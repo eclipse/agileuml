@@ -56,6 +56,10 @@ public class PrimitiveDomain extends Domain
   { return new BasicExpression(true);
   }
 
+  public Expression toUndoExpression(Vector bound)
+  { return new BasicExpression(true);
+  }
+
   public Expression toSourceExpressionOp(Vector bound)
   { return new BasicExpression(true); }
 
@@ -63,7 +67,7 @@ public class PrimitiveDomain extends Domain
   { return new BasicExpression(true);
   }
 
-  public Expression toGuardCondition(Vector bound, Expression e) 
+  public Expression toGuardCondition(Vector bound, Expression e, Entity tr) 
   { return new BinaryExpression(rootVariable); 
     // not needed if variable is bound? 
   }

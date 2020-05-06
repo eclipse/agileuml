@@ -21,11 +21,14 @@ public abstract class TemplateExp
 
   public abstract boolean typeCheck(Vector types, Vector entities, Vector contexts, Vector env);  
 
-  public abstract Expression toGuardCondition(Vector bound, Expression contextObj, Expression post);
+  public abstract Expression toGuardCondition(Vector bound, Expression contextObj, Expression post,
+                                              Entity tr);
 
   public abstract Expression toSourceExpression(Vector bound, Expression contextObj);
 
   public abstract Expression toTargetExpression(Vector bound, Expression contextObj, Expression setting);
+
+  public abstract Expression toUndoExpression(Vector bound, Expression contextObj, Expression setting);
 
   public abstract Expression toTargetExpressionOp(Vector bound, Expression contextObj, Expression setting);
 

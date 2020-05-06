@@ -84,6 +84,12 @@ public abstract class ConstraintOrGroup
 
   public abstract Vector wr(Vector assocs); 
 
+  public abstract Vector cwr(Vector assocs); 
+
+  public abstract DataDependency rhsDataDependency(); 
+
+  public abstract DataDependency getDataFlows(); 
+
   public abstract void changedEntityName(String oldN, String newN); 
 
   public abstract Vector operationsUsedIn(); 

@@ -10,9 +10,9 @@
 /*
  * Classname : UCDArea
  * 
- * Version information : 1.9
+ * Version information : 1.9-2.0
  *
- * Date :  June 2019
+ * Date :  April 2020
  * 
  * Description: This class describes the area that all the painting for 
  * the CD diagram will be performed and deals with painting them
@@ -144,6 +144,7 @@ public class UCDArea extends JPanel
 
     private Vector imported = new Vector(); // of String
     private Vector entitymaps = new Vector(); // of EntityMatching
+    private ModelMatching tlspecification = null; 
 
   // Parent frame: 
     UmlTool parent; 
@@ -231,12 +232,14 @@ public class UCDArea extends JPanel
 
   public void addUseCases(Vector ucs)
   { for (int i = 0; i < ucs.size(); i++) 
-    { UseCase uc = (UseCase) ucs.get(i);
-      String nme = uc.getName();  
-      UseCase uc0 = (UseCase) ModelElement.lookupByName(nme,useCases); 
-      if (uc0 != null) 
-      { System.out.println("Existing use case with name: " + nme); 
-        useCases.remove(uc0); 
+    { if (ucs.get(i) instanceof UseCase)
+	  { UseCase uc = (UseCase) ucs.get(i);
+        String nme = uc.getName();  
+        UseCase uc0 = (UseCase) ModelElement.lookupByName(nme,useCases); 
+        if (uc0 != null) 
+        { System.out.println("Existing use case with name: " + nme); 
+          useCases.remove(uc0); 
+		}
       }
     }
     for (int i = 0; i < ucs.size(); i++) 
@@ -418,7 +421,7 @@ public class UCDArea extends JPanel
       if (attnme == null) { return; } 
       boolean alreadyDefined = uc.hasAttribute(attnme); 
       if (alreadyDefined)
-      { System.err.println("Use case already has attribute " + attnme + " not added"); 
+      { System.err.println("!! ERROR: Use case already has attribute " + attnme + " not added"); 
         return; 
       }
 
@@ -433,7 +436,7 @@ public class UCDArea extends JPanel
           tt = new Type(typ,null);
         }
         else
-        { System.out.println("Invalid type name: " + typ);
+        { System.out.println("!!! Invalid type name: " + typ);
           JOptionPane.showMessageDialog(null, "Error: invalid type " + typ, 
                                       "", JOptionPane.ERROR_MESSAGE);  
  
@@ -647,9 +650,9 @@ public class UCDArea extends JPanel
 
     boolean tc = inv.typeCheck(types,entities,contexts,newparams); 
     if (tc) 
-    { System.out.println("Postcondition type-checked correctly"); } 
+    { System.out.println(">> Postcondition type-checked correctly"); } 
     else 
-    { System.out.println("Postcondition not correctly typed!"); } 
+    { System.out.println("!! Postcondition not correctly typed!"); } 
 
     Constraint cons = new Constraint((SafetyInvariant) inv,new Vector()); 
     cons.setOwner(owner); 
@@ -665,7 +668,7 @@ public class UCDArea extends JPanel
     { uc.addPostcondition(cons); 
       cons.setUseCase(uc); 
       uc.resetDesign(); 
-      System.out.println("The use case design has been reset"); 
+      System.out.println(">> The use case design has been reset"); 
     }       
   } 
 
@@ -739,7 +742,7 @@ public class UCDArea extends JPanel
         { System.err.println(messages); } 
         Expression eAssump = comp.parse();
         if (eAssump == null)
-        { eAssump = new BasicExpression("true"); }
+        { eAssump = new BasicExpression(true); }
         comp = new Compiler2(); 
         comp.nospacelexicalanalysis(sConc);
         Vector succsymbs = new Vector(); 
@@ -749,7 +752,7 @@ public class UCDArea extends JPanel
         { System.err.println(messages); } 
         Expression eConc = comp.parse();
         if (eConc == null)
-        { eConc = new BasicExpression("true"); }
+        { eConc = new BasicExpression(true); }
 
         // boolean isSys = sinvDialog.isSystem();
         // boolean isCrit = sinvDialog.isCritical();
@@ -874,23 +877,28 @@ public class UCDArea extends JPanel
     // check that ucinc is not already an extension of an extends, or inclusion of 
     // an includes: 
     for (int i = 0; i < useCases.size(); i++) 
-    { UseCase uc1 = (UseCase) useCases.get(i); 
-      if (uc1.hasExtension(ucext))
-      { System.err.println("Cannot have " + nme + " as extension of two usecases!"); 
-        return; 
-      } 
+    { if (useCases.get(i) instanceof UseCase)
+	  { UseCase uc1 = (UseCase) useCases.get(i); 
+        if (uc1.hasExtension(ucext))
+        { System.err.println("Cannot have " + nme + " as extension of two usecases!"); 
+          return; 
+        }
+	  }  
     } 
 
     for (int i = 0; i < useCases.size(); i++) 
-    { UseCase uc1 = (UseCase) useCases.get(i); 
-      if (uc1.hasInclusion(ucext))
-      { System.err.println("Cannot have " + nme + " as extension and inclusion!"); 
-        return; 
+    { if (useCases.get(i) instanceof UseCase)
+	  { UseCase uc1 = (UseCase) useCases.get(i); 
+        if (uc1.hasInclusion(ucext))
+        { System.err.println("Cannot have " + nme + " as extension and inclusion!"); 
+          return;
+		}  
       } 
     } 
 
     Extend ee = new Extend(uc,ucext); 
     uc.addExtension(ee);  
+	ucext.addExtensionOf(uc); 
     // Draw dashed line from ucext to uc
     drawDependency(ucext, uc, "<<extend>>"); 
   }
@@ -922,17 +930,20 @@ public class UCDArea extends JPanel
 
     // check that ucinc is not already an extension of an extends: 
     for (int i = 0; i < useCases.size(); i++) 
-    { UseCase uc1 = (UseCase) useCases.get(i); 
-      if (uc1.hasExtension(ucinc))
-      { System.err.println("Cannot have " + nme + " as extension and inclusion!"); 
-        JOptionPane.showMessageDialog(null, "Error: " + nme + " is extension & inclusion!", 
+    { if (useCases.get(i) instanceof UseCase)
+	  { UseCase uc1 = (UseCase) useCases.get(i); 
+        if (uc1.hasExtension(ucinc))
+        { System.err.println("Cannot have " + nme + " as extension and inclusion!"); 
+          JOptionPane.showMessageDialog(null, "Error: " + nme + " is extension & inclusion!", 
                                       "",JOptionPane.ERROR_MESSAGE);  
-        return; 
+          return;
+		}  
       } 
     } 
 
     Include ee = new Include(uc,ucinc); 
     uc.addInclude(ee);  
+	ucinc.addIncludedIn(uc); 
     drawDependency(uc, ucinc, "<<include>>"); 
   }
 
@@ -1018,7 +1029,7 @@ public class UCDArea extends JPanel
             typ.equals("double") || typ.equals("boolean"))
         { tt = new Type(typ,null); }
         else  
-        { System.err.println("Invalid type name: " + typ);
+        { System.err.println("!! ERROR: Invalid type name: " + typ);
           tt = null;
         }
       }
@@ -1064,7 +1075,7 @@ public class UCDArea extends JPanel
     { System.err.println("Failed to type-check precondition"); }
 
     if (post == null)
-    { System.err.println("Invalid postcondition"); 
+    { System.err.println(">>> Invalid postcondition"); 
       post = "true"; 
     }
 
@@ -1219,7 +1230,7 @@ public class UCDArea extends JPanel
 
     boolean tc = spre.typeCheck(types,entities,contexts,vars);
     if (!tc) 
-    { System.err.println("Warning: Unable to type-check precondition " + cond); }
+    { System.err.println("!! Warning: Unable to type-check precondition " + cond); }
 
     if (post == null)
     { System.err.println("ERROR: Invalid postcondition"); 
@@ -1391,8 +1402,8 @@ public class UCDArea extends JPanel
   } 
 
   public void addInvariant(Invariant inv)
-  { System.out.println("Select associations or entity that invariant is attached to");
-    System.out.println("And/or the use case to which it belongs as a postcondition"); 
+  { System.out.println(">>> Select associations or entity that invariant is attached to");
+    System.out.println(">>> And/or the use case to which it belongs as a postcondition"); 
     String anames = 
       JOptionPane.showInputDialog("Enter association names, or entity, or entity + use case:");
     if (anames == null) 
@@ -1405,6 +1416,8 @@ public class UCDArea extends JPanel
     int constraintType = 1; 
     String preEntity = ""; 
     int atindex = -1; 
+
+    Vector env = new Vector(); 
 
     while (st.hasMoreTokens())
     { String se = st.nextToken().trim();
@@ -1429,6 +1442,7 @@ public class UCDArea extends JPanel
         { UseCase uc = (UseCase) ModelElement.lookupByName(se,useCases); 
           if (uc != null) 
           { // System.out.println("Found use case");
+            env.addAll(uc.getParameters()); 
             usecase = uc;
           }
         }
@@ -1439,39 +1453,40 @@ public class UCDArea extends JPanel
     if (owner != null) 
     { contexts.add(owner); }  
 
-    boolean tc = inv.typeCheck(types,entities,contexts,new Vector()); 
-    if (tc) 
-    { // System.out.println("Invariant type-checked correctly"); 
-      Constraint cons = new Constraint((SafetyInvariant) inv,astv); 
-      for (int i = 0; i < astv.size(); i++) 
-      { Association ast = (Association) astv.get(i); 
-        ast.addConstraint(cons); 
-      } 
-      cons.setOwner(owner); 
-      if (preEntity.length() > 0) 
-      { cons.setisPre(true); } 
-      cons.typeCheck(types,entities,contexts); // to identify variables
+    boolean tc = inv.typeCheck(types,entities,contexts,env); 
+    if (!tc) 
+    { System.err.println("!! Type error in constraint: " + inv); } 
+
+    Constraint cons = new Constraint((SafetyInvariant) inv,astv); 
+    for (int i = 0; i < astv.size(); i++) 
+    { Association ast = (Association) astv.get(i); 
+      ast.addConstraint(cons); 
+    } 
+    cons.setOwner(owner); 
+    if (preEntity.length() > 0)
+    { cons.setisPre(true); } 
+    
+    cons.typeCheck(types,entities,contexts); // to identify variables
       // invariants.add(inv); 
 
-      System.out.println("read frame of " + cons + " is " + cons.readFrame()); 
+    System.out.println(">> read frame of " + cons + " is " + cons.readFrame()); 
 
    
-      if (usecase != null) 
-      { usecase.addPostcondition(cons); 
-        cons.setUseCase(usecase); 
-        if (preEntity.length() > 0)
-        { cons.setisPre(true); } 
-        
-      } 
+    if (usecase != null) 
+    { usecase.addPostcondition(cons); 
+      cons.setUseCase(usecase); 
+      if (preEntity.length() > 0)
+      { cons.setisPre(true); }       
+    } 
 
       // constraints.add(cons); 
       
-      boolean local = cons.checkIfLocal(); 
-      if (usecase != null) { } 
-      else if (local)
-      { owner.addInvariant(cons); } 
-      else  
-      { constraints.add(cons);   // global constraint not in a use case
+    boolean local = cons.checkIfLocal(); 
+    if (usecase != null) { } 
+    else if (local)
+    { owner.addInvariant(cons); } 
+    else  
+    { constraints.add(cons);   // global constraint not in a use case
 
         // Vector ents = cons.innermostEntities();
         // System.out.println("Needed entities are: " + ents);   
@@ -1528,9 +1543,7 @@ public class UCDArea extends JPanel
           } 
         } */
       }
-    } 
-    else 
-    { System.out.println("ERROR: Invariant not correctly typed, not added: " + inv); } 
+     
   } 
 
   public void addInvariant(Invariant inv, Entity owner)
@@ -1539,9 +1552,10 @@ public class UCDArea extends JPanel
     { contexts.add(owner); } 
 
     boolean tc = inv.typeCheck(types,entities,contexts,new Vector()); 
-    if (tc) 
-    { // System.out.println("Invariant type-checked correctly"); 
-      Constraint cons = new Constraint((SafetyInvariant) inv,
+    if (!tc) 
+    { System.err.println("!! ERROR in type-checking: " + inv); } 
+ 
+    Constraint cons = new Constraint((SafetyInvariant) inv,
                                        new Vector()); 
       cons.setOwner(owner); 
       // invariants.add(inv); 
@@ -1564,12 +1578,7 @@ public class UCDArea extends JPanel
                              " not subset of association ends: " + endPoints);
         }
       }
-    } 
-    else 
-    { System.out.println("Invariant not correctly typed, not added: " + inv); 
-      JOptionPane.showMessageDialog(null, "Invariant not correctly typed: " + inv, 
-                                    "", JOptionPane.WARNING_MESSAGE);  
-    } 
+    
   } 
 
   public void removeInvariant(Constraint con)
@@ -2329,6 +2338,7 @@ public class UCDArea extends JPanel
     { System.err.println("Invalid entity name: " + ent); 
       return; 
     } 
+
     if (nme.equals("add") || nme.equals("remove") || nme.equals("create") ||
         nme.equals("delete") || nme.equals("edit") || nme.equals("get") ||
         nme.equals("list") || nme.equals("searchBy") || nme.equals("set"))
@@ -2365,16 +2375,13 @@ public class UCDArea extends JPanel
     String nme = ucDialog.getName(); 
     if (nme == null || "".equals(nme)) { return; } 
 
-    // String ent = ucDialog.getEntity(); 
+    String ent = ucDialog.getEntity(); 
     String desc = ucDialog.getDescription(); 
     String typ = ucDialog.getUseCaseType(); 
 
     if ("none".equals(typ)) 
     { typ = null; } 
 
-    // Entity e = (Entity) ModelElement.lookupByName(ent,entities); 
-    // if (e == null) 
-    // { System.err.println("No entity specified"); } 
 
     UseCase uc = (UseCase) ModelElement.lookupByName(nme,useCases); 
     if (uc != null) 
@@ -2409,6 +2416,14 @@ public class UCDArea extends JPanel
       useCases.add(ucext); 
     } */ 
 
+    if (ent != null && ent.length() > 0) 
+    { Entity e = (Entity) ModelElement.lookupByName(ent,entities); 
+      if (e == null) 
+      { System.err.println("!! Invalid associated entity"); } 
+      else 
+      { uc.setEntity(e); } 
+    } 
+
     String pars = ucDialog.getParameters();
     if (pars == null || pars.trim().length() == 0) { } 
     else 
@@ -2422,7 +2437,7 @@ public class UCDArea extends JPanel
           Type elemType = null; 
           Type ptt = Type.getTypeFor(ptype, types, entities); 
           if (ptt == null) 
-          { System.err.println("ERROR: Invalid type for parameter: " + pp); }
+          { System.err.println("!!! ERROR: Invalid type " + ptype + " for parameter: " + pp); }
           else       
           { Attribute pattr = new Attribute(pp, ptt, ModelElement.INTERNAL);
             pattr.setElementType(ptt.getElementType());  
@@ -2515,7 +2530,7 @@ public class UCDArea extends JPanel
   public void reconstructUseCase(String nme, String ent, String role)
   { Entity e = (Entity) ModelElement.lookupByName(ent,entities); 
     if (e == null) 
-    { System.err.println("Invalid entity name: " + ent); 
+    { System.err.println("ERROR: Invalid entity name: " + ent); 
       return; 
     } 
     if (nme.equals("add") || nme.equals("remove") || nme.equals("create") ||
@@ -2896,32 +2911,138 @@ public class UCDArea extends JPanel
 
   }
 
+  public void generateIOSApp()
+  { IOSAppGenerator gen = new IOSAppGenerator(); 
+    CGSpec cgs = loadCSTL(); 
+	// System.out.println(cgs); 
+  
+    for (int j = 0; j < entities.size(); j++) 
+    { Entity ent = (Entity) entities.get(j); 
+      if (ent.isDerived()) { }
+      else 
+      { String entvo = ent.getName() + "VO.swift"; 
+        File entvof = new File("output/" + entvo); 
+        try
+        { PrintWriter voout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entvof)));
+          voout.println(ent.getIOSValueObject("app"));
+          voout.close(); 
+        } catch (Exception e) { }
+      }
+    }   
+      
+    Vector entusecases = new Vector(); 
+    for (int i = 0; i < useCases.size(); i++) 
+    { if (useCases.get(i) instanceof UseCase)
+      { UseCase uc = (UseCase) useCases.get(i);
+            // Vector wrf = uc.wr(associations); 
+            // Vector cwrf = uc.readFrame(); 
+            // System.out.println(">>> " + uc.getName() + " has outputs " + wrf + " and inputs " + cwrf);
+         // uc.identifyInputsOutputs(associations); 
+	     // Entity ucentity = uc.findEntity(entities,associations);   
+         // if (ent == ucentity)
+            { entusecases.add(uc); }     
+       } 
+       else if (useCases.get(i) instanceof OperationDescription)
+       { OperationDescription od = (OperationDescription) useCases.get(i); 
 
+         String nme = od.getName(); 
+         File odswift = new File("output/" + nme + "ViewController.swift"); 
+         try
+         { PrintWriter swiftout = new PrintWriter(
+                                    new BufferedWriter(
+                                      new FileWriter(odswift)));
+           od.iOSViewController(swiftout); 
+           swiftout.close(); 
+        } catch (Exception e) { } 
+      } 
+    } 
+
+    String entbean = "ModelFacade.swift"; 
+    File entbeanf = new File("output/" + entbean); 
+    try
+    { PrintWriter beanout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entbeanf)));
+	  System.out.println(">>> Writing " + entbeanf + " for " + entusecases); 
+		
+      gen.modelFacade(entusecases,cgs,entities,
+                          types,beanout);
+      beanout.flush(); 
+      beanout.close(); 
+    } catch (Exception e) { } 
+
+    for (int z = 0; z < entusecases.size(); z++) 
+    { UseCase uc = (UseCase) entusecases.get(z); 
+      String ucvc = uc.getName() + "ViewController.swift"; 
+      File ucvcf = new File("output/" + ucvc); 
+      try
+      { PrintWriter vcout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(ucvcf)));
+	   System.out.println(">>> Writing " + ucvcf + " for " +  uc.getName()); 
+		
+         gen.singlePageApp(uc,cgs,vcout);
+         vcout.flush(); 
+         vcout.close(); 
+       } catch (Exception e) { }
+     } 
+   }
+  
   public void generateAndroidLayouts(PrintWriter out)
-  { /* File chtml = new File("output/commands.html"); 
+  { AndroidAppGenerator agen = new AndroidAppGenerator(); 
+    
+    if (systemName == null || "".equals(systemName))
+    { systemName = "myApp"; } 
+    agen.generateManifest(systemName,out); 
+
+    File chtml = new File("output/app/src/main/res/layout/activity_main.xml"); 
     try
     { PrintWriter chout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(chtml)));
-      chout.println(generateCommandHtml(useCases)); 
-      // out.println();
+      OperationDescription.androidCreateMenu(useCases,chout); 
       chout.close(); 
-    } catch (Exception e) { }  */ 
+    } catch (Exception e) { }  
 
+    File codefile = new File("output/app/src/main/java/MainActivity.java"); 
+    try
+    { PrintWriter codeout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(codefile)));
+      OperationDescription.androidCreateMainActivity(useCases,codeout); 
+      codeout.close(); 
+    } catch (Exception e) { }  
+
+    Vector referencedEntities = new Vector(); 
     
     for (int i = 0; i < useCases.size(); i++)
     { Object obj = useCases.get(i); 
       if (obj instanceof OperationDescription)
       { OperationDescription od = (OperationDescription) obj; 
-        od.androidScreen(out); 
+        File odlayout = new File("output/app/src/main/res/layout/" + od.getName() + "_layout.xml"); 
+        try
+        { PrintWriter odlayoutfile = new PrintWriter(
+                                       new BufferedWriter(
+                                         new FileWriter(odlayout)));
+          od.androidScreen(odlayoutfile);
+          odlayoutfile.close();    
+        } catch (Exception e) { } 
+
+        if (od.entity != null) 
+        { if (referencedEntities.contains(od.entity)) { } 
+          else 
+          { referencedEntities.add(od.entity); } 
+        } 
 
         String nme = od.getName(); 
-        File odjsp = new File("output/View" + nme + ".java"); 
+        File odjsp = new File("output/app/src/main/java/View" + nme + ".java"); 
         try
         { PrintWriter jspout = new PrintWriter(
-                              new BufferedWriter(
-                                new FileWriter(odjsp)));
-          od.androidViewActivity(jspout); 
+                                 new BufferedWriter(
+                                   new FileWriter(odjsp)));
+          od.androidViewActivity(systemName,jspout); 
           jspout.close(); 
         } catch (Exception e) { } 
 
@@ -2936,22 +3057,54 @@ public class UCDArea extends JPanel
           odhout.close(); 
         } catch (Exception e) { }  */ 
       } 
+      else if (obj instanceof UseCase)
+      { UseCase uc = (UseCase) obj; 
+        if (uc.includedIn.size() == 0 && uc.extensionOf.size() == 0) 
+        { Vector extensions = uc.extensionUseCases(); 
+	      String nme = uc.getName(); 
+	      Vector atts = uc.getParameters(); 
+          Attribute res = uc.getResultParameter(); 
+
+          File opfile = new File("output/app/src/main/res/layout/" + nme + "_layout.xml"); 
+          try
+          { PrintWriter opout = new PrintWriter(
+                                 new BufferedWriter(
+                                   new FileWriter(opfile)));
+            if (extensions.size() > 0) 
+            { OperationDescription.androidTableLayoutForOps(nme,atts,res,extensions,opout); } 
+            else
+            { OperationDescription.androidTableLayoutForOp(nme,atts,res,opout); }   
+            opout.close(); 
+          } catch (Exception e) { } 
+
+          File odact = new File("output/app/src/main/java/" + nme + "Activity.java"); 
+          try
+          { PrintWriter actout = new PrintWriter(
+                                   new BufferedWriter(
+                                     new FileWriter(odact)));
+            OperationDescription.androidOpViewActivity(nme,atts,res,extensions,actout); 
+            actout.close(); 
+          } catch (Exception e) { }
+        }  
+      }
     } 
 
     for (int j = 0; j < entities.size(); j++) 
-    { Entity ent = (Entity) entities.get(j); 
+    { Entity ent = (Entity) entities.get(j);
+      if (ent.isDerived()) { continue; } 
+	   
       String entvo = ent.getName() + "VO.java"; 
-      File entvof = new File("output/" + entvo); 
+      File entvof = new File("output/app/src/main/java/" + entvo); 
       try
       { PrintWriter voout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(entvof)));
-        voout.println(ent.getAndroidValueObject());
+        voout.println(ent.getAndroidValueObject(systemName));
         voout.close(); 
       } catch (Exception e) { } 
       
       String entbean = ent.getName() + "Bean.java"; 
-      File entbeanf = new File("output/" + entbean); 
+      File entbeanf = new File("output/app/src/main/java/" + entbean); 
       try
       { PrintWriter beanout = new PrintWriter(
                               new BufferedWriter(
@@ -2961,14 +3114,52 @@ public class UCDArea extends JPanel
       } catch (Exception e) { } 
     }
 
-    File dbif = new File("output/Dbi.java"); 
+    for (int j = 0; j < useCases.size(); j++) 
+    { if (useCases.get(j) instanceof UseCase) 
+	  { UseCase uc = (UseCase) useCases.get(j); 
+	    String ucvo = uc.getName() + "VO.java"; 
+        File ucvof = new File("output/app/src/main/java/" + ucvo); 
+        try
+        { PrintWriter voout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(ucvof)));
+          voout.println(uc.getAndroidValueObject());
+          voout.close(); 
+        } catch (Exception e) { } 
+      
+        String ucbean = uc.getName() + "Bean.java"; 
+        File ucbeanf = new File("output/app/src/main/java/" + ucbean); 
+        try
+        { PrintWriter beanout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(ucbeanf)));
+          beanout.println(uc.generateAndroidBean(entities,types));
+          beanout.close(); 
+        } catch (Exception e) { }
+      } 
+    }
+
+    File dbif = new File("output/app/src/main/java/Dbi.java"); 
     try
     { PrintWriter dbiout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(dbif)));
-      generateAndroidDbi(useCases,dbiout);
+      generateAndroidDbi(referencedEntities,useCases,dbiout);
       dbiout.close(); 
     } catch (Exception e) { } 
+	
+    File mff = new File("output/app/src/main/java/ModelFacade.java"); 
+    try
+    { CGSpec cgs = loadCSTL(); 
+      PrintWriter mfout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(mff)));
+      agen.modelFacade(useCases,cgs,entities,types,mfout);
+      mfout.close(); 
+    } catch (Exception e) 
+    { e.printStackTrace(); } 
+
+    // generateIOSApp(out); 
 
     /* out.println(generateDbiPool());  */ 
   }
@@ -3125,12 +3316,12 @@ public class UCDArea extends JPanel
     boolean query = opDialog.getQuery(); 
 
     if (nme == null)  // cancelled 
-    { System.err.println("Operation definition cancelled. No name specified"); 
+    { System.err.println(">>> Operation definition cancelled. No name specified"); 
       return; 
     } 
 
     if (typ == null && query) 
-    { System.err.println("Error: query operation without type"); 
+    { System.err.println("!! Error: query operation without type"); 
       JOptionPane.showMessageDialog(null, "ERROR: query operation must have a return type!", "", JOptionPane.ERROR_MESSAGE); 
       return; 
     } 
@@ -3155,13 +3346,13 @@ public class UCDArea extends JPanel
     Expression cond;
     Compiler2 comp = new Compiler2(); 
     if (pre == null || pre.equals(""))
-    { cond = new BasicExpression("true"); } 
+    { cond = new BasicExpression(true); } 
     else
     { comp.nospacelexicalanalysis(pre);
       cond = comp.parse();
       if (cond == null)
       { System.err.println("Warning, precondition has wrong syntax: " + pre); 
-        cond = new BasicExpression("true"); 
+        cond = new BasicExpression(true); 
       } 
     }
     Expression spre = cond.simplify(); 
@@ -3178,8 +3369,8 @@ public class UCDArea extends JPanel
     } 
 
 
-    if (post == null)
-    { System.out.println("Invalid postcondition"); 
+    if (post == null || post.equals(""))
+    { System.out.println("!! Invalid postcondition"); 
       post = "true"; 
     }
     Compiler2 comp1 = new Compiler2(); 
@@ -3188,7 +3379,8 @@ public class UCDArea extends JPanel
 
     while (effect == null)
     { System.out.println("Invalid postcondition: " + post); 
-      JOptionPane.showMessageDialog(null, "ERROR: invalid expression: " + post, "", JOptionPane.ERROR_MESSAGE); 
+      JOptionPane.showMessageDialog(null, 
+         "ERROR: invalid expression: " + post, "", JOptionPane.ERROR_MESSAGE); 
       opDialog.setOldFields(nme,typ,params,pre,post,query);
       // opDialog.setStereotypes(null); 
       opDialog.setVisible(true);
@@ -3203,7 +3395,9 @@ public class UCDArea extends JPanel
 
     if (query) 
     { if (tt == null) 
-      { System.err.println("Error: query operation must have a return type!");                JOptionPane.showMessageDialog(null, "ERROR: query operation must have a return type!", "", JOptionPane.ERROR_MESSAGE);
+      { System.err.println("Error: query operation must have a return type!");                
+        JOptionPane.showMessageDialog(null, 
+           "ERROR: query operation must have a return type!", "", JOptionPane.ERROR_MESSAGE);
         return;  
       } 
     } 
@@ -3215,12 +3409,12 @@ public class UCDArea extends JPanel
 
     params = opDialog.getParams(); // pairs var type
     Vector oppars = 
-      BehaviouralFeature.reconstructParameters(params,types,entities);
+      BehaviouralFeature.reconstructParameters(params," ",types,entities);
     vars.addAll(oppars); 
 
     boolean tc = spre.typeCheck(types,entities,contexts,vars);
     if (!tc) 
-    { System.out.println("Warning: cannot type precondition: " + spre); 
+    { System.out.println("!! Warning: cannot type precondition: " + spre); 
       // spre = new BasicExpression("true"); 
       // return; 
     }
@@ -3406,7 +3600,7 @@ public class UCDArea extends JPanel
     Expression effect = comp1.parse(); 
 
     while (effect == null)
-    { System.out.println("Invalid postcondition: " + post); 
+    { System.out.println("!! Invalid postcondition: " + post); 
       JOptionPane.showMessageDialog(null, "ERROR: invalid expression!: " + post, "", JOptionPane.ERROR_MESSAGE); 
       opDialog.setOldFields(nme,
            typ, params, pre,
@@ -4488,7 +4682,7 @@ public class UCDArea extends JPanel
   // same as addInvariant: 
   public Constraint addInvariant(PreConstraint pc)
   { if (pc.succ == null) 
-    { System.err.println("Constraint not parsed correctly"); 
+    { System.err.println("!! Constraint not parsed correctly"); 
       return null;
     }
  
@@ -4522,7 +4716,7 @@ public class UCDArea extends JPanel
         else 
         { UseCase uc = (UseCase) ModelElement.lookupByName(se,useCases); 
           if (uc != null) 
-          { // System.out.println("Found use case");
+          { System.out.println(">> Found use case " + uc.getName());
             usecase = uc;
           }
         }
@@ -4559,11 +4753,13 @@ public class UCDArea extends JPanel
       // System.out.println("Prestate owner"); 
     } 
 
-    if (con.typeCheck(types,entities,contexts,env)) { } 
-    else
-    { System.err.println("ERROR: Constraint not correctly " +
+    boolean tc = con.typeCheck(types,entities,contexts,env); 
+ 
+    if (!tc)
+    { System.err.println("!! ERROR: Constraint not correctly " +
                          "typed: " + con);
     }
+
     // System.out.println("Invariant type-checked correctly"); 
     con.setBehavioural(pc.succ.isUpdateable()); 
     
@@ -4632,7 +4828,7 @@ public class UCDArea extends JPanel
 
   public Constraint addAssertion(PreConstraint pc)
   { if (pc.succ == null) 
-    { System.err.println("Constraint not parsed correctly"); 
+    { System.err.println("!! Constraint not parsed correctly"); 
       return null;
     }
  
@@ -4873,7 +5069,7 @@ public class UCDArea extends JPanel
 
   public Constraint addGenericInvariant(PreConstraint pc, Vector ucs)
   { if (pc.succ == null) 
-    { System.err.println("Constraint not parsed correctly"); 
+    { System.err.println("ERROR: Constraint not parsed correctly"); 
       return null;
     }
  
@@ -4898,7 +5094,7 @@ public class UCDArea extends JPanel
         usecase = uc;
       }
       else 
-      { System.out.println("Enter instantiation of entity: " + se);
+      { System.out.println(">> Enter instantiation of entity: " + se);
         String epar = 
             JOptionPane.showInputDialog("Actual entity of: " + se);
         Entity e = (Entity) ModelElement.lookupByName(epar,entities); 
@@ -5034,7 +5230,7 @@ public class UCDArea extends JPanel
 
     String params = p.params; // pairs var type
     Vector oppars = 
-      BehaviouralFeature.reconstructParameters(params,types,entities);
+      BehaviouralFeature.reconstructParameters(params," ",types,entities);
     String pre = p.pre; 
     String post = p.post; 
    
@@ -5061,7 +5257,7 @@ public class UCDArea extends JPanel
 
     boolean tc = cond.typeCheck(types,entities,contexts,vars);
     if (!tc) 
-    { System.err.println("Invalid precondition: " + cond); 
+    { System.err.println("!! ERROR: Invalid precondition: " + cond); 
       // return null; 
       JOptionPane.showMessageDialog(null, "ERROR: Invalid precondition " + cond + " for: " + p.name,
                                     "Expression error", JOptionPane.ERROR_MESSAGE); 
@@ -6859,6 +7055,9 @@ public void produceCUI(PrintWriter out)
     String collops = BSystemTypes.getCollectOps();
     out.println(collops);
 
+    String aops = BSystemTypes.getAnyOps();
+    out.println(aops);
+
     out.println(BSystemTypes.generateSetEqualsOp()); 
     out.println("    public Set add(Object x)"); 
     out.println("    { if (x != null) { elements.add(x); }"); 
@@ -7022,6 +7221,9 @@ public void produceCUI(PrintWriter out)
 
     String collops = BSystemTypes.getCollectOps();
     out.println(collops);
+
+    String aops = BSystemTypes.getAnyOps();
+    out.println(aops);
 
     // out.println(BSystemTypes.generateSetEqualsOp()); 
     out.println("    public static HashSet addSet(HashSet s, Object x)"); 
@@ -7207,6 +7409,9 @@ public void produceCUI(PrintWriter out)
     String collops = BSystemTypes.getCollectOps();
     out.println(collops);
 
+    String aops = BSystemTypes.getAnyOps();
+    out.println(aops);
+
     // out.println(BSystemTypes.generateSetEqualsOp()); 
     out.println("    public static <T> HashSet<T> addSet(HashSet<T> s, T x)"); 
     out.println("    { if (x != null) { s.add(x); }"); 
@@ -7326,10 +7531,10 @@ public void produceCUI(PrintWriter out)
 
     /* Map operations - optional */ 
 
-    // mop = BSystemTypes.generateIncludesAllMapOpJava7(); 
-    // out.println("\n" + mop);  
-    // mop = BSystemTypes.generateExcludesAllMapOpJava7(); 
-    // out.println("\n" + mop);  
+    mop = BSystemTypes.generateIncludesAllMapOpJava7(); 
+    out.println("\n" + mop);  
+    mop = BSystemTypes.generateExcludesAllMapOpJava7(); 
+    out.println("\n" + mop);  
     mop = BSystemTypes.generateIncludingMapOpJava7(); 
     out.println("\n" + mop);  
     mop = BSystemTypes.generateExcludeAllMapOpJava7(); 
@@ -7384,6 +7589,9 @@ public void produceCUI(PrintWriter out)
 
     String collops = BSystemTypes.getCollectOps();
     out.println(collops);
+
+    String aops = BSystemTypes.getAnyOps();
+    out.println(aops);
 
     out.println(BSystemTypes.generateSetEqualsOpCSharp()); 
     out.println("    public static ArrayList addSet(ArrayList a, object x)"); 
@@ -7535,6 +7743,9 @@ public void produceCUI(PrintWriter out)
     String collops = BSystemTypes.getCollectOps();
     out.println(collops);
 
+    String aops = BSystemTypes.getAnyOps();
+    out.println(aops);
+
     out.println("    static bool isIn(_T x, set<_T>* st)"); 
     out.println("    { return (st->find(x) != st->end()); }\n"); 
     out.println("    static bool isIn(_T x, vector<_T>* sq)"); 
@@ -7678,6 +7889,12 @@ public void produceCUI(PrintWriter out)
     mop = BSystemTypes.generateUnionMapOpCPP(); 
     out.println("\n" + mop);  
     mop = BSystemTypes.generateIntersectionMapOpCPP(); 
+    out.println("\n" + mop);  
+    mop = BSystemTypes.generateKeysMapOpCPP(); 
+    out.println("\n" + mop);  
+    mop = BSystemTypes.generateValuesMapOpCPP(); 
+    out.println("\n" + mop);  
+    mop = BSystemTypes.generateRestrictOpCPP(); 
     out.println("\n" + mop);  
 
     out.println("};");
@@ -8388,6 +8605,7 @@ public void produceCUI(PrintWriter out)
     out.println(BSystemTypes.getExistsOps()); 
     out.println(BSystemTypes.getExists1Ops()); 
     out.println(BSystemTypes.getCollectOps()); 
+    out.println(BSystemTypes.getAnyOps()); 
 
     // controllerInterface = controllerInterface + "}\n"; 
     // out3.println(controllerInterface); 
@@ -9149,6 +9367,185 @@ public void produceCUI(PrintWriter out)
     out.println("</ecore:EPackage>"); 
   } 
 
+  public void loadTL()
+  { ModelMatching res = new ModelMatching(); 
+    Map mm = new Map(); 
+
+    BufferedReader br = null;
+    String s;
+    boolean eof = false;
+    File file = new File("output/forward.tl");  /* default */ 
+
+    try
+    { br = new BufferedReader(new FileReader(file)); }
+    catch (FileNotFoundException _e)
+    { System.out.println("File not found: " + file);
+      return; 
+    }
+
+    int noflines = 0; 
+
+    while (!eof)
+    { try { s = br.readLine(); }
+      catch (IOException _ex)
+      { System.out.println("!! Reading TL file failed.");
+        return; 
+      }
+      if (s == null) 
+      { eof = true; 
+        break; 
+      }
+      else if (s.startsWith("--")) { } 
+      else if (s.indexOf("|-->") > 0)
+      { String trimemap = s.trim(); 
+        int mapsymb = trimemap.indexOf("|"); 
+        if (mapsymb > 0) 
+        { String sents = trimemap.substring(0,mapsymb); 
+          String tents = trimemap.substring(mapsymb + 4, trimemap.length()); 
+
+            System.out.println(">> Using match: " + sents + " to " + tents);
+
+          Entity esrc = (Entity) ModelElement.lookupByName(sents.trim(),entities); 
+          Entity etrg = (Entity) ModelElement.lookupByName(tents.trim(),entities); 
+
+          Expression precond = null; 
+          if (esrc == null) 
+          { int endprecond = sents.indexOf("}");
+            int startprecond = sents.indexOf("{"); 
+            if (endprecond > 0 && startprecond >= 0) 
+            { Compiler2 c2 = new Compiler2(); 
+              String precondstring = sents.substring(startprecond+1,endprecond);
+              c2.nospacelexicalanalysis(precondstring); 
+              precond = c2.parseExpression();
+              String sents1 = sents.substring(endprecond+1,mapsymb).trim(); 
+              esrc = (Entity) ModelElement.lookupByName(sents1,entities);  
+            }
+          } 
+  
+          Expression postcond = null; 
+          if (etrg == null) 
+          { int endpostcond = tents.indexOf("}");
+            int startpostcond = tents.indexOf("{"); 
+            if (endpostcond > 0 && startpostcond >= 0) 
+            { Compiler2 c3 = new Compiler2(); 
+              String postcondstring = tents.substring(startpostcond+1,endpostcond);
+              c3.nospacelexicalanalysis(postcondstring); 
+              postcond = c3.parseExpression();
+              String tents1 = tents.substring(0,startpostcond).trim(); 
+              etrg = (Entity) ModelElement.lookupByName(tents1,entities);  
+            }
+          } 
+
+          if (esrc != null && etrg != null) 
+          { EntityMatching em = new EntityMatching(esrc,etrg);
+            System.out.println(">> Using match: " + sents + " to " + tents);
+            if (precond != null) 
+            { Vector contexts1 = new Vector(); 
+              
+              contexts1.add(esrc); 
+              precond.typeCheck(types,entities,contexts1,new Vector()); 
+              em.setCondition(precond); 
+            } 
+            if (postcond != null) 
+            { Vector contexts2 = new Vector(); 
+              
+              contexts2.add(etrg); 
+              postcond.typeCheck(types,entities,contexts2,new Vector()); 
+              em.setPostcondition(postcond); 
+            } 
+            entitymaps.add(em);
+            Maplet s2t = new Maplet(esrc,etrg); 
+            mm.add(s2t); 
+            AttributeMatching amx = readEntityMapping(br,em);
+            while (amx != null)
+            { amx = readEntityMapping(br,em); }  
+          }   
+        } 
+      }         
+      // System.out.println(s); 
+    }
+    res.addEntityMatchings(entitymaps); 
+    res.mymap = mm; 
+    System.out.println(">>> Parsed TL specification: " + res); 
+    tlspecification = res; 
+  }
+
+  public void applyCSTLSpecification()
+  { CGSpec spec = loadCSTL(); 
+
+    if (spec == null) { return; } 
+
+
+    String newtypes = ""; 
+    String newclasses = ""; 
+    String newusecases = ""; 
+
+    /* Argument _2 of the package rule */
+
+    for (int i = 0; i < types.size(); i++) 
+    { Type t = (Type) types.get(i); 
+      String newt = t.cgEnum(spec);
+      newtypes = newtypes + newt + '\n'; 
+      // System.out.println("Transformed type usage " + t + " is " + newt); 
+    } 
+
+    /* Argument _3 of the package rule */ 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity t = (Entity) entities.get(i);
+      t.generateOperationDesigns(types,entities);  
+      String newt = t.cg(spec);
+      newclasses = newclasses + newt + '\n'; 
+      // System.out.println("Transformed entity " + t + " is " + newt); 
+    } 
+
+    /* Argument _4 of the package rule */ 
+
+    Vector ucs = new Vector(); 
+
+    for (int i = 0; i < useCases.size(); i++) 
+    { Object uc = useCases.get(i); 
+      if (uc instanceof UseCase) 
+      { UseCase xx = (UseCase) uc; 
+        ucs.add(xx); 
+          // xx.implementBehaviour(types,entities); 
+        String newt = xx.cg(spec,types,entities);
+        String arg1 = CGRule.correctNewlines(newt); 
+        newusecases = newusecases + arg1 + '\n';
+      } 
+    }  
+
+
+    File chtml = new File("output/cgout.txt"); 
+    try
+    { PrintWriter chout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(chtml)));
+      
+      spec.transformPackage(newtypes,newclasses,newusecases, 
+                            types,entities,ucs, chout);   
+
+
+      chout.println(); 
+
+      chout.close(); 
+    } catch (Exception e) { } 
+
+  }  
+
+  public CGSpec loadCSTL()
+  { CGSpec res = new CGSpec(); 
+    
+    File f = new File("./cg/cg.cstl");  /* default */ 
+    if (f != null) 
+    { res = CSTL.loadCSTL(f,types,entities); } 
+
+    System.out.println(">>> Parsed: " + res);
+ 
+    CSTL.loadTemplates(types,entities); 
+    return res; 
+  }
+
   public void loadATL()
   { 
     for (int i = 0; i < entities.size(); i++) 
@@ -9519,6 +9916,64 @@ public void produceCUI(PrintWriter out)
     addGeneralUseCase(uc);  
   }
 
+  public void parseExtendedTransformation(RelationalTransformation tt, String ext)
+  { 
+    Compiler2 c = new Compiler2(); 
+    BufferedReader br = null;
+    Vector res = new Vector();
+    String s;
+    boolean eof = false;
+    File file = new File("output/" + ext + ".qvt");  /* default */ 
+
+    BufferedWriter brout = null; 
+    PrintWriter pwout = null; 
+
+    File outfile = new File("output/" + ext + "measures.txt"); 
+
+    try
+    { br = new BufferedReader(new FileReader(file));
+      brout = new BufferedWriter(new FileWriter(outfile)); 
+      pwout = new PrintWriter(brout); 
+    }
+    catch (Exception _e)
+    { System.out.println("!!!! File not found: " + file);
+      return; 
+    }
+
+    String flockstring = ""; 
+    int noflines = 0; 
+
+    while (!eof)
+    { try { s = br.readLine(); }
+      catch (IOException _ex)
+      { System.out.println("!!! Reading failed.");
+        return; 
+      }
+      if (s == null) 
+      { eof = true; 
+        break; 
+      }
+      else if (s.startsWith("--")) { } 
+      else 
+      { flockstring = flockstring + s + " "; } 
+      noflines++; 
+    }
+    c.nospacelexicalanalysis(flockstring); 
+    
+    // c.displaylexs();
+    RelationalTransformation ttext = c.parse_QVTR(0,c.lexicals.size()-1,entities,types);
+    if (ttext == null) 
+    { System.err.println("!!!! Invalid QVT-R syntax"); 
+      return; 
+    } 
+    else 
+    { tt.union(ttext); 
+      if (ttext.getExtending() != null) 
+      { parseExtendedTransformation(tt, ttext.getExtending()); } 
+    } 
+    // add the rules of the extended transformation before those of tt. 
+  } 
+
   public void loadQVT()
   { 
     // for (int i = 0; i < entities.size(); i++) 
@@ -9575,6 +10030,9 @@ public void produceCUI(PrintWriter out)
     { System.err.println("!!!! Invalid QVT-R syntax"); 
       return; 
     } 
+    else if (tt.getExtending() != null) 
+    { parseExtendedTransformation(tt,tt.getExtending()); } 
+    // add the rules of the extended transformation before those of tt. 
  
     System.out.println("**** Parsed QVT-R: " + tt); 
     tt.typeCheck(types,entities,new Vector(),new Vector()); 
@@ -9807,7 +10265,7 @@ public void produceCUI(PrintWriter out)
   } // the generic use case is in its own file
 
   public void typeCheckOps()
-  { System.out.println("Rechecking operations"); 
+  { System.out.println(">> Rechecking operations"); 
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i); 
       ent.typeCheckOps(types,entities); 
@@ -10150,6 +10608,9 @@ public void produceCUI(PrintWriter out)
             { EntityMatching em = new EntityMatching(esrc,etrg);
               System.out.println("Using match: " + sents + " to " + tents);
               entitymaps.add(em);
+              AttributeMatching amx = readEntityMapping(br,em);
+              while (amx != null)
+              { amx = readEntityMapping(br,em); }  
             }   
           } 
         } catch (IOException _ex) { } 
@@ -10557,6 +11018,70 @@ public void produceCUI(PrintWriter out)
 
     repaint(); 
   }
+
+  public AttributeMatching readEntityMapping(BufferedReader br, EntityMatching em)
+  { try { String fmap = br.readLine(); 
+          if (fmap.startsWith("  "))
+          { String trimemap = fmap.trim(); 
+            int mapsymb = trimemap.indexOf("|"); 
+            if (mapsymb > 0) 
+            { String sf = trimemap.substring(0,mapsymb); 
+              String tf = trimemap.substring(mapsymb + 4, trimemap.length());
+
+              Compiler2 comp = new Compiler2(); 
+              comp.nospacelexicalanalysis(sf); 
+              Expression src = comp.parseExpression();   
+              Vector contexts1 = new Vector(); 
+              contexts1.add(em.realsrc); 
+        
+              Compiler2 comp2 = new Compiler2();
+              comp2.nospacelexicalanalysis(tf); 
+              Expression trg = comp2.parseExpression();   
+              Vector contexts2 = new Vector(); 
+              contexts2.add(em.realtrg); 
+
+              if (src != null && trg != null) 
+              { 
+                src.typeCheck(types,entities,contexts1,new Vector()); 
+                trg.typeCheck(types,entities,contexts2,new Vector()); 
+                Vector auxvars = src.allAttributesUsedIn(); 
+                Vector trgvars = trg.allAttributesUsedIn(); 
+
+                // System.out.println(">>>> attributes used in " + src + " are: " + auxvars); 
+
+                Attribute srcvar = null; 
+                if (auxvars.size() > 0) 
+                { srcvar = (Attribute) auxvars.get(0); } 
+                Attribute trgvar = null; 
+                if (trgvars.size() > 0) 
+                { trgvar = (Attribute) trgvars.get(0); } 
+                else 
+                { System.err.println("!!! ERROR: target of mapping must be an attribute: " + 
+                                     src + " --> " + trg); 
+                  return null; 
+                } 
+
+                AttributeMatching newam; 
+                if (("self").equals(src + ""))
+                { srcvar = new Attribute("self", new Type(em.realsrc), ModelElement.INTERNAL); 
+                  newam = new AttributeMatching(src, trgvar, srcvar, auxvars);
+                  // System.out.println(">>> created expression mapping " + src + 
+                  //                   " " + trgvar + " " + srcvar); 
+                } 
+                else if ((src instanceof BasicExpression) && (srcvar + "").equals(src + ""))
+                { newam = new AttributeMatching(srcvar, trgvar); } 
+                else 
+                { newam = new AttributeMatching(src, trgvar, srcvar, auxvars); } 
+ 
+                em.addMapping(newam); 
+                return newam; 
+              } 
+            } 
+          } 
+        } 
+    catch(Exception _e) { return null; }
+    return null;  
+  } 
 
   public Vector loadThesaurus()
   { BufferedReader br = null;
@@ -11288,18 +11813,37 @@ public void produceCUI(PrintWriter out)
 
     repaint(); 
   }
+  
+  public void loadComponent()
+  { String yn = 
+      JOptionPane.showInputDialog("Name of component:");
+    if (yn != null)
+    { loadKM3FromFile(yn + ".km3"); }
+    Entity component = (Entity) ModelElement.lookupByName(yn,entities); 
+    if (component != null) 
+    { component.addStereotype("external"); } 
+  }
 
   public void loadKM3FromFile()
-  { BufferedReader br = null;
+  { loadKM3FromFile("mm.km3"); } 
+  
+  public void loadKM3FromFile(String f)
+  { Vector oldentities = new Vector(); 
+    oldentities.addAll(entities); 
+	
+    Vector oldtypes = new Vector(); 
+    oldtypes.addAll(types); 
+	
+	BufferedReader br = null;
     Vector res = new Vector();
     String s;
     boolean eof = false;
-    File file = new File("output/mm.km3");  /* default */ 
+    File file = new File("output/" + f);  /* default */ 
 
     try
     { br = new BufferedReader(new FileReader(file)); }
     catch (FileNotFoundException e)
-    { System.out.println("File not found: " + file);
+    { System.out.println("File not found: " + f);
       return; 
     }
 
@@ -11350,15 +11894,23 @@ public void produceCUI(PrintWriter out)
     int delta = 80; // visual displacement 
     int ecount = 0; 
 
-    for (int i = 0; i < entities.size(); i++) 
-    { Entity enode = (Entity) entities.get(i); 
+    Vector newentities = new Vector(); 
+	newentities.addAll(entities); 
+	newentities.removeAll(oldentities); 
+	
+    for (int i = 0; i < newentities.size(); i++) 
+    { Entity enode = (Entity) newentities.get(i); 
       addEntity(enode, 20 + (ecount/5)*delta + ((ecount % 5)*delta)/5, 
                               100 + (ecount % 5)*delta);
       ecount++; 
     } 
 
-    for (int j = 0; j < types.size(); j++) 
-    { Type tt = (Type) types.get(j); 
+    Vector newtypes = new Vector(); 
+	newtypes.addAll(types); 
+	newtypes.removeAll(oldtypes); 
+
+    for (int j = 0; j < newtypes.size(); j++) 
+    { Type tt = (Type) newtypes.get(j); 
       if (tt.isEnumeration())
       { RectData rd = new RectData(100*j,20,getForeground(),
                                  componentMode,
@@ -12609,7 +13161,7 @@ public void produceCUI(PrintWriter out)
 
     try { line1 = br.readLine(); }
     catch (IOException e)
-    { System.err.println("Reading general usecase details failed");
+    { System.err.println("!! Reading general usecase details failed");
       return null; 
     }
     StringTokenizer st1 =
@@ -12662,7 +13214,7 @@ public void produceCUI(PrintWriter out)
 
     try { line2 = br.readLine(); }
     catch (IOException e)
-    { System.err.println("Reading usecase extends failed");
+    { System.err.println("!! Reading usecase extends failed");
       return res; 
     }
     StringTokenizer st2 =
@@ -12674,10 +13226,11 @@ public void produceCUI(PrintWriter out)
       UseCase extensionuc = 
           (UseCase) ModelElement.lookupByName(extend,useCases); 
       if (extensionuc == null) 
-      { System.err.println("Extension use case: " + extend + " does not exist"); }
+      { System.err.println("!! Extension use case: " + extend + " does not exist"); }
       else 
       { Extend ext = new Extend(res,extensionuc); 
         res.addExtension(ext); 
+		extensionuc.addExtensionOf(res); 
         drawDependency(extensionuc, res, "<<extend>>"); 
       }
     } 
@@ -12685,7 +13238,7 @@ public void produceCUI(PrintWriter out)
 
     try { line3 = br.readLine(); }
     catch (IOException e)
-    { System.err.println("Reading usecase includes failed");
+    { System.err.println("!! Reading usecase includes failed");
       return res; 
     }
     StringTokenizer st3 =
@@ -12699,16 +13252,17 @@ public void produceCUI(PrintWriter out)
       if (ucinc != null) 
       { Include ee = new Include(res,ucinc); 
         res.addInclude(ee); 
+		ucinc.addIncludedIn(res); 
         drawDependency(res, ucinc, "<<include>>"); 
       } 
       else 
-      { System.err.println("Included use case: " + include + " does not exist"); }
+      { System.err.println("!! Included use case: " + include + " does not exist"); }
     }
     // System.out.println(line3vals);
 
     try { line4 = br.readLine(); }
     catch (IOException e)
-    { System.err.println("Reading usecase attributes failed");
+    { System.err.println("!! Reading usecase attributes failed");
       return res; 
     }
     StringTokenizer st4 =
@@ -12736,7 +13290,7 @@ public void produceCUI(PrintWriter out)
 
     try { line5 = br.readLine(); }
     catch (IOException e)
-    { System.err.println("Reading usecase incremental failed");
+    { System.err.println("!! Reading usecase incremental failed");
       return null; 
     }
     // System.out.println("INCREAMENT" + line5); 
@@ -12828,7 +13382,7 @@ public void produceCUI(PrintWriter out)
     } 
 
     PreConstraint cons = new PreConstraint(cond0,cond,succ,line4vals,orderedBy);
-    // System.out.println("Retrived constraint: " + cons); 
+    System.out.println(">> Retrieved constraint: " + cons); 
     return cons; 
   } 
   // and line5 = use case
@@ -13218,9 +13772,53 @@ public void produceCUI(PrintWriter out)
                  "  }\n}\n";
   }
 
-  public void generateAndroidDbi(Vector operations, PrintWriter out) 
-  { Entity e0 = (Entity) entities.get(0); 
-    e0.androidDbi(out); 
+  public void generateAndroidDbi(Vector ents, Vector operations, PrintWriter out) 
+  { out.println("package com.example.app;");
+    out.println();
+    out.println();
+    out.println("import android.content.Context;");
+    out.println("import android.database.sqlite.SQLiteDatabase;");
+    out.println("import android.database.sqlite.SQLiteOpenHelper;");
+    out.println("import android.content.ContentValues;");
+    out.println("import android.database.Cursor;");
+    out.println("import java.util.List;");
+    out.println("import java.util.ArrayList;");
+    out.println();
+    out.println("public class Dbi extends SQLiteOpenHelper");
+    out.println("{ SQLiteDatabase database;");
+    out.println("  private static final String DBNAME = \"app.db\";");
+    out.println("  private static final int DBVERSION = 1;");
+    out.println();
+  
+    String createCode = ""; 
+    for (int i = 0; i < ents.size(); i++) 
+    { Entity e0 = (Entity) ents.get(i); 
+      e0.androidDbiDeclarations(out);
+      String ent = e0.getName(); 
+      createCode = createCode + "db.execSQL(" + ent + "_CREATE_SCHEMA);\n  "; 
+    }  
+
+    out.println("  public Dbi(Context context)"); 
+    out.println("  { super(context, DBNAME, null, DBVERSION); }");
+    out.println(); 
+    out.println("  @Override");
+    out.println("  public void onCreate(SQLiteDatabase db)");
+    out.println("  { " + createCode + " }");
+    out.println(); 
+
+    for (int i = 0; i < ents.size(); i++) 
+    { Entity e0 = (Entity) ents.get(i); 
+      e0.androidDbiOperations(out);
+    }  
+
+    out.println("  // @Override");
+    out.println("  public void onDestroy()");
+    out.println("  { // super.onDestroy();");
+    out.println("    database.close(); }");
+    out.println();
+    out.println("  public void onUpgrade(SQLiteDatabase d, int x, int y) {}");
+    out.println();
+    out.println("}");
   } 
 
   public String generateJspDbi(Vector operations)
@@ -14652,6 +15250,163 @@ public void produceCUI(PrintWriter out)
     System.out.println(modmatch); 
     synthesiseTransformations(modmatch,entities,thesaurus);
   } 
+
+  public void synthesiseFromTL(Vector thesaurus)
+  { if (tlspecification != null) 
+    { synthesiseTransformations(tlspecification,entities,thesaurus); } 
+    else 
+    { System.err.println("!! No TL specification loaded"); } 
+  } 
+
+  public void mapTL2UMLRSDS(Vector thesaurus)
+  { if (tlspecification != null) 
+    { synthesiseTransformationsUMLRSDS(tlspecification,entities,thesaurus); 
+      Vector pregens = new Vector(); 
+      Vector preassocs = new Vector(); 
+
+      BufferedReader br = null;
+      Vector res = new Vector();
+      String s;
+      boolean eof = false;
+      File file = new File("output/umlrsdscode.txt");  /* default */ 
+
+      try
+      { br = new BufferedReader(new FileReader(file)); }
+      catch (FileNotFoundException e)
+      { System.out.println("File not found: " + file);
+        return; 
+      }
+
+
+      String xmlstring = ""; 
+      int linecount = 0; 
+
+      while (!eof)
+      { try { s = br.readLine(); }
+        catch (IOException e)
+        { System.out.println("Reading failed.");
+          return; 
+        }
+        if (s == null) 
+        { eof = true; 
+          break; 
+        }
+        else if (s.startsWith("--")) { } 
+        else 
+        { xmlstring = xmlstring + s + " "; } 
+        linecount++; 
+      }
+
+
+      Compiler2 comp = new Compiler2();  
+      comp.nospacelexicalanalysis(xmlstring); 
+      UseCase uc = comp.parseKM3UseCase(entities,types,pregens,preassocs); 
+      if (uc != null) 
+      { addGeneralUseCase(uc); } 
+    } 
+    else 
+    { System.err.println("!! No TL specification loaded"); } 
+  } 
+
+  public void checkTLmodel()
+  { if (tlspecification != null) 
+    { ModelSpecification modelspec = new ModelSpecification(); 
+	
+      BufferedReader br = null;
+      Vector res = new Vector();
+      String s;
+      boolean eof = false;
+      File file = new File("output/out.txt");  /* default location of model */ 
+
+      try
+      { br = new BufferedReader(new FileReader(file)); }
+      catch (FileNotFoundException e)
+      { System.out.println("File not found: " + file);
+        return; 
+      }
+
+      while (!eof)
+      { try { s = br.readLine(); }
+        catch (IOException e)
+        { System.err.println("!! Reading failed.");
+          return; 
+        }
+
+        if (s == null) 
+        { eof = true; 
+          break; 
+        }
+        else if (s.startsWith("--")) { } 
+        else if (s.trim().length() == 0) { } 
+        else 
+        { String str = s.trim();
+          String[] strs = str.split(" "); 
+          if (strs.length == 3 && ":".equals(strs[1]) && strs[2].indexOf(".") < 0)  // obj : class
+          { String obj = strs[0]; 
+            String ename = strs[2]; 
+            System.out.println(">>> object " + obj + " of class " + ename);   
+            Entity ent = (Entity) ModelElement.lookupByName(ename,entities); 
+            if (ent == null)
+            { System.err.println("!! No class called " + ename); }
+            else 
+            { ObjectSpecification objspec = new ObjectSpecification(obj,ename); 
+              objspec.setEntity(ent); 
+              modelspec.addObject(objspec); 
+            }
+          }
+          else if (strs.length == 3 && "=".equals(strs[1]))  // x.prop = val
+          { String lft = strs[0];
+            int idx = lft.indexOf(".");
+            if (idx > 0)
+            { String x = lft.substring(0,idx);
+              String prop = lft.substring(idx+1,lft.length());
+              int ind2 = str.indexOf("="); 
+              String val = str.substring(ind2 + 1, str.length());
+              val = val.trim(); 
+              System.out.println("LINE: " + x + "." + prop + " = " + val);
+              ObjectSpecification objspec = modelspec.getObject(x); 
+              if (objspec == null)
+              { System.err.println("!! ERROR: no object called " + x); }
+              else 
+              { objspec.addAttribute(prop,val); } 
+            } 
+          }
+          else if (strs.length == 3 && ":".equals(strs[1]) && strs[2].indexOf(".") > 0) // val : x.prop 
+          { String lft = strs[0]; // value/object to be added
+            String rgt = strs[2]; 
+            int indx2 = rgt.indexOf("."); 
+            if (indx2 > 0)
+            { String xx = rgt.substring(0,indx2); 
+              String prop = rgt.substring(indx2+1,rgt.length()); 
+              String val = lft.trim(); 
+              System.out.println("LINE: " + val + " : " + xx + "." + prop); 
+              ObjectSpecification xspec = modelspec.getObject(xx); 
+              if (xspec == null)
+              { System.err.println("!! ERROR: no object called " + xx); }
+              else 
+              { ObjectSpecification valspec = modelspec.getObject(val); 
+                if (valspec != null) 
+                { xspec.addAttributeElement(prop,valspec); }
+                else 
+                { xspec.addAttributeElement(prop,val); } 
+              } 
+            }
+          }  
+          else 
+          { System.err.println("!!! Unrecognised line: " + str); } 
+        }  
+        // file.close();
+      }  
+	  System.out.println(">>> Read model " + modelspec); 
+	  tlspecification.checkModel(modelspec); 
+    } 
+    else 
+    { System.err.println("!! ERROR: no TL specification"); } 
+  } 
+
+
+
+
 
   public void ontologicalSimilarity(Vector thesaurus)
   { 
@@ -16841,10 +17596,22 @@ public void produceCUI(PrintWriter out)
   { selected.removeInvalidMatchings(); 
     selected.copySuperclassMatchings(thesaurus,originalentities); 
     selected.checkBidirectionalAssociationConsistency(); 
-    selected.checkEntityMapCompleteness(originalentities); 
+    Vector unusedentities = selected.checkEntityMapCompleteness(originalentities); 
 
-    Vector corrpatts = selected.analyseCorrelationPatterns(originalentities); 
+    Vector corrpatts = selected.analyseCorrelationPatterns(originalentities,types); 
+    Vector sources = Entity.sourceEntities(originalentities); 
+    Vector unusedtargets = selected.unusedTargetEntities(originalentities); 
+
+    selected.checkValidity(unusedtargets,entities,sources,thesaurus); 
+
+    String yn = 
+      JOptionPane.showInputDialog("Check that all target features are used (y or n)?:");
+ 
+    if (yn != null && yn.equals("y"))
+    { selected.checkTargetFeatureCompleteness(entities,sources,thesaurus); } 
+ 
     selected.removeSpuriousMatchings(); 
+    selected.addFlagVariables(corrpatts); 
 
     System.out.println("----------Correlation patterns are: ----------------------------"); 
     System.out.println();
@@ -16855,6 +17622,14 @@ public void produceCUI(PrintWriter out)
     }   
 
     System.out.println("----------------------------------------------------------------"); 
+
+    try
+    { PrintWriter fout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter("output/forward.tl")));
+      fout.println(selected); 
+      fout.close(); 
+    } catch (Exception _except) { } 
 
     try
     { PrintWriter cout = new PrintWriter(
@@ -16878,13 +17653,13 @@ public void produceCUI(PrintWriter out)
 
       Vector benames = new Vector(); 
       Vector bconvs = selected.boolEnumConversions(benames); 
-      System.out.println(">>> boolean-enumeration conversions are: " + bconvs + " " + benames); 
+      // System.out.println(">>> boolean-enumeration conversions are: " + bconvs + " " + benames); 
       Vector beFunctions = selected.booleanEnumConversionFunctions(bconvs,benames); 
 
       Vector ebnames = new Vector(); 
       Vector ebconvs = selected.enumBoolConversions(ebnames); 
-      System.out.println(">>> enumeration-boolean conversions are: " + ebconvs + " " + 
-                         ebnames); 
+      // System.out.println(">>> enumeration-boolean conversions are: " + ebconvs + " " + 
+      //                    ebnames); 
       Vector ebFunctions = selected.enumBooleanConversionFunctions(ebconvs,ebnames); 
 
       cout.println("/* QVT-R transformation: */"); 
@@ -16940,21 +17715,38 @@ public void produceCUI(PrintWriter out)
 
       cout.println(selected.atlTransformation(types)); 
 
+      Vector ecfuncsetl = selected.enumConversionFunctionsETL(enumconvs,thesaurus); 
+      Vector esfuncsetl = selected.enumStringConversionFunctionsETL(enumstringconversions,thesaurus); 
+      Vector sefuncsetl = selected.stringEnumConversionFunctionsETL(stringenumconversions,thesaurus); 
+      EtlModule etlmod = selected.etlTransformation(types,bconvs,benames,ebconvs,ebnames);
+      etlmod.addOperations(ecfuncsetl); 
+      etlmod.addOperations(esfuncsetl); 
+      etlmod.addOperations(sefuncsetl); 
+      cout.println(etlmod + "");  
+
       cout.close();
     }
     catch (Exception ex) 
     { ex.printStackTrace(); }
 
+    ModelMatching inv = selected.invert(); 
+
+    try
+    { PrintWriter revout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter("output/reverse.tl")));
+      revout.println(inv); 
+      revout.close(); 
+    } catch (Exception _except) { } 
 
     try
     { PrintWriter rout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter("output/reverse.txt")));
-      ModelMatching inv = selected.invert(); 
       rout.println("----------------------- Reverse map is \n" + inv); 
 
-      Vector enumconvs = selected.enumConversions(); 
-      Vector ecfuncs = selected.enumConversionFunctions(enumconvs,thesaurus); 
+      Vector enumconvs = inv.enumConversions(); 
+      Vector ecfuncs = inv.enumConversionFunctions(enumconvs,thesaurus); 
 
       Vector stringenumconversions = inv.stringEnumConversions(); 
       // System.out.println(">>> String-enumeration conversions are: " + stringenumconversions); 
@@ -17026,6 +17818,105 @@ public void produceCUI(PrintWriter out)
       } 
 
       rout.println(inv.atlTransformation(types)); 
+
+      Vector recfuncsetl = inv.enumConversionFunctionsETL(enumconvs,thesaurus); 
+      EtlModule retlmod = inv.etlTransformation(types,invbconvs,benamesinv,invebconvs,ebnamesinv);
+      retlmod.addOperations(recfuncsetl); 
+      rout.println(retlmod + "");  
+      
+      rout.close();
+    }
+    catch (Exception ex) 
+    { ex.printStackTrace(); }
+  } 
+
+  private void synthesiseTransformationsUMLRSDS(ModelMatching selected, Vector originalentities, 
+                                         Vector thesaurus)
+  { System.out.println("----------------------------------------------------------------"); 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ee = (Entity) entities.get(i); 
+      Attribute puk = ee.getPrincipalPK(); 
+      if (puk == null)
+      { ee.addPrimaryKey(ee.getName().toLowerCase() + "Id"); } 
+    } 
+
+    try
+    { PrintWriter cout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter("output/umlrsdscode.txt")));
+
+      PrintWriter qout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter("output/qvtrcode.txt")));
+
+      Vector enumconvs = selected.enumConversions(); 
+      // System.out.println(">>> Enumeration conversions are: " + enumconvs); 
+      Vector ecfuncs = selected.enumConversionFunctions(enumconvs,thesaurus); 
+      // System.out.println(">>> Enumeration conversion functions are: " + ecfuncs); 
+
+      Vector stringenumconversions = selected.stringEnumConversions(); 
+      // System.out.println(">>> String-enumeration conversions are: " + stringenumconversions); 
+      Vector seFunctions = selected.stringEnumConversionFunctions(stringenumconversions); 
+
+      Vector enumstringconversions = selected.enumStringConversions(); 
+      // System.out.println(">>> enumeration-String conversions are: " + enumstringconversions); 
+      Vector esFunctions = selected.enumStringConversionFunctions(enumstringconversions); 
+
+      Vector benames = new Vector(); 
+      Vector bconvs = selected.boolEnumConversions(benames); 
+      // System.out.println(">>> boolean-enumeration conversions are: " + bconvs + " " + benames); 
+      Vector beFunctions = selected.booleanEnumConversionFunctions(bconvs,benames); 
+
+      Vector ebnames = new Vector(); 
+      Vector ebconvs = selected.enumBoolConversions(ebnames); 
+      // System.out.println(">>> enumeration-boolean conversions are: " + ebconvs + " " + 
+      //                    ebnames); 
+      Vector ebFunctions = selected.enumBooleanConversionFunctions(ebconvs,ebnames); 
+
+      cout.println(selected.umlrsdsTransformation(enumconvs,stringenumconversions,
+                                                  enumstringconversions,bconvs,ebconvs)); 
+
+      qout.println(selected.qvtBxTransformation(enumconvs,stringenumconversions,
+                                                  enumstringconversions,bconvs,ebconvs));
+
+      cout.close();
+      qout.close(); 
+    }
+    catch (Exception ex) 
+    { ex.printStackTrace(); }
+
+    ModelMatching inv = selected.invert(); 
+
+    try
+    { PrintWriter rout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter("output/reverseumlrsds.txt")));
+      
+      Vector enumconvs = inv.enumConversions(); 
+      Vector ecfuncs = inv.enumConversionFunctions(enumconvs,thesaurus); 
+
+      Vector stringenumconversions = inv.stringEnumConversions(); 
+      // System.out.println(">>> String-enumeration conversions are: " + stringenumconversions); 
+      Vector seFunctions = inv.stringEnumConversionFunctions(stringenumconversions); 
+
+      Vector enumstringconversions = inv.enumStringConversions(); 
+      // System.out.println(">>> enumeration-String conversions are: " + enumstringconversions); 
+      Vector esFunctions = inv.enumStringConversionFunctions(enumstringconversions); 
+
+      Vector benamesinv = new Vector(); 
+      Vector invbconvs = inv.boolEnumConversions(benamesinv); 
+      // System.out.println(">>> boolean-enumeration conversions are: " + bconvs); 
+      Vector invbeFunctions = inv.booleanEnumConversionFunctions(invbconvs,benamesinv); 
+
+      Vector ebnamesinv = new Vector(); 
+      Vector invebconvs = inv.enumBoolConversions(ebnamesinv); 
+      // System.out.println(">>> enumeration-boolean conversions are: " + ebconvs); 
+      Vector invebFunctions = inv.enumBooleanConversionFunctions(invebconvs,ebnamesinv); 
+
+
+      rout.println(inv.umlrsdsTransformation(enumconvs,stringenumconversions,
+                                             enumstringconversions,invbconvs,invebconvs)); 
 
       rout.close();
     }

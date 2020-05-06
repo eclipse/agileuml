@@ -47,6 +47,12 @@ public class BSystemTypes extends BComponent
   public static java.util.Map collectDecs = new java.util.TreeMap(); 
   public static Vector collectList = new Vector(); 
 
+  public static java.util.Map anyOps = new java.util.TreeMap(); 
+  public static java.util.Map anyCodes = new java.util.TreeMap(); 
+  public static java.util.Map anyDecs = new java.util.TreeMap(); 
+  public static Vector anyList = new Vector(); 
+
+
   public BSystemTypes(String nme)
   { super(nme,new Vector());
     clearVariables();
@@ -56,17 +62,28 @@ public class BSystemTypes extends BComponent
   public static void resetDesigns()
   { selectOps.clear(); selectCodes.clear(); 
     selectList.clear(); selectDecs.clear(); 
+    
     existsOps.clear(); existsCodes.clear(); 
     existsList.clear(); 
+    
     exists1Ops.clear(); exists1Codes.clear(); 
     exists1List.clear(); 
+    
+    exists1Decs.clear(); existsDecs.clear(); 
+    
     forAllOps.clear(); forAllCodes.clear(); 
-    forAllDecs.clear(); exists1Decs.clear(); existsDecs.clear(); 
-    forAllList.clear(); 
+    forAllDecs.clear(); forAllList.clear(); 
+
+    
     rejectOps.clear(); rejectCodes.clear(); 
     rejectList.clear(); rejectDecs.clear(); 
+    
     collectList.clear(); collectDecs.clear(); 
     collectOps.clear(); collectCodes.clear(); 
+    
+    anyList.clear(); anyDecs.clear(); 
+    anyOps.clear(); anyCodes.clear(); 
+
     index = 0; 
   } 
 
@@ -1084,6 +1101,144 @@ public class BSystemTypes extends BComponent
     } 
   } 
 
+  public static String getAnyDefinitionCPP(Expression left, String lqf,
+                                           Expression exp,
+                                           String collectvar, java.util.Map env,
+                                           Vector pars)
+  { String signature = Attribute.parList(pars); 
+
+    if (Expression.isSimpleEntity(left)) 
+    { BasicExpression lbe = (BasicExpression) left;
+      String lbedata = lbe.data;  
+      String instances = lbedata.toLowerCase() + "_s"; 
+      lqf = "Controller::inst->get" + instances + "()"; 
+    }         
+
+
+    String ename; 
+    Type e = left.getElementType(); 
+    if (e == null) 
+    { ename = "void"; } 
+    else 
+    { ename = e.getName(); }
+
+    String tname = ename + "*"; 
+    if (Type.isBasicType(e)) 
+    { tname = e.getCPP("void*"); } 
+    else if ("Sequence".equals(ename))
+    { tname = e.getCPP(e.getElementType()); } 
+    else if ("Set".equals(ename))
+    { tname = e.getCPP(e.getElementType()); } 
+
+    String argtype1 = "vector<" + tname + ">"; 
+    String argtype2 = "set<" + tname + ">"; 
+
+    Type re = left.getElementType(); 
+    String restype = "void*"; 
+    if (re != null)
+    { restype = re.getCPP(re.getElementType()); } 
+
+    String pp = "" + exp + " " + ename + "(" + signature + ")"; 
+    String op = (String) anyOps.get(pp); 
+    // But may be different left element type with same expression
+
+    // System.out.println(">>> CPP Any definition " + op); 
+
+    if (op == null) 
+    { // add new definitions 
+      int oldindex = index; 
+      index++; 
+
+      String var; 
+      if (collectvar != null)
+      { var = collectvar; } 
+      else 
+      { var = ename.toLowerCase() + "_" + oldindex + "_xx"; }
+
+      java.util.Map newenv = (java.util.Map) ((java.util.HashMap) env).clone(); 
+      if (collectvar == null && e != null && e.isEntity())
+      { newenv.put(ename,var); }
+      String elem = exp.queryFormCPP(newenv,false); 
+
+      String res1 = "  static " + restype + " any_" + oldindex + 
+                    "(" + argtype1 + "*  _l"; 
+      String res2 = "  static " + restype + " any_" + oldindex + 
+                    "(" + argtype2 + "*  _l"; 
+
+      for (int i = 0; i < pars.size(); i++) 
+      { Attribute par = (Attribute) pars.get(i);
+        String partype = par.getType().getCPP(par.getElementType());  
+        res1 = res1 + ", " + partype + " " + par.getName(); 
+        res2 = res2 + ", " + partype + " " + par.getName(); 
+      } 
+
+      res1 = res1 + ")\n"; 
+
+      if (ename.equals("int"))  // for Integer.subrange(st,en)
+      { if (left instanceof BasicExpression)
+        { BasicExpression leftbe = (BasicExpression) left; 
+          Vector leftpars = leftbe.getParameters(); 
+          if (leftpars != null && leftpars.size() >= 2 && "subrange".equals(leftbe.data))
+          { Expression startexp = (Expression) leftpars.get(0); 
+            Expression endexp = (Expression) leftpars.get(1);
+            String startexpqf = startexp.queryFormCPP(env,false); 
+            String endexpqf = endexp.queryFormCPP(env,false); 
+            String inttest = exp.queryFormCPP(env,false);
+            res1 = res1 + "  { // Implements: " + left + "->any(" + var + "|" + exp + ")\n" + 
+                   "    for (int " + var + " = " + startexpqf + "; " + 
+                   var + " <= " + endexpqf + "; " + var + "++)\n" + 
+                   "    { if (" + inttest + ") { return " + var + "; } }\n"; 
+            res1 = res1 + "    return 0;\n  }";
+            
+            anyList.add(pp); 
+            anyOps.put(pp,res1); 
+            // anyDecs.put(pp,decl1); 
+            anyCodes.put(pp,"" + oldindex); 
+
+            System.out.println(">>> CPP Any definition " + res1); 
+           
+            return "any_" + oldindex + "(NULL)"; 
+          }
+        }
+      } 
+
+      res1 = res1 + 
+            "  { // Implements: " + left + "->any( " + var + " | " + exp + " )\n" + 
+            "    " + restype + " _result_" + oldindex + 
+                         " = NULL;\n" + 
+            "    for (int _i = 0; _i < _l->size(); _i++)\n" + 
+            "    { " + tname + " " + var + " = (*_l)[_i];\n"; 
+
+      res2 = res2 + ")\n"; 
+      res2 = res2 + "  { " + restype + " _result_" + oldindex + 
+                         " = NULL;\n" + 
+            "    for (" + argtype2 + "::iterator _i = _l->begin(); _i != _l->end(); ++_i)\n" + 
+            "    { " + tname + " " + var + " = *_i;\n"; 
+
+
+      res1 = res1 + "     if (" + elem + ") { return " + var +  "; }\n"; 
+      res1 = res1 + "    }\n"; 
+      res1 = res1 + "    return _result_" + oldindex + ";\n  }"; 
+
+      res2 = res2 + "     if (" + elem + ") { return " + var + "; }\n"; 
+      res2 = res2 + "    }\n"; 
+      res2 = res2 + "    return _result_" + oldindex + ";\n  }"; 
+
+      anyList.add(pp); 
+      anyOps.put(pp,res1 + "\n\n" + res2); 
+      anyCodes.put(pp,"" + oldindex); 
+
+      System.out.println(">>> CPP Any definition " + res1 + "\n\n" + res2); 
+
+
+      return "any_" + oldindex + "(" + lqf + ")"; 
+    } 
+    else 
+    { String ind = (String) anyCodes.get(pp); 
+      return "any_" + ind + "(" + lqf + ")"; 
+    } 
+  } 
+
 
   // distinguish cases where elem is an object and primitive: wrap(exp.getType(), 
   public static String getRejectDefinition(Expression left, String lqf,
@@ -1628,6 +1783,552 @@ public class BSystemTypes extends BComponent
     } 
   } 
 
+  // For:  left->any(pred)
+  public static String getAnyDefinition(Expression left, String lqf,
+                                           Expression pred, String exvar, 
+                                           java.util.Map env,
+                                           Vector pars)
+  { String signature = Attribute.parList(pars); 
+
+    if (left == null) 
+    { System.err.println("!!!! Null quantifier range: " + lqf + "->any(" + 
+                          exvar + "|" + pred + ")");
+      return "/* error in ->any */"; 
+    }  
+
+    if (Expression.isSimpleEntity(left))
+    { BasicExpression bel = (BasicExpression) left; 
+      String instances = bel.data.toLowerCase() + "s"; 
+      lqf = "Controller.inst()." + instances; 
+    }         
+
+    String ename; 
+    Type e = left.getElementType(); // left is null. 
+    if (e == null) 
+    { ename = "Object"; } 
+    else if ("Set".equals(e.getName()) || "Sequence".equals(e.getName()))
+    { ename = "List"; } 
+    else 
+    { ename = e.getName(); }
+
+    String tname = ename; 
+    if (ename.equals("int"))
+    { tname = "Integer"; } 
+    else if (e != null)
+    { tname = e.typeWrapper(); } 
+
+    String pp = lqf + " " + pred + " " + tname + "(" + signature + ")"; 
+    String op = (String) anyOps.get(pp); 
+
+    if (op == null) 
+    { // add new definitions 
+      int oldindex = index; 
+      index++; 
+      
+      String var; 
+      if (exvar != null)
+      { var = exvar; } 
+      else 
+      { var = ename.toLowerCase() + "_" + oldindex + "_xx"; }
+
+      java.util.Map newenv = (java.util.Map) ((java.util.HashMap) env).clone(); 
+      if (exvar == null && e != null && e.isEntity()) 
+      { newenv.put(ename,var); } 
+      
+      String res = "  public static " + tname + " any_" + oldindex + "(List _l"; 
+      for (int i = 0; i < pars.size(); i++) 
+      { Attribute par = (Attribute) pars.get(i); 
+        Type partype = par.getType(); 
+        if (partype != null) 
+        { res = res + ", " + partype.getJava() + " " + par.getName(); } 
+        else 
+        { res = res + ", Object " + par.getName(); } 
+ 
+        // if ("self".equals(par.getName()))
+        // { newenv.put(par.getType().getName(),"self"); } 
+      } 
+      res = res + ")\n"; 
+
+      if (ename.equals("int"))  // quantification over Integer.subrange(st,en)
+      { if (left instanceof BasicExpression)
+        { BasicExpression leftbe = (BasicExpression) left; 
+          Vector leftpars = leftbe.getParameters(); 
+          if (leftpars != null && leftpars.size() >= 2 && "subrange".equals(leftbe.data))
+          { Expression startexp = (Expression) leftpars.get(0); 
+            Expression endexp = (Expression) leftpars.get(1);
+            String startexpqf = startexp.queryForm(env,false); 
+            String endexpqf = endexp.queryForm(env,false); 
+            String inttest = pred.queryForm(env,false);
+            res = res + "  { \n" + 
+                  "    for (int " + var + " = " + startexpqf + "; " + 
+                            var + " <= " + endexpqf + "; " + var + "++)\n" + 
+                  "    { if (" + inttest + ") { return new Integer(" + var + "); } }\n"; 
+            res = res + "    return null;\n  }";
+
+            anyList.add(pp); 
+            anyOps.put(pp,res); 
+            anyCodes.put(pp,"" + oldindex); 
+            return "any_" + oldindex + "(null)"; 
+          } 
+        } 
+      } 
+
+
+      res = res + "  { // Implements: " + left + "->any(" + var + "|" + pred + ")\n" + 
+                  "    for (int _i = 0; _i < _l.size(); _i++)\n"; 
+      if ("int".equals(ename) || "Integer".equals(tname))
+      { res = res + 
+            "    { int " + var + " = ((Integer) _l.get(_i)).intValue();\n";
+      } 
+      else if ("double".equals(ename))
+      { res = res + 
+            "    { double " + var + " = ((Double) _l.get(_i)).doubleValue();\n";
+      } 
+      else if (ename.equals("boolean"))
+      { res = res + 
+            "    { boolean " + var + " = ((Boolean) _l.get(_i)).booleanValue();\n"; 
+      } 
+      else if ("long".equals(ename))
+      { res = res + 
+            "    { long " + var + " = ((Long) _l.get(_i)).longValue();\n";
+      } 
+      else
+      { res = res + 
+            "    { " + tname + " " + var + " = (" + tname + ") _l.get(_i);\n";
+      } 
+
+
+ 
+      String test = pred.queryForm(newenv,false); 
+      res = res + "      if (" + test + ")\n" + 
+	              "      { return (" + tname + ") _l.get(_i); }\n"; 
+      res = res + "    }\n"; 
+      res = res + "    return null;\n  }"; 
+
+      anyList.add(pp); 
+      anyOps.put(pp,res); 
+      anyCodes.put(pp,"" + oldindex); 
+
+      return "any_" + oldindex + "(" + lqf + ")"; 
+    } 
+    else 
+    { String ind = (String) anyCodes.get(pp); 
+      return "any_" + ind + "(" + lqf + ")"; 
+    } 
+  } 
+
+  // For:  left->any(pred)
+  public static String getAnyDefinitionJava6(Expression left, String lqf,
+                                           Expression pred, String exvar, 
+                                           java.util.Map env,
+                                           Vector pars)
+  { String signature = Attribute.parList(pars); 
+
+    if (left == null) 
+    { System.err.println("!!!! Null quantifier range: " + lqf + "->any(" + 
+                          exvar + "|" + pred + ")");
+      return "/* error in ->any */"; 
+    }  
+
+    if (Expression.isSimpleEntity(left))
+    { BasicExpression bel = (BasicExpression) left; 
+      String instances = bel.data.toLowerCase() + "s"; 
+      lqf = "Controller.inst()." + instances; 
+    }         
+
+    String ename; 
+    Type e = left.getElementType(); // left is null. 
+    if (e == null) 
+    { ename = "Object"; } 
+    else if ("Set".equals(e.getName()))
+	{ ename = "HashSet"; } 
+	else if ("Sequence".equals(e.getName()))
+    { ename = "ArrayList"; } 
+    else 
+    { ename = e.getName(); }
+
+    String tname = ename; 
+    if (ename.equals("int"))
+    { tname = "Integer"; } 
+    else if (e != null)
+    { tname = e.typeWrapperJava6(); } 
+
+    String pp = lqf + " " + pred + " " + tname + "(" + signature + ")"; 
+    String op = (String) anyOps.get(pp); 
+
+    if (op == null) 
+    { // add new definitions 
+      int oldindex = index; 
+      index++; 
+      
+      String var; 
+      if (exvar != null)
+      { var = exvar; } 
+      else 
+      { var = ename.toLowerCase() + "_" + oldindex + "_xx"; }
+
+      java.util.Map newenv = (java.util.Map) ((java.util.HashMap) env).clone(); 
+      if (exvar == null && e != null && e.isEntity()) 
+      { newenv.put(ename,var); } 
+      
+      String res = "  public static " + tname + " any_" + oldindex + "(Collection _l"; 
+      for (int i = 0; i < pars.size(); i++) 
+      { Attribute par = (Attribute) pars.get(i); 
+        Type partype = par.getType(); 
+        if (partype != null) 
+        { res = res + ", " + partype.getJava6() + " " + par.getName(); } 
+        else 
+        { res = res + ", Object " + par.getName(); } 
+ 
+        // if ("self".equals(par.getName()))
+        // { newenv.put(par.getType().getName(),"self"); } 
+      } 
+      res = res + ")\n"; 
+
+      if (ename.equals("int"))  // quantification over Integer.subrange(st,en)
+      { if (left instanceof BasicExpression)
+        { BasicExpression leftbe = (BasicExpression) left; 
+          Vector leftpars = leftbe.getParameters(); 
+          if (leftpars != null && leftpars.size() >= 2 && "subrange".equals(leftbe.data))
+          { Expression startexp = (Expression) leftpars.get(0); 
+            Expression endexp = (Expression) leftpars.get(1);
+            String startexpqf = startexp.queryFormJava6(env,false); 
+            String endexpqf = endexp.queryFormJava6(env,false); 
+            String inttest = pred.queryFormJava6(env,false);
+            res = res + "  { \n" + 
+                  "    for (int " + var + " = " + startexpqf + "; " + 
+                            var + " <= " + endexpqf + "; " + var + "++)\n" + 
+                  "    { if (" + inttest + ") { return new Integer(" + var + "); } }\n"; 
+            res = res + "    return null;\n  }";
+
+            anyList.add(pp); 
+            anyOps.put(pp,res); 
+            anyCodes.put(pp,"" + oldindex); 
+            return "any_" + oldindex + "(null)"; 
+          } 
+        } 
+      } 
+
+
+      res = res + "  { // Implements: " + left + "->any(" + var + "|" + pred + ")\n" + 
+                  "    for (Object _i : _l)\n"; 
+      if ("int".equals(ename) || "Integer".equals(tname))
+      { res = res + 
+            "    { int " + var + " = ((Integer) _i).intValue();\n";
+      } 
+      else if ("double".equals(ename))
+      { res = res + 
+            "    { double " + var + " = ((Double) _i).doubleValue();\n";
+      } 
+      else if (ename.equals("boolean"))
+      { res = res + 
+            "    { boolean " + var + " = ((Boolean) _i).booleanValue();\n"; 
+      } 
+      else if ("long".equals(ename))
+      { res = res + 
+            "    { long " + var + " = ((Long) _i).longValue();\n";
+      } 
+      else
+      { res = res + 
+            "    { " + tname + " " + var + " = (" + tname + ") _i;\n";
+      } 
+
+
+ 
+      String test = pred.queryFormJava6(newenv,false); 
+      res = res + "      if (" + test + ")\n" + 
+	              "      { return (" + tname + ") _i; }\n"; 
+      res = res + "    }\n"; 
+      res = res + "    return null;\n  }"; 
+
+      anyList.add(pp); 
+      anyOps.put(pp,res); 
+      anyCodes.put(pp,"" + oldindex); 
+
+      return "any_" + oldindex + "(" + lqf + ")"; 
+    } 
+    else 
+    { String ind = (String) anyCodes.get(pp); 
+      return "any_" + ind + "(" + lqf + ")"; 
+    } 
+  } 
+  
+  // For:  left->any(pred)
+  public static String getAnyDefinitionJava7(Expression left, String lqf,
+                                           Expression pred, String exvar, 
+                                           java.util.Map env,
+                                           Vector pars)
+  { String signature = Attribute.parList(pars); 
+
+    if (left == null) 
+    { System.err.println("!!!! Null quantifier range: " + lqf + "->any(" + 
+                          exvar + "|" + pred + ")");
+      return "/* error in ->any */"; 
+    }  
+
+    if (Expression.isSimpleEntity(left))
+    { BasicExpression bel = (BasicExpression) left; 
+      String instances = bel.data.toLowerCase() + "s"; 
+      lqf = "Controller.inst()." + instances; 
+    }         
+
+    String ename; 
+    Type e = left.getElementType(); // left is null. 
+    if (e == null) 
+    { ename = "Object"; } 
+    else if ("Set".equals(e.getName()))
+	{ ename = "HashSet"; } 
+	else if ("Sequence".equals(e.getName()))
+    { ename = "ArrayList"; } 
+    else 
+    { ename = e.getName(); }
+
+    String tname = ename; 
+    if (ename.equals("int"))
+    { tname = "Integer"; } 
+    else if (e != null)
+    { tname = e.typeWrapperJava7(); } 
+
+    String pp = lqf + " " + pred + " " + tname + "(" + signature + ")"; 
+    String op = (String) anyOps.get(pp); 
+
+    if (op == null) 
+    { // add new definitions 
+      int oldindex = index; 
+      index++; 
+      
+      String var; 
+      if (exvar != null)
+      { var = exvar; } 
+      else 
+      { var = ename.toLowerCase() + "_" + oldindex + "_xx"; }
+
+      java.util.Map newenv = (java.util.Map) ((java.util.HashMap) env).clone(); 
+      if (exvar == null && e != null && e.isEntity()) 
+      { newenv.put(ename,var); } 
+      
+      String res = "  public static " + tname + " any_" + oldindex + "(Collection<" + tname + "> _l"; 
+      for (int i = 0; i < pars.size(); i++) 
+      { Attribute par = (Attribute) pars.get(i); 
+        Type partype = par.getType(); 
+        if (partype != null) 
+        { res = res + ", " + partype.getJava7() + " " + par.getName(); } 
+        else 
+        { res = res + ", Object " + par.getName(); } 
+ 
+        // if ("self".equals(par.getName()))
+        // { newenv.put(par.getType().getName(),"self"); } 
+      } 
+      res = res + ")\n"; 
+
+      if (ename.equals("int"))  // quantification over Integer.subrange(st,en)
+      { if (left instanceof BasicExpression)
+        { BasicExpression leftbe = (BasicExpression) left; 
+          Vector leftpars = leftbe.getParameters(); 
+          if (leftpars != null && leftpars.size() >= 2 && "subrange".equals(leftbe.data))
+          { Expression startexp = (Expression) leftpars.get(0); 
+            Expression endexp = (Expression) leftpars.get(1);
+            String startexpqf = startexp.queryFormJava7(env,false); 
+            String endexpqf = endexp.queryFormJava7(env,false); 
+            String inttest = pred.queryFormJava7(env,false);
+            res = res + "  { \n" + 
+                  "    for (int " + var + " = " + startexpqf + "; " + 
+                            var + " <= " + endexpqf + "; " + var + "++)\n" + 
+                  "    { if (" + inttest + ") { return new Integer(" + var + "); } }\n"; 
+            res = res + "    return null;\n  }";
+
+            anyList.add(pp); 
+            anyOps.put(pp,res); 
+            anyCodes.put(pp,"" + oldindex); 
+            return "any_" + oldindex + "(null)"; 
+          } 
+        } 
+      } 
+
+
+      res = res + "  { // Implements: " + left + "->any(" + var + "|" + pred + ")\n" + 
+                  "    for (Object _i : _l)\n"; 
+      if ("int".equals(ename) || "Integer".equals(tname))
+      { res = res + 
+            "    { int " + var + " = ((Integer) _i).intValue();\n";
+      } 
+      else if ("double".equals(ename))
+      { res = res + 
+            "    { double " + var + " = ((Double) _i).doubleValue();\n";
+      } 
+      else if (ename.equals("boolean"))
+      { res = res + 
+            "    { boolean " + var + " = ((Boolean) _i).booleanValue();\n"; 
+      } 
+      else if ("long".equals(ename))
+      { res = res + 
+            "    { long " + var + " = ((Long) _i).longValue();\n";
+      } 
+      else
+      { res = res + 
+            "    { " + tname + " " + var + " = (" + tname + ") _i;\n";
+      } 
+
+
+ 
+      String test = pred.queryFormJava7(newenv,false); 
+      res = res + "      if (" + test + ")\n" + 
+	              "      { return (" + tname + ") _i; }\n"; 
+      res = res + "    }\n"; 
+      res = res + "    return null;\n  }"; 
+
+      anyList.add(pp); 
+      anyOps.put(pp,res); 
+      anyCodes.put(pp,"" + oldindex); 
+
+      return "any_" + oldindex + "(" + lqf + ")"; 
+    } 
+    else 
+    { String ind = (String) anyCodes.get(pp); 
+      return "any_" + ind + "(" + lqf + ")"; 
+    } 
+  } 
+  
+  // For:  left->any(pred)
+  public static String getAnyDefinitionCSharp(Expression left, String lqf,
+                                           Expression pred, String exvar, 
+                                           java.util.Map env,
+                                           Vector pars)
+  { String signature = Attribute.parList(pars); 
+
+    if (left == null) 
+    { System.err.println("!!!! Null quantifier range: " + lqf + "->any(" + 
+                          exvar + "|" + pred + ")");
+      return "/* error in ->any */"; 
+    }  
+
+    if (Expression.isSimpleEntity(left))
+    { BasicExpression bel = (BasicExpression) left; 
+      String instances = bel.data.toLowerCase() + "s"; 
+      lqf = "Controller.inst()." + instances; 
+    }         
+
+    String ename; 
+    Type e = left.getElementType(); 
+    if (e == null) 
+    { ename = "object"; } 
+    else if ("Set".equals(e.getName()))
+	{ ename = "ArrayList"; } 
+	else if ("Sequence".equals(e.getName()))
+    { ename = "ArrayList"; } 
+    else
+	{ ename = e.getName(); }
+
+    String tname = ename; 
+    if (ename.equals("String"))
+    { tname = "string"; } 
+    else if (ename.equals("boolean"))
+    { tname = "bool"; } 
+    
+    // if (ename.equals("int"))
+    // { tname = "Integer"; } 
+    // else if (e != null)
+    // { tname = e.typeWrapperCSharp(); } 
+
+    String pp = lqf + " " + pred + " " + tname + "(" + signature + ")"; 
+    String op = (String) anyOps.get(pp); 
+
+    if (op == null) 
+    { // add new definitions 
+      int oldindex = index; 
+      index++; 
+      
+      String var; 
+      if (exvar != null)
+      { var = exvar; } 
+      else 
+      { var = ename.toLowerCase() + "_" + oldindex + "_xx"; }
+
+      java.util.Map newenv = (java.util.Map) ((java.util.HashMap) env).clone(); 
+      if (exvar == null && e != null && e.isEntity()) 
+      { newenv.put(ename,var); } 
+      
+      String res = "  public static " + tname + " any_" + oldindex + "(ArrayList _l"; 
+      for (int i = 0; i < pars.size(); i++) 
+      { Attribute par = (Attribute) pars.get(i); 
+        Type partype = par.getType(); 
+        if (partype != null) 
+        { res = res + ", " + partype.getCSharp() + " " + par.getName(); } 
+        else 
+        { res = res + ", Object " + par.getName(); } 
+ 
+        // if ("self".equals(par.getName()))
+        // { newenv.put(par.getType().getName(),"self"); } 
+      } 
+      res = res + ")\n"; 
+
+      if (ename.equals("int"))  // quantification over Integer.subrange(st,en)
+      { if (left instanceof BasicExpression)
+        { BasicExpression leftbe = (BasicExpression) left; 
+          Vector leftpars = leftbe.getParameters(); 
+          if (leftpars != null && leftpars.size() >= 2 && "subrange".equals(leftbe.data))
+          { Expression startexp = (Expression) leftpars.get(0); 
+            Expression endexp = (Expression) leftpars.get(1);
+            String startexpqf = startexp.queryFormCSharp(env,false); 
+            String endexpqf = endexp.queryFormCSharp(env,false); 
+            String inttest = pred.queryFormCSharp(env,false);
+            res = res + "  { \n" + 
+                  "    for (int " + var + " = " + startexpqf + "; " + 
+                            var + " <= " + endexpqf + "; " + var + "++)\n" + 
+                  "    { if (" + inttest + ") { return new Integer(" + var + "); } }\n"; 
+            res = res + "    return null;\n  }";
+
+            anyList.add(pp); 
+            anyOps.put(pp,res); 
+            anyCodes.put(pp,"" + oldindex); 
+            return "any_" + oldindex + "(null)"; 
+          } 
+        } 
+      } 
+
+
+      res = res + "  { // Implements: " + left + "->any(" + var + "|" + pred + ")\n" + 
+                  "    for (int _i = 0; _i < _l.Count; _i++)\n"; 
+      if ("int".equals(ename) || "Integer".equals(tname))
+      { res = res + 
+            "    { int " + var + " = (int) _l[_i];\n";
+      } 
+      else if ("double".equals(ename))
+      { res = res + 
+            "    { double " + var + " = (double) _l[_i];\n";
+      } 
+      else if (ename.equals("boolean"))
+      { res = res + 
+            "    { bool " + var + " = (bool) _l[_i];\n"; 
+      } 
+      else if ("long".equals(ename))
+      { res = res + 
+            "    { long " + var + " = (long) _l[_i];\n";
+      } 
+      else
+      { res = res + 
+            "    { " + tname + " " + var + " = (" + tname + ") _l[_i];\n";
+      } 
+
+
+ 
+      String test = pred.queryFormCSharp(newenv,false); 
+      res = res + "      if (" + test + ")\n" + 
+	              "      { return (" + tname + ") _l[_i]; }\n"; 
+      res = res + "    }\n"; 
+      res = res + "    return null;\n  }"; 
+
+      anyList.add(pp); 
+      anyOps.put(pp,res); 
+      anyCodes.put(pp,"" + oldindex); 
+
+      return "any_" + oldindex + "(" + lqf + ")"; 
+    } 
+    else 
+    { String ind = (String) anyCodes.get(pp); 
+      return "any_" + ind + "(" + lqf + ")"; 
+    } 
+  } 
 
   // For:  left->exists(pred)
   public static String getExistsDefinition(Expression left, String lqf,
@@ -3569,6 +4270,17 @@ public class BSystemTypes extends BComponent
     return res; 
   }     
 
+  public static String getAnyOps()
+  { String res = ""; 
+    System.out.println(">>> Any ops are: " + anyOps); 
+
+    for (int i = 0; i < anyList.size(); i++) 
+    { Object k = anyList.get(i);  
+      res = res + anyOps.get(k) + "\n\n"; 
+    }  
+    return res; 
+  }     
+
   public static String getExistsOps()
   { String res = ""; 
     // java.util.Iterator keys = existsOps.keySet().iterator();
@@ -3821,11 +4533,34 @@ public class BSystemTypes extends BComponent
      "   { Hashtable res = new Hashtable();  \n" +
      "     foreach (DictionaryEntry pair in m1) \n" +
      "     { object key = pair.Key; \n" +
-     "       if (m2.ContainsKey(key) && pair.Value.Equals(m2[key])) \n" +
+     "       if (m2.ContainsKey(key) && pair.Value != null && pair.Value.Equals(m2[key])) \n" +
      "       { res.Add(key, pair.Value); } \n" +
      "     } \n" +
      "     return res; \n" +
-     "   } \n"; 
+     "   } \n\n";
+	 res = res + 
+	 "   public static Hashtable restrictMap(Hashtable m1, ArrayList ks) \n" +
+     "   { Hashtable res = new Hashtable();  \n" +
+     "     foreach (DictionaryEntry pair in m1) \n" +
+     "     { object key = pair.Key; \n" +
+     "       if (ks.Contains(key)) \n" +
+     "       { res.Add(key, pair.Value); } \n" +
+     "     } \n" +
+     "     return res; \n" +
+     "   } \n\n"; 
+	 res = res + 
+	 "   public static ArrayList mapKeys(Hashtable m) \n" +
+     "   { ArrayList res = new ArrayList();  \n" +
+     "     res.AddRange(m.Keys);\n" +
+     "     return res; \n" +
+     "   } \n\n"; 
+	 res = res + 
+	 "   public static ArrayList mapValues(Hashtable m) \n" +
+     "   { ArrayList res = new ArrayList();  \n" +
+     "     res.AddRange(m.Values);\n" +
+     "     return res; \n" +
+     "   } \n\n"; 
+ 
      return res; 
    } 
 
@@ -4007,6 +4742,52 @@ public class BSystemTypes extends BComponent
     return res; 
   } 
 
+  public static String generateKeysMapOpCPP()
+  { String res = 
+      "  static set<string>* keys(map<string,_T>* s)\n" +  
+      "  { map<string,_T>::iterator iter;\n" + 
+      "    set<string>* res = new set<string>();\n" + 
+      "  \n" + 
+      "    for (iter = s->begin(); iter != s->end(); ++iter)\n" + 
+      "    { string key = iter->first;\n" + 
+      "      res->insert(key);\n" + 
+      "    }    \n" + 
+      "    return res;\n" + 
+      "  }\n"; 
+	return res; 
+  } 
+  
+  public static String generateValuesMapOpCPP()
+  { String res = 
+      "  static vector<_T>* values(map<string,_T>* s)\n" +  
+      "  { map<string,_T>::iterator iter;\n" + 
+      "    vector<_T>* res = new vector<_T>();\n" + 
+      "  \n" + 
+      "    for (iter = s->begin(); iter != s->end(); ++iter)\n" + 
+      "    { _T value = iter->second;\n" + 
+      "      res->push_back(value);\n" + 
+      "    }    \n" + 
+      "    return res;\n" + 
+      "  }\n"; 
+	return res; 
+  } 
+  
+  public static String generateRestrictOpCPP()
+  { String res = 
+      "  static map<string,_T>* restrict(map<string,_T>* m1, set<string>* ks)\n" +  
+      "  { map<string,_T>* res = new map<string,_T>();\n" + 
+      "    map<string,_T>::iterator iter;\n" + 
+      "    for (iter = m1->begin(); iter != m1->end(); ++iter)\n" + 
+      "    { string key = iter->first;\n" + 
+      "      if (ks->find(key) != ks->end())\n" + 
+      "      { (*res)[key] = iter->second; }\n" + 
+      "    }    \n" + 
+      "    return res;\n" + 
+      "  }\n"; 
+	return res; 
+  } 
+  
+
 
   public static String generateTokeniseOpCPP()
   { String res = 
@@ -4082,6 +4863,10 @@ public class BSystemTypes extends BComponent
     "    { if (v.size() == 0) { return null; }\n" +
     "      return v.get(0);\n" +
     "    }\n";
+    res = res + "  public static Object any(Map m)\n" + 
+      "  { List range = new Vector();\n" +  
+      "    range.addAll(m.values());\n" +  
+      "    return any(range);  }\n\n"; 
     return res;
   }
 
@@ -4091,7 +4876,7 @@ public class BSystemTypes extends BComponent
     "      return null;\n" + 
     "    }\n";
     return res;
-  }
+  } // map
 
   public static String generateAnyOpJava7()
   { String res = "    public static <T> T any(Collection<T> v)\n" +
@@ -4099,7 +4884,7 @@ public class BSystemTypes extends BComponent
     "      return null;\n" + 
     "    }\n";
     return res;
-  }
+  } // map
 
   public static String generateAnyOpCSharp()
   { String res = "    public static object any(ArrayList v)\n" +
@@ -4107,7 +4892,7 @@ public class BSystemTypes extends BComponent
     "      return v[0];\n" +
     "    }\n";
     return res;
-  }
+  } // map
 
   public static String generateAnyOpCPP()
   { String res = "  static _T any(vector<_T>* v)\n" +
@@ -4120,7 +4905,7 @@ public class BSystemTypes extends BComponent
     "      return *_pos;\n" +
     "    }\n\n";
     return res;
-  }
+  } // map
 
   public static String generateFirstOp()
   { String res = "    public static Object first(List v)\n" +
@@ -4266,6 +5051,11 @@ public class BSystemTypes extends BComponent
     res = res + "    { Comparable e = (Comparable) l.get(i);\n";
     res = res + "      if (res.compareTo(e) < 0) { res = e; } }\n";
     res = res + "    return res; }\n";
+    res = res + "  public static Comparable max(Map m)\n" + 
+      "  { List range = new Vector();\n" +  
+      "    range.addAll(m.values());\n" +  
+      "    return max(range);  }\n\n"; 
+
     return res;
   }
 
@@ -4279,13 +5069,13 @@ public class BSystemTypes extends BComponent
     res = res + "      if (res.compareTo(e) < 0) { res = e; } }\n";
     res = res + "    return res; }\n";
     return res;
-  }
+  } // map
 
   public static String generateMaxOpJava7()  // for Java7
   { String res = "  public static <T> T max(Collection<T> l)\n";
     res = res +  "  { return Collections.max(l); }\n";
     return res;
-  }
+  } // map
 
   public static String generateMaxOpCSharp()  // for CSharp
   { String res = "  public static object max(ArrayList l)\n";
@@ -4297,7 +5087,7 @@ public class BSystemTypes extends BComponent
     res = res + "      if (res.CompareTo(e) < 0) { res = e; } }\n";
     res = res + "    return res; }\n";
     return res;
-  }
+  } // map
 
   public static String generateMaxOpCPP()  // for C++
   { String res = "  static _T max(set<_T>* l)\n";
@@ -4305,7 +5095,7 @@ public class BSystemTypes extends BComponent
     res = res + "  static _T max(vector<_T>* l)\n";
     res = res + "  { return *std::max_element(l->begin(), l->end()); }\n";
     return res;
-  }
+  } // map
 
   public static String generateMinOp()
   { String res = "  public static Comparable min(List l)\n";
@@ -4316,6 +5106,10 @@ public class BSystemTypes extends BComponent
     res = res + "    { Comparable e = (Comparable) l.get(i);\n";
     res = res + "      if (res.compareTo(e) > 0) { res = e; } }\n";
     res = res + "    return res; }\n";
+    res = res + "  public static Comparable min(Map m)\n" + 
+      "  { List range = new Vector();\n" +  
+      "    range.addAll(m.values());\n" +  
+      "    return min(range);  }\n\n"; 
     return res;
   }
 
@@ -4329,13 +5123,13 @@ public class BSystemTypes extends BComponent
     res = res + "      if (res.compareTo(e) > 0) { res = e; } }\n";
     res = res + "    return res; }\n";
     return res;
-  }
+  } // map
 
   public static String generateMinOpJava7()  // for Java7 - not needed. 
   { String res = "  public static <T> T min(Collection<T> l)\n";
     res = res +  "  { return Collections.min(l); }\n";
     return res;
-  }
+  } // map
 
   public static String generateMinOpCSharp()
   { String res = "  public static object min(ArrayList l)\n";
@@ -4347,7 +5141,7 @@ public class BSystemTypes extends BComponent
     res = res + "      if (res.CompareTo(e) > 0) { res = e; } }\n";
     res = res + "    return res; }\n";
     return res;
-  }
+  } // map
 
   public static String generateMinOpCPP()  // for C++
   { String res = "  static _T min(set<_T>* l)\n";
@@ -4355,7 +5149,7 @@ public class BSystemTypes extends BComponent
     res = res + "  static _T min(vector<_T>* l)\n";
     res = res + "  { return *std::min_element(l->begin(), l->end()); }\n";
     return res;
-  }
+  } // map
 
   public static String generateBeforeOp()
   { String res = "  public static String before(String s, String sep)\n" +
@@ -5100,8 +5894,25 @@ public class BSystemTypes extends BComponent
       "    { Object x = a.get(i); \n" +
       "      sum = sum + x; }\n" + 
       "    return sum;  }\n\n";
-    return res;
-  }
+    res = res + "  public static int sumint(Map m)\n" + 
+      "  { List range = new Vector();\n" +  
+      "    range.addAll(m.values());\n" +  
+      "    return sumint(range);  }\n\n"; 
+    res = res + "  public static double sumdouble(Map m)\n" + 
+      "  { List range = new Vector();\n" +  
+      "    range.addAll(m.values());\n" +  
+      "    return sumdouble(range);  }\n\n";
+    res = res + "  public static long sumlong(Map m)\n" + 
+      "  { List range = new Vector();\n" +  
+      "    range.addAll(m.values());\n" +  
+      "    return sumlong(range);  }\n\n"; 
+    res = res + "  public static String sumString(Map m)\n" + 
+      "  { List range = new Vector();\n" +  
+      "    range.addAll(m.values());\n" +  
+      "    return sumString(range);  }\n\n"; 
+    return res;  
+  } 
+
 
   public static String generatePrdOps()
   { String res = "  public static int prdint(List a)\n" +
@@ -5125,6 +5936,18 @@ public class BSystemTypes extends BComponent
       "      if (x != null) { res *= x.longValue(); }\n" +
       "    }\n" +  
       "    return res;  }\n\n";
+    res = res + "  public static int prdint(Map m)\n" + 
+      "  { List range = new Vector();\n" +  
+      "    range.addAll(m.values());\n" +  
+      "    return prdint(range);  }\n\n"; 
+    res = res + "  public static double prddouble(Map m)\n" + 
+      "  { List range = new Vector();\n" +  
+      "    range.addAll(m.values());\n" +  
+      "    return prddouble(range);  }\n\n";
+    res = res + "  public static long prdlong(Map m)\n" + 
+      "  { List range = new Vector();\n" +  
+      "    range.addAll(m.values());\n" +  
+      "    return prdlong(range);  }\n\n"; 
     return res;
   }
 
@@ -5157,7 +5980,7 @@ public class BSystemTypes extends BComponent
       "    { sum = sum + x; }\n" + 
       "    return sum;  }\n\n";
     return res;
-  }
+  } // and for maps
 
   public static String generatePrdOpsJava6()
   { String res = "  public static int prdint(Collection a)\n" +
@@ -5182,7 +6005,7 @@ public class BSystemTypes extends BComponent
       "    } \n" + 
       "    return prd; }\n\n";
     return res;
-  }
+  } // maps
 
 
   public static String generateSumOpsJava7()
@@ -5210,7 +6033,7 @@ public class BSystemTypes extends BComponent
       "    { sum = sum + x; }\n" + 
       "    return sum;  }\n\n";
     return res;
-  }
+  } // maps
 
   public static String generatePrdOpsJava7()
   { String res = "  public static int prdint(Collection<Integer> a)\n" +
@@ -5232,7 +6055,7 @@ public class BSystemTypes extends BComponent
       "    } \n" + 
       "    return prd; }\n\n";
     return res;
-  }
+  } // maps
 
 
   public static String generateSumOpsCSharp()
@@ -5264,7 +6087,7 @@ public class BSystemTypes extends BComponent
       "      sum = sum + x; }\n" + 
       "    return sum;  }\n\n";
     return res;
-  }
+  } // maps
 
   public static String generatePrdOpsCSharp()
   { String res = "  public static int prdint(ArrayList a)\n" +
@@ -5289,7 +6112,7 @@ public class BSystemTypes extends BComponent
       "    } \n" + 
       "    return _prd; }\n\n";
     return res;
-  }
+  } // maps
 
   public static String generateSumOpsCPP()
   { String res = "  static string sumString(vector<string>* a)\n" +
@@ -5315,7 +6138,7 @@ public class BSystemTypes extends BComponent
       "    { _sum += *_pos; }\n" +  
       "    return _sum; }\n\n";
     return res;
-  }
+  } // maps
 
   public static String generatePrdOpsCPP()
   { String res = "  static _T prd(vector<_T>* a)\n" +
@@ -5330,7 +6153,7 @@ public class BSystemTypes extends BComponent
       "    { _prd *= *_pos; }\n" +  
       "    return _prd; }\n\n";
     return res;
-  }
+  } // maps
 
   public static String generateClosureOps(Vector assocs) 
   { String res = ""; 
@@ -5392,7 +6215,12 @@ public class BSystemTypes extends BComponent
       "      else { res.add(obj); }\n" + 
       "    } \n" + 
       "    return res; \n" + 
-      "  }\n"; 
+      "  }\n";
+    res = res + "  public static List asSet(Map m)\n" + 
+      "  { List range = new Vector();\n" +  
+      "    range.addAll(m.values());\n" +  
+      "    return asSet(range);  }\n\n"; 
+ 
     return res;
   }
 
@@ -5407,7 +6235,7 @@ public class BSystemTypes extends BComponent
       "    return res; \n" + 
       "  }\n"; 
     return res;
-  }
+  } // and map
 
   public static String generateSortOp()
   { String res = "  public static List sort(final List a)\n" + 
@@ -6239,8 +7067,12 @@ public class BSystemTypes extends BComponent
       "      else if (obj != null && obj.equals(l.get(_i))) { res++; } \n" + 
       "    }\n" + 
       "    return res; \n" + 
-      "  }\n\n" + 
-      "  public static int count(String s, String x)\n" +
+      "  }\n\n";  
+    res = res + "  public static int count(Map m, Object obj)\n" + 
+      "  { List range = new Vector();\n" +  
+      "    range.addAll(m.values());\n" +  
+      "    return count(range,obj);  }\n\n"; 
+    res = res + "  public static int count(String s, String x)\n" +
       "  { int res = 0; \n" +
       "    if (\"\".equals(s)) { return res; }\n" + 
       "    int ind = s.indexOf(x); \n" +
@@ -6284,7 +7116,7 @@ public class BSystemTypes extends BComponent
       "    return res;\n" +  
       "  }\n\n";  
     return res; 
-  } 
+  } // map case
 
   public static String countOpJava7()
   { String res = 
@@ -6306,7 +7138,7 @@ public class BSystemTypes extends BComponent
       "    return res;\n" +  
       "  }\n\n";  
     return res; 
-  } 
+  } // map case
 
   public static String countOpCSharp()
   { String res = 
@@ -6334,7 +7166,7 @@ public class BSystemTypes extends BComponent
       "    return res;\n" +  
       "  }\n\n";  
     return res; 
-  } 
+  } // maps
 
   public static String countOpCPP()
   { String res = 
@@ -6359,7 +7191,7 @@ public class BSystemTypes extends BComponent
       "    return res;\n" +  
       "  }\n\n";  
     return res; 
-  } 
+  } // maps
 
   public static String charactersOp()
   { String res = 
@@ -7340,7 +8172,20 @@ public class BSystemTypes extends BComponent
       "  \n" +
       "    for (int x = 0; x < keys.size(); x++)\n" +
       "    { Object key = keys.get(x);\n" +
-      "      if (m2.containsKey(key) && m1.get(key).equals(m2.get(key)))\n" +
+      "      if (m2.containsKey(key) && m1.get(key) != null && m1.get(key).equals(m2.get(key)))\n" +
+      "      { res.put(key,m1.get(key));  }\n" +
+      "    }    \n" +
+      "    return res;\n" +
+      "  }\n\n"; 
+	res = res + 
+	  "  public static Map restrictMap(Map m1, Vector ks) \n" +
+      "  { Vector keys = new Vector();\n" +
+      "    keys.addAll(m1.keySet());\n" +
+      "    Map res = new HashMap();\n" +
+      "  \n" +
+      "    for (int x = 0; x < keys.size(); x++)\n" +
+      "    { Object key = keys.get(x);\n" +
+      "      if (ks.contains(key))\n" +
       "      { res.put(key,m1.get(key));  }\n" +
       "    }    \n" +
       "    return res;\n" +
@@ -7355,6 +8200,41 @@ public class BSystemTypes extends BComponent
       "    copy.put(src,trg);\n" +
       "    return copy;\n" +
       "  } \n";
+    return res; 
+  } 
+
+  public static String generateIncludesAllMapOpJava7()
+  { String res = "  public static <D,R> boolean includesAllMap(Map<D,R> sup, Map<D,R> sub)\n" + 
+      "  { Set<D> keys = sub.keySet();\n" +
+      "  \n" +
+      "    for (D key : keys)\n" +
+      "    { if (sup.containsKey(key))\n" +
+      "      { if (sub.get(key).equals(sup.get(key)))\n" +
+      "        {}\n" +
+      "        else\n" +
+      "        { return false; }\n" +       
+      "      }\n" +
+      "      else \n" +
+      "      { return false; }\n" +
+      "    }    \n" +
+      "    return true;\n" +
+      "  }\n"; 
+    return res; 
+  } 
+
+  public static String generateExcludesAllMapOpJava7()
+  { String res =  
+      "  public static <D,R> boolean excludesAllMap(Map<D,R> sup, Map<D,R> sub)\n" + 
+      "  { Set<D> keys = sub.keySet();\n" +
+      "  \n" +
+      "    for (D key : keys)\n" +
+      "    { if (sup.containsKey(key))\n" +
+      "      { if (sub.get(key).equals(sup.get(key)))\n" +
+      "        { return false; }\n" +
+      "      }\n" +
+      "    }    \n" +
+      "    return true;\n" +
+      "  }\n"; 
     return res; 
   } 
 
@@ -7424,8 +8304,20 @@ public class BSystemTypes extends BComponent
       "    Set<D> keys = m1.keySet(); \n" +
       "  \n" +
       "    for (D key : keys)\n" +
-      "    { if (m2.containsKey(key) && m1.get(key).equals(m2.get(key)))\n" +
+      "    { if (m2.containsKey(key) && m1.get(key) != null && m1.get(key).equals(m2.get(key)))\n" +
       "      { res.put(key,m1.get(key));  }\n" +
+      "    }    \n" +
+      "    return res;\n" +
+      "  }\n\n";
+	res = res + 
+	  "  public static <D,R> Map<D,R> restrictMap(Map<D,R> m1, Set<D> ks) \n" +
+      "  { Set<D> keys = new HashSet<D>();\n" +
+      "    keys.addAll(m1.keySet());\n" +
+      "    Map<D,R> res = new HashMap<D,R>();\n" +
+      "  \n" +
+      "    for (D key : keys)\n" +
+      "    { if (ks.contains(key))\n" +
+      "      { res.put(key,m1.get(key)); }\n" +
       "    }    \n" +
       "    return res;\n" +
       "  }\n"; 

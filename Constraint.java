@@ -676,6 +676,16 @@ public class Constraint extends ConstraintOrGroup
     return res; 
   } 
 
+  public Vector cwr(Vector assocs)
+  { Vector res = new Vector(); 
+    Expression succ = succedent(); 
+    { res.addAll(succ.cwr(assocs)); } 
+    return res; 
+  } 
+
+  public DataDependency rhsDataDependency()
+  { return succ.rhsDataDependency(); } 
+
   public Vector allPreTerms()
   { Expression antced = antecedent(); 
     Expression succed = succedent(); 
@@ -817,6 +827,9 @@ public class Constraint extends ConstraintOrGroup
   { owner = e; } 
 
   public void setisPre(boolean e) 
+  { ownerisPre = e; } 
+
+  public void setPrestate(boolean e) 
   { ownerisPre = e; } 
 
   public void setOwner(Entity e, boolean isPre) 
@@ -4436,7 +4449,7 @@ public Constraint generalType0inverse()
         uses.put(use.data,newuses);
       }
     }
-    System.out.println("Variable uses are: " + uses); 
+    // System.out.println("Variable uses are: " + uses); 
     variables = rationaliseVariableTypes(vars,uses,params);
   }
 
@@ -4457,7 +4470,7 @@ public Constraint generalType0inverse()
         uses.put(use.data,newuses);
       }
     }
-    System.out.println("Variable uses are: " + uses); 
+    // System.out.println("Variable uses are: " + uses); 
     return rationaliseVariableTypes(vars,uses,params);
   }
 
@@ -4475,7 +4488,7 @@ public Constraint generalType0inverse()
       else 
       { t = Type.determineType(vuses);
         if (t == null)
-        { System.out.println("Badly typed variable: " + var);
+        { System.out.println("!! Warning: Badly typed variable: " + var);
           t = new Type("Object",null);  // why? 
         } 
       }
@@ -4483,7 +4496,7 @@ public Constraint generalType0inverse()
       for (int j = 0; j < vuses.size(); j++)
       { BasicExpression be = (BasicExpression) vuses.get(j);
         be.setType(t);
-        System.out.println("Type of " + be + " determined as: " + t); 
+        // System.out.println("Type of " + be + " determined as: " + t); 
       }
 
       Attribute att = new Attribute(var,t,ModelElement.INTERNAL);
@@ -5170,7 +5183,10 @@ public Constraint generalType0inverse()
     int parcount = 0; 
     int outerparcount = 0; 
 
-    // System.out.println("Variables: " + actualvars + " QVARS: " + qvars + " LVARS: " + letVars); 
+    /* JOptionPane.showMessageDialog(null,"Variables: " + actualvars + 
+             " QVARS: " + qvars + " LVARS: " + letVars, "", JOptionPane.WARNING_MESSAGE);
+    */ 
+
     Vector allvars = new Vector(); 
     Vector allpreds = new Vector(); 
     Vector qvars1 = new Vector(); 
@@ -5182,12 +5198,17 @@ public Constraint generalType0inverse()
       v0.add(betrue.clone()); 
       Vector splitante = ante.splitToCond0Cond1Pred(v0,pars1,qvars1,lvars1,allvars,allpreds); 
       // System.out.println("Variables: " + actualvars + " " + qvars1 + " " + lvars1 + " " + allvars); 
-       
+
+     /* JOptionPane.showMessageDialog(null,"Variables: " + actualvars + 
+             " QVARS: " + qvars1 + " LVARS: " + lvars1 + "\n " + 
+             allvars + " " + allpreds, "", JOptionPane.WARNING_MESSAGE);
+       */ 
+
       Expression ante1 = (Expression) splitante.get(0); 
       Expression ante2 = (Expression) splitante.get(1); 
 
-      // System.out.println("Variable quantifiers: " + ante1); 
-      // System.out.println("Assumptions: " + ante2);
+      System.out.println("Variable quantifiers: " + ante1); 
+      System.out.println("Assumptions: " + ante2);
       // if (ante2 == null || "true".equals(ante2 + ""))
       { res = new ImplicitInvocationStatement(sc); } 
       // else 
@@ -5233,6 +5254,8 @@ public Constraint generalType0inverse()
     Vector pars = new Vector(); 
     pars.addAll(usecase.getParameters()); 
     Vector pars1 = ModelElement.getNames(pars); 
+
+    BasicExpression betrue = new BasicExpression(true); 
 
     BasicExpression selfexp = new BasicExpression("self"); 
     selfexp.setEntity(owner); 
@@ -5306,11 +5329,10 @@ public Constraint generalType0inverse()
     // bf.setResultType(new Type("void", null)); 
     bf.setElementType(new Type("void", null)); 
     bf.setBx(usecase.isBx()); 
-
+    bf.setPre(betrue); 
     Expression ante = antecedent();
     bf.setDerived(true);  
     bf.addStereotype("explicit"); 
-    Expression betrue = new BasicExpression(true); 
     BehaviouralFeature bfouter = null; // used for 2nd-ary vars
     String bfoutercall = ""; 
 
@@ -5433,7 +5455,9 @@ public Constraint generalType0inverse()
       call.setCallExp(ef); // the parameters don't have types here
       Statement forloop = q2LoopsPred(allvars,loopindexes,letVars,call); 
       bfouter = 
-        new BehaviouralFeature(opname + "outer", new Vector(), false, null); 
+        new BehaviouralFeature(opname + "outer", new Vector(), false, voidtype); 
+      bfouter.setElementType(new Type("void", null)); 
+      bfouter.setPre(betrue); 
       bfouter.setPost(betrue); 
       bfouter.setActivity(forloop);
       bfouter.setDerived(true);  
@@ -5776,8 +5800,8 @@ public Constraint generalType0inverse()
         fs.setLoopKind(Statement.FOR);
         fs.setLoopRange(vbe,range); 
         // setEntity? 
-        System.out.println("??? FOR loop " + vbe + " : " + range + " Entity: " +
-                           vbe.entity + " range element type: " + range.getElementType()); 
+        // System.out.println("??? FOR loop " + vbe + " : " + range + " Entity: " +
+        //                    vbe.entity + " range element type: " + range.getElementType()); 
         return fs; 
       } 
       else if (lvars.contains(v))
@@ -5813,7 +5837,7 @@ public Constraint generalType0inverse()
       }
     } 
     else if (obj instanceof Expression) 
-    { IfStatement ifstat = new IfStatement((Expression) obj, innerbody); 
+    { ConditionalStatement ifstat = new ConditionalStatement((Expression) obj, innerbody); 
       return ifstat; 
     }   
 
@@ -5827,7 +5851,7 @@ public Constraint generalType0inverse()
   public Statement mapToDesign2(UseCase usecase, String optimise,   
                                 SequenceStatement oldstat, Vector types, Vector entities)
   { if (owner == null) 
-    { System.err.println("ERROR: null owner for " + this); 
+    { System.err.println("!!! ERROR: null owner for constraint " + this); 
       return null; 
     } 
     this.usecase = usecase; 
@@ -5860,8 +5884,11 @@ public Constraint generalType0inverse()
     Expression nac = succedent().computeNegation4succ(); 
     // Negative application condition
 
+    Type voidtype = new Type("void", null); 
     BehaviouralFeature bf = 
-      new BehaviouralFeature(opname, new Vector(), false, null); 
+      new BehaviouralFeature(opname, new Vector(), false, voidtype);
+    bf.setElementType(new Type("void", null)); 
+    bf.setPre(betrue);  
     bf.setPost(succedent()); 
     bf.setDerived(true);
     bf.addStereotype("explicit"); 
@@ -6236,9 +6263,10 @@ public Constraint generalType0inverse()
     befalse.setType(booltype); 
     Expression sc = succedent();   // omit update ops from test
 
+    Type voidtype = new Type("void", null); 
     BehaviouralFeature bf = 
-      new BehaviouralFeature(opname, new Vector(), false, null); 
-    bf.setBx(usecase.isBx()); 
+      new BehaviouralFeature(opname, new Vector(), false, voidtype); 
+    bf.setElementType(new Type("void", null));    bf.setBx(usecase.isBx()); 
     bf.setPost(sc); 
     bf.setDerived(true); 
     bf.addStereotype("explicit"); 

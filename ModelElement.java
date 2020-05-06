@@ -13,6 +13,7 @@ import java.io.*;
 * *****************************/
 /* Package: Class Diagram */ 
 
+// Subclasses are: Entity, Attribute, Association, Type, BehaviouralFeature, UseCase
 
 public abstract class ModelElement implements SystemTypes
 { protected String name;
@@ -25,6 +26,7 @@ public abstract class ModelElement implements SystemTypes
   public static final int INTERNAL = 3;
   public static final int ACT = 7;
   public static final int DERIVED = 5; // no set operations
+  public static final int SUMMARY = 8; 
  
   /* role multiplicity */ 
   public static final int QUALIFIER = -4; 
@@ -50,6 +52,9 @@ public abstract class ModelElement implements SystemTypes
 
   public void setName(String newname)
   { name = newname; }
+
+  public String cg(CGSpec cgs)
+  { return this + ""; }
 
   public static Vector getNames(Vector elems)
   { Vector res = new Vector(); 
@@ -523,6 +528,54 @@ public abstract class ModelElement implements SystemTypes
     return ""; 
   } 
 
+  public static boolean haveCommonPrefix(String s, String t)
+  { int n = s.length(); 
+    int m = t.length(); 
+    if (s.startsWith(t)) { return true; } 
+    if (t.startsWith(s)) { return true; } 
+    if (n < m) 
+    { for (int i = n-1; i > 1; i--) 
+      { String sub = s.substring(0,i); 
+        // System.out.println(sub); 
+        if (t.startsWith(sub))
+        { return true; } 
+      } 
+    } 
+    else 
+    { for (int i = m-1; i > 1; i--) 
+      { String sub = t.substring(0,i); 
+        // System.out.println(sub); 
+        if (s.startsWith(sub))
+        { return true; } 
+      } 
+    } 
+    return false; 
+  } 
+
+  public static String longestCommonPrefix(String s, String t)
+  { int n = s.length(); 
+    int m = t.length(); 
+    if (s.startsWith(t)) { return t; } 
+    if (t.startsWith(s)) { return s; } 
+    if (n < m) 
+    { for (int i = n-1; i > 1; i--) 
+      { String sub = s.substring(0,i); 
+        // System.out.println(sub); 
+        if (t.startsWith(sub))
+        { return sub; } 
+      } 
+    } 
+    else 
+    { for (int i = m-1; i > 1; i--) 
+      { String sub = t.substring(0,i); 
+        // System.out.println(sub); 
+        if (s.startsWith(sub))
+        { return sub; } 
+      } 
+    } 
+    return ""; 
+  } 
+
 private static void addBuffer(StringBuffer b, Vector res)
 { if (b != null && b.length() > 0)
   { res.add(b.toString()); }
@@ -597,9 +650,19 @@ public static Vector splitIntoWords(String str)
   public static void main(String[] args) 
   { System.out.println(longestCommonSuffix("DataType", "CType")); 
     System.out.println(longestCommonSuffix("PTArc", "TPArc"));
-    System.out.println(splitIntoWords("CatTamer")); 
+
+    System.out.println(splitIntoWords("memberOf.father")); 
      
-    System.out.println(longestCommonSuffix("ENamedElement", "NamedElement"));
+    // System.out.println(longestCommonSuffix("ENamedElement", "NamedElement"));
+    System.out.println(similarity("type.name.ff","type.owner.gg")); 
+    System.out.println(similarity("owner.name.ff","type.name.gg"));     
+    Vector v = new Vector(); 
+    System.out.println(Entity.nmsSimilarity("type.name.ff","type.owner.gg",v)); 
+    System.out.println(Entity.nmsSimilarity("owner.name.ff","type.name.gg",v));     
+    System.out.println(Entity.nmsSimilarity("father","Male",v)); 
+    System.out.println(Entity.nmsSimilarity("mother","Female",v));     
+
+    System.out.println(longestCommonPrefix("colour", "color")); 
   } 
 
 }

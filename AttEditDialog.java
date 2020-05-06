@@ -100,7 +100,7 @@ public class AttEditDialog extends JDialog
     private JLabel initLabel;
     JTextField initField;  /* initial value */
     
-    JCheckBox senBox, intBox, actBox, derBox;
+    JCheckBox senBox, intBox, actBox, derBox, sumBox;
     private JPanel kindPanel;
     private ButtonGroup kindGroup;  /* kind */ 
 
@@ -133,14 +133,16 @@ public class AttEditDialog extends JDialog
       initField = new JTextField();
       
       kindPanel = new JPanel();
-      senBox = new JCheckBox("Sensor");
+      senBox = new JCheckBox("Input");
       intBox = new JCheckBox("Internal",true);
-      actBox = new JCheckBox("Actuator");
+      actBox = new JCheckBox("Output");
       derBox = new JCheckBox("Derived");
+      sumBox = new JCheckBox("Summary");
       kindPanel.add(senBox);
       kindPanel.add(intBox);
       kindPanel.add(actBox);
       kindPanel.add(derBox);
+      kindPanel.add(sumBox); 
       kindPanel.setBorder(
         BorderFactory.createTitledBorder("Kind"));
       kindGroup = new ButtonGroup(); 
@@ -148,6 +150,7 @@ public class AttEditDialog extends JDialog
       kindGroup.add(intBox);
       kindGroup.add(actBox);
       kindGroup.add(derBox);
+      kindGroup.add(sumBox);
 
       frozenPanel = new JPanel();
       frozBox = new JCheckBox("Frozen");
@@ -225,6 +228,8 @@ public class AttEditDialog extends JDialog
     { actBox.setSelected(true); }
     else if (kind == ModelElement.DERIVED)
     { derBox.setSelected(true); }
+    else if (kind == ModelElement.SUMMARY)
+    { sumBox.setSelected(true); }
   }
 
   public Dimension getPreferredSize()
@@ -269,6 +274,8 @@ public class AttEditDialog extends JDialog
        { kind = ModelElement.ACT; }
        else if (dialogPanel.derBox.isSelected())
        { kind = ModelElement.DERIVED; }
+       else if (dialogPanel.sumBox.isSelected())
+       { kind = ModelElement.SUMMARY; }
        else 
        { kind = ModelElement.INTERNAL; }
        setFields(dialogPanel.nameField.getText(),

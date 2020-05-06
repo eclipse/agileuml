@@ -348,9 +348,11 @@ public interface SystemTypes
     { Comparable e1 = (Comparable) f.get(a.get(ind1)); 
       Comparable e2 = (Comparable) f.get(a.get(ind2));
       if (e1.compareTo(e2) < 0) // e1 < e2
-      { res.add(a.get(ind1)); res.add(a.get(ind2)); return res; }
+      { res.add(a.get(ind1)); res.add(a.get(ind2)); 
+        return res; }
       else 
-      { res.add(a.get(ind2)); res.add(a.get(ind1)); return res; }
+      { res.add(a.get(ind2)); res.add(a.get(ind1)); 
+        return res; }
     }
     int mid = (ind1 + ind2)/2;
     List a1;
@@ -362,8 +364,11 @@ public interface SystemTypes
     }
     else
     { a1 = mergeSort(a,f,ind1,mid-1);
+      System.out.println(">>> merge sorted " + a + " with " + f + " from " + ind1 + " to " + (mid -1) + ": " + a1); 
       a2 = mergeSort(a,f,mid,ind2);
+      System.out.println(">>> merge sorted " + a + " with " + f + " from " + mid + " to " + (ind2) + ": " + a2); 
     }
+
     int i = 0;
     int j = 0;
     while (i < a1.size() && j < a2.size())
@@ -756,5 +761,6 @@ public interface SystemTypes
     return res;
   }
 
+   
   }
 }

@@ -21,8 +21,14 @@ public class Binding
     expression = exp;
   } 
 
+  public String getPropertyName()
+  { return propertyName; } 
+
   public String toString()
   { return propertyName + " <- " + expression; } 
+
+  public Statement toStatement()
+  { return new AssignStatement(propertyName,expression); } 
 
   public Expression toExpression(String nme, Type typ, Vector types, Vector ents, Vector env,
                                  java.util.Map interp, UseCase uc) 
@@ -82,4 +88,9 @@ public class Binding
 
   public Vector getUses(String data)
   { return expression.getUses(data); } 
+
+  public Binding substitute(String v, Expression expr)
+  { Expression newexpr = expression.substituteEq(v,expr); 
+    return new Binding(propertyName,newexpr); 
+  } 
 }

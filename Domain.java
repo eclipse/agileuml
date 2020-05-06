@@ -58,11 +58,13 @@ public abstract class Domain extends NamedElement
   public abstract boolean typeCheck(Vector entities, Vector types, Vector contexts, Vector env);  
    
 
-  public abstract Expression toGuardCondition(Vector bound, Expression post);
+  public abstract Expression toGuardCondition(Vector bound, Expression post, Entity tr);
 
   public abstract Expression toSourceExpression(Vector bound);
 
   public abstract Expression toTargetExpression(Vector bound);
+
+  public abstract Expression toUndoExpression(Vector bound);
 
   public abstract Expression toSourceExpressionOp(Vector bound);
 

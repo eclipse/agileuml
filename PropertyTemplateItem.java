@@ -93,7 +93,7 @@ public class PropertyTemplateItem
     // referredProperty = template, as UML-RSDS expression
    Expression result = new BasicExpression(true);
    if (referredProperty == null) 
-   { System.err.println(">>> No feature defined for property template item: " + this); 
+   { System.err.println(">>>ERROR: invalid feature in property template item: " + this); 
      return result; 
    } 
 
@@ -122,7 +122,8 @@ public class PropertyTemplateItem
     Expression xexp = new BasicExpression(x);
     result = new BinaryExpression(op, xexp, fexp); 
 
-    if (template.isEmpty()) { }
+    if (template.isEmpty()) 
+    { result = new BinaryExpression("&", result, post); }
     else
     { Expression andcond = template.toGuardCondition(bound,xexp,post);
       result = new BinaryExpression("&", result, andcond); 
@@ -267,6 +268,61 @@ public class PropertyTemplateItem
     // else
     { Expression andcond = template.toTargetExpression(bound,xexp,setting);
       result = new BinaryExpression("&", result, andcond);
+    } 
+  }
+  return result;
+ }
+
+  public Expression toUndoExpression(Vector bound, Expression contextObj, Expression setting)
+  { // Expresses inverse of the expression, as UML-RSDS expression
+
+   Expression result = new BasicExpression(true);
+ 
+   if (referredProperty == null) 
+   { System.err.println("No feature defined for " + this); 
+     return result; 
+   } 
+
+   BasicExpression fexp = new BasicExpression(contextObj, referredProperty);
+   String op = "=";
+   if (referredProperty.isMultiple())
+   { op = "/:"; }
+    
+   if (value != null)
+   { if (value.isVariable()) 
+     { // Expression valueexp = new BasicExpression(value);
+       if (bound.contains(value + ""))
+       { if ("=".equals(op))
+         { }
+         else 
+         { result = new BinaryExpression(op, value, fexp); }
+       }
+       else // should not occur
+       { result = new BinaryExpression(op, value, fexp); 
+         bound.add(value + ""); 
+       }
+    }
+    else // just a value expression
+    { }
+  }
+  else if (template != null)
+  { // Entity f = template.getEntity();
+    Attribute x = template.bindsTo;
+    Expression xexp = new BasicExpression(x);
+
+    // Expression setting;
+    if (referredProperty.isMultiple())
+    { setting = new BinaryExpression("/:", xexp, fexp); }
+    else
+    { }
+
+    // if (template.isEmpty())
+    // { bound.add(x.getName());
+    //   result = new BinaryExpression("&", result, setting); 
+    // }
+    // else
+    { Expression andcond = template.toUndoExpression(bound,xexp,setting);
+      result = Expression.simplifyAnd(result, andcond);
     } 
   }
   return result;

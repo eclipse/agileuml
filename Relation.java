@@ -114,11 +114,11 @@ public class Relation extends QVTRule
       Domain rdomain = r.getDomain(dname); 
 
       if (rdomain == null) 
-      { newdomains.add(d); } 
+      { newdomains.add(d); } // in old domain, not in r
       else 
       { Domain newdomain = d.overrideBy(rdomain); 
         if (newdomain != null) 
-        { newdomains.add(newdomain); }  
+        { newdomains.add(newdomain); }  // old version combined with new
       } 
     } 
 
@@ -128,7 +128,7 @@ public class Relation extends QVTRule
       Domain mydomain = getDomain(rdname); 
 
       if (mydomain == null) 
-      { newdomains.add(rd); } 
+      { newdomains.add(rd); } // new in the new rule
     } 
   
     Relation res = new Relation(r.name, transformation); 
@@ -223,7 +223,9 @@ public class Relation extends QVTRule
 
 
   public void addVariable(Attribute att)
-  { variable.add(att); }
+  { if (variable.contains(att)) {}
+    else { variable.add(att); }
+  }  
 
   public void addVariables(Vector atts)
   { variable.addAll(atts); }
@@ -270,9 +272,9 @@ public class Relation extends QVTRule
       res.add(wc); 
       String wcd = wc.data; 
       if (wcd.equals(name)) 
-      { System.err.println("!!! ERROR: calling relation " + name + " recursively"); } 
+      { System.err.println("!!! ERROR: calling relation " + name + " recursively via when"); } 
       else if (seen.contains(wcd)) 
-      { System.err.println("!!! ERROR: calling cycle of relations with " + wcd); } 
+      { System.err.println("!!! ERROR: calling cycle of relations in when with " + wcd); } 
       else 
       { Relation r = (Relation) NamedElement.findByName(wcd,rules); 
         if (r != null) 
@@ -306,9 +308,9 @@ public class Relation extends QVTRule
       res.add(wc); 
       String wcd = wc.data; 
       if (wcd.equals(name)) 
-      { System.err.println("!!! ERROR: calling relation " + name + " recursively"); } 
+      { System.err.println("!!! ERROR: calling relation " + name + " recursively in where"); } 
       else if (seen.contains(wcd)) 
-      { System.err.println("!!! ERROR: calling cycle of relations with " + wcd); } 
+      { System.err.println("!!! ERROR: calling cycle of relations in where with " + wcd); } 
       else 
       { Relation r = (Relation) NamedElement.findByName(wcd,rules); 
         if (r != null) 
@@ -435,7 +437,7 @@ public class Relation extends QVTRule
     Set calls = new HashSet(); 
     Vector ops = new Vector(); 
 
-    // assume no calls *within* the domains or variable initialisations
+    // assume no calls *within* variable initialisations
 
     for (int j = 0; j < domain.size(); j++)
     { Domain d = (Domain) domain.get(j);
@@ -466,7 +468,7 @@ public class Relation extends QVTRule
     return res; 
   }     
 
-
+  // EFI? 
 
   public void addTraceEntity(Vector entities, Vector assocs)
   { Entity e = getTraceEntity(assocs); 
@@ -477,12 +479,15 @@ public class Relation extends QVTRule
   public Entity getTraceEntity(Vector assocs)
   { String ename = getName() + "$trace";
     Vector atts = new Vector(); 
+    Vector seen = new Vector(); 
 
     Entity res = new Entity(ename);
     for (int j = 0; j < domain.size(); j++)
     { Domain d = (Domain) domain.get(j);
-      if (d.rootVariable != null)
+      if (d.rootVariable != null && !(seen.contains(d.rootVariable.getName())))
       { Attribute att = d.rootVariable; 
+        seen.add(att.getName()); 
+
         BasicExpression dini = new BasicExpression("null"); 
         dini.umlkind = Expression.VALUE;
         dini.type = att.getType(); 
@@ -491,6 +496,10 @@ public class Relation extends QVTRule
         { att.setInitialExpression(dini);
           att.setInitialValue("null"); 
         }  
+        else if (Type.isEntityCollection(dini.type))
+        { att.setInitialExpression(new SetExpression()); 
+          att.setInitialValue("new Vector()"); 
+        } 
         atts.add(att); 
         // res.addAttribute(att); 
 
@@ -498,6 +507,20 @@ public class Relation extends QVTRule
         { Entity ent2 = dini.type.getEntity(); 
           Association ast = new Association(res,ent2,Association.MANY,Association.ONE,
                                             "traces$" + getName() + "$" + att.getName(),att.getName()); 
+          assocs.add(ast);
+          res.addAssociation(ast);  
+          if (att.isSource())
+          { ast.setSource(true); } 
+          Association invast = ast.generateInverseAssociation(); 
+          ent2.addAssociation(invast);
+        } 
+        else if (Type.isEntityCollection(dini.type))
+        { Entity ent2 = dini.type.elementType.getEntity(); 
+          Association ast = new Association(res,ent2,Association.MANY,Association.MANY,
+                                            "traces$" + getName() + "$" + att.getName(),att.getName()); 
+          if (Type.isSequenceType(dini.type))
+          { ast.setOrdered(true); } 
+
           assocs.add(ast);
           res.addAssociation(ast);  
           if (att.isSource())
@@ -541,8 +564,10 @@ public class Relation extends QVTRule
       wdini.elementType = watt.getElementType();  
       // res.addAttribute(watt); 
 
-      if (wdini.type.isEntity())
-      { Entity ent2 = wdini.type.getEntity(); 
+      if (wdini.type.isEntity() && !(seen.contains(watt.getName())))
+      { seen.add(watt.getName()); 
+
+        Entity ent2 = wdini.type.getEntity(); 
         watt.setInitialExpression(wdini);
         watt.setInitialValue("null");  
         Association ast = new Association(res,ent2,Association.MANY,Association.ONE,
@@ -552,6 +577,27 @@ public class Relation extends QVTRule
         Association invast = ast.generateInverseAssociation(); 
         ent2.addAssociation(invast);
       } 
+      else if (Type.isEntityCollection(wdini.type) && !(seen.contains(watt.getName())))
+      { seen.add(watt.getName()); 
+        Entity ent2 = wdini.elementType.getEntity();
+        SetExpression initexp = new SetExpression();  
+        watt.setInitialExpression(initexp); 
+        watt.setInitialValue("new Vector()"); 
+        Association ast = 
+          new Association(res,ent2,Association.MANY,Association.MANY,
+                          "traces$" + getName() + "$" + watt.getName(),watt.getName()); 
+        if (Type.isSequenceType(wdini.type))
+        { ast.setOrdered(true); 
+          initexp.setOrdered(true); 
+        } 
+        assocs.add(ast);
+        res.addAssociation(ast);  
+        //  if (att.isSource())
+        //  { ast.setSource(true); } 
+        Association invast = ast.generateInverseAssociation(); 
+        ent2.addAssociation(invast);
+      } 
+
     } // actually assocs. - addRole? 
 
   /*  for (int f = 0; f < whenvars.size(); f++) 
@@ -611,7 +657,9 @@ public class Relation extends QVTRule
     Vector tvars = new Vector(); 
     for (int i = 0; i < tatts.size(); i++) 
     { Attribute tatt = (Attribute) tatts.get(i); 
-      tvars.add(tatt.getName()); 
+      if (tvars.contains(tatt.getName())) { } 
+      else 
+      { tvars.add(tatt.getName()); }  
     }
     return tvars; 
   } 
@@ -635,7 +683,9 @@ public class Relation extends QVTRule
     Vector tvars = new Vector(); 
     for (int i = 0; i < tatts.size(); i++) 
     { Attribute tatt = (Attribute) tatts.get(i); 
-      tvars.add(tatt.getName()); 
+      if (tvars.contains(tatt.getName())) { } 
+      else 
+      { tvars.add(tatt.getName()); } 
     }
     return tvars; 
   } 
@@ -663,7 +713,9 @@ public class Relation extends QVTRule
     Vector tvars = new Vector(); 
     for (int i = 0; i < tatts.size(); i++) 
     { Attribute tatt = (Attribute) tatts.get(i); 
-      tvars.add(tatt.getName()); 
+      if (tvars.contains(tatt.getName())) { } 
+      else 
+      { tvars.add(tatt.getName()); }  
     }
     return tvars; 
   } 
@@ -793,7 +845,7 @@ public class Relation extends QVTRule
 
     while (!(t.isEntity() && pivot.isSource()))
     { ind++; 
-      if (ind > fparams.size())
+      if (ind >= fparams.size())
       { System.err.println("!!!! Error: no checkonly object domain for " + this); 
         return pred; 
       } 
@@ -1096,7 +1148,7 @@ public class Relation extends QVTRule
     return whencases;
   } */ 
 
-  public Vector toGuardCondition(Vector bound, Vector entities)
+  public Vector toGuardCondition(Vector bound, Vector entities, Entity tr)
   { // for invoked rules only
     // b : T for each bound variable, and E->exists( e ... ) for other object variables
         
@@ -1109,6 +1161,8 @@ public class Relation extends QVTRule
 
     Vector rootvariables = new Vector(); 
 
+    // System.out.println("GUARD condition: " + whencases); 
+
     Vector newlist = new Vector(); 
     for (int j = 0; j < whencases.size(); j++) 
     { Expression ante = (Expression) whencases.get(j);
@@ -1116,12 +1170,32 @@ public class Relation extends QVTRule
       for (int i = domain.size() - 1; i >= 0; i--)
       { Domain d = (Domain) domain.get(i);
         if (d.isCheckable)
-        { ex = d.toGuardCondition(rootvariables,ex); } 
+        { ex = d.toGuardCondition(rootvariables,ex,tr); } 
       }
       newlist.add(ex); 
     } 
 
+    // System.out.println("GUARD condition: " + newlist); 
+
     return newlist;
+  }
+
+  public Expression undoExpression(Vector bound)
+  { // x /: y.r for each update x : y.r in an enforce domain
+        
+    Expression res = new BasicExpression(true);
+    
+    for (int i = 0; i < domain.size(); i++)
+    { Domain d = (Domain) domain.get(i);
+      if (d.isEnforceable)
+      { Expression ex = d.toUndoExpression(bound); 
+        res = Expression.simplifyAnd(res,ex);  
+      }
+    } 
+
+    System.out.println("Undo condition: " + res); 
+
+    return res;
   }
 
 /* 
@@ -1400,6 +1474,18 @@ public class Relation extends QVTRule
     bound.addAll(allVariables()); 
   
     Vector ante = toSourceExpressionOp(bound,entities);
+    Vector guards = toGuardCondition(bound,entities,ent); 
+
+    Constraint deleteTrace = deleteTraceConstraint(guards,ent,bound); 
+    deleteTrace.setOwner(ent); 
+    deleteTrace.setPrestate(true); 
+    deleteTrace.setUseCase(uc); 
+    Vector contexts = new Vector(); 
+    contexts.add(ent); 
+    contexts.addAll(entities); 
+    deleteTrace.typeCheck(types,contexts,new Vector()); 
+    res.add(deleteTrace); 
+
     Expression succ = toTargetExpressionPres(bound,uc,entities);  // but no trace needed
     for (int i = 0; i < ante.size(); i++) 
     { Expression antei = (Expression) ante.get(i); 
@@ -1553,4 +1639,25 @@ public class Relation extends QVTRule
     return new UnaryExpression("->isDeleted", arg); 
   } 
 
+  public Constraint deleteTraceConstraint(Vector preconds, Entity trent, Vector bound)
+  { Expression ante = new BasicExpression(true); 
+    for (int i = 0; i < preconds.size(); i++) 
+    { Expression precond = (Expression) preconds.get(i); 
+      UnaryExpression notpre = new UnaryExpression("not",precond); 
+      ante = Expression.simplifyAnd(ante,notpre); 
+    }  // set it to prestate. 
+
+    ante.setPre(); 
+
+    BasicExpression arg = new BasicExpression("self"); 
+    arg.setUmlKind(Expression.VARIABLE); 
+    arg.setType(new Type(trent)); 
+    arg.setElementType(new Type(trent)); 
+    arg.setEntity(trent); 
+
+    Expression succ = new UnaryExpression("->isDeleted", arg);
+    Expression undo = undoExpression(bound); 
+    Expression succ1 = Expression.simplifyAnd(undo,succ); 
+    return new Constraint(ante,succ1);  
+  } 
 }

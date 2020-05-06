@@ -163,6 +163,10 @@ class Map
   {  elements.addElement(m);  /* assumes still a map */
   }
 
+  public void add(Maplet m)
+  {  elements.add(m);  /* assumes still a map */
+  }
+
   public void add_pair(Object o1, Object o2)
   { Maplet mm = new Maplet(o1,o2);
     if (elements.contains(mm)) { } 

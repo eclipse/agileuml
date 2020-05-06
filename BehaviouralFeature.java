@@ -99,6 +99,79 @@ public class BehaviouralFeature extends ModelElement
   public void setResultType(Type t)
   { resultType = t; } 
 
+  public String cg(CGSpec cgs)
+  { String etext = this + "";
+    Vector args = new Vector();
+    args.add(getName());
+    Vector eargs = new Vector();
+    eargs.add(this);
+    String pars = "";
+
+    if (parameters == null) {} 
+    else if (parameters.size() == 0) {} 
+    else 
+    { Attribute p = (Attribute) parameters.get(0);
+      Vector partail = new Vector(); 
+      partail.addAll(parameters); 
+      partail.remove(0); 
+      pars = p.cgParameter(cgs,partail);
+    }
+    args.add(pars);
+    eargs.add(parameters); 
+
+    if (resultType != null) 
+    { args.add(resultType.cg(cgs)); 
+      eargs.add(resultType);
+    } 
+    else 
+    { Type rt = new Type("void",null); 
+      args.add(rt.cg(cgs)); 
+      eargs.add(rt); 
+    } 
+
+    if (pre != null) 
+    { args.add(pre.cg(cgs)); 
+      eargs.add(pre); 
+    } 
+    else 
+    { BasicExpression pr = new BasicExpression(true); 
+      args.add(pr.cg(cgs));
+      eargs.add(pr);  
+    } 
+
+    if (post != null) 
+    { args.add(post.cg(cgs)); 
+      eargs.add(post); 
+    } 
+    else 
+    { BasicExpression pst = new BasicExpression(true); 
+      args.add(pst.cg(cgs)); 
+      eargs.add(pst); 
+    } 
+
+    if (activity != null)
+    { String actres = activity.cg(cgs); 
+      // System.out.println(">>> Activity result: " + actres); 
+      args.add(actres);
+      eargs.add(activity);  
+    }
+    else 
+    { Statement nullstat = new SequenceStatement(); 
+      args.add(nullstat.cg(cgs));
+      eargs.add(nullstat);  
+    } 
+    // only one Operation rule?
+    // maybe for static/cached
+
+    CGRule r = cgs.matchedOperationRule(this,etext);
+    if (r != null)
+    { // System.out.println(">>> Matched operation rule: " + r + " with args " + args); 
+      return r.applyRule(args,eargs,cgs); 
+    }
+    System.out.println("!!! No matching rule for operation " + getName()); 
+    return etext;
+  }
+
   public Vector getReadFrame()
   { if (readfr != null) { return readfr; }   // to avoid recursion
     readfr = new Vector(); 
@@ -255,6 +328,9 @@ public class BehaviouralFeature extends ModelElement
   public void setOwner(Entity ent)
   { entity = ent; }
 
+  public Entity getOwner()
+  { return entity; } 
+
   public void setUseCase(UseCase uc)
   { useCase = uc; } 
 
@@ -270,6 +346,12 @@ public class BehaviouralFeature extends ModelElement
   { pre = p; }
 
   public void setPost(Expression p)
+  { post = p; }
+
+  public void setPrecondition(Expression p)
+  { pre = p; }
+
+  public void setPostcondition(Expression p)
   { post = p; }
 
   public void setOrdered(boolean ord)
@@ -363,6 +445,12 @@ public class BehaviouralFeature extends ModelElement
 
   public Type getResultType()
   { if (resultType == null) { return null; } 
+    return (Type) resultType.clone(); 
+  }
+
+  public Type getType()
+  { if (resultType == null) 
+    { return new Type("void",null); } 
     return (Type) resultType.clone(); 
   }
 
@@ -540,11 +628,15 @@ public class BehaviouralFeature extends ModelElement
   } // and the activity? 
   // could deduce type and element type of result. 
 
-  public static Vector reconstructParameters(String pars, 
+  public static Vector reconstructParameters(String pars,
+                                             Vector types, Vector entities)
+  { return reconstructParameters(pars," ,:",types,entities); } 
+
+  public static Vector reconstructParameters(String pars,String seps, 
                                              Vector types, Vector entities)
   { Vector parvals = new Vector(); 
     Vector res = new Vector(); 
-    StringTokenizer st = new StringTokenizer(pars," :,"); 
+    StringTokenizer st = new StringTokenizer(pars,seps); 
     while (st.hasMoreTokens())
     { parvals.add(st.nextToken()); } 
     
@@ -556,15 +648,16 @@ public class BehaviouralFeature extends ModelElement
 
       if (typ != null) 
       { int bind = typ.indexOf("("); 
-        if (bind > 0)  // a set or sequence type 
-        { String tparam = typ.substring(bind+1,typ.length() - 1); 
-          // typ = typ.substring(0,bind); 
-          // Entity eee = (Entity) ModelElement.lookupByName(tparam,entities);
-          // if (eee == null) 
-          // { System.out.println("Error: invalid element type for operation: " + tparam); }
-          // else 
-          // { elemType = new Type(eee); }
-          elemType = Type.getTypeFor(tparam,types,entities);           
+        if (bind > 0)  // a set, sequence or map type 
+        { int cind = typ.indexOf(","); 
+          if (cind > 0) 
+          { String xparam = typ.substring(cind+1, typ.length() - 1); 
+            elemType = Type.getTypeFor(xparam,types,entities); 
+          } 
+          else 
+          { String tparam = typ.substring(bind+1,typ.length() - 1); 
+            elemType = Type.getTypeFor(tparam,types,entities);
+          }            
         } 
       }      
 
@@ -580,7 +673,7 @@ public class BehaviouralFeature extends ModelElement
         att.setElementType(elemType); 
         t.setElementType(elemType); 
         res.add(att); 
-        System.out.println("Parameter " + var + " type " + t); 
+        System.out.println(">>> Parameter " + var + " type " + t); 
       } 
     }
     return res; 
@@ -1884,6 +1977,8 @@ public class BehaviouralFeature extends ModelElement
     String resT = "void";
     if (post == null) 
     { return res; }   // or use the SM if one exists
+	// if ("true".equals(post + ""))
+	// { return res; }
 
     if (resultType != null && !("void".equals(resultType.getName())))
     { resT = resultType + ""; 
@@ -1894,10 +1989,10 @@ public class BehaviouralFeature extends ModelElement
       CreationStatement cs = new CreationStatement(resT, "result"); 
       cs.setType(resultType); 
       cs.setElementType(elementType); 
-      Expression init = resultType.getDefaultValueExpression(elementType); 
-      AssignStatement initialise = new AssignStatement(rbe, init); 
+      // Expression init = resultType.getDefaultValueExpression(elementType); 
+      // AssignStatement initialise = new AssignStatement(rbe, init); 
       ((SequenceStatement) res).addStatement(cs); 
-      ((SequenceStatement) res).addStatement(initialise); 
+      // ((SequenceStatement) res).addStatement(initialise); 
       rets = new ReturnStatement(rbe); 
     }
 
@@ -3474,7 +3569,7 @@ public class BehaviouralFeature extends ModelElement
               "=>".equals(((BinaryExpression) next).operator)) 
       { Statement elsepart = designQueryList(ptail,resT,
                                              env0,types,entities,atts);
-        ((IfStatement) fst).addCases((IfStatement) elsepart);
+        ((ConditionalStatement) fst).setElse(elsepart);
            // Statement.combineIfStatements(fst,elsepart);
         return fst;   
       } 
@@ -3490,7 +3585,8 @@ public class BehaviouralFeature extends ModelElement
     { Statement stat = designQueryList(ptail,resT,
                                            env0,types,entities,atts); 
       SequenceStatement res = new SequenceStatement(); 
-      res.addStatement(fst); res.addStatement(stat); 
+      res.addStatement(fst); 
+	  res.addStatement(stat); 
       return res;
     }  // sequencing of fst and ptail
   } 
@@ -3544,13 +3640,13 @@ public class BehaviouralFeature extends ModelElement
         v0.add(betrue); 
         v0.add(betrue.clone()); 
         Vector splitante = test.splitToCond0Cond1Pred(v0,pars1,qvars1,lvars1,allvars,allpreds); 
-        System.out.println(">>> Quantified local = " + qvars1 + " Let local = " + lvars1 + " All: " + allvars); 
+        // System.out.println(">>> Quantified local = " + qvars1 + " Let local = " + lvars1 + " All: " + allvars); 
        
         Expression ante1 = (Expression) splitante.get(0); 
         Expression ante2 = (Expression) splitante.get(1); 
 
-        System.out.println(">>> Variable quantifiers: " + ante1); 
-        System.out.println(">>> Assumptions: " + ante2);
+        // System.out.println(">>> Variable quantifiers: " + ante1); 
+        // System.out.println(">>> Assumptions: " + ante2);
 
         Statement ifpart = // new ImplicitInvocationStatement(be.right); 
                            designBasicCase(be.right, resT, env0, types, entities, atts); 
@@ -3558,7 +3654,7 @@ public class BehaviouralFeature extends ModelElement
         { Statement forloop = virtualCon.q2LoopsPred(allvars,qvars1,lvars1,ifpart); 
           return forloop; 
         } 
-        return new IfStatement(test, ifpart); 
+        return new ConditionalStatement(test, ifpart); 
       } // But may be let definitions and local variables in test. 
       else if ("=".equals(be.operator))
       { Expression beleft = be.left; 

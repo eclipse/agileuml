@@ -19,10 +19,17 @@ public class RelationalTransformation extends NamedElement
 { Vector modelParameter = new Vector(); // of TypedModel
   Vector rule = new Vector(); // of QVTRule
   Vector functions = new Vector(); // of BehaviouralFeature
+  String extending = null; 
 
 
   public RelationalTransformation(String n)
   { super(n); }
+
+  public void setExtending(String ext) 
+  { extending = ext; } 
+
+  public String getExtending()
+  { return extending; } 
 
   public int nops() 
   { return functions.size(); } 
@@ -39,6 +46,45 @@ public class RelationalTransformation extends NamedElement
   public void addFunction(BehaviouralFeature bf)
   { functions.add(bf); }
 
+  public void union(RelationalTransformation tr) 
+  { // Rules of tr are placed before rules of this, likewise for functions. 
+    // Rules of tr with same name as element of rule are ignored, likewise for functions. 
+
+    Vector oldrules = new Vector(); // rules of tr not overriden
+    Vector newrules = new Vector(); // rules of this including overridding merges.
+    oldrules.addAll(tr.rule);  
+
+    for (int j = 0; j < rule.size(); j++) 
+    { Relation rr = (Relation) rule.get(j); 
+      Relation overriddenrule = (Relation) NamedElement.findByName(rr.getName(), tr.rule); 
+      if (overriddenrule != null) // rule in both tr and this
+      { Relation newr = overriddenrule.overrideBy(rr); 
+        newrules.add(newr); 
+        oldrules.remove(overriddenrule); 
+      } 
+      else 
+      { newrules.add(rr); } 
+    } 
+
+    rule.clear(); 
+    rule.addAll(oldrules); // inherited unchanged
+    rule.addAll(newrules); // new and overriding 
+
+    Vector newfunctions = new Vector(); 
+    for (int i = 0; i < tr.functions.size(); i++) 
+    { BehaviouralFeature rr = (BehaviouralFeature) tr.functions.get(i); 
+      BehaviouralFeature overriderr = (BehaviouralFeature) 
+                            ModelElement.lookupByName(rr.getName(), functions); 
+      if (overriderr != null) 
+      { System.out.println(">>> new function " + rr.getName() + " overrides imported version"); } 
+      else 
+      { newfunctions.add(rr); } 
+    } 
+    newfunctions.addAll(functions); 
+    functions.clear(); 
+    functions.addAll(newfunctions); 
+  } 
+       
   public boolean typeCheck(Vector types, Vector entities, Vector contexts, Vector env)
   { for (int i = 0; i < functions.size(); i++)
     { BehaviouralFeature bf = (BehaviouralFeature) functions.get(i);
@@ -161,26 +207,29 @@ public class RelationalTransformation extends NamedElement
       { Relation rr = (Relation) r; 
         if (rr.isConcrete() && rr.overrides())
         { Relation newr = rr.flattenedRelation(rule); 
-          System.out.println("******** New relation: "); 
+          // System.out.println("******** New relation: "); 
           System.out.println(newr); 
           if (newr != null) 
           { newrelations.add(newr); 
-            Vector gc = newr.toGuardCondition(new Vector(),entities);
-            System.out.println(">>> Guard condition of " + newr.getName() + " is: " + gc);  
+            Entity trent = (Entity) ModelElement.lookupByName(newr.getName() + "$trace", entities); 
+      
+            Vector gc = newr.toGuardCondition(new Vector(),entities,trent);
+            // System.out.println(">>> Guard condition of " + newr.getName() + " is: " + gc);  
             guardconditions.put(newr.getName(),gc); 
           }  
         } 
         else if (rr.isConcrete()) 
         { newrelations.add(rr);             
-          Vector gc = rr.toGuardCondition(new Vector(),entities);
-          System.out.println(">>> Guard condition of " + rr.getName() + " is: " + gc);  
+          Entity trent = (Entity) ModelElement.lookupByName(rr.getName() + "$trace", entities); 
+          Vector gc = rr.toGuardCondition(new Vector(),entities,trent);
+          // System.out.println(">>> Guard condition of " + rr.getName() + " is: " + gc);  
           guardconditions.put(rr.getName(),gc); 
         }
         else 
         { Vector leafs = rr.allLeafRelations(rule); 
           abstractrelations.add(rr); 
           leafrels.put(rr,leafs); 
-          System.out.println(">>> All leaf relations of " + rr.getName() + " are: " + leafs); 
+          // System.out.println(">>> All leaf relations of " + rr.getName() + " are: " + leafs); 
         }  
       }  
     } 
@@ -301,6 +350,8 @@ public class RelationalTransformation extends NamedElement
       } 
     } 
 
+    System.out.println(">>> All target trace features with type " + ename + " are: " + allArgs); 
+
     if (allArgs.size() == 0) { return null; } 
 
     Attribute att = (Attribute) allArgs.get(0); 
@@ -312,8 +363,10 @@ public class RelationalTransformation extends NamedElement
   }
        
   public String toString()
-  { String res = "transformation " + getName() + "\n" + 
-      "{ "; 
+  { String res = "transformation " + getName(); 
+    if (extending != null) 
+    { res = res + " extends " + extending; } 
+    res = res + "\n" + "{ "; 
     
     for (int i = 0; i < functions.size(); i++) 
     { BehaviouralFeature f = (BehaviouralFeature) functions.get(i);      

@@ -174,6 +174,18 @@ class VectorUtil
   } 
 
 
+  public static Vector removeByName(final Vector vs, final String s)
+  { Vector res = new Vector(); 
+    for (int i = 0; i < vs.size(); i++)
+    { Object obj = vs.elementAt(i);
+      if ((obj + "").equals(s))
+      { } 
+      else 
+      { res.add(obj); } 
+    }
+    return res; 
+  }
+
   public static Vector removeAllEqualString(final String s, final Vector vs)
   { Vector res = new Vector(); 
     for (int i = 0; i < vs.size(); i++)

@@ -68,6 +68,7 @@ class BasicExpression extends Expression
     elementType = new Type(e); 
     type = new Type("Sequence",null);
     type.setElementType(elementType); 
+    multiplicity = ModelElement.MANY; 
     entity = e; 
   } 
 
@@ -81,6 +82,7 @@ class BasicExpression extends Expression
     elementType = new Type(e); 
     type = elementType; 
     entity = e; 
+    multiplicity = ModelElement.ONE; 
   } 
 
   BasicExpression(Type t, String ex) 
@@ -90,8 +92,11 @@ class BasicExpression extends Expression
     } 
     data = ex; 
     umlkind = VARIABLE; 
-    elementType = t.getElementType(); 
     type = t; 
+    if (t != null) 
+    { multiplicity = t.typeMultiplicity(); 
+      elementType = t.getElementType(); 
+    } 
   } 
 
   BasicExpression(String v, Expression e) 
@@ -103,6 +108,8 @@ class BasicExpression extends Expression
     umlkind = VARIABLE; 
     type = e.elementType; 
     entity = e.entity; 
+    if (type != null) 
+    { multiplicity = type.typeMultiplicity(); }  
   } 
 
   BasicExpression(Attribute att)
@@ -129,6 +136,7 @@ class BasicExpression extends Expression
     umlkind = VALUE; 
     elementType = new Type("int",null);  
     type = new Type("int",null); 
+    multiplicity = ModelElement.ONE; 
   } 
 
   BasicExpression(long i)
@@ -136,6 +144,7 @@ class BasicExpression extends Expression
     umlkind = VALUE; 
     elementType = new Type("long",null);  
     type = new Type("long",null); 
+    multiplicity = ModelElement.ONE; 
   } 
 
   BasicExpression(double d)
@@ -143,6 +152,7 @@ class BasicExpression extends Expression
     umlkind = VALUE; 
     elementType = new Type("double",null);  
     type = new Type("double",null); 
+    multiplicity = ModelElement.ONE; 
   } 
 
   BasicExpression(boolean b)
@@ -150,6 +160,7 @@ class BasicExpression extends Expression
     umlkind = VALUE; 
     elementType = new Type("boolean",null);  
     type = new Type("boolean",null); 
+    multiplicity = ModelElement.ONE; 
   } 
 
   BasicExpression(Association ast)
@@ -218,11 +229,30 @@ class BasicExpression extends Expression
 
   BasicExpression(Type t)
   { data = t.getName(); 
+    if ("Set".equals(data) || "Sequence".equals(data))
+    { Type tp = t.getElementType(); 
+      if (tp != null && tp.isEntity())
+      { BasicExpression eexp = new BasicExpression(tp.getEntity()); 
+        data = "subcollections";
+        objectRef = eexp; 
+        umlkind = FUNCTION;  
+      } 
+      else 
+      { data = data + "(" + tp.getName() + ")"; 
+        umlkind = TYPE;
+      } 
+    } 
+    else if ("Set".equals(data) || "Sequence".equals(data))
+    { Type tp = t.getElementType(); 
+      if (tp != null)
+      { data = data + "(" + tp.getName() + ")"; } 
+      umlkind = TYPE;
+    }
     multiplicity = ModelElement.MANY; 
     type = new Type("Set", null); 
     type.setElementType(t); 
     elementType = t; 
-    umlkind = TYPE; 
+     
   } 
 
   public Expression getObjectRef() 
@@ -401,7 +431,7 @@ class BasicExpression extends Expression
         t = pivot.getElementType(); 
       } 
 
-      System.out.println("PIVOT for " + this + " is: " + pivot); 
+      // System.out.println("PIVOT for " + this + " is: " + pivot); 
 
       Entity pivotEntity = t.getEntity(); 
       Association ast = pivotEntity.getRole("traces$" + data + "$" + pivot.getName()); 
@@ -446,12 +476,15 @@ class BasicExpression extends Expression
     // String var = data.toLowerCase() + "$x";
     String traceop = data + "$trace";
     BasicExpression varexp = new BasicExpression(var);
+    varexp.setUmlKind(VARIABLE); 
+    
 
     Entity ent = (Entity) ModelElement.lookupByName(traceop, entities);
     // or of the use case? Or relation doms?
     Expression pred = new BasicExpression(true);
     if (ent == null)
     { return pred; }
+
     BasicExpression eexp = new BasicExpression(ent);
     BinaryExpression dran = new BinaryExpression(":", varexp, eexp); 
 
@@ -625,7 +658,7 @@ class BasicExpression extends Expression
   } // Or its type is a map ...
 
   public boolean isZeroOneRole()
-  { if (umlkind == ROLE) 
+  { if (umlkind == ROLE || umlkind == ATTRIBUTE) 
     { Association ast = entity.getDefinedRole(data); 
       if (ast != null && ast.getCard2() == ModelElement.ZEROONE)
       { return true; } 
@@ -633,6 +666,8 @@ class BasicExpression extends Expression
     return false; 
   } 
 
+  // public boolean isZeroOne()
+  // { return lower == 0 && upper == 1; } 
 
 
   public boolean isRuleCall(Vector rules)
@@ -2348,7 +2383,7 @@ class BasicExpression extends Expression
     if ("self".equals(data))
     { if (contexts.size() == 0)
       { System.err.println("ERROR: Invalid occurrence of self, not in instance context"); 
-        JOptionPane.showMessageDialog(null, "ERROR: Invalid occurrence of self, not in instance context", "Semantic error", JOptionPane.ERROR_MESSAGE); 
+        // JOptionPane.showMessageDialog(null, "ERROR: Invalid occurrence of self, not in instance context", "Semantic error", JOptionPane.ERROR_MESSAGE); 
       }
       else 
       { if (contexts.size() > 1)
@@ -3826,8 +3861,7 @@ class BasicExpression extends Expression
 
     if (objectRef == null)
     { if (umlkind == ATTRIBUTE || umlkind == ROLE)
-      { String nme = entity.getName();
-        if (local) 
+      { if (local) 
         { if (arrayIndex != null) 
           { // String etype = elementType + ""; 
             String ind = arrayIndex.queryForm(env,local); 
@@ -3848,6 +3882,10 @@ class BasicExpression extends Expression
           return data; 
         }
 
+        if (entity == null) { return data; } 
+
+        String nme = entity.getName();
+        
         if (entity.isClassScope(data))   // entity cannot be an interface
         { if (arrayIndex != null) 
           { String ind = arrayIndex.queryForm(env,local); 
@@ -4249,8 +4287,7 @@ class BasicExpression extends Expression
 
     if (objectRef == null)
     { if (umlkind == ATTRIBUTE || umlkind == ROLE)
-      { String nme = entity.getName();
-        if (local) 
+      { if (local) 
         { if (arrayIndex != null) 
           { String ind = arrayIndex.queryFormJava6(env,local); 
             if (isQualified())
@@ -4267,6 +4304,10 @@ class BasicExpression extends Expression
           } 
           return data; 
         } 
+
+        if (entity == null) { return data; } 
+
+        String nme = entity.getName();
 
         if (entity.isClassScope(data))   // entity cannot be an interface
         { if (arrayIndex != null) 
@@ -4667,8 +4708,7 @@ class BasicExpression extends Expression
 
     if (objectRef == null)
     { if (umlkind == ATTRIBUTE || umlkind == ROLE)
-      { String nme = entity.getName();
-        if (local) 
+      { if (local) 
         { if (arrayIndex != null) 
           { String ind = arrayIndex.queryFormJava7(env,local); 
             if (isQualified())
@@ -4685,6 +4725,10 @@ class BasicExpression extends Expression
           } 
           return data; 
         } 
+
+        if (entity == null) { return data; } 
+
+        String nme = entity.getName();
 
         if (entity.isClassScope(data))   // entity cannot be an interface
         { if (arrayIndex != null) 
@@ -5074,8 +5118,7 @@ class BasicExpression extends Expression
 
     if (objectRef == null)
     { if (umlkind == ATTRIBUTE || umlkind == ROLE)
-      { String nme = entity.getName();
-        if (local) 
+      { if (local) 
         { if (arrayIndex != null) 
           { String etype = type.getCSharp(); 
             String ind = arrayIndex.queryFormCSharp(env,local); 
@@ -5089,6 +5132,10 @@ class BasicExpression extends Expression
           }
           return data; 
         } 
+
+        if (entity == null) { return data; } 
+
+        String nme = entity.getName();
 
         if (entity.isClassScope(data))   // entity cannot be an interface
         { if (arrayIndex != null) 
@@ -5443,8 +5490,7 @@ class BasicExpression extends Expression
 
     if (objectRef == null)
     { if (umlkind == ATTRIBUTE || umlkind == ROLE)
-      { String nme = entity.getName();
-        if (local) 
+      { if (local) 
         { if (arrayIndex != null) 
           { String etype = elementType + ""; 
             String ind = arrayIndex.queryFormCPP(env,local); 
@@ -5458,6 +5504,10 @@ class BasicExpression extends Expression
           }
           return data; 
         } 
+
+        if (entity == null) { return data; } 
+
+        String nme = entity.getName();
 
         if (entity.isClassScope(data))
         { if (arrayIndex != null) 
@@ -5663,7 +5713,8 @@ public Statement generateDesignEq(Expression rhs)
   }
   else if (objectRef == null)
   { BinaryExpression inclu = new BinaryExpression("->including", this, rhs);
-    return new AssignStatement(this, inclu); }
+    return new AssignStatement(this, inclu); 
+  }
   else if (objectRef.isMultiple())
   { BasicExpression lhs = (BasicExpression) clone();
     String v = Identifier.nextIdentifier("v_");
@@ -5674,9 +5725,18 @@ public Statement generateDesignEq(Expression rhs)
     Statement lp = Expression.iterationLoop(var, objectRef, update);
     return lp;
   }
-  else
+  else if (multiplicity == ModelElement.ZEROONE)
+  { Expression sizeiszero = new UnaryExpression("->isEmpty", this); 
+    SequenceStatement skip = new SequenceStatement(); 
+    SetExpression sett = new SetExpression(); 
+    sett.addElement(rhs); 
+    AssignStatement setthis = new AssignStatement(this, sett); 
+    return new ConditionalStatement(sizeiszero, setthis, skip); 
+  } 
+  else 
   { BinaryExpression inclu = new BinaryExpression("->including", this, rhs);
-    return new AssignStatement(this, inclu);   }
+    return new AssignStatement(this, inclu);  
+  }
 }
 
 
@@ -7302,7 +7362,7 @@ public Statement generateDesignSubtract(Expression rhs)
 
         if (local) 
         { return data + ".add(" + val2 + ");"; }  
-        // unordered roles: check not in first
+        // unordered and zero-one roles: check not in first
 
         return cont + ".add" + data + "(" + var + "," + val2 + ");";
       } // no need to wrap -- val2 must be an object
@@ -10881,6 +10941,39 @@ public Statement generateDesignSubtract(Expression rhs)
     return res;
   }  // again, not if prestate
 
+  public Expression removePrestate()
+  { 
+    BasicExpression res = (BasicExpression) clone();
+
+    res.prestate = false; 
+
+    if (arrayIndex != null)
+    { Expression newind = arrayIndex.removePrestate(); 
+      res.arrayIndex = newind; 
+    }
+
+    Vector newpars = new Vector();   
+    if (parameters != null) 
+    { for (int i = 0; i < parameters.size(); i++) 
+      { Expression par = (Expression) parameters.get(i); 
+        newpars.add(par.removePrestate()); 
+      } 
+      res.parameters = newpars; 
+    }  
+
+    if (objectRef == null)
+    { }  
+    else 
+    { res.objectRef =
+        objectRef.removePrestate();
+    } 
+
+    res.setType(type); 
+    res.setElementType(elementType); 
+       
+    return res;
+  }  
+
   public Expression simplify(final Vector vars) 
   { return simplify(); }
 
@@ -11066,6 +11159,46 @@ public Statement generateDesignSubtract(Expression rhs)
     } 
     return res;
   } // and from arrayIndex
+
+  public Vector allAttributesUsedIn()
+  { Vector res = new Vector();
+    if ("self".equals(this + "")) 
+    { return res; } 
+    if ("super".equals(this + ""))
+    { return res; } 
+
+    if (umlkind == ATTRIBUTE || umlkind == ROLE)
+    { Vector path = getAttributePath(); 
+      res.add(new Attribute(path)); 
+    }
+    
+   /* 
+    if (objectRef != null)
+    { res.addAll(objectRef.allFeaturesUsedIn()); }
+    if (arrayIndex != null) 
+    { res.addAll(arrayIndex.allFeaturesUsedIn()); } 
+    if (parameters != null) 
+    { for (int i = 0; i < parameters.size(); i++) 
+      { Expression par = (Expression) parameters.get(i); 
+        res.addAll(par.allFeaturesUsedIn()); 
+      } 
+    } */
+
+    return res;
+  } // and from arrayIndex
+
+  private Vector getAttributePath()
+  { Attribute att = new Attribute(this); 
+    if (objectRef != null && (objectRef instanceof BasicExpression) && 
+        !("self".equals(objectRef + ""))) 
+    { Vector path = ((BasicExpression) objectRef).getAttributePath(); 
+      path.add(att); 
+      return path; 
+    } 
+    Vector res = new Vector(); 
+    res.add(att); 
+    return res; 
+  } 
 
   public Vector allOperationsUsedIn()
   { Vector res = new Vector();
@@ -11346,7 +11479,7 @@ public Statement generateDesignSubtract(Expression rhs)
 
 
   // The following turns  x : e & P & l = g & Q into [x,P,l,Q] in allvars
-  public Vector splitToCond0Cond1Pred(Vector conds, Vector pars, Vector qvars, Vector lvars, Vector allvars)
+  public Vector splitToCond0Cond1Pred(Vector conds, Vector pars, Vector qvars, Vector lvars, Vector allvars, Vector allpreds)
   { Expression cond0 = (Expression) conds.get(0); 
     Expression cond1 = (Expression) conds.get(1); 
     Vector res = new Vector(); 
@@ -11360,6 +11493,7 @@ public Statement generateDesignSubtract(Expression rhs)
     res.add(cond0); 
     res.add(c1); 
     allvars.add(this); 
+    allpreds.add(this); 
     // System.out.println("Added condition: " + this); 
     
     return res; 
@@ -11631,17 +11765,91 @@ public Statement generateDesignSubtract(Expression rhs)
   } 
 
   public String cg(CGSpec cgs)
-  { String etext = this + "";
+  { String etext = (this + "").trim();
     Vector args = new Vector();
+    Vector eargs = new Vector(); 
+
+    if (umlkind == FUNCTION) 
+    { // process as the corresponding unary or binary expression
+	 if ("allInstances".equals(data))
+	 { args.add(objectRef + ""); 
+	   eargs.add(objectRef); 
+	   CGRule r = cgs.matchedBasicExpressionRule(this,etext); 
+		// System.out.println(">> Matched rule: " + r + " to: " + etext + " with arguments= " + args); 
+        String res = r.applyRule(args,eargs,cgs);
+        return res; 
+	 }
+      else if (parameters != null && parameters.size() == 0) 
+      { UnaryExpression uexp = new UnaryExpression(this); 
+        System.out.println(">> Converted basic expression " + this + 
+                            " to UnaryExpression " + uexp); 
+        return uexp.cg(cgs); 
+      }  
+      else if (parameters != null && parameters.size() == 2) 
+      { // case of x.insertAt(i,y) or s.subrange(x,y)
+        if ("Integer".equals(objectRef + "")) { } 
+        else 
+        { args.add(objectRef.cg(cgs)); }  
+        args.add(((Expression) parameters.get(0)).cg(cgs)); 
+        args.add(((Expression) parameters.get(1)).cg(cgs)); 
+        eargs.add((Expression) parameters.get(0)); 
+        eargs.add((Expression) parameters.get(1)); 
+        CGRule r = cgs.matchedBasicExpressionRule(this,etext);
+    
+        if (r != null)
+        { System.out.println(">> Matched rule: " + r + " to: " + etext + " with arguments= " + args); 
+
+          String res = r.applyRule(args,eargs,cgs);
+          if (needsBracket) 
+          { return "(" + res + ")"; } 
+          else 
+          { return res; }
+        }  
+      }  
+      else if (parameters != null && parameters.size() == 4 && "Integer".equals(objectRef + "")) 
+      { // Integer.Sum(a,b,i,e), Integer.Prd(a,b,i,e)
+        args.add(((Expression) parameters.get(0)).cg(cgs)); 
+        args.add(((Expression) parameters.get(1)).cg(cgs)); 
+        args.add(((Expression) parameters.get(2)).cg(cgs)); 
+        args.add(((Expression) parameters.get(3)).cg(cgs)); 
+        eargs.add((Expression) parameters.get(0)); 
+        eargs.add((Expression) parameters.get(1)); 
+        eargs.add((Expression) parameters.get(2)); 
+        eargs.add((Expression) parameters.get(3)); 
+        CGRule r = cgs.matchedBasicExpressionRule(this,etext);
+    
+        if (r != null)
+        { // System.out.println(">> Matched rule: " + r + " to: " + etext + " with arguments= " + args); 
+
+          String res = r.applyRule(args,eargs,cgs);
+          if (needsBracket) 
+          { return "(" + res + ")"; } 
+          else 
+          { return res; }
+        }  
+      }        
+      else if (parameters != null && parameters.size() == 1) 
+      { BinaryExpression bexp = new BinaryExpression(this); 
+        // System.out.println(">> Converted basic expression " + this + 
+        //                    " to BinaryExpression " + bexp); 
+        return bexp.cg(cgs); 
+      }
+
+    } 
+
+
     if (arrayIndex != null)
     { BasicExpression arg = (BasicExpression) clone();
       arg.arrayIndex = null;
       arg.parameters = null; 
       args.add(arg.cg(cgs));
       args.add(arrayIndex.cg(cgs));
+      eargs.add(arg);
+      eargs.add(arrayIndex);
     } // assume parameters == null
     else if (objectRef != null)
     { args.add(objectRef.cg(cgs));
+      eargs.add(objectRef);
       BasicExpression dataexp = (BasicExpression) clone();
       dataexp.objectRef = null; 
       if (parameters != null) 
@@ -11656,9 +11864,13 @@ public Statement generateDesignSubtract(Expression rhs)
         dataexp.parameters = null; 
         args.add(dataexp.cg(cgs));
         args.add(parg); 
+        eargs.add(dataexp);
+        eargs.add(new BasicExpression(parg)); 
       } 
       else 
-      { args.add(dataexp.cg(cgs)); } 
+      { args.add(dataexp.cg(cgs)); 
+        eargs.add(dataexp);
+      } 
     }
     else if (parameters != null) 
     { String parg = ""; 
@@ -11671,16 +11883,37 @@ public Statement generateDesignSubtract(Expression rhs)
       }
       args.add(data);  
       args.add(parg); 
+      BasicExpression dataexp = (BasicExpression) clone();
+      dataexp.objectRef = null; 
+      dataexp.parameters = null; 
+      eargs.add(dataexp);  
+      eargs.add(new BasicExpression(parg)); 
     } 
     else
-    { args.add(etext); }
+    { args.add(etext);
+      eargs.add(this);
+    }
     // and cg of parameters
 
     CGRule r = cgs.matchedBasicExpressionRule(this,etext);
-    System.out.println(">> Matched rule: " + r + " arguments= " + args); 
+    
+    // System.out.println(">>> Found basic expression rule: " + r + " for " + this); 
 
     if (r != null)
-    { return r.applyRule(args); }
+    { 
+      String res = r.applyRule(args,eargs,cgs);
+      if (needsBracket) 
+      { return "(" + res + ")"; } 
+      else 
+      { return res; }
+    } 
+    else 
+    { r = cgs.matchedTextRule(etext); 
+      if (r != null) 
+      { System.out.println(">>> Found basic expression text rule: " + r + " for " + this); 
+        return r.applyTextRule(etext); 
+	 }
+    } 
     return etext;
   }
 

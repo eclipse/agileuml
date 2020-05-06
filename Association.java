@@ -36,13 +36,22 @@ public class Association extends ModelElement
  
   public Association(Entity e1, Entity e2, int c1,
                      int c2, String r1, String r2)
-  { super(e1.getName() + "_" + e2.getName());
+  { super(e1 + "_" + e2);
+    
     entity1 = e1;
     entity2 = e2;
     card1 = c1;
     card2 = c2;
     role1 = r1;
     role2 = r2;
+    if (e1 == null) 
+    { System.err.println("!!! FATAL ERROR: null class at association end 1"); 
+      return; 
+    } 
+    if (e2 == null) 
+    { System.err.println("!!! FATAL ERROR: null class at association end 2"); 
+      return; 
+    } 
   }
 
   public Association(Entity e1, Attribute att) 

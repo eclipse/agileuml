@@ -20,10 +20,10 @@ public class TransformationRule
   boolean isAbstract = false; 
 
   Attribute source;
-  Expression guard;
+  Expression guard = null;
   Vector targets = new Vector(); // of Attribute
   Statement body;
-  TransformationRule superclass; 
+  TransformationRule extending = null; 
 
   public TransformationRule(String n, boolean l, boolean p)
   { name = n; 
@@ -32,11 +32,22 @@ public class TransformationRule
     guard = new BasicExpression(true); 
   }
 
+  public TransformationRule(EntityMatching em) 
+  { name = em.getName(); 
+    lazy = false; 
+    primary = false; 
+    guard = new BasicExpression(true); 
+  }
+
+
   public String getName()
   { return name; } 
 
   public boolean isAbstract() 
   { return isAbstract; } 
+
+  public void setAbstract(boolean b)
+  { isAbstract = b; } 
 
   public void setLazy(boolean b)
   { lazy = b; } 
@@ -53,6 +64,23 @@ public class TransformationRule
   public void setBody(Statement s)
   { body = s; }
 
+  public void addBody(Statement s)
+  { Vector newbody = new Vector(); 
+    if (body == null) 
+    { body = s; }
+    else 
+    { newbody.add(body); 
+      newbody.add(s); 
+      body = new SequenceStatement(newbody); 
+    } 
+  } 
+
+  public void setExtends(TransformationRule ext) 
+  { extending = ext; } 
+
+  public void setExtends(EntityMatching ext) 
+  { extending = new TransformationRule(ext.getName(),false,false); } 
+
   public void addTarget(Attribute trg)
   { targets.add(trg); }
 
@@ -61,6 +89,52 @@ public class TransformationRule
 
   public Attribute getSource()
   { return source; }
+
+  public void addClause(OutPatternElement atlClause) 
+  { // add the variable as a new local variable and the code to the body
+    Vector stats = new Vector(); 
+
+    Attribute var = atlClause.getVariable(); 
+    if (var != null)
+    { if (targets.size() == 0)
+      { targets.add(var); } 
+      else 
+      { CreationStatement decvar = new CreationStatement(var.getType() + "", var.getName());
+        decvar.setInitialValue("new MM2!" + var.getClassType()); 
+        stats.add(decvar);
+      }  
+    }  
+
+
+    Vector binds = atlClause.getBindings(); 
+    for (int i = 0; i < binds.size(); i++) 
+    { Binding bd = (Binding) binds.get(i); 
+      Statement stat = bd.toStatement(); 
+      stats.add(stat); 
+    } // but a conditional case if RHS of the main assignment to var has 0..1 multiplicity
+
+    Statement clausebody = new SequenceStatement(stats); 
+    Expression cond = atlClause.getCondition(); 
+    if (cond == null) 
+    { if (body == null) 
+      { body = clausebody; } 
+      else 
+      { stats.add(0,body); 
+        body = new SequenceStatement(stats); 
+      } 
+    } 
+    else 
+    { clausebody.setBrackets(true); 
+      if (body == null) 
+      { body = new ConditionalStatement(cond,clausebody); } 
+      else 
+      { Vector newstats = new Vector(); 
+        newstats.add(body); 
+        newstats.add(new ConditionalStatement(cond,clausebody)); 
+        body = new SequenceStatement(newstats); 
+      } 
+    } 
+  } 
 
   public Expression applicationCondition(Expression selfvar)
   { Type typ = source.getType(); 
@@ -164,24 +238,27 @@ public class TransformationRule
     if (isAbstract)
     { res = res + "@abstract\n"; }
 
-    res = "rule " + name + "\n" +
-       "  transform " + source.getName() + " : " + source.getType() + "\n" +
+    res = res + "rule " + name + "\n" +
+       "  transform " + source.getName() + " : MM1!" + source.getType() + "\n" +
        "  to ";
     for (int i = 0; i < targets.size(); i++)
     { Attribute trg = (Attribute) targets.get(i);
-      res = res + trg.getName() + " : " + trg.getType();
+      res = res + trg.getName() + " : MM2!" + trg.getType();
       if (i < targets.size() - 1)
       { res = res + ", "; }
       res = res + "\n    ";
     }
 
-    if (guard != null) 
-    { res = res + "  { guard: " + guard + "\n  " +
-         body + "  }\n";
+    if (extending != null) 
+    { res = res + " extends " + extending.getName(); } 
+
+    if (guard != null && !("true".equals(guard + ""))) 
+    { res = res + "  { guard: (" + guard + ")\n  " +
+         body.toEtl() + "  }\n";
     } 
     else 
     { res = res + "  {\n  " +
-         body + "  }\n";
+         body.toEtl() + "  }\n";
     } 
     
     return res;
@@ -473,6 +550,9 @@ public class TransformationRule
     Vector bfcalls = body.allOperationsUsedIn(); 
     for (int j = 0; j < bfcalls.size(); j++) 
     { res.add_pair(name, bfcalls.get(j)); } 
+
+    if (extending != null) 
+    { res.add_pair(name, extending.getName()); } 
   } 
 
   public int analyseEFO(Map m) 

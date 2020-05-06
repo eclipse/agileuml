@@ -24,6 +24,15 @@ public class UnaryExpression extends Expression
     argument = arg; 
   } 
 
+  public UnaryExpression(BasicExpression be)
+  { // obj.op() becomes obj->op()
+
+    argument = ((BasicExpression) be).getObjectRef(); 
+    operator = "->" + be.getData(); 
+    type = be.getType();
+    elementType = be.getElementType();  
+  } 
+
   public String getOperator()
   { return operator; } 
 
@@ -104,6 +113,12 @@ public class UnaryExpression extends Expression
   public void setPre()
   { argument.setPre(); } 
 
+  public Expression removePrestate()
+  { UnaryExpression res = (UnaryExpression) clone(); 
+    res.argument = argument.removePrestate(); 
+    return res; 
+  } 
+
   public Expression determinate()
   { Expression res = argument.determinate(); 
 
@@ -153,7 +168,7 @@ public class UnaryExpression extends Expression
   } 
 
   // The following turns  x : e & P & l = g & Q into [x,P,l,Q] in allvars
-  public Vector splitToCond0Cond1Pred(Vector conds, Vector pars, Vector qvars, Vector lvars, Vector allvars)
+  public Vector splitToCond0Cond1Pred(Vector conds, Vector pars, Vector qvars, Vector lvars, Vector allvars, Vector allpreds)
   { Expression cond0 = (Expression) conds.get(0); 
     Expression cond1 = (Expression) conds.get(1); 
     Vector res = new Vector(); 
@@ -167,7 +182,8 @@ public class UnaryExpression extends Expression
     res.add(cond0); 
     res.add(c1); 
     allvars.add(this); 
-    System.out.println("Added condition: " + this); 
+    allpreds.add(this); 
+    System.out.println(">>>>> Added condition: " + this); 
     
     return res; 
   } 
@@ -1114,6 +1130,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
   public Vector innermostVariables()
   { return argument.innermostVariables(); } 
 
+  public Vector allAttributesUsedIn()
+  { return argument.allAttributesUsedIn(); } 
+
   public Vector allPreTerms()
   { return argument.allPreTerms(); } 
 
@@ -1284,7 +1303,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return res; 
     } 
 
-    if (operator.equals("-") || operator.equals("->abs"))   
+    if (operator.equals("-") || operator.equals("+") || operator.equals("->abs"))   
     { type = argument.type; 
       elementType = argument.elementType;
       if (type == null) 
@@ -1322,6 +1341,15 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return res; 
     }
 
+    if (operator.equals("->allInstances"))
+    { type = new Type("Sequence",null); 
+      elementType = argument.getElementType(); 
+      type.setElementType(elementType); 
+      multiplicity = ModelElement.MANY;
+      modality = argument.modality; 
+      return res; 
+    }
+
     if (operator.equals("->flatten"))
     { type = argument.type; 
       if (argument.isMultiple() && type.elementType != null) 
@@ -1335,6 +1363,14 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { type = new Type("Set",null); 
       elementType = argument.elementType; 
       entity = argument.entity; // the owner of the relation being closured
+      type.setElementType(elementType); 
+      multiplicity = ModelElement.MANY; 
+      return res; 
+    } 
+
+    if (operator.equals("->keys"))
+    { type = new Type("Set",null); 
+      elementType = new Type("String",null); 
       type.setElementType(elementType); 
       multiplicity = ModelElement.MANY; 
       return res; 
@@ -1371,7 +1407,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       }
     } 
 
-    if (operator.equals("->asSequence") || operator.equals("->sort"))
+    if (operator.equals("->asSequence") || operator.equals("->sort") || operator.equals("->values"))
     { type = new Type("Sequence",null); 
       elementType = argument.elementType; 
       type.setElementType(elementType); 
@@ -1463,8 +1499,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
   public boolean isMultiple()
   { if (operator.equals("->subcollections") || 
-        operator.equals("->closure") || operator.equals("->asSet") ||
-        operator.equals("->flatten") || operator.equals("->characters") || 
+        operator.equals("->closure") || operator.equals("->asSet") || operator.equals("->values") ||
+        operator.equals("->flatten") || operator.equals("->characters") || operator.equals("->keys") ||
         operator.equals("->asSequence") || operator.equals("->sort"))  
     { return true; } 
 
@@ -1517,6 +1553,13 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return "(" + qf + ").size()";
     } 
 
+    if (operator.equals("->allInstances"))
+    { if (argument.umlkind == CLASSID && 
+          (argument instanceof BasicExpression) &&
+          ((BasicExpression) argument).arrayIndex == null)
+      { return cont + "." + qf.toLowerCase() + "s"; }
+    } // and for other languages
+
     if (operator.equals("->display"))
     { return "true"; } 
 
@@ -1532,9 +1575,11 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return "false"; 
     } 
 
-    if (operator.equals("->asSequence")) { return qf; } 
+    if (operator.equals("->asSequence")) 
+	{ return qf; }  // but maps cannot be converted 
 
-    if (operator.equals("->sqr")) { return "((" + qf + ")*(" + qf + "))"; } 
+    if (operator.equals("->sqr")) 
+	{ return "((" + qf + ")*(" + qf + "))"; } 
 
     if (operator.equals("->flatten")) 
     { if (Type.isSequenceType(argument.type))
@@ -1542,7 +1587,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       else if (Type.isSetType(argument.type))
       { return "Set.unionAll(" + qf + ")"; } 
       return qf; 
-    } // but only goes one level down. 
+    } // but only goes one level down. Not for maps
 
     if (operator.equals("->isInteger")) 
     { return "Set.isInteger(" + qf + ")"; } 
@@ -1645,6 +1690,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     else if (data.equals("reverse") || data.equals("sort") ||
              data.equals("asSet")) 
     { return "Set." + data + "(" + pre + ")"; } 
+	else if (data.equals("keys"))
+	{ return pre + ".keySet()"; }
+	else if (data.equals("values"))
+	{ return pre + ".values()"; }
     else if (data.equals("closure"))
     { String rel = ((BasicExpression) argument).data; 
       Expression arg = ((BasicExpression) argument).objectRef; 
@@ -1851,6 +1900,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     } 
     else if (data.equals("asSet") || data.equals("asSequence"))
     { return "Set." + data + "(" + pre + ")"; } 
+    else if (data.equals("keys"))
+	{ return pre + ".keySet()"; }
+	else if (data.equals("values"))
+	{ return pre + ".values()"; }
     else if (data.equals("closure"))
     { String rel = ((BasicExpression) argument).data; 
       Expression arg = ((BasicExpression) argument).objectRef; 
@@ -2050,6 +2103,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     } 
     else if (data.equals("asSet") || data.equals("asSequence"))
     { return "Ocl." + data + "(" + pre + ")"; } 
+    else if (data.equals("keys"))
+    { return pre + ".keySet()"; }
+    else if (data.equals("values"))
+    { return pre + ".values()"; }
     else if (data.equals("closure"))
     { String rel = ((BasicExpression) argument).data; 
       Expression arg = ((BasicExpression) argument).objectRef; 
@@ -2173,7 +2230,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == null)"; } 
 
-    if (operator.equals("->sqr")) { return "((" + qf + ")*(" + qf + "))"; } 
+    if (operator.equals("->sqr")) 
+	{ return "((" + qf + ")*(" + qf + "))"; } 
 
     if (operator.equals("->flatten")) 
     { if (Type.isSequenceType(argument.type))
@@ -2248,6 +2306,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     else if (data.equals("reverse") || data.equals("sort") ||
              data.equals("asSet")) 
     { return "SystemTypes." + data + "(" + pre + ")"; } 
+    else if (data.equals("keys"))
+    { return "SystemTypes.mapKeys(" + pre + ")"; }
+    else if (data.equals("values"))
+    { return "SystemTypes.mapValues(" + pre + ")"; }
     else if (data.equals("closure") && (argument instanceof BasicExpression))
     { String rel = ((BasicExpression) argument).data;
       Expression arg = ((BasicExpression) argument).objectRef;  
@@ -2431,6 +2493,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     else if (data.equals("reverse") || data.equals("sort") ||
              data.equals("asSet") || data.equals("asSequence")) 
     { return "UmlRsdsLib<" + celtype + ">::" + data + "(" + pre + ")"; } 
+    else if (data.equals("keys"))
+    { return "UmlRsdsLib<string>::keys(" + pre + ")"; }
+    else if (data.equals("values"))
+    { return "UmlRsdsLib<" + celtype + ">::values(" + pre + ")"; }
     else if (data.equals("closure") && (argument instanceof BasicExpression))
     { String rel = ((BasicExpression) argument).data;
       Expression arg = ((BasicExpression) argument).objectRef;  
@@ -2494,7 +2560,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     else 
     { return "UmlRsdsLib<void*>::" + data + "(" + pre + ")"; }
     // return qf + ".get(0)"; 
-  } 
+  } // keys, values
 
   public BExpression bqueryForm(java.util.Map env)
   { BExpression pre = argument.bqueryForm(env); 
@@ -2997,9 +3063,9 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
     if (data.equals("size")) // also strings
     { return "CARD(" + pre + ")"; }
     if (data.equals("abs") || data.equals("sqr") ||
-             data.equals("sqrt") || data.equals("max") || data.equals("floor") ||
-            data.equals("min") || data.equals("exp") || data.equals("log") ||
-            data.equals("sin") || data.equals("cos") || data.equals("tan"))
+        data.equals("sqrt") || data.equals("max") || data.equals("floor") ||
+        data.equals("min") || data.equals("exp") || data.equals("log") ||
+        data.equals("sin") || data.equals("cos") || data.equals("tan"))
     { op = data.toUpperCase();
       return op + "(" + pre + ")"; 
     } 
@@ -3264,7 +3330,12 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
     args.add(argument.cg(cgs));
     CGRule r = cgs.matchedUnaryExpressionRule(this,etext);
     if (r != null)
-    { return r.applyRule(args); }
+    { String res = r.applyRule(args);
+      if (needsBracket) 
+      { return "(" + res + ")"; } 
+      else 
+      { return res; }
+    }
     return etext;
   }
 

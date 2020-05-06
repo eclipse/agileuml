@@ -1,3 +1,4 @@
+
 import java.util.Vector; 
 import java.io.*; 
 
@@ -49,6 +50,27 @@ public class Attribute extends ModelElement
       { upper = 0; lower = 0; } 
     } 
   }
+
+  public Attribute(String nme, Type t) 
+  { this(nme,t,ModelElement.INTERNAL); } 
+
+  public Attribute(BasicExpression e)
+  { super(e.getData()); 
+    type = e.getType(); 
+    elementType = e.getElementType(); 
+    entity = e.getEntity(); 
+    int c2 = e.getMultiplicity(); 
+    if (c2 == ModelElement.ONE)
+    { upper = 1; 
+      lower = 1; 
+    } 
+    else 
+    { upper = 0; 
+      lower = 0; 
+    } 
+    kind = INTERNAL; 
+  } 
+    
   
   public Attribute(Association ast) 
   { super(ast.getRole2()); 
@@ -121,6 +143,40 @@ public class Attribute extends ModelElement
   } // and set the entity and name. Set it as aggregation if all 
     // path elements are aggregations. Likewise for unique. 
 
+  public boolean isNumeric()
+  { return type != null && type.isNumericType(); } 
+
+  public boolean isString()
+  { return type != null && type.isStringType(); } 
+
+  public boolean isCollection()
+  { return type != null && type.isCollectionType(); } 
+
+  public boolean isSet()
+  { return type != null && type.isSetType(); } 
+
+  public boolean isSequence()
+  { return type != null && type.isSequenceType(); } 
+
+  public boolean equalByNameAndOwner(Attribute att) 
+  { if (att.getName().equals(name) && 
+        att.getOwner() == entity && entity != null) 
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean equalToReverseDirection(Attribute att) 
+  { if (att.getName().equals(role1 + "") && 
+        elementType != null && elementType.isEntity() && 
+        att.getOwner() == elementType.getEntity()) 
+    { return true; } 
+    else if (att.getName().equals(role1 + "") && 
+        type != null && type.isEntity() && 
+        att.getOwner() == type.getEntity()) 
+    { return true; } 
+    return false; 
+  } 
+
   public Attribute objectReference()
   { // path omitting the final feature
 
@@ -135,6 +191,59 @@ public class Attribute extends ModelElement
     return new Attribute(pathprefix); 
   } 
 
+  public String cg(CGSpec cgs)
+  { String atext = this + "";
+    Vector args = new Vector();
+    args.add(getName());
+    args.add(type.cg(cgs));
+    Vector eargs = new Vector(); 
+    eargs.add(this); 
+    eargs.add(type); 
+    // only one Attribute rule?
+    // maybe for static/frozen
+    CGRule r = cgs.matchedAttributeRule(this,atext);
+    if (r != null)
+    { return r.applyRule(args,eargs,cgs); }
+    return atext;
+  }
+
+  public String cgReference(CGSpec cgs)
+  { String atext = this + "";
+    Vector args = new Vector();
+    args.add(getName());
+    args.add(type.cg(cgs));
+    Vector eargs = new Vector(); 
+    eargs.add(this); 
+    eargs.add(type); 
+
+    // only one Reference rule?
+
+    CGRule r = cgs.matchedReferenceRule(this,atext);
+    if (r != null)
+    { return r.applyRule(args,eargs,cgs); }
+    return atext;
+  }
+
+  public String cgParameter(CGSpec cgs, Vector partail)
+  { String atext = this + "";
+    Vector args = new Vector();
+    args.add(getName());
+    args.add(type.cg(cgs));
+    if (partail.size() == 0) 
+    { args.add(""); } 
+    else 
+    { Attribute p = (Attribute) partail.get(0); 
+      Vector newtail = new Vector(); 
+      newtail.addAll(partail); 
+      newtail.remove(0); 
+      args.add(p.cgParameter(cgs,newtail));
+    }  
+    CGRule r = cgs.matchedParameterRule(this,partail,atext);
+    if (r != null)
+    { return r.applyRule(args); }
+    return atext;
+  } // but omit initialisations for parameters
+
   public Type getReverseType()
   { if (entity != null) 
     { Type et = new Type(entity); 
@@ -147,8 +256,25 @@ public class Attribute extends ModelElement
     return null; 
   } 
 
+  public Entity getClassType()
+  { if (type != null) 
+    { if (type.isEntity())
+      { return type.getEntity(); } 
+    } 
+
+    if (elementType != null) 
+    { if (elementType.isEntity())
+      { return elementType.getEntity(); } 
+    } 
+
+    return null; 
+  } 
+
   public String getRole1()
   { return role1; } 
+
+  public boolean hasOpposite()
+  { return role1 != null && role1.length() > 0; } 
 
   public Attribute getReverseReference()
   { if (role1 != null && role1.length() > 0) 
@@ -167,7 +293,7 @@ public class Attribute extends ModelElement
   { return (role1 != null && role1.length() > 0); } 
 
   public Expression makeInverseCallExpression()
-  { // E1.allInstances()->select( e1x ¦ e1.att->includes(self)) for *-mult att 
+  { // E1.allInstances()->select( e1x ï¿½ e1.att->includes(self)) for *-mult att 
 
     BasicExpression srcexp = new BasicExpression(this);
     srcexp.setUmlKind(Expression.ATTRIBUTE); 
@@ -214,9 +340,12 @@ public class Attribute extends ModelElement
   public boolean isMultiValued()
   { return upper != 1; } 
 
+  public boolean isMandatory()
+  { return lower > 0; } 
+
   public int upperBound()
   { if (upper == 0) 
-    { return 1000000000; } 
+    { return Integer.MAX_VALUE; } 
     return upper; 
   } 
 
@@ -389,11 +518,17 @@ public class Attribute extends ModelElement
     }
   } 
 
-  public Expression atlComposedExpression(String svar) 
-  { if (navigation.size() <= 1) 
-    { return new BasicExpression(svar + "." + this); } 
+  public Expression atlComposedExpression(String svar, Attribute trg, Vector ems) 
+  { Expression res = null; 
+
+    Entity sent = type.getEntity(); 
+    if (sent == null && elementType != null) 
+    { sent = elementType.getEntity(); } 
+
+    if (navigation.size() <= 1) 
+    { res = new BasicExpression(svar + "." + this); } 
     else 
-    { Expression res = new BasicExpression(svar);
+    { res = new BasicExpression(svar);
       res.multiplicity = ModelElement.ONE; 
  
       for (int i = 0; i < navigation.size(); i++) 
@@ -415,7 +550,101 @@ public class Attribute extends ModelElement
           res.multiplicity = ModelElement.MANY; 
         } 
       } 
-      return res; 
+    } 
+
+    if (trg.type.isEntityType())
+    { Entity tent = trg.type.getEntity(); 
+      EntityMatching em = ModelMatching.findEntityMatchingFor(sent,tent,ems);
+      if (em != null && em.isSecondary()) 
+      { String trgvarname = em.realtrg.getName().toLowerCase() + "_x"; 
+        return new BasicExpression("thisModule.resolveTemp(" + res + ", '" + trgvarname + "')"); 
+      }
+    } 
+    else if (Type.isEntityCollection(trg.type))
+    { Entity tent = trg.elementType.getEntity(); 
+      EntityMatching em = ModelMatching.findEntityMatchingFor(sent,tent,ems);
+      if (em != null && em.isSecondary()) 
+      { String trgvarname = em.realtrg.getName().toLowerCase() + "_x"; 
+        return new BasicExpression("thisModule.resolveTemp(" + res + ", '" + trgvarname + "')");  
+      }
+    } 
+    return res;  
+  } 
+
+  public Expression etlComposedExpression(String svar, Attribute trg, Vector ems) 
+  { Entity sent = type.getEntity(); 
+    if (sent == null && elementType != null) 
+    { sent = elementType.getEntity(); } 
+
+    if (navigation.size() <= 1) 
+    { if (trg.type.isEntityType())
+      { Entity tent = trg.type.getEntity(); 
+        EntityMatching em = ModelMatching.findEntityMatchingFor(sent,tent,ems);
+        if (em != null) 
+        { return new BasicExpression(svar + "." + this + ".equivalent('" + em.realsrc + "2" + 
+                                                                          em.realtrg + "')"); 
+        }  
+        return new BasicExpression(svar + "." + this + ".equivalent()"); 
+      } 
+      else if (Type.isEntityCollection(trg.type))
+      { Entity tent = trg.elementType.getEntity(); 
+        EntityMatching em = ModelMatching.findEntityMatchingFor(sent,tent,ems);
+        if (em != null) 
+        { return new BasicExpression(svar + "." + this + ".equivalent('" + em.realsrc + "2" + 
+                                                                          em.realtrg + "')"); 
+        }
+        return new BasicExpression(svar + "." + this + ".equivalent()"); 
+      } 
+      else 
+      { return new BasicExpression(svar + "." + this); }
+    }  
+    else 
+    { Expression res = new BasicExpression(svar);
+      res.multiplicity = ModelElement.ONE; 
+ 
+      for (int i = 0; i < navigation.size(); i++) 
+      { Attribute att = (Attribute) navigation.get(i); 
+        if (res.multiplicity == ModelElement.ONE) 
+        { BasicExpression r = new BasicExpression(att); 
+          r.setObjectRef(res); 
+          res = r; 
+          // res.multiplicity = ModelElement.ONE;
+        } 
+        else if (res.multiplicity != ModelElement.ONE && att.upper == 1)  
+        { // Expression ce = new BinaryExpression("->collect",res,new BasicExpression(att)); 
+          // res = ce; 
+          // res.multiplicity = ModelElement.MANY; 
+          BasicExpression r = new BasicExpression(att); 
+          r.setObjectRef(res); 
+          res = r; 
+        }  
+        else if (res.multiplicity != ModelElement.ONE && att.upper != 1)  
+        { Expression ce = new BinaryExpression("->collect",res,new BasicExpression(att)); 
+          res = new UnaryExpression("->flatten",ce); 
+          res.multiplicity = ModelElement.MANY; 
+        } 
+      }
+ 
+      if (trg.type.isEntityType())
+      { Entity tent = trg.type.getEntity(); 
+        EntityMatching em = ModelMatching.findEntityMatchingFor(sent,tent,ems);
+        if (em != null) 
+        { return new BasicExpression(res + ".equivalent('" + em.realsrc + "2" + 
+                                                                          em.realtrg + "')"); 
+        }
+        return new BasicExpression(res + ".equivalent()");
+      } 
+      else if (Type.isEntityCollection(trg.type))
+      { Entity tent = trg.elementType.getEntity(); 
+        EntityMatching em = ModelMatching.findEntityMatchingFor(sent,tent,ems);
+        if (em != null) 
+        { return new BasicExpression(res + ".equivalent('" + em.realsrc + "2" + 
+                                                                          em.realtrg + "')"); 
+        }
+        return new BasicExpression(res + ".equivalent()"); 
+      } 
+      else 
+      { return res; }  
     } 
   } 
 
@@ -603,6 +832,15 @@ public class Attribute extends ModelElement
     { card1 = ModelElement.ZEROONE; }  
   } 
 
+  public boolean isOutput()
+  { return hasStereotype("output"); }
+  
+  public boolean isInputAttribute()
+  { return hasStereotype("input"); }
+
+  public boolean isSummary()
+  { return kind == ModelElement.SUMMARY; } 
+  
   public void setIdentity(boolean uniq)
   { unique = uniq; 
     if (uniq) 
@@ -615,9 +853,45 @@ public class Attribute extends ModelElement
   public boolean isIdentityFeature()
   { return card1 == ModelElement.ZEROONE; } 
 
+  public boolean isPrimaryAttribute()
+  { // The first identity attribute in its owner's attributes
+
+    if (isIdentity()) { } 
+    else 
+    { return false; } 
+
+    Entity own = getOwner(); 
+    if (own == null) 
+    { return false; } 
+
+    Vector atts = own.getAttributes(); 
+    for (int i = 0; i < atts.size(); i++) 
+    { Attribute att = (Attribute) atts.get(i); 
+      if (att.isIdentity())
+      { if (att == this) 
+        { return true; } 
+        return false; 
+      } 
+    } 
+    return false; 
+  } 
 
   public void setFrozen(boolean fr)
-  { frozen = fr; } 
+  { frozen = fr; 
+    if (fr) 
+	{ addStereotype("readOnly"); }
+	else 
+	{ removeStereotype("readOnly"); }
+  }  
+  
+  public boolean isInt()
+  { return type != null && type.getName().equals("int"); }
+
+  public boolean isLong()
+  { return type != null && type.getName().equals("long"); }
+
+  public boolean isDouble()
+  { return type != null && type.getName().equals("double"); }
 
   public boolean isFinal()
   { return frozen && initialExpression != null; } 
@@ -3342,22 +3616,23 @@ public String dbType()
   { return tname; }
 }
 
-public String androidExtractOp()
+public String androidExtractOp(String ent)
 { String allcaps = name.toUpperCase();
+ 
   String tname = type.getName();
   if ("String".equals(tname))
-  { return "cursor.getString(COL_" + allcaps + ")"; }
+  { return "cursor.getString(" + ent + "_COL_" + allcaps + ")"; }
   if ("int".equals(tname))
-  { return "cursor.getInt(COL_" + allcaps + ")"; }
+  { return "cursor.getInt(" + ent + "_COL_" + allcaps + ")"; }
   if ("long".equals(tname))
-  { return "cursor.getLong(COL_" + allcaps + ")"; }
+  { return "cursor.getLong(" + ent + "_COL_" + allcaps + ")"; }
   if ("double".equals(tname))
-  { return "cursor.getDouble(COL_" + allcaps + ")"; }
+  { return "cursor.getDouble(" + ent + "_COL_" + allcaps + ")"; }
   else
-  { return "cursor.getString(COL_" + allcaps + ")"; }
+  { return "cursor.getString(" + ent + "_COL_" + allcaps + ")"; }
 }
 
-  public String androidExtractOp(String resultSet)
+/*   public String androidExtractOp(String resultSet)
   { String res = resultSet + ".get";
     String tname = type.getName();
     if (tname.equals("int"))
@@ -3368,7 +3643,7 @@ public String androidExtractOp()
     { res = res + "String(\""; }
     res = res + getName() + "\")";
     return res;
-  }
+  } */ 
 
   public String ejbBeanGet()
   { String nme = getName(); 
@@ -3981,9 +4256,8 @@ public String androidExtractOp()
     } 
     else if ("String".equals(t))
     { res.add(nme + " = \"\""); 
-      res.add(nme + " = \" abc \"");
-      res.add(nme + " = \"_XY Z \"");
-      res.add(nme + " = \"#¬$* &~@':\"");
+      res.add(nme + " = \" abc_XZ \"");
+      res.add(nme + " = \"#ï¿½$* &~@':\"");
     }
     else if (vs != null && vs.size() > 0) 
     { String v0 = (String) vs.get(0); 
@@ -4035,7 +4309,7 @@ public String androidTableEntryField(String ent, String op)
 { String nme = getName();
   String label = Named.capitalise(nme);
   String attfield = op + ent + nme;
-  String attlabel = op + ent+ label;
+  String attlabel = op + ent + nme + "Label";
   String hint = ent + " " + nme; 
 
   String res1 = "  <TextView\n\r" +
@@ -4045,12 +4319,19 @@ public String androidTableEntryField(String ent, String op)
     "    android:text=\"" + label + ":\" />\n\r";
 
   String res2 = ""; 
-  if (isIdentity())
-  { res2 = "  <TextView\n\r" +
+  // if (isIdentity())
+  // { res2 = "  <TextView\n\r" +
+  //   "    android:id=\"@id/" + attfield + "\"\n\r" +
+  //   "    android:layout_span=\"3\" />\n\r";
+  // } 
+  // else 
+  if (isNumeric())
+  { res2 = "  <EditText\n\r" +
     "    android:id=\"@id/" + attfield + "\"\n\r" +
+    "    android:inputType=\"number\"\n\r" +  
     "    android:layout_span=\"3\" />\n\r";
   } 
-  else 
+  else   
   { res2 = "  <EditText\n\r" +
     "    android:id=\"@id/" + attfield + "\"\n\r" +
     "    android:layout_span=\"3\" />\n\r";

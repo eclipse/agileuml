@@ -35,9 +35,9 @@ implements Cloneable
   abstract String getOperator(); 
 
   public String cg(CGSpec cgs)
-  { String etext = this + "";
-    return etext;
-  }
+  { return this + ""; }
+
+  public abstract Vector metavariables(); 
 
   abstract String bupdateForm(); 
 
@@ -441,6 +441,8 @@ implements Cloneable
   abstract public Vector allOperationsUsedIn(); 
 
   abstract public Vector equivalentsUsedIn(); 
+
+  abstract public String toEtl(); 
 }
 
 
@@ -458,6 +460,9 @@ class ReturnStatement extends Statement
 
   public Object clone()
   { return new ReturnStatement(value); } 
+
+  public boolean hasValue()
+  { return value != null; } 
 
   public void display()
   { System.out.print("  return"); 
@@ -523,6 +528,14 @@ class ReturnStatement extends Statement
       else 
       { res = res + " " + value.toJava(); } 
     } 
+    res = res + ";"; 
+    return res; 
+  }  
+
+  public String toEtl()
+  { String res = "  return"; 
+    if (value != null)
+    { res = res + " " + value; } 
     res = res + ";"; 
     return res; 
   }  
@@ -606,6 +619,13 @@ class ReturnStatement extends Statement
     return new ReturnStatement(val); 
   }  
 
+  public Vector metavariables()
+  { Vector res = new Vector(); 
+    if (value != null) 
+    { return value.metavariables(); }  
+    return res; 
+  } 
+
   public Vector readFrame() 
   { Vector res = new Vector();
     if (value == null) 
@@ -657,6 +677,17 @@ class ReturnStatement extends Statement
     { return res; } 
     return value.equivalentsUsedIn(); 
   } 
+
+  public String cg(CGSpec cgs)
+  { String etext = this + "";
+    Vector args = new Vector();
+    if (value != null) 
+    { args.add(value.cg(cgs)); } 
+    CGRule r = cgs.matchedStatementRule(this,etext);
+    if (r != null)
+    { return r.applyRule(args); }
+    return etext;
+  }
 }
 
 
@@ -691,6 +722,9 @@ class BreakStatement extends Statement
   } 
 
   public String toStringJava()
+  { return "  break;"; }
+
+  public String toEtl()
   { return "  break;"; }
 
   public String saveModelData(PrintWriter out)
@@ -765,6 +799,20 @@ class BreakStatement extends Statement
   { Vector res = new Vector(); 
     return res; 
   } 
+
+  public Vector metavariables()
+  { Vector res = new Vector(); 
+    return res; 
+  }
+ 
+  public String cg(CGSpec cgs)
+  { String etext = this + "";
+    Vector args = new Vector();
+    CGRule r = cgs.matchedStatementRule(this,etext);
+    if (r != null)
+    { return r.applyRule(args); }
+    return etext;
+  }
 }
 
 
@@ -955,6 +1003,15 @@ class InvocationStatement extends Statement
     { res = assignsTo + " = "; }
     if (targ != null)        /* Overrides target */ 
     { res = res + targ + "."; }
+    res = res + action + ";";
+    return res;
+  }
+
+
+  public String toEtl()
+  { String res = "";
+    if (assignsTo != null)
+    { res = assignsTo + " = "; }
     res = res + action + ";";
     return res;
   }
@@ -1254,6 +1311,37 @@ class InvocationStatement extends Statement
     { return res; } 
     return callExp.equivalentsUsedIn(); 
   } 
+
+  public Vector metavariables()
+  { Vector res = new Vector();
+    if (callExp != null) 
+    { return callExp.metavariables(); }  
+    return res; 
+  } 
+
+  public String cg(CGSpec cgs)
+  { String etext = this + "";
+    Vector args = new Vector();
+    if (callExp != null) 
+    { args.add(callExp.cg(cgs)); } 
+    CGRule r = cgs.matchedStatementRule(this,etext);
+    if (r != null)
+    { return r.applyRule(args); }
+    else 
+    { r = cgs.matchedTextRule(etext); 
+      if (r != null) 
+      return r.applyTextRule(etext); 
+    }     
+    return etext;
+  }
+
+  public Vector cgparameters()
+  { Vector args = new Vector();
+    if (callExp != null) 
+    { args.add(callExp); } 
+    return args; 
+  } 
+
 }
 
 
@@ -1341,6 +1429,12 @@ class ImplicitInvocationStatement extends Statement
   { String res = "execute ( " + callExp + " )"; 
     return res; 
   } 
+
+  public String toEtl() 
+  { String res = "  " + callExp + ";"; 
+    return res; 
+  } 
+
 
   public String toStringJava(String targ)
   { return toStringJava(); }
@@ -1500,6 +1594,30 @@ class ImplicitInvocationStatement extends Statement
     return callExp.equivalentsUsedIn(); 
   } 
 
+  public Vector metavariables()
+  { Vector res = new Vector();
+    if (callExp != null) 
+    { return callExp.metavariables(); }  
+    return res; 
+  } 
+
+  public String cg(CGSpec cgs)
+  { String etext = this + "";
+    Vector args = new Vector();
+    if (callExp != null) 
+    { args.add(callExp.cg(cgs)); } 
+    CGRule r = cgs.matchedStatementRule(this,etext);
+    if (r != null)
+    { return r.applyRule(args); }
+    return etext;
+  } 
+
+  public Vector cgparameters()
+  { Vector args = new Vector();
+    if (callExp != null) 
+    { args.add(callExp); } 
+    return args; 
+  } 
 }
 
 
@@ -1623,7 +1741,7 @@ class WhileStatement extends Statement
   { variant = inv; } 
 
   public static WhileStatement createInvocationLoop(BasicExpression call, Expression range)
-  { String v = Identifier.nextIdentifier("loopvar_"); 
+  { String v = Identifier.nextIdentifier("loopvar$"); 
     BasicExpression ve = new BasicExpression(v); 
 
     Type elemt = range.getElementType(); 
@@ -1744,11 +1862,11 @@ class WhileStatement extends Statement
     if (variant != null) 
     { bvar = variant.binvariantForm(env,local); }  
 
-    System.out.println("LOOP BODY = " + body); 
+    // System.out.println("LOOP BODY = " + body); 
 
     BStatement bbody = body.bupdateForm(env,local); 
 
-    System.out.println("LOOP BODY = " + bbody); 
+    // System.out.println("LOOP BODY = " + bbody); 
 
     return new BLoopStatement(btest,binv,bvar,bbody); 
   } 
@@ -1932,6 +2050,17 @@ class WhileStatement extends Statement
     return res + "  }"; 
   } 
 
+  public String toEtl() 
+  { String loop = "while"; 
+    if (loopKind == FOR)
+    { loop = "for"; } 
+
+    String res = "  " + loop + " (" + loopTest + ")"; 
+    res = res + "  {\n "; 
+    res = res + body.toEtl(); 
+    return res + "  }"; 
+  } 
+
   public String toString()
   { String res = " while "; 
     if (loopKind == FOR)
@@ -1980,6 +2109,18 @@ class WhileStatement extends Statement
   public Statement generateDesign(java.util.Map env, boolean local)
   { Statement bdy = body.generateDesign(env,local); 
     WhileStatement result = (WhileStatement) clone(); 
+    if (loopRange != null && loopRange instanceof BasicExpression)
+    { if (loopRange.umlkind == Expression.CLASSID) 
+      { BasicExpression lr = new BasicExpression("allInstances"); 
+        lr.umlkind = Expression.FUNCTION;
+        lr.setIsEvent(); 
+        lr.setParameters(null);  
+        lr.type = loopRange.type; 
+        lr.elementType = loopRange.elementType; 
+        lr.setObjectRef(loopRange); 
+        result.loopRange = lr; 
+      } 
+    } 
     result.body = bdy; 
     return result; 
   }  
@@ -2523,22 +2664,42 @@ class WhileStatement extends Statement
 
   public String cg(CGSpec cgs)
   { String etext = this + "";
+
+    Vector eargs = new Vector(); 
     Vector args = new Vector();
     if (loopKind == WHILE) 
     { args.add(loopTest.cg(cgs));
       args.add(body.cg(cgs));
+      eargs.add(loopTest); 
+      eargs.add(body); 
     } 
     else 
-    { args.add(loopVar); 
+    { args.add(loopVar + ""); 
       args.add(loopRange.cg(cgs)); 
       args.add(body.cg(cgs)); 
+      eargs.add(loopVar); 
+      eargs.add(loopRange); 
+      eargs.add(body); 
     } 
     CGRule r = cgs.matchedStatementRule(this,etext);
     if (r != null)
-    { return r.applyRule(args); }
+    { return r.applyRule(args,eargs,cgs); }
     return etext;
   } // for FOR, need the loopVar : loopRange
     // instead of test. 
+
+  public Vector metavariables()
+  { Vector res = new Vector(); 
+    if (loopKind == WHILE && loopTest != null) 
+    { res.addAll(loopTest.metavariables()); } 
+    else if (loopVar != null && loopRange != null) 
+    { res.addAll(loopVar.metavariables()); 
+      res.addAll(loopRange.metavariables()); 
+    }  
+    res = VectorUtil.union(res,body.metavariables()); 
+    return res; 
+  } 
+
 
 } 
  
@@ -2549,16 +2710,20 @@ class CreationStatement extends Statement
   private Type instanceType = null; 
   private Type elementType = null; 
   boolean declarationOnly = false; 
+  String initialValue = null; 
 
   public CreationStatement(String cio, String ast)
   { createsInstanceOf = cio;
     assignsTo = ast; 
   }
 
+  public void setInitialValue(String init)
+  { initialValue = init; } 
+
   public String getOperator() 
   { return "var"; } 
 
-  public String cg(CGSpec cgs)
+/*  public String cg(CGSpec cgs)
   { String etext = "var " + assignsTo + " : " + createsInstanceOf; 
     Vector args = new Vector();
     args.add(assignsTo);
@@ -2567,7 +2732,7 @@ class CreationStatement extends Statement
     if (r != null)
     { return r.applyRule(args); }
     return etext;
-  }
+  } */ 
 
   public void setInstanceType(Type t)
   { instanceType = t; 
@@ -2609,7 +2774,11 @@ class CreationStatement extends Statement
   } 
 
   public String toString()
-  { return assignsTo + " : " + createsInstanceOf; }
+  { if (initialValue != null) 
+    { return "  var " + assignsTo + " = " + initialValue; } 
+    else 
+    { return assignsTo + " : " + createsInstanceOf; }
+  } 
 
   public String saveModelData(PrintWriter out) 
   { String res = Identifier.nextIdentifier("creationstatement_"); 
@@ -2648,8 +2817,17 @@ class CreationStatement extends Statement
     return new BAnyStatement(updates, bqual, new BBasicStatement("skip"));
   } // No - add to the entity involved. 
 
+  public String toEtl()
+  { if (initialValue != null) 
+    { return "  var " + assignsTo + " = " + initialValue + ";"; } 
+    else 
+    { return "  var " + assignsTo + ";"; } 
+  }
+
   public String toStringJava()
-  { if (instanceType != null)
+  { if (initialValue != null) 
+    { return "  var " + assignsTo + " = " + initialValue; } 
+    else if (instanceType != null)
     { String jType = instanceType.getJava(); 
       if (Type.isBasicType(instanceType)) 
       { return "  " + jType + " " + assignsTo + ";"; } 
@@ -2794,11 +2972,12 @@ class CreationStatement extends Statement
       { return "  " + jType + " " + assignsTo + ";"; } 
       else if (instanceType.isEntity())
       { Entity ent = instanceType.getEntity(); 
+	    String ename = ent.getName(); 
         if (ent.hasStereotype("external"))
-        { return "  " + jType + " " + assignsTo + " = new " + jType + "();\n"; } 
+        { return "  " + jType + " " + assignsTo + " = new " + ename + "();\n"; } 
         else
-        { return "  " + jType + " " + assignsTo + " = new " + jType + "();\n" + 
-                 "  Controller::inst->add" + jType + "(" + assignsTo + ");";
+        { return "  " + jType + " " + assignsTo + " = new " + ename + "();\n" + 
+                 "  Controller::inst->add" + ename + "(" + assignsTo + ");";
         }  
       } 
     } 
@@ -2921,6 +3100,49 @@ class CreationStatement extends Statement
   { Vector res = new Vector(); 
     return res; 
   } 
+
+  public Vector metavariables()
+  { Vector res = new Vector(); 
+    if (assignsTo != null) 
+    { if (assignsTo.startsWith("_"))
+      { res.add(assignsTo); } 
+    } 
+    
+    if (instanceType != null) 
+    { res.addAll(instanceType.metavariables()); }  
+    return res; 
+  } 
+
+  public Vector cgparameters()
+  { Vector args = new Vector();
+    if (assignsTo != null) 
+    { args.add(assignsTo); } 
+    if (instanceType != null) 
+    { args.add(instanceType); } 
+    return args; 
+  } 
+
+
+  public String cg(CGSpec cgs)
+  { String etext = this + "";
+    Vector args = new Vector();
+	Vector eargs = new Vector(); 
+	
+    if (assignsTo != null) 
+    { args.add(assignsTo); 
+	  eargs.add(assignsTo); 
+	} 
+	
+    if (instanceType != null) 
+    { args.add(instanceType.cg(cgs)); 
+	  eargs.add(instanceType); 
+	}
+	 
+    CGRule r = cgs.matchedStatementRule(this,etext);
+    if (r != null)
+    { return r.applyRule(args,eargs,cgs); }
+    return etext;
+  } 
 }
 
 
@@ -2951,7 +3173,9 @@ class SequenceStatement extends Statement
   { String etext = this + "";
     Vector args = new Vector();
     if (statements.size() == 0)
-    { etext = "skip"; }
+    { etext = "skip"; 
+	  return ""; 
+	}
     else if (statements.size() == 1)
     { Statement st = (Statement) statements.get(0);
       return st.cg(cgs);
@@ -2968,7 +3192,12 @@ class SequenceStatement extends Statement
     }
     CGRule r = cgs.matchedStatementRule(this,etext);
     if (r != null)
-    { return r.applyRule(args); }
+    { // System.out.println(">>> Sequence rule: " + r + 
+      //                    " " + args); 
+      String res = r.applyRule(args);
+      // System.out.println(">>> Applied sequence rule: " + res);  
+	  return res; 
+    }
     return etext;
   }
 
@@ -3211,6 +3440,21 @@ class SequenceStatement extends Statement
       { res = res + "  "; }
       if (ss != null)
       { res = res + ss.toStringJava(); }
+      res = res + "\n"; 
+    } 
+    // if (brackets)
+    // { res = "( " + res + " )"; } 
+    return res; 
+  }
+
+  public String toEtl()
+  { String res = ""; 
+    for (int i = 0; i < statements.size(); i++)
+    { Statement ss = (Statement) statements.elementAt(i);
+      if (i > 0)                 /* Hack */ 
+      { res = res + "  "; }
+      if (ss != null)
+      { res = res + ss.toEtl(); }
       res = res + "\n"; 
     } 
     // if (brackets)
@@ -3508,6 +3752,15 @@ class SequenceStatement extends Statement
     return res; 
   } 
 
+  public Vector metavariables()
+  { Vector res = new Vector(); 
+    for (int i = 0; i < statements.size(); i++) 
+    { Statement stat = (Statement) statements.get(i); 
+      { res.addAll(stat.metavariables()); } 
+    } 
+    
+    return res; 
+  } 
 }
 
 
@@ -3736,6 +3989,25 @@ class CaseStatement extends Statement
     return res; 
   }
 
+  public String toEtl()
+  /* s is name of actuator/sensor */
+  { int n = cases.elements.size();
+    String res = ""; 
+    String s = "s"; 
+
+    for (int i = 0; i < n; i++)
+    { Maplet mm = (Maplet) cases.elements.elementAt(i);
+      res = res + "  if (M" + s + "." + s + " == " + 
+                  ((Named) mm.source).label + ")";
+      res = res + "    {\n";
+      res = res + ((Statement) mm.dest).toEtl();
+      res = res + "    }\n"; 
+      if (i < n-1)
+      { res = res + "  else {\n"; } 
+    }
+    return res; 
+  }
+
   public boolean typeCheck(Vector types, Vector entities, Vector cs, Vector env)
   { return true; }   // type check each case dest? 
 
@@ -3836,6 +4108,14 @@ class CaseStatement extends Statement
     return res; 
   } 
 
+  public Vector metavariables()
+  { Vector res = new Vector(); 
+    for (int i = 0; i < cases.elements.size(); i++) 
+    { Maplet mm = (Maplet) cases.elements.get(i); 
+      res.addAll(((Statement) mm.dest).metavariables()); 
+    } 
+    return res; 
+  } 
 }
 
 
@@ -3880,6 +4160,9 @@ class ErrorStatement extends Statement
   public String toStringJava()
   { return " {} /* Unreachable state */"; }
   
+  public String toEtl()
+  { return ""; }
+
   public void displayJava(String t, PrintWriter out)
   { out.println(" {} /* Unreachable state */"); } 
 
@@ -3946,6 +4229,10 @@ class ErrorStatement extends Statement
     return res; 
   } 
 
+  public Vector metavariables()
+  { Vector res = new Vector(); 
+    return res; 
+  } 
 }
 
 
@@ -4273,6 +4560,27 @@ class IfStatement extends Statement
        res = res + ic.toStringJava(); 
        if (j < n-1) 
        { res = res + "    else\n"; } 
+     }
+     return res; 
+   } 
+
+   public String toEtl()
+   { String res = ""; 
+     int n = cases.size();
+     if (n == 0) 
+     { return res; } 
+
+     for (int j = 0; j < n; j++)
+     { IfCase ic = (IfCase) cases.elementAt(j);
+       Expression test = ic.getTest();
+       Statement stat = ic.getIf();
+       if ("true".equals(test + ""))
+       { res = res + stat; }
+       else 
+       { res = res + "  if (" + test + ") { " + stat.toEtl() + " }\n";
+         if (j < n-1)
+         { res = res + "  else "; }
+       }       
      }
      return res; 
    } 
@@ -4650,11 +4958,51 @@ class IfStatement extends Statement
     return res;  
   }  
 
+  public Vector metavariables()
+  { Vector res = new Vector(); 
+    for (int i = 0; i < cases.size(); i++) 
+    { IfCase ic = (IfCase) cases.get(i); 
+      res.addAll(ic.metavariables());
+    } 
+    return res; 
+  } 
+
+  public String cg(CGSpec cgs)
+  { String etext = this + "";
+    Vector args = new Vector();
+
+    if (cases.size() > 0) 
+    { IfCase ic1 = (IfCase) cases.get(0); 
+      Expression test1 = ic1.getTest(); 
+      if ("true".equals(test1 + ""))
+      { Statement stat1 = ic1.getIf(); 
+        return stat1.cg(cgs); 
+      } 
+    } 
+
+    if (cases.size() > 0) 
+    { IfCase ic1 = (IfCase) cases.get(0); 
+      args.add(ic1.getTest().cg(cgs));
+      args.add(ic1.getIf().cg(cgs)); 
+    } 
+    
+    if (cases.size() > 1) // if then else
+    { IfCase ic2 = (IfCase) cases.get(1); 
+      args.add(ic2.getIf().cg(cgs));
+    } 
+    else  // if then
+    { args.add(""); }
+	
+    CGRule r = cgs.matchedStatementRule(this,etext);
+    if (r != null)
+    { return r.applyRule(args); }
+    return etext;
+  }
 }
 
 
 class AssignStatement extends Statement 
-{ private Type type;  // for declarations 
+{ private Type type = null;  // for declarations 
   private Expression lhs;
   private Expression rhs;
   private boolean copyValue = false; 
@@ -4665,8 +5013,27 @@ class AssignStatement extends Statement
     rhs = right; 
   }
 
+  public AssignStatement(Attribute left, Expression right)
+  { lhs = new BasicExpression(left);
+    rhs = right; 
+  }
+
+  public AssignStatement(Binding b) 
+  { lhs = new BasicExpression(b.getPropertyName()); 
+    rhs = b.expression; 
+  } 
+
+  public AssignStatement(String left, Expression right) 
+  { lhs = new BasicExpression(left); 
+    rhs = right; 
+  } 
+
   public String getOperator() 
   { return ":="; } 
+
+  public Expression getLeft()
+  { return lhs; } 
+
 
   public void setType(Type t)
   { type = t; } 
@@ -4676,14 +5043,59 @@ class AssignStatement extends Statement
     // rhs.elementType = t; 
   } 
 
-  public String cg(CGSpec cgs)
-  { String etext = this + "";
+  public Vector cgparameters()
+  { Vector args = new Vector();
+    args.add(lhs);
+    args.add(rhs);
+    return args; 
+  } 
+
+
+  public String basiccg(CGSpec cgs)
+  { // assumes type == null 
+    String etext = this + "";
     Vector args = new Vector();
     args.add(lhs.cg(cgs));
-    args.add(rhs.cg(cgs));
+    Vector eargs = new Vector(); 
+    eargs.add(lhs); 
+    Expression rhsnopre = rhs.removePrestate(); 
+    args.add(rhsnopre.cg(cgs));
+    eargs.add(rhsnopre);
+ 
     CGRule r = cgs.matchedStatementRule(this,etext);
     if (r != null)
-    { return r.applyRule(args); }
+    { return r.applyRule(args,eargs,cgs); }
+    return etext; 
+  }
+  
+  
+  
+  public String cg(CGSpec cgs)
+  { if (type != null) 
+    { // process as  var lhs : type ; lhs := rhs; 
+      SequenceStatement stat = new SequenceStatement(); 
+      CreationStatement cre = new CreationStatement(type + "", lhs + "");
+      cre.setType(type); 
+      cre.setElementType(lhs.elementType);  
+      AssignStatement newas = new AssignStatement(lhs,rhs);
+	  newas.type = null;  
+      stat.addStatement(cre); 
+      stat.addStatement(newas); 
+      return stat.cg(cgs); 
+    } 
+
+    String etext = this + "";
+    Vector args = new Vector();
+    args.add(lhs.cg(cgs));
+    Vector eargs = new Vector(); 
+    eargs.add(lhs); 
+    Expression rhsnopre = rhs.removePrestate(); 
+    args.add(rhsnopre.cg(cgs));
+    eargs.add(rhsnopre);
+ 
+    CGRule r = cgs.matchedStatementRule(this,etext);
+    if (r != null)
+    { return r.applyRule(args,eargs,cgs); }
     return etext;
   }
 
@@ -4791,6 +5203,11 @@ class AssignStatement extends Statement
     if (type != null) 
     { res = "  " + type.getJava() + " " + res; } 
     
+    return res; 
+  }
+
+  public String toEtl()
+  { String res = lhs + " = " + rhs + ";";  
     return res; 
   }
 
@@ -5098,6 +5515,11 @@ class AssignStatement extends Statement
     return res;  
   }  
 
+  public Vector metavariables()
+  { Vector res = lhs.metavariables();
+    res.addAll(rhs.metavariables());  
+    return res;  
+  }  
 }
 
 
@@ -5209,6 +5631,12 @@ class IfCase
     String res = "if (" + test.queryForm(env,false) + 
                        ") { "; 
     res = res + ifPart.toStringJava(); 
+    return res + " }\n";
+  }
+
+  public String toEtl()
+  { String res = "if (" + test + ") { "; 
+    res = res + ifPart.toEtl(); 
     return res + " }\n";
   }
 
@@ -5355,6 +5783,12 @@ class IfCase
     res.addAll(ifPart.equivalentsUsedIn()); 
     return res;  
   }  
+
+  public Vector metavariables()
+  { Vector res = test.metavariables();
+    res.addAll(ifPart.metavariables());  
+    return res;  
+  }  
 } 
 
 
@@ -5375,15 +5809,27 @@ class ConditionalStatement extends Statement
     elsePart = s2;
   }
 
+  public void setElse(Statement stat) 
+  { elsePart = stat; } 
+
   public String getOperator() 
   { return "if"; } 
+
+  public Expression getTest()
+  { return test; } 
 
   public String cg(CGSpec cgs)
   { String etext = this + "";
     Vector args = new Vector();
+	
+	if ("true".equals(test + ""))
+	{ return ifPart.cg(cgs); }
+	
     args.add(test.cg(cgs));
     args.add(ifPart.cg(cgs));
-    args.add(elsePart.cg(cgs));
+    if (elsePart == null) 
+	{ elsePart = new SequenceStatement(); } 
+	args.add(elsePart.cg(cgs));
 
     CGRule r = cgs.matchedStatementRule(this,etext);
     if (r != null)
@@ -5401,7 +5847,9 @@ class ConditionalStatement extends Statement
   }  
 
   public Statement generateDesign(java.util.Map env, boolean local)
-  { Statement ifc = ifPart.generateDesign(env,local); 
+  { Statement ifc = ifPart.generateDesign(env,local);
+    if ("true".equals(test + ""))
+	{ return ifc; } 
     Statement elsec = null; 
     if (elsePart != null) 
     { elsec = elsePart.generateDesign(env,local); }
@@ -5416,9 +5864,16 @@ class ConditionalStatement extends Statement
   }
 
   public String toStringJava()
-  { String res = "if " + test + " then " + ifPart;
+  { String res = "if (" + test + ") { " + ifPart + " } ";
     if (elsePart != null)
-    { res = res + " else " + elsePart; }
+    { res = res + " else { " + elsePart + " }"; }
+    return res;
+  }
+
+  public String toEtl()
+  { String res = "  if (" + test + ") { " + ifPart.toEtl() + " }\n";
+    if (elsePart != null)
+    { res = res + "  else { " + elsePart.toEtl() + " }"; }
     return res;
   }
 
@@ -5437,16 +5892,18 @@ class ConditionalStatement extends Statement
   }
 
   public void displayJava(String v, java.io.PrintWriter out)
-  { String res = "if " + test + " then " + ifPart;
+  { out.println("    if (" + test + ")"); 
+    out.println("    { " + ifPart + " }");
     if (elsePart != null)
-    { res = res + " else " + elsePart; }
-    out.println(res);
+    { out.println("    else "); 
+      out.println("    { " + elsePart + " }"); 
+    }
   }
 
   public void displayJava(String v)
-  { String res = "if " + test + " then " + ifPart;
+  { String res = "if (" + test + ") { " + ifPart + " }";
     if (elsePart != null)
-    { res = res + " else " + elsePart; }
+    { res = res + " else { " + elsePart + " }"; }
     System.out.println(res);
   }
 
@@ -5492,7 +5949,14 @@ class ConditionalStatement extends Statement
   }
 
   public Expression wpc(Expression post)
-  { return new BinaryExpression("=>", test, ifPart.wpc(post)); } 
+  { BinaryExpression ifimpl = new BinaryExpression("=>", test, ifPart.wpc(post));
+    if (elsePart != null) 
+	{ UnaryExpression ntest = new UnaryExpression("not", test); 
+	  BinaryExpression elseimpl = new BinaryExpression("=>", ntest, elsePart.wpc(post)); 
+	  return new BinaryExpression("&", ifimpl, elseimpl); 
+    }
+	return ifimpl; 
+  }  
   // and else if present
 
   public Vector dataDependents(Vector allvars, Vector vars)
@@ -5509,15 +5973,21 @@ class ConditionalStatement extends Statement
 
   public String updateForm(java.util.Map env, boolean local, Vector types,
                            Vector entities, Vector vars)
-  { String res = "if " + test.queryForm(env,local) + "\n";
-    res = res + "{ " + ifPart.updateForm(env,local,types,entities,vars) + " }\n";
+  { if ("true".equals(test + ""))
+    { return "    { " + ifPart.updateForm(env,local,types,entities,vars) + " }\n"; } 
+	
+	String res = "    if (" + test.queryForm(env,local) + ")\n";
+    res = res +  "    { " + ifPart.updateForm(env,local,types,entities,vars) + " }\n";
     if (elsePart != null)
-    { res = res + "else { " + elsePart.updateForm(env,local,types,entities,vars) + " }\n"; }
+    { res = res + "    else { " + elsePart.updateForm(env,local,types,entities,vars) + " }\n"; }
     return res;
   } 
 
   public String updateFormJava6(java.util.Map env, boolean local)
-  { String res = "if " + test.queryFormJava6(env,local) + "\n";
+  { if ("true".equals(test + ""))
+    { return "    { " + ifPart.updateFormJava6(env,local) + " }\n"; } 
+	
+	String res = "if (" + test.queryFormJava6(env,local) + ")\n";
     res = res + "{ " + ifPart.updateFormJava6(env,local) + " }\n";
     if (elsePart != null)
     { res = res + "else { " + elsePart.updateFormJava6(env,local) + " }\n"; }
@@ -5525,7 +5995,10 @@ class ConditionalStatement extends Statement
   } 
 
   public String updateFormJava7(java.util.Map env, boolean local)
-  { String res = "if " + test.queryFormJava7(env,local) + "\n";
+  { if ("true".equals(test + ""))
+    { return "    { " + ifPart.updateFormJava7(env,local) + " }\n"; } 
+	
+	String res = "if (" + test.queryFormJava7(env,local) + ")\n";
     res = res + "{ " + ifPart.updateFormJava7(env,local) + " }\n";
     if (elsePart != null)
     { res = res + "else { " + elsePart.updateFormJava7(env,local) + " }\n"; }
@@ -5533,7 +6006,10 @@ class ConditionalStatement extends Statement
   } 
 
   public String updateFormCSharp(java.util.Map env, boolean local)
-  { String res = "if " + test.queryFormCSharp(env,local) + "\n";
+  { if ("true".equals(test + ""))
+    { return "    { " + ifPart.updateFormCSharp(env,local) + " }\n"; } 
+	
+	String res = "if (" + test.queryFormCSharp(env,local) + ")\n";
     res = res + "{ " + ifPart.updateFormCSharp(env,local) + " }\n";
     if (elsePart != null)
     { res = res + "else { " + elsePart.updateFormCSharp(env,local) + " }\n"; }
@@ -5541,7 +6017,10 @@ class ConditionalStatement extends Statement
   } 
 
   public String updateFormCPP(java.util.Map env, boolean local)
-  { String res = "if " + test.queryFormCPP(env,local) + "\n";
+  { if ("true".equals(test + ""))
+    { return "    { " + ifPart.updateFormCPP(env,local) + " }\n"; } 
+	
+	String res = "if (" + test.queryFormCPP(env,local) + ")\n";
     res = res + "{ " + ifPart.updateFormCPP(env,local) + " }\n";
     if (elsePart != null)
     { res = res + "else { " + elsePart.updateFormCPP(env,local) + " }\n"; }
@@ -5664,5 +6143,12 @@ class ConditionalStatement extends Statement
     return res;  
   }  
 
+  public Vector metavariables()
+  { Vector res = test.metavariables();
+    res.addAll(ifPart.metavariables());  
+    if (elsePart != null) 
+    { res.addAll(elsePart.metavariables()); }   
+    return res;  
+  }  
 }
 

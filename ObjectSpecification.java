@@ -13,10 +13,10 @@ import java.io.*;
 public class ObjectSpecification extends ModelElement
 { // String objectName;
   
-  String objectClass;
-  Entity entity;
+  String objectClass = "";
+  Entity entity = null;
   List atts = new ArrayList();  // String
-  java.util.Map attvalues = new HashMap(); // String --> String
+  java.util.Map attvalues = new HashMap(); // String --> Object
   List elements = new ArrayList(); // ObjectSpecification
   boolean isSwingObject = true; 
 
@@ -30,10 +30,84 @@ public class ObjectSpecification extends ModelElement
     { isSwingObject = false; } 
   }
 
+  public void setEntity(Entity cls) 
+  { entity = cls; } 
+
   public String toString()
-  { return getName() + " : " + objectClass + "\n" +
-        attvalues + "\n" + elements +"\n\n";
+  { return getName() + " : " + objectClass + " { " +
+           attvalues + "; " + elements + " }";
   }
+
+  public boolean equals(Object x) 
+  { if (x instanceof ObjectSpecification)
+    { ObjectSpecification spec = (ObjectSpecification) x; 
+      String xname = spec.getName(); 
+      return xname.equals(getName()) && 
+         spec.attvalues != null && attvalues != null && 
+         attvalues.equals(spec.attvalues); 
+    } 
+    return false; 
+  } 
+
+
+  public int getInt(String att) 
+  { // Where we know that att represents an int value 
+    String val = (String) attvalues.get(att); 
+    if (val != null)
+    { int x = Integer.parseInt(val);  
+      return x; 
+    }
+    return 0; 
+  } 
+
+  public long getLong(String att) 
+  { // Where we know that att represents an int value 
+    String val = (String) attvalues.get(att); 
+    if (val != null)
+    { long x = Long.parseLong(val);  
+      return x; 
+    }
+    return 0; 
+  } 
+
+  public double getDouble(String att) 
+  { // Where we know that att represents an int value 
+    String val = (String) attvalues.get(att); 
+    if (val != null)
+    { double x = Double.parseDouble(val);  
+      return x; 
+    }
+    return 0; 
+  } 
+
+  public double getNumeric(String att) 
+  { double res = 0; 
+
+    String val = (String) attvalues.get(att); 
+    if (val != null) 
+    { try { res = Integer.parseInt(val); } 
+      catch (Exception _e) 
+      { try { res = Long.parseLong(val); } 
+        catch (Exception _f) 
+        { res = Double.parseDouble(val); } 
+      } 
+    } 
+    return res; 
+  }  
+
+  public String getString(String att) 
+  { 
+    String val = (String) attvalues.get(att); 
+    return val.substring(1,val.length()-1); 
+  } // Need also to remove the quotes
+
+  public Vector getCollection(String att) 
+  { Vector res = (Vector) attvalues.get(att); 
+    if (res == null) 
+    { return new Vector(); }
+    return res; 
+  }  
+
 
   public static boolean isJavaGUIClass(String s)
   { return s.equals("Frame") || s.equals("Panel") || s.equals("Button") ||
@@ -43,8 +117,39 @@ public class ObjectSpecification extends ModelElement
   } 
 
   public void addAttribute(String att, String value)
-  { atts.add(att);
+  { if (atts.contains(att)) { } 
+    else 
+    { atts.add(att); } 
     attvalues.put(att,value); 
+  }
+
+  public void addAttribute(String att, Vector value)
+  { if (atts.contains(att)) { } 
+    else 
+    { atts.add(att); } 
+    attvalues.put(att,value); 
+  }
+
+  public void addAttributeElement(String att, String value)
+  { Vector v = new Vector(); 
+    if (atts.contains(att)) 
+    { v = (Vector) attvalues.get(att); } 
+    else 
+    { atts.add(att);
+      attvalues.put(att,v); 
+    } 
+    v.add(value); 
+  }
+
+  public void addAttributeElement(String att, ObjectSpecification value)
+  { Vector v = new Vector(); 
+    if (atts.contains(att)) 
+    { v = (Vector) attvalues.get(att); } 
+    else 
+    { atts.add(att);
+      attvalues.put(att,v); 
+    } 
+    v.add(value); 
   }
 
   public void addelement(ObjectSpecification elem)

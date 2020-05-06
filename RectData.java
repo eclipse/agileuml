@@ -110,6 +110,13 @@ class RectData extends RectForm
         if (fm.stringWidth("<<active>>") + (namex - sourcex) >= width) 
         { width = fm.stringWidth("<<active>>") + (namex - sourcex) + 5; }
       }
+      else if (e.isExternal() || e.isExternalApp())
+      { g.drawString(label,namex,namey);
+        g.drawString("<<component>>",namex,namey-5);
+        FontMetrics fm = g.getFontMetrics(); 
+        if (fm.stringWidth("<<component>>") + (namex - sourcex) >= width) 
+        { width = fm.stringWidth("<<component>>") + (namex - sourcex) + 5; }
+      }
       else 
       { g.drawString(label,namex,namey); }
  

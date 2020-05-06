@@ -76,6 +76,7 @@ abstract class Expression
     operators.add("=>"); 
     operators.add("#"); 
     operators.add("or"); 
+    operators.add("xor"); 
     operators.add("&"); 
   }
 
@@ -166,7 +167,15 @@ abstract class Expression
 
   public Type getType() { return type; }
 
+  public boolean isMap() 
+  { if (type != null && type.getName().equals("Map"))
+    { return true; } 
+    return false; 
+  } 
+
   public int getKind() { return umlkind; } 
+
+  public int getMultiplicity()  { return multiplicity; } 
 
   public void setUmlKind(int k)
   { umlkind = k; } 
@@ -295,9 +304,45 @@ abstract class Expression
     } 
   } 
 
+  public Expression etlEquivalent(Attribute trg, Vector ems) 
+  { if (type == null) 
+    { return this; } 
+    if (trg == null) 
+    { return this; } 
+
+    Entity sent = type.getEntity(); 
+    if (sent == null && elementType != null) 
+    { sent = elementType.getEntity(); } 
+
+    if (trg.getType() != null && trg.getType().isEntityType())
+    { Entity tent = trg.getType().getEntity(); 
+      EntityMatching em = ModelMatching.findEntityMatchingFor(sent,tent,ems);
+      if (em != null) 
+      { return new BasicExpression("(" + this + ").equivalent('" + em.realsrc + "2" + 
+                                                                          em.realtrg + "')"); 
+      }  
+      return new BasicExpression("(" + this + ").equivalent()"); 
+    } 
+    else if (Type.isEntityCollection(trg.getType()))
+    { Entity tent = trg.getElementType().getEntity(); 
+      EntityMatching em = ModelMatching.findEntityMatchingFor(sent,tent,ems);
+      if (em != null) 
+      { return new BasicExpression("(" + this + ").equivalent('" + em.realsrc + "2" + 
+                                                                          em.realtrg + "')"); 
+      }
+      return new BasicExpression("(" + this + ").equivalent()"); 
+    } 
+    else 
+    { return this; }
+  } 
+
+
   public abstract Expression definedness(); 
 
   public abstract Expression determinate(); 
+
+  public abstract Expression removePrestate(); 
+
 
   public static Statement iterationLoop(Expression var, Expression range, Statement body)
   { BinaryExpression test = new BinaryExpression(":", var, range);
@@ -419,6 +464,25 @@ abstract class Expression
     { return "((int) " + se + ")"; } // for enumerated
     return se;   // can't unwrap -- for strings or objects
   }
+
+  public static String unwrapSwift(String se, Type t)
+  { if (t == null)
+    { return se; }  // should never happen
+    String tname = t.getName();
+    if (tname.equals("double"))
+    { return "Double(" + se + ")"; } 
+    if (tname.equals("boolean"))
+    { return "Bool(" + se + ")"; } 
+    if (tname.equals("int"))
+    { return "Int(" + se + ")"; }
+    if (tname.equals("long"))
+    { return "Int(" + se + ")"; }
+    if (t.isEnumerated())
+    { return tname + "(" + se + ")"; } 
+    // for enumerated
+    return se;   // can't unwrap -- for strings or objects
+  }
+
 
   public abstract Expression skolemize(Expression sourceVar, java.util.Map env); 
 
@@ -603,6 +667,8 @@ abstract class Expression
 
   public abstract Vector allFeaturesUsedIn(); 
 
+  public abstract Vector allAttributesUsedIn();
+  
   public abstract Vector allOperationsUsedIn(); 
 
   public abstract Vector equivalentsUsedIn(); 
@@ -1308,6 +1374,10 @@ abstract class Expression
       { Expression res1 = simplifyExistsAnd(be1.right, e2); 
         return new BinaryExpression("#", be1.left, res1); 
       }
+      else if ("#LC".equals(be1.operator))
+      { Expression res1 = simplifyExistsAnd(be1.right, e2); 
+        return new BinaryExpression("#LC", be1.left, res1); 
+      }
       else if ("&".equals(be1.operator))
       { Expression res1 = simplifyExistsAnd(be1.right, e2); 
         return simplifyExistsAnd(be1.left, res1); 
@@ -1454,6 +1524,9 @@ abstract class Expression
         res.setBrackets(true); 
         return res; 
       } 
+      else if (op.equals("->includesAll")) 
+      { return new BinaryExpression("/<:",be.right,be.left); } 
+
 
       String nop = negateOp(be.operator); 
       if (!(nop.equals(be.operator))) 
@@ -1542,7 +1615,26 @@ abstract class Expression
 
   public Vector splitToCond0Cond1Pred(Vector conds, Vector pars, 
                             Vector qvars1, Vector lvars1, Vector allvars, Vector allpreds)
-  { return conds; }  // all formulae in antecedent should be binary
+  // { return conds; }    
+  { Expression cond0 = (Expression) conds.get(0); 
+    Expression cond1 = (Expression) conds.get(1); 
+    Vector res = new Vector(); 
+    // System.out.println("Split conds on: " + this);
+
+    Expression c1; 
+    if (cond1 == null) 
+    { c1 = this; } 
+    else 
+    { c1 = new BinaryExpression("&",cond1,this); }  
+    res.add(cond0); 
+    res.add(c1); 
+    allvars.add(this); 
+    allpreds.add(this); 
+    // System.out.println("Added condition: " + this); 
+    
+    return res; 
+  } 
+
 
   public Vector splitToTCondPost(Vector tvars, Vector conds)
   { return conds; }  // all formulae in antecedent should be binary
