@@ -1,0 +1,53 @@
+Type::
+Sequence(_1) |-->ArrayList<_1>
+Set(_1) |-->HashSet<_1>
+
+
+
+
+
+
+
+Attribute::
+static attribute _1 : _2; |-->  static _2 _1;\n
+identity attribute _1 : _2 |-->  
+identity attribute _1 : _2; |--> 
+attribute _1 : _2; |-->  
+reference _1 : _2; |-->  
+
+
+
+Operation::
+query _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->  public _3 _1(_2);\n
+
+operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->  public _3 _1(_2);\n
+
+static query _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->  public static _3 _1(_2);\n
+
+static operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->  public static _3 _1(_2);\n
+
+
+
+
+Parameter::
+_1 : _2, _3 |-->_2 _1, _3
+_1 : _2 |-->_2 _1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

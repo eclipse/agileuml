@@ -13,17 +13,6 @@ import Glibc
 
 class Ocl
 {
-  static func displayString(s: String) 
-  { print(s) } 
-
-  static func displayint(s: Int) 
-  { print(String(s)) } 
-
-  static func displaylong(s: Int) 
-  { print(String(s)) } 
-
-  static func displaydouble(s: Double) 
-  { print(String(s)) } 
 
   static func includingSet<T>(s : Set<T>, x : T) -> Set<T>
   { var result : Set<T> = Set<T>()
@@ -36,6 +25,18 @@ class Ocl
   { var result : [T] = [T]()
     result = result + s
     result.append(x)
+    return result
+  }
+
+  static func copySet<T>(s : Set<T>) -> Set<T>
+  { var result : Set<T> = Set<T>()
+    result.formUnion(s)
+    return result
+  }
+
+  static func copySequence<T>(s : [T]) -> [T]
+  { var result : [T] = [T]()
+    result = result + s
     return result
   }
 
@@ -624,6 +625,17 @@ class Ocl
   return ""
 }
 
+ static func indexOf(str: String, ch: String) -> Int
+{ var count = 0
+  for index in str.indices
+  { let c : Character = str[index]
+    count = count + 1
+    if (String(c) == ch) 
+    { return count } 
+  } 
+  return 0
+}
+
  static func stringSubrange(str : String, st : Int, en : Int) -> String
   { var result : [Character] = [Character]()
     var count : Int = 0
@@ -695,6 +707,23 @@ class Ocl
     let rev = Ocl.reverse(s: result)
     return String(rev)
   }
+
+   static func toLineSequence(str: String) -> [String]
+   { var result : [String] = [String]()
+     var buffer : String = ""
+	 
+     for index in str.indices
+     { let c : Character = str[index]
+       if "\n" == String(c)
+       { result.append(buffer) 
+	     buffer = String() 
+	   } 
+	   else 
+	   { buffer = buffer + String(c) }
+     } 	   
+	 result.append(buffer)
+     return result
+   }
 
   /* Only for Swift 5+ 
   static func before(str: String, sep: String) -> String

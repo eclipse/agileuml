@@ -1,0 +1,47 @@
+Enumeration::
+enumeration _1 { _2 } |-->enum _1 { _2 }\n\n
+ 
+literal _1, _2 |-->case _1\n  _2
+literal _1 |-->case _1
+ 
+
+Type::
+int |-->Int
+long |-->Int
+boolean |-->Bool
+double |-->Double
+void |-->Void
+
+Sequence(_1) |-->[_1]
+Set(_1) |-->Set<_1>
+Map(_1,_2) |-->Dictionary<_1,_2>
+
+
+
+
+
+
+Attribute::
+static attribute _1 : _2; |-->  static var _1 : _2 { get set }\n
+identity attribute _1 : _2; |-->  var _1 : _2 { get set } /* principal key */\n\n  subscript(index : _2) -> _1`ownername\n  \n<when> _1 principal
+identity attribute _1 : _2; |-->  var _1 : _2 { get set } /* key */\n
+attribute _1 : _2; |-->  var _1 : _2 { get set }\n
+reference _1 : _2; |-->  var _1 : _2 { get set }\n<when> _2 collection
+reference _1 : _2; |-->  var _1 : _2 { get set }\n<when> _2 not collection
+
+
+
+
+Parameter::
+_1 : _2, _3 |-->_1 : _2, _3
+_1 : _2 |-->_1 : _2
+
+
+Operation::
+query _1(_2) : _3 pre: _4 post: _5 activity : _6 |-->\n  func _1(_2) -> _3\n\n
+operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->\n  func _1(_2)\n\n<when> _3 void
+operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->\n  func _1(_2) -> _3\n\n<when> _3 not void
+
+
+
+

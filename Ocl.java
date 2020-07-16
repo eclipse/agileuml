@@ -1,6 +1,8 @@
+package com.example.app6;
+
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -178,7 +180,42 @@ interface Evaluation<S,T> {
       { result.add(args[i]); } 
       return result; 
     } 
+	
+	public static <T> copySet(Collection<T> s)
+	{ HashSet<T> result = new HashSet<T>(); 
+      result.addAll(s); 
+	  return result; 
+	} 
 
+	public static <T> copySequence(Collection<T> s)
+	{ ArrayList<T> result = new ArrayList<T>(); 
+      result.addAll(s); 
+	  return result; 
+	} 
+
+    public static <T extends Comparable> T min(Collection<T> s)
+    { ArrayList<T> slist = new ArrayList<T>(); 
+	  slist.addAll(s); 
+	  T result = slist.get(0); 
+      for (int i = 1; i < slist.size(); i++) 
+      { T val = slist.get(i); 
+	    if (val.compareTo(result) < 0) 
+        { result = val; } 
+      } 
+      return result; 
+    } 
+
+    public static <T extends Comparable> T max(Collection<T> s)
+    { ArrayList<T> slist = new ArrayList<T>(); 
+	  slist.addAll(s); 
+	  T result = slist.get(0); 
+      for (int i = 1; i < slist.size(); i++) 
+      { T val = slist.get(i); 
+	    if (0 < val.compareTo(result)) 
+        { result = val; } 
+      } 
+      return result; 
+    } 
 
 
     public static <T> HashSet<T> addSet(HashSet<T> s, T x)
@@ -492,7 +529,7 @@ interface Evaluation<S,T> {
   }
 
 
-  public static ArrayList<Integer> integerSubrange(int i, int j)
+  public static ArrayList<Integer> integerSubrange(int i, double j)
   { ArrayList<Integer> tmp = new ArrayList<Integer>(); 
     for (int k = i; k <= j; k++)
     { tmp.add(new Integer(k)); } 
@@ -906,5 +943,51 @@ interface Evaluation<S,T> {
   { m.put(key,value);
     return m;
   }
-  
+
+ public static ArrayList<String> tokeniseCSV(String line)
+ { StringBuffer buff = new StringBuffer();
+   int x = 0;
+   int len = line.length();
+   boolean instring = false;
+   ArrayList<String> res = new ArrayList<String>();
+   while (x < len)
+   { char chr = line.charAt(x);
+     x++;
+     if (chr == ',')
+     { if (instring) { buff.append(chr); }
+       else
+       { res.add(buff.toString().trim());
+         buff = new StringBuffer();
+       }
+     }
+     else if ('"' == chr)
+     { if (instring) { instring = false; }
+       else { instring = true; } 
+     }
+     else
+     { buff.append(chr); }
+   }
+   res.add(buff.toString().trim());
+   return res;
+ }
+
+ public static ArrayList<String> parseCSVtable(String rows)
+ { StringBuffer buff = new StringBuffer();
+   int x = 0;
+   int len = rows.length();
+   boolean instring = false;
+   ArrayList<String> res = new ArrayList<String>();
+   while (x < len)
+   { char chr = rows.charAt(x);
+     x++;
+     if (chr == '\n')
+     { res.add(buff.toString().trim());
+       buff = new StringBuffer();
+     }
+     else
+     { buff.append(chr); }
+   }
+   res.add(buff.toString().trim());
+   return res;
+ }  
 }
