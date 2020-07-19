@@ -1,4 +1,4 @@
-package com.example.app6;
+
 
 
 /******************************
@@ -181,13 +181,13 @@ interface Evaluation<S,T> {
       return result; 
     } 
 	
-	public static <T> copySet(Collection<T> s)
+	public static <T> HashSet<T> copySet(Collection<T> s)
 	{ HashSet<T> result = new HashSet<T>(); 
       result.addAll(s); 
 	  return result; 
 	} 
 
-	public static <T> copySequence(Collection<T> s)
+	public static <T> ArrayList<T> copySequence(Collection<T> s)
 	{ ArrayList<T> result = new ArrayList<T>(); 
       result.addAll(s); 
 	  return result; 
