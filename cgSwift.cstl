@@ -1,3 +1,18 @@
+--
+-- Main code-generation specification file for Swift  
+-- Versions 4, 5. Also uses cgswiftmain.cstl, cgprotocol.cstl
+-- Depends on Ocl.swift
+-- 
+-- Copyright (c) 2003,2020 Kevin Lano
+-- This program and the accompanying materials are 
+-- made available under the
+-- terms of the Eclipse Public License 2.0 
+-- which is available at
+-- http://www.eclipse.org/legal/epl-2.0
+--
+-- SPDX-License-Identifier: EPL-2.0
+-- 
+
 Package::
 package _1 { types: _2 classes: _3 usecases: _4 } |-->import Foundation\nimport Glibc\n\nfunc displayString(s: String)\n{ print(s) }\n\nfunc displayint(s: Int)\n{ print(String(s)) }\n\nfunc displaylong(s: Int)\n{ print(String(s)) }\n\nfunc displaydouble(s: Double)\n{ print(String(s)) }\n\nfunc displayboolean(s: Bool)\n{ print(String(s)) }\n\n_2\n\n_3\n\n_3`cgswiftmain \n\n_4 
 
