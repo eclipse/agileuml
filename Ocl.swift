@@ -626,15 +626,44 @@ class Ocl
 }
 
  static func indexOf(str: String, ch: String) -> Int
-{ var count = 0
-  for index in str.indices
-  { let c : Character = str[index]
-    count = count + 1
-    if (String(c) == ch) 
-    { return count } 
-  } 
-  return 0
-}
+ { var res : Int = 0
+   var found : Bool = false
+   if ch.count == 0
+   { return 0 }
+   
+   let sepchars = chars(str: ch)
+   var ind : Int = 0
+   
+   for index in str.indices
+   { let c : Character = str[index]
+     
+	 if found && (ind < sepchars.count)
+	 { if (c == sepchars[ind])
+       { ind = ind + 1 } 
+       else 
+       { found = false
+         res = res + ind
+		 ind = 0
+	   } 
+     } 
+	 else if found
+	 { return res + 1 } 
+	 
+     if found == false
+     { if c == sepchars[0]
+       { found = true
+         ind = 1
+       } 
+     }
+    
+     if found == false
+     { res = res + 1 }
+   }
+
+   if found   
+   { return res + 1 } 
+   return 0
+ }
 
  static func stringSubrange(str : String, st : Int, en : Int) -> String
   { var result : [Character] = [Character]()
@@ -687,7 +716,14 @@ class Ocl
     return result
   } 
 
-  static func characters(str: String) -> [Character]
+  static func characters(str: String) -> [String]
+  { var res : [String] = [String]()
+    for ind in str.indices
+    { res.append(String(str[ind])) } 
+    return res
+  }
+
+  static func chars(str: String) -> [Character]
   { var res : [Character] = [Character]()
     for ind in str.indices
     { res.append(str[ind]) } 
@@ -696,14 +732,14 @@ class Ocl
 
   static func insertAtString(s1 : String, s2 : String, ind : Int) -> String
   { var result : [Character] = [Character]()
-    let seq1 = Ocl.characters(str: s1)
-    let seq2 = Ocl.characters(str: s2)
+    let seq1 = Ocl.chars(str: s1)
+    let seq2 = Ocl.chars(str: s2)
     result = Ocl.insertAt(s1: seq1, s2: seq2, ind: ind)
     return String(result)
   }
 
-  static func reverseString(s : String) -> String
-  { let result : [Character] = Ocl.characters(str: s)
+  static func reverseString(str : String) -> String
+  { let result : [Character] = Ocl.chars(str: str)
     let rev = Ocl.reverse(s: result)
     return String(rev)
   }
@@ -725,6 +761,31 @@ class Ocl
      return result
    }
 
+   static func before(str: String, sep: String) -> String
+   { let ind = indexOf(str: str, ch: sep)
+     if ind > 0
+     { return stringSubrange(str: str, st: 1, en: ind-1) } 
+     return str
+   } // Single-character sep only 
+
+   static func after(str: String, sep: String) -> String
+   { let revstr = reverseString(str: str)
+     let revsep = reverseString(str: sep)
+	 let ind = indexOf(str: revstr, ch: revsep)
+     if ind > 0
+     { let res = stringSubrange(str: revstr, st: 1, en: ind-1) 
+	   return reverseString(str: res)
+	 } 
+     return ""
+   } // Single-character sep only 
+   
+   static func matches(str: String, pattern: String) -> Bool
+   { let rge = NSRange(location: 0, length: str.utf16.count)
+     var regexp = try! NSRegularExpression(pattern: pattern)
+     let pred = regexp.firstMatch(in: str, options: [], range: rge)
+     return pred != nil
+  }
+  
   /* Only for Swift 5+ 
   static func before(str: String, sep: String) -> String
   { if let ind = str.firstIndex(of: sep)

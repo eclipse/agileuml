@@ -227,6 +227,8 @@ _1->hasPrefix(_2) |-->_1.startsWith(_2)
 _1->hasSuffix(_2) |-->_1.endsWith(_2)
 _1->after(_2) |-->Ocl.after(_1,_2))
 _1->before(_2) |-->Ocl.before(_1,_2)
+_1->matches(_2) |-->java.util.regex.Pattern.matches(_2,_1)
+
 
 
 

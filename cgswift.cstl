@@ -1,0 +1,352 @@
+--
+-- Main code-generation specification file for Swift  
+-- Versions 4, 5. Also uses cgswiftmain.cstl, cgprotocol.cstl
+-- Depends on Ocl.swift
+-- 
+-- Copyright (c) 2003,2020 Kevin Lano
+-- This program and the accompanying materials are 
+-- made available under the
+-- terms of the Eclipse Public License 2.0 
+-- which is available at
+-- http://www.eclipse.org/legal/epl-2.0
+--
+-- SPDX-License-Identifier: EPL-2.0
+-- 
+
+Package::
+package _1 { types: _2 classes: _3 usecases: _4 } |-->import Foundation\nimport Glibc\n\nfunc displayString(s: String)\n{ print(s) }\n\nfunc displayint(s: Int)\n{ print(String(s)) }\n\nfunc displaylong(s: Int)\n{ print(String(s)) }\n\nfunc displaydouble(s: Double)\n{ print(String(s)) }\n\nfunc displayboolean(s: Bool)\n{ print(String(s)) }\n\n_2\n\n_3\n\n_3`cgswiftmain \n\n_4 
+
+
+Enumeration::
+enumeration _1 { _2 } |-->enum _1 { _2 }\n\n
+ 
+literal _1, _2 |-->case _1\n  _2
+literal _1 |-->case _1
+ 
+
+Type::
+int |-->Int
+long |-->Int
+boolean |-->Bool
+double |-->Double
+void |-->Void
+
+Sequence(_1) |-->[_1]
+Set(_1) |-->Set<_1>
+
+Map(_1,_2) |-->Dictionary<_1,_2>
+
+
+
+BasicExpression::
+null |-->nil
+
+self |-->self
+
+_1 |-->_1`typename._1<when> _1 enumerationLiteral
+
+_1.allInstances |-->_1_allInstances
+
+_1.insertAt(_2,_3) |-->Ocl.insertAtString(s1: _1, s2: _2, ind: _3)<when> _1 String
+_1.insertAt(_2,_3) |-->Ocl.insertAt(s1: _1, s2: _2, ind: _3)
+
+Integer.subrange(_1,_2) |-->((_1)...(_2))
+
+_1.subrange(_2,_3) |-->Ocl.stringSubrange(str: _1, st: _2, en: _3)<when> _1 String
+_1.subrange(_2,_3) |-->Ocl.subrange(s: _1, st: _2, en: _3)
+
+_1[_2] |-->(_1)[_2 - 1]<when> _2 numeric
+_1[_2] |-->Ocl.at(str: _1, ind: _2)<when> _1 String
+_1[_2] |-->_1.getByPK_1(index: _2)<when> _1 classId
+_1[_2] |-->(_1)[_2]
+
+displayString(_1) |-->displayString(s: _1)
+displayint(_1) |-->displayint(s: _1)
+displaylong(_1) |-->displaylong(s: _1)
+displaydouble(_1) |-->displaydouble(s: _1)
+displayboolean(_1) |-->displayboolean(s: _1)
+createByPK_1(_2) |-->createByPK_1(key: _2)
+persist_1(_2) |-->persist_1(_x: _2)
+
+
+_1._2(_3) |-->_1!._2(_3)<when> _1 object
+_1._2 |-->_1!._2<when> _1 object
+
+
+_1._2(_3) |-->_1._2(_3)
+_1._2 |-->_1._2
+_1(_2) |-->_1(_2)
+
+
+
+
+
+UnaryExpression::
+-_1 |-->-_1
++_1 |-->+_1
+_1->log() |-->log(_: _1)
+_1->exp() |-->exp(_: _1)
+_1->sin() |-->sin(_: _1)
+_1->cos() |-->cos(_: _1)
+_1->tan() |-->tan(_: _1)
+_1->asin() |-->asin(_: _1)
+_1->acos() |-->acos(_: _1)
+_1->atan() |-->atan(_: _1)
+_1->sqr() |-->(_1)*(_1)
+_1->sqrt() |-->sqrt(_: _1)
+_1->cbrt() |-->cbrt(_: _1)
+_1->floor() |-->Int(floor(_: _1))
+_1->ceil() |-->Int(ceil(_: _1))
+_1->round() |-->Int(round(_: _1))
+_1->abs() |-->abs(_: _1)
+
+_1->size() |-->_1.count
+_1->toInteger() |-->Int(_1)
+_1->toReal() |-->Double(_1)
+_1->toUpper() |-->_1.uppercased()
+_1->toLower() |-->_1.lowercased()
+_1->characters() |-->Ocl.characters(str: _1)
+
+_1->oclIsUndefined() |-->(_1 == nil)
+_1->oclIsKindOf(_2) |-->(_1 is _2)
+_1->oclAsType(_2) |-->(_1 as _2)
+_1->allInstances() |-->_1_allInstances
+
+_1->first() |-->Ocl.at(str: _1, ind: 1)<when>_1 String
+_1->first() |-->_1[0]
+
+_1->last() |-->_1[_1.count - 1]
+_1->tail() |-->Ocl.tail(s: _1)
+_1->front() |-->Ocl.front(s: _1)
+
+_1->reverse() |-->Ocl.reverseString(str: _1)<when> _1 String
+_1->reverse() |-->Ocl.reverse(s: _1)
+
+_1->max() |-->Ocl.max(s: _1)
+_1->min() |-->Ocl.min(s: _1)
+_1->sum() |-->Ocl.sum(s: _1)
+_1->prd() |-->Ocl.prd(s: _1)
+_1->sort() |-->_1.sorted()
+_1->any() |-->Ocl.any(s: _1)
+_1->isEmpty() |-->(_1.count == 0)
+_1->notEmpty() |-->(_1.count > 0)
+_1->asSet() |-->Ocl.toSet(s: _1)
+_1->asSequence() |-->Ocl.toSequence(s: _1)
+_1->flatten() |-->Ocl.flatten(_1)
+_1->keys() |-->Ocl.mapKeys(m: _1)
+_1->values() |-->Ocl.mapRange(m: _1)
+
+
+not(_1) |-->!(_1)
+_1->display() |-->    print(_1 + "\n")
+_1->isDeleted() |-->    _1 = nil
+
+
+BinaryExpression::
+_1 & _2 |-->_1 && _2 
+_1 or _2 |-->_1 || _2 
+_1 xor _2 |-->((_1 || _2) && !(_1 && _2))
+
+_1 = _2 |-->_1 === _2<when> _1 object
+_1 = _2 |-->_1 == _2<when> _1 not object
+
+_1 < _2 |-->_1 < _2
+_1 > _2 |-->_1 > _2
+
+_1 <> _2 |-->_1 !== _2<when> _1 object
+_1 <> _2 |-->_1 != _2<when> _1 not object
+
+_1 <= _2 |-->_1 <= _2
+_1 >= _2 |-->_1 >= _2
+
+
+_1 + _2 |-->_1 + String(_2)<when> _1 String, _2 numeric
+_1 + _2 |-->String(_1) + _2<when> _1 numeric, _2 String
+_1 + _2 |-->_1 + _2
+
+_1 - _2 |-->_1 - _2<when> _1 numeric, _2 numeric
+_1 - _2 |-->Ocl.stringSubtract(s1: _1, s2: _2)<when> _1 String, _2 String
+_1 - _2 |-->_1.subtracting(_2)<when> _1 Set, _2 collection
+_1 - _2 |-->Ocl.sequenceSubtract(s1: _1, s2: _2)<when> _1 Sequence, _2 collection
+_1 * _2 |-->_1 * _2 
+_1 / _2 |-->_1 / _2 
+_1 mod _2 |-->_1 % _2
+
+_1->pow(_2) |-->pow(_: _1, _: _2)
+_1^_2 |-->_1 + _2
+_1->union(_2) |-->_1.union(_2)<when> _1 Set
+_1->union(_2) |-->_1 + _2<when> _1 Sequence
+
+_1->unionAll(_2|_3) |-->Ocl.unionAll(s: _1, f: { _2 in _3 })
+
+_1->intersection(_2) |-->_1.intersection(_2)<when> _1 Set
+_1->intersection(_2) |-->Ocl.intersectionSequence(s1: _1, s2: _2)<when> _1 Sequence
+
+_1->intersectAll(_2|_3) |-->Ocl.intersectAll(s: _1, f: { _2 in _3 })
+
+_1->count(_2) |-->Ocl.count(s: _1, x: _2)
+_1->indexOf(_2) |-->Ocl.indexOf(str: _1, ch: _2)
+
+_1->at(_2) |-->Ocl.at(str: _1, ind: _2)<when> _1 String
+_1->at(_2) |-->_1[_2 - 1]<when> _2 numeric
+_1->at(_2) |-->_1[_2]<when> _2 not numeric
+
+_1->select(_2 | _3) |-->Ocl.select(s: _1, f: { _2 in _3 })
+_1->reject(_2 | _3) |-->Ocl.reject(s: _1, f: { _2 in _3 })
+
+_1->collect(_2 | _3) |-->_1.map({_2 in _3})
+
+_1->sortedBy(_2|_3) |-->Ocl.sortedBy(s: _1, f: { _2 in  _3 })
+
+_1->forAll(_2 | _3) |-->Ocl.forAll(s: _1, f: { _2 in _3 })
+_1->exists(_2 | _3) |-->Ocl.exists(s: _1, f: { _2 in _3 })
+_1->exists1(_2 | _3) |-->Ocl.exists1(s: _1, f: { _2 in _3 })
+_1->isUnique(_2 | _3) |-->Ocl.isUnique(s: _1, f: { _2 in _3 })
+
+_1->any(_2 | _3) |-->Ocl.any(s: _1_allInstances, f: { _2 in _3 })<when> _1 classId
+_1->any(_2 | _3) |-->Ocl.any(s: _1, f: { _2 in _3 })<when> _1 not classId
+
+_1 : _2 |-->_2.contains(_1)<when> _1 Set
+_1 : _2 |-->Ocl.containsSequence(s: _2, x: _1)<when> _2 Sequence
+
+_1 <: _2 |-->_1.isSubset(of: _2)<when> _1 Set
+_1 <: _2 |-->Ocl.includesAllSequence(s1: _2, s2: _1)<when> _1 Sequence
+
+_1 /: _2 |-->!(_2.contains(_1))<when> _2 Set
+_1 /: _2 |-->!(Ocl.containsSequence(s: _2, x: _1))<when> _2 Sequence
+
+_1->includes(_2) |-->_1.contains(_2)<when> _1 Set
+_1->includes(_2) |-->Ocl.containsSequence(s: _1, x: _2)<when> _1 Sequence
+
+_1->includesAll(_2) |-->_2.isSubset(of: _1)<when> _1 Set
+_1->includesAll(_2) |-->Ocl.includesAllSequence(s1: _1, s2: _2)<when> _1 Sequence
+
+_1->excludes(_2) |-->!(_1.contains(_2))<when> _1 Set
+_1->excludes(_2) |-->!(Ocl.containsSequence(s: _1, x: _2))<when> _1 Sequence
+
+_1->excludesAll(_2) |-->_1.isDisjoint(with: _2)<when> _1 Set
+_1->excludesAll(_2) |-->(Ocl.intersectionSequence(s1: _1, s2: _2).count == 0)<when> _1 Sequence
+
+_1->including(_2) |-->Ocl.includingSet(s: _1, x: _2)<when> _1 Set
+_1->including(_2) |-->Ocl.includingSequence(s: _1, x: _2)<when> _1 Sequence
+
+_1->prepend(_2) |-->Ocl.prepend(s: _1, x: _2)
+_1->append(_2) |-->Ocl.includingSequence(s: _1, x: _2)
+_1->excluding(_2) |-->_1.subtracting([_2])<when> _1 Set
+_1->excluding(_2) |-->Ocl.excludingSequence(s: _1, x: _2)<when> _1 Sequence
+
+_1->hasPrefix(_2) |-->_1.hasPrefix(_2)
+_1->hasSuffix(_2) |-->_1.hasSuffix(_2)
+_1->after(_2) |-->Ocl.after(str: _1, sep: _2)
+_1->before(_2) |-->Ocl.before(str: _1, sep: _2)
+_1->restrict(_2) |-->Ocl.restrict(m: _1, ks: _2)
+_1->matches(_2) |-->Ocl.matches(str: _1, pattern: _2)
+
+
+
+SetExpression::
+Set{} |-->[]
+Set{_1} |-->[_1] 
+Sequence{} |-->[]
+Sequence{_1} |-->[_1]
+Map{} |-->[]
+Map{(_1,_2)} |-->[_1:_2]
+
+
+ConditionalExpression::
+if _1 then _2 else _3 endif |-->((_1)?_2:_3)
+
+
+
+Class::
+class _1 { _2 } |-->protocol _1\n{ _2`cgprotocol }\n<when> _1 interface 
+ 
+class _1 { _2 }   |-->class _1\n{ init() { }\n\n_2}\n 
+
+class _1 extends _2 { _3 }   |-->class _1 : _2\n{ init()\n  { super.init() }\n\n_3}\n\n
+
+abstract class _1 { _2 }   |-->class _1\n{ init() { }\n\n_2}\n
+
+abstract class _1 extends _2 { _3 }   |-->class _1 : _2\n{ init() { super.init() }\n\n_3}\n
+
+
+class _1 implements _2 { _3 }   |-->class _1 : _2 { \n  init() { }\n\n_3}\n 
+
+class _1 extends _2 implements _3 { _4 }   |-->class _1 : _2, _3\n{ init()\n  { super.init() }\n\n_4}\n\n
+
+abstract class _1 implements _2 { _3 }   |-->class _1 : _2\n{ init() { }\n\n_3}\n
+
+abstract class _1 extends _2 implements _3 { _4 }   |-->class _1 : _2, _3\n{ init() { super.init() }\n\n_4}\n
+
+
+Attribute::
+static attribute _1 : _2; |-->  static var _1 : _2 = _2`defaultValue\n
+
+identity attribute _1 : _2; |-->  var _1 : _2 = "" /* principal key */\n\n  static var _1`ownername_index : Dictionary<_2,_1`ownername> = [_2:_1`ownername]()\n\n  static func getByPK_1`ownername(index : _2) -> _1`ownername?\n  { return _1`ownername_index[index] }\n\n<when> _1 primary
+
+
+identity attribute _1 : _2; |-->  var _1 : _2 = ""/* key */\n
+
+attribute _1 : _2; |-->  let _1 : _2\n<when> _1 readOnly
+
+attribute _1 : _2; |-->  var _1 : _2 = _2`defaultValue\n
+
+reference _1 : _2; |-->  var _1 : _2 = _2()\n<when> _2 collection
+
+reference _1 : _2; |-->  var _1 : _2? = nil\n<when> _2 not collection
+
+
+
+
+Parameter::
+_1 : _2, _3 |-->_1 : _2, _3
+_1 : _2 |-->_1 : _2
+
+
+
+ParameterArgument::
+_1, _2 |-->_1`formalName: _1, _2
+_1 |-->_1`formalName: _1
+
+
+
+Operation::
+static query _1(_2) : _3 pre: _4 post: _5 activity : _6 |-->\n  static func _1(_2) -> _3\n  {\n_6\n  }\n\n
+
+query _1(_2) : _3 pre: _4 post: _5 activity : _6 |-->\n  func _1(_2) -> _3\n  {\n_6\n  }\n\n
+
+static operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->\n  static func _1(_2) -> _3\n  {\n_6\n  }\n\n
+
+operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->\n  func _1(_2) -> _3\n  {\n_6\n  }\n\n
+
+
+
+Statement::
+_1 := _2 |-->    _1 = Ocl.copySet(s: _2)\n<when> _1 Set
+_1 := _2 |-->    _1 = Ocl.copySequence(s: _2)\n<when> _1 Sequence
+
+_1 := _2 |-->    _1 = _2\n
+
+
+
+
+
+while _1 do _2 |-->    while (_1)\n    {\n  _2    }\n
+for _1 : _2 do _3 |-->    for _1 in _2\n    {\n  _3    }\n
+if _1 then _2 else _3 |-->    if _1\n    {\n  _2    }\n    else {\n  _3    }\n
+_1 ; _2 |-->_1_2
+skip |-->    {}\n
+return _1 |-->    return _1\n
+return |-->    return\n
+break |-->    break\n
+call _1 |-->    _1\n 
+execute _1 |-->    /* Abstract statement: _1 */\n
+var _1 : _2 |-->    var _1 : _2? = nil\n<when> _2 Class
+var _1 : _2 |-->    var _1 : _2 = _2`defaultValue\n
+
+
+
+
+UseCase::
+usecase _1(_2) : _3 { _4 } |-->func _1(_2) -> _3\n{\n_4}
+

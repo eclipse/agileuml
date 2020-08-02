@@ -29,7 +29,8 @@ abstract class _1 extends _2 implements _3 { _4 }   |-->var _1_allInstances : [_
 
 Attribute::
 static attribute _1 : _2; |-->  
-identity attribute _1 : _2 |-->func createByPK_1`ownername(key : _2) -> _1`ownername\n{ var result : _1`ownername? = _1`ownername.getByPK_1`ownername(index: key)\n  if result != nil { return result! } \n  result = _1`ownername()\n  _1`ownername._1`ownername_index[key] = result!\n  result!._1 = key\n  return result! }\n\n<when> _1 primary
+
+identity attribute _1 : _2 |-->func createByPK_1`ownername(key : _2) -> _1`ownername\n{ var result : _1`ownername? = _1`ownername.getByPK_1`ownername(index: key)\n  if result != nil { return result! } \n  result = _1`ownername()\n  _1`ownername_allInstances.append(result!)\n  _1`ownername._1`ownername_index[key] = result!\n  result!._1 = key\n  return result! }\n\n<when> _1 primary
 
 identity attribute _1 : _2; |--> 
 attribute _1 : _2; |-->  
