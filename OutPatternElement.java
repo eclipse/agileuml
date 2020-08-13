@@ -1,7 +1,7 @@
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -15,6 +15,7 @@ public class OutPatternElement
 { Attribute variable; 
   Vector bindings; // Binding
   boolean isDefault = false;  // true for the first output element
+  Expression condition = null; 
 
   public OutPatternElement(Attribute att)
   { variable = att; 
@@ -29,6 +30,18 @@ public class OutPatternElement
 
   public void addBinding(Binding ipe) 
   { bindings.add(ipe); } 
+
+  public void setCondition(Expression cond)
+  { condition = cond; } 
+
+  public Expression getCondition()
+  { return condition; } 
+
+  public Attribute getVariable()
+  { return variable; } 
+
+  public Vector getBindings()
+  { return bindings; } 
 
   public String toString()
   { String res = variable.getName() + " : MM2!" + variable.getType() + " (\n"; 

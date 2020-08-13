@@ -2,7 +2,7 @@ import java.util.Vector;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -173,6 +173,18 @@ class VectorUtil
     return v1.containsAll(v2) && v2.containsAll(v1); 
   } 
 
+
+  public static Vector removeByName(final Vector vs, final String s)
+  { Vector res = new Vector(); 
+    for (int i = 0; i < vs.size(); i++)
+    { Object obj = vs.elementAt(i);
+      if ((obj + "").equals(s))
+      { } 
+      else 
+      { res.add(obj); } 
+    }
+    return res; 
+  }
 
   public static Vector removeAllEqualString(final String s, final Vector vs)
   { Vector res = new Vector(); 

@@ -3,13 +3,14 @@ import java.util.Vector;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
 *
 * SPDX-License-Identifier: EPL-2.0
 * *****************************/
+/* Package: Utilities */ 
 
 public class XMLAttribute
 { String name;
@@ -109,6 +110,7 @@ public class XMLAttribute
       if (subent != null) 
       { att = subent.getDefinedAttribute(name); } 
     } 
+	
     if (att != null) // name is an attribute of ent or of a subclass
     { if ("String".equals(att.getType() + ""))
       { out.println(instance + "." + name + " = " + value); } 
@@ -123,7 +125,8 @@ public class XMLAttribute
       { Entity subent = ent.searchForSubclassWithRole(name); 
         if (subent != null) 
         { ast = subent.getDefinedRole(name); } 
-      } 
+      }
+	   
       if (ast != null && ast.getCard2() == ModelElement.ONE)
       { // value is single "//@inst.number" or "$id"
         int atind = value.indexOf("@");
@@ -146,7 +149,7 @@ public class XMLAttribute
         out.println(instance + "." + name + " = " + obj1 + obj2); 
         return; 
       } 
-      else // a list of objects
+      else if (ast != null)  // a list of objects
       { StringTokenizer st = new StringTokenizer(value,"\" "); 
         Vector objs = new Vector(); 
         String res = ""; 
@@ -175,7 +178,12 @@ public class XMLAttribute
           String obj2 = obj.substring(dotind + 1, obj.length()); 
           out.println(obj1 + obj2 + " : " + instance + "." + name); 
         } 
-      } 
+      }
+	  else // create a feature for the value
+	  { Attribute attnew = new Attribute(name, new Type("String", null), ModelElement.INTERNAL); 
+	    ent.addAttribute(attnew); 
+	    out.println(instance + "." + name + " = " + value + ""); 
+	  } 
     } 
   }  
 

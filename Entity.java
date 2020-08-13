@@ -5,7 +5,7 @@ import java.io.*;
 import javax.swing.*;
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -63,6 +63,81 @@ public class Entity extends ModelElement implements Comparable
 
   public Entity realEntity()
   { return realEntity; } 
+  
+  public boolean isPersistent()
+  { return hasStereotype("persistent"); }
+
+  public String cg(CGSpec cgs)
+  { String etext = this + "";
+    Vector args = new Vector();
+    Vector eargs = new Vector(); 
+	
+    args.add(getName());
+    eargs.add(this);
+	
+    if (superclass != null) 
+    { args.add(superclass.getName());
+      eargs.add(superclass);
+    }
+    
+	if (interfaces != null && interfaces.size() > 0)
+    { String allinterfaces = ""; 
+      // int nsup = superclasses.size(); 
+      // for (int i = 0; i < nsup-1; i++) 
+	  for (int i = 0; i < interfaces.size(); i++) 
+      { allinterfaces = allinterfaces + ((Entity) interfaces.get(i)).getName(); 
+        if (i < interfaces.size() - 1)
+		{ allinterfaces = allinterfaces + ", "; }  
+      } 
+      args.add(allinterfaces); 
+      eargs.add(interfaces); 
+    } 
+	
+    String arg = "";
+    Vector alist = new Vector();
+	
+    for (int x = 0; x < attributes.size(); x++)
+    { Attribute att = (Attribute) attributes.get(x);
+      alist.add(att);
+      String attx = att.cg(cgs);
+      arg = arg + attx;
+    }
+	
+
+    for (int y = 0; y < associations.size(); y++)
+    { Attribute ast = new Attribute((Association) associations.get(y));
+	  alist.add(ast); 
+      String astx = ast.cgReference(cgs);
+      arg = arg + astx;
+    }
+
+    for (int z = 0; z < operations.size(); z++)
+    { BehaviouralFeature op = (BehaviouralFeature) operations.get(z);
+      String opx = op.cg(cgs);
+	  alist.add(op); 
+      arg = arg + opx;
+    }
+
+    args.add(arg);
+	eargs.add(alist); 
+	
+    CGRule r = cgs.matchedEntityRule(this,etext);
+    if (r != null)
+    { System.out.println(">>> Matched class rule " + r + " for " + getName()); 
+	  return r.applyRule(args,eargs,cgs); 
+	} 
+	
+    return etext;
+  }
+
+  public void generateOperationDesigns(Vector types, Vector entities)
+  { for (int z = 0; z < operations.size(); z++)
+    { BehaviouralFeature op = (BehaviouralFeature) operations.get(z);
+      Statement act = op.generateDesign(this,entities,types);
+      System.out.println(">>> Activity for operation " + op + " is " + act); 
+      op.setActivity(act); 
+    }
+  } 
 
   public Vector getLocalFeatures()
   { return localFeatures; } 
@@ -93,6 +168,59 @@ public class Entity extends ModelElement implements Comparable
     return res; 
   } 
 
+  public Vector getDiscriminatorAttributes()
+  { Vector res = getLocalBooleanFeatures(); 
+    res.addAll(getLocalEnumerationFeatures());
+    return res; 
+  }  
+
+
+  public Vector getLocalEnumerationFeatures()
+  { Vector res = new Vector(); 
+
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      Type t = att.getType(); 
+      if (t != null && t.isEnumeration())
+      { res.add(att); } 
+    } 
+
+    if (res.size() > 0) 
+    { return res; } 
+
+    for (int i = 0; i < localFeatures.size(); i++) 
+    { Attribute att = (Attribute) localFeatures.get(i); 
+      Type t = att.getType(); 
+      if (t != null && t.isEnumeration())
+      { res.add(att); } 
+    } 
+
+    return res; 
+  } 
+
+  public Vector getLocalStringFeatures()
+  { Vector res = new Vector(); 
+
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      Type t = att.getType(); 
+      if (t != null && t.getName().equals("String"))
+      { res.add(att); } 
+    } 
+
+    if (res.size() > 0) 
+    { return res; } 
+
+    for (int i = 0; i < localFeatures.size(); i++) 
+    { Attribute att = (Attribute) localFeatures.get(i); 
+      Type t = att.getType(); 
+      if (t != null && t.getName().equals("String"))
+      { res.add(att); } 
+    } 
+
+    return res; 
+  } 
+
   public Vector getLocalReferenceFeatures()
   { Vector res = new Vector(); 
 
@@ -111,6 +239,28 @@ public class Entity extends ModelElement implements Comparable
       { res.add(att); } 
     } 
 
+    return res; 
+  } 
+
+  public Vector zeroOneRoles()
+  { Vector res = new Vector(); 
+
+    for (int i = 0; i < associations.size(); i++) 
+    { Association ast = (Association) associations.get(i); 
+      if (ast.isZeroOne())
+      { res.add(new Attribute(ast)); } 
+    } 
+    return res; 
+  } 
+
+  public Vector optionalRoles()
+  { Vector res = new Vector(); 
+
+    for (int i = 0; i < associations.size(); i++) 
+    { Association ast = (Association) associations.get(i); 
+      if (ast.isOptional())
+      { res.add(new Attribute(ast)); } 
+    } 
     return res; 
   } 
 
@@ -180,6 +330,17 @@ public class Entity extends ModelElement implements Comparable
   { allLeafSubclasses.clear(); 
     allLeafSubclasses.addAll(getActualLeafSubclasses()); 
   } 
+
+  public static Vector sourceEntities(Vector entities) 
+  { Vector res = new Vector(); 
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity et = (Entity) entities.get(i); 
+      if (et.isSourceEntity())
+      { res.add(et); } 
+    } 
+    return res; 
+  } 
+
 
   public Entity makeFlattenedCopy(boolean allmaps, int n)
   { // Combine all direct attributes, associations and inherited and
@@ -351,6 +512,7 @@ public class Entity extends ModelElement implements Comparable
 
   public void addPrimaryKey(String nme) 
   { Attribute att = new Attribute(nme,new Type("String",null), ModelElement.INTERNAL); 
+    att.setElementType(new Type("String",null)); 
     att.setUnique(true); 
     att.setEntity(this); 
     attributes.add(0,att); 
@@ -545,6 +707,17 @@ public class Entity extends ModelElement implements Comparable
     } 
   } 
 
+  public void typeCheckInvariants(Vector types, Vector entities)
+  { Vector contexts = new Vector(); 
+    contexts.add(this); 
+    Vector vars = new Vector(); 
+    
+    for (int i = 0; i < invariants.size(); i++) 
+    { Constraint inv = (Constraint) invariants.get(i); 
+      inv.typeCheck(types,entities,contexts,vars);
+    } 
+  } 
+
   public void addInterface(Entity intf)
   { // Check that all ops of intf are also in this
     Vector iops = intf.getOperations(); 
@@ -583,11 +756,21 @@ public class Entity extends ModelElement implements Comparable
   public boolean isInterface()
   { return hasStereotype("interface"); } 
 
+  public void setInterface(boolean intf)
+  { if (intf) 
+    { addStereotype("interface"); } 
+    else 
+    { removeStereotype("interface"); } 
+  } 
+
   public boolean isAbstract()
   { return hasStereotype("abstract"); } 
 
   public boolean isConcrete()
   { return !hasStereotype("abstract"); } 
+
+  public boolean isComponent()
+  { return hasStereotype("component"); } 
 
   public boolean isActive()
   { return hasStereotype("active"); }
@@ -596,7 +779,13 @@ public class Entity extends ModelElement implements Comparable
   { return hasStereotype("singleton"); }
 
   public boolean isSequential()
-  { return hasStereotype("sequential"); } 
+  { return hasStereotype("sequential"); }
+
+  public boolean isRemote() 
+  { return hasStereotype("remote"); }  
+
+  public boolean isCloud() 
+  { return hasStereotype("cloud"); }  
 
   public boolean isSourceEntity()
   { return hasStereotype("source"); } 
@@ -747,6 +936,49 @@ public class Entity extends ModelElement implements Comparable
     // System.out.println("=== All properties of " + getName() + " are " + res); 
     return res; 
   } 
+
+  public Vector allDefinedProperties()
+  { Vector res = new Vector();
+    Vector assocs = allDefinedDataFeatures();  
+    for (int i = 0; i < assocs.size(); i++) 
+    { Object ast = assocs.get(i); 
+      if (ast instanceof Association) 
+      { res.add(new Attribute((Association) ast)); } 
+      else if (ast instanceof Attribute) 
+      { res.add((Attribute) ast); }   
+    } 
+    return res; 
+  } 
+  
+  public Attribute getDataFeature(String nme)
+  { Vector res = allProperties(); 
+    for (int i = 0; i < res.size(); i++) 
+	{ Attribute f = (Attribute) res.get(i); 
+	  if (f.getName().equals(nme))
+	  { return f; }
+	} 
+	return null; 
+  } 
+  
+  public static Vector allSourceFeatures(Vector entities)
+  { Vector res = new Vector(); 
+    for (int i = 0; i < entities.size(); i++)
+	{ Entity ent = (Entity) entities.get(i); 
+	  if (ent.isSource())
+	  { res.addAll(ent.allProperties()); }
+	}
+	return res; 
+  }
+
+  public static Vector allTargetFeatures(Vector entities)
+  { Vector res = new Vector(); 
+    for (int i = 0; i < entities.size(); i++)
+	{ Entity ent = (Entity) entities.get(i); 
+	  if (ent.isTarget())
+	  { res.addAll(ent.allProperties()); }
+	}
+	return res; 
+  }
 
   public Vector composedProperties(HashSet seen, int n)
   { // pre: seen.contains(this)
@@ -1205,7 +1437,8 @@ public class Entity extends ModelElement implements Comparable
         Entity fsrc = srcent.flattenedCopy(); 
           // (Entity) ModelElement.lookupByName(name$, entities); 
         if (fsrc != null && mm.get(fsrc) != null)
-        { Entity trgent = (Entity) mm.get(fsrc);
+        { Entity trgent = (Entity) mm.get(fsrc); 
+		     // But in principle, could be many trgents for one fsrc. Iterate over them
            
           // look for trgent without the $
           String trgentname = trgent + ""; 
@@ -1264,7 +1497,7 @@ public class Entity extends ModelElement implements Comparable
         Entity fsrc = srcent.flattenedCopy(); 
           // (Entity) ModelElement.lookupByName(name$, entities); 
         if (fsrc != null && mm.get(fsrc) != null)
-        { Entity trgent = (Entity) mm.get(fsrc);
+        { Entity trgent = (Entity) mm.get(fsrc);    // again can be several 
            
           // look for trgent without the $
           String trgentname = trgent + ""; 
@@ -1699,6 +1932,16 @@ public class Entity extends ModelElement implements Comparable
 
   public Vector getInvariants()
   { return invariants; } 
+  
+  public Vector getAllInvariants()
+  { Vector res = new Vector(); 
+    res.addAll(invariants); 
+	if (superclass != null)
+	{ Vector sinvs = superclass.getAllInvariants(); 
+	  res = VectorUtil.union(res,sinvs); 
+	}
+	return res; 
+  }
 
   public boolean hasSuperclass()
   { return superclass != null; } 
@@ -1708,6 +1951,11 @@ public class Entity extends ModelElement implements Comparable
 
   public Vector getSubclasses()
   { return subclasses; } 
+
+  public boolean hasInterfaces()
+  { // return superclasses != null && superclasses.size() > 0; } 
+    return interfaces != null && interfaces.size() > 0; 
+  } 
 
   public Vector getSuperclasses()
   { Vector res = new Vector(); 
@@ -2148,7 +2396,7 @@ public class Entity extends ModelElement implements Comparable
         } 
 
         EntityMatching em = modm.getEntityMatching(superclass); 
-        if (em != null) 
+        if (em != null) // May be several 
         { Vector amaps = em.getAttributeMatchings(); 
           if (amaps != null) 
           { for (int i = 0; i < amaps.size(); i++) 
@@ -2272,7 +2520,7 @@ public class Entity extends ModelElement implements Comparable
         //                    " " + tatt.getType()); 
 
         if (matched.contains(satt)) { } 
-        else if (Attribute.exactTypeMatch(satt,tatt,mm))
+        else if (Attribute.exactTypeMatchRel(satt,tatt,mm))
         { if (satt.getName().equals(tatt.getName()) && !ematched.contains(tatt))
           { matched.add(satt); 
             ematched.add(tatt); 
@@ -2341,7 +2589,7 @@ public class Entity extends ModelElement implements Comparable
       for (int i = 0; i < othersources.size(); i++) 
       { Attribute satt = (Attribute) othersources.get(i); 
         if (matched.contains(satt)) { } 
-        else if (Attribute.exactTypeMatch(satt,tatt,mm))
+        else if (Attribute.exactTypeMatchRel(satt,tatt,mm))
         { if (satt.getName().equals(tatt.getName()))
           { matched.add(satt); 
             ematched.add(tatt); 
@@ -2385,7 +2633,7 @@ public class Entity extends ModelElement implements Comparable
       for (int i = 0; i < othertargets.size(); i++) 
       { Attribute tatt = (Attribute) othertargets.get(i); 
         if (ematched.contains(tatt)) { } 
-        else if (Attribute.exactTypeMatch(satt,tatt,mm))
+        else if (Attribute.exactTypeMatchRel(satt,tatt,mm))
         { if (satt.getName().equals(tatt.getName()))
           { matched.add(satt); 
             ematched.add(tatt); 
@@ -2436,7 +2684,7 @@ public class Entity extends ModelElement implements Comparable
 
         if (matched.contains(satt)) { } 
         else 
-        { double matchd = Attribute.partialTypeMatch(satt,tatt,mm,entities); 
+        { double matchd = Attribute.partialTypeMatchRel(satt,tatt,mm,entities); 
           if (matchd > 0 && satt.getName().equals(tatt.getName()) && !ematched.contains(tatt))
           { matched.add(satt); 
             ematched.add(tatt); 
@@ -2493,7 +2741,7 @@ public class Entity extends ModelElement implements Comparable
 
         if (matched.contains(satt)) { } 
         else 
-        { double matchd = Attribute.partialTypeMatch(satt,tatt,mm,entities); 
+        { double matchd = Attribute.partialTypeMatchRel(satt,tatt,mm,entities); 
           if (matchd > 0 && satt.getName().equals(tatt.getName()) && !ematched.contains(tatt))
           { matched.add(satt); 
             ematched.add(tatt); 
@@ -2555,7 +2803,7 @@ public class Entity extends ModelElement implements Comparable
 
         if (ematched.contains(tatt)) { } 
         else 
-        { double matchd = Attribute.partialTypeMatch(satt,tatt,mm,entities); 
+        { double matchd = Attribute.partialTypeMatchRel(satt,tatt,mm,entities); 
           // System.out.println("Matching is " + matchd); 
 
           if (matchd > 0 && satt.getName().equals(tatt.getName()) && !ematched.contains(tatt))
@@ -3119,26 +3367,33 @@ public class Entity extends ModelElement implements Comparable
   public static double nmsSimilarity(String fnme, String fenme, Vector thesaurus) 
   { double totalscore = 0; 
 
-    totalscore = Thesarus.findSimilarity(fnme,fenme,thesaurus); 
 
     // if (totalscore > 0) 
     // { return totalscore; } 
 
     Vector w1 = ModelElement.splitIntoWords(fnme); 
+    int n1 = w1.size(); 
     Vector w2 = ModelElement.splitIntoWords(fenme); 
+    int n2 = w2.size(); 
 
-    for (int i = 0; i < w1.size(); i++) 
-    { String word1 = (String) w1.get(i); 
-      for (int j = 0; j < w2.size(); j++) 
-      { String word2 = (String) w2.get(j); 
-        double wscore = Thesarus.findSimilarity(word1,word2,thesaurus); 
-        totalscore = (totalscore + wscore) - (totalscore*wscore); 
+    if (n1 + n2 > 2) 
+    { for (int i = 0; i < w1.size(); i++) 
+      { String word1 = (String) w1.get(i); 
+        for (int j = 0; j < w2.size(); j++) 
+        { String word2 = (String) w2.get(j); 
+          double wscore = Thesarus.findSimilarity(word1,word2,thesaurus); 
+          totalscore = (totalscore + wscore) - (totalscore*wscore);
+        }  
       } 
+      totalscore = totalscore*(2.0/(n1 + n2)); 
     } 
+    else 
+    { totalscore = Thesarus.findSimilarity(fnme,fenme,thesaurus); } 
+
 
     int res = (int) Math.round(totalscore*1000); 
     return res/1000.0; 
-  } // also break up the names into parts
+  } // also break up the names into parts based on suffixes, prefixes. 
 
   public Vector getActualLeafSubclasses() // recursively
   { Vector res = new Vector(); 
@@ -3485,6 +3740,16 @@ public class Entity extends ModelElement implements Comparable
     return res; 
   } 
 
+  public Vector allDefinedDataFeatures()
+  { // either from superclass or interfaces
+    Vector res = new Vector(); 
+    if (superclass != null) 
+    { res.addAll(superclass.allDefinedDataFeatures()); } 
+    res.addAll(attributes); 
+    res.addAll(associations); 
+    return res; 
+  } 
+
   public Vector allInheritedDataFeaturesCPP()
   { // either from superclass or interfaces
     Vector res = new Vector(); 
@@ -3569,6 +3834,17 @@ public class Entity extends ModelElement implements Comparable
     { res = superclass.getDefinedRole(rle); }
     return res; 
   } 
+
+  public Attribute getDefinedProperty(String nme)
+  { Attribute att = getDefinedAttribute(nme); 
+    if (att != null) 
+    { return att; } 
+    Association ast = getDefinedRole(nme); 
+    if (ast != null) 
+    { return new Attribute(ast); } 
+    return null; 
+  } 
+
 
   public Type getDefinedFeatureType(String f) 
   { Attribute att = getDefinedAttribute(f); 
@@ -4492,6 +4768,9 @@ public class Entity extends ModelElement implements Comparable
 
     return res; 
   } 
+  
+  public Attribute principalUniqueAttribute()
+  { return getPrincipalPK(); }
 
   public Attribute getPrincipalPK()
   { // first unique att of entity
@@ -4571,6 +4850,56 @@ public class Entity extends ModelElement implements Comparable
     return res; 
   } 
 
+  public String parseCSVOperationJava8()
+  { if (isAbstract()) { return ""; } 
+
+    Attribute key = getPrincipalPrimaryKey(); 
+
+    String ename = getName(); 
+    String ex = ename.toLowerCase() + "x"; 
+
+    String res = 
+      "  public static " + ename + " parseCSV(String _line)\n" + 
+      "  { if (_line == null) { return null; }\n" +   
+      "    ArrayList<String> _line1vals = Ocl.tokeniseCSV(_line);\n" + 
+      "    " + ename + " " + ex + ";\n";  
+
+    if (key != null) 
+    { String keyname = key.getName(); 
+      // Assume it is the first one
+      res = res + 
+      "    " + ex + " = " + ename + "." + ename + "_index.get((String) _line1vals.get(0));\n"; 
+      res = res + 
+      "    if (" + ex + " == null)\n" + 
+      "    { " + ex + " = " + ename + ".createByPK" + ename + "((String) _line1vals.get(0)); }\n"; 
+    } 
+    else 
+    { res = res + 
+      "    " + ex + " = new " + ename + "();\n";
+    } 
+ 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String aname = att.getName(); 
+      Type atype = att.getType(); 
+      String data = "(String) _line1vals.get(" + i + ")"; 
+
+      if (atype.isParsable())
+      { res = res + 
+          "    " + ex + "." + aname + " = " + atype.dataExtractionCode(data) + ";\n"; 
+      }  
+      else if (atype.isCollectionType())
+      { Type elemT = atype.getElementType(); 
+        if (elemT != null && elemT.isParsable())
+        res = res + "    " + atype.collectionExtractionCode(ex,aname,"_line1vals") + ";\n"; 
+      }          
+    }  
+    res = res + 
+      "    return " + ex + ";\n" + 
+      "  }\n\n"; 
+    return res; 
+  } 
+
   public String writeCSVOperation()
   { if (isAbstract()) { return ""; } 
 
@@ -4636,6 +4965,9 @@ public class Entity extends ModelElement implements Comparable
     }   // a bad error      
     return res; 
   } 
+
+  public Attribute getPrincipalPrimaryKey()
+  { return getPrincipalKey(); } 
  
   public void generateJava(PrintWriter out)
   { generateJava(new Vector(), new Vector(),out); } 
@@ -6916,6 +7248,26 @@ public class Entity extends ModelElement implements Comparable
   
     String res = "  " + nme + " {\n\r";
 
+    for (int i = 0; i < stereotypes.size(); i++) 
+    { String stereo = (String) stereotypes.get(i); 
+      res = res + "  stereotype " + stereo + ";\n\r"; 
+    }
+
+    res = res + "\n\r";
+
+    for (int i = 0; i < invariants.size(); i++) 
+    { Constraint con = (Constraint) invariants.get(i);
+      Expression ante = con.antecedent(); 
+      Expression succ = con.succedent(); 
+      if (ante == null || "true".equals(ante + ""))
+      { res = res + "  invariant " + succ + ";\n\r"; }  
+      else  
+      { res = res + "  invariant " + ante + " => " + succ + ";\n\r"; }
+    }
+
+    res = res + "\n\r";
+
+
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       res = res + att.getKM3() + "\n\r"; 
@@ -6946,20 +7298,43 @@ public class Entity extends ModelElement implements Comparable
     if (superclass != null) 
     { nme = nme + " extends " + superclass; }  
     out.println("  " + nme + " {");
+
+    for (int i = 0; i < stereotypes.size(); i++) 
+    { String stereo = (String) stereotypes.get(i); 
+      out.println("  stereotype " + stereo + ";"); 
+    }
+
+    out.println();
+
+    for (int i = 0; i < invariants.size(); i++) 
+    { Constraint con = (Constraint) invariants.get(i);
+      Expression ante = con.antecedent(); 
+      Expression succ = con.succedent(); 
+      if (ante == null || "true".equals(ante + ""))
+      { out.println("  invariant " + succ + ";"); }   
+      else  
+      { out.println("  invariant " + ante + " => " + succ + ";"); }
+    }
+
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       att.saveKM3(out); 
     }
+
     out.println();   
+
     for (int i = 0; i < associations.size(); i++) 
     { Association ast = (Association) associations.get(i); 
       ast.saveKM3(out); 
     }
+
     out.println(); 
+
     for (int i = 0; i < operations.size(); i++) 
     { BehaviouralFeature op = (BehaviouralFeature) operations.get(i); 
       op.saveKM3(out); 
     }
+
     out.println("  }\n\n");   
   } // and operations
 
@@ -7307,6 +7682,11 @@ public class Entity extends ModelElement implements Comparable
     if (s == null) { return false; }
     if (s == a) { return true; }   // s.equals(a) ?? 
     return isAncestor(a,s);
+  }
+
+  public static boolean isDescendant(Entity a, Entity b)
+  { if (a == b) { return true; } 
+    return isAncestor(b,a); 
   }
 
   public static boolean inheritanceRelated(Entity a, Entity b)
@@ -9455,9 +9835,10 @@ public class Entity extends ModelElement implements Comparable
     Vector newinvs = new Vector();
     Vector oldinvs = new Vector(); 
  
+    Vector allinvs = getAllInvariants(); 
     // Vector oldinvs = (Vector) ((Vector) invariants).clone(); 
-    for (int i = 0; i < invariants.size(); i++)
-    { Constraint c = (Constraint) invariants.get(i); 
+    for (int i = 0; i < allinvs.size(); i++)
+    { Constraint c = (Constraint) allinvs.get(i); 
       Vector cfeats = c.allFeaturesUsedIn(); 
       if (parnames.containsAll(cfeats))
       { oldinvs.add((Constraint) c.clone()); } 
@@ -9491,6 +9872,74 @@ public class Entity extends ModelElement implements Comparable
     for (int j = 0; j < oldinvs.size(); j++) 
     { Constraint con = (Constraint) oldinvs.get(j); 
       String contest = con.queryForm(env,true); 
+      res.add(contest); 
+    } 
+    return res; 
+  } // Type-check the con
+
+  public Vector getInvariantCheckTests(Vector types, Vector entities, Vector params, CGSpec cgs)
+  { // only include invariants which have all features in params
+    Vector parnames = ModelElement.getNames(params); 
+    Vector res = new Vector(); 
+    if (invariants.size() == 0) { return res; } 
+    Vector newinvs = new Vector();
+    Vector oldinvs = new Vector(); 
+
+    Vector allinvs = getAllInvariants(); 
+ 
+    // Vector oldinvs = (Vector) ((Vector) invariants).clone(); 
+    for (int i = 0; i < allinvs.size(); i++)
+    { Constraint c = (Constraint) allinvs.get(i); 
+      Vector cfeats = c.allFeaturesUsedIn(); 
+      if (parnames.containsAll(cfeats))
+      { oldinvs.add((Constraint) c.clone()); } 
+    }
+     
+    java.util.Map env = new java.util.HashMap(); 
+    env.put(getName(),"this"); 
+
+    for (int i = 0; i < params.size(); i++)
+    { Attribute att = (Attribute) params.get(i);
+      String attname = att.getName();  
+      Type t = att.getType(); 
+      String tname = t.getName();
+      Expression newE; 
+      if (tname.equals("int"))
+      { newE = new BasicExpression("i" + attname);
+        newE.setUmlKind(Expression.VARIABLE); 
+        newE.setType(t); 
+        newinvs = Constraint.substituteEqAll(attname,newE,oldinvs); 
+        oldinvs = (Vector) ((Vector) newinvs).clone(); 
+      }
+      else if (tname.equals("double"))
+      { newE = new BasicExpression("d" + attname);
+        newE.setUmlKind(Expression.VARIABLE); 
+        newE.setType(t);
+        newinvs = Constraint.substituteEqAll(attname,newE,oldinvs); 
+        oldinvs = (Vector) ((Vector) newinvs).clone(); 
+      }    
+    }
+    
+	Vector context = new Vector(); 
+	context.add(this); 
+	
+    for (int j = 0; j < oldinvs.size(); j++) 
+    { Constraint con = (Constraint) oldinvs.get(j); 
+	  con.typeCheck(types,entities,context); 
+      String contest = con.cg(cgs); 
+      res.add(contest); 
+    } 
+    return res; 
+  } 
+
+  public Vector getInvariantCheckTests(CGSpec cgs)
+  { Vector res = new Vector(); 
+
+    Vector allinvs = getAllInvariants(); 
+
+    for (int j = 0; j < allinvs.size(); j++) 
+    { Constraint con = (Constraint) allinvs.get(j); 
+      String contest = con.cg(cgs); 
       res.add(contest); 
     } 
     return res; 
@@ -9859,49 +10308,82 @@ public class Entity extends ModelElement implements Comparable
   { return getValueObject("beans"); } 
 
 
-  public String getAndroidValueObject() 
-  { return getValueObject("com.example.app"); } 
+  public String getAndroidValueObject(String systemName) 
+  { return getAndroidVO("com.example." + systemName); } // but with Java8 for types
 
  
   public String getValueObject(String pge)
   { String res = "package " + pge + ";\n\n";
+    res = res + "import java.util.List;\n" + 
+                "import java.util.ArrayList;\n\n"; 
+
     String nme = getName();  
     res = res + "public class " + nme + "VO\n" + 
           "{ \n"; 
+		  
+    String stringout = ""; 
+	
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attnme = att.getName(); 
       String tname = att.getType().getJava(); 
       if (tname.equals("boolean"))
       { tname = "String"; } 
-      res = res + " private " + tname + " " + attnme + ";\n"; 
+      res = res + "  private " + tname + " " + attnme + ";\n"; 
+	  stringout = stringout + "\"" + attnme + "= \" + " + attnme; 
+	  if (i < attributes.size() - 1)
+	  { stringout = stringout + " + \",\" + "; }
     } 
-    res = res + "\n" +
-          "  public " + nme + "VO() {}\n" +
-          "  public " + nme + "VO(";
-    boolean previous = false;
+    res = res + "\n" +  
+	      "  public " + nme + "VO() {}\n\n"; 
+		  
+    if (attributes.size() > 0)
+    { res = res + "  public " + nme + "VO(";
+      boolean previous = false;
 
-    for (int i = 0; i < attributes.size(); i++)
-    { Attribute att = (Attribute) attributes.get(i);
-      String tname = att.getType().getJava(); 
-      if (tname.equals("boolean"))
-      { tname = "String"; } 
+      for (int i = 0; i < attributes.size(); i++)
+      { Attribute att = (Attribute) attributes.get(i);
+        String tname = att.getType().getJava(); 
+        if (tname.equals("boolean"))
+        { tname = "String"; } 
 
-      String par = tname + " " + att.getName() + "x";
-      if (previous)
-      { res = res + "," + par; }
-      else        
-      { res = res + par;
-        previous = true;
+        String par = tname + " " + att.getName() + "x";
+        if (previous)
+        { res = res + "," + par; }
+        else        
+        { res = res + par;
+          previous = true;
+        }
       }
-    }
-    res = res + ")\n  { "; 
+      res = res + ")\n  { "; 
+      for (int i = 0; i < attributes.size(); i++) 
+      { Attribute att = (Attribute) attributes.get(i); 
+        String attnme = att.getName(); 
+        res = res + "   " + attnme + " = " + attnme + "x;\n"; 
+      }
+      res = res + "  }\n\n"; 
+	} 
+	
+    res = res + "  public " + nme + "VO(" + nme + " _x)\n";
+    res = res + "  {\n"; 
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attnme = att.getName(); 
-      res = res + "   " + attnme + " = " + attnme + "x;\n"; 
+      res = res + "   " + attnme + " = _x." + attnme + ";\n"; 
     }
     res = res + "  }\n\n"; 
+
+	res = res + "  public String toString()\n" + 
+	            "  { return (" + stringout + "); }\n\n";  
+ 
+	res = res + "  public static List<String> toStringList(List<" + nme + "VO> list)\n" + 
+	            "  { List<String> _res = new ArrayList<String>();\n" + 
+				"    for (int i = 0; i < list.size(); i++)\n" + 
+				"    { " + nme + "VO _x = (" + nme + "VO) list.get(i);\n" + 
+				"      _res.add(_x.toString()); \n" +
+                      "    }\n" +
+                      "    return _res;\n" +   
+	       		"  }\n\n";  
  
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
@@ -9928,39 +10410,430 @@ public class Entity extends ModelElement implements Comparable
     return res + "}\n\n"; 
   } 
 
-public void androidDbi(PrintWriter out)
+  public String getAndroidVO(String pge)
+  { String res = "package " + pge + ";\n\n";
+    res = res + "import java.util.List;\n" + 
+                "import java.util.ArrayList;\n\n"; 
+
+    String nme = getName();  
+    res = res + "public class " + nme + "VO\n" + 
+          "{ \n"; 
+		  
+    String stringout = ""; 
+	
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attnme = att.getName(); 
+      String tname = att.getType().getJava8(); 
+      if (tname.equals("boolean"))
+      { tname = "String"; } 
+      res = res + "  " + tname + " " + attnme + ";\n"; 
+	  stringout = stringout + "\"" + attnme + "= \" + " + attnme; 
+	  if (i < attributes.size() - 1)
+	  { stringout = stringout + " + \",\" + "; }
+    } 
+    res = res + "\n" +
+          "  public " + nme + "VO() {}\n\n"; 
+    if (attributes.size() > 0)
+	{ res = res + "  public " + nme + "VO(";
+      boolean previous = false;
+
+      for (int i = 0; i < attributes.size(); i++)
+      { Attribute att = (Attribute) attributes.get(i);
+        String tname = att.getType().getJava8(); 
+        if (tname.equals("boolean"))
+        { tname = "String"; } 
+
+        String par = tname + " " + att.getName() + "x";
+        if (previous)
+        { res = res + "," + par; }
+        else        
+        { res = res + par;
+          previous = true;
+        }
+      }
+      res = res + ")\n  { "; 
+      for (int i = 0; i < attributes.size(); i++) 
+      { Attribute att = (Attribute) attributes.get(i); 
+        String attnme = att.getName(); 
+        res = res + "   " + attnme + " = " + attnme + "x;\n"; 
+      }
+      res = res + "  }\n\n"; 
+	} 
+	
+    res = res + "  public " + nme + "VO(" + nme + " _x)\n";
+    res = res + "  {\n"; 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attnme = att.getName(); 
+      res = res + "   " + attnme + " = _x." + attnme + ";\n"; 
+    }
+    res = res + "  }\n\n"; 
+
+	res = res + "  public String toString()\n" + 
+	            "  { return (" + stringout + "); }\n\n";  
+ 
+	res = res + "  public static List<String> toStringList(List<" + nme + "VO> list)\n" + 
+	            "  { List<String> _res = new ArrayList<String>();\n" + 
+				"    for (int i = 0; i < list.size(); i++)\n" + 
+				"    { " + nme + "VO _x = (" + nme + "VO) list.get(i);\n" + 
+				"      _res.add(_x.toString()); \n" +
+                      "    }\n" +
+                      "    return _res;\n" +   
+	       		"  }\n\n";  
+ 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attnme = att.getName(); 
+      String tname = att.getType().getJava8(); 
+      if (tname.equals("boolean"))
+      { tname = "String"; } 
+
+      res = res + "  public " + tname + " get" + attnme + "()\n  { " + 
+            "return " + attnme + "; }\n\n"; 
+    } 
+
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attnme = att.getName(); 
+      String tname = att.getType().getJava8(); 
+      if (tname.equals("boolean"))
+      { tname = "String"; } 
+
+      res = res + "  public void set" + attnme + "(" + tname + " _x)\n  { " + 
+            attnme + " = _x; }\n\n"; 
+    } 
+
+    return res + "}\n\n"; 
+  } 
+
+  public String getIOSValueObject(String pge)
+  { String res = "";
+    String nme = getName();  
+    res = res + "class " + nme + "VO\n" + 
+          "{ \n"; 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attnme = att.getName(); 
+      String tname = att.getType().getSwift(); 
+	  String dflt = att.getType().getSwiftDefaultValue(); 
+      res = res + "  var " + attnme + " : " + tname + " = " + dflt + "\n"; 
+    } 
+    res = res + "\n" +
+          "  init() {}\n\n"; 
+
+    String stringtext = ""; 
+		  
+    if (attributes.size() > 0)
+    { res = res + "  init(";
+		  
+      boolean previous = false;
+	
+      for (int i = 0; i < attributes.size(); i++)
+      { Attribute att = (Attribute) attributes.get(i);
+        String tname = att.getType().getSwift();
+        String attname = att.getName(); 
+ 
+        String label = "\"" + attname + "= \" + "; 
+		if (att.isNumeric())
+		{ label = label + "String(" + attname + ")"; }
+		else if (att.isEnumerated())
+		{ label = label + attname + ".rawValue"; }
+		else 
+		{ label = label + attname; }
+		 
+      
+        String par = attname + "x" + " : " + tname;
+        if (previous)
+        { res = res + "," + par; 
+          stringtext = stringtext + " + \", \" + " + label; 
+        }
+        else        
+        { res = res + par;
+	      stringtext = stringtext + label; 
+          previous = true;
+        }
+      }
+      res = res + ")  {\n"; 
+      for (int i = 0; i < attributes.size(); i++) 
+      { Attribute att = (Attribute) attributes.get(i); 
+        String attnme = att.getName(); 
+        res = res + "    " + attnme + " = " + attnme + "x\n"; 
+      }
+      res = res + "  }\n\n"; 
+	} 
+	
+    res = res + "  init(_x : " + nme + ")  {\n"; 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attnme = att.getName(); 
+      res = res + "    " + attnme + " = _x." + attnme + "\n"; 
+    }
+    res = res + "  }\n\n"; 
+ 
+    res = res + "  func toString() -> String\n" + 
+                "  { return (" + stringtext + ") }\n\n"; 
+ 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attnme = att.getName(); 
+      String tname = att.getType().getSwift(); 
+      
+      res = res + "  func get" + attnme + "() -> " + tname + "\n  { " + 
+            "return " + attnme + " }\n\n"; 
+    } 
+
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attnme = att.getName(); 
+      String tname = att.getType().getSwift(); 
+
+      res = res + "  func set" + attnme + "(_x : " + tname + ")\n  { " + 
+            attnme + " = _x }\n\n"; 
+    } 
+
+    return res + "}\n\n"; 
+  } 
+
+  public String getSwiftUIValueObject(String pge, Vector types, Vector entities, Vector useCases, CGSpec cgs)
+  { String res = "import Foundation\n";
+    res = res + "import Glibc\n\n"; 
+	
+    String ename = getName();  
+    res = res + "class " + ename + "VO : Hashable\n" + 
+          "{ \n"; 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attnme = att.getName(); 
+      String tname = att.getType().getSwift(); 
+      String dflt = att.getType().getSwiftDefaultValue();
+	  if (att.isEntity())
+	  { tname = "String"; 
+	    dflt = "\"\""; 
+	  } 
+      res = res + "  var " + attnme + " : " + tname + " = " + dflt + "\n"; 
+    } // But entity instances are represented by their key values, a string. 
+
+    res = res + "  static var defaultInstance : " + ename + "VO? = nil\n"; 
+    res = res + "  var errorlist : [String] = [String]()\n\n"; 
+
+    res = res + "\n" +
+          "  init() {}\n\n"; 
+
+    res = res + "\n" +
+          "  static func default" + ename + "VO() -> " + ename + "VO\n" + 
+		  "  { if defaultInstance == nil \n" + 
+		  "    { defaultInstance = " + ename + "VO() }\n" + 
+		  "    return defaultInstance!\n" + 
+		  "  }\n\n"; 
+
+    String stringtext = "\"\""; 
+		  
+    if (attributes.size() > 0)
+    { res = res + "  init(";
+		  
+      boolean previous = false;
+	
+      for (int i = 0; i < attributes.size(); i++)
+      { Attribute att = (Attribute) attributes.get(i);
+        String tname = att.getType().getSwift();
+        if (att.isEntity())
+        { tname = "String"; }
+		
+        String attname = att.getName(); 
+ 
+        String label = "\"" + attname + "= \" + "; 
+        if (att.isNumeric())
+        { label = label + "String(" + attname + ")"; }
+		else if (att.isEnumerated())
+		{ label = label + attname + ".rawValue"; }
+        else 
+        { label = label + attname; }
+		 
+      
+        String par = attname + "x" + " : " + tname;
+        if (previous)
+        { res = res + "," + par; 
+          stringtext = stringtext + " + \", \" + " + label; 
+        }
+        else        
+        { res = res + par;
+          stringtext = stringtext + " + " + label; 
+          previous = true;
+        }
+      }
+      res = res + ")  {\n"; 
+      for (int i = 0; i < attributes.size(); i++) 
+      { Attribute att = (Attribute) attributes.get(i); 
+        String attnme = att.getName(); 
+        res = res + "    " + attnme + " = " + attnme + "x\n"; 
+      }
+      res = res + "  }\n\n"; 
+	} 
+	
+    res = res + "  init(_x : " + ename + ")  {\n"; 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attnme = att.getName(); 
+      if (att.isEntity())  
+      { Type atype = att.getType();    
+        Entity enttype = atype.getEntity(); 
+        Attribute primkey = enttype.getPrincipalPrimaryKey(); 
+        res = res + "    " + attnme + " = _x." + attnme + "." + primkey.getName() + "\n";
+      } 
+      else 
+      { res = res + "    " + attnme + " = _x." + attnme + "\n"; } 
+    }
+	
+    res = res + "  }\n\n"; 
+ 
+    res = res + "  func toString() -> String\n" + 
+                "  { return " + stringtext + " }\n\n"; 
+ 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attnme = att.getName(); 
+      String tname = att.getType().getSwift(); 
+	  
+      res = res + "  func get" + attnme + "() -> " + tname + "\n";  
+      if (att.isEntity())
+	  { Type atype = att.getType(); 
+	    Entity enttype = atype.getEntity(); 
+		String refname = enttype.getName(); 
+		res = res + "  { return " + refname + "." + refname + "_index[" + attnme + "]! }\n\n";
+	  } 
+	  else 
+	  { res = res + "  { return " + attnme + " }\n\n"; } 
+    } 
+
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attnme = att.getName(); 
+      String tname = att.getType().getSwift(); 
+
+      res = res + "  func set" + attnme + "(_x : " + tname + ")\n"; 
+      if (att.isEntity())
+	  { Type atype = att.getType(); 
+	    Entity enttype = atype.getEntity(); 
+		Attribute primkey = enttype.getPrincipalPrimaryKey(); 
+        res = res + "  { " + attnme + " = _x." + primkey.getName() + " }\n\n";
+	  } 
+	  else 
+	  { res = res + "  { " + attnme + " = _x }\n\n"; } 
+    }
+	
+	/* For SwiftUI this also holds the validation operation: */ 
+	 
+          
+    res = res + "  func resetData()\n  { errorlist = [String]() }\n\n"; 
+
+    Vector contexts = new Vector(); 
+    contexts.add(this); 
+    typeCheckInvariants(types,entities); 
+    Vector tests = getInvariantCheckTests(cgs); 
+
+    res = res + "  func iscreate" + ename + "error() -> Bool\n" + 
+                "  { resetData() \n";
+
+    for (int p = 0; p < tests.size(); p++)
+    { String test = (String) tests.get(p); 
+      res = res + 
+            "    if " + test + " { }\n" + 
+            "    else { errorlist.append(\"" + ename + " invariant " + (p+1) + " failed\") }\n";
+    }
+	res = res + "    return errorlist.count > 0\n" + 
+	            "  }\n\n";
+
+    res = res + "  func isedit" + ename + "error() -> Bool\n"; 
+	res = res + "  { return iscreate" + ename + "error() }\n" + 
+	            "\n";
+
+    res = res + "  func islist" + ename + "error() -> Bool\n"; 
+	res = res + "  { return false }\n" + 
+	            "\n";
+    res = res + "  func isdelete" + ename + "error() -> Bool\n"; 
+	res = res + "  { return false }\n" + 
+	            "\n";
+   /*
+    for (int j = 0; j < useCases.size(); j++)
+    { if (!(useCases.get(j) instanceof OperationDescription)) { continue; } 
+
+      OperationDescription od = (OperationDescription) useCases.get(j); 
+      if (this != od.getEntity()) { continue; } 
+      String action = od.getStereotype(0); 
+      if (action.equals("create") || action.equals("edit")) { continue; } 
+
+      Vector pars = od.getParameters(); 
+      String odname = od.getODName(); 
+	  
+      res = res + "  func is" + odname + "error() -> Bool\n" + 
+                  "  { resetData() \n";
+
+      for (int p = 0; p < tests.size(); p++)
+      { String test = (String) tests.get(p); 
+        res = res + 
+            "    if " + test + " { }\n" + 
+            "    else { errorlist.append(\"" + ename + " invariant " + (p+1) + " failed\") }\n";
+      }
+
+      res = res + "    return errorlist.count > 0\n  }\n\n";
+    } */ 
+	
+    res = res + "  func errors() -> String\n" + 
+	            "  { var res : String = \"\"\n" +
+				"    for (_,x) in errorlist.enumerated()\n" + 
+				"    { res = res + x + \", \" }\n" +  
+	            "    return res\n" + 
+				"  }\n\n"; 
+				
+    res = res + "  static func ==(lhs: " + ename + "VO, rhs: " + ename + "VO) -> Bool\n";
+	res = res + "  { return\n";
+	if (attributes.size() == 0)
+	{ res = res + "      (lhs === rhs)\n"; }
+	else   
+    { for (int i = 0; i < attributes.size(); i++) 
+      { Attribute att = (Attribute) attributes.get(i); 
+        String attnme = att.getName();
+        res = res + "      lhs." + attnme + " == rhs." + attnme;
+	    if (i < attributes.size() - 1)
+	    { res = res + " &&"; } 
+	    res = res + "\n"; 
+      }
+	} 
+	res = res + "  }\n\n"; 
+	
+
+    res = res + "  func hash(into hasher: inout Hasher) {\n"; 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attnme = att.getName();
+      res = res + "    hasher.combine(" + attnme + ")\n"; 
+    }
+	res = res + "  }\n"; 
+
+    return res + "}\n\n"; 
+  } 
+
+public void androidDbiDeclarations(PrintWriter out)
 { String ent = getName();
   String entlc = ent.toLowerCase();
   int natts = attributes.size();
-  out.println("package com.example.app;");
-  out.println();
-  out.println();
-  out.println("import android.content.Context;");
-  out.println("import android.database.sqlite.SQLiteDatabase;");
-  out.println("import android.database.sqlite.SQLiteOpenHelper;");
-  out.println("import android.content.ContentValues;");
-  out.println("import android.database.Cursor;");
-  out.println("import java.util.Vector;");
-  out.println();
-  out.println("public class Dbi extends SQLiteOpenHelper");
-  out.println("{ static final String TABLE_NAME = \"" + ent + "\";");
-  out.println("  public static final int COL_ID = 0;");
+
+  out.println("  static final String " + ent + "_TABLE_NAME = \"" + ent + "\";");
+  out.println("  static final int " + ent + "_COL_ID = 0;");
   String colnames = "{\"_id\"";
   for (int x = 0; x < natts; x++)
   { Attribute att = (Attribute) attributes.get(x);
     String aname = att.getName();
     String auname = aname.toUpperCase();
-    out.println("  static final int COL_" + auname + " = " + (x+1) + ";");
+    out.println("  static final int " + ent + "_COL_" + auname + " = " + (x+1) + ";");
     colnames = colnames + ", \"" + aname + "\"";
   }
-  out.println("  static final String[] COLS = new String[]" + colnames + "};");
-  out.println("  static final int NUMBER_COLS = " + natts + ";");
+
+  out.println("  static final String[] " + ent + "_COLS = new String[]" + colnames + "};");
+  out.println("  static final int " + ent + "_NUMBER_COLS = " + natts + ";");
   out.println();
-  out.println("  SQLiteDatabase database;");
-  out.println();
-  out.println("  private static final String DBNAME = \"app.db\";");
-  out.println("  private static final int DBVERSION = 1;");
-  out.println("  private static final String CREATE_SCHEMA ="); 
+  out.println("  private static final String " + ent + "_CREATE_SCHEMA ="); 
   out.println("     \"create table " + ent + " (" +
     "_id integer primary key autoincrement\" + ");
     for (int x = 0; x < attributes.size(); x++)
@@ -9969,26 +10842,64 @@ public void androidDbi(PrintWriter out)
       String dbtype = att.dbType();
       out.println("    \", " + attname + " " + dbtype + " not null\" + ");
     }
-    out.println("    )\";");
+    out.println("    \" )\";");
+    out.println();
+} 
+
+public void iosDbiDeclarations(PrintWriter out)
+{ String ent = getName();
+  String entlc = ent.toLowerCase();
+  int natts = attributes.size();
+
+  out.println("  static let " + ent + "_TABLE_NAME = \"" + ent + "\"");
+  out.println("  static let " + ent + "_COL_ID = 0;");
+  String colnames = "\"_id\"";
+  for (int x = 0; x < natts; x++)
+  { Attribute att = (Attribute) attributes.get(x);
+    String aname = att.getName();
+    String auname = aname.toUpperCase();
+    out.println("  static let " + ent + "_COL_" + auname + " = " + (x+1) + "");
+    colnames = colnames + ", \"" + aname + "\"";
+  }
+
+  out.println("  static let " + ent + "_COLS : [String] = [" + colnames + "]");
+  out.println("  static let " + ent + "_NUMBER_COLS = " + natts + "");
   out.println();
-  out.println("  public Dbi(Context context)"); 
-  out.println("  { super(context, DBNAME, null, DBVERSION); }");
-  out.println(); 
-  out.println("  @Override");
-  out.println("  public void onCreate(SQLiteDatabase db)");
-  out.println("  { db.execSQL(CREATE_SCHEMA); }");
-  out.println(); 
-  out.println("  public Vector list" + ent + "()");
-  out.println("  { Vector res = new Vector();");
-  out.println("    database = getWritableDatabase();");
-  out.println("    Cursor cursor = database.query(TABLE_NAME,COLS,null,null,null,null,null);");
+  out.println("  static let String " + ent + "_CREATE_SCHEMA ="); 
+  out.println("     \"create table " + ent + " (" +
+    "_id integer primary key autoincrement\" + ");
+    for (int x = 0; x < attributes.size(); x++)
+    { Attribute att = (Attribute) attributes.get(x);
+      String attname = att.getName();
+      String dbtype = att.dbType();
+      out.println("    \", " + attname + " " + dbtype + " not null\" + ");
+    }
+    out.println("    \" )\"");
+    out.println();
+} 
+
+public void androidDbiOperations(PrintWriter out)
+{ String ent = getName();
+  String entlc = ent.toLowerCase();
+  int natts = attributes.size();
+  String attlist = ""; 
+
+  out.println();
+  out.println("  public ArrayList<" + ent + "VO> list" + ent + "()");
+  out.println("  { ArrayList<" + ent + "VO> res = new ArrayList<" + ent + "VO>();");
+  out.println("    database = getReadableDatabase();");
+  out.println("    Cursor cursor = database.query(" + ent +
+                     "_TABLE_NAME," + ent + "_COLS,null,null,null,null,null);");
   out.println("    cursor.moveToFirst();");
-  out.println("    while(!cursor.isAfterLast())");
+  out.println("    while (!cursor.isAfterLast())");
   out.println("    { " + ent + "VO " + entlc + "vo = new " + ent + "VO();"); 
   for (int y = 0; y < natts; y++)
-  { Attribute att = (Attribute) attributes.get(y);
-    String anme = att.getName();
-    String getop = att.androidExtractOp(); 
+  { Attribute attx = (Attribute) attributes.get(y);
+    String anme = attx.getName();
+	attlist = attlist + anme; 
+	if (y < natts-1)
+	{ attlist = attlist + ", "; }
+    String getop = attx.androidExtractOp(ent); 
     out.println("      " + entlc + "vo.set" + anme + "(" + getop + ");");
   }
   out.println("      res.add(" + entlc + "vo);");
@@ -10000,27 +10911,292 @@ public void androidDbi(PrintWriter out)
   out.println();
   out.println("  public void create" + ent + "(" + ent + "VO " + entlc + "vo)");
   out.println("  { database = getWritableDatabase();");
-  out.println("    ContentValues _wr = new ContentValues(NUMBER_COLS);");
+  out.println("    ContentValues _wr = new ContentValues(" + ent + 
+                                         "_NUMBER_COLS);");
   for (int z = 0; z < natts; z++)
   { Attribute att = (Attribute) attributes.get(z);
     String nmeatt = att.getName();   
     String nup = nmeatt.toUpperCase();
-    out.println("    _wr.put(COLS[COL_" + nup + "]," + entlc + "vo.get" + nmeatt + "());");
+    out.println("    _wr.put(" + ent + "_COLS[" + ent + 
+                  "_COL_" + nup + "]," + entlc + "vo.get" + nmeatt + "());");
   }
-  out.println("    database.insert(TABLE_NAME,COLS[1],_wr);");
+  out.println("    database.insert(" + ent + "_TABLE_NAME," + ent + "_COLS[1],_wr);");
   out.println("  }");
   out.println();
-  out.println("  public void delete" + ent + "(String " + entlc + "Id)"); 
+
+  String entId = entlc + "Id"; 
+  Attribute pk = getPrincipalPrimaryKey();
+  if (pk != null)
+  { entId = pk.getName(); }
+  
+  for (int k = 0; k < attributes.size(); k++) 
+  { Attribute att = (Attribute) attributes.get(k);  
+    String attname = att.getName();  
+    out.println();
+    out.println("  public ArrayList<" + ent + "VO> searchBy" + ent + attname + "(String _val)");
+    out.println("  { ArrayList<" + ent + "VO> res = new ArrayList<" + ent + "VO>();");
+    out.println("    database = getReadableDatabase();");
+    out.println("    String[] _args = new String[]{_val};"); 
+    out.println("    Cursor cursor = database.rawQuery(\"select _id, " + attlist + 
+	                                   " from " + ent + " where " + attname + " = ?\", _args);"); 
+    out.println("    cursor.moveToFirst();");
+    out.println("    while (!cursor.isAfterLast())");
+    out.println("    { " + ent + "VO " + entlc + "vo = new " + ent + "VO();"); 
+    for (int y = 0; y < natts; y++)
+    { Attribute attx = (Attribute) attributes.get(y);
+      String anme = attx.getName();
+      String getop = attx.androidExtractOp(ent); 
+      out.println("      " + entlc + "vo.set" + anme + "(" + getop + ");");
+    }
+    out.println("      res.add(" + entlc + "vo);");
+    out.println("      cursor.moveToNext();");
+    out.println("    }");
+    out.println("    cursor.close();");
+    out.println("    return res;");
+    out.println("  }");
+    out.println();
+  } 
+
+  out.println("  public void edit" + ent + "(" + ent + "VO " + entlc + "vo)");
+  out.println("  { database = getWritableDatabase();");
+  out.println("    ContentValues _wr = new ContentValues(" + ent + "_NUMBER_COLS);");
+  for (int z = 0; z < natts; z++)
+  { Attribute att = (Attribute) attributes.get(z);
+    String nmeatt = att.getName();   
+    String nup = nmeatt.toUpperCase();
+    out.println("    _wr.put(" + ent + "_COLS[" + ent + "_COL_" + nup + "]," + 
+                             entlc + "vo.get" + nmeatt + "());");
+  }
+  out.println("    String[] _args = new String[]{ " + entlc + "vo.get" + entId + "() };");
+  out.println("    database.update(" + ent + "_TABLE_NAME, _wr, \"" + entId + " =?\", _args);");
+  out.println("  }");
+  out.println();
+  out.println("  public void delete" + ent + "(String _val)"); 
   out.println("  { database = getWritableDatabase();"); 
-  out.println("    String[] _args = new String[]{" + entlc + "Id};"); 
-  out.println("    database.delete(TABLE_NAME, \"" + entlc + "Id = ?\", _args);"); 
+  out.println("    String[] _args = new String[]{ _val };"); 
+  out.println("    database.delete(" + ent + "_TABLE_NAME, \"" + entId + " = ?\", _args);"); 
   out.println("  }"); 
   out.println(); 
-  out.println("  public void onUpgrade(SQLiteDatabase d, int x, int y) {}");
-  out.println();
-  out.println("}");
 }
 
+public void iosDbiOperations(PrintWriter out)
+{ String ent = getName();
+  String entlc = ent.toLowerCase();
+  int natts = attributes.size();
+  String attlist = ""; 
+
+  out.println();
+  out.println("  func list" + ent + "() -> [" + ent + "VO]");
+  out.println("  { var res : [" + ent + "VO] = [" + ent + "VO]()");
+  out.println("    let statement = \"SELECT * FROM " + ent + " \""); 
+  out.println("    let queryStatement = try? prepareStatement(sql: statement)");
+  out.println("    defer "); 
+  out.println("    { sqlite3_finalize(queryStatement) }"); 
+  out.println("    "); 
+  out.println("    while (sqlite3_step(queryStatement) == SQLITE_ROW)"); 
+  out.println("    { let id = sqlite3_column_int(queryStatement, 0)");
+  out.println("      var " + entlc + "vo = " + ent + "VO()");  
+  for (int y = 0; y < natts; y++)
+  { Attribute attx = (Attribute) attributes.get(y);
+    String anme = attx.getName();
+    attlist = attlist + anme; 
+    if (y < natts-1)
+    { attlist = attlist + ", "; }
+    String getop = attx.iosExtractOp(ent, y+1); 
+    out.println(getop); 
+    out.println("      " + entlc + "vo.set" + anme + "(_x: " + anme + ")");
+  }
+  out.println("      res.append(" + entlc + "vo)");
+  out.println("    }");
+  out.println("    sqlite3_finalize(queryStatement)");
+  out.println("    return res");  
+  out.println("  }"); 
+  out.println(); 
+  
+/* func query() {
+  var queryStatement: OpaquePointer?
+  if sqlite3_prepare_v2(
+    db, 
+    queryStatementString, 
+    -1, 
+    &queryStatement, 
+    nil
+  ) == SQLITE_OK {
+    print("\n")
+    while (sqlite3_step(queryStatement) == SQLITE_ROW) {
+      let id = sqlite3_column_int(queryStatement, 0)
+      guard let queryResultCol1 = sqlite3_column_text(queryStatement, 1) else {
+        print("Query result is nil.")
+        return
+      }
+      let name = String(cString: queryResultCol1)
+      print("Query Result:")
+      print("\(id) | \(name)")
+    }
+  } else {
+      let errorMessage = String(cString: sqlite3_errmsg(db))
+      print("\nQuery is not prepared \(errorMessage)")
+  }
+  sqlite3_finalize(queryStatement)
+}
+  */ 
+  
+  out.println("  func create" + ent + "(" + entlc + "vo : " + ent + "VO)");
+  String arguments = ""; 
+  String values = ""; 
+  for (int z = 0; z < natts; z++)
+  { Attribute att = (Attribute) attributes.get(z);
+    String nmeatt = att.getName();   
+    arguments = arguments + nmeatt;
+    values = values + entlc + "vo.get" + nmeatt + "()";  
+    if (z < natts-1) 
+    { arguments = arguments + ", "; 
+      values = values + " + \",\" + "; 
+    }
+  } 
+  out.println("  { let insertSQL : String = \"INSERT INTO " + ent + " (" + arguments + ") VALUES (\" + "); 
+  out.println("      " + values + " + \")\""); 
+  out.println("    let insertStatement = try prepareStatement(sql: insertSQL)"); 
+  out.println("    defer "); 
+  out.println("    { sqlite3_finalize(insertStatement) }");
+  out.println("    sqlite3_step(insertStatement)");  
+  out.println("  }");
+  out.println();
+
+ /*
+  func insertContact(contact: Contact) throws 
+  { let insertSql = "INSERT INTO Contact (Id, Name) VALUES (?, ?);"
+    let insertStatement = try prepareStatement(sql: insertSql)
+    defer 
+    { sqlite3_finalize(insertStatement) }
+    let name: NSString = contact.name
+    guard sqlite3_bind_int(insertStatement, 1, contact.id) == SQLITE_OK  &&
+      sqlite3_bind_text(insertStatement, 2, name.utf8String, -1, nil) == SQLITE_OK 
+    else 
+    { throw SQLiteError.Bind(message: errorMessage) }
+    guard sqlite3_step(insertStatement) == SQLITE_DONE 
+    else 
+    { throw SQLiteError.Step(message: errorMessage) }
+    print("Successfully inserted row.")
+  } */ 
+
+  String entId = entlc + "Id"; 
+  Attribute pk = getPrincipalPrimaryKey();
+  if (pk != null)
+  { entId = pk.getName(); }
+  
+  for (int k = 0; k < attributes.size(); k++) 
+  { Attribute att = (Attribute) attributes.get(k);  
+    String attname = att.getName();  
+    Type atype = att.getType(); 
+    String swifttype = atype.getSwift(); 
+    out.println();
+    out.println("  func searchBy" + ent + attname + "(_val : " + swifttype + ")");
+    out.println("  { var res : [" + ent + "VO] = [" + ent + "VO]()");
+    out.println("    let statement : String = \"SELECT * FROM " + ent + " WHERE " + attname + " = \" + String(_val)"); 
+    out.println("    let queryStatement = try? prepareStatement(sql: statement)");
+    out.println("    defer "); 
+    out.println("    { sqlite3_finalize(queryStatement) }"); 
+    out.println("    "); 
+    out.println("    while (sqlite3_step(queryStatement) == SQLITE_ROW)"); 
+    out.println("    { let id = sqlite3_column_int(queryStatement, 0)");
+    out.println("      var " + entlc + "vo = " + ent + "VO()");  
+    for (int y = 0; y < natts; y++)
+    { Attribute attx = (Attribute) attributes.get(y);
+      String anme = attx.getName();
+      attlist = attlist + anme; 
+      if (y < natts-1)
+      { attlist = attlist + ", "; }
+      String getop = attx.iosExtractOp(ent, y+1); 
+      out.println(getop); 
+      out.println("      " + entlc + "vo.set" + anme + "(_x: " + anme + ")");
+    }
+    out.println("      res.append(" + entlc + "vo)");
+    out.println("    }");
+    out.println("    sqlite3_finalize(queryStatement)");
+    out.println("    return res");  
+    out.println("  }");
+    out.println();
+  } 
+
+  out.println("  func edit" + ent + "(" + entlc + "vo : " + ent + "VO)");
+  out.println("  { var updateStatement: OpaquePointer?"); 
+  String columnsettings = ""; 
+  
+  for (int z = 0; z < natts; z++)
+  { Attribute att = (Attribute) attributes.get(z);
+    if (att == pk) 
+    { continue; }
+	
+    String nmeatt = att.getName();   
+    Type atype = att.getType(); 
+    String swifttype = atype.getSwift(); 
+    columnsettings = columnsettings + 
+       "      \" " + nmeatt + " = \" + " + 
+       entlc + "vo.get" + nmeatt + "() + \""; 
+    if (z < natts-1) 
+    { columnsettings = columnsettings + " ,\" +\n"; } 
+  }
+  
+  out.println("    let statement : String = \"UPDATE " + ent + " SET \" + "); 
+  out.println(columnsettings + " WHERE " + entId + " = \" + " + entlc + "vo.get" + entId + "()"); 
+  out.println("    if sqlite3_prepare_v2(dbPointer, statement, -1, &updateStatement, nil) == SQLITE_OK"); 
+  out.println("    { sqlite3_step(updateStatement) }"); 
+  out.println("    sqlite3_finalize(updateStatement)"); 
+  out.println("  }");
+  out.println();
+  
+  /* func update() {
+  var updateStatement: OpaquePointer?
+  String columnsettings = ""; 
+  for (int z = 0; z < natts; z++)
+  { Attribute att = (Attribute) attributes.get(z);
+    String nmeatt = att.getName();   
+    columnsettings = columnsettings + nmeatt + " = " + 
+                             entlc + "vo.get" + nmeatt + "()"; 
+    if (z < natts-1) 
+	{ columnsettings = columnsettings + ",\n"; } 
+  }
+  var statement : String = "UPDATE " + ent + " SET " + columnsettings; 
+  if sqlite3_prepare_v2(db, updateStatementString, -1, &updateStatement, nil) == 
+      SQLITE_OK {
+    if sqlite3_step(updateStatement) == SQLITE_DONE {
+      print("\nSuccessfully updated row.")
+    } else {
+      print("\nCould not update row.")
+    }
+  } else {
+    print("\nUPDATE statement is not prepared")
+  }
+  sqlite3_finalize(updateStatement)
+} */ 
+
+  out.println("  func delete" + ent + "(_val : String)"); 
+  out.println("  { let deleteStatementString = \"DELETE " + ent + " WHERE " + entId + " = \" + _val"); 
+  out.println("    var deleteStatement: OpaquePointer?"); 
+  out.println("    if sqlite3_prepare_v2(dbPointer, deleteStatementString, -1, &deleteStatement, nil) == SQLITE_OK"); 
+  out.println("    { sqlite3_step(deleteStatement) }");
+  out.println("    sqlite3_finalize(deleteStatement)"); 
+  out.println("  }"); 
+
+ /*  func delete() {
+  var deleteStatement: OpaquePointer?
+  if sqlite3_prepare_v2(db, deleteStatementString, -1, &deleteStatement, nil) == 
+      SQLITE_OK {
+    if sqlite3_step(deleteStatement) == SQLITE_DONE {
+      print("\nSuccessfully deleted row.")
+    } else {
+      print("\nCould not delete row.")
+    }
+  } else {
+    print("\nDELETE statement could not be prepared")
+  }
+  
+  sqlite3_finalize(deleteStatement)
+} */ 
+
+  out.println(); 
+}
  
   public String generateBean(Vector useCases, Vector cons, Vector entities,
                              Vector types)
@@ -10074,13 +11250,14 @@ public void androidDbi(PrintWriter out)
         String check = att.getBeanCheckCode(); 
         res = res + check; 
       } 
+	  
       if (action.equals("create") || action.equals("edit") || action.equals("set"))
       { Vector tests = getInvariantCheckTests(pars); 
         for (int p = 0; p < tests.size(); p++)
         { String test = (String) tests.get(p); 
           res = res + 
                 "    if (" + test + ") { }\n" + 
-                "    else { errors.add(\"Constraint: " + test + " failed\"); }\n";
+                "    else { errors.add(\"" + ename + " constraint " + (p+1) + " failed\"); }\n";
         }
       }
       res = res + "  return errors.size() > 0; }\n\n";
@@ -10097,7 +11274,7 @@ public void androidDbi(PrintWriter out)
       Vector pars = od.getParameters(); 
       String odname = od.getODName(); 
       String action = od.getStereotype(0); 
-      String dbiop = od.getDbiOp(); 
+      String dbiop = od.getDbiOpCall(); 
       Vector correc = new Vector(); 
 
       if (action.equals("create") || action.equals("delete") || 
@@ -10147,26 +11324,32 @@ public void androidDbi(PrintWriter out)
     return res + "}\n"; 
   }
 
-  public String generateAndroidBean(Vector useCases, Vector cons, Vector entities,
-                             Vector types)
+  public String generateAndroidBean(String packageName, Vector useCases, 
+      Vector cons, Vector entities, Vector types, CGSpec cgs)
   { String ename = getName(); 
-    String res = "package com.example.app;\n\n" + 
+    String res = "package " + packageName + ";\n\n" + 
       "import java.util.Vector;\n\n" + 
       "import android.content.Context;\n\n" + 
-      "public class " + ename + "Bean\n{ Dbi dbi;\n"; 
+      "public class " + ename + "Bean\n{ ModelFacade model;\n"; 
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attnme = att.getName(); 
-      String tname = att.getType().getName(); 
+	  Type atttype = att.getType(); 
+      String tname = atttype.getName(); 
       res = res + "  private String " + attnme + " = \"\";\n";
-      if (tname.equals("int"))
+      if (tname.equals("int") || tname.equals("long"))
       { res = res + "  private int i" + attnme + " = 0;\n"; } 
       else if (tname.equals("double"))
       { res = res + "  private double d" + attnme + " = 0;\n"; } 
+	  else if (att.isEnumeration())
+	  { Vector vals = atttype.getValues(); 
+	    res = res + "  private " + tname + " e" + attnme + " = " + tname + "." + vals.get(0) + ";\n"; 
+	  }
       // booleans are treated as strings. 
     } 
     res = res + "  private Vector errors = new Vector();\n\n" +
-          "  public " + ename + "Bean(Context _c) { dbi = new Dbi(_c); }\n\n"; 
+          "  public " + ename + "Bean(Context _c)\n" + 
+		  "  { model = ModelFacade.getInstance(_c); }\n\n"; 
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attnme = att.getName(); 
@@ -10198,14 +11381,15 @@ public void androidDbi(PrintWriter out)
       { Attribute att = (Attribute) pars.get(k); 
         String check = att.getBeanCheckCode(); 
         res = res + check; 
-      } 
+      }
+	   
       if (action.equals("create") || action.equals("edit") || action.equals("set"))
-      { Vector tests = getInvariantCheckTests(pars); 
+      { Vector tests = getInvariantCheckTests(types,entities,pars,cgs); 
         for (int p = 0; p < tests.size(); p++)
         { String test = (String) tests.get(p); 
           res = res + 
                 "    if (" + test + ") { }\n" + 
-                "    else { errors.add(\"Constraint: " + test + " failed\"); }\n";
+                "    else { errors.add(\"" + ename + " constraint " + (p+1) + " failed\"); }\n";
         }
       }
       res = res + "    return errors.size() > 0; }\n\n";
@@ -10222,7 +11406,7 @@ public void androidDbi(PrintWriter out)
       Vector pars = od.getParameters(); 
       String odname = od.getODName(); 
       String action = od.getStereotype(0); 
-      String dbiop = od.getAndroidDbiOp(); 
+      String dbiop = od.getAndroidModelOpCall(); 
       Vector correc = new Vector(); 
 
       if (action.equals("create") || action.equals("delete") || 
@@ -10241,6 +11425,7 @@ public void androidDbi(PrintWriter out)
                                ", i" + ename.toLowerCase() + "Id);\n  ";
         }
         res = res + "resetData(); }\n\n";
+
         if (correc.size() > 0)
         { res = res + correc.get(0) + "\n\n"; 
           correc.remove(0); 
@@ -10256,15 +11441,77 @@ public void androidDbi(PrintWriter out)
           if (ast != null)
           { ent2 = ast.getEntity2(); }
         }
-
-        res = res + "  public Iterator " + odname + "()\n" +  "  { "; 
-        res = res + "Vector rs = " + dbiop + "\n" +
-              "   List rs_list = new ArrayList();\n" +  
-              "   rs_list.addAll(rs);\n" +
-              "   resetData();\n" + 
-              "   return rs_list.iterator();\n  }\n"; 
       }  // for getrole it is the TARGET entities fields
     }
+    return res + "}\n"; 
+  }
+
+  public String generateIOSBean(Vector useCases, 
+                                Vector entities, Vector types, CGSpec cgs)
+  { String ename = getName(); 
+    String res = 
+	  // "package " + packageName + ";\n\n" + 
+      "import Foundation\n" + 
+      "import Glibc\n\n" + 
+      "class " + ename + "Bean\n{\n";
+	  
+    res = res + "  var errorlist : [String] = [String]()\n\n"; 
+
+    res = res + "  init()\n  { }\n\n"; 
+          
+    res = res + "  func resetData()\n  { errorlist = [String]() }\n\n"; 
+
+    Vector contexts = new Vector(); 
+    contexts.add(this); 
+    typeCheckInvariants(types,entities); 
+
+
+    for (int j = 0; j < useCases.size(); j++)
+    { if (!(useCases.get(j) instanceof OperationDescription)) { continue; } 
+
+      OperationDescription od = (OperationDescription) useCases.get(j); 
+      if (this != od.getEntity()) { continue; } 
+
+      Vector pars = od.getParameters(); 
+      String odname = od.getODName(); 
+      String action = od.getStereotype(0); 
+	  
+      Vector atts = new Vector(); 
+      atts.addAll(pars); 
+ 
+      String parlist = ""; 
+      for (int i = 0; i < atts.size(); i++) 
+      { Attribute att = (Attribute) atts.get(i); 
+        String attnme = att.getName();
+        Type atttype = att.getType();  
+        parlist = parlist + attnme + " : " + atttype.getSwift(); 
+        if (i < atts.size() - 1) 
+        { parlist = parlist + ", "; }
+      } 
+
+      res = res + "  func is" + odname + "error(" + parlist + ") -> Bool\n" + 
+                  "  { resetData() \n";
+
+
+      if (action.equals("create") || action.equals("edit"))
+      { Vector tests = getInvariantCheckTests(cgs); 
+        for (int p = 0; p < tests.size(); p++)
+        { String test = (String) tests.get(p); 
+          res = res + 
+            "    if " + test + " { }\n" + 
+            "    else { errorlist.append(\"" + ename + " invariant " + (p+1) + " failed\") }\n";
+        }
+        res = res + "    return errorlist.count > 0\n  }\n\n";
+	  }
+    }
+	
+    res = res + "  func errors() -> String\n" + 
+	            "  { var res : String = \"\"\n" +
+				"    for (_,x) in errorlist.enumerated()\n" + 
+				"    { res = res + x + \", \" }\n" +  
+	            "    return res\n" + 
+				"  }\n\n"; 
+
     return res + "}\n"; 
   }
 
@@ -12441,8 +13688,11 @@ public BehaviouralFeature designAbstractKillOp()
     Vector allattributes = allDefinedAttributes(); 
 
     for (int i = 0; i < allattributes.size(); i++) 
-    { Vector newres = new Vector(); 
-      Attribute att = (Attribute) allattributes.get(i); 
+    { Attribute att = (Attribute) allattributes.get(i);
+	  if (att.isIdentity() && allattributes.size() > 1) 
+	  { continue; }
+	   
+      Vector newres = new Vector(); 
       Vector testassignments = att.testCases(x); 
       for (int j = 0; j < res.size(); j++) 
       { String tst = (String) res.get(j); 
@@ -12457,6 +13707,623 @@ public BehaviouralFeature designAbstractKillOp()
       res.clear(); 
       res.addAll(newres); 
     } 
+
+    String y = nme.toLowerCase() + "x_"; 
+
+    Vector newres = new Vector(); 
+    for (int i = 0; i < res.size(); i++) 
+    { String model = (String) res.get(i); 
+      String yi = y + i; 
+      String mod1 = model.replace(x,yi); 
+      // System.out.println("Replaced model= " + mod1);
+      newres.add(mod1);  
+    } 
+	
+	res.clear(); 
+	res.addAll(newres); 
+	
+	int nmodels = newres.size(); 
+	
+	// But identity attributes should get different values in the different models
+	
+    for (int i = 0; i < allattributes.size(); i++) 
+    { Attribute att = (Attribute) allattributes.get(i);
+	  if (att.isIdentity() && allattributes.size() > 1) 
+	  { res.clear(); 
+	    String attnme = att.getName(); // assumed to be a string or int
+	    for (int j = 0; j < newres.size(); j++) 
+	    { String model = (String) newres.get(j); 
+          String yj = y + j; 
+          int rand = (int) (nmodels*Math.random());
+		  String attassign = yj + "." + attnme + " = " + rand;
+		  if (att.isNumeric()) { }
+		  else 
+		  { attassign = yj + "." + attnme + " = \"" + rand + "\""; }
+		  String model1 = model + "\n" + attassign;
+		  res.add(model1);  
+		}
+		newres.clear(); 
+		res.addAll(newres); 
+      }
+	}
+    
+    return res; 
+  }
+
+  public Vector operationTestCases()
+  { Vector res = new Vector(); 
+    String nme = getName(); 
+    String x = nme.toLowerCase() + "$x"; 
+    for (int i = 0; i < operations.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i);
+      if (bf.isAbstract()) { } 
+	  else 
+	  { Vector bfcases = bf.testCases(); 
+        res.addAll(bfcases);
+      }   
+    }
+    return res;  
+  }  
+
+  public void generateRemoteDAO(String packageName)
+  { String ename = getName(); 
+    String lcename = ename.toLowerCase(); 
+    String url = "\"base url for the data source\"";
+    String turl = getTaggedValue("url"); 
+    if (turl != null) 
+    url = turl;  
+
+    String entfile = ename + "_DAO.java"; 
+    File entff = new File("output/app/src/main/java/com/example/app/" + entfile); 
+    try
+    { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entff)));
+      out.println("package " + packageName + ";"); 
+      out.println(); 
+      out.println("import java.util.*;"); 
+      out.println("import java.util.HashMap;"); 
+      out.println("import java.util.Collection;");
+      out.println("import java.util.List;");
+      out.println("import java.util.ArrayList;");
+      out.println("import java.util.Set;");
+      out.println("import java.util.HashSet;");
+      out.println("import java.util.TreeSet;");
+      out.println("import java.util.Collections;");
+      out.println("import java.util.StringTokenizer;"); 
+      out.println("import java.util.Date; "); 
+      out.println("import java.text.DateFormat;");  
+      out.println("import java.text.SimpleDateFormat;");  
+      out.println("import org.json.JSONArray;"); 
+      out.println("import org.json.JSONObject;"); 
+      out.println("import org.json.*;"); 
+      out.println(); 
+      out.println("public class " + ename + "_DAO"); 
+      out.println("{ public static String getURL(String command, ArrayList<String> pars, ArrayList<String> values)"); 
+      out.println("  { String res = " + url + ";"); 
+      out.println("    if (command != null)"); 
+	  out.println("    { res = res + command; }"); 
+      out.println("    if (pars.size() == 0)"); 
+	  out.println("    { return res; }"); 
+      out.println("    res = res + \"?\";"); 
+      out.println("    for (int i = 0; i < pars.size(); i++)"); 
+      out.println("    { String par = pars.get(i); "); 
+      out.println("      String val = values.get(i); "); 
+      out.println("      res = res + par + \"=\" + val;"); 
+      out.println("      if (i < pars.size() - 1)"); 
+      out.println("      { res = res + \"&\"; }");
+      out.println("    }"); 
+      out.println("    return res;"); 
+      out.println("  }");  
+      out.println();  
+      out.println(checkCacheOperation()); 
+      out.println(); 
+      out.println(getCachedInstanceOperation()); 
+      out.println(); 
+      out.println(parseCSVOperationJava8());
+      out.println(); 
+      out.println(parseJSONOperation());
+      out.println(); 
+      out.println(parseCSVFileOperationJava8());
+      out.println();   
+      out.println(parseJSONSequenceOperation());
+      out.println(); 
+      out.println(writeJSONOperation());
+      out.println(); 
+      out.println(writeJSONArrayOperation());
+      out.println("}"); 
+      out.close(); 
+    } catch (Exception e) { } 
+  } 
+
+  public void generateFirebaseDbi(String packageName)
+  { String ename = getName(); 
+    String lcename = ename.toLowerCase();
+	String evo = ename + "VO"; 
+	String es = ename.toLowerCase() + "s";  
+	Attribute pk = getPrincipalPrimaryKey(); 
+	if (pk == null) 
+	{ System.err.println("!!! ERROR: no primary key for " + ename); 
+	  return; 
+	}
+	String key = pk.getName(); 
+
+    String entfile = "FirebaseDbi.java"; 
+    File entff = new File("output/app/src/main/java/" + entfile); 
+    try
+    { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entff)));
+      out.println("package " + packageName + ";"); 
+      out.println(); 
+      out.println("import java.util.*;"); 
+      out.println("import java.util.HashMap;"); 
+      out.println("import java.util.Collection;");
+      out.println("import java.util.List;");
+      out.println("import java.util.ArrayList;");
+      out.println("import java.util.Set;");
+      out.println("import java.util.HashSet;");
+      out.println("import java.util.TreeSet;");
+      out.println("import java.util.Collections;");
+      out.println("import java.util.StringTokenizer;"); 
+      out.println("import java.util.Date; "); 
+      out.println("import java.text.DateFormat;");  
+      out.println("import java.text.SimpleDateFormat;");  
+      out.println("import org.json.JSONArray;"); 
+      out.println("import org.json.JSONObject;"); 
+      out.println("import org.json.*;"); 
+      out.println("import com.google.firebase.auth.*;"); 
+
+      out.println("import com.google.firebase.database.DataSnapshot;"); 
+      out.println("import com.google.firebase.database.DatabaseError;"); 
+      out.println("import com.google.firebase.database.DatabaseReference;"); 
+      out.println("import com.google.firebase.database.FirebaseDatabase;"); 
+      out.println("import com.google.firebase.database.ValueEventListener;"); 
+
+      out.println(); 
+      out.println("public class FirebaseDbi"); 
+      out.println("{ static FirebaseDbi instance = null;");  
+      out.println("  DatabaseReference database = null;");  
+      out.println(); 
+      out.println("  public static FirebaseDbi getInstance()"); 
+      out.println("  { if (instance == null)"); 
+      out.println("    { instance = new FirebaseDbi(); }"); 
+      out.println("    return instance;");  
+      out.println("  }");
+	  out.println(""); 
+	  out.println("  FirebaseDbi()"); 
+      out.println("  { database = FirebaseDatabase.getInstance().getReference();"); 
+      out.println("    ");
+    
+      out.println("    ValueEventListener listener = new ValueEventListener()"); 
+      out.println("    {");
+      out.println("      @Override");
+      out.println("      public void onDataChange(DataSnapshot dataSnapshot)"); 
+      out.println("      { // Get object");
+      out.println("        " + evo + " _ex = dataSnapshot.getValue(" + evo + ".class);");
+      out.println("        " + ename + " _x = " + ename + "." + ename + "_index.get(_ex." + key + ");");
+      out.println("        if (_x == null)        ");
+      out.println("        { _x = " + ename + ".createByPK" + ename + "(_ex." + key + "); }");  
+	  for (int i = 0; i < attributes.size(); i++) 
+	  { Attribute att = (Attribute) attributes.get(i); 
+	    String attname = att.getName(); 
+        out.println("        _x." + attname + " = _ex." + attname + ";");
+	  } 
+      out.println("      }");
+      out.println("  ");
+      out.println("      @Override");
+      out.println("      public void onCancelled(DatabaseError databaseError)"); 
+      out.println("      { }");
+      out.println("    };");
+      out.println("    database.child(\"" + es + "\").addValueEventListener(listener);");
+      out.println("  }");
+      out.println("  ");
+      out.println("  public void persist" + ename + "(" + ename + " ex)");
+      out.println("  { " + evo + " _evo = new " + evo + "(ex); ");
+      out.println("    String _key = _evo." + key + "; ");
+      out.println("    database.child(\"" + es + "\").child(_key).setValue(_evo);"); 
+      out.println("  }");
+      out.println("  ");
+      out.println("  public void delete" + ename + "(" + ename + " ex)");
+      out.println("  { String _key = ex." + key + "; ");
+      out.println("    database.child(\"" + es + "\").child(_key).removeValue();"); 
+      out.println("  }");
+  
+	  out.println("}"); 
+	  out.close(); 
+    } catch (Exception _ex) { } 
+  } 
+
+  public void generateFirebaseDbiIOS(String packageName)
+  { String ename = getName(); 
+    String lcename = ename.toLowerCase();
+	String evo = ename + "VO"; 
+	String es = ename.toLowerCase() + "s";  
+	Attribute pk = getPrincipalPrimaryKey(); 
+	if (pk == null) 
+	{ System.err.println("!!! ERROR: no primary key for " + ename); 
+	  return; 
+	}
+	String key = pk.getName(); 
+
+    String entfile = "FirebaseDbi.swift"; 
+    File entff = new File("output/" + packageName + "/" + entfile); 
+    try
+    { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entff)));
+      out.println("import UIKit"); 
+      out.println("import FirebaseAuth"); 
+      out.println("import FirebaseDatabase");
+
+      out.println(); 
+      out.println("class FirebaseDbi"); 
+      out.println("{ static var instance : FirebaseDbi? = nil");  
+      out.println("  var database : DatabaseReference? = nil");  
+      out.println(); 
+      out.println("  func getInstance() -> FirebaseDbi"); 
+      out.println("  { if instance == nil"); 
+      out.println("    { instance = FirebaseDbi() }"); 
+      out.println("    return instance!");  
+      out.println("  }");
+	  out.println(""); 
+	  out.println("  init()"); 
+      out.println("  { self.database = Database.database().reference()"); 
+      out.println("    self.database?.child(\"" + es + "\").observe(.value,"); 
+      out.println("      with:");
+      out.println("      { (change) in");
+      out.println("        if let d = change.value as? [String : AnyObject]");
+      out.println("        { for (_,v) in d.enumerated()");
+      out.println("          { let _einst = v.1 as! Dictionary<String,AnyObject>");
+      out.println("            var _ex : " + ename + "? = " + ename + "_DAO.parseJSON(obj: _einst)");  
+      out.println("          }"); 
+      out.println("        }"); 
+      out.println("      })");
+      out.println("   }");
+      out.println("  ");
+      out.println("  func persist" + ename + "(ex : " + ename + ")");
+      out.println("  { let _evo = " + ename + "_DAO.writeJSON(_x: ex) ");
+      out.println("    if let newChild = self.database?.child(\"" + es + "\").child(ex." + key + ")"); 
+	  out.println("    { newChild.setValue(_evo) }");
+      out.println("  }");
+      out.println("  ");
+      out.println("  func delete" + ename + "(ex : " + ename + ")");
+      out.println("  { if let oldChild = self.database?.child(\"" + es + "\").child(ex." + key + ")"); 
+	  out.println("    { oldChild.removeValue() }"); 
+      out.println("  }"); 
+	  out.println("}"); 
+	  out.close(); 
+    } catch (Exception _ex) { } 
+  } 
+
+
+
+  private String parseJSONOperation()
+  { String ename = getName(); 
+    String x = "_" + ename.toLowerCase() + "x"; 
+    Attribute pk = getPrincipalPrimaryKey(); 
+    if (pk == null) { return ""; }
+    String pkname = pk.getName(); 
+	
+    String res = "  public static " + ename + " parseJSON(JSONObject obj)\n" + 
+                 "  { if (obj == null) { return null; }\n" + 
+                 "\n" + 
+                 "    try {\n" + 
+                 "      String " + pkname + " = obj.getString(\"" + pkname + "\");\n" + 
+                 "      " + ename + " " + x + " = " + ename + "." + ename + "_index.get(" + pkname + ");\n" +  
+                 "      if (" + x + " == null) { " + x + " = " + ename + ".createByPK" + ename + "(" + pkname + "); }\n" + 
+                 "      \n"; 
+				 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attname = att.getName(); 
+      Type t = att.getType(); 
+      String decoder = "get" + Named.capitalise(t.getName()); 
+      res = res + "      " + x + "." + attname + " = obj." + decoder + "(\"" + attname + "\");\n"; 
+	} 
+      
+	res = res + "      return " + x + ";\n" + 
+                "    } catch (Exception _e) { return null; }\n" + 
+                "  }\n\n"; 
     return res; 
   } 
+
+  private String writeJSONOperation()
+  { String ename = getName(); 
+
+    String res = "  public static JSONObject writeJSON(" + ename + " _x)\n" + 
+       "  { JSONObject result = new JSONObject();\n" + 
+       "    try {\n"; 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attname = att.getName(); 
+      res = res + "       result.put(\"" + attname + "\", _x." + attname + ");\n"; 
+     } 
+     res = res + "      } catch (Exception _e) { return null; }\n";  
+     res = res + "    return result;\n"; 
+     res = res + "  }\n\n"; 
+     return res; 
+  }
+
+  private String writeJSONArrayOperation()
+  { String ename = getName(); 
+     String res = "  public static JSONArray writeJSONArray(ArrayList<" + ename + "> es)\n" + 
+                  "  { JSONArray result = new JSONArray();\n" + 
+                  "    for (int _i = 0; _i < es.size(); _i++)\n" + 
+                  "    { " + ename + " _ex = es.get(_i);\n" + 
+                  "      JSONObject _jx = writeJSON(_ex);\n" + 
+                  "      if (_jx == null) { } \n" + 
+                  "      else \n" + 
+                  "      { try { result.put(_jx); }\n" + 
+                  "        catch (Exception _ee) { }\n" + 
+                  "      }\n" + 
+                  "    }\n" + 
+                  "    return result;\n" + 
+                  "  }\n\n"; 
+    return res;
+  }
+
+
+  public void generateRemoteDAOios(String packageName)
+  { String ename = getName(); 
+    String lcename = ename.toLowerCase(); 
+    String url = "\"base url for the data source\"";
+    String turl = getTaggedValue("url"); 
+    if (turl != null) 
+    url = turl;  
+
+    String entfile = ename + "_DAO.swift"; 
+    File entff = new File("output/" + packageName + "/" + entfile); 
+    try
+    { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entff)));
+      out.println("import Foundation"); 
+      out.println("import UIKit");
+      out.println("import Glibc");  
+      out.println(); 
+      out.println("class " + ename + "_DAO"); 
+      out.println("{ static func getURL(command : String?, pars : [String], values : [String])"); 
+      out.println("  { var res : String = " + url + ""); 
+      out.println("    if command != nil"); 
+	  out.println("    { res = res + command! }"); 
+      out.println("    if pars.count == 0"); 
+	  out.println("    { return res }"); 
+      out.println("    res = res + \"?\""); 
+      out.println("    for (i,v) in pars.enumerated()"); 
+      out.println("    { res = res + v + \"=\" + values[i]"); 
+      out.println("      if i < pars.count - 1"); 
+      out.println("      { res = res + \"&\" }");
+      out.println("    }"); 
+      out.println("    return res"); 
+      out.println("  }");  
+      out.println();  
+      out.println(checkCacheOperationIOS()); 
+      out.println(); 
+      out.println(getCachedInstanceOperationIOS()); 
+      out.println(); 
+      // out.println(parseCSVOperationIOS());
+      out.println(); 
+      out.println(parseJSONOperationIOS());
+      out.println(); 
+      out.println(); 
+      out.println(writeJSONOperationIOS());
+      out.println(); 
+      // out.println(parseCSVFileOperationIOS());
+      // out.println();   
+      // out.println(parseJSONSequenceOperationIOS());
+      out.println(); 
+      out.println("}"); 
+      out.close(); 
+    } catch (Exception e) { } 
+  } 
+
+  private String parseJSONOperationIOS()
+  { String ename = getName(); 
+    String x = "_" + ename.toLowerCase() + "x"; 
+    Attribute pk = getPrincipalPrimaryKey(); 
+    if (pk == null) { return ""; }
+    String pkname = pk.getName(); 
+	
+    String res = "  static func parseJSON(obj : AnyObject) -> " + ename + "?\n" + 
+                 "  { if (obj == nil) { return nil }\n" + 
+                 "\n" + 
+                 "    if let jsonObj = obj as? [String : AnyObject]\n" + 
+                 "    { let " + pkname + " : String? = jsonObj[\"" + pkname + "\"] as! String?\n" + 
+                 "      let " + x + " : " + ename + "? = " + ename + "." + ename + "_index[" + pkname + "]\n" +  
+                 "      if (" + x + " == nil)\n" + 
+				 "      { " + x + " = " + ename + ".createByPK" + ename + "(" + pkname + ") }\n" + 
+                 "      \n"; 
+				 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attname = att.getName(); 
+      Type t = att.getType(); 
+      String decoder = " as! " + t.getSwift(); 
+      res = res + "      let " + x + "." + attname + " = jsonObj[\"" + attname + "\"]" + decoder + "\n"; 
+	} 
+      
+	res = res +   "      return " + x + "\n" + 
+                  "    } else { return nil }\n" + 
+                  "  }\n\n"; 
+    return res; 
+  } // But booleans and enums are stored as strings. 
+
+  private String writeJSONOperationIOS()
+  { String ename = getName(); 
+
+    String res = "  static func writeJSON(_x : " + ename + ") -> NSDictionary\n" + 
+                 "  { return [\n"; 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attname = att.getName(); 
+      res = res + "       \"" + attname + "\": " + Type.nsValueOf(att);
+	  if (i < attributes.size() - 1) 
+	  { res = res + ",\n"; } 
+    } 
+    res = res + "      ]\n";  
+    res = res + "  }\n\n"; 
+    return res; 
+  }
+
+  private String parseJSONSequenceOperation()
+  { String ename = getName(); 
+    String x = "_" + ename.toLowerCase() + "x"; 
+    Attribute pk = getPrincipalPrimaryKey(); 
+    if (pk == null) { return ""; }
+    String pkname = pk.getName(); 
+	
+    String res = "  public static ArrayList<" + ename + "> parseJSON(JSONArray jarray)\n" + 
+                 "  { if (jarray == null) { return null; }\n" + 
+		      "    ArrayList<" + ename + "> res = new ArrayList<" + ename + ">();\n" + 
+                 "\n" + 
+                 "    int len = jarray.length();\n" +  
+                 "    for (int i = 0; i < len; i++)\n" + 
+                 "    { try { JSONObject _x = jarray.getJSONObject(i);\n" +  
+                 "        if (_x != null)\n" + 
+                 "        { " + ename + " _y = parseJSON(_x); \n" + 
+                 "          if (_y != null) { res.add(_y); }\n" +  
+                 "        }\n" + 
+                 "      }\n" + 
+                 "      catch (Exception _e) { }\n" + 
+                 "    }\n";  
+      
+    res = res +  "    return res;\n" + 
+                 "  }\n\n"; 
+    return res; 
+  } 
+
+  private String checkCacheOperation()
+  { String ename = getName(); 
+	
+    String res = "  public static boolean isCached(String id)\n" + 
+                 "  { " + ename + " _x = " + ename + "." + ename + "_index.get(id);\n" +  
+                 "    if (_x == null) { return false; }\n" + 
+                 "    return true;\n" +  
+                 "  }\n\n"; 
+    return res; 
+  } 
+
+  private String checkCacheOperationIOS()
+  { String ename = getName(); 
+	
+    String res = "  static func isCached(id : String) -> Bool\n" + 
+                 "  { let _x : " + ename + " = " + ename + "." + ename + "_index[id]\n" +  
+                 "    if _x == nil { return false }\n" + 
+                 "    return true\n" +  
+                 "  }\n\n"; 
+    return res; 
+  } 
+
+  private String getCachedInstanceOperation()
+  { String ename = getName(); 
+	
+    String res = "  public static " + ename + " getCachedInstance(String id)\n" + 
+                 "  { return " + ename + "." + ename + "_index.get(id); }\n\n"; 
+    return res; 
+  } 
+
+  private String getCachedInstanceOperationIOS()
+  { String ename = getName(); 
+	
+    String res = "  static func getCachedInstance(id : String) -> " + ename + "\n" + 
+                 "  { return " + ename + "." + ename + "_index[id] }\n\n"; 
+    return res; 
+  } 
+
+  private String parseCSVFileOperationJava8()
+  { String ename = getName(); 
+    String res = 
+	  "  public static ArrayList<" + ename + "> makeFromCSV(String lines)\n" + 
+      "  { ArrayList<" + ename + "> result = new ArrayList<" + ename + ">();\n" + 
+      "\n" + 
+      "    if (lines == null)\n" + 
+      "    { return result; }\n" + 
+      "\n" + 
+      "    ArrayList<String> rows = Ocl.parseCSVtable(lines);\n" + 
+      "\n" + 
+      "    for (int i = 1; i < rows.size(); i++)\n" + 
+      "    { String row = rows.get(i);\n" + 
+      "      if (row == null || row.trim().length() == 0)\n" + 
+      "      { }\n" + 
+      "      else\n" + 
+      "      { " + ename + " _x = parseCSV(row);\n" + 
+      "        if (_x != null)\n" + 
+      "        { result.add(_x); }\n" + 
+      "      }\n" + 
+      "    }\n" + 
+      "    return result;\n" + 
+	  "  }\n\n"; 
+	return res; 
+  } 
+
+  public void swiftUIListRow(PrintWriter out)
+  { String ename = getName(); 
+    String swiftname = ename + "ListRowView"; 
+	
+    Attribute pk = getPrincipalPrimaryKey(); 
+
+    out.println("import SwiftUI"); 
+    out.println(); 
+    out.println("struct " + swiftname + ": View"); 
+    out.println("{ var instance : " + ename + "VO");
+    out.println("  @ObservedObject model : ModelFacade = ModelFacade.getInstance()"); 
+    out.println();  
+    out.println("  var body: some View"); 
+    out.println("  { HStack {"); 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attname = att.getName(); 
+      if (att.isHidden() || att.isPassword()) { } 
+      else if (att == pk)
+      { out.println("      Text(String(instance." + attname + ")).bold()"); } 
+      else 
+      { out.println("      Text(String(instance." + attname + "))"); } 
+    } 
+    out.println("    }.onTapGesture()"); 
+    out.println("      { model.setSelected" + ename + "(_x: instance) } "); 
+    out.println("  }");  
+    out.println("}");
+    out.println(); 
+    out.println("struct ContentView_Previews: PreviewProvider {"); 
+    out.println("  static var previews: some View {"); 
+    out.println("    " + swiftname + "(instance: " + ename + "VO(" + ename + "_allInstances[0]))"); 
+    out.println("  }"); 
+    out.println("}"); 
+  }  
+
+  public void swiftUIList(PrintWriter out)
+  { String ename = getName(); 
+    String rowname = ename + "ListRowView"; 
+    String swiftname = "list" + ename + "Screen"; 
+    Attribute key = principalUniqueAttribute(); 
+    if (key == null) 
+    { System.err.println(">>> Entity " + ename + " must have an identity String-valued attribute"); 
+	  return; 
+    }
+    String pk = key.getName(); 
+	
+    out.println("import SwiftUI"); 
+    out.println(); 
+    out.println("struct " + swiftname + ": View"); 
+    out.println("{ @ObservedObject model : ModelFacade = ModelFacade.getInstance()"); 
+	out.println(); 
+	out.println("  var body: some View"); 
+    out.println("  { List(model.current" + ename + "s, id: ./" + pk + ")"); 
+    out.println("    { instance in " + rowname + "(instance: instance) }"); 
+    out.println("  }.onAppear { model.list" + ename + "() }");  
+    out.println("}");
+    out.println(); 
+    out.println("struct ContentView_Previews: PreviewProvider {"); 
+    out.println("  static var previews: some View {"); 
+    out.println("    " + swiftname + "()"); 
+    out.println("  }"); 
+    out.println("}"); 
+  }  
+	
+	
+  public static void main(String[] args)
+  { int rand = (int) (1000*Math.random()); 
+    System.out.println(rand); 
+  }
 }

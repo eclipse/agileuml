@@ -1,7 +1,7 @@
 import java.util.*; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -261,11 +261,11 @@ public class GUIBuilder
       "  { if (e == null) { return; }\n" +
       "    String cmd = e.getActionCommand();\n";
 
-    res = res + "  JButton loadModelButton = new JButton(\"loadModel\");\n";
+    res = res + "    JButton loadModelButton = new JButton(\"loadModel\");\n";
 
     cons = cons + 
-        "  tPanel.add(loadModelButton);\n" +
-        "  loadModelButton.addActionListener(this);\n";
+        "    tPanel.add(loadModelButton);\n" +
+        "    loadModelButton.addActionListener(this);\n";
       
     String loadmodelop = "    { " + contname + ".loadModel(\"in.txt\");\n";   
          
@@ -278,14 +278,14 @@ public class GUIBuilder
          "      System.err.println(\"Model loaded\");\n" + 
          "      return; } \n";
 
-    res = res + "  JButton saveModelButton = new JButton(\"saveModel\");\n";
+    res = res + "    JButton saveModelButton = new JButton(\"saveModel\");\n";
 
-    res = res + "  JButton loadXmiButton = new JButton(\"loadXmi\");\n";
+    res = res + "    JButton loadXmiButton = new JButton(\"loadXmi\");\n";
 
 
     cons = cons + 
-        "  tPanel.add(saveModelButton);\n" +
-        "  saveModelButton.addActionListener(this);\n";
+        "    tPanel.add(saveModelButton);\n" +
+        "    saveModelButton.addActionListener(this);\n";
       
     aper = aper +
          "    if (\"saveModel\".equals(cmd))\n" +
@@ -294,8 +294,8 @@ public class GUIBuilder
          "      return; } \n";
 
     cons = cons + 
-        "  tPanel.add(loadXmiButton);\n" +
-        "  loadXmiButton.addActionListener(this);\n";
+        "    tPanel.add(loadXmiButton);\n" +
+        "    loadXmiButton.addActionListener(this);\n";
       
     aper = aper +
          "    if (\"loadXmi\".equals(cmd))\n" +
@@ -307,8 +307,8 @@ public class GUIBuilder
     res = res + "  JButton loadCSVButton = new JButton(\"loadCSVs\");\n";
 
     cons = cons + 
-        "  tPanel.add(loadCSVButton);\n" +
-        "  loadCSVButton.addActionListener(this);\n";
+        "    tPanel.add(loadCSVButton);\n" +
+        "    loadCSVButton.addActionListener(this);\n";
       
     String loadcsvop = "    { " + contname + ".loadCSVModel();\n";   
             
@@ -320,8 +320,8 @@ public class GUIBuilder
     res = res + "  JButton saveCSVButton = new JButton(\"saveCSVs\");\n";
 
     cons = cons + 
-        "  tPanel.add(saveCSVButton);\n" +
-        "  saveCSVButton.addActionListener(this);\n";
+        "    tPanel.add(saveCSVButton);\n" +
+        "    saveCSVButton.addActionListener(this);\n";
       
     aper = aper +
          "    if (\"saveCSVs\".equals(cmd))\n" +
@@ -374,25 +374,43 @@ public class GUIBuilder
                 "    double " + parnme + 
                   " = Double.parseDouble((String) _values.get(" + j + "));\n"; 
             } 
-            else if (typ.isCollectionType())
-            { String convertElementType = "typ" + parnme; 
+            else if (typ != null && typ.isEnumeration())
+            { String tname = typ.getName(); 
+			  prompt = prompt + 
+                "    int " + parnme + 
+                  " = SystemTypes.parse" + tname + "((String) _values.get(" + j + "));\n"; 
+            } 
+			else if (typ != null && typ.isEntity())
+			{ Entity ent = typ.getEntity();
+			  String ename = ent.getName().toLowerCase();  
+			  Attribute pk = ent.getPrincipalPrimaryKey(); // arguments are supplied in the GUI as strings
+			  if (pk != null)
+			  { String indexname = ename + pk.getName() + "index"; 
+                prompt = prompt + 
+                "    " + ent.getName() + " " + parnme + 
+                  " = (" + ent.getName() + ") Controller.inst()." + indexname + ".get((String) _values.get(" + j + "));\n"; 
+			  }
+			}
+            else if (typ.isCollectionType()) // Only collections of basic types: numerics and strings
+            { String convertElementType = "typ_" + parnme; 
               Type elemTyp = typ.getElementType(); 
               if (elemTyp == null) { } 
               else if ("int".equals(elemTyp.getName()))
-              { convertElementType = "new Integer(Integer.parseInt(typ" + parnme + "))"; } 
+              { convertElementType = "new Integer(Integer.parseInt(typ_" + parnme + "))"; } 
               else if ("long".equals(elemTyp.getName()))
-              { convertElementType = "new Long(Long.parseLong(typ" + parnme + "))"; } 
+              { convertElementType = "new Long(Long.parseLong(typ_" + parnme + "))"; } 
               else if ("double".equals(elemTyp.getName()))
-              { convertElementType = "new Double(Double.parseDouble(typ" + parnme + "))"; } 
+              { convertElementType = "new Double(Double.parseDouble(typ_" + parnme + "))"; } 
 
               prompt = prompt + 
                 "    java.util.List " + parnme + " = new Vector();\n" + 
                 "    int " + parnme + "j = " + j + ";\n" +
-                "    String typ" + parnme + " = (String) _values.get(" + parnme + "j);\n" +
+                "    String typ_" + parnme + " = (String) _values.get(" + parnme + "j);\n" +
                 "    " + parnme + "j++; typ" + parnme + " = (String) _values.get(" + parnme + "j);\n" +
-                "    while (!typ" + parnme + ".equals(\"}\"))\n" + 
+                "    while (!typ_" + parnme + ".equals(\"}\"))\n" + 
                 "    { " + parnme + ".add(" + convertElementType + "); \n" + 
-                "      " + parnme + "j++; typ" + parnme + " = (String) _values.get(" + parnme + "j);\n" +
+                "      " + parnme + "j++;\n" + 
+				"      typ_" + parnme + " = (String) _values.get(" + parnme + "j);\n" +
                 "    }\n"; 
             } 
             else // if ("boolean".equals(typ + ""))
@@ -422,7 +440,273 @@ public class GUIBuilder
     aper = aper + "  }\n\n";
     res = res + "\n" + cons + aper +
       "  public static void main(String[] args)\n" +
-      "  {  GUI gui = new GUI();\n" +
+      "  { GUI gui = new GUI();\n" +
+      "    gui.setSize(550,400);\n" +
+      "    gui.setVisible(true);\n" +
+      "  }\n }";
+    return res;
+  }
+
+  public static String buildTestsGUI(Vector ucs, String sysName, boolean incr, Vector types, Vector entities)
+  { String res = "import javax.swing.*;\n" +
+      "import javax.swing.event.*;\n" +
+      "import java.awt.*;\n" +
+      "import java.awt.event.*;\n" + 
+      "import java.util.Vector;\n" + 
+      "import java.io.*;\n" + 
+      "import java.util.StringTokenizer;\n\n";  
+
+    String contname = "Controller"; 
+
+    if (sysName == null || sysName.length() == 0) { } 
+    else 
+    { contname = sysName + "." + contname; } 
+
+    res = res +
+      "public class TestsGUI extends JFrame implements ActionListener\n" +
+      "{ JPanel panel = new JPanel();\n" +
+      "  JPanel tPanel = new JPanel();\n" +
+      "  JPanel cPanel = new JPanel();\n" +
+      "  " + contname + " cont = " + contname + ".inst();\n";
+
+    String cons = " public TestsGUI()\n" +
+      "  { super(\"Select use case to test\");\n" +
+      "    panel.setLayout(new BorderLayout());\n" + 
+      "    panel.add(tPanel, BorderLayout.NORTH);\n" +  
+      "    panel.add(cPanel, BorderLayout.CENTER);\n" +  
+      "    setContentPane(panel);\n" + 
+      "    addWindowListener(new WindowAdapter() \n" + 
+      "    { public void windowClosing(WindowEvent e)\n" +  
+      "      { System.exit(0); } });\n";
+
+    String aper = "  public void actionPerformed(ActionEvent e)\n" +
+      "  { if (e == null) { return; }\n" +
+      "    String cmd = e.getActionCommand();\n";
+
+    res = res + "    JButton loadModelButton = new JButton(\"loadModel\");\n";
+
+    cons = cons + 
+        "    tPanel.add(loadModelButton);\n" +
+        "    loadModelButton.addActionListener(this);\n";
+      
+    String loadmodelop = "    { " + contname + ".loadModel(\"in.txt\");\n";   
+         
+    if (incr)
+    { loadmodelop = "    { " + contname + ".loadModelDelta(\"in.txt\");\n"; } 
+   
+    aper = aper +
+         "    if (\"loadModel\".equals(cmd))\n" + loadmodelop + 
+         "      cont.checkCompleteness();\n" + 
+         "      System.err.println(\"Model loaded\");\n" + 
+         "      return; } \n";
+
+    res = res + "    JButton saveModelButton = new JButton(\"saveModel\");\n";
+
+    res = res + "    JButton loadXmiButton = new JButton(\"loadXmi\");\n";
+
+
+    cons = cons + 
+        "    tPanel.add(saveModelButton);\n" +
+        "    saveModelButton.addActionListener(this);\n";
+      
+    aper = aper +
+         "    if (\"saveModel\".equals(cmd))\n" +
+         "    { cont.saveModel(\"out.txt\");  \n" + 
+         "      cont.saveXSI(\"xsi.txt\"); \n" + 
+         "      return; } \n";
+
+    cons = cons + 
+        "    tPanel.add(loadXmiButton);\n" +
+        "    loadXmiButton.addActionListener(this);\n";
+      
+    aper = aper +
+         "    if (\"loadXmi\".equals(cmd))\n" +
+         "    { cont.loadXSI();  \n" + 
+         "      cont.checkCompleteness();\n" + 
+         "      System.err.println(\"Model loaded\");\n" + 
+         "      return; } \n";
+
+    res = res + "    JButton loadCSVButton = new JButton(\"loadCSVs\");\n";
+
+    cons = cons + 
+         "    tPanel.add(loadCSVButton);\n" +
+         "    loadCSVButton.addActionListener(this);\n";
+      
+    String loadcsvop = "    { " + contname + ".loadCSVModel();\n";   
+            
+    aper = aper +
+         "    if (\"loadCSVs\".equals(cmd))\n" + loadcsvop + 
+         "      System.err.println(\"Model loaded\");\n" + 
+         "      return; } \n";
+
+    res = res + "    JButton saveCSVButton = new JButton(\"saveCSVs\");\n";
+
+    cons = cons + 
+        "    tPanel.add(saveCSVButton);\n" +
+        "    saveCSVButton.addActionListener(this);\n";
+      
+    aper = aper +
+         "    if (\"saveCSVs\".equals(cmd))\n" +
+         "    { cont.saveCSVModel();  \n" + 
+         "      return; } \n";
+
+	aper = aper + 
+         "    int[] intTestValues = {0, -1, 1, 2147483647, -2147483648};\n" + 
+         "    long[] longTestValues = {0, -1, 1, " + Long.MAX_VALUE + "L, " + Long.MIN_VALUE + "L};\n" + 
+         "    double[] doubleTestValues = {0, -1, 1, " + Double.MAX_VALUE + ", " + Double.MIN_VALUE + "};\n" +
+         "    boolean[] booleanTestValues = {false, true};\n";
+
+    for (int i = 0; i < ucs.size(); i++)
+    { ModelElement me = (ModelElement) ucs.get(i); 
+      if (me instanceof UseCase) 
+      { UseCase uc = (UseCase) me;
+        if (uc.isDerived()) { continue; } 
+		String indent = "    "; 
+        
+		// String checkCode = uc.getQueryCode("Java4", types, entities); 
+        String checkCode = ""; 
+		
+        
+        String nme = uc.getName();
+        Vector pars = uc.getParameters(); 
+        Type resultType = uc.getResultType(); 
+        String testscript = "";
+		String teststring = ""; 
+
+        res = res + "    JButton " + nme + "Button = new JButton(\"" + nme + "\");\n";
+ 
+        cons = cons + 
+          "    cPanel.add(" + nme + "Button);\n" +
+          "    " + nme + "Button.addActionListener(this);\n";
+
+        String parstring = ""; 
+        String parnames = uc.getParameterNames(); 
+
+				
+        if (pars.size() > 0)
+        { for (int j = 0; j < pars.size(); j++) 
+          { Attribute par = (Attribute) pars.get(j); 
+            String parnme = par.getName();
+			String indexvar = "_index_" + j; 
+			indent = indent + "  "; 
+			 
+            parstring = parstring + parnme; 
+			teststring = teststring + "\"" + parnme + " = \" + " + parnme; 
+            if (j < pars.size() - 1)
+            { parstring = parstring + ","; 
+			  teststring = teststring + "+ \"; \" + "; 
+			} 
+
+            Type typ = par.getType(); 
+			String tname = typ + ""; 
+			
+            if ("int".equals(tname))
+            { testscript = testscript + 
+                indent + "\n" + 
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 5; " + indexvar + "++)\n" + 
+				indent + "{ int " + parnme + " = intTestValues[" + indexvar + "];\n";  
+            } 
+            else if ("long".equals(tname))
+            { testscript = testscript + 
+                indent + "\n" + 
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 5; " + indexvar + "++)\n" + 
+				indent + "{ long " + parnme + " = longTestValues[" + indexvar + "];\n";  
+            } 
+            else if ("double".equals(tname))
+            { testscript = testscript + 
+                indent + "\n" + 
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 5; " + indexvar + "++)\n" + 
+				indent + "{ double " + parnme + " = doubleTestValues[" + indexvar + "];\n";  
+            } 
+            else if (typ != null && typ.isEnumeration())
+            { Vector vals = typ.getValues(); 
+			  int nvals = vals.size(); 
+			  testscript = testscript + 
+                  indent + "\n" + 
+				  indent + "for (int " + indexvar + " = 0; " + indexvar + " < " + nvals + "; " + indexvar + "++)\n" + 
+				  indent + "{ int " + parnme + " = " + indexvar + ";\n";
+            } 
+			else if (typ.isEntity())
+			{ String ename = tname.toLowerCase() + "s"; 
+			  testscript = testscript + 
+                  indent + "\n" + 
+				  indent + "for (int " + indexvar + " = 0; " + indexvar + " < Controller.inst()." + ename + ".size(); " + indexvar + "++)\n" + 
+				  indent + "{ " + tname + " " + parnme + " = (" + tname + ") Controller.inst()." + ename + ".get(" + indexvar + ");\n";
+            } // Check invariants of parnme. 
+        /*    else if (typ.isCollectionType()) // Try with empty list, singleton & random list
+            { String convertElementType = "typ" + parnme; 
+              Type elemTyp = typ.getElementType(); 
+              if (elemTyp == null) { } 
+              else if ("int".equals(elemTyp.getName()))
+              { convertElementType = "new Integer(Integer.parseInt(typ" + parnme + "))"; } 
+              else if ("long".equals(elemTyp.getName()))
+              { convertElementType = "new Long(Long.parseLong(typ" + parnme + "))"; } 
+              else if ("double".equals(elemTyp.getName()))
+              { convertElementType = "new Double(Double.parseDouble(typ" + parnme + "))"; } 
+
+              prompt = prompt + 
+                "    java.util.List " + parnme + " = new Vector();\n" + 
+                "    int " + parnme + "j = " + j + ";\n" +
+                "    String typ" + parnme + " = (String) _values.get(" + parnme + "j);\n" +
+                "    " + parnme + "j++; typ" + parnme + " = (String) _values.get(" + parnme + "j);\n" +
+                "    while (!typ" + parnme + ".equals(\"}\"))\n" + 
+                "    { " + parnme + ".add(" + convertElementType + "); \n" + 
+                "      " + parnme + "j++; typ" + parnme + " = (String) _values.get(" + parnme + "j);\n" +
+                "    }\n"; 
+            } */ 
+            else if ("boolean".equals(typ + ""))
+            { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 2; " + indexvar + "++)\n" + 
+                  indent + "{ boolean " + parnme + " = booleanTestValues[" + indexvar + "];\n";  
+            } 
+          }  
+        }
+      
+        for (int j = 0; j < uc.preconditions.size(); j++)
+        { java.util.Map env = new java.util.HashMap(); 
+          Constraint con = (Constraint) uc.preconditions.get(j); 
+          checkCode = checkCode + 
+		              indent + "if (" + con.queryForm(env,true) + ")\n" + 
+		              indent + "{ System.out.print(\" Precondition " + j + " is valid; \"); }\n" + 
+					  indent + "else \n" + 
+					  indent + "{ System.out.print(\" Precondition " + j + " fails; \"); }\n"; 
+        }
+
+      
+        String call = " cont." + nme + "(" + parstring + ")"; 
+        if (resultType != null) 
+        { call = " System.out.println(\" ==> Result: \" + " + call + " )"; } 
+		
+		call = indent + "try { " + call + ";\n" + 
+		       indent + "  }\n" + 
+			   indent + "  catch(Exception _e) { System.out.println(\" !!Exception occurred: test failed!! \"); }\n"; 
+			   
+		testscript = testscript + 
+		  indent + "System.out.print(\"Test: \" + " + teststring + ");\n" + 
+		  checkCode + 
+		  call + "\n"; 
+        // indent = indent.substring(0,indent.length()-2);  
+		
+		for (int p = 0; p < pars.size(); p++) 
+		{ testscript = testscript + 
+		               indent + "}\n";
+		  indent = indent.substring(0,indent.length()-2);  
+		}
+      
+        aper = aper +
+           "    if (\"" + nme + "\".equals(cmd))\n" +
+           "    { " + testscript + "\n" + 
+		   "      return;\n" + 
+		   "    } \n";
+      }
+    } 
+	
+    cons = cons + "  }\n\n";
+    aper = aper + "  }\n\n";
+    res = res + "\n" + cons + aper +
+      "  public static void main(String[] args)\n" +
+      "  { TestsGUI gui = new TestsGUI();\n" +
       "    gui.setSize(550,400);\n" +
       "    gui.setVisible(true);\n" +
       "  }\n }";
@@ -466,8 +750,8 @@ public class GUIBuilder
     res = res + "  JButton loadModelButton = new JButton(\"loadModel\");\n";
 
     cons = cons + 
-        "  panel.add(loadModelButton);\n" +
-        "  loadModelButton.addActionListener(this);\n";
+        "    panel.add(loadModelButton);\n" +
+        "    loadModelButton.addActionListener(this);\n";
       
     String loadmodelop = "    { " + contname + ".loadModel(\"in.txt\");\n";   
          
@@ -482,8 +766,8 @@ public class GUIBuilder
     res = res + "  JButton saveModelButton = new JButton(\"saveModel\");\n";
 
     cons = cons + 
-        "  panel.add(saveModelButton);\n" +
-        "  saveModelButton.addActionListener(this);\n";
+        "    panel.add(saveModelButton);\n" +
+        "    saveModelButton.addActionListener(this);\n";
       
     aper = aper +
          "    if (\"saveModel\".equals(cmd))\n" +
@@ -538,6 +822,12 @@ public class GUIBuilder
               "    double " + parnme + 
                 " = Double.parseDouble((String) _values.get(" + j + "));\n"; 
           } 
+          else if (typ != null && typ.isEnumeration())
+          { String tname = typ.getName(); 
+            prompt = prompt + 
+                "    int " + parnme + 
+                  " = SystemTypes.parse" + tname + "((String) _values.get(" + j + "));\n"; 
+          } 
           else if (typ.isCollectionType())
           { String j6typ = "HashSet"; 
             if (Type.isSequenceType(typ))
@@ -581,7 +871,7 @@ public class GUIBuilder
     aper = aper + "  }\n\n";
     res = res + "\n" + cons + aper +
       "  public static void main(String[] args)\n" +
-      "  {  GUI gui = new GUI();\n" +
+      "  { GUI gui = new GUI();\n" +
       "    gui.setSize(400,400);\n" +
       "    gui.setVisible(true);\n" +
       "  }\n }";

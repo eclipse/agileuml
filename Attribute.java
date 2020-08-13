@@ -1,8 +1,9 @@
+
 import java.util.Vector; 
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -49,6 +50,27 @@ public class Attribute extends ModelElement
       { upper = 0; lower = 0; } 
     } 
   }
+
+  public Attribute(String nme, Type t) 
+  { this(nme,t,ModelElement.INTERNAL); } 
+
+  public Attribute(BasicExpression e)
+  { super(e.getData()); 
+    type = e.getType(); 
+    elementType = e.getElementType(); 
+    entity = e.getEntity(); 
+    int c2 = e.getMultiplicity(); 
+    if (c2 == ModelElement.ONE)
+    { upper = 1; 
+      lower = 1; 
+    } 
+    else 
+    { upper = 0; 
+      lower = 0; 
+    } 
+    kind = INTERNAL; 
+  } 
+    
   
   public Attribute(Association ast) 
   { super(ast.getRole2()); 
@@ -121,6 +143,43 @@ public class Attribute extends ModelElement
   } // and set the entity and name. Set it as aggregation if all 
     // path elements are aggregations. Likewise for unique. 
 
+  public boolean isNumeric()
+  { return type != null && type.isNumericType(); } 
+
+  public boolean isString()
+  { return type != null && type.isStringType(); } 
+
+  public boolean isCollection()
+  { return type != null && type.isCollectionType(); } 
+
+  public boolean isSet()
+  { return type != null && type.isSetType(); } 
+
+  public boolean isSequence()
+  { return type != null && type.isSequenceType(); } 
+
+  public boolean isBoolean()
+  { return type != null && type.getName().equals("boolean"); } 
+
+  public boolean equalByNameAndOwner(Attribute att) 
+  { if (att.getName().equals(name) && 
+        att.getOwner() == entity && entity != null) 
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean equalToReverseDirection(Attribute att) 
+  { if (att.getName().equals(role1 + "") && 
+        elementType != null && elementType.isEntity() && 
+        att.getOwner() == elementType.getEntity()) 
+    { return true; } 
+    else if (att.getName().equals(role1 + "") && 
+        type != null && type.isEntity() && 
+        att.getOwner() == type.getEntity()) 
+    { return true; } 
+    return false; 
+  } 
+
   public Attribute objectReference()
   { // path omitting the final feature
 
@@ -135,6 +194,59 @@ public class Attribute extends ModelElement
     return new Attribute(pathprefix); 
   } 
 
+  public String cg(CGSpec cgs)
+  { String atext = this + "";
+    Vector args = new Vector();
+    args.add(getName());
+    args.add(type.cg(cgs));
+    Vector eargs = new Vector(); 
+    eargs.add(this); 
+    eargs.add(type); 
+    // only one Attribute rule?
+    // maybe for static/frozen
+    CGRule r = cgs.matchedAttributeRule(this,atext);
+    if (r != null)
+    { return r.applyRule(args,eargs,cgs); }
+    return atext;
+  }
+
+  public String cgReference(CGSpec cgs)
+  { String atext = this + "";
+    Vector args = new Vector();
+    args.add(getName());
+    args.add(type.cg(cgs));
+    Vector eargs = new Vector(); 
+    eargs.add(this); 
+    eargs.add(type); 
+
+    // only one Reference rule?
+
+    CGRule r = cgs.matchedReferenceRule(this,atext);
+    if (r != null)
+    { return r.applyRule(args,eargs,cgs); }
+    return atext;
+  }
+
+  public String cgParameter(CGSpec cgs, Vector partail)
+  { String atext = this + "";
+    Vector args = new Vector();
+    args.add(getName());
+    args.add(type.cg(cgs));
+    if (partail.size() == 0) 
+    { args.add(""); } 
+    else 
+    { Attribute p = (Attribute) partail.get(0); 
+      Vector newtail = new Vector(); 
+      newtail.addAll(partail); 
+      newtail.remove(0); 
+      args.add(p.cgParameter(cgs,newtail));
+    }  
+    CGRule r = cgs.matchedParameterRule(this,partail,atext);
+    if (r != null)
+    { return r.applyRule(args); }
+    return atext;
+  } // but omit initialisations for parameters
+
   public Type getReverseType()
   { if (entity != null) 
     { Type et = new Type(entity); 
@@ -147,8 +259,25 @@ public class Attribute extends ModelElement
     return null; 
   } 
 
+  public Entity getClassType()
+  { if (type != null) 
+    { if (type.isEntity())
+      { return type.getEntity(); } 
+    } 
+
+    if (elementType != null) 
+    { if (elementType.isEntity())
+      { return elementType.getEntity(); } 
+    } 
+
+    return null; 
+  } 
+
   public String getRole1()
   { return role1; } 
+
+  public boolean hasOpposite()
+  { return role1 != null && role1.length() > 0; } 
 
   public Attribute getReverseReference()
   { if (role1 != null && role1.length() > 0) 
@@ -167,7 +296,7 @@ public class Attribute extends ModelElement
   { return (role1 != null && role1.length() > 0); } 
 
   public Expression makeInverseCallExpression()
-  { // E1.allInstances()->select( e1x ¦ e1.att->includes(self)) for *-mult att 
+  { // E1.allInstances()->select( e1x ï¿½ e1.att->includes(self)) for *-mult att 
 
     BasicExpression srcexp = new BasicExpression(this);
     srcexp.setUmlKind(Expression.ATTRIBUTE); 
@@ -214,9 +343,12 @@ public class Attribute extends ModelElement
   public boolean isMultiValued()
   { return upper != 1; } 
 
+  public boolean isMandatory()
+  { return lower > 0; } 
+
   public int upperBound()
   { if (upper == 0) 
-    { return 1000000000; } 
+    { return Integer.MAX_VALUE; } 
     return upper; 
   } 
 
@@ -389,11 +521,17 @@ public class Attribute extends ModelElement
     }
   } 
 
-  public Expression atlComposedExpression(String svar) 
-  { if (navigation.size() <= 1) 
-    { return new BasicExpression(svar + "." + this); } 
+  public Expression atlComposedExpression(String svar, Attribute trg, Vector ems) 
+  { Expression res = null; 
+
+    Entity sent = type.getEntity(); 
+    if (sent == null && elementType != null) 
+    { sent = elementType.getEntity(); } 
+
+    if (navigation.size() <= 1) 
+    { res = new BasicExpression(svar + "." + this); } 
     else 
-    { Expression res = new BasicExpression(svar);
+    { res = new BasicExpression(svar);
       res.multiplicity = ModelElement.ONE; 
  
       for (int i = 0; i < navigation.size(); i++) 
@@ -415,7 +553,101 @@ public class Attribute extends ModelElement
           res.multiplicity = ModelElement.MANY; 
         } 
       } 
-      return res; 
+    } 
+
+    if (trg.type.isEntityType())
+    { Entity tent = trg.type.getEntity(); 
+      EntityMatching em = ModelMatching.findEntityMatchingFor(sent,tent,ems);
+      if (em != null && em.isSecondary()) 
+      { String trgvarname = em.realtrg.getName().toLowerCase() + "_x"; 
+        return new BasicExpression("thisModule.resolveTemp(" + res + ", '" + trgvarname + "')"); 
+      }
+    } 
+    else if (Type.isEntityCollection(trg.type))
+    { Entity tent = trg.elementType.getEntity(); 
+      EntityMatching em = ModelMatching.findEntityMatchingFor(sent,tent,ems);
+      if (em != null && em.isSecondary()) 
+      { String trgvarname = em.realtrg.getName().toLowerCase() + "_x"; 
+        return new BasicExpression("thisModule.resolveTemp(" + res + ", '" + trgvarname + "')");  
+      }
+    } 
+    return res;  
+  } 
+
+  public Expression etlComposedExpression(String svar, Attribute trg, Vector ems) 
+  { Entity sent = type.getEntity(); 
+    if (sent == null && elementType != null) 
+    { sent = elementType.getEntity(); } 
+
+    if (navigation.size() <= 1) 
+    { if (trg.type.isEntityType())
+      { Entity tent = trg.type.getEntity(); 
+        EntityMatching em = ModelMatching.findEntityMatchingFor(sent,tent,ems);
+        if (em != null) 
+        { return new BasicExpression(svar + "." + this + ".equivalent('" + em.realsrc + "2" + 
+                                                                          em.realtrg + "')"); 
+        }  
+        return new BasicExpression(svar + "." + this + ".equivalent()"); 
+      } 
+      else if (Type.isEntityCollection(trg.type))
+      { Entity tent = trg.elementType.getEntity(); 
+        EntityMatching em = ModelMatching.findEntityMatchingFor(sent,tent,ems);
+        if (em != null) 
+        { return new BasicExpression(svar + "." + this + ".equivalent('" + em.realsrc + "2" + 
+                                                                          em.realtrg + "')"); 
+        }
+        return new BasicExpression(svar + "." + this + ".equivalent()"); 
+      } 
+      else 
+      { return new BasicExpression(svar + "." + this); }
+    }  
+    else 
+    { Expression res = new BasicExpression(svar);
+      res.multiplicity = ModelElement.ONE; 
+ 
+      for (int i = 0; i < navigation.size(); i++) 
+      { Attribute att = (Attribute) navigation.get(i); 
+        if (res.multiplicity == ModelElement.ONE) 
+        { BasicExpression r = new BasicExpression(att); 
+          r.setObjectRef(res); 
+          res = r; 
+          // res.multiplicity = ModelElement.ONE;
+        } 
+        else if (res.multiplicity != ModelElement.ONE && att.upper == 1)  
+        { // Expression ce = new BinaryExpression("->collect",res,new BasicExpression(att)); 
+          // res = ce; 
+          // res.multiplicity = ModelElement.MANY; 
+          BasicExpression r = new BasicExpression(att); 
+          r.setObjectRef(res); 
+          res = r; 
+        }  
+        else if (res.multiplicity != ModelElement.ONE && att.upper != 1)  
+        { Expression ce = new BinaryExpression("->collect",res,new BasicExpression(att)); 
+          res = new UnaryExpression("->flatten",ce); 
+          res.multiplicity = ModelElement.MANY; 
+        } 
+      }
+ 
+      if (trg.type.isEntityType())
+      { Entity tent = trg.type.getEntity(); 
+        EntityMatching em = ModelMatching.findEntityMatchingFor(sent,tent,ems);
+        if (em != null) 
+        { return new BasicExpression(res + ".equivalent('" + em.realsrc + "2" + 
+                                                                          em.realtrg + "')"); 
+        }
+        return new BasicExpression(res + ".equivalent()");
+      } 
+      else if (Type.isEntityCollection(trg.type))
+      { Entity tent = trg.elementType.getEntity(); 
+        EntityMatching em = ModelMatching.findEntityMatchingFor(sent,tent,ems);
+        if (em != null) 
+        { return new BasicExpression(res + ".equivalent('" + em.realsrc + "2" + 
+                                                                          em.realtrg + "')"); 
+        }
+        return new BasicExpression(res + ".equivalent()"); 
+      } 
+      else 
+      { return res; }  
     } 
   } 
 
@@ -496,6 +728,9 @@ public class Attribute extends ModelElement
     { return false; } 
     return type.isEntity(); 
   } 
+  
+  public boolean isEntity()
+  { return isEntityInstance(); }
 
   public boolean isSorted()
   { return sorted; } 
@@ -603,6 +838,22 @@ public class Attribute extends ModelElement
     { card1 = ModelElement.ZEROONE; }  
   } 
 
+  public boolean isOutput()
+  { return hasStereotype("output"); }
+  
+  public boolean isInputAttribute()
+  { return hasStereotype("input"); }
+
+  public boolean isSummary()
+  { return kind == ModelElement.SUMMARY; } 
+
+  public boolean isPassword()
+  { return kind == ModelElement.PASSWORD; } 
+
+  public boolean isHidden()
+  { return kind == ModelElement.HIDDEN; } 
+
+  
   public void setIdentity(boolean uniq)
   { unique = uniq; 
     if (uniq) 
@@ -615,9 +866,60 @@ public class Attribute extends ModelElement
   public boolean isIdentityFeature()
   { return card1 == ModelElement.ZEROONE; } 
 
+  public boolean isPrimaryAttribute()
+  { // The first identity attribute in its owner's attributes
+
+    if (isIdentity()) { } 
+    else 
+    { return false; } 
+
+    Entity own = getOwner(); 
+    if (own == null) 
+    { return false; } 
+
+    Vector atts = own.getAttributes(); 
+    for (int i = 0; i < atts.size(); i++) 
+    { Attribute att = (Attribute) atts.get(i); 
+      if (att.isIdentity())
+      { if (att == this) 
+        { return true; } 
+        return false; 
+      } 
+    } 
+    return false; 
+  } 
 
   public void setFrozen(boolean fr)
-  { frozen = fr; } 
+  { frozen = fr; 
+    if (fr) 
+	{ addStereotype("readOnly"); }
+	else 
+	{ removeStereotype("readOnly"); }
+  }  
+  
+  public boolean isInteger()
+  { return isInt() || isLong(); }
+
+  public boolean isInt()
+  { return type != null && type.getName().equals("int"); }
+
+  public boolean isLong()
+  { return type != null && type.getName().equals("long"); }
+
+  public boolean isDouble()
+  { return type != null && type.getName().equals("double"); }
+
+  public boolean isEnumeration()
+  { return type != null && type.isEnumerated(); } 
+
+  public boolean isEnumerated()
+  { return type != null && type.isEnumerated(); } 
+
+  public boolean isSmallEnumeration()
+  { return type != null && type.isEnumerated() && (type.getValues().size() <= 4); } 
+
+  public boolean isLargeEnumeration()
+  { return type != null && type.isEnumerated() && (type.getValues().size() > 4); } 
 
   public boolean isFinal()
   { return frozen && initialExpression != null; } 
@@ -3215,10 +3517,12 @@ public class Attribute extends ModelElement
   { String res = "";
     String attname = getName();
     String tname = type.getName();
-    if (tname.equals("int"))
+    if (tname.equals("int") || tname.equals("long"))
     { res = "i" + attname; }
     else if (tname.equals("double"))
     { res = "d" + attname; } 
+    else if (type.isEnumerated())
+    { res = "e" + attname; } 
     else 
     { res = attname; } 
     return res; 
@@ -3239,7 +3543,17 @@ public class Attribute extends ModelElement
             attname + " + \" is not an integer\"); }\n";
       return res;
     }
-    if (tname.equals("double"))
+    else if (tname.equals("long"))
+    { String iatt = "i" + attname;
+      res = "    int " + iatt + " = 0;\n";
+      res = res + "    try { " + iatt + 
+            " = Long.parseLong(" + attname + "); }\n";
+      res = res + "    catch (Exception e)\n" +
+            "    { errorPage.addMessage(" + 
+            attname + " + \" is not a long integer\"); }\n";
+      return res;
+    }
+    else if (tname.equals("double"))
     { String datt = "d" + attname;
       res = "    double " + datt + " = 0;\n";
       res = res + "    try { " + datt + 
@@ -3249,6 +3563,8 @@ public class Attribute extends ModelElement
             attname + " + \" is not a double\"); }\n";
       return res;
     }
+    // enumerations 
+
     if (hasStereotype("email"))
     { String atindex = attname + "_index";
       res = "    int " + atindex + " = " + attname + 
@@ -3261,6 +3577,7 @@ public class Attribute extends ModelElement
             "); }\n";
       return res;
     }
+
     if (hasStereotype("nonempty"))
     { res = res + "    if (" +
             attname + ".length() == 0)\n" +
@@ -3269,6 +3586,7 @@ public class Attribute extends ModelElement
             "); }\n";
       return res;
     }        
+
     return res;
   }
 
@@ -3276,24 +3594,61 @@ public class Attribute extends ModelElement
   { String res = "";
     String attname = getName();
     String tname = type.getName();
+    
     if (tname.equals("int"))
     { String iatt = "i" + attname;
       res = "    try { " + iatt + 
             " = Integer.parseInt(" + attname + "); }\n";
       res = res + "    catch (Exception e)\n" +
-            "    { errors.add(" + 
-            attname + " + \" is not an integer\"); }\n";
+            "    { errors.add(\"" + 
+            attname + " is not an integer\"); }\n";
       return res;
     }
-    if (tname.equals("double"))
+    else if (tname.equals("long"))
+    { String iatt = "i" + attname;
+      res = "    try { " + iatt + 
+            " = Long.parseLong(" + attname + "); }\n";
+      res = res + "    catch (Exception e)\n" +
+            "    { errors.add(\"" + 
+            attname + " is not a long integer\"); }\n";
+      return res;
+    }
+    else if (tname.equals("double"))
     { String datt = "d" + attname;
       res = "    try { " + datt + 
             " = Double.parseDouble(" + attname + "); }\n";
       res = res + "    catch (Exception e)\n" +
-            "    { errors.add(" + 
-            attname + " + \" is not a double\"); }\n";
+            "    { errors.add(\"" + 
+            attname + " is not a double\"); }\n";
       return res;
     }
+    else if (type.isEnumerated())
+    { String eatt = "e" + attname; 
+      Vector vals = type.getValues(); 
+      
+      for (int i = 0; i < vals.size(); i++) 
+      { String val = (String) vals.get(i); 
+
+        res = res + "    if (" + attname + ".equals(\"" + val + "\"))\n" + 
+                    "    { " + eatt + " = " + tname + "." + val + "; } else\n"; 
+      } 
+      res = res + "    { errors.add(\"" + attname + " is not in type " + type + "\"); }\n"; 
+    } 
+    else if (type.isEntity())
+    { res = res + 
+            "    instance_" + attname + " = model.get" + tname + "ByPK(" + attname + ");\n" +  
+	       "    if (instance_" + attname + " == null)\n" + 
+	       "    { errors.add(\"" + attname + " must be a valid " + tname + " id\"); }\n"; 
+    } 
+    else if (type.isCollection())
+    { res = res + 
+            "    String[] split_" + attname + " = " + attname + ".split(\" \");\n" + 
+            "    for (int _i = 0; _i < split_" + attname + ".length; _i++)\n" + 
+            "    { s" + attname + ".add(split_" + attname + "[_i]); }\n" + 
+	       "    if (s" + attname + ".size() == 0)\n" + 
+	       "    { errors.add(\"" + attname + " must have one or more values\"); }\n"; 
+     } 
+
     if (hasStereotype("email"))
     { String atindex = attname + "_index";
       res = "    int " + atindex + " = " + attname + 
@@ -3302,16 +3657,54 @@ public class Attribute extends ModelElement
             " <= 0 || " + atindex + " >= " +
             attname + ".length() - 1)\n" +
             "    { errors.add(\"" + 
-            "not an email address:\" + " + attname + 
-            "); }\n";
+            "not an email address: " + attname + 
+            "\"); }\n";
       return res;
     }
+
     if (hasStereotype("nonempty"))
     { res = res + "    if (" +
             attname + ".length() == 0)\n" +
             "    { errors.add(\"" + 
-            "empty data: \" + " + attname + 
-            "); }\n";
+            "empty data: " + attname + 
+            "\"); }\n";
+      return res;
+    }        
+    return res;
+  }
+
+  public String getIOSCheckCode()
+  { String res = "";
+    String attname = getName();
+    String tname = type.getName();
+
+    /* if (type.isEntity())
+    { res = res + 
+            "    let instance_" + attname + " = " + tname + ".getByPK" + tname + "(" + attname + ")\n" +  
+	       "    if instance_" + attname + " == nil\n" + 
+	       "    { errors.append(\"" + attname + " must be a valid " + tname + " id\") }\n"; 
+    } */ 
+
+
+    if (hasStereotype("email"))
+    { String atindex = attname + "_index";
+      res = "    int " + atindex + " = " + 
+            "Ocl.indexOf(str: " + attname + ", ch: \"@\")\n";
+      res = res + "    if (" + atindex +
+            " <= 1 || " + atindex + " >= " +
+            attname + ".count)\n" +
+            "    { errors.append(\"" + 
+            "not an email address: " + attname + 
+            "\") }\n";
+      return res;
+    }
+
+    if (hasStereotype("nonempty"))
+    { res = res + "    if " +
+            attname + ".count == 0\n" +
+            "    { errors.append(\"" + 
+            "empty data: " + attname + 
+            "\") }\n";
       return res;
     }        
     return res;
@@ -3342,22 +3735,51 @@ public String dbType()
   { return tname; }
 }
 
-public String androidExtractOp()
+public String androidExtractOp(String ent)
 { String allcaps = name.toUpperCase();
+ 
   String tname = type.getName();
   if ("String".equals(tname))
-  { return "cursor.getString(COL_" + allcaps + ")"; }
+  { return "cursor.getString(" + ent + "_COL_" + allcaps + ")"; }
   if ("int".equals(tname))
-  { return "cursor.getInt(COL_" + allcaps + ")"; }
+  { return "cursor.getInt(" + ent + "_COL_" + allcaps + ")"; }
   if ("long".equals(tname))
-  { return "cursor.getLong(COL_" + allcaps + ")"; }
+  { return "cursor.getLong(" + ent + "_COL_" + allcaps + ")"; }
   if ("double".equals(tname))
-  { return "cursor.getDouble(COL_" + allcaps + ")"; }
+  { return "cursor.getDouble(" + ent + "_COL_" + allcaps + ")"; }
   else
-  { return "cursor.getString(COL_" + allcaps + ")"; }
+  { return "cursor.getString(" + ent + "_COL_" + allcaps + ")"; }
 }
 
-  public String androidExtractOp(String resultSet)
+public String iosExtractOp(String ent, int i)
+{ String allcaps = name.toUpperCase();
+  String nme = getName(); 
+ 
+  String tname = type.getName();
+  
+  if ("int".equals(tname))
+  { return "      guard let queryResult" + ent + "_COL" + allcaps + " = sqlite3_column_int(queryStatement, " + i + ")\n" + 
+           "      else { return res }\n" +  
+           "      let " + nme + " = Int(queryResult" + ent + "_COL" + allcaps + ")";
+  }
+  else if ("long".equals(tname))
+  { return "      guard let queryResult" + ent + "_COL" + allcaps + " = sqlite3_column_int64(queryStatement, " + i + ")\n" + 
+           "      else { return res }\n" +  
+           "      let " + nme + " = Int(queryResult" + ent + "_COL" + allcaps + ")";
+  }
+  else if ("double".equals(tname))
+  { return "      guard let queryResult" + ent + "_COL" + allcaps + " = sqlite3_column_double(queryStatement, " + i + ")\n" + 
+           "      else { return res }\n" +  
+           "      let " + nme + " = Double(queryResult" + ent + "_COL" + allcaps + ")";
+  }
+  else // ("String".equals(tname))
+  { return "      guard let queryResult" + ent + "_COL" + allcaps + " = sqlite3_column_text(queryStatement, " + i + ")\n" + 
+           "      else { return res }\n" +  
+           "      let " + nme + " = String(cString: queryResult" + ent + "_COL" + allcaps + ")"; 
+  }
+}
+
+/*   public String androidExtractOp(String resultSet)
   { String res = resultSet + ".get";
     String tname = type.getName();
     if (tname.equals("int"))
@@ -3368,7 +3790,7 @@ public String androidExtractOp()
     { res = res + "String(\""; }
     res = res + getName() + "\")";
     return res;
-  }
+  } */ 
 
   public String ejbBeanGet()
   { String nme = getName(); 
@@ -3575,6 +3997,57 @@ public String androidExtractOp()
     return false; 
   } 
 
+  public static boolean exactTypeMatchRel(Attribute satt, Attribute tatt, Map mm)
+  { Type t1 = satt.getType(); 
+    Type t2 = tatt.getType(); 
+    Type elemt1 = satt.getElementType(); 
+    Type elemt2 = tatt.getElementType(); 
+
+    if (tatt.isUnique())
+    { if (satt.isUnique())
+      { return true; } // both must be strings
+      else 
+      { return false; } // can't assign a non-key to a key
+    } 
+    
+    if (t1.isEntity()) 
+    { if (t2.isEntity())
+      { Entity e1 = t1.getEntity(); 
+        Entity e2 = t2.getEntity(); 
+        Vector e1mapped = mm.getAll(e1); 
+        if (e1mapped.size() == 0) 
+        { return false; } 
+        else 
+        { Vector targetnames = ModelElement.getNames(e1mapped); 
+          if (targetnames.contains(e2.getName()))
+          { return true; }
+          return false;
+        }  
+      } 
+      return false; 
+    } 
+    else if (elemt1 != null && elemt1.isEntity()) // ignore difference of sequences and sets of entities
+    { if (elemt2 != null && elemt2.isEntity())
+      { Entity e1 = elemt1.getEntity(); 
+        Entity e2 = elemt2.getEntity(); 
+        Vector e1mapped = mm.getAll(e1); 
+        if (e1mapped.size() == 0) 
+        { return false; } 
+        else 
+        { Vector targetnames = ModelElement.getNames(e1mapped); 
+          if (targetnames.contains(e2.getName()))
+          { return true; }
+          return false; 
+        }
+      } 
+      return false; 
+    } 
+    
+    if ((t1 + "").equals(t2 + "")) // e1 is basic
+    { return true; } 
+    return false; 
+  } 
+
 
   public static double partialTypeMatch(Attribute satt, Attribute tatt, Map mm, Vector entities)
   { Type t1 = satt.getType(); 
@@ -3624,6 +4097,63 @@ public String androidExtractOp()
         // else if (e1mapped.getName().equals(e2.getName()))
         // { return 1; }
         return satt.similarity(tatt,e1mapped.getName(),mm,entities); 
+      } 
+      return 0; 
+    } 
+    
+    if ((t1 + "").equals(t2 + "")) // e1 is basic
+    { return 1; } 
+    return satt.similarity(tatt,elemt1 + "",mm,entities); 
+  } 
+
+  public static double partialTypeMatchRel(Attribute satt, Attribute tatt, Map mm, Vector entities)
+  { Type t1 = satt.getType(); 
+    Type t2 = tatt.getType(); 
+    Type elemt1 = satt.getElementType(); 
+    Type elemt2 = tatt.getElementType(); 
+    
+
+    if (t1.isEntity()) 
+    { Entity e1 = t1.getEntity(); 
+      Vector e1mapped = mm.getAll(e1); 
+      if (e1mapped.size() == 0) 
+      { return 0; } 
+        
+      if (t2.isEntity())
+      { Entity e2 = t2.getEntity(); 
+        // System.out.println("--->> Trying partial type match of " + t1 + "(" + e1mapped + ") " + 
+        //                t2 + "(" + elemt2 + ")"); 
+         
+        return satt.maxSimilarity(tatt,e1mapped,mm,entities);  
+      } 
+      else if (elemt2 != null && elemt2.isEntity())
+      { Entity e2 = elemt2.getEntity(); 
+        // System.out.println("--->> Trying partial type match of " + t1 + "(" + e1mapped + ") " + 
+        //                t2 + "(" + elemt2 + ")"); 
+        return satt.maxSimilarity(tatt,e1mapped,mm,entities); 
+      }
+      return 0; 
+    } 
+    else if (elemt1 != null && elemt1.isEntity()) // ignore difference of sequences and sets of entities
+    { Entity e1 = elemt1.getEntity(); 
+      Vector e1mapped = mm.getAll(e1); 
+      if (e1mapped.size() == 0) 
+      { return 0; } 
+        
+      if (t2.isEntity())
+      { Entity e2 = t2.getEntity(); 
+        // System.out.println("--->> Trying partial type match of " + t1 + "(" + e1mapped + ") " + 
+        //                t2 + "(" + elemt2 + ")"); 
+         
+        return satt.maxSimilarity(tatt,e1mapped,mm,entities);  
+      } 
+      else if (elemt2 != null && elemt2.isEntity())
+      { Entity e2 = elemt2.getEntity(); 
+        // System.out.println("--->> Trying partial type match of " + t1 + "(" + e1mapped + ") " + 
+        //                t2 + "(" + elemt2 + ")"); 
+        // else if (e1mapped.getName().equals(e2.getName()))
+        // { return 1; }
+        return satt.maxSimilarity(tatt,e1mapped,mm,entities); 
       } 
       return 0; 
     } 
@@ -3862,6 +4392,19 @@ public String androidExtractOp()
     return 0; 
   } 
 
+  public double maxSimilarity(Attribute att, Vector targetEntities, Map mm, Vector entities)
+  { double res = 0; 
+  
+    for (int i = 0; i < targetEntities.size(); i++) 
+	{ Entity tent = (Entity) targetEntities.get(i); 
+	  String tname = tent.getName(); 
+	  double sim = similarity(att,tname,mm,entities); 
+	  if (sim > res) 
+	  { res = sim; }
+	}
+	return res; 
+  }
+  
   public double similarity(Attribute att, String tename, Map mm, Vector entities) 
   { String ts = type + ""; 
     String ats = att.getType() + ""; 
@@ -3979,15 +4522,20 @@ public String androidExtractOp()
       res.add(nme + " = " + Double.MAX_VALUE);
       res.add(nme + " = " + Double.MIN_VALUE);
     } 
+    else if ("boolean".equals(t))
+    { res.add(nme + " = true"); 
+      res.add(nme + " = false");
+    }
     else if ("String".equals(t))
     { res.add(nme + " = \"\""); 
-      res.add(nme + " = \" abc \"");
-      res.add(nme + " = \"_XY Z \"");
-      res.add(nme + " = \"#¬$* &~@':\"");
+      res.add(nme + " = \" abc_XZ \"");
+      res.add(nme + " = \"#ï¿½$* &~@':\"");
     }
     else if (vs != null && vs.size() > 0) 
-    { String v0 = (String) vs.get(0); 
-      res.add(nme + " = " + v0); 
+    { for (int j = 0; j < vs.size(); j++)   
+      { String v0 = (String) vs.get(j); 
+        res.add(nme + " = " + v0); 
+      } 
     }
     else if (type.isEntity())
     { String obj = Identifier.nextIdentifier(t.toLowerCase()); 
@@ -4018,7 +4566,7 @@ public String androidEntryField(String op, String previous, String ent)
     "    android:layout_alignParentLeft=\"true\"/>\n\r";
 
   String res2 = "  <EditText\n\r" +
-    "    android:id=\"@id/" + attfield + "\"\n\r" +
+    "    android:id=\"@+id/" + attfield + "\"\n\r" +
     "    android:layout_width=\"match_parent\"\n\r" +
     "    android:layout_height=\"wrap_content\"\n\r" +
     "    android:layout_toRightOf=\"@id/" + attlabel + "\"/>\n\r";
@@ -4031,33 +4579,285 @@ public String androidEntryFieldName(String op)
   return attlabel; 
 } 
 
+
 public String androidTableEntryField(String ent, String op)
 { String nme = getName();
   String label = Named.capitalise(nme);
-  String attfield = op + ent + nme;
-  String attlabel = op + ent+ label;
+  String attfield = op + ent + nme + "Field";
+  String attlabel = op + ent + nme + "Label";
   String hint = ent + " " + nme; 
 
   String res1 = "  <TextView\n\r" +
     "    android:id=\"@+id/" + attlabel + "\"\n\r" +
     "    android:hint=\"" + hint + "\"\n\r" +
     "    android:textStyle=\"bold\"\n\r" +
+    "    android:background=\"#EEFFBB\"\n\r" + 
     "    android:text=\"" + label + ":\" />\n\r";
 
   String res2 = ""; 
-  if (isIdentity())
-  { res2 = "  <TextView\n\r" +
-    "    android:id=\"@id/" + attfield + "\"\n\r" +
-    "    android:layout_span=\"3\" />\n\r";
-  } 
-  else 
+  // if (isIdentity())
+  // { res2 = "  <TextView\n\r" +
+  //   "    android:id=\"@id/" + attfield + "\"\n\r" +
+  //   "    android:layout_span=\"3\" />\n\r";
+  // } 
+  // else 
+  // android:inputType="textPassword"
+
+ 
+  if (isSmallEnumeration()) // no more than 4 elements
+  { res2 = androidRadioButtonGroup(op + ent + nme); }
+  else if (isLargeEnumeration() || isEntity())
+  { res2 = androidSpinner(op + ent + nme); }
+  else if (isInteger())
   { res2 = "  <EditText\n\r" +
-    "    android:id=\"@id/" + attfield + "\"\n\r" +
-    "    android:layout_span=\"3\" />\n\r";
+    "    android:id=\"@+id/" + attfield + "\"\n\r" +
+    "    android:inputType=\"number\"\n\r" +  
+    "    android:layout_span=\"4\" />\n\r";
+  } 
+  else if (isDouble())
+  { res2 = "  <EditText\n\r" +
+    "    android:id=\"@+id/" + attfield + "\"\n\r" +
+    "    android:inputType=\"number|numberDecimal\"\n\r" +  
+    "    android:layout_span=\"4\" />\n\r";
+  } 
+  else if (isPassword())
+  { res2 = "  <EditText\n\r" +
+    "    android:id=\"@+id/" + attfield + "\"\n\r" +
+    "    android:inputType=\"textPassword\"\n\r" +  
+    "    android:layout_span=\"4\" />\n\r";
+  } 
+  else   
+  { res2 = "  <EditText\n\r" +
+    "    android:id=\"@+id/" + attfield + "\"\n\r" +
+    "    android:layout_span=\"4\" />\n\r";
   } 
   return "  <TableRow>\n\r" +
          res1 + res2 + 
          "  </TableRow>\n\r";
-}
+}  // email, password kinds also 
+
+  public String androidRadioButtonGroup(String fullop) 
+  { Type t = getType(); 
+    Vector vals = t.getValues(); 
+
+    String res = 
+      "  <RadioGroup\n\r" + 
+      "    android:id=\"@+id/" + fullop + "Group\"\n\r" + 
+      "    android:orientation=\"horizontal\"\n\r" +
+      "    android:layout_span=\"4\"\n\r" +
+      "    android:layout_width=\"fill_parent\"\n\r" +
+      "    android:layout_height=\"wrap_content\" >\n\r"; 
+    for (int i = 0; i < vals.size(); i++) 
+    { String val = (String) vals.get(i);      
+      res = res + "    <RadioButton android:id=\"@+id/" + fullop + val + "\"\n\r" +
+            "      android:layout_width=\"wrap_content\"\n\r" +
+            "      android:layout_height=\"wrap_content\"\n\r" +
+            "      android:text=\"" + val + "\" />\n\r"; 
+     } 
+    res = res +         
+      "  </RadioGroup>\n\r"; 
+    return res; 
+  } 
+
+  public String androidSpinner(String fullop) 
+  { 
+    String res = 
+       "  <Spinner\n\r" +
+       "    android:id=\"@+id/" + fullop + "Spinner\"\n\r" + 
+       "    android:layout_width=\"fill_parent\"\n\r" + 
+       "    android:layout_height=\"wrap_content\"\n\r" + 
+       "    android:layout_span=\"4\" />\n\r"; 
+    return res; 
+  } 
+
+  public String extractEnumerationValue(String op, String attdata)
+  {  String res = "";
+     String nme = getName(); 
+     String group = op + nme + "Group";  
+     Vector vals = type.getValues(); 
+     for (int i = 0; i < vals.size(); i++) 
+     { String val = (String) vals.get(i); 
+       res = res + "   if (" + group + ".getCheckedRadioButtonId() == R.id." + op + nme + val + ")" + 
+       " { " + attdata + " = \"" + val + "\"; }\n\r"; 
+       if (i < vals.size() - 1) 
+       { res = res + "    else\n\r"; } 
+     } 
+     return res; 
+  } 
+
+  public String setEnumerationValue(String op, String attdata)
+  {  String res = "";
+     String nme = getName(); 
+     String group = op + nme + "Group";  
+     Vector vals = type.getValues(); 
+     String tname = type.getName();
+
+     for (int i = 0; i < vals.size(); i++) 
+     { String val = (String) vals.get(i); 
+       res = res + "   if (" + attdata + " == " + tname + "." + val + ")\n" + 
+                   "   { " + group + ".check(R.id." + op + nme + val + ");\n"; 
+       if (i < vals.size() - 1) 
+       { res = res + "    else\n"; } 
+     } 
+     return res; 
+  } 
+
+  public String androidValueList()
+  { if (isLargeEnumeration())
+    { Vector vals = type.getValues(); 
+      String res = "{"; 
+      for (int i = 0; i < vals.size(); i++) 
+      { String val = (String) vals.get(i); 
+        res = res + "\"" + val + "\""; 
+        if (i < vals.size() - 1)
+        { res = res + ", "; } 
+      } 
+      return res + "}";
+	} 
+	else if (isEntity())
+	{ String ename = type.getName(); 
+	  return "ModelFacade.getInstance(myContext).all" + ename + "ids()"; 
+	} 
+	return "{}"; 
+  } 
+
+
+  public String androidSpinnerInitialisation(String op, String nme, String root, String context)
+  { String res = "    " + op + nme + "Spinner = (Spinner) " + root + "findViewById(R.id." + op + nme + "Spinner);\n\r"; 
+    if (isEntity())
+    { res = res + "    " + op + nme + "ListItems = " + androidValueList() + ";\n"; } 
+    res = res +  
+                 "    ArrayAdapter<String> " + op + nme + "Adapter = new ArrayAdapter<String>(" + context + ", android.R.layout.simple_spinner_item," + op + nme + "ListItems);\n\r" +  
+                 "    " + op + nme + "Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);\n\r" + 
+                 "    " + op + nme + "Spinner.setAdapter(" + op + nme + "Adapter);\n\r" + 
+                 "    " + op + nme + "Spinner.setOnItemSelectedListener(this);\n\r"; 
+     return res; 
+  } 
+
+public String swiftUIEntryField(String ent, String op, Vector decs, Vector actions)
+{ String nme = getName();
+  String label = Named.capitalise(nme);
+  String hint = ent + " " + nme; 
+  String bean = "bean"; 
+  String tname = type.getName(); 
+  
+    // temporary data of the class attributes or use case parameters
+
+  String res1 = "      HStack {\n" +
+                "        Text(\"" + label + ":\").bold()\n" +
+                "        Divider()\n" +
+                "        TextField(\"" + label + "\", text: $bean." + nme + ")\n" +
+                "      }\n" + 
+                "    \n";
+
+  String res2 = ""; // declaration
+  String res3 = ""; // actions
+  // if (isIdentity())
+  // { res2 = "  <TextView\n\r" +
+  //   "    android:id=\"@id/" + attfield + "\"\n\r" +
+  //   "    android:layout_span=\"3\" />\n\r";
+  // } 
+  // else 
+  // android:inputType="textPassword"
+
+  if (isBoolean())
+  { res1 = "      Toggle(\"" + label + "\", isOn: $bean." + nme + ")\n"; } 
+  else if (isEnumeration())
+  { Vector vals = type.getValues();
+    res2 = "  var " + nme + "Values = ["; 
+	for (int i = 0; i < vals.size(); i++)
+	{ String val = (String) vals.get(i); 
+	  res2 = res2 + "\"" + val + "\""; 
+	  if (i < vals.size() - 1) 
+	  { res2 = res2 + ", "; }
+	} 
+	res2 = res2 + "]\n" + 
+	       "  @State var selected" + tname + " : Int = 0\n\n"; 
+    // decs.add(res2); 
+	res1 = 
+	  "      Picker(\"" + tname + "\", selection: $bean." + nme + ") {\n";  
+	for (int i = 0; i < vals.size(); i++)
+	{ String val = (String) vals.get(i); 
+	  res1 = res1 + "        Text(\"" + val + "\").tag(" + tname + "." + val + ")\n"; 
+	} 
+	res1 = res1 + "      }\n"; 
+	// res3 = "    $bean." + nme + " = " + tname + "(rawValue: selected" + tname + ")!"; 
+	// actions.add(res3);               
+  } // on button press, $bean.nme = tname(rawValue: selectedtname)!
+  else if (isEntity())
+  { // Show the list of instances
+    String rname = type.getName(); 
+    Entity ref = type.getEntity(); 
+    Attribute rkey = ref.getPrincipalPrimaryKey(); // must be one
+    if (rkey != null) 
+    { String pk = rkey.getName(); 
+      res1 = 
+	    "      Picker(\"" + tname + "\", selection: $bean." + nme + ")\n" + 
+	    "      { ForEach(model.current" + rname + "s) { Text($0." + pk + ").tag($0." + pk + ") } }\n";
+    }   
+  } // In the value object, objects are stored as their string primary key values. 
+  else if (isInteger())
+  { res1 = "      HStack {\n" +
+           "        Text(\"" + label + ":\").bold()\n" +
+           "        Divider()\n" +
+           "        TextField(\"" + label + "\", value: $bean." + nme + ", formatter: NumberFormatter()).keyboardType(.numberPad)\n" +
+           "      }\n" + 
+           "    \n";
+  } 
+  else if (isDouble())
+  { res1 = "      HStack {\n" +
+           "        Text(\"" + label + ":\").bold()\n" +
+           "        Divider()\n" +
+           "        TextField(\"" + label + "\", value: $bean." + nme + ", formatter: NumberFormatter()).keyboardType(.decimalPad)\n" +
+           "      }\n" + 
+           "    \n";
+  } 
+  else if (isPassword())
+  { res1 = "      HStack {\n" +
+           "        Text(\"" + label + ":\").bold()\n" +
+           "        Divider()\n" +
+           "        SecureField(\"" + label + "\", text: $bean." + nme + ")\n" +
+           "      }\n" + 
+           "    \n";
+  } 
+  return res1;
+}  // email, password kinds also 
+
+  public String uiKitDeclaration()
+  { String nme = getName(); 
+
+    if (isSmallEnumeration())
+    { Vector vals = type.getValues(); 
+      String defaultValue = (String) vals.get(0); 
+      return "  @IBOutlet weak var " + nme + "Control : UISegmentedControl!\n" + 
+             "  var " + nme + "Input : String = \"" + defaultValue + "\""; 
+    } 
+    else 
+    { return "  @IBOutlet weak var " + nme + "Input : UITextField!"; } 
+  } 
+
+  public String uiKitOp()
+  { String nme = getName(); 
+
+    if (isSmallEnumeration())
+    { Vector vals = type.getValues(); 
+      String switchcases = "";
+      for (int i = 0; i < vals.size(); i++) 
+      { String val = (String) vals.get(i); 
+        switchcases = switchcases + 
+                      "    case " + i + ":\n" + 
+                      "      " + nme + "Input = \"" + val + "\"\n"; 
+      }  
+      return "  @IBAction func " + nme + "Control(_ sender : Any)\n" + 
+             "  { switch " + nme + "Control.selectedSegmentIndex {\n" + 
+             switchcases + 
+             "    default: \n" + 
+             "      return\n" + 
+			 "  }\n\n"; 
+    } 
+    else 
+    { return ""; } 
+  } 
+
 
 }

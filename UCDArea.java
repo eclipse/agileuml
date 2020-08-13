@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -10,9 +10,9 @@
 /*
  * Classname : UCDArea
  * 
- * Version information : 1.9
+ * Version information : 1.9-2.0
  *
- * Date :  June 2019
+ * Date :  April 2020
  * 
  * Description: This class describes the area that all the painting for 
  * the CD diagram will be performed and deals with painting them
@@ -144,6 +144,7 @@ public class UCDArea extends JPanel
 
     private Vector imported = new Vector(); // of String
     private Vector entitymaps = new Vector(); // of EntityMatching
+    private ModelMatching tlspecification = null; 
 
   // Parent frame: 
     UmlTool parent; 
@@ -231,12 +232,14 @@ public class UCDArea extends JPanel
 
   public void addUseCases(Vector ucs)
   { for (int i = 0; i < ucs.size(); i++) 
-    { UseCase uc = (UseCase) ucs.get(i);
-      String nme = uc.getName();  
-      UseCase uc0 = (UseCase) ModelElement.lookupByName(nme,useCases); 
-      if (uc0 != null) 
-      { System.out.println("Existing use case with name: " + nme); 
-        useCases.remove(uc0); 
+    { if (ucs.get(i) instanceof UseCase)
+	  { UseCase uc = (UseCase) ucs.get(i);
+        String nme = uc.getName();  
+        UseCase uc0 = (UseCase) ModelElement.lookupByName(nme,useCases); 
+        if (uc0 != null) 
+        { System.out.println("Existing use case with name: " + nme); 
+          useCases.remove(uc0); 
+		}
       }
     }
     for (int i = 0; i < ucs.size(); i++) 
@@ -290,6 +293,7 @@ public class UCDArea extends JPanel
   { for (int i = 0; i < entities.size(); i++) 
     { Entity e = (Entity) entities.get(i); 
       e.typeCheckOps(types,entities); 
+	  e.typeCheckInvariants(types,entities); 
     } 
 
     for (int j = 0; j < useCases.size(); j++) 
@@ -298,6 +302,13 @@ public class UCDArea extends JPanel
         uc.typeCheck(types,entities); 
       } 
     } 
+	
+	Vector contexts = new Vector(); 
+	
+	for (int i = 0; i < constraints.size(); i++) 
+	{ Constraint con = (Constraint) constraints.get(i); 
+	  con.typeCheck(types,entities,contexts); 
+	}
   } // and entity activities. 
 
 
@@ -418,7 +429,7 @@ public class UCDArea extends JPanel
       if (attnme == null) { return; } 
       boolean alreadyDefined = uc.hasAttribute(attnme); 
       if (alreadyDefined)
-      { System.err.println("Use case already has attribute " + attnme + " not added"); 
+      { System.err.println("!! ERROR: Use case already has attribute " + attnme + " not added"); 
         return; 
       }
 
@@ -433,8 +444,8 @@ public class UCDArea extends JPanel
           tt = new Type(typ,null);
         }
         else
-        { System.out.println("Invalid type name: " + typ);
-          JOptionPane.showMessageDialog(null, "Error: invalid type " + typ, 
+        { System.out.println("!!! Unknown type name: " + typ);
+          JOptionPane.showMessageDialog(null, "Warning: unknown type " + typ, 
                                       "", JOptionPane.ERROR_MESSAGE);  
  
           tt = null;
@@ -647,9 +658,9 @@ public class UCDArea extends JPanel
 
     boolean tc = inv.typeCheck(types,entities,contexts,newparams); 
     if (tc) 
-    { System.out.println("Postcondition type-checked correctly"); } 
+    { System.out.println(">> Postcondition type-checked correctly"); } 
     else 
-    { System.out.println("Postcondition not correctly typed!"); } 
+    { System.out.println("!! Postcondition not correctly typed!"); } 
 
     Constraint cons = new Constraint((SafetyInvariant) inv,new Vector()); 
     cons.setOwner(owner); 
@@ -665,7 +676,7 @@ public class UCDArea extends JPanel
     { uc.addPostcondition(cons); 
       cons.setUseCase(uc); 
       uc.resetDesign(); 
-      System.out.println("The use case design has been reset"); 
+      System.out.println(">> The use case design has been reset"); 
     }       
   } 
 
@@ -739,7 +750,7 @@ public class UCDArea extends JPanel
         { System.err.println(messages); } 
         Expression eAssump = comp.parse();
         if (eAssump == null)
-        { eAssump = new BasicExpression("true"); }
+        { eAssump = new BasicExpression(true); }
         comp = new Compiler2(); 
         comp.nospacelexicalanalysis(sConc);
         Vector succsymbs = new Vector(); 
@@ -749,7 +760,7 @@ public class UCDArea extends JPanel
         { System.err.println(messages); } 
         Expression eConc = comp.parse();
         if (eConc == null)
-        { eConc = new BasicExpression("true"); }
+        { eConc = new BasicExpression(true); }
 
         // boolean isSys = sinvDialog.isSystem();
         // boolean isCrit = sinvDialog.isCritical();
@@ -874,23 +885,28 @@ public class UCDArea extends JPanel
     // check that ucinc is not already an extension of an extends, or inclusion of 
     // an includes: 
     for (int i = 0; i < useCases.size(); i++) 
-    { UseCase uc1 = (UseCase) useCases.get(i); 
-      if (uc1.hasExtension(ucext))
-      { System.err.println("Cannot have " + nme + " as extension of two usecases!"); 
-        return; 
-      } 
+    { if (useCases.get(i) instanceof UseCase)
+	  { UseCase uc1 = (UseCase) useCases.get(i); 
+        if (uc1.hasExtension(ucext))
+        { System.err.println("Cannot have " + nme + " as extension of two usecases!"); 
+          return; 
+        }
+	  }  
     } 
 
     for (int i = 0; i < useCases.size(); i++) 
-    { UseCase uc1 = (UseCase) useCases.get(i); 
-      if (uc1.hasInclusion(ucext))
-      { System.err.println("Cannot have " + nme + " as extension and inclusion!"); 
-        return; 
+    { if (useCases.get(i) instanceof UseCase)
+	  { UseCase uc1 = (UseCase) useCases.get(i); 
+        if (uc1.hasInclusion(ucext))
+        { System.err.println("Cannot have " + nme + " as extension and inclusion!"); 
+          return;
+		}  
       } 
     } 
 
     Extend ee = new Extend(uc,ucext); 
     uc.addExtension(ee);  
+	ucext.addExtensionOf(uc); 
     // Draw dashed line from ucext to uc
     drawDependency(ucext, uc, "<<extend>>"); 
   }
@@ -922,17 +938,20 @@ public class UCDArea extends JPanel
 
     // check that ucinc is not already an extension of an extends: 
     for (int i = 0; i < useCases.size(); i++) 
-    { UseCase uc1 = (UseCase) useCases.get(i); 
-      if (uc1.hasExtension(ucinc))
-      { System.err.println("Cannot have " + nme + " as extension and inclusion!"); 
-        JOptionPane.showMessageDialog(null, "Error: " + nme + " is extension & inclusion!", 
+    { if (useCases.get(i) instanceof UseCase)
+	  { UseCase uc1 = (UseCase) useCases.get(i); 
+        if (uc1.hasExtension(ucinc))
+        { System.err.println("Cannot have " + nme + " as extension and inclusion!"); 
+          JOptionPane.showMessageDialog(null, "Error: " + nme + " is extension & inclusion!", 
                                       "",JOptionPane.ERROR_MESSAGE);  
-        return; 
+          return;
+		}  
       } 
     } 
 
     Include ee = new Include(uc,ucinc); 
     uc.addInclude(ee);  
+	ucinc.addIncludedIn(uc); 
     drawDependency(uc, ucinc, "<<include>>"); 
   }
 
@@ -1018,7 +1037,7 @@ public class UCDArea extends JPanel
             typ.equals("double") || typ.equals("boolean"))
         { tt = new Type(typ,null); }
         else  
-        { System.err.println("Invalid type name: " + typ);
+        { System.err.println("!! ERROR: Invalid type name: " + typ);
           tt = null;
         }
       }
@@ -1064,7 +1083,7 @@ public class UCDArea extends JPanel
     { System.err.println("Failed to type-check precondition"); }
 
     if (post == null)
-    { System.err.println("Invalid postcondition"); 
+    { System.err.println(">>> Invalid postcondition"); 
       post = "true"; 
     }
 
@@ -1219,7 +1238,7 @@ public class UCDArea extends JPanel
 
     boolean tc = spre.typeCheck(types,entities,contexts,vars);
     if (!tc) 
-    { System.err.println("Warning: Unable to type-check precondition " + cond); }
+    { System.err.println("!! Warning: Unable to type-check precondition " + cond); }
 
     if (post == null)
     { System.err.println("ERROR: Invalid postcondition"); 
@@ -1391,8 +1410,8 @@ public class UCDArea extends JPanel
   } 
 
   public void addInvariant(Invariant inv)
-  { System.out.println("Select associations or entity that invariant is attached to");
-    System.out.println("And/or the use case to which it belongs as a postcondition"); 
+  { System.out.println(">>> Select associations or entity that invariant is attached to");
+    System.out.println(">>> And/or the use case to which it belongs as a postcondition"); 
     String anames = 
       JOptionPane.showInputDialog("Enter association names, or entity, or entity + use case:");
     if (anames == null) 
@@ -1405,6 +1424,8 @@ public class UCDArea extends JPanel
     int constraintType = 1; 
     String preEntity = ""; 
     int atindex = -1; 
+
+    Vector env = new Vector(); 
 
     while (st.hasMoreTokens())
     { String se = st.nextToken().trim();
@@ -1429,6 +1450,7 @@ public class UCDArea extends JPanel
         { UseCase uc = (UseCase) ModelElement.lookupByName(se,useCases); 
           if (uc != null) 
           { // System.out.println("Found use case");
+            env.addAll(uc.getParameters()); 
             usecase = uc;
           }
         }
@@ -1439,39 +1461,40 @@ public class UCDArea extends JPanel
     if (owner != null) 
     { contexts.add(owner); }  
 
-    boolean tc = inv.typeCheck(types,entities,contexts,new Vector()); 
-    if (tc) 
-    { // System.out.println("Invariant type-checked correctly"); 
-      Constraint cons = new Constraint((SafetyInvariant) inv,astv); 
-      for (int i = 0; i < astv.size(); i++) 
-      { Association ast = (Association) astv.get(i); 
-        ast.addConstraint(cons); 
-      } 
-      cons.setOwner(owner); 
-      if (preEntity.length() > 0) 
-      { cons.setisPre(true); } 
-      cons.typeCheck(types,entities,contexts); // to identify variables
+    boolean tc = inv.typeCheck(types,entities,contexts,env); 
+    if (!tc) 
+    { System.err.println("!! Type error in constraint: " + inv); } 
+
+    Constraint cons = new Constraint((SafetyInvariant) inv,astv); 
+    for (int i = 0; i < astv.size(); i++) 
+    { Association ast = (Association) astv.get(i); 
+      ast.addConstraint(cons); 
+    } 
+    cons.setOwner(owner); 
+    if (preEntity.length() > 0)
+    { cons.setisPre(true); } 
+    
+    cons.typeCheck(types,entities,contexts); // to identify variables
       // invariants.add(inv); 
 
-      System.out.println("read frame of " + cons + " is " + cons.readFrame()); 
+    System.out.println(">> read frame of " + cons + " is " + cons.readFrame()); 
 
    
-      if (usecase != null) 
-      { usecase.addPostcondition(cons); 
-        cons.setUseCase(usecase); 
-        if (preEntity.length() > 0)
-        { cons.setisPre(true); } 
-        
-      } 
+    if (usecase != null) 
+    { usecase.addPostcondition(cons); 
+      cons.setUseCase(usecase); 
+      if (preEntity.length() > 0)
+      { cons.setisPre(true); }       
+    } 
 
       // constraints.add(cons); 
       
-      boolean local = cons.checkIfLocal(); 
-      if (usecase != null) { } 
-      else if (local)
-      { owner.addInvariant(cons); } 
-      else  
-      { constraints.add(cons);   // global constraint not in a use case
+    boolean local = cons.checkIfLocal(); 
+    if (usecase != null) { } 
+    else if (local)
+    { owner.addInvariant(cons); } 
+    else  
+    { constraints.add(cons);   // global constraint not in a use case
 
         // Vector ents = cons.innermostEntities();
         // System.out.println("Needed entities are: " + ents);   
@@ -1528,9 +1551,7 @@ public class UCDArea extends JPanel
           } 
         } */
       }
-    } 
-    else 
-    { System.out.println("ERROR: Invariant not correctly typed, not added: " + inv); } 
+     
   } 
 
   public void addInvariant(Invariant inv, Entity owner)
@@ -1539,9 +1560,10 @@ public class UCDArea extends JPanel
     { contexts.add(owner); } 
 
     boolean tc = inv.typeCheck(types,entities,contexts,new Vector()); 
-    if (tc) 
-    { // System.out.println("Invariant type-checked correctly"); 
-      Constraint cons = new Constraint((SafetyInvariant) inv,
+    if (!tc) 
+    { System.err.println("!! ERROR in type-checking: " + inv); } 
+ 
+    Constraint cons = new Constraint((SafetyInvariant) inv,
                                        new Vector()); 
       cons.setOwner(owner); 
       // invariants.add(inv); 
@@ -1564,12 +1586,7 @@ public class UCDArea extends JPanel
                              " not subset of association ends: " + endPoints);
         }
       }
-    } 
-    else 
-    { System.out.println("Invariant not correctly typed, not added: " + inv); 
-      JOptionPane.showMessageDialog(null, "Invariant not correctly typed: " + inv, 
-                                    "", JOptionPane.WARNING_MESSAGE);  
-    } 
+    
   } 
 
   public void removeInvariant(Constraint con)
@@ -2329,6 +2346,7 @@ public class UCDArea extends JPanel
     { System.err.println("Invalid entity name: " + ent); 
       return; 
     } 
+
     if (nme.equals("add") || nme.equals("remove") || nme.equals("create") ||
         nme.equals("delete") || nme.equals("edit") || nme.equals("get") ||
         nme.equals("list") || nme.equals("searchBy") || nme.equals("set"))
@@ -2341,7 +2359,43 @@ public class UCDArea extends JPanel
       System.out.println("New Use Case: " + od); 
     }  
   }
+  
+  public void createPrivateUseCase(String nme, Vector pars, Attribute res)
+  { addPrivateUseCase(nme, pars, res); }
 
+  public void addPrivateUseCase(String nme, Vector pars, Attribute result)
+  { UseCase uc = (UseCase) ModelElement.lookupByName(nme,useCases); 
+    if (uc == null) 
+    { uc = new UseCase(nme,null); 
+      addGeneralUseCase(uc); 
+	  uc.addStereotype("private"); 
+      repaint(); 
+      if (result != null) 
+	  { uc.setResultType(result.getType()); 
+	    uc.setElementType(result.getElementType()); 
+	  }     
+      uc.setParameters(pars); 
+    }     
+    repaint(); 
+  }
+
+  public void addPublicUseCase(String nme, Vector pars, Attribute result)
+  { UseCase uc = (UseCase) ModelElement.lookupByName(nme,useCases); 
+    if (uc == null) 
+    { uc = new UseCase(nme,null); 
+      addGeneralUseCase(uc); 
+	 // uc.addStereotype("private"); 
+      repaint(); 
+      if (result != null) 
+	 { uc.setResultType(result.getType()); 
+	   uc.setElementType(result.getElementType()); 
+	 }     
+      uc.setParameters(pars); 
+    }     
+    repaint(); 
+  }
+  
+  
   public void addGeneralUseCase(UseCase uc)
   { useCases.add(uc); 
     OvalData od = new OvalData(10,80*useCases.size(),getForeground(),useCases.size()); 
@@ -2365,16 +2419,15 @@ public class UCDArea extends JPanel
     String nme = ucDialog.getName(); 
     if (nme == null || "".equals(nme)) { return; } 
 
-    // String ent = ucDialog.getEntity(); 
+    String ent = ucDialog.getEntity(); 
     String desc = ucDialog.getDescription(); 
+    // Stereotypes such as "private"
+
     String typ = ucDialog.getUseCaseType(); 
 
     if ("none".equals(typ)) 
     { typ = null; } 
 
-    // Entity e = (Entity) ModelElement.lookupByName(ent,entities); 
-    // if (e == null) 
-    // { System.err.println("No entity specified"); } 
 
     UseCase uc = (UseCase) ModelElement.lookupByName(nme,useCases); 
     if (uc != null) 
@@ -2409,6 +2462,14 @@ public class UCDArea extends JPanel
       useCases.add(ucext); 
     } */ 
 
+    if (ent != null && ent.length() > 0) 
+    { Entity e = (Entity) ModelElement.lookupByName(ent,entities); 
+      if (e == null) 
+      { System.err.println("!! Invalid associated entity"); } 
+      else 
+      { uc.setEntity(e); } 
+    } 
+
     String pars = ucDialog.getParameters();
     if (pars == null || pars.trim().length() == 0) { } 
     else 
@@ -2422,7 +2483,7 @@ public class UCDArea extends JPanel
           Type elemType = null; 
           Type ptt = Type.getTypeFor(ptype, types, entities); 
           if (ptt == null) 
-          { System.err.println("ERROR: Invalid type for parameter: " + pp); }
+          { System.err.println("!!! ERROR: Invalid type " + ptype + " for parameter: " + pp); }
           else       
           { Attribute pattr = new Attribute(pp, ptt, ModelElement.INTERNAL);
             pattr.setElementType(ptt.getElementType());  
@@ -2492,7 +2553,8 @@ public class UCDArea extends JPanel
     Statement undo = comp2.parseStatement(entities,types); 
 
     if (undo == null) 
-    { System.err.println("Invalid undo statements: " + undostats); 
+    { System.err.println("!! Invalid undo statements: " + undostats);
+	  comp2.checkBrackets();  
       return; 
     } 
 
@@ -2515,7 +2577,7 @@ public class UCDArea extends JPanel
   public void reconstructUseCase(String nme, String ent, String role)
   { Entity e = (Entity) ModelElement.lookupByName(ent,entities); 
     if (e == null) 
-    { System.err.println("Invalid entity name: " + ent); 
+    { System.err.println("ERROR: Invalid entity name: " + ent); 
       return; 
     } 
     if (nme.equals("add") || nme.equals("remove") || nme.equals("create") ||
@@ -2896,79 +2958,1108 @@ public class UCDArea extends JPanel
 
   }
 
+  public void generateSwiftUIApp()
+  { IOSAppGenerator gen = new IOSAppGenerator(); 
+    CGSpec cgs = loadCSTL(); 
+    // System.out.println(">>> Using loaded code generator: " + cgs); 
 
-  public void generateAndroidLayouts(PrintWriter out)
-  { /* File chtml = new File("output/commands.html"); 
-    try
-    { PrintWriter chout = new PrintWriter(
-                              new BufferedWriter(
-                                new FileWriter(chtml)));
-      chout.println(generateCommandHtml(useCases)); 
-      // out.println();
-      chout.close(); 
-    } catch (Exception e) { }  */ 
-
-    
-    for (int i = 0; i < useCases.size(); i++)
-    { Object obj = useCases.get(i); 
-      if (obj instanceof OperationDescription)
-      { OperationDescription od = (OperationDescription) obj; 
-        od.androidScreen(out); 
-
-        String nme = od.getName(); 
-        File odjsp = new File("output/View" + nme + ".java"); 
-        try
-        { PrintWriter jspout = new PrintWriter(
-                              new BufferedWriter(
-                                new FileWriter(odjsp)));
-          od.androidViewActivity(jspout); 
-          jspout.close(); 
-        } catch (Exception e) { } 
-
-      // out.println(od.getJsp());
-      // out.println(); 
-      /*  File odhtml = new File("output/" + nme + ".html"); 
-        try
-        { PrintWriter odhout = new PrintWriter(
-                              new BufferedWriter(
-                                new FileWriter(odhtml)));
-          odhout.println(od.getInputPage());
-          odhout.close(); 
-        } catch (Exception e) { }  */ 
-      } 
+    CGSpec cgswiftmain = CSTL.getTemplate("cgswiftmain.cstl"); 
+  
+    if (cgs == null || cgswiftmain == null) 
+    { System.err.println("!! No cg/cg.cstl or cg/cgswiftmain.cstl file defined!"); 
+      return; 
     } 
+    
+    String mainscreenName = "MainScreen"; 
+    Vector operationNames = new Vector(); 
+    Vector tabLabels = new Vector(); 
+
+    int screencount = 0; 
+
+    String delfile = "AppDelegate.swift"; 
+    File appdelf = new File("output/swiftuiapp/" + delfile); 
+    try
+    { PrintWriter appdelfile = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(appdelf)));
+      IOSAppGenerator.generateSwiftUIAppDelegate(appdelfile);
+      appdelfile.close(); 
+    }
+    catch(Exception _dd) { } 
+
+
+    boolean needsInternetPermission = false; 
+    Vector customComponents = new Vector(); 
+    Vector predefinedComponents = new Vector(); 
+    Vector persistentEntities = new Vector();
+    Vector clouds = new Vector(); 
+	
+    int internetCalls = 0; 
+    int remotecalls = 0; 
+    boolean needsMaps = false;
+    Vector predefinedUseCases = new Vector();  
+	
+    for (int j = 0; j < entities.size(); j++) 
+    { Entity ent = (Entity) entities.get(j); 
+      String ename = ent.getName(); 
+
+      if (ent.isDerived()) { }
+      else if (ent.isComponent()) 
+      { customComponents.add(ent); }
+      else if (ent.isRemote())
+      { Entity eeDAO = (Entity) ModelElement.lookupByName(ename + "_DAO",entities); 
+        Entity internetAccessor = (Entity) ModelElement.lookupByName("InternetAccessor",entities);
+        needsInternetPermission = true; 
+        internetCalls++; 
+		
+        if (eeDAO != null) 
+        { predefinedComponents.add(eeDAO); }
+        if (internetAccessor != null && !(predefinedComponents.contains(internetAccessor)))
+	    { predefinedComponents.add(internetAccessor); }
+	  } 
+	  else if (ent.isCloud())
+	  { Entity eeDAO = (Entity) ModelElement.lookupByName(ename + "_DAO",entities); 
+	    Entity cloudAccessor = (Entity) ModelElement.lookupByName("FirebaseDbi",entities);
+	    needsInternetPermission = true; 
+	    
+	    if (eeDAO != null) 
+	    { predefinedComponents.add(eeDAO); }
+	    if (cloudAccessor != null && !(predefinedComponents.contains(cloudAccessor)))
+	    { predefinedComponents.add(cloudAccessor); }
+	    clouds.add(ent); 
+      }
+      else if (ent.isPersistent())
+      { persistentEntities.add(ent); } 
+    } 
+	  
+    Entity fileaccessor = (Entity) ModelElement.lookupByName("FileAccessor", entities); 
+    if (fileaccessor != null) 
+    { predefinedComponents.add(fileaccessor); }
+    
+   
+    Entity graphcomponent = (Entity) ModelElement.lookupByName("GraphComponent", entities); 
+    if (graphcomponent != null) 
+    { predefinedComponents.add(graphcomponent); 
+      predefinedUseCases.add("graph"); 
+      screencount++; 
+    }
+
+    Entity mapcomponent = (Entity) ModelElement.lookupByName("MapsComponent", entities); 
+    if (mapcomponent != null) 
+    { predefinedComponents.add(mapcomponent); 
+      predefinedUseCases.add("map");
+      needsMaps = true;  
+      screencount++;   
+    }  
+
+	
+    customComponents.removeAll(predefinedComponents); 
+
+
+
+    Entity datecomponent = (Entity) ModelElement.lookupByName("DateComponent", entities); 
+    if (datecomponent != null) 
+    { String dfile = "DateComponent.swift"; 
+      File datef = new File("output/swiftuiapp/" + dfile); 
+      try
+      { PrintWriter datefile = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(datef)));
+        IOSAppGenerator.iosDateComponent(datefile);
+        datefile.close();  
+      }
+      catch(Exception _dd) { } 
+    } 
+
+    String fileaccfile = "FileAccessor.swift"; 
+    File facf = new File("output/swiftuiapp/" + fileaccfile); 
+    try
+    { PrintWriter facout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(facf)));
+      IOSAppGenerator.generateIOSFileAccessor(facout);
+      facout.close(); 
+    } 
+    catch (Exception _fac) { } 
+
 
     for (int j = 0; j < entities.size(); j++) 
     { Entity ent = (Entity) entities.get(j); 
+      String ename = ent.getName(); 
+
+      if (ent.isDerived()) { }
+      else if (ent.isComponent()) { } 
+      else 
+      { String entfile = ename + ".swift"; 
+        File entf = new File("output/swiftuiapp/" + entfile); 
+        try
+        { PrintWriter entfout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entf)));
+          entfout.println("import Foundation"); 
+          entfout.println("import Glibc"); 
+          entfout.println(); 
+		  					
+          ent.generateOperationDesigns(types,entities);  
+          String entcode = ent.cg(cgs);    
+          cgs.displayText(entcode,entfout);
+
+          entfout.println(); 
+          entfout.println(); 
+
+          String maincode = ent.cg(cgswiftmain); 
+          cgswiftmain.displayText(maincode,entfout); 
+
+          entfout.close();
+        } catch (Exception _e1) { _e1.printStackTrace(); }
+				
+        if (ent.isRemote() || ent.isCloud()) // Remote data source
+        { ent.generateRemoteDAOios("swiftuiapp"); 
+          remotecalls++; 
+        } 
+
+        if (ent.isCloud()) // Remote data source
+        { ent.generateFirebaseDbiIOS("swiftuiapp"); } 
+
+        try
+        { String entvo = ent.getName() + "VO.swift"; 
+          File entvof = new File("output/swiftuiapp/" + entvo); 
+          PrintWriter voout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entvof)));
+          voout.println(ent.getSwiftUIValueObject("app",types,entities,useCases,cgs));
+          voout.close(); 
+        } catch (Exception e) { }
+      }
+    }   
+
+
+
+    for (int j = 0; j < types.size(); j++) 
+    { Type typ = (Type) types.get(j);
+      if (typ.isEnumeration()) 
+      { String typef = typ.getName() + ".swift"; 
+        File typefile = new File("output/swiftuiapp/" + typef); 
+        try
+        { PrintWriter typeout = new PrintWriter(
+                                  new BufferedWriter(
+                                    new FileWriter(typefile)));
+          typeout.println(typ.getSwiftDefinition(systemName));
+          typeout.close(); 
+        } catch (Exception e) { } 
+      }
+    } 
+
+    Vector entusecases = new Vector(); 
+    for (int i = 0; i < useCases.size(); i++) 
+    { if (useCases.get(i) instanceof UseCase)
+      { UseCase uc = (UseCase) useCases.get(i);
+        if (uc.isPublic()) 
+        { screencount++; }
+        entusecases.add(uc);       
+      } 
+      else if (useCases.get(i) instanceof OperationDescription)
+      { OperationDescription od = (OperationDescription) useCases.get(i); 
+        screencount++; 
+
+        String nme = od.getName(); 
+        Entity ent = od.getEntity();
+        String ename = ent.getName(); 
+ 
+        operationNames.add(nme + "Screen"); 
+        if (nme.equals("create" + ename))
+        { tabLabels.add("+" + ename); } 
+        else if (nme.equals("delete" + ename))
+        { tabLabels.add("-" + ename); } 
+        else 
+        { tabLabels.add(Named.capitalise(nme)); }  
+
+        File odswift = new File("output/swiftuiapp/" + nme + "Screen.swift"); 
+        try
+        { PrintWriter swiftout = new PrintWriter(
+                                    new BufferedWriter(
+                                      new FileWriter(odswift)));
+          IOSAppGenerator.swiftuiScreen(nme,ent,swiftout); 
+          swiftout.close(); 
+        } catch (Exception e) { } 
+      } 
+    } 
+
+    
+    String entbean = "ModelFacade.swift"; 
+    File entbeanf = new File("output/swiftuiapp/" + entbean); 
+    try
+    { PrintWriter beanout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entbeanf)));
+      System.out.println(">>> Writing " + entbeanf + " for " + entusecases); 
+		
+      gen.swiftUIModelFacade(systemName,entusecases,cgs,entities,clouds,
+                      types,internetCalls,needsMaps,beanout);
+      // beanout.flush(); 
+      beanout.close(); 
+    } catch (Exception e) { e.printStackTrace(); } 
+
+    if (internetCalls > 0) 
+    { String accessor = "InternetAccessor.swift"; 
+      File accf = new File("output/swiftuiapp/" + accessor); 
+      try
+      { PrintWriter accout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(accf)));
+        IOSAppGenerator.generateInternetAccessor(systemName,accout);
+		accout.close();  
+	  } catch (Exception _w) { } 
+	}  
+
+    for (int z = 0; z < entusecases.size(); z++) 
+    { UseCase uc = (UseCase) entusecases.get(z);
+      if (uc.isPrivate()) { continue; }
+
+      String ucname = uc.getName(); 
+      operationNames.add(ucname + "Screen"); 
+      tabLabels.add(Named.capitalise(ucname)); 
+  
+	   
+      String ucvc = ucname + "Screen.swift"; 
+      File ucvcf = new File("output/swiftuiapp/" + ucvc); 
+      try
+      { PrintWriter vcout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(ucvcf)));
+  	    System.out.println(">>> Writing " + ucvcf + " for " +  ucname); 
+		
+        gen.singlePageAppSwiftUI(uc,systemName,"",cgs,types,entities,vcout);
+        vcout.close(); 
+      } catch (Exception e) { }
+  
+      
+       String ucbean = ucname + "VO.swift"; 
+       File ucbeanf = new File("output/swiftuiapp/" + ucbean); 
+       try
+       { PrintWriter beanout = new PrintWriter(
+                                 new BufferedWriter(
+                                   new FileWriter(ucbeanf)));
+          beanout.println(uc.getSwiftUIValueObject(systemName,types,entities,useCases,cgs));
+          beanout.close(); 
+        } catch (Exception e) { }  
+     }
+	 
+    for (int i = 0; i < predefinedUseCases.size(); i++) 
+    { String puc = (String) predefinedUseCases.get(i);
+      if ("graph".equals(puc))
+      { operationNames.add("GraphScreen"); 
+        tabLabels.add(Named.capitalise(puc)); 
+      }
+      else if ("map".equals(puc))
+      { operationNames.add("MapScreen"); 
+        tabLabels.add(Named.capitalise(puc)); 
+        File mapoptions = new File("output/swiftuiapp/OptionsDialog.swift"); 
+        try
+        { PrintWriter mapoptout = new PrintWriter(
+                                    new BufferedWriter(
+                                      new FileWriter(mapoptions)));
+          gen.swiftuiOptionsScreen(mapoptout);
+          mapoptout.close(); 
+        } catch (Exception e) { }
+      } 
+    }
+
+    if (operationNames.size() == 1)
+    { mainscreenName = (String) operationNames.get(0); } 
+    else 
+    { String mainscreen = "MainScreen.swift"; 
+      File mainbeanf = new File("output/swiftuiapp/" + mainscreen); 
+      try
+      { PrintWriter mainout = new PrintWriter(
+                                 new BufferedWriter(
+                                   new FileWriter(mainbeanf)));
+        IOSAppGenerator.swiftUITabScreen(operationNames,tabLabels,mainout);
+        mainout.close(); 
+      } 
+      catch (Exception e) { }  
+    } 
+	
+    String scenefile = "SceneDelegate.swift"; 
+    File scenedelf = new File("output/swiftuiapp/" + scenefile); 
+    try
+    { PrintWriter scenedelfile = new PrintWriter(
+                                   new BufferedWriter(
+                                     new FileWriter(scenedelf)));
+      IOSAppGenerator.generateSceneDelegate(mainscreenName,scenedelfile);
+      scenedelfile.close(); 
+    }
+    catch(Exception _sd) { } 
+
+  } 
+
+
+
+  public void generateIOSApp()
+  { IOSAppGenerator gen = new IOSAppGenerator(); 
+    CGSpec cgs = loadCSTL(); 
+    // System.out.println(">>> Using loaded code generator: " + cgs); 
+
+    CGSpec cgswiftmain = CSTL.getTemplate("cgswiftmain.cstl"); 
+  
+    if (cgs == null || cgswiftmain == null) 
+    { System.err.println("!! No cg/cg.cstl or cg/cgswiftmain.cstl file defined!"); 
+      return; 
+    } 
+
+    String delfile = "AppDelegate.swift"; 
+    File appdelf = new File("output/iosapp/" + delfile); 
+    try
+    { PrintWriter appdelfile = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(appdelf)));
+      IOSAppGenerator.generateUIKitAppDelegate(appdelfile);
+      appdelfile.close(); 
+    }
+    catch(Exception _dd) { } 
+
+    boolean needsInternetPermission = false; 
+    Vector customComponents = new Vector(); 
+    Vector predefinedComponents = new Vector(); 
+    Vector persistentEntities = new Vector();
+    Vector clouds = new Vector(); 
+	
+    int internetCalls = 0; 
+    int screencount = 0; 
+    int remotecalls = 0; 
+    boolean needsMaps = false;
+    Vector predefinedUseCases = new Vector();  
+	
+    for (int j = 0; j < entities.size(); j++) 
+    { Entity ent = (Entity) entities.get(j); 
+      String ename = ent.getName(); 
+
+      if (ent.isDerived()) { }
+      else if (ent.isComponent()) 
+      { customComponents.add(ent); }
+      else if (ent.isRemote())
+      { Entity eeDAO = (Entity) ModelElement.lookupByName(ename + "_DAO",entities); 
+        Entity internetAccessor = (Entity) ModelElement.lookupByName("InternetAccessor",entities);
+        needsInternetPermission = true; 
+        internetCalls++; 
+		
+        if (eeDAO != null) 
+        { predefinedComponents.add(eeDAO); }
+          if (internetAccessor != null && !(predefinedComponents.contains(internetAccessor)))
+	     { predefinedComponents.add(internetAccessor); }
+	  } 
+	  else if (ent.isCloud())
+	  { Entity eeDAO = (Entity) ModelElement.lookupByName(ename + "_DAO",entities); 
+	    Entity cloudAccessor = (Entity) ModelElement.lookupByName("FirebaseDbi",entities);
+	    needsInternetPermission = true; 
+	    
+	    if (eeDAO != null) 
+	    { predefinedComponents.add(eeDAO); }
+	    if (cloudAccessor != null && !(predefinedComponents.contains(cloudAccessor)))
+	    { predefinedComponents.add(cloudAccessor); }
+	    clouds.add(ent); 
+      }
+      else if (ent.isPersistent())
+      { persistentEntities.add(ent); } 
+    } 
+	  
+    Entity fileaccessor = (Entity) ModelElement.lookupByName("FileAccessor", entities); 
+    if (fileaccessor != null) 
+    { predefinedComponents.add(fileaccessor); }
+    
+
+   
+    Entity graphcomponent = (Entity) ModelElement.lookupByName("GraphComponent", entities); 
+    if (graphcomponent != null) 
+    { predefinedComponents.add(graphcomponent); 
+      predefinedUseCases.add("graph"); 
+      screencount++; 
+    }
+
+    Entity mapcomponent = (Entity) ModelElement.lookupByName("MapsComponent", entities); 
+    if (mapcomponent != null) 
+    { predefinedComponents.add(mapcomponent); 
+      predefinedUseCases.add("mapping");
+      needsMaps = true;  
+      screencount++;   
+    }
+
+    Entity datecomponent = (Entity) ModelElement.lookupByName("DateComponent", entities); 
+    if (datecomponent != null) 
+    { String dfile = "DateComponent.swift"; 
+      File datef = new File("output/iosapp/" + dfile); 
+      try
+      { PrintWriter datefile = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(datef)));
+        IOSAppGenerator.iosDateComponent(datefile);
+        datefile.close();  
+      }
+      catch(Exception _dd) { } 
+    } 
+	
+    customComponents.removeAll(predefinedComponents); 
+
+    String fileaccfile = "FileAccessor.swift"; 
+    File facf = new File("output/iosapp/" + fileaccfile); 
+    try
+    { PrintWriter facout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(facf)));
+      IOSAppGenerator.generateIOSFileAccessor(facout);
+      facout.close(); 
+    } 
+    catch (Exception _fac) { } 
+
+    for (int j = 0; j < entities.size(); j++) 
+    { Entity ent = (Entity) entities.get(j); 
+      String ename = ent.getName(); 
+
+      if (ent.isDerived()) { }
+      else if (ent.isComponent()) { } 
+      else 
+      { String entfile = ename + ".swift"; 
+        File entf = new File("output/iosapp/" + entfile); 
+        try
+        { PrintWriter entfout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entf)));
+          entfout.println("import Foundation"); 
+          entfout.println("import Glibc"); 
+          entfout.println(); 
+		  					
+          ent.generateOperationDesigns(types,entities);  
+          String entcode = ent.cg(cgs);    
+          cgs.displayText(entcode,entfout);
+
+          entfout.println(); 
+          entfout.println(); 
+
+          String maincode = ent.cg(cgswiftmain); 
+          cgswiftmain.displayText(maincode,entfout); 
+
+          entfout.close();
+        } catch (Exception _e1) { _e1.printStackTrace(); }
+				
+        if (ent.isRemote() || ent.isCloud()) // Remote data source
+        { ent.generateRemoteDAOios("iosapp"); 
+          remotecalls++; 
+        } 
+
+        if (ent.isCloud()) // Remote data source
+        { ent.generateFirebaseDbiIOS("iosapp"); } 
+
+        try
+        { String entvo = ent.getName() + "VO.swift"; 
+          File entvof = new File("output/iosapp/" + entvo); 
+          PrintWriter voout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entvof)));
+          voout.println(ent.getIOSValueObject("app"));
+          voout.close(); 
+        } catch (Exception e) { }
+
+        String entbean = ent.getName() + "Bean.swift"; 
+        File entbeanf = new File("output/iosapp/" + entbean); 
+        try
+        { PrintWriter ebeanout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entbeanf)));
+           ebeanout.println(ent.generateIOSBean(useCases,entities,types,cgs));
+           ebeanout.close(); 
+        } catch (Exception e) { } 
+      }
+    }   
+
+
+
+    for (int j = 0; j < types.size(); j++) 
+    { Type typ = (Type) types.get(j);
+      if (typ.isEnumeration()) 
+      { String typef = typ.getName() + ".swift"; 
+        File typefile = new File("output/iosapp/" + typef); 
+        try
+        { PrintWriter typeout = new PrintWriter(
+                                  new BufferedWriter(
+                                    new FileWriter(typefile)));
+          typeout.println(typ.getSwiftDefinition(systemName));
+          typeout.close(); 
+        } catch (Exception e) { } 
+      }
+    } 
+
+      
+    Vector entusecases = new Vector(); 
+    for (int i = 0; i < useCases.size(); i++) 
+    { if (useCases.get(i) instanceof UseCase)
+      { UseCase uc = (UseCase) useCases.get(i);
+        if (uc.isPublic() && uc.isIndependent()) 
+        { screencount++; }
+	    entusecases.add(uc);       
+      } 
+      else if (useCases.get(i) instanceof OperationDescription)
+      { OperationDescription od = (OperationDescription) useCases.get(i); 
+        screencount++; 
+
+        String nme = od.getName(); 
+        File odswift = new File("output/iosapp/" + nme + "ViewController.swift"); 
+        try
+        { PrintWriter swiftout = new PrintWriter(
+                                    new BufferedWriter(
+                                      new FileWriter(odswift)));
+          od.iOSViewController(systemName,swiftout); 
+          swiftout.close(); 
+        } catch (Exception e) { } 
+      } 
+    } 
+
+    if (persistentEntities.size() > 0)
+    { File dbif = new File("output/iosapp/Dbi.swift"); 
+      try
+      { PrintWriter dbiout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(dbif)));
+        IOSAppGenerator.generateIOSDbi("app",systemName,persistentEntities,useCases,dbiout);
+        dbiout.close(); 
+      } catch (Exception e) { }
+    }  
+
+    String entbean = "ModelFacade.swift"; 
+    File entbeanf = new File("output/iosapp/" + entbean); 
+    try
+    { PrintWriter beanout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entbeanf)));
+	  System.out.println(">>> Writing " + entbeanf + " for " + entusecases); 
+		
+      gen.modelFacade(systemName,entusecases,cgs,entities,clouds,
+                      types,internetCalls,needsMaps,beanout);
+      // beanout.flush(); 
+      beanout.close(); 
+    } catch (Exception e) { e.printStackTrace(); } 
+
+    if (internetCalls > 0) 
+    { String accessor = "InternetAccessor.swift"; 
+      File accf = new File("output/iosapp/" + accessor); 
+      try
+      { PrintWriter accout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(accf)));
+        IOSAppGenerator.generateInternetAccessor(systemName,accout);
+		accout.close();  
+	  } catch (Exception _w) { } 
+	}  
+
+    for (int z = 0; z < entusecases.size(); z++) 
+    { UseCase uc = (UseCase) entusecases.get(z);
+	  if (uc.isPrivate()) { continue; }
+	   
+      String ucvc = uc.getName() + "ViewController.swift"; 
+      File ucvcf = new File("output/iosapp/" + ucvc); 
+      try
+      { PrintWriter vcout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(ucvcf)));
+  	    System.out.println(">>> Writing " + ucvcf + " for " +  uc.getName()); 
+		
+         gen.singlePageApp(uc,systemName,"",cgs,types,entities,vcout);
+         // vcout.flush(); 
+         vcout.close(); 
+       } catch (Exception e) { }
+
+
+      
+        String ucbean = uc.getName() + "ValidationBean.swift"; 
+        File ucbeanf = new File("output/iosapp/" + ucbean); 
+        try
+        { PrintWriter beanout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(ucbeanf)));
+          beanout.println(uc.generateIOSValidationBean(systemName,cgs,entities,types));
+          beanout.close(); 
+        } catch (Exception e) { }
+      } 
+	  
+	  generateSwiftUIApp(); 
+   } // validation beans for entities? 
+  
+  public void generateAndroidLayouts(PrintWriter out)
+  { AndroidAppGenerator agen = new AndroidAppGenerator(); 
+    CGSpec cgs = loadCSTL(); 
+
+    if (cgs == null) 
+    { System.err.println("!! No cg/cg.cstl file defined!"); 
+      return; 
+    } 
+	
+    Vector persistentEntities = new Vector();
+	Vector clouds = new Vector(); 
+	 
+	Vector predefinedComponents = new Vector();
+	Vector predefinedUseCases = new Vector(); 
+	 
+    Vector customComponents = new Vector(); 
+	boolean needsInternetPermission = false; 
+	boolean needsMaps = false; 
+	
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ee = (Entity) entities.get(i); 
+	  String eename = ee.getName(); 
+	  
+      if (ee.isDerived()) {}
+	  else if (ee.isComponent()) 
+	  { customComponents.add(ee); }
+	  else if (ee.isRemote())
+	  { Entity eeDAO = (Entity) ModelElement.lookupByName(eename + "_DAO",entities); 
+	    Entity internetAccessor = (Entity) ModelElement.lookupByName("InternetAccessor",entities);
+		needsInternetPermission = true; 
+		 
+		if (eeDAO != null) 
+		{ predefinedComponents.add(eeDAO); }
+		if (internetAccessor != null && !(predefinedComponents.contains(internetAccessor)))
+		{ predefinedComponents.add(internetAccessor); }
+		predefinedUseCases.add("internetAccessCompleted"); 
+	  } 
+	  else if (ee.isCloud())
+	  { Entity eeDAO = (Entity) ModelElement.lookupByName(eename + "_DAO",entities); 
+	    Entity cloudAccessor = (Entity) ModelElement.lookupByName("FirebaseDbi",entities);
+	    needsInternetPermission = true; 
+	 
+	    if (eeDAO != null) 
+	    { predefinedComponents.add(eeDAO); }
+	    if (cloudAccessor != null && !(predefinedComponents.contains(cloudAccessor)))
+	    { predefinedComponents.add(cloudAccessor); }
+	    clouds.add(ee); 
+	  }
+      else if (ee.isPersistent())
+      { persistentEntities.add(ee); } 
+    } 
+
+	int screencount = 0; 
+
+    Entity fileaccessor = (Entity) ModelElement.lookupByName("FileAccessor", entities); 
+    if (fileaccessor != null) 
+    { predefinedComponents.add(fileaccessor); }
+	
+    Entity graphcomponent = (Entity) ModelElement.lookupByName("GraphComponent", entities); 
+    if (graphcomponent != null) 
+    { predefinedComponents.add(graphcomponent); 
+	  predefinedUseCases.add("graph"); 
+	  screencount++; 
+    }
+
+    Entity mapcomponent = (Entity) ModelElement.lookupByName("MapsComponent", entities); 
+    if (mapcomponent != null) 
+    { predefinedComponents.add(mapcomponent); 
+	  predefinedUseCases.add("mapping");
+	  needsMaps = true;  
+	  screencount = 1;  // Map screen is the only screen for such apps. 
+    }
+
+	customComponents.removeAll(predefinedComponents); 
+
+
+    String image = null; 
+	
+    UseCase primaryUC = AndroidAppGenerator.isSinglePageApp(useCases); 
+	if (primaryUC != null) 
+	{ screencount = 1; 
+	  image = primaryUC.getTaggedValue("image"); 
+	}
+	
+	if (needsMaps)
+	{ screencount = 1; }
+    // Also take account of components which need screens, such as MapComponent and GraphComponent
+
+   	if (image == null && !(needsMaps))  
+    { image = JOptionPane.showInputDialog("Image name to use for main screen (or null):"); } 
+
+    if (image != null && !("null".equals(image)))
+    { System.out.println("The image should be placed in the res/drawable folder of the app"); }
+    else 
+    { image = null; }
+	
+    if (systemName == null || "".equals(systemName))
+    { systemName = "app"; }
+    String packageName = "com.example." + systemName; 
+	String nestedPackageName = packageName + ".ui.main"; 
+	if (screencount <= 1)
+	{ nestedPackageName = packageName; }
+	 
+    	
+	agen.generateFileAccessor(nestedPackageName);
+	// Always included 
+
+    agen.generateManifest(systemName,needsInternetPermission,needsMaps,out);
+	// Include Internet permission if an InternetAccessor is present, or a cloud entity, or WebComponent.  
+	
+
+     boolean needsGraph = false; 
+
+     if (mapcomponent != null) 
+     { // generate its screen and view controller
+       needsMaps = true; 
+       String mapxml = "activity_maps.xml"; 
+       File mapfile = new File("output/app/src/main/res/layout/" + mapxml); 
+       try
+       { PrintWriter maplayout = new PrintWriter(
+                                  new BufferedWriter(
+                                    new FileWriter(mapfile)));
+         AndroidAppGenerator.generateMapComponentLayout(maplayout); 
+         // AndroidAppGenerator.generateGraphComponentVC(packageName,nestedPackageName); 
+         maplayout.close(); 
+       } catch (Exception e) { }
+     } 
+
+     if (graphcomponent != null) 
+     { // generate its screen and view controller
+       needsGraph = true; 
+       String glxml = "graph_fragment.xml"; 
+       File glfile = new File("output/app/src/main/res/layout/" + glxml); 
+       try
+       { PrintWriter glayout = new PrintWriter(
+                                  new BufferedWriter(
+                                    new FileWriter(glfile)));
+         AndroidAppGenerator.generateGraphComponentLayout(glayout); 
+         AndroidAppGenerator.generateGraphComponentVC(packageName,nestedPackageName); 
+         glayout.close(); 
+       } catch (Exception e) { }
+     }
+	
+    for (int j = 0; j < types.size(); j++) 
+    { Type typ = (Type) types.get(j);
+      if (typ.isEnumeration()) 
+      { String typef = typ.getName() + ".java"; 
+        File typefile = new File("output/app/src/main/java/com/example/app/" + typef); 
+        try
+        { PrintWriter typeout = new PrintWriter(
+                                  new BufferedWriter(
+                                    new FileWriter(typefile)));
+          typeout.println(typ.getJava8Definition(nestedPackageName));
+          typeout.close(); 
+        } catch (Exception e) { } 
+      }
+    } 
+
+    Vector referencedEntities = new Vector(); 
+ 
+    for (int j = 0; j < persistentEntities.size(); j++) 
+    { Entity ent = (Entity) persistentEntities.get(j);
+      if (ent.isDerived() || ent.isComponent()) 
+      { continue; } 
+	   
       String entvo = ent.getName() + "VO.java"; 
-      File entvof = new File("output/" + entvo); 
+      File entvof = new File("output/app/src/main/java/com/example/app/" + entvo); 
       try
       { PrintWriter voout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(entvof)));
-        voout.println(ent.getAndroidValueObject());
+        voout.println(ent.getAndroidVO(nestedPackageName));
         voout.close(); 
       } catch (Exception e) { } 
       
       String entbean = ent.getName() + "Bean.java"; 
-      File entbeanf = new File("output/" + entbean); 
+      File entbeanf = new File("output/app/src/main/java/com/example/app/" + entbean); 
       try
       { PrintWriter beanout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(entbeanf)));
-        beanout.println(ent.generateAndroidBean(useCases,constraints,entities,types));
+        beanout.println(ent.generateAndroidBean(nestedPackageName,useCases,constraints,persistentEntities,types,cgs));
         beanout.close(); 
       } catch (Exception e) { } 
     }
 
-    File dbif = new File("output/Dbi.java"); 
-    try
-    { PrintWriter dbiout = new PrintWriter(
+    int remotecalls = 0; 
+
+    for (int j = 0; j < entities.size(); j++) 
+    { Entity ent = (Entity) entities.get(j);
+      if (ent.isDerived()) { continue; } 
+      if (ent.isComponent()) { continue; } 
+	 
+      ent.generateOperationDesigns(types,entities);  
+           
+      String entfile = ent.getName() + ".java"; 
+      File entff = new File("output/app/src/main/java/com/example/app/" + entfile); 
+      try
+      { PrintWriter ffout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entff)));
+        ffout.println("package " + nestedPackageName + ";"); 
+        ffout.println(); 
+        ffout.println("import java.util.*;"); 
+        ffout.println("import java.util.HashMap;"); 
+        ffout.println("import java.util.Collection;");
+        ffout.println("import java.util.List;");
+        ffout.println("import java.util.ArrayList;");
+        ffout.println("import java.util.Set;");
+        ffout.println("import java.util.HashSet;");
+        ffout.println("import java.util.TreeSet;");
+        ffout.println("import java.util.Collections;");
+        ffout.println(); 
+        // ent.generateJava7(entities,types,ffout);
+        String entcode = ent.cg(cgs);
+        cgs.displayText(entcode,ffout); 
+		 
+        ffout.close(); 
+      } catch (Exception e) { } 
+
+      if (ent.isRemote()) // Remote data source
+      { ent.generateRemoteDAO(nestedPackageName); 
+        remotecalls++; 
+      } 
+
+      if (ent.isCloud()) // Remote data source
+      { ent.generateRemoteDAO(nestedPackageName); 
+	  
+        ent.generateFirebaseDbi(nestedPackageName); 
+	   String entvo = ent.getName() + "VO.java"; 
+        File entvof = new File("output/app/src/main/java/com/example/app/" + entvo); 
+        try
+        { PrintWriter voout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entvof)));
+          voout.println(ent.getAndroidVO(nestedPackageName));
+          voout.close(); 
+        } catch (Exception e) { } 
+
+        String entbean = ent.getName() + "Bean.java"; 
+        File entbeanf = new File("output/app/src/main/java/com/example/app/" + entbean); 
+        try
+        { PrintWriter beanout = new PrintWriter(
+                                 new BufferedWriter(
+                                  new FileWriter(entbeanf)));
+          beanout.println(ent.generateAndroidBean(nestedPackageName,useCases,constraints,persistentEntities,types,cgs));
+          beanout.close(); 
+        } catch (Exception _e) { }  
+      } 
+    } 
+
+    if (remotecalls > 0) 
+    { AndroidAppGenerator.generateInternetAccessor(nestedPackageName); } 
+
+    for (int j = 0; j < useCases.size(); j++) 
+    { if (useCases.get(j) instanceof UseCase) 
+      { UseCase uc = (UseCase) useCases.get(j); 
+        if (uc.isPrivate()) { continue; } 
+        if (predefinedUseCases.contains(uc.getName())) { continue; }
+	    String ucvo = uc.getName() + "VO.java"; 
+        File ucvof = new File("output/app/src/main/java/com/example/app/" + ucvo); 
+        try
+        { PrintWriter voout = new PrintWriter(
+                               new BufferedWriter(
+                                new FileWriter(ucvof)));
+          voout.println(uc.getAndroidValueObject(nestedPackageName));
+          voout.close(); 
+        } catch (Exception e) { } 
+      
+        String ucbean = uc.getName() + "Bean.java"; 
+        File ucbeanf = new File("output/app/src/main/java/com/example/app/" + ucbean); 
+        try
+        { PrintWriter beanout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(ucbeanf)));
+          beanout.println(uc.generateAndroidBean(nestedPackageName,persistentEntities,types,cgs));
+          beanout.close(); 
+        } catch (Exception e) { }
+      } 
+    }
+
+    if (persistentEntities.size() > 0)
+    { File dbif = new File("output/app/src/main/java/com/example/app/Dbi.java"); 
+      try
+      { PrintWriter dbiout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(dbif)));
-      generateAndroidDbi(useCases,dbiout);
-      dbiout.close(); 
-    } catch (Exception e) { } 
+        AndroidAppGenerator.generateAndroidDbi(nestedPackageName,systemName,persistentEntities,useCases,dbiout);
+        dbiout.close(); 
+      } catch (Exception e) { }
+    }  
+	
+    File mff = new File("output/app/src/main/java/com/example/app/ModelFacade.java"); 
+    try
+    { PrintWriter mfout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(mff)));
+      agen.modelFacade(nestedPackageName,useCases,cgs,persistentEntities,clouds,types,remotecalls,needsMaps,mfout);
+      mfout.close(); 
+     } catch (Exception e) 
+       { e.printStackTrace(); } 
+
+	if (needsMaps && screencount == 1)
+	{ agen.singlePageMapApp(primaryUC,systemName,image,cgs,types,entities,out); 
+	  return; 
+	}
+	
+	if (primaryUC != null && screencount == 1)
+	{ agen.singlePageApp(primaryUC,systemName,image,cgs,types,entities,out); 
+	  return; 
+	}
+    // and case of mapcomponent != null
+	
+    File chtml = new File("output/app/src/main/res/layout/activity_main.xml"); 
+    try
+    { PrintWriter chout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(chtml)));
+      AndroidAppGenerator.androidLayoutTabs(useCases,chout);   
+      chout.close(); 
+    } catch (Exception e) { }  // Only needed if more than 1 separate usecase/operationdescription
+
+    File codefile = new File("output/app/src/main/java/MainActivity.java"); 
+    try
+    { PrintWriter codeout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(codefile)));
+      
+      AndroidAppGenerator.androidMainVCTabs(useCases,packageName, needsGraph,codeout); 
+      codeout.close(); 
+    } catch (Exception e) { }   
+
+    Vector tabnames = new Vector(); 
+	
+    for (int i = 0; i < useCases.size(); i++)
+    { Object obj = useCases.get(i); 
+      if (obj instanceof OperationDescription)
+      { OperationDescription od = (OperationDescription) obj;
+        tabnames.add(od.getName()); 
+        String layoutname = od.getName().toLowerCase() + "_layout.xml"; 
+     
+        File odlayout = new File("output/app/src/main/res/layout/" + layoutname); 
+        try
+        { PrintWriter odlayoutfile = new PrintWriter(
+                                       new BufferedWriter(
+                                         new FileWriter(odlayout)));
+          AndroidAppGenerator.androidScreenTabs(od,odlayoutfile);
+          odlayoutfile.close();    
+        } catch (Exception e) { } 
+
+
+        String nme = od.getName();
+		
+	    if (nme.startsWith("list"))
+	    { Entity ent = od.getEntity(); 
+		  String ename = ent.getName();
+	      File fraglayout = new File("output/app/src/main/res/layout/fragment_" + ename.toLowerCase() + ".xml");
+		  try
+          { PrintWriter fragout = new PrintWriter(
+                                 new BufferedWriter(
+                                   new FileWriter(fraglayout)));
+            AndroidAppGenerator.listItemLayout(ent,fragout);
+		    fragout.close(); 
+		  } catch (Exception _r) { }
+		  
+		  File recycler = new File("output/app/src/main/java/com/example/app/" + ename + "RecyclerViewAdapter.java");
+		  try
+          { PrintWriter rout = new PrintWriter(
+                                 new BufferedWriter(
+                                   new FileWriter(recycler)));
+            AndroidAppGenerator.generateRecyclerViewAdapter(ent,packageName,rout);
+			rout.close(); 
+		  } catch (Exception _x) { }  
+	    }
+	 
+        File odjsp = new File("output/app/src/main/java/com/example/app/" + nme + "Fragment.java"); 
+        try
+        { PrintWriter jspout = new PrintWriter(
+                                 new BufferedWriter(
+                                   new FileWriter(odjsp)));
+          AndroidAppGenerator.androidViewFragment(packageName,od,jspout); 
+          jspout.close(); 
+        } catch (Exception e) { } 
+      } 
+      else if (obj instanceof UseCase && !(predefinedUseCases.contains(((UseCase) obj).getName())))
+      { UseCase uc = (UseCase) obj; 
+        if (uc.includedIn.size() == 0 && uc.extensionOf.size() == 0) 
+        { Vector extensions = uc.extensionUseCases(); 
+          String nme = uc.getName();
+          tabnames.add(nme); 
+ 
+          Vector atts = uc.getParameters(); 
+          Attribute res = uc.getResultParameter(); 
+          String lcnme = nme.toLowerCase(); 
+
+          if (uc.classifier != null) 
+          { if (referencedEntities.contains(uc.classifier)) { } 
+            else 
+            { referencedEntities.add(uc.classifier); } 
+          } 
+
+          File opfile = new File("output/app/src/main/res/layout/" + lcnme + "_layout.xml"); 
+          try
+          { PrintWriter opout = new PrintWriter(
+                                 new BufferedWriter(
+                                   new FileWriter(opfile)));
+            if (extensions.size() > 0) 
+            { AndroidAppGenerator.androidTableLayoutForOps(nme,".ui.main." + nme + "Fragment", image, atts,res,extensions,opout); } 
+            else
+            { AndroidAppGenerator.androidTableLayoutForOp(nme,".ui.main." + nme + "Fragment", image, atts,res,opout); }   
+            opout.close(); 
+          } catch (Exception e) { } 
+
+          File odact = new File("output/app/src/main/java/com/example/app/" + nme + "Fragment.java"); 
+          try
+          { PrintWriter actout = new PrintWriter(
+                                   new BufferedWriter(
+                                     new FileWriter(odact)));
+            AndroidAppGenerator.androidOpViewFragment(nme,packageName,nme + "Fragment",lcnme + "_layout",atts,res,extensions,actout); 
+            actout.close(); 
+          } catch (Exception e) { }
+        }  
+      }
+    } 
+
+    if (predefinedUseCases.contains("graph"))
+    { tabnames.add("Graph"); }
+    if (predefinedUseCases.contains("map"))
+    { tabnames.add("Map"); }    
+
+    for (int j = 0; j < referencedEntities.size(); j++) 
+    { Entity ent = (Entity) referencedEntities.get(j);
+      ent.generateOperationDesigns(types,entities);  
+           
+      String entfile = ent.getName() + ".java"; 
+      File entff = new File("output/app/src/main/java/com/example/app/" + entfile); 
+      try
+      { PrintWriter ffout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entff)));
+        ffout.println("package " + nestedPackageName + ";"); 
+        ffout.println(); 
+        ffout.println("import java.util.*;"); 
+        ffout.println("import java.util.HashMap;"); 
+        ffout.println("import java.util.Collection;");
+        ffout.println("import java.util.List;");
+        ffout.println("import java.util.ArrayList;");
+        ffout.println("import java.util.Set;");
+        ffout.println("import java.util.HashSet;");
+        ffout.println("import java.util.TreeSet;");
+        ffout.println("import java.util.Collections;");
+        ffout.println(); 
+        // ent.generateJava7(entities,types,ffout);
+        String entcode = ent.cg(cgs);
+        cgs.displayText(entcode,ffout); 
+		 
+        ffout.close(); 
+      } catch (Exception e) { } 
+    } 
+	
+    if (screencount == 0) 
+    { return; }
+	
+    if (screencount > 1)
+    { String spafile = "SectionsPagerAdapter.java"; 
+      File spaff = new File("output/app/src/main/java/com/example/app/" + spafile); 
+      try
+      { PrintWriter spaout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(spaff)));
+        AndroidAppGenerator.generatePagerAdapter(packageName, tabnames, spaout); 
+        spaout.close(); 
+      } 
+      catch (Exception _y) { } 
+    } 
+
+    // generateIOSApp(out); 
 
     /* out.println(generateDbiPool());  */ 
   }
@@ -3125,12 +4216,12 @@ public class UCDArea extends JPanel
     boolean query = opDialog.getQuery(); 
 
     if (nme == null)  // cancelled 
-    { System.err.println("Operation definition cancelled. No name specified"); 
+    { System.err.println(">>> Operation definition cancelled. No name specified"); 
       return; 
     } 
 
     if (typ == null && query) 
-    { System.err.println("Error: query operation without type"); 
+    { System.err.println("!! Error: query operation without type"); 
       JOptionPane.showMessageDialog(null, "ERROR: query operation must have a return type!", "", JOptionPane.ERROR_MESSAGE); 
       return; 
     } 
@@ -3155,13 +4246,13 @@ public class UCDArea extends JPanel
     Expression cond;
     Compiler2 comp = new Compiler2(); 
     if (pre == null || pre.equals(""))
-    { cond = new BasicExpression("true"); } 
+    { cond = new BasicExpression(true); } 
     else
     { comp.nospacelexicalanalysis(pre);
       cond = comp.parse();
       if (cond == null)
       { System.err.println("Warning, precondition has wrong syntax: " + pre); 
-        cond = new BasicExpression("true"); 
+        cond = new BasicExpression(true); 
       } 
     }
     Expression spre = cond.simplify(); 
@@ -3178,8 +4269,8 @@ public class UCDArea extends JPanel
     } 
 
 
-    if (post == null)
-    { System.out.println("Invalid postcondition"); 
+    if (post == null || post.equals(""))
+    { System.out.println("!! Invalid postcondition"); 
       post = "true"; 
     }
     Compiler2 comp1 = new Compiler2(); 
@@ -3188,7 +4279,8 @@ public class UCDArea extends JPanel
 
     while (effect == null)
     { System.out.println("Invalid postcondition: " + post); 
-      JOptionPane.showMessageDialog(null, "ERROR: invalid expression: " + post, "", JOptionPane.ERROR_MESSAGE); 
+      JOptionPane.showMessageDialog(null, 
+         "ERROR: invalid expression: " + post, "", JOptionPane.ERROR_MESSAGE); 
       opDialog.setOldFields(nme,typ,params,pre,post,query);
       // opDialog.setStereotypes(null); 
       opDialog.setVisible(true);
@@ -3203,7 +4295,9 @@ public class UCDArea extends JPanel
 
     if (query) 
     { if (tt == null) 
-      { System.err.println("Error: query operation must have a return type!");                JOptionPane.showMessageDialog(null, "ERROR: query operation must have a return type!", "", JOptionPane.ERROR_MESSAGE);
+      { System.err.println("Error: query operation must have a return type!");                
+        JOptionPane.showMessageDialog(null, 
+           "ERROR: query operation must have a return type!", "", JOptionPane.ERROR_MESSAGE);
         return;  
       } 
     } 
@@ -3215,12 +4309,12 @@ public class UCDArea extends JPanel
 
     params = opDialog.getParams(); // pairs var type
     Vector oppars = 
-      BehaviouralFeature.reconstructParameters(params,types,entities);
+      BehaviouralFeature.reconstructParameters(params," ",types,entities);
     vars.addAll(oppars); 
 
     boolean tc = spre.typeCheck(types,entities,contexts,vars);
     if (!tc) 
-    { System.out.println("Warning: cannot type precondition: " + spre); 
+    { System.out.println("!! Warning: cannot type precondition: " + spre); 
       // spre = new BasicExpression("true"); 
       // return; 
     }
@@ -3406,7 +4500,7 @@ public class UCDArea extends JPanel
     Expression effect = comp1.parse(); 
 
     while (effect == null)
-    { System.out.println("Invalid postcondition: " + post); 
+    { System.out.println("!! Invalid postcondition: " + post); 
       JOptionPane.showMessageDialog(null, "ERROR: invalid expression!: " + post, "", JOptionPane.ERROR_MESSAGE); 
       opDialog.setOldFields(nme,
            typ, params, pre,
@@ -3424,7 +4518,8 @@ public class UCDArea extends JPanel
 
     if (query) 
     { if (tt == null) 
-      { System.err.println("ERROR: query operation must have a return type!");                 JOptionPane.showMessageDialog(null, "ERROR: query operation must have a return type!", "", JOptionPane.ERROR_MESSAGE); 
+      { System.err.println("ERROR: query operation must have a return type!");                 
+	    JOptionPane.showMessageDialog(null, "ERROR: query operation must have a return type!", "", JOptionPane.ERROR_MESSAGE); 
       }  
     } 
     else 
@@ -3482,6 +4577,8 @@ public class UCDArea extends JPanel
 
     while (effect == null)
     { System.out.println(">>>>>> Invalid activity code: " + post); 
+	  comp.checkBrackets(); 
+	  
       actDialog.setOldFields("","","","",post + "",true);
       actDialog.setVisible(true);
    
@@ -3529,6 +4626,8 @@ public class UCDArea extends JPanel
 
     while (effect == null)
     { System.out.println(">>>>> Invalid activity code: " + post); 
+	  comp.checkBrackets(); 
+	  
       actDialog.setOldFields("","","","",post + "",true);
       actDialog.setVisible(true);
    
@@ -3579,6 +4678,8 @@ public class UCDArea extends JPanel
 
     while (effect == null)
     { System.out.println(">>>>> ERROR: Syntax error in activity: " + post); 
+	  comp.checkBrackets(); 
+	  
       actDialog.setOldFields(nme,"","","",post,true);
       actDialog.setVisible(true);
       post = actDialog.getPost(); 
@@ -3641,6 +4742,8 @@ public class UCDArea extends JPanel
 
     while (effect == null)
     { System.err.println(">>>>> ERROR: Syntax error in activity: " + post); 
+	  comp.checkBrackets(); 
+	  
       actDialog.setOldFields(nme,"","","",post,true);
       actDialog.setVisible(true);
       post = actDialog.getPost(); 
@@ -3693,6 +4796,8 @@ public class UCDArea extends JPanel
 
     while (effect == null)
     { System.out.println(">>>>> ERROR: Invalid activity code: " + post); 
+	  comp.checkBrackets(); 
+	  
       actDialog.setOldFields("","","","",post,true);
       actDialog.setVisible(true);
       post = actDialog.getPost(); 
@@ -3747,7 +4852,9 @@ public class UCDArea extends JPanel
     Statement effect = comp.parseStatement(entities,types); 
 
     while (effect == null)
-    { System.out.println("ERROR: Invalid activity code: " + post); 
+    { System.out.println("ERROR: Invalid activity code: " + post);
+	  comp.checkBrackets(); 
+	   
       actDialog.setOldFields("","","","",post,true);
       actDialog.setVisible(true);
       post = actDialog.getPost(); 
@@ -4075,6 +5182,12 @@ public class UCDArea extends JPanel
     else 
     { ent.setCardinality(ecard); }
     ent.setStereotypes(stereotypes);  
+	
+	if (ent.isRemote())
+	{ addDerivedRemoteComponents(ent); }
+    else if (ent.isCloud())
+	{ addDerivedCloudComponents(ent); }
+
     return ent;
   }
 
@@ -4249,6 +5362,9 @@ public class UCDArea extends JPanel
 
 
     Behaviour bb = new Behaviour(ent,op,effect); 
+	if (uc != null) 
+	{ bb.setUseCase(uc); }
+	
     activities.add(bb); 
   } 
   // use case operations can't have activities. 
@@ -4488,7 +5604,7 @@ public class UCDArea extends JPanel
   // same as addInvariant: 
   public Constraint addInvariant(PreConstraint pc)
   { if (pc.succ == null) 
-    { System.err.println("Constraint not parsed correctly"); 
+    { System.err.println("!! Constraint not parsed correctly"); 
       return null;
     }
  
@@ -4522,7 +5638,7 @@ public class UCDArea extends JPanel
         else 
         { UseCase uc = (UseCase) ModelElement.lookupByName(se,useCases); 
           if (uc != null) 
-          { // System.out.println("Found use case");
+          { System.out.println(">> Found use case " + uc.getName());
             usecase = uc;
           }
         }
@@ -4559,11 +5675,13 @@ public class UCDArea extends JPanel
       // System.out.println("Prestate owner"); 
     } 
 
-    if (con.typeCheck(types,entities,contexts,env)) { } 
-    else
-    { System.err.println("ERROR: Constraint not correctly " +
+    boolean tc = con.typeCheck(types,entities,contexts,env); 
+ 
+    if (!tc)
+    { System.err.println("!! ERROR: Constraint not correctly " +
                          "typed: " + con);
     }
+
     // System.out.println("Invariant type-checked correctly"); 
     con.setBehavioural(pc.succ.isUpdateable()); 
     
@@ -4632,7 +5750,7 @@ public class UCDArea extends JPanel
 
   public Constraint addAssertion(PreConstraint pc)
   { if (pc.succ == null) 
-    { System.err.println("Constraint not parsed correctly"); 
+    { System.err.println("!! Constraint not parsed correctly"); 
       return null;
     }
  
@@ -4873,7 +5991,7 @@ public class UCDArea extends JPanel
 
   public Constraint addGenericInvariant(PreConstraint pc, Vector ucs)
   { if (pc.succ == null) 
-    { System.err.println("Constraint not parsed correctly"); 
+    { System.err.println("ERROR: Constraint not parsed correctly"); 
       return null;
     }
  
@@ -4898,7 +6016,7 @@ public class UCDArea extends JPanel
         usecase = uc;
       }
       else 
-      { System.out.println("Enter instantiation of entity: " + se);
+      { System.out.println(">> Enter instantiation of entity: " + se);
         String epar = 
             JOptionPane.showInputDialog("Actual entity of: " + se);
         Entity e = (Entity) ModelElement.lookupByName(epar,entities); 
@@ -5034,7 +6152,7 @@ public class UCDArea extends JPanel
 
     String params = p.params; // pairs var type
     Vector oppars = 
-      BehaviouralFeature.reconstructParameters(params,types,entities);
+      BehaviouralFeature.reconstructParameters(params," ",types,entities);
     String pre = p.pre; 
     String post = p.post; 
    
@@ -5061,7 +6179,7 @@ public class UCDArea extends JPanel
 
     boolean tc = cond.typeCheck(types,entities,contexts,vars);
     if (!tc) 
-    { System.err.println("Invalid precondition: " + cond); 
+    { System.err.println("!! ERROR: Invalid precondition: " + cond); 
       // return null; 
       JOptionPane.showMessageDialog(null, "ERROR: Invalid precondition " + cond + " for: " + p.name,
                                     "Expression error", JOptionPane.ERROR_MESSAGE); 
@@ -6567,6 +7685,19 @@ public void produceCUI(PrintWriter out)
     }
     catch (Exception ex) { }
 
+    String testcode = GUIBuilder.buildTestsGUI(useCases,"",incr,types,entities); 
+    File testsguifile = new File(dirName + "/TestsGUI.java");
+    try
+    { PrintWriter testsout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(testsguifile)));
+      if (systemName != null && systemName.length() > 0)
+      { testsout.println("package " + systemName + ";\n\n"); }  
+      testsout.println(testcode); 
+      testsout.close();
+    }
+    catch (Exception ex) { }
+
   } 
 
   public void exportClass(Entity ent, PrintWriter out)
@@ -6806,6 +7937,20 @@ public void produceCUI(PrintWriter out)
       gout.close();
     }
     catch (Exception ex) { }
+
+    String testcode = GUIBuilder.buildTestsGUI(useCases,"",incr,types,entities); 
+    File testsguifile = new File(dirName + "/TestsGUI.java");
+    try
+    { PrintWriter testsout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(testsguifile)));
+      if (systemName != null && systemName.length() > 0)
+      { testsout.println("package " + systemName + ";\n\n"); }  
+      testsout.println(testcode); 
+      testsout.close();
+    }
+    catch (Exception ex) { }
+
   } 
 
   private boolean isIncremental()  // if there is some incremental use case
@@ -6858,6 +8003,9 @@ public void produceCUI(PrintWriter out)
 
     String collops = BSystemTypes.getCollectOps();
     out.println(collops);
+
+    String aops = BSystemTypes.getAnyOps();
+    out.println(aops);
 
     out.println(BSystemTypes.generateSetEqualsOp()); 
     out.println("    public Set add(Object x)"); 
@@ -7022,6 +8170,9 @@ public void produceCUI(PrintWriter out)
 
     String collops = BSystemTypes.getCollectOps();
     out.println(collops);
+
+    String aops = BSystemTypes.getAnyOps();
+    out.println(aops);
 
     // out.println(BSystemTypes.generateSetEqualsOp()); 
     out.println("    public static HashSet addSet(HashSet s, Object x)"); 
@@ -7207,6 +8358,9 @@ public void produceCUI(PrintWriter out)
     String collops = BSystemTypes.getCollectOps();
     out.println(collops);
 
+    String aops = BSystemTypes.getAnyOps();
+    out.println(aops);
+
     // out.println(BSystemTypes.generateSetEqualsOp()); 
     out.println("    public static <T> HashSet<T> addSet(HashSet<T> s, T x)"); 
     out.println("    { if (x != null) { s.add(x); }"); 
@@ -7326,10 +8480,10 @@ public void produceCUI(PrintWriter out)
 
     /* Map operations - optional */ 
 
-    // mop = BSystemTypes.generateIncludesAllMapOpJava7(); 
-    // out.println("\n" + mop);  
-    // mop = BSystemTypes.generateExcludesAllMapOpJava7(); 
-    // out.println("\n" + mop);  
+    mop = BSystemTypes.generateIncludesAllMapOpJava7(); 
+    out.println("\n" + mop);  
+    mop = BSystemTypes.generateExcludesAllMapOpJava7(); 
+    out.println("\n" + mop);  
     mop = BSystemTypes.generateIncludingMapOpJava7(); 
     out.println("\n" + mop);  
     mop = BSystemTypes.generateExcludeAllMapOpJava7(); 
@@ -7384,6 +8538,9 @@ public void produceCUI(PrintWriter out)
 
     String collops = BSystemTypes.getCollectOps();
     out.println(collops);
+
+    String aops = BSystemTypes.getAnyOps();
+    out.println(aops);
 
     out.println(BSystemTypes.generateSetEqualsOpCSharp()); 
     out.println("    public static ArrayList addSet(ArrayList a, object x)"); 
@@ -7535,6 +8692,9 @@ public void produceCUI(PrintWriter out)
     String collops = BSystemTypes.getCollectOps();
     out.println(collops);
 
+    String aops = BSystemTypes.getAnyOps();
+    out.println(aops);
+
     out.println("    static bool isIn(_T x, set<_T>* st)"); 
     out.println("    { return (st->find(x) != st->end()); }\n"); 
     out.println("    static bool isIn(_T x, vector<_T>* sq)"); 
@@ -7678,6 +8838,12 @@ public void produceCUI(PrintWriter out)
     mop = BSystemTypes.generateUnionMapOpCPP(); 
     out.println("\n" + mop);  
     mop = BSystemTypes.generateIntersectionMapOpCPP(); 
+    out.println("\n" + mop);  
+    mop = BSystemTypes.generateKeysMapOpCPP(); 
+    out.println("\n" + mop);  
+    mop = BSystemTypes.generateValuesMapOpCPP(); 
+    out.println("\n" + mop);  
+    mop = BSystemTypes.generateRestrictOpCPP(); 
     out.println("\n" + mop);  
 
     out.println("};");
@@ -8388,6 +9554,7 @@ public void produceCUI(PrintWriter out)
     out.println(BSystemTypes.getExistsOps()); 
     out.println(BSystemTypes.getExists1Ops()); 
     out.println(BSystemTypes.getCollectOps()); 
+    out.println(BSystemTypes.getAnyOps()); 
 
     // controllerInterface = controllerInterface + "}\n"; 
     // out3.println(controllerInterface); 
@@ -8616,6 +9783,13 @@ public void produceCUI(PrintWriter out)
       { PrintWriter out =
           new PrintWriter(
             new BufferedWriter(new FileWriter(file)));
+			
+	    if (systemName != null && !(systemName.equals("")))
+		{ out.println("Metamodel:"); 
+		  out.println(systemName); 
+		  out.println(); 
+		}
+		
         Vector locals = saveComponents(out); 
         locals.addAll(constraints); 
         Expression.saveOperators(out); 
@@ -8645,7 +9819,14 @@ public void produceCUI(PrintWriter out)
     { PrintWriter out =
           new PrintWriter(
             new BufferedWriter(new FileWriter(file)));
-      Vector locals = saveComponents(out); 
+      
+	  if (systemName != null && !(systemName.equals("")))
+	  { out.println("Metamodel:"); 
+	    out.println(systemName); 
+	    out.println(); 
+	  }
+		
+	  Vector locals = saveComponents(out); 
       locals.addAll(constraints); 
       Expression.saveOperators(out); 
       for (int i = 0; i < locals.size(); i++) 
@@ -8872,9 +10053,11 @@ public void produceCUI(PrintWriter out)
     { VisualData vd = (VisualData) visuals.get(i);
       if (vd instanceof OvalData) { continue; }   // ignore it  
       ModelElement me = (ModelElement) vd.getModelElement(); 
+	  if (me == null) { continue; } 
+	  if (me.isDerived()) { continue; }
 
       if (vd instanceof RectData) // Entity or Type
-      { if (me instanceof Entity) 
+      { if (me instanceof Entity) // Don't save derived entities 
         { out.println("Entity:"); } 
         else 
         { out.println("Type:"); } 
@@ -9088,7 +10271,9 @@ public void produceCUI(PrintWriter out)
 
     for (int i = 0; i < entities.size(); i++)
     { Entity ee = (Entity) entities.get(i); 
-      ee.saveKM3(out); 
+      if (ee.isDerived()) { } 
+	  else 
+	  { ee.saveKM3(out); }  
     } 
 
     for (int i = 0; i < useCases.size(); i++)
@@ -9148,6 +10333,190 @@ public void produceCUI(PrintWriter out)
     out.println("</eClassifiers>");  
     out.println("</ecore:EPackage>"); 
   } 
+
+  public void loadTL()
+  { ModelMatching res = new ModelMatching(); 
+    Map mm = new Map(); 
+
+    BufferedReader br = null;
+    String s;
+    boolean eof = false;
+    File file = new File("output/forward.tl");  /* default */ 
+
+    try
+    { br = new BufferedReader(new FileReader(file)); }
+    catch (FileNotFoundException _e)
+    { System.out.println("!! File not found: " + file);
+      return; 
+    }
+
+    int noflines = 0; 
+
+    while (!eof)
+    { try { s = br.readLine(); }
+      catch (IOException _ex)
+      { System.out.println("!! Reading TL file failed.");
+        return; 
+      }
+      if (s == null) 
+      { eof = true; 
+        break; 
+      }
+      else if (s.startsWith("--")) { } 
+      else if (s.indexOf("|-->") > 0)
+      { String trimemap = s.trim(); 
+        int mapsymb = trimemap.indexOf("|"); 
+        if (mapsymb > 0) 
+        { String sents = trimemap.substring(0,mapsymb); 
+          String tents = trimemap.substring(mapsymb + 4, trimemap.length()); 
+
+          System.out.println(">> Using match: " + sents + " to " + tents);
+
+          Entity esrc = (Entity) ModelElement.lookupByName(sents.trim(),entities); 
+          Entity etrg = (Entity) ModelElement.lookupByName(tents.trim(),entities); 
+
+          Expression precond = null; 
+          if (esrc == null) 
+          { int endprecond = sents.indexOf("}");
+            int startprecond = sents.indexOf("{"); 
+            if (endprecond > 0 && startprecond >= 0) 
+            { Compiler2 c2 = new Compiler2(); 
+              String precondstring = sents.substring(startprecond+1,endprecond);
+              c2.nospacelexicalanalysis(precondstring); 
+              precond = c2.parseExpression();
+              String sents1 = sents.substring(endprecond+1,mapsymb).trim(); 
+              esrc = (Entity) ModelElement.lookupByName(sents1,entities);  
+            }
+          } 
+  
+          Expression postcond = null; 
+          if (etrg == null) 
+          { int endpostcond = tents.indexOf("}");
+            int startpostcond = tents.indexOf("{"); 
+            if (endpostcond > 0 && startpostcond >= 0) 
+            { Compiler2 c3 = new Compiler2(); 
+              String postcondstring = tents.substring(startpostcond+1,endpostcond);
+              c3.nospacelexicalanalysis(postcondstring); 
+              postcond = c3.parseExpression();
+              String tents1 = tents.substring(0,startpostcond).trim(); 
+              etrg = (Entity) ModelElement.lookupByName(tents1,entities);  
+            }
+          } 
+
+          if (esrc != null && etrg != null) 
+          { EntityMatching em = new EntityMatching(esrc,etrg);
+            System.out.println(">> Using match: " + sents + " to " + tents);
+            if (precond != null) 
+            { Vector contexts1 = new Vector(); 
+              
+              contexts1.add(esrc); 
+              precond.typeCheck(types,entities,contexts1,new Vector()); 
+              em.setCondition(precond); 
+            } 
+            if (postcond != null) 
+            { Vector contexts2 = new Vector(); 
+              
+              contexts2.add(etrg); 
+              postcond.typeCheck(types,entities,contexts2,new Vector()); 
+              em.setPostcondition(postcond); 
+            } 
+            entitymaps.add(em);
+            Maplet s2t = new Maplet(esrc,etrg); 
+            mm.add(s2t); 
+            AttributeMatching amx = readEntityMapping(br,em);
+            while (amx != null)
+            { amx = readEntityMapping(br,em); }  
+          }   
+        } 
+      }         
+      // System.out.println(s); 
+    }
+    res.addEntityMatchings(entitymaps); 
+    res.mymap = mm; 
+    System.out.println(">>> Parsed TL specification: " + res); 
+    tlspecification = res; 
+  }
+
+  public void applyCSTLSpecification()
+  { CGSpec spec = loadCSTL(); 
+
+    if (spec == null) { return; } 
+
+
+    String newtypes = ""; 
+    String newclasses = ""; 
+    String newusecases = ""; 
+
+    /* Argument _2 of the package rule */
+	
+	java.util.Date d1 = new java.util.Date(); 
+
+
+    for (int i = 0; i < types.size(); i++) 
+    { Type t = (Type) types.get(i); 
+      String newt = t.cgEnum(spec);
+      newtypes = newtypes + newt + '\n'; 
+      // System.out.println("Transformed type usage " + t + " is " + newt); 
+    } 
+
+    /* Argument _3 of the package rule */ 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity t = (Entity) entities.get(i);
+      t.generateOperationDesigns(types,entities);  
+      String newt = t.cg(spec);
+      newclasses = newclasses + newt + '\n'; 
+      // System.out.println("Transformed entity " + t + " is " + newt); 
+    } 
+
+    /* Argument _4 of the package rule */ 
+
+    Vector ucs = new Vector(); 
+
+    for (int i = 0; i < useCases.size(); i++) 
+    { Object uc = useCases.get(i); 
+      if (uc instanceof UseCase) 
+      { UseCase xx = (UseCase) uc; 
+        ucs.add(xx); 
+          // xx.implementBehaviour(types,entities); 
+        String newt = xx.cg(spec,types,entities);
+        String arg1 = CGRule.correctNewlines(newt); 
+        newusecases = newusecases + arg1 + '\n';
+      } 
+    }  // Ignores OperationDescriptions, which are only used for web/eis/mobile generation
+
+    java.util.Date d2 = new java.util.Date(); 
+	System.out.println(">>> Time taken = " + (d2.getTime() - d1.getTime())); 
+
+    File chtml = new File("output/cgout.txt"); 
+    try
+    { PrintWriter chout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(chtml)));
+      
+      spec.transformPackage(newtypes,newclasses,newusecases, 
+                            types,entities,ucs, chout);   
+
+
+      chout.println(); 
+
+      chout.close(); 
+    } catch (Exception e) { } 
+
+  }  
+
+  public CGSpec loadCSTL()
+  { CGSpec res = new CGSpec(entities); 
+    
+    File f = new File("./cg/cg.cstl");  /* default */ 
+    if (f != null) 
+    { res = CSTL.loadCSTL(f,types,entities); } 
+
+    System.out.println(">>> Parsed: " + res);
+ 
+    CSTL.loadTemplates(types,entities); 
+    return res; 
+  }
 
   public void loadATL()
   { 
@@ -9519,6 +10888,64 @@ public void produceCUI(PrintWriter out)
     addGeneralUseCase(uc);  
   }
 
+  public void parseExtendedTransformation(RelationalTransformation tt, String ext)
+  { 
+    Compiler2 c = new Compiler2(); 
+    BufferedReader br = null;
+    Vector res = new Vector();
+    String s;
+    boolean eof = false;
+    File file = new File("output/" + ext + ".qvt");  /* default */ 
+
+    BufferedWriter brout = null; 
+    PrintWriter pwout = null; 
+
+    File outfile = new File("output/" + ext + "measures.txt"); 
+
+    try
+    { br = new BufferedReader(new FileReader(file));
+      brout = new BufferedWriter(new FileWriter(outfile)); 
+      pwout = new PrintWriter(brout); 
+    }
+    catch (Exception _e)
+    { System.out.println("!!!! File not found: " + file);
+      return; 
+    }
+
+    String flockstring = ""; 
+    int noflines = 0; 
+
+    while (!eof)
+    { try { s = br.readLine(); }
+      catch (IOException _ex)
+      { System.out.println("!!! Reading failed.");
+        return; 
+      }
+      if (s == null) 
+      { eof = true; 
+        break; 
+      }
+      else if (s.startsWith("--")) { } 
+      else 
+      { flockstring = flockstring + s + " "; } 
+      noflines++; 
+    }
+    c.nospacelexicalanalysis(flockstring); 
+    
+    // c.displaylexs();
+    RelationalTransformation ttext = c.parse_QVTR(0,c.lexicals.size()-1,entities,types);
+    if (ttext == null) 
+    { System.err.println("!!!! Invalid QVT-R syntax"); 
+      return; 
+    } 
+    else 
+    { tt.union(ttext); 
+      if (ttext.getExtending() != null) 
+      { parseExtendedTransformation(tt, ttext.getExtending()); } 
+    } 
+    // add the rules of the extended transformation before those of tt. 
+  } 
+
   public void loadQVT()
   { 
     // for (int i = 0; i < entities.size(); i++) 
@@ -9575,6 +11002,9 @@ public void produceCUI(PrintWriter out)
     { System.err.println("!!!! Invalid QVT-R syntax"); 
       return; 
     } 
+    else if (tt.getExtending() != null) 
+    { parseExtendedTransformation(tt,tt.getExtending()); } 
+    // add the rules of the extended transformation before those of tt. 
  
     System.out.println("**** Parsed QVT-R: " + tt); 
     tt.typeCheck(types,entities,new Vector(),new Vector()); 
@@ -9807,10 +11237,18 @@ public void produceCUI(PrintWriter out)
   } // the generic use case is in its own file
 
   public void typeCheckOps()
-  { System.out.println("Rechecking operations"); 
+  { System.out.println(">> Rechecking operations"); 
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i); 
       ent.typeCheckOps(types,entities); 
+    } 
+  } 
+
+  public void typeCheckInvariants()
+  { System.out.println(">> Rechecking invariants"); 
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ent = (Entity) entities.get(i); 
+      ent.typeCheckInvariants(types,entities); 
     } 
   } 
 
@@ -10132,7 +11570,7 @@ public void produceCUI(PrintWriter out)
             imported.add(fle); 
           } 
         } catch (IOException _excep) 
-          { System.out.println("Cannot load imported file " + importfile); 
+          { System.out.println("!! Cannot load imported file " + importfile); 
             continue; 
           }  
       }     
@@ -10141,19 +11579,31 @@ public void produceCUI(PrintWriter out)
           String trimemap = emap.trim(); 
           int mapsymb = trimemap.indexOf("|"); 
           if (mapsymb > 0) 
-          { String sents = trimemap.substring(0,mapsymb); 
-            String tents = trimemap.substring(mapsymb + 3, trimemap.length()); 
-            Entity esrc = (Entity) ModelElement.lookupByName(sents.trim(),entities); 
-            Entity etrg = (Entity) ModelElement.lookupByName(tents.trim(),entities); 
+          { String sents = trimemap.substring(0,mapsymb);
+		    int tosymb = trimemap.indexOf(">"); 
+			if (tosymb > 0) 
+            { String tents = trimemap.substring(tosymb + 1, trimemap.length()); 
+              Entity esrc = (Entity) ModelElement.lookupByName(sents.trim(),entities); 
+              Entity etrg = (Entity) ModelElement.lookupByName(tents.trim(),entities); 
  
-            if (esrc != null && etrg != null) 
-            { EntityMatching em = new EntityMatching(esrc,etrg);
-              System.out.println("Using match: " + sents + " to " + tents);
-              entitymaps.add(em);
+              if (esrc != null && etrg != null) 
+              { EntityMatching em = new EntityMatching(esrc,etrg);
+                System.out.println(">>> Using entity match: " + sents + " to " + tents);
+                entitymaps.add(em);
+                AttributeMatching amx = readEntityMapping(br,em);
+                while (amx != null)
+                { amx = readEntityMapping(br,em); } 
+			  }  
             }   
           } 
         } catch (IOException _ex) { } 
       }         
+	  else if (s.startsWith("Metamodel:"))
+	  { try 
+	    { String pname = br.readLine(); 
+	      setSystemName(pname.trim()); 
+		} catch (Exception _w) { }
+	  } // appimage="imagefile"
       else if (s.startsWith("Entity:"))
       { PreEntity pe = parseEntity(br); 
         if (pe != null)
@@ -10317,6 +11767,7 @@ public void produceCUI(PrintWriter out)
     } 
 
     typeCheckOps(); 
+	typeCheckInvariants(); 
 
     repaint(); 
   }
@@ -10395,6 +11846,12 @@ public void produceCUI(PrintWriter out)
           } 
         } catch (IOException _ex) { } 
       }         
+	  else if (s.startsWith("Metamodel:"))
+	  { try 
+	    { String pname = br.readLine(); 
+	      setSystemName(pname.trim()); 
+		} catch (Exception _w) { }
+	  }
       else if (s.equals("Entity:"))
       { PreEntity pe = parseEntity(br); 
         if (pe != null)
@@ -10554,9 +12011,85 @@ public void produceCUI(PrintWriter out)
     } 
 
     typeCheckOps(); 
+	typeCheckInvariants(); 
 
     repaint(); 
   }
+
+  public AttributeMatching readEntityMapping(BufferedReader br, EntityMatching em)
+  { try 
+    { String fmap = br.readLine(); 
+      if (fmap.startsWith(" "))
+      { String trimemap = fmap.trim(); 
+        int mapsymb = trimemap.indexOf("|"); 
+        if (mapsymb > 0) 
+        { String sf = trimemap.substring(0,mapsymb); 
+          String tf = trimemap.substring(mapsymb + 4, trimemap.length()); // after the |-->
+
+          Compiler2 comp = new Compiler2(); 
+          comp.nospacelexicalanalysis(sf); 
+          Expression src = comp.parseExpression();   
+          Vector contexts1 = new Vector(); 
+          contexts1.add(em.realsrc); 
+        
+          Compiler2 comp2 = new Compiler2();
+          comp2.nospacelexicalanalysis(tf); 
+          Expression trg = comp2.parseExpression();   
+          Vector contexts2 = new Vector(); 
+          contexts2.add(em.realtrg); 
+
+          if (src != null && trg != null) 
+          { 
+            src.typeCheck(types,entities,contexts1,new Vector()); 
+            trg.typeCheck(types,entities,contexts2,new Vector()); 
+            Vector auxvars = src.allAttributesUsedIn(); 
+            Vector trgvars = trg.allAttributesUsedIn(); 
+
+            System.out.println(">>>> attributes used in " + src + " are: " + auxvars); 
+            System.out.println(">>>> attributes used in " + trg + " are: " + trgvars); 
+
+            Attribute srcvar = null; 
+            if (auxvars.size() > 0) 
+            { srcvar = (Attribute) auxvars.get(0); } 
+            Attribute trgvar = null; 
+            if (trgvars.size() > 0) 
+            { trgvar = (Attribute) trgvars.get(0); } 
+            else 
+            { System.err.println("!!! ERROR: target of mapping must be an attribute: " + 
+                                 src + " |--> " + trg); 
+              return null; 
+            } 
+
+            AttributeMatching newam; 
+            if (("self").equals(src + ""))
+            { srcvar = new Attribute("self", new Type(em.realsrc), ModelElement.INTERNAL); 
+              newam = new AttributeMatching(src, trgvar, srcvar, auxvars);
+                  // System.out.println(">>> created expression mapping " + src + 
+                  //                   " " + trgvar + " " + srcvar); 
+            } 
+            else if ((src instanceof BasicExpression) && (srcvar + "").equals(src + ""))
+            { newam = new AttributeMatching(srcvar, trgvar); } 
+            else 
+            { newam = new AttributeMatching(src, trgvar, srcvar, auxvars); 
+	          // System.out.println(">> Expression matching. Type of " + srcvar + " is " + srcvar.getType()); 
+			  if (src.getType() != null && src.getType().isCollection())
+			  { Type elemType = src.getElementType(); 
+			    Attribute elementvar = new Attribute(srcvar.getName() + "$x", elemType, ModelElement.INTERNAL); 
+				newam.setElementVariable(elementvar); 
+			  }
+		    } 
+ 
+          //  newam.displayMappingKind(); 
+
+            em.addMapping(newam); 
+            return newam; 
+          } 
+        } 
+      } 
+    } 
+    catch(Exception _e) { return null; }
+    return null;  
+  } 
 
   public Vector loadThesaurus()
   { BufferedReader br = null;
@@ -10686,7 +12219,7 @@ public void produceCUI(PrintWriter out)
     Compiler2 comp = new Compiler2();  
     comp.nospacelexicalanalysisxml(xmlstring); 
     XMLNode xml = comp.parseXML(); 
-    // System.out.println(xml); 
+    System.out.println(">> Parsed XMI: " + xml); 
 
     java.util.Map instancemap = new java.util.HashMap(); // String --> Vector 
     java.util.Map idmap = new java.util.HashMap();       // String --> String
@@ -10694,20 +12227,42 @@ public void produceCUI(PrintWriter out)
 
     for (int i = 0; i < entities.size(); i++) 
     { Entity et = (Entity) entities.get(i);
-      String ename = et.getName().toLowerCase() + "s";  
-      instancemap.put(ename,new Vector()); 
-      entcodes.add(ename); 
-    } 
+      String instancesname = et.getName().toLowerCase() + "s";  
+      instancemap.put(instancesname,new Vector()); 
+      entcodes.add(instancesname); 
+    } // Assumes there is not both a class C and a class Cs
 
     Vector enodes = xml.getSubnodes(); // all instances
     for (int i = 0; i < enodes.size(); i++) 
     { XMLNode enode = (XMLNode) enodes.get(i); 
       String cname = enode.getTag(); 
-      Vector einstances = (Vector) instancemap.get(cname); 
+	 String lcname = cname.toLowerCase(); 
+      Vector einstances = (Vector) instancemap.get(lcname); 
       if (einstances == null) 
-      { einstances = (Vector) instancemap.get(cname + "s"); } // For multiplicity ONE globally
+      { einstances = (Vector) instancemap.get(lcname + "s"); } // For multiplicity ONE globally
       if (einstances != null) 
       { einstances.add(enode); }  
+	  else 
+	  { String tname = enode.getAttributeValue("xmi:type"); 
+        if (tname != null) 
+        { // String ename = tname.replace(":","$");
+	    String ename = tname; 
+         Entity newent = (Entity) ModelElement.lookupByName(ename,entities);
+         String instances = ename.toLowerCase() + "s";
+         Vector einst;  
+	    if (newent == null) 
+	    { newent = new Entity(ename); 
+	      System.out.println(">>> Created entity " + ename); 
+	      entities.add(newent);
+	      entcodes.add(instances); 
+            einst = new Vector(); 
+         } 
+         else 
+         { einst = (Vector) instancemap.get(instances); } 
+          einst.add(enode); 
+          instancemap.put(instances,einst); 
+        }
+	 }
     } 
       
     for (int j = 0; j < entities.size(); j++) 
@@ -11289,17 +12844,137 @@ public void produceCUI(PrintWriter out)
     repaint(); 
   }
 
+  private void addDerivedRemoteComponents(Entity ee)
+  { String eename = ee.getName(); 
+    Entity eeDAO = (Entity) ModelElement.lookupByName(eename + "_DAO",entities); 
+    Entity internetAccessor = (Entity) ModelElement.lookupByName("InternetAccessor",entities);
+		 
+    if (eeDAO == null) 
+    { addRemoteEntityDAO(ee); }
+    if (internetAccessor == null)
+    { addInternetAccessor(); }
+    Vector pars = new Vector(); 
+    pars.add(new Attribute("response", new Type("String", null), ModelElement.INTERNAL)); 
+    addPrivateUseCase("internetAccessCompleted", pars, null);  
+  }
+  
+  private void addDerivedCloudComponents(Entity ee)
+  { String eename = ee.getName(); 
+    Entity eeDAO = (Entity) ModelElement.lookupByName(eename + "_DAO",entities); 
+    Entity cloudAccessor = (Entity) ModelElement.lookupByName("FirebaseDbi",entities);
+		 
+    if (eeDAO == null) 
+    { addRemoteEntityDAO(ee); }
+    if (cloudAccessor == null)
+    { addFirebaseDbi(ee); }
+    // Vector pars = new Vector(); 
+    // pars.add(new Attribute("response", new Type("String", null), ModelElement.INTERNAL)); 
+    // addPrivateUseCase("internetAccessCompleted", pars, null);  
+  }
+
+  public void loadComponent()
+  { boolean predefined = false; 
+    String componentName = ""; 
+
+    String predef = 
+    JOptionPane.showInputDialog("Predefined component or custom? (p/c):"); 
+    if (predef != null && "p".equals(predef))
+    { predefined = true; 
+      ListShowDialog listShowDialog = new ListShowDialog(parent);
+      listShowDialog.pack();
+      listShowDialog.setLocationRelativeTo(parent); 
+    
+      Vector allcomponents = new Vector();
+      allcomponents.add("DateComponent"); 
+      allcomponents.add("FileAccessor"); 
+      allcomponents.add("InternetAccessor");  
+      allcomponents.add("MapsComponent");  
+      allcomponents.add("GraphComponent");  
+	  // Others: WebComponent, TextEditorComponent
+	  
+      listShowDialog.setOldFields(allcomponents);
+      System.out.println("Select component");
+      listShowDialog.setVisible(true); 
+
+      Object[] vals = listShowDialog.getSelectedValues();
+    
+      if (vals == null) { return; } 
+    
+      if (vals != null && vals.length > 0)
+      { componentName = (String) vals[0]; } 
+    } 
+    else if ("c".equals(predef))
+    { File file;
+
+      File startingpoint = new File("output");
+      JFileChooser fc = new JFileChooser();
+      fc.setCurrentDirectory(startingpoint);
+      fc.setDialogTitle("Load KM3 Component file");
+      fc.addChoosableFileFilter(new KM3FileFilter()); 
+      int returnVal = fc.showOpenDialog(this);
+      if (returnVal == JFileChooser.APPROVE_OPTION)
+      { file = fc.getSelectedFile(); }
+      else
+      { System.err.println("Load aborted");
+        return; 
+      }
+      componentName = file.getName();  
+        // JOptionPane.showInputDialog("Name of component:");
+      // if (componentName != null) 
+      // { loadKM3FromFile(componentName + ".km3"); 
+	  loadKM3FromFile(file);  
+        Entity component = (Entity) ModelElement.lookupByName(componentName,entities); 
+        if (component != null) 
+        { component.addStereotype("external"); } 
+        // custom components are usually external services such as cloud databases
+      // } 
+      return; 
+    } 
+
+    if (componentName != null && predefined)
+    { // generate the appropriate component, such as DateComponent
+      if ("DateComponent".equals(componentName))
+      { createDateComponent(); }
+      else if ("FileAccessor".equals(componentName))
+      { createFileAccessorComponent(); }
+      else if ("InternetAccessor".equals(componentName))
+      { addInternetAccessor(); }
+      else if ("GraphComponent".equals(componentName))
+      { createGraphComponent(); 
+        addPublicUseCase("graph", new Vector(), null); 
+      } 
+      else if ("MapsComponent".equals(componentName))
+      { createMapComponent(); }  // and several use cases for the ModelFacade
+      else 
+      { System.err.println("!! Unknown predefined component: " + componentName); }
+    } 
+  }
+
   public void loadKM3FromFile()
-  { BufferedReader br = null;
+  { loadKM3FromFile("mm.km3"); } 
+  
+  public void loadKM3FromFile(String f)
+  { File file = new File("output/" + f);  /* default */ 
+	loadKM3FromFile(file); 
+  }
+	
+  public void loadKM3FromFile(File file)
+  { Vector oldentities = new Vector(); 
+    oldentities.addAll(entities); 
+	
+    Vector oldtypes = new Vector(); 
+    oldtypes.addAll(types); 
+	
+    BufferedReader br = null;
     Vector res = new Vector();
     String s;
     boolean eof = false;
-    File file = new File("output/mm.km3");  /* default */ 
+    
 
     try
     { br = new BufferedReader(new FileReader(file)); }
     catch (FileNotFoundException e)
-    { System.out.println("File not found: " + file);
+    { System.out.println("File not found: " + file.getName());
       return; 
     }
 
@@ -11350,15 +13025,23 @@ public void produceCUI(PrintWriter out)
     int delta = 80; // visual displacement 
     int ecount = 0; 
 
-    for (int i = 0; i < entities.size(); i++) 
-    { Entity enode = (Entity) entities.get(i); 
+    Vector newentities = new Vector(); 
+	newentities.addAll(entities); 
+	newentities.removeAll(oldentities); 
+	
+    for (int i = 0; i < newentities.size(); i++) 
+    { Entity enode = (Entity) newentities.get(i); 
       addEntity(enode, 20 + (ecount/5)*delta + ((ecount % 5)*delta)/5, 
                               100 + (ecount % 5)*delta);
       ecount++; 
     } 
 
-    for (int j = 0; j < types.size(); j++) 
-    { Type tt = (Type) types.get(j); 
+    Vector newtypes = new Vector(); 
+	newtypes.addAll(types); 
+	newtypes.removeAll(oldtypes); 
+
+    for (int j = 0; j < newtypes.size(); j++) 
+    { Type tt = (Type) newtypes.get(j); 
       if (tt.isEnumeration())
       { RectData rd = new RectData(100*j,20,getForeground(),
                                  componentMode,
@@ -11447,7 +13130,7 @@ public void produceCUI(PrintWriter out)
       } 
     } 
 
-    int delta = 80; // visual displacement 
+    int delta = 120; // visual displacement 
     int ecount = 0; 
 
     // Use the existing coordinates if possible. 
@@ -11457,9 +13140,15 @@ public void produceCUI(PrintWriter out)
       Entity oldent = (Entity) ModelElement.lookupByName(enode.getName(), oldentities); 
       if (oldent != null) 
       { RectData rd = (RectData) getVisualOf(oldent); 
-        entities.add(enode); 
-        rd.setModelElement(enode); 
-        oldVisuals.remove(rd); 
+        if (rd == null)
+		{ addEntity(enode, 20 + (ecount/5)*delta + ((ecount % 5)*delta)/5, 
+                              100 + (ecount % 5)*delta);
+        }
+        else 
+		{ entities.add(enode); 
+		  rd.setModelElement(enode); 
+          oldVisuals.remove(rd); 
+		} 
         // addEntity(enode, rd.sourcex, rd.sourcey); 
       } 
       else 
@@ -11472,13 +13161,20 @@ public void produceCUI(PrintWriter out)
     for (int j = 0; j < typs.size(); j++) 
     { Type tt = (Type) typs.get(j); 
       if (tt.isEnumeration())
-      { RectData rd = new RectData(100*j,20,getForeground(),
+      { RectData rd = (RectData) getVisualOf(tt);
+	    if (rd == null) 
+        { rd = new RectData(100 + 100*j, 20, getForeground(),
                                  componentMode,
                                  rectcount);
-        rectcount++;
+          rectcount++;
+		  visuals.add(rd);
+		} 
+		else 
+		{ rd.setModelElement(tt); 
+          oldVisuals.remove(rd); 
+		}
         rd.setLabel(tt.getName());
         rd.setModelElement(tt); 
-        visuals.add(rd); 
       } 
     } // preserve the existing one if it exists
 
@@ -11529,6 +13225,10 @@ public void produceCUI(PrintWriter out)
           int xe = rd2.sourcex + 10; 
           int ye = rd2.sourcey + 10;   
 
+          if (rd1 == rd2)
+		  { xe = rd2.sourcex + 80; 
+		    ye = rd2.sourcey + 40; 
+          }
           reconstructAssociation(pa.e1name,pa.e2name,xs,ys,
                              xe,ye,pa.card1,pa.card2,
                              pa.role2, pa.role1, pa.stereotypes, new Vector());
@@ -11540,6 +13240,14 @@ public void produceCUI(PrintWriter out)
     { Object hx = items.get(h); 
       if (hx instanceof UseCase) 
       { addGeneralUseCase((UseCase) hx); } 
+    } 
+
+    for (int g = 0; g < useCases.size(); g++) 
+    { Object obj = useCases.get(g); 
+      if (obj instanceof UseCase)
+      { UseCase uc = (UseCase) obj; 
+        uc.resolveExtendsIncludes(useCases,this); 
+      } 
     } 
 
     visuals.removeAll(oldVisuals); 
@@ -12387,9 +14095,9 @@ public void produceCUI(PrintWriter out)
   }
 
   public PreGeneralisation parseGeneralisation(BufferedReader br)
-  { String line1;
+  { String line1 = "";
     Vector line1vals = new Vector();
-    String line2;
+    String line2 = "";
     Vector line2vals = new Vector();
     // String line3;
     // Vector line3vals = new Vector();
@@ -12609,7 +14317,7 @@ public void produceCUI(PrintWriter out)
 
     try { line1 = br.readLine(); }
     catch (IOException e)
-    { System.err.println("Reading general usecase details failed");
+    { System.err.println("!! Reading general usecase details failed");
       return null; 
     }
     StringTokenizer st1 =
@@ -12662,7 +14370,7 @@ public void produceCUI(PrintWriter out)
 
     try { line2 = br.readLine(); }
     catch (IOException e)
-    { System.err.println("Reading usecase extends failed");
+    { System.err.println("!! Reading usecase extends failed");
       return res; 
     }
     StringTokenizer st2 =
@@ -12674,10 +14382,11 @@ public void produceCUI(PrintWriter out)
       UseCase extensionuc = 
           (UseCase) ModelElement.lookupByName(extend,useCases); 
       if (extensionuc == null) 
-      { System.err.println("Extension use case: " + extend + " does not exist"); }
+      { System.err.println("!! Extension use case: " + extend + " does not exist"); }
       else 
       { Extend ext = new Extend(res,extensionuc); 
         res.addExtension(ext); 
+		extensionuc.addExtensionOf(res); 
         drawDependency(extensionuc, res, "<<extend>>"); 
       }
     } 
@@ -12685,7 +14394,7 @@ public void produceCUI(PrintWriter out)
 
     try { line3 = br.readLine(); }
     catch (IOException e)
-    { System.err.println("Reading usecase includes failed");
+    { System.err.println("!! Reading usecase includes failed");
       return res; 
     }
     StringTokenizer st3 =
@@ -12699,16 +14408,17 @@ public void produceCUI(PrintWriter out)
       if (ucinc != null) 
       { Include ee = new Include(res,ucinc); 
         res.addInclude(ee); 
+		ucinc.addIncludedIn(res); 
         drawDependency(res, ucinc, "<<include>>"); 
       } 
       else 
-      { System.err.println("Included use case: " + include + " does not exist"); }
+      { System.err.println("!! Included use case: " + include + " does not exist"); }
     }
     // System.out.println(line3vals);
 
     try { line4 = br.readLine(); }
     catch (IOException e)
-    { System.err.println("Reading usecase attributes failed");
+    { System.err.println("!! Reading usecase attributes failed");
       return res; 
     }
     StringTokenizer st4 =
@@ -12734,15 +14444,30 @@ public void produceCUI(PrintWriter out)
       res.addAttribute(ucatt);  
     } 
 
-    try { line5 = br.readLine(); }
+    try { line5 = br.readLine(); } // stereotypes
     catch (IOException e)
-    { System.err.println("Reading usecase incremental failed");
+    { System.err.println("!! Reading usecase incremental failed");
       return null; 
     }
     // System.out.println("INCREAMENT" + line5); 
-    if (line5 != null && "true".equals(line5.trim()))
+    if (line5 != null && line5.trim().startsWith("true"))
     { res.setIncremental(true); } 
 
+    StringTokenizer st5 =
+      new StringTokenizer(line5);
+	  
+	Vector line5vals = new Vector(); 
+
+    while (st5.hasMoreTokens())
+    { line5vals.add(st5.nextToken()); }  
+	
+	for (int j = 0; j < line5vals.size(); j++)
+	{ String stereo = (String) line5vals.get(j); 
+	  if (stereo.equals("true") || stereo.equals("false")) { }
+      else 
+	  res.addStereotype(stereo); 
+	} 
+	
     return res;  
   } 
 
@@ -12828,7 +14553,7 @@ public void produceCUI(PrintWriter out)
     } 
 
     PreConstraint cons = new PreConstraint(cond0,cond,succ,line4vals,orderedBy);
-    // System.out.println("Retrived constraint: " + cons); 
+    System.out.println(">> Retrieved constraint: " + cons); 
     return cons; 
   } 
   // and line5 = use case
@@ -12877,7 +14602,9 @@ public void produceCUI(PrintWriter out)
     } 
 
     if (cde == null) 
-    { System.err.println("ERROR: invalid syntax for activity " + line2); } 
+    { System.err.println("ERROR: invalid syntax for activity " + line2); 
+	  comp.checkBrackets(); 
+	} 
 
     // System.out.println("Read activity data: " + nme + " " + op + " " + cde); 
 
@@ -13218,10 +14945,6 @@ public void produceCUI(PrintWriter out)
                  "  }\n}\n";
   }
 
-  public void generateAndroidDbi(Vector operations, PrintWriter out) 
-  { Entity e0 = (Entity) entities.get(0); 
-    e0.androidDbi(out); 
-  } 
 
   public String generateJspDbi(Vector operations)
   { String res = "package beans;\n\n" + 
@@ -14002,14 +15725,242 @@ public void produceCUI(PrintWriter out)
     return res; 
   } 
 
-  public void createDateComponent()
-  { Entity e = new Entity("Date"); 
+  public void addRemoteEntityDAO(Entity ee)
+  { String ename = ee.getName(); 
+    Entity e = new Entity(ename + "_DAO");
+    RectData vd = (RectData) getVisualOf(ee); 
+	 
     e.addStereotype("external"); 
+    e.addStereotype("component"); 
+    e.addStereotype("derived"); 
+
+    Type seqstring = new Type("Sequence", null); 
+    seqstring.setElementType(new Type("String",null)); 
+	
+    Vector pars0 = new Vector(); 
+    Attribute id = new Attribute("id", new Type("String",null), ModelElement.INTERNAL); 
+    pars0.add(id);
+    BehaviouralFeature opcheck = 
+      new BehaviouralFeature("isCached",pars0,true,new Type("boolean",null)); 
+    opcheck.setStatic(true); 
+    e.addOperation(opcheck); 
+
+    BehaviouralFeature opget = 
+      new BehaviouralFeature("getCachedInstance",pars0,true,new Type(ee)); 
+    opget.setStatic(true); 
+    e.addOperation(opget); 
+
+    Vector pars = new Vector(); 
+    Attribute command = new Attribute("command", new Type("String", null), ModelElement.INTERNAL); 
+    pars.add(command); 
+    Attribute parameternames = new Attribute("pars", seqstring, ModelElement.INTERNAL); 
+    pars.add(parameternames);
+    Attribute values = new Attribute("values", seqstring, ModelElement.INTERNAL); 
+    pars.add(values);
     BehaviouralFeature op = 
-      new BehaviouralFeature("getTime",new Vector(),true,new Type("double",null)); 
+      new BehaviouralFeature("getURL",pars,true,new Type("String",null)); 
+   op.setStatic(true); 
+   e.addOperation(op); 
+	
+	Vector pars1 = new Vector(); 
+	Attribute line = new Attribute("_line", new Type("String",null), ModelElement.INTERNAL); 
+	pars1.add(line);
+	BehaviouralFeature op1 = 
+      new BehaviouralFeature("parseCSV",pars1,true,new Type(ee)); 
+	op1.setStatic(true); 
+    e.addOperation(op1); 
+
+
+   Type seqe = new Type("Sequence",null); 
+   seqe.setElementType(new Type(ee)); 
+   Vector pars2 = new Vector(); 
+   Attribute lines = new Attribute("lines", new Type("String",null), ModelElement.INTERNAL); 
+   pars2.add(lines);
+   BehaviouralFeature op2 = 
+      new BehaviouralFeature("makeFromCSV",pars2,true,seqe); 
+   op2.setStatic(true); 
+   e.addOperation(op2); 
+
+	Vector parsx = new Vector(); 
+	Attribute linex = new Attribute("obj", new Type("JSONObject",null), ModelElement.INTERNAL); 
+	parsx.add(linex);
+	BehaviouralFeature opx = 
+      new BehaviouralFeature("parseJSON",parsx,true,new Type(ee)); 
+	opx.setStatic(true); 
+    e.addOperation(opx); 
+
+	Vector parswx = new Vector(); 
+	Attribute ex = new Attribute("_x", new Type(ee), ModelElement.INTERNAL); 
+	parswx.add(ex);
+	BehaviouralFeature opwx = 
+      new BehaviouralFeature("writeJSON",parswx,true, new Type("JSONObject",null)); 
+	opwx.setStatic(true); 
+    e.addOperation(opwx); 
+	
+	Vector parswax = new Vector(); 
+	Attribute es = new Attribute(ename.toLowerCase() + "s", seqe, ModelElement.INTERNAL); 
+	parswx.add(ex);
+	BehaviouralFeature opwax = 
+      new BehaviouralFeature("writeJSONArray",parswax,true, new Type("JSONArray",null)); 
+	opwax.setStatic(true); 
+    e.addOperation(opwax); 
+
+	entities.add(e);                           
+    RectData rd = new RectData(300+vd.sourcex,vd.sourcey,getForeground(),
+                               componentMode,
+                               rectcount);
+    rectcount++;
+    rd.setLabel(e.getName());
+    rd.setModelElement(e); 
+    visuals.add(rd);
+    repaint();   
+	
+  } 
+
+  public void addFirebaseDbi(Entity ee)
+  { String ename = ee.getName(); 
+    Type enttype = new Type(ee); 
+	
+    Entity e = new Entity("FirebaseDbi");
+    RectData vd = (RectData) getVisualOf(ee); 
+	 
+    e.addStereotype("external"); 
+    e.addStereotype("component"); 
+    e.addStereotype("derived"); 
+
+	Type myself = new Type(e); 
+	Attribute instance = new Attribute("instance", myself, ModelElement.INTERNAL); 
+	instance.setStatic(true); 
+	e.addAttribute(instance); 
+    
+	Vector parsc = new Vector(); 
+	BehaviouralFeature opc = 
+      new BehaviouralFeature("getInstance",parsc,true,new Type(e));
+	opc.setStatic(true);  
+    e.addOperation(opc); 
+
+    Vector parset = new Vector(); 
+	Attribute ex = new Attribute("ex", enttype, ModelElement.INTERNAL);
+	parset.add(ex);  
+	BehaviouralFeature opset = 
+      new BehaviouralFeature("persist" + ename,parset,true,null);
+	e.addOperation(opset); 
+
+	BehaviouralFeature opdel = 
+      new BehaviouralFeature("delete" + ename,parset,true,null);
+	e.addOperation(opdel); 
+
+	entities.add(e);                           
+    RectData rd = new RectData(700+vd.sourcex,vd.sourcey,getForeground(),
+                               componentMode,
+                               rectcount);
+    rectcount++;
+    rd.setLabel(e.getName());
+    rd.setModelElement(e); 
+    visuals.add(rd);
+    repaint();   
+  } 
+  
+  public void addInternetAccessor()
+  { Entity e = new Entity("InternetAccessor"); 
+    e.addStereotype("external"); 
+	e.addStereotype("component"); 
+	e.addStereotype("derived"); 
+	
+    Entity eintf = new Entity("InternetCallback"); 
+    eintf.addStereotype("external"); 
+	eintf.addStereotype("interface"); 
+	eintf.addStereotype("component");
+	eintf.addStereotype("derived"); 
+	 
+	Type callback = new Type(eintf); 
+	Attribute delegate = new Attribute("delegate", callback, ModelElement.INTERNAL); 
+	e.addAttribute(delegate); 
+	
+	Type myself = new Type(e); 
+	Attribute instance = new Attribute("instance", myself, ModelElement.INTERNAL); 
+	instance.setStatic(true); 
+	e.addAttribute(instance); 
+
+	Vector pars = new Vector(); 
+	Attribute delegatec = new Attribute("c", callback, ModelElement.INTERNAL); 
+	pars.add(delegatec);
+    BehaviouralFeature op = 
+      new BehaviouralFeature("setDelegate",pars,false,null); 
     e.addOperation(op); 
-    entities.add(e);                           
-    RectData rd = new RectData(300,10,getForeground(),
+    
+	Vector parsc = new Vector(); 
+	BehaviouralFeature opc = 
+      new BehaviouralFeature("getInstance",parsc,true,new Type(e));
+	opc.setStatic(true);  
+    e.addOperation(opc); 
+
+	Vector pars1 = new Vector(); 
+	Attribute url = new Attribute("url", new Type("String", null), ModelElement.INTERNAL); 
+	pars1.add(url);
+    BehaviouralFeature op1 = 
+      new BehaviouralFeature("execute",pars1,false,null); 
+    e.addOperation(op1); 
+
+	entities.add(e);                           
+    RectData rd = new RectData(600,400,getForeground(),
+                               componentMode,
+                               rectcount);
+    rectcount++;
+    rd.setLabel(e.getName());
+    rd.setModelElement(e); 
+    visuals.add(rd);
+    repaint();   
+	        
+	Vector pars2 = new Vector(); 
+	Attribute response = new Attribute("response", new Type("String",null), ModelElement.INTERNAL); 
+	pars2.add(response);
+    BehaviouralFeature op2 = 
+      new BehaviouralFeature("internetAccessCompleted",pars2,false,null); 
+    eintf.addOperation(op2); 
+
+    entities.add(eintf);                           
+    RectData rd1 = new RectData(600,300,getForeground(),
+                               componentMode,
+                               rectcount);
+    rectcount++;
+    rd1.setLabel(eintf.getName());
+    rd1.setModelElement(eintf); 
+    visuals.add(rd1);
+    repaint();           
+  }  
+  
+  public void createDateComponent()
+  { Entity e = new Entity("DateComponent"); 
+    e.addStereotype("external"); 
+	e.addStereotype("component"); 
+	
+    BehaviouralFeature op = 
+      new BehaviouralFeature("getTime",new Vector(),true,new Type("long",null)); 
+	op.setStatic(true);
+	Attribute res = new Attribute("result", new Type("long", null), ModelElement.INTERNAL); 
+	op.setPostcondition(new BinaryExpression("=", new BasicExpression(res), new BasicExpression(0)));  
+    e.addOperation(op); 
+    
+	Vector pars1 = new Vector(); 
+	pars1.add(new Attribute("date", new Type("String", null), ModelElement.INTERNAL)); 
+	BehaviouralFeature op1 = 
+      new BehaviouralFeature("getEpochSeconds",pars1,true,new Type("long",null)); 
+	op1.setPostcondition(new BinaryExpression("=", new BasicExpression(res), new BasicExpression(0)));  
+    op1.setStatic(true); 
+    e.addOperation(op1); 
+
+	Vector pars2 = new Vector(); 
+	pars2.add(new Attribute("format", new Type("String", null), ModelElement.INTERNAL)); 
+	pars2.add(new Attribute("date", new Type("String", null), ModelElement.INTERNAL)); 
+	BehaviouralFeature op2 = 
+      new BehaviouralFeature("getEpochMilliseconds",pars2,true,new Type("long",null)); 
+	op2.setPostcondition(new BinaryExpression("=", new BasicExpression(res), new BasicExpression(0)));  
+    op2.setStatic(true); 
+    e.addOperation(op2); 
+    
+	entities.add(e);                           
+    RectData rd = new RectData(600,10,getForeground(),
                                componentMode,
                                rectcount);
     rectcount++;
@@ -14018,6 +15969,267 @@ public void produceCUI(PrintWriter out)
     visuals.add(rd);
     repaint();           
   } 
+
+  public void createFileAccessorComponent()
+  { Entity e = new Entity("FileAccessor"); 
+    e.addStereotype("external"); 
+	e.addStereotype("component"); 
+		 
+
+	Vector pars = new Vector(); 
+	Attribute delegatec = new Attribute("filename", new Type("String",null), ModelElement.INTERNAL); 
+	pars.add(delegatec);
+    BehaviouralFeature op = 
+      new BehaviouralFeature("createFile",pars,false,null); 
+    e.addOperation(op); 
+    
+	Type stringseq = new Type("Sequence", null); 
+	stringseq.setElementType(new Type("String", null)); 
+	BehaviouralFeature opc = 
+      new BehaviouralFeature("readFile",pars,true,stringseq);
+    e.addOperation(opc); 
+
+    Attribute contents = new Attribute("contents", stringseq, ModelElement.INTERNAL); 
+	Vector pars1 = new Vector(); 
+	pars1.add(delegatec); 
+	pars1.add(contents); 
+    BehaviouralFeature op1 = 
+      new BehaviouralFeature("writeFile",pars1,false,null); 
+    e.addOperation(op1); 
+
+	entities.add(e);                           
+    RectData rd = new RectData(800,10,getForeground(),
+                               componentMode,
+                               rectcount);
+    rectcount++;
+    rd.setLabel(e.getName());
+    rd.setModelElement(e); 
+    visuals.add(rd);
+    repaint();   
+  } 	        
+
+  public void createGraphComponent()
+  { Entity e = new Entity("GraphComponent"); 
+    e.addStereotype("external"); 
+    e.addStereotype("component"); 
+	BasicExpression truebe = new BasicExpression(true); 
+		 
+    Type selftype = new Type(e); 
+    Vector parinst = new Vector(); 
+    BehaviouralFeature getInstance = 
+      new BehaviouralFeature("getInstance", parinst, false, selftype); 
+    getInstance.setStatic(true);
+	getInstance.setPostcondition(truebe);  
+    e.addOperation(getInstance); 
+ 
+    Vector pars = new Vector(); 
+    Attribute delegatec = new Attribute("kind", new Type("String",null), ModelElement.INTERNAL); 
+    pars.add(delegatec);
+    BehaviouralFeature op = 
+      new BehaviouralFeature("setGraphKind",pars,false,null); 
+	op.setPostcondition(truebe);  
+    e.addOperation(op); 
+    
+    Type stringseq = new Type("Sequence", null); 
+    stringseq.setElementType(new Type("String", null));
+    Vector xpars = new Vector(); 
+    xpars.add(new Attribute("xvalues", stringseq, ModelElement.INTERNAL));  
+    BehaviouralFeature opc = 
+      new BehaviouralFeature("setXNominal",xpars,false,null);
+	opc.setPostcondition(truebe);  
+    e.addOperation(opc); 
+
+    Type doubleseq = new Type("Sequence", null); 
+    doubleseq.setElementType(new Type("double", null));
+    Vector xpars1 = new Vector(); 
+    Attribute contents = new Attribute("xvalues", doubleseq, ModelElement.INTERNAL); 
+    xpars1.add(contents); 
+    BehaviouralFeature op1 = 
+      new BehaviouralFeature("setXScalar",xpars1,false,null); 
+	op1.setPostcondition(truebe);  
+    e.addOperation(op1); 
+
+    Vector xpars2 = new Vector(); 
+    Attribute contentsy = new Attribute("yvalues", doubleseq, ModelElement.INTERNAL); 
+    xpars2.add(contentsy); 
+    BehaviouralFeature op2 = 
+      new BehaviouralFeature("setYPoints",xpars2,false,null);
+	op2.setPostcondition(truebe);   
+    e.addOperation(op2); 
+
+    Vector xpars3 = new Vector(); 
+    Attribute contentsz = new Attribute("zvalues", doubleseq, ModelElement.INTERNAL); 
+    xpars3.add(contents); 
+    BehaviouralFeature op3 = 
+      new BehaviouralFeature("setZPoints",xpars3,false,null);
+	op3.setPostcondition(truebe);  
+    e.addOperation(op3); 
+
+    Vector parssxn = new Vector(); 
+    Attribute xname = new Attribute("xname", new Type("String",null), ModelElement.INTERNAL); 
+    parssxn.add(xname);
+    BehaviouralFeature opxname = 
+      new BehaviouralFeature("setxname",parssxn,false,null);
+	opxname.setPostcondition(truebe);  
+    e.addOperation(opxname); 
+
+    Vector parssyn = new Vector(); 
+    Attribute yname = new Attribute("yname", new Type("String",null), ModelElement.INTERNAL); 
+    parssyn.add(yname);
+    BehaviouralFeature opyname = 
+      new BehaviouralFeature("setyname",parssyn,false,null);
+    opyname.setPostcondition(truebe);   
+    e.addOperation(opyname); 
+
+    Vector parsr = new Vector(); 
+    BehaviouralFeature opr = 
+      new BehaviouralFeature("redraw",parsr,false,null); 
+    opr.setPostcondition(truebe); 
+	e.addOperation(opr); 
+
+    entities.add(e);                           
+    RectData rd = new RectData(900,10,getForeground(),
+                               componentMode,
+                               rectcount);
+    rectcount++;
+    rd.setLabel(e.getName());
+    rd.setModelElement(e); 
+    visuals.add(rd);
+    repaint();   
+  } 	        
+
+  public void createMapComponent()
+  { Entity mapLocation = new Entity("MapLocation"); 
+    mapLocation.addStereotype("external"); 
+    mapLocation.addStereotype("component");
+	
+	Type doubletype = new Type("double", null); 
+	Type stringtype = new Type("String", null); 
+	
+	mapLocation.addAttribute(new Attribute("latitude", doubletype, ModelElement.INTERNAL)); 
+	mapLocation.addAttribute(new Attribute("longitude", doubletype, ModelElement.INTERNAL)); 
+	mapLocation.addAttribute(new Attribute("altitude", doubletype, ModelElement.INTERNAL)); 
+	mapLocation.addAttribute(new Attribute("name", stringtype, ModelElement.INTERNAL)); 
+	 
+	Type maploc = new Type(mapLocation); 
+  
+    Entity e = new Entity("MapsComponent"); 
+    e.addStereotype("external"); 
+    e.addStereotype("component"); 
+		 
+    // Type selftype = new Type(e); 
+    Vector parinst = new Vector(); 
+    BehaviouralFeature getInstance = 
+      new BehaviouralFeature("clearMap", parinst, false, null); 
+    // getInstance.setStatic(true); 
+    e.addOperation(getInstance); 
+
+    Vector parsr = new Vector(); 
+    BehaviouralFeature opr = 
+      new BehaviouralFeature("redraw",parsr,false,null); 
+    e.addOperation(opr); 
+ 
+    Vector pars = new Vector(); 
+    Attribute delegatec = new Attribute("type", stringtype, ModelElement.INTERNAL); 
+    pars.add(delegatec);
+    BehaviouralFeature op = 
+      new BehaviouralFeature("setMapType",pars,false,null); 
+    e.addOperation(op); 
+    
+    Type stringseq = new Type("Sequence", null); 
+    stringseq.setElementType(stringtype);
+    Vector xpars = new Vector(); 
+	xpars.add(new Attribute("mess", stringtype, ModelElement.INTERNAL)); 
+    xpars.add(new Attribute("labels", stringseq, ModelElement.INTERNAL));  
+    BehaviouralFeature opc = 
+      new BehaviouralFeature("userDialog",xpars,false,null);
+    e.addOperation(opc); 
+
+    Vector xpars1 = new Vector(); 
+    Attribute contents = new Attribute("mess", stringtype, ModelElement.INTERNAL); 
+    xpars1.add(contents); 
+    BehaviouralFeature op1 = 
+      new BehaviouralFeature("userPopup",xpars1,false,null); 
+    e.addOperation(op1); 
+
+    Vector xpars2 = new Vector(); 
+    Attribute contentsy = new Attribute("location", maploc, ModelElement.INTERNAL); 
+    xpars2.add(contentsy); 
+    BehaviouralFeature op2 = 
+      new BehaviouralFeature("moveTo",xpars2,false,null); 
+    e.addOperation(op2); 
+
+    Vector xpars3 = new Vector(); 
+    Attribute contentsz = new Attribute("z", doubletype, ModelElement.INTERNAL); 
+    xpars3.add(contents); 
+    BehaviouralFeature op3 = 
+      new BehaviouralFeature("setZoomLevel",xpars3,false,null); 
+    e.addOperation(op3); 
+
+    Vector parssxn = new Vector(); 
+    Attribute loc = new Attribute("location", maploc, ModelElement.INTERNAL); 
+	parssxn.add(loc); 
+    Attribute xname = new Attribute("label", stringtype, ModelElement.INTERNAL); 
+    parssxn.add(xname);
+    BehaviouralFeature opxname = 
+      new BehaviouralFeature("addMarker",parssxn,false,null); 
+    e.addOperation(opxname); 
+
+    BehaviouralFeature opremname = 
+      new BehaviouralFeature("removeMarker",parssxn,false,null); 
+    e.addOperation(opremname); 
+
+    Vector parssyn = new Vector(); 
+    Attribute loc1 = new Attribute("location1", maploc, ModelElement.INTERNAL); 
+	parssxn.add(loc1); 
+    Attribute loc2 = new Attribute("location2", maploc, ModelElement.INTERNAL); 
+	parssxn.add(loc2); 
+    Attribute yname = new Attribute("label", stringtype, ModelElement.INTERNAL); 
+    parssyn.add(yname);
+    BehaviouralFeature opyname = 
+      new BehaviouralFeature("addMarkerWithLine",parssyn,false,null); 
+    e.addOperation(opyname); 
+
+    entities.add(mapLocation);                           
+    RectData locrd = new RectData(1100,10,getForeground(),
+                               componentMode,
+                               rectcount);
+    rectcount++;
+    locrd.setLabel(mapLocation.getName());
+    locrd.setModelElement(mapLocation); 
+    visuals.add(locrd);
+    
+	entities.add(e);                           
+    RectData rd = new RectData(1100,100,getForeground(),
+                               componentMode,
+                               rectcount);
+    rectcount++;
+    rd.setLabel(e.getName());
+    rd.setModelElement(e); 
+    visuals.add(rd);
+    repaint();   
+	
+	Vector stringpar = new Vector(); 
+	stringpar.add(new Attribute("label", stringtype, ModelElement.INTERNAL)); 
+	createPrivateUseCase("getMapDelegate", new Vector(), new Attribute("result", new Type(e), ModelElement.INTERNAL)); 
+	createPrivateUseCase("dialogResponse", stringpar, null); 
+	createPrivateUseCase("markerCreated", stringpar, null); 
+	Vector locpar = new Vector();
+	locpar.add(new Attribute("location", maploc, ModelElement.INTERNAL)); 
+	createPrivateUseCase("locationSelected", locpar, null); 
+	Vector stringlocpar = new Vector(); 
+	stringlocpar.add(new Attribute("label", stringtype, ModelElement.INTERNAL));
+	stringlocpar.add(new Attribute("location", maploc, ModelElement.INTERNAL));
+	createPrivateUseCase("markerClicked", stringlocpar, null); 
+	createPrivateUseCase("markerInfoClicked", stringlocpar, null);
+	Vector stringlocpar2 = new Vector(); 
+	stringlocpar2.add(new Attribute("label", stringtype, ModelElement.INTERNAL));
+	stringlocpar2.add(new Attribute("location1", maploc, ModelElement.INTERNAL));
+	stringlocpar2.add(new Attribute("location2", maploc, ModelElement.INTERNAL));
+	 
+	createPrivateUseCase("markerMoved", stringlocpar2, null);
+	  
+  } 	        
 
   public void createXMLParserComponent()
   { Entity e = new Entity("XMLParser"); 
@@ -14422,7 +16634,7 @@ public void produceCUI(PrintWriter out)
     
   } 
 
-  public void nameSimilarity(Vector thesaurus)
+  public void nameSimilarity(Vector thesaurus)  // NSS matching
   { 
     String compositionDepth = 
       JOptionPane.showInputDialog("Max source feature chain length? (1 or 2): ");
@@ -14453,6 +16665,24 @@ public void produceCUI(PrintWriter out)
     // Vector allbmaps = Map.allMaps(sources,targets); 
     
     // System.out.println("**** EVALUATING " + allbmaps.size() + " entity mappings"); 
+	
+	Vector emapsources = new Vector(); 
+    Vector emaptargets = new Vector();
+    Vector emapsrcs = new Vector(); 
+    Map emap = new Map(); 
+ 
+    for (int i = 0; i < entitymaps.size(); i++) 
+    { EntityMatching em = (EntityMatching) entitymaps.get(i); 
+      Entity esrc = em.realsrc; // (Entity) ModelElement.lookupByName(em.realsrc.getName() + "$", entities); 
+      Entity etrg = em.realtrg; // (Entity) ModelElement.lookupByName(em.realtrg.getName() + "$", entities); 
+      if (esrc != null && etrg != null) 
+      { emapsources.add(esrc); 
+        emaptargets.add(etrg); 
+        emapsrcs.add(em.realsrc); 
+        emap.set(em.realsrc,em.realtrg); 
+      } 
+    } 
+
 
     Map mm = new Map(); 
     double bestscore = 0; 
@@ -14496,57 +16726,80 @@ public void produceCUI(PrintWriter out)
       double sbest = 0; 
       Entity smatch = null; 
       Vector salternatives = new Vector(); 
+	  
+	  if (emapsources.contains(se))
+      { Entity targ = (Entity) emap.get(se);
+	    Vector salts = new Vector(); 
+        if (se.isConcrete() && targ.isAbstract())
+        { Vector ttargets = targ.getAllConcreteSubclasses(); 
+          for (int h = 0; h < ttargets.size(); h++) 
+          { Entity ctarg = (Entity) ttargets.get(h); 
+            if (!salts.contains(ctarg))
+            { salts.add(ctarg); } 
+          }
+		  mm.set(se, (Entity) ttargets.get(0)); 
+		}  
+	    else 
+		{ mm.set(se,targ); 
+          if (salts.contains(targ)) {}
+		  else 
+		  { salts.add(targ); } 
+		}  
+        bestscore = bestscore + 1; 
+		mmalternatives.set(se,salts); 
+      }  
+	  else 
+      { for (int j = 0; j < targets.size(); j++) 
+        { Entity te = (Entity) targets.get(j); 
+          String tename = te.getName(); 
+          String tlcname = tename.toLowerCase(); 
 
-      for (int j = 0; j < targets.size(); j++) 
-      { Entity te = (Entity) targets.get(j); 
-        String tename = te.getName(); 
-        String tlcname = tename.toLowerCase(); 
+          boolean concrete2abstract = false; 
+          Vector ctargets = new Vector(); 
 
-        boolean concrete2abstract = false; 
-        Vector ctargets = new Vector(); 
-
-        double sim = 0; 
-        if (se.isConcrete() && te.isAbstract())
-        { concrete2abstract = true; } 
-        sim = ModelElement.similarity(slcname, tlcname); 
-        System.out.println(">>> NSS of " + se + " " + te + " is: " + sim); 
+          double sim = 0; 
+          if (se.isConcrete() && te.isAbstract())
+          { concrete2abstract = true; } 
+          sim = ModelElement.similarity(slcname, tlcname); 
+          System.out.println(">>> NSS of " + se + " " + te + " is: " + sim); 
  
-        if (sim > sbest) 
-        { sbest = sim; 
-          salternatives.clear(); 
-          if (concrete2abstract) 
-          { ctargets = te.getAllConcreteSubclasses(); 
-            for (int h = 0; h < ctargets.size(); h++) 
-            { Entity ctarg = (Entity) ctargets.get(h); 
-              if (!salternatives.contains(ctarg))
-              { salternatives.add(ctarg); }   
-            }
-          }  
-          else if (salternatives.contains(te)) { } 
-          else  
-          { salternatives.add(te); }  
-          smatch = te; 
-        } 
-        else if (sim == sbest) 
-        { if (concrete2abstract) 
-          { ctargets = te.getAllConcreteSubclasses(); 
-            for (int h = 0; h < ctargets.size(); h++) 
-            { Entity ctarg = (Entity) ctargets.get(h); 
-              if (!salternatives.contains(ctarg))
-              { salternatives.add(ctarg); } 
+          if (sim > sbest) 
+          { sbest = sim; 
+            salternatives.clear(); 
+            if (concrete2abstract) 
+            { ctargets = te.getAllConcreteSubclasses(); 
+              for (int h = 0; h < ctargets.size(); h++) 
+              { Entity ctarg = (Entity) ctargets.get(h); 
+                if (!salternatives.contains(ctarg))
+                { salternatives.add(ctarg); }   
+              }
             }  
+            else if (salternatives.contains(te)) { } 
+            else  
+            { salternatives.add(te); }  
+            smatch = te; 
           } 
-          else if (salternatives.contains(te)) { } 
-          else  
-          { salternatives.add(te); }         
-        } 
-     
+          else if (sim == sbest) 
+          { if (concrete2abstract) 
+            { ctargets = te.getAllConcreteSubclasses(); 
+              for (int h = 0; h < ctargets.size(); h++) 
+              { Entity ctarg = (Entity) ctargets.get(h); 
+                if (!salternatives.contains(ctarg))
+                { salternatives.add(ctarg); } 
+              }  
+            } 
+            else if (salternatives.contains(te)) { } 
+            else  
+            { salternatives.add(te); }         
+          }   
+        }
+	  
         if (smatch != null) 
         { mm.set(se,smatch); 
           bestscore = bestscore + sbest; 
           mmalternatives.set(se,salternatives); 
-        } 
-      }
+        }
+      }  
     } 
 
     System.out.println("===== The best map is " + mm); 
@@ -14596,10 +16849,10 @@ public void produceCUI(PrintWriter out)
     ModelMatching modmatch = null; 
     bestscore = 0; 
 
-    while (word.size() < maxsize) 
+    while (word.size() < maxsize/2.0) 
     { word = (Vector) lex.increment(maxsize,word); } 
     
-    while (word.size() == maxsize)
+    while (word.size() <= maxsize)
     { // System.out.println(">>> processing " + word); 
 
       Map newmap = LexMultiOrdering.getMap(word,msources); 
@@ -14652,6 +16905,184 @@ public void produceCUI(PrintWriter out)
     System.out.println(modmatch); 
     synthesiseTransformations(modmatch,entities,thesaurus);
   } 
+
+  public void synthesiseFromTL(Vector thesaurus)
+  { if (tlspecification != null) 
+    { synthesiseTransformations(tlspecification,entities,thesaurus); } 
+    else 
+    { System.err.println("!! No TL specification loaded"); } 
+  } 
+
+  public void mapTL2UMLRSDS(Vector thesaurus)
+  { if (tlspecification != null) 
+    { synthesiseTransformationsUMLRSDS(tlspecification,entities,thesaurus); 
+      Vector pregens = new Vector(); 
+      Vector preassocs = new Vector(); 
+
+      BufferedReader br = null;
+      Vector res = new Vector();
+      String s;
+      boolean eof = false;
+      File file = new File("output/umlrsdscode.txt");  /* default */ 
+
+      try
+      { br = new BufferedReader(new FileReader(file)); }
+      catch (FileNotFoundException e)
+      { System.out.println("File not found: " + file);
+        return; 
+      }
+
+
+      String xmlstring = ""; 
+      int linecount = 0; 
+
+      while (!eof)
+      { try { s = br.readLine(); }
+        catch (IOException e)
+        { System.out.println("Reading failed.");
+          return; 
+        }
+        if (s == null) 
+        { eof = true; 
+          break; 
+        }
+        else if (s.startsWith("--")) { } 
+        else 
+        { xmlstring = xmlstring + s + " "; } 
+        linecount++; 
+      }
+
+
+      Compiler2 comp = new Compiler2();  
+      comp.nospacelexicalanalysis(xmlstring); 
+      UseCase uc = comp.parseKM3UseCase(entities,types,pregens,preassocs); 
+      if (uc != null) 
+      { addGeneralUseCase(uc); } 
+    } 
+    else 
+    { System.err.println("!! No TL specification loaded"); } 
+  } 
+
+  public void checkTLmodel()
+  { if (tlspecification != null) 
+    { ModelSpecification modelspec = new ModelSpecification(); 
+	
+      BufferedReader br = null;
+      Vector res = new Vector();
+      String s;
+      boolean eof = false;
+      File file = new File("output/out.txt");  /* default location of model */ 
+
+      try
+      { br = new BufferedReader(new FileReader(file)); }
+      catch (FileNotFoundException e)
+      { System.out.println("!! ERROR: File not found: " + file);
+        return; 
+      }
+
+      while (!eof)
+      { try { s = br.readLine(); }
+        catch (IOException e)
+        { System.err.println("!! Reading file failed.");
+          return; 
+        }
+
+        if (s == null) 
+        { eof = true; 
+          break; 
+        }
+        else if (s.startsWith("--")) { } 
+        else if (s.trim().length() == 0) { } 
+        else 
+        { String str = s.trim();
+          String[] strs = str.split(" "); 
+          if (strs.length == 3 && ":".equals(strs[1]) && strs[2].indexOf(".") < 0)  // obj : class
+          { String obj = strs[0]; 
+            String ename = strs[2]; 
+            System.out.println(">>> object " + obj + " of class " + ename);   
+            Entity ent = (Entity) ModelElement.lookupByName(ename,entities); 
+            if (ent == null)
+            { System.err.println("!! ERROR in model: No class called " + ename); }
+            else 
+            { ObjectSpecification objspec = new ObjectSpecification(obj,ename); 
+              objspec.setEntity(ent); 
+              modelspec.addObject(objspec); 
+            }
+          }
+          else if (strs.length >= 3 && "=".equals(strs[1]))  // x.prop = val
+          { String lft = strs[0];
+            int idx = lft.indexOf(".");
+            if (idx > 0)
+            { String x = lft.substring(0,idx);
+              String prop = lft.substring(idx+1,lft.length());
+              int ind2 = str.indexOf("="); 
+              String val = str.substring(ind2 + 1, str.length());
+              val = val.trim(); 
+              System.out.println("LINE: " + x + "." + prop + " = " + val);
+              ObjectSpecification objspec = modelspec.getObject(x); 
+              if (objspec == null)
+              { System.err.println("!! ERROR in model: no object called " + x); }
+              else 
+              { objspec.addAttribute(prop,val); } 
+            } 
+          }
+          else if (strs.length == 3 && ":".equals(strs[1]) && strs[2].indexOf(".") > 0) // val : x.prop 
+          { String lft = strs[0]; // value/object to be added
+            String rgt = strs[2]; 
+            int indx2 = rgt.indexOf("."); 
+            if (indx2 > 0)
+            { String xx = rgt.substring(0,indx2); 
+              String prop = rgt.substring(indx2+1,rgt.length()); 
+              String val = lft.trim(); 
+              System.out.println("LINE: " + val + " : " + xx + "." + prop); 
+              ObjectSpecification xspec = modelspec.getObject(xx); 
+              if (xspec == null)
+              { System.err.println("!! ERROR: no object called " + xx); }
+              else 
+              { ObjectSpecification valspec = modelspec.getObject(val); 
+                if (valspec != null) 
+                { xspec.addAttributeElement(prop,valspec); }
+                else 
+                { xspec.addAttributeElement(prop,val); } 
+              } 
+            }
+          }  
+          else if (strs.length == 3 && "|->".equals(strs[1])) // x |-> y 
+          { String lft = strs[0]; // source element
+            String rgt = strs[2]; // target element
+            System.out.println("LINE: " + lft + " |-> " + rgt); 
+            ObjectSpecification xspec = modelspec.getObject(lft); 
+            if (xspec == null)
+            { System.err.println("!! ERROR: no object called " + lft); }
+            else 
+            { ObjectSpecification yspec = modelspec.getObject(rgt); 
+              if (yspec != null) 
+              { modelspec.addCorrespondence(xspec,yspec); }
+              else 
+              { System.err.println("!! ERROR: no object called " + rgt); } 
+            }
+          }  
+          else 
+          { System.err.println("!!! Unrecognised line: " + str); } 
+        }  
+        // file.close();
+      }  
+	  System.out.println(">>> Read model " + modelspec); 
+	  System.out.println("");
+	  System.out.println(">>> As ILP: " + modelspec.toILP()); 
+	  System.out.println(); 
+	  tlspecification.checkModel(modelspec,entities,types);
+	  
+	  System.out.println(">>> Enhanced specification: "); 
+	  System.out.println(tlspecification + "");  
+    } 
+    else 
+    { System.err.println("!! ERROR: no TL specification"); } 
+  } 
+
+
+
+
 
   public void ontologicalSimilarity(Vector thesaurus)
   { 
@@ -14714,11 +17145,23 @@ public void produceCUI(PrintWriter out)
  
     for (int i = 0; i < entitymaps.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymaps.get(i); 
-      emapsources.add(em.realsrc); 
-      emaptargets.add(em.realtrg);  
+	  Entity esrc = em.realsrc; 
+	  Entity etrg = em.realtrg; 
+      if (esrc != null && etrg != null) 
+      { if (esrc.isConcrete() && etrg.isAbstract())
+	    { Vector esubs = etrg.getAllConcreteSubclasses(); 
+		  for (int x = 0; x < esubs.size(); x++) 
+		  { emapsources.add(esrc);
+		    emaptargets.add(esubs.get(x));  
+		  } // want them all in here
+		} 
+		else  
+		{ emapsources.add(esrc); 
+          emaptargets.add(etrg);
+		}  
+      } 
     } 
     sources.removeAll(emapsources); 
-
 
     for (int i = 0; i < sources.size(); i++) 
     { Entity ei = (Entity) sources.get(i); 
@@ -14761,7 +17204,7 @@ public void produceCUI(PrintWriter out)
       //  System.out.println("========= Basic entity mapping " + mm0); 
       Map mm = Map.extendDomainRange(mm0,unused); 
       //  System.out.println("========= Entity mapping extended with copies: " + mm); 
-      Map mm1 = Map.extendDomainRange(mm,emapsources,emaptargets); 
+      Map mm1 = Map.unionDomainRange(mm,emapsources,emaptargets); 
       ModelMatching modmatch = new ModelMatching(mm1);
       
       double mapscore = 0; 
@@ -15234,7 +17677,94 @@ public void produceCUI(PrintWriter out)
     return res; 
   } 
 
-  public void nameSemanticSimilarity(Vector thesaurus)
+  public void requirements2TL()
+  { System.out.println("Input file tagged.txt should be the POS-tagged output from the stanford posttagger."); 
+    System.out.println("Remove brackets -LRB-_-LRB- and -RRB-_-RRB-, and put each sentence on a single line."); 
+    System.out.println(); 
+    System.out.println("Enter metamodel names:"); 
+	String mmnames = JOptionPane.showInputDialog("Metamodel names?: ");
+	String[] mms = mmnames.split(" "); 
+    
+    Vector sentences = new Vector(); 
+
+    BufferedReader br = null;
+    Vector res = new Vector();
+    String s;
+    boolean eof = false;
+    File file = new File("output/tagged.txt");  /* default */ 
+
+    try
+    { br = new BufferedReader(new FileReader(file)); }
+    catch (FileNotFoundException e)
+    { System.out.println("File not found: " + file);
+      return; 
+    }
+
+    Vector reqstrings = new Vector(); 
+    String xmlstring = ""; 
+    int linecount = 0; 
+
+    while (!eof)
+    { try { s = br.readLine(); }
+      catch (IOException e)
+      { System.out.println("!! Reading failed.");
+        return; 
+      }
+      if (s == null) 
+      { eof = true; 
+        break; 
+      }
+      else if (s.startsWith("--")) 
+      { } 
+      else if (s.trim().length() == 0) 
+      { reqstrings.add(xmlstring + ""); 
+        xmlstring = ""; 
+      } 
+      else 
+      { xmlstring = xmlstring + s + " "; } 
+      linecount++; 
+    }
+
+    if (xmlstring.length() > 0) 
+    { reqstrings.add(xmlstring); } 
+
+    entitymaps = new Vector(); 
+
+    for (int i = 0; i < reqstrings.size(); i++) 
+    { String xstring = (String) reqstrings.get(i); 
+      Compiler2 comp = new Compiler2();  
+      comp.nospacelexicalanalysis(xstring); 
+      Vector reqs = comp.parseRequirementsText(); 
+      System.out.println(reqs);
+      System.out.println(); 
+      RequirementsSentence req = new RequirementsSentence("",reqs); 
+      String classific = RequirementsPhrase.classify(reqs,entities,types,mms,req);
+	  // Only match sources to source classes, etc.  
+      System.out.println(">> Classification: " + classific); 
+	  req.sentencekind = classific; 
+	  sentences.add(req);
+      Vector ems = req.toEntityMappings(entitymaps); 
+      entitymaps.addAll(ems); 
+    } 
+
+	System.out.println(">> Identified entity mappings: " + entitymaps); 
+    
+	ModelMatching tlspec = new ModelMatching();
+	tlspec.entitymatches = entitymaps;  
+	
+	try
+    { PrintWriter fout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter("output/req.tl")));
+      fout.println(tlspec); 
+      fout.close(); 
+    } catch (Exception _except) { } 
+
+    try { br.close(); } 
+    catch (Exception _p) {}  
+   } 
+
+  public void nameSemanticSimilarity(Vector thesaurus) // For NMS
   { 
     Vector sources = getSourceEntities(); 
     Vector targets = getTargetEntities(); 
@@ -15415,12 +17945,25 @@ public void produceCUI(PrintWriter out)
       // String sename = se.getName(); 
       double sbest = 0; 
       Entity smatch = null; 
-      Vector salternatives = new Vector(); 
+      Vector salternatives = new Vector(); // alternative matches for se
 
       if (emapsrcs.contains(se))
       { smatch = (Entity) emap.get(se);
-        salternatives.add(smatch); 
+        if (se.isConcrete() && smatch.isAbstract())
+        { Vector ttargets = smatch.getAllConcreteSubclasses(); 
+          for (int h = 0; h < ttargets.size(); h++) 
+          { Entity ctarg = (Entity) ttargets.get(h); 
+            if (!salternatives.contains(ctarg))
+            { salternatives.add(ctarg); } 
+          }
+		  smatch = (Entity) ttargets.get(0); 
+		}  
+	    else 
+		{ salternatives.add(smatch); }  
         sbest = 1; 
+		mm.set(se,smatch); 
+        mmalternatives.set(se,salternatives); 
+        bestscore = bestscore + sbest;
       }  
       else 
       { for (int j = 0; j < targets.size(); j++) 
@@ -15466,14 +18009,15 @@ public void produceCUI(PrintWriter out)
             { salternatives.add(te); }
           }  
         } 
-      }
+     
 
-      if (smatch != null) 
-      { mm.set(se,smatch); 
-        mmalternatives.set(se,salternatives); 
-        bestscore = bestscore + sbest; 
-      } 
-    } // create a set of maps
+        if (smatch != null) 
+        { mm.set(se,smatch); 
+          mmalternatives.set(se,salternatives); 
+          bestscore = bestscore + sbest; 
+        }
+	  }  
+    } // create a set of maps; allow 1-* maps, ie., several matches for one entity
 
 
     System.out.println("===== The best name semantics map is " + mm); 
@@ -15546,7 +18090,7 @@ public void produceCUI(PrintWriter out)
     Vector word = new Vector(); 
     word = (Vector) lex.increment(maxsize,word);
 
-    int minsize = maxsize/2; 
+    int minsize = maxsize/3; 
 
     if (injectiveOnly == false)  
     { while (word.size() < minsize) 
@@ -15554,6 +18098,7 @@ public void produceCUI(PrintWriter out)
         word = (Vector) lex.increment(maxsize,word); 
       } 
     } 
+	// also, it must include the entitymaps; word extends emap
     
     while (word.size() <= maxsize)
     { System.out.println(">>> processing " + word); 
@@ -16134,7 +18679,7 @@ public void produceCUI(PrintWriter out)
   } 
 
 
-  public void flattenModel(String kind, Vector thesaurus)
+  public void flattenModel(String kind, Vector thesaurus) // This is DSS 
   { Vector fents = new Vector(); 
     Map mflat = new Map(); 
 
@@ -16253,8 +18798,15 @@ public void produceCUI(PrintWriter out)
       Entity esrc = (Entity) ModelElement.lookupByName(em.realsrc.getName() + "$", entities); 
       Entity etrg = (Entity) ModelElement.lookupByName(em.realtrg.getName() + "$", entities); 
       if (esrc != null && etrg != null) 
-      { emapsources.add(esrc); 
-        emaptargets.add(etrg); 
+      { if (esrc.isConcrete() && etrg.isAbstract())
+	    { Vector esubs = etrg.getAllConcreteSubclasses(); 
+		  emapsources.add(esrc);
+		  emaptargets.add(esubs.get(0));  // but actually want them all in here
+		} 
+		else  
+		{ emapsources.add(esrc); 
+          emaptargets.add(etrg);
+		}  
       } 
     } 
     osources.removeAll(emapsources); 
@@ -16841,10 +19393,22 @@ public void produceCUI(PrintWriter out)
   { selected.removeInvalidMatchings(); 
     selected.copySuperclassMatchings(thesaurus,originalentities); 
     selected.checkBidirectionalAssociationConsistency(); 
-    selected.checkEntityMapCompleteness(originalentities); 
+    Vector unusedentities = selected.checkEntityMapCompleteness(originalentities); 
 
-    Vector corrpatts = selected.analyseCorrelationPatterns(originalentities); 
+    Vector corrpatts = selected.analyseCorrelationPatterns(originalentities,types); 
+    Vector sources = Entity.sourceEntities(originalentities); 
+    Vector unusedtargets = selected.unusedTargetEntities(originalentities); 
+
+    selected.checkValidity(unusedtargets,entities,sources,entitymaps,thesaurus); 
+
+    String yn = 
+      JOptionPane.showInputDialog("Check that all target features are used (y or n)?:");
+ 
+    if (yn != null && yn.equals("y"))
+    { selected.checkTargetFeatureCompleteness(entities,sources,thesaurus); } 
+ 
     selected.removeSpuriousMatchings(); 
+    selected.addFlagVariables(corrpatts); 
 
     System.out.println("----------Correlation patterns are: ----------------------------"); 
     System.out.println();
@@ -16855,6 +19419,14 @@ public void produceCUI(PrintWriter out)
     }   
 
     System.out.println("----------------------------------------------------------------"); 
+
+    try
+    { PrintWriter fout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter("output/forward.tl")));
+      fout.println(selected); 
+      fout.close(); 
+    } catch (Exception _except) { } 
 
     try
     { PrintWriter cout = new PrintWriter(
@@ -16878,13 +19450,13 @@ public void produceCUI(PrintWriter out)
 
       Vector benames = new Vector(); 
       Vector bconvs = selected.boolEnumConversions(benames); 
-      System.out.println(">>> boolean-enumeration conversions are: " + bconvs + " " + benames); 
+      // System.out.println(">>> boolean-enumeration conversions are: " + bconvs + " " + benames); 
       Vector beFunctions = selected.booleanEnumConversionFunctions(bconvs,benames); 
 
       Vector ebnames = new Vector(); 
       Vector ebconvs = selected.enumBoolConversions(ebnames); 
-      System.out.println(">>> enumeration-boolean conversions are: " + ebconvs + " " + 
-                         ebnames); 
+      // System.out.println(">>> enumeration-boolean conversions are: " + ebconvs + " " + 
+      //                    ebnames); 
       Vector ebFunctions = selected.enumBooleanConversionFunctions(ebconvs,ebnames); 
 
       cout.println("/* QVT-R transformation: */"); 
@@ -16940,21 +19512,38 @@ public void produceCUI(PrintWriter out)
 
       cout.println(selected.atlTransformation(types)); 
 
+      Vector ecfuncsetl = selected.enumConversionFunctionsETL(enumconvs,thesaurus); 
+      Vector esfuncsetl = selected.enumStringConversionFunctionsETL(enumstringconversions,thesaurus); 
+      Vector sefuncsetl = selected.stringEnumConversionFunctionsETL(stringenumconversions,thesaurus); 
+      EtlModule etlmod = selected.etlTransformation(types,bconvs,benames,ebconvs,ebnames);
+      etlmod.addOperations(ecfuncsetl); 
+      etlmod.addOperations(esfuncsetl); 
+      etlmod.addOperations(sefuncsetl); 
+      cout.println(etlmod + "");  
+
       cout.close();
     }
     catch (Exception ex) 
     { ex.printStackTrace(); }
 
+    ModelMatching inv = selected.invert(); 
+
+    try
+    { PrintWriter revout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter("output/reverse.tl")));
+      revout.println(inv); 
+      revout.close(); 
+    } catch (Exception _except) { } 
 
     try
     { PrintWriter rout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter("output/reverse.txt")));
-      ModelMatching inv = selected.invert(); 
       rout.println("----------------------- Reverse map is \n" + inv); 
 
-      Vector enumconvs = selected.enumConversions(); 
-      Vector ecfuncs = selected.enumConversionFunctions(enumconvs,thesaurus); 
+      Vector enumconvs = inv.enumConversions(); 
+      Vector ecfuncs = inv.enumConversionFunctions(enumconvs,thesaurus); 
 
       Vector stringenumconversions = inv.stringEnumConversions(); 
       // System.out.println(">>> String-enumeration conversions are: " + stringenumconversions); 
@@ -17027,6 +19616,105 @@ public void produceCUI(PrintWriter out)
 
       rout.println(inv.atlTransformation(types)); 
 
+      Vector recfuncsetl = inv.enumConversionFunctionsETL(enumconvs,thesaurus); 
+      EtlModule retlmod = inv.etlTransformation(types,invbconvs,benamesinv,invebconvs,ebnamesinv);
+      retlmod.addOperations(recfuncsetl); 
+      rout.println(retlmod + "");  
+      
+      rout.close();
+    }
+    catch (Exception ex) 
+    { ex.printStackTrace(); }
+  } 
+
+  private void synthesiseTransformationsUMLRSDS(ModelMatching selected, Vector originalentities, 
+                                         Vector thesaurus)
+  { System.out.println("----------------------------------------------------------------"); 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ee = (Entity) entities.get(i); 
+      Attribute puk = ee.getPrincipalPK(); 
+      if (puk == null)
+      { ee.addPrimaryKey(ee.getName().toLowerCase() + "Id"); } 
+    } 
+
+    try
+    { PrintWriter cout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter("output/umlrsdscode.txt")));
+
+      PrintWriter qout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter("output/qvtrcode.txt")));
+
+      Vector enumconvs = selected.enumConversions(); 
+      // System.out.println(">>> Enumeration conversions are: " + enumconvs); 
+      Vector ecfuncs = selected.enumConversionFunctions(enumconvs,thesaurus); 
+      // System.out.println(">>> Enumeration conversion functions are: " + ecfuncs); 
+
+      Vector stringenumconversions = selected.stringEnumConversions(); 
+      // System.out.println(">>> String-enumeration conversions are: " + stringenumconversions); 
+      Vector seFunctions = selected.stringEnumConversionFunctions(stringenumconversions); 
+
+      Vector enumstringconversions = selected.enumStringConversions(); 
+      // System.out.println(">>> enumeration-String conversions are: " + enumstringconversions); 
+      Vector esFunctions = selected.enumStringConversionFunctions(enumstringconversions); 
+
+      Vector benames = new Vector(); 
+      Vector bconvs = selected.boolEnumConversions(benames); 
+      // System.out.println(">>> boolean-enumeration conversions are: " + bconvs + " " + benames); 
+      Vector beFunctions = selected.booleanEnumConversionFunctions(bconvs,benames); 
+
+      Vector ebnames = new Vector(); 
+      Vector ebconvs = selected.enumBoolConversions(ebnames); 
+      // System.out.println(">>> enumeration-boolean conversions are: " + ebconvs + " " + 
+      //                    ebnames); 
+      Vector ebFunctions = selected.enumBooleanConversionFunctions(ebconvs,ebnames); 
+
+      cout.println(selected.umlrsdsTransformation(enumconvs,stringenumconversions,
+                                                  enumstringconversions,bconvs,ebconvs)); 
+
+      qout.println(selected.qvtBxTransformation(enumconvs,stringenumconversions,
+                                                  enumstringconversions,bconvs,ebconvs));
+
+      cout.close();
+      qout.close(); 
+    }
+    catch (Exception ex) 
+    { ex.printStackTrace(); }
+
+    ModelMatching inv = selected.invert(); 
+
+    try
+    { PrintWriter rout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter("output/reverseumlrsds.txt")));
+      
+      Vector enumconvs = inv.enumConversions(); 
+      Vector ecfuncs = inv.enumConversionFunctions(enumconvs,thesaurus); 
+
+      Vector stringenumconversions = inv.stringEnumConversions(); 
+      // System.out.println(">>> String-enumeration conversions are: " + stringenumconversions); 
+      Vector seFunctions = inv.stringEnumConversionFunctions(stringenumconversions); 
+
+      Vector enumstringconversions = inv.enumStringConversions(); 
+      // System.out.println(">>> enumeration-String conversions are: " + enumstringconversions); 
+      Vector esFunctions = inv.enumStringConversionFunctions(enumstringconversions); 
+
+      Vector benamesinv = new Vector(); 
+      Vector invbconvs = inv.boolEnumConversions(benamesinv); 
+      // System.out.println(">>> boolean-enumeration conversions are: " + bconvs); 
+      Vector invbeFunctions = inv.booleanEnumConversionFunctions(invbconvs,benamesinv); 
+
+      Vector ebnamesinv = new Vector(); 
+      Vector invebconvs = inv.enumBoolConversions(ebnamesinv); 
+      // System.out.println(">>> enumeration-boolean conversions are: " + ebconvs); 
+      Vector invebFunctions = inv.enumBooleanConversionFunctions(invebconvs,ebnamesinv); 
+
+
+      rout.println(inv.umlrsdsTransformation(enumconvs,stringenumconversions,
+                                             enumstringconversions,invbconvs,invebconvs)); 
+
       rout.close();
     }
     catch (Exception ex) 
@@ -17037,21 +19725,64 @@ public void produceCUI(PrintWriter out)
   { Vector res = new Vector(); 
     for (int i = 0; i < entities.size(); i++) 
     { Entity e = (Entity) entities.get(i); 
+	  if (e.isDerived() || e.isComponent()) 
+	  { continue; }
+	  
+	  String testfile = "test" + e.getName() + "_in.txt"; 
+	  
       Vector tests = e.testCases(); 
-      System.out.println("*** Test cases for entity " + e.getName() + " are: " + tests); 
-      for (int j = 0; j < tests.size(); j++) 
-      { String tst = (String) tests.get(j); 
+      try
+      { PrintWriter rout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter("output/tests/" + testfile)));
+        System.out.println("*** Test cases for entity " + e.getName() + " written to: output/tests/" + testfile); 
+        for (int j = 0; j < tests.size(); j++) 
+        { String tst = (String) tests.get(j); 
+          rout.println(tst); 
+        }
+        rout.close(); 
+	  } 
+      catch (Exception _x) { } 
+      
+	  
+	  Vector optests = e.operationTestCases(); 
+      System.out.println("*** Test cases for entity " + e.getName() + " operations written to output/tests"); 
+      for (int j = 0; j < optests.size(); j++) 
+      { Vector otest = (Vector) optests.get(j); 
+	    String oname = (String) otest.get(0);
+		String otxt = (String) otest.get(1);  
         try
         { PrintWriter rout = new PrintWriter(
                               new BufferedWriter(
-                                new FileWriter("output/test" + e.getName() + "_" + j + ".txt")));
-          rout.println(tst); 
+                                new FileWriter("output/tests/" + oname + "test" + e.getName() + "_" + j + ".txt")));
+          rout.println(otxt); 
           rout.close(); 
         } 
         catch (Exception _x) { } 
-      } 
+      }   
     } 
+	
+    for (int i = 0; i < useCases.size(); i++) 
+    { if (useCases.get(i) instanceof UseCase) 
+	  { UseCase uc = (UseCase) useCases.get(i); 
+        Vector tests = uc.testCases(); 
+        System.out.println("*** Test cases for use case " + uc.getName() + " are: " + tests); 
+        for (int j = 0; j < tests.size(); j++) 
+        { String tst = (String) tests.get(j); 
+          try
+          { PrintWriter rout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter("output/tests/test" + uc.getName() + "_" + j + ".txt")));
+            rout.println(tst); 
+            rout.close(); 
+          } 
+          catch (Exception _x) { } 
+        }
+      }
+    }
   } 
+  
+  
 } 
 
 

@@ -12,7 +12,7 @@
   package: GUI
       */
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -109,6 +109,13 @@ class RectData extends RectForm
         FontMetrics fm = g.getFontMetrics(); 
         if (fm.stringWidth("<<active>>") + (namex - sourcex) >= width) 
         { width = fm.stringWidth("<<active>>") + (namex - sourcex) + 5; }
+      }
+      else if (e.isExternal() || e.isExternalApp())
+      { g.drawString(label,namex,namey);
+        g.drawString("<<component>>",namex,namey-5);
+        FontMetrics fm = g.getFontMetrics(); 
+        if (fm.stringWidth("<<component>>") + (namex - sourcex) >= width) 
+        { width = fm.stringWidth("<<component>>") + (namex - sourcex) + 5; }
       }
       else 
       { g.drawString(label,namex,namey); }

@@ -2,7 +2,7 @@ import java.util.*;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -200,6 +200,16 @@ public class ConstraintGroup extends ConstraintOrGroup
     return written; 
   } 
 
+  public Vector cwr(Vector assocs)
+  { Vector written = new Vector(); 
+
+    for (int i = 0; i < elements.size(); i++) 
+    { Constraint cst = (Constraint) elements.get(i); 
+      written.addAll(cst.cwr(assocs)); 
+    } 
+    return written; 
+  } 
+
   public Vector readFrame()
   { return rd(); } 
 
@@ -232,6 +242,23 @@ public class ConstraintGroup extends ConstraintOrGroup
     } 
     return read; 
   } 
+
+  public DataDependency getDataFlows()
+  { for (int i = 0; i < elements.size(); i++) 
+    { Constraint cst = (Constraint) elements.get(i); 
+      return cst.getDataFlows(); 
+    } 
+    return null; 
+  } 
+
+  public DataDependency rhsDataDependency()
+  { for (int i = 0; i < elements.size(); i++) 
+    { Constraint cst = (Constraint) elements.get(i); 
+      return cst.rhsDataDependency(); 
+    } 
+    return null; 
+  } 
+
 
 
   public int findGroupType(Vector assocs)
