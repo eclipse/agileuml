@@ -3,7 +3,7 @@ import java.io.*;
 import java.util.StringTokenizer; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -69,6 +69,11 @@ public class Type extends ModelElement
   public boolean isSequenceType() 
   { return "Sequence".equals(name); } 
 
+  public boolean isMapType() 
+  { return "Map".equals(name); } 
+
+  public boolean isVoidType() 
+  { return "void".equals(name); } 
 
   public Object clone()
   { Type result; 
@@ -112,6 +117,22 @@ public class Type extends ModelElement
 
   public Entity getEntity() { return entity; } 
 
+  public Vector metavariables()
+  { Vector res = new Vector(); 
+    if (name.startsWith("_"))
+    { res.add(name); } 
+    if ("Sequence".equals(name) && elementType != null)
+    { return elementType.metavariables(); } 
+    else if ("Set".equals(name) && elementType != null)
+    { return elementType.metavariables(); } 
+    else if ("Map".equals(name))
+    { Vector vars = keyType.metavariables(); 
+	  vars.addAll(elementType.metavariables());
+	  return vars;  
+	} 
+    return res; 
+  } 
+
   public int complexity() 
   { if ("Sequence".equals(name) && elementType != null)
     { return 1 + elementType.complexity(); } 
@@ -144,6 +165,9 @@ public class Type extends ModelElement
     return "Map".equals(nme); 
   } 
 
+  public boolean isCollection()
+  { return isCollectionType(this); } 
+
   public static boolean isCollectionType(Type t) 
   { if (t == null) { return false; } 
     String nme = t.getName(); 
@@ -166,6 +190,12 @@ public class Type extends ModelElement
 
   public boolean isNumericType()
   { if ("int".equals(name) || "double".equals(name) || "long".equals(name))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isStringType()
+  { if ("String".equals(name))
     { return true; } 
     return false; 
   } 
@@ -274,6 +304,12 @@ public class Type extends ModelElement
     } 
 
     if (t1name.equals("Set") && t2name.equals("Set"))
+    { Type et1 = t1.getElementType(); 
+      Type et2 = t2.getElementType(); 
+      return Type.isRecursiveSubtype(et1,et2); 
+    } 
+
+    if (t1name.equals("Map") && t2name.equals("Map"))
     { Type et1 = t1.getElementType(); 
       Type et2 = t2.getElementType(); 
       return Type.isRecursiveSubtype(et1,et2); 
@@ -481,6 +517,12 @@ public class Type extends ModelElement
       return Type.isSubType(et1,et2,mm,entities); 
     } 
 
+    if (t1name.equals("Map") && t2name.equals("Map"))
+    { Type et1 = t1.getElementType(); 
+      Type et2 = t2.getElementType(); 
+      return Type.isSubType(et1,et2,mm,entities); 
+    } 
+
     return false; 
   } 
 
@@ -512,6 +554,47 @@ public class Type extends ModelElement
     return ""; 
   } 
     
+  public static BehaviouralFeature booleanEnumConversionFunctionETL(Type e, String srcnme) 
+  { if (e.isEnumeration())
+    { String nme = e.getName();
+      double best = 0; 
+      String bestval = (String) e.values.get(0); 
+      double worst = 1; 
+      String worstval = (String) e.values.get(e.values.size() - 1); 
+  
+      for (int i = 0; i < e.values.size(); i++) 
+      { String val = (String) e.values.get(i); 
+        double sim = ModelElement.similarity(val,srcnme); 
+        if (sim > best)
+        { best = sim; 
+          bestval = val; 
+        }  
+        if (sim < worst)
+        { worst = sim; 
+          worstval = val; 
+        }  
+      } 
+
+      Type restype = new Type("MM2!" + nme,null);
+      Type btype = new Type("Boolean",null);  
+      Vector pars = new Vector(); 
+      Attribute p = new Attribute("self",btype); 
+      // pars.add(p); 
+      BehaviouralFeature bf = new BehaviouralFeature("boolean2" + nme + srcnme,pars,true,restype);
+      bf.setOwner(new Entity("Boolean"));  
+      ReturnStatement assignbest = 
+        new ReturnStatement(new BasicExpression("MM2!" + nme + "#" + bestval)); 
+      ReturnStatement assignworst = 
+        new ReturnStatement(new BasicExpression("MM2!" + nme + "#" + worstval)); 
+      BinaryExpression vtrue = 
+        new BinaryExpression("=",new BasicExpression(p),new BasicExpression(true)); 
+      ConditionalStatement cs = new ConditionalStatement(vtrue,assignbest,assignworst); 
+      bf.setActivity(cs); 
+      return bf; 
+    } 
+    return null; 
+  } 
+
   public static String enumBooleanConversionFunction(Type e, String trgnme) 
   { if (e.isEnumeration())
     { String nme = e.getName(); 
@@ -532,6 +615,39 @@ public class Type extends ModelElement
       return res; 
     } 
     return ""; 
+  } 
+
+  public static BehaviouralFeature enumBooleanConversionFunctionETL(Type e, String trgnme) 
+  { if (e.isEnumeration())
+    { String nme = e.getName(); 
+      double best = 0; 
+      String bestval = (String) e.values.get(0); 
+
+      for (int i = 0; i < e.values.size(); i++) 
+      { String val = (String) e.values.get(i); 
+        double sim = ModelElement.similarity(val,trgnme); 
+        if (sim > best)
+        { best = sim; 
+          bestval = val; 
+        }  
+      } 
+
+      Type restype = new Type("MM2!" + nme,null);
+      Type btype = new Type("Boolean",null);  
+      Vector pars = new Vector(); 
+      Attribute p = new Attribute("self",restype); 
+      // pars.add(p); 
+      BehaviouralFeature bf = new BehaviouralFeature(nme + "2boolean" + trgnme,pars,true,btype); 
+      bf.setOwner(new Entity("MM2!" + nme)); 
+      ReturnStatement returntrue = new ReturnStatement(new BasicExpression(true)); 
+      ReturnStatement returnfalse = new ReturnStatement(new BasicExpression(false)); 
+      BinaryExpression isbest = 
+        new BinaryExpression("=",new BasicExpression(p),new BasicExpression("#" + bestval)); 
+      ConditionalStatement cs = new ConditionalStatement(isbest,returntrue,returnfalse); 
+      bf.setActivity(cs); 
+      return bf; 
+    } 
+    return null; 
   } 
 
   public static String stringEnumConversionFunction(Type e) 
@@ -793,6 +909,63 @@ public class Type extends ModelElement
     return res + endres; 
   }     
 
+  public static BehaviouralFeature enumStringConversionFunctionETL(Type e1)
+  { String res = "  helper def: " + e1.getName() + "2String" + 
+                 "(s : MM1!" + e1.getName() + ") : String =\n    "; 
+    String restail = ""; 
+
+    Vector pars = new Vector(); 
+    Type restype = new Type("String", null); 
+    BehaviouralFeature bf = new BehaviouralFeature("" + e1.getName() + "2String", 
+                                                   pars,true,restype); 
+    bf.setOwner(new Entity("MM1!" + e1.getName())); 
+    
+    Vector values1 = e1.getValues(); 
+    int s1 = values1.size(); 
+
+    String lastval = (String) values1.get(s1 - 1); 
+    BasicExpression lastvale = new BasicExpression("\"" + lastval + "\""); 
+    Statement code = new ReturnStatement(lastvale); 
+ 
+    for (int j = 0; j < s1-1; j++) 
+    { String val = (String) values1.get(j); 
+      BasicExpression vale = new BasicExpression("\"" + val + "\""); 
+      code = new ConditionalStatement(new BasicExpression("self = #" + val), 
+                                      new ReturnStatement(vale),code); 
+    } 
+    bf.setActivity(code); 
+    return bf; 
+  } 
+
+  public static BehaviouralFeature stringEnumConversionFunctionETL(Type e1)
+  { String res = "  helper def: String2" + e1.getName() + 
+                 "(s : String) : MM2!" + e1.getName() + " =\n    "; 
+
+    Vector pars = new Vector(); 
+    Type restype = new Type("MM2!" + e1.getName(), null); 
+    BehaviouralFeature bf = new BehaviouralFeature("String2" + e1.getName(), 
+                                                   pars,true,restype); 
+    bf.setOwner(new Entity("String")); // HACK
+
+    String name1 = e1.getName(); 
+    
+    Vector values1 = e1.getValues(); 
+    int s1 = values1.size(); 
+
+    String lastval = (String) values1.get(s1 - 1); 
+    BasicExpression lastvale = new BasicExpression("MM2!" + name1 + "#" + lastval); 
+    Statement code = new ReturnStatement(lastvale); 
+ 
+    for (int j = 0; j < s1-1; j++) 
+    { String val = (String) values1.get(j); 
+      BasicExpression vale = new BasicExpression("MM2!" + name1 + "#" + val); 
+      code = new ConditionalStatement(new BasicExpression("self = \"" + val + "\""), 
+                                      new ReturnStatement(vale),code); 
+    } 
+    bf.setActivity(code); 
+    return bf; 
+  } 
+
   public String initialValueJava6()  // not used? 
   { if (isSequenceType(this))
     { return "new ArrayList()"; } 
@@ -819,6 +992,48 @@ public class Type extends ModelElement
     return "0"; 
   } 
 
+  public String getJava8Definition(String packageName) 
+  { String res = "package " + packageName + ";\n\r" + 
+                 "\n\r" + 
+                 "public enum " + name + " { ";
+    for (int i = 0; i < values.size(); i++) 
+    { String val = (String) values.get(i); 
+      res = res + val; 
+      if (i < values.size() - 1)
+      { res = res + ", "; } 
+    } 
+    return res + " }\n\r\n\r"; 
+  }  
+   
+  public String getSwiftDefinition(String packageName) 
+  { String res = // "package " + packageName + ";\n\r" + 
+                 // "\n\r" + 
+                 "enum " + name + " : String { ";
+    for (int i = 0; i < values.size(); i++) 
+    { String val = (String) values.get(i); 
+      res = res + "  case " + val; 
+      if (i < values.size() - 1)
+      { res = res + "\n "; } 
+    } 
+    return res + " }\n\r\n\r"; 
+  }  
+
+  public static String nsValueOf(Attribute att) 
+  { String attname = att.getName(); 
+    Type t = att.getType(); 
+    if (t == null) 
+    { return "_x." + attname + "!"; } 
+
+    String tname = t.getName(); 
+    if ("String".equals(tname))
+    { return "_x." + attname + "! as NSString"; } 
+    else if (t.isNumeric())
+    { return "NSNumber(value: _x." + attname + "!)"; } 
+    else
+    { return "NSString(string: _x." + attname + "!)"; } 
+  } 
+
+
   public boolean isEnumeration()
   { return (values != null); } 
 
@@ -828,8 +1043,22 @@ public class Type extends ModelElement
   public boolean isString()
   { return "String".equals(getName()); } 
 
+  public boolean isNumeric()
+  { String nme = getName();
+    if ("int".equals(nme))
+    { return true; } 
+    if ("long".equals(nme))
+    { return true; } 
+    if ("double".equals(nme))
+    { return true; }
+    return false;  
+  } 
+
   public boolean isEntity()
   { return isEntity; } 
+
+  public boolean isAbstractEntity()
+  { return entity != null && entity.isAbstract(); } 
 
   public static boolean isEntityType(Type t)
   { if (t == null) 
@@ -893,6 +1122,12 @@ public class Type extends ModelElement
   { if (values == null) 
     { return false; } 
     return values.contains(st); 
+  } 
+
+  public boolean hasValue(Expression st)
+  { if (values == null) 
+    { return false; } 
+    return values.contains(st + ""); 
   } 
 
   public boolean valueClash(Vector vals)
@@ -1145,6 +1380,74 @@ public class Type extends ModelElement
     return res + ";\n\n"; 
   } 
 
+  public static BehaviouralFeature enumConversionFunctionETL(Type e1, Type e2, Vector thesaurus)
+  { String res = "  helper def: convert" + e1.getName() + "_" + e2.getName() + 
+                 "(s : MM1!" + e1.getName() + ") : MM2!" + e2.getName() + " =\n    "; 
+    String restail = ""; 
+
+    Vector pars = new Vector(); 
+    Type restype = new Type("MM2!" + e2.getName(), null); 
+    BehaviouralFeature bf = new BehaviouralFeature("convert" + e1.getName() + "_" + e2.getName(), 
+                                                   pars,true,restype); 
+    bf.setOwner(new Entity("MM1!" + e1.getName())); 
+
+    String name1 = e1.getName().toLowerCase(); 
+    String name2 = e2.getName().toLowerCase();
+    
+    Vector values1 = e1.getValues(); 
+    Vector values2 = e2.getValues(); 
+    int s1 = values1.size(); 
+    int s2 = values2.size(); 
+
+    String lastval = (String) values1.get(values1.size() - 1); 
+    double bestscore1 = 0;
+    String besttarget1 = values2.get(0) + ""; 
+ 
+    for (int j = 0; j < values2.size(); j++) 
+    { String valt = (String) values2.get(j); 
+      double namesim = ModelElement.similarity(lastval,valt); 
+      double namesemsim = Entity.nmsSimilarity(lastval,valt, thesaurus); 
+      double nsim = (namesim + namesemsim - namesim*namesemsim); 
+      if (nsim > bestscore1) 
+      { bestscore1 = nsim; 
+        besttarget1 = valt; 
+      } 
+    } 
+
+    Statement code; 
+    if (bestscore1 > 0) 
+    { code = new ReturnStatement(new BasicExpression("#" + besttarget1)); } 
+    else 
+    { code = new SequenceStatement(); } // should not occur
+
+    for (int i = 0; i < values1.size() - 1; i++) 
+    { double bestscore = 0;
+      String besttarget = values2.get(0) + ""; 
+ 
+      String val = (String) values1.get(i); 
+
+      for (int j = 0; j < values2.size(); j++) 
+      { String valt = (String) values2.get(j); 
+        double namesim = ModelElement.similarity(val,valt); 
+        double namesemsim = Entity.nmsSimilarity(val,valt, thesaurus); 
+        double nsim = (namesim + namesemsim - namesim*namesemsim); 
+        if (nsim > bestscore) 
+        { bestscore = nsim; 
+          besttarget = valt; 
+        } 
+      } 
+
+      if (bestscore > 0) 
+      { code = new ConditionalStatement(new BasicExpression("self = #" + val), 
+                                        new ReturnStatement(new BasicExpression("#" + besttarget)), 
+                                        code); 
+      }       
+    } 
+
+    bf.setActivity(code); 
+    return bf; 
+  } 
+
   public double enumBooleanSimilarity()
   { int s1 = values.size(); 
     if (s1 <= 1) 
@@ -1194,6 +1497,24 @@ public class Type extends ModelElement
     return e.isPrimitive(); 
   } 
 
+  public boolean isValueType()
+  { if (isBasicType(this)) 
+    { return true; }
+ 
+    if ("Sequence".equals(name) && elementType != null)
+    { return elementType.isValueType(); } 
+    else if ("Set".equals(name) && elementType != null)
+    { return elementType.isValueType(); } 
+
+    return false; 
+  } 
+
+  public static boolean isValueType(Type t) 
+  { if (t == null) 
+    { return false; } 
+    return t.isValueType(); 
+  } 
+
   public int typeMultiplicity()
   { String nme = getName(); 
     if (nme.equals("int") || nme.equals("double") || nme.equals("boolean") ||
@@ -1216,7 +1537,7 @@ public class Type extends ModelElement
     if (nme.equals("Map"))
     { return elementType.isMultiple(); } 
     return false; 
-  } 
+  } // Shouldn't Maps be multiple anyway? 
 
   public boolean isParsable()
   { String nme = getName(); 
@@ -1525,9 +1846,9 @@ public class Type extends ModelElement
       { return "false"; }
       if (nme.equals("int") || nme.equals("double") || nme.equals("long"))
       { return "0"; }
-      if (nme.startsWith("Set") || nme.startsWith("Sequence"))
+      if (nme.equals("Set") || nme.equals("Sequence"))
       { return "new Vector()"; }
-      if (nme.startsWith("Map")) 
+      if (nme.equals("Map")) 
       { return "new HashMap()"; } 
       return "null";    // for class types
     }
@@ -1548,14 +1869,19 @@ public class Type extends ModelElement
       { return new BasicExpression(false); }
       else if (nme.equals("int") || nme.equals("double") || nme.equals("long"))
       { return new BasicExpression(0); }
-      else if (nme.startsWith("Set") || nme.startsWith("Sequence") || nme.startsWith("Map"))
+      else if (nme.equals("Set") || nme.equals("Sequence") || nme.equals("Map"))
       { res = new SetExpression();
-        if (nme.startsWith("Sequence"))
+        if (nme.equals("Sequence"))
         { ((SetExpression) res).setOrdered(true); }
         res.setType(this); 
         res.setElementType(elemt); 
       }
-      else 
+      else if (isEntity())
+      { res = new BasicExpression("null"); 
+        res.setType(this); 
+        res.setElementType(elemt); 
+      } 
+      else // unknown type
       { res = new BasicExpression(0); } 
     }
     else 
@@ -1693,6 +2019,66 @@ public class Type extends ModelElement
     if (nme.equals("long")) { return "long"; } 
     if (values == null) { return nme; } 
     return "int";   
+  } 
+
+  public String getSwift(String elemType)
+  { String nme = getName();
+    if (nme.equals("Set")) 
+    { return "Set<" + elemType + ">"; } 
+    if (nme.equals("Sequence"))
+    { return "[" + elemType + "]"; } 
+    if (nme.equals("Map"))
+    { return "Dictionary<String, " + elemType + ">"; } 
+    if (nme.equals("String")) { return "String"; }  
+    if (nme.equals("boolean")) { return "Bool"; } 
+    if (nme.equals("int")) { return "Int"; } 
+    if (nme.equals("long")) { return "Int"; } 
+    if (nme.equals("double")) { return "Double"; } 
+    if (isEntity) { return nme; } 
+    return nme;  // enumerations 
+  } 
+
+  public String getSwift()
+  { String nme = getName();
+    if (nme.equals("String")) { return "String"; }  
+    if (nme.equals("boolean")) { return "Bool"; } 
+    if (nme.equals("int")) { return "Int"; } 
+    if (nme.equals("long")) { return "Int"; } 
+    if (nme.equals("double")) { return "Double"; } 
+    if (isEntity) { return nme; } 
+    if (isEnumeration()) { return nme; }
+
+    String elemType = elementType.getSwift();  
+    if (nme.equals("Set")) 
+    { return "Set<" + elemType + ">"; } 
+    if (nme.equals("Sequence"))
+    { return "[" + elemType + "]"; } 
+    if (nme.equals("Map"))
+    { return "Dictionary<String, " + elemType + ">"; } 
+    return nme; 
+  } 
+    
+  public String getSwiftDefaultValue()
+  { String nme = getName();
+    if (nme.equals("String")) { return "\"\""; }  
+    if (nme.equals("boolean")) { return "false"; } 
+    if (nme.equals("int")) { return "0"; } 
+    if (nme.equals("long")) { return "0"; } 
+    if (nme.equals("double")) 
+	{ return "0.0"; } 
+    if (isEntity) 
+	{ return "nil"; } 
+    if (isEnumeration()) 
+	{ return nme + "." + values.get(0); }
+
+    String elemType = elementType.getSwift();  
+    if (nme.equals("Set")) 
+    { return "Set<" + elemType + ">()"; } 
+    if (nme.equals("Sequence"))
+    { return "[]()"; } 
+    if (nme.equals("Map"))
+    { return "Dictionary<String, " + elemType + ">()"; } 
+    return "nil"; 
   } 
 
   public String getCPP(String elemType)
@@ -1960,6 +2346,40 @@ public class Type extends ModelElement
     return "Integer"; 
   }
 
+  public String getJava8()
+  { String nme = getName();
+    // String et = ""; 
+    // if (elementType != null && elementType != this) 
+    // { et = elementType.getJava7(); } 
+    // else 
+    // { et = "Object"; } 
+
+    if (nme.equals("Set"))
+    { String tname = "HashSet"; 
+      
+      if (elementType != null) 
+      { return tname + "<" + elementType.typeWrapperJava8() + ">"; } 
+      else 
+      { return tname; } 
+    } 
+
+    if (nme.equals("Sequence"))
+    { if (elementType != null) 
+      { return "ArrayList<" + elementType.typeWrapperJava8() + ">"; } 
+      else 
+      { return "ArrayList"; } 
+    } 
+
+    if (nme.equals("Map"))
+    { if (elementType != null) 
+      { return "HashMap<String, " + elementType.typeWrapperJava8() + ">"; } 
+      else 
+      { return "HashMap"; } 
+    } 
+
+    return nme;  
+  }
+
   public String typeWrapper()  // for Java4
   { String nme = getName(); 
     if (isEntity()) { return nme; } 
@@ -2021,8 +2441,44 @@ public class Type extends ModelElement
     if ("boolean".equals(nme)) { return "Boolean"; } 
     if (values != null) { return "Integer"; } 
     return nme; 
-  } 
+  } // For enumerations, would be better to represent as Java enums. 
+  
 
+  public String typeWrapperJava8()  // for Java8
+  { String nme = getName(); 
+    if (isEntity()) { return nme; } 
+
+    if ("Set".equals(nme)) 
+    { String tname = "HashSet"; 
+      // if (sorted) 
+      // { tname = "TreeSet"; } 
+      if (elementType != null) 
+      { return tname + "<" + elementType.typeWrapperJava8() + ">"; }
+      else 
+      { return tname + "<Object>"; }
+    } 
+
+    if ("Sequence".equals(nme)) 
+    { if (elementType != null) 
+      { return "ArrayList<" + elementType.typeWrapperJava8() + ">"; }
+      else 
+      { return "ArrayList<Object>"; }
+    } 
+
+    if ("Map".equals(nme)) 
+    { if (elementType != null) 
+      { return "HashMap<String, " + elementType.typeWrapperJava8() + ">"; }
+      else 
+      { return "HashMap<String, Object>"; }
+    } 
+
+    if ("int".equals(nme)) { return "Integer"; } 
+    if ("double".equals(nme)) { return "Double"; } 
+    if ("long".equals(nme)) { return "Long"; } 
+    if ("boolean".equals(nme)) { return "Boolean"; } 
+    return nme; 
+  } // For enumerations, would be better to represent as Java enums. 
+  
   /* public void asTextModel(PrintWriter out) 
   { String nme = getName(); 
     out.println(nme + " : Type"); 
@@ -2030,13 +2486,23 @@ public class Type extends ModelElement
   } */ 
 
   public void generateDeclaration(PrintWriter out)
-  { if (values != null)
-    { for (int i = 0; i < values.size(); i++)
-      { out.println("  public static final int " 
+  { String nme = getName(); 
+
+    if (values == null)
+    { return; } 
+
+    for (int i = 0; i < values.size(); i++)
+    { out.println("  public static final int " 
                    + values.get(i) + " = " + i + ";");
-      }
-      out.println();
     }
+    out.println();
+    out.println(); 
+    out.println("  public static int parse" + nme + "(String _x) {"); 
+    for (int i = 0; i < values.size(); i++) 
+    { out.println("    if (\"" + values.get(i) + "\".equals(_x)) { return " + i + "; }"); }
+    out.println("    return 0;"); 
+    out.println("  }"); 
+    out.println(); 
   }
 
   public void generateDeclarationCSharp(PrintWriter out)
@@ -2236,7 +2702,7 @@ public class Type extends ModelElement
     } 
 
     if ("Map".equals(nme))
-    { return nme + "(" + keyType + ", " + elementType + ")"; } 
+    { return nme + "(" + keyType + "," + elementType + ")"; } 
 
     return nme; 
   } 
@@ -2298,9 +2764,8 @@ public class Type extends ModelElement
       return res; 
     }   
     else 
-    { return t; } 
-    
-  } 
+    { return t; }   
+  }  // Map(String, T) composed with R is Map(String, T composed with R)? 
         
   public static int composeMultiplicities(Vector atts, String bound)
   { int res = 1; 
@@ -2317,16 +2782,91 @@ public class Type extends ModelElement
   public String cg(CGSpec cgs)
   { String typetext = this + "";
     Vector args = new Vector();
-    if (isCollectionType())
-    { args.add(elementType + ""); }
+    Vector eargs = new Vector(); 
+	
+    if (isMapType())
+    { args.add(keyType.cg(cgs)); 
+      eargs.add(keyType); 
+      if (elementType == null) 
+      { args.add("Void"); 
+        eargs.add(new Type("void", null)); 
+      } 
+      else 
+      { args.add(elementType.cg(cgs)); 
+        eargs.add(elementType); 
+      }  
+    } 
+    else if (isCollectionType())
+    { if (elementType == null) 
+	 { args.add("Void"); 
+	   eargs.add(new Type("void", null)); 
+	 } 
+	 else 
+      { args.add(elementType.cg(cgs)); 
+        eargs.add(elementType); 
+      }
+    } 
     else
-    { args.add(typetext); }
+    { args.add(typetext);
+      eargs.add(this); 
+    }
 
     CGRule r = cgs.matchedTypeUseRule(this,typetext);
+    System.out.println(">>> Matched type rule " + r + " for type " + this + " " + typetext + " " +  args); 
+	
+    if (r != null)
+    { return r.applyRule(args,eargs,cgs); }
+    return typetext;
+  }
+
+  public String cgEnum(CGSpec cgs)
+  { String typetext = this + "";
+    Vector args = new Vector();
+    String arg = ""; 
+    Vector lits = new Vector(); 
+
+    for (int i = 0; i < values.size(); i++) 
+    { String v = (String) values.get(i); 
+      EnumLiteral lit = new EnumLiteral(v); 
+      lits.add(lit); 
+    } 
+    String litstring = cgLiteralsList(lits,cgs); 
+
+    args.add(getName()); 
+    args.add(litstring); 
+
+    CGRule r = cgs.matchedEnumerationRule(this,typetext);
     if (r != null)
     { return r.applyRule(args); }
     return typetext;
   }
+
+  public String cgLiteralsList(Vector literals, CGSpec cgs)
+  { if (literals.size() == 1)
+    { EnumLiteral lit = (EnumLiteral) literals.get(0); 
+      String text = "literal " + lit;
+      Vector args = new Vector(); 
+      args.add(lit + "");  
+      CGRule r = cgs.matchedEnumerationRule(lit,text);
+      if (r != null)
+      { return r.applyRule(args); }
+      return lit + ""; 
+    } 
+    else 
+    { EnumLiteral lit1 = (EnumLiteral) literals.get(0); 
+      Vector taillits = new Vector(); 
+      taillits.addAll(literals); 
+      taillits.remove(0); 
+      String stail = cgLiteralsList(taillits,cgs); 
+      Vector args = new Vector(); 
+      args.add(lit1 + ""); 
+      args.add(stail); 
+      CGRule r = cgs.matchedEnumerationRule(literals,"");
+      if (r != null)
+      { return r.applyRule(args); }
+      return lit1 + ", " + stail; 
+    } 
+  }  
 
 
   public static void main(String[] args) 
@@ -2345,6 +2885,34 @@ public class Type extends ModelElement
  
     Type t1 = new Type("T1", v1); 
     Type t2 = new Type("T2", v2); 
-    System.out.println(Type.enumSimilarity(t1,t2)); 
+    System.out.println(Type.enumSimilarity(t1,t2));
+	
+	Type tt = new Type("Map",null); 
+	tt.setElementType(t1); 
+	
+	
+	System.out.println(tt); 
+	 
   } 
 }
+
+class EnumLiteral
+{ String value = ""; 
+
+  EnumLiteral(String v)
+  { value = v; } 
+
+  public String toString()
+  { return value; } 
+
+  public String cg(CGSpec cgs)
+  { String typetext = this + "";
+    Vector args = new Vector();
+    args.add(typetext); 
+
+    CGRule r = cgs.matchedEnumerationRule(this,typetext);
+    if (r != null)
+    { return r.applyRule(args); }
+    return typetext;
+  }
+} 

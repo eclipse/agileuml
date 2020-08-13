@@ -8,7 +8,7 @@ import javax.swing.*;
 import javax.swing.text.*;
 import javax.swing.event.*;
 
-/* K. Lano 2010-2019
+/* K. Lano 2010-2020
    
   Adapted from Oracle example of JTextPane
 
@@ -44,7 +44,7 @@ import javax.swing.event.*;
    Package: GUI
 */ 
 
-public class KM3Editor extends JFrame 
+public class KM3Editor extends JFrame implements DocumentListener
 {
     JTextPane textPane;
     AbstractDocument doc;
@@ -53,7 +53,9 @@ public class KM3Editor extends JFrame
     String newline = "\n";
     HashMap actions;
 
+    String systemName = "app"; 
     Vector entities = new Vector(); // of Entity 
+	Vector types = new Vector(); 
     Vector useCases = new Vector(); // of UseCase
 
     String ownerName = ""; 
@@ -66,7 +68,9 @@ public class KM3Editor extends JFrame
     public KM3Editor(UCDArea parent, Vector ents, Vector ucs) 
     {
         super("KM3 Editor");
+		systemName = parent.getSystemName(); 
         entities = ents; 
+		types = parent.getTypes(); 
         useCases = ucs; 
 
         classArea = parent; 
@@ -77,6 +81,7 @@ public class KM3Editor extends JFrame
         StyledDocument styledDoc = textPane.getStyledDocument();
         if (styledDoc instanceof AbstractDocument) {
             doc = (AbstractDocument) styledDoc;
+			doc.addDocumentListener(this); 
         } else {
             System.err.println("Error: invalid document");
         }
@@ -179,7 +184,7 @@ public class KM3Editor extends JFrame
       String initString[] =
                 { "Enter classes in KM3 format. Write use case postconditions as:",
                   "ContextClass::",
-                  "Condition => Effect",
+                  "Condition => Effect;",
                   "The ContextClass can be omitted, but include ::"};
 
       SimpleAttributeSet[] attrs = initAttributes(initString.length);
@@ -193,11 +198,17 @@ public class KM3Editor extends JFrame
             System.err.println("Couldn't insert initial text.");
         } */ 
 
+       String sysName = "app"; 
+	   if (systemName != null && !systemName.equals(""))
+	   { sysName = systemName; }
+	   
        try 
-       { doc.insertString(0, "package app { \n\r\n\r" , attrs[1]); 
+       { doc.insertString(0, "package " + sysName + " { \n\r\n\r" , attrs[1]); 
          for (int j = 0; j < entities.size(); j++) 
          { Entity ent = (Entity) entities.get(j); 
-           doc.insertString(doc.getLength(), ent.getKM3() + "\n\r\n\r", attrs[1]); 
+		   if (ent.isDerived()) { } 
+		   else 
+           { doc.insertString(doc.getLength(), ent.getKM3() + "\n\r\n\r", attrs[1]); } 
          }
 
 
@@ -235,14 +246,14 @@ public class KM3Editor extends JFrame
         return attrs;
     }
 
-    private HashMap createActionTable(JTextComponent textComponent) {
-        HashMap actions = new HashMap();
-        Action[] actionsArray = textComponent.getActions();
-        for (int i = 0; i < actionsArray.length; i++) {
-            Action a = actionsArray[i];
-            actions.put(a.getValue(Action.NAME), a);
-        }
-	return actions;
+    private HashMap createActionTable(JTextComponent textComponent) 
+	{ HashMap actions = new HashMap();
+      Action[] actionsArray = textComponent.getActions();
+      for (int i = 0; i < actionsArray.length; i++) 
+	  { Action a = actionsArray[i];
+        actions.put(a.getValue(Action.NAME), a);
+      }
+	  return actions;
     }
 
    public int getClassStart(String txt, int en)
@@ -257,14 +268,18 @@ public class KM3Editor extends JFrame
        if (c == '\n')
        { String ls = line.toString(); 
          String tls = ls.trim(); 
-         if (tls.startsWith("abstract class") || tls.startsWith("class"))
+         if (tls.startsWith("abstract class") || 
+             tls.startsWith("class") || 
+             tls.startsWith("usecase") || 
+             tls.startsWith("enumeration") || 
+             tls.startsWith("datatype"))
          { st = linestart; 
            // int j = tls.indexOf(':'); 
            // ownerName = tls.substring(0,j); 
            // ownerNames.add(ownerName); 
            // System.out.println(ownerNames); 
            cons.add(conbuffer.toString()); 
-           System.out.println("CLASS: " + conbuffer); 
+           // System.out.println("CLASS: " + conbuffer); 
            conbuffer = new StringBuffer();
            conbuffer.append(tls); 
          } 
@@ -287,8 +302,49 @@ public class KM3Editor extends JFrame
     private Action getActionByName(String name) {
         return (Action) actions.get(name);
     }
+	
+	public void changedUpdate(DocumentEvent e)
+	{ int offset = e.getOffset(); 
+	  int pos = textPane.getCaretPosition();
+      // System.out.println("Update event at: " + offset + " " + pos); 
+	}
 
-  class CheckAction extends AbstractAction
+	public void insertUpdate(DocumentEvent e)
+	{ int offset = e.getOffset(); 
+	  int pos = textPane.getCaretPosition();
+	  try 
+	  { String ch = textPane.getText(pos,1); 
+	    // System.out.println("Insert event at: " + offset + " " + pos + " " + textPane.getText(pos,1)); 
+         String txt = textPane.getText(0,pos); 
+         Vector errors = new Vector();
+		 Vector colours = new Vector();  
+         if ("}".equals(ch) || ")".equals(ch) || "]".equals(ch))
+		 { int posb = Compiler2.matchPrecedingBracket(ch,txt,errors,colours);
+		// System.out.println("Preceding bracket at: " + posb); 
+           if (posb < 0) 
+           { messageArea.append("No matching opening bracket for " + ch + "!\n"); } 
+           else 
+           { if (errors.size() > 0)
+             { String err = (String) errors.get(0); 
+         
+               messageArea.append(err + "\n\r");
+               Color colr = (Color) colours.get(0);   
+               if (colr == Color.red)
+               { textPane.setSelectedTextColor(colr); }  
+		  // textPane.setCaretPosition(pos);
+             } 
+            }
+          } 
+	   } catch (Exception _e) { } 
+    }
+
+	public void removeUpdate(DocumentEvent e)
+	{ int offset = e.getOffset(); 
+	  int pos = textPane.getCaretPosition();
+      // System.out.println("Remove event at: " + offset + " " + pos); 
+	}
+
+  class CheckAction extends javax.swing.AbstractAction
   { public CheckAction()
     { super("Check"); }
 
@@ -303,23 +359,56 @@ public class KM3Editor extends JFrame
         txt = textPane.getText(st, pos-st); 
         comp.nospacelexicalanalysis(txt);
 
-        Vector ents = new Vector(); 
-        Vector typs = new Vector(); 
+        // Vector ents = new Vector(); 
+        // Vector typs = new Vector(); 
         Vector pregens = new Vector(); 
         Vector preassocs = new Vector(); 
+        Vector errors = new Vector(); 
 
-        Object cls = comp.parseKM3classifier(ents,typs,pregens,preassocs);
+        Object cls = comp.parseKM3classifier(entities,types,pregens,preassocs,errors);
         // classArea.processKM3(ents,typs,pregens,preassocs,items); 
 
-        if (cls != null) 
-        { System.out.println("PARSED " + cls); 
-          textPane.setSelectedTextColor(Color.green); 
+        if (cls != null && errors.size() == 0) 
+        { if (cls instanceof Entity) 
+          { Entity clsx = (Entity) cls; 
+		  
+		    for (int q = 0; q < preassocs.size(); q++) 
+            { PreAssociation pa = (PreAssociation) preassocs.get(q);  
+              Entity e1 =
+                (Entity) ModelElement.lookupByName(pa.e1name,entities);
+              Entity e2 =
+                (Entity) ModelElement.lookupByName(pa.e2name,entities);
+      
+	          // if (e1 == null)
+			  // { e1 = (Entity) cls; }
+              // Association ast = e1.getDefinedRole(pa.role2); 
+			  // if (ast == null) 
+			  Association ast = new Association(clsx,e2,pa.role2);   
+              ast.setEntity1(clsx); 
+              ast.setEntity2(e2); 
+			  clsx.addAssociation(ast); 
+			  
+			  ast.updateAssociation(pa.card1, pa.card2, pa.role1, pa.role2, pa.stereotypes);   
+            } 
+            System.out.println("PARSED class:\n" + clsx.getKM3()); 
+		  }
+          else if (cls instanceof UseCase)     
+          { System.out.println("PARSED use case:\n" + ((UseCase) cls).getKM3()); } 
+          else 
+          { System.out.println("PARSED classifier:\n" + cls); } 
+		  
+          textPane.setSelectedTextColor(Color.green);  
         } 
         else 
-        { System.out.println("SYNTAX errors in class"); 
-          textPane.setSelectedTextColor(Color.red); 
-        } 
-
+        { System.out.println("SYNTAX errors in classifier!"); 
+          textPane.setSelectedTextColor(Color.red);
+          for (int i = 0; i < errors.size(); i++) 
+          { Vector err = (Vector) errors.get(i); 
+            for (int j = 0; j < err.size(); j++) 
+            { messageArea.append(err.get(j) + "\n\r"); }  
+            messageArea.append("\n\r"); 
+		  }  
+        }
 
         /* comp.checkSyntax(owner,entities,antesymbs,messages); 
         if (messages.size() > 0)

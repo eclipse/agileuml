@@ -1,7 +1,7 @@
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -13,6 +13,7 @@ import java.util.Vector;
 public class ObjectTemplateExp extends TemplateExp
 { Entity referredClass;
   Vector part = new Vector(); // PropertyTemplateItem
+  boolean leastchange = false; 
 
   public ObjectTemplateExp(Attribute att, Expression ex, Entity e)
   { super(att,ex); 
@@ -24,6 +25,9 @@ public class ObjectTemplateExp extends TemplateExp
     referredClass = e; 
   }
 
+  public void setLeastChange(boolean lc) 
+  { leastchange = lc; } 
+
   public Object clone()
   { Expression wclone = null; 
     if (where != null) 
@@ -33,6 +37,7 @@ public class ObjectTemplateExp extends TemplateExp
     { PropertyTemplateItem pti = (PropertyTemplateItem) part.get(i); 
       res.addpart((PropertyTemplateItem) pti.clone()); 
     } 
+    res.leastchange = leastchange; 
     return res; 
   } 
 
@@ -212,13 +217,14 @@ public class ObjectTemplateExp extends TemplateExp
     return true; 
   } 
 
-  public Expression toGuardCondition(Vector bound, Expression contextObj, Expression post)
+  public Expression toGuardCondition(Vector bound, Expression contextObj, Expression post, 
+                                     Entity tr)
   { Expression res = new BasicExpression(true);
  
     String bind = bindsTo.getName(); 
         
     boolean alreadybound = bound.contains(bind); 
-    System.out.println("BOUND = " + bound + " BINDS TO= " + bindsTo); 
+    // System.out.println("BOUND = " + bound + " BINDS TO= " + bindsTo); 
     
     res = Expression.simplify("&",where,post,null);
 
@@ -228,7 +234,10 @@ public class ObjectTemplateExp extends TemplateExp
       res = p.toGuardCondition(bound, contextObj, res);
     }
 
-    Expression btexp = new BasicExpression(bindsTo);
+    BasicExpression btexp = new BasicExpression(bindsTo);
+    btexp.setUmlKind(Expression.ROLE);
+    btexp.setEntity(tr); 
+ 
     // Expression scope = new BasicExpression(referredClass);
     // Expression decl = new BinaryExpression(":", btexp, scope); 
     // res = Expression.simplify("&",decl,res,null);
@@ -259,13 +268,64 @@ public class ObjectTemplateExp extends TemplateExp
       res = Expression.simplify("&",res,pexp,null);
     }
 
-    res = Expression.simplify("&",res,where,null);
+    Expression fwhere = filterWhereSource(bound,where); 
+    res = Expression.simplify("&",res,fwhere,null);
     // Expression btexp = new BasicExpression(bindsTo);
     // Expression scope = new BasicExpression(referredClass);
     // Expression decl = new BinaryExpression(":", btexp, scope); 
     // res = Expression.simplify("&",decl,res,null);
     return res;
   }
+
+  private Expression filterWhereSource(Vector bound,Expression expr) 
+  { if (expr == null) 
+    { return null; } 
+
+    // bindsTo.f = e only permitted if variables of e are subset of bound. 
+    // Likewise for e : bindsTo.f, etc 
+
+    if (expr instanceof BinaryExpression) 
+    { BinaryExpression be = (BinaryExpression) expr; 
+      if (be.getOperator().equals("&"))
+      { Expression eleft = filterWhereSource(bound, be.getLeft()); 
+        Expression eright = filterWhereSource(bound, be.getRight()); 
+        return Expression.simplify("&", eleft, eright,null); 
+      } 
+      else if (be.getOperator().equals("!"))
+      { BinaryExpression eleft = (BinaryExpression) be.getLeft(); 
+        Vector newbound = new Vector(); 
+        newbound.add(eleft.getLeft() + ""); 
+        newbound.addAll(bound); 
+        Expression fleft = filterWhereSource(bound, eleft); 
+        Expression eright = be.getRight(); 
+        Expression fright = filterWhereSource(newbound, eright); 
+        if (fright == null) { return null; } 
+        if (fleft == null) { return null; } 
+        return new BinaryExpression("!", fleft, fright); 
+      } // and for =>, etc
+      else 
+      { Vector invars = expr.innermostVariables(); 
+        if (bound.containsAll(invars))
+        { return expr; } 
+        else 
+        { System.err.println("!! Template where " + expr + " uses unbound variables " + 
+                             invars + " not in " + bound); 
+          return null; 
+        } 
+      }  
+    } 
+    else 
+    { Vector invars = expr.innermostVariables(); 
+      if (bound.containsAll(invars))
+      { return expr; } 
+      else 
+      { System.err.println("!! Template where " + expr + " uses unbound variables " + 
+                             invars + " not in " + bound); 
+        return null; 
+      } 
+    }  
+  }
+  
 
   public Expression toUMLRSDSantecedent()
   { Vector bnd = new Vector(); 
@@ -324,7 +384,44 @@ public class ObjectTemplateExp extends TemplateExp
 
     Expression scope = new BasicExpression(referredClass);
     Expression decl = new BinaryExpression(":", btexp, scope); 
-    res = new BinaryExpression("#", decl, res);
+    if (leastchange) 
+    { res = new BinaryExpression("#LC", decl, res); } 
+    else 
+    { res = new BinaryExpression("#", decl, res); } 
+
+    // System.out.println("TARGET ACTION for " + this + " IS " + res); 
+
+    return res;
+  }
+
+  public Expression toUndoExpression(Vector bound, Expression contextObj, Expression setting)
+  { Expression res = setting; 
+    Expression btexp = new BasicExpression(bindsTo);
+    boolean alreadybound = bound.contains(bindsTo + ""); 
+    // System.out.println("BOUND = " + bound + " " + bindsTo); 
+
+    if (alreadybound) { } 
+    else 
+    { bound.add(bindsTo + ""); } 
+
+    for (int i = 0; i < part.size(); i++)
+    { PropertyTemplateItem p = (PropertyTemplateItem) part.get(i);
+      p.setEntity(referredClass);
+      Expression pexp = p.toUndoExpression(bound, btexp,null);
+      res = Expression.simplify("&",res,pexp,null);
+    }
+
+    // res = Expression.simplify("&",res,where,null);
+
+    if (alreadybound)    
+    { return res; } 
+
+    /* Expression scope = new BasicExpression(referredClass);
+    Expression decl = new BinaryExpression(":", btexp, scope); 
+    if (leastchange) 
+    { res = new BinaryExpression("#LC", decl, res); } 
+    else 
+    { res = new BinaryExpression("#", decl, res); } */ 
 
     // System.out.println("TARGET ACTION for " + this + " IS " + res); 
 
@@ -352,7 +449,11 @@ public class ObjectTemplateExp extends TemplateExp
     { return res; } 
     Expression scope = new BasicExpression(referredClass);
     Expression decl = new BinaryExpression(":", btexp, scope); 
-    res = new BinaryExpression("#", decl, res);
+
+    if (leastchange) 
+    { res = new BinaryExpression("#LC", decl, res); } 
+    else 
+    { res = new BinaryExpression("#", decl, res); } 
 
     // System.out.println("TARGET ACTION for " + this + " IS " + res); 
     return res;
@@ -361,6 +462,9 @@ public class ObjectTemplateExp extends TemplateExp
 
   public String toString()
   { String res = bindsTo + " : " + referredClass + " { ";
+    if (leastchange) 
+    { res = bindsTo + " <:= " + referredClass + " { "; } 
+
     for (int i = 0; i < part.size(); i++)
     { PropertyTemplateItem p = (PropertyTemplateItem) part.get(i);
       res = res + p;

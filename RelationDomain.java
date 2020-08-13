@@ -1,7 +1,7 @@
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -123,17 +123,23 @@ public class RelationDomain extends Domain
     return res; 
   }
 
-  public Expression toGuardCondition(Vector bound, Expression post)
-  { Expression contextObj = new BasicExpression(rootVariable);
+  public Expression toGuardCondition(Vector bound, Expression post, Entity tr)
+  { BasicExpression contextObj = new BasicExpression(rootVariable);
+    contextObj.setUmlKind(Expression.ROLE); 
+    contextObj.setEntity(tr); // it is a property of the trace entity
+
     // This should be bound, ie, in the call that is being guarded. 
 
     if (isCheckable)
     { bound.add(rootVariable.getName()); } 
 
-    Expression res = pattern.toGuardCondition(bound, contextObj, post); 
+    Expression res = pattern.toGuardCondition(bound, contextObj, post, tr); 
+    // res.setBrackets(true); 
+
     if (pattern != null && pattern.templateExpression != null &&
         (pattern.templateExpression instanceof ObjectTemplateExp))
-    { Expression btexp = new BasicExpression(rootVariable);
+    { BasicExpression btexp = new BasicExpression(rootVariable);
+      btexp.setUmlKind(Expression.ROLE); 
       Expression scope = 
         new BasicExpression(((ObjectTemplateExp) pattern.templateExpression).referredClass);
       Expression decl = new BinaryExpression(":", btexp, scope); 
@@ -146,6 +152,12 @@ public class RelationDomain extends Domain
   { Expression contextObj = new BasicExpression(rootVariable);
     BasicExpression be = new BasicExpression(true);
     return pattern.toTargetExpression(bound, contextObj, be);
+  }
+
+  public Expression toUndoExpression(Vector bound)
+  { Expression contextObj = new BasicExpression(rootVariable);
+    BasicExpression be = new BasicExpression(true);
+    return pattern.toUndoExpression(bound, contextObj, be);
   }
 
   public Expression toSourceExpressionOp(Vector bound)

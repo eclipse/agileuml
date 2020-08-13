@@ -1,7 +1,7 @@
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -56,6 +56,10 @@ public class PrimitiveDomain extends Domain
   { return new BasicExpression(true);
   }
 
+  public Expression toUndoExpression(Vector bound)
+  { return new BasicExpression(true);
+  }
+
   public Expression toSourceExpressionOp(Vector bound)
   { return new BasicExpression(true); }
 
@@ -63,7 +67,7 @@ public class PrimitiveDomain extends Domain
   { return new BasicExpression(true);
   }
 
-  public Expression toGuardCondition(Vector bound, Expression e) 
+  public Expression toGuardCondition(Vector bound, Expression e, Entity tr) 
   { return new BinaryExpression(rootVariable); 
     // not needed if variable is bound? 
   }

@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.*;
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -29,9 +29,15 @@ public class UseCase extends ModelElement
   SequenceStatement classifierBehaviour = new SequenceStatement();
   Statement activity = null; 
 
+  Vector extendsList = new Vector(); // of String. Resolve for:
   Vector extend = new Vector(); // Extend objects pointing to extension use cases 
     // should be called "extensions", it is not the "extend" in the UML metamodel
+  Vector extensionOf = new Vector(); // The UseCases which this extends
+
+  Vector includesList = new Vector(); // String. to resolve:
   Vector include = new Vector(); // Include objects of this use case
+  Vector includedIn = new Vector(); // The UseCases which include this
+  
   boolean generic = false; 
   boolean derived = false; 
   UseCase superclass = null; 
@@ -52,7 +58,10 @@ public class UseCase extends ModelElement
     classifier.addStereotype("derived"); 
     operation = new BehaviouralFeature(nme); 
     operation.addStereotype("derived"); 
+    operation.setResultType(new Type("void",null)); 
     operation.addStereotype("auxiliary"); 
+    operation.setPrecondition(new BasicExpression(true)); 
+    operation.setPostcondition(new BasicExpression(true)); 
     classifier.addOperation(operation); 
   }
 
@@ -64,8 +73,12 @@ public class UseCase extends ModelElement
     classifier.addStereotype("derived"); 
     BehaviouralFeature bf = new BehaviouralFeature(nme); 
     bf.addStereotype("derived"); 
+    bf.setResultType(new Type("void",null)); 
     classifier.addOperation(bf); 
     operation = bf; 
+    operation.addStereotype("auxiliary"); 
+    operation.setPrecondition(new BasicExpression(true)); 
+    operation.setPostcondition(new BasicExpression(true)); 
   }
 
   public void setResultType(Type et)
@@ -86,6 +99,15 @@ public class UseCase extends ModelElement
   public Type getElementType()
   { return elementType; }
 
+  public Attribute getResultParameter()
+  { if (resultType != null) 
+    { Attribute res = new Attribute("result", resultType, ModelElement.INTERNAL); 
+      res.setElementType(elementType); 
+      return res; 
+    }
+    return null; 
+  } 
+
   public Entity getClassifier() 
   { return classifier; } 
 
@@ -105,12 +127,25 @@ public class UseCase extends ModelElement
       classifier.setName(ename); 
     } 
   } 
+  
+  public void setEntity(Entity e)
+  { ent = e; }  
+  // Associated entity: use case only updates features of ent. 
+  
+  public Entity getEntity() 
+  { return ent; }
 
   public int ruleCount() 
   { return orderedPostconditions.size(); } 
 
   public int operationsCount() 
   { return ownedOperations.size(); } 
+
+  public void addParameter(String nme, Type typ) 
+  { Attribute par = new Attribute(nme, typ, ModelElement.INTERNAL); 
+    par.setElementType(typ.getElementType()); 
+    parameters.add(par); 
+  } 
 
   public Object clone()
   { UseCase uc = new UseCase(getName(), ent); // copies the classifier
@@ -182,6 +217,22 @@ public class UseCase extends ModelElement
 
   public boolean isBx() 
   { return bx; } 
+
+  public boolean isDependent()
+  { return extensionOf.size() > 0 || includedIn.size() > 0; } 
+
+  public boolean isIndependent()
+  { return extensionOf.size() == 0 && includedIn.size() == 0; } 
+
+  public boolean isPrivate()
+  { return hasStereotype("private"); } 
+
+  public boolean isPublic()
+  { if (isPrivate()) 
+    { return false; } 
+    return true; 
+  } 
+
 
   public void setParameters(Vector pars)
   { parameters = pars; 
@@ -308,6 +359,12 @@ public class UseCase extends ModelElement
     ownedAttribute.addAll(atts); 
     classifier.setAttributes(atts); 
   } // must all be set to PUBLIC class scope. 
+
+  public void addAttribute(String nme, Type typ) 
+  { Attribute par = new Attribute(nme, typ, ModelElement.INTERNAL); 
+    par.setElementType(typ.getElementType()); 
+    addAttribute(par); 
+  } 
 
   public void addAttribute(Attribute att)
   { removeAttribute(att.getName()); 
@@ -467,6 +524,40 @@ public class UseCase extends ModelElement
   public Vector getPreconditions()
   { return preconditions; } 
 
+  public void addExtends(String ext) 
+  { if (extendsList.contains(ext)) { } 
+    else 
+    { extendsList.add(ext); } 
+  } 
+
+  public void addIncludes(String ext) 
+  { if (includesList.contains(ext)) { } 
+    else 
+    { includesList.add(ext); } 
+  } 
+
+  public void addExtensionOf(UseCase base)
+  { extensionOf.add(base); } 
+
+  public void removeExtensionOf(UseCase base)
+  { extensionOf.remove(base); } 
+
+  public void addIncludedIn(UseCase base)
+  { includedIn.add(base); } 
+
+  public void removeIncludedIn(UseCase base)
+  { includedIn.remove(base); } 
+
+  public Vector cwr(Vector assocs)
+  { Vector res = new Vector(); 
+    for (int i = 0; i < orderedPostconditions.size(); i++) 
+    { ConstraintOrGroup cns = 
+        (ConstraintOrGroup) orderedPostconditions.get(i); 
+      res = VectorUtil.union(res,cns.cwr(assocs)); 
+    } 
+    return res; 
+  } 
+
   public Vector wr(Vector assocs)
   { Vector res = new Vector(); 
     for (int i = 0; i < orderedPostconditions.size(); i++) 
@@ -485,6 +576,17 @@ public class UseCase extends ModelElement
       res = VectorUtil.union(res,cns.readFrame()); 
     } 
     return res; 
+  } 
+
+  public Entity findEntity(Vector entities, Vector assocs)
+  { Vector readents = new Vector(); 
+    Vector wrents = new Vector(); 
+    classDependencies(entities,assocs,readents,wrents); 
+    if (wrents.size() > 0) 
+    { ent = (Entity) wrents.get(0); 
+      return ent; 
+    } 
+    return null; 
   } 
 
   public void classDependencies(Vector entities, Vector assocs, Vector readents, Vector writtenents)
@@ -524,7 +626,8 @@ public class UseCase extends ModelElement
     System.out.println(""); 
     System.out.println("Use case " + this + " reads entities: " + readents); 
     System.out.println("Use case " + this + " writes entities: " + writtenents); 
-    System.out.println(""); 
+    System.out.println("Associated entity: " + ent + " should be the only written entity.");
+    System.out.println();  
   } 
     
   public void addStatement(Statement stat)
@@ -534,6 +637,15 @@ public class UseCase extends ModelElement
   { // ext.extension /: uc1.extend.extension for any other uc1, and 
     // ext.extension /: uc1.include.addition for any other uc1
     extend.add(ext);
+  } 
+
+  public Vector extensionUseCases()
+  { Vector res = new Vector(); 
+    for (int i = 0; i < extend.size(); i++) 
+    { Extend ext = (Extend) extend.get(i); 
+      res.add(ext.extension); 
+    } 
+    return res; 
   } 
 
   public void addInclude(Include ext)
@@ -589,6 +701,37 @@ public class UseCase extends ModelElement
       { return true; } 
     } 
     return false; 
+  } 
+
+  public void resolveExtendsIncludes(Vector useCases, UCDArea ucdArea)
+  { for (int i = 0; i < includesList.size(); i++) 
+    { String nme = (String) includesList.get(i); 
+	  UseCase ucinc = (UseCase) ModelElement.lookupByName(nme,useCases); 
+
+      if (ucinc == null) 
+      { System.err.println("Invalid use case name: " + nme); } 
+      else 
+	  { Include ee = new Include(this,ucinc); 
+        addInclude(ee);  
+	    ucinc.addIncludedIn(this); 
+        ucdArea.drawDependency(this, ucinc, "<<include>>"); 
+      }
+	} 
+	
+    for (int j = 0; j < extendsList.size(); j++) 
+	{ String nme = (String) extendsList.get(j); 
+	  UseCase ucext = (UseCase) ModelElement.lookupByName(nme,useCases); 
+
+      if (ucext == null) 
+      { System.err.println("Invalid use case name: " + nme); } 
+      else
+	  { Extend ee = new Extend(this,ucext); 
+        addExtension(ee);  
+	    ucext.addExtensionOf(this); 
+        // Draw dashed line from ucext to uc
+        ucdArea.drawDependency(ucext, this, "<<extend>>"); 
+      }
+    }
   } 
 
   public void analyseConstraints(Vector types, Vector entities, Vector assocs) 
@@ -684,8 +827,8 @@ public class UseCase extends ModelElement
           // JOptionPane.showMessageDialog(null, "Constraint " + inv + "\n is of type 1", 
           //                    "Constraint analysis",
           //                    JOptionPane.INFORMATION_MESSAGE);  
-          System.out.println("Implementation by bounded loop.\n"  + 
-                             "Syntactic check for confluence & correctness."); 
+          System.out.println(">-> Implementation by bounded loop.\n"  + 
+                             ">-> Syntactic check for confluence & correctness."); 
           constraintType = 1; 
           inv.setConstraintKind(1); 
         } 
@@ -695,7 +838,7 @@ public class UseCase extends ModelElement
         if (owner == null) 
         { constraintType = 0;
           inv.setConstraintKind(0);   
-          System.out.println("Owner is null; bounded loop will be used."); 
+          System.out.println(">-> Owner is null; bounded loop will be used."); 
           if (oldConstraintType > 1)
           { System.out.println("But a bounded loop may not be sufficient!"); }  
         } 
@@ -709,7 +852,7 @@ public class UseCase extends ModelElement
     }
 
     Vector res = allPreTerms(); 
-    System.out.println("All pre-terms: " + res); 
+    System.out.println(">-> All pre-terms: " + res); 
   }   // no analysis of groups? 
    
 
@@ -929,6 +1072,33 @@ public class UseCase extends ModelElement
       // System.out.println("Required parameters for code = " + newparms);  
       addStatement(stat); 
     } 
+  }   
+
+  public void identifyInputsOutputs(Vector assocs)
+  { // assume analyseDependencies has already been done, and derived = false
+  
+    Vector newparms = new Vector();
+    newparms.addAll(parameters); 
+  
+    Vector inputs = new Vector(); // written and read
+	Vector outputs = new Vector(); // only written
+
+    for (int i = 0; i < orderedPostconditions.size(); i++) 
+    { ConstraintOrGroup cc = (ConstraintOrGroup) orderedPostconditions.get(i); 
+      Vector ccrd = cc.readFrame(); 
+	  Vector ccwr = cc.wr(assocs); 
+	  DataDependency dd = cc.getDataFlows();
+        System.out.println("Data flows for " + cc + " are: " + dd); 
+       // DataDependency dd = cc.rhsDataDependency(); 
+	  System.out.println(">> read in constraint " + i + " = " + ccrd); 
+	  System.out.println(">> written in constraint " + i + " = " + ccwr);
+	  System.out.println(">> Data-dependencies: " + dd);  
+	}
+
+        // owner.setActivity(stat); 
+     newparms.addAll(ownedAttribute); // and result
+     System.out.println(">>> Parameters = " + newparms); 
+      // System.out.println("Type-checking " + stat + " with " + newparms); 
   }   
 
   public UseCase instantiate(Vector parvals, Vector types, Vector entities,
@@ -2155,7 +2325,12 @@ public void generateCUIcode(PrintWriter out)
       out.print(par.getName() + " " + par.getType() + " "); 
     }  // missing initial values 
     out.println();  
-    out.println(incremental);
+
+    String stereos = incremental + "";
+    for (int h = 0; h < stereotypes.size(); h++) 
+    { stereos = stereos + " " + stereotypes.get(h); } 
+ 
+    out.println(stereos);
     out.println();  
     out.println();  
 
@@ -2360,6 +2535,72 @@ public void generateCUIcode(PrintWriter out)
     }  
   }  
 
+
+  public Statement implementBehaviour(Vector types, Vector entities)
+  { System.out.println(">>> Activity = " + classifierBehaviour); 
+
+    if (classifierBehaviour != null) 
+    { java.util.Map env = new java.util.HashMap(); 
+
+      Statement stat; 
+      if (bx) 
+      { stat = classifierBehaviour.statLC(env,false); } 
+      else 
+      { stat = classifierBehaviour.generateDesign(env,false); } 
+
+      System.out.println(">>> Activity = " + stat); 
+ 
+      Vector newparams = new Vector(); 
+      newparams.addAll(parameters); 
+      if (resultType != null) 
+      { Attribute att = new Attribute("result",resultType,ModelElement.INTERNAL); 
+        att.setElementType(elementType); 
+        newparams.add(att);
+      }
+      Vector contexts = new Vector(); 
+      newparams.addAll(ownedAttribute); 
+
+      Statement newstat = stat; 
+
+      if (activity != null) 
+      { newstat = new SequenceStatement(); 
+        ReturnStatement returnstat = null; 
+        if (resultType != null && !("void".equals(resultType + "")))
+        { Attribute att = new Attribute("result",resultType,ModelElement.INTERNAL); 
+          att.setElementType(elementType);
+	     CreationStatement cres = new CreationStatement(resultType + "", "result");
+	     cres.setInstanceType(resultType);
+	     cres.setElementType(elementType);   
+	     ((SequenceStatement) newstat).addStatement(cres);
+	     returnstat = new ReturnStatement(new BasicExpression(att));   
+        }
+        ((SequenceStatement) newstat).addStatement(stat); 
+        Statement actstat = activity.generateDesign(env,false); 
+        ((SequenceStatement) newstat).addStatement(actstat); 
+	   if (returnstat != null) 
+	   { ((SequenceStatement) newstat).addStatement(returnstat); }
+      }
+      else if (resultType != null && !("void".equals(resultType + "")))
+      { newstat = new SequenceStatement(); 
+        Attribute att = new Attribute("result",resultType,ModelElement.INTERNAL); 
+        att.setElementType(elementType);
+	   CreationStatement cres = new CreationStatement(resultType + "", "result");
+	   cres.setInstanceType(resultType);
+	   cres.setElementType(elementType);   
+	   ((SequenceStatement) newstat).addStatement(cres);
+        ((SequenceStatement) newstat).addStatement(stat); 
+	   ReturnStatement returnstat = null; 
+         returnstat = new ReturnStatement(new BasicExpression(att));   
+	   ((SequenceStatement) newstat).addStatement(returnstat);
+      }
+        
+      
+      newstat.typeCheck(types,entities,contexts,newparams); 
+      return newstat; 
+    } 
+    return new SequenceStatement(); 
+  } 
+
   public void saveKM3(PrintWriter out, Vector saved)
   { // if (derived) { return; } 
 
@@ -2391,53 +2632,69 @@ public void generateCUIcode(PrintWriter out)
     if (saved.contains(nme)) { }     
     else 
     { out.println("  usecase " + nme + " {");
-      for (int i = 0; i < parameters.size(); i++) 
-      { Attribute par = (Attribute) parameters.get(i); 
-        out.println("    parameter " + par.getName() + ";");  
-      }  // and result
-
-      out.println();
          
       for (int i = 0; i < inclist.size(); i++) 
       { out.println("    includes " + inclist.get(i) + ";"); }  
     
+      for (int i = 0; i < extlist.size(); i++) 
+      { out.println("    extends " + extlist.get(i) + ";"); }  
+
       saved.add(nme); 
     
-      /* for (int i = 0; i < ownedAttribute.size(); i++) 
+      for (int i = 0; i < parameters.size(); i++) 
+      { Attribute par = (Attribute) parameters.get(i); 
+        out.println("    parameter " + par.getName() + " : " + par.getType() + ";");  
+      }  // and result
+
+      out.println();
+      
+      for (int i = 0; i < stereotypes.size(); i++) 
+      { String stereo = (String) stereotypes.get(i); 
+        out.println("  stereotype " + stereo + ";"); 
+      }
+
+      out.println();
+      
+	  
+      for (int i = 0; i < ownedAttribute.size(); i++) 
       { Attribute par = (Attribute) ownedAttribute.get(i); 
-        par.saveModelData(out); 
-      }  
-      out.println();  
-      out.println();  
-      out.println();  
+        out.println("    attribute " + par.getName() + " : " + par.getType() + ";");  
+      }  // and result
 
-      for (int i = 0; i < ownedOperations.size(); i++) 
-      { BehaviouralFeature op = (BehaviouralFeature) ownedOperations.get(i); 
-        String opid = op.saveModelData(out,classifier,entities,types);
-        out.println(opid + " : " + nme + ".ownedOperation");  
-      } 
-
+      out.println();
+      
 
       for (int i = 0; i < preconditions.size(); i++) 
       { Constraint con = (Constraint) preconditions.get(i); 
-        String preid = con.saveModelData(out);
-        out.println(preid + " : " + nme + ".assumptions");  
-      }  */ 
+        Expression ante = con.antecedent(); 
+        Expression succ = con.succedent(); 
+        if (ante == null || "true".equals(ante + ""))
+        { out.println("  precondition " + succ + ";"); } 
+        else 
+        { out.println("  precondition " + ante + " => " + succ + ";"); }  
+      }  
 
+      out.println(); 
+	  
       for (int i = 0; i < orderedPostconditions.size(); i++) 
       { ConstraintOrGroup con = (ConstraintOrGroup) orderedPostconditions.get(i); 
         con.saveKM3(out);
         out.println();  
       } 
+	  
+	  if (activity != null) 
+	  { out.println("  activity: ");  
+	    out.println("    " + activity + ";"); 
+	  }
 
-      /* for (int i = 0; i < constraints.size(); i++) 
-      { Constraint con = (Constraint) constraints.get(i); 
-        String invid = con.saveModelData(out);
-        out.println(invid + " : " + nme + ".constraint");  
-      }  */ 
       out.println("  }"); 
     } 
   }  
+
+  public String getKM3()
+  { Vector saved = new Vector(); 
+    return getKM3(saved); 
+  } 
 
   public String getKM3(Vector saved)
   { // if (derived) { return; } 
@@ -2471,18 +2728,36 @@ public void generateCUIcode(PrintWriter out)
     if (saved.contains(nme)) { }     
     else 
     { res = res + "  usecase " + nme + " {\n";
-      for (int i = 0; i < parameters.size(); i++) 
-      { Attribute par = (Attribute) parameters.get(i); 
-        res = res + "    parameter " + par.getName() + ";\n";  
-      }  // and result
-
-      res = res + "\n";
          
       for (int i = 0; i < inclist.size(); i++) 
       { res = res + "    includes " + inclist.get(i) + ";\n"; }  
     
+      for (int i = 0; i < extlist.size(); i++) 
+      { res = res + "    extends " + extlist.get(i) + ";\n"; }  
+
       saved.add(nme); 
     
+      res = res + "\n"; 
+	  
+      for (int i = 0; i < parameters.size(); i++) 
+      { Attribute par = (Attribute) parameters.get(i); 
+        res = res + "    parameter " + par.getName() + " : " + par.getType() + ";\n";  
+      }  // and result
+
+      res = res + "\n";
+
+      for (int i = 0; i < stereotypes.size(); i++) 
+      { String stereo = (String) stereotypes.get(i); 
+        res = res + "  stereotype " + stereo + ";\n\r"; 
+      }
+
+      res = res + "\n";
+
+      for (int i = 0; i < ownedAttribute.size(); i++) 
+      { Attribute par = (Attribute) ownedAttribute.get(i); 
+        res = res + "    attribute " + par.getName() + " : " + par.getType() + ";\n";  
+      }  // and result
+
       /* for (int i = 0; i < ownedAttribute.size(); i++) 
       { Attribute par = (Attribute) ownedAttribute.get(i); 
         par.saveModelData(out); 
@@ -2497,17 +2772,30 @@ public void generateCUIcode(PrintWriter out)
         out.println(opid + " : " + nme + ".ownedOperation");  
       } 
 
-
+       */ 
+	   
       for (int i = 0; i < preconditions.size(); i++) 
       { Constraint con = (Constraint) preconditions.get(i); 
-        String preid = con.saveModelData(out);
-        out.println(preid + " : " + nme + ".assumptions");  
-      }  */ 
+        // String preid = con.saveModelData(out);
+        Expression ante = con.antecedent(); 
+        Expression succ = con.succedent(); 
+        if (ante == null || "true".equals(ante + ""))
+        { res = res + " precondition " + succ + ";\n"; } 
+        else 
+        { res = res + " precondition " + ante + " => " + succ + ";\n"; } 
+      }  
+	  
+	  res = res + "\n"; 
 
       for (int i = 0; i < orderedPostconditions.size(); i++) 
       { ConstraintOrGroup con = (ConstraintOrGroup) orderedPostconditions.get(i); 
         res = res + con.getKM3() + "\n";
       } 
+
+      if (activity != null) 
+      { res = res + "  activity:\n ";  
+        res = res + "    " + activity + ";\n"; 
+      }
 
       /* for (int i = 0; i < constraints.size(); i++) 
       { Constraint con = (Constraint) constraints.get(i); 
@@ -2720,9 +3008,9 @@ public void generateCUIcode(PrintWriter out)
 
     String res = dec + "\n\r" + sets + "\n\r" +
       "<html>\n\r" +
-      "<head><title>" + op + " results</title></head>\n\r" +
+      "<head><title>" + op + " Results</title></head>\n\r" +
       "<body>\n\r" +
-      "<h1>" + op + " results</h1>\n\r" +
+      "<h1>" + op + " Results</h1>\n\r" +
       "<% Iterator " + bean + "s = " + bean + "." + op +
       "(); %>\n\r" +
       "<table border=\"1\">\n\r" +
@@ -2756,9 +3044,9 @@ public void generateCUIcode(PrintWriter out)
     //     action.equals("remove"))
     // { method = "POST"; }
     String res = "<html>\n\r" +
-      "<head><title>" + op + " form</title></head>\n\r" +
+      "<head><title>" + op + " Form</title></head>\n\r" +
       "<body>\n\r" +
-      "<h1>" + op + " form</h1>\n\r" +
+      "<h1>" + op + " Form</h1>\n\r" +
       "<form action = \"" + jsp + "\" method = \"" + method + "\" >\n\r";
     Vector pars = getParameters();
     for (int i = 0; i < pars.size(); i++)
@@ -2897,6 +3185,733 @@ public void generateCUIcode(PrintWriter out)
   }
     */ 
 
+  public String cg(CGSpec cgs, Vector types, Vector entities)
+  { String etext = this + "";
+    Vector args = new Vector();
+    args.add(getName());
+    Vector eargs = new Vector();
+    eargs.add(this);
+    String pars = "";
+	
+    if (parameters == null) {} 
+    else if (parameters.size() == 0) {} 
+    else 
+    { Attribute p = (Attribute) parameters.get(0);
+      Vector partail = new Vector(); 
+      partail.addAll(parameters); 
+      partail.remove(0); 
+      pars = p.cgParameter(cgs,partail);
+    }
+    args.add(pars);
+    eargs.add(parameters); 
 
 
+
+ /*   if (parameters == null) {} 
+    else if (parameters.size() == 0) {} 
+    else 
+    { Attribute p = (Attribute) parameters.get(0);
+      Vector partail = new Vector(); 
+      partail.addAll(parameters); 
+      partail.remove(0); 
+      pars = p.cgParameter(cgs,partail);
+    }
+    args.add(pars); */ 
+
+    if (resultType != null) 
+    { args.add(resultType.cg(cgs)); 
+      eargs.add(resultType); 
+    } 
+    else 
+    { Type rt = new Type("void",null); 
+      args.add(rt.cg(cgs)); 
+      eargs.add(rt); 
+    } 
+
+   /* 
+    if (pre != null) 
+    { args.add(pre.cg(cgs)); } 
+    else 
+    { BasicExpression pr = new BasicExpression(true); 
+      args.add(pr.cg(cgs)); 
+    } 
+
+    if (post != null) 
+    { args.add(post.cg(cgs)); } 
+    else 
+    { BasicExpression pst = new BasicExpression(true); 
+      args.add(pst.cg(cgs)); 
+    } */ 
+
+    if (classifierBehaviour != null)
+    { Statement impl = implementBehaviour(types,entities); 
+      args.add(impl.cg(cgs));
+      eargs.add(impl);  
+    }
+    else 
+    { Statement nullstat = new SequenceStatement(); 
+      args.add(nullstat.cg(cgs));
+      eargs.add(nullstat);  
+    } 
+    // only one Use Case rule?
+    // maybe for static/cached
+
+    CGRule r = cgs.matchedUsecaseRule(this,etext);
+    if (r != null)
+    { return r.applyRule(args,eargs,cgs); }
+    return etext;
+  }
+
+  public String cgActivity(CGSpec cgs, Vector types, Vector entities)
+  { java.util.Map env = new java.util.HashMap(); 
+  
+    System.out.println(">>> " + getName() + " classifierBehaviour= " + classifierBehaviour + 
+	                   " activity= " + activity); 
+
+    if (classifierBehaviour != null && !Statement.isEmpty(classifierBehaviour))
+    { // Statement impl = implementBehaviour(types,entities);
+      Statement stat = classifierBehaviour.generateDesign(env,false);
+      System.out.println(">>> Use case implementation is: " + stat);  
+      if (stat != null) 
+      { return stat.cg(cgs); }  
+    }
+	else if (activity != null) 
+	{ Statement stat1 = activity.generateDesign(env,false);
+      System.out.println(">>> Use case activity implementation is: " + stat1);  
+      if (stat1 != null) 
+      { return stat1.cg(cgs); }  
+    }
+    Statement nullstat = new SequenceStatement(); 
+    return "";    
+  }
+
+  public String getAndroidValueObject() 
+  { return getAndroidValueObject("com.example.app"); } 
+
+ 
+  public String getAndroidValueObject(String pge)
+  { String res = "package " + pge + ";\n\n";
+    String nme = getName();  
+    res = res + "public class " + nme + "VO\n" + 
+          "{ \n"; 
+
+    for (int i = 0; i < parameters.size(); i++) 
+    { Attribute att = (Attribute) parameters.get(i); 
+      String attnme = att.getName(); 
+      String tname = att.getType().getJava8(); 
+      if (tname.equals("boolean"))
+      { tname = "String"; } 
+      res = res + " private " + tname + " " + attnme + ";\n"; 
+    }
+ 
+    res = res + "\n" +
+          "  public " + nme + "VO() {}\n\n"; 
+		  
+    if (parameters.size() > 0)
+    { res = res + "  public " + nme + "VO(";
+      boolean previous = false;
+
+      for (int i = 0; i < parameters.size(); i++)
+      { Attribute att = (Attribute) parameters.get(i);
+        String tname = att.getType().getJava8(); 
+        if (tname.equals("boolean"))
+        { tname = "String"; } 
+
+        String par = tname + " " + att.getName() + "x";
+        if (previous)
+        { res = res + "," + par; }
+        else        
+        { res = res + par;
+          previous = true;
+        }
+      }
+      res = res + ")\n  { "; 
+
+      for (int i = 0; i < parameters.size(); i++) 
+      { Attribute att = (Attribute) parameters.get(i); 
+        String attnme = att.getName(); 
+        res = res + "   " + attnme + " = " + attnme + "x;\n"; 
+      }
+      res = res + "  }\n\n"; 
+    } 
+	
+    for (int i = 0; i < parameters.size(); i++) 
+    { Attribute att = (Attribute) parameters.get(i); 
+      String attnme = att.getName(); 
+      String tname = att.getType().getJava8(); 
+      if (tname.equals("boolean"))
+      { tname = "String"; } 
+
+      res = res + "  public " + tname + " get" + attnme + "()\n  { " + 
+            "return " + attnme + "; }\n\n"; 
+    } 
+
+    for (int i = 0; i < parameters.size(); i++) 
+    { Attribute att = (Attribute) parameters.get(i); 
+      String attnme = att.getName(); 
+      String tname = att.getType().getJava8(); 
+      if (tname.equals("boolean"))
+      { tname = "String"; } 
+
+      res = res + "  public void set" + attnme + "(" + tname + " _x)\n  { " + 
+            attnme + " = _x; }\n\n"; 
+    } 
+
+    return res + "}\n\n"; 
+  } 
+
+  public String generateAndroidBean(String packageName, 
+       Vector entities, Vector types, CGSpec cgs)
+  { String ename = getName(); 
+    String res = "package " + packageName + ";\n\n" + 
+      "import java.util.ArrayList;\n\n" + 
+      "import java.util.List;\n\n" + 
+      "import android.content.Context;\n\n" + 
+      "public class " + ename + "Bean\n{ ModelFacade model = null;\n\n";
+	  
+    Attribute resultAttribute = getResultParameter(); 
+
+    Vector attributes = new Vector(); 
+    attributes.addAll(parameters); 
+ 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attnme = att.getName();
+      Type atttype = att.getType();  
+      String tname = atttype.getName(); 
+      res = res + "  private String " + attnme + " = \"\";\n";
+      if (tname.equals("int") || tname.equals("long"))
+      { res = res + "  private int i" + attnme + " = 0;\n"; } 
+      else if (tname.equals("double"))
+      { res = res + "  private double d" + attnme + " = 0;\n"; } 
+      else if (att.isEnumeration())
+      { Vector vals = atttype.getValues(); 
+	   res = res + "  private " + tname + " e" + attnme + " = " + tname + "." + vals.get(0) + ";\n"; 
+      }  
+      else if (att.isEntity())
+      { res = res + "  private " + tname + " instance_" + attnme + " = null;\n"; 
+      }  
+      else if (att.isCollection()) // assume a collection of strings
+      { res = res + "  private ArrayList<String> s" + attnme + " = new ArrayList<String>();\n"; } 
+
+       // booleans are treated as strings. 
+    } 
+    res = res + "  private List errors = new ArrayList();\n\n" +
+          "  public " + ename + "Bean(Context _c) { model = ModelFacade.getInstance(_c); }\n\n"; 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attnme = att.getName(); 
+      res = res + "  public void set" + attnme + "(String " + attnme + "x)\n  { " + 
+            attnme + " = " + attnme + "x; }\n\n"; 
+    } 
+
+    res = res + "  public void resetData()\n  { "; 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attname = att.getName(); 
+      res = res + attname + " = \"\";\n    "; 
+    } 
+    res = res + "}\n\n";     
+
+    res = res + "  public boolean is" + ename + "error()\n" + 
+            "  { errors.clear(); \n";
+
+    String parstring = "";  
+    for (int k = 0; k < parameters.size(); k++) 
+    { Attribute att = (Attribute) parameters.get(k);
+      String attnme = att.getName();  
+      Type atype = att.getType(); 
+      String tname = atype.getName(); 
+      String check = att.getBeanCheckCode(); 
+      res = res + check; 
+
+      if (tname.equals("int") || tname.equals("long"))
+      { parstring = parstring + "i" + attnme; } 
+      else if (tname.equals("double"))
+      { parstring = parstring + "d" + attnme; }
+      else if (att.isEnumerated())
+      { parstring = parstring + "e" + attnme; } 
+      else if (att.isEntity())
+      { parstring = parstring + "instance_" + attnme; } 
+      else if (att.isCollection())
+      { parstring = parstring + "s" + attnme; } 
+      else 
+      { parstring = parstring + attnme; }  
+      if (k < parameters.size() - 1) 
+      { parstring = parstring + ","; } 
+    } 
+
+    Vector tests = getPreconditionCheckTests(cgs,parameters); 
+    for (int p = 0; p < tests.size(); p++)
+    { String test = (String) tests.get(p); 
+      res = res + 
+            "    if (" + test + ") { }\n" + 
+            "    else { errors.add(\"Precondition: " + test + " failed\"); }\n";
+    }
+    res = res + "    return errors.size() > 0;\n  }\n\n";
+
+    res = res + "  public String errors() { return errors.toString(); }\n\n"; 
+
+    if (resultAttribute == null)
+    { res = res + "  public void " + ename + "()\n" +  "  { "; 
+      res = res + "model." + ename + "(" + parstring + ");" + " }\n\n";
+    } 
+	else 
+	{ Type t = resultAttribute.getType(); 
+	  String jType = t.getJava7(); 
+	  res = res + "  public " + jType + " " + ename + "()\n" +  "  { "; 
+      res = res + "return model." + ename + "(" + parstring + ");" + " }\n\n";
+    }  
+    return res + "}\n"; 
+  }
+
+  public String generateIOSValidationBean(String packageName, 
+       CGSpec cgs, Vector entities, Vector types)
+  { String ename = getName(); 
+    String res = 
+	  // "package " + packageName + ";\n\n" + 
+      "import Foundation\n" + 
+      "import Glibc\n\n" + 
+      "class " + ename + "ValidationBean\n{ \n";
+	  
+    Attribute resultAttribute = getResultParameter(); 
+
+    Vector atts = new Vector(); 
+    atts.addAll(parameters); 
+ 
+    String parlist = ""; 
+    for (int i = 0; i < atts.size(); i++) 
+    { Attribute att = (Attribute) atts.get(i); 
+      String attnme = att.getName();
+      Type atttype = att.getType();  
+      parlist = parlist + attnme + " : " + atttype.getSwift(); 
+      if (i < atts.size() - 1) 
+      { parlist = parlist + ", "; } 
+    } 
+
+    res = res + "  var errorlist : [String] = [String]()\n\n"; 
+
+    res = res + "  init()\n  { }\n\n"; 
+          
+    res = res + "  func resetData()\n  { errorlist = [String]() }\n\n"; 
+
+    res = res + "  func is" + ename + "error(" + parlist + ") -> Bool\n" + 
+            "  { resetData() \n";
+
+    String parstring = "";  
+    for (int k = 0; k < parameters.size(); k++) 
+    { Attribute att = (Attribute) parameters.get(k);
+      String attnme = att.getName();  
+      Type atype = att.getType(); 
+      String tname = atype.getName(); 
+      String check = att.getIOSCheckCode(); 
+      res = res + check; 
+	}
+
+    Vector tests = getIOSPreconditionCheckTests(cgs,parameters); 
+    for (int p = 0; p < tests.size(); p++)
+    { String test = (String) tests.get(p); 
+      res = res + 
+            "    if " + test + " { }\n" + 
+            "    else { errorlist.append(\"Precondition " + (p+1) + " failed\") }\n";
+    }
+    res = res + "    return errorlist.count > 0\n  }\n\n";
+
+    res = res + "  func errors() -> String\n" + 
+                "  { var res : [String] = [String]()\n" + 
+                "    for (_,x) in errorlist.enumerated()\n" + 
+                "    { res = res + x + \" \"; } \n" + 
+                "    return res\n" + 
+                "  }\n\n"; 
+
+    return res + "}\n"; 
+  }
+
+  public void androidTabItem(PrintWriter out)
+  { String fullop = getName();
+    String titleop = Named.capitalise(fullop);
+    out.println("  <item android:id=\"@+id/" + fullop + "\"");
+    out.println("    android:title=\"" + titleop + "\"");
+    out.println("    android:showAsAction=\"always\" />"); 
+  }
+
+  public Vector getPreconditionCheckTests(CGSpec cgs, Vector params)
+  { // only include invariants which have all features in params
+    Vector parnames = ModelElement.getNames(params); 
+    Vector res = new Vector(); 
+    if (preconditions.size() == 0) { return res; } 
+    Vector newinvs = new Vector();
+    Vector oldinvs = new Vector(); 
+ 
+    for (int i = 0; i < preconditions.size(); i++)
+    { Constraint c = (Constraint) preconditions.get(i); 
+      Vector cfeats = c.allFeaturesUsedIn(); 
+      if (parnames.containsAll(cfeats))
+      { oldinvs.add((Constraint) c.clone()); } 
+    }
+     
+    java.util.Map env = new java.util.HashMap(); 
+    if (classifier != null) 
+    { env.put(classifier.getName(),"this"); } 
+
+    for (int i = 0; i < params.size(); i++)
+    { Attribute att = (Attribute) params.get(i);
+      String attname = att.getName();  
+      Type t = att.getType(); 
+      String tname = t.getName();
+      Expression newE; 
+      if (tname.equals("int") || tname.equals("long"))
+      { newE = new BasicExpression("i" + attname);
+        newE.setUmlKind(Expression.VARIABLE); 
+        newE.setType(t); 
+        newinvs = Constraint.substituteEqAll(attname,newE,oldinvs); 
+        oldinvs = (Vector) ((Vector) newinvs).clone(); 
+      }
+      else if (tname.equals("double"))
+      { newE = new BasicExpression("d" + attname);
+        newE.setUmlKind(Expression.VARIABLE); 
+        newE.setType(t);
+        newinvs = Constraint.substituteEqAll(attname,newE,oldinvs); 
+        oldinvs = (Vector) ((Vector) newinvs).clone(); 
+      }    
+      else if (t.isEnumerated())
+      { newE = new BasicExpression("e" + attname);
+        newE.setUmlKind(Expression.VARIABLE); 
+        newE.setType(t); 
+        newinvs = Constraint.substituteEqAll(attname,newE,oldinvs); 
+        oldinvs = (Vector) ((Vector) newinvs).clone(); 
+      } 
+    }
+    
+    for (int j = 0; j < oldinvs.size(); j++) 
+    { Constraint con = (Constraint) oldinvs.get(j); 
+      String contest = // con.cg(cgs); 
+                       con.queryForm(env,true); 
+      res.add(contest); 
+    } 
+    return res; 
+  } 
+
+  public Vector getIOSPreconditionCheckTests(CGSpec cgs, Vector params)
+  { // only include invariants which have all features in params
+    Vector parnames = ModelElement.getNames(params); 
+    Vector res = new Vector(); 
+    if (preconditions.size() == 0) { return res; } 
+    Vector newinvs = new Vector();
+    Vector oldinvs = new Vector(); 
+ 
+    for (int i = 0; i < preconditions.size(); i++)
+    { Constraint c = (Constraint) preconditions.get(i); 
+      Vector cfeats = c.allFeaturesUsedIn(); 
+      if (parnames.containsAll(cfeats))
+      { oldinvs.add((Constraint) c.clone()); } 
+    }
+     
+    java.util.Map env = new java.util.HashMap(); 
+    if (classifier != null) 
+    { env.put(classifier.getName(),"this"); } 
+    
+    for (int j = 0; j < oldinvs.size(); j++) 
+    { Constraint con = (Constraint) oldinvs.get(j); 
+      String contest = con.cg(cgs); 
+      res.add(contest); 
+    } 
+    return res; 
+  } // type check them again
+
+  public static boolean hasLargeEnumerationParameter(Vector pars) 
+  { for (int i = 0; i < pars.size(); i++)
+    { Attribute att = (Attribute) pars.get(i);
+      if (att.isLargeEnumeration() || att.isEntity())
+      { return true; } 
+    } 
+    return false; 
+  } 
+
+  public static String spinnerListenerOperations(String op, Vector pars) 
+  { String selectcode = "";
+    String deselectcode = ""; 
+ 
+    for (int i = 0; i < pars.size(); i++)
+    { Attribute att = (Attribute) pars.get(i);
+      String attnme = att.getName(); 
+
+      if (att.isLargeEnumeration())
+      { selectcode = selectcode + 
+           "    if (_parent == " + op + attnme + "Spinner)\n\r" +
+           "    { " + op + attnme + "Data = " + op + attnme + "ListItems[_position]; }\n\r"; 
+        deselectcode = deselectcode + 
+           "    " + op + attnme + "Data = " + op + attnme + "ListItems[0];\n\r"; 
+      } 
+      else if (att.isEntity())
+      { selectcode = selectcode + 
+           "    if (_parent == " + op + attnme + "Spinner)\n\r" +
+           "    { " + op + attnme + "Data = " + op + attnme + "ListItems.get(_position); }\n\r"; 
+        deselectcode = deselectcode + 
+           "    " + op + attnme + "Data = \"\";\n\r"; 
+      } 
+    } 
+ 
+    if ("".equals(selectcode)) { return ""; }
+
+    return "  public void onItemSelected(AdapterView<?> _parent, View _v, int _position, long _id)\n\r" +   
+           "  { " + selectcode + " }\n\r\n\r" + 
+        
+           "  public void onNothingSelected(AdapterView<?> _parent)\n\r" + 
+           "  { " + deselectcode + " }\n\r"; 
+  } 
+
+  public static Vector spinnerListenerOps(String op, Vector pars, Vector extensions) 
+  { String selectcode = "";
+    String deselectcode = ""; 
+ 
+    for (int i = 0; i < pars.size(); i++)
+    { Attribute att = (Attribute) pars.get(i);
+      String attnme = att.getName(); 
+
+      if (att.isLargeEnumeration())
+      { selectcode = selectcode + 
+           "    if (_parent == " + op + attnme + "Spinner)\n\r" +
+           "    { " + op + attnme + "Data = " + op + attnme + "ListItems[_position]; }\n\r"; 
+        deselectcode = deselectcode + 
+           "    " + op + attnme + "Data = " + op + attnme + "ListItems[0];\n\r"; 
+      } 
+      else if (att.isEntity())
+      { selectcode = selectcode + 
+           "    if (_parent == " + op + attnme + "Spinner)\n\r" +
+           "    { " + op + attnme + "Data = " + op + attnme + "ListItems.get(_position); }\n\r"; 
+        deselectcode = deselectcode + 
+           "    " + op + attnme + "Data = \"\";\n\r"; 
+      } 
+    } 
+
+
+    for (int j = 0; j < extensions.size(); j++) 
+    { UseCase ext = (UseCase) extensions.get(j);
+      String extop = ext.getName();  
+      Vector extpars = ext.getParameters(); 
+
+      for (int k = 0; k < extpars.size(); k++)
+      { Attribute extatt = (Attribute) extpars.get(k);
+        String attnme = extatt.getName(); 
+
+        if (extatt.isLargeEnumeration())
+        { selectcode = selectcode + 
+            "    if (_parent == " + extop + attnme + "Spinner)\n\r" +
+            "    { " + extop + attnme + "Data = " + extop + attnme + "ListItems[_position]; }\n\r"; 
+          deselectcode = deselectcode + 
+            "    " + extop + attnme + "Data = " + extop + attnme + "ListItems[0];\n\r"; 
+        } 
+        else if (extatt.isEntity())
+        { selectcode = selectcode + 
+             "    if (_parent == " + extop + attnme + "Spinner)\n\r" +
+             "    { " + extop + attnme + "Data = " + extop + attnme + "ListItems.get(_position); }\n\r"; 
+          deselectcode = deselectcode + 
+             "    " + extop + attnme + "Data = \"\";\n\r"; 
+        } 
+      }
+    }  
+
+    Vector res = new Vector(); 
+ 
+    if ("".equals(selectcode)) 
+    { return res; }
+
+    res.add("  public void onItemSelected(AdapterView<?> _parent, View _v, int _position, long _id)\n\r" +   
+           "  { " + selectcode + " }\n\r");  
+        
+    res.add("  public void onNothingSelected(AdapterView<?> _parent)\n\r" + 
+           "  { " + deselectcode + " }\n\r");
+    return res;  
+  } 
+
+  public String getSwiftUIValueObject(String pge, Vector types, Vector entities, Vector useCases, CGSpec cgs)
+  { String res = "import Foundation\n";
+    res = res + "import Glibc\n\n"; 
+	
+    String ename = getName();
+    String ucname = getName(); 
+  
+    res = res + "class " + ename + "VO\n" + 
+          "{ \n"; 
+    for (int i = 0; i < parameters.size(); i++) 
+    { Attribute att = (Attribute) parameters.get(i); 
+      String attnme = att.getName(); 
+      String tname = att.getType().getSwift(); 
+      String dflt = att.getType().getSwiftDefaultValue();
+      if (att.isEntity())
+      { tname = "String"; 
+        dflt = "\"\""; 
+      } 
+      res = res + "  var " + attnme + " : " + tname + " = " + dflt + "\n"; 
+    } // But entity instances are represented by their key values, a string. 
+
+    res = res + "  static var defaultInstance : " + ename + "VO? = nil\n"; 
+    res = res + "  var errorlist : [String] = [String]()\n\n"; 
+    if (resultType != null)
+    { res = res + "  var result : " + resultType.getSwift() + " = " + resultType.getSwiftDefaultValue() + "\n\n"; }
+
+    res = res + "\n" +
+          "  init() {}\n\n"; 
+
+    res = res + "\n" +
+          "  static func default" + ename + "VO() -> " + ename + "VO\n" + 
+          "  { if defaultInstance == nil \n" + 
+          "    { defaultInstance = " + ename + "VO() }\n" + 
+          "    return defaultInstance!\n" + 
+          "  }\n\n"; 
+
+    String stringtext = "\"\""; 
+		  
+    if (parameters.size() > 0)
+    { res = res + "  init(";
+		  
+      boolean previous = false;
+	
+      for (int i = 0; i < parameters.size(); i++)
+      { Attribute att = (Attribute) parameters.get(i);
+        String tname = att.getType().getSwift();
+        if (att.isEntity())
+        { tname = "String"; }
+		
+        String attname = att.getName(); 
+ 
+        String label = "\"" + attname + "= \" + "; 
+        if (att.isNumeric())
+        { label = label + "String(" + attname + ")"; }
+		else if (att.isEnumerated())
+        { label = label + attname + ".rawValue"; }
+        else 
+        { label = label + attname; }
+		 
+      
+        String par = attname + "x" + " : " + tname;
+        if (previous)
+        { res = res + "," + par; 
+          stringtext = stringtext + " + \", \" + " + label; 
+        }
+        else        
+        { res = res + par;
+          stringtext = stringtext + " + " + label; 
+          previous = true;
+        }
+      }
+      res = res + ")  {\n"; 
+      for (int i = 0; i < parameters.size(); i++) 
+      { Attribute att = (Attribute) parameters.get(i); 
+        String attnme = att.getName(); 
+        res = res + "    " + attnme + " = " + attnme + "x\n"; 
+      }
+      res = res + "  }\n\n"; 
+    } 
+	
+	 
+    res = res + "  func toString() -> String\n" + 
+                "  { return " + stringtext + " }\n\n"; 
+ 
+    for (int i = 0; i < parameters.size(); i++) 
+    { Attribute att = (Attribute) parameters.get(i); 
+      String attnme = att.getName(); 
+      String tname = att.getType().getSwift(); 
+	  
+      res = res + "  func get" + attnme + "() -> " + tname + "\n";  
+      if (att.isEntity())
+	  { Type atype = att.getType(); 
+	    Entity enttype = atype.getEntity(); 
+	    String refname = enttype.getName(); 
+	    res = res + "  { return " + refname + "." + refname + "_index[" + attnme + "]! }\n\n";
+	  } 
+	  else 
+	  { res = res + "  { return " + attnme + " }\n\n"; } 
+    } 
+
+    for (int i = 0; i < parameters.size(); i++) 
+    { Attribute att = (Attribute) parameters.get(i); 
+      String attnme = att.getName(); 
+      String tname = att.getType().getSwift(); 
+
+      res = res + "  func set" + attnme + "(_x : " + tname + ")\n"; 
+      if (att.isEntity())
+      { Type atype = att.getType(); 
+        Entity enttype = atype.getEntity(); 
+        Attribute primkey = enttype.getPrincipalPrimaryKey(); 
+        res = res + "  { " + attnme + " = _x." + primkey.getName() + " }\n\n";
+	  } 
+	  else 
+	  { res = res + "  { " + attnme + " = _x }\n\n"; } 
+     }
+
+	if (resultType != null)
+	{ res = res + "  func setresult(_x : " + resultType.getSwift() + ")\n" + 
+	              "  { result = _x }\n\n"; 
+	}
+	
+	/* For SwiftUI this also holds the validation operation: */ 
+	 
+          
+    res = res + "  func resetData()\n  { errorlist = [String]() }\n\n"; 
+
+    Vector contexts = new Vector(); 
+    contexts.add(this); 
+    // typeCheckInvariants(types,entities); 
+
+    res = res + "  func is" + ucname + "error() -> Bool\n" + 
+                "  { resetData() \n";
+    
+
+    Vector tests = getIOSPreconditionCheckTests(cgs,parameters); 
+    for (int p = 0; p < tests.size(); p++)
+    { String test = (String) tests.get(p); 
+      res = res + 
+            "    if " + test + " { }\n" + 
+            "    else { errorlist.append(\"" + ename + " invariant " + (p+1) + " failed\") }\n";
+    }
+    res = res + "    if errorlist.count > 0\n" + 
+                "    { return true }\n" + 
+                "    return false\n" + 
+                "  }\n\n"; 
+
+
+    res = res + "  func errors() -> String\n" + 
+           "  { var res : String = \"\"\n" +
+           "    for (_,x) in errorlist.enumerated()\n" + 
+           "    { res = res + x + \", \" }\n" +  
+           "    return res\n" + 
+           "  }\n\n"; 
+				
+
+    return res + "}\n\n"; 
+  } 
+
+
+  public Vector testCases()
+  { Vector allattributes = getParameters();
+    String nme = getName();  
+    Vector res = new Vector(); 
+	if (allattributes == null || allattributes.size() == 0) 
+	{ res.add("-- no test for operation " + nme + "\n"); 
+	  return res; 
+	}
+	res.add("-- test for operation " + nme + "\n"); 
+	
+    for (int i = 0; i < allattributes.size(); i++) 
+    { Vector newres = new Vector(); 
+      Attribute att = (Attribute) allattributes.get(i); 
+      Vector testassignments = att.testCases("parameters"); 
+      for (int j = 0; j < res.size(); j++) 
+      { String tst = (String) res.get(j); 
+        for (int k = 0; k < testassignments.size(); k++) 
+        { String kstr = (String) testassignments.get(k); 
+          if (kstr.length() > 0) 
+          { String newtst = tst + "\n" + kstr; 
+            newres.add(newtst); 
+          } 
+        } 
+      } 
+      res.clear(); 
+      res.addAll(newres); 
+    } 
+    return res; 
+ }
+    
 }

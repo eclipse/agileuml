@@ -2,7 +2,7 @@ import java.util.Vector;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -163,6 +163,14 @@ class Map
   {  elements.addElement(m);  /* assumes still a map */
   }
 
+  public void add(Maplet m)
+  {  elements.add(m);  /* assumes still a map */
+  }
+
+  public void add(Object x, Object y)
+  {  add_pair(x,y);  /* assumes still a map */
+  }
+
   public void add_pair(Object o1, Object o2)
   { Maplet mm = new Maplet(o1,o2);
     if (elements.contains(mm)) { } 
@@ -197,6 +205,16 @@ class Map
 
     for (int i = 0; i < srcs.size() && i < trgs.size(); i++) 
     { res.set(srcs.get(i), trgs.get(i)); } 
+    return res; 
+  } 
+
+  public static Map unionDomainRange(Map m, Vector srcs, Vector trgs) 
+  { Vector elems = new Vector(); 
+    elems.addAll(m.elements); 
+    Map res = new Map(elems); 
+
+    for (int i = 0; i < srcs.size() && i < trgs.size(); i++) 
+    { res.add(srcs.get(i), trgs.get(i)); } 
     return res; 
   } 
 
@@ -307,6 +325,22 @@ class Map
       { return ((Maplet) elements.elementAt(i)).dest; } 
     }
     return null; 
+  }
+
+  public Vector getAll(Object x)
+  { Vector res = new Vector(); 
+    if (x == null) { return res; } 
+
+    for (int i = 0; i < elements.size(); i++)
+    { Maplet elem = (Maplet) elements.elementAt(i); 
+      if (x.equals(elem.source))
+      { Object trg = elem.dest; 
+        if (res.contains(trg)) { } 
+        else 
+        { res.add(trg); }
+      }  
+    }
+    return res; 
   }
 
   public void set(Object x, Object y)

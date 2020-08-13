@@ -1,9 +1,10 @@
 import java.util.Vector; 
 import java.io.*; 
 import java.util.Collections; 
+import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -15,6 +16,7 @@ import java.util.Collections;
 public class ModelMatching implements SystemTypes
 { Map mymap; 
   Vector entitymatches = new Vector(); // of EntityMatching
+  Vector helpers = new Vector(); // of BehaviouralFeature
 
   final static double INTLONG = 0.8; // matching weight of int mapping to a long, etc
   final static double LONGINT = 0.6; 
@@ -60,6 +62,41 @@ public class ModelMatching implements SystemTypes
     } 
   } 
 
+  public void addEntityMatch(EntityMatching em, Vector entities)
+  { Entity s = em.realsrc; 
+    Entity t = em.realtrg; 
+    String sname = s.getName(); 
+    String tname = t.getName(); 
+    Entity s$ = (Entity) ModelElement.lookupByName(sname + "$",entities); 
+    Entity t$ = (Entity) ModelElement.lookupByName(tname + "$",entities); 
+    if (s$ != null && t$ != null) 
+    { mymap.add(new Maplet(s$,t$)); 
+      System.out.println(">> Added entity matching: >> " + s$ + " --> " + t$);  
+    } 
+    entitymatches.add(em);
+  } 
+
+  public void addEntityMatchings(Vector ems) 
+  { entitymatches.addAll(ems); } 
+
+  public void addEntityMatchings(Vector ems, Vector entities) 
+  { for (int i = 0; i < ems.size(); i++) 
+    { EntityMatching em = (EntityMatching) ems.get(i); 
+      addEntityMatch(em,entities); 
+    } 
+  } 
+
+  public void combineMatches(Vector ems)
+  { for (int i = 0; i < ems.size(); i++) 
+    { EntityMatching em = (EntityMatching) ems.get(i); 
+	 EntityMatching emx = findExactMatchBySourceTarget(em.realsrc,em.realtrg,entitymatches); 
+	 if (emx != null)
+	 { emx.combineMatching(em); }
+	 else 
+	 { entitymatches.add(em); }
+    }
+  }
+  
   public ModelMatching invert()
   { Map invmm = Map.inverse(mymap); 
     ModelMatching inv = new ModelMatching(); 
@@ -81,13 +118,18 @@ public class ModelMatching implements SystemTypes
   } 
 
   public String toString()
-  { String res = "Abstract transformation: \n"; 
+  { String res = "\n"; 
+    for (int i = 0; i < helpers.size(); i++) 
+	{ BehaviouralFeature bf = (BehaviouralFeature) helpers.get(i); 
+	  res = res + bf.display() + "\n\n"; 
+	}
+	
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
       // Entity s = em.realsrc; 
       // Entity t = em.realtrg; 
       // res = res + "  " + s + " |--> " + t + "\n"; 
-      res = res + em + "\n";  
+      res = res + em + "\r\n";  
     }
     return res; 
   }  
@@ -206,8 +248,43 @@ public class ModelMatching implements SystemTypes
     return res; 
   } 
 
+  public Vector enumConversionFunctionsETL(Vector enumconversions, Vector thesaurus) 
+  { Vector res = new Vector(); 
+ 
+    for (int i = 0; i < enumconversions.size(); i++) 
+    { Maplet conv = (Maplet) enumconversions.get(i); 
+      Type e1 = (Type) conv.source; 
+      Type e2 = (Type) conv.dest; 
+      BehaviouralFeature tconv = Type.enumConversionFunctionETL(e1,e2,thesaurus); 
+      res.add(tconv); 
+    } 
+    return res; 
+  } 
+
+  public Vector enumStringConversionFunctionsETL(Vector enumconversions, Vector thesaurus) 
+  { Vector res = new Vector(); 
+ 
+    for (int i = 0; i < enumconversions.size(); i++) 
+    { Type e1 = (Type) enumconversions.get(i); 
+      BehaviouralFeature tconv = Type.enumStringConversionFunctionETL(e1); 
+      res.add(tconv); 
+    } 
+    return res; 
+  } 
+
+  public Vector stringEnumConversionFunctionsETL(Vector enumconversions, Vector thesaurus) 
+  { Vector res = new Vector(); 
+ 
+    for (int i = 0; i < enumconversions.size(); i++) 
+    { Type e1 = (Type) enumconversions.get(i); 
+      BehaviouralFeature tconv = Type.stringEnumConversionFunctionETL(e1); 
+      res.add(tconv); 
+    } 
+    return res; 
+  } 
+
   public void removeInvalidMatchings()
-  { // remove att -> tatt.f where f is in sources of its owner's attribute matching
+  { // remove att -> tatt.f where f is in targets of its owner's attribute matching
 
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
@@ -224,7 +301,7 @@ public class ModelMatching implements SystemTypes
       Vector srcsubs = em.realsrc.getSubclasses(); 
 
       if (srcsup == null && srcsubs.size() > 0)
-      { em.copyAttributeMappingsToSubclasses(srcsubs,entitymatches,thesaurus,mymap,entities); } 
+      { em.copyAttributeMappingsToSubclasses(srcsubs,entitymatches,thesaurus,this,entities); } 
     } 
   } 
 
@@ -292,17 +369,20 @@ public class ModelMatching implements SystemTypes
     return res; 
   } 
 
-  public void checkEntityMapCompleteness(Vector targets) 
+  public Vector checkEntityMapCompleteness(Vector targets) 
   { // for every concrete target entity t, warn if no mapping to t or any 
     // superclass of t, if there is a superclass mapping s -> tsup, prompt  
     // for a mapping condition { tcond } s --> t 
 
+   Vector unused = new Vector(); 
+
    for (int i = 0; i < targets.size(); i++) 
    { Entity t = (Entity) targets.get(i); 
      if (t.isConcrete() && t.isTarget())
-     { EntityMatching emt = findEntityMatchingByTarget(t,entitymatches);     
-       if (emt == null) 
-       { EntityMatching supemt = findSuperclassMatchingByTarget(t,entitymatches); 
+     { Vector emts = findEntityMatchingsByTarget(t,entitymatches);
+       if (emts.size() == 0) 
+       { unused.add(t); 
+         EntityMatching supemt = findSuperclassMatchingByTarget(t,entitymatches); 
          if (supemt == null) 
          { System.out.println(">>> Neither " + t + 
                               " or any superclass is in the range of the mapping"); 
@@ -312,10 +392,12 @@ public class ModelMatching implements SystemTypes
                               supemt + " is defined."); 
            System.out.println(">>> Suggest conditional mappings { Cond } " + 
                               supemt.realsrc + " --> " + t);
+           // Cond based on unused source features of supemt.realsrc
           } 
         } 
       }  
     } 
+    return unused; 
   } 
 
 
@@ -331,7 +413,9 @@ public class ModelMatching implements SystemTypes
     for (int j = 0; j < entitymatches.size(); j++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(j); 
       if (em.realsrc != null) 
-      { found.add(em.realsrc); } 
+      { found.add(em.realsrc); 
+        found.addAll(em.realsrc.getAllSubclasses()); 
+      } 
     }
     res.removeAll(found); 
     return res; 
@@ -341,7 +425,7 @@ public class ModelMatching implements SystemTypes
   { Vector res = new Vector(); 
     for (int i = 0; i < entities.size(); i++) 
     { Entity ex = (Entity) entities.get(i); 
-      if (ex.isTarget())
+      if (ex.isTarget() && ex.isConcrete())
       { res.add(ex); } 
     } 
    
@@ -353,11 +437,15 @@ public class ModelMatching implements SystemTypes
     }
     res.removeAll(found); 
     return res; 
-  }   
+  }
 
-  public Vector analyseCorrelationPatterns(Vector entities)
+  public Vector unusedTargetEntities(Vector entities) 
+  { return ModelMatching.unusedTargetEntities(entities,entitymatches); }    
+
+  public Vector analyseCorrelationPatterns(Vector entities, Vector types)
   { Vector res = new Vector(); 
 
+    /* 
     for (int i = 0; i < entities.size(); i++) 
     { Entity e = (Entity) entities.get(i); 
       // some source e /: entitymatches.realsrc
@@ -389,30 +477,42 @@ public class ModelMatching implements SystemTypes
         if (res.contains(p)) { } else { res.add(p); }  
       } 
  
-    } 
+    }  */ 
 
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
-      res.addAll(em.analyseCorrelationPatterns(entitymatches));  
+      res.addAll(em.analyseCorrelationPatterns(entitymatches,this,entities,types));  
     }
 
+    return res; 
+  } 
+
+
+  public void addFlagVariables(Vector res) 
+  { 
+
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
+
+      em.removeDuplicateMappings(); 
+
       Entity t = em.trg; // The $ form of the entity
       Vector tvect = new Vector(); 
       tvect.add(t); 
       Vector tsources = mymap.inverseImage(tvect); 
-      if (tsources.size() > 1) 
+      Vector emts = ModelMatching.findEntityMatchingsByTarget(em.realtrg, entitymatches); 
+      if (emts.size() > 1) 
       { System.out.println(">>> Several classes " + tsources + 
                            " map to " + t); 
- 
+
+
         // if (em.isSpurious(entitymatches))
         // { System.out.println(">>> match " + em.realsrc + " |--> " + em.realtrg + 
         //                          " seems to be spurious, suggest deletion"); 
         // } 
         
         if (Entity.haveCommonSuperclass(tsources))
-        { CorrelationPattern p = new CorrelationPattern("Entity merging (horizontal)", 
+        { CorrelationPattern p = new CorrelationPattern("Class merging (horizontal)", 
                                      "Entity " + em.realtrg + " is target of " + 
                                                      tsources.size() + " exclusive sources"); 
           p.addTargetEntity(t); 
@@ -423,6 +523,7 @@ public class ModelMatching implements SystemTypes
           Entity rtrg = em.realtrg; 
           String flagname = rtrg.getName().toLowerCase() + "Flag";
           if (rtrg.hasDefinedAttribute(flagname)) { } 
+          else if (conditionedMatches(emts)) { } 
           else   
           { Attribute tflag = new Attribute(flagname, 
                                           new Type("String", null),
@@ -430,10 +531,9 @@ public class ModelMatching implements SystemTypes
             tflag.setElementType(new Type("String",null)); 
  
             rtrg.addAttribute(tflag); 
-            for (int z = 0; z < tsources.size(); z++) 
-            { Entity tsrc = (Entity) tsources.get(z); 
-              EntityMatching emz = ModelMatching.getEntityMatching(tsrc,t,entitymatches); 
-              if (emz != null && emz.realsrc != null) 
+            for (int z = 0; z < emts.size(); z++) 
+            { EntityMatching emz = (EntityMatching) emts.get(z); 
+              if (emz.realsrc != null && emz.realsrc.isConcrete()) 
               { BasicExpression srcvalue = new BasicExpression("\"" + emz.realsrc.getName() + "\""); 
                 srcvalue.setType(new Type("String",null)); 
                 srcvalue.setElementType(new Type("String",null)); 
@@ -445,7 +545,7 @@ public class ModelMatching implements SystemTypes
           }  
         } 
         else 
-        { CorrelationPattern p = new CorrelationPattern("Entity merging (vertical)", 
+        { CorrelationPattern p = new CorrelationPattern("Class merging (vertical)", 
                                      "Entity " + em.realtrg + " is target of " + 
                                                      tsources.size() + " non-exclusive sources"); 
           p.addTargetEntity(t); 
@@ -456,14 +556,67 @@ public class ModelMatching implements SystemTypes
       } // risk of conflict in data, for some feature merges
         // target should have id attribute, mapped to by id in each source
         // apart from this and *-mult features, the target features of each mapping 
-        // must be disjoint. 
+        // must be disjoint. Or merge the data if they are not disjoint. 
     } 
 
-    return res; 
   }  
 
+  public boolean conditionedMatches(Vector emts)
+  { // each E --> F in emts has an assignment "F" --> s for some target variable s
+
+    for (int i = 0; i < emts.size(); i++) 
+    { EntityMatching emt = (EntityMatching) emts.get(i); 
+      Entity t = emt.realtrg; 
+      String tname = t.getName(); 
+      if (emt.hasAssignmentOf(tname)) 
+      { return true; } 
+    } 
+    return false; 
+  } 
+
   public void removeSpuriousMatchings() 
-  { for (int i = 0; i < entitymatches.size(); i++) 
+  { // E --> F may be spurious if all features of E are already mapped by other entity matchings
+    // Or, if no mapped feature f uses E as a type/element type
+
+    Vector spurious = new Vector(); 
+    Vector removed = new Vector(); 
+
+    for (int i = 0; i < entitymatches.size(); i++) 
+    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
+      Entity s = em.src; // The $ form of the entity
+      boolean allused = true;  // all of s's features are used elsewhere
+
+      Vector satts = s.getAttributes(); 
+
+      for (int j = 0; j < satts.size(); j++) 
+      { Attribute f = (Attribute) satts.get(j); 
+        boolean fused = false; 
+
+        for (int k = 0; k < entitymatches.size(); k++) 
+        { EntityMatching em2 = (EntityMatching) entitymatches.get(k); 
+          if (i != k && !em.inheritanceRelatedTo(em2)) 
+          { if (em2.usedInSource(f)) 
+            { fused = true; } 
+          } 
+        }
+
+        if (fused == true) { } 
+        else 
+        { allused = false; 
+          break; 
+        }        
+      } 
+
+      if (allused) 
+      { System.out.println(">>> match " + em.realsrc + " |--> " + em.realtrg + 
+                           " has all source features mapped elsewhere - may be spurious"); 
+        spurious.add(em); 
+      }  
+    }  
+    
+      
+
+    for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
       Entity t = em.trg; // The $ form of the entity
       Vector tvect = new Vector(); 
@@ -473,13 +626,359 @@ public class ModelMatching implements SystemTypes
       { System.out.println(">>> Several classes " + tsources + 
                            " map to " + t); 
  
+        
         if (em.isSpurious(entitymatches))
         { System.out.println(">>> match " + em.realsrc + " |--> " + em.realtrg + 
-                                 " seems to be spurious, suggest deletion"); 
+                             " is not used by any feature mappings - may be spurious"); 
+          if (spurious.contains(em)) 
+          { String yn = 
+                JOptionPane.showInputDialog("Remove mapping " + em +
+                                            "? (y/n):");
+
+            if (yn != null && "y".equals(yn))
+            { removed.add(em); } 
+          } 
         } 
       } 
     } 
+    entitymatches.removeAll(removed); 
+    // and remove from mymap
+    for (int i = 0; i < removed.size(); i++) 
+    { EntityMatching rem = (EntityMatching) removed.get(i); 
+      mymap.remove_pair(rem.src, rem.trg); 
+    } 
   } 
+  
+  public static Vector sourcesMappedTo(Vector entitymaps, Entity ut)
+  { Vector res = new Vector(); 
+    for (int i = 0; i < entitymaps.size(); i++) 
+	{ EntityMatching em = (EntityMatching) entitymaps.get(i); 
+	  if (em.realtrg == ut)
+	  { res.add(em.realsrc); }
+	}
+	return res;
+  }
+
+  public void checkValidity(Vector unusedtargets, Vector entities, Vector sources,
+                            Vector entitymaps, Vector thesaurus)
+  { // (i) unused target F1 matches highly with used target F. 
+    // Introduce class splitting: horizontal
+    // if F, F1 have a common ancestor.
+ 
+    // (ii) unused mandatory target reference r : R of some F in range of entity matching:
+    // if (E,R) in entitymatches then add self --> r to the attribute mapping of E -> F, otherwise
+    // entity split E to R if permitted and add self --> r. 
+
+    Vector added = new Vector(); // New entity matches
+
+    for (int i = 0; i < entitymatches.size(); i++) 
+    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
+      Vector unusedmandatorytargets = em.unusedMandatoryTargetReferences(entitymatches); 
+      if (unusedmandatorytargets.size() > 0) 
+      { System.out.println("!! Warning: invalid matching, unused mandatory target features: " + 
+                           unusedmandatorytargets + " of " + em.getName());
+ 
+        for (int j = 0; j < unusedmandatorytargets.size(); j++) 
+        { Attribute targ = (Attribute) unusedmandatorytargets.get(j);
+          if (targ.getElementType() != null && targ.getElementType().isEntity()) 
+          { Entity tent = targ.getElementType().getEntity(); 
+
+            // Is there already a mapping of em.realsrc to tent? 
+            EntityMatching e2tent = findEntityMatchingFor(em.realsrc,tent,entitymatches); 
+            // or tent is used as intermediate target in em?
+            boolean usedasintermediate = em.usedAsIntermediateClass(tent); 
+
+            if (e2tent == null && !usedasintermediate)
+            { String yn = 
+                JOptionPane.showInputDialog("Add mapping " + em.realsrc + " |--> " + tent +
+                                            "? (y/n):");
+
+              if (yn != null && "y".equals(yn))
+              { String s$ = em.realsrc.getName() + "$";  
+                String t$ = tent.getName() + "$"; 
+                Entity newsrc = (Entity) ModelElement.lookupByName(s$,entities); 
+                Entity newtrg = (Entity) ModelElement.lookupByName(t$,entities); 
+                EntityMatching newemx = null; 
+
+                if (newsrc == null || newtrg == null) 
+                { System.err.println("!! ERROR: no entity " + s$ + " or " + t$); 
+                  newemx = new EntityMatching(em.realsrc,tent);                
+                }
+                else 
+                { newemx = new EntityMatching(newsrc,newtrg,entities); } 
+                // addEntityMatch(newemx,entities);
+
+                added.add(newemx);  
+                unusedtargets.remove(tent);
+              } 
+            } // But don't do this if tent already occurs as intermediate class in an em.realsrc
+              // feature mapping target 
+
+            String yn = 
+                JOptionPane.showInputDialog("Add feature mapping self |--> " + targ +
+                                            "? (y/n):");
+
+            if (yn != null && "y".equals(yn))
+            { BasicExpression selfatt = new BasicExpression(em.realsrc,"self"); 
+              selfatt.setElementType(new Type(em.realsrc)); 
+              Attribute selfvar = new Attribute("self",new Type(em.realsrc),
+                                                  ModelElement.INTERNAL); 
+              selfvar.setElementType(new Type(em.realsrc));
+              AttributeMatching self2mandatory = new AttributeMatching(selfatt,targ); 
+              self2mandatory.setElementVariable(selfvar);   
+              em.addAttributeMatch(self2mandatory); 
+              Vector emsrcsubs = em.realsrc.getSubclasses(); 
+              em.copyAttributeMappingToSubclasses(self2mandatory,emsrcsubs,entitymatches,
+                                                  thesaurus,this,entities);
+ 
+              // System.out.println(">> Created new feature map self --> " + targ); 
+              // Also, add it to all subclasses of em.realsrc               
+            } 
+          } 
+        } 
+      } 
+    } 
+
+    addEntityMatchings(added,entities); 
+
+    for (int h = 0; h < added.size(); h++) 
+    { EntityMatching add = (EntityMatching) added.get(h); 
+      add.src.similarity(add.trg,this,entities,false,false,thesaurus);
+      Vector srcsubs = add.realsrc.getSubclasses(); 
+      if (srcsubs.size() > 0)
+      { add.createSubclassMatchings(srcsubs,entitymatches); 
+        add.copyAttributeMappingsToSubclasses(srcsubs,entitymatches,thesaurus,this,entities); 
+      }
+    } // build feature mappings of the new entity matchings
+
+
+    // For unused target entities, look for closest matching source & propose to add
+    // and to class split. 
+
+
+
+    for (int i = 0; i < unusedtargets.size(); i++) 
+    { Entity ut = (Entity) unusedtargets.get(i); 
+      if (ut.isAbstract()) { continue; } 
+	  Vector recommendedsources = sourcesMappedTo(entitymaps,ut); 
+
+      System.out.println(">>> Recommended source matches for " + ut + " are " + recommendedsources); 
+
+      double bestscore = 0; 
+      Entity bestmatch = null; 
+
+      for (int j = 0; j < sources.size(); j++) 
+      { Entity ej = (Entity) sources.get(j); 
+        String ejname = ej.getName(); 
+        Entity ej$ = (Entity) ModelElement.lookupByName(ejname + "$", entities); 
+        String utname = ut.getName(); 
+        Entity ut$ = (Entity) ModelElement.lookupByName(utname + "$", entities); 
+        double dd = 0; 
+        if (ej$ != null && ut$ != null) 
+        { dd = ej$.similarity(ut$,this,entities,false,false,thesaurus); } 
+        else 
+        { dd = ej.similarity(ut,this,entities,false,false,thesaurus); }  
+        double namesim = ModelElement.similarity(ej.getName().toLowerCase(),
+                                                 ut.getName().toLowerCase()); 
+        double nmssim = ej.nms$Similarity(ut,thesaurus); 
+        double escore = dd + namesim*ModelMatching.NAMEWEIGHT + 
+                             nmssim*ModelMatching.NMSWEIGHT; 
+        System.out.println(">>> Possible match for target " + ut + " is source " + ej + " with " + 
+                           "NSS=" + namesim + " NMS=" + nmssim + " DSS=" + dd); 
+
+        if (escore > bestscore) 
+        { bestscore = escore; 
+          bestmatch = ej; 
+        } 
+      }
+      
+      if (bestmatch != null) 
+      { System.out.println(">>> Best match for unused target class " + ut + " is " + bestmatch); 
+        String yn = 
+          JOptionPane.showInputDialog("Add class mapping " + bestmatch + " |--> " + ut +
+                                            "? (y/n):");
+        if (yn != null && "n".equals(yn))
+        { sources = VectorUtil.union(recommendedsources,sources); 
+		  sources.remove(bestmatch); 
+		  
+          if (sources.size() > 0)
+          { String othere = 
+              JOptionPane.showInputDialog("Suggest another source from " + 
+                                          sources + " (name/null)?");  
+            bestmatch = (Entity) ModelElement.lookupByName(othere,sources);
+          } 
+          else 
+          { bestmatch = null; }  
+        }  
+      } 
+
+      if (bestmatch != null)
+      { // EntityMatching newem = new EntityMatching(bestmatch,ut); 
+        String s$ = bestmatch.getName() + "$";  
+        String t$ = ut.getName() + "$"; 
+        Entity newsrc = (Entity) ModelElement.lookupByName(s$,entities); 
+        Entity newtrg = (Entity) ModelElement.lookupByName(t$,entities); 
+        EntityMatching newem = null; 
+        
+        if (newsrc == null || newtrg == null) 
+        { System.err.println("!! Warning: no entity " + s$ + " or " + t$); 
+          newem = new EntityMatching(bestmatch,ut);  
+        }
+        else 
+        { newem = new EntityMatching(newsrc,newtrg,entities); } 
+        addEntityMatch(newem,entities); 
+        newem.src.similarity(newem.trg,this,entities,false,false,thesaurus);
+        // Needs a discriminator if bestmatch now has > 1 target match & no conditions
+        // look for unused boolean features of bestmatch & test their name similarity to 
+        // ut and other targets. Condition is { bf } bestmatch --> ut if name similarity
+        // highest for bt, ut names.
+
+        Vector allems = new Vector(); 
+        Vector trgs = isUnconditionalEntitySplitting(bestmatch,allems);
+            
+        if (trgs.size() > 1)
+        { Vector ubools = newem.unusedSourceBooleans();  
+          Vector ustrings = newem.unusedSourceStrings(); 
+          System.out.println(">>> Unconditional entity splitting of " + 
+                             bestmatch + " to: " + trgs); 
+
+          if (ubools.size() > 0) 
+          { System.out.println(">>> Unused source boolean features: " + ubools); 
+            for (int p = 0; p < ubools.size(); p++) 
+            { Attribute ub = (Attribute) ubools.get(p); 
+              EntityMatching besttrg = newem; 
+              double besttscore = ModelElement.similarity(ub.getName(), ut.getName()); 
+              for (int k = 0; k < trgs.size(); k++) 
+              { EntityMatching tk = (EntityMatching) trgs.get(k); 
+                double tknss = ModelElement.similarity(ub.getName(), tk.realtrg.getName()); 
+                if (tknss > besttscore) 
+                { besttscore = tknss; 
+                  besttrg = tk; 
+                }
+              }
+              System.out.println(">>> Best match for " + ub + " is " + besttrg.realtrg); 
+              besttrg.addCondition(new BasicExpression(ub));
+
+              UnaryExpression negub = new UnaryExpression("not", new BasicExpression(ub)); 
+
+              for (int k = 0; k < trgs.size(); k++) 
+              { EntityMatching tk = (EntityMatching) trgs.get(k); 
+                if (tk != besttrg)
+                { tk.addCondition(negub); } 
+              }  
+            }  
+          }
+          else if (ustrings.size() > 0) 
+          { System.out.println(">>> Unused source string features: " + ustrings); 
+            Attribute selector = (Attribute) ustrings.get(0); 
+            String yns = 
+                JOptionPane.showInputDialog("Add conditions " + selector + " = target entity name" +
+                                            "? (y/n):");
+
+            if (yns != null && "y".equals(yns))
+            { BasicExpression selbe = new BasicExpression(selector); 
+            
+              for (int k = 0; k < trgs.size(); k++) 
+              { EntityMatching tk = (EntityMatching) trgs.get(k); 
+                BasicExpression tbe = new BasicExpression("\"" + tk.realtrg.getName() + "\""); 
+                tbe.setType(selector.getType()); 
+                tbe.setElementType(selector.getType()); 
+
+                BinaryExpression equalstname = new BinaryExpression("=",selbe,tbe);  
+                tk.addCondition(equalstname);  
+              }  
+            }
+            else 
+            { String ynn = 
+                JOptionPane.showInputDialog("Choose string selector from " + ustrings +
+                                            "? (name/null):");
+
+              if (ynn != null && !"null".equals(ynn))
+              { Attribute selsel = (Attribute) ModelElement.lookupByName(ynn,ustrings); 
+                if (selsel != null) 
+                { BasicExpression selbe = new BasicExpression(selsel); 
+            
+                  for (int k = 0; k < trgs.size(); k++) 
+                  { EntityMatching tk = (EntityMatching) trgs.get(k); 
+                    BasicExpression tbe = new BasicExpression("\"" + tk.realtrg.getName() + "\""); 
+                    tbe.setType(selsel.getType()); 
+                    tbe.setElementType(selsel.getType()); 
+                    BinaryExpression equalstname = new BinaryExpression("=",selbe,tbe);  
+                    tk.addCondition(equalstname);  
+                  }  
+                } 
+              } 
+            }
+          }
+          else 
+          { Vector featuresets = new Vector(); 
+            Vector otherconds = newem.unusedSourceConditions(featuresets); 
+
+            Vector matchedconditions = new Vector(); 
+            Vector matchedtargets = new Vector(); 
+
+            System.out.println(">>> Possible discriminator conditions are: " + otherconds); 
+            for (int k = 0; k < trgs.size(); k++) 
+            { EntityMatching tk = (EntityMatching) trgs.get(k); 
+              if (matchedtargets.contains(tk.realtrg)) { } 
+              else 
+              { Expression bestcond = null; 
+                Vector bestconds = new Vector(); 
+
+                double besttscore = 0;  
+
+                for (int p = 0; p < featuresets.size(); p++) 
+                { Attribute ub = (Attribute) featuresets.get(p); 
+                  Expression newcond = (Expression) otherconds.get(p); 
+                  if (matchedconditions.contains(newcond + "")) { } 
+                  else 
+                  { double tknss = // ModelElement.similarity(ub.getName(), tk.realtrg.getName());
+                        Entity.nmsSimilarity(ub.getName(), tk.realtrg.getName(), thesaurus); 
+                    System.out.println(">>> NMS similarity of " + ub + " and " + tk.realtrg + 
+                                       " = " + tknss); 
+                    
+                    if (tknss > besttscore) 
+                    { besttscore = tknss; 
+                      bestcond = newcond;   
+                      bestconds.clear(); 
+                      bestconds.add(newcond); 
+                    }
+                    else if (tknss == besttscore) 
+                    { bestconds.add(newcond); } 
+                  } 
+                } 
+                if (besttscore > 0) 
+                {   
+                  System.out.println(">>> Best matches for " + tk.realtrg + " are " + bestconds); 
+                  tk.addCondition(bestcond);
+                  // add negation of bestcond to the other ones
+
+                  matchedconditions.add(bestcond + ""); 
+                  matchedtargets.add(tk.realtrg);
+                }
+                else 
+                { System.out.println(">>> No discriminator available for " + tk.realtrg); }  
+              }  
+            }  
+          }  
+        } 
+      } 
+    }  
+
+  } 
+
+  public void checkTargetFeatureCompleteness(Vector entities, Vector sources,
+                            Vector thesaurus)
+  { // are all target features used in the target of some entitymatch? 
+    // if not, search for similar targets that are used, or similar sources. 
+
+    for (int i = 0; i < entitymatches.size(); i++) 
+    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
+      em.checkTargetFeatureCompleteness(entitymatches,thesaurus); 
+    } 
+  } 
+
+ 
 
   public int size() 
   { return mymap.size(); } 
@@ -489,13 +988,17 @@ public class ModelMatching implements SystemTypes
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
       Entity s = em.src; 
+      if (em.realsrc != null) 
+      { s = em.realsrc; } 
       Entity t = em.trg; 
+      if (em.realtrg != null) 
+      { t = em.realtrg; } 
       double sim = ModelElement.similarity(s.getName().toLowerCase(), 
                                            t.getName().toLowerCase()); 
       res = res + sim; 
     } 
     return res; 
-  }       
+  } // better to use realsrc.       
 
   public double graphSimilarity(Map srcgraph, Map trggraph, Map mm1, Vector entities)
   { double res = 0; 
@@ -603,6 +1106,28 @@ public class ModelMatching implements SystemTypes
     } 
   } 
 
+
+  public Vector isUnconditionalEntitySplitting(Entity src, Vector alltargets)
+  { Vector targets = new Vector(); 
+
+    for (int i = 0; i < entitymatches.size(); i++) 
+    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
+      if (src == em.realsrc) 
+      { alltargets.add(em); 
+
+        if (em.getCondition() == null) 
+        { targets.add(em); } 
+        else if ("true".equals(em.getCondition() + ""))
+        { targets.add(em); } 
+      } 
+    } 
+    
+    if (targets.size() > 0 && targets.size() == alltargets.size())
+    { System.out.println(">>> All mappings from " + src + " are unconditioned."); } 
+
+    return targets; 
+  } 
+
   public String qvtTransformation(Vector econvs, Vector seconvs, Vector esconvs, 
                                   Vector benums, Vector ebools)
   { String res = "transformation tau(source: MM1, target: MM2)\n" + 
@@ -647,9 +1172,60 @@ public class ModelMatching implements SystemTypes
 
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
-      if (em.isConcrete())
+      if (em.isConcrete() && em.isConcreteTarget())
       { res = res + em.qvtrule2(entitymatches) + "\n"; }  
     } // omits mapping to primary keys of em.realtarget
+
+    return res + "\n}\n"; 
+  } 
+
+  public String qvtBxTransformation(Vector econvs, Vector seconvs, Vector esconvs, 
+                                  Vector benums, Vector ebools)
+  { String res = "transformation tau(source: MM1, target: MM2)\n" + 
+                 "{ \n"; 
+
+    for (int i = 0; i < econvs.size(); i++) 
+    { Maplet mt = (Maplet) econvs.get(i); 
+      Type t1 = (Type) mt.source; 
+      Type t2 = (Type) mt.dest; 
+      if (t1.isEnumeration() && t2.isEnumeration())
+      { res = res + "  " + Type.enumConversionOpQVT(t1,t2) + "\n\n" + Type.enumConversionOpQVT(t2,t1) + "\n\n"; } 
+    } 
+
+    for (int i = 0; i < seconvs.size(); i++) 
+    { Type et = (Type) seconvs.get(i); 
+      if (et.isEnumeration())
+      { res = res + "  " + et.stringEnumQueryOpQVTR() + "\n\n" + et.enumStringQueryOpQVTR() + "\n\n"; } 
+    } // Only include functions that are actually used
+
+    for (int i = 0; i < esconvs.size(); i++) 
+    { Type et = (Type) esconvs.get(i); 
+      if (et.isEnumeration())
+      { res = res + "  " + et.enumStringQueryOpQVTR() + "\n\n" + et.stringEnumQueryOpQVTR() + "\n\n"; } 
+    } 
+
+    for (int i = 0; i < benums.size(); i++) 
+    { Type et = (Type) benums.get(i); 
+      if (et.isEnumeration())
+      { res = res + "  " + Type.booleanEnumOpQVTR(et) + "\n\n" + Type.enumBooleanOpQVTR(et) + "\n\n"; } 
+    } 
+
+    for (int i = 0; i < ebools.size(); i++) 
+    { Type et = (Type) ebools.get(i); 
+      if (et.isEnumeration())
+      { res = res + "  " + Type.enumBooleanOpQVTR(et) + "\n\n" + Type.booleanEnumOpQVTR(et); } 
+    } 
+
+    for (int i = 0; i < entitymatches.size(); i++) 
+    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
+      res = res + em.qvtrule1bx(entitymatches) + "\n"; 
+    } // must include mapping to any primary key of em.realtarget
+
+    for (int i = 0; i < entitymatches.size(); i++) 
+    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
+      if (em.isConcrete() && em.isConcreteTarget())
+      { res = res + em.qvtrule2bx(entitymatches) + "\n"; }  
+    }  
 
     return res + "\n}\n"; 
   } 
@@ -698,7 +1274,7 @@ public class ModelMatching implements SystemTypes
 
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
-      if (em.isConcrete())
+      if (em.isConcrete() && em.isConcreteTarget())
       { res = res + em.umlrsdsrule2(entitymatches) + "\n"; }  
     } 
 
@@ -707,7 +1283,9 @@ public class ModelMatching implements SystemTypes
 
   public String qvtoTransformation(Vector econvs, Vector esconvs, Vector seconvs, 
                                    Vector benums, Vector ebools, Vector thesaurus)
-  { String res = "transformation tau(in : src, out : trg);\n\n"; 
+  { String res = "modeltype MM1 uses 'http://mm1.com';\n" + 
+                 "modeltype MM2 uses 'http://mm2.com';\n\n\n" + 
+                 "transformation tau(in src : MM1, out trg : MM2);\n\n"; 
 
     for (int i = 0; i < econvs.size(); i++) 
     { Maplet mt = (Maplet) econvs.get(i); 
@@ -751,7 +1329,7 @@ public class ModelMatching implements SystemTypes
 
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
-      if (em.isConcrete())
+      if (em.isConcrete() && em.isConcreteTarget())
       { res = res + em.qvtomain2() + "\n"; }  
     } 
 
@@ -767,7 +1345,7 @@ public class ModelMatching implements SystemTypes
 
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
-      if (em.isConcrete())
+      if (em.isConcrete() && em.isConcreteTarget())
       { res = res + em.qvtorule2(entitymatches) + "\n"; }  
     } 
 
@@ -777,21 +1355,88 @@ public class ModelMatching implements SystemTypes
   public String atlTransformation(Vector types)
   { String res = ""; 
 
-   /* for (int i = 0; i < types.size(); i++) 
-    { Type et = (Type) types.get(i); 
-      if (et.isEnumeration())
-      { res = res + "  " + et.enumQueryOpsATL() + "\n\n"; } 
-    }     */ 
+    java.util.Map fromCommonSource = new java.util.HashMap(); 
+    // entity name --> Vector of mappings with same entity
 
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
-      if (em.isConcrete())
-      { res = res + em.atlrule(entitymatches) + "\n"; }  
+      if (em.isConcrete() && em.isConcreteTarget())
+      { Entity emsrc = em.realsrc; 
+        String key = emsrc.getName() + "{" + em.getCondition() + "}"; 
+        Vector emsrcmappings = (Vector) fromCommonSource.get(key); 
+        if (emsrcmappings == null) 
+        { emsrcmappings = new Vector(); 
+          em.isSecondary = false; 
+        }
+        else 
+        { em.isSecondary = true;
+          EntityMatching r1 = (EntityMatching) emsrcmappings.get(0);  
+          em.isSecondaryTo = r1.getName(); 
+        } 
+        emsrcmappings.add(em);  
+        fromCommonSource.put(key,emsrcmappings); 
+      }   
+    } 
+
+    System.out.println(">> ATL rule groups: " + fromCommonSource); 
+
+    for (int i = 0; i < entitymatches.size(); i++) 
+    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
+      if (em.isConcrete() && em.isConcreteTarget() && em.isPrimary())
+      { Vector secondaryRules = new Vector(); 
+        String rkey = em.realsrc.getName() + "{" + em.getCondition() + "}"; 
+        secondaryRules.addAll((Vector) fromCommonSource.get(rkey)); 
+        secondaryRules.remove(em); 
+        res = res + em.atlrule(entitymatches,secondaryRules) + "\n"; 
+      }  
     } 
 
     return res + "\n\n"; 
   } 
 
+
+  public EtlModule etlTransformation(Vector types, Vector benums, Vector benames, 
+                                     Vector ebools, Vector ebnames)
+  { EtlModule res = new EtlModule("Autogenerated"); 
+
+    for (int i = 0; i < benums.size(); i++) 
+    { Type et = (Type) benums.get(i); 
+      String trgname = (String) benames.get(i); 
+      if (et.isEnumeration())
+      { BehaviouralFeature bf = 
+          Type.booleanEnumConversionFunctionETL(et,trgname); 
+        if (bf != null) 
+        { res.addOperation(bf); }
+      }  
+    } // Only include functions that are actually used
+
+    for (int i = 0; i < ebools.size(); i++) 
+    { Type et = (Type) ebools.get(i); 
+      String trgnme = (String) ebnames.get(i); 
+      if (et.isEnumeration())
+      { BehaviouralFeature bf = Type.enumBooleanConversionFunctionETL(et,trgnme);
+        if (bf != null) 
+        { res.addOperation(bf); }
+      }  
+    } // Only include functions that are actually used
+
+    Vector auxrules = new Vector(); 
+
+    for (int i = 0; i < entitymatches.size(); i++) 
+    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
+      // if (em.isConcrete())
+      res.addRule(em.etlrule(entitymatches,auxrules));  
+    } 
+
+    for (int y = 0; y < auxrules.size(); y++) 
+    { Object arx = auxrules.get(y); 
+      if (arx instanceof TransformationRule)
+      { res.addRule((TransformationRule) arx); } 
+      else if (arx instanceof BehaviouralFeature)
+      { res.addOperation((BehaviouralFeature) arx); } 
+    } 
+    return res; 
+  } 
 
   public static Entity lookupMatch(Entity s, Vector ems) 
   { for (int i = 0; i < ems.size(); i++) 
@@ -816,6 +1461,18 @@ public class ModelMatching implements SystemTypes
     return null; 
   } 
 
+  public static Vector getMatchings(Entity s, Vector ems)
+  { Vector res = new Vector(); 
+    for (int i = 0; i < ems.size(); i++) 
+    { EntityMatching em = (EntityMatching) ems.get(i); 
+      if (em.src == s) 
+      { res.add(em); } 
+      else if (em.src != null && em.src.getName().equals(s.getName()))
+      { res.add(em); } 
+    } 
+    return res; 
+  } 
+
   public EntityMatching getMatching(Entity s) 
   { return getMatching(s,entitymatches); } 
 
@@ -827,6 +1484,17 @@ public class ModelMatching implements SystemTypes
       { return em.realtrg; } 
     } 
     return null; 
+  } 
+
+  public static Vector lookupRealMatches(Entity s, Vector ems) 
+  { Vector res = new Vector(); 
+
+    for (int i = 0; i < ems.size(); i++) 
+    { EntityMatching em = (EntityMatching) ems.get(i); 
+      if (em.realsrc == s) 
+      { res.add(em.realtrg); } 
+    } 
+    return res; 
   } 
 
   public static EntityMatching findEntityMatching(Entity s, Vector ems)
@@ -844,6 +1512,40 @@ public class ModelMatching implements SystemTypes
     return null;      
   }
 
+  public static Vector findEntityMatchings(Entity s, Vector ems)
+  { // closest matchings that can map elements of type s. 
+    Vector res = new Vector(); 
+
+    for (int i = 0; i < ems.size(); i++) 
+    { EntityMatching em = (EntityMatching) ems.get(i); 
+      if (em.realsrc == s) 
+      { res.add(em); } 
+      else   
+      { Entity srcsup = s.getSuperclass(); 
+        if (srcsup != null) 
+        { res.addAll(ModelMatching.findEntityMatchings(srcsup,ems)); }
+      } 
+    } 
+    return null;      
+  }
+
+  public static EntityMatching findEntityMatchingFor(Entity s, Entity t, Vector ems)
+  { // some matching that can map elements of type s to type t. 
+    if (s == null || t == null)
+	{ return null; }
+	
+    for (int i = 0; i < ems.size(); i++) 
+    { EntityMatching em = (EntityMatching) ems.get(i); 
+      if (em.realsrc == s && Entity.isDescendant(em.realtrg,t)) 
+      { return em; } 
+    }  
+
+    Entity srcsup = s.getSuperclass(); 
+    if (srcsup != null) 
+    { return ModelMatching.findEntityMatchingFor(srcsup,t,ems); }
+    return null;      
+  }
+
   public static EntityMatching findEntityMatchingByTarget(Entity t, Vector ems)
   { // some matching that can map elements to type t. 
 
@@ -854,6 +1556,20 @@ public class ModelMatching implements SystemTypes
     }  
 
     return null;      
+  }
+
+  public static Vector findEntityMatchingsByTarget(Entity t, Vector ems)
+  { // all matchings that can map elements to type t. 
+
+    Vector res = new Vector(); 
+
+    for (int i = 0; i < ems.size(); i++) 
+    { EntityMatching em = (EntityMatching) ems.get(i); 
+      if (em.realtrg == t) 
+      { res.add(em); } 
+    }  
+
+    return res;      
   }
 
   public static EntityMatching findSuperclassMatchingByTarget(Entity t, Vector ems)
@@ -871,6 +1587,41 @@ public class ModelMatching implements SystemTypes
     return null;      
   }
 
+  public static EntityMatching findSuperclassMatchingBySourceTarget(Entity s, Entity t, Vector ems)
+  { // some matching with s descendant of realsrc, t of realtrg
+
+    for (int i = 0; i < ems.size(); i++) 
+    { EntityMatching em = (EntityMatching) ems.get(i); 
+      if (em.realsrc == s && Entity.isDescendant(t,em.realtrg)) 
+      { return em; } 
+    }  
+
+    Entity srcsup = s.getSuperclass(); 
+    if (srcsup != null) 
+    { return ModelMatching.findSuperclassMatchingBySourceTarget(srcsup,t,ems); }
+    return null;      
+  }
+
+  public static Vector findSpecialisedMatchingsBySourceTarget(Entity s, Entity t, Vector ems)
+  { // all matchings with t = or descendant of realtrg
+    Vector res = new Vector(); 
+
+    for (int i = 0; i < ems.size(); i++) 
+    { EntityMatching em = (EntityMatching) ems.get(i); 
+      if (em.realsrc == s && Entity.isDescendant(t,em.realtrg)) 
+      { res.add(em); } 
+    }  
+
+    if (res.size() == 0) 
+    { Vector srcsubs = s.getSubclasses(); 
+      for (int j = 0; j < srcsubs.size(); j++) 
+      { Entity srcsub = (Entity) srcsubs.get(j); 
+        res.addAll(findSpecialisedMatchingsBySourceTarget(srcsub,t,ems)); 
+      } 
+    } 
+    return res; 
+  }
+
   public static EntityMatching getEntityMatching(Entity s, Vector ems)
   { // the exact matching that maps elements of type s. 
 
@@ -881,6 +1632,19 @@ public class ModelMatching implements SystemTypes
     }  
 
     return null;      
+  }
+
+  public static Vector getEntityMatchings(Entity s, Vector ems)
+  { // all matchings that map elements of type s. 
+    Vector res = new Vector(); 
+
+    for (int i = 0; i < ems.size(); i++) 
+    { EntityMatching em = (EntityMatching) ems.get(i); 
+      if (em.realsrc == s) 
+      { res.add(em); } 
+    }  
+
+    return res;      
   }
 
   public static EntityMatching getEntityMatching(Entity s, Entity t, Vector ems)
@@ -907,6 +1671,26 @@ public class ModelMatching implements SystemTypes
     return null;      
   }
 
+  public static EntityMatching findExactMatchBySourceTarget(Entity s, Entity t, Vector ems)
+  { return getRealEntityMatching(s,t,ems); }
+  
+  public static EntityMatching getAncestorMatching(Entity srcsup, Entity realtrg, Vector ems)
+  { for (int i = 0; i < ems.size(); i++) 
+    { EntityMatching em = (EntityMatching) ems.get(i); 
+      if (em.realsrc == srcsup && 
+          (realtrg == em.realtrg || 
+           Entity.isDescendant(realtrg,em.realtrg))
+          )  
+      { return em; } 
+      else if (srcsup.getSuperclass() != null) 
+      { EntityMatching emx = getAncestorMatching(srcsup.getSuperclass(), realtrg, ems); 
+        if (emx != null) 
+        { return emx; } 
+      } 
+    }
+    return null;  
+  }
+
   public EntityMatching getEntityMatching(Entity s)
   { return getEntityMatching(s,entitymatches); } 
 
@@ -916,6 +1700,16 @@ public class ModelMatching implements SystemTypes
     { return em.attributeMappings; } 
     return null; 
   }  
+
+  public static boolean isUnusedTargetByName(Attribute att, Vector ems)
+  { for (int i = 0; i < ems.size(); i++) 
+    { EntityMatching em = (EntityMatching) ems.get(i); 
+      if (em.isUnusedTargetByName(att)) { } 
+      else 
+      { return false; } 
+    } 
+    return true; 
+  } 
 
   public static boolean isUnusedTarget(Attribute att, Vector ems)
   { for (int i = 0; i < ems.size(); i++) 
@@ -927,21 +1721,55 @@ public class ModelMatching implements SystemTypes
     return true; 
   } 
 
+  public static Vector findCompatibleSourceAttributes(Attribute tatt, Vector satts, EntityMatching em, Vector ems)
+  { // Some attribute of em.realsrc which is type-compatible 
+    // with tatt. 
+
+    Vector res = new Vector(); 
+    Vector allsats = new Vector(); 
+    allsats.addAll(satts); 
+    if (tatt.isEntity())
+    { Attribute selfatt = new Attribute("self", new Type(em.realsrc), ModelElement.INTERNAL);
+      selfatt.setElementType(new Type(em.realsrc));  
+      allsats.add(selfatt); 
+    } 
+
+    for (int i = 0; i < allsats.size(); i++) 
+    { Attribute satt = (Attribute) allsats.get(i); 
+      if (compatibleType(satt,tatt,ems))
+      { System.out.println(">> " + satt + " matches by type to " + tatt); 
+        res.add(satt); 
+      }
+      // else 
+      // { System.out.println(">> " + satt + " : " + satt.getType() + " does not match by type to " + tatt + " : " + tatt.getType()); }  
+    } 
+    return res; 
+  } 
+
+
   public static boolean compatibleType(Attribute satt, Attribute tatt, Vector ems)
   { // true if satt could be matched to tatt, given ems
-    Type setype = satt.getElementType(); 
-    Type tetype = tatt.getElementType(); 
+    Type setype = satt.getType(); 
+    Type tetype = tatt.getType(); 
     
+	if (Type.isCollectionType(setype) && Type.isCollectionType(tetype))
+	{ setype = setype.getElementType(); 
+	  tetype = tetype.getElementType(); 
+	}
+	
     if (setype != null && tetype != null && 
         setype.isEntity() && tetype.isEntity())
     { Entity e1 = setype.getEntity(); 
       Entity e2 = tetype.getEntity(); 
-        // and e1 maps to e2 or a subclass of it 
-      Entity e1img = ModelMatching.lookupRealMatch(e1,ems); 
-      if (e1img == e2) 
-      { return true; } 
-      if (Entity.isAncestor(e2,e1img))
-      { return true; } 
+        // and e1 maps to e2 or a subclass/superclass of it 
+      Vector e1imgs = ModelMatching.lookupRealMatches(e1,ems); 
+      for (int i = 0; i < e1imgs.size(); i++) 
+      { Entity e1img = (Entity) e1imgs.get(i); 
+        if (e1img == e2) 
+        { return true; } 
+        if (Entity.isAncestor(e2,e1img) || Entity.isAncestor(e1img,e2))
+        { return true; } 
+      } 
     } 
     else if ((setype + "").equals(tetype + "")) 
     { return true; }  
@@ -957,11 +1785,14 @@ public class ModelMatching implements SystemTypes
         setype.isEntity())
     { Entity e1 = setype.getEntity(); 
         // and e1 maps to e2 or a subclass of it 
-      Entity e1img = ModelMatching.lookupRealMatch(e1,ems); 
-      if (e1img == e2) 
-      { return true; } 
-      if (Entity.isAncestor(e2,e1img))
-      { return true; } 
+      Vector e1imgs = ModelMatching.lookupRealMatches(e1,ems);
+      for (int i = 0; i < e1imgs.size(); i++)  
+      { Entity e1img = (Entity) e1imgs.get(i); 
+        if (e1img == e2) 
+        { return true; } 
+        if (Entity.isAncestor(e2,e1img))
+        { return true; }
+      }  
     } 
     return false; 
   } 
@@ -976,10 +1807,9 @@ public class ModelMatching implements SystemTypes
     Expression unusedExp = new BasicExpression(unused);
     unusedExp.setUmlKind(Expression.ATTRIBUTE); 
     
-    if (used.isDirect() && 
-        unused.isDirect() && 
+    if (used.isDirect() &&  
         "String".equals(targetType.getName()))
-    { BasicExpression sep = new BasicExpression("\"~\"");
+    { BasicExpression sep = new BasicExpression("\" ~ \"");
       sep.setType(new Type("String", null));
       sep.setElementType(new Type("String", null));
       Expression res = 
@@ -1280,6 +2110,85 @@ public class ModelMatching implements SystemTypes
 
     return r;
   }
+
+  public static AttributeMatching defineFeatureSplitting(AttributeMatching am, Attribute newtrg)
+  { Attribute src = am.src; 
+    Attribute oldtrg = am.trg; 
+
+    Type srctype = src.getType();
+    Type trgtype = oldtrg.getType();
+    Type newtype = newtrg.getType();
+
+    Expression srcExp = new BasicExpression(src);
+    srcExp.setUmlKind(Expression.ATTRIBUTE); 
+    Expression newExp = new BasicExpression(newtrg);
+    newExp.setUmlKind(Expression.ATTRIBUTE); 
+    
+    if ("String".equals(srctype.getName()) && "String".equals(trgtype.getName()) && 
+        "String".equals(newtype.getName()))
+    { BasicExpression sep = new BasicExpression("\" ~ \"");
+      sep.setType(new Type("String", null));
+      sep.setElementType(new Type("String", null));
+      Expression src1 = 
+        new BinaryExpression("->before", srcExp, sep);
+      src1.setType(new Type("String", null));
+      src1.setElementType(new Type("String", null));
+      src1.setMultiplicity(ModelElement.ONE); 
+      Expression src2 = 
+        new BinaryExpression("->after", srcExp, sep);
+      src2.setType(new Type("String", null));
+      src2.setElementType(new Type("String", null));
+      src2.setMultiplicity(ModelElement.ONE);
+      // am.srcvalue = src1; 
+      // am.elementVariable = src;
+      Attribute var1 = new Attribute(Identifier.nextIdentifier("var$"),srctype,
+                                  ModelElement.INTERNAL);
+      var1.setElementType(srctype); 
+      am.setExpressionMatch(src1,am.trg,var1);  
+      Attribute var2 = new Attribute(Identifier.nextIdentifier("var$"),srctype,
+                                   ModelElement.INTERNAL);
+      var2.setElementType(srctype); 
+      Vector auxvariables = new Vector(); 
+      // auxvariables.add(var1); 
+      auxvariables.add(var2); 
+      AttributeMatching res = new AttributeMatching(src2,newtrg,var2,auxvariables);   
+      
+      return res;
+    }
+    return null; 
+  }
+
+  public void checkModel(ModelSpecification mod, Vector entities, Vector types)
+  { // For each feature mapping f |--> g, checks for each 
+    // ex : E and corresponding fx : F, that ex.f = fx.g in 
+    // the model. 
+
+    Vector removed = new Vector(); 
+    Vector functions = new Vector(); 
+
+    for (int i = 0; i < entitymatches.size(); i++) 
+    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
+      em.checkModel(mod,removed,functions); 
+    } 
+
+    helpers.addAll(functions); 
+    entitymatches.removeAll(removed); 
+	
+    // Are there extra (unexpected) correspondences? 
+    Vector extraems = mod.extraEntityMatches(entitymatches); 
+    if (extraems.size() > 0)
+    { System.out.println(">>> Additional class mappings discovered in the model: "); 
+      for (int j = 0; j < extraems.size(); j++) 
+      { EntityMatching emx = (EntityMatching) extraems.get(j); 
+        System.out.println(emx); 
+      }
+    }
+
+    combineMatches(extraems); // and the mymap. 
+
+    mod.extraAttributeMatches(entitymatches); 
+  } 
+
 }
 
 

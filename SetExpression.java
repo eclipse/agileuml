@@ -2,7 +2,7 @@ import java.util.Vector;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -23,11 +23,12 @@ public class SetExpression extends Expression
     { elements = v; }
     else
     { for (int i = 0; i < v.size(); i++)
-      { String ss = (String) v.get(i);
+      { String ss = v.get(i) + "";
         elements.add(new BasicExpression(ss));
       }
     }
-  }
+  } // For a map, the elements are BinaryExpressions representing pairs "," key value
+  
 
   public SetExpression(Vector v,boolean ord)
   { this(v); 
@@ -44,7 +45,7 @@ public class SetExpression extends Expression
   { return elements.size(); } 
 
   public Expression definedness()
-  { Expression res = new BasicExpression("true");   // conjunction of definedness of elements
+  { Expression res = new BasicExpression(true);   // conjunction of definedness of elements
     for (int i = 0; i < elements.size(); i++) 
     { Expression elem = (Expression) elements.get(i); 
       res = Expression.simplifyAnd(res,elem.definedness());  
@@ -53,7 +54,7 @@ public class SetExpression extends Expression
   } 
 
   public Expression determinate()
-  { Expression res = new BasicExpression("true");  // conjunction of definedness of elements
+  { Expression res = new BasicExpression(true);  // conjunction of definedness of elements
     for (int i = 0; i < elements.size(); i++) 
     { Expression elem = (Expression) elements.get(i); 
       res = Expression.simplifyAnd(res,elem.determinate());  
@@ -84,7 +85,23 @@ public class SetExpression extends Expression
       Expression ne = elem.addPreForms(var); 
       newelems.add(ne); 
     } 
-    return new SetExpression(newelems,ordered); 
+    SetExpression result = new SetExpression(newelems,ordered);
+	result.setType(type); 
+	result.setElementType(elementType); 
+	return result;  
+  } 
+
+  public Expression removePrestate()
+  { Vector newelems = new Vector(); 
+    for (int i = 0; i < elements.size(); i++) 
+    { Expression elem = (Expression) elements.get(i); 
+      Expression ne = elem.removePrestate(); 
+      newelems.add(ne); 
+    } 
+    Expression res = new SetExpression(newelems,ordered);
+    res.setType(type); 
+    res.setElementType(elementType); 
+    return res;  
   } 
 
   public void findClones(java.util.Map clones, String rule, String op)
@@ -101,6 +118,9 @@ public class SetExpression extends Expression
 
   public boolean isOrderedB()
   { return ordered; }
+  
+  public boolean isMap()
+  { return type != null && "Map".equals(type.getName()); }
 
   public void setOrdered(boolean ord)
   { ordered = ord; } 
@@ -136,7 +156,10 @@ public class SetExpression extends Expression
 
   public String toString()
   { String res;
-    if (ordered) 
+
+    if (isMap())
+	{ res = "Map{"; }
+    else if (ordered) 
     { res = "Sequence{"; } 
     else 
     { res = "Set{"; }
@@ -195,7 +218,9 @@ public class SetExpression extends Expression
 
   public String toOcl(java.util.Map env, boolean local)
   { String res;
-    if (ordered) 
+    if (isMap())
+	{ res = "Map{"; }
+    else if (ordered) 
     { res = "Sequence{"; } 
     else 
     { res = "Set{"; }
@@ -231,8 +256,22 @@ public class SetExpression extends Expression
   public Expression skolemize(Expression sourceVar, java.util.Map env)
   { return this; } 
 
+  /* TODO: add operations for MAPS. */ 
+  
   public String queryForm(java.util.Map env, boolean local)
-  { String res = "(new SystemTypes.Set())"; 
+  { if (isMap())
+    { String result = "(new HashMap())"; 
+	  for (int i = 0; i < elements.size(); i++)
+      { BinaryExpression e = (BinaryExpression) elements.get(i);
+	    Expression key = e.getLeft(); 
+		Expression value = e.getRight(); 
+        result = "Set.includingMap(" + result + "," + key.queryForm(env,local) + "," + 
+		                           value.queryForm(env,local) + ")";
+      }
+	  return result; 
+	}
+	
+    String res = "(new SystemTypes.Set())"; 
     for (int i = 0; i < elements.size(); i++)
     { Expression e = (Expression) elements.get(i);
       res = res + ".add(" + wrap(elementType, e.queryForm(env,local)) + ")";
@@ -242,7 +281,19 @@ public class SetExpression extends Expression
   }  // different for sequences?
 
   public String queryFormJava6(java.util.Map env, boolean local)
-  { String res = "(new HashSet())"; 
+  { if (isMap())
+    { String result = "(new HashMap())"; 
+	  for (int i = 0; i < elements.size(); i++)
+      { BinaryExpression e = (BinaryExpression) elements.get(i);
+	    Expression key = e.getLeft(); 
+		Expression value = e.getRight(); 
+        result = "Set.includingMap(" + result + "," + key.queryFormJava6(env,local) + "," + 
+		                           value.queryFormJava6(env,local) + ")";
+      }
+	  return result; 
+	}
+	
+	String res = "(new HashSet())"; 
     if (ordered) 
     { res = "(new ArrayList())"; } 
 
@@ -258,7 +309,21 @@ public class SetExpression extends Expression
   }  // different for sequences?
 
   public String queryFormJava7(java.util.Map env, boolean local)
-  { if (type == null)
+  { 
+    if (isMap())
+    { String mtype = type.getJava7(elementType); 
+      String result = "(new " + mtype + "())"; 
+	  for (int i = 0; i < elements.size(); i++)
+      { BinaryExpression e = (BinaryExpression) elements.get(i);
+	    Expression key = e.getLeft(); 
+		Expression value = e.getRight(); 
+        result = "Ocl.includingMap(" + result + "," + key.queryFormJava7(env,local) + "," + 
+		                           value.queryFormJava7(env,local) + ")";
+      }
+	  return result; 
+	}
+	
+	if (type == null)
     { if (ordered)
       { type = new Type("Sequence",null); }
       else
@@ -283,14 +348,26 @@ public class SetExpression extends Expression
   }  // different for sequences?
 
   public String queryFormCSharp(java.util.Map env, boolean local)
-  { String res = "(new ArrayList())"; 
+  { if (isMap())
+    { String result = "(new Hashtable())"; 
+	  for (int i = 0; i < elements.size(); i++)
+      { BinaryExpression e = (BinaryExpression) elements.get(i);
+	    Expression key = e.getLeft(); 
+		Expression value = e.getRight(); 
+        result = "System.includingMap(" + result + "," + key.queryFormCSharp(env,local) + "," + 
+		                              value.queryFormCSharp(env,local) + ")";
+      }
+	  return result; 
+    }
+  
+    String res = "(new ArrayList())"; 
     for (int i = 0; i < elements.size(); i++)
     { Expression e = (Expression) elements.get(i);
       res = "SystemTypes.addSet(" + res + "," + 
                 Expression.wrapCSharp(elementType, e.queryFormCSharp(env,local)) + ")";
     }
     return res; 
-  }  // different for sequences?
+  }   
 
   public String queryFormCPP(java.util.Map env, boolean local)
   { Type et = getElementType(); 
@@ -298,7 +375,19 @@ public class SetExpression extends Expression
     if (et != null) 
     { cet = et.getCPP(et.getElementType()); } 
 
-    String collkind = "Set"; 
+    if (isMap())
+    { String result = "(new map<string," + cet + ">())"; 
+	  for (int i = 0; i < elements.size(); i++)
+      { BinaryExpression e = (BinaryExpression) elements.get(i);
+	    Expression key = e.getLeft(); 
+		Expression value = e.getRight(); 
+        result = "UmlRsdsLib<" + cet + ">::includingMap(" + result + "," + key.queryFormCPP(env,local) + "," + 
+		                           value.queryFormCPP(env,local) + ")";
+      }
+	  return result; 
+	}
+	
+	String collkind = "Set"; 
     String res = "(new set<" + cet + ">())";
     if (ordered) 
     { res = "(new vector<" + cet + ">())"; 
@@ -334,7 +423,7 @@ public class SetExpression extends Expression
     }
     
     return new BSetExpression(elems,ordered);
-  }
+  } // maps?
 
   public BExpression bqueryForm()
   { Vector elems = new Vector();
@@ -357,7 +446,7 @@ public class SetExpression extends Expression
     }
     
     return new BSetExpression(elems,ordered);
-  }
+  } // maps? 
 
   public int minModality()
   { int mm = 9;
@@ -522,7 +611,9 @@ public class SetExpression extends Expression
     }
     // deduce element type and type itself, and the entity??
 
-    if (ordered)
+    if (isMap())
+    { type = new Type("Map", null); } 
+    else if (ordered)
     { type = new Type("Sequence",null); }
     else
     { type = new Type("Set",null); } 
@@ -561,6 +652,15 @@ public class SetExpression extends Expression
     for (int i = 0; i < elements.size(); i++)
     { Expression val = (Expression) elements.get(i);
       res = VectorUtil.union(res,val.allEntitiesUsedIn());
+    }
+    return res;
+  }
+
+  public Vector allAttributesUsedIn()
+  { Vector res = new Vector();
+    for (int i = 0; i < elements.size(); i++)
+    { Expression val = (Expression) elements.get(i);
+      res = VectorUtil.union(res,val.allAttributesUsedIn());
     }
     return res;
   }
@@ -631,7 +731,10 @@ public class SetExpression extends Expression
       Expression be = e.substitute(old,n);
       elems.add(be);
     }
-    return new SetExpression(elems,ordered);
+    SetExpression result = new SetExpression(elems,ordered);
+	if (isMap())
+	{ result.setType(type); }
+	return result; 
   }
 
   public Expression substituteEq(String old,
@@ -642,7 +745,10 @@ public class SetExpression extends Expression
       Expression be = e.substituteEq(old,n);
       elems.add(be);
     }
-    return new SetExpression(elems,ordered);
+    SetExpression result = new SetExpression(elems,ordered);
+	if (isMap())
+	{ result.setType(type); }
+	return result; 
   }
 
   public boolean isOrExpression() { return false; }
@@ -658,7 +764,7 @@ public class SetExpression extends Expression
       res = res + ".add(" + val + ")";
     }
     return res + ".getElements()";
-  }  // ordered?
+  }  // ordered? Maps? 
 
   public String toB() { return ""; }
 
@@ -719,7 +825,10 @@ public class SetExpression extends Expression
       Expression newval = val.simplify(vars);
       newvals.add(newval);
     }
-    return new SetExpression(newvals,ordered);
+	SetExpression result = new SetExpression(newvals,ordered);
+	if (isMap())
+	{ result.setType(type); }
+	return result; 
   } // could eliminate duplicates
 
   public Expression simplify()
@@ -729,7 +838,10 @@ public class SetExpression extends Expression
       Expression newval = val.simplify();
       newvals.add(newval);
     }
-    return new SetExpression(newvals,ordered);
+	SetExpression result = new SetExpression(newvals,ordered);
+	if (isMap())
+	{ result.setType(type); }
+	return result; 
   } // could eliminate duplicates for ordered == false
 
   public Expression filter(final Vector vars)
@@ -746,6 +858,7 @@ public class SetExpression extends Expression
     res.type = type; 
     res.elementType = elementType; 
     res.ordered = ordered; 
+	res.formalParameter = formalParameter; 
     return res; 
   }
 
@@ -811,6 +924,7 @@ public class SetExpression extends Expression
     } 
     SetExpression res = new SetExpression(newelems);
     res.ordered = ordered; 
+	res.type = type; 
     return res;  
   } 
 
@@ -822,7 +936,8 @@ public class SetExpression extends Expression
       newelems.add(newelem); 
     } 
     SetExpression res = new SetExpression(newelems);
-    res.ordered = ordered; 
+    res.ordered = ordered;
+	res.type = type;  
     return res;  
   } 
 
@@ -834,7 +949,8 @@ public class SetExpression extends Expression
       newelems.add(newelem); 
     } 
     SetExpression res = new SetExpression(newelems);
-    res.ordered = ordered; 
+    res.ordered = ordered;
+	res.type = type;  
     return res;  
   } 
 
@@ -878,10 +994,15 @@ public class SetExpression extends Expression
     }
     args.add(arg);
     CGRule r = cgs.matchedSetExpressionRule(this,etext);
-    System.out.println(">> Found rule " + r); 
 
     if (r != null)
-    { return r.applyRule(args); }
+    { System.out.println(">> Found rule " + r + " for: " + etext); 
+      String res = r.applyRule(args);
+      if (needsBracket) 
+      { return "(" + res + ")"; } 
+      else 
+      { return res; }
+    }
     return etext;
   }
 

@@ -4,7 +4,7 @@ import java.util.StringTokenizer;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -13,6 +13,7 @@ import java.io.*;
 * *****************************/
 /* Package: Class Diagram */ 
 
+// Subclasses are: Entity, Attribute, Association, Type, BehaviouralFeature, UseCase
 
 public abstract class ModelElement implements SystemTypes
 { protected String name;
@@ -25,6 +26,10 @@ public abstract class ModelElement implements SystemTypes
   public static final int INTERNAL = 3;
   public static final int ACT = 7;
   public static final int DERIVED = 5; // no set operations
+  public static final int SUMMARY = 8; // discontinued
+  public static final int PASSWORD = 11; 
+  public static final int HIDDEN = 13; 
+  
  
   /* role multiplicity */ 
   public static final int QUALIFIER = -4; 
@@ -50,6 +55,9 @@ public abstract class ModelElement implements SystemTypes
 
   public void setName(String newname)
   { name = newname; }
+
+  public String cg(CGSpec cgs)
+  { return this + ""; }
 
   public static Vector getNames(Vector elems)
   { Vector res = new Vector(); 
@@ -215,6 +223,17 @@ public abstract class ModelElement implements SystemTypes
   public boolean hasStereotype(String s)
   { return stereotypes.contains(s); }
 
+  public String getTaggedValue(String tag)
+  { for (int i = 0; i < stereotypes.size(); i++) 
+    { String s = (String) stereotypes.get(i); 
+      if (s.startsWith(tag + "="))
+      { String value = s.substring(tag.length() + 1,s.length()); 
+        return value; 
+      } 
+    } 
+    return null; 
+  } 
+
   public Vector getComments()
   { return comments; }
 
@@ -288,6 +307,35 @@ public abstract class ModelElement implements SystemTypes
     } 
     return null; 
   } 
+
+  public static ModelElement lookupByNameIgnoreCase(String nme, Vector mes)
+  { for (int i = 0; i < mes.size(); i++) 
+    { ModelElement me = (ModelElement) mes.get(i); 
+      if (me.getName().equalsIgnoreCase(nme))
+      { return me; } 
+    } 
+    return null; 
+  } 
+
+  public static ModelElement lookupByNameNMS(String nme, Vector mes, double threshold) 
+  { Vector v = new Vector();
+    double bestsim = 0;  
+    ModelElement result = null; 
+
+    for (int i = 0; i < mes.size(); i++) 
+    { ModelElement me = (ModelElement) mes.get(i); 
+      String menme = me.getName(); 
+      String lcnme = nme.toLowerCase(); 
+      String lcmenme = menme.toLowerCase(); 
+      double sim = Entity.nmsSimilarity(lcnme,lcmenme,v); 
+      if (sim > bestsim && sim > threshold) 
+      { bestsim = sim; 
+        result = me; 
+        System.out.println(">> Similarity of " + nme + " " + menme + " = " + sim);
+      } 
+    } 
+    return result; 
+  }  
 
   public static Expression lookupExpressionByName(String nme, Vector mes)
   { for (int i = 0; i < mes.size(); i++) 
@@ -523,6 +571,54 @@ public abstract class ModelElement implements SystemTypes
     return ""; 
   } 
 
+  public static boolean haveCommonPrefix(String s, String t)
+  { int n = s.length(); 
+    int m = t.length(); 
+    if (s.startsWith(t)) { return true; } 
+    if (t.startsWith(s)) { return true; } 
+    if (n < m) 
+    { for (int i = n-1; i > 1; i--) 
+      { String sub = s.substring(0,i); 
+        // System.out.println(sub); 
+        if (t.startsWith(sub))
+        { return true; } 
+      } 
+    } 
+    else 
+    { for (int i = m-1; i > 1; i--) 
+      { String sub = t.substring(0,i); 
+        // System.out.println(sub); 
+        if (s.startsWith(sub))
+        { return true; } 
+      } 
+    } 
+    return false; 
+  } 
+
+  public static String longestCommonPrefix(String s, String t)
+  { int n = s.length(); 
+    int m = t.length(); 
+    if (s.startsWith(t)) { return t; } 
+    if (t.startsWith(s)) { return s; } 
+    if (n < m) 
+    { for (int i = n-1; i > 1; i--) 
+      { String sub = s.substring(0,i); 
+        // System.out.println(sub); 
+        if (t.startsWith(sub))
+        { return sub; } 
+      } 
+    } 
+    else 
+    { for (int i = m-1; i > 1; i--) 
+      { String sub = t.substring(0,i); 
+        // System.out.println(sub); 
+        if (s.startsWith(sub))
+        { return sub; } 
+      } 
+    } 
+    return ""; 
+  } 
+
 private static void addBuffer(StringBuffer b, Vector res)
 { if (b != null && b.length() > 0)
   { res.add(b.toString()); }
@@ -594,12 +690,50 @@ public static Vector splitIntoWords(String str)
   return res; 
 }
 
+  public static Vector findClosestNamed(String attname, Vector atts)
+  { double bestmatch = 0; 
+    double besttargetmatch = 0; 
+
+    String xname = attname.toLowerCase(); 
+    Vector best = new Vector(); 
+
+    for (int i = 0; i < atts.size(); i++) 
+    { ModelElement att = (ModelElement) atts.get(i); 
+      String tname = att.getName().toLowerCase(); 
+
+      double d1 = ModelElement.similarity(tname,xname); 
+      if (d1 > bestmatch)
+      { bestmatch = d1;
+        best.clear();  
+        best.add(att); 
+      } 
+      else if (d1 == bestmatch)
+      { best.add(att); } 
+    } 
+    return best; 
+  } // also NMS
+
   public static void main(String[] args) 
   { System.out.println(longestCommonSuffix("DataType", "CType")); 
     System.out.println(longestCommonSuffix("PTArc", "TPArc"));
-    System.out.println(splitIntoWords("CatTamer")); 
+
+    System.out.println(splitIntoWords("memberOf.father")); 
      
-    System.out.println(longestCommonSuffix("ENamedElement", "NamedElement"));
+    // System.out.println(longestCommonSuffix("ENamedElement", "NamedElement"));
+    System.out.println(similarity("type.name.ff","type.owner.gg")); 
+    System.out.println(similarity("owner.name.ff","type.name.gg"));     
+    Vector v = new Vector(); 
+    System.out.println(Entity.nmsSimilarity("type.name.ff","type.owner.gg",v)); 
+    System.out.println(Entity.nmsSimilarity("owner.name.ff","type.name.gg",v));     
+    System.out.println(Entity.nmsSimilarity("father","Male",v)); 
+    System.out.println(Entity.nmsSimilarity("mother","Female",v));     
+
+    System.out.println(longestCommonPrefix("colour", "color")); 
+
+    Entity e = new Entity("test"); 
+    e.addStereotype("url=\"testtest\"");
+    String vvv = e.getTaggedValue("url");  
+    System.out.println(vvv); 
   } 
 
 }

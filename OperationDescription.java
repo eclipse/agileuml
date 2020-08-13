@@ -5,7 +5,7 @@ import java.io.*;
 
 /* Package: EIS */ 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -15,8 +15,10 @@ import java.io.*;
 
 public class OperationDescription extends BehaviouralFeature
 { private Vector maintainOps = new Vector(); // extra ops for Dbi, in case of set
-
-
+  String opaction = ""; 
+  String oprole = ""; 
+  	
+  	
   public OperationDescription(String nme,
                               Entity e, String op, String role)
   { // E is the entity being operated on, op the 
@@ -25,8 +27,10 @@ public class OperationDescription extends BehaviouralFeature
     setEntity(e);
     setStereotypes(new Vector()); 
     stereotypes.add(op);
+    opaction = op; 
     if (role != null && !(role.equals("")))
     { stereotypes.add(role); } 
+    oprole = role; 
 
     System.out.println("Action: " + op + " Stereotypes: " + stereotypes); 
       
@@ -68,7 +72,7 @@ public class OperationDescription extends BehaviouralFeature
     else if (op.equals("get") || op.equals("delete")) // delete, get
     { Vector keys = e.getUniqueAttributes();
       if (keys.size() == 0)
-      { System.err.println("!! ERROR: Cannot define operation get: no primary key"); 
+      { System.err.println("!! ERROR: Cannot define operation get/delete: no primary key"); 
         return; 
       }
       else 
@@ -83,6 +87,8 @@ public class OperationDescription extends BehaviouralFeature
       else 
       { Entity entity2 = ast.getEntity2(); 
         Vector bkeys = entity2.getUniqueAttributes(); 
+        if (bkeys.size() == 0) 
+        { System.err.println("!! ERROR: no primary keys for: " + entity2); }  
         Vector pars = new Vector(); 
         pars.addAll(e.getUniqueAttributes()); 
         pars.addAll(bkeys); 
@@ -98,6 +104,8 @@ public class OperationDescription extends BehaviouralFeature
       else 
       { Entity entity2 = ast.getEntity2(); 
         Vector bkeys = entity2.getUniqueAttributes(); 
+        if (bkeys.size() == 0) 
+        { System.err.println("!! ERROR: no primary keys for: " + entity2); }  
         Vector pars = new Vector(); 
         pars.addAll(bkeys); 
         setParameters(pars); 
@@ -118,7 +126,7 @@ public class OperationDescription extends BehaviouralFeature
   public String getAction()
   { if (stereotypes.size() > 0)
     { return (String) stereotypes.get(0); } 
-    return ""; 
+    return opaction; 
   } // should be the first one that isn't a standard stereotype
 
   public void saveData(PrintWriter out)
@@ -168,7 +176,13 @@ public class OperationDescription extends BehaviouralFeature
   private String getAndroidDbiCallList()
   { String res = "";
     String ent = entity.getName(); 
-    Vector pars = getParameters();
+    // Vector pars = getParameters();
+    Vector pars = entity.getAttributes(); 
+    if (opaction.startsWith("delete"))
+    { Attribute att1 = entity.getPrincipalPrimaryKey(); 
+	 return att1.getName(); 
+    }
+
     for (int i = 0; i < pars.size(); i++)
     { Attribute att = (Attribute) pars.get(i);
       Type t = att.getType();
@@ -181,12 +195,22 @@ public class OperationDescription extends BehaviouralFeature
       if (i < pars.size() - 1)
       { res = res + ", "; }
     }
+
+    // if (pars.size() <= 1) 
+    // { return res; } 
+
     return "new " + ent + "VO(" + res + ")";
   }
 
   private String getDbiCallList()
   { String res = "";
     Vector pars = getParameters();
+    if (opaction.startsWith("delete"))
+    { // Attribute att1 = (Attribute) pars.get(0);
+      Attribute att1 = entity.getPrincipalPrimaryKey();  
+      return att1.getName(); 
+    }
+
     for (int i = 0; i < pars.size(); i++)
     { Attribute att = (Attribute) pars.get(i);
       Type t = att.getType();
@@ -202,13 +226,19 @@ public class OperationDescription extends BehaviouralFeature
     return res;
   }
 
-  public String getAndroidDbiOp()
+  public String getAndroidDbiOpCall()
   { // Op is: dbi.action + ename(pars);
     String pars = getAndroidDbiCallList();
     return "dbi." + getODName() + "(" + pars + ");";
   } // plus the role name in case of get/add/remove
  
-  public String getDbiOp()
+  public String getAndroidModelOpCall()
+  { // Op is: model.action + ename(pars);
+    String pars = getAndroidDbiCallList();
+    return "model." + getODName() + "(" + pars + ");";
+  } // plus the role name in case of get/add/remove
+ 
+  public String getDbiOpCall()
   { // Op is: dbi.action + ename(pars);
     String pars = getDbiCallList();
     return "dbi." + getODName() + "(" + pars + ");";
@@ -242,6 +272,144 @@ public class OperationDescription extends BehaviouralFeature
     else 
     { return action + ename; } 
   }
+
+  public void androidDbiOp(PrintWriter out) 
+  { String action = getStereotype(0);
+    String ename = entity.getName();
+    ArrayList ents = new ArrayList();
+    ents.add(ename);
+    ArrayList flds = new ArrayList();
+    Vector pars = getParameters();
+    for (int i = 0; i < pars.size(); i++)
+    { Attribute att = (Attribute) pars.get(i);
+      flds.add(att.getName());
+    }
+
+    if (action.equals("create"))
+    { androidDbiCreateOp(ename,out); } 
+    else if (action.equals("delete"))
+    { androidDbiDeleteOp(ename,out); } 
+    else if (action.equals("list"))
+    { androidDbiListOp(ename,out); } 
+    else if (action.equals("searchBy") && stereotypes.size() > 1)
+    { String key = getStereotype(1);
+      androidDbiSearchByOp(ename,key,out); 
+    }  
+    else if (action.equals("edit"))
+    { androidDbiEditOp(ename,out); } 
+  } 
+
+  public void androidDbiCreateOp(String ent, PrintWriter out)
+  { String entlc = ent.toLowerCase();
+    Vector atts = entity.getAttributes(); 
+    int natts = atts.size();
+    out.println("  public void create" + ent + "(" + ent + "VO " + entlc + "vo)");
+    out.println("  { database = getWritableDatabase();");
+    out.println("    ContentValues _wr = new ContentValues(" + ent + "_NUMBER_COLS);");
+
+    for (int z = 0; z < natts; z++)
+    { Attribute att = (Attribute) atts.get(z);
+      String nmeatt = att.getName();   
+      String nup = nmeatt.toUpperCase();
+      out.println("    _wr.put(" + ent + "_COLS[" + ent + "_COL_" + nup + "]," + 
+                  entlc + "vo.get" + nmeatt + "());");
+    }
+    out.println("    database.insert(" + ent + "_TABLE_NAME," + 
+                                     ent + "_COLS[1],_wr);");
+    out.println("  }");
+  } 
+
+  public void androidDbiDeleteOp(String ent, PrintWriter out)
+  { String entlc = ent.toLowerCase();
+    
+    out.println("  public void delete" + ent + "(String " + entlc + "Id)"); 
+    out.println("  { database = getWritableDatabase();"); 
+    out.println("    String[] _args = new String[]{" + entlc + "Id};"); 
+    out.println("    database.delete(" + ent + "_TABLE_NAME, \"" + entlc + "Id = ?\", _args);"); 
+    out.println("  }"); 
+  } 
+
+  public void androidDbiListOp(String ent, PrintWriter out) 
+  { Vector atts = entity.getAttributes(); 
+    int natts = atts.size(); 
+    String entlc = ent.toLowerCase();
+    
+    out.println("  public ArrayList<" + ent + "VO> list" + ent + "()");
+    out.println("  { ArrayList<" + ent + "VO> res = new ArrayList<" + ent + "VO>();");
+    out.println("    database = getReadableDatabase();");
+    out.println("    Cursor cursor = database.query(" + ent +
+                     "_TABLE_NAME," + ent + "_COLS,null,null,null,null,null);");
+    out.println("    cursor.moveToFirst();");
+    out.println("    while(!cursor.isAfterLast())");
+    out.println("    { " + ent + "VO " + entlc + "vo = new " + ent + "VO();"); 
+    for (int y = 0; y < natts; y++)
+    { Attribute att = (Attribute) atts.get(y);
+      String anme = att.getName();
+      String getop = att.androidExtractOp(ent); 
+      out.println("      " + entlc + "vo.set" + anme + "(" + getop + ");");
+    }
+    out.println("      res.add(" + entlc + "vo);");
+    out.println("      cursor.moveToNext();");
+    out.println("    }");
+    out.println("    cursor.close();");
+    out.println("    return res;");
+    out.println("  }");
+  } 
+
+  public void androidDbiSearchByOp(String ent, String att, PrintWriter out) 
+  { Vector atts = entity.getAttributes(); 
+
+    int natts = atts.size(); 
+    String entlc = ent.toLowerCase();
+
+    out.println("  public ArrayList<" + ent + "VO> searchBy" + ent + att + "(String _val)");
+    out.println("  { ArrayList<" + ent + "VO> res = new ArrayList<" + ent + "VO>();");
+    out.println("    database = getReadableDatabase();");
+    out.println("    String[] _args = new String[]{_val};");
+    String allatts = "_id"; 
+    for (int c = 0; c < natts; c++)
+    { Attribute ax = (Attribute) atts.get(c);
+      allatts = allatts + ", " + ax.getName(); 
+    }
+    out.println("    Cursor cursor = database.rawQuery(\"select " + allatts + " from " + 
+                                                ent + " where " + att + " = ?\", _args);");
+    out.println("    cursor.moveToFirst();");
+    out.println("    while(!cursor.isAfterLast())");
+    out.println("    { " + ent + "VO " + entlc + "vo = new " + ent + "VO();"); 
+    for (int y = 0; y < natts; y++)
+    { Attribute attx = (Attribute) atts.get(y);
+      String anme = attx.getName();
+      String getop = attx.androidExtractOp(ent);
+      out.println("      " + entlc + "vo.set" + anme + "(" + getop + ");");
+    }
+    out.println("      res.add(" + entlc + "vo);");
+    out.println("      cursor.moveToNext();");
+    out.println("    }");
+    out.println("    cursor.close();");
+    out.println("    return res;"); 
+    out.println("  }");
+    out.println();
+  } 
+
+  public void androidDbiEditOp(String ent, PrintWriter out)
+  { String entlc = ent.toLowerCase();
+    Vector atts = entity.getAttributes(); 
+    int natts = atts.size();
+
+    out.println("  public void edit" + ent + "(" + ent + "VO " + entlc + "vo)");
+    out.println("  { database = getWritableDatabase();");
+    out.println("    ContentValues _wr = new ContentValues(" + ent + "_NUMBER_COLS);");
+    for (int z = 0; z < natts; z++)
+    { Attribute att = (Attribute) atts.get(z);
+      String nmeatt = att.getName();   
+      String nup = nmeatt.toUpperCase();
+      out.println("    _wr.put(" + ent + "_COLS[" + ent + "_COL_" + nup + "]," + 
+                               entlc + "vo.get" + nmeatt + "());");
+    }
+    out.println("    String[] _args = new String[]{ " + entlc + "vo.get" + entlc + "Id() };");
+    out.println("    database.update(" + ent + "_TABLE_NAME, _wr, \"" + entlc + "Id=?\", _args);");
+    out.println("  }");
+  } 
 
   public SQLStatement getSQL0()
   { String action = getStereotype(0);
@@ -386,7 +554,7 @@ public class OperationDescription extends BehaviouralFeature
   public String getServletCode()
   { String res = "";
     String sname = getODName();
-    String dbiop = getDbiOp();
+    String dbiop = getDbiOpCall();
     String action = getStereotype(0); 
 
     String ename = entity.getName(); 
@@ -742,127 +910,165 @@ public class OperationDescription extends BehaviouralFeature
     out.println("}\n\r\n\r");
   }
 
-public void androidScreen(PrintWriter out)
+public void iOSViewController(String systemName, PrintWriter out)
 { String op = getAction();
+  
+  IOSAppGenerator gen = new IOSAppGenerator(); 
+  
   if (op.startsWith("create"))
-  { androidCreateScreen(op,out); }
+  { gen.createViewController(systemName,entity,out); }
+  else if (op.startsWith("delete"))
+  { gen.deleteViewController(systemName,entity,out); }
   else if (op.startsWith("edit"))
-  { androidEditScreen(op,out); }
+  { gen.editViewController(systemName,entity,out); }
+  else if (op.startsWith("list"))
+  { gen.listViewController(entity,out); }
+  else if (op.startsWith("searchBy"))
+  { Attribute byatt = entity.getAttribute(oprole); 
+    gen.searchByViewController(systemName,entity,byatt,out); 
+  } 
   else 
-  { System.err.println("No screen is defined yet for " + op); } 
+  { System.err.println("!! No iOS screen is defined yet for " + op); } 
 }
 
-public void androidCreateScreen(String op, PrintWriter out)
-{ String ename = entity.getName(); 
-  String viewname = "View" + op + ename;
-  String opok = op + ename + "OK";
-  String opcancel = op + ename + "Cancel";
-  String fullop = op + ename; 
+  public void generateViewController(PrintWriter out)
+  { // for createE, editE, deleteE
 
-  out.println("<RelativeLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"");
-  out.println("  xmlns:tools=\"http://schemas.android.com/tools\"");
-  out.println("  android:layout_width=\"match_parent\"");
-  out.println("  android:layout_height=\"wrap_content\"");
-  out.println("  tools:context=\"." + viewname + "\" >");
-  out.println();
+    String op = getAction(); 
+    String ename = entity.getName(); 
+    String ucname = op + ename;
+    String evc = ucname + "ViewController";
+    // String evo = ename + "ValueObject";
+    // String vo = evo.toLowerCase();
+    String resvo = "result";
+    String restype = ""; 
+    String ebean =  "ModelFacade";
+    String bean = ebean.toLowerCase();
+    Vector atts = getParameters();
+    // Attribute res = uc.getResultParameter(); 
 
-  String previous = null; 
+    // String evocreate = createVOStatement(e,atts);
 
-  Vector pars = getParameters();
-  for (int x = 0; x < pars.size(); x++)
-  { Attribute att = (Attribute) pars.get(x);
-    String labelname = att.androidEntryFieldName(fullop); 
-    String attfield = att.androidEntryField(fullop,previous,ename);
-    out.println(attfield);
-    previous = labelname; 
-  }
+    out.println("import UIKit");
+    out.println();
+    out.println("class " + evc + " : UIViewController");
+    out.println("{");
+    out.println("  var " + bean + " : " + ebean + " = " + ebean + ".getInstance()");
 
-  out.println("  <Button");
-  out.println("    android:id=\"@+id/" + opok + "\"");
-  out.println("    android:layout_width=\"wrap_content\"");
-  out.println("    android:layout_height=\"wrap_content\"");
-  out.println("    android:text=\"OK\"");
-  out.println("    android:onClick=\"" + opok + "\"");
-  if (previous != null) 
-  { out.println("    android:layout_below=\"@id/" + previous + "\""); } 
-  out.println("    android:layout_alignParentLeft=\"true\"/>");
+    String parlist = ""; 
+    for (int x = 0; x < atts.size(); x++)
+    { Attribute att = (Attribute) atts.get(x);
+      // if (att.isInputAttribute())
+      out.println("  @IBOutlet weak var " + att + "Input: UITextField!");
+      
+      parlist = parlist + att.getName(); 
+      if (x < atts.size() - 1) 
+      { parlist = parlist + ", "; } 
+    } 
+    
+    /* if (res != null)
+    { out.println("  @IBOutlet weak var resultOutput: UILabel!");
+      restype = res.getType().getSwift(); 
+    } */ 
 
-  out.println("  <Button");
-  out.println("    android:id=\"@+id/" + opcancel + "\"");
-  out.println("    android:layout_width=\"wrap_content\"");
-  out.println("    android:layout_height=\"wrap_content\"");
-  out.println("    android:text=\"Cancel\"");
-  out.println("    android:onClick=\"" + opcancel + "\"");
-  out.println("    android:layout_toRightOf=\"@id/" + opok + "\"");
-  out.println("    android:layout_alignTop=\"@id/" + opok + "\"/>");
-  out.println("</RelativeLayout>");
+    out.println("  var userId : String = " + "\"0\"");
+    out.println();
+    out.println("  override func viewDidLoad()");
+    out.println("  { super.viewDidLoad()");
+    // out.println("    self." + elist + " = " + bean + "." + getlist + "()");
+    out.println("  }");
+    out.println("");
+ 
+    String attdecoder = "    guard ";
+    boolean previous = false;
+    String localVars = "";
 
-}
+    for (int x = 0; x < atts.size(); x++)
+    { Attribute att = (Attribute) atts.get(x);
+      // if (att.isInputAttribute())
+      { if (previous)
+        { attdecoder = attdecoder + ", "; }
+        attdecoder = attdecoder + " let " + att + " = " + 
+                     Expression.unwrapSwift(att + "Input.text",att.getType());
+        previous = true;
+      }
+      // else 
+      // { Type atype = att.getType(); 
+	 //  if (atype != null) 
+      //  { localVars = localVars + "    var " + att + " : " + atype.getSwift() + "\n"; }
+      // }  
+    }
+    attdecoder = attdecoder + " else { return }\n";
 
-public void androidEditScreen(String op, PrintWriter out)
-{ String ent = entity.getName();
-  String viewname = "View" + op + ent;
-  String opok = op + ent + "OK";
-  String opcancel = op + ent + "Cancel";
+    String updateScreen = "";
+   
+    /* if (res != null) 
+    { Attribute att = res; // (Attribute) atts.get(x);
+      // if (att.isOutput())
+      { updateScreen = updateScreen + "    " + att + "Output.text = String(" + att + ")";
+      }
+    } */ 
 
-  out.println("<TableLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"");
-  out.println("  xmlns:tools=\"http://schemas.android.com/tools\"");
-  out.println("  android:layout_width=\"match_parent\"");
-  out.println("  android:layout_height=\"match_parent\"");
-  out.println("  android:stretchColumns=\"1\"");
-  out.println("  tools:context=\"." + viewname + "\" >");
-  out.println();
+      out.println("  @IBAction func " + ucname + "(_ sender: Any) {");
+      if (atts.size() > 0) 
+      { out.println(attdecoder); } 
+      // out.println(localVars);
+      // out.println(evocreate);
+      /* if (res != null) 
+      { out.println("    var " + resvo + " : " + restype + " = " + bean + "." + ucname + "(" + parlist + ")"); 
+        out.println(updateScreen);
+      } 
+      else */  
+      { out.println("    " + bean + "." + ucname + "(" + parlist + ")"); } 
+      out.println("  }");
+    // }
 
-  Vector pars = getParameters();
-  for (int x = 0; x < pars.size(); x++)
-  { Attribute att = (Attribute) pars.get(x);
-    String attfield = att.androidTableEntryField(ent,op);
-    out.println(attfield);
-  }
-  out.println(" <TableRow>");
-  out.println("  <Button");
-  out.println("    android:id=\"@+id/" + opok + "\"");
-  out.println("    android:layout_width=\"wrap_content\"");
-  out.println("    android:layout_height=\"wrap_content\"");
-  out.println("    android:layout_column=\"2\"");
-   out.println("    android:text=\"OK\"");
-  out.println("    android:onClick=\"" + opok + "\"");
-  out.println("    />");
+    out.println("");
+ 
+    out.println("  override func didReceiveMemoryWarning()");
+    out.println("  { super.didReceiveMemoryWarning() }");
+    out.println("");
+    out.println("}");
+  } 
 
-  out.println("  <Button");
-  out.println("    android:id=\"@+id/" + opcancel + "\"");
-  out.println("    android:layout_width=\"wrap_content\"");
-  out.println("    android:layout_height=\"wrap_content\"");
-  out.println("    android:text=\"Cancel\"");
-  out.println("    android:onClick=\"" + opcancel + "\"");
-  out.println("    />");
-  out.println(" </TableRow>");
-  out.println("</TableLayout>");
-}
 
-public void androidViewActivity(PrintWriter out)
+public void androidViewActivity(String packageName, PrintWriter out)
 { String op = getAction();
+  AndroidAppGenerator gen = new AndroidAppGenerator(); 
+    
   if (op.startsWith("create"))
-  { androidCreateViewActivity(op,out); }
+  { androidCreateViewActivity(op,packageName,out); }
+  else if (op.startsWith("delete"))
+  { gen.androidDeleteViewActivity(op,entity,out); }
+  else if (op.startsWith("edit"))
+  { gen.androidEditViewActivity(op,entity,out); }
+  else if (op.startsWith("list"))
+  { gen.listViewController(entity,out); }
+  else if (op.startsWith("searchBy"))
+  { androidSearchByViewActivity(op,packageName,out); }
 }
 
-public void androidCreateViewActivity(String op, PrintWriter out)
+public void androidCreateViewActivity(String op, String systemName, PrintWriter out)
 { Entity ent = getEntity();
   String entname = ent.getName();
   String fullop = op + entname; 
   String beanclass = entname + "Bean";
   String bean = beanclass.toLowerCase();
+  String lcname = fullop.toLowerCase(); 
 
-  out.println("package com.example.app;\n"); 
+  out.println("package " + systemName + ";\n"); 
   out.println(); 
+  out.println("import androidx.appcompat.app.AppCompatActivity;\n\r");
   out.println("import android.os.Bundle;");
-  out.println("import android.app.Activity;");
+  out.println("// import android.app.Activity;");
   out.println("import android.view.View;");
   out.println("import android.util.Log;"); 
+  out.println("import android.widget.Toast;");
+  out.println("import android.widget.TextView;");
   out.println("import android.widget.EditText;\n\r");
   out.println(); 
 
-  out.println("public class View" + fullop + " extends Activity");
+  out.println("public class View" + fullop + " extends AppCompatActivity");
   out.println("{ " + beanclass + " " + bean + ";");
 
   Vector pars = getParameters();
@@ -879,7 +1085,7 @@ public void androidCreateViewActivity(String op, PrintWriter out)
   out.println("  @Override");
   out.println("  protected void onCreate(Bundle bundle)");
   out.println("  { super.onCreate(bundle);");
-  out.println("    setContentView(R.layout." + fullop + ");");
+  out.println("    setContentView(R.layout." + lcname + "_layout);");
 
   for (int x = 0; x < pars.size(); x++)
   { Attribute par = (Attribute) pars.get(x);
@@ -889,7 +1095,7 @@ public void androidCreateViewActivity(String op, PrintWriter out)
   }
   out.println("    " + bean + " = new " + beanclass + "(this);");
   out.println("  }\n\r");
-  out.println();
+  out.println(); // for edit, the principal primary key does not have an EditText
   
   out.println("  public void " + fullop + "OK(View _v) ");
   out.println("  {");
@@ -909,7 +1115,18 @@ public void androidCreateViewActivity(String op, PrintWriter out)
   out.println("  }\n\r");
   out.println();
 
-  out.println("  public void " + fullop + "Cancel(View _v) {}");
+  out.println("  public void " + fullop + "Cancel(View _v)");
+  out.println("  { " + bean + ".resetData();");
+  for (int x = 0; x < pars.size(); x++)
+  { Attribute att = (Attribute) pars.get(x);
+    String aname = att.getName();
+    String tfnme = aname + "TextField"; 
+    out.println("    " + tfnme + ".setText(\"\");");
+	// if (res != null) 
+	// { out.println("    " + op + "Result.setText(\"" + op + " result\");"); }
+  }
+  out.println("  }");    
+
   out.println("}"); 
 }
 
@@ -922,9 +1139,18 @@ public static void androidCreateMenu(Vector ops, PrintWriter out)
   out.println();
 
   for (int x = 0; x < ops.size(); x++)
-  { OperationDescription op = (OperationDescription) ops.get(x);
-    op.androidTabItem(out);
+  { if (ops.get(x) instanceof OperationDescription) 
+    { OperationDescription op = (OperationDescription) ops.get(x);
+      op.androidTabItem(out);
+    } 
+    else if (ops.get(x) instanceof UseCase)
+    { UseCase uc = (UseCase) ops.get(x); 
+      if (uc.includedIn.size() == 0 && uc.extensionOf.size() == 0)
+      { uc.androidTabItem(out); }  
+    } 
   }
+
+  out.println();
   out.println("</menu>");
 }
 
@@ -943,8 +1169,8 @@ public static void androidCreateMainActivity(Vector ops, PrintWriter out)
   out.println("import android.app.FragmentTransaction;");
   out.println("import android.view.Menu;");
   out.println("import android.view.MenuItem;");
-  out.println("import android.view.ActionBar;");
-  out.println("import android.view.ActionBar.Tab;");
+  out.println("import android.app.ActionBar;");
+  out.println("import android.app.ActionBar.Tab;");
   out.println("");
   out.println("public class MainActivity extends Activity implements ActionBar.TabListener");
   out.println("{ ");
@@ -953,18 +1179,34 @@ public static void androidCreateMainActivity(Vector ops, PrintWriter out)
   out.println("  @Override");
   out.println("  protected void onCreate(Bundle bundle)");
   out.println("  { super.onCreate(bundle);");
-  out.println("    setContentView(R.layout.mainActivity);");
+  out.println("    setContentView(R.layout.activity_main);");
   out.println("    ActionBar bar = this.getActionBar();");
+  out.println("    bar.setTitle(\"My application\");"); 
   out.println("    bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);");
 
   for (int x = 0; x < ops.size(); x++)
-  { OperationDescription op = (OperationDescription) ops.get(x);
-    String pnme = op.getName(); 
-    String tfnme = pnme + "Tab"; 
-    out.println("    Tab " + tfnme + " = bar.newTab();");
-    out.println("    " + tfnme + ".setText(" + pnme + ");");
-    out.println("    " + tfnme + ".setTabListener(this);");
-    out.println("    bar.addTab(" + tfnme + ");");
+  { if (ops.get(x) instanceof OperationDescription)
+    { OperationDescription op = (OperationDescription) ops.get(x);
+      String pnme = op.getName(); 
+      String tfnme = pnme + "Tab"; 
+      String tabname = Named.capitalise(pnme); 
+      out.println("    Tab " + tfnme + " = bar.newTab();");
+      out.println("    " + tfnme + ".setText(\"" + tabname + "\");");
+      out.println("    " + tfnme + ".setTabListener(this);");
+      out.println("    bar.addTab(" + tfnme + ");");
+    }
+    else if (ops.get(x) instanceof UseCase)
+    { UseCase op = (UseCase) ops.get(x);
+      if (op.includedIn.size() == 0 && op.extensionOf.size() == 0)
+	 { String pnme = op.getName(); 
+        String tfnme = pnme + "Tab"; 
+        String tabname = Named.capitalise(pnme); 
+        out.println("    Tab " + tfnme + " = bar.newTab();");
+        out.println("    " + tfnme + ".setText(\"" + tabname + "\");");
+        out.println("    " + tfnme + ".setTabListener(this);");
+        out.println("    bar.addTab(" + tfnme + ");");
+      } 
+    } 
   }
   out.println("  }");
 
@@ -972,16 +1214,28 @@ public static void androidCreateMainActivity(Vector ops, PrintWriter out)
   out.println("  @Override");
   out.println("  public void onTabSelected(Tab tab, FragmentTransaction frag) ");
   out.println("  {");
-  out.println("    switch (tab.getItemId()) {");
   for (int x = 0; x < ops.size(); x++)
-  { OperationDescription op = (OperationDescription) ops.get(x);
-    String opname = op.getName();
-    out.println("      case R.id." + opname + ":");
-    out.println("        Intent " + opname + "Intent = new Intent(this,View" + opname + ".class);");
-    out.println("        startActivity(" + opname + "Intent);");
-    out.println("        return;");
+  { if (ops.get(x) instanceof OperationDescription)
+    { OperationDescription op = (OperationDescription) ops.get(x);
+      String opname = op.getName();
+      String tabname = Named.capitalise(opname); 
+      out.println("    if (\"" + tabname + "\".equals(tab.getText())) ");
+      out.println("    { Intent " + opname + "Intent = new Intent(this, View" + opname + ".class);");
+      out.println("      startActivity(" + opname + "Intent);");
+      out.println("      return; }");
+    } 
+    else if (ops.get(x) instanceof UseCase)
+    { UseCase op = (UseCase) ops.get(x);
+      if (op.extensionOf.size() == 0 && op.includedIn.size() == 0) 
+      { String opname = op.getName();
+        String capsname = Named.capitalise(opname); 
+        out.println("    if (\"" + capsname + "\".equals(tab.getText())) ");
+        out.println("    { Intent " + opname + "Intent = new Intent(this, " + opname + "Activity.class);");
+        out.println("      startActivity(" + opname + "Intent);");
+        out.println("      return; }");
+      } 
+    }
   }
-  out.println("    }");
   out.println("  }");
   out.println();
   out.println("  @Override");
@@ -992,7 +1246,7 @@ public static void androidCreateMainActivity(Vector ops, PrintWriter out)
   out.println("}"); 
 }
 
-
+/* 
 public void androidListScreen(String op, PrintWriter out)
 { String nme = getName();
   String viewname = "View" + nme;
@@ -1014,8 +1268,69 @@ public void androidListScreen(String op, PrintWriter out)
   out.println("  </TableRow>");
 
   out.println("</TableLayout>");
-}
+} */ 
 
+  public void androidSearchByViewActivity(String op, String systemName, PrintWriter out)
+  { String ename = entity.getName();
+    String evc = "ViewsearchBy" + ename + oprole;
+    String evo = ename + "VO";
+    String ebean = "ModelFacade";
+    String bean = "model";
+    Vector atts = entity.getAttributes();
+    String elist = ename.toLowerCase() + "List";
+    String getlist = "searchBy" + ename + oprole;
+    String pnme = "searchBy" + ename + oprole + "Field"; 
+	
+    out.println("package " + systemName + ";");
+    out.println(); 
+    out.println("import android.os.Bundle;");
+    out.println("import android.app.ListActivity;");
+    out.println("import android.view.View;");
+    out.println("import android.widget.ArrayAdapter;");
+    out.println("import android.widget.ListView;");
+    out.println("import android.widget.TextView;");
+    out.println("import java.util.ArrayList;");
+    out.println("import java.util.List;");
+    out.println();
+    out.println("public class " + evc + " extends ListActivity");
+    out.println("{ private ModelFacade model;"); 
+    out.println();
+    out.println("  ArrayList<" + evo + "> " + elist + ";"); 
+    
+	String tfnme = pnme + "Text"; 
+    String dname = pnme + "Data";
+	String lcname = (ename + oprole).toLowerCase(); 
+	
+    out.println("  EditText " + tfnme + ";");
+    out.println("  String " + dname + " = \"\";");
+    out.println();
+    out.println("  @Override");
+    out.println("  protected void onCreate(Bundle savedInstanceState)");
+    out.println("  { super.onCreate(savedInstanceState);");
+    out.println("    setContentView(R.layout.searchby" + lcname + "_layout);");
+    out.println("    model = ModelFacade.getInstance(this);");
+    out.println("    " + tfnme + " = (EditText) findViewById(R.id." + pnme + ");");
+    out.println("    " + elist + " = new ArrayList<String>();");
+    out.println("    ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1," + elist + ");");
+    out.println("    setListAdapter(adapter);");
+    out.println("  }");
+    out.println();
+
+    out.println("  public void searchBy" + ename + oprole + "OK(View _v) ");
+    out.println("  {");
+    out.println("    " + dname + " = " + tfnme + ".getText() + \"\";");
+	out.println("    " + elist + " = " + evo + 
+         ".getStringList(model.searchBy" + ename + oprole + "(" + dname + "));"); 
+	out.println("  }"); 
+	out.println(); 
+    out.println("  public void searchBy" + ename + oprole + "Cancel(View _v) ");
+    out.println("  { } // go back to main screen");
+ 	out.println(); 
+    out.println("  public void onListItemClick(ListView parent, View v, int position, long id)"); 
+    out.println("  { model.setSelected" + ename + "(position); }");
+    out.println();
+    out.println("}");
+  }
 
 
 }

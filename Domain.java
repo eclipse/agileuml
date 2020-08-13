@@ -1,7 +1,7 @@
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -58,11 +58,13 @@ public abstract class Domain extends NamedElement
   public abstract boolean typeCheck(Vector entities, Vector types, Vector contexts, Vector env);  
    
 
-  public abstract Expression toGuardCondition(Vector bound, Expression post);
+  public abstract Expression toGuardCondition(Vector bound, Expression post, Entity tr);
 
   public abstract Expression toSourceExpression(Vector bound);
 
   public abstract Expression toTargetExpression(Vector bound);
+
+  public abstract Expression toUndoExpression(Vector bound);
 
   public abstract Expression toSourceExpressionOp(Vector bound);
 

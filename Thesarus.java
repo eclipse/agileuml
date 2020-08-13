@@ -3,7 +3,7 @@ import java.io.*;
 import java.util.Collections; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -44,7 +44,7 @@ class ThesaurusConcept
   { boolean res = false; 
     for (int i = 0; i < terms.size(); i++) 
     { ThesaurusTerm tt = (ThesaurusTerm) terms.get(i); 
-      if (t.equals(tt.name))
+      if (t.equalsIgnoreCase(tt.name))
       { return true; } 
     } 
     return res; 
@@ -54,7 +54,7 @@ class ThesaurusConcept
   { boolean res = false; 
     for (int i = 0; i < preferredTerms.size(); i++) 
     { ThesaurusTerm tt = (ThesaurusTerm) preferredTerms.get(i); 
-      if (t.equals(tt.name))
+      if (t.equalsIgnoreCase(tt.name))
       { return true; } 
     } 
     return res; 
@@ -124,7 +124,7 @@ class ThesaurusTerm
   public boolean equals(Object x) 
   { if (x instanceof ThesaurusTerm)
     { ThesaurusTerm tt = (ThesaurusTerm) x; 
-      return tt.name.equals(name); 
+      return tt.name.equalsIgnoreCase(name); 
     } 
     return false; 
   } 
@@ -153,15 +153,22 @@ public class Thesarus
   { String nme = fnme.toLowerCase(); 
     String enme = fenme.toLowerCase(); 
 
-    if (nme.equals(enme)) { return 1.0; } 
-    if (nme.startsWith(enme)) { return 2.0/3; } 
-    if (nme.endsWith(enme)) { return 2.0/3; } 
-    if (enme.startsWith(nme)) { return 2.0/3; } 
-    if (enme.endsWith(nme)) { return 2.0/3; }
+    int nlen = fnme.length(); 
+    int elen = fenme.length(); 
+
+    if (nme.equalsIgnoreCase(enme)) { return 1.0; } 
+    if (nme.startsWith(enme)) { return elen/(1.0*nlen); } 
+    if (nme.endsWith(enme)) { return elen/(1.0*nlen); } 
+    if (enme.startsWith(nme)) { return nlen/(1.0*elen); } 
+    if (enme.endsWith(nme)) { return nlen/(1.0*elen); }
 
     String suff = ModelElement.longestCommonSuffix(nme,enme); 
-    if (suff.length() > 0)
+    if (suff.length() > 1)
     { return suff.length()/(1.0*Math.max(fnme.length(),fenme.length())); } 
+
+    String pref = ModelElement.longestCommonPrefix(nme,enme); 
+    if (pref.length() > 1)
+    { return pref.length()/(1.0*Math.max(fnme.length(),fenme.length())); } 
 
     for (int i = 0; i < thesaurus.size(); i++) 
     { ThesaurusConcept tc = (ThesaurusConcept) thesaurus.get(i); 
@@ -173,8 +180,8 @@ public class Thesarus
 
     for (int i = 0; i < thesaurus.size(); i++) 
     { ThesaurusConcept tc = (ThesaurusConcept) thesaurus.get(i); 
-      if (tc.hasTerm(nme)) 
-      { if (tc.hasTerm(enme)) 
+      if (tc.hasAnyTerm(nme)) 
+      { if (tc.hasAnyTerm(enme)) 
         { return 2.0/3; } 
       } 
     } 

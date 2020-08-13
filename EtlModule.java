@@ -1,7 +1,7 @@
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -37,11 +37,25 @@ public class EtlModule
   { // if (r.isPrimary())
     // { transformationRules.add(0,r); }
     // else 
+    if (r == null) { } 
+    else 
     { transformationRules.add(r); }
   }
 
+  public void addRules(Vector rs)
+  { for (int i = 0; i < rs.size(); i++) 
+    { TransformationRule tr = (TransformationRule) rs.get(i); 
+      addRule(tr);
+    }
+  } 
+
   public void addOperation(BehaviouralFeature bf)
-  { operations.add(bf); } 
+  { if (bf != null) 
+    { operations.add(bf); } 
+  } 
+
+  public void addOperations(Vector ops)
+  { operations.addAll(ops); } 
 
   public void addAttribute(Attribute att)
   { attributes.add(att); } 
@@ -62,24 +76,31 @@ public class EtlModule
 
 
   public String toString()
-  { String res = "module " + name + "\n"; 
+  { String res = "-- module " + name + "\r\n"; 
     for (int i = 0; i < pre.size(); i++)
     { res = res + pre.get(i); }
 
     for (int j = 0; j < operations.size(); j++) 
     { BehaviouralFeature bf = (BehaviouralFeature) operations.get(j); 
       Entity context = bf.getEntity(); 
-      res = res + "operation " + context + " " + bf.getSignature() + "\n" +  
-            "{ " + bf.getActivity() + " }\n"; 
+      if (context != null) 
+      { res = res + "operation " + context + " " + bf.getSignature(); } 
+      else 
+      { res = res + "operation " + bf.getSignature(); } 
+      Type restype = bf.getResultType(); 
+      if (restype != null)       
+      { res = res + " : " + restype; } 
+      res = res + "\n" +  
+            "{ " + (bf.getActivity()).toEtl() + " }\r\n\r\n"; 
     } 
  
     for (int i = 0; i < transformationRules.size(); i++)
-    { res = res + transformationRules.get(i); }
+    { res = res + transformationRules.get(i) + " \r\n\r\n"; }
 
     for (int i = 0; i < post.size(); i++)
     { res = res + post.get(i); }
 
-    return res + "\n";
+    return res + "\r\n";
   }
 
   public boolean typeCheck(Vector types, Vector entities, Vector contexts, Vector env) 

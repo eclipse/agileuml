@@ -1,7 +1,7 @@
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -166,13 +166,17 @@ public class Pattern
   // but should count let and ->iterate variables 
 
 
-  public Expression toGuardCondition(Vector bound, Expression contextObj, Expression post)
+  public Expression toGuardCondition(Vector bound, Expression contextObj, Expression post, 
+                                     Entity tr)
   { return null; }
 
   public Expression toSourceExpression(Vector bound, Expression contextObj)
   { return null; }
 
   public Expression toTargetExpression(Vector bound, Expression contextObj)
+  { return null; }
+
+  public Expression toUndoExpression(Vector bound, Expression contextObj)
   { return null; }
 
   public Expression toSourceExpressionOp(Vector bound, Expression contextObj)
@@ -226,9 +230,16 @@ public class Pattern
         res.addAll(q1); 
         res.addAll(q2); 
       } 
+      else if (conj instanceof UnaryExpression && ((UnaryExpression) conj).operator.equals("not"))
+      { UnaryExpression uexp = (UnaryExpression) conj; 
+        Expression arg = uexp.getArgument(); 
+        Pattern notpatt = new Pattern(); 
+        notpatt.addPredicate(arg); 
+        res.addAll(notpatt.allRuleCalls(rules)); 
+      } 
     } 
     return res; 
-  } // and negation, conditionals, ->forAll
+  } 
 
   public Pattern expandWhenCalls(Vector oldrules, java.util.Map leafrules, java.util.Map guards)
   { Vector newpredicate = new Vector(); 
@@ -242,6 +253,11 @@ public class Pattern
         if (r != null) 
         { Vector leafs = (Vector) leafrules.get(r); 
           Expression res = new BasicExpression(false); 
+
+          if (leafs == null) 
+          { newpredicate.add(conj); 
+            continue; 
+          } 
 
           for (int k = 0; k < leafs.size(); k++) 
           { Relation rk = (Relation) leafs.get(k); 
@@ -274,7 +290,7 @@ public class Pattern
       { newpredicate.add(conj); } 
     } 
     return new Pattern(newpredicate);       
-  } 
+  } // and other cases, disjunctions etc of calls. 
 
   public Pattern expandWhereCalls(Vector oldrules, java.util.Map leafrules, java.util.Map guards)
   { Vector newpredicate = new Vector(); 
@@ -322,7 +338,7 @@ public class Pattern
       { newpredicate.add(conj); } 
     } 
     return new Pattern(newpredicate);       
-  } 
+  } // and other cases. 
 
   public Vector whenToExp(Vector bound, Vector rules, Vector entities)
   { // R(s,t) is r$trace : s.traces$R$p1 & t = r$trace.p2
@@ -364,7 +380,8 @@ public class Pattern
         res.clear(); 
         res.addAll(newres); 
       }   
-      else if (conj != null && (conj instanceof BinaryExpression) && ((BinaryExpression) conj).isRuleCallDisjunction(rules))
+      else if (conj != null && (conj instanceof BinaryExpression) && 
+	           ((BinaryExpression) conj).isRuleCallDisjunction(rules))
       { Vector disjs = ((BinaryExpression) conj).allDisjuncts(); 
  
         Vector newres = new Vector(); 
@@ -395,15 +412,15 @@ public class Pattern
           Pattern pd = new Pattern(); 
           pd.addPredicate(disj); 
           Vector pdcases = pd.whenToExp(bound,rules,entities); 
-          alldisjuncts.addAll(pdcases); 
+          alldisjuncts.addAll(pdcases);
+		} 
 
-          for (int j = 0; j < res.size(); j++) 
-          { Expression ante = (Expression) res.get(j); 
-            for (int m = 0; m < alldisjuncts.size(); m++) 
-            { Expression disjm = (Expression) alldisjuncts.get(m); 
-              Expression newante = Expression.simplify("&", ante, disjm, null); 
-              newres.add(newante);
-            }  
+        for (int j = 0; j < res.size(); j++) 
+        { Expression ante = (Expression) res.get(j); 
+          for (int m = 0; m < alldisjuncts.size(); m++) 
+          { Expression disjm = (Expression) alldisjuncts.get(m); 
+            Expression newante = Expression.simplify("&", ante, disjm, null); 
+            newres.add(newante);  
           } 
         }
         res.clear(); 
@@ -427,6 +444,7 @@ public class Pattern
 
     return res;
   }  // also add parameters of call to bound variables with predicate p:T if not in bound
+     // cases of quantifiers? Negation? ConditionalExpressions? 
 
   public Vector checkWhen(Vector bound, Vector rules, Vector entities)
   { // R(s,t) is r$trace : R$trace # s = r$trace.p1 & t = r$trace.p2
@@ -445,7 +463,7 @@ public class Pattern
       { BasicExpression be = (BasicExpression) conj; 
         e = be.checkWhen(entities,bound); 
 
-        // System.out.println("RULE TEST: " + e); 
+        // System.out.println("RULE TEST for guard: " + e); 
 
         Vector pars = be.getParameters(); 
         for (int p = 0; p < pars.size(); p++) 
@@ -468,7 +486,8 @@ public class Pattern
         res.clear(); 
         res.addAll(newres); 
       }   
-      else if (conj != null && (conj instanceof BinaryExpression) && ((BinaryExpression) conj).isRuleCallDisjunction(rules))
+      else if (conj != null && (conj instanceof BinaryExpression) && 
+               ((BinaryExpression) conj).isRuleCallDisjunction(rules))
       { Vector disjs = ((BinaryExpression) conj).allDisjuncts(); 
  
         Vector newres = new Vector(); 
@@ -476,6 +495,27 @@ public class Pattern
         for (int k = 0; k < disjs.size(); k++) 
         { BasicExpression disj = (BasicExpression) disjs.get(k); 
           Expression callk = disj.checkWhen(entities,bound); 
+          // System.out.println("*** All disjuncts = " + callk); 
+
+          for (int j = 0; j < res.size(); j++) 
+          { Expression ante = (Expression) res.get(j); 
+            Expression newante = Expression.simplify("&", ante, callk, null); 
+            newres.add(newante); 
+          } 
+        }
+        res.clear(); 
+        res.addAll(newres);  
+      }  // also case of negated call
+      else if (conj != null && (conj instanceof BinaryExpression) && 
+               ("or".equals(((BinaryExpression) conj).operator)))
+      { Vector disjs = ((BinaryExpression) conj).allDisjuncts(); 
+ 
+        Vector newres = new Vector(); 
+                 
+        for (int k = 0; k < disjs.size(); k++) 
+        { // BasicExpression disj = (BasicExpression) disjs.get(k); 
+          Expression callk = (Expression) disjs.get(k); 
+          // disj.checkWhen(entities,bound); 
           // System.out.println("*** All disjuncts = " + callk); 
 
           for (int j = 0; j < res.size(); j++) 

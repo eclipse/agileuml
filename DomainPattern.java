@@ -1,7 +1,7 @@
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -21,21 +21,29 @@ public class DomainPattern extends Pattern
   }
 
   public Object clone()
-  { TemplateExp te = (TemplateExp) ((ObjectTemplateExp) templateExpression).clone(); 
+  { if (templateExpression instanceof ObjectTemplateExp)
+    { TemplateExp te = (TemplateExp) ((ObjectTemplateExp) templateExpression).clone(); 
+      return new DomainPattern(relationDomain, te);
+    } 
+    TemplateExp te = (TemplateExp) ((CollectionTemplateExp) templateExpression).clone(); 
     return new DomainPattern(relationDomain, te); 
   } 
 
   public String toString()
   { return "" + templateExpression; }
 
-  public Expression toGuardCondition(Vector bound, Expression contextObj, Expression post)
-  { return templateExpression.toGuardCondition(bound, contextObj, post); }
+  public Expression toGuardCondition(Vector bound, Expression contextObj, Expression post, 
+                                     Entity tr)
+  { return templateExpression.toGuardCondition(bound, contextObj, post, tr); }
 
   public Expression toSourceExpression(Vector bound, Expression contextObj)
   { return templateExpression.toSourceExpression(bound, contextObj); }
 
   public Expression toTargetExpression(Vector bound, Expression contextObj, Expression setting)
   { return templateExpression.toTargetExpression(bound, contextObj, setting); }
+
+  public Expression toUndoExpression(Vector bound, Expression contextObj, Expression setting)
+  { return templateExpression.toUndoExpression(bound, contextObj, setting); }
 
   public Expression toTargetExpressionOp(Vector bound, Expression contextObj, Expression setting)
   { return templateExpression.toTargetExpressionOp(bound, contextObj, setting); }

@@ -3,7 +3,7 @@ import java.io.*;
 import java.util.List; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -36,13 +36,41 @@ public class Association extends ModelElement
  
   public Association(Entity e1, Entity e2, int c1,
                      int c2, String r1, String r2)
-  { super(e1.getName() + "_" + e2.getName());
+  { super(e1 + "_" + e2);
+    
     entity1 = e1;
     entity2 = e2;
     card1 = c1;
     card2 = c2;
     role1 = r1;
     role2 = r2;
+    if (e1 == null) 
+    { System.err.println("!!! FATAL ERROR: null class at association end 1"); 
+      return; 
+    } 
+    if (e2 == null) 
+    { System.err.println("!!! FATAL ERROR: null class at association end 2"); 
+      return; 
+    } 
+  }
+
+  public Association(Entity e1, Entity e2, String r2)
+  { super(e1 + "_" + e2);
+    
+    entity1 = e1;
+    entity2 = e2;
+    card1 = MANY; 
+    card2 = MANY; 
+    // role1 = r1;
+    role2 = r2;
+    /* if (e1 == null) 
+    { System.err.println("!!! FATAL ERROR: null class at association end 1"); 
+      return; 
+    } 
+    if (e2 == null) 
+    { System.err.println("!!! FATAL ERROR: null class at association end 2"); 
+      return; 
+    } */ 
   }
 
   public Association(Entity e1, Attribute att) 
@@ -293,6 +321,15 @@ public class Association extends ModelElement
   { return card1 == MANY && card2 == ONE ||
            card1 == ONE && card2 == MANY; 
   }
+
+  public boolean isZeroOne()
+  { return card2 == ZEROONE; } 
+
+  public boolean isOptional()
+  { return card2 == ZEROONE || card2 == MANY; } 
+
+  public boolean isMandatory()
+  { return card2 == ONE || card2 > 1; } 
 
   public boolean isPersistent()
   { return hasStereotype("persistent"); } 
@@ -596,13 +633,15 @@ public class Association extends ModelElement
 
       if (qualifier != null)
       { out.println("java.util.Map " + role2 + " = new java.util.HashMap();"); } 
-      else if (card2 == ONE)
+      else if (card2 == ONE && entity2 != null)
       { out.println(entity2.getName() + " " + role2 + ";"); }
-      else
+      else if (entity2 != null)
       { out.println("List " +
                     role2 + initialiser + "; // of " +
                     entity2.getName());
       }
+	  else 
+	  { out.println("Object " + role2 + "; // Undefined class type"); }
     }
   }  // not valid for a..b a > 0. Should be array then?
 

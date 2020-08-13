@@ -1,10 +1,12 @@
-import java.util.Vector; 
 import java.io.*; 
 import java.util.Collections; 
 import javax.swing.JOptionPane; 
+import java.util.Vector; 
+import java.util.List; 
+
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -58,14 +60,272 @@ public class AttributeMatching
     auxVariables = auxvars;  
   } 
 
+  public AttributeMatching(Expression source, Expression target)
+  { src = new Attribute("" + source, source.getType(), 
+                        ModelElement.INTERNAL); 
+    src.setElementType(source.getElementType());
+ 
+
+    srcvalue = source; 
+    trg = new Attribute("" + target, target.getType(), 
+                        ModelElement.INTERNAL);
+    trg.setElementType(target.getElementType()); 
+ 
+    srcname = srcvalue + ""; 
+    trgname = trg.getName(); 
+  } 
+
+  public void setElementVariable(Attribute var) 
+  { elementVariable = var; } 
+
+  public void addAuxVariable(Attribute var) 
+  { if (auxVariables.contains(var)) { } 
+    else 
+    { auxVariables.add(var); }
+  }  
+
+  public void setExpressionMatch(Expression source, Attribute target, Attribute var) 
+  { src = new Attribute("" + source, source.getType(), ModelElement.INTERNAL); 
+    src.setType(source.getType()); 
+    src.setElementType(source.getElementType()); 
+
+    srcvalue = source; 
+    trg = target; 
+    elementVariable = var; 
+    srcname = srcvalue + ""; 
+    trgname = trg.getName();
+  } 
+
   public Attribute getSource()
   { return src; } 
+  
+  public Expression getSourceExpression()
+  { if (srcvalue != null) 
+    { return srcvalue; }
+	return new BasicExpression(src); 
+  }
 
   public Attribute getTarget()
   { return trg; } 
 
   public String toString()
   { return "    " + srcname + " |--> " + trgname; } 
+
+  boolean isDirect() // either source or target is a direct attribute
+  { if (src.getNavigation().size() <= 1) 
+    { return true; } 
+    if (trg.getNavigation().size() <= 1) 
+    { return true; } 
+    return false; 
+  } 
+
+  boolean isDirectSource() // source is a direct attribute
+  { if (src.getNavigation().size() <= 1) 
+    { return true; } 
+    return false; 
+  } 
+
+  boolean isDirectTarget() // target is a direct attribute
+  { if (trg.getNavigation().size() <= 1) 
+    { return true; } 
+    return false; 
+  } 
+
+  boolean isExpressionMapping()
+  { return srcvalue != null; } 
+
+  boolean isValueAssignment() 
+  { return srcvalue != null && elementVariable == null; } 
+
+  boolean isExpressionAssignment()
+  { return srcvalue != null && elementVariable != null; } 
+
+  boolean isStringAssignment() 
+  { return srcvalue != null && auxVariables.size() > 1; } 
+  // But could occur even if srcvalue is not a string. 
+
+  boolean isStringMapping() 
+  { return srcvalue != null && auxVariables.size() > 1 && 
+           srcvalue.getType().isString(); 
+  } 
+
+  boolean isValueTyped()
+  { // target and source are of a value type
+    Type st = src.getType(); 
+    Type tt = trg.getType(); 
+    if (Type.isValueType(st) && Type.isValueType(tt))
+    { return true; } 
+    return false; 
+  } 
+
+  void displayMappingKind()
+  { if (isExpressionMapping() && !(srcvalue.getType().isString()))
+    { System.out.println("Expression mapping: " + this); } 
+
+    if (isStringAssignment() && srcvalue.getType().isString())
+    { System.out.println("String mapping: " + this); } 
+
+    if (isValueAssignment())
+    { System.out.println("Value mapping: " + this); } 
+  } 
+
+  boolean isPossibleFeatureMerge()
+  { // of form s->before(sep) or s->after(sep), etc
+    if (srcvalue != null && 
+        (srcvalue instanceof BinaryExpression))
+    { BinaryExpression be = (BinaryExpression) srcvalue; 
+      if ("->before".equals(be.operator) || "->after".equals(be.operator))
+      { return true; } 
+      if ("->front".equals(be.operator) || "->last".equals(be.operator))
+      { return true; } 
+      if ("->first".equals(be.operator) || "->tail".equals(be.operator))
+      { return true; } 
+    } 
+    return false; 
+  } 
+ 
+  Vector findMergeFamily(Vector ams, Vector seen)
+  { // of form s->before(sep) or s->after(sep), etc
+    Vector res = new Vector(); 
+    res.add(this); 
+
+    if (srcvalue != null && 
+        (srcvalue instanceof BinaryExpression))
+    { BinaryExpression be = (BinaryExpression) srcvalue; 
+      if ("->before".equals(be.operator))
+      { Expression sep = be.getRight(); 
+        for (int i = 0; i < ams.size(); i++) 
+        { AttributeMatching amx = (AttributeMatching) ams.get(i); 
+          if (amx.isExpressionAssignment() && !(seen.contains(amx)) && 
+              amx.srcvalue instanceof BinaryExpression)
+          { BinaryExpression be2 = (BinaryExpression) amx.srcvalue; 
+            if ("->after".equals(be2.getOperator()) && 
+                (sep + "").equals(be2.getRight() + "") && 
+                (be.getLeft() + "").equals(be2.getLeft() + ""))
+            { res.add(amx); 
+              return res; 
+            } 
+          } 
+        } 
+      } 
+      else if ("->after".equals(be.operator))
+      { Expression sep = be.getRight(); 
+        for (int i = 0; i < ams.size(); i++) 
+        { AttributeMatching amx = (AttributeMatching) ams.get(i); 
+          if (amx.isExpressionAssignment() && !(seen.contains(amx)) && 
+              amx.srcvalue instanceof BinaryExpression)
+          { BinaryExpression be2 = (BinaryExpression) amx.srcvalue; 
+            if ("->before".equals(be2.getOperator()) && 
+                (sep + "").equals(be2.getRight() + "") && 
+                (be.getLeft() + "").equals(be2.getLeft() + ""))
+            { res.add(amx); 
+              return res; 
+            } 
+          } 
+        } 
+      }
+    }
+    return res; 
+  } 
+
+  Vector findMergeFamilySequence1(Vector ams, Vector seen)
+  { // of form s->front() or s->last(), etc
+    Vector res = new Vector(); 
+    res.add(this); 
+
+    if (srcvalue != null && 
+        (srcvalue instanceof UnaryExpression))
+    { UnaryExpression be = (UnaryExpression) srcvalue; 
+      if ("->front".equals(be.operator))
+      { for (int i = 0; i < ams.size(); i++) 
+        { AttributeMatching amx = (AttributeMatching) ams.get(i); 
+          if (amx.isExpressionAssignment() && !(seen.contains(amx)) && 
+              amx.srcvalue instanceof UnaryExpression)
+          { UnaryExpression be2 = (UnaryExpression) amx.srcvalue; 
+            if ("->last".equals(be2.getOperator()) && 
+                (be.getArgument() + "").equals(be2.getArgument() + ""))
+            { res.add(amx); 
+              return res; 
+            } 
+          } 
+        } 
+      } 
+      else if ("->last".equals(be.operator))
+      { for (int i = 0; i < ams.size(); i++) 
+        { AttributeMatching amx = (AttributeMatching) ams.get(i); 
+          if (amx.isExpressionAssignment() && !(seen.contains(amx)) && 
+              amx.srcvalue instanceof UnaryExpression)
+          { UnaryExpression be2 = (UnaryExpression) amx.srcvalue; 
+            if ("->front".equals(be2.getOperator()) && 
+                (be.getArgument() + "").equals(be2.getArgument() + ""))
+            { res.add(amx); 
+              return res; 
+            } 
+          } 
+        } 
+      }
+    }
+    return res; 
+  } 
+
+  Vector findMergeFamilySequence2(Vector ams, Vector seen)
+  { // of form s->tail() or s->first(), etc
+    Vector res = new Vector(); 
+    res.add(this); 
+
+    if (srcvalue != null && 
+        (srcvalue instanceof UnaryExpression))
+    { UnaryExpression be = (UnaryExpression) srcvalue; 
+      if ("->first".equals(be.operator))
+      { for (int i = 0; i < ams.size(); i++) 
+        { AttributeMatching amx = (AttributeMatching) ams.get(i); 
+          if (amx.isExpressionAssignment() && !(seen.contains(amx)) && 
+              amx.srcvalue instanceof UnaryExpression)
+          { UnaryExpression be2 = (UnaryExpression) amx.srcvalue; 
+            if ("->tail".equals(be2.getOperator()) && 
+                (be.getArgument() + "").equals(be2.getArgument() + ""))
+            { res.add(amx); 
+              return res; 
+            } 
+          } 
+        } 
+      } 
+      else if ("->tail".equals(be.operator))
+      { for (int i = 0; i < ams.size(); i++) 
+        { AttributeMatching amx = (AttributeMatching) ams.get(i); 
+          if (amx.isExpressionAssignment() && !(seen.contains(amx)) && 
+              amx.srcvalue instanceof UnaryExpression)
+          { UnaryExpression be2 = (UnaryExpression) amx.srcvalue; 
+            if ("->first".equals(be2.getOperator()) && 
+                (be.getArgument() + "").equals(be2.getArgument() + ""))
+            { res.add(amx); 
+              return res; 
+            } 
+          } 
+        } 
+      }
+    }
+    return res; 
+  } 
+
+  public boolean usedAsIntermediateClass(Entity e)
+  { // E is the entity element type of some p : trg.path
+    if (e == null) 
+    { return false; } 
+
+    String nme = e.getName(); 
+
+    if (trg.isComposed())
+    { Vector path = trg.getNavigation(); 
+      for (int i = 0; i < path.size() - 1; i++) 
+      { Attribute p = (Attribute) path.get(i); 
+        if ((p.getElementType() + "").equals(nme))
+        { return true; } 
+      } 
+    } 
+    return false; 
+  } 
+    
 
   public boolean unusedInSource(Attribute v)
   { String nme = v.getName(); 
@@ -91,14 +351,38 @@ public class AttributeMatching
     return true; 
   } 
 
+  public boolean usedInSource(Attribute v)
+  { if (v == src || v.equalByNameAndOwner(src) || v.equalToReverseDirection(src)) 
+    { return true; } 
+
+    if (src.isComposed())
+    { Vector path = src.getNavigation(); 
+      for (int i = 0; i < path.size(); i++) 
+      { Attribute p = (Attribute) path.get(i); 
+        if (v == p || v.equalByNameAndOwner(p))
+        { return true; } 
+      } 
+      return false; 
+    } 
+
+    String nme = v.getName(); 
+
+    if (srcvalue != null) 
+    { if (srcvalue.hasVariable(nme))
+      { return true; }
+    }  
+
+    return false; 
+  } // or src is the reverse
+
   public double similarity(Map mm, Vector entities, Vector thesaurus) 
   { // NMS similarity between src and trg
     double namesim = ModelElement.similarity(srcname, trgname); 
     double namesemsim = Entity.nmsSimilarity(srcname, trgname, thesaurus); 
-    double nsim = (namesim + namesemsim - namesim*namesemsim); 
+    double nsim = (namesim + 2*namesemsim - namesim*namesemsim); 
     double tsim = Attribute.partialTypeMatch(src,trg,mm,entities);
     return nsim*tsim;   
-  } 
+  } // should be namesemsim not 2*namesemsim
 
   public Vector enumConversions()
   { // Conversions from one enum type to a different one 
@@ -170,18 +454,42 @@ public class AttributeMatching
            trg.isBidirectionalassociation(); 
   } 
 
-  public void addAuxVariable(Attribute x)
-  { auxVariables.add(x); } 
-
   public Vector inverts(Entity srcent, Entity trgent, Vector ems)
   { Vector res = new Vector(); 
     if (isStringAssignment())
     { // assume auxVariables.size() == 2
-      BasicExpression delim = new BasicExpression("\"~\""); 
+      // v1 + " ~ " + v2 --> v  inverts as 
+      // v->before(" ~ ") --> v1, v->after(" ~ ") --> v2
+
+      Expression delim = new BasicExpression("\" ~ \""); 
+
+      if (srcvalue instanceof BinaryExpression)
+      { BinaryExpression sbe = (BinaryExpression) srcvalue; 
+        if ("+".equals(sbe.operator))
+        { Expression lbe = sbe.getLeft(); 
+          Expression rbe = sbe.getRight(); 
+          // Attribute var1 = (Attribute) auxVariables.get(0); 
+          // Attribute var2 = (Attribute) auxVariables.get(1); 
+          if (rbe instanceof BinaryExpression && 
+              "+".equals(((BinaryExpression) rbe).operator))  
+          { delim = (BasicExpression) ((BinaryExpression) rbe).getLeft();
+            System.out.println(">> Delimiter = " + delim); 
+          } 
+          else if (lbe instanceof BinaryExpression && 
+                   "+".equals(((BinaryExpression) lbe).operator))
+          { // (var1 + sep) + var2
+            delim = ((BinaryExpression) lbe).getRight();
+            System.out.println(">> Delimiter = " + delim); 
+          } 
+        } 
+      } 
+ 
+
       delim.setType(new Type("String",null)); 
       delim.setElementType(new Type("String",null));
  
       BasicExpression etrg = new BasicExpression(trg); 
+      etrg.setUmlKind(Expression.ATTRIBUTE); 
       BinaryExpression be1 = new BinaryExpression("->before", etrg, delim); 
       BinaryExpression be2 = new BinaryExpression("->after", etrg, delim); 
 
@@ -197,7 +505,10 @@ public class AttributeMatching
       return res; 
     } // In general could be several of these. 
     else if (isExpressionAssignment())
-    { if (srcvalue instanceof SetExpression) 
+    { if ("self".equals(srcvalue + ""))
+      { return null; } // inverted to condition instead 
+
+      if (srcvalue instanceof SetExpression) 
       { SetExpression sse = (SetExpression) srcvalue; 
         if (sse.isOrdered() && sse.size() >= 2 && trg.isOrdered())
         { // Sequence{r1,...,rn} --> trg inverts to trg->at(1) --> r1, ...,
@@ -208,6 +519,9 @@ public class AttributeMatching
                                        ModelElement.INTERNAL); 
           Attribute a2 = new Attribute(v2 + "",v2.getType(),
                                        ModelElement.INTERNAL);
+          a1.setElementType(v1.getElementType()); 
+          a2.setElementType(v2.getElementType()); 
+
           BasicExpression ind1 = new BasicExpression(1); 
           BasicExpression ind2 = new BasicExpression(2);
           BasicExpression trge = new BasicExpression(trg); 
@@ -242,6 +556,9 @@ public class AttributeMatching
                                        ModelElement.INTERNAL); 
           Attribute a2 = new Attribute(rgt.data,rgt.getType(),
                                        ModelElement.INTERNAL); 
+          a1.setElementType(lft.getElementType()); 
+          a2.setElementType(rgt.getElementType()); 
+
           Expression trge = new BasicExpression(trg); 
           UnaryExpression at1 = new UnaryExpression("->front",trge); 
           UnaryExpression at2 = new UnaryExpression("->last",trge); 
@@ -296,6 +613,8 @@ public class AttributeMatching
           { Entity b = etval.getEntity(); 
             Entity b1 = trg.getElementType().getEntity(); 
             BasicExpression selfexp = new BasicExpression("self"); 
+            // selfexp.setUmlkind(Expression.VARIABLE); 
+
             selfexp.setType(new Type(b1)); 
             selfexp.setElementType(new Type(b1)); 
             
@@ -315,6 +634,129 @@ public class AttributeMatching
             return null; 
           }
         }
+      } 
+
+      if (srcvalue instanceof BinaryExpression) 
+      { BinaryExpression sbe = (BinaryExpression) srcvalue; 
+        // elems->closure(next) --> parts  for ordered parts inverts as 
+        // parts --> elems, next computation of parts/container --> next
+
+        // System.out.println("INVERSE OF: " + srcvalue + " --> " + trg); 
+        // System.out.println(trg.isOrdered() + " " + trg.hasOpposite() + " " +  
+        //                    ((BasicExpression) sbe.right).variable + " " + 
+        //                    ((BasicExpression) sbe.right).isZeroOneRole()); 
+
+        if (sbe.operator.equals("->closure") && trg.isOrdered() &&  
+            sbe.left instanceof BasicExpression && trg.hasOpposite() && 
+            sbe.right instanceof BasicExpression && 
+            ((BasicExpression) sbe.right).variable != null && 
+            ((BasicExpression) sbe.right).isZeroOneRole()) 
+        { BasicExpression lft = (BasicExpression) sbe.left; 
+          BasicExpression rgt = (BasicExpression) sbe.right;
+          String role1 = trg.getRole1(); // container 
+          Attribute newrhs1 = new Attribute(sbe.left + "", sbe.left.getType(), 
+                                            ModelElement.INTERNAL); // elems
+          newrhs1.setElementType(sbe.left.getElementType()); 
+          AttributeMatching newam = new AttributeMatching(trg,newrhs1);
+          res.add(newam);   
+
+          Type targetref = src.getElementType(); 
+          if (targetref != null && targetref.isEntity())
+          { Entity trgref = targetref.getEntity(); 
+            BasicExpression ownerparts = new BasicExpression(trg);
+            BasicExpression ownr = new BasicExpression(role1);
+            ownerparts.setUmlKind(Expression.ATTRIBUTE); 
+            ownr.setUmlKind(Expression.ATTRIBUTE); 
+            ownerparts.setObjectRef(ownr);
+            BasicExpression selfexp = new BasicExpression("self");
+            // should have umlkind = VARIABLE
+
+            selfexp.setType(new Type(trgref));
+            selfexp.setElementType(new Type(trgref));
+            BinaryExpression selfindex = new BinaryExpression("->indexOf", ownerparts, selfexp);
+            UnaryExpression ownerpartssize = new UnaryExpression("->size",ownerparts);
+            BinaryExpression test = new BinaryExpression("<", selfindex, ownerpartssize);
+            BinaryExpression nextindex = new BinaryExpression("+",selfindex,new BasicExpression(1));
+            BinaryExpression ownerpartsat = new BinaryExpression("->at", ownerparts, nextindex);
+            SetExpression emptyset = new SetExpression();
+            SetExpression nextset = new SetExpression();
+            nextset.addElement(ownerpartsat);
+            ConditionalExpression newlhs = new ConditionalExpression(test,nextset,emptyset);
+            Type sourceref = trg.getElementType(); 
+            if (sourceref != null && sourceref.isEntity())
+            { Entity srcref = sourceref.getEntity(); 
+              Type restype = new Type("Set", null);
+              restype.setElementType(new Type(srcref)); // not trgref
+              ownerparts.setType(restype);
+              ownerparts.setElementType(new Type(srcref));
+
+              newlhs.setType(restype);
+              newlhs.setElementType(new Type(srcref));
+              newlhs.setBrackets(true); 
+
+              AttributeMatching newatm =  
+                    new AttributeMatching(newlhs,rgt.variable);
+              Attribute varnew = new Attribute(Identifier.nextIdentifier("var$"),
+                                          newlhs.getElementType(),
+                                          ModelElement.INTERNAL);
+              varnew.setElementType(newlhs.getElementType()); 
+              newatm.setElementVariable(varnew); 
+
+              EntityMatching bb1 = ModelMatching.getRealEntityMatching(srcref,trgref,ems); 
+              if (bb1 != null) 
+              { bb1.addAttributeMatch(newatm); } 
+            } 
+          } 
+
+          return res; 
+        } 
+		else if (sbe.operator.equals("->unionAll") && sbe.right instanceof BasicExpression &&
+                 sbe.left instanceof BinaryExpression &&
+                 ((BinaryExpression) sbe.left).operator.equals("->closure"))
+        { BinaryExpression clsre = (BinaryExpression) sbe.left;
+          BasicExpression f = (BasicExpression) sbe.right;
+          Expression g = clsre.right;
+          BasicExpression r = new BasicExpression(trg);
+          Type Rtype = r.getElementType();
+          BasicExpression Fclass = new BasicExpression(trgent);
+          Type Ftype = new Type(trgent);
+          String avalue = Identifier.nextIdentifier("var$");
+          BasicExpression ax = new BasicExpression(avalue);
+          ax.setType(Ftype);
+          ax.setElementType(Ftype);
+          BinaryExpression aInFclass = new BinaryExpression(":", ax, Fclass);
+          BasicExpression ar = new BasicExpression(trg);
+          ar.setObjectRef(ax);
+          BinaryExpression aAncestor = new BinaryExpression("->includesAll", r, ar);
+          BinaryExpression aStrict = new BinaryExpression("/=", r, ar);
+          BinaryExpression aStrictAncestor = new BinaryExpression("&",aAncestor,aStrict);
+          BinaryExpression ancestors = new BinaryExpression("|", aInFclass, aStrictAncestor);
+          // ancestors->selectMaximals(r.size) |--> g
+          // r - ancestors->unionAll(r) |--> f
+          UnaryExpression rsize = new UnaryExpression("->size", r);
+          BinaryExpression lhsgmap = new BinaryExpression("->selectMaximals", ancestors, rsize);
+		  Type FSetType = new Type("Set",null); 
+		  FSetType.setElementType(Ftype); 
+		  lhsgmap.setType(FSetType); 
+		  lhsgmap.setElementType(Ftype); 
+          AttributeMatching gmatch = new AttributeMatching(lhsgmap,g);
+          Attribute gmatchvar = new Attribute(Identifier.nextIdentifier("var$"), Ftype, ModelElement.INTERNAL);
+          gmatchvar.setElementType(Ftype);
+          gmatch.setElementVariable(gmatchvar);
+          res.add(gmatch);
+          BinaryExpression ancestorsUnionAllr = new BinaryExpression("->unionAll", ancestors, r);
+          BinaryExpression fmatchlhs = new BinaryExpression("-", r, ancestorsUnionAllr);
+		  Type FRefSetType = new Type("Set",null); 
+		  FRefSetType.setElementType(Rtype); 
+		  fmatchlhs.setType(FRefSetType); 
+		  fmatchlhs.setElementType(Rtype);
+          AttributeMatching fmatch = new AttributeMatching(fmatchlhs,f); 
+          Attribute fmatchvar = new Attribute(Identifier.nextIdentifier("var$"), Rtype, ModelElement.INTERNAL);
+          fmatchvar.setElementType(Rtype);
+          fmatch.setElementVariable(fmatchvar);
+          res.add(fmatch);
+          return res;
+        }
       }  
     } 
           
@@ -327,36 +769,89 @@ public class AttributeMatching
   { return new AttributeMatching(trg,src); } 
   // ignores any expression/value match
 
-  boolean isDirect() // either source or target is a direct attribute
-  { if (src.getNavigation().size() <= 1) 
-    { return true; } 
-    if (trg.getNavigation().size() <= 1) 
-    { return true; } 
-    return false; 
-  } 
+  public static Vector invertCondition(Expression cond, Entity realsrc, Entity realtrg) 
+  { Vector res = new Vector(); 
+    if (cond instanceof BinaryExpression)
+    { BinaryExpression condbe = (BinaryExpression) cond; 
+      
+      if (condbe.operator.equals("="))
+      { // feature = value inverts as value --> feature
+        if ((condbe.left.umlkind == Expression.VARIABLE ||
+             condbe.left.umlkind == Expression.ATTRIBUTE) &&
+            condbe.left instanceof BasicExpression && 
+            ((BasicExpression) condbe.left).variable != null &&  
+            condbe.right.umlkind != Expression.VARIABLE &&
+            condbe.right.umlkind != Expression.ATTRIBUTE)
+        { Attribute trgfeature = ((BasicExpression) condbe.left).variable; 
+          Attribute var = null; 
 
-  boolean isDirectSource() // source is a direct attribute
-  { if (src.getNavigation().size() <= 1) 
-    { return true; } 
-    return false; 
-  } 
+          // System.out.println(">> Target feature is " + trgfeature + 
+          //                    " " + trgfeature.getType()); 
+          Expression newleft = null; 
+          if ((condbe.right + "").equals("self"))
+          { newleft = new BasicExpression("self"); 
+            newleft.setType(new Type(realtrg)); 
+            newleft.setElementType(new Type(realtrg)); 
+            var = new Attribute("self",
+                                        new Type(realtrg),
+                                        ModelElement.INTERNAL);
+            var.setElementType(new Type(realtrg));
+          }  
+          else 
+          { newleft = condbe.right; 
+            var = new Attribute(Identifier.nextIdentifier("var$"),
+                                        condbe.right.getType(),
+                                        ModelElement.INTERNAL);
+            var.setElementType(condbe.right.getElementType());
+          } 
+          AttributeMatching newam = new AttributeMatching(newleft,trgfeature); 
+          newam.setElementVariable(var); 
+          res.add(newam);
+        } 
+        else if ((condbe.right.umlkind == Expression.VARIABLE ||
+                  condbe.right.umlkind == Expression.ATTRIBUTE) &&
+                 condbe.right instanceof BasicExpression && 
+                 ((BasicExpression) condbe.right).variable != null &&  
+                 condbe.left.umlkind != Expression.VARIABLE &&
+                 condbe.left.umlkind != Expression.ATTRIBUTE)
+        { Attribute trgfeature = ((BasicExpression) condbe.right).variable; 
+          Attribute var = null; 
 
-  boolean isDirectTarget() // target is a direct attribute
-  { if (trg.getNavigation().size() <= 1) 
-    { return true; } 
-    return false; 
-  } 
-
-  boolean isValueAssignment() 
-  { return srcvalue != null && elementVariable == null; } 
-
-  boolean isExpressionAssignment()
-  { return srcvalue != null && elementVariable != null; } 
-
-  boolean isStringAssignment() 
-  { return srcvalue != null && auxVariables.size() > 1; } 
-  // But could occur even if srcvalue is not a string. 
-
+          // System.out.println(">> Target feature is " + trgfeature + 
+          //                    " " + trgfeature.getType());  
+          // trgfeature.setUmlKind(Expression.ATTRIBUTE); 
+          Expression newleft = null; 
+          if ((condbe.left + "").equals("self"))
+          { newleft = new BasicExpression("self"); 
+            newleft.setType(new Type(realtrg)); 
+            newleft.setElementType(new Type(realtrg)); 
+            var = new Attribute("self",
+                                        new Type(realtrg),
+                                        ModelElement.INTERNAL);
+            var.setElementType(new Type(realtrg));
+          }  
+          else 
+          { newleft = condbe.left; 
+            var = new Attribute(Identifier.nextIdentifier("var$"),
+                                        condbe.left.getType(),
+                                        ModelElement.INTERNAL);
+            var.setElementType(condbe.left.getElementType());
+          } 
+          AttributeMatching newam = new AttributeMatching(newleft,trgfeature); 
+          newam.setElementVariable(var); 
+          res.add(newam);
+        } 
+      }
+      else if (condbe.operator.equals("&"))
+      { Expression cond1 = condbe.left; 
+        Expression cond2 = condbe.right; 
+        res.addAll(invertCondition(cond1,realsrc,realtrg)); 
+        res.addAll(invertCondition(cond2,realsrc,realtrg)); 
+      } 
+    } 
+    return res; 
+  }   // cases of f->includes(self)  
+        
   Expression addReference(BasicExpression ref, Type t)
   { if (srcvalue != null) 
     { return srcvalue.addReference(ref,t); } 
@@ -391,6 +886,8 @@ public class AttributeMatching
     String tname = ttype.getName(); 
     Type selemt = stype.getElementType(); 
     Type telemt = ttype.getElementType(); 
+
+    // In the case of entity types, (selemt.entity, telemt.entity) : mymap 
 
     if (("" + selemt).equals("" + telemt))
     { if (sname.equals("Sequence") && tname.equals("Set"))
@@ -482,11 +979,18 @@ public class AttributeMatching
       return res; 
     } 
  
+    if (stype.isCollectionType())
+    { return sexp; } 
+
+    if (ttype.isCollectionType())
+    { return sexp; } 
+
     return new BinaryExpression("->oclAsType", sexp, new BasicExpression(ttype)); 
   } 
 
   public Vector analyseCorrelationPatterns(Entity s, Entity t, Entity realsrc, Entity realtrg, 
-                                           EntityMatching ematch, Vector ems) 
+                                           EntityMatching ematch, Vector ems, ModelMatching modmatch,
+                                           Vector entities) 
   { Vector res = new Vector(); 
 
     if (src.isComposition() && !trg.isComposition()) 
@@ -531,8 +1035,8 @@ public class AttributeMatching
           if (trgunused.size() > 0) 
           { System.out.println(">>! Recommend: " + trgunused + "\n"); }  
           String ans = 
-              JOptionPane.showInputDialog("Replace " + trgent + " by? (y/n):");
-          if (ans != null && "y".equals(ans)) 
+              JOptionPane.showInputDialog("Replace " + trgent + " by? (name/null):");
+          if (ans != null && !("null".equals(ans))) 
           { Entity conc = (Entity) ModelElement.lookupByName(ans,trgactualleaves); 
             if (conc != null) 
             { trg.replaceIntermediateEntity(trgent,conc); }
@@ -763,24 +1267,9 @@ public class AttributeMatching
       // Suggest a source splitting if possible. 
       Entity realtrgsup = realtrg.getSuperclass(); 
       if (realtrgsup != null) 
-      { Vector siblings = new Vector(); 
-        siblings.addAll(realtrgsup.getSubclasses());
-        siblings.remove(realtrg);
-        if (siblings.size() == 1) 
-        { UnaryExpression srcsize = new UnaryExpression("->size",new BasicExpression(src)); 
-          Expression guard0 = new BinaryExpression("=",srcsize,new BasicExpression(1));
-          Expression guard1 = new BinaryExpression("/=",srcsize,new BasicExpression(1)); 
-          ematch.addCondition(guard0); 
-          Entity othere = (Entity) siblings.get(0); 
-          EntityMatching newothermatch = new EntityMatching(realsrc,othere); 
-          newothermatch.addCondition(guard1); 
-          newothermatch.copyApplicableAttributeMappings(ematch.attributeMappings); 
-          System.out.println(">>> Suggest new Entity match: " + newothermatch); 
-          String ans = 
-              JOptionPane.showInputDialog("Add to entity matches?: (y/n) ");
-          if (ans != null && "y".equals(ans))
-          { ems.add(newothermatch); } 
-        } 
+      { optionalToTotal(realtrgsup, realsrc, realtrg, 
+                        ematch, entities, 
+                        modmatch, res); 
       }    
         
       q.addSourceEntity(realsrc); 
@@ -796,7 +1285,16 @@ public class AttributeMatching
                                    "Feature " + realsrc + "::" + src +
                                    " narrowed from 0..1 to ONE multiplicity in " + 
                                    realtrg + "::" + trg); 
-      q.addSourceEntity(realsrc); 
+      
+	  // Suggest a source splitting if possible. 
+      Entity realtrgsup = realtrg.getSuperclass(); 
+      if (realtrgsup != null) 
+      { optionalToTotal(realtrgsup, realsrc, realtrg, 
+                        ematch, entities, 
+                        modmatch, res); 
+      }
+	  
+	  q.addSourceEntity(realsrc); 
       q.addTargetEntity(realtrg); 
       q.addSourceFeature(src); 
       q.addTargetFeature(trg); 
@@ -844,7 +1342,16 @@ public class AttributeMatching
                                    "Feature " + realsrc + "::" + src +
                                    " narrowed from 0..1 to 1 multiplicity in " + 
                                    realtrg + "::" + trg); 
-      q.addSourceEntity(realsrc); 
+      
+	  // Suggest a source splitting if possible. 
+      Entity realtrgsup = realtrg.getSuperclass(); 
+      if (realtrgsup != null) 
+      { optionalToTotal(realtrgsup, realsrc, realtrg, 
+                        ematch, entities, 
+                        modmatch, res); 
+      }
+	  
+	  q.addSourceEntity(realsrc); 
       q.addTargetEntity(realtrg); 
       q.addSourceFeature(src); 
       q.addTargetFeature(trg); 
@@ -856,6 +1363,49 @@ public class AttributeMatching
     return res; 
   } // also feature merging; stereotype changes
 
+  private void optionalToTotal(Entity realtrgsup, Entity realsrc, Entity realtrg, 
+                               EntityMatching ematch, Vector entities, 
+                               ModelMatching modmatch, Vector res) 
+  { Vector siblings = new Vector(); 
+    siblings.addAll(realtrgsup.getSubclasses());
+    siblings.remove(realtrg);
+    if (siblings.size() == 1) 
+    { UnaryExpression srcsize = new UnaryExpression("->size",new BasicExpression(src)); 
+      Expression guard0 = new BinaryExpression("=",srcsize,new BasicExpression(1));
+      Expression guard1 = new BinaryExpression("/=",srcsize,new BasicExpression(1)); 
+      Entity othere = (Entity) siblings.get(0); 
+      EntityMatching newothermatch = new EntityMatching(realsrc,othere); 
+      newothermatch.addCondition(guard1); 
+      newothermatch.copyApplicableAttributeMappings(ematch.attributeMappings); 
+      System.out.println(">>> Suggest splitting based on cases of " + src + 
+                             " size (1 or not)"); 
+      String ans = 
+              JOptionPane.showInputDialog("Add " + newothermatch + " to entity matches?: (y/n) ");
+      if (ans != null && "y".equals(ans))
+      { // ems.add(newothermatch);
+        modmatch.addEntityMatch(newothermatch,entities);  
+        ematch.addCondition(guard0); 
+        CorrelationPattern qq = new CorrelationPattern("Conditioned class splitting", 
+                                          "Class " + realsrc + " split to " + realtrg + ", " + 
+                                          othere); 
+        qq.addSourceEntity(realsrc); 
+        qq.addTargetEntity(realtrg); 
+        qq.addTargetEntity(othere); 
+        if (res.contains(qq)) { } 
+        else 
+        { res.add(qq); } 
+      } 
+    } 
+  } 
+
+  public boolean isEquality() 
+  { // types are the same 
+    Type tsrc = src.getType(); 
+    Type ttrg = trg.getType();
+    if ((tsrc + "").equals(ttrg + "")) 
+    { return true; } 
+    return false; 
+  } 
 
   public EntityMatching isObjectMatch(Vector ems) 
   { Vector spath = new Vector(); 
@@ -876,18 +1426,16 @@ public class AttributeMatching
     Type ttrg = trg.getElementType(); 
 
     // System.out.println(">_>_ " + src + " (" + tsrc + ") " + trg + " (" + ttrg + 
-    //                    ")"); 
+    //                     ")"); 
 
     if (Type.isEntityType(tsrc) && Type.isEntityType(ttrg))
     { Entity e1 = tsrc.getEntity(); 
       Entity e2 = ttrg.getEntity();
 
-      EntityMatching emx = ModelMatching.findEntityMatching(e1,ems); 
-      if (emx != null && emx.realtrg != null) 
-      { if (e2.getName().equals(emx.realtrg.getName()) || 
-            Entity.isAncestor(e2,emx.realtrg))
-        { return emx; } 
-      } // to map from e1 to e2, emx.realsrc must be e1 or an ancestor of e1,
+      EntityMatching emx = ModelMatching.findEntityMatchingFor(e1,e2,ems); 
+      if (emx != null)
+      { return emx; } 
+        // to map from e1 to e2, emx.realsrc must be e1 or an ancestor of e1,
         // emx.realtrg must be e2 or a descendent of e2
     }  
     return null; 
@@ -941,26 +1489,33 @@ public class AttributeMatching
     return srcentx + "2" + trgentx + "(" + d1 + "," + d2 + ")"; 
   } 
 
-  String whenClause(String trgroot, Vector ems, Map whens) 
+  String whenClause(String trgroot, String srcobj, Vector ems, Map whens) 
   { // For expr --> trg, need E2F(elementVariable,d2) 
+
+    // System.out.println(">>> Element variable of " + this + " is>> " + elementVariable); 
+		
     if (elementVariable == null) 
-    { return ""; } 
+    { return "true"; } 
 
     Vector tpath = new Vector(); 
     tpath.addAll(trg.getNavigation()); 
     if (tpath.size() == 0) 
     { tpath.add(trg); } 
 
-    Type vtype = elementVariable.getElementType(); 
+    Type vtype = elementVariable.getType(); 
+	
     if (vtype != null && vtype.isEntity())
     { Entity vent = vtype.getEntity(); 
-      // System.out.println(">>> Entity of " + elementVariable + " is " + vent); 
+      // System.out.println(">>> Entity element type of " + elementVariable + " is " + vent); 
 
       Type ttype = trg.getElementType(); 
       if (ttype != null && ttype.isEntity())
-      { Entity tent = ttype.getEntity(); 
-        EntityMatching emx = ModelMatching.findEntityMatching(vent,ems); 
-        // System.out.println(">>> Entity match of " + elementVariable + " is " + emx); 
+      { Entity tent = ttype.getEntity();
+         
+        EntityMatching emx = ModelMatching.findEntityMatchingFor(vent,tent,ems); 
+
+        // System.out.println(">>> Entity match of " + elementVariable + " to " + tent + " is " + emx);
+ 
         if (emx != null) 
         { String nsrc = emx.src.getName(); 
           String ntrg = emx.trg.getName(); 
@@ -984,11 +1539,13 @@ public class AttributeMatching
           // be2.variable = trg; 
 
           // whens.set(be2,be1); 
+          if ("self".equals(elementVariable + ""))
+          { return srcentx + "2" + trgentx + "(" + srcobj + "," + d2 + ")"; } 
           return srcentx + "2" + trgentx + "(" + elementVariable + "," + d2 + ")"; 
         } 
       } 
     } 
-    return ""; 
+    return "true"; 
   } 
 
   String sourcedataname(String prefix)
@@ -1178,6 +1735,18 @@ public class AttributeMatching
     return targetequationUMLRSDS(tvar,path,bound); 
   } 
 
+  String targetequationbx(BasicExpression srcx, BasicExpression trgx, 
+                          String prefix,String srcdata,ObjectTemplateExp tExps,Vector whereclause)
+  { // trgx.nme = srcx.nme and srcx.nme = trgx.nme for non-objects, non-collections
+
+
+    Vector path = new Vector(); 
+    path.addAll(trg.getNavigation()); 
+    if (path.size() == 0) 
+    { path.add(trg); }
+    return targetequationbx(srcx,trgx,prefix,path,srcdata,tExps,whereclause); 
+  } 
+
   String targetequation(String prefix, Vector path, String srcdata, ObjectTemplateExp tExp)
   { // nme = srcdata at the end of the path
 
@@ -1217,7 +1786,12 @@ public class AttributeMatching
       valueExp.setElementType(p.getElementType()); 
       valueExp.variable = src; 
 
+      
+
       Expression valueExpC = valueExp; 
+
+      if (src == null || src.getType() == null) 
+      { System.err.println("!! ERROR: null type in " + src); } 
       if ("String".equals(p.getType() + "") && src.getType().isEnumeration())
       { valueExpC = AttributeMatching.dataConversion("QVTR",valueExp, src.getType(), p.getType()); } 
       else if ("String".equals(src.getType() + "") && p.getType().isEnumeration())
@@ -1258,13 +1832,12 @@ public class AttributeMatching
       else 
       { String obj = fullname + "$x"; 
 
+        if (tent == null) 
+        { System.err.println("!! ERROR: no entity type for " + p); 
+          return ""; 
+        } 
+
         Attribute objroot = new Attribute(obj,new Type(tent),ModelElement.INTERNAL); 
-
-          if (tent == null) 
-          { System.err.println("!! ERROR: no entity type for " + p); 
-            return ""; 
-          } 
-
         objroot.setElementType(new Type(tent)); 
 
         ObjectTemplateExp newSubTE = new ObjectTemplateExp(objroot,tent); 
@@ -1284,13 +1857,18 @@ public class AttributeMatching
       valueExp.variable = src; 
 
       Expression valueExpC = valueExp; 
-      if ("String".equals(p.getType() + "") && src.getType().isEnumeration())
+
+      if (src == null || src.getType() == null) 
+      { System.err.println("!! ERROR: null type in " + src); } 
+      else if ("String".equals(p.getType() + "") && src.getType().isEnumeration())
       { valueExpC = AttributeMatching.dataConversion("QVTR",valueExp, src.getType(), p.getType()); } 
       else if ("String".equals(src.getType() + "") && p.getType().isEnumeration())
       { valueExpC = AttributeMatching.dataConversion("QVTR",valueExp, src.getType(), p.getType()); } 
       if (p.getType().isEnumeration() && src.getType().isEnumeration())
       { valueExpC = AttributeMatching.dataConversion("QVTR",valueExp, src.getType(), p.getType()); } 
       else if ("boolean".equals(src.getType() + "") && p.getType().isEnumeration())
+      { valueExpC = AttributeMatching.dataConversion("QVTR",valueExp, src.getType(), p.getType()); } 
+      else if ("boolean".equals(p.getType() + "") && src.getType().isEnumeration())
       { valueExpC = AttributeMatching.dataConversion("QVTR",valueExp, src.getType(), p.getType()); } 
 
       tExp.addPTI(p,valueExpC);     
@@ -1299,6 +1877,160 @@ public class AttributeMatching
     return "";  
   } // and boolean -> enum data conversions
 
+  String targetequationbx(BasicExpression srcx, BasicExpression trgx, 
+                          String prefix, Vector path, String srcdata, 
+						  ObjectTemplateExp tExp, Vector whereclause)
+  { // nme = srcdata at the end of the path
+
+    if (path.size() == 1) 
+    { Attribute p = (Attribute) path.get(0); 
+      Type t = p.getType();
+      String pname = p.getName(); 
+      String fullname = prefix + "_" + pname; 
+ 
+      if (Type.isCollectionOrEntity(t))
+      { Entity tent = null; 
+        Type telem = t.getElementType(); 
+        if (telem != null && telem.isEntity())
+        { tent = telem.getEntity(); } 
+        else if (t.isEntity())
+        { tent = t.getEntity(); } 
+
+        if (tent != null) 
+        { // String defn = pname + " = " + fullname + "$x : " + tent;  
+          // Vector exps = (Vector) tExps.get(defn);
+          // if (exps == null) 
+          // { exps = new Vector(); }
+          
+          // tExps.set(defn,exps);
+          // return "";    
+
+          String obj = fullname + "$x";
+          Attribute objroot = new Attribute(obj,new Type(tent),ModelElement.INTERNAL); 
+          objroot.setElementType(new Type(tent)); 
+
+          tExp.addPTI(p,new ObjectTemplateExp(objroot,tent));     
+          return pname + " = " + fullname + "$x : " + tent + " { }"; 
+        } 
+      }
+      BasicExpression valueExp = new BasicExpression(src);
+      valueExp.setObjectRef(srcx);  
+      valueExp.setType(src.getType()); 
+      valueExp.setElementType(src.getElementType()); 
+      valueExp.variable = src; 
+
+      BasicExpression tvalueExp = new BasicExpression(trg);
+      tvalueExp.setObjectRef(trgx);  
+      tvalueExp.setType(trg.getType()); 
+      tvalueExp.setElementType(trg.getElementType()); 
+      tvalueExp.variable = trg; 
+      
+
+      Expression valueExpC = valueExp; 
+
+      if (src == null || src.getType() == null) 
+      { System.err.println("!! ERROR: null type in " + src); } 
+      if ("String".equals(p.getType() + "") && src.getType().isEnumeration())
+      { valueExpC = AttributeMatching.dataConversion("QVTR",valueExp, src.getType(), p.getType()); } 
+      else if ("String".equals(src.getType() + "") && p.getType().isEnumeration())
+      { valueExpC = AttributeMatching.dataConversion("QVTR",valueExp, src.getType(), p.getType()); } 
+      else if (p.getType().isEnumeration() && src.getType().isEnumeration())
+      { valueExpC = AttributeMatching.dataConversion("QVTR",valueExp, src.getType(), p.getType()); } 
+      else if (src.getType().isBoolean() && p.getType().isEnumeration())
+      { valueExpC = AttributeMatching.dataConversion("QVTR",valueExp, src.getType(), p.getType()); } 
+      else if (p.getType().isBoolean() && src.getType().isEnumeration())
+      { valueExpC = AttributeMatching.dataConversion("QVTR",valueExp, src.getType(), p.getType()); } 
+
+      Expression tvalueExpC = tvalueExp; 
+
+      if (trg == null || trg.getType() == null) 
+      { System.err.println("!! ERROR: null type in " + trg); } 
+      if ("String".equals(p.getType() + "") && src.getType().isEnumeration())
+      { tvalueExpC = AttributeMatching.dataConversion("QVTR", tvalueExp, p.getType(), src.getType()); } 
+      else if ("String".equals(src.getType() + "") && p.getType().isEnumeration())
+      { tvalueExpC = AttributeMatching.dataConversion("QVTR", tvalueExp, p.getType(), src.getType()); } 
+      else if (p.getType().isEnumeration() && src.getType().isEnumeration())
+      { tvalueExpC = AttributeMatching.dataConversion("QVTR", tvalueExp, p.getType(), src.getType()); } 
+      else if (src.getType().isBoolean() && p.getType().isEnumeration())
+      { tvalueExpC = AttributeMatching.dataConversion("QVTR", tvalueExp, p.getType(), src.getType()); } 
+      else if (p.getType().isBoolean() && src.getType().isEnumeration())
+      { tvalueExpC = AttributeMatching.dataConversion("QVTR", tvalueExp, p.getType(), src.getType()); } 
+
+      // tExp.addPTI(p,valueExpC);     
+	  
+      whereclause.add(tvalueExp + " = " + valueExpC + " and " + valueExp + " = " + tvalueExpC); 
+      return tvalueExp + " = " + valueExpC + " and " + valueExp + " = " + tvalueExpC; 
+    }  
+    else if (path.size() > 1) 
+    { Attribute p = (Attribute) path.get(0); 
+      Type t = p.getType();
+      String pname = p.getName(); 
+      String fullname = prefix + "_" + pname; 
+ 
+      // (Type.isCollectionOrEntity(t))
+      Type telem = t.getElementType(); 
+      Entity tent = telem.getEntity(); 
+      if (tent == null) 
+      { tent = t.getEntity(); } 
+
+      Vector pathtail = new Vector(); 
+      pathtail.addAll(path); 
+      pathtail.remove(0); 
+      String body = ""; 
+      // String defn = pname + " = " + fullname + "$x : " + tent; 
+
+      Object subtemplate = tExp.getPTI(p); 
+      if (subtemplate instanceof ObjectTemplateExp)
+      { ObjectTemplateExp subTE = (ObjectTemplateExp) subtemplate; 
+        body = targetequationbx(srcx,trgx,prefix + "_" + pname, pathtail, srcdata, subTE,whereclause); 
+      } 
+      else 
+      { String obj = fullname + "$x"; 
+
+        if (tent == null) 
+        { System.err.println("!! ERROR: no entity type for " + p); 
+          return ""; 
+        } 
+
+        Attribute objroot = new Attribute(obj,new Type(tent),ModelElement.INTERNAL); 
+        objroot.setElementType(new Type(tent)); 
+
+        ObjectTemplateExp newSubTE = new ObjectTemplateExp(objroot,tent); 
+        tExp.addPTI(p,newSubTE);     
+        body = targetequationbx(srcx,trgx,prefix + "_" + pname, pathtail, srcdata, newSubTE,whereclause); 
+        return pname + " = " + obj + " : " + tent + " { " + body + " }";
+      }   
+      // return pname + " = " + fullname + "$x : " + tent + " { " + body + " }"; 
+    }      
+
+    if (path.size() > 0) 
+    { Attribute p = (Attribute) path.get(0); 
+      String pname = p.getName(); 
+      BasicExpression valueExp = new BasicExpression(srcdata); 
+      valueExp.setType(p.getType()); 
+      valueExp.setElementType(p.getElementType()); 
+      valueExp.variable = src; 
+
+      Expression valueExpC = valueExp; 
+
+      if (src == null || src.getType() == null) 
+      { System.err.println("!! ERROR: null type in " + src); } 
+      else if ("String".equals(p.getType() + "") && src.getType().isEnumeration())
+      { valueExpC = AttributeMatching.dataConversion("QVTR",valueExp, src.getType(), p.getType()); } 
+      else if ("String".equals(src.getType() + "") && p.getType().isEnumeration())
+      { valueExpC = AttributeMatching.dataConversion("QVTR",valueExp, src.getType(), p.getType()); } 
+      if (p.getType().isEnumeration() && src.getType().isEnumeration())
+      { valueExpC = AttributeMatching.dataConversion("QVTR",valueExp, src.getType(), p.getType()); } 
+      else if ("boolean".equals(src.getType() + "") && p.getType().isEnumeration())
+      { valueExpC = AttributeMatching.dataConversion("QVTR",valueExp, src.getType(), p.getType()); } 
+      else if ("boolean".equals(p.getType() + "") && src.getType().isEnumeration())
+      { valueExpC = AttributeMatching.dataConversion("QVTR",valueExp, src.getType(), p.getType()); } 
+
+      tExp.addPTI(p,valueExpC);     
+      return pname + " = " + valueExpC;
+    } 
+    return "";  
+  } // and boolean -> enum data conversions
 
   String targetequationUMLRSDS(String tvar, Vector path, Vector bound) 
   { Type ttarg = trg.getType(); 
@@ -1334,15 +2066,25 @@ public class AttributeMatching
         { Entity sentity = selem.getEntity(); 
           String sename = sentity.getName(); 
           String sId = sename.toLowerCase() + "Id";
+          
+		  Attribute srcpk = sentity.getPrincipalPK(); 
+          if (srcpk != null) 
+          { sId = srcpk + ""; }
+		   
           String srclookup = tename + "[" + src + "." + sId + "]";  // src is a feature 
 
+          
           if (multsrc != ModelElement.ONE && multtrg == ModelElement.ONE)
-          { res = tvar + "." + trg + " = " + srclookup + "->any()"; } 
+          { srclookup = tename + "[" + src + "->collect(" + sId + ")]";
+		    res = tvar + "." + trg + " = " + srclookup + "->any()"; 
+		  } 
           else if (multsrc == ModelElement.ONE && multtrg != ModelElement.ONE)
           { res = srclookup + " : " + tvar + "." + trg; }  
-          else if ("Sequence".equals(t.getName()) && "Set".equals(src.getType().getName()))
+          else if (src.getType() != null && 
+                   "Sequence".equals(t.getName()) && "Set".equals(src.getType().getName()))
           { res = tvar + "." + trg + " = " + srclookup + "->asSequence()"; } 
-          else if ("Set".equals(t.getName()) && "Sequence".equals(src.getType().getName()))
+          else if (src.getType() != null && 
+                   "Set".equals(t.getName()) && "Sequence".equals(src.getType().getName()))
           { res = tvar + "." + trg + " = " + srclookup + "->asSet()"; } 
           else 
           { res = tvar + "." + trg + " = " + srclookup; }
@@ -1369,10 +2111,17 @@ public class AttributeMatching
 
         String sename = sentity.getName(); 
         String sId = sename.toLowerCase() + "Id"; 
-        String srclookup = tename + "[" + src + "." + sId + "]";  // src is a feature 
 
+        Attribute srcpk = sentity.getPrincipalPK(); 
+        if (srcpk != null) 
+        { sId = srcpk + ""; } 
+
+        String srclookup = tename + "[" + src + "." + sId + "]";  // src is a feature 
+        
         if (multsrc != ModelElement.ONE && multtrg == ModelElement.ONE)
-        { res = tvar + "." + trg + " = " + srclookup + "->any()"; } 
+        { srclookup = tename + "[" + src + "->collect(" + sId + ")]";;
+		  res = tvar + "." + trg + " = " + srclookup + "->any()"; 
+		} 
         else if (multsrc == ModelElement.ONE && multtrg != ModelElement.ONE)
         { res = srclookup + " : " + tvar + "." + trg; }  
         else 
@@ -1393,6 +2142,7 @@ public class AttributeMatching
     return res; 
   } 
  
+  // For UML-RSDS: 
   String composedTargetEquation(String tvar, Vector created)
   { Vector path = new Vector(); 
     path.addAll(trg.getNavigation()); 
@@ -1415,11 +2165,19 @@ public class AttributeMatching
       prex = preatt.getName(); // ModelElement.composeNames(preatt); 
       tvar1 = tvar + "." + prex; 
       pathrem.addAll(path); 
-      pathrem.removeAll(preattp); 
+      // System.out.println("PATH=" + pathrem + " " + preattp); 
+      // pathrem.removeAll(preattp); 
+      // System.out.println("PATHREM=" + pathrem); 
+      for (int xx = 0; xx < preattp.size(); xx++)
+      { String xxs = ((Attribute) preattp.get(xx)).getName(); 
+        pathrem = VectorUtil.removeByName(pathrem,xxs); 
+      } // Does this make sense?
+
       Type tpreatt = preatt.getElementType(); 
       if (tpreatt != null && tpreatt.isEntity())
       { preattD = tpreatt.getEntity(); } 
       // System.out.println(">>> Already created " + preatt + " : " + preattD + " followed by " + pathrem); 
+      
       alreadycreated = true; 
       multiple = preatt.isManyValued(); 
     } 
@@ -1441,18 +2199,22 @@ public class AttributeMatching
       // String shortename = ename.substring(0,ename.length()-1);  // target feature element type 
 
       Type stype = src.getElementType(); 
+      Attribute bpk = null; 
 
       if (Type.isEntityType(stype))
       { b = stype.getEntity(); 
         bname = b.getName(); 
         // sname = bname.substring(0,bname.length()-1);  // source feature element type
+        bpk = b.getPrincipalPK(); 
       }  
       String bId = bname.toLowerCase() + "Id"; 
+      if (bpk != null) 
+      { bId = bpk.getName(); } 
       String evar = ename.toLowerCase() + "$x"; 
       String evardec = ""; 
 
       if (Type.isCollectionType(src.getType()) && b != null)
-      { evardec = " & " + evar + " : " + ename + "[" + src + "." + bId + "] => \n"; } 
+      { evardec = " & " + evar + " : " + ename + "[" + src + "->collect(" + bId + ")] => \n"; } 
       else if (b != null) 
       { evardec = " & " + evar + " = " + ename + "[" + src + "." + bId + "] => \n"; }
       else if (Type.isCollectionType(src.getType()))
@@ -1461,7 +2223,11 @@ public class AttributeMatching
       { evardec = " & " + evar + " = " + src + " => \n"; }
 
       if (alreadycreated)
-      { if (multiple) 
+      { // System.out.println("* source: " + srcexp.isMultipleValued() + " * " + preatt + " " + 
+        //                    multiple + " * " + pathrem + " " + 
+        //                    Attribute.isMultipleValued(pathrem)); 
+      
+        if (multiple) 
         { if (srcexp.isMultipleValued() && 
               !Attribute.isMultipleValued(pathrem))
           { // ignore the existing elements in tvar1 and create new ones for the new srcexp. 
@@ -1523,7 +2289,11 @@ public class AttributeMatching
     else 
     { String evar = src + ""; 
       if (alreadycreated)
-      { if (multiple) 
+      { // System.out.println("Valuetype * source: " + srcexp.isMultipleValued() + " * " + preatt + " " + 
+        //                    multiple + " * " + pathrem + " " + 
+        //                    Attribute.isMultipleValued(pathrem)); 
+		
+        if (multiple) 
         { String cteq0 = composedTargetEquation(srcexp,"_y",evar,pathrem); 
           if (cteq0.length() > 0) 
           { return " =>\n" + 
@@ -1571,7 +2341,11 @@ public class AttributeMatching
       prex = preatt.getName(); // ModelElement.composeNames(preatt); 
       tvar1 = tvar + "." + prex; 
       pathrem.addAll(path); 
-      pathrem.removeAll(preattp); 
+      // pathrem.removeAll(preattp); 
+      for (int xx = 0; xx < preattp.size(); xx++)
+      { String xxs = ((Attribute) preattp.get(xx)).getName(); 
+        pathrem = VectorUtil.removeByName(pathrem,xxs); 
+      } 
       // System.out.println(">>> Already created " + preatt + " " + tvar1 + " " + pathrem); 
       alreadycreated = true; 
       multiple = preatt.isManyValued(); 
@@ -1597,12 +2371,17 @@ public class AttributeMatching
       Entity b = null; 
 
       Type stype = srcexp.getElementType(); 
+      Attribute bpk = null; 
+
       if (Type.isEntityType(stype))
       { b = stype.getEntity(); 
         bname = b.getName(); 
          // source expression element type
+        bpk = b.getPrincipalPK(); 
       }  
       String bId = bname.toLowerCase() + "Id"; 
+      if (bpk != null) 
+      { bId = bpk.getName(); } 
       String evar = ename.toLowerCase() + "$x"; 
       String evardec = ""; 
 
@@ -1705,7 +2484,10 @@ public class AttributeMatching
   } 
 
   public String composedTargetEquation(Expression srcexp, String tvar, String evar, Vector path) 
-  { if (path.size() == 1) 
+  { // System.out.println("CTEq: source: " + srcexp + " tvar " + tvar + " evar " + 
+    //                        evar + " path: " + path); 
+      
+    if (path.size() == 1) 
     { Attribute p = (Attribute) path.get(0); 
       Type t = p.getType(); 
       Type tsrc = srcexp.getType(); 
@@ -1742,6 +2524,11 @@ public class AttributeMatching
         Expression texp = AttributeMatching.dataConversion("UML-RSDS",sexp,tsrc,t); 
         return tvar + "." + p.getName() + " = " + texp;
       } 
+      else if (t.isBoolean() && tsrc.isEnumeration())
+      { BasicExpression sexp = new BasicExpression(evar); 
+        Expression texp = AttributeMatching.dataConversion("UML-RSDS",sexp,tsrc,t); 
+        return tvar + "." + p.getName() + " = " + texp;
+      }
       else 
       { return tvar + "." + p.getName() + " = " + evar; } 
     } 
@@ -1788,7 +2575,11 @@ public class AttributeMatching
       String tvar1 = tvar + "." + prex; 
       Vector pathrem = new Vector(); 
       pathrem.addAll(path); 
-      pathrem.removeAll(preattp); 
+      for (int xx = 0; xx < preattp.size(); xx++)
+      { String xxs = ((Attribute) preattp.get(xx)).getName(); 
+        pathrem = VectorUtil.removeByName(pathrem,xxs); 
+      } 
+      // pathrem.removeAll(preattp); 
       // System.out.println(">>> Already created " + preatt + " " + tvar1 + " " + pathrem); 
       if (preatt.isManyValued())
       { if (srcdata.isMultipleValued() && 
@@ -1852,7 +2643,7 @@ public class AttributeMatching
           if (selem != null && selem.isEntity())
           { s = selem.getEntity(); } 
 
-          EntityMatching em = ModelMatching.findEntityMatching(s,ems);
+          EntityMatching em = ModelMatching.findEntityMatchingFor(s,tent,ems);
           // System.out.println("Entity matching for " + s + " is " + em); 
 
           if (em != null && smult == ModelElement.ONE) 
@@ -1883,7 +2674,7 @@ public class AttributeMatching
           if (selem != null && selem.isEntity())
           { s = selem.getEntity(); } 
           
-          EntityMatching em = ModelMatching.findEntityMatching(s,ems); 
+          EntityMatching em = ModelMatching.findEntityMatchingFor(s,tent,ems); 
           // System.out.println("Entity matching for " + s + " is " + em); 
 
           if (em != null && smult == ModelElement.ONE) 
@@ -1939,6 +2730,13 @@ public class AttributeMatching
       // created.add(trg.getNavigation()); 
     }  
       // tvar + "." + trg + " := " + svar + "." + src + ";"; } 
+
+    if (src.getUpper() == 1 && src.getLower() == 0) 
+    { String testnull = "if (" + svar + " = null) then {} else { " + 
+                        res + " } endif"; 
+      return testnull; 
+    }     
+
     return res; 
   } 
 
@@ -1958,6 +2756,12 @@ public class AttributeMatching
     if (path.size() == 1) 
     { Attribute p = (Attribute) path.get(0); 
       Entity t = p.getOwner(); 
+	  if (t != null && t.isConcrete()) { } 
+	  else 
+	  { System.err.println("!! Cannot instanciate owner " + t + " of " + p); 
+	    t = previous.getElementType().getEntity(); 
+	  }
+	  
       String pname = p.getName(); 
       Type ptype = p.getType(); 
 
@@ -1981,14 +2785,14 @@ public class AttributeMatching
         
       if (previous != null && previous.isManyValued() && src.isManyValued())
       { String xresolve = "_x.resolveone()"; 
-        if (selem.isEntity())
-        { EntityMatching emx = ModelMatching.findEntityMatching(selem.getEntity(), ems); 
-          String desttype = ""; 
+        if (selem.isEntity() && pent != null)
+        { EntityMatching emx = ModelMatching.findEntityMatchingFor(selem.getEntity(), pent, ems); 
+          String desttype = pent.getName(); 
           if (emx != null) 
-          { if (pent != null) 
-            { desttype = pent.getName(); }  
-            else 
-            { desttype = emx.realtrg.getName(); } 
+          { // if (pent != null) 
+            // { desttype = pent.getName(); }  
+            // else 
+            // { desttype = emx.realtrg.getName(); } 
             xresolve = "_x.resolveoneIn(" + 
                        emx.realsrc + "::" + emx.realsrc + "2" + emx.realtrg + 
                        ", " + desttype + ")";
@@ -2015,13 +2819,20 @@ public class AttributeMatching
       { 
         if (pent != null && selem != null && selem.isEntity()) 
         { Entity s = selem.getEntity(); 
-          EntityMatching em = ModelMatching.findEntityMatching(s,ems); 
+          EntityMatching em = ModelMatching.findEntityMatchingFor(s,pent,ems); 
           // System.out.println("Entity matching for " + s + " is " + em); 
 
-          String res = pname + " " + pop + " " + svar + "." + 
+          if (em != null) 
+          { String res = pname + " " + pop + " " + svar + "." + 
                  "resolveoneIn(" + em.realsrc + "::" + em.realsrc + "2" + em.realtrg + ", " +
                  pent.getName() + ");"; 
-          result = tvar + " " + operator + " object " + t + " { " + res + " };"; 
+            result = tvar + " " + operator + " object " + t + " { " + res + " };";
+          }
+          else 
+          { System.err.println(">>> no entity matching for " + s + " Incomplete mapping."); 
+            String res = pname + " " + pop + " " + svar + "." + "resolveone();"; 
+            result = tvar + " " + operator + " object " + t + " { " + res + " };";
+          } 
         } 
         else 
         { result = tvar + " " + operator + " object " + t + 
@@ -2036,6 +2847,12 @@ public class AttributeMatching
       Vector pathtail = new Vector(); 
       pathtail.addAll(path); 
       pathtail.remove(0); 
+	  
+	  if (t != null && t.isConcrete()) { }
+	  else 
+	  { System.err.println("!! Cannot create instance of owner " + t + " of " + p); 
+	    t = previous.getElementType().getEntity(); 
+	  }
 
       BasicExpression xexp = new BasicExpression("_x"); 
       xexp.setType(svar.getElementType());  
@@ -2055,9 +2872,9 @@ public class AttributeMatching
 
 
 
-  String atldirecttarget(String svar) 
+  String atldirecttarget(String svar, Vector ems) 
   { Expression sexp = // new BasicExpression(svar + "." + src);
-                      src.atlComposedExpression(svar); 
+                      src.atlComposedExpression(svar,trg,ems); 
     Expression vexp = sexp;
     Type stype = src.getType(); 
     Type ttype = trg.getType();   
@@ -2083,6 +2900,36 @@ public class AttributeMatching
     
     Binding bres = new Binding(trg + "", vexp); 
     return trg + " <- " + vexp;
+  } 
+
+  Binding atldirectbinding(String svar, Vector ems) 
+  { Expression sexp = // new BasicExpression(svar + "." + src);
+                      src.atlComposedExpression(svar,trg,ems); 
+    Expression vexp = sexp;
+    Type stype = src.getType(); 
+    Type ttype = trg.getType();   
+    if (stype != null && ttype != null && 
+        "String".equals(ttype.getName()) && stype.isEnumeration())
+    { vexp = AttributeMatching.dataConversion("ATL", sexp, stype, ttype); } 
+    else if (stype != null && ttype != null && 
+             "String".equals(stype.getName()) && ttype.isEnumeration())
+    { vexp = AttributeMatching.dataConversion("ATL", sexp, stype, ttype); } 
+    // or both are enums, or one boolean and the other enum
+    else if (stype != null && ttype != null && 
+             stype.isEnumeration() && ttype.isEnumeration())
+    { vexp = AttributeMatching.dataConversion("ATL", sexp, stype, ttype); }
+    else if (stype != null && ttype != null && 
+        "boolean".equals(ttype.getName()) && stype.isEnumeration())
+    { vexp = new BasicExpression("thisModule." + stype.getName() + "2boolean" + trg.getName() + 
+                                 "(" + sexp + ")"); } 
+    else if (stype != null && ttype != null && 
+             "boolean".equals(stype.getName()) && ttype.isEnumeration())
+    { vexp = new BasicExpression("thisModule.boolean2" + ttype.getName() + src.getName() + 
+                                 "(" + sexp + ")"); 
+    } 
+    
+    Binding bres = new Binding(trg + "", vexp); 
+    return bres; 
   } 
 
   Binding atlcomposedtarget(Vector newclauses, Vector newrules, Vector newdo, 
@@ -2113,8 +2960,11 @@ public class AttributeMatching
     BasicExpression srcexvar = new BasicExpression(srcvar); 
     Expression expr; 
 
-    if (isExpressionAssignment())
-    { expr = srcvalue.addReference(srcexvar, new Type(realsrc)); } 
+    if (srcvalue != null)
+    { expr = srcvalue.addReference(srcexvar, new Type(realsrc));
+      expr.setType(srcvalue.getType()); 
+      expr.setElementType(srcvalue.getElementType()); 
+    } 
     else 
     { expr = new BasicExpression(src); 
       ((BasicExpression) expr).setObjectRef(srcexvar); 
@@ -2122,7 +2972,7 @@ public class AttributeMatching
 
     
     if (preset != null && (preset instanceof Attribute)) 
-    { // System.out.println(">>> Additional mapping " + expr + " ¦-> " + trg); 
+    { // System.out.println(">>> Additional mapping " + expr + " ?-> " + trg); 
       Attribute trgref = trg.objectReference(); 
       Attribute f = trg.getFinalFeature(); 
         
@@ -2201,6 +3051,9 @@ Binding atlTargetMap(Attribute preatt, Vector path, Expression sexpr,
     dx = p1x + "_" + d.getName().toLowerCase() + "_x";
     dxvar = new Attribute(dx, new Type(d), ModelElement.INTERNAL); 
     dxvar.setElementType(new Type(d)); 
+	if (d != null && d.isConcrete()) { } 
+	else 
+	{ System.err.println("!! Cannot instantiate entity " + d); }
   }
   
   Entity srcent = null;
@@ -2473,5 +3326,930 @@ Binding atlTargetMap(Attribute preatt, Vector path, Expression sexpr,
   }
 }
 
+  Statement etldirecttarget(String svar, BasicExpression directtarget, Vector ems) 
+  { Expression sexp = // new BasicExpression(svar + "." + src);
+                      src.etlComposedExpression(svar,trg,ems); 
+    Expression vexp = sexp;
+    Type stype = src.getType(); 
+    Type ttype = trg.getType();   
+    if (stype != null && ttype != null && 
+        "String".equals(ttype.getName()) && stype.isEnumeration())
+    { vexp = new BasicExpression("(" + sexp + ")." + stype.getName() + "2String()"); }  
+    else if (stype != null && ttype != null && 
+             "String".equals(stype.getName()) && ttype.isEnumeration())
+    { vexp = new BasicExpression("(" + sexp + ").String2" + ttype.getName() + "()"); } 
+    else if (stype != null && ttype != null && 
+             stype.isEnumeration() && ttype.isEnumeration())
+    { vexp = new BasicExpression("(" + sexp + ").convert" + stype.getName() + "_" + 
+                                 ttype.getName() + "()"); 
+    }
+    else if (stype != null && ttype != null && 
+        "boolean".equals(ttype.getName()) && stype.isEnumeration())
+    { vexp = new BasicExpression("(" + sexp + ")." + stype.getName() + "2boolean" + trg.getName() + 
+                                 "()"); } 
+    else if (stype != null && ttype != null && 
+             "boolean".equals(stype.getName()) && ttype.isEnumeration())
+    { vexp = new BasicExpression("(" + sexp + ").boolean2" + 
+                                 ttype.getName() + src.getName() + "()"); 
+    } 
 
+    AssignStatement res = new AssignStatement(directtarget, vexp); 
+    if (src.getUpper() == 1 && src.getLower() == 0) 
+    { BasicExpression testnull = new BasicExpression("isDefined"); 
+      testnull.setParameters(new Vector()); 
+      testnull.setObjectRef(new BasicExpression(svar + "." + src)); 
+      return new ConditionalStatement(testnull, res); 
+    }     
+    return res; 
+  } 
+
+  Statement etlcomposedtarget(Vector newclauses, Vector newrules, Vector statements, 
+                              String srcvar, String trgvar, Entity realsrc,
+                              Vector created, java.util.Map implementedBy, Vector ems) 
+  { Vector path = trg.getNavigation(); 
+    if (path.size() == 0) 
+    { path.add(trg); } 
+
+    Attribute preatt = null; 
+    Vector preattp = VectorUtil.largestInitialSegment(path,created); 
+    Object preset = null; 
+
+    if (preattp != null && preattp.size() > 0) 
+    { preatt = new Attribute(preattp); 
+      String prex = preatt.getName(); // ModelElement.composeNames(preatt); 
+      // String tvar1 = tvar + "." + prex; 
+      Vector pathrem = new Vector(); 
+      pathrem.addAll(path); 
+      pathrem.removeAll(preattp); 
+      preset = implementedBy.get(prex); 
+      // System.out.println(">>> Already created " + preattp + " " + prex + " " + pathrem); 
+      // System.out.println(">>> Implemented by " + preset); 
+    } 
+    // else if (path.size() > 0) 
+    // { preatt = (Attribute) path.get(0); } 
+
+    BasicExpression srcexvar = new BasicExpression(srcvar); 
+    Expression expr; 
+
+    if (srcvalue != null)
+    { expr = srcvalue.addReference(srcexvar, new Type(realsrc)); 
+      expr.setType(srcvalue.getType()); 
+      expr.setElementType(srcvalue.getElementType()); 
+    } 
+    else 
+    { expr = new BasicExpression(src); 
+      ((BasicExpression) expr).setObjectRef(srcexvar); 
+    } 
+
+    
+    if (preset != null && (preset instanceof Attribute)) 
+    { // System.out.println(">>> Additional mapping " + expr + " ?-> " + trg); 
+      Attribute trgref = trg.objectReference(); 
+      Attribute f = trg.getFinalFeature(); 
+        
+      if (trgref.isMultiValued())
+      { // System.out.println(f + " upper bound is " + f.upperBound()); 
+        // System.out.println(expr + " upper bound is " + expr.upperBound()); 
+        
+        if (f.upperBound() >= expr.upperBound())
+        { // convert expr by using equivalent. 
+          Expression xf = new BasicExpression("_x." + f); 
+          Expression expretl = expr.etlEquivalent(trg,ems); 
+          AssignStatement body = new AssignStatement(xf, expretl);
+          Expression test = new BasicExpression("_x in " + trgvar + "." + trgref);  
+          WhileStatement ws = new WhileStatement(test,body); 
+          ws.setLoopKind(Statement.FOR); 
+          statements.add(ws); 
+        } 
+        else 
+        { Binding res = etlTargetMap(trgvar,preatt,path,expr,newclauses,newrules,implementedBy,ems);
+          if (res == null) 
+          { return null; }
+
+          AssignStatement astat = new AssignStatement(res); 
+ 
+          if (src.getUpper() == 1 && src.getLower() == 0) 
+          { BasicExpression testnull = new BasicExpression("isDefined"); 
+            testnull.setParameters(new Vector()); 
+            testnull.setObjectRef(expr); 
+            return new ConditionalStatement(testnull, astat); 
+          }     
+          return astat; 
+        } 
+      }  
+      else if (f.upperBound() >= expr.upperBound()) 
+      { Expression expretl = expr.etlEquivalent(trg,ems); 
+        AssignStatement as1 = new AssignStatement(trgvar + "." + trg, expretl); 
+        if (src.getUpper() == 1 && src.getLower() == 0) 
+        { BasicExpression testnull = new BasicExpression("isDefined"); 
+          testnull.setParameters(new Vector()); 
+          testnull.setObjectRef(expr); 
+          statements.add(new ConditionalStatement(testnull, as1)); 
+        }     
+        statements.add(as1); 
+      }
+      else 
+      { Expression expretl = expr.etlEquivalent(trg,ems); 
+        AssignStatement as2 = new AssignStatement(trgvar + "." + trg, 
+                                     new UnaryExpression("->any", expretl)); 
+        statements.add(as2); 
+      }
+ 
+      return null; 
+    }      
+    else 
+    { Binding res = etlTargetMap(trgvar,preatt,path,expr,newclauses,newrules,implementedBy,ems);
+      if (res == null) { return null; } 
+      AssignStatement ast2 = new AssignStatement(res); 
+      if (src.getUpper() == 1 && src.getLower() == 0) 
+      { BasicExpression testnull = new BasicExpression("isDefined"); 
+        testnull.setParameters(new Vector()); 
+        testnull.setObjectRef(expr); 
+        return new ConditionalStatement(testnull, ast2); 
+      }     
+      return ast2; 
+
+    } 
+  } 
+
+Binding etlTargetMap(String trgvar, Attribute preatt, Vector path, Expression sexpr, 
+                     Vector newclauses, Vector newrules, java.util.Map implementedBy, 
+                     Vector ems)
+{ if (path.size() == 0)
+  { return null; }
+  Attribute p1 = (Attribute) path.get(0);
+  String p1x = p1.getName();
+
+  String preattname = ""; 
+  if (preatt != null) 
+  { preattname = preatt.getName(); } 
+  else 
+  { preatt = p1; 
+    preattname = p1x; 
+  } 
+
+  Vector pathtail = new Vector();
+  pathtail.addAll(path);
+  pathtail.remove(0);
+  Type p1type = p1.getElementType();
+  Entity d = null;
+  String dx = "";
+  Attribute dxvar = null; 
+
+  Attribute nextatt = null; 
+  if (preatt != null) 
+  { Vector prepath = preatt.getNavigation(); 
+    Vector route = new Vector(); 
+    route.addAll(prepath); 
+    route.add(p1); 
+    nextatt = new Attribute(route); 
+  } 
+
+  if (p1type == null) 
+  { // Expression expretl = sexpr.etlEquivalent(trg,ems); 
+    Binding bres = new Binding(trgvar + "." + p1x, sexpr); 
+    return bres; 
+    // return trgvar + "." + p1x + " := " + sexpr; 
+  }
+
+
+  if (p1type.isEntity())
+  { d = p1type.getEntity(); 
+    dx = p1x + "_" + d.getName().toLowerCase() + "_x";
+    dxvar = new Attribute(dx, new Type(d), ModelElement.INTERNAL); 
+    dxvar.setElementType(new Type(d));
+	if (d != null && d.isConcrete()) { } 
+	else 
+	{ System.err.println("!!! Cannot instantiate " + d); } 
+  }
+  
+  Entity srcent = null;
+  String sx = "";
+  Attribute srcvar = null;
+
+  Type srctype = sexpr.getElementType();
+
+  if (Type.isEntityType(srctype))
+  { srcent = srctype.getEntity();
+    sx = srcent.getName().toLowerCase() + "_x";
+    srcvar = new Attribute(sx,new Type(srcent),ModelElement.INTERNAL);
+    srcvar.setElementType(new Type(srcent));
+  }
+  else if (srctype != null) // eg, for String  
+  { // sx = srctype.getName().toLowerCase() + "$x"; 
+    sx = Identifier.nextIdentifier("var_"); 
+    srcvar = new Attribute(sx,srctype,ModelElement.INTERNAL); 
+    srcvar.setElementType(srctype); 
+  } 
+  else // for int, long, boolean, etc
+  { // System.err.println("!! Null element type in " + sexpr); 
+    srctype = sexpr.getType(); 
+    if (srctype == null) 
+    { Binding bres1 = new Binding(trgvar + "." + p1x,sexpr); 
+      return bres1; 
+      // Do conversions using equivalent. 
+    }
+    sx = Identifier.nextIdentifier("var_"); 
+         // srctype.getName().toLowerCase() + "$x"; 
+    srcvar = new Attribute(sx,srctype,ModelElement.INTERNAL); 
+    srcvar.setElementType(srctype); 
+  } 
+
+  if (path.size() > 1) 
+  { if (p1.isSingleValued())
+    { Binding sexp = etlTargetMap(dx,nextatt,pathtail,sexpr,
+                                  newclauses,newrules,implementedBy,ems);
+      // String newclause = "  " + dx + " : " + d.getName() + "\n" +
+      //     "    ( " + sexp + " )";
+      // newclauses.add(newclause);
+      Binding bres2 = new Binding(trgvar + "." + p1x, new BasicExpression(dxvar)); 
+
+      OutPatternElement ope = null; 
+      if (implementedBy.get(preattname) != null && 
+          implementedBy.get(preattname) instanceof OutPatternElement)
+      { ope = (OutPatternElement) implementedBy.get(preattname); 
+        ope.addBinding(sexp);
+        // implementedBy.put(preattname, ope);
+        return null;  
+      } 
+      else 
+      { ope = new OutPatternElement(dxvar); 
+        if (src.getLower() == 0 && src.getUpper() == 1) 
+        { BasicExpression isdefined = new BasicExpression("isDefined"); 
+          isdefined.setParameters(new Vector()); 
+          isdefined.setObjectRef(sexpr); 
+          ope.setCondition(isdefined); 
+        } 
+        newclauses.add(ope);
+        ope.addBinding(sexp);
+        implementedBy.put(preattname, ope);
+        return bres2;  
+      } 
+    } 
+    else // p1 not ONE
+    { if (sexpr.isMultipleValued() && srcent != null)
+      { Binding sexp2 = etlTargetMap(dx,nextatt,pathtail,new BasicExpression(srcvar),
+                                     newclauses,newrules,implementedBy,ems);
+        String newmap = "Map" + srcent + "2" + d + "_" + ModelElement.underscoredNames(pathtail);
+        // String newrule = "  unique lazy rule " + newmap +"\n" +
+        //   "  { from " + sx + " : MM1!" + srcent + "\n" +
+        //   "    to " + dx + " : MM2!" + d + "\n" +
+        //   "    ( " + sexp2 + " )\n" +
+        //   "  }";
+        // newrules.add(newrule);  
+
+        TransformationRule mr = new TransformationRule(newmap,true,false);
+        mr.setSource(srcvar); 
+          // OutPattern op = new OutPattern(); 
+        OutPatternElement ope = new OutPatternElement(dxvar);
+        ope.addBinding(sexp2); 
+          // implementedBy.put(preattname, ope);
+        implementedBy.put(preattname, preatt); 
+          // op.setElement(ope);
+        mr.addClause(ope);
+        if (newrules.contains(mr)) { } 
+        else 
+        { newrules.add(mr); } 
+         
+
+        BinaryExpression crange = new BinaryExpression(":",new BasicExpression(sx),sexpr); 
+        BasicExpression mapcall = new BasicExpression(sx + ".equivalent('" + newmap + "')"); 
+        BinaryExpression collexp = new BinaryExpression("|C", crange, mapcall); 
+        Binding bres3 = new Binding(trgvar + "." + p1x, collexp); 
+
+        return bres3; 
+        // return p1x + " <- " + 
+        //   sexpr + "->collect( " + sx + " | thisModule." + newmap + "(" + sx + "))";
+      }
+      else if (sexpr.isMultipleValued())
+      { Binding sexp2 = etlTargetMap(dx,nextatt,pathtail,new BasicExpression(srcvar),
+                                     newclauses,newrules,implementedBy,ems);
+        String newmap = "Map" + srctype + "2" + d + "_" + ModelElement.underscoredNames(pathtail);
+        // String newrule = "    rule " + newmap +"(" + sx + " : " + srctype + ")\n" +
+        //   "  { to " + dx + " : " + d + "\n" +
+        //   "    ( " + sexp2 + " )\n" +
+        //   "  }";
+        // newrules.add(newrule);  
+
+        // OutPatternElement ope = null; 
+        // MatchedRule mr = new MatchedRule(false,false);
+          Type rettype = new Type(d); 
+          BehaviouralFeature bf = new BehaviouralFeature(newmap,new Vector(),false,rettype); 
+          Vector stats = new Vector(); 
+          CreationStatement decvar = new CreationStatement(d + "", dx);
+          decvar.setInitialValue("new MM2!" + d); 
+          stats.add(decvar);
+          Binding sexp3 = sexp2.substitute(sx,new BasicExpression("self")); 
+          stats.add(new AssignStatement(sexp3));
+       
+          stats.add(new ReturnStatement(new BasicExpression(dx)));  
+          bf.setActivity(new SequenceStatement(stats)); 
+
+          if (srcent != null) 
+          { bf.setOwner(srcent); } 
+          else 
+          { bf.setOwner(new Entity(srctype + "")); } 
+          // mr.addParameter(srcvar); 
+          // OutPattern op = new OutPattern(); 
+          // ope = new OutPatternElement(dxvar); 
+          // op.setElement(ope); 
+          // mr.setOutPattern(op);
+
+          if (newrules.contains(bf)) { } 
+          else 
+          { newrules.add(bf); } 
+ 
+          // ope.addBinding(sexp2); 
+          implementedBy.put(preattname,preatt); 
+        // An operation in ETL 
+        
+        BinaryExpression crange = new BinaryExpression(":",new BasicExpression(sx),sexpr); 
+        BasicExpression mapcall = new BasicExpression(sx + "." + newmap + "()"); 
+        BinaryExpression collexp = new BinaryExpression("|C", crange, mapcall); 
+        Binding bres4 = new Binding(trgvar + "." + p1x,collexp); 
+        return bres4; 
+        // return p1x + " <- " + 
+        //   sexpr + "->collect( " + sx + " | thisModule." + newmap + "(" + sx + "))";
+      }
+      else // if (srcent != null) // sexpr single-valued, object
+      { // Binding sexp2 = atlTargetMap(nextatt,pathtail,new BasicExpression(srcvar),
+        //                              newclauses,newrules,implementedBy);
+        // String newmap = "Map" + srcent + "2" + d;
+        Binding sexp = etlTargetMap(dx,nextatt,pathtail,sexpr,newclauses,
+                                    newrules,implementedBy,ems);
+        // String newclause = "  " + dx + " : " + d.getName() + "\n" +
+        //     "    ( " + sexp + " )";
+        // newclauses.add(newclause);
+        Binding bres2 = new Binding(trgvar + "." + p1x, new BasicExpression(dxvar)); 
+        // String newrule = "  unique lazy rule " + newmap +"\n" +
+        //   "  { from " + sx + " : MM1!" + srcent + "\n" +
+        //   "    to " + dx + " : MM2!" + d + "\n" +
+        //   "    ( " + sexp2 + " )\n" +
+        //   "  }";
+        // newrules.add(newrule);  
+
+        OutPatternElement ope = null; 
+        if (implementedBy.get(preattname) != null && 
+            implementedBy.get(preattname) instanceof OutPatternElement)
+        { ope = (OutPatternElement) implementedBy.get(preattname);           
+          ope.addBinding(sexp); 
+          // implementedBy.put(preattname,ope); 
+          return null; 
+        } 
+        else 
+        { ope = new OutPatternElement(dxvar); 
+          // MatchedRule mr = new MatchedRule(true,true);
+          // mr.setName(newmap);  
+          // InPattern ip = new InPattern(); 
+          // InPatternElement ipe = new InPatternElement(srcvar,null); 
+          // ip.addElement(ipe); 
+          // OutPattern op = new OutPattern(); 
+          // ope = new OutPatternElement(dxvar); 
+          // op.setElement(ope); 
+          // mr.setInPattern(ip); 
+          // mr.setOutPattern(op);
+          // newrules.add(mr); 
+          ope.addBinding(sexp); 
+          newclauses.add(ope); 
+          implementedBy.put(preattname,ope); 
+          return bres2; 
+        } 
+      }
+    }
+  }
+  else // path.size() == 1
+  { if (p1.isSingleValued() && sexpr.isSingleValued())
+    { Expression expretl = sexpr.etlEquivalent(p1,ems); 
+      Binding res7 = new Binding(trgvar + "." + p1x, expretl); 
+      return res7; 
+    }
+    else if (p1.isSingleValued())
+    { Expression expretl = sexpr.etlEquivalent(p1,ems); 
+      UnaryExpression anyexp = new UnaryExpression("->any", expretl); 
+      Binding bres8 = new Binding(trgvar + "." + p1x, anyexp); 
+      return bres8; 
+      // return p1x + " <- (" + sexpr + ")->any()";
+    }
+    else
+    { Expression expretl = sexpr.etlEquivalent(p1,ems); 
+      Binding res9 = new Binding(trgvar + "." + p1x, expretl); 
+      return res9; 
+      // return p1x + " <- " + sexpr; 
+    }
+  }
+}
+
+
+  public void checkModel(ModelSpecification mod, 
+                         Vector srcobjs, Vector trgobjs, Vector attmaps, Vector removed, Vector added, Vector queries)
+  { // For this feature mapping f |--> g, checks for each 
+    // srcobjs ex : E and corresponding trgobjs fx : F, that ex.f = fx.g in 
+    // the model mod. For set-valued g, could be ok if f1 |--> g, f2 |--> g and union of f1, f2 in model is g
+	
+	Type selemt = src.getElementType(); 
+	Type telemt = trg.getElementType(); 
+	String sent = ""; 
+	String tent = ""; 
+	if (selemt != null && selemt.isEntityType())
+	{ sent = selemt.getEntity().getName(); }
+	if (telemt != null && telemt.isEntityType())
+	{ tent = telemt.getEntity().getName(); }
+	
+     boolean valid = true;
+ 
+     double[] xs = new double[srcobjs.size()]; 
+     double[] ys = new double[trgobjs.size()]; 
+     Vector xlist = new Vector(); 
+     java.util.Map ymap = new java.util.HashMap(); 
+	
+     String[] xstrs = new String[srcobjs.size()]; 
+     String[] ystrs = new String[trgobjs.size()]; 
+	
+     Vector[] xvect = new Vector[srcobjs.size()]; 
+     Vector[] yvect = new Vector[trgobjs.size()]; 
+	 
+     boolean[] xbools = new boolean[srcobjs.size()]; 
+     boolean[] ybools = new boolean[trgobjs.size()]; 
+
+     for (int i = 0; i < srcobjs.size() && i < trgobjs.size(); i++) 
+     { ObjectSpecification sobj = (ObjectSpecification) srcobjs.get(i); 
+       ObjectSpecification tobj = (ObjectSpecification) trgobjs.get(i); 
+
+       if (src.isEnumeration() && trg.isEnumeration())
+	   { String senumval = sobj.getEnumerationValue(src,mod); 
+	     String tenumval = tobj.getEnumerationValue(trg,mod);
+		 xstrs[i] = senumval; 
+		 ystrs[i] = tenumval;  
+		 if (senumval != null && tenumval != null && senumval.equals(tenumval))
+		 { System.out.println(">> objects " + sobj + " and"); 
+           System.out.println(tobj + " satisfy matching " + this); 
+         } 
+         else 
+         { System.out.println("!! objects " + sobj + " (" + senumval + ") and"); 
+           System.out.println(tobj + " (" + tenumval + ") fail to satisfy matching " + this); 
+           valid = false; 
+           removed.add(this); 
+         }
+	   }
+       else if (src.isNumeric() && trg.isNumeric())
+       { double srcval = sobj.getNumericValue(src,mod); 
+         xs[i] = srcval;
+         Double xv = new Double(srcval);  
+         xlist.add(xv); 
+         double trgval = tobj.getNumericValue(trg,mod);
+         ys[i] = trgval; 
+         ymap.put(xv,new Double(trgval)); 
+		 
+         if (srcval == trgval) 
+         { System.out.println(">> objects " + sobj + " and"); 
+           System.out.println(tobj + " satisfy matching " + this); 
+         } 
+         else 
+         { System.out.println("!! objects " + sobj + " and"); 
+           System.out.println(tobj + " fail to satisfy matching " + this); 
+           valid = false; 
+           removed.add(this); 
+         }
+         System.out.println("----------------------"); 
+         System.out.println();  
+       } 
+       else if (src.isBoolean() && trg.isBoolean())
+       { boolean srcval = sobj.getBoolean(src.getName()); 
+         xbools[i] = srcval;
+         boolean trgval = tobj.getBoolean(trg.getName());
+         ybools[i] = trgval; 
+         
+         if (srcval == trgval) 
+         { System.out.println(">> objects " + sobj + " and"); 
+           System.out.println(tobj + " satisfy matching " + this); 
+         } 
+         else 
+         { System.out.println("!! objects " + sobj + " and"); 
+           System.out.println(tobj + " fail to satisfy matching " + this); 
+           valid = false;
+		   removed.add(this);  
+         }
+         System.out.println("----------------------"); 
+         System.out.println();  
+       } 
+       else if (src.isString() && trg.isString())
+       { String srcstr = sobj.getStringValue(src,mod); 
+         String trgstr = tobj.getStringValue(trg,mod);
+         xstrs[i] = srcstr; 
+         ystrs[i] = trgstr; 
+		
+         if (srcstr.equals(trgstr))
+         { System.out.println(">> objects " + sobj + " and"); 
+           System.out.println(tobj + " satisfy matching " + this); 
+         } 
+         else 
+         { System.out.println("!! objects " + sobj + " and"); 
+           System.out.println(tobj + " fail to satisfy matching " + this); 
+	      valid = false; 
+	      removed.add(this); 
+         }
+         System.out.println("----------------------");
+         System.out.println();    
+	  }
+	  else if (src.isEntity() && trg.isEntity())
+	  { ObjectSpecification srcobj = sobj.getReferredObject(src,mod); 
+	    ObjectSpecification trgobj = tobj.getReferredObject(trg,mod);
+	    if (srcobj == null) 
+	    { System.out.println("?? Incomplete model: Referred object " + src + " of " + sobj + " is undefined."); }
+	    if (trgobj == null)
+	    { System.out.println("?? Incomplete model: Referred object " + trg + " of " + tobj + " is undefined."); }
+	    if (trgobj != null && srcobj != null)	 
+	    { if (mod.correspondence.getAll(srcobj) != null && mod.correspondence.getAll(srcobj).contains(trgobj))
+		 { System.out.println(">> objects " + srcobj + " and"); 
+		   System.out.println(trgobj + " correspond."); 
+		   System.out.println(">> objects " + sobj + " and"); 
+              System.out.println(tobj + " satisfy matching " + this); 
+		  } 
+             else 
+             { System.out.println(">> objects " + srcobj + " and"); 
+		    System.out.println(trgobj + " do not correspond."); 
+		    System.out.println("!! objects " + sobj + " " + tobj + " fail to satisfy matching " + this); 
+	          valid = false; 
+	          removed.add(this); 
+              }
+	       } 
+	       else 
+	       { valid = false; 
+		    removed.add(this); 
+		  }
+             System.out.println("----------------------");
+             System.out.println();
+	      }
+	      else if (src.isCollection() && trg.isCollection())
+	      { Vector srcvect = sobj.getCollectionValue(src,mod); 
+	    Vector trgvect = tobj.getCollectionValue(trg,mod); 
+		
+	    xvect[i] = srcvect; 
+	    yvect[i] = trgvect; 
+		
+	    if (src.isSequence() && trg.isSequence())
+	    { if (srcvect.equals(trgvect))
+	      { System.out.println(">> objects " + sobj + " and"); 
+            System.out.println(tobj + " satisfy matching " + this); 
+          } 
+          else if (mod.correspondingObjectSequences(sent,tent,srcvect,trgvect))
+          { System.out.println(">> objects " + sobj + " and"); 
+	        System.out.println(tobj + " satisfy matching " + this); 
+	      } 
+          else 
+          { System.out.println("!! objects " + sobj + " and"); 
+            System.out.println(tobj + " fail to satisfy matching " + this); 
+	        valid = false;
+			// removed.add(this); 
+		  }  
+          System.out.println("----------------------");
+          System.out.println();    
+	    }
+	    else if (src.isCollection() && trg.isCollection()) 
+	    { // System.out.println(srcvect + "  " + trgvect); 
+            if (srcvect.containsAll(trgvect) && trgvect.containsAll(srcvect))
+            { System.out.println(">> objects " + sobj + " and"); 
+              System.out.println(tobj + " satisfy matching " + this); 
+           } 
+           else if (mod.correspondingObjectSets(srcvect,trgvect))
+           { System.out.println(">> objects " + sobj + " and"); 
+             System.out.println(tobj + " satisfy matching " + this); 
+            } 
+            else 
+            { System.out.println("!! Collections " + srcvect); 
+		      System.out.println(trgvect + " Do not correspond"); 
+		      System.out.println(">> Sizes are " + srcvect.size() + " and " + trgvect.size()); 
+		      System.out.println("!! objects " + sobj + " and"); 
+		      System.out.println(tobj + " fail to satisfy matching " + this); 
+	          valid = false;
+			  // removed.add(this); 
+		    }                   
+            System.out.println("----------------------");
+            System.out.println();    
+          }
+        } 
+      } 
+
+	if (!valid && src.isEnumeration() && trg.isEnumeration())
+	{ if (AuxMath.isConstant(ystrs))
+       { System.out.println(">>> " + trg + " is constant.");
+         System.out.println(ystrs[0] + " |--> " + trg);
+         added.add(new AttributeMatching(new BasicExpression(ystrs[0]), trg)); 
+         System.out.println(); 
+       }    
+	
+       if (AuxMath.isFunctional(xstrs,ystrs)) { } 
+	  else
+	  { System.out.println(">>> " + trg + " is not a function of " + src); 
+	     return; 
+	   }
+	   
+	   // Propose a function
+	   if (xstrs.length > 1)
+	   { System.out.println(">>> Suggesting a function f_" + src + "_" + trg); 
+           int qs = queries.size(); 
+           Vector pars = new Vector(); 
+           pars.add(src); 
+           Type returntype = trg.getType(); 
+           BehaviouralFeature bf = new BehaviouralFeature("f_" + src + "_" + trg + "_" + qs, pars, true, returntype);
+           Expression post = new BasicExpression(trg);  
+	     for (int i = 0; i < xstrs.length; i++)
+	     { System.out.println("  " + xstrs[i] + " |--> " + ystrs[i]); 
+            BinaryExpression test = 
+              new BinaryExpression("=", new BasicExpression(src), new BasicExpression(xstrs[i])); 
+             post = new ConditionalExpression(test,
+                      new BasicExpression(ystrs[i]),post); 
+           }
+           bf.setPostcondition(post); 
+           queries.add(bf); 
+	     System.out.println(">>> for " + src + " |--> " + trg); 
+		 added.add(new AttributeMatching(new BasicExpression("f_" + src + "_" + trg + "_" + qs + "(" + src + ")"), trg)); 
+         System.out.println(); 
+       }    
+
+	}
+     else if (!valid && src.isNumeric() && trg.isNumeric())
+	{ // check if the x and y are constant, or 
+       // linearly or quadratically correlated. 
+       // If so, derive the x to y function
+	   removed.add(this); 
+	   
+	   if (AuxMath.isFunctional(xs,ys)) { } 
+	   else
+	   { System.out.println(">>> " + trg + " is not a function of " + src); 
+	     return; 
+	   }
+
+       if (AuxMath.isConstant(ys))
+       { System.out.println(">>> " + trg + " is constant.");
+         System.out.println(ys[0] + " |--> " + trg);
+		 added.add(new AttributeMatching(new BasicExpression(ys[0]), trg)); 
+         System.out.println(); 
+       }    
+       else 
+	   { double corr = AuxMath.linearCorrelation(xs,ys); 
+	     if (corr > 0.95)
+	     { System.out.println(">>> The " + src + " and " + trg + 
+	            " values are linearly related with correlation " + corr); 
+	       double slope = AuxMath.linearSlope(); 
+	       double offset = AuxMath.linearOffset(); 
+	       System.out.println(slope + "*" + src + " + " + offset + " |--> " + trg);
+           added.add(new AttributeMatching(new BasicExpression(slope + "*" + src + " + " + offset), trg)); 
+           System.out.println(); 
+         } 
+         else 
+         { // sort the ys by increasing xs
+            List sortedxs = new Vector(); 
+            sortedxs.addAll(xlist); 
+            Collections.sort(sortedxs); 
+            System.out.println(sortedxs); 
+            List ylist = new Vector();
+            for (int g = 0; g < sortedxs.size(); g++) 
+            { ylist.add(ymap.get(sortedxs.get(g))); }  
+            System.out.println(ylist); 
+            
+            double[] ys2 = new double[ylist.size()]; 
+            for (int k = 0; k < ylist.size(); k++) 
+            { ys2[k] = 
+                ((Double) ylist.get(k)).doubleValue(); 
+            } 
+
+            AuxMath.slopes(ys2); 
+            boolean quad = AuxMath.quadraticRelationship(xs,ys2,
+                                            src.getName(),trg.getName()); 
+            System.out.println(">>> Quadratic " + quad); 
+
+            if (!quad)
+            { double isexp = AuxMath.isExponential(xs,ys2); 
+              System.out.println(">>> Exponential: " + isexp); 
+	          if (isexp > 0.9) 
+              { AuxMath.exponentialRelationship(src.getName(),trg.getName()); }
+            } 
+          }  
+        }
+		
+	   return; 
+      }
+
+	  if (!valid && src.isBoolean() && trg.isBoolean())
+	  { removed.add(this); 
+	  
+	    if (AuxMath.isConstant(ybools))
+         { System.out.println(">>> " + trg + " is constant.");
+           System.out.println(">>> Corrected mapping is: ");
+           System.out.println(ybools[0] + " |--> " + trg);
+           added.add(new AttributeMatching(new BasicExpression(ybools[0]),trg)); 
+		   System.out.println(); 
+         }
+		 else if (AuxMath.isNegation(xbools,ybools))
+		 { System.out.println(">>> " + trg + " is negation of " + src + ".");
+           System.out.println(">>> Corrected mapping is: ");
+           System.out.println("not(" + src + ") |--> " + trg);
+           added.add(new AttributeMatching(new UnaryExpression("not", new BasicExpression(src)),trg)); 
+		   System.out.println(); 
+         }
+		 
+	    return; 
+      } 
+	  
+	  
+	  if (!valid && src.isString() && trg.isString())
+	  { // System.out.println(xstrs[0]); 
+	    // System.out.println(ystrs[0]); 
+		removed.add(this); 
+		
+	    if (AuxMath.isConstant(ystrs))
+         { System.out.println(">>> " + trg + " is constant.");
+           System.out.println(">>> Corrected mapping is: ");
+           System.out.println("\"" + ystrs[0] + "\" |--> " + trg);
+           added.add(new AttributeMatching(new BasicExpression("\"" + ystrs[0] + "\""),trg)); 
+		   System.out.println(); 
+         }
+	   
+	    boolean prefixed = AuxMath.isPrefixed(xstrs,ystrs); 
+	    if (prefixed) 
+	    { System.out.println(">>> Target is " + src + " + a prefix "); 
+           String pref = AuxMath.commonPrefix(xstrs,ystrs); 
+           if (pref != null) 
+           { System.out.println(">>> Corrected mapping is: ");
+             System.out.println("\"" + pref + "\" + " + src + " |--> " + trg); 
+             added.add(new AttributeMatching(new BasicExpression("\"" + pref + "\" + " + src),trg)); 
+		     System.out.println(); 
+           }
+         }
+ 
+	    boolean suffixed = AuxMath.isSuffixed(xstrs,ystrs); 
+	    if (suffixed) 
+	    { System.out.println(">>> Target is " + src + " + a suffix "); 
+           String pref = AuxMath.commonSuffix(xstrs,ystrs); 
+           if (pref != null) 
+           { System.out.println(">>> Corrected mapping is: ");
+             System.out.println(src + " + \"" + pref + "\" |--> " + trg); 
+             added.add(new AttributeMatching(new BasicExpression(src + " + \"" + pref + "\""),trg)); 
+		     System.out.println(); 
+           }
+         }
+
+	    boolean uppercased = AuxMath.isUpperCased(xstrs,ystrs); 
+	    if (uppercased) 
+	    { System.out.println(">>> Target is " + src + " uppercased ");
+           System.out.println(">>> Corrected mapping is: ");
+           
+           System.out.println(src + "->toUpperCase() |--> " + trg); 
+           BasicExpression srcexp = new BasicExpression(src);  
+
+		   added.add(new AttributeMatching(new UnaryExpression("->toUpperCase",srcexp),trg)); 
+		     
+           System.out.println(); 
+         }
+
+         boolean lowercased = AuxMath.isLowerCased(xstrs,ystrs); 
+         if (lowercased) 
+	     { System.out.println(">>> Target is " + src + " lowercased "); 
+           System.out.println(src + "->toLowerCase() |--> " + trg); 
+		   BasicExpression srcexp = new BasicExpression(src);  
+		   added.add(new AttributeMatching(new UnaryExpression("->toLowerCase",srcexp),trg)); 
+         }
+
+        boolean reversed = AuxMath.isReversed(xstrs,ystrs); 
+	   if (reversed) 
+	   { System.out.println(">>> Target is " + src + " reversed "); 
+          System.out.println(src + "->reverse() |--> " + trg);
+          BasicExpression srcexp = new BasicExpression(src);  
+	     added.add(new AttributeMatching(new UnaryExpression("->reverse",srcexp),trg)); 
+        }
+		
+	   return; 
+     }
+	 
+	 if (!valid && src.isSequence() && trg.isSequence())
+      { 
+	   if (AuxMath.isConstantSequence(yvect))
+        { System.out.println(">>> " + trg + " is constant.");
+          System.out.println(">>> Corrected mapping is: ");
+          System.out.println(yvect[0] + " |--> " + trg);
+          removed.add(this); 
+	     added.add(new AttributeMatching(new SetExpression(yvect[0],true), trg)); 
+	     System.out.println(); 
+        }
+		
+		
+	   boolean prefixed = AuxMath.isPrefixedSequence(xvect, yvect, sent, tent, mod); 
+	   if (prefixed)
+	   { System.out.println(">>> Target is " + src + " + a prefix "); 
+         Vector pref = AuxMath.commonSequencePrefix(xvect,yvect); 
+         if (pref != null) 
+         { System.out.println(">>> Corrected mapping is: ");
+           System.out.println(pref + "^" + src + " |--> " + trg); 
+           removed.add(this);
+           BinaryExpression cat = new BinaryExpression("^", new SetExpression(pref,true), new BasicExpression(src));
+           added.add(new AttributeMatching(cat, trg)); 
+		    
+           System.out.println(); 
+         }
+       }
+
+	   boolean suffixed = AuxMath.isSuffixedSequence(xvect, yvect, sent, tent, mod); 
+	   if (suffixed)
+	   { System.out.println(">>> Target is " + src + " + a suffix "); 
+          Vector pref = AuxMath.commonSequenceSuffix(xvect,yvect); 
+          if (pref != null) 
+          { System.out.println(">>> Corrected mapping is: ");
+            System.out.println(src + "^" + pref + " |--> " + trg); 
+            removed.add(this);
+            BinaryExpression cat = new BinaryExpression("^", new BasicExpression(src), new SetExpression(pref,true));
+            added.add(new AttributeMatching(cat, trg)); 
+            System.out.println(); 
+          }
+        }
+		
+	   return; 
+	 }
+	  
+     if (!valid && src.isCollection() && trg.isCollection())
+     { 
+	   if (AuxMath.isConstantSet(yvect))
+        { System.out.println(">>> " + trg + " is constant.");
+          System.out.println(">>> Corrected mapping is: ");
+          System.out.println(yvect[0] + " |--> " + trg);
+          removed.add(this); 
+	      added.add(new AttributeMatching(new SetExpression(yvect[0]), trg)); // SetExpression constructor 
+          System.out.println(); 
+        }
+		
+		
+      boolean subsetted = AuxMath.isSubsetSet(xvect, yvect, mod); 
+	  if (subsetted)
+	  { System.out.println(">>> Target " + trg + " is " + src + " + some elements -- possibly another feature or a constant set");  
+        Vector sadded = AuxMath.commonSubsetSet(xvect,yvect,mod); 
+        if (sadded != null) 
+        { System.out.println(">>> Corrected mapping is: ");
+          System.out.println(src + "->union(" + sadded + ") |--> " + trg);
+		  BinaryExpression unionexp = new BinaryExpression("->union", new BasicExpression(src), new SetExpression(sadded));  
+          added.add(new AttributeMatching(unionexp, trg)); 
+          removed.add(this); 
+          System.out.println();      
+        } // or union of another feature
+	    else 
+	    { for (int k = 0; k < attmaps.size(); k++) 
+	      { AttributeMatching kmap = (AttributeMatching) attmaps.get(k); 
+	        if (kmap.trg == trg && kmap.src != src)
+		    { System.out.println(">>> Suggest " + src + "->union(" + kmap.src + ") |--> " + trg); }
+		  }
+		  System.out.println(); 
+		}
+      }
+      else 
+	  { boolean supsetted = AuxMath.isSupsetSet(xvect, yvect, mod); 
+	    if (supsetted)
+	    { System.out.println(">>> Target " + trg + " is selection of " + src);  
+            // Vector sadded = AuxMath.commonSubsetSet(xvect,yvect,sent,tent,mod); 
+            // if (sadded != null) 
+			
+           if (src.getElementType() != null && src.getElementType().isAbstractEntity())
+		   { // Possible conditions P are x->oclIsTypeOf(S) for concrete subtypes of the elementtype, 
+	         // or x.f = val for booleans, enums, Strings
+		     Entity srcelement = src.getElementType().getEntity(); 
+		     Vector leafsubs = srcelement.getActualLeafSubclasses(); 
+		     Vector selectionconditions = mod.validateSelectionConditions(leafsubs,xvect,yvect,src);   
+             if (selectionconditions.size() > 0)
+             { System.out.println(">>> Possible corrected mapping is: ");
+               System.out.println(selectionconditions.get(0) + " |--> " + trg); 
+               added.add(new AttributeMatching((Expression) selectionconditions.get(0), trg)); 
+               removed.add(this); 
+               System.out.println(); 
+             }
+             else 
+             { System.out.println(">>> Retaining mapping, but it needs to be refined."); }
+           } 
+           else if (src.getElementType() != null && src.getElementType().isEntity())
+           { Entity srcref = src.getElementType().getEntity(); 
+             Vector discriminators = srcref.getDiscriminatorAttributes();
+             System.out.println(">>> Discriminator attributes of " + srcref + " are: " + discriminators); 
+
+             Vector selectionConds = mod.validateDiscriminatorConditions(discriminators,xvect,yvect,src); 
+             if (selectionConds.size() > 0)
+             { System.out.println(">>> Possible alternative source expressions are: " + selectionConds);
+			   
+               System.out.println(selectionConds.get(0) + " |--> " + trg); 
+               added.add(new AttributeMatching((Expression) selectionConds.get(0), trg)); 
+               removed.add(this); 
+               System.out.println(); 
+             } 
+           }
+           else 
+           { System.out.println(">>> Retaining mapping, but it needs to be refined."); }
+           System.out.println(); 
+         }
+	    else 
+         { System.out.println(">>> " + trg + " seems unrelated to " + src);
+           System.out.println(">>> Try an alternative target feature of type " + trg.getType());
+           removed.add(this); 
+           System.out.println();   
+         }
+       }        
+     }
+   }    
+    
+  
 } 
