@@ -1,6 +1,12 @@
 import java.io.*; 
-import java.awt.*;
-import java.awt.event.*;
+// import java.awt.*;
+import java.awt.Color; 
+import java.awt.BorderLayout; 
+import java.awt.GridLayout; 
+import java.awt.Insets; 
+import java.awt.Dimension; 
+import java.awt.event.ActionEvent; 
+// import java.awt.event.*;
 import java.util.HashMap;
 import java.util.Vector; 
 
@@ -70,7 +76,7 @@ public class KM3Editor extends JFrame implements DocumentListener
         super("KM3 Editor");
 		systemName = parent.getSystemName(); 
         entities = ents; 
-		types = parent.getTypes(); 
+		types = parent.getKM3Types(); 
         useCases = ucs; 
 
         classArea = parent; 
@@ -79,13 +85,16 @@ public class KM3Editor extends JFrame implements DocumentListener
         textPane.setCaretPosition(0);
         textPane.setMargin(new Insets(5,5,5,5));
         StyledDocument styledDoc = textPane.getStyledDocument();
-        if (styledDoc instanceof AbstractDocument) {
-            doc = (AbstractDocument) styledDoc;
-			doc.addDocumentListener(this); 
-        } else {
+        if (styledDoc instanceof AbstractDocument) 
+		{ doc = (AbstractDocument) styledDoc;
+          doc.addDocumentListener(this); 
+        } 
+		else 
+		{
             System.err.println("Error: invalid document");
         }
-        JScrollPane scrollPane = new JScrollPane(textPane);
+        
+		JScrollPane scrollPane = new JScrollPane(textPane);
         scrollPane.setPreferredSize(new Dimension(100, 300));
 
         messageArea = new JTextArea(15, 80);
@@ -204,7 +213,15 @@ public class KM3Editor extends JFrame implements DocumentListener
 	   
        try 
        { doc.insertString(0, "package " + sysName + " { \n\r\n\r" , attrs[1]); 
-         for (int j = 0; j < entities.size(); j++) 
+         
+		 
+		 for (int j = 0; j < types.size(); j++) 
+         { String typ = (String) types.get(j);
+		   // System.out.println(typ.class);  
+		   doc.insertString(doc.getLength(), typ, attrs[1]);  
+         }
+		 
+		 for (int j = 0; j < entities.size(); j++) 
          { Entity ent = (Entity) entities.get(j); 
 		   if (ent.isDerived()) { } 
 		   else 

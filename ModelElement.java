@@ -434,6 +434,14 @@ public abstract class ModelElement implements SystemTypes
     return fl.toUpperCase() + rem;
   }
 
+  public static boolean hasInitialCapital(String nme)
+  { if (nme.length() == 0) { return false; } 
+
+    if (Character.isUpperCase(nme.charAt(0)))
+    { return true; } 
+    return false; 
+  }
+
   public String constructorParameterCPP()
   { return null; } 
 

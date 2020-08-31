@@ -4204,7 +4204,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
          uc.addIncludes(inc);
          j = j + 3;  
        } 
-       else if ("extends".equals(jx))
+       else if ("extendedBy".equals(jx))
        { String ext = lexicals.get(j+1) + ""; 
          uc.addExtends(ext);
          j = j + 3;  
@@ -6294,7 +6294,7 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 
   public static boolean isNounPhraseWord(String lex)
   { if (lex.endsWith("_DT") || lex.endsWith("_PDT") || lex.endsWith("_NNPS") || lex.endsWith("_WDT") ||
-        lex.endsWith("_WH") || lex.endsWith("_FW") ||
+        lex.endsWith("_WH") || lex.endsWith("_FW") || lex.endsWith("_JJR") || 
         lex.endsWith("_CD") || lex.endsWith("_NNS") || lex.endsWith("_LS") || lex.endsWith("_JJS") ||
 	    lex.endsWith("_NN") || lex.endsWith("_NNP") || lex.endsWith("_JJ") || lex.endsWith("_PRP") || 
 		lex.endsWith("_PRP$") || lex.endsWith("_WP$"))
@@ -6304,7 +6304,7 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
   
   public static boolean isVerbPhraseWord(String lex)
   { if (lex.endsWith("_VB") || lex.endsWith("_VBZ") || lex.endsWith("_TO") || lex.endsWith("_VBG") || 
-        lex.endsWith("_MD") || lex.endsWith("_IN") || lex.endsWith("_TO") || lex.endsWith("_VBD") ||
+        lex.endsWith("_MD") || lex.endsWith("_IN") || lex.endsWith("_VBD") ||
 	    lex.endsWith("_VBN") || lex.endsWith("_VBP") || lex.endsWith("_RB") || lex.endsWith("_WRB") || 
 		lex.endsWith("_EX"))
     { return true; }
@@ -6558,8 +6558,41 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 	RequirementsPhrase nounphrase6 = new RequirementsPhrase("noun", noun6); 
 	res.add(nounphrase6);
 
+	boolean inverb6 = true;
+	Vector verb6 = new Vector();  
+    
+	while (i <= en && inverb6)
+    { String lex = lexicals.get(i) + "";
+	  if (isNounPhraseWord(lex))
+	  { inverb6 = false; }
+	  else if (isVerbPhraseWord(lex))
+	  { verb6.add(lex); 
+	    i++; 
+	  } 
+	  else 
+	  { inverb6 = false; }
+	} 
+	RequirementsPhrase verbphrase6 = new RequirementsPhrase("verb", verb6); 
+	res.add(verbphrase6); 
+	
+	Vector noun7 = new Vector(); 
+	boolean innoun7 = true; 
+    while (i <= en && innoun7)
+    { String lex = lexicals.get(i) + "";
+	  if (isNounPhraseWord(lex) || isConjunctionWord(lex))
+	  { noun7.add(lex);
+	    i++; 
+	  }
+	  else if (isVerbPhraseWord(lex))
+	  { innoun7 = false; }
+	  else 
+	  { i++; } 
+	} 
+	RequirementsPhrase nounphrase7 = new RequirementsPhrase("noun", noun7); 
+	res.add(nounphrase7);
+
     if (i < en)
-	{ System.out.println("!! Unprocessed text: " + showLexicals(i,en)); }
+	{ System.out.println("!! Requirements sentence too long!! Unprocessed text: " + showLexicals(i,en)); }
 	System.out.println(); 
 	
 	return res; 

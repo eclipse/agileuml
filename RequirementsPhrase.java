@@ -34,7 +34,7 @@ public class RequirementsPhrase
 
   static String[] classUpdatingVerbs = { "rewrites", "rewritten", "rewriting", "refactor", "refactors", "refactoring",  
                                        "moved", "moves", "moving", "modified", "modifies", "modifying",
-                                       "update", "updates", "updating" };  
+                                       "update", "updated", "updates", "updating" };  
 
   static String[] featureMappingVerbs = { "copy", "copied", "corresponds", "correspond", "corresponding", 
                                           "accepts", "set-to", "set-from", "set-by", "set-as", 
@@ -45,12 +45,17 @@ public class RequirementsPhrase
 										  "same", "identical", "represented", "represents", "computed", "computes", 
 										  "provided", "provides", "translated", "translation" };
 										  
+  static String[] relationalVerbs = { "corresponds", "encoded", "associated", "linked",   
+                                      "connected", "connects", "composed", "comprised", "comprises", 
+									  "equals", "equal", "equalling", 
+									  "same", "identical", "represented", "represents"}; 
+										  
   static String[] featureCopyingWords = { "same", "equal", "equals", "equalling", "copy", "copied", "identical" }; 
   // also "is"
 
   static String[] featureCombinationWords = { "combined", "combining", "combines", "composition", 
                                               "composed", "concatenation", "joined", "appended" }; 
-  // also "is"
+  
 
   static String[] conditionalPredicates = { "if", "when", "which", "that", "where" }; 
                                           // Others, ambiguous: "with", "case", "not" 
@@ -161,6 +166,26 @@ public class RequirementsPhrase
     } 
     return false; 
   } 
+  
+  public static boolean isRelationalVerb(String str) 
+  { int subind = str.indexOf("_"); 
+    if (subind < 0) 
+	{ return false; }
+    String check = str.substring(0,subind); 
+    for (int i = 0; i < relationalVerbs.length; i++) 
+    { if (check.equals(relationalVerbs[i]))
+      { return true; } 
+    } 
+    return false; 
+  } 
+
+  public static boolean isActiveVerb(String vb) 
+  { if (isRelationalVerb(vb))
+    { return false; } 
+	return 
+      (isFeatureMappingVerb(vb) || isClassSplitVerb(vb) || isClassMergeVerb(vb) || 
+       isClassDeleteVerb(vb) || isClassUpdateVerb(vb) || isClassMappingVerb(vb));  
+  }
 
   public static boolean isFeatureCopyingWord(String str) 
   { int subind = str.indexOf("_"); 
@@ -169,6 +194,18 @@ public class RequirementsPhrase
     String check = str.substring(0,subind); 
     for (int i = 0; i < featureCopyingWords.length; i++) 
     { if (check.equals(featureCopyingWords[i]))
+      { return true; } 
+    } 
+    return false; 
+  } 
+
+  public static boolean isFeatureCombineWord(String str) 
+  { int subind = str.indexOf("_"); 
+    if (subind < 0) 
+	{ return false; }
+    String check = str.substring(0,subind); 
+    for (int i = 0; i < featureCombinationWords.length; i++) 
+    { if (check.equals(featureCombinationWords[i]))
       { return true; } 
     } 
     return false; 
@@ -210,113 +247,185 @@ public class RequirementsPhrase
     return res; 
   } 
   
+  public static boolean hasCombineWord(Vector phrases)
+  { boolean res = false;  
+    for (int p = 0; p < phrases.size(); p++)
+    { RequirementsPhrase pr = (RequirementsPhrase) phrases.get(p); 
+	 
+      for (int i = 0; i < pr.words.size() && !res; i++)
+      { String word = (String) pr.words.get(i); 
+        if (isFeatureCombineWord(word)) 
+        { res = true; } 
+      } 
+    }
+    return res; 
+  } 
+
   public static boolean isClassName(String cwd, Vector entities)
-  { Entity trg = (Entity) ModelElement.lookupByName(cwd,entities); 
+  { if (ModelElement.hasInitialCapital(cwd))
+    { Entity trg = (Entity) ModelElement.lookupByName(cwd,entities); 
+      if (trg == null)
+      { trg = (Entity) ModelElement.lookupByNameNMS(cwd,entities,0.5); }
+      if (trg == null) 
+	  { return false; }
+	  return true;
+	}
+	return false;   
+  } 
+
+  public static boolean isFeatureName(String cwd, Vector features)
+  { Attribute trg = (Attribute) ModelElement.lookupByName(cwd, features); 
     if (trg == null)
-    { trg = (Entity) ModelElement.lookupByNameNMS(cwd,entities,0.5); }
+    { trg = (Attribute) ModelElement.lookupByNameNMS(cwd, features, 0.5); }
     if (trg == null) 
 	{ return false; }
 	return true; 
   } 
 
   public static Entity findClass(String cwd, Vector entities)
-  { Entity trg = (Entity) ModelElement.lookupByName(cwd,entities); 
-    if (trg == null)
-    { trg = (Entity) ModelElement.lookupByNameNMS(cwd,entities,0.5); }
-    return trg; 
+  { if (ModelElement.hasInitialCapital(cwd))
+    { Entity trg = (Entity) ModelElement.lookupByName(cwd,entities); 
+      if (trg == null)
+      { trg = (Entity) ModelElement.lookupByNameNMS(cwd,entities,0.5); }
+      return trg;
+	} 
+	return null;  
   } 
 
-  public static Vector conditional(Vector phrases, Vector sources, Vector targets, Vector scopeClass)
+  public static Vector conditional(Vector phrases, Vector sources, Vector targets, Vector sourceFeatures,
+                                   Vector scopeClass)
   { Vector res = new Vector(); 
     Entity currentSource = null; 
-	Entity currentTarget = null; 
+    Entity currentTarget = null; 
 	
     for (int x = 0; x < phrases.size(); x++)
-	{ RequirementsPhrase pr = (RequirementsPhrase) phrases.get(x);  
+    { RequirementsPhrase pr = (RequirementsPhrase) phrases.get(x);  
       Vector wds = pr.words; 
-	  for (int i = 0; i < wds.size(); i++)
+      for (int i = 0; i < wds.size(); i++)
       { String word = (String) wds.get(i);
-	    int subind = word.indexOf("_"); 
+        int subind = word.indexOf("_"); 
         if (subind < 0) 
-	    { continue; }
+        { continue; }
 		
-		String subword = word.substring(0,subind);
-		Entity src = findClass(subword,sources); 
-		if (src != null)
-		{ currentSource = src; }
+        String subword = word.substring(0,subind);
+        Entity src = findClass(subword,sources); 
+        if (src != null)
+        { currentSource = src; }
         Entity trg = findClass(subword,targets); 
-		if (trg != null)
-		{ currentTarget = trg; }
+        if (trg != null)
+        { currentTarget = trg; }
 		 
         String check = subword.toLowerCase(); 
-	    if ("if".equals(check) || "when".equals(check) || "which".equals(check) || "that".equals(check) || 
-	        "where".equals(check))
-	    { for (int j = i+1; j < wds.size(); j++) 
-		  { String xw = (String) wds.get(j); 
-		    int subxw = xw.indexOf("_"); 
-            if (subxw >= 0)
-			{ xw = xw.substring(0,subxw); } 
-			res.add(xw); 
-		  }
+        if ("if".equals(check) || "when".equals(check) || "which".equals(check) || "that".equals(check) || 
+	        "where".equals(check) || "with".equals(check))
+        { if ("with".equals(check))
+          { res.add("with"); }
 		  
-		  if (x < phrases.size() - 1)
-		  { RequirementsPhrase nextphrase = (RequirementsPhrase) phrases.get(x+1); 
-		    // res.addAll(nextphrase.words); 
-		    // should be a verb phrase
-			for (int g = 0; g < nextphrase.words.size(); g++) 
-			{ String gw = (String) nextphrase.words.get(g); 
-			  int subgw = gw.indexOf("_"); 
-              if (subgw >= 0)
-			  { gw = gw.substring(0,subgw); } 
-			  res.add(gw); 
-		    }
-			
-			if (nextphrase.isVerbPhrase() && x < phrases.size() - 2) 
-			{ RequirementsPhrase rnext = (RequirementsPhrase) phrases.get(x+2);
-			  if (rnext.isNounPhrase())
-			  { Vector condwords = rnext.words; 
-			    for (int y = 0; y < condwords.size(); y++)
-				{ String cwd = (String) condwords.get(y); 
-                  int wdind = cwd.indexOf("_"); 
-				  if (wdind >= 0)
-				  { cwd = cwd.substring(0,wdind); }
-				  /* Entity trg = (Entity) ModelElement.lookupByName(cwd,targets); 
-             	  if (trg == null)
-                  { trg = (Entity) ModelElement.lookupByNameNMS(cwd,targets,0.5); }
-				  if (trg == null) */ 
-				  if (isClassName(cwd,targets))
-				  { if (currentSource != null) 
-				    { scopeClass.add(currentSource); }  
-					return res; 
-			      }
-				  else  
-				  { res.add(cwd); }
-				}
-			  }	 
-			}
+          for (int j = i+1; j < wds.size(); j++) 
+          { String xw = (String) wds.get(j); 
+            int subxw = xw.indexOf("_"); 
+            if (subxw >= 0)
+            { xw = xw.substring(0,subxw); } 
+            res.add(xw); 
           }
-          if (currentSource != null) 
+		  
+          if (x < phrases.size() - 1)
+          { RequirementsPhrase nextphrase = (RequirementsPhrase) phrases.get(x+1); 
+            
+            // res.addAll(nextphrase.words); 
+            // should be a verb phrase - but not a verb phrase with a class mapping/update/etc verb or 
+            // feature mapping verb. 
+			
+            for (int g = 0; g < nextphrase.words.size(); g++) 
+            { String origgw = (String) nextphrase.words.get(g); 
+              int subgw = origgw.indexOf("_");
+              String gw = origgw;  
+              if (subgw >= 0)
+              { gw = origgw.substring(0,subgw); }
+			   
+              if (isActiveVerb(origgw) || isClassName(gw,targets) || "then".equals(gw))
+              { if (currentSource != null) 
+                { scopeClass.add(currentSource); }  
+                return res; 
+              }
+              else  
+              { res.add(gw); } 
+            }
+			
+           if (x < phrases.size() - 2) 
+           { RequirementsPhrase rnext = (RequirementsPhrase) phrases.get(x+2);
+		  // if (rnext.isNounPhrase())
+             Vector condwords = rnext.words; 
+             for (int y = 0; y < condwords.size(); y++)
+             { String origcwd = (String) condwords.get(y); 
+               int wdind = origcwd.indexOf("_"); 
+               String cwd = origcwd; 
+               if (wdind >= 0)
+               { cwd = origcwd.substring(0,wdind); }
+
+               if (isActiveVerb(origcwd) || "then".equals(cwd) || isClassName(cwd,targets))
+               { if (currentSource != null) 
+                 { scopeClass.add(currentSource); }  
+                 return res; 
+               }
+               else  
+               { res.add(cwd); }
+             }
+           }	 
+
+           if (x < phrases.size() - 3) 
+           { RequirementsPhrase rnext = (RequirementsPhrase) phrases.get(x+3);
+		     if (rnext.isNounPhrase())
+             { Vector condwords = rnext.words; 
+               for (int y = 0; y < condwords.size(); y++)
+               { String origcwd = (String) condwords.get(y); 
+                 int wdind = origcwd.indexOf("_"); 
+                 String cwd = origcwd; 
+                 if (wdind >= 0)
+                 { cwd = origcwd.substring(0,wdind); }
+
+                 if (isActiveVerb(origcwd) || "then".equals(cwd) || isClassName(cwd,targets))
+                 { if (currentSource != null) 
+	               { scopeClass.add(currentSource); }  
+                   return res; 
+                 }
+                 else  
+                 { res.add(cwd); }
+               }
+             }
+           }	 
+          
+        }
+      
+        if (currentSource != null) 
+        { scopeClass.add(currentSource); } 
+        return res; 
+      }	
+      else if (isAdjective(word))
+      { res.add(check); 
+        for (int j = i+1; j < wds.size(); j++) 
+        { String xw = (String) wds.get(j); 
+          int subxw = xw.indexOf("_"); 
+        if (subxw >= 0)
+		{ xw = xw.substring(0,subxw); } 
+		if (isAdjective(xw) || isQuantifier(xw))
+		{ res.add(xw); } 
+		else if (isFeatureName(xw,sourceFeatures))
+		{ res.add(xw); }
+		else if (isClassName(xw,sources))
+		{ Entity srcclass = findClass(xw,sources);
+		  scopeClass.add(srcclass);  
+		  return res; 
+		} 
+        else 
+		{ if (currentSource != null) 
           { scopeClass.add(currentSource); } 
           return res; 
-	    }	
-		else if (isAdjective(word) || isQuantifier(word))
-		{ res.add(check); 
-		  for (int j = i+1; j < wds.size(); j++) 
-		  { String xw = (String) wds.get(j); 
-		    int subxw = xw.indexOf("_"); 
-            if (subxw >= 0)
-			{ xw = xw.substring(0,subxw); } 
-			if (isAdjective(xw) || isQuantifier(xw))
-			{ res.add(xw); } 
-			else if (isClassName(xw,sources))
-			{ Entity srcclass = findClass(xw,sources);
-			  scopeClass.add(srcclass);  
-			  return res; 
-			} 
-		  }
-		}  
-      }
-	} 
+		} 
+	  }
+	}  
+  }
+} 
     return res; 
   } // and return the remainder of the phrase as the condition, up to the next Target class name
 
@@ -388,35 +497,62 @@ public class RequirementsPhrase
 	  
       if (mmnames.contains(check)) { continue; } 
 
-      if ((sources.size() > 0 || targets.size() > 0) && check.startsWith("element")) 
-      { continue; } // vacuous word
+      // if ((sources.size() > 0 || targets.size() > 0) && check.startsWith("element")) 
+      // { continue; } // vacuous word
 	  
-      Entity ent = (Entity) ModelElement.lookupByNameIgnoreCase(check,entities);
+	  if (ModelElement.hasInitialCapital(check))
+      { Entity ent = (Entity) ModelElement.lookupByNameIgnoreCase(check,entities);
 	  
-	  if (ent == null)
-	  { ent = (Entity) ModelElement.lookupByNameNMS(check,entities,0.5); }
+	    if (ent == null)
+	    { ent = (Entity) ModelElement.lookupByNameNMS(check,entities,0.5); }
 	  
-	  if (ent != null)
-	  { if (ent.isSource())
-	    { if (sources.contains(ent)) { } 
-		  else 
-		  { sources.add(ent); }
-		} 
-	    else if (ent.isTarget())
-		{ if (targets.contains(ent)) { } 
-		  else 
-		  { targets.add(ent); }
+        if (ent != null)
+	    { if (ent.isSource())
+	      { if (sources.contains(ent)) { } 
+		    else 
+		    { sources.add(ent); }
+		  } 
+	      else if (ent.isTarget())
+		  { if (targets.contains(ent)) { } 
+		    else 
+		    { targets.add(ent); }
+		  }
 		} 
 	  }
 	  else 
 	  { Attribute feat = (Attribute) ModelElement.lookupByNameIgnoreCase(check,sourceFeatures); 
 	    if (feat != null) 
-		{ sourcefeats.add(feat); }
+		{ if (sourcefeats.contains(feat)) {}
+		  else 
+		  { sourcefeats.add(feat); }
+		} 
 		else
-		{ feat = (Attribute) ModelElement.lookupByNameIgnoreCase(check,targetFeatures); 
-		  if (feat != null) 
+		{ feat = (Attribute) ModelElement.lookupByNameIgnoreCase(check,targetFeatures); }
+		
+		if (feat != null) 
+		{ if (targetfeats.contains(feat)) { }
+		  else 
 		  { targetfeats.add(feat); }
 		} 
+		else 
+		{ Entity ent = (Entity) ModelElement.lookupByNameIgnoreCase(check,entities);
+	  
+	      if (ent == null)
+	      { ent = (Entity) ModelElement.lookupByNameNMS(check,entities,0.5); }
+	  
+          if (ent != null)
+	      { if (ent.isSource())
+	        { if (sources.contains(ent)) { } 
+		      else 
+		      { sources.add(ent); }
+		    } 
+	        else if (ent.isTarget())
+		    { if (targets.contains(ent)) { } 
+		      else 
+		      { targets.add(ent); }
+		    }
+		  }
+		}
 	  }
 	}
 	
@@ -469,7 +605,7 @@ public class RequirementsPhrase
     // { classifications.add("conditional"); } 
 
     Vector scopeClass = new Vector(); 	
-	Vector cond = conditional(phrases,sourceClasses,targetClasses,scopeClass); 
+	Vector cond = conditional(phrases,sourceClasses,targetClasses,sourceFeatures,scopeClass); 
     
 	if (cond.size() > 0) 
 	{ System.out.println(">> Possible condition = " + cond); 

@@ -2637,7 +2637,7 @@ public void generateCUIcode(PrintWriter out)
       { out.println("    includes " + inclist.get(i) + ";"); }  
     
       for (int i = 0; i < extlist.size(); i++) 
-      { out.println("    extends " + extlist.get(i) + ";"); }  
+      { out.println("    extendedBy " + extlist.get(i) + ";"); }  
 
       saved.add(nme); 
     
@@ -2733,7 +2733,7 @@ public void generateCUIcode(PrintWriter out)
       { res = res + "    includes " + inclist.get(i) + ";\n"; }  
     
       for (int i = 0; i < extlist.size(); i++) 
-      { res = res + "    extends " + extlist.get(i) + ";\n"; }  
+      { res = res + "    extendedBy " + extlist.get(i) + ";\n"; }  
 
       saved.add(nme); 
     
@@ -3748,7 +3748,11 @@ public void generateCUIcode(PrintWriter out)
 
     res = res + "  static var defaultInstance : " + ename + "VO? = nil\n"; 
     res = res + "  var errorlist : [String] = [String]()\n\n"; 
-    if (resultType != null)
+    if (resultType != null && "WebDisplay".equals(resultType.getName()))
+	{ res = res + "  var result : WebDisplay = WebDisplay()\n\n"; }
+	else if (resultType != null && "ImageDisplay".equals(resultType.getName()))
+	{ res = res + "  var result : ImageDisplay = ImageDisplay()\n\n"; }
+	else if (resultType != null)
     { res = res + "  var result : " + resultType.getSwift() + " = " + resultType.getSwiftDefaultValue() + "\n\n"; }
 
     res = res + "\n" +

@@ -152,6 +152,11 @@ public class Attribute extends ModelElement
   public boolean isCollection()
   { return type != null && type.isCollectionType(); } 
 
+  public boolean isEntityCollection()
+  { return type != null && type.isCollectionType() && 
+           elementType != null && elementType.isEntity(); 
+  } 
+
   public boolean isSet()
   { return type != null && type.isSetType(); } 
 
@@ -4538,10 +4543,21 @@ public String iosExtractOp(String ent, int i)
       } 
     }
     else if (type.isEntity())
-    { String obj = Identifier.nextIdentifier(t.toLowerCase()); 
-      String decl = obj + " : " + t + "\n" + nme + " = " + obj; 
+    { String obj = t.toLowerCase() + "x_0"; 
+        // Identifier.nextIdentifier(t.toLowerCase()); 
+      String decl = nme + " = " + obj; 
       res.add(decl); 
     }  
+    else if (type.isCollection() && elementType != null)
+    { Type elemT = getElementType(); 
+      Vector testVals = elemT.testValues(); 
+      res.add(""); 
+      for (int p = 0; p < testVals.size(); p++) 
+      { String tv = (String) testVals.get(p); 
+        res.add(tv + " : " + nme); 
+      }
+    } 
+ 
     return res;  
   } 
 

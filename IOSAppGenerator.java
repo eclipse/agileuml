@@ -132,7 +132,11 @@ public class IOSAppGenerator extends AppGenerator
       { out.println(); } 
 
       out.println("  { ");
-      if (res != null) 
+      if (res != null && "WebDisplay".equals(res.getType().getName())) 
+      { out.println("    var result : WebDisplay = WebDisplay()"); } 
+      else if (res != null && "ImageDisplay".equals(res.getType().getName())) 
+      { out.println("    var result : ImageDisplay = ImageDisplay()"); } 
+      else if (res != null) 
       { out.println("    var result : " + res.getType().getSwift()); } 
 
       // out.println(extractatts);
@@ -202,6 +206,11 @@ public class IOSAppGenerator extends AppGenerator
         out.println("    return _res");  
         out.println("  }"); 
         out.println();
+		out.println("  func retrieve" + item + "(_val : String) -> " + item + "?"); 
+        out.println("  { let _res : " + item + "? = " + item + ".getByPK" + item + "(index: _val)"); 
+        out.println("    return _res");  
+        out.println("  }"); 
+        out.println(); 
       }  
 
       out.println("  func setSelected" + item + "(_x : " + item + "VO)"); 
@@ -305,6 +314,9 @@ public class IOSAppGenerator extends AppGenerator
        if (key != null) 
        { pk = key.getName(); 
          out.println("  func get" + item + "ByPK(_val: String) -> " + item + "?"); 
+         out.println("  { return " + item + "." + item + "_index[_val] }"); 
+         out.println();
+         out.println("  func retrieve" + item + "(_val: String) -> " + item + "?"); 
          out.println("  { return " + item + "." + item + "_index[_val] }"); 
          out.println();
          out.println("  func all" + item + "ids() -> [String]"); 
@@ -533,7 +545,12 @@ public class IOSAppGenerator extends AppGenerator
       { out.println(); } 
 
       out.println("  { ");
-      if (res != null) 
+
+      if (res != null && "WebDisplay".equals(res.getType().getName())) 
+      { out.println("    var result : WebDisplay = WebDisplay()"); } 
+      else if (res != null && "ImageDisplay".equals(res.getType().getName())) 
+      { out.println("    var result : ImageDisplay = ImageDisplay()"); } 
+      else if (res != null) 
       { Type restype = res.getType(); 
         out.println("    var result : " + restype.getSwift() + " = " + restype.getSwiftDefaultValue()); 
       } 
@@ -615,6 +632,11 @@ public class IOSAppGenerator extends AppGenerator
       if (key != null) 
       { String pk = key.getName(); 
         out.println("  func get" + item + "ByPK(_val : String) -> " + item + "?"); 
+        out.println("  { let _res : " + item + "? = " + item + ".getByPK" + item + "(index: _val)"); 
+        out.println("    return _res");  
+        out.println("  }"); 
+        out.println();
+        out.println("  func retrieve" + item + "(_val : String) -> " + item + "?"); 
         out.println("  { let _res : " + item + "? = " + item + ".getByPK" + item + "(index: _val)"); 
         out.println("    return _res");  
         out.println("  }"); 
@@ -738,6 +760,9 @@ public class IOSAppGenerator extends AppGenerator
          out.println("  func get" + item + "ByPK(_val: String) -> " + item + "?"); 
          out.println("  { return " + item + "." + item + "_index[_val] }"); 
          out.println();
+         out.println("  func retrieve" + item + "(_val: String) -> " + item + "?"); 
+         out.println("  { return " + item + "." + item + "_index[_val] }"); 
+         out.println();
          out.println("  func all" + item + "ids() -> [String]"); 
          out.println("  { var res : [String] = [String]()"); 
          out.println("    for (_,_item) in current" + item + "s.enumerated()"); 
@@ -848,12 +873,17 @@ public class IOSAppGenerator extends AppGenerator
     String validator = ucname + "Validator"; 
 	
     out.println("import UIKit");
+    out.println("import WebKit"); 
     out.println();
-    out.println("class " + evc + " : UIViewController");
+    out.print("class " + evc + " : UIViewController");
+    if (res != null && "WebDisplay".equals(res.getType().getName()))
+    { out.println(", WKUIDelegate"); } 
+    else 
+    { out.println(); } 
     out.println("{");
     out.println("  var " + bean + " : " + ebean + " = " + ebean + ".getInstance()");
     out.println("  var " + validator + " : " + validationBean + " = " + validationBean + "()");
-	out.println(); 
+    out.println(); 
 
     String parlist = ""; 
     for (int x = 0; x < atts.size(); x++)
@@ -866,16 +896,30 @@ public class IOSAppGenerator extends AppGenerator
       { parlist = parlist + ", "; } 
     } 
     
-    if (res != null)
+    if (res != null && "WebDisplay".equals(res.getType().getName()))
+    { out.println("  @IBOutlet var resultOutput: WKWebView!"); 
+      restype = "WebDisplay"; 
+    } 
+    else if (res != null && "ImageDisplay".equals(res.getType().getName()))
+    { out.println("  @IBOutlet var resultOutput: UIImageView!"); 
+      restype = "ImageDisplay"; 
+    }
+    else if (res != null) 
     { out.println("  @IBOutlet weak var resultOutput: UILabel!");
       restype = res.getType().getSwift(); 
     }
+	
     out.println(); 
     out.println("  var userId : String = " + "\"0\"");
     out.println();
 
     out.println("  override func viewDidLoad()");
     out.println("  { super.viewDidLoad()");
+    if (res != null && "WebDisplay".equals(res.getType().getName()))
+    { out.println("    let myURL = URL(string: \"https://www.apple.com\")"); 
+      out.println("    let myRequest = URLRequest(url: myURL)"); 
+      out.println("    resultOutput.load(myRequest)"); 
+    } 
     // out.println("    self." + elist + " = " + bean + "." + getlist + "()");
     out.println("  }");
     out.println("");
@@ -919,9 +963,23 @@ public class IOSAppGenerator extends AppGenerator
     // for (int x = 0; x < atts.size(); x++)
     if (res != null) 
     { Attribute att = res; // (Attribute) atts.get(x);
-      // if (att.isOutput())
-      { updateScreen = updateScreen + "    " + att + "Output.text = String(" + att + ")";
+      if ("WebDisplay".equals(att.getType().getName()))
+      { updateScreen = updateScreen + "    let myURL = URL(string: result.url)\n"; 
+        updateScreen = updateScreen + "    let myRequest = URLRequest(url: myURL)\n"; 
+        updateScreen = updateScreen + "    resultOutput.load(myRequest)"; 
+		
+        out.println("  override func loadView()"); 
+        out.println("  { let webConfiguration = WKWebViewConfiguration()"); 
+        out.println("    resultOutput = WKWebView(frame: .zero, configuration: webConfiguration)"); 
+        out.println("    resultOutput.uiDelegate = self"); 
+        out.println("  }"); 
+        out.println(); 
       }
+      else if ("ImageDisplay".equals(att.getType().getName()))
+      { updateScreen = updateScreen + "    resultOutput.image = UIImage(named: result.imageName)\n";
+      }  
+      else 
+      { updateScreen = updateScreen + "    resultOutput.text = String(result)"; }
     }
 
     // for (int y = 0; y < usecases.size(); y++)
@@ -993,13 +1051,18 @@ public class IOSAppGenerator extends AppGenerator
     out.println("  @ObservedObject var model : ModelFacade"); 
     out.println("");  
     out.println("  var body: some View {");
-    out.println("    VStack(alignment: HorizontalAlignment.leading, spacing: 20) {");
+    out.println("    VStack(alignment: .leading, spacing: 20) {");
     out.println(formfields); 
-    out.println("      HStack(spacing: 20) {");
-    out.println("        Button(action: { self.model.cancel" + op + "() } ) { Text(\"Cancel\") }"); 
+    out.println("      HStack(spacing: 20) ");
+    out.println("      { Button(action: { self.model.cancel" + op + "() } ) { Text(\"Cancel\") }"); 
     out.println("        Button(action: { self.model." + op + "(_x: bean) } ) { Text(\"" + label + "\") }"); 
     out.println("      }.buttonStyle(PlainButtonStyle())"); 
-    if (res != null) 
+
+    if (res != null && "WebDisplay".equals(res.getType().getName()))
+    { out.println("      WebView(request: URLRequest(string: bean.result.url))"); } 
+    else if (res != null && "ImageDisplay".equals(res.getType().getName()))
+    { out.println("      Image(bean.result.imageName)"); } 
+    else if (res != null) 
     { out.println("      HStack(spacing: 20) {");
       out.println("        Text(\"Result:\")"); 
       out.println("        Text(String(bean.result))");
@@ -1034,16 +1097,16 @@ public void listViewController(Entity e, PrintWriter out)
   out.println("  override func viewDidLoad()");
   out.println("  { super.viewDidLoad()");
   out.println("    self." + elist + " = " + bean + "." + getlist + "()");
-   out.println("  }");
-   out.println("");
-   out.println("  override func didReceiveMemoryWarning()");
-   out.println("  { super.didReceiveMemoryWarning() }");
-   out.println("");
+  out.println("  }");
+  out.println("");
+  out.println("  override func didReceiveMemoryWarning()");
+  out.println("  { super.didReceiveMemoryWarning() }");
+  out.println("");
    // For UITableViewDataSource
-   out.println("  func numberOfSections(in tableView: UITableView) -> Int"); 
-   out.println("  { return 1 }");
-   out.println("");
-   out.println("  func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int");
+  out.println("  func numberOfSections(in tableView: UITableView) -> Int"); 
+  out.println("  { return 1 }");
+  out.println("");
+  out.println("  func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int");
    out.println("  { return self." + elist + ".count }");
    out.println("");
    out.println("");
@@ -1051,17 +1114,17 @@ public void listViewController(Entity e, PrintWriter out)
    out.println("  { let cell = self.tableView.dequeueReusableCell(withIdentifier: \"Cell\", for: indexPath)");
    out.println("");
    out.println("    if let item = self." + elist + "[indexPath.row]"); 
-   out.println("    {");
-   for (int x = 0; x < atts.size(); x++)
-   { Attribute att = (Attribute) atts.get(x);
-     if (att.isHidden()) { } 
-     else 
-     { String attnme = att.getName();
-       out.println("      cell." + attnme + "Label?.text = item." + attnme);
-     }
-   }
-   out.println("    }");
-   out.println("    return cell");
+  out.println("    {");
+  for (int x = 0; x < atts.size(); x++)   
+  { Attribute att = (Attribute) atts.get(x);
+    if (att.isHidden()) { } 
+    else 
+    { String attnme = att.getName();
+      out.println("      cell." + attnme + "Label?.text = item." + attnme);     
+    }
+  }
+  out.println("    }");
+  out.println("    return cell");
   out.println("  }");
   out.println("  ");
    
@@ -1382,7 +1445,7 @@ public void iOSViewController(String systemName, String op, String feature, Enti
     Vector atts = e.getAttributes();
     String elist = ename.toLowerCase() + "List";
     String getlist = "list" + ename;
-	String opname = "searchBy" + ename + attname; 
+    String opname = "searchBy" + ename + attname; 
 
     out.println("import Foundation"); 
     out.println("import UIKit");
@@ -1405,12 +1468,12 @@ public void iOSViewController(String systemName, String op, String feature, Enti
     out.println("  { super.didReceiveMemoryWarning() }");
     out.println("");
     out.println("  @IBAction func " + opname + "(_ sender: Any)");
-	out.println("  { guard let " + attname + " = " + 
+    out.println("  { guard let " + attname + " = " + 
                      Expression.unwrapSwift(attname + "Input.text",byatt.getType()));
     out.println("    else { return } "); 
-	out.println("    self." + elist + " = " + bean + "." + opname + "(_val: " + attname + ")");
-	out.println("   }"); 
-	out.println(); 
+    out.println("    self." + elist + " = " + bean + "." + opname + "(_val: " + attname + ")");
+    out.println("   }"); 
+    out.println(); 
    // For UITableViewDataSource
     out.println("  func numberOfSections(in tableView: UITableView) -> Int"); 
     out.println("  { return 1 }");
@@ -1469,7 +1532,7 @@ public void iOSViewController(String systemName, String op, String feature, Enti
     out.println("    let task = urlSession.dataTask(with: urlref!)");
     out.println("    { (data,response,error) in");
     out.println("      if let e = error"); 
-	out.println("      { delegate?.internetAccessCompleted(nil) }");
+    out.println("      { delegate?.internetAccessCompleted(nil) }");
     out.println("      else if let _ = response");
     out.println("      { delegate?.internetAccessCompleted(String(data)) }");
     out.println("    }");
@@ -1640,24 +1703,24 @@ public static void generateIOSFileAccessor(PrintWriter out)
     out.println("");
     out.println("@UIApplicationMain @IBObject public class AppDelegate : IUIApplicationDelegate {"); 
     out.println("  override var window : UIWindow?"); 
-	out.println(); 
+    out.println(); 
     out.println("  override func application(_ application: UIApplication!, didFinishLaunchingWithOptions launchOptions: NSDictionary<UIApplicationLaunchOptionsKey!,rtl.id!>!) -> Bool"); 
-	out.println("  { window = UIWindow()"); 
+    out.println("  { window = UIWindow()"); 
     out.println("    window!.rootViewController = UINavigationController(rootViewController: RootViewController())"); 
     out.println("    window!.makeKeyAndVisible()"); 
     out.println("    return true"); 
-	out.println("  }"); 
-	out.println(""); 
+    out.println("  }"); 
+    out.println(""); 
     out.println("  override func applicationWillResignActive(_ application: UIApplication) {}"); 
-	out.println(); 
+    out.println(); 
     out.println("  override func applicationDidEnterBackground(_ application: UIApplication) {}"); 
     out.println(); 
     out.println("  override func applicationWillEnterForeground(_ application: UIApplication) {}"); 
     out.println(); 
-	out.println("  override func applicationDidBecomeActive(_ application: UIApplication) {}"); 
+    out.println("  override func applicationDidBecomeActive(_ application: UIApplication) {}"); 
     out.println(); 
     out.println("  override func applicationWillTerminate(_ application: UIApplication) {}"); 
-	out.println(); 
+    out.println(); 
   }
 
 public static void generateSceneDelegate(String mainscreen, PrintWriter out)
@@ -1701,11 +1764,14 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
   { swiftuiEditScreen(op,entity,out); }
   else if (op.startsWith("list"))
   { entity.swiftUIList(out);
-    File outfile = new File("output/swiftuiapp/" + ename + "ListRowView.swift");
+    String outfile = "output/swiftuiapp/" + ename + "ListRowView.swift";
     try { 
-      PrintWriter pwout = new PrintWriter(outfile); 
+      PrintWriter pwout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(outfile)));
+          
       entity.swiftUIListRow(pwout); 
-	  pwout.close(); 
+      pwout.close(); 
     }
     catch (Exception e)
     { System.out.println("Errors with file: " + outfile);
@@ -1799,10 +1865,10 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     Vector extraactions = new Vector(); 
     String formfields = ""; 
 	
-	Attribute id = ent.getPrincipalPrimaryKey(); 
-	if (id == null) { return; }
+    Attribute id = ent.getPrincipalPrimaryKey(); 
+    if (id == null) { return; }
 	
-	String pk = id.getName(); 
+    String pk = id.getName(); 
     
     out.println("import SwiftUI");
     out.println("");
@@ -1813,7 +1879,7 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("  var body: some View {");
     out.println("    VStack(alignment: HorizontalAlignment.leading, spacing: 20) {");
     out.println("      Picker(\"" + ename + "\", selection: $objectId)"); 
-	out.println("      { ForEach(model.current" + ename + "s) { Text($0." + pk + ").tag($0." + pk + ") } }");
+    out.println("      { ForEach(model.current" + ename + "s) { Text($0." + pk + ").tag($0." + pk + ") } }");
     out.println(""); 
     out.println("      HStack(spacing: 20) {");
     out.println("        Button(action: { self.model.cancel" + op + "() } ) { Text(\"Cancel\") }"); 
@@ -1830,15 +1896,15 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("");
     out.println("struct OptionsDialog : View {");
     out.println("  var title : String");
-	out.println("  var labels : [String]");
-	out.println("  @State var selected : String = \"\""); 
-	out.println();  
+    out.println("  var labels : [String]");
+    out.println("  @State var selected : String = \"\""); 
+    out.println();  
     out.println("  @ObservedObject var model : ModelFacade"); 
     out.println("");  
     out.println("  var body: some View {");
     out.println("    VStack(alignment: HorizontalAlignment.leading, spacing: 20) {");
     out.println("      Picker(\"title\", selection: $selected)"); 
-	out.println("      { ForEach(labels) { Text($0).tag($0) } }");
+    out.println("      { ForEach(labels) { Text($0).tag($0) } }");
     out.println(""); 
     out.println("      HStack(spacing: 20) {");
     out.println("        Button(\"Cancel\")"); 
@@ -1857,15 +1923,15 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("  var body: some View {");
     out.println("    TabView {");
     for (int i = 0; i < operations.size(); i++) 
-	{ String op = (String) operations.get(i); 
-	  String label = (String) labels.get(i); 
+    { String op = (String) operations.get(i); 
+      String label = (String) labels.get(i); 
       out.println("      " + op + "().tabItem"); 
-	  out.println("      { Image(systemName: \"" + (i+1) + ".square.fill\")"); 
+      out.println("      { Image(systemName: \"" + (i+1) + ".square.fill\")"); 
       out.println("        Text(\"" + label + "\")"); 
-	  out.println("      }"); 
+      out.println("      }"); 
     }
     out.println("    }.font(.headline)"); 
-	out.println("  }"); 
+    out.println("  }"); 
     out.println("}"); 
   } 
 
@@ -1876,6 +1942,7 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     // out.println();
     out.println("import Foundation");
     out.println("import Glibc");
+    out.println("import SQLite3"); 
     out.println();
     out.println("class Dbi");
     out.println("{ private let dbPointer : OpaquePointer?");
@@ -1897,8 +1964,8 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
 
     out.println("  func createDatabase(db : Dbi)"); 
     out.println("  { " + createCode);
-	out.println("  }"); 
-	out.println();  
+    out.println("  }"); 
+    out.println();  
 	
     out.println("  fileprivate var errorMessage: String"); 
     out.println("  { if let errorPointer = sqlite3_errmsg(dbPointer)");
@@ -1927,7 +1994,7 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("    { defer ");
     out.println("      { if db != nil ");
     out.println("        { sqlite3_close(db) }");
-	out.println("      }");
+    out.println("      }");
     out.println("  ");
     out.println("      if let errorPointer = sqlite3_errmsg(db)"); 
     out.println("      { let message = String(cString: errorPointer)");
@@ -1935,7 +2002,7 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("      } ");
     out.println("      else ");
     out.println("      { print(\"Unknown error opening database\") }");
-	out.println("      return nil"); 
+    out.println("      return nil"); 
     out.println("    }");
     out.println("  }"); 
     out.println("  "); 
@@ -1948,8 +2015,8 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("    guard sqlite3_step(createTableStatement) == SQLITE_DONE "); 
     out.println("    else");  
     out.println("    { print(\"Error creating table\") ");
-	out.println("      return"); 
-	out.println("    }"); 
+    out.println("      return"); 
+    out.println("    }"); 
     out.println("    print(\"table \" + table + \" created.\")"); 
     out.println("  }"); 
     out.println(); 
@@ -1967,6 +2034,57 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("}");
   } 
 
+  public static void generateWebDisplay(String packageName)
+  { String entfile = "WebDisplay.swift"; 
+    File entff = new File("output/" + packageName + "/" + entfile); 
+    try
+    { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entff)));
+      // out.println("package " + packageName + ";"); 
+      out.println(); 
+
+      out.println("");
+      out.println("class WebDisplay");
+      out.println("{ var url : String = \"\"");
+      out.println("");
+      out.println("  init()");
+      out.println("  { }");
+      out.println("");
+      out.println("  func loadURL(url : String)");
+      out.println("  { self.url = url }");
+      out.println("");
+      out.println("  func reload()");
+      out.println("  { }");
+      out.println("}"); 
+      out.close();  
+    } catch (Exception _e) { }  
+  }
+
+  public static void generateImageDisplay(String packageName)
+  { String entfile = "ImageDisplay.swift"; 
+    File entff = new File("output/" + packageName + "/" + entfile); 
+    try
+    { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entff)));
+      // out.println("package " + packageName + ";"); 
+      out.println(); 
+	
+      out.println("");
+      out.println("class ImageDisplay");
+      out.println("{ var imageName : String = \"\"");
+      out.println(""); 
+      out.println("");
+      out.println("  init()");
+      out.println("  { }");
+      out.println("");
+      out.println("  func setImageName(name : String)");
+      out.println("  { imageName = name }");
+      out.println("}"); 
+      out.close();  
+    } catch (Exception _e) { }  
+  }
 
   public static void main(String[] args)
   { // System.out.println(Double.MAX_VALUE); 

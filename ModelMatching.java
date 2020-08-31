@@ -1724,13 +1724,19 @@ public class ModelMatching implements SystemTypes
   public static Vector findCompatibleSourceAttributes(Attribute tatt, Vector satts, EntityMatching em, Vector ems)
   { // Some attribute of em.realsrc which is type-compatible 
     // with tatt. 
+    return findCompatibleSourceAttributes(tatt,satts,em.realsrc,ems); 
+  } 
+
+  public static Vector findCompatibleSourceAttributes(Attribute tatt, Vector satts, Entity sent, Vector ems)
+  { // Some attribute of sent which is type-compatible 
+    // with tatt. 
 
     Vector res = new Vector(); 
     Vector allsats = new Vector(); 
     allsats.addAll(satts); 
     if (tatt.isEntity())
-    { Attribute selfatt = new Attribute("self", new Type(em.realsrc), ModelElement.INTERNAL);
-      selfatt.setElementType(new Type(em.realsrc));  
+    { Attribute selfatt = new Attribute("self", new Type(sent), ModelElement.INTERNAL);
+      selfatt.setElementType(new Type(sent));  
       allsats.add(selfatt); 
     } 
 
@@ -1745,7 +1751,6 @@ public class ModelMatching implements SystemTypes
     } 
     return res; 
   } 
-
 
   public static boolean compatibleType(Attribute satt, Attribute tatt, Vector ems)
   { // true if satt could be matched to tatt, given ems
@@ -1771,6 +1776,72 @@ public class ModelMatching implements SystemTypes
         { return true; } 
       } 
     } 
+    else if ((setype + "").equals("int") && 
+             (tetype + "").equals("long")) 
+    { return true; } 
+    else if ((setype + "").equals(tetype + "")) 
+    { return true; }  
+    return false; 
+  } 
+
+  public static Vector findBaseTypeCompatibleSourceAttributes(Attribute tatt, Vector satts, EntityMatching em, Vector ems)
+  { // Some attribute of em.realsrc which is type-compatible 
+    // with tatt. 
+    return findBaseTypeCompatibleSourceAttributes(tatt, satts, em.realsrc, ems); 
+  } 
+
+  public static Vector findBaseTypeCompatibleSourceAttributes(Attribute tatt, Vector satts, Entity sent, Vector ems)
+  { // Some attribute of sent which is basetype-compatible 
+    // with tatt. 
+
+    Vector res = new Vector(); 
+    Vector allsats = new Vector(); 
+    allsats.addAll(satts); 
+    if (tatt.isEntity())
+    { Attribute selfatt = new Attribute("self", new Type(sent), ModelElement.INTERNAL);
+      selfatt.setElementType(new Type(sent));  
+      allsats.add(selfatt); 
+    } 
+
+    for (int i = 0; i < allsats.size(); i++) 
+    { Attribute satt = (Attribute) allsats.get(i); 
+      if (compatibleBaseTypes(satt,tatt,ems))
+      { System.out.println(">> " + satt + " matches by base type to " + tatt); 
+        res.add(satt); 
+      }
+    } 
+    return res; 
+  } 
+
+  public static boolean compatibleBaseTypes(Attribute satt, Attribute tatt, Vector ems)
+  { // true if base type of satt can map to base type of tatt,
+    // given ems
+    Type setype = satt.getType(); 
+    Type tetype = tatt.getType(); 
+    
+	if (Type.isCollectionType(setype))
+	{ setype = setype.getElementType(); }
+
+      if (Type.isCollectionType(tetype))
+      { tetype = tetype.getElementType(); }
+	
+    if (setype != null && tetype != null && 
+        setype.isEntity() && tetype.isEntity())
+    { Entity e1 = setype.getEntity(); 
+      Entity e2 = tetype.getEntity(); 
+        // and e1 maps to e2 or a subclass/superclass of it 
+      Vector e1imgs = ModelMatching.lookupRealMatches(e1,ems); 
+      for (int i = 0; i < e1imgs.size(); i++) 
+      { Entity e1img = (Entity) e1imgs.get(i); 
+        if (e1img == e2) 
+        { return true; } 
+        if (Entity.isAncestor(e2,e1img) || Entity.isAncestor(e1img,e2))
+        { return true; } 
+      } 
+    } 
+    else if ((setype + "").equals("int") && 
+             (tetype + "").equals("long")) 
+    { return true; } 
     else if ((setype + "").equals(tetype + "")) 
     { return true; }  
     return false; 
@@ -2166,6 +2237,17 @@ public class ModelMatching implements SystemTypes
     Vector removed = new Vector(); 
     Vector functions = new Vector(); 
 
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity tent = (Entity) entities.get(i); 
+      if (tent.isTarget())
+      { java.util.HashMap mergings = mod.objectMergings(tent.getName()); 
+        if (mergings != null && mergings.size() > 0)
+        { System.out.println(">>> Merging in model: " + mergings); 
+          mod.checkMergingCondition(tent,entities,mergings); 
+        } 
+      } 
+    } 
+
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
       em.checkModel(mod,removed,functions); 
@@ -2187,6 +2269,29 @@ public class ModelMatching implements SystemTypes
     combineMatches(extraems); // and the mymap. 
 
     mod.extraAttributeMatches(entitymatches); 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity tent = (Entity) entities.get(i); 
+      if (tent.isTarget())
+      { java.util.HashMap mergings = mod.objectMergings(tent.getName()); 
+        if (mergings != null && mergings.size() > 0)
+        { System.out.println(">>> Merging in model: " + mergings); 
+          mod.checkMergingCondition(tent,entities,mergings); 
+        } 
+      } 
+    } 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity sent = (Entity) entities.get(i); 
+      if (sent.isSource())
+      { java.util.HashMap splittings = mod.objectSplittings(sent.getName()); 
+        if (splittings != null && splittings.size() > 0)
+        { System.out.println(">>> Splitting in model: " + splittings); 
+          mod.checkSplittingCondition(sent,entities,entitymatches,splittings); 
+        } 
+      } 
+    } 
+
   } 
 
 }

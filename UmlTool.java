@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -20,7 +20,7 @@
  * the menu options and their action 
  * listeners.
  package: Class Diagram Editor
-
+ Note this can only be compiled under Java 1.4
  */
 
 import javax.swing.*;
@@ -260,12 +260,40 @@ public void findPlugins()
     loadMTMenu.add(loadETLMI);
 
     JMenuItem loadQVTMI = 
-      new JMenuItem("Load QVT",openIcon);
+      new JMenuItem("Load QVT-R",openIcon);
     loadQVTMI.addActionListener(this);
     loadQVTMI.setToolTipText(
-      "Load QVT-R module from test.qvt");
+      "Load QVT-R module from mm.qvt");
         // loadEcoreMI.setMnemonic(KeyEvent.VK_L);
     loadMTMenu.add(loadQVTMI);
+
+    JMenuItem loadTLMI = 
+      new JMenuItem("Load TL",openIcon);
+    loadTLMI.addActionListener(this);
+    loadTLMI.setToolTipText(
+      "Load TL module from file.tl");
+        // loadEcoreMI.setMnemonic(KeyEvent.VK_L);
+    loadMTMenu.add(loadTLMI);
+
+    JMenuItem loadCSTLMI = 
+      new JMenuItem("Load CSTL",openIcon);
+    loadCSTLMI.addActionListener(this);
+    loadCSTLMI.setToolTipText(
+      "Load CSTL module from file.cstl");
+        // loadEcoreMI.setMnemonic(KeyEvent.VK_L);
+    loadMTMenu.add(loadCSTLMI);
+
+    JMenuItem tl2umlrsds = 
+      new JMenuItem("Map TL to bx"); 
+    tl2umlrsds.addActionListener(this);
+    fileMenu.add(tl2umlrsds);
+
+    JMenuItem checkTL = 
+      new JMenuItem("Check model wrt TL"); 
+    checkTL.addActionListener(this);
+    fileMenu.add(checkTL);
+
+    fileMenu.addSeparator(); 
 
     JMenuItem loadGenericMI = 
       new JMenuItem("Load generic use case",openIcon);
@@ -377,7 +405,7 @@ public void findPlugins()
     //Build second menu in the menu bar.
     JMenu createMenu = new JMenu("Create");
     createMenu.setToolTipText(
-      "Create classes and invariants");
+      "Create classes, features and invariants");
     createMenu.setMnemonic(KeyEvent.VK_C);
     menuBar.add(createMenu);
     
@@ -528,6 +556,12 @@ public void findPlugins()
     JMenuItem guiMI = new JMenuItem("GUI");
     guiMI.addActionListener(this);
     createMenu.add(guiMI);
+
+    JMenuItem componentMI = new JMenuItem("Component");
+    componentMI.addActionListener(this); 
+    createMenu.add(componentMI);
+
+    createMenu.addSeparator(); 
 
     // JMenuItem transMenu = new JMenu("Event flow");
     // createMenu.add(transMenu);
@@ -843,6 +877,13 @@ public void findPlugins()
 
     synthMenu.addSeparator(); 
 
+    JMenuItem requirements2TL = 
+      new JMenuItem("Requirements to TL"); 
+    requirements2TL.addActionListener(this);
+    synthMenu.add(requirements2TL);
+    
+    synthMenu.addSeparator(); 
+
     JMenuItem flatten = 
       new JMenu("Synthesise transformation"); 
     synthMenu.add(flatten);
@@ -903,7 +944,13 @@ public void findPlugins()
     gasimilarity.addActionListener(this);
     flatten.add(gasimilarity);
 
+    JMenuItem fromloadedTL = 
+      new JMenuItem("From loaded TL"); 
+    fromloadedTL.addActionListener(this);
+    flatten.add(fromloadedTL);
+
     synthMenu.addSeparator(); 
+
 
     JMenuItem normalise = 
       new JMenuItem("Form Contrapositives"); 
@@ -1029,6 +1076,15 @@ public void findPlugins()
     // javaMenu.setEnabled(false); 
     buildMenu.add(pyMenu); 
 
+    buildMenu.addSeparator(); 
+
+    JMenuItem cstlGenerator = new JMenuItem("Use CSTL specification"); 
+    cstlGenerator.addActionListener(this);
+    buildMenu.add(cstlGenerator); 
+
+
+    buildMenu.addSeparator(); 
+
 
     JMenu webMI = new JMenu("Web System"); 
     buildMenu.add(webMI); 
@@ -1050,6 +1106,14 @@ public void findPlugins()
     JMenuItem androidMI = new JMenuItem("Android system"); 
     buildMenu.add(androidMI); 
     androidMI.addActionListener(this); 
+
+    JMenuItem iosMI = new JMenuItem("iOS system"); 
+    buildMenu.add(iosMI); 
+    iosMI.addActionListener(this); 
+
+    JMenuItem swiftuiMI = new JMenuItem("SwiftUI system"); 
+    buildMenu.add(swiftuiMI); 
+    swiftuiMI.addActionListener(this); 
 
     buildMenu.addSeparator(); 
 
@@ -1236,6 +1300,8 @@ public void findPlugins()
       }   
       else if (label.equals("GUI"))
       { buildGUI(); } 
+      else if (label.equals("Component"))
+      { ucdArea.loadComponent(); } 
       else if (label.equals("OCL"))
       { ucdArea.printOCL(); } 
       else if (label.equals("Type"))
@@ -1245,7 +1311,7 @@ public void findPlugins()
         { return; }
         if (tname.equals("int") || tname.equals("String") || tname.equals("long") || 
             tname.equals("double") || tname.equals("boolean"))
-        { System.err.println("Cannot redefine inbuilt type!");
+        { System.err.println("ERROR: Cannot redefine inbuilt type!");
           return;
         }
         String values =
@@ -1399,6 +1465,14 @@ public void findPlugins()
       { ucdArea.loadKM3FromFile();
         saved = true; 
       }
+      else if (label.equals("Load TL")) 
+      { ucdArea.loadTL();
+         // saved = true; 
+      }
+      else if (label.equals("Load CSTL")) 
+      { ucdArea.loadCSTL();
+         // saved = true; 
+      }
       else if (label.equals("Load standard ATL")) 
       { ucdArea.loadATL();
          // saved = true; 
@@ -1413,7 +1487,7 @@ public void findPlugins()
       { ucdArea.loadFlock();
          // saved = true; 
       }
-      else if (label.equals("Load QVT")) 
+      else if (label.equals("Load QVT-R")) 
       { ucdArea.loadQVT();
          // saved = true; 
       }
@@ -1651,6 +1725,8 @@ public void findPlugins()
         catch (IOException ex)
         { System.out.println("Error generating C UI"); }
       }
+      else if (label.equals("Use CSTL specification"))
+      { ucdArea.applyCSTLSpecification(); } 
       else if (label.equals("Generate Python"))
       { ucdArea.saveModelToFile("output/model.txt"); 
 
@@ -1712,7 +1788,7 @@ public void findPlugins()
         new TextDisplay("Web System code","output/jsps.txt");
       } 
       else if (label.equals("Android system"))
-      { File file = new File("output/layout.xml");
+      { File file = new File("output/app/AndroidManifest.xml");
         try
         { PrintWriter out = new PrintWriter(
                               new BufferedWriter(
@@ -1723,8 +1799,12 @@ public void findPlugins()
         catch (IOException ex)
         { System.out.println("Error generating Android System"); }
 
-        new TextDisplay("Android System code","output/layout.xml");
+        new TextDisplay("Android System code","output/app/AndroidManifest.xml");
       } 
+      else if (label.equals("iOS system"))
+      { ucdArea.generateIOSApp(); } 
+      else if (label.equals("SwiftUI system"))
+      { ucdArea.generateSwiftUIApp(); } 
       else if (label.equals("J2EE style"))
       { File file = new File("output/j2ees.txt");
         try
@@ -1904,6 +1984,8 @@ public void findPlugins()
       {  } 
       else if (label.equals("Smv Modules"))
       { }
+      else if (label.equals("Requirements to TL"))
+      { ucdArea.requirements2TL(); } 
       else if (label.equals("All maps (DSS)"))
       { Vector t = ucdArea.loadThesaurus();
         ucdArea.flattenModel("all maps",t); 
@@ -1944,6 +2026,18 @@ public void findPlugins()
       { Vector t = ucdArea.loadThesaurus();
         ucdArea.refinementScore(t); 
       }  
+      else if (label.equals("From loaded TL"))
+      { Vector t = ucdArea.loadThesaurus();
+        ucdArea.synthesiseFromTL(t); 
+      } 
+      else if (label.equals("Map TL to bx"))
+      { Vector t = ucdArea.loadThesaurus();
+        ucdArea.mapTL2UMLRSDS(t); 
+      } 
+      else if (label.equals("Check model wrt TL"))
+      { 
+        ucdArea.checkTLmodel(); 
+      } 
       else if (label.equals("Use Case Dependencies"))
       { ucdArea.showUCDependencies(); } 
       else if (label.equals("Form Contrapositives"))

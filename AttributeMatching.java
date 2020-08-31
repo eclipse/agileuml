@@ -1271,6 +1271,8 @@ public class AttributeMatching
                         ematch, entities, 
                         modmatch, res); 
       }    
+	  else
+	  { multiplicityReduction(); }
         
       q.addSourceEntity(realsrc); 
       q.addTargetEntity(realtrg); 
@@ -1319,6 +1321,8 @@ public class AttributeMatching
                                    "Feature " + realsrc + "::" + src +
                                    " narrowed from * to 0..1 multiplicity in " + 
                                    realtrg + "::" + trg); 
+	  multiplicityReduction(); 
+
       q.addSourceEntity(realsrc); 
       q.addTargetEntity(realtrg); 
       q.addSourceFeature(src); 
@@ -1397,6 +1401,29 @@ public class AttributeMatching
       } 
     } 
   } 
+  
+  public void multiplicityReduction()
+  { // src is *, trg is not
+    Type elemT = src.getElementType();  
+    if (elemT != null && elemT.isNumeric())
+	{ System.out.println(">>> Suggest replacing " + src + " |--> " + trg); 
+	  System.out.println("with reduction such as " + src + "->sum()  |-->  " + trg); 
+    }
+	else if (elemT != null && elemT.isString())
+	{ System.out.println(">>> Suggest replacing " + src + " |--> " + trg); 
+	  System.out.println("with reduction such as " + src + "->sum()  |-->  " + trg);
+    }
+	else if (src.isOrdered())
+	{ System.out.println(">>> Suggest replacing " + src + " |--> " + trg); 
+	  System.out.println("with reduction such as " + src + "->first()  |-->  " + trg); 
+	  System.out.println("or " + src + "->last()  |-->  " + trg); 
+	}
+	else 
+	{ System.out.println(">>> Suggest replacing " + src + " |--> " + trg); 
+	  System.out.println("with reduction such as " + src + "->any()  |-->  " + trg);
+    } 
+	System.out.println(); 
+  }
 
   public boolean isEquality() 
   { // types are the same 
@@ -3776,10 +3803,10 @@ Binding etlTargetMap(String trgvar, Attribute preatt, Vector path, Expression se
        ObjectSpecification tobj = (ObjectSpecification) trgobjs.get(i); 
 
        if (src.isEnumeration() && trg.isEnumeration())
-	   { String senumval = sobj.getEnumerationValue(src,mod); 
-	     String tenumval = tobj.getEnumerationValue(trg,mod);
-		 xstrs[i] = senumval; 
-		 ystrs[i] = tenumval;  
+       { String senumval = sobj.getEnumerationValue(src,mod); 
+         String tenumval = tobj.getEnumerationValue(trg,mod);
+         xstrs[i] = senumval; 
+         ystrs[i] = tenumval;  
 		 if (senumval != null && tenumval != null && senumval.equals(tenumval))
 		 { System.out.println(">> objects " + sobj + " and"); 
            System.out.println(tobj + " satisfy matching " + this); 
@@ -3845,8 +3872,8 @@ Binding etlTargetMap(String trgvar, Attribute preatt, Vector path, Expression se
          else 
          { System.out.println("!! objects " + sobj + " and"); 
            System.out.println(tobj + " fail to satisfy matching " + this); 
-	      valid = false; 
-	      removed.add(this); 
+           valid = false; 
+           removed.add(this); 
          }
          System.out.println("----------------------");
          System.out.println();    
@@ -3860,29 +3887,29 @@ Binding etlTargetMap(String trgvar, Attribute preatt, Vector path, Expression se
 	    { System.out.println("?? Incomplete model: Referred object " + trg + " of " + tobj + " is undefined."); }
 	    if (trgobj != null && srcobj != null)	 
 	    { if (mod.correspondence.getAll(srcobj) != null && mod.correspondence.getAll(srcobj).contains(trgobj))
-		 { System.out.println(">> objects " + srcobj + " and"); 
-		   System.out.println(trgobj + " correspond."); 
-		   System.out.println(">> objects " + sobj + " and"); 
-              System.out.println(tobj + " satisfy matching " + this); 
+          { System.out.println(">> objects " + srcobj + " and"); 
+		    System.out.println(trgobj + " correspond."); 
+		    System.out.println(">> objects " + sobj + " and"); 
+            System.out.println(tobj + " satisfy matching " + this); 
 		  } 
-             else 
-             { System.out.println(">> objects " + srcobj + " and"); 
+          else 
+          { System.out.println(">> objects " + srcobj + " and"); 
 		    System.out.println(trgobj + " do not correspond."); 
 		    System.out.println("!! objects " + sobj + " " + tobj + " fail to satisfy matching " + this); 
-	          valid = false; 
-	          removed.add(this); 
-              }
-	       } 
-	       else 
-	       { valid = false; 
-		    removed.add(this); 
-		  }
-             System.out.println("----------------------");
-             System.out.println();
-	      }
-	      else if (src.isCollection() && trg.isCollection())
-	      { Vector srcvect = sobj.getCollectionValue(src,mod); 
-	    Vector trgvect = tobj.getCollectionValue(trg,mod); 
+	        valid = false; 
+	        removed.add(this); 
+          }
+	    } 
+        else 
+	    { valid = false; 
+          removed.add(this); 
+        }
+        System.out.println("----------------------");
+        System.out.println();
+      }
+      else if (src.isCollection() && trg.isCollection())
+      { Vector srcvect = sobj.getCollectionValue(src,mod); 
+        Vector trgvect = tobj.getCollectionValue(trg,mod); 
 		
 	    xvect[i] = srcvect; 
 	    yvect[i] = trgvect; 
@@ -3894,7 +3921,7 @@ Binding etlTargetMap(String trgvar, Attribute preatt, Vector path, Expression se
           } 
           else if (mod.correspondingObjectSequences(sent,tent,srcvect,trgvect))
           { System.out.println(">> objects " + sobj + " and"); 
-	        System.out.println(tobj + " satisfy matching " + this); 
+            System.out.println(tobj + " satisfy matching " + this); 
 	      } 
           else 
           { System.out.println("!! objects " + sobj + " and"); 
@@ -3907,28 +3934,28 @@ Binding etlTargetMap(String trgvar, Attribute preatt, Vector path, Expression se
 	    }
 	    else if (src.isCollection() && trg.isCollection()) 
 	    { // System.out.println(srcvect + "  " + trgvect); 
-            if (srcvect.containsAll(trgvect) && trgvect.containsAll(srcvect))
-            { System.out.println(">> objects " + sobj + " and"); 
-              System.out.println(tobj + " satisfy matching " + this); 
-           } 
-           else if (mod.correspondingObjectSets(srcvect,trgvect))
-           { System.out.println(">> objects " + sobj + " and"); 
-             System.out.println(tobj + " satisfy matching " + this); 
-            } 
-            else 
-            { System.out.println("!! Collections " + srcvect); 
-		      System.out.println(trgvect + " Do not correspond"); 
-		      System.out.println(">> Sizes are " + srcvect.size() + " and " + trgvect.size()); 
-		      System.out.println("!! objects " + sobj + " and"); 
-		      System.out.println(tobj + " fail to satisfy matching " + this); 
-	          valid = false;
+          if (srcvect.containsAll(trgvect) && trgvect.containsAll(srcvect))
+          { System.out.println(">> objects " + sobj + " and"); 
+            System.out.println(tobj + " satisfy matching " + this); 
+          } 
+          else if (mod.correspondingObjectSets(srcvect,trgvect))
+          { System.out.println(">> objects " + sobj + " and"); 
+            System.out.println(tobj + " satisfy matching " + this); 
+          } 
+          else 
+          { System.out.println("!! Collections " + srcvect); 
+            System.out.println(trgvect + " Do not correspond"); 
+            System.out.println(">> Sizes are " + srcvect.size() + " and " + trgvect.size()); 
+            System.out.println("!! objects " + sobj + " and"); 
+            System.out.println(tobj + " fail to satisfy matching " + this); 
+            valid = false;
 			  // removed.add(this); 
-		    }                   
-            System.out.println("----------------------");
-            System.out.println();    
-          }
-        } 
+          }                   
+          System.out.println("----------------------");
+          System.out.println();    
+        }
       } 
+    } 
 
 	if (!valid && src.isEnumeration() && trg.isEnumeration())
 	{ if (AuxMath.isConstant(ystrs))

@@ -4817,6 +4817,7 @@ public class Entity extends ModelElement implements Comparable
 
   public String parseCSVOperation()
   { if (isAbstract()) { return ""; } 
+    if (isInterface()) { return ""; } 
 
     String ename = getName(); 
     String ex = ename.toLowerCase() + "x"; 
@@ -4852,6 +4853,7 @@ public class Entity extends ModelElement implements Comparable
 
   public String parseCSVOperationJava8()
   { if (isAbstract()) { return ""; } 
+    if (isInterface()) { return ""; } 
 
     Attribute key = getPrincipalPrimaryKey(); 
 
@@ -4902,6 +4904,7 @@ public class Entity extends ModelElement implements Comparable
 
   public String writeCSVOperation()
   { if (isAbstract()) { return ""; } 
+    if (isInterface()) { return ""; } 
 
     String ename = getName(); 
     String ex = ename.toLowerCase() + "x"; 
@@ -13679,13 +13682,19 @@ public BehaviouralFeature designAbstractKillOp()
 }
 
 
+  // public int testNumbers()
+  // { How many tests will be generated for this class }
+
+
   public Vector testCases()
   { Vector res = new Vector(); 
     String nme = getName(); 
     String x = nme.toLowerCase() + "$x"; 
     res.add(x + " : " + nme); 
-    
-    Vector allattributes = allDefinedAttributes(); 
+	
+	defineLocalFeatures(); 
+
+    Vector allattributes = localFeatures; 
 
     for (int i = 0; i < allattributes.size(); i++) 
     { Attribute att = (Attribute) allattributes.get(i);
@@ -13714,7 +13723,7 @@ public BehaviouralFeature designAbstractKillOp()
     for (int i = 0; i < res.size(); i++) 
     { String model = (String) res.get(i); 
       String yi = y + i; 
-      String mod1 = model.replace(x,yi); 
+      String mod1 = model.replaceAll(x,yi); 
       // System.out.println("Replaced model= " + mod1);
       newres.add(mod1);  
     } 

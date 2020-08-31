@@ -17,6 +17,9 @@ public class ObjectSpecification extends ModelElement
   Entity entity = null;
   List atts = new ArrayList();  // String
   java.util.Map attvalues = new HashMap(); // String --> Object
+    // basic values are stored as strings, as are object names
+    // Collections are stored as Vectors
+
   List elements = new ArrayList(); // ObjectSpecification
   boolean isSwingObject = true; 
 
@@ -35,6 +38,26 @@ public class ObjectSpecification extends ModelElement
 
   public Entity getEntity() 
   { return entity; } 
+
+  public void setValue(String att, Object val) 
+  { if (val instanceof String)
+    { attvalues.put(att,val); }
+	else if (val instanceof ObjectSpecification)
+	{ String nme = ((ObjectSpecification) val).getName(); 
+	  attvalues.put(att,nme); 
+	}
+	else if (val instanceof Vector)
+	{ Vector vect = (Vector) val; 
+	  Vector actualval = new Vector(); 
+	  for (int i = 0; i < vect.size(); i++)
+	  { Object obj = vect.get(i); 
+	    if (obj instanceof String)
+		{ actualval.add(obj); }
+		else if (obj instanceof ObjectSpecification)
+		{ actualval.add(((ObjectSpecification) obj).getName()); }
+      } 
+	}
+  } 
 
   public String toString()
   { String res = getName() + " : " + objectClass; 
@@ -90,9 +113,10 @@ public class ObjectSpecification extends ModelElement
   { if (x instanceof ObjectSpecification)
     { ObjectSpecification spec = (ObjectSpecification) x; 
       String xname = spec.getName(); 
-      return xname.equals(getName()) && 
-         spec.attvalues != null && attvalues != null && 
-         attvalues.equals(spec.attvalues); 
+      return xname.equals(getName()); 
+       // && 
+       //  spec.attvalues != null && attvalues != null && 
+       //  attvalues.equals(spec.attvalues); 
     } 
     return false; 
   } 
@@ -104,6 +128,42 @@ public class ObjectSpecification extends ModelElement
     Object val = attvalues.get(att); 
     return (val != null); 
   } 
+
+  public boolean hasDefinedValue(Attribute att, ModelSpecification mod)
+  { String attname = att.getName(); 
+    if (attvalues.get(attname) != null) 
+    { return true; } 
+
+    Vector path = att.getNavigation(); 
+    if (path.size() == 0)
+    { path.add(att); }
+    return hasDefinedValue(path, mod); 
+  } 
+
+  public boolean hasDefinedValue(Vector atts, ModelSpecification mod)
+  { if (atts.size() == 0) 
+    { return true; }
+	
+    Attribute fst = (Attribute) atts.get(0);  
+    String attname = fst.getName(); 
+    Vector rest = new Vector(); 
+    rest.addAll(atts); 
+    rest.remove(0); 
+	
+    if ("self".equals(attname)) 
+    { return hasDefinedValue(rest, mod); }
+	
+    if (atts.size() == 1) 
+    { Object val = attvalues.get(attname);
+      return (val != null); 
+    } 
+    else 
+    { ObjectSpecification ospec = getReferredObject(attname,mod); 
+      if (ospec != null) 
+      { return ospec.hasDefinedValue(rest, mod); }
+      return false; 
+    }  
+  }
 
   public int getInt(String att) 
   { // Where we know that att represents an int value 
@@ -205,25 +265,53 @@ public class ObjectSpecification extends ModelElement
     } 
   }  
 
+  public ObjectSpecification[] getCollectionAsObjectArray(Attribute att, ModelSpecification mod)
+  { Vector res = getCollectionValue(att,mod); 
+    if (res == null) 
+    { return null; } 
+    ObjectSpecification[] objs = new ObjectSpecification[res.size()]; 
+    for (int i = 0; i < res.size(); i++)
+    { ObjectSpecification obj = (ObjectSpecification) res.get(i); 
+      objs[i] = obj; 
+    } 
+    return objs; 
+  } 
+
+  public String[] getCollectionAsStringArray(Attribute att, ModelSpecification mod)
+  { Vector res = getCollectionValue(att,mod); 
+    if (res == null) 
+    { return null; } 
+    String[] objs = new String[res.size()]; 
+    for (int i = 0; i < res.size(); i++)
+    { String obj = (String) res.get(i); 
+      if (obj != null && '"' == obj.charAt(0) && 
+          '"' == obj.charAt(obj.length() - 1)) 
+      { objs[i] = obj.substring(1,obj.length()-1); } 
+      else 
+      { objs[i] = obj; }  
+    } 
+    return objs; 
+  } 
+
   public Vector getCollectionValue(Attribute att, ModelSpecification mod) 
   { Vector rawvalues = getRawCollectionValue(att, mod); 
     Vector res = new Vector(); 
 	
     Type elemT = att.getElementType(); 
     if (elemT != null && elemT.isEntity())
-	{ for (int i = 0; i < rawvalues.size(); i++) 
-	  { if (rawvalues.get(i) instanceof ObjectSpecification)
-	    { res.add(rawvalues.get(i)); }
-		else if (rawvalues.get(i) instanceof String)
-		{ ObjectSpecification obj = mod.getObject(rawvalues.get(i) + ""); 
-		  if (obj != null) 
-		  { res.add(obj); }
-		} 
+    { for (int i = 0; i < rawvalues.size(); i++) 
+      { if (rawvalues.get(i) instanceof ObjectSpecification)
+        { res.add(rawvalues.get(i)); }
+	   else if (rawvalues.get(i) instanceof String)
+	   { ObjectSpecification obj = mod.getObject(rawvalues.get(i) + ""); 
+           if (obj != null) 
+	     { res.add(obj); }
+	   } 
       } 
-	  return res; 
-	} 
-	else 
-	{ return rawvalues; }
+      return res; 
+    } 
+    else 
+    { return rawvalues; }
   } 
 		
   public Vector getRawCollectionValue(Attribute att, ModelSpecification mod) 
@@ -240,8 +328,8 @@ public class ObjectSpecification extends ModelElement
       Attribute head = (Attribute) path.get(0); 
       Attribute tail = new Attribute(pathtail); 
 	  
-	  System.out.println(">>> " + head + " is collection: " + head.isCollection()); 
-	  System.out.println(">>> " + tail + " is collection: " + Attribute.isMultipleValued(pathtail)); 
+      // System.out.println(">>> " + head + " is collection: " + head.isCollection()); 
+      // System.out.println(">>> " + tail + " is collection: " + Attribute.isMultipleValued(pathtail)); 
 	  
 
       if (head.isCollection())
@@ -250,11 +338,11 @@ public class ObjectSpecification extends ModelElement
         if (Attribute.isMultipleValued(pathtail))
         { for (int i = 0; i < objs.size(); i++) 
           { if (objs.get(i) instanceof ObjectSpecification)
-		    { ObjectSpecification obj = (ObjectSpecification) objs.get(i); 
+            { ObjectSpecification obj = (ObjectSpecification) objs.get(i); 
               Vector values = obj.getCollectionValue(tail,mod); 
               if (values != null)
               { res.addAll(values); }
-			}   
+            }   
           } 
           return res; 
         } 
@@ -285,7 +373,7 @@ public class ObjectSpecification extends ModelElement
     String val = (String) attvalues.get(att); 
     if (val != null) 
     { return val.substring(1,val.length()-1); } 
-	return "";  
+    return "";  
   } // Need also to remove the quotes
 
   public String getEnumeration(String att) 
@@ -300,10 +388,10 @@ public class ObjectSpecification extends ModelElement
   { Object x = attvalues.get(att); 
     if (x == null) 
     { return new Vector(); }
-	if (x instanceof Vector)
-	{ return (Vector) x; }
-	Vector res = new Vector(); 
-	res.add(x); 
+    if (x instanceof Vector)
+    { return (Vector) x; }
+    Vector res = new Vector(); 
+    res.add(x); 
     return res; 
   }  
 
@@ -388,14 +476,14 @@ public class ObjectSpecification extends ModelElement
 
     if (expr instanceof BasicExpression)
     { BasicExpression be = (BasicExpression) expr; 
-	  if (be.objectRef != null)
-	  { ObjectSpecification spec = mod.getObjectValue((BasicExpression) be.objectRef); 
-	    if (spec != null)
-	    { BasicExpression attr = new BasicExpression(be.data); 
-		  attr.setType(t); 
-	      return spec.getValue(attr,mod); 
-	    }
-	  } 
+      if (be.objectRef != null)
+      { ObjectSpecification spec = mod.getObjectValue((BasicExpression) be.objectRef); 
+        if (spec != null)
+        { BasicExpression attr = new BasicExpression(be.data); 
+          attr.setType(t); 
+          return spec.getValue(attr,mod); 
+        }
+      } 
     }
 	
     Object val = attvalues.get(v); 
@@ -431,11 +519,37 @@ public class ObjectSpecification extends ModelElement
     { Vector pathtail = new Vector(); 
       pathtail.addAll(path); 
       pathtail.remove(0); 
-      ObjectSpecification obj = getReferredObject(path.get(0) + "", mod); 
-      if (obj == null) 
-      { return null; } 
-      return obj.getValueOf(new Attribute(pathtail), mod); 
+      Attribute att1 = (Attribute) path.get(0); 
+      if (att1 != null && att1.isEntity())
+      { ObjectSpecification obj = getReferredObject(att1.getName(), mod); 
+        if (obj == null) 
+        { return null; } 
+        return obj.getValueOf(new Attribute(pathtail), mod);
+      } 
+      else if (att1 != null && att1.isCollection()) // an Entity collection
+      { Vector vect = getCollection(att1.getName()); 
+        Vector res = new Vector(); 
+        Attribute tail = new Attribute(pathtail); 
+        for (int i = 0; i < vect.size(); i++) 
+        { ObjectSpecification objx = null; 
+		  if (vect.get(i) instanceof ObjectSpecification)
+		  { objx = (ObjectSpecification) vect.get(i); } 
+		  else if (vect.get(i) instanceof String)
+		  { String idx = (String) vect.get(i); 
+		    objx = mod.getObject(idx); 
+		  } 
+          if (objx != null) 
+		  { Object val = objx.getValueOf(tail, mod); 
+            if (val != null) 
+            { res.add(val); }
+		  } 
+		  else 
+		  { System.err.println("!! Error: expected an object value for: (" + this + ")." + attr); } 
+        }
+        return res;  
+      } 
     }  
+    return null; 
   } 
 
   public boolean satisfiesBinaryCondition(BinaryExpression cond, ModelSpecification mod) 

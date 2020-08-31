@@ -37,6 +37,7 @@ import java.util.Vector;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer; 
+import java.util.Date; 
 
 
 public class UCDArea extends JPanel 
@@ -197,6 +198,16 @@ public class UCDArea extends JPanel
 
   public Vector getTypes()
   { return types; } 
+
+  public Vector getKM3Types()
+  { Vector res = new Vector(); 
+    for (int j = 0; j < types.size(); j++) 
+    { Type typ = (Type) types.get(j);
+      if (typ.isEnumeration()) 
+      { res.add(typ.getKM3() + "\n\r"); } 
+    }
+    return res; 
+  } 
 
   public Vector getAllComponents()
   { Vector res = sensors; 
@@ -3052,6 +3063,15 @@ public class UCDArea extends JPanel
       screencount++;   
     }  
 
+    Entity webcomponent = (Entity) ModelElement.lookupByName("WebDisplay", entities); 
+    if (webcomponent != null) 
+    { predefinedComponents.add(webcomponent); 
+	  needsInternetPermission = true; 
+    } 
+	
+    Entity imagecomponent = (Entity) ModelElement.lookupByName("ImageDisplay", entities); 
+    if (imagecomponent != null) 
+    { predefinedComponents.add(imagecomponent); } 
 	
     customComponents.removeAll(predefinedComponents); 
 
@@ -3081,6 +3101,16 @@ public class UCDArea extends JPanel
       facout.close(); 
     } 
     catch (Exception _fac) { } 
+
+    if (webcomponent != null) 
+    { // generate its screen and view controller
+      IOSAppGenerator.generateWebDisplay("swiftuiapp"); 
+    }
+
+    if (imagecomponent != null) 
+    { // generate its screen and view controller
+      IOSAppGenerator.generateImageDisplay("swiftuiapp"); 
+    }
 
 
     for (int j = 0; j < entities.size(); j++) 
@@ -3397,7 +3427,17 @@ public class UCDArea extends JPanel
       }
       catch(Exception _dd) { } 
     } 
+
+    Entity webcomponent = (Entity) ModelElement.lookupByName("WebDisplay", entities); 
+    if (webcomponent != null) 
+    { predefinedComponents.add(webcomponent); 
+	  needsInternetPermission = true; 
+    } 
 	
+    Entity imagecomponent = (Entity) ModelElement.lookupByName("ImageDisplay", entities); 
+    if (imagecomponent != null) 
+    { predefinedComponents.add(imagecomponent); } 
+
     customComponents.removeAll(predefinedComponents); 
 
     String fileaccfile = "FileAccessor.swift"; 
@@ -3410,6 +3450,16 @@ public class UCDArea extends JPanel
       facout.close(); 
     } 
     catch (Exception _fac) { } 
+
+    if (webcomponent != null) 
+    { // generate its screen and view controller
+      IOSAppGenerator.generateWebDisplay("iosapp"); 
+    }
+
+    if (imagecomponent != null) 
+    { // generate its screen and view controller
+      IOSAppGenerator.generateImageDisplay("iosapp"); 
+    }
 
     for (int j = 0; j < entities.size(); j++) 
     { Entity ent = (Entity) entities.get(j); 
@@ -3513,17 +3563,6 @@ public class UCDArea extends JPanel
       } 
     } 
 
-    if (persistentEntities.size() > 0)
-    { File dbif = new File("output/iosapp/Dbi.swift"); 
-      try
-      { PrintWriter dbiout = new PrintWriter(
-                              new BufferedWriter(
-                                new FileWriter(dbif)));
-        IOSAppGenerator.generateIOSDbi("app",systemName,persistentEntities,useCases,dbiout);
-        dbiout.close(); 
-      } catch (Exception e) { }
-    }  
-
     String entbean = "ModelFacade.swift"; 
     File entbeanf = new File("output/iosapp/" + entbean); 
     try
@@ -3580,7 +3619,7 @@ public class UCDArea extends JPanel
         } catch (Exception e) { }
       } 
 	  
-	  generateSwiftUIApp(); 
+	  // generateSwiftUIApp(); 
    } // validation beans for entities? 
   
   public void generateAndroidLayouts(PrintWriter out)
@@ -3656,6 +3695,16 @@ public class UCDArea extends JPanel
 	  screencount = 1;  // Map screen is the only screen for such apps. 
     }
 
+    Entity webcomponent = (Entity) ModelElement.lookupByName("WebDisplay", entities); 
+    if (webcomponent != null) 
+    { predefinedComponents.add(webcomponent); 
+	  needsInternetPermission = true; 
+    } 
+	
+    Entity imagecomponent = (Entity) ModelElement.lookupByName("ImageDisplay", entities); 
+    if (imagecomponent != null) 
+    { predefinedComponents.add(imagecomponent); } 
+
 	customComponents.removeAll(predefinedComponents); 
 
 
@@ -3665,6 +3714,11 @@ public class UCDArea extends JPanel
 	if (primaryUC != null) 
 	{ screencount = 1; 
 	  image = primaryUC.getTaggedValue("image"); 
+	  System.out.println(">>> Single screen app, for use case " + primaryUC.getName());
+	}
+	else 
+	{ System.out.println(">>> Multiple screen app, tabs will be used"); 
+	  screencount = 2; 
 	}
 	
 	if (needsMaps)
@@ -3687,7 +3741,7 @@ public class UCDArea extends JPanel
 	{ nestedPackageName = packageName; }
 	 
     	
-	agen.generateFileAccessor(nestedPackageName);
+	agen.generateFileAccessor(screencount,nestedPackageName);
 	// Always included 
 
     agen.generateManifest(systemName,needsInternetPermission,needsMaps,out);
@@ -3726,6 +3780,16 @@ public class UCDArea extends JPanel
        } catch (Exception e) { }
      }
 	
+     if (webcomponent != null) 
+     { // generate its screen and view controller
+       AndroidAppGenerator.generateWebDisplay(nestedPackageName); 
+     }
+	
+     if (imagecomponent != null) 
+     { // generate its screen and view controller
+       AndroidAppGenerator.generateImageDisplay(nestedPackageName); 
+     }
+
     for (int j = 0; j < types.size(); j++) 
     { Type typ = (Type) types.get(j);
       if (typ.isEnumeration()) 
@@ -3812,7 +3876,8 @@ public class UCDArea extends JPanel
       { ent.generateRemoteDAO(nestedPackageName); 
 	  
         ent.generateFirebaseDbi(nestedPackageName); 
-	   String entvo = ent.getName() + "VO.java"; 
+
+        String entvo = ent.getName() + "VO.java"; 
         File entvof = new File("output/app/src/main/java/com/example/app/" + entvo); 
         try
         { PrintWriter voout = new PrintWriter(
@@ -3842,6 +3907,7 @@ public class UCDArea extends JPanel
       { UseCase uc = (UseCase) useCases.get(j); 
         if (uc.isPrivate()) { continue; } 
         if (predefinedUseCases.contains(uc.getName())) { continue; }
+
 	    String ucvo = uc.getName() + "VO.java"; 
         File ucvof = new File("output/app/src/main/java/com/example/app/" + ucvo); 
         try
@@ -3882,8 +3948,8 @@ public class UCDArea extends JPanel
                                 new FileWriter(mff)));
       agen.modelFacade(nestedPackageName,useCases,cgs,persistentEntities,clouds,types,remotecalls,needsMaps,mfout);
       mfout.close(); 
-     } catch (Exception e) 
-       { e.printStackTrace(); } 
+    } catch (Exception e) 
+      { e.printStackTrace(); } 
 
 	if (needsMaps && screencount == 1)
 	{ agen.singlePageMapApp(primaryUC,systemName,image,cgs,types,entities,out); 
@@ -4010,8 +4076,8 @@ public class UCDArea extends JPanel
 
     if (predefinedUseCases.contains("graph"))
     { tabnames.add("Graph"); }
-    if (predefinedUseCases.contains("map"))
-    { tabnames.add("Map"); }    
+    // if (predefinedUseCases.contains("map"))
+    // { tabnames.add("Map"); }    
 
     for (int j = 0; j < referencedEntities.size(); j++) 
     { Entity ent = (Entity) referencedEntities.get(j);
@@ -7875,6 +7941,9 @@ public void produceCUI(PrintWriter out)
 
   public void generateJava(PrintWriter out, PrintWriter out2, PrintWriter out3)
   { String dirName = "output"; 
+  
+    Date d0 = new Date(); 
+	long startTime = d0.getTime(); 
 
     if (systemName != null && systemName.length() > 0)
     { out.println("package " + systemName + ";\n\n"); 
@@ -7950,6 +8019,10 @@ public void produceCUI(PrintWriter out)
       testsout.close();
     }
     catch (Exception ex) { }
+
+    Date d1 = new Date(); 
+	long endTime = d1.getTime(); 
+	System.out.println(">> Code generation took " + (endTime - startTime) + "ms"); 
 
   } 
 
@@ -12889,7 +12962,9 @@ public void produceCUI(PrintWriter out)
       allcomponents.add("FileAccessor"); 
       allcomponents.add("InternetAccessor");  
       allcomponents.add("MapsComponent");  
-      allcomponents.add("GraphComponent");  
+      allcomponents.add("GraphComponent");
+      allcomponents.add("WebDisplay");  
+      allcomponents.add("ImageDisplay");  
 	  // Others: WebComponent, TextEditorComponent
 	  
       listShowDialog.setOldFields(allcomponents);
@@ -12923,9 +12998,9 @@ public void produceCUI(PrintWriter out)
       // if (componentName != null) 
       // { loadKM3FromFile(componentName + ".km3"); 
 	  loadKM3FromFile(file);  
-        Entity component = (Entity) ModelElement.lookupByName(componentName,entities); 
-        if (component != null) 
-        { component.addStereotype("external"); } 
+      Entity component = (Entity) ModelElement.lookupByName(componentName,entities); 
+      if (component != null) 
+      { component.addStereotype("external"); } 
         // custom components are usually external services such as cloud databases
       // } 
       return; 
@@ -12945,6 +13020,10 @@ public void produceCUI(PrintWriter out)
       } 
       else if ("MapsComponent".equals(componentName))
       { createMapComponent(); }  // and several use cases for the ModelFacade
+      else if ("WebDisplay".equals(componentName))
+      { createWebDisplay(); }
+      else if ("ImageDisplay".equals(componentName))
+      { createImageDisplay(); }
       else 
       { System.err.println("!! Unknown predefined component: " + componentName); }
     } 
@@ -13130,7 +13209,7 @@ public void produceCUI(PrintWriter out)
       } 
     } 
 
-    int delta = 120; // visual displacement 
+    int delta = 200; // visual displacement between classes
     int ecount = 0; 
 
     // Use the existing coordinates if possible. 
@@ -13163,7 +13242,7 @@ public void produceCUI(PrintWriter out)
       if (tt.isEnumeration())
       { RectData rd = (RectData) getVisualOf(tt);
 	    if (rd == null) 
-        { rd = new RectData(100 + 100*j, 20, getForeground(),
+        { rd = new RectData(100 + 150*j, 20, getForeground(),
                                  componentMode,
                                  rectcount);
           rectcount++;
@@ -16098,6 +16177,69 @@ public void produceCUI(PrintWriter out)
     repaint();   
   } 	        
 
+  public void createWebDisplay()
+  { Entity e = new Entity("WebDisplay"); 
+    e.addStereotype("external"); 
+    e.addStereotype("component"); 
+	BasicExpression truebe = new BasicExpression(true); 
+		 
+    // Type selftype = new Type(e); 
+    Vector parinst = new Vector(); 
+    Attribute url = new Attribute("url", new Type("String",null), ModelElement.INTERNAL);
+	e.addAttribute(url);  
+	parinst.add(url); 
+    BehaviouralFeature getInstance = 
+      new BehaviouralFeature("loadURL", parinst, false, null); 
+    // getInstance.setStatic(true);
+	getInstance.setPostcondition(truebe);  
+    e.addOperation(getInstance); 
+ 
+    Vector pars = new Vector(); 
+    BehaviouralFeature op = 
+      new BehaviouralFeature("reload",pars,false,null); 
+	op.setPostcondition(truebe);  
+    e.addOperation(op); 
+
+    entities.add(e);                           
+    RectData rd = new RectData(990,10,getForeground(),
+                               componentMode,
+                               rectcount);
+    rectcount++;
+    rd.setLabel(e.getName());
+    rd.setModelElement(e); 
+    visuals.add(rd);
+    repaint();   
+  } 	        
+    
+  public void createImageDisplay()
+  { Entity e = new Entity("ImageDisplay"); 
+    e.addStereotype("external"); 
+    e.addStereotype("component"); 
+	BasicExpression truebe = new BasicExpression(true); 
+		 
+    // Type selftype = new Type(e); 
+    Vector parinst = new Vector(); 
+    Attribute url = new Attribute("imageName", new Type("String",null), ModelElement.INTERNAL);
+    e.addAttribute(url);  
+    Attribute nme = new Attribute("name", new Type("String",null), ModelElement.INTERNAL);
+    parinst.add(nme); 
+    BehaviouralFeature getInstance = 
+      new BehaviouralFeature("setImageName", parinst, false, null); 
+    // getInstance.setStatic(true);
+    getInstance.setPostcondition(truebe);  
+    e.addOperation(getInstance); 
+ 
+    entities.add(e);                           
+    RectData rd = new RectData(990,210,getForeground(),
+                               componentMode,
+                               rectcount);
+    rectcount++;
+    rd.setLabel(e.getName());
+    rd.setModelElement(e); 
+    visuals.add(rd);
+    repaint();   
+  } 	        
+    
   public void createMapComponent()
   { Entity mapLocation = new Entity("MapLocation"); 
     mapLocation.addStereotype("external"); 
@@ -16964,7 +17106,10 @@ public void produceCUI(PrintWriter out)
   } 
 
   public void checkTLmodel()
-  { if (tlspecification != null) 
+  { Date d1 = new Date(); 
+	long startTime = d1.getTime(); 
+	
+	if (tlspecification != null) 
     { ModelSpecification modelspec = new ModelSpecification(); 
 	
       BufferedReader br = null;
@@ -17071,6 +17216,9 @@ public void produceCUI(PrintWriter out)
 	  System.out.println("");
 	  System.out.println(">>> As ILP: " + modelspec.toILP()); 
 	  System.out.println(); 
+	  
+	  modelspec.defineComposedFeatureValues(entities,types); 
+	  
 	  tlspecification.checkModel(modelspec,entities,types);
 	  
 	  System.out.println(">>> Enhanced specification: "); 
@@ -17078,6 +17226,10 @@ public void produceCUI(PrintWriter out)
     } 
     else 
     { System.err.println("!! ERROR: no TL specification"); } 
+	
+	Date d2 = new Date(); 
+	long endTime = d2.getTime(); 
+	System.out.println(">>> MTBE took " + (endTime - startTime) + "ms"); 
   } 
 
 
@@ -17685,6 +17837,9 @@ public void produceCUI(PrintWriter out)
 	String mmnames = JOptionPane.showInputDialog("Metamodel names?: ");
 	String[] mms = mmnames.split(" "); 
     
+	Date d1 = new Date(); 
+	long startTime = d1.getTime(); 
+	
     Vector sentences = new Vector(); 
 
     BufferedReader br = null;
@@ -17761,8 +17916,12 @@ public void produceCUI(PrintWriter out)
     } catch (Exception _except) { } 
 
     try { br.close(); } 
-    catch (Exception _p) {}  
-   } 
+    catch (Exception _p) {} 
+	
+	Date d2 = new Date(); 
+	long endTime = d2.getTime(); 
+    System.out.println(">>> Requirements analysis took " + (endTime - startTime) + "ms"); 
+  } 
 
   public void nameSemanticSimilarity(Vector thesaurus) // For NMS
   { 
@@ -19766,7 +19925,7 @@ public void produceCUI(PrintWriter out)
     { if (useCases.get(i) instanceof UseCase) 
 	  { UseCase uc = (UseCase) useCases.get(i); 
         Vector tests = uc.testCases(); 
-        System.out.println("*** Test cases for use case " + uc.getName() + " are: " + tests); 
+        System.out.println("*** Test cases for use case " + uc.getName() + " written to output/tests"); 
         for (int j = 0; j < tests.size(); j++) 
         { String tst = (String) tests.get(j); 
           try

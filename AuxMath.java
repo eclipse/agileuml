@@ -102,6 +102,90 @@ public class AuxMath
 	  return false; 
 	}
 
+    public static boolean isConstant(ObjectSpecification[] ys)
+    { if (ys.length > 1)
+	 { ObjectSpecification y0 = ys[0]; 
+         for (int i = 1; i < ys.length; i++)
+	    { if (ys[i] == y0) { }
+		 else 
+	      { return false; }
+	    }
+	    return true; 
+	  } 
+	  return false; 
+	}
+
+    public static boolean isConstant(Vector[] ys)
+    { if (ys.length > 1)
+	 { Vector y0 = ys[0]; 
+         for (int i = 1; i < ys.length; i++)
+         { if (ys[i] == null && y0 == null) { }
+           else if (ys[i] != null && y0 != null && 
+                    ys[i].containsAll(y0) && 
+                    y0.containsAll(ys[i]))
+           { }  // Assuming they are sets.   
+           else { return false; }
+	    }
+	    return true; 
+	  } 
+	  return false; 
+	}
+
+    public static boolean allDifferent(double[] ys)
+    { if (ys.length > 1)
+      { java.util.HashSet values = new java.util.HashSet(); 
+        for (int i = 0; i < ys.length; i++)
+        { values.add(new Double(ys[i])); }
+        if (values.size() < ys.length)
+        { return false; } 
+        return true; 
+      } 
+      return false; 
+    }
+
+    public static boolean allDifferent(String[] ys)
+    { if (ys.length > 1)
+      { java.util.HashSet values = new java.util.HashSet(); 
+        for (int i = 0; i < ys.length; i++)
+        { values.add(ys[i]); }
+        if (values.size() < ys.length)
+        { return false; } 
+        return true; 
+      } 
+      return false; 
+    }
+
+    public static boolean allDifferent(ObjectSpecification[] ys)
+    { if (ys.length > 1)
+      { java.util.HashSet values = new java.util.HashSet(); 
+        for (int i = 0; i < ys.length; i++)
+        { if (ys[i] != null)
+		  { values.add(ys[i].getName()); }
+		} 
+		
+        if (values.size() < ys.length)
+        { return false; } 
+        return true; 
+      } 
+      return false; 
+    }
+
+    // Version for sets: 
+    public static boolean allDifferent(Vector[] ys)
+    { if (ys.length > 1)
+      { java.util.HashSet values = new java.util.HashSet(); 
+        for (int i = 0; i < ys.length; i++)
+        { java.util.HashSet value = new java.util.HashSet(); 
+          value.addAll(ys[i]);
+          values.add(value); 
+        }
+        if (values.size() < ys.length)
+        { return false; } 
+        return true; 
+      } 
+      return false; 
+    }
+
     public static boolean isNegation(boolean[] xs, boolean[] ys)
     { if (ys.length == xs.length)
 	 { for (int i = 0; i < xs.length; i++)
@@ -126,16 +210,186 @@ public class AuxMath
 	  return false; 
 	}
 
+    public static boolean isNumericSum(Vector[] xs, Vector[] ys)
+    { if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { Vector xvect = xs[i]; 
+          Vector yvect = ys[i]; 
+          if (yvect.size() == 1 && yvect.get(0) instanceof Double) 
+          { double dd = ((Double) yvect.get(0)).doubleValue(); 
+            double sum = 0; 
+            for (int j = 0; j < xvect.size(); j++) 
+            { if (xvect.get(j) instanceof String) 
+              { try 
+                { double xx = Double.parseDouble((String) xvect.get(j)); 
+                  sum = sum+xx; 
+                }
+                catch (Exception _x) 
+				{ return false; } 
+              }
+            }
+            if (sum == dd) 
+            { System.out.println(">>> Numeric sum of " + xvect + " = " + dd); } 
+            else 
+            { return false; } 
+          } 
+        }
+      } 
+      return true; 
+    }
+
+    public static boolean isNumericPrd(Vector[] xs, Vector[] ys)
+    { if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { Vector xvect = xs[i]; 
+          Vector yvect = ys[i]; 
+          if (yvect.size() == 1 && yvect.get(0) instanceof Double) 
+          { double dd = ((Double) yvect.get(0)).doubleValue(); 
+            double sum = 1; 
+            for (int j = 0; j < xvect.size(); j++) 
+            { if (xvect.get(j) instanceof String) 
+              { try 
+                { double xx = Double.parseDouble((String) xvect.get(j)); 
+                  sum = sum*xx; 
+                }
+                catch (Exception _x) 
+				{ return false; } 
+              }
+            }
+            if (sum == dd) 
+            { System.out.println(">>> Numeric product of " + xvect + " = " + dd); } 
+            else 
+            { return false; } 
+          } 
+        }
+      } 
+      return true; 
+    }
+
     public static boolean isCopy(String[] xs, String[] ys)
     { if (ys.length > 1 && xs.length == ys.length)
-	 { for (int i = 0; i < xs.length; i++)
+      { for (int i = 0; i < xs.length; i++)
         { if (xs[i].equals(ys[i])) { }
-	     else 
-		{ return false; }
+	      else 
+          { return false; }
         }
-	   return true; 
-	 } 
-	 return false; 
+	    return true; 
+	  } 
+      return false; 
+    }
+
+    public static boolean isStringSum(Vector[] xs, Vector[] ys)
+    { if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { Vector xvect = xs[i]; 
+          Vector yvect = ys[i]; 
+          if (yvect.size() == 1 && yvect.get(0) instanceof String) 
+          { String dd = "\"" + yvect.get(0) + "\""; 
+            String sum = ""; 
+            for (int j = 0; j < xvect.size(); j++) 
+            { sum = sum + "" + xvect.get(j); }
+   
+            if (sum.equals(dd)) 
+            { System.out.println(">>> String sum of " + xvect + " = " + dd); } 
+            else 
+            { return false; } 
+          } 
+        }
+      } 
+      return true; 
+    }
+
+    public static boolean isStringMax(Vector[] xs, Vector[] ys)
+    { if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { Vector xvect = xs[i]; 
+          Vector yvect = ys[i]; 
+          if (yvect.size() == 1 && yvect.get(0) instanceof String) 
+          { String dd = "\"" + yvect.get(0) + "\""; 
+            String maxstring = ""; 
+            for (int j = 0; j < xvect.size(); j++) 
+            { // System.out.println(">>> xvect(j) = " + xvect.get(j) + " " + maxstring + " " + dd); 
+			  if (xvect.get(j) instanceof String)
+			  { String vs = (String) xvect.get(j); 
+			    if (maxstring.compareTo(vs) < 0)
+			    { maxstring = vs; }
+			  } 
+			  else 
+			  { return false; }
+            }
+			
+            if (maxstring.equals(dd)) 
+            { System.out.println(">>> String max of " + xvect + " = " + dd); } 
+            else 
+            { return false; } 
+          } 
+        }
+      } 
+      return true; 
+    }
+
+    public static boolean isNumericMax(Vector[] xs, Vector[] ys)
+    { if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { Vector xvect = xs[i]; 
+          Vector yvect = ys[i]; 
+          if (yvect.size() == 1 && yvect.get(0) instanceof Double) 
+          { double dd = ((Double) yvect.get(0)).doubleValue(); 
+            double maxd = -1.7976931348623157E308; 
+            for (int j = 0; j < xvect.size(); j++) 
+            { // System.out.println(">>> xvect(j) = " + xvect.get(j) + " " + maxstring + " " + dd); 
+			  if (xvect.get(j) instanceof String) 
+              { try 
+                { double xx = Double.parseDouble((String) xvect.get(j)); 
+                  maxd = Math.max(maxd,xx); 
+                }
+                catch (Exception _x) 
+				{ return false; } 
+              }
+			  else 
+			  { return false; }
+            }
+			
+            if (maxd == dd) 
+            { System.out.println(">>> Numeric max of " + xvect + " = " + dd); } 
+            else 
+            { return false; } 
+          } 
+        }
+      } 
+      return true; 
+    }
+
+    public static boolean isNumericMin(Vector[] xs, Vector[] ys)
+    { if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { Vector xvect = xs[i]; 
+          Vector yvect = ys[i]; 
+          if (yvect.size() == 1 && yvect.get(0) instanceof Double) 
+          { double dd = ((Double) yvect.get(0)).doubleValue(); 
+            double maxd = 1.7976931348623157E308; 
+            for (int j = 0; j < xvect.size(); j++) 
+            { // System.out.println(">>> xvect(j) = " + xvect.get(j) + " " + maxstring + " " + dd); 
+			  if (xvect.get(j) instanceof String) 
+              { try 
+                { double xx = Double.parseDouble((String) xvect.get(j)); 
+                  maxd = Math.min(maxd,xx); 
+                }
+                catch (Exception _x) 
+				{ return false; } 
+              }
+			  else 
+			  { return false; }
+            }
+			
+            if (maxd == dd) 
+            { System.out.println(">>> Numeric min of " + xvect + " = " + dd); } 
+            else 
+            { return false; } 
+          } 
+        }
+      } 
+      return true; 
     }
 
     public static boolean isCopy(boolean[] xs, boolean[] ys)
@@ -438,18 +692,48 @@ public class AuxMath
      { String xval = xs[i]; 
        String yval = ys[i]; 
        if (yval.endsWith(xval)) 
-	   { int j = yval.lastIndexOf(xval); 
-	     prefix = yval.substring(0,j); 
+       { int j = yval.lastIndexOf(xval); 
+         prefix = yval.substring(0,j); 
 		 // System.out.println(prefix); 
-		 prefixes.add(prefix); 
-	   } 
+         prefixes.add(prefix); 
+       } 
        else 
        { return null; } 
      } 
 	 
-	 if (prefixes.size() == 1)
+     if (prefixes.size() == 1)
      { return prefix; } 
-	 return null;  
+     return null;  
+   } 
+
+   public static boolean allPrefixed(String[] xs, String[] ys) 
+   { for (int i = 0; i < xs.length; i++) 
+     { for (int j = 0; j < ys.length; j++) 
+       { String xval = xs[i]; 
+         String yval = ys[j]; 
+         // System.out.println(">>> Testing prefix: " + xs[i] + " " + ys[j]); 
+         if (yval.endsWith(xval)) { } 
+         else 
+         { return false; }
+       }  
+     } 
+     return true; 
+   } 
+
+   public static Vector getPrefixes(String[] xs, String[] ys) 
+   { Vector res = new Vector(); 
+     for (int i = 0; i < xs.length; i++) 
+     { for (int j = 0; j < ys.length; j++) 
+       { String xval = xs[i]; 
+         String yval = ys[j];
+         int lenx = xval.length(); 
+         String prefix = yval.substring(0,yval.length() - lenx);  
+         if (res.contains(prefix)) { } 
+         else 
+         { res.add(prefix); }
+       }  
+     } 
+     return res; 
    } 
 
    public static boolean isSuffixed(String[] xs, String[] ys) 
@@ -463,6 +747,36 @@ public class AuxMath
      return true; 
    } 
 
+   public static boolean allSuffixed(String[] xs, String[] ys) 
+   { for (int i = 0; i < xs.length; i++) 
+     { for (int j = 0; j < ys.length; j++) 
+       { String xval = xs[i]; 
+         String yval = ys[j]; 
+         // System.out.println(">>> Testing suffix: " + xs[i] + " " + ys[j]); 
+         if (yval.startsWith(xval)) { } 
+         else 
+         { return false; }
+       }  
+     } 
+     return true; 
+   } 
+
+   public static Vector getSuffixes(String[] xs, String[] ys) 
+   { Vector res = new Vector(); 
+     for (int i = 0; i < xs.length; i++) 
+     { for (int j = 0; j < ys.length; j++) 
+       { String xval = xs[i]; 
+         String yval = ys[j];
+         int lenx = xval.length(); 
+         String suffix = yval.substring(lenx,yval.length());  
+         if (res.contains(suffix)) { } 
+         else 
+         { res.add(suffix); }
+       }  
+     } 
+     return res; 
+   } 
+
    public static String commonSuffix(String[] xs, String[] ys) 
    { java.util.HashSet suffixes = new java.util.HashSet(); 
      String suffix = ""; 
@@ -471,16 +785,16 @@ public class AuxMath
      { String xval = xs[i]; 
        String yval = ys[i]; 
        if (yval.startsWith(xval)) 
-	  { int j = xval.length(); 
-	    suffix = yval.substring(j,yval.length()); 
+       { int j = xval.length(); 
+         suffix = yval.substring(j,yval.length()); 
 		 // System.out.println(suffix); 
-	    suffixes.add(suffix); 
-	  } 
+         suffixes.add(suffix); 
+       } 
        else 
        { return null; } 
      } 
 	 
-	if (suffixes.size() == 1)
+     if (suffixes.size() == 1)
      { return suffix; } 
 	return null;  
    }

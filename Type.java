@@ -59,6 +59,9 @@ public class Type extends ModelElement
   public boolean isEnumeratedType() 
   { return values != null; } 
 
+  // public boolean isEnumeration() 
+  // { return values != null; } 
+
 
   public boolean isEntityType() 
   { return entity != null; } 
@@ -1700,6 +1703,24 @@ public class Type extends ModelElement
 
     return t;  
   } 
+
+  public String getKM3()
+  { String res = ""; 
+    if (values == null)  // for basic types only
+    { res = "  datatype " + name + ";\n"; 
+      return res; 
+    } 
+    
+    res = "  enumeration " + name + " {\n";
+    
+    for (int i = 0; i < values.size(); i++) 
+    { String val = (String) values.get(i); 
+      res = res + "    literal " + val + ";\n"; 
+    } 
+    res = res + "  }\n";
+    return res;  
+  } 
+
     
   public void saveKM3(PrintWriter out)
   { String res = ""; 
@@ -2868,6 +2889,55 @@ public class Type extends ModelElement
     } 
   }  
 
+  public Vector testValues()
+  { Vector res = new Vector(); 
+  
+    String t = getName(); 
+    Vector vs = getValues(); 
+
+    if ("int".equals(t))
+    { res.add("0"); 
+      res.add("-1");
+      res.add("1"); 
+      res.add("2147483647");  // Integer.MAX_VALUE);
+      res.add("-2147483648"); // Integer.MIN_VALUE);
+    } 
+    else if ("long".equals(t))
+    { res.add("0"); 
+      res.add("-1");
+      res.add("1"); 
+      res.add("" + Long.MAX_VALUE);
+      res.add("" + Long.MIN_VALUE);
+    } 
+    else if ("double".equals(t))
+    { res.add("0"); 
+      res.add("-1");
+      res.add("1"); 
+      res.add("" + Double.MAX_VALUE);
+      res.add("" + Double.MIN_VALUE);
+    } 
+    else if ("boolean".equals(t))
+    { res.add("true"); 
+      res.add("false");
+    }
+    else if ("String".equals(t))
+    { res.add("\"\""); 
+      res.add("\" abc_XZ \"");
+      res.add("\"#�$* &~@':\"");
+    }
+    else if (vs != null && vs.size() > 0) 
+    { for (int j = 0; j < vs.size(); j++)   
+      { String v0 = (String) vs.get(j); 
+        res.add(v0); 
+      } 
+    }
+    else if (isEntity())
+    { String obj = t.toLowerCase() + "x_0"; 
+        // Identifier.nextIdentifier(t.toLowerCase()); 
+      res.add(obj); 
+    }
+    return res;   
+  } 
 
   public static void main(String[] args) 
   { /* Boolean b = new Boolean(true); 

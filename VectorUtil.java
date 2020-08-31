@@ -110,6 +110,23 @@ class VectorUtil
     return res; 
   } 
 
+  static Vector flattenVectorArray(final Vector[] a)
+  { Vector res = new Vector();
+    for (int i = 0; i < a.length; i++)
+    { Vector acoll = a[i]; 
+
+      if (acoll == null) { continue; } 
+
+      for (int j = 0; j < acoll.size(); j++) 
+      { if (res.contains(acoll.get(j))) { } 
+        else 
+        { res.add(acoll.get(j)); } 
+      } 
+    } 
+
+    return res; 
+  } 
+
   static public Named lookup(final String key, final Vector data)
   { for (int i = 0; i < data.size(); i++)
     { if ( key.equals(((Named) data.elementAt(i)).label) )

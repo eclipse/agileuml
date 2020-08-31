@@ -618,6 +618,12 @@ public class GUIBuilder
 				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 5; " + indexvar + "++)\n" + 
 				indent + "{ double " + parnme + " = doubleTestValues[" + indexvar + "];\n";  
             } 
+            else if ("boolean".equals(typ + ""))
+            { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 2; " + indexvar + "++)\n" + 
+                  indent + "{ boolean " + parnme + " = booleanTestValues[" + indexvar + "];\n";  
+            } 
             else if (typ != null && typ.isEnumeration())
             { Vector vals = typ.getValues(); 
 			  int nvals = vals.size(); 
@@ -633,33 +639,62 @@ public class GUIBuilder
 				  indent + "for (int " + indexvar + " = 0; " + indexvar + " < Controller.inst()." + ename + ".size(); " + indexvar + "++)\n" + 
 				  indent + "{ " + tname + " " + parnme + " = (" + tname + ") Controller.inst()." + ename + ".get(" + indexvar + ");\n";
             } // Check invariants of parnme. 
-        /*    else if (typ.isCollectionType()) // Try with empty list, singleton & random list
-            { String convertElementType = "typ" + parnme; 
-              Type elemTyp = typ.getElementType(); 
+            else if (typ.isCollectionType()) // Try with empty list, singleton & random list
+            { Type elemTyp = typ.getElementType(); 
               if (elemTyp == null) { } 
               else if ("int".equals(elemTyp.getName()))
-              { convertElementType = "new Integer(Integer.parseInt(typ" + parnme + "))"; } 
+              { testscript = testscript + 
+                indent + "\n" + 
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+				indent + "{ Vector " + parnme + " = new Vector();\n" + 
+				indent + "  if (" + indexvar + " < 5)\n" + 
+				indent + "  { " + parnme + ".add(new Integer(intTestValues[" + indexvar + "])); }\n";  
+              } 
               else if ("long".equals(elemTyp.getName()))
-              { convertElementType = "new Long(Long.parseLong(typ" + parnme + "))"; } 
+              { testscript = testscript + 
+                indent + "\n" + 
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+				indent + "{ Vector " + parnme + " = new Vector();\n" + 
+				indent + "  if (" + indexvar + " < 5)\n" + 
+				indent + "  { " + parnme + ".add(new Long(longTestValues[" + indexvar + "])); }\n"; 
+			  }  
               else if ("double".equals(elemTyp.getName()))
-              { convertElementType = "new Double(Double.parseDouble(typ" + parnme + "))"; } 
-
-              prompt = prompt + 
-                "    java.util.List " + parnme + " = new Vector();\n" + 
-                "    int " + parnme + "j = " + j + ";\n" +
-                "    String typ" + parnme + " = (String) _values.get(" + parnme + "j);\n" +
-                "    " + parnme + "j++; typ" + parnme + " = (String) _values.get(" + parnme + "j);\n" +
-                "    while (!typ" + parnme + ".equals(\"}\"))\n" + 
-                "    { " + parnme + ".add(" + convertElementType + "); \n" + 
-                "      " + parnme + "j++; typ" + parnme + " = (String) _values.get(" + parnme + "j);\n" +
-                "    }\n"; 
-            } */ 
-            else if ("boolean".equals(typ + ""))
-            { testscript = testscript + 
+              { testscript = testscript + 
+                indent + "\n" + 
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+				indent + "{ Vector " + parnme + " = new Vector();\n" + 
+				indent + "  if (" + indexvar + " < 5)\n" + 
+				indent + "  { " + parnme + ".add(new Double(doubleTestValues[" + indexvar + "])); }\n";
+			  }
+              else if ("boolean".equals(elemTyp.getName()))
+              { testscript = testscript + 
+                indent + "\n" + 
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 3; " + indexvar + "++)\n" + 
+				indent + "{ Vector " + parnme + " = new Vector();\n" + 
+				indent + "  if (" + indexvar + " < 2)\n" + 
+				indent + "  { " + parnme + ".add(new Boolean(booleanTestValues[" + indexvar + "])); }\n";
+              } 
+              else if (elemTyp != null && elemTyp.isEnumeration())
+              { Vector vals = elemTyp.getValues(); 
+			    int nvals = vals.size(); 
+			    testscript = testscript + 
                   indent + "\n" + 
-                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 2; " + indexvar + "++)\n" + 
-                  indent + "{ boolean " + parnme + " = booleanTestValues[" + indexvar + "];\n";  
-            } 
+				  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= " + nvals + "; " + indexvar + "++)\n" + 
+				  indent + "{ Vector " + parnme + " = new Vector();\n" + 
+				  indent + "  if (" + indexvar + " < " + nvals + ")\n" + 
+				  indent + "  { " + parnme + ".add(new Integer(" + indexvar + ")); }\n"; 
+			  }
+              else if (elemTyp.isEntity())
+			  { String etname = elemTyp.getName(); 
+			    String eename = etname.toLowerCase() + "s"; 
+			    testscript = testscript + 
+                  indent + "\n" + 
+				  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= Controller.inst()." + etname + ".size(); " + indexvar + "++)\n" + 
+				  indent + "{ Vector " + parnme + " = new Vector();\n" + 
+				  indent + "  if (" + indexvar + " < Controller.inst()." + etname + ".size())\n" + 
+				  indent + "  { " + parnme + ".add(Controller.inst()." + eename + ".get(" + indexvar + ")); }\n";
+              } // Check invariants of parnme. 
+			}  
           }  
         }
       

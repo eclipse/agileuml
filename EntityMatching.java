@@ -78,6 +78,22 @@ public class EntityMatching implements SystemTypes
     else 
     { attributeMappings.add(am); } 
   } 
+  
+  public boolean hasEmptyCondition()
+  { if (condition == null) 
+    { return true; }
+	if ("true".equals(condition))
+	{ return true; }
+	return false; 
+  }
+
+  public boolean hasSameCondition(EntityMatching em)
+  { if (hasEmptyCondition() && em.hasEmptyCondition()) 
+    { return true; }
+	else if (("" + condition).equals(em.condition + ""))
+	{ return true; }
+	return false; 
+  }
 
   public void setCondition(Expression e)
   { condition = e; } 
@@ -242,6 +258,18 @@ public class EntityMatching implements SystemTypes
   { if (attributeMappings.contains(am)) { } 
     else 
     { attributeMappings.add(am); } 
+  } 
+
+  public void replaceAttributeMatching(AttributeMatching am) 
+  { // remove any from the same source
+    Vector removed = new Vector(); 
+    for (int i = 0; i < attributeMappings.size(); i++) 
+    { AttributeMatching amx = (AttributeMatching) attributeMappings.get(i); 
+      if ((amx.trg + "").equals(am.trg + ""))
+      { removed.add(amx); } 
+    } 
+    attributeMappings.removeAll(removed); 
+    attributeMappings.add(am); 
   } 
 
   public void addAttributeMatch(AttributeMatching am)
@@ -3608,7 +3636,7 @@ public class EntityMatching implements SystemTypes
 	  
 	  if (am.isExpressionMapping())
 	  { } 
-	  else if (am.isDirectSource() || am.isDirectTarget())
+	  else if (am.isDirectTarget())
 	  { Attribute satt = am.src; 
 	    Attribute tatt = am.trg; 
 	    if (satt.isEnumeration() && tatt.isEnumeration())
@@ -3623,6 +3651,10 @@ public class EntityMatching implements SystemTypes
         { am.checkModel(mod,restrictedsources,trgobjects,attributeMappings,removed,added,queries); } 
         else if (satt.isCollection() && tatt.isCollection())
         { am.checkModel(mod,restrictedsources,trgobjects,attributeMappings,removed,added,queries); }
+		else
+		{ System.out.println(">>> Mis-matching types in " + am); 
+		  removed.add(am); 
+		}
 		// Other possibilities: enum to enum, enum/String, enum/boolean either way round
 		// Entity to Collection. Others are invalid and should be removed. 
       } 

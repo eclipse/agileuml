@@ -79,6 +79,10 @@ public class RequirementsSentence
     if (hasCopyWord) 
     { System.out.println(">> Feature copying"); } 
 
+    boolean hasCombineWord = RequirementsPhrase.hasCombineWord(phrases); 
+    if (hasCombineWord) 
+    { System.out.println(">> Feature combination"); } 
+
     Vector specificSources = new Vector(); 
     Vector specificTargets = new Vector(); 
     specificSources.addAll(sourceClasses); 
@@ -129,7 +133,7 @@ public class RequirementsSentence
              { 
               for (int l = 0; l < targetFeatures.size(); l++) 
               { Attribute tf = (Attribute) targetFeatures.get(l);
-               if (tfeatures.contains(tf.getName()))
+               if (tfeatures.contains(tf.getName()) && sf.getName().equals(tf.getName()))
                { AttributeMatching am = new AttributeMatching(sf,tf);
                  System.out.println(">>> Identified feature mapping: " + am);  
                  em.addAttributeMatching(am);
@@ -148,7 +152,8 @@ public class RequirementsSentence
      boolean duplicate = false;  
      for (int j = 0; j < precedingMappings.size(); j++)
      { EntityMatching emx = (EntityMatching) precedingMappings.get(j);
-       if (em.realsrc == emx.realsrc && em.realtrg == emx.realtrg)
+       if (em.realsrc == emx.realsrc && em.realtrg == emx.realtrg && 
+	       em.hasSameCondition(emx))
 	  { emx.mergeWith(em); 
 	    duplicate = true; 
 	  }

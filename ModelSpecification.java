@@ -12,12 +12,17 @@ import java.io.*;
 
 public class ModelSpecification 
 { Vector objects = new Vector(); 
+
   Map correspondence = new Map();
+
   // needs to be a multi-map/relation
+
   Map inverseCorrespondence = new Map();  
    
-  java.util.Map objectmap = new java.util.HashMap(); 
+  java.util.Map objectmap = new java.util.HashMap();
+                      // String -> ObjectSpecification 
   java.util.Map objectsOfClass = new java.util.HashMap(); 
+                      // String -> Vector
 
   public void addObject(ObjectSpecification obj) 
   { if (objects.contains(obj)) { } 
@@ -66,6 +71,36 @@ public class ModelSpecification
     return res; 
   } 
 
+  public void defineComposedFeatureValues(Vector entities, Vector types)
+  { // For 2-step source features f.g define the value of
+    // the feature in each source object
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity sent = (Entity) entities.get(i); 
+      if (sent != null && sent.isSource()) 
+      { sent.defineNonLocalFeatures(); 
+        Vector allFeatures = sent.getNonLocalFeatures();
+        String sentname = sent.getName(); 
+        
+		Vector sobjs = (Vector) objectsOfClass.get(sentname); 
+		if (sobjs == null)
+		{ sobjs = new Vector(); }
+		
+        for (int j = 0; j < sobjs.size(); j++) 
+        { ObjectSpecification obj = (ObjectSpecification) sobjs.get(j); 
+          for (int k = 0; k < allFeatures.size(); k++) 
+          { Attribute attk = (Attribute) allFeatures.get(k); 
+            Object val = obj.getValueOf(attk,this); 
+            System.out.println(">> Value of (" + obj + ")." + attk + " = " + val);
+            String attkname = attk.getName(); 
+            obj.setValue(attkname, val);  
+          } 
+        }  
+      } 
+    }  
+      
+  } 
+
 
   public ObjectSpecification getObject(String nme)
   { return (ObjectSpecification) objectmap.get(nme); } 
@@ -81,7 +116,16 @@ public class ModelSpecification
     return getObject(obj.data);  
   }  
 
-  
+  public ObjectSpecification[] getAllReferredObjects(Vector sobjs, Attribute ref)
+  { ObjectSpecification[] res = new ObjectSpecification[sobjs.size()]; 
+    for (int i = 0; i < sobjs.size(); i++) 
+	{ ObjectSpecification sobj = (ObjectSpecification) sobjs.get(i); 
+	  res[i] = sobj.getReferredObject(ref,this);
+	  System.out.println(">> " + sobj + " " + ref + " = " + res[i]); 
+	} 
+	return res; 
+  }  
+
   public ObjectSpecification getCorrespondingObject(String nme)
   { ObjectSpecification sobj = getObject(nme); 
     if (sobj == null) 
@@ -157,6 +201,458 @@ public class ModelSpecification
 	
     return null; 
   }  
+  
+  public java.util.HashMap objectMergings(String tename)
+  { Vector tobjs = (Vector) objectsOfClass.get(tename);
+    if (tobjs == null) 
+    { return null; }
+	
+	java.util.HashMap res = new java.util.HashMap(); 
+	
+	for (int i = 0; i < tobjs.size(); i++)
+	{ ObjectSpecification tobj = (ObjectSpecification) tobjs.get(i); 
+	  Vector sobjs = inverseCorrespondence.getAll(tobj); 
+	  if (sobjs != null && sobjs.size() > 1)
+	  { System.out.println(">>> Object merging of " + sobjs + " into " + tobj); 
+	    res.put(tobj,sobjs); 
+	  }
+	} 
+	return res; 
+  } 
+  
+  public void checkMergingCondition(Entity tent, Vector entities, java.util.HashMap mergings)
+  { // for each tobj |-> sobjs in mergings, check for which features the sobjs have same values
+    Vector identificationProperties = new Vector(); 
+	
+    Vector keys = new Vector(); 
+    keys.addAll(mergings.keySet()); 
+    for (int i = 0; i < keys.size(); i++) 
+    { ObjectSpecification key = (ObjectSpecification) keys.get(i); 
+      Vector sobjs = (Vector) mergings.get(key); 
+      ObjectSpecification sobj = (ObjectSpecification) sobjs.get(0); 
+      Entity sent = sobj.getEntity(); 
+      if (sent != null) 
+      { sent.defineNonLocalFeatures(); 
+        Vector allFeatures = sent.allDefinedProperties(); 
+        allFeatures.addAll(sent.getNonLocalFeatures()); 
+        // System.out.println(">> All features of " + sobj + " are: " + allFeatures); 
+        for (int j = 0; j < allFeatures.size(); j++) 
+        { Attribute satt = (Attribute) allFeatures.get(j); 
+          if (satt.isString())
+          { String[] xstrs = new String[sobjs.size()];
+            for (int k = 0; k < sobjs.size(); k++)
+            { ObjectSpecification srcobj = (ObjectSpecification) sobjs.get(k); 
+              String srcstr = srcobj.getStringValue(satt,this); 
+			  xstrs[k] = srcstr; 
+			} 
+			if (AuxMath.isConstant(xstrs))
+            { System.out.println(">>> " + satt + " is constant.");
+			  if (identificationProperties.contains(satt)) { } 
+			  else 
+			  { identificationProperties.add(satt); }  
+			} 
+			else 
+			{ identificationProperties.remove(satt); }
+          }
+		  else if (satt.isNumeric())
+		  { double[] xstrs = new double[sobjs.size()];
+            for (int k = 0; k < sobjs.size(); k++)
+            { ObjectSpecification srcobj = (ObjectSpecification) sobjs.get(k); 
+              double srcd = srcobj.getNumericValue(satt,this); 
+			  xstrs[k] = srcd; 
+			} 
+			if (AuxMath.isConstant(xstrs))
+            { System.out.println(">>> " + satt + " is constant.");
+			  if (identificationProperties.contains(satt)) { } 
+			  else 
+			  { identificationProperties.add(satt); }  
+			} 
+			else 
+			{ identificationProperties.remove(satt); }
+          }
+		  else if (satt.isEntity())
+		  { ObjectSpecification[] xstrs = new ObjectSpecification[sobjs.size()];
+            ObjectSpecification[] ystrs = new ObjectSpecification[sobjs.size()];
+            for (int k = 0; k < sobjs.size(); k++)
+            { ObjectSpecification srcobj = (ObjectSpecification) sobjs.get(k); 
+              ObjectSpecification srcref = srcobj.getReferredObject(satt,this);
+			  // System.out.println(">>> " + satt + " of " + srcobj + " is: " + srcref);  
+			  xstrs[k] = srcref; 
+			  Vector trgobjs = (Vector) correspondence.getAll(srcref); 
+			  if (trgobjs != null && trgobjs.size() > 0) 
+			  { ObjectSpecification trgobj = (ObjectSpecification) trgobjs.get(0); 
+			    ystrs[k] = trgobj;
+			  } 
+			  else 
+			  { ystrs[k] = null; } 
+			} 
+			if (AuxMath.isConstant(xstrs))
+            { System.out.println(">>> " + satt + " is constant.");
+			  if (identificationProperties.contains(satt)) { } 
+			  else 
+			  { identificationProperties.add(satt); }  
+			} 
+			else if (AuxMath.isConstant(ystrs))
+            { System.out.println(">>> " + satt + "' is constant.");
+			  if (identificationProperties.contains(satt)) { } 
+			  else 
+			  { identificationProperties.add(satt); }  
+			} 
+			else 
+			{ identificationProperties.remove(satt); }
+          }
+          else if (satt.isCollection())
+		  { Vector[] xstrs = new Vector[sobjs.size()];
+            for (int k = 0; k < sobjs.size(); k++)
+            { ObjectSpecification srcobj = (ObjectSpecification) sobjs.get(k); 
+		      Vector srcvect = srcobj.getCollectionValue(satt,this);
+			  xstrs[k] = srcvect; 
+			}  
+			if (AuxMath.isConstant(xstrs))
+            { System.out.println(">>> " + satt + " is constant.");
+			  if (identificationProperties.contains(satt)) { } 
+			  else 
+			  { identificationProperties.add(satt); }  
+			} 
+			else 
+			{ identificationProperties.remove(satt); }	        
+		  }
+	    }
+	  }
+	}
+	System.out.println(">>> Identification properties = " + identificationProperties); 
+	System.out.println(); 
+  }
+
+  public java.util.HashMap objectSplittings(String sename)
+  { Vector sobjs = (Vector) objectsOfClass.get(sename);
+    if (sobjs == null) 
+    { return null; }
+	
+	java.util.HashMap res = new java.util.HashMap(); 
+	
+	for (int i = 0; i < sobjs.size(); i++)
+	{ ObjectSpecification sobj = (ObjectSpecification) sobjs.get(i); 
+	  Vector tobjs = correspondence.getAll(sobj); 
+	  if (tobjs != null && tobjs.size() > 1)
+	  { // But sort into sets with the same target class. 
+		java.util.HashMap tobjectsets = new java.util.HashMap(); 
+		for (int j = 0; j < tobjs.size(); j++) 
+		{ ObjectSpecification tobj = (ObjectSpecification) tobjs.get(j); 
+		  Entity tent = tobj.getEntity(); 
+		  if (tent != null)
+		  { Vector tentobjs = (Vector) tobjectsets.get(tent.getName()); 
+		    if (tentobjs == null)
+			{ tentobjs = new Vector(); } 
+            tentobjs.add(tobj); 
+			tobjectsets.put(tent.getName(), tentobjs); 
+		  }
+		} 
+		System.out.println(">>> Object splitting of " + sobj + " into " + tobjectsets); 
+	    System.out.println(); 
+        Vector keys = new Vector(); 
+	    keys.addAll(tobjectsets.keySet()); 
+		for (int y = 0; y < keys.size(); y++)
+		{ String key = (String) keys.get(y); 
+		  if (((Vector) tobjectsets.get(key)).size() > 1)
+   	      { res.put(sobj,tobjectsets.get(key)); } 
+		}  
+	  }
+	} 
+	return res; 
+  } 
+
+  public void checkSplittingCondition(Entity sent, Vector entities, Vector ems, java.util.HashMap mergings)
+  { // for each sobj |-> tobjs in mergings, check for which features the tobjs all have different values
+    Vector identificationProperties = new Vector(); 
+	java.util.HashMap valuemap = new java.util.HashMap(); // Map from target atts to (sobj -> tobj tatt values)
+	
+    Vector keys = new Vector(); 
+	keys.addAll(mergings.keySet()); 
+	
+	Entity tent = null; 
+	
+	for (int i = 0; i < keys.size(); i++) 
+	{ ObjectSpecification key = (ObjectSpecification) keys.get(i); 
+	  Vector tobjs = (Vector) mergings.get(key); 
+	  ObjectSpecification tobj = (ObjectSpecification) tobjs.get(0); 
+	  tent = tobj.getEntity(); 
+
+      if (tent != null) 
+      { tent.defineNonLocalFeatures(); 
+	    Vector allFeatures = tent.allDefinedProperties(); 
+	    // allFeatures.addAll(tent.getNonLocalFeatures()); 
+		System.out.println(">> All direct features of " + tobj + " are: " + allFeatures); 
+        for (int j = 0; j < allFeatures.size(); j++) 
+		{ Attribute tatt = (Attribute) allFeatures.get(j); 
+		  if (tatt.isString())
+		  { String[] xstrs = new String[tobjs.size()];
+            for (int k = 0; k < tobjs.size(); k++)
+            { ObjectSpecification srcobj = (ObjectSpecification) tobjs.get(k); 
+              String srcstr = srcobj.getStringValue(tatt,this);
+			  System.out.println(">** (" + srcobj + ")." + tatt + " = " + srcstr);  
+			  xstrs[k] = srcstr; 
+			} 
+			
+			if (AuxMath.allDifferent(xstrs))
+            { System.out.println(">>> " + tatt + " has distinct values for each splitting target.");
+			  if (identificationProperties.contains(tatt)) { } 
+			  else 
+			  { identificationProperties.add(tatt); }  
+			  String tattname = tatt.getName(); 
+			  java.util.HashMap vmap = (java.util.HashMap) valuemap.get(tattname); 
+			  if (vmap == null) 
+			  { vmap = new java.util.HashMap(); }
+			  vmap.put(key,xstrs); 
+			  valuemap.put(tattname,vmap); 
+			} 
+			else 
+			{ identificationProperties.remove(tatt); }
+          }
+		  else if (tatt.isNumeric())
+		  { double[] xstrs = new double[tobjs.size()];
+            for (int k = 0; k < tobjs.size(); k++)
+            { ObjectSpecification srcobj = (ObjectSpecification) tobjs.get(k); 
+              double srcd = srcobj.getNumericValue(tatt,this); 
+			  xstrs[k] = srcd; 
+			} 
+			if (AuxMath.allDifferent(xstrs))
+            { System.out.println(">>> " + tatt + " has distinct values for each splitting target.");
+			  if (identificationProperties.contains(tatt)) { } 
+			  else 
+			  { identificationProperties.add(tatt); }
+			  String tattname = tatt.getName(); 
+			  java.util.HashMap vmap = (java.util.HashMap) valuemap.get(tattname); 
+			  if (vmap == null) 
+			  { vmap = new java.util.HashMap(); }
+			  vmap.put(key,xstrs); 
+			  valuemap.put(tattname,vmap);  
+			} 
+			else 
+			{ identificationProperties.remove(tatt); }
+          }
+		  else if (tatt.isEntity())
+		  { ObjectSpecification[] xstrs = new ObjectSpecification[tobjs.size()];
+            for (int k = 0; k < tobjs.size(); k++)
+            { ObjectSpecification srcobj = (ObjectSpecification) tobjs.get(k); 
+              ObjectSpecification srcref = srcobj.getReferredObject(tatt,this);
+			  xstrs[k] = srcref; 
+			} 
+			
+			if (AuxMath.allDifferent(xstrs))
+            { System.out.println(">>> " + tatt + " has distinct values for each splitting target.");
+			  if (identificationProperties.contains(tatt)) { } 
+			  else 
+			  { identificationProperties.add(tatt); }
+			  String tattname = tatt.getName(); 
+			  java.util.HashMap vmap = (java.util.HashMap) valuemap.get(tattname); 
+			  if (vmap == null) 
+			  { vmap = new java.util.HashMap(); }
+			  vmap.put(key,xstrs); 
+			  System.out.println(">>> vmap: " + vmap); 
+			  valuemap.put(tattname,vmap);  
+			} 
+			else 
+			{ identificationProperties.remove(tatt); }
+          }
+          else if (tatt.isCollection())
+		  { Vector[] xstrs = new Vector[tobjs.size()];
+            for (int k = 0; k < tobjs.size(); k++)
+            { ObjectSpecification srcobj = (ObjectSpecification) tobjs.get(k); 
+		      Vector srcvect = srcobj.getCollectionValue(tatt,this);
+			  // System.out.println(">>> (" + srcobj + ")." + tatt + " = " + srcvect);
+			  xstrs[k] = srcvect; 
+			}  
+			if (AuxMath.allDifferent(xstrs))
+            { System.out.println(">>> " + tatt + " has distinct values for each splitting target.");
+			  if (identificationProperties.contains(tatt)) { } 
+			  else 
+			  { identificationProperties.add(tatt); } 
+			  String tattname = tatt.getName(); 
+			  java.util.HashMap vmap = (java.util.HashMap) valuemap.get(tattname); 
+			  if (vmap == null) 
+			  { vmap = new java.util.HashMap(); }
+			  vmap.put(key,xstrs); 
+			  valuemap.put(tattname,vmap); 
+			} // actually vmap[key] should be the array of all base elements within any of the xstrs[k] vectors
+			else 
+			{ identificationProperties.remove(tatt); }	        
+		  }
+	    }
+	  }
+	}
+	
+	System.out.println(">>> Splitting properties for " + sent.getName() + " = " + identificationProperties);
+	
+	Vector allsobjs = (Vector) objectsOfClass.get(sent.getName());
+	// System.out.println(">>> All " + sent + " instances are = " + allsobjs);
+    
+	sent.defineNonLocalFeatures(); 
+	    
+    for (int j = 0; j < identificationProperties.size(); j++) 
+	{ Attribute tatt = (Attribute) identificationProperties.get(j);
+	  // Entity tent = tatt.getOwner(); 
+	  String tattname = tatt.getName(); 
+	  Vector possibleSourceFeatures = new Vector(); 
+	  java.util.HashMap splittingConds = new java.util.HashMap(); 
+
+      Vector s1atts = sent.allDefinedProperties();
+      Vector s2atts = sent.getNonLocalFeatures(); 
+	  Vector sattributes = new Vector(); 
+      sattributes.addAll(s1atts); 
+      sattributes.addAll(s2atts); 
+    
+      Vector satts = ModelMatching.findBaseTypeCompatibleSourceAttributes(tatt,sattributes,sent,ems); 
+      System.out.println(">>> Possible matching source features are: " + satts); 
+	  // Only interested in collection-valued satt
+	  
+	  java.util.HashMap vmap = (java.util.HashMap) valuemap.get(tattname); 
+
+      for (int i = 0; i < keys.size(); i++) 
+	  { ObjectSpecification sobj = (ObjectSpecification) keys.get(i); 
+
+	    if (tatt.isEntity()) 
+	    { ObjectSpecification[] values = (ObjectSpecification[]) vmap.get(sobj); 
+		  // compare the values to values of some feature sobj.f
+
+		  if (values != null) 
+		  { // System.out.println(">>> for source " + sobj + " target feature " + tatt + " values are: " + values.length); 
+ 		    for (int k = 0; k < satts.size(); k++) 
+			{ Attribute satt = (Attribute) satts.get(k); 
+			  String sattname = satt.getName();
+			  ObjectSpecification[] sattvalues = sobj.getCollectionAsObjectArray(satt,this); 
+			     // getAllReferredObjects(allsobjs,satt); 
+			  if (sattvalues != null && AuxMath.isCopy(sattvalues,values,this))
+ 		      { System.out.println(">> " + sobj + " satisfies copy feature mapping " + sattname + " |--> " + tattname);
+			    if (possibleSourceFeatures.contains(satt)) { } 
+				else 
+				{ possibleSourceFeatures.add(satt); } 
+			  } 
+			  else 
+			  { possibleSourceFeatures.remove(satt); }
+			}
+		  }
+		}
+	    else if (tatt.isCollection()) // assume, an entity collection 
+	    { Vector[] values = (Vector[]) vmap.get(sobj); 
+		  // compare the values to values of some feature sobj.f
+
+          
+		  if (values != null) 
+		  { // System.out.println(">>> for source " + sobj + " target feature " + tatt + " values are: " + values.length); 
+		    Vector flattenedValues = VectorUtil.flattenVectorArray(values); 
+		    // System.out.println(">>> for source " + sobj + " target feature " + tatt + " values are: " + flattenedValues); 
+		    
+ 		    for (int k = 0; k < satts.size(); k++) 
+			{ Attribute satt = (Attribute) satts.get(k); 
+			  String sattname = satt.getName();
+			  Vector sattvalues = sobj.getCollectionValue(satt,this); 
+			     // getAllReferredObjects(allsobjs,satt); 
+              // System.out.println(">>> for source " + sobj + " source feature " + satt + " values are: " + sattvalues); 
+		    
+			  if (sattvalues != null && correspondingObjectSets(sattvalues,flattenedValues))
+ 		      { System.out.println(">> " + sobj + " satisfies copy feature mapping " + sattname + " |--> " + tattname);
+			    if (possibleSourceFeatures.contains(satt)) { } 
+				else 
+				{ possibleSourceFeatures.add(satt); } 
+			  } 
+			  else 
+			  { possibleSourceFeatures.remove(satt); }
+			}
+		  }
+		}
+        else if (tatt.isString())
+		{ String[] values = (String[]) vmap.get(sobj); 
+		  if (values != null) 
+		  { // System.out.println(">>> for source " + sobj + " target feature " + tatt + " values are: " + values.length); 
+ 		    for (int k = 0; k < satts.size(); k++) 
+			{ Attribute satt = (Attribute) satts.get(k); 
+			  String sattname = satt.getName();
+			  String[] sattvalues = sobj.getCollectionAsStringArray(satt,this); 
+			     // getAllReferredObjects(allsobjs,satt); 
+			  if (sattvalues != null && AuxMath.isCopy(sattvalues,values))
+ 		      { System.out.println(">> " + sobj + " satisfies copy feature mapping " + sattname + " |--> " + tattname);
+			    if (possibleSourceFeatures.contains(satt)) { } 
+				else 
+				{ possibleSourceFeatures.add(satt); } 
+			  } 
+			  else if (sattvalues != null && AuxMath.allSuffixed(sattvalues,values)) 
+			  { System.out.println(">> " + sobj + " satisfies feature mapping " + 
+				                   sattname + " + suffix |--> " + tattname);
+				Vector suffixes = AuxMath.getSuffixes(sattvalues,values); 
+				System.out.println(">> All suffixes = " + suffixes); 
+				
+				SetExpression suffixesexpr = new SetExpression(); 
+				for (int p = 0; p < suffixes.size(); p++) 
+				{ String suff = (String) suffixes.get(p); 
+				  BasicExpression suffbe = new BasicExpression("\"" + suff + "\""); 
+				  BinaryExpression sattplus = new BinaryExpression("+", 
+				                                new BasicExpression(satt), suffbe); 
+				  suffixesexpr.addElement(sattplus); 
+				}
+				
+			    if (possibleSourceFeatures.contains(satt)) { } 
+		        else 
+		        { possibleSourceFeatures.add(satt); }  
+                Attribute x$ = new Attribute("x$0", satt.getElementType(), ModelElement.INTERNAL); 
+				BinaryExpression insuffixset = 
+				  new BinaryExpression(":", new BasicExpression(x$), suffixesexpr); 
+				splittingConds.put(sattname, insuffixset); 
+			  } 
+			  else if (sattvalues != null && AuxMath.allPrefixed(sattvalues,values)) 
+			  { System.out.println(">> " + sobj + " satisfies feature mapping " + 
+				                   "prefix + " + sattname + " |--> " + tattname);
+				Vector prefixes = AuxMath.getPrefixes(sattvalues,values); 
+				System.out.println(">> All prefixes = " + prefixes); 
+				
+				SetExpression prefixesexpr = new SetExpression(); 
+				for (int p = 0; p < prefixes.size(); p++) 
+				{ String pref = (String) prefixes.get(p); 
+				  BasicExpression prefbe = new BasicExpression("\"" + pref + "\""); 
+				  BinaryExpression plussatt = new BinaryExpression("+", prefbe,  
+				                                new BasicExpression(satt)); 
+				  prefixesexpr.addElement(plussatt); 
+				}
+			    if (possibleSourceFeatures.contains(satt)) { } 
+		        else 
+		        { possibleSourceFeatures.add(satt); }  
+                Attribute x$ = new Attribute("x$0", satt.getElementType(), ModelElement.INTERNAL); 
+				BinaryExpression inprefixset = 
+				  new BinaryExpression(":", new BasicExpression(x$), prefixesexpr); 
+				splittingConds.put(sattname, inprefixset); 
+			  } 
+			  else 
+			  { possibleSourceFeatures.remove(satt); }
+			}
+		  }
+		}
+	  }
+	  
+	  System.out.println(">>> Possible splitting variables for " + sent + " |--> " + tent + " are " + 
+	                     possibleSourceFeatures); 
+					// lookup the sent |-> tent matching, add the possible x |--> tatt mappings, for  
+	        // extra condition  x : sent
+      if (possibleSourceFeatures.size() > 0 && tent != null) 
+      { EntityMatching sent2tent = ModelMatching.getRealEntityMatching(sent,tent,ems);
+	    if (sent2tent != null)
+	    { Attribute satt = (Attribute) possibleSourceFeatures.get(0); 
+	      Attribute x = new Attribute("x$0", satt.getElementType(), ModelElement.INTERNAL); 
+          AttributeMatching newam = new AttributeMatching(x,tatt); 
+		  sent2tent.replaceAttributeMatching(newam);
+		  Expression cond = (Expression) splittingConds.get(satt.getName()); 
+		  if (cond != null)
+		  { sent2tent.addCondition(cond); }
+		  else 
+		  { BinaryExpression xinsatt = new BinaryExpression(":", new BasicExpression(x), new BasicExpression(satt)); 
+		    sent2tent.addCondition(xinsatt);
+		  }   
+		}
+	  } 
+	} 
+	
+	
+	System.out.println(); 
+  }
 
   public ObjectSpecification getSourceObject(String sename, String tename, String nme)
   { // Vector sobjs = getObjects(sename); 
@@ -312,10 +808,17 @@ public class ModelSpecification
   }  
 
   public boolean correspondingObjectSets(Vector svals, Vector tvals) 
-  { 
+  { // System.out.println(">>>Testing correspondence of " + svals + " ~ " + tvals); 
+  
     for (int i = 0; i < svals.size(); i++) 
-    { ObjectSpecification sobj = (ObjectSpecification) svals.get(i);
-      Vector tobjs = correspondence.getAll(sobj);
+    { Vector tobjs = new Vector(); 
+	  if (svals.get(i) instanceof ObjectSpecification)
+	  { ObjectSpecification sobj = (ObjectSpecification) svals.get(i);
+        tobjs = correspondence.getAll(sobj);
+      } // else it is a simple value
+	  else 
+	  { tobjs.add(svals.get(i)); }
+        
       boolean found = false; 
       for (int j = 0; j < tobjs.size(); j++) 
       { if (tvals.contains(tobjs.get(j)))
@@ -325,8 +828,13 @@ public class ModelSpecification
     } 
     
     for (int i = 0; i < tvals.size(); i++) 
-    { ObjectSpecification tobj = (ObjectSpecification) tvals.get(i); 
-      Vector sobjs = inverseCorrespondence.getAll(tobj); 
+    { Vector sobjs = new Vector(); 
+	  if (tvals.get(i) instanceof ObjectSpecification)
+	  { ObjectSpecification tobj = (ObjectSpecification) tvals.get(i); 
+        sobjs = inverseCorrespondence.getAll(tobj);
+	  } 
+	  else 
+	  { sobjs.add(tvals.get(i)); } 
  
       boolean foundsource = false; 
       for (int j = 0; j < sobjs.size(); j++) 
@@ -706,7 +1214,8 @@ public class ModelSpecification
 	  
       identifyConstantAttributeMatchings(trgent,em,pairs);
       em.realsrc.defineNonLocalFeatures(); 
-       identifyCopyAttributeMatchings(em.realsrc,trgent,em,pairs,ems); 
+      identifyCopyAttributeMatchings(em.realsrc,trgent,em,pairs,ems); 
+	  identifyManyToOneAttributeMatchings(em.realsrc,trgent,em,pairs,ems);
 	} 
 	
      ems.removeAll(removed);     
@@ -875,6 +1384,29 @@ public class ModelSpecification
 		    res.add(amx); 
 		    emx.addMapping(amx); 
 		  }
+	  	  else if (alldefined && AuxMath.isSuffixed(sattvalues,tattvalues))
+		  { String suff = AuxMath.commonSuffix(sattvalues,tattvalues); 
+		    if (suff != null)
+			{ System.out.println(">> Copy feature mapping " + sattname + " + " + suff + " |--> " + tattname); 
+		      BinaryExpression addsuff = new BinaryExpression("+", new BasicExpression(satt), 
+			                                                  new BasicExpression("\"" + suff + "\"")); 
+			  AttributeMatching amx = new AttributeMatching(addsuff, tatt); 
+		      res.add(amx); 
+		      emx.addMapping(amx); 
+			} 
+		  }
+	  	  else if (alldefined && AuxMath.isPrefixed(sattvalues,tattvalues))
+		  { String pref = AuxMath.commonPrefix(sattvalues,tattvalues); 
+		    if (pref != null)
+			{ System.out.println(">> Copy feature mapping " + pref + " + " + sattname + " |--> " + tattname); 
+		      BinaryExpression addsuff = new BinaryExpression("+",  
+			                                                  new BasicExpression("\"" + pref + "\""),
+															  new BasicExpression(satt)); 
+			  AttributeMatching amx = new AttributeMatching(addsuff, tatt); 
+		      res.add(amx); 
+		      emx.addMapping(amx); 
+			} 
+		  }
 	    }	
 	    else if (satt.isBoolean() && tatt.isBoolean())
 	    { boolean[] sattvalues = new boolean[en]; 
@@ -908,8 +1440,8 @@ public class ModelSpecification
 		  { Vector pair = (Vector) pairs.get(j); 
 		    ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
 		    ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
-		    if (sobj.hasDefinedValue(sattname) && tobj.hasDefinedValue(tattname)) { } 
-		    else 
+		    if (sobj.hasDefinedValue(satt,this) && tobj.hasDefinedValue(tattname)) { } 
+            else 
 		    { alldefined = false; } 
 		    sattvalues[j] = sobj.getReferredObject(sattname,this); 
 			tattvalues[j] = tobj.getReferredObject(tattname,this); 
@@ -932,11 +1464,13 @@ public class ModelSpecification
 		  { Vector pair = (Vector) pairs.get(j); 
 		    ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
 		    ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
-		    if (sobj.hasDefinedValue(sattname) && tobj.hasDefinedValue(tattname)) { } 
-		    else 
-		    { alldefined = false; } 
-		    sattvalues[j] = sobj.getCollection(sattname); 
-			tattvalues[j] = tobj.getCollection(tattname); 
+		    // if (sobj.hasDefinedValue(satt,this) && tobj.hasDefinedValue(tattname)) { } 
+            // else 
+		    // { alldefined = false; } 
+		    sattvalues[j] = sobj.getCollectionValue(satt,this); 
+	        tattvalues[j] = tobj.getCollection(tattname);
+			System.out.println(">> Checking copy feature mapping " + sattvalues[j] + " |--> " + tattvalues[j]); 
+		     
 		  }
 		
 		  if (alldefined && AuxMath.isCopy(sattvalues,tattvalues,this))
@@ -947,6 +1481,202 @@ public class ModelSpecification
 		  }
 		} 
 	  }   
+	}
+	System.out.println(); 
+	
+	return res; 
+  }
+
+  public Vector identifyManyToOneAttributeMatchings(Entity sent, Entity tent, EntityMatching emx, Vector pairs, Vector ems)
+  { int en = pairs.size();  
+    if (en <= 1)
+    { return null; }
+	
+    System.out.println(); 
+    System.out.println(">>>> Trying to identify 0..1 to 1 copy feature mappings for " + sent + " |--> " + tent); 
+    System.out.println(); 
+
+    Vector sattributes = new Vector(); 
+
+    Vector s1atts = sent.allDefinedProperties();
+    Vector s2atts = sent.getNonLocalFeatures(); 
+    sattributes.addAll(s1atts); 
+    sattributes.addAll(s2atts); 
+     
+    Vector tattributes = tent.allDefinedProperties(); 
+    Vector res = new Vector();
+	 
+    for (int i = 0; i < tattributes.size(); i++)
+    { Attribute tatt = (Attribute) tattributes.get(i);
+      String tattname = tatt.getName();
+	  // System.out.println(">> " + tent + " target feature: " + tattname);
+      if (emx.isUnusedTargetByName(tatt)) { }
+      else 
+      { continue; } 
+	  
+      System.out.println(); 
+      System.out.println(">> Unused target feature: " + tattname);
+	   
+      Vector satts = ModelMatching.findBaseTypeCompatibleSourceAttributes(tatt,sattributes,emx,ems); 
+
+      for (int k = 0; k < satts.size(); k++) 
+      { Attribute satt = (Attribute) satts.get(k);
+        String sattname = satt.getName();  
+	 
+        System.out.println(">> Checking possible map " + satt + " : " + satt.getType() + 
+		                     " |--> " + tatt + " : " + tatt.getType()); 
+	   	  
+       if (satt.isNumeric() && tatt.isNumeric())
+       { double[] sattvalues = new double[en]; 
+         double[] tattvalues = new double[en]; 
+         boolean alldefined = true; 
+		
+         for (int j = 0; j < en; j++) 
+         { Vector pair = (Vector) pairs.get(j); 
+           ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+           ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+           if (sobj.hasDefinedValue(satt,this) && tobj.hasDefinedValue(tattname)) { } 
+           else 
+           { alldefined = false; } 
+           sattvalues[j] = sobj.getNumeric(sattname);
+           tattvalues[j] = tobj.getNumeric(tattname); 
+         }
+		
+         if (alldefined && AuxMath.isCopy(sattvalues,tattvalues))
+         { System.out.println(">> Copy feature mapping " + sattname + " |--> " + tattname); 
+           AttributeMatching amx = new AttributeMatching(satt, tatt); 
+           res.add(amx); 
+           emx.addMapping(amx); 
+         }
+       }   
+       else if (satt.isCollection() && tatt.isNumeric())
+       { Vector[] sattvalues = new Vector[en]; 
+         Vector[] tattvalues = new Vector[en]; 
+         boolean alldefined = true; 
+		
+         for (int j = 0; j < en; j++) 
+         { Vector pair = (Vector) pairs.get(j); 
+           ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+           ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+           if (tobj.hasDefinedValue(tattname)) { } 
+           else 
+           { alldefined = false; } 
+           sattvalues[j] = sobj.getCollectionValue(satt,this);
+           tattvalues[j] = new Vector();
+           double dd = tobj.getNumeric(tattname); 
+           tattvalues[j].add(new Double(dd));  
+         }
+		
+         if (alldefined && AuxMath.isNumericSum(sattvalues,tattvalues))
+         { System.out.println(">> Sum feature mapping " + sattname + "->sum() |--> " + tattname); 
+           AttributeMatching amx = new AttributeMatching(new UnaryExpression("->sum", new BasicExpression(satt)), tatt); 
+           res.add(amx); 
+           emx.addMapping(amx); 
+         }
+         else if (alldefined && AuxMath.isNumericPrd(sattvalues,tattvalues))
+         { System.out.println(">> Product feature mapping " + sattname + "->prd() |--> " + tattname); 
+           AttributeMatching amx = new AttributeMatching(new UnaryExpression("->prd", new BasicExpression(satt)), tatt); 
+           res.add(amx); 
+           emx.addMapping(amx); 
+         }
+         else if (alldefined && AuxMath.isNumericMin(sattvalues,tattvalues))
+         { System.out.println(">> Feature mapping " + sattname + "->min() |--> " + tattname); 
+           AttributeMatching amx = new AttributeMatching(new UnaryExpression("->min", new BasicExpression(satt)), tatt); 
+           res.add(amx); 
+           emx.addMapping(amx); 
+         }
+         else if (alldefined && AuxMath.isNumericMax(sattvalues,tattvalues))
+         { System.out.println(">> Feature mapping " + sattname + "->max() |--> " + tattname); 
+           AttributeMatching amx = new AttributeMatching(new UnaryExpression("->max", new BasicExpression(satt)), tatt); 
+           res.add(amx); 
+           emx.addMapping(amx); 
+         }
+       }   
+       else if (satt.isCollection() && tatt.isString())
+       { Vector[] sattvalues = new Vector[en]; 
+         Vector[] tattvalues = new Vector[en]; 
+         boolean alldefined = true; 
+		
+         for (int j = 0; j < en; j++) 
+         { Vector pair = (Vector) pairs.get(j); 
+           ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+           ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+           if (tobj.hasDefinedValue(tattname)) { } 
+           else 
+           { alldefined = false; } 
+           sattvalues[j] = sobj.getCollectionValue(satt,this);
+           tattvalues[j] = new Vector();
+           String dd = tobj.getString(tattname); 
+           tattvalues[j].add(dd);  
+         }
+		
+         if (alldefined && AuxMath.isStringSum(sattvalues,tattvalues))
+         { System.out.println(">> Sum feature mapping " + sattname + "->sum() |--> " + tattname); 
+           AttributeMatching amx = new AttributeMatching(new UnaryExpression("->sum", new BasicExpression(satt)), tatt); 
+           res.add(amx); 
+           emx.addMapping(amx); 
+         }
+         else if (alldefined && AuxMath.isStringMax(sattvalues,tattvalues))
+         { System.out.println(">> Max feature mapping " + sattname + "->max() |--> " + tattname); 
+           AttributeMatching amx = new AttributeMatching(new UnaryExpression("->max", new BasicExpression(satt)), tatt); 
+           res.add(amx); 
+           emx.addMapping(amx); 
+         }
+       }   
+       else if (satt.isCollection() && tatt.isCollection())     
+       { Vector[] sattvalues = new Vector[en]; 
+         Vector[] tattvalues = new Vector[en];
+         boolean alldefined = true; 
+	
+							 	 
+         for (int j = 0; j < en; j++) 
+         { Vector pair = (Vector) pairs.get(j); 
+           ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+           ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+           if (sobj.hasDefinedValue(satt,this) && tobj.hasDefinedValue(tattname)) { } 
+           else 
+           { alldefined = false; } 
+             sattvalues[j] = sobj.getCollectionValue(satt,this); 
+	        tattvalues[j] = tobj.getCollectionValue(tatt,this); 
+           }
+		
+		  if (alldefined && AuxMath.isCopy(sattvalues,tattvalues,this))
+ 		  { System.out.println(">> Copy feature mapping " + sattname + " |--> " + tattname); 
+		    AttributeMatching amx = new AttributeMatching(satt, tatt); 
+		    res.add(amx); 
+		    emx.addMapping(amx); 
+          }
+        } 
+        else if (satt.isCollection() && tatt.isEntity())
+        { Vector[] sattvalues = new Vector[en]; 
+          Vector[] tattvalues = new Vector[en];
+          boolean alldefined = true; 
+	
+							 	 
+          for (int j = 0; j < en; j++) 
+          { Vector pair = (Vector) pairs.get(j); 
+            ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+            ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+		    if (sobj.hasDefinedValue(satt,this) && tobj.hasDefinedValue(tattname)) { } 
+		    else 
+		    { alldefined = false; } 
+            sattvalues[j] = sobj.getCollectionValue(satt,this); 
+	        // System.out.println(">>> (" + sobj + ")." + satt + " = " + sattvalues[j]); 
+            tattvalues[j] = new Vector(); 
+	
+            tattvalues[j].add(tobj.getReferredObject(tattname,this)); 
+             // System.out.println(">>> (" + tobj + ")." + tattname + " = " + tattvalues[j]); 
+          }
+		
+          if (alldefined && AuxMath.isCopy(sattvalues,tattvalues,this))
+          { System.out.println(">> Copy feature mapping " + sattname + "->any() |--> " + tattname); 
+            UnaryExpression anysatt = new UnaryExpression("->any", new BasicExpression(satt)); 
+            AttributeMatching amx = new AttributeMatching(anysatt, tatt); 
+            res.add(amx); 
+            emx.addMapping(amx); 
+          }
+        } 
+      }   
 	}
 	System.out.println(); 
 	
