@@ -210,6 +210,18 @@ public class CGCondition
       else
       { return e.umlkind != Expression.VARIABLE; }
     }
+    else if ("attribute".equals(stereotype))
+    { if (positive)
+      { return e.umlkind == Expression.ATTRIBUTE; }
+      else
+      { return e.umlkind != Expression.ATTRIBUTE; }
+    }
+    else if ("role".equals(stereotype))
+    { if (positive)
+      { return e.umlkind == Expression.ROLE; }
+      else
+      { return e.umlkind != Expression.ROLE; }
+    }
     return false;
   }
 

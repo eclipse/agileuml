@@ -11941,7 +11941,8 @@ public Statement generateDesignSubtract(Expression rhs)
     textrules = new Vector(); 
     CGRule r = cgs.matchedBasicExpressionRule(this,etext,textrules);
     
-    // System.out.println(">>> Found basic expression rule: " + r + " for " + this); 
+    System.out.println(">>> Found basic expression rule: " + r + " for " + this + " args= " + args + 
+	                   " eargs= " + eargs); 
 
     if (r != null)
     { if (textrules.size() > 0)
@@ -11967,7 +11968,7 @@ public Statement generateDesignSubtract(Expression rhs)
 	    }  
 	    else if (tr.variables.size() == 1 && 
                    tr.lhs.endsWith("_1()"))  // it is text_1()
-         { BasicExpression rootexp = (BasicExpression) clone();
+        { BasicExpression rootexp = (BasicExpression) clone();
 	      rootexp.parameters = null; 
 	      String rootstring = rootexp + ""; 
 	      String prefix = ModelElement.longestCommonPrefix(rootstring,tr.lhs);
@@ -11976,20 +11977,20 @@ public Statement generateDesignSubtract(Expression rhs)
 	      textargs.add(remstring);
 	      return tr.applyRule(textargs); 
 	    }
-         else if (tr.variables.size() == 1 && 
-                  tr.lhs.endsWith("(_1)"))  // it is text(_1)
-         { Vector textargs = new Vector(); 
-		String parstring = ""; 
-		for (int i = 0; i < parameters.size(); i++) 
-		{ Expression par = (Expression) parameters.get(i); 
-		  parstring = parstring + par.cg(cgs); 
-	       if (i < parameters.size() - 1) 
-		  { parstring = parstring + ", "; }
-		} 
-	     textargs.add(parstring);  
-	     return tr.applyRule(textargs); 
-	   }
-	 }
+        else if (tr.variables.size() == 1 && 
+                 tr.lhs.endsWith("(_1)"))  // it is text(_1)
+        { Vector textargs = new Vector(); 
+		  String parstring = ""; 
+		  for (int i = 0; i < parameters.size(); i++) 
+		  { Expression par = (Expression) parameters.get(i); 
+		    parstring = parstring + par.cg(cgs); 
+	        if (i < parameters.size() - 1) 
+		    { parstring = parstring + ", "; }
+		  } 
+	      textargs.add(parstring);  
+	      return tr.applyRule(textargs); 
+	    }
+	  }
       String res = r.applyRule(args,eargs,cgs);
       if (needsBracket) 
       { return "(" + res + ")"; } 
@@ -12001,7 +12002,7 @@ public Statement generateDesignSubtract(Expression rhs)
       if (r != null) 
       { System.out.println(">>> Found basic expression text rule: " + r + " for " + this); 
         return r.applyTextRule(etext); 
-	 }
+	  }
     } 
     return etext;
   }

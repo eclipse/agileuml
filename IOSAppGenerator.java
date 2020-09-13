@@ -136,6 +136,8 @@ public class IOSAppGenerator extends AppGenerator
       { out.println("    var result : WebDisplay = WebDisplay()"); } 
       else if (res != null && "ImageDisplay".equals(res.getType().getName())) 
       { out.println("    var result : ImageDisplay = ImageDisplay()"); } 
+      else if (res != null && "GraphDisplay".equals(res.getType().getName())) 
+      { out.println("    var result : GraphDisplay = GraphDisplay()"); } 
       else if (res != null) 
       { out.println("    var result : " + res.getType().getSwift()); } 
 
@@ -550,6 +552,8 @@ public class IOSAppGenerator extends AppGenerator
       { out.println("    var result : WebDisplay = WebDisplay()"); } 
       else if (res != null && "ImageDisplay".equals(res.getType().getName())) 
       { out.println("    var result : ImageDisplay = ImageDisplay()"); } 
+	  else if (res != null && "GraphDisplay".equals(res.getType().getName())) 
+      { out.println("    var result : GraphDisplay = GraphDisplay()"); } 
       else if (res != null) 
       { Type restype = res.getType(); 
         out.println("    var result : " + restype.getSwift() + " = " + restype.getSwiftDefaultValue()); 
@@ -874,10 +878,14 @@ public class IOSAppGenerator extends AppGenerator
 	
     out.println("import UIKit");
     out.println("import WebKit"); 
+    if (res != null && "GraphDisplay".equals(res.getType().getName()))
+    { out.println("import Charts"); } 
     out.println();
     out.print("class " + evc + " : UIViewController");
     if (res != null && "WebDisplay".equals(res.getType().getName()))
     { out.println(", WKUIDelegate"); } 
+    else if (res != null && "GraphDisplay".equals(res.getType().getName()))
+    { out.println(", IAxisValueFormatter"); } 
     else 
     { out.println(); } 
     out.println("{");
@@ -904,6 +912,11 @@ public class IOSAppGenerator extends AppGenerator
     { out.println("  @IBOutlet var resultOutput: UIImageView!"); 
       restype = "ImageDisplay"; 
     }
+    else if (res != null && "GraphDisplay".equals(res.getType().getName()))
+    { out.println("  @IBOutlet var resultOutput: LineChartView!"); 
+      out.println("  var graph: GraphDisplay = GraphDisplay.getInstance()"); 
+      restype = "GraphDisplay"; 
+    }
     else if (res != null) 
     { out.println("  @IBOutlet weak var resultOutput: UILabel!");
       restype = res.getType().getSwift(); 
@@ -920,6 +933,8 @@ public class IOSAppGenerator extends AppGenerator
       out.println("    let myRequest = URLRequest(url: myURL)"); 
       out.println("    resultOutput.load(myRequest)"); 
     } 
+    else if (res != null && "GraphDisplay".equals(res.getType().getName()))
+    { out.println("    resultOutput.pinchZoomEnabled = true"); } 
     // out.println("    self." + elist + " = " + bean + "." + getlist + "()");
     out.println("  }");
     out.println("");
@@ -976,8 +991,17 @@ public class IOSAppGenerator extends AppGenerator
         out.println(); 
       }
       else if ("ImageDisplay".equals(att.getType().getName()))
-      { updateScreen = updateScreen + "    resultOutput.image = UIImage(named: result.imageName)\n";
-      }  
+      { updateScreen = updateScreen + "    resultOutput.image = UIImage(named: result.imageName)\n"; }  
+      else if ("GraphDisplay".equals(att.getType().getName()))
+      { updateScreen = updateScreen + "    graph = result\n" + 
+	                                  "    let xpts = result.xpoints\n" + 
+                                      "    let ypts = result.ypoints\n" + 
+                                      "    let xlbs = result.xlabels\n" + 
+                                      "    if xlbs.count > 0\n" + 
+          "    { drawNominalChart(dataPoints: xlbs, values: ypts.map{ Double($0) }, name: result.yname) }\n" + 
+          "    else if xpts.count > 0\n" + 
+          "    { drawScalarChart(dataPoints: xpts, values: ypts.map{ Double($0) }, name: result.yname) }\n"; 
+	  } 
       else 
       { updateScreen = updateScreen + "    resultOutput.text = String(result)"; }
     }
@@ -1007,11 +1031,59 @@ public class IOSAppGenerator extends AppGenerator
     // }
 
     out.println("");
- 
+    if (res != null && "GraphDisplay".equals(res.getType().getName()))
+	{ printGraphDisplayOperations(out); }
+	
     out.println("  override func didReceiveMemoryWarning()");
     out.println("  { super.didReceiveMemoryWarning() }");
     out.println("");
     out.println("}");
+  }
+  
+  private void printGraphDisplayOperations(PrintWriter out)
+  { out.println("  func stringForValue(_ dataPointIndex: Double, axis: AxisBase?) -> String "); 
+    out.println("  { let xlbs = graph.xlabels"); 
+    out.println("    let xpts = graph.xpoints"); 
+    out.println("    let ind = Int(dataPointIndex)"); 
+    out.println("    if xlbs.count > ind"); 
+    out.println("    { return xlbs[ind] } "); 
+    out.println("    else if xpts.count > ind"); 
+    out.println("    { return String(xpts[ind]) }");  
+    out.println("    return \"\""); 
+    out.println("  }"); 
+    out.println("  "); 
+    out.println("  func drawNominalChart(dataPoints: [String], values: [Double], name : String)");  
+    out.println("  { var dataEntries: [ChartDataEntry] = []"); 
+    out.println("    "); 
+    out.println("    for i in 0..<dataPoints.count "); 
+    out.println("    { let dataEntry = ChartDataEntry(x: Double(i), y: values[i])"); 
+    out.println("      dataEntries.append(dataEntry)"); 
+    out.println("    }"); 
+    out.println("    "); 
+    out.println("    let xAxis = resultOutput.xAxis"); 
+    out.println("    xAxis.valueFormatter = self"); 
+    out.println("  "); 
+    out.println("    let lineChartDataSet = LineChartDataSet(values: dataEntries, label: name)"); 
+    out.println("    let lineChartData = LineChartData(dataSet: lineChartDataSet)"); 
+    out.println("    resultOutput.data = lineChartData"); 
+    out.println("  }"); 
+    out.println("  "); 
+    out.println("  func drawScalarChart(dataPoints: [Double], values: [Double], name : String)");  
+    out.println("  { var dataEntries: [ChartDataEntry] = []"); 
+    out.println("    "); 
+    out.println("    for i in 0..<dataPoints.count "); 
+    out.println("    { let dataEntry = ChartDataEntry(x: dataPoints[i], y: values[i])"); 
+    out.println("      dataEntries.append(dataEntry)"); 
+    out.println("    }"); 
+    out.println("  "); 
+    out.println("    let xAxis = resultOutput.xAxis"); 
+    out.println("    xAxis.valueFormatter = self"); 
+    out.println("    "); 
+    out.println("    let lineChartDataSet = LineChartDataSet(values: dataEntries, label: name)"); 
+    out.println("    let lineChartData = LineChartData(dataSet: lineChartDataSet)"); 
+    out.println("    resultOutput.data = lineChartData"); 
+    out.println("  }"); 
+	out.println(); 
   }
 
   public void singlePageAppSwiftUI(UseCase uc, String appName, String image, CGSpec cgs, Vector types, Vector entities, PrintWriter out)
@@ -1062,6 +1134,8 @@ public class IOSAppGenerator extends AppGenerator
     { out.println("      WebView(request: URLRequest(string: bean.result.url))"); } 
     else if (res != null && "ImageDisplay".equals(res.getType().getName()))
     { out.println("      Image(bean.result.imageName)"); } 
+    else if (res != null && "GraphDisplay".equals(res.getType().getName()))
+    { out.println("      GraphDisplayView(graph: bean.result)"); } 
     else if (res != null) 
     { out.println("      HStack(spacing: 20) {");
       out.println("        Text(\"Result:\")"); 

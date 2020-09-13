@@ -98,6 +98,14 @@ public class BehaviouralFeature extends ModelElement
 
   public void setResultType(Type t)
   { resultType = t; } 
+  
+  public boolean hasReturnVariable()
+  { if (resultType == null) 
+    { return false; }
+	if ("void".equals(resultType + ""))
+	{ return false; }
+	return true; 
+  }
 
   public String cg(CGSpec cgs)
   { String etext = this + "";
@@ -1212,7 +1220,7 @@ public class BehaviouralFeature extends ModelElement
     if (isClassScope() || isStatic())
     { res = res + "static "; } 
 
-    if (resultType == null) 
+    if (resultType == null || "void".equals(resultType + "")) 
     { JOptionPane.showMessageDialog(null, "ERROR: null result type for: " + this,
                                     "Type error", JOptionPane.ERROR_MESSAGE);
       return ""; 
@@ -1257,7 +1265,7 @@ public class BehaviouralFeature extends ModelElement
     if (isClassScope() || isStatic())
     { res = res + "static "; } 
 
-    if (resultType == null) 
+    if (resultType == null || "void".equals(resultType + "")) 
     { JOptionPane.showMessageDialog(null, "ERROR: null result type for: " + this,
                                     "Type error", JOptionPane.ERROR_MESSAGE);
       return ""; 
@@ -1303,7 +1311,7 @@ public class BehaviouralFeature extends ModelElement
     if (isClassScope() || isStatic())
     { res = res + "static "; } 
 
-    if (resultType == null) 
+    if (resultType == null || "void".equals(resultType + "")) 
     { JOptionPane.showMessageDialog(null, "ERROR: null result type for: " + this,
                                     "Type error", JOptionPane.ERROR_MESSAGE);
       return ""; 
@@ -1349,7 +1357,7 @@ public class BehaviouralFeature extends ModelElement
     if (isClassScope() || isStatic())
     { res = res + "static "; } 
 
-    if (resultType == null) 
+    if (resultType == null || "void".equals(resultType + "")) 
     { JOptionPane.showMessageDialog(null, "ERROR: null result type for: " + this,
                                     "Type error", JOptionPane.ERROR_MESSAGE);
       return ""; 
@@ -1395,7 +1403,7 @@ public class BehaviouralFeature extends ModelElement
     // if (isClassScope() || isStatic())
     // { res = res + "static "; } 
 
-    if (resultType == null) 
+    if (resultType == null || "void".equals(resultType + "")) 
     { JOptionPane.showMessageDialog(null, "ERROR: null result type for: " + this,
                                     "Type error", JOptionPane.ERROR_MESSAGE);
       return ""; 
@@ -2134,7 +2142,7 @@ public class BehaviouralFeature extends ModelElement
         if (ent.isInterface())
         { return "  public " + ts + " " + name + "(" + pars + ");\n"; } 
  
-        if (tp != null)
+        if (tp != null && !"void".equals(ts))
         { res = res + ts + " result;\n"; }
         localatts.addAll(parameters);   
         cde.typeCheck(types,entities,context,localatts); 
@@ -2173,7 +2181,7 @@ public class BehaviouralFeature extends ModelElement
 
       res = "  public " + header + ts + " " + name + "(" + pars + ")\n  {  "; 
 
-      if (tp != null)
+      if (tp != null && !"void".equals(ts))
       { res = res + ts + " result;\n"; }
       localatts.addAll(parameters);   
 
@@ -2309,7 +2317,7 @@ public class BehaviouralFeature extends ModelElement
         if (ent != null && ent.isInterface())
         { return "  public " + ts + " " + name + "(" + pars + ");\n"; } 
  
-        if (tp != null)
+        if (tp != null && !"void".equals(ts))
         { res = res + ts + " result;\n"; }
         localatts.addAll(parameters);   
         cde.typeCheck(types,entities,context,localatts); 
@@ -2348,8 +2356,9 @@ public class BehaviouralFeature extends ModelElement
 
       res = "  public " + header + ts + " " + name + "(" + pars + ")\n  {  "; 
 
-      if (tp != null)
+      if (tp != null && !("void".equals(ts)))
       { res = res + ts + " result;\n"; }
+
       localatts.addAll(parameters);   
       Vector preterms = activity.allPreTerms(); 
       if (preterms.size() > 0) 
@@ -2955,7 +2964,7 @@ public class BehaviouralFeature extends ModelElement
   public String buildQueryOp(Entity ent, String opname,
                              Type t, String resT, 
                              Vector entities, Vector types)
-  { if (resultType == null) 
+  { if (resultType == null || "void".equals(resT)) 
     { System.err.println("ERROR: No result type for " + opname); 
       return ""; 
     }
@@ -3130,7 +3139,7 @@ public class BehaviouralFeature extends ModelElement
   public String buildQueryOpJava6(Entity ent, String opname,
                              Type t, String resT, 
                              Vector entities, Vector types)
-  { if (resultType == null) 
+  { if (resultType == null || "void".equals(resT)) 
     { System.err.println("ERROR: No result type for " + opname); 
       return ""; 
     }
@@ -3242,7 +3251,7 @@ public class BehaviouralFeature extends ModelElement
                              Type t, String resT, 
                              Vector entities, Vector types)
   { 
-    if (resultType == null) 
+    if (resultType == null || "void".equals(resultType + "")) 
     { System.err.println("ERROR: No result type for " + opname); 
       return ""; 
     }
@@ -3348,7 +3357,7 @@ public class BehaviouralFeature extends ModelElement
   public String buildQueryOpCSharp(Entity ent, String opname,
                              Type t, String resT, 
                              Vector entities, Vector types)
-  { if (resultType == null) 
+  { if (resultType == null || "void".equals(resultType + "")) 
     { System.err.println("ERROR: No result type for " + opname); 
       return ""; 
     }
@@ -3460,7 +3469,7 @@ public class BehaviouralFeature extends ModelElement
   public String buildQueryOpCPP(Entity ent, String opname,
                              Type t, String resT, 
                              Vector entities, Vector types, Vector decs)
-  { if (resultType == null) 
+  { if (resultType == null || "void".equals(resultType + "")) 
     { System.err.println("ERROR: No result type for " + opname); 
       return ""; 
     }
@@ -4384,6 +4393,8 @@ public class BehaviouralFeature extends ModelElement
   { String preheader = ""; 
     String javaPars = getJavaParameterDec(); 
     
+	System.out.println(">>> Building update op for " + opname + " : " + t + " >> " + resT); 
+	
     String header = "  public "; 
     if (isAbstract())
     { header = header + "abstract "; } 

@@ -4275,18 +4275,23 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
   public UseCase parseKM3UseCase(int st, int en, Vector entities, Vector types, 
                                  Vector gens, Vector pasts)
-  { // usecase name { parameters postconditions activity }
-    String nme = lexicals.get(st+1) + ""; 
-
+  { // usecase name : type { parameters postconditions activity }
+    String nme = lexicals.get(st+1) + "";
+	String typ = lexicals.get(st+3) + "";  
+    Type uctyp = parseType(st+3,st+3,entities,types); 
+        
     UseCase uc = new UseCase(nme); 
-    int startpostconditions = st + 2;
+	uc.setResultType(uctyp); 
+	System.out.println(">>> use case " + nme + " has return type " + uctyp); 
+	
+    int startpostconditions = st + 4;
     int endpostconditions = en;
     int startactivity = en;   
     boolean foundpostconditions = false; 
     boolean foundactivity = false; 
 	
 	
-    for (int i = st + 2; i < en; i++) 
+    for (int i = st + 4; i < en; i++) 
     { String lx = lexicals.get(i) + ""; 
       if ("activity".equals(lx) && ":".equals(lexicals.get(i+1) + ""))
       { foundactivity = true;
@@ -4295,7 +4300,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 	 }
     }
     
-    for (int i = st + 2; i < en && i < endpostconditions; i++) 
+    for (int i = st + 4; i < en && i < endpostconditions; i++) 
     { String lx = lexicals.get(i) + ""; 
       if (":".equals(lx) && ":".equals(lexicals.get(i+1) + ""))
       { String scope = lexicals.get(i-1) + ""; // must be present, can be void
@@ -4381,7 +4386,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     } 
 
     if (foundpostconditions == false && foundactivity == true)
-    { parseUseCaseParameters(uc,st+2,startactivity-2,entities,types);
+    { parseUseCaseParameters(uc,st+4,startactivity-2,entities,types);
       int actualend = en-1; 
       if (";".equals(lexicals.get(actualend) + ""))
       { actualend = en-2; } 

@@ -158,6 +158,7 @@ public class UCDArea extends JPanel
   ModifyEntityDialog modifyDialog;
   // ModifyTypeDialog modifyTypeDialog;  
   UseCaseDialog ucDialog; 
+  EISUseCaseDialog eisucDialog; 
   BacktrackDialog backtrackDialog; 
   EntityCreateDialog entDialog; 
   ModifyUseCaseDialog editucDialog; 
@@ -2342,16 +2343,16 @@ public class UCDArea extends JPanel
   } 
 
   public void addUseCase()
-  { if (ucDialog == null)
-    { ucDialog = new UseCaseDialog(parent);
-      ucDialog.pack();
-      ucDialog.setLocationRelativeTo(this);
+  { if (eisucDialog == null)
+    { eisucDialog = new EISUseCaseDialog(parent);
+      eisucDialog.pack();
+      eisucDialog.setLocationRelativeTo(this);
     }
-    ucDialog.setOldFields("","","");
-    ucDialog.setVisible(true);
+    eisucDialog.setOldFields("","","");
+    eisucDialog.setVisible(true);
    
-    String nme = ucDialog.getName(); 
-    String ent = ucDialog.getEntity(); 
+    String nme = eisucDialog.getName(); 
+    String ent = eisucDialog.getEntity(); 
     Entity e = (Entity) ModelElement.lookupByName(ent,entities); 
     if (e == null) 
     { System.err.println("Invalid entity name: " + ent); 
@@ -2362,12 +2363,12 @@ public class UCDArea extends JPanel
         nme.equals("delete") || nme.equals("edit") || nme.equals("get") ||
         nme.equals("list") || nme.equals("searchBy") || nme.equals("set"))
     { String name = nme + ent;
-      String role = ucDialog.getRole(); 
+      String role = eisucDialog.getRole(); 
       if (role != null && !(role.equals("")))
       { name = name + role; } 
       OperationDescription od = new OperationDescription(name,e,nme,role); 
       useCases.add(od); 
-      System.out.println("New Use Case: " + od); 
+      System.out.println("New EIS Use Case: " + od); 
     }  
   }
   
@@ -2430,8 +2431,8 @@ public class UCDArea extends JPanel
     String nme = ucDialog.getName(); 
     if (nme == null || "".equals(nme)) { return; } 
 
-    String ent = ucDialog.getEntity(); 
-    String desc = ucDialog.getDescription(); 
+    // String ent = ucDialog.getEntity(); 
+    // String desc = ucDialog.getDescription(); 
     // Stereotypes such as "private"
 
     String typ = ucDialog.getUseCaseType(); 
@@ -2456,7 +2457,7 @@ public class UCDArea extends JPanel
       repaint(); 
     } 
 
-    uc.setDescription(desc); 
+    // uc.setDescription(desc); 
     Type tt = Type.getTypeFor(typ, types, entities); 
     uc.setResultType(tt); 
     if (tt != null) 
@@ -2473,13 +2474,13 @@ public class UCDArea extends JPanel
       useCases.add(ucext); 
     } */ 
 
-    if (ent != null && ent.length() > 0) 
+    /* if (ent != null && ent.length() > 0) 
     { Entity e = (Entity) ModelElement.lookupByName(ent,entities); 
       if (e == null) 
       { System.err.println("!! Invalid associated entity"); } 
       else 
       { uc.setEntity(e); } 
-    } 
+    } */ 
 
     String pars = ucDialog.getParameters();
     if (pars == null || pars.trim().length() == 0) { } 
@@ -2505,7 +2506,13 @@ public class UCDArea extends JPanel
         { System.err.println("ERROR: missing type for parameter: " + pp); }
       } 
       uc.setParameters(patts); 
-    }     
+    } 
+	
+	String stereo = ucDialog.getStereotype(); 
+	if (stereo == null || "none".equals(stereo)) { } 
+	else 
+	{ uc.addStereotype(stereo); }
+	    
     repaint(); 
   }
 
@@ -3048,12 +3055,12 @@ public class UCDArea extends JPanel
     { predefinedComponents.add(fileaccessor); }
     
    
-    Entity graphcomponent = (Entity) ModelElement.lookupByName("GraphComponent", entities); 
+    /* Entity graphcomponent = (Entity) ModelElement.lookupByName("GraphComponent", entities); 
     if (graphcomponent != null) 
     { predefinedComponents.add(graphcomponent); 
       predefinedUseCases.add("graph"); 
       screencount++; 
-    }
+    } */ 
 
     Entity mapcomponent = (Entity) ModelElement.lookupByName("MapsComponent", entities); 
     if (mapcomponent != null) 
@@ -3073,6 +3080,10 @@ public class UCDArea extends JPanel
     if (imagecomponent != null) 
     { predefinedComponents.add(imagecomponent); } 
 	
+    Entity graphcomponent = (Entity) ModelElement.lookupByName("GraphDisplay", entities); 
+    if (graphcomponent != null) 
+    { predefinedComponents.add(graphcomponent); } 
+
     customComponents.removeAll(predefinedComponents); 
 
 
@@ -3127,7 +3138,7 @@ public class UCDArea extends JPanel
                               new BufferedWriter(
                                 new FileWriter(entf)));
           entfout.println("import Foundation"); 
-          entfout.println("import Glibc"); 
+          entfout.println("import Darwin"); 
           entfout.println(); 
 		  					
           ent.generateOperationDesigns(types,entities);  
@@ -3277,11 +3288,12 @@ public class UCDArea extends JPanel
 	 
     for (int i = 0; i < predefinedUseCases.size(); i++) 
     { String puc = (String) predefinedUseCases.get(i);
-      if ("graph".equals(puc))
-      { operationNames.add("GraphScreen"); 
-        tabLabels.add(Named.capitalise(puc)); 
-      }
-      else if ("map".equals(puc))
+      // if ("graph".equals(puc))
+      // { operationNames.add("GraphScreen"); 
+      //   tabLabels.add(Named.capitalise(puc)); 
+      // }
+      // else 
+	  if ("map".equals(puc))
       { operationNames.add("MapScreen"); 
         tabLabels.add(Named.capitalise(puc)); 
         File mapoptions = new File("output/swiftuiapp/OptionsDialog.swift"); 
@@ -3399,12 +3411,12 @@ public class UCDArea extends JPanel
     
 
    
-    Entity graphcomponent = (Entity) ModelElement.lookupByName("GraphComponent", entities); 
-    if (graphcomponent != null) 
-    { predefinedComponents.add(graphcomponent); 
-      predefinedUseCases.add("graph"); 
-      screencount++; 
-    }
+    // Entity graphcomponent = (Entity) ModelElement.lookupByName("GraphComponent", entities); 
+    // if (graphcomponent != null) 
+    // { predefinedComponents.add(graphcomponent); 
+      // predefinedUseCases.add("graph"); 
+      // screencount++; 
+    // }
 
     Entity mapcomponent = (Entity) ModelElement.lookupByName("MapsComponent", entities); 
     if (mapcomponent != null) 
@@ -3437,6 +3449,10 @@ public class UCDArea extends JPanel
     Entity imagecomponent = (Entity) ModelElement.lookupByName("ImageDisplay", entities); 
     if (imagecomponent != null) 
     { predefinedComponents.add(imagecomponent); } 
+
+    Entity graphdisplaycomponent = (Entity) ModelElement.lookupByName("GraphDisplay", entities); 
+    if (graphdisplaycomponent != null) 
+    { predefinedComponents.add(graphdisplaycomponent); } 
 
     customComponents.removeAll(predefinedComponents); 
 
@@ -3680,12 +3696,12 @@ public class UCDArea extends JPanel
     if (fileaccessor != null) 
     { predefinedComponents.add(fileaccessor); }
 	
-    Entity graphcomponent = (Entity) ModelElement.lookupByName("GraphComponent", entities); 
-    if (graphcomponent != null) 
-    { predefinedComponents.add(graphcomponent); 
-	  predefinedUseCases.add("graph"); 
-	  screencount++; 
-    }
+   // Entity graphcomponent = (Entity) ModelElement.lookupByName("GraphComponent", entities); 
+   // if (graphcomponent != null) 
+   // { predefinedComponents.add(graphcomponent); 
+	//  predefinedUseCases.add("graph"); 
+	//  screencount++; 
+   // }
 
     Entity mapcomponent = (Entity) ModelElement.lookupByName("MapsComponent", entities); 
     if (mapcomponent != null) 
@@ -3704,6 +3720,10 @@ public class UCDArea extends JPanel
     Entity imagecomponent = (Entity) ModelElement.lookupByName("ImageDisplay", entities); 
     if (imagecomponent != null) 
     { predefinedComponents.add(imagecomponent); } 
+
+    Entity graphdisplaycomponent = (Entity) ModelElement.lookupByName("GraphDisplay", entities); 
+    if (graphdisplaycomponent != null) 
+    { predefinedComponents.add(graphdisplaycomponent); } 
 
 	customComponents.removeAll(predefinedComponents); 
 
@@ -3747,11 +3767,20 @@ public class UCDArea extends JPanel
     agen.generateManifest(systemName,needsInternetPermission,needsMaps,out);
 	// Include Internet permission if an InternetAccessor is present, or a cloud entity, or WebComponent.  
 	
+    File buildfile = new File("output/app/build.gradle"); 
+    try
+    { PrintWriter gradle = new PrintWriter(
+                                  new BufferedWriter(
+                                    new FileWriter(buildfile)));
+	  AndroidAppGenerator.generateBuildGradle(systemName,gradle); 
+         // AndroidAppGenerator.generateGraphComponentVC(packageName,nestedPackageName); 
+      gradle.close(); 
+    } catch (Exception e) { }
 
-     boolean needsGraph = false; 
+    boolean needsGraph = false; 
 
-     if (mapcomponent != null) 
-     { // generate its screen and view controller
+    if (mapcomponent != null) 
+    { // generate its screen and view controller
        needsMaps = true; 
        String mapxml = "activity_maps.xml"; 
        File mapfile = new File("output/app/src/main/res/layout/" + mapxml); 
@@ -3765,7 +3794,7 @@ public class UCDArea extends JPanel
        } catch (Exception e) { }
      } 
 
-     if (graphcomponent != null) 
+     /* if (graphcomponent != null) 
      { // generate its screen and view controller
        needsGraph = true; 
        String glxml = "graph_fragment.xml"; 
@@ -3778,7 +3807,7 @@ public class UCDArea extends JPanel
          AndroidAppGenerator.generateGraphComponentVC(packageName,nestedPackageName); 
          glayout.close(); 
        } catch (Exception e) { }
-     }
+     } */ 
 	
      if (webcomponent != null) 
      { // generate its screen and view controller
@@ -4074,8 +4103,8 @@ public class UCDArea extends JPanel
       }
     } 
 
-    if (predefinedUseCases.contains("graph"))
-    { tabnames.add("Graph"); }
+    // if (predefinedUseCases.contains("graph"))
+    // { tabnames.add("Graph"); }
     // if (predefinedUseCases.contains("map"))
     // { tabnames.add("Map"); }    
 
@@ -12962,9 +12991,9 @@ public void produceCUI(PrintWriter out)
       allcomponents.add("FileAccessor"); 
       allcomponents.add("InternetAccessor");  
       allcomponents.add("MapsComponent");  
-      allcomponents.add("GraphComponent");
       allcomponents.add("WebDisplay");  
       allcomponents.add("ImageDisplay");  
+      allcomponents.add("GraphDisplay");
 	  // Others: WebComponent, TextEditorComponent
 	  
       listShowDialog.setOldFields(allcomponents);
@@ -13013,17 +13042,15 @@ public void produceCUI(PrintWriter out)
       else if ("FileAccessor".equals(componentName))
       { createFileAccessorComponent(); }
       else if ("InternetAccessor".equals(componentName))
-      { addInternetAccessor(); }
-      else if ("GraphComponent".equals(componentName))
-      { createGraphComponent(); 
-        addPublicUseCase("graph", new Vector(), null); 
-      } 
+      { addInternetAccessor(); } 
       else if ("MapsComponent".equals(componentName))
       { createMapComponent(); }  // and several use cases for the ModelFacade
       else if ("WebDisplay".equals(componentName))
       { createWebDisplay(); }
       else if ("ImageDisplay".equals(componentName))
       { createImageDisplay(); }
+      else if ("GraphDisplay".equals(componentName))
+      { createGraphDisplay(); }
       else 
       { System.err.println("!! Unknown predefined component: " + componentName); }
     } 
@@ -15973,6 +16000,11 @@ public void produceCUI(PrintWriter out)
       new BehaviouralFeature("getInstance",parsc,true,new Type(e));
 	opc.setStatic(true);  
     e.addOperation(opc); 
+	
+	BehaviouralFeature opcreate = 
+      new BehaviouralFeature("createInternetAccessor",parsc,true,new Type(e));
+	opcreate.setStatic(true);  
+    e.addOperation(opcreate); 
 
 	Vector pars1 = new Vector(); 
 	Attribute url = new Attribute("url", new Type("String", null), ModelElement.INTERNAL); 
@@ -16168,6 +16200,114 @@ public void produceCUI(PrintWriter out)
 
     entities.add(e);                           
     RectData rd = new RectData(900,10,getForeground(),
+                               componentMode,
+                               rectcount);
+    rectcount++;
+    rd.setLabel(e.getName());
+    rd.setModelElement(e); 
+    visuals.add(rd);
+    repaint();   
+  } 	        
+
+  public void createGraphDisplay()
+  { Entity e = new Entity("GraphDisplay"); 
+    e.addStereotype("external"); 
+    e.addStereotype("component"); 
+	BasicExpression truebe = new BasicExpression(true); 
+		 
+    Type selftype = new Type(e); 
+    Vector parinst = new Vector(); 
+    BehaviouralFeature getInstance = 
+      new BehaviouralFeature("getInstance", parinst, false, selftype); 
+    getInstance.setStatic(true);
+	getInstance.setPostcondition(truebe);  
+    e.addOperation(getInstance); 
+ 
+    Vector pars = new Vector(); 
+    Attribute delegatec = new Attribute("kind", new Type("String",null), ModelElement.INTERNAL); 
+    pars.add(delegatec);
+    BehaviouralFeature op = 
+      new BehaviouralFeature("setGraphKind",pars,false,null); 
+	op.setPostcondition(truebe);  
+    e.addOperation(op); 
+    
+    Type stringseq = new Type("Sequence", null); 
+    stringseq.setElementType(new Type("String", null));
+    Vector xpars = new Vector(); 
+    xpars.add(new Attribute("xvalues", stringseq, ModelElement.INTERNAL));  
+    BehaviouralFeature opc = 
+      new BehaviouralFeature("setXNominal",xpars,false,null);
+	opc.setPostcondition(truebe);  
+    e.addOperation(opc); 
+
+    Type doubleseq = new Type("Sequence", null); 
+    doubleseq.setElementType(new Type("double", null));
+    Vector xpars1 = new Vector(); 
+    Attribute contents = new Attribute("xvalues", doubleseq, ModelElement.INTERNAL); 
+    xpars1.add(contents); 
+    BehaviouralFeature op1 = 
+      new BehaviouralFeature("setXScalar",xpars1,false,null); 
+	op1.setPostcondition(truebe);  
+    e.addOperation(op1); 
+
+    Vector xpars2 = new Vector(); 
+    Attribute contentsy = new Attribute("yvalues", doubleseq, ModelElement.INTERNAL); 
+    xpars2.add(contentsy); 
+    BehaviouralFeature op2 = 
+      new BehaviouralFeature("setYPoints",xpars2,false,null);
+	op2.setPostcondition(truebe);   
+    e.addOperation(op2); 
+
+    Vector xpars3 = new Vector(); 
+    Attribute contentsz = new Attribute("zvalues", doubleseq, ModelElement.INTERNAL); 
+    xpars3.add(contents); 
+    BehaviouralFeature op3 = 
+      new BehaviouralFeature("setZPoints",xpars3,false,null);
+	op3.setPostcondition(truebe);  
+    e.addOperation(op3); 
+
+    Vector parssxn = new Vector(); 
+    Attribute xname = new Attribute("xname", new Type("String",null), ModelElement.INTERNAL); 
+    parssxn.add(xname);
+    BehaviouralFeature opxname = 
+      new BehaviouralFeature("setxname",parssxn,false,null);
+	opxname.setPostcondition(truebe);  
+    e.addOperation(opxname); 
+
+    Vector parssyn = new Vector(); 
+    Attribute yname = new Attribute("yname", new Type("String",null), ModelElement.INTERNAL); 
+    parssyn.add(yname);
+    BehaviouralFeature opyname = 
+      new BehaviouralFeature("setyname",parssyn,false,null);
+    opyname.setPostcondition(truebe);   
+    e.addOperation(opyname); 
+
+    Vector addlinepars = new Vector(); 
+	addlinepars.add(new Attribute("name", new Type("String", null), ModelElement.INTERNAL));
+	addlinepars.add(contents); 
+	addlinepars.add(contentsy);  
+    BehaviouralFeature addLine = 
+	  new BehaviouralFeature("addLine", addlinepars, false, null); 
+	addLine.setPostcondition(truebe); 
+	e.addOperation(addLine); 
+	  
+    Vector addlabelpars = new Vector(); 
+	addlabelpars.add(new Attribute("name", new Type("String", null), ModelElement.INTERNAL));
+	addlabelpars.add(new Attribute("x", new Type("double", null), ModelElement.INTERNAL)); 
+	addlabelpars.add(new Attribute("y", new Type("double", null), ModelElement.INTERNAL));  
+    BehaviouralFeature addLabel = 
+	  new BehaviouralFeature("addLabel", addlabelpars, false, null); 
+	addLabel.setPostcondition(truebe); 
+	e.addOperation(addLabel); 
+
+    Vector parsr = new Vector(); 
+    BehaviouralFeature opr = 
+      new BehaviouralFeature("redraw",parsr,false,null); 
+    opr.setPostcondition(truebe); 
+	e.addOperation(opr); 
+
+    entities.add(e);                           
+    RectData rd = new RectData(990,410,getForeground(),
                                componentMode,
                                rectcount);
     rectcount++;

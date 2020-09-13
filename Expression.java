@@ -2123,7 +2123,7 @@ public static boolean conflictsReverseOp(String op1, String op2)
   { String atext = this + "";
     Vector args = new Vector();
     Vector eargs = new Vector();
-    args.add(atext);
+    args.add(cg(cgs));
     eargs.add(this); 
     if (partail.size() == 0) 
     { args.add("");
@@ -2139,8 +2139,11 @@ public static boolean conflictsReverseOp(String op1, String op2)
     }  
     CGRule r = cgs.matchedParameterArgumentRule(this,partail,atext);
     if (r != null)
-    { return r.applyRule(args,eargs,cgs); }
-    return atext;
+    { String res = r.applyRule(args,eargs,cgs); 
+	  System.out.println(">>> Applied parameter rule " + r + " to " + this + " giving " + res); 
+	  return res; 
+	}
+    return cg(cgs);
   } // but omit initialisations for parameters
 
 } 

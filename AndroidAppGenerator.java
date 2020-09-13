@@ -181,6 +181,10 @@ public class AndroidAppGenerator extends AppGenerator
        { out.println("    " + res.getType().getJava8()  + " " + res.getName() + " = " + res.getType().getDefaultJava7() + ";"); 
 	     if ("WebDisplay".equals(res.getType().getName()))
 		 { out.println("    " + res.getName() + " = new WebDisplay();"); }
+	     else if ("ImageDisplay".equals(res.getType().getName()))
+		 { out.println("    " + res.getName() + " = new ImageDisplay();"); }
+         else if ("GraphDisplay".equals(res.getType().getName()))
+		 { out.println("    " + res.getName() + " = new GraphDisplay();"); }
 	   }  
 
       // out.println(extractatts);
@@ -834,13 +838,19 @@ public class AndroidAppGenerator extends AppGenerator
 	
 	
   public static void androidTableLayoutForOp(String op, String vc, String image, Vector atts, Attribute res, PrintWriter out)
-  { out.println("<TableLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"");
-    out.println("  xmlns:tools=\"http://schemas.android.com/tools\"");
-    out.println("  android:layout_width=\"match_parent\"");
-    out.println("  android:layout_height=\"match_parent\"");
-    out.println("  android:stretchColumns=\"1\""); 
-    out.println("  tools:context=\"" + vc + "\" >");
-
+  { out.println("<ScrollView"); 
+    out.println("xmlns:android=\"http://schemas.android.com/apk/res/android\""); 
+    out.println("xmlns:app=\"http://schemas.android.com/apk/res-auto\""); 
+    out.println("xmlns:tools=\"http://schemas.android.com/tools\""); 
+    out.println("android:layout_width=\"match_parent\""); 
+    out.println("android:layout_height=\"match_parent\""); 
+    out.println("tools:context=\"" + vc + "\" >");
+    out.println(); 
+    out.println("<TableLayout"); 
+    out.println("  android:layout_width=\"fill_parent\"");
+    out.println("  android:layout_height=\"fill_parent\"");
+    out.println("  android:stretchColumns=\"1\" >"); 
+    out.println(); 
 
     for (int x = 0; x < atts.size(); x++)
     { Attribute att = (Attribute) atts.get(x);
@@ -907,11 +917,18 @@ public class AndroidAppGenerator extends AppGenerator
       out.println("    android:layout_height=\"wrap_content\""); 
       out.println("    android:id=\"@+id/" + op + "Result\" />"); 
     } 
+    else if (res != null && "GraphDisplay".equals(res.getType().getName())) 
+    { out.println("  <ImageView"); 
+      out.println("     android:id=\"@+id/" + op + "Result\""); 
+      out.println("     android:layout_height=\"500dp\""); 
+      out.println("     android:layout_width=\"fill_parent\""); 
+      out.println("     android:adjustViewBounds=\"true\" />"); 
+    } 
     else if (res != null && "ImageDisplay".equals(res.getType().getName())) 
     { out.println("  <ImageView"); 
-      out.println("     android:id=\"@+id/" + op + "Result\" />"); 
+      out.println("     android:id=\"@+id/" + op + "Result\""); 
       out.println("     android:layout_height=\"wrap_content\""); 
-      out.println("     android:layout_width=\"wrap_content\""); 
+      out.println("     android:layout_width=\"match_parent\""); 
       out.println("     android:src=\"@drawable/ic_launcher_background\" />"); 
     } 
     else if (res != null) 
@@ -936,17 +953,24 @@ public class AndroidAppGenerator extends AppGenerator
       out.println("   android:src=\"@drawable/" + image + "\" />"); 
     }  
     out.println("</TableLayout>");
+    out.println("</ScrollView>");
   }
 
   public static void androidTableLayoutForOps(String op, String vc, String image, Vector atts, Attribute res, Vector usecases, 
                                               PrintWriter out)
-  { out.println("<TableLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"");
-    out.println("  xmlns:tools=\"http://schemas.android.com/tools\"");
-    out.println("  android:layout_width=\"match_parent\"");
-    out.println("  android:layout_height=\"match_parent\"");
-    out.println("  android:stretchColumns=\"1\""); 
-    out.println("  tools:context=\"" + vc + "\" >");
-
+  { out.println("<ScrollView"); 
+    out.println("xmlns:android=\"http://schemas.android.com/apk/res/android\""); 
+    out.println("xmlns:app=\"http://schemas.android.com/apk/res-auto\""); 
+    out.println("xmlns:tools=\"http://schemas.android.com/tools\""); 
+    out.println("android:layout_width=\"match_parent\""); 
+    out.println("android:layout_height=\"match_parent\""); 
+    out.println("tools:context=\"" + vc + "\" >");
+    out.println(); 
+    out.println("<TableLayout"); 
+    out.println("  android:layout_width=\"fill_parent\"");
+    out.println("  android:layout_height=\"fill_parent\"");
+    out.println("  android:stretchColumns=\"1\" >"); 
+    out.println(); 
 
     for (int x = 0; x < atts.size(); x++)
     { Attribute att = (Attribute) atts.get(x);
@@ -981,7 +1005,7 @@ public class AndroidAppGenerator extends AppGenerator
         else if (att.isDouble())
         { out.println("    android:inputType=\"number|numberDecimal\""); } 
         else if (att.isPassword())
-	  { out.println("    android:inputType=\"textPassword\""); }
+        { out.println("    android:inputType=\"textPassword\""); }
         out.println("    android:layout_span=\"4\" />");
       } 
       out.println("  </TableRow>");
@@ -1011,6 +1035,14 @@ public class AndroidAppGenerator extends AppGenerator
     out.println("  </TableRow>");
     out.println(); 
 
+	if (res != null)
+	{  out.println("<TableRow>"); 
+	   out.println("  <TextView");  
+       out.println("     android:textStyle=\"bold\"");
+       out.println("     android:text=\"Result:\" />");
+       out.println("</TableRow>"); 
+	} 
+	  
     if (res != null && "WebDisplay".equals(res.getType().getName())) 
     { out.println("  <WebView"); 
       out.println("    android:layout_width=\"match_parent\""); 
@@ -1021,7 +1053,7 @@ public class AndroidAppGenerator extends AppGenerator
     { out.println("  <ImageView"); 
       out.println("     android:id=\"@+id/" + op + "Result\" />"); 
       out.println("     android:layout_height=\"wrap_content\""); 
-      out.println("     android:layout_width=\"wrap_content\""); 
+      out.println("     android:layout_width=\"match_parent\""); 
       out.println("     android:src=\"@drawable/ic_launcher_background\" />"); 
     } 
     else if (res != null) 
@@ -1031,7 +1063,7 @@ public class AndroidAppGenerator extends AppGenerator
       out.println("    android:hint=\"Result of " + op + "\"");
       out.println("    android:textStyle=\"bold\"");
       out.println("    android:background=\"#EEFFBB\""); 
-      out.println("    android:text=\"Result:\" />");
+      out.println("    android:text=\"Result of " + op + ":\" />");
       out.println("  <TextView");  
       out.println("    android:id=\"@+id/" + op + "Result\"");
       out.println("    android:hint=\"Result of " + op + "\"");
@@ -1080,7 +1112,7 @@ public class AndroidAppGenerator extends AppGenerator
            else if (att.isPassword())
            { out.println("    android:inputType=\"textPassword\""); }
            out.println("    android:layout_span=\"4\" />");
-	   }  
+         }  
          out.println("  </TableRow>");
          out.println(); 
        }
@@ -1097,7 +1129,15 @@ public class AndroidAppGenerator extends AppGenerator
        out.println("  android:onClick=\"" + ucop + "OK\"");
        out.println("  />");
        out.println("  </TableRow>"); 
-	   out.println(); 
+       out.println(); 
+	   
+       if (ucres != null) 
+       { out.println("<TableRow>"); 
+         out.println("  <TextView");  
+         out.println("     android:textStyle=\"bold\"");
+         out.println("     android:text=\"Result:\" />");
+         out.println("</TableRow>");
+       } 
 	   
        if (ucres != null && "WebDisplay".equals(ucres.getType().getName())) 
        { out.println("  <WebView"); 
@@ -1107,36 +1147,44 @@ public class AndroidAppGenerator extends AppGenerator
        } 
        else if (ucres != null && "ImageDisplay".equals(ucres.getType().getName())) 
        { out.println("  <ImageView"); 
-         out.println("     android:id=\"@+id/" + ucop + "Result\" />"); 
+         out.println("     android:id=\"@+id/" + ucop + "Result\""); 
          out.println("     android:layout_height=\"wrap_content\""); 
-         out.println("     android:layout_width=\"wrap_content\""); 
+         out.println("     android:layout_width=\"match_parent\""); 
          out.println("     android:src=\"@drawable/ic_launcher_background\" />"); 
+       } 
+       else if (ucres != null && "GraphDisplay".equals(ucres.getType().getName())) 
+       { out.println("  <ImageView"); 
+         out.println("     android:id=\"@+id/" + ucop + "Result\""); 
+         out.println("     android:layout_height=\"500dp\""); 
+         out.println("     android:layout_width=\"fill_parent\""); 
+         out.println("     android:adjustViewBounds=\"true\" />"); 
        } 
        else if (ucres != null) 
        { out.println("  <TableRow>");
-         out.println("  <TextView");  
+       /*  out.println("  <TextView");  
          out.println("    android:id=\"@+id/" + ucop + "ResultLabel\"");
          out.println("    android:hint=\"Result of " + ucop + "\"");
          out.println("    android:textStyle=\"bold\"");
          out.println("    android:background=\"#EEFFBB\""); 
-         out.println("    android:text=\"Result:\" />");
+         out.println("    android:text=\"Result:\" />"); */ 
          out.println("  <TextView");  
          out.println("    android:id=\"@+id/" + ucop + "Result\"");
          out.println("    android:hint=\"Result of " + ucop + "\"");
          out.println("    android:textStyle=\"bold\"");
-         out.println("    android:layout_span=\"4\" />");
+         out.println("    android:layout_span=\"5\" />");
          out.println("  </TableRow>");
        } 
        out.println(); 
 	}
 
-    if (image != null && !("null".equals(image))) 
-	{ out.println("  <ImageView"); 
+    if (image != null && !("null".equals(image)))         
+    { out.println("  <ImageView"); 
       out.println("   android:id=\"@+id/" + op + "image\""); 
       out.println("   android:src=\"@drawable/" + image + "\" />"); 
-	}  
+    }  
 
     out.println("</TableLayout>");
+    out.println("</ScrollView>");
   }
 
 public static void androidOpViewActivity(String op, String systemName, 
@@ -1225,6 +1273,8 @@ public static void androidOpViewActivity(String op, String systemName,
   { out.println("  WebView " + op + "Result;"); }
   else if (res != null && "ImageDisplay".equals(res.getType().getName()))
   { out.println("  ImageView " + op + "Result;"); }
+  else if (res != null && "GraphDisplay".equals(res.getType().getName()))
+  { out.println("  ImageView " + op + "Result;"); }
   else if (res != null)  
   { out.println("  TextView " + op + "Result;"); }
 
@@ -1258,6 +1308,8 @@ public static void androidOpViewActivity(String op, String systemName,
     { out.println("  WebView " + extop + "Result;"); }
     else if (extres != null && "ImageDisplay".equals(extres.getType().getName()))
     { out.println("  ImageView " + extop + "Result;"); }
+    else if (extres != null && "GraphDisplay".equals(extres.getType().getName()))
+    { out.println("  ImageView " + extop + "Result;"); }
     else if (extres != null)  
     { out.println("  TextView " + extop + "Result;"); }
   } 
@@ -1289,6 +1341,8 @@ public static void androidOpViewActivity(String op, String systemName,
   { out.println("    " + op + "Result = (WebView) findViewById(R.id." + op + "Result);"); }
   else if (res != null && "ImageDisplay".equals(res.getType().getName()))
   { out.println("    " + op + "Result = (ImageView) findViewById(R.id." + op + "Result);"); }
+  else if (res != null && "GraphDisplay".equals(res.getType().getName()))
+  { out.println("    " + op + "Result = (ImageView) findViewById(R.id." + op + "Result);"); }
   else if (res != null)  
   { out.println("    " + op + "Result = (TextView) findViewById(R.id." + op + "Result);"); }
 	
@@ -1318,6 +1372,8 @@ public static void androidOpViewActivity(String op, String systemName,
       if (extres != null && "WebDisplay".equals(extres.getType().getName()))
       { out.println("    " + extop + "Result = (WebView) findViewById(R.id." + extop + "Result);"); }
       else if (extres != null && "ImageDisplay".equals(extres.getType().getName()))
+      { out.println("    " + extop + "Result = (ImageView) findViewById(R.id." + extop + "Result);"); }
+      else if (extres != null && "GraphDisplay".equals(extres.getType().getName()))
       { out.println("    " + extop + "Result = (ImageView) findViewById(R.id." + extop + "Result);"); }
       else if (extres != null)
       { out.println("    " + extop + "Result = (TextView) findViewById(R.id." + extop + "Result);"); }
@@ -1364,6 +1420,13 @@ public static void androidOpViewActivity(String op, String systemName,
     out.println("        Drawable _drawable = new BitmapDrawable(_rsrcs, _imageStream);"); 
     out.println("        " + op + "Result.setImageDrawable(_drawable);"); 
     out.println("      }  catch (Exception _e) { _e.printStackTrace(); }"); 
+    out.println("    }"); 
+  }
+  else if (res != null && "GraphDisplay".equals(res.getType().getName())) 
+  { out.println("    { GraphDisplay _result = " + bean + "." + op + "();"); 
+    out.println("      " + op + "Result.invalidate();"); 
+	out.println("      " + op + "Result.refreshDrawableState();"); 
+    out.println("      " + op + "Result.setImageDrawable(_result);"); 
     out.println("    }"); 
   }
   else if (res != null) 
@@ -1440,6 +1503,13 @@ public static void androidOpViewActivity(String op, String systemName,
         out.println("      }  catch (Exception _e) { _e.printStackTrace(); }"); 
         out.println("    }"); 
       }
+      else if (extres != null && "GraphDisplay".equals(extres.getType().getName())) 
+      { out.println("    { GraphDisplay _result = " + extbean + "." + extop + "();"); 
+        out.println("      " + extop + "Result.invalidate();"); 
+	    out.println("      " + extop + "Result.refreshDrawableState();"); 
+        out.println("      " + extop + "Result.setImageDrawable(_result);"); 
+        out.println("    }"); 
+      }
       else if (extres != null) 
       { out.println("    { " + extop + "Result.setText(" + extbean + "." + extop + "() + \"\"); }"); } 
       else 
@@ -1478,6 +1548,13 @@ public static void androidOpViewFragment(String op, String packageName,
   out.println(); 
   out.println("import androidx.appcompat.app.AppCompatActivity;\n\r");
   out.println("import android.os.Bundle;");
+  out.println("import android.content.res.Resources;"); 
+  out.println("import android.graphics.drawable.Drawable;"); 
+  out.println("import androidx.core.content.res.ResourcesCompat;");
+  out.println("import android.content.res.AssetManager;"); 
+  out.println("import android.graphics.drawable.BitmapDrawable;"); 
+  out.println("import java.io.InputStream;"); 
+
   out.println(extraimports);
   out.println("import android.view.LayoutInflater;"); 
   out.println("import android.view.ViewGroup;"); 
@@ -1507,6 +1584,7 @@ public static void androidOpViewFragment(String op, String packageName,
   out.println("import android.widget.RadioGroup;"); 
   out.println("import android.widget.EditText;");
   out.println("import android.webkit.WebView;"); 
+  out.println("import android.webkit.ImageView;"); 
   out.println("import android.widget.TextView;\n\r");
   out.println(); 
 
@@ -1551,6 +1629,10 @@ public static void androidOpViewFragment(String op, String packageName,
   
   if (res != null && "WebDisplay".equals(res.getType().getName()))
   { out.println("  WebView " + op + "Result;"); }
+  else if (res != null && "ImageDisplay".equals(res.getType().getName()))
+  { out.println("  ImageView " + op + "Result;"); }
+  else if (res != null && "GraphDisplay".equals(res.getType().getName()))
+  { out.println("  ImageView " + op + "Result;"); }
   else if (res != null)  
   { out.println("  TextView " + op + "Result;"); }
 
@@ -1587,6 +1669,10 @@ public static void androidOpViewFragment(String op, String packageName,
 
     if (extres != null && "WebDisplay".equals(extres.getType().getName()))
     { out.println("  WebView " + extop + "Result;"); }
+    else if (extres != null && "ImageDisplay".equals(extres.getType().getName()))
+    { out.println("  ImageView " + extop + "Result;"); }
+    else if (extres != null && "GraphDisplay".equals(extres.getType().getName()))
+    { out.println("  ImageView " + extop + "Result;"); }
     else if (extres != null)  
     { out.println("  TextView " + extop + "Result;");  }
   } 
@@ -1635,6 +1721,10 @@ public static void androidOpViewFragment(String op, String packageName,
 
   if (res != null && "WebDisplay".equals(res.getType().getName()))
   { out.println("    " + op + "Result = (WebView) root.findViewById(R.id." + op + "Result);"); }
+  else if (res != null && "ImageDisplay".equals(res.getType().getName()))
+  { out.println("    " + op + "Result = (ImageView) root.findViewById(R.id." + op + "Result);"); }
+  else if (res != null && "GraphDisplay".equals(res.getType().getName()))
+  { out.println("    " + op + "Result = (ImageView) root.findViewById(R.id." + op + "Result);"); }
   else if (res != null)  
   { out.println("    " + op + "Result = (TextView) root.findViewById(R.id." + op + "Result);"); }
 	
@@ -1663,6 +1753,10 @@ public static void androidOpViewFragment(String op, String packageName,
 
       if (extres != null && "WebDisplay".equals(extres.getType().getName()))
       { out.println("    " + extop + "Result = (WebView) root.findViewById(R.id." + extop + "Result);"); }
+      else if (extres != null && "ImageDisplay".equals(extres.getType().getName()))
+      { out.println("    " + extop + "Result = (ImageView) findViewById(R.id." + extop + "Result);"); }
+      else if (extres != null && "GraphDisplay".equals(extres.getType().getName()))
+      { out.println("    " + extop + "Result = (ImageView) findViewById(R.id." + extop + "Result);"); }
       else if (extres != null)
       { out.println("    " + extop + "Result = (TextView) root.findViewById(R.id." + extop + "Result);"); }
     } 
@@ -1724,6 +1818,24 @@ public static void androidOpViewFragment(String op, String packageName,
 
   if (res != null && "WebDisplay".equals(res.getType().getName())) 
   { out.println("    { " + op + "Result.loadUrl(" + bean + "." + op + "().url + \"\"); }"); }
+  else if (res != null && "ImageDisplay".equals(res.getType().getName())) 
+  { out.println("    { Resources _rsrcs = getResources();"); 
+    out.println("      AssetManager _amanager = _rsrcs.getAssets();"); 
+    out.println("      try {"); 
+	out.println("        String _imgName = " + bean + "." + op + "().imageName;"); 
+    out.println("        InputStream _imageStream = _amanager.open(_imgName);"); 
+    out.println("        Drawable _drawable = new BitmapDrawable(_rsrcs, _imageStream);"); 
+    out.println("        " + op + "Result.setImageDrawable(_drawable);"); 
+    out.println("      }  catch (Exception _e) { _e.printStackTrace(); }"); 
+    out.println("    }"); 
+  }
+  else if (res != null && "GraphDisplay".equals(res.getType().getName())) 
+  { out.println("    { GraphDisplay _result = " + bean + "." + op + "();"); 
+    out.println("      " + op + "Result.invalidate();"); 
+	out.println("      " + op + "Result.refreshDrawableState();"); 
+    out.println("      " + op + "Result.setImageDrawable(_result);"); 
+    out.println("    }"); 
+  }
   else if (res != null) 
   { out.println("    { " + op + "Result.setText(" + bean + "." + op + "() + \"\"); }"); } 
   else 
@@ -1786,6 +1898,24 @@ public static void androidOpViewFragment(String op, String packageName,
 
       if (extres != null && "WebDisplay".equals(extres.getType().getName())) 
       { out.println("    { " + extop + "Result.loadUrl(" + extbean + "." + extop + "().url + \"\"); }"); }
+      else if (extres != null && "ImageDisplay".equals(extres.getType().getName())) 
+      { out.println("    { Resources _rsrcs = getResources();"); 
+        out.println("      AssetManager _amanager = _rsrcs.getAssets();"); 
+        out.println("      try {"); 
+	    out.println("        String _imgName = " + extbean + "." + extop + "().imageName;"); 
+        out.println("        InputStream _imageStream = _amanager.open(_imgName);"); 
+        out.println("        Drawable _drawable = new BitmapDrawable(_rsrcs, _imageStream);"); 
+        out.println("        " + extop + "Result.setImageDrawable(_drawable);"); 
+        out.println("      }  catch (Exception _e) { _e.printStackTrace(); }"); 
+        out.println("    }"); 
+      }
+      else if (extres != null && "GraphDisplay".equals(extres.getType().getName())) 
+      { out.println("    { GraphDisplay _result = " + extbean + "." + extop + "();"); 
+        out.println("      " + extop + "Result.invalidate();"); 
+	    out.println("      " + extop + "Result.refreshDrawableState();"); 
+        out.println("      " + extop + "Result.setImageDrawable(_result);"); 
+        out.println("    }"); 
+      }
       else if (extres != null) 
       { out.println("    { " + extop + "Result.setText(" + extbean + "." + extop + "() + \"\"); }"); } 
       else 
@@ -3151,7 +3281,13 @@ public static void generateRecyclerViewAdapter(Entity ent, String packageName, P
       out.println("   public static InternetAccessor getInstance()");
       out.println("   { if (instance == null) "); 
 	  out.println("     { instance = new InternetAccessor(); }");
-	  out.println("     return instance; }"); 
+	  out.println("     return instance;"); 
+	  out.println("   }"); 
+      out.println("");
+      out.println("   public static InternetAccessor createInternetAccessor()");
+      out.println("   { InternetAccessor newinstance = new InternetAccessor();");
+	  out.println("     return newinstance;"); 
+	  out.println("   }"); 
       out.println("");
       out.println("   @Override");
       out.println("   protected void onPreExecute() {}");
@@ -3470,4 +3606,47 @@ public static void generateGraphComponentVC(String packageName, String nestedPac
 	  out.close();  
 	} catch (Exception _e) { }  
   }
-}
+  
+  public static void generateBuildGradle(String appName, PrintWriter out)
+  { out.println("apply plugin: 'com.android.application'"); 
+    out.println(); 
+    out.println("android {");
+    out.println("  compileSdkVersion 29");
+    out.println("  buildToolsVersion \"29.0.3\"");
+    out.println("");
+    out.println("  defaultConfig {");
+    out.println("    applicationId \"com.example." + appName + "\""); 
+    out.println("    minSdkVersion 25");
+    out.println("    targetSdkVersion 29");
+    out.println("    versionCode 1");
+    out.println("    versionName \"1.0\"");
+    out.println("");
+    out.println("    testInstrumentationRunner \"androidx.test.runner.AndroidJUnitRunner\"");
+    out.println("  }");
+    out.println("");
+    out.println("  compileOptions {");
+    out.println("    sourceCompatibility JavaVersion.VERSION_1_8");
+    out.println("    targetCompatibility JavaVersion.VERSION_1_8");
+    out.println("  }");
+    out.println("");
+    out.println("  buildTypes {");
+    out.println("    release {");
+    out.println("        minifyEnabled false");
+    out.println("        proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'");
+    out.println("    }");
+    out.println("  }");
+    out.println("}");
+    out.println("");
+    out.println("dependencies {");
+    out.println("    implementation fileTree(dir: 'libs', include: ['*.jar'])");
+    out.println("");
+    out.println("    implementation 'androidx.appcompat:appcompat:1.2.0'");
+    out.println("    implementation 'com.google.android.material:material:1.2.1'");
+    out.println("    implementation 'androidx.constraintlayout:constraintlayout:2.0.1'");
+    out.println("    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'");
+    out.println("    testImplementation 'junit:junit:4.13'");
+    out.println("    androidTestImplementation 'androidx.test.ext:junit:1.1.2'");
+    out.println("    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'");
+    out.println("}"); 
+  }
+}  

@@ -82,7 +82,13 @@ public class UseCase extends ModelElement
   }
 
   public void setResultType(Type et)
-  { resultType = et;
+  { if ("void".equals(et + ""))
+    { resultType = null;
+	  operation.setResultType(null); 
+	  return;
+    } 
+	
+	resultType = et; 
     if (et != null && Type.isBasicType(et)) 
     { setElementType(et); } 
     operation.setResultType(et); 
@@ -1373,6 +1379,10 @@ public class UseCase extends ModelElement
   { Vector newparams = new Vector(); 
     newparams.addAll(parameters); 
     newparams.addAll(ownedAttribute); // static attributes
+	if (resultType != null)
+	{ Attribute resultPar = getResultParameter(); 
+	  newparams.add(resultPar); 
+	}
     Vector context0 = new Vector(); 
 
     for (int i = 0; i < ownedAttribute.size(); i++) 
@@ -2628,10 +2638,14 @@ public void generateCUIcode(PrintWriter out)
     out.println();
 
     String nme = getName();
+	
+	String retType = "void"; 
+	if (resultType != null)
+	{ retType = resultType + ""; }
 
     if (saved.contains(nme)) { }     
     else 
-    { out.println("  usecase " + nme + " {");
+    { out.println("  usecase " + nme + " : " + retType + " {");
          
       for (int i = 0; i < inclist.size(); i++) 
       { out.println("    includes " + inclist.get(i) + ";"); }  
@@ -2724,10 +2738,13 @@ public void generateCUIcode(PrintWriter out)
     
 
     String nme = getName();
+	String retType = "void"; 
+	if (resultType != null)
+	{ retType = resultType + ""; }
 
     if (saved.contains(nme)) { }     
     else 
-    { res = res + "  usecase " + nme + " {\n";
+    { res = res + "  usecase " + nme + " : " + retType + " {\n";
          
       for (int i = 0; i < inclist.size(); i++) 
       { res = res + "    includes " + inclist.get(i) + ";\n"; }  
@@ -3186,7 +3203,9 @@ public void generateCUIcode(PrintWriter out)
     */ 
 
   public String cg(CGSpec cgs, Vector types, Vector entities)
-  { String etext = this + "";
+  { // _1(_2) : 3 { precondition: _4; activity: _5; } 
+  
+    String etext = this + "";
     Vector args = new Vector();
     args.add(getName());
     Vector eargs = new Vector();
@@ -3752,6 +3771,8 @@ public void generateCUIcode(PrintWriter out)
 	{ res = res + "  var result : WebDisplay = WebDisplay()\n\n"; }
 	else if (resultType != null && "ImageDisplay".equals(resultType.getName()))
 	{ res = res + "  var result : ImageDisplay = ImageDisplay()\n\n"; }
+	else if (resultType != null && "GraphDisplay".equals(resultType.getName()))
+	{ res = res + "  var result : GraphDisplay = GraphDisplay()\n\n"; }
 	else if (resultType != null)
     { res = res + "  var result : " + resultType.getSwift() + " = " + resultType.getSwiftDefaultValue() + "\n\n"; }
 
