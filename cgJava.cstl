@@ -1,0 +1,344 @@
+--
+-- Main code-generation specification file for Java  
+-- Version 8+. Also uses cginterface.cstl
+-- Depends on Ocl.java
+-- 
+-- Copyright (c) 2003,2020 Kevin Lano
+-- This program and the accompanying materials are 
+-- made available under the
+-- terms of the Eclipse Public License 2.0 
+-- which is available at
+-- http://www.eclipse.org/legal/epl-2.0
+--
+-- SPDX-License-Identifier: EPL-2.0
+-- 
+
+
+Package::
+package _1 { types: _2 classes: _3 usecases: _4 } |-->package _1;\n\nimport java.util.*;\nimport java.util.Map;\nimport java.util.HashMap;\n\n\n_2 \n_3\npublic class _1\n{ public static void main(String[] args) { }\n\n_4 \n}\n
+
+
+
+Type::
+Sequence(String) |-->ArrayList<String>
+Sequence(int) |-->ArrayList<Integer>
+Sequence(double) |-->ArrayList<Double>
+Sequence(long) |-->ArrayList<Long>
+Sequence(boolean) |-->ArrayList<Boolean>
+
+Set(String) |-->HashSet<String>
+Set(int) |-->HashSet<Integer>
+Set(double) |-->HashSet<Double>
+Set(long) |-->HashSet<Long>
+Set(boolean) |-->HashSet<Boolean>
+
+Sequence(_1) |-->ArrayList<_1>
+Set(_1) |-->HashSet<_1>
+Map(_1,_2) |-->HashMap<_1,_2>
+
+
+
+Enumeration::
+enumeration _1 { _2 } |-->enum _1 { _2 } \n
+
+literal _1, _2 |-->_1, _2
+literal _1 |-->_1
+
+
+
+
+BasicExpression::
+self |-->this
+
+_1 |-->_1`typename._1<when> _1 enumerationLiteral
+
+_1.allInstances |-->_1._1_allInstances
+
+_1.insertAt(_2,_3) |-->Ocl.insertAt(_1,_2,_3)
+
+Integer.subrange(_1,_2) |-->Ocl.integerSubrange(_1,_2)
+
+Integer.Sum(_1,_2,_3,_4) |-->Ocl.sum(Ocl.collectSequence(Ocl.integerSubrange(_1,_2),(_3)->{ return _4; }))
+
+Integer.Prd(_1,_2,_3,_4) |-->Ocl.prd(Ocl.collectSequence(Ocl.integerSubrange(_1,_2),(_3)->{ return _4; }))
+
+_1.subrange(_2,_3) |-->Ocl.subrange(_1,_2,_3)
+
+_1[_2] |-->(_1.charAt(_2) + "")<when> _1 String
+_1[_2] |-->_1._1_index.get(_2)<when> _1 classId
+
+_1[_2] |-->((_1`elementType) (_1).get(_2 - 1))<when> _2 numeric
+
+_1[_2] |-->((_1`elementType) (_1).get(_2))<when> _2 not numeric
+
+displayString(_1) |-->System.out.println(_1)
+displayint(_1) |-->System.out.println("" + _1)
+displaylong(_1) |-->System.out.println("" + _1)
+displayboolean(_1) |-->System.out.println("" + _1)
+
+createByPK_1(_2) |-->_1.createByPK_1(_2)
+create_1() |-->_1.create_1()
+
+_1._2(_3) |-->_1._2(_3)
+
+_1._2 |-->_1._2
+
+
+
+
+
+UnaryExpression::
+-_1 |-->-_1
++_1 |-->+_1
+_1->log() |-->Math.log(_1)
+_1->exp() |-->Math.exp(_1)
+_1->sin() |-->Math.sin(_1)
+_1->cos() |-->Math.cos(_1)
+_1->tan() |-->Math.tan(_1)
+_1->asin() |-->Math.asin(_1)
+_1->acos() |-->Math.acos(_1)
+_1->atan() |-->Math.atan(_1)
+_1->sqr() |-->(_1)*(_1)
+_1->sqrt() |-->Math.sqrt(_1)
+_1->cbrt() |-->Math.cbrt(_1)
+_1->floor() |-->((int) Math.floor(_1))
+_1->ceil() |-->((int) Math.ceil(_1))
+_1->round() |-->((int) Math.round(_1))
+_1->abs() |-->Math.abs(_1)
+
+_1->size() |-->_1.length()<when> _1 String
+_1->size() |-->_1.size()<when> _1 collection
+
+_1->toInteger() |-->Integer.parseInt(_1).intValue()<when> _1 String
+_1->toReal() |-->Double.parseDouble(_1).doubleValue()<when> _1 String
+_1->toUpper() |-->_1.toUpperCase()<when> _1 String
+_1->toLower() |-->_1.toLowerCase()<when> _1 String
+_1->characters() |-->Ocl.characters(_1)
+
+_1->oclIsUndefined() |-->(_1 == null)
+_1->oclIsKindOf(_2) |-->(_1 instanceof _2)
+_1->oclAsType(_2) |-->((_2) _1)
+_1->allInstances() |-->_1._1_allInstances
+
+_1->first() |-->Ocl.first(_1)
+_1->last() |-->Ocl.last(_1)
+_1->tail() |-->Ocl.tail(_1)
+_1->front() |-->Ocl.front(_1)
+_1->reverse() |-->Ocl.reverse(_1)
+_1->max() |-->Ocl.max(_1)
+_1->min() |-->Ocl.min(_l)
+_1->sum() |-->Ocl.sum_1`elementType(_1)
+_1->prd() |-->Ocl.prd_1`elementType(_1)
+_1->sort() |-->Ocl.sort(_1)
+_1->any() |-->Ocl.any(_1)
+_1->isEmpty() |-->(_1.size() == 0)
+_1->notEmpty() |-->(_1.size() > 0)
+_1->asSet() |-->Ocl.asSet(_1)
+_1->asSequence() |-->Ocl.asSequence(_1)
+_1->flatten() |-->Ocl.flatten(_1)
+_1->values() |-->_1.values()
+_1->keys() |-->_1.keySet()
+
+
+not(_1) |-->!(_1)
+_1->display() |-->    System.out.println(_1 + "");
+
+
+BinaryExpression::
+_1 & _2 |-->_1 && _2 
+_1 or _2 |-->_1 || _2 
+_1 xor _2 |-->((_1 || _2) && !(_1 && _2))
+
+_1 = _2 |-->_1 == _2<when> _1 not String, _1 not object, _1 not collection
+_1 = _2 |-->_1.equals(_2)<when> _1 String
+_1 = _2 |-->_1.equals(_2)<when> _1 object
+_1 = _2 |-->_1.equals(_2)<when> _1 Sequence, _2 collection
+_1 = _2 |-->Ocl.equalsSet(_1,_2) <when> _1 Set, _2 collection
+_1 < _2 |-->_1 < _2<when> _1 numeric, _2 numeric
+_1 < _2 |-->(_1.compareTo(_2) < 0)<when> _1 String, _2 String
+_1 > _2 |-->_1 > _2<when> _1 numeric, _2 numeric
+_1 > _2 |-->(_1.compareTo(_2) > 0)<when> _1 String, _2 String
+_1 <= _2 |-->_1 <= _2<when> _1 numeric, _2 numeric
+_1 <= _2 |-->(_1.compareTo(_2) <= 0)<when> _1 String, _2 String
+_1 >= _2 |-->_1 >= _2<when> _1 numeric, _2 numeric
+_1 >= _2 |-->(_1.compareTo(_2) >= 0)<when> _1 String, _2 String
+_1 + _2 |-->_1 + _2 
+_1 - _2 |-->_1 - _2<when> _1 numeric, _2 numeric
+_1 - _2 |-->Ocl.subtract(_1,_2)<when> _1 String, _2 String
+_1 - _2 |-->Ocl.subtract(_1,_2)<when> _1 Set, _2 collection
+_1 - _2 |-->Ocl.subtract(_1,_2)<when> _1 Sequence, _2 collection
+_1 * _2 |-->_1 * _2 
+_1 / _2 |-->_1 / _2 
+_1 mod _2 |-->_1 % _2
+
+_1->pow(_2) |-->Math.pow(_1,_2)
+_1^_2 |-->Ocl.concatenate(_1,_2)
+_1->union(_2) |-->Ocl.union(_1,_2)
+_1->unionAll(_2|_3) |-->Ocl.unionAll(_1,(_2)->{return _3;})
+_1->intersection(_2) |-->Ocl.intersection(_1,_2)
+_1->intersectAll(_2|_3) |-->Ocl.intersectAllSet(_1,(_2)->{return _3;})<when> _3 Set
+_1->intersectAll(_2|_3) |-->Ocl.intersectAllSequence(_1,(_2)->{return _3;})<when> _3 Sequence
+_1->count(_2) |-->Collections.frequency(_1,_2)
+
+_1->at(_2) |-->(_1.charAt(_2) + "")<when> _1 String
+_1->at(_2) |-->((_1`elementType) _1.get(_2 - 1))<when> _2 numeric
+_1->at(_2) |-->(_1`elementType) _1.get(_2))<when> _2 not numeric
+
+
+_1->select(_2 | _3) |-->Ocl.selectSet(_1,(_2)->{return _3;})<when> _1 Set
+_1->select(_2 | _3) |-->Ocl.selectSequence(_1,(_2)->{return _3;})<when> _1 Sequence
+_1->reject(_2 | _3) |-->Ocl.rejectSet(_1,(_2)->{return _3;})<when> _1 Set
+_1->reject(_2 | _3) |-->Ocl.rejectSequence(_1,(_2)->{return _3;})<when> _1 Sequence
+_1->collect(_2 | _3) |-->Ocl.collectSet(_1,(_2)->{return _3;})<when> _1 Set
+_1->collect(_2 | _3) |-->Ocl.collectSequence(_1,(_2)->{return _3;})<when> _1 Sequence
+_1->sortedBy(_2|_3) |-->Ocl.sortedBy(_1, Ocl.collectSequence(_1, (_2)->{ return _3; }))
+
+_1->any(_2|_3) |-->Ocl.any(_1._1_allInstances, (_2)->{ return _3; })<when> _1 classId
+_1->any(_2|_3) |-->Ocl.any(_1, (_2)->{ return _3; })<when> _1 not classId
+
+
+_1->forAll(_2 | _3) |-->Ocl.forAll(_1._1_allInstances, (_2)->{ return _3; })<when>_1 classId
+_1->forAll(_2 | _3) |-->Ocl.forAll(_1, (_2)->{ return _3; })<when>_1 not classId
+
+_1->exists(_2 | _3) |-->Ocl.exists(_1._1_allInstances, (_2)->{ return _3; })<when> _1 classId
+_1->exists(_2 | _3) |-->Ocl.exists(_1, (_2)->{ return _3; })<when> _1 not classId
+
+_1->exists1(_2 | _3) |-->Ocl.exists1(_1._1_allInstances, (_2)->{ return _3; })<when> _1 classId
+_1->exists1(_2 | _3) |-->Ocl.exists1(_1, (_2)->{ return _3; })<when> _1 not classId
+
+_1->isUnique(_2 | _3) |-->Ocl.isUnique(Ocl.collectSequence(_1, (_2)->{ return _3; }))
+
+_1 : _2 |-->_2.contains(_1)
+_1 <: _2 |-->_2.containsAll(_1)
+_1 /: _2 |-->!(_2.contains(_1))
+_1->includes(_2) |-->_1.contains(_2)
+_1->includesAll(_2) |-->_1.containsAll(_2)
+_1->excludes(_2) |-->!(_1.contains(_2))
+_1->excludesAll(_2) |-->Collections.disjoint(_1,_2)
+
+_1->including(_2) |-->Ocl.includingSet(_1,_2)<when> _1 Set
+_1->including(_2) |-->Ocl.includingSequence(_1,_2)<when> _1 Sequence
+_1->prepend(_2) |-->Ocl.prepend(_1,_2)
+_1->append(_2) |-->Ocl.append(_1,_2)
+_1->excluding(_2) |-->Ocl.excludingSet(_1,_2)<when> _1 Set
+_1->excluding(_2) |-->Ocl.excludingSequence(_1,_2)<when> _1 Sequence
+
+_1->hasPrefix(_2) |-->_1.startsWith(_2)
+_1->hasSuffix(_2) |-->_1.endsWith(_2)
+_1->after(_2) |-->Ocl.after(_1,_2))
+_1->before(_2) |-->Ocl.before(_1,_2)
+_1->matches(_2) |-->java.util.regex.Pattern.matches(_2,_1)
+
+
+
+
+SetExpression::
+Set{} |-->(new HashSet())
+Set{_1} |-->Ocl.initialiseSet(_1) 
+Sequence{} |-->(new ArrayList())
+Sequence{_1} |-->Ocl.initialiseSequence(_1)
+Map{} |-->(new HashMap())
+
+
+ConditionalExpression::
+if _1 then _2 else _3 endif |-->((_1)?_2:_3)
+
+
+Class::
+class _1 { _2 }   |-->interface _1 { _2`cginterface }\n<when> _1 interface
+
+
+class _1 { _2 }   |-->class _1 { static ArrayList<_1> _1_allInstances = new ArrayList<_1>();\n\n  _1() { _1_allInstances.add(this); }\n\n  static _1 create_1() { _1 result = new _1();\n    return result; }\n\n_2}\n 
+
+
+class _1 extends _2 { _3 }   |-->class _1 extends _2 { static ArrayList<_1> _1_allInstances = new ArrayList<_1>();\n\n  _1() { super();\n    _1_allInstances.add(this); }\n\n  static _1 create_1() { _1 result = new _1();\n    return result; }\n\n_3}\n
+
+
+class _1 implements _2 { _3 }   |-->class _1 implements _2 { static ArrayList<_1> _1_allInstances = new ArrayList<_1>();\n\n  _1() { _1_allInstances.add(this); }\n\n  static _1 create_1() { _1 result = new _1();\n    return result; }\n\n_3}\n
+
+
+class _1 extends _2 implements _3 { _4 }   |-->class _1 extends _2 implements _3 { static ArrayList<_1> _1_allInstances = new ArrayList<_1>();\n\n  _1() { super();\n    _1_allInstances.add(this); }\n\n  static _1 create_1() { _1 result = new _1();\n    return result; }\n\n_4}\n
+
+
+abstract class _1 { _2 }   |-->abstract class _1 { static ArrayList<_1> _1_allInstances = new ArrayList<_1>();\n  _1() { _1_allInstances.add(this); }\n\n_2}\n
+
+
+abstract class _1 extends _2 { _3 }   |-->abstract class _1 extends _2 { static ArrayList<_1> _1_allInstances = new ArrayList<_1>();\n\n  _1() { super();\n    _1_allInstances.add(this); }\n\n_3}\n
+
+
+abstract class _1 implements _2 { _3 }   |-->abstract class _1 implements _2 { static ArrayList<_1> _1_allInstances = new ArrayList<_1>();\n\n  _1() { _1_allInstances.add(this); }\n\n_3}\n
+
+
+abstract class _1 extends _2 implements _3 { _4 }   |-->abstract class _1 extends _2 implements _3 { static ArrayList<_1> _1_allInstances = new ArrayList<_1>();\n\n  _1() { super();\n    _1_allInstances.add(this); }\n\n_4}\n
+
+
+
+Attribute::
+static attribute _1 : _2; |-->  static _2 _1 = _2`defaultValue;\n
+
+identity attribute _1 : _2 |-->  _2 _1 = _2`defaultValue; /* primary */\n  static Map<_2,_1`ownername> _1`ownername_index = new HashMap<_2,_1`ownername>();\n\n  static _1`ownername createByPK_1`ownername(_2 _1x) { _1`ownername result = new _1`ownername();\n    _1`ownername._1`ownername_index.put(_1x,result);\n    result._1 = _1x;\n    return result; }\n\n<when> _1 primary
+
+identity attribute _1 : _2; |-->  _2 _1 = _2`defaultValue; /* key */\n
+
+attribute _1 : _2; |-->  _2 _1 = _2`defaultValue;\n
+
+reference _1 : _2; |-->  _2 _1 = new _2();\n<when> _2 collection
+
+reference _1 : _2; |-->  _2 _1 = null;\n<when> _2 not collection
+
+
+
+
+Parameter::
+_1 : _2, _3 |-->_2 _1, _3
+_1 : _2 |-->_2 _1
+
+
+ParameterArgument::
+_1, _2 |-->_1, _2
+_1 |-->_1
+
+
+
+Operation::
+query _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->\n  public _3 _1(_2)\n  {\n_6  }\n\n
+
+operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->\n  public _3 _1(_2)\n  {\n_6  }\n\n
+
+static query _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->\n  public static _3 _1(_2)\n  {\n_6  }\n\n
+
+static operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->\n  public static _3 _1(_2)\n  {\n_6  }\n\n
+
+
+
+Statement::
+
+_1 := _2 |-->    _1 = Ocl.copySet(_2);\n<when> _1 Set
+
+_1 := _2 |-->    _1 = Ocl.copySequence(_2);\n<when> _1 Sequence
+
+_1 := _2 |-->    _1 = _2;\n
+
+
+while _1 do _2 |-->    while (_1)\n    {\n  _2    }\n
+for _1 : _2 do _3 |-->    for (_2`elementType _1 : _2)\n    {\n  _3    }\n
+
+if _1 then _2 else _3 |-->    if (_1)\n    {\n  _2    }\n    else {\n  _3    }\n
+
+
+_1 ; _2 |-->_1_2
+skip |-->    {}\n
+return _1 |-->    return _1;\n
+return |-->    return;\n
+break |-->    break;\n
+call _1 |-->    _1;\n 
+execute _1 |-->    /* Abstract statement: _1 */\n
+var _1 : _2 |-->    _2 _1 = null;\n<when> _2 Class
+var _1 : _2 |-->    _2 _1 = null;\n<when> _2 collection
+var _1 : _2 |-->    _2 _1 = _2`defaultValue;\n
+
+
+
+UseCase::
+usecase _1(_2) : _3 { _4 } |-->  public static _3 _1(_2)\n  {\n_4  }
+

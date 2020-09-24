@@ -14,7 +14,7 @@
 -- 
 
 Package::
-package _1 { types: _2 classes: _3 usecases: _4 } |-->import Foundation\nimport Glibc\n\nfunc displayString(s: String)\n{ print(s) }\n\nfunc displayint(s: Int)\n{ print(String(s)) }\n\nfunc displaylong(s: Int)\n{ print(String(s)) }\n\nfunc displaydouble(s: Double)\n{ print(String(s)) }\n\nfunc displayboolean(s: Bool)\n{ print(String(s)) }\n\n_2\n\n_3\n\n_3`cgswiftmain \n\n_4 
+package _1 { types: _2 classes: _3 usecases: _4 } |-->import Foundation\nimport Glibc\n\nfunc displayString(_ s: String)\n{ print(s) }\n\nfunc displayint(_ s: Int)\n{ print(String(s)) }\n\nfunc displaylong(_ s: Int)\n{ print(String(s)) }\n\nfunc displaydouble(_ s: Double)\n{ print(String(s)) }\n\nfunc displayboolean(_ s: Bool)\n{ print(String(s)) }\n\n_2\n\n_3\n\n_3`cgswiftmain \n\n_4 
 
 
 Enumeration::
@@ -66,6 +66,8 @@ displaylong(_1) |-->displaylong(s: _1)
 displaydouble(_1) |-->displaydouble(s: _1)
 displayboolean(_1) |-->displayboolean(s: _1)
 createByPK_1(_2) |-->createByPK_1(key: _2)
+persist_1(_2) |-->persist_1(_x: _2)
+
 
 _1._2(_3) |-->_1!._2(_3)<when> _1 object
 _1._2 |-->_1!._2<when> _1 object
@@ -117,7 +119,7 @@ _1->last() |-->_1[_1.count - 1]
 _1->tail() |-->Ocl.tail(s: _1)
 _1->front() |-->Ocl.front(s: _1)
 
-_1->reverse() |-->Ocl.reverseString(s: _1)<when> _1 String
+_1->reverse() |-->Ocl.reverseString(str: _1)<when> _1 String
 _1->reverse() |-->Ocl.reverse(s: _1)
 
 _1->max() |-->Ocl.max(s: _1)
@@ -235,9 +237,10 @@ _1->excluding(_2) |-->Ocl.excludingSequence(s: _1, x: _2)<when> _1 Sequence
 
 _1->hasPrefix(_2) |-->_1.hasPrefix(_2)
 _1->hasSuffix(_2) |-->_1.hasSuffix(_2)
-_1->after(_2) |-->Ocl.after(_1,_2))
-_1->before(_2) |-->Ocl.before(_1,_2)
+_1->after(_2) |-->Ocl.after(str: _1, sep: _2)
+_1->before(_2) |-->Ocl.before(str: _1, sep: _2)
 _1->restrict(_2) |-->Ocl.restrict(m: _1, ks: _2)
+_1->matches(_2) |-->Ocl.matches(str: _1, pattern: _2)
 
 
 
@@ -260,20 +263,20 @@ class _1 { _2 } |-->protocol _1\n{ _2`cgprotocol }\n<when> _1 interface
  
 class _1 { _2 }   |-->class _1\n{ init() { }\n\n_2}\n 
 
-class _1 extends _2 { _3 }   |-->class _1 : _2\n{ init()\n  { super.init() }\n\n_3}\n\n
+class _1 extends _2 { _3 }   |-->class _1 : _2\n{ override init()\n  { super.init() }\n\n_3}\n\n
 
 abstract class _1 { _2 }   |-->class _1\n{ init() { }\n\n_2}\n
 
-abstract class _1 extends _2 { _3 }   |-->class _1 : _2\n{ init() { super.init() }\n\n_3}\n
+abstract class _1 extends _2 { _3 }   |-->class _1 : _2\n{ override init() { super.init() }\n\n_3}\n
 
 
 class _1 implements _2 { _3 }   |-->class _1 : _2 { \n  init() { }\n\n_3}\n 
 
-class _1 extends _2 implements _3 { _4 }   |-->class _1 : _2, _3\n{ init()\n  { super.init() }\n\n_4}\n\n
+class _1 extends _2 implements _3 { _4 }   |-->class _1 : _2, _3\n{ override init()\n  { super.init() }\n\n_4}\n\n
 
 abstract class _1 implements _2 { _3 }   |-->class _1 : _2\n{ init() { }\n\n_3}\n
 
-abstract class _1 extends _2 implements _3 { _4 }   |-->class _1 : _2, _3\n{ init() { super.init() }\n\n_4}\n
+abstract class _1 extends _2 implements _3 { _4 }   |-->class _1 : _2, _3\n{ override init() { super.init() }\n\n_4}\n
 
 
 Attribute::
