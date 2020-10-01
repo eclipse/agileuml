@@ -20047,17 +20047,19 @@ public void produceCUI(PrintWriter out)
 	  Vector optests = e.operationTestCases(); 
       System.out.println("*** Test cases for entity " + e.getName() + " operations written to output/tests"); 
       for (int j = 0; j < optests.size(); j++) 
-      { Vector otest = (Vector) optests.get(j); 
-	    String oname = (String) otest.get(0);
-		String otxt = (String) otest.get(1);  
-        try
-        { PrintWriter rout = new PrintWriter(
-                              new BufferedWriter(
-                                new FileWriter("output/tests/" + oname + "test" + e.getName() + "_" + j + ".txt")));
-          rout.println(otxt); 
-          rout.close(); 
-        } 
-        catch (Exception _x) { } 
+      { if (optests.get(j) instanceof Vector)
+	    { Vector otest = (Vector) optests.get(j); 
+	      String oname = otest.get(0) + "";
+		  String otxt = otest.get(1) + "";  
+          try
+          { PrintWriter rout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter("output/tests/" + oname + "test" + e.getName() + "_" + j + ".txt")));
+            rout.println(otxt); 
+            rout.close(); 
+          } 
+          catch (Exception _x) { } 
+		} 
       }   
     } 
 	

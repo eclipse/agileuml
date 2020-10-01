@@ -243,6 +243,42 @@ abstract class Expression
     return 1; 
   } 
 
+  public void getParameterBounds(Vector pars, Vector bounds, java.util.Map attBounds)
+  { } 
+
+  public static void identifyUpperBounds(Vector atts, java.util.Map boundConstraints, java.util.Map upperBounds)
+  { for (int i = 0; i < atts.size(); i++) 
+    { Attribute att = (Attribute) atts.get(i); 
+      String aname = att.getName(); 
+      Vector bpreds = (Vector) boundConstraints.get(aname); 
+      if (bpreds != null) 
+      { for (int j = 0; j < bpreds.size(); j++) 
+        { BinaryExpression pred = (BinaryExpression) bpreds.get(j); 
+          Expression ubound = pred.getUpperBound(aname); 
+          if (ubound != null)
+          { upperBounds.put(aname,ubound); }
+         }
+       } 
+     }
+  } 
+  
+  public static void identifyLowerBounds(Vector atts, java.util.Map boundConstraints, java.util.Map lowerBounds)
+  { for (int i = 0; i < atts.size(); i++) 
+    { Attribute att = (Attribute) atts.get(i); 
+      String aname = att.getName(); 
+      Vector bpreds = (Vector) boundConstraints.get(aname); 
+      if (bpreds != null) 
+      { for (int j = 0; j < bpreds.size(); j++) 
+        { BinaryExpression pred = (BinaryExpression) bpreds.get(j); 
+          Expression lbound = pred.getLowerBound(aname); 
+          if (lbound != null)
+          { lowerBounds.put(aname,lbound); }
+        }
+	 } 
+     }
+  } 
+
+
   public static boolean isSimpleEntity(Expression ee) 
   { if (ee == null) 
     { return false; } 
