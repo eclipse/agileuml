@@ -897,9 +897,9 @@ public class Attribute extends ModelElement
   public void setFrozen(boolean fr)
   { frozen = fr; 
     if (fr) 
-	{ addStereotype("readOnly"); }
-	else 
-	{ removeStereotype("readOnly"); }
+    { addStereotype("readOnly"); }
+    else 
+    { removeStereotype("readOnly"); }
   }  
   
   public boolean isInteger()
@@ -937,6 +937,9 @@ public class Attribute extends ModelElement
 
   public boolean isStatic()
   { return instanceScope == false; } 
+
+  public boolean isDerived()
+  { return kind == ModelElement.DERIVED; } 
 
   public void setVisibility(int visib)
   { visibility = visib; } 
@@ -4497,7 +4500,8 @@ public String iosExtractOp(String ent, int i)
     return Type.typeSimilarity(type,typetatt,mm,entities); 
   } // int does not match to enum, but boolean can match to an enum of size 2
 
-  public Vector testCases(String x)
+
+  public Vector testCases(String x, java.util.Map lowerBnds, java.util.Map upperBnds)
   { Vector res = new Vector(); 
     if (type == null) 
     { return res; } 
@@ -4506,26 +4510,106 @@ public String iosExtractOp(String ent, int i)
     String t = type.getName(); 
     Vector vs = type.getValues(); 
 
+    String nmx = getName(); 
+    Expression lbnd = (Expression) lowerBnds.get(nmx); 
+    Expression ubnd = (Expression) upperBnds.get(nmx); 
+
     if ("int".equals(t))
     { res.add(nme + " = 0"); 
       res.add(nme + " = -1");
       res.add(nme + " = 1"); 
-      res.add(nme + " = 2147483647");  // Integer.MAX_VALUE);
-      res.add(nme + " = -2147483648"); // Integer.MIN_VALUE);
+
+	  if (ubnd != null && lbnd != null)
+	  { try
+	    { double ud = Double.parseDouble(ubnd + ""); 
+	      double ld = Double.parseDouble(lbnd + ""); 
+		  int midd = (int) Math.floor((ud + ld)/2); 
+		  res.add(nme + " = " + midd);
+		} catch (Exception _e) { } 
+	  }
+
+      if (ubnd != null) 
+      { String upperval = ubnd + ""; 
+        if ("0".equals(upperval) || "1".equals(upperval) || "-1".equals(upperval)) { } 
+        else 
+        { res.add(nme + " = " + upperval); }
+      }  
+      else 
+      { res.add(nme + " = 2147483647"); } // Integer.MAX_VALUE);
+
+      if (lbnd != null) 
+      { String lowerval = lbnd + ""; 
+        if ("0".equals(lowerval) || "1".equals(lowerval) || "-1".equals(lowerval)) { } 
+        else 
+        { res.add(nme + " = " + lowerval); }
+      }  
+      else 
+      { res.add(nme + " = -2147483648"); } // Integer.MIN_VALUE);
     } 
     else if ("long".equals(t))
     { res.add(nme + " = 0"); 
       res.add(nme + " = -1");
       res.add(nme + " = 1"); 
-      res.add(nme + " = " + Long.MAX_VALUE);
-      res.add(nme + " = " + Long.MIN_VALUE);
+	  
+	  if (ubnd != null && lbnd != null)
+	  { try
+	    { double ud = Double.parseDouble(ubnd + ""); 
+	      double ld = Double.parseDouble(lbnd + ""); 
+		  long midd = (long) Math.floor((ud + ld)/2); 
+		  res.add(nme + " = " + midd);
+		} catch (Exception _e) { } 
+	  }
+
+      if (ubnd != null) 
+      { String upperval = ubnd + ""; 
+        if ("0".equals(upperval) || "1".equals(upperval) || "-1".equals(upperval)) { } 
+        else 
+        { res.add(nme + " = " + upperval); }
+      }  
+      else 
+      { res.add(nme + " = " + Long.MAX_VALUE); } 
+
+      if (lbnd != null) 
+      { String lowerval = lbnd + ""; 
+        if ("0".equals(lowerval) || "1".equals(lowerval) || "-1".equals(lowerval)) { } 
+        else 
+        { res.add(nme + " = " + lowerval); }
+      }  
+      else 
+      { res.add(nme + " = " + Long.MIN_VALUE); } 
     } 
     else if ("double".equals(t))
     { res.add(nme + " = 0"); 
       res.add(nme + " = -1");
       res.add(nme + " = 1"); 
-      res.add(nme + " = " + Double.MAX_VALUE);
-      res.add(nme + " = " + Double.MIN_VALUE);
+	  
+	  if (ubnd != null && lbnd != null)
+	  { try
+	    { double ud = Double.parseDouble(ubnd + ""); 
+	      double ld = Double.parseDouble(lbnd + ""); 
+		  double midd = (ud + ld)/2; 
+		  res.add(nme + " = " + midd);
+		} catch (Exception _e) { } 
+	  }
+
+      if (ubnd != null) 
+      { String upperval = ubnd + ""; 
+        if ("0".equals(upperval) || "1".equals(upperval) || "-1".equals(upperval)) { } 
+        else 
+        { res.add(nme + " = " + upperval); }
+      }  
+      else 
+      { res.add(nme + " = " + Double.MAX_VALUE); } 
+	  
+	  if (lbnd != null) 
+      { String lowerval = lbnd + ""; 
+        if ("0".equals(lowerval) || "1".equals(lowerval) || "-1".equals(lowerval)) { } 
+        else 
+        { res.add(nme + " = " + lowerval); }
+      }  
+      else 
+      { res.add(nme + " = " + Double.MIN_VALUE); }
+      
     } 
     else if ("boolean".equals(t))
     { res.add(nme + " = true"); 
@@ -4557,6 +4641,150 @@ public String iosExtractOp(String ent, int i)
         res.add(tv + " : " + nme); 
       }
     } 
+ 
+    return res;  
+  } 
+
+  public Vector testValues(String x, java.util.Map lowerBnds, java.util.Map upperBnds)
+  { Vector res = new Vector(); 
+    if (type == null) 
+    { return res; } 
+
+    String nme = x + "." + getName(); 
+    String t = type.getName(); 
+    Vector vs = type.getValues(); 
+
+    String nmx = getName(); 
+    Expression lbnd = (Expression) lowerBnds.get(nmx); 
+    Expression ubnd = (Expression) upperBnds.get(nmx); 
+
+    if ("int".equals(t))
+    { res.add("0"); 
+      res.add("-1");
+      res.add("1"); 
+
+	  if (ubnd != null && lbnd != null)
+	  { try
+	    { double ud = Double.parseDouble(ubnd + ""); 
+	      double ld = Double.parseDouble(lbnd + ""); 
+		  int midd = (int) Math.floor((ud + ld)/2); 
+		  res.add("" + midd);
+		} catch (Exception _e) { } 
+	  }
+
+      if (ubnd != null) 
+      { String upperval = ubnd + ""; 
+        if ("0".equals(upperval) || "1".equals(upperval) || "-1".equals(upperval)) { } 
+        else 
+        { res.add(upperval); }
+      }  
+      else 
+      { res.add("2147483647"); } // Integer.MAX_VALUE);
+
+      if (lbnd != null) 
+      { String lowerval = lbnd + ""; 
+        if ("0".equals(lowerval) || "1".equals(lowerval) || "-1".equals(lowerval)) { } 
+        else 
+        { res.add(lowerval); }
+      }  
+      else 
+      { res.add("-2147483648"); } // Integer.MIN_VALUE);
+    } 
+    else if ("long".equals(t))
+    { res.add("0"); 
+      res.add("-1");
+      res.add("1"); 
+	  
+	  if (ubnd != null && lbnd != null)
+	  { try
+	    { double ud = Double.parseDouble(ubnd + ""); 
+	      double ld = Double.parseDouble(lbnd + ""); 
+		  long midd = (long) Math.floor((ud + ld)/2); 
+		  res.add("" + midd);
+		} catch (Exception _e) { } 
+	  }
+
+      if (ubnd != null) 
+      { String upperval = ubnd + ""; 
+        if ("0".equals(upperval) || "1".equals(upperval) || "-1".equals(upperval)) { } 
+        else 
+        { res.add(upperval); }
+      }  
+      else 
+      { res.add(Long.MAX_VALUE + "L"); } 
+
+      if (lbnd != null) 
+      { String lowerval = lbnd + ""; 
+        if ("0".equals(lowerval) || "1".equals(lowerval) || "-1".equals(lowerval)) { } 
+        else 
+        { res.add(lowerval); }
+      }  
+      else 
+      { res.add(Long.MIN_VALUE + "L"); } 
+    } 
+    else if ("double".equals(t))
+    { res.add("0"); 
+      res.add("-1");
+      res.add("1"); 
+	  
+	  if (ubnd != null && lbnd != null)
+	  { try
+	    { double ud = Double.parseDouble(ubnd + ""); 
+           double ld = Double.parseDouble(lbnd + ""); 
+           double midd = (ud + ld)/2; 
+           res.add("" + midd);
+	    } catch (Exception _e) { } 
+	  }
+
+      if (ubnd != null) 
+      { String upperval = ubnd + ""; 
+        if ("0".equals(upperval) || "1".equals(upperval) || "-1".equals(upperval)) { } 
+        else 
+        { res.add(upperval); }
+      }  
+      else 
+      { res.add("" + Double.MAX_VALUE); } 
+	  
+	  if (lbnd != null) 
+      { String lowerval = lbnd + ""; 
+        if ("0".equals(lowerval) || "1".equals(lowerval) || "-1".equals(lowerval)) { } 
+        else 
+        { res.add(lowerval); }
+      }  
+      else 
+      { res.add("" + Double.MIN_VALUE); }
+      
+    } 
+    else if ("boolean".equals(t))
+    { res.add("true"); 
+      res.add("false");
+    }
+    else if ("String".equals(t))
+    { res.add("\"\""); 
+      res.add("\" abc_XZ \"");
+      res.add("\"#�$* &~@':\"");
+    }
+    else if (vs != null && vs.size() > 0) 
+    { for (int j = 0; j < vs.size(); j++)   
+      { String v0 = (String) vs.get(j); 
+        res.add(v0); 
+      } 
+    }
+    else if (type.isEntity())
+    { String obj = t.toLowerCase() + "x_0"; 
+        // Identifier.nextIdentifier(t.toLowerCase()); 
+      String decl = obj; 
+      res.add(decl); 
+    }  
+    /* else if (type.isCollection() && elementType != null)
+    { Type elemT = getElementType(); 
+      Vector testVals = elemT.testValues(); 
+      res.add(""); 
+      for (int p = 0; p < testVals.size(); p++) 
+      { String tv = (String) testVals.get(p); 
+        res.add(tv + " : " + nme); 
+      }
+    } */ 
  
     return res;  
   } 

@@ -642,6 +642,20 @@ public class Constraint extends ConstraintOrGroup
   public boolean isOrdered()
   { return ordered; } 
 
+  public Constraint addReference(String ref, Type t) 
+  { Constraint res = (Constraint) clone(); 
+    BasicExpression refbe = new BasicExpression(ref); 
+    refbe.setType(t); 
+    if (cond0 != null)
+    { res.cond0 = (BinaryExpression) cond0.addReference(refbe,t); } 
+    if (cond != null) 
+    { res.cond = cond.addReference(refbe,t); }
+    if (succ != null) 
+    { res.succ = succ.addReference(refbe,t); }
+    return res; 
+  } 
+    
+
   public Vector readFrame()
   { Vector res = new Vector(); 
     Expression ante = antecedent(); 

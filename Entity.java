@@ -13692,17 +13692,33 @@ public BehaviouralFeature designAbstractKillOp()
     String x = nme.toLowerCase() + "$x"; 
     res.add(x + " : " + nme); 
 	
-	defineLocalFeatures(); 
+    defineLocalFeatures(); 
 
     Vector allattributes = localFeatures; 
-
+    java.util.Map upperBounds = new java.util.HashMap(); 
+    java.util.Map lowerBounds = new java.util.HashMap(); 
+    Vector bounds = new Vector(); 
+    java.util.Map aBounds = new java.util.HashMap(); 
+      
+    for (int i = 0; i < invariants.size(); i++) 
+    { Constraint con = (Constraint) invariants.get(i); 
+      Expression pre = con.succedent(); 
+      pre.getParameterBounds(allattributes,bounds,aBounds);
+	  
+      Expression.identifyUpperBounds(allattributes,aBounds,upperBounds); 
+      Expression.identifyLowerBounds(allattributes,aBounds,lowerBounds); 
+    } 
+	
     for (int i = 0; i < allattributes.size(); i++) 
     { Attribute att = (Attribute) allattributes.get(i);
-	  if (att.isIdentity() && allattributes.size() > 1) 
-	  { continue; }
+      if (att.isIdentity() && allattributes.size() > 1) 
+      { continue; }
+      if (att.isDerived() && allattributes.size() > 1) 
+      { continue; } 
 	   
       Vector newres = new Vector(); 
-      Vector testassignments = att.testCases(x); 
+      Vector testassignments = att.testCases(x,lowerBounds,upperBounds);
+ 
       for (int j = 0; j < res.size(); j++) 
       { String tst = (String) res.get(j); 
         for (int k = 0; k < testassignments.size(); k++) 
@@ -13723,8 +13739,8 @@ public BehaviouralFeature designAbstractKillOp()
     for (int i = 0; i < res.size(); i++) 
     { String model = (String) res.get(i); 
       String yi = y + i; 
-      String mod1 = model.replaceAll(x,yi); 
-      // System.out.println("Replaced model= " + mod1);
+      String mod1 = model.replace(x,yi); 
+      // System.out.println(">---->> Replaced model= " + mod1);
       newres.add(mod1);  
     } 
 	
@@ -13732,28 +13748,32 @@ public BehaviouralFeature designAbstractKillOp()
 	res.addAll(newres); 
 	
 	int nmodels = newres.size(); 
-	
+	System.out.println(">>> Number of models for " + nme + " =  " + nmodels);
+      
 	// But identity attributes should get different values in the different models
 	
     for (int i = 0; i < allattributes.size(); i++) 
     { Attribute att = (Attribute) allattributes.get(i);
-	  if (att.isIdentity() && allattributes.size() > 1) 
-	  { res.clear(); 
-	    String attnme = att.getName(); // assumed to be a string or int
-	    for (int j = 0; j < newres.size(); j++) 
-	    { String model = (String) newres.get(j); 
+      if (att.isIdentity() && allattributes.size() > 1) 
+      { res.clear(); 
+        String attnme = att.getName(); // assumed to be a string or int
+        for (int j = 0; j < newres.size(); j++) 
+        { String model = (String) newres.get(j); 
           String yj = y + j; 
-          int rand = (int) (nmodels*Math.random());
-		  String attassign = yj + "." + attnme + " = " + rand;
-		  if (att.isNumeric()) { }
-		  else 
-		  { attassign = yj + "." + attnme + " = \"" + rand + "\""; }
-		  String model1 = model + "\n" + attassign;
-		  res.add(model1);  
-		}
-		newres.clear(); 
-		res.addAll(newres); 
-      }
+          String mod1 = model.replace(x,yj); 
+         // System.out.println(">>>>>>>> Replaced model= " + mod1);
+           
+          int rand = j; // (int) (nmodels*Math.random());
+          String attassign = yj + "." + attnme + " = " + rand;
+          if (att.isNumeric()) { }
+          else 
+          { attassign = yj + "." + attnme + " = \"" + j + "\""; }
+            String model1 = mod1 + "\n" + attassign;
+            res.add(model1);  
+          }
+          newres.clear(); 
+          res.addAll(newres); 
+        }
 	}
     
     return res; 

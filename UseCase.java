@@ -3912,17 +3912,38 @@ public void generateCUIcode(PrintWriter out)
   public Vector testCases()
   { Vector allattributes = getParameters();
     String nme = getName();  
-    Vector res = new Vector(); 
-	if (allattributes == null || allattributes.size() == 0) 
-	{ res.add("-- no test for operation " + nme + "\n"); 
-	  return res; 
-	}
-	res.add("-- test for operation " + nme + "\n"); 
+    Vector res = new Vector();
+ 
+    if (allattributes == null || allattributes.size() == 0) 
+    { res.add("-- no test for operation " + nme + "\n"); 
+      return res; 
+    }
+    res.add("-- test for operation " + nme + "\n"); 
 	
+    java.util.Map upperBounds = new java.util.HashMap(); 
+    java.util.Map lowerBounds = new java.util.HashMap(); 
+	
+    Vector bounds = new Vector(); 
+    java.util.Map aBounds = new java.util.HashMap(); 
+      
+    for (int i = 0; i < preconditions.size(); i++) 
+    { Constraint con = (Constraint) preconditions.get(i);
+      Expression pre = con.succedent();  
+      pre.getParameterBounds(allattributes,bounds,aBounds);
+   
+      Expression.identifyUpperBounds(allattributes,aBounds,upperBounds); 
+      Expression.identifyLowerBounds(allattributes,aBounds,lowerBounds); 
+      System.out.println(".>> Parameter bounds for operation " + nme + " : " + aBounds);  
+      System.out.println(".>> Upper bounds map for operation " + nme + " : " + upperBounds);  
+      System.out.println(".>> Lower bounds map for operation " + nme + " : " + lowerBounds);
+    }
+
     for (int i = 0; i < allattributes.size(); i++) 
     { Vector newres = new Vector(); 
       Attribute att = (Attribute) allattributes.get(i); 
-      Vector testassignments = att.testCases("parameters"); 
+
+      Vector testassignments = att.testCases("parameters", lowerBounds, upperBounds);
+ 
       for (int j = 0; j < res.size(); j++) 
       { String tst = (String) res.get(j); 
         for (int k = 0; k < testassignments.size(); k++) 
@@ -3938,5 +3959,6 @@ public void generateCUIcode(PrintWriter out)
     } 
     return res; 
  }
-    
+ 
+   
 }

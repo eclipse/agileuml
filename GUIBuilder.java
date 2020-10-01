@@ -561,6 +561,75 @@ public class GUIBuilder
       if (me instanceof UseCase) 
       { UseCase uc = (UseCase) me;
         if (uc.isDerived()) { continue; } 
+        String nme = uc.getName();
+        Vector pars = uc.getParameters(); 
+        if (pars.size() > 0)
+        { java.util.Map upperBounds = new java.util.HashMap(); 
+          java.util.Map lowerBounds = new java.util.HashMap(); 
+	
+          Vector bounds = new Vector(); 
+          java.util.Map aBounds = new java.util.HashMap(); 
+      
+          for (int k = 0; k < uc.preconditions.size(); k++) 
+          { Constraint con = (Constraint) uc.preconditions.get(k);
+            Expression pre = con.succedent();  
+            pre.getParameterBounds(pars,bounds,aBounds);
+   
+            Expression.identifyUpperBounds(pars,aBounds,upperBounds); 
+            Expression.identifyLowerBounds(pars,aBounds,lowerBounds); 
+		  } 
+		  
+          for (int j = 0; j < pars.size(); j++) 
+          { Attribute par = (Attribute) pars.get(j); 
+            String parnme = par.getName();
+            Type typ = par.getType(); 
+			String tname = typ + ""; 
+			Vector testassignments = par.testValues("parameters", lowerBounds, upperBounds);
+			
+            if ("int".equals(tname))
+            { aper = aper + 
+			     "    int[] " + nme + par + "TestValues = {";
+			  for (int y = 0; y < testassignments.size(); y++) 
+			  { String tval = (String) testassignments.get(y); 
+			    aper = aper + tval; 
+				if (y < testassignments.size() - 1) 
+				{ aper = aper + ", "; }
+			  }
+			  aper = aper + "};\n";  
+		    } 
+            else if ("long".equals(tname))
+            { aper = aper + 
+			     "    long[] " + nme + par + "TestValues = {";
+			  for (int y = 0; y < testassignments.size(); y++) 
+			  { String tval = (String) testassignments.get(y); 
+			    aper = aper + tval; 
+				if (y < testassignments.size() - 1) 
+				{ aper = aper + ", "; }
+			  }
+			  aper = aper + "};\n";  
+		    } 
+	        else if ("double".equals(tname))
+            { aper = aper + 
+			     "    double[] " + nme + par + "TestValues = {";
+			  for (int y = 0; y < testassignments.size(); y++) 
+			  { String tval = (String) testassignments.get(y); 
+			    aper = aper + tval; 
+				if (y < testassignments.size() - 1) 
+				{ aper = aper + ", "; }
+			  }
+			  aper = aper + "};\n";  
+		    } 
+
+		  }
+		}
+	  }
+	}
+	 
+    for (int i = 0; i < ucs.size(); i++)
+    { ModelElement me = (ModelElement) ucs.get(i); 
+      if (me instanceof UseCase) 
+      { UseCase uc = (UseCase) me;
+        if (uc.isDerived()) { continue; } 
 		String indent = "    "; 
         
 		// String checkCode = uc.getQueryCode("Java4", types, entities); 
@@ -594,7 +663,7 @@ public class GUIBuilder
 			teststring = teststring + "\"" + parnme + " = \" + " + parnme; 
             if (j < pars.size() - 1)
             { parstring = parstring + ","; 
-			  teststring = teststring + "+ \"; \" + "; 
+			  teststring = teststring + " + \"; \" + "; 
 			} 
 
             Type typ = par.getType(); 
@@ -603,20 +672,20 @@ public class GUIBuilder
             if ("int".equals(tname))
             { testscript = testscript + 
                 indent + "\n" + 
-				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 5; " + indexvar + "++)\n" + 
-				indent + "{ int " + parnme + " = intTestValues[" + indexvar + "];\n";  
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < " + nme + par + "TestValues.length; " + indexvar + "++)\n" + 
+				indent + "{ int " + parnme + " = " + nme + par + "TestValues[" + indexvar + "];\n";  
             } 
             else if ("long".equals(tname))
             { testscript = testscript + 
                 indent + "\n" + 
-				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 5; " + indexvar + "++)\n" + 
-				indent + "{ long " + parnme + " = longTestValues[" + indexvar + "];\n";  
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < " + nme + par + "TestValues.length; " + indexvar + "++)\n" + 
+				indent + "{ long " + parnme + " = " + nme + par + "TestValues[" + indexvar + "];\n";  
             } 
             else if ("double".equals(tname))
             { testscript = testscript + 
                 indent + "\n" + 
-				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 5; " + indexvar + "++)\n" + 
-				indent + "{ double " + parnme + " = doubleTestValues[" + indexvar + "];\n";  
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < " + nme + par + "TestValues.length; " + indexvar + "++)\n" + 
+				indent + "{ double " + parnme + " = " + nme + par + "TestValues[" + indexvar + "];\n";  
             } 
             else if ("boolean".equals(typ + ""))
             { testscript = testscript + 
@@ -633,11 +702,29 @@ public class GUIBuilder
 				  indent + "{ int " + parnme + " = " + indexvar + ";\n";
             } 
 			else if (typ.isEntity())
-			{ String ename = tname.toLowerCase() + "s"; 
-			  testscript = testscript + 
+			{ String ename = tname.toLowerCase() + "s";
+			  Entity ee = typ.getEntity(); 
+			   
+			  Vector eeinvariants = new Vector(); 
+	          if (ee != null) 
+	          { eeinvariants.addAll(ee.getInvariants()); }
+
+              testscript = testscript + 
                   indent + "\n" + 
 				  indent + "for (int " + indexvar + " = 0; " + indexvar + " < Controller.inst()." + ename + ".size(); " + indexvar + "++)\n" + 
 				  indent + "{ " + tname + " " + parnme + " = (" + tname + ") Controller.inst()." + ename + ".get(" + indexvar + ");\n";
+  		      for (int p = 0; p < eeinvariants.size(); p++)
+              { java.util.Map env = new java.util.HashMap(); 
+			    env.put(tname, parnme); 
+                Constraint conp = (Constraint) eeinvariants.get(p); 
+				Constraint conpr = conp.addReference(parnme,typ); 
+                testscript = testscript + 
+		          indent + "  if (" + conpr.queryForm(env,true) + ")\n" + 
+		          indent + "  { System.out.print(\" Class " + tname + " invariant " + p + " is valid; \"); }\n" + 
+				  indent + "  else \n" + 
+				  indent + "  { System.out.print(\" Class " + tname + " invariant " + p + " fails; \"); }\n"; 
+              }
+				  		  
             } // Check invariants of parnme. 
             else if (typ.isCollectionType()) // Try with empty list, singleton & random list
             { Type elemTyp = typ.getElementType(); 
@@ -686,14 +773,18 @@ public class GUIBuilder
 			  }
               else if (elemTyp.isEntity())
 			  { String etname = elemTyp.getName(); 
+			    // Entity ee = elemTyp.getEntity(); 
+				
 			    String eename = etname.toLowerCase() + "s"; 
-			    testscript = testscript + 
+			    
+				testscript = testscript + 
                   indent + "\n" + 
 				  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= Controller.inst()." + etname + ".size(); " + indexvar + "++)\n" + 
-				  indent + "{ Vector " + parnme + " = new Vector();\n" + 
-				  indent + "  if (" + indexvar + " < Controller.inst()." + etname + ".size())\n" + 
-				  indent + "  { " + parnme + ".add(Controller.inst()." + eename + ".get(" + indexvar + ")); }\n";
-              } // Check invariants of parnme. 
+				  indent + "{ Vector " + parnme + " = new Vector();\n";  
+                testscript = testscript + 
+			      indent + "  if (" + indexvar + " < Controller.inst()." + etname + ".size())\n" + 
+			      indent + "  { " + parnme + ".add(Controller.inst()." + eename + ".get(" + indexvar + ")); }\n";
+              }  
 			}  
           }  
         }
@@ -702,10 +793,10 @@ public class GUIBuilder
         { java.util.Map env = new java.util.HashMap(); 
           Constraint con = (Constraint) uc.preconditions.get(j); 
           checkCode = checkCode + 
-		              indent + "if (" + con.queryForm(env,true) + ")\n" + 
-		              indent + "{ System.out.print(\" Precondition " + j + " is valid; \"); }\n" + 
-					  indent + "else \n" + 
-					  indent + "{ System.out.print(\" Precondition " + j + " fails; \"); }\n"; 
+		              indent + "  if (" + con.queryForm(env,true) + ")\n" + 
+		              indent + "  { System.out.print(\" Precondition " + j + " is valid; \"); }\n" + 
+					  indent + "  else \n" + 
+					  indent + "  { System.out.print(\" Precondition " + j + " fails; \"); }\n"; 
         }
 
       
@@ -713,12 +804,12 @@ public class GUIBuilder
         if (resultType != null) 
         { call = " System.out.println(\" ==> Result: \" + " + call + " )"; } 
 		
-		call = indent + "try { " + call + ";\n" + 
+		call = indent + "  try { " + call + ";\n" + 
 		       indent + "  }\n" + 
-			   indent + "  catch(Exception _e) { System.out.println(\" !!Exception occurred: test failed!! \"); }\n"; 
+			   indent + "  catch(Exception _e) { System.out.println(\" !! Exception occurred: test failed !! \"); }\n"; 
 			   
 		testscript = testscript + 
-		  indent + "System.out.print(\"Test: \" + " + teststring + ");\n" + 
+		  indent + "  System.out.print(\">>> Test: \" + " + teststring + ");\n" + 
 		  checkCode + 
 		  call + "\n"; 
         // indent = indent.substring(0,indent.length()-2);  
