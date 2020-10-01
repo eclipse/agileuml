@@ -10,9 +10,9 @@
 /* 
  * Classname : UmlTool
  * 
- * Version information : 1.9
+ * Version information : 2.0
  *
- * Date : June 2019 
+ * Date : October 2020
  * 
  * Description : This describes the GUI interface of 
  * the UML RSDS tool,
@@ -20,7 +20,7 @@
  * the menu options and their action 
  * listeners.
  package: Class Diagram Editor
- Note this can only be compiled under Java 1.4
+ 
  */
 
 import javax.swing.*;
@@ -3686,7 +3686,7 @@ public void findPlugins()
 
   public static void main(String[] args) 
   { UmlTool window = new UmlTool();  
-    window.setTitle("Agile UML Toolset, Eclipse Incubation Project Version 1.9");
+    window.setTitle("Agile UML Toolset, Eclipse Incubation Project Version 2.0");
     window.setControllerName("Controller"); 
     window.setSize(500, 400);
     window.setVisible(true);   
