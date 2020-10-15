@@ -3648,30 +3648,30 @@ public class UCDArea extends JPanel
     } 
 	
     Vector persistentEntities = new Vector();
-	Vector clouds = new Vector(); 
+    Vector clouds = new Vector(); 
 	 
-	Vector predefinedComponents = new Vector();
-	Vector predefinedUseCases = new Vector(); 
+    Vector predefinedComponents = new Vector();
+    Vector predefinedUseCases = new Vector(); 
 	 
     Vector customComponents = new Vector(); 
-	boolean needsInternetPermission = false; 
-	boolean needsMaps = false; 
+    boolean needsInternetPermission = false; 
+    boolean needsMaps = false; 
 	
     for (int i = 0; i < entities.size(); i++) 
     { Entity ee = (Entity) entities.get(i); 
-	  String eename = ee.getName(); 
+      String eename = ee.getName(); 
 	  
       if (ee.isDerived()) {}
-	  else if (ee.isComponent()) 
-	  { customComponents.add(ee); }
-	  else if (ee.isRemote())
-	  { Entity eeDAO = (Entity) ModelElement.lookupByName(eename + "_DAO",entities); 
-	    Entity internetAccessor = (Entity) ModelElement.lookupByName("InternetAccessor",entities);
-		needsInternetPermission = true; 
+      else if (ee.isComponent()) 
+      { customComponents.add(ee); }
+      else if (ee.isRemote())
+      { Entity eeDAO = (Entity) ModelElement.lookupByName(eename + "_DAO",entities); 
+        Entity internetAccessor = (Entity) ModelElement.lookupByName("InternetAccessor",entities);
+        needsInternetPermission = true; 
 		 
-		if (eeDAO != null) 
-		{ predefinedComponents.add(eeDAO); }
-		if (internetAccessor != null && !(predefinedComponents.contains(internetAccessor)))
+        if (eeDAO != null) 
+        { predefinedComponents.add(eeDAO); }
+          if (internetAccessor != null && !(predefinedComponents.contains(internetAccessor)))
 		{ predefinedComponents.add(internetAccessor); }
 		predefinedUseCases.add("internetAccessCompleted"); 
 	  } 
@@ -4160,7 +4160,20 @@ public class UCDArea extends JPanel
   }
 
   public void generateJSPWebSystem(PrintWriter out)
-  { File chtml = new File("output/commands.html"); 
+  { String appname = "beans"; 
+    // if (systemName != null && systemName.length() > 0)
+    // { appname = systemName; }
+
+    CGSpec cgs = loadCSTL(); 
+
+    if (cgs == null) 
+    { System.err.println("!! No cg/cg.cstl file defined!"); 
+      return; 
+    } 
+ 
+    boolean needsModelFacade = false; 
+
+    File chtml = new File("output/commands.html"); 
     try
     { PrintWriter chout = new PrintWriter(
                               new BufferedWriter(
@@ -4178,14 +4191,12 @@ public class UCDArea extends JPanel
         File odjsp = new File("output/" + nme + ".jsp"); 
         try
         { PrintWriter jspout = new PrintWriter(
-                              new BufferedWriter(
-                                new FileWriter(odjsp)));
+                                new BufferedWriter(
+                                  new FileWriter(odjsp)));
           jspout.println(od.getJsp()); 
           jspout.close(); 
         } catch (Exception e) { } 
 
-      // out.println(od.getJsp());
-      // out.println(); 
         File odhtml = new File("output/" + nme + ".html"); 
         try
         { PrintWriter odhout = new PrintWriter(
@@ -4195,10 +4206,60 @@ public class UCDArea extends JPanel
           odhout.close(); 
         } catch (Exception e) { } 
       } 
+      else if (obj instanceof UseCase)
+      { UseCase uc = (UseCase) obj; 
+
+        needsModelFacade = true; 
+
+        String ucnme = uc.getName(); 
+        File ucjsp = new File("output/" + ucnme + ".jsp"); 
+        try
+        { PrintWriter jspout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(ucjsp)));
+          jspout.println(uc.getJsp(appname)); 
+          jspout.close(); 
+        } catch (Exception e) { }
+
+        File uchtml = new File("output/" + ucnme + ".html"); 
+        try
+        { PrintWriter uchout = new PrintWriter(
+                                 new BufferedWriter(
+                                   new FileWriter(uchtml)));
+          uchout.println(uc.getInputPage(appname));
+          uchout.close(); 
+        } catch (Exception e) { } 
+
+        String ucvo = ucnme + "VO.java"; 
+        File ucvof = new File("output/" + ucvo); 
+        try
+        { PrintWriter ucvoout = new PrintWriter(
+                                  new BufferedWriter(
+                                    new FileWriter(ucvof)));
+          ucvoout.println(uc.getAndroidValueObject(appname));
+		  System.out.println(">>> Written use case value object for " + ucnme + " to output/" + ucvo); 
+          ucvoout.close(); 
+        } catch (Exception e) { } 
+
+
+        String ucbean = ucnme + "Bean.java"; 
+        File ucbeanf = new File("output/" + ucbean); 
+        try
+        { PrintWriter ucbeanout = new PrintWriter(
+                                    new BufferedWriter(
+                                      new FileWriter(ucbeanf)));
+          ucbeanout.println(uc.generateJSPBean(appname,entities,types,cgs));
+		  System.out.println(">>> Written use case bean for " + ucnme + " to output/" + ucbean); 
+          ucbeanout.close(); 
+        } catch (Exception e) { } 
+      }  
     } 
 
     for (int j = 0; j < entities.size(); j++) 
     { Entity ent = (Entity) entities.get(j); 
+
+      if (ent.isDerived() || ent.isComponent()) { continue; } 
+
       String entvo = ent.getName() + "VO.java"; 
       File entvof = new File("output/" + entvo); 
       try
@@ -4220,62 +4281,338 @@ public class UCDArea extends JPanel
       } catch (Exception e) { } 
     }
 
+    for (int j = 0; j < types.size(); j++) 
+    { Type typ = (Type) types.get(j);
+      if (typ.isEnumeration()) 
+      { String typef = typ.getName() + ".java"; 
+        File typefile = new File("output/" + typef); 
+        try
+        { PrintWriter typeout = new PrintWriter(
+                                  new BufferedWriter(
+                                    new FileWriter(typefile)));
+          typeout.println(typ.getJava8Definition(appname));
+          typeout.close(); 
+        } catch (Exception e) { } 
+      }
+    } 
+	
+    for (int j = 0; j < entities.size(); j++) 
+    { Entity ent = (Entity) entities.get(j);
+      if (ent.isDerived()) { continue; } 
+      if (ent.isComponent()) { continue; } 
+	 
+      ent.generateOperationDesigns(types,entities);  
+           
+      String entfile = ent.getName() + ".java"; 
+      File entff = new File("output/" + entfile); 
+      try
+      { PrintWriter ffout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entff)));
+        ffout.println("package " + appname + ";"); 
+        ffout.println(); 
+        ffout.println("import java.util.*;"); 
+        ffout.println("import java.util.HashMap;"); 
+        ffout.println("import java.util.Collection;");
+        ffout.println("import java.util.List;");
+        ffout.println("import java.util.ArrayList;");
+        ffout.println("import java.util.Set;");
+        ffout.println("import java.util.HashSet;");
+        ffout.println("import java.util.TreeSet;");
+        ffout.println("import java.util.Collections;");
+        ffout.println(); 
+        // ent.generateJava7(entities,types,ffout);
+        String entcode = ent.cg(cgs);
+        cgs.displayText(entcode,ffout); 
+		 
+        ffout.close(); 
+      } catch (Exception e) { } 
+
+    } 
+
+    Vector allops = OperationDescription.allCoreOperations(entities); 
+	
     File dbif = new File("output/Dbi.java"); 
     try
     { PrintWriter dbiout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(dbif)));
-      dbiout.println(generateJspDbi(useCases));
+      dbiout.println(generateJspDbi(allops));
       dbiout.close(); 
     } catch (Exception e) { } 
+
+    if (needsModelFacade) 
+    { File model = new File("output/ModelFacade.java"); 
+      try
+      { PrintWriter modelout = new PrintWriter(
+                                 new BufferedWriter(
+                                   new FileWriter(model)));
+        UseCase.modelFacade(appname,useCases,cgs,entities,types,modelout);
+        modelout.close(); 
+      } catch (Exception e) { } 
+    } 
 
     out.println(generateDbiPool());  
   }
 
   public void generateJ2EEWebSystem(PrintWriter out)
   { for (int j = 0; j < entities.size(); j++) 
-    { Entity ent = (Entity) entities.get(j); 
-      out.println(ent.getValueObject());
-      out.println(); 
-      out.println(ent.ejbBean());
-      out.println();   
-      out.println(ent.genEJBLocalRemote(true)); 
-      out.println(); 
-      out.println(ent.genEJBHome(true)); 
-      out.println(); 
-      out.println(ent.genEJBLocalRemote(false)); 
-      out.println(); 
-      out.println(ent.genEJBHome(false)); 
+    { Entity ent = (Entity) entities.get(j);
+	  String ename = ent.getName(); 
+	  
+	  if (ent.isDerived()) { continue; }
+	  if (ent.isComponent()) { continue; }
+	   
+      String entvo = ename + "VO.java"; 
+      File entvof = new File("output/" + entvo); 
+      try
+      { PrintWriter voout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entvof)));
+        voout.println(ent.getValueObject());
+        voout.close(); 
+      } catch (Exception e) { } 
+      
+
+      String entbean = ename + "Bean.java"; 
+      File entbeanf = new File("output/" + entbean); 
+      try
+      { PrintWriter beanout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(entbeanf)));
+        beanout.println(ent.ejbBean());
+        beanout.close(); 
+      } catch (Exception e) { } 
+      
+
+      String localent = "Local" + ename + ".java"; 
+      File localf = new File("output/" + localent); 
+      try
+      { PrintWriter localout = new PrintWriter(
+                                 new BufferedWriter(
+                                   new FileWriter(localf)));
+        localout.println(ent.genEJBLocalRemote(true));
+        localout.close(); 
+      } catch (Exception e) { } 
+      
+      String remoteent = "Remote" + ename + ".java"; 
+      File remotef = new File("output/" + remoteent); 
+      try
+      { PrintWriter remoteout = new PrintWriter(
+                                 new BufferedWriter(
+                                   new FileWriter(remotef)));
+        remoteout.println(ent.genEJBLocalRemote(false));
+        remoteout.close(); 
+      } catch (Exception e) { } 
+
+      String localhomeent = "Local" + ename + "Home.java"; 
+      File localhomef = new File("output/" + localhomeent); 
+      try
+      { PrintWriter localhomeout = new PrintWriter(
+                                     new BufferedWriter(
+                                       new FileWriter(localhomef)));
+        localhomeout.println(ent.genEJBHome(true));
+        localhomeout.close(); 
+      } catch (Exception e) { } 
+      
+      String remotehomeent = "Remote" + ename + "Home.java"; 
+      File remotehomef = new File("output/" + remotehomeent); 
+      try
+      { PrintWriter remotehomeout = new PrintWriter(
+                                     new BufferedWriter(
+                                       new FileWriter(remotehomef)));
+        remotehomeout.println(ent.genEJBHome(false));
+        remotehomeout.close(); 
+      } catch (Exception e) { } 
     }
-    out.println(getSessionBeans(entities,useCases)); 
+    
+	OperationDescription.generateSessionBeans(entities,useCases); 
     // out.println(generateJspDbi(useCases));
     // out.println(generateDbiPool());  
   }
 
-
+  // Servlet style
   public void generateWebSystem(PrintWriter out)
-  { out.println(generateBasePage("Web System")); 
-    if (useCases == null) { return; } 
+  { String appname = "beans"; 
+    // if (systemName != null && systemName.length() > 0)
+    // { appname = systemName; }
 
-    out.println(generateCommandPage(useCases)); 
+    CGSpec cgs = loadCSTL(); 
+
+    if (cgs == null) 
+    { System.err.println("!! No cg/cg.cstl file defined!"); 
+      return; 
+    } 
+ 
+    boolean needsModelFacade = false; 
+
+    File basepagef = new File("output/BasePage.java"); 
+    try
+    { PrintWriter basepageout = new PrintWriter(
+                                  new BufferedWriter(
+                                    new FileWriter(basepagef)));
+      basepageout.println(generateBasePage("Web System"));
+      basepageout.close(); 
+    } catch (Exception e) { } 
+    
+	if (useCases == null) { return; } 
+
+    File commandpagef = new File("output/CommandPage.java"); 
+    try
+    { PrintWriter commandpageout = new PrintWriter(
+                                     new BufferedWriter(
+                                       new FileWriter(commandpagef)));
+      commandpageout.println(generateCommandPage(useCases));
+      commandpageout.close(); 
+    } catch (Exception e) { } 
+    
     for (int i = 0; i < useCases.size(); i++)
     { Object obj = useCases.get(i); 
-      if (!(obj instanceof OperationDescription)) { continue; } 
+      if (obj instanceof OperationDescription)
+	  { OperationDescription od = (OperationDescription) obj;
+	    String odname = od.getODName(); 
+	   
+        String srvltcode = od.getServletCode(); 
+        out.println(srvltcode);
+      
+        File odf = new File("output/" + odname + "Servlet.java"); 
+        try
+        { PrintWriter odout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(odf)));
+          odout.println(srvltcode);
+          odout.close(); 
+        } catch (Exception _e) { } 
 
-      OperationDescription od = (OperationDescription) obj; 
-      String srvltcode = od.getServletCode(); 
-      out.println(srvltcode);
-      System.out.println(srvltcode); 
-      String genclass = od.getGenerationClass();  
-      out.println(genclass);  
+        String genclass = od.getGenerationClass();  
+      // out.println(genclass);  
+	    File genf = new File("output/" + odname + "Page.java"); 
+        try
+        { PrintWriter genout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(genf)));
+          genout.println(genclass);
+          genout.close(); 
+        } catch (Exception e) { } 
+      } 
+	  else if (obj instanceof UseCase)
+	  { UseCase uc = (UseCase) obj; 
+	    needsModelFacade = true; 
+
+        String ucnme = uc.getName(); 
+        File ucjsp = new File("output/" + ucnme + "Servlet.java"); 
+        try
+        { PrintWriter jspout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(ucjsp)));
+          jspout.println(uc.getServletCode()); 
+          jspout.close(); 
+        } catch (Exception e) { }
+
+        File uchtml = new File("output/" + ucnme + "Page.java"); 
+        try
+        { PrintWriter uchout = new PrintWriter(
+                                 new BufferedWriter(
+                                   new FileWriter(uchtml)));
+          uchout.println(uc.getGenerationClass());
+          uchout.close(); 
+        } catch (Exception e) { } 
+
+        String ucvo = ucnme + "VO.java"; 
+        File ucvof = new File("output/" + ucvo); 
+        try
+        { PrintWriter ucvoout = new PrintWriter(
+                                  new BufferedWriter(
+                                    new FileWriter(ucvof)));
+          ucvoout.println(uc.getAndroidValueObject(appname));
+		  System.out.println(">>> Written use case value object for " + ucnme + " to output/" + ucvo); 
+          ucvoout.close(); 
+        } catch (Exception e) { } 
+
+        File ef = new File("output/" + ucnme + "ResultPage.java"); 
+        try
+        { PrintWriter efout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(ef)));
+          efout.println(uc.getResultPage());
+          efout.close(); 
+        } catch (Exception e) { } 
+      }
     } 
 
     for (int j = 0; j < entities.size(); j++) 
     { Entity ent = (Entity) entities.get(j); 
-      out.println(ent.getResultPage()); 
+	  if (ent.isDerived()) { continue; }
+	  if (ent.isComponent()) { continue; }
+	  
+	  String ename = ent.getName(); 
+
+	  File ef = new File("output/" + ename + "ResultPage.java"); 
+      try
+      { PrintWriter efout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(ef)));
+        efout.println(ent.getResultPage());
+        efout.close(); 
+      } catch (Exception e) { } 
+      ent.generateOperationDesigns(types,entities);  
+           
+      String entfile = ent.getName() + ".java"; 
+      File entff = new File("output/" + entfile); 
+      try
+      { PrintWriter ffout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entff)));
+        ffout.println("// package " + appname + ";"); 
+        ffout.println(); 
+        ffout.println("import java.util.*;"); 
+        ffout.println("import java.util.HashMap;"); 
+        ffout.println("import java.util.Collection;");
+        ffout.println("import java.util.List;");
+        ffout.println("import java.util.ArrayList;");
+        ffout.println("import java.util.Set;");
+        ffout.println("import java.util.HashSet;");
+        ffout.println("import java.util.TreeSet;");
+        ffout.println("import java.util.Collections;");
+        ffout.println(); 
+        // ent.generateJava7(entities,types,ffout);
+        String entcode = ent.cg(cgs);
+        cgs.displayText(entcode,ffout); 
+		 
+        ffout.close(); 
+      } catch (Exception e) { } 
     }
-    out.println(generateErrorPage()); 
-    out.println(generateDbi(useCases)); 
+	
+    File errorf = new File("output/ErrorPage.java"); 
+    try
+    { PrintWriter errorout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(errorf)));
+      errorout.println(generateErrorPage());
+      errorout.close(); 
+    } catch (Exception _e) { } 
+    
+    if (needsModelFacade) 
+    { File model = new File("output/ModelFacade.java"); 
+      try
+      { PrintWriter modelout = new PrintWriter(
+                                 new BufferedWriter(
+                                   new FileWriter(model)));
+        UseCase.modelFacade(appname,useCases,cgs,entities,types,modelout);
+        modelout.close(); 
+      } catch (Exception e) { } 
+    } 
+
+    Vector allops = OperationDescription.allCoreOperations(entities); 
+
+	File dbif = new File("output/Dbi.java"); 
+    try
+    { PrintWriter dbiout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(dbif)));
+      dbiout.println(generateDbi(allops));
+      dbiout.close(); 
+    } catch (Exception e) { } 
   }
 
   public Type lookupType(String tname) 
@@ -9829,7 +10166,7 @@ public void produceCUI(PrintWriter out)
       out.close(); 
     } 
     catch (IOException e) 
-    { System.out.println("Error saving data"); } 
+    { System.out.println("!!! Error saving data"); } 
 
     for (int i = 0; i < useCases.size(); i++)
     { Object obj = useCases.get(i); 
@@ -15016,35 +15353,41 @@ public void produceCUI(PrintWriter out)
       "DriverManager.getConnection(db);\n";
  
     for (int i = 0; i < operations.size(); i++)
-    { OperationDescription od = 
-          (OperationDescription) operations.get(i);
-      SQLStatement odstat = od.getSQL0();
-      System.out.println(odstat);
-      String odname = od.getODName();  
-      if (odstat != null) 
-      { res = res + "      " + odname +
-          "Statement = connection.prepareStatement(" +
-          odstat.preparedStatement() + ");\n";
-      } 
+    { if (operations.get(i) instanceof OperationDescription)
+	  { OperationDescription od = 
+           (OperationDescription) operations.get(i);
+        SQLStatement odstat = od.getSQL0();
+        System.out.println(odstat);
+        String odname = od.getODName();  
+        if (odstat != null) 
+        { res = res + "      " + odname +
+            "Statement = connection.prepareStatement(" +
+            odstat.preparedStatement() + ");\n";
+        }
+      }  
     }
+	
     res = res + "    } catch (Exception e) { }\n" +
                 "  }\n\n";
        
     for (int i = 0; i < operations.size(); i++)
-    { OperationDescription od = 
-          (OperationDescription) operations.get(i);
-      String odname = od.getODName();  
-      String pars = od.getDbiParameterDec();
-      String code = od.getDbiOpCode();
-      String resultType = "void"; 
-      String odaction = od.getAction();
-      if (odaction.equals("get") || odaction.equals("list") || odaction.equals("searchBy") || 
-          odaction.equals("check"))
-      { resultType = "ResultSet"; } 
-      res = res + 
-        "  public synchronized " + resultType + " " + odname + "(" +
-        pars + ")\n  " + code + "\n";
+    { if (operations.get(i) instanceof OperationDescription) 
+	  { OperationDescription od = 
+           (OperationDescription) operations.get(i);
+        String odname = od.getODName();  
+        String pars = od.getDbiParameterDec();
+        String code = od.getDbiOpCode();
+        String resultType = "void"; 
+        String odaction = od.getAction();
+        if (odaction.equals("get") || odaction.equals("list") || odaction.equals("searchBy") || 
+            odaction.equals("check"))
+        { resultType = "ResultSet"; } 
+        res = res + 
+          "  public synchronized " + resultType + " " + odname + "(" +
+          pars + ")\n  " + code + "\n";
+       } 
     }
+	
     return res + "  public synchronized void logoff() \n" + 
                  "  { try { connection.close(); } \n" + 
                  "    catch (Exception e) { e.printStackTrace(); }\n" + 
@@ -15059,7 +15402,8 @@ public void produceCUI(PrintWriter out)
       "{ private Connection connection;\n" +
       "  private static String defaultDriver = \"\"; \n" + 
       "  private static String defaultDb = \"\"; \n" + 
-      getPreparedStatDecs(operations);
+      getPreparedStatDecs(operations) + "\n\n";
+	  
     res = res +
       "  public Dbi() { this(defaultDriver,defaultDb); } \n\n" + 
       "  public Dbi(String driver, String db)\n" +
@@ -15090,8 +15434,9 @@ public void produceCUI(PrintWriter out)
       { OperationDescription od = 
           (OperationDescription) operations.get(i);
         String odname = od.getODName();  
-        String pars = od.getDbiParameterDec();
-        String code = od.getDbiOpCode();
+        String pars = od.getJSPDbiParameterDec();
+		String parsettings = od.getJSPDbiParameterTransfer(); 
+        String code = od.getJSPDbiOpCode();
         String resultType = "void"; 
         String odaction = od.getAction();
         if (odaction.equals("get") || odaction.equals("list") || odaction.equals("searchBy") || 
@@ -15099,12 +15444,13 @@ public void produceCUI(PrintWriter out)
         { resultType = "ResultSet"; } 
         res = res + 
           "  public synchronized " + resultType + " " + odname + "(" +
-          pars + ")\n  " + code + "\n";
+          pars + ")\n  { " + parsettings + code + "\n";
         String mops = od.getMaintainOps(); 
         res = res + mops; 
       } 
     }
-    return res + "  public synchronized void logoff() \n" + 
+
+    return res + "\n\n  public synchronized void logoff() \n" + 
                  "  { try { connection.close(); } \n" + 
                  "    catch (Exception e) { e.printStackTrace(); }\n" + 
                  "  }\n}\n";
@@ -15113,12 +15459,14 @@ public void produceCUI(PrintWriter out)
   private String getPreparedStatDecs(Vector ops)
   { String res = "";
     for (int i = 0; i < ops.size(); i++)
-    { OperationDescription od = 
+    { if (ops.get(i) instanceof OperationDescription)
+      { OperationDescription od = 
           (OperationDescription) ops.get(i);
-      String odname = od.getODName();
-      res = res +
+        String odname = od.getODName();
+        res = res +
             "  private PreparedStatement " + odname +
-            "Statement;\n"; 
+            "Statement;\n";
+      }  
     }
     return res;
   }
@@ -15174,14 +15522,17 @@ public void produceCUI(PrintWriter out)
 
   public String generateCommandPage(java.util.List ops)
   { String res = "public class CommandPage extends BasePage\n" +
-      "{ private HtmlForm form = new HtmlForm();\n"; 
+      "{ private HtmlForm form = new HtmlForm();\n";
+ 
     for (int i = 0; i < ops.size(); i++)
-    { OperationDescription od = 
-        (OperationDescription) ops.get(i);
-      String nme = od.getODName();
-      res = res +
-        "  private HtmlInput " + nme +
-        "button = new HtmlInput();\n";
+    { if (ops.get(i) instanceof OperationDescription)
+      { OperationDescription od = 
+          (OperationDescription) ops.get(i);
+        String nme = od.getODName();
+        res = res +
+          "  private HtmlInput " + nme +
+          "button = new HtmlInput();\n";
+      } 
     }
     res = res + "\n  public CommandPage()\n" +
       "  { super();\n" +
@@ -15189,19 +15540,21 @@ public void produceCUI(PrintWriter out)
       "        form.setAttribute(\"action\",\n" + 
       "               \"http://localhost:8080/servlet/CommandServlet\");\n";
     for (int i = 0; i < ops.size(); i++)
-    { OperationDescription od = 
-        (OperationDescription) ops.get(i);
-      String odnme = od.getODName();
-      res = res + 
-        "    " + odnme + 
-        "button.setAttribute(\"value\",\"" + odnme +
-        "\");\n" +
-        "    " + odnme + 
-        "button.setAttribute(\"name\",\"" + odnme +
-        "\");\n" +
-        "    " + odnme + 
-        "button.setAttribute(\"type\",\"submit\");\n" +
-        "    form.add(" + odnme + "button);\n";
+    { if (ops.get(i) instanceof OperationDescription)
+      { OperationDescription od = 
+          (OperationDescription) ops.get(i);
+        String odnme = od.getODName();
+        res = res + 
+          "    " + odnme + 
+          "button.setAttribute(\"value\",\"" + odnme +
+          "\");\n" +
+          "    " + odnme + 
+          "button.setAttribute(\"name\",\"" + odnme +
+          "\");\n" +
+          "    " + odnme + 
+          "button.setAttribute(\"type\",\"submit\");\n" +
+          "    form.add(" + odnme + "button);\n";
+      } 
     }
     res = res + "    body.add(form);\n" +
                 "  }\n}\n";
@@ -15216,12 +15569,21 @@ public void produceCUI(PrintWriter out)
     res = res + "</h1>\n\r";
 
     for (int i = 0; i < ops.size(); i++)
-    { OperationDescription od = 
-        (OperationDescription) ops.get(i);
-      String odnme = od.getODName();
-      res = res + 
-        "<p><a href=\"" + odnme + ".html\">" + odnme + "</a></p>\n\r";  
+    { if (ops.get(i) instanceof OperationDescription) 
+      { OperationDescription od = 
+          (OperationDescription) ops.get(i);
+        String odnme = od.getODName();
+        res = res + 
+          "<p><a href=\"" + odnme + ".html\">" + odnme + "</a></p>\n\r";
+      } 
+      else if (ops.get(i) instanceof UseCase) 
+      { UseCase uc = (UseCase) ops.get(i); 
+        String ucnme = uc.getName();
+        res = res + 
+          "<p><a href=\"" + ucnme + ".html\">" + ucnme + "</a></p>\n\r";
+      } 
     }
+
     return res + "</html>\n\r";
   }
 
@@ -15247,12 +15609,14 @@ public void produceCUI(PrintWriter out)
       "    PrintWriter pw = res.getWriter();\n";
 
     for (int i = 0; i < ops.size(); i++)
-    { OperationDescription od = (OperationDescription) ops.get(i);
-      String odname = od.getODName(); 
-      res = res + "    String " + odname + "C = req.getParameter(\"" + odname + 
+    { if (ops.get(i) instanceof OperationDescription)
+      { OperationDescription od = (OperationDescription) ops.get(i);
+        String odname = od.getODName(); 
+        res = res + "    String " + odname + "C = req.getParameter(\"" + odname + 
             "\");\n" + 
             "    if (" + odname + "C != null)\n" + 
-            "    { pw.println(new " + odname + "Page()); }\n"; 
+            "    { pw.println(new " + odname + "Page()); }\n";
+      }  
     }
     res = res + "    pw.close();\n" + 
       "  }\n\n";
@@ -15287,10 +15651,12 @@ public void produceCUI(PrintWriter out)
     { Entity e = (Entity) ents.get(i);
       Vector eucs = new Vector();
       for (int j = 0; j < ucs.size(); j++)
-      { OperationDescription uc = 
-          (OperationDescription) ucs.get(j);
-        if (uc.getEntity() == e)
-        { eucs.add(uc); }
+      { if (ucs.get(j) instanceof OperationDescription)
+        { OperationDescription uc = 
+            (OperationDescription) ucs.get(j);
+          if (uc.getEntity() == e)
+          { eucs.add(uc); }
+        } 
       }
       res = res + e.getSessionBean(eucs) + "\n\n";
     }
@@ -20047,17 +20413,19 @@ public void produceCUI(PrintWriter out)
 	  Vector optests = e.operationTestCases(); 
       System.out.println("*** Test cases for entity " + e.getName() + " operations written to output/tests"); 
       for (int j = 0; j < optests.size(); j++) 
-      { Vector otest = (Vector) optests.get(j); 
-	    String oname = (String) otest.get(0);
-		String otxt = (String) otest.get(1);  
-        try
-        { PrintWriter rout = new PrintWriter(
-                              new BufferedWriter(
-                                new FileWriter("output/tests/" + oname + "test" + e.getName() + "_" + j + ".txt")));
-          rout.println(otxt); 
-          rout.close(); 
-        } 
-        catch (Exception _x) { } 
+      { if (optests.get(j) instanceof Vector)
+	    { Vector otest = (Vector) optests.get(j); 
+	      String oname = otest.get(0) + "";
+		  String otxt = otest.get(1) + "";  
+          try
+          { PrintWriter rout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter("output/tests/" + oname + "test" + e.getName() + "_" + j + ".txt")));
+            rout.println(otxt); 
+            rout.close(); 
+          } 
+          catch (Exception _x) { } 
+		} 
       }   
     } 
 	

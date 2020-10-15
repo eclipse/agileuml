@@ -2865,15 +2865,16 @@ public void generateCUIcode(PrintWriter out)
        String par = att.getName();
        Type typ = att.getType();         
        String tname = typ.getJava();
-       out.println("  " + tname + " " + par + ";\n\r");
-        /* if ("String".equals(tname)) {}
-        else if ("int".equals(tname) || "long".equals(tname) || "double".equals(tname))
-        { out.println("  " + tname + "  _" + nme + "_" + par + ";\n\r"); } */ 
-      } 
-      if (resultType != null)
-      { // String rtyp = resultType.getJava();
-        out.println("  String result;\n\r");
-      }
+       out.println("  " + tname + " " + nme + "_" + par + ";\n");
+     } 
+
+     if (resultType != null)
+     { // String rtyp = resultType.getJava();
+       out.println("  String " + nme + "result = \"\";\n");
+     }
+
+     out.println("  List<String> " + nme + "errors = new ArrayList<String>();\n\r");
+      
     }  
  
 
@@ -2884,49 +2885,73 @@ public void generateCUIcode(PrintWriter out)
       String nme = getName();
       // String parsetname = (nme.charAt(0) + "").toUpperCase() + nme.substring(1,nme.length());
       String opcallpars = "";
+      String errorlist = nme + "errors"; 
+
       for (int i = 0; i < parameters.size(); i++)
       { Attribute att = (Attribute) parameters.get(i);
         String par = att.getName();
         Type typ = att.getType();         
         String tname = typ.getJava();
-        // String parname = nme + "_" + par;
-        opcallpars = opcallpars + par;
+        String parname = nme + "_" + par;
+        opcallpars = opcallpars + parname;
         if (i < parameters.size()-1)
         { opcallpars = opcallpars + ","; }
 
-        out.println("  public void set" + par + "(String _s)\n\r");
-        out.println("  {\n\r"); 
-        String convertcode = "    " + par + " = _s;";  
+        out.println("  public void set" + parname + "(String _s)");
+        out.println("  {"); 
+        String convertcode = "    " + parname + " = _s;";  
         if ("String".equals(tname)) {}
         else if ("int".equals(tname))
-        { convertcode = "    try { " + par + " = Integer.parseInt(_s); } catch (Exception _e) { return; }";
+        { convertcode = "    try { " + parname + " = Integer.parseInt(_s); }\n" + 
+            "    catch (Exception _e)\n" + 
+            "    { " + errorlist + ".add(\"" + par + " is not an int\");\n" +  
+            "      return; }";
         }
         else if ("long".equals(tname))
-        { convertcode = "    try { " + par + " = Long.parseLong(_s); } catch (Exception _e) { return; }";
+        { convertcode = "    try { " + parname + " = Long.parseLong(_s); }\n" + 
+		                "    catch (Exception _e)\n" + 
+						"    { " + errorlist + ".add(\"" + par + " is not a long\");\n" +
+						"      return; }";
         }
         else if ("double".equals(tname))
-         { convertcode = "    try { " + par + " = Double.parseDouble(_s); } catch (Exception _e) { return; }";
+        { convertcode = "    try { " + parname + " = Double.parseDouble(_s); }\n" + 
+		                "    catch (Exception _e)\n" + 
+						"    { " + errorlist + ".add(\"" + par + " is not a double\");\n" +
+						"      return; }";
         }
         else if ("boolean".equals(tname))
-        { convertcode = "    if (\"true\".equals(_s) { " + par + " = true; } else { " + par + " = false; }"; 
+        { convertcode = "    if (\"true\".equals(_s) { " + parname + " = true; } else { " + parname + " = false; }"; 
         }
-        out.println(convertcode + "\n\r");
-        out.println("  }\n\r\n\r");
+        else if (typ.isEntity())
+        { convertcode = "    " + parname + " = cont.get" + tname + "ByPK(_s);"; } 
+ 
+        out.println(convertcode);
+        out.println("  }\n\n");
       }
-      out.println("  public void " + nme + "()\n\r");
+
+
       if (resultType == null)
-      { out.println("  { cont." + nme + "(" + opcallpars + "); }\n\r\n\r"); } 
-      else // (resultType != null)
-      { // String rtyp = resultType.getJava();
-        out.println("  { result = \"\" + cont." + nme + "(" + opcallpars + "); }\n\r\n\r");
-        out.println("  public String getResult() { return result; }\n\r");
-      }
+      { out.println("  public void " + nme + "()");
+
+        out.println("  { cont." + nme + "(" + opcallpars + "); }\n\n"); } 
+      else 
+      { out.println("  public String " + nme + "()");
+        out.println("  { " + nme + "result = \"\" + cont." + nme + "(" + opcallpars + ");"); 
+        out.println("    return " + nme + "result;"); 
+        out.println("  }\n\n");
+
+        out.println("  public String get" + nme + "Result() { return " + nme + "result; }\n");
+      } 
+
+      out.println("  public boolean is" + nme + "error() { return " + nme + "errors.size() > 0; }\n");
+      out.println("  public List<String> " + nme + "errors() { return " + nme + "errors; }\n");
     } 
 
    public void generateWebServiceOp(PrintWriter out)
    { String nme = getName();
      String opcallpars = "";
      String opcalldec = "";
+
      for (int i = 0; i < parameters.size(); i++)
      { Attribute att = (Attribute) parameters.get(i);
        String par = att.getName();
@@ -2939,18 +2964,26 @@ public void generateCUIcode(PrintWriter out)
          opcalldec = opcalldec + ",";
        }
       }
-      out.println("  @WebMethod( operationName = \"" + nme + "\" )\n\r");
-      out.println("  public  String " + nme + "(" + opcalldec + ")\n\r");
+
+      out.println("  @WebMethod( operationName = \"" + nme + "\" )");
+      out.println("  public  String " + nme + "(" + opcalldec + ")");
       if (resultType != null)
-      { out.println("  { return \"\" + cont." + nme + "(" + opcallpars + "); }\n\r\n\r"); } 
+      { out.println("  { return \"\" + cont." + nme + "(" + opcallpars + "); }\n\n"); } 
       else // (resultType == null)
-      { out.println("  {  cont." + nme + "(" + opcallpars + "); }\n\r\n\r");
+      { out.println("  {  cont." + nme + "(" + opcallpars + "); }\n\n");
       }
     } 
   
 
   public String jspUpdateDeclarations()
-  { // String bean = ename.toLowerCase();
+  { String nme = getName();
+    String beanclass = "beans." + nme + "Bean";
+    return "<jsp:useBean id=\"bean\" scope=\"session\" \n " + 
+           "class=\"" + beanclass + "\"/>";
+  }
+
+  public String jspRESTDeclarations()
+  { String nme = getName();
     String beanclass = "beans.ControllerBean";
     return "<jsp:useBean id=\"bean\" scope=\"session\" \n " + 
            "class=\"" + beanclass + "\"/>";
@@ -2971,6 +3004,21 @@ public void generateCUIcode(PrintWriter out)
     return res;
   }
 
+  public String jspRESTParamTransfers(Vector atts)
+  { String bean = "bean";
+    String ucname = getName(); 
+    String res = "";
+    for (int i = 0; i < atts.size(); i++)
+    { Attribute att = (Attribute) atts.get(i);
+      String nme = att.getName();
+      res = res +
+        "<jsp:setProperty name=\"" + bean +
+        "\"  property=\"" + ucname + "_" + nme + 
+        "\"  param=\"" + nme + "\"/>\n\r";
+    }
+    return res;
+  }
+
   
   public String jspUpdateText(String op,
                               Vector atts)
@@ -2980,7 +3028,7 @@ public void generateCUIcode(PrintWriter out)
     String showresult = ""; 
     if (resultType != null) 
     { // String op1 = (op.charAt(0) + "").toUpperCase() + op.substring(1,op.length()); 
-      showresult = "<strong> Result = </strong> <%= bean.getResult() %>\n\r"; 
+      showresult = "<p><strong> Result = </strong> <%= " + bean + "." + op + "()%> </p>\n\r"; 
     } 
     String res = dec + "\n\r" + 
       sets + "\n\r" +
@@ -2988,9 +3036,53 @@ public void generateCUIcode(PrintWriter out)
       "<head><title>" + op + "</title></head>\n\r" +
       "<body>\n\r" +
       "<h1>" + op + "</h1>\n\r" +
-      "<% " + bean + "." + op + "(); %>\n\r" +
-      "<h2>" + op + " performed</h2>\n\r" +
-      showresult + "\n\r" +
+	  "<% if (" + bean + ".is" + op + "error())\n\r" +
+      "{ %> <h2>Error in data: <%= " + bean + ".errors() %></h2>\n\r" +
+      "<h2>Press Back to re-enter</h2> <% }\n\r"; 
+    if (resultType != null)
+    { res = res + "else { %> " + showresult + "\n\r" +
+        "<h2>" + op + " performed</h2> <% } %>\n\r"; 
+	} 
+	else 
+	{ res = res + "else { %> " + bean + "." + op + "();\n\r" +
+        "<h2>" + op + " performed</h2> <% } %>\n\r" +  
+        "\n\r\n\r"; 
+    }
+	res = res +  
+      "<hr>\n\r\n\r" +
+      "</body>\n\r</html>\n\r";
+    return res;
+  }
+
+  public String jspRESTText(String op,
+                              Vector atts)
+  { String bean = "bean";
+    String dec = jspRESTDeclarations();
+    String sets = jspRESTParamTransfers(atts);
+    String showresult = ""; 
+    if (resultType != null) 
+    { // String op1 = (op.charAt(0) + "").toUpperCase() + op.substring(1,op.length()); 
+      showresult = "<p><strong> Result = </strong> <%= " + bean + "." + op + "()%> </p>\n\r"; 
+    } 
+    String res = dec + "\n\r" + 
+      sets + "\n\r" +
+      "<html>\n\r" +
+      "<head><title>" + op + "</title></head>\n\r" +
+      "<body>\n\r" +
+      "<h1>" + op + "</h1>\n\r" +
+	  "<% if (" + bean + ".is" + op + "error())\n\r" +
+      "{ %> <h2>Error in data: <%= " + bean + "." + op + "errors() %></h2>\n\r" +
+      "<h2>Press Back to re-enter</h2> <% }\n\r"; 
+    if (resultType != null)
+    { res = res + "else { %> " + showresult + "\n\r" +
+        "<h2>" + op + " performed</h2> <% } %>\n\r"; 
+	} 
+	else 
+	{ res = res + "else { %> " + bean + "." + op + "();\n\r" +
+        "<h2>" + op + " performed</h2> <% } %>\n\r" +  
+        "\n\r\n\r"; 
+    }
+	res = res +  
       "<hr>\n\r\n\r" +
       "</body>\n\r</html>\n\r";
     return res;
@@ -3047,6 +3139,14 @@ public void generateCUIcode(PrintWriter out)
     // String ename = entity.getName();
     Vector pars = getParameters();
     return jspUpdateText(action,pars); 
+    // return jspQueryText(action,ename,pars,entity);
+  }
+
+  public String getRESTJsp(String appname)
+  { String action = getName();
+    // String ename = entity.getName();
+    Vector pars = getParameters();
+    return jspRESTText(action,pars); 
     // return jspQueryText(action,ename,pars,entity);
   }
 
@@ -3379,6 +3479,154 @@ public void generateCUIcode(PrintWriter out)
     return res + "}\n\n"; 
   } 
 
+  public String generateJSPBean(String packageName, 
+       Vector entities, Vector types, CGSpec cgs)
+  { String ename = getName(); 
+    String res = "package " + packageName + ";\n\n" + 
+      "import java.util.ArrayList;\n\n" + 
+      "import java.util.List;\n\n" + 
+      "\n\n" + 
+      "public class " + ename + "Bean\n{ ModelFacade model = null;\n\n";
+	  
+    Attribute resultAttribute = getResultParameter(); 
+
+    Vector attributes = new Vector(); 
+    attributes.addAll(parameters); 
+ 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attnme = att.getName();
+      Type atttype = att.getType();  
+      String tname = atttype.getName(); 
+      res = res + "  private String " + attnme + " = \"\";\n";
+      if (tname.equals("int") || tname.equals("long"))
+      { res = res + "  private int i" + attnme + " = 0;\n"; } 
+      else if (tname.equals("double"))
+      { res = res + "  private double d" + attnme + " = 0;\n"; } 
+      else if (att.isEnumeration())
+      { Vector vals = atttype.getValues(); 
+	   res = res + "  private " + tname + " e" + attnme + " = " + tname + "." + vals.get(0) + ";\n"; 
+      }  
+      else if (att.isEntity())
+      { res = res + "  private " + tname + " instance_" + attnme + " = null;\n"; 
+      }  
+      else if (att.isCollection()) // assume a collection of strings
+      { res = res + "  private ArrayList<String> s" + attnme + " = new ArrayList<String>();\n"; } 
+
+       // booleans are treated as strings. 
+    } 
+    res = res + "  private List errors = new ArrayList();\n\n" +
+          "  public " + ename + "Bean() { model = ModelFacade.getInstance(); }\n\n"; 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attnme = att.getName(); 
+      res = res + "  public void set" + attnme + "(String " + attnme + "x)\n  { " + 
+            attnme + " = " + attnme + "x; }\n\n"; 
+    } 
+
+    res = res + "  public void resetData()\n  { "; 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attname = att.getName(); 
+      res = res + attname + " = \"\";\n    "; 
+    } 
+    res = res + "}\n\n";     
+
+    res = res + "  public boolean is" + ename + "error()\n" + 
+            "  { errors.clear(); \n";
+
+    String parstring = "";  
+    for (int k = 0; k < parameters.size(); k++) 
+    { Attribute att = (Attribute) parameters.get(k);
+      String attnme = att.getName();  
+      Type atype = att.getType(); 
+      String tname = atype.getName(); 
+      String check = att.getBeanCheckCode(); 
+      res = res + check; 
+
+      if (tname.equals("int") || tname.equals("long"))
+      { parstring = parstring + "i" + attnme; } 
+      else if (tname.equals("double"))
+      { parstring = parstring + "d" + attnme; }
+      else if (att.isEnumerated())
+      { parstring = parstring + "e" + attnme; } 
+      else if (att.isEntity())
+      { parstring = parstring + "instance_" + attnme; } 
+      else if (att.isCollection())
+      { parstring = parstring + "s" + attnme; } 
+      else 
+      { parstring = parstring + attnme; }  
+      if (k < parameters.size() - 1) 
+      { parstring = parstring + ","; } 
+    } 
+
+    Vector tests = getPreconditionCheckTests(parameters); 
+    for (int p = 0; p < tests.size(); p++)
+    { String test = (String) tests.get(p); 
+      res = res + 
+            "    if (" + test + ") { }\n" + 
+            "    else { errors.add(\"Precondition: " + test + " failed\"); }\n";
+    }
+    res = res + "    return errors.size() > 0;\n  }\n\n";
+
+    res = res + "  public String errors() { return errors.toString(); }\n\n"; 
+
+    if (resultAttribute == null)
+    { res = res + "  public void " + ename + "()\n" +  "  { "; 
+      res = res + "model." + ename + "(" + parstring + ");" + " }\n\n";
+    } 
+	else 
+	{ Type t = resultAttribute.getType(); 
+	  String jType = t.getJava7(); 
+	  res = res + "  public " + jType + " " + ename + "()\n" +  "  { "; 
+      res = res + "return model." + ename + "(" + parstring + ");" + " }\n\n";
+    }  
+    return res + "}\n"; 
+  }
+
+  public String generateRESTerrorOp()
+  { String ucname = getName(); 
+    String res = "  public boolean is" + ucname + "error()\n" + 
+            "  { " + ucname + "errors.clear(); \n";
+
+    String parstring = "";  
+    for (int k = 0; k < parameters.size(); k++) 
+    { Attribute att = (Attribute) parameters.get(k);
+      String attnme = att.getName();  
+      Type atype = att.getType(); 
+      String tname = atype.getName(); 
+      String check = att.getBeanCheckCode(); 
+      res = res + check; 
+
+      if (tname.equals("int") || tname.equals("long"))
+      { parstring = parstring + "i" + attnme; } 
+      else if (tname.equals("double"))
+      { parstring = parstring + "d" + attnme; }
+      else if (att.isEnumerated())
+      { parstring = parstring + "e" + attnme; } 
+      else if (att.isEntity())
+      { parstring = parstring + "instance_" + attnme; } 
+      else if (att.isCollection())
+      { parstring = parstring + "s" + attnme; } 
+      else 
+      { parstring = parstring + attnme; }  
+      if (k < parameters.size() - 1) 
+      { parstring = parstring + ","; } 
+    } 
+
+    Vector tests = getPreconditionCheckTests(parameters); 
+    for (int p = 0; p < tests.size(); p++)
+    { String test = (String) tests.get(p); 
+      res = res + 
+            "    if (" + test + ") { }\n" + 
+            "    else { " + ucname + "errors.add(\"Precondition: " + test + " failed\"); }\n";
+    }
+    res = res + "    return errors.size() > 0;\n  }\n\n";
+
+    res = res + "  public String " + ucname + "errors() { return " + ucname + "errors.toString(); }\n\n"; 
+    return res; 
+  } 
+
   public String generateAndroidBean(String packageName, 
        Vector entities, Vector types, CGSpec cgs)
   { String ename = getName(); 
@@ -3460,7 +3708,7 @@ public void generateCUIcode(PrintWriter out)
       { parstring = parstring + ","; } 
     } 
 
-    Vector tests = getPreconditionCheckTests(cgs,parameters); 
+    Vector tests = getPreconditionCheckTests(parameters); 
     for (int p = 0; p < tests.size(); p++)
     { String test = (String) tests.get(p); 
       res = res + 
@@ -3475,10 +3723,10 @@ public void generateCUIcode(PrintWriter out)
     { res = res + "  public void " + ename + "()\n" +  "  { "; 
       res = res + "model." + ename + "(" + parstring + ");" + " }\n\n";
     } 
-	else 
-	{ Type t = resultAttribute.getType(); 
-	  String jType = t.getJava7(); 
-	  res = res + "  public " + jType + " " + ename + "()\n" +  "  { "; 
+    else 
+    { Type t = resultAttribute.getType(); 
+      String jType = t.getJava7(); 
+      res = res + "  public " + jType + " " + ename + "()\n" +  "  { "; 
       res = res + "return model." + ename + "(" + parstring + ");" + " }\n\n";
     }  
     return res + "}\n"; 
@@ -3554,7 +3802,7 @@ public void generateCUIcode(PrintWriter out)
     out.println("    android:showAsAction=\"always\" />"); 
   }
 
-  public Vector getPreconditionCheckTests(CGSpec cgs, Vector params)
+  public Vector getPreconditionCheckTests(Vector params)
   { // only include invariants which have all features in params
     Vector parnames = ModelElement.getNames(params); 
     Vector res = new Vector(); 
@@ -3912,17 +4160,38 @@ public void generateCUIcode(PrintWriter out)
   public Vector testCases()
   { Vector allattributes = getParameters();
     String nme = getName();  
-    Vector res = new Vector(); 
-	if (allattributes == null || allattributes.size() == 0) 
-	{ res.add("-- no test for operation " + nme + "\n"); 
-	  return res; 
-	}
-	res.add("-- test for operation " + nme + "\n"); 
+    Vector res = new Vector();
+ 
+    if (allattributes == null || allattributes.size() == 0) 
+    { res.add("-- no test for operation " + nme + "\n"); 
+      return res; 
+    }
+    res.add("-- test for operation " + nme + "\n"); 
 	
+    java.util.Map upperBounds = new java.util.HashMap(); 
+    java.util.Map lowerBounds = new java.util.HashMap(); 
+	
+    Vector bounds = new Vector(); 
+    java.util.Map aBounds = new java.util.HashMap(); 
+      
+    for (int i = 0; i < preconditions.size(); i++) 
+    { Constraint con = (Constraint) preconditions.get(i);
+      Expression pre = con.succedent();  
+      pre.getParameterBounds(allattributes,bounds,aBounds);
+   
+      Expression.identifyUpperBounds(allattributes,aBounds,upperBounds); 
+      Expression.identifyLowerBounds(allattributes,aBounds,lowerBounds); 
+      System.out.println(".>> Parameter bounds for operation " + nme + " : " + aBounds);  
+      System.out.println(".>> Upper bounds map for operation " + nme + " : " + upperBounds);  
+      System.out.println(".>> Lower bounds map for operation " + nme + " : " + lowerBounds);
+    }
+
     for (int i = 0; i < allattributes.size(); i++) 
     { Vector newres = new Vector(); 
       Attribute att = (Attribute) allattributes.get(i); 
-      Vector testassignments = att.testCases("parameters"); 
+
+      Vector testassignments = att.testCases("parameters", lowerBounds, upperBounds);
+ 
       for (int j = 0; j < res.size(); j++) 
       { String tst = (String) res.get(j); 
         for (int k = 0; k < testassignments.size(); k++) 
@@ -3937,6 +4206,453 @@ public void generateCUIcode(PrintWriter out)
       res.addAll(newres); 
     } 
     return res; 
- }
+  }
+ 
+  // For JSP Web apps: 
+  public static void modelFacade(String packageName, Vector usecases, CGSpec cgs, Vector entities, Vector types, PrintWriter out)
+  { // String ename = e.getName();
+    // Vector atts = e.getAttributes(); 
+	
+    // String evc = ename + "ViewController";
+    // String evo = ename + "ValueObject";
+    // String resvo = ename.toLowerCase() + "_vo";
+    // String populateResult = createVOStatement(e,atts);
+	
+    boolean hasDbi = false; 
+    if (entities.size() > 0)
+    { hasDbi = true; }
+
+
+    out.println("package " + packageName + ";");
+    out.println(); 
     
+    out.println("import java.util.ArrayList;");
+    out.println("import java.util.HashMap;");
+    out.println("import java.util.List;");
+    out.println("import java.util.Map;");
+    out.println("import java.sql.*;"); 
+    out.println("");
+    out.println("public class ModelFacade");
+
+    /* if (remoteCalls > 0) 
+    { out.println("  implements InternetCallback"); } */ 
+	out.println("{ "); 
+    
+    if (hasDbi) 
+    { out.println("  Dbi dbi; "); } 
+    
+    out.println("  static ModelFacade instance = null; ");
+    out.println(); 
+    out.println("  public static ModelFacade getInstance()"); 
+    out.println("  { if (instance == null) "); 
+    out.println("    { instance = new ModelFacade(); }"); 
+    out.println("    return instance;");  
+    out.println("  }");  
+    out.println(); 
+    out.println(); 
+	
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ent = (Entity) entities.get(i); 
+      if (ent.isDerived()) { } 
+      else if (ent.isComponent()) { } 
+      else 
+      { String ename = ent.getName(); 
+        out.println("  " + ename + "VO current" + ename + " = null;"); 
+        out.println(); 
+        out.println("  public List<" + ename + "VO> current" + 
+		            ename + "s = new ArrayList<" + ename + "VO>();");
+        out.println();  
+      } 
+    } 
+	
+    out.println("  private ModelFacade()"); 
+    if (hasDbi) 
+    { out.println("  { dbi = new Dbi(); }"); 
+	}  
+    else 
+    { out.println("  { }"); } 
+    out.println();
+	
+    for (int y = 0; y < usecases.size(); y++)
+    { if (usecases.get(y) instanceof UseCase) 
+      { UseCase uc = (UseCase) usecases.get(y);
+        Vector pars = uc.getParameters(); 
+        Attribute res = uc.getResultParameter(); 
+        String partext = ""; 
+        for (int i = 0; i < pars.size(); i++) 
+        { Attribute par = (Attribute) pars.get(i);
+          Type partype = par.getType();  
+          partext = partext + partype.getJava8() + " " + par.getName(); 
+          if (i < pars.size()-1)
+          { partext = partext + ", "; } 
+        }   
+	  
+        String restype = "void"; 
+        String resstring = ""; 
+        if (res != null) 
+        { restype = res.getType().getJava8(); 
+          resstring = restype + " result ;\n"; 
+        } 
+      
+        out.println("  public " + restype + " " + uc.getName() + "(" + partext + ")"); 
+      
+        out.println("  { " + resstring);
+
+      // out.println(extractatts);
+        String uccode = uc.cgActivity(cgs,entities,types);
+        cgs.displayText(uccode,out);
+          
+        if (res != null) 
+        { out.println("    return result;"); } 
+
+        out.println("  }");
+        out.println(); 	 
+      }
+    }
+	
+    for (int j = 0; j < entities.size(); j++) 
+    { Entity ee = (Entity) entities.get(j); 
+      if (ee.isDerived()) { continue; } 
+      if (ee.isComponent()) { continue; } 
+	  
+      if (ee.isPersistent())
+      { String item = ee.getName(); 
+        String extractedItem = ee.jspExtractCode(); 
+        out.println("  public List<" + item + "VO> list" + item + "()"); 
+        out.println("  { ResultSet _rs = dbi.list" + item + "();"); 
+        out.println("    current" + item + "s = new ArrayList<" + item + "VO>();"); 
+        out.println("    try");  
+        out.println("    { while (_rs.next())"); 
+        out.println("      { current" + item + "s.add(" + extractedItem + "); }"); 
+        out.println("    } catch (Exception _e) { }");    
+        out.println("    return current" + item + "s;"); 
+        out.println("  }"); 
+        out.println(); 
+
+        out.println("  public List<String> stringList" + item + "()"); 
+        out.println("  { list" + item + "();"); 
+        out.println("    List<String> res = new ArrayList<String>();"); 
+        out.println("    for (int x = 0; x < current" + item + "s.size(); x++)"); 
+        out.println("    { " + item + "VO _item = (" + item + "VO) current" + item + "s.get(x);"); 
+        out.println("      res.add(_item + \"\");"); 
+        out.println("    }"); 
+        out.println("    return res;"); 
+        out.println("  }"); 
+        out.println(); 
+
+        Attribute key = ee.getPrincipalPK();
+        String pk = "";  
+        if (key != null) 
+        { pk = key.getName(); 
+          Vector atts = ee.getAttributes(); 
+          out.println("  public " + item + " get" + item + "ByPK(String _val)"); 
+          out.println("  { List<" + item + "VO> _res = searchBy" + item + key + "(_val);"); 
+          out.println("    if (_res.size() == 0)"); 
+          out.println("    { return null; }"); 
+          out.println("    else"); 
+          out.println("    { " + item + "VO _vo = _res.get(0);"); 
+          out.println("      " + item + " _itemx = " + item + ".createByPK" + item + "(_val);");
+          for (int k = 0; k < atts.size(); k++) 
+          { Attribute att = (Attribute) atts.get(k); 
+            String aname = att.getName();  
+            out.println("      _itemx." + aname + " = _vo.get" + aname + "();"); 
+          } 
+          out.println("      return _itemx;"); 
+          out.println("    }"); 
+          out.println("  }"); 
+          out.println(); 
+          out.println("  public " + item + " retrieve" + item + "(String _val)"); 
+          out.println("  { return get" + item + "ByPK(_val); }"); 
+          out.println();
+          out.println("  public List<String> all" + item + "ids()"); 
+          out.println("  { list" + item + "();"); 
+          out.println("    List<String> res = new ArrayList<String>();"); 
+          out.println("    for (int x = 0; x < current" + item + "s.size(); x++)"); 
+          out.println("    { " + item + "VO _item = (" + item + "VO) current" + item + "s.get(x);"); 
+          out.println("      res.add(_item.get" + key + "() + \"\");"); 
+          out.println("    }"); 
+          out.println("    return res;"); 
+          out.println("  }"); 
+          out.println(); 
+        }  
+
+        out.println("  public void setSelected" + item + "(" + item + "VO x)"); 
+        out.println("  { current" + item + " = x; }"); 
+        out.println(); 
+
+        out.println("  public void setSelected" + item + "(int i)"); 
+        out.println("  { if (i < current" + item + "s.size())"); 
+        out.println("    { current" + item + " = current" + item + "s.get(i); }");
+        out.println("  }"); 
+        out.println(); 
+
+        out.println("  public " + item + "VO getSelected" + item + "()"); 
+        out.println("  { return current" + item + "; }"); 
+        out.println(); 
+
+        out.println("  public void persist" + item + "(" + item + " _x)"); 
+        out.println("  { " + item + "VO _vo = new " + item + "VO(_x);"); 
+        out.println("    dbi.edit" + item + "(_vo); "); 
+        out.println("    current" + item + " = _vo;"); 
+        out.println("  }"); 
+        out.println(); 
+
+        out.println("  public void edit" + item + "(" + item + "VO _x)"); 
+        out.println("  { dbi.edit" + item + "(_x); "); 
+        out.println("    current" + item + " = _x;"); 
+        out.println("  }"); 
+        out.println(); 
+	  
+        out.println("  public void create" + item + "(" + item + "VO _x)"); 
+        out.println("  { dbi.create" + item + "(_x);");  
+        out.println("    current" + item + " = _x;"); 
+        out.println("  }"); 
+        out.println(); 
+	  
+        out.println("  public void delete" + item + "(String _id)"); 
+        out.println("  { dbi.delete" + item + "(_id);");  
+        out.println("    current" + item + " = null;"); 
+        out.println("  }");
+        out.println(); 
+
+        Vector atts = ee.getAttributes(); 
+        for (int i = 0; i < atts.size(); i++) 
+        { Attribute att = (Attribute) atts.get(i); 
+          String attnme = att.getName(); 
+          Type atttyp = att.getType(); 
+          String typ = atttyp.getJava8(); 
+
+	      out.println("  public List<" + item + "VO> searchBy" + item + attnme + "(" + typ + " " + attnme + "x)"); 
+          out.println("  { ResultSet _rs = dbi.searchBy" + item + attnme + "(" + attnme + "x);"); 
+		  out.println("    current" + item + "s = new ArrayList<" + item + "VO>();"); 
+		  out.println("    try");  
+          out.println("    { while (_rs.next())"); 
+          out.println("      { current" + item + "s.add(" + extractedItem + "); }"); 
+          out.println("    } catch (Exception _e) { }");    
+          out.println("    return current" + item + "s;"); 
+          out.println("  }"); 
+          out.println(); 
+        }  // It is always a string? No. 
+      }
+    } 
+
+    out.println("}");
+  }
+
+  public String getServletCode()
+  { String res = "";
+    String sname = getName();
+	  
+    Attribute resultAttribute = getResultParameter(); 
+    
+	res = "import java.io.*;\n" +
+          "import java.util.*;\n" +
+          "import javax.servlet.http.*;\n" +
+          "import javax.servlet.*;\n";
+
+    res = res + "\n"; 
+
+    res = res + 
+      "public class " + sname + "Servlet extends HttpServlet\n"; 
+    res = res + "{ ModelFacade model; \n\n" + 
+          "  public " + sname + "Servlet() { model = ModelFacade.getInstance(); }\n\n";
+
+    res = res + "  public void init(ServletConfig cfg)\n" +
+          "  throws ServletException\n" +
+          "  { super.init(cfg); }\n\n"; 
+		  
+    res = res + 
+      "  public void doGet(HttpServletRequest req,\n" +
+      "              HttpServletResponse res)\n" + 
+      "  throws ServletException, IOException\n" +
+      "  { res.setContentType(\"text/html\");\n" +
+      "    PrintWriter pw = res.getWriter();\n" +
+      "    ErrorPage errorPage = new ErrorPage();\n";
+
+    String parstring = ""; 
+    Vector pars = getParameters();
+
+    for (int i = 0; i < pars.size(); i++)
+    { Attribute att = (Attribute) pars.get(i);
+	  String attnme = att.getName(); 
+	  Type atttype = att.getType(); 
+	  
+      String extractatt = att.extractCode();
+      String testatt = att.getServletCheckCode();
+      res = res + extractatt + testatt;
+
+      String tname = atttype.getName(); 
+
+      if (tname.equals("int") || tname.equals("long"))
+      { parstring = parstring + "i" + attnme; } 
+      else if (tname.equals("double"))
+      { parstring = parstring + "d" + attnme; }
+      else if (att.isEnumerated())
+      { parstring = parstring + "e" + attnme; } 
+      else if (att.isEntity())
+      { parstring = parstring + "instance_" + attnme; } 
+      else if (att.isCollection())
+      { parstring = parstring + "s" + attnme; } 
+      else 
+      { parstring = parstring + attnme; }  
+      if (i < pars.size() - 1) 
+      { parstring = parstring + ","; } 
+
+    } // including case of objects specified by primary key value. 
+
+    // call to the model op with the parameters
+	
+    String code = "\n" +
+      "      CommandPage cp = new CommandPage();\n" +
+      "      pw.println(cp);\n"; 
+      
+    if (resultAttribute != null) 
+    { String resultPage = sname + "result"; 
+      code = code + "      " + sname + "ResultPage " + resultPage + " = new " + sname + "ResultPage();\n";
+      code = code + "      " + resultPage + ".addRow(model." + sname + "(" + parstring + "));\n" + 
+                    "      pw.println(" + resultPage + ");";  
+    } 
+    else 
+    { code = code + "      model." + sname + "(" + parstring + ");\n"; } 
+
+//      "       while (resultSet.next())\n" + 
+//      "       { " + resultPage + ".addRow(resultSet); }\n" + 
+//      "       pw.println(" + resultPage + ");\n" + 
+//      "       resultSet.close();\n"; 
+    
+    res = res + 
+      "    if (errorPage.hasError())\n" +
+      "    { pw.println(errorPage); }\n" +
+      "    else \n" +
+      "    try { " + code + 
+      "    } catch (Exception e) \n" + 
+      "      { e.printStackTrace(); \n" + 
+      "        errorPage.addMessage(\"Error in operation call of " + sname + "\"); \n" + 
+      "        pw.println(errorPage); \n" + 
+	  "      }\n" + 
+      "    pw.close();\n" + 
+      "  }\n\n";
+
+    res = res +
+      "  public void doPost(HttpServletRequest req,\n" + 
+      "               HttpServletResponse res)\n" +
+      "  throws ServletException, IOException\n" +
+      "  { doGet(req,res); }\n\n"; 
+
+    res = res + 
+      "  public void destroy()\n" +
+      "  { dbi.logoff(); }\n" +
+      "}\n";
+    return res;
+  }
+
+  public String getGenerationClass()
+  { String nme = getName();
+    String codebase = "http://localhost:8080/servlet/"; 
+    // String ename = entity.getName();
+    // String action = getStereotype(0);
+    // String rolename = "";
+    // if (getStereotype(1) != null)
+    // { rolename = getStereotype(1); } 
+    
+    String servlet = codebase + nme + "Servlet";
+    String res = "public class " + nme + 
+      "Page extends BasePage\n" +
+      "{ protected HtmlForm form = new HtmlForm();\n" +
+      "  protected HtmlInput button = new HtmlInput();\n\n" +
+      "  public " + nme + "Page()\n" +
+      "  { super();\n" +
+      "    HtmlText heading = new HtmlText(\"" + nme + " form\",\"h1\");\n" +
+      "    body.add(0,heading);\n" +
+      "    form.setAttribute(\"action\",\"" + 
+      servlet + "\");\n" + 
+      "    HtmlItem para = new HtmlItem(\"p\");\n" + 
+      "    form.setAttribute(\"method\",\"POST\");\n" +
+      "    button.setAttribute(\"type\",\"submit\");\n" +
+      "    button.setAttribute(\"value\",\"" + 
+    Named.capitalise(nme) + "\");\n" +
+      "    body.add(form);\n";
+
+    Vector pars = getParameters();
+    for (int i = 0; i < pars.size(); i++)
+    { Attribute att = (Attribute) pars.get(i);
+      String attItem = att.getHtmlGen();
+      res = res + attItem;
+    }
+    res = res + "    form.add(button);\n" +
+          "  }\n" + "}\n";
+    return res;
+  } // use GET for query ops
+
+
+  public String getResultPage()
+  { String res =
+          "import java.sql.*;\n\n" + 
+          "public class " + getName() + "ResultPage extends BasePage\n" +
+          "{ private HtmlTable table = new HtmlTable(); \n" +
+          "  private HtmlTableRow header = new HtmlTableRow();\n\n" +
+          "  public " + getName() + "ResultPage()\n" +
+          "  { table.setAttribute(\"border\",\"2\");\n";
+    res = res + "    header.addCell(new HtmlTableData(\"" + getName() + " result\"));\n"; 
+    res = res + "    table.addRow(header);\n"; 
+    res = res + "    body.add(table);\n"; 
+	res = res + "  }\n\n" +
+          "  public void addRow(String r)\n" +
+          "  { HtmlTableRow row = new HtmlTableRow();\n" +
+          "    row.addCell(new HtmlTableData(r));\n" + 
+          "    table.addRow(row);\n" +
+          "  }\n"; 
+    return res;
+  }
+
+
 }
+
+/*     String parstring = "";  
+    for (int k = 0; k < parameters.size(); k++) 
+    { Attribute att = (Attribute) parameters.get(k);
+      String attnme = att.getName();  
+      Type atype = att.getType(); 
+      String tname = atype.getName(); 
+      String check = att.getBeanCheckCode(); 
+      res = res + check; 
+
+      if (tname.equals("int") || tname.equals("long"))
+      { parstring = parstring + "i" + attnme; } 
+      else if (tname.equals("double"))
+      { parstring = parstring + "d" + attnme; }
+      else if (att.isEnumerated())
+      { parstring = parstring + "e" + attnme; } 
+      else if (att.isEntity())
+      { parstring = parstring + "instance_" + attnme; } 
+      else if (att.isCollection())
+      { parstring = parstring + "s" + attnme; } 
+      else 
+      { parstring = parstring + attnme; }  
+      if (k < parameters.size() - 1) 
+      { parstring = parstring + ","; } 
+    } 
+
+    Vector tests = getPreconditionCheckTests(parameters); 
+    for (int p = 0; p < tests.size(); p++)
+    { String test = (String) tests.get(p); 
+      res = res + 
+            "    if (" + test + ") { }\n" + 
+            "    else { errors.add(\"Precondition: " + test + " failed\"); }\n";
+    }
+    res = res + "    return errors.size() > 0;\n  }\n\n";
+
+    res = res + "  public String errors() { return errors.toString(); }\n\n"; 
+
+    if (resultAttribute == null)
+    { res = res + "  public void " + ename + "()\n" +  "  { "; 
+      res = res + "model." + ename + "(" + parstring + ");" + " }\n\n";
+    } 
+    else 
+    { Type t = resultAttribute.getType(); 
+      String jType = t.getJava7(); 
+      res = res + "  public " + jType + " " + ename + "()\n" +  "  { "; 
+      res = res + "return model." + ename + "(" + parstring + ");" + " }\n\n";
+    }  
+
+  */ 

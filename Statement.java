@@ -2744,6 +2744,7 @@ class CreationStatement extends Statement
   private Type elementType = null; 
   boolean declarationOnly = false; 
   String initialValue = null; 
+  boolean isFrozen = false;  // true when a constant is declared. 
 
   public CreationStatement(String cio, String ast)
   { createsInstanceOf = cio;
@@ -2752,6 +2753,9 @@ class CreationStatement extends Statement
 
   public void setInitialValue(String init)
   { initialValue = init; } 
+
+  public void setFrozen(boolean froz)
+  { isFrozen = froz; } 
 
   public String getOperator() 
   { return "var"; } 
@@ -2810,8 +2814,8 @@ class CreationStatement extends Statement
   { if (initialValue != null) 
     { return "  var " + assignsTo + " = " + initialValue; } 
     else if (instanceType != null)
-	{ return "  var " + assignsTo + " : " + instanceType; }
-	else 
+    { return "  var " + assignsTo + " : " + instanceType; }
+    else 
     { return "  var " + assignsTo + " : " + createsInstanceOf; }
   } 
 
@@ -2860,16 +2864,22 @@ class CreationStatement extends Statement
   }
 
   public String toStringJava()
-  { if (initialValue != null) 
-    { return "  var " + assignsTo + " = " + initialValue; } 
+  { String mode = ""; 
+    if (isFrozen) 
+    { mode = "final "; } 
+
+    if (initialValue != null) 
+    { String jType = instanceType.getJava(); 
+      return "  " + mode + jType + " " + assignsTo + " = " + initialValue + ";"; 
+    } 
     else if (instanceType != null)
     { String jType = instanceType.getJava(); 
       if (Type.isBasicType(instanceType)) 
-      { return "  " + jType + " " + assignsTo + ";"; } 
+      { return "  " + mode + jType + " " + assignsTo + ";"; } 
       else if (declarationOnly) 
-      { return "  " + jType + " " + assignsTo + ";"; } 
+      { return "  " + mode + jType + " " + assignsTo + ";"; } 
       else if (Type.isCollectionType(instanceType))
-      { return "  List " + assignsTo + ";"; } 
+      { return "  " + mode + "List " + assignsTo + ";"; } 
       else if (instanceType.isEntity())
       { Entity ent = instanceType.getEntity(); 
         if (ent.hasStereotype("external"))
@@ -2883,12 +2893,12 @@ class CreationStatement extends Statement
     else if (createsInstanceOf.equals("boolean") || createsInstanceOf.equals("int") ||
         createsInstanceOf.equals("long") || 
         createsInstanceOf.equals("String") || createsInstanceOf.equals("double"))
-    { return "  " + createsInstanceOf + " " + assignsTo + ";"; } 
+    { return "  " + mode + createsInstanceOf + " " + assignsTo + ";"; } 
 
     if (createsInstanceOf.startsWith("Set") || createsInstanceOf.startsWith("Sequence"))
     { return "  List " + assignsTo + ";"; } 
 
-    return createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
+    return "  " + mode + createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
            "  Controller.inst().add" + createsInstanceOf + "(" + assignsTo + ");"; 
   }
 
@@ -2921,7 +2931,7 @@ class CreationStatement extends Statement
     else if (createsInstanceOf.startsWith("Sequence"))
     { return "  ArrayList " + assignsTo + ";"; } 
 
-    return createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
+    return "  " + createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
            "  Controller.inst().add" + createsInstanceOf + "(" + assignsTo + ");"; 
   }
 
@@ -3161,17 +3171,17 @@ class CreationStatement extends Statement
   public String cg(CGSpec cgs)
   { String etext = this + "";
     Vector args = new Vector();
-	Vector eargs = new Vector(); 
+    Vector eargs = new Vector(); 
 	
     if (assignsTo != null) 
     { args.add(assignsTo); 
-	  eargs.add(assignsTo); 
-	} 
+      eargs.add(assignsTo); 
+    } 
 	
     if (instanceType != null) 
     { args.add(instanceType.cg(cgs)); 
-	  eargs.add(instanceType); 
-	}
+      eargs.add(instanceType); 
+    }
 	 
     CGRule r = cgs.matchedStatementRule(this,etext);
     if (r != null)

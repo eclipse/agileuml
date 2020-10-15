@@ -10333,9 +10333,9 @@ public class Entity extends ModelElement implements Comparable
       if (tname.equals("boolean"))
       { tname = "String"; } 
       res = res + "  private " + tname + " " + attnme + ";\n"; 
-	  stringout = stringout + "\"" + attnme + "= \" + " + attnme; 
-	  if (i < attributes.size() - 1)
-	  { stringout = stringout + " + \",\" + "; }
+      stringout = stringout + "\"" + attnme + "= \" + " + attnme; 
+      if (i < attributes.size() - 1)
+      { stringout = stringout + " + \",\" + "; }
     } 
     res = res + "\n" +  
 	      "  public " + nme + "VO() {}\n\n"; 
@@ -10358,14 +10358,16 @@ public class Entity extends ModelElement implements Comparable
           previous = true;
         }
       }
+
       res = res + ")\n  { "; 
+
       for (int i = 0; i < attributes.size(); i++) 
       { Attribute att = (Attribute) attributes.get(i); 
         String attnme = att.getName(); 
         res = res + "   " + attnme + " = " + attnme + "x;\n"; 
       }
       res = res + "  }\n\n"; 
-	} 
+    } 
 	
     res = res + "  public " + nme + "VO(" + nme + " _x)\n";
     res = res + "  {\n"; 
@@ -10376,17 +10378,20 @@ public class Entity extends ModelElement implements Comparable
     }
     res = res + "  }\n\n"; 
 
-	res = res + "  public String toString()\n" + 
-	            "  { return (" + stringout + "); }\n\n";  
+    res = res + "  public String toString()\n"; 
+    if (attributes.size() > 0)  
+    { res = res + "  { return (" + stringout + "); }\n\n"; } 
+    else 
+    { res = res + " { return \"\"; }\n\n"; }   
  
-	res = res + "  public static List<String> toStringList(List<" + nme + "VO> list)\n" + 
-	            "  { List<String> _res = new ArrayList<String>();\n" + 
-				"    for (int i = 0; i < list.size(); i++)\n" + 
-				"    { " + nme + "VO _x = (" + nme + "VO) list.get(i);\n" + 
-				"      _res.add(_x.toString()); \n" +
-                      "    }\n" +
-                      "    return _res;\n" +   
-	       		"  }\n\n";  
+    res = res + "  public static List<String> toStringList(List<" + nme + "VO> list)\n" + 
+          "  { List<String> _res = new ArrayList<String>();\n" + 
+          "    for (int i = 0; i < list.size(); i++)\n" + 
+          "    { " + nme + "VO _x = (" + nme + "VO) list.get(i);\n" + 
+          "      _res.add(_x.toString()); \n" +
+          "    }\n" +
+          "    return _res;\n" +   
+          "  }\n\n";  
  
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
@@ -10431,14 +10436,16 @@ public class Entity extends ModelElement implements Comparable
       if (tname.equals("boolean"))
       { tname = "String"; } 
       res = res + "  " + tname + " " + attnme + ";\n"; 
-	  stringout = stringout + "\"" + attnme + "= \" + " + attnme; 
-	  if (i < attributes.size() - 1)
-	  { stringout = stringout + " + \",\" + "; }
+      stringout = stringout + "\"" + attnme + "= \" + " + attnme; 
+      if (i < attributes.size() - 1)
+      { stringout = stringout + " + \",\" + "; }
     } 
+
     res = res + "\n" +
-          "  public " + nme + "VO() {}\n\n"; 
+          "  public " + nme + "VO() {}\n\n";
+ 
     if (attributes.size() > 0)
-	{ res = res + "  public " + nme + "VO(";
+    { res = res + "  public " + nme + "VO(";
       boolean previous = false;
 
       for (int i = 0; i < attributes.size(); i++)
@@ -10455,7 +10462,9 @@ public class Entity extends ModelElement implements Comparable
           previous = true;
         }
       }
+
       res = res + ")\n  { "; 
+
       for (int i = 0; i < attributes.size(); i++) 
       { Attribute att = (Attribute) attributes.get(i); 
         String attnme = att.getName(); 
@@ -10466,6 +10475,7 @@ public class Entity extends ModelElement implements Comparable
 	
     res = res + "  public " + nme + "VO(" + nme + " _x)\n";
     res = res + "  {\n"; 
+
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attnme = att.getName(); 
@@ -10473,17 +10483,21 @@ public class Entity extends ModelElement implements Comparable
     }
     res = res + "  }\n\n"; 
 
-	res = res + "  public String toString()\n" + 
-	            "  { return (" + stringout + "); }\n\n";  
+    res = res + "  public String toString()\n"; 
+    if (attributes.size() > 0) 
+    { res = res + "  { return (" + stringout + "); }\n\n"; } 
+    else 
+    { res = res + "  { return \"\"; }\n\n"; } 
+  
  
-	res = res + "  public static List<String> toStringList(List<" + nme + "VO> list)\n" + 
-	            "  { List<String> _res = new ArrayList<String>();\n" + 
-				"    for (int i = 0; i < list.size(); i++)\n" + 
-				"    { " + nme + "VO _x = (" + nme + "VO) list.get(i);\n" + 
-				"      _res.add(_x.toString()); \n" +
-                      "    }\n" +
-                      "    return _res;\n" +   
-	       		"  }\n\n";  
+    res = res + "  public static List<String> toStringList(List<" + nme + "VO> list)\n" + 
+                "  { List<String> _res = new ArrayList<String>();\n" + 
+                "    for (int i = 0; i < list.size(); i++)\n" + 
+                "    { " + nme + "VO _x = (" + nme + "VO) list.get(i);\n" + 
+                "      _res.add(_x.toString()); \n" +
+                "    }\n" +
+                "    return _res;\n" +   
+                "  }\n\n";  
  
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
@@ -10519,7 +10533,7 @@ public class Entity extends ModelElement implements Comparable
     { Attribute att = (Attribute) attributes.get(i); 
       String attnme = att.getName(); 
       String tname = att.getType().getSwift(); 
-	  String dflt = att.getType().getSwiftDefaultValue(); 
+      String dflt = att.getType().getSwiftDefaultValue(); 
       res = res + "  var " + attnme + " : " + tname + " = " + dflt + "\n"; 
     } 
     res = res + "\n" +
@@ -10538,12 +10552,12 @@ public class Entity extends ModelElement implements Comparable
         String attname = att.getName(); 
  
         String label = "\"" + attname + "= \" + "; 
-		if (att.isNumeric())
-		{ label = label + "String(" + attname + ")"; }
-		else if (att.isEnumerated())
-		{ label = label + attname + ".rawValue"; }
-		else 
-		{ label = label + attname; }
+        if (att.isNumeric())
+        { label = label + "String(" + attname + ")"; }
+        else if (att.isEnumerated())
+        { label = label + attname + ".rawValue"; }
+        else 
+        { label = label + attname; }
 		 
       
         String par = attname + "x" + " : " + tname;
@@ -10553,11 +10567,13 @@ public class Entity extends ModelElement implements Comparable
         }
         else        
         { res = res + par;
-	      stringtext = stringtext + label; 
+          stringtext = stringtext + label; 
           previous = true;
         }
       }
+
       res = res + ")  {\n"; 
+
       for (int i = 0; i < attributes.size(); i++) 
       { Attribute att = (Attribute) attributes.get(i); 
         String attnme = att.getName(); 
@@ -10574,8 +10590,12 @@ public class Entity extends ModelElement implements Comparable
     }
     res = res + "  }\n\n"; 
  
-    res = res + "  func toString() -> String\n" + 
-                "  { return (" + stringtext + ") }\n\n"; 
+    res = res + "  func toString() -> String\n"; 
+    if (attributes.size() > 0) 
+    { res = res + "  { return (" + stringtext + ") }\n\n"; } 
+    else 
+    { res = res + "  { return \"\" }\n\n"; } 
+ 
  
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
@@ -10610,10 +10630,10 @@ public class Entity extends ModelElement implements Comparable
       String attnme = att.getName(); 
       String tname = att.getType().getSwift(); 
       String dflt = att.getType().getSwiftDefaultValue();
-	  if (att.isEntity())
-	  { tname = "String"; 
-	    dflt = "\"\""; 
-	  } 
+      if (att.isEntity())
+      { tname = "String"; 
+        dflt = "\"\""; 
+      } 
       res = res + "  var " + attnme + " : " + tname + " = " + dflt + "\n"; 
     } // But entity instances are represented by their key values, a string. 
 
@@ -11277,7 +11297,8 @@ public void iosDbiOperations(PrintWriter out)
       Vector pars = od.getParameters(); 
       String odname = od.getODName(); 
       String action = od.getStereotype(0); 
-      String dbiop = od.getDbiOpCall(); 
+      String dbiop = // od.getDbiOpCall();
+                     od.getAndroidDbiOpCall();  
       Vector correc = new Vector(); 
 
       if (action.equals("create") || action.equals("delete") || 
@@ -11352,7 +11373,7 @@ public void iosDbiOperations(PrintWriter out)
     } 
     res = res + "  private Vector errors = new Vector();\n\n" +
           "  public " + ename + "Bean(Context _c)\n" + 
-		  "  { model = ModelFacade.getInstance(_c); }\n\n"; 
+          "  { model = ModelFacade.getInstance(_c); }\n\n"; 
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attnme = att.getName(); 
@@ -11533,6 +11554,23 @@ public void iosDbiOperations(PrintWriter out)
     return res + "));"; 
   }
 
+  public String jspExtractCode()
+  { String ename = getName(); 
+    Vector pars = getAttributes(); 
+
+    String res = "new " + ename + "VO("; 
+    for (int i = 0; i < pars.size(); i++)
+    { Attribute att = (Attribute) pars.get(i); 
+      String attname = att.getName(); 
+      String jdbcop = att.jdbcExtractOp("_rs");  // rs.getInt() etc
+      if (i < pars.size() - 1)
+      { res = res + jdbcop + ","; } 
+      else 
+      { res = res + jdbcop; } 
+    } 
+    return res + ")"; 
+  }
+
 /*  private String androidExtractCode(Vector pars)
   { String ename = getName(); 
     String res = "rs_list.add(new " + ename + "VO("; 
@@ -11560,12 +11598,14 @@ public void iosDbiOperations(PrintWriter out)
     { Attribute att = (Attribute) attributes.get(i); 
       res = res + att.ejbBeanGet() + "\n" + att.ejbBeanSet() + "\n"; 
     } 
+
     // also set and get for associations, then ejbCreate, etc
     for (int i = 0; i < associations.size(); i++) 
     { Association ast = (Association) associations.get(i); 
       res = res + ast.ejbBeanGet() + "\n" + ast.ejbBeanSet() + "\n"; 
     } 
     // include add/remove for multiple ones if these are use cases
+
     res = res + ejbBeanCreate(); 
     res = res + ejbMethods();  
     return res + "\n\n"; 
@@ -13692,17 +13732,33 @@ public BehaviouralFeature designAbstractKillOp()
     String x = nme.toLowerCase() + "$x"; 
     res.add(x + " : " + nme); 
 	
-	defineLocalFeatures(); 
+    defineLocalFeatures(); 
 
     Vector allattributes = localFeatures; 
-
+    java.util.Map upperBounds = new java.util.HashMap(); 
+    java.util.Map lowerBounds = new java.util.HashMap(); 
+    Vector bounds = new Vector(); 
+    java.util.Map aBounds = new java.util.HashMap(); 
+      
+    for (int i = 0; i < invariants.size(); i++) 
+    { Constraint con = (Constraint) invariants.get(i); 
+      Expression pre = con.succedent(); 
+      pre.getParameterBounds(allattributes,bounds,aBounds);
+	  
+      Expression.identifyUpperBounds(allattributes,aBounds,upperBounds); 
+      Expression.identifyLowerBounds(allattributes,aBounds,lowerBounds); 
+    } 
+	
     for (int i = 0; i < allattributes.size(); i++) 
     { Attribute att = (Attribute) allattributes.get(i);
-	  if (att.isIdentity() && allattributes.size() > 1) 
-	  { continue; }
+      if (att.isIdentity() && allattributes.size() > 1) 
+      { continue; }
+      if (att.isDerived() && allattributes.size() > 1) 
+      { continue; } 
 	   
       Vector newres = new Vector(); 
-      Vector testassignments = att.testCases(x); 
+      Vector testassignments = att.testCases(x,lowerBounds,upperBounds);
+ 
       for (int j = 0; j < res.size(); j++) 
       { String tst = (String) res.get(j); 
         for (int k = 0; k < testassignments.size(); k++) 
@@ -13723,8 +13779,8 @@ public BehaviouralFeature designAbstractKillOp()
     for (int i = 0; i < res.size(); i++) 
     { String model = (String) res.get(i); 
       String yi = y + i; 
-      String mod1 = model.replaceAll(x,yi); 
-      // System.out.println("Replaced model= " + mod1);
+      String mod1 = model.replace(x,yi); 
+      // System.out.println(">---->> Replaced model= " + mod1);
       newres.add(mod1);  
     } 
 	
@@ -13732,28 +13788,32 @@ public BehaviouralFeature designAbstractKillOp()
 	res.addAll(newres); 
 	
 	int nmodels = newres.size(); 
-	
+	System.out.println(">>> Number of models for " + nme + " =  " + nmodels);
+      
 	// But identity attributes should get different values in the different models
 	
     for (int i = 0; i < allattributes.size(); i++) 
     { Attribute att = (Attribute) allattributes.get(i);
-	  if (att.isIdentity() && allattributes.size() > 1) 
-	  { res.clear(); 
-	    String attnme = att.getName(); // assumed to be a string or int
-	    for (int j = 0; j < newres.size(); j++) 
-	    { String model = (String) newres.get(j); 
+      if (att.isIdentity() && allattributes.size() > 1) 
+      { res.clear(); 
+        String attnme = att.getName(); // assumed to be a string or int
+        for (int j = 0; j < newres.size(); j++) 
+        { String model = (String) newres.get(j); 
           String yj = y + j; 
-          int rand = (int) (nmodels*Math.random());
-		  String attassign = yj + "." + attnme + " = " + rand;
-		  if (att.isNumeric()) { }
-		  else 
-		  { attassign = yj + "." + attnme + " = \"" + rand + "\""; }
-		  String model1 = model + "\n" + attassign;
-		  res.add(model1);  
-		}
-		newres.clear(); 
-		res.addAll(newres); 
-      }
+          String mod1 = model.replace(x,yj); 
+         // System.out.println(">>>>>>>> Replaced model= " + mod1);
+           
+          int rand = j; // (int) (nmodels*Math.random());
+          String attassign = yj + "." + attnme + " = " + rand;
+          if (att.isNumeric()) { }
+          else 
+          { attassign = yj + "." + attnme + " = \"" + j + "\""; }
+            String model1 = mod1 + "\n" + attassign;
+            res.add(model1);  
+          }
+          newres.clear(); 
+          res.addAll(newres); 
+        }
 	}
     
     return res; 

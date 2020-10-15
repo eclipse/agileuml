@@ -112,6 +112,38 @@ public class OperationDescription extends BehaviouralFeature
       }
     }
   } // add: e's key and entity2 key. remove: entity2 key. check e key + some atts
+  
+  public static Vector allCoreOperations(Vector entities)
+  { // createE, editE, deleteE, listE, searchByattE
+    Vector res = new Vector(); 
+	
+    for (int i = 0; i < entities.size(); i++) 
+	{ Entity ent = (Entity) entities.get(i); 
+	  if (ent.isDerived() || ent.isComponent()) 
+	  { }
+	  else if (ent.isPersistent())
+	  { String ename = ent.getName(); 
+	    OperationDescription createE = new OperationDescription("create" + ename, ent, "create", null); 
+		res.add(createE); 
+		OperationDescription editE = new OperationDescription("edit" + ename, ent, "edit", null); 
+		res.add(editE);
+		OperationDescription listE = new OperationDescription("list" + ename, ent, "list", null); 
+		res.add(listE);
+		OperationDescription deleteE = new OperationDescription("delete" + ename, ent, "delete", null); 
+		res.add(deleteE);
+		
+		Vector attrs = ent.getAttributes(); 
+		for (int j = 0; j < attrs.size(); j++) 
+		{ Attribute att = (Attribute) attrs.get(j);
+		  String attname = att.getName();  
+		  OperationDescription searchByEatt = new OperationDescription("searchBy" + ename + attname, ent, "searchBy", attname); 
+		  res.add(searchByEatt); 
+		}
+	  }
+	}
+	
+	return res; 
+  }
 
   public void addDbiMaintainOps(Vector ops)
   { maintainOps.addAll(ops); } 
@@ -173,15 +205,77 @@ public class OperationDescription extends BehaviouralFeature
     return res; 
   }      
 
+  public String getJSPDbiParameterDec()
+  { String res = ""; 
+    String ent = entity.getName();
+    Vector pars = getParameters(); 
+    
+    if (opaction.startsWith("list"))
+	{ return res; }
+    else if (opaction.startsWith("delete"))
+    { Attribute att1 = (Attribute) pars.get(0); 
+                  // entity.getPrincipalPrimaryKey(); 
+      Type typ = att1.getType(); 
+      String tname = typ.getJava8(); 
+      res = tname + " _x"; 
+    } 
+    else if (opaction.startsWith("searchBy"))
+    { Attribute att1 = (Attribute) pars.get(0); 
+                  // entity.getPrincipalPrimaryKey(); 
+      Type typ = att1.getType(); 
+      String tname = typ.getJava8(); 
+      res = tname + " _x"; 
+    } 
+    else  
+    { res = ent + "VO _x"; }  
+    return res; 
+  }      
+
+  public String getJSPDbiParameterTransfer()
+  { String res = ""; 
+    String ent = entity.getName(); 
+    Vector pars = getParameters(); 
+    if (opaction.startsWith("delete") || opaction.startsWith("searchBy"))
+    { Attribute att1 = (Attribute) pars.get(0); 
+                  // entity.getPrincipalPrimaryKey(); 
+      String pk = att1.getName(); 
+      Type typ = att1.getType(); 
+      String tname = typ.getJava8(); 
+      if (typ.getName().equals("boolean"))
+      { tname = "String"; } 
+      res = "    " + tname + " " + pk + " = _x;\n"; 
+    } 
+    else  
+    { for (int i = 0; i < pars.size(); i++)
+      { Attribute att = (Attribute) pars.get(i); 
+        String attnme = att.getName(); 
+        Type typ = att.getType(); 
+        if (typ.getName().equals("boolean"))
+        { res = res + "    String " + attnme + " = _x.get" + attnme + "();\n"; } 
+        else
+        { res = res + "    " + typ.getJava() + " " + attnme + " = _x.get" + attnme + "();\n"; }
+      }  
+    }
+    return res; 
+  }      
+
   private String getAndroidDbiCallList()
   { String res = "";
     String ent = entity.getName(); 
-    // Vector pars = getParameters();
-    Vector pars = entity.getAttributes(); 
+    Vector params = getParameters();
+    Vector pars = entity.getAttributes();
+ 
     if (opaction.startsWith("delete"))
     { Attribute att1 = entity.getPrincipalPrimaryKey(); 
-	 return att1.getName(); 
+      return att1.getName(); 
     }
+    else if (opaction.startsWith("list"))
+    { return res; } 
+    else if (opaction.startsWith("searchBy"))
+    { Attribute att2 = (Attribute) params.get(0); 
+      return att2.getName(); 
+    }
+
 
     for (int i = 0; i < pars.size(); i++)
     { Attribute att = (Attribute) pars.get(i);
@@ -205,6 +299,7 @@ public class OperationDescription extends BehaviouralFeature
   private String getDbiCallList()
   { String res = "";
     Vector pars = getParameters();
+    
     if (opaction.startsWith("delete"))
     { // Attribute att1 = (Attribute) pars.get(0);
       Attribute att1 = entity.getPrincipalPrimaryKey();  
@@ -558,25 +653,27 @@ public class OperationDescription extends BehaviouralFeature
     String action = getStereotype(0); 
 
     String ename = entity.getName(); 
-    res = "import java.io.*;\n\r" +
-          "import java.util.*;\n\r" +
-          "import javax.servlet.http.*;\n\r" +
-          "import javax.servlet.*;\n\r";
+    res = "import java.io.*;\n" +
+          "import java.util.*;\n" +
+          "import javax.servlet.http.*;\n" +
+          "import javax.servlet.*;\n";
     if (action.equals("list") || action.equals("check") ||
         action.equals("get") || action.equals("searchBy")) 
-    { res = res + "import java.sql.*;\n\r"; }
+    { res = res + "import java.sql.*;\n"; }
+
+    res = res + "\n"; 
 
     res = res + 
       "public class " + sname +
-      "Servlet extends HttpServlet\n\r"; 
-    res = res + "{ private Dbi dbi; \n\r\n\r" +
-          "  public " + sname + "Servlet() {}\n\r\n\r";
+      "Servlet extends HttpServlet\n"; 
+    res = res + "{ private Dbi dbi; \n\n" +
+          "  public " + sname + "Servlet() {}\n\n";
 
-    res = res + "  public void init(ServletConfig cfg)\n\r" +
-          "  throws ServletException\n\r" +
-          "  { super.init(cfg);\n\r" +  
-          "    dbi = new Dbi();\n\r" + 
-          "  }\n\r\n\r"; 
+    res = res + "  public void init(ServletConfig cfg)\n" +
+          "  throws ServletException\n" +
+          "  { super.init(cfg);\n" +  
+          "    dbi = new Dbi();\n" + 
+          "  }\n\n"; 
     res = res + 
       "  public void doGet(HttpServletRequest req,\n" +
       "              HttpServletResponse res)\n" + 
@@ -678,10 +775,9 @@ public class OperationDescription extends BehaviouralFeature
   }
 
   
-  public String jspUpdateText(String op,
-    String ename, Vector atts)
+  public String jspUpdateText(String op, String ename, Vector atts)
   { String bean = ename.toLowerCase();
-         String dec = jspUpdateDeclarations(ename);
+    String dec = jspUpdateDeclarations(ename);
     String sets = jspParamTransfers(ename, atts);
     String res = dec + "\n\r" + sets + "\n\r" +
       "<html>\n\r" +
@@ -759,6 +855,111 @@ public class OperationDescription extends BehaviouralFeature
     return jspQueryText(action,ename,pars,entity);
   }
 
+  public String getRESTJsp(String appname)
+  { String action = getName();
+    String op = getStereotype(0);
+    String ename = entity.getName();
+    Vector pars = getParameters();
+    if (op.equals("create") || op.equals("delete") ||
+        op.equals("edit") || op.equals("add") ||
+        op.equals("set") || op.equals("remove"))
+    { return jspRESTText(action,pars); }  
+    return jspRESTQueryText(action,ename,pars,entity);
+  }
+
+  public String jspRESTQueryText(String op,
+                             String ename, Vector atts, Entity ent)
+  { String bean = ename.toLowerCase();
+    String dec = jspRESTDeclarations();
+    String sets = jspRESTParamTransfers(atts);
+    Entity ent2 = ent; 
+    String action = getStereotype(0); 
+    if (action.equals("get"))
+    { String role = getStereotype(1); 
+      Association ast = ent.getRole(role); 
+      if (ast != null)
+      { ent2 = ast.getEntity2(); }
+    }
+    String e2name = ent2.getName(); 
+    String e2bean = e2name.toLowerCase(); 
+
+    String res = dec + "\n\r" + sets + "\n\r" +
+      "<html>\n\r" +
+      "<head><title>" + op + " results</title></head>\n\r" +
+      "<body>\n\r" +
+      "<h1>" + op + " results</h1>\n\r" +
+      "<% List " + bean + "s = " + bean + "." + op + "(); %>\n\r" +
+      "<table border=\"1\">\n\r" +
+      "<tr><th>" + ename + "</th></tr>\n\r" +
+      "<% for (int i = 0; i < " + bean + "s.size(); i++)\n\r" +
+      "{ %> <tr><td><%=" + bean + "s.get(i)%></td></tr>\n" +
+      "<% } %>\n\r" + 
+	  "</table>\n\r<hr>\n\r\n\r" +
+      "<%@ include file=\"commands.html\" %>\n\r" +
+      "</body>\n\r</html>\n\r";
+    return res;
+  }
+
+  public String jspRESTText(String op,
+                              Vector atts)
+  { String bean = "bean";
+    String dec = jspRESTDeclarations();
+    String sets = jspRESTParamTransfers(atts);
+    String showresult = ""; 
+
+    if (op.startsWith("list") || op.startsWith("searchBy")) 
+    { // String op1 = (op.charAt(0) + "").toUpperCase() + op.substring(1,op.length()); 
+      showresult = "<p><strong> Result = </strong> <%= " + bean + "." + op + "()%> </p>\n\r"; 
+    } 
+    String res = dec + "\n\r" + 
+      sets + "\n\r" +
+      "<html>\n\r" +
+      "<head><title>" + op + "</title></head>\n\r" +
+      "<body>\n\r" +
+      "<h1>" + op + "</h1>\n\r" +
+      "<% if (" + bean + ".is" + op + "error())\n\r" +
+      "{ %> <h2>Error in data: <%= " + bean + "." + op + "errors() %></h2>\n\r" +
+      "<h2>Press Back to re-enter</h2> <% }\n\r"; 
+
+    if (op.startsWith("list") || op.startsWith("searchBy"))
+    { res = res + "else { %> " + showresult + "\n\r" +
+        "<h2>" + op + " performed</h2> <% } %>\n\r"; 
+    } 
+    else 
+    { res = res + "else { %> " + bean + "." + op + "();\n\r" +
+        "<h2>" + op + " performed</h2> <% } %>\n\r" +  
+        "\n\r\n\r"; 
+    }
+    res = res +  
+      "<hr>\n\r\n\r" +
+      "</body>\n\r</html>\n\r";
+    return res;
+  }
+
+  public String jspRESTDeclarations()
+  { String nme = getName();
+    String beanclass = "beans.ControllerBean";
+    return "<jsp:useBean id=\"bean\" scope=\"session\" \n " + 
+           "class=\"" + beanclass + "\"/>";
+  }
+
+
+  public String jspRESTParamTransfers(Vector atts)
+  { String bean = "bean";
+    String ucname = getName(); 
+    String res = "";
+    for (int i = 0; i < atts.size(); i++)
+    { Attribute att = (Attribute) atts.get(i);
+      String nme = att.getName();
+      res = res +
+        "<jsp:setProperty name=\"" + bean +
+        "\"  property=\"" + ucname + "_" + nme + 
+        "\"  param=\"" + nme + "\"/>\n\r";
+    }
+    return res;
+  }
+
+
   public String getInputPage()
   { String codebase = "http://127.0.0.1:8080/servlets/";
     String op = getODName();
@@ -779,6 +980,33 @@ public class OperationDescription extends BehaviouralFeature
     for (int i = 0; i < pars.size(); i++)
     { Attribute att = (Attribute) pars.get(i);
       res = res + att.getFormInput() + "\n\r";
+    }
+    res = res + "<input type=\"submit\" value = \"" + 
+          op + "\"/>\n\r</form>\n\r</body>\n\r</html>";
+    return res;
+  }
+
+  public String getInputPage(String appname)
+  { String codebase = "http://127.0.0.1:8080/" + appname + "/servlets/";
+    String op = getODName();
+    String action = getStereotype(0);
+    String jsp = codebase + op + ".jsp";
+    String method = "GET";
+    if (action.equals("create") || action.equals("delete") ||
+        action.equals("edit") || 
+        action.equals("add") || action.equals("set") ||
+        action.equals("remove"))
+    { method = "POST"; }
+    String res = "<html>\n\r" +
+      "<head><title>" + op + " form</title></head>\n" +
+      "<body>\n" +
+      "<h1>" + op + " form</h1>\n" +
+      "<form action = \"" + jsp + "\" method = \"" +
+      method + "\" >\n\r";
+    Vector pars = getParameters();
+    for (int i = 0; i < pars.size(); i++)
+    { Attribute att = (Attribute) pars.get(i);
+      res = res + att.getFormInput() + "\n";
     }
     res = res + "<input type=\"submit\" value = \"" + 
           op + "\"/>\n\r</form>\n\r</body>\n\r</html>";
@@ -860,54 +1088,351 @@ public class OperationDescription extends BehaviouralFeature
     return res;
   }
 
+  public String getJSPDbiOpCode()
+  { String action = getStereotype(0);
+    String ename = entity.getName();
+    Vector pars = getParameters();
+    String stat = getODName() + "Statement";
+    String res = "  try\n" +
+      "    { ";
+    for (int i = 0; i < pars.size(); i++)
+    { Attribute att = (Attribute) pars.get(i);
+      Type t = att.getType();
+      String nme = att.getName();
+      if ("int".equals(t.getName()) || "long".equals(t.getName()))
+      { res = res + "  " + stat + ".setInt(" + (i+1) + ", " +
+                            nme + ");\n    "; 
+      }
+      else if ("double".equals(t.getName()))
+      { res = res + "  " + stat + ".setDouble(" + (i+1) + ", " +
+                               nme + ");\n    "; 
+      }
+      else 
+      { res = res + "  " + stat + ".setString(" + (i+1) + ", " +
+                               nme + ");\n    "; 
+      }
+    }
+    if (action.equals("get") || action.equals("list") || action.equals("check") ||
+        action.equals("searchBy"))
+    { res = res + "  return " + stat + ".executeQuery();\n" +
+            "  } catch (Exception e) { e.printStackTrace(); }\n" +
+            "  return null; }\n";
+    }
+    else 
+    { res = res + "  " + stat + ".executeUpdate();\n" +
+        "    connection.commit();\n" +
+        "  } catch (Exception e) { e.printStackTrace(); }\n}\n";
+    }
+    return res;
+  }
+
+  // for REST web service: 
   public static void createControllerBean(Vector usecases, Vector entities, PrintWriter out)
-  { out.println("package beans;\n\r\n\r");
-    out.println("import java.util.*;\n\r");
-    out.println("\n\r");
-    out.println("public class ControllerBean\n\r");
-    out.println("{ Controller cont;\n\r");
-    out.println("\n\r");
-    out.println("  public ControllerBean() { cont = Controller.inst(); }\n\r");
-    out.println("\n\r");
+  { out.println("package beans;\n\n");
+    out.println("import java.util.*;\n");
+    out.println("\n");
+    out.println("public class ControllerBean");
+    out.println("{ Controller cont;");
+    out.println("");
+    out.println("  public ControllerBean() { cont = Controller.inst(); }");
+    out.println("");
     for (int i = 0; i < usecases.size(); i++)
     { Object obj = usecases.get(i);
       if (obj instanceof UseCase)
       { UseCase uc = (UseCase) obj;
         uc.generateControllerBeanAttributes(out);
       } // parameters must all have different names, only one result. 
+      else if (obj instanceof OperationDescription)
+      { OperationDescription od = (OperationDescription) obj; 
+        od.generateControllerBeanAttributes(out); 
+      }
     }
-    out.println("\n\r");
+    out.println("\n");
     for (int i = 0; i < usecases.size(); i++)
     { Object obj = usecases.get(i);
       if (obj instanceof UseCase)
       { UseCase uc = (UseCase) obj;
         uc.generateControllerBeanOps(out);
       }
+      else if (obj instanceof OperationDescription)
+      { OperationDescription od = (OperationDescription) obj; 
+        od.generateControllerBeanOps(out); 
+      }
     }
-    out.println("}\n\r");
+    out.println("}\n");
   }
+  
+   public void generateControllerBeanAttributes(PrintWriter out)
+   { String nme = getName();
+     
+     Vector pars = getParameters(); 
+	 
+     for (int i = 0; i < pars.size(); i++)
+     { Attribute att = (Attribute) pars.get(i);
+       String par = att.getName();
+       Type typ = att.getType();         
+       String tname = typ.getJava();
+       out.println("  " + tname + " " + nme + "_" + par + ";\n");
+     } 
+
+     if (nme.startsWith("list") || nme.startsWith("searchBy"))
+     { 
+       out.println("  List<String> " + nme + "result = new ArrayList<String>();\n");
+     }
+
+     out.println("  List<String> " + nme + "errors = new ArrayList<String>();\n\r");
+      
+    }  
+ 
+
+   public void generateControllerBeanOps(PrintWriter out)
+   { // set and get ops for attributes,
+     // and the op itself
+
+      Entity ent = getEntity(); 
+      String ename = ent.getName(); 
+      String nme = getName();
+
+      String opcallpars = "";
+      String updateEnt = ""; 
+      String errorlist = nme + "errors"; 
+      Vector pars = getParameters(); 
+
+      for (int i = 0; i < pars.size(); i++)
+      { Attribute att = (Attribute) pars.get(i);
+        String par = att.getName();
+        Type typ = att.getType();         
+        String tname = typ.getJava();
+        String parname = nme + "_" + par;
+		
+        opcallpars = opcallpars + parname;
+        updateEnt = updateEnt + "    cont.set" + par + "(_obj," + parname + ");\n"; 
+        if (i < pars.size()-1)
+        { opcallpars = opcallpars + ","; }
+
+        out.println("  public void set" + parname + "(String _s)");
+        out.println("  {"); 
+        String convertcode = "    " + parname + " = _s;";  
+        if ("String".equals(tname)) {}
+        else if ("int".equals(tname))
+        { convertcode = "    try { " + parname + " = Integer.parseInt(_s); }\n" + 
+            "    catch (Exception _e)\n" + 
+            "    { " + errorlist + ".add(\"" + par + " is not an int\");\n" +  
+            "      return; }";
+        }
+        else if ("long".equals(tname))
+        { convertcode = "    try { " + parname + " = Long.parseLong(_s); }\n" + 
+		                "    catch (Exception _e)\n" + 
+						"    { " + errorlist + ".add(\"" + par + " is not a long\");\n" +
+						"      return; }";
+        }
+        else if ("double".equals(tname))
+        { convertcode = "    try { " + parname + " = Double.parseDouble(_s); }\n" + 
+		                "    catch (Exception _e)\n" + 
+						"    { " + errorlist + ".add(\"" + par + " is not a double\");\n" +
+						"      return; }";
+        }
+        else if ("boolean".equals(tname))
+        { convertcode = "    if (\"true\".equals(_s) { " + parname + " = true; } else { " + parname + " = false; }"; 
+        }
+        else if (typ.isEntity())
+        { convertcode = "    " + parname + " = cont.get" + tname + "ByPK(_s);"; } 
+ 
+        out.println(convertcode);
+        out.println("  }\n\n");
+      }
 
 
+      if (nme.startsWith("list"))
+      { // String rtyp = resultType.getJava();
+        out.println("  public List<String> " + nme + "()");
+        out.println("  { List all" + ename + " = cont." + ename.toLowerCase() + "s;"); 
+        out.println("    " + nme + "result.clear();"); 
+        out.println("    for (int _i = 0; _i < all" + ename + ".size(); _i++)"); 
+        out.println("    { " + nme + "result.add(\"\" + all" + ename + ".get(_i)); }");
+        out.println("");  
+        out.println("    return " + nme + "result;"); 
+        out.println("  }\n\n");
+
+        out.println("  public List<String> get" + nme + "Result() { return " + nme + "result; }\n");
+      } 
+      else if (nme.startsWith("searchBy"))
+      { // String rtyp = resultType.getJava();
+	    Attribute par1 = (Attribute) pars.get(0); 
+		String par1name = par1.getName(); 
+		
+        out.println("  public List<String> " + nme + "()");
+        out.println("  { List all" + ename + " = cont." + ename.toLowerCase() + "s;"); 
+        out.println("    " + nme + "result.clear();"); 
+        out.println("    for (int _i = 0; _i < all" + ename + ".size(); _i++)"); 
+        out.println("    { " + ename + " _obj = " + ename + ".get(_i);"); 
+		out.println("      if ((_obj." + par1name + " + \"\").equals(\"\" + " + par1name + "))"); 
+		out.println("      { " + nme + "result.add(\"\" + _obj); }");
+		out.println("    }"); 
+        out.println("");  
+        out.println("    return " + nme + "result;"); 
+        out.println("  }\n\n");
+
+        out.println("  public List<String> get" + nme + "Result() { return " + nme + "result; }\n");
+      } 
+      else if (nme.startsWith("create"))
+      { Attribute pk = ent.getPrincipalPrimaryKey(); 
+        String key = pk.getName(); 
+        out.println("  public void " + nme + "()");
+        out.println("  { " + ename + " _obj = cont.get" + ename + "ByPK(" + nme + "_" + key + ");"); 
+        out.println("    if (_obj == null)");  
+        out.println("    { _obj = cont.create" + ename + "(); }");  
+        out.println(updateEnt); 
+        out.println("  }");  
+        out.println("\n\n"); 
+      } 
+      else if (nme.startsWith("edit"))
+      { Attribute pk = ent.getPrincipalPrimaryKey(); 
+        String key = pk.getName(); 
+        out.println("  public void " + nme + "()");
+        out.println("  { " + ename + " _obj = cont.get" + ename + "ByPK(" + nme + "_" + key + ");"); 
+        out.println("    if (_obj == null)");
+        out.println("    { _obj = cont.create" + ename + "(); }");  
+        out.println(updateEnt); 
+        out.println("  }"); 
+        out.println("\n\n"); 
+      } 
+      else if (nme.startsWith("delete"))
+      { Attribute pk = ent.getPrincipalPrimaryKey(); 
+        String key = pk.getName(); 
+        out.println("  public void " + nme + "()");
+        out.println("  { " + ename + " _obj = cont.get" + ename + "ByPK(" + nme + "_" + key + ");"); 
+        out.println("    if (_obj != null)");
+        out.println("    { cont.kill" + ename + "(_obj); }");  
+        out.println("  }"); 
+        out.println("\n\n"); 
+      } 
+      
+      out.println("  public boolean is" + nme + "error() { return " + nme + "errors.size() > 0; }\n");
+      out.println("  public List<String> " + nme + "errors() { return " + nme + "errors; }\n");
+    } 
+
+   public void generateWebServiceOp(PrintWriter out)
+   { // set and get ops for attributes,
+     // and the op itself
+
+      Entity ent = getEntity(); 
+      String ename = ent.getName(); 
+      String nme = getName();
+
+      String opcallpars = "";
+      String updateEnt = ""; 
+      String errorlist = nme + "errors"; 
+      Vector pars = getParameters(); 
+
+      for (int i = 0; i < pars.size(); i++)
+      { Attribute att = (Attribute) pars.get(i);
+        String par = att.getName();
+        Type typ = att.getType();         
+        String tname = typ.getJava7();
+        String parname = tname + " " + par;
+		
+        opcallpars = opcallpars + parname;
+        updateEnt = updateEnt + "    cont.set" + par + "(_obj," + par + ");\n"; 
+        if (i < pars.size()-1)
+        { opcallpars = opcallpars + ","; }
+      } 
+
+      if (nme.startsWith("list"))
+      { // String rtyp = resultType.getJava();
+        out.println("  @WebMethod( operationName = \"" + nme + "\" )");
+        out.println("  public List<String> " + nme + "()");
+        out.println("  { List all" + ename + " = cont." + ename.toLowerCase() + "s;"); 
+        out.println("    List " + nme + "result = new ArrayList<String>();"); 
+        out.println("    for (int _i = 0; _i < all" + ename + ".size(); _i++)"); 
+        out.println("    { " + nme + "result.add(\"\" + all" + ename + ".get(_i)); }");
+        out.println("");  
+        out.println("    return " + nme + "result;"); 
+        out.println("  }\n\n");
+      } 
+      else if (nme.startsWith("searchBy"))
+      { // String rtyp = resultType.getJava();
+	    Attribute par1 = (Attribute) pars.get(0); 
+		String par1name = par1.getName(); 
+		
+        out.println("  @WebMethod( operationName = \"" + nme + "\" )");
+        out.println("  public List<String> " + nme + "(" + opcallpars + ")");
+        out.println("  { List all" + ename + " = cont." + ename.toLowerCase() + "s;"); 
+        out.println("    List " + nme + "result = new ArrayList<String>();"); 
+        out.println("    for (int _i = 0; _i < all" + ename + ".size(); _i++)"); 
+        out.println("    { " + ename + " _obj = " + ename + ".get(_i);"); 
+		out.println("      if ((_obj." + par1name + " + \"\").equals(\"\" + " + par1name + "))"); 
+		out.println("      { " + nme + "result.add(\"\" + _obj); }");
+		out.println("    }"); 
+        out.println("");  
+        out.println("    return " + nme + "result;"); 
+        out.println("  }\n\n");
+      } 
+      else if (nme.startsWith("create"))
+      { Attribute pk = ent.getPrincipalPrimaryKey(); 
+        String key = pk.getName(); 
+        out.println("  @WebMethod( operationName = \"" + nme + "\" )");
+        out.println("  public void " + nme + "(" + opcallpars + ")");
+        out.println("  { " + ename + " _obj = cont.get" + ename + "ByPK(" + key + ");"); 
+        out.println("    if (_obj == null)");  
+        out.println("    { _obj = cont.create" + ename + "(); }");  
+        out.println(updateEnt); 
+        out.println("  }");  
+        out.println("\n\n"); 
+      } 
+      else if (nme.startsWith("edit"))
+      { Attribute pk = ent.getPrincipalPrimaryKey(); 
+        String key = pk.getName(); 
+        out.println("  @WebMethod( operationName = \"" + nme + "\" )");
+        out.println("  public void " + nme + "(" + opcallpars + ")");
+        out.println("  { " + ename + " _obj = cont.get" + ename + "ByPK(" + key + ");"); 
+        out.println("    if (_obj == null)");
+        out.println("    { _obj = cont.create" + ename + "(); }");  
+        out.println(updateEnt); 
+        out.println("  }"); 
+        out.println("\n\n"); 
+      } 
+      else if (nme.startsWith("delete"))
+      { Attribute pk = ent.getPrincipalPrimaryKey(); 
+        String key = pk.getName(); 
+        out.println("  @WebMethod( operationName = \"" + nme + "\" )");
+        out.println("  public void " + nme + "(" + opcallpars + ")");
+        out.println("  { " + ename + " _obj = cont.get" + ename + "ByPK(" + key + ");"); 
+        out.println("    if (_obj != null)");
+        out.println("    { cont.kill" + ename + "(_obj); }");  
+        out.println("  }"); 
+        out.println("\n\n"); 
+      } 
+    } 
+
+
+  // for SOAP web service: 
   public static void createWebServiceBean(Vector usecases, Vector entities, PrintWriter out)
-  { out.println("import java.util.*;\n\r");
+  { out.println("package beans;"); 
+    out.println(); 
+    out.println("import java.util.*;\n\r");
     out.println("import javax.jws.WebService;\n\r");
     out.println("import javax.jws.WebMethod;\n\r");
     out.println("import javax.jws.WebParam;\n\r\n\r");
-    out.println("@WebService( name = \"ControllerWebBean\",  serviceName = \"ControllerWebBeanService\" )\n\r");
-    out.println("public class ControllerWebBean\n\r");
-    out.println("{ Controller cont;\n\r");
-    out.println("\n\r");
-    out.println("  public ControllerWebBean() { cont = Controller.inst(); }\n\r");
-    out.println("\n\r");
+    out.println("@WebService( name = \"ControllerWebBean\",  serviceName = \"ControllerWebBeanService\" )");
+    out.println("public class ControllerWebBean");
+    out.println("{ Controller cont;");
+    out.println("");
+    out.println("  public ControllerWebBean() { cont = Controller.inst(); }");
+    out.println("");
     for (int i = 0; i < usecases.size(); i++)
     { Object obj = usecases.get(i);
       if (obj instanceof UseCase)
       { UseCase uc = (UseCase) obj;
         uc.generateWebServiceOp(out);
       }
+      else if (obj instanceof OperationDescription)
+      { OperationDescription od = (OperationDescription) obj;
+        od.generateWebServiceOp(out);
+      }
     }
-    out.println("\n\r");
-    out.println("}\n\r\n\r");
+    out.println("");
+    out.println("}\n");
   }
 
 public void iOSViewController(String systemName, PrintWriter out)
@@ -1332,5 +1857,31 @@ public void androidListScreen(String op, PrintWriter out)
     out.println("}");
   }
 
+  public static void generateSessionBeans(Vector ents, Vector ucs)
+  { 
+    for (int i = 0; i < ents.size(); i++)
+    { Entity e = (Entity) ents.get(i);
+      Vector eucs = new Vector();
+      for (int j = 0; j < ucs.size(); j++)
+      { if (ucs.get(j) instanceof OperationDescription)
+        { OperationDescription uc = 
+            (OperationDescription) ucs.get(j);
+          if (uc.getEntity() == e)
+          { eucs.add(uc); }
+        } 
+      }
+
+      String ename = e.getName(); 
+      String sbean = ename + "SessionBean.java"; 
+      File sbeanf = new File("output/" + sbean); 
+      try
+      { PrintWriter sbeanout = new PrintWriter(
+                                     new BufferedWriter(
+                                       new FileWriter(sbeanf)));
+        sbeanout.println(e.getSessionBean(eucs));
+        sbeanout.close(); 
+      } catch (Exception _ex) { }      
+    }
+  }
 
 }

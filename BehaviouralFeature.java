@@ -183,31 +183,55 @@ public class BehaviouralFeature extends ModelElement
   
   public Vector testCases()
   { Vector allattributes = getParameters();
+    Vector preattributes = new Vector(); 
+    preattributes.addAll(allattributes); 
+    if (entity != null) 
+    { preattributes.addAll(entity.getLocalFeatures()); }  
+	
     String nme = getName();  
     Vector res = new Vector(); 
-	if (allattributes == null || allattributes.size() == 0) 
-	{ res.add("-- no test for operation " + nme + "\n"); 
-	  return res; 
-	}
-	Vector test0 = new Vector(); 
-	test0.add(nme); 
-	test0.add("-- test for operation " + nme + "\n");
-	res.add(test0);  
+    if (preattributes == null || preattributes.size() == 0) 
+    { res.add("-- no test for operation " + nme + "\n"); 
+      return res; 
+    }
+
+    java.util.Map upperBounds = new java.util.HashMap(); 
+    java.util.Map lowerBounds = new java.util.HashMap(); 
+	
+    Vector test0 = new Vector(); 
+    test0.add(nme); 
+    test0.add("-- tests for operation " + nme + "\n");
+    res.add(test0);  
+	
+    Expression pre = precondition(); 
+    if (pre != null) 
+    { Vector bounds = new Vector(); 
+      java.util.Map aBounds = new java.util.HashMap(); 
+      pre.getParameterBounds(preattributes,bounds,aBounds);
+	
+    
+      identifyUpperBounds(allattributes,aBounds,upperBounds); 
+      identifyLowerBounds(allattributes,aBounds,lowerBounds); 
+      System.out.println(".>> Parameter bounds for operation " + nme + " : " + aBounds);  
+      System.out.println(".>> Upper bounds map for operation " + nme + " : " + upperBounds);  
+      System.out.println(".>> Lower bounds map for operation " + nme + " : " + lowerBounds);  
+    }
 	
     for (int i = 0; i < allattributes.size(); i++) 
     { Vector newres = new Vector(); 
       Attribute att = (Attribute) allattributes.get(i); 
-      Vector testassignments = att.testCases("parameters"); 
+      Vector testassignments = att.testCases("parameters", lowerBounds, upperBounds); 
+	  
       for (int j = 0; j < res.size(); j++) 
       { Vector oldtest = (Vector) res.get(j); 
-	    String tst = (String) oldtest.get(1); 
+        String tst = (String) oldtest.get(1); 
         for (int k = 0; k < testassignments.size(); k++) 
         { String kstr = (String) testassignments.get(k); 
           if (kstr.length() > 0) 
           { String newtst = tst + "\n" + kstr; 
-		    Vector optest = new Vector(); 
-			optest.add(nme); 
-			optest.add(newtst); 
+            Vector optest = new Vector(); 
+            optest.add(nme); 
+            optest.add(newtst); 
             newres.add(optest); 
           } 
         } 
@@ -216,7 +240,39 @@ public class BehaviouralFeature extends ModelElement
       res.addAll(newres); 
     } 
     return res; 
- }
+  }
+
+  private void identifyUpperBounds(Vector atts, java.util.Map boundConstraints, java.util.Map upperBounds)
+  { for (int i = 0; i < atts.size(); i++) 
+    { Attribute att = (Attribute) atts.get(i); 
+      String aname = att.getName(); 
+      Vector bpreds = (Vector) boundConstraints.get(aname); 
+      if (bpreds != null) 
+      { for (int j = 0; j < bpreds.size(); j++) 
+        { BinaryExpression pred = (BinaryExpression) bpreds.get(j); 
+          Expression ubound = pred.getUpperBound(aname); 
+          if (ubound != null)
+          { upperBounds.put(aname,ubound); }
+         }
+       } 
+     }
+  } 
+  
+  private void identifyLowerBounds(Vector atts, java.util.Map boundConstraints, java.util.Map lowerBounds)
+  { for (int i = 0; i < atts.size(); i++) 
+    { Attribute att = (Attribute) atts.get(i); 
+	  String aname = att.getName(); 
+	  Vector bpreds = (Vector) boundConstraints.get(aname); 
+	  if (bpreds != null) 
+	  { for (int j = 0; j < bpreds.size(); j++) 
+	    { BinaryExpression pred = (BinaryExpression) bpreds.get(j); 
+	      Expression lbound = pred.getLowerBound(aname); 
+		  if (lbound != null)
+		  { lowerBounds.put(aname,lbound); }
+		}
+	  } 
+	}
+  } 
 
   public Vector getReadFrame()
   { if (readfr != null) { return readfr; }   // to avoid recursion
@@ -397,6 +453,9 @@ public class BehaviouralFeature extends ModelElement
   public void setPrecondition(Expression p)
   { pre = p; }
 
+  public Expression precondition()
+  { return pre; }
+  
   public void setPostcondition(Expression p)
   { post = p; }
 
@@ -3726,6 +3785,7 @@ public class BehaviouralFeature extends ModelElement
           CreationStatement cs = new CreationStatement(t.getJava(), be.left + ""); 
           cs.setInstanceType(t); 
           cs.setElementType(t.getElementType()); 
+		  cs.setFrozen(true); // it must be a constant
           AssignStatement ast = new AssignStatement(be.left, be.right);
           SequenceStatement sst = new SequenceStatement(); 
           sst.addStatement(cs); sst.addStatement(ast); 
@@ -4092,7 +4152,7 @@ public class BehaviouralFeature extends ModelElement
             // JOptionPane.showMessageDialog(null, 
             //   "Declaring new local variable " + be.left + " in:\n" + this,               
             //   "Implicit variable declaration", JOptionPane.INFORMATION_MESSAGE); 
-            return "  " + t.getJava() + " " + pst.updateForm(env0,true) + " \n  "; 
+            return "  final " + t.getJava() + " " + pst.updateForm(env0,true) + " \n  "; 
           } 
         }
         else if ("&".equals(be.operator))
@@ -4209,7 +4269,7 @@ public class BehaviouralFeature extends ModelElement
             JOptionPane.showMessageDialog(null, 
               "Declaring new local variable " + be.left + " in:\n" + this,               
               "Implicit variable declaration", JOptionPane.INFORMATION_MESSAGE); 
-            return "  " + t.getJava6() + " " + pst.updateFormJava6(env0,true) + " \n  "; 
+            return "  final " + t.getJava6() + " " + pst.updateFormJava6(env0,true) + " \n  "; 
           } 
         } 
       } 
@@ -4232,7 +4292,7 @@ public class BehaviouralFeature extends ModelElement
           JOptionPane.showMessageDialog(null, 
             "Declaring new local variable " + be.left + " : " + t + " in:\n" + this,               
             "Implicit variable declaration", JOptionPane.INFORMATION_MESSAGE); 
-          return "  " + t.getJava7(t.getElementType()) + " " + pst.updateFormJava7(env0,true) + " \n  "; 
+          return "  final " + t.getJava7(t.getElementType()) + " " + pst.updateFormJava7(env0,true) + " \n  "; 
         } 
       } 
     } 

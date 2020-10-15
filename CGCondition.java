@@ -222,7 +222,13 @@ public class CGCondition
       else
       { return e.umlkind != Expression.ROLE; }
     }
-    return false;
+	else // _i is T   T is int, double, long, etc, or a enumeration or class name 
+	{ if (positive) 
+	  { return stereotype.equals(tname); }
+	  else 
+	  { return !(stereotype.equals(tname)); }
+	}
+    // return false;
   }
 
   public boolean conditionSatisfied(Statement e, Vector entities)

@@ -2014,7 +2014,72 @@ public void findClones(java.util.Map clones, String rule, String op)
     enew.right = right.excel2Ocl(target, entities, qvars, antes); 
     return enew; 
   } 
+  
+  public void getParameterBounds(Vector atts, Vector bounds, java.util.Map attBounds)
+  { if ("&".equals(operator))
+    { left.getParameterBounds(atts,bounds,attBounds);   
+      right.getParameterBounds(atts,bounds,attBounds); 
+    }
+    else if ("<".equals(operator) || "<=".equals(operator) || ">".equals(operator) || "=".equals(operator) ||
+    	     ">=".equals(operator))
+    { bounds.add(this);
+ 
+      for (int i = 0; i < atts.size(); i++) 
+      { Attribute attr = (Attribute) atts.get(i); 
+        if ((left + "").equals(attr + "") || 
+            (right + "").equals(attr + ""))
+        { Vector abounds = (Vector) attBounds.get(attr + ""); 
+          if (abounds == null) 
+          { abounds = new Vector(); }
+          abounds.add(this); 
+          attBounds.put(attr + "", abounds); 
+        } 
+      } 
+    } 
+  } 
 
+  public Expression getUpperBound(String attname)
+  { if (("<".equals(operator) || 
+         "<=".equals(operator) || 
+         "=".equals(operator)) && 
+         attname.equals(left + "") &&
+         (right.umlkind == VALUE || 
+          Expression.isValue(right))
+        ) 
+     { return right; } 
+     
+     if ((">".equals(operator) || 
+         ">=".equals(operator) || 
+         "=".equals(operator)) && 
+         attname.equals(right + "") &&
+         (left.umlkind == VALUE || Expression.isValue(left))
+        ) 
+     { return left; } 
+    
+     return null; 
+  } 
+
+  public Expression getLowerBound(String attname)
+  { if (("<".equals(operator) || 
+         "<=".equals(operator) || 
+         "=".equals(operator)) && 
+         attname.equals(right + "") &&
+         (left.umlkind == VALUE || Expression.isValue(left))
+        ) 
+     { return left; } 
+     
+     if ((">".equals(operator) || 
+          ">=".equals(operator) || 
+          "=".equals(operator)) && 
+         attname.equals(left + "") &&
+         (right.umlkind == VALUE || Expression.isValue(right))
+        ) 
+     { return right; } 
+    
+     return null; 
+  } 
+
+  
   // The following turns  x : e & P & l = g & Q into [x,P,l,Q] in allvars
   public Vector splitToCond0Cond1(Vector conds, Vector pars, 
                                   Vector qvars, Vector lvars, Vector allvars)
