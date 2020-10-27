@@ -11222,9 +11222,9 @@ public void iosDbiOperations(PrintWriter out)
 }
  
   public String generateBean(Vector useCases, Vector cons, Vector entities,
-                             Vector types)
+                             Vector types, String appName)
   { String ename = getName(); 
-    String res = "package beans;\n\n" + 
+    String res = "package " + appName + ";\n\n" + 
       "import java.util.*;\n" + 
       "import java.sql.*;\n\n" + 
       "public class " + ename + "Bean\n{ Dbi dbi = new Dbi();\n"; 
@@ -11343,6 +11343,134 @@ public void iosDbiOperations(PrintWriter out)
               "   } catch (Exception e) { }\n" + 
               "   resetData();\n" + 
               "   return rs_list.iterator();\n  }\n"; 
+      }  // for getrole it is the TARGET entities fields
+    }
+    return res + "}\n"; 
+  }
+
+  public String generateJSPBean(String packageName, Vector useCases, 
+      Vector cons, Vector entities, Vector types, CGSpec cgs)
+  { String ename = getName(); 
+    String res = "package " + packageName + ";\n\n" + 
+      "import java.util.Vector;\n" + 
+	  "import java.util.List;\n" + 
+	  "import java.util.Iterator;\n\n" + 
+	  
+      "public class " + ename + "Bean\n{ ModelFacade model;\n"; 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attnme = att.getName(); 
+	  Type atttype = att.getType(); 
+      String tname = atttype.getName(); 
+      res = res + "  private String " + attnme + " = \"\";\n";
+      if (tname.equals("int") || tname.equals("long"))
+      { res = res + "  private int i" + attnme + " = 0;\n"; } 
+      else if (tname.equals("double"))
+      { res = res + "  private double d" + attnme + " = 0;\n"; } 
+	  else if (att.isEnumeration())
+	  { Vector vals = atttype.getValues(); 
+	    res = res + "  private " + tname + " e" + attnme + " = " + tname + "." + vals.get(0) + ";\n"; 
+	  }
+      // booleans are treated as strings. 
+    } 
+    res = res + "  private Vector errors = new Vector();\n\n" +
+          "  public " + ename + "Bean()\n" + 
+          "  { model = ModelFacade.getInstance(); }\n\n"; 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attnme = att.getName(); 
+      res = res + "  public void set" + attnme + "(String " + attnme + "x)\n  { " + 
+            attnme + " = " + attnme + "x; }\n\n"; 
+    } 
+
+    res = res + "  public void resetData()\n  { "; 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attname = att.getName(); 
+      res = res + attname + " = \"\";\n    "; 
+    } 
+    res = res + "}\n\n";     
+
+    for (int j = 0; j < useCases.size(); j++)
+    { if (!(useCases.get(j) instanceof OperationDescription)) { continue; } 
+
+      OperationDescription od = (OperationDescription) useCases.get(j); 
+      if (this != od.getEntity()) { continue; } 
+
+      Vector pars = od.getParameters(); 
+      String odname = od.getODName(); 
+      String action = od.getStereotype(0); 
+      // build op that checks if parameters are correct, and does data conversions:
+      res = res + "  public boolean is" + odname + "error()\n" + 
+            "  { errors.clear(); \n"; 
+      for (int k = 0; k < pars.size(); k++) 
+      { Attribute att = (Attribute) pars.get(k); 
+        String check = att.getBeanCheckCode(); 
+        res = res + check; 
+      }
+	   
+      if (action.equals("create") || action.equals("edit") || action.equals("set"))
+      { Vector tests = getInvariantCheckTests(types,entities,pars,cgs); 
+        for (int p = 0; p < tests.size(); p++)
+        { String test = (String) tests.get(p); 
+          res = res + 
+                "    if (" + test + ") { }\n" + 
+                "    else { errors.add(\"" + ename + " constraint " + (p+1) + " failed\"); }\n";
+        }
+      }
+      res = res + "    return errors.size() > 0; }\n\n";
+    }
+
+    res = res + "  public String errors() { return errors.toString(); }\n\n"; 
+
+    for (int j = 0; j < useCases.size(); j++)
+    { if (!(useCases.get(j) instanceof OperationDescription)) { continue; } 
+      OperationDescription od = (OperationDescription) useCases.get(j); 
+      // and is responsibility of this bean
+      if (this != od.getEntity()) { continue; } 
+
+      Vector pars = od.getParameters(); 
+      String odname = od.getODName(); 
+      String action = od.getStereotype(0); 
+      String dbiop = od.getAndroidModelOpCall(); 
+      Vector correc = new Vector(); 
+
+      if (action.equals("create") || action.equals("delete") || 
+          action.equals("add") || action.equals("remove") ||
+          action.equals("edit") || action.equals("set"))
+      { res = res + "  public void " + odname + "()\n" +  "  { "; 
+        res = res + dbiop + "\n    ";  
+        /* if (action.equals("set"))
+        { Attribute att = (Attribute) pars.get(0); 
+          Vector allinvs = new Vector();
+          allinvs.addAll(invariants); 
+          allinvs.addAll(cons); 
+
+          correc = att.sqlSetOperations(this,allinvs,entities,types); 
+          res = res + odname + "(" + att.getBeanForm() + 
+                               ", i" + ename.toLowerCase() + "Id);\n  ";
+        } */ 
+        res = res + "resetData(); }\n\n";
+
+        /* if (correc.size() > 0)
+        { res = res + correc.get(0) + "\n\n"; 
+          correc.remove(0); 
+          od.addDbiMaintainOps(correc); 
+        } */ 
+      }   // for set, correcting code goes here as well. 
+      else 
+      { Entity ent2 = this; 
+
+        if (action.equals("get"))
+        { String role = od.getStereotype(1); 
+          Association ast = getRole(role); 
+          if (ast != null)
+          { ent2 = ast.getEntity2(); }
+        }
+
+        res = res + "  public Iterator " + odname + "()\n" +  "  { "; 
+        res = res + "List<" + ename + "VO> rs = " + dbiop + "\n" +
+              "   return rs.iterator();\n  }\n"; 
       }  // for getrole it is the TARGET entities fields
     }
     return res + "}\n"; 

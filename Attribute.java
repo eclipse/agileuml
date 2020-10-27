@@ -1027,14 +1027,20 @@ public class Attribute extends ModelElement
 
   public void saveKM3(PrintWriter out)
   { if (isStatic())
-    { out.println("    static attribute " + getName() + " : " + getType() + ";"); } 
-    out.println("    attribute " + getName() + " : " + getType() + ";");
+    { out.println("    static attribute " + getName() + " : " + getType() + ";"); }
+    else if (isIdentity())
+    { out.println("    attribute " + getName() + " identity : " + getType() + ";"); } 
+    else  
+    { out.println("    attribute " + getName() + " : " + getType() + ";"); } 
   } 
 
   public String getKM3()
   { if (isStatic())
     { return "    static attribute " + getName() + " : " + getType() + ";"; } 
-    return "    attribute " + getName() + " : " + getType() + ";"; 
+    else if (isIdentity())
+    { return "    attribute " + getName() + " identity : " + getType() + ";"; }
+    else  
+    { return "    attribute " + getName() + " : " + getType() + ";"; } 
   } 
 
   public void saveEcore(PrintWriter out)
@@ -3516,6 +3522,19 @@ public class Attribute extends ModelElement
   public String getFormInput()
   { String nme = getName();
     String label = nme; 
+    String res = ""; 
+
+    if (type != null && type.isEnumerated())
+    { Vector vals = type.getValues(); 
+      res = "<p><strong>" + label + "</strong>\n" + 
+            "<select name=\"" + nme + "\">\n"; 
+      for (int i = 0; i < vals.size(); i++) 
+      { String val = (String) vals.get(i); 
+        res = res + "  <option value=\"" + val + "\">" + val + "</option>\n"; 
+      } 
+      res = res + "</select>\n"; 
+      return res; 
+    } 
 
     if (type != null && type.isEntity())
     { Entity etype = type.getEntity(); 
@@ -3524,7 +3543,7 @@ public class Attribute extends ModelElement
       { label = nme + " (" + pk.getName() + ")"; } 
     } 
 
-    String res = 
+    res = 
       "<p><strong>" + label + "</strong>\n" +
       "<input type = \"text\" name = \"" + nme + "\"/></p>\n";
     return res;

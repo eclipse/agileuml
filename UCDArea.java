@@ -4160,9 +4160,9 @@ public class UCDArea extends JPanel
   }
 
   public void generateJSPWebSystem(PrintWriter out)
-  { String appname = "beans"; 
-    // if (systemName != null && systemName.length() > 0)
-    // { appname = systemName; }
+  { String appName = "app"; 
+    if (systemName != null && systemName.length() > 0)
+    { appName = systemName; }
 
     CGSpec cgs = loadCSTL(); 
 
@@ -4173,7 +4173,7 @@ public class UCDArea extends JPanel
  
     boolean needsModelFacade = false; 
 
-    File chtml = new File("output/commands.html"); 
+    File chtml = new File("output/index.html"); 
     try
     { PrintWriter chout = new PrintWriter(
                               new BufferedWriter(
@@ -4193,7 +4193,7 @@ public class UCDArea extends JPanel
         { PrintWriter jspout = new PrintWriter(
                                 new BufferedWriter(
                                   new FileWriter(odjsp)));
-          jspout.println(od.getJsp()); 
+          jspout.println(od.getJsp(appName)); 
           jspout.close(); 
         } catch (Exception e) { } 
 
@@ -4202,7 +4202,7 @@ public class UCDArea extends JPanel
         { PrintWriter odhout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(odhtml)));
-          odhout.println(od.getInputPage());
+          odhout.println(od.getInputPage(appName));
           odhout.close(); 
         } catch (Exception e) { } 
       } 
@@ -4217,7 +4217,7 @@ public class UCDArea extends JPanel
         { PrintWriter jspout = new PrintWriter(
                                 new BufferedWriter(
                                   new FileWriter(ucjsp)));
-          jspout.println(uc.getJsp(appname)); 
+          jspout.println(uc.getJsp(appName)); 
           jspout.close(); 
         } catch (Exception e) { }
 
@@ -4226,7 +4226,7 @@ public class UCDArea extends JPanel
         { PrintWriter uchout = new PrintWriter(
                                  new BufferedWriter(
                                    new FileWriter(uchtml)));
-          uchout.println(uc.getInputPage(appname));
+          uchout.println(uc.getInputPage(appName));
           uchout.close(); 
         } catch (Exception e) { } 
 
@@ -4236,7 +4236,7 @@ public class UCDArea extends JPanel
         { PrintWriter ucvoout = new PrintWriter(
                                   new BufferedWriter(
                                     new FileWriter(ucvof)));
-          ucvoout.println(uc.getAndroidValueObject(appname));
+          ucvoout.println(uc.getAndroidValueObject(appName));
 		  System.out.println(">>> Written use case value object for " + ucnme + " to output/" + ucvo); 
           ucvoout.close(); 
         } catch (Exception e) { } 
@@ -4248,7 +4248,7 @@ public class UCDArea extends JPanel
         { PrintWriter ucbeanout = new PrintWriter(
                                     new BufferedWriter(
                                       new FileWriter(ucbeanf)));
-          ucbeanout.println(uc.generateJSPBean(appname,entities,types,cgs));
+          ucbeanout.println(uc.generateJSPBean(appName,entities,types,cgs));
 		  System.out.println(">>> Written use case bean for " + ucnme + " to output/" + ucbean); 
           ucbeanout.close(); 
         } catch (Exception e) { } 
@@ -4266,7 +4266,7 @@ public class UCDArea extends JPanel
       { PrintWriter voout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(entvof)));
-        voout.println(ent.getValueObject());
+        voout.println(ent.getValueObject(appName));
         voout.close(); 
       } catch (Exception e) { } 
       
@@ -4276,7 +4276,12 @@ public class UCDArea extends JPanel
       { PrintWriter beanout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(entbeanf)));
-        beanout.println(ent.generateBean(useCases,constraints,entities,types));
+        String entbeancode = ""; 
+        if (ent.isPersistent())
+        { entbeancode = ent.generateBean(useCases,constraints,entities,types,appName); } 
+        else 
+        { entbeancode = ent.generateJSPBean(appName,useCases,constraints,entities,types,cgs); } 
+        beanout.println(entbeancode); 
         beanout.close(); 
       } catch (Exception e) { } 
     }
@@ -4290,7 +4295,7 @@ public class UCDArea extends JPanel
         { PrintWriter typeout = new PrintWriter(
                                   new BufferedWriter(
                                     new FileWriter(typefile)));
-          typeout.println(typ.getJava8Definition(appname));
+          typeout.println(typ.getJava8Definition(appName));
           typeout.close(); 
         } catch (Exception e) { } 
       }
@@ -4309,7 +4314,7 @@ public class UCDArea extends JPanel
       { PrintWriter ffout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(entff)));
-        ffout.println("package " + appname + ";"); 
+        ffout.println("package " + appName + ";"); 
         ffout.println(); 
         ffout.println("import java.util.*;"); 
         ffout.println("import java.util.HashMap;"); 
@@ -4337,7 +4342,7 @@ public class UCDArea extends JPanel
     { PrintWriter dbiout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(dbif)));
-      dbiout.println(generateJspDbi(allops));
+      dbiout.println(generateJspDbi(allops, appName));
       dbiout.close(); 
     } catch (Exception e) { } 
 
@@ -4347,7 +4352,7 @@ public class UCDArea extends JPanel
       { PrintWriter modelout = new PrintWriter(
                                  new BufferedWriter(
                                    new FileWriter(model)));
-        UseCase.modelFacade(appname,useCases,cgs,entities,types,modelout);
+        UseCase.modelFacade(appName,useCases,cgs,entities,types,modelout);
         modelout.close(); 
       } catch (Exception e) { } 
     } 
@@ -4466,6 +4471,15 @@ public class UCDArea extends JPanel
       commandpageout.close(); 
     } catch (Exception e) { } 
     
+    File commandsf = new File("output/CommandServlet.java"); 
+    try
+    { PrintWriter commandsout = new PrintWriter(
+                                     new BufferedWriter(
+                                       new FileWriter(commandsf)));
+      commandsout.println(generateCommandServlet(useCases));
+      commandsout.close(); 
+    } catch (Exception e) { } 
+
     for (int i = 0; i < useCases.size(); i++)
     { Object obj = useCases.get(i); 
       if (obj instanceof OperationDescription)
@@ -4518,7 +4532,7 @@ public class UCDArea extends JPanel
           uchout.close(); 
         } catch (Exception e) { } 
 
-        String ucvo = ucnme + "VO.java"; 
+     /*   String ucvo = ucnme + "VO.java"; 
         File ucvof = new File("output/" + ucvo); 
         try
         { PrintWriter ucvoout = new PrintWriter(
@@ -4527,7 +4541,7 @@ public class UCDArea extends JPanel
           ucvoout.println(uc.getAndroidValueObject(appname));
 		  System.out.println(">>> Written use case value object for " + ucnme + " to output/" + ucvo); 
           ucvoout.close(); 
-        } catch (Exception e) { } 
+        } catch (Exception e) { } */ 
 
         File ef = new File("output/" + ucnme + "ResultPage.java"); 
         try
@@ -4540,6 +4554,21 @@ public class UCDArea extends JPanel
       }
     } 
 
+    for (int j = 0; j < types.size(); j++) 
+    { Type typ = (Type) types.get(j);
+      if (typ.isEnumeration()) 
+      { String typef = typ.getName() + ".java"; 
+        File typefile = new File("output/" + typef); 
+        try
+        { PrintWriter typeout = new PrintWriter(
+                                  new BufferedWriter(
+                                    new FileWriter(typefile)));
+          typeout.println(typ.getJava8Definition(appname));
+          typeout.close(); 
+        } catch (Exception e) { } 
+      }
+    } 
+	
     for (int j = 0; j < entities.size(); j++) 
     { Entity ent = (Entity) entities.get(j); 
 	  if (ent.isDerived()) { continue; }
@@ -4581,6 +4610,17 @@ public class UCDArea extends JPanel
 		 
         ffout.close(); 
       } catch (Exception e) { } 
+
+      String entvo = ent.getName() + "VO.java"; 
+      File entvof = new File("output/" + entvo); 
+      try
+      { PrintWriter voout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entvof)));
+        voout.println(ent.getValueObject());
+        voout.close(); 
+      } catch (Exception e) { } 
+      
     }
 	
     File errorf = new File("output/ErrorPage.java"); 
@@ -13443,12 +13483,16 @@ public void produceCUI(PrintWriter out)
 
     Vector pregens = new Vector(); 
     Vector preassocs = new Vector(); 
+	Vector pnames = new Vector(); 
 
     Compiler2 comp = new Compiler2();  
     comp.nospacelexicalanalysis(xmlstring); 
-    Vector items = comp.parseKM3(entities,types,pregens,preassocs); 
+    Vector items = comp.parseKM3(entities,types,pregens,preassocs,pnames); 
     System.out.println(linecount + " lines in file mm.km3"); 
-
+    System.out.println("Packages " + pnames + " in file mm.km3"); 
+    if (pnames.size() > 0) 
+	{ setSystemName((String) pnames.get(0)); }
+	
     Vector passocs = new Vector(); 
     passocs.addAll(preassocs); 
 
@@ -15385,7 +15429,19 @@ public void produceCUI(PrintWriter out)
         res = res + 
           "  public synchronized " + resultType + " " + odname + "(" +
           pars + ")\n  " + code + "\n";
-       } 
+
+
+        if (odaction.equals("create") || odaction.equals("edit"))
+		{ String pars1 = od.getJSPDbiParameterDec();
+		  String parsettings = od.getJSPDbiParameterTransfer(); 
+          String code1 = od.getJSPDbiOpCode();
+          res = res + 
+            "  public synchronized " + resultType + " " + odname + "(" +
+            pars1 + ")\n  { " + parsettings + code1 + "\n";
+          String mops = od.getMaintainOps(); 
+          res = res + mops;
+		}  
+      } 
     }
 	
     return res + "  public synchronized void logoff() \n" + 
@@ -15395,8 +15451,8 @@ public void produceCUI(PrintWriter out)
   }
 
 
-  public String generateJspDbi(Vector operations)
-  { String res = "package beans;\n\n" + 
+  public String generateJspDbi(Vector operations, String appName)
+  { String res = "package " + appName + ";\n\n" + 
       "import java.sql.*; \n\n" +
       "public class Dbi\n" +
       "{ private Connection connection;\n" +
@@ -15533,6 +15589,13 @@ public void produceCUI(PrintWriter out)
           "  private HtmlInput " + nme +
           "button = new HtmlInput();\n";
       } 
+	  else if (ops.get(i) instanceof UseCase)
+	  { UseCase uc = (UseCase) ops.get(i); 
+	    String ucname = uc.getName(); 
+		res = res + 
+          "  private HtmlInput " + ucname +
+          "button = new HtmlInput();\n";
+      }
     }
     res = res + "\n  public CommandPage()\n" +
       "  { super();\n" +
@@ -15555,6 +15618,21 @@ public void produceCUI(PrintWriter out)
           "button.setAttribute(\"type\",\"submit\");\n" +
           "    form.add(" + odnme + "button);\n";
       } 
+	  else if (ops.get(i) instanceof UseCase)
+      { UseCase uc = 
+          (UseCase) ops.get(i);
+        String ucnme = uc.getName();
+        res = res + 
+          "    " + ucnme + 
+          "button.setAttribute(\"value\",\"" + ucnme +
+          "\");\n" +
+          "    " + ucnme + 
+          "button.setAttribute(\"name\",\"" + ucnme +
+          "\");\n" +
+          "    " + ucnme + 
+          "button.setAttribute(\"type\",\"submit\");\n" +
+          "    form.add(" + ucnme + "button);\n";
+      }
     }
     res = res + "    body.add(form);\n" +
                 "  }\n}\n";
@@ -15591,7 +15669,7 @@ public void produceCUI(PrintWriter out)
   { String res = "import java.io.*;\n" +
           "import java.util.*;\n" +
           "import javax.servlet.http.*;\n" +
-          "import javax.servlet.*;\n";
+          "import javax.servlet.*;\n\n";
 
     res = res + 
       "public class CommandServlet extends HttpServlet\n"; 
@@ -15616,7 +15694,15 @@ public void produceCUI(PrintWriter out)
             "\");\n" + 
             "    if (" + odname + "C != null)\n" + 
             "    { pw.println(new " + odname + "Page()); }\n";
-      }  
+      } 
+	  else if (ops.get(i) instanceof UseCase)
+      { UseCase uc = (UseCase) ops.get(i);
+        String ucname = uc.getName(); 
+        res = res + "    String " + ucname + "C = req.getParameter(\"" + ucname + 
+            "\");\n" + 
+            "    if (" + ucname + "C != null)\n" + 
+            "    { pw.println(new " + ucname + "Page()); }\n";
+      } 
     }
     res = res + "    pw.close();\n" + 
       "  }\n\n";

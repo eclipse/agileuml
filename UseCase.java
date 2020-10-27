@@ -2975,10 +2975,10 @@ public void generateCUIcode(PrintWriter out)
     } 
   
 
-  public String jspUpdateDeclarations()
+  public String jspUpdateDeclarations(String appname)
   { String nme = getName();
-    String beanclass = "beans." + nme + "Bean";
-    return "<jsp:useBean id=\"bean\" scope=\"session\" \n " + 
+    String beanclass = appname + "." + nme + "Bean";
+    return "<jsp:useBean id=\"bean\" scope=\"request\" \n " + 
            "class=\"" + beanclass + "\"/>";
   }
 
@@ -3021,9 +3021,9 @@ public void generateCUIcode(PrintWriter out)
 
   
   public String jspUpdateText(String op,
-                              Vector atts)
+                              Vector atts, String appname)
   { String bean = "bean";
-    String dec = jspUpdateDeclarations();
+    String dec = jspUpdateDeclarations(appname);
     String sets = jspParamTransfers(atts);
     String showresult = ""; 
     if (resultType != null) 
@@ -3138,7 +3138,7 @@ public void generateCUIcode(PrintWriter out)
   { String action = getName();
     // String ename = entity.getName();
     Vector pars = getParameters();
-    return jspUpdateText(action,pars); 
+    return jspUpdateText(action,pars,appname); 
     // return jspQueryText(action,ename,pars,entity);
   }
 
@@ -3151,15 +3151,12 @@ public void generateCUIcode(PrintWriter out)
   }
 
   public String getInputPage(String appname)
-  { String codebase = "http://127.0.0.1:8080/" + appname + "/servlets/";
+  { String codebase = "http://127.0.0.1:8080/examples/jsp/" + appname + "/";
     String op = getName();
     // String action = getStereotype(0);
     String jsp = codebase + op + ".jsp";
     String method = "GET";
-    // if (action.equals("create") || action.equals("delete") ||
-    //     action.equals("edit") || action.equals("add") || action.equals("set") ||
-    //     action.equals("remove"))
-    // { method = "POST"; }
+
     String res = "<html>\n\r" +
       "<head><title>" + op + " Form</title></head>\n\r" +
       "<body>\n\r" +
@@ -4221,6 +4218,7 @@ public void generateCUIcode(PrintWriter out)
     boolean hasDbi = false; 
     if (entities.size() > 0)
     { hasDbi = true; }
+    // No, only if there is a persistent entity
 
 
     out.println("package " + packageName + ";");
@@ -4267,8 +4265,7 @@ public void generateCUIcode(PrintWriter out)
 	
     out.println("  private ModelFacade()"); 
     if (hasDbi) 
-    { out.println("  { dbi = new Dbi(); }"); 
-	}  
+    { out.println("  { dbi = new Dbi(); }"); }  
     else 
     { out.println("  { }"); } 
     out.println();
@@ -4434,6 +4431,97 @@ public void generateCUIcode(PrintWriter out)
           out.println(); 
         }  // It is always a string? No. 
       }
+      else // Not persistent 
+      { String item = ee.getName();
+        String extractedItem = "new " + item + "VO(_rs.get(i))";  
+        out.println("  public List<" + item + "VO> list" + item + "()"); 
+        out.println("  { List<" + item + "> _rs = " + item + "." + item + "_allInstances;"); 
+        out.println("    current" + item + "s = new ArrayList<" + item + "VO>();"); 
+        out.println("    for (int i = 0; i < _rs.size(); i++)"); 
+        out.println("    { current" + item + "s.add(" + extractedItem + "); }"); 
+        out.println("    return current" + item + "s;"); 
+        out.println("  }"); 
+        out.println(); 
+
+out.println("  public List<String> stringList" + item + "()"); 
+        out.println("  { list" + item + "();"); 
+        out.println("    List<String> res = new ArrayList<String>();"); 
+        out.println("    for (int x = 0; x < current" + item + "s.size(); x++)"); 
+        out.println("    { " + item + "VO _item = (" + item + "VO) current" + item + "s.get(x);"); 
+        out.println("      res.add(_item + \"\");"); 
+        out.println("    }"); 
+        out.println("    return res;"); 
+        out.println("  }"); 
+        out.println();
+ 
+        Attribute key = ee.getPrincipalPK();
+        String pk = "";  
+        if (key != null) 
+        { pk = key.getName(); 
+          Vector atts = ee.getAttributes(); 
+          out.println("  public " + item + " get" + item + "ByPK(String _val)"); 
+          out.println("  { return " + item + "." + item + "_index.get(_val); }"); 
+          out.println(); 
+          out.println("  public " + item + " retrieve" + item + "(String _val)"); 
+          out.println("  { return get" + item + "ByPK(_val); }"); 
+          out.println();
+          out.println("  public List<String> all" + item + "ids()"); 
+          out.println("  { list" + item + "();"); 
+          out.println("    List<String> res = new ArrayList<String>();"); 
+          out.println("    for (int x = 0; x < current" + item + "s.size(); x++)"); 
+          out.println("    { " + item + "VO _item = (" + item + "VO) current" + item + "s.get(x);"); 
+          out.println("      res.add(_item.get" + key + "() + \"\");"); 
+          out.println("    }"); 
+          out.println("    return res;"); 
+          out.println("  }"); 
+          out.println(); 
+          out.println("  public void create" + item + "(" + item + "VO _x)"); 
+          out.println("  { // dbi.create" + item + "(_x);");
+          out.println("    " + item + " xx = " + item + ".createByPK" + item + "(_x.get" + key + "());");   
+          for (int i = 0; i < atts.size(); i++) 
+          { Attribute att = (Attribute) atts.get(i); 
+            String attnme = att.getName();
+            out.println("    xx." + attnme + " = _x.get" + attnme + "();"); 
+          }   
+          out.println("    current" + item + " = _x;"); 
+          out.println("  }"); 
+          out.println(); 
+        } 
+
+        out.println("  public void setSelected" + item + "(" + item + "VO x)"); 
+        out.println("  { current" + item + " = x; }"); 
+        out.println(); 
+
+        out.println("  public void setSelected" + item + "(int i)"); 
+        out.println("  { if (i < current" + item + "s.size())"); 
+        out.println("    { current" + item + " = current" + item + "s.get(i); }");
+        out.println("  }"); 
+        out.println(); 
+
+        out.println("  public " + item + "VO getSelected" + item + "()"); 
+        out.println("  { return current" + item + "; }"); 
+        out.println(); 
+
+        out.println("  public void persist" + item + "(" + item + " _x)"); 
+        out.println("  { " + item + "VO _vo = new " + item + "VO(_x);"); 
+        out.println("    // dbi.edit" + item + "(_vo); "); 
+        out.println("    current" + item + " = _vo;"); 
+        out.println("  }"); 
+        out.println(); 
+
+        out.println("  public void edit" + item + "(" + item + "VO _x)"); 
+        out.println("  { // dbi.edit" + item + "(_x); "); 
+        out.println("    current" + item + " = _x;"); 
+        out.println("  }"); 
+        out.println(); 
+	  
+	  
+        out.println("  public void delete" + item + "(String _id)"); 
+        out.println("  { // dbi.delete" + item + "(_id);");  
+        out.println("    current" + item + " = null;"); 
+        out.println("  }");
+        out.println(); 
+      }
     } 
 
     out.println("}");
@@ -4445,7 +4533,7 @@ public void generateCUIcode(PrintWriter out)
 	  
     Attribute resultAttribute = getResultParameter(); 
     
-	res = "import java.io.*;\n" +
+    res = "import java.io.*;\n" +
           "import java.util.*;\n" +
           "import javax.servlet.http.*;\n" +
           "import javax.servlet.*;\n";
@@ -4509,14 +4597,16 @@ public void generateCUIcode(PrintWriter out)
     if (resultAttribute != null) 
     { String resultPage = sname + "result"; 
       code = code + "      " + sname + "ResultPage " + resultPage + " = new " + sname + "ResultPage();\n";
-      code = code + "      " + resultPage + ".addRow(model." + sname + "(" + parstring + "));\n" + 
+      code = code + "      " + resultPage + ".addRow(\"\" + model." + sname + "(" + parstring + "));\n" + 
                     "      pw.println(" + resultPage + ");";  
     } 
     else 
     { code = code + "      model." + sname + "(" + parstring + ");\n"; } 
 
-//      "       while (resultSet.next())\n" + 
-//      "       { " + resultPage + ".addRow(resultSet); }\n" + 
+// case if resultAttribute.isCollection()
+//      "       List resultSet = model.sname(parstring);\n" + 
+//      "       for (int _i = 0; _i < resultSet.size(); _i++)\n" + 
+//      "       { " + resultPage + ".addRow(\"\" + resultSet.get(_i)); }\n" + 
 //      "       pw.println(" + resultPage + ");\n" + 
 //      "       resultSet.close();\n"; 
     
@@ -4541,7 +4631,8 @@ public void generateCUIcode(PrintWriter out)
 
     res = res + 
       "  public void destroy()\n" +
-      "  { dbi.logoff(); }\n" +
+      "  { // dbi.logoff(); \n" + 
+	  "  }\n" +
       "}\n";
     return res;
   }

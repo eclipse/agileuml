@@ -3767,7 +3767,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
 
 
-  public Vector parseKM3(Vector entities, Vector types, Vector gens, Vector pasts)
+  public Vector parseKM3(Vector entities, Vector types, Vector gens, Vector pasts, Vector pnames)
   { Vector res = new Vector(); 
     int en = lexicals.size()-1; 
     
@@ -3787,13 +3787,13 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     { String lex = lexicals.get(i) + "";
       if ("package".equals(lex))
       { // parse contents of previous package: 
-        Vector resp = parseKM3package(prevstart,i-1,entities,types,gens,pasts); 
+        Vector resp = parseKM3package(prevstart,i-1,entities,types,gens,pasts,pnames); 
         res.addAll(resp); 
         prevstart = i; 
       } 
     } 
        
-    Vector resp = parseKM3package(prevstart,en-1,entities,types,gens,pasts); 
+    Vector resp = parseKM3package(prevstart,en-1,entities,types,gens,pasts,pnames); 
     res.addAll(resp); 
     return res; 
   } 
@@ -3806,12 +3806,13 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
 
   public Vector parseKM3package(int st, int en, 
-                                Vector entities, Vector types, Vector gens, Vector pasts)
+                                Vector entities, Vector types, Vector gens, Vector pasts, Vector pnames)
   { Vector res = new Vector(); 
     if ("package".equals(lexicals.get(st) + "") && 
         "{".equals(lexicals.get(st+2) + ""))
     { String pname = lexicals.get(st+1) + ""; 
       System.out.println(">> Parsing package " + pname); 
+      pnames.add(pname); 
 
       for (int i = st+3; i < en;  i++) 
       { String lx = lexicals.get(i) + ""; 

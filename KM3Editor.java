@@ -465,9 +465,12 @@ public class KM3Editor extends JFrame implements DocumentListener
       Vector typs = new Vector(); 
       Vector pregens = new Vector(); 
       Vector preassocs = new Vector(); 
+	  Vector pnames = new Vector(); 
 
-      Vector items = comp.parseKM3(ents,typs,pregens,preassocs);
+      Vector items = comp.parseKM3(ents,typs,pregens,preassocs,pnames);
       classArea.processKM3(ents,typs,pregens,preassocs,items); 
+	  if (pnames.size() > 0) 
+	  { classArea.setSystemName((String) pnames.get(0)); }
 
       File file = new File("output/mm.km3");  /* default */ 
       try

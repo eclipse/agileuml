@@ -752,11 +752,11 @@ public class OperationDescription extends BehaviouralFeature
     return res;
   }
 
-  public String jspUpdateDeclarations(String ename)
+  public String jspUpdateDeclarations(String ename, String appName)
   { String bean = ename.toLowerCase();
-    String beanclass = "beans." + ename + "Bean";
+    String beanclass = appName + "." + ename + "Bean";
     return "<jsp:useBean id=\"" + bean +
-           "\" scope=\"session\" \n " + 
+           "\" scope=\"request\" \n " + 
            "class=\"" + beanclass + "\"/>";
   }
 
@@ -775,9 +775,9 @@ public class OperationDescription extends BehaviouralFeature
   }
 
   
-  public String jspUpdateText(String op, String ename, Vector atts)
+  public String jspUpdateText(String op, String ename, Vector atts, String appName)
   { String bean = ename.toLowerCase();
-    String dec = jspUpdateDeclarations(ename);
+    String dec = jspUpdateDeclarations(ename,appName);
     String sets = jspParamTransfers(ename, atts);
     String res = dec + "\n\r" + sets + "\n\r" +
       "<html>\n\r" +
@@ -792,26 +792,26 @@ public class OperationDescription extends BehaviouralFeature
       "<h2>" + op + " performed</h2>\n\r" +
       "<% } %>\n\r\n\r" +
       "<hr>\n\r\n\r" +
-      "<%@ include file=\"commands.html\" %>\n\r" +
+      "<%@ include file=\"index.html\" %>\n\r" +
       "</body>\n\r</html>\n\r";
     return res;
   }
 
-  public String jspQueryDeclarations(String ename)
+  public String jspQueryDeclarations(String ename, String appName)
   { String bean = ename.toLowerCase();
-    String beanclass = "beans." + ename + "Bean";
+    String beanclass = appName + "." + ename + "Bean";
     String res = "<%@ page import = \"java.util.*\" %>\n\r" +
-      "<%@ page import = \"beans.*\" %>\n\r" +
+      "<%@ page import = \"" + appName + ".*\" %>\n\r" +
       "<jsp:useBean id=\"" + bean +
-           "\" scope=\"session\" \n\r " + 
+           "\" scope=\"request\" \n\r " + 
            "class=\"" + beanclass + "\"/>";
       return res;
   }
 
   public String jspQueryText(String op,
-                             String ename, Vector atts, Entity ent)
+                             String ename, Vector atts, Entity ent, String appName)
   { String bean = ename.toLowerCase();
-    String dec = jspQueryDeclarations(ename);
+    String dec = jspQueryDeclarations(ename,appName);
     String sets = jspParamTransfers(ename, atts);
     Entity ent2 = ent; 
     String action = getStereotype(0); 
@@ -838,12 +838,12 @@ public class OperationDescription extends BehaviouralFeature
       e2name + "VO) " + bean + "s.next(); %>\n\r" +
       ent2.getTableRow() + "\n\r" +
       "<% } %>\n\r</table>\n\r\n\r<hr>\n\r\n\r" +
-      "<%@ include file=\"commands.html\" %>\n\r" +
+      "<%@ include file=\"index.html\" %>\n\r" +
       "</body>\n\r</html>\n\r";
     return res;
   }
 
-  public String getJsp()
+  public String getJsp(String appName)
   { String action = getODName();
     String op = getStereotype(0);
     String ename = entity.getName();
@@ -851,8 +851,8 @@ public class OperationDescription extends BehaviouralFeature
     if (op.equals("create") || op.equals("delete") ||
         op.equals("edit") || op.equals("add") ||
         op.equals("set") || op.equals("remove"))
-    { return jspUpdateText(action,ename,pars); }
-    return jspQueryText(action,ename,pars,entity);
+    { return jspUpdateText(action,ename,pars,appName); }
+    return jspQueryText(action,ename,pars,entity,appName);
   }
 
   public String getRESTJsp(String appname)
@@ -960,8 +960,8 @@ public class OperationDescription extends BehaviouralFeature
   }
 
 
-  public String getInputPage()
-  { String codebase = "http://127.0.0.1:8080/servlets/";
+  public String getInputPage(String appName)
+  { String codebase = "http://127.0.0.1:8080/examples/jsp/" + appName + "/";
     String op = getODName();
     String action = getStereotype(0);
     String jsp = codebase + op + ".jsp";
@@ -986,7 +986,7 @@ public class OperationDescription extends BehaviouralFeature
     return res;
   }
 
-  public String getInputPage(String appname)
+ /*  public String getInputPage(String appname)
   { String codebase = "http://127.0.0.1:8080/" + appname + "/servlets/";
     String op = getODName();
     String action = getStereotype(0);
@@ -1011,7 +1011,7 @@ public class OperationDescription extends BehaviouralFeature
     res = res + "<input type=\"submit\" value = \"" + 
           op + "\"/>\n\r</form>\n\r</body>\n\r</html>";
     return res;
-  }
+  } */ 
 
   public String getGenerationClass()
   { String nme = getName();
