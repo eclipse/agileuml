@@ -3035,22 +3035,24 @@ public void generateCUIcode(PrintWriter out)
       "<html>\n\r" +
       "<head><title>" + op + "</title></head>\n\r" +
       "<body>\n\r" +
-      "<h1>" + op + "</h1>\n\r" +
-	  "<% if (" + bean + ".is" + op + "error())\n\r" +
-      "{ %> <h2>Error in data: <%= " + bean + ".errors() %></h2>\n\r" +
-      "<h2>Press Back to re-enter</h2> <% }\n\r"; 
+      "<h1>" + op + "</h1>\n" +
+	  "<% if (" + bean + ".is" + op + "error())\n" +
+      "{ %> <h2>Error in data: <%= " + bean + ".errors() %></h2>\n" +
+      "<h2>Press Back to re-enter</h2> <% }\n"; 
     if (resultType != null)
-    { res = res + "else { %> " + showresult + "\n\r" +
-        "<h2>" + op + " performed</h2> <% } %>\n\r"; 
+    { res = res + "else { %> " + showresult + "\n" +
+        "<h2>" + op + " performed</h2> <% } %>\n"; 
 	} 
 	else 
-	{ res = res + "else { %> " + bean + "." + op + "();\n\r" +
-        "<h2>" + op + " performed</h2> <% } %>\n\r" +  
-        "\n\r\n\r"; 
+	{ res = res + "else { %> " + bean + "." + op + "();\n" +
+        "<h2>" + op + " performed</h2> <% } %>\n" +  
+        "\n\n"; 
     }
 	res = res +  
-      "<hr>\n\r\n\r" +
-      "</body>\n\r</html>\n\r";
+      "<hr>\n\n" +
+      "<%@ include file=\"index.html\" %>\n" +
+
+      "</body>\n\r</html>\n";
     return res;
   }
 

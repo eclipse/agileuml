@@ -447,6 +447,9 @@ public class GUIBuilder
     return res;
   }
 
+  public static String buildTestsGUIJava6(Vector ucs, String sysName, boolean incr, Vector types, Vector entities)
+  { return buildTestsGUI(ucs, sysName, incr, types, entities); }
+  
   public static String buildTestsGUI(Vector ucs, String sysName, boolean incr, Vector types, Vector entities)
   { String res = "import javax.swing.*;\n" +
       "import javax.swing.event.*;\n" +
@@ -641,6 +644,7 @@ public class GUIBuilder
         Type resultType = uc.getResultType(); 
         String testscript = "";
 		String teststring = ""; 
+		String posttests = ""; 
 
         res = res + "    JButton " + nme + "Button = new JButton(\"" + nme + "\");\n";
  
@@ -701,13 +705,13 @@ public class GUIBuilder
 				  indent + "for (int " + indexvar + " = 0; " + indexvar + " < " + nvals + "; " + indexvar + "++)\n" + 
 				  indent + "{ int " + parnme + " = " + indexvar + ";\n";
             } 
-			else if (typ.isEntity())
-			{ String ename = tname.toLowerCase() + "s";
-			  Entity ee = typ.getEntity(); 
+            else if (typ.isEntity())
+            { String ename = tname.toLowerCase() + "s";
+              Entity ee = typ.getEntity(); 
 			   
-			  Vector eeinvariants = new Vector(); 
-	          if (ee != null) 
-	          { eeinvariants.addAll(ee.getInvariants()); }
+              Vector eeinvariants = new Vector(); 
+              if (ee != null) 
+              { eeinvariants.addAll(ee.getInvariants()); }
 
               testscript = testscript + 
                   indent + "\n" + 
@@ -717,12 +721,19 @@ public class GUIBuilder
               { java.util.Map env = new java.util.HashMap(); 
 			    env.put(tname, parnme); 
                 Constraint conp = (Constraint) eeinvariants.get(p); 
-				Constraint conpr = conp.addReference(parnme,typ); 
+                Constraint conpr = conp.addReference(parnme,typ); 
+                String constring = conpr.queryForm(env,true); 
+				
                 testscript = testscript + 
-		          indent + "  if (" + conpr.queryForm(env,true) + ")\n" + 
-		          indent + "  { System.out.print(\" Class " + tname + " invariant " + p + " is valid; \"); }\n" + 
+		          indent + "  if (" + constring + ")\n" + 
+		          indent + "  { System.out.print(\"" + parnme + " : " + tname + " invariant " + p + " is valid at start; \"); }\n" + 
 				  indent + "  else \n" + 
-				  indent + "  { System.out.print(\" Class " + tname + " invariant " + p + " fails; \"); }\n"; 
+				  indent + "  { System.out.print(\"" + parnme + " : " + tname + " invariant " + p + " fails at start; \"); }\n"; 
+                posttests = posttests + 
+		          indent + "  if (" + constring + ")\n" + 
+		          indent + "  { System.out.print(\"" + parnme + " : " + tname + " invariant " + p + " is valid at end; \"); }\n" + 
+				  indent + "  else \n" + 
+				  indent + "  { System.out.print(\"" + parnme + " : " + tname + " invariant " + p + " fails at end; \"); }\n"; 
               }
 				  		  
             } // Check invariants of parnme. 
@@ -741,7 +752,7 @@ public class GUIBuilder
               { testscript = testscript + 
                 indent + "\n" + 
 				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
-				indent + "{ Vector " + parnme + " = new Vector();\n" + 
+				indent + "{ java.util.List " + parnme + " = new Vector();\n" + 
 				indent + "  if (" + indexvar + " < 5)\n" + 
 				indent + "  { " + parnme + ".add(new Long(longTestValues[" + indexvar + "])); }\n"; 
 			  }  
@@ -749,7 +760,7 @@ public class GUIBuilder
               { testscript = testscript + 
                 indent + "\n" + 
 				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
-				indent + "{ Vector " + parnme + " = new Vector();\n" + 
+				indent + "{ java.util.List " + parnme + " = new Vector();\n" + 
 				indent + "  if (" + indexvar + " < 5)\n" + 
 				indent + "  { " + parnme + ".add(new Double(doubleTestValues[" + indexvar + "])); }\n";
 			  }
@@ -757,7 +768,7 @@ public class GUIBuilder
               { testscript = testscript + 
                 indent + "\n" + 
 				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 3; " + indexvar + "++)\n" + 
-				indent + "{ Vector " + parnme + " = new Vector();\n" + 
+				indent + "{ java.util.List " + parnme + " = new Vector();\n" + 
 				indent + "  if (" + indexvar + " < 2)\n" + 
 				indent + "  { " + parnme + ".add(new Boolean(booleanTestValues[" + indexvar + "])); }\n";
               } 
@@ -767,7 +778,7 @@ public class GUIBuilder
 			    testscript = testscript + 
                   indent + "\n" + 
 				  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= " + nvals + "; " + indexvar + "++)\n" + 
-				  indent + "{ Vector " + parnme + " = new Vector();\n" + 
+				  indent + "{ java.util.List " + parnme + " = new Vector();\n" + 
 				  indent + "  if (" + indexvar + " < " + nvals + ")\n" + 
 				  indent + "  { " + parnme + ".add(new Integer(" + indexvar + ")); }\n"; 
 			  }
@@ -780,7 +791,7 @@ public class GUIBuilder
 				testscript = testscript + 
                   indent + "\n" + 
 				  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= Controller.inst()." + etname + ".size(); " + indexvar + "++)\n" + 
-				  indent + "{ Vector " + parnme + " = new Vector();\n";  
+				  indent + "{ java.util.List " + parnme + " = new Vector();\n";  
                 testscript = testscript + 
 			      indent + "  if (" + indexvar + " < Controller.inst()." + etname + ".size())\n" + 
 			      indent + "  { " + parnme + ".add(Controller.inst()." + eename + ".get(" + indexvar + ")); }\n";
@@ -809,9 +820,12 @@ public class GUIBuilder
 			   indent + "  catch(Exception _e) { System.out.println(\" !! Exception occurred: test failed !! \"); }\n"; 
 			   
 		testscript = testscript + 
-		  indent + "  System.out.print(\">>> Test: \" + " + teststring + ");\n" + 
+		  indent + "  System.out.println();\n" + 
+             indent + "  System.out.print(\">>> Test: \" + " + teststring + ");\n" + 
 		  checkCode + 
-		  call + "\n"; 
+		  call + posttests + "\n" + 
+		  indent + "  System.out.println();\n" + 
+             indent + "  System.out.println();\n"; 
         // indent = indent.substring(0,indent.length()-2);  
 		
 		for (int p = 0; p < pars.size(); p++) 
@@ -823,8 +837,8 @@ public class GUIBuilder
         aper = aper +
            "    if (\"" + nme + "\".equals(cmd))\n" +
            "    { " + testscript + "\n" + 
-		   "      return;\n" + 
-		   "    } \n";
+		"      return;\n" + 
+           "    } \n";
       }
     } 
 	

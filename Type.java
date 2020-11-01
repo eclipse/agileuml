@@ -1680,20 +1680,22 @@ public class Type extends ModelElement
   { if (etype == null) 
     { return null; } 
 
-    if (etype.endsWith("EString"))
+    if (etype.endsWith("String"))
     { return new Type("String",null); } 
-    if (etype.endsWith("EInt"))
+    if (etype.endsWith("EInt") || etype.endsWith("Integer"))
     { return new Type("int",null); } 
     if (etype.endsWith("ELong"))
     { return new Type("long",null); } 
-    if (etype.endsWith("EDouble"))
+    if (etype.endsWith("EDouble") || etype.endsWith("Real"))
     { return new Type("double",null); } 
-    if (etype.endsWith("EBoolean"))
+    if (etype.endsWith("Boolean"))
     { return new Type("boolean",null); }
 
     String et = "";
-    if (etype.startsWith("#//"))
-    { et = etype.substring(3,etype.length()); }
+    if (etype.startsWith("#/"))
+    { int x = etype.lastIndexOf("/"); 
+      et = etype.substring(x,etype.length()); 
+    }
 
     Type t =
        (Type) ModelElement.lookupByName(et,types);

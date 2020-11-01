@@ -3012,7 +3012,7 @@ public void findClones(java.util.Map clones, String rule, String op)
         type = new Type("boolean",null);
       }
       else 
-      { System.err.println("TYPE ERROR: Unable to type: " + this);
+      { System.err.println("!!! TYPE ERROR: Unable to type: " + this);
         JOptionPane.showMessageDialog(null, "Unable to type " + this, 
                                       "Type error", JOptionPane.ERROR_MESSAGE);
         type = null; 
@@ -9370,8 +9370,9 @@ public boolean conflictsWithIn(String op, Expression el,
       { return bel.updateForm(env,"/:",val3,right,local); }
     }
     else
-    { return "{} // No update form for: " + this + "\n";
-    }
+    { String qf = queryForm(env,local); 
+	  return "if (" + qf + ") { } else { System.err.println(\"Assertion " + this + " fails\"); }\n";  
+	}
   }
 
 public String updateFormIn(String language, java.util.Map env, Expression var, boolean local)
@@ -9442,7 +9443,10 @@ public String updateFormIn(String language, java.util.Map env, Expression var, b
     return "  if (" + test.queryForm(language, env, local) + ") { }\n" +
       "  else { " + adda.updateForm(language, env, local) + " }";
   }
-  return "{ } // No update form for " + var + " : " + this + " \n";
+  else
+  { String qf = queryForm(env,local); 
+    return "if (" + qf + ") { } else { System.err.println(\"Assertion " + this + " fails\"); }\n";  
+  }
 }
 
 public String updateFormNotIn(String language, java.util.Map env, Expression var, boolean local)
@@ -10291,7 +10295,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
      return assign.updateForm(language, env, local);
    }
 
-   return "/* No update form for: " + this + " = " + var + " */"; 
+   return "/* No update form for: " + this + " = " + var + " */\n"; 
  }
 
   public String updateFormJava6(java.util.Map env, boolean local)
@@ -10457,8 +10461,13 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       else 
       { return bel.updateFormJava6(env,"/:",val3,right,local); }
     }
-    else
-    { return "{} /* Cannot produce update code for: " + this + " */"; }
+	else
+    { String qf = queryFormJava6(env,local); 
+	  return "if (" + qf + ") { } else { System.err.println(\"Assertion " + this + " fails\"); }\n";  
+	}
+
+    // else
+    // { return "{} /* Cannot produce update code for: " + this + " */"; }
   }
 
   public String updateFormJava7(java.util.Map env, boolean local)
@@ -10633,7 +10642,12 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       { return bel.updateFormJava7(env,"/:",val3,right,local); }
     }
     else
-    { return "{} /* Cannot produce update code for: " + this + " */"; }
+    { String qf = queryFormJava7(env,local); 
+	  return "if (" + qf + ") { } else { System.err.println(\"Assertion " + this + " fails\"); }\n";  
+	}
+
+    // else
+    // { return "{} /* Cannot produce update code for: " + this + " */"; }
   }
 
   public String updateFormCSharp(java.util.Map env, boolean local)

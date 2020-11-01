@@ -7934,6 +7934,19 @@ public void produceCUI(PrintWriter out)
     }
     catch (Exception ex) { }
 
+    String testcode = GUIBuilder.buildTestsGUIJava6(useCases,"",false,types,entities); 
+    File testsguifile = new File(dirName + "/TestsGUI.java");
+    try
+    { PrintWriter testsout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(testsguifile)));
+      if (systemName != null && systemName.length() > 0)
+      { testsout.println("package " + systemName + ";\n\n"); }  
+      testsout.println(testcode); 
+      testsout.close();
+    }
+    catch (Exception ex) { }
+
     try
     { out.close();
       out2.close(); 
@@ -8006,6 +8019,19 @@ public void produceCUI(PrintWriter out)
       { gout.println("package " + systemName + ";\n\n"); }  
       gout.println(gui); 
       gout.close();
+    }
+    catch (Exception ex) { }
+
+    String testcode = GUIBuilder.buildTestsGUIJava6(useCases,"",false,types,entities); 
+    File testsguifile = new File(dirName + "/TestsGUI.java");
+    try
+    { PrintWriter testsout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(testsguifile)));
+      if (systemName != null && systemName.length() > 0)
+      { testsout.println("package " + systemName + ";\n\n"); }  
+      testsout.println(testcode); 
+      testsout.close();
     }
     catch (Exception ex) { }
 
@@ -8427,8 +8453,8 @@ public void produceCUI(PrintWriter out)
     catch (Exception ex) { }
 
     Date d1 = new Date(); 
-	long endTime = d1.getTime(); 
-	System.out.println(">> Code generation took " + (endTime - startTime) + "ms"); 
+    long endTime = d1.getTime(); 
+    System.out.println(">> Code generation took " + (endTime - startTime) + "ms"); 
 
   } 
 
@@ -13179,12 +13205,30 @@ public void produceCUI(PrintWriter out)
     Vector enodes = xml.getSubnodes(); // entities and types
     int delta = 200; // visual displacement 
     int ecount = 0; 
+	
+    Vector allnodes = new Vector(); 
 
     for (int i = 0; i < enodes.size(); i++) 
     { XMLNode enode = (XMLNode) enodes.get(i); 
-      if ("eClassifiers".equals(enode.getTag()))
+	  
+      if ("ecore:EPackage".equals(enode.getTag()))
+      { System.out.println(">>>> Package subnode: " + enode.getAttributeValue("name")); 
+        allnodes.addAll(enode.getSubnodes()); 
+      }  
+      else 
+      { allnodes.add(enode); }
+    } 
+
+    for (int i = 0; i < allnodes.size(); i++) 
+    { XMLNode enode = (XMLNode) allnodes.get(i); 
+	  
+      if ("ecore:EPackage".equals(enode.getTag()))
+      { System.out.println(">>>> Package subnode: " + enode.getAttributeValue("name")); }  
+      else if ("eClassifiers".equals(enode.getTag()))
       { String xsitype = enode.getAttributeValue("xsi:type"); 
-        String ename = enode.getAttributeValue("name"); 
+        String ename = enode.getAttributeValue("name");
+        System.out.println(">>>> Class/type subnode: " + ename); 
+		 
         if ("ecore:EClass".equals(xsitype) && ename != null)  
         { Entity ent = 
             reconstructEntity(ename, 40 + (ecount/3)*delta + ((ecount % 3)*delta)/2, 
@@ -13212,19 +13256,21 @@ public void produceCUI(PrintWriter out)
       } 
     } 
 
-    for (int i = 0; i < enodes.size(); i++) 
-    { XMLNode enode = (XMLNode) enodes.get(i); 
+    for (int i = 0; i < allnodes.size(); i++) 
+    { XMLNode enode = (XMLNode) allnodes.get(i); 
       if ("eClassifiers".equals(enode.getTag()))
       { String xsitype = enode.getAttributeValue("xsi:type"); 
         String ename = enode.getAttributeValue("name"); 
         if ("ecore:EClass".equals(xsitype) && ename != null)  
         { Entity ent = (Entity) ModelElement.lookupByName(ename,entities);
           String esupers = enode.getAttributeValue("eSuperTypes"); 
-          if (esupers != null && esupers.startsWith("#//"))
+          if (esupers != null && (esupers.startsWith("#//") || esupers.startsWith("#/1")))
           { String[] allsupers = esupers.split(" ");
             for (int p = 0; p < allsupers.length; p++) 
             { String supr = (String) allsupers[p];
               String suprname = supr.substring(3,supr.length());   
+              if (suprname.startsWith("/"))
+              { suprname = suprname.substring(1,suprname.length()); }
               Entity supent = (Entity) ModelElement.lookupByName(suprname,entities);
             
             // String supername = esupers.substring(3,esupers.length()); 
@@ -13233,6 +13279,7 @@ public void produceCUI(PrintWriter out)
               { Entity[] subents = new Entity[1]; 
                 subents[0] = ent; 
                 addInheritances(supent,subents); 
+				System.out.println(">>> Added inheritance: " + ename + " --|> " + suprname); 
                 supent.setAbstract(true);
               } 
             } 
@@ -13251,13 +13298,18 @@ public void produceCUI(PrintWriter out)
               } 
               else if ("ecore:EReference".equals(ed.getAttributeValue("xsi:type")))
               { String e2name = ed.getAttributeValue("eType"); 
+			    // int xind = e2name.lastIndexOf("/");
                 e2name = e2name.substring(3,e2name.length()); 
+				if (e2name.startsWith("/"))
+				{ e2name = e2name.substring(1,e2name.length()); }
+                // e2name = e2name.substring(xind,e2name.length()); 
                 Entity ent2 = (Entity) ModelElement.lookupByName(e2name,entities);
                 String upper = ed.getAttributeValue("upperBound"); // default is 1
                 String lower = ed.getAttributeValue("lowerBound"); // default is 0 
                 String opposite = ed.getAttributeValue("eOpposite"); 
                 String rolename = ed.getAttributeValue("name"); 
                 String containment = ed.getAttributeValue("containment"); 
+                String ordering = ed.getAttributeValue("ordered"); 
 
                 if ("-1".equals(upper)) { } 
                 else 
@@ -13268,6 +13320,7 @@ public void produceCUI(PrintWriter out)
 
                 System.out.println(">> Association: " + rolename + " from " + ename + " to " + e2name); 
                 System.out.println(">> Opposite is " + opposite); 
+                System.out.println(">> Ordering: " + ordering); 
                 String opp = opposite; 
 
                 if (ent2 != null && opposite != null && opposite.startsWith("#//"))
@@ -13286,33 +13339,38 @@ public void produceCUI(PrintWriter out)
                 } 
 
              
-                Association ast = new Association(ent,ent2,lower,upper,opp,
+                if (ent != null && ent2 != null) 
+                { Association ast = new Association(ent,ent2,lower,upper,opp,
                                                   rolename);
-                if ("true".equals(containment)) 
-                { ast.setAggregation(true); 
-                  // ast.setCard1(ModelElement.ZEROONE); 
-                } 
+                  if ("true".equals(containment)) 
+                  { ast.setAggregation(true); 
+                    // ast.setCard1(ModelElement.ZEROONE); 
+                  } 
+				  
+				  if ("true".equals(ordering))
+				  { ast.setOrdered(true); }
 
-                associations.add(ast);  
-                ent.addAssociation(ast); 
-                ast.setName("r" + associations.size());
-                int xs = 0, ys = 0, xe = 100, ye = 100;  
-                for (int m = 0; m < visuals.size(); m++)
-                { VisualData vd = (VisualData) visuals.get(m); 
-                  ModelElement me = (ModelElement) vd.getModelElement(); 
-                  if (me == ent) // Entity1
-                  { xs = vd.getx(); ys = vd.gety(); } 
-                  else if (me == ent2) // Entity2
-                  { xe = vd.getx(); ye = vd.gety(); }  
-                }
+                  associations.add(ast);  
+                  ent.addAssociation(ast); 
+                  ast.setName("r" + associations.size());
+                  int xs = 0, ys = 0, xe = 100, ye = 100;  
+                  for (int m = 0; m < visuals.size(); m++)
+                  { VisualData vd = (VisualData) visuals.get(m); 
+                    ModelElement me = (ModelElement) vd.getModelElement(); 
+                    if (me == ent) // Entity1
+                    { xs = vd.getx(); ys = vd.gety(); } 
+                    else if (me == ent2) // Entity2
+                    { xe = vd.getx(); ye = vd.gety(); }  
+                  }
 
-                int featuresize = ent.featureCount(); 
-                int efeaturesize = ent2.featureCount(); 
+                  int featuresize = ent.featureCount(); 
+                  int efeaturesize = ent2.featureCount(); 
 
-                LineData sline = 
-                  new LineData(xs + featuresize*4, ys+50, xe + efeaturesize*4,ye,linecount,SOLID);
-                sline.setModelElement(ast); 
-                visuals.add(sline); 
+                  LineData sline = 
+                    new LineData(xs + featuresize*4, ys+50, xe + efeaturesize*4,ye,linecount,SOLID);
+                  sline.setModelElement(ast); 
+                  visuals.add(sline);
+                }  
               }
             }
           }

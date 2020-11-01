@@ -5720,6 +5720,11 @@ String qual = "";
     if (aggregation)
     { res = res + " containment=\"true\""; } 
 
+    if (ordered)
+    { res = res + " ordered=\"true\""; }
+	else  
+    { res = res + " ordered=\"false\""; }
+
     out.println(res + "/>");  
   } // ordering? 
 

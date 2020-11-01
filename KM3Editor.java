@@ -112,9 +112,11 @@ public class KM3Editor extends JFrame implements DocumentListener
         getContentPane().add(statusPane, BorderLayout.PAGE_END);
 
         actions = createActionTable(textPane);
+        JMenu fileMenu = createFileMenu(); 
         JMenu editMenu = createEditMenu();
         JMenu styleMenu = createStyleMenu();
         JMenuBar mb = new JMenuBar();
+        mb.add(fileMenu); 
         mb.add(editMenu);
         mb.add(styleMenu);
         setJMenuBar(mb);
@@ -150,32 +152,48 @@ public class KM3Editor extends JFrame implements DocumentListener
         // inputMap.put(key, DefaultEditorKit.downAction);
     }
 
-    protected JMenu createEditMenu() {
-        JMenu menu = new JMenu("Edit");
+    protected JMenu createFileMenu() 
+    { JMenu menu = new JMenu("File");
 
-        Action checkAction = new CheckAction(); 
+      Action loadAction = new LoadAction(); 
         // checkAction.setMnemonic(KeyEvent.VK_K);
-        menu.add(checkAction); 
-
-        Action saveAction = new SaveAction(); 
+      menu.add(loadAction); 
+        
+      Action saveAction = new SaveAction(); 
         // checkAction.setMnemonic(KeyEvent.VK_K);
-        menu.add(saveAction); 
-        // menu.add(getActionByName(DefaultEditorKit.loadFileAction));
+      menu.add(saveAction); 
+      return menu; 
+   } 
 
-        Action loadAction = new LoadAction(); 
+    protected JMenu createEditMenu() 
+    { JMenu menu = new JMenu("Edit");
+
+      Action checkAction = new CheckAction(); 
         // checkAction.setMnemonic(KeyEvent.VK_K);
-        menu.add(loadAction); 
+      JMenuItem checkMI = menu.add(checkAction); 
+      checkMI.setToolTipText(
+           "First, position cursor under item to be checked");
+            // checkAction.setMnemonic(KeyEvent.VK_K);
+        
+      Action searchAction = new SearchAction(); 
+      menu.add(searchAction); 
 
+      menu.addSeparator();
 
-        menu.addSeparator();
-
-        Action cAction = getActionByName(DefaultEditorKit.cutAction);
+      Action cAction = getActionByName(DefaultEditorKit.cutAction);
         // cAction.setValue(Action.NAME,"Cut");  
-        menu.add(cAction);
-        menu.add(getActionByName(DefaultEditorKit.copyAction));
-        menu.add(getActionByName(DefaultEditorKit.pasteAction));
+      JMenuItem cutMI = menu.add(cAction);
+      cutMI.setLabel("Cut"); 
+      
+      Action cpyAction = getActionByName(DefaultEditorKit.copyAction);
+      JMenuItem copyMI = menu.add(cpyAction); 
+      copyMI.setLabel("Copy"); 
+      
+      Action pteAction = getActionByName(DefaultEditorKit.pasteAction);
+      JMenuItem pasteMI = menu.add(pteAction); 
+      pasteMI.setLabel("Paste"); 
 
-        return menu;
+      return menu;
     }
 
     protected JMenu createStyleMenu() {
@@ -436,6 +454,36 @@ public class KM3Editor extends JFrame implements DocumentListener
         }  */ 
      
       } catch (Exception ee) { } 
+    }
+  }
+
+  class SearchAction extends javax.swing.AbstractAction
+  { public SearchAction()
+    { super("Search"); }
+
+    public void actionPerformed(ActionEvent e)
+    { String searchfor = 
+        JOptionPane.showInputDialog("Search for:");
+	  if (searchfor == null) { return; }
+	  boolean found = false; 
+	  
+	  int len = searchfor.length();
+	  int en = doc.getLength(); 
+	  
+      for (int i = 0; i + len < en; i++)
+      try 
+      { String txt = textPane.getText(i, len);
+        if (searchfor.equals(txt))
+		{ textPane.select(i,i+len);
+          textPane.setSelectedTextColor(Color.gray);
+		  found = true;   
+        }   
+      } catch (Exception ee) { }
+	  
+	  if (found)
+	  { System.out.println("Found: " + found); } 
+	  else 
+	  { System.out.println("Did not find " + searchfor); }  
     }
   }
 

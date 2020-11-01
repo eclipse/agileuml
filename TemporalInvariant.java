@@ -3,7 +3,7 @@ import java.io.*;
 import java.util.StringTokenizer;
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -487,6 +487,27 @@ class TemporalInvariant extends Invariant
     else { return null; }
   }
 
+  public static Invariant parseTemporalInvariant(String sc, String se, String ops, Compiler2 comp)
+  { Expression eCond;
+    Expression eEffect;
+    Vector mode = new Vector();
+
+    comp.nospacelexicalanalysis(sc);
+    eCond = comp.parse(); 
+
+    comp.nospacelexicalanalysis(se);
+    eEffect = comp.parse();
+    
+    StringTokenizer st = new StringTokenizer(ops);
+    while (st.hasMoreTokens())
+    { String tok = st.nextToken();
+      mode.add(tok); 
+    }
+    
+    if (eEffect != null && eCond != null)
+    { return new TemporalInvariant(eCond,eEffect,mode); }
+    else { return null; }
+  }
 
 }
 
