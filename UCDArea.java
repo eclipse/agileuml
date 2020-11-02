@@ -9571,7 +9571,7 @@ public void produceCUI(PrintWriter out)
                 "    return uniqueInstance; } \n\n"); 
 
     out.println(getLoadModelOp()); 
-    // out.println(getCheckCompletenessOp()); 
+    out.println(getCheckCompletenessOp()); 
     out.println(getSaveModelOpJava6()); 
     // out.println(getSaveXSIOp()); 
     // out.println(getSaveXSI2Op()); 
@@ -9686,7 +9686,7 @@ public void produceCUI(PrintWriter out)
                 "    return uniqueInstance; } \n\n"); 
 
     out.println(getLoadModelOp()); 
-    // out.println(getCheckCompletenessOp()); 
+    out.println(getCheckCompletenessOp()); 
     out.println(getSaveModelOpJava6()); 
     // out.println(getSaveXSIOp()); 
     // out.println(getSaveXSI2Op()); 

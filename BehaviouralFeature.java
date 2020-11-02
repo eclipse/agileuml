@@ -1386,14 +1386,15 @@ public class BehaviouralFeature extends ModelElement
       { dec = dec + ", "; }
       res = res + dec;
     }
+	
     if (isAbstract())
     { res = res + ");\n\n"; 
       return res; 
     } 
+	
     res = res + ")\n";
     res = res + "  { " + resultType.getJava7(elementType) + " " +
-          " result = " + resultType.getDefaultJava7() +
-          ";\n";
+          " result = " + resultType.getDefaultJava7() + ";\n";
 
     for (int j = 0; j < cons.size(); j++)
     { Constraint con = (Constraint) cons.get(j);
@@ -2502,6 +2503,7 @@ public class BehaviouralFeature extends ModelElement
     { context.add(ent); 
       ename = ent.getName(); 
     } 
+	
     String ex = ename.toLowerCase() + "x"; 
     java.util.Map env0 = new java.util.HashMap(); 
     String pars = getJava7ParameterDec(); 
@@ -2549,7 +2551,7 @@ public class BehaviouralFeature extends ModelElement
         if (ent != null && ent.isInterface())
         { return "  public " + ts + " " + name + "(" + pars + ");\n"; } 
  
-        if (tp != null)
+        if (tp != null && !"void".equals(ts))
         { res = res + ts + " result;\n"; }
         localatts.addAll(parameters);   
         cde.typeCheck(types,entities,context,localatts); 
@@ -2588,8 +2590,9 @@ public class BehaviouralFeature extends ModelElement
 
       res = "  public " + header + ts + " " + name + "(" + pars + ")\n  {  "; 
 
-      if (tp != null)
+      if (tp != null & !"void".equals(ts))
       { res = res + ts + " result;\n"; }
+	  
       localatts.addAll(parameters);   
       Vector preterms = activity.allPreTerms(); 
       if (preterms.size() > 0) 
