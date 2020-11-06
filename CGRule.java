@@ -141,6 +141,9 @@ public class CGRule
     metafeatures = metafeatures(rhs); 
   }
 
+  public boolean equalsLHS(CGRule r) 
+  { return r.lhs.equals(lhs); } 
+
   public int variableCount()
   { if (variables == null) 
     { return 0; } 

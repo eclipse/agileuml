@@ -4717,14 +4717,14 @@ public String iosExtractOp(String ent, int i)
       res.add("-1");
       res.add("1"); 
 
-	  if (ubnd != null && lbnd != null)
-	  { try
-	    { double ud = Double.parseDouble(ubnd + ""); 
-	      double ld = Double.parseDouble(lbnd + ""); 
-		  int midd = (int) Math.floor((ud + ld)/2); 
-		  res.add("" + midd);
-		} catch (Exception _e) { } 
-	  }
+      if (ubnd != null && lbnd != null)
+      { try
+        { double ud = Double.parseDouble(ubnd + ""); 
+          double ld = Double.parseDouble(lbnd + ""); 
+          int midd = (int) Math.floor((ud + ld)/2); 
+          res.add("" + midd);
+        } catch (Exception _e) { } 
+      }
 
       if (ubnd != null) 
       { String upperval = ubnd + ""; 

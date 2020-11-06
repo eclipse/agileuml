@@ -25,16 +25,22 @@ public class CSTL
       if (sub != null && dirfiles[i].endsWith(".cstl") && 
           !(dirfiles[i].equals("cg.cstl")))
       { System.out.println(">>> Found CSTL template: " + dirfiles[i]); 
-        CGSpec cg = loadCSTL(sub,types,entities); 
-        if (cg != null) 
-        { addTemplate(dirfiles[i],cg); }         
+        CGSpec cg = new CGSpec(entities); 
+        CGSpec res = loadCSTL(cg, sub,types,entities); 
+        if (res != null) 
+        { addTemplate(dirfiles[i], res); }         
       }
     }
   }
 
   public static CGSpec loadCSTL(File file, Vector types, Vector entities)
-  { CGSpec res = new CGSpec(entities); 
-    
+  { CGSpec cg = new CGSpec(entities); 
+    return loadCSTL(cg, file, types, entities);
+  }  
+
+
+  public static CGSpec loadCSTL(CGSpec res, File file, Vector types, Vector entities)
+  { 
     BufferedReader br = null;
     String s;
     boolean eof = false;
@@ -61,6 +67,14 @@ public class CSTL
       }
       else if (s.startsWith("--")) { } 
       else if (s.trim().length() == 0) { } 
+      else if (s.startsWith("import "))
+      { String[] strs = s.split(" "); 
+        if (strs.length > 1) 
+        { String toimport = strs[1]; 
+          File ff = new File("./cg/" + toimport); 
+          loadCSTL(res, ff, types, entities); 
+        }
+      }  
       else if (s.equals("Type::"))
       { mode = "types"; }         
       else if (s.equals("Enumeration::"))

@@ -6615,7 +6615,8 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
   { // System.out.println(Double.MAX_VALUE); 
 
      Compiler2 c0 = new Compiler2(); 
-     c0.nospacelexicalanalysis("str->matches(pat)"); 
+     c0.nospacelexicalanalysis("$act(m) <= (now - settlement)/frequency"); 
+	 System.out.println(c0.lexicals); 
      Expression expr = c0.parseExpression();
      System.out.println(expr); 
 

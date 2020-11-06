@@ -2392,6 +2392,16 @@ class BasicExpression extends Expression
       entity = null; 
     } // for use in oclAsType(typ)
 
+    if ("now".equals(data))
+    { type = new Type("long", null); 
+      elementType = type; 
+      umlkind = VARIABLE; 
+      variable = new Attribute("now", type, ModelElement.INTERNAL); 
+      multiplicity = ModelElement.ONE; 
+      System.out.println("***Type of " + this + " is: " + type); 
+      return true;  
+    } 
+
 
     if ("self".equals(data))
     { if (contexts.size() == 0)
@@ -3603,6 +3613,8 @@ class BasicExpression extends Expression
         else 
         { return "this"; }
       } 
+      else if (data.equals("now")) 
+	  { return "Set.getTime()"; } 
       else // entity == null) 
       if (arrayIndex != null)
       { String ind = arrayIndex.queryForm(env,local); 

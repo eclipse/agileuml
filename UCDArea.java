@@ -8491,6 +8491,11 @@ public void produceCUI(PrintWriter out)
     // should use real sets
     out.println("  public class Set"); 
     out.println("  { private Vector elements = new Vector();\n"); 
+    out.println("    public static long now = 0;\n");  
+
+    String timeops = BSystemTypes.generateTimeOp();
+    out.println(timeops);
+   
     String sops = BSystemTypes.getSelectOps();
     out.println(sops);
 

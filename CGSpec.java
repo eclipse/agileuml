@@ -73,11 +73,27 @@ public class CGSpec
   { conditionalExpressionRules.add(r); }
 
   public void addStatementRule(CGRule r)
-  { statementRules.add(r); }
+  { Vector removedRules = new Vector(); 
+    for (int i = 0; i < statementRules.size(); i++) 
+	{ CGRule rule = (CGRule) statementRules.get(i); 
+	  if (r.equalsLHS(rule)) 
+	  { removedRules.add(rule); } 
+	} 
+	statementRules.removeAll(removedRules); 
+	statementRules.add(r); 
+  }
 
 
   public void addClassRule(CGRule r)
-  { classRules.add(r); }
+  { Vector removedRules = new Vector(); 
+    for (int i = 0; i < classRules.size(); i++) 
+	{ CGRule rule = (CGRule) classRules.get(i); 
+	  if (r.equalsLHS(rule)) 
+	  { removedRules.add(rule); } 
+	} 
+	classRules.removeAll(removedRules); 
+	classRules.add(r); 
+  }
 
   public void addPackageRule(CGRule r)
   { r.metafeatures = r.metafeatures(r.rhs);
@@ -85,10 +101,26 @@ public class CGSpec
   }
 
   public void addUseCaseRule(CGRule r)
-  { usecaseRules.add(r); }
+  { Vector removedRules = new Vector(); 
+    for (int i = 0; i < usecaseRules.size(); i++) 
+	{ CGRule rule = (CGRule) usecaseRules.get(i); 
+	  if (r.equalsLHS(rule)) 
+	  { removedRules.add(rule); } 
+	} 
+	usecaseRules.removeAll(removedRules); 
+	usecaseRules.add(r); 
+  }
 
   public void addAttributeRule(CGRule r)
-  { attributeRules.add(r); }
+  { Vector removedRules = new Vector(); 
+    for (int i = 0; i < attributeRules.size(); i++) 
+	{ CGRule rule = (CGRule) attributeRules.get(i); 
+	  if (r.equalsLHS(rule)) 
+	  { removedRules.add(rule); } 
+	} 
+	attributeRules.removeAll(removedRules); 
+	attributeRules.add(r); 
+  }
 
   public void addParameterRule(CGRule r)
   { parameterRules.add(r); }
@@ -97,7 +129,15 @@ public class CGSpec
   { parameterArgumentRules.add(r); }
 
   public void addOperationRule(CGRule r)
-  { operationRules.add(r); }
+  { Vector removedRules = new Vector(); 
+    for (int i = 0; i < operationRules.size(); i++) 
+	{ CGRule rule = (CGRule) operationRules.get(i); 
+	  if (r.equalsLHS(rule)) 
+	  { removedRules.add(rule); } 
+	} 
+	operationRules.removeAll(removedRules); 
+	operationRules.add(r); 
+  }
 
   public void addEnumerationRule(CGRule r)
   { enumerationRules.add(r); }
