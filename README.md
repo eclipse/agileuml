@@ -9,4 +9,4 @@ This can be executed as java -jar umlrsds.jar on the command line
 The toolset expects a directory called 'output' to exist in its execution directory, 
 'output' is used to hold all input and output files, such as metamodels and models.
 
-Further information, and a manual for the toolset, can be found in the file umlrsds19.pdf and at https://nms.kcl.ac.uk/kevin.lano/uml2web/
+Further information, and a manual for the toolset, can be found in the file umlrsds20.pdf and at https://nms.kcl.ac.uk/kevin.lano/uml2web/
