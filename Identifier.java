@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -13,6 +13,13 @@ public class Identifier
 
   public static String nextIdentifier(String pfx)
   { String res = pfx + count;
+    count++;
+    return res;
+  }
+
+  public static String nextIdentifier(int incr, String pfx)
+  { count = count + incr; 
+    String res = pfx + count;
     count++;
     return res;
   }

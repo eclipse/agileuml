@@ -404,19 +404,19 @@ public class AndroidAppGenerator extends AppGenerator
       out.println("  }"); 
       out.println(); 
 	  
-       out.println("  public void create" + item + "(" + item + "VO _x)"); 
-       out.println("  { " + item + " _obj = get" + item + "ByPK(_x." + pk + ");"); 
-       out.println("    if (_obj != null)"); 
-       out.println("    { cdbi.persist" + item + "(_obj); "); 
-       out.println("      current" + item + " = _x;"); 
-       out.println("    }"); 
-       out.println("    else "); 
-       out.println("    { " + item + " _itemx = " + item + ".createByPK" + item + "(_x." + pk + ");");
-       out.println("      cdbi.persist" + item + "(_itemx); ");  
-       out.println("      current" + item + " = _x;"); 
-       out.println("    }"); 
-       out.println("  }"); 
-       out.println(); 
+      out.println("  public void create" + item + "(" + item + "VO _x)"); 
+      out.println("  { " + item + " _obj = get" + item + "ByPK(_x." + pk + ");"); 
+      out.println("    if (_obj != null)"); 
+      out.println("    { cdbi.persist" + item + "(_obj); "); 
+      out.println("      current" + item + " = _x;"); 
+      out.println("    }"); 
+      out.println("    else "); 
+      out.println("    { " + item + " _itemx = " + item + ".createByPK" + item + "(_x." + pk + ");");
+      out.println("      cdbi.persist" + item + "(_itemx); ");  
+      out.println("      current" + item + " = _x;"); 
+      out.println("    }"); 
+      out.println("  }"); 
+      out.println(); 
 	  
       out.println("  public void delete" + item + "(String _id)"); 
       out.println("  { " + item + " _obj = get" + item + "ByPK(_id);"); 
@@ -480,7 +480,7 @@ public class AndroidAppGenerator extends AppGenerator
       } 
     } 
 
-    File opfile = new File("output/app/src/main/res/layout/activity_main.xml"); 
+    File opfile = new File("output/" + systemName + "/src/main/res/layout/activity_main.xml"); 
     try
     { PrintWriter opout = new PrintWriter(
                                  new BufferedWriter(
@@ -492,7 +492,7 @@ public class AndroidAppGenerator extends AppGenerator
       opout.close(); 
     } catch (Exception e) { } 
 
-    File odact = new File("output/app/src/main/java/com/example/app/MainActivity.java"); 
+    File odact = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/MainActivity.java"); 
     try
     { PrintWriter actout = new PrintWriter(
                                    new BufferedWriter(
@@ -506,7 +506,7 @@ public class AndroidAppGenerator extends AppGenerator
       ent.generateOperationDesigns(types,entities);  
            
       String entfile = ent.getName() + ".java"; 
-      File entff = new File("output/app/src/main/java/com/example/app/" + entfile); 
+      File entff = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entfile); 
       try
       { PrintWriter ffout = new PrintWriter(
                               new BufferedWriter(
@@ -551,7 +551,7 @@ public class AndroidAppGenerator extends AppGenerator
       ent.generateOperationDesigns(types,entities);  
            
       String entfile = ent.getName() + ".java"; 
-      File entff = new File("output/app/src/main/java/com/example/app/" + entfile); 
+      File entff = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entfile); 
       try
       { PrintWriter ffout = new PrintWriter(
                               new BufferedWriter(
@@ -3250,9 +3250,9 @@ public static void generateRecyclerViewAdapter(Entity ent, String packageName, P
 }
 
  
-  public static void generateInternetAccessor(String packageName)
+  public static void generateInternetAccessor(String systemName, String packageName)
   { String entfile = "InternetAccessor.java"; 
-    File entff = new File("output/app/src/main/java/com/example/app/" + entfile); 
+    File entff = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entfile); 
     try
     { PrintWriter out = new PrintWriter(
                               new BufferedWriter(
@@ -3348,9 +3348,9 @@ public static void generateRecyclerViewAdapter(Entity ent, String packageName, P
 	} catch (Exception _e) { }  
   } 
   
-  public static void generateFileAccessor(int screencount, String packageName)
+  public static void generateFileAccessor(int screencount, String systemName, String packageName)
   { String entfile = "FileAccessor.java"; 
-    File entff = new File("output/app/src/main/java/com/example/app/" + entfile); 
+    File entff = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entfile); 
     try
     { PrintWriter out = new PrintWriter(
                               new BufferedWriter(
@@ -3393,14 +3393,14 @@ public static void generateRecyclerViewAdapter(Entity ent, String packageName, P
       out.println("");
       out.println("     try {");
       out.println("           InputStream inStrm = myContext.openFileInput(filename);");
-      out.println("           if (inStrm != null) {");
-      out.println("               InputStreamReader inStrmRdr = new InputStreamReader(inStrm);");
-      out.println("               BufferedReader buffRdr = new BufferedReader(inStrmRdr);");
-      out.println("               String fileContent;");
+      out.println("           if (inStrm != null)");
+      out.println("           { InputStreamReader inStrmRdr = new InputStreamReader(inStrm);");
+      out.println("             BufferedReader buffRdr = new BufferedReader(inStrmRdr);");
+      out.println("             String fileContent;");
       out.println("");
-      out.println("               while ((fileContent = buffRdr.readLine()) != null)"); 
+      out.println("             while ((fileContent = buffRdr.readLine()) != null)"); 
       out.println("               { result.add(fileContent); }");
-      out.println("               inStrm.close();");
+      out.println("             inStrm.close();");
       out.println("           }");
       out.println("       } catch (Exception _e) { _e.printStackTrace(); }");
       out.println("     return result;");
@@ -3465,9 +3465,9 @@ public static void generateRecyclerViewAdapter(Entity ent, String packageName, P
     out.println("tools:context=\".MapsActivity\" />"); 
   } 
 
-public static void generateGraphComponentVC(String packageName, String nestedPackage)
+public static void generateGraphComponentVC(String systemName, String packageName, String nestedPackage)
 { String entfile = "GraphFragment.java"; 
-  File entff = new File("output/app/src/main/java/com/example/app/" + entfile); 
+  File entff = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entfile); 
   try
   { PrintWriter out = new PrintWriter(
                               new BufferedWriter(
@@ -3552,9 +3552,9 @@ public static void generateGraphComponentVC(String packageName, String nestedPac
     out.close();  } catch (Exception _e) { }
   }
 
-  public static void generateWebDisplay(String packageName)
+  public static void generateWebDisplay(String systemName, String packageName)
   { String entfile = "WebDisplay.java"; 
-    File entff = new File("output/app/src/main/java/com/example/app/" + entfile); 
+    File entff = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entfile); 
     try
     { PrintWriter out = new PrintWriter(
                               new BufferedWriter(
@@ -3579,9 +3579,9 @@ public static void generateGraphComponentVC(String packageName, String nestedPac
 	} catch (Exception _e) { }  
   }
 
-  public static void generateImageDisplay(String packageName)
+  public static void generateImageDisplay(String systemName, String packageName)
   { String entfile = "ImageDisplay.java"; 
-    File entff = new File("output/app/src/main/java/com/example/app/" + entfile); 
+    File entff = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entfile); 
     try
     { PrintWriter out = new PrintWriter(
                               new BufferedWriter(

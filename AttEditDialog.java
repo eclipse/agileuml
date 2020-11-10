@@ -10,7 +10,7 @@ import java.io.*;
 
 /* Package: GUI */ 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -100,7 +100,7 @@ public class AttEditDialog extends JDialog
     private JLabel initLabel;
     JTextField initField;  /* initial value */
     
-    JCheckBox senBox, intBox, actBox, derBox;
+    JCheckBox senBox, intBox, actBox, derBox, sumBox, passBox;
     private JPanel kindPanel;
     private ButtonGroup kindGroup;  /* kind */ 
 
@@ -133,21 +133,27 @@ public class AttEditDialog extends JDialog
       initField = new JTextField();
       
       kindPanel = new JPanel();
-      senBox = new JCheckBox("Sensor");
+      senBox = new JCheckBox("Input");
       intBox = new JCheckBox("Internal",true);
-      actBox = new JCheckBox("Actuator");
+      actBox = new JCheckBox("Output");
       derBox = new JCheckBox("Derived");
+      sumBox = new JCheckBox("Hidden");
+      passBox = new JCheckBox("Password");
       kindPanel.add(senBox);
       kindPanel.add(intBox);
       kindPanel.add(actBox);
       kindPanel.add(derBox);
+      kindPanel.add(sumBox); 
+      kindPanel.add(passBox); 
       kindPanel.setBorder(
-        BorderFactory.createTitledBorder("Kind"));
+        BorderFactory.createTitledBorder("Stereotype"));
       kindGroup = new ButtonGroup(); 
       kindGroup.add(senBox);
       kindGroup.add(intBox);
       kindGroup.add(actBox);
       kindGroup.add(derBox);
+      kindGroup.add(sumBox);
+      kindGroup.add(passBox);
 
       frozenPanel = new JPanel();
       frozBox = new JCheckBox("Frozen");
@@ -225,25 +231,29 @@ public class AttEditDialog extends JDialog
     { actBox.setSelected(true); }
     else if (kind == ModelElement.DERIVED)
     { derBox.setSelected(true); }
+    else if (kind == ModelElement.HIDDEN)
+    { sumBox.setSelected(true); }
+    else if (kind == ModelElement.PASSWORD)
+    { passBox.setSelected(true); }
   }
 
   public Dimension getPreferredSize()
-  { return new Dimension(450,350); }
+  { return new Dimension(550,350); }
 
   public Dimension getMinimumSize()
-  { return new Dimension(450,650); }
+  { return new Dimension(550,650); }
 
   public void doLayout()
   { nameLabel.setBounds(10,10,90,30);
-    nameField.setBounds(100,15,270,20);
+    nameField.setBounds(100,15,370,20);
     typeLabel.setBounds(10,40,90,30);
-    typeCombo.setBounds(100,45,270,20);
+    typeCombo.setBounds(100,45,370,20);
     initLabel.setBounds(10,70,90,30);
-    initField.setBounds(100,75,270,20);
-    kindPanel.setBounds(10,100,400,50); 
-    frozenPanel.setBounds(10,160,400,50); 
-    scopePanel.setBounds(10,210,400,50); 
-    uniqPanel.setBounds(10,260,400,50); 
+    initField.setBounds(100,75,370,20);
+    kindPanel.setBounds(10,100,500,50); 
+    frozenPanel.setBounds(10,160,500,50); 
+    scopePanel.setBounds(10,210,500,50); 
+    uniqPanel.setBounds(10,260,500,50); 
   }
 
   public void reset()
@@ -269,6 +279,10 @@ public class AttEditDialog extends JDialog
        { kind = ModelElement.ACT; }
        else if (dialogPanel.derBox.isSelected())
        { kind = ModelElement.DERIVED; }
+       else if (dialogPanel.sumBox.isSelected())
+       { kind = ModelElement.HIDDEN; }
+       else if (dialogPanel.passBox.isSelected())
+       { kind = ModelElement.PASSWORD; }
        else 
        { kind = ModelElement.INTERNAL; }
        setFields(dialogPanel.nameField.getText(),

@@ -9,7 +9,7 @@ import java.util.Vector;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003,2020 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -81,12 +81,14 @@ public class EntityCreateDialog extends JDialog
       stereotypesField.addItem("abstract");
       stereotypesField.addItem("interface"); 
       stereotypesField.addItem("persistent"); 
+      stereotypesField.addItem("source"); 
+      stereotypesField.addItem("target"); 
+      stereotypesField.addItem("remote"); 
+      stereotypesField.addItem("cloud"); 
       stereotypesField.addItem("utility"); 
       stereotypesField.addItem("sequential"); 
       stereotypesField.addItem("leaf"); 
       stereotypesField.addItem("active"); 
-      stereotypesField.addItem("source"); 
-      stereotypesField.addItem("target"); 
       stereotypesField.addItem("auxiliary"); 
       stereotypesField.addItem("external"); 
       stereotypesField.addItem("externalApp"); 

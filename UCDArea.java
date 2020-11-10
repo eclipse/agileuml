@@ -2987,6 +2987,12 @@ public class UCDArea extends JPanel
     { System.err.println("!! No cg/cg.cstl or cg/cgswiftmain.cstl file defined!"); 
       return; 
     } 
+
+    String dirName = "output/swiftuiapp"; 
+    File dir = new File(dirName); 
+    if (dir.exists()) { } 
+    else 
+    { dir.mkdir(); }
     
     String mainscreenName = "MainScreen"; 
     Vector operationNames = new Vector(); 
@@ -3348,6 +3354,12 @@ public class UCDArea extends JPanel
     { System.err.println("!! No cg/cg.cstl or cg/cgswiftmain.cstl file defined!"); 
       return; 
     } 
+
+    String dirName = "output/iosapp"; 
+    File dir = new File(dirName); 
+    if (dir.exists()) { } 
+    else 
+    { dir.mkdir(); }
 
     String delfile = "AppDelegate.swift"; 
     File appdelf = new File("output/iosapp/" + delfile); 
@@ -3760,14 +3772,68 @@ public class UCDArea extends JPanel
 	if (screencount <= 1)
 	{ nestedPackageName = packageName; }
 	 
+    String dirName = "output/" + systemName; 
+    File dir = new File(dirName); 
+    if (dir.exists()) { } 
+    else 
+    { dir.mkdir(); }
+	
+	String dir1Name = "output/" + systemName + "/src"; 
+	File dir1 = new File(dir1Name); 
+    if (dir1.exists()) { } 
+    else 
+    { dir1.mkdir(); }
+	  
+    String dir2Name = "output/" + systemName + "/src/main"; 
+    File dir2 = new File(dir2Name); 
+    if (dir2.exists()) { } 
+    else 
+    { dir2.mkdir(); }
+   
+    String dir3Name = "output/" + systemName + "/src/main/res"; 
+    File dir3 = new File(dir3Name); 
+    if (dir3.exists()) { } 
+    else 
+    { dir3.mkdir(); }
     	
-	agen.generateFileAccessor(screencount,nestedPackageName);
+    String dir4Name = "output/" + systemName + "/src/main/res/layout"; 
+    File dir4 = new File(dir4Name); 
+    if (dir4.exists()) { } 
+    else 
+    { dir4.mkdir(); }
+	
+    String dir5Name = "output/" + systemName + "/src/main/java/"; 
+    File dir5 = new File(dir5Name); 
+    if (dir5.exists()) { } 
+    else 
+    { dir5.mkdir(); }
+	
+    String dir6Name = "output/" + systemName + "/src/main/java/com/"; 
+    File dir6 = new File(dir6Name); 
+    if (dir6.exists()) { } 
+    else 
+    { dir6.mkdir(); }
+	
+    String dir7Name = "output/" + systemName + "/src/main/java/com/example/"; 
+    File dir7 = new File(dir7Name); 
+    if (dir7.exists()) { } 
+    else 
+    { dir7.mkdir(); }
+	
+    String dir8Name = dir7Name + systemName + "/"; 
+    File dir8 = new File(dir8Name); 
+    if (dir8.exists()) { } 
+    else 
+    { dir8.mkdir(); }
+	
+
+	agen.generateFileAccessor(screencount,systemName,nestedPackageName);
 	// Always included 
 
     agen.generateManifest(systemName,needsInternetPermission,needsMaps,out);
 	// Include Internet permission if an InternetAccessor is present, or a cloud entity, or WebComponent.  
 	
-    File buildfile = new File("output/app/build.gradle"); 
+    File buildfile = new File("output/" + systemName + "/build.gradle"); 
     try
     { PrintWriter gradle = new PrintWriter(
                                   new BufferedWriter(
@@ -3783,7 +3849,7 @@ public class UCDArea extends JPanel
     { // generate its screen and view controller
        needsMaps = true; 
        String mapxml = "activity_maps.xml"; 
-       File mapfile = new File("output/app/src/main/res/layout/" + mapxml); 
+       File mapfile = new File("output/" + systemName + "/src/main/res/layout/" + mapxml); 
        try
        { PrintWriter maplayout = new PrintWriter(
                                   new BufferedWriter(
@@ -3811,19 +3877,19 @@ public class UCDArea extends JPanel
 	
      if (webcomponent != null) 
      { // generate its screen and view controller
-       AndroidAppGenerator.generateWebDisplay(nestedPackageName); 
+       AndroidAppGenerator.generateWebDisplay(systemName,nestedPackageName); 
      }
 	
      if (imagecomponent != null) 
      { // generate its screen and view controller
-       AndroidAppGenerator.generateImageDisplay(nestedPackageName); 
+       AndroidAppGenerator.generateImageDisplay(systemName, nestedPackageName); 
      }
 
     for (int j = 0; j < types.size(); j++) 
     { Type typ = (Type) types.get(j);
       if (typ.isEnumeration()) 
       { String typef = typ.getName() + ".java"; 
-        File typefile = new File("output/app/src/main/java/com/example/app/" + typef); 
+        File typefile = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + typef); 
         try
         { PrintWriter typeout = new PrintWriter(
                                   new BufferedWriter(
@@ -3842,7 +3908,7 @@ public class UCDArea extends JPanel
       { continue; } 
 	   
       String entvo = ent.getName() + "VO.java"; 
-      File entvof = new File("output/app/src/main/java/com/example/app/" + entvo); 
+      File entvof = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entvo); 
       try
       { PrintWriter voout = new PrintWriter(
                               new BufferedWriter(
@@ -3852,7 +3918,7 @@ public class UCDArea extends JPanel
       } catch (Exception e) { } 
       
       String entbean = ent.getName() + "Bean.java"; 
-      File entbeanf = new File("output/app/src/main/java/com/example/app/" + entbean); 
+      File entbeanf = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entbean); 
       try
       { PrintWriter beanout = new PrintWriter(
                               new BufferedWriter(
@@ -3872,7 +3938,7 @@ public class UCDArea extends JPanel
       ent.generateOperationDesigns(types,entities);  
            
       String entfile = ent.getName() + ".java"; 
-      File entff = new File("output/app/src/main/java/com/example/app/" + entfile); 
+      File entff = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entfile); 
       try
       { PrintWriter ffout = new PrintWriter(
                               new BufferedWriter(
@@ -3907,7 +3973,7 @@ public class UCDArea extends JPanel
         ent.generateFirebaseDbi(nestedPackageName); 
 
         String entvo = ent.getName() + "VO.java"; 
-        File entvof = new File("output/app/src/main/java/com/example/app/" + entvo); 
+        File entvof = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entvo); 
         try
         { PrintWriter voout = new PrintWriter(
                               new BufferedWriter(
@@ -3917,7 +3983,7 @@ public class UCDArea extends JPanel
         } catch (Exception e) { } 
 
         String entbean = ent.getName() + "Bean.java"; 
-        File entbeanf = new File("output/app/src/main/java/com/example/app/" + entbean); 
+        File entbeanf = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entbean); 
         try
         { PrintWriter beanout = new PrintWriter(
                                  new BufferedWriter(
@@ -3929,7 +3995,7 @@ public class UCDArea extends JPanel
     } 
 
     if (remotecalls > 0) 
-    { AndroidAppGenerator.generateInternetAccessor(nestedPackageName); } 
+    { AndroidAppGenerator.generateInternetAccessor(systemName, nestedPackageName); } 
 
     for (int j = 0; j < useCases.size(); j++) 
     { if (useCases.get(j) instanceof UseCase) 
@@ -3937,8 +4003,8 @@ public class UCDArea extends JPanel
         if (uc.isPrivate()) { continue; } 
         if (predefinedUseCases.contains(uc.getName())) { continue; }
 
-	    String ucvo = uc.getName() + "VO.java"; 
-        File ucvof = new File("output/app/src/main/java/com/example/app/" + ucvo); 
+        String ucvo = uc.getName() + "VO.java"; 
+        File ucvof = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + ucvo); 
         try
         { PrintWriter voout = new PrintWriter(
                                new BufferedWriter(
@@ -3948,7 +4014,7 @@ public class UCDArea extends JPanel
         } catch (Exception e) { } 
       
         String ucbean = uc.getName() + "Bean.java"; 
-        File ucbeanf = new File("output/app/src/main/java/com/example/app/" + ucbean); 
+        File ucbeanf = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + ucbean); 
         try
         { PrintWriter beanout = new PrintWriter(
                               new BufferedWriter(
@@ -3960,7 +4026,7 @@ public class UCDArea extends JPanel
     }
 
     if (persistentEntities.size() > 0)
-    { File dbif = new File("output/app/src/main/java/com/example/app/Dbi.java"); 
+    { File dbif = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/Dbi.java"); 
       try
       { PrintWriter dbiout = new PrintWriter(
                               new BufferedWriter(
@@ -3970,7 +4036,7 @@ public class UCDArea extends JPanel
       } catch (Exception e) { }
     }  
 	
-    File mff = new File("output/app/src/main/java/com/example/app/ModelFacade.java"); 
+    File mff = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/ModelFacade.java"); 
     try
     { PrintWriter mfout = new PrintWriter(
                               new BufferedWriter(
@@ -3991,7 +4057,7 @@ public class UCDArea extends JPanel
 	}
     // and case of mapcomponent != null
 	
-    File chtml = new File("output/app/src/main/res/layout/activity_main.xml"); 
+    File chtml = new File("output/" + systemName + "/src/main/res/layout/activity_main.xml"); 
     try
     { PrintWriter chout = new PrintWriter(
                               new BufferedWriter(
@@ -4000,7 +4066,7 @@ public class UCDArea extends JPanel
       chout.close(); 
     } catch (Exception e) { }  // Only needed if more than 1 separate usecase/operationdescription
 
-    File codefile = new File("output/app/src/main/java/MainActivity.java"); 
+    File codefile = new File("output/" + systemName + "/src/main/java/MainActivity.java"); 
     try
     { PrintWriter codeout = new PrintWriter(
                               new BufferedWriter(
@@ -4019,7 +4085,7 @@ public class UCDArea extends JPanel
         tabnames.add(od.getName()); 
         String layoutname = od.getName().toLowerCase() + "_layout.xml"; 
      
-        File odlayout = new File("output/app/src/main/res/layout/" + layoutname); 
+        File odlayout = new File("output/" + systemName + "/src/main/res/layout/" + layoutname); 
         try
         { PrintWriter odlayoutfile = new PrintWriter(
                                        new BufferedWriter(
@@ -4034,7 +4100,7 @@ public class UCDArea extends JPanel
 	    if (nme.startsWith("list"))
 	    { Entity ent = od.getEntity(); 
 		  String ename = ent.getName();
-	      File fraglayout = new File("output/app/src/main/res/layout/fragment_" + ename.toLowerCase() + ".xml");
+	      File fraglayout = new File("output/" + systemName + "/src/main/res/layout/fragment_" + ename.toLowerCase() + ".xml");
 		  try
           { PrintWriter fragout = new PrintWriter(
                                  new BufferedWriter(
@@ -4043,7 +4109,7 @@ public class UCDArea extends JPanel
 		    fragout.close(); 
 		  } catch (Exception _r) { }
 		  
-		  File recycler = new File("output/app/src/main/java/com/example/app/" + ename + "RecyclerViewAdapter.java");
+		  File recycler = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + ename + "RecyclerViewAdapter.java");
 		  try
           { PrintWriter rout = new PrintWriter(
                                  new BufferedWriter(
@@ -4053,7 +4119,7 @@ public class UCDArea extends JPanel
 		  } catch (Exception _x) { }  
 	    }
 	 
-        File odjsp = new File("output/app/src/main/java/com/example/app/" + nme + "Fragment.java"); 
+        File odjsp = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + nme + "Fragment.java"); 
         try
         { PrintWriter jspout = new PrintWriter(
                                  new BufferedWriter(
@@ -4079,7 +4145,7 @@ public class UCDArea extends JPanel
             { referencedEntities.add(uc.classifier); } 
           } 
 
-          File opfile = new File("output/app/src/main/res/layout/" + lcnme + "_layout.xml"); 
+          File opfile = new File("output/" + systemName + "/src/main/res/layout/" + lcnme + "_layout.xml"); 
           try
           { PrintWriter opout = new PrintWriter(
                                  new BufferedWriter(
@@ -4091,7 +4157,7 @@ public class UCDArea extends JPanel
             opout.close(); 
           } catch (Exception e) { } 
 
-          File odact = new File("output/app/src/main/java/com/example/app/" + nme + "Fragment.java"); 
+          File odact = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + nme + "Fragment.java"); 
           try
           { PrintWriter actout = new PrintWriter(
                                    new BufferedWriter(
@@ -4113,7 +4179,7 @@ public class UCDArea extends JPanel
       ent.generateOperationDesigns(types,entities);  
            
       String entfile = ent.getName() + ".java"; 
-      File entff = new File("output/app/src/main/java/com/example/app/" + entfile); 
+      File entff = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entfile); 
       try
       { PrintWriter ffout = new PrintWriter(
                               new BufferedWriter(
@@ -4143,7 +4209,7 @@ public class UCDArea extends JPanel
 	
     if (screencount > 1)
     { String spafile = "SectionsPagerAdapter.java"; 
-      File spaff = new File("output/app/src/main/java/com/example/app/" + spafile); 
+      File spaff = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + spafile); 
       try
       { PrintWriter spaout = new PrintWriter(
                               new BufferedWriter(
@@ -15515,12 +15581,15 @@ public void produceCUI(PrintWriter out)
 
 
   public String generateJspDbi(Vector operations, String appName)
-  { String res = "package " + appName + ";\n\n" + 
+  { String db = getDatabaseName(operations); 
+    String driv = getDatabaseDriver(operations); 
+	
+    String res = "package " + appName + ";\n\n" + 
       "import java.sql.*; \n\n" +
       "public class Dbi\n" +
       "{ private Connection connection;\n" +
-      "  private static String defaultDriver = \"\"; \n" + 
-      "  private static String defaultDb = \"\"; \n" + 
+      "  private static String defaultDriver = " + driv + "; \n" + 
+      "  private static String defaultDb = " + db + "; \n" + 
       getPreparedStatDecs(operations) + "\n\n";
 	  
     res = res +
@@ -15590,6 +15659,40 @@ public void produceCUI(PrintWriter out)
     return res;
   }
 
+  private String getDatabaseName(Vector ops)
+  { String res = "\"\"";
+    for (int i = 0; i < ops.size(); i++)
+    { if (ops.get(i) instanceof OperationDescription)
+      { OperationDescription od = 
+          (OperationDescription) ops.get(i);
+		Entity ent = od.getEntity(); 
+        if (ent != null) 
+		{ String dbname = ent.getTaggedValue("database"); 
+          if (dbname != null && dbname.length() > 0)
+          { return dbname; } 
+		} 
+      }  
+    }
+    return res;
+  }
+
+  private String getDatabaseDriver(Vector ops)
+  { String res = "\"\"";
+    for (int i = 0; i < ops.size(); i++)
+    { if (ops.get(i) instanceof OperationDescription)
+      { OperationDescription od = 
+          (OperationDescription) ops.get(i);
+		Entity ent = od.getEntity(); 
+        if (ent != null) 
+		{ String dbname = ent.getTaggedValue("driver"); 
+          if (dbname != null && dbname.length() > 0)
+          { return dbname; } 
+		} 
+      }  
+    }
+    return res;
+  }
+  
   private String generateDbiPool()
   { String res = "package beans;\n\n" + 
       "import java.util.Vector;\n\n" + 
@@ -20539,7 +20642,7 @@ public void produceCUI(PrintWriter out)
   { Vector res = new Vector(); 
     for (int i = 0; i < entities.size(); i++) 
     { Entity e = (Entity) entities.get(i); 
-	  if (e.isDerived() || e.isComponent()) 
+	  if (e.isDerived() || e.isComponent() || e.isAbstract() || e.isInterface()) 
 	  { continue; }
 	  
 	  String testfile = "test" + e.getName() + "_in.txt"; 

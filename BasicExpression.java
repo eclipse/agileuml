@@ -2402,6 +2402,14 @@ class BasicExpression extends Expression
       return true;  
     } 
 
+    if ("$act".equals(data) || "$fin".equals(data))
+    { type = new Type("int", null); 
+      elementType = type; 
+      umlkind = VALUE; 
+      multiplicity = ModelElement.ONE; 
+      System.out.println("***Type of " + this + " is: " + type); 
+	  return true; 
+    } 
 
     if ("self".equals(data))
     { if (contexts.size() == 0)
@@ -3569,6 +3577,11 @@ class BasicExpression extends Expression
     String ename = ""; 
     String cont = "Controller.inst()"; 
 
+    if (data.equals("$act") && parameters.size() > 0)
+    { return "$act_" + parameters.get(0); }
+    else if (data.equals("$fin") && parameters.size() > 0)
+    { return "$fin_" + parameters.get(0); }
+
     if (umlkind == VALUE || umlkind == CONSTANT)
     { if (data.equals("{}") || data.equals("Set{}") || data.equals("Sequence{}"))
       { return "new Vector()"; }    // new Set really
@@ -3647,10 +3660,14 @@ class BasicExpression extends Expression
       { return data; } // Invalid function
 
       
+      if (data.equals("$act") && parameters.size() > 0)
+      { return "$act_" + parameters.get(0); }
+
       String pre = objectRef.queryForm(env,local);
       
       if (data.equals("allInstances"))  // objectRef is a CLASSID
       { return cont + "." + pre.toLowerCase() + "s"; } 
+	  
 
       if (objectRef.umlkind == CLASSID)
       { pre = ((BasicExpression) objectRef).classExtentQueryForm(env,local); }

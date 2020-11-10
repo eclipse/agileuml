@@ -301,6 +301,16 @@ public class Entity extends ModelElement implements Comparable
 
       Entity e2 = ast.getEntity2(); 
       Vector v1 = e2.allDefinedAttributes(); 
+	  /* if (e2.isAbstract())
+	  { Vector e2leaves = e2.getActualLeafSubclasses(); 
+	    for (int j = 0; j < e2leaves.size(); j++) 
+		{ Entity leaf = (Entity) e2leaves.get(j); 
+		  v1.addAll(leaf.attributes); 
+		}
+	  } 
+	  System.out.println("Two-step attribute features of " + this + " are: " + v1); 
+	 */  
+	  
       Vector v2 = e2.allDefinedAssociations(); 
       for (int j = 0; j < v1.size(); j++) 
       { Attribute step2 = (Attribute) v1.get(j); 
@@ -7170,7 +7180,7 @@ public class Entity extends ModelElement implements Comparable
   { String nme = getName(); 
     out.println(nme + " : Entity"); 
     out.println(nme + ".name = \"" + nme + "\"");
-    String tid = Identifier.nextIdentifier("");  
+    String tid = Identifier.nextIdentifier(10,"");  
     out.println(nme + ".typeId = \"" + tid + "\""); 
     if (isAbstract())
     { out.println(nme + ".isAbstract = true"); }
@@ -13954,8 +13964,8 @@ public BehaviouralFeature designAbstractKillOp()
     for (int i = 0; i < operations.size(); i++) 
     { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i);
       if (bf.isAbstract()) { } 
-	  else 
-	  { Vector bfcases = bf.testCases(); 
+      else 
+      { Vector bfcases = bf.testCases(); 
         res.addAll(bfcases);
       }   
     }

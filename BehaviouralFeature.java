@@ -3663,14 +3663,14 @@ public class BehaviouralFeature extends ModelElement
   }
 
   public Statement designQueryList(Vector postconds, String resT,
-                                 java.util.Map env0, 
-                                 Vector types, Vector entities, Vector atts)
+                                   java.util.Map env0, 
+                                   Vector types, Vector entities, Vector atts)
   { if (postconds.size() == 0)
     { return new SequenceStatement(); } 
 
     Expression postcond = (Expression) postconds.get(0); 
     Statement fst = designBasicCase(postcond,resT,
-                                     env0,types,entities,atts);
+                                    env0,types,entities,atts);
     if (postconds.size() == 1) 
     { return fst; } 
 
@@ -3686,9 +3686,16 @@ public class BehaviouralFeature extends ModelElement
               "=>".equals(((BinaryExpression) next).operator)) 
       { Statement elsepart = designQueryList(ptail,resT,
                                              env0,types,entities,atts);
-        ((ConditionalStatement) fst).setElse(elsepart);
+        if (fst instanceof ConditionalStatement)
+		{ ((ConditionalStatement) fst).setElse(elsepart);
            // Statement.combineIfStatements(fst,elsepart);
-        return fst;   
+          return fst;
+		} 
+		else 
+		{ SequenceStatement res = new SequenceStatement(); 
+          res.addStatement(fst); res.addStatement(elsepart); 
+          return res;
+		}   
       } 
       else 
       { Statement stat = designQueryList(ptail,resT,
