@@ -63,7 +63,7 @@ public class RequirementsPhrase
 
 
   String phrasekind = "noun"; // or "verb"
-  Vector words = new Vector(); 
+  Vector words = new Vector(); // of String
   java.util.Set verbClassifications = new java.util.HashSet();  // for verb phrase
   java.util.Set nounClassifications = new java.util.HashSet();  // for noun phrase
   

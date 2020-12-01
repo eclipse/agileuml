@@ -13,7 +13,24 @@ import java.io.*;
 
 
 public abstract class AppGenerator
-{ 
+{ public static UseCase isSinglePageApp(Vector usecases)
+  { // True if there is only one independent use case. 
+
+    UseCase res = null; 
+    for (int i = 0; i < usecases.size(); i++) 
+    { if (usecases.get(i) instanceof OperationDescription)
+      { return null; } 
+      UseCase uc = (UseCase) usecases.get(i); 
+      if (uc.isDependent()) { } 
+      else if (uc.isPublic())
+      { if (res != null) 
+        { return null; } 
+        else 
+        { res = uc; } 
+      } 
+    } 
+    return res; 
+  } 
 
   public abstract void modelFacade(String packageName, Vector usecases, CGSpec cgs, 
     Vector entities, Vector clouds, Vector types, 

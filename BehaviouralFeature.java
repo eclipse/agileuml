@@ -3686,16 +3686,16 @@ public class BehaviouralFeature extends ModelElement
               "=>".equals(((BinaryExpression) next).operator)) 
       { Statement elsepart = designQueryList(ptail,resT,
                                              env0,types,entities,atts);
-        if (fst instanceof ConditionalStatement)
-		{ ((ConditionalStatement) fst).setElse(elsepart);
+        if (fst instanceof ConditionalStatement)  
+        { ((ConditionalStatement) fst).setElse(elsepart);
            // Statement.combineIfStatements(fst,elsepart);
           return fst;
-		} 
-		else 
-		{ SequenceStatement res = new SequenceStatement(); 
+        } 
+        else 
+        { SequenceStatement res = new SequenceStatement(); 
           res.addStatement(fst); res.addStatement(elsepart); 
           return res;
-		}   
+        }   
       } 
       else 
       { Statement stat = designQueryList(ptail,resT,
@@ -3710,7 +3710,7 @@ public class BehaviouralFeature extends ModelElement
                                            env0,types,entities,atts); 
       SequenceStatement res = new SequenceStatement(); 
       res.addStatement(fst); 
-	  res.addStatement(stat); 
+      res.addStatement(stat); 
       return res;
     }  // sequencing of fst and ptail
   } 
@@ -3774,11 +3774,14 @@ public class BehaviouralFeature extends ModelElement
 
         Statement ifpart = // new ImplicitInvocationStatement(be.right); 
                            designBasicCase(be.right, resT, env0, types, entities, atts); 
-        if (allvars.size() > 0) 
+        if (qvars1.size() > 0 || lvars1.size() > 0)   // allvars.size() > 0) 
         { Statement forloop = virtualCon.q2LoopsPred(allvars,qvars1,lvars1,ifpart); 
           return forloop; 
         } 
-        return new ConditionalStatement(test, ifpart); 
+        Statement cs = new ConditionalStatement(test, ifpart);
+        System.out.println(">-->> code for branch " + be); 
+        System.out.println(">-->> is: " + cs);
+        return cs; 
       } // But may be let definitions and local variables in test. 
       else if ("=".equals(be.operator))
       { Expression beleft = be.left; 
@@ -3795,10 +3798,11 @@ public class BehaviouralFeature extends ModelElement
           CreationStatement cs = new CreationStatement(t.getJava(), be.left + ""); 
           cs.setInstanceType(t); 
           cs.setElementType(t.getElementType()); 
-		  cs.setFrozen(true); // it must be a constant
+          cs.setFrozen(true); // it must be a constant
           AssignStatement ast = new AssignStatement(be.left, be.right);
           SequenceStatement sst = new SequenceStatement(); 
-          sst.addStatement(cs); sst.addStatement(ast); 
+          sst.addStatement(cs); 
+          sst.addStatement(ast); 
           return sst;  
         } 
       } 
@@ -3881,7 +3885,7 @@ public class BehaviouralFeature extends ModelElement
       { Expression test = pst.left; 
         test.typeCheck(types,entities,context,atts); 
         String qf = test.queryForm(env0,true); 
-        // System.out.println(test + " QUERY FORM= " + qf); 
+        System.out.println(">>-->> " + test + " QUERY FORM= " + qf); 
 
         Constraint virtualCon = new Constraint(test,pst.right); 
 
@@ -3902,29 +3906,35 @@ public class BehaviouralFeature extends ModelElement
         v0.add(betrue.clone()); 
         Vector splitante = test.splitToCond0Cond1Pred(v0,pars1,qvars1,lvars1,allvars,allpreds); 
         System.out.println(); 
-        // System.out.println(">>> Operation " + getName() + " case parameters = " + 
-        //                    pars1 + " Quantified local = " + 
-        //                    qvars1 + " Let local = " + lvars1 + " All: " + allvars); 
+        System.out.println(">>> Operation " + getName() + " case parameters = " + 
+                            pars1 + " Quantified local = " + 
+                            qvars1 + " Let local = " + lvars1 + " All: " + allvars); 
        
         Expression ante1 = (Expression) splitante.get(0); 
         Expression ante2 = (Expression) splitante.get(1); 
 
-        // System.out.println(">>> Operation " + getName() + " case variable quantifiers: " + ante1); 
-        // System.out.println(">>> Operation " + getName() + " case assumptions: " + ante2);
+         System.out.println(">>> Operation " + getName() + " case variable quantifiers: " + ante1); 
+         System.out.println(">>> Operation " + getName() + " case assumptions: " + ante2);
         // System.out.println(); 
 
-        if (allvars.size() > 0) 
+        if (qvars1.size() > 0 || lvars1.size() > 0) 
         { Statement ifpart = new ImplicitInvocationStatement(pst.right);
              // designBasicCase(pst.right, resT, env0, types, entities, atts); 
           Statement forloop = virtualCon.q2LoopsPred(allvars,qvars1,lvars1,ifpart); 
-          // System.out.println(">>> Actual code= " + forloop); 
-          return header + forloop.updateForm(env0,true,types,entities,atts); 
+          System.out.println(">>> Actual code= " + forloop); 
+          String res = header + forloop.updateForm(env0,true,types,entities,atts); 
+          System.out.println(">-->> code for branch " + pst); 
+          System.out.println(">-->> is: " + res);
+          return res; 
         } 
         
         header = header + "  if (" + qf + ") \n  { "; 
         String body = buildQueryCases(pst.right,header,resT,
                                       env0,types,entities,atts); 
-        return body + " \n  }"; 
+        String res = body + " \n  }"; 
+        System.out.println(">-->> code for branch " + pst); 
+        System.out.println(">-->> is: " + res);
+        return res; 
       } 
 
       if ("or".equals(pst.operator))

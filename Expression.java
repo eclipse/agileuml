@@ -524,11 +524,30 @@ abstract class Expression
     if (t.isEnumerated())
     { return tname + "(rawValue: " + se + ")"; } 
     if (t.isEntity())
-    { return tname + ".getByPK" + tname + "(" + se + ")"; } 
+    { return tname + ".getByPK" + tname + "(index: " + se + ")"; } 
 
     return se;   // no unwrap -- for strings
   }
 
+  public static String unwrapSwiftOptional(String se, Type t)
+  { if (t == null)
+    { return se; }  // should never happen
+    String tname = t.getName();
+    if (tname.equals("double"))
+    { return "Double(" + se + "!)"; } 
+    if (tname.equals("boolean"))
+    { return "Bool(" + se + "!)"; } 
+    if (tname.equals("int"))
+    { return "Int(" + se + "!)"; }
+    if (tname.equals("long"))
+    { return "Int(" + se + "!)"; }
+    if (t.isEnumerated())
+    { return tname + "(rawValue: " + se + "!)"; } 
+    if (t.isEntity())
+    { return tname + ".getByPK" + tname + "(index: " + se + "!)"; } 
+
+    return se;   // no unwrap -- for strings
+  }
 
   public abstract Expression skolemize(Expression sourceVar, java.util.Map env); 
 

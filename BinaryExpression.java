@@ -438,8 +438,9 @@ class BinaryExpression extends Expression
       for (int j = i + 1; j < cases.size(); j++)
       { Expression e2 = (Expression) cases.get(j);
         Expression neg = e2.computeNegation4succ();
-        res = simplify("&",res,
-                    new BinaryExpression("=>",e1,neg),null);
+		Expression next = new BinaryExpression("=>",e1,neg); 
+		next.setBrackets(true); 
+        res = simplify("&",res,next,null);
       }
     }
     return res;
@@ -453,8 +454,9 @@ class BinaryExpression extends Expression
     { BinaryExpression cse = (BinaryExpression) caselist.get(i); 
       Expression e1 = (Expression) caseconds.get(i); 
       Expression ce = cse.completeness(ent);
-      res = simplify("&",res,
-                    new BinaryExpression("=>",e1,ce),null);
+      Expression next = new BinaryExpression("=>",e1,ce);
+	  next.setBrackets(true);  
+      res = simplify("&",res,next,null);
     }
     return res;
   } // and disjunction of guards is true
@@ -479,7 +481,7 @@ class BinaryExpression extends Expression
       }
       else
       { System.out.println("Expression: " + this + " incomplete: updates " + v + 
-                           " not all " + feats);
+                           ", not all defined features: " + feats);
         return new BasicExpression(false);
       }
     } 

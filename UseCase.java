@@ -3737,7 +3737,7 @@ public void generateCUIcode(PrintWriter out)
     String res = 
 	  // "package " + packageName + ";\n\n" + 
       "import Foundation\n" + 
-      "import Glibc\n\n" + 
+      "import Darwin\n\n" + 
       "class " + ename + "ValidationBean\n{ \n";
 	  
     Attribute resultAttribute = getResultParameter(); 
@@ -3784,7 +3784,7 @@ public void generateCUIcode(PrintWriter out)
     res = res + "    return errorlist.count > 0\n  }\n\n";
 
     res = res + "  func errors() -> String\n" + 
-                "  { var res : [String] = [String]()\n" + 
+                "  { var res : String = \"\"\n" + 
                 "    for (_,x) in errorlist.enumerated()\n" + 
                 "    { res = res + x + \" \"; } \n" + 
                 "    return res\n" + 
@@ -3993,7 +3993,7 @@ public void generateCUIcode(PrintWriter out)
 
   public String getSwiftUIValueObject(String pge, Vector types, Vector entities, Vector useCases, CGSpec cgs)
   { String res = "import Foundation\n";
-    res = res + "import Glibc\n\n"; 
+    res = res + "import Darwin\n\n"; 
 	
     String ename = getName();
     String ucname = getName(); 

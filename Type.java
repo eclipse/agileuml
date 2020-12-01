@@ -119,6 +119,14 @@ public class Type extends ModelElement
   { return sorted; } 
 
   public Entity getEntity() { return entity; } 
+  
+  public Entity getEntityOrElementEntity() 
+  { if (entity != null) 
+    { return entity; }
+	if (elementType != null && elementType.isEntity())
+	{ return elementType.entity; }
+	return null; 
+  }
 
   public Vector metavariables()
   { Vector res = new Vector(); 
@@ -193,6 +201,20 @@ public class Type extends ModelElement
 
   public boolean isNumericType()
   { if ("int".equals(name) || "double".equals(name) || "long".equals(name))
+    { return true; } 
+    return false; 
+  } 
+
+  public static boolean isIntegerType(Type t)
+  { if (t == null) { return false; } 
+    String tname = t.getName(); 
+    if ("int".equals(tname) || "long".equals(tname))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isIntegerType()
+  { if ("int".equals(name) || "long".equals(name))
     { return true; } 
     return false; 
   } 
@@ -2088,11 +2110,11 @@ public class Type extends ModelElement
     if (nme.equals("int")) { return "0"; } 
     if (nme.equals("long")) { return "0"; } 
     if (nme.equals("double")) 
-	{ return "0.0"; } 
+    { return "0.0"; } 
     if (isEntity) 
-	{ return "nil"; } 
+    { return "nil"; } 
     if (isEnumeration()) 
-	{ return nme + "." + values.get(0); }
+    { return nme + "." + values.get(0); }
 
     String elemType = elementType.getSwift();  
     if (nme.equals("Set")) 

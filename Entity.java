@@ -336,6 +336,50 @@ public class Entity extends ModelElement implements Comparable
     }       
   } 
 
+  public void defineExtendedNonLocalFeatures()
+  { nonlocalFeatures.clear(); 
+    Vector asts = allDefinedAssociations(); 
+    for (int i = 0; i < asts.size(); i++) 
+    { Association ast = (Association) asts.get(i); 
+      Attribute step1 = new Attribute(ast); 
+
+      Entity e2 = ast.getEntity2(); 
+      Vector v1 = e2.allDefinedAttributes(); 
+	  if (e2.isAbstract())
+	  { Vector e2leaves = e2.getActualLeafSubclasses(); 
+	    for (int j = 0; j < e2leaves.size(); j++) 
+		{ Entity leaf = (Entity) e2leaves.get(j); 
+		  v1.addAll(leaf.attributes); 
+		}
+	  } 
+	  System.out.println("Two-step attribute features of " + this + " are: " + v1); 
+	   
+	  
+      Vector v2 = e2.allDefinedAssociations(); 
+      for (int j = 0; j < v1.size(); j++) 
+      { Attribute step2 = (Attribute) v1.get(j); 
+
+        Vector path = new Vector();        
+        path.add(step1); path.add(step2); 
+        Attribute newatt = new Attribute(path); 
+        nonlocalFeatures.add(newatt); 
+      } 
+
+      for (int k = 0; k < v2.size(); k++) 
+      { Association ast2 = (Association) v2.get(k);
+        Attribute step2 = new Attribute(ast2);  
+        if (step1.equals(step2)) { } 
+        else if (step1.isForbiddenInverse(step2)) { } 
+        else 
+        { Vector path = new Vector(); 
+          path.add(step1); path.add(step2); 
+          Attribute newatt = new Attribute(path); 
+          nonlocalFeatures.add(newatt); 
+        } 
+      } 
+    }       
+  } 
+
   public void computeLeafs()
   { allLeafSubclasses.clear(); 
     allLeafSubclasses.addAll(getActualLeafSubclasses()); 
@@ -352,7 +396,7 @@ public class Entity extends ModelElement implements Comparable
   } 
 
 
-  public Entity makeFlattenedCopy(boolean allmaps, int n)
+  public Entity makeFlattenedCopy(boolean allmaps, int n, boolean exact)
   { // Combine all direct attributes, associations and inherited and
     // indirect data features. Up to maximum length of chain = n
 
@@ -391,9 +435,9 @@ public class Entity extends ModelElement implements Comparable
     seen.add(this); 
     Vector comps; 
     if (allmaps) 
-    { comps = composedProperties1(seen,n); } 
+    { comps = composedProperties1(seen,n,exact); } 
     else 
-    { comps = composedProperties(seen,n); } 
+    { comps = composedProperties(seen,n,exact); } 
  
     // System.out.println("Composed properties of " + getName() + " are: " + comps); 
     for (int j = 0; j < comps.size(); j++) 
@@ -990,13 +1034,26 @@ public class Entity extends ModelElement implements Comparable
 	return res; 
   }
 
-  public Vector composedProperties(HashSet seen, int n)
+  public Vector composedProperties(HashSet seen, int n, boolean exact)
   { // pre: seen.contains(this)
     Vector res = new Vector();
 
     if (n <= 0) { return res; } 
 
-    Vector atts = allDefinedAttributes(); 
+    Vector atts = new Vector(); 
+    atts.addAll(allDefinedAttributes()); 
+    
+    Vector v1 = new Vector(); 
+    if (isAbstract() && !exact)
+    { Vector e2leaves = getActualLeafSubclasses(); 
+      for (int j = 0; j < e2leaves.size(); j++) 
+      { Entity leaf = (Entity) e2leaves.get(j); 
+        v1.addAll(leaf.attributes); 
+      }
+    } 
+    // System.out.println("leaf class attribute features of " + this + " are: " + v1); 
+    atts.addAll(v1);
+ 
     for (int a = 0; a < atts.size(); a++)
     { Attribute att = (Attribute) atts.get(a);
       Vector aseq = new Vector();
@@ -1034,7 +1091,7 @@ public class Entity extends ModelElement implements Comparable
       if (pent != null) 
       { seen1.add(pent); } 
 
-      Vector pseq = pent.composedProperties(seen1, n-1);
+      Vector pseq = pent.composedProperties(seen1, n-1, exact);
       for (int t = 0; t < pseq.size(); t++)
       { Vector sq = (Vector) pseq.get(t);
         Vector nsq = new Vector();
@@ -1048,13 +1105,26 @@ public class Entity extends ModelElement implements Comparable
     return res;
   } // but don't add r1.r2 or r2.r1 for one association. 
 
-  public Vector composedProperties1(HashSet seen, int n)
+  public Vector composedProperties1(HashSet seen, int n, boolean exact)
   { // pre: seen.contains(this)
     Vector res = new Vector();
 
     if (n <= 0) { return res; } 
 
-    Vector atts = allDefinedAttributes(); 
+    Vector atts = new Vector(); 
+    atts.addAll(allDefinedAttributes());
+ 
+    Vector v1 = new Vector(); 
+    if (isAbstract() && !exact)
+    { Vector e2leaves = getActualLeafSubclasses(); 
+      for (int j = 0; j < e2leaves.size(); j++) 
+      { Entity leaf = (Entity) e2leaves.get(j); 
+        v1.addAll(leaf.attributes); 
+      }
+    } 
+    // System.out.println("leaf class attribute features of " + this + " are: " + v1); 
+    atts.addAll(v1); 
+	
     for (int a = 0; a < atts.size(); a++)
     { Attribute att = (Attribute) atts.get(a);
       Vector aseq = new Vector();
@@ -1092,7 +1162,7 @@ public class Entity extends ModelElement implements Comparable
       if (pent != null) 
       { seen1.add(pent); } 
 
-      Vector pseq = pent.composedProperties1(seen1, n-1);
+      Vector pseq = pent.composedProperties1(seen1, n-1, exact);
       for (int t = 0; t < pseq.size(); t++)
       { Vector sq = (Vector) pseq.get(t);
         Vector nsq = new Vector();
@@ -10537,7 +10607,8 @@ public class Entity extends ModelElement implements Comparable
   public String getIOSValueObject(String pge)
   { String res = "";
     String nme = getName();  
-    res = res + "class " + nme + "VO\n" + 
+    res = res + "import Foundation\n\n" + 
+	      "class " + nme + "VO\n" + 
           "{ \n"; 
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
@@ -10630,7 +10701,7 @@ public class Entity extends ModelElement implements Comparable
 
   public String getSwiftUIValueObject(String pge, Vector types, Vector entities, Vector useCases, CGSpec cgs)
   { String res = "import Foundation\n";
-    res = res + "import Glibc\n\n"; 
+    res = res + "import Darwin\n\n"; 
 	
     String ename = getName();  
     res = res + "class " + ename + "VO : Hashable\n" + 
@@ -10678,8 +10749,8 @@ public class Entity extends ModelElement implements Comparable
         String label = "\"" + attname + "= \" + "; 
         if (att.isNumeric())
         { label = label + "String(" + attname + ")"; }
-		else if (att.isEnumerated())
-		{ label = label + attname + ".rawValue"; }
+        else if (att.isEnumerated())
+        { label = label + attname + ".rawValue"; }
         else 
         { label = label + attname; }
 		 
@@ -10702,7 +10773,7 @@ public class Entity extends ModelElement implements Comparable
         res = res + "    " + attnme + " = " + attnme + "x\n"; 
       }
       res = res + "  }\n\n"; 
-	} 
+    } 
 	
     res = res + "  init(_x : " + ename + ")  {\n"; 
     for (int i = 0; i < attributes.size(); i++) 
@@ -10729,14 +10800,14 @@ public class Entity extends ModelElement implements Comparable
       String tname = att.getType().getSwift(); 
 	  
       res = res + "  func get" + attnme + "() -> " + tname + "\n";  
-      if (att.isEntity())
-	  { Type atype = att.getType(); 
-	    Entity enttype = atype.getEntity(); 
-		String refname = enttype.getName(); 
-		res = res + "  { return " + refname + "." + refname + "_index[" + attnme + "]! }\n\n";
-	  } 
-	  else 
-	  { res = res + "  { return " + attnme + " }\n\n"; } 
+      if (att.isEntity())  
+      { Type atype = att.getType(); 
+        Entity enttype = atype.getEntity(); 
+        String refname = enttype.getName(); 
+        res = res + "  { return " + refname + "." + refname + "_index[" + attnme + "]! }\n\n";
+      } 
+      else 
+      { res = res + "  { return " + attnme + " }\n\n"; } 
     } 
 
     for (int i = 0; i < attributes.size(); i++) 
@@ -10746,14 +10817,14 @@ public class Entity extends ModelElement implements Comparable
 
       res = res + "  func set" + attnme + "(_x : " + tname + ")\n"; 
       if (att.isEntity())
-	  { Type atype = att.getType(); 
-	    Entity enttype = atype.getEntity(); 
-		Attribute primkey = enttype.getPrincipalPrimaryKey(); 
+      { Type atype = att.getType(); 
+        Entity enttype = atype.getEntity(); 
+        Attribute primkey = enttype.getPrincipalPrimaryKey(); 
         res = res + "  { " + attnme + " = _x." + primkey.getName() + " }\n\n";
 	  } 
 	  else 
 	  { res = res + "  { " + attnme + " = _x }\n\n"; } 
-    }
+      }
 	
 	/* For SwiftUI this also holds the validation operation: */ 
 	 
@@ -10774,18 +10845,18 @@ public class Entity extends ModelElement implements Comparable
             "    if " + test + " { }\n" + 
             "    else { errorlist.append(\"" + ename + " invariant " + (p+1) + " failed\") }\n";
     }
-	res = res + "    return errorlist.count > 0\n" + 
+    res = res + "    return errorlist.count > 0\n" + 
 	            "  }\n\n";
 
     res = res + "  func isedit" + ename + "error() -> Bool\n"; 
-	res = res + "  { return iscreate" + ename + "error() }\n" + 
+    res = res + "  { return iscreate" + ename + "error() }\n" + 
 	            "\n";
 
     res = res + "  func islist" + ename + "error() -> Bool\n"; 
-	res = res + "  { return false }\n" + 
+    res = res + "  { return false }\n" + 
 	            "\n";
     res = res + "  func isdelete" + ename + "error() -> Bool\n"; 
-	res = res + "  { return false }\n" + 
+    res = res + "  { return false }\n" + 
 	            "\n";
    /*
     for (int j = 0; j < useCases.size(); j++)
@@ -10869,14 +10940,14 @@ public void androidDbiDeclarations(PrintWriter out)
   out.println("  private static final String " + ent + "_CREATE_SCHEMA ="); 
   out.println("     \"create table " + ent + " (" +
     "_id integer primary key autoincrement\" + ");
-    for (int x = 0; x < attributes.size(); x++)
-    { Attribute att = (Attribute) attributes.get(x);
-      String attname = att.getName();
-      String dbtype = att.dbType();
-      out.println("    \", " + attname + " " + dbtype + " not null\" + ");
-    }
-    out.println("    \" )\";");
-    out.println();
+  for (int x = 0; x < attributes.size(); x++)
+  { Attribute att = (Attribute) attributes.get(x);
+    String attname = att.getName();
+    String dbtype = att.dbType();
+    out.println("    \", " + attname + " " + dbtype + " not null\" + ");
+  }
+  out.println("    \" )\";");
+  out.println();
 } 
 
 public void iosDbiDeclarations(PrintWriter out)
@@ -10898,17 +10969,17 @@ public void iosDbiDeclarations(PrintWriter out)
   out.println("  static let " + ent + "_COLS : [String] = [" + colnames + "]");
   out.println("  static let " + ent + "_NUMBER_COLS = " + natts + "");
   out.println();
-  out.println("  static let String " + ent + "_CREATE_SCHEMA ="); 
+  out.println("  static let " + ent + "_CREATE_SCHEMA ="); 
   out.println("     \"create table " + ent + " (" +
     "_id integer primary key autoincrement\" + ");
-    for (int x = 0; x < attributes.size(); x++)
-    { Attribute att = (Attribute) attributes.get(x);
-      String attname = att.getName();
-      String dbtype = att.dbType();
-      out.println("    \", " + attname + " " + dbtype + " not null\" + ");
-    }
-    out.println("    \" )\"");
-    out.println();
+  for (int x = 0; x < attributes.size(); x++)
+  { Attribute att = (Attribute) attributes.get(x);      
+    String attname = att.getName();
+    String dbtype = att.dbType();
+    out.println("    \", " + attname + " " + dbtype + " not null\" + ");
+  }
+  out.println("    \" )\"");
+  out.println();
 } 
 
 public void androidDbiOperations(PrintWriter out)
@@ -10929,9 +11000,9 @@ public void androidDbiOperations(PrintWriter out)
   for (int y = 0; y < natts; y++)
   { Attribute attx = (Attribute) attributes.get(y);
     String anme = attx.getName();
-	attlist = attlist + anme; 
-	if (y < natts-1)
-	{ attlist = attlist + ", "; }
+    attlist = attlist + anme; 
+    if (y < natts-1)
+    { attlist = attlist + ", "; }
     String getop = attx.androidExtractOp(ent); 
     out.println("      " + entlc + "vo.set" + anme + "(" + getop + ");");
   }
@@ -11124,7 +11195,7 @@ public void iosDbiOperations(PrintWriter out)
     Type atype = att.getType(); 
     String swifttype = atype.getSwift(); 
     out.println();
-    out.println("  func searchBy" + ent + attname + "(_val : " + swifttype + ")");
+    out.println("  func searchBy" + ent + attname + "(_val : " + swifttype + ") -> [" + ent + "VO]");
     out.println("  { var res : [" + ent + "VO] = [" + ent + "VO]()");
     out.println("    let statement : String = \"SELECT * FROM " + ent + " WHERE " + attname + " = \" + String(_val)"); 
     out.println("    let queryStatement = try? prepareStatement(sql: statement)");
@@ -11132,7 +11203,7 @@ public void iosDbiOperations(PrintWriter out)
     out.println("    { sqlite3_finalize(queryStatement) }"); 
     out.println("    "); 
     out.println("    while (sqlite3_step(queryStatement) == SQLITE_ROW)"); 
-    out.println("    { let id = sqlite3_column_int(queryStatement, 0)");
+    out.println("    { let _id = sqlite3_column_int(queryStatement, 0)");
     out.println("      var " + entlc + "vo = " + ent + "VO()");  
     for (int y = 0; y < natts; y++)
     { Attribute attx = (Attribute) attributes.get(y);
@@ -11614,7 +11685,7 @@ public void iosDbiOperations(PrintWriter out)
     String res = 
 	  // "package " + packageName + ";\n\n" + 
       "import Foundation\n" + 
-      "import Glibc\n\n" + 
+      "import Darwin\n\n" + 
       "class " + ename + "Bean\n{\n";
 	  
     res = res + "  var errorlist : [String] = [String]()\n\n"; 
@@ -11664,15 +11735,17 @@ public void iosDbiOperations(PrintWriter out)
             "    else { errorlist.append(\"" + ename + " invariant " + (p+1) + " failed\") }\n";
         }
         res = res + "    return errorlist.count > 0\n  }\n\n";
-	  }
+      }
+      else 
+      { res = res + "    return false\n  }\n\n"; } 
     }
 	
     res = res + "  func errors() -> String\n" + 
-	            "  { var res : String = \"\"\n" +
-				"    for (_,x) in errorlist.enumerated()\n" + 
-				"    { res = res + x + \", \" }\n" +  
-	            "    return res\n" + 
-				"  }\n\n"; 
+                "  { var res : String = \"\"\n" +
+                "    for (_,x) in errorlist.enumerated()\n" + 
+                "    { res = res + x + \", \" }\n" +  
+                "    return res\n" + 
+                "  }\n\n"; 
 
     return res + "}\n"; 
   }
@@ -13972,7 +14045,7 @@ public BehaviouralFeature designAbstractKillOp()
     return res;  
   }  
 
-  public void generateRemoteDAO(String packageName)
+  public void generateRemoteDAO(String appName, String packageName)
   { String ename = getName(); 
     String lcename = ename.toLowerCase(); 
     String url = "\"base url for the data source\"";
@@ -13981,7 +14054,7 @@ public BehaviouralFeature designAbstractKillOp()
     url = turl;  
 
     String entfile = ename + "_DAO.java"; 
-    File entff = new File("output/app/src/main/java/com/example/app/" + entfile); 
+    File entff = new File("output/" + appName + "/src/main/java/com/example/" + appName + "/" + entfile); 
     try
     { PrintWriter out = new PrintWriter(
                               new BufferedWriter(
@@ -14043,7 +14116,7 @@ public BehaviouralFeature designAbstractKillOp()
     } catch (Exception e) { } 
   } 
 
-  public void generateFirebaseDbi(String packageName)
+  public void generateFirebaseDbi(String appName, String packageName)
   { String ename = getName(); 
     String lcename = ename.toLowerCase();
 	String evo = ename + "VO"; 
@@ -14056,7 +14129,7 @@ public BehaviouralFeature designAbstractKillOp()
 	String key = pk.getName(); 
 
     String entfile = "FirebaseDbi.java"; 
-    File entff = new File("output/app/src/main/java/" + entfile); 
+    File entff = new File("output/" + appName + "/src/main/java/" + entfile); 
     try
     { PrintWriter out = new PrintWriter(
                               new BufferedWriter(
@@ -14287,15 +14360,15 @@ public BehaviouralFeature designAbstractKillOp()
                                 new FileWriter(entff)));
       out.println("import Foundation"); 
       out.println("import UIKit");
-      out.println("import Glibc");  
+      out.println("import Darwin");  
       out.println(); 
       out.println("class " + ename + "_DAO"); 
-      out.println("{ static func getURL(command : String?, pars : [String], values : [String])"); 
+      out.println("{ static func getURL(command : String?, pars : [String], values : [String]) -> String"); 
       out.println("  { var res : String = " + url + ""); 
       out.println("    if command != nil"); 
-	  out.println("    { res = res + command! }"); 
+      out.println("    { res = res + command! }"); 
       out.println("    if pars.count == 0"); 
-	  out.println("    { return res }"); 
+      out.println("    { return res }"); 
       out.println("    res = res + \"?\""); 
       out.println("    for (i,v) in pars.enumerated()"); 
       out.println("    { res = res + v + \"=\" + values[i]"); 
@@ -14332,14 +14405,14 @@ public BehaviouralFeature designAbstractKillOp()
     if (pk == null) { return ""; }
     String pkname = pk.getName(); 
 	
-    String res = "  static func parseJSON(obj : AnyObject) -> " + ename + "?\n" + 
+    String res = "  static func parseJSON(obj : AnyObject?) -> " + ename + "?\n" + 
                  "  { if (obj == nil) { return nil }\n" + 
                  "\n" + 
                  "    if let jsonObj = obj as? [String : AnyObject]\n" + 
                  "    { let " + pkname + " : String? = jsonObj[\"" + pkname + "\"] as! String?\n" + 
-                 "      let " + x + " : " + ename + "? = " + ename + "." + ename + "_index[" + pkname + "]\n" +  
+                 "      var " + x + " : " + ename + "? = " + ename + "." + ename + "_index[" + pkname + "!]\n" +  
                  "      if (" + x + " == nil)\n" + 
-				 "      { " + x + " = " + ename + ".createByPK" + ename + "(" + pkname + ") }\n" + 
+				 "      { " + x + " = " + ename + ".createByPK" + ename + "(key: " + pkname + "!) }\n" + 
                  "      \n"; 
 				 
     for (int i = 0; i < attributes.size(); i++) 
@@ -14347,11 +14420,12 @@ public BehaviouralFeature designAbstractKillOp()
       String attname = att.getName(); 
       Type t = att.getType(); 
       String decoder = " as! " + t.getSwift(); 
-      res = res + "      let " + x + "." + attname + " = jsonObj[\"" + attname + "\"]" + decoder + "\n"; 
-	} 
+      res = res + "      " + x + "!." + attname + " = jsonObj[\"" + attname + "\"]" + decoder + ";\n"; 
+    } 
       
-	res = res +   "      return " + x + "\n" + 
-                  "    } else { return nil }\n" + 
+    res = res +   "      return " + x + "!\n" + 
+                  "    }\n" + 
+				  "    return nil\n" + 
                   "  }\n\n"; 
     return res; 
   } // But booleans and enums are stored as strings. 
@@ -14365,8 +14439,8 @@ public BehaviouralFeature designAbstractKillOp()
     { Attribute att = (Attribute) attributes.get(i); 
       String attname = att.getName(); 
       res = res + "       \"" + attname + "\": " + Type.nsValueOf(att);
-	  if (i < attributes.size() - 1) 
-	  { res = res + ",\n"; } 
+      if (i < attributes.size() - 1) 
+      { res = res + ",\n"; } 
     } 
     res = res + "      ]\n";  
     res = res + "  }\n\n"; 
@@ -14415,8 +14489,9 @@ public BehaviouralFeature designAbstractKillOp()
   { String ename = getName(); 
 	
     String res = "  static func isCached(id : String) -> Bool\n" + 
-                 "  { let _x : " + ename + " = " + ename + "." + ename + "_index[id]\n" +  
-                 "    if _x == nil { return false }\n" + 
+                 "  { let _x : " + ename + "? = " + ename + "." + ename + "_index[id]\n" +  
+                 "    if _x == nil \n" + 
+				 "    { return false }\n" + 
                  "    return true\n" +  
                  "  }\n\n"; 
     return res; 
@@ -14434,7 +14509,7 @@ public BehaviouralFeature designAbstractKillOp()
   { String ename = getName(); 
 	
     String res = "  static func getCachedInstance(id : String) -> " + ename + "\n" + 
-                 "  { return " + ename + "." + ename + "_index[id] }\n\n"; 
+                 "  { return " + ename + "." + ename + "_index[id]! }\n\n"; 
     return res; 
   } 
 

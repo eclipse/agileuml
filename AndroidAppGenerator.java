@@ -15,25 +15,6 @@ import java.io.*;
 public class AndroidAppGenerator extends AppGenerator
 { 
 
-  public static UseCase isSinglePageApp(Vector usecases)
-  { // True if there is only one independent use case. 
-
-    UseCase res = null; 
-    for (int i = 0; i < usecases.size(); i++) 
-    { if (usecases.get(i) instanceof OperationDescription)
-      { return null; } 
-      UseCase uc = (UseCase) usecases.get(i); 
-      if (uc.isDependent()) { } 
-      else if (uc.isPublic())
-      { if (res != null) 
-        { return null; } 
-        else 
-        { res = uc; } 
-      } 
-    } 
-    return res; 
-  } 
-
   public void modelFacade(String packageName, Vector usecases, CGSpec cgs, Vector entities, Vector clouds, Vector types, 
                           int remoteCalls, boolean needsMap, PrintWriter out)
   { // String ename = e.getName();
@@ -752,13 +733,13 @@ public class AndroidAppGenerator extends AppGenerator
     out.println("    " + evo + " _current = model.getSelected" + ename + "();"); 
     out.println("    if (_current != null)"); 
     out.println("    { "); 
-	for (int x = 0; x < pars.size(); x++) 
-	{ Attribute par = (Attribute) pars.get(x); 
-	  String pnme = par.getName(); 
-	  String tfnme = pnme + "TextField"; 
+    for (int x = 0; x < pars.size(); x++) 
+    { Attribute par = (Attribute) pars.get(x); 
+      String pnme = par.getName(); 
+      String tfnme = pnme + "TextField"; 
       out.println("    " + tfnme + "TextField.setText(_current." + pnme + ");"); 
     }
-	out.println("    }"); 
+    out.println("    }"); 
     out.println("  }\n\r");
     out.println(); 
   
@@ -1035,13 +1016,13 @@ public class AndroidAppGenerator extends AppGenerator
     out.println("  </TableRow>");
     out.println(); 
 
-	if (res != null)
-	{  out.println("<TableRow>"); 
-	   out.println("  <TextView");  
-       out.println("     android:textStyle=\"bold\"");
-       out.println("     android:text=\"Result:\" />");
-       out.println("</TableRow>"); 
-	} 
+    if (res != null)
+    { out.println("<TableRow>"); 
+      out.println("  <TextView");  
+      out.println("     android:textStyle=\"bold\"");
+      out.println("     android:text=\"Result:\" />");
+      out.println("</TableRow>"); 
+    } 
 	  
     if (res != null && "WebDisplay".equals(res.getType().getName())) 
     { out.println("  <WebView"); 

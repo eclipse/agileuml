@@ -843,8 +843,8 @@ public class CGSpec
       { if (r.lhs.indexOf("static") > -1)     
         { selected = r; }
       }
-      else if (r.hasCondition("primary") && e.isPrimaryAttribute())
-      { selected = r; } 
+      // else if (r.hasCondition("primary") && e.isPrimaryAttribute())
+      // { selected = r; } 
       else if (e.isUnique())
       { if (r.lhs.indexOf("identity") > -1)     
         { selected = r; }

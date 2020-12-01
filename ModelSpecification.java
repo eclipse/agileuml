@@ -77,8 +77,8 @@ public class ModelSpecification
 
     for (int i = 0; i < entities.size(); i++) 
     { Entity sent = (Entity) entities.get(i); 
-      if (sent != null && sent.isSource()) 
-      { sent.defineNonLocalFeatures(); 
+      if (sent != null) // && sent.isSource()) 
+      { sent.defineExtendedNonLocalFeatures(); 
         Vector allFeatures = sent.getNonLocalFeatures();
         String sentname = sent.getName(); 
         
@@ -1316,7 +1316,12 @@ public class ModelSpecification
     sattributes.addAll(s1atts); 
     sattributes.addAll(s2atts); 
      
-    Vector tattributes = tent.allDefinedProperties(); 
+    Vector t1atts = tent.allDefinedProperties();
+	Vector t2atts = tent.getNonLocalFeatures(); 
+	Vector tattributes = new Vector(); 
+	tattributes.addAll(t1atts); 
+	tattributes.addAll(t2atts); 
+	 
     Vector res = new Vector();
 	 
     for (int i = 0; i < tattributes.size(); i++)
@@ -1334,6 +1339,9 @@ public class ModelSpecification
 
 	  for (int k = 0; k < satts.size(); k++) 
 	  { Attribute satt = (Attribute) satts.get(k);
+	    if (satt.isComposed() && tatt.isComposed()) 
+		{ continue; }
+
 	    String sattname = satt.getName();  
 	 
 	    System.out.println(">> Checking possible map " + satt + " : " + satt.getType() + 

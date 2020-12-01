@@ -4438,6 +4438,10 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
             { att.stereotypes.add("static"); 
               att.setStatic(true); 
             }
+			else if ("derived".equals(lx))
+            { att.stereotypes.add("derived"); 
+              att.setDerived(true); 
+            }
           } 
           return att;
         }
@@ -6611,16 +6615,216 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
   // Whose: _WP$
   // Where adverb _WRB
   
+  public NLPSentence parseNLP()
+  { int en = lexicals.size(); 
+    // Vector mes = new Vector(); 
+    // for (int i = 0; i < en; i++)
+	// { String lex = lexicals.get(i) + ""; 
+	//   if ("Constituency".equals(lex) && i+1 < en && "parse".equals(lexicals.get(i+1) + ""))
+	//   { for (int j = i+2; j < en; j++) 
+	//     { String lex2 = lexicals.get(j) + ""; 
+	// 	  if ("Dependency".equals(lex2) && j+1 < en && "parse".equals(lexicals.get(j+1) + ""))
+    NLPSentence res = parseRoot(0,en-1); 
+    return res; 
+  }
+	//	} 
+	//  } 
+	// }
+	// return ""; 
+ 
+  
+  public NLPWord parseWord(int st, int en) 
+  { // Pre: en >= st + 3
+  
+    String lex0 = "" + lexicals.get(st); 
+    String lex1 = "" + lexicals.get(en); 
+	if (en == st + 3 && "(".equals(lex0) && ")".equals(lex1))
+	{ NLPWord res = new NLPWord("" + lexicals.get(st + 1), "" + lexicals.get(st + 2)); 
+	  return res; 
+    }
+	else if (en == st + 7 && "(".equals(lex0) && ")".equals(lex1) && 
+	         "-".equals(lexicals.get(st+1) + "") && "-".equals(lexicals.get(en-1) + ""))
+	{ NLPWord res = new NLPWord("BRACKET", lexicals.get(st+2) + ""); 
+	  return res; 
+	}
+	// System.err.println("!! Not a word: " + showLexicals(st,en));
+	return null; 
+  }
+  
+  public NLPPhrase parsePhrase(int st, int en) 
+  { String lex0 = "" + lexicals.get(st); 
+    String lex1 = "" + lexicals.get(en); 
+	if (en == st + 7 && "(".equals(lex0) && ")".equals(lex1) && 
+	         "-".equals(lexicals.get(st+1) + "") && "-".equals(lexicals.get(en-1) + ""))
+	{ NLPPhrase res = new NLPPhrase("BRACKET", new Vector()); 
+	  return res; 
+	}
+	else if (en > st + 3 && "(".equals(lex0) && ")".equals(lex1))
+	{ String tag = "" + lexicals.get(st+1); 
+	  Vector phs = parsePhraseList(st+2,en-1); 
+	  if (phs == null) 
+	  { // System.err.println("!! Not a phrase list: " + showLexicals(st+2,en-1)); 
+	    return null; 
+	  }
+	  else 
+	  {	return new NLPPhrase(tag,phs); } 
+	} 
+	return null;  
+  }
+  
+  public Vector parsePhraseList(int st, int en)
+  { // a sequence of either words (Tag Wd) or phrases.
+    if (st >= en) 
+	{ return new Vector(); }
+    if (en < st+3) 
+	{ return null; } 
+	
+    NLPWord wd = parseWord(st,st+3); 
+	if (wd != null) 
+	{ Vector rest = parsePhraseList(st+4,en); 
+	  if (rest == null) 
+	  { return null; }
+	  Vector res = new Vector(); 
+	  res.add(wd); res.addAll(rest); 
+	  return res; 
+	} 
+	else 
+	{ for (int i = st+4; i <= en; i++) 
+	  { NLPPhrase pr = parsePhrase(st,i); 
+	    if (pr != null) 
+		{ Vector rem = parsePhraseList(i+1,en); 
+		  if (rem == null) { return null; } 
+		  Vector result = new Vector(); 
+		  result.add(pr); result.addAll(rem);
+		  return result; 
+        }
+      }
+    }
+    return null; 
+  } 
+  
+  public NLPSentence parseSentence(int st, int en) 
+  { String lex0 = "" + lexicals.get(st); 
+    String lex1 = "" + lexicals.get(en); 
+	if (en > st + 3 && "(".equals(lex0) && ")".equals(lex1))
+	{ String tag = "" + lexicals.get(st+1); 
+	  Vector phs = parsePhraseList(st+2,en-1); 
+	  if (phs == null) 
+	  { System.err.println("!! Not a phrase list: " + showLexicals(st+2,en-1)); 
+	    return null; 
+	  }
+	  else 
+	  {	return new NLPSentence(tag,phs); } 
+	} 
+	return null;  
+  }
+  
+  public NLPSentence parseRoot(int st, int en) 
+  { String lex0 = "" + lexicals.get(st); 
+    String lex1 = "" + lexicals.get(en); 
+	if (en > st + 3 && "(".equals(lex0) && ")".equals(lex1))
+	{ String tag = "" + lexicals.get(st+1); 
+	  NLPSentence sent = parseSentence(st+2,en-1); 
+	  if (sent == null) 
+	  { System.err.println("!! Not a sentence: " + showLexicals(st+2,en-1)); 
+	    return null; 
+	  }
+      return sent; 
+	} 
+	return null;  
+  }
+
   public static void main(String[] args)
   { // System.out.println(Double.MAX_VALUE); 
 
-     Compiler2 c0 = new Compiler2(); 
-     // c0.nospacelexicalanalysis("$act(m) <= (now - settlement)/frequency"); 
-	 c0.nospacelexicalanalysis("result = (if (umlKind = classid) then addClassIdReference(x) else if (umlKind = value) then addValueReference(x) else addBEReference(x) endif endif)"); 
-	 System.out.println(c0.lexicals); 
-     Expression expr = c0.parseExpression();
-     System.out.println(expr); 
+     File infile = new File("output/nlpout.txt");
+     BufferedReader br = null;
+     Vector res = new Vector();
+     String s;
+     boolean eof = false;
+    
 
+     try
+     { br = new BufferedReader(new FileReader(infile)); }
+     catch (FileNotFoundException e)
+     { System.out.println("File not found: " + infile.getName());
+       return; 
+     }
+
+
+     String xmlstring = ""; 
+     int linecount = 0; 
+     boolean flag = false; 
+	 Vector sentences = new Vector(); 
+	 
+     while (!eof)
+     { try { s = br.readLine(); }
+       catch (IOException e)
+       { System.out.println("Reading failed.");
+         return; 
+       }
+	   
+       if (s == null) 
+       { eof = true; 
+         break; 
+       }
+       else if (s.startsWith("Constituency parse:"))
+	   { flag = true; }
+	   else if (s.startsWith("Dependency Parse (enhanced plus plus dependencies):"))
+	   { flag = false; 
+	     sentences.add(xmlstring); 
+         System.out.println("Read: " + xmlstring); 
+		 xmlstring = ""; 
+	   }
+	   else if (flag) 
+       { xmlstring = xmlstring + s + " "; } 
+       linecount++; 
+     }
+	 
+     Vector mes = new Vector(); 
+	 String km3model = ""; 
+     for (int i = 0; i < sentences.size(); i++) 
+	 { String xstring = (String) sentences.get(i); 
+	   Compiler2 c0 = new Compiler2(); 
+	   c0.nospacelexicalanalysis(xstring); 
+	   NLPSentence xres = c0.parseNLP();
+	   if (xres != null) 
+	   { km3model = xres.getKM3(mes); } 
+	 } 	 
+	     
+	String outfile = "mm.km3"; 
+    File appout = new File("output/" + outfile); 
+    try
+    { PrintWriter appfile = new PrintWriter(
+                                new BufferedWriter(new FileWriter(appout)));
+      
+      appfile.println("package app {\n" + km3model + "\n}\n"); 
+	  appfile.close(); 
+    }
+    catch(Exception _dd) { } 
+ 	 
+	 // try 
+	 // { infile.close(); }
+	 // catch (Exception _fx) { } 
+	 
+     // c0.nospacelexicalanalysis("$act(m) <= (now - settlement)/frequency"); 
+	 // c0.nospacelexicalanalysis("result = (if (umlKind = classid) then addClassIdReference(x) else if (umlKind = value) then addValueReference(x) else addBEReference(x) endif endif)"); 
+	 /* c0.nospacelexicalanalysis("(S (NP (NNS Bonds)) (VP (VBP have) (NP (NP (DT a) (JJ unique) (NN name)) (, ,) (NP (DT a) (JJ realvalued) (NN term)))))"); 
+	 System.out.println(c0.lexicals); 
+	 int n = c0.lexicals.size(); 
+     // Expression expr = c0.parseExpression();
+     NLPSentence sent = c0.parseSentence(0,n-1);
+	 System.out.println(sent); 
+	 System.out.println(sent.isSVO());  
+     System.out.println(sent.isClassDefinition());  
+     Vector elems = sent.modelElements();
+	 
+	 for (int i = 0; i < elems.size(); i++) 
+	 { Entity ent = (Entity) elems.get(i); 
+	   System.out.println(ent.getKM3()); 
+	 } */ 
+	  
+	 
      /* Statement stat = c0.parseStatement(new Vector(), new Vector()); 
 	 System.out.println(stat);
      c0.checkBrackets(); 

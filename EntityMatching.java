@@ -2922,10 +2922,41 @@ public class EntityMatching implements SystemTypes
       { Expression srcinst = am.srcvalue.addReference(new BasicExpression("self"),
                                                       new Type(realsrc));
         Type srctype = am.srcvalue.getType(); 
+		Type trgtype = am.trg.getType(); 
+		
         String trgeq = ""; 
         if (srctype != null && srctype.isValueType())
         { trgeq = "result." + am.trg + " := " + srcinst + ";"; } 
-        else
+        else if (srctype != null && srctype.isEntity() && trgtype != null && trgtype.isEntity())
+        { Entity s = srctype.getEntity(); 
+		  Entity tent = trgtype.getEntity(); 
+		  EntityMatching emx = ModelMatching.findEntityMatchingFor(s,tent,ems);
+          // System.out.println("Entity matching for " + s + " is " + em); 
+
+          if (emx != null) 
+          { trgeq = "result." + am.trg + " := (" + srcinst +  
+                 ").resolveoneIn(" + emx.realsrc + "::" + 
+                 emx.realsrc + "2" + emx.realtrg + "," + tent.getName() + ")";
+          } 
+		  else 
+		  { trgeq = "result." + am.trg + " := (" + srcinst + ").resolve();"; }
+		}
+        else if (srctype != null && Type.isEntityCollection(srctype))
+        { Type selt = srctype.getElementType(); 
+		
+		  Entity s = selt.getEntity(); 
+		  Entity tent = trgtype.getEntityOrElementEntity(); 
+		  EntityMatching emx = ModelMatching.findEntityMatchingFor(s,tent,ems);
+		  
+		  if (emx != null)
+          { trgeq = "result." + am.trg + " := (" + srcinst +   
+                 ").resolveIn(" + emx.realsrc + "::" + 
+                 emx.realsrc + "2" + emx.realtrg + "," + tent.getName() + ")";
+          } 
+		  else 
+		  { trgeq = "result." + am.trg + " := (" + srcinst + ").resolve();"; }
+        } 
+		else 
         { trgeq = "result." + am.trg + " := (" + srcinst + ").resolve();"; } 
  
         updateCreated(am.trg.getNavigation(), created); 
@@ -3048,7 +3079,7 @@ public class EntityMatching implements SystemTypes
             String tvar = tent.getName().toLowerCase() + "_x"; 
             EntityMatching em = ModelMatching.findEntityMatchingFor(realsrc,tent,ems);
             if (em != null && em.isSecondary()) 
-            { } 
+            { tvar = em.trg.getName().toLowerCase() + "_x"; } 
             else  
             { tvar = "thisModule.resolveTemp(" + srcvar + ", '" + tvar + "')"; } 
             newval = new BasicExpression(tvar); 

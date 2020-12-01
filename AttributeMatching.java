@@ -3075,12 +3075,19 @@ Binding atlTargetMap(Attribute preatt, Vector path, Expression sexpr,
 
   if (p1type.isEntity())
   { d = p1type.getEntity(); 
+	if (d != null && d.isConcrete()) { } 
+	else 
+	{ if (pathtail.size() > 0) 
+	  { Attribute tailhead = (Attribute) pathtail.get(0); 
+	    System.err.println("!! Cannot instantiate entity " + d + " try " + tailhead.getOwner()); 
+		d = tailhead.getOwner(); 
+	  }
+	  else 
+	  { System.err.println("!! Error: Cannot instantiate entity " + d); }
+	} 
     dx = p1x + "_" + d.getName().toLowerCase() + "_x";
     dxvar = new Attribute(dx, new Type(d), ModelElement.INTERNAL); 
     dxvar.setElementType(new Type(d)); 
-	if (d != null && d.isConcrete()) { } 
-	else 
-	{ System.err.println("!! Cannot instantiate entity " + d); }
   }
   
   Entity srcent = null;
@@ -3178,21 +3185,21 @@ Binding atlTargetMap(Attribute preatt, Vector path, Expression sexpr,
         // newrules.add(newrule);  
 
         MatchedRule mr = new MatchedRule(true,true);
-          mr.setName(newmap);  
-          InPattern ip = new InPattern(); 
-          InPatternElement ipe = new InPatternElement(srcvar,null); 
-          ip.addElement(ipe); 
-          OutPattern op = new OutPattern(); 
-          OutPatternElement ope = new OutPatternElement(dxvar);
-          ope.addBinding(sexp2); 
+        mr.setName(newmap);  
+        InPattern ip = new InPattern(); 
+        InPatternElement ipe = new InPatternElement(srcvar,null); 
+        ip.addElement(ipe); 
+        OutPattern op = new OutPattern(); 
+        OutPatternElement ope = new OutPatternElement(dxvar);
+        ope.addBinding(sexp2); 
           // implementedBy.put(preattname, ope);
-          implementedBy.put(preattname, preatt); 
-          op.setElement(ope);
-          mr.setInPattern(ip);  
-          mr.setOutPattern(op);
-          if (newrules.contains(mr)) { } 
-          else 
-          { newrules.add(mr); } 
+        implementedBy.put(preattname, preatt); 
+        op.setElement(ope);
+        mr.setInPattern(ip);  
+        mr.setOutPattern(op);
+        if (newrules.contains(mr)) { } 
+        else 
+        { newrules.add(mr); } 
          
 
         BinaryExpression crange = new BinaryExpression(":",new BasicExpression(sx),sexpr); 
@@ -3216,13 +3223,13 @@ Binding atlTargetMap(Attribute preatt, Vector path, Expression sexpr,
 
         OutPatternElement ope = null; 
         MatchedRule mr = new MatchedRule(false,false);
-          mr.setName(newmap);  
-          mr.setIsCalled(true); 
-          mr.addParameter(srcvar); 
-          OutPattern op = new OutPattern(); 
-          ope = new OutPatternElement(dxvar); 
-          op.setElement(ope); 
-          mr.setOutPattern(op);
+        mr.setName(newmap);  
+        mr.setIsCalled(true); 
+        mr.addParameter(srcvar); 
+        OutPattern op = new OutPattern(); 
+        ope = new OutPatternElement(dxvar); 
+        op.setElement(ope); 
+        mr.setOutPattern(op);
 
           if (newrules.contains(mr)) { } 
           else 
@@ -3542,12 +3549,17 @@ Binding etlTargetMap(String trgvar, Attribute preatt, Vector path, Expression se
 
   if (p1type.isEntity())
   { d = p1type.getEntity(); 
+	if (d != null && d.isConcrete()) { } 
+	else if (pathtail.size() > 0)
+    { Attribute tailhead = (Attribute) pathtail.get(0); 
+      System.err.println("!!! Cannot instantiate entity " + d + " try " + tailhead.getOwner()); 
+      d = tailhead.getOwner(); 
+    }
+    else 
+	{ System.err.println("!!! Error: Cannot instantiate " + d); } 
     dx = p1x + "_" + d.getName().toLowerCase() + "_x";
     dxvar = new Attribute(dx, new Type(d), ModelElement.INTERNAL); 
     dxvar.setElementType(new Type(d));
-	if (d != null && d.isConcrete()) { } 
-	else 
-	{ System.err.println("!!! Cannot instantiate " + d); } 
   }
   
   Entity srcent = null;

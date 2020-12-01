@@ -87,8 +87,8 @@ public class CGCondition
     { return positive; }
     if ("class".equals(stereotype.toLowerCase()) && t.isEntityType())
     { return positive; }
-	if ("void".equals(stereotype.toLowerCase()) && (t == null || t.isVoidType()))
-	{ return positive; }
+    if ("void".equals(stereotype.toLowerCase()) && (t == null || t.isVoidType()))
+    { return positive; }
     if ("enumerated".equals(stereotype.toLowerCase()) && t.isEnumeratedType())
     { return positive; }
     if ("collection".equals(stereotype.toLowerCase()) && t.isCollectionType())
@@ -123,8 +123,8 @@ public class CGCondition
   public boolean conditionSatisfied(Expression e, Vector entities)
   { Type t = e.getType();
     int kind = e.getUMLKind(); 
-	String edata = e + ""; 
-	Entity ent = (Entity) ModelElement.lookupByName(edata,entities); 
+    String edata = e + ""; 
+    Entity ent = (Entity) ModelElement.lookupByName(edata,entities); 
 	
 	// if (ent != null)
 	// { System.out.println(">> Expression " + e + " is a class"); }
@@ -173,6 +173,12 @@ public class CGCondition
       { return t.isNumericType(); }
       else
       { return !(t.isNumericType()); }
+    }
+    else if ("integer".equals(stereotype))
+    { if (positive)
+      { return t.isIntegerType(); }
+      else
+      { return !(t.isIntegerType()); }
     }
     else if ("object".equals(stereotype))
     { if (positive)

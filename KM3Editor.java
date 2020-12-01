@@ -418,12 +418,12 @@ public class KM3Editor extends JFrame implements DocumentListener
 			  // { e1 = (Entity) cls; }
               // Association ast = e1.getDefinedRole(pa.role2); 
 			  // if (ast == null) 
-			  Association ast = new Association(clsx,e2,pa.role2);   
+              Association ast = new Association(clsx,e2,pa.role2);   
               ast.setEntity1(clsx); 
               ast.setEntity2(e2); 
-			  clsx.addAssociation(ast); 
+              clsx.addAssociation(ast); 
 			  
-			  ast.updateAssociation(pa.card1, pa.card2, pa.role1, pa.role2, pa.stereotypes);   
+              ast.updateAssociation(pa.card1, pa.card2, pa.role1, pa.role2, pa.stereotypes);   
             } 
             System.out.println("PARSED class:\n" + clsx.getKM3()); 
 		  }
@@ -442,7 +442,7 @@ public class KM3Editor extends JFrame implements DocumentListener
             for (int j = 0; j < err.size(); j++) 
             { messageArea.append(err.get(j) + "\n\r"); }  
             messageArea.append("\n\r"); 
-		  }  
+	    }  
         }
 
         /* comp.checkSyntax(owner,entities,antesymbs,messages); 
@@ -464,11 +464,11 @@ public class KM3Editor extends JFrame implements DocumentListener
     public void actionPerformed(ActionEvent e)
     { String searchfor = 
         JOptionPane.showInputDialog("Search for:");
-	  if (searchfor == null) { return; }
-	  boolean found = false; 
+      if (searchfor == null) { return; }
+      boolean found = false; 
 	  
-	  int len = searchfor.length();
-	  int en = doc.getLength(); 
+      int len = searchfor.length();
+      int en = doc.getLength(); 
 	  
       for (int i = 0; i + len < en; i++)
       try 
@@ -480,10 +480,10 @@ public class KM3Editor extends JFrame implements DocumentListener
         }   
       } catch (Exception ee) { }
 	  
-	  if (found)
-	  { System.out.println("Found: " + found); } 
-	  else 
-	  { System.out.println("Did not find " + searchfor); }  
+      if (found)
+      { System.out.println("Found: " + found); } 
+      else 
+      { System.out.println("Did not find " + searchfor); }  
     }
   }
 
@@ -513,12 +513,12 @@ public class KM3Editor extends JFrame implements DocumentListener
       Vector typs = new Vector(); 
       Vector pregens = new Vector(); 
       Vector preassocs = new Vector(); 
-	  Vector pnames = new Vector(); 
+      Vector pnames = new Vector(); 
 
       Vector items = comp.parseKM3(ents,typs,pregens,preassocs,pnames);
       classArea.processKM3(ents,typs,pregens,preassocs,items); 
-	  if (pnames.size() > 0) 
-	  { classArea.setSystemName((String) pnames.get(0)); }
+      if (pnames.size() > 0) 
+      { classArea.setSystemName((String) pnames.get(0)); }
 
       File file = new File("output/mm.km3");  /* default */ 
       try
