@@ -27,7 +27,7 @@ public class IOSAppGenerator extends AppGenerator
     // String populateResult = createVOStatement(e,atts);
 
     out.println("import Foundation");
-    out.println("import Glibc");
+    out.println("import Darwin");
     out.println("");
     out.print("class ModelFacade");
 	if (remoteCalls > 0) 
@@ -102,16 +102,16 @@ public class IOSAppGenerator extends AppGenerator
 	 else 
 	 { String ename = ent.getName(); 
 	   out.println("  var current" + ename + " : " + ename + "VO? = nil"); 
-        out.println(); 
-        out.println("  var current" + 
+       out.println(); 
+       out.println("  var current" + 
 		            ename + "s : [" + ename + "VO] = [" + ename + "VO]()");
-        out.println();  
-      } 
-    } 
+       out.println();  
+     } 
+   } 
 
-    out.println(); 
-    out.println("  init() { }"); 
-    out.println(); 
+   out.println(); 
+   out.println("  init() { }"); 
+   out.println(); 
 	   
     for (int y = 0; y < usecases.size(); y++)
     { UseCase uc = (UseCase) usecases.get(y);
@@ -166,7 +166,7 @@ public class IOSAppGenerator extends AppGenerator
       out.println("  func list" + item + "() -> [" + item + "VO]"); 
       out.println("  { // current" + item + "s = dbi.list" + item + "()");
       out.println("    current" + item + "s = [" + item + "VO]()"); 
-      out.println("    var _list : [" + item + "] = " + item + "_allInstances"); 
+      out.println("    let _list : [" + item + "] = " + item + "_allInstances"); 
       out.println("    for (_,x) in _list.enumerated()"); 
       out.println("    { current" + item + "s.append(" + item + "VO(_x: x)) }");  
       out.println("    return current" + item + "s"); 
@@ -213,6 +213,11 @@ public class IOSAppGenerator extends AppGenerator
         out.println("    return _res");  
         out.println("  }"); 
         out.println(); 
+        out.println("  func persist" + item + "(_x : " + item + ")"); 
+        out.println("  { let _vo : " + item + "VO = " + item + "VO(_x: _x)"); 
+        out.println("    create" + item + "(_x: _vo) "); 
+        out.println("  }"); 
+        out.println(); 
       }  
 
       out.println("  func setSelected" + item + "(_x : " + item + "VO)"); 
@@ -233,7 +238,7 @@ public class IOSAppGenerator extends AppGenerator
       { String pk = key.getName(); 
         out.println("  func edit" + item + "(_x : " + item + "VO)"); 
         out.println("  { let _val : String = _x." + pk + ""); 
-        out.println("    var _res : " + item + "? = " + item + ".getByPK" + item + "(index: _val)");
+        out.println("    let _res : " + item + "? = " + item + ".getByPK" + item + "(index: _val)");
         out.println("    if _res != nil {");  
         for (int i = 0; i < atts.size(); i++) 
         { Attribute att = (Attribute) atts.get(i);
@@ -256,7 +261,7 @@ public class IOSAppGenerator extends AppGenerator
        if (key != null) 
        { String pk = key.getName(); 
          out.println("  func create" + item + "(_x : " + item + "VO)"); 
-         out.println("  { var _res : " + item + " = createByPK" + item + "(key: _x." + pk + ")"); 
+         out.println("  { let _res : " + item + " = createByPK" + item + "(key: _x." + pk + ")"); 
          for (int i = 0; i < atts.size(); i++) 
          { Attribute att = (Attribute) atts.get(i);
            String attname = att.getName();  
@@ -549,7 +554,7 @@ public class IOSAppGenerator extends AppGenerator
       out.println("  { ");
 
       if (res != null && "WebDisplay".equals(res.getType().getName())) 
-      { out.println("    var result : WebDisplay = WebDisplay()"); } 
+      { out.println("    let result : WebDisplay = WebDisplay()"); } 
       else if (res != null && "ImageDisplay".equals(res.getType().getName())) 
       { out.println("    var result : ImageDisplay = ImageDisplay()"); } 
 	  else if (res != null && "GraphDisplay".equals(res.getType().getName())) 
@@ -572,7 +577,7 @@ public class IOSAppGenerator extends AppGenerator
 
       if (uc.isPublic())
 	  { if (res != null) 
-        { out.println("    _x.setresult(_x: result)"); 
+        { // out.println("    _x.setresult(_x: result)"); 
           out.println("    return result"); 
         }
 	  } 
@@ -720,7 +725,7 @@ public class IOSAppGenerator extends AppGenerator
 	  
        out.println("  func delete" + item + "(_id : String)"); 
        out.println("  { // dbi.delete" + item + "(_id)");  
-       out.println("    // current" + item + " = nil"); 
+       out.println("    current" + item + " = nil"); 
        out.println("  }");
 	   out.println();
 	   out.println("  func persist" + item + "(_x: " + item + ") { }"); 
@@ -807,7 +812,8 @@ public class IOSAppGenerator extends AppGenerator
 	     if (att != key)
           { out.println("      _obj." + attname + " = _x.get" + attname + "()"); }  
 	   } 
-       out.println("      cdbi.persist" + item + "(ex: _obj) }"); 
+       out.println("      cdbi.persist" + item + "(ex: _obj)"); 
+	   out.println("    }"); 
        out.println("    current" + item + " = _x"); 
        out.println("  }"); 
        out.println(); 
@@ -834,7 +840,7 @@ public class IOSAppGenerator extends AppGenerator
        out.println("  func delete" + item + "(_id : String)"); 
        out.println("  { if let _obj = get" + item + "ByPK(_val: _id)"); 
        out.println("    { cdbi.delete" + item + "(ex: _obj) }"); 
-       out.println("    // current" + item + " = nil"); 
+       out.println("    current" + item + " = nil"); 
        out.println("  }");
        out.println();   
      } 
@@ -862,6 +868,195 @@ public class IOSAppGenerator extends AppGenerator
   }
 
   public void singlePageApp(UseCase uc, String appName, String image, CGSpec cgs, Vector types, Vector entities, PrintWriter out)
+  { Vector extensions = uc.extensionUseCases(); // and recursively
+
+    String ucname = uc.getName();
+    String evc = ucname + "ViewController";
+    // String evo = ename + "ValueObject";
+    // String vo = evo.toLowerCase();
+    String resvo = "result";
+    String restype = ""; 
+    String ebean =  "ModelFacade";
+    String bean = ebean.toLowerCase();
+    Vector atts = uc.getParameters();
+    Attribute res = uc.getResultParameter(); 
+    String validationBean = ucname + "ValidationBean"; 
+    // String evocreate = createVOStatement(e,atts);
+    String validator = ucname + "Validator"; 
+	
+    if (extensions.size() > 0) 
+    { iosViewController(uc,appName,atts,extensions,out); 
+      return; 
+    } 
+
+    out.println("import UIKit");
+    out.println("import WebKit"); 
+    if (res != null && "GraphDisplay".equals(res.getType().getName()))
+    { out.println("import Charts"); } 
+    out.println();
+    out.print("class " + evc + " : UIViewController");
+    if (res != null && "WebDisplay".equals(res.getType().getName()))
+    { out.println(", WKUIDelegate"); } 
+    else if (res != null && "GraphDisplay".equals(res.getType().getName()))
+    { out.println(", IAxisValueFormatter"); } 
+    else 
+    { out.println(); } 
+    out.println("{");
+    out.println("  var " + bean + " : " + ebean + " = " + ebean + ".getInstance()");
+    out.println("  var " + validator + " : " + validationBean + " = " + validationBean + "()");
+    out.println(); 
+
+    String parlist = ""; 
+    for (int x = 0; x < atts.size(); x++)
+    { Attribute att = (Attribute) atts.get(x);
+	  String attname = att.getName(); 
+      String iosdeclaration = att.uiKitDeclaration(); 
+      out.println(iosdeclaration);
+      
+      parlist = parlist + attname + ": " + attname; 
+      if (x < atts.size() - 1) 
+      { parlist = parlist + ", "; } 
+    } 
+    
+    if (res != null && "WebDisplay".equals(res.getType().getName()))
+    { out.println("  @IBOutlet var resultOutput: WKWebView!"); 
+      restype = "WebDisplay"; 
+    } 
+    else if (res != null && "ImageDisplay".equals(res.getType().getName()))
+    { out.println("  @IBOutlet var resultOutput: UIImageView!"); 
+      restype = "ImageDisplay"; 
+    }
+    else if (res != null && "GraphDisplay".equals(res.getType().getName()))
+    { out.println("  @IBOutlet var resultOutput: LineChartView!"); 
+      out.println("  var graph: GraphDisplay = GraphDisplay.getInstance()"); 
+      restype = "GraphDisplay"; 
+    }
+    else if (res != null) 
+    { out.println("  @IBOutlet weak var resultOutput: UILabel!");
+      restype = res.getType().getSwift(); 
+    }
+	
+    out.println(); 
+    // out.println("  var userId : String = " + "\"0\"");
+    out.println();
+
+    out.println("  override func viewDidLoad()");
+    out.println("  { super.viewDidLoad()");
+    if (res != null && "WebDisplay".equals(res.getType().getName()))
+    { // out.println("    let myURL = URL(string: \"https://www.apple.com\")"); 
+      // out.println("    let myRequest = URLRequest(url: myURL)"); 
+      // out.println("    resultOutput.load(myRequest)"); 
+    } 
+    else if (res != null && "GraphDisplay".equals(res.getType().getName()))
+    { out.println("    resultOutput.pinchZoomEnabled = true"); } 
+    // out.println("    self." + elist + " = " + bean + "." + getlist + "()");
+    out.println("  }");
+    out.println("");
+
+    for (int x = 0; x < atts.size(); x++)
+    { Attribute att = (Attribute) atts.get(x);
+      String iosattop = att.uiKitOp(); 
+      out.println(iosattop);
+    } 
+    out.println(); 
+	
+    String attdecoder = "    guard ";
+    boolean previous = false;
+    String localVars = "";
+
+    for (int x = 0; x < atts.size(); x++)
+    { Attribute att = (Attribute) atts.get(x);
+      // if (att.isInputAttribute())
+      String attname = att.getName(); 
+      { if (previous)
+        { attdecoder = attdecoder + ", "; }
+		
+	   String inputvar = attname + "Input.text";
+	   if (att.isSmallEnumeration())
+	   { inputvar = attname + "Input"; }
+		
+        attdecoder = attdecoder + " let " + att + " = " + 
+                     Expression.unwrapSwiftOptional(inputvar,att.getType());
+        previous = true;
+      }
+      // else 
+      // { Type atype = att.getType(); 
+	 //  if (atype != null) 
+      //  { localVars = localVars + "    var " + att + " : " + atype.getSwift() + "\n"; }
+      // }  
+    }
+    attdecoder = attdecoder + " else { return }\n";
+
+    String updateScreen = "";
+   
+    // for (int x = 0; x < atts.size(); x++)
+    if (res != null) 
+    { Attribute att = res; // (Attribute) atts.get(x);
+      if ("WebDisplay".equals(att.getType().getName()))
+      { updateScreen = updateScreen + "    let myURL = URL(string: result.url)\n"; 
+        updateScreen = updateScreen + "    let myRequest = URLRequest(url: myURL!)\n"; 
+        updateScreen = updateScreen + "    resultOutput.load(myRequest)"; 
+		
+        out.println("  override func loadView()"); 
+        out.println("  { let webConfiguration = WKWebViewConfiguration()"); 
+        out.println("    resultOutput = WKWebView(frame: .zero, configuration: webConfiguration)"); 
+        out.println("    resultOutput.uiDelegate = self"); 
+        out.println("  }"); 
+        out.println(); 
+      }
+      else if ("ImageDisplay".equals(att.getType().getName()))
+      { updateScreen = updateScreen + "    resultOutput.image = UIImage(named: result.imageName)\n"; }  
+      else if ("GraphDisplay".equals(att.getType().getName()))
+      { updateScreen = updateScreen + "    graph = result\n" + 
+	                                  "    let xpts = result.xpoints\n" + 
+                                      "    let ypts = result.ypoints\n" + 
+                                      "    let xlbs = result.xlabels\n" + 
+                                      "    if xlbs.count > 0\n" + 
+          "    { drawNominalChart(dataPoints: xlbs, values: ypts.map{ Double($0) }, name: result.yname) }\n" + 
+          "    else if xpts.count > 0\n" + 
+          "    { drawScalarChart(dataPoints: xpts, values: ypts.map{ Double($0) }, name: result.yname) }\n"; 
+	  } 
+      else 
+      { updateScreen = updateScreen + "    resultOutput.text = String(result)"; }
+    }
+
+    // for (int y = 0; y < usecases.size(); y++)
+    // { UseCase uc = (UseCase) usecases.get(y);
+    //  String ucname = uc.getName();
+      out.println("  @IBAction func " + ucname + "(_ sender: Any) {");
+      if (atts.size() > 0) 
+      { out.println(attdecoder); } 
+      // out.println(localVars);
+      // out.println(evocreate);
+	  
+      out.println(); 
+      String errorcall = "is" + ucname + "error"; 
+      out.println("    if " + validator + "." + errorcall + "(" + parlist + ")"); 
+      out.println("    { return }"); 
+      out.println(); 
+	  
+      if (res != null) 
+      { out.println("    var " + resvo + " : " + restype + " = " + bean + "." + ucname + "(" + parlist + ")"); 
+        out.println(updateScreen);
+      } 
+      else 
+      { out.println("    " + bean + "." + ucname + "(" + parlist + ")"); } 
+      out.println("  }");
+    // }
+
+    out.println("");
+    if (res != null && "GraphDisplay".equals(res.getType().getName()))
+    { printGraphDisplayOperations(out); }
+	
+    out.println("  override func didReceiveMemoryWarning()");
+    out.println("  { super.didReceiveMemoryWarning() }");
+    out.println("");
+    out.println("}");
+  }
+  
+  public static void iosViewController(UseCase uc, String systemName, 
+                                       Vector pars,  
+                                       Vector extensions, PrintWriter out)
   { String ucname = uc.getName();
     String evc = ucname + "ViewController";
     // String evo = ename + "ValueObject";
@@ -896,10 +1091,12 @@ public class IOSAppGenerator extends AppGenerator
     String parlist = ""; 
     for (int x = 0; x < atts.size(); x++)
     { Attribute att = (Attribute) atts.get(x);
+	  String attnme = att.getName(); 
+	  
       String iosdeclaration = att.uiKitDeclaration(); 
       out.println(iosdeclaration);
       
-      parlist = parlist + att.getName(); 
+      parlist = parlist + attnme + ": " + attnme; 
       if (x < atts.size() - 1) 
       { parlist = parlist + ", "; } 
     } 
@@ -923,15 +1120,48 @@ public class IOSAppGenerator extends AppGenerator
     }
 	
     out.println(); 
-    out.println("  var userId : String = " + "\"0\"");
+    // out.println("  var userId : String = " + "\"0\"");
     out.println();
+    for (int p = 0; p < extensions.size(); p++) 
+    { UseCase extension = (UseCase) extensions.get(p);
+      String extop = extension.getName();  
+      Vector extpars = extension.getParameters();
+      Attribute extres = extension.getResultParameter(); 
+	  String extvalidationBean = extop + "ValidationBean"; 
+      // String evocreate = createVOStatement(e,atts);
+      String extvalidator = extop + "Validator";  
+      // extraops = extraops + UseCase.spinnerListenerOperations(extop,extpars); 
+      // String extbeanclass = extop + "Bean";
+      // String extbean = extbeanclass.toLowerCase();
+	  String extrestype = ""; 
+      out.println("  var " + extvalidator + " : " + extvalidationBean + " = " + extvalidationBean + "()"); 
+	  if (extres != null && "WebDisplay".equals(extres.getType().getName()))
+      { out.println("  @IBOutlet var " + extop + "resultOutput: WKWebView!"); 
+        extrestype = "WebDisplay"; 
+      } 
+      else if (extres != null && "ImageDisplay".equals(extres.getType().getName()))
+      { out.println("  @IBOutlet var " + extop + "resultOutput: UIImageView!"); 
+        extrestype = "ImageDisplay"; 
+      }
+      else if (extres != null && "GraphDisplay".equals(extres.getType().getName()))
+      { out.println("  @IBOutlet var " + extop + "resultOutput: LineChartView!"); 
+        out.println("  var " + extop + "graph: GraphDisplay = GraphDisplay.getInstance()"); 
+        extrestype = "GraphDisplay"; 
+      }
+      else if (extres != null) 
+      { out.println("  @IBOutlet weak var " + extop + "resultOutput: UILabel!");
+        extrestype = res.getType().getSwift(); 
+      }
+    } 
+    out.println(); 
+
 
     out.println("  override func viewDidLoad()");
     out.println("  { super.viewDidLoad()");
     if (res != null && "WebDisplay".equals(res.getType().getName()))
-    { out.println("    let myURL = URL(string: \"https://www.apple.com\")"); 
-      out.println("    let myRequest = URLRequest(url: myURL)"); 
-      out.println("    resultOutput.load(myRequest)"); 
+    { // out.println("    let myURL = URL(string: \"https://www.apple.com\")"); 
+      // out.println("    let myRequest = URLRequest(url: myURL)"); 
+      // out.println("    resultOutput.load(myRequest)"); 
     } 
     else if (res != null && "GraphDisplay".equals(res.getType().getName()))
     { out.println("    resultOutput.pinchZoomEnabled = true"); } 
@@ -962,7 +1192,7 @@ public class IOSAppGenerator extends AppGenerator
 	   { inputvar = attname + "Input"; }
 		
         attdecoder = attdecoder + " let " + att + " = " + 
-                     Expression.unwrapSwift(inputvar,att.getType());
+                     Expression.unwrapSwiftOptional(inputvar,att.getType());
         previous = true;
       }
       // else 
@@ -971,16 +1201,37 @@ public class IOSAppGenerator extends AppGenerator
       //  { localVars = localVars + "    var " + att + " : " + atype.getSwift() + "\n"; }
       // }  
     }
-    attdecoder = attdecoder + " else { return }\n";
+    attdecoder = attdecoder + " else { print(\"Error in inputs\"); return }\n";
 
     String updateScreen = "";
    
+    for (int p = 0; p < extensions.size(); p++) 
+    { UseCase extension = (UseCase) extensions.get(p); 
+      String extop = extension.getName();    
+      Vector extpars = extension.getParameters();
+      Attribute extres = extension.getResultParameter(); 
+      for (int x = 0; x < extpars.size(); x++)
+      { Attribute extatt = (Attribute) extpars.get(x);
+      // if (att.isInputAttribute())
+        String extattname = extatt.getName(); 
+        
+        // String extinputvar = extop + extattname + "Input.text";
+        // if (extatt.isSmallEnumeration())
+        // { extinputvar = extop + extattname + "Input"; }
+        String extiosdeclaration = extatt.uiKitDeclaration(extop); 
+        out.println(extiosdeclaration);
+        String extiosattop = extatt.uiKitOp(extop); 
+        out.println(extiosattop);
+      }
+    } 
+	
+	
     // for (int x = 0; x < atts.size(); x++)
     if (res != null) 
     { Attribute att = res; // (Attribute) atts.get(x);
       if ("WebDisplay".equals(att.getType().getName()))
       { updateScreen = updateScreen + "    let myURL = URL(string: result.url)\n"; 
-        updateScreen = updateScreen + "    let myRequest = URLRequest(url: myURL)\n"; 
+        updateScreen = updateScreen + "    let myRequest = URLRequest(url: myURL!)\n"; 
         updateScreen = updateScreen + "    resultOutput.load(myRequest)"; 
 		
         out.println("  override func loadView()"); 
@@ -993,54 +1244,150 @@ public class IOSAppGenerator extends AppGenerator
       else if ("ImageDisplay".equals(att.getType().getName()))
       { updateScreen = updateScreen + "    resultOutput.image = UIImage(named: result.imageName)\n"; }  
       else if ("GraphDisplay".equals(att.getType().getName()))
-      { updateScreen = updateScreen + "    graph = result\n" + 
-	                                  "    let xpts = result.xpoints\n" + 
-                                      "    let ypts = result.ypoints\n" + 
-                                      "    let xlbs = result.xlabels\n" + 
-                                      "    if xlbs.count > 0\n" + 
+      { updateScreen = updateScreen + 
+          "    graph = result\n" + 
+          "    let xpts = result.xpoints\n" + 
+          "    let ypts = result.ypoints\n" + 
+          "    let xlbs = result.xlabels\n" + 
+          "    if xlbs.count > 0\n" + 
           "    { drawNominalChart(dataPoints: xlbs, values: ypts.map{ Double($0) }, name: result.yname) }\n" + 
           "    else if xpts.count > 0\n" + 
           "    { drawScalarChart(dataPoints: xpts, values: ypts.map{ Double($0) }, name: result.yname) }\n"; 
-	  } 
+      } 
       else 
       { updateScreen = updateScreen + "    resultOutput.text = String(result)"; }
     }
 
-    // for (int y = 0; y < usecases.size(); y++)
-    // { UseCase uc = (UseCase) usecases.get(y);
-    //  String ucname = uc.getName();
-      out.println("  @IBAction func " + ucname + "(_ sender: Any) {");
-      if (atts.size() > 0) 
-	  { out.println(attdecoder); } 
+    out.println("  @IBAction func " + ucname + "(_ sender: Any) {");
+    if (atts.size() > 0) 
+    { out.println(attdecoder); } 
       // out.println(localVars);
       // out.println(evocreate);
 	  
-	  out.println(); 
-	  String errorcall = "is" + ucname + "error"; 
-	  out.println("    if " + validator + "." + errorcall + "(" + parlist + ")"); 
-	  out.println("    { return }"); 
-	  out.println(); 
+    out.println(); 
+    String errorcall = "is" + ucname + "error"; 
+    out.println("    if " + validator + "." + errorcall + "(" + parlist + ")"); 
+    out.println("    { return }"); 
+    out.println(); 
 	  
-      if (res != null) 
-      { out.println("    var " + resvo + " : " + restype + " = " + bean + "." + ucname + "(" + parlist + ")"); 
-        out.println(updateScreen);
-      } 
-      else 
-      { out.println("    " + bean + "." + ucname + "(" + parlist + ")"); } 
-      out.println("  }");
+    if (res != null) 
+    { out.println("    var " + resvo + " : " + restype + " = " + bean + "." + ucname + "(" + parlist + ")"); 
+      out.println(updateScreen);
+    } 
+    else 
+    { out.println("    " + bean + "." + ucname + "(" + parlist + ")"); } 
+    out.println("  }");
     // }
 
     out.println("");
     if (res != null && "GraphDisplay".equals(res.getType().getName()))
-	{ printGraphDisplayOperations(out); }
+    { printGraphDisplayOperations(out); }
 	
+    for (int p = 0; p < extensions.size(); p++) 
+    { UseCase extension = (UseCase) extensions.get(p); 
+      String extucname = extension.getName();    
+      Vector extatts = extension.getParameters(); 
+      Attribute extres = extension.getResultParameter(); 
+      String extvalidationBean = extucname + "ValidationBean"; 
+      String extvalidator = extucname + "Validator"; 
+      String extparlist = ""; 
+      for (int x = 0; x < extatts.size(); x++)
+      { Attribute extatt = (Attribute) extatts.get(x);
+        String extattname = extatt.getName(); 
+		
+        extparlist = extparlist + extattname + ": " + extattname; 
+        if (x < extatts.size() - 1) 
+        { extparlist = extparlist + ", "; } 
+      }
+
+      String extattdecoder = "    guard ";
+      boolean extprevious = false;
+    
+      for (int x = 0; x < extatts.size(); x++)
+      { Attribute extatt = (Attribute) extatts.get(x);
+        String extattname = extatt.getName(); 
+        { if (extprevious)
+          { extattdecoder = extattdecoder + ", "; }
+		
+          String extinputvar = extucname + extattname + "Input.text";
+          if (extatt.isSmallEnumeration())
+          { extinputvar = extucname + extattname + "Input"; }
+		
+          extattdecoder = extattdecoder + " let " + extatt + " = " + 
+                          Expression.unwrapSwiftOptional(extinputvar,extatt.getType());
+          extprevious = true;
+        }
+      }
+      extattdecoder = extattdecoder + " else { print(\"Errors in inputs\"); return }\n";
+
+      out.println("  @IBAction func " + extucname + "(_ sender: Any) {");
+      if (extatts.size() > 0) 
+      { out.println(extattdecoder); } 
+       
+      out.println(); 
+      String exterrorcall = "is" + extucname + "error"; 
+      out.println("    if " + extvalidator + "." + exterrorcall + "(" + extparlist + ")"); 
+      out.println("    { return }"); 
+      out.println(); 
+	  
+      String extresvo = "result";
+	  String extresult = extucname + "resultOutput"; 
+
+      String extrestype = ""; 
+      String extupdateScreen = ""; 	  
+      if (extres != null) 
+      { Attribute extatt = extres; // (Attribute) atts.get(x);
+        if ("WebDisplay".equals(extatt.getType().getName()))
+        { extupdateScreen = extupdateScreen + "    let myURL = URL(string: result.url)\n"; 
+          extupdateScreen = extupdateScreen + "    let myRequest = URLRequest(url: myURL!)\n"; 
+          extupdateScreen = extupdateScreen + "    " + extresult + ".load(myRequest)"; 
+		  extrestype = "WebDisplay"; 
+          // out.println("  override func loadView()"); 
+          // out.println("  { let webConfiguration = WKWebViewConfiguration()"); 
+          // out.println("    resultOutput = WKWebView(frame: .zero, configuration: webConfiguration)"); 
+          // out.println("    resultOutput.uiDelegate = self"); 
+          // out.println("  }"); 
+          // out.println(); 
+        }
+        else if ("ImageDisplay".equals(extatt.getType().getName()))
+        { extupdateScreen = extupdateScreen + "    " + extresult + "Output.image = UIImage(named: result.imageName)\n"; 
+		  extrestype = "ImageDisplay"; 
+		}  
+        else if ("GraphDisplay".equals(extatt.getType().getName()))
+        { extupdateScreen = extupdateScreen + 
+          "    " + extucname + "graph = result\n" + 
+          "    let xpts = result.xpoints\n" + 
+          "    let ypts = result.ypoints\n" + 
+          "    let xlbs = result.xlabels\n" + 
+          "    if xlbs.count > 0\n" + 
+          "    { drawNominalChart(dataPoints: xlbs, values: ypts.map{ Double($0) }, name: result.yname) }\n" + 
+          "    else if xpts.count > 0\n" + 
+          "    { drawScalarChart(dataPoints: xpts, values: ypts.map{ Double($0) }, name: result.yname) }\n"; 
+          extrestype = "GraphDisplay"; 
+		} 
+        else 
+        { extupdateScreen = extupdateScreen + "    " + extresult + ".text = String(result)"; 
+		  extrestype = extres.getType().getSwift(); 
+		}
+      }
+
+      if (extres != null) 
+      { out.println("    var " + extresvo + " : " + extrestype + " = " + bean + "." + extucname + "(" + extparlist + ")"); 
+        out.println(extupdateScreen);
+      } 
+      else 
+      { out.println("    " + bean + "." + extucname + "(" + extparlist + ")"); } 
+      out.println("  }");
+    }
+	
+	out.println(); 
     out.println("  override func didReceiveMemoryWarning()");
     out.println("  { super.didReceiveMemoryWarning() }");
     out.println("");
     out.println("}");
   }
-  
-  private void printGraphDisplayOperations(PrintWriter out)
+ 
+  private static void printGraphDisplayOperations(PrintWriter out)
   { out.println("  func stringForValue(_ dataPointIndex: Double, axis: AxisBase?) -> String "); 
     out.println("  { let xlbs = graph.xlabels"); 
     out.println("    let xpts = graph.xpoints"); 
@@ -1101,7 +1448,10 @@ public class IOSAppGenerator extends AppGenerator
     Attribute res = uc.getResultParameter(); 
     String validationBean = ucname + "ValidationBean"; 
     // String evocreate = createVOStatement(e,atts);
-    String validator = ucname + "Validator"; 
+    String validator = ucname + "Validator";
+	String resultVar = ucname + "Result"; 
+	if (res != null) 
+	{ restype = res.getType().getSwift(); } 
 	
     String label = Named.capitalise(ucname);
     String opbean = ucname + "VO"; // The VO also provides validation checks
@@ -1118,6 +1468,7 @@ public class IOSAppGenerator extends AppGenerator
     out.println("");
     out.println("struct " + op + "Screen : View {");
     out.println("  @State var bean : " + opbean + " = " + opbean + "()");
+	out.println("  @State var " + resultVar + " : " + restype + " = " + res.getType().getSwiftDefaultValue()); 
     // for (int i = 0; i < extradeclarations.size(); i++)
     // { out.println(extradeclarations.get(i)); } 
     out.println("  @ObservedObject var model : ModelFacade"); 
@@ -1126,20 +1477,24 @@ public class IOSAppGenerator extends AppGenerator
     out.println("    VStack(alignment: .leading, spacing: 20) {");
     out.println(formfields); 
     out.println("      HStack(spacing: 20) ");
-    out.println("      { Button(action: { self.model.cancel" + op + "() } ) { Text(\"Cancel\") }"); 
-    out.println("        Button(action: { self.model." + op + "(_x: bean) } ) { Text(\"" + label + "\") }"); 
+    out.println("      { Button(action: { self.model.cancel" + op + "() } ) { Text(\"Cancel\") }");
+	if (res != null)  
+    { out.println("        Button(action: { " + resultVar + " = self.model." + op + "(_x: bean) } ) { Text(\"" + label + "\") }"); } 
+	else 
+	{ out.println("        Button(action: { self.model." + op + "(_x: bean) } ) { Text(\"" + label + "\") }"); } 
+	
     out.println("      }.buttonStyle(PlainButtonStyle())"); 
 
     if (res != null && "WebDisplay".equals(res.getType().getName()))
-    { out.println("      WebView(request: URLRequest(string: bean.result.url))"); } 
+    { out.println("      WebView(request: URLRequest(string: " + resultVar + ".url))"); } 
     else if (res != null && "ImageDisplay".equals(res.getType().getName()))
-    { out.println("      Image(bean.result.imageName)"); } 
+    { out.println("      Image(" + resultVar + ".imageName)"); } 
     else if (res != null && "GraphDisplay".equals(res.getType().getName()))
-    { out.println("      GraphDisplayView(graph: bean.result)"); } 
+    { out.println("      GraphDisplayView(graph: " + resultVar + ")"); } 
     else if (res != null) 
     { out.println("      HStack(spacing: 20) {");
       out.println("        Text(\"Result:\")"); 
-      out.println("        Text(String(bean.result))");
+      out.println("        Text(String(" + resultVar + "))");
       out.println("      }"); 
     } 
     out.println("    }.padding(.top)");
@@ -1165,11 +1520,15 @@ public void listViewController(Entity e, PrintWriter out)
   out.println("  var " + bean + " : " + ebean + " = " + ebean + ".getInstance()");
   out.println("  @IBOutlet weak var tableView: UITableView!");
   out.println(); 
-  out.println("  var userId : String = " + "\"0\"");
   out.println("  var " + elist + " : [" + evo + "] = [" + evo + "]()");
+  out.println("  { didSet"); 
+  out.println("    { DispatchQueue.main.async { self.tableView.reloadData() } }"); 
+  out.println("  }"); 
   out.println();
   out.println("  override func viewDidLoad()");
   out.println("  { super.viewDidLoad()");
+  out.println("    self.tableView.delegate = self");
+  out.println("    self.tableView.dataSource = self");
   out.println("    self." + elist + " = " + bean + "." + getlist + "()");
   out.println("  }");
   out.println("");
@@ -1180,31 +1539,25 @@ public void listViewController(Entity e, PrintWriter out)
   out.println("  func numberOfSections(in tableView: UITableView) -> Int"); 
   out.println("  { return 1 }");
   out.println("");
-  out.println("  func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int");
-   out.println("  { return self." + elist + ".count }");
-   out.println("");
-   out.println("");
-   out.println("  func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell"); 
-   out.println("  { let cell = self.tableView.dequeueReusableCell(withIdentifier: \"Cell\", for: indexPath)");
-   out.println("");
-   out.println("    if let item = self." + elist + "[indexPath.row]"); 
-  out.println("    {");
-  for (int x = 0; x < atts.size(); x++)   
-  { Attribute att = (Attribute) atts.get(x);
-    if (att.isHidden()) { } 
-    else 
-    { String attnme = att.getName();
-      out.println("      cell." + attnme + "Label?.text = item." + attnme);     
-    }
-  }
-  out.println("    }");
-  out.println("    return cell");
+  out.println("  func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int");  
+  out.println("  { return self." + elist + ".count }");
+  out.println("");
+  out.println("");
+  out.println("  func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell");   
+  out.println("  { let _cell = self.tableView.dequeueReusableCell(withIdentifier: \"Cell\", for: indexPath)");
+  out.println("");
+  out.println("    self." + elist + " = " + bean + "." + getlist + "()"); 
+  out.println(); 
+  out.println("    let _item = self." + elist + "[indexPath.row]"); 
+  out.println("    _cell.textLabel?.text = _item.toString()");     
+  out.println("    ");
+  out.println("    return _cell");
   out.println("  }");
   out.println("  ");
    
   out.println("  func tableView(_ tableView: UITableView, didSelectRowAt indexPath : IndexPath)");
-  out.println("  { guard let item = " + elist + "[indexPath.row] else { return }");
-  out.println("    " + bean + ".setSelected" + ename + "(item)");
+  out.println("  { let _item = " + elist + "[indexPath.row]");
+  out.println("    " + bean + ".setSelected" + ename + "(_x: _item)");
   out.println("  }");
   out.println("}");
 }
@@ -1273,7 +1626,7 @@ public void iOSViewController(String systemName, String op, String feature, Enti
     } 
     
     out.println(); 
-    out.println("  var userId : String = " + "\"0\"");
+    // out.println("  var userId : String = " + "\"0\"");
     out.println();
     out.println("  override func viewDidLoad()");
     out.println("  { super.viewDidLoad()");
@@ -1290,7 +1643,7 @@ public void iOSViewController(String systemName, String op, String feature, Enti
       { if (previous)
         { attdecoder = attdecoder + ", "; }
         attdecoder = attdecoder + " let " + att + " = " + 
-                     Expression.unwrapSwift(att + "Input.text",att.getType());
+                     Expression.unwrapSwiftOptional(att + "Input.text",att.getType());
         previous = true;
       }
       // else 
@@ -1313,7 +1666,7 @@ public void iOSViewController(String systemName, String op, String feature, Enti
       out.println("    { " + bean + "." + opname + "(_x: " + ename + "VO(" + parlistx + ")) }");  
     }
     else 
-    { out.println("    " + bean + "." + opname + "(_x: " + ename + "VO(" + parlistx + ")"); } 
+    { out.println("    " + bean + "." + opname + "(_x: " + ename + "VO(" + parlistx + "))"); } 
 
     out.println("  }");
     out.println("");
@@ -1383,7 +1736,7 @@ public void iOSViewController(String systemName, String op, String feature, Enti
       { if (previous)
         { attdecoder = attdecoder + ", "; }
         attdecoder = attdecoder + " let " + att + " = " + 
-                     Expression.unwrapSwift(att + "Input.text",att.getType());
+                     Expression.unwrapSwiftOptional(att + "Input.text",att.getType());
         previous = true;
       }
       // else 
@@ -1442,11 +1795,12 @@ public void iOSViewController(String systemName, String op, String feature, Enti
     String parlistx = ""; 
     for (int x = 0; x < atts.size(); x++)
     { Attribute att = (Attribute) atts.get(x);
+	  String attname = att.getName(); 
       // if (att.isPassword() || att.isHidden()) { } else
       out.println("  @IBOutlet weak var " + att + "Input: UITextField!");
       
-      parlist = parlist + att.getName(); 
-      parlistx = parlistx + att.getName() + "x: " + att.getName(); 
+      parlist = parlist + attname + ": " + attname; 
+      parlistx = parlistx + attname + "x: " + attname; 
       if (x < atts.size() - 1) 
       { parlist = parlist + ", "; 
         parlistx = parlistx + ", "; 
@@ -1454,7 +1808,7 @@ public void iOSViewController(String systemName, String op, String feature, Enti
     } 
       
     out.println(); 
-    out.println("  var userId : String = \"0\"");
+    // out.println("  var userId : String = \"0\"");
     out.println();
     out.println("  override func viewDidLoad()");
     out.println("  { super.viewDidLoad()");
@@ -1479,7 +1833,7 @@ public void iOSViewController(String systemName, String op, String feature, Enti
       { if (previous)
         { attdecoder = attdecoder + ", "; }
         attdecoder = attdecoder + " let " + att + " = " + 
-                     Expression.unwrapSwift(att + "Input.text",att.getType());
+                     Expression.unwrapSwiftOptional(att + "Input.text",att.getType());
         previous = true;
       }  
     }
@@ -1497,7 +1851,7 @@ public void iOSViewController(String systemName, String op, String feature, Enti
       out.println("    { " + bean + "." + opname + "(_x: " + ename + "VO(" + parlistx + ")) }");  
     }
     else 
-    { out.println("    " + bean + "." + opname + "(_x: " + ename + "VO(" + parlistx + ")"); } 
+    { out.println("    " + bean + "." + opname + "(_x: " + ename + "VO(" + parlistx + "))"); } 
     
     out.println("  }");
     
@@ -1535,6 +1889,8 @@ public void iOSViewController(String systemName, String op, String feature, Enti
     out.println();
     out.println("  override func viewDidLoad()");
     out.println("  { super.viewDidLoad()");
+    out.println("    self.tableView.delegate = self");
+    out.println("    self.tableView.dataSource = self");
     out.println("    self." + elist + " = " + bean + "." + getlist + "()");
     out.println("  }");
     out.println("");
@@ -1543,7 +1899,7 @@ public void iOSViewController(String systemName, String op, String feature, Enti
     out.println("");
     out.println("  @IBAction func " + opname + "(_ sender: Any)");
     out.println("  { guard let " + attname + " = " + 
-                     Expression.unwrapSwift(attname + "Input.text",byatt.getType()));
+                     Expression.unwrapSwiftOptional(attname + "Input.text",byatt.getType()));
     out.println("    else { return } "); 
     out.println("    self." + elist + " = " + bean + "." + opname + "(_val: " + attname + ")");
     out.println("   }"); 
@@ -1557,26 +1913,17 @@ public void iOSViewController(String systemName, String op, String feature, Enti
     out.println("");
     out.println("");
     out.println("  func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell"); 
-    out.println("  { let cell = self.tableView.dequeueReusableCell(withIdentifier: \"Cell\", for: indexPath)");
+    out.println("  { let _cell = self.tableView.dequeueReusableCell(withIdentifier: \"Cell\", for: indexPath)");
     out.println("");
-    out.println("    if let item = self." + elist + "[indexPath.row]"); 
-    out.println("    {");
-    for (int x = 0; x < atts.size(); x++)
-    { Attribute att = (Attribute) atts.get(x);
-      if (att.isHidden()) { } 
-      else 
-      { String attnme = att.getName();
-        out.println("      cell." + attnme + "Label?.text = item." + attnme);
-      }
-    }
-    out.println("    }");
-    out.println("    return cell");
+    out.println("    let _item = self." + elist + "[indexPath.row]"); 
+    out.println("    _cell.textLabel?.text = _item.toString()");
+    out.println("    return _cell");
     out.println("  }");
     out.println("  ");
    
     out.println("  func tableView(_ tableView: UITableView, didSelectRowAt indexPath : IndexPath)");
-    out.println("  { guard let item = " + elist + "[indexPath.row] else { return }");
-    out.println("    " + bean + ".setSelected" + ename + "(item)");
+    out.println("  { let item = " + elist + "[indexPath.row]");
+    out.println("    " + bean + ".setSelected" + ename + "(_x: item)");
     out.println("  }");
     out.println("}");
   }
@@ -1679,7 +2026,13 @@ public static void generateIOSFileAccessor(PrintWriter out)
   out.println("    let dirPaths = filemgr.urls(for: .documentDirectory, in: .userDomainMask) ");
   out.println("    let docsDir = dirPaths[0]");
   out.println("    let path = docsDir.appendingPathComponent(filename)");
-  out.println("    return filemgr.fileExists(atPath: path) ");
+  out.println("    var pathtext : String = \"\""); 
+  out.println("    do"); 
+  out.println("    { pathtext ="); 
+  out.println("        try String(contentsOf: path, encoding: .utf8)"); 
+  out.println("    }"); 
+  out.println("    catch { return false }"); 
+  out.println("    return filemgr.fileExists(atPath: pathtext) ");
   out.println("  }");
   out.println("");
   out.println("  func fileIsWritable(filename : String) -> Bool");
@@ -1687,7 +2040,13 @@ public static void generateIOSFileAccessor(PrintWriter out)
   out.println("    let dirPaths = filemgr.urls(for: .documentDirectory, in: .userDomainMask) ");
   out.println("    let docsDir = dirPaths[0]");
   out.println("    let path = docsDir.appendingPathComponent(filename)");
-  out.println("    return filemgr.isWritableFile(atPath: path) ");
+  out.println("    var pathtext : String = \"\""); 
+  out.println("    do"); 
+  out.println("    { pathtext ="); 
+  out.println("        try String(contentsOf: path, encoding: .utf8)"); 
+  out.println("    }"); 
+  out.println("    catch { return false }"); 
+  out.println("    return filemgr.isWritableFile(atPath: pathtext) ");
   out.println("  }");
   out.println("");
   out.println("  func deleteFile(filename : String) -> String");  
@@ -1695,9 +2054,15 @@ public static void generateIOSFileAccessor(PrintWriter out)
   out.println("    let dirPaths = filemgr.urls(for: .documentDirectory, in: .userDomainMask) ");
   out.println("    let docsDir = dirPaths[0]");
   out.println("    let path = docsDir.appendingPathComponent(filename)");
+  out.println("    var pathtext : String = \"\""); 
+  out.println("    do"); 
+  out.println("    { pathtext ="); 
+  out.println("        try String(contentsOf: path, encoding: .utf8)"); 
+  out.println("    }"); 
+  out.println("    catch { return \"ERROR in filename\" }"); 
   out.println("    do ");
-  out.println("    { try filemgr.removeItem(atPath: path) ");
-  out.println("      return \"Success\") ");
+  out.println("    { try filemgr.removeItem(atPath: pathtext) ");
+  out.println("      return \"Success\" ");
   out.println("    } ");
   out.println("    catch let error ");
   out.println("    { return \"Error: \" + error.localizedDescription }");
@@ -1725,13 +2090,20 @@ public static void generateIOSFileAccessor(PrintWriter out)
   out.println("      let docsDir = dirPaths[0]");
   out.println("      let path = docsDir.appendingPathComponent(filename)");
   out.println("      for s in contents");
-  out.println("      { text = text + s + '\\n' } ");
-  out.println("      let file: FileHandle? = FileHandle(forUpdatingAtPath: path) ");
-  out.println("      if file != nil ");
-  out.println("      { let data = (text as NSString).data(using: String.Encoding.utf8.rawValue)");
-  out.println("        file?.write(data!) ");
-  out.println("        file?.closeFile() ");
-  out.println("      }");
+  out.println("      { text = text + s + \"\\n\" } ");
+  out.println(); 
+  out.println("      do"); 
+  out.println("      { let pathtext ="); 
+  out.println("          try String(contentsOf: path, encoding: .utf8)"); 
+  out.println(); 
+  out.println("        let file: FileHandle? = FileHandle(forUpdatingAtPath: pathtext) ");
+  out.println("        if file != nil ");
+  out.println("        { let data = (text as NSString).data(using: String.Encoding.utf8.rawValue)");
+  out.println("          file?.write(data!) ");
+  out.println("          file?.closeFile() ");
+  out.println("        }");
+  out.println("      }"); 
+  out.println("      catch { return }"); 
   out.println("    }");
   out.println("  }");
 }
@@ -1796,6 +2168,19 @@ public static void generateIOSFileAccessor(PrintWriter out)
     out.println("  override func applicationWillTerminate(_ application: UIApplication) {}"); 
     out.println(); 
   }
+  
+  public static void generateSwiftUIAppScreen(String appName, PrintWriter out)
+  { out.println("import SwiftUI"); 
+    out.println(); 
+    out.println("@main"); 
+    out.println("struct " + appName + "App: App {"); 
+    out.println("  var body: some Scene {"); 
+    out.println("    WindowGroup {"); 
+    out.println("      ContentView(model: ModelFacade.getInstance())"); 
+    out.println("    }"); 
+    out.println("  }"); 
+    out.println("}"); 
+  }
 
 public static void generateSceneDelegate(String mainscreen, PrintWriter out)
 { out.println("import UIKit");
@@ -1808,7 +2193,7 @@ public static void generateSceneDelegate(String mainscreen, PrintWriter out)
   out.println("  func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions)");
   out.println("  { if let windowScene = scene as? UIWindowScene ");
   out.println("    { let window = UIWindow(windowScene: windowScene)");
-  out.println("      window.rootViewController = UIHostingController(rootView: " + mainscreen + "())");
+  out.println("      window.rootViewController = UIHostingController(rootView: " + mainscreen + "(model: ModelFacade.getInstance()))");
   out.println("      self.window = window");
   out.println("      window.makeKeyAndVisible()");
   out.println("    }");
@@ -1992,14 +2377,15 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
   public static void swiftUITabScreen(Vector operations, Vector labels, PrintWriter out)
   { out.println("import SwiftUI");
     out.println("");
-    out.println("struct MainScreen : View");
-    out.println("{");  
+    out.println("struct ContentView : View");
+    out.println("{ @ObservedObject var model : ModelFacade");
+	out.println();   
     out.println("  var body: some View {");
     out.println("    TabView {");
     for (int i = 0; i < operations.size(); i++) 
     { String op = (String) operations.get(i); 
       String label = (String) labels.get(i); 
-      out.println("      " + op + "().tabItem"); 
+      out.println("      " + op + "(model: model).tabItem"); 
       out.println("      { Image(systemName: \"" + (i+1) + ".square.fill\")"); 
       out.println("        Text(\"" + label + "\")"); 
       out.println("      }"); 
@@ -2014,14 +2400,17 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     // out.println("package " + packageName + ";");
     // out.println();
     // out.println();
+    if (appName == null || appName.length() == 0) 
+    { appName = "app"; } 
+
     out.println("import Foundation");
     out.println("import Glibc");
     out.println("import SQLite3"); 
     out.println();
     out.println("class Dbi");
-    out.println("{ private let dbPointer : OpaquePointer?");
-    out.println("  private static let DBNAME = \"" + appName + ".db\"");
-    out.println("  private static let DBVERSION = 1");
+    out.println("{ let dbPointer : OpaquePointer?");
+    out.println("  static let DBNAME = \"" + appName + ".db\"");
+    out.println("  static let DBVERSION = 1");
     out.println();
   
     String createCode = ""; 

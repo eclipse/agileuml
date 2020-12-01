@@ -336,7 +336,7 @@ public class Attribute extends ModelElement
 
       
   public boolean isComposed()
-  { return navigation.size() > 1; } 
+  { return (navigation != null && navigation.size() > 1); } 
 
   public static boolean isMultipleValued(Vector path)
   { int u = Type.composeMultiplicities(path,"upper"); 
@@ -880,7 +880,9 @@ public class Attribute extends ModelElement
 
     Entity own = getOwner(); 
     if (own == null) 
-    { return false; } 
+    { System.err.println("!! Warning: " + this + " has no owner"); 
+      return true; 
+    } 
 
     Vector atts = own.getAttributes(); 
     for (int i = 0; i < atts.size(); i++) 
@@ -941,6 +943,13 @@ public class Attribute extends ModelElement
   public boolean isDerived()
   { return kind == ModelElement.DERIVED; } 
 
+  public void setDerived(boolean deriv)
+  { if (deriv) 
+    { kind = ModelElement.DERIVED; } 
+	else 
+	{ kind = ModelElement.INTERNAL; } 
+  } 
+  
   public void setVisibility(int visib)
   { visibility = visib; } 
 
@@ -1030,7 +1039,9 @@ public class Attribute extends ModelElement
     { out.println("    static attribute " + getName() + " : " + getType() + ";"); }
     else if (isIdentity())
     { out.println("    attribute " + getName() + " identity : " + getType() + ";"); } 
-    else  
+    else if (isDerived())
+    { out.println("    attribute " + getName() + " derived : " + getType() + ";"); }
+	else 
     { out.println("    attribute " + getName() + " : " + getType() + ";"); } 
   } 
 
@@ -1039,6 +1050,8 @@ public class Attribute extends ModelElement
     { return "    static attribute " + getName() + " : " + getType() + ";"; } 
     else if (isIdentity())
     { return "    attribute " + getName() + " identity : " + getType() + ";"; }
+    else if (isDerived())
+    { return "    attribute " + getName() + " derived : " + getType() + ";"; }
     else  
     { return "    attribute " + getName() + " : " + getType() + ";"; } 
   } 
@@ -5063,17 +5076,17 @@ public String swiftUIEntryField(String ent, String op, Vector decs, Vector actio
   else if (isEnumeration())
   { Vector vals = type.getValues();
     res2 = "  var " + nme + "Values = ["; 
-	for (int i = 0; i < vals.size(); i++)
-	{ String val = (String) vals.get(i); 
-	  res2 = res2 + "\"" + val + "\""; 
-	  if (i < vals.size() - 1) 
-	  { res2 = res2 + ", "; }
-	} 
-	res2 = res2 + "]\n" + 
-	       "  @State var selected" + tname + " : Int = 0\n\n"; 
+    for (int i = 0; i < vals.size(); i++)
+    { String val = (String) vals.get(i); 
+      res2 = res2 + "\"" + val + "\""; 
+      if (i < vals.size() - 1) 
+      { res2 = res2 + ", "; }
+    } 
+    res2 = res2 + "]\n" + 
+       "  @State var selected" + tname + " : Int = 0\n\n"; 
     // decs.add(res2); 
-	res1 = 
-	  "      Picker(\"" + tname + "\", selection: $bean." + nme + ") {\n";  
+    res1 = 
+       "      Picker(\"" + tname + "\", selection: $bean." + nme + ") {\n";  
 	for (int i = 0; i < vals.size(); i++)
 	{ String val = (String) vals.get(i); 
 	  res1 = res1 + "        Text(\"" + val + "\").tag(" + tname + "." + val + ")\n"; 
@@ -5134,6 +5147,19 @@ public String swiftUIEntryField(String ent, String op, Vector decs, Vector actio
     { return "  @IBOutlet weak var " + nme + "Input : UITextField!"; } 
   } 
 
+  public String uiKitDeclaration(String ucname)
+  { String nme = ucname + getName(); 
+
+    if (isSmallEnumeration())
+    { Vector vals = type.getValues(); 
+      String defaultValue = (String) vals.get(0); 
+      return "  @IBOutlet weak var " + nme + "Control : UISegmentedControl!\n" + 
+             "  var " + nme + "Input : String = \"" + defaultValue + "\""; 
+    } 
+    else 
+    { return "  @IBOutlet weak var " + nme + "Input : UITextField!"; } 
+  } 
+
   public String uiKitOp()
   { String nme = getName(); 
 
@@ -5143,15 +5169,40 @@ public String swiftUIEntryField(String ent, String op, Vector decs, Vector actio
       for (int i = 0; i < vals.size(); i++) 
       { String val = (String) vals.get(i); 
         switchcases = switchcases + 
-                      "    case " + i + ":\n" + 
-                      "      " + nme + "Input = \"" + val + "\"\n"; 
+                      "      case " + i + ":\n" + 
+                      "        " + nme + "Input = \"" + val + "\"\n"; 
       }  
       return "  @IBAction func " + nme + "Control(_ sender : Any)\n" + 
              "  { switch " + nme + "Control.selectedSegmentIndex {\n" + 
              switchcases + 
-             "    default: \n" + 
-             "      return\n" + 
-			 "  }\n\n"; 
+             "      default: \n" + 
+             "        return\n" + 
+             "    }\n" + 
+             "  }\n\n"; 
+    } 
+    else 
+    { return ""; } 
+  } 
+
+  public String uiKitOp(String ucname)
+  { String nme = ucname + getName(); 
+
+    if (isSmallEnumeration())
+    { Vector vals = type.getValues(); 
+      String switchcases = "";
+      for (int i = 0; i < vals.size(); i++) 
+      { String val = (String) vals.get(i); 
+        switchcases = switchcases + 
+                      "      case " + i + ":\n" + 
+                      "        " + nme + "Input = \"" + val + "\"\n"; 
+      }  
+      return "  @IBAction func " + nme + "Control(_ sender : Any)\n" + 
+             "  { switch " + nme + "Control.selectedSegmentIndex {\n" + 
+             switchcases + 
+             "      default: \n" + 
+             "        return\n" + 
+             "    }\n" + 
+             "  }\n\n"; 
     } 
     else 
     { return ""; } 

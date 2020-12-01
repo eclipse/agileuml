@@ -2981,6 +2981,11 @@ public class UCDArea extends JPanel
     CGSpec cgs = loadCSTL(); 
     // System.out.println(">>> Using loaded code generator: " + cgs); 
 
+    String appName = systemName; 
+    if (systemName == null || "".equals(systemName))
+    { appName = "app"; }
+
+
     CGSpec cgswiftmain = CSTL.getTemplate("cgswiftmain.cstl"); 
   
     if (cgs == null || cgswiftmain == null) 
@@ -2994,7 +2999,7 @@ public class UCDArea extends JPanel
     else 
     { dir.mkdir(); }
     
-    String mainscreenName = "MainScreen"; 
+    String mainscreenName = "ContentView"; 
     Vector operationNames = new Vector(); 
     Vector tabLabels = new Vector(); 
 
@@ -3011,6 +3016,16 @@ public class UCDArea extends JPanel
     }
     catch(Exception _dd) { } 
 
+    String appfile = appName + "App.swift"; 
+    File appappf = new File("output/swiftuiapp/" + appfile); 
+    try
+    { PrintWriter appappfile = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(appappf)));
+      IOSAppGenerator.generateSwiftUIAppScreen(appName, appappfile);
+      appappfile.close(); 
+    }
+    catch(Exception _dd) { } 
 
     boolean needsInternetPermission = false; 
     Vector customComponents = new Vector(); 
@@ -3274,7 +3289,7 @@ public class UCDArea extends JPanel
       { PrintWriter vcout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(ucvcf)));
-  	    System.out.println(">>> Writing " + ucvcf + " for " +  ucname); 
+        System.out.println(">>> Writing " + ucvcf + " for " +  ucname); 
 		
         gen.singlePageAppSwiftUI(uc,systemName,"",cgs,types,entities,vcout);
         vcout.close(); 
@@ -3316,7 +3331,7 @@ public class UCDArea extends JPanel
     if (operationNames.size() == 1)
     { mainscreenName = (String) operationNames.get(0); } 
     else 
-    { String mainscreen = "MainScreen.swift"; 
+    { String mainscreen = "ContentView.swift"; 
       File mainbeanf = new File("output/swiftuiapp/" + mainscreen); 
       try
       { PrintWriter mainout = new PrintWriter(
@@ -3399,8 +3414,8 @@ public class UCDArea extends JPanel
 		
         if (eeDAO != null) 
         { predefinedComponents.add(eeDAO); }
-          if (internetAccessor != null && !(predefinedComponents.contains(internetAccessor)))
-	     { predefinedComponents.add(internetAccessor); }
+        if (internetAccessor != null && !(predefinedComponents.contains(internetAccessor)))
+        { predefinedComponents.add(internetAccessor); }
 	  } 
 	  else if (ent.isCloud())
 	  { Entity eeDAO = (Entity) ModelElement.lookupByName(ename + "_DAO",entities); 
@@ -3503,7 +3518,7 @@ public class UCDArea extends JPanel
                               new BufferedWriter(
                                 new FileWriter(entf)));
           entfout.println("import Foundation"); 
-          entfout.println("import Glibc"); 
+          entfout.println("import Darwin"); 
           entfout.println(); 
 		  					
           ent.generateOperationDesigns(types,entities);  
@@ -3572,8 +3587,9 @@ public class UCDArea extends JPanel
     { if (useCases.get(i) instanceof UseCase)
       { UseCase uc = (UseCase) useCases.get(i);
         if (uc.isPublic() && uc.isIndependent()) 
-        { screencount++; }
-	    entusecases.add(uc);       
+        { screencount++; 
+          entusecases.add(uc);
+		}        
       } 
       else if (useCases.get(i) instanceof OperationDescription)
       { OperationDescription od = (OperationDescription) useCases.get(i); 
@@ -3590,6 +3606,17 @@ public class UCDArea extends JPanel
         } catch (Exception e) { } 
       } 
     } 
+
+    if (persistentEntities.size() > 0)
+    { File dbif = new File("output/iosapp/Dbi.swift"); 
+      try
+      { PrintWriter dbiout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(dbif)));
+        IOSAppGenerator.generateIOSDbi("",systemName,persistentEntities,useCases,dbiout);
+        dbiout.close(); 
+      } catch (Exception e) { }
+    }  
 
     String entbean = "ModelFacade.swift"; 
     File entbeanf = new File("output/iosapp/" + entbean); 
@@ -3633,8 +3660,12 @@ public class UCDArea extends JPanel
          // vcout.flush(); 
          vcout.close(); 
        } catch (Exception e) { }
+     } 
 
-
+    for (int z = 0; z < useCases.size(); z++) 
+    { if (useCases.get(z) instanceof UseCase) 
+	  { UseCase uc = (UseCase) useCases.get(z);
+	    if (uc.isPrivate()) { continue; }
       
         String ucbean = uc.getName() + "ValidationBean.swift"; 
         File ucbeanf = new File("output/iosapp/" + ucbean); 
@@ -3645,10 +3676,11 @@ public class UCDArea extends JPanel
           beanout.println(uc.generateIOSValidationBean(systemName,cgs,entities,types));
           beanout.close(); 
         } catch (Exception e) { }
-      } 
+      }
+	} 
 	  
 	  // generateSwiftUIApp(); 
-   } // validation beans for entities? 
+  } // validation beans for entities? 
   
   public void generateAndroidLayouts(PrintWriter out)
   { AndroidAppGenerator agen = new AndroidAppGenerator(); 
@@ -3768,9 +3800,9 @@ public class UCDArea extends JPanel
     if (systemName == null || "".equals(systemName))
     { systemName = "app"; }
     String packageName = "com.example." + systemName; 
-	String nestedPackageName = packageName + ".ui.main"; 
-	if (screencount <= 1)
-	{ nestedPackageName = packageName; }
+    String nestedPackageName = packageName + ".ui.main"; 
+    if (screencount <= 1)
+    { nestedPackageName = packageName; }
 	 
     String dirName = "output/" + systemName; 
     File dir = new File(dirName); 
@@ -3963,14 +3995,14 @@ public class UCDArea extends JPanel
       } catch (Exception e) { } 
 
       if (ent.isRemote()) // Remote data source
-      { ent.generateRemoteDAO(nestedPackageName); 
+      { ent.generateRemoteDAO(systemName,nestedPackageName); 
         remotecalls++; 
       } 
 
       if (ent.isCloud()) // Remote data source
-      { ent.generateRemoteDAO(nestedPackageName); 
+      { ent.generateRemoteDAO(systemName,nestedPackageName); 
 	  
-        ent.generateFirebaseDbi(nestedPackageName); 
+        ent.generateFirebaseDbi(systemName,nestedPackageName); 
 
         String entvo = ent.getName() + "VO.java"; 
         File entvof = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entvo); 
@@ -13612,7 +13644,7 @@ public void produceCUI(PrintWriter out)
 
     Vector pregens = new Vector(); 
     Vector preassocs = new Vector(); 
-	Vector pnames = new Vector(); 
+    Vector pnames = new Vector(); 
 
     Compiler2 comp = new Compiler2();  
     comp.nospacelexicalanalysis(xmlstring); 
@@ -17976,7 +18008,8 @@ public void produceCUI(PrintWriter out)
 	  System.out.println(); 
 	  
 	  modelspec.defineComposedFeatureValues(entities,types); 
-	  
+	  System.out.println(); 
+
 	  tlspecification.checkModel(modelspec,entities,types);
 	  
 	  System.out.println(">>> Enhanced specification: "); 
@@ -18728,7 +18761,7 @@ public void produceCUI(PrintWriter out)
     { Entity ent = (Entity) sources.get(i); 
       VisualData vd = getVisualOf(ent); 
       RectData rd0 = (RectData) vd; 
-      Entity fent = ent.makeFlattenedCopy(true,scdepth); 
+      Entity fent = ent.makeFlattenedCopy(true,scdepth,exact); 
 
       if (rd0 != null) 
       { RectData rd = new RectData(rd0.getx(), rd0.gety() + 400,
@@ -18747,7 +18780,7 @@ public void produceCUI(PrintWriter out)
     { Entity ent = (Entity) targets.get(i); 
       VisualData vd = getVisualOf(ent); 
       RectData rd0 = (RectData) vd; 
-      Entity fent = ent.makeFlattenedCopy(true,tcdepth); 
+      Entity fent = ent.makeFlattenedCopy(true,tcdepth,exact); 
 
       if (rd0 != null) 
       { RectData rd = new RectData(rd0.getx(), rd0.gety() + 400,
@@ -18771,7 +18804,7 @@ public void produceCUI(PrintWriter out)
     { Entity ent = (Entity) originalunused.get(i); 
       VisualData vd = getVisualOf(ent); 
       RectData rd0 = (RectData) vd; 
-      Entity fent = ent.makeFlattenedCopy(true,scdepth); 
+      Entity fent = ent.makeFlattenedCopy(true,scdepth,exact); 
 
       if (rd0 != null) 
       { RectData rd = new RectData(rd0.getx(), rd0.gety() + 400,
@@ -19135,7 +19168,7 @@ public void produceCUI(PrintWriter out)
       
       VisualData vd = getVisualOf(ent); 
       RectData rd0 = (RectData) vd; 
-      Entity fent = ent.makeFlattenedCopy(allmaps,cdepth); 
+      Entity fent = ent.makeFlattenedCopy(allmaps,cdepth,true); 
       
       if (rd0 != null) 
       { RectData rd = new RectData(rd0.getx(), rd0.gety() + 400,
@@ -19632,11 +19665,11 @@ public void produceCUI(PrintWriter out)
       Entity fent; 
 
       if (ent.isSource())
-      { fent = ent.makeFlattenedCopy(allmaps,scdepth); } 
+      { fent = ent.makeFlattenedCopy(allmaps,scdepth,exact); } 
       else if (ent.isTarget())
-      { fent = ent.makeFlattenedCopy(allmaps,tcdepth); } 
+      { fent = ent.makeFlattenedCopy(allmaps,tcdepth,exact); } 
       else 
-      { fent = ent.makeFlattenedCopy(allmaps,scdepth); } 
+      { fent = ent.makeFlattenedCopy(allmaps,scdepth,exact); } 
        
 
       if (rd0 != null) 
