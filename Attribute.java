@@ -3854,6 +3854,31 @@ public String iosExtractOp(String ent, int i)
   }
 }
 
+public String iosDbiExtractOp(String ent, int i)
+{ String allcaps = name.toUpperCase();
+  String nme = getName(); 
+ 
+  String tname = type.getName();
+  
+  if ("int".equals(tname))
+  { return "      let queryResult" + ent + "_COL" + allcaps + " = sqlite3_column_int(queryStatement, " + i + ")\n" + 
+           "      let " + nme + " = Int(queryResult" + ent + "_COL" + allcaps + ")";
+  }
+  else if ("long".equals(tname))
+  { return "      let queryResult" + ent + "_COL" + allcaps + " = sqlite3_column_int64(queryStatement, " + i + ")\n" + 
+           "      let " + nme + " = Int(queryResult" + ent + "_COL" + allcaps + ")";
+  }
+  else if ("double".equals(tname))
+  { return "      let queryResult" + ent + "_COL" + allcaps + " = sqlite3_column_double(queryStatement, " + i + ")\n" + 
+           "      let " + nme + " = Double(queryResult" + ent + "_COL" + allcaps + ")";
+  }
+  else // ("String".equals(tname))
+  { return "      guard let queryResult" + ent + "_COL" + allcaps + " = sqlite3_column_text(queryStatement, " + i + ")\n" + 
+           "      else { return res }\n" +  
+           "      let " + nme + " = String(cString: queryResult" + ent + "_COL" + allcaps + ")"; 
+  }
+}
+
 /*   public String androidExtractOp(String resultSet)
   { String res = resultSet + ".get";
     String tname = type.getName();
@@ -5058,7 +5083,7 @@ public String swiftUIEntryField(String ent, String op, Vector decs, Vector actio
                 "        Text(\"" + label + ":\").bold()\n" +
                 "        Divider()\n" +
                 "        TextField(\"" + label + "\", text: $bean." + nme + ")\n" +
-                "      }\n" + 
+                "      }.frame(width: 200, height: 30).border(Color.gray)\n" + 
                 "    \n";
 
   String res2 = ""; // declaration
@@ -5091,7 +5116,7 @@ public String swiftUIEntryField(String ent, String op, Vector decs, Vector actio
 	{ String val = (String) vals.get(i); 
 	  res1 = res1 + "        Text(\"" + val + "\").tag(" + tname + "." + val + ")\n"; 
 	} 
-	res1 = res1 + "      }\n"; 
+	res1 = res1 + "      }.frame(height: 100)\n"; 
 	// res3 = "    $bean." + nme + " = " + tname + "(rawValue: selected" + tname + ")!"; 
 	// actions.add(res3);               
   } // on button press, $bean.nme = tname(rawValue: selectedtname)!
@@ -5104,7 +5129,7 @@ public String swiftUIEntryField(String ent, String op, Vector decs, Vector actio
     { String pk = rkey.getName(); 
       res1 = 
 	    "      Picker(\"" + tname + "\", selection: $bean." + nme + ")\n" + 
-	    "      { ForEach(model.current" + rname + "s) { Text($0." + pk + ").tag($0." + pk + ") } }\n";
+	    "      { ForEach(model.current" + rname + "s) { Text($0." + pk + ").tag($0." + pk + ") } }.frame(height: 100)\n";
     }   
   } // In the value object, objects are stored as their string primary key values. 
   else if (isInteger())
@@ -5112,7 +5137,7 @@ public String swiftUIEntryField(String ent, String op, Vector decs, Vector actio
            "        Text(\"" + label + ":\").bold()\n" +
            "        Divider()\n" +
            "        TextField(\"" + label + "\", value: $bean." + nme + ", formatter: NumberFormatter()).keyboardType(.numberPad)\n" +
-           "      }\n" + 
+           "      }.frame(height: 30).border(Color.gray)\n" + 
            "    \n";
   } 
   else if (isDouble())
@@ -5120,7 +5145,7 @@ public String swiftUIEntryField(String ent, String op, Vector decs, Vector actio
            "        Text(\"" + label + ":\").bold()\n" +
            "        Divider()\n" +
            "        TextField(\"" + label + "\", value: $bean." + nme + ", formatter: NumberFormatter()).keyboardType(.decimalPad)\n" +
-           "      }\n" + 
+           "      }.frame(height: 30).border(Color.gray)\n" + 
            "    \n";
   } 
   else if (isPassword())
@@ -5128,9 +5153,34 @@ public String swiftUIEntryField(String ent, String op, Vector decs, Vector actio
            "        Text(\"" + label + ":\").bold()\n" +
            "        Divider()\n" +
            "        SecureField(\"" + label + "\", text: $bean." + nme + ")\n" +
-           "      }\n" + 
+           "      }.frame(height: 30).border(Color.gray)\n" + 
            "    \n";
   } 
+  return res1;
+}  // email, password kinds also 
+
+public String swiftUIFormInitialiser()
+{ if (type.isEntity()) { } 
+  else 
+  { return ""; } 
+
+  String attname = getName();
+  String bean = "model"; 
+  String tname = type.getName(); 
+  String res1 = ""; 
+  
+  Entity ref = type.getEntity(); 
+  String ename = ref.getName(); 
+
+  Attribute rkey = ref.getPrincipalPrimaryKey(); // must be one
+  if (rkey != null) 
+  { String pk = rkey.getName(); 
+    res1 = ".onAppear(perform:\n" + 
+           "             { let list = model.list" + ename + "()\n" + 
+           "               if list.count > 0\n" + 
+           "               { bean." + attname + " = list[0]." + pk + " }\n" + 
+           "             })\n\n";
+  }  
   return res1;
 }  // email, password kinds also 
 

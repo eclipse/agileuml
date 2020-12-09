@@ -4034,6 +4034,7 @@ public void generateCUIcode(PrintWriter out)
           "  }\n\n"; 
 
     String stringtext = "\"\""; 
+	String extrachecks = ""; 
 		  
     if (parameters.size() > 0)
     { res = res + "  init(";
@@ -4043,11 +4044,18 @@ public void generateCUIcode(PrintWriter out)
       for (int i = 0; i < parameters.size(); i++)
       { Attribute att = (Attribute) parameters.get(i);
         String tname = att.getType().getSwift();
-        if (att.isEntity())
-        { tname = "String"; }
-		
         String attname = att.getName(); 
  
+ 
+        if (att.isEntity())
+        { extrachecks = extrachecks + 
+		               "    if " + tname + "." + tname + "_index[" + attname + "] == nil\n" + 
+                       "    { errorlist.append(\"Invalid object identifier: \" + " + attname + ") }\n"; 
+	      tname = "String"; 
+		} 
+      
+		
+      
         String label = "\"" + attname + "= \" + "; 
         if (att.isNumeric())
         { label = label + "String(" + attname + ")"; }
@@ -4128,7 +4136,8 @@ public void generateCUIcode(PrintWriter out)
     // typeCheckInvariants(types,entities); 
 
     res = res + "  func is" + ucname + "error() -> Bool\n" + 
-                "  { resetData() \n";
+                "  { resetData() \n" + 
+				extrachecks;
     
 
     Vector tests = getIOSPreconditionCheckTests(cgs,parameters); 

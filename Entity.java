@@ -10704,7 +10704,7 @@ public class Entity extends ModelElement implements Comparable
     res = res + "import Darwin\n\n"; 
 	
     String ename = getName();  
-    res = res + "class " + ename + "VO : Hashable\n" + 
+    res = res + "class " + ename + "VO : Hashable, Identifiable\n" + 
           "{ \n"; 
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
@@ -10956,7 +10956,7 @@ public void iosDbiDeclarations(PrintWriter out)
   int natts = attributes.size();
 
   out.println("  static let " + ent + "_TABLE_NAME = \"" + ent + "\"");
-  out.println("  static let " + ent + "_COL_ID = 0;");
+  out.println("  static let " + ent + "_ID = 0;");
   String colnames = "\"_id\"";
   for (int x = 0; x < natts; x++)
   { Attribute att = (Attribute) attributes.get(x);
@@ -11095,10 +11095,12 @@ public void iosDbiOperations(PrintWriter out)
   out.println("    let statement = \"SELECT * FROM " + ent + " \""); 
   out.println("    let queryStatement = try? prepareStatement(sql: statement)");
   out.println("    defer "); 
-  out.println("    { sqlite3_finalize(queryStatement) }"); 
+  out.println("    { sqlite3_finalize(queryStatement)"); 
+  out.println("    }");
+  out.println("    if queryStatement == nil { return res }");  
   out.println("    "); 
   out.println("    while (sqlite3_step(queryStatement) == SQLITE_ROW)"); 
-  out.println("    { let id = sqlite3_column_int(queryStatement, 0)");
+  out.println("    { let _id = sqlite3_column_int(queryStatement, 0)");
   out.println("      var " + entlc + "vo = " + ent + "VO()");  
   for (int y = 0; y < natts; y++)
   { Attribute attx = (Attribute) attributes.get(y);
@@ -11106,7 +11108,7 @@ public void iosDbiOperations(PrintWriter out)
     attlist = attlist + anme; 
     if (y < natts-1)
     { attlist = attlist + ", "; }
-    String getop = attx.iosExtractOp(ent, y+1); 
+    String getop = attx.iosDbiExtractOp(ent, y+1); 
     out.println(getop); 
     out.println("      " + entlc + "vo.set" + anme + "(_x: " + anme + ")");
   }
@@ -11145,14 +11147,18 @@ public void iosDbiOperations(PrintWriter out)
 }
   */ 
   
-  out.println("  func create" + ent + "(" + entlc + "vo : " + ent + "VO)");
+  out.println("  func create" + ent + "(" + entlc + "vo : " + ent + "VO) throws");
   String arguments = ""; 
   String values = ""; 
   for (int z = 0; z < natts; z++)
   { Attribute att = (Attribute) attributes.get(z);
     String nmeatt = att.getName();   
     arguments = arguments + nmeatt;
-    values = values + entlc + "vo.get" + nmeatt + "()";  
+	if (att.isNumeric())
+	{ values = values + "String(" + entlc + "vo.get" + nmeatt + "())"; }
+    else 
+	{ values = values + "\"'\" + " + entlc + "vo.get" + nmeatt + "() + \"'\""; } 
+	  
     if (z < natts-1) 
     { arguments = arguments + ", "; 
       values = values + " + \",\" + "; 
@@ -11162,7 +11168,8 @@ public void iosDbiOperations(PrintWriter out)
   out.println("      " + values + " + \")\""); 
   out.println("    let insertStatement = try prepareStatement(sql: insertSQL)"); 
   out.println("    defer "); 
-  out.println("    { sqlite3_finalize(insertStatement) }");
+  out.println("    { sqlite3_finalize(insertStatement)"); 
+  out.println("    }");
   out.println("    sqlite3_step(insertStatement)");  
   out.println("  }");
   out.println();
@@ -11193,11 +11200,17 @@ public void iosDbiOperations(PrintWriter out)
   { Attribute att = (Attribute) attributes.get(k);  
     String attname = att.getName();  
     Type atype = att.getType(); 
-    String swifttype = atype.getSwift(); 
+    String swifttype = atype.getSwift();
+	String finder = "";  
+	if (att.isNumeric())
+	{ finder = "String(_val)"; }
+	else 
+	{ finder = "\"'\" + _val + \"'\""; }
+	
     out.println();
     out.println("  func searchBy" + ent + attname + "(_val : " + swifttype + ") -> [" + ent + "VO]");
     out.println("  { var res : [" + ent + "VO] = [" + ent + "VO]()");
-    out.println("    let statement : String = \"SELECT * FROM " + ent + " WHERE " + attname + " = \" + String(_val)"); 
+    out.println("    let statement : String = \"SELECT * FROM " + ent + " WHERE " + attname + " = \" + " + finder); 
     out.println("    let queryStatement = try? prepareStatement(sql: statement)");
     out.println("    defer "); 
     out.println("    { sqlite3_finalize(queryStatement) }"); 
@@ -11211,7 +11224,7 @@ public void iosDbiOperations(PrintWriter out)
       attlist = attlist + anme; 
       if (y < natts-1)
       { attlist = attlist + ", "; }
-      String getop = attx.iosExtractOp(ent, y+1); 
+      String getop = attx.iosDbiExtractOp(ent, y+1); 
       out.println(getop); 
       out.println("      " + entlc + "vo.set" + anme + "(_x: " + anme + ")");
     }
@@ -11235,15 +11248,23 @@ public void iosDbiOperations(PrintWriter out)
     String nmeatt = att.getName();   
     Type atype = att.getType(); 
     String swifttype = atype.getSwift(); 
-    columnsettings = columnsettings + 
-       "      \" " + nmeatt + " = \" + " + 
-       entlc + "vo.get" + nmeatt + "() + \""; 
+    if (att.isNumeric())
+	{ columnsettings = columnsettings + 
+       "      \" " + nmeatt + " = \" + String(" + 
+       entlc + "vo.get" + nmeatt + "()) + \""; 
+	} 
+	else 
+	{ columnsettings = columnsettings + 
+       "      \" " + nmeatt + " = '\" + " + 
+       entlc + "vo.get" + nmeatt + "() + \"'"; 
+	} 
+	
     if (z < natts-1) 
     { columnsettings = columnsettings + " ,\" +\n"; } 
   }
   
   out.println("    let statement : String = \"UPDATE " + ent + " SET \" + "); 
-  out.println(columnsettings + " WHERE " + entId + " = \" + " + entlc + "vo.get" + entId + "()"); 
+  out.println(columnsettings + " WHERE " + entId + " = '\" + " + entlc + "vo.get" + entId + "() + \"'\""); 
   out.println("    if sqlite3_prepare_v2(dbPointer, statement, -1, &updateStatement, nil) == SQLITE_OK"); 
   out.println("    { sqlite3_step(updateStatement) }"); 
   out.println("    sqlite3_finalize(updateStatement)"); 
@@ -11276,7 +11297,7 @@ public void iosDbiOperations(PrintWriter out)
 } */ 
 
   out.println("  func delete" + ent + "(_val : String)"); 
-  out.println("  { let deleteStatementString = \"DELETE " + ent + " WHERE " + entId + " = \" + _val"); 
+  out.println("  { let deleteStatementString = \"DELETE " + ent + " WHERE " + entId + " = '\" + _val + \"'\""); 
   out.println("    var deleteStatement: OpaquePointer?"); 
   out.println("    if sqlite3_prepare_v2(dbPointer, deleteStatementString, -1, &deleteStatement, nil) == SQLITE_OK"); 
   out.println("    { sqlite3_step(deleteStatement) }");
@@ -14241,20 +14262,20 @@ public BehaviouralFeature designAbstractKillOp()
       out.println("{ static var instance : FirebaseDbi? = nil");  
       out.println("  var database : DatabaseReference? = nil");  
       out.println(); 
-      out.println("  func getInstance() -> FirebaseDbi"); 
+      out.println("  static func getInstance() -> FirebaseDbi"); 
       out.println("  { if instance == nil"); 
       out.println("    { instance = FirebaseDbi() }"); 
       out.println("    return instance!");  
       out.println("  }");
-	  out.println(""); 
-	  out.println("  init()"); 
+      out.println(""); 
+      out.println("  init()"); 
       out.println("  { self.database = Database.database().reference()"); 
       out.println("    self.database?.child(\"" + es + "\").observe(.value,"); 
       out.println("      with:");
       out.println("      { (change) in");
       out.println("        if let d = change.value as? [String : AnyObject]");
       out.println("        { for (_,v) in d.enumerated()");
-      out.println("          { let _einst = v.1 as! Dictionary<String,AnyObject>");
+      out.println("          { let _einst = v.1 as! [String : AnyObject]");
       out.println("            var _ex : " + ename + "? = " + ename + "_DAO.parseJSON(obj: _einst)");  
       out.println("          }"); 
       out.println("        }"); 
@@ -14271,8 +14292,8 @@ public BehaviouralFeature designAbstractKillOp()
       out.println("  { if let oldChild = self.database?.child(\"" + es + "\").child(ex." + key + ")"); 
 	  out.println("    { oldChild.removeValue() }"); 
       out.println("  }"); 
-	  out.println("}"); 
-	  out.close(); 
+      out.println("}"); 
+      out.close(); 
     } catch (Exception _ex) { } 
   } 
 
@@ -14405,14 +14426,14 @@ public BehaviouralFeature designAbstractKillOp()
     if (pk == null) { return ""; }
     String pkname = pk.getName(); 
 	
-    String res = "  static func parseJSON(obj : AnyObject?) -> " + ename + "?\n" + 
-                 "  { if (obj == nil) { return nil }\n" + 
+    String res = "  static func parseJSON(obj : [String : AnyObject]?) -> " + ename + "?\n" + 
+                 "  { // if (obj == nil) { return nil }\n" + 
                  "\n" + 
-                 "    if let jsonObj = obj as? [String : AnyObject]\n" + 
+                 "    if let jsonObj = obj\n" + 
                  "    { let " + pkname + " : String? = jsonObj[\"" + pkname + "\"] as! String?\n" + 
                  "      var " + x + " : " + ename + "? = " + ename + "." + ename + "_index[" + pkname + "!]\n" +  
                  "      if (" + x + " == nil)\n" + 
-				 "      { " + x + " = " + ename + ".createByPK" + ename + "(key: " + pkname + "!) }\n" + 
+                 "      { " + x + " = " + ename + ".createByPK" + ename + "(key: " + pkname + "!) }\n" + 
                  "      \n"; 
 				 
     for (int i = 0; i < attributes.size(); i++) 
@@ -14425,7 +14446,7 @@ public BehaviouralFeature designAbstractKillOp()
       
     res = res +   "      return " + x + "!\n" + 
                   "    }\n" + 
-				  "    return nil\n" + 
+                  "    return nil\n" + 
                   "  }\n\n"; 
     return res; 
   } // But booleans and enums are stored as strings. 
@@ -14491,7 +14512,7 @@ public BehaviouralFeature designAbstractKillOp()
     String res = "  static func isCached(id : String) -> Bool\n" + 
                  "  { let _x : " + ename + "? = " + ename + "." + ename + "_index[id]\n" +  
                  "    if _x == nil \n" + 
-				 "    { return false }\n" + 
+                 "    { return false }\n" + 
                  "    return true\n" +  
                  "  }\n\n"; 
     return res; 
@@ -14549,7 +14570,7 @@ public BehaviouralFeature designAbstractKillOp()
     out.println(); 
     out.println("struct " + swiftname + ": View"); 
     out.println("{ var instance : " + ename + "VO");
-    out.println("  @ObservedObject model : ModelFacade = ModelFacade.getInstance()"); 
+    out.println("  @ObservedObject var model : ModelFacade = ModelFacade.getInstance()"); 
     out.println();  
     out.println("  var body: some View"); 
     out.println("  { HStack {"); 
@@ -14567,9 +14588,9 @@ public BehaviouralFeature designAbstractKillOp()
     out.println("  }");  
     out.println("}");
     out.println(); 
-    out.println("struct ContentView_Previews: PreviewProvider {"); 
+    out.println("struct " + swiftname + "_Previews: PreviewProvider {"); 
     out.println("  static var previews: some View {"); 
-    out.println("    " + swiftname + "(instance: " + ename + "VO(" + ename + "_allInstances[0]))"); 
+    out.println("    " + swiftname + "(instance: " + ename + "VO(_x: " + ename + "_allInstances[0]))"); 
     out.println("  }"); 
     out.println("}"); 
   }  
@@ -14581,24 +14602,24 @@ public BehaviouralFeature designAbstractKillOp()
     Attribute key = principalUniqueAttribute(); 
     if (key == null) 
     { System.err.println(">>> Entity " + ename + " must have an identity String-valued attribute"); 
-	  return; 
+      return; 
     }
     String pk = key.getName(); 
 	
     out.println("import SwiftUI"); 
     out.println(); 
     out.println("struct " + swiftname + ": View"); 
-    out.println("{ @ObservedObject model : ModelFacade = ModelFacade.getInstance()"); 
-	out.println(); 
-	out.println("  var body: some View"); 
-    out.println("  { List(model.current" + ename + "s, id: ./" + pk + ")"); 
+    out.println("{ @ObservedObject var model : ModelFacade = ModelFacade.getInstance()"); 
+    out.println(); 
+    out.println("  var body: some View"); 
+    out.println("  { List(model.current" + ename + "s)"); 
     out.println("    { instance in " + rowname + "(instance: instance) }"); 
-    out.println("  }.onAppear { model.list" + ename + "() }");  
+    out.println("  }.onAppear(perform: { model.list" + ename + "() })");  
     out.println("}");
     out.println(); 
-    out.println("struct ContentView_Previews: PreviewProvider {"); 
+    out.println("struct " + swiftname + "_Previews: PreviewProvider {"); 
     out.println("  static var previews: some View {"); 
-    out.println("    " + swiftname + "()"); 
+    out.println("    " + swiftname + "(model: ModelFacade.getInstance())"); 
     out.println("  }"); 
     out.println("}"); 
   }  

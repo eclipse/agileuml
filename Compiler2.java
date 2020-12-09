@@ -6789,7 +6789,10 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 	   c0.nospacelexicalanalysis(xstring); 
 	   NLPSentence xres = c0.parseNLP();
 	   if (xres != null) 
-	   { km3model = xres.getKM3(mes); } 
+	   { xres.indexing(); 
+	     System.out.println(">>> Sentence " + (i+1) + ": " + xres); 
+		 km3model = xres.getKM3(mes); 
+	   } 
 	 } 	 
 	     
 	String outfile = "mm.km3"; 

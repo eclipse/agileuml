@@ -3001,7 +3001,8 @@ public class UCDArea extends JPanel
     
     String mainscreenName = "ContentView"; 
     Vector operationNames = new Vector(); 
-    Vector tabLabels = new Vector(); 
+    Vector tabLabels = new Vector();
+    Vector pods = new Vector();  
 
     int screencount = 0; 
 
@@ -3057,15 +3058,19 @@ public class UCDArea extends JPanel
 	    { predefinedComponents.add(internetAccessor); }
 	  } 
 	  else if (ent.isCloud())
-	  { Entity eeDAO = (Entity) ModelElement.lookupByName(ename + "_DAO",entities); 
-	    Entity cloudAccessor = (Entity) ModelElement.lookupByName("FirebaseDbi",entities);
-	    needsInternetPermission = true; 
+       { Entity eeDAO = (Entity) ModelElement.lookupByName(ename + "_DAO",entities); 
+         Entity cloudAccessor = (Entity) ModelElement.lookupByName("FirebaseDbi",entities);
+         needsInternetPermission = true; 
 	    
-	    if (eeDAO != null) 
-	    { predefinedComponents.add(eeDAO); }
-	    if (cloudAccessor != null && !(predefinedComponents.contains(cloudAccessor)))
-	    { predefinedComponents.add(cloudAccessor); }
-	    clouds.add(ent); 
+         if (eeDAO != null) 
+         { predefinedComponents.add(eeDAO); }
+
+         if (cloudAccessor != null && !(predefinedComponents.contains(cloudAccessor)))
+         { predefinedComponents.add(cloudAccessor); }
+         clouds.add(ent);
+ 
+         pods.add("Firebase/Auth"); 
+         pods.add("Firebase/Database"); 
       }
       else if (ent.isPersistent())
       { persistentEntities.add(ent); } 
@@ -3195,7 +3200,18 @@ public class UCDArea extends JPanel
       }
     }   
 
-
+    if (pods.size() > 0) 
+    { try
+      { String podfile = "Podfile"; 
+        File podf = new File("output/swiftuiapp/" + podfile); 
+        PrintWriter podout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(podf)));
+        IOSAppGenerator.generatePodfile(podout,appName,pods); 
+        podout.close(); 
+      } 
+      catch (Exception pe) { } 
+    } 
 
     for (int j = 0; j < types.size(); j++) 
     { Type typ = (Type) types.get(j);
@@ -3233,6 +3249,8 @@ public class UCDArea extends JPanel
         { tabLabels.add("+" + ename); } 
         else if (nme.equals("delete" + ename))
         { tabLabels.add("-" + ename); } 
+        else if (nme.startsWith("searchBy"))
+        { tabLabels.add(ename + "?" + od.getStereotype(1)); } 
         else 
         { tabLabels.add(Named.capitalise(nme)); }  
 

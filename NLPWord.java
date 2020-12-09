@@ -13,10 +13,22 @@ public class NLPWord extends NLPPhraseElement
   }
 
   public String toString()
-  { return "(" + tag + " " + text + ")"; }  
+  { return "(" + tag + " " + text + ")_" + index; }  
+
+  public int indexing(int st) 
+  { index = st; 
+    return index + 1; 
+  } 
+
+  public Vector sequentialise() 
+  { Vector res = new Vector(); 
+    res.add(this); 
+    return res; 
+  } 
 
   public boolean isKeyword() 
   { return text.equals("integer") || text.equals("numeric") || 
+           text.equals("set") || text.equals("sequence") || 
            text.equals("real"); 
   } 
 
@@ -34,6 +46,37 @@ public class NLPWord extends NLPPhraseElement
     return false; 
   } 
 
+  public boolean isNounPhraseWord()
+  { if (tag.equals("DT") || tag.equals("PDT") || 
+        tag.equals("NNPS") || tag.equals("WDT") ||
+        tag.equals("WH") || tag.equals("FW") ||
+        tag.equals("JJR") || 
+        tag.equals("CD") || tag.equals("NNS") || 
+        tag.equals("_LS") || tag.equals("JJS") ||
+        tag.equals("NN") || tag.equals("NNP") || 
+        tag.equals("JJ") || tag.equals("PRP") || 
+        tag.equals("PRP$") || tag.equals("WP$"))
+    { return true; } 
+    return false; 
+  } 
+  
+  public boolean isVerbPhraseWord()
+  { if (text.startsWith("store") || text.startsWith("record") ||
+        tag.equals("VB") || tag.equals("VBZ") || tag.equals("TO") || tag.equals("VBG") || 
+        tag.equals("MD") || tag.equals("IN") || tag.equals("VBD") ||
+	    tag.equals("VBN") || tag.equals("VBP") || tag.equals("RB") || tag.equals("WRB") || 
+		tag.equals("EX"))
+    { return true; }
+	return false; 
+  }
+  
+  public boolean isConjunctionWord()
+  { if (tag.equals("IN") || tag.equals("CC"))
+    { return true; }
+	return false; 
+  }
+
+
   public String formQualifier()
   { return text; } 
   // but not for punctuation, etc. 
@@ -46,7 +89,7 @@ public class NLPWord extends NLPPhraseElement
     return text; 
   } 
 
-  public static Type identifyType(Vector quals)
+  public static Type identifyType(String text, Vector quals)
   { Type res = null; 
     for (int i = 0; i < quals.size(); i++) 
     { String wd = (String) quals.get(i); 
@@ -62,10 +105,21 @@ public class NLPWord extends NLPPhraseElement
     } 
 
     if (res == null) 
-    { res = new Type("String", null); } 
+    { if ("age".equals(text) || "weight".equals(text) || 
+          "height".equals(text) || "time".equals(text) || 
+          "years".equals(text) || "longitude".equals(text) || 
+          "latitude".equals(text) || "altitude".equals(text) || 
+          "duration".equals(text) || "distance".equals(text) || 
+          "velocity".equals(text) || "acceleration".equals(text) || "depth".equals(text))
+      { res = new Type("double", null); } 
+      else if ("year".equals(text))
+      { res = new Type("int", null); } 
+      else 
+      { res = new Type("String", null); } 
+    } 
 
     return res; 
-  } 
+  } // but nouns such as age, year are always numeric. 
 
   public static void identifyStereotypes(Attribute att, Vector quals)
   { for (int i = 0; i < quals.size(); i++) 

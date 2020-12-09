@@ -37,8 +37,10 @@ public class IOSAppGenerator extends AppGenerator
 	
     out.println("{ static var instance : ModelFacade? = nil");
     out.println("  var fileSystem : FileAccessor = FileAccessor()");
-    // if e is persistent, include a Dbi
-    out.println(); 
+    out.println("  // if some class is persistent, include a Dbi:"); 
+    out.println("  // var dbi : Dbi?");
+	out.println("  // let dbpath : String = absolute path of app.db");  
+	out.println(); 
     
     boolean hasCloud = false; 
     if (clouds.size() > 0)
@@ -83,11 +85,11 @@ public class IOSAppGenerator extends AppGenerator
 
     for (int i = 0; i < persistentEntities.size(); i++) 
     { Entity ent = (Entity) persistentEntities.get(i); 
-	 if (ent.isDerived()) { } 
-	 else if (ent.isComponent()) { } 
-	 else 
-	 { String ename = ent.getName(); 
-	   out.println("  var current" + ename + " : " + ename + "VO? = nil"); 
+      if (ent.isDerived()) { } 
+      else if (ent.isComponent()) { } 
+      else 
+	  { String ename = ent.getName(); 
+        out.println("  var current" + ename + " : " + ename + "VO? = nil"); 
         out.println(); 
         out.println("  var current" + 
 		            ename + "s : [" + ename + "VO] = [" + ename + "VO]()");
@@ -110,7 +112,10 @@ public class IOSAppGenerator extends AppGenerator
    } 
 
    out.println(); 
-   out.println("  init() { }"); 
+   out.println("  init()"); 
+   out.println("  { ");
+   out.println("    // dbi = Dbi.obtainDatabase(path: dbpath)"); 
+   out.println("  }");  
    out.println(); 
 	   
     for (int y = 0; y < usecases.size(); y++)
@@ -162,9 +167,13 @@ public class IOSAppGenerator extends AppGenerator
 	  
       Vector atts = ee.getAttributes(); 
       String item = ee.getName(); 
+	  String itemvo = item.toLowerCase() + "vo"; 
     
       out.println("  func list" + item + "() -> [" + item + "VO]"); 
-      out.println("  { // current" + item + "s = dbi.list" + item + "()");
+      out.println("  { // if dbi != nil"); 
+      out.println("    // { current" + item + "s = (dbi?.list" + item + "())!"); 
+      out.println("    //   return current" + item + "s"); 
+      out.println("    // }"); 
       out.println("    current" + item + "s = [" + item + "VO]()"); 
       out.println("    let _list : [" + item + "] = " + item + "_allInstances"); 
       out.println("    for (_,x) in _list.enumerated()"); 
@@ -174,7 +183,7 @@ public class IOSAppGenerator extends AppGenerator
       out.println(); 
 
       out.println("  func stringList" + item + "() -> [String]"); 
-      out.println("  { // current" + item + "s = dbi.list" + item + "()"); 
+      out.println("  { current" + item + "s = list" + item + "()"); 
       out.println("    var _res : [String] = [String]()"); 
       out.println("    for (_,x) in current" + item + "s.enumerated()"); 
       out.println("    { _res.append(x.toString()) }"); 
@@ -187,7 +196,10 @@ public class IOSAppGenerator extends AppGenerator
         String attname = byatt.getName(); 
         String intype = byatt.getType().getSwift(); 
         out.println("  func searchBy" + item + attname + "(_val : " + intype + ") -> [" + item + "VO]"); 
-        out.println("  { // current" + item + "s = dbi.list" + item + "()");
+        out.println("  { // if dbi != nil"); 
+        out.println("    // { let _res = (dbi?.searchBy" + item + attname + "(_val: _val))!");
+        out.println("    //   return _res"); 
+		out.println("    // }"); 
         out.println("    current" + item + "s = [" + item + "VO]()"); 
         out.println("    let _list : [" + item + "] = " + item + "_allInstances"); 
         out.println("    for (_,x) in _list.enumerated()"); 
@@ -205,11 +217,22 @@ public class IOSAppGenerator extends AppGenerator
       { String pk = key.getName(); 
         out.println("  func get" + item + "ByPK(_val : String) -> " + item + "?"); 
         out.println("  { let _res : " + item + "? = " + item + ".getByPK" + item + "(index: _val)"); 
+		out.println("    // if _res == nil && dbi != nil"); 
+		out.println("    // { let _list = dbi.searchBy" + item + pk + "(_val: _val) ");
+		out.println("    //   if _list.count > 0"); 
+		out.println("    //   { _res = createByPK" + item + "(key: _val)"); 
+        for (int i = 0; i < atts.size(); i++) 
+        { Attribute att = (Attribute) atts.get(i);
+          String attname = att.getName();  
+          out.println("    //     _res!." + attname + " = _list[0]." + attname); 
+        } 
+		out.println("    //   }"); 
+		out.println("    // }"); 
         out.println("    return _res");  
         out.println("  }"); 
         out.println();
 		out.println("  func retrieve" + item + "(_val : String) -> " + item + "?"); 
-        out.println("  { let _res : " + item + "? = " + item + ".getByPK" + item + "(index: _val)"); 
+        out.println("  { let _res : " + item + "? = get" + item + "ByPK(_val: _val)"); 
         out.println("    return _res");  
         out.println("  }"); 
         out.println(); 
@@ -247,16 +270,18 @@ public class IOSAppGenerator extends AppGenerator
         } 
         out.println("    }");
         out.println("    current" + item + " = _x"); 
+        out.println("    // do { try dbi?.edit" + item + "(" + itemvo + ": _x) }"); 
+        out.println("    // catch { print(\"Error editing " + item + "\") }"); 
         out.println("  }"); 
         out.println();
-	 } 
-       else 
-       { out.println("  func edit" + item + "(_x : " + item + "VO)"); 
-         out.println("  { // dbi.edit" + item + "(_x) "); 
-         out.println("    current" + item + " = _x"); 
-         out.println("  }"); 
-         out.println();
-       } 
+      } 
+      else 
+      { out.println("  func edit" + item + "(_x : " + item + "VO)"); 
+        out.println("  { "); 
+        out.println("    current" + item + " = _x"); 
+        out.println("  }"); 
+        out.println();
+      } 
 	  
        if (key != null) 
        { String pk = key.getName(); 
@@ -268,6 +293,8 @@ public class IOSAppGenerator extends AppGenerator
            out.println("    _res." + attname + " = _x." + attname); 
          } 
          out.println("    current" + item + " = _x"); 
+         out.println("    // do { try dbi?.create" + item + "(" + itemvo + ": _x) }"); 
+         out.println("    // catch { print(\"Error creating " + item + "\") }"); 
          out.println("  }"); 
          out.println();
        } 
@@ -280,8 +307,10 @@ public class IOSAppGenerator extends AppGenerator
 	   } 
 	  
        out.println("  func delete" + item + "(_id : String)"); 
-       out.println("  { // dbi.delete" + item + "(_id)");  
+       out.println("  { // if dbi != nil"); 
+	   out.println("    // { dbi!.delete" + item + "(_val: _id) }");  
        out.println("    current" + item + " = nil"); 
+	   out.println("    kill" + item + "(key: _id)"); 
        out.println("  }");
 	   out.println();  
      }  
@@ -444,7 +473,8 @@ public class IOSAppGenerator extends AppGenerator
     out.println("  static func getInstance() -> ModelFacade"); 
     out.println("  { if instance == nil"); 
     out.println("    { instance = ModelFacade() }"); 
-    out.println("    return instance! }"); 
+    out.println("    return instance!"); 
+	out.println("  }"); 
     out.println(); 
 
     if (needsMap) 
@@ -476,7 +506,7 @@ public class IOSAppGenerator extends AppGenerator
 	  out.println("    markerClicked(label: annotation.title, location: MapLocation(latitudex: coord.latitude, longitudex: coord.longitude))"); 
 	  out.println("  }"); 
       out.println(); 
-       } 
+    } 
 
 	Vector persistentEntities = new Vector(); 
 	persistentEntities.addAll(entities); 
@@ -556,7 +586,7 @@ public class IOSAppGenerator extends AppGenerator
       if (res != null && "WebDisplay".equals(res.getType().getName())) 
       { out.println("    let result : WebDisplay = WebDisplay()"); } 
       else if (res != null && "ImageDisplay".equals(res.getType().getName())) 
-      { out.println("    var result : ImageDisplay = ImageDisplay()"); } 
+      { out.println("    let result : ImageDisplay = ImageDisplay()"); } 
 	  else if (res != null && "GraphDisplay".equals(res.getType().getName())) 
       { out.println("    var result : GraphDisplay = GraphDisplay()"); } 
       else if (res != null) 
@@ -566,7 +596,9 @@ public class IOSAppGenerator extends AppGenerator
 
       if (uc.isPublic())
       { out.println("    if _x.is" + ucname + "error()"); 
-        out.println("    { return " + restext + " }");
+        out.println("    { print(\"Error in data: \" + _x.errors())"); 
+		out.println("      return " + restext); 
+		out.println("    }");
       // _x.result is undefined.
  
         out.println(partext); 
@@ -576,15 +608,15 @@ public class IOSAppGenerator extends AppGenerator
       cgs.displayText(uccode,out);      
 
       if (uc.isPublic())
-	  { if (res != null) 
+      { if (res != null) 
         { // out.println("    _x.setresult(_x: result)"); 
           out.println("    return result"); 
         }
-	  } 
-	  else 
-	  { if (res != null) 
+      } 
+      else 
+      { if (res != null) 
         { out.println("    return result"); }
-	  } 
+      } 
 
       out.println("  }");
       out.println(); 
@@ -725,7 +757,8 @@ public class IOSAppGenerator extends AppGenerator
 	  
        out.println("  func delete" + item + "(_id : String)"); 
        out.println("  { // dbi.delete" + item + "(_id)");  
-       out.println("    current" + item + " = nil"); 
+       out.println("    // current" + item + " = nil");
+	   out.println("    kill" + item + "(key: _id)");
        out.println("  }");
 	   out.println();
 	   out.println("  func persist" + item + "(_x: " + item + ") { }"); 
@@ -840,7 +873,7 @@ public class IOSAppGenerator extends AppGenerator
        out.println("  func delete" + item + "(_id : String)"); 
        out.println("  { if let _obj = get" + item + "ByPK(_val: _id)"); 
        out.println("    { cdbi.delete" + item + "(ex: _obj) }"); 
-       out.println("    current" + item + " = nil"); 
+       out.println("    // current" + item + " = nil"); 
        out.println("  }");
        out.println();   
      } 
@@ -1449,9 +1482,11 @@ public class IOSAppGenerator extends AppGenerator
     String validationBean = ucname + "ValidationBean"; 
     // String evocreate = createVOStatement(e,atts);
     String validator = ucname + "Validator";
-	String resultVar = ucname + "Result"; 
-	if (res != null) 
-	{ restype = res.getType().getSwift(); } 
+    String resultVar = ucname + "Result"; 
+    String initialiser = ""; 
+	
+    if (res != null) 
+    { restype = res.getType().getSwift(); } 
 	
     String label = Named.capitalise(ucname);
     String opbean = ucname + "VO"; // The VO also provides validation checks
@@ -1462,6 +1497,7 @@ public class IOSAppGenerator extends AppGenerator
     for (int x = 0; x < atts.size(); x++)
     { Attribute att = (Attribute) atts.get(x);
       formfields = formfields + att.swiftUIEntryField(ucname,op,extradeclarations,extraactions);
+      initialiser = initialiser + att.swiftUIFormInitialiser(); 
     }
     
     out.println("import SwiftUI");
@@ -1478,17 +1514,17 @@ public class IOSAppGenerator extends AppGenerator
     out.println(formfields); 
     out.println("      HStack(spacing: 20) ");
     out.println("      { Button(action: { self.model.cancel" + op + "() } ) { Text(\"Cancel\") }");
-	if (res != null)  
+    if (res != null)  
     { out.println("        Button(action: { " + resultVar + " = self.model." + op + "(_x: bean) } ) { Text(\"" + label + "\") }"); } 
-	else 
-	{ out.println("        Button(action: { self.model." + op + "(_x: bean) } ) { Text(\"" + label + "\") }"); } 
+     else 
+     { out.println("        Button(action: { self.model." + op + "(_x: bean) } ) { Text(\"" + label + "\") }"); } 
 	
-    out.println("      }.buttonStyle(PlainButtonStyle())"); 
+    out.println("      }.buttonStyle(DefaultButtonStyle())"); 
 
     if (res != null && "WebDisplay".equals(res.getType().getName()))
-    { out.println("      WebView(request: URLRequest(string: " + resultVar + ".url))"); } 
+    { out.println("      WebView(request: URLRequest(url: URL(string: " + resultVar + ".url)!)).frame(width: 200).border(Color.gray)"); } 
     else if (res != null && "ImageDisplay".equals(res.getType().getName()))
-    { out.println("      Image(" + resultVar + ".imageName)"); } 
+    { out.println("      Image(" + resultVar + ".imageName).frame(width: 150).border(Color.gray)"); } 
     else if (res != null && "GraphDisplay".equals(res.getType().getName()))
     { out.println("      GraphDisplayView(graph: " + resultVar + ")"); } 
     else if (res != null) 
@@ -1497,7 +1533,7 @@ public class IOSAppGenerator extends AppGenerator
       out.println("        Text(String(" + resultVar + "))");
       out.println("      }"); 
     } 
-    out.println("    }.padding(.top)");
+    out.println("    }.padding(.top)" + initialiser);
     out.println("  }");
     out.println("}");
   }
@@ -2011,17 +2047,17 @@ public static void generateIOSFileAccessor(PrintWriter out)
   out.println("{");
   out.println("  init() { }"); 
   out.println(""); 
-  out.println("  func createFile(filename : String) ");
+  out.println("  static func createFile(filename : String) ");
   out.println("  { let fm = FileManager.default");
   out.println("    do");
   out.println("    { let path = try fm.url(for: .documentDirectory, in: .allDomainsMask, appropriateFor: nil, create: false)");
   out.println("      let furl = path.appendingPathComponent(filename)");
   out.println("      try \"\".write(to: furl, atomically: true, encoding: .utf8)");
   out.println("    }");
-  out.println("    catch { }");
+  out.println("    catch { print(\"Unable to create file \" + filename); }");
   out.println("  }");
   out.println("");
-  out.println("  func fileExists(filename : String) -> Bool ");
+  out.println("  static func fileExists(filename : String) -> Bool ");
   out.println("  { let filemgr = FileManager.default");
   out.println("    let dirPaths = filemgr.urls(for: .documentDirectory, in: .userDomainMask) ");
   out.println("    let docsDir = dirPaths[0]");
@@ -2035,7 +2071,12 @@ public static void generateIOSFileAccessor(PrintWriter out)
   out.println("    return filemgr.fileExists(atPath: pathtext) ");
   out.println("  }");
   out.println("");
-  out.println("  func fileIsWritable(filename : String) -> Bool");
+  out.println("  static func fileExistsAbsolutePath(filename : String) -> Bool ");
+  out.println("  { let filemgr = FileManager.default");
+  out.println("    return filemgr.fileExists(atPath: filename) ");
+  out.println("  }");
+  out.println(); 
+  out.println("  static func fileIsWritable(filename : String) -> Bool");
   out.println("  { let filemgr = FileManager.default");
   out.println("    let dirPaths = filemgr.urls(for: .documentDirectory, in: .userDomainMask) ");
   out.println("    let docsDir = dirPaths[0]");
@@ -2049,7 +2090,7 @@ public static void generateIOSFileAccessor(PrintWriter out)
   out.println("    return filemgr.isWritableFile(atPath: pathtext) ");
   out.println("  }");
   out.println("");
-  out.println("  func deleteFile(filename : String) -> String");  
+  out.println("  static func deleteFile(filename : String) -> String");  
   out.println("  { let filemgr = FileManager.default");
   out.println("    let dirPaths = filemgr.urls(for: .documentDirectory, in: .userDomainMask) ");
   out.println("    let docsDir = dirPaths[0]");
@@ -2068,44 +2109,44 @@ public static void generateIOSFileAccessor(PrintWriter out)
   out.println("    { return \"Error: \" + error.localizedDescription }");
   out.println("  }");
   out.println("  ");
-  out.println("   func readFile(filename : String) -> [String]");
-  out.println("    { var res : [String] = [String]()");
-  out.println("      let filemgr = FileManager.default");
-  out.println("      let dirPaths = filemgr.urls(for: .documentDirectory, in: .userDomainMask) ");
-  out.println("      let docsDir = dirPaths[0]");
-  out.println("      let path = docsDir.appendingPathComponent(filename)");
-  out.println("      do");
-  out.println("      { let text = ");
+  out.println("  static func readFile(filename : String) -> [String]");
+  out.println("  { var res : [String] = [String]()");
+  out.println("    let filemgr = FileManager.default");
+  out.println("    let dirPaths = filemgr.urls(for: .documentDirectory, in: .userDomainMask) ");
+  out.println("    let docsDir = dirPaths[0]");
+  out.println("    let path = docsDir.appendingPathComponent(filename)");
+  out.println("    do");
+  out.println("    { let text = ");
   out.println("          try String(contentsOf: path, encoding: .utf8)");
-  out.println("        res = Ocl.toLineSequence(str: text)");
-  out.println("        return res");
-  out.println("      }");
-  out.println("      catch { return res } ");
+  out.println("      res = Ocl.toLineSequence(str: text)");
+  out.println("      return res");
   out.println("    }");
+  out.println("    catch { return res } ");
+  out.println("  }");
   out.println("  ");
-  out.println("    func writeFile(filename : String, contents : [String])");
-  out.println("    { var text : String = \"\"");
-  out.println("      let filemgr = FileManager.default");
-  out.println("      let dirPaths = filemgr.urls(for: .documentDirectory, in: .userDomainMask) ");
-  out.println("      let docsDir = dirPaths[0]");
-  out.println("      let path = docsDir.appendingPathComponent(filename)");
-  out.println("      for s in contents");
-  out.println("      { text = text + s + \"\\n\" } ");
+  out.println("  static func writeFile(filename : String, contents : [String])");
+  out.println("  { var text : String = \"\"");
+  out.println("    let filemgr = FileManager.default");
+  out.println("    let dirPaths = filemgr.urls(for: .documentDirectory, in: .userDomainMask) ");
+  out.println("    let docsDir = dirPaths[0]");
+  out.println("    let path = docsDir.appendingPathComponent(filename)");
+  out.println("    for s in contents");
+  out.println("    { text = text + s + \"\\n\" } ");
   out.println(); 
-  out.println("      do"); 
-  out.println("      { let pathtext ="); 
+  out.println("    do"); 
+  out.println("    { let pathtext ="); 
   out.println("          try String(contentsOf: path, encoding: .utf8)"); 
   out.println(); 
-  out.println("        let file: FileHandle? = FileHandle(forUpdatingAtPath: pathtext) ");
-  out.println("        if file != nil ");
-  out.println("        { let data = (text as NSString).data(using: String.Encoding.utf8.rawValue)");
-  out.println("          file?.write(data!) ");
-  out.println("          file?.closeFile() ");
-  out.println("        }");
-  out.println("      }"); 
-  out.println("      catch { return }"); 
-  out.println("    }");
+  out.println("      let file: FileHandle? = FileHandle(forUpdatingAtPath: pathtext) ");
+  out.println("      if file != nil ");
+  out.println("      { let data = (text as NSString).data(using: String.Encoding.utf8.rawValue)");
+  out.println("        file?.write(data!) ");
+  out.println("        file?.closeFile() ");
+  out.println("      }");
+  out.println("    }"); 
+  out.println("    catch { return }"); 
   out.println("  }");
+  out.println("}");
 }
 
 
@@ -2261,8 +2302,8 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     
     out.println("import SwiftUI");
     out.println("");
-    out.println("struct " + op + "Screen : View {");
-    out.println("  @State var bean : " + opbean + " = " + opbean + "()");
+    out.println("struct " + op + "Screen : View ");
+    out.println("{ @State var bean : " + opbean + " = " + opbean + "()");
     // for (int i = 0; i < extradeclarations.size(); i++)
     // { out.println(extradeclarations.get(i)); } 
     out.println("  @ObservedObject var model : ModelFacade"); 
@@ -2273,7 +2314,7 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("      HStack(spacing: 20) {");
     out.println("        Button(action: { self.model.cancel" + op + "() } ) { Text(\"Cancel\") }"); 
     out.println("        Button(action: { self.model." + op + "(_x: bean) } ) { Text(\"" + label + "\") }"); 
-    out.println("      }.buttonStyle(PlainButtonStyle())"); 
+    out.println("      }.buttonStyle(DefaultButtonStyle())"); 
     out.println("    }.padding(.top)");
     out.println("  }");
     out.println("}");
@@ -2296,8 +2337,8 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     
     out.println("import SwiftUI");
     out.println("");
-    out.println("struct " + op + "Screen : View {");
-    out.println("  @State var bean: " + opbean + " = " + opbean + ".default" + opbean + "()");
+    out.println("struct " + op + "Screen : View ");
+    out.println("{ @State var bean: " + opbean + " = " + opbean + ".default" + opbean + "()");
     // for (int i = 0; i < extradeclarations.size(); i++)
     // { out.println(extradeclarations.get(i)); } 
     out.println("  @ObservedObject var model : ModelFacade"); 
@@ -2308,9 +2349,10 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("      HStack(spacing: 20) {");
     out.println("        Button(action: { self.model.cancel" + op + "() } ) { Text(\"Cancel\") }"); 
     out.println("        Button(action: { self.model." + op + "(_x: bean) } ) { Text(\"" + label + "\") }"); 
-    out.println("      }.buttonStyle(PlainButtonStyle())"); 
-    out.println("    }.padding(.top)");
-    out.println("  }.onAppear { bean = model.current" + ename + " }");
+    out.println("      }.buttonStyle(DefaultButtonStyle())"); 
+    out.println("    }.padding(.top).onAppear(perform: "); 
+	out.println("                      { bean = model.current" + ename + " })");
+	out.println("  }"); 
     out.println("}");
   }
 
@@ -2331,8 +2373,8 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     
     out.println("import SwiftUI");
     out.println("");
-    out.println("struct " + op + "Screen : View {");
-    out.println("  @State var objectId: String = \"\"");
+    out.println("struct " + op + "Screen : View");
+    out.println("{ @State var objectId: String = \"\"");
     out.println("  @ObservedObject var model : ModelFacade"); 
     out.println("");  
     out.println("  var body: some View {");
@@ -2341,11 +2383,12 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("      { ForEach(model.current" + ename + "s) { Text($0." + pk + ").tag($0." + pk + ") } }");
     out.println(""); 
     out.println("      HStack(spacing: 20) {");
-    out.println("        Button(action: { self.model.cancel" + op + "() } ) { Text(\"Cancel\") }"); 
-    out.println("        Button(action: { self.model." + op + "(_x: bean) } ) { Text(\"" + label + "\") }"); 
-    out.println("      }.buttonStyle(PlainButtonStyle())"); 
-    out.println("    }.padding(.top)");
-    out.println("  }.onAppear { objectId = model.current" + ename + "?." + pk + " }");
+    out.println("        Button(action: { } ) { Text(\"Cancel\") }"); 
+    out.println("        Button(action: { self.model." + op + "(_id: objectId) } ) { Text(\"" + label + "\") }"); 
+    out.println("      }.buttonStyle(DefaultButtonStyle())"); 
+    out.println("    }.padding(.top).onAppear(perform: "); 
+	out.println("                    { objectId = model.current" + ename + "." + pk + " })");
+	out.println("  }"); 
     out.println("}");
   }
   
@@ -2353,8 +2396,8 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
   { 
     out.println("import SwiftUI");
     out.println("");
-    out.println("struct OptionsDialog : View {");
-    out.println("  var title : String");
+    out.println("struct OptionsDialog : View");
+    out.println("{ var title : String");
     out.println("  var labels : [String]");
     out.println("  @State var selected : String = \"\""); 
     out.println();  
@@ -2368,7 +2411,7 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("      HStack(spacing: 20) {");
     out.println("        Button(\"Cancel\")"); 
     out.println("        Button(\"OK\", action: model.dialogResponse(label: selected))"); 
-    out.println("      }.buttonStyle(BorderedButtonStyle())"); 
+    out.println("      }.buttonStyle(DefaultButtonStyle())"); 
     out.println("    }.padding(.top)");
     out.println("  }");
     out.println("}");
@@ -2404,9 +2447,10 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     { appName = "app"; } 
 
     out.println("import Foundation");
-    out.println("import Glibc");
     out.println("import SQLite3"); 
     out.println();
+    out.println("/* Code adapted from https://www.raywenderlich.com/6620276-sqlite-with-swift-tutorial-getting-started */");
+    out.println();  
     out.println("class Dbi");
     out.println("{ let dbPointer : OpaquePointer?");
     out.println("  static let DBNAME = \"" + appName + ".db\"");
@@ -2418,18 +2462,56 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     { Entity e0 = (Entity) ents.get(i); 
       e0.iosDbiDeclarations(out);
       String ent = e0.getName(); 
-      createCode = createCode + "createTable(table: " + ent + "_CREATE_SCHEMA)\n    "; 
+      createCode = createCode + "try createTable(table: Dbi." + ent + "_CREATE_SCHEMA)\n    "; 
     }  
 
     out.println("  private init(dbPointer: OpaquePointer?)"); 
     out.println("  { self.dbPointer = dbPointer }");
     out.println(); 
 
-    out.println("  func createDatabase(db : Dbi)"); 
-    out.println("  { " + createCode);
+    out.println("  func createDatabase(db : Dbi) throws"); 
+    out.println("  { do "); 
+	out.println("    { " + createCode);
+	out.println("      print(\"Created database\")"); 
+	out.println("    }"); 
+	out.println("    catch { print(\"Errors: \" + errorMessage) }");
     out.println("  }"); 
     out.println();  
 	
+	
+	out.println("  static func obtainDatabase(path: String) -> Dbi?"); 
+	out.println("  { var dbi : Dbi? = nil"); 
+	out.println("    if FileAccessor.fileExistsAbsolutePath(filename: path)"); 
+    out.println("    { print(\"Database already exists\")"); 
+    out.println("      do");
+    out.println("      { try dbi = Dbi.open(path: \"/Users/kevinlano/Desktop/dbtest/app.db\")"); 
+    out.println("        if dbi != nil"); 
+    out.println("        { print(\"Opened database\") }"); 
+    out.println("        else"); 
+    out.println("        { print(\"Failed to open existing database\") }"); 
+    out.println("      }"); 
+    out.println("      catch { print(\"Error opening existing database\") "); 
+	out.println("              return nil "); 
+	out.println("            }"); 
+    out.println("    }"); 
+    out.println("    else"); 
+    out.println("    { print(\"New database will be created\")"); 
+    out.println("      do");
+    out.println("      { try dbi = Dbi.open(path: \"/Users/kevinlano/Desktop/dbtest/app.db\")"); 
+    out.println("        if dbi != nil"); 
+    out.println("        { print(\"Opened new database\") "); 
+	out.println("          try dbi!.createDatabase(db: dbi!) "); 
+	out.println("        }"); 
+    out.println("        else"); 
+    out.println("        { print(\"Failed to open new database\") }"); 
+    out.println("      }"); 
+    out.println("      catch { print(\"Error opening new database\")  "); 
+	out.println("              return nil }"); 
+    out.println("    }");
+	out.println("    return dbi");  
+    out.println("  }"); 
+    out.println(); 
+
     out.println("  fileprivate var errorMessage: String"); 
     out.println("  { if let errorPointer = sqlite3_errmsg(dbPointer)");
     out.println("    { let errorMessage = String(cString: errorPointer)");
@@ -2489,7 +2571,7 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
       e0.iosDbiOperations(out);
     }  
 
-    out.println("  deinit()");
+    out.println("  deinit");
     out.println("  { sqlite3_close(self.dbPointer) }");
     out.println();
     // out.println("  func onUpgrade(Dbi d, int x, int y) {}");
@@ -2509,7 +2591,7 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
 
       out.println("");
       out.println("class WebDisplay");
-      out.println("{ var url : String = \"\"");
+      out.println("{ var url : String = \"https://www.bbc.co.uk\"");
       out.println("");
       out.println("  init()");
       out.println("  { }");
@@ -2522,6 +2604,37 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
       out.println("}"); 
       out.close();  
     } catch (Exception _e) { }  
+  
+    String viewfile = "WebView.swift"; 
+    File viewff = new File("output/" + packageName + "/" + viewfile); 
+    try
+    { PrintWriter outv = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(viewff)));
+
+      outv.println("import SwiftUI"); 
+      outv.println("import WebKit");
+      outv.println("");
+      outv.println("struct WebView: UIViewRepresentable"); 
+      outv.println("{ var request : URLRequest");
+      outv.println("");
+      outv.println("  var model : ModelFacade = ModelFacade.getInstance()");
+      outv.println("");
+
+      outv.println("  func makeUIView(context: Context) -> WKWebView"); 
+      outv.println("  { return WKWebView() }");
+      outv.println("");
+      outv.println("  func updateUIView(_ uiView: WKWebView, context: Context)"); 
+      outv.println("  { uiView.load(request) }");
+      outv.println("}"); 
+      outv.close();  
+    } catch (Exception _e) { }  
+  
+// struct WebView_Previews: PreviewProvider {
+//     static var previews: some View {
+//         WebView(request: URLRequest(url: URL(string: "https://www.bbc.co.uk" )! ) )
+//    }
+//  }
   }
 
   public static void generateImageDisplay(String packageName)
@@ -2536,7 +2649,7 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
 	
       out.println("");
       out.println("class ImageDisplay");
-      out.println("{ var imageName : String = \"\"");
+      out.println("{ var imageName : String = \"image1\"");
       out.println(""); 
       out.println("");
       out.println("  init()");
@@ -2549,6 +2662,34 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     } catch (Exception _e) { }  
   }
 
+
+  public static void generatePodfile(PrintWriter out, String appName, Vector pods)
+  { out.println("# Uncomment the next line to define a global platform for your project"); 
+    out.println("# platform :ios, '9.0'");
+    out.println("");
+    out.println("target '" + appName + "' do");
+    out.println("  # Comment the next line if you don't want to use dynamic frameworks");
+    out.println("  use_frameworks!");
+    out.println("");
+    out.println("  # Pods for " + appName);
+	for (int i = 0; i < pods.size(); i++) 
+	{ String pod = (String) pods.get(i); 
+      out.println("    pod '" + pod + "'");
+	} 
+    out.println("");
+    out.println("");
+    out.println("  target '" + appName + "Tests' do");
+    out.println("    inherit! :search_paths");
+    out.println("    # Pods for testing");
+    out.println("  end");
+    out.println("");
+    out.println("  target '" + appName + "UITests' do");
+    out.println("    # Pods for testing");
+    out.println("  end");
+    out.println("");
+    out.println("end"); 
+  }
+  
   public static void main(String[] args)
   { // System.out.println(Double.MAX_VALUE); 
 

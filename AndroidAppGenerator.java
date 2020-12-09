@@ -2000,8 +2000,11 @@ public static void androidOpViewFragment(String op, String packageName,
 	  { title = "+" + tt.substring(6,tt.length()); }
 	  else if (tt.startsWith("delete"))
 	  { title = "-" + tt.substring(6,tt.length()); }
+	  else if (tt.startsWith("searchBy"))
+	  { title = "?" + tt.substring(8,tt.length()); }
+
       tabtitles = tabtitles + "\"" + title + "\"";
-	  
+
       if (x < tabNames.size()-1)
       { tabtitles = tabtitles + ", "; }
     }
@@ -3545,7 +3548,7 @@ public static void generateGraphComponentVC(String systemName, String packageNam
 
       out.println("");
       out.println("public class WebDisplay");
-      out.println("{ String url = \"\";");
+      out.println("{ String url = \"https://www.bbc.co.uk\";");
       out.println("");
       out.println("  public WebDisplay()");
       out.println("  { }");
@@ -3575,7 +3578,7 @@ public static void generateGraphComponentVC(String systemName, String packageNam
 
       out.println("");
       out.println("public class ImageDisplay");
-      out.println("{ String imageName = \"\";");
+      out.println("{ String imageName = \"image1\";");
 	  out.println(""); 
       out.println("");
       out.println("  public ImageDisplay()");

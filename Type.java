@@ -2111,6 +2111,13 @@ public class Type extends ModelElement
     if (nme.equals("long")) { return "0"; } 
     if (nme.equals("double")) 
     { return "0.0"; } 
+
+
+    if (nme.equals("WebDisplay")) 
+    { return "WebDisplay()"; } 
+    else if (nme.equals("ImageDisplay"))
+    { return "ImageDisplay()"; } 
+
     if (isEntity) 
     { return "nil"; } 
     if (isEnumeration()) 
