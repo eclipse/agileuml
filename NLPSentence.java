@@ -55,6 +55,19 @@ public class NLPSentence
     return false; 
   }  
   
+  public boolean isSystemDefinition()
+  { // first noun is "system", "application", etc
+    NLPPhraseElement p1 = (NLPPhraseElement) phrases.get(0); 
+    if (p1 instanceof NLPPhrase && p1.tag.equals("NP"))
+	{ NLPPhrase pr = (NLPPhrase) p1; 
+	  Vector nouns = pr.getNouns(); 
+	  if (nouns.contains("System") || nouns.contains("system") || nouns.contains("Application") || 
+	      nouns.contains("application") || nouns.contains("app") || nouns.contains("App"))
+	  { return true; }
+	}
+	return false; 
+  }
+  
   public String getMainVerb()
   { // The VP verb is "consists"/"has"/"have", etc
     if (phrases.get(1) instanceof NLPPhrase) { } 
@@ -226,24 +239,41 @@ public class NLPSentence
     { System.out.println(">>> General definition: " + this); 
       relationElements(elems);
     }
+    else if (isSVO() && isSystemDefinition())
+    { System.out.println(">>> System definition: " + this); 
+	  Vector seqs = sequentialise(); 
+	  Vector np1 = new Vector(); 
+	  Vector vb1 = new Vector(); 
+	  Vector rem = new Vector();   
+	  splitIntoPhrases(seqs,np1,vb1,rem); 
+	  identifyClassesAndFeatures(rem,elems);
+    }
     else if (isSVO())
     { System.out.println(">>> Constraint definition: " + this); 
       otherRelationElements(elems); 
     }
     else 
     { Vector seqs = sequentialise(); 
-	  Vector np1 = new Vector(); 
-	  Vector vb1 = new Vector(); 
-	  Vector rem = new Vector();   
-	  splitIntoPhrases(seqs,np1,vb1,rem); 
-	  System.out.println(">>> Not recognised as model elements definition: " + np1 + "; " + vb1 + "; " + rem);
-	  if (describesSystem(np1))
-	  { identifyClassesAndFeatures(rem,elems); }  
+      Vector np1 = new Vector(); 
+      Vector vb1 = new Vector(); 
+      Vector rem = new Vector();   
+      splitIntoPhrases(seqs,np1,vb1,rem); 
+      System.out.println(">>> Not recognised as model elements definition: " + np1 + "; " + vb1 + "; " + rem);
+      if (describesSystem(np1))
+      { identifyClassesAndFeatures(rem,elems); }  
+      else if (describesUseCase(np1,vb1,rem))
+      { identifyUseCase(rem,elems); }
     }  
       
     for (int i = 0; i < elems.size(); i++) 
-    { Entity ent = (Entity) elems.get(i); 
-      res = res + ent.getKM3() + "\n\n"; 
+    { if (elems.get(i) instanceof Entity) 
+	  { Entity ent = (Entity) elems.get(i); 
+        res = res + ent.getKM3() + "\n\n";
+	  } 
+	  else if (elems.get(i) instanceof UseCase)
+	  { UseCase uc = (UseCase) elems.get(i); 
+        res = res + uc.getKM3() + "\n\n";
+	  } 
     }
     return res; 
   } 
@@ -264,23 +294,23 @@ public class NLPSentence
 	  { i++; } 
 	} 
 	
-	boolean inverb1 = true;
+    boolean inverb1 = true;
     while (i < en && inverb1)
     { NLPWord lex = (NLPWord) seq.get(i); 
-	  if (lex.isVerbPhraseWord())
-	  { vb1.add(lex); 
-	    i++; 
+      if (lex.isVerbPhraseWord())
+      { vb1.add(lex); 
+        i++; 
       }
-	  else if (lex.isNounPhraseWord())
-	  { inverb1 = false; }
-	  else 
-	  { i++; } 
-	} 
+      else if (lex.isNounPhraseWord())
+      { inverb1 = false; }
+      else 
+      { i++; } 
+    } 
 	
-	for (int j = i; j < en; j++)
+    for (int j = i; j < en; j++)
     { NLPWord lex = (NLPWord) seq.get(j); 
       rem.add(lex); 
-	}
+    }
   }
   
   public boolean describesSystem(Vector np)
@@ -296,39 +326,91 @@ public class NLPSentence
   public void identifyClassesAndFeatures(Vector rem, Vector modelElements)
   { // First noun is usually a class, others features. 
     String firstNoun = null; 
-	int found = 0; 
-	for (int i = 0; i < rem.size(); i++) 
-	{ NLPWord wd = (NLPWord) rem.get(i); 
+    int found = 0; 
+    for (int i = 0; i < rem.size(); i++) 
+    { NLPWord wd = (NLPWord) rem.get(i); 
 	  // if (wd.text.equals("details")) { } 
 	  // else 
-	  if (wd.isNoun())
-	  { firstNoun = wd.getSingular();
-	    found = i;  
-	    break; 
-	  }
-	}
+      if (wd.isNoun())
+      { firstNoun = wd.getSingular();
+        found = i;  
+        break; 
+      }
+    }
 	
-	System.out.println(">>> first noun: " + firstNoun); 
-	Entity mainent = (Entity) ModelElement.lookupByNameIgnoreCase(firstNoun,modelElements); 
-	if (mainent == null) 
-	{ mainent = new Entity(firstNoun); 
-	  modelElements.add(mainent); 
-	} 
+    System.out.println(">>> first noun: " + firstNoun); 
+    Entity mainent = (Entity) ModelElement.lookupByNameIgnoreCase(firstNoun,modelElements); 
+    if (mainent == null) 
+    { mainent = new Entity(Named.capitalise(firstNoun)); 
+      modelElements.add(mainent); 
+    } 
 	
-	Vector remnouns = new Vector(); 
-	for (int j = found+1; j < rem.size(); j++) 
-	{ NLPWord wx = (NLPWord) rem.get(j); 
-	  if (wx.isNoun())
-	  { remnouns.add(wx); }
-	}
+    Vector remnouns = new Vector(); 
+    Vector remwords = new Vector(); 
+    for (int j = found+1; j < rem.size(); j++) 
+    { NLPWord wx = (NLPWord) rem.get(j); 
+      if (wx.isNoun())
+      { remnouns.add(wx); }
+      remwords.add(wx); 
+    } // ignore words like "information" and "details"? 
 	
-	System.out.println(">>> other nouns: " + remnouns); 
-	Vector quals = new Vector(); 
+    System.out.println(">>> other nouns: " + remnouns); 
+    Vector quals = new Vector(); 
 	
-	for (int j = 0; j < remnouns.size(); j++) 
+    for (int j = 0; j < remnouns.size(); j++) 
     { NLPWord attx = (NLPWord) remnouns.get(j); 
-	  String attname = attx.text; 
+      String attname = attx.text; 
       NLPPhrase.extractAtt(attname,quals,mainent); 
     }
+
+    NLPPhrase newpr = new NLPPhrase("NP"); 
+    newpr.elements = remwords; 
+    java.util.HashMap mp = new java.util.HashMap(); 
+    Vector currentQuals = new Vector(); 
+    Vector anal = newpr.extractNouns(mp,currentQuals); 
+    System.out.println(">>> identified features: " + anal); 
+    System.out.println(">>> identified qualifiers: " + mp); 
   }
+  
+  public boolean describesUseCase(Vector np, Vector vb1, Vector rem)
+  { if (np.size() == 0 && vb1.size() == 1 && rem.size() >= 5)
+    { NLPWord vb = (NLPWord) vb1.get(0); 
+      if (vb.text.equalsIgnoreCase("As"))
+      { return true; }
+    } 
+    return false; 
+  }	  
+	  
+  public void identifyUseCase(Vector rem, Vector elems)
+  { int index = 0; 
+  
+    for (int i = 0; i < rem.size(); i++) 
+    { NLPWord wd = (NLPWord) rem.get(i); 
+      String textlc = wd.text.toLowerCase(); 
+      if (textlc.startsWith("wish") || textlc.startsWith("want"))
+      { index = i+2; } 
+    }
+	
+    if (index == 0) { return; }
+	
+    String uc = ""; 
+	
+    for (int j = index; j < rem.size(); j++) 
+    { NLPWord wd = (NLPWord) rem.get(j); 
+      if (wd.isVerbPhraseWord() || wd.isAdjective() || wd.isNounPhraseWord() || wd.isConjunctionWord())
+      { uc = uc + wd.text; }  
+    }
+	
+    if (uc.length() > 0)
+    { UseCase ucase = (UseCase) ModelElement.lookupByNameIgnoreCase(uc,elems); 
+      if (ucase != null) 
+      { System.out.println(">>> Duplicate use case: " + uc); } 
+      else 
+      { ucase = new UseCase(uc);
+        System.out.println(">>> New use case: " + uc); 
+        elems.add(ucase); 
+      } 
+    }  
+  } 
+
 } 

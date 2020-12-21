@@ -27,14 +27,37 @@ public class NLPWord extends NLPPhraseElement
   } 
 
   public boolean isKeyword() 
-  { return text.equals("integer") || text.equals("numeric") || 
-           text.equals("set") || text.equals("sequence") || 
-           text.equals("real"); 
+  { return text.equalsIgnoreCase("integer") || text.equalsIgnoreCase("numeric") || 
+           text.equalsIgnoreCase("set") || text.equalsIgnoreCase("sequence") || 
+           text.equalsIgnoreCase("real"); 
+  } // or collection
+
+  public static boolean isKeyword(String txt) 
+  { return txt.equalsIgnoreCase("integer") || txt.equalsIgnoreCase("numeric") || 
+           txt.equalsIgnoreCase("set") || txt.equalsIgnoreCase("sequence") || 
+           txt.equalsIgnoreCase("real"); 
   } 
+
+  public boolean isQualifier() 
+  { return tag.equals("CD") || 
+           text.equalsIgnoreCase("integer") || text.equalsIgnoreCase("numeric") || 
+           text.equalsIgnoreCase("set") || text.equalsIgnoreCase("sequence") || 
+           text.equalsIgnoreCase("real") || text.equalsIgnoreCase("unique") ||
+           text.equalsIgnoreCase("many") || 
+           text.equalsIgnoreCase("several") || 
+           text.equalsIgnoreCase("more") || text.equalsIgnoreCase("some") || 
+           text.equalsIgnoreCase("multiple"); 
+  } // or collection
 
   public boolean isNoun()
   { if (tag.equals("NNPS") || tag.equals("NNS") ||
         tag.equals("NN") || tag.equals("NNP"))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isPlural()
+  { if (tag.equals("NNPS") || tag.equals("NNS"))
     { return true; } 
     return false; 
   } 
@@ -67,13 +90,27 @@ public class NLPWord extends NLPPhraseElement
 	    tag.equals("VBN") || tag.equals("VBP") || tag.equals("RB") || tag.equals("WRB") || 
 		tag.equals("EX"))
     { return true; }
-	return false; 
+    return false; 
   }
   
   public boolean isConjunctionWord()
   { if (tag.equals("IN") || tag.equals("CC"))
     { return true; }
 	return false; 
+  }
+
+  public boolean isConjunction()
+  { if (isSeparator() ||
+        text.equalsIgnoreCase("and") || text.equalsIgnoreCase("of"))
+    { return true; }
+    return false; 
+  }
+
+  public boolean isSeparator()
+  { if (text.equals("+") || text.equals("&") || text.equals(",") || text.equals(";") ||
+        text.equalsIgnoreCase("|") || text.equalsIgnoreCase("/"))
+    { return true; }
+    return false; 
   }
 
 
@@ -110,9 +147,9 @@ public class NLPWord extends NLPPhraseElement
           "years".equals(text) || "longitude".equals(text) || 
           "latitude".equals(text) || "altitude".equals(text) || 
           "duration".equals(text) || "distance".equals(text) || 
-          "velocity".equals(text) || "acceleration".equals(text) || "depth".equals(text))
+          "velocity".equals(text) || "acceleration".equals(text) || "speed".equals(text) || "depth".equals(text))
       { res = new Type("double", null); } 
-      else if ("year".equals(text))
+      else if ("year".equals(text) || "frequency".equals(text))
       { res = new Type("int", null); } 
       else 
       { res = new Type("String", null); } 

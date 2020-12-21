@@ -3798,6 +3798,26 @@ public class Attribute extends ModelElement
     return res;
   }
 
+  public String rawDecoder(String m)
+  { String res = "";
+    String attname = getName();
+    String tname = type.getName();
+    if (tname.equals("int"))
+    { res = "(int) ((Long) " + m + ".get(\"" + attname + "\")).longValue();"; }
+    else if (tname.equals("long"))
+    { res = "((Long) " + m + ".get(\"" + attname + "\")).longValue();"; }
+    else if (tname.equals("double"))
+    { res = "((Double) " + m + ".get(\"" + attname + "\")).doubleValue();"; } 
+    else if (type.isBoolean())
+    { res = "((Boolean) " + m + ".get(\"" + attname + "\")).booleanValue();"; } 
+    else if (type.isString())
+    { res = "(String) " + m + ".get(\"" + attname + "\");"; } 
+    else 
+    { res = m + ".get(\"" + attname + "\");"; } 
+
+    return res; 
+  } // TODO: case of lists and maps? 
+
 public String dbType()
 { String tname = type.getName();
   if ("int".equals(tname))

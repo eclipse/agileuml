@@ -30,17 +30,14 @@ public class IOSAppGenerator extends AppGenerator
     out.println("import Darwin");
     out.println("");
     out.print("class ModelFacade");
-	if (remoteCalls > 0) 
+    if (remoteCalls > 0) 
     { out.println(" : InternetCallback"); } 
-	else 
-	{ out.println(); }
+    else 
+    { out.println(); }
 	
     out.println("{ static var instance : ModelFacade? = nil");
     out.println("  var fileSystem : FileAccessor = FileAccessor()");
-    out.println("  // if some class is persistent, include a Dbi:"); 
-    out.println("  // var dbi : Dbi?");
-	out.println("  // let dbpath : String = absolute path of app.db");  
-	out.println(); 
+    out.println(); 
     
     boolean hasCloud = false; 
     if (clouds.size() > 0)
@@ -79,16 +76,34 @@ public class IOSAppGenerator extends AppGenerator
       out.println(); 
     } 
 
-	Vector persistentEntities = new Vector(); 
-	persistentEntities.addAll(entities); 
-	persistentEntities.removeAll(clouds); 
+    Vector persistentEntities = new Vector(); 
+    persistentEntities.addAll(entities); 
+    persistentEntities.removeAll(clouds); 
+	Vector localPersistent = new Vector(); 
 
     for (int i = 0; i < persistentEntities.size(); i++) 
     { Entity ent = (Entity) persistentEntities.get(i); 
       if (ent.isDerived()) { } 
       else if (ent.isComponent()) { } 
       else 
-	  { String ename = ent.getName(); 
+      { String ename = ent.getName(); 
+        out.println("  var current" + ename + " : " + ename + "VO? = nil"); 
+        out.println(); 
+        out.println("  var current" + 
+		            ename + "s : [" + ename + "VO] = [" + ename + "VO]()");
+        out.println();  
+      } 
+	  
+	  if (ent.isPersistent())
+	  { localPersistent.add(ent); }
+    } 
+
+    for (int i = 0; i < clouds.size(); i++) 
+    { Entity ent = (Entity) clouds.get(i); 
+      if (ent.isDerived()) { } 
+      else if (ent.isComponent()) { } 
+      else 
+      { String ename = ent.getName(); 
         out.println("  var current" + ename + " : " + ename + "VO? = nil"); 
         out.println(); 
         out.println("  var current" + 
@@ -97,26 +112,26 @@ public class IOSAppGenerator extends AppGenerator
       } 
     } 
 
-    for (int i = 0; i < clouds.size(); i++) 
-    { Entity ent = (Entity) clouds.get(i); 
-	 if (ent.isDerived()) { } 
-	 else if (ent.isComponent()) { } 
-	 else 
-	 { String ename = ent.getName(); 
-	   out.println("  var current" + ename + " : " + ename + "VO? = nil"); 
-       out.println(); 
-       out.println("  var current" + 
-		            ename + "s : [" + ename + "VO] = [" + ename + "VO]()");
-       out.println();  
-     } 
-   } 
-
-   out.println(); 
-   out.println("  init()"); 
-   out.println("  { ");
-   out.println("    // dbi = Dbi.obtainDatabase(path: dbpath)"); 
-   out.println("  }");  
-   out.println(); 
+    if (localPersistent.size() > 0)
+	{ out.println("  // Some class is locally persistent, include an SQLite Dbi:"); 
+      out.println("  var dbi : Dbi?");
+      out.println("  let dbpath : String = \"absolute path of app.db\"");   
+      out.println(); 
+      out.println("  init()"); 
+      out.println("  { ");
+      out.println("    dbi = Dbi.obtainDatabase(path: dbpath)");
+	  for (int j = 0; j < localPersistent.size(); j++) 
+	  { Entity pent = (Entity) localPersistent.get(j); 
+	    String pname = pent.getName(); 
+		out.println("    load" + pname + "()"); 
+	  } 
+      out.println("  }");  // and load the dbi sets of instances for each persistant entity E. 
+      out.println(); 
+	} 
+	else 
+	{ out.println("  init() { }"); 
+      out.println(); 
+	}
 	   
     for (int y = 0; y < usecases.size(); y++)
     { UseCase uc = (UseCase) usecases.get(y);
@@ -167,19 +182,29 @@ public class IOSAppGenerator extends AppGenerator
 	  
       Vector atts = ee.getAttributes(); 
       String item = ee.getName(); 
-	  String itemvo = item.toLowerCase() + "vo"; 
+      String itemvo = item.toLowerCase() + "vo"; 
     
+	  if (ee.isPersistent())
+	  { ee.iosDbiLoadOperation(out); }
+	  
+	  out.println(); 
+	  
       out.println("  func list" + item + "() -> [" + item + "VO]"); 
-      out.println("  { // if dbi != nil"); 
-      out.println("    // { current" + item + "s = (dbi?.list" + item + "())!"); 
-      out.println("    //   return current" + item + "s"); 
-      out.println("    // }"); 
+      if (ee.isPersistent())
+	  { out.println("  { if dbi != nil"); 
+        out.println("    { current" + item + "s = (dbi?.list" + item + "())!"); 
+        out.println("      return current" + item + "s"); 
+        out.println("    }");
+	  } 
+	  else 
+	  { out.println("  {"); } 
       out.println("    current" + item + "s = [" + item + "VO]()"); 
       out.println("    let _list : [" + item + "] = " + item + "_allInstances"); 
       out.println("    for (_,x) in _list.enumerated()"); 
       out.println("    { current" + item + "s.append(" + item + "VO(_x: x)) }");  
       out.println("    return current" + item + "s"); 
       out.println("  }"); 
+	  
       out.println(); 
 
       out.println("  func stringList" + item + "() -> [String]"); 
@@ -196,10 +221,14 @@ public class IOSAppGenerator extends AppGenerator
         String attname = byatt.getName(); 
         String intype = byatt.getType().getSwift(); 
         out.println("  func searchBy" + item + attname + "(_val : " + intype + ") -> [" + item + "VO]"); 
-        out.println("  { // if dbi != nil"); 
-        out.println("    // { let _res = (dbi?.searchBy" + item + attname + "(_val: _val))!");
-        out.println("    //   return _res"); 
-		out.println("    // }"); 
+        if (ee.isPersistent())
+		{ out.println("  { if dbi != nil"); 
+          out.println("    { let _res = (dbi?.searchBy" + item + attname + "(_val: _val))!");
+          out.println("      return _res"); 
+          out.println("    }");
+		} 
+		else 
+		{ out.println("  {"); } 
         out.println("    current" + item + "s = [" + item + "VO]()"); 
         out.println("    let _list : [" + item + "] = " + item + "_allInstances"); 
         out.println("    for (_,x) in _list.enumerated()"); 
@@ -217,21 +246,23 @@ public class IOSAppGenerator extends AppGenerator
       { String pk = key.getName(); 
         out.println("  func get" + item + "ByPK(_val : String) -> " + item + "?"); 
         out.println("  { let _res : " + item + "? = " + item + ".getByPK" + item + "(index: _val)"); 
-		out.println("    // if _res == nil && dbi != nil"); 
-		out.println("    // { let _list = dbi.searchBy" + item + pk + "(_val: _val) ");
-		out.println("    //   if _list.count > 0"); 
-		out.println("    //   { _res = createByPK" + item + "(key: _val)"); 
-        for (int i = 0; i < atts.size(); i++) 
-        { Attribute att = (Attribute) atts.get(i);
-          String attname = att.getName();  
-          out.println("    //     _res!." + attname + " = _list[0]." + attname); 
-        } 
-		out.println("    //   }"); 
-		out.println("    // }"); 
+        if (ee.isPersistent())
+		{ out.println("    if _res == nil && dbi != nil"); 
+          out.println("    { let _list = dbi!.searchBy" + item + pk + "(_val: _val) ");
+          out.println("      if _list.count > 0"); 
+          out.println("      { _res = createByPK" + item + "(key: _val)"); 
+          for (int i = 0; i < atts.size(); i++) 
+          { Attribute att = (Attribute) atts.get(i);
+            String attname = att.getName();  
+            out.println("        _res!." + attname + " = _list[0]." + attname); 
+          } 
+          out.println("      }"); 
+          out.println("    }"); 
+		} 
         out.println("    return _res");  
         out.println("  }"); 
         out.println();
-		out.println("  func retrieve" + item + "(_val : String) -> " + item + "?"); 
+        out.println("  func retrieve" + item + "(_val : String) -> " + item + "?"); 
         out.println("  { let _res : " + item + "? = get" + item + "ByPK(_val: _val)"); 
         out.println("    return _res");  
         out.println("  }"); 
@@ -270,8 +301,10 @@ public class IOSAppGenerator extends AppGenerator
         } 
         out.println("    }");
         out.println("    current" + item + " = _x"); 
-        out.println("    // do { try dbi?.edit" + item + "(" + itemvo + ": _x) }"); 
-        out.println("    // catch { print(\"Error editing " + item + "\") }"); 
+        if (ee.isPersistent())
+		{ out.println("    if dbi != nil"); 
+          out.println("    { dbi!.edit" + item + "(" + itemvo + ": _x) }");
+		} 
         out.println("  }"); 
         out.println();
       } 
@@ -293,8 +326,10 @@ public class IOSAppGenerator extends AppGenerator
            out.println("    _res." + attname + " = _x." + attname); 
          } 
          out.println("    current" + item + " = _x"); 
-         out.println("    // do { try dbi?.create" + item + "(" + itemvo + ": _x) }"); 
-         out.println("    // catch { print(\"Error creating " + item + "\") }"); 
+         if (ee.isPersistent())
+		 { out.println("    do { try dbi?.create" + item + "(" + itemvo + ": _x) }"); 
+           out.println("    catch { print(\"Error creating " + item + "\") }"); 
+		 }
          out.println("  }"); 
          out.println();
        } 
@@ -307,12 +342,16 @@ public class IOSAppGenerator extends AppGenerator
 	   } 
 	  
        out.println("  func delete" + item + "(_id : String)"); 
-       out.println("  { // if dbi != nil"); 
-	   out.println("    // { dbi!.delete" + item + "(_val: _id) }");  
+       if (ee.isPersistent())
+	   { out.println("  { if dbi != nil"); 
+         out.println("    { dbi!.delete" + item + "(_val: _id) }");
+	   } 
+	   else 
+	   { out.println("  {"); }  
        out.println("    current" + item + " = nil"); 
-	   out.println("    kill" + item + "(key: _id)"); 
+       out.println("    kill" + item + "(key: _id)"); 
        out.println("  }");
-	   out.println();  
+       out.println();  
      }  
 
      for (int j = 0; j < clouds.size(); j++) 
@@ -390,10 +429,11 @@ public class IOSAppGenerator extends AppGenerator
 	   for (int k = 0; k < atts.size(); k++)
  	   { Attribute att = (Attribute) atts.get(k); 
 	     String attname = att.getName(); 
-		 if (att != key)
-		 { out.println("      _obj." + attname + " = _x." + attname); }  
-	   } 
-       out.println("      cdbi.persist" + item + "(ex: _obj) }"); 
+          if (att != key)
+          { out.println("      _obj." + attname + " = _x." + attname); }  
+       } 
+       out.println("      cdbi.persist" + item + "(ex: _obj)"); 
+       out.println("    }"); 
        out.println("    current" + item + " = _x"); 
        out.println("  }"); 
        out.println(); 
@@ -443,20 +483,23 @@ public class IOSAppGenerator extends AppGenerator
     out.println("import Darwin");
     out.println("import Combine");
     out.println("import SwiftUI");
-	out.println("import CoreLocation"); 
+    out.println("import CoreLocation"); 
 	
     out.println("");
     out.print("class ModelFacade : ObservableObject");
-	if (needsMap) 
-	{ out.print(", MKMapViewDelegate"); }
-	if (remoteCalls > 0) 
+    if (needsMap) 
+    { out.print(", MKMapViewDelegate"); }
+    if (remoteCalls > 0) 
     { out.println(", InternetCallback"); } 
-	else 
-	{ out.println(); }
+    else 
+    { out.println(); }
 	
     out.println("{ static var instance : ModelFacade? = nil");
     out.println("  var fileSystem : FileAccessor = FileAccessor()");
-    // if e is persistent, include a Dbi
+    // if any entity is persistent, include a Dbi
+    out.println("  // var dbi : Dbi?");
+    out.println("  // let dbpath : String = absolute path of app.db");  
+    out.println(); 
     out.println(); 
     
     boolean hasCloud = false; 
@@ -474,7 +517,7 @@ public class IOSAppGenerator extends AppGenerator
     out.println("  { if instance == nil"); 
     out.println("    { instance = ModelFacade() }"); 
     out.println("    return instance!"); 
-	out.println("  }"); 
+    out.println("  }"); 
     out.println(); 
 
     if (needsMap) 
@@ -494,23 +537,24 @@ public class IOSAppGenerator extends AppGenerator
       out.println(); 
       out.println("  func MapView(mapView: MKMapView, didUpdate userLocation : MKUserLocation)"); 
       out.println("  { let loc = MapLocation(latitudex: userLocation.location.latitude, longitudex: userLocation.location.longitude)");   
-	  out.println("    mapDelegate?.moveTo(location: loc, label: userLocation.title)"); 
-	  out.println("  }"); 
+      out.println("    mapDelegate?.moveTo(location: loc, label: userLocation.title)"); 
+      out.println("  }"); 
       out.println(); 
       out.println("  func MapView(mapView: MKMapView, didAdd views : [MKAnnotationView])"); 
       out.println("  { }"); 
       out.println(); 
       out.println("  func MapView(mapView: MKMapView, didSelect view : MKAnnotationView)"); 
       out.println("  { let annotation = view.annotation"); // an MKPlacemark
-	  out.println("    let coord = annotation.coordinate"); // a CLLocationCoordinate2D
-	  out.println("    markerClicked(label: annotation.title, location: MapLocation(latitudex: coord.latitude, longitudex: coord.longitude))"); 
-	  out.println("  }"); 
+      out.println("    let coord = annotation.coordinate"); // a CLLocationCoordinate2D
+      out.println("    markerClicked(label: annotation.title, location: MapLocation(latitudex: coord.latitude, longitudex: coord.longitude))"); 
+      out.println("  }"); 
       out.println(); 
     } 
 
-	Vector persistentEntities = new Vector(); 
-	persistentEntities.addAll(entities); 
-	persistentEntities.removeAll(clouds); 
+    Vector persistentEntities = new Vector(); 
+    persistentEntities.addAll(entities); 
+    persistentEntities.removeAll(clouds); 
+	Vector localPersistent = new Vector(); 
 
     for (int i = 0; i < persistentEntities.size(); i++) 
     { Entity ent = (Entity) persistentEntities.get(i); 
@@ -524,6 +568,9 @@ public class IOSAppGenerator extends AppGenerator
 	                ename + "s : [" + ename + "VO] = [" + ename + "VO]()");
         out.println();  
       }  
+
+	  if (ent.isPersistent())
+	  { localPersistent.add(ent); }
     } 
 
     for (int i = 0; i < clouds.size(); i++) 
@@ -540,20 +587,32 @@ public class IOSAppGenerator extends AppGenerator
       } 
     } 
 
-    out.println(); 
-    out.println("  init() { }"); 
-    out.println(); 
+    if (localPersistent.size() > 0)
+	{ out.println("  // Some class is locally persistent, include an SQLite Dbi:"); 
+      out.println("  var dbi : Dbi?");
+      out.println("  let dbpath : String = \"absolute path of app.db\"");   
+      out.println(); 
+      out.println("  init()"); 
+      out.println("  { ");
+      out.println("    dbi = Dbi.obtainDatabase(path: dbpath)"); 
+      out.println("  }");  
+      out.println(); 
+	} 
+	else 
+	{ out.println("  init() { }"); 
+      out.println(); 
+	}
 	   
     for (int y = 0; y < usecases.size(); y++)
     { UseCase uc = (UseCase) usecases.get(y);
-	  String ucname = uc.getName(); 
+      String ucname = uc.getName(); 
       Vector pars = uc.getParameters(); 
       Attribute res = uc.getResultParameter();
 
       
       String restext = "";  
       String partext = "";
-	  String pardecs = ""; 
+      String pardecs = ""; 
 	   
       for (int i = 0; i < pars.size(); i++) 
       { Attribute par = (Attribute) pars.get(i);
@@ -561,18 +620,18 @@ public class IOSAppGenerator extends AppGenerator
         Type partype = par.getType();  
 
         partext = partext + "    let " + parname + " : " + partype.getSwift() + " = _x.get" + parname + "()\n"; 
-		pardecs = pardecs + parname + " : " + partype.getSwift(); 
-		if (i < pars.size() - 1)
-		{ pardecs = pardecs + ", "; }
+        pardecs = pardecs + parname + " : " + partype.getSwift(); 
+        if (i < pars.size() - 1)
+        { pardecs = pardecs + ", "; }
       }   
 
       if (uc.isPrivate())
       { out.print("  func " + ucname + "(" + pardecs + ")"); }
-	  else 
-	  { out.println("  func cancel" + ucname + "() { }"); 
+      else 
+      { out.println("  func cancel" + ucname + "() { }"); 
         out.println(); 
         out.print("  func " + ucname + "(_x : " + ucname + "VO)"); 
-	  } 
+      } 
 	  
       if (res != null) 
       { out.println(" -> " + res.getType().getSwift()); 
@@ -597,8 +656,8 @@ public class IOSAppGenerator extends AppGenerator
       if (uc.isPublic())
       { out.println("    if _x.is" + ucname + "error()"); 
         out.println("    { print(\"Error in data: \" + _x.errors())"); 
-		out.println("      return " + restext); 
-		out.println("    }");
+        out.println("      return " + restext); 
+        out.println("    }");
       // _x.result is undefined.
  
         out.println(partext); 
@@ -631,9 +690,17 @@ public class IOSAppGenerator extends AppGenerator
 	  
       Vector atts = ee.getAttributes(); 
       String item = ee.getName(); 
+      String itemvo = item.toLowerCase() + "vo"; 
     
       out.println("  func list" + item + "() -> [" + item + "VO]"); 
-      out.println("  { // current" + item + "s = dbi.list" + item + "()");
+	  if (ee.isPersistent())
+	  { out.println("  { if dbi != nil"); 
+        out.println("    { current" + item + "s = (dbi?.list" + item + "())!"); 
+        out.println("      return current" + item + "s"); 
+        out.println("    }");
+	  } 
+	  else 
+	  { out.println("  {"); } 
       out.println("    current" + item + "s = [" + item + "VO]()"); 
       out.println("    let _list : [" + item + "] = " + item + "_allInstances"); 
       out.println("    for (_,x) in _list.enumerated()"); 
@@ -643,7 +710,7 @@ public class IOSAppGenerator extends AppGenerator
       out.println(); 
 
       out.println("  func stringList" + item + "() -> [String]"); 
-      out.println("  { // current" + item + "s = dbi.list" + item + "()"); 
+      out.println("  { list" + item + "()"); 
       out.println("    var _res : [String] = [String]()"); 
       out.println("    for (_,x) in current" + item + "s.enumerated()"); 
       out.println("    { _res.append(x.toString()) }"); 
@@ -656,7 +723,14 @@ public class IOSAppGenerator extends AppGenerator
         String attname = byatt.getName(); 
         String intype = byatt.getType().getSwift(); 
         out.println("  func searchBy" + item + attname + "(_val : " + intype + ") -> [" + item + "VO]"); 
-        out.println("  { // current" + item + "s = dbi.list" + item + "()");
+        if (ee.isPersistent())
+		{ out.println("  { if dbi != nil"); 
+          out.println("    { let _res = (dbi?.searchBy" + item + attname + "(_val: _val))!");
+          out.println("      return _res"); 
+          out.println("    }");
+		} 
+		else 
+		{ out.println("  {"); } 
         out.println("    current" + item + "s = [" + item + "VO]()"); 
         out.println("    let _list : [" + item + "] = " + item + "_allInstances"); 
         out.println("    for (_,x) in _list.enumerated()"); 
@@ -674,11 +748,24 @@ public class IOSAppGenerator extends AppGenerator
       { String pk = key.getName(); 
         out.println("  func get" + item + "ByPK(_val : String) -> " + item + "?"); 
         out.println("  { let _res : " + item + "? = " + item + ".getByPK" + item + "(index: _val)"); 
+        if (ee.isPersistent())
+		{ out.println("    if _res == nil && dbi != nil"); 
+          out.println("    { let _list = dbi!.searchBy" + item + pk + "(_val: _val) ");
+          out.println("      if _list.count > 0"); 
+          out.println("      { _res = createByPK" + item + "(key: _val)"); 
+          for (int i = 0; i < atts.size(); i++) 
+          { Attribute att = (Attribute) atts.get(i);
+            String attname = att.getName();  
+            out.println("        _res!." + attname + " = _list[0]." + attname); 
+          } 
+          out.println("      }"); 
+          out.println("    }"); 
+		} 
         out.println("    return _res");  
         out.println("  }"); 
         out.println();
         out.println("  func retrieve" + item + "(_val : String) -> " + item + "?"); 
-        out.println("  { let _res : " + item + "? = " + item + ".getByPK" + item + "(index: _val)"); 
+        out.println("  { let _res : " + item + "? = get" + item + "ByPK(_val: _val)"); 
         out.println("    return _res");  
         out.println("  }"); 
         out.println();
@@ -716,16 +803,20 @@ public class IOSAppGenerator extends AppGenerator
         } 
         out.println("    }");
         out.println("    current" + item + " = _x"); 
+        if (ee.isPersistent())
+		{ out.println("    if dbi != nil"); 
+          out.println("    { dbi!.edit" + item + "(" + itemvo + ": _x) }");
+		} 
         out.println("  }"); 
         out.println();
       } 
       else 
       { out.println("  func edit" + item + "(_x : " + item + "VO)"); 
-         out.println("  { // dbi.edit" + item + "(_x) "); 
-         out.println("    current" + item + " = _x"); 
-         out.println("  }"); 
-         out.println();
-       } 
+        out.println("  { // dbi.edit" + item + "(_x) "); 
+        out.println("    current" + item + " = _x"); 
+        out.println("  }"); 
+        out.println();
+      } 
 	  
 	   /* create and edit call the vo to check validity */ 
 
@@ -738,12 +829,16 @@ public class IOSAppGenerator extends AppGenerator
          out.println("  { if _x.iscreate" + item + "error()"); 
          out.println("    { return }"); 
          out.println("    let _res : " + item + " = createByPK" + item + "(key: _x." + pk + ")"); 
-	     for (int i = 0; i < atts.size(); i++) 
-	     { Attribute att = (Attribute) atts.get(i);
-	       String attname = att.getName();  
-	       out.println("    _res." + attname + " = _x.get" + attname + "()"); 
-	     } 
-	     out.println("    current" + item + " = _x"); 
+         for (int i = 0; i < atts.size(); i++) 
+         { Attribute att = (Attribute) atts.get(i);
+           String attname = att.getName();  
+           out.println("    _res." + attname + " = _x.get" + attname + "()"); 
+         } 
+         out.println("    current" + item + " = _x"); 
+         if (ee.isPersistent())
+		 { out.println("    do { try dbi?.create" + item + "(" + itemvo + ": _x) }"); 
+           out.println("    catch { print(\"Error creating " + item + "\") }"); 
+		 }
          out.println("  }"); 
          out.println();
        } 
@@ -753,16 +848,20 @@ public class IOSAppGenerator extends AppGenerator
          out.println("    current" + item + " = _x"); 
          out.println("  }"); 
          out.println(); 
-	   } 
+       } 
 	  
        out.println("  func delete" + item + "(_id : String)"); 
-       out.println("  { // dbi.delete" + item + "(_id)");  
-       out.println("    // current" + item + " = nil");
-	   out.println("    kill" + item + "(key: _id)");
+       if (ee.isPersistent())
+	   { out.println("  { if dbi != nil"); 
+         out.println("    { dbi!.delete" + item + "(_val: _id) }");
+	   } 
+	   else 
+	   { out.println("  {"); }  
+       out.println("    kill" + item + "(key: _id)");
        out.println("  }");
-	   out.println();
-	   out.println("  func persist" + item + "(_x: " + item + ") { }"); 
-	   out.println();  
+       out.println();
+       out.println("  func persist" + item + "(_x: " + item + ") { }"); 
+       out.println();  
      }  
 
      for (int j = 0; j < clouds.size(); j++) 
@@ -882,6 +981,45 @@ public class IOSAppGenerator extends AppGenerator
     // System.out.println("}");  
   }
 
+  public static void generateFirebaseDbi(Vector clouds, String appName, String packageName, PrintWriter out) 
+  { out.println("import UIKit"); 
+    out.println("import FirebaseAuth"); 
+    out.println("import FirebaseDatabase");
+
+    out.println(); 
+    out.println("class FirebaseDbi"); 
+    out.println("{ static var instance : FirebaseDbi? = nil");  
+    out.println("  var database : DatabaseReference? = nil");  
+    out.println(); 
+    out.println("  static func getInstance() -> FirebaseDbi"); 
+    out.println("  { if instance == nil"); 
+    out.println("    { instance = FirebaseDbi() }"); 
+    out.println("    return instance!");  
+    out.println("  }");
+    out.println(""); 
+    out.println("  init() {}");
+	out.println(""); 
+	out.println("  func connectByURL(_ url: String)");  
+    out.println("  { self.database = Database.database(url: url).reference()");
+	out.println("    if self.database == nil"); 
+	out.println("    { print(\"Invalid database url\")"); 
+	out.println("      return"); 
+	out.println("    }"); 
+	for (int i = 0; i < clouds.size(); i++) 
+	{ Entity ent = (Entity) clouds.get(i); 
+	  ent.generateCloudUpdateCodeIOS(out); 
+	}
+	out.println("  }");
+	out.println();  
+	
+	for (int i = 0; i < clouds.size(); i++) 
+	{ Entity ent = (Entity) clouds.get(i); 
+	  ent.generateFirebaseOpsIOS(out);
+	  out.println(); 
+	} 
+	out.println("}");  
+  } 
+  
   public String createVOStatement(Entity e, Vector atts)
   { String ename = e.getName();
     // String evc = ename + "ViewController";
@@ -1043,11 +1181,12 @@ public class IOSAppGenerator extends AppGenerator
       { updateScreen = updateScreen + "    graph = result\n" + 
 	                                  "    let xpts = result.xpoints\n" + 
                                       "    let ypts = result.ypoints\n" + 
+									  "    let zpts = result.zpoints\n" + 
                                       "    let xlbs = result.xlabels\n" + 
                                       "    if xlbs.count > 0\n" + 
-          "    { drawNominalChart(dataPoints: xlbs, values: ypts.map{ Double($0) }, name: result.yname) }\n" + 
+          "    { drawNominalChart(dataPoints: xlbs, yvalues: ypts.map{ Double($0) }, zvalues: zpts.map{ Double($0) }, xname: result.xname, yname: result.yname) }\n" + 
           "    else if xpts.count > 0\n" + 
-          "    { drawScalarChart(dataPoints: xpts, values: ypts.map{ Double($0) }, name: result.yname) }\n"; 
+          "    { drawScalarChart(dataPoints: xpts, yvalues: ypts.map{ Double($0) }, zvalues: zpts.map{ Double($0) }, xname: result.xname, yname: result.yname) }\n"; 
 	  } 
       else 
       { updateScreen = updateScreen + "    resultOutput.text = String(result)"; }
@@ -1281,11 +1420,12 @@ public class IOSAppGenerator extends AppGenerator
           "    graph = result\n" + 
           "    let xpts = result.xpoints\n" + 
           "    let ypts = result.ypoints\n" + 
+		  "    let zpts = result.zpoints\n" + 
           "    let xlbs = result.xlabels\n" + 
           "    if xlbs.count > 0\n" + 
-          "    { drawNominalChart(dataPoints: xlbs, values: ypts.map{ Double($0) }, name: result.yname) }\n" + 
+          "    { drawNominalChart(dataPoints: xlbs, yvalues: ypts.map{ Double($0) }, zvalues: zpts.map{ Double($0) }, xname: result.xname, yname: result.yname) }\n" + 
           "    else if xpts.count > 0\n" + 
-          "    { drawScalarChart(dataPoints: xpts, values: ypts.map{ Double($0) }, name: result.yname) }\n"; 
+          "    { drawScalarChart(dataPoints: xpts, yvalues: ypts.map{ Double($0) }, zvalues: zpts.map{ Double($0) }, xname : result.xname, yname: result.yname) }\n"; 
       } 
       else 
       { updateScreen = updateScreen + "    resultOutput.text = String(result)"; }
@@ -1391,11 +1531,12 @@ public class IOSAppGenerator extends AppGenerator
           "    " + extucname + "graph = result\n" + 
           "    let xpts = result.xpoints\n" + 
           "    let ypts = result.ypoints\n" + 
+          "    let zpts = result.zpoints\n" + 
           "    let xlbs = result.xlabels\n" + 
           "    if xlbs.count > 0\n" + 
-          "    { drawNominalChart(dataPoints: xlbs, values: ypts.map{ Double($0) }, name: result.yname) }\n" + 
+          "    { drawNominalChart(dataPoints: xlbs, yvalues: ypts.map{ Double($0) }, zvalues: zpts.map{ Double($0) }, xname : result.xname, yname: result.yname) }\n" + 
           "    else if xpts.count > 0\n" + 
-          "    { drawScalarChart(dataPoints: xpts, values: ypts.map{ Double($0) }, name: result.yname) }\n"; 
+          "    { drawScalarChart(dataPoints: xpts, yvalues: ypts.map{ Double($0) }, zvalues: zpts.map{ Double($0) }, xname : result.xname, yname: result.yname) }\n"; 
           extrestype = "GraphDisplay"; 
 		} 
         else 
@@ -1428,40 +1569,72 @@ public class IOSAppGenerator extends AppGenerator
     out.println("    if xlbs.count > ind"); 
     out.println("    { return xlbs[ind] } "); 
     out.println("    else if xpts.count > ind"); 
-    out.println("    { return String(xpts[ind]) }");  
+    out.println("    { return String(Double(Int(1000*xpts[ind]))/1000) }");  
     out.println("    return \"\""); 
     out.println("  }"); 
     out.println("  "); 
-    out.println("  func drawNominalChart(dataPoints: [String], values: [Double], name : String)");  
+    out.println("  func drawNominalChart(dataPoints: [String], yvalues: [Double], zvalues : [Double], xname : String, yname : String)");  
     out.println("  { var dataEntries: [ChartDataEntry] = []"); 
     out.println("    "); 
     out.println("    for i in 0..<dataPoints.count "); 
-    out.println("    { let dataEntry = ChartDataEntry(x: Double(i), y: values[i])"); 
+    out.println("    { let dataEntry = ChartDataEntry(x: Double(i), y: yvalues[i])"); 
     out.println("      dataEntries.append(dataEntry)"); 
     out.println("    }"); 
     out.println("    "); 
     out.println("    let xAxis = resultOutput.xAxis"); 
     out.println("    xAxis.valueFormatter = self"); 
     out.println("  "); 
-    out.println("    let lineChartDataSet = LineChartDataSet(values: dataEntries, label: name)"); 
-    out.println("    let lineChartData = LineChartData(dataSet: lineChartDataSet)"); 
-    out.println("    resultOutput.data = lineChartData"); 
+    out.println("    let lineChartDataSet = LineChartDataSet(entries: dataEntries, label: yname)"); 
+	out.println("    lineChartDataSet.colors = [NSUIColor.blue]"); 
+    out.println("    let lineChartData = LineChartData()");
+	out.println("    lineChartData.addDataSet(lineChartDataSet)"); 
+    out.println("    if zvalues.count > 0");
+    out.println("    { var zdataEntries: [ChartDataEntry] = []");
+    out.println("      for i in 0..<dataPoints.count");
+    out.println("      { if i < zvalues.count");
+	out.println("        { let zdataEntry = ChartDataEntry(x: Double(i), y: zvalues[i])"); 
+    out.println("          zdataEntries.append(zdataEntry)");
+    out.println("        }"); 
+	out.println("      }"); 
+    out.println("      let linez = LineChartDataSet(entries: zdataEntries, label: \"zname\")"); 
+    out.println("      linez.colors = [NSUIColor.orange]"); 
+    out.println("      lineChartData.addDataSet(linez)");
+    out.println("    }");
+    out.println(""); 
+    out.println("    resultOutput.data = lineChartData");
+	out.println("    resultOutput.chartDescription?.text = xname");   
     out.println("  }"); 
     out.println("  "); 
-    out.println("  func drawScalarChart(dataPoints: [Double], values: [Double], name : String)");  
+    out.println("  func drawScalarChart(dataPoints: [Double], yvalues: [Double], zvalues: [Double], xname : String, yname : String)");  
     out.println("  { var dataEntries: [ChartDataEntry] = []"); 
     out.println("    "); 
     out.println("    for i in 0..<dataPoints.count "); 
-    out.println("    { let dataEntry = ChartDataEntry(x: dataPoints[i], y: values[i])"); 
+    out.println("    { let dataEntry = ChartDataEntry(x: dataPoints[i], y: yvalues[i])"); 
     out.println("      dataEntries.append(dataEntry)"); 
     out.println("    }"); 
     out.println("  "); 
     out.println("    let xAxis = resultOutput.xAxis"); 
     out.println("    xAxis.valueFormatter = self"); 
     out.println("    "); 
-    out.println("    let lineChartDataSet = LineChartDataSet(values: dataEntries, label: name)"); 
-    out.println("    let lineChartData = LineChartData(dataSet: lineChartDataSet)"); 
+    out.println("    let lineChartDataSet = LineChartDataSet(entries: dataEntries, label: yname)"); 
+	out.println("    lineChartDataSet.colors = [NSUIColor.blue]"); 
+    out.println("    let lineChartData = LineChartData()"); 
+	out.println("    lineChartData.addDataSet(lineChartDataSet)"); 
+    out.println("    if zvalues.count > 0");
+    out.println("    { var zdataEntries: [ChartDataEntry] = []");
+    out.println("      for i in 0..<dataPoints.count");
+    out.println("      { if i < zvalues.count");
+	out.println("        { let zdataEntry = ChartDataEntry(x: dataPoints[i], y: zvalues[i])"); 
+    out.println("          zdataEntries.append(zdataEntry)");
+    out.println("        }"); 
+	out.println("      }"); 
+    out.println("      let linez = LineChartDataSet(entries: zdataEntries, label: \"zname\")"); 
+    out.println("      linez.colors = [NSUIColor.orange]"); 
+    out.println("      lineChartData.addDataSet(linez)");
+    out.println("    }");
+    out.println(""); 
     out.println("    resultOutput.data = lineChartData"); 
+	out.println("    resultOutput.chartDescription?.text = xname");   
     out.println("  }"); 
 	out.println(); 
   }
@@ -1584,16 +1757,22 @@ public void listViewController(Entity e, PrintWriter out)
   out.println("");
   out.println("    self." + elist + " = " + bean + "." + getlist + "()"); 
   out.println(); 
-  out.println("    let _item = self." + elist + "[indexPath.row]"); 
-  out.println("    _cell.textLabel?.text = _item.toString()");     
+  out.println("    if indexPath.row < self." + elist + ".count"); 
+  out.println("    { let _item = self." + elist + "[indexPath.row]"); 
+  out.println("      _cell.textLabel?.text = _item.toString()");
+  out.println("    }");      
+  out.println("    else "); 
+  out.println("    { _cell.textLabel?.text = \"\" }"); 
   out.println("    ");
   out.println("    return _cell");
   out.println("  }");
   out.println("  ");
    
   out.println("  func tableView(_ tableView: UITableView, didSelectRowAt indexPath : IndexPath)");
-  out.println("  { let _item = " + elist + "[indexPath.row]");
-  out.println("    " + bean + ".setSelected" + ename + "(_x: _item)");
+  out.println("  { if indexPath.row < " + elist + ".count"); 
+  out.println("    { let _item = " + elist + "[indexPath.row]");
+  out.println("      " + bean + ".setSelected" + ename + "(_x: _item)");
+  out.println("    }"); 
   out.println("  }");
   out.println("}");
 }
@@ -2166,15 +2345,23 @@ public static void generateIOSFileAccessor(PrintWriter out)
     out.println("}"); 
   }  
   
-  public static void generateSwiftUIAppDelegate(PrintWriter out)
+  public static void generateSwiftUIAppDelegate(PrintWriter out, boolean needsFirebase)
   { out.println("import UIKit");
+    if (needsFirebase)
+	{ out.println("import Firebase"); }
     out.println("");
     out.println("@UIApplicationMain");
     out.println("class AppDelegate: UIResponder, UIApplicationDelegate");
     out.println("{");
     out.println("  func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool");
-    out.println("  { return true }");
-    out.println("");
+    if (needsFirebase)
+	{ out.println("  { FirebaseApp.configure()"); 
+	  out.println("    return true"); 
+	  out.println("  }"); 
+	}
+    else 
+	{ out.println("  { return true }"); } 
+	out.println("");
     out.println("  func applicationWillTerminate(_ application: UIApplication) { }");
     out.println("");
     out.println("  func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration");
@@ -2185,18 +2372,37 @@ public static void generateIOSFileAccessor(PrintWriter out)
     out.println("}");
   }
   
-  public static void generateUIKitAppDelegate(PrintWriter out)
+  public static void generateUIKitAppDelegate(PrintWriter out, boolean needsFirebase)
   { out.println("import UIKit");
+    if (needsFirebase)
+	{ out.println("import Firebase"); }
     out.println("");
-    out.println("@UIApplicationMain @IBObject public class AppDelegate : IUIApplicationDelegate {"); 
-    out.println("  override var window : UIWindow?"); 
+    out.println("@UIApplicationMain"); 
+	out.println("public class AppDelegate : UIResponder, UIApplicationDelegate"); 
+    out.println("{ override var window : UIWindow?"); 
     out.println(); 
-    out.println("  override func application(_ application: UIApplication!, didFinishLaunchingWithOptions launchOptions: NSDictionary<UIApplicationLaunchOptionsKey!,rtl.id!>!) -> Bool"); 
-    out.println("  { window = UIWindow()"); 
-    out.println("    window!.rootViewController = UINavigationController(rootViewController: RootViewController())"); 
-    out.println("    window!.makeKeyAndVisible()"); 
+    out.println("  override func application(_ application: UIApplication!, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey:Any]?) -> Bool"); 
+    out.println("  { // window = UIWindow()"); 
+    out.println("    // window!.rootViewController = UINavigationController(rootViewController: RootViewController())"); 
+    out.println("    // window!.makeKeyAndVisible()"); 
+	if (needsFirebase)
+	{ out.println("    FirebaseApp.configure()"); }
     out.println("    return true"); 
     out.println("  }"); 
+    out.println(""); 
+	out.println("  // MARK: UISceneSession Lifecycle"); 
+    out.println(""); 
+    out.println("    func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {");
+    out.println("        // Called when a new scene session is being created.");
+    out.println("        // Use this method to select a configuration to create the new scene with.");
+    out.println("        return UISceneConfiguration(name: \"Default Configuration\", sessionRole: connectingSceneSession.role)");
+    out.println("    }");
+    out.println("");
+    out.println("    func application(_ application: UIApplication, didDiscardSceneSessions sceneSessions: Set<UISceneSession>) {");
+    out.println("        // Called when the user discards a scene session.");
+    out.println("        // If any sessions were discarded while the application was not running, this will be called shortly after application:didFinishLaunchingWithOptions.");
+    out.println("        // Use this method to release any resources that were specific to the discarded scenes, as they will not return.");
+    out.println("    }");
     out.println(""); 
     out.println("  override func applicationWillResignActive(_ application: UIApplication) {}"); 
     out.println(); 
@@ -2484,7 +2690,7 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
 	out.println("    if FileAccessor.fileExistsAbsolutePath(filename: path)"); 
     out.println("    { print(\"Database already exists\")"); 
     out.println("      do");
-    out.println("      { try dbi = Dbi.open(path: \"/Users/kevinlano/Desktop/dbtest/app.db\")"); 
+    out.println("      { try dbi = Dbi.open(path: path)"); 
     out.println("        if dbi != nil"); 
     out.println("        { print(\"Opened database\") }"); 
     out.println("        else"); 
@@ -2497,7 +2703,7 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("    else"); 
     out.println("    { print(\"New database will be created\")"); 
     out.println("      do");
-    out.println("      { try dbi = Dbi.open(path: \"/Users/kevinlano/Desktop/dbtest/app.db\")"); 
+    out.println("      { try dbi = Dbi.open(path: path)"); 
     out.println("        if dbi != nil"); 
     out.println("        { print(\"Opened new database\") "); 
 	out.println("          try dbi!.createDatabase(db: dbi!) "); 
@@ -2664,7 +2870,10 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
 
 
   public static void generatePodfile(PrintWriter out, String appName, Vector pods)
-  { out.println("# Uncomment the next line to define a global platform for your project"); 
+  { if (appName == null || appName.length() == 0) 
+    { appName = "app"; } 
+	
+	out.println("# Uncomment the next line to define a global platform for your project"); 
     out.println("# platform :ios, '9.0'");
     out.println("");
     out.println("target '" + appName + "' do");
@@ -2688,6 +2897,162 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("  end");
     out.println("");
     out.println("end"); 
+  }
+  
+  public static void generateFirebaseAuthenticator(PrintWriter out, String appName, String packageName)
+  { out.println("import Foundation");
+    out.println("");
+    out.println("import Darwin");
+    out.println("import UIKit");
+    out.println("import FirebaseAuth");
+    out.println("");
+    out.println("class FirebaseAuthenticator");
+    out.println("{ static var instance : FirebaseAuthenticator? = nil");
+    out.println("");
+    out.println("  var userId : String = \"\"");
+    out.println("");
+    out.println("  static func getInstance() -> FirebaseAuthenticator");
+    out.println("  { if instance == nil");
+    out.println("    { instance = FirebaseAuthenticator() }");
+    out.println("    return instance!");
+    out.println("  }");
+    out.println("");
+    out.println("  init()");
+    out.println("  { Auth.auth().addStateDidChangeListener");
+    out.println("    { (auth,user) in");
+    out.println("        if let u = user");
+    out.println("        { self.userId = u.uid }");
+    out.println("        else");
+	out.println("        { self.userId = \"\" }");
+    out.println("    }");
+    out.println("  }");
+    out.println("");
+    out.println("  static func signUp(email : String, password : String) -> String");
+    out.println("  { var result : String = \"Success\"");
+    out.println("    Auth.auth().createUser(withEmail: email, password: password)");
+    out.println("    { (user,error) in");
+    out.println("      if let _ = user");
+    out.println("      { }");
+    out.println("      else");
+    out.println("      { result = (error?.localizedDescription)! }");
+    out.println("    }");
+    out.println("    return result");
+    out.println("  }");
+    out.println("");
+    out.println("  static func signIn(email : String, password : String) -> String");
+    out.println("  { var result : String = \"Success\"");
+    out.println("    Auth.auth().signIn(withEmail: email, password: password)");
+    out.println("    { (user,error) in");
+    out.println("      if let _ = user");
+    out.println("      { }");
+    out.println("      else");
+    out.println("      { result = (error?.localizedDescription)! }");
+    out.println("    }");
+    out.println("    return result");
+    out.println("  }");
+    out.println("  ");
+    out.println("  func getUserId() -> String");
+    out.println("  { return self.userId }");
+    /* Auth.auth().currentUser + "" */
+    out.println("");
+    out.println("  static func signOut() -> String");
+    out.println("  { do");
+    out.println("    { try Auth.auth().signOut()");
+    out.println("      return \"Success\"");
+    out.println("    }");
+    out.println("    catch let err as NSError");
+    out.println("    { return (err as! String + \"\") }");
+    out.println("  }");
+    out.println("}"); 
+  }
+
+  public static void generateGraphDisplay(String packageName)
+  { String entfile = "GraphDisplay.swift"; 
+    File entff = new File("output/" + packageName + "/" + entfile); 
+    try
+    { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entff)));
+      // out.println("package " + packageName + ";"); 
+      out.println("import Foundation"); 
+  	  out.println("import UIKit"); 
+      out.println("import Charts");
+      out.println("");
+      out.println("class GraphDisplay");
+      out.println("{ var graphKind : String = \"line\"");
+      out.println("  var xpoints : [Double] = [Double]()");
+      out.println("  var xlabels : [String] = [String]()");
+      out.println("  var ypoints : [Double] = [Double]()");
+      out.println("  var zpoints : [Double] = [Double]()");
+      out.println("");
+      out.println("  var linesx : Dictionary<String,[Double]> = Dictionary<String,[Double]>()");
+      out.println("  var linesy : Dictionary<String,[Double]> = Dictionary<String,[Double]>()");
+      out.println("  var labelsx : Dictionary<String,Double> = Dictionary<String,Double>()");
+      out.println("  var labelsy : Dictionary<String,Double> = Dictionary<String,Double>()");
+      out.println("  ");
+      out.println("  var xname : String = \"X-axis\"");
+      out.println("  var yname : String = \"Y-axis\"");
+      out.println("  var zname : String = \"\"");
+      out.println("");
+      out.println("  static var instance : GraphDisplay? = nil");
+      out.println("");
+      out.println("  init() { }"); 
+      out.println("");
+      out.println("  static func getInstance() -> GraphDisplay");
+      out.println("  { if (instance == nil) ");
+      out.println("    { instance = GraphDisplay() }");
+      out.println("    return instance!");
+      out.println("  }");
+      out.println("");
+      out.println("  func reset()");
+      out.println("  { xpoints = [Double]()");
+      out.println("    ypoints = [Double]()");
+      out.println("    zpoints = [Double]()");
+      out.println("    xlabels = [String]()");
+      out.println("    linesx = Dictionary<String,[Double]>()");
+      out.println("    linesy = Dictionary<String,[Double]>()");
+      out.println("    labelsx = Dictionary<String,Double>()");
+      out.println("    labelsy = Dictionary<String,Double>()");
+      out.println("  }");
+      out.println("");
+      out.println("  func redraw() { }"); 
+      out.println("");
+      out.println("  func setXScalar(xvalues : [Double])");
+      out.println("  { xpoints = xvalues }");
+      out.println("");
+      out.println("  func setXNominal(xvalues : [String])");
+      out.println("  { xlabels = xvalues }");
+      out.println("");
+      out.println("  func setYPoints(yvalues : [Double])");
+      out.println("  { ypoints = yvalues }");
+      out.println("");
+      out.println("  func setZPoints(zvalues : [Double])");
+      out.println("  { zpoints = zvalues }");
+      out.println("");
+      out.println("  func setxname(xname : String)");
+      out.println("  { self.xname = xname }");
+      out.println("");
+      out.println("  func setyname(yname : String)");
+      out.println("  { self.yname = yname }");
+      out.println("");
+      out.println("  func setzname(zname : String)");
+      out.println("  { self.zname = zname }");
+      out.println("");
+      out.println("  func setGraphKind(kind : String)");
+      out.println("  { graphKind = kind }"); 
+      out.println("");
+      out.println("  func addLine(name : String, xvalues : [Double], yvalues : [Double])");
+      out.println("  { linesx[name] = xvalues");
+      out.println("    linesy[name] = yvalues");
+      out.println("  }"); 
+      out.println("  ");
+      out.println("  func addLabel(name : String, x : Double, y : Double)");
+      out.println("  { labelsx[name] = x");
+      out.println("    labelsy[name] = y");
+      out.println("  }"); 
+      out.println("}");
+	  out.close(); 
+	} catch (Exception e) { }  
   }
   
   public static void main(String[] args)

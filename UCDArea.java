@@ -2999,6 +2999,9 @@ public class UCDArea extends JPanel
     else 
     { dir.mkdir(); }
     
+    System.out.println(">>> App code will be generated in directory " + dirName); 
+    System.out.println(); 
+
     String mainscreenName = "ContentView"; 
     Vector operationNames = new Vector(); 
     Vector tabLabels = new Vector();
@@ -3006,16 +3009,6 @@ public class UCDArea extends JPanel
 
     int screencount = 0; 
 
-    String delfile = "AppDelegate.swift"; 
-    File appdelf = new File("output/swiftuiapp/" + delfile); 
-    try
-    { PrintWriter appdelfile = new PrintWriter(
-                                new BufferedWriter(
-                                  new FileWriter(appdelf)));
-      IOSAppGenerator.generateSwiftUIAppDelegate(appdelfile);
-      appdelfile.close(); 
-    }
-    catch(Exception _dd) { } 
 
     String appfile = appName + "App.swift"; 
     File appappf = new File("output/swiftuiapp/" + appfile); 
@@ -3032,11 +3025,14 @@ public class UCDArea extends JPanel
     Vector customComponents = new Vector(); 
     Vector predefinedComponents = new Vector(); 
     Vector persistentEntities = new Vector();
+    Entity cloudauthenticator = null; 
     Vector clouds = new Vector(); 
 	
     int internetCalls = 0; 
     int remotecalls = 0; 
     boolean needsMaps = false;
+    boolean needsFirebase = false; 
+    boolean needsGraph = false; 
     Vector predefinedUseCases = new Vector();  
 	
     for (int j = 0; j < entities.size(); j++) 
@@ -3058,29 +3054,44 @@ public class UCDArea extends JPanel
 	    { predefinedComponents.add(internetAccessor); }
 	  } 
 	  else if (ent.isCloud())
-       { Entity eeDAO = (Entity) ModelElement.lookupByName(ename + "_DAO",entities); 
-         Entity cloudAccessor = (Entity) ModelElement.lookupByName("FirebaseDbi",entities);
-         needsInternetPermission = true; 
+      { Entity eeDAO = (Entity) ModelElement.lookupByName(ename + "_DAO",entities); 
+        Entity cloudAccessor = (Entity) ModelElement.lookupByName("FirebaseDbi",entities);
+        Entity cloudAuthenticator = (Entity) ModelElement.lookupByName("FirebaseAuthenticator",entities);
+        needsInternetPermission = true; 
 	    
-         if (eeDAO != null) 
-         { predefinedComponents.add(eeDAO); }
+        if (eeDAO != null) 
+        { predefinedComponents.add(eeDAO); }
 
-         if (cloudAccessor != null && !(predefinedComponents.contains(cloudAccessor)))
-         { predefinedComponents.add(cloudAccessor); }
-         clouds.add(ent);
- 
-         pods.add("Firebase/Auth"); 
-         pods.add("Firebase/Database"); 
+        if (cloudAccessor != null && !(predefinedComponents.contains(cloudAccessor)))
+        { predefinedComponents.add(cloudAccessor); }
+        if (cloudAuthenticator != null && !(predefinedComponents.contains(cloudAuthenticator)))
+        { predefinedComponents.add(cloudAuthenticator); 
+          cloudauthenticator = cloudAuthenticator; 
+        }
+
+        needsFirebase = true; 
+        clouds.add(ent);
       }
       else if (ent.isPersistent())
       { persistentEntities.add(ent); } 
     } 
 	  
     Entity fileaccessor = (Entity) ModelElement.lookupByName("FileAccessor", entities); 
-    if (fileaccessor != null) 
+    if (fileaccessor != null && !predefinedComponents.contains(fileaccessor)) 
     { predefinedComponents.add(fileaccessor); }
     
-   
+    Entity cloudAuthenticator = (Entity) ModelElement.lookupByName("FirebaseAuthenticator",entities);
+    if (cloudAuthenticator != null && !(predefinedComponents.contains(cloudAuthenticator)))
+    { predefinedComponents.add(cloudAuthenticator); 
+      cloudauthenticator = cloudAuthenticator; 
+    }    
+		
+    if (clouds.size() > 0 || cloudauthenticator != null)
+    { pods.add("Firebase/Auth"); 
+      pods.add("Firebase/Database"); 
+      needsFirebase = true; 
+    }
+
     /* Entity graphcomponent = (Entity) ModelElement.lookupByName("GraphComponent", entities); 
     if (graphcomponent != null) 
     { predefinedComponents.add(graphcomponent); 
@@ -3089,7 +3100,7 @@ public class UCDArea extends JPanel
     } */ 
 
     Entity mapcomponent = (Entity) ModelElement.lookupByName("MapsComponent", entities); 
-    if (mapcomponent != null) 
+    if (mapcomponent != null && !predefinedComponents.contains(mapcomponent)) 
     { predefinedComponents.add(mapcomponent); 
       predefinedUseCases.add("map");
       needsMaps = true;  
@@ -3097,9 +3108,9 @@ public class UCDArea extends JPanel
     }  
 
     Entity webcomponent = (Entity) ModelElement.lookupByName("WebDisplay", entities); 
-    if (webcomponent != null) 
+    if (webcomponent != null && !predefinedComponents.contains(webcomponent)) 
     { predefinedComponents.add(webcomponent); 
-	  needsInternetPermission = true; 
+      needsInternetPermission = true; 
     } 
 	
     Entity imagecomponent = (Entity) ModelElement.lookupByName("ImageDisplay", entities); 
@@ -3108,10 +3119,14 @@ public class UCDArea extends JPanel
 	
     Entity graphcomponent = (Entity) ModelElement.lookupByName("GraphDisplay", entities); 
     if (graphcomponent != null) 
-    { predefinedComponents.add(graphcomponent); } 
+    { predefinedComponents.add(graphcomponent); 
+      needsGraph = true; 
+    } 
 
     customComponents.removeAll(predefinedComponents); 
 
+    if (needsGraph)
+    { pods.add("Charts"); }  
 
 
     Entity datecomponent = (Entity) ModelElement.lookupByName("DateComponent", entities); 
@@ -3139,6 +3154,20 @@ public class UCDArea extends JPanel
     } 
     catch (Exception _fac) { } 
 
+    if (cloudauthenticator != null)
+    { needsFirebase = true; 
+      String auth = "FirebaseAuthenticator.swift"; 
+      File authf = new File("output/swiftuiapp/" + auth); 
+      try
+      { PrintWriter authout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(authf)));
+        IOSAppGenerator.generateFirebaseAuthenticator(authout,appName,"");
+        authout.close(); 
+      } 
+      catch (Exception _fac) { } 
+    }
+	
     if (webcomponent != null) 
     { // generate its screen and view controller
       IOSAppGenerator.generateWebDisplay("swiftuiapp"); 
@@ -3185,8 +3214,9 @@ public class UCDArea extends JPanel
           remotecalls++; 
         } 
 
-        if (ent.isCloud()) // Remote data source
+      /*  if (ent.isCloud()) // Remote data source. But better to have one integrated one for all entities. 
         { ent.generateFirebaseDbiIOS("swiftuiapp"); } 
+       */ 
 
         try
         { String entvo = ent.getName() + "VO.swift"; 
@@ -3212,6 +3242,8 @@ public class UCDArea extends JPanel
       } 
       catch (Exception pe) { } 
     } 
+	
+	// And any specific pod for graphics? 
 
     for (int j = 0; j < types.size(); j++) 
     { Type typ = (Type) types.get(j);
@@ -3288,9 +3320,9 @@ public class UCDArea extends JPanel
                               new BufferedWriter(
                                 new FileWriter(accf)));
         IOSAppGenerator.generateInternetAccessor(systemName,accout);
-		accout.close();  
-	  } catch (Exception _w) { } 
-	}  
+        accout.close();  
+      } catch (Exception _w) { } 
+    }  
 
     for (int z = 0; z < entusecases.size(); z++) 
     { UseCase uc = (UseCase) entusecases.get(z);
@@ -3361,7 +3393,29 @@ public class UCDArea extends JPanel
       catch (Exception e) { }  
     } 
 	
-    String scenefile = "SceneDelegate.swift"; 
+    if (clouds.size() > 0) 
+    { File clouddbif = new File("output/iosapp/FirebaseDbi.swift"); 
+      try
+      { PrintWriter clouddbiout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(clouddbif)));
+	    IOSAppGenerator.generateFirebaseDbi(clouds,systemName,"",clouddbiout);
+        clouddbiout.close(); 
+      } catch (Exception e) { }
+    }  
+
+    String delfile = "AppDelegate.swift"; 
+    File appdelf = new File("output/swiftuiapp/" + delfile); 
+    try
+    { PrintWriter appdelfile = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(appdelf)));
+      IOSAppGenerator.generateSwiftUIAppDelegate(appdelfile,needsFirebase);
+      appdelfile.close(); 
+    }
+    catch(Exception _dd) { } 
+
+String scenefile = "SceneDelegate.swift"; 
     File scenedelf = new File("output/swiftuiapp/" + scenefile); 
     try
     { PrintWriter scenedelfile = new PrintWriter(
@@ -3371,6 +3425,10 @@ public class UCDArea extends JPanel
       scenedelfile.close(); 
     }
     catch(Exception _sd) { } 
+
+    System.out.println(); 
+    System.out.println(">>> App code is generated in directory " + dirName); 
+    System.out.println(); 
 
   } 
 
@@ -3388,33 +3446,31 @@ public class UCDArea extends JPanel
       return; 
     } 
 
+    Vector pods = new Vector(); 
+	
     String dirName = "output/iosapp"; 
     File dir = new File(dirName); 
     if (dir.exists()) { } 
     else 
     { dir.mkdir(); }
 
-    String delfile = "AppDelegate.swift"; 
-    File appdelf = new File("output/iosapp/" + delfile); 
-    try
-    { PrintWriter appdelfile = new PrintWriter(
-                                new BufferedWriter(
-                                  new FileWriter(appdelf)));
-      IOSAppGenerator.generateUIKitAppDelegate(appdelfile);
-      appdelfile.close(); 
-    }
-    catch(Exception _dd) { } 
+    System.out.println(">>> App code will be generated in directory " + dirName); 
+    System.out.println(); 
 
     boolean needsInternetPermission = false; 
     Vector customComponents = new Vector(); 
     Vector predefinedComponents = new Vector(); 
     Vector persistentEntities = new Vector();
     Vector clouds = new Vector(); 
+    Entity cloudauthenticator = null; 
 	
     int internetCalls = 0; 
     int screencount = 0; 
     int remotecalls = 0; 
     boolean needsMaps = false;
+    boolean needsFirebase = false; 
+    boolean needsGraph = false; 
+
     Vector predefinedUseCases = new Vector();  
 	
     for (int j = 0; j < entities.size(); j++) 
@@ -3438,12 +3494,17 @@ public class UCDArea extends JPanel
 	  else if (ent.isCloud())
 	  { Entity eeDAO = (Entity) ModelElement.lookupByName(ename + "_DAO",entities); 
 	    Entity cloudAccessor = (Entity) ModelElement.lookupByName("FirebaseDbi",entities);
+	    Entity cloudAuthenticator = (Entity) ModelElement.lookupByName("FirebaseAuthenticator",entities);
 	    needsInternetPermission = true; 
 	    
 	    if (eeDAO != null) 
 	    { predefinedComponents.add(eeDAO); }
 	    if (cloudAccessor != null && !(predefinedComponents.contains(cloudAccessor)))
 	    { predefinedComponents.add(cloudAccessor); }
+	    if (cloudAuthenticator != null && !(predefinedComponents.contains(cloudAuthenticator)))
+	    { predefinedComponents.add(cloudAuthenticator); 
+	      cloudauthenticator = cloudAuthenticator; 
+	    }
 	    clouds.add(ent); 
       }
       else if (ent.isPersistent())
@@ -3455,7 +3516,26 @@ public class UCDArea extends JPanel
     { predefinedComponents.add(fileaccessor); }
     
 
-   
+    Entity cloudAuthenticator = (Entity) ModelElement.lookupByName("FirebaseAuthenticator",entities);
+    if (cloudAuthenticator != null && !(predefinedComponents.contains(cloudAuthenticator)))
+    { predefinedComponents.add(cloudAuthenticator); 
+      cloudauthenticator = cloudAuthenticator; 
+    }
+	    
+    if (cloudauthenticator != null)
+    { needsFirebase = true; 
+      String auth = "FirebaseAuthenticator.swift"; 
+      File authf = new File("output/iosapp/" + auth); 
+      try
+      { PrintWriter authout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(authf)));
+        IOSAppGenerator.generateFirebaseAuthenticator(authout,systemName,"");
+        authout.close(); 
+      } 
+      catch (Exception _fac) { } 
+    }
+
     // Entity graphcomponent = (Entity) ModelElement.lookupByName("GraphComponent", entities); 
     // if (graphcomponent != null) 
     // { predefinedComponents.add(graphcomponent); 
@@ -3497,7 +3577,9 @@ public class UCDArea extends JPanel
 
     Entity graphdisplaycomponent = (Entity) ModelElement.lookupByName("GraphDisplay", entities); 
     if (graphdisplaycomponent != null) 
-    { predefinedComponents.add(graphdisplaycomponent); } 
+    { predefinedComponents.add(graphdisplaycomponent); 
+      needsGraph = true; 
+    } 
 
     customComponents.removeAll(predefinedComponents); 
 
@@ -3521,6 +3603,12 @@ public class UCDArea extends JPanel
     { // generate its screen and view controller
       IOSAppGenerator.generateImageDisplay("iosapp"); 
     }
+	
+	 if (graphdisplaycomponent != null) 
+     { // generate its screen and view controller
+       IOSAppGenerator.generateGraphDisplay("iosapp"); 
+     }
+
 
     for (int j = 0; j < entities.size(); j++) 
     { Entity ent = (Entity) entities.get(j); 
@@ -3557,8 +3645,10 @@ public class UCDArea extends JPanel
           remotecalls++; 
         } 
 
-        if (ent.isCloud()) // Remote data source
-        { ent.generateFirebaseDbiIOS("iosapp"); } 
+       /* if (ent.isCloud()) // Remote data source
+        { ent.generateFirebaseDbiIOS("iosapp"); } // Should be one for all cloud entities. 
+        */ 
+
 
         try
         { String entvo = ent.getName() + "VO.swift"; 
@@ -3607,7 +3697,7 @@ public class UCDArea extends JPanel
         if (uc.isPublic() && uc.isIndependent()) 
         { screencount++; 
           entusecases.add(uc);
-		}        
+        }        
       } 
       else if (useCases.get(i) instanceof OperationDescription)
       { OperationDescription od = (OperationDescription) useCases.get(i); 
@@ -3642,7 +3732,7 @@ public class UCDArea extends JPanel
     { PrintWriter beanout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(entbeanf)));
-	  System.out.println(">>> Writing " + entbeanf + " for " + entusecases); 
+      System.out.println(">>> Writing " + entbeanf + " for " + entusecases); 
 		
       gen.modelFacade(systemName,entusecases,cgs,entities,clouds,
                       types,internetCalls,needsMaps,beanout);
@@ -3664,7 +3754,7 @@ public class UCDArea extends JPanel
 
     for (int z = 0; z < entusecases.size(); z++) 
     { UseCase uc = (UseCase) entusecases.get(z);
-	  if (uc.isPrivate()) { continue; }
+      if (uc.isPrivate()) { continue; }
 	   
       String ucvc = uc.getName() + "ViewController.swift"; 
       File ucvcf = new File("output/iosapp/" + ucvc); 
@@ -3672,7 +3762,7 @@ public class UCDArea extends JPanel
       { PrintWriter vcout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(ucvcf)));
-  	    System.out.println(">>> Writing " + ucvcf + " for " +  uc.getName()); 
+        System.out.println(">>> Writing " + ucvcf + " for " +  uc.getName()); 
 		
          gen.singlePageApp(uc,systemName,"",cgs,types,entities,vcout);
          // vcout.flush(); 
@@ -3682,8 +3772,8 @@ public class UCDArea extends JPanel
 
     for (int z = 0; z < useCases.size(); z++) 
     { if (useCases.get(z) instanceof UseCase) 
-	  { UseCase uc = (UseCase) useCases.get(z);
-	    if (uc.isPrivate()) { continue; }
+      { UseCase uc = (UseCase) useCases.get(z);
+        if (uc.isPrivate()) { continue; }
       
         String ucbean = uc.getName() + "ValidationBean.swift"; 
         File ucbeanf = new File("output/iosapp/" + ucbean); 
@@ -3696,8 +3786,56 @@ public class UCDArea extends JPanel
         } catch (Exception e) { }
       }
 	} 
-	  
+
+    if (clouds.size() > 0 || cloudauthenticator != null)
+    { pods.add("Firebase/Auth"); 
+      pods.add("Firebase/Database"); 
+      needsFirebase = true; 
+    }
+	
+    if (needsGraph)
+    { pods.add("Charts"); }  
+
+    if (pods.size() > 0) 
+    { try
+      { String podfile = "Podfile"; 
+        File podf = new File("output/iosapp/" + podfile); 
+        PrintWriter podout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(podf)));
+        IOSAppGenerator.generatePodfile(podout,systemName,pods); 
+        podout.close(); 
+      } 
+      catch (Exception pe) { } 
+    } 
+
+    if (clouds.size() > 0) 
+    { File clouddbif = new File("output/iosapp/FirebaseDbi.swift"); 
+      try
+      { PrintWriter clouddbiout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(clouddbif)));
+	    IOSAppGenerator.generateFirebaseDbi(clouds,systemName,"",clouddbiout);
+        clouddbiout.close(); 
+      } catch (Exception e) { }
+    }  
+
+    String delfile = "AppDelegate.swift"; 
+    File appdelf = new File("output/iosapp/" + delfile); 
+    try
+    { PrintWriter appdelfile = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(appdelf)));
+      IOSAppGenerator.generateUIKitAppDelegate(appdelfile,needsFirebase);
+      appdelfile.close(); 
+    }
+    catch(Exception _dd) { }   
 	  // generateSwiftUIApp(); 
+
+    System.out.println(); 
+    System.out.println(">>> App code is generated in directory " + dirName); 
+    System.out.println(); 
+
   } // validation beans for entities? 
   
   public void generateAndroidLayouts(PrintWriter out)
@@ -3711,6 +3849,7 @@ public class UCDArea extends JPanel
 	
     Vector persistentEntities = new Vector();
     Vector clouds = new Vector(); 
+    Entity cloudauthenticator = null; 
 	 
     Vector predefinedComponents = new Vector();
     Vector predefinedUseCases = new Vector(); 
@@ -3718,7 +3857,8 @@ public class UCDArea extends JPanel
     Vector customComponents = new Vector(); 
     boolean needsInternetPermission = false; 
     boolean needsMaps = false; 
-	
+    boolean needsFirebase = false; 
+		
     for (int i = 0; i < entities.size(); i++) 
     { Entity ee = (Entity) entities.get(i); 
       String eename = ee.getName(); 
@@ -3733,19 +3873,26 @@ public class UCDArea extends JPanel
 		 
         if (eeDAO != null) 
         { predefinedComponents.add(eeDAO); }
-          if (internetAccessor != null && !(predefinedComponents.contains(internetAccessor)))
-		{ predefinedComponents.add(internetAccessor); }
-		predefinedUseCases.add("internetAccessCompleted"); 
-	  } 
-	  else if (ee.isCloud())
-	  { Entity eeDAO = (Entity) ModelElement.lookupByName(eename + "_DAO",entities); 
-	    Entity cloudAccessor = (Entity) ModelElement.lookupByName("FirebaseDbi",entities);
-	    needsInternetPermission = true; 
-	 
+		
+        if (internetAccessor != null && !(predefinedComponents.contains(internetAccessor)))
+        { predefinedComponents.add(internetAccessor); }
+        predefinedUseCases.add("internetAccessCompleted"); 
+     } 
+     else if (ee.isCloud())
+     { Entity eeDAO = (Entity) ModelElement.lookupByName(eename + "_DAO",entities); 
+       Entity cloudAccessor = (Entity) ModelElement.lookupByName("FirebaseDbi",entities);
+       Entity cloudAuthenticator = (Entity) ModelElement.lookupByName("FirebaseAuthenticator",entities);
+       needsInternetPermission = true; 
+       needsFirebase = true; 
+		
 	    if (eeDAO != null) 
 	    { predefinedComponents.add(eeDAO); }
 	    if (cloudAccessor != null && !(predefinedComponents.contains(cloudAccessor)))
 	    { predefinedComponents.add(cloudAccessor); }
+	    if (cloudAuthenticator != null && !(predefinedComponents.contains(cloudAuthenticator)))
+	    { predefinedComponents.add(cloudAuthenticator); 
+          cloudauthenticator = cloudAuthenticator; 
+        }
 	    clouds.add(ee); 
 	  }
       else if (ee.isPersistent())
@@ -3758,6 +3905,24 @@ public class UCDArea extends JPanel
     if (fileaccessor != null) 
     { predefinedComponents.add(fileaccessor); }
 	
+    Entity cloudAuthenticator = (Entity) ModelElement.lookupByName("FirebaseAuthenticator",entities);
+    if (cloudAuthenticator != null && !(predefinedComponents.contains(cloudAuthenticator)))
+    { predefinedComponents.add(cloudAuthenticator); 
+      cloudauthenticator = cloudAuthenticator; 
+    }
+
+	Entity smsComponent = (Entity) ModelElement.lookupByName("SMSComponent",entities);
+    if (smsComponent != null && !(predefinedComponents.contains(smsComponent)))
+    { predefinedComponents.add(smsComponent); }
+	
+	Entity phoneComponent = (Entity) ModelElement.lookupByName("PhoneComponent",entities);
+    if (phoneComponent != null && !(predefinedComponents.contains(phoneComponent)))
+    { predefinedComponents.add(phoneComponent); }
+
+	Entity mediaComponent = (Entity) ModelElement.lookupByName("MediaComponent",entities);
+    if (mediaComponent != null && !(predefinedComponents.contains(mediaComponent)))
+    { predefinedComponents.add(mediaComponent); }
+
    // Entity graphcomponent = (Entity) ModelElement.lookupByName("GraphComponent", entities); 
    // if (graphcomponent != null) 
    // { predefinedComponents.add(graphcomponent); 
@@ -3768,15 +3933,15 @@ public class UCDArea extends JPanel
     Entity mapcomponent = (Entity) ModelElement.lookupByName("MapsComponent", entities); 
     if (mapcomponent != null) 
     { predefinedComponents.add(mapcomponent); 
-	  predefinedUseCases.add("mapping");
-	  needsMaps = true;  
-	  screencount = 1;  // Map screen is the only screen for such apps. 
+      predefinedUseCases.add("mapping");
+      needsMaps = true;  
+      screencount = 1;  // Map screen is the only screen for such apps. 
     }
 
     Entity webcomponent = (Entity) ModelElement.lookupByName("WebDisplay", entities); 
     if (webcomponent != null) 
     { predefinedComponents.add(webcomponent); 
-	  needsInternetPermission = true; 
+      needsInternetPermission = true; 
     } 
 	
     Entity imagecomponent = (Entity) ModelElement.lookupByName("ImageDisplay", entities); 
@@ -3787,27 +3952,28 @@ public class UCDArea extends JPanel
     if (graphdisplaycomponent != null) 
     { predefinedComponents.add(graphdisplaycomponent); } 
 
-	customComponents.removeAll(predefinedComponents); 
+    customComponents.removeAll(predefinedComponents); 
 
 
     String image = null; 
 	
     UseCase primaryUC = AndroidAppGenerator.isSinglePageApp(useCases); 
-	if (primaryUC != null) 
-	{ screencount = 1; 
-	  image = primaryUC.getTaggedValue("image"); 
-	  System.out.println(">>> Single screen app, for use case " + primaryUC.getName());
-	}
-	else 
-	{ System.out.println(">>> Multiple screen app, tabs will be used"); 
-	  screencount = 2; 
-	}
+    if (primaryUC != null) 
+    { screencount = 1; 
+      image = primaryUC.getTaggedValue("image"); 
+      System.out.println(">>> Single screen app, for use case " + primaryUC.getName());
+    }
+    else 
+    { System.out.println(">>> Multiple screen app, tabs will be used"); 
+      screencount = 2; 
+    }
 	
-	if (needsMaps)
-	{ screencount = 1; }
+    if (needsMaps)
+    { screencount = 1; }
     // Also take account of components which need screens, such as MapComponent and GraphComponent
 
-   	if (image == null && !(needsMaps))  
+ 
+    if (image == null && !(needsMaps))  
     { image = JOptionPane.showInputDialog("Image name to use for main screen (or null):"); } 
 
     if (image != null && !("null".equals(image)))
@@ -3827,9 +3993,11 @@ public class UCDArea extends JPanel
     if (dir.exists()) { } 
     else 
     { dir.mkdir(); }
+
+    System.out.println(">>> App code will be generated in directory " + dirName); 
 	
-	String dir1Name = "output/" + systemName + "/src"; 
-	File dir1 = new File(dir1Name); 
+    String dir1Name = "output/" + systemName + "/src"; 
+    File dir1 = new File(dir1Name); 
     if (dir1.exists()) { } 
     else 
     { dir1.mkdir(); }
@@ -3883,16 +4051,6 @@ public class UCDArea extends JPanel
     agen.generateManifest(systemName,needsInternetPermission,needsMaps,out);
 	// Include Internet permission if an InternetAccessor is present, or a cloud entity, or WebComponent.  
 	
-    File buildfile = new File("output/" + systemName + "/build.gradle"); 
-    try
-    { PrintWriter gradle = new PrintWriter(
-                                  new BufferedWriter(
-                                    new FileWriter(buildfile)));
-	  AndroidAppGenerator.generateBuildGradle(systemName,gradle); 
-         // AndroidAppGenerator.generateGraphComponentVC(packageName,nestedPackageName); 
-      gradle.close(); 
-    } catch (Exception e) { }
-
     boolean needsGraph = false; 
 
     if (mapcomponent != null) 
@@ -3935,6 +4093,36 @@ public class UCDArea extends JPanel
        AndroidAppGenerator.generateImageDisplay(systemName, nestedPackageName); 
      }
 
+     if (smsComponent != null) 
+     { // generate its screen and view controller
+       AndroidAppGenerator.generateSMSComponent(systemName, nestedPackageName); 
+     }
+
+
+     if (phoneComponent != null) 
+     { // generate its screen and view controller
+       AndroidAppGenerator.generatePhoneComponent(systemName, nestedPackageName); 
+     }
+
+     if (mediaComponent != null) 
+     { // generate its screen and view controller
+       AndroidAppGenerator.generateMediaComponent(systemName, nestedPackageName); 
+     }
+
+    if (cloudauthenticator != null)
+    { String auth = "FirebaseAuthenticator.java"; 
+      File authf = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + auth); 
+      try
+      { PrintWriter authout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(authf)));
+        AndroidAppGenerator.generateFirebaseAuthenticator(authout,systemName,nestedPackageName);
+        authout.close(); 
+      } 
+      catch (Exception _fac) { }
+	  needsFirebase = true;  
+    }
+
     for (int j = 0; j < types.size(); j++) 
     { Type typ = (Type) types.get(j);
       if (typ.isEnumeration()) 
@@ -3954,7 +4142,7 @@ public class UCDArea extends JPanel
  
     for (int j = 0; j < persistentEntities.size(); j++) 
     { Entity ent = (Entity) persistentEntities.get(j);
-      if (ent.isDerived() || ent.isComponent()) 
+      if (ent.isDerived() || ent.isComponent() || predefinedComponents.contains(ent)) 
       { continue; } 
 	   
       String entvo = ent.getName() + "VO.java"; 
@@ -3984,6 +4172,7 @@ public class UCDArea extends JPanel
     { Entity ent = (Entity) entities.get(j);
       if (ent.isDerived()) { continue; } 
       if (ent.isComponent()) { continue; } 
+	  if (predefinedComponents.contains(ent)) { continue; }
 	 
       ent.generateOperationDesigns(types,entities);  
            
@@ -4019,8 +4208,8 @@ public class UCDArea extends JPanel
 
       if (ent.isCloud()) // Remote data source
       { ent.generateRemoteDAO(systemName,nestedPackageName); 
-	  
-        ent.generateFirebaseDbi(systemName,nestedPackageName); 
+        // ent.generateFirebaseDbi(systemName,nestedPackageName); 
+		needsFirebase = true; 
 
         String entvo = ent.getName() + "VO.java"; 
         File entvof = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entvo); 
@@ -4085,6 +4274,18 @@ public class UCDArea extends JPanel
         dbiout.close(); 
       } catch (Exception e) { }
     }  
+	
+    if (clouds.size() > 0) 
+    { File clouddbif = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/FirebaseDbi.java"); 
+      try
+      { PrintWriter clouddbiout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(clouddbif)));
+	    AndroidAppGenerator.generateFirebaseDbi(clouds,systemName,nestedPackageName,clouddbiout);
+        clouddbiout.close(); 
+      } catch (Exception e) { }
+    }  
+		
 	
     File mff = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/ModelFacade.java"); 
     try
@@ -4165,9 +4366,9 @@ public class UCDArea extends JPanel
                                  new BufferedWriter(
                                    new FileWriter(recycler)));
             AndroidAppGenerator.generateRecyclerViewAdapter(ent,packageName,rout);
-			rout.close(); 
-		  } catch (Exception _x) { }  
-	    }
+            rout.close(); 
+          } catch (Exception _x) { }  
+        }
 	 
         File odjsp = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + nme + "Fragment.java"); 
         try
@@ -4270,9 +4471,25 @@ public class UCDArea extends JPanel
       catch (Exception _y) { } 
     } 
 
+    // The app-level build file
+    File buildfile = new File("output/" + systemName + "/build.gradle"); 
+    try
+    { PrintWriter gradle = new PrintWriter(
+                                  new BufferedWriter(
+                                    new FileWriter(buildfile)));
+	  AndroidAppGenerator.generateBuildGradle(systemName,needsFirebase,gradle); 
+         // AndroidAppGenerator.generateGraphComponentVC(packageName,nestedPackageName); 
+      gradle.close(); 
+    } catch (Exception e) { }
+
     // generateIOSApp(out); 
 
     /* out.println(generateDbiPool());  */ 
+
+    System.out.println(); 
+    System.out.println(">>> App code is generated in directory " + dirName); 
+    System.out.println(); 
+
   }
 
   public void generateJSPWebSystem(PrintWriter out)
@@ -6044,7 +6261,10 @@ public class UCDArea extends JPanel
       if (oldsuper == null) 
       { ent.setSuperclass(e); } 
       else 
-      { ent.addSuperclass(e); } 
+      { ent.addSuperclass(e); 
+        System.err.println("!! Warning: Multiple inheritance: " + ent.getName() + " inherits from " + oldsuper.getName() + " and " + 
+		                   e.getName()); 
+      } 
  
       e.addSubclass(ent); 
       linecount++;
@@ -13524,7 +13744,9 @@ public void produceCUI(PrintWriter out)
     if (eeDAO == null) 
     { addRemoteEntityDAO(ee); }
     if (cloudAccessor == null)
-    { addFirebaseDbi(ee); }
+    { addFirebaseDbi(); }
+	else 
+	{ updateFirebaseDbi(cloudAccessor); }
     // Vector pars = new Vector(); 
     // pars.add(new Attribute("response", new Type("String", null), ModelElement.INTERNAL)); 
     // addPrivateUseCase("internetAccessCompleted", pars, null);  
@@ -13550,6 +13772,7 @@ public void produceCUI(PrintWriter out)
       allcomponents.add("WebDisplay");  
       allcomponents.add("ImageDisplay");  
       allcomponents.add("GraphDisplay");
+	  allcomponents.add("FirebaseAuthenticator"); 
 	  // Others: WebComponent, TextEditorComponent
 	  
       listShowDialog.setOldFields(allcomponents);
@@ -13565,6 +13788,9 @@ public void produceCUI(PrintWriter out)
     } 
     else if ("c".equals(predef))
     { File file;
+	  System.out.println(">>> Load the component specification as a KM3 file.");
+	  System.out.println(">>> You will need to provide .java or .swift implementations for your target platform(s).");
+	  System.out.println();  
 
       File startingpoint = new File("output");
       JFileChooser fc = new JFileChooser();
@@ -13582,12 +13808,13 @@ public void produceCUI(PrintWriter out)
         // JOptionPane.showInputDialog("Name of component:");
       // if (componentName != null) 
       // { loadKM3FromFile(componentName + ".km3"); 
+	  String currentSystemName = systemName; 
 	  loadKM3FromFile(file);  
+	  systemName = currentSystemName; 
+	  
       Entity component = (Entity) ModelElement.lookupByName(componentName,entities); 
       if (component != null) 
       { component.addStereotype("external"); } 
-        // custom components are usually external services such as cloud databases
-      // } 
       return; 
     } 
 
@@ -13607,6 +13834,8 @@ public void produceCUI(PrintWriter out)
       { createImageDisplay(); }
       else if ("GraphDisplay".equals(componentName))
       { createGraphDisplay(); }
+	  else if ("FirebaseAuthenticator".equals(componentName))
+	  { createFirebaseAuthenticatorComponent(); }
       else 
       { System.err.println("!! Unknown predefined component: " + componentName); }
     } 
@@ -16579,8 +16808,16 @@ public void produceCUI(PrintWriter out)
 	opwax.setStatic(true); 
     e.addOperation(opwax); 
 
+	Vector parsxx = new Vector(); 
+	Attribute linexx = new Attribute("obj", new Type("Object",null), ModelElement.INTERNAL); 
+	parsxx.add(linexx);
+	BehaviouralFeature opxx = 
+      new BehaviouralFeature("parseRaw",parsxx,true,new Type(ee)); 
+	opxx.setStatic(true); 
+    e.addOperation(opxx); 
+
 	entities.add(e);                           
-    RectData rd = new RectData(300+vd.sourcex,vd.sourcey,getForeground(),
+    RectData rd = new RectData(vd.sourcex,500 + vd.sourcey,getForeground(),
                                componentMode,
                                rectcount);
     rectcount++;
@@ -16591,13 +16828,20 @@ public void produceCUI(PrintWriter out)
 	
   } 
 
-  public void addFirebaseDbi(Entity ee)
-  { String ename = ee.getName(); 
-    Type enttype = new Type(ee); 
+  public void addFirebaseDbi()
+  { Vector clouds = new Vector(); 
+  
+    for (int i = 0; i < entities.size(); i++) 
+	{ Entity ent = (Entity) entities.get(i); 
+	  if (ent.isCloud())
+	  { clouds.add(ent); }
+	} 
 	
+	if (clouds.size() == 0) { return; }
+	
+    
     Entity e = new Entity("FirebaseDbi");
-    RectData vd = (RectData) getVisualOf(ee); 
-	 
+     
     e.addStereotype("external"); 
     e.addStereotype("component"); 
     e.addStereotype("derived"); 
@@ -16612,20 +16856,32 @@ public void produceCUI(PrintWriter out)
       new BehaviouralFeature("getInstance",parsc,true,new Type(e));
 	opc.setStatic(true);  
     e.addOperation(opc); 
+	
+	Vector urlpars = new Vector();
+	Attribute url = new Attribute("url", new Type("String", null), ModelElement.INTERNAL);  
+    BehaviouralFeature bf = new BehaviouralFeature("connectByURL", urlpars, false, null); 
+	bf.setStatic(true); 
+	e.addOperation(bf); 
+	
+	for (int i = 0; i < clouds.size(); i++) 
+	{ Entity ent = (Entity) clouds.get(i); 
+	  Type enttype = new Type(ent); 
+	  String ename = ent.getName(); 
+	  
+      Vector parset = new Vector(); 
+	  Attribute ex = new Attribute("ex", enttype, ModelElement.INTERNAL);
+  	  parset.add(ex);  
+	  BehaviouralFeature opset = 
+        new BehaviouralFeature("persist" + ename,parset,true,null);
+	  e.addOperation(opset); 
 
-    Vector parset = new Vector(); 
-	Attribute ex = new Attribute("ex", enttype, ModelElement.INTERNAL);
-	parset.add(ex);  
-	BehaviouralFeature opset = 
-      new BehaviouralFeature("persist" + ename,parset,true,null);
-	e.addOperation(opset); 
+  	  BehaviouralFeature opdel = 
+        new BehaviouralFeature("delete" + ename,parset,true,null);
+	  e.addOperation(opdel); 
+	}
 
-	BehaviouralFeature opdel = 
-      new BehaviouralFeature("delete" + ename,parset,true,null);
-	e.addOperation(opdel); 
-
-	entities.add(e);                           
-    RectData rd = new RectData(700+vd.sourcex,vd.sourcey,getForeground(),
+    entities.add(e);                           
+    RectData rd = new RectData(200,750,getForeground(),
                                componentMode,
                                rectcount);
     rectcount++;
@@ -16635,6 +16891,40 @@ public void produceCUI(PrintWriter out)
     repaint();   
   } 
   
+  public void updateFirebaseDbi(Entity cdbi)
+  { Vector clouds = new Vector(); 
+  
+    for (int i = 0; i < entities.size(); i++) 
+	{ Entity ent = (Entity) entities.get(i); 
+	  if (ent.isCloud())
+	  { clouds.add(ent); }
+	} 
+	
+	if (clouds.size() == 0) { return; }
+		
+	for (int i = 0; i < clouds.size(); i++) 
+	{ Entity ent = (Entity) clouds.get(i); 
+	  Type enttype = new Type(ent); 
+	  String ename = ent.getName(); 
+	
+	  if (cdbi.hasOperation("persist" + ename)) { } 
+	  else   
+      { Vector parset = new Vector(); 
+	    Attribute ex = new Attribute("ex", enttype, ModelElement.INTERNAL);
+  	    parset.add(ex);  
+	    BehaviouralFeature opset = 
+          new BehaviouralFeature("persist" + ename,parset,true,null);
+	    cdbi.addOperation(opset); 
+
+        BehaviouralFeature opdel = 
+          new BehaviouralFeature("delete" + ename,parset,true,null);
+	    cdbi.addOperation(opdel); 
+	  } 
+	} // also remove operations for entities that are not clouds. 
+
+    repaint();   
+  } 
+
   public void addInternetAccessor()
   { Entity e = new Entity("InternetAccessor"); 
     e.addStereotype("external"); 
@@ -16682,7 +16972,7 @@ public void produceCUI(PrintWriter out)
     e.addOperation(op1); 
 
 	entities.add(e);                           
-    RectData rd = new RectData(600,400,getForeground(),
+    RectData rd = new RectData(550,750,getForeground(),
                                componentMode,
                                rectcount);
     rectcount++;
@@ -16699,7 +16989,7 @@ public void produceCUI(PrintWriter out)
     eintf.addOperation(op2); 
 
     entities.add(eintf);                           
-    RectData rd1 = new RectData(600,300,getForeground(),
+    RectData rd1 = new RectData(750,530,getForeground(),
                                componentMode,
                                rectcount);
     rectcount++;
@@ -16739,7 +17029,7 @@ public void produceCUI(PrintWriter out)
     e.addOperation(op2); 
     
 	entities.add(e);                           
-    RectData rd = new RectData(600,10,getForeground(),
+    RectData rd = new RectData(700,400,getForeground(),
                                componentMode,
                                rectcount);
     rectcount++;
@@ -16752,32 +17042,105 @@ public void produceCUI(PrintWriter out)
   public void createFileAccessorComponent()
   { Entity e = new Entity("FileAccessor"); 
     e.addStereotype("external"); 
-	e.addStereotype("component"); 
+    e.addStereotype("component"); 
 		 
-
-	Vector pars = new Vector(); 
-	Attribute delegatec = new Attribute("filename", new Type("String",null), ModelElement.INTERNAL); 
-	pars.add(delegatec);
+    Vector pars0 = new Vector(); 
+    Attribute delegatec0 = new Attribute("filename", new Type("String",null), ModelElement.INTERNAL); 
+    pars0.add(delegatec0);
+    Type booltype = new Type("boolean", null); 
+    BehaviouralFeature opFE = 
+      new BehaviouralFeature("fileExists",pars0,false,booltype);
+    opFE.setStatic(true);  
+    e.addOperation(opFE); 
+    
+    Vector parsx = new Vector(); 
+    Attribute delegatec1 = new Attribute("filename", new Type("String",null), ModelElement.INTERNAL); 
+    parsx.add(delegatec1);
+    BehaviouralFeature opFEA = 
+      new BehaviouralFeature("fileExistsAbsolutePath",parsx,false,booltype);
+    opFEA.setStatic(true);  
+    e.addOperation(opFEA); 
+    
+    Vector pars = new Vector(); 
+    Attribute delegatec = new Attribute("filename", new Type("String",null), ModelElement.INTERNAL); 
+    pars.add(delegatec);
     BehaviouralFeature op = 
-      new BehaviouralFeature("createFile",pars,false,null); 
+      new BehaviouralFeature("createFile",pars,false,null);
+    op.setStatic(true);  
     e.addOperation(op); 
     
-	Type stringseq = new Type("Sequence", null); 
-	stringseq.setElementType(new Type("String", null)); 
-	BehaviouralFeature opc = 
+    Type stringseq = new Type("Sequence", null); 
+    stringseq.setElementType(new Type("String", null)); 
+    BehaviouralFeature opc = 
       new BehaviouralFeature("readFile",pars,true,stringseq);
+    opc.setStatic(true); 
     e.addOperation(opc); 
 
     Attribute contents = new Attribute("contents", stringseq, ModelElement.INTERNAL); 
-	Vector pars1 = new Vector(); 
-	pars1.add(delegatec); 
-	pars1.add(contents); 
+    Vector pars1 = new Vector(); 
+    pars1.add(delegatec); 
+    pars1.add(contents); 
     BehaviouralFeature op1 = 
-      new BehaviouralFeature("writeFile",pars1,false,null); 
+      new BehaviouralFeature("writeFile",pars1,false,null);
+    op1.setStatic(true);  
     e.addOperation(op1); 
 
-	entities.add(e);                           
-    RectData rd = new RectData(800,10,getForeground(),
+    entities.add(e);                           
+    RectData rd = new RectData(950,750,getForeground(),
+                               componentMode,
+                               rectcount);
+    rectcount++;
+    rd.setLabel(e.getName());
+    rd.setModelElement(e); 
+    visuals.add(rd);
+    repaint();   
+  } 	        
+
+  public void createFirebaseAuthenticatorComponent()
+  { Entity e = new Entity("FirebaseAuthenticator"); 
+    e.addStereotype("external"); 
+    e.addStereotype("component"); 
+		 
+    Vector pars0 = new Vector(); 
+    Type fatype = new Type(e); 
+    BehaviouralFeature opFE = 
+      new BehaviouralFeature("getInstance",pars0,false,fatype);
+    opFE.setStatic(true);  
+    e.addOperation(opFE); 
+    
+    Vector parsx = new Vector(); 
+    Attribute eml = new Attribute("email", new Type("String",null), ModelElement.INTERNAL); 
+    parsx.add(eml);
+	Attribute passd = new Attribute("password", new Type("String",null), ModelElement.INTERNAL); 
+    parsx.add(passd);
+	Type stringtype = new Type("String", null); 
+	
+    BehaviouralFeature opFEA = 
+      new BehaviouralFeature("signUp",parsx,false,stringtype);
+    opFEA.setStatic(true);  
+    e.addOperation(opFEA); 
+    
+    Vector pars = new Vector(); 
+	pars.add(eml); 
+	pars.add(passd); 
+    BehaviouralFeature op = 
+      new BehaviouralFeature("signIn",pars,false,stringtype);
+    op.setStatic(true);  
+    e.addOperation(op); 
+   
+     
+    BehaviouralFeature opc = 
+      new BehaviouralFeature("userId",new Vector(),true,stringtype);
+    e.addOperation(opc); 
+
+    Vector pars1 = new Vector(); 
+    BehaviouralFeature op1 = 
+      new BehaviouralFeature("signOut",pars1,false,stringtype);
+    op1.setStatic(true);  
+    e.addOperation(op1); 
+
+    entities.add(e);                           
+    RectData rd = new RectData(850,900,getForeground(),
                                componentMode,
                                rectcount);
     rectcount++;
@@ -16860,6 +17223,14 @@ public void produceCUI(PrintWriter out)
     opyname.setPostcondition(truebe);   
     e.addOperation(opyname); 
 
+    Vector parsszn = new Vector(); 
+    Attribute zname = new Attribute("zname", new Type("String",null), ModelElement.INTERNAL); 
+    parsszn.add(zname);
+    BehaviouralFeature opzname = 
+      new BehaviouralFeature("setzname",parsszn,false,null);
+    opzname.setPostcondition(truebe);   
+    e.addOperation(opzname); 
+
     Vector parsr = new Vector(); 
     BehaviouralFeature opr = 
       new BehaviouralFeature("redraw",parsr,false,null); 
@@ -16867,7 +17238,7 @@ public void produceCUI(PrintWriter out)
 	e.addOperation(opr); 
 
     entities.add(e);                           
-    RectData rd = new RectData(900,10,getForeground(),
+    RectData rd = new RectData(900,300,getForeground(),
                                componentMode,
                                rectcount);
     rectcount++;
@@ -16950,6 +17321,14 @@ public void produceCUI(PrintWriter out)
     opyname.setPostcondition(truebe);   
     e.addOperation(opyname); 
 
+    Vector parsszn = new Vector(); 
+    Attribute zname = new Attribute("zname", new Type("String",null), ModelElement.INTERNAL); 
+    parsszn.add(zname);
+    BehaviouralFeature opzname = 
+      new BehaviouralFeature("setzname",parsszn,false,null);
+    opzname.setPostcondition(truebe);   
+    e.addOperation(opzname); 
+
     Vector addlinepars = new Vector(); 
 	addlinepars.add(new Attribute("name", new Type("String", null), ModelElement.INTERNAL));
 	addlinepars.add(contents); 
@@ -16975,7 +17354,7 @@ public void produceCUI(PrintWriter out)
 	e.addOperation(opr); 
 
     entities.add(e);                           
-    RectData rd = new RectData(990,410,getForeground(),
+    RectData rd = new RectData(1190,300,getForeground(),
                                componentMode,
                                rectcount);
     rectcount++;
@@ -17009,7 +17388,7 @@ public void produceCUI(PrintWriter out)
     e.addOperation(op); 
 
     entities.add(e);                           
-    RectData rd = new RectData(990,10,getForeground(),
+    RectData rd = new RectData(990,200,getForeground(),
                                componentMode,
                                rectcount);
     rectcount++;
@@ -17038,7 +17417,7 @@ public void produceCUI(PrintWriter out)
     e.addOperation(getInstance); 
  
     entities.add(e);                           
-    RectData rd = new RectData(990,210,getForeground(),
+    RectData rd = new RectData(1000,300,getForeground(),
                                componentMode,
                                rectcount);
     rectcount++;
@@ -17141,7 +17520,7 @@ public void produceCUI(PrintWriter out)
     e.addOperation(opyname); 
 
     entities.add(mapLocation);                           
-    RectData locrd = new RectData(1100,10,getForeground(),
+    RectData locrd = new RectData(1100,400,getForeground(),
                                componentMode,
                                rectcount);
     rectcount++;
@@ -17150,7 +17529,7 @@ public void produceCUI(PrintWriter out)
     visuals.add(locrd);
     
 	entities.add(e);                           
-    RectData rd = new RectData(1100,100,getForeground(),
+    RectData rd = new RectData(1100,550,getForeground(),
                                componentMode,
                                rectcount);
     rectcount++;

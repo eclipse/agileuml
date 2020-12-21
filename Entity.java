@@ -10987,8 +10987,13 @@ public void androidDbiOperations(PrintWriter out)
   String entlc = ent.toLowerCase();
   int natts = attributes.size();
   String attlist = ""; 
+  String entId = entlc + "Id"; 
+  Attribute pk = getPrincipalPrimaryKey();
+  if (pk != null)
+  { entId = pk.getName(); }
 
   out.println();
+
   out.println("  public ArrayList<" + ent + "VO> list" + ent + "()");
   out.println("  { ArrayList<" + ent + "VO> res = new ArrayList<" + ent + "VO>();");
   out.println("    database = getReadableDatabase();");
@@ -11028,10 +11033,6 @@ public void androidDbiOperations(PrintWriter out)
   out.println("  }");
   out.println();
 
-  String entId = entlc + "Id"; 
-  Attribute pk = getPrincipalPrimaryKey();
-  if (pk != null)
-  { entId = pk.getName(); }
   
   for (int k = 0; k < attributes.size(); k++) 
   { Attribute att = (Attribute) attributes.get(k);  
@@ -11081,6 +11082,30 @@ public void androidDbiOperations(PrintWriter out)
   out.println("    database.delete(" + ent + "_TABLE_NAME, \"" + entId + " = ?\", _args);"); 
   out.println("  }"); 
   out.println(); 
+}
+
+// Only used in ModelFacade if there is a dbi: 
+public void iosDbiLoadOperation(PrintWriter out)
+{ String ent = getName();
+  String entlc = ent.toLowerCase();
+  int natts = attributes.size();
+
+  String entId = entlc + "Id"; 
+  Attribute pk = getPrincipalPrimaryKey();
+  if (pk != null)
+  { entId = pk.getName(); }
+  
+  out.println("  func load" + ent + "()"); 
+  out.println("  { let res : [" + ent + "VO] = list" + ent + "()"); 
+  out.println("    for (_,x) in res.enumerated()");
+  out.println("    { let _ex = createByPK" + ent + "(key: x." + entId + ")"); 
+  for (int i = 0; i < attributes.size(); i++) 
+  { Attribute att = (Attribute) attributes.get(i);
+    String attname = att.getName();  
+    out.println("      _ex." + attname + " = x." + attname); 
+  } 
+  out.println("    }"); 
+  out.println("  }"); 
 }
 
 public void iosDbiOperations(PrintWriter out)
@@ -11154,10 +11179,10 @@ public void iosDbiOperations(PrintWriter out)
   { Attribute att = (Attribute) attributes.get(z);
     String nmeatt = att.getName();   
     arguments = arguments + nmeatt;
-	if (att.isNumeric())
-	{ values = values + "String(" + entlc + "vo.get" + nmeatt + "())"; }
+    if (att.isNumeric())
+    { values = values + "String(" + entlc + "vo.get" + nmeatt + "())"; }
     else 
-	{ values = values + "\"'\" + " + entlc + "vo.get" + nmeatt + "() + \"'\""; } 
+    { values = values + "\"'\" + " + entlc + "vo.get" + nmeatt + "() + \"'\""; } 
 	  
     if (z < natts-1) 
     { arguments = arguments + ", "; 
@@ -11201,11 +11226,11 @@ public void iosDbiOperations(PrintWriter out)
     String attname = att.getName();  
     Type atype = att.getType(); 
     String swifttype = atype.getSwift();
-	String finder = "";  
-	if (att.isNumeric())
-	{ finder = "String(_val)"; }
-	else 
-	{ finder = "\"'\" + _val + \"'\""; }
+    String finder = "";  
+    if (att.isNumeric())
+    { finder = "String(_val)"; }
+    else 
+    { finder = "\"'\" + _val + \"'\""; }
 	
     out.println();
     out.println("  func searchBy" + ent + attname + "(_val : " + swifttype + ") -> [" + ent + "VO]");
@@ -11297,7 +11322,7 @@ public void iosDbiOperations(PrintWriter out)
 } */ 
 
   out.println("  func delete" + ent + "(_val : String)"); 
-  out.println("  { let deleteStatementString = \"DELETE " + ent + " WHERE " + entId + " = '\" + _val + \"'\""); 
+  out.println("  { let deleteStatementString = \"DELETE FROM " + ent + " WHERE " + entId + " = '\" + _val + \"'\""); 
   out.println("    var deleteStatement: OpaquePointer?"); 
   out.println("    if sqlite3_prepare_v2(dbPointer, deleteStatementString, -1, &deleteStatement, nil) == SQLITE_OK"); 
   out.println("    { sqlite3_step(deleteStatement) }");
@@ -14131,18 +14156,102 @@ public BehaviouralFeature designAbstractKillOp()
       out.println(); 
       out.println(writeJSONOperation());
       out.println(); 
+      out.println(parseRawOperation());
+      out.println(); 
       out.println(writeJSONArrayOperation());
       out.println("}"); 
       out.close(); 
     } catch (Exception e) { } 
   } 
+  
+  public void generateCloudUpdateCode(PrintWriter out)  
+  { String ename = getName(); 
+    Attribute pk = getPrincipalPrimaryKey(); 
+    if (pk == null) 
+    { System.err.println("!!! ERROR: no primary key for " + ename); 
+      return; 
+    }
+    String key = pk.getName(); 
+    String evo = ename + "VO"; 
+    String _ex = "_" + ename.toLowerCase() + "x"; 
+    String lcename = ename.toLowerCase();
+    String es = ename.toLowerCase() + "s";
+	String esx = "_" + es;   
+    String elistener = lcename + "_listener"; 
 
+    out.println("    ValueEventListener " + elistener + " = new ValueEventListener()"); 
+    out.println("    {");
+    out.println("      @Override");
+    out.println("      public void onDataChange(DataSnapshot dataSnapshot)"); 
+    out.println("      { // Get instances from the cloud database");
+    out.println("        Map<String,Object> " + esx + " = (Map<String,Object>) dataSnapshot.getValue();");
+    out.println("        if (" + esx + " != null)"); 
+    out.println("        { Set<String> _keys = " + esx + ".keySet();"); 
+    out.println("          for (String _key : _keys)");
+    out.println("          { Object _x = " + esx + ".get(_key);"); 
+    out.println("            " + ename + "_DAO.parseRaw(_x);"); 
+	// out.println("            " + ename + " " + _ex + " = " + ename + "." + ename + "_index.get(_key);");
+    // out.println("            if (" + _ex + " == null)");
+    // out.println("            { " + _ex + " = " + ename + ".createByPK" + ename + "(_key); }");  
+    // for (int i = 0; i < attributes.size(); i++) 
+    // { Attribute att = (Attribute) attributes.get(i); 
+    //   String attname = att.getName(); 
+    //   out.println("          _x." + attname + " = " + _ex + "." + attname + ";");
+    // }
+    out.println("          }"); 
+	out.println("          // Delete local objects which are not in the cloud:");
+	out.println("          ArrayList<" + ename + "> _locals = new ArrayList<" + ename + ">();"); 
+	out.println("          _locals.addAll(" + ename + "." + ename + "_allInstances);");  
+	out.println("          for (" + ename + " _x : _locals)"); 
+	out.println("          { if (_keys.contains(_x." + key + ")) { }"); 
+	out.println("            else { " + ename + ".kill" + ename + "(_x." + key + "); }"); 
+	out.println("          }"); 
+    out.println("        }");  
+    out.println("      }");
+    out.println("  ");
+    out.println("      @Override");
+    out.println("      public void onCancelled(DatabaseError databaseError)"); 
+    out.println("      { }");
+    out.println("    };");
+    out.println("    database.child(\"" + es + "\").addValueEventListener(" + elistener + ");");
+    out.println("  ");
+  } 
+
+  public void generateFirebaseOps(PrintWriter out)
+  { String ename = getName(); 
+    Attribute pk = getPrincipalPrimaryKey(); 
+    if (pk == null) 
+    { System.err.println("!!! ERROR: no primary key for " + ename); 
+      return; 
+    }
+    String key = pk.getName(); 
+    String evo = ename + "VO"; 
+    // String _ex = "_" + ename.toLowerCase() + "x"; 
+    // String lcename = ename.toLowerCase();
+    String es = ename.toLowerCase() + "s";  
+	// String elistener = lcename + "_listener"; 
+
+    out.println("  public void persist" + ename + "(" + ename + " ex)");
+    out.println("  { " + evo + " _evo = new " + evo + "(ex); ");
+    out.println("    String _key = _evo." + key + "; ");
+    out.println("    if (database == null) { return; }"); 
+	out.println("    database.child(\"" + es + "\").child(_key).setValue(_evo);"); 
+    out.println("  }");
+    out.println("  ");
+    out.println("  public void delete" + ename + "(" + ename + " ex)");
+    out.println("  { String _key = ex." + key + "; ");
+    out.println("    if (database == null) { return; }"); 
+	out.println("    database.child(\"" + es + "\").child(_key).removeValue();"); 
+    out.println("  }");
+    out.println(); 
+  }
+  
   public void generateFirebaseDbi(String appName, String packageName)
   { String ename = getName(); 
     String lcename = ename.toLowerCase();
-	String evo = ename + "VO"; 
-	String es = ename.toLowerCase() + "s";  
-	Attribute pk = getPrincipalPrimaryKey(); 
+    String evo = ename + "VO"; 
+    String es = ename.toLowerCase() + "s";  
+    Attribute pk = getPrincipalPrimaryKey(); 
 	if (pk == null) 
 	{ System.err.println("!!! ERROR: no primary key for " + ename); 
 	  return; 
@@ -14191,8 +14300,8 @@ public BehaviouralFeature designAbstractKillOp()
       out.println("    { instance = new FirebaseDbi(); }"); 
       out.println("    return instance;");  
       out.println("  }");
-	  out.println(""); 
-	  out.println("  FirebaseDbi()"); 
+      out.println(""); 
+      out.println("  FirebaseDbi()"); 
       out.println("  { database = FirebaseDatabase.getInstance().getReference();"); 
       out.println("    ");
     
@@ -14205,11 +14314,11 @@ public BehaviouralFeature designAbstractKillOp()
       out.println("        " + ename + " _x = " + ename + "." + ename + "_index.get(_ex." + key + ");");
       out.println("        if (_x == null)        ");
       out.println("        { _x = " + ename + ".createByPK" + ename + "(_ex." + key + "); }");  
-	  for (int i = 0; i < attributes.size(); i++) 
-	  { Attribute att = (Attribute) attributes.get(i); 
-	    String attname = att.getName(); 
+      for (int i = 0; i < attributes.size(); i++) 
+      { Attribute att = (Attribute) attributes.get(i); 
+        String attname = att.getName(); 
         out.println("        _x." + attname + " = _ex." + attname + ";");
-	  } 
+      } 
       out.println("      }");
       out.println("  ");
       out.println("      @Override");
@@ -14235,17 +14344,80 @@ public BehaviouralFeature designAbstractKillOp()
     } catch (Exception _ex) { } 
   } 
 
+  public void generateCloudUpdateCodeIOS(PrintWriter out)  
+  { String ename = getName(); 
+    Attribute pk = getPrincipalPrimaryKey(); 
+    if (pk == null) 
+    { System.err.println("!!! ERROR: no primary key for " + ename); 
+      return; 
+    }
+    String key = pk.getName(); 
+    String evo = ename + "VO"; 
+    String _ex = "_" + ename.toLowerCase() + "x"; 
+    String lcename = ename.toLowerCase();
+    String es = ename.toLowerCase() + "s";  
+    String elistener = lcename + "_listener"; 
+
+    out.println("    self.database?.child(\"" + es + "\").observe(.value,"); 
+    out.println("      with:");
+    out.println("      { (change) in");
+    out.println("        var _keys : [String] = [String]()"); 
+	out.println("        if let d = change.value as? [String : AnyObject]");
+    out.println("        { for (_,v) in d.enumerated()");
+    out.println("          { let _einst = v.1 as! [String : AnyObject]");
+    out.println("            let _ex : " + ename + "? = " + ename + "_DAO.parseJSON(obj: _einst)");
+	out.println("            _keys.append(_ex!." + key + ")");   
+    out.println("          }"); 
+    out.println("        }"); 
+    out.println("        var _runtime" + es + " : [" + ename + "] = [" + ename + "]()"); 
+    out.println("        _runtime" + es + ".append(contentsOf: " + ename + "_allInstances)"); 
+	out.println(); 
+    out.println("        for (_,_obj) in _runtime" + es + ".enumerated()"); 
+    out.println("        { if _keys.contains(_obj." + key + ")"); 
+    out.println("          {}"); 
+    out.println("          else"); 
+    out.println("          { kill" + ename + "(key: _obj." + key + ") }"); 
+    out.println("        }"); 
+    out.println("      })");
+  }
+
+  public void generateFirebaseOpsIOS(PrintWriter out)
+  { String ename = getName(); 
+    Attribute pk = getPrincipalPrimaryKey(); 
+    if (pk == null) 
+    { System.err.println("!!! ERROR: no primary key for " + ename); 
+      return; 
+    }
+    String key = pk.getName(); 
+    String evo = ename + "VO"; 
+    // String _ex = "_" + ename.toLowerCase() + "x"; 
+    // String lcename = ename.toLowerCase();
+    String es = ename.toLowerCase() + "s";  
+
+	// String elistener = lcename + "_listener"; 
+    out.println("  func persist" + ename + "(ex : " + ename + ")");
+    out.println("  { let _evo = " + ename + "_DAO.writeJSON(_x: ex) ");
+    out.println("    if let newChild = self.database?.child(\"" + es + "\").child(ex." + key + ")"); 
+    out.println("    { newChild.setValue(_evo) }");
+    out.println("  }");
+    out.println("  ");
+    out.println("  func delete" + ename + "(ex : " + ename + ")");
+    out.println("  { if let oldChild = self.database?.child(\"" + es + "\").child(ex." + key + ")"); 
+    out.println("    { oldChild.removeValue() }"); 
+    out.println("  }"); 
+  } 
+
   public void generateFirebaseDbiIOS(String packageName)
   { String ename = getName(); 
     String lcename = ename.toLowerCase();
-	String evo = ename + "VO"; 
-	String es = ename.toLowerCase() + "s";  
-	Attribute pk = getPrincipalPrimaryKey(); 
-	if (pk == null) 
-	{ System.err.println("!!! ERROR: no primary key for " + ename); 
-	  return; 
-	}
-	String key = pk.getName(); 
+    String evo = ename + "VO"; 
+    String es = ename.toLowerCase() + "s";  
+    Attribute pk = getPrincipalPrimaryKey(); 
+    if (pk == null) 
+    { System.err.println("!!! ERROR: no primary key for " + ename); 
+      return; 
+    }
+    String key = pk.getName(); 
 
     String entfile = "FirebaseDbi.swift"; 
     File entff = new File("output/" + packageName + "/" + entfile); 
@@ -14285,12 +14457,12 @@ public BehaviouralFeature designAbstractKillOp()
       out.println("  func persist" + ename + "(ex : " + ename + ")");
       out.println("  { let _evo = " + ename + "_DAO.writeJSON(_x: ex) ");
       out.println("    if let newChild = self.database?.child(\"" + es + "\").child(ex." + key + ")"); 
-	  out.println("    { newChild.setValue(_evo) }");
+      out.println("    { newChild.setValue(_evo) }");
       out.println("  }");
       out.println("  ");
       out.println("  func delete" + ename + "(ex : " + ename + ")");
       out.println("  { if let oldChild = self.database?.child(\"" + es + "\").child(ex." + key + ")"); 
-	  out.println("    { oldChild.removeValue() }"); 
+      out.println("    { oldChild.removeValue() }"); 
       out.println("  }"); 
       out.println("}"); 
       out.close(); 
@@ -14364,6 +14536,36 @@ public BehaviouralFeature designAbstractKillOp()
     return res;
   }
 
+  private String parseRawOperation()
+  { String ename = getName(); 
+    String x = "_" + ename.toLowerCase() + "x"; 
+    Attribute pk = getPrincipalPrimaryKey(); 
+    if (pk == null) { return ""; }
+    String pkname = pk.getName(); 
+	
+    String res = "  public static " + ename + " parseRaw(Object obj)\n" + 
+                 "  { if (obj == null) { return null; }\n" +
+				 "\n" + 
+                 "    try {\n" + 
+                 "      Map<String,Object> _map = (Map<String,Object>) obj;\n" + 
+                 "      String " + pkname + " = (String) _map.get(\"" + pkname + "\");\n" + 
+                 "      " + ename + " " + x + " = " + ename + "." + ename + "_index.get(" + pkname + ");\n" +  
+                 "      if (" + x + " == null) { " + x + " = " + ename + ".createByPK" + ename + "(" + pkname + "); }\n" + 
+                 "      \n"; 
+				 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String attname = att.getName(); 
+      Type t = att.getType(); 
+      String decoder = att.rawDecoder("_map");  
+      res = res + "      " + x + "." + attname + " = " + decoder + "\n"; 
+	} 
+      
+	res = res + "      return " + x + ";\n" + 
+                "    } catch (Exception _e) { return null; }\n" + 
+                "  }\n\n"; 
+    return res; 
+  } 
 
   public void generateRemoteDAOios(String packageName)
   { String ename = getName(); 
@@ -14475,7 +14677,7 @@ public BehaviouralFeature designAbstractKillOp()
     if (pk == null) { return ""; }
     String pkname = pk.getName(); 
 	
-    String res = "  public static ArrayList<" + ename + "> parseJSON(JSONArray jarray)\n" + 
+    String res = "  public static ArrayList<" + ename + "> parseJSONArray(JSONArray jarray)\n" + 
                  "  { if (jarray == null) { return null; }\n" + 
 		      "    ArrayList<" + ename + "> res = new ArrayList<" + ename + ">();\n" + 
                  "\n" + 

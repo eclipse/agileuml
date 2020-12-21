@@ -103,6 +103,12 @@ public class AndroidAppGenerator extends AppGenerator
     { out.println("  { dbi = new Dbi(context); "); 
 	  out.println("    myContext = context; "); 
 	  out.println("    fileSystem = new FileAccessor(context); "); 
+	  for (int i = 0; i < entities.size(); i++) 
+	  { Entity ex = (Entity) entities.get(i); 
+	    String ename = ex.getName(); 
+        if (ex.isPersistent())
+		{ out.println("    load" + ename + "();"); }
+	  }
 	  out.println("  }"); 
 	}  
     else 
@@ -199,7 +205,27 @@ public class AndroidAppGenerator extends AppGenerator
       if (ee.isDerived()) { continue; } 
 	  if (ee.isComponent()) { continue; } 
 	  
+      Vector atts = ee.getAttributes(); 
 	  String item = ee.getName(); 
+      Attribute key = ee.getPrincipalPK();
+	  if (key != null) 
+	  { String entId = key.getName(); 
+	  
+  	    out.println("  public void load" + item + "()");
+        out.println("  { ArrayList<" + item + "VO> _res = list" + item + "();");
+        out.println("    for (" + item + "VO _x : _res)"); 
+        out.println("    { " + item + " _ex = " + item + ".createByPK" + item + "(_x.get" + entId + "());"); 
+        for (int k = 0; k < atts.size(); k++) 
+        { Attribute att = (Attribute) atts.get(k); 
+          String aname = att.getName();  
+          out.println("      _ex." + aname + " = _x." + aname + ";"); 
+        } 
+        out.println("    }"); 
+		out.println("  }"); 
+		out.println(); 
+      } 
+	  
+	  
 	  out.println("  public List<" + item + "VO> list" + item + "()"); 
       out.println("  { current" + item + "s = dbi.list" + item + "();"); 
       out.println("    return current" + item + "s;"); 
@@ -217,11 +243,9 @@ public class AndroidAppGenerator extends AppGenerator
       out.println("  }"); 
       out.println(); 
 
-      Attribute key = ee.getPrincipalPK();
       String pk = "";  
       if (key != null) 
       { pk = key.getName(); 
-        Vector atts = ee.getAttributes(); 
         out.println("  public " + item + " get" + item + "ByPK(String _val)"); 
         out.println("  { ArrayList<" + item + "VO> _res = dbi.searchBy" + item + key + "(_val);"); 
         out.println("    if (_res.size() == 0)"); 
@@ -292,7 +316,6 @@ public class AndroidAppGenerator extends AppGenerator
       out.println("  }");
       out.println(); 
 
-      Vector atts = ee.getAttributes(); 
       for (int i = 0; i < atts.size(); i++) 
       { Attribute att = (Attribute) atts.get(i); 
         String attnme = att.getName(); 
@@ -379,30 +402,29 @@ public class AndroidAppGenerator extends AppGenerator
 
       out.println("  public void edit" + item + "(" + item + "VO _x)"); 
       out.println("  { " + item + " _obj = get" + item + "ByPK(_x." + pk + ");"); 
-	  out.println("    if (_obj != null)"); 
-	  out.println("    { cdbi.persist" + item + "(_obj); }"); 
+	  out.println("    if (_obj == null)"); 
+	  out.println("    { _obj = " + item + ".createByPK" + item + "(_x." + pk + "); }"); 
+      Vector eatts = ee.getAttributes(); 
+	  for (int z = 0; z < eatts.size(); z++) 
+      { Attribute att = (Attribute) eatts.get(z); 
+        String aname = att.getName();  
+        out.println("    _obj." + aname + " = _x." + aname + ";"); 
+      } 
+      out.println("    cdbi.persist" + item + "(_obj);"); 
       out.println("    current" + item + " = _x;"); 
       out.println("  }"); 
       out.println(); 
 	  
       out.println("  public void create" + item + "(" + item + "VO _x)"); 
-      out.println("  { " + item + " _obj = get" + item + "ByPK(_x." + pk + ");"); 
-      out.println("    if (_obj != null)"); 
-      out.println("    { cdbi.persist" + item + "(_obj); "); 
-      out.println("      current" + item + " = _x;"); 
-      out.println("    }"); 
-      out.println("    else "); 
-      out.println("    { " + item + " _itemx = " + item + ".createByPK" + item + "(_x." + pk + ");");
-      out.println("      cdbi.persist" + item + "(_itemx); ");  
-      out.println("      current" + item + " = _x;"); 
-      out.println("    }"); 
-      out.println("  }"); 
+      out.println("  { edit" + item + "(_x); }");  
       out.println(); 
 	  
       out.println("  public void delete" + item + "(String _id)"); 
       out.println("  { " + item + " _obj = get" + item + "ByPK(_id);"); 
       out.println("    if (_obj != null)"); 
-      out.println("    { cdbi.delete" + item + "(_obj); }"); 
+      out.println("    { cdbi.delete" + item + "(_obj); "); 
+      out.println("      " + item + ".kill" + item + "(_id); "); 
+      out.println("    }"); 
       out.println("    current" + item + " = null;"); 
       out.println("  }");
       out.println();   
@@ -928,12 +950,23 @@ public class AndroidAppGenerator extends AppGenerator
       out.println("  </TableRow>");
     }
  
-    if (image != null && !("null".equals(image))) 
+    out.println("  <View"); 
+    out.println("     android:layout_height=\"20dip\""); 
+    out.println("     android:background=\"#FFFFFF\"/>"); 
+	out.println(); 
+    
+	if (image != null && !("null".equals(image))) 
     { out.println("  <ImageView"); 
       out.println("   android:id=\"@+id/" + op + "image\""); 
       out.println("   android:src=\"@drawable/" + image + "\" />"); 
     }  
-    out.println("</TableLayout>");
+    
+    out.println("  <View"); 
+    out.println("     android:layout_height=\"20dip\""); 
+    out.println("     android:background=\"#FFFFFF\"/>"); 
+	out.println(); 
+    
+	out.println("</TableLayout>");
     out.println("</ScrollView>");
   }
 
@@ -1053,6 +1086,11 @@ public class AndroidAppGenerator extends AppGenerator
       out.println("  </TableRow>");
     } 
 	
+    out.println("  <View"); 
+    out.println("     android:layout_height=\"20dip\""); 
+    out.println("     android:background=\"#FFFFFF\"/>"); 
+	out.println(); 
+    
 	for (int j = 0; j < usecases.size(); j++)
 	{ UseCase extensionuc = (UseCase) usecases.get(j); 
 	  String ucop = extensionuc.getName(); 
@@ -1155,6 +1193,10 @@ public class AndroidAppGenerator extends AppGenerator
          out.println("    android:layout_span=\"5\" />");
          out.println("  </TableRow>");
        } 
+       out.println("  <View"); 
+       out.println("     android:layout_height=\"20dip\""); 
+       out.println("     android:background=\"#FFFFFF\"/>"); 
+	   out.println(); 
        out.println(); 
 	}
 
@@ -1163,7 +1205,11 @@ public class AndroidAppGenerator extends AppGenerator
       out.println("   android:id=\"@+id/" + op + "image\""); 
       out.println("   android:src=\"@drawable/" + image + "\" />"); 
     }  
-
+    out.println("  <View"); 
+    out.println("     android:layout_height=\"20dip\""); 
+    out.println("     android:background=\"#FFFFFF\"/>"); 
+	out.println(); 
+    
     out.println("</TableLayout>");
     out.println("</ScrollView>");
   }
@@ -2105,6 +2151,63 @@ public static void androidOpViewFragment(String op, String packageName,
     out.println();
     out.println("}");
   } 
+
+  public static void generateFirebaseDbi(Vector clouds, String appName, String packageName, PrintWriter out) 
+  { out.println("package " + packageName + ";"); 
+    out.println(); 
+    out.println("import java.util.*;"); 
+    out.println("import java.util.HashMap;"); 
+    out.println("import java.util.Collection;");
+    out.println("import java.util.List;");
+    out.println("import java.util.ArrayList;");
+    out.println("import java.util.Set;");
+    out.println("import java.util.HashSet;");
+    out.println("import java.util.TreeSet;");
+    out.println("import java.util.Collections;");
+    out.println("import java.util.StringTokenizer;"); 
+    out.println("import java.util.Date; "); 
+    out.println("import java.text.DateFormat;");  
+    out.println("import java.text.SimpleDateFormat;");  
+    out.println("import org.json.JSONArray;"); 
+    out.println("import org.json.JSONObject;"); 
+    out.println("import org.json.*;"); 
+	out.println("import android.net.Uri;"); 
+    out.println("import android.os.Bundle;"); 
+    out.println("import com.google.android.gms.tasks.OnCompleteListener;"); 
+    out.println("import com.google.android.gms.tasks.Task;"); 
+    out.println("import com.google.firebase.auth.*;"); 
+    out.println("import com.google.firebase.database.*;"); 
+
+    out.println(); 
+    out.println("public class FirebaseDbi"); 
+    out.println("{ static FirebaseDbi instance = null;");  
+    out.println("  DatabaseReference database = null;");  
+    out.println(); 
+    out.println("  public static FirebaseDbi getInstance()"); 
+    out.println("  { if (instance == null)"); 
+    out.println("    { instance = new FirebaseDbi(); }"); 
+    out.println("    return instance;");  
+    out.println("  }");
+    out.println(""); 
+    out.println("  FirebaseDbi() { }");
+	out.println(); 
+	out.println("  public void connectByURL(String url)"); 
+    out.println("  { database = FirebaseDatabase.getInstance(url).getReference();"); 
+    out.println("    if (database == null) { return; }");
+    
+    for (int i = 0; i < clouds.size(); i++) 
+    { Entity ent = (Entity) clouds.get(i); 
+      ent.generateCloudUpdateCode(out); 
+    } 
+    out.println("  }");
+    out.println("  ");
+    for (int i = 0; i < clouds.size(); i++) 
+    { Entity ent = (Entity) clouds.get(i); 
+      ent.generateFirebaseOps(out); 
+    } 
+    out.println("}"); 
+  }
+
 
   public static void androidLayoutTabs(Vector ucs, PrintWriter out)
   { out.println("<?xml version=\"1.0\" encoding=\"utf-8\"?>"); 
@@ -3361,18 +3464,18 @@ public static void generateRecyclerViewAdapter(Entity ent, String packageName, P
       out.println("import java.io.File;");
       out.println("");
       out.println("public class FileAccessor");
-      out.println("{ Context myContext;");
+      out.println("{ static Context myContext;");
       out.println("");
       out.println("  public FileAccessor(Context context)");
       out.println("  { myContext = context; }");
       out.println("");
-      out.println("  public void createFile(String filename)");
+      out.println("  public static void createFile(String filename)");
       out.println("  { try ");
       out.println("    { File newFile = new File(myContext.getFilesDir(), filename); }");
       out.println("    catch (Exception _e) { _e.printStackTrace(); }");
       out.println("  }"); 
       out.println("");
-      out.println("   public ArrayList<String> readFile(String filename)");
+      out.println("   public static ArrayList<String> readFile(String filename)");
       out.println("   { ArrayList<String> result = new ArrayList<String>();");
       out.println("");
       out.println("     try {");
@@ -3390,7 +3493,7 @@ public static void generateRecyclerViewAdapter(Entity ent, String packageName, P
       out.println("     return result;");
       out.println("   }");
       out.println("");
-      out.println("   public void writeFile(String filename, ArrayList<String> contents)");
+      out.println("   public static void writeFile(String filename, ArrayList<String> contents)");
       out.println("   { try {");
       out.println("       OutputStreamWriter outStrm =");
       out.println("               new OutputStreamWriter(myContext.openFileOutput(filename, Context.MODE_PRIVATE));");
@@ -3405,8 +3508,8 @@ public static void generateRecyclerViewAdapter(Entity ent, String packageName, P
       out.println("   }");
       out.println("");
       out.println("}"); 
-	  out.close();  
-	} catch (Exception _e) { }  
+      out.close();  
+    } catch (Exception _e) { }  
   }
   
   public static void generateGraphComponentLayout(PrintWriter out)
@@ -3559,8 +3662,8 @@ public static void generateGraphComponentVC(String systemName, String packageNam
       out.println("  public void reload()");
       out.println("  { }");
       out.println("}"); 
-	  out.close();  
-	} catch (Exception _e) { }  
+      out.close();  
+    } catch (Exception _e) { }  
   }
 
   public static void generateImageDisplay(String systemName, String packageName)
@@ -3572,14 +3675,14 @@ public static void generateGraphComponentVC(String systemName, String packageNam
                                 new FileWriter(entff)));
       out.println("package " + packageName + ";"); 
       out.println(); 
-	  out.println("import java.util.Map;"); 
-	  out.println("import java.util.HashMap;");
+      out.println("import java.util.Map;"); 
+      out.println("import java.util.HashMap;");
 	  // out.println("import "); 
 
       out.println("");
       out.println("public class ImageDisplay");
       out.println("{ String imageName = \"image1\";");
-	  out.println(""); 
+      out.println(""); 
       out.println("");
       out.println("  public ImageDisplay()");
       out.println("  { }");
@@ -3587,11 +3690,11 @@ public static void generateGraphComponentVC(String systemName, String packageNam
       out.println("  public void setImageName(String name)");
       out.println("  { imageName = name; }");
       out.println("}"); 
-	  out.close();  
-	} catch (Exception _e) { }  
+      out.close();  
+    } catch (Exception _e) { }  
   }
   
-  public static void generateBuildGradle(String appName, PrintWriter out)
+  public static void generateBuildGradle(String appName, boolean firebase, PrintWriter out)
   { out.println("apply plugin: 'com.android.application'"); 
     out.println(); 
     out.println("android {");
@@ -3628,9 +3731,228 @@ public static void generateGraphComponentVC(String systemName, String packageNam
     out.println("    implementation 'com.google.android.material:material:1.2.1'");
     out.println("    implementation 'androidx.constraintlayout:constraintlayout:2.0.1'");
     out.println("    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'");
+
+    if (firebase)
+    { out.println("    implementation platform('com.google.firebase:firebase-bom:26.1.1')"); 
+      out.println("    implementation 'com.google.firebase:firebase-auth'"); 
+      out.println("    implementation 'com.google.firebase:firebase-database'"); 
+    } 
+
     out.println("    testImplementation 'junit:junit:4.13'");
     out.println("    androidTestImplementation 'androidx.test.ext:junit:1.1.2'");
     out.println("    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'");
-    out.println("}"); 
+    out.println("}");
+
+    if (firebase) 
+    { out.println("apply plugin: 'com.google.gms.google-services'"); } 
   }
+
+  public static void generateFirebaseAuthenticator(PrintWriter out, String appName, String packageName)
+  { out.println("package " + packageName + ";"); 
+    
+   out.println("import com.google.android.gms.tasks.OnCompleteListener;");
+   out.println("import com.google.android.gms.tasks.Task;");
+   out.println("import com.google.firebase.auth.*;");
+   out.println(""); 
+   out.println("public class FirebaseAuthenticator");
+   out.println("{ static FirebaseAuth authenticator = FirebaseAuth.getInstance();");
+   out.println(""); 
+   out.println("  static FirebaseAuthenticator instance = null; ");
+   out.println("");  
+   out.println("  public static FirebaseAuthenticator getInstance()");
+   out.println("  { if (instance == null)"); 
+   out.println("    { instance = new FirebaseAuthenticator(); }");
+   out.println("	return instance;"); 
+   out.println("  }");
+   out.println("");
+   out.println("");
+   out.println("  public static String signUp(String email, String password)");
+   out.println("  {");
+   out.println("    final String[] res = new String[1];");
+   out.println("    authenticator.createUserWithEmailAndPassword(email,password).addOnCompleteListener(");
+   out.println("          new OnCompleteListener<AuthResult>() {");
+   out.println("            public void onComplete(Task<AuthResult> task) {");
+   out.println("              if (task.isSuccessful()) {");
+   out.println("                res[0] = \"Success\";");
+   out.println("              } else {");
+   out.println("                res[0] = task.getException().getMessage();");
+   out.println("              }"); 
+   out.println("            }");
+   out.println("      });");
+   out.println("    return res[0];");
+   out.println("  }");
+   out.println("");
+   out.println("  public static String signIn(String email, String password) ");
+   out.println("  { final String[] res = new String[1];");
+   out.println("    authenticator.signInWithEmailAndPassword(email,password).addOnCompleteListener(");
+   out.println("          new OnCompleteListener<AuthResult>() {");
+   out.println("            public void onComplete(Task<AuthResult> task) {");
+   out.println("              if (task.isSuccessful()) {");
+   out.println("                res[0] = \"Success\";");
+   out.println("              } else {");
+   out.println("                res[0] = task.getException().getMessage();");
+   out.println("              }");
+   out.println("            }");
+   out.println("      });");
+   out.println("    return res[0];");
+   out.println("  }");
+   out.println("");
+   out.println("  public String userId()");
+   out.println("  { String res = null;");
+   out.println("    FirebaseUser user = authenticator.getCurrentUser();");
+   out.println("    if (user != null)");
+   out.println("    { res = user.getUid(); }");
+   out.println("    return res;");
+   out.println("  }");
+   out.println("");
+   out.println("  public static String signOut()");
+   out.println("  { try");
+   out.println("    { authenticator.signOut();");
+   out.println("      return \"Success\";");
+   out.println("    } catch (Exception e)");
+   out.println("      { return e + \"\"; }");
+   out.println("  }"); 
+   out.println("}"); 
+  }
+
+  public static void generateSMSComponent(String systemName, String packageName)
+  { String entfile = "SMSComponent.java"; 
+    File entff = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entfile); 
+    try
+    { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entff)));
+      out.println("package " + packageName + ";"); 
+      out.println(); 
+      out.println("import android.telephony.SmsManager;"); 
+      out.println("");
+      out.println("import java.util.ArrayList;");
+      out.println("");
+      out.println("/* Note: Using this component requires");     
+      out.println("   Manifest.permission.SEND_SMS permission */");
+      out.println("");
+      out.println("public class SMSComponent");
+      out.println("{ public boolean canSendText()");
+      out.println("  { return SmsManager.getDefault() != null; }");
+      out.println("");
+      out.println("  public void sendText(String text, ArrayList<String> receivers)");
+      out.println("  { SmsManager sms = SmsManager.getDefault();");
+      out.println("    for (int x = 0; x < receivers.size(); x++)");
+      out.println("    { String r = receivers.get(x);");
+      out.println("      sms.sendTextMessage(r,null,text,null,null);");
+      out.println("    }");
+      out.println("  }");
+      out.println("}");
+      out.close(); 
+    } catch (Exception _e) { } 
+  }
+
+  public static void generatePhoneComponent(String systemName, String packageName)
+  { String entfile = "PhoneComponent.java"; 
+    File entff = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entfile); 
+    try
+    { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entff)));
+      out.println("package " + packageName + ";"); 
+      out.println(); 
+      out.println("import android.content.Intent;"); 
+      out.println("import android.content.pm.PackageManager;");
+      out.println("import android.net.Uri;");
+      out.println("import android.content.Context;");
+      out.println("import android.telephony.TelephonyManager;");
+      out.println("");
+      out.println("import static android.telephony.TelephonyManager.CALL_STATE_IDLE;");
+      out.println("import static android.telephony.TelephonyManager.CALL_STATE_RINGING;");
+      out.println("");
+      out.println("public class PhoneComponent");
+      out.println("{ Context myContext = null;");
+      out.println("  static PhoneComponent instance = null;");
+      out.println("");
+      out.println("  public static PhoneComponent getInstance(Context context)"); 
+      out.println("  { if (instance == null)"); 
+      out.println("    { instance = new PhoneComponent(context); }");
+      out.println("    return instance;");
+      out.println("  }");
+      out.println("");
+      out.println("  private PhoneComponent(Context context)");
+      out.println("  { myContext = context; }");
+      out.println("");
+      out.println("  public boolean hasPhoneFeature()");
+      out.println("  { PackageManager man = myContext.getPackageManager();");
+      out.println("    if (man.hasSystemFeature(PackageManager.FEATURE_TELEPHONY))");
+      out.println("    { return true; }");
+      out.println("    return false;");
+      out.println("  }");
+      out.println("");
+      out.println("  public String getCallState()");
+      out.println("  { TelephonyManager tman = null;");
+      out.println("    int cstate = tman.getCallState();");
+      out.println("    if (cstate == CALL_STATE_IDLE)");
+      out.println("    { return \"IDLE\"; }");
+      out.println("    else if (cstate == CALL_STATE_RINGING)");
+      out.println("    { return \"RINGING\"; }");
+      out.println("    else { return \"OFFHOOK\"; }");
+      out.println("  }");
+      out.println("");
+      out.println("");
+      out.println("  public void makeCall(String number)");
+      out.println("  { Intent callIntent = new Intent(Intent.ACTION_DIAL, Uri.parse(\"tel:\" + number));");
+      out.println("    myContext.startActivity(callIntent);");
+      out.println("  }");
+      out.println("}");
+	  out.close(); 
+	} catch (Exception ex) {} 
+  } 
+
+  public static void generateMediaComponent(String systemName, String packageName)
+  { String entfile = "MediaComponent.java"; 
+    File entff = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entfile); 
+    try
+    { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entff)));
+      out.println("package " + packageName + ";"); 
+      out.println(); 
+      out.println("import android.media.AudioManager;"); 
+      out.println("import android.media.MediaPlayer;");
+      out.println("import android.media.MediaPlayer.OnPreparedListener;");
+      out.println("");
+      out.println("/* For non-local sources, android.permission.INTERNET"); 
+      out.println("   is needed in the AndroidManifest */");
+      out.println("");
+      out.println("public class MediaComponent implements OnPreparedListener");
+      out.println("{ private MediaPlayer mplay;");
+      out.println("  private static MediaComponent instance = null;");
+      out.println("");
+      out.println("  private MediaComponent()");
+      out.println("  { mplay = new MediaPlayer(); }");
+      out.println("");
+      out.println("  public static MediaComponent getInstance()");
+      out.println("  { if (instance == null)");
+      out.println("    { instance = new MediaComponent(); }");
+      out.println("    return instance;");
+      out.println("  }");
+      out.println("");
+      out.println("  public void playAudioAsync(String source)");
+      out.println("  { mplay.setAudioStreamType(AudioManager.STREAM_MUSIC);");
+      out.println("    try");
+      out.println("    { mplay.setDataSource(source); }");
+      out.println("    catch (Exception _e) { return; }");
+      out.println("    mplay.setOnPreparedListener(this);");
+      out.println("    mplay.prepareAsync();");
+      out.println("  }");
+      out.println("");
+      out.println("  public void onPrepared(MediaPlayer mp)");
+      out.println("  { mp.start(); }");
+      out.println("");
+      out.println("  public void stopPlay()");
+      out.println("  { mplay.stop(); }");
+      out.println("");
+      out.println("  public void finalize()");
+      out.println("  { mplay.release(); }");
+      out.println("}");
+	  out.close(); 
+	} catch (Exception _ex) { } 
+  } 
 }  
