@@ -167,8 +167,39 @@ public class BSystemTypes extends BComponent
       res = res + "      if (" + test + ")\n" + 
                   "      { _results_" + oldindex + ".add(" + wvar + "); }\n"; 
       res = res + "    }\n"; 
-      res = res + "    return _results_" + oldindex + ";\n  }"; 
+      res = res + "    return _results_" + oldindex + ";\n  }\n\n"; 
 
+      // Version for maps: 
+	  res = res + "  public static Map select_" + oldindex + "(Map _l"; 
+
+      for (int i = 0; i < pars.size(); i++) 
+      { Attribute par = (Attribute) pars.get(i); 
+        res = res + "," + par.getType().getJava() + " " + par.getName(); 
+        // if ("self".equals(par.getName()))
+        // { newenv.put(par.getType().getName(),"self"); } 
+      } 
+      res = res + ")\n"; 
+      res = res + "  { // Implements: " + left + "->select(" + var + " | " + pred + ")\n" + 
+                  "    Map _results_" + oldindex + " = new java.util.HashMap();\n" +
+				  "    java.util.Set _keys = _l.keySet();\n" +  
+                  "    for (Object _i : _keys)\n"; 
+      if (ename.equals("int") || "Integer".equals(tname))
+      { res = res + "    { int " + var + " = ((Integer) _l.get(_i)).intValue();\n"; } 
+      else if (ename.equals("double"))
+      { res = res + "    { double " + var + " = ((Double) _l.get(_i)).doubleValue();\n"; } 
+      else if (ename.equals("long"))
+      { res = res + "    { long " + var + " = ((Long) _l.get(_i)).longValue();\n"; } 
+      else if (ename.equals("boolean"))
+      { res = res + "    { boolean " + var + " = ((Boolean) _l.get(_i)).booleanValue();\n"; } 
+      else 
+      { res = res + "    { " + tname + " " + var + " = (" + tname + ") _l.get(_i);\n"; }   
+
+      res = res + "      if (" + test + ")\n" + 
+                  "      { _results_" + oldindex + ".put(_i, " + wvar + "); }\n"; 
+      res = res + "    }\n"; 
+      res = res + "    return _results_" + oldindex + ";\n  }\n"; 
+
+	  
       selectList.add(pp); 
       selectOps.put(pp,res); 
       selectCodes.put(pp,"" + oldindex); 
@@ -703,6 +734,24 @@ public class BSystemTypes extends BComponent
 
       res = res + "      " + jtype + " collect_x = " + elem + ";\n" + 
                   "      if (collect_x != null) { _results_" + oldindex + ".add(collect_x); }\n"; 
+      res = res + "    }\n"; 
+      res = res + "    return _results_" + oldindex + ";\n  }\n\n"; 
+
+      // Also need a Map version: 
+      res = res + "  public static Map collect_" + oldindex + "(Map _l"; 
+	  for (int i = 0; i < pars.size(); i++) 
+      { Attribute par = (Attribute) pars.get(i); 
+        res = res + "," + par.getType().getJava() + " " + par.getName(); 
+      } 
+      res = res + ")\n"; 
+      res = res + 
+         "  { // implements: " + left + "->collect( " +  var + " | " + exp + " )\n" +
+         "    Map _results_" + oldindex + " = new HashMap();\n" + 
+         "    java.util.Set _keys = _l.keySet();\n" +  
+         "    for (Object _i : _keys)\n" + 
+         "    { " + tname + " " + var + " = (" + tname + ") _l.get(_i);\n" + 
+         "      " + jtype + " collect_x = " + elem + ";\n" + 
+         "      if (collect_x != null) { _results_" + oldindex + ".put(_i,collect_x); }\n";
       res = res + "    }\n"; 
       res = res + "    return _results_" + oldindex + ";\n  }"; 
 
@@ -1319,7 +1368,40 @@ public class BSystemTypes extends BComponent
       res = res + "      if (" + test + ") { } \n" + 
                   "      else { _results_" + oldindex + ".add(" + wvar + "); }\n"; 
       res = res + "    }\n"; 
-      res = res + "    return _results_" + oldindex + ";\n  }"; 
+      res = res + "    return _results_" + oldindex + ";\n  }\n\n";
+	  
+	  /* Version for maps: */  
+
+	  res = res + "  public static Map reject_" + oldindex + "(Map _l"; 
+
+      for (int i = 0; i < pars.size(); i++) 
+      { Attribute par = (Attribute) pars.get(i); 
+        res = res + "," + par.getType().getJava() + " " + par.getName(); 
+        // if ("self".equals(par.getName()))
+        // { newenv.put(par.getType().getName(),"self"); } 
+      } 
+      res = res + ")\n"; 
+      res = res + "  { // Implements: " + left + "->reject(" + var + " | " + pred + ")\n" + 
+                  "    Map _results_" + oldindex + " = new java.util.HashMap();\n" +
+				  "    java.util.Set _keys = _l.keySet();\n" +  
+                  "    for (Object _i : _keys)\n"; 
+      if (ename.equals("int") || "Integer".equals(tname))
+      { res = res + "    { int " + var + " = ((Integer) _l.get(_i)).intValue();\n"; } 
+      else if (ename.equals("double"))
+      { res = res + "    { double " + var + " = ((Double) _l.get(_i)).doubleValue();\n"; } 
+      else if (ename.equals("long"))
+      { res = res + "    { long " + var + " = ((Long) _l.get(_i)).longValue();\n"; } 
+      else if (ename.equals("boolean"))
+      { res = res + "    { boolean " + var + " = ((Boolean) _l.get(_i)).booleanValue();\n"; } 
+      else 
+      { res = res + "    { " + tname + " " + var + " = (" + tname + ") _l.get(_i);\n"; }
+	     
+      res = res + "      if (" + test + ") { } \n" + 
+                  "      else\n" +  
+                  "      { _results_" + oldindex + ".put(_i, " + wvar + "); }\n"; 
+      res = res + "    }\n"; 
+      res = res + "    return _results_" + oldindex + ";\n  }\n"; 
+
 
       rejectList.add(pp); 
       rejectOps.put(pp,res); 
@@ -8091,8 +8173,8 @@ public class BSystemTypes extends BComponent
 
   public static String generateIncludingMapOp()
   { String res =  
-      "  public static Map includingMap(Map m, Object src, Object trg) \n" +
-      "  { Map copy = new HashMap();\n" +
+      "  public static HashMap includingMap(Map m, Object src, Object trg) \n" +
+      "  { HashMap copy = new HashMap();\n" +
       "    copy.putAll(m); \n" +
       "    copy.put(src,trg);\n" +
       "    return copy;\n" +
@@ -8102,11 +8184,11 @@ public class BSystemTypes extends BComponent
 
   public static String generateExcludeAllMapOp()
   { String res =  
-      "  public static Map excludeAllMap(Map m1, Map m2)  \n" +
+      "  public static HashMap excludeAllMap(Map m1, Map m2)  \n" +
       "  { // m1 - m2 \n" +
       "    Vector keys = new Vector(); \n" +
       "    keys.addAll(m1.keySet()); \n" +
-      "    Map res = new HashMap(); \n" +
+      "    HashMap res = new HashMap(); \n" +
       "   \n" +
       "    for (int x = 0; x < keys.size(); x++) \n" +
       "    { Object key = keys.get(x); \n" +
@@ -8122,9 +8204,9 @@ public class BSystemTypes extends BComponent
 
   public static String generateExcludingMapKeyOp()
   { String res =  
-      "  public static Map excludingMapKey(Map m, Object k)   \n" +
+      "  public static HashMap excludingMapKey(Map m, Object k)   \n" +
       "  { // m - { k |-> m(k) }   \n" +
-      "    Map res = new HashMap();  \n" +
+      "    HashMap res = new HashMap();  \n" +
       "    res.putAll(m);  \n" +
       "    res.remove(k);  \n" +
       "    return res;  \n" +
@@ -8134,11 +8216,11 @@ public class BSystemTypes extends BComponent
 
   public static String generateExcludingMapValueOp()
   { String res =  
-      "  public static Map excludingMapValue(Map m, Object v) \n" +
+      "  public static HashMap excludingMapValue(Map m, Object v) \n" +
       "  { // m - { k |-> v } \n" +
       "    Vector keys = new Vector();\n" +
       "    keys.addAll(m.keySet());\n" +
-      "    Map res = new HashMap();\n" +
+      "    HashMap res = new HashMap();\n" +
       "  \n" +
       "    for (int x = 0; x < keys.size(); x++)\n" +
       "    { Object key = keys.get(x);\n" +
@@ -8154,8 +8236,8 @@ public class BSystemTypes extends BComponent
 
   public static String generateUnionMapOp()
   { String res =  
-      "  public static Map unionMap(Map m1, Map m2) \n" +
-      "  { Map res = new HashMap();\n" +
+      "  public static HashMap unionMap(Map m1, Map m2) \n" +
+      "  { HashMap res = new HashMap();\n" +
       "    res.putAll(m1);\n" +
       "    res.putAll(m2);    \n" +
       "    return res;\n" + 
@@ -8165,10 +8247,10 @@ public class BSystemTypes extends BComponent
 
   public static String generateIntersectionMapOp()
   { String res =  
-      "  public static Map intersectionMap(Map m1, Map m2) \n" +
+      "  public static HashMap intersectionMap(Map m1, Map m2) \n" +
       "  { Vector keys = new Vector();\n" +
       "    keys.addAll(m1.keySet());\n" +
-      "    Map res = new HashMap();\n" +
+      "    HashMap res = new HashMap();\n" +
       "  \n" +
       "    for (int x = 0; x < keys.size(); x++)\n" +
       "    { Object key = keys.get(x);\n" +
@@ -8178,10 +8260,10 @@ public class BSystemTypes extends BComponent
       "    return res;\n" +
       "  }\n\n"; 
 	res = res + 
-	  "  public static Map restrictMap(Map m1, Vector ks) \n" +
+	  "  public static HashMap restrictMap(Map m1, Vector ks) \n" +
       "  { Vector keys = new Vector();\n" +
       "    keys.addAll(m1.keySet());\n" +
-      "    Map res = new HashMap();\n" +
+      "    HashMap res = new HashMap();\n" +
       "  \n" +
       "    for (int x = 0; x < keys.size(); x++)\n" +
       "    { Object key = keys.get(x);\n" +
@@ -8194,8 +8276,8 @@ public class BSystemTypes extends BComponent
   } 
 
   public static String generateIncludingMapOpJava7()
-  { String res = "  public static <D,R> Map<D,R> includingMap(Map<D,R> m, D src, R trg)\n" + 
-      "  { Map<D,R> copy = new HashMap<D,R>();\n" + 
+  { String res = "  public static <D,R> HashMap<D,R> includingMap(Map<D,R> m, D src, R trg)\n" + 
+      "  { HashMap<D,R> copy = new HashMap<D,R>();\n" + 
       "    copy.putAll(m); \n" +
       "    copy.put(src,trg);\n" +
       "    return copy;\n" +
@@ -8240,9 +8322,9 @@ public class BSystemTypes extends BComponent
 
   public static String generateExcludeAllMapOpJava7()
   { String res = 
-      "  public static <D,R> Map<D,R> excludeAllMap(Map<D,R> m1, Map m2)\n" + 
+      "  public static <D,R> HashMap<D,R> excludeAllMap(Map<D,R> m1, Map m2)\n" + 
       "  { // m1 - m2\n" +
-      "    Map<D,R> res = new HashMap<D,R>();\n" +
+      "    HashMap<D,R> res = new HashMap<D,R>();\n" +
       "    Set<D> keys = m1.keySet(); \n" +
       "  \n" +
       "    for (D key : keys)\n" +
@@ -8258,9 +8340,9 @@ public class BSystemTypes extends BComponent
 
   public static String generateExcludingMapKeyOpJava7()
   { String res = 
-      "  public static <D,R> Map<D,R> excludingMapKey(Map<D,R> m, D k)\n" + 
+      "  public static <D,R> HashMap<D,R> excludingMapKey(Map<D,R> m, D k)\n" + 
       "  { // m - { k |-> m(k) } \n" +
-      "    Map<D,R> res = new HashMap<D,R>();\n" +
+      "    HashMap<D,R> res = new HashMap<D,R>();\n" +
       "    res.putAll(m);\n" +
       "    res.remove(k);\n" +
       "    return res;\n" +
@@ -8270,9 +8352,9 @@ public class BSystemTypes extends BComponent
 
   public static String generateExcludingMapValueOpJava7()
   { String res = 
-      "  public static <D,R> Map<D,R> excludingMapValue(Map<D,R> m, R v)\n" + 
+      "  public static <D,R> HashMap<D,R> excludingMapValue(Map<D,R> m, R v)\n" + 
       "  { // m - { k |-> v }\n" + 
-      "    Map<D,R> res = new HashMap<D,R>();\n" +
+      "    HashMap<D,R> res = new HashMap<D,R>();\n" +
       "    Set<D> keys = m.keySet(); \n" +
       "    \n" +
       "    for (D key : keys)\n" +
@@ -8288,8 +8370,8 @@ public class BSystemTypes extends BComponent
 
   public static String generateUnionMapOpJava7()
   { String res = 
-      "  public static <D,R> Map<D,R> unionMap(Map<D,R> m1, Map<D,R> m2)\n" + 
-      "  { Map<D,R> res = new HashMap<D,R>();\n" +
+      "  public static <D,R> HashMap<D,R> unionMap(Map<D,R> m1, Map<D,R> m2)\n" + 
+      "  { HashMap<D,R> res = new HashMap<D,R>();\n" +
       "    res.putAll(m1);\n" +
       "    res.putAll(m2);    \n" +
       "    return res;\n" +
@@ -8299,8 +8381,8 @@ public class BSystemTypes extends BComponent
 
   public static String generateIntersectionMapOpJava7()
   { String res = 
-      "  public static <D,R> Map<D,R> intersectionMap(Map<D,R> m1, Map m2)\n" + 
-      "  { Map<D,R> res = new HashMap<D,R>();\n" +
+      "  public static <D,R> HashMap<D,R> intersectionMap(Map<D,R> m1, Map m2)\n" + 
+      "  { HashMap<D,R> res = new HashMap<D,R>();\n" +
       "    Set<D> keys = m1.keySet(); \n" +
       "  \n" +
       "    for (D key : keys)\n" +
@@ -8310,10 +8392,10 @@ public class BSystemTypes extends BComponent
       "    return res;\n" +
       "  }\n\n";
 	res = res + 
-	  "  public static <D,R> Map<D,R> restrictMap(Map<D,R> m1, Set<D> ks) \n" +
+	  "  public static <D,R> HashMap<D,R> restrictMap(Map<D,R> m1, Set<D> ks) \n" +
       "  { Set<D> keys = new HashSet<D>();\n" +
       "    keys.addAll(m1.keySet());\n" +
-      "    Map<D,R> res = new HashMap<D,R>();\n" +
+      "    HashMap<D,R> res = new HashMap<D,R>();\n" +
       "  \n" +
       "    for (D key : keys)\n" +
       "    { if (ks.contains(key))\n" +

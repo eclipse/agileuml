@@ -74,24 +74,24 @@ public class CGSpec
 
   public void addStatementRule(CGRule r)
   { Vector removedRules = new Vector(); 
-    for (int i = 0; i < statementRules.size(); i++) 
+   /* for (int i = 0; i < statementRules.size(); i++) 
 	{ CGRule rule = (CGRule) statementRules.get(i); 
 	  if (r.equalsLHS(rule)) 
 	  { removedRules.add(rule); } 
 	} 
-	statementRules.removeAll(removedRules); 
+	statementRules.removeAll(removedRules); */ 
 	statementRules.add(r); 
   }
 
 
   public void addClassRule(CGRule r)
   { Vector removedRules = new Vector(); 
-    for (int i = 0; i < classRules.size(); i++) 
+   /* for (int i = 0; i < classRules.size(); i++) 
 	{ CGRule rule = (CGRule) classRules.get(i); 
 	  if (r.equalsLHS(rule)) 
 	  { removedRules.add(rule); } 
 	} 
-	classRules.removeAll(removedRules); 
+	classRules.removeAll(removedRules); */  
 	classRules.add(r); 
   }
 
@@ -102,23 +102,23 @@ public class CGSpec
 
   public void addUseCaseRule(CGRule r)
   { Vector removedRules = new Vector(); 
-    for (int i = 0; i < usecaseRules.size(); i++) 
+    /* for (int i = 0; i < usecaseRules.size(); i++) 
 	{ CGRule rule = (CGRule) usecaseRules.get(i); 
 	  if (r.equalsLHS(rule)) 
 	  { removedRules.add(rule); } 
 	} 
-	usecaseRules.removeAll(removedRules); 
+	usecaseRules.removeAll(removedRules); */ 
 	usecaseRules.add(r); 
   }
 
   public void addAttributeRule(CGRule r)
   { Vector removedRules = new Vector(); 
-    for (int i = 0; i < attributeRules.size(); i++) 
+    /* for (int i = 0; i < attributeRules.size(); i++) 
 	{ CGRule rule = (CGRule) attributeRules.get(i); 
 	  if (r.equalsLHS(rule)) 
 	  { removedRules.add(rule); } 
 	} 
-	attributeRules.removeAll(removedRules); 
+	attributeRules.removeAll(removedRules); */  
 	attributeRules.add(r); 
   }
 
@@ -130,12 +130,12 @@ public class CGSpec
 
   public void addOperationRule(CGRule r)
   { Vector removedRules = new Vector(); 
-    for (int i = 0; i < operationRules.size(); i++) 
+  /*  for (int i = 0; i < operationRules.size(); i++) 
 	{ CGRule rule = (CGRule) operationRules.get(i); 
 	  if (r.equalsLHS(rule)) 
 	  { removedRules.add(rule); } 
 	} 
-	operationRules.removeAll(removedRules); 
+	operationRules.removeAll(removedRules); */  
 	operationRules.add(r); 
   }
 
@@ -389,10 +389,14 @@ public class CGSpec
       String trimmedlhs = r.lhs.trim(); 
       // int varcount = r.variables().size(); 
 	  
+	  // System.out.println(">>> " + t + " is map type: " + t.isMapType() + " lhs: " + trimmedlhs); 
+	  
       if (typetext.equals(trimmedlhs))
       { return r; } // exact match
-      else if (t.isMapType() && trimmedlhs.startsWith("Map"))
-      { return r; }
+      // else if (t.isMapType() && trimmedlhs.startsWith("Map"))
+      // { return r; }
+	  else if (t.isMapType() && trimmedlhs.equals("Map(_1,_2)"))
+	  { return r; }
       else if (t.isEnumeratedType() && r.hasCondition("enumerated"))
       { return r; }
       else if (t.isEntityType() && r.hasCondition("class"))
@@ -487,14 +491,18 @@ public class CGSpec
       { return r; }
       else if (e instanceof SequenceStatement && (trimmedlhs.indexOf(";") > -1))
       { return r; }
-      else if (op.equals("var") && trimmedlhs.startsWith(op))
-      { Vector args = ((CreationStatement) e).cgparameters(); 
-        if (r.satisfiesConditions(args,entities))
+      else if (op.equals("var") && trimmedlhs.startsWith(op) && 
+               e instanceof CreationStatement)
+      { CreationStatement cse = (CreationStatement) e; 
+        Vector args = cse.cgparameters(); 
+        if (r.variables.size() == 3 && cse.initialExpression != null && r.satisfiesConditions(args,entities))
+        { return r; }
+        else if (r.variables.size() == 2 && cse.initialExpression == null && r.satisfiesConditions(args,entities))
         { return r; }
       } 
       else if (op.equals(":=") && (trimmedlhs.indexOf(op) > -1))
       { Vector args = ((AssignStatement) e).cgparameters(); 
-        if (r.satisfiesConditions(args,entities))
+        if (r.variables.size() == args.size() && r.satisfiesConditions(args,entities))
         { return r; }
       }
       else if (op.equals("execute") && trimmedlhs.startsWith(op))
@@ -741,27 +749,30 @@ public class CGSpec
   public CGRule matchedSetExpressionRule(SetExpression e, String etext)
   { boolean ordered = e.isOrdered();
     Vector elems = e.getElements(); 
+	
 
     for (int x = 0; x < setExpressionRules.size(); x++)
     { CGRule r = (CGRule) setExpressionRules.get(x);
-      if (etext.equals(r.lhs))
+	  String trimmedlhs = r.lhs.trim(); 
+	  
+      if (etext.equals(trimmedlhs))
       { return r; } // exact match
       else if (etext.startsWith("Set{") && etext.endsWith("}") && 
-               r.lhs.startsWith("Set{") && r.lhs.endsWith("}"))
+               trimmedlhs.startsWith("Set{") && trimmedlhs.endsWith("}"))
       { if (elems.size() == 0 && r.variables.size() == 0)
         { return r; } // r is empty set -- just white space in lhs between {}
         else if (elems.size() > 0 && r.variables.size() > 0) 
         { return r; } 
       } 
       else if (etext.startsWith("Sequence{") && etext.endsWith("}") && 
-               r.lhs.startsWith("Sequence{") && r.lhs.endsWith("}"))
+               trimmedlhs.startsWith("Sequence{") && trimmedlhs.endsWith("}"))
       { if (elems.size() == 0 && r.variables.size() == 0)
         { return r; } // r is empty set
         else if (elems.size() > 0 && r.variables.size() > 0) 
         { return r; } 
       } 
       else if (etext.startsWith("Map{") && etext.endsWith("}") && 
-               r.lhs.startsWith("Map{") && r.lhs.endsWith("}"))
+               trimmedlhs.startsWith("Map{") && trimmedlhs.endsWith("}"))
       { if (elems.size() == 0 && r.variables.size() == 0) 
         { return r; }  // empty map
         else if (elems.size() > 0 && r.variables.size() > 0) 
@@ -862,9 +873,27 @@ public class CGSpec
   public CGRule matchedReferenceRule(Attribute e, String ctext)
   { for (int x = 0; x < attributeRules.size(); x++)
     { CGRule r = (CGRule) attributeRules.get(x);
+	
+	  System.out.println("???? reference rule: " + r); 
 
       if (r.lhs.startsWith("reference")) 
-      { if (e.getType() != null && e.getType().isCollectionType()) 
+      { if (e.getType() != null && e.getType().isMapType()) 
+        { if (r.hasCondition("map"))
+          { return r; }
+          else if (r.hasNegativeCondition("map"))
+          { } 
+		  else 
+		  { return r; }
+        } 
+        else if (e.getType() != null && !e.getType().isMapType())
+        { if (r.hasNegativeCondition("map"))
+          { return r; } 
+          else if (r.hasCondition("map"))
+          { } 
+		  else 
+		  { return r; }
+        }
+		else if (e.getType() != null && e.getType().isCollectionType()) 
         { if (r.hasCondition("collection"))
           { return r; }
           else if (r.hasNegativeCondition("collection"))

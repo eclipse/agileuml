@@ -2743,7 +2743,8 @@ class CreationStatement extends Statement
   private Type instanceType = null; 
   private Type elementType = null; 
   boolean declarationOnly = false; 
-  String initialValue = null; 
+  String initialValue = null;
+  Expression initialExpression = null;  
   boolean isFrozen = false;  // true when a constant is declared. 
 
   public CreationStatement(String cio, String ast)
@@ -2753,6 +2754,11 @@ class CreationStatement extends Statement
 
   public void setInitialValue(String init)
   { initialValue = init; } 
+
+  public void setInitialisation(Expression expr) 
+  { initialExpression = expr; 
+    initialValue = expr + ""; 
+  } 
 
   public void setFrozen(boolean froz)
   { isFrozen = froz; } 
@@ -2807,16 +2813,30 @@ class CreationStatement extends Statement
     CreationStatement res = new CreationStatement(cio,ast);
     res.setType(instanceType); 
     res.setElementType(elementType);  
+	
+	if (initialExpression != null) 
+	{ Expression newExpr = initialExpression.substituteEq(oldE,newE); 
+	  res.setInitialisation(newExpr); 
+	}
     return res; 
   } 
 
   public String toString()
-  { if (initialValue != null) 
-    { return "  var " + assignsTo + " = " + initialValue; } 
-    else if (instanceType != null)
-    { return "  var " + assignsTo + " : " + instanceType; }
+  { if (instanceType != null)
+    { if (initialValue != null) 
+      { return "  var " + assignsTo + " : " + instanceType + " := " + initialValue; } 
+      else if (initialExpression != null) 
+      { return "  var " + assignsTo + " : " + instanceType + " := " + initialExpression; } 
+      else
+      { return "  var " + assignsTo + " : " + instanceType; }
+    } 
     else 
-    { return "  var " + assignsTo + " : " + createsInstanceOf; }
+    { if (initialValue != null) 
+      { return "  var " + assignsTo + " := " + initialValue; } 
+      else if (initialExpression != null) 
+      { return "  var " + assignsTo + " : " + createsInstanceOf + " := " + initialExpression; } 
+      return "  var " + assignsTo + " : " + createsInstanceOf; 
+    }
   } 
 
   public String saveModelData(PrintWriter out) 
@@ -2868,16 +2888,20 @@ class CreationStatement extends Statement
     if (isFrozen) 
     { mode = "final "; } 
 
-    if (initialValue != null) 
+    if (initialValue != null && instanceType != null) 
     { String jType = instanceType.getJava(); 
       return "  " + mode + jType + " " + assignsTo + " = " + initialValue + ";"; 
     } 
     else if (instanceType != null)
     { String jType = instanceType.getJava(); 
-      if (Type.isBasicType(instanceType)) 
+      if (initialExpression != null)
+      { return "  " + jType + " " + assignsTo + " = " + initialExpression.toJava() + ";\n"; }
+      else if (Type.isBasicType(instanceType)) 
       { return "  " + mode + jType + " " + assignsTo + ";"; } 
       else if (declarationOnly) 
       { return "  " + mode + jType + " " + assignsTo + ";"; } 
+      else if (Type.isMapType(instanceType))
+      { return "  " + mode + "Map " + assignsTo + " = new HashMap();"; } 
       else if (Type.isCollectionType(instanceType))
       { return "  " + mode + "List " + assignsTo + ";"; } 
       else if (instanceType.isEntity())
@@ -2897,6 +2921,8 @@ class CreationStatement extends Statement
 
     if (createsInstanceOf.startsWith("Set") || createsInstanceOf.startsWith("Sequence"))
     { return "  List " + assignsTo + ";"; } 
+    else if (createsInstanceOf.startsWith("Map"))
+    { return "  Map " + assignsTo + ";"; } 
 
     return "  " + mode + createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
            "  Controller.inst().add" + createsInstanceOf + "(" + assignsTo + ");"; 
@@ -2905,8 +2931,12 @@ class CreationStatement extends Statement
   public String toStringJava6()
   { if (instanceType != null)
     { String jType = instanceType.getJava6(); 
-      if (Type.isBasicType(instanceType)) 
+      if (initialExpression != null)
+      { return "  " + jType + " " + assignsTo + " = " + initialExpression.toJava6() + ";\n"; }
+      else if (Type.isBasicType(instanceType)) 
       { return "  " + jType + " " + assignsTo + ";"; } 
+      else if (Type.isMapType(instanceType))
+      { return "  Map " + assignsTo + " = new HashMap();"; } 
       else if (Type.isSetType(instanceType))
       { return "  HashSet " + assignsTo + ";"; } 
       else if (Type.isSequenceType(instanceType))
@@ -2930,6 +2960,8 @@ class CreationStatement extends Statement
     { return "  HashSet " + assignsTo + ";"; } 
     else if (createsInstanceOf.startsWith("Sequence"))
     { return "  ArrayList " + assignsTo + ";"; } 
+    else if (createsInstanceOf.startsWith("Map"))
+    { return "  Map " + assignsTo + ";"; } 
 
     return "  " + createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
            "  Controller.inst().add" + createsInstanceOf + "(" + assignsTo + ");"; 
@@ -2941,7 +2973,13 @@ class CreationStatement extends Statement
  
     if (instanceType != null)
     { String jType = instanceType.getJava7(elementType); 
-      if (Type.isBasicType(instanceType) || Type.isSetType(instanceType) || 
+	  if (initialExpression != null)
+	  { return "  " + jType + " " + assignsTo + " = " + initialExpression.toJava7() + ";\n"; }
+      else if (Type.isBasicType(instanceType)) 
+      { return "  " + jType + " " + assignsTo + ";"; } 
+      else if (Type.isMapType(instanceType))
+      { return "  " + jType + " " + assignsTo + " = new " + jType + "();"; } 
+      else if (Type.isBasicType(instanceType) || Type.isSetType(instanceType) || 
           Type.isSequenceType(instanceType)) 
       { return "  " + jType + " " + assignsTo + ";"; } 
       else if (instanceType.isEntity())
@@ -2963,6 +3001,8 @@ class CreationStatement extends Statement
     { return "  HashSet " + assignsTo + ";"; } 
     else if (createsInstanceOf.startsWith("Sequence"))
     { return "  ArrayList " + assignsTo + ";"; } 
+    else if (createsInstanceOf.startsWith("Map"))
+    { return "  HashMap " + assignsTo + ";"; } 
 
     return createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
            "  Controller.inst().add" + createsInstanceOf + "(" + assignsTo + ");"; 
@@ -2973,7 +3013,9 @@ class CreationStatement extends Statement
   { String cstype = createsInstanceOf; 
     if (instanceType != null)
     { String jType = instanceType.getCSharp(); 
-      if (Type.isBasicType(instanceType)) 
+	  if (initialExpression != null)
+	  { return "  " + jType + " " + assignsTo + " = " + initialExpression.toCSharp() + ";\n"; }
+      else if (Type.isBasicType(instanceType)) 
       { return "  " + jType + " " + assignsTo + ";"; } 
       else if (Type.isCollectionType(instanceType))
       { return "  ArrayList " + assignsTo + ";"; } 
@@ -3018,7 +3060,9 @@ class CreationStatement extends Statement
       else if (instanceType.isEntity())
       { Entity ent = instanceType.getEntity(); 
 	    String ename = ent.getName(); 
-        if (ent.hasStereotype("external"))
+		if (initialExpression != null)
+		{ return "  " + jType + " " + assignsTo + " = " + initialExpression.toCPP() + ";\n"; }
+        else if (ent.hasStereotype("external"))
         { return "  " + jType + " " + assignsTo + " = new " + ename + "();\n"; } 
         else
         { return "  " + jType + " " + assignsTo + " = new " + ename + "();\n" + 
@@ -3078,6 +3122,10 @@ class CreationStatement extends Statement
     { att.setElementType(elementType); } 
  
     env.add(att); 
+	
+	if (initialExpression != null) 
+	{ initialExpression.typeCheck(types,entities,ctxs,env); }
+	
     return true; 
   }  // createsInstanceOf must be a primitive type, String or entity, if Sequence, Set
      // there is not necessarily an element type. Needs be set when the statement is parsed. 
@@ -3110,6 +3158,9 @@ class CreationStatement extends Statement
   public Vector readFrame()
   { Vector res = new Vector(); 
     // res.add(createsInstanceOf); 
+	if (initialExpression != null) 
+	{ res.addAll(initialExpression.readFrame()); }  
+
     return res; 
   } 
 
@@ -3138,11 +3189,15 @@ class CreationStatement extends Statement
 
   public Vector allOperationsUsedIn()
   { Vector res = new Vector(); 
+    if (initialExpression != null) 
+	{ res.addAll(initialExpression.allOperationsUsedIn()); }  
     return res; 
   } 
 
   public Vector equivalentsUsedIn()
   { Vector res = new Vector(); 
+    if (initialExpression != null) 
+	{ res.addAll(initialExpression.equivalentsUsedIn()); }  
     return res; 
   } 
 
@@ -3155,6 +3210,10 @@ class CreationStatement extends Statement
     
     if (instanceType != null) 
     { res.addAll(instanceType.metavariables()); }  
+
+    if (initialExpression != null) 
+    { res.addAll(initialExpression.metavariables()); }  
+
     return res; 
   } 
 
@@ -3163,7 +3222,9 @@ class CreationStatement extends Statement
     if (assignsTo != null) 
     { args.add(assignsTo); } 
     if (instanceType != null) 
-    { args.add(instanceType); } 
+    { args.add(instanceType); }
+    if (initialExpression != null) 
+    { args.add(initialExpression); }  
     return args; 
   } 
 
@@ -3183,6 +3244,11 @@ class CreationStatement extends Statement
       eargs.add(instanceType); 
     }
 	 
+    if (initialExpression != null) 
+    { args.add(initialExpression.cg(cgs)); 
+      eargs.add(initialExpression); 
+    }  
+
     CGRule r = cgs.matchedStatementRule(this,etext);
     if (r != null)
     { return r.applyRule(args,eargs,cgs); }
@@ -5055,6 +5121,9 @@ class AssignStatement extends Statement
   private Expression rhs;
   private boolean copyValue = false; 
   private String operator = ":=";  // default
+  
+  /* Note that the version with a type is depricated and replaced by 
+     var lhs : type := rhs */ 
 
   public AssignStatement(Expression left, Expression right)
   { lhs = left;
@@ -5093,8 +5162,21 @@ class AssignStatement extends Statement
 
   public Vector cgparameters()
   { Vector args = new Vector();
+    Expression rhsnopre = rhs.removePrestate(); 
+    
+    if (lhs instanceof BasicExpression)
+    { BasicExpression lhsbe = (BasicExpression) lhs; 
+      if (lhsbe.arrayIndex != null) 
+      { BasicExpression lhs0 = (BasicExpression) lhsbe.clone(); 
+        lhs0.arrayIndex = null; 
+        args.add(lhs0); 
+        args.add(lhsbe.arrayIndex); 
+        args.add(rhsnopre);
+        return args; 
+      } 
+    } 
     args.add(lhs);
-    args.add(rhs);
+    args.add(rhsnopre);
     return args; 
   } 
 
@@ -5103,10 +5185,28 @@ class AssignStatement extends Statement
   { // assumes type == null 
     String etext = this + "";
     Vector args = new Vector();
-    args.add(lhs.cg(cgs));
     Vector eargs = new Vector(); 
-    eargs.add(lhs); 
     Expression rhsnopre = rhs.removePrestate(); 
+    
+    if (lhs instanceof BasicExpression)
+    { BasicExpression lhsbe = (BasicExpression) lhs; 
+      if (lhsbe.arrayIndex != null) 
+      { BasicExpression lhs0 = (BasicExpression) lhsbe.clone(); 
+        lhs0.arrayIndex = null; 
+        args.add(lhs0.cg(cgs)); 
+        eargs.add(lhs0); 
+        args.add(lhsbe.arrayIndex.cg(cgs)); 
+        eargs.add(lhsbe.arrayIndex); 
+        args.add(rhsnopre.cg(cgs));
+        eargs.add(rhsnopre);
+        CGRule r = cgs.matchedStatementRule(this,etext);
+        if (r != null)
+        { return r.applyRule(args,eargs,cgs); }
+        return etext; 
+      }
+    }
+    args.add(lhs.cg(cgs));
+    eargs.add(lhs); 
     args.add(rhsnopre.cg(cgs));
     eargs.add(rhsnopre);
  
@@ -5119,7 +5219,9 @@ class AssignStatement extends Statement
   
   
   public String cg(CGSpec cgs)
-  { if (type != null) 
+  { if (type == null) 
+    { return basiccg(cgs); } 
+    else // if (type != null) 
     { // process as  var lhs : type ; lhs := rhs; 
       SequenceStatement stat = new SequenceStatement(); 
       CreationStatement cre = new CreationStatement(type + "", lhs + "");
@@ -5132,7 +5234,7 @@ class AssignStatement extends Statement
       return stat.cg(cgs); 
     } 
 
-    String etext = this + "";
+    /* String etext = this + "";
     Vector args = new Vector();
     args.add(lhs.cg(cgs));
     Vector eargs = new Vector(); 
@@ -5144,7 +5246,7 @@ class AssignStatement extends Statement
     CGRule r = cgs.matchedStatementRule(this,etext);
     if (r != null)
     { return r.applyRule(args,eargs,cgs); }
-    return etext;
+    return etext; */ 
   }
 
   public void setCopyValue(boolean b)
@@ -5318,10 +5420,29 @@ class AssignStatement extends Statement
   public Expression toExpression()
   { return new BinaryExpression("=",lhs,rhs); }
 
+  /* public Statement generateDesign(java.util.Map env, boolean local)
+  { if (type == null) 
+    { Statement res = (new BinaryExpression("=", lhs, rhs)).generateDesign(env,local); 
+      System.out.println("++++ Generated design " + res); 
+      return res; 
+    } 
+    return this; 
+  } */ 
+
   public String updateForm(java.util.Map env, boolean local, Vector types, Vector entities,
                            Vector vars)
   { // if (entity != null) 
     // { env.put(entity.getName(),"this"); } 
+    if (copyValue && type != null && type.isMapType())
+    { String res = "  " + type.getJava() + " " + lhs + " = new HashMap();\n"; 
+      res = res + "  " + lhs + ".putAll(" + rhs.queryForm(env,local) + ");\n"; 
+      return res; 
+    } // For type.isEntityType() or strings, clone the rhs. 
+    else if (copyValue && lhs.getType() != null && lhs.getType().isMapType())
+    { String res = "  " + lhs + " = new Vector();\n"; 
+      res = res + "  " + lhs + ".putAll(" + rhs.queryForm(env,local) + ");\n"; 
+      return res; 
+    } // For type.isEntityType() or strings, clone the rhs. 
     if (copyValue && type != null && type.isCollectionType())
     { String res = "  " + type.getJava() + " " + lhs + " = new Vector();\n"; 
       res = res + "  " + lhs + ".addAll(" + rhs.queryForm(env,local) + ");\n"; 

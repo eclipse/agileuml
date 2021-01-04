@@ -555,11 +555,11 @@ public class SetExpression extends Expression
        BinaryExpression seti = new BinaryExpression("=", elem, varelem );
        UnaryExpression varsize = new UnaryExpression("->size", var );
        BinaryExpression se = new BinaryExpression(">", varsize, new BasicExpression(i));
-       res = res + "  if (" + se.queryForm(language,env,local) + ") { " +                     seti.updateForm(language,env,local) + " }\n";
+       res = res + "  if (" + se.queryForm(language,env,local) + ") { " +  seti.updateForm(language,env,local) + " }\n";
      }
    }  
    return res;
- }
+ } // For maps???
 
   public SetExpression subrange(int i, int j)
   { SetExpression res = new SetExpression();
@@ -757,11 +757,23 @@ public class SetExpression extends Expression
   { return this; }
 
   public String toJava()
-  { String res = "(new SystemTypes.Set())";
+  { if (isMap())
+    { String result = "(new HashMap())"; 
+	  for (int i = 0; i < elements.size(); i++)
+      { BinaryExpression e = (BinaryExpression) elements.get(i);
+	    Expression key = e.getLeft(); 
+		Expression value = e.getRight(); 
+        result = "Set.includingMap(" + result + "," + key.toJava() + "," + 
+		                           value.toJava() + ")";
+      }
+	  return result; 
+	}
+	
+    String res = "(new SystemTypes.Set())";
     for (int i = 0; i < elements.size(); i++)
     { Expression e = (Expression) elements.get(i);
       String val = e.toJava();
-      res = res + ".add(" + val + ")";
+      res = res + ".add(" + wrap(elementType, val) + ")";
     }
     return res + ".getElements()";
   }  // ordered? Maps? 
@@ -859,6 +871,8 @@ public class SetExpression extends Expression
     res.elementType = elementType; 
     res.ordered = ordered; 
 	res.formalParameter = formalParameter; 
+	// if (isMap())
+	// { res.setType(type); }
     return res; 
   }
 
@@ -996,7 +1010,7 @@ public class SetExpression extends Expression
     CGRule r = cgs.matchedSetExpressionRule(this,etext);
 
     if (r != null)
-    { System.out.println(">> Found rule " + r + " for: " + etext); 
+    { System.out.println(">> Found set expression rule " + r + " for: " + etext); 
       String res = r.applyRule(args);
       if (needsBracket) 
       { return "(" + res + ")"; } 

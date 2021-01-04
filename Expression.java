@@ -1024,9 +1024,9 @@ abstract class Expression
 
   public static boolean isSet(String data)
   { int len = data.length();
-    if (len > 1 && data.charAt(0) == '{' && 
-        data.charAt(len-1) == '}')
-    { return true; }
+    // if (len > 1 && data.charAt(0) == '{' && 
+    //     data.charAt(len-1) == '}')
+    // { return true; }
     if (len > 4 && data.substring(0,4).equals("Set{") && 
         data.charAt(len-1) == '}')
     { return true; }
@@ -1036,6 +1036,14 @@ abstract class Expression
   public static boolean isSequence(String data)
   { int len = data.length();
     if (len > 9 && data.substring(0,9).equals("Sequence{") &&
+        data.charAt(len-1) == '}')
+    { return true; }
+    return false;
+  }
+
+  public static boolean isMap(String data)
+  { int len = data.length();
+    if (data.startsWith("Map{") &&
         data.charAt(len-1) == '}')
     { return true; }
     return false;
@@ -1241,7 +1249,28 @@ abstract class Expression
 
   abstract public String toSQL(); 
 
-  abstract public String toJava();   // Java version of expression
+  abstract public String toJava();   // Java4 version of expression
+
+  public String toJava6()   // Java6 version of expression
+  { java.util.Map env = new java.util.HashMap(); 
+    return queryFormJava6(env,true); 
+  } 
+
+  public String toJava7()   // Java7 version of expression
+  { java.util.Map env = new java.util.HashMap(); 
+    return queryFormJava7(env,true); 
+  } 
+
+  public String toCSharp()   // C# version of expression
+  { java.util.Map env = new java.util.HashMap(); 
+    return queryFormCSharp(env,true); 
+  } 
+
+  public String toCPP()   // C++ version of expression
+  { java.util.Map env = new java.util.HashMap(); 
+    return queryFormCPP(env,true); 
+  } 
+
 
   abstract public String toB();  
 

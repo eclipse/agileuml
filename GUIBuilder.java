@@ -709,7 +709,9 @@ public class GUIBuilder
 				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
 				indent + "{ Vector " + parnme + " = new Vector();\n" + 
 				indent + "  if (" + indexvar + " < 5)\n" + 
-				indent + "  { " + parnme + ".add(new Integer(intTestValues[" + indexvar + "])); }\n";  
+				indent + "  { " + parnme + ".add(new Integer(intTestValues[" + indexvar + "])); }\n" + 
+				indent + "  if (" + indexvar + " < 3)\n" + 
+				indent + "  { " + parnme + ".add(new Integer(intTestValues[" + indexvar + " + 2])); }\n";  
               } 
               else if ("long".equals(elemTyp.getName()))
               { testscript = testscript + 
@@ -717,7 +719,9 @@ public class GUIBuilder
 				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
 				indent + "{ java.util.List " + parnme + " = new Vector();\n" + 
 				indent + "  if (" + indexvar + " < 5)\n" + 
-				indent + "  { " + parnme + ".add(new Long(longTestValues[" + indexvar + "])); }\n"; 
+				indent + "  { " + parnme + ".add(new Long(longTestValues[" + indexvar + "])); }\n" +
+				indent + "  if (" + indexvar + " < 3)\n" + 
+				indent + "  { " + parnme + ".add(new Long(longTestValues[" + indexvar + " + 2])); }\n"; 
               }  
               else if ("double".equals(elemTyp.getName()))
               { testscript = testscript + 
@@ -725,7 +729,9 @@ public class GUIBuilder
                   indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
                   indent + "{ java.util.List " + parnme + " = new Vector();\n" + 
                   indent + "  if (" + indexvar + " < 5)\n" + 
-                  indent + "  { " + parnme + ".add(new Double(doubleTestValues[" + indexvar + "])); }\n";
+                  indent + "  { " + parnme + ".add(new Double(doubleTestValues[" + indexvar + "])); }\n" + 
+				  indent + "  if (" + indexvar + " < 3)\n" + 
+                  indent + "  { " + parnme + ".add(new Double(doubleTestValues[" + indexvar + " + 2])); }\n";
               }
               else if ("boolean".equals(elemTyp.getName()))
               { testscript = testscript + 
@@ -741,7 +747,9 @@ public class GUIBuilder
                   indent + "for (int " + indexvar + " = 0; " + indexvar + " < 4; " + indexvar + "++)\n" + 
                   indent + "{ java.util.List " + parnme + " = new Vector();\n" + 
                   indent + "  if (" + indexvar + " < 3)\n" + 
-                  indent + "  { " + parnme + ".add(stringTestValues[" + indexvar + "]); }\n";
+                  indent + "  { " + parnme + ".add(stringTestValues[" + indexvar + "]); }\n" + 
+                  indent + "  if (" + indexvar + " < 2)\n" + 
+                  indent + "  { " + parnme + ".add(stringTestValues[" + indexvar + " + 1]); }\n";
               } 
               else if (elemTyp != null && elemTyp.isEnumeration())
               { Vector vals = elemTyp.getValues(); 
@@ -1106,15 +1114,15 @@ public class GUIBuilder
                 String constring = conpr.queryForm(env,true); 
 				
                 testscript = testscript + 
-		          indent + "  if (" + constring + ")\n" + 
-		          indent + "  { System.out.print(\"" + parnme + " : " + tname + " invariant " + p + " is valid at start; \"); }\n" + 
-                     indent + "  else \n" + 
-                     indent + "  { System.out.print(\"" + parnme + " : " + tname + " invariant " + p + " fails at start; \"); }\n"; 
+                  indent + "  if (" + constring + ")\n" + 
+                  indent + "  { System.out.print(\"" + parnme + " : " + tname + " invariant " + p + " is valid at start; \"); }\n" + 
+                  indent + "  else \n" + 
+                  indent + "  { System.out.print(\"" + parnme + " : " + tname + " invariant " + p + " fails at start; \"); }\n"; 
                 posttests = posttests + 
-		          indent + "  if (" + constring + ")\n" + 
-		          indent + "  { System.out.print(\"" + parnme + " : " + tname + " invariant " + p + " is valid at end; \"); }\n" + 
-                     indent + "  else \n" + 
-                     indent + "  { System.out.print(\"" + parnme + " : " + tname + " invariant " + p + " fails at end; \"); }\n"; 
+                  indent + "  if (" + constring + ")\n" + 
+                  indent + "  { System.out.print(\"" + parnme + " : " + tname + " invariant " + p + " is valid at end; \"); }\n" + 
+                  indent + "  else \n" + 
+                  indent + "  { System.out.print(\"" + parnme + " : " + tname + " invariant " + p + " fails at end; \"); }\n"; 
               }
 				  		  
             } // Check invariants of parnme. 
@@ -1127,7 +1135,9 @@ public class GUIBuilder
                   indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
                   indent + "{ Vector " + parnme + " = new Vector();\n" + 
                   indent + "  if (" + indexvar + " < 5)\n" + 
-                  indent + "  { " + parnme + ".add(new Integer(intTestValues[" + indexvar + "])); }\n";  
+                  indent + "  { " + parnme + ".add(new Integer(intTestValues[" + indexvar + "])); }\n" +   
+                  indent + "  if (" + indexvar + " < 3)\n" + 
+                  indent + "  { " + parnme + ".add(new Integer(intTestValues[" + indexvar + " + 2])); }\n";  
               } 
               else if ("long".equals(elemTyp.getName()))
               { testscript = testscript + 
@@ -1135,7 +1145,9 @@ public class GUIBuilder
                   indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
                   indent + "{ java.util.List " + parnme + " = new Vector();\n" + 
                   indent + "  if (" + indexvar + " < 5)\n" + 
-                  indent + "  { " + parnme + ".add(new Long(longTestValues[" + indexvar + "])); }\n"; 
+                  indent + "  { " + parnme + ".add(new Long(longTestValues[" + indexvar + "])); }\n" +  
+                  indent + "  if (" + indexvar + " < 3)\n" + 
+				  indent + "  { " + parnme + ".add(new Long(longTestValues[" + indexvar + " + 2])); }\n"; 
                 }  
                 else if ("double".equals(elemTyp.getName()))
                 { testscript = testscript + 
@@ -1143,7 +1155,9 @@ public class GUIBuilder
                     indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
                     indent + "{ java.util.List " + parnme + " = new Vector();\n" + 
                     indent + "  if (" + indexvar + " < 5)\n" + 
-                    indent + "  { " + parnme + ".add(new Double(doubleTestValues[" + indexvar + "])); }\n";
+                    indent + "  { " + parnme + ".add(new Double(doubleTestValues[" + indexvar + "])); }\n" + 
+				    indent + "  if (" + indexvar + " < 3)\n" + 
+                    indent + "  { " + parnme + ".add(new Double(doubleTestValues[" + indexvar + " + 2])); }\n";
                   }
                   else if ("boolean".equals(elemTyp.getName()))
                  { testscript = testscript + 
@@ -1159,7 +1173,9 @@ public class GUIBuilder
                      indent + "for (int " + indexvar + " = 0; " + indexvar + " < 4; " + indexvar + "++)\n" + 
                      indent + "{ java.util.List " + parnme + " = new Vector();\n" + 
                      indent + "  if (" + indexvar + " < 3)\n" + 
-                     indent + "  { " + parnme + ".add(stringTestValues[" + indexvar + "]); }\n";
+                     indent + "  { " + parnme + ".add(stringTestValues[" + indexvar + "]); }\n" + 
+                     indent + "  if (" + indexvar + " < 2)\n" + 
+                     indent + "  { " + parnme + ".add(stringTestValues[" + indexvar + " + 1]); }\n";
                  } 
                  else if (elemTyp != null && elemTyp.isEnumeration())
                  { Vector vals = elemTyp.getValues();   

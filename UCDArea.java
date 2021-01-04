@@ -3113,6 +3113,18 @@ public class UCDArea extends JPanel
       needsInternetPermission = true; 
     } 
 	
+    Entity smsComponent = (Entity) ModelElement.lookupByName("SMSComponent", entities); 
+    if (smsComponent != null) 
+    { predefinedComponents.add(smsComponent); } 
+
+    Entity mediaComponent = (Entity) ModelElement.lookupByName("MediaComponent", entities); 
+    if (mediaComponent != null) 
+    { predefinedComponents.add(mediaComponent); } 
+
+    Entity phoneComponent = (Entity) ModelElement.lookupByName("PhoneComponent", entities); 
+    if (phoneComponent != null) 
+    { predefinedComponents.add(phoneComponent); } 
+
     Entity imagecomponent = (Entity) ModelElement.lookupByName("ImageDisplay", entities); 
     if (imagecomponent != null) 
     { predefinedComponents.add(imagecomponent); } 
@@ -3178,13 +3190,34 @@ public class UCDArea extends JPanel
       IOSAppGenerator.generateImageDisplay("swiftuiapp"); 
     }
 
+     if (graphcomponent != null) 
+     { // generate its screen and view controller
+       IOSAppGenerator.generateSwiftUIGraphDisplay("swiftuiapp");
+	   IOSAppGenerator.generateLineView("swiftuiapp");  
+     }
+
+    if (smsComponent != null) 
+    { // generate its screen and view controller
+      IOSAppGenerator.generateSMSComponent(systemName,"swiftuiapp"); 
+    }
+
+    if (mediaComponent != null) 
+    { // generate its screen and view controller
+      IOSAppGenerator.generateMediaComponent(systemName,"swiftuiapp"); 
+    }
+
+    if (phoneComponent != null) 
+    { // generate its screen and view controller
+      IOSAppGenerator.generatePhoneComponent(systemName, "swiftuiapp"); 
+    }
 
     for (int j = 0; j < entities.size(); j++) 
     { Entity ent = (Entity) entities.get(j); 
       String ename = ent.getName(); 
 
       if (ent.isDerived()) { }
-      else if (ent.isComponent()) { } 
+      else if (ent.isComponent()) { }
+      else if (predefinedComponents.contains(ent)) { }  
       else 
       { String entfile = ename + ".swift"; 
         File entf = new File("output/swiftuiapp/" + entfile); 
@@ -3297,7 +3330,17 @@ public class UCDArea extends JPanel
       } 
     } 
 
-    
+    if (persistentEntities.size() > 0)
+    { File dbif = new File("output/swiftuiapp/Dbi.swift"); 
+      try
+      { PrintWriter dbiout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(dbif)));
+        IOSAppGenerator.generateIOSDbi("",systemName,persistentEntities,useCases,dbiout);
+        dbiout.close(); 
+      } catch (Exception e) { }
+    }  
+
     String entbean = "ModelFacade.swift"; 
     File entbeanf = new File("output/swiftuiapp/" + entbean); 
     try
@@ -3394,7 +3437,7 @@ public class UCDArea extends JPanel
     } 
 	
     if (clouds.size() > 0) 
-    { File clouddbif = new File("output/iosapp/FirebaseDbi.swift"); 
+    { File clouddbif = new File("output/swiftuiapp/FirebaseDbi.swift"); 
       try
       { PrintWriter clouddbiout = new PrintWriter(
                               new BufferedWriter(
@@ -3415,7 +3458,8 @@ public class UCDArea extends JPanel
     }
     catch(Exception _dd) { } 
 
-String scenefile = "SceneDelegate.swift"; 
+
+    String scenefile = "SceneDelegate.swift"; 
     File scenedelf = new File("output/swiftuiapp/" + scenefile); 
     try
     { PrintWriter scenedelfile = new PrintWriter(
@@ -3568,9 +3612,21 @@ String scenefile = "SceneDelegate.swift";
     Entity webcomponent = (Entity) ModelElement.lookupByName("WebDisplay", entities); 
     if (webcomponent != null) 
     { predefinedComponents.add(webcomponent); 
-	  needsInternetPermission = true; 
+      needsInternetPermission = true; 
     } 
+
+    Entity smsComponent = (Entity) ModelElement.lookupByName("SMSComponent", entities); 
+    if (smsComponent != null) 
+    { predefinedComponents.add(smsComponent); } 
 	
+    Entity mediaComponent = (Entity) ModelElement.lookupByName("MediaComponent", entities); 
+    if (mediaComponent != null) 
+    { predefinedComponents.add(mediaComponent); } 
+
+    Entity phoneComponent = (Entity) ModelElement.lookupByName("PhoneComponent", entities); 
+    if (phoneComponent != null) 
+    { predefinedComponents.add(phoneComponent); } 
+
     Entity imagecomponent = (Entity) ModelElement.lookupByName("ImageDisplay", entities); 
     if (imagecomponent != null) 
     { predefinedComponents.add(imagecomponent); } 
@@ -3599,15 +3655,31 @@ String scenefile = "SceneDelegate.swift";
       IOSAppGenerator.generateWebDisplay("iosapp"); 
     }
 
+    if (smsComponent != null) 
+    { // generate its screen and view controller
+      IOSAppGenerator.generateSMSComponent(systemName, "iosapp"); 
+    }
+
+     if (mediaComponent != null) 
+     { // generate its screen and view controller
+       IOSAppGenerator.generateMediaComponent(systemName, "iosapp"); 
+     }
+
+
+     if (phoneComponent != null) 
+     { // generate its screen and view controller
+       IOSAppGenerator.generatePhoneComponent(systemName, "iosapp"); 
+     }
+
     if (imagecomponent != null) 
     { // generate its screen and view controller
       IOSAppGenerator.generateImageDisplay("iosapp"); 
     }
 	
-	 if (graphdisplaycomponent != null) 
-     { // generate its screen and view controller
-       IOSAppGenerator.generateGraphDisplay("iosapp"); 
-     }
+    if (graphdisplaycomponent != null) 
+    { // generate its screen and view controller
+      IOSAppGenerator.generateGraphDisplay("iosapp"); 
+    }
 
 
     for (int j = 0; j < entities.size(); j++) 
@@ -3616,6 +3688,7 @@ String scenefile = "SceneDelegate.swift";
 
       if (ent.isDerived()) { }
       else if (ent.isComponent()) { } 
+      else if (predefinedComponents.contains(ent)) { } 
       else 
       { String entfile = ename + ".swift"; 
         File entf = new File("output/iosapp/" + entfile); 
@@ -3695,9 +3768,8 @@ String scenefile = "SceneDelegate.swift";
     { if (useCases.get(i) instanceof UseCase)
       { UseCase uc = (UseCase) useCases.get(i);
         if (uc.isPublic() && uc.isIndependent()) 
-        { screencount++; 
-          entusecases.add(uc);
-        }        
+        { screencount++; }
+        entusecases.add(uc);
       } 
       else if (useCases.get(i) instanceof OperationDescription)
       { OperationDescription od = (OperationDescription) useCases.get(i); 
@@ -6075,6 +6147,13 @@ String scenefile = "SceneDelegate.swift";
         ast.unsetQualifier(); 
         ast.setQualifier(qatt);
       }   
+    }          
+    else if (stereotypes.contains("qualified"))
+    { String qvar = "x"; 
+      Attribute qatt = new Attribute(qvar,new Type("String",null),ModelElement.INTERNAL); 
+      qatt.setElementType(new Type("String",null)); 
+      ast.unsetQualifier(); 
+      ast.setQualifier(qatt);   
     }          
     if (stereotypes.contains("associationClass"))
     { int acind = stereotypes.indexOf("associationClass"); 
@@ -13012,7 +13091,18 @@ public void produceCUI(PrintWriter out)
             c.addTerm(tt); 
             tt.addConcept(c); 
           } 
+          else if ("POS".equals(stag) && c != null)
+          { String ndef = sb.getContent(); 
+		    System.out.println(">> part of speech = " + ndef); 
+            c.setPOS(ndef); 
+          } 
+          else if ("SEM".equals(stag) && c != null)
+          { String ndef = sb.getContent(); 
+		    System.out.println(">> semantics = " + ndef); 
+            // c.setPOS(ndef); 
+          } 
         } 
+
         if (c != null) 
         { concepts.add(c); }  
       } 
@@ -13773,7 +13863,10 @@ public void produceCUI(PrintWriter out)
       allcomponents.add("ImageDisplay");  
       allcomponents.add("GraphDisplay");
 	  allcomponents.add("FirebaseAuthenticator"); 
-	  // Others: WebComponent, TextEditorComponent
+	  allcomponents.add("SMSComponent"); 
+	  allcomponents.add("MediaComponent"); 
+	  allcomponents.add("PhoneComponent"); 
+	  // Others: NLPComponent, MLComponent
 	  
       listShowDialog.setOldFields(allcomponents);
       System.out.println("Select component");
@@ -13820,7 +13913,12 @@ public void produceCUI(PrintWriter out)
 
     if (componentName != null && predefined)
     { // generate the appropriate component, such as DateComponent
-      if ("DateComponent".equals(componentName))
+	
+	  Entity cent = (Entity) ModelElement.lookupByName(componentName,entities); 
+	  
+	  if (cent != null) 
+	  { System.out.println(">>> Component " + componentName + " is already in the system"); }
+      else if ("DateComponent".equals(componentName))
       { createDateComponent(); }
       else if ("FileAccessor".equals(componentName))
       { createFileAccessorComponent(); }
@@ -13836,7 +13934,13 @@ public void produceCUI(PrintWriter out)
       { createGraphDisplay(); }
 	  else if ("FirebaseAuthenticator".equals(componentName))
 	  { createFirebaseAuthenticatorComponent(); }
-      else 
+	  else if ("SMSComponent".equals(componentName))
+	  { createSMSComponent(); }
+	  else if ("MediaComponent".equals(componentName))
+	  { createMediaComponent(); }
+      else if ("PhoneComponent".equals(componentName))
+	  { createPhoneComponent(); }
+	  else 
       { System.err.println("!! Unknown predefined component: " + componentName); }
     } 
   }
@@ -16928,50 +17032,50 @@ public void produceCUI(PrintWriter out)
   public void addInternetAccessor()
   { Entity e = new Entity("InternetAccessor"); 
     e.addStereotype("external"); 
-	e.addStereotype("component"); 
-	e.addStereotype("derived"); 
+    e.addStereotype("component"); 
+    e.addStereotype("derived"); 
 	
     Entity eintf = new Entity("InternetCallback"); 
     eintf.addStereotype("external"); 
-	eintf.addStereotype("interface"); 
-	eintf.addStereotype("component");
-	eintf.addStereotype("derived"); 
+    eintf.addStereotype("interface"); 
+    eintf.addStereotype("component");
+    eintf.addStereotype("derived"); 
 	 
-	Type callback = new Type(eintf); 
-	Attribute delegate = new Attribute("delegate", callback, ModelElement.INTERNAL); 
-	e.addAttribute(delegate); 
+    Type callback = new Type(eintf); 
+    Attribute delegate = new Attribute("delegate", callback, ModelElement.INTERNAL); 
+    e.addAttribute(delegate); 
 	
-	Type myself = new Type(e); 
-	Attribute instance = new Attribute("instance", myself, ModelElement.INTERNAL); 
-	instance.setStatic(true); 
-	e.addAttribute(instance); 
+    Type myself = new Type(e); 
+    Attribute instance = new Attribute("instance", myself, ModelElement.INTERNAL); 
+    instance.setStatic(true); 
+    e.addAttribute(instance); 
 
-	Vector pars = new Vector(); 
-	Attribute delegatec = new Attribute("c", callback, ModelElement.INTERNAL); 
-	pars.add(delegatec);
+    Vector pars = new Vector(); 
+    Attribute delegatec = new Attribute("d", callback, ModelElement.INTERNAL); 
+    pars.add(delegatec);
     BehaviouralFeature op = 
-      new BehaviouralFeature("setDelegate",pars,false,null); 
+       new BehaviouralFeature("setDelegate",pars,false,null); 
     e.addOperation(op); 
     
-	Vector parsc = new Vector(); 
-	BehaviouralFeature opc = 
+    Vector parsc = new Vector(); 
+    BehaviouralFeature opc = 
       new BehaviouralFeature("getInstance",parsc,true,new Type(e));
-	opc.setStatic(true);  
+    opc.setStatic(true);  
     e.addOperation(opc); 
 	
-	BehaviouralFeature opcreate = 
+    BehaviouralFeature opcreate = 
       new BehaviouralFeature("createInternetAccessor",parsc,true,new Type(e));
-	opcreate.setStatic(true);  
+    opcreate.setStatic(true);  
     e.addOperation(opcreate); 
 
-	Vector pars1 = new Vector(); 
-	Attribute url = new Attribute("url", new Type("String", null), ModelElement.INTERNAL); 
-	pars1.add(url);
+    Vector pars1 = new Vector(); 
+    Attribute url = new Attribute("url", new Type("String", null), ModelElement.INTERNAL); 
+    pars1.add(url);
     BehaviouralFeature op1 = 
       new BehaviouralFeature("execute",pars1,false,null); 
     e.addOperation(op1); 
 
-	entities.add(e);                           
+    entities.add(e);                           
     RectData rd = new RectData(550,750,getForeground(),
                                componentMode,
                                rectcount);
@@ -16981,9 +17085,9 @@ public void produceCUI(PrintWriter out)
     visuals.add(rd);
     repaint();   
 	        
-	Vector pars2 = new Vector(); 
-	Attribute response = new Attribute("response", new Type("String",null), ModelElement.INTERNAL); 
-	pars2.add(response);
+    Vector pars2 = new Vector(); 
+    Attribute response = new Attribute("response", new Type("String",null), ModelElement.INTERNAL); 
+    pars2.add(response);
     BehaviouralFeature op2 = 
       new BehaviouralFeature("internetAccessCompleted",pars2,false,null); 
     eintf.addOperation(op2); 
@@ -17002,7 +17106,7 @@ public void produceCUI(PrintWriter out)
   public void createDateComponent()
   { Entity e = new Entity("DateComponent"); 
     e.addStereotype("external"); 
-	e.addStereotype("component"); 
+    e.addStereotype("component"); 
 	
     BehaviouralFeature op = 
       new BehaviouralFeature("getTime",new Vector(),true,new Type("long",null)); 
@@ -17150,6 +17254,114 @@ public void produceCUI(PrintWriter out)
     repaint();   
   } 	        
 
+  public void createSMSComponent()
+  { Entity e = new Entity("SMSComponent"); 
+    e.addStereotype("external"); 
+	e.addStereotype("component"); 
+	
+	Type mytype = new Type(e); 
+    BehaviouralFeature op = 
+      new BehaviouralFeature("getInstance",new Vector(),true,mytype); 
+	op.setStatic(true);
+	op.setPostcondition(new BasicExpression(true));  
+    e.addOperation(op); 
+    
+	Vector pars1 = new Vector(); 
+	BehaviouralFeature op1 = 
+      new BehaviouralFeature("canSendText",pars1,true,new Type("boolean",null)); 
+    e.addOperation(op1); 
+
+	Vector pars2 = new Vector(); 
+	Type str = new Type("String", null); 
+	Type seqstr = new Type("Sequence", null); 
+	seqstr.setElementType(str); 
+	pars2.add(new Attribute("text", new Type("String", null), ModelElement.INTERNAL)); 
+	pars2.add(new Attribute("receivers", seqstr, ModelElement.INTERNAL)); 
+	BehaviouralFeature op2 = 
+      new BehaviouralFeature("sendText",pars2,false,null); 
+    e.addOperation(op2); 
+    
+	entities.add(e);                           
+    RectData rd = new RectData(770,600,getForeground(),
+                               componentMode,
+                               rectcount);
+    rectcount++;
+    rd.setLabel(e.getName());
+    rd.setModelElement(e); 
+    visuals.add(rd);
+    repaint();           
+  } 
+
+  public void createMediaComponent()
+  { Entity e = new Entity("MediaComponent"); 
+    e.addStereotype("external"); 
+	e.addStereotype("component"); 
+	
+	Type mytype = new Type(e); 
+    BehaviouralFeature op = 
+      new BehaviouralFeature("getInstance",new Vector(),true,mytype); 
+	op.setStatic(true);
+	op.setPostcondition(new BasicExpression(true));  
+    e.addOperation(op); 
+    
+	Vector pars1 = new Vector(); 
+	BehaviouralFeature op1 = 
+      new BehaviouralFeature("stopPlay",pars1,false,null); 
+    e.addOperation(op1); 
+
+	Vector pars2 = new Vector(); 
+	Type str = new Type("String", null); 
+	pars2.add(new Attribute("source", new Type("String", null), ModelElement.INTERNAL)); 
+	BehaviouralFeature op2 = 
+      new BehaviouralFeature("playAudioAsync",pars2,false,null); 
+    e.addOperation(op2); 
+    
+	entities.add(e);                           
+    RectData rd = new RectData(1000,600,getForeground(),
+                               componentMode,
+                               rectcount);
+    rectcount++;
+    rd.setLabel(e.getName());
+    rd.setModelElement(e); 
+    visuals.add(rd);
+    repaint();           
+  } 
+
+  public void createPhoneComponent()
+  { Entity e = new Entity("PhoneComponent"); 
+    e.addStereotype("external"); 
+	e.addStereotype("component"); 
+	
+	Type mytype = new Type(e); 
+    BehaviouralFeature op = 
+      new BehaviouralFeature("getInstance",new Vector(),true,mytype); 
+	op.setStatic(true);
+	op.setPostcondition(new BasicExpression(true));  
+    e.addOperation(op); 
+    
+	Vector pars1 = new Vector(); 
+	BehaviouralFeature op1 = 
+      new BehaviouralFeature("hasPhoneFeature",pars1,true,new Type("boolean",null)); 
+    e.addOperation(op1); 
+
+	Vector pars2 = new Vector(); 
+	Type str = new Type("String", null); 
+	pars2.add(new Attribute("number", new Type("String", null), ModelElement.INTERNAL)); 
+	BehaviouralFeature op2 = 
+      new BehaviouralFeature("makeCall",pars2,false,null); 
+    e.addOperation(op2); 
+    
+	entities.add(e);                           
+    RectData rd = new RectData(980,700,getForeground(),
+                               componentMode,
+                               rectcount);
+    rectcount++;
+    rd.setLabel(e.getName());
+    rd.setModelElement(e); 
+    visuals.add(rd);
+    repaint();           
+  } 
+
   public void createGraphComponent()
   { Entity e = new Entity("GraphComponent"); 
     e.addStereotype("external"); 
@@ -17257,7 +17469,7 @@ public void produceCUI(PrintWriter out)
     Type selftype = new Type(e); 
     Vector parinst = new Vector(); 
     BehaviouralFeature getInstance = 
-      new BehaviouralFeature("getInstance", parinst, false, selftype); 
+      new BehaviouralFeature("defaultInstance", parinst, false, selftype); 
     getInstance.setStatic(true);
 	getInstance.setPostcondition(truebe);  
     e.addOperation(getInstance); 
@@ -17266,7 +17478,8 @@ public void produceCUI(PrintWriter out)
     Attribute delegatec = new Attribute("kind", new Type("String",null), ModelElement.INTERNAL); 
     pars.add(delegatec);
     BehaviouralFeature op = 
-      new BehaviouralFeature("setGraphKind",pars,false,null); 
+      new BehaviouralFeature("setGraphKind",pars,false,null);
+	//  BinaryExpression setkind = new BinaryExpression() 
 	op.setPostcondition(truebe);  
     e.addOperation(op); 
     

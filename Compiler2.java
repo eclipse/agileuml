@@ -30,7 +30,9 @@ import java.awt.*;
   Allow "<:, intersect, union" (6.4.2003) 
   Added "*, /" and checkIfSetExpression (16.4.2003) 
   Introduced "|" and unspaced parsing (2.1.2006)
-
+  
+  Breaking change: no longer accepts {elems} as a set, must be written as Set{elems} (28.12.2020)
+  
   package: Utilities
 */ 
 
@@ -922,13 +924,14 @@ public class Compiler2
           if (t1 != null && t2 != null) 
           { tt = new Type("Map",t1,t2);
             tt.setKeyType(t1);  
-            tt.setElementType(t2); 
+            tt.setElementType(t2);
+			System.out.println("******* Parsed Map type: " + tt);  
             return tt; 
           } 
         }
       } 
       if (tt == null) 
-      { System.err.println("******** Invalid map type: " + showLexicals(st,en)); 
+      { System.err.println("ERROR: Invalid map type: " + showLexicals(st,en)); 
         return null; 
       }
       else 
@@ -1328,7 +1331,7 @@ public class Compiler2
           { variables.add(lex); } 
         } 
 
-        // System.out.println("LHS variables = " + variables); 
+        System.out.println("LHS variables = " + variables); 
 
         if (lhs != null) 
         { String rhs = rule.substring(i+4,rule.length());
@@ -1861,7 +1864,7 @@ public Expression parse_let_expression(int bc, int st, int en, Vector entities, 
     
     for (int i = pend-1; pstart < i; i--) 
     { String ss = lexicals.get(i).toString(); 
-      if (ss.equals("->") && "(".equals(lexicals.get(i+2) + "") && 
+      if (ss.equals("->") && i+2 < lexicals.size() && "(".equals(lexicals.get(i+2) + "") && 
           ")".equals(lexicals.get(pend) + ""))
       { String ss2 = lexicals.get(i+1).toString(); // must exist
         if (i + 3 == pend &&
@@ -2079,8 +2082,12 @@ public Expression parse_let_expression(int bc, int st, int en, Vector entities, 
     }
 
     if (pstart < pend && "}".equals(lexicals.get(pend) + "") && 
-        "{".equals(lexicals.get(pstart) + ""))
-    { return parse_set_expression(bc,pstart,pend); } 
+        "Map".equals(lexicals.get(pstart) + "") &&
+        "{".equals(lexicals.get(pstart + 1) + ""))
+    { Vector v1 = new Vector(); 
+	  Vector v2 = new Vector(); 
+	  return parse_map_expression(bc,pstart+1,pend,v1,v2); 
+	} 
 
     if (pstart < pend && "}".equals(lexicals.get(pend) + "") && 
         "Sequence".equals(lexicals.get(pstart) + "") &&
@@ -2240,6 +2247,20 @@ public Expression parse_let_expression(int bc, int st, int en, Vector entities, 
       return null; 
     }   */     
 
+	if (pstart + 2 < pend)
+    { for (int i = pstart + 1; i < pend; i++)
+      { String ss = lexicals.get(i) + "";
+        if ("|".equals(ss) && i+1 < pend && "->".equals(lexicals.get(i+1) + ""))
+        { Expression key = parse_basic_expression(bc,pstart,i-1); 
+	      Expression value = parse_expression(bc,i+2,pend); 
+          if (key != null && value != null) 
+	      { System.out.println(">>> Parsed maplet expression: " + key + " |-> " + value); 
+            return new BinaryExpression("|->", key, value); 
+	      }
+		}
+	  }
+	} 
+
     return parse_bracketed_expression(bc,pstart,pend); 
   }
 
@@ -2386,10 +2407,9 @@ public Expression parse_let_expression(int bc, int st, int en, Vector entities, 
          { // top-level ,
            Expression exp = parse_pair_expression(bc,st0,i-1,entities,types);
            if (exp == null) 
-           { System.out.println("Invalid pair exp: " + buff);
+           { System.out.println("Invalid pair exp: " + showLexicals(st0,i-1));
              return null;
            }
-           exp.setBrackets(true); 
            res.add(exp);
            st0 = i + 1;
            buff = "";
@@ -2400,14 +2420,13 @@ public Expression parse_let_expression(int bc, int st, int en, Vector entities, 
      if (bcnt == 0 && sqbcnt == 0 && cbcnt == 0)
      { Expression exp = parse_pair_expression(bc,st0,en,entities,types);
        if (exp == null) 
-       { System.out.println("Invalid pair exp: " + buff);
+       { System.out.println("Invalid pair exp: " + showLexicals(st0,en));
          return null;
        }
-       exp.setBrackets(true); 
        res.add(exp);
      }
      else
-     { System.err.println("Not fe sequence: " + showLexicals(st,en)); 
+     { System.err.println("Not map element sequence: " + showLexicals(st,en)); 
        return null;
      }
      return res; 
@@ -2415,14 +2434,30 @@ public Expression parse_let_expression(int bc, int st, int en, Vector entities, 
 
   public Expression parse_pair_expression(int bc, int st, int en, Vector entities, Vector types)
   { // st is "(" and en is ")" 
-    for (int i = st+1; i < en; i++)
+    System.out.println(">>> Map contents: --> " + showLexicals(st,en));
+	
+    for (int i = st; i <= en; i++)
     { String ss = lexicals.get(i) + ""; 
-      if (",".equals(ss))
+      if (",".equals(ss) && i < en) // st is "(" and en is ")" 
       { Expression e1 = parse_ATLexpression(bc,st + 1, i-1,entities,types); 
         Expression e2 = parse_ATLexpression(bc,i+1, en-1,entities,types); 
         if (e1 != null && e2 != null)
-        { return new BinaryExpression(",", e1, e2); } 
-      } 
+        { Expression expr = new BinaryExpression(",", e1, e2); 
+		  expr.setBrackets(true);
+		  return expr;  
+        } 
+      } // or the pair is not bracketed
+	  else if ("|".equals(ss) && i+1 < en && "->".equals(lexicals.get(i+1) + ""))
+	  { Expression e1 = parse_ATLexpression(bc,st, i-1,entities,types); 
+        Expression e2 = parse_ATLexpression(bc,i+2, en,entities,types); 
+        if (e1 != null && e2 != null)
+        { return new BinaryExpression("|->", e1, e2); } 
+      }	// or a single variable 
+	  else if ("_1".equals(ss)) 
+	  { Expression be = new BasicExpression(ss); 
+	    if (be != null) 
+		{ return be; }
+      }   
     } 
     return null; 
   }  
@@ -3093,7 +3128,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     }
 
     if (pstart < pend && "}".equals(lexicals.get(pend) + "") && 
-        "Map".equals(lexicals.get(pstart) + ""))
+        "Map".equals(lexicals.get(pstart) + "") && 
+		"{".equals(lexicals.get(pstart + 1) + ""))
     { return parse_map_expression(bc,pstart+1,pend,entities,types); } 
 
     if (pstart < pend && "}".equals(lexicals.get(pend) + "") && 
@@ -3642,7 +3678,22 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     else if ("var".equals(lexicals.get(s) + ""))
     { // creation with complex type
       String varname = lexicals.get(s+1) + ""; 
-      Type typ = parseType(s+3,e,entities,types);
+      for (int j = s+4; j < e; j++) 
+	  { String chr = lexicals.get(j) + ""; 
+		if (":=".equals(chr))
+		{ Type typ1 = parseType(s+3,j-1,entities,types); 
+		  Expression expr = parse_expression(0,j+1,e); 
+		  if (typ1 != null && expr != null) 
+		  { System.out.println("Creation statement var " + varname + " : " + typ1 + " with initialisation " + expr);
+	        CreationStatement cs1 = new CreationStatement(typ1 + "",varname); 
+            cs1.setType(typ1); 
+            cs1.setElementType(typ1.getElementType());  
+            cs1.setInitialisation(expr);
+            return cs1;
+		  }   
+		}
+	  } 
+	  Type typ = parseType(s+3,e,entities,types);
       if (typ != null) 
       { CreationStatement cs = new CreationStatement(typ + "", varname); 
         cs.setType(typ); 
@@ -3650,7 +3701,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         return cs; 
       } 
       else 
-      { System.err.println("!! Unrecognised type in var statement: " + showLexicals(s+3,e)); }
+      { System.err.println("!! Unrecognised var statement: " + showLexicals(s,e)); }  
     }  
     else if (e == s + 2 && ":".equals(lexicals.get(s+1) + ""))
     { CreationStatement cs = new CreationStatement(lexicals.get(e) + "", lexicals.get(s) + "");
@@ -4049,7 +4100,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
             else 
             { ast.e1name = rname; 
               pasts.add(ast);
-              System.out.println("Parsed reference " + ast); 
+              System.out.println(">>> Parsed reference " + ast); 
             }  
             // res.addAssociation(ast); 
           } 
@@ -4142,7 +4193,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         else 
         { ast.e1name = rname; 
           pasts.add(ast);
-		  System.out.println("Parsed reference " + ast); 
+		  System.out.println(">>> Parsed reference " + ast); 
         }  
         // res.addAssociation(ast); 
       }  
@@ -4470,6 +4521,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
           { res.stereotypes.add("ordered"); } 
           else if ("container".equals(lx))
           { res.stereotypes.add("aggregation"); } 
+          else if ("qualified".equals(lx))
+          { res.stereotypes.add("qualified"); } 
           else if ("[".equals(lx))
           { if ("*".equals(lexicals.get(j+1) + ""))
             { // upper and lower are MANY 
@@ -6659,6 +6712,16 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 	{ NLPPhrase res = new NLPPhrase("BRACKET", new Vector()); 
 	  return res; 
 	}
+	else if (en == st + 5 && "(".equals(lex0) && ")".equals(lex1) && 
+	         "-".equals(lexicals.get(st+1) + "") && "{".equals(lexicals.get(en-1) + ""))
+	{ NLPPhrase res = new NLPPhrase("OBRACKET", new Vector()); 
+	  return res; 
+	}
+	else if (en == st + 5 && "(".equals(lex0) && ")".equals(lex1) && 
+	         "-".equals(lexicals.get(st+1) + "") && "}".equals(lexicals.get(en-1) + ""))
+	{ NLPPhrase res = new NLPPhrase("CBRACKET", new Vector()); 
+	  return res; 
+	}
 	else if (en > st + 3 && "(".equals(lex0) && ")".equals(lex1))
 	{ String tag = "" + lexicals.get(st+1); 
 	  Vector phs = parsePhraseList(st+2,en-1); 
@@ -6737,6 +6800,9 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
   public static void main(String[] args)
   { // System.out.println(Double.MAX_VALUE); 
 
+     Vector background = Thesarus.loadThesaurus("output/background.txt");
+	 System.out.println(">>> Background information assumed: " + background); 
+	  
      File infile = new File("output/nlpout.txt");
      BufferedReader br = null;
      Vector res = new Vector();
@@ -6804,7 +6870,17 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
       appfile.println("package app {\n" + km3model + "\n}\n"); 
 	  appfile.close(); 
     }
-    catch(Exception _dd) { } 
+    catch(Exception _dd) { }
+	
+	Compiler2 cx = new Compiler2(); 
+	cx.nospacelexicalanalysis("m := m->union(Map{ \"form\" |-> \"table\" })");
+	System.out.println(cx.showLexicals(0,cx.lexicals.size()-1));
+	
+	// cx.nospacelexicalanalysis("reference _1 : _2; |-->  var _1 : _2 = _2()\n<when> _2 collection"); 
+	// System.out.println(cx.showLexicals(0,cx.lexicals.size()-1));  
+    // CGRule r = cx.parse_ExpressionCodegenerationrule("Map{_1} |-->Ocl.initialiseMap(_1)"); 
+	Expression r = cx.parseExpression(); 
+	System.out.println(r);  
  	 
 	 // try 
 	 // { infile.close(); }

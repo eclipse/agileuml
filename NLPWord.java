@@ -83,13 +83,18 @@ public class NLPWord extends NLPPhraseElement
     return false; 
   } 
   
-  public boolean isVerbPhraseWord()
-  { if (text.startsWith("store") || text.startsWith("record") ||
-        tag.equals("VB") || tag.equals("VBZ") || tag.equals("TO") || tag.equals("VBG") || 
+  public boolean isVerbPhraseWord(Vector quals)
+  { if (text.startsWith("store") || text.startsWith("record")) 
+    { quals.add("persistent"); 
+      return true; 
+    }  
+    if (tag.equals("VB") || tag.equals("VBZ") || tag.equals("TO") || tag.equals("VBG") || 
         tag.equals("MD") || tag.equals("IN") || tag.equals("VBD") ||
-	    tag.equals("VBN") || tag.equals("VBP") || tag.equals("RB") || tag.equals("WRB") || 
-		tag.equals("EX"))
+	   tag.equals("VBN") || tag.equals("VBP") || tag.equals("RB") || tag.equals("WRB") || 
+	   tag.equals("EX"))
     { return true; }
+    if ("SYM".equals(tag) && text.equals("="))
+    { return true; } 
     return false; 
   }
   

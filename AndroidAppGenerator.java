@@ -3,7 +3,7 @@ import java.io.*;
 
 /* Package: Mobile */ 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003,2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -1452,7 +1452,7 @@ public static void androidOpViewActivity(String op, String systemName,
   else if (res != null && "GraphDisplay".equals(res.getType().getName())) 
   { out.println("    { GraphDisplay _result = " + bean + "." + op + "();"); 
     out.println("      " + op + "Result.invalidate();"); 
-	out.println("      " + op + "Result.refreshDrawableState();"); 
+    out.println("      " + op + "Result.refreshDrawableState();"); 
     out.println("      " + op + "Result.setImageDrawable(_result);"); 
     out.println("    }"); 
   }
@@ -1533,7 +1533,7 @@ public static void androidOpViewActivity(String op, String systemName,
       else if (extres != null && "GraphDisplay".equals(extres.getType().getName())) 
       { out.println("    { GraphDisplay _result = " + extbean + "." + extop + "();"); 
         out.println("      " + extop + "Result.invalidate();"); 
-	    out.println("      " + extop + "Result.refreshDrawableState();"); 
+        out.println("      " + extop + "Result.refreshDrawableState();"); 
         out.println("      " + extop + "Result.setImageDrawable(_result);"); 
         out.println("    }"); 
       }
@@ -1859,7 +1859,7 @@ public static void androidOpViewFragment(String op, String packageName,
   else if (res != null && "GraphDisplay".equals(res.getType().getName())) 
   { out.println("    { GraphDisplay _result = " + bean + "." + op + "();"); 
     out.println("      " + op + "Result.invalidate();"); 
-	out.println("      " + op + "Result.refreshDrawableState();"); 
+    out.println("      " + op + "Result.refreshDrawableState();"); 
     out.println("      " + op + "Result.setImageDrawable(_result);"); 
     out.println("    }"); 
   }
@@ -1939,7 +1939,7 @@ public static void androidOpViewFragment(String op, String packageName,
       else if (extres != null && "GraphDisplay".equals(extres.getType().getName())) 
       { out.println("    { GraphDisplay _result = " + extbean + "." + extop + "();"); 
         out.println("      " + extop + "Result.invalidate();"); 
-	    out.println("      " + extop + "Result.refreshDrawableState();"); 
+        out.println("      " + extop + "Result.refreshDrawableState();"); 
         out.println("      " + extop + "Result.setImageDrawable(_result);"); 
         out.println("    }"); 
       }
@@ -3826,7 +3826,8 @@ public static void generateGraphComponentVC(String systemName, String packageNam
       out.println(); 
       out.println("import android.telephony.SmsManager;"); 
       out.println("");
-      out.println("import java.util.ArrayList;");
+      out.println("import java.util.List;");
+	  out.println("import java.util.ArrayList;");
       out.println("");
       out.println("/* Note: Using this component requires");     
       out.println("   Manifest.permission.SEND_SMS permission */");
@@ -3835,7 +3836,7 @@ public static void generateGraphComponentVC(String systemName, String packageNam
       out.println("{ public boolean canSendText()");
       out.println("  { return SmsManager.getDefault() != null; }");
       out.println("");
-      out.println("  public void sendText(String text, ArrayList<String> receivers)");
+      out.println("  public void sendText(String text, List<String> receivers)");
       out.println("  { SmsManager sms = SmsManager.getDefault();");
       out.println("    for (int x = 0; x < receivers.size(); x++)");
       out.println("    { String r = receivers.get(x);");

@@ -455,6 +455,9 @@ public class BehaviouralFeature extends ModelElement
 
   public Expression precondition()
   { return pre; }
+
+  public Expression postcondition()
+  { return post; } 
   
   public void setPostcondition(Expression p)
   { post = p; }

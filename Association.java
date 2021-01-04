@@ -383,6 +383,27 @@ public class Association extends ModelElement
     return res;  
   } 
 
+  public Type getRole2Type()
+  { Type e2type = new Type(entity2);
+    if (isQualified())
+    { if (card2 == ONE)
+      { Type mapres = new Type("Map",null); 
+        mapres.setElementType(e2type); 
+      } 
+      Type res;
+      if (ordered)
+      { res = new Type("Sequence", null); }
+      else  
+      { res = new Type("Set",null); }
+ 
+      Type mres = new Type("Map", null); 
+      mres.setElementType(res);       
+      return mres;
+    } 
+    else 
+    { return getType2(); }   
+  } 
+
   public void setOrdered(boolean ord) 
   { ordered = ord; 
     if (ordered == true) 
@@ -632,7 +653,7 @@ public class Association extends ModelElement
       { out.print("  private " + qual); } 
 
       if (qualifier != null)
-      { out.println("java.util.Map " + role2 + " = new java.util.HashMap();"); } 
+      { out.println("java.util.HashMap " + role2 + " = new java.util.HashMap();"); } 
       else if (card2 == ONE && entity2 != null)
       { out.println(entity2.getName() + " " + role2 + ";"); }
       else if (entity2 != null)
@@ -666,7 +687,7 @@ public class Association extends ModelElement
       { out.print("  private " + qual); } 
 
       if (qualifier != null)
-      { out.println("java.util.Map " + role2 + " = new java.util.HashMap();"); } 
+      { out.println("java.util.HashMap " + role2 + " = new java.util.HashMap();"); } 
       else if (card2 == ONE)
       { out.println(entity2.getName() + " " + role2 + ";"); }
       else if (ordered)
@@ -688,7 +709,12 @@ public class Association extends ModelElement
 
     String initialiser = ""; 
     String reltype = e2name; 
-    if (ordered)
+	
+	if (card2 == ONE)
+	{ initialiser = " = null"; 
+	  reltype = e2name; 
+	}
+    else if (ordered)
     { initialiser = " = new ArrayList<" + e2name + ">()"; 
       reltype = "ArrayList<" + e2name + ">"; 
     } 
@@ -716,7 +742,7 @@ public class Association extends ModelElement
       // String j2type = t2.getJava7(t2.getElementType()); 
 
       if (qualifier != null)
-      { out.println("java.util.Map<String, " + reltype + "> " + role2 + 
+      { out.println("java.util.HashMap<String, " + reltype + "> " + role2 + 
                             " = new java.util.HashMap<String, " + reltype + ">();"); 
       } 
       else if (card2 == ONE)
@@ -3877,11 +3903,13 @@ String qual = "";
     { if (card2 == ONE) 
       { return "public " + e2name + " get" +
              role2 + "(String _ind) { return (" + e2name + ") " + 
-                                        role2 + ".get(_ind); }\n";
+                                        role2 + ".get(_ind); }\n\n" +
+			 "  public HashMap get" + role2 + "() { return (HashMap) " + role2 + "; }\n"; 
       } 
       else 
       { return "public List get" +
-             role2 + "(String _ind) { return (List) " + role2 + ".get(_ind); }\n";
+             role2 + "(String _ind) { return (List) " + role2 + ".get(_ind); }\n\n" +
+			 "  public HashMap get" + role2 + "() { return (HashMap) " + role2 + "; }\n";
       } 
     }
     else if (card2 == ONE)
@@ -3897,17 +3925,18 @@ String qual = "";
     String e2name = entity2.getName() + ""; 
 
     if (qualifier != null) 
-    { if (card2 == ONE) 
-      { return "public " + e2name + " get" +
+    { String res = "  public HashMap get" + role2 + "() { return (HashMap) " + role2 + "; }\n\n";
+	  if (card2 == ONE) 
+      { return res + "  public " + e2name + " get" +
              role2 + "(String _ind) { return (" + e2name + ") " + 
                                         role2 + ".get(_ind); }\n";
       } 
       else if (ordered)
-      { return "public ArrayList get" +
+      { return res + "  public ArrayList get" +
              role2 + "(String _ind) { return (ArrayList) " + role2 + ".get(_ind); }\n";
       } 
       else 
-      { return "public HashSet get" +
+      { return res + "  public HashSet get" +
              role2 + "(String _ind) { return (HashSet) " + role2 + ".get(_ind); }\n";
       } 
     }
@@ -3930,21 +3959,25 @@ String qual = "";
     String e2name = entity2.getName() + ""; 
 
     if (qualifier != null) 
-    { if (card2 == ONE) 
-      { return "public " + e2name + " get" +
+    { String res = "  public HashMap<String," + e2name + "> get" + role2 + "() { return " + role2 + "; }\n\n";
+	  if (card2 == ONE) 
+      { return res + "  public " + e2name + " get" +
              role2 + "(String _ind) { return (" + e2name + ") " + 
                                         role2 + ".get(_ind); }\n";
       } 
       else if (ordered)
-      { return "public ArrayList<" + e2name + "> get" +
+      { res = "  public HashMap<String, ArrayList<" + e2name + ">> get" + role2 + "() { return " + role2 + "; }\n\n";
+	    return res + "  public ArrayList<" + e2name + "> get" +
              role2 + "(String _ind) { return (ArrayList<" + e2name + ">) " + role2 + ".get(_ind); }\n";
       } 
       else if (sortedAsc) 
-      { return "public TreeSet<" + e2name + "> get" +
+      { res = "  public HashMap<String, TreeSet<" + e2name + ">> get" + role2 + "() { return " + role2 + "; }\n\n";
+	    return res + "  public TreeSet<" + e2name + "> get" +
              role2 + "(String _ind) { return (TreeSet<" + e2name + ">) " + role2 + ".get(_ind); }\n";
       } 
       else 
-      { return "public HashSet<" + e2name + "> get" +
+      { res = "  public HashMap<String, HashSet<" + e2name + ">> get" + role2 + "() { return " + role2 + "; }\n\n";
+	    return res + "  public HashSet<" + e2name + "> get" +
              role2 + "(String _ind) { return (HashSet<" + e2name + ">) " + role2 + ".get(_ind); }\n";
       } 
     }
@@ -3974,11 +4007,13 @@ String qual = "";
     { if (card2 == ONE) 
       { return "public " + e2name + " get" +
              role2 + "(string _ind) { return (" + e2name + ") " + 
-                                        role2 + "[_ind]; }\n";
+                                        role2 + "[_ind]; }\n\n" + 
+			"  public Dictionary get" + role2 + "() { return " + role2 + "; }\n";
       } 
       else 
       { return "public ArrayList get" +
-             role2 + "(string _ind) { return (ArrayList) " + role2 + "[_ind]; }\n";
+             role2 + "(string _ind) { return (ArrayList) " + role2 + "[_ind]; }\n\n" + 
+			 "  public Dictionary get" + role2 + "() { return " + role2 + "; }\n";
       } 
     }
     else if (card2 == ONE)
@@ -4000,15 +4035,18 @@ String qual = "";
     { if (card2 == ONE) 
       { return "  " + e2name + " get" +
              role2 + "(string _ind) { return (*" + 
-                                        role2 + ")[_ind]; }\n";
+                                        role2 + ")[_ind]; }\n\n" + 
+			 "  map<string," + e2name + ">* get" + role2 + "() { return " + role2 + "; }\n";
       } 
       else if (ordered) 
       { return "  vector<" + e2name + ">* get" +
-             role2 + "(string _ind) { return (*" + role2 + ")[_ind]; }\n";
+             role2 + "(string _ind) { return (*" + role2 + ")[_ind]; }\n\n" +
+			 "  map<string,vector<" + e2name + ">*>* get" + role2 + "() { return " + role2 + "; }\n";
       }
       else 
       { return "  set<" + e2name + ">* get" +
-             role2 + "(string _ind) { return (*" + role2 + ")[_ind]; }\n";
+             role2 + "(string _ind) { return (*" + role2 + ")[_ind]; }\n\n" +
+			 "  map<string,set<" + e2name + ">*>* get" + role2 + "() { return " + role2 + "; }\n";
       } 
     }
     else if (card2 == ONE)
@@ -5668,6 +5706,9 @@ String qual = "";
     if (role1 != null && role1.length() > 0)
     { opp = " oppositeOf " + role1; } 
 
+	if (isQualified())
+	{ out.println("    reference " + role2 + mult + " qualified " + ord + agg + ": " + entity2 + opp + ";"); }
+
     out.println("    reference " + role2 + mult + " " + ord + agg + ": " + entity2 + opp + ";");  
   } 
 
@@ -5694,6 +5735,9 @@ String qual = "";
     String opp = ""; 
     if (role1 != null && role1.length() > 0)
     { opp = " oppositeOf " + role1; } 
+	
+	if (isQualified())
+	{ return "    reference " + role2 + mult + " qualified " + ord + agg + ": " + entity2 + opp + ";"; }
 
     return "    reference " + role2 + mult + " " + ord + agg + ": " + entity2 + opp + ";";  
   } 

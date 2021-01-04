@@ -106,8 +106,14 @@ public class Entity extends ModelElement implements Comparable
 
     for (int y = 0; y < associations.size(); y++)
     { Attribute ast = new Attribute((Association) associations.get(y));
-	  alist.add(ast); 
-      String astx = ast.cgReference(cgs);
+	  alist.add(ast);
+	  
+	  // System.out.println(">>>> Converted association to attribute: " + ast + " : " + ast.getType());  
+      
+	  String astx = ast.cgReference(cgs);
+
+	  // System.out.println(">>>> Converted association to: " + astx);  
+
       arg = arg + astx;
     }
 
@@ -4978,6 +4984,62 @@ public class Entity extends ModelElement implements Comparable
     }  
     res = res + 
       "    return " + ex + ";\n" + 
+      "  }\n\n"; 
+    return res; 
+  } 
+
+  public String parseCSVOperationIOS()
+  { if (isAbstract()) { return ""; } 
+    if (isInterface()) { return ""; } 
+
+    Attribute key = getPrincipalPrimaryKey(); 
+
+    String ename = getName(); 
+    String ex = ename.toLowerCase() + "x"; 
+
+    String res = 
+      "  static func " + ename + " parseCSV(_line: String) -> " + ename + "?\n" + 
+      "  { if _line.count == 0\n" + 
+	  "    { return nil }\n" +   
+      "    let _line1vals : [String] = Ocl.tokeniseCSV(line: _line)\n" + 
+      "    var " + ex + " : " + ename + "? = nil\n";  
+
+    if (key != null) 
+    { String keyname = key.getName(); 
+      // Assume it is the first one
+      res = res + 
+      "    " + ex + " = " + ename + "." + ename + "_index[_line1vals[0]]\n"; 
+      res = res + 
+      "    if " + ex + " == nil\n" + 
+      "    { " + ex + " = createByPK" + ename + "(key: _line1vals[0]) }\n"; 
+    } 
+    else // all bets are off
+    { res = res + 
+      "    " + ex + " = " + ename + "()\n";
+    } 
+ 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String aname = att.getName(); 
+      Type atype = att.getType(); 
+      String data = "_line1vals[" + i + "]"; 
+
+      if (atype.isString())
+	  { res = res + 
+          "    " + ex + "!." + aname + " = " + atype.dataExtractionCodeIOS(data) + "\n"; 
+      }
+      else if (atype.isParsable())
+      { res = res + 
+          "    " + ex + "!." + aname + " = " + atype.dataExtractionCodeIOS(data) + " ?? " + atype.getSwiftDefaultValue() + "\n"; 
+      }  
+      else if (atype.isCollectionType())
+      { Type elemT = atype.getElementType(); 
+        if (elemT != null && elemT.isParsable())
+        res = res + "    " + atype.collectionExtractionCodeIOS(ex,aname,"_line1vals") + "\n"; 
+      }          
+    }  
+    res = res + 
+      "    return " + ex + "\n" + 
       "  }\n\n"; 
     return res; 
   } 
@@ -11119,9 +11181,9 @@ public void iosDbiOperations(PrintWriter out)
   out.println("  { var res : [" + ent + "VO] = [" + ent + "VO]()");
   out.println("    let statement = \"SELECT * FROM " + ent + " \""); 
   out.println("    let queryStatement = try? prepareStatement(sql: statement)");
-  out.println("    defer "); 
-  out.println("    { sqlite3_finalize(queryStatement)"); 
-  out.println("    }");
+  out.println("    // defer "); 
+  out.println("    // { sqlite3_finalize(queryStatement)"); 
+  out.println("    // }");
   out.println("    if queryStatement == nil { return res }");  
   out.println("    "); 
   out.println("    while (sqlite3_step(queryStatement) == SQLITE_ROW)"); 
@@ -14086,6 +14148,8 @@ public BehaviouralFeature designAbstractKillOp()
       else 
       { Vector bfcases = bf.testCases(); 
         res.addAll(bfcases);
+		Expression post = bf.postcondition(); 
+		System.out.println(">>> Definedness precondition for " + bf.getName() + " is: " + post.definedness()); 
       }   
     }
     return res;  
@@ -14128,9 +14192,9 @@ public BehaviouralFeature designAbstractKillOp()
       out.println("{ public static String getURL(String command, ArrayList<String> pars, ArrayList<String> values)"); 
       out.println("  { String res = " + url + ";"); 
       out.println("    if (command != null)"); 
-	  out.println("    { res = res + command; }"); 
+      out.println("    { res = res + command; }"); 
       out.println("    if (pars.size() == 0)"); 
-	  out.println("    { return res; }"); 
+      out.println("    { return res; }"); 
       out.println("    res = res + \"?\";"); 
       out.println("    for (int i = 0; i < pars.size(); i++)"); 
       out.println("    { String par = pars.get(i); "); 
@@ -14176,7 +14240,7 @@ public BehaviouralFeature designAbstractKillOp()
     String _ex = "_" + ename.toLowerCase() + "x"; 
     String lcename = ename.toLowerCase();
     String es = ename.toLowerCase() + "s";
-	String esx = "_" + es;   
+    String esx = "_" + es;   
     String elistener = lcename + "_listener"; 
 
     out.println("    ValueEventListener " + elistener + " = new ValueEventListener()"); 
@@ -14582,7 +14646,7 @@ public BehaviouralFeature designAbstractKillOp()
                               new BufferedWriter(
                                 new FileWriter(entff)));
       out.println("import Foundation"); 
-      out.println("import UIKit");
+      // out.println("import UIKit");
       out.println("import Darwin");  
       out.println(); 
       out.println("class " + ename + "_DAO"); 
@@ -14605,14 +14669,14 @@ public BehaviouralFeature designAbstractKillOp()
       out.println(); 
       out.println(getCachedInstanceOperationIOS()); 
       out.println(); 
-      // out.println(parseCSVOperationIOS());
+      out.println(parseCSVOperationIOS());
       out.println(); 
       out.println(parseJSONOperationIOS());
       out.println(); 
       out.println(); 
       out.println(writeJSONOperationIOS());
       out.println(); 
-      // out.println(parseCSVFileOperationIOS());
+      out.println(parseCSVFileOperationIOS());
       // out.println();   
       // out.println(parseJSONSequenceOperationIOS());
       out.println(); 
@@ -14758,7 +14822,32 @@ public BehaviouralFeature designAbstractKillOp()
       "      }\n" + 
       "    }\n" + 
       "    return result;\n" + 
-	  "  }\n\n"; 
+      "  }\n\n"; 
+	return res; 
+  } 
+
+  private String parseCSVFileOperationIOS()
+  { String ename = getName(); 
+    String res = 
+	  "  static func makeFromCSV(lines: String) -> [" + ename + "]\n" + 
+      "  { var res : [" + ename + "] = [" + ename + "]()\n" + 
+      "\n" + 
+      "    if lines.count == 0\n" + 
+      "    { return res }\n" + 
+      "\n" + 
+      "    let rows : [String] = Ocl.parseCSVtable(rows: lines)\n" + 
+      "\n" + 
+      "    for (_,row) in rows.enumerated()\n" + 
+      "    { if row.count == 0\n" + 
+      "      { }\n" + 
+      "      else\n" + 
+      "      { let _x : " + ename + "? = parseCSV(_line: row)\n" + 
+      "        if (_x != nil)\n" + 
+      "        { res.append(_x!) }\n" + 
+      "      }\n" + 
+      "    }\n" + 
+      "    return res\n" + 
+      "  }\n\n"; 
 	return res; 
   } 
 
@@ -14790,11 +14879,11 @@ public BehaviouralFeature designAbstractKillOp()
     out.println("  }");  
     out.println("}");
     out.println(); 
-    out.println("struct " + swiftname + "_Previews: PreviewProvider {"); 
-    out.println("  static var previews: some View {"); 
-    out.println("    " + swiftname + "(instance: " + ename + "VO(_x: " + ename + "_allInstances[0]))"); 
-    out.println("  }"); 
-    out.println("}"); 
+    // out.println("struct " + swiftname + "_Previews: PreviewProvider {"); 
+    // out.println("  static var previews: some View {"); 
+    // out.println("    " + swiftname + "(instance: " + ename + "VO(_x: " + ename + "_allInstances[0]))"); 
+    // out.println("  }"); 
+    // out.println("}"); 
   }  
 
   public void swiftUIList(PrintWriter out)
@@ -14815,8 +14904,9 @@ public BehaviouralFeature designAbstractKillOp()
     out.println(); 
     out.println("  var body: some View"); 
     out.println("  { List(model.current" + ename + "s)"); 
-    out.println("    { instance in " + rowname + "(instance: instance) }"); 
-    out.println("  }.onAppear(perform: { model.list" + ename + "() })");  
+    out.println("    { instance in " + rowname + "(instance: instance) }.onAppear(perform: "); 
+    out.println("        { model.list" + ename + "() })");
+    out.println("  }");   
     out.println("}");
     out.println(); 
     out.println("struct " + swiftname + "_Previews: PreviewProvider {"); 

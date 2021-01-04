@@ -62,7 +62,8 @@ public class NLPSentence
 	{ NLPPhrase pr = (NLPPhrase) p1; 
 	  Vector nouns = pr.getNouns(); 
 	  if (nouns.contains("System") || nouns.contains("system") || nouns.contains("Application") || 
-	      nouns.contains("application") || nouns.contains("app") || nouns.contains("App"))
+	      nouns.contains("application") || nouns.contains("app") || nouns.contains("App") || 
+		  nouns.contains("database") || nouns.contains("Database"))
 	  { return true; }
 	}
 	return false; 
@@ -116,14 +117,18 @@ public class NLPSentence
     return verb; 
   } 
 
-  public boolean isClassDefinition()
+  public boolean isClassDefinition(Vector quals)
   { // The VP verb is "consists"/"has"/"have", etc
     
     String verb = getMainVerb(); 
 	
     if ("has".equals(verb) || "have".equals(verb) ||
-        verb.startsWith("compris") || verb.startsWith("consist") || verb.equals("composed"))
-    { return true; } 
+        verb.startsWith("compris") || verb.startsWith("consist") || verb.equals("composed")) 
+	{ return true; } 
+	else if (verb.equals("records") || verb.equals("stores"))
+    { quals.add("persistent"); 
+	  return true; 
+	} 
     return false; 
   } 
  
@@ -227,7 +232,8 @@ public class NLPSentence
 
   public String getKM3(Vector elems)
   { String res = ""; 
-    if (isSVO() && isClassDefinition())
+    Vector quals = new Vector(); 
+    if (isSVO() && isClassDefinition(quals))
     { System.out.println(">>> Class definition: " + this); 
       modelElements(elems);	 
     }
@@ -245,8 +251,9 @@ public class NLPSentence
 	  Vector np1 = new Vector(); 
 	  Vector vb1 = new Vector(); 
 	  Vector rem = new Vector();   
-	  splitIntoPhrases(seqs,np1,vb1,rem); 
-	  identifyClassesAndFeatures(rem,elems);
+	  Vector quals1 = new Vector(); 
+	  splitIntoPhrases(seqs,np1,vb1,rem,quals1); 
+	  identifyClassesAndFeatures(rem,elems,quals1);
     }
     else if (isSVO())
     { System.out.println(">>> Constraint definition: " + this); 
@@ -257,10 +264,11 @@ public class NLPSentence
       Vector np1 = new Vector(); 
       Vector vb1 = new Vector(); 
       Vector rem = new Vector();   
-      splitIntoPhrases(seqs,np1,vb1,rem); 
+	  Vector quals1 = new Vector(); 
+      splitIntoPhrases(seqs,np1,vb1,rem,quals1); 
       System.out.println(">>> Not recognised as model elements definition: " + np1 + "; " + vb1 + "; " + rem);
       if (describesSystem(np1))
-      { identifyClassesAndFeatures(rem,elems); }  
+      { identifyClassesAndFeatures(rem,elems,quals1); }  
       else if (describesUseCase(np1,vb1,rem))
       { identifyUseCase(rem,elems); }
     }  
@@ -278,13 +286,15 @@ public class NLPSentence
     return res; 
   } 
   
-  public void splitIntoPhrases(Vector seq, Vector np1, Vector vb1, Vector rem)
+  public void splitIntoPhrases(Vector seq, Vector np1, Vector vb1, Vector rem, Vector quals)
   { int i = 0; 
     int en = seq.size(); 
+	Vector quals1 = new Vector(); 
+	
     boolean innoun1 = true; 
     while (i < en && innoun1)
     { NLPWord lex = (NLPWord) seq.get(i); 
-	  if (lex.isVerbPhraseWord())
+	  if (lex.isVerbPhraseWord(quals1))
 	  { innoun1 = false; }
 	  else if (lex.isNounPhraseWord())
 	  { np1.add(lex);
@@ -297,7 +307,7 @@ public class NLPSentence
     boolean inverb1 = true;
     while (i < en && inverb1)
     { NLPWord lex = (NLPWord) seq.get(i); 
-      if (lex.isVerbPhraseWord())
+      if (lex.isVerbPhraseWord(quals1))
       { vb1.add(lex); 
         i++; 
       }
@@ -323,7 +333,7 @@ public class NLPSentence
     return false; 
   } 
   
-  public void identifyClassesAndFeatures(Vector rem, Vector modelElements)
+  public void identifyClassesAndFeatures(Vector rem, Vector modelElements, Vector quals)
   { // First noun is usually a class, others features. 
     String firstNoun = null; 
     int found = 0; 
@@ -338,12 +348,17 @@ public class NLPSentence
       }
     }
 	
+	if (firstNoun == null) 
+	{ return; }
+	
     System.out.println(">>> first noun: " + firstNoun); 
     Entity mainent = (Entity) ModelElement.lookupByNameIgnoreCase(firstNoun,modelElements); 
     if (mainent == null) 
     { mainent = new Entity(Named.capitalise(firstNoun)); 
       modelElements.add(mainent); 
     } 
+	
+	mainent.addStereotypes(quals); 
 	
     Vector remnouns = new Vector(); 
     Vector remwords = new Vector(); 
@@ -355,12 +370,12 @@ public class NLPSentence
     } // ignore words like "information" and "details"? 
 	
     System.out.println(">>> other nouns: " + remnouns); 
-    Vector quals = new Vector(); 
+    Vector quals1 = new Vector(); 
 	
     for (int j = 0; j < remnouns.size(); j++) 
     { NLPWord attx = (NLPWord) remnouns.get(j); 
       String attname = attx.text; 
-      NLPPhrase.extractAtt(attname,quals,mainent); 
+      NLPPhrase.extractAtt(attname,quals1,mainent); 
     }
 
     NLPPhrase newpr = new NLPPhrase("NP"); 
@@ -369,7 +384,32 @@ public class NLPSentence
     Vector currentQuals = new Vector(); 
     Vector anal = newpr.extractNouns(mp,currentQuals); 
     System.out.println(">>> identified features: " + anal); 
-    System.out.println(">>> identified qualifiers: " + mp); 
+    System.out.println(">>> identified qualifiers: " + mp);
+	applyQualifiers(mainent,anal,mp);  
+  }
+  
+  public void applyQualifiers(Entity ent, Vector features, java.util.Map quals)
+  { for (int i = 0; i < features.size(); i++) 
+    { String fname = (String) features.get(i);
+	  Attribute f = ent.getAttribute(fname); 
+	  if (f == null)
+	  { continue; } 
+	  Vector quallist = (Vector) quals.get(f.getName()); 
+	  for (int j = 0; j < quallist.size(); j++) 
+	  { String qual = (String) quallist.get(j); 
+	    if (qual != null) 
+	    { if (qual.equals("many") && !f.isCollection())
+	      { Type atype = f.getType(); 
+		    Type colltype = new Type("Sequence", null);
+		    colltype.setElementType(atype); 
+		    f.setType(colltype); 
+		    f.setElementType(atype); 
+		  } 
+		  else if (qual.equals("identity"))
+	  	  { f.setUnique(true); }
+		}  
+	  }
+	}
   }
   
   public boolean describesUseCase(Vector np, Vector vb1, Vector rem)
@@ -383,6 +423,7 @@ public class NLPSentence
 	  
   public void identifyUseCase(Vector rem, Vector elems)
   { int index = 0; 
+    Vector quals = new Vector(); 
   
     for (int i = 0; i < rem.size(); i++) 
     { NLPWord wd = (NLPWord) rem.get(i); 
@@ -397,7 +438,7 @@ public class NLPSentence
 	
     for (int j = index; j < rem.size(); j++) 
     { NLPWord wd = (NLPWord) rem.get(j); 
-      if (wd.isVerbPhraseWord() || wd.isAdjective() || wd.isNounPhraseWord() || wd.isConjunctionWord())
+      if (wd.isVerbPhraseWord(quals) || wd.isAdjective() || wd.isNounPhraseWord() || wd.isConjunctionWord())
       { uc = uc + wd.text; }  
     }
 	

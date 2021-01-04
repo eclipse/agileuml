@@ -2383,6 +2383,18 @@ class BasicExpression extends Expression
       return true;
     }  // and deduce elementType
 
+    if (isMap(data))  // convert it to a SetExpression
+    { type = new Type("Map",null);  // or Sequence if ordered
+      entity = null;
+      umlkind = VALUE;
+      multiplicity = ModelElement.MANY;
+      SetExpression se = (SetExpression) buildSetExpression(data); 
+      elementType = Type.determineType(se.getElements()); 
+      type.setElementType(elementType); 
+      // System.out.println("**Type of " + data + " is " + type);
+      return true;
+    }  // could have an array index. Also deduce elementType
+
     if ("int".equals(data) || "long".equals(data) || "double".equals(data))
     { type = new Type("Sequence", null); 
       elementType = new Type(data, null); 
@@ -2413,7 +2425,7 @@ class BasicExpression extends Expression
 
     if ("self".equals(data))
     { if (contexts.size() == 0)
-      { System.err.println("ERROR: Invalid occurrence of self, not in instance context"); 
+      { System.err.println("WARNING: Invalid occurrence of self, not in instance context"); 
         // JOptionPane.showMessageDialog(null, "ERROR: Invalid occurrence of self, not in instance context", "Semantic error", JOptionPane.ERROR_MESSAGE); 
       }
       else 
@@ -2517,6 +2529,7 @@ class BasicExpression extends Expression
         }
         else 
         { res = objectRef.typeCheck(types,entities,contexts,env); }
+        // Also case of literal maps Map{...}. But not really needed
       }
       else 
       { res = objectRef.typeCheck(types,entities,contexts,env); }
@@ -2844,7 +2857,7 @@ class BasicExpression extends Expression
         multiplicity = ModelElement.ONE;
         Attribute att = ent.getDefinedAttribute(data);
         if (att == null)   // something very bad has happened
-        { System.err.println("TYPE ERROR: Undefined attribute: " + data); 
+        { System.err.println("TYPE ERROR: attribute: " + data + " is not defined in class " + ent.getName()); 
           return false; 
         } 
         modality = att.getKind(); 
@@ -2870,8 +2883,8 @@ class BasicExpression extends Expression
           multiplicity = ModelElement.ONE;
           Attribute att = subent.getAttribute(data);
           if (att == null)   // something very bad has happened
-          { System.err.println("***TYPE ERROR: Undefined attribute: " + data); 
-            JOptionPane.showMessageDialog(null, "Undefined attribute " + data, "Type error",                                           JOptionPane.ERROR_MESSAGE);  
+          { System.err.println("***TYPE ERROR: attribute: " + data + " is not defined in class " + subent); 
+            JOptionPane.showMessageDialog(null, "Undefined attribute: " + data, "Type error",                                           JOptionPane.ERROR_MESSAGE);  
             return false; 
           } 
           modality = att.getKind();
@@ -2893,14 +2906,17 @@ class BasicExpression extends Expression
       { umlkind = ROLE; 
         Association ast = ent.getDefinedRole(data); 
         if (ast == null)   // something very bad has happened
-        { System.err.println("!! TYPE ERROR: Undefined role: " + data); 
-          JOptionPane.showMessageDialog(null, "Undefined role " + data, "Type error",                                         JOptionPane.ERROR_MESSAGE);  
+        { System.err.println("!! TYPE ERROR: role: " + data + " is not defined in class " + ent.getName()); 
+          JOptionPane.showMessageDialog(null, "Undefined role " + data, "Type error",                                         
+		                                JOptionPane.ERROR_MESSAGE);  
           return false; 
         } 
         multiplicity = ast.getCard2();
         elementType = new Type(ast.getEntity2()); 
         modality = ModelElement.INTERNAL; // ???
-        if (multiplicity == ModelElement.ONE) 
+		if (ast.isQualified() && arrayIndex == null) // a naked qualified role, it is a map
+		{ type = ast.getRole2Type(); }
+        else if (multiplicity == ModelElement.ONE) 
         { type = new Type(ast.getEntity2()); } 
         else 
         { if (ast.isOrdered())
@@ -3611,6 +3627,8 @@ class BasicExpression extends Expression
         return se.queryForm(env,local); 
       } 
 
+ 	  // Also case of literal maps Map{...}[arrayIndex]
+
       if (isString(data) && arrayIndex != null)
       { String ind = arrayIndex.queryForm(env,local); 
         String indopt = evaluateString("-",ind,"1"); 
@@ -3635,8 +3653,12 @@ class BasicExpression extends Expression
         if (type != null)
         { if (variable != null && "String".equals(variable.getType() + ""))
           { return "(" + data + ".charAt(" + indopt + ") + \"\")"; } 
-          if (Type.isPrimitiveType(type))
-          { return unwrap(data + ".get(" + indopt + ")"); } 
+          if (arrayIndex.type != null && arrayIndex.type.getName().equals("int"))
+		  // if (Type.isPrimitiveType(type))
+          { return unwrap(data + ".get(" + indopt + ")"); }
+		  else if (arrayIndex.type != null && arrayIndex.type.getName().equals("String"))
+		  { return unwrap(data + ".get(" + ind + ")"); }
+		   
           String jType = type.getJava(); 
           return "((" + jType + ") " + data + ".get(" + indopt + "))"; 
         }         
@@ -3908,7 +3930,7 @@ class BasicExpression extends Expression
       }
       String var = findEntityVariable(env);
       if (var == null || "".equals(var))
-      { return res + parString; } 
+      { return "Controller.inst()." + res + parString; } 
       return var + "." + res + parString; 
     } // may also be an arrayIndex
       
@@ -3961,6 +3983,9 @@ class BasicExpression extends Expression
         String var = findEntityVariable(env);
 
         String res = var + ".get" + data + "()";
+		if (var == null || var.length() == 0)
+		{ res = data; }
+
         if (arrayIndex != null) 
         { String etype = elementType + ""; 
           String ind = arrayIndex.queryForm(env,local); 
@@ -4060,6 +4085,7 @@ class BasicExpression extends Expression
       { Expression se = buildSetExpression(data); 
         return se.queryFormJava6(env,local);
       }
+	  
       if (isSequence(data))
       { Expression se = buildSetExpression(data); 
         if (arrayIndex != null)
@@ -4077,6 +4103,9 @@ class BasicExpression extends Expression
         }  // primitive types
         return se.queryFormJava6(env,local); 
       } 
+
+  	  // Also case of literal maps Map{...}[arrayIndex]
+
       if (isString(data) && arrayIndex != null)
       { String ind = arrayIndex.queryFormJava6(env,local); 
         String indopt = evaluateString("-",ind,"1"); 
@@ -4105,7 +4134,13 @@ class BasicExpression extends Expression
         if (type != null)
         { if (variable != null && "String".equals(variable.getType() + ""))
           { return "(" + data + ".charAt(" + indopt + ") + \"\")"; } 
-          else if (Type.isPrimitiveType(type))
+          
+		  if (arrayIndex.type != null && arrayIndex.type.getName().equals("int"))
+		  // if (Type.isPrimitiveType(type))
+          { return unwrap(data + ".get(" + indopt + ")"); }
+		  else if (arrayIndex.type != null && arrayIndex.type.getName().equals("String"))
+		  { return unwrap(data + ".get(" + ind + ")"); }
+		  else if (Type.isPrimitiveType(type))
           { return unwrap(data + ".get(" + indopt + ")"); } 
           String jType = type.getJava6(); 
           return "((" + jType + ") " + data + ".get(" + indopt + "))"; 
@@ -4334,8 +4369,12 @@ class BasicExpression extends Expression
         }
         return res;  
       }
+	  
       String var = findEntityVariable(env);
-      return var + "." + res + parString; 
+      if (var != null && var.length() > 0) 
+	  { return var + "." + res + parString; } 
+	  else 
+	  { return "Controller.inst()." + res + parString; }
     } // may also be an arrayIndex
       
 
@@ -4384,6 +4423,9 @@ class BasicExpression extends Expression
         String var = findEntityVariable(env);
 
         String res = var + ".get" + data + "()";
+		if (var == null || var.length() == 0)
+		{ res = data; }
+
         if (arrayIndex != null) 
         { String etype = elementType + ""; 
           String ind = arrayIndex.queryFormJava6(env,local); 
@@ -4474,7 +4516,9 @@ class BasicExpression extends Expression
       { return "new HashSet<Object>()"; }    // new Set really
       if (data.equals("Sequence{}"))
       { return "new ArrayList<Object>()"; } 
-
+      if (data.equals("Map{}"))
+      { return "new HashMap<String,Object>()"; }
+	  
       if (data.equals("null")) { return "null"; } 
 
       if (isSet(data))
@@ -4499,6 +4543,7 @@ class BasicExpression extends Expression
         }  // primitive types
         return se.queryFormJava7(env,local); 
       } 
+	  
       if (isString(data) && arrayIndex != null)
       { String ind = arrayIndex.queryFormJava7(env,local); 
         String indopt = evaluateString("-",ind,"1"); 
@@ -4506,6 +4551,8 @@ class BasicExpression extends Expression
       } 
       return data;
     }
+	
+	// Also case of literal maps Map{...}[arrayIndex]
 
     if (umlkind == VARIABLE)
     { if (data.equals("self"))  // but return "self" if it is a genuine variable
@@ -4615,11 +4662,13 @@ class BasicExpression extends Expression
       { Expression arg1 = (Expression) parameters.get(0); 
         String arg1s = arg1 + ""; 
         return "(" + pre + " instanceof " + arg1s + ")";  // works for external classes also 
-      } 
+      }
+	   
       if (data.equals("oclAsType") && parameters != null && parameters.size() > 0)  
       { Expression arg1 = (Expression) parameters.get(0); 
         return "((" + arg1 + ") " + pre + ")";  // casting 
-      } 
+      }
+	   
       if (data.equals("sqr"))
       { return "(" + pre + ") * (" + pre + ")"; } 
       else if (data.equals("abs") || data.equals("sin") || data.equals("cos") ||
@@ -4755,8 +4804,12 @@ class BasicExpression extends Expression
         }
         return res;  
       }
+	  
       String var = findEntityVariable(env);
-      return var + "." + res + parString; 
+      if (var != null && var.length() > 0) 
+	  { return var + "." + res + parString; } 
+	  else 
+	  { return "Controller.inst()." + res + parString; } 
     } // may also be an arrayIndex
       
 
@@ -4802,9 +4855,12 @@ class BasicExpression extends Expression
           return nme + "." + data; 
         }  
         
-        String var = findEntityVariable(env);
+        String var = findEntityVariable(env); // could be null, or ""
 
         String res = var + ".get" + data + "()";
+		if (var == null || var.length() == 0) 
+		{ res = data; }
+		
         if (arrayIndex != null) 
         { String etype = elementType + ""; 
           String ind = arrayIndex.queryFormJava7(env,local); 
@@ -5165,8 +5221,12 @@ class BasicExpression extends Expression
         }
         return res;  
       }
+
       String var = findEntityVariable(env);
-      return var + "." + res + parString; 
+      if (var != null && var.length() > 0) 
+	  { return var + "." + res + parString; } 
+	  else 
+	  { return res + parString; }   
     } // may also be an arrayIndex
       
 
@@ -5210,6 +5270,9 @@ class BasicExpression extends Expression
         String var = findEntityVariable(env);
 
         String res = var + ".get" + data + "()";
+		if (var == null || var.length() == 0) 
+		{ res = data; }
+		
         if (arrayIndex != null) 
         { String etype = type.getCSharp(); 
           String ind = arrayIndex.queryFormCSharp(env,local); 
@@ -5537,8 +5600,12 @@ class BasicExpression extends Expression
         }
         return res;  
       }
+	  
       String var = findEntityVariable(env);
-      return var + "->" + res + parString; 
+      if (var != null && var.length() > 0) 
+	  { return var + "->" + res + parString; } 
+	  else 
+	  { return res + parString; }      
     } // may also be an arrayIndex
       
 
@@ -5579,6 +5646,9 @@ class BasicExpression extends Expression
         String var = findEntityVariable(env);
 
         String res = var + "->get" + data + "()";
+		if (var == null || var.length() == 0)
+		{ res = data; }
+		
         if (arrayIndex != null) 
         { String etype = type.getCPP(elementType); 
           String ind = arrayIndex.queryFormCPP(env,local); 
@@ -6592,7 +6662,7 @@ public Statement generateDesignSubtract(Expression rhs)
       String wind = ind.wrap(indopt); 
       String wval = var.wrap(val2); 
  
-      if ("String".equals(ind.type + ""))
+      if (ind.type != null && "String".equals(ind.type.getName()))
       { return "((Map) " + lexp + ").put(" + wind + ", " + wval + ");"; }  // map[ind] = val2 
       else 
       { return "((Vector) " + lexp + ").set((" + indopt + " -1), " + wval + ");"; }  
@@ -6628,7 +6698,7 @@ public Statement generateDesignSubtract(Expression rhs)
       { String indopt = arrayIndex.queryForm(env,local); 
         String wind = arrayIndex.wrap(indopt); 
         String wval = var.wrap(val2); 
-        if ("String".equals(arrayIndex.type + ""))
+        if (arrayIndex.type != null && "String".equals(arrayIndex.type.getName()))
         { return data + ".put(" + wind + ", " + wval + ");"; }  // map[index] = val2 
         else 
         { return data + ".set((" + indopt + " -1), " + wval + ");"; }  
@@ -6649,7 +6719,7 @@ public Statement generateDesignSubtract(Expression rhs)
         { if (arrayIndex != null)
           { String ind = arrayIndex.queryForm(env,local); 
             String wval = var.wrap(val2); 
-            if (isQualified() || "String".equals(arrayIndex.type + ""))
+            if (isQualified() || (arrayIndex.type != null && "String".equals(arrayIndex.type.getName())))
             { return data + ".put(" + ind + ", " + wval + ");"; } // for maps
             return data + ".set((" + ind + " - 1), " + wval + ");"; 
           }
@@ -6679,7 +6749,7 @@ public Statement generateDesignSubtract(Expression rhs)
         if (arrayIndex != null) 
         { String ind = arrayIndex.queryForm(env,local); 
           if (isQualified())
-          { return cont + ".set" + data + "(" + ind + ", " + target + val2 + ");"; } 
+          { return cont + ".set" + data + "(" + target + ind + ", " + val2 + ");"; } 
           String indopt = evaluateString("-",ind,"1"); // not for qualified
           return cont + ".set" + data + "(" + target + indopt + "," + val2 + ");";
         }
@@ -6834,7 +6904,7 @@ public Statement generateDesignSubtract(Expression rhs)
         if (arrayIndex != null) 
         { String ind = arrayIndex.queryFormJava6(env,local); 
           if (isQualified())
-          { return cont + ".set" + data + "(" + ind + ", " + target + val2 + ");"; } 
+          { return cont + ".set" + data + "(" + target + ind + ", " + val2 + ");"; } 
           String indopt = evaluateString("-",ind,"1"); // not for qualified
           return cont + ".set" + data + "(" + target + indopt + "," + val2 + ");";
         }
@@ -6985,7 +7055,7 @@ public Statement generateDesignSubtract(Expression rhs)
         if (arrayIndex != null) 
         { String ind = arrayIndex.queryFormJava7(env,local); 
           if (isQualified())
-          { return cont + ".set" + data + "(" + ind + ", " + target + val2 + ");"; } 
+          { return cont + ".set" + data + "(" + target + ind + ", " + val2 + ");"; } 
           String indopt = evaluateString("-",ind,"1"); // not for qualified
           return cont + ".set" + data + "(" + target + indopt + "," + val2 + ");";
         }
@@ -7134,7 +7204,7 @@ public Statement generateDesignSubtract(Expression rhs)
         if (arrayIndex != null) 
         { String ind = arrayIndex.queryFormCSharp(env,local); 
           if (isQualified())
-          { return cont + ".set" + data + "(" + ind + ", " + target + val2 + ");"; } 
+          { return cont + ".set" + data + "(" + target + ind + ", " + val2 + ");"; } 
           String indopt = evaluateString("-",ind,"1"); // not for qualified
           return cont + ".set" + data + "(" + target + indopt + "," + val2 + ");";
         }
@@ -7285,7 +7355,7 @@ public Statement generateDesignSubtract(Expression rhs)
         if (arrayIndex != null) 
         { String ind = arrayIndex.queryFormCPP(env,local); 
           if (isQualified())
-          { return cont + "set" + data + "(" + ind + ", " + target + val2 + ");"; } 
+          { return cont + "set" + data + "(" + target + ind + ", " + val2 + ");"; } 
           String indopt = evaluateString("-",ind,"1"); // not for qualified
           return cont + "set" + data + "(" + target + indopt + "," + val2 + ");";
         }

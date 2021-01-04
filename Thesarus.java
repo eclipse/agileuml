@@ -18,6 +18,9 @@ class ThesaurusConcept
   Vector preferredTerms = new Vector(); 
   Vector terms = new Vector(); 
   Vector linkedConcepts = new Vector(); 
+  String partOfSpeech = "";
+  Vector semantics = new Vector(); 
+    // eg., attribute with type, class, association, etc, stereotypes.  
 
   ThesaurusConcept(String n) 
   { name = n; } 
@@ -39,6 +42,12 @@ class ThesaurusConcept
     else 
     { preferredTerms.add(t); } 
   } 
+
+  void setPOS(String pos) 
+  { partOfSpeech = pos; } 
+
+  void addSemantics(ModelElement me) 
+  { semantics.add(me); } 
 
   public boolean hasTerm(String t)
   { boolean res = false; 
@@ -137,6 +146,118 @@ class ThesaurusTerm
 public class Thesarus
 { Vector concepts = new Vector(); 
   Vector terms = new Vector(); 
+
+  public static Vector loadThesaurus(String f)
+  { BufferedReader br = null;
+    // BufferedWriter brout = null; 
+    // PrintWriter pwout = null; 
+
+    Vector concepts = new Vector(); 
+
+    String s;
+    boolean eof = false;
+    File infile = new File(f);  
+
+    try
+    { br = new BufferedReader(new FileReader(infile));
+      // brout = new BufferedWriter(new FileWriter(outfile)); 
+      // pwout = new PrintWriter(brout); 
+    }
+    catch (Exception e)
+    { System.out.println("Errors with file: " + f);
+      return concepts; 
+    }
+    String xmlstring = ""; 
+
+    while (!eof)
+    { try { s = br.readLine(); }
+      catch (IOException e)
+      { System.out.println("Reading failed.");
+        return concepts; 
+      }
+      if (s == null) 
+      { eof = true; 
+        break; 
+      }
+      else 
+      { xmlstring = xmlstring + s + " "; } 
+    }
+
+    Compiler2 comp = new Compiler2();  
+    comp.nospacelexicalanalysisxml(xmlstring); 
+    XMLNode xml = comp.parseXML(); 
+    // System.out.println(xml); 
+
+    if (xml == null) 
+    { System.err.println("!!!! Wrong format for XML file. Must start with <?xml header"); 
+      return concepts; 
+    } 
+
+
+    Vector enodes = xml.getSubnodes(); // all instances
+    for (int i = 0; i < enodes.size(); i++) 
+    { XMLNode enode = (XMLNode) enodes.get(i); 
+      String cname = enode.getTag(); 
+      if ("CONCEPT".equals(cname))
+      { ThesaurusConcept c = null; 
+        Vector subnodes = enode.getSubnodes(); 
+        for (int j = 0; j < subnodes.size(); j++) 
+        { XMLNode sb = (XMLNode) subnodes.get(j); 
+          String stag = sb.getTag(); 
+          if ("DESCRIPTOR".equals(stag))
+          { String cdef = sb.getContent(); 
+            c = new ThesaurusConcept(cdef.toLowerCase());
+            System.out.println("New concept: " + cdef); 
+          } 
+          else if ("PT".equals(stag) && c != null)
+          { String ndef = sb.getContent(); 
+            ThesaurusTerm tt = new ThesaurusTerm(ndef.toLowerCase()); 
+            c.addPreferredTerm(tt); 
+            tt.addConcept(c); 
+          } 
+          else if ("NT".equals(stag) && c != null)
+          { String ndef = sb.getContent(); 
+            ThesaurusTerm tt = new ThesaurusTerm(ndef.toLowerCase()); 
+            c.addTerm(tt); 
+            tt.addConcept(c); 
+          } 
+          else if ("POS".equals(stag) && c != null)
+          { String ndef = sb.getContent(); 
+		 System.out.println(">> part of speech = " + ndef); 
+            c.setPOS(ndef); 
+          } 
+          else if ("SEM".equals(stag) && c != null)
+          { String ndef = sb.getContent(); 
+            System.out.println(">> semantics = " + ndef);
+            if (ndef.equals("attribute"))
+            { String xsitype = sb.getAttributeValue("type"); 
+              System.out.println(">> type = " + xsitype);
+              if (xsitype == null) 
+              { xsitype = "String"; } 
+              Attribute x = new Attribute(c.name,new Type(xsitype,null), ModelElement.INTERNAL); 
+              c.addSemantics(x); 
+            } 
+            else if (ndef.equals("class"))
+            { Entity ent = new Entity(c.name); 
+              c.addSemantics(ent); 
+            } 
+            else if (ndef.equals("reference"))
+            { } 
+          } 
+        } 
+
+        if (c != null) 
+        { concepts.add(c); }  
+      } 
+    } 
+
+    for (int i = 0; i < concepts.size(); i++) 
+    { ThesaurusConcept tc = (ThesaurusConcept) concepts.get(i); 
+      tc.findLinkedConcepts(concepts); 
+    } 
+
+    return concepts; 
+  }       
 
   void addConceptTerm(ThesarusConcept c, ThesarusTerm t)
   { if (concepts.contains(c)) {}

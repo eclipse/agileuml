@@ -109,6 +109,13 @@ public class Attribute extends ModelElement
     if (c2 == ModelElement.ZEROONE)
     { upper = 1; } 
 
+    if (ast.isQualified())
+    { Type etype = (Type) type.clone(); 
+	  type = new Type("Map", null); 
+	  type.setKeyType(new Type("String", null));
+	  type.setElementType(etype); 
+    } 
+
     setStereotypes(ast.getStereotypes());  // eg., target, source, aggregation, addOnly
   }  
 
@@ -4631,14 +4638,14 @@ public String iosDbiExtractOp(String ent, int i)
       res.add(nme + " = -1");
       res.add(nme + " = 1"); 
 
-	  if (ubnd != null && lbnd != null)
-	  { try
-	    { double ud = Double.parseDouble(ubnd + ""); 
-	      double ld = Double.parseDouble(lbnd + ""); 
-		  int midd = (int) Math.floor((ud + ld)/2); 
-		  res.add(nme + " = " + midd);
-		} catch (Exception _e) { } 
-	  }
+      if (ubnd != null && lbnd != null)
+      { try
+        { double ud = Double.parseDouble(ubnd + ""); 
+          double ld = Double.parseDouble(lbnd + ""); 
+          int midd = (int) Math.floor((ud + ld)/2); 
+          res.add(nme + " = " + midd);
+        } catch (Exception _e) { } 
+      }
 
       if (ubnd != null) 
       { String upperval = ubnd + ""; 
@@ -4748,9 +4755,19 @@ public String iosDbiExtractOp(String ent, int i)
     { Type elemT = getElementType(); 
       Vector testVals = elemT.testValues(); 
       res.add(""); 
-      for (int p = 0; p < testVals.size(); p++) 
+	  
+	  // Singletons: 
+      for (int p = 0; p < testVals.size() && p < 3; p++) 
       { String tv = (String) testVals.get(p); 
         res.add(tv + " : " + nme); 
+      }
+	  
+	  // Triples: 
+      for (int p = 0; p+2 < testVals.size() && p < 3; p++) 
+      { String tv = (String) testVals.get(p); 
+        String tv1 = (String) testVals.get(p+1);
+		String tv2 = (String) testVals.get(p+2);  
+        res.add(tv + " : " + nme + "\n" + tv1 + " : " + nme + "\n" + tv2 + " : " + nme); 
       }
     } 
  
@@ -4944,10 +4961,10 @@ public String androidTableEntryField(String ent, String op)
   String hint = ent + " " + nme; 
 
   String res1 = "  <TextView\n\r" +
-    "    android:id=\"@+id/" + attlabel + "\"\n\r" +
-    "    android:hint=\"" + hint + "\"\n\r" +
-    "    android:textStyle=\"bold\"\n\r" +
-    "    android:background=\"#EEFFBB\"\n\r" + 
+    "    android:id=\"@+id/" + attlabel + "\"\n" +
+    "    android:hint=\"" + hint + "\"\n" +
+    "    android:textStyle=\"bold\"\n" +
+    "    android:background=\"#EEFFBB\"\n" + 
     "    android:text=\"" + label + ":\" />\n\r";
 
   String res2 = ""; 
@@ -4966,25 +4983,32 @@ public String androidTableEntryField(String ent, String op)
   { res2 = androidSpinner(op + ent + nme); }
   else if (isInteger())
   { res2 = "  <EditText\n\r" +
-    "    android:id=\"@+id/" + attfield + "\"\n\r" +
-    "    android:inputType=\"number\"\n\r" +  
+    "    android:id=\"@+id/" + attfield + "\"\n" +
+    "    android:inputType=\"number\"\n" +  
     "    android:layout_span=\"4\" />\n\r";
   } 
   else if (isDouble())
   { res2 = "  <EditText\n\r" +
-    "    android:id=\"@+id/" + attfield + "\"\n\r" +
-    "    android:inputType=\"number|numberDecimal\"\n\r" +  
+    "    android:id=\"@+id/" + attfield + "\"\n" +
+    "    android:inputType=\"number|numberDecimal\"\n" +  
     "    android:layout_span=\"4\" />\n\r";
   } 
   else if (isPassword())
   { res2 = "  <EditText\n\r" +
-    "    android:id=\"@+id/" + attfield + "\"\n\r" +
-    "    android:inputType=\"textPassword\"\n\r" +  
-    "    android:layout_span=\"4\" />\n\r";
+    "    android:id=\"@+id/" + attfield + "\"\n" +
+    "    android:inputType=\"textPassword\"\n" +  
+    "    android:layout_span=\"4\" />\n";
   } 
-  else   
+  else if (isCollection())
   { res2 = "  <EditText\n\r" +
-    "    android:id=\"@+id/" + attfield + "\"\n\r" +
+    "    android:id=\"@+id/" + attfield + "\"\n" +
+    "    android:inputType=\"text|textMultiLine\"\n" +
+	"    android:minLines=\"5\"\n" + 
+	"    android:gravity=\"top\"\n" +   
+    "    android:layout_span=\"4\" />\n\r"; }
+  else  
+  { res2 = "  <EditText\n\r" +
+    "    android:id=\"@+id/" + attfield + "\"\n" +
     "    android:layout_span=\"4\" />\n\r";
   } 
   return "  <TableRow>\n\r" +
@@ -4998,16 +5022,16 @@ public String androidTableEntryField(String ent, String op)
 
     String res = 
       "  <RadioGroup\n\r" + 
-      "    android:id=\"@+id/" + fullop + "Group\"\n\r" + 
-      "    android:orientation=\"horizontal\"\n\r" +
-      "    android:layout_span=\"4\"\n\r" +
-      "    android:layout_width=\"fill_parent\"\n\r" +
+      "    android:id=\"@+id/" + fullop + "Group\"\n" + 
+      "    android:orientation=\"horizontal\"\n" +
+      "    android:layout_span=\"4\"\n" +
+      "    android:layout_width=\"fill_parent\"\n" +
       "    android:layout_height=\"wrap_content\" >\n\r"; 
     for (int i = 0; i < vals.size(); i++) 
     { String val = (String) vals.get(i);      
       res = res + "    <RadioButton android:id=\"@+id/" + fullop + val + "\"\n\r" +
-            "      android:layout_width=\"wrap_content\"\n\r" +
-            "      android:layout_height=\"wrap_content\"\n\r" +
+            "      android:layout_width=\"wrap_content\"\n" +
+            "      android:layout_height=\"wrap_content\"\n" +
             "      android:text=\"" + val + "\" />\n\r"; 
      } 
     res = res +         
@@ -5019,9 +5043,9 @@ public String androidTableEntryField(String ent, String op)
   { 
     String res = 
        "  <Spinner\n\r" +
-       "    android:id=\"@+id/" + fullop + "Spinner\"\n\r" + 
-       "    android:layout_width=\"fill_parent\"\n\r" + 
-       "    android:layout_height=\"wrap_content\"\n\r" + 
+       "    android:id=\"@+id/" + fullop + "Spinner\"\n" + 
+       "    android:layout_width=\"fill_parent\"\n" + 
+       "    android:layout_height=\"wrap_content\"\n" + 
        "    android:layout_span=\"4\" />\n\r"; 
     return res; 
   } 
@@ -5176,6 +5200,15 @@ public String swiftUIEntryField(String ent, String op, Vector decs, Vector actio
            "      }.frame(height: 30).border(Color.gray)\n" + 
            "    \n";
   } 
+  else if (isCollection())
+  { res1 = "      HStack {\n" +
+           "        Text(\"" + label + ":\").bold()\n" +
+           "        Divider()\n" +
+           "        TextEditor(text: $bean." + nme + ")\n" +
+           "      }.frame(height: 100).border(Color.gray)\n" + 
+           "    \n";
+  }
+  
   return res1;
 }  // email, password kinds also 
 
@@ -5213,7 +5246,9 @@ public String swiftUIFormInitialiser()
       return "  @IBOutlet weak var " + nme + "Control : UISegmentedControl!\n" + 
              "  var " + nme + "Input : String = \"" + defaultValue + "\""; 
     } 
-    else 
+    else if (isCollection())
+	{ return "  @IBOutlet weak var " + nme + "Input : UITextView!"; } 
+	else
     { return "  @IBOutlet weak var " + nme + "Input : UITextField!"; } 
   } 
 
@@ -5226,6 +5261,8 @@ public String swiftUIFormInitialiser()
       return "  @IBOutlet weak var " + nme + "Control : UISegmentedControl!\n" + 
              "  var " + nme + "Input : String = \"" + defaultValue + "\""; 
     } 
+    else if (isCollection())
+	{ return "  @IBOutlet weak var " + nme + "Input : UITextView!"; } 
     else 
     { return "  @IBOutlet weak var " + nme + "Input : UITextField!"; } 
   } 

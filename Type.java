@@ -20,13 +20,15 @@ public class Type extends ModelElement
   // For future use: 
 
   // boolean userDefined = false; 
-  Type elementType = null; 
+  Type elementType = null; // this is the range type of a map
+
   // Expression arrayBound = null; 
   boolean sorted = false;  // for collections 
 
   Type keyType = null;  // for maps -- by default this is String for a map
   // Note below the assumption that this is String, also in the code generators.
 
+  // cached type correspondence for MT synthesis: 
   static java.util.Map simMap = new java.util.HashMap(); 
    
   public Type(String nme, Vector vals)
@@ -40,7 +42,7 @@ public class Type extends ModelElement
     else if ("Real".equals(nme))
     { setName("double"); } 
     values = vals;
-  }
+  } // also convert EInt, ELong, etc to our types
 
   public Type(String nme, Type arg, Type range)
   { super(nme);
@@ -138,9 +140,9 @@ public class Type extends ModelElement
     { return elementType.metavariables(); } 
     else if ("Map".equals(name))
     { Vector vars = keyType.metavariables(); 
-	  vars.addAll(elementType.metavariables());
-	  return vars;  
-	} 
+      vars.addAll(elementType.metavariables());
+      return vars;  
+    } 
     return res; 
   } 
 
@@ -1047,6 +1049,21 @@ public class Type extends ModelElement
   { String attname = att.getName(); 
     Type t = att.getType(); 
     if (t == null) 
+    { return "_x." + attname; } 
+
+    String tname = t.getName(); 
+    if ("String".equals(tname))
+    { return "_x." + attname + " as NSString"; } 
+    else if (t.isNumeric())
+    { return "NSNumber(value: _x." + attname + ")"; } 
+    else
+    { return "NSString(string: _x." + attname + ")"; } 
+  } 
+
+  public static String nsOptionalValueOf(Attribute att) 
+  { String attname = att.getName(); 
+    Type t = att.getType(); 
+    if (t == null) 
     { return "_x." + attname + "!"; } 
 
     String tname = t.getName(); 
@@ -1566,8 +1583,9 @@ public class Type extends ModelElement
 
   public boolean isParsable()
   { String nme = getName(); 
-    if ("String".equals(nme) ||
-        "int".equals(nme) || "long".equals(nme) || "double".equals(nme))
+    if ("String".equals(nme) || "boolean".equals(nme) ||
+        "int".equals(nme) || "long".equals(nme) || 
+        "double".equals(nme))
     { return true; } 
     return false; 
   } // also boolean
@@ -1579,6 +1597,17 @@ public class Type extends ModelElement
     if (nme.equals("int")) { return "Integer.parseInt(" + data + ")"; } 
     else if (nme.equals("long")) { return "Long.parseLong(" + data + ")"; } 
     else if (nme.equals("double")) { return "Double.parseDouble(" + data + ")"; } 
+    if (nme.equals("boolean")) { return "Boolean.parseBoolean(" + data + ")"; } 
+    return data; 
+  } 
+
+  public String dataExtractionCodeIOS(String data)
+  { String nme = getName(); 
+    if (nme.equals("String")) 
+    { return data; } 
+    if (nme.equals("int")) { return "Int(" + data + ")"; } 
+    else if (nme.equals("long")) { return "Long(" + data + ")"; } 
+    else if (nme.equals("double")) { return "Double(" + data + ")"; } 
     // if (nme.equals("boolean")) { return "Boolean.parseBoolean(" + data + ")"; } 
     return data; 
   } 
@@ -1596,6 +1625,22 @@ public class Type extends ModelElement
  
     String res = "for (int _i = 0; _i < " + data + ".size(); _i++)\n" + 
              "    { " + ex + "." + aname + ".add(" + extractValue + "); }\n";   
+    return res; 
+  } 
+
+  public String collectionExtractionCodeIOS(String ex, String aname, String data)
+  { String nme = elementType.getName();
+    String extractValue = "_x"; // data + "[_i]"; 
+
+    if (nme.equals("int")) 
+    { extractValue = "Int(" + extractValue + ")"; } 
+    else if (nme.equals("long")) 
+    { extractValue = "Long(" + extractValue + ")"; } 
+    else if (nme.equals("double")) 
+    { extractValue = "Double(" + extractValue + ")"; }
+ 
+    String res = "for (_,_x) in " + data + ".enumerated()\n" + 
+             "    { " + ex + "." + aname + ".append(" + extractValue + ") }\n";   
     return res; 
   } 
 
@@ -2117,6 +2162,8 @@ public class Type extends ModelElement
     { return "WebDisplay()"; } 
     else if (nme.equals("ImageDisplay"))
     { return "ImageDisplay()"; } 
+    else if (nme.equals("GraphDisplay"))
+    { return "GraphDisplay.getInstance()"; } 
 
     if (isEntity) 
     { return "nil"; } 
@@ -2385,8 +2432,8 @@ public class Type extends ModelElement
     String nme = typ.getName(); 
     if (nme.equals("Set"))
     { String tname = "HashSet"; 
-      if (typ.isSorted()) 
-      { tname = "TreeSet"; } 
+    if (typ.isSorted()) 
+    { tname = "TreeSet"; } 
       return tname + "<" + et + ">"; 
     } 
     if (nme.equals("Sequence"))

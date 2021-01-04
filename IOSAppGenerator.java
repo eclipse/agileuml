@@ -245,7 +245,7 @@ public class IOSAppGenerator extends AppGenerator
       if (key != null) 
       { String pk = key.getName(); 
         out.println("  func get" + item + "ByPK(_val : String) -> " + item + "?"); 
-        out.println("  { let _res : " + item + "? = " + item + ".getByPK" + item + "(index: _val)"); 
+        out.println("  { var _res : " + item + "? = " + item + ".getByPK" + item + "(index: _val)"); 
         if (ee.isPersistent())
 		{ out.println("    if _res == nil && dbi != nil"); 
           out.println("    { let _list = dbi!.searchBy" + item + pk + "(_val: _val) ");
@@ -268,8 +268,9 @@ public class IOSAppGenerator extends AppGenerator
         out.println("  }"); 
         out.println(); 
         out.println("  func persist" + item + "(_x : " + item + ")"); 
-        out.println("  { let _vo : " + item + "VO = " + item + "VO(_x: _x)"); 
-        out.println("    create" + item + "(_x: _vo) "); 
+        out.println("  { // This assumes that the element is already in the database"); 
+		out.println("    let _vo : " + item + "VO = " + item + "VO(_x: _x)"); 
+        out.println("    edit" + item + "(_x: _vo) "); 
         out.println("  }"); 
         out.println(); 
       }  
@@ -595,6 +596,11 @@ public class IOSAppGenerator extends AppGenerator
       out.println("  init()"); 
       out.println("  { ");
       out.println("    dbi = Dbi.obtainDatabase(path: dbpath)"); 
+	  for (int j = 0; j < localPersistent.size(); j++) 
+	  { Entity pent = (Entity) localPersistent.get(j); 
+	    String pname = pent.getName(); 
+		out.println("    load" + pname + "()"); 
+	  } 
       out.println("  }");  
       out.println(); 
 	} 
@@ -747,7 +753,7 @@ public class IOSAppGenerator extends AppGenerator
       if (key != null) 
       { String pk = key.getName(); 
         out.println("  func get" + item + "ByPK(_val : String) -> " + item + "?"); 
-        out.println("  { let _res : " + item + "? = " + item + ".getByPK" + item + "(index: _val)"); 
+        out.println("  { var _res : " + item + "? = " + item + ".getByPK" + item + "(index: _val)"); 
         if (ee.isPersistent())
 		{ out.println("    if _res == nil && dbi != nil"); 
           out.println("    { let _list = dbi!.searchBy" + item + pk + "(_val: _val) ");
@@ -860,7 +866,13 @@ public class IOSAppGenerator extends AppGenerator
        out.println("    kill" + item + "(key: _id)");
        out.println("  }");
        out.println();
-       out.println("  func persist" + item + "(_x: " + item + ") { }"); 
+       out.println();
+       out.println(); 
+       out.println("  func persist" + item + "(_x : " + item + ")"); 
+       out.println("  { // This assumes that the element is already in the database"); 
+	   out.println("    let _vo : " + item + "VO = " + item + "VO(_x: _x)"); 
+       out.println("    edit" + item + "(_x: _vo) "); 
+       out.println("  }"); 
        out.println();  
      }  
 
@@ -1099,7 +1111,7 @@ public class IOSAppGenerator extends AppGenerator
     }
     else if (res != null && "GraphDisplay".equals(res.getType().getName()))
     { out.println("  @IBOutlet var resultOutput: LineChartView!"); 
-      out.println("  var graph: GraphDisplay = GraphDisplay.getInstance()"); 
+      out.println("  var graph: GraphDisplay = GraphDisplay.defaultInstance()"); 
       restype = "GraphDisplay"; 
     }
     else if (res != null) 
@@ -1283,7 +1295,7 @@ public class IOSAppGenerator extends AppGenerator
     }
     else if (res != null && "GraphDisplay".equals(res.getType().getName()))
     { out.println("  @IBOutlet var resultOutput: LineChartView!"); 
-      out.println("  var graph: GraphDisplay = GraphDisplay.getInstance()"); 
+      out.println("  var graph: GraphDisplay = GraphDisplay.defaultInstance()"); 
       restype = "GraphDisplay"; 
     }
     else if (res != null) 
@@ -1317,7 +1329,7 @@ public class IOSAppGenerator extends AppGenerator
       }
       else if (extres != null && "GraphDisplay".equals(extres.getType().getName()))
       { out.println("  @IBOutlet var " + extop + "resultOutput: LineChartView!"); 
-        out.println("  var " + extop + "graph: GraphDisplay = GraphDisplay.getInstance()"); 
+        out.println("  var " + extop + "graph: GraphDisplay = GraphDisplay.defaultInstance()"); 
         extrestype = "GraphDisplay"; 
       }
       else if (extres != null) 
@@ -1420,7 +1432,7 @@ public class IOSAppGenerator extends AppGenerator
           "    graph = result\n" + 
           "    let xpts = result.xpoints\n" + 
           "    let ypts = result.ypoints\n" + 
-		  "    let zpts = result.zpoints\n" + 
+          "    let zpts = result.zpoints\n" + 
           "    let xlbs = result.xlabels\n" + 
           "    if xlbs.count > 0\n" + 
           "    { drawNominalChart(dataPoints: xlbs, yvalues: ypts.map{ Double($0) }, zvalues: zpts.map{ Double($0) }, xname: result.xname, yname: result.yname) }\n" + 
@@ -1538,11 +1550,11 @@ public class IOSAppGenerator extends AppGenerator
           "    else if xpts.count > 0\n" + 
           "    { drawScalarChart(dataPoints: xpts, yvalues: ypts.map{ Double($0) }, zvalues: zpts.map{ Double($0) }, xname : result.xname, yname: result.yname) }\n"; 
           extrestype = "GraphDisplay"; 
-		} 
+        } 
         else 
         { extupdateScreen = extupdateScreen + "    " + extresult + ".text = String(result)"; 
 		  extrestype = extres.getType().getSwift(); 
-		}
+        }
       }
 
       if (extres != null) 
@@ -1554,7 +1566,7 @@ public class IOSAppGenerator extends AppGenerator
       out.println("  }");
     }
 	
-	out.println(); 
+    out.println(); 
     out.println("  override func didReceiveMemoryWarning()");
     out.println("  { super.didReceiveMemoryWarning() }");
     out.println("");
@@ -1592,17 +1604,17 @@ public class IOSAppGenerator extends AppGenerator
     out.println("    { var zdataEntries: [ChartDataEntry] = []");
     out.println("      for i in 0..<dataPoints.count");
     out.println("      { if i < zvalues.count");
-	out.println("        { let zdataEntry = ChartDataEntry(x: Double(i), y: zvalues[i])"); 
+    out.println("        { let zdataEntry = ChartDataEntry(x: Double(i), y: zvalues[i])"); 
     out.println("          zdataEntries.append(zdataEntry)");
     out.println("        }"); 
-	out.println("      }"); 
+    out.println("      }"); 
     out.println("      let linez = LineChartDataSet(entries: zdataEntries, label: \"zname\")"); 
     out.println("      linez.colors = [NSUIColor.orange]"); 
     out.println("      lineChartData.addDataSet(linez)");
     out.println("    }");
     out.println(""); 
     out.println("    resultOutput.data = lineChartData");
-	out.println("    resultOutput.chartDescription?.text = xname");   
+    out.println("    resultOutput.chartDescription?.text = xname");   
     out.println("  }"); 
     out.println("  "); 
     out.println("  func drawScalarChart(dataPoints: [Double], yvalues: [Double], zvalues: [Double], xname : String, yname : String)");  
@@ -1617,26 +1629,26 @@ public class IOSAppGenerator extends AppGenerator
     out.println("    xAxis.valueFormatter = self"); 
     out.println("    "); 
     out.println("    let lineChartDataSet = LineChartDataSet(entries: dataEntries, label: yname)"); 
-	out.println("    lineChartDataSet.colors = [NSUIColor.blue]"); 
+    out.println("    lineChartDataSet.colors = [NSUIColor.blue]"); 
     out.println("    let lineChartData = LineChartData()"); 
-	out.println("    lineChartData.addDataSet(lineChartDataSet)"); 
+    out.println("    lineChartData.addDataSet(lineChartDataSet)"); 
     out.println("    if zvalues.count > 0");
     out.println("    { var zdataEntries: [ChartDataEntry] = []");
     out.println("      for i in 0..<dataPoints.count");
     out.println("      { if i < zvalues.count");
-	out.println("        { let zdataEntry = ChartDataEntry(x: dataPoints[i], y: zvalues[i])"); 
+    out.println("        { let zdataEntry = ChartDataEntry(x: dataPoints[i], y: zvalues[i])"); 
     out.println("          zdataEntries.append(zdataEntry)");
     out.println("        }"); 
-	out.println("      }"); 
+    out.println("      }"); 
     out.println("      let linez = LineChartDataSet(entries: zdataEntries, label: \"zname\")"); 
     out.println("      linez.colors = [NSUIColor.orange]"); 
     out.println("      lineChartData.addDataSet(linez)");
     out.println("    }");
     out.println(""); 
     out.println("    resultOutput.data = lineChartData"); 
-	out.println("    resultOutput.chartDescription?.text = xname");   
+    out.println("    resultOutput.chartDescription?.text = xname");   
     out.println("  }"); 
-	out.println(); 
+    out.println(); 
   }
 
   public void singlePageAppSwiftUI(UseCase uc, String appName, String image, CGSpec cgs, Vector types, Vector entities, PrintWriter out)
@@ -1699,7 +1711,7 @@ public class IOSAppGenerator extends AppGenerator
     else if (res != null && "ImageDisplay".equals(res.getType().getName()))
     { out.println("      Image(" + resultVar + ".imageName).frame(width: 150).border(Color.gray)"); } 
     else if (res != null && "GraphDisplay".equals(res.getType().getName()))
-    { out.println("      GraphDisplayView(graph: " + resultVar + ")"); } 
+    { out.println("      LineView(chart: " + resultVar + ")"); } 
     else if (res != null) 
     { out.println("      HStack(spacing: 20) {");
       out.println("        Text(\"Result:\")"); 
@@ -1935,9 +1947,9 @@ public void iOSViewController(String systemName, String op, String feature, Enti
     out.println("");
     out.println("  override func viewDidLoad()");
     out.println("  { super.viewDidLoad()");
-    out.println("    let " + vo + " : " + evo + "? = " + bean + ".getCurrent" + ename + "()"); 
+    out.println("    let " + vo + " : " + evo + "? = " + bean + ".current" + ename); 
     out.println("    if " + vo + " != nil"); 
-    out.println("    { " + pk + "Input.text = " + vo + "." + pk + " }");
+    out.println("    { " + pk + "Input.text = " + vo + "!." + pk + " }");
     out.println("  }");
     out.println("");
  
@@ -2027,7 +2039,7 @@ public void iOSViewController(String systemName, String op, String feature, Enti
     out.println();
     out.println("  override func viewDidLoad()");
     out.println("  { super.viewDidLoad()");
-    out.println("    let " + vo + " : " + evo + "? = " + bean + ".getCurrent" + ename + "()"); 
+    out.println("    let " + vo + " : " + evo + "? = " + bean + ".current" + ename); 
     out.println("    if " + vo + " != nil {");
     for (int j = 0; j < atts.size(); j++)
     { Attribute att = (Attribute) atts.get(j); 
@@ -2144,8 +2156,7 @@ public void iOSViewController(String systemName, String op, String feature, Enti
   }
   
   public static void generateInternetAccessor(String packagename, PrintWriter out)
-  { out.println("import UIKit");
-    out.println("import Foundation");  
+  { out.println("import Foundation");  
     out.println(); 
     out.println("class InternetAccessor"); 
     out.println("{ var delegate : InternetCallback? = nil");
@@ -2157,7 +2168,7 @@ public void iOSViewController(String systemName, String op, String feature, Enti
     out.println("  func setDelegate(d : InternetCallback)");
     out.println("  { delegate = d }");
     out.println("");
-    out.println("  func getInstance() -> InternetAccessor");
+    out.println("  static func getInstance() -> InternetAccessor");
     out.println("  { if instance == nil");
     out.println("    { instance = InternetAccessor() }");
     out.println("    return instance!");
@@ -2167,17 +2178,22 @@ public void iOSViewController(String systemName, String op, String feature, Enti
     out.println("  { let urlref = URL(string: url)");
     out.println("    let task = urlSession.dataTask(with: urlref!)");
     out.println("    { (data,response,error) in");
-    out.println("      if let e = error"); 
-    out.println("      { delegate?.internetAccessCompleted(nil) }");
+    out.println("      if let _ = error"); 
+    out.println("      { self.delegate?.internetAccessCompleted(response: \"\") }");
     out.println("      else if let _ = response");
-    out.println("      { delegate?.internetAccessCompleted(String(data)) }");
+    out.println("      { var res : String = \"\""); 
+    out.println("        for (_,x) in data!.enumerated()");
+    out.println("        { res = res + String(Character(Unicode.Scalar(x))) }");
+    out.println("        ");
+    out.println("        self.delegate?.internetAccessCompleted(response: res)"); 
+	out.println("      }");
     out.println("    }");
     out.println("    task.resume()");
     out.println("  }");
     out.println("}");
     out.println("");
     out.println("protocol InternetCallback");
-    out.println("{ func internetAccessCompleted(response : String?) }");   
+    out.println("{ func internetAccessCompleted(response : String) }");   
     out.println("");
   }
 
@@ -2220,7 +2236,7 @@ public static void iosDateComponent(PrintWriter out)
 public static void generateIOSFileAccessor(PrintWriter out)
 { out.println("import Foundation");
   out.println("import Darwin");
-  out.println("import UIKit");
+  // out.println("import UIKit");
   out.println("");
   out.println("class FileAccessor");
   out.println("{");
@@ -2966,6 +2982,146 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("}"); 
   }
 
+  public static void generateSMSComponent(String appName, String packageName)
+  { String entfile = "SMSComponent.swift"; 
+    File entff = new File("output/" + packageName + "/" + entfile); 
+    try
+    { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entff)));
+      out.println("import Foundation");
+      out.println("");
+      out.println("import Darwin");
+      out.println("import UIKit");
+      out.println("import MessageUI");
+      out.println("");
+      out.println("class SMSComponent : NSObject, MFMessageComposeViewControllerDelegate");
+      out.println("{ let messager = MFMessageComposeViewController()");
+      out.println("      ");
+      out.println("  static var instance : SMSComponent? = nil");
+      out.println("    ");
+      out.println("  static func getInstance() -> SMSComponent");
+      out.println("  { if instance == nil");
+      out.println("    { instance = SMSComponent() }");
+      out.println("    return instance!");
+      out.println("  }");
+      out.println("    ");
+      out.println("  func canSendText() -> Bool");
+      out.println("  { return MFMessageComposeViewController.canSendText() }");
+      out.println("");
+      out.println("  func sendText(text : String, receivers : [String])");
+      out.println("  { messager.messageComposeDelegate = self");
+      out.println("    messager.recipients = receivers");
+      out.println("    messager.body = text");
+      out.println("    let vc = UIApplication.shared.windows.filter {$0.isKeyWindow}.first?.rootViewController");
+      out.println("    if vc  == nil");
+      out.println("    { print(\"Error: no root window\")");
+      out.println("      return");
+      out.println("    }");
+      out.println("    vc!.present(messager, animated: true, completion: nil)");
+      out.println("  }");
+      out.println("");
+      out.println("  func messageComposeViewController(_ controller: MFMessageComposeViewController, didFinishWith result: MessageComposeResult)");
+      out.println("  { controller.dismiss(animated: true, completion: nil) }");
+      out.println("}");
+	  out.close(); 
+	} catch (Exception _e) { }  
+  }
+
+  public static void generateMediaComponent(String appName, String packageName)
+  { String entfile = "MediaComponent.swift"; 
+    File entff = new File("output/" + packageName + "/" + entfile); 
+    try
+    { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entff)));
+      out.println("import Foundation");
+      out.println("");
+      out.println("import Darwin");
+      out.println("import UIKit");
+      out.println("import MediaPlayer");
+      out.println("/* Include MediaPlayer.framework in the BuildPhases/link with libraries list */");
+	  out.println(""); 
+      out.println("class MediaComponent");
+      out.println("{ static var instance : MediaComponent? = nil");
+      out.println("");
+      out.println("  init() { }");
+      out.println("");
+      out.println("  static func getInstance() -> MediaComponent");
+      out.println("  { if instance == nil");
+      out.println("    { instance = MediaComponent() }");
+      out.println("    return instance!");
+      out.println("  }");
+      out.println("");
+      out.println("  func playAudioAsync(source : String)");
+      out.println("  { let musicPlayer = MPMusicPlayerApplicationController.applicationQueuePlayer");
+      out.println("    var sources : [String] = [String]()");
+      out.println("    sources.append(source)");
+      out.println("    musicPlayer.setQueue(with: sources)");
+      out.println("");
+      out.println("    musicPlayer.play()");
+      out.println("  }");
+      out.println("");
+      out.println("  func stopPlay()");
+      out.println("  { let musicPlayer = MPMusicPlayerApplicationController.applicationQueuePlayer");
+      out.println("    musicPlayer.setQueue(with: [])"); 
+	  out.println("  }");
+      out.println("}"); 
+	  out.close(); 
+	} catch (Exception _e) { }  
+  }
+
+  public static void generatePhoneComponent(String systemName, String packageName)
+  { String entfile = "PhoneComponent.swift"; 
+    File entff = new File("output/" + packageName + "/" + entfile); 
+    try
+    { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entff)));
+      // out.println("package " + packageName + ";"); 
+      out.println("import Foundation");
+      out.println("import CallKit");
+      out.println(""); 
+      out.println("class PhoneComponent : NSObject, CXProviderDelegate");
+      out.println("{ static var instance : PhoneComponent? = nil");
+      out.println("    ");
+      out.println("  static func getInstance() -> PhoneComponent");
+      out.println("  { if instance == nil");
+      out.println("    { instance = PhoneComponent() }");
+      out.println("    return instance!");
+      out.println("  }");
+      out.println("");
+      out.println("  func providerDidReset(_ provider: CXProvider) { }");
+      out.println("    ");
+      out.println("  func hasPhoneFeature() -> Bool");
+      out.println("  { let callController : CXCallController? = CXCallController()");
+      out.println("    return callController != nil");
+      out.println("  }");
+      out.println("");
+      out.println("  func makeCall(number : String)");
+      out.println("  { let uuid = UUID()");
+      out.println("    let handle = CXHandle(type: .phoneNumber, value: number)");
+      out.println("    let callController : CXCallController = CXCallController()");
+      out.println("    let startCallAction = CXStartCallAction(call: uuid, handle: handle)");
+      out.println("     ");
+      out.println("    let transaction = CXTransaction(action: startCallAction)");
+      out.println("    callController.request(transaction)");
+      out.println("      { error in");
+      out.println("        if let error = error");
+      out.println("        { print(\"Error requesting transaction: \" + error) }");
+      out.println("        else");
+      out.println("        { print(\"Requested transaction successfully\") }");
+      out.println("     }");
+      out.println("  }");
+      out.println("  ");
+      out.println("  func provider(_ provider: CXProvider, perform action: CXAnswerCallAction)");
+      out.println("  { action.fulfill() }");
+      out.println("}");
+      out.close();
+    }  
+    catch(Exception e) { } 
+  }	   
+
   public static void generateGraphDisplay(String packageName)
   { String entfile = "GraphDisplay.swift"; 
     File entff = new File("output/" + packageName + "/" + entfile); 
@@ -2975,11 +3131,11 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
                                 new FileWriter(entff)));
       // out.println("package " + packageName + ";"); 
       out.println("import Foundation"); 
-  	  out.println("import UIKit"); 
+      out.println("import UIKit"); 
       out.println("import Charts");
       out.println("");
       out.println("class GraphDisplay");
-      out.println("{ var graphKind : String = \"line\"");
+      out.println("{ var kind : String = \"line\"");
       out.println("  var xpoints : [Double] = [Double]()");
       out.println("  var xlabels : [String] = [String]()");
       out.println("  var ypoints : [Double] = [Double]()");
@@ -2998,7 +3154,7 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
       out.println("");
       out.println("  init() { }"); 
       out.println("");
-      out.println("  static func getInstance() -> GraphDisplay");
+      out.println("  static func defaultInstance() -> GraphDisplay");
       out.println("  { if (instance == nil) ");
       out.println("    { instance = GraphDisplay() }");
       out.println("    return instance!");
@@ -3018,16 +3174,21 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
       out.println("  func redraw() { }"); 
       out.println("");
       out.println("  func setXScalar(xvalues : [Double])");
-      out.println("  { xpoints = xvalues }");
+      out.println("  { xpoints = [Double]()"); 
+      out.println("    xpoints = xvalues }");
       out.println("");
       out.println("  func setXNominal(xvalues : [String])");
-      out.println("  { xlabels = xvalues }");
+      out.println("  { xlabels = [String]()"); 
+      out.println("    xlabels = xvalues }");
       out.println("");
       out.println("  func setYPoints(yvalues : [Double])");
-      out.println("  { ypoints = yvalues }");
+      out.println("  { ypoints = [Double]()");       
+      out.println("    ypoints = yvalues"); 
+      out.println("  }");
       out.println("");
       out.println("  func setZPoints(zvalues : [Double])");
-      out.println("  { zpoints = zvalues }");
+      out.println("  { zpoints = [Double]()"); 
+      out.println("    zpoints = zvalues }");
       out.println("");
       out.println("  func setxname(xname : String)");
       out.println("  { self.xname = xname }");
@@ -3039,7 +3200,7 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
       out.println("  { self.zname = zname }");
       out.println("");
       out.println("  func setGraphKind(kind : String)");
-      out.println("  { graphKind = kind }"); 
+      out.println("  { self.kind = kind }"); 
       out.println("");
       out.println("  func addLine(name : String, xvalues : [Double], yvalues : [Double])");
       out.println("  { linesx[name] = xvalues");
@@ -3051,10 +3212,223 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
       out.println("    labelsy[name] = y");
       out.println("  }"); 
       out.println("}");
-	  out.close(); 
-	} catch (Exception e) { }  
+      out.close(); 
+    } catch (Exception e) { }  
   }
-  
+
+  public static void generateSwiftUIGraphDisplay(String packageName)
+  { String entfile = "GraphDisplay.swift"; 
+    File entff = new File("output/" + packageName + "/" + entfile); 
+    try
+    { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entff)));
+
+      out.println("import Foundation"); 
+      out.println("import SwiftUI"); 
+      out.println("import Charts");
+      out.println("");
+      out.println("class GraphDisplay: ObservableObject");
+      out.println("{ @Published var kind : String = \"line\"");
+      out.println("  @Published var xpoints : [Double] = [0.0, 10.0, 20.0]");
+      out.println("  @Published var xlabels : [String] = [\"1\", \"2\", \"3\"]");
+      out.println("  @Published var ypoints : [Double] = [0.0, 10.0, 20.0]");
+      out.println("  @Published var zpoints : [Double] = [Double]()");
+      out.println("");
+      out.println("  @Published var linesx : Dictionary<String,[Double]> = Dictionary<String,[Double]>()");
+      out.println("  @Published var linesy : Dictionary<String,[Double]> = Dictionary<String,[Double]>()");
+      out.println("  @Published var labelsx : Dictionary<String,Double> = Dictionary<String,Double>()");
+      out.println("  @Published var labelsy : Dictionary<String,Double> = Dictionary<String,Double>()");
+      out.println("  ");
+      out.println("  @Published var xaxisName : String = \"X-axis\"");
+      out.println("  @Published var yaxisName : String = \"Y-axis\"");
+      out.println("  @Published var zname : String = \"\"");
+      out.println("");
+      out.println("  static var instance : GraphDisplay? = nil");
+      out.println("");
+      out.println("  init() { }"); 
+      out.println("");
+      out.println("  static func defaultInstance() -> GraphDisplay");
+      out.println("  { if (instance == nil) ");
+      out.println("    { instance = GraphDisplay() }");
+      out.println("    return instance!");
+      out.println("  }");
+      out.println("");
+      out.println("  func reset()");
+      out.println("  { xpoints = [Double]()");
+      out.println("    ypoints = [Double]()");
+      out.println("    zpoints = [Double]()");
+      out.println("    xlabels = [String]()");
+      out.println("    linesx = Dictionary<String,[Double]>()");
+      out.println("    linesy = Dictionary<String,[Double]>()");
+      out.println("    labelsx = Dictionary<String,Double>()");
+      out.println("    labelsy = Dictionary<String,Double>()");
+      out.println("  }");
+      out.println("");
+      out.println("  func redraw() { }"); 
+      out.println("");
+      out.println("  func setXScalar(xvalues : [Double])");
+      out.println("  { xpoints = [Double]()"); 
+      out.println("    xpoints = xvalues }");
+      out.println("");
+      out.println("  func setXNominal(xvalues : [String])");
+      out.println("  { xlabels = [String]()"); 
+      out.println("    xlabels = xvalues }");
+      out.println("");
+      out.println("  func setYPoints(yvalues : [Double])");
+      out.println("  { ypoints = [Double]()");       
+      out.println("    ypoints = yvalues"); 
+      out.println("  }");
+      out.println("");
+      out.println("  func setZPoints(zvalues : [Double])");
+      out.println("  { zpoints = [Double]()"); 
+      out.println("    zpoints = zvalues }");
+      out.println("");
+      out.println("  func setxname(xname : String)");
+      out.println("  { self.xaxisName = xname }");
+      out.println("");
+      out.println("  func setyname(yname : String)");
+      out.println("  { self.yaxisName = yname }");
+      out.println("");
+      out.println("  func setzname(zname : String)");
+      out.println("  { self.zname = zname }");
+      out.println("");
+      out.println("  func setGraphKind(kind : String)");
+      out.println("  { self.kind = kind }"); 
+      out.println("");
+      out.println("  func addLine(name : String, xvalues : [Double], yvalues : [Double])");
+      out.println("  { linesx[name] = xvalues");
+      out.println("    linesy[name] = yvalues");
+      out.println("  }"); 
+      out.println("  ");
+      out.println("  func addLabel(name : String, x : Double, y : Double)");
+      out.println("  { labelsx[name] = x");
+      out.println("    labelsy[name] = y");
+      out.println("  }"); 
+      out.println("}");
+      out.close(); 
+    } catch (Exception e) { }  
+  }
+
+  public static void generateLineView(String packageName)
+  { String entfile = "LineView.swift"; 
+    File entff = new File("output/" + packageName + "/" + entfile); 
+    try
+    { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(entff)));
+      // out.println("package " + packageName + ";"); 
+      out.println("import Foundation");
+      out.println("import SwiftUI");
+      out.println("import Charts");
+      out.println("");
+      out.println("final class LineView : UIViewRepresentable, IAxisValueFormatter");
+      out.println("{ var graph: GraphDisplay = GraphDisplay.defaultInstance()");
+      out.println("");
+      out.println("    init(chart: GraphDisplay)");
+      out.println("    { graph = chart; }");
+      out.println("    ");
+      out.println("    func stringForValue(_ value: Double, axis: AxisBase?) -> String {");
+      out.println("        let xlbs : [String] = graph.xlabels");
+      out.println("        let xpts = graph.xpoints");
+      out.println("        let ind = Int(round(value))");
+      out.println("        if xlbs.count >= ind && ind >= 1");
+      out.println("        { return xlbs[ind-1] }");
+      out.println("        else if xpts.count >= ind && ind >= 1");
+      out.println("        { return String(Double(Int(1000*xpts[ind-1]))/1000) }");
+      out.println("        return \"\"");
+      out.println("    }");
+      out.println("");
+      out.println("  func makeUIView(context : Context) -> LineChartView");
+      out.println("  { let chart = LineChartView()");
+      out.println("    let xlbs = graph.xlabels");
+      out.println("    let xpts = graph.xpoints");
+      out.println("    if xlbs.count > 0");
+      out.println("    { drawNominalChart(chart: chart, dataPoints: xlbs, yvalues: graph.ypoints.map{ Double($0) }, zvalues: graph.zpoints.map{ Double($0) }, xname: graph.xaxisName, yname: graph.yaxisName) }");
+      out.println("    else if xpts.count > 0");
+      out.println("    { drawScalarChart(chart: chart, dataPoints: graph.xpoints, yvalues: graph.ypoints, zvalues: graph.zpoints, xname: graph.xaxisName, yname: graph.yaxisName) }");
+      out.println("    return chart");
+      out.println("  }");
+      out.println("");
+      out.println("    func updateUIView(_ uiView : LineChartView, context : Context)");
+      out.println("    {");
+      out.println("        let xlbs = graph.xlabels");
+      out.println("        let xpts = graph.xpoints");
+      out.println("        if xlbs.count > 0");
+      out.println("        { drawNominalChart(chart: uiView, dataPoints: xlbs, yvalues: graph.ypoints.map{ Double($0) }, zvalues: graph.zpoints.map{ Double($0) }, xname: graph.xaxisName, yname: graph.yaxisName) }");
+      out.println("        else if xpts.count > 0");
+      out.println("        { drawScalarChart(chart: uiView, dataPoints: graph.xpoints, yvalues: graph.ypoints, zvalues: graph.zpoints, xname: graph.xaxisName, yname: graph.yaxisName) }");
+      out.println("    }");
+      out.println("    ");
+      out.println("    func drawNominalChart(chart: LineChartView, dataPoints: [String], yvalues: [Double], zvalues : [Double], xname : String, yname : String)");
+      out.println("    { var dataEntries: [ChartDataEntry] = []");
+      out.println("      ");
+      out.println("      for i in 0..<dataPoints.count");
+      out.println("      { let dataEntry = ChartDataEntry(x: Double(i), y: yvalues[i])");
+      out.println("        dataEntries.append(dataEntry)");
+      out.println("      }");
+      out.println("      ");
+      out.println("      let xAxis = chart.xAxis");
+      out.println("      xAxis.valueFormatter = self");
+      out.println("    ");
+      out.println("      let lineChartDataSet = LineChartDataSet(entries: dataEntries, label: yname)");
+      out.println("      lineChartDataSet.colors = [NSUIColor.blue]");
+      out.println("      let lineChartData = LineChartData()");
+      out.println("      lineChartData.addDataSet(lineChartDataSet)");
+      out.println("      if zvalues.count > 0");
+      out.println("      { var zdataEntries: [ChartDataEntry] = []");
+      out.println("        for i in 0..<dataPoints.count");
+      out.println("        { if i < zvalues.count");
+      out.println("          { let zdataEntry = ChartDataEntry(x: Double(i), y: zvalues[i])");
+      out.println("            zdataEntries.append(zdataEntry)");
+      out.println("          }");
+      out.println("        }");
+      out.println("        let linez = LineChartDataSet(entries: zdataEntries, label: \"\")");
+      out.println("        linez.colors = [NSUIColor.orange]");
+      out.println("        lineChartData.addDataSet(linez)");
+      out.println("      }");
+      out.println("");
+      out.println("      chart.data = lineChartData");
+      out.println("      chart.chartDescription?.text = xname");
+      out.println("    }");
+      out.println("");
+      out.println("  func drawScalarChart(chart : LineChartView, dataPoints: [Double], yvalues: [Double], zvalues: [Double], xname : String, yname : String)"); 
+      out.println("  { var dataEntries: [ChartDataEntry] = []");
+      out.println("          ");
+      out.println("    for i in 0..<dataPoints.count");
+      out.println("    { let dataEntry = ChartDataEntry(x: dataPoints[i], y: yvalues[i])");
+      out.println("      dataEntries.append(dataEntry)");
+      out.println("    }");
+      out.println("        ");
+      out.println("          let xAxis = chart.xAxis");
+      out.println("          xAxis.valueFormatter = self");
+      out.println("          ");
+      out.println("          let lineChartDataSet = LineChartDataSet(entries: dataEntries, label: yname)");
+      out.println("          lineChartDataSet.colors = [NSUIColor.blue]");
+      out.println("          let lineChartData = LineChartData()");
+      out.println("          lineChartData.addDataSet(lineChartDataSet)");
+      out.println("          if zvalues.count > 0");
+      out.println("          { var zdataEntries: [ChartDataEntry] = []");
+      out.println("            for i in 0..<dataPoints.count");
+      out.println("            { if i < zvalues.count");
+      out.println("              { let zdataEntry = ChartDataEntry(x: dataPoints[i], y: zvalues[i])");
+      out.println("                zdataEntries.append(zdataEntry)");
+      out.println("              }");
+      out.println("            }");
+      out.println("            let linez = LineChartDataSet(entries: zdataEntries, label: \"\")");
+      out.println("            linez.colors = [NSUIColor.orange]");
+      out.println("            lineChartData.addDataSet(linez)");
+      out.println("          }");
+      out.println("    ");
+      out.println("          chart.data = lineChartData");
+      out.println("          chart.chartDescription?.text = xname");
+      out.println("        }");
+      out.println("    ");
+      out.println("}");  
+	  out.close(); 
+	} catch (Exception _w) { } 
+  }
+
   public static void main(String[] args)
   { // System.out.println(Double.MAX_VALUE); 
 

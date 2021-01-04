@@ -133,7 +133,8 @@ class BinaryExpression extends Expression
     { Expression zero = new BasicExpression(0);
       Expression eqz = new BinaryExpression("=",left,zero);
       Expression geqz = new BinaryExpression(">",right,zero); 
-      Expression pex = new BinaryExpression("=>",eqz,geqz); 
+      Expression pex = new BinaryExpression("=>",eqz,geqz);
+	  pex.setBrackets(true);  
       return simplify("&",res,pex,null);
     }  // left < 0  =>  right->oclIsTypeOf("int")
 
@@ -3622,10 +3623,16 @@ public boolean conflictsWithIn(String op, Expression el,
     if (rprim) 
     { rw = right.wrap(rqf); }
  
-    // System.out.println(left + " is primitive: " + lprim + " is multiple: " + lmult); 
-    // System.out.println(right + " is primitive: " + rprim + " is multiple: " + rmult); 
+    System.out.println(left + " is primitive: " + lprim + " is multiple: " + lmult); 
+    System.out.println(right + " is primitive: " + rprim + " is multiple: " + rmult); 
 
 
+    String typ = ""; 
+	if (type != null) 
+	{ typ = type.getJava(); } 
+	else 
+	{ System.err.println("!! Warning: no type for " + this); }
+	 
     String javaOp = javaOpOf(operator);
     res = lqf + " " + javaOp + " " + rqf; // default
     // if & or or: &&, ||
@@ -3640,7 +3647,6 @@ public boolean conflictsWithIn(String op, Expression el,
     { String getany = anyQueryForm(lqf,rqf,rprim,env,local); 
       if (Type.isPrimitiveType(type))
       { return unwrap(getany); } 
-      String typ = type.getJava(); 
       return "((" + typ + ") " + getany + ")"; 
     } 
 
@@ -3678,28 +3684,36 @@ public boolean conflictsWithIn(String op, Expression el,
       if (left.type == null) 
       { if ("String".equals(right.type + ""))
         { lqf = "((Map) " + lqf + ")"; 
-          left.type = new Type("Map", null); 
+          left.type = new Type("Map", null);
+		  left.type.elementType = type;  
         } 
         else 
         { lqf = "((List) " + lqf + ")"; 
-          left.type = new Type("Sequence", null); 
+          left.type = new Type("Sequence", null);
+		  left.type.elementType = type;  
         } 
       } 
 
-      String getind = lqf + ".get(" + rqf + " - 1)"; 
-      if ("String".equals(right.type + ""))  // a map lookup
+      String ind = lqf + ".get(" + rqf + ")"; 
+      String getind = lqf + ".get(" + rqf + " - 1)";
+	   
+      if (left.type != null && left.type.isMapType())
+	  { return "((" + typ + ") " + ind + ")"; }
+      
+	  if ("String".equals(right.type + ""))  // a map lookup
       { getind = lqf + ".get(" + rqf + ")"; } 
 
       if (type == null) 
       { if (left.elementType == null) 
         { return getind; } 
         else 
-        { type = left.elementType; } 
+        { type = left.elementType; 
+		  typ = type.getJava(); 
+		} 
       } 
 
       if (Type.isPrimitiveType(type))
       { return unwrap(getind); } 
-      String typ = type.getJava(); 
       return "((" + typ + ") " + getind + ")"; 
     } 
 
@@ -3725,7 +3739,8 @@ public boolean conflictsWithIn(String op, Expression el,
       { entity = left.entity; } // the owner of the relation being closured
       else if (left instanceof SetExpression)
       { entity = ((SetExpression) left).findEntity(); 
-        type = new Type("Set", null); 
+        type = new Type("Set", null);
+		typ = type.getJava();  
       } 
 
       if (entity == null) 
@@ -3738,7 +3753,8 @@ public boolean conflictsWithIn(String op, Expression el,
       if (left.isMultiple()) {} 
       else 
       { System.err.println("ERROR: LHS of " + this + " must be collection");                             
-        JOptionPane.showMessageDialog(null, "ERROR: LHS of " + this + " must be collection",                               "Type error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(null, "ERROR: LHS of " + this + " must be collection",                               
+		                              "Type error", JOptionPane.ERROR_MESSAGE);
       }
 
       if (entity != null)       
@@ -3752,7 +3768,8 @@ public boolean conflictsWithIn(String op, Expression el,
  
           if (ast.isClosurable()) { } 
           else 
-          { JOptionPane.showMessageDialog(null, "ERROR: association in " + this + " cannot be closured",                               "Expression error", JOptionPane.ERROR_MESSAGE);
+          { JOptionPane.showMessageDialog(null, "ERROR: association in " + this + " cannot be closured",                               
+		                                  "Expression error", JOptionPane.ERROR_MESSAGE);
           }
           Entity ent1 = ast.getEntity1(); 
           return "Set.closure" + ent1.getName() + rel + "(" + lqf + ")";  
@@ -3922,7 +3939,8 @@ public boolean conflictsWithIn(String op, Expression el,
         bNeeded = true; 
       } 
       else   
-      { res = lqf + " " + operator + " " + rqf; 
+      { // res = lqf + " " + operator + " " + rqf;
+	    res = composeSetQueryForms(lqf,rqf); 
         bNeeded = true; 
       } // composeSetQueryForms(lqf,rs,rqf); }  
     }
@@ -3994,6 +4012,13 @@ public boolean conflictsWithIn(String op, Expression el,
     { rw = right.wrap(rqf); } 
 
     String javaOp = javaOpOf(operator);
+
+    String typ = ""; 
+	if (type != null) 
+	{ typ = type.getJava6(); } 
+	else 
+	{ System.err.println("!! Warning: no type for " + this); }
+ 
     res = lqf + " " + javaOp + " " + rqf; // default
     // if & or or: &&, ||
 
@@ -4007,7 +4032,7 @@ public boolean conflictsWithIn(String op, Expression el,
     { String getany = anyQueryFormJava6(lqf,rqf,rprim,env,local); 
       if (Type.isPrimitiveType(type))
       { return unwrap(getany); } 
-      String typ = type.getJava6(); 
+       
       return "((" + typ + ") " + getany + ")"; 
     } 
 
@@ -4041,11 +4066,14 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->at") && type != null)
     { String getind = lqf + ".get(" + rqf + " - 1)"; 
-      if ("String".equals(left.type + ""))
+      String ind = lqf + ".get(" + rqf + ")"; 
+      
+	  if ("String".equals(left.type + ""))
       { return "(" + lqf + ".charAt(" + rqf + " - 1) + \"\")"; }  // and for Java6, 7, etc. 
+      else if (left.type != null && left.type.isMapType())
+	  { return "((" + typ + ") " + ind + ")"; }
       else if (Type.isPrimitiveType(type))
       { return unwrap(getind); } 
-      String typ = type.getJava6(); 
       return "((" + typ + ") " + getind + ")"; 
     } 
 
@@ -4277,6 +4305,13 @@ public boolean conflictsWithIn(String op, Expression el,
     { rw = right.wrap(rqf); } 
 
     String javaOp = javaOpOf(operator);
+
+    String typ = ""; 
+	if (type != null) 
+	{ typ = type.getJava7(elementType); } 
+	else 
+	{ System.err.println("!! Warning: no type for " + this); }
+	
     res = lqf + " " + javaOp + " " + rqf; // default
     // if & or or: &&, ||
 
@@ -4290,7 +4325,6 @@ public boolean conflictsWithIn(String op, Expression el,
     { String getany = anyQueryFormJava7(lqf,rqf,rprim,env,local); 
       if (Type.isPrimitiveType(type))
       { return unwrap(getany); } 
-      String typ = type.getJava7(elementType); 
       return "((" + typ + ") " + getany + ")"; 
     } 
 
@@ -4325,11 +4359,14 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->at") && type != null)
     { String getind = lqf + ".get(" + rqf + " - 1)"; 
+      String ind = lqf + ".get(" + rqf + ")"; 
+      
       if ("String".equals(left.type + ""))
       { return "(" + lqf + ".charAt(" + rqf + " - 1) + \"\")"; }  // and for Java6, 7, etc. 
+	  else if (left.type != null && left.type.isMapType())
+	  { return "((" + typ + ") " + ind + ")"; }
       else if (Type.isPrimitiveType(type))
       { return unwrap(getind); } 
-      String typ = type.getJava7(elementType); 
       return "((" + typ + ") " + getind + ")"; 
     } 
 
@@ -4600,8 +4637,13 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->at") && type != null)
     { String typ = type.getCSharp(); 
-      if ("String".equals(left.type + ""))
+      
+	  if ("String".equals(left.type + ""))
       { return "(" + lqf + ").Substring(" + rqf + "-1 , 1)"; } 
+      
+	  if (left.type != null && left.type.isMapType())
+	  { return "((" + typ + ") " + lqf + "[" + rqf + "])"; }
+	  
       return "((" + typ + ") " + lqf + "[" + rqf + " - 1])"; 
     } 
 
@@ -4909,8 +4951,13 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->at") && type != null)
     { String typ = type.getCPP(elementType); 
+
       if ("String".equals(left.type + ""))
       { return "(" + lqf + ").substr(" + rqf + "-1 , 1)"; } 
+
+      if (left.type != null && left.type.isMapType())
+	  { return "((" + typ + ") " + lqf + "->at(" + rqf + "))"; }
+
       return "((" + typ + ") " + lqf + "->at(" + rqf + " - 1))"; 
     } 
 	
@@ -8840,7 +8887,7 @@ public boolean conflictsWithIn(String op, Expression el,
     else if (operator.equals("->excluding"))  
     { res = "Set.subtract(" + lqf + "," + rqf + ")"; } 
     else if (operator.equals("\\/") || operator.equals("->union")) 
-    { if (left.isMap() && right.isMap())
+    { if (left.isMap())
 	  { res = "Set.unionMap(" + lqf + "," + rqf + ")"; }
 	  else if (left.isOrdered() && right.isOrdered())
       { res = "Set.concatenate(" + lqf + ", " + rqf + ")"; } 
@@ -8854,7 +8901,7 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "Set.union(" + lqf + "," + rqf + ")"; }
     }
     else if (operator.equals("/\\") || operator.equals("->intersection"))
-    { if (left.isMap() && right.isMap())
+    { if (left.isMap())
 	  { res = "Set.intersectionMap(" + lqf + "," + rqf + ")"; } 
 	  else 
 	  { res = "Set.intersection(" + lqf + "," + rqf + ")"; }
@@ -8862,7 +8909,7 @@ public boolean conflictsWithIn(String op, Expression el,
     else if (operator.equals("/:") || operator.equals("/<:"))
     { res = "!(" + rqf + ".containsAll(" + lqf + "))"; } 
     else if (operator.equals("->excludesAll"))
-    { if (left.isMap() && right.isMap())
+    { if (left.isMap())
 	  { res = "Set.excludesAllMap(" + lqf + "," + rqf + ")"; } 
 	  else 
 	  { res = "(Set.intersection(" + rqf + "," + lqf + ").size() == 0)"; }
@@ -8887,13 +8934,13 @@ public boolean conflictsWithIn(String op, Expression el,
     else if (operator.equals(":") || operator.equals("<:")) 
     { res = rqf + ".containsAll(" + lqf + ")"; }
     else if (operator.equals("->includesAll"))
-    { if (left.isMap() && right.isMap())
+    { if (left.isMap())
 	  { res = "Set.includesAllMap(" + lqf + "," + rqf + ")"; } 
 	  else 
 	  { res = lqf + ".containsAll(" + rqf + ")"; }
 	}
     else if (operator.equals("-"))
-    { if (left.isMap() && right.isMap())
+    { if (left.isMap())
 	  { res = "Set.excludeAllMap(" + lqf + "," + rqf + ")"; } 
 	  else 
 	  { res = "Set.subtract(" + lqf + "," + rqf + ")"; }
@@ -8901,7 +8948,7 @@ public boolean conflictsWithIn(String op, Expression el,
     else if (operator.equals("->excluding"))  
     { res = "Set.subtract(" + lqf + "," + rqf + ")"; } 
     else if (operator.equals("\\/") || operator.equals("->union")) 
-    { if (left.isMap() && right.isMap())
+    { if (left.isMap())
 	  { res = "Set.unionMap(" + lqf + "," + rqf + ")"; }
 	  else if (left.isOrdered() && right.isOrdered())
       { res = "Set.concatenate(" + lqf + ", " + rqf + ")"; } 
@@ -8915,7 +8962,7 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "Set.union(" + lqf + "," + rqf + ")"; }
     } 
     else if (operator.equals("/\\") || operator.equals("->intersection"))
-    { if (left.isMap() && right.isMap())
+    { if (left.isMap())
 	  { res = "Set.intersectionMap(" + lqf + "," + rqf + ")"; } 
 	  else 
 	  { res = "Set.intersection(" + lqf + "," + rqf + ")"; }
@@ -8923,7 +8970,7 @@ public boolean conflictsWithIn(String op, Expression el,
     else if (operator.equals("/:") || operator.equals("/<:"))
     { res = "!(" + rqf + ".containsAll(" + lqf + "))"; } 
     else if (operator.equals("->excludesAll"))
-    { if (left.isMap() && right.isMap())
+    { if (left.isMap())
 	  { res = "Set.excludesAllMap(" + lqf + "," + rqf + ")"; } 
 	  else 
 	  { res = "Collections.disjoint(" + lqf + "," + rqf + ")"; }
