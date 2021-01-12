@@ -2,7 +2,7 @@ import java.util.*;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003,2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -1415,6 +1415,8 @@ public class ModelSpecification
 		      emx.addMapping(amx); 
 			} 
 		  }
+		  // Or - identify a specific string-to-string mapping. Eg., "Real" |-> "double", etc. 
+		  
 	    }	
 	    else if (satt.isBoolean() && tatt.isBoolean())
 	    { boolean[] sattvalues = new boolean[en]; 
@@ -1483,6 +1485,35 @@ public class ModelSpecification
 		
 		  if (alldefined && AuxMath.isCopy(sattvalues,tattvalues,this))
  		  { System.out.println(">> Copy feature mapping " + sattname + " |--> " + tattname); 
+		    AttributeMatching amx = new AttributeMatching(satt, tatt); 
+		    res.add(amx); 
+		    emx.addMapping(amx); 
+		  }
+		} 
+	    else if (satt.isEntity() && tatt.isCollection())
+	    { Vector[] sattvalues = new Vector[en]; 
+          Vector[] tattvalues = new Vector[en];
+  	      boolean alldefined = true; 
+	
+							 	 
+	      for (int j = 0; j < en; j++) 
+		  { Vector pair = (Vector) pairs.get(j); 
+		    ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+		    ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+		    // if (sobj.hasDefinedValue(satt,this) && tobj.hasDefinedValue(tattname)) { } 
+            // else 
+		    // { alldefined = false; } 
+			ObjectSpecification xobj = sobj.getReferredObject(sattname,this);
+			// Object xobj = sobj.getValueOf(satt,this); 
+		    sattvalues[j] = new Vector(); 
+			sattvalues[j].add(xobj);  
+	        tattvalues[j] = tobj.getCollection(tattname);
+			System.out.println(">> Checking inclusion feature mapping " + sattvalues[j] + " |--> " + tattvalues[j]); 
+		     
+		  }
+		
+		  if (alldefined && AuxMath.isCopy(sattvalues,tattvalues,this))
+ 		  { System.out.println(">> Inclusion feature mapping " + sattname + " |--> " + tattname); 
 		    AttributeMatching amx = new AttributeMatching(satt, tatt); 
 		    res.add(amx); 
 		    emx.addMapping(amx); 

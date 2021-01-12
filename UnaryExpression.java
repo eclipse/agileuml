@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003,2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -16,6 +16,7 @@ import javax.swing.JOptionPane;
 public class UnaryExpression extends Expression
 { String operator; 
   Expression argument; 
+  Attribute accumulator = null;      // lambda
 
   // For expressions   e->size()  e->any()  s->isDeleted()  etc
 
@@ -55,6 +56,10 @@ public class UnaryExpression extends Expression
     res.entity = entity; 
     res.multiplicity = multiplicity;
 	res.formalParameter = formalParameter; 
+	if (accumulator != null) 
+	{ Attribute newacc = new Attribute(accumulator.getName(), accumulator.getType(), ModelElement.INTERNAL); 
+	  res.accumulator = newacc; 
+	}
     return res;   
   }  
 
@@ -1016,7 +1021,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return res; 
     }
     return res; 
-  }   // default
+  }   // default. lambda should not have a write frame. 
 
   public Vector wr()
   { Vector res = new Vector(); 
@@ -1063,6 +1068,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         "->asSequence".equals(operator) ||
         "->reverse".equals(operator) || "->sort".equals(operator))
     { return true; } 
+	
+	if ("lambda".equals(operator))
+	{ return argument.isOrdered(); }
 
     return false; 
   } 
@@ -1078,6 +1086,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if ("->front".equals(operator) || "->tail".equals(operator) ||
         "->asSequence".equals(operator)) // || "->reverse".equals(operator))
     { return argument.isSorted(); } 
+
+	if ("lambda".equals(operator))
+	{ return argument.isSorted(); }
 
     return false; 
   } 
@@ -1095,6 +1106,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         "->asSequence".equals(operator) ||
         "->reverse".equals(operator) || "->sort".equals(operator))
     { return true; } 
+
+	if ("lambda".equals(operator))
+	{ return argument.isOrderedB(); }
 
     return false; 
   } 
@@ -1216,8 +1230,12 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
   public Vector metavariables() 
   { Vector res = new Vector(); 
-    // if ("_".equals(operator))
-    // { res.add("_" + argument); } 
+    if ("lambda".equals(operator))
+    { res.add("_1"); 
+	  res.add("_2"); 
+	  res.add("_3"); 
+	  return res; 
+	} 
     // else 
     return argument.metavariables(); 
   } 
@@ -1262,6 +1280,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return true; 
     } 
 
+	if ("lambda".equals(operator))
+	{ return argument.isPrimitive(); }
+
     return false; 
   } 
 
@@ -1270,7 +1291,25 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
   public boolean typeCheck(final Vector typs, final Vector ents,
                            final Vector contexts, final Vector env)
-  { boolean res = argument.typeCheck(typs,ents,contexts,env); 
+  { 
+  
+    if (operator.equals("lambda") && accumulator != null)
+    { Vector context = new Vector(); 
+	  context.addAll(contexts); 
+
+      Vector env1 = new Vector(); 
+      env1.addAll(env); 
+      env1.add(accumulator); 
+      boolean rtc = argument.typeCheck(typs,ents,context,env1);
+      type = new Type("Function",accumulator.getType(),argument.type);
+      elementType = argument.elementType; 
+	  System.out.println(">>> Typechecked lambda expression: " + rtc + " " + type); 
+      return true; 
+    }
+
+
+  
+    boolean res = argument.typeCheck(typs,ents,contexts,env); 
     multiplicity = ModelElement.ONE; 
 
     if (operator.equals("->size") || operator.equals("->toInteger") ||
@@ -1287,7 +1326,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return res; 
     } 
     
-
+    
     if (operator.equals("->last") || operator.equals("->first"))
     { type = argument.elementType; 
       if (type != null && type.isCollectionType())
@@ -1388,7 +1427,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
           entity = ent; 
           if (ast == null)   // something very bad has happened
           { System.err.println("TYPE ERROR: Undefined role: " + argument); 
-            JOptionPane.showMessageDialog(null, "Undefined role " + argument, "Type error",                                         JOptionPane.ERROR_MESSAGE);  
+            JOptionPane.showMessageDialog(null, "Undefined role " + argument, "Type error",
+			                                         JOptionPane.ERROR_MESSAGE);  
             return false; 
           } 
           multiplicity = ast.getCard2();
@@ -1506,7 +1546,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return true; } 
 
     if (argument.isMultiple() &&
-        (operator.equals("->reverse") || operator.equals("->tail") || 
+        (operator.equals("->reverse") || operator.equals("->tail") || operator.equals("lambda") ||
          operator.equals("->front")) )  
     { return true; } 
 
@@ -1538,6 +1578,11 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
   { String qf = argument.queryForm(env,local); 
     String cont = "Controller.inst()"; 
 
+    if (operator.equals("lambda") && accumulator != null)
+	{ String acc = accumulator.getName(); 
+	  return "(" + acc + ") -> { return " + qf + "; }"; // for Java8+ 
+	}
+	
     if (operator.equals("-"))
     { return "-" + qf; } 
 
@@ -1771,6 +1816,11 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
   { String qf = argument.queryFormJava6(env,local); 
     String cont = "Controller.inst()"; 
 
+    if (operator.equals("lambda") && accumulator != null)
+	{ String acc = accumulator.getName(); 
+	  return "(" + acc + ") -> { return " + qf + "; }"; // for Java8+ 
+	}
+
     if (operator.equals("-"))
     { return "-" + qf; } 
 
@@ -1969,6 +2019,11 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
   public String queryFormJava7(java.util.Map env, boolean local)
   { String qf = argument.queryFormJava7(env,local); 
     String cont = "Controller.inst()"; 
+
+    if (operator.equals("lambda") && accumulator != null)
+	{ String acc = accumulator.getName(); 
+	  return "(" + acc + ") -> { return " + qf + "; }"; // for Java8+ 
+	}
 
     if (operator.equals("-"))
     { return "-" + qf; } 
@@ -2174,6 +2229,11 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
   public String queryFormCSharp(java.util.Map env, boolean local)
   { String qf = argument.queryFormCSharp(env,local); 
     String cont = "Controller.inst()"; 
+
+    if (operator.equals("lambda") && accumulator != null)
+	{ String acc = accumulator.getName(); 
+	  return acc + " => (" + qf + ")"; // for C# 3+ 
+	}
 
     if (operator.equals("-"))
     { return "-" + qf; } 
@@ -2383,11 +2443,19 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (argtype != null) 
     { cargtype = argtype.getCPP(argtype.getElementType()); }
  
+ 
     Type sumtype = argument.getElementType();  
     String celtype = "void*"; 
     if (sumtype != null) 
     { celtype = sumtype.getCPP(sumtype.getElementType()); }  
-      
+ 
+    if (operator.equals("lambda") && accumulator != null)
+	{ String acc = accumulator.getName(); 
+	  String acct = accumulator.getType().getCPP(accumulator.getElementType()); 
+	  
+	  return "[](" + acct + " " + acc + ") -> " + cargtype + " { return " + qf + "; }"; // for C++11 onwards
+	}
+     
     if (operator.equals("-"))
     { return "-" + qf; } 
 
@@ -2568,6 +2636,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     BExpression psimp = pre.simplify(); 
     String op; 
 
+    // lambda expressions 
+	
     if (operator.equals("-"))
     { return new BUnaryExpression("-",psimp); } 
 
@@ -2677,7 +2747,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     else // last, first, front, tail, sort, reverse
     { return new BUnaryExpression(data,pre); } 
   }   // no equivalent for ->any, ->isDeleted 
-
+// keys, values 
+	
 private BExpression subcollectionsBinvariantForm(BExpression bsimp)
 { String i = Identifier.nextIdentifier("i");
   String j = Identifier.nextIdentifier("j");
@@ -2727,6 +2798,8 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
   { BExpression barg = argument.bqueryForm(); 
     BExpression bsimp = barg.simplify(); 
 
+    // lambda expressions, ->keys, ->values 
+	
     if (operator.equals("-"))
     { return new BUnaryExpression("-",bsimp); }
 
@@ -2893,6 +2966,8 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
   { BExpression pre = argument.binvariantForm(env,local);
     BExpression psimp = pre.simplify(); 
 
+    // lambda expressions, ->keys, ->values 
+	
     String op;
     String data; 
     if (operator.startsWith("->"))
@@ -3010,7 +3085,10 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
   } 
 
   public String toString()  // RSDS version of expression
-  { if (operator.equals("-"))
+  { if (operator.equals("lambda"))
+    { return "lambda " + accumulator.getName() + " : " + accumulator.getType() + " in " + argument; }
+  
+    if (operator.equals("-"))
     { return "-" + argument; }
   
     if (operator.equals("_"))
@@ -3046,7 +3124,9 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
 
     out.println(id + ".needsBracket = " + needsBracket); 
     out.println(id + ".umlKind = " + umlkind); 
-    // out.println(res + ".prestate = " + prestate); 
+    if (accumulator != null) 
+	{ out.println(id + ".variable = \"" + accumulator.getName() + "\""); } 
+	 // out.println(res + ".prestate = " + prestate); 
     return id; 
   }         
 
@@ -3329,11 +3409,21 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
   { String etext = this + "";
     Vector args = new Vector();
 	Vector eargs = new Vector(); 
+	if (operator.equals("lambda") && accumulator != null)
+	{ args.add(accumulator.getName()); 
+	  eargs.add(accumulator); 
+	  args.add(accumulator.getType().cg(cgs)); 
+	  eargs.add(accumulator.getType()); 
+	}
     args.add(argument.cg(cgs));
 	eargs.add(argument); 
     CGRule r = cgs.matchedUnaryExpressionRule(this,etext);
     if (r != null)
     { String res = r.applyRule(args,eargs,cgs);
+	  System.out.println(">>> matched unary expression rule " + r + " for " + this + " args: " + args + " eargs: " + eargs); 
+	  System.out.println(">>> " + r.variables); 
+	  System.out.println(); 
+	  
       if (needsBracket) 
       { return "(" + res + ")"; } 
       else 

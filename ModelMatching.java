@@ -4,7 +4,7 @@ import java.util.Collections;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003,2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -1742,14 +1742,34 @@ public class ModelMatching implements SystemTypes
 
     for (int i = 0; i < allsats.size(); i++) 
     { Attribute satt = (Attribute) allsats.get(i); 
+	
+	  System.out.println("???? testing " + satt + " against " + tatt); 
+	  
       if (compatibleType(satt,tatt,ems))
       { System.out.println(">> " + satt + " matches by type to " + tatt); 
         res.add(satt); 
       }
-      // else 
-      // { System.out.println(">> " + satt + " : " + satt.getType() + " does not match by type to " + tatt + " : " + tatt.getType()); }  
+      else if (compatibleElementType(satt,tatt,ems)) 
+      { System.out.println(">> " + satt + " : " + satt.getType() + " is compatible to element type of " + tatt + " : " + tatt.getType()); 
+        res.add(satt); 
+      }  
     } 
     return res; 
+  } 
+
+  public static boolean compatibleElementType(Attribute satt, Attribute tatt, Vector ems)
+  { // true if satt could be matched to tatt elements, given ems
+    Type setype = satt.getType(); 
+    Type tetype = tatt.getType(); 
+    
+    if (!Type.isCollectionType(setype) && Type.isCollectionType(tetype))
+    { tetype = tetype.getElementType();
+      if (tetype == null) { return false; } 
+
+      Attribute telematt = new Attribute(satt.getName() + "Element", tetype, ModelElement.INTERNAL); 
+      return compatibleType(satt,telematt,ems); 
+    }
+    return false; 
   } 
 
   public static boolean compatibleType(Attribute satt, Attribute tatt, Vector ems)

@@ -397,6 +397,8 @@ public class CGSpec
       // { return r; }
 	  else if (t.isMapType() && trimmedlhs.equals("Map(_1,_2)"))
 	  { return r; }
+	  else if (t.isFunctionType() && trimmedlhs.equals("Function(_1,_2)"))
+	  { return r; }
       else if (t.isEnumeratedType() && r.hasCondition("enumerated"))
       { return r; }
       else if (t.isEntityType() && r.hasCondition("class"))
@@ -430,12 +432,14 @@ public class CGSpec
     for (int x = 0; x < unaryExpressionRules.size(); x++)
     { CGRule r = (CGRule) unaryExpressionRules.get(x);
       CGRule selected = null; 
+	  
+	  String trimmedlhs = r.lhs.trim(); 
 
-      if (etext.equals(r.lhs))
+      if (etext.equals(trimmedlhs))
       { selected = r; } // exact match
-      else if (op.startsWith("->") && r.lhs.endsWith(op + "()"))
+      else if (op.startsWith("->") && trimmedlhs.endsWith(op + "()"))
       { selected = r; }
-      else if (etext.startsWith(op) && r.lhs.startsWith(op))
+      else if (etext.startsWith(op) && trimmedlhs.startsWith(op))
       { selected = r; }
 
       if (selected != null && selected.satisfiesConditions(args,entities))

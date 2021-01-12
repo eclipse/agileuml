@@ -3,7 +3,7 @@ import java.io.*;
 import java.util.StringTokenizer; 
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003,2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -25,7 +25,7 @@ public class Type extends ModelElement
   // Expression arrayBound = null; 
   boolean sorted = false;  // for collections 
 
-  Type keyType = null;  // for maps -- by default this is String for a map
+  Type keyType = null;  // for maps and functions -- by default this is String for a map
   // Note below the assumption that this is String, also in the code generators.
 
   // cached type correspondence for MT synthesis: 
@@ -48,7 +48,7 @@ public class Type extends ModelElement
   { super(nme);
     keyType = arg; 
     elementType = range;
-  } // for Map
+  } // for Map and Function
 
   public Type(Entity e)
   { this(e + "",null); 
@@ -76,6 +76,9 @@ public class Type extends ModelElement
 
   public boolean isMapType() 
   { return "Map".equals(name); } 
+
+  public boolean isFunctionType() 
+  { return "Function".equals(name); } 
 
   public boolean isVoidType() 
   { return "void".equals(name); } 
@@ -138,7 +141,7 @@ public class Type extends ModelElement
     { return elementType.metavariables(); } 
     else if ("Set".equals(name) && elementType != null)
     { return elementType.metavariables(); } 
-    else if ("Map".equals(name))
+    else if ("Map".equals(name) || "Function".equals(name))
     { Vector vars = keyType.metavariables(); 
       vars.addAll(elementType.metavariables());
       return vars;  
@@ -154,6 +157,9 @@ public class Type extends ModelElement
     { return 1 + elementType.complexity(); } 
 
     if ("Map".equals(name) && elementType != null && keyType != null)
+    { return 1 + elementType.complexity() + keyType.complexity(); } 
+
+    if ("Function".equals(name) && elementType != null && keyType != null)
     { return 1 + elementType.complexity() + keyType.complexity(); } 
 
     return 1; 
@@ -176,6 +182,12 @@ public class Type extends ModelElement
   { if (t == null) { return false; } 
     String nme = t.getName(); 
     return "Map".equals(nme); 
+  } 
+
+  public static boolean isFunctionType(Type t) 
+  { if (t == null) { return false; } 
+    String nme = t.getName(); 
+    return "Function".equals(nme); 
   } 
 
   public boolean isCollection()
@@ -1003,6 +1015,7 @@ public class Type extends ModelElement
     if ("boolean".equals(getName())) { return "false"; }
     if (isEntity) { return "null"; }  
     if ("String".equals(getName())) { return "\"\""; } 
+    if (isFunctionType(this)) { return "null"; }  
     return "0"; 
   } 
 
@@ -1016,6 +1029,7 @@ public class Type extends ModelElement
     if ("boolean".equals(getName())) { return "false"; }
     if (isEntity) { return "null"; }  
     if ("String".equals(getName())) { return "\"\""; } 
+    if (isFunctionType(this)) { return "null"; }  
     return "0"; 
   } 
 
@@ -1566,7 +1580,7 @@ public class Type extends ModelElement
     { return ModelElement.ONE; }
     if (nme.equals("Set") || nme.equals("Sequence"))
     { return ModelElement.MANY; }  
-    if (nme.equals("Map")) 
+    if (nme.equals("Map") || nme.equals("Function")) 
     { return elementType.typeMultiplicity(); } 
 
     return ModelElement.ONE;
@@ -1576,8 +1590,8 @@ public class Type extends ModelElement
   { String nme = getName(); 
     if (nme.equals("Set") || nme.equals("Sequence"))
     { return true; }  
-    if (nme.equals("Map"))
-    { return elementType.isMultiple(); } 
+    if (nme.equals("Map") || nme.equals("Function"))
+    { return elementType.isMultiple(); } // ie., the application result is multiple
     return false; 
   } // Shouldn't Maps be multiple anyway? 
 
@@ -1657,7 +1671,7 @@ public class Type extends ModelElement
       { return nme; } 
     } 
 
-    if (nme.equals("Map"))
+    if (nme.equals("Map") || nme.equals("Function"))
     { return nme + "(" + keyType.getUMLName() + ", " + elementType.getUMLName() + ")"; } 
 
     return nme; 
@@ -1711,8 +1725,22 @@ public class Type extends ModelElement
       out.println("MapType" + tid + ".typeId = \"" + tid + "\""); 
       return "MapType" + tid; 
     } 
+    else if (nme.equals("Function"))
+    { String tid = Identifier.nextIdentifier(""); 
+      out.println("FunctionType" + tid + " : CollectionType"); 
+      out.println("FunctionType" + tid + ".name = \"Function\""); 
+      if (elementType != null) 
+      { String etype = elementType.getUMLModelName(out); 
+        out.println("FunctionType" + tid + ".elementType = " + etype); 
+      } 
+      else 
+      { out.println("FunctionType" + tid + ".elementType = void"); } 
+      // assume key type is String
+      out.println("FunctionType" + tid + ".typeId = \"" + tid + "\""); 
+      return "FunctionType" + tid; 
+    } 
     return nme; 
-  } 
+  } // Function types for the future. 
 
   public String getZ3Name()  // check
   { String nme = getName(); 
@@ -1818,7 +1846,7 @@ public class Type extends ModelElement
     if (tname.equals("String") || tname.equals("Set") || tname.equals("Sequence"))
     { return false; }
 
-    if (tname.equals("Map")) { return false; } 
+    if (tname.equals("Map") || tname.equals("Function")) { return false; } 
 
     if (t.getEntity() != null)  { return false; } 
 
@@ -1844,7 +1872,9 @@ public class Type extends ModelElement
 
     if (tname.equals("Set") || tname.equals("Sequence"))
     { return false; }
-    if (tname.equals("Map")) { return false; } 
+    
+	if (tname.equals("Map") || tname.equals("Function")) 
+	{ return false; } 
 
     if (t.getEntity() != null)  { return false; } 
     return true; // enum
@@ -1940,7 +1970,7 @@ public class Type extends ModelElement
       { return "new Vector()"; }
       if (nme.equals("Map")) 
       { return "new HashMap()"; } 
-      return "null";    // for class types
+      return "null";    // for class types, functions
     }
     return (String) values.get(0);
   }
@@ -1966,7 +1996,7 @@ public class Type extends ModelElement
         res.setType(this); 
         res.setElementType(elemt); 
       }
-      else if (isEntity())
+      else if (isEntity() || nme.equals("Function"))
       { res = new BasicExpression("null"); 
         res.setType(this); 
         res.setElementType(elemt); 
@@ -1996,7 +2026,7 @@ public class Type extends ModelElement
       { return "new ArrayList()"; }
       if (nme.equals("Map"))
       { return "new HashMap()"; } 
-      return "null";    // for class types
+      return "null";    // for class types, functions
     }
     return (String) values.get(0);
   }
@@ -2029,7 +2059,7 @@ public class Type extends ModelElement
         else 
         { return "new HashMap()"; }
       }  
-      return "null";    // for class types
+      return "null";    // for class types, functions
     } 
     return (String) values.get(0);
   }
@@ -2048,7 +2078,7 @@ public class Type extends ModelElement
       { return "new ArrayList()"; }
       if (nme.equals("Map"))
       { return "new Hashtable()"; }
-      return "null";    // for class types
+      return "null";    // for class types, functions
     }
     return "0"; // (String) values.get(0);
   }
@@ -2077,7 +2107,7 @@ public class Type extends ModelElement
       { return "new vector<" + et + ">()"; }
       if (nme.equals("Map"))
       { return "new map<string, " + et + ">()"; }
-      return "NULL";    // for class types
+      return "NULL";    // for class types, functions
     }
     return "0"; // (String) values.get(0);
   }
@@ -2104,6 +2134,8 @@ public class Type extends ModelElement
     { return "ArrayList"; }
     if (nme.equals("Map"))
     { return "Hashtable"; }
+    if (nme.equals("Function"))
+    { return "Func"; }
     if (nme.equals("String")) { return "string"; }  
     if (nme.equals("boolean")) { return "bool"; } 
     if (nme.equals("long")) { return "long"; } 
@@ -2117,8 +2149,21 @@ public class Type extends ModelElement
     { return "Set<" + elemType + ">"; } 
     if (nme.equals("Sequence"))
     { return "[" + elemType + "]"; } 
-    if (nme.equals("Map"))
-    { return "Dictionary<String, " + elemType + ">"; } 
+    
+	if (nme.equals("Map"))
+    { String kt = "String"; 
+	  if (keyType != null) 
+	  { kt = keyType.getSwift(""); }
+	  return "Dictionary<" + kt + ", " + elemType + ">"; 
+	}
+	 
+    if (nme.equals("Function"))
+    { String kt = "String"; 
+	  if (keyType != null) 
+	  { kt = keyType.getSwift(""); }
+	  return "(" + kt + ") -> " + elemType; 
+	} 
+	
     if (nme.equals("String")) { return "String"; }  
     if (nme.equals("boolean")) { return "Bool"; } 
     if (nme.equals("int")) { return "Int"; } 
@@ -2145,6 +2190,8 @@ public class Type extends ModelElement
     { return "[" + elemType + "]"; } 
     if (nme.equals("Map"))
     { return "Dictionary<String, " + elemType + ">"; } 
+    if (nme.equals("Function"))
+    { return "(String) -> " + elemType; } 
     return nme; 
   } 
     
@@ -2159,11 +2206,11 @@ public class Type extends ModelElement
 
 
     if (nme.equals("WebDisplay")) 
-    { return "WebDisplay()"; } 
+    { return "WebDisplay.defaultInstance()"; } 
     else if (nme.equals("ImageDisplay"))
-    { return "ImageDisplay()"; } 
+    { return "ImageDisplay.defaultInstance()"; } 
     else if (nme.equals("GraphDisplay"))
-    { return "GraphDisplay.getInstance()"; } 
+    { return "GraphDisplay.defaultInstance()"; } 
 
     if (isEntity) 
     { return "nil"; } 
@@ -2191,6 +2238,9 @@ public class Type extends ModelElement
     if (nme.equals("String")) { return "string"; }  
     if (nme.equals("boolean")) { return "bool"; } 
     if (isEntity) { return nme + "*"; } 
+	if (nme.equals("Function"))
+    { return elemType + " (*)(String)"; } 
+
     return nme;  // enumerations, long, int and double 
   } 
 
@@ -2207,7 +2257,7 @@ public class Type extends ModelElement
 
   public String getCPP()  /* For attribute/simple types */ 
   { String nme = getName();
-    if (nme.equals("Set") || nme.equals("Sequence") || nme.equals("Map"))
+    if (nme.equals("Set") || nme.equals("Sequence") || nme.equals("Map") || nme.equals("Function"))
     { return "void*"; }
     if (nme.equals("String")) { return "string"; }  
     if (nme.equals("boolean")) { return "bool"; } 
@@ -2255,14 +2305,16 @@ public class Type extends ModelElement
         if (nme.equals("Set")) { return "FIN(" + etB + ")"; } 
         else { return "seq(" + etB + ")"; } 
       } 
-    } 
-    if (nme.equals("Map"))
+    }
+	 
+    if (nme.equals("Map") || nme.equals("Function"))
     { Type et = var.elementType; 
       if (et != null)
       { String etB = et.generateB(); 
         return "STRING +-> " + etB;   // Partial function  
       } 
     } 
+
     if (entity != null)
     { return nme.toLowerCase() + "s"; }
     if (values == null || values.size() == 0)
@@ -2292,7 +2344,7 @@ public class Type extends ModelElement
         else { return "seq(" + etB + ")"; } 
       } 
     } 
-    if (nme.equals("Map"))
+    if (nme.equals("Map") || nme.equals("Function"))
     { if (elemType != null)
       { String etB = ""; 
         if (elemType.elementType != null) 
@@ -2303,8 +2355,10 @@ public class Type extends ModelElement
         return "STRING +-> " + etB;  
       } 
     } 
+	
     if (entity != null)
     { return nme.toLowerCase() + "s"; }
+	
     if (values == null || values.size() == 0)
     { if (nme.equals("int") || nme.equals("long")) 
       { return "INT"; }
@@ -2371,10 +2425,17 @@ public class Type extends ModelElement
     } 
 
     if (nme.equals("Map"))
-    { if (elementType != null) 
-      { return "HashMap<String, " + elementType.typeWrapperJava7() + ">"; } 
+    { if (keyType != null && elementType != null) 
+      { return "HashMap<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
       else 
       { return "HashMap"; } 
+    } 
+
+    if (nme.equals("Function"))
+    { if (keyType != null && elementType != null) 
+      { return "Evaluation<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
+      else 
+      { return "Evaluation<String,Object>"; } 
     } 
 
     if (values == null)
@@ -2412,11 +2473,22 @@ public class Type extends ModelElement
     }  
 
     if (nme.equals("Map"))
-    { if (elemType != null) 
+    { if (keyType != null && elementType != null) 
+      { return "HashMap<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
+      else if (elemType != null) 
       { return "HashMap<String, " + elemType.typeWrapperJava7() + ">"; } 
       else 
       { return "HashMap"; }
     }  
+
+    if (nme.equals("Function"))
+    { if (keyType != null && elementType != null) 
+      { return "Evaluation<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
+      else if (elemType != null) 
+      { return "Evaluation<String, " + elemType.typeWrapperJava7() + ">"; } 
+      else 
+      { return "Evaluation<String,Object>"; } 
+    } 
 
     if (values == null)
     { return nme; }
@@ -2429,17 +2501,29 @@ public class Type extends ModelElement
     if (elemType != null) 
     { et = elemType.typeWrapperJava7(); } 
 
+    String kt = "String"; 
+    // if (keyType != null) 
+    // { kt = keyType.typeWrapperJava7(); } 
+
     String nme = typ.getName(); 
+
     if (nme.equals("Set"))
     { String tname = "HashSet"; 
+
     if (typ.isSorted()) 
     { tname = "TreeSet"; } 
       return tname + "<" + et + ">"; 
     } 
+
     if (nme.equals("Sequence"))
     { return "ArrayList<" + et + ">"; } 
+
     if (nme.equals("Map"))
-    { return "HashMap<String, " + et + ">"; } 
+    { return "HashMap<" + kt + ", " + et + ">"; } 
+
+    if (nme.equals("Function"))
+    { return "Evaluation<" + kt + ", " + et + ">"; } 
+
     if (typ.values == null)
     { return typ.typeWrapperJava7(); }
     return "Integer"; 
@@ -2470,12 +2554,23 @@ public class Type extends ModelElement
     } 
 
     if (nme.equals("Map"))
-    { if (elementType != null) 
+    { if (keyType != null && elementType != null) 
+      { return "HashMap<" + keyType.typeWrapperJava8() + ", " + elementType.typeWrapperJava8() + ">"; } 
+      else if (elementType != null) 
       { return "HashMap<String, " + elementType.typeWrapperJava8() + ">"; } 
       else 
       { return "HashMap"; } 
     } 
 
+    if (nme.equals("Function"))
+    { if (keyType != null && elementType != null) 
+      { return "Evaluation<" + keyType.typeWrapperJava8() + ", " + elementType.typeWrapperJava8() + ">"; } 
+      else if (elementType != null) 
+      { return "Evaluation<String, " + elementType.typeWrapperJava8() + ">"; } 
+      else 
+      { return "Evaluation<String,Object>"; } 
+    } 
+	
     return nme;  
   }
 
@@ -2528,10 +2623,21 @@ public class Type extends ModelElement
     } 
 
     if ("Map".equals(nme)) 
-    { if (elementType != null) 
+    { if (keyType != null && elementType != null) 
+      { return "HashMap<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
+      else if (elementType != null) 
       { return "HashMap<String, " + elementType.typeWrapperJava7() + ">"; }
       else 
       { return "HashMap<String, Object>"; }
+    } 
+
+    if ("Function".equals(nme)) 
+    { if (keyType != null && elementType != null) 
+      { return "Evaluation<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
+      else if (elementType != null) 
+      { return "Evaluation<String, " + elementType.typeWrapperJava7() + ">"; }
+      else 
+      { return "Evaluation<String, Object>"; }
     } 
 
     if ("int".equals(nme)) { return "Integer"; } 
@@ -2565,10 +2671,21 @@ public class Type extends ModelElement
     } 
 
     if ("Map".equals(nme)) 
-    { if (elementType != null) 
+    { if (keyType != null && elementType != null) 
+      { return "HashMap<" + keyType.typeWrapperJava8() + ", " + elementType.typeWrapperJava8() + ">"; } 
+      else if (elementType != null) 
       { return "HashMap<String, " + elementType.typeWrapperJava8() + ">"; }
       else 
       { return "HashMap<String, Object>"; }
+    } 
+
+    if ("Function".equals(nme)) 
+    { if (keyType != null && elementType != null) 
+      { return "Evaluation<" + keyType.typeWrapperJava8() + ", " + elementType.typeWrapperJava8() + ">"; } 
+      else if (elementType != null) 
+      { return "Evaluation<String, " + elementType.typeWrapperJava8() + ">"; }
+      else 
+      { return "Evaluation<String, Object>"; }
     } 
 
     if ("int".equals(nme)) { return "Integer"; } 
@@ -2594,6 +2711,7 @@ public class Type extends ModelElement
     { out.println("  public static final int " 
                    + values.get(i) + " = " + i + ";");
     }
+	
     out.println();
     out.println(); 
     out.println("  public static int parse" + nme + "(String _x) {"); 
@@ -2633,7 +2751,7 @@ public class Type extends ModelElement
         "long".equals(typ) || "String".equals(typ))
     { return new Type(typ,null); } 
 
-    if (typ.equals("Sequence") || "Set".equals(typ) || "Map".equals(typ))
+    if (typ.equals("Sequence") || "Set".equals(typ) || "Map".equals(typ) || "Function".equals(typ))
     { return new Type(typ,null); } 
   
     Entity ent = (Entity) ModelElement.lookupByName(typ,entities); 
@@ -2667,6 +2785,49 @@ public class Type extends ModelElement
       resT.setKeyType(new Type("String", null));  
       resT.setElementType(innerT); 
       return resT; 
+    }   
+
+    if (typ.startsWith("Map(") && typ.endsWith(")"))
+    { for (int i = 4; i < typ.length(); i++) 
+	  { if (",".equals(typ.charAt(i) + ""))
+	    { String nt = typ.substring(4,i);
+          Type innerT = getTypeFor(nt, types, entities);
+		  String rt = typ.substring(i+1,typ.length()-1);
+          Type restT = getTypeFor(rt, types, entities); 
+		  if (innerT != null && restT != null) 
+		  { Type resT = new Type("Map",null);
+            resT.setKeyType(innerT);  
+            resT.setElementType(restT); 
+            return resT; 
+		  } 
+		}
+      }
+    }   
+
+    if (typ.startsWith("Function(String,") && typ.endsWith(")"))
+    { String nt = typ.substring(16,typ.length()-1);
+      Type innerT = getTypeFor(nt, types, entities); 
+      Type resT = new Type("Function",null);
+      resT.setKeyType(new Type("String", null));  
+      resT.setElementType(innerT); 
+      return resT; 
+    }   
+
+    if (typ.startsWith("Function(") && typ.endsWith(")"))
+    { for (int i = 9; i < typ.length(); i++) 
+	  { if (",".equals(typ.charAt(i) + ""))
+	    { String nt = typ.substring(9,i);
+          Type innerT = getTypeFor(nt, types, entities);
+		  String rt = typ.substring(i+1,typ.length()-1);
+          Type restT = getTypeFor(rt, types, entities); 
+		  if (innerT != null && restT != null) 
+		  { Type resT = new Type("Function",null);
+            resT.setKeyType(innerT);  
+            resT.setElementType(restT); 
+            return resT; 
+		  } 
+		}
+      }
     }   
 
     return null; 
@@ -2716,7 +2877,7 @@ public class Type extends ModelElement
     String t1name = t1.getName(); 
     String t2name = t2.getName(); 
     if (t1name.equals(t2name))  
-    { if ("Set".equals(t1name) || "Sequence".equals(t1name) || "Map".equals(t1name))
+    { if ("Set".equals(t1name) || "Sequence".equals(t1name) || "Map".equals(t1name) || "Function".equals(t1name))
       { Type et1 = t1.getElementType(); 
         Type et2 = t2.getElementType(); 
         Type et = mostSpecificType(et1, et2); 
@@ -2751,7 +2912,7 @@ public class Type extends ModelElement
     String t2name = t2.getName(); 
 
     if (t1name.equals(t2name))  
-    { if ("Set".equals(t1name) || "Sequence".equals(t1name) || "Map".equals(t1name))
+    { if ("Set".equals(t1name) || "Sequence".equals(t1name) || "Map".equals(t1name) || "Function".equals(t1name))
       { Type et1 = t1.getElementType(); 
         Type et2 = t2.getElementType(); 
         Type et = mostGeneralType(et1, et2); 
@@ -2800,7 +2961,7 @@ public class Type extends ModelElement
       { return nme + "(" + elementType + ")"; } 
     } 
 
-    if ("Map".equals(nme))
+    if ("Map".equals(nme) || "Function".equals(nme))
     { return nme + "(" + keyType + "," + elementType + ")"; } 
 
     return nme; 
@@ -2883,7 +3044,7 @@ public class Type extends ModelElement
     Vector args = new Vector();
     Vector eargs = new Vector(); 
 	
-    if (isMapType())
+    if (isMapType() || isFunctionType())
     { args.add(keyType.cg(cgs)); 
       eargs.add(keyType); 
       if (elementType == null) 
@@ -3019,12 +3180,13 @@ public class Type extends ModelElement
 
   public static void main(String[] args) 
   { /* Boolean b = new Boolean(true); 
-    System.out.println(b.booleanValue()); 
-    System.out.println(getTypeFor("Set(Sequence(int))",new Vector(),new Vector()));
+    System.out.println(b.booleanValue()); */ 
+    System.out.println(getTypeFor("Function(double,Function(int,double))",new Vector(),new Vector()));
+    System.out.println(getTypeFor("Map(Map(int,double),double)",new Vector(),new Vector()));
 
-    Type t1 = new Type("Sequence",null); t1.setElementType(new Type("int", null)); 
+    /* Type t1 = new Type("Sequence",null); t1.setElementType(new Type("int", null)); 
     Type t2 = new Type("Sequence",null); t2.setElementType(new Type("long", null)); 
-    System.out.println(mostSpecificType(t1, t2));  */
+    System.out.println(mostSpecificType(t1, t2));  
 
     Vector v1 = new Vector(); 
     v1.add("a"); v1.add("b"); v1.add("c"); v1.add("d"); 
@@ -3040,7 +3202,7 @@ public class Type extends ModelElement
 	
 	
 	System.out.println(tt); 
-	 
+	*/  
   } 
 }
 

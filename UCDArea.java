@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003,2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -12,7 +12,7 @@
  * 
  * Version information : 1.9-2.0
  *
- * Date :  April 2020
+ * Date :  January 2021
  * 
  * Description: This class describes the area that all the painting for 
  * the CD diagram will be performed and deals with painting them
@@ -3957,21 +3957,21 @@ public class UCDArea extends JPanel
        needsInternetPermission = true; 
        needsFirebase = true; 
 		
-	    if (eeDAO != null) 
-	    { predefinedComponents.add(eeDAO); }
-	    if (cloudAccessor != null && !(predefinedComponents.contains(cloudAccessor)))
-	    { predefinedComponents.add(cloudAccessor); }
-	    if (cloudAuthenticator != null && !(predefinedComponents.contains(cloudAuthenticator)))
-	    { predefinedComponents.add(cloudAuthenticator); 
-          cloudauthenticator = cloudAuthenticator; 
+       if (eeDAO != null) 
+       { predefinedComponents.add(eeDAO); }
+       if (cloudAccessor != null && !(predefinedComponents.contains(cloudAccessor)))
+       { predefinedComponents.add(cloudAccessor); }
+       if (cloudAuthenticator != null && !(predefinedComponents.contains(cloudAuthenticator)))
+       { predefinedComponents.add(cloudAuthenticator); 
+         cloudauthenticator = cloudAuthenticator; 
         }
-	    clouds.add(ee); 
-	  }
+        clouds.add(ee); 
+      }
       else if (ee.isPersistent())
       { persistentEntities.add(ee); } 
     } 
 
-	int screencount = 0; 
+    int screencount = 0; 
 
     Entity fileaccessor = (Entity) ModelElement.lookupByName("FileAccessor", entities); 
     if (fileaccessor != null) 
@@ -4116,8 +4116,7 @@ public class UCDArea extends JPanel
     else 
     { dir8.mkdir(); }
 	
-
-	agen.generateFileAccessor(screencount,systemName,nestedPackageName);
+    agen.generateFileAccessor(screencount,systemName,nestedPackageName);
 	// Always included 
 
     agen.generateManifest(systemName,needsInternetPermission,needsMaps,out);
@@ -4164,6 +4163,11 @@ public class UCDArea extends JPanel
      { // generate its screen and view controller
        AndroidAppGenerator.generateImageDisplay(systemName, nestedPackageName); 
      }
+
+    if (graphdisplaycomponent != null) 
+    { // generate its screen and view controller
+      AndroidAppGenerator.generateGraphDisplay(systemName,nestedPackageName); 
+    }
 
      if (smsComponent != null) 
      { // generate its screen and view controller
@@ -11437,7 +11441,7 @@ public void produceCUI(PrintWriter out)
     if (f != null) 
     { res = CSTL.loadCSTL(f,types,entities); } 
 
-    System.out.println(">>> Parsed: " + res);
+    // System.out.println(">>> Parsed: " + res);
  
     CSTL.loadTemplates(types,entities); 
     return res; 
@@ -17583,16 +17587,23 @@ public void produceCUI(PrintWriter out)
     e.addStereotype("component"); 
 	BasicExpression truebe = new BasicExpression(true); 
 		 
-    // Type selftype = new Type(e); 
+    Type selftype = new Type(e); 
+    Vector parinst0 = new Vector(); 
+    BehaviouralFeature getInstance = 
+      new BehaviouralFeature("defaultInstance", parinst0, false, selftype); 
+    getInstance.setStatic(true);
+	getInstance.setPostcondition(truebe);  
+    e.addOperation(getInstance); 
+
     Vector parinst = new Vector(); 
     Attribute url = new Attribute("url", new Type("String",null), ModelElement.INTERNAL);
 	e.addAttribute(url);  
 	parinst.add(url); 
-    BehaviouralFeature getInstance = 
+    BehaviouralFeature loadURL = 
       new BehaviouralFeature("loadURL", parinst, false, null); 
     // getInstance.setStatic(true);
-	getInstance.setPostcondition(truebe);  
-    e.addOperation(getInstance); 
+    loadURL.setPostcondition(truebe);  
+    e.addOperation(loadURL); 
  
     Vector pars = new Vector(); 
     BehaviouralFeature op = 
@@ -17617,17 +17628,25 @@ public void produceCUI(PrintWriter out)
     e.addStereotype("component"); 
 	BasicExpression truebe = new BasicExpression(true); 
 		 
+    Type selftype = new Type(e); 
+    Vector parinst0 = new Vector(); 
+    BehaviouralFeature getInstance = 
+      new BehaviouralFeature("defaultInstance", parinst0, false, selftype); 
+    getInstance.setStatic(true);
+	getInstance.setPostcondition(truebe);  
+    e.addOperation(getInstance); 
+
     // Type selftype = new Type(e); 
     Vector parinst = new Vector(); 
     Attribute url = new Attribute("imageName", new Type("String",null), ModelElement.INTERNAL);
     e.addAttribute(url);  
     Attribute nme = new Attribute("name", new Type("String",null), ModelElement.INTERNAL);
     parinst.add(nme); 
-    BehaviouralFeature getInstance = 
+    BehaviouralFeature setImageName = 
       new BehaviouralFeature("setImageName", parinst, false, null); 
     // getInstance.setStatic(true);
-    getInstance.setPostcondition(truebe);  
-    e.addOperation(getInstance); 
+    setImageName.setPostcondition(truebe);  
+    e.addOperation(setImageName); 
  
     entities.add(e);                           
     RectData rd = new RectData(1000,300,getForeground(),

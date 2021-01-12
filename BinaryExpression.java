@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003,2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -707,6 +707,13 @@ class BinaryExpression extends Expression
   { String basicString = 
              left + " " + operator + " " + right; 
      
+    if ("let".equals(operator) && accumulator != null)
+    { String res = "let " + accumulator.getName() + " : " + accumulator.getType() + " = " + left + " in (" + right + ")"; 
+      if (needsBracket)
+      { return "(" + res + ")"; }
+      return res; 
+    }  
+
     if (operator.equals("#"))
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = "" + range; 
@@ -2485,13 +2492,30 @@ public void findClones(java.util.Map clones, String rule, String op)
   { Vector context = new Vector(); 
   
     if (operator.equals(","))
-	{ left.typeCheck(types,entities,contexts,env); 
-	  right.typeCheck(types,entities,contexts,env); 
+    { left.typeCheck(types,entities,contexts,env); 
+      right.typeCheck(types,entities,contexts,env); 
+      type = right.type; 
+      elementType = right.elementType; 
+      multiplicity = right.multiplicity; 
+      return true; 
+    }
+
+    if (operator.equals("let") && accumulator != null)
+    { boolean lrt = left.typeCheck(types,entities,contexts,env); 
+      context.addAll(contexts); 
+
+      Vector env1 = new Vector(); 
+      env1.addAll(env); 
+      env1.add(accumulator); 
+      boolean rtc = right.typeCheck(types,entities,context,env1);
+      // type = new Type("Function",accumulator.getType(),right.type);
+      // elementType = right.type; 
 	  type = right.type; 
-	  elementType = right.elementType; 
-	  multiplicity = right.multiplicity; 
-	  return true; 
-	}
+	  elementType = right.elementType;  
+      System.out.println(">>> Typechecked let expression: " + lrt + " " + rtc + " " + type); 
+      return true; 
+    }
+
 
     if (operator.equals("#") || operator.equals("#1") || operator.equals("#LC") || operator.equals("!"))
     { BinaryExpression lexp = (BinaryExpression) left; 
@@ -3612,6 +3636,12 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->forAll") || operator.equals("!"))
     { return forAllQueryForm(env,local); } 
+	
+	if (operator.equals("let"))
+	{ String acc = accumulator.getName(); 
+	  Expression sbst = right.substituteEq(acc,left); 
+	  return sbst.queryForm(env,local); 
+	} // Or, extend env by acc |-> left
 
     boolean lmult = left.isMultiple();
     boolean rmult = right.isMultiple();
@@ -9301,6 +9331,18 @@ public boolean conflictsWithIn(String op, Expression el,
       String ufr = right.updateForm(env,local);
       return ufl + "\n    " + ufr;
     }
+	
+	if (operator.equals("let"))
+	{ // { var acc : T := e; ... E ... }
+	  String acc = accumulator.getName(); 
+	  Type acct = accumulator.getType(); 
+	  String lett = acct.getJava(); 
+	  String val = left.queryForm(env,local); 
+	  java.util.Map env1 = new java.util.HashMap(); 
+	  env1.putAll(env); 
+	  String stats = right.updateForm(env1,local); 
+	  return "\n    { final " + lett + " " + acc + " = " + val + ";\n" + stats + "\n    }"; 
+	} 
 
     if (operator.equals("or"))
     { String ufl = left.updateForm(env,local);
@@ -10163,6 +10205,21 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     }
 	
 	// And for xor
+
+    if (operator.equals("let") && accumulator != null)
+    { // let accumulator = left in right
+	  SequenceStatement sstat = new SequenceStatement();
+	  Type typ1 = accumulator.getType();   
+	  String varname = accumulator.getName(); 
+      CreationStatement cs1 = new CreationStatement(typ1 + "",varname); 
+      cs1.setType(typ1); 
+      cs1.setElementType(typ1.getElementType());  
+      cs1.setInitialisation(left);
+	  sstat.addStatement(cs1); 
+      Statement ufr = right.generateDesign(env,local); 
+      sstat.addStatement(ufr); 
+	  return sstat; 
+    } 
 
     if (operator.equals("=>"))
     { Statement ufr = right.generateDesign(env,local); 
@@ -12324,13 +12381,16 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
         operator.equals("->closure") || operator.equals("->sortedBy") || 
         operator.equals("|") || operator.equals("|R") || operator.equals("|C") || 
         operator.equals("->collect") || operator.equals("->selectMinimals") ||
-        operator.equals("->selectMaximals") || operator.equals("->unionAll") ||
+        operator.equals("->selectMaximals") || operator.equals("->unionAll") || operator.equals("->concatenateAll") || 
         operator.equals("->intersectAll") || operator.equals("->symmetricDifference"))
     { return true; } 
 
-    if (operator.equals("->at"))
+    if (operator.equals("->at") || operator.equals("->any") || operator.equals("|A"))
     { return Type.isCollectionType(left.elementType); } 
 
+    if (operator.equals("let"))
+	{ return right.isMultiple(); }
+	
     return false;
   }
 
@@ -12352,6 +12412,10 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
  
     if (operator.equals("->select") || operator.equals("->reject"))
     { return left.isSorted(); } 
+	
+	if (operator.equals("let"))
+	{ return right.isSorted(); }
+
 
     // if (operator.equals("->at"))
     // { return Type.isSequenceType(left.elementType); } 
@@ -12381,8 +12445,11 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
         operator.equals("->selectMaximals"))
     { return left.isOrdered(); } 
 
-    if (operator.equals("->at"))
+    if (operator.equals("->at") || operator.equals("->any") || operator.equals("|A"))
     { return Type.isSequenceType(left.elementType); } 
+
+	if (operator.equals("let"))
+	{ return right.isOrdered(); }
 
     return false;
   }

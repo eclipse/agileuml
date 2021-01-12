@@ -2686,8 +2686,8 @@ class BasicExpression extends Expression
         } 
       } 
 
-      JOptionPane.showMessageDialog(null, "Operation " + this + " unknown at this call.\n" + 
-                 "Please re-type-check or correct your specification.", 
+      JOptionPane.showMessageDialog(null, "Operation " + data + " unknown at call " + this + ".\n" + 
+                                    "Please re-type-check or correct your specification.", 
                                     "Type warning", JOptionPane.WARNING_MESSAGE); 
       umlkind = UPDATEOP; 
       type = new Type("boolean",null);         
@@ -3001,7 +3001,7 @@ class BasicExpression extends Expression
       modality = var.getKind(); 
       if (type != null) 
       { String tname = type.getName(); 
-        if (tname.equals("Set") || tname.equals("Sequence"))
+        if (tname.equals("Set") || tname.equals("Sequence") || tname.equals("Map"))
         { multiplicity = ModelElement.MANY; } 
         else 
         { multiplicity = ModelElement.ONE; }   // assume
@@ -3011,14 +3011,20 @@ class BasicExpression extends Expression
       
       if (arrayIndex != null) 
       { adjustTypeForArrayIndex(var); } 
-  
+	  
+	  if (parameters != null && var.getType().isFunctionType()) // application of a Function(S,T)
+      { Type ftype = var.getType(); 
+	    type = ftype.getElementType(); 
+		elementType = type.getElementType(); 
+        System.out.println(">>>> TYPE CHECKED: Type of variable expression " + this + " is " + type + " entity: " + entity); 
+	  }
+	  
       entity = var.getEntity(); 
       if (entity == null && elementType != null) 
       { entity = elementType.getEntity(); } 
       if (entity == null && type != null) 
       { entity = type.getEntity(); } 
 
-      // System.out.println(">>>> TYPE CHECKED: Type of variable " + data + " is " + type + " enty: " + entity); 
        
       return true; 
     } // entity = var.getEntity() ? 
@@ -3664,6 +3670,16 @@ class BasicExpression extends Expression
         }         
         return data + ".get(" + indopt + ")";
       } // unwrap ints, doubles, etc, also 
+      else if (parameters != null && variable != null && variable.getType().isFunctionType()) // application of a Function(S,T)
+      { String pars = ""; 
+	    for (int h = 0; h < parameters.size(); h++) 
+		{ Expression par = (Expression) parameters.get(h); 
+		  pars = pars + par.queryForm(env,local); 
+		  if (h < parameters.size()-1) 
+		  { pars = pars + ","; } 
+		} 
+	    return data + ".evaluate(" + pars + ")"; 
+      }
       else 
       { return data; } 
     } 
@@ -4147,6 +4163,16 @@ class BasicExpression extends Expression
         }         
         return data + ".get(" + indopt + ")";
       } // unwrap it, also for primitive types
+      else if (parameters != null && variable != null && variable.getType().isFunctionType()) // application of a Function(S,T)
+      { String pars = ""; 
+	    for (int h = 0; h < parameters.size(); h++) 
+		{ Expression par = (Expression) parameters.get(h); 
+		  pars = pars + par.queryFormJava6(env,local); 
+		  if (h < parameters.size()-1) 
+		  { pars = pars + ","; } 
+		} 
+	    return data + ".evaluate(" + pars + ")"; 
+      }
       else 
       { return data; }  
     } 
@@ -4574,13 +4600,29 @@ class BasicExpression extends Expression
         if (type != null)
         { if (variable != null && "String".equals(variable.getType() + ""))
           { return "(" + data + ".charAt(" + indopt + ") + \"\")"; } 
-          else if (Type.isPrimitiveType(type))
+          if (arrayIndex.type != null && arrayIndex.type.getName().equals("int"))
+		  // if (Type.isPrimitiveType(type))
+          { return unwrap(data + ".get(" + indopt + ")"); }
+		  else if (arrayIndex.type != null && arrayIndex.type.getName().equals("String"))
+		  { return unwrap(data + ".get(" + ind + ")"); }
+		  else if (Type.isPrimitiveType(type))
           { return unwrap(data + ".get(" + indopt + ")"); } 
           String jType = type.getJava7(elementType); 
           return "((" + jType + ") " + data + ".get(" + indopt + "))"; 
         }         
         return data + ".get(" + indopt + ")";
       } // unwrap it, also for primitive types
+      else if (parameters != null && variable != null && variable.getType().isFunctionType()) // application of a Function(S,T)
+      { String pars = ""; 
+	    for (int h = 0; h < parameters.size(); h++) 
+		{ Expression par = (Expression) parameters.get(h); 
+		  pars = pars + par.queryFormJava7(env,local); 
+		  if (h < parameters.size()-1) 
+		  { pars = pars + ","; } 
+		} 
+	    return data + ".evaluate(" + pars + ")"; 
+      }
+
       else 
       { return data; }  
     } 
@@ -5012,8 +5054,20 @@ class BasicExpression extends Expression
         String indopt = evaluateString("-",ind,"1"); 
         if (variable != null && "String".equals(variable.getType() + ""))
         { return data + ".Substring(" + indopt + ", 1)"; } 
+        if (variable != null && variable.getType() != null && "Map".equals(variable.getType().getName()))
+        { return data + "[" + ind + "]"; } 
         String cstype = type.getCSharp(); 
-        return "((" + cstype + ") (" + data + ")[" + indopt + "])";
+        return "((" + cstype + ") " + data + "[" + indopt + "])";
+      }
+      else if (parameters != null && variable != null && variable.getType().isFunctionType()) // application of a Function(S,T)
+      { String pars = ""; 
+	    for (int h = 0; h < parameters.size(); h++) 
+		{ Expression par = (Expression) parameters.get(h); 
+		  pars = pars + par.queryFormCSharp(env,local); 
+		  if (h < parameters.size()-1) 
+		  { pars = pars + ","; } 
+		} 
+	    return data + "(" + pars + ")"; 
       }
       return data;  
     } 
@@ -5392,7 +5446,19 @@ class BasicExpression extends Expression
         String indopt = evaluateString("-",ind,"1"); 
         if (variable != null && "String".equals(variable.getType() + ""))
         { return data + ".substr(" + indopt + ", 1)"; } 
+        if (variable != null && variable.getType() != null && "Map".equals(variable.getType().getName()))
+        { return data + "->at(" + ind + ")"; } 
         return "(" + data + ")->at(" + indopt + ")";
+      }
+      else if (parameters != null && variable != null && variable.getType().isFunctionType()) // application of a Function(S,T)
+      { String pars = ""; 
+	    for (int h = 0; h < parameters.size(); h++) 
+		{ Expression par = (Expression) parameters.get(h); 
+		  pars = pars + par.queryFormCPP(env,local); 
+		  if (h < parameters.size()-1) 
+		  { pars = pars + ","; } 
+		} 
+	    return "(*" + data + ")(" + pars + ")"; 
       }
       return data;  
     } 

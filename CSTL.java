@@ -1,8 +1,10 @@
 import java.io.*;
+import javax.swing.*;
+
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003,2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -67,14 +69,14 @@ public class CSTL
       }
       else if (s.startsWith("--")) { } 
       else if (s.trim().length() == 0) { } 
-      else if (s.startsWith("import "))
-      { String[] strs = s.split(" "); 
-        if (strs.length > 1) 
-        { String toimport = strs[1]; 
-          File ff = new File("./cg/" + toimport); 
-          loadCSTL(res, ff, types, entities); 
-        }
-      }  
+      // else if (s.startsWith("import "))
+      // { String[] strs = s.split(" "); 
+      //   if (strs.length > 1) 
+      //   { String toimport = strs[1]; 
+      //     File ff = new File("./cg/" + toimport); 
+      //     loadCSTL(res, ff, types, entities); 
+      //   }
+      // }  
       else if (s.equals("Type::"))
       { mode = "types"; }         
       else if (s.equals("Enumeration::"))
@@ -112,102 +114,140 @@ public class CSTL
         CGRule r = c.parse_TypeCodegenerationrule(s.trim());
         if (r != null) 
         { res.addTypeUseRule(r); } 
+		else 
+		{ alertRule("Type", s); }
       }  
       else if ("basicexpressions".equals(mode))
       { Compiler2 c = new Compiler2(); 
         CGRule r = c.parse_ExpressionCodegenerationrule(s.trim());
         if (r != null) 
         { res.addBasicExpressionRule(r); } 
+        else 
+		{ alertRule("Basic expression", s); }
       }  
       else if ("unaryexpressions".equals(mode))
       { Compiler2 c = new Compiler2(); 
-        CGRule r = c.parse_ExpressionCodegenerationrule(s.trim());
+        CGRule r = c.parse_UnaryExpressionCodegenerationrule(s.trim());
         if (r != null) 
         { res.addUnaryExpressionRule(r); } 
+        else 
+		{ alertRule("Unary expression", s); }
       }  
       else if ("binaryexpressions".equals(mode))
       { Compiler2 c = new Compiler2(); 
         CGRule r = c.parse_ExpressionCodegenerationrule(s.trim());
         if (r != null) 
         { res.addBinaryExpressionRule(r); } 
+        else 
+		{ alertRule("Binary expression", s); }
       }  
       else if ("setexpressions".equals(mode))
       { Compiler2 c = new Compiler2(); 
         CGRule r = c.parse_ExpressionCodegenerationrule(s.trim());
         if (r != null) 
-        { res.addSetExpressionRule(r); } 
+        { res.addSetExpressionRule(r); }
+        else 
+		{ alertRule("Set expression", s); }
       }  
       else if ("conditionalexpressions".equals(mode))
       { Compiler2 c = new Compiler2(); 
         CGRule r = c.parse_ExpressionCodegenerationrule(s.trim());
         if (r != null) 
         { res.addConditionalExpressionRule(r); } 
+        else 
+		{ alertRule("Conditional expression", s); }
       }  
       else if ("entities".equals(mode))
       { Compiler2 c = new Compiler2(); 
         CGRule r = c.parse_EntityCodegenerationrule(s.trim()); 
         if (r != null) 
         { res.addClassRule(r); } 
+        else 
+		{ alertRule("Entity", s); }
       }         
       else if ("enumerations".equals(mode))
       { Compiler2 c = new Compiler2(); 
         CGRule r = c.parse_EntityCodegenerationrule(s.trim()); 
         if (r != null) 
         { res.addEnumerationRule(r); } 
+        else 
+		{ alertRule("Enumeration", s); }
       }         
       else if ("packages".equals(mode))
       { Compiler2 c = new Compiler2(); 
         CGRule r = c.parse_EntityCodegenerationrule(s.trim()); 
         if (r != null) 
         { res.addPackageRule(r); } 
+        else 
+		{ alertRule("Package", s); }
       }         
       else if ("attributes".equals(mode))
       { Compiler2 c = new Compiler2(); 
         CGRule r = c.parse_AttributeCodegenerationrule(s.trim()); 
         if (r != null) 
-        { res.addAttributeRule(r); } 
+        { res.addAttributeRule(r); }
+        else 
+		{ alertRule("Attribute/reference", s); }
+ 
       }         
       else if ("operations".equals(mode))
       { Compiler2 c = new Compiler2(); 
         CGRule r = c.parse_OperationCodegenerationrule(s.trim()); 
         if (r != null) 
         { res.addOperationRule(r); } 
+        else 
+		{ alertRule("Operation", s); }
+
       }  
       else if ("parameters".equals(mode))
       { Compiler2 c = new Compiler2(); 
         CGRule r = c.parse_OperationCodegenerationrule(s.trim()); 
         if (r != null) 
-        { res.addParameterRule(r); } 
+        { res.addParameterRule(r); }
+        else 
+		{ alertRule("Parameter", s); } 
       }       
       else if ("parameterarguments".equals(mode))
       { Compiler2 c = new Compiler2(); 
         CGRule r = c.parse_OperationCodegenerationrule(s.trim()); 
         if (r != null) 
         { res.addParameterArgumentRule(r); } 
+        else 
+		{ alertRule("Parameter argument", s); } 
       }       
       else if ("statements".equals(mode))
       { Compiler2 c = new Compiler2(); 
         CGRule r = c.parse_StatementCodegenerationrule(s.trim(),entities,types); 
         if (r != null) 
         { res.addStatementRule(r); } 
+        else 
+		{ alertRule("Statement", s); } 
       }         
       else if ("usecases".equals(mode))
       { Compiler2 c = new Compiler2(); 
         CGRule r = c.parse_UseCaseCodegenerationrule(s.trim(),entities,types); 
         if (r != null) 
-        { res.addUseCaseRule(r); } 
+        { res.addUseCaseRule(r); }
+        else 
+		{ alertRule("UseCase", s); }  
       }         
       else if ("texts".equals(mode))
       { Compiler2 c = new Compiler2(); 
         CGRule r = c.parse_TextCodegenerationrule(s.trim()); 
         if (r != null) 
-        { res.addTextRule(r); } 
+        { res.addTextRule(r); }
+        else 
+		{ alertRule("Text", s); }  
       }         
     }
     System.out.println(">>> Parsed: " + res); 
     return res; 
   }
 
+  private static void alertRule(String kind, String r)
+  { System.err.println("!!! Unable to parse " + kind + " rule: " + r);
+    JOptionPane.showMessageDialog(null, "Warning: Unable to parse " + kind + " rule: " + r, "", JOptionPane.ERROR_MESSAGE);
+  }
 
   public static void addTemplate(String filename, CGSpec cg) 
   { templates.put(filename,cg); }

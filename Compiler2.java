@@ -6,7 +6,7 @@ import javax.swing.JTextArea;
 import java.awt.*; 
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003,2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -914,7 +914,7 @@ public class Compiler2
     { // System.out.println("Creating new basic type " + typ);
       return new Type(typ,null);
     }
-    else if ("Map".equals(typ))  // for ATL
+    else if ("Map".equals(typ) || "Function".equals(typ))  // for ATL and extensions
     { Type tt = null; 
       for (int i = st + 2; i < en; i++) 
       { String ss = lexicals.get(i) + ""; 
@@ -922,16 +922,16 @@ public class Compiler2
         { Type t1 = parseType(st+2,i-1,entities,types); 
           Type t2 = parseType(i+1,en-1,entities,types);
           if (t1 != null && t2 != null) 
-          { tt = new Type("Map",t1,t2);
+          { tt = new Type(typ,t1,t2);
             tt.setKeyType(t1);  
             tt.setElementType(t2);
-			System.out.println("******* Parsed Map type: " + tt);  
+            System.out.println("******* Parsed " + typ + " type: " + tt);  
             return tt; 
           } 
         }
       } 
       if (tt == null) 
-      { System.err.println("ERROR: Invalid map type: " + showLexicals(st,en)); 
+      { System.err.println("ERROR: Invalid map/function type: " + showLexicals(st,en)); 
         return null; 
       }
       else 
@@ -1049,7 +1049,7 @@ public class Compiler2
     Expression ee = parse_expression(0,0,lexicals.size()-1); 
     finalexpression = ee;
     if (ee == null) 
-    { messageArea.append("Not a valid OCL constraint. Trying to parse as an operation.\n\r"); } 
+    { messageArea.append("!! Not a valid OCL constraint. Trying to parse as an operation.\n\r"); } 
     else 
     { messageArea.append("This is a valid OCL expression for a constraint.\n\r"); }  
     return ee; 
@@ -1097,6 +1097,52 @@ public class Compiler2
     System.err.println(">>> Invalid rule: " + rule); 
     return null; 
   } 
+
+  public CGRule parse_UnaryExpressionCodegenerationrule(String rule)
+  { String buff = ""; 
+    for (int i = 0; i < rule.length(); i++) 
+    { char c = rule.charAt(i); 
+      if (c == '|' && i + 2 < rule.length() && rule.charAt(i+1) == '-' && 
+          rule.charAt(i+2) == '-' && rule.charAt(i+3) == '>') 
+      { String lhs = rule.substring(0,i); 
+        nospacelexicalanalysis(lhs); 
+        Expression lhsexp = parseExpression();
+		if (lhsexp == null)
+		{ lhsexp = parseLambdaExpression(); } 
+
+        if (lhsexp != null) 
+        { if (lhsexp instanceof BinaryExpression)
+		  { BinaryExpression bexp = (BinaryExpression) lhsexp; 
+		    if (bexp.operator.equals("/=")) 
+			{ bexp.operator = "<>"; } 
+		  } 
+		
+		
+		  String rhs = rule.substring(i+4,rule.length());
+          for (int j = 0; j < rhs.length(); j++) 
+          { char d = rhs.charAt(j); 
+            if (d == '<' && j+5 < rhs.length() &&
+                rhs.charAt(j+1) == 'w' &&
+                rhs.charAt(j+2) == 'h' &&
+                rhs.charAt(j+3) == 'e' &&
+                rhs.charAt(j+4) == 'n' &&
+                rhs.charAt(j+5) == '>') 
+            { String conditions = rhs.substring(j+6,rhs.length()); 
+              Vector conds = parse_conditions(conditions); 
+              String rhstext = rhs.substring(0,j); 
+              CGRule r = new CGRule(lhsexp,rhstext,conds); 
+              return r; 
+            } 
+          } 
+          CGRule res = new CGRule(lhsexp,rhs); 
+          return res; 
+        } 
+      } 
+    } 
+    System.err.println(">>> Invalid rule: " + rule); 
+    return null; 
+  } 
+
 
   public CGRule parse_StatementCodegenerationrule(String rule, Vector entities, Vector types)
   { String buff = ""; 
@@ -1503,6 +1549,15 @@ public class Compiler2
     return ee; 
   } 
 
+  public Expression parseLambdaExpression() 
+  { // System.out.println("LEXICALS: " + lexicals); 
+    Vector v1 = new Vector(); 
+	Vector v2 = new Vector(); 
+	Expression ee = parse_lambda_expression(0,0,lexicals.size()-1,v1,v2); 
+    finalexpression = ee; 
+    return ee; 
+  } 
+
   public Expression parse_expression(int bcount, int pstart, int pend)
   { Expression ee = null; 
     
@@ -1510,6 +1565,11 @@ public class Compiler2
     { ee = parse_conditional_expression(bcount,pstart,pend); 
       if (ee != null) { return ee; } 
     } 
+
+    // if ("let".equals(lexicals.get(pstart) + "") && "endlet".equals(lexicals.get(pend) + ""))
+    // { ee = parse_let_expression(bcount,pstart,pend); 
+    //   if (ee != null) { return ee; } 
+    // } 
 
     if ("not".equals(lexicals.get(pstart) + ""))
     { ee = parse_expression(bcount,pstart+1,pend); 
@@ -1648,6 +1708,7 @@ public Expression parse_ATLconditional_expression(int bc, int st, int en, Vector
 public Expression parse_let_expression(int bc, int st, int en, Vector entities, Vector types)
 { // let v : T = e in expr
   // a BinaryExpression with operator "let" and accumulator v : T
+  // expr should be bracketed for nested lets. 
 
   int letcount = 1;
   String lxst = lexicals.get(st) + "";
@@ -1691,6 +1752,52 @@ public Expression parse_let_expression(int bc, int st, int en, Vector entities, 
             } 
           }
         } // k loop 
+      }
+    } else { }  
+  } // j loop
+  return null;
+} 
+
+/* Only for ATL, ETL, QVT-R */ 
+public Expression parse_lambda_expression(int bc, int st, int en, Vector entities, Vector types)
+{ // lambda v : T in expr
+  // a UnaryExpression with operator "lambda" and accumulator v : T
+  // expr should be bracketed for nested lets. 
+
+  int letcount = 1;
+  String lxst = lexicals.get(st) + "";
+  if ("lambda".equals(lxst)) {}
+  else { return null; }
+
+  for (int j = st+1; j < en; j++)
+  { String lxj = lexicals.get(j) + "";
+    if ("lambda".equals(lxj))
+    { letcount++; }
+    else if ("in".equals(lxj))
+    { if (letcount > 1)  // an inner let
+      { letcount--; } 
+      else if (letcount < 1)
+      { System.err.println("Too many in clauses"); return null; }
+      else 
+      { Expression var = parse_ATLexpression(bc, st+1, st+1,entities,types);
+        if (var == null)
+        { System.err.println("Error in lambda variable"); return null;  }
+        // lambda var : T in expr
+		
+        Type ltype = parseType(st+3,j-1,entities,types);
+        if (ltype == null)
+        { System.err.println("Error in lambda type"); return null;  }
+
+        Expression lbody = parse_ATLexpression(bc,j+1,en,entities,types); 
+        if (lbody == null)
+        { System.err.println("Error in lambda body"); }
+
+        if (ltype != null && lbody != null) 
+        { UnaryExpression letexp = new UnaryExpression("lambda", lbody); 
+          letexp.accumulator = new Attribute(var + "", ltype, ModelElement.INTERNAL); 
+          return letexp; 
+              // return new LetExpression(var,ltype,lexp,lbody); 
+        } 
       }
     } else { }  
   } // j loop
@@ -2350,8 +2457,11 @@ public Expression parse_let_expression(int bc, int st, int en, Vector entities, 
          { // top-level ,
            Expression exp = parse_additive_expression(bc,st0,i-1);
            if (exp == null) 
-           { System.out.println("Invalid additive exp: " + buff);
-             return null;
+           { exp = parse_lambda_expression(bc,st0,i-1,new Vector(),new Vector());
+		     if (exp == null) 
+			 { System.out.println("Invalid additive exp: " + buff);
+               return null;
+			 } 
            }
            res.add(exp);
            st0 = i + 1;
@@ -2363,8 +2473,11 @@ public Expression parse_let_expression(int bc, int st, int en, Vector entities, 
      if (bcnt == 0 && sqbcnt == 0 && cbcnt == 0)
      { Expression exp = parse_additive_expression(bc,st0,en);
        if (exp == null) 
-       { System.out.println("Invalid additive exp: " + buff);
-         return null;
+       { exp = parse_lambda_expression(bc,st0,en,new Vector(),new Vector());
+		 if (exp == null) 
+         { System.out.println("Invalid additive/lambda expression: " + buff);
+           return null;
+         }
        }
        res.add(exp);
      }
@@ -3679,19 +3792,19 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     { // creation with complex type
       String varname = lexicals.get(s+1) + ""; 
       for (int j = s+4; j < e; j++) 
-	  { String chr = lexicals.get(j) + ""; 
-		if (":=".equals(chr))
-		{ Type typ1 = parseType(s+3,j-1,entities,types); 
-		  Expression expr = parse_expression(0,j+1,e); 
-		  if (typ1 != null && expr != null) 
-		  { System.out.println("Creation statement var " + varname + " : " + typ1 + " with initialisation " + expr);
-	        CreationStatement cs1 = new CreationStatement(typ1 + "",varname); 
+      { String chr = lexicals.get(j) + ""; 
+        if (":=".equals(chr))
+        { Type typ1 = parseType(s+3,j-1,entities,types); 
+          Expression expr = parse_expression(0,j+1,e); 
+          if (typ1 != null && expr != null) 
+          { System.out.println("Creation statement var " + varname + " : " + typ1 + " with initialisation " + expr);
+            CreationStatement cs1 = new CreationStatement(typ1 + "",varname); 
             cs1.setType(typ1); 
             cs1.setElementType(typ1.getElementType());  
             cs1.setInitialisation(expr);
             return cs1;
-		  }   
-		}
+	     }   
+         }
 	  } 
 	  Type typ = parseType(s+3,e,entities,types);
       if (typ != null) 
@@ -6873,13 +6986,17 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
     catch(Exception _dd) { }
 	
 	Compiler2 cx = new Compiler2(); 
-	cx.nospacelexicalanalysis("m := m->union(Map{ \"form\" |-> \"table\" })");
-	System.out.println(cx.showLexicals(0,cx.lexicals.size()-1));
+	// cx.nospacelexicalanalysis("var f : Function(String,int)");
+	// cx.nospacelexicalanalysis("findRoot(st, en, lambda x : double in (x*x - x))");
+	cx.nospacelexicalanalysis("Function(double,double)");  
+	int en = cx.lexicals.size()-1; 
+	System.out.println(cx.showLexicals(0,en));
 	
 	// cx.nospacelexicalanalysis("reference _1 : _2; |-->  var _1 : _2 = _2()\n<when> _2 collection"); 
 	// System.out.println(cx.showLexicals(0,cx.lexicals.size()-1));  
     // CGRule r = cx.parse_ExpressionCodegenerationrule("Map{_1} |-->Ocl.initialiseMap(_1)"); 
-	Expression r = cx.parseExpression(); 
+	// Expression r = cx.parse_lambda_expression(0,0,en,new Vector(),new Vector());
+	Type r = cx.parseType();  
 	System.out.println(r);  
  	 
 	 // try 
