@@ -1,5 +1,6 @@
 import java.util.*; 
 import java.io.*; 
+import javax.swing.JOptionPane; 
 
 /******************************
 * Copyright (c) 2003,2021 Kevin Lano
@@ -348,6 +349,7 @@ public class ModelSpecification
 			tobjectsets.put(tent.getName(), tentobjs); 
 		  }
 		} 
+		
 		System.out.println(">>> Object splitting of " + sobj + " into " + tobjectsets); 
 	    System.out.println(); 
         Vector keys = new Vector(); 
@@ -1003,6 +1005,31 @@ public class ModelSpecification
     }
 	return res;  
   }
+  
+  public boolean isConstant(Attribute attr, Vector objects)
+  { boolean res = false;
+    boolean alldefined = true;
+    if (objects.size() < 2) 
+    { return false; } 
+ 
+    String attname = attr.getName(); // assume it is a string
+    String[] attvalues = new String[objects.size()]; 
+		
+    for (int j = 0; j < objects.size(); j++) 
+    { ObjectSpecification tobj = (ObjectSpecification) objects.get(j); 
+      if (tobj.hasDefinedValue(attname)) { } 
+      else 
+      { alldefined = false; } 
+      attvalues[j] = tobj.getString(attname); 
+		
+      if (alldefined && AuxMath.isConstant(attvalues))
+      { String constv = "\"" + attvalues[0] + "\""; 
+        System.out.println(">> Constant attribute " + constv + " |--> " + attname);
+        return true;  
+      }	  
+    }
+	return res;  
+  }
 
   public Vector validateSelectionConditions(Vector subclasses, Vector[] svals, Vector[] tvals, Attribute src) 
   { // For each sc : subclasses, check if all target elements 
@@ -1200,7 +1227,7 @@ public class ModelSpecification
 	return res; 
   } 
   
-  public void extraAttributeMatches(Vector ems)
+  public void extraAttributeMatches(Vector ems, Vector tms)
   { // for each em : ems, check if there are missing attribute matchings that are valid in the model
     Vector removed = new Vector(); 
 	  
@@ -1214,7 +1241,7 @@ public class ModelSpecification
 	  
       identifyConstantAttributeMatchings(trgent,em,pairs);
       em.realsrc.defineNonLocalFeatures(); 
-      identifyCopyAttributeMatchings(em.realsrc,trgent,em,pairs,ems); 
+      identifyCopyAttributeMatchings(em.realsrc,trgent,em,pairs,ems,tms); 
 	  identifyManyToOneAttributeMatchings(em.realsrc,trgent,em,pairs,ems);
 	} 
 	
@@ -1230,15 +1257,15 @@ public class ModelSpecification
     Vector res = new Vector();
 	 
     for (int i = 0; i < attributes.size(); i++)
-	{ Attribute att = (Attribute) attributes.get(i);
-	  String attname = att.getName(); 
+    { Attribute att = (Attribute) attributes.get(i);
+      String attname = att.getName(); 
 	   
-	  if (att.isNumeric())
-	  { double[] attvalues = new double[en]; 
-	    boolean alldefined = true; 
+      if (att.isNumeric())
+      { double[] attvalues = new double[en]; 
+        boolean alldefined = true; 
 		
 	    for (int j = 0; j < en; j++) 
-		{ Vector pair = (Vector) pairs.get(j); 
+        { Vector pair = (Vector) pairs.get(j); 
 		  ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
 		  if (tobj.hasDefinedValue(attname)) { } 
 		  else 
@@ -1275,6 +1302,25 @@ public class ModelSpecification
 		  emx.addMapping(amx); 
 		}
 	  }	
+	  else if (att.isCollection())
+	  { Vector[] attvalues = new Vector[en]; 
+	    boolean alldefined = true; 
+	    for (int j = 0; j < en; j++) 
+		{ Vector pair = (Vector) pairs.get(j); 
+		  ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+		  if (tobj.hasDefinedValue(attname)) { } 
+		  else 
+		  { alldefined = false; } 
+		  attvalues[j] = tobj.getCollectionValue(att,this); 
+	    }  
+		if (alldefined && AuxMath.isConstant(attvalues))
+		{ String constv = "" + attvalues[0]; 
+		  System.out.println(">> Constant feature mapping " + constv + " |--> " + attname); 
+		  AttributeMatching amx = new AttributeMatching(new SetExpression(attvalues[0],att.isSequence()), att); 
+		  res.add(amx); 
+		  emx.addMapping(amx); 
+		}
+	  }
 	  else if (att.isBoolean())
 	  { boolean[] attvalues = new boolean[en];
 	    boolean alldefined = true; 
@@ -1298,9 +1344,9 @@ public class ModelSpecification
 	  }   
 	}
 	return res; 
-  }
+  } // plus enumerations 
 
-  public Vector identifyCopyAttributeMatchings(Entity sent, Entity tent, EntityMatching emx, Vector pairs, Vector ems)
+  public Vector identifyCopyAttributeMatchings(Entity sent, Entity tent, EntityMatching emx, Vector pairs, Vector ems, Vector tms)
   { int en = pairs.size();  
     if (en <= 1)
     { return null; }
@@ -1406,17 +1452,37 @@ public class ModelSpecification
 	  	  else if (alldefined && AuxMath.isPrefixed(sattvalues,tattvalues))
 		  { String pref = AuxMath.commonPrefix(sattvalues,tattvalues); 
 		    if (pref != null)
-			{ System.out.println(">> Copy feature mapping " + pref + " + " + sattname + " |--> " + tattname); 
+            { System.out.println(">> Copy feature mapping " + pref + " + " + sattname + " |--> " + tattname); 
 		      BinaryExpression addsuff = new BinaryExpression("+",  
 			                                                  new BasicExpression("\"" + pref + "\""),
 															  new BasicExpression(satt)); 
 			  AttributeMatching amx = new AttributeMatching(addsuff, tatt); 
-		      res.add(amx); 
-		      emx.addMapping(amx); 
+              res.add(amx); 
+              emx.addMapping(amx); 
 			} 
 		  }
 		  // Or - identify a specific string-to-string mapping. Eg., "Real" |-> "double", etc. 
-		  
+		  else if (alldefined && AuxMath.isFunctional(sattvalues,tattvalues))
+		  { System.out.println(">>>> Create specific string-to-string function for these features?"); 
+            for (int mk = 0; mk < en; mk++) 
+            { System.out.println("  " + sattvalues[mk] + " |--> " + tattvalues[mk]); }
+            String fname = "f" + sent + satt.underscoreName() + "2" + tent + tatt.underscoreName(); 
+			String yn = 
+                   JOptionPane.showInputDialog("Create String-to-String function " + fname + "? (y/n):");
+
+            if (yn != null && "y".equals(yn))
+            { TypeMatching newfunction = new TypeMatching(satt.getType(), tatt.getType()); 
+			  newfunction.setName(fname); 
+              newfunction.setStringValues(sattvalues,tattvalues);
+              System.out.println(">>> New function: " + newfunction);
+			  BasicExpression fsatt = new BasicExpression(fname); 
+			  fsatt.addParameter(new BasicExpression(satt));   
+      	      AttributeMatching amx = new AttributeMatching(fsatt, tatt); 
+              res.add(amx); 
+              emx.addMapping(amx);
+			  tms.add(newfunction);  
+		    }  
+		  } 
 	    }	
 	    else if (satt.isBoolean() && tatt.isBoolean())
 	    { boolean[] sattvalues = new boolean[en]; 
@@ -1431,12 +1497,19 @@ public class ModelSpecification
 		    else 
 		    { alldefined = false; } 
 		    sattvalues[j] = sobj.getBoolean(sattname); 
-			tattvalues[j] = tobj.getBoolean(tattname); 
+               tattvalues[j] = tobj.getBoolean(tattname); 
 		  }
 		
 		  if (alldefined && AuxMath.isCopy(sattvalues,tattvalues))
  		  { System.out.println(">> Copy feature mapping " + sattname + " |--> " + tattname); 
 		    AttributeMatching amx = new AttributeMatching(satt, tatt); 
+		    res.add(amx); 
+		    emx.addMapping(amx); 
+		  }
+		  else if (alldefined && AuxMath.isNegation(sattvalues,tattvalues))
+ 		  { System.out.println(">> Copy feature mapping not(" + sattname + ") |--> " + tattname); 
+		    UnaryExpression notatt = new UnaryExpression("not", new BasicExpression(satt)); 
+			AttributeMatching amx = new AttributeMatching(notatt, tatt); 
 		    res.add(amx); 
 		    emx.addMapping(amx); 
 		  }
@@ -1446,15 +1519,15 @@ public class ModelSpecification
           ObjectSpecification[] tattvalues = new ObjectSpecification[en];
   	      boolean alldefined = true; 
 						 	 
-	      for (int j = 0; j < en; j++) 
-		  { Vector pair = (Vector) pairs.get(j); 
-		    ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
-		    ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
-		    if (sobj.hasDefinedValue(satt,this) && tobj.hasDefinedValue(tattname)) { } 
+          for (int j = 0; j < en; j++) 
+          { Vector pair = (Vector) pairs.get(j); 
+            ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+            ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+            if (sobj.hasDefinedValue(satt,this) && tobj.hasDefinedValue(tattname)) { } 
             else 
-		    { alldefined = false; } 
+            { alldefined = false; } 
 		    sattvalues[j] = sobj.getReferredObject(sattname,this); 
-			tattvalues[j] = tobj.getReferredObject(tattname,this); 
+            tattvalues[j] = tobj.getReferredObject(tattname,this); 
 		  }
 		
 		  if (alldefined && AuxMath.isCopy(sattvalues,tattvalues,this))

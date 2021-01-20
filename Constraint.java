@@ -5,7 +5,7 @@ import java.io.*;
 import javax.swing.*; 
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003,2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -5918,6 +5918,7 @@ public Constraint generalType0inverse()
 
     Expression nac = succedent().computeNegation4succ(); 
     // Negative application condition
+    Expression nac1 = nac.removePrestate(); 
 
     Type voidtype = new Type("void", null); 
     BehaviouralFeature bf = 
@@ -5962,11 +5963,11 @@ public Constraint generalType0inverse()
     if (actualvars.size() == 0) // (qvars.size() == 0 && letVars.size() == 0)
     { if (ante == null) 
       { bftest.setActivity(sstat0); 
-        bf.setPre(nac); 
+        bf.setPre(nac1); 
       } 
       else if ("true".equals(ante + ""))
       { bftest.setActivity(sstat0); 
-        bf.setPre(nac); 
+        bf.setPre(nac1); 
       } 
       else 
       { SequenceStatement outerss = new SequenceStatement(); 
@@ -5974,7 +5975,8 @@ public Constraint generalType0inverse()
         if (ante.conflictsWith(succedent()) || "y".equals(optimise))
         { System.out.println("Omitting test of: " + succedent()); 
           outerif = new IfStatement(ante,rettrue); 
-          bf.setPre(ante); 
+          Expression antex = ante.removePrestate(); 
+          bf.setPre(antex); 
         } 
         else 
         { outerif = new IfStatement(ante,sstat0); 
@@ -6007,22 +6009,24 @@ public Constraint generalType0inverse()
       Statement outerif; 
       if (ante2 == null) 
       { bftest.setActivity(sstat0); 
-        bf.setPre(nac); 
+        bf.setPre(nac1); 
       } 
       else if ("true".equals(ante2 + ""))
       { bftest.setActivity(sstat0); 
-        bf.setPre(nac); 
+        bf.setPre(nac1); 
       } 
       else 
       { if (ante2.conflictsWith(succedent()) || "y".equals(optimise))
         { System.out.println("Omitting negative application condition: " +
                              succedent()); 
           outerif = new IfStatement(ante2,rettrue);
-          bf.setPre(ante2); 
+          Expression ante2x = ante2.removePrestate(); 
+          bf.setPre(ante2x); 
         } 
         else 
         { outerif = new IfStatement(ante2,sstat0); 
-          bf.setPre(new BinaryExpression("&",ante2,nac)); 
+          Expression ante2x = ante2.removePrestate(); 
+          bf.setPre(new BinaryExpression("&",ante2x,nac1)); 
         } 
  
         outerss.addStatement(outerif); 
@@ -6277,6 +6281,7 @@ public Constraint generalType0inverse()
 
     Expression nac = succedent().computeNegation4succ(); 
     // Negative application condition
+    Expression nac1 = nac.removePrestate(); 
 
     Type booltype = new Type("boolean",null); 
     Type ownertype = new Type(owner); 
@@ -6340,7 +6345,11 @@ public Constraint generalType0inverse()
       { actualvars.add(av); } 
     } 
       
-    Expression ante = antecedent(); 
+    Expression ante = antecedent();
+    Expression antex = null; 
+    if (ante != null) 
+    { antex = ante.removePrestate(); } 
+ 
     // if ("y".equals(optimise))
     // { outerif = new IfStatement(ante,rettrue);
     //   outerss.addStatement(outerif); 
@@ -6352,17 +6361,17 @@ public Constraint generalType0inverse()
     // else 
     if (ante == null || "true".equals(ante + ""))
     { bftest.setActivity(sstat0);
-      bf.setPre(nac); 
+      bf.setPre(nac1); 
     } 
     else if (actualvars.size() == 0) // (qvars.size() == 0 && letVars.size() == 0)
     { if (ante.conflictsWith(sc) || "y".equals(optimise))
-      { System.out.println("CONFLICT between: " + ante + " and " + sc + ". I WILL OMIT not(succ) test"); 
+      { System.out.println("!! CONFLICT between: " + ante + " and " + sc + ". I WILL OMIT not(succ) test"); 
         outerif = new IfStatement(ante,rettrue);
-        bf.setPre(ante); 
+        bf.setPre(antex); 
       } 
       else 
       { outerif = new IfStatement(ante,sstat0); 
-        bf.setPre(new BinaryExpression("&",ante,nac)); 
+        bf.setPre(new BinaryExpression("&",antex,nac1)); 
       }
       outerss.addStatement(outerif); 
       outerss.addStatement(retfalse);       
@@ -6382,6 +6391,8 @@ public Constraint generalType0inverse()
       // System.out.println("Variables: " + actualvars + " " + qvars1 + " " + lvars1); 
       Expression ante1 = (Expression) splitante.get(0); 
       Expression ante2 = (Expression) splitante.get(1); 
+      Expression ante2x = ante2.removePrestate(); 
+
       // System.out.println("Variables: " + variables); 
       // System.out.println("Variable quantifiers: " + ante1); 
       // System.out.println("Assumptions: " + ante2); 
@@ -6395,21 +6406,21 @@ public Constraint generalType0inverse()
         outerif.setEntity(owner); 
         outerss.setEntity(owner); 
         bftest.setActivity(outerss);
-        bf.setPre(ante2); 
+        bf.setPre(ante2x); 
       }
       else if (ante2 == null || "true".equals(ante2 + ""))
       { bftest.setActivity(sstat0);
-        bf.setPre(nac); 
+        bf.setPre(nac1); 
       } 
       else 
       { if (ante2.conflictsWith(succedent()))
         { System.out.println("Conflict between: " + ante2 + " and " + sc); 
           outerif = new IfStatement(ante2,rettrue); 
-          bf.setPre(ante2); 
+          bf.setPre(ante2x); 
         } 
         else 
         { outerif = new IfStatement(ante2,sstat0);
-          bf.setPre(new BinaryExpression("&",ante2,nac)); 
+          bf.setPre(new BinaryExpression("&",ante2x,nac1)); 
         } 
  
         outerss.addStatement(outerif); 

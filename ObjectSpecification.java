@@ -371,8 +371,10 @@ public class ObjectSpecification extends ModelElement
   public String getString(String att) 
   { 
     String val = (String) attvalues.get(att); 
-    if (val != null) 
+    if (val != null && val.startsWith("\"") && val.endsWith("\"")) 
     { return val.substring(1,val.length()-1); } 
+	else if (val != null) 
+	{ return val; }
     return "";  
   } // Need also to remove the quotes
 
@@ -474,6 +476,7 @@ public class ObjectSpecification extends ModelElement
   { String v = expr + ""; 
     Type t = expr.getType(); 
 
+    
     if (expr instanceof BasicExpression)
     { BasicExpression be = (BasicExpression) expr; 
       if (be.objectRef != null)
@@ -492,7 +495,13 @@ public class ObjectSpecification extends ModelElement
       { return "Set{}"; } 
       else if (t != null && t.isSequenceType())
       { return "Sequence{}"; } 
-      else 
+      else if (t != null && t.isEnumeration())
+      { return expr + ""; } 
+      else if (t != null && t.isNumeric())
+      { return expr + ""; } 
+      else if (t != null && t.isString())
+      { return expr + ""; } // "\"" + expr + "\""; } 
+      else // and numerics?  
       { return "null"; }
     } 
     else // if (val != null) 
@@ -564,9 +573,21 @@ public class ObjectSpecification extends ModelElement
     } 
     else if ("=".equals(condop))
     { String valleft = getValue(cond.getLeft(),mod); 
-      String valright = getValue(cond.getRight(),mod); 
+      String valright = getValue(cond.getRight(),mod);
+      System.out.println("---> Value of " + cond.getLeft() + " is ---> " + valleft); 
+      System.out.println("---> Value of " + cond.getRight() + " is ---> " + valright); 
+ 
       if (valleft != null && valleft.equals(valright))
       { return true; } 
+      return false; 
+    } 
+    else if ("/=".equals(condop))
+    { String valleft = getValue(cond.getLeft(),mod); 
+      String valright = getValue(cond.getRight(),mod); 
+      if (valleft != null && valleft.equals(valright))
+      { return false; }
+      else if (valleft != null && !valleft.equals(valright))
+      { return true; }  
       return false; 
     } 
     else if ("->oclIsTypeOf".equals(condop))
@@ -615,13 +636,13 @@ public class ObjectSpecification extends ModelElement
   public boolean satisfiesCondition(Expression cond, ModelSpecification mod)
   { if (cond instanceof BinaryExpression) 
     { return satisfiesBinaryCondition((BinaryExpression) cond, mod); }
-	else if (cond instanceof BasicExpression)
-	{ return satisfiesBasicCondition((BasicExpression) cond, mod); }
-	else if (cond instanceof UnaryExpression)
-	{ return satisfiesUnaryCondition((UnaryExpression) cond, mod); }
-	else if (cond instanceof SetExpression)
-	{ return satisfiesSetCondition((SetExpression) cond, mod); }
-	return false;
+    else if (cond instanceof BasicExpression)
+    { return satisfiesBasicCondition((BasicExpression) cond, mod); }
+    else if (cond instanceof UnaryExpression)
+    { return satisfiesUnaryCondition((UnaryExpression) cond, mod); }
+    else if (cond instanceof SetExpression)
+    { return satisfiesSetCondition((SetExpression) cond, mod); }
+    return false;
   } 
 	 
 

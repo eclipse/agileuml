@@ -3,7 +3,7 @@ import java.util.Vector;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003,2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -800,6 +800,18 @@ public class Attribute extends ModelElement
     return res; 
   } 
  
+  public String underscoreName()
+  { if (navigation.size() <= 1) 
+    { return getName(); } 
+    String res = "";
+    for (int i = 0; i < navigation.size(); i++)
+    { Attribute p = (Attribute) navigation.get(i);
+      res = res + p.getName(); 
+      if (i < navigation.size()-1)
+      { res = res + "_"; } 
+    } 
+    return res; 
+  } 
 
   public boolean isSource()
   { return stereotypes.contains("source"); } 

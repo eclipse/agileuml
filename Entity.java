@@ -5,7 +5,7 @@ import java.io.*;
 import javax.swing.*;
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003,2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -266,6 +266,27 @@ public class Entity extends ModelElement implements Comparable
     { Association ast = (Association) associations.get(i); 
       if (ast.isOptional())
       { res.add(new Attribute(ast)); } 
+    } 
+    return res; 
+  } 
+
+  public Vector getLocalOptionalFeatures()
+  { Vector res = new Vector(); 
+
+    for (int i = 0; i < associations.size(); i++) 
+    { Association ast = (Association) associations.get(i); 
+      if (ast.isOptional()) // either 0..1 or *
+      { res.add(new Attribute(ast)); } 
+    } 
+
+    if (res.size() > 0)
+    { return res; } 
+
+    for (int i = 0; i < localFeatures.size(); i++) 
+    { Attribute att = (Attribute) localFeatures.get(i); 
+      Type t = att.getType(); 
+      if (t != null && t.isCollection())
+      { res.add(att); } 
     } 
     return res; 
   } 

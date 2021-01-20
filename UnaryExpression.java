@@ -46,6 +46,9 @@ public class UnaryExpression extends Expression
   public void setArgument(Expression arg) 
   { argument = arg; } 
 
+  public void setAccumulator(Attribute att) 
+  { accumulator = att; } 
+
   public Object clone()
   { Expression newarg = (Expression) argument.clone(); 
     UnaryExpression res = new UnaryExpression(operator,newarg); 

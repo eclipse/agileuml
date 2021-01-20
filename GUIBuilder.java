@@ -1,7 +1,7 @@
 import java.util.*; 
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003,2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -797,7 +797,10 @@ public class GUIBuilder
 		call = indent + "  try { " + call + ";\n" + 
 		       indent + "  }\n" + 
 			   indent + "  catch(Exception _e) { System.out.println(\" !! Exception occurred: test failed !! \"); }\n"; 
-			   
+		
+           if (teststring.equals(""))
+           { teststring = "\"\""; } 
+	   
 		testscript = testscript + 
              indent + "  System.out.println();\n" + 
              indent + "  System.out.print(\">>> Test: \" + " + teststring + ");\n" + 
@@ -1224,6 +1227,9 @@ public class GUIBuilder
 		       indent + "  }\n" + 
 			   indent + "  catch(Exception _e) { System.out.println(\" !! Exception occurred: test failed !! \"); }\n"; 
 			   
+           if (teststring.equals(""))
+           { teststring = "\"\""; } 
+
 		testscript = testscript + 
 		  indent + "  System.out.println();\n" + 
              indent + "  System.out.print(\">>> Test: \" + " + teststring + ");\n" + 

@@ -156,6 +156,12 @@ public class CGCondition
       else
       { return !("Map".equals(tname)); }
     }
+    else if ("Function".equals(stereotype))
+    { if (positive)
+      { return "Function".equals(tname); }
+      else
+      { return !("Function".equals(tname)); }
+    }
     else if ("collection".equals(stereotype.toLowerCase()))
     { if (positive)
       { return ("Set".equals(tname) || "Sequence".equals(tname)); }

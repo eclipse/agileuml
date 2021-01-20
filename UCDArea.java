@@ -14025,7 +14025,7 @@ public void produceCUI(PrintWriter out)
       } 
     } 
 
-    int delta = 80; // visual displacement 
+    int delta = 180; // visual displacement 
     int ecount = 0; 
 
     Vector newentities = new Vector(); 
@@ -14080,9 +14080,9 @@ public void produceCUI(PrintWriter out)
       { RectData rd1 = (RectData) getVisualOf(e1); 
         RectData rd2 = (RectData) getVisualOf(e2);
         int xs = rd1.sourcex + 50;
-        int ys = rd1.sourcey + 50; 
-        int xe = rd2.sourcex; 
-        int ye = rd2.sourcey + 50;   
+        int ys = rd1.sourcey; 
+        int xe = rd2.sourcex + 100; 
+        int ye = rd2.sourcey;   
 
         reconstructAssociation(pa.e1name,pa.e2name,xs,ys,
                              xe,ye,pa.card1,pa.card2,
@@ -18526,9 +18526,9 @@ public void produceCUI(PrintWriter out)
 
   public void checkTLmodel()
   { Date d1 = new Date(); 
-	long startTime = d1.getTime(); 
+    long startTime = d1.getTime(); 
 	
-	if (tlspecification != null) 
+    if (tlspecification != null) 
     { ModelSpecification modelspec = new ModelSpecification(); 
 	
       BufferedReader br = null;

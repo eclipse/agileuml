@@ -16,6 +16,7 @@ import javax.swing.JOptionPane;
 public class ModelMatching implements SystemTypes
 { Map mymap; 
   Vector entitymatches = new Vector(); // of EntityMatching
+  Vector typematches = new Vector(); // of TypeMatching
   Vector helpers = new Vector(); // of BehaviouralFeature
 
   final static double INTLONG = 0.8; // matching weight of int mapping to a long, etc
@@ -120,9 +121,14 @@ public class ModelMatching implements SystemTypes
   public String toString()
   { String res = "\n"; 
     for (int i = 0; i < helpers.size(); i++) 
-	{ BehaviouralFeature bf = (BehaviouralFeature) helpers.get(i); 
-	  res = res + bf.display() + "\n\n"; 
-	}
+    { BehaviouralFeature bf = (BehaviouralFeature) helpers.get(i); 
+      res = res + bf.display() + "\n\n"; 
+    }
+	
+    for (int i = 0; i < typematches.size(); i++) 
+    { TypeMatching tm = (TypeMatching) typematches.get(i); 
+      res = res + tm + "\n\n"; 
+    }
 	
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
@@ -760,7 +766,7 @@ public class ModelMatching implements SystemTypes
     for (int i = 0; i < unusedtargets.size(); i++) 
     { Entity ut = (Entity) unusedtargets.get(i); 
       if (ut.isAbstract()) { continue; } 
-	  Vector recommendedsources = sourcesMappedTo(entitymaps,ut); 
+      Vector recommendedsources = sourcesMappedTo(entitymaps,ut); 
 
       System.out.println(">>> Recommended source matches for " + ut + " are " + recommendedsources); 
 
@@ -838,7 +844,8 @@ public class ModelMatching implements SystemTypes
             
         if (trgs.size() > 1)
         { Vector ubools = newem.unusedSourceBooleans();  
-          Vector ustrings = newem.unusedSourceStrings(); 
+          Vector ustrings = newem.unusedSourceStrings();
+          Vector unusedoptionals = newem.allSourceOptionals();  
           System.out.println(">>> Unconditional entity splitting of " + 
                              bestmatch + " to: " + trgs); 
 
@@ -908,6 +915,42 @@ public class ModelMatching implements SystemTypes
                   }  
                 } 
               } 
+            }
+          }
+          else if (unusedoptionals.size() > 0) 
+          { System.out.println(">>> Optional source features: " + unusedoptionals); 
+            for (int pp = 0; pp < unusedoptionals.size(); pp++) 
+            { Attribute selector = (Attribute) unusedoptionals.get(pp); 
+              String yns = 
+                  JOptionPane.showInputDialog("Add conditions " + selector + "->isEmpty(), " + selector + "->notEmpty() " +
+                                            "? (y/n):");
+
+              if (yns != null && "y".equals(yns))
+              { BasicExpression selbe = new BasicExpression(selector); 
+
+              // Look for a match to selector in tk, if found, use selector->notEmpty().             
+                for (int k = 0; k < trgs.size(); k++) 
+                { EntityMatching tk = (EntityMatching) trgs.get(k); 
+			    // if tk.realtrg has match for selector, set condition 
+                // BasicExpression tbe = new BasicExpression("\"" + tk.realtrg.getName() + "\""); 
+                // tbe.setType(selector.getType()); 
+                // tbe.setElementType(selector.getType()); 
+			// Vector amsc = tk.findCompatibleMappings(selector,entitymatches); 
+                // AttributeMatching amx = tk.findClosestNamedMapping(selector,amsc); 
+                  Vector amsc = tk.bestTargetMatches(selector,entitymatches,thesaurus);  
+                  if (amsc != null && amsc.size() > 0) 
+			  { System.out.println(">>> " + tk + " has matches " + amsc + " for " + selector);
+                    BasicExpression selxbe = new BasicExpression(selector);    
+                    UnaryExpression hasOptional = new UnaryExpression("->notEmpty",selbe);  
+                    tk.addCondition(hasOptional);
+                  } 
+                  else 
+                  { BasicExpression selxbe = new BasicExpression(selector);    
+                    UnaryExpression emptyOptional = new UnaryExpression("->isEmpty",selbe);  
+                    tk.addCondition(emptyOptional);
+                  } 
+                }   
+              }  
             }
           }
           else 
@@ -2288,7 +2331,7 @@ public class ModelMatching implements SystemTypes
 
     combineMatches(extraems); // and the mymap. 
 
-    mod.extraAttributeMatches(entitymatches); 
+    mod.extraAttributeMatches(entitymatches,typematches); 
 
     for (int i = 0; i < entities.size(); i++) 
     { Entity tent = (Entity) entities.get(i); 

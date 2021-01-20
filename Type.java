@@ -1987,7 +1987,9 @@ public class Type extends ModelElement
       { res = new BasicExpression("\"\""); }
       else if (nme.equals("boolean"))
       { return new BasicExpression(false); }
-      else if (nme.equals("int") || nme.equals("double") || nme.equals("long"))
+	  else if (nme.equals("double"))
+	  { return new BasicExpression(0.0); }
+      else if (nme.equals("int") || nme.equals("long"))
       { return new BasicExpression(0); }
       else if (nme.equals("Set") || nme.equals("Sequence") || nme.equals("Map"))
       { res = new SetExpression();
@@ -1996,11 +1998,17 @@ public class Type extends ModelElement
         res.setType(this); 
         res.setElementType(elemt); 
       }
-      else if (isEntity() || nme.equals("Function"))
+      else if (isEntity())
       { res = new BasicExpression("null"); 
         res.setType(this); 
         res.setElementType(elemt); 
       } 
+	  else if (nme.equals("Function"))
+	  { // lambda x : keyType in elementType.defaultValueExpression() 
+	    res = new UnaryExpression("lambda", elementType.getDefaultValueExpression()); 
+		((UnaryExpression) res).setAccumulator(new Attribute("_x", keyType, ModelElement.INTERNAL)); 
+		return res; 
+      }
       else // unknown type
       { res = new BasicExpression(0); } 
     }

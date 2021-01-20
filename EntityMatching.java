@@ -4,7 +4,7 @@ import java.util.Collections;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003,2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -438,6 +438,32 @@ public class EntityMatching implements SystemTypes
     return true; 
   } 
 
+  public Vector bestTargetMatches(Attribute satt, Vector ems, Vector thesaurus)
+  { Vector locals1 = trg.getAttributes();
+    Vector best = new Vector(); 
+	
+    for (int i = 0; i < locals1.size(); i++) 
+    { Attribute tatt = (Attribute) locals1.get(i); 
+      double bestmatch = 0;
+      Attribute smatched = null; 
+      if (ModelMatching.compatibleType(satt,tatt,ems))
+      { double tknss = 
+            Entity.nmsSimilarity(tatt.getName(), satt.getName(), thesaurus); 
+        System.out.println(">>> NMS similarity of " + tatt + " and " + satt + 
+                                       " = " + tknss); 
+	    if (tknss > bestmatch) 
+        { bestmatch = tknss; 
+		  smatched = tatt; 
+		  best = new Vector(); 
+		  best.add(smatched);  
+        } 
+		else if (tknss == bestmatch)
+		{ best.add(tatt); }
+	  }
+	}
+    return best; 
+  } 
+   
   public void checkTargetFeatureCompleteness(Vector ems, Vector thesaurus)
   { Vector locals1 = trg.getAttributes();
     Vector locals3 = src.getAttributes();
@@ -581,6 +607,26 @@ public class EntityMatching implements SystemTypes
     return res; 
   } 
 
+  public Vector unusedSourceOptionals()
+  { Vector sbools = realsrc.getLocalOptionalFeatures(); 
+    // System.out.println(">>> Optional source features: " + sbools); 
+    Vector res = new Vector();
+
+    for (int i = 0; i < sbools.size(); i++) 
+    { Attribute sbool = (Attribute) sbools.get(i); 
+      if (isUnusedSource(sbool))
+      { if (res.contains(sbool)) { } 
+        else 
+        { res.add(sbool); }
+      }  
+    }  
+    return res; 
+  } 
+
+  public Vector allSourceOptionals()
+  { Vector sbools = realsrc.getLocalOptionalFeatures();
+    return sbools; 
+  }  
 
   public Vector unusedSourceConditions(Vector featuresets)
   { Vector locals1 = realsrc.getLocalFeatures();
@@ -3596,7 +3642,8 @@ public class EntityMatching implements SystemTypes
 	       addCondition(possibleCond); 
 	     }
 	     else 
-	     { possibleCond = new UnaryExpression("not", new BasicExpression(att)); 
+	     { possibleCond = new UnaryExpression("not", new BasicExpression(att));
+		   possibleCond.setType(att.getType());  
 	       condValid = mod.checkConditionInModel(possibleCond,restrictedsources);
 	       if (condValid)
 	       { System.out.println(">>> Condition not(" + att + ") is valid. Adding to mapping"); 
@@ -3610,60 +3657,79 @@ public class EntityMatching implements SystemTypes
           { Vector enumvals = enumt.getValues(); 
             for (int j = 0; j < enumvals.size(); j++) 
             { String enumval = (String) enumvals.get(j); 
-              System.out.println(">>> Possible source enum condition is: " + att + " = " + enumval); 
-     	         Expression possCond = new BinaryExpression("=", new BasicExpression(att), new BasicExpression("\"" + enumval + "\"")); 
+              System.out.println(">>> Possible source enum condition is: " + att + " = " + enumval);
+			  BasicExpression enumValbe = new BasicExpression(enumval); // no quotes?? 
+			  enumValbe.setType(enumt);  
+              Expression possCond = new BinaryExpression("=", new BasicExpression(att), enumValbe); 
 	          boolean condValid = mod.checkConditionInModel(possCond,restrictedsources);
 	    	  if (condValid)
 	          { System.out.println(">>> Condition " + att + " = " + enumval + " is valid. Adding to mapping"); 
 	            addCondition(possCond); 
 	          }
-		    }
+            }
           }
         }  
         else if (att.isString())
         { System.out.println(">>> Possible source string condition is: " + att + " = \"" + trgname + "\"");
-		  Expression possibleCond = new BinaryExpression("=", new BasicExpression(att), 
-		                                                   new BasicExpression("\"" + trgname + "\"")); 
-		  boolean condValid = mod.checkConditionInModel(possibleCond,restrictedsources);
-		  if (condValid)
-		  { System.out.println(">>> Condition " + att + " = \"" + trgname + "\" is valid. Adding to mapping"); 
-		    addCondition(possibleCond); 
-		  } 
+		  BasicExpression strexpr = new BasicExpression("\"" + trgname + "\""); 
+		  strexpr.setType(new Type("String", null)); 
+		  strexpr.setElementType(new Type("String", null)); 
+		  
+          Expression possibleCond = new BinaryExpression("=", new BasicExpression(att), strexpr); 
+          boolean condValid = mod.checkConditionInModel(possibleCond,restrictedsources);
+          if (condValid)
+          { System.out.println(">>> Condition " + att + " = \"" + trgname + "\" is valid. Adding to mapping"); 
+            addCondition(possibleCond); 
+          } 
+		  else // check that all the sources have a constant value for att. 
+		  if (mod.isConstant(att,restrictedsources))
+		  { String attnme = att.getName(); 
+		    System.out.println(">>> Attribute " + att + " is constant on these source objects");
+		    String val = ((ObjectSpecification) restrictedsources.get(0)).getString(attnme); 
+	
+		    possibleCond = new BinaryExpression("=", new BasicExpression(att), new BasicExpression("\"" + val + "\"")); 
+			addCondition(possibleCond);
+		  }
         }
       }
-	  if (condition == null)
-	  { // try 0-1 and * associations from realsrc
-	    Vector optroles = realsrc.optionalRoles();
-		for (int j = 0; j < optroles.size(); j++) 
-		{ Attribute role = (Attribute) optroles.get(j); 
-		  Expression possCond = new UnaryExpression("->isEmpty", new BasicExpression(role)); 
-		  System.out.println(">>> Possible source condition is: " + possCond);
+	  
+      if (condition == null)
+      { // try 0-1 and * associations from realsrc
+        Vector optroles = realsrc.optionalRoles();
+        for (int j = 0; j < optroles.size(); j++) 
+        { Attribute role = (Attribute) optroles.get(j); 
+          Expression possCond = new UnaryExpression("->isEmpty", new BasicExpression(role)); 
+		  possCond.setType(new Type("boolean", null)); 
 		  
-		  boolean cvalid = mod.checkConditionInModel(possCond,restrictedsources); 
-		  if (cvalid) 
-		  { System.out.println(">>> Condition " + role + "->isEmpty() is valid. Adding to mapping"); 
-		    addCondition(possCond); 
-		  }
+          System.out.println(">>> Possible source condition is: " + possCond);
 		  
-		  Expression possCond2 = new UnaryExpression("->notEmpty", new BasicExpression(role)); 
+          boolean cvalid = mod.checkConditionInModel(possCond,restrictedsources); 
+          if (cvalid) 
+          { System.out.println(">>> Condition " + role + "->isEmpty() is valid. Adding to mapping"); 
+            addCondition(possCond); 
+          }
+		  
+          Expression possCond2 = new UnaryExpression("->notEmpty", new BasicExpression(role)); 
+          possCond2.setType(new Type("boolean", null)); 
 		  System.out.println(">>> Possible source condition is: " + possCond2);
 		  
-		  boolean cvalid2 = mod.checkConditionInModel(possCond2,restrictedsources); 
-		  if (cvalid2) 
-		  { System.out.println(">>> Condition " + role + "->notEmpty() is valid. Adding to mapping"); 
-		    addCondition(possCond2); 
-		  }
-		}   
+          boolean cvalid2 = mod.checkConditionInModel(possCond2,restrictedsources); 
+          if (cvalid2) 
+          { System.out.println(">>> Condition " + role + "->notEmpty() is valid. Adding to mapping"); 
+            addCondition(possCond2); 
+          }
+         }   
 	  } 
 	  System.out.println(); 
 	} // and class specialisations if realsrc is abstract
 	
-    Vector removed = new Vector(); 
-    Vector added = new Vector(); 
+      Vector removed = new Vector(); 
+      Vector added = new Vector(); 
 
-	for (int i = 0; i < attributeMappings.size(); i++)
-	{ AttributeMatching am = (AttributeMatching) attributeMappings.get(i);
-	  System.out.println(">> >> Types of " + am + " are " + am.src.getType() + " |--> " + am.trg.getType()); 
+      for (int i = 0; i < attributeMappings.size(); i++)
+      { AttributeMatching am = (AttributeMatching) attributeMappings.get(i);
+        System.out.println(">> Checking mapping " + am); 
+        System.out.println(">> Types of " + am + " are " + am.src.getType() + " |--> " + am.trg.getType()); 
 	  
 	  if (am.isExpressionMapping())
 	  { } 
@@ -3682,10 +3748,10 @@ public class EntityMatching implements SystemTypes
         { am.checkModel(mod,restrictedsources,trgobjects,attributeMappings,removed,added,queries); } 
         else if (satt.isCollection() && tatt.isCollection())
         { am.checkModel(mod,restrictedsources,trgobjects,attributeMappings,removed,added,queries); }
-		else
-		{ System.out.println(">>> Mis-matching types in " + am); 
-		  removed.add(am); 
-		}
+        else
+        { System.out.println(">>> Mis-matching types in " + am); 
+          removed.add(am); 
+        }
 		// Other possibilities: enum to enum, enum/String, enum/boolean either way round
 		// Entity to Collection. Others are invalid and should be removed. 
       } 

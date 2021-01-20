@@ -1,7 +1,7 @@
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003,2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -273,6 +273,24 @@ public class RequirementsPhrase
 	return false;   
   } 
 
+  public static boolean isSourceClassName(String cwd, Vector entities)
+  { Entity src = (Entity) ModelElement.lookupByName(cwd,entities); 
+    if (src == null)
+    { src = (Entity) ModelElement.lookupByNameNMS(cwd,entities,0.5); }
+    if (src == null) 
+	{ return false; }
+	return src.isSource();   
+  } 
+
+  public static boolean isTargetClassName(String cwd, Vector entities)
+  { Entity src = (Entity) ModelElement.lookupByName(cwd,entities); 
+    if (src == null)
+    { src = (Entity) ModelElement.lookupByNameNMS(cwd,entities,0.5); }
+    if (src == null) 
+	{ return false; }
+	return src.isTarget();   
+  } 
+
   public static boolean isFeatureName(String cwd, Vector features)
   { Attribute trg = (Attribute) ModelElement.lookupByName(cwd, features); 
     if (trg == null)
@@ -290,6 +308,15 @@ public class RequirementsPhrase
       return trg;
 	} 
 	return null;  
+  } 
+
+  public static Entity getAnyClass(String cwd, Vector entities)
+  { Entity src = (Entity) ModelElement.lookupByName(cwd,entities); 
+    if (src == null)
+    { src = (Entity) ModelElement.lookupByNameNMS(cwd,entities,0.5); 
+      return src;
+	} 
+	return src; 
   } 
 
   public static Vector conditional(Vector phrases, Vector sources, Vector targets, Vector sourceFeatures,
@@ -560,6 +587,46 @@ public class RequirementsPhrase
 	nounClassifications.addAll(sources);
 	nounClassifications.addAll(targets);  
   }
+  
+  public void findAnySourceClass(Vector entities, Vector sourceClasses)
+  { for (int i = 0; i < words.size(); i++) 
+    { String wd = (String) words.get(i); 
+      int subind = wd.indexOf("_"); 
+      if (subind < 0) { continue; }
+	  String check = wd.substring(0,subind); 
+	  Entity ent = getAnyClass(check,entities);
+	  if (ent != null && ent.isSource())
+	  { sourceClasses.add(ent); }
+	} 
+  } 
+  
+  public void findAnyTargetClass(Vector entities, Vector targetClasses)
+  { for (int i = 0; i < words.size(); i++) 
+    { String wd = (String) words.get(i); 
+      int subind = wd.indexOf("_"); 
+      if (subind < 0) { continue; }
+	  String check = wd.substring(0,subind); 
+	  Entity ent = getAnyClass(check,entities);
+	  if (ent != null && ent.isTarget())
+	  { targetClasses.add(ent); }
+	} 
+  } 
+
+  public static void findAnySourceClass(Vector phrases, Vector entities, Vector sourceClasses)
+  { for (int i = 0; i < phrases.size(); i++) 
+    { RequirementsPhrase ph = (RequirementsPhrase) phrases.get(i); 
+      if (ph.isNounPhrase())
+      { ph.findAnySourceClass(entities,sourceClasses); }
+	} 
+  } 
+
+  public static void findAnyTargetClass(Vector phrases, Vector entities, Vector sourceClasses)
+  { for (int i = 0; i < phrases.size(); i++) 
+    { RequirementsPhrase ph = (RequirementsPhrase) phrases.get(i); 
+      if (ph.isNounPhrase())
+      { ph.findAnyTargetClass(entities,sourceClasses); }
+	} 
+  } 
 
   public static String classify(Vector phrases, Vector entities, Vector types, String[] mmnames, RequirementsSentence req)
   { java.util.Set classifications = new java.util.HashSet(); 
@@ -596,6 +663,13 @@ public class RequirementsPhrase
        } 
      } 
 
+    if (classifications.contains("classMapping")) 
+	{ if (sourceClasses.size() == 0)
+	  { findAnySourceClass(phrases,entities,sourceClasses); }
+	  if (targetClasses.size() == 0)
+	  { findAnyTargetClass(phrases,entities,targetClasses); }
+	}
+	
 	System.out.println("Source classes in sentence >> " + sourceClasses); 
 	System.out.println("Target classes in sentence >> " + targetClasses); 
 	System.out.println("Source features in sentence >> " + sourceFeatures); 
