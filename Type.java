@@ -3,7 +3,7 @@ import java.io.*;
 import java.util.StringTokenizer; 
 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -1715,12 +1715,20 @@ public class Type extends ModelElement
     { String tid = Identifier.nextIdentifier(""); 
       out.println("MapType" + tid + " : CollectionType"); 
       out.println("MapType" + tid + ".name = \"Map\""); 
+
       if (elementType != null) 
       { String etype = elementType.getUMLModelName(out); 
         out.println("MapType" + tid + ".elementType = " + etype); 
       } 
       else 
       { out.println("MapType" + tid + ".elementType = void"); } 
+
+      if (keyType != null) 
+      { String etype = elementType.getUMLModelName(out); 
+        out.println("MapType" + tid + ".keyType = " + etype); 
+      } 
+      else 
+      { out.println("MapType" + tid + ".keyType = void"); } 
       // assume key type is String
       out.println("MapType" + tid + ".typeId = \"" + tid + "\""); 
       return "MapType" + tid; 
@@ -1729,6 +1737,7 @@ public class Type extends ModelElement
     { String tid = Identifier.nextIdentifier(""); 
       out.println("FunctionType" + tid + " : CollectionType"); 
       out.println("FunctionType" + tid + ".name = \"Function\""); 
+
       if (elementType != null) 
       { String etype = elementType.getUMLModelName(out); 
         out.println("FunctionType" + tid + ".elementType = " + etype); 
@@ -1736,6 +1745,14 @@ public class Type extends ModelElement
       else 
       { out.println("FunctionType" + tid + ".elementType = void"); } 
       // assume key type is String
+
+      if (keyType != null) 
+      { String etype = keyType.getUMLModelName(out); 
+        out.println("FunctionType" + tid + ".keyType = " + etype); 
+      } 
+      else 
+      { out.println("FunctionType" + tid + ".keyType = void"); } 
+
       out.println("FunctionType" + tid + ".typeId = \"" + tid + "\""); 
       return "FunctionType" + tid; 
     } 
@@ -2797,18 +2814,18 @@ public class Type extends ModelElement
 
     if (typ.startsWith("Map(") && typ.endsWith(")"))
     { for (int i = 4; i < typ.length(); i++) 
-	  { if (",".equals(typ.charAt(i) + ""))
-	    { String nt = typ.substring(4,i);
+      { if (",".equals(typ.charAt(i) + ""))
+        { String nt = typ.substring(4,i);
           Type innerT = getTypeFor(nt, types, entities);
-		  String rt = typ.substring(i+1,typ.length()-1);
+          String rt = typ.substring(i+1,typ.length()-1);
           Type restT = getTypeFor(rt, types, entities); 
-		  if (innerT != null && restT != null) 
-		  { Type resT = new Type("Map",null);
+          if (innerT != null && restT != null) 
+          { Type resT = new Type("Map",null);
             resT.setKeyType(innerT);  
             resT.setElementType(restT); 
             return resT; 
-		  } 
-		}
+          } 
+        }
       }
     }   
 

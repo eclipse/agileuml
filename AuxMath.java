@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -28,6 +28,26 @@ public class AuxMath
     return x/1000.0; 
   } 
 
+  public static int gcd(int x, int y)
+  { int l = x; 
+    int k = y;  
+    while (l != 0 && k != 0)
+    { if (l == k) 
+      { return l; } 
+
+      if (l < k) 
+      { k = k % l; } 
+      else 
+      { l = l % k; } 
+    } 
+    
+    if (l == 0) 
+    { return k; }
+    else 
+    { return l; }
+  }       
+
+
   public static boolean isFunctional(double[] xs, double[] ys) 
   { // For each x : xs, only one y : ys
     java.util.HashMap valueSets = new java.util.HashMap(); 
@@ -45,6 +65,79 @@ public class AuxMath
     } 
     return true; 
   } 
+
+    public static int modFunction(double[] xs, double[] ys) 
+    { // the xs[i] - y[i] have a common divisor > 1
+      int oldgcd = 0; 
+
+      for (int i = 0; i < xs.length && i < ys.length; i++) 
+      { double diff = xs[i] - ys[i]; 
+
+        System.out.println("!!! GCD with " + oldgcd + " " + diff); 
+
+        if (diff >= 0) 
+		{ oldgcd = AuxMath.gcd(oldgcd, (int) diff); } 
+		else 
+		{ return 1; } 
+
+        if (oldgcd == 1)
+        { return 1; } 
+      }
+
+      for (int j = 0; j < ys.length; j++)
+      { if (ys[j] < oldgcd) { } 
+        else 
+        { return 1; } 
+      }  
+      return oldgcd; 
+    } 
+
+    public static int divFunction(double[] xs, double[] ys) 
+    { // ys[i] = xs[i] div K
+      double upperBound = Integer.MAX_VALUE; 
+      double lowerBound = 0; 
+	  
+      for (int i = 0; i < xs.length && i < ys.length; i++) 
+      { if (ys[i] == 0) 
+	    { lowerBound = Math.max(xs[i],lowerBound); } 
+		else if (ys[i] > 0) 
+		{ double diff = xs[i]/ys[i]; 
+	      double diff1 = xs[i]/(ys[i] + 1); 
+	      upperBound = Math.min(upperBound,diff); 
+          lowerBound = Math.max(lowerBound,diff1); 
+          System.out.println(">> Upper bound = " + upperBound); 
+          System.out.println(">> Lower bound = " + lowerBound); 
+        } 
+		else 
+		{ return 0; } 
+
+        if (lowerBound > upperBound)
+        { return 0; } 
+      }
+
+      System.out.println(">> Upper bound = " + upperBound); 
+      System.out.println(">> Lower bound = " + lowerBound); 
+	  
+	  int possK1 = (int) Math.floor(upperBound); 
+	  int possK2 = (int) Math.ceil(lowerBound); 
+	  
+	  if (possK1 == possK2) 
+	  { return possK1; }
+
+	  for (int k = possK2; k <= possK1; k++)
+	  { boolean validK = true; 
+        for (int i = 0; i < xs.length && i < ys.length; i++) 
+        { int xint = (int) xs[i]; 
+	      int yint = (int) ys[i]; 
+          if (yint == xint/k) {}
+		  else 
+		  { validK = false; } 
+	    } 
+		if (validK) { return k; }
+	  } 
+	  
+	  return 0;   // search in the range for a valid K. 
+    } 
 
   public static boolean isFunctional(String[] xs, String[] ys) 
   { // For each x : xs, only one y : ys
@@ -238,6 +331,58 @@ public class AuxMath
       return true; 
     }
 
+    public static boolean isNumericSum(double[] xs, double[] xs1, double[] ys)
+    { for (int i = 0; i < xs.length && i < xs1.length && i < ys.length; i++)
+      { double xval = xs[i]; 
+        double xval1 = xs1[i];
+        double yval = to3dp(ys[i]);  
+        if (to3dp(xval + xval1) == yval) 
+        {  }
+        else 
+        { return false; }
+      } 
+      return true; 
+    }
+
+    public static boolean isNumericSubtraction(double[] xs, double[] xs1, double[] ys)
+    { for (int i = 0; i < xs.length && i < xs1.length && i < ys.length; i++)
+      { double xval = xs[i]; 
+        double xval1 = xs1[i];
+        double yval = to3dp(ys[i]);  
+        if (to3dp(xval - xval1) == yval) 
+        {  }
+        else 
+        { return false; }
+      } 
+      return true; 
+    }
+
+    public static boolean isNumericProduct(double[] xs, double[] xs1, double[] ys)
+    { for (int i = 0; i < xs.length && i < xs1.length && i < ys.length; i++)
+      { double xval = xs[i]; 
+        double xval1 = xs1[i];
+        double yval = to3dp(ys[i]);  
+        if (to3dp(xval * xval1) == yval) 
+        {  }
+        else 
+        { return false; }
+      } 
+      return true; 
+    }
+
+    public static boolean isNumericDivision(double[] xs, double[] xs1, double[] ys)
+    { for (int i = 0; i < xs.length && i < xs1.length && i < ys.length; i++)
+      { double xval = xs[i]; 
+        double xval1 = xs1[i];
+        double yval = to3dp(ys[i]);  
+        if (xval1 != 0 && to3dp(xval / xval1) == yval) 
+        {  }
+        else 
+        { return false; }
+      } 
+      return true; 
+    }
+
     public static boolean isNumericPrd(Vector[] xs, Vector[] ys)
     { if (ys.length > 1 && xs.length == ys.length)
       { for (int i = 0; i < xs.length; i++)
@@ -328,6 +473,35 @@ public class AuxMath
       return true; 
     }
 
+    public static boolean isStringMin(Vector[] xs, Vector[] ys)
+    { if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { Vector xvect = xs[i]; 
+          Vector yvect = ys[i]; 
+          if (yvect.size() == 1 && yvect.get(0) instanceof String) 
+          { String dd = "\"" + yvect.get(0) + "\""; 
+            String minstring = ""; 
+            for (int j = 0; j < xvect.size(); j++) 
+            { // System.out.println(">>> xvect(j) = " + xvect.get(j) + " " + maxstring + " " + dd); 
+              if (xvect.get(j) instanceof String)
+              { String vs = (String) xvect.get(j); 
+                if (0 < minstring.compareTo(vs))
+                { minstring = vs; }
+              } 
+              else 
+              { return false; }
+            }
+			
+            if (minstring.equals(dd)) 
+            { System.out.println(">>> String min of " + xvect + " = " + dd); } 
+            else 
+            { return false; } 
+          } 
+        }
+      } 
+      return true; 
+    }
+
     public static boolean isNumericMax(Vector[] xs, Vector[] ys)
     { if (ys.length > 1 && xs.length == ys.length)
       { for (int i = 0; i < xs.length; i++)
@@ -344,10 +518,10 @@ public class AuxMath
                   maxd = Math.max(maxd,xx); 
                 }
                 catch (Exception _x) 
-				{ return false; } 
+			{ return false; } 
               }
-			  else 
-			  { return false; }
+		  else 
+		  { return false; }
             }
 			
             if (maxd == dd) 
@@ -384,6 +558,49 @@ public class AuxMath
 			
             if (maxd == dd) 
             { System.out.println(">>> Numeric min of " + xvect + " = " + dd); } 
+            else 
+            { return false; } 
+          } 
+        }
+      } 
+      return true; 
+    }
+
+    public static boolean isNumericAverage(Vector[] xs, Vector[] ys)
+    { if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { Vector xvect = xs[i]; 
+          Vector yvect = ys[i]; 
+          if (yvect.size() == 1 && yvect.get(0) instanceof Double) 
+          { double dd = ((Double) yvect.get(0)).doubleValue();
+		    double dd3dp = to3dp(dd); 
+			 
+            double averg = 0.0;
+			int xsize = xvect.size();  
+            for (int j = 0; j < xsize; j++) 
+            { // System.out.println(">>> xvect(j) = " + xvect.get(j) + " " + averg + " " + dd); 
+			  if (xvect.get(j) instanceof String) 
+              { try 
+                { double xx = Double.parseDouble((String) xvect.get(j)); 
+                  averg = averg + xx/((double) xsize); 
+                }
+                catch (Exception _x) 
+				{ return false; } 
+              }
+			  else if (xvect.get(j) instanceof Double)
+			  { try
+			    { double xx = ((Double) xvect.get(j)).doubleValue(); 
+				  averg = averg + xx/((double) xsize); 
+                }
+                catch (Exception _x) 
+				{ return false; }
+			  }
+			  else
+			  { return false; }
+            }
+			
+            if (to3dp(averg) == dd3dp) 
+            { System.out.println(">>> To 3 decimal places, numeric average of " + xvect + " = " + dd); } 
             else 
             { return false; } 
           } 
@@ -534,8 +751,11 @@ public class AuxMath
     }  
 
     public static double linearOffset()
-    { double slope = sumprods/sumdiffxsq; 
-      return meany - slope*meanx; 
+    { if (sumdiffxsq != 0) 
+      { double slope = sumprods/sumdiffxsq; 
+        return meany - slope*meanx;
+      } 
+      return 0;  
     } 
     	
     public static boolean slopes(double[] ys)
@@ -674,7 +894,9 @@ public class AuxMath
    } 
 
    public static boolean isPrefixed(String[] xs, String[] ys) 
-   { for (int i = 0; i < xs.length && i < ys.length; i++) 
+   { // Each ys[i] = something + xs[i]
+
+     for (int i = 0; i < xs.length && i < ys.length; i++) 
      { String xval = xs[i]; 
        String yval = ys[i]; 
        if (yval.endsWith(xval)) { } 
@@ -685,7 +907,9 @@ public class AuxMath
    } 
 
    public static String commonPrefix(String[] xs, String[] ys) 
-   { java.util.HashSet prefixes = new java.util.HashSet(); 
+   { // ys[i] = result + xs[i] each i
+
+     java.util.HashSet prefixes = new java.util.HashSet(); 
      String prefix = ""; 
 	 
      for (int i = 0; i < xs.length && i < ys.length; i++) 
@@ -736,8 +960,39 @@ public class AuxMath
      return res; 
    } 
 
+   public static Vector allPrefixes(String[] xs, String[] ys) 
+   { Vector res = new Vector(); 
+     for (int i = 0; i < xs.length && i < ys.length; i++) 
+     { String xval = xs[i]; 
+       String yval = ys[i];
+       int lenx = xval.length(); 
+       String prefix = yval.substring(0,yval.length() - lenx);  
+       if (res.contains(prefix)) { } 
+       else 
+       { res.add(prefix); }
+     } 
+     return res; 
+   } 
+
+   public static String longestCommonPrefix(Vector strs)
+   { // each of the s : strs has result as prefix & 
+     // no longer common prefix
+     String res = ""; 
+
+     if (strs.size() < 1) 
+     { return res; } 
+
+     res = (String) strs.get(0); 
+     for (int i = 1; i < strs.size(); i++) 
+     { res = ModelElement.longestCommonPrefix(res,(String) strs.get(i),0); } 
+
+     return res; 
+   } 
+
    public static boolean isSuffixed(String[] xs, String[] ys) 
-   { for (int i = 0; i < xs.length && i < ys.length; i++) 
+   { // Each ys[i] starts with xs[i]
+
+     for (int i = 0; i < xs.length && i < ys.length; i++) 
      { String xval = xs[i]; 
        String yval = ys[i]; 
        if (yval.startsWith(xval)) { } 
@@ -777,8 +1032,25 @@ public class AuxMath
      return res; 
    } 
 
+   public static Vector allSuffixes(String[] xs, String[] ys) 
+   { Vector res = new Vector(); 
+     for (int i = 0; i < xs.length && i < ys.length; i++) 
+     { String xval = xs[i]; 
+       String yval = ys[i];
+       int lenx = xval.length(); 
+       String suffix = yval.substring(lenx,yval.length());  
+       if (res.contains(suffix)) { } 
+       else 
+       { res.add(suffix); }
+     } 
+     return res; 
+   } 
+
+ 
    public static String commonSuffix(String[] xs, String[] ys) 
-   { java.util.HashSet suffixes = new java.util.HashSet(); 
+   { // All the ys[i] = xs[i] + result
+
+     java.util.HashSet suffixes = new java.util.HashSet(); 
      String suffix = ""; 
 	 
      for (int i = 0; i < xs.length && i < ys.length; i++) 
@@ -799,7 +1071,68 @@ public class AuxMath
 	return null;  
    }
 
+   public static String longestCommonSuffix(Vector strs)
+   { // each of the s : strs has result as suffix & 
+     // no longer common suffix
+     String res = ""; 
+
+     if (strs.size() < 1) 
+     { return res; } 
+
+     res = (String) strs.get(0); 
+     for (int i = 1; i < strs.size(); i++) 
+     { res = ModelElement.longestCommonSuffix(res,(String) strs.get(i),0); } 
+
+     return res; 
+   } 
+
+
    // Suffixed and prefixed can occur 
+
+   public static boolean isConcatenation(String[] x1s, String[] x2s, String[] ys)
+   { // each ys[i] starts with x1s[i] and ends with x2s[i]
+
+     for (int i = 0; i < x1s.length && i < x2s.length && i < ys.length; i++) 
+     { String x1val = x1s[i]; 
+       String x2val = x2s[i]; 
+       String yval = ys[i]; 
+       if (yval.startsWith(x1val) && yval.endsWith(x2val)) 
+       { } 
+       else 
+       { return false; }
+     } 
+     return true; 
+   } 
+
+   public static String commonInfix(String[] x1s, String[] x2s, String[] ys) 
+   { java.util.HashSet infixes = new java.util.HashSet(); 
+     String infix = ""; 
+	 
+     for (int i = 0; i < x1s.length && i < x2s.length && i < ys.length; i++) 
+     { String x1val = x1s[i]; 
+       String x2val = x2s[i]; 
+       String yval = ys[i];
+ 
+       if (yval.startsWith(x1val)) 
+       { int j = x1val.length();
+         int k = x2val.length(); 
+ 
+         String suffix = yval.substring(j,yval.length());
+         if (suffix.endsWith(x2val))
+         { infix = suffix.substring(0,suffix.length()-k);   
+           infixes.add(infix); 
+         } 
+       } 
+       else 
+       { return null; } 
+     } 
+	 
+     System.out.println(">>> Infixes are " + infixes); 
+
+     if (infixes.size() == 1)
+     { return infix; } 
+	return null;  
+   }
 
    public static boolean isEqualIgnoringCase(String[] xs, String[] ys) 
    { for (int i = 0; i < xs.length && i < ys.length; i++) 
@@ -1002,11 +1335,86 @@ public class AuxMath
      return null; 
    } 
 
-   public static void main(String[] args)
-   { double[] xs = {-2,-1,0,1,2,3}; 
-   	double[] ys = {11,5,3,5,11,21};
+   public static boolean isUnion(Vector[] xs, Vector xs1[], Vector[] ys, ModelSpecification mod) 
+   { // assuming they are collections of objects
+   
+     for (int i = 0; i < xs.length && i < xs1.length && i < ys.length; i++) 
+     { Vector xval = xs[i]; 
+       Vector xval1 = xs1[i]; 
+       Vector yval = ys[i];
+       Vector vals = new Vector(); 
+       vals.addAll(xval);
+       vals.addAll(xval1);   // assuming disjoint 
+       Vector tvals = mod.getCorrespondingElements(vals); 
 
-     System.out.println(isFunctional(xs,ys)); 
+       if (yval.containsAll(tvals) && tvals.containsAll(yval))
+       { System.out.println(">>> Union of " + xval + " and " + xval1 + " |--> " + yval); }
+       else 
+       { return false; } 
+     } 
+     return true; 
+   } 
+
+   public static boolean isUnion(ObjectSpecification[] xs, ObjectSpecification[] xs1, ObjectSpecification[] ys, String tent, ModelSpecification mod) 
+   { // assuming they are collections of objects
+     Vector imageofxvals = new Vector(); 
+
+     for (int i = 0; i < xs.length; i++) 
+     { ObjectSpecification xobj = xs[i]; 
+       Vector tvals = mod.getCorrespondingObjects(xobj,tent); 
+       imageofxvals.addAll(tvals);  
+     } 
+
+     for (int i = 0; i < xs1.length; i++) 
+     { ObjectSpecification xobj = xs1[i]; 
+       Vector tvals = mod.getCorrespondingObjects(xobj,tent); 
+       imageofxvals.addAll(tvals);
+     } 
+
+     Vector yvals = new Vector(); 
+     for (int i = 0; i < ys.length; i++) 
+     { ObjectSpecification yobj = ys[i]; 
+       yvals.add(yobj); 
+     } 
+
+     System.out.println("*** Comparing " + imageofxvals + " to " + yvals); 
+
+     if (imageofxvals.containsAll(yvals) && yvals.containsAll(imageofxvals))
+     { return true; } 
+     return false; 
+   } 
+
+   public static void main(String[] args)
+   { double[] xs = {19601123,19700316,20010101,20001119,19501209,20090101}; 
+     double[] ys = {1960,1970,2001,2000,1950,2009};
+
+     System.out.println(AuxMath.divFunction(xs,ys)); 
+
+     System.out.println(gcd(1,1)); 
+     System.out.println(gcd(-1,1)); 
+     System.out.println(gcd(0,1)); 
+     System.out.println(gcd(0,0)); 
+
+	 
+	 Vector x1 = new Vector(); 
+	 x1.add(new Double(1)); x1.add(new Double(3)); x1.add(new Double(5)); 
+	 Vector y1 = new Vector(); 
+	 y1.add(new Double(3)); 
+	 	 
+	 
+	 Vector x2 = new Vector(); 
+	 x2.add(new Double(10)); x2.add(new Double(10)); x2.add(new Double(10)); 
+	 Vector y2 = new Vector(); 
+	 y2.add(new Double(10)); 
+	 
+	 
+     Vector[] xvs = { x1, x2 }; 
+	 Vector[] yvs = { y1, y2 }; 
+	 
+	 
+     System.out.println(AuxMath.isNumericAverage(xvs,yvs)); 
+
+     /* System.out.println(isFunctional(xs,ys)); 
 
    	System.out.println(quadraticRelationship(xs,ys,"s","t"));  
    	 	
@@ -1052,7 +1460,7 @@ public class AuxMath
       Vector[] yv = { sq1, sq3 }; 
       System.out.println(isConstantSequence(yv));
       System.out.println(allSubsets(xv,yv)); 
-      	 
+      */ 	 
       	
 
    	 /* Double d1 = new Double(12); 

@@ -3,7 +3,7 @@ import java.util.Vector;
 
 /* Package: Requirements */ 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -95,6 +95,20 @@ public class Requirement extends ModelElement
       res = res + sc.saveData(name) + "\n"; 
     } 
     return res; 
+  } 
+
+  public void saveModelData(PrintWriter out)
+  { out.println(name + " : Requirement"); 
+    out.println(name + ".id = \"" + id + "\""); 
+    out.println(name + ".text = \"" + text + "\""); 
+    out.println(name + ".requirementKind = \"" + requirementKind + "\""); 
+    out.println(name + ".localScope = " + local);
+ 
+    for (int i = 0; i < scenarios.size(); i++) 
+    { Scenario sc = (Scenario) scenarios.get(i); 
+      sc.saveModelData(out,name); 
+    } 
+    
   } 
 
 } 

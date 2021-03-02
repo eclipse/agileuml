@@ -3,7 +3,7 @@ import java.io.*;
 import java.util.Collections; 
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003,2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -43,11 +43,14 @@ class ThesaurusConcept
     { preferredTerms.add(t); } 
   } 
 
-  void setPOS(String pos) 
+  public void setPOS(String pos) 
   { partOfSpeech = pos; } 
 
-  void addSemantics(ModelElement me) 
+  public void addSemantics(ModelElement me) 
   { semantics.add(me); } 
+
+  public Vector getSemantics()
+  { return semantics; } 
 
   public boolean hasTerm(String t)
   { boolean res = false; 
@@ -76,6 +79,21 @@ class ThesaurusConcept
     { return true; } 
     return false; 
   } 
+
+  public ThesaurusConcept lookupTerm(String wd) 
+  { for (int i = 0; i < preferredTerms.size(); i++) 
+    { ThesaurusTerm tt = (ThesaurusTerm) preferredTerms.get(i); 
+      if (wd.equalsIgnoreCase(tt.name))
+      { return this; } 
+    } 
+    for (int i = 0; i < terms.size(); i++) 
+    { ThesaurusTerm tt = (ThesaurusTerm) terms.get(i); 
+      if (wd.equalsIgnoreCase(tt.name))
+      { return this; } 
+    } 
+    return null; 
+  } 
+
 
   public String toString()
   { String res = name + " = [ "; 
@@ -269,6 +287,16 @@ public class Thesarus
     c.addTerm(t); 
     t.addConcept(c); 
   } 
+
+  public static ThesaurusConcept lookupWord(Vector cs, String wd) 
+  { for (int i = 0; i < cs.size(); i++) 
+    { ThesaurusConcept tc = (ThesaurusConcept) cs.get(i); 
+      if (tc.hasAnyTerm(wd))
+      { return tc; } 
+    } 
+    return null; 
+  } 
+
 
   public static double findSimilarity(String fnme, String fenme, Vector thesaurus) 
   { String nme = fnme.toLowerCase(); 

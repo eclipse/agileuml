@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -1639,7 +1639,8 @@ class BinaryExpression extends Expression
 
   public boolean isPrimitive()  
   { if (operator.equals("->count") || operator.equals("->indexOf") || 
-        operator.equals("->oclIsKindOf") || operator.equals("->pow") || 
+        operator.equals("->oclIsKindOf") || operator.equals("->oclIsTypeOf") || 
+		operator.equals("->pow") || 
         operator.equals("->hasPrefix") || operator.equals("->hasSuffix") ||
         operator.equals("->exists") || "->existsLC".equals(operator) ||
         operator.equals("->exists1") || operator.equals("->isUnique") || 
@@ -3653,8 +3654,8 @@ public boolean conflictsWithIn(String op, Expression el,
     if (rprim) 
     { rw = right.wrap(rqf); }
  
-    System.out.println(left + " is primitive: " + lprim + " is multiple: " + lmult); 
-    System.out.println(right + " is primitive: " + rprim + " is multiple: " + rmult); 
+    // System.out.println(left + " is primitive: " + lprim + " is multiple: " + lmult); 
+    // System.out.println(right + " is primitive: " + rprim + " is multiple: " + rmult); 
 
 
     String typ = ""; 
@@ -3834,7 +3835,11 @@ public boolean conflictsWithIn(String op, Expression el,
         ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsKindOf"))  
     { return "(" + lqf + " instanceof " + right + ")"; } 
 
-    // ->oclIsTypeOf (in the class & not in any direct subclass)
+    // ->oclIsTypeOf (in the exact class)
+	
+    if (right.umlkind == CLASSID && 
+        ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsTypeOf"))  
+    { return "(" + lqf + " instanceof " + right + ")"; } 
 
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("<:"))  
@@ -4151,6 +4156,10 @@ public boolean conflictsWithIn(String op, Expression el,
     { return "(" + lqf + " instanceof " + right + ")"; }  // Java6 version of type named by right
 
     if (right.umlkind == CLASSID && 
+        ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsTypeOf"))  
+    { return "(" + lqf + " instanceof " + right + ")"; } 
+
+    if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("/:")) 
     { return "!(" + lqf + " instanceof " + right + ")"; } 
 
@@ -4443,6 +4452,10 @@ public boolean conflictsWithIn(String op, Expression el,
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsKindOf"))  
     { return "(" + lqf + " instanceof " + right + ")"; }  
+	
+	if (right.umlkind == CLASSID && 
+        ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsTypeOf"))  
+    { return "(" + lqf + " instanceof " + right + ")"; } 
 
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("/:")) 
@@ -4725,6 +4738,11 @@ public boolean conflictsWithIn(String op, Expression el,
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsKindOf"))  
     { return "(" + lqf + " is " + right + ")"; } 
+	
+	if (right.umlkind == CLASSID && 
+        ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsTypeOf"))  
+    { return "(" + lqf + " is " + right + ")"; } 
+
 
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("/:")) 
@@ -5047,6 +5065,12 @@ public boolean conflictsWithIn(String op, Expression el,
     { String rinstances = cont + "get" + ("" + right).toLowerCase() + "_s()"; 
       return "UmlRsdsLib<" + right + "*>::isIn(" + lqf + ", " + rinstances + ")";
     } 
+	
+	if (right.umlkind == CLASSID && 
+        ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsTypeOf"))  
+    { String rinstances = cont + "get" + ("" + right).toLowerCase() + "_s()"; 
+      return "UmlRsdsLib<" + right + "*>::isIn(" + lqf + ", " + rinstances + ")";
+    }
 
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("/:")) 
@@ -11842,7 +11866,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     { op = "\\/"; } 
     else if (operator.equals("->intersection"))
     { op = "/\\"; } 
-    else if (operator.equals("->oclIsKindOf"))
+    else if (operator.equals("->oclIsKindOf") || operator.equals("->oclIsTypeOf"))
     { op = ":"; } 
 
     // System.out.println(left + " b form is " + le + " " + le.setValued());
@@ -11981,7 +12005,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     { op = "\\/"; } 
     else if (operator.equals("->intersection"))
     { op = "/\\"; } 
-    else if (operator.equals("->oclIsKindOf"))
+    else if (operator.equals("->oclIsKindOf") || operator.equals("->oclIsTypeOf"))
     { op = ":"; } 
 
     // System.out.println(left + " b form is " + le + " " + le.setValued());
@@ -12605,7 +12629,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       } 
     } 
 
-    if (operator.equals("->oclIsKindOf"))
+    if (operator.equals("->oclIsKindOf") || operator.equals("->oclIsTypeOf"))
     { BExpression es = new BBasicExpression((right + "").toLowerCase() + "s"); 
       BExpression res = new BBinaryExpression(":",bel,es); 
       res.setBrackets(needsBracket); 

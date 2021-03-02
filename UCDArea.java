@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -2637,9 +2637,23 @@ public class UCDArea extends JPanel
     int lowcost = 0;  // maintainability/changeability remediation
 
     int topscount = 0; 
-    for (int j = 0; j < entities.size(); j++) 
-    { Entity ent = (Entity) entities.get(j); 
-      ent.displayMeasures(out,clones); 
+	
+	int totalClassSize = 0; 
+	
+	int sourceClasses = 0; 
+	int targetClasses = 0; 
+	int allClasses = entities.size(); 
+	
+    for (int j = 0; j < allClasses; j++) 
+    { Entity ent = (Entity) entities.get(j);
+	  if (ent.isSource()) 
+	  { sourceClasses++; }
+	  else if (ent.isTarget())
+	  { targetClasses++; }
+	 
+      int entsize = ent.displayMeasures(out,clones);
+	  totalClassSize = totalClassSize + entsize; 
+	   
       out.println(); 
       int eopscount = ent.operationsCount(); 
 
@@ -2667,6 +2681,11 @@ public class UCDArea extends JPanel
         { highcost = highcost + 30; }
       }  
     } 
+	
+	System.out.println(">>> There are " + sourceClasses + " source classes"); 
+	System.out.println(">>> There are " + targetClasses + " target classes"); 
+	System.out.println(">>> There are " + allClasses + " total classes"); 
+	System.out.println(); 
 
     int tcount = 0; 
     int trcount = 0; 
@@ -2712,6 +2731,7 @@ public class UCDArea extends JPanel
 
     highcost = highcost + 20*clonecount; 
 
+    out.println("*** Total size of classes in the system is: " + totalClassSize);  
     out.println("*** Total number of transformations in the system is: " + tcount);  
     out.println("*** Total number of transformation rules in the system is: " + trcount);  
     out.println("*** Total number of operations in the system is: " + topscount);  
@@ -3934,6 +3954,16 @@ public class UCDArea extends JPanel
     for (int i = 0; i < entities.size(); i++) 
     { Entity ee = (Entity) entities.get(i); 
       String eename = ee.getName(); 
+	  
+      Attribute eekey = ee.getPrincipalPK();
+	if (eekey == null && !ee.isDerived() && !ee.isComponent())
+      { System.out.println(">>> A key is needed for each managed entity in the app."); 
+        System.out.println(">>> I will add one for you."); 
+        String keyname = eename.toLowerCase() + "Id"; 
+        eekey = new Attribute(keyname,new Type("String",null), ModelElement.INTERNAL); 
+		eekey.setIdentity(true); 
+        ee.addAttribute(eekey); 
+      }  
 	  
       if (ee.isDerived()) {}
       else if (ee.isComponent()) 
@@ -11276,10 +11306,11 @@ public void produceCUI(PrintWriter out)
     { br = new BufferedReader(new FileReader(file)); }
     catch (FileNotFoundException _e)
     { System.out.println("!! File not found: " + file);
-      return; 
+      eof = true; 
     }
 
     int noflines = 0; 
+	String currentTypeMappingName = ""; 
 
     while (!eof)
     { try { s = br.readLine(); }
@@ -11294,12 +11325,12 @@ public void produceCUI(PrintWriter out)
       else if (s.startsWith("--")) { } 
       else if (s.indexOf("|-->") > 0)
       { String trimemap = s.trim(); 
-        int mapsymb = trimemap.indexOf("|"); 
+        int mapsymb = trimemap.indexOf("|-->"); 
         if (mapsymb > 0) 
         { String sents = trimemap.substring(0,mapsymb); 
           String tents = trimemap.substring(mapsymb + 4, trimemap.length()); 
 
-          System.out.println(">> Using match: " + sents + " to " + tents);
+          System.out.println(">> Mapping rule: " + sents + " |--> " + tents);
 
           Entity esrc = (Entity) ModelElement.lookupByName(sents.trim(),entities); 
           Entity etrg = (Entity) ModelElement.lookupByName(tents.trim(),entities); 
@@ -11308,7 +11339,7 @@ public void produceCUI(PrintWriter out)
           if (esrc == null) 
           { int endprecond = sents.indexOf("}");
             int startprecond = sents.indexOf("{"); 
-            if (endprecond > 0 && startprecond >= 0) 
+            if (endprecond > startprecond + 1 && startprecond >= 0) 
             { Compiler2 c2 = new Compiler2(); 
               String precondstring = sents.substring(startprecond+1,endprecond);
               c2.nospacelexicalanalysis(precondstring); 
@@ -11322,7 +11353,7 @@ public void produceCUI(PrintWriter out)
           if (etrg == null) 
           { int endpostcond = tents.indexOf("}");
             int startpostcond = tents.indexOf("{"); 
-            if (endpostcond > 0 && startpostcond >= 0) 
+            if (endpostcond > startpostcond + 1 && startpostcond >= 0) 
             { Compiler2 c3 = new Compiler2(); 
               String postcondstring = tents.substring(startpostcond+1,endpostcond);
               c3.nospacelexicalanalysis(postcondstring); 
@@ -11334,14 +11365,16 @@ public void produceCUI(PrintWriter out)
 
           if (esrc != null && etrg != null) 
           { EntityMatching em = new EntityMatching(esrc,etrg);
-            System.out.println(">> Using match: " + sents + " to " + tents);
-            if (precond != null) 
+            System.out.println(">> Entity mapping rule: " + sents + " |--> " + tents);
+            
+			if (precond != null) 
             { Vector contexts1 = new Vector(); 
               
               contexts1.add(esrc); 
               precond.typeCheck(types,entities,contexts1,new Vector()); 
               em.setCondition(precond); 
             } 
+			
             if (postcond != null) 
             { Vector contexts2 = new Vector(); 
               
@@ -11355,11 +11388,33 @@ public void produceCUI(PrintWriter out)
             AttributeMatching amx = readEntityMapping(br,em);
             while (amx != null)
             { amx = readEntityMapping(br,em); }  
-          }   
+          }
+		  else // type mapping? 
+		  { Type t1 = Type.getTypeFor(sents.trim(),types,entities);
+		    Type t2 = Type.getTypeFor(tents.trim(),types,entities);
+			if (t1 != null && t2 != null)
+			{ System.out.println(">> Type mapping rule: " + t1 + " |--> " + t2); 
+			  TypeMatching tm = new TypeMatching(t1,t2); 
+			  ValueMatching vmx = readTypeMapping(br,tm);
+              while (vmx != null)
+              { vmx = readTypeMapping(br,tm); }
+			  System.out.println(">> New type mapping rule: " + tm);
+			  tm.setName(currentTypeMappingName);  
+	          res.addTypeMatch(tm); 		  
+			}  
+		  }   
         } 
-      }         
+      } 
+	  else if (s.indexOf(":") > 0) // A named function definition
+	  { int inddot = s.indexOf(":"); 
+	    String ff = s.substring(0,inddot); 
+	    String f = ff.trim(); 
+		System.out.println(">> Named type mapping function: " + f);
+		currentTypeMappingName = f; 
+      }        
       // System.out.println(s); 
     }
+	
     res.addEntityMatchings(entitymaps); 
     res.mymap = mm; 
     System.out.println(">>> Parsed TL specification: " + res); 
@@ -12506,7 +12561,7 @@ public void produceCUI(PrintWriter out)
       else if (s.startsWith("EntityMapping:"))
       { try { String emap = br.readLine(); 
           String trimemap = emap.trim(); 
-          int mapsymb = trimemap.indexOf("|"); 
+          int mapsymb = trimemap.indexOf("|-"); 
           if (mapsymb > 0) 
           { String sents = trimemap.substring(0,mapsymb);
 		    int tosymb = trimemap.indexOf(">"); 
@@ -12950,7 +13005,7 @@ public void produceCUI(PrintWriter out)
     { String fmap = br.readLine(); 
       if (fmap.startsWith(" "))
       { String trimemap = fmap.trim(); 
-        int mapsymb = trimemap.indexOf("|"); 
+        int mapsymb = trimemap.indexOf("|-"); 
         if (mapsymb > 0) 
         { String sf = trimemap.substring(0,mapsymb); 
           String tf = trimemap.substring(mapsymb + 4, trimemap.length()); // after the |-->
@@ -12968,14 +13023,15 @@ public void produceCUI(PrintWriter out)
           contexts2.add(em.realtrg); 
 
           if (src != null && trg != null) 
-          { 
+          { System.out.println(">> Feature mapping: " + src + " |--> " + trg); 
+		  
             src.typeCheck(types,entities,contexts1,new Vector()); 
             trg.typeCheck(types,entities,contexts2,new Vector()); 
             Vector auxvars = src.allAttributesUsedIn(); 
             Vector trgvars = trg.allAttributesUsedIn(); 
 
-            System.out.println(">>>> attributes used in " + src + " are: " + auxvars); 
-            System.out.println(">>>> attributes used in " + trg + " are: " + trgvars); 
+            // System.out.println(">>>> attributes used in " + src + " are: " + auxvars); 
+            // System.out.println(">>>> attributes used in " + trg + " are: " + trgvars); 
 
             Attribute srcvar = null; 
             if (auxvars.size() > 0) 
@@ -13001,7 +13057,7 @@ public void produceCUI(PrintWriter out)
             else 
             { newam = new AttributeMatching(src, trgvar, srcvar, auxvars); 
 	          // System.out.println(">> Expression matching. Type of " + srcvar + " is " + srcvar.getType()); 
-			  if (src.getType() != null && src.getType().isCollection())
+			  if (src.getType() != null && src.getType().isCollection() && srcvar != null)
 			  { Type elemType = src.getElementType(); 
 			    Attribute elementvar = new Attribute(srcvar.getName() + "$x", elemType, ModelElement.INTERNAL); 
 				newam.setElementVariable(elementvar); 
@@ -13012,6 +13068,52 @@ public void produceCUI(PrintWriter out)
 
             em.addMapping(newam); 
             return newam; 
+          } 
+          else 
+	      { System.out.println("!!! Unrecognised feature mapping: " + fmap); }  
+		} 
+      } 
+	  // else 
+	  // { System.out.println("!!! Unrecognised feature mapping: " + fmap); }
+    } 
+    catch (Exception _e) 
+	{ _e.printStackTrace(); 
+	  System.out.println(">> End of entity matching: " + em);
+	  System.out.println(); 
+	  return null; 
+	}
+	
+    return null;  
+  } 
+
+  public ValueMatching readTypeMapping(BufferedReader br, TypeMatching tm)
+  { try 
+    { String fmap = br.readLine(); 
+      if (fmap.startsWith(" "))
+      { String trimemap = fmap.trim(); 
+        int mapsymb = trimemap.indexOf("|-"); 
+        if (mapsymb > 0) 
+        { String sf = trimemap.substring(0,mapsymb); 
+          String tf = trimemap.substring(mapsymb + 4, trimemap.length()); // after the |-->
+
+          Compiler2 comp = new Compiler2(); 
+          comp.nospacelexicalanalysis(sf); 
+          Expression src = comp.parseExpression();   
+          
+          Compiler2 comp2 = new Compiler2();
+          comp2.nospacelexicalanalysis(tf); 
+          Expression trg = comp2.parseExpression();   
+          
+          if (src != null && trg != null) 
+          { System.out.println(">> Parsed value mapping: " + src + " |--> " + trg); 
+		  
+            src.typeCheck(types,entities,new Vector(),new Vector()); 
+            trg.typeCheck(types,entities,new Vector(),new Vector()); 
+            
+            
+            ValueMatching newvm = new ValueMatching(src,trg); 
+            tm.addValueMapping(newvm); 
+            return newvm; 
           } 
         } 
       } 
@@ -14034,8 +14136,8 @@ public void produceCUI(PrintWriter out)
 	
     for (int i = 0; i < newentities.size(); i++) 
     { Entity enode = (Entity) newentities.get(i); 
-      addEntity(enode, 20 + (ecount/5)*delta + ((ecount % 5)*delta)/5, 
-                              100 + (ecount % 5)*delta);
+      addEntity(enode, 200 + (ecount/5)*delta + ((ecount % 5)*delta)/5, 
+                              150 + (ecount % 5)*delta);
       ecount++; 
     } 
 
@@ -14046,7 +14148,7 @@ public void produceCUI(PrintWriter out)
     for (int j = 0; j < newtypes.size(); j++) 
     { Type tt = (Type) newtypes.get(j); 
       if (tt.isEnumeration())
-      { RectData rd = new RectData(100*j,20,getForeground(),
+      { RectData rd = new RectData(120*j,20,getForeground(),
                                  componentMode,
                                  rectcount);
         rectcount++;
@@ -14133,7 +14235,7 @@ public void produceCUI(PrintWriter out)
       } 
     } 
 
-    int delta = 200; // visual displacement between classes
+    int delta = 180; // visual displacement 
     int ecount = 0; 
 
     // Use the existing coordinates if possible. 
@@ -14144,8 +14246,8 @@ public void produceCUI(PrintWriter out)
       if (oldent != null) 
       { RectData rd = (RectData) getVisualOf(oldent); 
         if (rd == null)
-		{ addEntity(enode, 20 + (ecount/5)*delta + ((ecount % 5)*delta)/5, 
-                              100 + (ecount % 5)*delta);
+		{ addEntity(enode, 200 + (ecount/5)*delta + ((ecount % 5)*delta)/5, 
+                              150 + (ecount % 5)*delta);
         }
         else 
 		{ entities.add(enode); 
@@ -14155,8 +14257,8 @@ public void produceCUI(PrintWriter out)
         // addEntity(enode, rd.sourcex, rd.sourcey); 
       } 
       else 
-      { addEntity(enode, 20 + (ecount/5)*delta + ((ecount % 5)*delta)/5, 
-                              100 + (ecount % 5)*delta);
+      { addEntity(enode, 200 + (ecount/5)*delta + ((ecount % 5)*delta)/5, 
+                              150 + (ecount % 5)*delta);
       } 
       ecount++; 
     } 
@@ -18477,9 +18579,7 @@ public void produceCUI(PrintWriter out)
   public void mapTL2UMLRSDS(Vector thesaurus)
   { if (tlspecification != null) 
     { synthesiseTransformationsUMLRSDS(tlspecification,entities,thesaurus); 
-      Vector pregens = new Vector(); 
-      Vector preassocs = new Vector(); 
-
+      
       BufferedReader br = null;
       Vector res = new Vector();
       String s;
@@ -18513,12 +18613,23 @@ public void produceCUI(PrintWriter out)
         linecount++; 
       }
 
+      Vector pregens = new Vector(); 
+      Vector preassocs = new Vector(); 
+      Vector pnames = new Vector(); 
 
       Compiler2 comp = new Compiler2();  
       comp.nospacelexicalanalysis(xmlstring); 
-      UseCase uc = comp.parseKM3UseCase(entities,types,pregens,preassocs); 
-      if (uc != null) 
-      { addGeneralUseCase(uc); } 
+      Vector items = comp.parseKM3(entities,types,pregens,preassocs,pnames); 
+
+      // Compiler2 comp = new Compiler2();  
+      // comp.nospacelexicalanalysis(xmlstring); 
+      for (int i = 0; i < items.size(); i++) 
+	  { if (items.get(i) instanceof UseCase)
+	    { UseCase uc = (UseCase) items.get(i); 
+          if (uc != null) 
+          { addGeneralUseCase(uc); } 
+		} 
+	  }
     } 
     else 
     { System.err.println("!! No TL specification loaded"); } 
@@ -18527,6 +18638,8 @@ public void produceCUI(PrintWriter out)
   public void checkTLmodel()
   { Date d1 = new Date(); 
     long startTime = d1.getTime(); 
+	
+	int correspondenceCount = 0; 
 	
     if (tlspecification != null) 
     { ModelSpecification modelspec = new ModelSpecification(); 
@@ -18614,7 +18727,8 @@ public void produceCUI(PrintWriter out)
           else if (strs.length == 3 && "|->".equals(strs[1])) // x |-> y 
           { String lft = strs[0]; // source element
             String rgt = strs[2]; // target element
-            System.out.println("LINE: " + lft + " |-> " + rgt); 
+            System.out.println("LINE: " + lft + " |-> " + rgt);
+			correspondenceCount++;  
             ObjectSpecification xspec = modelspec.getObject(lft); 
             if (xspec == null)
             { System.err.println("!! ERROR: no object called " + lft); }
@@ -18636,13 +18750,38 @@ public void produceCUI(PrintWriter out)
 	  System.out.println(">>> As ILP: " + modelspec.toILP()); 
 	  System.out.println(); 
 	  
+	  if (correspondenceCount == 0)
+	  { System.err.println("!! No correspondences are defined in the model. Please specify how to correspond source |-> target objects"); 
+        String sourceFeature = 
+          JOptionPane.showInputDialog("Match by same values of Source feature = target feature?:");
+		if (sourceFeature != null) 
+		{ int eqind = sourceFeature.indexOf("="); 
+		  String sf = sourceFeature.substring(0,eqind).trim(); 
+		  String tf = sourceFeature.substring(eqind+1,sourceFeature.length()).trim(); 
+		  if (sf != null && tf != null && sf.length() > 0 && tf.length() > 0)
+		  { System.out.println(">>> Matching source objects to target by " + sf + " = " + tf); 
+		    modelspec.defineCorrespondences(sf,tf); 
+		  }
+		} 
+      }
+	  
 	  modelspec.defineComposedFeatureValues(entities,types); 
 	  System.out.println(); 
 
 	  tlspecification.checkModel(modelspec,entities,types);
 	  
 	  System.out.println(">>> Enhanced specification: "); 
-	  System.out.println(tlspecification + "");  
+	  System.out.println(tlspecification + "");
+	  
+	  try
+      { PrintWriter fout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter("output/final.tl")));
+        fout.println(tlspecification + ""); 
+        fout.close(); 
+      } catch (Exception _except) { } 
+
+      System.out.println("----- Written TL transformation to output/final.tl ----------");   
     } 
     else 
     { System.err.println("!! ERROR: no TL specification"); } 
@@ -19249,16 +19388,258 @@ public void produceCUI(PrintWriter out)
     return res; 
   } 
 
-  public void requirements2TL()
+  // Formalise User Stories
+  public void formaliseBehaviourRequirements()
+  { System.out.println("Input file output/tagged.txt should be the POS-tagged output from Stanford or OpenNLP tagger."); 
+    System.out.println("Each sentence should be on a single line, with an empty line between sentences."); 
+    System.out.println(); 
+    
+    Date d1 = new Date(); 
+    long startTime = d1.getTime(); 
+	
+	Vector background = Thesarus.loadThesaurus("output/background.txt");
+
+    BufferedReader br = null;
+    Vector res = new Vector();
+    String s;
+    boolean eof = false;
+    File file = new File("output/tagged.txt");  /* default */ 
+
+    try
+    { br = new BufferedReader(new FileReader(file)); }
+    catch (FileNotFoundException e)
+    { System.out.println("File not found: " + file);
+      return; 
+    }
+
+    Vector reqstrings = new Vector(); 
+    String xmlstring = ""; 
+    int linecount = 0; 
+
+    while (!eof)
+    { try { s = br.readLine(); }
+      catch (IOException e)
+      { System.out.println("!! Reading failed.");
+        return; 
+      }
+      if (s == null) 
+      { eof = true; 
+        break; 
+      }
+      else if (s.startsWith("--")) 
+      { } 
+      else if (s.trim().length() == 0) 
+      { reqstrings.add(xmlstring + ""); 
+        xmlstring = ""; 
+      } 
+      else 
+      { xmlstring = xmlstring + s + " "; } 
+      linecount++; 
+    }
+
+    if (xmlstring.length() > 0) 
+    { reqstrings.add(xmlstring); } 
+
+	String km3model = ""; 
+	Vector mes = new Vector(); 
+	mes.addAll(entities); 
+	for (int x = 0; x < useCases.size(); x++)
+	{ Object ob = useCases.get(x); 
+	  if (ob instanceof UseCase)
+	  { mes.add(ob); } // but not OperationDescription instances
+    } 
+	
+	Vector sentences = new Vector(); 
+	
+    for (int i = 0; i < reqstrings.size(); i++) 
+    { String xstring = (String) reqstrings.get(i); 
+      Compiler2 comp = new Compiler2();  
+      comp.nospacelexicalanalysisText(xstring); 
+      Vector reqs = comp.parseTaggedText(); 
+      System.out.println(reqs);
+      System.out.println(); 
+      NLPSentence xres = new NLPSentence("S", reqs); 
+      xres.setId("" + (i+1)); 
+      sentences.add(xres); 
+	  
+      java.util.Map classifications = xres.classifyWords(background,mes);
+      System.out.println(); 
+      System.out.println(">>> Sentence " + (i+1));  
+      System.out.println("Using classifications >>> " + classifications);
+      km3model = xres.getBehaviourKM3(reqs,mes,classifications); 
+      System.out.println();    
+
+      // RequirementsSentence req = new RequirementsSentence("",reqs); 
+      // String classific = RequirementsPhrase.classify(reqs,entities,types,mms,req);
+	  // Only match sources to source classes, etc.  
+      // System.out.println(">> Classification: " + classific); 
+      // req.sentencekind = classific; 
+      // sentences.add(req);
+      // Vector ems = req.toEntityMappings(entitymaps); 
+      // entitymaps.addAll(ems); 
+    } 
+	
+    String outfile = "mm.km3"; 
+    File appout = new File("output/" + outfile); 
+    try
+    { PrintWriter appfile = new PrintWriter(
+                                new BufferedWriter(new FileWriter(appout)));
+      
+      appfile.println("package app {\n" + km3model + "\n}\n"); 
+      appfile.close(); 
+    }
+    catch(Exception _dd) { }
+
+
+    // System.out.println(">> Identified entity mappings: " + entitymaps); 
+    
+    try { br.close(); } 
+    catch (Exception _p) {} 
+	
+	for (int i = 0; i < sentences.size(); i++) 
+	{ NLPSentence st = (NLPSentence) sentences.get(i); 
+	  System.out.println(">> Derived elements from sentence " + st.id + " are:"); 
+	  System.out.println(st.derivedElements); 
+	}
+	
+	System.out.println(">> Output model written to output/mm.km3."); 
+    System.out.println(); 
+    
+	Date d2 = new Date(); 
+	long endTime = d2.getTime(); 
+    System.out.println(">>> Requirements analysis took " + (endTime - startTime) + "ms"); 
+  } 
+
+  public void formaliseDataRequirements()
+  { System.out.println("Input file output/nlpout.txt should be the output from Stanford tagger & parser."); 
+    System.out.println(); 
+    
+	java.util.Date d1 = new java.util.Date(); 
+	long t1 = d1.getTime(); 
+
+     Vector background = Thesarus.loadThesaurus("output/background.txt");
+	 System.out.println(">>> Background information assumed: " + background); 
+	  
+     File infile = new File("output/nlpout.txt");
+     BufferedReader br = null;
+     Vector res = new Vector();
+     String s;
+     boolean eof = false;
+    
+
+     try
+     { br = new BufferedReader(new FileReader(infile)); }
+     catch (FileNotFoundException e)
+     { System.out.println("File not found: " + infile.getName());
+       return; 
+     }
+
+
+     String xmlstring = ""; 
+     int linecount = 0; 
+     boolean flag = false; 
+     Vector sentences = new Vector(); 
+	 
+     while (!eof)
+     { try { s = br.readLine(); }
+       catch (IOException e)
+       { System.out.println("Reading failed.");
+         return; 
+       }
+	   
+       if (s == null) 
+       { eof = true; 
+         break; 
+       }
+       else if (s.startsWith("Constituency parse:"))
+       { flag = true; }
+       else if (s.startsWith("Dependency Parse (enhanced plus plus dependencies):"))
+       { flag = false; 
+         sentences.add(xmlstring); 
+         System.out.println(">> Read: " + xmlstring); 
+	    xmlstring = ""; 
+	  }
+	  else if (flag) 
+      { xmlstring = xmlstring + s + " "; } 
+      linecount++; 
+    } // replace ' and " in s by harmless characters. Remove - within a string or number. 
+	 
+	 Vector nlpsentences = new Vector(); 
+     Vector mes = new Vector(); // entities and usecases from the model.
+     mes.addAll(entities); 
+     for (int x = 0; x < useCases.size(); x++)
+     { Object ob = useCases.get(x); 
+       if (ob instanceof UseCase)
+       { mes.add(ob); } // but not OperationDescription instances
+     } 
+	  
+     String km3model = ""; 
+     for (int i = 0; i < sentences.size(); i++) 
+     { String xstring = (String) sentences.get(i); 
+       Compiler2 c0 = new Compiler2(); 
+       c0.nospacelexicalanalysisText(xstring); 
+       NLPSentence xres = c0.parseNLP();
+       if (xres != null) 
+       { xres.indexing(); 
+	     xres.setId("" + (i+1)); 
+		 xres.linkToPhrases(); 
+		 
+	     nlpsentences.add(xres); 
+         System.out.println(">>> Sentence " + (i+1) + ": " + xres); 
+         java.util.Map classifications = xres.classifyWords(background,mes); 
+         System.out.println(">>> Using word classifications >>> " + classifications);
+         km3model = xres.getKM3(mes,classifications); 
+         System.out.println(); 
+       }  
+     } 	 
+	     
+    String outfile = "mm.km3"; 
+    File appout = new File("output/" + outfile); 
+    try
+    { PrintWriter appfile = new PrintWriter(
+                                new BufferedWriter(new FileWriter(appout)));
+      
+      appfile.println("package app {\n" + km3model + "\n}\n"); 
+      appfile.close(); 
+    }
+    catch(Exception _dd) { }
+	
+	for (int i = 0; i < nlpsentences.size(); i++) 
+	{ NLPSentence ss = (NLPSentence) nlpsentences.get(i); 
+	  System.out.println(">>> Sentence " + (i+1)); 
+	  System.out.println(">>> Derived elements: " + ss.derivedElements); 
+	  System.out.println(); 
+	}
+	
+	System.out.println(">>> Output model written to output/mm.km3."); 
+    System.out.println(); 
+    
+	
+	java.util.Date d2 = new java.util.Date(); 
+	long t2 = d2.getTime(); 
+	System.out.println(">>> Time taken = " + (t2-t1)); 
+  } 	
+
+  // MT requirements to TL
+  public void requirements2TL0()
   { System.out.println("Input file tagged.txt should be the POS-tagged output from the stanford posttagger."); 
     System.out.println("Remove brackets -LRB-_-LRB- and -RRB-_-RRB-, and put each sentence on a single line."); 
-    System.out.println(); 
+    System.out.println("Class names are assumed to start with a capital letter, features with small letters.");
+	System.out.println();  
     System.out.println("Enter metamodel names:"); 
-	String mmnames = JOptionPane.showInputDialog("Metamodel names?: ");
-	String[] mms = mmnames.split(" "); 
+    String mmnames = JOptionPane.showInputDialog("Metamodel names?: ");
+    String[] mms = mmnames.split(" "); 
+    System.out.println("Enter threshold for name similarity (>= 0.4, <= 1.0):"); 
+    String thres = JOptionPane.showInputDialog("Similarity threshold?: ");
+    double thr = 0.5; 
+
+    try { thr = Double.parseDouble(thres); } 
+    catch (Exception _e) { thr = 0.5; } 
+ 
+    RequirementsPhrase.threshold = thr; 
     
-	Date d1 = new Date(); 
-	long startTime = d1.getTime(); 
+    Date d1 = new Date(); 
+    long startTime = d1.getTime(); 
 	
     Vector sentences = new Vector(); 
 
@@ -19316,18 +19697,18 @@ public void produceCUI(PrintWriter out)
       String classific = RequirementsPhrase.classify(reqs,entities,types,mms,req);
 	  // Only match sources to source classes, etc.  
       System.out.println(">> Classification: " + classific); 
-	  req.sentencekind = classific; 
-	  sentences.add(req);
+      req.sentencekind = classific; 
+      sentences.add(req);
       Vector ems = req.toEntityMappings(entitymaps); 
       entitymaps.addAll(ems); 
     } 
 
-	System.out.println(">> Identified entity mappings: " + entitymaps); 
+    System.out.println(">> Identified entity mappings: " + entitymaps); 
     
-	ModelMatching tlspec = new ModelMatching();
-	tlspec.entitymatches = entitymaps;  
+    ModelMatching tlspec = new ModelMatching();
+    tlspec.entitymatches = entitymaps;  
 	
-	try
+    try
     { PrintWriter fout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter("output/req.tl")));
@@ -21007,6 +21388,8 @@ public void produceCUI(PrintWriter out)
       fout.close(); 
     } catch (Exception _except) { } 
 
+    System.out.println("----- Written TL transformation to output/forward.tl ----------"); 
+
     try
     { PrintWriter cout = new PrintWriter(
                               new BufferedWriter(
@@ -21041,7 +21424,7 @@ public void produceCUI(PrintWriter out)
       cout.println("/* QVT-R transformation: */"); 
 
       cout.println(selected.qvtTransformation(enumconvs,stringenumconversions,enumstringconversions,
-                                              bconvs,ebconvs)); 
+                                              bconvs,ebconvs,entities)); 
 
     /*  for (int i = 0; i < types.size(); i++) 
       { Type et = (Type) types.get(i); 
@@ -21146,7 +21529,7 @@ public void produceCUI(PrintWriter out)
       rout.println("/* Reverse QVT-R transformation: */"); 
 
       rout.println(inv.qvtTransformation(enumconvs,stringenumconversions, enumstringconversions,
-                                         invbconvs,invebconvs)); 
+                                         invbconvs,invebconvs,entities)); 
 
       /* for (int i = 0; i < types.size(); i++) 
       { Type et = (Type) types.get(i); 
@@ -21213,8 +21596,10 @@ public void produceCUI(PrintWriter out)
     for (int i = 0; i < entities.size(); i++) 
     { Entity ee = (Entity) entities.get(i); 
       Attribute puk = ee.getPrincipalPK(); 
-      if (puk == null)
-      { ee.addPrimaryKey(ee.getName().toLowerCase() + "Id"); } 
+      if (puk == null && ee.isTarget())
+      { ee.addPrimaryKey(ee.getName().toLowerCase() + "Id"); }
+	  else if (puk == null && ee.isSource())
+	  { ee.addAttribute(new Attribute(ee.getName().toLowerCase() + "Id", new Type("String", null), ModelElement.INTERNAL)); }
     } 
 
     try
@@ -21254,7 +21639,7 @@ public void produceCUI(PrintWriter out)
                                                   enumstringconversions,bconvs,ebconvs)); 
 
       qout.println(selected.qvtBxTransformation(enumconvs,stringenumconversions,
-                                                  enumstringconversions,bconvs,ebconvs));
+                                                  enumstringconversions,bconvs,ebconvs,entities));
 
       cout.close();
       qout.close(); 

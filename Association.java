@@ -3,7 +3,7 @@ import java.io.*;
 import java.util.List; 
 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -324,6 +324,9 @@ public class Association extends ModelElement
 
   public boolean isZeroOne()
   { return card2 == ZEROONE; } 
+
+  public boolean isMany()
+  { return card2 == MANY; } 
 
   public boolean isOptional()
   { return card2 == ZEROONE || card2 == MANY; } 
@@ -7680,7 +7683,7 @@ String qual = "";
         { setinverse = "    if (" + ex + ".get" + role2 + "() != null)\n" + 
                        "    { " + e2name + " old_value = " + ex + ".get" + role2 + "();\n" + 
                        "      old_value.remove" + role1 + "(" + ex + "); } \n" + 
-                       "    " + attx + ".add" + role1 + "(" + ex + ");\n";
+                       "    if (" + attx + " != null) { " + attx + ".add" + role1 + "(" + ex + "); }\n";
         }
         else if (card1 == ZEROONE)
         { setinverse = "    if (" + ex + ".get" + role2 + "() != null)\n" + 
@@ -7801,8 +7804,8 @@ String qual = "";
              ex + ", " + t2 + " " + attx + ") \n  { " + settest + unlink1 + setinverse + 
              "    " + ex + ".set" + nme + "(" + attx + ");\n  ";
 
-      Vector contexts = new Vector(); 
-      contexts.add(ent); 
+    Vector contexts = new Vector(); 
+    contexts.add(ent); 
 
     for (int j = 0; j < cons.size(); j++)
     { Constraint cc = (Constraint) cons.get(j);

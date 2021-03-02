@@ -4,7 +4,7 @@ import java.util.Collections;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -26,6 +26,7 @@ public class EntityMatching implements SystemTypes
   Vector attributeMappings = new Vector(); // of AttributeMatching
   Expression condition = null; 
   Expression postcondition = null; 
+  Vector replicationConditions = new Vector(); // of Expression
 
   ObjectTemplateExp sourceTemplate; 
   ObjectTemplateExp targetTemplate; 
@@ -79,10 +80,16 @@ public class EntityMatching implements SystemTypes
     { attributeMappings.add(am); } 
   } 
   
+  public void addReplicationCondition(Expression r)
+  { if (replicationConditions.contains(r)) { } 
+    else 
+    { replicationConditions.add(r); } 
+  } 
+
   public boolean hasEmptyCondition()
   { if (condition == null) 
     { return true; }
-	if ("true".equals(condition))
+	if ("true".equals(condition + ""))
 	{ return true; }
 	return false; 
   }
@@ -95,6 +102,12 @@ public class EntityMatching implements SystemTypes
 	return false; 
   }
 
+  public boolean hasReplicationCondition()
+  { if (replicationConditions.size() > 0) 
+    { return true; }
+	return false; 
+  }
+
   public void setCondition(Expression e)
   { condition = e; } 
 
@@ -103,6 +116,21 @@ public class EntityMatching implements SystemTypes
 
   public void addCondition(Expression e)
   { condition = Expression.simplify("&",condition,e,null); } 
+
+  public static void addCondition(Expression e, Vector ematches)
+  { for (int i = 0; i < ematches.size(); i++) 
+    { EntityMatching em = (EntityMatching) ematches.get(i); 
+	  em.addCondition(e); 
+	} 
+  } 
+
+  public static void addToConditionIfNull(Expression e, Vector ematches)
+  { for (int i = 0; i < ematches.size(); i++) 
+    { EntityMatching em = (EntityMatching) ematches.get(i); 
+	  if (em.condition == null) 
+	  { em.addCondition(e); }  
+	} 
+  } 
 
   public void mergeWith(EntityMatching emx)
   { attributeMappings = VectorUtil.union(attributeMappings, emx.attributeMappings); 
@@ -439,28 +467,30 @@ public class EntityMatching implements SystemTypes
   } 
 
   public Vector bestTargetMatches(Attribute satt, Vector ems, Vector thesaurus)
-  { Vector locals1 = trg.getAttributes();
+  { // Find closest NMS matches for satt in attributes of trg
+
+    Vector locals1 = trg.getAttributes();
     Vector best = new Vector(); 
 	
     for (int i = 0; i < locals1.size(); i++) 
     { Attribute tatt = (Attribute) locals1.get(i); 
       double bestmatch = 0;
       Attribute smatched = null; 
-      if (ModelMatching.compatibleType(satt,tatt,ems))
+      if (ModelMatching.compatibleType(satt,tatt,ems) || ModelMatching.compatibleBaseTypes(satt,tatt,ems) ||
+          ModelMatching.compatibleElementType(satt,tatt,ems))
       { double tknss = 
             Entity.nmsSimilarity(tatt.getName(), satt.getName(), thesaurus); 
-        System.out.println(">>> NMS similarity of " + tatt + " and " + satt + 
-                                       " = " + tknss); 
-	    if (tknss > bestmatch) 
+        System.out.println(">>> NMS similarity of " + tatt + " and " + satt + " = " + tknss); 
+        if (tknss > bestmatch) 
         { bestmatch = tknss; 
-		  smatched = tatt; 
-		  best = new Vector(); 
-		  best.add(smatched);  
+          smatched = tatt; 
+          best = new Vector(); 
+          best.add(smatched);  
         } 
-		else if (tknss == bestmatch)
-		{ best.add(tatt); }
-	  }
-	}
+        else if (tknss == bestmatch)
+        { best.add(tatt); }
+	 }
+    }
     return best; 
   } 
    
@@ -2034,7 +2064,7 @@ public class EntityMatching implements SystemTypes
     } 
 
     Vector localams = new Vector(); 
-	localams.addAll(attributeMappings); 
+    localams.addAll(attributeMappings); 
 	
     String overrides = ""; 
     String res = " top relation " + srcent + "2" + trgent; 
@@ -2050,7 +2080,7 @@ public class EntityMatching implements SystemTypes
       { String ssname = em.realsrc.getName(); 
         String stname = em.realtrg.getName(); 
         overrides = " overrides " + ssname + "2" + stname + " ";  
-		localams.removeAll(em.attributeMappings); 
+	  localams.removeAll(em.attributeMappings); 
       }
     }     
     res = res + overrides + "\n"; 
@@ -2061,10 +2091,12 @@ public class EntityMatching implements SystemTypes
     ObjectTemplateExp sourceObjectTemplate = new ObjectTemplateExp(srcroot,realsrc); 
     ObjectTemplateExp targetObjectTemplate = new ObjectTemplateExp(trgroot,realtrg); 
 
-	Vector whereclause = new Vector(); 
+    Vector whereclause = new Vector(); 
 
     for (int i = 0; i < localams.size(); i++)
     { AttributeMatching am = (AttributeMatching) localams.get(i); 
+
+      if (am.isComposedTarget()) { continue; } 
 
       if (am.isStringMapping())
       { Vector reverseassignments = am.inverts(realsrc,realtrg,ems); 
@@ -2084,9 +2116,10 @@ public class EntityMatching implements SystemTypes
           // val = val.substituteEq(av + "", new BasicExpression(avdata));
           // System.out.println("STRING ASSIGNMENT " + am + " inverted is: "); 
         } 
-		Expression srcexpr = am.srcvalue.addReference(new BasicExpression(srcroot), 
+        Expression srcexpr = am.srcvalue.addReference(new BasicExpression(srcroot), 
                                                       new Type(realsrc));
         whereclause.add(trgv + "." + am.trg + " = " + srcexpr);
+
         /* Vector trgpath = new Vector(); 
         if (am.trg.getNavigation().size() == 0) 
         { trgpath.add(am.trg); } 
@@ -2115,6 +2148,7 @@ public class EntityMatching implements SystemTypes
                             targetObjectTemplate);  
         am.targetequationbx(srcv,trgv,trgvar,srcdata,
                            targetObjectTemplate,whereclause); */ 
+
         for (int j = 0; j < reverseassignments.size(); j++) 
         { AttributeMatching invam = (AttributeMatching) reverseassignments.get(j); 
 		  // System.out.println(">>> Inverse: " + invam); 
@@ -2122,8 +2156,8 @@ public class EntityMatching implements SystemTypes
           whereclause.add(trgv + "." + invam.trg + " = " + srcv + "." + invam.src); 
         }  
       } 
-	  else if (am.isExpressionAssignment()) 
-	  { } 
+      else if (am.isExpressionAssignment()) 
+      { } 
       else if (am.isValueAssignment())
       { Expression sval = 
           am.srcvalue.addReference(new BasicExpression(srcroot), 
@@ -2138,19 +2172,22 @@ public class EntityMatching implements SystemTypes
         am.targetequation(trgvar,trgpath,sval + "",targetObjectTemplate);  
 		// Inverse entity mapping has the condition { trgeq }
       }    
-	  else if (am.isDirect())
+      else if (am.isDirect())
       { String srceq = "";
         String trgeq = "";  
         String srcdata = am.sourcedataname(srcvar); 
         
-        EntityMatching emx = am.isObjectMatch(ems); 
+		Vector possibles = new Vector(); 
+        EntityMatching emx = am.isObjectMatch(ems,possibles); 
         if (emx == null)
         { srceq = am.sourceequation(srcvar,sourceObjectTemplate); 
-		  trgeq = am.targetequationbx(srcv,trgv,trgvar,srcdata,targetObjectTemplate,whereclause);                  
+          trgeq = am.targetequationbx(srcv,trgv,trgvar,srcdata,targetObjectTemplate,whereclause);                  
+
 		  /* if (am.isEquality())
 		  { whereclause.add(trgvar + "." + am.trg + " = " + srcdata); 
 		    whereclause.add(srcvar + "." + am.src + " = " + trgvar + "." + am.trg); 
           } */ 
+
         } 
       } 
     } 
@@ -2182,6 +2219,236 @@ public class EntityMatching implements SystemTypes
     res = res +  "  }\n"; 
     return res; 
   } 
+  
+  String qvtrule1InstanceReplication(Vector ems) 
+  { // if (src == trg) { return ""; } 
+  
+    Expression repl = (Expression) replicationConditions.get(0); // assume just one at the moment
+	
+	if (repl instanceof BinaryExpression) { } 
+	else 
+	{ return ""; }
+	
+	BinaryExpression repExpr = (BinaryExpression) repl; 
+	BasicExpression repVar = (BasicExpression) repExpr.getLeft();  // should be a BasicExpression of String or Entity type. 
+    Expression repExprR = repExpr.getRight();  // should be a BasicExpression of String or Entity type. 
+
+    Type repType = repVar.getType(); 
+    System.out.println(">>> Replication constraint in phase 1; condition = " + repExpr + " variable type = " + repType); 
+
+    Expression repExpr1 = repExprR.addReference(repVar, repType);
+
+    String srcvar = srcname.toLowerCase() + "x"; 
+    BasicExpression srcv = new BasicExpression(srcvar); 
+    String srcent = srcname.substring(0,srcname.length()-1); 
+
+    if (realsrc != null)
+    { srcent = realsrc.getName(); 
+      srcv.setType(new Type(realsrc)); 
+      srcv.setElementType(new Type(realsrc)); 
+    } 
+
+    String trgvar = trgname.toLowerCase() + "x"; 
+    BasicExpression trgv = new BasicExpression(trgvar); 
+
+    String trgent = trgname.substring(0,trgname.length()-1); 
+
+    if (realtrg != null)
+    { trgent = realtrg.getName(); 
+      trgv.setType(new Type(realtrg)); 
+      trgv.setElementType(new Type(realtrg)); 
+    } 
+
+    Vector localams = new Vector(); 
+    localams.addAll(attributeMappings); 
+	
+    String overrides = ""; 
+    String res = " top relation " + srcent + "2" + trgent; 
+    if (src.isConcrete())
+    { res = " " + res; }  
+    else 
+    { res = "  abstract" + res; }   
+
+    Entity srcsup = realsrc.getSuperclass(); 
+    if (srcsup != null) 
+    { EntityMatching em = ModelMatching.getAncestorMatching(srcsup,realtrg,ems); 
+      if (em != null) 
+      { String ssname = em.realsrc.getName(); 
+        String stname = em.realtrg.getName(); 
+        overrides = " overrides " + ssname + "2" + stname + " ";  
+	  localams.removeAll(em.attributeMappings); 
+      }
+    }     
+    res = res + overrides + "\n"; 
+
+    Attribute srcroot = new Attribute(srcvar, new Type(realsrc), ModelElement.INTERNAL); 
+    Attribute trgroot = new Attribute(trgvar, new Type(realtrg), ModelElement.INTERNAL); 
+
+    ObjectTemplateExp sourceObjectTemplate = new ObjectTemplateExp(srcroot,realsrc); 
+    ObjectTemplateExp targetObjectTemplate = new ObjectTemplateExp(trgroot,realtrg); 
+
+    Vector whereclause = new Vector(); 
+	Vector whenclauses = new Vector(); 
+    Map whens = new Map(); 
+
+    for (int i = 0; i < localams.size(); i++)
+    { AttributeMatching am = (AttributeMatching) localams.get(i); 
+
+      if (am.isComposedTarget()) { continue; } 
+
+      if (am.isStringMapping())
+      { Vector reverseassignments = am.inverts(realsrc,realtrg,ems); 
+        Vector auxvars = am.getAuxVariables(); 
+        // Expression val = (Expression) am.srcvalue.clone(); 
+        for (int j = 0; j < auxvars.size(); j++) 
+        { Attribute av = (Attribute) auxvars.get(j); 
+          Vector avpath = new Vector(); 
+          Vector avnavigation = av.getNavigation(); 
+          if (avnavigation.size() == 0)  
+          { avpath.add(av); } 
+          else 
+          { avpath.addAll(avnavigation); } 
+          // String avdata = AttributeMatching.dataname(srcvar,avpath);
+          am.sourceequation(srcvar,avpath, 
+                            sourceObjectTemplate);
+          // val = val.substituteEq(av + "", new BasicExpression(avdata));
+          // System.out.println("STRING ASSIGNMENT " + am + " inverted is: "); 
+        } 
+        Expression srcexpr = am.srcvalue.addReference(new BasicExpression(srcroot), 
+                                                      new Type(realsrc));
+        whereclause.add(trgv + "." + am.trg + " = " + srcexpr);
+
+        /* Vector trgpath = new Vector(); 
+        if (am.trg.getNavigation().size() == 0) 
+        { trgpath.add(am.trg); } 
+        else 
+        { trgpath.addAll(am.trg.getNavigation()); } 
+                 am.targetequation(trgvar,trgpath,val+"",targetObjectTemplate);  
+        for (int j = 0; j < auxvars.size(); j++) 
+        { Attribute av = (Attribute) auxvars.get(j); 
+          Vector avpath = new Vector();
+          Vector avnavigation = av.getNavigation(); 
+          if (avnavigation.size() == 0)  
+          { avpath.add(av); } 
+          else 
+          { avpath.addAll(avnavigation); } 
+           
+          am.sourceequation(srcvar,avpath, 
+                            sourceObjectTemplate);
+          String srcdata = am.sourcedataname(srcvar); 
+          Vector trgpath = new Vector(); 
+          if (am.trg.getNavigation().size() == 0) 
+          { trgpath.add(am.trg); } 
+          else 
+          { trgpath.addAll(am.trg.getNavigation()); } 
+               
+          am.targetequation(trgvar,trgpath,val+"", 
+                            targetObjectTemplate);  
+        am.targetequationbx(srcv,trgv,trgvar,srcdata,
+                           targetObjectTemplate,whereclause); */ 
+
+        for (int j = 0; j < reverseassignments.size(); j++) 
+        { AttributeMatching invam = (AttributeMatching) reverseassignments.get(j); 
+		  // System.out.println(">>> Inverse: " + invam); 
+		  
+          whereclause.add(trgv + "." + invam.trg + " = " + srcv + "." + invam.src); 
+        }  
+      } 
+      else if (am.isExpressionAssignment()) 
+      { } 
+      else if (am.isValueAssignment())
+      { Expression sval = 
+          am.srcvalue.addReference(new BasicExpression(srcroot), 
+                                   new Type(realsrc));
+        String trgeq = am.trg + " = " + sval;
+        // targetObjectTemplate.addPTI(am.trg,sval);
+        Vector trgpath = new Vector(); 
+        if (am.trg.getNavigation().size() == 0) 
+        { trgpath.add(am.trg); } 
+        else 
+        { trgpath.addAll(am.trg.getNavigation()); } 
+        am.targetequation(trgvar,trgpath,sval + "",targetObjectTemplate);  
+		// Inverse entity mapping has the condition { trgeq }
+      }    
+      else if (am.isDirect())
+      { String srceq = "";
+        String trgeq = "";  
+        String srcdata = am.sourcedataname(srcvar); 
+        
+		Vector possibles = new Vector(); 
+        EntityMatching emx = am.isObjectMatch(ems,possibles); 
+        if (emx == null)
+        { srceq = am.sourceequation(srcvar,sourceObjectTemplate); 
+          trgeq = am.targetequationbx(srcv,trgv,trgvar,srcdata,targetObjectTemplate,whereclause);                  
+
+		  /* if (am.isEquality())
+		  { whereclause.add(trgvar + "." + am.trg + " = " + srcdata); 
+		    whereclause.add(srcvar + "." + am.src + " = " + trgvar + "." + am.trg); 
+          } */ 
+          am.dependsOn = emx; 
+          String whenc = am.whenClause(emx,srcvar,trgvar,whens); 
+          whenclauses.add(whenc);
+          // srceq = am.sourceequation(srcvar,sourceObjectTemplate);
+		  // clausecount++;  
+        } 
+		else if (possibles.size() > 0)
+		{ String whencs = am.whenClause(possibles,srcvar,trgvar,whens); 
+		  whenclauses.add("(" + whencs + ")");
+          srceq = am.sourceequation(srcvar,sourceObjectTemplate);
+          trgeq = am.targetequationbx(srcv,trgv,trgvar,srcdata,targetObjectTemplate,whereclause);                  
+		  // clausecount++;  
+        }
+      } 
+    } 
+
+    // if (condition != null) 
+    // { Expression cexp = condition.addReference(srcv, new Type(realsrc)); 
+    //   sourceObjectTemplate.addWhere(cexp); 
+    // } 
+
+    res = res +  "  { checkonly domain source " + repVar + " : " + repType + "{ };\n" + 
+	             "    checkonly domain source " + sourceObjectTemplate + " { " + repExpr1 + "->includes(" + repVar + ") };\n"; 
+    res = res +  "    enforce domain target " + targetObjectTemplate + ";\n"; 
+
+    // Should include attribute mappings that are not in any superclass rule & of 1-mult and of 
+    // value type 
+	
+
+    if (whenclauses.size() > 0) 
+	{ res = res +  "    when {\n          ";
+ 
+      boolean previous = false; 
+      for (int k = 0; k < whenclauses.size(); k++) 
+      { String w = (String) whenclauses.get(k); 
+        if ("true".equals(w)) { } 
+        else if ("".equals(w)) { } 
+        else 
+        { if (previous) 
+          { res = res + " and\n          " + w; } 
+          else  
+          { res = res + w; 
+            previous = true; 
+          }
+        }
+	  }   
+      res = res + " }\n"; 
+	} 
+	
+	if (whereclause.size() > 0)
+	{ res = res + "    where {\n"; 
+	  for (int i = 0; i < whereclause.size(); i++) 
+	  { res = res + "      " + whereclause.get(i); 
+	    if (i < whereclause.size() - 1)
+		{ res = res + " and\n"; } 
+		else 
+		{ res = res + "\n"; }; 
+      }
+	  res = res + "    }\n";
+	} 
+    res = res +  "  }\n"; 
+    return res; 
+  } 
+
 
   String qvtrule2(Vector ems) 
   { // if (src == trg) { return ""; } 
@@ -2290,13 +2557,20 @@ public class EntityMatching implements SystemTypes
       { String srceq = ""; 
         String srcdata = am.sourcedataname(srcvar); 
         
-        EntityMatching emx = am.isObjectMatch(ems); 
+		Vector possibles = new Vector(); 
+        
+        EntityMatching emx = am.isObjectMatch(ems,possibles); 
         if (emx != null)
         { am.dependsOn = emx; 
           String whenc = am.whenClause(emx,srcvar,trgvar,whens); 
           whenclauses.add(whenc);
           srceq = am.sourceequation(srcvar,sourceObjectTemplate); 
         } 
+		else if (possibles.size() > 0)
+		{ String whencs = am.whenClause(possibles,srcvar,trgvar,whens); 
+		  whenclauses.add("(" + whencs + ")");
+          srceq = am.sourceequation(srcvar,sourceObjectTemplate); 
+        }
         else 
         { srceq = am.sourceequation(srcvar,sourceObjectTemplate); } 
       } 
@@ -2501,7 +2775,9 @@ public class EntityMatching implements SystemTypes
       { String srceq = ""; 
         String srcdata = am.sourcedataname(srcvar); 
         
-        EntityMatching emx = am.isObjectMatch(ems); 
+		Vector possibles = new Vector(); 
+        
+        EntityMatching emx = am.isObjectMatch(ems,possibles); 
         if (emx != null)
         { am.dependsOn = emx; 
           String whenc = am.whenClause(emx,srcvar,trgvar,whens); 
@@ -2509,6 +2785,12 @@ public class EntityMatching implements SystemTypes
           srceq = am.sourceequation(srcvar,sourceObjectTemplate);
 		  clausecount++;  
         } 
+		else if (possibles.size() > 0)
+		{ String whencs = am.whenClause(possibles,srcvar,trgvar,whens); 
+		  whenclauses.add("(" + whencs + ")");
+          srceq = am.sourceequation(srcvar,sourceObjectTemplate);
+		  clausecount++;  
+        }
       } 
     } 
 
@@ -2546,7 +2828,8 @@ public class EntityMatching implements SystemTypes
         }   
       }  
       else if (am.isDirect())
-      { EntityMatching emx = am.isObjectMatch(ems); 
+      { Vector possibles = new Vector(); 
+        EntityMatching emx = am.isObjectMatch(ems,possibles); 
         if (emx != null)
         { String srceq = ""; 
           String trgeq = ""; 
@@ -2591,6 +2874,9 @@ public class EntityMatching implements SystemTypes
     return res; 
   } // and when for the objects that are referenced. 
 
+
+  /* First phase rules for UML-RSDS: */ 
+
   String umlrsdsrule1() 
   { if (src == trg) { return ""; } 
 
@@ -2606,27 +2892,294 @@ public class EntityMatching implements SystemTypes
 
     String srcid = srcent.toLowerCase() + "Id"; 
     String trgid = trgent.toLowerCase() + "Id"; 
+    
     Attribute srcpk = realsrc.getPrincipalPK(); 
     if (srcpk != null) 
     { srcid = srcpk.getName(); } 
+	
     Attribute trgpk = realtrg.getPrincipalPK(); 
     if (trgpk != null) 
     { trgid = trgpk.getName(); } 
 
-    String srcexp = srcid; 
+    Expression srcexp = new BasicExpression(srcid);
+    String srcval = srcid; 
+ 
     // If there is an attribute mapping to trgid, use that: 
     AttributeMatching amx = findAttributeMappingByTarget(trgid); 
 
     if (amx != null) 
-    { srcexp = amx.getSourceExpression() + ""; } 
+    { srcexp = amx.getSourceExpression(); 
+      srcval = srcexp + ""; 
+    } 
+
+    Vector found = new Vector(); 
+    found.add(trgid); 
+    String setSuperPKs = superclassKeyAssignments(realtrg,trgvar,found,srcexp,srcval); 
 
     String res = srcent + "::\n"; 
     if (condition != null) 
     { res = res + "  " + condition + " =>\n  "; } 
     res = res +  "  " + trgent + "->exists( " + trgvar + " | "; 
-    res = res + trgvar + "." + trgid + " = " + srcexp + " )\n"; 
+    res = res + trgvar + "." + trgid + " = " + srcexp + " " + setSuperPKs + " )\n"; 
     res = res +  "\n"; 
     return res; 
+  } 
+
+  String umlrsdsrule1InstanceReplication() 
+  { if (src == trg) { return ""; } 
+  
+    Expression repl = (Expression) replicationConditions.get(0); // assume just one at the moment
+	
+	if (repl instanceof BinaryExpression) { } 
+	else 
+	{ return ""; }
+	
+	BinaryExpression repExpr = (BinaryExpression) repl; 
+	Expression repVar = repExpr.getLeft();  // should be a BasicExpression of String or Entity type. 
+
+    Type repType = repVar.getType(); 
+    System.out.println(">>> Replication constraint in phase 1; condition = " + repExpr + " variable type = " + repType); 
+
+    String srcent = srcname.substring(0,srcname.length()-1); 
+    String trgent = trgname.substring(0,trgname.length()-1); 
+
+    if (realsrc != null)
+    { srcent = realsrc.getName(); } 
+    if (realtrg != null) 
+    { trgent = realtrg.getName(); } 
+
+    String srcid = srcent.toLowerCase() + "Id"; 
+	
+	if (repType != null && repType.isEntity())
+	{ Entity repEnt = repType.getEntity(); 
+	  String repPk = repEnt.getName().toLowerCase() + "Id"; 
+      srcid = srcid + " + \"~for~\" + " + repVar + "." + repPk;
+	} 
+	else if (repType != null)
+	{ srcid = srcid + " + \"~for~\" + " + repVar; }
+	 
+    String srcvar = srcname.toLowerCase() + "x"; 
+    String trgvar = trgname.toLowerCase() + "x"; 
+
+    String trgid = trgent.toLowerCase() + "Id"; 
+    
+    Attribute srcpk = realsrc.getPrincipalPK(); 
+    if (srcpk != null) 
+    { srcid = srcpk.getName(); } 
+	
+    Attribute trgpk = realtrg.getPrincipalPK(); 
+    if (trgpk != null) 
+    { trgid = trgpk.getName(); } 
+
+    Expression srcexp = new BasicExpression(srcid);
+    String srcval = srcid; 
+ 
+    // If there is an attribute mapping to trgid, use that: 
+    AttributeMatching amx = findAttributeMappingByTarget(trgid); 
+
+    if (amx != null) 
+    { srcexp = amx.getSourceExpression(); 
+      srcval = srcexp + ""; 
+    } 
+
+    String targetbody = ""; 
+    String remainder = ""; 
+
+    Vector created = new Vector(); 
+
+    Vector auxattmaps = new Vector(); 
+    auxattmaps.addAll(attributeMappings); 
+
+    Vector trgnames = new Vector(); 
+    for (int i = 0; i < auxattmaps.size(); i++)
+    { AttributeMatching am = (AttributeMatching) auxattmaps.get(i); 
+      trgnames.add(am.trg.getName()); 
+    } 
+
+    if (amx != null) 
+    { Vector amxs = new Vector(); 
+      amxs.add(amx); 
+      auxattmaps.removeAll(amxs); 
+    } 
+
+    Vector ams2 = (Vector) Ocl.sortedBy(auxattmaps, trgnames); 
+    // But: ids should always precede non-ids. 
+
+    Vector processed = new Vector(); 
+
+    // First, handle the direct targets: 
+
+    for (int i = 0; i < ams2.size(); i++)
+    { AttributeMatching am = (AttributeMatching) ams2.get(i);
+      if (am.isDirectTarget())
+      { if (am.isStringAssignment())
+        { String trgeq = trgvar + "." + am.trg + " = " + am.srcvalue; 
+          targetbody = targetbody + " & " + trgeq;
+          processed.add(am);  
+        } 
+        else if (am.isExpressionAssignment())
+        { Type srcvaltype = am.srcvalue.getElementType();
+          if (srcvaltype != null && srcvaltype.isEntityType()) 
+          { String e1Id = srcvaltype.getName().toLowerCase() + "Id";  
+            Attribute e1pk = srcvaltype.getEntity().getPrincipalPK(); 
+            if (e1pk != null) 
+            { e1Id = e1pk.getName(); } 
+    
+            Expression srcids = null; 
+            if (am.srcvalue.isMultipleValued())
+            { am.srcvalue.setBrackets(true); 
+              srcids = new BinaryExpression("->collect", am.srcvalue, 
+                                          new BasicExpression(e1Id)); 
+            } 
+            else 
+            { srcids = new BasicExpression(e1Id); 
+            ((BasicExpression) srcids).setObjectRef(am.srcvalue); 
+            } 
+            String trgeq = trgvar + "." + am.trg + " = " + am.trg.getElementType() + 
+                                                   "@pre[" + srcids + "]"; 
+            targetbody = targetbody + " & " + trgeq;
+            processed.add(am);
+          } 
+          else 
+          { String trgeq = trgvar + "." + am.trg + " = " + am.srcvalue; 
+            targetbody = targetbody + " & " + trgeq; 
+            processed.add(am);
+          } 
+          updateCreated(am.trg.getNavigation(),created); 
+        } 
+        else if (am.isValueAssignment())
+        { String trgeq = trgvar + "." + am.trg + " = " + am.srcvalue; 
+          targetbody = targetbody + " & " + trgeq;
+          processed.add(am); 
+        } 
+        else // if (am.isDirectTarget())
+        { String srceq = ""; 
+          String trgeq = ""; 
+          String srcdata = am.sourcedataname(srcvar); 
+          Vector bound = new Vector(); 
+          bound.add(trgvar); 
+          trgeq = am.targetequationUMLRSDS(trgvar,bound); 
+          targetbody = targetbody + " & " + trgeq; 
+          updateCreated(am.trg.getNavigation(),created);
+          processed.add(am); 
+        }
+      } 
+    } 
+
+    ams2.removeAll(processed);  
+    // Only indirect targets are left. Process primary key & 
+    // 1-multiplicity references before other forms of target. 
+
+    for (int j = 0; j < ams2.size(); j++) 
+    { AttributeMatching am = (AttributeMatching) ams2.get(j); 
+      String trgvar1 = trgent.toLowerCase() + "$" + j; 
+
+      // Creating an intermediate single-valued reference. 
+      // Must be done before any assignment to its features. 
+
+      if (!am.isDirectTarget() && am.isIdentityTarget()) 
+      { if (am.isExpressionAssignment())
+        { remainder = remainder + srcent + "::\n"; 
+          remainder = remainder + "  " + trgvar1 + " = " + trgent + "@pre[" + srcexp + "] "; 
+          remainder = remainder + "  " + 
+                        am.composedTargetEquationExpr(realsrc,am.srcvalue,trgvar1,created) + "\n\n"; 
+          updateCreated(am.trg.getNavigation(),created);
+          processed.add(am);  
+        }
+        else 
+        { remainder = remainder + srcent + "::\n"; 
+          remainder = remainder + "  " + trgvar1 + " = " + trgent + "@pre[" + srcexp + "] "; 
+          remainder = remainder + "  " + am.composedTargetEquation(realsrc,trgvar1,created) + "\n\n"; 
+          updateCreated(am.trg.getNavigation(),created);
+          processed.add(am);  
+        } 
+      }
+    } 
+
+    ams2.removeAll(processed); 
+
+    for (int j = 0; j < ams2.size(); j++) 
+    { AttributeMatching am = (AttributeMatching) ams2.get(j); 
+      String trgvar1 = trgent.toLowerCase() + "$" + j; 
+
+      // Creating an intermediate single-valued reference. 
+      // Must be done before any assignment to its features. 
+
+      if (!am.isDirectTarget() && am.is1MultiplicityTarget()) 
+      { if (am.isExpressionAssignment())
+        { remainder = remainder + srcent + "::\n"; 
+          remainder = remainder + "  " + trgvar1 + " = " + trgent + "@pre[" + srcexp + "] "; 
+          remainder = remainder + "  " + 
+                        am.composedTargetEquationExpr(realsrc,am.srcvalue,trgvar1,created) + "\n\n"; 
+          updateCreated(am.trg.getNavigation(),created);
+          processed.add(am);  
+        }
+        else 
+        { remainder = remainder + srcent + "::\n"; 
+          remainder = remainder + "  " + trgvar1 + " = " + trgent + "@pre[" + srcexp + "] "; 
+          remainder = remainder + "  " + am.composedTargetEquation(realsrc,trgvar1,created) + "\n\n"; 
+          updateCreated(am.trg.getNavigation(),created);
+          processed.add(am);  
+        } 
+      }
+    } 
+
+    ams2.removeAll(processed); 
+
+    for (int j = 0; j < ams2.size(); j++) 
+    { AttributeMatching am = (AttributeMatching) ams2.get(j); 
+      String trgvar1 = trgent.toLowerCase() + "$" + j; 
+
+      if (!am.isDirectTarget() && am.isExpressionAssignment() && !am.is1MultiplicityTarget())
+      { remainder = remainder + srcent + "::\n"; 
+        remainder = remainder + "  " + trgvar1 + " = " + trgent + "@pre[" + srcexp + "] "; 
+        remainder = remainder + "  " + 
+                        am.composedTargetEquationExpr(realsrc,am.srcvalue,trgvar1,created) + "\n\n"; 
+        updateCreated(am.trg.getNavigation(),created); 
+      } 
+      else if (!am.isDirectTarget() && am.isDirect() && !am.is1MultiplicityTarget()) // target is composite, source is not
+      { remainder = remainder + srcent + "::\n"; 
+        remainder = remainder + "  " + trgvar1 + " = " + trgent + "@pre[" + srcexp + "] "; 
+        remainder = remainder + "  " + am.composedTargetEquation(realsrc,trgvar1,created) + "\n\n"; 
+        updateCreated(am.trg.getNavigation(),created); 
+      } 
+    } // But amalgamate the equations where there is a common target path
+    
+    Vector found = new Vector(); 
+    found.add(trgid); 
+    String setSuperPKs = superclassKeyAssignments(realtrg,trgvar,found,srcexp,srcval); 
+
+    String res = srcent + "::\n"; 
+    if (repExpr != null) 
+    { res = res + "  " + repExpr + " =>\n  "; } 
+    res = res +  "  " + trgent + "->exists( " + trgvar + " | "; 
+    res = res + trgvar + "." + trgid + " = " + srcexp + " " + setSuperPKs + targetbody + " )\n"; 
+    res = res +  "\n\n" + remainder; 
+    return res; 
+  } 
+
+  private String superclassKeyAssignments(Entity etarg, String trgvar, Vector found, Expression srcexp, String srcval)
+  { if (etarg == null) { return ""; } 
+   
+    Entity sup = etarg.getSuperclass(); 
+    if (sup == null) { return ""; } 
+
+    Attribute pk = sup.getPrincipalPrimaryKey(); 
+    if (pk == null) { return ""; } 
+
+    String supkey = pk.getName(); 
+    if (found.contains(supkey)) { }
+    else 
+    { found.add(supkey); 
+      String res = ""; 
+      if (srcexp.isNumeric() && pk.isString())
+      { res = " & " + trgvar + "." + supkey + " = " + srcexp + "\"\""; } 
+      else // assume both String
+      { res = " & " + trgvar + "." + supkey + " = " + srcexp; } 
+ 
+      return res + superclassKeyAssignments(sup,trgvar,found,srcexp,srcval);
+    } 
+    return superclassKeyAssignments(sup,trgvar,found,srcexp,srcval);  
   } 
 
   String umlrsdsrule2(Vector ems) 
@@ -2653,9 +3206,11 @@ public class EntityMatching implements SystemTypes
 
     String srcid = srcent.toLowerCase() + "Id"; 
     String trgid = trgent.toLowerCase() + "Id"; 
+
     Attribute srcpk = realsrc.getPrincipalPK(); 
     if (srcpk != null) 
     { srcid = srcpk.getName(); } 
+
     Attribute trgpk = realtrg.getPrincipalPK(); 
     if (trgpk != null) 
     { trgid = trgpk.getName(); } 
@@ -2681,75 +3236,146 @@ public class EntityMatching implements SystemTypes
     { AttributeMatching am = (AttributeMatching) auxattmaps.get(i); 
       trgnames.add(am.trg.getName()); 
     } 
-    Vector ams2 = (Vector) Ocl.sortedBy(auxattmaps, trgnames); 
 
+    Vector ams2 = (Vector) Ocl.sortedBy(auxattmaps, trgnames); 
+    // But: ids should always precede non-ids. 
+
+    Vector processed = new Vector(); 
+
+    // First, handle the direct targets: 
 
     for (int i = 0; i < ams2.size(); i++)
-    { AttributeMatching am = (AttributeMatching) ams2.get(i); 
-      if (am.isStringAssignment() && am.isDirectTarget())
-      { String trgeq = trgvar + "." + am.trg + " = " + am.srcvalue; 
-        targetbody = targetbody + " & " + trgeq; 
-      } 
-      else if (am.isExpressionAssignment() && am.isDirectTarget())
-      { Type srcvaltype = am.srcvalue.getElementType();
-        if (srcvaltype != null && srcvaltype.isEntityType()) 
-        { String e1Id = srcvaltype.getName().toLowerCase() + "Id";  
-          Attribute e1pk = srcvaltype.getEntity().getPrincipalPK(); 
-          if (e1pk != null) 
-          { e1Id = e1pk.getName(); } 
+    { AttributeMatching am = (AttributeMatching) ams2.get(i);
+      if (am.isDirectTarget())
+      { if (am.isStringAssignment())
+        { String trgeq = trgvar + "." + am.trg + " = " + am.srcvalue; 
+          targetbody = targetbody + " & " + trgeq;
+          processed.add(am);  
+        } 
+        else if (am.isExpressionAssignment())
+        { Type srcvaltype = am.srcvalue.getElementType();
+          if (srcvaltype != null && srcvaltype.isEntityType()) 
+          { String e1Id = srcvaltype.getName().toLowerCase() + "Id";  
+            Attribute e1pk = srcvaltype.getEntity().getPrincipalPK(); 
+            if (e1pk != null) 
+            { e1Id = e1pk.getName(); } 
     
-          Expression srcids = null; 
-          if (am.srcvalue.isMultipleValued())
-          { am.srcvalue.setBrackets(true); 
-            srcids = new BinaryExpression("->collect", am.srcvalue, 
+            Expression srcids = null; 
+            if (am.srcvalue.isMultipleValued())
+            { am.srcvalue.setBrackets(true); 
+              srcids = new BinaryExpression("->collect", am.srcvalue, 
                                           new BasicExpression(e1Id)); 
+            } 
+            else 
+            { srcids = new BasicExpression(e1Id); 
+            ((BasicExpression) srcids).setObjectRef(am.srcvalue); 
+            } 
+            String trgeq = trgvar + "." + am.trg + " = " + am.trg.getElementType() + 
+                                                   "@pre[" + srcids + "]"; 
+            targetbody = targetbody + " & " + trgeq;
+            processed.add(am);
           } 
           else 
-          { srcids = new BasicExpression(e1Id); 
-            ((BasicExpression) srcids).setObjectRef(am.srcvalue); 
+          { String trgeq = trgvar + "." + am.trg + " = " + am.srcvalue; 
+            targetbody = targetbody + " & " + trgeq; 
+            processed.add(am);
           } 
-          String trgeq = trgvar + "." + am.trg + " = " + am.trg.getElementType() + 
-                                                   "[" + srcids + "]"; 
-          targetbody = targetbody + " & " + trgeq;
+          updateCreated(am.trg.getNavigation(),created); 
         } 
-        else 
+        else if (am.isValueAssignment())
         { String trgeq = trgvar + "." + am.trg + " = " + am.srcvalue; 
-          targetbody = targetbody + " & " + trgeq; 
+          targetbody = targetbody + " & " + trgeq;
+          processed.add(am); 
         } 
-        updateCreated(am.trg.getNavigation(),created); 
+        else // if (am.isDirectTarget())
+        { String srceq = ""; 
+          String trgeq = ""; 
+          String srcdata = am.sourcedataname(srcvar); 
+          Vector bound = new Vector(); 
+          bound.add(trgvar); 
+          trgeq = am.targetequationUMLRSDS(trgvar,bound); 
+          targetbody = targetbody + " & " + trgeq; 
+          updateCreated(am.trg.getNavigation(),created);
+          processed.add(am); 
+        }
       } 
-      else if (am.isValueAssignment() && am.isDirectTarget())
-      { String trgeq = trgvar + "." + am.trg + " = " + am.srcvalue; 
-        targetbody = targetbody + " & " + trgeq; 
-      } 
-      else if (am.isDirectTarget())
-      { String srceq = ""; 
-        String trgeq = ""; 
-        String srcdata = am.sourcedataname(srcvar); 
-        Vector bound = new Vector(); 
-        bound.add(trgvar); 
-        trgeq = am.targetequationUMLRSDS(trgvar,bound); 
-        targetbody = targetbody + " & " + trgeq; 
-        updateCreated(am.trg.getNavigation(),created); 
-      }
     } 
 
-      
+    ams2.removeAll(processed);  
+    // Only indirect targets are left. Process primary key & 
+    // 1-multiplicity references before other forms of target. 
+
     for (int j = 0; j < ams2.size(); j++) 
     { AttributeMatching am = (AttributeMatching) ams2.get(j); 
       String trgvar1 = trgent.toLowerCase() + "$" + j; 
 
-      if (!am.isDirectTarget() && am.isExpressionAssignment())
+      // Creating an intermediate single-valued reference. 
+      // Must be done before any assignment to its features. 
+
+      if (!am.isDirectTarget() && am.isIdentityTarget()) 
+      { if (am.isExpressionAssignment())
+        { remainder = remainder + srcent + "::\n"; 
+          remainder = remainder + "  " + trgvar1 + " = " + trgent + "@pre[" + srcexp + "] "; 
+          remainder = remainder + "  " + 
+                        am.composedTargetEquationExpr(realsrc,am.srcvalue,trgvar1,created) + "\n\n"; 
+          updateCreated(am.trg.getNavigation(),created);
+          processed.add(am);  
+        }
+        else 
+        { remainder = remainder + srcent + "::\n"; 
+          remainder = remainder + "  " + trgvar1 + " = " + trgent + "@pre[" + srcexp + "] "; 
+          remainder = remainder + "  " + am.composedTargetEquation(realsrc,trgvar1,created) + "\n\n"; 
+          updateCreated(am.trg.getNavigation(),created);
+          processed.add(am);  
+        } 
+      }
+    } 
+
+    ams2.removeAll(processed); 
+
+    for (int j = 0; j < ams2.size(); j++) 
+    { AttributeMatching am = (AttributeMatching) ams2.get(j); 
+      String trgvar1 = trgent.toLowerCase() + "$" + j; 
+
+      // Creating an intermediate single-valued reference. 
+      // Must be done before any assignment to its features. 
+
+      if (!am.isDirectTarget() && am.is1MultiplicityTarget()) 
+      { if (am.isExpressionAssignment())
+        { remainder = remainder + srcent + "::\n"; 
+          remainder = remainder + "  " + trgvar1 + " = " + trgent + "@pre[" + srcexp + "] "; 
+          remainder = remainder + "  " + 
+                        am.composedTargetEquationExpr(realsrc,am.srcvalue,trgvar1,created) + "\n\n"; 
+          updateCreated(am.trg.getNavigation(),created);
+          processed.add(am);  
+        }
+        else 
+        { remainder = remainder + srcent + "::\n"; 
+          remainder = remainder + "  " + trgvar1 + " = " + trgent + "@pre[" + srcexp + "] "; 
+          remainder = remainder + "  " + am.composedTargetEquation(realsrc,trgvar1,created) + "\n\n"; 
+          updateCreated(am.trg.getNavigation(),created);
+          processed.add(am);  
+        } 
+      }
+    } 
+
+    ams2.removeAll(processed); 
+
+    for (int j = 0; j < ams2.size(); j++) 
+    { AttributeMatching am = (AttributeMatching) ams2.get(j); 
+      String trgvar1 = trgent.toLowerCase() + "$" + j; 
+
+      if (!am.isDirectTarget() && am.isExpressionAssignment() && !am.is1MultiplicityTarget())
       { remainder = remainder + srcent + "::\n"; 
-        remainder = remainder + "  " + trgvar1 + " = " + trgent + "[" + srcexp + "] "; 
+        remainder = remainder + "  " + trgvar1 + " = " + trgent + "@pre[" + srcexp + "] "; 
         remainder = remainder + "  " + 
-                        am.composedTargetEquationExpr(am.srcvalue,trgvar1,created) + "\n\n"; 
+                        am.composedTargetEquationExpr(realsrc,am.srcvalue,trgvar1,created) + "\n\n"; 
         updateCreated(am.trg.getNavigation(),created); 
       } 
-      else if (!am.isDirectTarget() && am.isDirect()) // target is composite, source is not
+      else if (!am.isDirectTarget() && am.isDirect() && !am.is1MultiplicityTarget()) // target is composite, source is not
       { remainder = remainder + srcent + "::\n"; 
-        remainder = remainder + "  " + trgvar1 + " = " + trgent + "[" + srcexp + "] "; 
-        remainder = remainder + "  " + am.composedTargetEquation(trgvar1,created) + "\n\n"; 
+        remainder = remainder + "  " + trgvar1 + " = " + trgent + "@pre[" + srcexp + "] "; 
+        remainder = remainder + "  " + am.composedTargetEquation(realsrc,trgvar1,created) + "\n\n"; 
         updateCreated(am.trg.getNavigation(),created); 
       } 
     } // But amalgamate the equations where there is a common target path
@@ -2769,12 +3395,12 @@ public class EntityMatching implements SystemTypes
     }  
     res = res +  "\n\n" + remainder; 
 
-    String trgvar2 = trgent.toLowerCase() + "$x"; 
+    String trgvar2 = trgent.toLowerCase() + "$xx"; 
 
     if (postcondition != null) 
     { Expression post = postcondition.addReference(new BasicExpression(trgvar2),new Type(realtrg)); 
       String postconstraint = srcent + "::\n"; 
-      postconstraint = postconstraint + "  " + trgvar2 + " = " + trgent + "[" + srcexp + "] "; 
+      postconstraint = postconstraint + "  " + trgvar2 + " = " + trgent + "@pre[" + srcexp + "] "; 
       postconstraint = postconstraint + "  => (" + post + ")\n\n"; 
       res = res + "\n\n" + postconstraint;
     } 
@@ -3592,7 +4218,7 @@ public class EntityMatching implements SystemTypes
     } 
   } 
   
-  public void checkModel(ModelSpecification mod, Vector rem, Vector queries)
+  public void checkModel(ModelSpecification mod, ModelMatching mm, Vector ems, Vector rem, Vector queries)
   { // For each feature mapping f |--> g, checks for each 
     // ex : E and corresponding fx : F, that ex.f = fx.g in 
     // the model. 
@@ -3604,22 +4230,68 @@ public class EntityMatching implements SystemTypes
     Vector restrictedsources = new Vector();  
     Vector trgobjects = mod.getCorrespondingObjects(srcobjects,restrictedsources,trgname); 
 	
-	// If there is a condition Cond, check that all restrictedsources actually satisfy the condition and no rejected source 
+	// If there is a condition Cond, check that all restrictedsources actually satisfy the condition and no other source 
 	// fails the condition.
+	
+	Vector othersources = new Vector(); 
+	othersources.addAll(srcobjects);  // the extent of realsrc in mod
+	othersources.removeAll(restrictedsources);  // elements of realsrc which do not map to trgname
 
+    // pairs x : restrictedsources and corresponding y : trgobjects in the corresponding targets via trgname
+	// are the extent of rule(s)  srcname |--> trgname.  There may be several such rules but we treat them the same here. 
+	
+	Vector otherrules = ModelMatching.getEntityMatchings(realsrc,ems); 
+	Vector thislist = new Vector(); 
+	thislist.add(this); 
+	otherrules.removeAll(thislist); 
+	
+	System.out.println(">> Other rules from " + srcname + " are: " + otherrules); 
+	System.out.println(); 
+	
+    boolean conditionError = false; 
+	
     if (condition != null) 
     { boolean condAreMapped = mod.checkConditionInModel(condition,restrictedsources); 
       if (condAreMapped) { }
       else 
-      { System.err.println("!! Some instances of " + restrictedsources + " are mapped to " + trgname + " but fail condition " + condition); } 
+      { System.err.println("!! Some instances of " + restrictedsources + " are mapped to " + trgname + " but fail the " + 
+	                       srcname + " |--> " + trgname + " mapping condition " + condition); 
+	    // But they may be mapped by another rule  srcname |--> trgname with a different condition
+		if (otherrules.size() > 0) 
+		{ System.out.println(">> There are " + otherrules.size() + " other rule(s) from " + srcname); }
+		conditionError = true; 
+	  } 
+	  
+	  Expression notcond = Expression.negate(condition); 
+	  boolean othersAreNotMapped = mod.checkConditionInModel(notcond,othersources); 
+      if (othersAreNotMapped) 
+	  { System.out.println(">>> " + condition + " is a valid condition for rule " + this);
+	    System.out.println(">>> adding its negation to other rules from " + srcname); 
+		addToConditionIfNull(notcond,otherrules); 
+	  }
+      else 
+      { System.err.println("!! Some instances of " + othersources + " are not mapped to " + trgname + " but satisfy the " + 
+	                       srcname + " |--> " + trgname + " mapping condition " + condition);
+		conditionError = true; 
+	  } 
     }  
+	
+	if (conditionError)
+	{ String yn = 
+         JOptionPane.showInputDialog("Remove invalid condition " + condition + " of mapping " + srcname + 
+                                              " |--> " + trgname + " (y or n)?:");
+ 
+       if (yn != null && yn.equals("y"))
+       { condition = null; }  
+    }          
 	
     if (srcobjects.size() > 0 && 
         trgobjects.size() == 0 && 
         (condition == null || "true".equals(condition + "")))
     { System.out.println(">>>> No source " + srcname + " object has a corresponding " + trgname);  
       System.out.println(">>>> object: suggest to delete the entity mapping " + srcname + " |--> " + trgname);
-      System.out.println();  
+      System.out.println();
+	  condition = new BasicExpression(false);   
       rem.add(this); 
     } 
     else if (trgobjects.size() < srcobjects.size() && 
@@ -3629,26 +4301,39 @@ public class EntityMatching implements SystemTypes
       System.out.println();  
 
       System.out.println(">>>> Mapped source objects are: " + restrictedsources);  
+	  System.out.println(">>>> Non-mapped source objects are: " + othersources);  
 	  
-      Vector allatts = realsrc.allDefinedAttributes(); 
+      Vector allatts = realsrc.allDefinedAttributes();
+	  Vector allrefs = realsrc.getLocalReferenceFeatures(); 
+	  allatts.addAll(allrefs); 
+	   
       for (int i = 0; i < allatts.size(); i++)
       { Attribute att = (Attribute) allatts.get(i); 
+        String attnme = att.getName(); 
+            
         if (att.isBoolean())
-        { System.out.println(">>> Possible source boolean condition: " + att + " or not(" + att + ")"); 
-	     Expression possibleCond = new BasicExpression(att); 
-	     boolean condValid = mod.checkConditionInModel(possibleCond,restrictedsources);
-	     if (condValid)
-	     { System.out.println(">>> Condition " + att + " is valid. Adding to mapping"); 
-	       addCondition(possibleCond); 
-	     }
-	     else 
-	     { possibleCond = new UnaryExpression("not", new BasicExpression(att));
-		   possibleCond.setType(att.getType());  
-	       condValid = mod.checkConditionInModel(possibleCond,restrictedsources);
-	       if (condValid)
-	       { System.out.println(">>> Condition not(" + att + ") is valid. Adding to mapping"); 
-	         addCondition(possibleCond); 
-	       }
+        { System.out.println(">>> Possible source boolean condition: " + attnme + " or not(" + attnme + ")"); 
+	      Expression possibleCond = new BasicExpression(att);
+		  Expression negationCond = new UnaryExpression("not", possibleCond);
+          negationCond.setType(att.getType());  
+	         
+          boolean condValid = mod.checkConditionInModel(possibleCond,restrictedsources);
+          boolean notcondValid = mod.checkConditionInModel(negationCond,othersources);
+          if (condValid && notcondValid)
+          { System.out.println(">>> Condition " + att + " is valid on all mapped sources & false on all others. Adding to mapping"); 
+            addCondition(possibleCond);
+			addCondition(negationCond,otherrules);  
+			System.out.println(); 
+          }
+          else 
+          { condValid = mod.checkConditionInModel(negationCond,restrictedsources);
+            notcondValid = mod.checkConditionInModel(possibleCond,othersources);
+            if (condValid && notcondValid)
+            { System.out.println(">>> Condition not(" + att + ") is valid on all mapped sources & false on others. Adding to mapping"); 
+	          addCondition(negationCond); 
+	  		  addCondition(possibleCond,otherrules);
+			  System.out.println();   
+            }
           }
         }
         else if (att.isEnumeration())	  
@@ -3658,39 +4343,113 @@ public class EntityMatching implements SystemTypes
             for (int j = 0; j < enumvals.size(); j++) 
             { String enumval = (String) enumvals.get(j); 
               System.out.println(">>> Possible source enum condition is: " + att + " = " + enumval);
-			  BasicExpression enumValbe = new BasicExpression(enumval); // no quotes?? 
-			  enumValbe.setType(enumt);  
+              BasicExpression enumValbe = new BasicExpression(enumval); // no quotes?? 
+              enumValbe.setType(enumt);  
               Expression possCond = new BinaryExpression("=", new BasicExpression(att), enumValbe); 
+              Expression negCond = new BinaryExpression("/=", new BasicExpression(att), enumValbe); 
 	          boolean condValid = mod.checkConditionInModel(possCond,restrictedsources);
-	    	  if (condValid)
-	          { System.out.println(">>> Condition " + att + " = " + enumval + " is valid. Adding to mapping"); 
-	            addCondition(possCond); 
-	          }
+              boolean condnotValid = mod.checkConditionInModel(negCond,othersources);
+              if (condValid && condnotValid)
+              { System.out.println(">>> Condition " + att + " = " + enumval + " is valid on all sources & false on others. Adding to mapping"); 
+                addCondition(possCond);
+				System.out.println();  
+              }
             }
           }
         }  
         else if (att.isString())
         { System.out.println(">>> Possible source string condition is: " + att + " = \"" + trgname + "\"");
-		  BasicExpression strexpr = new BasicExpression("\"" + trgname + "\""); 
-		  strexpr.setType(new Type("String", null)); 
-		  strexpr.setElementType(new Type("String", null)); 
+          BasicExpression strexpr = new BasicExpression("\"" + trgname + "\""); 
+          strexpr.setType(new Type("String", null)); 
+          strexpr.setElementType(new Type("String", null)); 
 		  
-          Expression possibleCond = new BinaryExpression("=", new BasicExpression(att), strexpr); 
-          boolean condValid = mod.checkConditionInModel(possibleCond,restrictedsources);
-          if (condValid)
-          { System.out.println(">>> Condition " + att + " = \"" + trgname + "\" is valid. Adding to mapping"); 
-            addCondition(possibleCond); 
+          Expression possibleCond = new BinaryExpression("=", new BasicExpression(att), strexpr);
+		  Expression negCond = new BinaryExpression("/=", new BasicExpression(att), strexpr); 
+		  possibleCond.setType(new Type("boolean", null)); 
+          negCond.setType(new Type("boolean", null));
+		  boolean condValid = mod.checkConditionInModel(possibleCond,restrictedsources);
+		  boolean notcondValid = mod.checkConditionInModel(negCond,othersources);
+		  
+          if (condValid && notcondValid)
+          { System.out.println(">>> Condition " + att + " = \"" + trgname + "\" is valid on source instances & false on others. Adding to mapping"); 
+            addCondition(possibleCond);
+			System.out.println();  
           } 
-		  else // check that all the sources have a constant value for att. 
-		  if (mod.isConstant(att,restrictedsources))
-		  { String attnme = att.getName(); 
-		    System.out.println(">>> Attribute " + att + " is constant on these source objects");
-		    String val = ((ObjectSpecification) restrictedsources.get(0)).getString(attnme); 
+          else // check that all the sources have a constant value for att. 
+          if (mod.isConstant(att,restrictedsources))
+          { System.out.println(">>> Attribute " + att + " is constant on these source objects");
+            String val = ((ObjectSpecification) restrictedsources.get(0)).getString(attnme); 
 	
-		    possibleCond = new BinaryExpression("=", new BasicExpression(att), new BasicExpression("\"" + val + "\"")); 
-			addCondition(possibleCond);
-		  }
-        }
+            possibleCond = new BinaryExpression("=", new BasicExpression(att), new BasicExpression("\"" + val + "\"")); 
+		    negCond = new BinaryExpression("/=", new BasicExpression(att), new BasicExpression("\"" + val + "\""));
+			notcondValid = mod.checkConditionInModel(negCond,othersources);
+            if (notcondValid)
+			{ addCondition(possibleCond); 
+			  System.out.println(">> Adding the condition " + possibleCond); 
+			  System.out.println(); 
+			} 
+          }
+          else 
+          { Vector attvalues = ObjectSpecification.getStringValues(att,restrictedsources,mod); 
+            String csuff = AuxMath.longestCommonSuffix(attvalues); 
+            if (csuff != null && csuff.length() > 0) 
+            { System.out.println(">>> The source objects have a common " + attnme + " suffix = " + csuff); 
+              possibleCond = new BinaryExpression("->hasSuffix", new BasicExpression(att), new BasicExpression("\"" + csuff + "\"")); 
+              negCond = new UnaryExpression("not", possibleCond);
+  			  notcondValid = mod.checkConditionInModel(negCond,othersources);
+              if (notcondValid)
+			  { possibleCond.setType(new Type("boolean", null));
+			    addCondition(possibleCond);   
+			    System.out.println(">> Adding the condition " + possibleCond); 
+			    System.out.println(); 
+			  }
+            } 
+            else 
+            { String cpref = AuxMath.longestCommonPrefix(attvalues); 
+              if (cpref != null && cpref.length() > 0) 
+              { System.out.println(">>> The source objects have a common " + attnme + " prefix = " + cpref); 
+                possibleCond = new BinaryExpression("->hasPrefix", new BasicExpression(att), new BasicExpression("\"" + cpref + "\"")); 
+                negCond = new UnaryExpression("not", possibleCond);
+  			    notcondValid = mod.checkConditionInModel(negCond,othersources);
+                if (notcondValid)
+			    { possibleCond.setType(new Type("boolean", null));
+				  addCondition(possibleCond);   
+				  System.out.println(">> Adding the condition " + possibleCond); 
+			      System.out.println(); 
+			    }
+              } 
+            } 
+          } 
+        } // other conditions: att->hasSuffix(ss) if the values have a common suffix, different from any suffix of other 
+		  // sets, or ->hasPrefix, or ->size, etc. Conditions for numbers being all equal. 
+        else if (att.isEntity())
+		{ Type enttype = att.getType(); 
+		  Entity attent = enttype.getEntity(); 
+		  if (attent != null && attent.isAbstract())
+		  { // try att->oclIsTypeOf(sub) each subclass of attent 
+		    Vector esubs = attent.getActualLeafSubclasses(); 
+			/* for (int h = 0; h < esubs.size(); h++) 
+			{ Entity esub = (Entity) esubs.get(h); 
+			  String subname = esub.getName(); 
+ 		      BinaryExpression possCond = 
+			    new BinaryExpression("->oclIsTypeOf", new BasicExpression(att), new BasicExpression(subname)); 
+			  boolean cValid = mod.checkConditionInModel(possCond,restrictedsources);
+              if (cValid)
+			  { System.out.println(">> Condition " + att + "->oclIsTypeOf(" + subname + ") is valid on " + restrictedsources); 
+			    addCondition(possCond); 
+			  }
+			} */ 
+			Vector classesOfSources = mod.getClassNames(restrictedsources,att);
+			if (classesOfSources.size() < esubs.size())
+			{ System.out.println(">>> Only subclasses " + classesOfSources + " of " + attent + " are permitted for " + att + 
+			                     " for this mapping"); 
+              Expression membershipCond = Expression.classMembershipPredicate(att,classesOfSources); 
+			  addCondition(membershipCond); 	
+			  System.out.println(">> Adding the condition " + membershipCond); 
+			  System.out.println(); 
+            } 
+		  } // and ->oclIsKindOf for abstract subclasses. You could actually compute the set of subclasses of the restricted sources.
+		}
       }
 	  
       if (condition == null)
@@ -3718,7 +4477,35 @@ public class EntityMatching implements SystemTypes
           { System.out.println(">>> Condition " + role + "->notEmpty() is valid. Adding to mapping"); 
             addCondition(possCond2); 
           }
-         }   
+
+          Expression uepossCond3 = new UnaryExpression("->size", new BasicExpression(role));
+		  Expression bcpossCond3 = new BasicExpression(1); 
+		  Expression possCond3 = new BinaryExpression("=", uepossCond3, bcpossCond3);  
+          possCond3.setType(new Type("boolean", null)); 
+		  System.out.println(">>> Possible source condition is: " + possCond3);
+		  
+          boolean cvalid3 = mod.checkConditionInModel(possCond3,restrictedsources); 
+          if (cvalid3) 
+          { System.out.println(">>> Condition " + role + "->size() = 1  is valid. Adding to mapping"); 
+            addCondition(possCond3); 
+			System.out.println(); 
+          }
+
+          if (role.isMany())
+		  { Expression uepossCond4 = new UnaryExpression("->size", new BasicExpression(role));
+		    Expression bcpossCond4 = new BasicExpression(1); 
+		    Expression possCond4 = new BinaryExpression(">", uepossCond3, bcpossCond3);  
+            possCond4.setType(new Type("boolean", null)); 
+		    System.out.println(">>> Possible source condition is: " + possCond4);
+		  
+            boolean cvalid4 = mod.checkConditionInModel(possCond4,restrictedsources); 
+            if (cvalid4) 
+            { System.out.println(">>> Condition " + role + "->size() > 1  is valid. Adding to mapping"); 
+              addCondition(possCond4); 
+  			  System.out.println(); 
+            }
+          }
+        }   
 	  } 
 	  System.out.println(); 
 	} // and class specialisations if realsrc is abstract
@@ -3731,9 +4518,8 @@ public class EntityMatching implements SystemTypes
         System.out.println(">> Checking mapping " + am); 
         System.out.println(">> Types of " + am + " are " + am.src.getType() + " |--> " + am.trg.getType()); 
 	  
-	  if (am.isExpressionMapping())
-	  { } 
-	  else if (am.isDirectTarget())
+        if (am.isExpressionMapping()) { } 
+        else if (am.isDirectTarget())
 	  { Attribute satt = am.src; 
 	    Attribute tatt = am.trg; 
 	    if (satt.isEnumeration() && tatt.isEnumeration())
@@ -3748,12 +4534,16 @@ public class EntityMatching implements SystemTypes
         { am.checkModel(mod,restrictedsources,trgobjects,attributeMappings,removed,added,queries); } 
         else if (satt.isCollection() && tatt.isCollection())
         { am.checkModel(mod,restrictedsources,trgobjects,attributeMappings,removed,added,queries); }
-        else
+        else if (tatt.isCollection())
+		{ System.out.println(">>> mapping of non-collection to collection: " + am); 
+		  am.unionSemantics = true; 
+		}
+		else 
         { System.out.println(">>> Mis-matching types in " + am); 
           removed.add(am); 
         }
 		// Other possibilities: enum to enum, enum/String, enum/boolean either way round
-		// Entity to Collection. Others are invalid and should be removed. 
+		// Entity to Collection, Collection to Entity. Others are invalid and should be removed. 
       } 
     } 
     attributeMappings.removeAll(removed); 

@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.*;
 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -19,7 +19,10 @@ public class UseCase extends ModelElement
   private Type elementType = null; 
 
   String description = ""; 
-  Entity ent = null;
+  Entity ent = null;  // The updated entity, if any
+  // Vector writes = new Vector(); // written features
+  // Vector reads = new Vector();  // read features
+  
   Vector orderedPostconditions = new Vector(); // of ConstraintOrGroup
   Vector preconditions = new Vector(); // Assumptions to be checked on initial data
   Vector constraints = new Vector(); // local invariants during the use case
@@ -84,11 +87,11 @@ public class UseCase extends ModelElement
   public void setResultType(Type et)
   { if ("void".equals(et + ""))
     { resultType = null;
-	  operation.setResultType(null); 
-	  return;
+      operation.setResultType(null); 
+      return;
     } 
 	
-	resultType = et; 
+    resultType = et; 
     if (et != null && Type.isBasicType(et)) 
     { setElementType(et); } 
     operation.setResultType(et); 
@@ -104,6 +107,14 @@ public class UseCase extends ModelElement
 
   public Type getElementType()
   { return elementType; }
+
+  public boolean hasNoResult()
+  { if (resultType == null) 
+    { return true; } 
+    if ("void".equals(resultType.getName()))
+    { return true; } 
+    return false; 
+  } 
 
   public Attribute getResultParameter()
   { if (resultType != null) 
@@ -148,7 +159,11 @@ public class UseCase extends ModelElement
   { return ownedOperations.size(); } 
 
   public void addParameter(String nme, Type typ) 
-  { Attribute par = new Attribute(nme, typ, ModelElement.INTERNAL); 
+  { Attribute par = (Attribute) ModelElement.lookupByName(nme,parameters); 
+  
+    if (par != null) { return; }
+	 
+	par = new Attribute(nme, typ, ModelElement.INTERNAL); 
     par.setElementType(typ.getElementType()); 
     parameters.add(par); 
   } 
@@ -566,16 +581,52 @@ public class UseCase extends ModelElement
 
   public Vector wr(Vector assocs)
   { Vector res = new Vector(); 
+  
+    if (resultType != null) 
+	{ if (resultType.isEntity())
+	  { String rname = resultType.getName(); 
+	    res.add(rname); 
+	  }
+	}
+	
+	if (hasStereotype("edit") && parameters != null) 
+	{ for (int i = 0; i < parameters.size(); i++)
+	  { Attribute att = (Attribute) parameters.get(i); 
+	    if (att.isEntity())
+		{ Entity ent = att.getType().getEntity(); 
+		  String ename = ent.getName(); 
+		  if (res.contains(ename)) { } 
+		  else 
+		  { res.add(ename); }
+		}
+	  }
+	}
+	
     for (int i = 0; i < orderedPostconditions.size(); i++) 
     { ConstraintOrGroup cns = 
         (ConstraintOrGroup) orderedPostconditions.get(i); 
       res = VectorUtil.union(res,cns.wr(assocs)); 
     } 
+	
     return res; 
   } 
 
   public Vector readFrame()
   { Vector res = new Vector(); 
+    
+	if (parameters != null) 
+	{ for (int i = 0; i < parameters.size(); i++)
+	  { Attribute att = (Attribute) parameters.get(i); 
+	    if (att.isEntity())
+		{ Entity ent = att.getType().getEntity(); 
+		  String ename = ent.getName(); 
+		  if (res.contains(ename)) { } 
+		  else 
+		  { res.add(ename); }
+		}
+	  }
+	}
+	
     for (int i = 0; i < orderedPostconditions.size(); i++) 
     { ConstraintOrGroup cns = 
         (ConstraintOrGroup) orderedPostconditions.get(i); 
@@ -632,7 +683,7 @@ public class UseCase extends ModelElement
     System.out.println(""); 
     System.out.println("Use case " + this + " reads entities: " + readents); 
     System.out.println("Use case " + this + " writes entities: " + writtenents); 
-    System.out.println("Associated entity: " + ent + " should be the only written entity.");
+    // System.out.println("Associated entity: " + ent + " should be the only written entity.");
     System.out.println();  
   } 
     
@@ -887,7 +938,7 @@ public class UseCase extends ModelElement
           System.out.println(inter1); 
           JOptionPane.showMessageDialog(null, "Warning: constraint " + j + " writes data\n" + 
                              inter1 + " read in constraint " + i, 
-                             "Possible invalid ordering of postconditions",
+                             "Constraint " + i + " may be invalidated.",
                              JOptionPane.WARNING_MESSAGE);  
           Vector rdj = cj.internalReadFrame(); // plus the owner 
           Vector inter2 = new Vector(); 
@@ -898,7 +949,7 @@ public class UseCase extends ModelElement
             System.out.println("They should be in a constraint group."); 
             JOptionPane.showMessageDialog(null, "The constraints are mutually dependent: " + inter2 + 
                              "\n" + 
-                             "I will put them in a constraint group.",
+                             "They should be in a constraint group executed recurrently.",
                              "Mutually dependent postconditions",
                              JOptionPane.WARNING_MESSAGE);  
             Vector grp = new Vector(); 
@@ -945,9 +996,12 @@ public class UseCase extends ModelElement
         } 
       } 
     } 
-    System.out.println("Possible groups: " + possibleGroups); 
+    System.out.println("Possible constraint groups: " + possibleGroups); 
     System.out.println("\n"); 
 
+    return; 
+	
+	/* 
     if (possibleGroups.size() == 0) { return; } 
 
     boolean somemerge = true; 
@@ -992,7 +1046,7 @@ public class UseCase extends ModelElement
 
     orderedPostconditions.clear(); 
     orderedPostconditions.addAll(newPostconds); 
-    classifierBehaviour = new SequenceStatement(); 
+    classifierBehaviour = new SequenceStatement(); */ 
   } 
 
   public void mapToDesign(Vector types, Vector entities, Vector assocs)
@@ -2484,7 +2538,8 @@ public void generateCUIcode(PrintWriter out)
         for (int i = 0; i < ownedOperations.size(); i++) 
         { BehaviouralFeature op = (BehaviouralFeature) ownedOperations.get(i); 
           String opid = op.saveModelData(out,classifier,entities,types);
-          out.println(opid + " : " + nme + ".ownedOperation");  
+          if (opid != null && opid.length() > 0) 
+		  { out.println(opid + " : " + nme + ".ownedOperation"); }   
         } 
       } 
 
@@ -2765,7 +2820,7 @@ public void generateCUIcode(PrintWriter out)
 
       for (int i = 0; i < stereotypes.size(); i++) 
       { String stereo = (String) stereotypes.get(i); 
-        res = res + "  stereotype " + stereo + ";\n\r"; 
+        res = res + "  stereotype " + stereo + ";\n"; 
       }
 
       res = res + "\n";

@@ -10,7 +10,7 @@
 */
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003,2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -88,6 +88,14 @@ abstract public class Named
   { if (str.length() > 0) 
     { String s1 = str.charAt(0) + ""; 
       return s1.toUpperCase() + str.substring(1,str.length()); 
+    } 
+    return str; 
+  } 
+
+  public static String decapitalise(String str) 
+  { if (str.length() > 0) 
+    { String s1 = str.charAt(0) + ""; 
+      return s1.toLowerCase() + str.substring(1,str.length()); 
     } 
     return str; 
   } 

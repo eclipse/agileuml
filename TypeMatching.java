@@ -3,7 +3,7 @@ import java.util.Set;
 import java.util.HashSet;
 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -38,12 +38,12 @@ public class TypeMatching
   { Type stringtype = new Type("String", null); 
     for (int i = 0; i < svals.length && i < tvals.length; i++) 
     { BasicExpression s = new BasicExpression(svals[i]);
-	  BasicExpression t = new BasicExpression(tvals[i]); 
-	  s.setType(stringtype); 
-	  t.setType(stringtype);  
-	  ValueMatching v = new ValueMatching(s,t);
+      BasicExpression t = new BasicExpression(tvals[i]); 
+      s.setType(stringtype); 
+      t.setType(stringtype);  
+      ValueMatching v = new ValueMatching(s,t);
       valueMappings.add(v);
-	} 
+    } 
   }
 
   public void addValueMapping(ValueMatching vm)
@@ -81,6 +81,64 @@ public class TypeMatching
       ValueMatching ivm = vm.invert();
       res.addValueMapping(ivm);
     }
+    return res;
+  }
+
+  public String qvtfunction()
+  { String res = "  query " + name; 
+    String restail = ""; 
+      
+
+    if (src.isEnumeration() && trg.isEnumeration())
+    { res = Type.enumConversionOpQVT(src,trg); } 
+    else if (src.isString() && trg.isEnumeration())
+    { res = trg.stringEnumQueryOpQVTR(); } 
+    else if (trg.isString() && src.isEnumeration())
+    { res = src.enumStringQueryOpQVTR(); } 
+    else if (trg.isBoolean() && src.isEnumeration())
+    { res = Type.enumBooleanOpQVTR(src); } 
+    else if (src.isBoolean() && trg.isEnumeration())
+    { res = Type.booleanEnumOpQVTR(trg); } 
+    else if (src.isString() && trg.isString())
+    { res = res + "(s : String) : String =\n    "; 
+      for (int i = 0; i < valueMappings.size(); i++) 
+      { ValueMatching vm = (ValueMatching) valueMappings.get(i); 
+        String vals = vm.src + ""; 
+        String valt = vm.trg + ""; 
+        res = res + "if s = " + vals + " then " + valt + " else "; 
+        restail = restail + " endif "; 
+      }
+      res = res + " \"\" " + restail + ";\n\n";  
+    } 
+    return res;
+  } 
+
+  public String umlrsdsfunction()
+  { String res = "  query " + name; 
+    String restail = ""; 
+      
+
+    if (src.isEnumeration() && trg.isEnumeration())
+    { res = Type.enum2enumOp(src,trg); } 
+    else if (src.isString() && trg.isEnumeration())
+    { res = trg.string2EnumOp(); } 
+    else if (trg.isString() && src.isEnumeration())
+    { res = src.enum2StringOp(); } 
+    else if (trg.isBoolean() && src.isEnumeration())
+    { res = Type.enumBooleanOp(src); } 
+    else if (src.isBoolean() && trg.isEnumeration())
+    { res = Type.booleanEnumOp(trg); } 
+    else if (src.isString() && trg.isString())
+    { res = res + "(s : String) : String =\n    "; 
+      for (int i = 0; i < valueMappings.size(); i++) 
+      { ValueMatching vm = (ValueMatching) valueMappings.get(i); 
+        String vals = vm.src + ""; 
+        String valt = vm.trg + ""; 
+        res = res + "if s = " + vals + " then " + valt + " else "; 
+        restail = restail + " endif "; 
+      }
+      res = res + " \"\" " + restail + ";\n\n";  
+    } 
     return res;
   }
 }

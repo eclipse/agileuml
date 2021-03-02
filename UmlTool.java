@@ -12,7 +12,7 @@
  * 
  * Version information : 2.0
  *
- * Date : October 2020
+ * Date : February 2021
  * 
  * Description : This describes the GUI interface of 
  * the UML RSDS tool,
@@ -289,9 +289,21 @@ public void findPlugins()
     fileMenu.add(tl2umlrsds);
 
     JMenuItem checkTL = 
-      new JMenuItem("Check model wrt TL"); 
+      new JMenuItem("Check TL wrt model"); 
     checkTL.addActionListener(this);
     fileMenu.add(checkTL);
+
+    fileMenu.addSeparator(); 
+
+    JMenuItem loadDataRequirements = 
+      new JMenuItem("Formalise data requirements"); 
+    loadDataRequirements.addActionListener(this);
+    fileMenu.add(loadDataRequirements);
+
+    JMenuItem loadbehaviourRequirements = 
+      new JMenuItem("Formalise behaviour requirements"); 
+    loadbehaviourRequirements.addActionListener(this);
+    fileMenu.add(loadbehaviourRequirements);
 
     fileMenu.addSeparator(); 
 
@@ -878,7 +890,7 @@ public void findPlugins()
     synthMenu.addSeparator(); 
 
     JMenuItem requirements2TL = 
-      new JMenuItem("Requirements to TL"); 
+      new JMenuItem("MT requirements to TL"); 
     requirements2TL.addActionListener(this);
     synthMenu.add(requirements2TL);
     
@@ -1984,8 +1996,8 @@ public void findPlugins()
       {  } 
       else if (label.equals("Smv Modules"))
       { }
-      else if (label.equals("Requirements to TL"))
-      { ucdArea.requirements2TL(); } 
+      else if (label.equals("MT requirements to TL"))
+      { ucdArea.requirements2TL0(); } 
       else if (label.equals("All maps (DSS)"))
       { Vector t = ucdArea.loadThesaurus();
         ucdArea.flattenModel("all maps",t); 
@@ -2034,9 +2046,17 @@ public void findPlugins()
       { Vector t = ucdArea.loadThesaurus();
         ucdArea.mapTL2UMLRSDS(t); 
       } 
-      else if (label.equals("Check model wrt TL"))
+      else if (label.equals("Check TL wrt model"))
       { 
         ucdArea.checkTLmodel(); 
+      } 
+      else if (label.equals("Formalise data requirements"))
+      { 
+        ucdArea.formaliseDataRequirements(); 
+      } 
+      else if (label.equals("Formalise behaviour requirements"))
+      { 
+        ucdArea.formaliseBehaviourRequirements(); 
       } 
       else if (label.equals("Use Case Dependencies"))
       { ucdArea.showUCDependencies(); } 

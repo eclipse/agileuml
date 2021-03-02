@@ -3,7 +3,7 @@ import java.util.List;
 import java.io.*;
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -278,6 +278,72 @@ abstract class Expression
      }
   } 
 
+
+  public static Expression combineBySum(Vector atts)
+  { Expression res = null; 
+    for (int i = 0; i < atts.size(); i++)
+    { Attribute att = (Attribute) atts.get(i); 
+      BasicExpression be = new BasicExpression(att);
+      be.setUmlKind(Expression.ATTRIBUTE);  
+      res = concatenateStrings(res,be); 
+    } 
+    return res; 
+  } 
+
+  public static Expression disjoinCases(Attribute att, Vector values)
+  { Expression res = null; 
+    Vector seen = new Vector(); 
+
+    for (int i = 0; i < values.size(); i++)
+    { Object val = values.get(i);
+      if (seen.contains(val))
+      { continue; } 
+ 
+      BasicExpression be = new BasicExpression(val + "");
+      BasicExpression attbe = new BasicExpression(att); 
+      attbe.setUmlKind(Expression.ATTRIBUTE);
+      BinaryExpression eq = new BinaryExpression("=", attbe, be);   
+      if (res == null) 
+      { res = eq; } 
+      else
+      { res = new BinaryExpression("or", res, eq); }
+      seen.add(val);  
+    } 
+    return res; 
+  } 
+
+  public static Expression concatenateStrings(Expression lhs, Expression rhs)
+  { if (lhs == null) 
+    { return rhs; } 
+    Expression expr = new BinaryExpression("+", lhs, 
+      new BasicExpression("\" ~ \"")); 
+    Expression expr1 = new BinaryExpression("+", expr, rhs); 
+    expr1.setType(new Type("String", null)); 
+    expr1.setElementType(new Type("String", null)); 
+    return expr1; 
+  } 
+
+  public static Expression classMembershipPredicate(Attribute att, Vector classNames)
+  { if (classNames.size() == 0) 
+    { return new BasicExpression(false); } 
+
+    String c1 = (String) classNames.get(0); 
+    BinaryExpression possCond = 
+			    new BinaryExpression("->oclIsTypeOf", new BasicExpression(att), new BasicExpression(c1));
+   
+    for (int i = 1; i < classNames.size(); i++) 
+    { String ci = (String) classNames.get(i); 
+      BinaryExpression condi = 
+			    new BinaryExpression("->oclIsTypeOf", new BasicExpression(att), new BasicExpression(ci));
+      possCond = new BinaryExpression("or", possCond, condi); 
+    } 
+    possCond.setBrackets(true); 
+    possCond.setType(new Type("boolean",null)); 
+    return possCond; 
+  } 
+ 
+			   
+			  
 
   public static boolean isSimpleEntity(Expression ee) 
   { if (ee == null) 
@@ -765,6 +831,17 @@ abstract class Expression
     { Expression expr = (Expression) exprs.get(i); 
       res = simplifyOr(res,expr); 
     } 
+    res.setType(new Type("boolean", null)); 
+    return res; 
+  } 
+
+  public static Expression formConjunction(Vector exprs) 
+  { Expression res = new BasicExpression(true); 
+    for (int i = 0; i < exprs.size(); i++) 
+    { Expression expr = (Expression) exprs.get(i); 
+      res = simplifyAnd(res,expr); 
+    } 
+    res.setType(new Type("boolean", null)); 
     return res; 
   } 
 
@@ -952,6 +1029,12 @@ abstract class Expression
   public abstract int maxModality();
 
   public abstract int minModality(); 
+
+  public boolean isNumeric()
+  { if (type != null) 
+    { return type.getName().equals("int") || type.getName().equals("double") || type.getName().equals("long"); } 
+    return false; 
+  }  
 
   public static boolean isNumber(Object ob) 
   { try
@@ -1378,7 +1461,7 @@ abstract class Expression
       { System.err.println("Inconsistent formulae " +
                     e1.toString() + " and " + 
                     e2.toString() + " being removed"); 
-        return new BasicExpression("false"); 
+        return new BasicExpression(false); 
       }
     }
   }
@@ -1438,9 +1521,9 @@ abstract class Expression
   { if (e1 == null) { return e2; } 
     if (e2 == null) { return e1; } 
     if (e1.equalsString("false"))
-    { return new BasicExpression("false"); } 
+    { return new BasicExpression(false); } 
     if (e2.equalsString("false"))
-    { return new BasicExpression("false"); } 
+    { return new BasicExpression(false); } 
     if (e1.equalsString("true")) 
     { return e2; } 
     if (e2.equalsString("true"))
@@ -1493,7 +1576,7 @@ abstract class Expression
   public static Expression simplifyOr(final Expression e1,
                                       final Expression e2)
   { if (e1.equalsString("true") || e2.equalsString("true"))
-    { return new BasicExpression("true"); }
+    { return new BasicExpression(true); }
     if (e1.equalsString("false"))
     { return e2; }
     if (e2.equalsString("false"))
@@ -1509,9 +1592,9 @@ abstract class Expression
   { if (ante.equalsString("true"))
     { return succ; }
     if (succ.equalsString("true"))
-    { return new BasicExpression("true"); }
+    { return new BasicExpression(true); }
     if (ante.equals(succ))
-    { return new BasicExpression("true"); }
+    { return new BasicExpression(true); }
     if (succ instanceof BinaryExpression)
     { BinaryExpression sbe = (BinaryExpression) succ;
       if (sbe.operator.equals("=>"))
@@ -1527,7 +1610,7 @@ abstract class Expression
                                        final Expression e2, 
                                        final Vector vars)
   { if (e1.equals(e2))
-    { return new BasicExpression("true"); }
+    { return new BasicExpression(true); }
                    /* if different states of same component, false */
                    /*for (int i = 0; i < comps.size(); i++) 
                      { Statemachine sm = (Statemachine) comps.elementAt(i); 
@@ -1554,7 +1637,7 @@ abstract class Expression
                                         final Expression e2,
                                         final Vector vars)
   { if (e1.equals(e2))
-    { return new BasicExpression("false"); }
+    { return new BasicExpression(false); }
     /* else 
     { boolean b1 = vars.contains(e1.toString());
       if (!b1)
@@ -1569,7 +1652,7 @@ abstract class Expression
   private static Expression simplifyEq(final Expression e1,
                                        final Expression e2)
   { if (e1.equals(e2))
-    { return new BasicExpression("true"); }
+    { return new BasicExpression(true); }
     // else if (e1.getKind() == VALUE && e2.getKind() == VALUE)
     // { return new BasicExpression("false"); } 
                    
@@ -1579,7 +1662,7 @@ abstract class Expression
   private static Expression simplifyNeq(final Expression e1,
                                         final Expression e2)
   { if (e1.equals(e2))
-    { return new BasicExpression("false"); }
+    { return new BasicExpression(false); }
     // else if (e1.getKind() == VALUE && e2.getKind() == VALUE)
     // { return new BasicExpression("true"); } 
 
@@ -1651,7 +1734,7 @@ abstract class Expression
   { if (re instanceof SetExpression)
     { SetExpression rse = (SetExpression) re;
       if (rse.isEmpty()) 
-      { return new BasicExpression("false"); }
+      { return new BasicExpression(false); }
       if (rse.isSingleton())
       { Expression relem = rse.getElement(0);
         return simplify("=",le,relem,vars);
@@ -1665,7 +1748,7 @@ abstract class Expression
   { if (re instanceof SetExpression)
     { SetExpression rse = (SetExpression) re;
       if (rse.isEmpty()) 
-      { return new BasicExpression("false"); }
+      { return new BasicExpression(false); }
       if (rse.isSingleton())
       { Expression relem = rse.getElement(0);
         return simplify("=",le,relem,false);
@@ -1681,11 +1764,11 @@ abstract class Expression
     String rval = right.toString(); 
     if (op.equals("<") || op.equals(">"))
     { if (lval.equals(rval)) 
-      { return new BasicExpression("false"); } 
+      { return new BasicExpression(false); } 
     }
     else if (op.equals("<=") || op.equals(">=") || op.equals("<:"))
     { if (lval.equals(rval))
-      { return new BasicExpression("true"); } 
+      { return new BasicExpression(true); } 
     } 
     try 
     { int x = Integer.parseInt(lval); 

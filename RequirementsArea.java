@@ -7,7 +7,7 @@
       * 
 */
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -478,10 +478,39 @@ class RequirementsArea extends JPanel
   }  // Not actually used. 
 
 
+  public void saveModelDataToFile(String f) 
+  { File file = new File("output/requirementsmodel.txt");
+    Vector saved = new Vector(); 
+
+    try
+    { PrintWriter out =
+          new PrintWriter(
+            new BufferedWriter(new FileWriter(file)));
+      for (int i = 0; i < visuals.size(); i++) 
+      { VisualData vd = (VisualData) visuals.get(i); 
+        if (vd instanceof RectData) 
+        { RectData rd = (RectData) vd; 
+          Requirement req = (Requirement) rd.modelElement; 
+          req.saveModelData(out); 
+        } 
+        else if (vd instanceof ReqLineData)
+        { ReqLineData rld = (ReqLineData) vd; 
+          // out.println("SubgoalRelation:");
+		  RectData rstart = findRectDataAt(rld.xstart,rld.ystart); 
+		  RectData rend = findRectDataAt(rld.xend,rld.yend);
+		  if (rstart != null && rend != null && rstart.modelElement != null && rend.modelElement != null)  
+          { out.println(rstart.modelElement.getName() + " : " + rend.modelElement.getName() + ".subgoals"); 
+            out.println(); 
+		  } 
+        } 
+      } 
+      out.close(); 
+    } catch (Exception e) { } 
+  } 
+
   public void saveDataToFile(String f) 
   { File file = new File("output/requirements.txt");
     Vector saved = new Vector(); 
-
     try
     { PrintWriter out =
           new PrintWriter(
@@ -511,6 +540,17 @@ class RequirementsArea extends JPanel
     } catch (Exception e) { } 
   } 
  
+  public RectData findRectDataAt(int xx, int yy) 
+  { for (int i = 0; i < visuals.size(); i++) 
+    { VisualData vd = (VisualData) visuals.get(i); 
+      if (vd instanceof RectData) 
+      { RectData rd = (RectData) vd; 
+        if (rd.isUnder(xx,yy))
+		{ return rd; }
+	  } 
+	} 
+	return null;
+  } 
 
   public void loadDataFromFile(String f) 
   { BufferedReader br = null;
@@ -709,7 +749,7 @@ class RequirementsArea extends JPanel
 
     for (int i = 0; i < requirements.size(); i++) 
     { Requirement rq = (Requirement) requirements.get(i); 
-      if (rq.isGlobal() && rq.hasScenarios())
+      if (rq.isGlobal())
       { UseCase uc = rq.generateUseCase(types,entities); 
         System.out.println("Created use case: " + uc.getName()); 
         System.out.println(uc.display()); 

@@ -4,7 +4,7 @@ import java.util.StringTokenizer;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -265,6 +265,8 @@ public abstract class ModelElement implements SystemTypes
     else if ("Boolean".equals(val)) { sval = "boolean"; } 
     else if ("SequenceType".equals(val)) { sval = "Sequence"; } 
     else if ("SetType".equals(val)) { sval = "Set"; } 
+    else if ("MapType".equals(val)) { sval = "Map"; } 
+    else if ("FunctionType".equals(val)) { sval = "Function"; } 
 
     Type typ = new Type(sval, null);
     return typ; 
@@ -313,6 +315,34 @@ public abstract class ModelElement implements SystemTypes
     { ModelElement me = (ModelElement) mes.get(i); 
       if (me.getName().equalsIgnoreCase(nme))
       { return me; } 
+    } 
+    return null; 
+  } 
+
+  public static ModelElement findElementByNameIgnoreCase(String nme, Vector mes)
+  { // Either a class or feature by name
+    for (int i = 0; i < mes.size(); i++) 
+    { ModelElement me = (ModelElement) mes.get(i); 
+      if (me.getName().equalsIgnoreCase(nme))
+      { return me; }
+      if (me instanceof Entity)
+      { Attribute mf = ((Entity) me).getDefinedProperty(nme); 
+        if (mf != null) 
+        { return mf; } 
+      }  
+    } 
+    return null; 
+  } 
+
+  public static Entity featureBelongsTo(String nme, Vector mes)
+  { 
+    for (int i = 0; i < mes.size(); i++) 
+    { ModelElement me = (ModelElement) mes.get(i); 
+      if (me instanceof Entity)
+      { Attribute mf = ((Entity) me).getDefinedPropertyIgnoreCase(nme); 
+        if (mf != null) 
+        { return (Entity) me; } 
+      }  
     } 
     return null; 
   } 
@@ -579,6 +609,30 @@ public abstract class ModelElement implements SystemTypes
     return ""; 
   } 
 
+  public static String longestCommonSuffix(String s, String t, int k)
+  { int n = s.length(); 
+    int m = t.length(); 
+    if (s.endsWith(t)) { return t; } 
+    if (t.endsWith(s)) { return s; } 
+    if (n < m) 
+    { for (int i = 1; i < n-k; i++) 
+      { String sub = s.substring(i,n); 
+        // System.out.println(sub); 
+        if (t.endsWith(sub))
+        { return sub; } 
+      } 
+    } 
+    else 
+    { for (int i = 1; i < m-k; i++) 
+      { String sub = t.substring(i,m); 
+        // System.out.println(sub); 
+        if (s.endsWith(sub))
+        { return sub; } 
+      } 
+    } 
+    return ""; 
+  } 
+
   public static boolean haveCommonPrefix(String s, String t)
   { int n = s.length(); 
     int m = t.length(); 
@@ -604,12 +658,17 @@ public abstract class ModelElement implements SystemTypes
   } 
 
   public static String longestCommonPrefix(String s, String t)
-  { int n = s.length(); 
+  { return longestCommonPrefix(s, t, 1); } 
+
+  public static String longestCommonPrefix(String s, String t, int k)
+  { // Look for prefixes of length k+1 or more
+
+    int n = s.length(); 
     int m = t.length(); 
     if (s.startsWith(t)) { return t; } 
     if (t.startsWith(s)) { return s; } 
     if (n < m) 
-    { for (int i = n-1; i > 1; i--) 
+    { for (int i = n-1; i > k; i--) 
       { String sub = s.substring(0,i); 
         // System.out.println(sub); 
         if (t.startsWith(sub))
@@ -617,7 +676,7 @@ public abstract class ModelElement implements SystemTypes
       } 
     } 
     else 
-    { for (int i = m-1; i > 1; i--) 
+    { for (int i = m-1; i > k; i--) 
       { String sub = t.substring(0,i); 
         // System.out.println(sub); 
         if (s.startsWith(sub))
@@ -722,8 +781,8 @@ public static Vector splitIntoWords(String str)
   } // also NMS
 
   public static void main(String[] args) 
-  { System.out.println(longestCommonSuffix("DataType", "CType")); 
-    System.out.println(longestCommonSuffix("PTArc", "TPArc"));
+  { System.out.println(longestCommonPrefix("DType", "Data", 0)); 
+    System.out.println(longestCommonSuffix("PTArc", "TPARc",0));
 
     System.out.println(splitIntoWords("memberOf.father")); 
      

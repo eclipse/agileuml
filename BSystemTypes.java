@@ -2,7 +2,7 @@ import java.util.Vector;
 import java.util.List; 
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -162,8 +162,13 @@ public class BSystemTypes extends BComponent
       else 
       { res = res + "    { " + tname + " " + var + " = (" + tname + ") _l.get(_i);\n"; }   
 
+      System.out.println(">>> Evaluating " + pred + " in environment " + newenv); 
+	  
       String test = pred.queryForm(newenv,false); 
-      String wvar = Expression.wrap(e,var); 
+      
+	  System.out.println(">>> Result =  " + test); 
+	  
+	  String wvar = Expression.wrap(e,var); 
       res = res + "      if (" + test + ")\n" + 
                   "      { _results_" + oldindex + ".add(" + wvar + "); }\n"; 
       res = res + "    }\n"; 

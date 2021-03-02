@@ -4,7 +4,7 @@ import javax.swing.JOptionPane;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -228,7 +228,9 @@ class BasicExpression extends Expression
   } 
 
   BasicExpression(Type t)
-  { data = t.getName(); 
+  { // if (t == null) 
+    
+    data = t.getName(); 
     if ("Set".equals(data) || "Sequence".equals(data))
     { Type tp = t.getElementType(); 
       if (tp != null && tp.isEntity())
@@ -256,14 +258,19 @@ class BasicExpression extends Expression
   } 
 
   BasicExpression(ObjectSpecification obj) 
-  { data = obj.getName(); 
-    if (obj.entity != null) 
+  { if (obj == null) 
+    { data = "null"; } 
+    else 
+    { data = obj.getName(); }
+
+    if (obj != null && obj.entity != null) 
     { type = new Type(obj.getEntity());
       elementType = type; 
     } 
-    multiplicity = ModelElement.MANY; 
+    // multiplicity = ModelElement.MANY; 
     umlkind = VALUE; 
   } 
+
 
   public Expression getObjectRef() 
   { return objectRef; } 
@@ -3647,8 +3654,17 @@ class BasicExpression extends Expression
     { if (data.equals("self"))  // but return "self" if it is a genuine variable
       { if (env.containsValue("self"))
         { return data; } 
+        else if (type != null && type.isEntity())
+		{ // System.out.println("^^^^^^^^ Type of self = " + type); 
+		  String tname = type.getName(); 
+		  Object obj = env.get(tname); 
+		  if (obj != null) 
+		  { return obj + ""; }
+		  else 
+		  { return "this"; }
+		}
         else 
-        { return "this"; }
+		{ return "this"; }
       } 
       else if (data.equals("now")) 
 	  { return "Set.getTime()"; } 

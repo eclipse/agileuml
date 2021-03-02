@@ -1,7 +1,7 @@
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -11,7 +11,8 @@ import java.util.Vector;
 /* Package: MT synthesis */ 
 
 public class RequirementsPhrase
-{ 
+{ public static double threshold = 0.5; 
+ 
   static String[] classMappingVerbs = {"created", "creates", "creating", "create", 
                                        "generated", "generates", "generate", "generating", 
 									   "engendered", "engender", "engenders", "transformed", "transforms", "transform", 
@@ -265,7 +266,7 @@ public class RequirementsPhrase
   { if (ModelElement.hasInitialCapital(cwd))
     { Entity trg = (Entity) ModelElement.lookupByName(cwd,entities); 
       if (trg == null)
-      { trg = (Entity) ModelElement.lookupByNameNMS(cwd,entities,0.5); }
+      { trg = (Entity) ModelElement.lookupByNameNMS(cwd,entities,threshold); }
       if (trg == null) 
 	  { return false; }
 	  return true;
@@ -276,7 +277,7 @@ public class RequirementsPhrase
   public static boolean isSourceClassName(String cwd, Vector entities)
   { Entity src = (Entity) ModelElement.lookupByName(cwd,entities); 
     if (src == null)
-    { src = (Entity) ModelElement.lookupByNameNMS(cwd,entities,0.5); }
+    { src = (Entity) ModelElement.lookupByNameNMS(cwd,entities,threshold); }
     if (src == null) 
 	{ return false; }
 	return src.isSource();   
@@ -285,7 +286,7 @@ public class RequirementsPhrase
   public static boolean isTargetClassName(String cwd, Vector entities)
   { Entity src = (Entity) ModelElement.lookupByName(cwd,entities); 
     if (src == null)
-    { src = (Entity) ModelElement.lookupByNameNMS(cwd,entities,0.5); }
+    { src = (Entity) ModelElement.lookupByNameNMS(cwd,entities,threshold); }
     if (src == null) 
 	{ return false; }
 	return src.isTarget();   
@@ -294,7 +295,7 @@ public class RequirementsPhrase
   public static boolean isFeatureName(String cwd, Vector features)
   { Attribute trg = (Attribute) ModelElement.lookupByName(cwd, features); 
     if (trg == null)
-    { trg = (Attribute) ModelElement.lookupByNameNMS(cwd, features, 0.5); }
+    { trg = (Attribute) ModelElement.lookupByNameNMS(cwd, features, threshold); }
     if (trg == null) 
 	{ return false; }
 	return true; 
@@ -304,7 +305,7 @@ public class RequirementsPhrase
   { if (ModelElement.hasInitialCapital(cwd))
     { Entity trg = (Entity) ModelElement.lookupByName(cwd,entities); 
       if (trg == null)
-      { trg = (Entity) ModelElement.lookupByNameNMS(cwd,entities,0.5); }
+      { trg = (Entity) ModelElement.lookupByNameNMS(cwd,entities,threshold); }
       return trg;
 	} 
 	return null;  
@@ -313,7 +314,7 @@ public class RequirementsPhrase
   public static Entity getAnyClass(String cwd, Vector entities)
   { Entity src = (Entity) ModelElement.lookupByName(cwd,entities); 
     if (src == null)
-    { src = (Entity) ModelElement.lookupByNameNMS(cwd,entities,0.5); 
+    { src = (Entity) ModelElement.lookupByNameNMS(cwd,entities,threshold); 
       return src;
 	} 
 	return src; 
@@ -565,7 +566,7 @@ public class RequirementsPhrase
 		{ Entity ent = (Entity) ModelElement.lookupByNameIgnoreCase(check,entities);
 	  
 	      if (ent == null)
-	      { ent = (Entity) ModelElement.lookupByNameNMS(check,entities,0.5); }
+	      { ent = (Entity) ModelElement.lookupByNameNMS(check,entities,threshold); }
 	  
           if (ent != null)
 	      { if (ent.isSource())

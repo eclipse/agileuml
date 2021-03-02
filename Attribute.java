@@ -3,7 +3,7 @@ import java.util.Vector;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -150,6 +150,36 @@ public class Attribute extends ModelElement
   } // and set the entity and name. Set it as aggregation if all 
     // path elements are aggregations. Likewise for unique. 
 
+  public boolean isMany()
+  { return upper == 0; }
+  
+  public static Vector reduceToInitialPaths(Vector atts)
+  { // Remove r.f if r is already in atts
+    Vector res = new Vector(); 
+    for (int i = 0; i < atts.size(); i++) 
+    { Attribute att = (Attribute) atts.get(i); 
+      if (containsInitialSegment(atts,att)) { }
+      else 
+      { res.add(att); } 
+    } 
+    return res; 
+  } 
+
+  private static boolean containsInitialSegment(Vector atts, Attribute att)
+  { boolean res = false;
+    Vector navatt = att.navigation;  
+    for (int i = 0; i < atts.size(); i++) 
+    { Attribute attx = (Attribute) atts.get(i); 
+      if (attx == att) { } 
+      else 
+      { Vector navx = attx.navigation; 
+        if (navx.size() > 0 && navx.size() < navatt.size() && navatt.containsAll(navx))
+        { return true; } 
+      }
+    } 
+    return res; 
+  } 
+
   public boolean isNumeric()
   { return type != null && type.isNumericType(); } 
 
@@ -162,6 +192,11 @@ public class Attribute extends ModelElement
   public boolean isEntityCollection()
   { return type != null && type.isCollectionType() && 
            elementType != null && elementType.isEntity(); 
+  } 
+
+  public boolean isNumericCollection()
+  { return type != null && type.isCollectionType() && 
+           elementType != null && elementType.isNumeric(); 
   } 
 
   public boolean isSet()
@@ -886,6 +921,13 @@ public class Attribute extends ModelElement
 
   public boolean isIdentity()
   { return unique; } 
+
+  public boolean endsWithIdentity()
+  { if (navigation.size() == 0) 
+    { return unique; }
+    Attribute attf = (Attribute) navigation.get(navigation.size()-1); 
+    return attf.isIdentity(); 
+  }  
 
   public boolean isIdentityFeature()
   { return card1 == ModelElement.ZEROONE; } 

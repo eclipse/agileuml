@@ -5,7 +5,7 @@ import java.io.*;
 import javax.swing.*;
 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -177,6 +177,7 @@ public class Entity extends ModelElement implements Comparable
   public Vector getDiscriminatorAttributes()
   { Vector res = getLocalBooleanFeatures(); 
     res.addAll(getLocalEnumerationFeatures());
+    res.addAll(getLocalAbstractReferenceFeatures()); 
     return res; 
   }  
 
@@ -198,6 +199,29 @@ public class Entity extends ModelElement implements Comparable
     { Attribute att = (Attribute) localFeatures.get(i); 
       Type t = att.getType(); 
       if (t != null && t.isEnumeration())
+      { res.add(att); } 
+    } 
+
+    return res; 
+  } 
+
+  public Vector getLocalAbstractReferenceFeatures()
+  { Vector res = new Vector(); 
+
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      Type t = att.getType(); 
+      if (t != null && t.isAbstractEntity())
+      { res.add(att); } 
+    } 
+
+    if (res.size() > 0) 
+    { return res; } 
+
+    for (int i = 0; i < localFeatures.size(); i++) 
+    { Attribute att = (Attribute) localFeatures.get(i); 
+      Type t = att.getType(); 
+      if (t != null && t.isAbstractEntity())
       { res.add(att); } 
     } 
 
@@ -598,6 +622,20 @@ public class Entity extends ModelElement implements Comparable
     att.setEntity(this); 
     attributes.add(0,att); 
   } 
+  
+  public String primaryKeySettings(String ex, String expr)
+  { String res = ""; 
+    Attribute pk = getPrincipalPrimaryKey(); 
+    if (pk != null)
+	{ String pkname = pk.getName(); 
+	  res = ex + "." + pkname + " = " + expr + " & ";
+    }
+	
+	if (superclass != null) 
+	{ res = res + superclass.primaryKeySettings(ex, expr); }
+	
+	return res; 
+  }
  
   public void addAttribute(Attribute att)
   { if (att == null || attributes.contains(att)) { return; } 
@@ -3596,7 +3634,7 @@ public class Entity extends ModelElement implements Comparable
     } 
   } 
       
-  public void displayMeasures(PrintWriter out, java.util.Map clones)
+  public int displayMeasures(PrintWriter out, java.util.Map clones)
   { out.println("*** Class " + getName()); 
 
     int highcount = 0; 
@@ -3635,6 +3673,10 @@ public class Entity extends ModelElement implements Comparable
     out.println("*** " + lowcount + " other operations of " + getName() + " are > 50 complexity"); 
 
     out.println("*** Total complexity of " + getName() + " is: " + totalComplexity); 
+    if (totalComplexity > 1000)
+    { System.err.println("!! Excessively large class: " + getName() + " has c=" + totalComplexity); } 
+
+    return totalComplexity; 
   } 
 
   public int excessiveOperationsSize()
@@ -3768,6 +3810,9 @@ public class Entity extends ModelElement implements Comparable
 
   public boolean hasAttribute(String att)
   { return ModelElement.lookupByName(att,attributes) != null; } 
+
+  public boolean hasAttributeIgnoreCase(String att)
+  { return ModelElement.lookupByNameIgnoreCase(att,attributes) != null; } 
 
   public boolean hasInheritedAttribute(String att)
   { boolean res = false; 
@@ -3935,10 +3980,29 @@ public class Entity extends ModelElement implements Comparable
     return null;
   }
 
+  public Association getRoleIgnoreCase(String rle)
+  { if (rle == null)
+    { return null; }
+    for (int i = 0; i < associations.size(); i++)
+    { Association ast = (Association) associations.get(i);
+      String role2 = ast.getRole2();
+      if (rle.equalsIgnoreCase(role2))
+      { return ast; }
+    }
+    return null;
+  }
+
   public Association getDefinedRole(String rle)
   { Association res = getRole(rle); 
     if (res == null && superclass != null)
     { res = superclass.getDefinedRole(rle); }
+    return res; 
+  } 
+
+  public Association getDefinedRoleIgnoreCase(String rle)
+  { Association res = getRoleIgnoreCase(rle); 
+    if (res == null && superclass != null)
+    { res = superclass.getDefinedRoleIgnoreCase(rle); }
     return res; 
   } 
 
@@ -3952,6 +4016,15 @@ public class Entity extends ModelElement implements Comparable
     return null; 
   } 
 
+  public Attribute getDefinedPropertyIgnoreCase(String nme)
+  { Attribute att = getDefinedAttributeIgnoreCase(nme); 
+    if (att != null) 
+    { return att; } 
+    Association ast = getDefinedRoleIgnoreCase(nme); 
+    if (ast != null) 
+    { return new Attribute(ast); } 
+    return null; 
+  } 
 
   public Type getDefinedFeatureType(String f) 
   { Attribute att = getDefinedAttribute(f); 
@@ -4067,10 +4140,20 @@ public class Entity extends ModelElement implements Comparable
   public Attribute getAttribute(String nme) 
   { return (Attribute) ModelElement.lookupByName(nme,attributes); } 
 
+  public Attribute getAttributeIgnoreCase(String nme) 
+  { return (Attribute) ModelElement.lookupByNameIgnoreCase(nme,attributes); } 
+
   public Attribute getDefinedAttribute(String nme) 
   { Attribute res = getAttribute(nme); 
     if (res == null && superclass != null)
     { res = superclass.getDefinedAttribute(nme); }
+    return res; 
+  }  
+
+  public Attribute getDefinedAttributeIgnoreCase(String nme) 
+  { Attribute res = getAttributeIgnoreCase(nme); 
+    if (res == null && superclass != null)
+    { res = superclass.getDefinedAttributeIgnoreCase(nme); }
     return res; 
   }  
 
@@ -7361,11 +7444,14 @@ public class Entity extends ModelElement implements Comparable
     { BehaviouralFeature op = (BehaviouralFeature) operations.get(i);
       String opname = op.getName(); 
       String opid = op.saveModelData(out, this, entities, types);
-      out.println(opid + " : " + nme + ".ownedOperation");
-      for (int j = 0; j < subs.size(); j++) 
-      { Entity esub = (Entity) subs.get(j); 
-        // if (esub.hasConcreteOperation(opname)) 
-        { out.println(esub.getName() + " : " + opid + ".definers"); } 
+      if (opid != null && opid.length() > 0) 
+      { out.println(opid + " : " + nme + ".ownedOperation");   
+      
+        for (int j = 0; j < subs.size(); j++) 
+        { Entity esub = (Entity) subs.get(j); 
+          // if (esub.hasConcreteOperation(opname)) 
+          { out.println(esub.getName() + " : " + opid + ".definers"); }
+        }  
       } 
     }
 
@@ -7855,6 +7941,17 @@ public class Entity extends ModelElement implements Comparable
     return isAncestor(b,a); 
   }
 
+  public static boolean isDescendantOrEqualTo(Entity e, String ename)
+  { if (e.getName().equals(ename))
+    { return true; } 
+
+    Entity s = e.getSuperclass(); 
+    if (s == null) 
+    { return false; } 
+
+    return isDescendantOrEqualTo(s,ename); 
+  } 
+
   public static boolean inheritanceRelated(Entity a, Entity b)
   { if (a == null) 
     { return false; } 
@@ -7876,6 +7973,10 @@ public class Entity extends ModelElement implements Comparable
     { return e1; }
     if (isAncestor(e2,e1))
     { return e2; }
+
+    if (e1 == null) 
+    { return null; } 
+
     Entity es1 = e1.getSuperclass();
     while (es1 != null)
     { if (isAncestor(es1,e2))
@@ -14119,7 +14220,7 @@ public BehaviouralFeature designAbstractKillOp()
     for (int i = 0; i < res.size(); i++) 
     { String model = (String) res.get(i); 
       String yi = y + i; 
-      String mod1 = model.replace(x,yi); 
+      String mod1 = model.replace(x,yi);  // replaceAll(x,yi);  
       // System.out.println(">---->> Replaced model= " + mod1);
       newres.add(mod1);  
     } 
@@ -14140,7 +14241,7 @@ public BehaviouralFeature designAbstractKillOp()
         for (int j = 0; j < newres.size(); j++) 
         { String model = (String) newres.get(j); 
           String yj = y + j; 
-          String mod1 = model.replace(x,yj); 
+          String mod1 = model.replace(x,yj); // replaceAll(x,yj);  
          // System.out.println(">>>>>>>> Replaced model= " + mod1);
            
           int rand = j; // (int) (nmodels*Math.random());
@@ -14936,7 +15037,18 @@ public BehaviouralFeature designAbstractKillOp()
     out.println("  }"); 
     out.println("}"); 
   }  
-	
+
+  public String qvtrKeyDeclarations()
+  { String res = "";
+    String ename = getName(); 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      if (att.isUnique())
+      { res = res + "  key " + ename + "{ " + att.getName() + " };\n"; } 
+    } 
+    return res; 
+  } 
+
 	
   public static void main(String[] args)
   { int rand = (int) (1000*Math.random()); 

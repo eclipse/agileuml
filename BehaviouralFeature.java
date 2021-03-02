@@ -7,7 +7,7 @@ import java.util.HashSet;
 
 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -1630,6 +1630,7 @@ public class BehaviouralFeature extends ModelElement
     return res;  
   } 
 
+  /* Save text model */ 
   public String saveModelData(PrintWriter out, Entity ent, Vector entities, Vector types)
   { if (stereotypes.contains("auxiliary"))
     { return ""; } // but derived ops are usually recorded. 
@@ -1678,7 +1679,8 @@ public class BehaviouralFeature extends ModelElement
     { String rtname = resultType.getName();
       String typeid = resultType.getUMLModelName(out); 
       out.println(opid + ".type = " + typeid);  
-      if (rtname.equals("Set") || rtname.equals("Sequence"))
+      if (rtname.equals("Set") || rtname.equals("Sequence") ||
+          rtname.equals("Map") || rtname.equals("Function") )
       { if (elementType == null) 
         { System.err.println("Error: No element type for " + this); 
           out.println(opid + ".elementType = void"); 
@@ -4642,7 +4644,9 @@ public class BehaviouralFeature extends ModelElement
       if ("true".equals("" + pre)) { } 
       else 
       { Expression npre = pre.computeNegation4succ(); 
-        preheader = "  //  if (" + npre.queryFormJava6(env0,true) + 
+	    Expression npre1 = npre.removePrestate();  
+        
+        preheader = "  //  if (" + npre1.queryFormJava6(env0,true) + 
                     ")) { return" + returning + "; } \n  "; 
       }
     } 
@@ -4758,8 +4762,10 @@ public class BehaviouralFeature extends ModelElement
     { pre.typeCheck(types,entities,context,atts); 
       if ("true".equals("" + pre)) { } 
       else 
-      { Expression npre = pre.computeNegation4succ(); 
-        preheader = "  //  if (" + npre.queryFormJava7(env0,true) + 
+      { Expression npre = pre.computeNegation4succ();
+	    Expression npre1 = npre.removePrestate();  
+         
+        preheader = "  //  if (" + npre1.queryFormJava7(env0,true) + 
                     ")) { return" + returning + "; } \n  "; 
       }
     } 
@@ -4876,8 +4882,10 @@ public class BehaviouralFeature extends ModelElement
     { pre.typeCheck(types,entities,context,atts); 
       if ("true".equals("" + pre)) { } 
       else 
-      { Expression npre = pre.computeNegation4succ(); 
-        preheader = "  //  if (" + npre.queryFormCSharp(env0,true) + 
+      { Expression npre = pre.computeNegation4succ();
+	    Expression npre1 = npre.removePrestate();  
+         
+        preheader = "  //  if (" + npre1.queryFormCSharp(env0,true) + 
                     ")) { return" + returning + "; } \n  "; 
       }
     } 
@@ -5000,8 +5008,10 @@ public class BehaviouralFeature extends ModelElement
     { pre.typeCheck(types,entities,context,atts); 
       if ("true".equals("" + pre)) { } 
       else 
-      { Expression npre = pre.computeNegation4succ(); 
-        preheader = "  //  if (" + npre.queryFormCPP(env0,true) + 
+      { Expression npre = pre.computeNegation4succ();
+	    Expression npre1 = npre.removePrestate();  
+         
+        preheader = "  //  if (" + npre1.queryFormCPP(env0,true) + 
                     ")) { return" + returning + "; } \n  "; 
       }
     } 

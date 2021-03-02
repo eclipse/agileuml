@@ -2,7 +2,7 @@ import java.util.*;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -42,22 +42,26 @@ public class ObjectSpecification extends ModelElement
   public void setValue(String att, Object val) 
   { if (val instanceof String)
     { attvalues.put(att,val); }
-	else if (val instanceof ObjectSpecification)
-	{ String nme = ((ObjectSpecification) val).getName(); 
-	  attvalues.put(att,nme); 
-	}
-	else if (val instanceof Vector)
-	{ Vector vect = (Vector) val; 
-	  Vector actualval = new Vector(); 
-	  for (int i = 0; i < vect.size(); i++)
-	  { Object obj = vect.get(i); 
-	    if (obj instanceof String)
-		{ actualval.add(obj); }
-		else if (obj instanceof ObjectSpecification)
-		{ actualval.add(((ObjectSpecification) obj).getName()); }
+    else if (val instanceof ObjectSpecification)
+    { String nme = ((ObjectSpecification) val).getName(); 
+      attvalues.put(att,nme); 
+    }
+    else if (val instanceof Vector)
+    { Vector vect = (Vector) val; 
+      Vector actualval = new Vector(); 
+      for (int i = 0; i < vect.size(); i++)
+      { Object obj = vect.get(i); 
+        if (obj instanceof String)
+        { actualval.add(obj); }
+        else if (obj instanceof ObjectSpecification)
+        { actualval.add(((ObjectSpecification) obj).getName()); }
       } 
-	}
+      attvalues.put(att,actualval); 
+    }
   } 
+
+  public Object getRawValue(String att) 
+  { return attvalues.get(att); } 
 
   public String toString()
   { String res = getName() + " : " + objectClass; 
@@ -247,6 +251,17 @@ public class ObjectSpecification extends ModelElement
     } 
   }  
 
+  public static Vector getStringValues(Attribute att, Vector objects, ModelSpecification mod)
+  { Vector res = new Vector(); 
+    for (int i = 0; i < objects.size(); i++) 
+    { ObjectSpecification obj = (ObjectSpecification) objects.get(i); 
+      String attvalue = obj.getStringValue(att,mod); 
+      if (attvalue != null) 
+      { res.add(attvalue); } 
+    } 
+    return res; 
+  } 
+
   public String getEnumerationValue(Attribute att, ModelSpecification mod) 
   { String res = ""; 
     String attname = att.getName(); 
@@ -266,7 +281,10 @@ public class ObjectSpecification extends ModelElement
   }  
 
   public ObjectSpecification[] getCollectionAsObjectArray(Attribute att, ModelSpecification mod)
-  { Vector res = getCollectionValue(att,mod); 
+  { Vector res = getCollectionValue(att,mod);
+
+    System.out.println("+++---> Value of " + att + " on " + this + " = " + res); 
+ 
     if (res == null) 
     { return null; } 
     ObjectSpecification[] objs = new ObjectSpecification[res.size()]; 
@@ -516,6 +534,17 @@ public class ObjectSpecification extends ModelElement
     // return expr + ""; 
   } 
 
+  public static Vector getAllValuesOf(Attribute attr, Vector objs, ModelSpecification mod)
+  { Vector res = new Vector(); 
+    for (int i = 0; i < objs.size(); i++) 
+    { ObjectSpecification obj = (ObjectSpecification) objs.get(i); 
+      Object x = obj.getValueOf(attr,mod); 
+      if (x != null) 
+      { res.add(x); } 
+    } 
+    return res; 
+  } 
+
   // Assuming a singular value for attr: 
   public Object getValueOf(Attribute attr, ModelSpecification mod)
   { String attname = attr + ""; 
@@ -541,9 +570,9 @@ public class ObjectSpecification extends ModelElement
         Attribute tail = new Attribute(pathtail); 
         for (int i = 0; i < vect.size(); i++) 
         { ObjectSpecification objx = null; 
-		  if (vect.get(i) instanceof ObjectSpecification)
-		  { objx = (ObjectSpecification) vect.get(i); } 
-		  else if (vect.get(i) instanceof String)
+          if (vect.get(i) instanceof ObjectSpecification)
+          { objx = (ObjectSpecification) vect.get(i); } 
+          else if (vect.get(i) instanceof String)
 		  { String idx = (String) vect.get(i); 
 		    objx = mod.getObject(idx); 
 		  } 
@@ -574,17 +603,17 @@ public class ObjectSpecification extends ModelElement
     else if ("=".equals(condop))
     { String valleft = getValue(cond.getLeft(),mod); 
       String valright = getValue(cond.getRight(),mod);
-      System.out.println("---> Value of " + cond.getLeft() + " is ---> " + valleft); 
-      System.out.println("---> Value of " + cond.getRight() + " is ---> " + valright); 
+      // System.out.println("---> Value of " + cond.getLeft() + " is ---> " + valleft); 
+      // System.out.println("---> Value of " + cond.getRight() + " is ---> " + valright); 
  
-      if (valleft != null && valleft.equals(valright))
+      if (valleft != null && valright != null && valleft.equals(valright))
       { return true; } 
       return false; 
     } 
     else if ("/=".equals(condop))
     { String valleft = getValue(cond.getLeft(),mod); 
       String valright = getValue(cond.getRight(),mod); 
-      if (valleft != null && valleft.equals(valright))
+      if (valleft != null && valright != null && valleft.equals(valright))
       { return false; }
       else if (valleft != null && !valleft.equals(valright))
       { return true; }  
@@ -594,8 +623,36 @@ public class ObjectSpecification extends ModelElement
     { ObjectSpecification obj = getReferredObject(cond.getLeft() + "",mod); 
       if (obj != null && 
           obj.objectClass.equals(cond.getRight() + ""))
-      { return true; } 
+      { return true; }
+	  return false;  
     } 
+    else if ("->oclIsKindOf".equals(condop))
+    { ObjectSpecification obj = getReferredObject(cond.getLeft() + "",mod); 
+      if (obj != null && entity != null && 
+          Entity.isDescendantOrEqualTo(entity, cond.getRight() + ""))
+      { return true; }
+	  return false;  
+    } 
+	else if ("->hasPrefix".equals(condop))
+	{ String vleft = getValue(cond.getLeft(),mod); 
+	  String vright = getValue(cond.getRight(),mod);
+	  // System.out.println(">>> left = " + vleft + ", right = " + vright + " left->hasPrefix(right) = " + vleft.startsWith(vright));  
+	  if (vleft != null && vright != null)
+	  { if (vright.length() > 0 && vleft.startsWith(vright.substring(0,vright.length()-1)))
+        { return true; }
+	  } 
+	  return false; 
+	} 
+	else if ("->hasSuffix".equals(condop))
+	{ String vleft = getValue(cond.getLeft(),mod); 
+	  String vright = getValue(cond.getRight(),mod); 
+	  // System.out.println(">>> left = " + vleft + ", right = " + vright + " left->hasSuffix(right) = " + vleft.endsWith(vright));  
+	  if (vleft != null && vright != null)
+	  { if (vright.length() > 0 && vleft.endsWith(vright.substring(1,vright.length())))
+        { return true; }
+	  } 
+	  return false; 
+	} 
     return false; 
   }  
 
@@ -613,14 +670,15 @@ public class ObjectSpecification extends ModelElement
     { return !satisfiesCondition(arg, mod); }
     else if ("->isEmpty".equals(op + ""))
     { String val = getValue(arg,mod); 
-      System.out.println("***>> Value of " + arg + " is " + val); 
+      // System.out.println("***>> Value of " + arg + " is " + val); 
       if (val != null && val.endsWith("{}")) 
-      { return true; } 
+      { return true; }
+	  // else if (val == null) { return true; }  
       return false; 
     }
     else if ("->notEmpty".equals(op + ""))
     { String val = getValue(arg,mod); 
-      System.out.println("***>> Value of " + arg + " is " + val); 
+      // System.out.println("***>> Value of " + arg + " is " + val); 
       if (val != null && val.endsWith("{}")) 
       { return false; } 
       else if (val != null) 

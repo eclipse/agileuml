@@ -3,7 +3,7 @@ import java.util.Vector;
 
 /* Package: Requirements */ 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -52,4 +52,15 @@ public class Scenario extends ModelElement
            semiformalDescription + "\n" + 
            formalDescription + "\n"; 
   }  
+
+  public void saveModelData(PrintWriter out, String nme) 
+  { String id = getName(); 
+    out.println(id + " : Scenario"); 
+    out.println(id + " : " + nme + ".scenarios"); 
+
+    if (formalDescription != null) 
+    { String preid = formalDescription.saveModelData(out);
+      out.println(preid + " : " + nme + ".formalDescription");  
+    }  
+  } 
 } 

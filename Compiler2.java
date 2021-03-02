@@ -6,7 +6,7 @@ import javax.swing.JTextArea;
 import java.awt.*; 
 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -549,7 +549,11 @@ public class Compiler2
   private static boolean isXMLBasicExpCharacter(char c)
   { return (Character.isLetterOrDigit(c) || c == '.' || c == '$' || c == '@' || c == ':'); } 
         
-
+  private static boolean isSymbolCharacterText(char c)
+  { return (c == '(' || c == ')' || c == '{' || c == '}' || c == '[' ||
+            c == ']'); 
+  } 
+  
   public void nospacelexicalanalysis(String str) 
   { int in = INUNKNOWN; 
     char previous = ' '; 
@@ -806,6 +810,42 @@ public class Compiler2
       }    
       previous = c; 
     }
+  }
+
+  /* For text from NLP: */ 
+  
+  public void nospacelexicalanalysisText(String str) 
+  { int in = INUNKNOWN; 
+    char previous = ' '; 
+
+    int explen = str.length(); 
+    lexicals = new Vector(explen);  /* Sequence of lexicals */ 
+    StringBuffer sb = null;    /* Holds current lexical item */ 
+
+    char prev = ' '; 
+
+    for (int i = 0; i < explen; i++)
+    { char c = str.charAt(i); 
+	
+      if (isSymbolCharacterText(c))
+      { sb = new StringBuffer();     // start new buffer for the symbol
+        lexicals.addElement(sb);  
+        sb.append(c); 
+		sb = null; 
+      }        
+	  else if (c == ' ' || c == '\n' || c == '\t' || c == '\r') 
+      { sb = null; } 
+      else // if (isBasicExpCharacter(c))
+      { if (sb != null) 
+	    { sb.append(c); } 
+		else 
+		{ sb = new StringBuffer();     // start new buffer for the text
+		  lexicals.add(sb); 
+          sb.append(c); 
+        }           
+      } 
+    }
+
   }
 
   private static boolean validFollowingCharacter(char c1, char c2)
@@ -1822,7 +1862,8 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     // { System.err.println("Invalid expression: " + showLexicals(pos + 1, pend)); }
 
     if (e1 == null || e2 == null)
-    { System.out.println("Failed to parse: " + showLexicals(pstart, pend)); 
+    { 
+      // System.out.println("Failed to parse: " + showLexicals(pstart, pend)); 
       return null; 
     }
     else 
@@ -4247,18 +4288,34 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 			}
 		  }  
           else if ("stereotype".equals(lxr))
-	      { Expression expr = parse_expression(0,reached+1,i-2); 
+	      { String stereo = ""; 
+	        for (int kk = reached+1; kk <= i-2; kk++)
+	        { // System.out.println(lexicals.get(k) + ""); 
+		      String lxstr = lexicals.get(kk) + ""; 
+	          stereo = stereo + lxstr;  
+		    }
+			res.addStereotype(stereo); 
+		  } 
+		    /* Expression expr = parse_expression(0,reached+1,i-2); 
 		    if (expr != null) 
-			{ res.addStereotype(expr + ""); }
-			else 
-			{ System.err.println("!! Invalid stereotype expression: " + showLexicals(reached+1,i-2)); 
-			  checkBrackets(reached+1,i-2); 
-			  Vector error5 = new Vector(); 
-			  error5.add("Invalid stereotype"); 
-			  error5.add(showLexicals(reached+1,i-2)); 
-			  errors.add(error5); 
-			}
-		  }  
+			{ if (expr instanceof BasicExpression) 
+			  { res.addStereotype(expr + ""); }
+			  else if (expr instanceof BinaryExpression)
+			  { BinaryExpression binexpr = (BinaryExpression) expr; 
+			    res.addStereotype(binexpr.left + "" + binexpr.operator + "" + binexpr.right); 
+			  }
+			  else 
+			  { System.err.println("!! Unexpected form of stereotype expression: " + expr); }
+			} */ 
+			// else 
+			// { System.err.println("!! Invalid stereotype expression: " + showLexicals(reached+1,i-2)); 
+			//   checkBrackets(reached+1,i-2); 
+			//   Vector error5 = new Vector(); 
+			//   error5.add("Invalid stereotype"); 
+			//   error5.add(showLexicals(reached+1,i-2)); 
+			//   errors.add(error5); 
+			// }
+		  // }  
           reached = i;   // one element has been parsed, go on to start of next one. 
         } 
         else 
@@ -4343,9 +4400,17 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 		}
 	  }  
       else if ("stereotype".equals(lexicals.get(reached) + ""))
-	  { Expression expr = parse_expression(0,reached+1,en-2); 
+	  { /* Expression expr = parse_expression(0,reached+1,en-2); 
 		if (expr != null) 
-    	{ res.addStereotype(expr + ""); }
+    	{ if (expr instanceof BasicExpression) 
+		  { res.addStereotype(expr + ""); }
+		  else if (expr instanceof BinaryExpression)
+		  { BinaryExpression binexpr = (BinaryExpression) expr; 
+		    res.addStereotype(binexpr.left + "" + binexpr.operator + "" + binexpr.right); 
+		  }
+		  else 
+		  { System.err.println("!! Unexpected form of stereotype expression: " + expr); }
+	    }
 		else 
 		{ System.err.println("!! Invalid stereotype expression: " + showLexicals(reached+1,en-2)); 
 		  checkBrackets(reached+1,en-2); 
@@ -4353,8 +4418,15 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 		  error5.add("Invalid stereotype"); 
 		  error5.add(showLexicals(reached+1,en-2)); 
 		  errors.add(error5); 
+		} */ 
+		String stereo = ""; 
+		for (int kk = reached+1; kk <= en-2; kk++)
+        { // System.out.println(lexicals.get(k) + ""); 
+	      String lxstr = lexicals.get(kk) + ""; 
+          stereo = stereo + lxstr;  
 		}
-	  }  
+		res.addStereotype(stereo); 
+	  }   
     } 
 
     return res; 
@@ -4373,26 +4445,38 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
        { String ext = lexicals.get(j+1) + ""; 
          uc.addExtends(ext);
          j = j + 3;  
-       }  
-       else if ("stereotype".equals(jx))
-       { String stereo = lexicals.get(j+1) + ""; 
-         uc.addStereotype(stereo);
-         j = j + 3;  
-       }  
+      }  
+      else if ("stereotype".equals(jx))
+      { String stereo = lexicals.get(j+1) + ""; 
+        for (int k = j+2; k <= en; k++)
+        { // System.out.println(lexicals.get(k) + ""); 
+		   String lx = lexicals.get(k) + ""; 
+	       if (";".equals(lx))
+	       { uc.addStereotype(stereo);
+		     j = k; 
+		     k = en; // end the loop
+	       }
+		   else 
+		   { stereo = stereo + lx; } 
+		 } 
+         // uc.addStereotype(stereo);
+         // j = j + 3; 
+		 j++;  
+      }  
 	  else if ("parameter".equals(jx))
 	  { String p = lexicals.get(j+1) + ""; 
 	    for (int k = j+2; k <= en; k++)
-	    { System.out.println(lexicals.get(k) + ""); 
+	    { // System.out.println(lexicals.get(k) + ""); 
 		
 	      if (";".equals(lexicals.get(k) + ""))
 	      { Type ptype = parseType(j+3,k-1,entities,types); 
 	        if (ptype != null) 
 	        { uc.addParameter(p,ptype);
-		     j = k; 
-		     k = en; 
+		      j = k; 
+		      k = en; 
 	        }
-		   else 
-		   { System.err.println("!! Invalid parameter type: " + showLexicals(j+3,k-1)); }
+		    else 
+		    { System.err.println("!! Invalid parameter type: " + showLexicals(j+3,k-1)); }
 		  } 
 		} 
 		j++;  
@@ -4462,7 +4546,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       { foundactivity = true;
         endpostconditions = i;
         startactivity = i+2;  
-	 }
+	  }
     }
     
     for (int i = st + 4; i < en && i < endpostconditions; i++) 
@@ -4471,11 +4555,11 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       { String scope = lexicals.get(i-1) + ""; // must be present, can be void
         Entity ent = (Entity) ModelElement.lookupByName(scope, entities); 
 		
-	   if (foundpostconditions == false)
-	   { foundpostconditions = true; 
-	     startpostconditions = i-1; 
-	     parseUseCaseParameters(uc,st+2,i,entities,types); 
-	   }
+	    if (foundpostconditions == false)
+	    { foundpostconditions = true; 
+	      startpostconditions = i-1; 
+	      parseUseCaseParameters(uc,st+2,i,entities,types); 
+	    }
 
         for (int j = i+2; j < en && j < endpostconditions; j++) 
         { if (":".equals(lexicals.get(j) + "") && ":".equals(lexicals.get(j+1) + ""))
@@ -4577,6 +4661,13 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       }
     }
 
+    if (foundpostconditions == false && foundactivity == false)
+    { int actualend = en-1; 
+      if (";".equals(lexicals.get(actualend) + ""))
+      { actualend = en-2; }
+	  parseUseCaseParameters(uc,st+4,actualend,entities,types);
+    } 
+	
     return uc; 
   } 
 
@@ -6490,7 +6581,18 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
   public static boolean isConjunctionWord(String lex)
   { if (lex.endsWith("_IN") || lex.endsWith("_CC"))
     { return true; }
-	return false; 
+    return false; 
+  }
+
+  public Vector parseTaggedText()
+  { int en = lexicals.size();
+    // System.out.println("Lexicals = " + lexicals);  
+    Vector newlexicals = preprocessWords(0,en-1);
+	// System.out.println("New lexicals = " + newlexicals); 
+    lexicals.clear(); 
+    lexicals.addAll(newlexicals);
+    int len = lexicals.size();   
+    return parseTaggedText(0,len-1); 
   }
 
 
@@ -6549,6 +6651,18 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 	} 
 	return newres; 
   }
+
+  public Vector parseTaggedText(int st, int en)
+  { Vector res = new Vector();
+    int index = 0;  
+    for (int i = st; i < en; i++) 
+    { NLPWord wd = parseOneWord(i,i,index); 
+      if (wd != null) 
+      { res.add(wd); } 
+      index++; 
+    } 
+    return res; 
+  } 
   
   public Vector parseRequirementsText(int st, int en)
   { Vector res = new Vector(); 
@@ -6557,22 +6671,22 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
     boolean innoun1 = true; 
     while (i <= en && innoun1)
     { String lex = lexicals.get(i) + ""; 
-	  if (isNounPhraseWord(lex))
-	  { noun1.add(lex);
-	    i++;  
-	  }
-	  else if (isVerbPhraseWord(lex))
-	  { innoun1 = false; }
-	  else 
-	  { i++; } 
-	} 
-	RequirementsPhrase nounphrase1 = new RequirementsPhrase("noun", noun1); 
-	res.add(nounphrase1);
+      if (isNounPhraseWord(lex))
+      { noun1.add(lex);
+        i++;  
+      }
+      else if (isVerbPhraseWord(lex))
+      { innoun1 = false; }
+      else 
+      { i++; } 
+    } 
+    RequirementsPhrase nounphrase1 = new RequirementsPhrase("noun", noun1); 
+    res.add(nounphrase1);
 	 
-	boolean inverb1 = true;
-	Vector verb1 = new Vector();  
+    boolean inverb1 = true;
+    Vector verb1 = new Vector();  
     
-	while (i <= en && inverb1)
+    while (i <= en && inverb1)
     { String lex = lexicals.get(i) + "";
 	  if (isNounPhraseWord(lex))
 	  { inverb1 = false; }
@@ -6790,7 +6904,13 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 	//   { for (int j = i+2; j < en; j++) 
 	//     { String lex2 = lexicals.get(j) + ""; 
 	// 	  if ("Dependency".equals(lex2) && j+1 < en && "parse".equals(lexicals.get(j+1) + ""))
+	
+	System.out.println(); 
+	System.out.println(">>> Trying to parse " + showLexicals(0,en-1)); 
+	
     NLPSentence res = parseRoot(0,en-1); 
+	if (res == null) 
+	{ System.err.println("!! Failed to parse sentence"); }
     return res; 
   }
 	//	} 
@@ -6798,23 +6918,48 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 	// }
 	// return ""; 
  
+  public NLPWord parseOneWord(int st, int en, int index) 
+  { // Pre: en >= st + 3
+
+    
+    String lex0 = "" + lexicals.get(st); 
+    String lex1 = "" + lexicals.get(en); 
+    if (st == en) 
+    { int sb = lex0.indexOf("_"); 
+      if (sb < 0) { return null; } 
+      NLPWord wd = new NLPWord(lex0.substring(sb+1,lex0.length()), lex0.substring(0,sb));
+      wd.setIndex(index); 
+      return wd;  
+    } 
+    /* else if (en == st + 7 && "(".equals(lex0) && ")".equals(lex1) && 
+	         "-".equals(lexicals.get(st+1) + "") && "-".equals(lexicals.get(en-1) + ""))
+    { NLPWord res = new NLPWord("BRACKET", lexicals.get(st+2) + ""); 
+      return res; 
+    } */ 
+    return null; 
+  }
   
   public NLPWord parseWord(int st, int en) 
   { // Pre: en >= st + 3
   
     String lex0 = "" + lexicals.get(st); 
     String lex1 = "" + lexicals.get(en); 
-	if (en == st + 3 && "(".equals(lex0) && ")".equals(lex1))
-	{ NLPWord res = new NLPWord("" + lexicals.get(st + 1), "" + lexicals.get(st + 2)); 
-	  return res; 
+    if (en == st + 3 && "(".equals(lex0) && ")".equals(lex1))
+    { NLPWord res = new NLPWord("" + lexicals.get(st + 1), "" + lexicals.get(st + 2)); 
+      return res; 
     }
-	else if (en == st + 7 && "(".equals(lex0) && ")".equals(lex1) && 
+    else if (en == st + 7 && "(".equals(lex0) && ")".equals(lex1) && 
 	         "-".equals(lexicals.get(st+1) + "") && "-".equals(lexicals.get(en-1) + ""))
-	{ NLPWord res = new NLPWord("BRACKET", lexicals.get(st+2) + ""); 
-	  return res; 
-	}
+    { NLPWord res = new NLPWord("BRACKET", lexicals.get(st+2) + ""); 
+      return res; 
+    }
+    else if (en > st + 3 && "(".equals(lex0) && ")".equals(lex1) && 
+	         "POS".equals(lexicals.get(st+1) + ""))
+    { NLPWord res = new NLPWord("POS", "POS"); 
+      return res; 
+    }
 	// System.err.println("!! Not a word: " + showLexicals(st,en));
-	return null; 
+    return null; 
   }
   
   public NLPPhrase parsePhrase(int st, int en) 
@@ -6886,7 +7031,7 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 	{ String tag = "" + lexicals.get(st+1); 
 	  Vector phs = parsePhraseList(st+2,en-1); 
 	  if (phs == null) 
-	  { System.err.println("!! Not a phrase list: " + showLexicals(st+2,en-1)); 
+	  { // System.err.println("!! Not a phrase list: " + showLexicals(st+2,en-1)); 
 	    return null; 
 	  }
 	  else 
@@ -6897,7 +7042,12 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
   
   public NLPSentence parseRoot(int st, int en) 
   { String lex0 = "" + lexicals.get(st); 
-    String lex1 = "" + lexicals.get(en); 
+    String lex1 = "" + lexicals.get(en);
+	
+	System.out.println();  
+	// System.out.println("***** " + lex0 + " " + lex1); 
+	System.out.println(); 
+	
 	if (en > st + 3 && "(".equals(lex0) && ")".equals(lex1))
 	{ String tag = "" + lexicals.get(st+1); 
 	  NLPSentence sent = parseSentence(st+2,en-1); 
@@ -6912,6 +7062,9 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 
   public static void main(String[] args)
   { // System.out.println(Double.MAX_VALUE); 
+
+	java.util.Date d1 = new java.util.Date(); 
+	long t1 = d1.getTime(); 
 
      Vector background = Thesarus.loadThesaurus("output/background.txt");
 	 System.out.println(">>> Background information assumed: " + background); 
@@ -6934,7 +7087,7 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
      String xmlstring = ""; 
      int linecount = 0; 
      boolean flag = false; 
-	 Vector sentences = new Vector(); 
+     Vector sentences = new Vector(); 
 	 
      while (!eof)
      { try { s = br.readLine(); }
@@ -6948,56 +7101,76 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
          break; 
        }
        else if (s.startsWith("Constituency parse:"))
-	   { flag = true; }
-	   else if (s.startsWith("Dependency Parse (enhanced plus plus dependencies):"))
-	   { flag = false; 
-	     sentences.add(xmlstring); 
+       { flag = true; }
+       else if (s.startsWith("Dependency Parse (enhanced plus plus dependencies):"))
+       { flag = false; 
+         sentences.add(xmlstring); 
          System.out.println("Read: " + xmlstring); 
-		 xmlstring = ""; 
-	   }
-	   else if (flag) 
+	    xmlstring = ""; 
+	  }
+	  else if (flag) 
        { xmlstring = xmlstring + s + " "; } 
        linecount++; 
-     }
+     } // replace ' and " in s by harmless characters. Remove - within a string or number. 
 	 
-     Vector mes = new Vector(); 
-	 String km3model = ""; 
+	 Vector nlpsentences = new Vector(); 
+     Vector mes = new Vector(); // entities and usecases from the model.
+	  
+     String km3model = ""; 
      for (int i = 0; i < sentences.size(); i++) 
-	 { String xstring = (String) sentences.get(i); 
-	   Compiler2 c0 = new Compiler2(); 
-	   c0.nospacelexicalanalysis(xstring); 
-	   NLPSentence xres = c0.parseNLP();
-	   if (xres != null) 
-	   { xres.indexing(); 
-	     System.out.println(">>> Sentence " + (i+1) + ": " + xres); 
-		 km3model = xres.getKM3(mes); 
-	   } 
-	 } 	 
+     { String xstring = (String) sentences.get(i); 
+       Compiler2 c0 = new Compiler2(); 
+       c0.nospacelexicalanalysisText(xstring); 
+       NLPSentence xres = c0.parseNLP();
+       if (xres != null) 
+       { xres.indexing(); 
+	     xres.setId("" + (i+1)); 
+		 xres.linkToPhrases(); 
+		 
+	     nlpsentences.add(xres); 
+         System.out.println(">>> Sentence " + (i+1) + ": " + xres); 
+         java.util.Map classifications = xres.classifyWords(background,mes); 
+         System.out.println(">>> Using word classifications >>> " + classifications);
+         km3model = xres.getKM3(mes,classifications); 
+         System.out.println(); 
+       }  
+     } 	 
 	     
-	String outfile = "mm.km3"; 
+    String outfile = "mm.km3"; 
     File appout = new File("output/" + outfile); 
     try
     { PrintWriter appfile = new PrintWriter(
                                 new BufferedWriter(new FileWriter(appout)));
       
       appfile.println("package app {\n" + km3model + "\n}\n"); 
-	  appfile.close(); 
+      appfile.close(); 
     }
     catch(Exception _dd) { }
 	
-	Compiler2 cx = new Compiler2(); 
+	for (int i = 0; i < nlpsentences.size(); i++) 
+	{ NLPSentence ss = (NLPSentence) nlpsentences.get(i); 
+	  System.out.println(">>> Sentence " + (i+1)); 
+	  System.out.println(">>> Derived elements: " + ss.derivedElements); 
+	  System.out.println(); 
+	}
+	
+	java.util.Date d2 = new java.util.Date(); 
+	long t2 = d2.getTime(); 
+	System.out.println(">>> Time taken = " + (t2-t1)); 
+	
+	// Compiler2 cx = new Compiler2(); 
 	// cx.nospacelexicalanalysis("var f : Function(String,int)");
 	// cx.nospacelexicalanalysis("findRoot(st, en, lambda x : double in (x*x - x))");
-	cx.nospacelexicalanalysis("Function(double,double)");  
-	int en = cx.lexicals.size()-1; 
-	System.out.println(cx.showLexicals(0,en));
+	// cx.nospacelexicalanalysis("Function(double,double)");  
+	// int en = cx.lexicals.size()-1; 
+	// System.out.println(cx.showLexicals(0,en));
 	
 	// cx.nospacelexicalanalysis("reference _1 : _2; |-->  var _1 : _2 = _2()\n<when> _2 collection"); 
 	// System.out.println(cx.showLexicals(0,cx.lexicals.size()-1));  
     // CGRule r = cx.parse_ExpressionCodegenerationrule("Map{_1} |-->Ocl.initialiseMap(_1)"); 
 	// Expression r = cx.parse_lambda_expression(0,0,en,new Vector(),new Vector());
-	Type r = cx.parseType();  
-	System.out.println(r);  
+	// Type r = cx.parseType();  
+	// System.out.println(r);  
  	 
 	 // try 
 	 // { infile.close(); }

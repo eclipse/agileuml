@@ -11,7 +11,7 @@
   package: Requirements
 */
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -91,7 +91,20 @@ public class RequirementsWin extends JFrame implements ActionListener
     fileMenu.add(loadMenu); 
     
     fileMenu.addSeparator();
+
+    JMenuItem saveModelMI = new JMenuItem("Save as model"); 
+    saveModelMI.addActionListener(this); 
+    fileMenu.add(saveModelMI);
+
+    /* fileMenu.addSeparator();
         
+
+    JMenuItem loadDataRequirementsMI = new JMenuItem("Formalise data reqs"); 
+    loadDataRequirementsMI.addActionListener(this); 
+    fileMenu.add(loadDataRequirementsMI); */ 
+
+    fileMenu.addSeparator();
+
     JMenuItem printMI = new JMenuItem("Print");
     printMI.addActionListener(this);
     fileMenu.add(printMI); 
@@ -240,6 +253,10 @@ public class RequirementsWin extends JFrame implements ActionListener
       else if (label.equals("Load data")) 
       { drawArea.loadDataFromFile("out.dat");
         messageLabel.setText("Loaded data from requirements.txt"); 
+      } 
+      if (label.equals("Save as model")) 
+      { drawArea.saveModelDataToFile("requirementsmodel.txt"); 
+        messageLabel.setText("Saved data to requirementsmodel.txt"); 
       } 
       else if (label.equals("Requirements"))
       { System.out.println("List of requirements");

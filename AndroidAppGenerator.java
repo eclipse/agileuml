@@ -3,7 +3,7 @@ import java.io.*;
 
 /* Package: Mobile */ 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -865,7 +865,7 @@ public class AndroidAppGenerator extends AppGenerator
       out.println("  <TableRow>");
       out.println("  <TextView");  
       out.println("    android:id=\"@+id/" + attlabel + "\"");
-      out.println("    android:hint=\"" + attnme + " for " + op + "\"");
+      // out.println("    android:hint=\"" + attnme + " for " + op + "\"");
       out.println("    android:textStyle=\"bold\"");
       out.println("    android:background=\"#EEFFBB\""); 
       out.println("    android:text=\"" + label + ":\" />");
@@ -935,16 +935,16 @@ public class AndroidAppGenerator extends AppGenerator
       out.println("     android:src=\"@drawable/ic_launcher_background\" />"); 
     } 
     else if (res != null) 
-	{ out.println("  <TableRow>");
+    { out.println("  <TableRow>");
       out.println("  <TextView");  
       out.println("    android:id=\"@+id/" + op + "ResultLabel\"");
-      out.println("    android:hint=\"Result of " + op + "\"");
+      // out.println("    android:hint=\"Result of " + op + "\"");
       out.println("    android:textStyle=\"bold\"");
       out.println("    android:background=\"#EEFFBB\""); 
       out.println("    android:text=\"Result:\" />");
       out.println("  <TextView");  
       out.println("    android:id=\"@+id/" + op + "Result\"");
-      out.println("    android:hint=\"Result of " + op + "\"");
+      // out.println("    android:hint=\"Result of " + op + "\"");
       out.println("    android:textStyle=\"bold\"");
       out.println("    android:layout_span=\"4\" />");
       out.println("  </TableRow>");
@@ -996,7 +996,7 @@ public class AndroidAppGenerator extends AppGenerator
       out.println("  <TableRow>");
       out.println("  <TextView");  
       out.println("    android:id=\"@+id/" + attlabel + "\"");
-      out.println("    android:hint=\"" + attnme + " for " + op + "\"");
+      // out.println("    android:hint=\"" + attnme + " for " + op + "\"");
       out.println("    android:textStyle=\"bold\"");
       out.println("    android:background=\"#EEFFBB\""); 
       out.println("    android:text=\"" + label + ":\" />");
@@ -1074,13 +1074,13 @@ public class AndroidAppGenerator extends AppGenerator
     { out.println("  <TableRow>");
       out.println("  <TextView");  
       out.println("    android:id=\"@+id/" + op + "ResultLabel\"");
-      out.println("    android:hint=\"Result of " + op + "\"");
+      // out.println("    android:hint=\"Result of " + op + "\"");
       out.println("    android:textStyle=\"bold\"");
       out.println("    android:background=\"#EEFFBB\""); 
       out.println("    android:text=\"Result of " + op + ":\" />");
       out.println("  <TextView");  
       out.println("    android:id=\"@+id/" + op + "Result\"");
-      out.println("    android:hint=\"Result of " + op + "\"");
+      // out.println("    android:hint=\"Result of " + op + "\"");
       out.println("    android:textStyle=\"bold\"");
       out.println("    android:layout_span=\"4\" />");
       out.println("  </TableRow>");
@@ -1106,7 +1106,7 @@ public class AndroidAppGenerator extends AppGenerator
          out.println("  <TableRow>");
          out.println("  <TextView");  
          out.println("    android:id=\"@+id/" + attlabel + "\"");
-         out.println("    android:hint=\"" + attnme + " for " + ucop + "\"");
+         // out.println("    android:hint=\"" + attnme + " for " + ucop + "\"");
          out.println("    android:background=\"#EEFFBB\""); 
          out.println("    android:textStyle=\"bold\"");
          out.println("    android:text=\"" + label + ":\" />");
@@ -1611,7 +1611,7 @@ public static void androidOpViewFragment(String op, String packageName,
   out.println("import android.widget.RadioGroup;"); 
   out.println("import android.widget.EditText;");
   out.println("import android.webkit.WebView;"); 
-  out.println("import android.webkit.ImageView;"); 
+  out.println("import android.widget.ImageView;"); 
   out.println("import android.widget.TextView;\n\r");
   out.println(); 
 
@@ -2389,7 +2389,7 @@ public static void androidDeleteScreen(String op, OperationDescription od, Print
   
   out.println("  <TextView"); 
   out.println("    android:id=\"@+id/" + op + ename + "Label\""); 
-  out.println("    android:hint=\"" + ename + " id\""); 
+  // out.println("    android:hint=\"" + ename + " id\""); 
   out.println("    android:textStyle=\"bold\""); 
   out.println("    android:background=\"#EEFFBB\""); 
   out.println("    android:text=\"" + ename + ":\" />"); 

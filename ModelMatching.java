@@ -4,7 +4,7 @@ import java.util.Collections;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -62,6 +62,9 @@ public class ModelMatching implements SystemTypes
       entitymatches.add(em); 
     } 
   } 
+
+  public void addTypeMatch(TypeMatching tm)
+  { typematches.add(tm); } 
 
   public void addEntityMatch(EntityMatching em, Vector entities)
   { Entity s = em.realsrc; 
@@ -922,7 +925,7 @@ public class ModelMatching implements SystemTypes
             for (int pp = 0; pp < unusedoptionals.size(); pp++) 
             { Attribute selector = (Attribute) unusedoptionals.get(pp); 
               String yns = 
-                  JOptionPane.showInputDialog("Add conditions " + selector + "->isEmpty(), " + selector + "->notEmpty() " +
+                  JOptionPane.showInputDialog("Add condition " + selector + "->isEmpty(), or " + selector + "->notEmpty() " +
                                             "? (y/n):");
 
               if (yns != null && "y".equals(yns))
@@ -1170,11 +1173,22 @@ public class ModelMatching implements SystemTypes
 
     return targets; 
   } 
+  
+  private String qvtrKeyDeclarations(Vector entities)
+  { String res = ""; 
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ent = (Entity) entities.get(i); 
+      res = res + ent.qvtrKeyDeclarations(); 
+    }
+    return res + "\n\n"; 
+  }
 
   public String qvtTransformation(Vector econvs, Vector seconvs, Vector esconvs, 
-                                  Vector benums, Vector ebools)
+                                  Vector benums, Vector ebools, Vector entities)
   { String res = "transformation tau(source: MM1, target: MM2)\n" + 
                  "{ \n"; 
+				 
+	res = res + qvtrKeyDeclarations(entities); 
 
     for (int i = 0; i < econvs.size(); i++) 
     { Maplet mt = (Maplet) econvs.get(i); 
@@ -1208,6 +1222,11 @@ public class ModelMatching implements SystemTypes
       { res = res + "  " + Type.enumBooleanOpQVTR(et) + "\n\n"; } 
     } // Only include functions that are actually used
 
+    for (int i = 0; i < typematches.size(); i++) 
+    { TypeMatching tm = (TypeMatching) typematches.get(i); 
+      res = res + tm.qvtfunction() + "\n\n"; 
+    }
+	
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
       res = res + em.qvtrule1(entitymatches) + "\n"; 
@@ -1223,10 +1242,12 @@ public class ModelMatching implements SystemTypes
   } 
 
   public String qvtBxTransformation(Vector econvs, Vector seconvs, Vector esconvs, 
-                                  Vector benums, Vector ebools)
+                                  Vector benums, Vector ebools, Vector entities)
   { String res = "transformation tau(source: MM1, target: MM2)\n" + 
                  "{ \n"; 
 
+    res = res + qvtrKeyDeclarations(entities) + "\n"; 
+	
     for (int i = 0; i < econvs.size(); i++) 
     { Maplet mt = (Maplet) econvs.get(i); 
       Type t1 = (Type) mt.source; 
@@ -1259,14 +1280,27 @@ public class ModelMatching implements SystemTypes
       { res = res + "  " + Type.enumBooleanOpQVTR(et) + "\n\n" + Type.booleanEnumOpQVTR(et); } 
     } 
 
+    for (int i = 0; i < typematches.size(); i++) 
+    { TypeMatching tm = (TypeMatching) typematches.get(i); 
+      res = res + tm.qvtfunction() + "\n\n"; 
+    }
+	
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
-      res = res + em.qvtrule1bx(entitymatches) + "\n"; 
+      if (!em.hasReplicationCondition())
+      { res = res + em.qvtrule1bx(entitymatches) + "\n"; } 
     } // must include mapping to any primary key of em.realtarget
 
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
-      if (em.isConcrete() && em.isConcreteTarget())
+      if (em.isConcreteTarget() && em.hasReplicationCondition())
+      { res = res + em.qvtrule1InstanceReplication(entitymatches) + "\n"; } 
+    } // must include mapping to any primary key of em.realtarget
+
+    for (int i = 0; i < entitymatches.size(); i++) 
+    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
+      if (em.isConcrete() && em.isConcreteTarget() && 
+          !em.hasReplicationCondition())
       { res = res + em.qvtrule2bx(entitymatches) + "\n"; }  
     }  
 
@@ -1275,7 +1309,24 @@ public class ModelMatching implements SystemTypes
 
   public String umlrsdsTransformation(Vector econvs, Vector esconvs, Vector seconvs, 
                                       Vector beconvs, Vector ebconvs)
-  { String res = "  usecase app {\n"; 
+  { String res = "package tau {\n\n" + 
+                 "  usecase tauphase1 : void {\n"; 
+
+    for (int i = 0; i < entitymatches.size(); i++) 
+    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
+      if (em.isConcrete() && !em.hasReplicationCondition())
+      { res = res + em.umlrsdsrule1() + "\n"; }  
+    } 
+
+    for (int i = 0; i < entitymatches.size(); i++) 
+    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
+      if (em.isConcrete() && em.hasReplicationCondition())
+      { res = res + em.umlrsdsrule1InstanceReplication() + "\n"; }  
+    } 
+
+    res = res + "}\n\n"; 
+
+    res = res + "  usecase tauphase2 : void {\n"; 
 
     for (int i = 0; i < econvs.size(); i++) 
     { Maplet mt = (Maplet) econvs.get(i); 
@@ -1309,19 +1360,20 @@ public class ModelMatching implements SystemTypes
       { res = res + "  " + Type.enumBooleanOp(et) + "\n\n"; } 
     } // Only include functions that are actually used
 
-    for (int i = 0; i < entitymatches.size(); i++) 
-    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
-      if (em.isConcrete())
-      { res = res + em.umlrsdsrule1() + "\n"; }  
-    } 
+    for (int i = 0; i < typematches.size(); i++) 
+    { TypeMatching tm = (TypeMatching) typematches.get(i); 
+      res = res + tm.umlrsdsfunction() + "\n\n"; 
+    }
+	
 
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
-      if (em.isConcrete() && em.isConcreteTarget())
+      if (em.isConcrete() && em.isConcreteTarget() && 
+          !em.hasReplicationCondition())
       { res = res + em.umlrsdsrule2(entitymatches) + "\n"; }  
     } 
 
-    return res + "\n  }\n"; 
+    return res + "\n  }\n\n}\n"; 
   } 
 
   public String qvtoTransformation(Vector econvs, Vector esconvs, Vector seconvs, 
@@ -1786,7 +1838,7 @@ public class ModelMatching implements SystemTypes
     for (int i = 0; i < allsats.size(); i++) 
     { Attribute satt = (Attribute) allsats.get(i); 
 	
-	  System.out.println("???? testing " + satt + " against " + tatt); 
+	  System.out.println("???? testing " + satt + " as a match for " + tatt); 
 	  
       if (compatibleType(satt,tatt,ems))
       { System.out.println(">> " + satt + " matches by type to " + tatt); 
@@ -1809,8 +1861,23 @@ public class ModelMatching implements SystemTypes
     { tetype = tetype.getElementType();
       if (tetype == null) { return false; } 
 
-      Attribute telematt = new Attribute(satt.getName() + "Element", tetype, ModelElement.INTERNAL); 
+      Attribute telematt = new Attribute(tatt.getName() + "Element", tetype, ModelElement.INTERNAL); 
       return compatibleType(satt,telematt,ems); 
+    }
+    return false; 
+  } 
+
+  public static boolean compatibleSourceElementType(Attribute satt, Attribute tatt, Vector ems)
+  { // true if satt elements could be matched to tatt, given ems
+    Type setype = satt.getType(); 
+    Type tetype = tatt.getType(); 
+    
+    if (Type.isCollectionType(setype) && !Type.isCollectionType(tetype))
+    { setype = setype.getElementType();
+      if (setype == null) { return false; } 
+
+      Attribute selematt = new Attribute(satt.getName() + "Element", setype, ModelElement.INTERNAL); 
+      return compatibleType(selematt,tatt,ems); 
     }
     return false; 
   } 
@@ -1820,10 +1887,10 @@ public class ModelMatching implements SystemTypes
     Type setype = satt.getType(); 
     Type tetype = tatt.getType(); 
     
-	if (Type.isCollectionType(setype) && Type.isCollectionType(tetype))
-	{ setype = setype.getElementType(); 
-	  tetype = tetype.getElementType(); 
-	}
+    if (Type.isCollectionType(setype) && Type.isCollectionType(tetype))
+    { setype = setype.getElementType(); 
+      tetype = tetype.getElementType(); 
+    }
 	
     if (setype != null && tetype != null && 
         setype.isEntity() && tetype.isEntity())
@@ -2300,20 +2367,20 @@ public class ModelMatching implements SystemTypes
     Vector removed = new Vector(); 
     Vector functions = new Vector(); 
 
-    for (int i = 0; i < entities.size(); i++) 
+  /*  for (int i = 0; i < entities.size(); i++) 
     { Entity tent = (Entity) entities.get(i); 
       if (tent.isTarget())
       { java.util.HashMap mergings = mod.objectMergings(tent.getName()); 
         if (mergings != null && mergings.size() > 0)
-        { System.out.println(">>> Merging in model: " + mergings); 
+        { System.out.println(">>> Instance merging to " + tent + " in model: " + mergings); 
           mod.checkMergingCondition(tent,entities,mergings); 
         } 
       } 
-    } 
+    }  */ 
 
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
-      em.checkModel(mod,removed,functions); 
+      em.checkModel(mod,this,entitymatches,removed,functions); 
     } 
 
     helpers.addAll(functions); 
@@ -2331,16 +2398,33 @@ public class ModelMatching implements SystemTypes
 
     combineMatches(extraems); // and the mymap. 
 
+    Vector unusedSources = unusedSourceEntities(entities);
+
+    Vector cems = mod.completeClassMappings(entities,unusedSources,entitymatches); 
+
     mod.extraAttributeMatches(entitymatches,typematches); 
+
+    mod.checkPrimaryKeyAssignments(entitymatches); 
+
+    for (int i = 0; i < entitymatches.size(); i++) 
+    { System.out.println(">>> Rechecking conditions and mappings"); 
+      EntityMatching em = (EntityMatching) entitymatches.get(i); 
+      em.checkModel(mod,this,entitymatches,removed,functions); 
+    } 
+
+    Vector sourceClasses = new Vector(); 
 
     for (int i = 0; i < entities.size(); i++) 
     { Entity tent = (Entity) entities.get(i); 
       if (tent.isTarget())
-      { java.util.HashMap mergings = mod.objectMergings(tent.getName()); 
+      { Vector unmerged = new Vector(); 
+        java.util.HashMap mergings = mod.objectMergings(tent.getName(),sourceClasses, unmerged); 
         if (mergings != null && mergings.size() > 0)
-        { System.out.println(">>> Merging in model: " + mergings); 
-          mod.checkMergingCondition(tent,entities,mergings); 
-        } 
+        { System.out.println(">>> Instance merging from classes " + sourceClasses + " to " + tent + " in model: " + mergings); 
+          System.out.println(">>> Unmerged source elements are: " + unmerged);  
+          EntityMatching sent2tent = mod.checkMergingCondition(tent,entities,entitymatches,mergings,unmerged); 
+          mod.checkMergingMappings(tent,sent2tent,sourceClasses,entities,entitymatches,mergings,unmerged);
+        }
       } 
     } 
 
@@ -2349,7 +2433,7 @@ public class ModelMatching implements SystemTypes
       if (sent.isSource())
       { java.util.HashMap splittings = mod.objectSplittings(sent.getName()); 
         if (splittings != null && splittings.size() > 0)
-        { System.out.println(">>> Splitting in model: " + splittings); 
+        { System.out.println(">>> Instance replication in model: " + splittings); 
           mod.checkSplittingCondition(sent,entities,entitymatches,splittings); 
         } 
       } 
