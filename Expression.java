@@ -181,6 +181,13 @@ abstract class Expression
     return false; 
   } 
 
+  public boolean isEmptyCollection() 
+  { if ("Set{}".equals(this + "") || 
+        "Sequence{}".equals(this + ""))
+    { return true; } 
+    return false; 
+  } 
+
   public int getKind() { return umlkind; } 
 
   public int getMultiplicity()  { return multiplicity; } 
@@ -208,6 +215,9 @@ abstract class Expression
   public Entity getEntity() { return entity; } 
 
   public abstract void setPre(); 
+
+  public boolean isEnumerated()
+  { return type != null && type.isEnumerated(); } 
 
   public boolean isVariable()
   { return (umlkind == VARIABLE); } 
@@ -300,13 +310,18 @@ abstract class Expression
       { continue; } 
  
       BasicExpression be = new BasicExpression(val + "");
+      be.setUmlKind(Expression.VALUE); 
+      be.setType(att.getType()); 
       BasicExpression attbe = new BasicExpression(att); 
       attbe.setUmlKind(Expression.ATTRIBUTE);
       BinaryExpression eq = new BinaryExpression("=", attbe, be);   
+
       if (res == null) 
       { res = eq; } 
       else
       { res = new BinaryExpression("or", res, eq); }
+      res.setType(new Type("boolean",null));
+ 
       seen.add(val);  
     } 
     return res; 
@@ -366,7 +381,23 @@ abstract class Expression
     return false; 
   } 
 
+  public boolean isEntity()
+  { if (Type.isEntityType(type))
+    { return true; } 
+    
+    return false; 
+  } 
+
   public boolean isBooleanValued()
+  { if (type == null) 
+    { return false; } 
+    String nme = type.getName(); 
+    if (nme.equals("boolean"))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isBoolean()
   { if (type == null) 
     { return false; } 
     String nme = type.getName(); 
@@ -850,7 +881,7 @@ abstract class Expression
   { Vector conjs = computeNegation4ante();
     Expression disj;
     if (conjs.size() == 0)
-    { return new BasicExpression("false"); }  // ???
+    { return new BasicExpression(false); }  // ???
     disj = (Expression) conjs.get(0);
     for (int i = 1; i < conjs.size(); i++)
     { Expression c = (Expression) conjs.get(i);
@@ -1087,6 +1118,9 @@ abstract class Expression
     return false; 
   } // and values of enum types? 
 
+  public boolean isValue()
+  { return umlkind == VALUE; } 
+
   public static boolean isConstant(String s)
   { // it is all capitals
     if (s == null || s.length() == 0) { return false; } 
@@ -1101,6 +1135,12 @@ abstract class Expression
     { return true; }
     return false;
   }
+  
+  public boolean isString()
+  { return type != null && type.isString(); }
+
+  public boolean isCollection()
+  { return type != null && type.isCollection(); }
 
   public static boolean isBoolean(String data)
   { return data.equals("true") || data.equals("false"); }
@@ -1265,6 +1305,12 @@ abstract class Expression
     return 0; 
   } 
 
+  public String cstlConditionForm(java.util.Map srcvarmap)
+  { return this + ""; }
+  
+  public String cstlQueryForm(java.util.Map srcvarmap)
+  { return this + ""; }
+  
   abstract public Expression createActionForm(final Vector v);
 
   public String classqueryForm(java.util.Map env, boolean local)

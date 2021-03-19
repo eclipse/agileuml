@@ -58,7 +58,7 @@ public class ObjectSpecification extends ModelElement
       } 
       attvalues.put(att,actualval); 
     }
-  } 
+  } // What about numbers, etc? 
 
   public Object getRawValue(String att) 
   { return attvalues.get(att); } 
@@ -211,6 +211,15 @@ public class ObjectSpecification extends ModelElement
         { res = Double.parseDouble(val); } 
       } 
     } 
+    else if (att != null) // att itself is a number? 
+    { try { res = Integer.parseInt(att); } 
+      catch (Exception _e) 
+      { try { res = Long.parseLong(att); } 
+        catch (Exception _f) 
+        { res = Double.parseDouble(att); } 
+      } 
+    } 
+
     return res; 
   }  
 
@@ -232,6 +241,70 @@ public class ObjectSpecification extends ModelElement
       return obj.getNumericValue(new Attribute(pathtail), mod); 
     } 
   }  
+
+  public double getNumericValue(Expression expr, ModelSpecification mod)
+  { if (expr instanceof BasicExpression) 
+    { Vector atts = ((BasicExpression) expr).decompose(); 
+      Attribute att = new Attribute(atts); 
+      return getNumericValue(att,mod); 
+    } 
+    else if (expr instanceof UnaryExpression) 
+    { UnaryExpression ue = (UnaryExpression) expr; 
+      Expression arg = ue.getArgument();   
+      if (ue.operator.equals("->size"))
+      { if (arg.isString())
+        { String str = getStringValue(arg,mod); 
+          if (str != null) 
+          { return str.length()-2; } 
+          return 0; 
+        } 
+        else if (arg.isCollection())
+        { Vector vect = getCollectionValue(arg,mod); 
+          return vect.size(); 
+        } 
+      } 
+    }
+	else if (expr instanceof BinaryExpression)
+	{ BinaryExpression be = (BinaryExpression) expr; 
+	  Expression lft = be.getLeft(); 
+	  Expression rgt = be.getRight(); 
+	  if (be.operator.equals("+"))
+	  { double d1 = getNumericValue(lft,mod); 
+	    double d2 = getNumericValue(rgt,mod); 
+		return d1 + d2; 
+	  }
+	  else if (be.operator.equals("*"))
+	  { double d1 = getNumericValue(lft,mod); 
+	    double d2 = getNumericValue(rgt,mod); 
+		return d1 * d2; 
+	  }
+	  else if (be.operator.equals("-"))
+	  { double d1 = getNumericValue(lft,mod); 
+	    double d2 = getNumericValue(rgt,mod); 
+		return d1 - d2; 
+	  }
+	  else if (be.operator.equals("/"))
+	  { double d1 = getNumericValue(lft,mod); 
+	    double d2 = getNumericValue(rgt,mod); 
+		return d1 / d2; 
+	  }
+	  else if (be.operator.equals("->pow"))
+	  { double d1 = getNumericValue(lft,mod); 
+	    double d2 = getNumericValue(rgt,mod); 
+		return Math.pow(d1,d2); 
+	  }
+	} 
+    return 0; 
+  } 
+
+  public String getStringValue(Expression expr, ModelSpecification mod)
+  { if (expr instanceof BasicExpression) 
+    { Vector atts = ((BasicExpression) expr).decompose(); 
+      Attribute att = new Attribute(atts); 
+      return getStringValue(att,mod); 
+    } 
+    return ""; 
+  } 
 
   public String getStringValue(Attribute att, ModelSpecification mod) 
   { String res = ""; 
@@ -279,6 +352,16 @@ public class ObjectSpecification extends ModelElement
       return obj.getEnumerationValue(new Attribute(pathtail), mod); 
     } 
   }  
+
+  public String getEnumerationValue(Expression expr, ModelSpecification mod)
+  { if (expr.isFeature()) 
+    { Vector atts = ((BasicExpression) expr).decompose(); 
+      Attribute att = new Attribute(atts); 
+      return getEnumerationValue(att,mod); 
+    } 
+	System.err.println(">>> Unknown enumeration value: " + expr); 
+	return "" + expr; 
+  } 
 
   public ObjectSpecification[] getCollectionAsObjectArray(Attribute att, ModelSpecification mod)
   { Vector res = getCollectionValue(att,mod);
@@ -330,7 +413,68 @@ public class ObjectSpecification extends ModelElement
     } 
     else 
     { return rawvalues; }
+  } // expecting either a collection of objects or a 
+    // collection of basic values of the same type,
+    // represented as strings.
+
+  public Vector getCollectionValue(Expression expr, ModelSpecification mod)
+  { if (expr instanceof BasicExpression) 
+    { Vector atts = ((BasicExpression) expr).decompose(); 
+      Attribute att = new Attribute(atts); 
+      return getCollectionValue(att,mod); 
+    } 
+    else if (expr instanceof BinaryExpression)
+    { BinaryExpression becoll = (BinaryExpression) expr;
+      Expression lft = becoll.getLeft(); 
+      Expression rgt = becoll.getRight(); 
+ 
+      String op = becoll.operator; 
+      if (op.equals("->union"))
+      { Vector leftVal = getCollectionValue(lft,mod); 
+        Vector rightVal = getCollectionValue(rgt,mod); 
+        Vector res = new Vector(); 
+        res.addAll(leftVal); 
+        res.addAll(rightVal); 
+        return res; 
+      } 
+      else if (op.equals("->including"))
+      { Vector leftVal = getCollectionValue(lft,mod); 
+        Object rightVal = getValue(expr,mod); 
+        Vector res = new Vector(); 
+        res.addAll(leftVal); 
+        res.add(rightVal); 
+        return res; 
+      }
+      else if (op.equals("->intersection"))
+      { Vector leftVal = getCollectionValue(lft,mod); 
+        Vector rightVal = getCollectionValue(rgt,mod); 
+        Vector res = new Vector(); 
+        res.addAll(leftVal); 
+        res.retainAll(rightVal); 
+        return res; 
+      } 
+      else if (op.equals("->excluding"))
+      { Vector leftVal = getCollectionValue(lft,mod); 
+        Object rightVal = getValue(expr,mod); 
+        Vector res = new Vector(); 
+        res.addAll(leftVal); 
+        Vector rvals = new Vector(); 
+        rvals.add(rightVal);
+        res.removeAll(rvals);  
+        return res; 
+      }
+      else if (op.equals("-"))
+      { Vector leftVal = getCollectionValue(lft,mod); 
+        Vector rightVal = getCollectionValue(rgt,mod); 
+        Vector res = new Vector(); 
+        res.addAll(leftVal); 
+        res.removeAll(rightVal); 
+        return res; 
+      } 
+    } 
+    return new Vector(); 
   } 
+
 		
   public Vector getRawCollectionValue(Attribute att, ModelSpecification mod) 
   { Vector res = new Vector(); 
@@ -438,7 +582,13 @@ public class ObjectSpecification extends ModelElement
   }  
 
   public boolean getBoolean(String att) 
-  { // Where we know that att represents a boolean value 
+  { // Where we know that att represents a boolean value
+  
+    if ("true".equals(att)) 
+	{ return true; }
+	else if ("false".equals(att))
+	{ return false; }
+	 
     String val = (String) attvalues.get(att); 
     if (val != null)
     { if ("true".equals(val))
@@ -494,6 +644,12 @@ public class ObjectSpecification extends ModelElement
   { String v = expr + ""; 
     Type t = expr.getType(); 
 
+    if ("true".equals(expr + ""))
+    { return "true"; }
+    else if ("false".equals(expr + ""))
+    { return "false"; }
+    else if ("self".equals(expr + ""))
+    { return this + ""; }
     
     if (expr instanceof BasicExpression)
     { BasicExpression be = (BasicExpression) expr; 
@@ -573,16 +729,16 @@ public class ObjectSpecification extends ModelElement
           if (vect.get(i) instanceof ObjectSpecification)
           { objx = (ObjectSpecification) vect.get(i); } 
           else if (vect.get(i) instanceof String)
-		  { String idx = (String) vect.get(i); 
-		    objx = mod.getObject(idx); 
-		  } 
+          { String idx = (String) vect.get(i); 
+            objx = mod.getObject(idx); 
+          } 
           if (objx != null) 
-		  { Object val = objx.getValueOf(tail, mod); 
+          { Object val = objx.getValueOf(tail, mod); 
             if (val != null) 
             { res.add(val); }
-		  } 
-		  else 
-		  { System.err.println("!! Error: expected an object value for: (" + this + ")." + attr); } 
+          } 
+          else 
+          { System.err.println("!! Error: expected an object value for: (" + this + ")." + attr); } 
         }
         return res;  
       } 
@@ -590,19 +746,61 @@ public class ObjectSpecification extends ModelElement
     return null; 
   } 
 
+  public static Vector getAllValuesOf(Expression expr, Vector objs, ModelSpecification mod)
+  { Vector res = new Vector(); 
+    for (int i = 0; i < objs.size(); i++) 
+    { ObjectSpecification obj = (ObjectSpecification) objs.get(i); 
+      Object x = obj.getValueOf(expr,mod); 
+      if (x != null) 
+      { res.add(x); } 
+    } 
+    return res; 
+  } 
+
+  public Object getValueOf(Expression expr, ModelSpecification mod)
+  { // assume for the present, expr is boolean. 
+    if (expr.isBoolean())
+	{ if (satisfiesCondition(expr,mod))
+      { return "true"; } 
+      else
+      { return "false"; }
+	} 
+	
+	if (expr.isNumeric())
+	{ return "" + getNumericValue(expr,mod); }
+	
+	if (expr.isCollection())
+	{ return getCollectionValue(expr,mod); } 
+	
+	if (expr.isEntity() && expr instanceof BasicExpression)
+	{ if ("self".equals(expr + ""))
+	  { return this + ""; } 
+	  return mod.getObjectValue((BasicExpression) expr); 
+	} // and self.att, etc. 
+	
+	if (expr.isEnumerated()) // must be a BasicExpression
+	{ return getEnumerationValue(expr,mod); }
+	
+	return getValue(expr,mod);  // Strings
+  } 
+
+
   public boolean satisfiesBinaryCondition(BinaryExpression cond, ModelSpecification mod) 
   { String condop = cond.getOperator(); 
     if ("&".equals(condop))
-    { return satisfiesCondition(cond.getLeft(),mod) && 
-             satisfiesCondition(cond.getRight(),mod); 
+    { boolean sat1 = satisfiesCondition(cond.getLeft(),mod); 
+	  boolean sat2 = satisfiesCondition(cond.getRight(),mod);
+	  System.out.println(this + " satisfies? " + sat1 + " " + cond.getLeft()); 
+	  System.out.println(this + " satisfies? " + sat2 + " " + cond.getRight()); 
+	  return sat1 && sat2; 
     } 
     else if ("or".equals(condop))
     { return satisfiesCondition(cond.getLeft(),mod) || 
              satisfiesCondition(cond.getRight(),mod); 
     } 
     else if ("=".equals(condop))
-    { String valleft = getValue(cond.getLeft(),mod); 
-      String valright = getValue(cond.getRight(),mod);
+    { String valleft = getValueOf(cond.getLeft(),mod) + ""; 
+      String valright = getValueOf(cond.getRight(),mod) + "";
       // System.out.println("---> Value of " + cond.getLeft() + " is ---> " + valleft); 
       // System.out.println("---> Value of " + cond.getRight() + " is ---> " + valright); 
  
@@ -611,12 +809,52 @@ public class ObjectSpecification extends ModelElement
       return false; 
     } 
     else if ("/=".equals(condop))
-    { String valleft = getValue(cond.getLeft(),mod); 
-      String valright = getValue(cond.getRight(),mod); 
+    { String valleft = getValueOf(cond.getLeft(),mod) + ""; 
+      String valright = getValueOf(cond.getRight(),mod) + ""; 
       if (valleft != null && valright != null && valleft.equals(valright))
       { return false; }
       else if (valleft != null && !valleft.equals(valright))
       { return true; }  
+      return false; 
+    } 
+    else if (">".equals(condop) && cond.getLeft().isNumeric() && cond.getRight().isNumeric())
+    { double valleft = getNumericValue(cond.getLeft(),mod); 
+      double valright = getNumericValue(cond.getRight(),mod);
+      // System.out.println("---> Value of " + cond.getLeft() + " is ---> " + valleft); 
+      // System.out.println("---> Value of " + cond.getRight() + " is ---> " + valright); 
+ 
+      if (valleft > valright)
+      { return true; } 
+      return false; 
+    } 
+    else if ("<".equals(condop) && cond.getLeft().isNumeric() && cond.getRight().isNumeric())
+    { double valleft = getNumericValue(cond.getLeft(),mod); 
+      double valright = getNumericValue(cond.getRight(),mod);
+      // System.out.println("---> Value of " + cond.getLeft() + " is ---> " + valleft); 
+      // System.out.println("---> Value of " + cond.getRight() + " is ---> " + valright); 
+ 
+      if (valleft < valright)
+      { return true; } 
+      return false; 
+    } 
+    else if ("<=".equals(condop) && cond.getLeft().isNumeric() && cond.getRight().isNumeric())
+    { double valleft = getNumericValue(cond.getLeft(),mod); 
+      double valright = getNumericValue(cond.getRight(),mod);
+      // System.out.println("---> Value of " + cond.getLeft() + " is ---> " + valleft); 
+      // System.out.println("---> Value of " + cond.getRight() + " is ---> " + valright); 
+ 
+      if (valleft <= valright)
+      { return true; } 
+      return false; 
+    } 
+    else if (">=".equals(condop) && cond.getLeft().isNumeric() && cond.getRight().isNumeric())
+    { double valleft = getNumericValue(cond.getLeft(),mod); 
+      double valright = getNumericValue(cond.getRight(),mod);
+      // System.out.println("---> Value of " + cond.getLeft() + " is ---> " + valleft); 
+      // System.out.println("---> Value of " + cond.getRight() + " is ---> " + valright); 
+ 
+      if (valleft >= valright)
+      { return true; } 
       return false; 
     } 
     else if ("->oclIsTypeOf".equals(condop))
@@ -632,33 +870,65 @@ public class ObjectSpecification extends ModelElement
           Entity.isDescendantOrEqualTo(entity, cond.getRight() + ""))
       { return true; }
 	  return false;  
-    } 
-	else if ("->hasPrefix".equals(condop))
-	{ String vleft = getValue(cond.getLeft(),mod); 
-	  String vright = getValue(cond.getRight(),mod);
+     } 
+     else if ("->hasPrefix".equals(condop))
+     { String vleft = getValue(cond.getLeft(),mod); 
+       String vright = getValue(cond.getRight(),mod);
 	  // System.out.println(">>> left = " + vleft + ", right = " + vright + " left->hasPrefix(right) = " + vleft.startsWith(vright));  
 	  if (vleft != null && vright != null)
 	  { if (vright.length() > 0 && vleft.startsWith(vright.substring(0,vright.length()-1)))
         { return true; }
-	  } 
-	  return false; 
-	} 
-	else if ("->hasSuffix".equals(condop))
-	{ String vleft = getValue(cond.getLeft(),mod); 
-	  String vright = getValue(cond.getRight(),mod); 
+      } 
+      return false; 
+    } 
+    else if ("->hasSuffix".equals(condop))
+    { String vleft = getValue(cond.getLeft(),mod); 
+      String vright = getValue(cond.getRight(),mod); 
 	  // System.out.println(">>> left = " + vleft + ", right = " + vright + " left->hasSuffix(right) = " + vleft.endsWith(vright));  
-	  if (vleft != null && vright != null)
-	  { if (vright.length() > 0 && vleft.endsWith(vright.substring(1,vright.length())))
-        { return true; }
-	  } 
-	  return false; 
-	} 
+      if (vleft != null && vright != null)
+      { if (vright.length() > 0 && vleft.endsWith(vright.substring(1,vright.length())))
+        { return true; } // assumes string values always have "". 
+      } 
+      return false; 
+    } 
+    else if ("->includes".equals(condop))
+    { Vector leftValue = getCollectionValue(cond.getLeft(),mod); 
+      Object rightValue = getValueOf(cond.getRight(),mod); 
+      if (leftValue.contains(rightValue))
+      { return true; } 
+      return false; 
+    } 
+    else if ("->excludes".equals(condop))
+    { Vector leftValue = getCollectionValue(cond.getLeft(),mod); 
+      Object rightValue = getValueOf(cond.getRight(),mod); 
+      if (leftValue.contains(rightValue))
+      { return false; } 
+      return true; 
+    } 
+    else if ("->includesAll".equals(condop))
+    { Vector leftValue = getCollectionValue(cond.getLeft(),mod); 
+      Vector rightValue = getCollectionValue(cond.getRight(),mod); 
+      if (leftValue.containsAll(rightValue))
+      { return true; } 
+      return false; 
+    } 
+    else if ("->excludesAll".equals(condop))
+    { Vector leftValue = getCollectionValue(cond.getLeft(),mod); 
+      Vector rightValue = getCollectionValue(cond.getRight(),mod); 
+      Vector intersect = new Vector(); 
+	  intersect.addAll(leftValue); 
+	  intersect.retainAll(rightValue); 
+	  if (intersect.size() > 0)
+      { return false; } 
+      return true; 
+    } 
     return false; 
   }  
 
   public boolean satisfiesBasicCondition(BasicExpression cond, ModelSpecification mod)
   { String val = getValue(cond,mod); 
-    if ("true".equals(val + "")) { return true; } 
+    if ("true".equals(val + "")) 
+	{ return true; } 
     return false; 
   } 
  
@@ -692,7 +962,10 @@ public class ObjectSpecification extends ModelElement
   { return false; } 
 
   public boolean satisfiesCondition(Expression cond, ModelSpecification mod)
-  { if (cond instanceof BinaryExpression) 
+  { if (cond == null) 
+    { return true; } 
+
+    if (cond instanceof BinaryExpression) 
     { return satisfiesBinaryCondition((BinaryExpression) cond, mod); }
     else if (cond instanceof BasicExpression)
     { return satisfiesBasicCondition((BasicExpression) cond, mod); }
@@ -851,5 +1124,60 @@ public class ObjectSpecification extends ModelElement
 
   public void generateJava(PrintWriter out)
   { } 
+  
+  
+  public static void main(String[] args) 
+  { ModelSpecification mod = new ModelSpecification();
+    Entity ent = new Entity("A"); 
+	 
+    Expression e1 = new BasicExpression(true); 
+	Expression e2 = new BasicExpression(-3); 
+	Expression e3 = new BasicExpression("\"My name\""); 
+	e3.setType(new Type("String", null)); 
+	Expression e4 = new BasicExpression("self"); 
+	e4.setType(new Type(ent)); 
+	Expression e5 = new BasicExpression(5.8);
+	BinaryExpression add = new BinaryExpression("+", e2, e5); 
+	add.setType(new Type("double", null));  
+	Expression e6 = new BasicExpression("\"me\""); 
+	e6.setType(new Type("String", null)); 
+	BinaryExpression suff = new BinaryExpression("->hasSuffix", e3, e6); 
+	suff.setType(new Type("boolean", null)); 
+	BinaryExpression less = new BinaryExpression("<", e2, e5); 
+	less.setType(new Type("boolean", null));  
+	
+	ObjectSpecification obj = new ObjectSpecification("a1", "A");
+	obj.setEntity(ent);  
+	mod.addObject(obj); 
+	System.out.println(mod + ""); 
+	
+	System.out.println(obj.getValueOf(e1,mod)); 
+	System.out.println(obj.getValueOf(e2,mod)); 
+	System.out.println(obj.getValueOf(e3,mod)); 
+	System.out.println(obj.getValueOf(e4,mod)); 
+	System.out.println(obj.getValueOf(add,mod));
+	// System.out.println(obj.getValueOf(e6,mod));
+	
+	System.out.println("\"name\"->hasSuffix(\"me\")  is " + obj.getValueOf(suff,mod));
+	System.out.println(obj.getValueOf(less,mod));
+	
+	Vector vect = new Vector(); 
+	vect.add("0.0"); 
+	vect.add("-3.0"); 
+	vect.add("6.0"); 
+	obj.setValue("r", vect); 
+	
+	Type intset = new Type("Set", null); 
+	intset.setElementType(new Type("double", null)); 
+	
+	Attribute r = new Attribute("r", intset, ModelElement.INTERNAL); 
+	
+	BasicExpression rexp = new BasicExpression(r); 
+	BinaryExpression isin = new BinaryExpression("->includes", rexp, e2);
+	isin.setType(new Type("boolean", null)); 
+	
+	System.out.println(obj.getValueOf(rexp,mod)); 
+	System.out.println(obj.getValueOf(isin,mod)); 
+  }
 
 }

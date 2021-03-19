@@ -11,7 +11,7 @@
  package: Statemachine
 */
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003-2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -53,7 +53,7 @@ class Statemachine extends Named
   public static int METHOD = 2; 
 
   private int describes = 0; 
-  private ModelElement modelElement = null; 
+  ModelElement modelElement = null; 
   private Vector attributes = new Vector();  // of Attribute
 
   /* Invariant:  
@@ -2330,6 +2330,61 @@ public Vector missingOpspecs(Vector opevents, String prefix)
     { System.err.println("Error in writing"); }
   }
 
+  public void saveModelData(String fileName, Vector vis)
+  { int n = events.size();
+    int m = states.size();
+    int an = attributes.size(); 
+    int p = transitions.size();
+
+    String name = label; 
+	
+    File filef = new File(fileName);
+    Vector saved = new Vector(); 
+
+    try
+    { PrintWriter out =
+          new PrintWriter(
+            new BufferedWriter(new FileWriter(filef)));
+			
+	  out.println(name + " : Statemachine"); 
+	  out.println(name + ".name = \"" + name + "\""); 
+
+      for (int i = 0; i < n; i++)
+      { String eventName = ((Event) events.get(i)).label; 
+	    out.println(eventName + " : Event"); 
+		out.println(eventName + ".name = \"" + eventName + "\"");
+		out.println(eventName + " : " + name + ".events");  
+	  }
+
+      for (int i = 0; i < vis.size(); i++)
+      { VisualData vd = (VisualData) vis.get(i);
+        if (vd instanceof RoundRectData)
+        { RoundRectData rd = (RoundRectData) vd;
+          if (rd.state != null) 
+		  { rd.state.saveModelData(out); 
+		    out.println(rd.state.label + " : " + name + ".states"); 
+		  } 
+        }
+        else if (vd instanceof LineData)
+        { LineData ld = (LineData) vd;
+		  if (ld.transition != null) 
+		  { ld.transition.saveModelData(out); 
+		    out.println(ld.transition.label + " : " + name + ".transitions"); 
+		  }
+        }
+      }
+
+      if (initial_state != null)
+	  { out.println(name + ".initialState = " + initial_state.label); }
+	  
+      out.close(); 
+      System.out.println("Written model data to " + fileName); 
+    }
+    catch (IOException e) 
+    { System.err.println("Error in writing"); }
+  }
+
+
   public static StatechartData retrieveData(String fileName, int cType)
   { String[] data;
     int[] datax;
@@ -3394,7 +3449,7 @@ public Vector retrieveEventlist(String fileName)
    
     String statename = nme + "_state"; 
     BasicExpression var = new BasicExpression(statename);
-    Expression cond = new BasicExpression("true"); 
+    Expression cond = new BasicExpression(true); 
  
     Vector terms = getTerminalStates(); 
     for (int i = 0; i < terms.size(); i++) 
@@ -3436,7 +3491,7 @@ public Vector retrieveEventlist(String fileName)
     var.setType(intType); 
     var.setUmlKind(Expression.VARIABLE); 
 
-    Expression cond = new BasicExpression("true"); 
+    Expression cond = new BasicExpression(true); 
      
     Vector terms = getTerminalStates(); 
     for (int i = 0; i < terms.size(); i++) 
@@ -3491,7 +3546,7 @@ public Vector retrieveEventlist(String fileName)
    
     String statename = nme + "_state"; 
     BasicExpression var = new BasicExpression(statename);
-    Expression cond = new BasicExpression("true"); 
+    Expression cond = new BasicExpression(true); 
  
     Vector terms = getTerminalStates(); 
     for (int i = 0; i < terms.size(); i++) 

@@ -2642,6 +2642,7 @@ public class UCDArea extends JPanel
 	
 	int sourceClasses = 0; 
 	int targetClasses = 0; 
+	int derivedClasses = 0; 
 	int allClasses = entities.size(); 
 	
     for (int j = 0; j < allClasses; j++) 
@@ -2650,6 +2651,9 @@ public class UCDArea extends JPanel
 	  { sourceClasses++; }
 	  else if (ent.isTarget())
 	  { targetClasses++; }
+	  
+	  if (ent.isDerived())
+	  { derivedClasses++; }
 	 
       int entsize = ent.displayMeasures(out,clones);
 	  totalClassSize = totalClassSize + entsize; 
@@ -2684,14 +2688,19 @@ public class UCDArea extends JPanel
 	
 	System.out.println(">>> There are " + sourceClasses + " source classes"); 
 	System.out.println(">>> There are " + targetClasses + " target classes"); 
+	System.out.println(">>> There are " + derivedClasses + " derived classes"); 
+	System.out.println(">>> There are " + (allClasses - derivedClasses) + " non-derived classes"); 
 	System.out.println(">>> There are " + allClasses + " total classes"); 
 	System.out.println(); 
+	int uccount = useCases.size(); 
+	System.out.println(">>> There are " + uccount + " total use cases"); 
+	
 
     int tcount = 0; 
     int trcount = 0; 
     int totalsize = 0; 
 
-    for (int i = 0; i < useCases.size(); i++)
+    for (int i = 0; i < uccount; i++)
     { ModelElement me = (ModelElement) useCases.get(i); 
       if (me instanceof UseCase)
       { UseCase uc = (UseCase) me; 
@@ -2714,6 +2723,7 @@ public class UCDArea extends JPanel
       }  
     } 
 
+	System.out.println(">>> There are " + tcount + " general use cases"); 
 
     Map cg = displayCallGraph(out,clones);
 
@@ -2732,7 +2742,7 @@ public class UCDArea extends JPanel
     highcost = highcost + 20*clonecount; 
 
     out.println("*** Total size of classes in the system is: " + totalClassSize);  
-    out.println("*** Total number of transformations in the system is: " + tcount);  
+    out.println("*** Total number of transformations (general use cases) in the system is: " + tcount);  
     out.println("*** Total number of transformation rules in the system is: " + trcount);  
     out.println("*** Total number of operations in the system is: " + topscount);  
     out.println("*** Total size of transformations in the system is: " + totalsize);  
@@ -11367,7 +11377,7 @@ public void produceCUI(PrintWriter out)
           { EntityMatching em = new EntityMatching(esrc,etrg);
             System.out.println(">> Entity mapping rule: " + sents + " |--> " + tents);
             
-			if (precond != null) 
+            if (precond != null) 
             { Vector contexts1 = new Vector(); 
               
               contexts1.add(esrc); 
@@ -11389,23 +11399,23 @@ public void produceCUI(PrintWriter out)
             while (amx != null)
             { amx = readEntityMapping(br,em); }  
           }
-		  else // type mapping? 
-		  { Type t1 = Type.getTypeFor(sents.trim(),types,entities);
-		    Type t2 = Type.getTypeFor(tents.trim(),types,entities);
-			if (t1 != null && t2 != null)
-			{ System.out.println(">> Type mapping rule: " + t1 + " |--> " + t2); 
-			  TypeMatching tm = new TypeMatching(t1,t2); 
-			  ValueMatching vmx = readTypeMapping(br,tm);
+          else // type mapping? 
+          { Type t1 = Type.getTypeFor(sents.trim(),types,entities);
+            Type t2 = Type.getTypeFor(tents.trim(),types,entities);
+            if (t1 != null && t2 != null)
+            { System.out.println(">> Type mapping rule: " + t1 + " |--> " + t2); 
+              TypeMatching tm = new TypeMatching(t1,t2); 
+              ValueMatching vmx = readTypeMapping(br,tm);
               while (vmx != null)
               { vmx = readTypeMapping(br,tm); }
-			  System.out.println(">> New type mapping rule: " + tm);
-			  tm.setName(currentTypeMappingName);  
-	          res.addTypeMatch(tm); 		  
-			}  
-		  }   
+                System.out.println(">> New type mapping rule: " + tm);
+                tm.setName(currentTypeMappingName);  
+                res.addTypeMatch(tm); 		  
+              }  
+            }   
+          } 
         } 
-      } 
-	  else if (s.indexOf(":") > 0) // A named function definition
+        else if (s.indexOf(":") > 0) // A named function definition
 	  { int inddot = s.indexOf(":"); 
 	    String ff = s.substring(0,inddot); 
 	    String f = ff.trim(); 
@@ -13030,8 +13040,8 @@ public void produceCUI(PrintWriter out)
             Vector auxvars = src.allAttributesUsedIn(); 
             Vector trgvars = trg.allAttributesUsedIn(); 
 
-            // System.out.println(">>>> attributes used in " + src + " are: " + auxvars); 
-            // System.out.println(">>>> attributes used in " + trg + " are: " + trgvars); 
+            System.out.println(">>>> attributes used in " + src + " are: " + auxvars); 
+            System.out.println(">>>> attributes used in " + trg + " are: " + trgvars); 
 
             Attribute srcvar = null; 
             if (auxvars.size() > 0) 
@@ -13056,13 +13066,14 @@ public void produceCUI(PrintWriter out)
             { newam = new AttributeMatching(srcvar, trgvar); } 
             else 
             { newam = new AttributeMatching(src, trgvar, srcvar, auxvars); 
-	          // System.out.println(">> Expression matching. Type of " + srcvar + " is " + srcvar.getType()); 
-			  if (src.getType() != null && src.getType().isCollection() && srcvar != null)
-			  { Type elemType = src.getElementType(); 
-			    Attribute elementvar = new Attribute(srcvar.getName() + "$x", elemType, ModelElement.INTERNAL); 
-				newam.setElementVariable(elementvar); 
-			  }
-		    } 
+	          System.out.println(">> Expression matching. src=" + src + " srcvar=" + srcvar);
+ 
+              if (src.getType() != null && src.getType().isCollection() && srcvar != null)
+              { Type elemType = src.getElementType(); 
+                Attribute elementvar = new Attribute(srcvar.getName() + "$x", elemType, ModelElement.INTERNAL); 
+                newam.setElementVariable(elementvar); 
+              }
+	       } 
  
           //  newam.displayMappingKind(); 
 
@@ -18575,10 +18586,42 @@ public void produceCUI(PrintWriter out)
     else 
     { System.err.println("!! No TL specification loaded"); } 
   } 
+  
+  public void mapTL2CSTL()
+  { if (tlspecification != null) 
+    { System.out.println(); 
+      System.out.println(">>> CSTL specification corresponding to TL, saved in tl.cstl"); 
+      System.out.println(); 
+	
+      try
+      { PrintWriter cout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter("output/tl.cstl")));
 
+  
+        java.util.Map cstlVersion = tlspecification.convert2CSTL();
+        Vector cstlcats = new Vector(); 
+        cstlcats.addAll(cstlVersion.keySet()); 
+        for (int i = 0; i < cstlcats.size(); i++) 
+        { String cat = (String) cstlcats.get(i); 
+          Vector cstlrules = (Vector) cstlVersion.get(cat);  
+          cout.println(cat + "::");
+          for (int j = 0; j < cstlrules.size(); j++) 
+          { CGRule r = (CGRule) cstlrules.get(j); 
+            cout.println(r); 
+          }
+          cout.println(); 
+        }  
+        cout.close(); 
+      } catch (Exception _fex) 
+      { _fex.printStackTrace(); } 
+    }
+  }
+  
   public void mapTL2UMLRSDS(Vector thesaurus)
   { if (tlspecification != null) 
-    { synthesiseTransformationsUMLRSDS(tlspecification,entities,thesaurus); 
+    { System.out.println(); 
+      synthesiseTransformationsUMLRSDS(tlspecification,entities,thesaurus); 
       
       BufferedReader br = null;
       Vector res = new Vector();
@@ -18630,6 +18673,9 @@ public void produceCUI(PrintWriter out)
           { addGeneralUseCase(uc); } 
 		} 
 	  }
+	  
+	  System.out.println(); 
+	  System.out.println();   
     } 
     else 
     { System.err.println("!! No TL specification loaded"); } 
@@ -19398,6 +19444,7 @@ public void produceCUI(PrintWriter out)
     long startTime = d1.getTime(); 
 	
 	Vector background = Thesarus.loadThesaurus("output/background.txt");
+	Vector verbs = Thesarus.loadThesaurus("output/verbs.txt");
 
     BufferedReader br = null;
     Vector res = new Vector();
@@ -19449,6 +19496,11 @@ public void produceCUI(PrintWriter out)
 	  { mes.add(ob); } // but not OperationDescription instances
     } 
 	
+	System.out.println("Input file output/tagged.txt should be the POS-tagged output from Stanford or OpenNLP tagger."); 
+    System.out.println("Each sentence should be on a single line, with an empty line between sentences."); 
+    System.out.println("output/background.txt and output/verbs.txt should also be defined, in thesaurus format.");
+	System.out.println();  
+    
 	Vector sentences = new Vector(); 
 	
     for (int i = 0; i < reqstrings.size(); i++) 
@@ -19456,17 +19508,19 @@ public void produceCUI(PrintWriter out)
       Compiler2 comp = new Compiler2();  
       comp.nospacelexicalanalysisText(xstring); 
       Vector reqs = comp.parseTaggedText(); 
-      System.out.println(reqs);
+      System.out.println(">> Parsed: " + reqs);
       System.out.println(); 
       NLPSentence xres = new NLPSentence("S", reqs); 
       xres.setId("" + (i+1)); 
       sentences.add(xres); 
 	  
       java.util.Map classifications = xres.classifyWords(background,mes);
+      java.util.Map verbClassifications = xres.classifyVerbs(verbs);
       System.out.println(); 
       System.out.println(">>> Sentence " + (i+1));  
-      System.out.println("Using classifications >>> " + classifications);
-      km3model = xres.getBehaviourKM3(reqs,mes,classifications); 
+      System.out.println("Using noun classifications >>> " + classifications);
+      System.out.println("Using verb classifications >>> " + verbClassifications);
+      km3model = xres.getBehaviourKM3(reqs,mes,background,classifications,verbClassifications); 
       System.out.println();    
 
       // RequirementsSentence req = new RequirementsSentence("",reqs); 
@@ -19518,7 +19572,7 @@ public void produceCUI(PrintWriter out)
 	long t1 = d1.getTime(); 
 
      Vector background = Thesarus.loadThesaurus("output/background.txt");
-	 System.out.println(">>> Background information assumed: " + background); 
+	 // System.out.println(">>> Background information assumed: " + background); 
 	  
      File infile = new File("output/nlpout.txt");
      BufferedReader br = null;
@@ -19534,7 +19588,11 @@ public void produceCUI(PrintWriter out)
        return; 
      }
 
-
+    System.out.println("Input file output/nlpout.txt should be the output from Stanford tagger & parser."); 
+    System.out.println("Background information file output/background.txt should be in thesaurus format."); 
+    System.out.println(); 
+    System.out.println(); 
+    
      String xmlstring = ""; 
      int linecount = 0; 
      boolean flag = false; 
@@ -21748,7 +21806,23 @@ public void produceCUI(PrintWriter out)
     }
   } 
   
-  
+  public void qualityCheck()
+  { for (int i = 0; i < entities.size(); i++) 
+    { Entity ent = (Entity) entities.get(i); 
+      if (ent.allSubclassesAreEmpty())
+      { System.err.println("! Warning: class " + ent + " has empty immediate subclasses -- these may be redundant."); } 
+    } 
+
+    consistencyCheck(); 
+    diagramCheck(); 
+
+    for (int i = 0; i < useCases.size(); i++) 
+    { if (useCases.get(i) instanceof UseCase)
+      { UseCase uc = (UseCase) useCases.get(i); 
+        uc.checkIncludesValidity(useCases); 
+      } 
+    } 
+  }  
 } 
 
 

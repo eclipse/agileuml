@@ -152,6 +152,15 @@ public class Attribute extends ModelElement
 
   public boolean isMany()
   { return upper == 0; }
+
+  public boolean isReference()
+  { if (type != null && type.isEntity())
+    { return true; }
+    if (type != null && Type.isEntityCollection(type))
+    { return true; }
+    return false; 
+  } 
+
   
   public static Vector reduceToInitialPaths(Vector atts)
   { // Remove r.f if r is already in atts

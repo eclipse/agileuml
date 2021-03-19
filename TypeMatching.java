@@ -1,6 +1,7 @@
 import java.util.Vector;
 import java.util.Set;
 import java.util.HashSet;
+import java.io.*; 
 
 /******************************
 * Copyright (c) 2003--2021 Kevin Lano
@@ -24,10 +25,27 @@ public class TypeMatching
   public TypeMatching(Type s, Type t)
   { src = s;
     trg = t;
+    if (s != null && t != null && 
+        s.isEnumeration() && t.isEnumeration())
+    { name = "convert" + s.getName() + "_" + t.getName(); } 
+    else 
+    { name = s.getName() + "2" + t.getName(); }  
   }
+
+  public static TypeMatching lookupByName(String nme, Vector tms)
+  { for (int i = 0; i < tms.size(); i++) 
+    { TypeMatching tm = (TypeMatching) tms.get(i); 
+      if (tm.getName().equals(nme))
+      { return tm; } 
+    } 
+    return null; 
+  } 
   
   public void setName(String nme)
   { name = nme; }
+
+  public String getName()
+  { return name; }
 
   public void addValueMapping(Expression s, Expression t)
   { ValueMatching v = new ValueMatching(s,t);
@@ -59,6 +77,16 @@ public class TypeMatching
     }
     return res;
   }
+
+  public boolean equals(Object obj) 
+  { if (obj instanceof TypeMatching)
+    { TypeMatching tm = (TypeMatching) obj; 
+      if ((tm + "").equals(this + ""))
+      { return true; } 
+    } 
+    return false; 
+  } // every ValueMatching of tm has equal one in this, 
+    // & vice-versa
 
   public boolean isBijective()
   { Set domain = new HashSet();
@@ -103,8 +131,8 @@ public class TypeMatching
     { res = res + "(s : String) : String =\n    "; 
       for (int i = 0; i < valueMappings.size(); i++) 
       { ValueMatching vm = (ValueMatching) valueMappings.get(i); 
-        String vals = vm.src + ""; 
-        String valt = vm.trg + ""; 
+        String vals = "\"" + vm.src + "\""; 
+        String valt = "\"" + vm.trg + "\""; 
         res = res + "if s = " + vals + " then " + valt + " else "; 
         restail = restail + " endif "; 
       }
@@ -129,16 +157,42 @@ public class TypeMatching
     else if (src.isBoolean() && trg.isEnumeration())
     { res = Type.booleanEnumOp(trg); } 
     else if (src.isString() && trg.isString())
-    { res = res + "(s : String) : String =\n    "; 
+    { res = res + "(s : String) : String\n"; 
+      res = res + "  pre: true\n"; 
+      res = res + "  post: \n"; 
+	   
+      for (int i = 0; i < valueMappings.size(); i++) 
+      { ValueMatching vm = (ValueMatching) valueMappings.get(i); 
+        String vals = "\"" + vm.src + "\""; 
+        String valt = "\"" + vm.trg + "\""; 
+        res = res + "    ( s = " + vals + " => result = " + valt + " ) &\n";  
+      }
+      res = res + "    ( true => result = \"\" );\n\n";  
+    } 
+    return res;
+  }
+
+  public void cstlfunction(PrintWriter out)
+  { /* 
+    if (src.isEnumeration() && trg.isEnumeration())
+    { res = Type.enum2enumOp(src,trg); } 
+    else if (src.isString() && trg.isEnumeration())
+    { res = trg.string2EnumOp(); } 
+    else if (trg.isString() && src.isEnumeration())
+    { res = src.enum2StringOp(); } 
+    else if (trg.isBoolean() && src.isEnumeration())
+    { res = Type.enumBooleanOp(src); } 
+    else if (src.isBoolean() && trg.isEnumeration())
+    { res = Type.booleanEnumOp(trg); } 
+    else */ 
+    if (src.isString() && trg.isString())
+    { out.println("Text::"); 
       for (int i = 0; i < valueMappings.size(); i++) 
       { ValueMatching vm = (ValueMatching) valueMappings.get(i); 
         String vals = vm.src + ""; 
         String valt = vm.trg + ""; 
-        res = res + "if s = " + vals + " then " + valt + " else "; 
-        restail = restail + " endif "; 
+        out.println(vals + " |-->" + valt);  
       }
-      res = res + " \"\" " + restail + ";\n\n";  
     } 
-    return res;
   }
 }

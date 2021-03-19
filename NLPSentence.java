@@ -2,7 +2,7 @@ import java.util.Vector;
 
 /* Package: Requirements Engineering */ 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003-2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -353,6 +353,8 @@ public class NLPSentence
   public String getKM3(Vector elems, java.util.Map fromBackground)
   { String res = ""; 
     Vector quals = new Vector(); 
+	java.util.HashMap verbClassifications = new java.util.HashMap(); 
+	
     if (isSVO() && isSystemDefinition())
     { System.out.println(">>> System definition: " + this); 
 	  Vector seqs = sequentialise(); 
@@ -402,28 +404,37 @@ public class NLPSentence
         System.out.println(">>> Split as follows (noun phrase, verb phrase, remainder, comment): " + np1 + "; " + vb1 + "; " + 
 	                   rem + "; " + comment);
         java.util.Map mp = new java.util.HashMap(); 
-	    UseCase uc = identifyUseCase(np1,vb1,rem,elems,mp); 
+	    UseCase uc = identifyUseCase(np1,vb1,rem,elems,mp,verbClassifications); 
 	    System.out.println(">>> Identified use case " + uc); 
 		
-  	    identifyModelElements(uc,np1,vb1,rem,fromBackground,mp,elems);   
+  	    identifyModelElements(uc,np1,vb1,rem,fromBackground,verbClassifications,mp,elems);   
 	  }
 	  else 
 	  { identifyClassesAndFeatures(fromBackground,rem,elems,quals1); }
     }  
       
 	String ucs = ""; 
-    for (int i = 0; i < elems.size(); i++) 
+	for (int i = 0; i < elems.size(); i++) 
     { if (elems.get(i) instanceof Type) 
       { Type tt = (Type) elems.get(i); 
         res = res + tt.getKM3() + "\n\n";
       }
-	  else if (elems.get(i) instanceof Entity) 
+	}
+	
+	
+	for (int i = 0; i < elems.size(); i++) 
+    { if (elems.get(i) instanceof Entity) 
       { Entity ent = (Entity) elems.get(i); 
         res = res + ent.getKM3() + "\n\n";
-      } 
-      else if (elems.get(i) instanceof UseCase)
-      { UseCase uc = (UseCase) elems.get(i); 
-        ucs = ucs + uc.getKM3() + "\n\n";
+      }
+	} 
+	
+	 
+    for (int i = 0; i < elems.size(); i++) 
+    { if (elems.get(i) instanceof UseCase)
+      { UseCase ucx = (UseCase) elems.get(i);
+	    // System.out.println(">>> Linked entity of " + ucx.getName() + " is " + ucx.ent);  
+        ucs = ucs + ucx.getKM3() + "\n\n";
       } 
     }
     return res + ucs; 
@@ -650,7 +661,9 @@ public class NLPSentence
       if (ent != null) 
       { System.out.println(">>> use case on entity " + ent); 
         if (uc.indexOf("creat") >= 0) 
-        { ucase.setResultType(new Type(ent)); } 
+        { ucase.setResultType(new Type(ent)); 
+		  ucase.defineCreateCode(ent); 
+		} 
 		if (uc.indexOf("edit") >= 0 || uc.indexOf("delete") >= 0)
 		{ String ex = ent.getName().toLowerCase(); 
 		  ucase.addParameter(ex, new Type(ent)); 
@@ -661,7 +674,7 @@ public class NLPSentence
     return mp; 
   } 
 
-  public UseCase identifyUseCase(Vector np1, Vector vb1, Vector rem, Vector elems, java.util.Map mp)
+  public UseCase identifyUseCase(Vector np1, Vector vb1, Vector rem, Vector elems, java.util.Map mp, java.util.Map verbClassifications)
   { int index = 0; 
     Vector quals = new Vector(); 
     String uc = ""; 
@@ -716,7 +729,7 @@ public class NLPSentence
 	  
 	  for (int j = 0; j < vb1.size(); j++) 
       { NLPWord wd = (NLPWord) vb1.get(j); 
-        if (index == 0 && wd.isSignificantVerbPhraseWord(quals,mp))
+        if (index == 0 && wd.isSignificantVerbPhraseWord(verbClassifications,quals,mp))
 		{ uc = uc + wd.text; 
 		  index = j+1;
 		  shortName = shortName + wd.text;  
@@ -759,7 +772,7 @@ public class NLPSentence
       if (wd.text.equals("so"))
 	  { break; } 
 
-      if (index == 0 && wd.isSignificantVerbPhraseWord(quals,mp))
+      if (index == 0 && wd.isSignificantVerbPhraseWord(verbClassifications,quals,mp))
       { uc = uc + wd.text; 
         index = j+1;
 	    shortName = shortName + wd.text;  
@@ -805,7 +818,7 @@ public class NLPSentence
 		  }
 		  else 
 		  { Entity newent = new Entity(actr); 
-   		    System.out.println(">>> New entity: " + actr); 
+   		    System.out.println(">>> New entity for use case actor: " + actr); 
             elems.add(newent);
     	    derivedElements.add(newent); 
 	        newent.addStereotype("originator=\"" + id + "\""); 
@@ -830,45 +843,73 @@ public class NLPSentence
     return res; 
   } 
   
-  public String getBehaviourKM3(Vector seqs, Vector elems, java.util.Map fromBackground)
+  public java.util.Map classifyVerbs(Vector verbs)
+  { java.util.HashMap res = new java.util.HashMap(); 
+    for (int i = 0; i < phrases.size(); i++) 
+    { NLPPhraseElement phr = (NLPPhraseElement) phrases.get(i); 
+      java.util.HashMap mp = phr.classifyVerbs(verbs); 
+      res.putAll(mp);  
+    } 
+    return res; 
+  } 
+
+  public String getBehaviourKM3(Vector seqs, Vector elems, Vector background, java.util.Map fromBackground, java.util.Map verbClassifications)
   { String res = ""; 
     Vector quals = new Vector(); 
     // Vector seqs = sequentialise(); 
     Vector np1 = new Vector(); 
     Vector vb1 = new Vector(); 
     Vector rem = new Vector();   
-	Vector comment = new Vector(); 
-	java.util.Map mp = new java.util.HashMap(); 
+    Vector comment = new Vector(); 
+    java.util.Map mp = new java.util.HashMap(); 
 
     splitIntoPhrases(seqs,np1,vb1,rem,comment); 
     System.out.println(">>> Split as follows (noun phrase, verb phrase, remainder, comment): " + np1 + "; " + vb1 + "; " + 
 	                   rem + "; " + comment);
-    UseCase uc = identifyUseCase(np1,vb1,rem,elems,mp); 
-	System.out.println(">>> Identified use case " + uc); 
+    UseCase uc = identifyUseCase(np1,vb1,rem,elems,mp,verbClassifications); 
+    System.out.println(">>> Identified use case " + uc); 
 	
-	identifyModelElements(uc,np1,vb1,rem,fromBackground,mp,elems);   
+    identifyModelElements(uc,np1,vb1,rem,fromBackground,verbClassifications,mp,elems);   
       
-	String ucs = ""; 
+    String ucs = ""; 
 	
     for (int i = 0; i < elems.size(); i++) 
     { if (elems.get(i) instanceof Type) 
       { Type tt = (Type) elems.get(i); 
         res = res + tt.getKM3() + "\n\n";
       }
-	  else if (elems.get(i) instanceof Entity) 
+    }
+	
+	
+    for (int i = 0; i < elems.size(); i++) 
+    { if (elems.get(i) instanceof Entity) 
       { Entity ent = (Entity) elems.get(i); 
+        // check if it has a superclass in elems, according to
+        // background: 
+        ThesaurusConcept tc = Thesarus.lookupWord(background,ent.getName()); 
+        if (tc != null && tc.getGeneralisation() != null) 
+        { String gen = tc.getGeneralisation(); 
+          Object gencl = ModelElement.lookupByName(gen,elems); 
+          if (gencl != null && (gencl instanceof Entity))
+          { ent.setSuperclass((Entity) gencl); } 
+        } 
         res = res + ent.getKM3() + "\n\n";
-      } 
-      else if (elems.get(i) instanceof UseCase)
+      }
+    } 
+	
+	 
+    for (int i = 0; i < elems.size(); i++) 
+    { if (elems.get(i) instanceof UseCase)
       { UseCase ucx = (UseCase) elems.get(i);
-	    // System.out.println(">>> Linked entity of " + ucx.getName() + " is " + ucx.ent);  
-        ucs = ucs + ucx.getKM3() + "\n\n";
+	   ucs = ucs + ucx.getKM3() + "\n\n";
       } 
     }
     return res + ucs; 
   } 
 
-  public void identifyModelElements(UseCase uc, Vector np1, Vector vb1, Vector rem, java.util.Map fromBackground, java.util.Map mp, Vector elems)
+  public void identifyModelElements(UseCase uc, Vector np1, Vector vb1, Vector rem, 
+                                    java.util.Map fromBackground, java.util.Map verbClassifications, 
+									java.util.Map mp, Vector elems)
   { // check if the definite classes and features already exist, if not, create them 
   
     // After a "create", "delete" we expect a class name 
@@ -884,6 +925,7 @@ public class NLPSentence
 	Vector quals = new Vector(); 
 	Vector localElems = new Vector(); // in this use case
 	// String currStereo = null; 
+	Vector foundStereotypes = new Vector(); 
 	
     if (vb1.size() > 0)
 	{ // starts with a verb "Update/create/add etc ...."
@@ -893,12 +935,15 @@ public class NLPSentence
         if (index > 0) 
 		{ addWordSemantics(wd,uc,elems,localElems,fromBackground,mp); }
 		
-        if (wd.isSignificantVerbPhraseWord(quals,mp))
+        if (wd.isSignificantVerbPhraseWord(verbClassifications,quals,mp))
 		{ index = j+1;     
 		  String stereotype = (String) mp.get(wd.text + ""); 
           if (stereotype != null)
-          { System.out.println("Current stereotype >> " + stereotype); 
-	        uc.addStereotype(stereotype); 
+          { System.out.println("Found stereotype >> " + stereotype); 
+	        if (foundStereotypes.size() == 0) 
+			{ foundStereotypes.add(stereotype); 
+			  uc.addStereotype(stereotype); 
+			} 
 	      }
         } 		    
       }
@@ -910,12 +955,15 @@ public class NLPSentence
       if (index > 0) 
 	  { addWordSemantics(wd,uc,elems,localElems,fromBackground,mp); }
 		
-      if (wd.isSignificantVerbPhraseWord(quals,mp))
+      if (wd.isSignificantVerbPhraseWord(verbClassifications,quals,mp))
 	  { index = j+1; 
         String stereotype = (String) mp.get(wd.text + ""); 
         if (stereotype != null)
         { System.out.println("Current stereotype >> " + stereotype); 
-	      uc.addStereotype(stereotype); 
+	      if (foundStereotypes.size() == 0) 
+          { foundStereotypes.add(stereotype); 
+            uc.addStereotype(stereotype); 
+          } 
 	    }
       } 
     }
@@ -941,12 +989,16 @@ public class NLPSentence
           uc.ent = (Entity) elm; 
           Vector stereos = uc.getStereotypes(); 
           if (stereos.contains("create") && uc.hasNoResult())
-          { uc.setResultType(new Type(uc.ent)); }  // Only for the *first* entity after the main verb. 
+          { uc.setResultType(new Type(uc.ent)); 
+		    uc.defineCreateCode(uc.ent); 
+		  }  // Only for the *first* entity after the main verb. 
           if (stereos.contains("edit") ||
                 stereos.contains("persistent") ||
                 stereos.contains("delete") || 
                 stereos.contains("read"))
           { String ex = uc.ent.getName().toLowerCase() + "x"; 
+            if (stereos.contains("read"))
+            { uc.defineReadCode(ex,uc.ent); } 
             uc.addParameter(ex, new Type(uc.ent)); 
           }
           // resolve any unattached attributes at this point
@@ -969,12 +1021,16 @@ public class NLPSentence
             { uc.ent = mainent;  
   		      Vector stereos = uc.getStereotypes(); 
               if (stereos.contains("create") && uc.hasNoResult())
-              { uc.setResultType(new Type(uc.ent)); }
+              { uc.setResultType(new Type(uc.ent)); 
+			    uc.defineCreateCode(uc.ent); 
+		      }
               if (stereos.contains("edit") ||
                   stereos.contains("persistent") || 
                   stereos.contains("delete") || stereos.contains("other") ||  
                   stereos.contains("read"))
-              { String ex = uc.ent.getName().toLowerCase() + "x"; 
+              { String ex = uc.ent.getName().toLowerCase() + "x";
+			    if (stereos.contains("read"))
+				{ uc.defineReadCode(ex,uc.ent); } 
                 uc.addParameter(ex, new Type(uc.ent)); 
               }
             }

@@ -8,7 +8,7 @@
 */
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -453,7 +453,39 @@ class InteractionArea extends JPanel
 
 
   public void saveDataToFile(String file) 
-  { } 
+  { File filef = new File("output/interactionsmodel.txt");
+    Vector saved = new Vector(); 
+
+    try
+    { PrintWriter out =
+          new PrintWriter(
+            new BufferedWriter(new FileWriter(filef)));
+
+      for (int i = 0; i < lifelines.size(); i++) 
+      { UMLObject lf = (UMLObject) lifelines.get(i); 
+	    lf.saveModelData(out); 
+      } 
+
+      for (int i = 0; i < messages.size(); i++) 
+      { Message ms = (Message) messages.get(i); 
+	    ms.saveModelData(out,entities); 
+      } 
+	  
+	  for (int i = 0; i < executionInstances.size(); i++) 
+	  { ExecutionInstance inst = (ExecutionInstance) executionInstances.get(i); 
+	    inst.saveModelData(out,entities); 
+	  }
+      
+	  for (int i = 0; i < lifelineStates.size(); i++) 
+	  { LifelineState st = (LifelineState) lifelineStates.get(i); 
+	    st.saveModelData(out); 
+	  }
+	  
+	  System.out.println(">>> Model data written to output/interactionsmodel.txt"); 
+
+      out.close(); 
+    } catch (Exception e) { } 
+  } 
 
   public void loadDataFromFile(String file) 
   {  }
@@ -605,7 +637,7 @@ class InteractionArea extends JPanel
     String txt = eDialog.getName();     
     if (txt != null && !txt.trim().equals(""))
     { String ttxt = txt.trim();    
-      System.out.println("The name entered is valid.");
+      System.out.println("The event name entered is valid.");
       Message e = 
         (Message) VectorUtil.lookup(ttxt,evs); 
       if (e != null) 
@@ -616,7 +648,7 @@ class InteractionArea extends JPanel
       return res; 
     }
     else
-    { System.out.println("Null text"); 
+    { System.out.println("Null text in input"); 
       return false; 
     } 
   }

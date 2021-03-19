@@ -3,7 +3,7 @@ import java.io.*;
 import java.util.Collections; 
 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003-2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -18,7 +18,9 @@ class ThesaurusConcept
   Vector preferredTerms = new Vector(); 
   Vector terms = new Vector(); 
   Vector linkedConcepts = new Vector(); 
+  String generalisation = "";  // superclass
   String partOfSpeech = "";
+  String verbType = "other";
   Vector semantics = new Vector(); 
     // eg., attribute with type, class, association, etc, stereotypes.  
 
@@ -51,6 +53,12 @@ class ThesaurusConcept
 
   public Vector getSemantics()
   { return semantics; } 
+  
+  public void setGeneralisation(String g)
+  { generalisation = g; }
+  
+  public String getGeneralisation()
+  { return generalisation; }
 
   public boolean hasTerm(String t)
   { boolean res = false; 
@@ -182,7 +190,7 @@ public class Thesarus
       // pwout = new PrintWriter(brout); 
     }
     catch (Exception e)
-    { System.out.println("Errors with file: " + f);
+    { System.out.println("!! Error loading file: " + f);
       return concepts; 
     }
     String xmlstring = ""; 
@@ -190,7 +198,7 @@ public class Thesarus
     while (!eof)
     { try { s = br.readLine(); }
       catch (IOException e)
-      { System.out.println("Reading failed.");
+      { System.out.println("!! Error: Reading " + f + " failed.");
         return concepts; 
       }
       if (s == null) 
@@ -225,7 +233,7 @@ public class Thesarus
           if ("DESCRIPTOR".equals(stag))
           { String cdef = sb.getContent(); 
             c = new ThesaurusConcept(cdef.toLowerCase());
-            System.out.println("New concept: " + cdef); 
+            System.out.println(">> New concept: " + cdef); 
           } 
           else if ("PT".equals(stag) && c != null)
           { String ndef = sb.getContent(); 
@@ -239,9 +247,13 @@ public class Thesarus
             c.addTerm(tt); 
             tt.addConcept(c); 
           } 
+          else if ("NTG".equals(stag) && c != null)
+          { String ndef = sb.getContent(); 
+            c.setGeneralisation(ndef);  
+          } 
           else if ("POS".equals(stag) && c != null)
           { String ndef = sb.getContent(); 
-		 System.out.println(">> part of speech = " + ndef); 
+            System.out.println(">> part of speech = " + ndef); 
             c.setPOS(ndef); 
           } 
           else if ("SEM".equals(stag) && c != null)
@@ -261,6 +273,8 @@ public class Thesarus
             } 
             else if (ndef.equals("reference"))
             { } 
+            else if (c.partOfSpeech.equals("VB"))
+            { c.verbType = ndef; } 
           } 
         } 
 

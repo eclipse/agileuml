@@ -3620,7 +3620,48 @@ public boolean conflictsWithIn(String op, Expression el,
     return res; 
   } 
 
+  public String cstlQueryForm(java.util.Map srcvarMap)
+  { String lqf = left.cstlQueryForm(srcvarMap); 
+    String rqf = right.cstlQueryForm(srcvarMap); 
+    if ("+".equals(operator) && isString())
+    { return lqf + "" + rqf; }
+    if ("->union".equals(operator))
+    { return lqf + "" + rqf; }
+    if ("^".equals(operator))
+    { return lqf + "" + rqf; }
 
+    return this + ""; 
+  }  
+    
+  public String cstlConditionForm(java.util.Map srcvarmap)
+  { String lqf = left.cstlConditionForm(srcvarmap); 
+    String rqf = right.cstlConditionForm(srcvarmap); 
+    if ("&".equals(operator))
+    { return lqf + ", " + rqf; } 
+    // for "or", copy the rule 
+    if ("=".equals(operator))
+    { return lqf + " " + rqf; } 
+    if ("/=".equals(operator))
+    { return lqf + " not " + rqf; }
+    if ("->hasStereotype".equals(operator))
+    { return lqf + " " + rqf; }
+    return this + ""; 
+  } 
+
+  public String negatedcstlConditionForm(java.util.Map srcvarmap)
+  { String lqf = left.cstlConditionForm(srcvarmap); 
+    String rqf = right.cstlConditionForm(srcvarmap); 
+    // if ("&".equals(operator))
+    // { return lqf + ", " + rqf; } 
+    // for "or", copy the rule 
+    if ("=".equals(operator))
+    { return lqf + " not " + rqf; } 
+    if ("/=".equals(operator))
+    { return lqf + " " + rqf; }
+    if ("->hasStereotype".equals(operator))
+    { return lqf + " not " + rqf; }
+    return "not " + this + ""; 
+  } 
 
   public String queryForm(java.util.Map env, boolean local)
   { String res;

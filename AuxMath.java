@@ -989,6 +989,43 @@ public class AuxMath
      return res; 
    } 
 
+   public static Vector removeCommonPrefix(Vector strs, String prefix)
+   { // each of the s : strs is prefix + something
+     Vector res = new Vector(); 
+     int plen = prefix.length(); 
+
+     if (strs.size() < 1) 
+     { return res; } 
+
+     for (int i = 0; i < strs.size(); i++) 
+     { String str = (String) strs.get(i); 
+       int slen = str.length(); 
+       res.add(str.substring(plen,slen)); 
+     } 
+
+     return res; 
+   } 
+
+   public static Vector removePrefix(String[] strs, String[]  prefs)
+   { // each strs[i] is prefs[i] + something
+
+     Vector res = new Vector(); 
+
+     if (strs.length < 1) 
+     { return res; } 
+
+     for (int i = 0; i < strs.length && i < prefs.length; i++) 
+     { String str = strs[i]; 
+       int slen = str.length(); 
+       int plen = prefs[i].length();
+       String remp = str.substring(plen,slen); 
+       System.out.println(str + " - prefix " + prefs[i] + " is: " + remp);  
+       res.add(remp); 
+     } 
+
+     return res; 
+   } 
+
    public static boolean isSuffixed(String[] xs, String[] ys) 
    { // Each ys[i] starts with xs[i]
 
@@ -1086,6 +1123,39 @@ public class AuxMath
      return res; 
    } 
 
+   public static Vector removeCommonSuffix(Vector strs, String suffix)
+   { // each of the s : strs is something + suffix
+     Vector res = new Vector(); 
+     int plen = suffix.length(); 
+
+     if (strs.size() < 1) 
+     { return res; } 
+
+     for (int i = 0; i < strs.size(); i++) 
+     { String str = (String) strs.get(i); 
+       int slen = str.length(); 
+       res.add(str.substring(0,slen - plen)); 
+     } 
+
+     return res; 
+   } 
+
+   public static Vector removeSuffix(String[] strs, String[] suffs)
+   { // each strs[i] is something + suffs[i]
+     Vector res = new Vector(); 
+     
+     if (strs.length < 1) 
+     { return res; } 
+
+     for (int i = 0; i < strs.length && i < suffs.length; i++) 
+     { String str = strs[i]; 
+       int slen = str.length();
+       int plen = suffs[i].length();  
+       res.add(str.substring(0,slen - plen)); 
+     } 
+
+     return res; 
+   } 
 
    // Suffixed and prefixed can occur 
 

@@ -1,13 +1,15 @@
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003-2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
 *
 * SPDX-License-Identifier: EPL-2.0
 * *****************************/
+
+import java.io.*; 
 
 class ExecutionInstance extends InteractionElement
 { Entity classifier = null;
@@ -117,5 +119,44 @@ class ExecutionInstance extends InteractionElement
     finTime.setParameters(pars);
     return finTime;
   }
+
+  public void saveModelData(PrintWriter out, Vector entities) 
+  { String name = label; 
+
+    out.println(name + " : ExecutionInstance"); 
+
+    if (classifier != null) 
+    { out.println(name + ".classifier = " + classifier.getName()); } 
+
+    if (executesOn != null) 
+    { out.println(name + ".executesOn = " + executesOn.getName()); } 
+
+    // BehaviouralFeature operation = null;
+    if (trigger != null) 
+    { out.println(name + ".trigger = " + trigger.getName()); 
+	  // if (trigger.operation != null) 
+	  // { out.println(name + ".operation = " + trigger.operation.getName()); }
+	}  
+
+    if (startTime != null) 
+    { String sid = startTime.saveModelData(out); 
+      out.println(name + ".startTime = " + sid); 
+    } 
+
+    if (endTime != null) 
+    { String tid = endTime.saveModelData(out); 
+      out.println(name + ".endTime = " + tid); 
+    } 
+
+    /* if (operation != null) 
+    { Entity owner = operation.getOwner(); 
+      Vector types = new Vector(); 
+      
+      String opid = operation.saveModelData(out,owner,entities,types); 
+      out.println(name + ".operation = " + opid); 
+    } */ 
+	// The operation is the same as trigger.operation
+
+  } 
 
 }

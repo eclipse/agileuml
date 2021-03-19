@@ -3597,7 +3597,7 @@ public Constraint generalType0inverse()
     { ostring = owner.getName(); } 
 
     out.println("    " + ostring + "::"); 
-    out.println(antecedent() + " => " + succedent() + ""); 
+    out.println(antecedent() + " => " + succedent() + ";"); 
     out.println(); 
   }  // the baseEntities are regenerated
 
@@ -3607,7 +3607,7 @@ public Constraint generalType0inverse()
     { ostring = owner.getName(); } 
 
     String res = "    " + ostring + "::\n"; 
-    res = res +  "      " + antecedent() + " => " + succedent() + "\n"; 
+    res = res +  "      " + antecedent() + " => " + succedent() + ";\n"; 
     res = res + "\n"; 
     return res; 
   }  // the baseEntities are regenerated

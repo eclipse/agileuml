@@ -10,7 +10,7 @@
       * depending on the users actions with the mouse. (Detecting events)
 */
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003-2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -147,7 +147,7 @@ class StatechartArea extends JPanel
     {
       if (visuals.elementAt(i) instanceof RoundRectData)
       {
-	RoundRectData rd = (RoundRectData) visuals.elementAt(i);
+        RoundRectData rd = (RoundRectData) visuals.elementAt(i);
 	
     // Vector sts = module.getStates();
     // for (int j = 0; j < sts.size(); j++) 
@@ -172,7 +172,7 @@ class StatechartArea extends JPanel
     {
       if (visuals.elementAt(i) instanceof LineData)
       {
-	LineData ld = (LineData) visuals.elementAt(i);
+        LineData ld = (LineData) visuals.elementAt(i);
 	
         Transition tr = ld.transition;
         Event ev = tr.event; 
@@ -193,7 +193,7 @@ class StatechartArea extends JPanel
 
         Expression grd1 = null; 
         if (grd == null) 
-        { tr1.guard = new BasicExpression("true"); }  
+        { tr1.guard = new BasicExpression(true); }  
         else if (module.getModelElement() instanceof Entity) 
         { grd1 = (Expression) grd.clone(); 
           Vector atts = ((Entity) module.getModelElement()).getAttributes();
@@ -733,7 +733,9 @@ class StatechartArea extends JPanel
 
 
   public void saveDataToFile(String file) 
-  { module.saveData(file,visuals); } 
+  { module.saveData(file,visuals);
+    module.saveModelData("output/statechartdata.txt",visuals); 
+  } 
 
   public void loadDataFromFile(String file) 
   { StatechartData sd = Statemachine.retrieveData(file,module.cType);
@@ -892,15 +894,16 @@ class StatechartArea extends JPanel
       module.setTemplate(null);  // is custom now. 
       String gens = transDialog.getGens(); 
       System.out.println("Generations: " + gens); 
-      int multip = module.getMultiplicity(); 
-      t.setGenerations(gens,outputevents); // eventlist must also
+      int multip = module.getMultiplicity();
+	   
+      t.setGenerations(gens,outputevents,module); // eventlist must also
                                         // contain events of all
                                         // reciever modules.
       String gd = transDialog.getGuard(); 
       if (gd == null) 
-      { t.setGuard("true"); } 
+      { t.guard = new BasicExpression(true); } 
       else 
-      { t.setGuard(gd); }
+      { t.setGuard(gd,module); }
       // boolean ii = transDialog.getInput(); 
       // ld.setInput(ii); 
       return res; 
@@ -1166,8 +1169,8 @@ class StatechartArea extends JPanel
     { trans.setEvent(e); } 
     else 
     { System.err.println("No event with name " + ld.label); } 
-    trans.setGuard(guard); 
-    trans.setGenerations(gen,eventlist); 
+    trans.setGuard(guard,module); 
+    trans.setGenerations(gen,eventlist,module); 
    }
 
   public void createVisuals(Vector sensors) 

@@ -1722,7 +1722,7 @@ public class BehaviouralFeature extends ModelElement
       des.typeCheck(types,entities,cntxt,env); 
       String desid = des.saveModelData(out); 
       out.println(opid + ".activity = " + desid); 
-      System.out.println("Operation activity is: " + des); 
+      System.out.println(">> Operation " + getName() + " activity is: " + des); 
     } 
     else // if (activity != null) 
     { String actid = activity.saveModelData(out); 

@@ -47,7 +47,7 @@ public class CGSpec
     usecaseRules = new Vector();
     attributeRules = new Vector();
     parameterRules = new Vector();
-	parameterArgumentRules = new Vector(); 
+    parameterArgumentRules = new Vector(); 
     operationRules = new Vector();
     enumerationRules = new Vector();
     textRules = new Vector();

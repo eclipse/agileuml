@@ -2,7 +2,7 @@ import java.util.Vector;
 
 /* Package: Requirements Engineering */ 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003-2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -49,7 +49,7 @@ public class NLPWord extends NLPPhraseElement
   public boolean isKeyword() 
   { return text.equalsIgnoreCase("integer") || text.equalsIgnoreCase("numeric") || 
            text.equalsIgnoreCase("set") || text.equalsIgnoreCase("sequence") || 
-		text.equals("instance") || text.equals("instances") ||
+           text.equals("instance") || text.equals("instances") ||
            text.equals("boolean") ||
            text.equalsIgnoreCase("real") || text.equalsIgnoreCase("double"); 
   } // or collection
@@ -122,52 +122,86 @@ public class NLPWord extends NLPPhraseElement
     return false; 
   } 
   
+  public boolean isSignificantVerbPhraseWord(java.util.Map verbClassifications, Vector quals, java.util.Map wordQuals)
+  { String lctext = text.toLowerCase(); 
+
+    String classif = (String) verbClassifications.get(lctext); 
+    if (isVerb() && classif != null) 
+    { quals.add(classif); 
+      wordQuals.put(text, classif);  
+      return true; 
+    } 
+  
+    return isSignificantVerbPhraseWord(quals,wordQuals); 
+  } 
+
   public boolean isSignificantVerbPhraseWord(Vector quals, java.util.Map wordQuals)
   { String lctext = text.toLowerCase(); 
 
-    if (lctext.startsWith("updat") || lctext.startsWith("assign") || lctext.equals("write") || lctext.equals("overwrite") ||
-       lctext.startsWith("edit") || lctext.startsWith("link") || lctext.startsWith("manag") ||
-       (lctext.equals("set") && isVerb()) || lctext.startsWith("validat") || (lctext.startsWith("insert") && isVerb()) ||
+    if (lctext.equals("write") || lctext.equals("overwrite") ||
+       (lctext.startsWith("edit") && isVerb()) || (lctext.startsWith("confirm") && isVerb()) ||
+       (lctext.equals("set") && isVerb()) || (lctext.startsWith("insert") && isVerb()) ||
 	   (lctext.equals("schedule") && isVerb()) || lctext.equals("upload") || lctext.equals("suspend") || 
-       lctext.equals("merg") || lctext.equals("combin") || (lctext.startsWith("packag") && isVerb()) ||
+       (lctext.startsWith("packag") && isVerb()) ||
 	   (isVerb() && 
-	     (lctext.equals("sets") || lctext.startsWith("rewrit") || lctext.startsWith("revis") || 
-		  lctext.startsWith("approv") || lctext.startsWith("certif") ||
-		  lctext.startsWith("customiz") || lctext.startsWith("customis"))) || 
-       lctext.equals("setting") || lctext.startsWith("reset") || lctext.startsWith("append") ||
-	   lctext.startsWith("annotat") || lctext.startsWith("resubmit") || lctext.equals("hide") ||
-       lctext.equals("conceal") || lctext.startsWith("chang") || lctext.startsWith("modif"))
+	     (lctext.startsWith("updat") || lctext.startsWith("assign") || lctext.equals("reorder") || lctext.equals("order") ||  
+		  lctext.equals("sets") || lctext.startsWith("rewrit") || lctext.equals("revise") || lctext.equals("undelete") ||
+		  lctext.startsWith("rotat") || lctext.startsWith("clear") || lctext.equals("rename") || lctext.startsWith("annotat") || 
+		  lctext.startsWith("approv") || lctext.startsWith("certif") || lctext.equals("restore") || lctext.equals("revert") ||
+		  lctext.equals("join") || lctext.equals("undo") || lctext.startsWith("correct") || lctext.equals("associate") ||  
+		  lctext.equals("rejoin") || lctext.startsWith("validat") || lctext.startsWith("improv") || lctext.equals("version") || 
+		  lctext.equals("moderate") || lctext.equals("duplicate") || lctext.startsWith("email") || lctext.equals("post") ||   
+		  lctext.equals("load") || lctext.equals("republish") || lctext.startsWith("tag") || lctext.startsWith("sign") ||
+		  lctext.startsWith("reproduc") || lctext.startsWith("deposit") || lctext.startsWith("segment") || lctext.startsWith("redact") || 
+		  lctext.startsWith("partition") || lctext.startsWith("compos") || lctext.equals("say") || lctext.equals("flag") ||
+		  lctext.equals("upgrade") || lctext.equals("migrate") || lctext.startsWith("link") || lctext.startsWith("manag") || 
+		  lctext.startsWith("replicat") || lctext.equals("queue") || lctext.startsWith("encrypt") || lctext.startsWith("grant") || 
+		  lctext.equals("merg") || lctext.equals("combin") || lctext.startsWith("customiz") || lctext.startsWith("customis"))) 
+       || lctext.equals("enqueue") || (lctext.equals("make") && isVerb()) || lctext.equals("expose") || lctext.equals("move") || 
+	   lctext.equals("dequeue") || lctext.equals("subscribe") || (lctext.startsWith("copy") && isVerb()) || 
+	   lctext.equals("restock") || lctext.equals("attach") || lctext.equals("detach") || 
+       lctext.equals("setting") || lctext.startsWith("reset") || lctext.startsWith("append") || lctext.equals("announce") || 
+	   lctext.startsWith("resubmit") || lctext.equals("hide") || lctext.equals("prepend") || 
+       lctext.equals("conceal") || (lctext.startsWith("chang") && isVerb()) || (lctext.startsWith("modif") && isVerb()))
     { quals.add("edit"); 
       wordQuals.put(text, "edit");  
       return true; 
     } 
 
-    if (lctext.startsWith("creat") || (lctext.startsWith("add") && isVerb()) || 
-	    lctext.startsWith("initialis") ||
-	    (lctext.equals("enroll") && isVerb()) || (lctext.equals("register") && isVerb()) ||
-		(lctext.equals("hire") && isVerb()) ||
-		(lctext.startsWith("onboard") && isVerb()) || lctext.startsWith("submit") || lctext.startsWith("send") || 
-		(lctext.equals("issue") && isVerb()))
+    if (isVerb() && 
+	    (lctext.startsWith("creat") || lctext.startsWith("add") || 
+	     lctext.startsWith("initialis") || lctext.equals("install") || lctext.equals("initiate") || 
+	     lctext.equals("enroll") || lctext.equals("register") ||
+		 lctext.equals("hire") ||
+		 lctext.startsWith("onboard") || lctext.startsWith("submit") || lctext.startsWith("send") || 
+		 lctext.equals("issue")))
     { quals.add("create"); 
       wordQuals.put(text, "create");  
       return true; 
     } 
 
-    if (lctext.startsWith("read") || lctext.startsWith("display") || lctext.startsWith("list") ||
-	    lctext.startsWith("show") || lctext.startsWith("brows") || lctext.startsWith("check") ||
-		lctext.startsWith("search") || (lctext.equals("track") && isVerb()) || (lctext.startsWith("navigat") && isVerb()) || 
-	    lctext.startsWith("receiv") || lctext.equals("review") || (lctext.equals("monitor") && isVerb()) ||
-        (lctext.startsWith("inspect") && isVerb()) || (lctext.equals("survey") && isVerb()) ||
-		lctext.startsWith("provid") || (lctext.startsWith("scan") && isVerb()) ||
-	    (lctext.startsWith("get") && isVerb()) || lctext.startsWith("retriev") || lctext.startsWith("select") || 
-	    lctext.startsWith("view") || lctext.startsWith("access") || lctext.startsWith("choose") || 
-		(lctext.startsWith("publish") && isVerb()) || lctext.equals("see") || lctext.startsWith("download") ||
+    if ((isVerb() && 
+	     (lctext.startsWith("read") || lctext.startsWith("show") || lctext.startsWith("brows") || lctext.startsWith("check") ||
+		  lctext.startsWith("query") || lctext.startsWith("distinguish") || lctext.startsWith("stream") || lctext.startsWith("broadcast") ||
+		  lctext.startsWith("search") || lctext.equals("track") || lctext.startsWith("navigat") || lctext.startsWith("harvest") || 
+	      lctext.equals("monitor") || lctext.equals("compare") || lctext.equals("enquire") || lctext.startsWith("mine") || 
+		  lctext.equals("contrast") || lctext.startsWith("inspect") || lctext.equals("extract") ) ) || 
+		lctext.equals("analyse") || lctext.equals("derive") ||  
+		(isVerb() && 
+		  (lctext.startsWith("view") || lctext.equals("learn") || lctext.equals("scroll") || lctext.equals("preview") ||
+		   lctext.startsWith("wrangl") || lctext.startsWith("display") || lctext.startsWith("list") || lctext.startsWith("locat") || 
+		   lctext.startsWith("receiv") || lctext.equals("review") || lctext.startsWith("retriev") || lctext.startsWith("select") ||  
+		   lctext.startsWith("access") || lctext.startsWith("test") || lctext.startsWith("authenticat") || lctext.startsWith("zoom") ||
+		   lctext.startsWith("download") || lctext.equals("survey") || lctext.startsWith("scan") || lctext.startsWith("get") || 
+		   lctext.startsWith("discover") || lctext.startsWith("choose"))) || 
+		(lctext.startsWith("publish") && isVerb()) || lctext.equals("see") || 
 		lctext.startsWith("visualiz") || lctext.startsWith("visualis") || (lctext.startsWith("detect") && isVerb()) ||
 		(lctext.startsWith("know") && isVerb()) || (lctext.startsWith("explor") && isVerb()) ||
-		(lctext.equals("chart") && isVerb()) || (lctext.equals("identif") && isVerb()) ||
-		lctext.startsWith("request") || (lctext.startsWith("examin") && isVerb()) || 
+		(lctext.equals("chart") && isVerb()) || (lctext.equals("identify") && isVerb()) ||
+		(lctext.startsWith("requ") && isVerb()) || (lctext.startsWith("examin") && isVerb()) ||
+		lctext.equals("reexamine") || lctext.equals("reassess") || lctext.equals("rectify") ||  
 		(lctext.startsWith("assess") && isVerb()) || (lctext.startsWith("measur") && isVerb()) ||
-		lctext.startsWith("find") )
+		(lctext.startsWith("find") && isVerb()) )
     { quals.add("read"); 
       wordQuals.put(text, "read");  
 
@@ -175,8 +209,8 @@ public class NLPWord extends NLPPhraseElement
     } 
 
 
-    if (lctext.startsWith("delet") || (lctext.startsWith("remov") && isVerb()) || 
-	    (lctext.startsWith("eras") && isVerb()) || 
+    if ((lctext.startsWith("delet") && isVerb()) || (lctext.startsWith("remov") && isVerb()) || 
+	    (lctext.startsWith("eras") && isVerb()) || lctext.equals("unpublish") || (lctext.startsWith("cut") && isVerb()) || 
 	    lctext.equals("terminate") || (lctext.equals("fire") && isVerb()) ||
 	    lctext.startsWith("destroy") )
     { quals.add("delete");
@@ -185,44 +219,87 @@ public class NLPWord extends NLPPhraseElement
       return true; 
     } 
 
-    if (lctext.startsWith("stor") || lctext.startsWith("record") || lctext.startsWith("save") ||
-        lctext.startsWith("persist") || lctext.startsWith("commit")) 
+    if (isVerb() && 
+	    (lctext.startsWith("stor") || lctext.startsWith("record") || lctext.startsWith("save") || lctext.startsWith("curat") ||
+         lctext.startsWith("archiv") || lctext.startsWith("persist") || lctext.startsWith("preserv") || 
+		 lctext.startsWith("commit"))) 
     { quals.add("persistent");
 	  quals.add("edit"); 
       wordQuals.put(text, "persistent");  
       return true; 
     }  // also counts as an edit
 
-    if (lctext.startsWith("communicat") || lctext.startsWith("surf") || lctext.startsWith("model") || lctext.startsWith("login") ||
-	    lctext.startsWith("prioritis") || lctext.startsWith("import") || lctext.startsWith("export") || lctext.startsWith("logout") ||
-		lctext.startsWith("provid") || lctext.startsWith("filter") || lctext.startsWith("sort") || lctext.startsWith("signup") ||
-        lctext.startsWith("aggregat") || lctext.startsWith("share") || lctext.startsWith("zoom") || lctext.startsWith("signin") ||
-	    lctext.equals("warn") || lctext.equals("allocate") ||
+    if ((lctext.startsWith("communicat") && isVerb()) || (lctext.startsWith("surf") && isVerb()) || lctext.equals("deny") ||
+	    (lctext.startsWith("lift") && isVerb()) || (lctext.startsWith("elevat") && isVerb()) || lctext.equals("allow") || 
+	    (lctext.startsWith("model") && isVerb()) || (lctext.startsWith("login") && isVerb()) || (lctext.startsWith("restrict") && isVerb()) ||
+	    lctext.startsWith("prioritis") || (lctext.startsWith("import") && isVerb()) || (lctext.startsWith("function") && isVerb()) || 
+		(isVerb() && 
+		 (lctext.startsWith("execut") || lctext.startsWith("run") || lctext.startsWith("sort") || lctext.startsWith("signup") ||
+		  lctext.startsWith("filter") || lctext.startsWith("prefilter") || lctext.startsWith("classif") || 
+		  lctext.startsWith("preclassif") || lctext.startsWith("group") || 
+		  lctext.equals("push") || lctext.startsWith("tell") || lctext.startsWith("deliv") ||
+		  lctext.equals("mint") || lctext.startsWith("fulfil") || lctext.startsWith("gain") || lctext.startsWith("assur") || 
+		  lctext.startsWith("reassur") || lctext.startsWith("scop") || lctext.equals("ask") || lctext.startsWith("recogni") ||
+		  lctext.startsWith("categori") || lctext.startsWith("recommend") || lctext.startsWith("administ") ||
+		  lctext.startsWith("point") || lctext.startsWith("shar") || lctext.equals("interact") || lctext.startsWith("signin") ||
+		  lctext.startsWith("compl") || lctext.startsWith("open") || lctext.startsWith("clos") || lctext.startsWith("calculat") ||
+		  lctext.startsWith("call") || lctext.startsWith("place") ) ) || 
+		lctext.equals("ingest") || 
+		(lctext.startsWith("respond") && isVerb()) || (lctext.startsWith("configur") && isVerb()) || lctext.equals("assist") || 
+		(lctext.startsWith("export") && isVerb()) || lctext.startsWith("logout") || (lctext.equals("written") && isVerb()) || 
+        lctext.startsWith("aggregat") || lctext.equals("buy") || lctext.equals("reacts") ||	lctext.startsWith("declar") || 	
+	    lctext.equals("warn") || lctext.equals("warned") || lctext.equals("allocate") || (lctext.startsWith("alert") && isVerb()) || 
 		lctext.startsWith("understand") || lctext.startsWith("have") || lctext.startsWith("signout") || lctext.equals("revise") ||
-		(lctext.equals("sign") && isVerb()) || (lctext.equals("mark") && isVerb()) || (lctext.equals("indicate") && isVerb()) ||
-	    (lctext.equals("give") && isVerb()) || (lctext.startsWith("notif") && isVerb()) ||
-		(lctext.startsWith("use") && isVerb()) || lctext.startsWith("enter") || lctext.startsWith("attend") ||
+		(lctext.equals("sign") && isVerb()) || (lctext.equals("mark") && isVerb()) || 
+		(lctext.startsWith("indicat") && isVerb()) ||
+	    (lctext.equals("give") && isVerb()) || (lctext.startsWith("notif") && isVerb()) || lctext.equals("describe") ||
+		(lctext.startsWith("use") && isVerb()) || lctext.startsWith("enter") || (lctext.equals("reenter") && isVerb()) ||
+		(lctext.startsWith("concept") && isVerb()) || (lctext.startsWith("estimat") && isVerb()) ||
+		(lctext.startsWith("attend") && isVerb()) || (lctext.startsWith("begin") && isVerb()) || lctext.equals("invite") || 
 		lctext.equals("retake") || lctext.equals("resit") || lctext.equals("revisit") || lctext.equals("renew") || 
 		lctext.equals("satisfy") || lctext.equals("prepare") || lctext.equals("support") || lctext.equals("capture") ||
 		lctext.equals("perform") || lctext.equals("diagnose") || lctext.equals("debug") || lctext.equals("transfer") || 
-		lctext.startsWith("generat") || (lctext.startsWith("produc") && isVerb()) || lctext.equals("promote") || 
-		(lctext.startsWith("compute") && isVerb()) || lctext.startsWith("calculat") || lctext.equals("demote") || 
+		lctext.startsWith("generat") || (lctext.startsWith("produc") && isVerb()) ||  
+		(lctext.startsWith("compute") && isVerb()) || lctext.equals("demote") || 
 		lctext.startsWith("normaliz") || lctext.startsWith("normalis") || (lctext.equals("log") && isVerb()) ||
-		lctext.startsWith("choose") || lctext.startsWith("help") ||
-		lctext.startsWith("enabl") || lctext.startsWith("facilitat") || (lctext.startsWith("prov") && isVerb()) || 
-		(lctext.startsWith("act") && isVerb()) || lctext.equals("reply") ||
-		lctext.startsWith("highlight") || lctext.equals("translat") ||  lctext.startsWith("redirect") || lctext.equals("develop") ||
-		(lctext.equals("denote") && isVerb()) || (lctext.equals("conduct") && isVerb()) || lctext.equals("evaluate") ||
-		(lctext.startsWith("packag") && isVerb()) || lctext.startsWith("click") || lctext.startsWith("contact") ||
-		lctext.startsWith("embed") || (lctext.startsWith("specif") && isVerb()) || lctext.equals("process") || 
-		(lctext.startsWith("delegat") && isVerb()) || lctext.equals("apply") || lctext.equals("complete") ||
+		lctext.startsWith("choose") || (lctext.startsWith("invit") && isVerb()) || 
+		lctext.startsWith("facilitat") || lctext.equals("encode") || lctext.equals("decode") ||  
+		(lctext.startsWith("act") && isVerb()) || lctext.equals("ensure") || 
+		lctext.equals("establish") ||
+		(isVerb() && 
+		 (lctext.startsWith("highlight") || lctext.startsWith("translat") || lctext.startsWith("offer") || lctext.startsWith("constr") || 
+		  lctext.startsWith("redirect") || lctext.startsWith("arrang") || lctext.startsWith("plan") || lctext.startsWith("reus") || 
+		  lctext.startsWith("form") || lctext.startsWith("reform") || lctext.startsWith("preinstall") || lctext.startsWith("rearrang") ||
+		  lctext.startsWith("reply") || lctext.startsWith("forward") || lctext.startsWith("host") || lctext.startsWith("sync") ||
+		  lctext.startsWith("alias") || lctext.startsWith("pass") || lctext.startsWith("maintain") || lctext.startsWith("promot") || 
+		  lctext.startsWith("help") || lctext.startsWith("repres") || lctext.startsWith("direct") || lctext.startsWith("disseminat") ||  
+		  lctext.startsWith("prov") || lctext.startsWith("limit") || lctext.equals("draw") || lctext.equals("withdraw") || 
+		  lctext.startsWith("tolerat") || lctext.startsWith("enabl") || lctext.startsWith("disabl") || lctext.equals("theme") ||  
+		  lctext.startsWith("forc") || lctext.equals("denote") || lctext.startsWith("conduct") || lctext.startsWith("tak") || 
+		  lctext.startsWith("separat") || lctext.startsWith("depend") || lctext.startsWith("implement"))) || 
+		lctext.equals("develop") || lctext.equals("evaluate") ||
+		(isVerb() && 
+		 (lctext.startsWith("packag") || lctext.startsWith("click") || lctext.startsWith("press") || lctext.startsWith("walk") || 
+		  lctext.startsWith("contact") || lctext.equals("appear") || lctext.equals("control") || 
+		  lctext.startsWith("embed") || lctext.startsWith("specif") || lctext.equals("process") || lctext.equals("trigger") ||
+		  lctext.startsWith("delegat") || lctext.startsWith("apply") || lctext.startsWith("collect") || lctext.startsWith("activat") || 
+		  lctext.startsWith("complet"))) ||
 		lctext.equals("finalise") || lctext.equals("finalize") || lctext.equals("enact") || lctext.equals("authorise") ||
-		lctext.equals("authorize") || lctext.equals("notify") || (lctext.equals("report") && isVerb()) ||
-		(lctext.startsWith("integrat") && isVerb()) || (lctext.startsWith("map") && isVerb()) || 
-		lctext.equals("pay") || (lctext.startsWith("connect") && isVerb()) || lctext.equals("keep") || 
-	    lctext.equals("put") || (lctext.equals("reference") && isVerb()) || (lctext.equals("handle") && isVerb()) || 
-		(lctext.equals("block") && isVerb()) || (lctext.startsWith("suggest") && isVerb()) ||
-		(lctext.startsWith("calibrat") && isVerb()) )
+		lctext.equals("authorize") || lctext.equals("notify") || (lctext.equals("report") && isVerb()) || 
+		(lctext.equals("reject") && isVerb()) || lctext.equals("reflect") || (lctext.equals("fill") && isVerb()) ||
+		(lctext.equals("recruit") && isVerb()) || (lctext.equals("continue") && isVerb()) || lctext.equals("deploy") || 
+		(lctext.startsWith("demonstrat") && isVerb()) || (lctext.startsWith("visit") && isVerb()) ||
+		(lctext.startsWith("revisit") && isVerb()) || (lctext.startsWith("elect") && isVerb()) || 
+		(lctext.startsWith("narrow") && isVerb()) || (lctext.startsWith("expan") && isVerb()) || // (lctext.equals("want") && isVerb()) ||  
+		(lctext.startsWith("integrat") && isVerb()) || (lctext.startsWith("map") && isVerb()) || lctext.equals("relieve") || 
+		lctext.equals("pay") || (lctext.startsWith("connect") && isVerb()) || lctext.equals("keep") || lctext.equals("accept") || 
+	    lctext.equals("put") || (lctext.startsWith("refer") && isVerb()) || (lctext.equals("handle") && isVerb()) || 
+		(lctext.equals("leave") && isVerb()) || (lctext.equals("block") && isVerb()) || (lctext.startsWith("suggest") && isVerb()) ||
+		lctext.equals("enlist") || lctext.equals("enlighten") || lctext.equals("extend") || lctext.equals("clarify") ||
+		(lctext.equals("include") && isVerb()) || (lctext.equals("stop") && isVerb()) ||  
+		(lctext.equals("start") && isVerb()) || (lctext.equals("design") && isVerb()) || lctext.equals("redesign") ||  
+		(lctext.startsWith("calibrat") && isVerb()) || lctext.equals("determine") || lctext.equals("decide") || 
+		(lctext.equals("express") && isVerb()) || (lctext.equals("meet") && isVerb()) || (lctext.equals("shadow") && isVerb()))
     { quals.add("other"); 
       wordQuals.put(text, "other");  
 
@@ -405,65 +482,78 @@ public class NLPWord extends NLPPhraseElement
     } 
   } 
 
+  public java.util.HashMap classifyVerbs(Vector verbs)
+  { java.util.HashMap res = new java.util.HashMap(); 
+  
+    // if (isKeyword()) 
+    // { return res; } 
+	
+    ThesaurusConcept tc = Thesarus.lookupWord(verbs,text); 
+    if (tc != null && tc.verbType.length() > 0)
+    { res.put(text, tc.verbType); }
+	
+	return res; 
+  } 
+
   public java.util.HashMap classifyWords(Vector background, Vector modelElems)
   { java.util.HashMap res = new java.util.HashMap(); 
   
     if (isKeyword()) 
-	{ return res; } 
+    { return res; } 
 	
     ThesaurusConcept tc = Thesarus.lookupWord(background,text); 
     if (tc != null && tc.semantics.size() > 0)
     { res.put(text, tc.semantics); }
-	else if (isPlural())
-	{ String sing = getSingular(); 
+    else if (isPlural())
+    { String sing = getSingular(); 
 	  // System.out.println(">>> Singular of " + text + " is " + sing); 
 	  
-	  tc = Thesarus.lookupWord(background,sing); 
-	  if (tc != null)
-	  { Vector tcsem = tc.semantics; 
-	    if (tcsem.size() > 0 && (tcsem.get(0) instanceof Entity))
-		{ Type colltype = new Type("Set", null);
-		  String ename = Named.capitalise(sing); 
-		  Entity ee = null; 
+       tc = Thesarus.lookupWord(background,sing); 
+       if (tc != null)
+       { Vector tcsem = tc.semantics; 
+         if (tcsem.size() > 0 && (tcsem.get(0) instanceof Entity))
+         { Type colltype = new Type("Set", null);
+           String ename = Named.capitalise(sing); 
+           Entity ee = null; 
 		  
-		  Object obj = ModelElement.lookupByNameIgnoreCase(ename,modelElems); 
-		  if (obj != null && obj instanceof Entity)
-		  { ee = (Entity) obj; }
-		  else
-		  { ee = new Entity(ename);
-		    modelElems.add(ee); 
-			System.out.println(">>> New entity: " + ename); 
-			String id = sentence.id; 
-			sentence.derivedElements.add(ee); 
-			ee.addStereotype("originator=\"" + id + "\""); 
-		  }   
-		  colltype.setElementType(new Type(ee)); 
-		  Attribute r = new Attribute(text, colltype, ModelElement.INTERNAL); 
-		  Vector sem1 = new Vector(); 
-		  sem1.add(r); 
-		  res.put(text, sem1); 
-		}
+           Object obj = ModelElement.lookupByNameIgnoreCase(ename,modelElems); 
+           if (obj != null && obj instanceof Entity)
+           { ee = (Entity) obj; }
+           else
+           { ee = new Entity(ename);
+             modelElems.add(ee); 
+             System.out.println(">>> Recognised new entity: " + ename); 
+             String id = sentence.id; 
+             sentence.derivedElements.add(ee); 
+             ee.addStereotype("originator=\"" + id + "\""); 
+           }   
+           colltype.setElementType(new Type(ee)); 
+           Attribute r = new Attribute(text, colltype, ModelElement.INTERNAL); 
+           Vector sem1 = new Vector(); 
+           sem1.add(r); 
+           res.put(text, sem1); 
+         }
 	  }
-	}
-    else if (isProperNoun())
-    { String ename = getSingular(); 
-      Vector sem = new Vector(); 
-      Entity ee = null; 
+      }
+      else if (isProperNoun())
+      { String ename = getSingular(); 
+        Vector sem = new Vector(); 
+        Entity ee = null; 
 		  
-      Object obj = ModelElement.lookupByNameIgnoreCase(ename,modelElems); 
-      if (obj != null && obj instanceof Entity)
-      { ee = (Entity) obj; }
-      else
-      { ee = new Entity(ename);
-        modelElems.add(ee); 
-    	System.out.println(">>> New entity: " + ename); 
-		String id = sentence.id; 
-		sentence.derivedElements.add(ee); 
-		ee.addStereotype("originator=\"" + id + "\""); 
-      }   
-      sem.add(ee); 
-      res.put(text, sem); 
-    }  
+        Object obj = ModelElement.lookupByNameIgnoreCase(ename,modelElems); 
+        if (obj != null && obj instanceof Entity)
+        { ee = (Entity) obj; }
+        else
+        { ee = new Entity(ename);
+          modelElems.add(ee);
+          System.out.println(">>> Recognised new entity: " + ename); 
+          String id = sentence.id; 
+          sentence.derivedElements.add(ee); 
+          ee.addStereotype("originator=\"" + id + "\""); 
+        }   
+        sem.add(ee); 
+        res.put(text, sem); 
+      }  
 	// These need to be added to the model elements if they are not already there. 
 	
     return res; 
@@ -472,7 +562,7 @@ public class NLPWord extends NLPPhraseElement
   public String getPrincipalNoun()
   { String noun = ""; 
     if (isNoun())
-	{ noun = text; } 
+    { noun = text; } 
     return noun; 
   }   
 

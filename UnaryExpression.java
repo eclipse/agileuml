@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -769,7 +769,36 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     return false; 
   } 
 
+  public String cstlQueryForm(java.util.Map fmap)
+  { String pre = argument.cstlQueryForm(fmap); 
+    if (operator.startsWith("->"))
+    { String op = operator.substring(2,operator.length()); 
+      return pre + "`" + op; 
+    } 
+    return this + ""; 
+  } 
 
+  public String cstlConditionForm(java.util.Map fmap)
+  { String pre = argument.cstlConditionForm(fmap); 
+    if ("not".equals(operator))
+    { if (argument instanceof BinaryExpression) 
+      { return ((BinaryExpression) argument).negatedcstlConditionForm(fmap); } 
+      return "not " + pre; 
+    }
+
+    if ("->isEmpty".equals(operator))
+    { return pre + " empty"; }
+
+    if ("->notEmpty".equals(operator))
+    { return pre + " not empty"; }
+
+    if (operator.startsWith("->"))
+    { String op = operator.substring(2,operator.length()); 
+      return pre + "`" + op; 
+    } 
+    return pre + ""; 
+  } 
+  
   public String updateForm(java.util.Map env, boolean local)
   { String cont = "Controller.inst()"; 
     String pre = argument.queryForm(env,local);

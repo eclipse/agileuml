@@ -9,7 +9,7 @@
       * transitions (lines) in the statechart diagram.
 */
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003-2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -23,10 +23,10 @@ import java.util.StringTokenizer;
 
 class Transition extends Named implements Serializable
 {
-  Event event;             /* Trigger event */ 
-  State source;            /* Starting state */ 
-  State target;            /* Ending state, can be same as source */ 
-  Expression guard = new BasicExpression("true"); 
+  Event event = null;             /* Trigger event */ 
+  State source = null;            /* Starting state */ 
+  State target = null;            /* Ending state, can be same as source */ 
+  Expression guard = new BasicExpression(true); 
               /* Boolean-valued condition, default "true" */ 
   Vector generations = new Vector();  /* List of generated events */ 
 
@@ -46,7 +46,7 @@ class Transition extends Named implements Serializable
       source = src;
       target = targ;
       event = ev;
-      guard = new BasicExpression("true"); 
+      guard = new BasicExpression(true); 
       generations = new Vector(); 
   }
 
@@ -209,7 +209,7 @@ class Transition extends Named implements Serializable
 
   public void slice(Vector allvars, Vector tvars)
   { if (source == target && (generations == null || generations.size() == 0))
-    { guard = new BasicExpression("true");
+    { guard = new BasicExpression(true);
       return; 
     } 
     // valid for skip and blocking semantics only
@@ -428,7 +428,7 @@ class Transition extends Named implements Serializable
   } 
 
   // Old definition, for RSDS tool:
-  public void setGenerations(String s, Vector events, int multip)
+  public void setGenerations(String s, Vector events, int multip, Statemachine module)
   { StringTokenizer st = new StringTokenizer(s,"/");
     Vector res = new Vector();
     while (st.hasMoreTokens())
@@ -449,7 +449,7 @@ class Transition extends Named implements Serializable
     generations = res; 
   }
 
-  public void setGenerations(String s, Vector events)
+  public void setGenerations(String s, Vector events, Statemachine module)
   { Vector res = new Vector();
     if (s == null || s.equals("") || s.equals("null")) 
     { generations = res; 
@@ -460,13 +460,23 @@ class Transition extends Named implements Serializable
       s = s.substring(1,s.length());
     }  // crazy
 
-    Compiler comp = new Compiler(); 
-    comp.lexicalanalysis(s); 
+    Compiler2 comp = new Compiler2(); 
+    comp.nospacelexicalanalysis(s); 
     Expression gen = comp.parse(); 
     if (gen == null)
     { System.out.println("Unrecognised generation expression: " + s); } 
     else 
-    { res.add(gen); } 
+    { res.add(gen); 
+	  if (module != null && (module.modelElement instanceof Entity))
+	  { Entity owner = (Entity) module.modelElement;
+	    Vector types = new Vector(); 
+		Vector entities = new Vector();
+		Vector contexts = new Vector(); 
+		contexts.add(owner); 
+		Vector env = new Vector();   
+	    gen.typeCheck(types,entities,contexts,env); 
+      }
+	}  
     generations = res; 
   }
 
@@ -490,10 +500,19 @@ class Transition extends Named implements Serializable
     return res; 
   } 
 
-  public void setGuard(String s) 
-  { Compiler comp = new Compiler(); 
-    comp.lexicalanalysis(s); 
+  public void setGuard(String s, Statemachine module) 
+  { Compiler2 comp = new Compiler2(); 
+    comp.nospacelexicalanalysis(s); 
     guard = comp.parse(); 
+    if (module != null && (module.modelElement instanceof Entity))
+    { Entity owner = (Entity) module.modelElement;
+      Vector types = new Vector(); 
+      Vector entities = new Vector();
+      Vector contexts = new Vector(); 
+      contexts.add(owner); 
+      Vector env = new Vector();   
+      guard.typeCheck(types,entities,contexts,env); 
+    }
   } 
 
   private AssignStatement parseAssignStatement(String s, int multip) 
@@ -581,6 +600,36 @@ class Transition extends Named implements Serializable
         abs.add_trans(evstskip);
       }
     }
+  }
+  
+  
+  public void saveModelData(PrintWriter out)
+  { String name = label; 
+  
+    out.println(name + " : Transition"); 
+	if (event != null) 
+	{ out.println(event.label + " : " + name + ".event"); }
+	
+	if (source != null)
+	{ out.println(name + ".source = " + source.label);
+	  out.println(name + " : " + source.label + ".trans_from"); 
+    } 
+	
+	if (target != null) 
+	{ out.println(name + ".target = " + target.label);
+	  out.println(name + " : " + target.label + ".trans_to"); 
+    }  
+	
+	if (guard != null)
+	{ String exprId = guard.saveModelData(out); 
+	  out.println(name + ".guard = " + exprId); 
+	}
+    
+	for (int i = 0; i < generations.size(); i++)
+	{ Expression gen = (Expression) generations.get(i); 
+	  String genId = gen.saveModelData(out); 
+	  out.println(genId + " : " + name + ".generations"); 
+	}
   }
 
 }

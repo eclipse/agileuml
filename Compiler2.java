@@ -2624,7 +2624,11 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
 
 
 public BehaviouralFeature operationDefinition(int st, int en, Vector entities, Vector types)
-{ if (en <= st) { return null; }
+{ // query|operation name(pars) : returnType 
+  // pre: expr1
+  // post: expr2; 
+  
+  if (en <= st) { return null; }
   boolean valid = false; 
   boolean foundpre = false; 
   boolean foundpost = false; 
@@ -4484,12 +4488,12 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 	  else if ("attribute".equals(jx))
 	  { String p = lexicals.get(j+1) + ""; 
 	    for (int k = j+2; k <= en; k++)
-		{ System.out.println(lexicals.get(k) + ""); 
+		{ // System.out.println(lexicals.get(k) + ""); 
 		
 		  if (";".equals(lexicals.get(k) + ""))
 		  { Type ptype = parseType(j+3,k-1,entities,types); 
 		    if (ptype != null) 
-			{ uc.addAttribute(p,ptype);
+			{ uc.addAttribute(p,ptype); // it is automatically static 
 			  j = k; 
 			  k = en; 
 		    }
@@ -4499,7 +4503,30 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 		} 
 		j++;  
       }
-	  else if ("precondition".equals(jx))
+      else if ("query".equals(jx))  // Only static query operations are permitted in use cases.  
+      { for (int k = j+1; k <= en; k++)
+		{ // System.out.println(lexicals.get(k) + ""); 
+		
+		  if (";".equals(lexicals.get(k) + ""))
+		  { 
+            BehaviouralFeature bf = 
+                operationDefinition(j+1, k-1, entities, types); 
+            if (bf != null) 
+            { bf.setStatic(true); 
+              uc.addOperation(bf);
+		      j = k; 
+		      k = en;      
+			  System.out.println(">>> Recognised query operation: " + bf); 
+            } 
+            else 
+            { System.err.println("!! ERROR: Invalid operation definition: " + 
+                                 showLexicals(j, k-1));
+            }
+          }
+        } 
+		j++;   
+      } 
+      else if ("precondition".equals(jx))
 	  { for (int k = j+1; k <= en; k++)
 		{ System.out.println(lexicals.get(k) + ""); 
 		

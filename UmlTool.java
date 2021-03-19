@@ -330,6 +330,10 @@ public void findPlugins()
     JMenuItem convertMenu = new JMenu("Convert"); 
     fileMenu.add(convertMenu); 
 
+    JMenuItem mapTL2CSTL = new JMenuItem("Map TL to CSTL"); 
+    mapTL2CSTL.addActionListener(this); 
+    convertMenu.add(mapTL2CSTL);     
+
     JMenuItem convertMI = new JMenuItem("Convert XSI (small) to Data"); 
     convertMI.addActionListener(this); 
     convertMenu.add(convertMI);     
@@ -755,6 +759,11 @@ public void findPlugins()
     transMenu.setMnemonic(KeyEvent.VK_T);
     transMenu.setToolTipText("Transform UML Models"); 
     menuBar.add(transMenu); 
+
+    JMenuItem qualCheck = 
+      new JMenuItem("Quality check"); 
+    qualCheck.addActionListener(this);
+    transMenu.add(qualCheck);
 
     JMenuItem qualityMenu = new JMenu("Refactoring"); 
     transMenu.add(qualityMenu); 
@@ -1457,6 +1466,8 @@ public void findPlugins()
       } 
       else if (label.equals("Save as CSV"))
       { ucdArea.saveCSV(); } 
+      else if (label.equals("Map TL to CSTL"))
+      { ucdArea.mapTL2CSTL(); } 
       else if (label.equals("Convert XSI (small) to Data"))
       { ucdArea.convertXsiToData(); } 
       else if (label.equals("Convert XSI (large) to Data"))
@@ -2218,10 +2229,12 @@ public void findPlugins()
 
         // new TextDisplay("Guidelines","umlrsds.pdf");
         Runtime proc = Runtime.getRuntime(); 
-        try { Process p = proc.exec("C:\\Program Files\\Mozilla Firefox\\firefox.exe http://www.dcs.kcl.ac.uk/staff/kcl/umlrsds.pdf"); } 
+        try { Process p = proc.exec("C:\\Program Files\\Mozilla Firefox\\firefox.exe http://www.nms.kcl.ac.uk/kevin.lano/umlrsds.pdf"); } 
         catch (Exception ee) 
         { System.err.println("Unable to open the UML-RSDS manual: requires Firefox"); } 
       }
+      else if (label.equals("Quality check"))
+      { ucdArea.qualityCheck(); }
       else if (label.equals("Introduce Superclass"))
       { introduceSuperclass(); 
         repaint(); 

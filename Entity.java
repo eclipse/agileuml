@@ -43,12 +43,32 @@ public class Entity extends ModelElement implements Comparable
     realEntity = this; 
   }
 
+  public boolean isEmpty()
+  { if (attributes.size() == 0 && associations.size() == 0 && operations.size() == 0)
+    { return true; }
+	return false; 
+  }
+  
   public boolean notEmpty()
   { if (attributes.size() > 0) { return true; } 
+    if (associations.size() > 0) { return true; } 
     if (operations.size() > 0) { return true; } 
     return false; 
   } // or associations 
 
+  public boolean allSubclassesAreEmpty()
+  { boolean res = true;
+    if (subclasses.size() == 0) 
+	{ return false; }
+	 
+    for (int i = 0; i < subclasses.size(); i++) 
+	{ Entity sub = (Entity) subclasses.get(i); 
+	  if (sub.notEmpty())
+	  { return false; }
+	}
+	return res;
+  } 
+  
   public int featureCount()
   { return attributes.size() + associations.size(); } 
 

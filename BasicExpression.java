@@ -315,6 +315,24 @@ class BasicExpression extends Expression
     return res; 
   }
 
+  public Vector decompose()
+  { // assuming it represents a navigation path r1.r2.r3.att
+    Vector res = new Vector(); 
+    if (objectRef == null) 
+    { Attribute finalatt = new Attribute(data, type, ModelElement.INTERNAL);
+      finalatt.setElementType(elementType);  
+      res.add(finalatt); 
+      return res; 
+    } 
+
+    Vector front = ((BasicExpression) objectRef).decompose(); 
+    Attribute finalatt = new Attribute(data, type, ModelElement.INTERNAL);
+    finalatt.setElementType(elementType);  
+    front.add(finalatt); 
+    return front;
+  } 
+
+
   public BasicExpression invokeOnFirstArg()
   { if (parameters == null || parameters.size() == 0)
     { return this; }  // error
@@ -3405,6 +3423,31 @@ class BasicExpression extends Expression
   public Expression skolemize(Expression sourceVar, java.util.Map env)
   { return this; } 
 
+  public String cstlQueryForm(java.util.Map srcfeatureMap)
+  { if (parameters != null && parameters.size() > 0) // (umlKind == QUERY || umlKind == UPDATEOP) 
+    { Expression par1 = (Expression) parameters.get(0); 
+      String expr = par1.cstlQueryForm(srcfeatureMap); 
+      return expr + "`" + data; 
+    }
+    if (isString())
+    { if (data.endsWith("\"") && data.startsWith("\""))
+      { int dlen = data.length(); 
+        return data.substring(1,dlen-2); 
+      }
+    }
+    if (objectRef != null) 
+    { String obj = objectRef.cstlQueryForm(srcfeatureMap); 
+      return obj + "`" + data;
+    }
+    String vv = (String) srcfeatureMap.get(data); 
+	System.out.println(srcfeatureMap + " " + data); 
+    if (vv != null) 
+    { return vv; } 
+    return data; 
+  } 
+  
+  public String cstlConditionForm(java.util.Map fmap)
+  { return cstlQueryForm(fmap); }
 
   public String classExtentQueryForm(java.util.Map env, boolean local)
   { // umlkind == CLASSID
@@ -11383,12 +11426,14 @@ public Statement generateDesignSubtract(Expression rhs)
     { res.addAll(objectRef.allFeaturesUsedIn()); }
     if (arrayIndex != null) 
     { res.addAll(arrayIndex.allFeaturesUsedIn()); } 
+   */ 
+
     if (parameters != null) 
     { for (int i = 0; i < parameters.size(); i++) 
       { Expression par = (Expression) parameters.get(i); 
-        res.addAll(par.allFeaturesUsedIn()); 
+        res.addAll(par.allAttributesUsedIn()); 
       } 
-    } */
+    }
 
     return res;
   } // and from arrayIndex

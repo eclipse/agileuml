@@ -1291,12 +1291,27 @@ public class ModelMatching implements SystemTypes
       { res = res + em.qvtrule1bx(entitymatches) + "\n"; } 
     } // must include mapping to any primary key of em.realtarget
 
+    String replicationRules = ""; 
+	Vector abstractReplicationRules = new Vector(); 
+	
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
       if (em.isConcreteTarget() && em.hasReplicationCondition())
-      { res = res + em.qvtrule1InstanceReplication(entitymatches) + "\n"; } 
+      { replicationRules = replicationRules + em.qvtrule1InstanceReplication(entitymatches) + "\n"; 
+	    String absRule = em.abstractReplicationRule(entitymatches); 
+		if (abstractReplicationRules.contains(absRule)) { } 
+		else 
+		{ abstractReplicationRules.add(absRule); }  
+	  } 
     } // must include mapping to any primary key of em.realtarget
 
+    for (int j = 0; j < abstractReplicationRules.size(); j++)
+	{ String absRule = (String) abstractReplicationRules.get(j); 
+	  res = res + absRule; 
+	}
+	
+	res = res + replicationRules; 
+	
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
       if (em.isConcrete() && em.isConcreteTarget() && 
@@ -1838,7 +1853,7 @@ public class ModelMatching implements SystemTypes
     for (int i = 0; i < allsats.size(); i++) 
     { Attribute satt = (Attribute) allsats.get(i); 
 	
-	  System.out.println("???? testing " + satt + " as a match for " + tatt); 
+	  // System.out.println("???? testing " + satt + " as a match for " + tatt); 
 	  
       if (compatibleType(satt,tatt,ems))
       { System.out.println(">> " + satt + " matches by type to " + tatt); 
@@ -2378,25 +2393,31 @@ public class ModelMatching implements SystemTypes
       } 
     }  */ 
 
-    for (int i = 0; i < entitymatches.size(); i++) 
-    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
-      em.checkModel(mod,this,entitymatches,removed,functions); 
-    } 
-
-    helpers.addAll(functions); 
-    entitymatches.removeAll(removed); 
-	
     // Are there extra (unexpected) correspondences? 
     Vector extraems = mod.extraEntityMatches(entitymatches); 
     if (extraems.size() > 0)
     { System.out.println(">>> Additional class mappings discovered in the model: "); 
       for (int j = 0; j < extraems.size(); j++) 
       { EntityMatching emx = (EntityMatching) extraems.get(j); 
-        System.out.println(emx); 
+        System.out.println("Additional mapping: \n" + emx); 
       }
     }
 
     combineMatches(extraems); // and the mymap. 
+	
+    for (int i = 0; i < entitymatches.size(); i++) 
+    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
+      em.checkModelConditions(mod,this,entitymatches,removed,functions); 
+    } // check the conditions for each rule.  
+
+    for (int i = 0; i < entitymatches.size(); i++) 
+    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
+      em.recheckModel(mod,this,entitymatches,removed,functions); 
+    } // check feature mappings of each em.  
+
+    helpers.addAll(functions); 
+    entitymatches.removeAll(removed); 
+	
 
     Vector unusedSources = unusedSourceEntities(entities);
 
@@ -2406,10 +2427,13 @@ public class ModelMatching implements SystemTypes
 
     mod.checkPrimaryKeyAssignments(entitymatches); 
 
+    Vector rem = new Vector(); 
+    Vector fcns = new Vector(); 
+	
     for (int i = 0; i < entitymatches.size(); i++) 
     { System.out.println(">>> Rechecking conditions and mappings"); 
       EntityMatching em = (EntityMatching) entitymatches.get(i); 
-      em.checkModel(mod,this,entitymatches,removed,functions); 
+      em.recheckModel(mod,this,entitymatches,rem,fcns); 
     } 
 
     Vector sourceClasses = new Vector(); 
@@ -2431,7 +2455,9 @@ public class ModelMatching implements SystemTypes
     for (int i = 0; i < entities.size(); i++) 
     { Entity sent = (Entity) entities.get(i); 
       if (sent.isSource())
-      { java.util.HashMap splittings = mod.objectSplittings(sent.getName()); 
+      { Vector splitsources = new Vector(); 
+        Vector splittargets = new Vector(); 
+        java.util.HashMap splittings = mod.objectSplittings(sent.getName(),splitsources,splittargets); 
         if (splittings != null && splittings.size() > 0)
         { System.out.println(">>> Instance replication in model: " + splittings); 
           mod.checkSplittingCondition(sent,entities,entitymatches,splittings); 
@@ -2440,6 +2466,47 @@ public class ModelMatching implements SystemTypes
     } 
 
   } 
+
+  public java.util.Map convert2CSTL()
+  { java.util.Map rulecategories = new java.util.HashMap(); 
+  
+    for (int i = 0; i < typematches.size(); i++) 
+    { TypeMatching tm = (TypeMatching) typematches.get(i); 
+	  String ffile = tm.getName(); 
+	  File chtml = new File("output/" + ffile + ".cstl"); 
+      try
+      { PrintWriter chout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(chtml)));
+        tm.cstlfunction(chout);
+		chout.close(); 
+	  } catch (Exception _e) { }  
+    }
+
+
+    for (int i = 0; i < entitymatches.size(); i++) 
+    { EntityMatching em = (EntityMatching) entitymatches.get(i);
+      CGRule r = em.convert2CSTL(); 
+      Entity sent = em.realsrc; 
+      if (sent != null) 
+      { String sname = sent.getName(); 
+        Vector srules = (Vector) rulecategories.get(sname);
+        if (srules == null) 
+        { srules = new Vector(); 
+          rulecategories.put(sname,srules); 
+        }
+ 
+        if (srules.contains(r)) 
+        { System.err.println("! Warning: duplicate CSTL rules produced from TL: " + r); 
+		  System.err.println("! Only one copy will be retained.");
+		} 
+        else 
+        { srules.add(r); }
+      }   
+    } 
+    return rulecategories; 
+  } 
+
 
 }
 

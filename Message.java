@@ -4,7 +4,7 @@ import java.util.StringTokenizer;
 
 /* Package: Interactions */ 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003-2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -161,6 +161,31 @@ class Message extends InteractionElement implements Serializable
   { Message res = new Message(label,source,target,
                                             operation); 
     return res; 
+  } 
+
+  public void saveModelData(PrintWriter out, Vector entities)
+  { String name = label; 
+
+    out.println(name + " : Message"); 
+    if (source != null) 
+    { out.println(name + ".source = " + source.getName()); }  
+    if (target != null) 
+    { out.println(name + ".target = " + target.getName()); }  
+    /* if (sendTime != null) 
+    { String sendId = sendTime.saveModelData(out); 
+      out.println(name + ".sendTime = " + sendId); 
+    }
+    if (receiveTime != null) 
+    { String receiveId = receiveTime.saveModelData(out); 
+      out.println(name + ".receiveTime = " + receiveId); 
+    } */ 
+
+    if (operation != null) 
+    { Entity owner = operation.getOwner(); 
+      Vector types = new Vector(); 
+      String opid = operation.saveModelData(out,owner,entities,types); 
+      out.println(name + ".operation = " + opid); 
+    } 
   } 
 
 

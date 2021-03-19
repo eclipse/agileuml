@@ -2,7 +2,7 @@ import java.util.Vector;
 
 /* Package: Requirements Engineering */ 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003-2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -790,6 +790,25 @@ public class NLPPhrase extends NLPPhraseElement
       else if (elem instanceof NLPPhrase)
       { NLPPhrase phr = (NLPPhrase) elem; 
         java.util.HashMap mp = phr.classifyWords(background, modelElements); 
+        res.putAll(mp); 
+	 }
+    }
+    return res; 
+  }
+
+  public java.util.HashMap classifyVerbs(Vector verbs)
+  { java.util.HashMap res = new java.util.HashMap(); 
+  
+    for (int i = 0; i < elements.size(); i++) 
+    { NLPPhraseElement elem = (NLPPhraseElement) elements.get(i); 
+      if (elem instanceof NLPWord) 
+      { NLPWord wd = (NLPWord) elem; 
+        java.util.HashMap mp = wd.classifyVerbs(verbs);
+        res.putAll(mp); 
+      } 
+      else if (elem instanceof NLPPhrase)
+      { NLPPhrase phr = (NLPPhrase) elem; 
+        java.util.HashMap mp = phr.classifyVerbs(verbs); 
         res.putAll(mp); 
 	 }
     }

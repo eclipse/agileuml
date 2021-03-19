@@ -146,6 +146,12 @@ public class AttributeMatching
     return false; 
   } 
 
+  boolean notReferenceTarget() // target is not a reference
+  { if (trg.isReference())
+    { return false; } 
+    return true; 
+  } 
+
   boolean isComposedTarget() // target is a composed attribute
   { if (trg.getNavigation().size() > 1) 
     { return true; } 
@@ -1487,18 +1493,18 @@ public class AttributeMatching
       { return emx; } 
         // to map from e1 to e2, emx.realsrc must be e1 or an ancestor of e1,
         // emx.realtrg must be e2 or a descendent of e2
-	  else 
-	  { Vector e1leafs = e1.getActualLeafSubclasses(); 
-	    Vector e2leafs = e2.getActualLeafSubclasses(); 
-		for (int i = 0; i < e1leafs.size(); i++) 
-		{ Entity e1sub = (Entity) e1leafs.get(i); 
-		  for (int j = 0; j < e2leafs.size(); j++) 
-		  { Entity e2sub = (Entity) e2leafs.get(j); 
-		    EntityMatching emy = ModelMatching.getRealEntityMatching(e1sub,e2sub,ems); 
-			if (emy != null) 
-			{ possibles.add(emy); }
-		  }
-		}
+      else 
+      { Vector e1leafs = e1.getActualLeafSubclasses(); 
+        Vector e2leafs = e2.getActualLeafSubclasses(); 
+        for (int i = 0; i < e1leafs.size(); i++) 
+        { Entity e1sub = (Entity) e1leafs.get(i); 
+          for (int j = 0; j < e2leafs.size(); j++) 
+          { Entity e2sub = (Entity) e2leafs.get(j); 
+            EntityMatching emy = ModelMatching.getRealEntityMatching(e1sub,e2sub,ems); 
+            if (emy != null) 
+            { possibles.add(emy); }
+          }
+        }
       }
     }  
     return null; 
@@ -1507,7 +1513,7 @@ public class AttributeMatching
   String whenClause(EntityMatching emx, String srcroot, String trgroot, Map whens) 
   { // isObjectMatching is true
     if (emx == null) 
-	{ return ""; }
+    { return ""; }
 	
     Vector spath = new Vector(); 
     spath.addAll(src.getNavigation()); 
@@ -1553,6 +1559,57 @@ public class AttributeMatching
 
     whens.set(be2,be1); 
     return srcentx + "2" + trgentx + "(" + d1 + "," + d2 + ")"; 
+  } 
+
+  String whenClause(EntityMatching emx, String srcvar, String srcroot, String trgroot, Map whens) 
+  { // isObjectMatching is true
+    if (emx == null) 
+    { return ""; }
+	
+    Vector spath = new Vector(); 
+    spath.addAll(src.getNavigation()); 
+    if (spath.size() == 0) 
+    { spath.add(src); } 
+    Vector tpath = new Vector(); 
+    tpath.addAll(trg.getNavigation()); 
+    if (tpath.size() == 0) 
+    { tpath.add(trg); } 
+
+    // Attribute s1 = (Attribute) spath.get(0); 
+    // Attribute t1 = (Attribute) tpath.get(0); 
+    // Type tsrc = src.getElementType(); 
+    // Type ttrg = trg.getElementType(); 
+    String nsrc = emx.src + ""; 
+    String ntrg = emx.trg + ""; 
+    String srcentx = nsrc; 
+    if (nsrc.endsWith("$"))
+    { srcentx = nsrc.substring(0,nsrc.length()-1); } 
+    if (emx.realsrc != null) 
+    { srcentx = emx.realsrc.getName(); }
+ 
+    String trgentx = ntrg; 
+    if (ntrg.endsWith("$"))
+    { trgentx = ntrg.substring(0,ntrg.length()-1); }  
+    if (emx.realtrg != null) 
+    { trgentx = emx.realtrg.getName(); } 
+
+    // String d1 = dataname(srcroot,spath); 
+    String d2 = dataname(trgroot,tpath); 
+
+    /* BasicExpression be1 = new BasicExpression(d1); 
+    be1.setType(src.getType()); 
+    if (emx.realsrc != null) 
+    { be1.setElementType(new Type(emx.realsrc)); }  
+    be1.variable = src; 
+
+    BasicExpression be2 = new BasicExpression(d2); 
+    be2.setType(trg.getType()); 
+    if (emx.realtrg != null) 
+    { be2.setElementType(new Type(emx.realtrg)); } 
+    be2.variable = trg; */ 
+
+    // whens.set(be2,be1); 
+    return srcentx + "2" + trgentx + "(" + srcvar + "," + d2 + ")"; 
   } 
 
   String whenClause(Vector possibles, String srcroot, String trgroot, Map whens) 
@@ -3934,8 +3991,8 @@ Binding etlTargetMap(String trgvar, Attribute preatt, Vector path, Expression se
          String tenumval = tobj.getEnumerationValue(trg,mod);
          xstrs[i] = senumval; 
          ystrs[i] = tenumval;  
-		 if (senumval != null && tenumval != null && senumval.equals(tenumval))
-		 { System.out.println(">> objects " + sobj + " and"); 
+         if (senumval != null && tenumval != null && senumval.equals(tenumval))
+         { System.out.println(">> objects " + sobj + " and"); 
            System.out.println(tobj + " satisfy matching " + this); 
          } 
          else 
@@ -3944,7 +4001,7 @@ Binding etlTargetMap(String trgvar, Attribute preatt, Vector path, Expression se
            valid = false; 
            removed.add(this); 
          }
-	   }
+       }
        else if (src.isNumeric() && trg.isNumeric())
        { double srcval = sobj.getNumericValue(src,mod); 
          xs[i] = srcval;
@@ -3981,7 +4038,7 @@ Binding etlTargetMap(String trgvar, Attribute preatt, Vector path, Expression se
          { System.out.println("!! objects " + sobj + " and"); 
            System.out.println(tobj + " fail to satisfy matching " + this); 
            valid = false;
-		   removed.add(this);  
+           removed.add(this);  
          }
          System.out.println("----------------------"); 
          System.out.println();  
@@ -4015,20 +4072,20 @@ Binding etlTargetMap(String trgvar, Attribute preatt, Vector path, Expression se
 	    if (trgobj != null && srcobj != null)	 
 	    { if (mod.correspondence.getAll(srcobj) != null && mod.correspondence.getAll(srcobj).contains(trgobj))
           { System.out.println(">> objects " + srcobj + " and"); 
-		    System.out.println(trgobj + " correspond."); 
-		    System.out.println(">> objects " + sobj + " and"); 
+            System.out.println(trgobj + " correspond."); 
+            System.out.println(">> objects " + sobj + " and"); 
             System.out.println(tobj + " satisfy matching " + this); 
-		  } 
+          } 
           else 
           { System.out.println(">> objects " + srcobj + " and"); 
-		    System.out.println(trgobj + " do not correspond."); 
-		    System.out.println("!! objects " + sobj + " " + tobj + " fail to satisfy matching " + this); 
-	        valid = false; 
-	        removed.add(this); 
+            System.out.println(trgobj + " do not correspond."); 
+            System.out.println("!! objects " + sobj + " " + tobj + " fail to satisfy matching " + this); 
+            valid = false; 
+            removed.add(this); 
           }
-	    } 
+        } 
         else 
-	    { valid = false; 
+        { valid = false; 
           removed.add(this); 
         }
         System.out.println("----------------------");
@@ -4038,51 +4095,51 @@ Binding etlTargetMap(String trgvar, Attribute preatt, Vector path, Expression se
       { Vector srcvect = sobj.getCollectionValue(src,mod); 
         Vector trgvect = tobj.getCollectionValue(trg,mod); 
 		
-	    xvect[i] = srcvect; 
-	    yvect[i] = trgvect; 
+	   xvect[i] = srcvect; 
+	   yvect[i] = trgvect; 
 		
-	    if (src.isSequence() && trg.isSequence())
-	    { if (srcvect.equals(trgvect))
-	      { System.out.println(">> objects " + sobj + " and"); 
+        if (src.isSequence() && trg.isSequence())
+        { if (srcvect.equals(trgvect))
+          { System.out.println(">> objects " + sobj + " and"); 
             System.out.println(tobj + " satisfy matching " + this); 
           } 
           else if (mod.correspondingObjectSequences(sent,tent,srcvect,trgvect))
           { System.out.println(">> objects " + sobj + " and"); 
             System.out.println(tobj + " satisfy matching " + this); 
-	      } 
+          } 
           else 
           { System.out.println("!! objects " + sobj + " and"); 
             System.out.println(tobj + " fail to satisfy matching " + this); 
 	        valid = false;
 			// removed.add(this); 
-		  }  
+          }  
           System.out.println("----------------------");
           System.out.println();    
 	    }
 	    else if (src.isCollection() && trg.isCollection()) 
 	    { // System.out.println(srcvect + "  " + trgvect); 
-          if (srcvect.containsAll(trgvect) && trgvect.containsAll(srcvect))
-          { System.out.println(">> objects " + sobj + " and"); 
-            System.out.println(tobj + " satisfy matching " + this); 
-          } 
-          else if (mod.correspondingObjectSets(srcvect,trgvect))
-          { System.out.println(">> objects " + sobj + " and"); 
-            System.out.println(tobj + " satisfy matching " + this); 
-          } 
-          else 
-          { System.out.println("!! Collections " + srcvect); 
-            System.out.println(trgvect + " Do not correspond"); 
-            System.out.println(">> Sizes are " + srcvect.size() + " and " + trgvect.size()); 
-            System.out.println("!! objects " + sobj + " and"); 
-            System.out.println(tobj + " fail to satisfy matching " + this); 
-            valid = false;
+           if (srcvect.containsAll(trgvect) && trgvect.containsAll(srcvect))
+           { System.out.println(">> objects " + sobj + " and"); 
+             System.out.println(tobj + " satisfy matching " + this); 
+           } 
+           else if (mod.correspondingObjectSets(srcvect,trgvect))
+           { System.out.println(">> objects " + sobj + " and"); 
+             System.out.println(tobj + " satisfy matching " + this); 
+           } 
+           else 
+           { System.out.println("!! Collections " + srcvect); 
+             System.out.println(trgvect + " Do not correspond"); 
+             System.out.println(">> Sizes are " + srcvect.size() + " and " + trgvect.size()); 
+             System.out.println("!! objects " + sobj + " and"); 
+             System.out.println(tobj + " fail to satisfy matching " + this); 
+             valid = false;
 			  // removed.add(this); 
-          }                   
-          System.out.println("----------------------");
-          System.out.println();    
-        }
-      } 
-    } 
+           }                   
+           System.out.println("----------------------");
+           System.out.println();    
+         }
+       } 
+     } 
 
 	if (!valid && src.isEnumeration() && trg.isEnumeration())
 	{ if (AuxMath.isConstant(ystrs))
@@ -4096,7 +4153,7 @@ Binding etlTargetMap(String trgvar, Attribute preatt, Vector path, Expression se
 	  else
 	  { System.out.println(">>> " + trg + " is not a function of " + src); 
 	     return; 
-	   }
+        }
 	   
 	   // Propose a function
 	   if (xstrs.length > 1)
@@ -4393,17 +4450,54 @@ Binding etlTargetMap(String trgvar, Attribute preatt, Vector path, Expression se
            }
            else 
            { System.out.println(">>> Retaining mapping, but it needs to be refined."); }
-           System.out.println(); 
-         }
-	    else 
-         { System.out.println(">>> " + trg + " seems unrelated to " + src);
-           System.out.println(">>> Try an alternative target feature of type " + trg.getType());
-           removed.add(this); 
-           System.out.println();   
-         }
-       }        
-     }
+             System.out.println(); 
+           }
+	      else 
+           { System.out.println(">>> " + trg + " seems unrelated to " + src);
+             System.out.println(">>> Try an alternative target feature of type " + trg.getType());
+             removed.add(this); 
+             System.out.println();   
+           }
+         }        
+       }
    }    
     
-  
+   public String targetCSTLExpressionFor(java.util.Map srcfeatureMap)
+   { // Add var`f for any source composition src of the form att.f, where att |-> var in the featureMap
+   
+     String var = (String) srcfeatureMap.get(src + ""); 
+     String res = "\"\""; 
+     if (var != null) 
+     { res = var; } // can be null. 
+
+     if (srcvalue != null) 
+     { res = srcvalue.cstlQueryForm(srcfeatureMap); } 
+     // but can't convert general expressions to CSTL
+
+     Vector tpath = trg.getNavigation(); 
+     int tpathsize = tpath.size(); 
+     if (tpathsize > 1) // must be size 2 in most cases
+     { // create a nested target element
+       Attribute attf = (Attribute) tpath.get(tpathsize-2); 
+       Type eintermediate = attf.getElementType(); 
+       if (eintermediate != null && eintermediate.isEntity())
+       { Entity eint = eintermediate.getEntity(); 
+         return eint.getName() + "[" + res + "]"; 
+       } // actually, accumulate features of eint. 
+     } 
+
+     Vector path = src.getNavigation(); 
+     if (path.size() <= 1) 
+     { return res; } // The variable _i corresponding to src
+
+     Attribute fsrc = (Attribute) path.get(0); 
+     var = (String) srcfeatureMap.get(fsrc + ""); 
+
+     String metafeatures = ""; 
+     for (int i = 1; i < path.size(); i++) 
+     { Attribute f = (Attribute) path.get(i); 
+       metafeatures = metafeatures + "`" + f.getName();
+     } 
+     return var + metafeatures;   
+   } // can't have both a source expression and source path. 
 } 

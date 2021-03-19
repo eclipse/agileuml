@@ -83,7 +83,31 @@ public class UseCase extends ModelElement
     operation.setPrecondition(new BasicExpression(true)); 
     operation.setPostcondition(new BasicExpression(true)); 
   }
-
+  
+  public void checkIncludesValidity(Vector useCases)
+  { for (int j = 0; j < include.size(); j++) 
+    { Include inc = (Include) include.get(j); 
+	  UseCase ucinc = inc.getInclusion(); 
+	  if (ucinc == null) 
+	  { System.err.println("!! Error: null included use case in " + getName()); 
+	    continue; 
+      }
+	  
+	  String nme = ucinc.getName(); 
+	  for (int i = 0; i < useCases.size(); i++) 
+      { if (useCases.get(i) instanceof UseCase)
+	    { UseCase uc1 = (UseCase) useCases.get(i); 
+          if (uc1.hasExtension(ucinc))
+          { System.err.println("!! Error: Cannot have " + nme + " as extension (of " + 
+		                       uc1.getName() + ") and inclusion (of " + getName() + ")!"); 
+            // JOptionPane.showMessageDialog(null, "Error: " + nme + " is extension & inclusion!", 
+            //                           "",JOptionPane.ERROR_MESSAGE);  
+		  }  
+        } 
+      }
+    }
+  }
+  
   public void setResultType(Type et)
   { if ("void".equals(et + ""))
     { resultType = null;
@@ -163,7 +187,7 @@ public class UseCase extends ModelElement
   
     if (par != null) { return; }
 	 
-	par = new Attribute(nme, typ, ModelElement.INTERNAL); 
+    par = new Attribute(nme, typ, ModelElement.INTERNAL); 
     par.setElementType(typ.getElementType()); 
     parameters.add(par); 
   } 
@@ -322,6 +346,21 @@ public class UseCase extends ModelElement
     orderedPostconditions.add(post); 
     post.setId(orderedPostconditions.size()); 
   }
+
+  public void addPostcondition(Expression expr)
+  { Constraint post = new Constraint(new BasicExpression(true), expr); 
+    orderedPostconditions.add(post); 
+    post.setId(orderedPostconditions.size()); 
+  } 
+
+  public void addUniquePostcondition(Expression expr)
+  { Constraint post = new Constraint(new BasicExpression(true), expr); 
+    if (orderedPostconditions.contains(post)) { } 
+	else 
+	{ orderedPostconditions.add(post); 
+      post.setId(orderedPostconditions.size()); 
+	} 
+  } 
 
   public void addPostconditions(Vector posts)
   { for (int i = 0; i < posts.size(); i++) 
@@ -2732,6 +2771,12 @@ public void generateCUIcode(PrintWriter out)
 
       out.println();
       
+      for (int i = 0; i < ownedOperations.size(); i++) 
+      { BehaviouralFeature op = (BehaviouralFeature) ownedOperations.get(i); 
+        out.println("  " + op.getKM3() + ";");  
+      }  // and result
+
+      out.println(); 
 
       for (int i = 0; i < preconditions.size(); i++) 
       { Constraint con = (Constraint) preconditions.get(i); 
@@ -2845,6 +2890,11 @@ public void generateCUIcode(PrintWriter out)
       } 
 
        */ 
+
+      for (int i = 0; i < ownedOperations.size(); i++) 
+      { BehaviouralFeature op = (BehaviouralFeature) ownedOperations.get(i); 
+        res = res + "  " + op.getKM3() + ";\n";  
+      }  
 	   
       for (int i = 0; i < preconditions.size(); i++) 
       { Constraint con = (Constraint) preconditions.get(i); 
@@ -4762,7 +4812,44 @@ out.println("  public List<String> stringList" + item + "()");
     return res;
   }
 
+  public void defineCreateCode(Entity ent)
+  { // adds postcondition to create ent.
+    Type etype = new Type(ent); 
+    BasicExpression e = new BasicExpression(ent); 
 
+    BasicExpression ret = new BasicExpression("result"); 
+    ret.setType(etype); 
+    ret.setElementType(etype); 
+
+    String ename = ent.getName(); 
+    String enamex = ename.toLowerCase() + "x"; 
+    BasicExpression ex = new BasicExpression(enamex); 
+    ex.setType(etype); 
+    ex.setElementType(etype); 
+    BinaryExpression ereturn = new BinaryExpression("=", ret, ex);  
+    BinaryExpression erang = new BinaryExpression(":", ex, e); 
+    BinaryExpression createE = new BinaryExpression("#", erang, ereturn); 
+    addPostcondition(createE); 
+  } 
+
+  public void defineReadCode(String ex, Entity ent)
+  { // adds postcondition to read ex.
+
+    /* Attribute par = (Attribute) ModelElement.lookupByName(ex,parameters); 
+  
+    if (par != null) { return; }
+    // only add the read code once.  */ 
+
+    Type etype = new Type(ent); 
+   
+    BasicExpression ret = new BasicExpression(ex); 
+    ret.setType(etype); 
+    ret.setElementType(etype); 
+
+    UnaryExpression ereturn = new UnaryExpression("->display", ret);  
+    addUniquePostcondition(ereturn); 
+  } 
+    
 }
 
 /*     String parstring = "";  
