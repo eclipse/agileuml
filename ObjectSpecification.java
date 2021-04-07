@@ -208,16 +208,26 @@ public class ObjectSpecification extends ModelElement
       catch (Exception _e) 
       { try { res = Long.parseLong(val); } 
         catch (Exception _f) 
-        { res = Double.parseDouble(val); } 
-      } 
+        { try { res = Double.parseDouble(val); } 
+		  catch (Exception _x) 
+		  { System.err.println("!! Wrong value: " + val + " for numeric feature " + att); 
+		    return res; 
+		  }
+        }
+	  } 
     } 
     else if (att != null) // att itself is a number? 
     { try { res = Integer.parseInt(att); } 
       catch (Exception _e) 
       { try { res = Long.parseLong(att); } 
         catch (Exception _f) 
-        { res = Double.parseDouble(att); } 
-      } 
+        { try { res = Double.parseDouble(att); } 
+       	  catch (Exception _x) 
+		  { System.err.println("!! Wrong value: " + att + " for numeric feature " + att); 
+		    return res; 
+		  }
+        } 
+	  }   
     } 
 
     return res; 
@@ -357,16 +367,17 @@ public class ObjectSpecification extends ModelElement
   { if (expr.isFeature()) 
     { Vector atts = ((BasicExpression) expr).decompose(); 
       Attribute att = new Attribute(atts); 
-      return getEnumerationValue(att,mod); 
+      String val = getEnumerationValue(att,mod); 
+	  // System.err.println(">>> Enumeration value of (" + this + ")." + expr + " is: " + val);
+	  return val;  
     } 
-	System.err.println(">>> Unknown enumeration value: " + expr); 
 	return "" + expr; 
   } 
 
   public ObjectSpecification[] getCollectionAsObjectArray(Attribute att, ModelSpecification mod)
   { Vector res = getCollectionValue(att,mod);
 
-    System.out.println("+++---> Value of " + att + " on " + this + " = " + res); 
+    // System.out.println("+++---> Value of " + att + " on " + this + " = " + res); 
  
     if (res == null) 
     { return null; } 
@@ -989,7 +1000,8 @@ public class ObjectSpecification extends ModelElement
     else 
     { atts.add(att); } 
     attvalues.put(att,value); 
-  }
+  } 
+  // numbers, booleans, objects & enums are entered as a string with no quotes, but actual string values have "". 
 
   public void addAttribute(String att, Vector value)
   { if (atts.contains(att)) { } 
@@ -997,6 +1009,7 @@ public class ObjectSpecification extends ModelElement
     { atts.add(att); } 
     attvalues.put(att,value); 
   }
+  // Likewise for trees, which are nested vectors. 
 
   public void addAttributeElement(String att, String value)
   { Vector v = new Vector(); 

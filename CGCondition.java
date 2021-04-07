@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -67,8 +67,15 @@ public class CGCondition
           else if (m instanceof ModelElement && 
                    cond.stereotypeConditionSatisfied((ModelElement) m, entities))
           { } 
+          else if (m instanceof Vector && 
+                   cond.conditionSatisfied((Vector) m, entities)) 
+          { }
+          else if (m instanceof String && 
+                   cond.conditionSatisfied((String) m, entities)) 
+          { }
           else 
           { return false; } 
+		  
 		  System.out.println(">>> Condition " + cond + " is satisfied by " + m); 
         } 
       } 
@@ -79,6 +86,8 @@ public class CGCondition
   public boolean stereotypeConditionSatisfied(ModelElement m, Vector entities)
   { if (m.hasStereotype(stereotype))
     { return positive; }
+	if (!m.hasStereotype(stereotype))
+	{ return !positive; }
     return false; 
   } 
 
@@ -91,6 +100,10 @@ public class CGCondition
     { return positive; }
     if ("enumerated".equals(stereotype.toLowerCase()) && t.isEnumeratedType())
     { return positive; }
+    if ("map".equals(stereotype.toLowerCase()) && t.isMapType())
+    { return positive; }
+    if ("function".equals(stereotype.toLowerCase()) && t.isFunctionType())
+    { return positive; }
     if ("collection".equals(stereotype.toLowerCase()) && t.isCollectionType())
     { return positive; }
     if ("sequence".equals(stereotype.toLowerCase()) && t.isSequenceType())
@@ -102,6 +115,10 @@ public class CGCondition
 	if ("void".equals(stereotype.toLowerCase()) && t != null && !t.isVoidType())
 	{ return !positive; }
     if ("enumerated".equals(stereotype.toLowerCase()) && !(t.isEnumeratedType()))
+    { return !positive; }
+    if ("map".equals(stereotype.toLowerCase()) && !t.isMapType())
+    { return !positive; }
+    if ("function".equals(stereotype.toLowerCase()) && !t.isFunctionType())
     { return !positive; }
     if ("collection".equals(stereotype.toLowerCase()) && !(t.isCollectionType()))
     { return !positive; }
@@ -119,6 +136,14 @@ public class CGCondition
     { return positive; }
     return false;
   }
+
+  public boolean conditionSatisfied(Vector v, Vector entities)
+  { if ("empty".equals(stereotype.toLowerCase()) && (v == null || v.size() == 0))
+    { return positive; }
+	if ("empty".equals(stereotype.toLowerCase()) && v != null && v.size() > 0)
+	{ return !positive; }
+	return false; 
+  } 
 
   public boolean conditionSatisfied(Expression e, Vector entities)
   { Type t = e.getType();
@@ -249,6 +274,16 @@ public class CGCondition
       Expression left = st.getLeft(); 
       return conditionSatisfied(left,entities); 
     } 
+    return false; 
+  } // and for other kinds of statement also 
+
+  public boolean conditionSatisfied(String e, Vector entities)
+  { if (e != null && e.equals(stereotype)) 
+    { return positive; } 
+	if (e == null) 
+	{ return !positive; }
+	if (!e.equals(stereotype))
+	{ return !positive; }
     return false; 
   } // and for other kinds of statement also 
 }

@@ -28,6 +28,18 @@ public class AuxMath
     return x/1000.0; 
   } 
 
+  public static String dequote(String x)
+  { if (x.endsWith("\"") && x.startsWith("\""))
+    { return x.substring(1,x.length()-1); } 
+    return x; 
+  } 
+
+  public static String after(String s, String prefix)
+  { // s = prefix + result 
+    int plen = prefix.length(); 
+	return s.substring(plen,s.length()); 
+  }
+  
   public static int gcd(int x, int y)
   { int l = x; 
     int k = y;  
@@ -73,12 +85,12 @@ public class AuxMath
       for (int i = 0; i < xs.length && i < ys.length; i++) 
       { double diff = xs[i] - ys[i]; 
 
-        System.out.println("!!! GCD with " + oldgcd + " " + diff); 
+        // System.out.println("!!! GCD with " + oldgcd + " " + diff); 
 
         if (diff >= 0) 
-		{ oldgcd = AuxMath.gcd(oldgcd, (int) diff); } 
-		else 
-		{ return 1; } 
+	   { oldgcd = AuxMath.gcd(oldgcd, (int) diff); } 
+	   else 
+	   { return 1; } 
 
         if (oldgcd == 1)
         { return 1; } 
@@ -444,6 +456,185 @@ public class AuxMath
       return true; 
     }
 
+    public static boolean isStringSum(Vector[] xs, String[] ys)
+    { if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { Vector xvect = xs[i]; 
+          String dd = ys[i]; 
+          String sum = ""; 
+          for (int j = 0; j < xvect.size(); j++) 
+          { sum = sum + "" + dequote((String) xvect.get(j)); }
+   
+          if (sum.equals(dd)) 
+          { System.out.println(">>> String sum of " + xvect + " = " + dd); } 
+          else 
+          { return false; } 
+        }
+      } 
+      return true; 
+    }
+
+    public static boolean hasInitialStringSum(Vector[] xs, String[] ys)
+    { if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { Vector xvect = xs[i]; 
+          String dd = ys[i]; 
+          String sum = ""; 
+          for (int j = 0; j < xvect.size(); j++) 
+          { sum = sum + "" + dequote((String) xvect.get(j)); }
+   
+          if (dd.startsWith(sum)) 
+          { System.out.println(">>> " + xvect + "->sum() + ?? = " + dd); } 
+          else 
+          { return false; } 
+        }
+      } 
+      return true; 
+    }
+
+    public static String separatorStringSum(Vector[] xs, String[] ys)
+    { // Try to find a consistent separator K such that 
+      // each xs[i][0] + K + ... + K + xs[i][p] = ys[i]
+      // where p = xs[i].size()-1
+      // Returns K if such is found, otherwise null
+      
+      String K = null; 
+
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { Vector xvect = xs[i]; 
+          String dd = ys[i]; 
+          String sum = ""; 
+
+          if (xvect.size() == 0) 
+          { if (dd.equals("")) { } 
+            else 
+            { return null; } 
+          } 
+          else if (xvect.size() == 1) 
+          { sum = dequote((String) xvect.get(0));  
+            if (dd.equals(sum)) { } 
+            else 
+            { return null; } 
+          } 
+          else
+          { String fst = "" + dequote((String) xvect.get(0));
+            if (dd.startsWith(fst)) 
+            { String rem = dd.substring(fst.length(),dd.length()); 
+              String scnd = "" + dequote((String) xvect.get(1)); 
+              int kend = rem.indexOf(scnd); 
+              if (kend < 0)
+              { return null; } 
+              String k2 = rem.substring(0,kend); 
+              System.out.println(">> Found separator " + k2); 
+              if (K != null && K.equals(k2)) { } 
+              else if (K == null) 
+              { K = k2; } 
+              else 
+              { return null; } // inconsistent separators
+            } 
+          }
+        }
+        
+        if (K == null) { return null; }
+		
+		// Check that K is ok for the whole list: 
+		
+        for (int i = 0; i < xs.length; i++)
+        { Vector xvect = xs[i]; 
+          String dd = ys[i]; 
+          String sum = ""; 
+ 
+          if (xvect.size() > 1)
+          { sum = dequote((String) xvect.get(0)); 
+		  
+            for (int j = 1; j < xvect.size(); j++) 
+            { sum = sum + K + dequote((String) xvect.get(j)); }
+   
+            if (sum.equals(dd)) 
+            { System.out.println(">>> Separator string sum of " + xvect + " and " + K + " = " + dd); } 
+            else 
+            { return null; } 
+          }
+        }
+      } 
+      return K; 
+    }
+
+    public static String initialSeparatorStringSum(Vector[] xs, String[] ys, String[] rems)
+    { // Try to find a consistent separator K such that 
+      // each xs[i][0] + K + ... + K + xs[i][p] + rems[i] = ys[i]
+      // where p = xs[i].size()-1
+      // Returns K if such is found, otherwise null
+      
+      String K = null; 
+
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { Vector xvect = xs[i]; 
+          String dd = ys[i]; 
+          String sum = ""; 
+
+          if (xvect.size() == 0) 
+          { // if (dd.equals("")) { } 
+            // else 
+            // { return null; } 
+		 rems[i] = dd; 
+          } 
+          else if (xvect.size() == 1) 
+          { sum = dequote((String) xvect.get(0));  
+            if (dd.startsWith(sum)) 
+            { rems[i] = after(dd,sum); } 
+            else 
+            { return null; } 
+          } 
+          else
+          { String fst = "" + dequote((String) xvect.get(0));
+            if (dd.startsWith(fst)) 
+            { String rem = dd.substring(fst.length(),dd.length()); 
+              String scnd = "" + dequote((String) xvect.get(1)); 
+              int kend = rem.indexOf(scnd); 
+              if (kend < 0)
+              { return null; } 
+              String k2 = rem.substring(0,kend); 
+              System.out.println(">> Found separator " + k2); 
+              if (K != null && K.equals(k2)) { } 
+              else if (K == null) 
+              { K = k2; } 
+              else 
+              { return null; } // inconsistent separators
+            } 
+          }
+        }
+		
+        if (K == null) { return null; }
+		
+		// Check that K is ok for the whole list: 
+		
+        for (int i = 0; i < xs.length; i++)
+        { Vector xvect = xs[i]; 
+          String dd = ys[i]; 
+          String sum = ""; 
+ 
+          if (xvect.size() > 1)
+          { sum = dequote((String) xvect.get(0)); 
+		  
+            for (int j = 1; j < xvect.size(); j++) 
+            { sum = sum + K + dequote((String) xvect.get(j)); }
+   
+            if (dd.startsWith(sum)) 
+            { System.out.println(">>> " + xvect + "->separatorSum(" + K + ") + ?? = " + dd); 
+              rems[i] = after(dd,sum); 
+            } 
+            else 
+            { return null; } 
+          }
+        }
+      } 
+      // System.out.println(">> remainders = " + rems); 
+      return K; 
+    }
+
     public static boolean isStringMax(Vector[] xs, Vector[] ys)
     { if (ys.length > 1 && xs.length == ys.length)
       { for (int i = 0; i < xs.length; i++)
@@ -454,7 +645,7 @@ public class AuxMath
             String maxstring = ""; 
             for (int j = 0; j < xvect.size(); j++) 
             { // System.out.println(">>> xvect(j) = " + xvect.get(j) + " " + maxstring + " " + dd); 
-			  if (xvect.get(j) instanceof String)
+              if (xvect.get(j) instanceof String)
 			  { String vs = (String) xvect.get(j); 
 			    if (maxstring.compareTo(vs) < 0)
 			    { maxstring = vs; }
@@ -642,6 +833,22 @@ public class AuxMath
            Vector yvect = ys[i]; 
 
            if (mod.correspondingObjectSets(xvect,yvect)) { }
+           else { return false; }
+	    }
+	    return true; 
+	  } 
+	  return false; 
+	}
+
+    public static boolean isSubset(Vector[] xs, Vector[] ys, ModelSpecification mod)
+    { // Assume they are both sets
+
+       if (ys.length > 1 && xs.length == ys.length)
+       { for (int i = 0; i < xs.length; i++)
+         { Vector xvect = xs[i]; 
+           Vector yvect = ys[i]; 
+
+           if (mod.correspondingObjectSubset(xvect,yvect) != null) { }
            else { return false; }
 	    }
 	    return true; 
@@ -1466,7 +1673,7 @@ public class AuxMath
      System.out.println(gcd(0,0)); 
 
 	 
-	 Vector x1 = new Vector(); 
+	 /* Vector x1 = new Vector(); 
 	 x1.add(new Double(1)); x1.add(new Double(3)); x1.add(new Double(5)); 
 	 Vector y1 = new Vector(); 
 	 y1.add(new Double(3)); 
@@ -1479,11 +1686,25 @@ public class AuxMath
 	 
 	 
      Vector[] xvs = { x1, x2 }; 
-	 Vector[] yvs = { y1, y2 }; 
+     Vector[] yvs = { y1, y2 }; 
 	 
 	 
-     System.out.println(AuxMath.isNumericAverage(xvs,yvs)); 
+     System.out.println(AuxMath.isNumericAverage(xvs,yvs)); */ 
 
+     Vector x1 = new Vector(); 
+	 x1.add("ab"); x1.add("cd"); 
+	 Vector x2 = new Vector(); 
+	 x2.add("x"); x2.add("yy"); x2.add("try");
+	 Vector x3 = new Vector(); 
+	 x3.add("ttt"); x3.add("pppp"); 
+	 
+     Vector[] xstrs = {x1, x2, x3};
+     String[] ystrs = {"ab##cd((", "x##yy##try((", "ttt##pppp(("}; 
+	 
+     String[] rems = new String[3]; 
+	 System.out.println(AuxMath.initialSeparatorStringSum(xstrs,ystrs,rems)); 
+	  
+	 
      /* System.out.println(isFunctional(xs,ys)); 
 
    	System.out.println(quadraticRelationship(xs,ys,"s","t"));  

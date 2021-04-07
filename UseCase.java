@@ -2468,8 +2468,8 @@ public void generateCUIcode(PrintWriter out)
     } 
 
 
-    // if (activity != null) 
-    // { activity.saveData(out); }
+    if (activity != null) 
+    { Behaviour.saveUseCaseActivity(nme,activity,out); }
 
   }  // and the activity
 

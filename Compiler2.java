@@ -1104,6 +1104,8 @@ public class Compiler2
       { String lhs = rule.substring(0,i); 
         nospacelexicalanalysis(lhs); 
         Expression lhsexp = parseExpression(); 
+		if (lhsexp == null) 
+		{ lhsexp = parseATLExpression(); }
 
         if (lhsexp != null) 
         { if (lhsexp instanceof BinaryExpression)
@@ -1585,6 +1587,15 @@ public class Compiler2
   public Expression parseExpression() 
   { // System.out.println("LEXICALS: " + lexicals); 
     Expression ee = parse_expression(0,0,lexicals.size()-1); 
+    finalexpression = ee; 
+    return ee; 
+  } 
+
+  public Expression parseATLExpression() 
+  { // System.out.println("LEXICALS: " + lexicals);
+    Vector ents = new Vector(); 
+	Vector typs = new Vector();  
+    Expression ee = parse_ATLexpression(0,0,lexicals.size()-1,ents,typs); 
     finalexpression = ee; 
     return ee; 
   } 
@@ -3100,8 +3111,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
              "toLowerCase".equals(ss2) || "isInteger".equals(ss2) || "toLong".equals(ss2) ||
              "toInteger".equals(ss2) || "isReal".equals(ss2) || "toReal".equals(ss2) ||
              "exp".equals(ss2) || "log".equals(ss2) || "log10".equals(ss2) || 
-             "sin".equals(ss2) || "cos".equals(ss2) || 
-             "tan".equals(ss2) || "oclIsUndefined".equals(ss2) ||
+             "sin".equals(ss2) || "cos".equals(ss2) || "keys".equals(ss2) || "values".equals(ss2) ||  
+             "tan".equals(ss2) || "oclIsUndefined".equals(ss2) || "oclType".equals(ss2) || 
              "floor".equals(ss2) || "ceil".equals(ss2) || "round".equals(ss2) ||
              "abs".equals(ss2) || "cbrt".equals(ss2) || "asin".equals(ss2) ||
              "acos".equals(ss2) || "atan".equals(ss2) || "isLong".equals(ss2) ||
@@ -3208,6 +3219,86 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
             new BasicExpression(lexicals.get(i+3) + "",0);
           BinaryExpression be = 
             new BinaryExpression("|C",new BinaryExpression(":",bevar,ee2),ee1); 
+          // System.out.println("Parsed: " + be); 
+          return be; 
+        } 
+        else if ("unionAll".equals(ss2) && 
+                 i+5 < pend && "|".equals(lexicals.get(i+4) + "") &&
+                               // "(".equals(lexicals.get(i+2) + "") &&
+                               ")".equals(lexicals.get(pend) + ""))
+        { // It is ->collect(v|...)
+          Expression ee1 = parse_ATLexpression(bc+1,i+5,pend-1,entities,types);
+          if (ee1 == null) { continue; } 
+          Expression ee2 = parse_ATLfactor_expression(bc,pstart,i-1,entities,types); 
+          if (ee2 == null) { continue; } 
+          BasicExpression bevar = 
+            new BasicExpression(lexicals.get(i+3) + "",0);
+          BinaryExpression be = 
+            new BinaryExpression("|unionAll",new BinaryExpression(":",bevar,ee2),ee1); 
+          // System.out.println("Parsed: " + be); 
+          return be; 
+        } 
+        else if ("intersectAll".equals(ss2) && 
+                 i+5 < pend && "|".equals(lexicals.get(i+4) + "") &&
+                               // "(".equals(lexicals.get(i+2) + "") &&
+                               ")".equals(lexicals.get(pend) + ""))
+        { // It is ->collect(v|...)
+          Expression ee1 = parse_ATLexpression(bc+1,i+5,pend-1,entities,types);
+          if (ee1 == null) { continue; } 
+          Expression ee2 = parse_ATLfactor_expression(bc,pstart,i-1,entities,types); 
+          if (ee2 == null) { continue; } 
+          BasicExpression bevar = 
+            new BasicExpression(lexicals.get(i+3) + "",0);
+          BinaryExpression be = 
+            new BinaryExpression("|intersectAll",new BinaryExpression(":",bevar,ee2),ee1); 
+          // System.out.println("Parsed: " + be); 
+          return be; 
+        } 
+        else if ("sortedBy".equals(ss2) && 
+                 i+5 < pend && "|".equals(lexicals.get(i+4) + "") &&
+                               // "(".equals(lexicals.get(i+2) + "") &&
+                               ")".equals(lexicals.get(pend) + ""))
+        { // It is ->collect(v|...)
+          Expression ee1 = parse_ATLexpression(bc+1,i+5,pend-1,entities,types);
+          if (ee1 == null) { continue; } 
+          Expression ee2 = parse_ATLfactor_expression(bc,pstart,i-1,entities,types); 
+          if (ee2 == null) { continue; } 
+          BasicExpression bevar = 
+            new BasicExpression(lexicals.get(i+3) + "",0);
+          BinaryExpression be = 
+            new BinaryExpression("|sortedBy",new BinaryExpression(":",bevar,ee2),ee1); 
+          // System.out.println("Parsed: " + be); 
+          return be; 
+        } 
+        else if ("selectMaximals".equals(ss2) && 
+                 i+5 < pend && "|".equals(lexicals.get(i+4) + "") &&
+                               // "(".equals(lexicals.get(i+2) + "") &&
+                               ")".equals(lexicals.get(pend) + ""))
+        { // It is ->collect(v|...)
+          Expression ee1 = parse_ATLexpression(bc+1,i+5,pend-1,entities,types);
+          if (ee1 == null) { continue; } 
+          Expression ee2 = parse_ATLfactor_expression(bc,pstart,i-1,entities,types); 
+          if (ee2 == null) { continue; } 
+          BasicExpression bevar = 
+            new BasicExpression(lexicals.get(i+3) + "",0);
+          BinaryExpression be = 
+            new BinaryExpression("|selectMaximals",new BinaryExpression(":",bevar,ee2),ee1); 
+          // System.out.println("Parsed: " + be); 
+          return be; 
+        } 
+        else if ("selectMinimals".equals(ss2) && 
+                 i+5 < pend && "|".equals(lexicals.get(i+4) + "") &&
+                               // "(".equals(lexicals.get(i+2) + "") &&
+                               ")".equals(lexicals.get(pend) + ""))
+        { // It is ->collect(v|...)
+          Expression ee1 = parse_ATLexpression(bc+1,i+5,pend-1,entities,types);
+          if (ee1 == null) { continue; } 
+          Expression ee2 = parse_ATLfactor_expression(bc,pstart,i-1,entities,types); 
+          if (ee2 == null) { continue; } 
+          BasicExpression bevar = 
+            new BasicExpression(lexicals.get(i+3) + "",0);
+          BinaryExpression be = 
+            new BinaryExpression("|selectMinimals",new BinaryExpression(":",bevar,ee2),ee1); 
           // System.out.println("Parsed: " + be); 
           return be; 
         } 
@@ -4553,12 +4644,29 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
                                  Vector gens, Vector pasts)
   { // usecase name : type { parameters postconditions activity }
     String nme = lexicals.get(st+1) + "";
-	String typ = lexicals.get(st+3) + "";  
-    Type uctyp = parseType(st+3,st+3,entities,types); 
+	String colon = lexicals.get(st+2) + "";
+	Type uctyp = new Type("void",null);  // default 
+	int openingBracket = st + 4; 
+	boolean foundstart = false; 
+	
+	for (int i = st + 3; i < en && !foundstart; i++)
+	{ String lx = lexicals.get(i) + ""; 
+      if ("{".equals(lx))
+	  { openingBracket = i; 
+	    foundstart = true; 
+        if (":".equals(colon))
+		{ uctyp = parseType(st+3,i-1,entities,types); } 
+	  } 
+	}  
         
     UseCase uc = new UseCase(nme); 
 	uc.setResultType(uctyp); 
 	System.out.println(">>> use case " + nme + " has return type " + uctyp); 
+
+    if (foundstart == false) 
+	{ System.err.println("!! ERROR: no { found for use case " + nme);
+	  return uc;
+    }
 	
     int startpostconditions = st + 4;
     int endpostconditions = en;

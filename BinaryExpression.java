@@ -1661,7 +1661,7 @@ class BinaryExpression extends Expression
         operator.equals("->intersection") || operator.equals("->prepend") || 
         operator.equals("->unionAll") || operator.equals("->intersectAll") || 
         operator.equals("->selectMaximals") || operator.equals("->selectMinimals") ||
-        operator.equals("->append") || operator.equals("->including") ||
+        operator.equals("->append") || operator.equals("->including") || operator.equals("->restrict") || 
         operator.equals("->excluding")) 
     { return false; } 
 
@@ -1676,7 +1676,7 @@ class BinaryExpression extends Expression
       return false; 
     } 
 
-    if (operator.equals("->at"))
+    if (operator.equals("->at") || operator.equals("|A") || operator.equals("->any"))
     { return Type.isPrimitiveType(left.elementType); } 
 
     // for +, -, *, /
@@ -1751,7 +1751,7 @@ class BinaryExpression extends Expression
       } 
       rpterms.removeAll(removals); 
     } 
-    else if ("!".equals(operator) || "#".equals(operator) ||
+    else if ("!".equals(operator) || "#".equals(operator) || "|A".equals(operator) || 
         "#1".equals(operator) || "|".equals(operator) || operator.equals("#LC") ||
         "|R".equals(operator) || "|C".equals(operator))
     { // discard pre-terms of features of the left.left
@@ -1813,7 +1813,7 @@ class BinaryExpression extends Expression
       rpterms.removeAll(removals); 
     } 
     else if ("!".equals(operator) || "#".equals(operator) || operator.equals("#LC") ||
-        "#1".equals(operator) || "|".equals(operator) || 
+        "#1".equals(operator) || "|".equals(operator) || "|A".equals(operator) || 
         "|R".equals(operator) || "|C".equals(operator))
     { // discard pre-terms of features of the left.left
       // because these are invalid
@@ -1887,7 +1887,7 @@ class BinaryExpression extends Expression
     res = VectorUtil.union(res,right.getBaseEntityUses());
     // System.out.println("Base entities of " + this + " = " + res); 
     return res;
-  }
+  } // This is what you need in uml2Cbmm to obtain the parameters of lambda expressions. 
     
   public Vector getVariableUses()
   { if (operator.equals("#") || operator.equals("|") || operator.equals("|A") ||
@@ -2665,7 +2665,9 @@ public void findClones(java.util.Map clones, String rule, String op)
       boolean lrt = lexp.right.typeCheck(types,entities,contexts,env);
       Type et = lexp.right.elementType;
       if (et == null)
-      { System.err.println("!! TYPE ERROR: no element type for " + lexp.right + " in " + this);                     JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this,                                       "Type error", JOptionPane.ERROR_MESSAGE);
+      { System.err.println("!! TYPE ERROR: no element type for " + lexp.right + " in " + this);                     
+	    JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this,
+		                                       "Type error", JOptionPane.ERROR_MESSAGE);
         et = new Type("void", null); 
       }
 
@@ -2723,7 +2725,9 @@ public void findClones(java.util.Map clones, String rule, String op)
       boolean lrt = lexp.right.typeCheck(types,entities,contexts,env);
       Type et = lexp.right.elementType;
       if (et == null)
-      { System.err.println("!! TYPE ERROR: no element type for " + lexp.right + " in " + this);                     JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this,                                       "Type error", JOptionPane.ERROR_MESSAGE);
+      { System.err.println("!! TYPE ERROR: no element type for " + lexp.right + " in " + this);                     
+	    JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this,
+		                                       "Type error", JOptionPane.ERROR_MESSAGE);
         et = new Type("void", null); 
       }
 
@@ -2783,7 +2787,8 @@ public void findClones(java.util.Map clones, String rule, String op)
  
           if (ast.isClosurable()) { } 
           else 
-          { JOptionPane.showMessageDialog(null, "ERROR: association in " + this + " cannot be closured",                               "Expression error", JOptionPane.ERROR_MESSAGE);
+          { JOptionPane.showMessageDialog(null, "ERROR: association in " + this + " cannot be closured",
+		                                 "Expression error", JOptionPane.ERROR_MESSAGE);
           } 
           // System.out.println(">>> FOUND ASSOCIATION " + ast); 
         } 
@@ -2792,7 +2797,8 @@ public void findClones(java.util.Map clones, String rule, String op)
         right.typeCheck(types,entities,context2,env); 
       } 
       else 
-      { System.err.println("!! ERROR: no entity for " + this);                                             elementType = left.elementType; 
+      { System.err.println("!! ERROR: no entity for " + this);
+	    elementType = left.elementType; 
         type.setElementType(elementType); 
       } 
       multiplicity = ModelElement.MANY;
@@ -3336,7 +3342,8 @@ public void findClones(java.util.Map clones, String rule, String op)
 
     if (tright == null) 
     { System.err.println("!!! TYPE ERROR: No type for collect RHS: " + this); 
-      JOptionPane.showMessageDialog(null, "ERROR: No type for collect RHS: " + this,                                           "Type error", JOptionPane.ERROR_MESSAGE);
+      JOptionPane.showMessageDialog(null, "ERROR: No type for collect RHS: " + this,                                          
+	                                "Type error", JOptionPane.ERROR_MESSAGE);
       return; 
     } 
     

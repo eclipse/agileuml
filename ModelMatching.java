@@ -2436,6 +2436,8 @@ public class ModelMatching implements SystemTypes
       em.recheckModel(mod,this,entitymatches,rem,fcns); 
     } 
 
+    mod.defineTargetQueryFunctions(entitymatches,typematches); 
+
     Vector sourceClasses = new Vector(); 
 
     for (int i = 0; i < entities.size(); i++) 

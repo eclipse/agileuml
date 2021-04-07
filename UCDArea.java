@@ -2256,9 +2256,11 @@ public class UCDArea extends JPanel
 
     String typ = attDialog.getAttributeType();
     if (typ == null) 
-    { System.err.println("null type, creation cancelled"); 
+    { System.err.println("!! ERROR: null type, creation cancelled"); 
       return; 
     } 
+
+    System.out.println(">>> Type: " + typ + " (NB, select a chosen type list entry by highlighting it)"); 
 
     Type tt = Type.getTypeFor(typ, types, entities); 
     Type elemType = null; 
@@ -2271,7 +2273,7 @@ public class UCDArea extends JPanel
         tt = new Type(typ,null);
       }
       else
-      { System.out.println("Warning: Invalid type name: " + typ);
+      { System.out.println("Found type: " + typ);
         tt = new Type(typ,null);
       }
     } 
@@ -3008,7 +3010,7 @@ public class UCDArea extends JPanel
 
   public void generateSwiftUIApp()
   { IOSAppGenerator gen = new IOSAppGenerator(); 
-    CGSpec cgs = loadCSTL(); 
+    CGSpec cgs = loadCSTL("cgSwift.cstl"); 
     // System.out.println(">>> Using loaded code generator: " + cgs); 
 
     String appName = systemName; 
@@ -3019,7 +3021,7 @@ public class UCDArea extends JPanel
     CGSpec cgswiftmain = CSTL.getTemplate("cgswiftmain.cstl"); 
   
     if (cgs == null || cgswiftmain == null) 
-    { System.err.println("!! No cg/cg.cstl or cg/cgswiftmain.cstl file defined!"); 
+    { System.err.println("!! No cg/cgSwift.cstl or cg/cgswiftmain.cstl file defined!"); 
       return; 
     } 
 
@@ -3510,13 +3512,13 @@ public class UCDArea extends JPanel
 
   public void generateIOSApp()
   { IOSAppGenerator gen = new IOSAppGenerator(); 
-    CGSpec cgs = loadCSTL(); 
+    CGSpec cgs = loadCSTL("cgSwift.cstl"); 
     // System.out.println(">>> Using loaded code generator: " + cgs); 
 
     CGSpec cgswiftmain = CSTL.getTemplate("cgswiftmain.cstl"); 
   
     if (cgs == null || cgswiftmain == null) 
-    { System.err.println("!! No cg/cg.cstl or cg/cgswiftmain.cstl file defined!"); 
+    { System.err.println("!! No cg/cgSwift.cstl or cg/cgswiftmain.cstl file defined!"); 
       return; 
     } 
 
@@ -3722,6 +3724,8 @@ public class UCDArea extends JPanel
       else 
       { String entfile = ename + ".swift"; 
         File entf = new File("output/iosapp/" + entfile); 
+		File simpleentf = new File("output/" + entfile); 
+		
         try
         { PrintWriter entfout = new PrintWriter(
                               new BufferedWriter(
@@ -3741,6 +3745,16 @@ public class UCDArea extends JPanel
           cgswiftmain.displayText(maincode,entfout); 
 
           entfout.close();
+
+		  PrintWriter simpleentfout = new PrintWriter(
+                                        new BufferedWriter(
+                                          new FileWriter(simpleentf)));
+          simpleentfout.println("import Foundation"); 
+          simpleentfout.println("import Darwin"); 
+          simpleentfout.println(); 
+		  cgs.displayText(entcode,simpleentfout);
+		  cgswiftmain.displayText(maincode,simpleentfout); 
+          simpleentfout.close(); 
         } catch (Exception _e1) { _e1.printStackTrace(); }
 				
         if (ent.isRemote() || ent.isCloud()) // Remote data source
@@ -3830,6 +3844,7 @@ public class UCDArea extends JPanel
 
     String entbean = "ModelFacade.swift"; 
     File entbeanf = new File("output/iosapp/" + entbean); 
+    File simpleMFf = new File("output/" + entbean); 
     try
     { PrintWriter beanout = new PrintWriter(
                               new BufferedWriter(
@@ -3840,6 +3855,14 @@ public class UCDArea extends JPanel
                       types,internetCalls,needsMaps,beanout);
       // beanout.flush(); 
       beanout.close(); 
+	  
+	  PrintWriter mfout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(simpleMFf)));
+      gen.simpleModelFacade(systemName,entusecases,cgs,entities,clouds,
+                      types,internetCalls,needsMaps,mfout);
+      // beanout.flush(); 
+      mfout.close(); 
     } catch (Exception e) { e.printStackTrace(); } 
 
     if (internetCalls > 0) 
@@ -3942,10 +3965,10 @@ public class UCDArea extends JPanel
   
   public void generateAndroidLayouts(PrintWriter out)
   { AndroidAppGenerator agen = new AndroidAppGenerator(); 
-    CGSpec cgs = loadCSTL(); 
+    CGSpec cgs = loadCSTL("cgJava8.cstl"); 
 
     if (cgs == null) 
-    { System.err.println("!! No cg/cg.cstl file defined!"); 
+    { System.err.println("!! No cg/cgJava8.cstl file defined!"); 
       return; 
     } 
 	
@@ -3966,7 +3989,7 @@ public class UCDArea extends JPanel
       String eename = ee.getName(); 
 	  
       Attribute eekey = ee.getPrincipalPK();
-	if (eekey == null && !ee.isDerived() && !ee.isComponent())
+      if (eekey == null && !ee.isDerived() && !ee.isComponent())
       { System.out.println(">>> A key is needed for each managed entity in the app."); 
         System.out.println(">>> I will add one for you."); 
         String keyname = eename.toLowerCase() + "Id"; 
@@ -4294,6 +4317,7 @@ public class UCDArea extends JPanel
            
       String entfile = ent.getName() + ".java"; 
       File entff = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entfile); 
+      File simpleentff = new File("output/" + entfile); 
       try
       { PrintWriter ffout = new PrintWriter(
                               new BufferedWriter(
@@ -4314,7 +4338,24 @@ public class UCDArea extends JPanel
         String entcode = ent.cg(cgs);
         cgs.displayText(entcode,ffout); 
 		 
-        ffout.close(); 
+        ffout.close();
+		
+		PrintWriter simplefout = new PrintWriter(
+                                   new BufferedWriter(
+                                     new FileWriter(simpleentff)));
+        simplefout.println("import java.util.*;"); 
+        simplefout.println("import java.util.HashMap;"); 
+        simplefout.println("import java.util.Collection;");
+        simplefout.println("import java.util.List;");
+        simplefout.println("import java.util.ArrayList;");
+        simplefout.println("import java.util.Set;");
+        simplefout.println("import java.util.HashSet;");
+        simplefout.println("import java.util.TreeSet;");
+        simplefout.println("import java.util.Collections;");
+        simplefout.println(); 
+        cgs.displayText(entcode,simplefout); 
+		 
+		simplefout.close(); 
       } catch (Exception e) { } 
 
       if (ent.isRemote()) // Remote data source
@@ -4613,10 +4654,10 @@ public class UCDArea extends JPanel
     if (systemName != null && systemName.length() > 0)
     { appName = systemName; }
 
-    CGSpec cgs = loadCSTL(); 
+    CGSpec cgs = loadCSTL("cgJava8.cstl"); 
 
     if (cgs == null) 
-    { System.err.println("!! No cg/cg.cstl file defined!"); 
+    { System.err.println("!! No cg/cgJava8.cstl file defined!"); 
       return; 
     } 
  
@@ -4891,10 +4932,10 @@ public class UCDArea extends JPanel
     // if (systemName != null && systemName.length() > 0)
     // { appname = systemName; }
 
-    CGSpec cgs = loadCSTL(); 
+    CGSpec cgs = loadCSTL("cgJava8.cstl"); 
 
     if (cgs == null) 
-    { System.err.println("!! No cg/cg.cstl file defined!"); 
+    { System.err.println("!! No cg/cgJava8.cstl file defined!"); 
       return; 
     } 
  
@@ -11432,9 +11473,12 @@ public void produceCUI(PrintWriter out)
   }
 
   public void applyCSTLSpecification()
-  { CGSpec spec = loadCSTL(); 
+  { CGSpec spec = loadCSTL(); // from cg/cg.cstl
 
-    if (spec == null) { return; } 
+    if (spec == null) 
+	{ System.err.println("!! ERROR: No file cg/cg.cstl"); 
+	  return; 
+	} 
 
 
     String newtypes = ""; 
@@ -11503,6 +11547,19 @@ public void produceCUI(PrintWriter out)
   { CGSpec res = new CGSpec(entities); 
     
     File f = new File("./cg/cg.cstl");  /* default */ 
+    if (f != null) 
+    { res = CSTL.loadCSTL(f,types,entities); } 
+
+    // System.out.println(">>> Parsed: " + res);
+ 
+    CSTL.loadTemplates(types,entities); 
+    return res; 
+  }
+
+  public CGSpec loadCSTL(String fname)
+  { CGSpec res = new CGSpec(entities); 
+    
+    File f = new File("./cg/" + fname);   
     if (f != null) 
     { res = CSTL.loadCSTL(f,types,entities); } 
 
@@ -18739,7 +18796,7 @@ public void produceCUI(PrintWriter out)
             { String x = lft.substring(0,idx);
               String prop = lft.substring(idx+1,lft.length());
               int ind2 = str.indexOf("="); 
-              String val = str.substring(ind2 + 1, str.length());
+              String val = str.substring(ind2 + 1, str.length()); // could be a tree value even
               val = val.trim(); 
               System.out.println("LINE: " + x + "." + prop + " = " + val);
               ObjectSpecification objspec = modelspec.getObject(x); 
@@ -18799,13 +18856,13 @@ public void produceCUI(PrintWriter out)
 	  if (correspondenceCount == 0)
 	  { System.err.println("!! No correspondences are defined in the model. Please specify how to correspond source |-> target objects"); 
         String sourceFeature = 
-          JOptionPane.showInputDialog("Match by same values of Source feature = target feature?:");
+          JOptionPane.showInputDialog("Match objects by equal values of Source feature = Target feature? (f1 = f2):");
 		if (sourceFeature != null) 
 		{ int eqind = sourceFeature.indexOf("="); 
 		  String sf = sourceFeature.substring(0,eqind).trim(); 
 		  String tf = sourceFeature.substring(eqind+1,sourceFeature.length()).trim(); 
 		  if (sf != null && tf != null && sf.length() > 0 && tf.length() > 0)
-		  { System.out.println(">>> Matching source objects to target by " + sf + " = " + tf); 
+		  { System.out.println(">>> Matching source objects x to target y by x." + sf + " = y." + tf); 
 		    modelspec.defineCorrespondences(sf,tf); 
 		  }
 		} 
@@ -18827,7 +18884,7 @@ public void produceCUI(PrintWriter out)
         fout.close(); 
       } catch (Exception _except) { } 
 
-      System.out.println("----- Written TL transformation to output/final.tl ----------");   
+      System.out.println("----- Written result TL transformation to output/final.tl ----------");   
     } 
     else 
     { System.err.println("!! ERROR: no TL specification"); } 
@@ -20704,6 +20761,9 @@ public void produceCUI(PrintWriter out)
     boolean allmaps = false; 
     boolean strict = false; 
     boolean exact = false; 
+	
+	Vector unreferencedRootClasses = new Vector(); 
+	Vector unreferencedSources = new Vector(); 
 
     if ("all maps".equals(kind)) // including superclasses
     { allmaps = true; } 
@@ -20711,6 +20771,8 @@ public void produceCUI(PrintWriter out)
     { allmaps = true; 
       strict = true; 
     } 
+	else if ("1-1 maps".equals(kind))
+	{ unreferencedRootClasses = Entity.unreferencedRootClasses(entities,associations); }
 
 
     String scompositionDepth = 
@@ -20757,6 +20819,9 @@ public void produceCUI(PrintWriter out)
     { Entity ex = (Entity) entities.get(j); 
       Entity fex = (Entity) mflat.get(ex); 
       fex.copyInheritances(ex,mflat); 
+	  
+	  if (unreferencedRootClasses.contains(ex))
+	  { unreferencedSources.add(fex); }
     } 
 
     Vector originalentities = new Vector(); 
@@ -20833,6 +20898,9 @@ public void produceCUI(PrintWriter out)
     if (allmaps) { } 
     else 
     { otargets.removeAll(emaptargets); } // can't be used for other entities
+	
+	osources.removeAll(unreferencedSources);  // Useless classes for a transformation.  
+	
 
     System.out.println("**** Assumed matchings are: " + emapsources + " -> " + emaptargets); 
 

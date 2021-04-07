@@ -2711,19 +2711,36 @@ class BasicExpression extends Expression
         } 
       } 
 
-      JOptionPane.showMessageDialog(null, "Operation " + data + " unknown at call " + this + ".\n" + 
+      Attribute fvar = (Attribute) ModelElement.lookupByName(data,env); 
+      if (fvar != null) 
+      { type = fvar.getType(); 
+        if (type != null && type.isFunctionType())
+		{ umlkind = UPDATEOP; 
+		  elementType = fvar.getElementType();
+		  System.out.println(">> Function parameter " + data + " of type " + type); 
+		} 
+		else 
+		{ JOptionPane.showMessageDialog(null, data + " is not a function parameter or known function in " + this + ".\n" + 
+                                        "Please re-type-check or correct your specification.", 
+                                        "Type warning", JOptionPane.WARNING_MESSAGE);
+	    }
+	  } // default
+      else 
+	  { JOptionPane.showMessageDialog(null, "Operation " + data + " unknown at call " + this + ".\n" + 
                                     "Please re-type-check or correct your specification.", 
-                                    "Type warning", JOptionPane.WARNING_MESSAGE); 
-      umlkind = UPDATEOP; 
-      type = new Type("boolean",null);         
-      elementType = new Type("boolean",null);         
+                                    "Type warning", JOptionPane.WARNING_MESSAGE);
+ 
+        umlkind = UPDATEOP; 
+        type = new Type("boolean",null);         
+        elementType = new Type("boolean",null);
+	  }          
     }
 
     if (isFunction(data))
     { umlkind = FUNCTION;
       if (objectRef == null) // error
-      { System.out.println("*** TYPE ERROR: function " + data +
-                           " should have an argument: arg->f(pars)");
+      { System.out.println("*** TYPE ERROR: OCL function " + data +
+                           " should have an argument: arg->" + data + "(pars)");
         if (parameters != null && parameters.size() > 0)
         { objectRef = (Expression) parameters.get(0); 
           parameters.remove(0); 

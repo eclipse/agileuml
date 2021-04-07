@@ -1521,7 +1521,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
 
     if (operator.equals("->reverse") || operator.equals("->tail") || operator.equals("->front") ||
-        operator.equals("->toLowerCase") || operator.equals("->toUpperCase"))  
+        operator.equals("->toLowerCase") || 
+        operator.equals("->toUpper") ||
+        operator.equals("->toLower") || 
+        operator.equals("->toUpperCase"))  
     { type = argument.getType(); 
       modality = argument.modality; 
       elementType = argument.elementType;
@@ -1689,6 +1692,12 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("->toReal")) 
     { return "Double.parseDouble(" + qf + ")"; } 
+
+    if (operator.equals("->toLower")) 
+    { return qf + ".toLowerCase()"; } 
+
+    if (operator.equals("->toUpper")) 
+    { return qf + ".toUpperCase()"; } 
 
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == null)"; } 
@@ -1900,6 +1909,12 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->toReal")) 
     { return "Double.parseDouble(" + qf + ")"; } 
 
+    if (operator.equals("->toLower")) 
+    { return qf + ".toLowerCase()"; } 
+
+    if (operator.equals("->toUpper")) 
+    { return qf + ".toUpperCase()"; } 
+
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == null)"; } 
 
@@ -2103,6 +2118,12 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("->toReal")) 
     { return "Double.parseDouble(" + qf + ")"; } 
+
+    if (operator.equals("->toLower")) 
+    { return qf + ".toLowerCase()"; } 
+
+    if (operator.equals("->toUpper")) 
+    { return qf + ".toUpperCase()"; } 
 
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == null)"; } 
@@ -2324,7 +2345,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "(" + qf + " == null)"; } 
 
     if (operator.equals("->sqr")) 
-	{ return "((" + qf + ")*(" + qf + "))"; } 
+    { return "((" + qf + ")*(" + qf + "))"; } 
 
     if (operator.equals("->flatten")) 
     { if (Type.isSequenceType(argument.type))
@@ -2368,9 +2389,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { String data1 = (data.charAt(0) + "").toUpperCase() + data.substring(1,data.length()); 
       return "((int) Math." + data1 + "(" + pre + "))"; 
     }  // could be long for double arguments 
-    else if (data.equals("toUpperCase")) 
+    else if (data.equals("toUpperCase") || data.equals("toUpper")) 
     { return pre + ".ToUpper()"; } 
-    else if (data.equals("toLowerCase"))
+    else if (data.equals("toLowerCase") || data.equals("toLower"))
     { return pre + ".ToLower()"; } 
     else if (data.equals("sum"))
     { Type sumtype = argument.getElementType();  // int, double, long, String 
@@ -2576,9 +2597,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "UmlRsdsLib<int>::oclRound(" + pre + ")"; } 
     else if (operator.equals("->sqr"))
     { return "(" + pre + ")*(" + pre + ")"; } 
-    else if (data.equals("toUpperCase")) 
+    else if (data.equals("toUpperCase") || data.equals("toUpper")) 
     { return "UmlRsdsLib<string>::toUpperCase(" + pre + ")"; } 
-    else if (data.equals("toLowerCase"))
+    else if (data.equals("toLowerCase") || data.equals("toLower"))
     { return "UmlRsdsLib<string>::toLowerCase(" + pre + ")"; } 
     else if (data.equals("sum"))
     { if (celtype.equals("string"))
@@ -3157,7 +3178,13 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
     out.println(id + ".needsBracket = " + needsBracket); 
     out.println(id + ".umlKind = " + umlkind); 
     if (accumulator != null) 
-	{ out.println(id + ".variable = \"" + accumulator.getName() + "\""); } 
+	{ out.println(id + ".variable = \"" + accumulator.getName() + "\""); 
+	  Type vtype = accumulator.getType(); 
+	  if (vtype != null) 
+	  { String vtypeid = vtype.getUMLModelName(out); 
+        out.println(id + ".variableType = " + vtypeid);
+	  }  
+	} 
 	 // out.println(res + ".prestate = " + prestate); 
     return id; 
   }         

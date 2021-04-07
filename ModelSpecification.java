@@ -1059,45 +1059,47 @@ public class ModelSpecification
         }
         else if (tatt.isString())
         { String[] values = (String[]) vmap.get(sobj); 
-            if (values != null) 
-			{ // System.out.println(">>> for source " + sobj + " target feature " + tatt + " values are: " + values.length); 
- 		       for (int k = 0; k < satts.size(); k++) 
-               { Attribute satt = (Attribute) satts.get(k); 
-                 String sattname = satt.getName();
-                 String[] sattvalues = sobj.getCollectionAsStringArray(satt,this); 
+          if (values != null) 
+          { System.out.println(">>> for source " + sobj + " target feature " + tatt + " values are: " + values.length); 
+ 		    for (int k = 0; k < satts.size(); k++) 
+            { Attribute satt = (Attribute) satts.get(k); 
+              String sattname = satt.getName();
+              String[] sattvalues = sobj.getCollectionAsStringArray(satt,this); 
 			     // getAllReferredObjects(allsobjs,satt); 
-                 if (sattvalues != null && AuxMath.isCopy(sattvalues,values))
+              if (sattvalues != null && AuxMath.isCopy(sattvalues,values))
  		      { System.out.println(">> " + sobj + " satisfies copy feature mapping " + sattname + " |--> " + tattname);
-                   if (possibleSourceFeatures.contains(satt)) { } 
-                   else 
-                   { possibleSourceFeatures.add(satt); } 
-                 } 
-                 else if (sattvalues != null && AuxMath.allSuffixed(sattvalues,values)) 
-                 { System.out.println(">> " + sobj + " satisfies feature mapping " + 
+                if (possibleSourceFeatures.contains(satt)) { } 
+                else 
+                { possibleSourceFeatures.add(satt); } 
+              } 
+              else if (sattvalues != null && AuxMath.allSuffixed(sattvalues,values)) 
+              { System.out.println(">> " + sobj + " satisfies feature mapping " + 
 				                   sattname + " + suffix |--> " + tattname);
-                   Vector suffixes = AuxMath.getSuffixes(sattvalues,values); 
-                   System.out.println(">> All suffixes = " + suffixes); 
+                Vector suffixes = AuxMath.getSuffixes(sattvalues,values); 
+                System.out.println(">> All suffixes = " + suffixes); 
 				
-                   SetExpression suffixesexpr = new SetExpression(); 
-                   for (int p = 0; p < suffixes.size(); p++) 
-                   { String suff = (String) suffixes.get(p); 
-                     BasicExpression suffbe = new BasicExpression("\"" + suff + "\"");
-                     BasicExpression sattbe = new BasicExpression(satt); 
+                SetExpression suffixesexpr = new SetExpression(); 
+                for (int p = 0; p < suffixes.size(); p++) 
+                { String suff = (String) suffixes.get(p); 
+                  BasicExpression suffbe = new BasicExpression("\"" + suff + "\"");
+                  BasicExpression sattbe = new BasicExpression(satt); 
 				  sattbe.setUmlKind(Expression.ATTRIBUTE); 
-                     BinaryExpression sattplus = new BinaryExpression("+", 
-				                                sattbe, suffbe); 
-                     sattplus.setType(new Type("String", null)); 
-                     sattplus.setElementType(new Type("String", null));
-                     suffixesexpr.addElement(sattplus); 
-                   }
+                  BinaryExpression sattplus = new BinaryExpression("+", sattbe, suffbe); 
+                  sattplus.setType(new Type("String", null)); 
+                  sattplus.setElementType(new Type("String", null));
+                  suffixesexpr.addElement(sattplus); 
+				  suffixesexpr.setType(new Type("Set", null)); 
+				  suffixesexpr.setElementType(new Type("String", null));
+                }
 				
-                   if (possibleSourceFeatures.contains(satt)) { } 
+                if (possibleSourceFeatures.contains(satt)) { } 
 		        else 
-		        { possibleSourceFeatures.add(satt); }  
-                Attribute x$ = new Attribute("x$0", satt.getElementType(), ModelElement.INTERNAL); 
-                BinaryExpression insuffixset = 
-				  new BinaryExpression(":", new BasicExpression(x$), suffixesexpr); 
-				splittingConds.put(sattname, insuffixset); 
+		        { possibleSourceFeatures.add(satt);   
+                  Attribute x$ = new Attribute("x$", satt.getElementType(), ModelElement.INTERNAL); 
+                  BinaryExpression insuffixset = 
+				    new BinaryExpression(":", new BasicExpression(x$), suffixesexpr); 
+				  splittingConds.put(sattname, insuffixset);
+				}  
 			  } 
 			  else if (sattvalues != null && AuxMath.allPrefixed(sattvalues,values)) 
 			  { System.out.println(">> " + sobj + " satisfies feature mapping " + 
@@ -1115,15 +1117,18 @@ public class ModelSpecification
 				  plussatt.setType(new Type("String", null)); 
 				  plussatt.setElementType(new Type("String", null));
 				  prefixesexpr.addElement(plussatt); 
+				  prefixesexpr.setType(new Type("Set", null)); 
+				  prefixesexpr.setElementType(new Type("String", null));
 				}
 			    if (possibleSourceFeatures.contains(satt)) { } 
 		        else 
-		        { possibleSourceFeatures.add(satt); }  
+		        { possibleSourceFeatures.add(satt);  
 				
-                Attribute x$ = new Attribute("x$0", satt.getElementType(), ModelElement.INTERNAL); 
-				BinaryExpression inprefixset = 
-				  new BinaryExpression(":", new BasicExpression(x$), prefixesexpr); 
-				splittingConds.put(sattname, inprefixset); 
+                  Attribute x$ = new Attribute("x$", satt.getElementType(), ModelElement.INTERNAL); 
+			  	  BinaryExpression inprefixset = 
+				    new BinaryExpression(":", new BasicExpression(x$), prefixesexpr); 
+				  splittingConds.put(sattname, inprefixset);
+				}  
 			  } 
 			  else 
 			  { possibleSourceFeatures.remove(satt); }
@@ -1147,16 +1152,22 @@ public class ModelSpecification
 		{ repData.satt = (Attribute) satt; }
 		else if (satt instanceof Expression)
 		{ repData.sexpr = (Expression) satt; } 
+        
+		Expression spcond = (Expression) splittingConds.get(satt + ""); 
+        if (spcond != null) 
+		{ repData.setSplittingCondition(spcond); }
+		
         repData.sourceObjects = (Vector) perTattSobjs.get(tatt); 
 		repData.targetObjects = (Vector) perTattTobjs.get(tatt);       
 	    EntityMatching sent2tent = ModelMatching.getRealEntityMatching(sent,tent,ems);
         if (sent2tent != null)
 	    { repData.entityMapping = sent2tent; 
 		  replicationMap.put(tatt, repData);  // This is the preferred satt for tatt, a new rule will arise from this.
+		  
 		  System.out.println(">>> Potential replication rule: " + repData);
 		}   
 	  }  
-	} // End of loop for tatt
+	} // End of loop for tatt; now we use the replicationMap entries
 	
 	System.out.println(">> Potential instance replication rules are: " + replicationMap); 
 		  
@@ -1172,7 +1183,12 @@ public class ModelSpecification
 	  Type elemT = null; 
       Expression rang = null; 
       	  
-      if (repData.satt != null) 
+      if (repData.scond != null && (repData.scond instanceof BinaryExpression)) 
+	  { BinaryExpression inr = (BinaryExpression) repData.scond; 
+	    rang = inr.getRight();
+		elemT = rang.getElementType();  
+	  } 
+	  else if (repData.satt != null) 
       { elemT = repData.satt.getElementType(); 
         rang = new BasicExpression(repData.satt);
         rang.setUmlKind(Expression.ATTRIBUTE);  
@@ -1209,7 +1225,12 @@ public class ModelSpecification
   	    Type elemT = null; 
         Expression rang = null; 
       	  
-        if (repData.satt != null) 
+        if (repData.scond != null && (repData.scond instanceof BinaryExpression)) 
+	    { BinaryExpression inr = (BinaryExpression) repData.scond; 
+	      rang = inr.getRight();
+		  elemT = rang.getElementType();  
+	    } 
+        else if (repData.satt != null) 
         { elemT = repData.satt.getElementType(); 
           rang = new BasicExpression(repData.satt);
           rang.setUmlKind(Expression.ATTRIBUTE);  
@@ -2215,8 +2236,8 @@ public class ModelSpecification
 	
     for (int i = 0; i < seobjs.size(); i++)
     { ObjectSpecification sobj = (ObjectSpecification) seobjs.get(i); 
-      System.out.println(sobj + " satisfies? " + cond); 
-      sobj.satisfiesCondition(cond,this); 
+      // System.out.println(sobj + " satisfies? " + cond); 
+      // sobj.satisfiesCondition(cond,this); 
 
       if (cond == null || sobj.satisfiesCondition(cond,this))
       { Vector tobjs = correspondence.getAll(sobj); 
@@ -2249,7 +2270,7 @@ public class ModelSpecification
 	  // Get the object pairs sx |-> tx instantiating em
       Vector pairs = objectPairsForEntityMatching(em,removed);
 	  
-      System.out.println(">>> Object matchings for " + em.realsrc + " |--> " + em.realtrg + " are: " + pairs); 
+      System.out.println(">>> Object matchings for { " + em.condition + " } " + em.realsrc + " |--> " + em.realtrg + " are: " + pairs); 
 	  if (pairs.size() == 0) 
 	  { System.out.println(">> This mapping has no instances, it will be removed from the TL specification."); 
 	    removed.add(em); 
@@ -2268,6 +2289,15 @@ public class ModelSpecification
 	
     ems.removeAll(removed);     
   }   
+  
+  public void defineTargetQueryFunctions(Vector ems, Vector tms)
+  { for (int i = 0; i < ems.size(); i++) 
+    { EntityMatching em = (EntityMatching) ems.get(i); 
+      Entity trgent = em.realtrg;
+	  Vector tobjs = (Vector) objectsOfClass.get(trgent.getName()); 
+	  identifyQueryFunctions(trgent,tobjs,tms);
+	} // The target query functions are functions of trgent. 
+  } 
   
   public void checkPrimaryKeyAssignments(Vector ems)
   { // for each em : ems, check if there are missing attribute matchings that are valid in the model
@@ -2305,11 +2335,11 @@ public class ModelSpecification
 	    System.out.println(">> Target feature " + fatt + " of " + tatt + " unused in any class mapping");
 	  
 	    if (tatt.endsWithIdentity())
-	    { System.out.println("!! ERROR: Unused target identify feature " + fatt + " --> it must be assigned for transformation to be valid");
-		  unusedids.add(tatt); 
-		}
+	    { System.out.println("!! ERROR: Unused target identity feature " + fatt + " --> it must be assigned for transformation to be valid");
+           unusedids.add(tatt); 
+	    }
 	  }
-    }
+     }
 	
 	for (int i = 0; i < unusedids.size(); i++) 
 	{ Attribute tatt = (Attribute) unusedids.get(i); 
@@ -2441,7 +2471,7 @@ public class ModelSpecification
           if (tobj.hasDefinedValue(attname)) { } 
           else 
           { alldefined = false; } 
-            attvalues[j] = tobj.getNumeric(attname); 
+          attvalues[j] = tobj.getNumericValue(att,this); 
           }
 		
 		if (alldefined && AuxMath.isConstant(attvalues))
@@ -2550,7 +2580,7 @@ public class ModelSpecification
     { return null; }
 	
     System.out.println(); 
-    System.out.println(">>>> Trying to identify additional copy feature mappings for " + sent + " |--> " + tent); 
+    System.out.println(">>>> Trying to identify additional copy feature mappings for { " + emx.condition + " } " + sent + " |--> " + tent); 
     System.out.println(); 
 
     Vector sattributes = new Vector(); 
@@ -2600,42 +2630,42 @@ public class ModelSpecification
 	      double[] tattvalues = new double[en]; 
 	      boolean alldefined = true; 
 		
-          for (int j = 0; j < en; j++) 
-		  { Vector pair = (Vector) pairs.get(j); 
-		    ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
-		    ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
-		    if (sobj.hasDefinedValue(sattname) && tobj.hasDefinedValue(tattname)) { } 
-		    else 
-		    { alldefined = false; } 
-			sattvalues[j] = sobj.getNumeric(sattname);
-		    tattvalues[j] = tobj.getNumeric(tattname); 
-    	  }
+            for (int j = 0; j < en; j++) 
+		 { Vector pair = (Vector) pairs.get(j); 
+	        ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+	        ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+	        if (sobj.hasDefinedValue(sattname) && tobj.hasDefinedValue(tattname)) { } 
+	        else 
+	        { alldefined = false; } 
+             sattvalues[j] = sobj.getNumericValue(satt,this);
+             tattvalues[j] = tobj.getNumericValue(tatt,this); 
+    	      }
 		
-		  if (alldefined && AuxMath.isCopy(sattvalues,tattvalues))
-		  { System.out.println(">> Copy feature mapping " + sattname + " |--> " + tattname); 
-		    AttributeMatching amx = new AttributeMatching(satt, tatt); 
-		    res.add(amx); 
-		    emx.addMapping(amx);
-			found = true;  
-	  	  }
-		  else if (alldefined && AuxMath.linearCorrelation(sattvalues,tattvalues) > 0.98)
-		  { double slope = AuxMath.linearSlope(); 
-			double offset = AuxMath.linearOffset();
-			slope = AuxMath.to3dp(slope); 
-			offset = AuxMath.to3dp(offset);  
-			System.out.println(">> Apparent linear correspondence " + sattname + "*" + slope + " + " + offset + " |--> " + tattname); 
-		    BasicExpression slopebe = new BasicExpression(slope); 
-			BasicExpression offsetbe = new BasicExpression(offset); 
-			BasicExpression sattbe = new BasicExpression(satt);
-			sattbe.setUmlKind(Expression.ATTRIBUTE); 
+		 if (alldefined && AuxMath.isCopy(sattvalues,tattvalues))
+	      { System.out.println(">> Copy feature mapping " + sattname + " |--> " + tattname); 
+	        AttributeMatching amx = new AttributeMatching(satt, tatt); 
+	        res.add(amx); 
+	        emx.addMapping(amx);
+	        found = true;  
+	  	 }
+		 else if (alldefined && AuxMath.linearCorrelation(sattvalues,tattvalues) > 0.98)
+            { double slope = AuxMath.linearSlope(); 
+              double offset = AuxMath.linearOffset();
+              slope = AuxMath.to3dp(slope); 
+		   offset = AuxMath.to3dp(offset);  
+		   System.out.println(">> Apparent linear correspondence " + sattname + "*" + slope + " + " + offset + " |--> " + tattname); 
+		   BasicExpression slopebe = new BasicExpression(slope); 
+	        BasicExpression offsetbe = new BasicExpression(offset); 
+		   BasicExpression sattbe = new BasicExpression(satt);
+		   sattbe.setUmlKind(Expression.ATTRIBUTE); 
 			 
-			BinaryExpression mbe = new BinaryExpression("*", sattbe, slopebe);
-			BinaryExpression lhsbe = new BinaryExpression("+", mbe, offsetbe);
-			lhsbe.setType(new Type("double", null));   
-			AttributeMatching amx = new AttributeMatching(lhsbe, tatt); 
+		   BinaryExpression mbe = new BinaryExpression("*", sattbe, slopebe);
+		   BinaryExpression lhsbe = new BinaryExpression("+", mbe, offsetbe);
+		   lhsbe.setType(new Type("double", null));   
+		   AttributeMatching amx = new AttributeMatching(lhsbe, tatt); 
 		    res.add(amx); 
 		    emx.addMapping(amx);
-			found = true;  
+		    found = true;  
 	  	  }
 		  else if (alldefined && satt.isInteger() && tatt.isInteger() && AuxMath.isFunctional(sattvalues,tattvalues))
 		  { int possibleK = AuxMath.modFunction(sattvalues,tattvalues); 
@@ -2693,6 +2723,30 @@ public class ModelSpecification
 		    emx.addMapping(amx); 
 			found = true; 
 		  }
+          else if (alldefined && AuxMath.isUpperCased(sattvalues,tattvalues)) 
+          { BasicExpression sattbe = new BasicExpression(satt); 
+            sattbe.setUmlKind(Expression.ATTRIBUTE);
+		    UnaryExpression upperc = new UnaryExpression("->toUpperCase", sattbe); 
+		    upperc.setType(new Type("String", null)); 
+		    upperc.setElementType(new Type("String", null)); 
+		    System.out.println(">> Uppercased mapping " + sattname + "->toUpperCase() |--> " + tattname); 
+		    AttributeMatching amx = new AttributeMatching(upperc, tatt); 
+		    res.add(amx); 
+		    emx.addMapping(amx); 
+			found = true; 
+		  }  
+          else if (alldefined && AuxMath.isLowerCased(sattvalues,tattvalues)) 
+          { BasicExpression sattbe = new BasicExpression(satt); 
+            sattbe.setUmlKind(Expression.ATTRIBUTE);
+		    UnaryExpression lowerc = new UnaryExpression("->toLowerCase", sattbe); 
+		    lowerc.setType(new Type("String", null)); 
+		    lowerc.setElementType(new Type("String", null)); 
+		    System.out.println(">> Lowercased mapping " + sattname + "->toLowerCase() |--> " + tattname); 
+		    AttributeMatching amx = new AttributeMatching(lowerc, tatt); 
+		    res.add(amx); 
+		    emx.addMapping(amx); 
+			found = true; 
+		  }  
 	  	  else if (alldefined && AuxMath.isSuffixed(sattvalues,tattvalues))
 		  { String suff = AuxMath.commonSuffix(sattvalues,tattvalues); 
 		    if (suff != null)
@@ -2969,9 +3023,10 @@ public class ModelSpecification
             else if (alldefined && AuxMath.isSubsetSet(sattvalues,tattvalues,this))
             { System.out.println(">> Possible union feature mapping " + sattname + "->union(something) |--> " + tattname);
 			  System.out.println(">> or " + sattname + "->including(something)");  
-		    // AttributeMatching amx = new AttributeMatching(satt, tatt); 
-		    // res.add(amx); 
-		    // emx.addMapping(amx); 
+		      AttributeMatching amx = new AttributeMatching(satt, tatt); 
+		      amx.unionSemantics = true; 
+			  res.add(amx); 
+		      emx.addMapping(amx); 
             }
           } 
           else if (satt.isEntity() && tatt.isCollection())
@@ -2993,14 +3048,15 @@ public class ModelSpecification
 			// Object xobj = sobj.getValueOf(satt,this); 
 		    sattvalues[j] = new Vector(); 
 			sattvalues[j].add(xobj);  
-	        tattvalues[j] = tobj.getCollection(tattname);
+	        tattvalues[j] = tobj.getCollectionValue(tatt,this);
 			System.out.println(">> Checking inclusion feature mapping " + sattvalues[j] + " |--> " + tattvalues[j]); 
 		  }
 		
-		  if (alldefined && AuxMath.isCopy(sattvalues,tattvalues,this))
+		  if (alldefined && AuxMath.isSubset(sattvalues,tattvalues,this))
  		  { System.out.println(">> Inclusion feature mapping " + sattname + " |--> " + tattname); 
 		    AttributeMatching amx = new AttributeMatching(satt, tatt); 
-		    res.add(amx); 
+		    amx.unionSemantics = true;  
+            res.add(amx); 
 		    emx.addMapping(amx);
 			found = true;  
 		  }
@@ -3018,7 +3074,7 @@ public class ModelSpecification
     { return null; }
 	
     System.out.println(); 
-    System.out.println(">>>> Trying to identify Collection to 1 feature mappings for " + sent + " |--> " + tent); 
+    System.out.println(">>>> Trying to identify Collection to 1 feature mappings for { " + emx.condition + " } " + sent + " |--> " + tent); 
     System.out.println(); 
 
     Vector sattributes = new Vector(); 
@@ -3064,8 +3120,8 @@ public class ModelSpecification
             if (sobj.hasDefinedValue(satt,this) && tobj.hasDefinedValue(tattname)) { } 
             else 
             { alldefined = false; } 
-            sattvalues[j] = sobj.getNumeric(sattname);
-            tattvalues[j] = tobj.getNumeric(tattname); 
+            sattvalues[j] = sobj.getNumericValue(satt,this);
+            tattvalues[j] = tobj.getNumericValue(tatt,this); 
           }
 		
           if (alldefined && AuxMath.isCopy(sattvalues,tattvalues))
@@ -3090,7 +3146,7 @@ public class ModelSpecification
             { alldefined = false; } 
             sattvalues[j] = sobj.getCollectionValue(satt,this);
             tattvalues[j] = new Vector();
-            double dd = tobj.getNumeric(tattname); 
+            double dd = tobj.getNumericValue(tatt,this); 
             tattvalues[j].add(new Double(dd));  
           }
 		
@@ -3279,7 +3335,7 @@ public class ModelSpecification
     { return null; }
 	
     System.out.println(); 
-    System.out.println(">>>> Trying to identify 2 source feature to 1 target feature mappings for " + sent + " |--> " + tent); 
+    System.out.println(">>>> Trying to identify 2 source feature to 1 target feature mappings for { " + emx.condition + " } " + sent + " |--> " + tent); 
     System.out.println(); 
 
     Vector sattributes = new Vector(); 
@@ -3335,9 +3391,9 @@ public class ModelSpecification
               if (sobj.hasDefinedValue(satt,this) && sobj.hasDefinedValue(satt1,this) && tobj.hasDefinedValue(tattname)) { } 
               else 
               { alldefined = false; } 
-              sattvalues[j] = sobj.getNumeric(sattname);
-              satt1values[j] = sobj.getNumeric(satt1name);
-              tattvalues[j] = tobj.getNumeric(tattname); 
+              sattvalues[j] = sobj.getNumericValue(satt,this);
+              satt1values[j] = sobj.getNumericValue(satt1,this);
+              tattvalues[j] = tobj.getNumericValue(tatt,this); 
             }
 		  
 		    // check satt + satt1 = tatt, etc
@@ -3459,6 +3515,8 @@ public class ModelSpecification
              if (AuxMath.isUnion(sattvalues,satt1values,tattvalues,this))
              { System.out.println(">> Union feature mapping " + sattname + "->union(" + satt1name + ") |--> " + tattname); 
                BinaryExpression add1st = new BinaryExpression("->union", sattbe, satt1be); 
+               add1st.setType(satt.getType()); 
+			   add1st.setElementType(satt.getElementType());  
                AttributeMatching amx = new AttributeMatching(add1st, tatt); 
                res.add(amx); 
                emx.addMapping(amx); 
@@ -3466,7 +3524,9 @@ public class ModelSpecification
              }
              else if (AuxMath.isUnion(satt1values,sattvalues,tattvalues,this))
              { System.out.println(">> Union feature mapping " + satt1name + "->union(" + sattname + ") |--> " + tattname); 
-               BinaryExpression add1st = new BinaryExpression("->union", satt1be, sattbe); 
+               BinaryExpression add1st = new BinaryExpression("->union", satt1be, sattbe);
+			   add1st.setType(satt1.getType()); 
+			   add1st.setElementType(satt1.getElementType());  
                AttributeMatching amx = new AttributeMatching(add1st, tatt); 
                res.add(amx); 
                emx.addMapping(amx); 
@@ -3486,9 +3546,11 @@ public class ModelSpecification
     { return null; }
 	
 	// Only really for $text : String, representing the concrete syntax of the target object
+	// Future work will extend to  $q : Sequence(T) and Set(T)
 	
     System.out.println(); 
-    System.out.println(">>>> Trying to identify definitions of target query functions $tatt for " + sent + " |--> " + tent); 
+    System.out.println(">>>> Trying to identify definitions of target string attributes for { " + emx.condition + " } " + 
+	                   sent + " |--> " + tent); 
     System.out.println(); 
 
     Vector sattributes = new Vector(); 
@@ -3501,6 +3563,8 @@ public class ModelSpecification
 	System.out.println(">> All source attributes are: " + sattributes); 
      
     Vector tattributes = tent.allDefinedProperties(); 
+	// Vector othertattributes = new Vector(); 
+	// othertattributes.addAll(tattributes); 
 	
     Vector res = new Vector();
 	 
@@ -3508,7 +3572,11 @@ public class ModelSpecification
     { Attribute tatt = (Attribute) tattributes.get(i);
       String tattname = tatt.getName();
 	  // System.out.println(">> " + tent + " target feature: " + tattname);
-      if (tattname.startsWith("$") && tatt.isString() && emx.isUnusedTargetByName(tatt)) { }
+      if (tatt.isString() && emx.isUnusedTargetByName(tatt)) 
+	  { // Vector qattributes = new Vector(); 
+	    // qattributes.add(tatt); 
+		// othertattributes.removeAll(qattributes); 
+	  }
       else 
       { continue; } 
 	  
@@ -3534,11 +3602,11 @@ public class ModelSpecification
 	  }
 		
       System.out.println(); 
-      System.out.println(">> Undefined target query function: " + tattname);
+      System.out.println(">> Target feature: " + tattname);
 	  System.out.println(">> Target values are: " + tvalues); 
 	  System.out.println(); 
 	   
-      Vector satts = ModelMatching.findBaseTypeCompatibleSourceAttributes(tatt,sattributes,emx,ems); 
+      Vector satts = ModelMatching.findBaseTypeCompatibleSourceAttributes(tatt, sattributes, emx, ems); // sattributes,emx,ems); 
       boolean found = false; 
 	  
       Vector sourceattributes = new Vector();  // attributes considered for combination into tatt
@@ -3554,7 +3622,7 @@ public class ModelSpecification
 		        
           for (int j = 0; j < en; j++) 
           { Vector pair = (Vector) pairs.get(j); 
-            ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+            ObjectSpecification sobj = (ObjectSpecification) pair.get(0);   
             // if (sobj.hasDefinedValue(satt,this)) { } 
             // else 
             // { alldefined = false; } 
@@ -3574,7 +3642,7 @@ public class ModelSpecification
 		
           for (int j = 0; j < en; j++) 
           { Vector pair = (Vector) pairs.get(j); 
-            ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+            ObjectSpecification sobj = (ObjectSpecification) pair.get(0); // 0
             // if (sobj.hasDefinedValue(sattname)) { } 
 		    // else 
   		    // { alldefined = false; } 
@@ -3595,11 +3663,33 @@ public class ModelSpecification
 		    sourceattributes.add(satt); 
 		  } 
 		}
+        else if (satt.isStringCollection())
+		{ Vector[] sattvalues = new Vector[en]; 
+		
+		  boolean allempty = true; 
+		  
+		  for (int j = 0; j < en; j++)
+          { Vector pair = (Vector) pairs.get(j); 
+            ObjectSpecification srcobj = (ObjectSpecification) pair.get(0); // 0
+            Vector srcvect = srcobj.getCollectionValue(satt,this);
+            sattvalues[j] = srcvect;
+			System.out.println(">>> Value of (" + srcobj + ")." + satt + " = " + srcvect); 
+			
+			if (srcvect.size() > 0)
+			{ allempty = false; } 
+          }  
+           
+		  if (allempty) { } 
+		  else 
+		  { sattvalueMap.put(satt,sattvalues); 
+		    sourceattributes.add(satt); 
+		  } 
+		}
       }
 
-      Expression cexpr = composedStringFunction(tatt,sourceattributes,sattvalueMap,tattvalues,tvalues,pairs,tms); 
+      Expression cexpr = composedStringFunction(tatt,sourceattributes,sattvalueMap,tattvalues,tvalues,tms); 
       if (cexpr != null) 
-      { System.out.println(">>> Composed function " + cexpr + " |--> " + tatt); 
+      { System.out.println(">>> Composed string function " + cexpr + " |--> " + tatt); 
         AttributeMatching amx = new AttributeMatching(cexpr, tatt);
 		emx.addMapping(amx);  
         res.add(amx); 
@@ -3608,8 +3698,193 @@ public class ModelSpecification
 	return res; 
   } 
   
+  public Vector identifyQueryFunctions(Entity tent, Vector tobjs, Vector tms)
+  { int en = tobjs.size();  
+    if (en <= 1)
+    { return null; }
+	
+	// Only really for $text : String, representing the concrete syntax of the target object
+	// Future work will extend to  $q : Sequence(T) and Set(T)
+	
+    System.out.println(); 
+    System.out.println(">>>> Trying to identify definitions of target query functions $tatt for " + tent); 
+    System.out.println(); 
+
+    Vector sattributes = new Vector(); 
+
+    Vector s1atts = tent.allDefinedProperties();
+    Vector s2atts = tent.getNonLocalFeatures(); 
+    sattributes.addAll(s1atts); 
+    sattributes.addAll(s2atts); 
+	
+	System.out.println(">> All source attributes are: " + sattributes); 
+     
+    Vector tattributes = tent.allQueryOperationProperties(); 
+	// Vector othertattributes = new Vector(); 
+	// othertattributes.addAll(tattributes); 
+	
+    Vector res = new Vector();
+	 
+    for (int i = 0; i < tattributes.size(); i++)
+    { Attribute tatt = (Attribute) tattributes.get(i);
+      String tattname = tatt.getName();
+	  System.out.println(">> " + tent + " target query function: " + tattname);
+	  
+      if (tatt.isString()) //  && emx.isUnusedTargetByName(tatt)) 
+	  { Vector qattributes = new Vector(); 
+	    qattributes.add(tatt); 
+		sattributes.removeAll(qattributes); 
+	  }
+      else 
+      { continue; } 
+	  
+	  String[] tattvalues = new String[en]; 
+	  Vector tvalues = new Vector(); 
+   	  
+      boolean alltdefined = true; 
+		
+      for (int j = 0; j < en; j++) 
+      { ObjectSpecification tobj = (ObjectSpecification) tobjs.get(j); 
+        if (tobj.hasDefinedValue(tattname)) { } 
+        else 
+        { alltdefined = false; } 
+        tattvalues[j] = tobj.getString(tattname);
+		tvalues.add(tattvalues[j]);  
+	  }
+	  
+	  if (alltdefined) { } 
+	  else 
+	  { System.err.println("! Not every target instance has a " + tattname + " value"); 
+	    continue; 
+	  }
+		
+      System.out.println(); 
+      System.out.println(">> Undefined target query function: " + tattname);
+	  System.out.println(">> Target values are: " + tvalues); 
+	  System.out.println(); 
+	   
+      Vector satts = Entity.typeCompatibleFeatures(tatt, sattributes); // sattributes,emx,ems); 
+      boolean found = false; 
+     
+	  System.out.println(">> Type-compatible source attributes are: " + satts); 
+     
+	  
+      Vector sourceattributes = new Vector();  // attributes considered for combination into tatt
+	  java.util.Map sattvalueMap = new java.util.HashMap();  // for each satt in sourceattributes, its values for sobjs of pairs
+	  
+      for (int k = 0; k < satts.size(); k++) 
+      { Attribute satt = (Attribute) satts.get(k);
+        String sattname = satt.getName(); 
+	 
+	    if (satt.isNumeric())
+	    { String[] sattvalues = new String[en];
+          boolean alldefined = true; 
+		        
+          for (int j = 0; j < en; j++) 
+          { ObjectSpecification sobj = (ObjectSpecification) tobjs.get(j);  // 0 
+            // if (sobj.hasDefinedValue(satt,this)) { } 
+            // else 
+            // { alldefined = false; } 
+            sattvalues[j] = sobj.getNumericValue(satt,this) + "";
+          }
+		
+		  if (alldefined)
+		  { sattvalueMap.put(satt,sattvalues); 
+		    sourceattributes.add(satt); 
+		  }  
+		    // check satt + satt1 = tatt, etc
+	  	} 
+	    else if (satt.isString())
+	    { String[] sattvalues = new String[en]; 
+   	  
+          boolean allempty = true; 
+		
+          for (int j = 0; j < en; j++) 
+          { ObjectSpecification sobj = (ObjectSpecification) tobjs.get(j); // 0
+            // if (sobj.hasDefinedValue(sattname)) { } 
+		    // else 
+  		    // { alldefined = false; } 
+		    Object vv = sobj.getValueOf(satt,this); 
+			// System.out.println(">>> valueof " + sobj + "." + satt + " = " + vv); 
+			if (vv != null && (vv instanceof String) && ((String) vv).startsWith("\"") && ((String) vv).endsWith("\""))
+			{ sattvalues[j] = ((String) vv).substring(1,((String) vv).length()-1); } 
+			else 
+			{ sattvalues[j] = "" + vv; }
+			
+			if (sattvalues[j].length() > 0)
+			{ allempty = false; }
+	      }
+		
+          if (allempty) { } 
+		  else 
+		  { sattvalueMap.put(satt,sattvalues); 
+		    sourceattributes.add(satt); 
+		  } 
+		}
+		else if (satt.isStringCollection())
+		{ Vector[] sattvalues = new Vector[en]; 
+		
+		  boolean allempty = true; 
+		  
+		  for (int j = 0; j < en; j++)
+          { ObjectSpecification srcobj = (ObjectSpecification) tobjs.get(j); 
+            Vector srcvect = srcobj.getCollectionValue(satt,this);
+            sattvalues[j] = srcvect;
+			System.out.println(">>> Value of (" + srcobj + ")." + satt + " = " + srcvect); 
+			
+			if (srcvect.size() > 0)
+			{ allempty = false; } 
+          }  
+           
+		  if (allempty) { } 
+		  else 
+		  { sattvalueMap.put(satt,sattvalues); 
+		    sourceattributes.add(satt); 
+		  } 
+		}
+		else if (satt.isEntityCollection())
+		{ Vector[] sattvalues = new Vector[en]; 
+		
+		  boolean allempty = true; 
+		  
+		  for (int j = 0; j < en; j++)
+          { ObjectSpecification srcobj = (ObjectSpecification) tobjs.get(j); 
+            Vector srcvect = srcobj.getCollectionValue(satt,this);
+			sattvalues[j] = new Vector(); 
+			for (int p = 0; p < srcvect.size(); p++) 
+			{ ObjectSpecification sx = (ObjectSpecification) srcvect.get(p); 
+			  String val = sx.getString("toString"); 
+			  sattvalues[j].add(val); 
+			}
+			
+            System.out.println(">>> Value of (" + srcobj + ")." + satt + ".toString = " + sattvalues[j]); 
+			
+			if (srcvect.size() > 0)
+			{ allempty = false; } 
+          }  
+           
+		  if (allempty) { } 
+		  else 
+		  { sattvalueMap.put(satt,sattvalues); 
+		    sourceattributes.add(satt); 
+		  } 
+		}
+      }
+
+      Expression cexpr = composedStringFunction(tatt,sourceattributes,sattvalueMap,tattvalues,tvalues,tms); 
+      if (cexpr != null) 
+      { System.out.println(">>> Composed function " + cexpr + " |--> " + tatt); 
+        // AttributeMatching amx = new AttributeMatching(cexpr, tatt);
+		// emx.addMapping(amx);  
+        // res.add(amx); 
+		tent.addQueryOperation(tatt,cexpr); 
+      }
+    }
+	return res; 
+  } 
+
   public Expression composedStringFunction(Attribute tatt, Vector sourceatts, java.util.Map sattvalueMap, 
-                                           String[] targetValues, Vector tvalues, Vector pairs, Vector tms)
+                                           String[] targetValues, Vector tvalues, Vector tms)
   { // check what combinations of sourceatts values compose to tatt's values targetValues (tvalues)
 
 	System.out.println(">> Checking all combination functions based on source attributes: " + sourceatts); 
@@ -3622,59 +3897,12 @@ public class ModelSpecification
       return new BasicExpression("\"" + constv + "\""); 
     }
 	
-    // Do targetValues have a common prefix? If so, remove it and recursively check the remainder of the targetValues
-    String cpref = AuxMath.longestCommonPrefix(tvalues); 
-    System.out.println(">> Longest common prefix of target values = " + cpref); 
-    if (cpref != null && cpref.length() > 0)
-    { // System.out.println(">> feature mapping " + sattname + "->before(\"" + cpref + "\") |--> " + tattname); 
-      // BasicExpression sattbe = new BasicExpression(satt); 
-      // sattbe.setUmlKind(Expression.ATTRIBUTE);
-	  // Remove the common prefix from the targetValues and tattvalues and recurse, prepend the prefix to the result:
-	  Vector removedtvalues = AuxMath.removeCommonPrefix(tvalues,cpref); 
-	  System.out.println(">> removed prefix of target values = " + removedtvalues); 
-       
-      int vlen = targetValues.length; 
-	  for (int i = 0; i < vlen && i < removedtvalues.size(); i++) 
-	  { targetValues[i] = (String) removedtvalues.get(i); }
-	  
-	  Expression subexpr = composedStringFunction(tatt,sourceatts,sattvalueMap,targetValues,removedtvalues,pairs,tms); 
-	  
-	  if (subexpr != null)
-      { BasicExpression prefexpr = new BasicExpression("\"" + cpref + "\"");  
-        prefexpr.setType(new Type("String", null));  
-        prefexpr.setElementType(new Type("String", null));  
-		Expression res = new BinaryExpression("+", prefexpr, subexpr); 
-		return res; 
-      }  
-	}
-    // Do targetValues have a common suffix? If so, remove it and recursively check the remainder of the targetValues
-	
-    String csuff = AuxMath.longestCommonSuffix(tvalues); 
-    System.out.println(">> Longest common suffix = " + csuff); 
-    if (csuff != null && csuff.length() > 0)
-    { // System.out.println(">> feature mapping " + sattname + "->before(\"" + cpref + "\") |--> " + tattname); 
-      // BasicExpression sattbe = new BasicExpression(satt); 
-      // sattbe.setUmlKind(Expression.ATTRIBUTE);
-      Vector removedtvalues = AuxMath.removeCommonSuffix(tvalues,csuff);
-	  int vlen = targetValues.length; 
-	  for (int i = 0; i < vlen && i < removedtvalues.size(); i++) 
-	  { targetValues[i] = (String) removedtvalues.get(i); }
-	   
-	  System.out.println(">> removed suffix of target values = " + removedtvalues); 
-      Expression subexpr = composedStringFunction(tatt,sourceatts,sattvalueMap,targetValues,removedtvalues,pairs,tms); 
-	  
-	  if (subexpr != null)
-      { BasicExpression suffexpr = new BasicExpression("\"" + csuff + "\""); 
-        suffexpr.setType(new Type("String", null));  
-        suffexpr.setElementType(new Type("String", null));
-		Expression res = new BinaryExpression("+", subexpr, suffexpr); 
-		return res; 
-      }  
-	} 
 	
 	for (int i = 0; i < sourceatts.size(); i++) 
 	{ Attribute satt = (Attribute) sourceatts.get(i); 
 	  // check if tatt = satt, if tatt = K + satt, tatt = satt + K, etc. 
+	  
+	  if (satt.isCollection()) { continue; }  // we try these later.  
 	  
 	  String[] sattvalues = (String[]) sattvalueMap.get(satt); 
 
@@ -3683,15 +3911,34 @@ public class ModelSpecification
         sattbe.setUmlKind(Expression.ATTRIBUTE);
 		return sattbe;  
       }
+      else if (AuxMath.isUpperCased(sattvalues,targetValues)) 
+	  { BasicExpression sattbe = new BasicExpression(satt); 
+        sattbe.setUmlKind(Expression.ATTRIBUTE);
+		UnaryExpression upperc = new UnaryExpression("->toUpperCase", sattbe); 
+		upperc.setType(new Type("String", null)); 
+		upperc.setElementType(new Type("String", null)); 
+		return upperc;  
+      }
+      else if (AuxMath.isLowerCased(sattvalues,targetValues)) 
+	  { BasicExpression sattbe = new BasicExpression(satt); 
+        sattbe.setUmlKind(Expression.ATTRIBUTE);
+		UnaryExpression lowerc = new UnaryExpression("->toLowerCase", sattbe); 
+		lowerc.setType(new Type("String", null)); 
+		lowerc.setElementType(new Type("String", null)); 
+		return lowerc;  
+      }
       else if (AuxMath.isSuffixed(sattvalues,targetValues))
       { System.out.println(">> Suffix feature mapping " + satt + " + ??? |--> " + tatt); 
 	    Vector remd = AuxMath.removePrefix(targetValues,sattvalues); 
 		System.out.println(">> removed the " + satt + " prefixes: " + remd);
+        System.out.println(); 
+		
 		int vlen = targetValues.length; 
+		String[] newTargetValues = new String[vlen];  
 	    for (int j = 0; j < vlen && j < remd.size(); j++) 
-	    { targetValues[j] = (String) remd.get(j); }
+	    { newTargetValues[j] = (String) remd.get(j); }
 	  
-        Expression subexpr = composedStringFunction(tatt,sourceatts,sattvalueMap,targetValues,remd,pairs,tms); 
+        Expression subexpr = composedStringFunction(tatt,sourceatts,sattvalueMap,newTargetValues,remd,tms); 
 	  
 	    if (subexpr != null)
         { BasicExpression sattbe = new BasicExpression(satt); 
@@ -3706,11 +3953,14 @@ public class ModelSpecification
       { System.out.println(">> Prefix feature mapping ??? + " + satt + " |--> " + tatt); 
 	    Vector remd = AuxMath.removePrefix(targetValues,sattvalues); 
 		System.out.println(">> removed the " + satt + " suffixes: " + remd);
+		System.out.println(); 
+		
 		int vlen = targetValues.length; 
+		String[] newTargetValues = new String[vlen];  
 	    for (int j = 0; j < vlen && j < remd.size(); j++) 
-	    { targetValues[j] = (String) remd.get(j); }
+	    { newTargetValues[j] = (String) remd.get(j); }
 	  
-        Expression subexpr = composedStringFunction(tatt,sourceatts,sattvalueMap,targetValues,remd,pairs,tms); 
+        Expression subexpr = composedStringFunction(tatt,sourceatts,sattvalueMap,newTargetValues,remd,tms); 
 	  
 	    if (subexpr != null)
         { BasicExpression sattbe = new BasicExpression(satt); 
@@ -3725,8 +3975,125 @@ public class ModelSpecification
 
 	for (int i = 0; i < sourceatts.size(); i++) 
 	{ Attribute satt = (Attribute) sourceatts.get(i); 
+	  // check if tatt = satt, if tatt = K + satt, tatt = satt + K, etc. 
+	  
+	  if (satt.isCollection())   
+	  { Vector[] sattvalues = (Vector[]) sattvalueMap.get(satt); 
+	    // sattvalues are Vectors of Strings. Check if tatt is a sum of these, or a separator-sum
+	    
+         if (AuxMath.isStringSum(sattvalues,targetValues))
+         { BasicExpression sattbe = new BasicExpression(satt); 
+           sattbe.setUmlKind(Expression.ATTRIBUTE);
+           UnaryExpression sumsatt = new UnaryExpression("->sum",sattbe);   
+           sumsatt.setType(new Type("String", null));  
+           sumsatt.setElementType(new Type("String", null));  
+           return sumsatt;
+         }
+    
+	     int en = targetValues.length; 
+	     String[] newtvalues = new String[en]; 
+		 
+         String K = AuxMath.initialSeparatorStringSum(sattvalues,targetValues,newtvalues); 
+         if (K != null) 
+         { BasicExpression Kbe = new BasicExpression("\"" + K + "\""); 
+           Kbe.setUmlKind(Expression.VALUE);
+           Kbe.setType(new Type("String", null));  
+          
+           BasicExpression sattbe = new BasicExpression(satt); 
+           sattbe.setUmlKind(Expression.ATTRIBUTE);
+           BinaryExpression sumsatt = new BinaryExpression("->separatorSum",sattbe,Kbe);   
+           sumsatt.setType(new Type("String", null));  
+           sumsatt.setElementType(new Type("String", null));  
+		   
+		   Vector tailtvalues = new Vector();
+		   boolean allEmpty = true;  
+		   for (int q = 0; q < en; q++)
+		   { tailtvalues.add(newtvalues[q]); 
+		     if (newtvalues[q] != null && newtvalues[q].length() > 0) 
+			 { allEmpty = false; }
+		   } 
+		   
+		   if (allEmpty) // no tail
+		   { return sumsatt; }
+		    
+           Expression subexpr = composedStringFunction(tatt,sourceatts,sattvalueMap,newtvalues,tailtvalues,tms); 
+	  
+           if (subexpr != null)
+           { Expression res = new BinaryExpression("+", sumsatt, subexpr); 
+             res.setType(new Type("String", null));  
+             res.setElementType(new Type("String", null));
+             return res; 
+           }  
+         } 	
+       }
+     }
+
+    // Remove common suffixes and prefixes one token at a time. 
+	
+    // Do targetValues have a common prefix? If so, remove it and recursively check the remainder of the targetValues
+    String cpref = AuxMath.longestCommonPrefix(tvalues); 
+    System.out.println(">> Longest common prefix of target values = " + cpref); 
+    if (cpref != null && cpref.length() > 0)
+    { // System.out.println(">> feature mapping " + sattname + "->before(\"" + cpref + "\") |--> " + tattname); 
+      // BasicExpression sattbe = new BasicExpression(satt); 
+      // sattbe.setUmlKind(Expression.ATTRIBUTE);
+	  // Remove the common prefix from the targetValues and tattvalues and recurse, prepend the prefix to the result:
+	  Vector removedtvalues = AuxMath.removeCommonPrefix(tvalues,cpref); 
+	  System.out.println(">> removed prefix " + cpref + " of target values = " + removedtvalues); 
+       
+      int vlen = targetValues.length; 
+	  String[] newTargetValues = new String[vlen];  
+
+	  for (int i = 0; i < vlen && i < removedtvalues.size(); i++) 
+	  { newTargetValues[i] = (String) removedtvalues.get(i); }
+	  
+	  Expression subexpr = composedStringFunction(tatt,sourceatts,sattvalueMap,newTargetValues,removedtvalues,tms); 
+	  
+	  if (subexpr != null)
+      { BasicExpression prefexpr = new BasicExpression("\"" + cpref + "\"");  
+        prefexpr.setType(new Type("String", null));  
+        prefexpr.setElementType(new Type("String", null));  
+		Expression res = new BinaryExpression("+", prefexpr, subexpr); 
+		res.setType(new Type("String", null));  
+        res.setElementType(new Type("String", null));
+		return res; 
+      }  
+	}
+    // Do targetValues have a common suffix? If so, remove it and recursively check the remainder of the targetValues
+	
+    String csuff = AuxMath.longestCommonSuffix(tvalues); 
+    System.out.println(">> Longest common suffix = " + csuff); 
+    if (csuff != null && csuff.length() > 0)
+    { // System.out.println(">> feature mapping " + sattname + "->before(\"" + cpref + "\") |--> " + tattname); 
+      // BasicExpression sattbe = new BasicExpression(satt); 
+      // sattbe.setUmlKind(Expression.ATTRIBUTE);
+      Vector removedtvalues = AuxMath.removeCommonSuffix(tvalues,csuff);
+	  int vlen = targetValues.length; 
+  	  String[] newTargetValues = new String[vlen];  
+	  for (int i = 0; i < vlen && i < removedtvalues.size(); i++) 
+	  { newTargetValues[i] = (String) removedtvalues.get(i); }
+	   
+	  System.out.println(">> removed suffix of target values = " + removedtvalues); 
+      Expression subexpr = composedStringFunction(tatt,sourceatts,sattvalueMap,newTargetValues,removedtvalues,tms); 
+	  
+	  if (subexpr != null)
+      { BasicExpression suffexpr = new BasicExpression("\"" + csuff + "\""); 
+        suffexpr.setType(new Type("String", null));  
+        suffexpr.setElementType(new Type("String", null));
+		Expression res = new BinaryExpression("+", subexpr, suffexpr); 
+		res.setType(new Type("String", null));  
+        res.setElementType(new Type("String", null));
+		return res; 
+      }  
+	} 
+
+	for (int i = 0; i < sourceatts.size(); i++) 
+	{ Attribute satt = (Attribute) sourceatts.get(i); 
 	  // check if tatt = f(satt) for custom function, either already defined or new
 
+      if (satt.isCollection()) 
+	  { continue; }
+	  
       String[] sattvalues = (String[]) sattvalueMap.get(satt); 
 	  int en = sattvalues.length; 
 	  	   
@@ -3744,7 +4111,7 @@ public class ModelSpecification
 		if (tm != null) 
 		{ System.out.println(">> Use this existing type matching?: " + tm); 
           String yn = 
-                   JOptionPane.showInputDialog("Use String-to-String function " + fname + "? (y/n):");
+                   JOptionPane.showInputDialog("Use the String-to-String function " + fname + "? (y/n):");
 		  if (yn != null && "y".equals(yn))
           { newfunction = tm; 
             BasicExpression fsatt = new BasicExpression(fname);
@@ -3760,7 +4127,7 @@ public class ModelSpecification
 		} 
 		
 		String yn2 = 
-                   JOptionPane.showInputDialog("Create a String-to-String function " + fname + "? (y/n):");
+                   JOptionPane.showInputDialog("Create a custom String-to-String function " + fname + "? (y/n):");
 
         if (yn2 != null && "y".equals(yn2))
         { newfunction = new TypeMatching(satt.getType(), tatt.getType()); 
@@ -3789,6 +4156,7 @@ class InstanceReplicationData
 { Attribute tatt; 
   Attribute satt = null; 
   Expression sexpr = null; 
+  Expression scond = null; 
   Entity sent; 
   Entity tent; 
   Vector sourceObjects; 
@@ -3799,11 +4167,16 @@ class InstanceReplicationData
   
   InstanceReplicationData(Attribute t)
   { tatt = t; }
+  
+  void setSplittingCondition(Expression c)
+  { scond = c; }
 
   public String toString()
   { String res = ""; 
   
-    if (satt != null) 
+    if (scond != null) 
+	{ res = "{ " + scond + " } " + sent + " |--> " + tent + "\n"; }
+    else if (satt != null) 
     { res = "{ $x : " + satt + " } " + sent + " |--> " + tent + "\n"; }
 	else 
 	{ res = "{ $x : " + sexpr + " } " + sent + " |--> " + tent + "\n"; } 

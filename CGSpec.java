@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -878,39 +878,81 @@ public class CGSpec
   { for (int x = 0; x < attributeRules.size(); x++)
     { CGRule r = (CGRule) attributeRules.get(x);
 	
-	  System.out.println("???? reference rule: " + r); 
-
+	  System.out.println(">> matching reference " + e + " with type " + e.getType()); 
+	  System.out.println(r.conditions); 
+	  System.out.println(); 
+	  
       if (r.lhs.startsWith("reference")) 
-      { if (e.getType() != null && e.getType().isMapType()) 
+      { Type t = e.getType(); 
+	    if (t == null) { continue; }
+		
+		String tname = t.getName(); 
+		
+	    if (t.isEntityType()) 
+        { if (r.hasCondition("class"))
+          { return r; }
+          else if (r.hasNegativeCondition("class"))
+          { } 
+		  else if (r.hasNoCondition()) 
+		  { return r; }
+        } 
+	    else 
+        { if (r.hasNegativeCondition("class"))
+          { return r; }
+          else if (r.hasCondition("class"))
+          { } 
+		  else if (r.hasNoCondition()) 
+		  { return r; }
+        } 
+		
+		if (t.isMapType()) 
         { if (r.hasCondition("map"))
           { return r; }
           else if (r.hasNegativeCondition("map"))
           { } 
-		  else 
+		  else if (r.hasNoCondition())
 		  { return r; }
         } 
-        else if (e.getType() != null && !e.getType().isMapType())
-        { if (r.hasNegativeCondition("map"))
-          { return r; } 
-          else if (r.hasCondition("map"))
+		else  
+        { if (r.hasCondition("map"))
+          { return r; }
+          else if (r.hasNegativeCondition("map"))
           { } 
-		  else 
+		  else if (r.hasNoCondition())
+		  { return r; }
+        } 
+		
+		if (t.isFunctionType()) 
+        { if (r.hasCondition("function"))
+          { return r; }
+          else if (r.hasNegativeCondition("function"))
+          { } 
+		  else if (r.hasNoCondition())
+		  { return r; }
+        } 
+        else 
+        { if (r.hasNegativeCondition("function"))
+          { return r; } 
+          else if (r.hasCondition("function"))
+          { } 
+		  else if (r.hasNoCondition())
 		  { return r; }
         }
-		else if (e.getType() != null && e.getType().isCollectionType()) 
+		
+		if (t.isCollectionType()) 
         { if (r.hasCondition("collection"))
           { return r; }
           else if (r.hasNegativeCondition("collection"))
           { } 
-          else 
+          else if (r.hasNoCondition())
           { return r; } 
         } 
-        else if (e.getType() != null && !e.getType().isCollectionType())
+        else 
         { if (r.hasNegativeCondition("collection"))
           { return r; } 
           else if (r.hasCondition("collection"))
           { } 
-          else 
+          else if (r.hasNoCondition())
           { return r; }
         }
       }  

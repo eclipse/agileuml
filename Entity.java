@@ -780,11 +780,52 @@ public class Entity extends ModelElement implements Comparable
 
   public Vector getOperations()
   { return operations; } 
+  
+  public Vector allQueryOperations()
+  { Vector res = new Vector(); 
+    for (int i = 0; i < operations.size(); i++) 
+	{ BehaviouralFeature bf = (BehaviouralFeature) operations.get(i); 
+	  if (bf.isQuery())
+	  { res.add(bf); }
+	} 
+	return res; 
+  }
 
+  public Vector allQueryOperationProperties()
+  { Vector res = new Vector(); 
+    Vector qops = allQueryOperations(); 
+    
+    for (int i = 0; i < qops.size(); i++) 
+    { BehaviouralFeature qop = (BehaviouralFeature) qops.get(i); 
+      if (qop.isZeroArgument())
+      { Attribute p = new Attribute(qop); 
+        res.add(p); 
+      } 
+    } 
+    return res; 
+  } 
 
   public int operationsCount() 
   { return operations.size(); } 
 
+  public void addQueryOperation(Attribute fatt, Expression fres)
+  { String fname = fatt.getName(); 
+    BehaviouralFeature bf = getOperation(fname); 
+    if (bf == null)
+    { bf = new BehaviouralFeature(fname, new Vector(), true, fatt.getType()); 
+	  bf.setPre(new BasicExpression(true)); 
+	  bf.setStatic(fatt.isStatic()); 
+    } 
+	
+    BasicExpression res = new BasicExpression("result"); 
+    res.setUmlKind(Expression.VARIABLE); 
+    res.setType(new Type("String", null)); 
+
+    Expression eqres = new BinaryExpression("=", res, fres); 
+    bf.setPost(eqres);  
+    addOperation(bf); 
+  } 
+    
   public void addOperation(BehaviouralFeature f)
   { // if (isInterface())
     // { if (f.isAbstract()) { } 
@@ -1011,6 +1052,9 @@ public class Entity extends ModelElement implements Comparable
 
   public boolean isRoot()
   { return superclass == null && (superclasses == null || superclasses.size() == 0); } 
+
+  public boolean isAbstractRoot()
+  { return isAbstract() && isRoot(); } 
 
   public boolean isLeaf()
   { return hasStereotype("leaf"); } 
@@ -15069,7 +15113,41 @@ public BehaviouralFeature designAbstractKillOp()
     return res; 
   } 
 
-	
+  public static Vector typeCompatibleFeatures(Attribute att, Vector attrs)
+  { Vector res = new Vector(); 
+    // attributes which could be converted to the type of att
+    Type atype = att.getType(); 
+    Type aelemtype = att.getElementType();
+
+    for (int i = 0; i < attrs.size(); i++) 
+    { Attribute f = (Attribute) attrs.get(i); 
+      Type ftype = f.getType(); 
+      Type felemtype = f.getElementType(); 
+      if (Type.typeCompatible(ftype,felemtype,atype,aelemtype))
+      { res.add(f); } 
+    }
+    return res;   
+  } 
+  
+  public static Vector unreferencedRootClasses(Vector ents, Vector assocs)
+  { // abstract root classes of ents which are not targets of 
+    // any reference. 
+    Vector res = new Vector(); 
+    Vector targs = Association.allRole1Classes(assocs); 
+    targs.addAll(Association.allRole2Classes(assocs)); 
+
+    for (int i = 0; i < ents.size(); i++) 
+    { Entity ent = (Entity) ents.get(i); 
+      if (ent.isAbstractRoot())
+      { if (targs.contains(ent)) { } 
+        else 
+        { res.add(ent); } 
+      } 
+    }
+    System.out.println(">> All abstract unreferenced root classes are: " + res); 
+    return res; 
+  } 
+ 
   public static void main(String[] args)
   { int rand = (int) (1000*Math.random()); 
     System.out.println(rand); 

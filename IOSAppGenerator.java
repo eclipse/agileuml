@@ -3,7 +3,7 @@ import java.io.*;
 
 /* Package: Mobile */ 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -465,6 +465,77 @@ public class IOSAppGenerator extends AppGenerator
      } 
 
      out.println("}");
+    // System.out.println("}");  
+  }
+
+  public void simpleModelFacade(String nestedPackageName, Vector usecases, CGSpec cgs, 
+                          Vector entities, Vector clouds, Vector types, int remoteCalls, boolean needsMap,
+                          PrintWriter out)
+  { // String ename = e.getName();
+    // Vector atts = e.getAttributes(); 
+	
+    // String evc = ename + "ViewController";
+    // String evo = ename + "ValueObject";
+    // String resvo = ename.toLowerCase() + "_vo";
+    // String populateResult = createVOStatement(e,atts);
+
+    out.println("import Foundation");
+    out.println("import Darwin");
+    out.println("");
+    out.print("class ModelFacade");
+    out.println(); 
+	
+    out.println("{ static var instance : ModelFacade? = nil");
+    out.println(); 
+    
+    out.println(); 
+    out.println("  static func getInstance() -> ModelFacade"); 
+    out.println("  { if (instance == nil)"); 
+    out.println("    { instance = ModelFacade() }"); 
+    out.println("    return instance! }"); 
+    out.println(); 
+
+    Vector persistentEntities = new Vector(); 
+    persistentEntities.addAll(entities); 
+	Vector localPersistent = new Vector(); 
+
+    out.println("  init() { }"); 
+    out.println(); 
+	   
+    for (int y = 0; y < usecases.size(); y++)
+    { UseCase uc = (UseCase) usecases.get(y);
+      Vector pars = uc.getParameters(); 
+      Attribute res = uc.getResultParameter(); 
+      String partext = ""; 
+      for (int i = 0; i < pars.size(); i++) 
+      { Attribute par = (Attribute) pars.get(i);
+        Type partype = par.getType();  
+        partext = partext + par.getName() + " : " + partype.getSwift(); 
+        if (i < pars.size()-1)
+        { partext = partext + ", "; } 
+      }   
+      out.print("  func " + uc.getName() + "(" + partext + ")"); 
+      if (res != null) 
+      { out.println(" -> " + res.getType().getSwift()); } 
+      else 
+      { out.println(); } 
+
+      out.println("  { ");
+      if (res != null) 
+      { out.println("    var result : " + res.getType().getSwift()); } 
+
+      String uccode = uc.cgActivity(cgs,entities,types);
+      cgs.displayText(uccode,out);      
+
+      if (res != null) 
+      { out.println("    return result"); } 
+
+      out.println("  }");
+      out.println(); 
+    }
+	
+    out.println(); 
+    out.println("}");
     // System.out.println("}");  
   }
 

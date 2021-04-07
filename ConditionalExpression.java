@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -72,12 +72,12 @@ public class ConditionalExpression extends Expression
   public String updateForm(java.util.Map env, boolean local)
   { String tqf = test.queryForm(env, local);
     String lqf = ifExp.updateForm(env, local);
-	if ("true".equals(test + ""))
-	{ return lqf; }
+    if ("true".equals(test + ""))
+    { return lqf; }
 	
     String rqf = elseExp.updateForm(env, local);
-    return "  if (" + tqf + ") { " + lqf + " }\n" +
-                "  else { " + rqf + " }";
+    return "    if (" + tqf + ") { " + lqf + " }\n" +
+           "    else { " + rqf + " }";
   }
 
   public String updateFormJava6(java.util.Map env, boolean local)
@@ -87,7 +87,7 @@ public class ConditionalExpression extends Expression
 	{ return lqf; }
 	String rqf = elseExp.updateFormJava6(env, local);
     return "  if (" + tqf + ") { " + lqf + " }\n" +
-                "  else { " + rqf + " }";
+           "  else { " + rqf + " }";
   }
 
   public String updateFormJava7(java.util.Map env, boolean local)
@@ -97,7 +97,7 @@ public class ConditionalExpression extends Expression
 	{ return lqf; }
 	String rqf = elseExp.updateFormJava7(env, local);
     return "  if (" + tqf + ") { " + lqf + " }\n" +
-                "  else { " + rqf + " }";
+           "  else { " + rqf + " }";
   }
 
   public String updateFormCSharp(java.util.Map env, boolean local)
@@ -105,7 +105,7 @@ public class ConditionalExpression extends Expression
     String lqf = ifExp.updateFormCSharp(env, local);
     String rqf = elseExp.updateFormCSharp(env, local);
     return "  if (" + tqf + ") { " + lqf + " }\n" +
-                "  else { " + rqf + " }";
+           "  else { " + rqf + " }";
   }
 
   public String updateFormCPP(java.util.Map env, boolean local)
@@ -113,7 +113,7 @@ public class ConditionalExpression extends Expression
     String lqf = ifExp.updateFormCPP(env, local);
     String rqf = elseExp.updateFormCPP(env, local);
     return "  if (" + tqf + ") { " + lqf + " }\n" +
-                "  else { " + rqf + " }";
+           "  else { " + rqf + " }";
   }
 
   public Statement generateDesign(java.util.Map env, boolean local)

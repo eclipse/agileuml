@@ -1580,7 +1580,7 @@ public class Type extends ModelElement
     { return ModelElement.ONE; }
     if (nme.equals("Set") || nme.equals("Sequence"))
     { return ModelElement.MANY; }  
-    if (nme.equals("Map") || nme.equals("Function")) 
+    if ((nme.equals("Map") || nme.equals("Function")) && elementType != null) 
     { return elementType.typeMultiplicity(); } 
 
     return ModelElement.ONE;
@@ -1591,7 +1591,7 @@ public class Type extends ModelElement
     if (nme.equals("Set") || nme.equals("Sequence"))
     { return true; }  
     if (nme.equals("Map") || nme.equals("Function"))
-    { return elementType.isMultiple(); } // ie., the application result is multiple
+    { return elementType != null && elementType.isMultiple(); } // ie., the application result is multiple
     return false; 
   } // Shouldn't Maps be multiple anyway? 
 
@@ -1672,7 +1672,14 @@ public class Type extends ModelElement
     } 
 
     if (nme.equals("Map") || nme.equals("Function"))
-    { return nme + "(" + keyType.getUMLName() + ", " + elementType.getUMLName() + ")"; } 
+    { String kt = "String"; 
+	  if (keyType != null) 
+      { kt = keyType.getUMLName(); } 
+      String et = "String"; 
+      if (elementType != null) 
+	  { et = elementType.getUMLName(); } 
+      return nme + "(" + kt + ", " + et + ")"; 
+	} 
 
     return nme; 
   } 
@@ -1683,6 +1690,7 @@ public class Type extends ModelElement
     if (nme.equals("long")) { return "Long"; } 
     if (nme.equals("double")) { return "Real"; } 
     if (nme.equals("boolean")) { return "Boolean"; } 
+	
     if (nme.equals("Set")) 
     { String tid = Identifier.nextIdentifier(""); 
       out.println("SetType" + tid + " : CollectionType"); 
@@ -1694,6 +1702,13 @@ public class Type extends ModelElement
       else 
       { out.println("SetType" + tid + ".elementType = void"); }
   
+      if (keyType != null) 
+      { String etype = keyType.getUMLModelName(out); 
+        out.println("SetType" + tid + ".keyType = " + etype); 
+      } 
+      else 
+      { out.println("SetType" + tid + ".keyType = void"); } 
+
       out.println("SetType" + tid + ".typeId = \"" + tid + "\""); 
       return "SetType" + tid; 
     } 
@@ -1708,6 +1723,13 @@ public class Type extends ModelElement
       else 
       { out.println("SequenceType" + tid + ".elementType = void"); }
 
+      if (keyType != null) 
+      { String ktype = keyType.getUMLModelName(out); 
+        out.println("SequenceType" + tid + ".keyType = " + ktype); 
+      } 
+      else 
+      { out.println("SequenceType" + tid + ".keyType = void"); } 
+
       out.println("SequenceType" + tid + ".typeId = \"" + tid + "\""); 
       return "SequenceType" + tid;
     } 
@@ -1721,15 +1743,16 @@ public class Type extends ModelElement
         out.println("MapType" + tid + ".elementType = " + etype); 
       } 
       else 
-      { out.println("MapType" + tid + ".elementType = void"); } 
+      { out.println("MapType" + tid + ".elementType = String"); } 
 
       if (keyType != null) 
-      { String etype = elementType.getUMLModelName(out); 
-        out.println("MapType" + tid + ".keyType = " + etype); 
+      { String ktype = keyType.getUMLModelName(out); 
+        out.println("MapType" + tid + ".keyType = " + ktype); 
       } 
       else 
-      { out.println("MapType" + tid + ".keyType = void"); } 
+      { out.println("MapType" + tid + ".keyType = String"); } 
       // assume key type is String
+	  
       out.println("MapType" + tid + ".typeId = \"" + tid + "\""); 
       return "MapType" + tid; 
     } 
@@ -1743,15 +1766,15 @@ public class Type extends ModelElement
         out.println("FunctionType" + tid + ".elementType = " + etype); 
       } 
       else 
-      { out.println("FunctionType" + tid + ".elementType = void"); } 
+      { out.println("FunctionType" + tid + ".elementType = String"); } 
       // assume key type is String
 
       if (keyType != null) 
-      { String etype = keyType.getUMLModelName(out); 
-        out.println("FunctionType" + tid + ".keyType = " + etype); 
+      { String ktype = keyType.getUMLModelName(out); 
+        out.println("FunctionType" + tid + ".keyType = " + ktype); 
       } 
       else 
-      { out.println("FunctionType" + tid + ".keyType = void"); } 
+      { out.println("FunctionType" + tid + ".keyType = String"); } 
 
       out.println("FunctionType" + tid + ".typeId = \"" + tid + "\""); 
       return "FunctionType" + tid; 
@@ -2021,15 +2044,21 @@ public class Type extends ModelElement
         res.setElementType(elemt); 
       } 
 	  else if (nme.equals("Function"))
-	  { // lambda x : keyType in elementType.defaultValueExpression() 
-	    res = new UnaryExpression("lambda", elementType.getDefaultValueExpression()); 
+	  { // lambda x : keyType in elementType.defaultValueExpression()
+	    Expression elementDefault = null; 
+		if (elementType != null) 
+		{ elementDefault = elementType.getDefaultValueExpression(); }
+		else 
+		{ elementDefault = new BasicExpression("null"); }
+		 
+	    res = new UnaryExpression("lambda", elementDefault); 
 		((UnaryExpression) res).setAccumulator(new Attribute("_x", keyType, ModelElement.INTERNAL)); 
 		return res; 
       }
       else // unknown type
       { res = new BasicExpression(0); } 
     }
-    else 
+    else // values != null
     { res = new BasicExpression((String) values.get(0)); } 
     res.setType(this); 
     res.setElementType(elemt); 
@@ -2402,8 +2431,19 @@ public class Type extends ModelElement
   { String nme = getName();
     if (nme.equals("Set") || nme.equals("Sequence"))
     { return "List"; } 
+
     if (nme.equals("Map"))
     { return "Map"; } 
+
+    if (nme.equals("Function"))
+    { if (keyType != null && elementType != null)
+      { return "Evaluation<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
+      else if (elementType != null) 
+      { return "Evaluation<String, " + elementType.typeWrapperJava7() + ">"; } 
+      else 
+      { return "Evaluation<String, String>"; } 
+    } 
+
     if (values == null)
     { return nme; }
     return "int"; 
@@ -2417,6 +2457,16 @@ public class Type extends ModelElement
     { return "ArrayList"; } 
     if (nme.equals("Map"))
     { return "HashMap"; } 
+
+    if (nme.equals("Function"))
+    { if (keyType != null && elementType != null)
+      { return "Evaluation<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
+      else if (elementType != null) 
+      { return "Evaluation<String, " + elementType.typeWrapperJava7() + ">"; } 
+      else 
+      { return "Evaluation<String, String>"; } 
+    } 
+
     if (values == null)
     { return nme; }
     // if (nme.equals("long")) { return "long"; } 
@@ -3202,6 +3252,38 @@ public class Type extends ModelElement
     }
     return res;   
   } 
+  
+  public static boolean typeCompatible(Type t1, Type elemt1, Type t2, Type elemt2)
+  { // Something of type t1(elemt1) can be converted to something of type t2(elemt2)
+    String t1name = t1.getName(); 
+	String t2name = t2.getName(); 
+	
+    if (t1.isCollection() && t2.isCollection() && t1name.equals(t2name))
+	{ return typeCompatible(elemt1, elemt1, elemt2, elemt2); }   // sets and sequences of compatible types
+	
+	if (t1.isCollection() && !t2.isCollection())
+	{ return typeCompatible(elemt1,elemt1,t2,elemt2); }  // reduce set(String) to String, etc
+	
+	if (t1.isEntity() && t2.isEntity())
+	{ return Entity.isDescendant(t1.entity,t2.entity); }  // including equality. 
+	
+	if (t1.isEntity() && t2.isString())  // ok if t1.entity has a toString operation
+	{ if (t1.entity.hasOperation("toString"))
+	  { return true; }
+	}
+	
+	if (t1.isNumeric() && t2.isString())
+	{ return true; }
+	
+	if ((t1name + "").equals("int") && (t2name + "").equals("long")) 
+    { return true; } // and other cases where t1 is a subtype of t2
+    
+	if ((t1name + "").equals(t2name + "")) 
+    { return true; }  
+    
+	return false; 
+  } 
+
 
   public static void main(String[] args) 
   { /* Boolean b = new Boolean(true); 

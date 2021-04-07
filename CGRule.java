@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -219,7 +219,7 @@ public class CGRule
   public boolean hasNegativeCondition(String prop)
   { for (int x = 0; x < conditions.size(); x++)
     { CGCondition cond = (CGCondition) conditions.get(x);
-      if (prop.equals(cond.stereotype) && !cond.positive)
+      if (prop.equalsIgnoreCase(cond.stereotype) && !cond.positive)
       { return true; }
     }
     return false;
@@ -228,9 +228,15 @@ public class CGRule
   public boolean hasCondition(String prop, String var)
   { for (int x = 0; x < conditions.size(); x++)
     { CGCondition cond = (CGCondition) conditions.get(x);
-      if (prop.equals(cond.stereotype) && var.equals(cond.variable) && cond.positive)
+      if (prop.equalsIgnoreCase(cond.stereotype) && var.equals(cond.variable) && cond.positive)
       { return true; }
     }
+    return false;
+  }
+
+  public boolean hasNoCondition()
+  { if (conditions.size() == 0)
+    { return true; } 
     return false;
   }
 
@@ -413,7 +419,7 @@ public class CGRule
         { Expression e = (Expression) obj; 
           Attribute fp = e.formalParameter; 
 		  
-		  System.out.println(">> Replacting " + e + "`formalName by " + fp); 
+		  System.out.println(">> Replacing " + e + "`formalName by " + fp); 
 		  
           if (fp != null) 
           { String repl = fp.getName(); 
@@ -437,6 +443,22 @@ public class CGRule
 		  System.out.println(">> Replacting " + e + "`upper by " + upper); 
 		  
           res = res.replaceAll(mf,upper + ""); 
+        }
+        else if ("lower".equals(mffeat) && obj instanceof Expression)
+        { Expression e = (Expression) obj; 
+          int lower = e.lowerBound(); 
+		  
+		  System.out.println(">> Replacing " + e + "`lower by " + lower); 
+		  
+          res = res.replaceAll(mf,lower + ""); 
+        }
+        else if ("lower".equals(mffeat) && obj instanceof Attribute)
+        { Attribute e = (Attribute) obj; 
+          int lower = e.lowerBound(); 
+		  
+		  System.out.println(">> Replacing " + e + "`lower by " + lower); 
+		  
+          res = res.replaceAll(mf,lower + ""); 
         }
         else if ("name".equals(mffeat) && obj instanceof ModelElement)
         { ModelElement e = (ModelElement) obj; 

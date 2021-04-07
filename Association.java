@@ -275,6 +275,28 @@ public class Association extends ModelElement
   public Entity getEntity2()
   { return entity2; }
 
+  public static Vector allRole2Classes(Vector assocs)
+  { Vector res = new Vector(); 
+    for (int i = 0; i < assocs.size(); i++) 
+    { Association ast = (Association) assocs.get(i); 
+      Entity ent2 = ast.getEntity2();
+      res.add(ent2); 
+    }
+    return res; 
+  } 
+
+  public static Vector allRole1Classes(Vector assocs)
+  { Vector res = new Vector(); 
+    for (int i = 0; i < assocs.size(); i++) 
+    { Association ast = (Association) assocs.get(i); 
+      if (ast.role1 != null && ast.role1.length() > 0)
+      { Entity ent1 = ast.getEntity1();
+        res.add(ent1);
+      }  
+    }
+    return res; 
+  } 
+
   public String getRole1()
   { return role1; }
 

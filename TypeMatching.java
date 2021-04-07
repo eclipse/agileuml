@@ -41,6 +41,16 @@ public class TypeMatching
     return null; 
   } 
   
+  public ValueMatching lookupBySource(String val)
+  { ValueMatching res = null; 
+    for (int x = 0; x < valueMappings.size(); x++)
+    { ValueMatching vm = (ValueMatching) valueMappings.get(x);
+      if (val.equals(vm.src + ""))
+	  { return vm; };
+    }
+	return res; 
+  }
+  
   public void setName(String nme)
   { name = nme; }
 
@@ -52,6 +62,16 @@ public class TypeMatching
     valueMappings.add(v);
   }
 
+  public void setValueMapping(Expression s, Expression t)
+  { ValueMatching v = lookupBySource(s + ""); 
+    if (v == null) 
+	{ v = new ValueMatching(s,t); 
+	  valueMappings.add(v); 
+	} 
+	else 
+	{ v.trg = t; }
+  } // update or create, so there is no duplication of value mappings. 
+
   public void setStringValues(String[] svals, String[] tvals)
   { Type stringtype = new Type("String", null); 
     for (int i = 0; i < svals.length && i < tvals.length; i++) 
@@ -59,8 +79,7 @@ public class TypeMatching
       BasicExpression t = new BasicExpression(tvals[i]); 
       s.setType(stringtype); 
       t.setType(stringtype);  
-      ValueMatching v = new ValueMatching(s,t);
-      valueMappings.add(v);
+	  setValueMapping(s,t); 
     } 
   }
 

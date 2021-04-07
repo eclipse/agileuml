@@ -150,6 +150,42 @@ public class Attribute extends ModelElement
   } // and set the entity and name. Set it as aggregation if all 
     // path elements are aggregations. Likewise for unique. 
 
+  public Attribute(BehaviouralFeature qf) 
+  { super(qf.getName()); 
+
+    // assume that qf is a query operation & therefore has a 
+    // result type. 
+
+    type = qf.getResultType();
+    int tm = type.typeMultiplicity(); 
+    if (tm == ModelElement.ONE) 
+    { upper = 1; 
+      lower = 1; 
+    } 
+    else 
+    { upper = 0; 
+      lower = 0; 
+    } 
+ 
+    setStatic(qf.isStatic()); 
+	
+    entity = qf.getOwner(); 
+
+    // card1 = ModelElement.composeCard1(path); 
+    // unique = ModelElement.composeUnique(path); 
+    // String agg = ModelElement.composeAggregation(path); 
+    // if ("aggregation".equals(agg))
+    // { addStereotype("aggregation"); } 
+    // String st = ModelElement.composeSourceTarget(path); 
+    // if ("source".equals(st))
+    // { addStereotype("source"); } 
+    if (entity != null && entity.isTarget())
+    { addStereotype("target"); } 
+
+    elementType = type.getElementType(); 
+    kind = INTERNAL; 
+  } 
+
   public boolean isMany()
   { return upper == 0; }
 
@@ -208,6 +244,11 @@ public class Attribute extends ModelElement
            elementType != null && elementType.isNumeric(); 
   } 
 
+  public boolean isStringCollection()
+  { return type != null && type.isCollectionType() && 
+           elementType != null && elementType.isString(); 
+  } 
+
   public boolean isSet()
   { return type != null && type.isSetType(); } 
 
@@ -262,7 +303,9 @@ public class Attribute extends ModelElement
     // maybe for static/frozen
     CGRule r = cgs.matchedAttributeRule(this,atext);
     if (r != null)
-    { return r.applyRule(args,eargs,cgs); }
+    { System.out.println(">> Matched attribute rule for " + this + ": " + r); 
+      return r.applyRule(args,eargs,cgs); 
+    }
     return atext;
   }
 
@@ -279,7 +322,9 @@ public class Attribute extends ModelElement
 
     CGRule r = cgs.matchedReferenceRule(this,atext);
     if (r != null)
-    { return r.applyRule(args,eargs,cgs); }
+    { System.out.println(">>> Matched reference rule for " + this + ": " + r); 
+      return r.applyRule(args,eargs,cgs); 
+    }
     return atext;
   }
 
@@ -407,6 +452,9 @@ public class Attribute extends ModelElement
     { return Integer.MAX_VALUE; } 
     return upper; 
   } 
+
+  public int lowerBound()
+  { return lower; } 
 
   public boolean endsWith(Attribute att)
   { int n = navigation.size(); 

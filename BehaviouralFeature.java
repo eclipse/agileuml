@@ -48,6 +48,9 @@ public class BehaviouralFeature extends ModelElement
                             Type res)
   { super(nme);
     parameters = pars;
+    if (pars == null) 
+    { parameters = new Vector(); } 
+
     query = readstatus;
     if (query) { addStereotype("query"); } 
     resultType = res;
@@ -106,6 +109,9 @@ public class BehaviouralFeature extends ModelElement
 	{ return false; }
 	return true; 
   }
+
+  public boolean isZeroArgument()
+  { return parameters.size() == 0; } 
 
   public String cg(CGSpec cgs)
   { String etext = this + "";
@@ -1298,22 +1304,26 @@ public class BehaviouralFeature extends ModelElement
       { dec = dec + ", "; }
       res = res + dec;
     }
+	
     if (isAbstract())
     { res = res + ");\n\n"; 
       return res; 
     } 
-    res = res + ")\n";
+    
+	res = res + ")\n";
     res = res + "  { " + resultType.getJava() + " " +
           " result = " + resultType.getDefault() +
           ";\n";
-    for (int j = 0; j < cons.size(); j++)
+    
+	for (int j = 0; j < cons.size(); j++)
     { Constraint con = (Constraint) cons.get(j);
       if (con.getEvent() != null &&
           con.getEvent().equals(this))
       res = res + "    " +
           con.queryOperation(ent) + "\n";
     }
-    res = res + "    return result;\n";
+    
+	res = res + "    return result;\n";
     res = res + "  }\n\n";
     return res;
   }
@@ -1343,7 +1353,8 @@ public class BehaviouralFeature extends ModelElement
       { dec = dec + ", "; }
       res = res + dec;
     }
-    if (isAbstract())
+    
+	if (isAbstract())
     { res = res + ");\n\n"; 
       return res; 
     } 
@@ -2122,8 +2133,14 @@ public class BehaviouralFeature extends ModelElement
 
     if (query)
     { Vector cases = Expression.caselist(post); 
+	
+	  System.out.println(">>> Caselist = " + cases); 
+	  
       Statement qstat = designQueryList(cases, resT, env0, types, entities, atts);
-      ((SequenceStatement) res).addStatement(qstat); 
+      
+	  System.out.println(">>> qstat = " + qstat); 
+	  
+	  ((SequenceStatement) res).addStatement(qstat); 
       ((SequenceStatement) res).addStatement(rets); 
       return res; 
     } 
@@ -3104,6 +3121,9 @@ public class BehaviouralFeature extends ModelElement
     header = header + preheader; 
 
     String querycases = buildQueryCases(post,"",resT,env0,types,entities,atts); 
+	
+	System.out.println(">> Query cases for " + post + " are: " + querycases); 
+	System.out.println(); 
 
     if (ent != null && isCached() && parameters.size() == 0 && instanceScope) 
     { ent.addAux("  private static java.util.Map " + opname + "_cache = new java.util.HashMap();\n");
@@ -3890,7 +3910,7 @@ public class BehaviouralFeature extends ModelElement
       { Expression test = pst.left; 
         test.typeCheck(types,entities,context,atts); 
         String qf = test.queryForm(env0,true); 
-        System.out.println(">>-->> " + test + " QUERY FORM= " + qf); 
+        // System.out.println(">>-->> " + test + " QUERY FORM= " + qf); 
 
         Constraint virtualCon = new Constraint(test,pst.right); 
 
@@ -3918,18 +3938,18 @@ public class BehaviouralFeature extends ModelElement
         Expression ante1 = (Expression) splitante.get(0); 
         Expression ante2 = (Expression) splitante.get(1); 
 
-         System.out.println(">>> Operation " + getName() + " case variable quantifiers: " + ante1); 
-         System.out.println(">>> Operation " + getName() + " case assumptions: " + ante2);
+        // System.out.println(">>> Operation " + getName() + " case variable quantifiers: " + ante1); 
+        // System.out.println(">>> Operation " + getName() + " case assumptions: " + ante2);
         // System.out.println(); 
 
         if (qvars1.size() > 0 || lvars1.size() > 0) 
         { Statement ifpart = new ImplicitInvocationStatement(pst.right);
              // designBasicCase(pst.right, resT, env0, types, entities, atts); 
           Statement forloop = virtualCon.q2LoopsPred(allvars,qvars1,lvars1,ifpart); 
-          System.out.println(">>> Actual code= " + forloop); 
+          // System.out.println(">>> Actual code= " + forloop); 
           String res = header + forloop.updateForm(env0,true,types,entities,atts); 
-          System.out.println(">-->> code for branch " + pst); 
-          System.out.println(">-->> is: " + res);
+          // System.out.println(">-->> code for branch " + pst); 
+          // System.out.println(">-->> is: " + res);
           return res; 
         } 
         
@@ -3937,8 +3957,8 @@ public class BehaviouralFeature extends ModelElement
         String body = buildQueryCases(pst.right,header,resT,
                                       env0,types,entities,atts); 
         String res = body + " \n  }"; 
-        System.out.println(">-->> code for branch " + pst); 
-        System.out.println(">-->> is: " + res);
+        // System.out.println(">-->> code for branch " + pst); 
+        // System.out.println(">-->> is: " + res);
         return res; 
       } 
 
@@ -3947,6 +3967,8 @@ public class BehaviouralFeature extends ModelElement
       else 
       { return header + basicQueryCase(pst,resT,env0,types,entities,atts); } 
     }
+	else if (postcond instanceof ConditionalExpression)
+	{ return header + basicQueryCase(postcond,resT,env0,types,entities,atts); }
     return header; 
   } 
 
@@ -4162,32 +4184,31 @@ public class BehaviouralFeature extends ModelElement
    
     // if (scope == null) 
      if (pst instanceof BinaryExpression) 
-      { BinaryExpression be = (BinaryExpression) pst; 
-        if ("=".equals(be.operator))
-        { Expression beleft = be.left; 
-          if (env0.containsValue(be.left + "") || "result".equals(be.left + "") || 
-              ModelElement.getNames(parameters).contains(be.left + ""))
-          { return "  " + pst.updateForm(env0,true) + "\n"; } // or attribute of ent
-          else if (entity != null && entity.hasFeature(be.left + "")) 
-          { return "  " + pst.updateForm(env0,true) + "\n"; }
-          else // declare it
-          { Type t = be.right.getType(); 
-            System.out.println("Declaring new local variable " + be.left + 
-                               " in:\n" + this); 
+     { BinaryExpression be = (BinaryExpression) pst; 
+       if ("=".equals(be.operator))
+       { Expression beleft = be.left; 
+         if (env0.containsValue(be.left + "") || "result".equals(be.left + "") || 
+             ModelElement.getNames(parameters).contains(be.left + ""))
+         { return "  " + pst.updateForm(env0,true) + "\n"; } // or attribute of ent
+         else if (entity != null && entity.hasFeature(be.left + "")) 
+         { return "  " + pst.updateForm(env0,true) + "\n"; }
+         else // declare it
+         { Type t = be.right.getType(); 
+           System.out.println("Declaring new local variable " + be.left + 
+                              " in:\n" + this); 
             // JOptionPane.showMessageDialog(null, 
             //   "Declaring new local variable " + be.left + " in:\n" + this,               
             //   "Implicit variable declaration", JOptionPane.INFORMATION_MESSAGE); 
-            return "  final " + t.getJava() + " " + pst.updateForm(env0,true) + " \n  "; 
-          } 
-        }
-        else if ("&".equals(be.operator))
-        { String fst = basicQueryCase(be.left, resT, env0, types, entities, atts); 
-          return fst + basicQueryCase(be.right, resT, env0, types, entities, atts); 
-        }  
-      } 
-      return "  " + pst.updateForm(env0,true) + "\n  ";
+           return "  final " + t.getJava() + " " + pst.updateForm(env0,true) + " \n  "; 
+         } 
+       }
+       else if ("&".equals(be.operator))
+       { String fst = basicQueryCase(be.left, resT, env0, types, entities, atts); 
+         return fst + basicQueryCase(be.right, resT, env0, types, entities, atts); 
+       }  
+     } 
+     return "  " + pst.updateForm(env0,true) + "\n  ";
      
- 
    /* BinaryExpression rscope = scope.resultScope; 
     String op = scope.scopeKind; 
     String rx = "resultx";

@@ -253,6 +253,12 @@ abstract class Expression
     return 1; 
   } 
 
+  public int lowerBound()
+  { if (isMultipleValued())
+    { return 0; } 
+    return 1; 
+  } 
+
   public void getParameterBounds(Vector pars, Vector bounds, java.util.Map attBounds)
   { } 
 

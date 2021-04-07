@@ -1,7 +1,7 @@
 import java.util.*; 
 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -291,7 +291,8 @@ public class GUIBuilder
          "    if (\"saveModel\".equals(cmd))\n" +
          "    { cont.saveModel(\"out.txt\");  \n" + 
          "      cont.saveXSI(\"xsi.txt\"); \n" + 
-         "      return; } \n";
+         "      return;\n" + 
+		 "    } \n";
 
     cons = cons + 
         "    tPanel.add(loadXmiButton);\n" +
@@ -344,7 +345,7 @@ public class GUIBuilder
         String prompt = ""; 
         if (pars.size() > 0)
         { prompt = "String _vals = JOptionPane.showInputDialog(\"Enter parameters " + parnames + ":\");\n" +                                 "    Vector _values = new Vector();\n" + 
-                 "    StringTokenizer _st = new StringTokenizer(_vals);\n" +  
+                 "    StringTokenizer _st = new StringTokenizer(_vals, \" ,\");\n" +  
                  "    while (_st.hasMoreTokens())\n" + 
                  "    { String _se = _st.nextToken().trim();\n" + 
                  "      _values.add(_se); \n" + 
@@ -376,23 +377,27 @@ public class GUIBuilder
             } 
             else if (typ != null && typ.isEnumeration())
             { String tname = typ.getName(); 
-			  prompt = prompt + 
+              prompt = prompt + 
                 "    int " + parnme + 
                   " = SystemTypes.parse" + tname + "((String) _values.get(" + j + "));\n"; 
             } 
-			else if (typ != null && typ.isEntity())
-			{ Entity ent = typ.getEntity();
-			  String ename = ent.getName().toLowerCase();  
-			  Attribute pk = ent.getPrincipalPrimaryKey(); // arguments are supplied in the GUI as strings
-			  if (pk != null)
-			  { String indexname = ename + pk.getName() + "index"; 
+            else if (typ != null && typ.isEntity())
+            { Entity ent = typ.getEntity();
+              String ename = ent.getName().toLowerCase();  
+              Attribute pk = ent.getPrincipalPrimaryKey(); 
+              // arguments are supplied in the GUI as strings
+              if (pk != null)
+              { String indexname = ename + pk.getName() + "index"; 
                 prompt = prompt + 
                 "    " + ent.getName() + " " + parnme + 
                   " = (" + ent.getName() + ") Controller.inst()." + indexname + ".get((String) _values.get(" + j + "));\n"; 
-			  }
-			}
+              }
+            }
             else if (typ.isCollectionType()) // Only collections of basic types: numerics and strings
-            { String convertElementType = "typ_" + parnme; 
+            { if (typ.getName().equals("Map"))
+			  { System.out.println("!! Warning: map parameters cannot be instantiated from the GUI!"); }
+			
+			  String convertElementType = "typ_" + parnme; 
               Type elemTyp = typ.getElementType(); 
               if (elemTyp == null) { } 
               else if ("int".equals(elemTyp.getName()))
@@ -406,11 +411,11 @@ public class GUIBuilder
                 "    java.util.List " + parnme + " = new Vector();\n" + 
                 "    int " + parnme + "j = " + j + ";\n" +
                 "    String typ_" + parnme + " = (String) _values.get(" + parnme + "j);\n" +
-                "    " + parnme + "j++; typ" + parnme + " = (String) _values.get(" + parnme + "j);\n" +
-                "    while (!typ_" + parnme + ".equals(\"}\"))\n" + 
+                "    " + parnme + "j++; typ_" + parnme + " = (String) _values.get(" + parnme + "j);\n" +
+                "    while (!typ_" + parnme + ".equals(\"}\") && " + parnme + "j < _values.size())\n" + 
                 "    { " + parnme + ".add(" + convertElementType + "); \n" + 
                 "      " + parnme + "j++;\n" + 
-				"      typ_" + parnme + " = (String) _values.get(" + parnme + "j);\n" +
+                "      typ_" + parnme + " = (String) _values.get(" + parnme + "j);\n" +
                 "    }\n"; 
             } 
             else // if ("boolean".equals(typ + ""))

@@ -2,7 +2,7 @@ import java.io.*;
 
 /* package: Class Diagram */ 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -68,10 +68,20 @@ public class Behaviour
     out.println(""); 
   } 
 
+
+  public static void saveUseCaseActivity(String nme, Statement stat, PrintWriter out)
+  { 
+    out.println("Activity:");
+    out.println(nme); 
+    out.println(stat); 
+    out.println(""); 
+  } 
+
+
   public String toString()
   { String res = "Activity of "; 
     if (behaviouredClassifier != null) 
-	{ res = res + " classifier " + behaviouredClassifier.getName(); } 
+    { res = res + " classifier " + behaviouredClassifier.getName(); } 
     if (uc != null) 
     { res = res + " use case " + uc.getName(); }  
     if (specification != null) 
