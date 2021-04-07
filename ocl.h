@@ -344,6 +344,8 @@ char* after(char* s, char* sep)
     return result;
   }
 
+/* These functions support lists of primitive types, strings, numerics and booleans */
+
   char** appendString(char* col[], char* ex)
   { char** result;
     int len = length((void**) col);
@@ -359,6 +361,67 @@ char* after(char* s, char* sep)
     result[len+1] = NULL;
     return result;
   }
+
+  int** appendint(int* col[], int ex)
+  { int** result;
+    int len = length((void**) col);
+    if (len % ALLOCATIONSIZE == 0)
+    { result = (int**) calloc(len + ALLOCATIONSIZE + 1, sizeof(int*));
+      int i = 0;
+      for ( ; i < len; i++)
+      { result[i] = col[i]; }
+    }
+    else
+    { result = col; }
+
+    int* elem = (int*) malloc(sizeof(int));
+    *elem = ex; 
+  
+    result[len] = elem;
+    result[len+1] = NULL;
+    return result;
+  }
+
+  long** appendlong(long* col[], long ex)
+  { long** result;
+    int len = length((void**) col);
+    if (len % ALLOCATIONSIZE == 0)
+    { result = (long**) calloc(len + ALLOCATIONSIZE + 1, sizeof(long*));
+      int i = 0;
+      for ( ; i < len; i++)
+      { result[i] = col[i]; }
+    }
+    else
+    { result = col; }
+
+    long* elem = (long*) malloc(sizeof(long));
+    *elem = ex; 
+  
+    result[len] = elem;
+    result[len+1] = NULL;
+    return result;
+  }
+
+  double** appenddouble(double* col[], double ex)
+  { double** result;
+    int len = length((void**) col);
+    if (len % ALLOCATIONSIZE == 0)
+    { result = (double**) calloc(len + ALLOCATIONSIZE + 1, sizeof(double*));
+      int i = 0;
+      for ( ; i < len; i++)
+      { result[i] = col[i]; }
+    }
+    else
+    { result = col; }
+
+    double* elem = (double*) malloc(sizeof(double));
+    *elem = ex; 
+  
+    result[len] = elem;
+    result[len+1] = NULL;
+    return result;
+  }
+
 
   char** insertString(char* col[], char* ex)
   { char** result;
@@ -385,6 +448,28 @@ char* after(char* s, char* sep)
     return result;
   }
 
+  int** newintList(void)
+  { int** result;
+    result = (int**) calloc(ALLOCATIONSIZE + 1, sizeof(int*));
+    result[0] = NULL;
+    return result;
+  }
+
+  long** newlongList(void)
+  { long** result;
+    result = (long**) calloc(ALLOCATIONSIZE + 1, sizeof(long*));
+    result[0] = NULL;
+    return result;
+  }
+
+  double** newdoubleList(void)
+  { double** result;
+    result = (double**) calloc(ALLOCATIONSIZE + 1, sizeof(double*));
+    result[0] = NULL;
+    return result;
+  }
+
+
 void displayString(char* s)
 { printf("%s\n", s); }
 
@@ -399,7 +484,8 @@ void displaydouble(double s)
 { printf("%f\n", s); }
 
 void displayboolean(unsigned int s)
-{ if (s == TRUE) { printf("%s\n", "true"); }
+{ if (s == TRUE) 
+  { printf("%s\n", "true"); }
   else
   { printf("%s\n", "false"); }
 }
@@ -1291,16 +1377,17 @@ struct oclmnode
   void* value;
 };
 
+
 struct ocltnode* insertIntoMap(struct ocltnode* self, char* _key, void* _value)
 { if (self == NULL)
   { struct oclmnode* elem = (struct oclmnode*) malloc(sizeof(struct oclmnode));
     elem->key = _key;
     elem->value = _value;
-    self = (struct ocltnode*) malloc(sizeof(struct ocltnode));
-    self->object = elem;
-    self->left = NULL;
-    self->right = NULL;
-    return self;
+    struct ocltnode* result = (struct ocltnode*) malloc(sizeof(struct ocltnode));
+    result->object = elem;
+    result->left = NULL;
+    result->right = NULL;
+    return result;
   }
   else 
   { struct oclmnode* e = (struct oclmnode*) self->object;
@@ -1314,10 +1401,30 @@ struct ocltnode* insertIntoMap(struct ocltnode* self, char* _key, void* _value)
   return self;
 }
 
+struct ocltnode* insertIntoMapint(struct ocltnode* self, char* _key, int _value)
+{ int* elem = (int*) malloc(sizeof(int));
+  *elem = _value; 
+  return insertIntoMap(self, _key, (void*) elem); 
+}
+
+struct ocltnode* insertIntoMaplong(struct ocltnode* self, char* _key, long _value)
+{ long* elem = (long*) malloc(sizeof(long));
+  *elem = _value; 
+  return insertIntoMap(self, _key, (void*) elem); 
+}
+
+struct ocltnode* insertIntoMapdouble(struct ocltnode* self, char* _key, double _value)
+{ double* elem = (double*) malloc(sizeof(double));
+  *elem = _value; 
+  return insertIntoMap(self, _key, (void*) elem); 
+}
+
+
 void* lookupInMap(struct ocltnode* self, char* _key)
 { if (self == NULL) 
   { return NULL; }
-  struct oclmnode* elem = self->object;
+  struct oclmnode* elem = (struct oclmnode*) self->object;
+
   if (strcmp(_key, elem->key) == 0)
   { return elem->value; }
   else if (strcmp(_key, elem->key) < 0)
@@ -1332,7 +1439,8 @@ struct ocltnode* oclSelectMap(struct ocltnode* self, unsigned char (*f)(void*))
 
   struct ocltnode* resl = oclSelectMap(self->left, f);
   struct ocltnode* resr = oclSelectMap(self->right, f);
-  struct oclmnode* node = self->object;
+  struct oclmnode* node = (struct oclmnode*) self->object;
+
   if ((*f)(node->value))
   { struct ocltnode* newnode = (struct ocltnode*) malloc(sizeof(struct ocltnode));
     newnode->object = node;
@@ -1363,7 +1471,8 @@ struct ocltnode* oclRejectMap(struct ocltnode* self, unsigned char (*f)(void*))
   struct ocltnode* resl = oclRejectMap(self->left, f);
   struct ocltnode* resr = oclRejectMap(self->right, f);
 
-  struct oclmnode* maplet = self->object;
+  struct oclmnode* maplet = (struct oclmnode*) self->object;
+
   if (!((*f)(maplet->value)))
   { struct ocltnode* newnode = (struct ocltnode*) malloc(sizeof(struct ocltnode));
     newnode->object = maplet;
@@ -1390,16 +1499,56 @@ struct ocltnode* oclCollectMap(struct ocltnode* self, void* (*f)(void*))
   struct oclmnode* emaplet = (struct oclmnode*) malloc(sizeof(struct oclmnode));
   emaplet->key = maplet->key;
   emaplet->value = (*f)(maplet->value);
+
   res->object = emaplet;
   res->left = oclCollectMap(self->left, f);
   res->right = oclCollectMap(self->right, f);
   return res;
 }
 
+struct ocltnode* oclComposeMaps(struct ocltnode* self, struct ocltnode* t)
+{ if (self == NULL)
+  { return NULL; }
+
+  struct ocltnode* u1 = oclComposeMaps(self->left, t);
+  struct ocltnode* u2 = oclComposeMaps(self->right, t);
+  struct oclmnode* node = (struct oclmnode*) self->object;
+
+  void* val = lookupInMap(t,(char*) node->value); 
+
+  if (val != NULL)
+  { struct ocltnode* newnode = (struct ocltnode*) malloc(sizeof(struct ocltnode));
+    struct oclmnode* emaplet = (struct oclmnode*) malloc(sizeof(struct oclmnode));
+    emaplet->key = node->key;
+    emaplet->value = val;
+    newnode->object = emaplet;
+    newnode->left = u1;
+    newnode->right = u2; 
+    return newnode;
+  }
+  else if (u2 != NULL)
+  { if (u1 == NULL)
+    { return u2; }
+    else
+    { struct ocltnode* newnode2 = 
+        (struct ocltnode*) malloc(sizeof(struct ocltnode));
+      newnode2->object = oclFirst(u2);
+      newnode2->left = u1;
+      newnode2->right = oclTail(u2);
+      return newnode2;
+    }
+  }
+  else 
+  { return u1; }
+}
+
+
+
 unsigned char oclIncludesKey(struct ocltnode* self, char* _key)
 { if (self == NULL)
   { return FALSE; }
-  struct oclmnode* elem = self->object;
+  struct oclmnode* elem = (struct oclmnode*) self->object;
+
   if (strcmp(_key, elem->key) == 0)
   { return TRUE; }
   else if (strcmp(_key, elem->key) < 0)
@@ -1411,7 +1560,8 @@ unsigned char oclIncludesKey(struct ocltnode* self, char* _key)
 unsigned char oclIncludesValue(struct ocltnode* self, void* _value)
 { if (self == NULL)
   { return FALSE; }
-  struct oclmnode* elem = self->object;
+  struct oclmnode* elem = (struct oclmnode*) self->object;
+
   if (_value == elem->value)
   { return TRUE; }
   else if (oclIncludesValue(self->left, _value))
@@ -1451,6 +1601,85 @@ void** oclValues(struct ocltnode* m)
 
 void* oclAtMap(struct ocltnode* m, char* key)
 { return lookupInMap(m,key); } 
+
+
+struct ocltnode* oclUnionMap(struct ocltnode* t1, struct ocltnode* t2)
+{ if (t1 == NULL)
+  { return t2; }
+  if (t2 == NULL)
+  { return t1; }
+
+  struct ocltnode* u1 = oclUnionMap(t1, t2->left);
+
+  struct ocltnode* u2 = oclUnionMap(u1, t2->right);
+
+  struct oclmnode* elem = (struct oclmnode*) t2->object;
+
+  return insertIntoMap(u2, elem->key, elem->value);
+}
+
+struct ocltnode* oclIntersectionMap(struct ocltnode* t1, struct ocltnode* t2)
+{ if (t1 == NULL)
+  { return NULL; }
+  if (t2 == NULL)
+  { return NULL; }
+
+  struct ocltnode* u1 = oclIntersectionMap(t1->left, t2);
+
+  struct ocltnode* u2 = oclIntersectionMap(t1->right, t2);
+
+  struct ocltnode* u = oclUnionMap(u1,u2); 
+
+  struct oclmnode* elem = (struct oclmnode*) t1->object;
+  void* v = lookupInMap(t2, elem->key); 
+  if (v == NULL)
+  { return u; } 
+  else if (v != elem->value)
+  { return u; } 
+  return insertIntoMap(u, elem->key, elem->value);
+}
+
+struct ocltnode* oclRestrictMap(struct ocltnode* t, char* keys[])
+{ /* the elements of t which have key in keys */ 
+
+  if (t == NULL) 
+  { return NULL; } 
+
+  struct ocltnode* u1 = oclRestrictMap(t->left, keys);
+  struct ocltnode* u2 = oclRestrictMap(t->right, keys);
+  struct ocltnode* u = oclUnionMap(u1,u2); 
+
+  struct oclmnode* elem = (struct oclmnode*) t->object;
+
+  if (isIn(elem->key,keys))
+  { return insertIntoMap(u, elem->key, elem->value); }
+  return u; 
+}
+
+struct ocltnode* oclAntirestrictMap(struct ocltnode* t, char* keys[])
+{ /* the elements of t which do not have key in keys */ 
+
+  if (t == NULL) 
+  { return NULL; } 
+
+  struct ocltnode* u1 = oclAntirestrictMap(t->left, keys);
+  struct ocltnode* u2 = oclAntirestrictMap(t->right, keys);
+  struct ocltnode* u = oclUnionMap(u1,u2); 
+
+  struct oclmnode* elem = (struct oclmnode*) t->object;
+
+  if (isIn(elem->key,keys))
+  { return u; } 
+  return insertIntoMap(u, elem->key, elem->value); 
+}
+
+struct ocltnode* oclSubtractMap(struct ocltnode* m1, struct ocltnode* m2)
+{ /* Elements of m1 whose key is not in m2->keys() */
+  char** keyset2 = oclKeyset(m2); 
+  struct ocltnode* result = oclAntirestrictMap(m1,keyset2); 
+  return result; 
+} 
+ 
 
 /* Utility functions to parse strings and build formats */ 
 
