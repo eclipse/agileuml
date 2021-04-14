@@ -19,6 +19,10 @@
    operations.
 
    NULL collections are treated as being empty collections. 
+
+   Collections of primitive types Sequence(T), etc are 
+   represented as T**, collections of Strings as char** and 
+   collections of objects of class E as struct E**.  
 */
 
 
@@ -40,6 +44,65 @@ unsigned char isIn(void* x, void* col[])
   int i = 0;
   while (ex != NULL)
   { if (ex == x) { return TRUE; }
+    i++;
+    ex = col[i];
+  }
+  return result;
+}
+
+unsigned char isInint(int x, int* col[])
+{ int result = FALSE;
+  if (col == NULL) { return result; }
+  int* ex = col[0];
+  int i = 0;
+  while (ex != NULL)
+  { if (*ex == x) 
+    { return TRUE; }
+    i++;
+    ex = col[i];
+  }
+  return result;
+}
+
+unsigned char isInlong(long x, long* col[])
+{ int result = FALSE;
+  if (col == NULL) 
+  { return result; }
+  long* ex = col[0];
+  int i = 0;
+  while (ex != NULL)
+  { if (*ex == x) 
+    { return TRUE; }
+    i++;
+    ex = col[i];
+  }
+  return result;
+}
+
+unsigned char isIndouble(double x, double* col[])
+{ int result = FALSE;
+  if (col == NULL) 
+  { return result; }
+  double* ex = col[0];
+  int i = 0;
+  while (ex != NULL)
+  { if (*ex == x) 
+    { return TRUE; }
+    i++;
+    ex = col[i];
+  }
+  return result;
+}
+
+unsigned char isInString(char* x, char* col[])
+{ int result = FALSE;
+  if (col == NULL) 
+  { return result; }
+  char* ex = col[0];
+  int i = 0;
+  while (ex != NULL)
+  { if (strcmp(x,ex) == 0)
+    { return TRUE; }
     i++;
     ex = col[i];
   }
@@ -194,12 +257,12 @@ char* lastString(const char* s)
   return subString(s,n,n);
 }
 
-char* frontString(const char* s)
+char* frontStrings(const char* s)
 { int n = strlen(s);
   return subString(s,1,n-1);
 }
 
-char* tailString(const char* s)
+char* tailStrings(const char* s)
 { int n = strlen(s);
   return subString(s,2,n);
 }
@@ -274,7 +337,7 @@ char* after(char* s, char* sep)
     return result;
   }
 
-  char* reverseString(const char* s)
+  char* reverseStrings(const char* s)
   { int n = strlen(s);
     char* result = (char*) calloc(n+1,sizeof(char));
     int x = n-1;
@@ -362,6 +425,65 @@ char* after(char* s, char* sep)
     return result;
   }
 
+char** unionString(char* col1[], char* col2[])
+{ int n = length((void**) col1);
+  int m = length((void**) col2);
+  char** result = (char**) calloc(n + m + 1, sizeof(char*));
+  int i = 0;
+  int j = 0;
+  for ( ; i < n; i++)
+  { char* ex = col1[i];
+    if (isInString(ex, result)) { }
+    else   
+    { result[j] = ex; j++; }
+  }   
+  i = 0;
+  for ( ; i < m; i++)
+  { char* ex = col2[i];
+    if (isInString(ex, result)) { }
+    else  
+    { result[j] = ex; j++; }
+  }
+  result[j] = NULL;
+  return result;
+}
+
+
+char** intersectionString(char* _col1[], char* _col2[])
+{ int n = length((void**) _col1);
+  int m = length((void**) _col2);
+  char** result = (char**) calloc(n + 1, sizeof(char*));
+  int i = 0;
+  int j = 0;
+  for ( ; i < n; i++)
+  { char* _ex = _col1[i];
+    if (isInString(_ex, _col2))
+    { result[j] = _ex; j++; }
+  }
+  result[j] = NULL;
+  return result;
+}
+
+char** concatenateString(char* _col1[], char* _col2[])
+{ int n = length((void**) _col1);
+  int m = length((void**) _col2);
+  char** result = (char**) calloc(n + m + 1, sizeof(char*));
+  int i = 0;
+  int j = 0;
+  for ( ; i < n; i++)
+  { result[j] = _col1[i];
+    j++;
+  }
+  i = 0;
+  for ( ; i < m; i++)
+  { result[j] = _col2[i];
+    j++;
+  }
+  result[j] = NULL;
+  return result;
+}
+
+
   int** appendint(int* col[], int ex)
   { int** result;
     int len = length((void**) col);
@@ -425,7 +547,8 @@ char* after(char* s, char* sep)
 
   char** insertString(char* col[], char* ex)
   { char** result;
-    if (isIn((void*) ex, (void**) col)) { return col; }
+    if (isInString(ex, col)) 
+    { return col; }
 
     int len = length((void**) col);
     if (len % ALLOCATIONSIZE == 0)
@@ -440,6 +563,75 @@ char* after(char* s, char* sep)
     result[len+1] = NULL;
     return result;
   }
+
+  int** insertint(int* col[], int ex)
+  { int** result;
+    if (isInint(ex, col)) 
+    { return col; }
+
+    int len = length((void**) col);
+    if (len % ALLOCATIONSIZE == 0)
+    { result = (int**) calloc(len + ALLOCATIONSIZE + 1, sizeof(int*));
+      int i = 0;
+      for ( ; i < len; i++)
+      { result[i] = col[i]; }
+    }
+    else
+    { result = col; }
+
+    int* elem = (int*) malloc(sizeof(int));
+    *elem = ex; 
+    result[len] = elem;
+    result[len+1] = NULL;
+    return result;
+  }
+
+  long** insertlong(long* col[], long ex)
+  { long** result;
+    if (isInlong(ex, col)) 
+    { return col; }
+
+    int len = length((void**) col);
+    if (len % ALLOCATIONSIZE == 0)
+    { result = (long**) calloc(len + ALLOCATIONSIZE + 1, sizeof(long*));
+      int i = 0;
+      for ( ; i < len; i++)
+      { result[i] = col[i]; }
+    }
+    else
+    { result = col; }
+
+    long* elem = (long*) malloc(sizeof(long));
+    *elem = ex; 
+  
+    result[len] = elem;
+    result[len+1] = NULL;
+    return result;
+  }
+
+  double** insertdouble(double* col[], double ex)
+  { double** result;
+    if (isIndouble(ex, col)) 
+    { return col; }
+
+    int len = length((void**) col);
+    if (len % ALLOCATIONSIZE == 0)
+    { result = (double**) calloc(len + ALLOCATIONSIZE + 1, sizeof(double*));
+      int i = 0;
+      for ( ; i < len; i++)
+      { result[i] = col[i]; }
+    }
+    else
+    { result = col; }
+
+    double* elem = (double*) malloc(sizeof(double));
+    *elem = ex; 
+
+    result[len] = elem;
+    result[len+1] = NULL;
+    return result;
+  }
+
 
   char** newStringList(void)
   { char** result;
@@ -469,6 +661,143 @@ char* after(char* s, char* sep)
     return result;
   }
 
+char** removeString(char* col[], char* ex)
+{ int len = length((void**) col);
+  char** result = (char**) calloc(len+1, sizeof(char*));
+  int j = 0;
+  int i = 0;
+  for ( ; i < len; i++)
+  { char* eobj = col[i];
+    if (eobj == NULL)
+    { result[j] = NULL;
+      return result; 
+    }
+
+    if (strcmp(eobj,ex) == 0) { }
+    else
+    { result[j] = eobj; j++; }
+  }
+  result[j] = NULL;
+  return result;
+}
+
+char** removeAllString(char* col1[], char* col2[])
+{ int n = length((void**) col1);
+  char** result = (char**) calloc(n+1, sizeof(char*));
+  int i = 0; int j = 0;
+  for ( ; i < n; i++)
+  { char* ex = col1[i];
+    if (isInString(ex, col2)) {}
+    else
+    { result[j] = ex; j++; }
+  }
+  result[j] = NULL;
+  return result;
+}
+
+char** removeAtString(char* col1[], int index)
+{ int n = length((void**) col1);
+  char** result = (char**) calloc(n+1, sizeof(char*));
+  int i = 0; 
+  int j = 0;
+  for ( ; i < n; i++)
+  { char* ex = col1[i];
+    if (i+1 == index) {}
+    else
+    { result[j] = ex; 
+      j++; 
+    }
+  }
+  result[j] = NULL;
+  return result;
+}
+
+char** subrangeString(char** col, int i, int j)
+{ // OCL indexing: 1..n
+  int len = length((void**) col);
+  if (i > j || j > len) 
+  { return NULL; }
+
+  char** result = (char**) calloc(j - i + 2, sizeof(char*));
+  int k = i-1;
+  int l = 0;
+  for ( ; k < j; k++, l++)
+  { result[l] = col[k]; }
+  result[l] = NULL;
+  return result;
+}
+
+int** removeint(int* col[], int ex)
+{ int len = length((void**) col);
+  int** result = (int**) calloc(len+1, sizeof(int*));
+  int j = 0;
+  int i = 0;
+  for ( ; i < len; i++)
+  { int* eobj = col[i];
+    if (eobj == NULL)
+    { result[j] = NULL;
+      return result; 
+    }
+
+    if (*eobj == ex) { }
+    else
+    { result[j] = eobj; j++; }
+  }
+  result[j] = NULL;
+  return result;
+}
+
+char** frontString(char* col[])
+{ int n = length((void**) col);
+  return subrangeString(col, 1, n-1); 
+}
+
+char** tailString(char* col[])
+{ int n = length((void**) col);
+  return subrangeString(col, 2, n); 
+}
+
+
+long** removelong(long* col[], long ex)
+{ int len = length((void**) col);
+  long** result = (long**) calloc(len+1, sizeof(long*));
+  int j = 0;
+  int i = 0;
+  for ( ; i < len; i++)
+  { long* eobj = col[i];
+    if (eobj == NULL)
+    { result[j] = NULL;
+      return result; 
+    }
+
+    if (*eobj == ex) { }
+    else
+    { result[j] = eobj; j++; }
+  }
+  result[j] = NULL;
+  return result;
+}
+
+double** removedouble(double* col[], double ex)
+{ int len = length((void**) col);
+  double** result = (double**) calloc(len+1, sizeof(double*));
+  int j = 0;
+  int i = 0;
+  for ( ; i < len; i++)
+  { double* eobj = col[i];
+    if (eobj == NULL)
+    { result[j] = NULL;
+      return result; 
+    }
+
+    if (*eobj == ex) { }
+    else
+    { result[j] = eobj; j++; }
+  }
+  result[j] = NULL;
+  return result;
+}
+
 
 void displayString(char* s)
 { printf("%s\n", s); }
@@ -483,7 +812,7 @@ void displaylong(long s)
 void displaydouble(double s)
 { printf("%f\n", s); }
 
-void displayboolean(unsigned int s)
+void displayboolean(unsigned char s)
 { if (s == TRUE) 
   { printf("%s\n", "true"); }
   else
@@ -1431,6 +1760,52 @@ void* lookupInMap(struct ocltnode* self, char* _key)
   { return lookupInMap(self->left, _key); }
   else
   { return lookupInMap(self->right, _key); }
+} 
+
+unsigned char includesKey(struct ocltnode* m, char* _key)
+{ void* value = lookupInMap(m, _key); 
+
+  if (value == NULL)
+  { return FALSE; } 
+  return TRUE; 
+} 
+
+unsigned char excludesKey(struct ocltnode* m, char* _key)
+{ void* value = lookupInMap(m, _key); 
+
+  if (value == NULL)
+  { return TRUE; } 
+  return FALSE; 
+} 
+
+unsigned char includesValue(struct ocltnode* self, void* _val)
+{ if (self == NULL) 
+  { return FALSE; }
+
+  struct oclmnode* elem = (struct oclmnode*) self->object;
+  if (_val == elem->value)
+  { return TRUE; }
+
+  unsigned char inLeft = includesValue(self->left, _val); 
+  if (inLeft) 
+  { return TRUE; }
+
+  return includesValue(self->right, _val); 
+} 
+
+unsigned char excludesValue(struct ocltnode* self, void* _val)
+{ if (self == NULL) 
+  { return TRUE; }
+
+  struct oclmnode* elem = (struct oclmnode*) self->object;
+  if (_val == elem->value)
+  { return FALSE; }
+
+  unsigned char inLeft = includesValue(self->left, _val); 
+  if (inLeft) 
+  { return FALSE; }
+
+  return excludesValue(self->right, _val); 
 } 
 
 struct ocltnode* oclSelectMap(struct ocltnode* self, unsigned char (*f)(void*))
