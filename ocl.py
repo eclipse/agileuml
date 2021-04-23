@@ -1,4 +1,5 @@
 # OCL library ocl.py
+import re
 
 def sqr(x) : 
   return x*x
@@ -118,6 +119,71 @@ def subtractString(s1,s2) :
       pass
     else :
       res = res + x
+  return res
+
+
+def equalsIgnoreCase(s1,s2) :
+  result = False
+  if toLowerCase(s1) == toLowerCase(s2) :
+    result = True
+  return result
+
+def lastIndexOf(s,d) :
+  result = 0
+  dlen = len(d)
+  if dlen == 0 : 
+    return 0
+  i = (reverseString(s).find(reverseString(d)) + 1)
+  if i <= 0 :
+    result = 0
+  else :
+    if i > 0 :
+      result = len(s) - i - dlen + 2
+  return result
+
+
+def trim(str) : 
+  res = '' + str
+  return res.strip()
+
+
+def replace(str,sub,rep) : 
+  res = '' + str
+  return res.replace(sub,rep)
+
+
+def split(str, delimiters) :
+  if 0 < len(delimiters) :  
+    delim = delimiters[0] 
+    taildelims = (delimiters)[1:]
+    splits = str.split(delim)
+    res = [] 
+    for st in splits : 
+      if len(st) > 0 : 
+        res.extend(split(st, taildelims))
+    return res
+  else : 
+    result = [] 
+    result.append(str) 
+    return result
+
+
+def matches(str, pattern) : 
+  if re.fullmatch(pattern,str) == None : 
+    return False
+  else : 
+    return True
+
+
+def allMatches(str, pattern) : 
+  res = []
+  res.extend(re.findall(pattern,str)) 
+  return res
+  
+
+def replaceAll(str, pattern, repl) : 
+  res = '' + str
+  res = re.sub(pattern, repl, res)
   return res
 
 

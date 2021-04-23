@@ -181,10 +181,12 @@ unsigned char containsAll(void* col1[], void* col2[])
    { void* ex = col1[i];
      if (ex == NULL) { return result; }
      if (ex == col2[i]) { }
-     else { return FALSE; }
+     else 
+     { return FALSE; }
    }
    return result;
  }
+
 
  unsigned char disjoint(void* col1[], void* col2[])
  { int n = length((void**) col1);
@@ -192,8 +194,10 @@ unsigned char containsAll(void* col1[], void* col2[])
    int i = 0;
    for ( ; i < n; i++)
    { void* ex = col1[i];
-     if (ex == NULL) { return result; }
-     if (isIn(ex,col2)) { return FALSE; }
+     if (ex == NULL) 
+     { return result; }
+     if (isIn(ex,col2)) 
+     { return FALSE; }
    }
    return result;
  }
@@ -249,6 +253,13 @@ char* subString(const char* s, int i, int j)
   return result;
 }
 
+unsigned char equalsIgnoreCase(char* s1, char* s2)
+{ unsigned char result = FALSE;
+  if (strcmp(toLowerCase(s1), toLowerCase(s2)) == 0)
+  { result = TRUE; }
+  return result;
+}
+
 char* firstString(const char* s)
 { return subString(s,1,1); }
 
@@ -267,6 +278,20 @@ char* tailStrings(const char* s)
   return subString(s,2,n);
 }
 
+unsigned char hasCharacter(char* str, char x)
+{ int result = FALSE;
+  if (str == NULL) 
+  { return result; }
+  char ex = str[0];
+  int i = 0;
+  while (ex != '\0')
+  { if (ex == x) 
+    { return TRUE; }
+    i++;
+    ex = str[i];
+  }
+  return result;
+}
 
   unsigned char startsWith(const char* s, const char* sb)
   { int n = strlen(s);
@@ -288,7 +313,8 @@ char* tailStrings(const char* s)
   { int n = strlen(s);
     int m = strlen(sb);
     int result = 0;
-    if (n == 0 || m == 0) { return result; }
+    if (n == 0 || m == 0) 
+    { return result; }
     int i = 0;
     for ( ; i < n; i++)
     { if (startsWith(&s[i],sb))
@@ -347,6 +373,44 @@ char* after(char* s, char* sep)
     return result;
   }
 
+int lastIndexOf(char* s, char* d)
+{ int result = 0;
+  int lens = strlen(s);
+  int lend = strlen(d); 
+
+  if (lens == 0 || lend == 0) 
+  { return 0; } 
+
+  int i = indexOfString(reverseStrings(s), reverseStrings(d));  
+  if (i <= 0)
+  { result = 0; }
+  else
+  { if (i > 0)
+    { result = lens - i - lend + 2; }
+  }
+  return result;
+}
+
+char* trim(char* str)
+{ char* result = ""; 
+  int i = 1;
+  int n = strlen(str); 
+  while (i < n && (str[i-1] == ' ' || str[i-1] == '\n' || 
+                   str[i-1] == '\t'))
+  { i = i + 1; }
+
+  int j = n;
+
+  while (j >= 1 && 
+    (str[j-1] == ' ' || str[j-1] == '\n' || str[j-1] == '\t')) 
+  { j = j - 1; }
+
+  if (j < i)
+  { result = ""; }
+  else
+  { result = subString(str, i, j); }
+  return result;
+}
 
   char** characters(char* s)
   { int n = strlen(s);
@@ -361,6 +425,19 @@ char* after(char* s, char* sep)
     result[n] = NULL;
     return result;
   }
+
+char* replace(char* str, char* delim, char* s2)
+{ char* result = ""; 
+  int i = indexOfString(str, delim);
+  while (i > 0)
+  { result = concatenateStrings(result, 
+         concatenateStrings(subString(str, 1, i - 1), s2));
+    str = subString(str, i + strlen(delim), strlen(str));
+    i = indexOfString(str, delim);
+  }
+  result = concatenateStrings(result, str);
+  return result;
+}
 
   char* subtractString(const char* s, const char* s1)
   { /* Characters of s not in s1 */
@@ -713,7 +790,8 @@ char** removeAtString(char* col1[], int index)
 }
 
 char** subrangeString(char** col, int i, int j)
-{ // OCL indexing: 1..n
+{ /* OCL indexing: 1..n */
+
   int len = length((void**) col);
   if (i > j || j > len) 
   { return NULL; }
@@ -2056,7 +2134,118 @@ struct ocltnode* oclSubtractMap(struct ocltnode* m1, struct ocltnode* m2)
 } 
  
 
-/* Utility functions to parse strings and build formats */ 
+/* Utility functions to parse strings and build formats        */ 
+/* matches, allMatches and replaceAll need the regex.h library */
+
+unsigned char matches(char* str, char* patt) 
+{ regexp* expression = regcomp(patt); 
+  int r = regexec(expression, str); 
+  if (r == TRUE)
+  { printf("Expression matches\n"); 
+    if (strlen(str) > strlen(expression->startp[0]))
+    { printf("Partial match\n"); } 
+    else if (strlen(expression->endp[0]) == 0) 
+    { printf("Complete match\n");
+      return TRUE; 
+    } 
+  } 
+  return FALSE; 
+}  
+
+char** allMatches(char* str, char* patt)
+{ int strsize = strlen(str); 
+  int pattsize = strlen(patt);
+ 
+  char** res = (char**) calloc(strsize + 2, sizeof(char*));
+
+  if (strsize == 0 || pattsize == 0)
+  { res[0] = str; 
+    res[1] = NULL; 
+    return res; 
+  } 
+
+  int i = 0; 
+    
+  regexp* expression = regcomp(patt); 
+  int r = regexec(expression, str); 
+
+  while (r == TRUE)
+  {  
+    if (expression->startp[0] != NULL && 
+        expression->endp[0] != NULL)
+    { char* st = expression->startp[0];
+      int stlen = strlen(st);  
+      char* en = expression->endp[0]; 
+      int enlen = strlen(en);  
+      char* mat = (char*) malloc(strsize*sizeof(char)); 
+      int j = 0; 
+      for ( ; j < stlen - enlen ; j++)
+      { mat[j] = st[j]; } 
+      mat[j] = '\0'; 
+      res[i] = mat; 
+      r = regexec(expression, en);
+      i++;  
+    }
+    else 
+    { r = FALSE; }
+  } 
+  res[i] = NULL; 
+  return res; 
+} 
+
+char* replaceAll(char* str, char* patt, char* rep)
+{ int strsize = strlen(str); 
+  int pattsize = strlen(patt); 
+  int repsize = strlen(rep); 
+
+  if (strsize == 0 || pattsize == 0) 
+  { return str; } 
+  if (repsize == 0) 
+  { return str; }
+
+  char** mts = allMatches(str,patt); 
+  int numbermts = length((void**) mts); 
+
+  if (numbermts == 0) 
+  { return str; } 
+
+  char* s = (char*) malloc((strsize + numbermts*repsize + 1)*sizeof(char)); 
+  /* copy of s + space for all replacements. */
+ 
+  
+  int i = 0; 
+  int mcount = 0;
+  char* remainderOfstr = str; 
+ 
+  for ( ; mcount < numbermts; mcount++)
+  { char* mtch = mts[mcount]; 
+    int k = indexOfString(remainderOfstr,mtch); 
+    /* printf("Match %s occurs at position %d\n", mtch, k); */ 
+    int j = 0; 
+    for ( ; j < k-1; j++)
+    { s[i] = remainderOfstr[j]; 
+      i++; 
+    } 
+    int r = 0; 
+    for ( ; r < repsize; r++) 
+    { s[i] = rep[r]; 
+      i++; 
+    } 
+    int mlen = strlen(mtch); 
+    remainderOfstr = &remainderOfstr[k+mlen-1];  
+  }     
+
+  int remainderlen = strlen(remainderOfstr); 
+  int t = 0; 
+  for ( ; t < remainderlen; t++) 
+  { s[i] = remainderOfstr[t]; 
+    i++; 
+  } 
+
+  s[i] = '\0'; 
+  return s; 
+} 
+
 
 unsigned char isCSVseparator(char c)
 { if (c == ',') { return TRUE; } 
@@ -2091,6 +2280,56 @@ char** tokenise(char* str, unsigned char (*isseperator)(char))
       /* printf("Extracted token %s\n", token); */ 
  
       while ((*isseperator)(str[i]) && i < maxtokens)
+      { i++; }
+      if (i >= maxtokens) 
+      { tokens[resultcount] = NULL; 
+        return tokens; 
+      } 
+      else 
+      { token = (char*) malloc(maxtokens*sizeof(char));
+        token[0] = str[i]; 
+        j = 1; 
+      } 
+    }
+  } 
+
+  token[j] = '\0'; 
+  tokens[resultcount] = token; 
+  /* printf("Extracted token %s\n", token); */  
+  resultcount++; 
+  tokens[resultcount] = NULL; 
+
+  /* printf("Parsed %d tokens\n", resultcount); */  
+  return tokens;  
+} 
+
+char** split(char* str, char* seps) 
+{ int maxtokens = strlen(str); 
+  if (maxtokens == 0) 
+  { return NULL; } 
+
+  char** tokens = (char**) calloc(maxtokens, sizeof(char*)); 
+  char* token = (char*) malloc(maxtokens*sizeof(char)); 
+  int resultcount = 0; 
+
+  int i = 0;
+  int j = 0; 
+ 
+  for ( ; i < maxtokens; i++) 
+  { 
+    char c = str[i]; 
+    if (!hasCharacter(seps,c))
+    { token[j] = c; 
+      j++; 
+    } 
+    else 
+    { token[j] = '\0'; 
+      tokens[resultcount] = token;
+      resultcount++; 
+
+      /* printf("Extracted token %s\n", token); */ 
+ 
+      while (hasCharacter(seps,str[i]) && i < maxtokens)
       { i++; }
       if (i >= maxtokens) 
       { tokens[resultcount] = NULL; 
