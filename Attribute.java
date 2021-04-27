@@ -4731,12 +4731,13 @@ public String iosDbiExtractOp(String ent, int i)
   } // int does not match to enum, but boolean can match to an enum of size 2
 
 
-  public Vector testCases(String x, java.util.Map lowerBnds, java.util.Map upperBnds)
+  public Vector testCases(String x, java.util.Map lowerBnds, java.util.Map upperBnds, Vector opTests)
   { Vector res = new Vector(); 
     if (type == null) 
     { return res; } 
 
-    String nme = x + "." + getName(); 
+    String attname = getName(); 
+    String nme = x + "." + attname; 
     String t = type.getName(); 
     Vector vs = type.getValues(); 
 
@@ -4748,6 +4749,9 @@ public String iosDbiExtractOp(String ent, int i)
     { res.add(nme + " = 0"); 
       res.add(nme + " = -1");
       res.add(nme + " = 1"); 
+      opTests.add(attname + " = 0;"); 
+      opTests.add(attname + " = -1;");
+      opTests.add(attname + " = 1;"); 
 
       if (ubnd != null && lbnd != null)
       { try
@@ -4755,130 +4759,184 @@ public String iosDbiExtractOp(String ent, int i)
           double ld = Double.parseDouble(lbnd + ""); 
           int midd = (int) Math.floor((ud + ld)/2); 
           res.add(nme + " = " + midd);
+          opTests.add(attname + " = " + midd + ";");
         } catch (Exception _e) { } 
+      }
+
+      if (ubnd != null) 
+      { String upperval = ubnd + ""; 
+        if ("0".equals(upperval) || 
+            "1".equals(upperval) || 
+            "-1".equals(upperval)) 
+        { } 
+        else 
+        { opTests.add(attname + " = " + upperval + ";");
+          res.add(nme + " = " + upperval);
+        }
+      }  
+      else 
+      { res.add(nme + " = 2147483647");
+        opTests.add(attname + " = 2147483647;");
+      } // Integer.MAX_VALUE);
+
+      if (lbnd != null) 
+      { String lowerval = lbnd + ""; 
+        if ("0".equals(lowerval) || "1".equals(lowerval) || "-1".equals(lowerval)) { } 
+        else 
+        { res.add(nme + " = " + lowerval);
+          opTests.add(attname + " = " + lowerval + ";");
+        }
+      }  
+      else 
+      { res.add(nme + " = -2147483648");
+        opTests.add(attname + " = -2147483648;");
+      } // Integer.MIN_VALUE);
+    } 
+    else if ("long".equals(t))
+    { res.add(nme + " = 0"); 
+      res.add(nme + " = -1");
+      res.add(nme + " = 1"); 
+      opTests.add(attname + " = 0;"); 
+      opTests.add(attname + " = -1;");
+      opTests.add(attname + " = 1;"); 
+	   
+      if (ubnd != null && lbnd != null)
+      { try
+        { double ud = Double.parseDouble(ubnd + ""); 
+          double ld = Double.parseDouble(lbnd + ""); 
+          long midd = (long) Math.floor((ud + ld)/2); 
+          res.add(nme + " = " + midd);
+          opTests.add(attname + " = " + midd + ";");
+        } catch (Exception _e) { } 
+      }
+
+      if (ubnd != null) 
+      { String upperval = ubnd + ""; 
+        if ("0".equals(upperval) || 
+            "1".equals(upperval) || 
+            "-1".equals(upperval)) 
+        { } 
+        else 
+        { res.add(nme + " = " + upperval);
+          opTests.add(attname + " = " + upperval + ";");
+        }
+      }  
+      else 
+      { res.add(nme + " = " + Long.MAX_VALUE); 
+        opTests.add(attname + " = " + Long.MAX_VALUE + ";"); 
+      } 
+
+      if (lbnd != null) 
+      { String lowerval = lbnd + ""; 
+        if ("0".equals(lowerval) || "1".equals(lowerval) || "-1".equals(lowerval)) { } 
+        else 
+        { res.add(nme + " = " + lowerval); 
+          opTests.add(attname + " = " + lowerval + ";"); 
+        }
+      }  
+      else 
+      { res.add(nme + " = " + Long.MIN_VALUE);
+        opTests.add(attname + " = " + Long.MIN_VALUE + ";");
+      } 
+    } 
+    else if ("double".equals(t))
+    { res.add(nme + " = 0"); 
+      res.add(nme + " = -1");
+      res.add(nme + " = 1"); 
+      opTests.add(attname + " = 0;"); 
+      opTests.add(attname + " = -1;");
+      opTests.add(attname + " = 1;"); 
+	  
+      if (ubnd != null && lbnd != null)
+      { try
+        { double ud = Double.parseDouble(ubnd + ""); 
+          double ld = Double.parseDouble(lbnd + ""); 
+          double midd = (ud + ld)/2; 	
+          res.add(nme + " = " + midd);
+          opTests.add(attname + " = " + midd + ";");
+	   } catch (Exception _e) { } 
       }
 
       if (ubnd != null) 
       { String upperval = ubnd + ""; 
         if ("0".equals(upperval) || "1".equals(upperval) || "-1".equals(upperval)) { } 
         else 
-        { res.add(nme + " = " + upperval); }
+        { res.add(nme + " = " + upperval);
+          opTests.add(attname + " = " + upperval + ";");
+        }
       }  
       else 
-      { res.add(nme + " = 2147483647"); } // Integer.MAX_VALUE);
-
+      { res.add(nme + " = " + Double.MAX_VALUE); 
+        opTests.add(attname + " = " + Double.MAX_VALUE + ";"); 
+      } 
+	  
       if (lbnd != null) 
       { String lowerval = lbnd + ""; 
         if ("0".equals(lowerval) || "1".equals(lowerval) || "-1".equals(lowerval)) { } 
         else 
-        { res.add(nme + " = " + lowerval); }
+        { res.add(nme + " = " + lowerval);
+          opTests.add(attname + " = " + lowerval + ";");
+        }
       }  
       else 
-      { res.add(nme + " = -2147483648"); } // Integer.MIN_VALUE);
-    } 
-    else if ("long".equals(t))
-    { res.add(nme + " = 0"); 
-      res.add(nme + " = -1");
-      res.add(nme + " = 1"); 
-	  
-	  if (ubnd != null && lbnd != null)
-	  { try
-	    { double ud = Double.parseDouble(ubnd + ""); 
-	      double ld = Double.parseDouble(lbnd + ""); 
-		  long midd = (long) Math.floor((ud + ld)/2); 
-		  res.add(nme + " = " + midd);
-		} catch (Exception _e) { } 
-	  }
-
-      if (ubnd != null) 
-      { String upperval = ubnd + ""; 
-        if ("0".equals(upperval) || "1".equals(upperval) || "-1".equals(upperval)) { } 
-        else 
-        { res.add(nme + " = " + upperval); }
-      }  
-      else 
-      { res.add(nme + " = " + Long.MAX_VALUE); } 
-
-      if (lbnd != null) 
-      { String lowerval = lbnd + ""; 
-        if ("0".equals(lowerval) || "1".equals(lowerval) || "-1".equals(lowerval)) { } 
-        else 
-        { res.add(nme + " = " + lowerval); }
-      }  
-      else 
-      { res.add(nme + " = " + Long.MIN_VALUE); } 
-    } 
-    else if ("double".equals(t))
-    { res.add(nme + " = 0"); 
-      res.add(nme + " = -1");
-      res.add(nme + " = 1"); 
-	  
-	  if (ubnd != null && lbnd != null)
-	  { try
-	    { double ud = Double.parseDouble(ubnd + ""); 
-	      double ld = Double.parseDouble(lbnd + ""); 
-		  double midd = (ud + ld)/2; 
-		  res.add(nme + " = " + midd);
-		} catch (Exception _e) { } 
-	  }
-
-      if (ubnd != null) 
-      { String upperval = ubnd + ""; 
-        if ("0".equals(upperval) || "1".equals(upperval) || "-1".equals(upperval)) { } 
-        else 
-        { res.add(nme + " = " + upperval); }
-      }  
-      else 
-      { res.add(nme + " = " + Double.MAX_VALUE); } 
-	  
-	  if (lbnd != null) 
-      { String lowerval = lbnd + ""; 
-        if ("0".equals(lowerval) || "1".equals(lowerval) || "-1".equals(lowerval)) { } 
-        else 
-        { res.add(nme + " = " + lowerval); }
-      }  
-      else 
-      { res.add(nme + " = " + Double.MIN_VALUE); }
-      
+      { res.add(nme + " = " + Double.MIN_VALUE); 
+        opTests.add(attname + " = " + Double.MIN_VALUE + ";"); 
+      }
     } 
     else if ("boolean".equals(t))
     { res.add(nme + " = true"); 
       res.add(nme + " = false");
+      opTests.add(attname + " = true;"); 
+      opTests.add(attname + " = false;");
     }
     else if ("String".equals(t))
     { res.add(nme + " = \"\""); 
       res.add(nme + " = \" abc_XZ \"");
       res.add(nme + " = \"#�$* &~@':\"");
+      opTests.add(attname + " = \"\";"); 
+      opTests.add(attname + " = \" abc_XZ \";");
+      opTests.add(attname + " = \"#�$* &~@':\";");
     }
     else if (vs != null && vs.size() > 0) 
     { for (int j = 0; j < vs.size(); j++)   
       { String v0 = (String) vs.get(j); 
-        res.add(nme + " = " + v0); 
+        res.add(nme + " = " + v0);
+        opTests.add(attname + " = " + v0 + ";"); 
       } 
     }
     else if (type.isEntity())
     { String obj = t.toLowerCase() + "x_0"; 
         // Identifier.nextIdentifier(t.toLowerCase()); 
+      Entity ee = type.getEntity(); 
+      String ename = ee.getName(); 
+      String es = ename.toLowerCase() + "s"; 
       String decl = nme + " = " + obj; 
-      res.add(decl); 
+      res.add(decl);
+      opTests.add(attname + " = (" + ename + ") Controller.inst()." + es + ".get(0);");  
     }  
-    else if (type.isCollection() && elementType != null)
+    else if (type.isCollection() && 
+             ("Set".equals(type.getName()) || 
+              "Sequence".equals(type.getName())) && 
+              elementType != null)
     { Type elemT = getElementType(); 
       Vector testVals = elemT.testValues(); 
       res.add(""); 
-	  
+      opTests.add(attname + " = new Vector();"); 
+	   
 	  // Singletons: 
       for (int p = 0; p < testVals.size() && p < 3; p++) 
       { String tv = (String) testVals.get(p); 
         res.add(tv + " : " + nme); 
+        opTests.add(attname + " = (new SystemTypes.Set()).add(" + tv + ").getElements();"); 
       }
 	  
 	  // Triples: 
       for (int p = 0; p+2 < testVals.size() && p < 3; p++) 
       { String tv = (String) testVals.get(p); 
         String tv1 = (String) testVals.get(p+1);
-		String tv2 = (String) testVals.get(p+2);  
-        res.add(tv + " : " + nme + "\n" + tv1 + " : " + nme + "\n" + tv2 + " : " + nme); 
+        String tv2 = (String) testVals.get(p+2);  
+        res.add(tv + " : " + nme + "\n" + tv1 + " : " + nme + "\n" + tv2 + " : " + nme);
+        opTests.add(attname + " = (new SystemTypes.Set()).add(" + tv + ").add(" + tv1 + ").add(" + tv2 + ").getElements();"); 
       }
     } 
  
@@ -4939,9 +4997,9 @@ public String iosDbiExtractOp(String ent, int i)
 	  { try
 	    { double ud = Double.parseDouble(ubnd + ""); 
 	      double ld = Double.parseDouble(lbnd + ""); 
-		  long midd = (long) Math.floor((ud + ld)/2); 
-		  res.add("" + midd);
-		} catch (Exception _e) { } 
+	      long midd = (long) Math.floor((ud + ld)/2); 
+	      res.add("" + midd);
+	    } catch (Exception _e) { } 
 	  }
 
       if (ubnd != null) 
@@ -4985,15 +5043,14 @@ public String iosDbiExtractOp(String ent, int i)
       else 
       { res.add("" + Double.MAX_VALUE); } 
 	  
-	  if (lbnd != null) 
+      if (lbnd != null) 
       { String lowerval = lbnd + ""; 
         if ("0".equals(lowerval) || "1".equals(lowerval) || "-1".equals(lowerval)) { } 
         else 
         { res.add(lowerval); }
       }  
       else 
-      { res.add("" + Double.MIN_VALUE); }
-      
+      { res.add("" + Double.MIN_VALUE); }  
     } 
     else if ("boolean".equals(t))
     { res.add("true"); 

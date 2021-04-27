@@ -90,6 +90,168 @@ public class BehaviouralFeature extends ModelElement
     return res; 
   } // and copy the use case, readfr, etc? 
 
+  public boolean isMutatable()
+  { if (isDerived())
+    { return false; } 
+    if (parameters == null || parameters.size() == 0) 
+    { return false; } 
+    if (resultType == null || "void".equals(resultType + ""))
+    { return false; } 
+    return isQuery(); 
+  } // At least one input parameter, and a result parameter
+
+  public Vector formMutantOperations(Vector posts) 
+  { Vector res = new Vector();
+    String nme = getName(); 
+ 
+    for (int i = 0; i < posts.size(); i++) 
+    { Expression postx = (Expression) posts.get(i); 
+      BehaviouralFeature bfclone = (BehaviouralFeature) this.clone(); 
+      bfclone.setName(nme + "_mutant_" + i); 
+      bfclone.setPost(postx); 
+      bfclone.setDerived(true); 
+      res.add(bfclone); 
+    } 
+    return res; 
+  } 
+
+  public Vector formMutantCalls(Vector mutants, Vector tests, Vector alltests) 
+  { // for each m : mutants, t : tests, set up a call to 
+    // m(t.values)
+ 
+    String nme = getName();         
+    Vector res = new Vector();
+
+    if (resultType != null && !("void".equals(resultType + "")))
+    { int tsts = alltests.size(); 
+      int muts = mutants.size(); 
+
+      for (int j = 0; j < tsts; j++) 
+      { Vector tst = (Vector) alltests.get(j);
+        // String tvals = (String) tst.get(1); 
+        String code = parInitCode(tst);  
+           // parameterInitialisationCode(tvals); 
+
+        String call = resultType + " " + nme + "_result = _self." + this.toString() + ";\n";  
+        call = call + 
+            "    System.out.println(\"Test " + j + " of " + nme + " on \" + _self + \" result = \" + " + nme + "_result);\n";
+ 
+        String testcode = "  try {\n" + 
+                          "    " + code + "\n" + 
+                          "    " + call + "\n";  
+     
+        for (int i = 0; i < muts; i++) 
+        { BehaviouralFeature m = (BehaviouralFeature) mutants.get(i); 
+          String mname = m.getName(); 
+          String mutantcall = "_self." + m.toString(); 
+          testcode = testcode +  
+            "    " + resultType + " " + mname + "_result = " + mutantcall + ";\n" +    
+            "    if ((\"\" + " + nme + "_result).equals(\"\" + " + mname + "_result)) { _totals[" + j + "]++; } else\n" + 
+            "    { System.out.println(\"Test " + j + " of " + tsts + " detects " + nme + " mutant " + i + " of " + muts + "\");\n" +
+            "      _counts[" + j + "]++; \n" +   
+            "      _totals[" + j + "]++;\n" + 
+            "    }\n";  
+        } 
+        testcode = testcode +
+             "  } catch (Exception _e) { _e.printStackTrace(); }\n"; 
+        res.add(testcode); 
+      }  
+    }  
+    return res; 
+  } 
+
+
+  public String parameterInitialisationCode(String strs) 
+  { String res = ""; 
+    int st = strs.indexOf("parameters"); 
+    if (st >= 0) 
+    { String data = strs.substring(st,strs.length()); 
+      res = data.substring(11,data.length());
+      int eqind = res.indexOf("="); 
+      if (eqind >= 0) 
+      { String par = res.substring(0,eqind).trim(); 
+        String val = res.substring(eqind+2,res.length()).trim(); 
+
+        int next = val.indexOf("parameters"); 
+
+        // if a parameter, give it a declaration
+        Attribute att = (Attribute) ModelElement.lookupByName(par,parameters); 
+        if (att != null) 
+        { res = "    " + att.getType() + " " + par + " = "; } 
+        else // it is a feature of the object
+        { res = "    _self." + par + " = "; }
+
+        String value = val; 
+        if (att != null && att.isEntity())
+        { Type atttype = att.getType(); 
+          Entity attent = atttype.getEntity(); 
+          String attentname = attent.getName(); 
+          String es = attentname.toLowerCase() + "s"; 
+          value = "(" + attentname + ") Controller.inst()." + es + ".get(0)"; 
+        }
+  
+        if (next < 0) 
+        { return res + value + ";"; } 
+        String remainder = val.substring(next,val.length()); 
+        
+        if (att != null && att.isEntity()) { } 
+        else 
+        { value = val.substring(0,next).trim(); } 
+ 
+        return res + value + ";\n" + 
+                parameterInitialisationCode(remainder); 
+      }  
+      else 
+      { eqind = res.indexOf(":");
+        // else look for ":" in the case of collection pars
+        // val : parameters.par
+
+        if (eqind >= 0) 
+        { String val = res.substring(0,eqind).trim(); 
+          String par = res.substring(eqind+12,res.length()).trim(); 
+
+          int rnext = val.indexOf(":"); 
+
+        // if a parameter, give it a declaration
+          Attribute att = (Attribute) ModelElement.lookupByName(par,parameters); 
+          if (att != null) 
+          { res = "    " + att.getType() + " " + par + " = new " + att.getType().getJava() + "();\n" + 
+                  "    " + par + ".add(" + val + ")"; } 
+          else // it is a feature of the object
+          { res = "    _self." + par + ".add(" + val + ")"; }
+
+          if (rnext < 0) 
+          { return res + ";"; } 
+          String remainder = val.substring(rnext,val.length()); 
+          String value = val.substring(0,rnext).trim(); 
+          return res + value + ";\n" + 
+                parameterInitialisationCode(remainder);
+        } 
+      } 
+    } 
+    return res; 
+  } 
+
+  public String parInitCode(Vector v) 
+  { String res = ""; 
+    for (int i = 0; i < v.size(); i++) 
+    { String assign = (String) v.get(i); 
+      int eqindex = assign.indexOf("="); 
+      if (eqindex >= 0) 
+      { String par = assign.substring(0,eqindex).trim(); 
+        String rem = assign.substring(eqindex,assign.length()); 
+
+        // if a parameter, give it a declaration
+        Attribute att = (Attribute) ModelElement.lookupByName(par,parameters); 
+        if (att != null) 
+        { res = res + "    " + att.getType().getJava() + " " + par + " " + rem + "\n"; } 
+        else // it is a feature of the object
+        { res = res + "    _self." + par + " " + rem + "\n"; }
+      } 
+    } 
+    return res; 
+  } 
+
   public void addParameter(Attribute att)
   { parameters.add(att); } 
 
@@ -99,19 +261,73 @@ public class BehaviouralFeature extends ModelElement
   public void setActivity(Statement st)
   { activity = st; } 
 
+  public boolean hasResult()
+  { if (resultType != null && 
+        !("void".equals(resultType + "")))
+    { return true; } 
+    return false; 
+  } 
+
   public void setResultType(Type t)
   { resultType = t; } 
   
   public boolean hasReturnVariable()
   { if (resultType == null) 
     { return false; }
-	if ("void".equals(resultType + ""))
-	{ return false; }
-	return true; 
+    if ("void".equals(resultType + ""))
+    { return false; }
+    return true; 
   }
 
   public boolean isZeroArgument()
   { return parameters.size() == 0; } 
+
+  public Statement extendBehaviour()
+  { System.out.println(">>> Operation activity = " + activity); 
+
+    if (activity == null)
+    { return new SequenceStatement(); } 
+
+      // Vector newparams = new Vector(); 
+      // newparams.addAll(parameters); 
+
+    java.util.Map env = new java.util.HashMap(); 
+
+    Statement stat = activity.generateDesign(env,false); 
+    
+    if (hasResult()) 
+    { if (Statement.hasResultDeclaration(stat))
+      { return stat; } 
+
+      Attribute att = new Attribute("result",resultType,ModelElement.INTERNAL); 
+      att.setElementType(elementType); 
+        // newparams.add(att);
+     
+      
+
+      System.out.println(">>> Enhanced activity = " + stat);   Vector contexts = new Vector(); 
+      // newparams.addAll(ownedAttribute); 
+
+      Statement newstat = new SequenceStatement(); 
+        // ReturnStatement returnstat = null; 
+      CreationStatement cres = new CreationStatement(resultType + "", "result");
+      cres.setInstanceType(resultType);
+      cres.setElementType(elementType);   
+      ((SequenceStatement) newstat).addStatement(cres);
+	     // returnstat = new ReturnStatement(new BasicExpression(att));   
+  
+      ((SequenceStatement) newstat).addStatement(stat); 
+        
+        // if (returnstat != null) 
+	   // { ((SequenceStatement) newstat).addStatement(returnstat); }
+      
+        
+      // newstat.typeCheck(types,entities,contexts,newparams); 
+      return newstat; 
+    } 
+    return new SequenceStatement();
+  } 
+
 
   public String cg(CGSpec cgs)
   { String etext = this + "";
@@ -164,10 +380,18 @@ public class BehaviouralFeature extends ModelElement
     } 
 
     if (activity != null)
-    { String actres = activity.cg(cgs); 
+    { if (hasResult())
+      { Statement newact = extendBehaviour(); 
+        String actres = newact.cg(cgs); 
+        args.add(actres);
+        eargs.add(newact);
+      } 
+      else 
+      { String actres = activity.cg(cgs); 
       // System.out.println(">>> Activity result: " + actres); 
-      args.add(actres);
-      eargs.add(activity);  
+        args.add(actres);
+        eargs.add(activity);
+      }  
     }
     else 
     { Statement nullstat = new SequenceStatement(); 
@@ -187,7 +411,7 @@ public class BehaviouralFeature extends ModelElement
   }
   
   
-  public Vector testCases()
+  public Vector testCases(Vector opTests)
   { Vector allattributes = getParameters();
     Vector preattributes = new Vector(); 
     preattributes.addAll(allattributes); 
@@ -196,6 +420,8 @@ public class BehaviouralFeature extends ModelElement
 	
     String nme = getName();  
     Vector res = new Vector(); 
+    Vector allOpTests = new Vector(); 
+
     if (preattributes == null || preattributes.size() == 0) 
     { res.add("-- no test for operation " + nme + "\n"); 
       return res; 
@@ -218,15 +444,17 @@ public class BehaviouralFeature extends ModelElement
     
       identifyUpperBounds(allattributes,aBounds,upperBounds); 
       identifyLowerBounds(allattributes,aBounds,lowerBounds); 
-      System.out.println(".>> Parameter bounds for operation " + nme + " : " + aBounds);  
-      System.out.println(".>> Upper bounds map for operation " + nme + " : " + upperBounds);  
-      System.out.println(".>> Lower bounds map for operation " + nme + " : " + lowerBounds);  
+      // System.out.println(".>> Parameter bounds for operation " + nme + " : " + aBounds);  
+      // System.out.println(".>> Upper bounds map for operation " + nme + " : " + upperBounds);  
+      // System.out.println(".>> Lower bounds map for operation " + nme + " : " + lowerBounds);  
     }
 	
     for (int i = 0; i < allattributes.size(); i++) 
     { Vector newres = new Vector(); 
+      Vector attoptests = new Vector(); 
       Attribute att = (Attribute) allattributes.get(i); 
-      Vector testassignments = att.testCases("parameters", lowerBounds, upperBounds); 
+      Vector testassignments = att.testCases("parameters", lowerBounds, upperBounds, attoptests); 
+      allOpTests.add(attoptests); 
 	  
       for (int j = 0; j < res.size(); j++) 
       { Vector oldtest = (Vector) res.get(j); 
@@ -245,9 +473,38 @@ public class BehaviouralFeature extends ModelElement
       res.clear(); 
       res.addAll(newres); 
     } 
+
+    opTests.addAll(flattenTests(allOpTests));
+    System.out.println(">>> Flattened tests = " + opTests);  
+        
     return res; 
   }
 
+  private Vector flattenTests(Vector opTests)
+  { Vector newOpTests = new Vector(); 
+    if (opTests.size() > 0)
+    { Vector ptests = (Vector) opTests.get(0); 
+      for (int j = 0; j < ptests.size(); j++) 
+      { String ptest = (String) ptests.get(j); 
+        Vector tailopTests = new Vector(); 
+        tailopTests.addAll(opTests); 
+        tailopTests.remove(0); 
+        Vector tailtests = flattenTests(tailopTests); 
+        for (int k = 0; k < tailtests.size(); k++) 
+        { Vector tailtest = (Vector) tailtests.get(k);
+          Vector newtest = new Vector(); 
+          newtest.add(ptest); 
+          newtest.addAll(tailtest);
+          newOpTests.add(newtest);  
+        } 
+      } 
+      return newOpTests; 
+    } 
+    else 
+    { newOpTests.add(new Vector()); 
+      return newOpTests; 
+    } 
+  } 
   private void identifyUpperBounds(Vector atts, java.util.Map boundConstraints, java.util.Map upperBounds)
   { for (int i = 0; i < atts.size(); i++) 
     { Attribute att = (Attribute) atts.get(i); 
@@ -562,6 +819,17 @@ public class BehaviouralFeature extends ModelElement
     return (Type) resultType.clone(); 
   }
 
+  public Attribute getResultParameter()
+  { if (resultType == null) 
+    { return null; }
+    if (resultType.getName().equals("void")) 
+    { return null; }
+ 
+    Attribute resultVar = new Attribute("result", resultType, ModelElement.INTERNAL); 
+    resultVar.setElementType(elementType); 
+    return resultVar; 
+  }
+
   public Type getType()
   { if (resultType == null) 
     { return new Type("void",null); } 
@@ -711,7 +979,14 @@ public class BehaviouralFeature extends ModelElement
     if (entity != null && instanceScope) 
     { contexts.add(entity); } 
     Vector env = new Vector(); 
-    env.addAll(parameters); 
+    env.addAll(parameters);
+
+    if (resultType != null && !("void".equals(resultType + "")))
+    { Attribute resultVar = getResultParameter(); 
+      if (resultVar != null) 
+      { env.add(resultVar); }  
+    } 
+ 
     if (pre != null) 
     { pre.typeCheck(types,entities,contexts,env); } 
     boolean res = false; 
@@ -1693,7 +1968,7 @@ public class BehaviouralFeature extends ModelElement
       if (rtname.equals("Set") || rtname.equals("Sequence") ||
           rtname.equals("Map") || rtname.equals("Function") )
       { if (elementType == null) 
-        { System.err.println("Error: No element type for " + this); 
+        { System.err.println("Warning!: No element type for " + this); 
           out.println(opid + ".elementType = void"); 
         } 
         else 
@@ -1736,11 +2011,22 @@ public class BehaviouralFeature extends ModelElement
       System.out.println(">> Operation " + getName() + " activity is: " + des); 
     } 
     else // if (activity != null) 
-    { String actid = activity.saveModelData(out); 
+    { Statement newstat = activity; 
+      if (hasResult() && 
+          !Statement.hasResultDeclaration(activity))
+      { // Add a  var result : resultType 
+        Attribute att = new Attribute("result",resultType,ModelElement.INTERNAL); 
+        att.setElementType(elementType); 
+        newstat = new SequenceStatement(); 
+        CreationStatement cres = new CreationStatement(resultType + "", "result");
+        cres.setInstanceType(resultType);
+        cres.setElementType(elementType);   
+        ((SequenceStatement) newstat).addStatement(cres);
+        ((SequenceStatement) newstat).addStatement(activity); 
+      } 
+      String actid = newstat.saveModelData(out); 
       out.println(opid + ".activity = " + actid); 
     }  
-    // out.println(opid + ".text = \"" + text + "\""); 
-
    
     return opid;  
   }  // multiple pre, post, and stereotypes, and the operation text

@@ -9114,6 +9114,8 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);
     mop = BSystemTypes.generateAfterOp(); 
     out.println("\n" + mop);
+    mop = BSystemTypes.generateHasMatchOp(); 
+    out.println("\n" + mop);
 
 
     /* Map operations - optional */ 
@@ -9299,6 +9301,8 @@ public void produceCUI(PrintWriter out)
     mop = BSystemTypes.generateBeforeOp(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateAfterOp(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateHasMatchOp(); 
     out.println("\n" + mop);
 
     /* Map operations - optional */ 
@@ -9486,6 +9490,8 @@ public void produceCUI(PrintWriter out)
     mop = BSystemTypes.generateBeforeOp(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateAfterOp(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateHasMatchOp(); 
     out.println("\n" + mop);
 
     /* Map operations - optional */ 
@@ -11473,12 +11479,32 @@ public void produceCUI(PrintWriter out)
   }
 
   public void applyCSTLSpecification()
-  { CGSpec spec = loadCSTL(); // from cg/cg.cstl
+  { File file = null; 
+    try 
+    { JFileChooser fc = new JFileChooser();
+      File startingpoint = new File("./cg");
+      fc.setCurrentDirectory(startingpoint);
+      fc.setDialogTitle("Select a *.cstl file");
+      // fc.addChoosableFileFilter(new TextFileFilter()); 
+
+	  
+      int returnVal = fc.showOpenDialog(null);
+      if (returnVal == JFileChooser.APPROVE_OPTION)
+      { file = fc.getSelectedFile(); }
+      else
+      { System.err.println("Load aborted");
+        return; 
+      }
+	  
+      if (file == null) { return; }
+    } catch (Exception e) { return; } 
+
+    CGSpec spec = loadCSTL(file); 
 
     if (spec == null) 
-	{ System.err.println("!! ERROR: No file cg/cg.cstl"); 
-	  return; 
-	} 
+    { System.err.println("!! ERROR: No file " + file.getName()); 
+      return; 
+    } 
 
 
     String newtypes = ""; 
@@ -11487,7 +11513,7 @@ public void produceCUI(PrintWriter out)
 
     /* Argument _2 of the package rule */
 	
-	java.util.Date d1 = new java.util.Date(); 
+    java.util.Date d1 = new java.util.Date(); 
 
 
     for (int i = 0; i < types.size(); i++) 
@@ -11524,7 +11550,7 @@ public void produceCUI(PrintWriter out)
     }  // Ignores OperationDescriptions, which are only used for web/eis/mobile generation
 
     java.util.Date d2 = new java.util.Date(); 
-	System.out.println(">>> Time taken = " + (d2.getTime() - d1.getTime())); 
+    System.out.println(">>> Time taken for code generation = " + (d2.getTime() - d1.getTime())); 
 
     File chtml = new File("output/cgout.txt"); 
     try
@@ -11562,6 +11588,17 @@ public void produceCUI(PrintWriter out)
     File f = new File("./cg/" + fname);   
     if (f != null) 
     { res = CSTL.loadCSTL(f,types,entities); } 
+
+    // System.out.println(">>> Parsed: " + res);
+ 
+    CSTL.loadTemplates(types,entities); 
+    return res; 
+  }
+
+  public CGSpec loadCSTL(File f)
+  { CGSpec res = new CGSpec(entities); 
+    
+    res = CSTL.loadCSTL(f,types,entities);
 
     // System.out.println(">>> Parsed: " + res);
  
@@ -14435,6 +14472,9 @@ public void produceCUI(PrintWriter out)
     boolean eof = false;
     File file = new File("output/model.txt");  /* default */ 
 
+    System.out.println(">>> Loading model from output/model.txt"); 
+    System.out.println(">>> This should be an instance model of the UML-RSDS metamodel for class diagrams"); 
+
     try
     { br = new BufferedReader(new FileReader(file)); }
     catch (FileNotFoundException e)
@@ -14457,7 +14497,7 @@ public void produceCUI(PrintWriter out)
     /* Also process PrimitiveType, CollectionType */ 
 
     String str = ""; 
-    int delta = 80; // visual displacement 
+    int delta = 180; // visual displacement 
     int ecount = 0; 
 
     while (!eof)
@@ -14517,6 +14557,11 @@ public void produceCUI(PrintWriter out)
         else if (str.endsWith("BinaryExpression"))
         { String glabel = strs[0]; 
           BinaryExpression be = new BinaryExpression(glabel,null,null); 
+          preexps.put(glabel,be); 
+        } 
+        else if (str.endsWith("ConditionalExpression"))
+        { String glabel = strs[0]; 
+          ConditionalExpression be = new ConditionalExpression(null,null,null); 
           preexps.put(glabel,be); 
         } 
         else if (str.endsWith("UnaryExpression"))
@@ -14581,6 +14626,18 @@ public void produceCUI(PrintWriter out)
               { Expression ee = (Expression) preexps.get(x); 
                 ee.setElementType(ModelElement.model2type(val)); 
               } 
+            }
+            else if ("lower".equals(prop))
+            { if (preproperties.keySet().contains(x))
+              { PreProperty pp = (PreProperty) preproperties.get(x);
+                pp.setLower(val);
+              }
+            }
+            else if ("upper".equals(prop))
+            { if (preproperties.keySet().contains(x))
+              { PreProperty pp = (PreProperty) preproperties.get(x);
+                pp.setUpper(val);
+              }
             }
             else if ("name".equals(prop))
             { if (preproperties.keySet().contains(x))
@@ -14693,6 +14750,36 @@ public void produceCUI(PrintWriter out)
                 } 
               } 
             }
+            else if ("test".equals(prop))
+            { if (preexps.keySet().contains(x))
+              { Expression ee = (Expression) preexps.get(x); 
+                if (preexps.keySet().contains(val))
+                { Expression ex = (Expression) preexps.get(val); 
+                  if (ee instanceof ConditionalExpression)
+                  { ((ConditionalExpression) ee).setTest(ex); }
+                } 
+              } 
+            }
+            else if ("ifExp".equals(prop))
+            { if (preexps.keySet().contains(x))
+              { Expression ee = (Expression) preexps.get(x); 
+                if (preexps.keySet().contains(val))
+                { Expression ex = (Expression) preexps.get(val); 
+                  if (ee instanceof ConditionalExpression)
+                  { ((ConditionalExpression) ee).setIf(ex); }
+                } 
+              } 
+            }
+            else if ("elseExp".equals(prop))
+            { if (preexps.keySet().contains(x))
+              { Expression ee = (Expression) preexps.get(x); 
+                if (preexps.keySet().contains(val))
+                { Expression ex = (Expression) preexps.get(val); 
+                  if (ee instanceof ConditionalExpression)
+                  { ((ConditionalExpression) ee).setElse(ex); }
+                } 
+              } 
+            }
             else if ("condition".equals(prop))
             { if (preconstraints.keySet().contains(x))
               { Constraint cc = (Constraint) preconstraints.get(x); 
@@ -14789,18 +14876,23 @@ public void produceCUI(PrintWriter out)
     { String pname = (String) preps.get(i);
       PreProperty pp = (PreProperty) preproperties.get(pname);
 
+      System.out.println(">>> Found property " + pp.name + " owner: " + pp.owner + " type: " + pp.type + " " + pp.elementType); 
+
       if (pp.name == null || pp.name.trim().length() == 0) 
       { continue; }  // valid features have a name
 
       Type ptyp = pp.type;
-      if (pp.owner != null && ptyp != null && Type.isAttributeType(ptyp))
+      if (pp.owner != null && ptyp != null && Type.isExtendedAttributeType(ptyp,pp.elementType))
       { Attribute att = new Attribute(pp.name, ptyp, ModelElement.INTERNAL); 
+        att.setElementType(pp.elementType); 
         pp.owner.addAttribute(att);
         att.setEntity(pp.owner);
       }
       else if (pp.owner != null && pp.entity2 != null)
-      { Association ast = new Association(pp.owner, pp.entity2, 
-                                          ModelElement.MANY, ModelElement.ONE, null, pp.name);
+      { String lwr = pp.lower; 
+        String upr = pp.upper; 
+        Association ast = new Association(pp.owner, pp.entity2, 
+                                          lwr, upr, null, pp.name);
         associations.add(ast);
         pp.owner.addAssociation(ast);
         int xs = 0, ys = 0, xe = 100, ye = 100;  
@@ -14808,9 +14900,9 @@ public void produceCUI(PrintWriter out)
         { VisualData vd = (VisualData) visuals.get(m); 
           ModelElement me = (ModelElement) vd.getModelElement(); 
           if (me == pp.owner) // Entity1
-          { xs = vd.getx(); ys = vd.gety(); } 
+          { xs = vd.getx() + 80; ys = vd.gety() + 40; } 
           else if (me == pp.entity2) // Entity2
-          { xe = vd.getx(); ye = vd.gety(); }  
+          { xe = vd.getx() + 80; ye = vd.gety(); }  
         }
 
         if (pp.owner == pp.entity2) 
@@ -14851,86 +14943,6 @@ public void produceCUI(PrintWriter out)
       System.out.println(e); 
     } 
 
-    /* for (int i = 0; i < enodes.size(); i++) 
-    { XMLNode enode = (XMLNode) enodes.get(i); 
-      if ("eClassifiers".equals(enode.getTag()))
-      { String xsitype = enode.getAttributeValue("xsi:type"); 
-        String ename = enode.getAttributeValue("name"); 
-        if ("ecore:EClass".equals(xsitype) && ename != null)  
-        { Entity ent = (Entity) ModelElement.lookupByName(ename,entities);
-          String esupers = enode.getAttributeValue("eSuperTypes"); 
-          if (esupers != null && esupers.startsWith("#//"))
-          { String supername = esupers.substring(3,esupers.length()); 
-            Entity supent = (Entity) ModelElement.lookupByName(supername,entities);
-            if (supent != null) 
-            { Entity[] subents = new Entity[1]; 
-              subents[0] = ent; 
-              addInheritances(supent,subents); 
-              supent.setAbstract(true); 
-            } 
-          } 
-          Vector edata = enode.getSubnodes(); 
-          for (int j = 0; j < edata.size(); j++) 
-          { XMLNode ed = (XMLNode) edata.get(j); 
-            if ("eStructuralFeatures".equals(ed.getTag()))
-            { String dataname = ed.getAttributeValue("name"); 
-              if ("ecore:EAttribute".equals(ed.getAttributeValue("xsi:type")))
-              { Type typ = Type.getEcoreType(ed.getAttributeValue("eType"),types); 
-                Attribute att = new Attribute(dataname,typ,ModelElement.INTERNAL); 
-                ent.addAttribute(att); 
-                att.setEntity(ent); 
-              } 
-              else if ("ecore:EReference".equals(ed.getAttributeValue("xsi:type")))
-              { String e2name = ed.getAttributeValue("eType"); 
-                e2name = e2name.substring(3,e2name.length()); 
-                Entity ent2 = (Entity) ModelElement.lookupByName(e2name,entities);
-                String upper = ed.getAttributeValue("upperBound"); 
-                String lower = ed.getAttributeValue("lowerBound"); 
-                String opposite = ed.getAttributeValue("eOpposite"); 
-
-                System.out.println("Association: from " + ename + " to " + e2name); 
-                System.out.println("Opposite is " + opposite); 
-                String opp = opposite; 
-
-                if (ent2 != null && opposite != null && opposite.startsWith("#//"))
-                { opp = opposite.substring(3,opposite.length()); // E1/role1
-                  int ind = opp.indexOf("/"); 
-                  String e1name = opp.substring(0,ind); 
-                  String role1 = opp.substring(ind+1,opp.length()); 
-                  Association oldast = ent2.getRole(role1);
-                  System.out.println(e1name + " " + role1 + " " + oldast);  
-
-                  if (oldast != null) 
-                  { oldast.setRole1(ed.getAttributeValue("name")); 
-                    oldast.setCard1(lower,upper);
-                    continue;  
-                  } 
-                } 
-
-                Association ast = new Association(ent,ent2,lower,upper,opp,
-                                        ed.getAttributeValue("name"));
-                associations.add(ast);  
-                ent.addAssociation(ast); 
-                ast.setName("r" + associations.size());
-                int xs = 0, ys = 0, xe = 100, ye = 100;  
-                for (int m = 0; m < visuals.size(); m++)
-                { VisualData vd = (VisualData) visuals.get(m); 
-                  ModelElement me = (ModelElement) vd.getModelElement(); 
-                  if (me == ent) // Entity1
-                  { xs = vd.getx(); ys = vd.gety(); } 
-                  else if (me == ent2) // Entity2
-                  { xe = vd.getx(); ye = vd.gety(); }  
-                }
-                LineData sline = 
-                  new LineData(xs,ys,xe,ye,linecount,SOLID);
-                sline.setModelElement(ast); 
-                visuals.add(sline); 
-              }
-            }
-          }
-        } 
-      }
-    }  */
     repaint(); 
   } 
 
@@ -21813,35 +21825,50 @@ public void produceCUI(PrintWriter out)
 
   public void testCases()
   { Vector res = new Vector(); 
+    Vector mutationtests = new Vector();   
+
+    String dirName = "output"; 
+
+    if (systemName != null && systemName.length() > 0)
+    { dirName = systemName; } 
+
     for (int i = 0; i < entities.size(); i++) 
     { Entity e = (Entity) entities.get(i); 
-	  if (e.isDerived() || e.isComponent() || e.isAbstract() || e.isInterface()) 
-	  { continue; }
+      if (e.isDerived() || e.isComponent() || e.isAbstract() || e.isInterface()) 
+      { continue; }
 	  
-	  String testfile = "test" + e.getName() + "_in.txt"; 
+      String testfile = "test" + e.getName() + "_in.txt"; 
 	  
       Vector tests = e.testCases(); 
       try
-      { PrintWriter rout = new PrintWriter(
+      { String testsdirName = "output/tests"; 
+        File testsdir = new File(testsdirName); 
+        if (testsdir.exists()) { } 
+        else 
+        { testsdir.mkdir(); }
+        PrintWriter rout = new PrintWriter(
                               new BufferedWriter(
-                                new FileWriter("output/tests/" + testfile)));
-        System.out.println("*** Test cases for entity " + e.getName() + " written to: output/tests/" + testfile); 
+                                new FileWriter(testsdirName + "/" + testfile)));
+
+        System.out.println("*** Test cases for entity " + e.getName() + " written to: " + testsdirName);
+ 
         for (int j = 0; j < tests.size(); j++) 
         { String tst = (String) tests.get(j); 
           rout.println(tst); 
         }
         rout.close(); 
-	  } 
+      } 
       catch (Exception _x) { } 
       
-	  
-	  Vector optests = e.operationTestCases(); 
+      Vector optests = e.operationTestCases(mutationtests);
+ 
       System.out.println("*** Test cases for entity " + e.getName() + " operations written to output/tests"); 
+    
       for (int j = 0; j < optests.size(); j++) 
       { if (optests.get(j) instanceof Vector)
-	    { Vector otest = (Vector) optests.get(j); 
-	      String oname = otest.get(0) + "";
-		  String otxt = otest.get(1) + "";  
+        { Vector otest = (Vector) optests.get(j); 
+          String oname = otest.get(0) + "";
+          String otxt = otest.get(1) + "";  
           try
           { PrintWriter rout = new PrintWriter(
                                 new BufferedWriter(
@@ -21850,13 +21877,44 @@ public void produceCUI(PrintWriter out)
             rout.close(); 
           } 
           catch (Exception _x) { } 
-		} 
-      }   
+        }
+      } 
+    }   
+  
+    try
+    { File dir = new File(dirName); 
+      if (dir.exists()) { } 
+      else 
+      { dir.mkdir(); }
+      PrintWriter mtout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(dirName + "/MutationTest.java")));
+      if ("output".equals(dirName)) { } 
+      else 
+      { mtout.println("package " + dirName + ";"); 
+        mtout.println(); 
+      } 
+
+      mtout.println("import java.util.Vector;"); 
+      mtout.println("import java.util.List;"); 
+      mtout.println(); 
+      mtout.println("public class MutationTest"); 
+      mtout.println("{"); 
+      for (int k = 0; k < mutationtests.size(); k++) 
+      { String mtest = (String) mutationtests.get(k); 
+        mtout.println(mtest);
+        mtout.println();  
+      }
+      mtout.println("}");  
+      mtout.close(); 
     } 
-	
+    catch (Exception _x) { } 
+   
+    System.out.println("*** Mutation tester operations written to " + dirName + "/MutationTest.java"); 
+    
     for (int i = 0; i < useCases.size(); i++) 
     { if (useCases.get(i) instanceof UseCase) 
-	  { UseCase uc = (UseCase) useCases.get(i); 
+      { UseCase uc = (UseCase) useCases.get(i); 
         Vector tests = uc.testCases(); 
         System.out.println("*** Test cases for use case " + uc.getName() + " written to output/tests"); 
         for (int j = 0; j < tests.size(); j++) 
@@ -21868,7 +21926,7 @@ public void produceCUI(PrintWriter out)
             rout.println(tst); 
             rout.close(); 
           } 
-          catch (Exception _x) { } 
+          catch (Exception _x) { }
         }
       }
     }

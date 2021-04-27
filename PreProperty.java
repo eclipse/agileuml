@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -15,7 +15,9 @@ public class PreProperty
   public Entity entity2 = null; 
   public Type elementType = null; 
   public BehaviouralFeature op = null; 
-
+  public String lower; 
+  public String upper;
+  
   public PreProperty(String l)
   { label = l; }
 
@@ -36,4 +38,10 @@ public class PreProperty
 
   public void setOp(BehaviouralFeature bf)
   { op = bf; } 
+
+  public void setLower(String l)
+  { lower = l; } 
+
+  public void setUpper(String u)
+  { upper = u; } 
 } 

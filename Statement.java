@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.JOptionPane;
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -41,6 +41,24 @@ implements Cloneable
       if (sq.size() == 0) 
       { return true; } 
     } 
+    return false; 
+  } 
+
+  public static boolean hasResultDeclaration(Statement st)
+  { if (st == null) { return false; } 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      if (sq.size() == 0) 
+      { return false; }
+      Statement st1 = (Statement) sq.getStatements().get(0);  
+      return hasResultDeclaration(st1); 
+    } 
+    else if (st instanceof CreationStatement)
+    { CreationStatement cs = (CreationStatement) st; 
+      if (cs.isResultDeclaration())
+      { return true; } 
+    } 
+
     return false; 
   } 
 
@@ -711,6 +729,9 @@ class BreakStatement extends Statement
   public Object clone()
   { return new BreakStatement(); } 
 
+  public String toString() 
+  { return "break"; } 
+
   public String bupdateForm()
   { return " "; } 
 
@@ -825,6 +846,133 @@ class BreakStatement extends Statement
   }
 }
 
+class ContinueStatement extends Statement
+{ public void display()
+  { System.out.println("  continue;"); }  
+
+  public String getOperator() 
+  { return "continue"; } 
+
+  public Object clone()
+  { return new BreakStatement(); } 
+
+  public String toString() 
+  { return "continue"; } 
+
+  public String bupdateForm()
+  { return " "; } 
+
+  public BStatement bupdateForm(java.util.Map env, boolean local)
+  { return new BBasicStatement("skip"); } 
+
+  public void display(PrintWriter out)
+  { out.println("  continue;"); }  
+
+  public void displayJava(String t)
+  { display(); }  
+
+  public void displayJava(String t, PrintWriter out)
+  { display(out); }  
+ 
+  public Statement substituteEq(String oldE, Expression newE)
+  {  
+    return this; 
+  } 
+
+  public String toStringJava()
+  { return "  continue;"; }
+
+  public String toEtl()
+  { return "  continue;"; }
+
+  public String saveModelData(PrintWriter out)
+  { String res = Identifier.nextIdentifier("continuestatement_"); 
+    out.println(res + " : ContinueStatement"); 
+    out.println(res + ".statId = \"" + res + "\""); 
+    return res; 
+  } 
+
+  public boolean typeCheck(Vector types, Vector entities, Vector cs, Vector env)
+  { return true; }  
+ 
+  public Expression wpc(Expression post)
+  { return post; }  
+
+  public Vector dataDependents(Vector allvars, Vector vars)
+  { return vars; }  
+
+  public boolean updates(Vector v) 
+  { return false; } 
+
+  public String updateForm(java.util.Map env, boolean local, Vector types, 
+                           Vector entities, Vector vars)
+  { return toStringJava(); }  
+
+  public String updateFormJava6(java.util.Map env, boolean local)
+  { return toStringJava(); }  
+
+  public String updateFormJava7(java.util.Map env, boolean local)
+  { return toStringJava(); }  
+
+  public String updateFormCSharp(java.util.Map env, boolean local)
+  { return toStringJava(); }  
+
+  public String updateFormCPP(java.util.Map env, boolean local)
+  { return toStringJava(); }  
+
+  public Statement dereference(BasicExpression var)
+  { return new ContinueStatement(); }  
+
+  public Vector readFrame() 
+  { Vector res = new Vector();
+    return res; 
+  } 
+
+  public Vector writeFrame() 
+  { Vector res = new Vector();
+    return res;
+  } 
+
+  public Statement checkConversions(Entity e, Type propType, Type propElemType, java.util.Map interp)
+  { return new ContinueStatement(); } 
+
+  public Statement replaceModuleReferences(UseCase uc)
+  { return new ContinueStatement(); } 
+
+  public int syntacticComplexity()
+  { return 1; } 
+
+  public int cyclomaticComplexity()
+  { return 0; }  // no predicate nodes
+
+  public int epl()
+  { return 0; }  
+
+  public Vector allOperationsUsedIn()
+  { Vector res = new Vector(); 
+    return res; 
+  } 
+
+  public Vector equivalentsUsedIn()
+  { Vector res = new Vector(); 
+    return res; 
+  } 
+
+  public Vector metavariables()
+  { Vector res = new Vector(); 
+    return res; 
+  }
+ 
+  public String cg(CGSpec cgs)
+  { String etext = this + "";
+    Vector args = new Vector();
+    CGRule r = cgs.matchedStatementRule(this,etext);
+    if (r != null)
+    { return r.applyRule(args); }
+    return etext;
+  }
+}
+
 
 class InvocationStatement extends Statement
 { String action; 
@@ -834,14 +982,15 @@ class InvocationStatement extends Statement
   String assignsType = ""; 
 
   private Vector parameters = new Vector();  
-  Expression callExp; 
+  Expression callExp = new BasicExpression("skip"); 
 
 
   public InvocationStatement(Event ee)
   { // event = ee; 
     action = ee.label; 
     assignsTo = null; 
-    target = null; }
+    target = null; 
+  }
 
   /* InvocationStatement(String var, Event ee) 
   { assignsTo = var; 
@@ -894,7 +1043,10 @@ class InvocationStatement extends Statement
   } 
 
   public boolean isSkip()
-  { if ("skip".equals(action)) { return true; } 
+  { if ("skip".equals(action)) 
+    { return true; } 
+    if ("skip".equals(callExp + "")) 
+    { return true; } 
     return false; 
   } 
 
@@ -1332,7 +1484,7 @@ class InvocationStatement extends Statement
   public String cg(CGSpec cgs)
   { String etext = this + "";
     if (etext.equals("skip")) 
-    { return "    {}"; }
+    { etext = ""; }
 	
     Vector args = new Vector();
    /* if (callExp != null && callExp instanceof BasicExpression) 
@@ -1364,6 +1516,12 @@ class InvocationStatement extends Statement
       CGRule r = cgs.matchedStatementRule(this,etext);
       if (r != null)
       { return r.applyRule(args,eargs,cgs); }
+    } 
+    else 
+    { CGRule r1 = cgs.matchedStatementRule(this,""); 
+      Vector eargs = new Vector();
+      if (r1 != null) 
+      { return r1.applyRule(args,eargs,cgs); } 
     } 
     return etext;
   }
@@ -2765,6 +2923,13 @@ class CreationStatement extends Statement
 
   public String getOperator() 
   { return "var"; } 
+
+  public boolean isResultDeclaration()
+  { if (assignsTo.equals("result") && 
+        (instanceType != null || createsInstanceOf != null))
+    { return true; } 
+    return false; 
+  } 
 
 /*  public String cg(CGSpec cgs)
   { String etext = "var " + assignsTo + " : " + createsInstanceOf; 
@@ -4234,7 +4399,9 @@ class CaseStatement extends Statement
 
 
 class ErrorStatement extends Statement
-{ public void display()
+{ // This represents a throw, raise or abort statement
+
+  public void display()
   { System.out.println("SELECT false THEN skip END"); }
 
   public String getOperator() 

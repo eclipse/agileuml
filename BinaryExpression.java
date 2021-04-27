@@ -28,11 +28,11 @@ class BinaryExpression extends Expression
   { operator = op; 
 
     if ("<>".equals(op) || op.equals("!=")) 
-	{ operator = "/="; } 
+    { operator = "/="; } 
     else if ("->one".equals(op)) 
-	{ operator = "->exists1"; } 
+    { operator = "->exists1"; } 
     else if ("div".equals(op)) 
-	{ operator = "/"; } 
+    { operator = "/"; } 
 
     left = ll; 
     right = rr; 
@@ -183,8 +183,11 @@ class BinaryExpression extends Expression
         "->including".equals(operator) || "->excluding".equals(operator) ||
         "->count".equals(operator) || "->prepend".equals(operator) ||
         "->indexOf".equals(operator) || "->hasPrefix".equals(operator) ||
-        "->hasSuffix".equals(operator) || "/<:".equals(operator))
-    { return new BasicExpression("true",0); }
+        "->hasSuffix".equals(operator) ||
+        "->hasMatch".equals(operator) ||
+        "->isMatch".equals(operator) ||
+ "/<:".equals(operator))
+    { return new BasicExpression(true); }
     // provided left, right have no common features */ 
 
     if ("&".equals(operator) && isCaseExpression())
@@ -702,6 +705,116 @@ class BinaryExpression extends Expression
         
     return id; 
   } 
+  
+  public Vector mutantOperators(String op)
+  { Vector res = new Vector(); 
+    if (":".equals(op))
+    { res.add("/:"); }
+    else if ("/:".equals(op))
+    { res.add(":"); }
+    else if ("<".equals(op))
+    { res.add("<="); }
+    else if (">".equals(op))
+    { res.add(">="); }
+    else if ("->including".equals(op))
+    { res.add("->excluding"); }
+    else if ("->excluding".equals(op))
+    { res.add("->including"); }
+    else if ("->includes".equals(op))
+    { res.add("->excludes"); }
+    else if ("->excludes".equals(op))
+    { res.add("->includes"); }
+    else if ("->select".equals(op))
+    { res.add("->reject"); }
+    else if ("->reject".equals(op))
+    { res.add("->select"); }
+    else if ("->before".equals(op))
+    { res.add("->after"); }
+    else if ("->after".equals(op))
+    { res.add("->before"); }
+    else if ("->endsWith".equals(op))
+    { res.add("->startsWith"); }
+    else if ("->startsWith".equals(op))
+    { res.add("->endsWith"); }
+    else if (left.isNumeric() && right.isNumeric() && op.equals("+"))
+    { res.add("-"); }
+    else if (left.isNumeric() && right.isNumeric() && op.equals("-"))
+    { res.add("+"); }
+	
+    res.add(op); 
+    return res; 
+  }
+  
+  public Vector mutants()
+  { Vector lms = left.mutants(); 
+    Vector rms = right.mutants(); 
+    Vector res = new Vector(); 
+    Vector mutantOps = mutantOperators(operator); 
+	
+    for (int i = 0; i < lms.size(); i++) 
+    { Expression lm = (Expression) lms.get(i); 
+      for (int j = 0; j < rms.size(); j++) 
+      { Expression rm = (Expression) rms.get(j); 
+        for (int k = 0; k < mutantOps.size(); k++) 
+        { String mop = (String) mutantOps.get(k); 
+          BinaryExpression mutant = (BinaryExpression) this.clone(); 
+          mutant.operator = mop; 
+          mutant.left = lm; 
+          mutant.right = rm;  
+          res.add(mutant); 
+        } 
+	 }
+     }
+     System.out.println(">>> All mutants of " + this + " are: " + res); 
+     return res; 
+  }
+
+  public Vector singleMutants()
+  { Vector lms = left.singleMutants(); 
+    Vector rms = right.singleMutants(); 
+    Vector res = new Vector(); 
+    Vector mutantOps = mutantOperators(operator); 
+	
+    for (int i = 0; i < lms.size(); i++) 
+    { Expression lm = (Expression) lms.get(i); 
+      BinaryExpression mutant = (BinaryExpression) this.clone(); 
+      mutant.operator = operator; 
+      mutant.left = lm; 
+      mutant.right = right;  
+      if (VectorUtil.containsEqualString(mutant + "",res)) { } 
+      else 
+      { res.add(mutant); } 
+    } 
+
+    for (int j = 0; j < rms.size(); j++) 
+    { Expression rm = (Expression) rms.get(j); 
+      BinaryExpression mutant = (BinaryExpression) this.clone(); 
+      mutant.operator = operator; 
+      mutant.left = left; 
+      mutant.right = rm;  
+      if (VectorUtil.containsEqualString(mutant + "",res)) { } 
+      else 
+      { res.add(mutant); } 
+    } 
+
+    for (int k = 0; k < mutantOps.size(); k++) 
+    { String mop = (String) mutantOps.get(k); 
+      BinaryExpression mutant = (BinaryExpression) this.clone(); 
+      mutant.operator = mop; 
+      mutant.left = left; 
+      mutant.right = right;  
+      if (VectorUtil.containsEqualString(mutant + "",res)) { } 
+      else 
+      { res.add(mutant); } 
+    } 
+
+    Vector selfs = new Vector(); 
+    selfs.add(this); 
+    res.removeAll(selfs); 
+     
+    System.out.println(">>> Single mutants of " + this + " are: " + res); 
+    return res; 
+  }
  
   public String toString()
   { String basicString = 
@@ -784,6 +897,69 @@ class BinaryExpression extends Expression
       basicString = rangestring + "->reject( " + 
              ((BinaryExpression) left).left + " | " + right + " )";
     }
+    else if (operator.equals("|selectMinimals"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = "" + range; 
+      if (range.needsBracket)
+      { rangestring = "(" + rangestring + ")"; } 
+
+      basicString = rangestring + "->selectMinimals( " + 
+             ((BinaryExpression) left).left + " | " + right + " )";
+    }
+    else if (operator.equals("|selectMaximals"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = "" + range; 
+      if (range.needsBracket)
+      { rangestring = "(" + rangestring + ")"; } 
+
+      basicString = rangestring + "->selectMaximals( " + 
+             ((BinaryExpression) left).left + " | " + right + " )";
+    }
+    else if (operator.equals("|unionAll"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = "" + range; 
+      if (range.needsBracket)
+      { rangestring = "(" + rangestring + ")"; } 
+
+      basicString = rangestring + "->unionAll( " + 
+             ((BinaryExpression) left).left + " | " + right + " )";
+    }
+    else if (operator.equals("|intersectAll"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = "" + range; 
+      if (range.needsBracket)
+      { rangestring = "(" + rangestring + ")"; } 
+
+      basicString = rangestring + "->intersectAll( " + 
+             ((BinaryExpression) left).left + " | " + right + " )";
+    }
+    else if (operator.equals("|concatenateAll"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = "" + range; 
+      if (range.needsBracket)
+      { rangestring = "(" + rangestring + ")"; } 
+
+      basicString = rangestring + "->concatenateAll( " + 
+             ((BinaryExpression) left).left + " | " + right + " )";
+    }
+    else if (operator.equals("|sortedBy"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = "" + range; 
+      if (range.needsBracket)
+      { rangestring = "(" + rangestring + ")"; } 
+
+      basicString = rangestring + "->sortedBy( " + 
+             ((BinaryExpression) left).left + " | " + right + " )";
+    }
+    else if (operator.equals("|isUnique"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = "" + range; 
+      if (range.needsBracket)
+      { rangestring = "(" + rangestring + ")"; } 
+
+      basicString = rangestring + "->isUnique( " + 
+             ((BinaryExpression) left).left + " | " + right + " )";
+    }
     else if (operator.equals("->including") && keyValue != null) 
     { basicString = left + "->including(" + keyValue + ", " + right + ")"; } 
     else if (operator.equals("->excluding") && keyValue != null) 
@@ -805,14 +981,15 @@ class BinaryExpression extends Expression
              operator.equals("->excludesValue") || operator.equals("->restrict") ||  
              operator.equals("->selectMinimals") || operator.equals("->union") ||
              operator.equals("->intersectAll") || operator.equals("->unionAll") ||
-             operator.equals("->count") || operator.equals("->indexOf") || 
-             operator.equals("->before") || operator.equals("->after") || 
+             operator.equals("->count") || operator.equals("->indexOf") || operator.equals("->lastIndexOf") || 
+             operator.equals("->equalsIgnoreCase") || operator.equals("->before") || operator.equals("->after") || 
+             operator.equals("->hasMatch") || operator.equals("->isMatch") || 
              operator.equals("->at") || operator.equals("->closure") || 
              operator.equals("->intersection") || operator.equals("->symmetricDifference"))   
     { basicString = left + operator + "(" + right + ")"; } 
 
     if (operator.startsWith("->"))
-	{ basicString = left + operator + "(" + right + ")"; }
+    { basicString = left + operator + "(" + right + ")"; }
 	
     if (needsBracket) 
     { return "( " + basicString + " )"; }  // eg, for or inside &  }
@@ -827,10 +1004,11 @@ class BinaryExpression extends Expression
         "->collect".equals(operator) || "->closure".equals(operator) ||
         "->selectMinimals".equals(operator) || "->selectMaximals".equals(operator) ||
         "->isUnique".equals(operator) || "->sortedBy".equals(operator) || 
-        "->unionAll".equals(operator) || "->intersectAll".equals(operator) ||                         "->concatenateAll".equals(operator) || "->existsLC".equals(operator) || 
+        "->unionAll".equals(operator) || "->intersectAll".equals(operator) ||
+        "->concatenateAll".equals(operator) || "->existsLC".equals(operator) || 
         "->exists".equals(operator) || "->exists1".equals(operator) || 
         "->forAll".equals(operator))
-    { res.right = right; } 
+    { res.right = right; } // assume no objects of type t in the rhs. 
     else 
     { Expression rr = right.addReference(ref,t); 
       res.right = rr;
@@ -1638,7 +1816,7 @@ class BinaryExpression extends Expression
      
 
   public boolean isPrimitive()  
-  { if (operator.equals("->count") || operator.equals("->indexOf") || 
+  { if (operator.equals("->count") || operator.equals("->indexOf") || operator.equals("->lastIndexOf") || 
         operator.equals("->oclIsKindOf") || operator.equals("->oclIsTypeOf") || 
 		operator.equals("->pow") || 
         operator.equals("->hasPrefix") || operator.equals("->hasSuffix") ||
@@ -1704,7 +1882,9 @@ class BinaryExpression extends Expression
   public Vector metavariables()
   { if ("|C".equals(operator) || "|R".equals(operator) || "|".equals(operator) ||
         "|A".equals(operator) || "#".equals(operator) || "#1".equals(operator) || 
-		"!".equals(operator))
+		"!".equals(operator) || 
+		(operator.startsWith("|") && (left instanceof BinaryExpression))  
+	   )
     { BinaryExpression beleft = (BinaryExpression) left; 
       Vector res = beleft.right.metavariables(); 
       res = VectorUtil.union(res,beleft.left.metavariables());
@@ -1753,7 +1933,10 @@ class BinaryExpression extends Expression
     } 
     else if ("!".equals(operator) || "#".equals(operator) || "|A".equals(operator) || 
         "#1".equals(operator) || "|".equals(operator) || operator.equals("#LC") ||
-        "|R".equals(operator) || "|C".equals(operator))
+        "|R".equals(operator) || "|C".equals(operator) || 
+		"|selectMinimals".equals(operator) || "|selectMaximals".equals(operator) || 
+        "|unionAll".equals(operator) || "|intersectAll".equals(operator) ||
+        "|concatenateAll".equals(operator))
     { // discard pre-terms of features of the left.left
       // because these are invalid
 
@@ -1814,7 +1997,10 @@ class BinaryExpression extends Expression
     } 
     else if ("!".equals(operator) || "#".equals(operator) || operator.equals("#LC") ||
         "#1".equals(operator) || "|".equals(operator) || "|A".equals(operator) || 
-        "|R".equals(operator) || "|C".equals(operator))
+        "|R".equals(operator) || "|C".equals(operator) ||
+		"|selectMinimals".equals(operator) || "|selectMaximals".equals(operator) || 
+        "|unionAll".equals(operator) || "|intersectAll".equals(operator) ||
+        "|concatenateAll".equals(operator))
     { // discard pre-terms of features of the left.left
       // because these are invalid
 
@@ -1874,7 +2060,10 @@ class BinaryExpression extends Expression
 
     if (operator.equals("!") || operator.equals("#") || operator.equals("#LC") ||
         operator.equals("#1") || operator.equals("|") || operator.equals("|R") ||
-        operator.equals("|A") || operator.equals("|C"))
+        operator.equals("|A") || operator.equals("|C") ||
+		"|selectMinimals".equals(operator) || "|selectMaximals".equals(operator) || 
+        "|unionAll".equals(operator) || "|intersectAll".equals(operator) ||
+        "|concatenateAll".equals(operator))
     { Vector ss = right.getBaseEntityUses(); 
       if (left instanceof BinaryExpression)
       { Vector res = ((BinaryExpression) left).right.getBaseEntityUses(); 
@@ -1892,7 +2081,10 @@ class BinaryExpression extends Expression
   public Vector getVariableUses()
   { if (operator.equals("#") || operator.equals("|") || operator.equals("|A") ||
         operator.equals("|C") || operator.equals("#LC") ||
-        operator.equals("|R") || operator.equals("#1") || operator.equals("!"))
+        operator.equals("|R") || operator.equals("#1") || operator.equals("!") ||
+		"|selectMinimals".equals(operator) || "|selectMaximals".equals(operator) || 
+        "|unionAll".equals(operator) || "|intersectAll".equals(operator) ||
+        "|concatenateAll".equals(operator))
     { Vector ss = right.getVariableUses(); 
       Vector removals = new Vector(); 
       if (left instanceof BinaryExpression)
@@ -2573,7 +2765,8 @@ public void findClones(java.util.Map clones, String rule, String op)
       elementType = new Type("boolean", null); 
       return true; 
     }
-    else if (operator.equals("|") || operator.equals("|R")) 
+    else if (operator.equals("|") || operator.equals("|R") || "|sortedBy".equals(operator) || 
+	         "|selectMinimals".equals(operator) || "|selectMaximals".equals(operator))
     { BinaryExpression lexp = (BinaryExpression) left; 
       boolean lrt = lexp.right.typeCheck(types,entities,contexts,env); 
 
@@ -2607,9 +2800,9 @@ public void findClones(java.util.Map clones, String rule, String op)
       tcSelect(stleft,stright,seleft); 
       return true; 
     }        
-    else if (operator.equals("->select") || operator.equals("->selectMaximals") ||
-             operator.equals("->selectMinimals") || operator.equals("->sortedBy") ||  
-             operator.equals("->reject"))
+    else if (operator.equals("->select") || operator.equals("->sortedBy") ||  
+             operator.equals("->reject") || operator.equals("->selectMinimals") || 
+			 operator.equals("->selectMaximals"))
     { // System.out.println("Type-checking select/reject " + this); 
       left.typeCheck(types,entities,contexts,env);
       Vector scontext = new Vector(); 
@@ -2634,7 +2827,7 @@ public void findClones(java.util.Map clones, String rule, String op)
       return true; 
     }  
     else if (operator.equals("->collect") || operator.equals("->unionAll") ||
-             operator.equals("->intersectAll"))   // and |C
+             operator.equals("->intersectAll") || operator.equals("->concatenateAll"))   // and |C
     { // System.out.println("Type-checking collect " + this); 
       left.typeCheck(types,entities,contexts,env);
       Vector ccontext = new Vector(); 
@@ -2658,7 +2851,9 @@ public void findClones(java.util.Map clones, String rule, String op)
       tcCollect(ctleft,ctright,ceright); 
       return true; 
     } // as for exists etc, include |C
-    else if (operator.equals("|C"))
+    else if (operator.equals("|C") || 
+        "|unionAll".equals(operator) || "|intersectAll".equals(operator) ||
+        "|concatenateAll".equals(operator))
     { BinaryExpression lexp = (BinaryExpression) left;
       // must be a collection
 
@@ -2868,7 +3063,7 @@ public void findClones(java.util.Map clones, String rule, String op)
 
     // ->oclAsType(T)? T.umlkind == CLASSID, and type = T.elementType
 
-    if ("->count".equals(operator) || "->indexOf".equals(operator))
+    if ("->count".equals(operator) || "->indexOf".equals(operator) || operator.equals("->lastIndexOf"))
     { type = new Type("int",null); } 
     else if ("->oclAsType".equals(operator))
     { type = Type.getTypeFor(right + "", types, entities); 
@@ -2900,6 +3095,8 @@ public void findClones(java.util.Map clones, String rule, String op)
     else if ("->pow".equals(operator))
     { type = new Type("double",null); } 
     else if ("->hasPrefix".equals(operator) || "->hasSuffix".equals(operator) ||
+             "->hasMatch".equals(operator) || "->isMatch".equals(operator) ||
+             operator.equals("->equalsIgnoreCase") ||
              "->oclIsKindOf".equals(operator) || "->oclIsTypeOf".equals(operator))
     { type = new Type("boolean",null); } 
     else if (operator.equals("->before") || operator.equals("->after")) 
@@ -3073,10 +3270,10 @@ public void findClones(java.util.Map clones, String rule, String op)
       else if (tlname.equals("String") || trname.equals("String"))
       { type = new Type("String",null); }
       else
-      { System.err.println("TYPE ERROR: disallowed types in +: " + this);
-        JOptionPane.showMessageDialog(null, "Disallowed types in " + this, 
-                                      "Type error", JOptionPane.WARNING_MESSAGE);
-        type = new Type("double",null);
+      { System.err.println("Warning: disallowed types " + tlname + " " + trname + " in +: " + this);
+        // JOptionPane.showMessageDialog(null, "Disallowed types in " + this, 
+        //                              "Type error", JOptionPane.WARNING_MESSAGE);
+        type = tleft; // new Type("double",null);
       } 
     }
     else
@@ -3090,8 +3287,8 @@ public void findClones(java.util.Map clones, String rule, String op)
       }
       else 
       { System.err.println("TYPE ERROR: disallowed types " + tleft + " " + tright + " in +: " + this);
-        JOptionPane.showMessageDialog(null, "Disallowed types in " + this, 
-                                      "Type error", JOptionPane.ERROR_MESSAGE);
+        // JOptionPane.showMessageDialog(null, "Disallowed types in " + this, 
+        //                              "Type error", JOptionPane.ERROR_MESSAGE);
         type = new Type("void", null); 
       }
     }
@@ -3142,9 +3339,10 @@ public void findClones(java.util.Map clones, String rule, String op)
       else if (tleft.equals(tright) && tlname.equals("int"))
       { type = new Type("int",null); }
       else if (type == null)
-      { System.err.println("TYPE ERROR: disallowed types in -: " + this); 
-        JOptionPane.showMessageDialog(null, "Disallowed types in " + this, 
-                                      "Type error", JOptionPane.ERROR_MESSAGE);
+      { System.err.println("Warning!: disallowed types in -: " + this); 
+        // JOptionPane.showMessageDialog(null, "Disallowed types in " + this, 
+        //                               "Type error", JOptionPane.ERROR_MESSAGE);
+        type = tleft; 
       } 
     }
     else
@@ -3176,6 +3374,7 @@ public void findClones(java.util.Map clones, String rule, String op)
   private void tcSetOps(Type tleft, Type tright,
                         Entity eleft, Entity eright)
   { // union and intersection
+
     String tlname = "Set"; 
     if (tleft != null)
     { tlname = tleft.getName(); } 
@@ -3189,66 +3388,80 @@ public void findClones(java.util.Map clones, String rule, String op)
     { System.err.println("!! WARNING: no type for: " + right); } 
     
       
-    if (left.isMultiple() || right.isMultiple())
-    { if (operator.equals("^") || operator.equals("->prepend") || operator.equals("->append"))
-      { if ("Sequence".equals(tlname)) { } 
-        else 
-        { System.err.println("!! WARNING: ^, prepend, append must be applied to sequence: " + this); } 
-        type = new Type("Sequence",null); 
-      } 
-      else if (operator.equals("->excluding") || 
-               operator.equals("->including") ||
-               operator.equals("->restrict") || 
-               operator.equals("->intersection") ||
-               operator.equals("/\\"))
-      { if ("Sequence".equals(tlname))
-        { type = new Type("Sequence",null); }  
-        else if ("Map".equals(tlname))
-        { type = new Type("Map",null); }  
-        else 
-        { type = new Type("Set",null); } 
-      } 
-      else if (operator.equals("->union") || operator.equals("\\/")) 
-      { if (tlname.equals("Sequence") && trname.equals("Sequence"))
-        { type = new Type("Sequence",null); } 
-        else if (tlname.equals("Map") && trname.equals("Map"))
-        { type = new Type("Map",null); } 
-        else 
-        { type = new Type("Set",null); } 
-      } 
-      else // ->symmetricDifference
-      { type = new Type("Set",null); } 
-    } 
-    else if (tleft != null && tright != null)
-    { if (tleft.equals(tright) && tlname.equals("Set")) 
-      { type = new Type("Set",null); }
-      else if (tleft.equals(tright) && tlname.equals("Sequence")) 
-      { type = new Type("Sequence",null); }
-      else if (tleft.equals(tright) && tlname.equals("Map")) 
-      { type = new Type("Map",null); }
+    if (operator.equals("^") || operator.equals("->prepend") || operator.equals("->append"))
+    { if ("Sequence".equals(tlname)) 
+      { type = tleft; } 
       else 
-      { System.out.println("TYPE ERROR: invalid types " + tleft + " " + tright + " in: " + this);
-        JOptionPane.showMessageDialog(null, "Disallowed types in " + this, 
-                                      "Type error", JOptionPane.ERROR_MESSAGE);
-        type = new Type("Set", null);
-      }
-    }
-    else 
-    { System.err.println("TYPE ERROR: missing types in: " + this);
-      if (tright == null && tleft != null)
+      { System.err.println("!! WARNING: ^, ->prepend, ->append must be applied to a sequence: " + this);  
+        type = new Type("Sequence",null);
+      }  
+    } 
+    else if (operator.equals("->excluding") || 
+             operator.equals("->including") ||
+             operator.equals("->restrict") || 
+             operator.equals("->intersection") ||
+             operator.equals("/\\"))
+    { if ("Sequence".equals(tlname))
+      { type = tleft; }  
+      else if ("Map".equals(tlname))
+      { type = tleft; }  
+      else if ("Set".equals(tlname))
+      { type = tleft; } 
+      else  
+      { System.err.println("!! WARNING: unknown type for LHS of " + this);  
+        type = new Type("Set",null); 
+      } 
+    } 
+    else if (operator.equals("->union") || operator.equals("\\/")) 
+    { if (tlname.equals("Sequence") && trname.equals("Sequence"))
+      { type = tleft; } 
+      else if (tlname.equals("Map") && trname.equals("Map"))
+      { type = tleft; } 
+      else if (tlname.equals("Set") && trname.equals("Set"))
+      { type = tleft; }
+      else
+      { System.err.println("!! WARNING: different types for LHS and RHS of " + this);  
+        type = tleft; 
+      } 
+    } 
+    else // ->symmetricDifference
+    { type = new Type("Set",null); 
+      elementType = left.elementType; 
+    } 
+  
+
+    if (operator.equals("^") || operator.equals("->union") ||
+        operator.equals("->intersection") ||  
+        // || operator.equals("->restrict") || 
+        operator.equals("->symmetricDifference") ||
+        operator.equals("/\\") || operator.equals("\\/"))
+    { if (tright == null && tleft != null)
       { right.setType(tleft);
-        type = new Type("Set",null);
+        type = tleft; // new Type("Set",null);
       }
       else if (tleft == null && tright != null)
       { left.setType(tright);
-        type = new Type("Set",null);
+        type = tright; // new Type("Set",null);
       }
       else 
-      { type = null;         
-        JOptionPane.showMessageDialog(null, "Disallowed types in " + this, 
-                                      "Type error", JOptionPane.ERROR_MESSAGE);
+      {        
+        // JOptionPane.showMessageDialog(null, "Null types in " + this, 
+        //                              "Type error", JOptionPane.ERROR_MESSAGE);
+        System.err.println("!! Warning: null types on both sides of " + this);
+        if (operator.equals("^"))
+        { type = new Type("Sequence", null); } 
+        else if (operator.equals("->restrict"))
+        { type = new Type("Map", null); } 
+        else 
+        { type = new Type("Set",null); }
+        // new Type("void", null);   
       }
     }
+
+    if (operator.equals("->restrict"))
+    { if (tleft == null && tright == null) 
+      { type = new Type("Map", null); } 
+    } 
 
     Type etleft = left.getElementType(); 
     Type etright = right.getElementType(); 
@@ -3284,31 +3497,36 @@ public void findClones(java.util.Map clones, String rule, String op)
 
   private void tcSelect(Type tleft, Type tright, Entity eleft)
   { // left should be set, sequence or map, right a boolean
-
+    // All cases where result is a subset or rearrangement of the selectleft
+	// ie., operators "selectMaximals", "selectMinimals", "sortedBy", "select", "reject" 
+	
     Expression selectleft = left; 
 
-    if (operator.equals("|") || operator.equals("|R"))
+    if (operator.equals("|") || operator.equals("|R") ||
+        operator.equals("|sortedBy") ||
+        "|selectMinimals".equals(operator) ||  
+        "|selectMaximals".equals(operator))
     { selectleft = ((BinaryExpression) left).right; 
       // tleft = selectleft.getType(); 
     }
     
-    if (selectleft.isMultiple())
-    { if (Type.isSequenceType(tleft))
-      { type = new Type("Sequence",null); } 
-      else if (operator.equals("->sortedBy"))
-      { type = new Type("Sequence",null); } 
-      else if (Type.isMapType(tleft))
-	  { type = new Type("Map", null); }
-	  else 
-      { type = new Type("Set",null); } 
-    } 
+    // if (selectleft.isMultiple())
+    if (Type.isSequenceType(tleft))
+    { type = new Type("Sequence",null); } 
+    else if (operator.equals("->sortedBy") || operator.equals("|sortedBy"))
+    { type = new Type("Sequence",null); } 
+    else if (Type.isMapType(tleft))
+    { type = new Type("Map", null); }
+    else if (Type.isSetType(tleft)) 
+    { type = new Type("Set",null); } 
     else 
-    { System.err.println("TYPE ERROR: LHS of select/reject must be a collection! " + this); 
-      JOptionPane.showMessageDialog(null, "LHS of " + this + " must be a collection", 
-                                          "Type error", JOptionPane.ERROR_MESSAGE);
-      type = null; 
-      return; 
+    { System.err.println("TYPE ERROR!!: LHS of select/reject must be a collection! " + this); 
+      // JOptionPane.showMessageDialog(null, "LHS of " + this + " must be a collection", 
+      //                                    "Type error", JOptionPane.ERROR_MESSAGE);
+      type = new Type("Set",null); 
+      // return; 
     } 
+
     Type etleft = selectleft.getElementType(); 
     if (etleft != null) 
     { elementType = etleft; } 
@@ -3327,7 +3545,9 @@ public void findClones(java.util.Map clones, String rule, String op)
 
     Expression collectleft = left; 
 
-    if (operator.equals("|C"))
+    if (operator.equals("|C") || 
+        "|unionAll".equals(operator) || "|intersectAll".equals(operator) ||
+        "|concatenateAll".equals(operator))
     { collectleft = ((BinaryExpression) left).right; }
     
     if (collectleft.isMultiple())
@@ -3354,7 +3574,7 @@ public void findClones(java.util.Map clones, String rule, String op)
 	  if (Type.isMapType(tleft))
 	  { type = new Type("Map", null); }   // map->collect(e) is the composed map. 
     } 
-    else // ->intersectAll, ->unionAll
+    else // ->intersectAll, ->unionAll, ->concatenateAll and | versions of these
     { if (right.elementType == null) 
       { elementType = null; } 
       else 
@@ -3368,8 +3588,10 @@ public void findClones(java.util.Map clones, String rule, String op)
           type.setElementType(left.getElementType()); 
         }
       }  
-      else 
-      { type = new Type("Set",null); }     // Always unordered
+      else if (operator.equals("|concatenateAll") || operator.equals("->concatenateAll"))
+	  { type = new Type("Sequence", null); } 
+	  else 
+      { type = new Type("Set",null); }     // intersectAll always unordered
       // entity = eright; 
     } // ?? 
 
@@ -3729,24 +3951,36 @@ public boolean conflictsWithIn(String op, Expression el,
       return "((" + typ + ") " + getany + ")"; 
     } 
 
-    if (operator.equals("->selectMaximals"))
+    if (operator.equals("->selectMaximals") || operator.equals("|selectMaximals"))
     { String col = collectQueryForm(lqf,rqf,rprim,env,local); 
-      if (left.umlkind == CLASSID)
+      if (operator.equals("->selectMaximals") && left.umlkind == CLASSID)
       { lqf = ((BasicExpression) left).classExtentQueryForm(env,local); }   // And pass lqf to collectQueryForm? 
+      else if (operator.equals("|selectMaximals") && ((BinaryExpression) left).right.umlkind == CLASSID)
+      { BinaryExpression leftbe = (BinaryExpression) left; 
+	    lqf = ((BasicExpression) leftbe.right).classExtentQueryForm(env,local); 
+	  }   // And pass lqf to collectQueryForm? 
       return "Set.maximalElements(" + lqf + ", " + col + ")"; 
     } 
 
-    if (operator.equals("->selectMinimals"))
+    if (operator.equals("->selectMinimals") || operator.equals("|selectMinimals"))
     { String col = collectQueryForm(lqf,rqf,rprim,env,local); 
-      if (left.umlkind == CLASSID)
-      { lqf = ((BasicExpression) left).classExtentQueryForm(env,local); } 
-      return "Set.minimalElements(" + lqf + ", " + col + ")"; 
+      if (operator.equals("->selectMinimals") && left.umlkind == CLASSID)
+      { lqf = ((BasicExpression) left).classExtentQueryForm(env,local); }   // And pass lqf to collectQueryForm? 
+      else if (operator.equals("|selectMinimals") && ((BinaryExpression) left).right.umlkind == CLASSID)
+      { BinaryExpression leftbe = (BinaryExpression) left; 
+	    lqf = ((BasicExpression) leftbe.right).classExtentQueryForm(env,local); 
+	  }
+	  return "Set.minimalElements(" + lqf + ", " + col + ")"; 
     } 
 
-    if (operator.equals("->sortedBy"))
+    if (operator.equals("->sortedBy") || operator.equals("|sortedBy"))
     { String col = collectQueryForm(lqf,rqf,rprim,env,local); 
-      if (left.umlkind == CLASSID)
-      { lqf = ((BasicExpression) left).classExtentQueryForm(env,local); } 
+      if (operator.equals("->sortedBy") && left.umlkind == CLASSID)
+      { lqf = ((BasicExpression) left).classExtentQueryForm(env,local); }   // And pass lqf to collectQueryForm? 
+      else if (operator.equals("|sortedBy") && ((BinaryExpression) left).right.umlkind == CLASSID)
+      { BinaryExpression leftbe = (BinaryExpression) left; 
+	    lqf = ((BasicExpression) leftbe.right).classExtentQueryForm(env,local); 
+	  }      
       return "Set.sortedBy(" + lqf + ", " + col + ")"; 
     } 
 
@@ -3755,6 +3989,12 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->restrict"))
     { return "Set.restrictMap(" + lqf + "," + rw + ")"; } 
+
+    if (operator.equals("->includesKey"))
+    { return "Set.includesKey(" + lqf + "," + rw + ")"; } 
+
+    if (operator.equals("->excludesKey"))
+    { return "Set.excludesKey(" + lqf + "," + rw + ")"; } 
 
     if (operator.equals("->at"))
     { if ("String".equals(left.type + ""))
@@ -3799,7 +4039,7 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->pow"))
     { return "Math.pow(" + lqf + "," + rqf + ")"; } 
 
-    if (operator.equals("->isUnique"))  // and define for B and for Maps
+    if (operator.equals("->isUnique") || operator.equals("|isUnique"))  // and define for B and for Maps
     { String fcollect = collectQueryForm(lqf,rqf,rprim,env,local);
       return "Set.isUnique(" + fcollect + ")"; 
     } 
@@ -3857,18 +4097,22 @@ public boolean conflictsWithIn(String op, Expression el,
       } 
     } // left must be set-valued. 
 
-    if (operator.equals("->intersectAll"))
+    if (operator.equals("->intersectAll") || operator.equals("|intersectAll"))
     { String col = collectQueryForm(lqf,rqf,rprim,env,local); 
       return "Set.intersectAll(" + col + ")"; 
     } 
 
-    if (operator.equals("->unionAll"))
+    if (operator.equals("->unionAll") || operator.equals("|unionAll"))
     { String col = collectQueryForm(lqf,rqf,rprim,env,local); 
       if (left.isOrdered() && (right.isOrdered() || "self".equals(right + "")))
       { return "Set.concatenateAll(" + col + ")"; } 
       return "Set.unionAll(" + col + ")"; 
     } 
 
+    if (operator.equals("|concatenateAll"))
+    { String col = collectQueryForm(lqf,rqf,rprim,env,local); 
+      return "Set.concatenateAll(" + col + ")";
+    } 
 
     if (operator.equals("->reject") || operator.equals("|R"))
     { String sel = rejectQueryForm(lqf,rqf,env,local);
@@ -3954,6 +4198,10 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = lqf + ".indexOf(" + rqf + ") + 1"; 
         bNeeded = true; 
       } 
+      else if (operator.equals("->lastIndexOf"))
+      { res = lqf + ".lastIndexOf(" + rqf + ") + 1"; 
+        bNeeded = true; 
+      } 
       else if (operator.equals("->count"))  // for strings
       { res = "Set.count(" + lqf + "," + rw + ")"; 
         bNeeded = false; 
@@ -3970,6 +4218,12 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = lqf + ".endsWith(" + rqf + ")"; 
         bNeeded = true; 
       } 
+      else if (operator.equals("->hasMatch"))
+      { res = "Set.hasMatch(" + lqf + ", " + rqf + ")"; } 
+      else if (operator.equals("->isMatch"))
+      { res = lqf + ".matches(" + rqf + ")"; } 
+      else if (operator.equals("->equalsIgnoreCase"))
+      { res = lqf + ".equalsIgnoreCase(" + rqf + ")"; } 
       else if (operator.equals("->before"))
       { res = "Set.before(" + lqf + "," + rqf + ")"; } 
       else if (operator.equals("->after"))
@@ -4019,6 +4273,10 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "Set.count(" + lqf + "," + rw + ")"; } 
       else if (operator.equals("->indexOf"))
       { res = lqf + ".indexOf(" + rw + ") + 1"; 
+        bNeeded = true; 
+      } 
+      else if (operator.equals("->lastIndexOf"))
+      { res = lqf + ".lastIndexOf(" + rw + ") + 1"; 
         bNeeded = true; 
       } 
       else   
@@ -4272,11 +4530,19 @@ public boolean conflictsWithIn(String op, Expression el,
       else if (operator.equals("->count"))
       { res = "Set.count(" + lqf + "," + rw + ")"; } 
       else if (operator.equals("->indexOf"))
-      { res = "(" + lqf + ".indexOf(" + rw + ") + 1)"; } 
+      { res = "(" + lqf + ".indexOf(" + rw + ") + 1)"; }
+      else if (operator.equals("->lastIndexOf"))
+      { res = "(" + lqf + ".lastIndexOf(" + rw + ") + 1)"; } 
       else if (operator.equals("->hasPrefix"))
       { res = "(" + lqf + ".startsWith(" + rqf + "))"; } 
       else if (operator.equals("->hasSuffix"))
-      { res = "(" + lqf + ".endsWith(" + rqf + "))"; } 
+      { res = "(" + lqf + ".endsWith(" + rqf + "))"; }
+      else if (operator.equals("->hasMatch"))
+      { res = "Set.hasMatch(" + lqf + ", " + rqf + ")"; } 
+      else if (operator.equals("->isMatch"))
+      { res = lqf + ".matches(" + rqf + ")"; } 
+      else if (operator.equals("->equalsIgnoreCase"))
+      { res = "(" + lqf + ".equalsIgnoreCase(" + rqf + "))"; }  
       else if (operator.equals("->before"))
       { res = "Set.before(" + lqf + "," + rqf + ")"; } 
       else if (operator.equals("->after"))
@@ -4328,6 +4594,12 @@ public boolean conflictsWithIn(String op, Expression el,
         { res = "Collections.frequency(" + lqf + "," + rw + ")"; } 
         else if (operator.equals("->indexOf"))
         { res = "(" + lqf + ".indexOf(" + rw + ") + 1)"; } 
+        else if (operator.equals("->lastIndexOf"))
+        { res = "(" + lqf + ".lastIndexOf(" + rw + ") + 1)"; }
+        else if (operator.equals("->hasMatch"))
+        { res = "Set.hasMatch(" + lqf + ", " + rqf + ")"; } 
+        else if (operator.equals("->isMatch"))
+        { res = lqf + ".matches(" + rqf + ")"; } 
         /* else if (operator.equals("->hasPrefix"))
         { res = "(" + lqf + ".startsWith(" + rqf + "))"; } 
         else if (operator.equals("->hasSuffix"))
@@ -4571,10 +4843,18 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "Ocl.count(" + lqf + "," + rw + ")"; } 
       else if (operator.equals("->indexOf"))
       { res = "(" + lqf + ".indexOf(" + rw + ") + 1)"; } 
+      else if (operator.equals("->lastIndexOf"))
+      { res = "(" + lqf + ".lastIndexOf(" + rw + ") + 1)"; } 
       else if (operator.equals("->hasPrefix"))
       { res = "(" + lqf + ".startsWith(" + rqf + "))"; } 
       else if (operator.equals("->hasSuffix"))
-      { res = "(" + lqf + ".endsWith(" + rqf + "))"; } 
+      { res = "(" + lqf + ".endsWith(" + rqf + "))"; }
+      else if (operator.equals("->hasMatch"))
+      { res = "Ocl.hasMatch(" + lqf + ", " + rqf + ")"; } 
+      else if (operator.equals("->isMatch"))
+      { res = lqf + ".matches(" + rqf + ")"; }  
+      else if (operator.equals("->equalsIgnoreCase"))
+      { res = "(" + lqf + ".equalsIgnoreCase(" + rqf + "))"; } 
       else if (operator.equals("->before"))
       { res = "Ocl.before(" + lqf + "," + rqf + ")"; } 
       else if (operator.equals("->after"))
@@ -4625,7 +4905,9 @@ public boolean conflictsWithIn(String op, Expression el,
         else if (operator.equals("->count"))
         { res = "Collections.frequency(" + lqf + "," + rw + ")"; } 
         else if (operator.equals("->indexOf"))
-        { res = "(" + lqf + ".indexOf(" + rw + ") + 1)"; } 
+        { res = "(" + lqf + ".indexOf(" + rw + ") + 1)"; }
+        else if (operator.equals("->lastIndexOf"))
+        { res = "(" + lqf + ".lastIndexOf(" + rw + ") + 1)"; } 
         /* else if (operator.equals("->hasPrefix"))
         { res = "(" + lqf + ".startsWith(" + rqf + "))"; } 
         else if (operator.equals("->hasSuffix"))
@@ -4851,12 +5133,16 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = composeMathOpQueryFormsCSharp(lqf,rqf,lprim,rprim); } 
       else if (operator.equals("->indexOf"))
       { res = "(" + lqf + ".IndexOf(" + rqf + ") + 1)"; } 
+      else if (operator.equals("->lastIndexOf"))
+      { res = "(" + lqf + ".LastIndexOf(" + rqf + ") + 1)"; } 
       else if (operator.equals("->count"))
       { res = "SystemTypes.count(" + lqf + "," + rqf + ")"; } 
       else if (operator.equals("->hasPrefix"))
       { res = "(" + lqf + ".StartsWith(" + rqf + "))"; } 
       else if (operator.equals("->hasSuffix"))
       { res = "(" + lqf + ".EndsWith(" + rqf + "))"; } 
+      else if (operator.equals("->equalsIgnoreCase"))
+      { res = "(" + lqf + ".ToLower().equals(" + rqf + ".ToLower()))"; } 
       else if (operator.equals("->before"))
       { res = "SystemTypes.before(" + lqf + "," + rqf + ")"; } 
       else if (operator.equals("->after"))
@@ -4912,6 +5198,8 @@ public boolean conflictsWithIn(String op, Expression el,
         { res = "SystemTypes.count(" + lqf + "," + rqf + ")"; } 
         else if (operator.equals("->indexOf"))
         { res = "(" + lqf + ".IndexOf(" + rqf + ") + 1)"; } 
+        else if (operator.equals("->lastIndexOf"))
+        { res = "(" + lqf + ".LastIndexOf(" + rqf + ") + 1)"; } 
         /* else if (operator.equals("->hasPrefix"))
         { res = "(" + lqf + ".StartsWith(" + rqf + "))"; } 
         else if (operator.equals("->hasSuffix"))
@@ -5044,6 +5332,9 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->count"))
     { return "UmlRsdsLib<" + lcet + ">::count(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("->equalsIgnoreCase"))
+    { return "UmlRsdsLib<" + lcet + ">::equalsIgnoreCase(" + lqf + "," + rqf + ")"; } 
 
     if (operator.equals("->at") && type != null)
     { String typ = type.getCPP(elementType); 
@@ -5813,7 +6104,7 @@ public boolean conflictsWithIn(String op, Expression el,
       else
       { localentity = left.elementType.getEntity(); }  
     } 
-    else if (operator.equals("|")) 
+    else if (operator.equals("|") || operator.equals("|selectMaximals") || operator.equals("|selectMinimals")) 
     { BinaryExpression beleft = (BinaryExpression) left; 
       lqf = beleft.right.queryForm(env,local); 
       selectleft = beleft.right; 
@@ -7342,7 +7633,8 @@ public boolean conflictsWithIn(String op, Expression el,
 
     java.util.Map env1 = (java.util.Map) ((java.util.HashMap) env).clone(); 
 
-    if (operator.equals("|C")) 
+    if (operator.equals("|C") || operator.equals("|unionAll") || operator.equals("|intersectAll") || 
+	    operator.equals("|concatenateAll") || operator.equals("|sortedBy") || operator.equals("|isUnique")) 
     { BinaryExpression beleft = (BinaryExpression) left; 
       lqf = beleft.right.queryForm(env,local); 
       collectleft = beleft.right; 
@@ -7357,7 +7649,8 @@ public boolean conflictsWithIn(String op, Expression el,
     }  
     else 
     { if (left.elementType == null) 
-      { System.err.println("DESIGN ERROR: no element type for: " + left);                 JOptionPane.showMessageDialog(null, "no element type for " + left + " in " + this, 
+      { System.err.println("DESIGN ERROR: no element type for: " + left);                
+	    JOptionPane.showMessageDialog(null, "no element type for " + left + " in " + this, 
                                       "Design error", JOptionPane.ERROR_MESSAGE);
       } 
       else
@@ -11974,6 +12267,13 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       BExpression res1 = new BApplySetExpression(func,img); 
       result = new BUnaryExpression("min",res1); 
     } 
+    else if (operator.equals("->lastIndexOf"))  // max(bel~[{ber}]) 
+    { BSetExpression limg = new BSetExpression(); 
+      limg.addElement(res); 
+      BExpression func = new BPostfixExpression("~", les); 
+      BExpression res1 = new BApplySetExpression(func,limg); 
+      result = new BUnaryExpression("max",res1); 
+    } 
     else if (operator.equals("->count"))  // card(bel~[{ber}]) 
     { BSetExpression img = new BSetExpression(); 
       img.addElement(res); 
@@ -12114,6 +12414,13 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       BExpression func = new BPostfixExpression("~", les); 
       BExpression res1 = new BApplySetExpression(func,img); 
       result = new BUnaryExpression("min",res1); 
+    } 
+    else if (operator.equals("->lastIndexOf"))  // max(bel~[{ber}]) 
+    { BSetExpression img = new BSetExpression(); 
+      img.addElement(res); 
+      BExpression func = new BPostfixExpression("~", les); 
+      BExpression res1 = new BApplySetExpression(func,img); 
+      result = new BUnaryExpression("max",res1); 
     } 
     else if (operator.equals("->count"))  // card(bel~[{ber}]) 
     { BSetExpression img = new BSetExpression(); 
@@ -12497,7 +12804,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
 
   public boolean isOrdered()
   { if (operator.equals("->sortedBy") || operator.equals("->collect") ||
-        operator.equals("|C")) 
+        operator.equals("|C") || "|concatenateAll".equals(operator)) 
     { return true; } 
 
     if (operator.equals("\\/") || operator.equals("->union")) 
@@ -12509,16 +12816,20 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
         (operator.equals("-") && left.isMultiple())) 
     { return left.isOrdered(); }
 
-    if (operator.equals("|") || operator.equals("|R"))
+    if (operator.equals("|") || operator.equals("|R") ||
+	    "|selectMinimals".equals(operator) || "|selectMaximals".equals(operator))
     { return ((BinaryExpression) left).right.isOrdered(); }
  
     if (operator.equals("->select") || operator.equals("->reject") ||
         operator.equals("->selectMinimals") ||
         operator.equals("->selectMaximals"))
     { return left.isOrdered(); } 
-
-    if (operator.equals("->at") || operator.equals("->any") || operator.equals("|A"))
+	
+    if (operator.equals("->at") || operator.equals("->any"))
     { return Type.isSequenceType(left.elementType); } 
+
+    if (operator.equals("|A"))
+	{ return Type.isSequenceType(((BinaryExpression) left).right.elementType); } 
 
 	if (operator.equals("let"))
 	{ return right.isOrdered(); }
@@ -12743,6 +13054,14 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       BExpression res = new BApplySetExpression(func,img); 
       res = new BUnaryExpression("min",res); 
       return res; 
+    } 
+    else if (operator.equals("->lastIndexOf"))  // max(bel~[{ber}]) 
+    { BSetExpression img = new BSetExpression(); 
+      img.addElement(ber); 
+      BExpression func = new BPostfixExpression("~", bel); 
+      BExpression res1 = new BApplySetExpression(func,img); 
+      BExpression result = new BUnaryExpression("max",res1);
+      return result;  
     } 
     else if (operator.equals("->count"))  // card(bel~[{ber}]) 
     { BSetExpression img = new BSetExpression(); 
@@ -15711,7 +16030,10 @@ private BExpression seqselectBinvariantForm(String var, BExpression bsimp, BExpr
 
     if ("|C".equals(operator) || "|R".equals(operator) || 
         "|".equals(operator) || "#".equals(operator) || 
-        "#1".equals(operator) || 
+        "#1".equals(operator) || "|sortedBy".equals(operator) ||
+		"|intersectAll".equals(operator) || "|unionAll".equals(operator) ||
+		"|concatenateAll".equals(operator) || "|isUnique".equals(operator) ||
+		"|selectMaximals".equals(operator) || "|selectMinimals".equals(operator) || 
         "!".equals(operator) || "|A".equals(operator))
     { BinaryExpression beleft = (BinaryExpression) getLeft();  
       args.add(beleft.getRight().cg(cgs)); 
@@ -15724,6 +16046,8 @@ private BExpression seqselectBinvariantForm(String var, BExpression bsimp, BExpr
     else if ("->collect".equals(operator) || "->reject".equals(operator) || 
              "->select".equals(operator) || "->exists".equals(operator) || 
              "->exists1".equals(operator) || "->forAll".equals(operator) ||
+             "->intersectAll".equals(operator) || "->unionAll".equals(operator) ||
+		     "->selectMaximals".equals(operator) || "->selectMinimals".equals(operator) || 
              "->isUnique".equals(operator) || "->sortedBy".equals(operator) || 
              "->any".equals(operator))
     { String id = Identifier.nextIdentifier("var");

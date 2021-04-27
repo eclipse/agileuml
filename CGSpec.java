@@ -493,6 +493,8 @@ public class CGSpec
       } 
       else if (op.equals("break") && trimmedlhs.startsWith(op))
       { return r; }
+      else if (op.equals("continue") && trimmedlhs.startsWith(op))
+      { return r; }
       else if (e instanceof SequenceStatement && (trimmedlhs.indexOf(";") > -1))
       { return r; }
       else if (op.equals("var") && trimmedlhs.startsWith(op) && 
@@ -516,10 +518,18 @@ public class CGSpec
       }
       else if (op.equals("call") && trimmedlhs.startsWith(op))
       { Vector args = ((InvocationStatement) e).cgparameters();
-	    System.out.println(">>> Call statement " + e + " matches rule " + r); 
+        System.out.println(">>> Call statement " + e + " matches rule " + r); 
 		 
         if (r.satisfiesConditions(args,entities))
         { return r; }
+      }
+      else if (op.equals("call") && trimmedlhs.equals("skip"))
+      { InvocationStatement istat = (InvocationStatement) e;
+        if (istat.isSkip() || "skip".equals(istat + ""))
+        { System.out.println(">>> skip call statement " + e + " matches rule " + r); 
+		 
+          return r; 
+        }
       }
    }
    return null;
@@ -600,7 +610,7 @@ public class CGSpec
     for (int x = 0; x < binaryExpressionRules.size(); x++)
     { CGRule r = (CGRule) binaryExpressionRules.get(x);
       CGRule selected = null; 
-	  Expression rexpr = r.getLhsExpression(); 
+      Expression rexpr = r.getLhsExpression(); 
 
       if (etext.equals(r.lhs))
       { selected = r; } // exact match
@@ -679,21 +689,35 @@ public class CGSpec
       else if (pars != null && pars.size() == 2 && 
                e.data.equals("subrange") && trimmedlhs.equals("_1.subrange(_2,_3)"))
       { selected = r; 
-	    args.add(obj); 
-		args.add(pars.get(0)); 
-		args.add(pars.get(1)); 
-	  }  
+        args.add(obj); 
+        args.add(pars.get(0)); 
+        args.add(pars.get(1)); 
+      }  
       else if (pars != null && pars.size() == 2 && 
                e.data.equals("insertAt") && trimmedlhs.equals("_1.insertAt(_2,_3)"))
       { selected = r; 
-	    args.add(obj); 
-	    args.add(pars.get(0)); 
-	    args.add(pars.get(1)); 
-	  }  
+        args.add(obj); 
+        args.add(pars.get(0)); 
+        args.add(pars.get(1)); 
+      }  
+     /* else if (pars != null && pars.size() == 2 && 
+               e.data.equals("replace") && trimmedlhs.equals("_1.replace(_2,_3)"))
+      { selected = r; 
+        args.add(obj); 
+        args.add(pars.get(0)); 
+        args.add(pars.get(1)); 
+      }  
+      else if (pars != null && pars.size() == 2 && 
+               e.data.equals("replaceAll") && trimmedlhs.equals("_1.replaceAll(_2,_3)"))
+      { selected = r; 
+        args.add(obj); 
+        args.add(pars.get(0)); 
+        args.add(pars.get(1)); 
+      } */  
       else if (ind != null && pars == null && trimmedlhs.equals("_1[_2]"))
       { selected = r;
-	    BasicExpression e1 = (BasicExpression) e.clone(); 
-	    e1.arrayIndex = null; 
+        BasicExpression e1 = (BasicExpression) e.clone(); 
+        e1.arrayIndex = null; 
         args.add(e1); // But again the type can be different. 
         args.add(ind); // condition is on _2 
       }

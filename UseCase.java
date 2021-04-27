@@ -2641,7 +2641,7 @@ public void generateCUIcode(PrintWriter out)
 
 
   public Statement implementBehaviour(Vector types, Vector entities)
-  { System.out.println(">>> Activity = " + classifierBehaviour); 
+  { System.out.println(">>> Use case activity = " + classifierBehaviour); 
 
     if (classifierBehaviour != null) 
     { java.util.Map env = new java.util.HashMap(); 
@@ -2652,7 +2652,7 @@ public void generateCUIcode(PrintWriter out)
       else 
       { stat = classifierBehaviour.generateDesign(env,false); } 
 
-      System.out.println(">>> Activity = " + stat); 
+      System.out.println(">>> Enhanced activity = " + stat); 
  
       Vector newparams = new Vector(); 
       newparams.addAll(parameters); 

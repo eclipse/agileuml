@@ -395,9 +395,9 @@ public class GUIBuilder
             }
             else if (typ.isCollectionType()) // Only collections of basic types: numerics and strings
             { if (typ.getName().equals("Map"))
-			  { System.out.println("!! Warning: map parameters cannot be instantiated from the GUI!"); }
+              { System.out.println("!! Warning: map parameters cannot be instantiated from the GUI!"); }
 			
-			  String convertElementType = "typ_" + parnme; 
+              String convertElementType = "typ_" + parnme; 
               Type elemTyp = typ.getElementType(); 
               if (elemTyp == null) { } 
               else if ("int".equals(elemTyp.getName()))
@@ -470,6 +470,32 @@ public class GUIBuilder
     else 
     { contname = sysName + "." + contname; } 
 
+    String mutationTestsOp = ""; 
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ent = (Entity) entities.get(i);
+      if (ent.isDerived() || ent.isComponent()) 
+      { continue; }  
+      String ename = ent.getName();
+      String es = ename.toLowerCase() + "s"; 
+      Vector eops = ent.getOperations();  
+      
+      for (int j = 0; j < eops.size(); j++) 
+      { BehaviouralFeature bf = (BehaviouralFeature) eops.get(j); 
+        if (bf.isMutatable())
+        { String bfname = bf.getName();  
+          mutationTestsOp = mutationTestsOp + 
+          "      int[] " + es + "_" + bfname + "_counts = new int[100]; \n" +   
+          "      int[] " + es + "_" + bfname + "_totals = new int[100]; \n" +   
+          "      for (int _i = 0; _i < Controller.inst()." + es + ".size(); _i++)\n" + 
+          "      { " + ename + " _ex = (" + ename + ") Controller.inst()." + es + ".get(_i);\n" +  
+          "        MutationTest." + bfname + "_mutation_tests(_ex," + es + "_" + bfname + "_counts, " + es + "_" + bfname + "_totals);\n" + 
+          "      }\n" + 
+          "      System.out.println();\n";  
+        } 
+      }
+    } 
+
+
     res = res +
       "public class TestsGUI extends JFrame implements ActionListener\n" +
       "{ JPanel panel = new JPanel();\n" +
@@ -514,6 +540,20 @@ public class GUIBuilder
          "    { cont.saveModel(\"out.txt\");  \n" + 
     //         "      cont.saveXSI(\"xsi.txt\"); \n" + 
          "      return; } \n";
+
+    res = res + "    JButton loadCSVButton = new JButton(\"Mutation Tests\");\n";
+
+    cons = cons + 
+         "    Panel.add(loadCSVButton);\n" +
+         "    loadCSVButton.addActionListener(this);\n";
+                  
+    aper = aper +
+         "    if (\"Mutation Tests\".equals(cmd))\n" + 
+         "    { System.err.println(\"Mutation tests\");\n" +
+         mutationTestsOp +  
+         "      return;\n" + 
+         "    } \n";
+
     aper = aper + 
          "    int[] intTestValues = {0, -1, 1, 2147483647, -2147483648};\n" + 
          "    long[] longTestValues = {0, -1, 1, " + Long.MAX_VALUE + "L, " + Long.MIN_VALUE + "L};\n" + 
@@ -849,6 +889,31 @@ public class GUIBuilder
       "import java.io.*;\n" + 
       "import java.util.StringTokenizer;\n\n";  
 
+    String mutationTestsOp = ""; 
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ent = (Entity) entities.get(i);
+      if (ent.isDerived() || ent.isComponent()) 
+      { continue; }  
+      String ename = ent.getName();
+      String es = ename.toLowerCase() + "s"; 
+      Vector eops = ent.getOperations();  
+      
+      for (int j = 0; j < eops.size(); j++) 
+      { BehaviouralFeature bf = (BehaviouralFeature) eops.get(j); 
+        if (bf.isMutatable())
+        { String bfname = bf.getName();  
+          mutationTestsOp = mutationTestsOp + 
+          "      int[] " + es + "_" + bfname + "_counts = new int[100]; \n" +   
+          "      int[] " + es + "_" + bfname + "_totals = new int[100]; \n" +   
+          "      for (int _i = 0; _i < Controller.inst()." + es + ".size(); _i++)\n" + 
+          "      { " + ename + " _ex = (" + ename + ") Controller.inst()." + es + ".get(_i);\n" +  
+          "        MutationTest." + bfname + "_mutation_tests(_ex," + es + "_" + bfname + "_counts, " + es + "_" + bfname + "_totals);\n" + 
+          "      }\n" + 
+          "      System.out.println();\n";  
+        } 
+      }
+    } 
+
     String contname = "Controller"; 
 
     if (sysName == null || sysName.length() == 0) { } 
@@ -919,29 +984,29 @@ public class GUIBuilder
          "      System.err.println(\"Model loaded\");\n" + 
          "      return; } \n";
 
-    res = res + "    JButton loadCSVButton = new JButton(\"loadCSVs\");\n";
+    res = res + "    JButton loadCSVButton = new JButton(\"Mutation Tests\");\n";
 
     cons = cons + 
          "    tPanel.add(loadCSVButton);\n" +
          "    loadCSVButton.addActionListener(this);\n";
-      
-    String loadcsvop = "    { " + contname + ".loadCSVModel();\n";   
-            
+                  
     aper = aper +
-         "    if (\"loadCSVs\".equals(cmd))\n" + loadcsvop + 
-         "      System.err.println(\"Model loaded\");\n" + 
-         "      return; } \n";
+         "    if (\"Mutation Tests\".equals(cmd))\n" + 
+         "    { System.err.println(\"Mutation tests\");\n" +
+         mutationTestsOp +  
+         "      return;\n" + 
+         "    } \n";
 
-    res = res + "    JButton saveCSVButton = new JButton(\"saveCSVs\");\n";
+    // res = res + "    JButton saveCSVButton = new JButton(\"saveCSVs\");\n";
 
-    cons = cons + 
-        "    tPanel.add(saveCSVButton);\n" +
-        "    saveCSVButton.addActionListener(this);\n";
+    // cons = cons + 
+    //     "    tPanel.add(saveCSVButton);\n" +
+    //     "    saveCSVButton.addActionListener(this);\n";
       
-    aper = aper +
-         "    if (\"saveCSVs\".equals(cmd))\n" +
-         "    { cont.saveCSVModel();  \n" + 
-         "      return; } \n";
+    // aper = aper +
+    //      "    if (\"saveCSVs\".equals(cmd))\n" +
+    //      "    { cont.saveCSVModel();  \n" + 
+    //      "      return; } \n";
 
 	aper = aper + 
          "    int[] intTestValues = {0, -1, 1, 2147483647, -2147483648};\n" + 

@@ -12036,7 +12036,7 @@ public Statement generateDesignSubtract(Expression rhs)
   { String etext = (this + "").trim();
     Vector args = new Vector();
     Vector eargs = new Vector(); 
-	Vector textrules = new Vector(); 
+    Vector textrules = new Vector(); 
 
     if (umlkind == FUNCTION) 
     { // process as the corresponding unary or binary expression
@@ -12049,10 +12049,23 @@ public Statement generateDesignSubtract(Expression rhs)
          String res = r.applyRule(args,eargs,cgs);
          return res;
 	   }  
-	 }
-     else if (parameters != null && parameters.size() == 0) 
-     { UnaryExpression uexp = new UnaryExpression(this); 
-       System.out.println(">> Converted basic expression " + this + 
+      }
+	 else if ("size".equals(data) || 
+                "reverse".equals(data) || 
+                "toLowerCase".equals(data) ||
+                "toUpperCase".equals(data) || 
+                "first".equals(data) || "last".equals(data) ||
+                "front".equals(data) || "tail".equals(data))
+	 { // args.add(objectRef + ""); 
+	   // eargs.add(objectRef); 
+        UnaryExpression uexp = new UnaryExpression(this); 
+        System.out.println(">> Converted basic expression " + this + 
+                            " to UnaryExpression " + uexp); 
+        return uexp.cg(cgs); 
+      }
+      else if (parameters != null && parameters.size() == 0) 
+      { UnaryExpression uexp = new UnaryExpression(this); 
+        System.out.println(">> Converted basic expression " + this + 
                             " to UnaryExpression " + uexp); 
         return uexp.cg(cgs); 
       }  
@@ -12125,8 +12138,8 @@ public Statement generateDesignSubtract(Expression rhs)
       dataexp.objectRef = null; // retype it 
       if (parameters != null) 
       { String pars = ""; 
-	    if (parameters.size() > 0) 
-	    { Expression p = (Expression) parameters.get(0);
+        if (parameters.size() > 0) 
+        { Expression p = (Expression) parameters.get(0);
           Vector partail = new Vector(); 
           partail.addAll(parameters); 
           partail.remove(0); 
@@ -12161,7 +12174,7 @@ public Statement generateDesignSubtract(Expression rhs)
       // the corresponding attribute of the operation.
 
       if (parameters.size() > 0) 
-	  { Expression p = (Expression) parameters.get(0);
+      { Expression p = (Expression) parameters.get(0);
         Vector partail = new Vector(); 
         partail.addAll(parameters); 
         partail.remove(0); 
@@ -12189,12 +12202,12 @@ public Statement generateDesignSubtract(Expression rhs)
 
     if (r != null)
     { if (textrules.size() > 0)
-	  { CGRule tr = (CGRule) textrules.get(0);
-	    System.out.println(">>> Applying text rule " + tr + " " + tr.variables);  
-	    if (tr.variables.size() == 2)  // it is text_1(_2)
-         { BasicExpression rootexp = (BasicExpression) clone();
-	      rootexp.parameters = null; 
-	      String rootstring = rootexp + ""; 
+      { CGRule tr = (CGRule) textrules.get(0);
+        System.out.println(">>> Applying text rule " + tr + " " + tr.variables);  
+        if (tr.variables.size() == 2)  // it is text_1(_2)
+        { BasicExpression rootexp = (BasicExpression) clone();
+          rootexp.parameters = null; 
+          String rootstring = rootexp + ""; 
 	      String prefix = ModelElement.longestCommonPrefix(rootstring,tr.lhs);
 	      String remstring = rootstring.substring(prefix.length(), rootstring.length());
 	      Vector textargs = new Vector(); 

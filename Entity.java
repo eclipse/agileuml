@@ -3604,6 +3604,13 @@ public class Entity extends ModelElement implements Comparable
     return res/1000.0; 
   } // also break up the names into parts based on suffixes, prefixes. 
 
+  public Entity getDefaultSubclass()
+  { if (subclasses.size() == 0) 
+    { return this; } 
+    Entity sub1 = (Entity) subclasses.get(0); 
+    return sub1.getDefaultSubclass(); 
+  }  
+
   public Vector getActualLeafSubclasses() // recursively
   { Vector res = new Vector(); 
     Vector allsubs = getAllSubclasses(); 
@@ -14262,7 +14269,8 @@ public BehaviouralFeature designAbstractKillOp()
       { continue; } 
 	   
       Vector newres = new Vector(); 
-      Vector testassignments = att.testCases(x,lowerBounds,upperBounds);
+      Vector javatests = new Vector(); 
+      Vector testassignments = att.testCases(x,lowerBounds,upperBounds,javatests);
  
       for (int j = 0; j < res.size(); j++) 
       { String tst = (String) res.get(j); 
@@ -14324,20 +14332,50 @@ public BehaviouralFeature designAbstractKillOp()
     return res; 
   }
 
-  public Vector operationTestCases()
+  public Vector operationTestCases(Vector mtests)
   { Vector res = new Vector(); 
     String nme = getName(); 
-    String x = nme.toLowerCase() + "$x"; 
+    // String x = nme.toLowerCase() + "$x"; 
+    Vector newoperations = new Vector(); 
+
     for (int i = 0; i < operations.size(); i++) 
     { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i);
-      if (bf.isAbstract()) { } 
+      if (bf.isAbstract() || bf.isDerived()) { } 
       else 
-      { Vector bfcases = bf.testCases(); 
+      { Vector opTests = new Vector(); 
+        Vector bfcases = bf.testCases(opTests); 
         res.addAll(bfcases);
-		Expression post = bf.postcondition(); 
-		System.out.println(">>> Definedness precondition for " + bf.getName() + " is: " + post.definedness()); 
-      }   
-    }
+
+        if (bf.isMutatable())
+        { String bfname = bf.getName(); 
+          Expression post = bf.postcondition();
+ 
+        // System.out.println(">>> Definedness precondition for " + bfname + " is: " + post.definedness());
+
+          Vector mutants = post.singleMutants();
+          Vector mutantoperations = bf.formMutantOperations(mutants); 
+          newoperations.addAll(mutantoperations);  
+          System.out.println(">>> Tests for " + bfname + " are: " + opTests);
+  
+          Vector mutationTests = bf.formMutantCalls(mutantoperations,bfcases,opTests); 
+          String bfmutanttest = "  public static void " + bfname + "_mutation_tests(" + nme + " _self, int[] _counts, int[] _totals)\n" + 
+          "  { "; 
+          for (int j = 0; j < mutationTests.size(); j++) 
+          { String tst = (String) mutationTests.get(j); 
+            bfmutanttest = bfmutanttest + tst + "\n"; 
+          } 
+          bfmutanttest = bfmutanttest + "\n" + 
+            "   for (int i = 0; i < _counts.length; i++)\n" + 
+            "   { if (_totals[i] > 0)\n" + 
+            "     { System.out.println(\"Test \" + i + \" detects \" + (100.0*_counts[i])/_totals[i] + \"% " + bfname + " mutants\"); }\n" +
+            "     }\n" +  
+            "   }\n\n"; 
+          // System.out.println(bfmutanttest);
+          mtests.add(bfmutanttest);  
+        }   
+      }
+    } 
+    operations.addAll(newoperations); 
     return res;  
   }  
 

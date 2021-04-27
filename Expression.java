@@ -216,6 +216,18 @@ abstract class Expression
 
   public abstract void setPre(); 
 
+  public Vector mutants()
+  { Vector res = new Vector(); 
+    res.add(this); 
+    return res; 
+  }  // default implementation. 
+
+  public Vector singleMutants()
+  { Vector res = new Vector(); 
+    // res.add(this); 
+    return res; 
+  }  // default implementation. 
+
   public boolean isEnumerated()
   { return type != null && type.isEnumerated(); } 
 

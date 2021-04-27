@@ -170,7 +170,6 @@ public class CGRule
       if (str.indexOf(var) > -1) 
       { int j = str.indexOf(var); 
         String f = var; 
-        System.out.println(">>> found metafeature for " + var); 
 
         boolean found = false; 
         for (int k = j+3; k < str.length() && !found; k++) 
@@ -181,6 +180,7 @@ public class CGRule
             found = true; 
           } 
         } 
+        System.out.println(">>> found metafeature " + f + " for " + var); 
       } 
     } 
     return res; 
@@ -268,7 +268,7 @@ public class CGRule
       int k = Integer.parseInt(mfvar.charAt(1) + "");  
       if (k >= 1 && k <= eargs.size())
       { Object obj = eargs.get(k-1);
-        // System.out.println(">>> Applying metafeature " + mffeat + " to " + obj); 
+        System.out.println(">>> Applying metafeature " + mffeat + " to " + obj); 
 
 
         if ("defaultValue".equals(mffeat) && obj instanceof Type)
@@ -279,6 +279,24 @@ public class CGRule
             String repl1 = correctNewlines(repl); 
             System.out.println(">--> Replacing " + mf + " by " + repl1); 
             res = res.replaceAll(mf,repl1);
+          } 
+        }
+        else if ("defaultSubclass".equals(mffeat) && obj instanceof Entity)
+        { Entity ee = (Entity) obj; 
+          Entity esub = ee.getDefaultSubclass(); 
+          if (esub != null) 
+          { String repl = esub.getName(); 
+            System.out.println(">--> Replacing " + mf + " by " + repl); 
+            res = res.replace(mf,repl);
+          } 
+        }
+        else if ("defaultSubclass".equals(mffeat) && obj instanceof Type)
+        { Entity ee = ((Type) obj).getEntity(); 
+          Entity esub = ee.getDefaultSubclass(); 
+          if (esub != null) 
+          { String repl = esub.getName(); 
+            System.out.println(">--> Replacing " + mf + " by " + repl); 
+            res = res.replace(mf,repl);
           } 
         }
         else if ("elementType".equals(mffeat) && obj instanceof Expression)

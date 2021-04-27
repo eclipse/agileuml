@@ -19,6 +19,16 @@ public class ConditionalExpression extends Expression
   public ConditionalExpression(Expression t, Expression ie, Expression ee)
   { test = t; ifExp = ie; elseExp = ee; }
 
+  /* public Object clone()
+  { ConditionalExpression clne = new ConditionalExpression(test, ifExp, elseExp); 
+    clne.setType(type); 
+    clne.setElementType(elementType); 
+    return clne;  
+  } */ 
+
+  public void setTest(Expression teste)
+  { test = teste; } 
+
   public void setIf(Expression ife)
   { ifExp = ife; } 
 
@@ -143,6 +153,45 @@ public void findClones(java.util.Map clones, String rule, String op)
   test.findClones(clones,rule,op); 
   ifExp.findClones(clones,rule,op);
   elseExp.findClones(clones,rule,op);
+}
+
+public Vector mutants()
+{ Vector res = new Vector(); 
+  res.add(this); 
+  ConditionalExpression mutant = (ConditionalExpression) clone(); 
+  mutant.ifExp = elseExp; 
+  mutant.elseExp = ifExp; 
+  res.add(mutant); 
+  return res; 
+} // Together with mutants of if and else. 
+
+public Vector singleMutants()
+{ Vector res = new Vector(); 
+  // res.add(this); 
+  ConditionalExpression mutant = (ConditionalExpression) clone(); 
+  mutant.ifExp = elseExp; 
+  mutant.elseExp = ifExp; 
+  res.add(mutant); 
+  Vector ifMutants = ifExp.singleMutants(); 
+  Vector elseMutants = elseExp.singleMutants(); 
+
+  for (int i = 0; i < ifMutants.size(); i++) 
+  { Expression mif = (Expression) ifMutants.get(i); 
+    ConditionalExpression mut = (ConditionalExpression) clone(); 
+    mut.ifExp = mif; 
+    mut.elseExp = elseExp; 
+    res.add(mut); 
+  } 
+
+  for (int i = 0; i < elseMutants.size(); i++) 
+  { Expression melse = (Expression) elseMutants.get(i); 
+    ConditionalExpression mut = (ConditionalExpression) clone(); 
+    mut.ifExp = ifExp; 
+    mut.elseExp = melse; 
+    res.add(mut); 
+  } 
+
+  return res; 
 }
 
   public int cyclomaticComplexity()
@@ -344,7 +393,7 @@ public void findClones(java.util.Map clones, String rule, String op)
     be.multiplicity = multiplicity;
     be.umlkind = umlkind; 
     be.setBrackets(needsBracket); 
-	be.formalParameter = formalParameter; 
+    be.formalParameter = formalParameter; 
     return be; 
   } // is this sufficient? 
 

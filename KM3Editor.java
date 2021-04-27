@@ -14,7 +14,7 @@ import javax.swing.*;
 import javax.swing.text.*;
 import javax.swing.event.*;
 
-/* K. Lano 2010-2020
+/* K. Lano 2010-2021
    
   Adapted from Oracle example of JTextPane
 
@@ -70,13 +70,14 @@ public class KM3Editor extends JFrame implements DocumentListener
     Vector invs = new Vector(); // SafetyInvariant
     Vector ops = new Vector();  // BehaviouralFeature - all static for use cases
     UCDArea classArea = null; 
-
+    ActivityEditDialog actDialog; 
+  
     public KM3Editor(UCDArea parent, Vector ents, Vector ucs) 
     {
         super("KM3 Editor");
-		systemName = parent.getSystemName(); 
+        systemName = parent.getSystemName(); 
         entities = ents; 
-		types = parent.getKM3Types(); 
+        types = parent.getKM3Types(); 
         useCases = ucs; 
 
         classArea = parent; 
@@ -86,7 +87,7 @@ public class KM3Editor extends JFrame implements DocumentListener
         textPane.setMargin(new Insets(5,5,5,5));
         StyledDocument styledDoc = textPane.getStyledDocument();
         if (styledDoc instanceof AbstractDocument) 
-		{ doc = (AbstractDocument) styledDoc;
+        { doc = (AbstractDocument) styledDoc;
           doc.addDocumentListener(this); 
         } 
 		else 
@@ -178,6 +179,9 @@ public class KM3Editor extends JFrame implements DocumentListener
       Action searchAction = new SearchAction(); 
       menu.add(searchAction); 
 
+      Action addCodeAction = new AddCodeAction(); 
+      menu.add(addCodeAction); 
+
       menu.addSeparator();
 
       Action cAction = getActionByName(DefaultEditorKit.cutAction);
@@ -217,8 +221,8 @@ public class KM3Editor extends JFrame implements DocumentListener
       SimpleAttributeSet[] attrs = initAttributes(initString.length);
 
         /* try {
-            for (int i = 0; i < initString.length; i ++) {
-                doc.insertString(doc.getLength(), initString[i] + newline,
+            for (int i = 0; i < initString.length; i++) 
+            { doc.insertString(doc.getLength(), initString[i] + newline,
                         attrs[i]);
             }
         } catch (BadLocationException ble) {
@@ -232,30 +236,29 @@ public class KM3Editor extends JFrame implements DocumentListener
        try 
        { doc.insertString(0, "package " + sysName + " { \n\r\n\r" , attrs[1]); 
          
-		 
-		 for (int j = 0; j < types.size(); j++) 
+         for (int j = 0; j < types.size(); j++) 
          { String typ = (String) types.get(j);
 		   // System.out.println(typ.class);  
-		   doc.insertString(doc.getLength(), typ, attrs[1]);  
+           doc.insertString(doc.getLength(), typ, attrs[1]);  
          }
 		 
-		 for (int j = 0; j < entities.size(); j++) 
+         for (int j = 0; j < entities.size(); j++) 
          { Entity ent = (Entity) entities.get(j); 
-		   if (ent.isDerived()) { } 
-		   else 
+           if (ent.isDerived()) { } 
+	     else 
            { doc.insertString(doc.getLength(), ent.getKM3() + "\n\r\n\r", attrs[1]); } 
-         }
+          }
 
 
-         doc.insertString(doc.getLength(), "\n\r", attrs[1]); 
-         Vector seen = new Vector(); 
+           doc.insertString(doc.getLength(), "\n\r", attrs[1]); 
+           Vector seen = new Vector(); 
 
-         for (int j = 0; j < useCases.size(); j++) 
-         { UseCase uc = (UseCase) useCases.get(j); 
-           doc.insertString(doc.getLength(), uc.getKM3(seen) + "\n\r\n\r", attrs[1]); 
-         }
+           for (int j = 0; j < useCases.size(); j++) 
+           { UseCase uc = (UseCase) useCases.get(j); 
+             doc.insertString(doc.getLength(), uc.getKM3(seen) + "\n\r\n\r", attrs[1]); 
+           }
 
-         doc.insertString(doc.getLength(), "}\n\r", attrs[1]); 
+           doc.insertString(doc.getLength(), "}\n\r", attrs[1]); 
 
       }  
       catch (Exception ble) 
@@ -379,6 +382,43 @@ public class KM3Editor extends JFrame implements DocumentListener
       // System.out.println("Remove event at: " + offset + " " + pos); 
 	}
 
+  class AddCodeAction extends javax.swing.AbstractAction
+  { public AddCodeAction()
+    { super("Add Code"); } 
+
+    public void actionPerformed(ActionEvent e)
+    { int pos = textPane.getCaretPosition(); 
+      if (pos == 0) { return; } 
+
+      if (actDialog == null)
+      { actDialog = new ActivityEditDialog(classArea.parent);
+        actDialog.pack();
+        actDialog.setLocationRelativeTo(classArea.parent);
+      }
+      actDialog.setOldFields("","","","","",true);
+      actDialog.setVisible(true);
+   
+      String post = actDialog.getPost(); 
+      Compiler2 comp = new Compiler2(); 
+      if (post == null)
+      { System.out.println(">>>>> Invalid code: " + post); 
+        return; 
+      }
+      ASTTerm xx = comp.parseGeneralAST(post);
+      String km3code = xx.toKM3(); 
+      System.out.println(">>>>> Translated code: " + km3code); 
+        
+      SimpleAttributeSet[] attrs = initAttributes(4);
+
+      try {
+        doc.insertString(pos, km3code, attrs[1]);
+          }
+          catch (BadLocationException ble) {
+            System.err.println("Couldn't insert code text.");
+        } 
+    } 
+  } 
+
   class CheckAction extends javax.swing.AbstractAction
   { public CheckAction()
     { super("Check"); }
@@ -407,7 +447,7 @@ public class KM3Editor extends JFrame implements DocumentListener
         { if (cls instanceof Entity) 
           { Entity clsx = (Entity) cls; 
 		  
-		    for (int q = 0; q < preassocs.size(); q++) 
+            for (int q = 0; q < preassocs.size(); q++) 
             { PreAssociation pa = (PreAssociation) preassocs.get(q);  
               Entity e1 =
                 (Entity) ModelElement.lookupByName(pa.e1name,entities);
@@ -426,7 +466,7 @@ public class KM3Editor extends JFrame implements DocumentListener
               ast.updateAssociation(pa.card1, pa.card2, pa.role1, pa.role2, pa.stereotypes);   
             } 
             System.out.println("PARSED class:\n" + clsx.getKM3()); 
-		  }
+          }
           else if (cls instanceof UseCase)     
           { System.out.println("PARSED use case:\n" + ((UseCase) cls).getKM3()); } 
           else 
@@ -473,10 +513,10 @@ public class KM3Editor extends JFrame implements DocumentListener
       for (int i = 0; i + len < en; i++)
       try 
       { String txt = textPane.getText(i, len);
-        if (searchfor.equals(txt))
-		{ textPane.select(i,i+len);
+        if (searchfor.equalsIgnoreCase(txt))
+        { textPane.select(i,i+len);
           textPane.setSelectedTextColor(Color.gray);
-		  found = true;   
+          found = true;   
         }   
       } catch (Exception ee) { }
 	  

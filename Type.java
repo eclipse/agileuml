@@ -1920,6 +1920,33 @@ public class Type extends ModelElement
     return true; // enum
   }
 
+  public static boolean isExtendedAttributeType(Type t, Type elemT) 
+  { if (t == null) // need to get type for atts
+    { return false; }
+
+    if (t.values != null) 
+    { return true; }     // enumeration
+
+    String tname = t.getName();
+    if (tname.equals("int") || tname.equals("double") || tname.equals("String") || 
+        tname.equals("long") || tname.equals("boolean"))
+    { return true; } 
+
+    if (tname.equals("Set") || tname.equals("Sequence"))
+    { if (elemT != null && elemT.isEntity())
+      { return false; }
+      if (elemT != null && isExtendedAttributeType(elemT,null))
+      { return true; } 
+      return false; 
+    } 
+    
+    if (tname.equals("Map") || tname.equals("Function")) 
+    { return false; } 
+
+    if (t.getEntity() != null)  { return false; } 
+    return true; // enum
+  }
+
   public boolean isCollectionType()
   { String nme = getName(); 
     return ("Sequence".equals(nme) || "Set".equals(nme) || "Map".equals(nme)); 

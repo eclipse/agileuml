@@ -58,11 +58,11 @@ public class UnaryExpression extends Expression
     res.elementType = elementType;  // type of elements if a set
     res.entity = entity; 
     res.multiplicity = multiplicity;
-	res.formalParameter = formalParameter; 
-	if (accumulator != null) 
-	{ Attribute newacc = new Attribute(accumulator.getName(), accumulator.getType(), ModelElement.INTERNAL); 
-	  res.accumulator = newacc; 
-	}
+    res.formalParameter = formalParameter; 
+    if (accumulator != null) 
+    { Attribute newacc = new Attribute(accumulator.getName(), accumulator.getType(), ModelElement.INTERNAL); 
+      res.accumulator = newacc; 
+    }
     return res;   
   }  
 
@@ -704,7 +704,12 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return new InvocationStatement(killop); 
     } 
     else if ("->display".equals(operator))
-    { BasicExpression dispop = new BasicExpression("display" + argument.type.getName()); 
+    { BasicExpression dispop = null; 
+	  if (argument.type != null) 
+	  { dispop = new BasicExpression("display" + argument.type.getName()); }
+	  else 
+	  { dispop = new BasicExpression("display"); }
+	  
       dispop.umlkind = UPDATEOP; 
       dispop.addParameter(argument); 
       return new InvocationStatement(dispop); 
@@ -1422,6 +1427,33 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return res; 
     }
 
+    if (operator.equals("->unionAll"))
+    { type = new Type("Set", null); 
+      if (argument.isMultiple() && type.elementType != null) 
+      { elementType = type.elementType.getElementType(); }
+      else 
+      { elementType = type.elementType; }  
+      return res; 
+    } 
+
+    if (operator.equals("->intersectAll"))
+    { type = new Type("Set", null); 
+      if (argument.isMultiple() && type.elementType != null) 
+      { elementType = type.elementType.getElementType(); }
+      else 
+      { elementType = type.elementType; }  
+      return res; 
+    } 
+
+    if (operator.equals("->concatenateAll"))
+    { type = new Type("Sequence", null); 
+      if (argument.isMultiple() && type.elementType != null) 
+      { elementType = type.elementType.getElementType(); }
+      else 
+      { elementType = type.elementType; }  
+      return res; 
+    } 
+
     if (operator.equals("->flatten"))
     { type = argument.type; 
       if (argument.isMultiple() && type.elementType != null) 
@@ -1520,11 +1552,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     } 
 
 
-    if (operator.equals("->reverse") || operator.equals("->tail") || operator.equals("->front") ||
-        operator.equals("->toLowerCase") || 
-        operator.equals("->toUpper") ||
-        operator.equals("->toLower") || 
-        operator.equals("->toUpperCase"))  
+    if (operator.equals("->reverse") || operator.equals("->tail") || operator.equals("->front"))  
     { type = argument.getType(); 
       modality = argument.modality; 
       elementType = argument.elementType;
@@ -1558,6 +1586,18 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       System.out.println("**Type of " + this + " is " + type);
       return res;
     }
+    
+    if (operator.equals("->toLowerCase") || 
+        operator.equals("->toUpper") ||
+        operator.equals("->toLower") || 
+        operator.equals("->toUpperCase") || 
+        operator.equals("->trim"))  
+    { modality = argument.modality; 
+      type = new Type("String",null); 
+      elementType = type; 
+      multiplicity = ModelElement.ONE; 
+      return res; 
+    }  
     else if (extensionoperators.containsKey(operator))
     { type = getOperatorType(operator); 
       elementType = type; 
@@ -1574,7 +1614,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
   { return argument.minModality(); } 
 
   public boolean isMultiple()
-  { if (operator.equals("->subcollections") || 
+  { if (operator.equals("->subcollections") || operator.equals("->unionAll") || operator.equals("->intersectAll") ||
+        operator.equals("->concatenateAll") || 
         operator.equals("->closure") || operator.equals("->asSet") || operator.equals("->values") ||
         operator.equals("->flatten") || operator.equals("->characters") || operator.equals("->keys") ||
         operator.equals("->asSequence") || operator.equals("->sort"))  
@@ -1662,6 +1703,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->sqr")) 
 	{ return "((" + qf + ")*(" + qf + "))"; } 
 
+
+    if (operator.equals("->concatenateAll")) 
+    { return "Set.concatenateAll(" + qf + ")"; } 
+    
+	if (operator.equals("->unionAll"))
+    { return "Set.unionAll(" + qf + ")"; } 
+    
+	if (operator.equals("->intersectAll"))
+    { return "Set.intersectAll(" + qf + ")"; } 
+    
     if (operator.equals("->flatten")) 
     { if (Type.isSequenceType(argument.type))
       { return "Set.concatenateAll(" + qf + ")"; } 
@@ -1698,6 +1749,15 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("->toUpper")) 
     { return qf + ".toUpperCase()"; } 
+
+    if (operator.equals("->toLowerCase")) 
+    { return qf + ".toLowerCase()"; } 
+
+    if (operator.equals("->toUpperCase")) 
+    { return qf + ".toUpperCase()"; } 
+
+    if (operator.equals("->trim")) 
+    { return qf + ".trim()"; } 
 
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == null)"; } 
@@ -1915,10 +1975,28 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->toUpper")) 
     { return qf + ".toUpperCase()"; } 
 
+    if (operator.equals("->toLowerCase")) 
+    { return qf + ".toLowerCase()"; } 
+
+    if (operator.equals("->toUpperCase")) 
+    { return qf + ".toUpperCase()"; } 
+
+    if (operator.equals("->trim")) 
+    { return qf + ".trim()"; } 
+
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == null)"; } 
 
     if (operator.equals("->sqr")) { return "((" + qf + ")*(" + qf + "))"; } 
+
+    if (operator.equals("->concatenateAll")) 
+    { return "Set.concatenateAll(" + qf + ")"; } 
+    
+	if (operator.equals("->unionAll"))
+    { return "Set.unionAll(" + qf + ")"; } 
+    
+	if (operator.equals("->intersectAll"))
+    { return "Set.intersectAll(" + qf + ")"; } 
 
     if (operator.equals("->flatten")) 
     { if (Type.isSequenceType(argument.type))
@@ -2125,10 +2203,34 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->toUpper")) 
     { return qf + ".toUpperCase()"; } 
 
+    if (operator.equals("->toLowerCase")) 
+    { return qf + ".toLowerCase()"; } 
+
+    if (operator.equals("->toUpperCase")) 
+    { return qf + ".toUpperCase()"; } 
+
+    if (operator.equals("->trim")) 
+    { return qf + ".trim()"; } 
+
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == null)"; } 
 
     if (operator.equals("->sqr")) { return "((" + qf + ")*(" + qf + "))"; } 
+
+    if (operator.equals("->concatenateAll")) 
+    { String jtype = type.getJava7(elementType); 
+      return "((" + jtype + ") Ocl.concatenateAll(" + qf + "))"; 
+	} 
+    
+	if (operator.equals("->unionAll"))
+    { String jtype = type.getJava7(elementType); 
+      return "((" + jtype + ") Ocl.unionAll(" + qf + "))"; 
+	} 
+    
+	if (operator.equals("->intersectAll"))
+    { String jtype = type.getJava7(elementType); 
+      return "((" + jtype + ") Ocl.intersectAll(" + qf + "))"; 
+	} 
 
     if (operator.equals("->flatten")) 
     { String jtype = type.getJava7(elementType); 
@@ -2167,7 +2269,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     else if (operator.equals("->round") || 
              operator.equals("->ceil") || operator.equals("->floor"))
     { return "((int) Math." + data + "(" + pre + "))"; } 
-    else if (data.equals("toUpperCase") || data.equals("toLowerCase"))
+    else if (data.equals("toUpperCase") || data.equals("toLowerCase") || data.equals("trim"))
     { return pre + "." + data + "()"; } 
     else if (data.equals("sum"))
     { Type sumtype = argument.getElementType();  // int, double, long, String 
@@ -2347,6 +2449,15 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->sqr")) 
     { return "((" + qf + ")*(" + qf + "))"; } 
 
+    if (operator.equals("->concatenateAll")) 
+    { return "SystemTypes.concatenateAll(" + qf + ")"; } 
+    
+	if (operator.equals("->unionAll"))
+    { return "SystemTypes.unionAll(" + qf + ")"; } 
+    
+	if (operator.equals("->intersectAll"))
+    { return "SystemTypes.intersectAll(" + qf + ")"; } 
+
     if (operator.equals("->flatten")) 
     { if (Type.isSequenceType(argument.type))
       { return "SystemTypes.concatenateAll(" + qf + ")"; } 
@@ -2393,6 +2504,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return pre + ".ToUpper()"; } 
     else if (data.equals("toLowerCase") || data.equals("toLower"))
     { return pre + ".ToLower()"; } 
+    else if (data.equals("trim"))
+    { return pre + ".Trim()"; } 
     else if (data.equals("sum"))
     { Type sumtype = argument.getElementType();  // int, double, long, String 
       if (sumtype == null) 
@@ -2503,11 +2616,11 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { celtype = sumtype.getCPP(sumtype.getElementType()); }  
  
     if (operator.equals("lambda") && accumulator != null)
-	{ String acc = accumulator.getName(); 
-	  String acct = accumulator.getType().getCPP(accumulator.getElementType()); 
+    { String acc = accumulator.getName(); 
+      String acct = accumulator.getType().getCPP(accumulator.getElementType()); 
 	  
-	  return "[](" + acct + " " + acc + ") -> " + cargtype + " { return " + qf + "; }"; // for C++11 onwards
-	}
+      return "[](" + acct + " " + acc + ") -> " + cargtype + " { return " + qf + "; }"; // for C++11 onwards
+    }
      
     if (operator.equals("-"))
     { return "-" + qf; } 
@@ -2558,6 +2671,15 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == NULL)"; } 
+
+    if (operator.equals("->concatenateAll")) 
+    { return "UmlRsdsLib<" + celtype + ">::concatenateAll(" + qf + ")"; } 
+    
+	if (operator.equals("->unionAll"))
+    { return "UmlRsdsLib<" + celtype + ">::unionAll(" + qf + ")"; } 
+    
+	if (operator.equals("->intersectAll"))
+    { return "UmlRsdsLib<" + celtype + ">::intersectAll(" + qf + ")"; } 
 
     if (operator.equals("->flatten")) 
     { if (Type.isSequenceType(argument.type))
@@ -2683,6 +2805,87 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "UmlRsdsLib<void*>::" + data + "(" + pre + ")"; }
     // return qf + ".get(0)"; 
   } // keys, values
+  
+  public Vector mutants()
+  { Vector res = new Vector(); 
+    res.add(this); 
+    Vector argmutants = argument.mutants();
+	
+    String mutantop = null;  
+    if (operator.equals("->first"))
+    { mutantop = "->last"; }
+    else if (operator.equals("->last"))
+    { mutantop = "->first"; }
+    else if (operator.equals("->front"))
+    { mutantop = "->tail"; }
+    else if (operator.equals("->tail"))
+    { mutantop = "->front"; }
+    else if (operator.equals("->isEmpty"))
+    { mutantop = "->notEmpty"; }
+    else if (operator.equals("->notEmpty"))
+    { mutantop = "->isEmpty"; }
+	
+    for (int i = 0; i < argmutants.size(); i++) 
+    { Expression mutant = (Expression) argmutants.get(i); 
+      if (mutantop != null) 
+      { UnaryExpression thisclone = (UnaryExpression) this.clone();
+        thisclone.operator = mutantop; 
+        thisclone.argument = mutant;  
+        res.add(thisclone); 
+      }
+      else if ("not".equals(operator) || "-".equals(operator))
+      { res.add(mutant); } 
+    }
+    return res; 
+  } 
+
+  public Vector singleMutants()
+  { Vector res = new Vector(); 
+    // res.add(this); 
+    Vector argmutants = argument.singleMutants();
+	
+    String mutantop = null;  
+    if (operator.equals("->first"))
+    { mutantop = "->last"; }
+    else if (operator.equals("->last"))
+    { mutantop = "->first"; }
+    else if (operator.equals("->front"))
+    { mutantop = "->tail"; }
+    else if (operator.equals("->tail"))
+    { mutantop = "->front"; }
+    else if (operator.equals("->isEmpty"))
+    { mutantop = "->notEmpty"; }
+    else if (operator.equals("->notEmpty"))
+    { mutantop = "->isEmpty"; }
+    else if (operator.equals("->sum"))
+    { mutantop = "->prd"; }
+    else if (operator.equals("->prd"))
+    { mutantop = "->sum"; }
+    
+    for (int i = 0; i < argmutants.size(); i++) 
+    { Expression mutant = (Expression) argmutants.get(i); 
+      UnaryExpression thisclone = (UnaryExpression) this.clone();
+      thisclone.operator = operator; 
+      thisclone.argument = mutant;
+      if (VectorUtil.containsEqualString(thisclone + "",res)) { } 
+      else 
+      { res.add(thisclone); } 
+    }
+
+    if (mutantop != null) 
+    { UnaryExpression thisclone = (UnaryExpression) this.clone();
+      thisclone.operator = mutantop; 
+      thisclone.argument = argument;  
+      if (VectorUtil.containsEqualString(thisclone + "",res)) { } 
+      else 
+      { res.add(thisclone); } 
+    }  
+    else if ("not".equals(operator) || "-".equals(operator))
+    { res.add(argument); } 
+
+    return res; 
+  } 
+
 
   public BExpression bqueryForm(java.util.Map env)
   { BExpression pre = argument.bqueryForm(env); 

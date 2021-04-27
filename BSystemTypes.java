@@ -5259,6 +5259,23 @@ public class BSystemTypes extends BComponent
     return res;
   }
 
+  public static String generateIsMatchOp()
+  { String res = "  public static boolean isMatch(String str, String regex)\n" + 
+                 "  { return str.matches(regex); }\n\n"; 
+    return res;
+  }
+
+  public static String generateHasMatchOp()
+  { String res = "  public static boolean hasMatch(String str, String regex)\n" + 
+                 "  { java.util.regex.Pattern patt = java.util.regex.Pattern.compile(regex);\n" +  
+                 "    java.util.regex.Matcher matcher = patt.matcher(str); \n" + 
+                 "    if (matcher.find())\n" + 
+                 "    { return true; }\n" + 
+                 "    return false;\n" +  
+                 "  }\n\n"; 
+    return res; 
+  } 
+
   public static String generateBeforeOpCSharp()
   { String res = "  public static string before(string s, string sep)\n" +
       "  { if (sep.Length == 0) { return s; }\n" +
@@ -7564,12 +7581,23 @@ public class BSystemTypes extends BComponent
       "    for (int i = 0; i < a->size(); i++)\n" + 
       "    { if (x == (*a)[i]) { return i+1; } }\n" +
       "    return res; \n" +
-      "  }\n"; 
+      "  }\n\n"; 
     res = res + "  static int indexOf(string x, string str)\n" + 
       "  { int res = str.find(x); \n" +
       "    if (res == string::npos) { return 0; }\n" + 
       "    return res + 1; \n" +
-      "  } \n"; 
+      "  } \n\n" + 
+      "  static int lastIndexOf(_T x, vector<_T>* a)\n" + 
+      "  { int res = 0; \n" +
+      "    for (int i = a->size() - 1; i >= 0; i--)\n" + 
+      "    { if (x == (*a)[i]) { return i+1; } }\n" +
+      "    return res; \n" +
+      "  }\n\n"; 
+    res = res + "  static int lastIndexOf(string x, string str)\n" + 
+      "  { int res = str.rfind(x); \n" +
+      "    if (res == string::npos) { return 0; }\n" + 
+      "    return res + 1; \n" +
+      "  } \n\n"; 
     return res; 
   } 
 
@@ -7580,13 +7608,24 @@ public class BSystemTypes extends BComponent
       "    for (int i = 0; i < str.length(); i++)\n" +  
       "    { res[i] = tolower(str[i]); }\n" +
       "    return res; \n" +  
-      "  }\n"; 
+      "  }\n\n"; 
     res = res + "  static string toUpperCase(string str)\n" + 
       "  { string res(str);\n" + 
       "    for (int i = 0; i < str.length(); i++)\n" +  
       "    { res[i] = toupper(str[i]); }\n" +
       "    return res;\n" + 
-      "  }\n"; 
+      "  }\n\n";
+    res = res + "  static bool equalsIgnoreCase(string str1, string str2)\n" + 
+      "  { int len1 = str1.length();\n" + 
+      "    int len2 = str2.length();\n" + 
+      "    if (len1 != len2) { return false; }\n" + 
+      "    for (int i = 0; i < len1; i++)\n" +  
+      "    { if (tolower(str1[i]) == tolower(str2[i])) { }\n" + 
+      "      else { return false; }\n" +
+      "    }\n" + 
+      "    return true;\n" + 
+      "  }\n\n";
+ 
     return res; 
   } 
 
@@ -7598,7 +7637,7 @@ public class BSystemTypes extends BComponent
       "    if (l1 < l2) { return false; }\n" + 
       "    if (s1.substr(0,l2) == s2) { return true; }\n" +  
       "    return false; \n" +  
-      "  }\n"; 
+      "  }\n\n"; 
     res = res + 
       "  static bool endsWith(string s1, string s2)\n" + 
       "  { int l1 = s1.length(); \n" + 
@@ -7606,7 +7645,7 @@ public class BSystemTypes extends BComponent
       "    if (l1 < l2) { return false; }\n" + 
       "    if (s1.substr(l1-l2,l2) == s2) { return true; }\n" +  
       "    return false; \n" +  
-      "  }\n"; 
+      "  }\n\n"; 
     return res; 
   } 
 
@@ -8265,7 +8304,7 @@ public class BSystemTypes extends BComponent
       "    return res;\n" +
       "  }\n\n"; 
 	res = res + 
-	  "  public static HashMap restrictMap(Map m1, Vector ks) \n" +
+      "  public static HashMap restrictMap(Map m1, Vector ks) \n" +
       "  { Vector keys = new Vector();\n" +
       "    keys.addAll(m1.keySet());\n" +
       "    HashMap res = new HashMap();\n" +
@@ -8276,7 +8315,41 @@ public class BSystemTypes extends BComponent
       "      { res.put(key,m1.get(key));  }\n" +
       "    }    \n" +
       "    return res;\n" +
-      "  }\n"; 
+      "  }\n\n"; 
+	res = res + 
+      "  public static boolean includesKey(Map m, Object key) \n" +
+      "  { Object val = m.get(key); \n" + 
+      "    if (val == null) { return false; }\n" +
+      "    return true;\n" +
+      "  }\n\n"; 
+    res = res + 
+      "  public static boolean excludesKey(Map m, Object key) \n" +
+      "  { Object val = m.get(key); \n" + 
+      "    if (val == null) { return true; }\n" +
+      "    return false;\n" +
+      "  }\n\n"; 
+	res = res + 
+      "  public static boolean includesValue(Map m, Object val) \n" +
+      "  { Vector keys = new Vector();\n" +
+      "    keys.addAll(m.keySet());\n" +
+      "    for (int x = 0; x < keys.size(); x++)\n" +
+      "    { Object v = m.get(x);\n" +
+      "      if (v != null && v.equals(val))\n" +
+      "      { return true;  }\n" +
+      "    }    \n" +
+      "    return false;\n" +
+      "  }\n\n"; 
+    res = res + 
+      "  public static boolean excludesValue(Map m, Object val) \n" +
+      "  { Vector keys = new Vector();\n" +
+      "    keys.addAll(m.keySet());\n" +
+      "    for (int x = 0; x < keys.size(); x++)\n" +
+      "    { Object v = m.get(x);\n" +
+      "      if (v != null && v.equals(val))\n" +
+      "      { return false;  }\n" +
+      "    }    \n" +
+      "    return true;\n" +
+      "  }\n\n"; 
     return res; 
   } 
 
