@@ -152,7 +152,7 @@ def replace(str,sub,rep) :
   return res.replace(sub,rep)
 
 
-def split(str, delimiters) :
+def splitByAll(str, delimiters) :
   if 0 < len(delimiters) :  
     delim = delimiters[0] 
     taildelims = (delimiters)[1:]
@@ -160,7 +160,7 @@ def split(str, delimiters) :
     res = [] 
     for st in splits : 
       if len(st) > 0 : 
-        res.extend(split(st, taildelims))
+        res.extend(splitByAll(st, taildelims))
     return res
   else : 
     result = [] 
@@ -168,8 +168,18 @@ def split(str, delimiters) :
     return result
 
 
-def matches(str, pattern) : 
+def split(str, pattern) : 
+  return re.split(pattern,str)
+
+
+def isMatch(str, pattern) : 
   if re.fullmatch(pattern,str) == None : 
+    return False
+  else : 
+    return True
+
+def hasMatch(str, pattern) : 
+  if re.search(pattern,str) == None : 
     return False
   else : 
     return True

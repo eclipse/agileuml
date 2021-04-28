@@ -2135,19 +2135,24 @@ struct ocltnode* oclSubtractMap(struct ocltnode* m1, struct ocltnode* m2)
  
 
 /* Utility functions to parse strings and build formats        */ 
-/* matches, allMatches and replaceAll need the regex.h library */
+/* isMatch, hasMatch, allMatches and replaceAll need the 
+   regex.h library */
 
-unsigned char matches(char* str, char* patt) 
+unsigned char hasMatch(char* str, char* patt) 
 { regexp* expression = regcomp(patt); 
   int r = regexec(expression, str); 
   if (r == TRUE)
-  { printf("Expression matches\n"); 
-    if (strlen(str) > strlen(expression->startp[0]))
-    { printf("Partial match\n"); } 
-    else if (strlen(expression->endp[0]) == 0) 
-    { printf("Complete match\n");
-      return TRUE; 
-    } 
+  { return TRUE; } 
+  return FALSE; 
+}  
+
+unsigned char isMatch(char* str, char* patt) 
+{ regexp* expression = regcomp(patt); 
+  int r = regexec(expression, str); 
+  if (r == TRUE)
+  { if (strlen(str) == strlen(expression->startp[0]) &&
+        strlen(expression->endp[0]) == 0) 
+    { return TRUE; } 
   } 
   return FALSE; 
 }  
