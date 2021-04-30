@@ -2198,6 +2198,75 @@ char** allMatches(char* str, char* patt)
   return res; 
 } 
 
+char** split(char* str, char* patt)
+{ int strsize = strlen(str); 
+  int pattsize = strlen(patt);
+ 
+  char** res = (char**) calloc(strsize + 2, sizeof(char*));
+
+  if (strsize == 0 || pattsize == 0)
+  { res[0] = str; 
+    res[1] = NULL; 
+    return res; 
+  } 
+
+  int i = 0; 
+  char* pos = &str[0]; 
+    
+  regexp* expression = regcomp(patt); 
+  int r = regexec(expression, str); 
+
+  if (r == FALSE) 
+  { res[0] = str; 
+    res[1] = NULL; 
+    return res; 
+  } 
+
+  while (r == TRUE)
+  {  
+    if (expression->startp[0] != NULL && 
+        expression->endp[0] != NULL)
+    { char* st = expression->startp[0];
+      int stlen = strlen(st);  
+      char* en = expression->endp[0]; 
+      int enlen = strlen(en);  
+      char* mat = (char*) malloc(strsize*sizeof(char)); 
+      int j = 0; 
+      for ( ; pos < st ; pos++)
+      { mat[j] = *pos; 
+        j++;
+      }
+
+      mat[j] = '\0'; 
+      if (j > 0)
+      { res[i] = mat; 
+        i++;
+      } 
+
+      pos = &en[0]; 
+      r = regexec(expression, en);
+    }
+    else 
+    { r = FALSE; }
+  } 
+
+  char* mat = (char*) malloc(strsize*sizeof(char)); 
+  int j = 0; 
+  for ( ; pos <= &str[strsize-1] ; pos++)
+  { mat[j] = *pos; 
+    j++;
+  }
+
+  mat[j] = '\0'; 
+  if (j > 0)
+  { res[i] = mat; 
+    i++;
+  } 
+
+  res[i] = NULL; 
+  return res; 
+} 
+
 char* replaceAll(char* str, char* patt, char* rep)
 { int strsize = strlen(str); 
   int pattsize = strlen(patt); 
@@ -2308,7 +2377,7 @@ char** tokenise(char* str, unsigned char (*isseperator)(char))
   return tokens;  
 } 
 
-char** split(char* str, char* seps) 
+char** splitOnSeparators(char* str, char* seps) 
 { int maxtokens = strlen(str); 
   if (maxtokens == 0) 
   { return NULL; } 

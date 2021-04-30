@@ -1,15 +1,21 @@
+//
+//  Ocl.swift
+//
+//  Created by Kevin Lano on 31/12/2020.
+//
+
 import Foundation
-import Glibc
+import Darwin
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003,2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
 *
 * SPDX-License-Identifier: EPL-2.0
 * *****************************/
-/* OCL library for Swift version 4+ */ 
+/* OCL library for Swift version 4+ */
 
 class Ocl
 {
@@ -55,7 +61,7 @@ class Ocl
       { result.append(y) }
     }
     return result
-  } 
+  }
 
   static func sequenceSubtract<T : Equatable>(s1 : [T], s2 : [T]) -> [T]
   { var result : [T] = [T]()
@@ -65,7 +71,7 @@ class Ocl
       { result.append(y) }
     }
     return result
-  } 
+  }
 
   static func sequenceSubtract<T>(s1 : [T], s2 : Set<T>) -> [T]
   { var result : [T] = [T]()
@@ -75,25 +81,25 @@ class Ocl
       { result.append(y) }
     }
     return result
-  } 
+  }
 
   static func intersectionSequence<T : Equatable>(s1 : [T], s2 : [T]) -> [T]
   { var result : [T] = [T]()
     for y in s1
-    { if containsSequence(s: s2, x: y) 
+    { if containsSequence(s: s2, x: y)
       { result.append(y) }
     }
     return result
-  } 
+  }
 
 
   static func containsSequence<T : Equatable>(s : [T], x : T) -> Bool
   { for y in s
-    { if x == y 
+    { if x == y
       { return true }
     }
     return false
-  } 
+  }
 
   static func tail<T>(s : [T]) -> [T]
   { var result : [T] = [T]()
@@ -102,7 +108,7 @@ class Ocl
       { result.append(x) }
     }
     return result
-  } 
+  }
 
   static func subrange<T>(s : [T], st : Int, en : Int) -> [T]
   { var result : [T] = [T]()
@@ -110,7 +116,7 @@ class Ocl
     { if i+1 >= st && i < en
       { result.append(x) }
       else if i >= en
-      { return result } 
+      { return result }
     }
     return result
   }
@@ -120,7 +126,7 @@ class Ocl
     result = result + s
     result.removeLast()
     return result
-  } 
+  }
 
   static func reverse<T>(s : [T]) -> [T]
   { var result : [T] = [T]()
@@ -129,6 +135,13 @@ class Ocl
     return result
   }
 
+  static func count<T : Equatable>(s : [T], x : T) -> Int
+  { var result : Int = 0
+    result = s.filter{ $0 == x }.count
+	return result
+  } 
+  // But it may be more efficient just to loop over s, testing ==
+  
   static func sum(s : [Int]) -> Int
   { var result : Int = 0
     for x in s
@@ -206,6 +219,12 @@ class Ocl
     return result
   }
 
+  static func concatenateAll<T>(s : [[T]]) -> [T]
+  { var result : [T] = [T]()
+    for x in s
+    { result = result + x }
+    return result
+  }
 
   static func unionAll<D,T>(s : Set<D>, f : (D) -> Set<T>) -> Set<T>
   { var result : Set<T> = Set<T>()
@@ -219,9 +238,9 @@ class Ocl
     let y = Ocl.any(s: s)
     
     if (y == nil)
-    { return result } 
-    else 
-    { result = y! } 
+    { return result }
+    else
+    { result = y! }
     
     for x in s
     { result.formIntersection(x) }
@@ -233,9 +252,9 @@ class Ocl
     let y = any(s: s)
     
     if (y == nil)
-    { return result } 
-    else 
-    { result = f(y!) } 
+    { return result }
+    else
+    { result = f(y!) }
     
     for x in s
     { result.formIntersection(f(x)) }
@@ -257,14 +276,14 @@ class Ocl
   static func toSet<T>(s : Dictionary<String,T>) -> Set<T>
   { var result : Set<T> = Set<T>()
     for (_,x) in s
-    { result.insert(x) } 
+    { result.insert(x) }
     return result
   }
 
   static func toSequence<T>(s : Set<T>) -> [T]
   { var result : [T] = [T]()
     for x in s
-    { result.append(x) } 
+    { result.append(x) }
     return result
   }
 
@@ -277,19 +296,9 @@ class Ocl
   static func toSequence<T>(s : Dictionary<String,T>) -> [T]
   { var result : [T] = [T]()
     for (_,x) in s
-    { result.append(x) } 
+    { result.append(x) }
     return result
   }
-
-
-  static func count<T : Equatable>(s : [T], x : T) -> Int
-  { var result : Int = 0
-    for y in s
-    { if x == y 
-      { result = result + 1 }
-    }
-    return result
-  } 
 
   static func count<T>(s : Set<T>, x : T) -> Int
   { let result : Int = 0
@@ -359,8 +368,8 @@ class Ocl
   { var found : Bool = false
     for v in s
     { if (f(v))
-      { if (found) 
-        { return false } 
+      { if (found)
+        { return false }
         found = true
       }
     }
@@ -390,7 +399,7 @@ class Ocl
       else
       { result.insert(v) }
     }
-    return result 
+    return result
   }
 
   static func isUnique<T, R : Hashable>(s : Set<T>, f : (T) -> R) -> Bool
@@ -398,7 +407,7 @@ class Ocl
 
     for v in s
     { if found.contains(f(v))
-      { return false } 
+      { return false }
       found.insert(f(v))
     }
     return true
@@ -425,8 +434,8 @@ class Ocl
   { var found : Bool = false
     for v in s
     { if (f(v))
-      { if (found) 
-        { return false } 
+      { if (found)
+        { return false }
         found = true
       }
     }
@@ -440,7 +449,7 @@ class Ocl
       else
       { result.append(v) }
     }
-    return result 
+    return result
   }
 
   static func isUnique<T,R: Hashable>(s : [T], f : (T) -> R) -> Bool
@@ -448,27 +457,81 @@ class Ocl
 
     for v in s
     { if found.contains(f(v))
-      { return false } 
+      { return false }
       found.insert(f(v))
     }
     return true
   }
 
+    static func selectMaximals<T,R: Comparable>(s : [T], f : (T) -> R) -> [T]
+    { var result : [T] = [T]()
+      var values : [R] = [R]()
+
+      for (_,v) in s.enumerated()
+      { if result.count == 0
+        {
+          result.append(v)
+          values.append(f(v))
+        }
+        else
+        { let y : R = f(v)
+          if y > values[0]
+          { result = [T]()
+            result.append(v)
+            values = [R]()
+            values.append(y)
+          }
+          else if y == values[0]
+          { result.append(v)
+            values.append(y)
+          }
+        }
+      }
+      return result
+    }
+
+    static func selectMinimals<T,R: Comparable>(s : [T], f : (T) -> R) -> [T]
+    { var result : [T] = [T]()
+      var values : [R] = [R]()
+
+      for (_,v) in s.enumerated()
+      { if result.count == 0
+        {
+          result.append(v)
+          values.append(f(v))
+        }
+        else
+        { let y : R = f(v)
+          if y < values[0]
+          { result = [T]()
+            result.append(v)
+            values = [R]()
+            values.append(y)
+          }
+          else if y == values[0]
+          { result.append(v)
+            values.append(y)
+          }
+        }
+      }
+      return result
+    }
+    
 
  static func includingMap<T>(m : Dictionary<String,T>, k : String, val : T) -> Dictionary<String,T>
   { var res: Dictionary<String,T> = [String:T]()
-    for (key,value) in m 
-    { res[key] = value } 
-    res[k] = val 
+    for (key,value) in m
+    { res[key] = value }
+    res[k] = val
     return res
   }
 
   static func unionMap<T>(m1 : Dictionary<String,T>, m2 : Dictionary<String,T>) -> Dictionary<String,T>
   { var res : Dictionary<String,T> = [String:T]()
     for (key,value) in m1
-    { res[key] = value } 
+    { res[key] = value }
     for (key,value) in m2
-    { res[key] = value } 
+    { res[key] = value }
     return res
   }
 
@@ -476,7 +539,7 @@ class Ocl
   { var res : Dictionary<String,T> = [String:T]()
     for (key,value) in m1
     { if (m2[key] == value)
-      { res[key] = value } 
+      { res[key] = value }
     }
     return res
   }
@@ -485,8 +548,8 @@ class Ocl
   { var res : Dictionary<String,T> = [String:T]()
     for (key,value) in m1
     { if (m2[key] == nil)
-      { res[key] = value } 
-    } 
+      { res[key] = value }
+    }
     return res
   }
 
@@ -495,8 +558,8 @@ class Ocl
   { var res : Dictionary<String,T> = [String:T]()
     for (key,value) in m
     { if (value != v)
-      { res[key] = value } 
-    } 
+      { res[key] = value }
+    }
     return res
   }
 
@@ -504,8 +567,8 @@ class Ocl
   { var res : Dictionary<String,T> = [String:T]()
     for (key,value) in m
     { if (key != k)
-      { res[key] = value } 
-    } 
+      { res[key] = value }
+    }
     return res
   }
 
@@ -528,10 +591,13 @@ class Ocl
     return result
   }
 
-  static func collectMap<T,R>(m : Dictionary<String,T>, f : (T) -> R) -> Dictionary<String,R>
+  static func collectMap<T,R>(m : Dictionary<String,T>, f : (T) throws -> R) -> Dictionary<String,R>
   { var result : Dictionary<String,R> = [String:R]()
     for (k,v) in m
-    { result[k] = f(v) }
+    { do
+      { try result[k] = f(v) }
+      catch { }
+    }
     return result
   }
 
@@ -544,14 +610,14 @@ class Ocl
     return result
   }
 
-  static func mapRange<T>(m : Dictionary<String,T>) -> [T] 
+  static func mapRange<T>(m : Dictionary<String,T>) -> [T]
   { var result : [T] = [T]()
     for (_,v) in m
     { result.append(v) }
     return result
   }
 
-  static func mapKeys<T>(m : Dictionary<String,T>) -> [String] 
+  static func mapKeys<T>(m : Dictionary<String,T>) -> [String]
   { var result : [String] = [String]()
     for (k,_) in m
     { result.append(k) }
@@ -570,8 +636,8 @@ class Ocl
   { var found : Bool = false
     for (_,v) in s
     { if (f(v))
-      { if (found) 
-        { return false } 
+      { if (found)
+        { return false }
         found = true
       }
     }
@@ -583,7 +649,7 @@ class Ocl
 
     for (_,v) in s
     { if found.contains(f(v))
-      { return false } 
+      { return false }
       found.insert(f(v))
     }
     return true
@@ -609,7 +675,7 @@ class Ocl
     { if containsSequence(s: s1, x: y)
       {}
       else
-      { return false } 
+      { return false }
     }
     return true
   }
@@ -619,11 +685,71 @@ class Ocl
   for index in str.indices
   { let c : Character = str[index]
     count = count + 1
-    if (count == ind) 
-    { return String(c) } 
-  } 
+    if (count == ind)
+    { return String(c) }
+  }
   return ""
 }
+
+
+  static func iswhitespace(s: String) -> Bool
+  { if (" " == s || "\n" == s || "\t" == s) 
+    { return true } 
+    return false
+  } 
+  
+  static func trim(str : String) -> String
+  {
+    var result : String = ""
+    result = ""
+    var i : Int = 0
+    i = 1
+    while ((i < str.count && Ocl.iswhitespace(s: Ocl.at(str: str, ind: i))))
+    {
+      i = i + 1
+    }
+    var j : Int = 0
+    j = str.count
+    while (j >= 1 && Ocl.iswhitespace(s: Ocl.at(str: str, ind: j)))
+    {
+      j = j - 1
+    }
+    if j < i
+    {
+      result = ""
+    }
+    else {
+      result = Ocl.stringSubrange(str: str, st: i, en: j)
+    }
+    return result
+
+  }
+
+  static func replace(str : String, delim : String, s2 : String) -> String
+  { var s : String = "" + str
+    var result : String = ""
+    var i : Int = Ocl.indexOf(str: str, ch: delim)
+
+    while (i > 0)
+    {
+      result = result + Ocl.stringSubrange(str: s, st: 1, en: i - 1) + s2
+      s = Ocl.stringSubrange(str: s, st: i + delim.count, en: s.count)
+      i = Ocl.indexOf(str: s, ch: delim)
+    }
+    result = result + s
+    return result
+  }
+
+  static func equalsIgnoreCase(s1 : String, s2 : String) -> Bool
+  {
+    var result : Bool = false
+    if s1.lowercased() == s2.lowercased()
+    {
+      result = true
+    }
+    return result
+  }
+
 
  static func indexOf(str: String, ch: String) -> Int
  { var res : Int = 0
@@ -637,31 +763,31 @@ class Ocl
    for index in str.indices
    { let c : Character = str[index]
      
-	 if found && (ind < sepchars.count)
-	 { if (c == sepchars[ind])
-       { ind = ind + 1 } 
-       else 
+     if found && (ind < sepchars.count)
+     { if (c == sepchars[ind])
+       { ind = ind + 1 }
+       else
        { found = false
          res = res + ind
-		 ind = 0
-	   } 
-     } 
-	 else if found
-	 { return res + 1 } 
-	 
+         ind = 0
+       }
+     }
+     else if found
+     { return res + 1 }
+     
      if found == false
      { if c == sepchars[0]
        { found = true
          ind = 1
-       } 
+       }
      }
     
      if found == false
      { res = res + 1 }
    }
 
-   if found   
-   { return res + 1 } 
+   if found
+   { return res + 1 }
    return 0
  }
 
@@ -675,7 +801,7 @@ class Ocl
       if count >= st && count <= en
       { result.append(c) }
       else if count > en
-      { return String(result) } 
+      { return String(result) }
     }
     return String(result)
   }
@@ -691,13 +817,13 @@ class Ocl
 
     for index in s1.indices
     { let c1 : Character = s1[index]
-      if subtracted.contains(c1) 
-      { } 
-      else 
-      { result.append(c1) } 
+      if subtracted.contains(c1)
+      { }
+      else
+      { result.append(c1) }
     }
-    print(subtracted)
-    print(result)
+    // print(subtracted)
+    // print(result)
     return String(result)
   }
 
@@ -708,25 +834,25 @@ class Ocl
       { result.append(x) }
     }
     for y in s2
-    { result.append(y) } 
+    { result.append(y) }
     for (j,z) in s1.enumerated()
     { if j >= ind-1
       { result.append(z) }
     }
     return result
-  } 
+  }
 
   static func characters(str: String) -> [String]
   { var res : [String] = [String]()
     for ind in str.indices
-    { res.append(String(str[ind])) } 
+    { res.append(String(str[ind])) }
     return res
   }
 
   static func chars(str: String) -> [Character]
   { var res : [Character] = [Character]()
     for ind in str.indices
-    { res.append(str[ind]) } 
+    { res.append(str[ind]) }
     return res
   }
 
@@ -747,51 +873,174 @@ class Ocl
    static func toLineSequence(str: String) -> [String]
    { var result : [String] = [String]()
      var buffer : String = ""
-	 
+     
      for index in str.indices
      { let c : Character = str[index]
        if "\n" == String(c)
-       { result.append(buffer) 
-	     buffer = String() 
-	   } 
-	   else 
-	   { buffer = buffer + String(c) }
-     } 	   
-	 result.append(buffer)
+       { result.append(buffer)
+         buffer = String()
+       }
+       else
+       { buffer = buffer + String(c) }
+     }
+     result.append(buffer)
      return result
    }
 
    static func before(str: String, sep: String) -> String
    { let ind = indexOf(str: str, ch: sep)
      if ind > 0
-     { return stringSubrange(str: str, st: 1, en: ind-1) } 
+     { return stringSubrange(str: str, st: 1, en: ind-1) }
      return str
-   } // Single-character sep only 
+   } // Single-character sep only
 
    static func after(str: String, sep: String) -> String
    { let revstr = reverseString(str: str)
      let revsep = reverseString(str: sep)
-	 let ind = indexOf(str: revstr, ch: revsep)
+     let ind = indexOf(str: revstr, ch: revsep)
      if ind > 0
-     { let res = stringSubrange(str: revstr, st: 1, en: ind-1) 
-	   return reverseString(str: res)
-	 } 
+     { let res = stringSubrange(str: revstr, st: 1, en: ind-1)
+       return reverseString(str: res)
+     }
      return ""
-   } // Single-character sep only 
+   } // Single-character sep only
    
-   static func matches(str: String, pattern: String) -> Bool
+   static func hasMatch(str: String, pattern: String) -> Bool
    { let rge = NSRange(location: 0, length: str.utf16.count)
-     var regexp = try! NSRegularExpression(pattern: pattern)
+     let regexp = try! NSRegularExpression(pattern: pattern)
      let pred = regexp.firstMatch(in: str, options: [], range: rge)
      return pred != nil
   }
   
-  /* Only for Swift 5+ 
-  static func before(str: String, sep: String) -> String
-  { if let ind = str.firstIndex(of: sep)
-    { return String(str[..<ind]) } 
-    return str
-  } */ 
+   static func isMatch(str: String, pattern: String) -> Bool
+   { let rge = NSRange(location: 0, length: str.utf16.count)
+     let regexp = try! NSRegularExpression(pattern: pattern)
+     let pred = regexp.firstMatch(in: str, options: [], range: rge)
+     if pred == nil
+     { return false }
+     let res = pred!.range
+     return res.length == str.count
+  }
 
+  static func replaceAll(str: String, pattern: String, rep: String) -> String
+  { let regex = try! NSRegularExpression(pattern: pattern)
+    
+    let modText = 
+      regex.stringByReplacingMatches(in: str, options: [], 
+	          range: NSRange(location: 0, length: str.count), withTemplate: rep)
+    return modText
+  }  
+
+  static func allMatches(str: String, pattern: String) -> [String]
+   { let rge = NSRange(location: 0, length: str.utf16.count)
+     let regexp = try! NSRegularExpression(pattern: pattern)
+     let pred = regexp.matches(in: str, options: [], range: rge)
+     var result : [String] = [String]()
+
+     for p in pred
+     { let range = p.range
+       let matchString = Ocl.stringSubrange(str: str, st: range.location+1, en: range.location + range.length)
+       result.append(matchString)
+     }
+     return result
+  }
+  
+
+   static func split(str: String, pattern: String) -> [String]
+   { let rge = NSRange(location: 0, length: str.utf16.count)
+     let regexp = try! NSRegularExpression(pattern: pattern)
+     let pred = regexp.matches(in: str, options: [], range: rge)
+     var result : [String] = [String]()
+     var prev : Int = 1; 
+
+     for p in pred
+     { let range = p.range
+       let splitString = Ocl.stringSubrange(str: str, st: prev, en: range.location)
+       prev = range.location + range.length + 1
+       if splitString.count > 0
+       { result.append(splitString) }
+     }
+
+     if prev < str.count
+     { result.append(Ocl.stringSubrange(str: str, st: prev, en: str.count)) } 
+     return result
+  }
+
+  static func lastIndexOf(s : String, d : String) -> Int
+  {
+    var result : Int = 0
+    var i : Int = 0
+    i = Ocl.indexOf(str: Ocl.reverseString(str: s), ch: Ocl.reverseString(str: d))
+    if i <= 0
+    {
+      result = 0
+    }
+    else 
+    {
+      if i > 0
+      {
+        result = s.count - i - d.count + 2
+      }
+    }
+    return result
+  }
+
+
+  static func tokeniseCSV(line: String) -> [String]
+  { // Assumes the separator is a comma
+    var buff : String = ""
+    // var x : Int = 0
+    // var len : Int = line.count
+    var instring : Bool = false
+    var res : [String] = [String]()
+   
+    for x in line.indices
+    { let chr : Character = line[x]
+      if chr == ","
+      { if instring
+        { buff = buff + String(chr) }
+        else
+        { res.append(buff)
+          buff = String()
+        }
+      }
+      else if "\"" == chr
+      { if instring
+        { instring = false }
+        else
+        { instring = true }
+      }
+      else
+      { buff = buff + String(chr) }
+    }
+    res.append(buff)
+    return res
+  }
+
+  static func parseCSVtable(rows: String) -> [String]
+  { var buff : String = ""
+    var ind : Int = 0
+    // var len : Int = rows.count
+    // var instring : Bool = false
+    var res : [String] = [String]()
+   
+    // Ignore the first row: column names
+    
+    for x in rows.indices
+    { let chr : Character = rows[x]
+      if chr == "\n" && ind > 0
+      { res.append(buff)
+        buff = String()
+        ind = ind + 1
+      }
+      else if chr == "\n"
+      { ind = ind + 1
+        buff = String()
+      }
+      else
+      { buff = buff + String(chr) }
+    }
+    res.append(buff)
+    return res
+  }
 }
-

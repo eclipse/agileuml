@@ -1,8 +1,8 @@
-
+// Place in the relevant package directory of your application. 
 
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -32,9 +32,36 @@ interface Evaluation<S,T> {
     T evaluate(S s);
 }
 
+class OclMaplet<K,T>
+{ K key; 
+  T value; 
+
+  OclMaplet(K k, T v)
+  { key = k; 
+    value = v; 
+  } 
+}
 
   public class Ocl
-  { 
+  { public static long getTime()
+    { java.util.Date d = new java.util.Date();
+      return d.getTime();
+    }
+
+    public static void displayString(String s)
+    { System.out.println(s); } 
+
+    public static void displayint(int i) 
+    { System.out.println("" + i); } 
+
+    public static void displaylong(long i)
+    { System.out.println("" + i); } 
+
+    public static void displayboolean(boolean b)
+    { System.out.println("" + b); } 
+
+    public static void displaydouble(double d)
+    { System.out.println("" + d); } 
 
     public static <T> HashSet<T> selectSet(Set<T> _s, Predicate<T> _f)
     { HashSet<T> result = new HashSet<T>(); 
@@ -181,6 +208,15 @@ interface Evaluation<S,T> {
       return result; 
     } 
 	
+    public static <K,T> HashMap<K,T> initialiseMap(OclMaplet ... args)
+    { HashMap<K,T> result = new HashMap<K,T>(); 
+      for (int i = 0; i < args.length; i++) 
+      { OclMaplet<K,T> x = (OclMaplet<K,T>) args[i]; 
+	    result.put(x.key, x.value); 
+	  } 
+      return result; 
+    } 
+
 	public static <T> HashSet<T> copySet(Collection<T> s)
 	{ HashSet<T> result = new HashSet<T>(); 
       result.addAll(s); 
@@ -190,6 +226,12 @@ interface Evaluation<S,T> {
 	public static <T> ArrayList<T> copySequence(Collection<T> s)
 	{ ArrayList<T> result = new ArrayList<T>(); 
       result.addAll(s); 
+	  return result; 
+	} 
+
+	public static <K,T> HashMap<K,T> copyMap(Map<K,T> s)
+	{ HashMap<K,T> result = new HashMap<K,T>(); 
+      result.putAll(s); 
 	  return result; 
 	} 
 
@@ -301,32 +343,39 @@ interface Evaluation<S,T> {
   public static <T> ArrayList<T> union(ArrayList<T> a, ArrayList<T> b)
   { ArrayList<T> res = new ArrayList<T>(); 
     res.addAll(a); res.addAll(b);
-    return res; }
+    return res; 
+  }
 
 
   public static <T> HashSet<T> subtract(HashSet<T> a, Collection<T> b)
   { HashSet<T> res = new HashSet<T>(); 
     res.addAll(a);
     res.removeAll(b);
-    return res; }
+    return res; 
+  }
 
   public static <T> TreeSet<T> subtract(TreeSet<T> a, Collection<T> b)
   { TreeSet<T> res = new TreeSet<T>(); 
     res.addAll(a);
     res.removeAll(b);
-    return res; }
+    return res; 
+  }
 
   public static <T> ArrayList<T> subtract(ArrayList<T> a, Collection<T> b)
   { ArrayList<T> res = new ArrayList<T>(); 
     res.addAll(a);
     res.removeAll(b);
-    return res; }
+    return res; 
+  }
 
   public static String subtract(String a, String b)
   { String res = ""; 
     for (int i = 0; i < a.length(); i++)
-    { if (b.indexOf(a.charAt(i)) < 0) { res = res + a.charAt(i); } }
-    return res; }
+    { if (b.indexOf(a.charAt(i)) < 0) 
+	  { res = res + a.charAt(i); } 
+	}
+    return res; 
+  }
 
 
 
@@ -334,19 +383,22 @@ interface Evaluation<S,T> {
   { HashSet<T> res = new HashSet<T>(); 
     res.addAll(a);
     res.retainAll(b);
-    return res; }
+    return res; 
+  }
 
   public static <T> TreeSet<T> intersection(TreeSet<T> a, Collection<T> b)
   { TreeSet<T> res = new TreeSet<T>(); 
     res.addAll(a);
     res.retainAll(b);
-    return res; }
+    return res; 
+  }
 
   public static <T> ArrayList<T> intersection(ArrayList<T> a, Collection<T> b)
   { ArrayList<T> res = new ArrayList<T>(); 
     res.addAll(a);
     res.retainAll(b);
-    return res; }
+    return res; 
+  }
 
 
 
@@ -378,29 +430,36 @@ interface Evaluation<S,T> {
   public static int sumint(Collection<Integer> a)
   { int sum = 0; 
     for (Integer x : a)
-    { if (x != null) { sum += x.intValue(); }
+    { if (x != null) 
+	  { sum += x.intValue(); }
     } 
-    return sum; }
+    return sum; 
+  }
 
   public static double sumdouble(Collection<Double> a)
   { double sum = 0.0; 
     for (Double x : a)
-    { if (x != null) { sum += x.doubleValue(); }
+    { if (x != null) 
+	  { sum += x.doubleValue(); }
     } 
-    return sum; }
+    return sum; 
+  }
 
   public static long sumlong(Collection<Long> a)
   { long sum = 0; 
     for (Long x : a)
-    { if (x != null) { sum += x.longValue(); }
+    { if (x != null) 
+	  { sum += x.longValue(); }
     } 
-    return sum; }
+    return sum; 
+  }
 
   public static String sumString(Collection<String> a)
   { String sum = ""; 
     for (String x : a)
     { sum = sum + x; }
-    return sum;  }
+    return sum;  
+  }
 
 
 
@@ -446,14 +505,14 @@ interface Evaluation<S,T> {
     { res = res + a.charAt(i); } 
     return res; }
 
-  public static <T> ArrayList<T> front(ArrayList<T> a)
+  public static <T> ArrayList<T> front(List<T> a)
   { ArrayList<T> res = new ArrayList<T>(); 
     for (int i = 0; i < a.size() - 1; i++)
     { res.add(a.get(i)); } 
     return res; }
 
 
-  public static <T> ArrayList<T> tail(ArrayList<T> a)
+  public static <T> ArrayList<T> tail(List<T> a)
   { ArrayList<T> res = new ArrayList<T>(); 
     for (int i = 1; i < a.size(); i++)
     { res.add(a.get(i)); } 
@@ -563,6 +622,19 @@ interface Evaluation<S,T> {
     return res;
   }
 
+  public static <T> ArrayList<T> includingSequence(List<T> l, T ob)
+  { ArrayList<T> res = new ArrayList<T>();
+    res.addAll(l);
+    res.add(ob);
+    return res;
+  }
+
+  public static <T> HashSet<T> includingSet(Set<T> l, T ob)
+  { HashSet<T> res = new HashSet<T>();
+    res.addAll(l);
+    res.add(ob);
+    return res;
+  }
 
   public static <T> int count(Collection<T> l, T obj)
   { return Collections.frequency(l,obj); }
@@ -576,7 +648,8 @@ interface Evaluation<S,T> {
     res++; 
     while (ind >= 0)
     { ind = ss.indexOf(x); 
-      if (ind == -1 || ss.equals("")) { return res; }
+      if (ind == -1 || ss.equals("")) 
+	  { return res; }
       res++; 
       ss = ss.substring(ind+1,ss.length());
     } 
@@ -760,26 +833,32 @@ interface Evaluation<S,T> {
 
 
  public static boolean isLong(String str)
-  { try { Long.parseLong(str); return true; }
-    catch (Exception _e) { return false; }
+  { try 
+    { Long.parseLong(str); 
+	  return true; 
+	}
+    catch (Exception _e) 
+	{ return false; }
   }
 
 
   public static boolean oclIsTypeOf(Object x, String E)
   { try { 
-    if (x.getClass() == Class.forName(E))
-    { return true; } 
-    else 
-    { return false; }
+      if (x.getClass() == Class.forName(E))
+      { return true; } 
+      else 
+      { return false; }
     } 
     catch (Exception e) { return false; }
   } 
 
 
   public static String before(String s, String sep)
-  { if (sep.length() == 0) { return s; }
+  { if (sep.length() == 0) 
+    { return s; }
     int ind = s.indexOf(sep);
-    if (ind < 0) { return s; }
+    if (ind < 0) 
+	{ return s; }
     return s.substring(0,ind); 
   }
 
@@ -787,23 +866,84 @@ interface Evaluation<S,T> {
   public static String after(String s, String sep)
   { int ind = s.indexOf(sep);
     int seplength = sep.length();
-    if (ind < 0) { return ""; }
-    if (seplength == 0) { return ""; }
+    if (ind < 0) 
+	{ return ""; }
+    if (seplength == 0) 
+	{ return ""; }
     return s.substring(ind + seplength, s.length()); 
   }
+  
+  public static String replace(String str, String delim, String rep)
+  { String result = "";
 
+    String s = str + ""; 
+    int i = (s.indexOf(delim) + 1);
+    if (i == 0) 
+    { return s; }
+	
+    int sublength = delim.length();
+    if (sublength == 0) 
+    { return s; }
+	
+    while (i > 0)
+    {
+      result = result + Ocl.subrange(s,1,i - 1) + rep;
+      s = Ocl.subrange(s,i + delim.length(),s.length());
+      i = (s.indexOf(delim) + 1);
+    }
+    result = result + s;
+    return result;
+  }
 
-  public static <D,R> Map<D,R> includingMap(Map<D,R> m, D src, R trg)
-  { Map<D,R> copy = new HashMap<D,R>();
+  public static ArrayList<String> split(String str, String delim)
+  { String[] splits = str.split(delim);
+       
+    ArrayList<String> res = new ArrayList<String>(); 
+  
+    for (int j = 0; j < splits.length; j++) 
+    { if (splits[j].length() > 0) 
+      { res.add(splits[j]); }
+    } 
+    return res; 
+  }
+  
+  public static ArrayList<String> allMatches(String str, String regex)
+  { java.util.regex.Pattern patt = java.util.regex.Pattern.compile(regex); 
+    java.util.regex.Matcher matcher = patt.matcher(str); 
+    ArrayList<String> res = new ArrayList<String>(); 
+    while (matcher.find())
+    { res.add(matcher.group() + ""); }
+    return res; 
+  }
+
+  public static String replaceAll(String str, String regex, String rep)
+  { java.util.regex.Pattern patt = java.util.regex.Pattern.compile(regex); 
+    java.util.regex.Matcher matcher = patt.matcher(str); 
+    return matcher.replaceAll(rep); 
+  }
+
+  public static boolean hasMatch(String str, String regex)
+  { java.util.regex.Pattern patt = java.util.regex.Pattern.compile(regex); 
+    java.util.regex.Matcher matcher = patt.matcher(str); 
+    if (matcher.find())
+    { return true; }
+    return false; 
+  }
+
+  public static boolean isMatch(String str, String regex)
+  { return str.matches(regex); }
+
+  public static <D,R> HashMap<D,R> includingMap(Map<D,R> m, D src, R trg)
+  { HashMap<D,R> copy = new HashMap<D,R>();
     copy.putAll(m); 
     copy.put(src,trg);
     return copy;
   } 
 
 
-  public static <D,R> Map<D,R> excludeAllMap(Map<D,R> m1, Map m2)
+  public static <D,R> HashMap<D,R> excludeAllMap(Map<D,R> m1, Map m2)
   { // m1 - m2
-    Map<D,R> res = new HashMap<D,R>();
+    HashMap<D,R> res = new HashMap<D,R>();
     Set<D> keys = m1.keySet(); 
   
     for (D key : keys)
@@ -816,18 +956,18 @@ interface Evaluation<S,T> {
   }
 
 
-  public static <D,R> Map<D,R> excludingMapKey(Map<D,R> m, D k)
+  public static <D,R> HashMap<D,R> excludingMapKey(Map<D,R> m, D k)
   { // m - { k |-> m(k) } 
-    Map<D,R> res = new HashMap<D,R>();
+    HashMap<D,R> res = new HashMap<D,R>();
     res.putAll(m);
     res.remove(k);
     return res;
   }
 
 
-  public static <D,R> Map<D,R> excludingMapValue(Map<D,R> m, R v)
+  public static <D,R> HashMap<D,R> excludingMapValue(Map<D,R> m, R v)
   { // m - { k |-> v }
-    Map<D,R> res = new HashMap<D,R>();
+    HashMap<D,R> res = new HashMap<D,R>();
     Set<D> keys = m.keySet(); 
     
     for (D key : keys)
@@ -840,16 +980,16 @@ interface Evaluation<S,T> {
   }
 
 
-  public static <D,R> Map<D,R> unionMap(Map<D,R> m1, Map<D,R> m2)
-  { Map<D,R> res = new HashMap<D,R>();
+  public static <D,R> HashMap<D,R> unionMap(Map<D,R> m1, Map<D,R> m2)
+  { HashMap<D,R> res = new HashMap<D,R>();
     res.putAll(m1);
     res.putAll(m2);    
     return res;
   }
 
 
-  public static <D,R> Map<D,R> intersectionMap(Map<D,R> m1, Map m2)
-  { Map<D,R> res = new HashMap<D,R>();
+  public static <D,R> HashMap<D,R> intersectionMap(Map<D,R> m1, Map m2)
+  { HashMap<D,R> res = new HashMap<D,R>();
     Set<D> keys = m1.keySet(); 
   
     for (D key : keys)
@@ -860,8 +1000,8 @@ interface Evaluation<S,T> {
     return res;
   }
 
-  public static <D,R> Map<D,R> restrictMap(Map<D,R> m1, Set<D> ks)
-  { Map<D,R> res = new HashMap<D,R>();
+  public static <D,R> HashMap<D,R> restrictMap(Map<D,R> m1, Set<D> ks)
+  { HashMap<D,R> res = new HashMap<D,R>();
     Set<D> keys = m1.keySet(); 
   
     for (D key : keys)
@@ -871,7 +1011,7 @@ interface Evaluation<S,T> {
     return res;
   }
 
-  public static <D,R> Map<D,R> selectMap(Map<D,R> m, Predicate<R> f)
+  public static <D,R> HashMap<D,R> selectMap(Map<D,R> m, Predicate<R> f)
   { HashMap<D,R> result = new HashMap<D,R>();
     Set<D> keys = m.keySet();
     for (D k : keys)
@@ -882,7 +1022,7 @@ interface Evaluation<S,T> {
     return result;
   }
 
-  public static <D,R> Map<D,R> rejectMap(Map<D,R> m, Predicate<R> f)
+  public static <D,R> HashMap<D,R> rejectMap(Map<D,R> m, Predicate<R> f)
   { HashMap<D,R> result = new HashMap<D,R>();
     Set<D> keys = m.keySet();
     for (D k : keys)
@@ -939,13 +1079,14 @@ interface Evaluation<S,T> {
     return true;
   }
 
-  public static <D,R> Map<D,R> addMap(Map<D,R> m, D key, R value)
+  public static <D,R> HashMap<D,R> addMap(HashMap<D,R> m, D key, R value)
   { m.put(key,value);
     return m;
   }
 
  public static ArrayList<String> tokeniseCSV(String line)
- { StringBuffer buff = new StringBuffer();
+ { // Assumes the separator is a comma
+   StringBuffer buff = new StringBuffer();
    int x = 0;
    int len = line.length();
    boolean instring = false;

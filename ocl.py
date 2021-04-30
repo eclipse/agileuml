@@ -169,7 +169,12 @@ def splitByAll(str, delimiters) :
 
 
 def split(str, pattern) : 
-  return re.split(pattern,str)
+  splits = re.split(pattern,str)
+  res = [] 
+  for st in splits : 
+    if len(st) > 0 : 
+      res.append(st)
+  return res
 
 
 def isMatch(str, pattern) : 
