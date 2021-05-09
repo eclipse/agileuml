@@ -370,6 +370,7 @@ char* after(char* s, char* sep)
     int i = 0;
     for ( ; i < n; i++, x--)
     { result[i] = s[x]; }
+    result[n] = '\0'; 
     return result;
   }
 
@@ -467,6 +468,80 @@ char* replace(char* str, char* delim, char* s2)
     }
     return result;
   }
+
+  void** reverseSequence(void** s)
+  { int n = length(s);
+    void** result = (void**) calloc(n+1,sizeof(void*));
+    int x = n-1;
+    int i = 0;
+    for ( ; i < n; i++, x--)
+    { result[i] = s[x]; }
+    result[n] = NULL; 
+    return result;
+  }
+
+int lastIndexOfSequence(void* x, void** col)
+{ int n = length(col); 
+
+  if (n == 0) 
+  { return 0; } 
+
+  void** revcol = reverseSequence(col); 
+
+  int i = indexOf(x, revcol);  
+  if (i <= 0)
+  { return 0; }
+  else
+  { return n - i + 1; }
+}
+
+
+  unsigned char hasPrefixSequence(void** sq, void** sq1)
+  { int n = length(sq);
+    int m = length(sq1);
+    if (n == 0 || m == 0 || m > n)
+    { return FALSE; }
+
+    int i = 0;
+    for ( ; i < m; i++) 
+    { if (sq[i] == sq1[i]) { } 
+      else 
+      { return FALSE; } 
+    } 
+
+    return TRUE;
+  }
+
+  int indexOfSubSequence(void** sq, void** sq1)
+  { int n = length(sq);
+    int m = length(sq1);
+    if (n == 0 || m == 0 || m > n)
+    { return 0; }
+  
+    int i = 0; 
+    for ( ; i+m <= n; i++) 
+    { if (hasPrefixSequence(&sq[i], sq1))
+      { return i+1; } 
+    } 
+    return 0; 
+  }
+
+int lastIndexOfSubSequence(void** sq, void** sq1)
+{ int n = length(sq); 
+  int m = length(sq1); 
+
+  if (n == 0 || m == 0 || m > n) 
+  { return 0; } 
+
+  void** revsq = reverseSequence(sq); 
+  void** revsq1 = reverseSequence(sq1); 
+
+  int i = indexOfSubSequence(revsq, revsq1);  
+  if (i <= 0)
+  { return 0; }
+  else
+  { return n - i - m + 2; }
+}
 
    void** append(void* col[], void* ex)
    { void** result;
@@ -620,6 +695,51 @@ char** concatenateString(char* _col1[], char* _col2[])
     result[len+1] = NULL;
     return result;
   }
+
+  char** reverseString(char** s)
+  { int n = length(s);
+    char** result = (char**) calloc(n+1,sizeof(char*));
+    int x = n-1;
+    int i = 0;
+    for ( ; i < n; i++, x--)
+    { result[i] = s[x]; }
+    result[n] = NULL; 
+    return result;
+  }
+
+  int** reverseint(int** s)
+  { int n = length(s);
+    int** result = (int**) calloc(n+1,sizeof(int*));
+    int x = n-1;
+    int i = 0;
+    for ( ; i < n; i++, x--)
+    { result[i] = s[x]; }
+    result[n] = NULL; 
+    return result;
+  }
+
+  long** reverselong(long** s)
+  { int n = length(s);
+    long** result = (long**) calloc(n+1,sizeof(long*));
+    int x = n-1;
+    int i = 0;
+    for ( ; i < n; i++, x--)
+    { result[i] = s[x]; }
+    result[n] = NULL; 
+    return result;
+  }
+
+  double** reversedouble(double** s)
+  { int n = length(s);
+    double** result = (double**) calloc(n+1,sizeof(double*));
+    int x = n-1;
+    int i = 0;
+    for ( ; i < n; i++, x--)
+    { result[i] = s[x]; }
+    result[n] = NULL; 
+    return result;
+  }
+
 
 
   char** insertString(char* col[], char* ex)
@@ -2198,75 +2318,6 @@ char** allMatches(char* str, char* patt)
   return res; 
 } 
 
-char** split(char* str, char* patt)
-{ int strsize = strlen(str); 
-  int pattsize = strlen(patt);
- 
-  char** res = (char**) calloc(strsize + 2, sizeof(char*));
-
-  if (strsize == 0 || pattsize == 0)
-  { res[0] = str; 
-    res[1] = NULL; 
-    return res; 
-  } 
-
-  int i = 0; 
-  char* pos = &str[0]; 
-    
-  regexp* expression = regcomp(patt); 
-  int r = regexec(expression, str); 
-
-  if (r == FALSE) 
-  { res[0] = str; 
-    res[1] = NULL; 
-    return res; 
-  } 
-
-  while (r == TRUE)
-  {  
-    if (expression->startp[0] != NULL && 
-        expression->endp[0] != NULL)
-    { char* st = expression->startp[0];
-      int stlen = strlen(st);  
-      char* en = expression->endp[0]; 
-      int enlen = strlen(en);  
-      char* mat = (char*) malloc(strsize*sizeof(char)); 
-      int j = 0; 
-      for ( ; pos < st ; pos++)
-      { mat[j] = *pos; 
-        j++;
-      }
-
-      mat[j] = '\0'; 
-      if (j > 0)
-      { res[i] = mat; 
-        i++;
-      } 
-
-      pos = &en[0]; 
-      r = regexec(expression, en);
-    }
-    else 
-    { r = FALSE; }
-  } 
-
-  char* mat = (char*) malloc(strsize*sizeof(char)); 
-  int j = 0; 
-  for ( ; pos <= &str[strsize-1] ; pos++)
-  { mat[j] = *pos; 
-    j++;
-  }
-
-  mat[j] = '\0'; 
-  if (j > 0)
-  { res[i] = mat; 
-    i++;
-  } 
-
-  res[i] = NULL; 
-  return res; 
-} 
-
 char* replaceAll(char* str, char* patt, char* rep)
 { int strsize = strlen(str); 
   int pattsize = strlen(patt); 
@@ -2377,7 +2428,7 @@ char** tokenise(char* str, unsigned char (*isseperator)(char))
   return tokens;  
 } 
 
-char** splitOnSeparators(char* str, char* seps) 
+char** split(char* str, char* seps) 
 { int maxtokens = strlen(str); 
   if (maxtokens == 0) 
   { return NULL; } 

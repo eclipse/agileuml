@@ -128,6 +128,21 @@ def equalsIgnoreCase(s1,s2) :
     result = True
   return result
 
+
+def indexOfSequence(sq,x) : 
+  if x in sq : 
+    return sq.index(x) + 1
+  else : 
+    return 0
+
+def lastIndexOfSequence(sq,x) : 
+  if x in sq : 
+    sqr = reverseSequence(sq)
+    i = indexOfSequence(sqr,x)
+    return len(sq) - i + 1
+  else : 
+    return 0
+
 def lastIndexOf(s,d) :
   result = 0
   dlen = len(d)
@@ -141,6 +156,45 @@ def lastIndexOf(s,d) :
       result = len(s) - i - dlen + 2
   return result
 
+
+def hasPrefixSequence(sq,sq1,j) : 
+  m = len(sq1)
+  n = len(sq)
+  if m == 0 or n == 0 or n < m : 
+    return False
+  i = 0
+  while i < m and i+j < n : 
+    if sq[i+j] != sq1[i] : 
+      return False
+    i = i+1
+  return True
+
+
+def indexOfSubSequence(sq,sq1) : 
+  m = len(sq1)
+  n = len(sq)
+  if m == 0 or n == 0 or n < m : 
+    return 0
+  i = 0
+  while i+m <= n : 
+    if hasPrefixSequence(sq,sq1,i) : 
+      return i+1
+    i = i + 1
+  return 0
+
+
+def lastIndexOfSubSequence(sq,sq1) :
+  m = len(sq1)
+  n = len(sq)
+  if m == 0 or n == 0 or n < m : 
+    return 0
+  rsq = reverseSequence(sq)
+  rsq1 = reverseSequence(sq1)
+  i = indexOfSubSequence(rsq,rsq1)
+  if i <= 0 :
+    return 0
+  return n - i - m + 2
+ 
 
 def trim(str) : 
   res = '' + str
