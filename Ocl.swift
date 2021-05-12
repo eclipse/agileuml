@@ -1,21 +1,13 @@
 //
 //  Ocl.swift
+//  app2swiftui
 //
-//  Created by Kevin Lano on 31/12/2020.
+//  Created by Kevin Lano on 03/05/2021.
 //
 
 import Foundation
 import Darwin
 
-/******************************
-* Copyright (c) 2003,2021 Kevin Lano
-* This program and the accompanying materials are made available under the
-* terms of the Eclipse Public License 2.0 which is available at
-* http://www.eclipse.org/legal/epl-2.0
-*
-* SPDX-License-Identifier: EPL-2.0
-* *****************************/
-/* OCL library for Swift version 4+ */
 
 class Ocl
 {
@@ -138,8 +130,8 @@ class Ocl
   static func count<T : Equatable>(s : [T], x : T) -> Int
   { var result : Int = 0
     result = s.filter{ $0 == x }.count
-	return result
-  } 
+    return result
+  }
   // But it may be more efficient just to loop over s, testing ==
   
   static func sum(s : [Int]) -> Int
@@ -693,10 +685,10 @@ class Ocl
 
 
   static func iswhitespace(s: String) -> Bool
-  { if (" " == s || "\n" == s || "\t" == s) 
-    { return true } 
+  { if (" " == s || "\n" == s || "\t" == s)
+    { return true }
     return false
-  } 
+  }
   
   static func trim(str : String) -> String
   {
@@ -925,11 +917,11 @@ class Ocl
   static func replaceAll(str: String, pattern: String, rep: String) -> String
   { let regex = try! NSRegularExpression(pattern: pattern)
     
-    let modText = 
-      regex.stringByReplacingMatches(in: str, options: [], 
-	          range: NSRange(location: 0, length: str.count), withTemplate: rep)
+    let modText =
+      regex.stringByReplacingMatches(in: str, options: [],
+              range: NSRange(location: 0, length: str.count), withTemplate: rep)
     return modText
-  }  
+  }
 
   static func allMatches(str: String, pattern: String) -> [String]
    { let rge = NSRange(location: 0, length: str.utf16.count)
@@ -951,7 +943,7 @@ class Ocl
      let regexp = try! NSRegularExpression(pattern: pattern)
      let pred = regexp.matches(in: str, options: [], range: rge)
      var result : [String] = [String]()
-     var prev : Int = 1; 
+     var prev : Int = 1;
 
      for p in pred
      { let range = p.range
@@ -962,7 +954,7 @@ class Ocl
      }
 
      if prev < str.count
-     { result.append(Ocl.stringSubrange(str: str, st: prev, en: str.count)) } 
+     { result.append(Ocl.stringSubrange(str: str, st: prev, en: str.count)) }
      return result
   }
 
@@ -975,7 +967,7 @@ class Ocl
     {
       result = 0
     }
-    else 
+    else
     {
       if i > 0
       {
@@ -985,8 +977,76 @@ class Ocl
     return result
   }
 
+  static func indexOfSequence<T : Equatable>(sq : [T], x : T) -> Int
+  { for (i,y) in sq.enumerated()
+    { if x == y
+      { return i+1 }
+    }
+    return 0
+  }
+  
+  static func lastIndexOfSequence<T : Equatable>(sq : [T], x : T) -> Int
+  { if sq.count == 0
+    { return 0 }
 
-  static func tokeniseCSV(line: String) -> [String]
+    let revsq = reverse(s: sq)
+    let i = indexOfSequence(sq: revsq, x: x)
+    
+    if i == 0
+    { return 0 }
+    return sq.count - i + 1
+  }
+ 
+  static func hasPrefixSequence<T : Equatable>(sq : [T], sq1 : [T], i : Int) -> Bool
+  { let n = sq.count
+    let m = sq1.count
+    if n == 0 || m == 0 || i+m > n
+    { return false }
+    
+    var j : Int = 0
+    while j < m && i+j < n
+    { if sq[i+j] != sq1[j]
+      { return false }
+      j = j+1
+    }
+    return true
+  }
+  
+  static func hasPrefixSequence<T : Equatable>(sq : [T], sq1 : [T]) -> Bool
+  { return hasPrefixSequence(sq: sq, sq1: sq1, i: 0) }
+  
+  static func indexOfSubSequence<T : Equatable>(sq : [T], sq1 : [T]) -> Int
+  { let m = sq1.count
+    let n = sq.count
+    if m == 0 || n == 0 || n < m
+    { return 0 }
+    var i : Int = 0
+
+    while i+m <= n
+    { if hasPrefixSequence(sq: sq, sq1: sq1, i: i)
+      { return i+1 }
+      i = i + 1
+    }
+    return 0
+  }
+  
+    static func lastIndexOfSubSequence<T : Equatable>(sq : [T], sq1 : [T]) -> Int
+    { let m = sq1.count
+      let n = sq.count
+      if m == 0 || n == 0 || n < m
+      { return 0 }
+        
+      var i : Int = n - m
+
+      while i >= 0
+      { if hasPrefixSequence(sq: sq, sq1: sq1, i: i)
+        { return i+1 }
+        i = i - 1
+      }
+      return 0
+    }
+    
+    static func tokeniseCSV(line: String) -> [String]
   { // Assumes the separator is a comma
     var buff : String = ""
     // var x : Int = 0

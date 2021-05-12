@@ -2,8 +2,11 @@
 -- Main code-generation specification file for Java  
 -- Version 8+. Also uses cginterface.cstl
 -- Depends on Ocl.java
+-- Prototype support for map and function types
+--
+-- Note that newlines and $ should be written as \n and \$
 -- 
--- Copyright (c) 2003,2020 Kevin Lano
+-- Copyright (c) 2003--2021 Kevin Lano
 -- This program and the accompanying materials are 
 -- made available under the
 -- terms of the Eclipse Public License 2.0 
@@ -20,22 +23,11 @@ package _1 { types: _2 classes: _3 usecases: _4 } |-->package _1;\n\nimport java
 
 
 Type::
-Sequence(String) |-->ArrayList<String>
-Sequence(int) |-->ArrayList<Integer>
-Sequence(double) |-->ArrayList<Double>
-Sequence(long) |-->ArrayList<Long>
-Sequence(boolean) |-->ArrayList<Boolean>
-
-Set(String) |-->HashSet<String>
-Set(int) |-->HashSet<Integer>
-Set(double) |-->HashSet<Double>
-Set(long) |-->HashSet<Long>
-Set(boolean) |-->HashSet<Boolean>
-
-Sequence(_1) |-->ArrayList<_1>
-Set(_1) |-->HashSet<_1>
-Map(_1,_2) |-->HashMap<_1,_2>
-
+Sequence(_1) |-->ArrayList<_1`jwrap>
+Set(_1) |-->HashSet<_1`jwrap>
+Map(_1,_2) |-->HashMap<_1`jwrap,_2`jwrap>
+Function(_1,_2) |-->Evaluation<_1`jwrap,_2`jwrap>
+_1 |--> _1
 
 
 Enumeration::
@@ -55,6 +47,8 @@ _1 |-->_1`typename._1<when> _1 enumerationLiteral
 _1.allInstances |-->_1._1_allInstances
 
 _1.insertAt(_2,_3) |-->Ocl.insertAt(_1,_2,_3)
+_1.replace(_2,_3) |-->Ocl.replace(_1,_2,_3)
+_1.replaceAll(_2,_3) |-->Ocl.replaceAll(_1,_2,_3)
 
 Integer.subrange(_1,_2) |-->Ocl.integerSubrange(_1,_2)
 
@@ -64,7 +58,7 @@ Integer.Prd(_1,_2,_3,_4) |-->Ocl.prd(Ocl.collectSequence(Ocl.integerSubrange(_1,
 
 _1.subrange(_2,_3) |-->Ocl.subrange(_1,_2,_3)
 
-_1[_2] |-->(_1.charAt(_2) + "")<when> _1 String
+_1[_2] |-->(_1.charAt(_2 - 1) + "")<when> _1 String
 _1[_2] |-->_1._1_index.get(_2)<when> _1 classId
 
 _1[_2] |-->((_1`elementType) (_1).get(_2 - 1))<when> _2 numeric
@@ -80,7 +74,8 @@ createByPK_1(_2) |-->_1.createByPK_1(_2)
 create_1() |-->_1.create_1()
 
 _1._2(_3) |-->_1._2(_3)
-
+_1(_2) |-->_1.evaluate(_2)<when>_1 variable
+_1(_2) |-->_1(_2)
 _1._2 |-->_1._2
 
 
@@ -107,12 +102,15 @@ _1->round() |-->((int) Math.round(_1))
 _1->abs() |-->Math.abs(_1)
 
 _1->size() |-->_1.length()<when> _1 String
-_1->size() |-->_1.size()<when> _1 collection
+_1->size() |-->_1.size()
 
 _1->toInteger() |-->Integer.parseInt(_1).intValue()<when> _1 String
 _1->toReal() |-->Double.parseDouble(_1).doubleValue()<when> _1 String
-_1->toUpper() |-->_1.toUpperCase()<when> _1 String
-_1->toLower() |-->_1.toLowerCase()<when> _1 String
+_1->toUpper() |-->_1.toUpperCase()
+_1->toLower() |-->_1.toLowerCase()
+_1->toUpperCase() |-->_1.toUpperCase()
+_1->toLowerCase() |-->_1.toLowerCase()
+_1->trim() |-->_1.trim()
 _1->characters() |-->Ocl.characters(_1)
 
 _1->oclIsUndefined() |-->(_1 == null)
@@ -143,6 +141,14 @@ _1->keys() |-->_1.keySet()
 not(_1) |-->!(_1)
 _1->display() |-->    System.out.println(_1 + "");
 
+lambda _1 : _2 in _3 |-->(_1) -> { return _3; }
+
+_1->unionAll() |-->Ocl.unionAll(_1)
+_1->intersectAll() |-->Ocl.intersectAll(_1)
+_1->concatenateAll() |-->Ocl.concatenateAll(_1)
+
+
+
 
 BinaryExpression::
 _1 & _2 |-->_1 && _2 
@@ -163,23 +169,46 @@ _1 <= _2 |-->(_1.compareTo(_2) <= 0)<when> _1 String, _2 String
 _1 >= _2 |-->_1 >= _2<when> _1 numeric, _2 numeric
 _1 >= _2 |-->(_1.compareTo(_2) >= 0)<when> _1 String, _2 String
 _1 + _2 |-->_1 + _2 
+
 _1 - _2 |-->_1 - _2<when> _1 numeric, _2 numeric
 _1 - _2 |-->Ocl.subtract(_1,_2)<when> _1 String, _2 String
-_1 - _2 |-->Ocl.subtract(_1,_2)<when> _1 Set, _2 collection
-_1 - _2 |-->Ocl.subtract(_1,_2)<when> _1 Sequence, _2 collection
+_1 - _2 |-->Ocl.subtract(_1,_2)<when> _1 Set
+_1 - _2 |-->Ocl.subtract(_1,_2)<when> _1 Sequence
+_1 - _2 |-->Ocl.excludeAllMap(_1,_2)<when>_1 Map
+
 _1 * _2 |-->_1 * _2 
 _1 / _2 |-->_1 / _2 
 _1 mod _2 |-->_1 % _2
+_1 div _2 |-->((int) (_1 / _2))
+
+
+_1 |-> _2 |-->(new OclMaplet(_1,_2))
 
 _1->pow(_2) |-->Math.pow(_1,_2)
 _1^_2 |-->Ocl.concatenate(_1,_2)
+
+_1->union(_2) |-->Ocl.unionMap(_1,_2)<when> _1 Map
 _1->union(_2) |-->Ocl.union(_1,_2)
+
 _1->unionAll(_2|_3) |-->Ocl.unionAll(_1,(_2)->{return _3;})
+
+_1->intersection(_2) |-->Ocl.intersectionMap(_1,_2)<when> _1 Map
 _1->intersection(_2) |-->Ocl.intersection(_1,_2)
+
 _1->intersectAll(_2|_3) |-->Ocl.intersectAllSet(_1,(_2)->{return _3;})<when> _3 Set
 _1->intersectAll(_2|_3) |-->Ocl.intersectAllSequence(_1,(_2)->{return _3;})<when> _3 Sequence
-_1->count(_2) |-->Collections.frequency(_1,_2)
 
+_1->count(_2) |-->Collections.frequency(_1,_2)
+_1->indexOf(_2) |-->(Collections.indexOfSubList(_1,_2) + 1)<when> _2 Sequence
+_1->lastIndexOf(_2) |-->(Collections.lastIndexOfSubList(_1,_2) + 1)<when> _2 Sequence
+_1->indexOf(_2) |-->(_1.indexOf(_2) + 1)
+_1->lastIndexOf(_2) |-->(_1.lastIndexOf(_2) + 1)
+
+_1->equalsIgnoreCase(_2) |-->_1.equalsIgnoreCase(_2)
+_1->split(_2) |-->Ocl.split(_1,_2)
+_1->allMatches(_2) |-->Ocl.allMatches(_1,_2)
+
+_1->at(_2) |-->((_1`elementType) _1.get(_2))<when> _1 Map
 _1->at(_2) |-->(_1.charAt(_2) + "")<when> _1 String
 _1->at(_2) |-->((_1`elementType) _1.get(_2 - 1))<when> _2 numeric
 _1->at(_2) |-->(_1`elementType) _1.get(_2))<when> _2 not numeric
@@ -187,10 +216,16 @@ _1->at(_2) |-->(_1`elementType) _1.get(_2))<when> _2 not numeric
 
 _1->select(_2 | _3) |-->Ocl.selectSet(_1,(_2)->{return _3;})<when> _1 Set
 _1->select(_2 | _3) |-->Ocl.selectSequence(_1,(_2)->{return _3;})<when> _1 Sequence
+_1->select(_2 | _3) |-->Ocl.selectMap(_1,(_2)->{return _3;})<when> _1 Map
+
 _1->reject(_2 | _3) |-->Ocl.rejectSet(_1,(_2)->{return _3;})<when> _1 Set
 _1->reject(_2 | _3) |-->Ocl.rejectSequence(_1,(_2)->{return _3;})<when> _1 Sequence
+_1->reject(_2 | _3) |-->Ocl.rejectMap(_1,(_2)->{return _3;})<when> _1 Map
+
 _1->collect(_2 | _3) |-->Ocl.collectSet(_1,(_2)->{return _3;})<when> _1 Set
 _1->collect(_2 | _3) |-->Ocl.collectSequence(_1,(_2)->{return _3;})<when> _1 Sequence
+_1->collect(_2 | _3) |-->Ocl.collectMap(_1,(_2)->{return _3;})<when> _1 Map
+
 _1->sortedBy(_2|_3) |-->Ocl.sortedBy(_1, Ocl.collectSequence(_1, (_2)->{ return _3; }))
 
 _1->any(_2|_3) |-->Ocl.any(_1._1_allInstances, (_2)->{ return _3; })<when> _1 classId
@@ -227,7 +262,8 @@ _1->hasPrefix(_2) |-->_1.startsWith(_2)
 _1->hasSuffix(_2) |-->_1.endsWith(_2)
 _1->after(_2) |-->Ocl.after(_1,_2))
 _1->before(_2) |-->Ocl.before(_1,_2)
-_1->matches(_2) |-->java.util.regex.Pattern.matches(_2,_1)
+_1->isMatch(_2) |-->Ocl.isMatch(_1,_2)
+_1->hasMatch(_2) |-->Ocl.hasMatch(_1,_2)
 
 
 
@@ -238,10 +274,11 @@ Set{_1} |-->Ocl.initialiseSet(_1)
 Sequence{} |-->(new ArrayList())
 Sequence{_1} |-->Ocl.initialiseSequence(_1)
 Map{} |-->(new HashMap())
+Map{_1} |-->Ocl.initialiseMap(_1)
 
 
 ConditionalExpression::
-if _1 then _2 else _3 endif |-->((_1)?_2:_3)
+if _1 then _2 else _3 endif |-->((_1) ? _2 : _3)
 
 
 Class::
@@ -276,15 +313,17 @@ abstract class _1 extends _2 implements _3 { _4 }   |-->abstract class _1 extend
 Attribute::
 static attribute _1 : _2; |-->  static _2 _1 = _2`defaultValue;\n
 
-identity attribute _1 : _2 |-->  _2 _1 = _2`defaultValue; /* primary */\n  static Map<_2,_1`ownername> _1`ownername_index = new HashMap<_2,_1`ownername>();\n\n  static _1`ownername createByPK_1`ownername(_2 _1x) { _1`ownername result = new _1`ownername();\n    _1`ownername._1`ownername_index.put(_1x,result);\n    result._1 = _1x;\n    return result; }\n\n<when> _1 primary
-
-identity attribute _1 : _2; |-->  _2 _1 = _2`defaultValue; /* key */\n
+identity attribute _1 : _2 |-->  _2 _1 = _2`defaultValue; /* primary */\n  static Map<_2,_1`ownername> _1`ownername_index = new HashMap<_2,_1`ownername>();\n\n  static _1`ownername createByPK_1`ownername(_2 _1x)\n  { _1`ownername result = _1`ownername._1`ownername_index.get(_1x);\n    if (result != null) { return result; }\n    result = new _1`ownername();\n    _1`ownername._1`ownername_index.put(_1x,result);\n    result._1 = _1x;\n    return result; }\n\n  static void kill_1`ownername(_2 _1x)\n  { _1`ownername rem = _1`ownername_index.get(_1x);\n    if (rem == null) { return; }\n    ArrayList<_1`ownername> remd = new ArrayList<_1`ownername>();\n    remd.add(rem);\n    _1`ownername_index.remove(_1x);\n    _1`ownername_allInstances.removeAll(remd);\n  }\n\n
 
 attribute _1 : _2; |-->  _2 _1 = _2`defaultValue;\n
 
+
 reference _1 : _2; |-->  _2 _1 = new _2();\n<when> _2 collection
 
-reference _1 : _2; |-->  _2 _1 = null;\n<when> _2 not collection
+reference _1 : _2; |-->  _2 _1 = new _2();\n<when> _2 map
+
+reference _1 : _2; |-->  _2 _1 = null;\n
+
 
 
 
@@ -312,6 +351,8 @@ static operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->\n  public static
 
 
 Statement::
+_1[_2] := _3 |-->    _1.put(_2,_3);\n<when>_2 String
+_1[_2] := _3 |-->    _1[_2 - 1] = _3;\n
 
 _1 := _2 |-->    _1 = Ocl.copySet(_2);\n<when> _1 Set
 
@@ -330,11 +371,14 @@ _1 ; _2 |-->_1_2
 skip |-->    {}\n
 return _1 |-->    return _1;\n
 return |-->    return;\n
+continue |-->    continue;\n
 break |-->    break;\n
 call _1 |-->    _1;\n 
-execute _1 |-->    /* Abstract statement: _1 */\n
+execute _1 |-->    /* if (_1) { } else { System.err.println("Condition _1 fails"); } */\n
+
+var _1 : _2 := _3 |-->    _2 _1 = _3;\n
 var _1 : _2 |-->    _2 _1 = null;\n<when> _2 Class
-var _1 : _2 |-->    _2 _1 = null;\n<when> _2 collection
+var _1 : _2 |-->    _2 _1 = new _2();\n<when> _2 collection
 var _1 : _2 |-->    _2 _1 = _2`defaultValue;\n
 
 
