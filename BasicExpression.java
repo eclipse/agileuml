@@ -563,6 +563,15 @@ class BasicExpression extends Expression
   public Vector getParameters()
   { return parameters; } 
 
+  public Expression getParameter(int i) 
+  { if (parameters == null) 
+    { return null; } 
+     
+    if (i <= parameters.size() && i >= 1) 
+    { return (Expression) parameters.get(i-1); } 
+    return null; 
+  } 
+
   public String getData()
   { return data; } 
 
@@ -777,7 +786,9 @@ class BasicExpression extends Expression
                data.equals("flatten") || data.equals("sortedBy") || 
                data.equals("reverse") || data.equals("sort") || data.equals("asSequence") || 
                data.equals("front") || data.equals("tail") || data.equals("insertAt") || 
-               data.equals("subrange") || data.equals("characters") || data.equals("allInstances") || 
+               data.equals("subrange") ||
+               data.equals("replace") || data.equals("replaceAll") ||
+               data.equals("characters") || data.equals("allInstances") || 
                data.equals("closure") || data.equals("asSet") || data.equals("subcollections"))
       { return false; }   // but strings don't need to be wrapped 
       else if (data.equals("max") || data.equals("min") || data.equals("last") ||
@@ -964,12 +975,17 @@ class BasicExpression extends Expression
     { if (data.equals("asSet") || data.equals("closure") || 
           data.equals("subcollections"))
       { return false; } 
+      
       if (data.equals("sort") || data.equals("allInstances") || data.equals("asSequence") ||
           data.equals("sortedBy") || data.equals("characters"))
       { return true; } 
-      if (objectRef == null) { return false; } // invalid anyway
+      
+      if (objectRef == null) 
+      { return false; } // invalid anyway
+
       if (data.equals("any") || data.equals("first") || data.equals("last"))
       { return Type.isSequenceType(elementType); } 
+
       if (objectRef.isOrdered())
       { if (data.equals("front") || data.equals("reverse") || data.equals("tail") ||
             data.equals("insertAt") || data.equals("subrange"))
@@ -1029,10 +1045,13 @@ class BasicExpression extends Expression
     { if (data.equals("asSet") || data.equals("closure") || 
           data.equals("subcollections"))
       { return false; } 
+
       if (data.equals("sort") || data.equals("allInstances") || data.equals("asSequence") ||
           data.equals("sortedBy") || data.equals("characters"))
       { return true; } 
+
       if (objectRef == null) { return false; } // invalid anyway
+
       if (objectRef.isOrderedB())
       { if (data.equals("front") || data.equals("reverse") || data.equals("tail") ||
             data.equals("insertAt") || data.equals("subrange"))
@@ -1087,9 +1106,12 @@ class BasicExpression extends Expression
     { if (data.equals("asSet") || data.equals("closure") || 
           data.equals("subcollections"))
       { return false; } 
+
       if (data.equals("sort") || data.equals("sortedBy"))
       { return true; } 
+
       if (objectRef == null) { return false; } // invalid anyway
+
       if (objectRef.isSorted())
       { if (data.equals("front") || data.equals("reverse") || data.equals("tail") ||
             data.equals("subrange"))
@@ -1156,9 +1178,9 @@ class BasicExpression extends Expression
     { res = objectRef.metavariables(); } 
 
     for (int i = 0; i < data.length() - 1; i++) 
-	{ if ('_' == data.charAt(i) && Character.isDigit(data.charAt(i+1))) 
-	  { res.add(data.charAt(i) + "" + data.charAt(i+1)); }
-	}  
+    { if ('_' == data.charAt(i) && Character.isDigit(data.charAt(i+1))) 
+      { res.add(data.charAt(i) + "" + data.charAt(i+1)); }
+    }  
 
     if (arrayIndex != null) 
     { res = VectorUtil.union(res,arrayIndex.metavariables()); } 
@@ -2628,6 +2650,8 @@ class BasicExpression extends Expression
     } // this should not arise. 
 
     if (isEvent && !data.equals("subrange") && !data.equals("indexOf") && 
+        !(data.equals("replace")) && 
+        !(data.equals("replaceAll")) && 
         !(data.equals("Sum")) && !(data.equals("Prd")) &&  
         !(data.equals("oclIsKindOf")) && !(data.equals("oclAsType")))
     { // data must be an event of the owning class, the elementType of 
@@ -2715,25 +2739,25 @@ class BasicExpression extends Expression
       if (fvar != null) 
       { type = fvar.getType(); 
         if (type != null && type.isFunctionType())
-		{ umlkind = UPDATEOP; 
-		  elementType = fvar.getElementType();
-		  System.out.println(">> Function parameter " + data + " of type " + type); 
-		} 
-		else 
-		{ JOptionPane.showMessageDialog(null, data + " is not a function parameter or known function in " + this + ".\n" + 
+        { umlkind = UPDATEOP; 
+          elementType = fvar.getElementType();
+          System.out.println(">> Function parameter " + data + " of type " + type); 
+        } 
+        else 
+        { JOptionPane.showMessageDialog(null, data + " is not a function parameter or known function in " + this + ".\n" + 
                                         "Please re-type-check or correct your specification.", 
                                         "Type warning", JOptionPane.WARNING_MESSAGE);
-	    }
-	  } // default
+        }
+      } // default
       else 
-	  { JOptionPane.showMessageDialog(null, "Operation " + data + " unknown at call " + this + ".\n" + 
+      { JOptionPane.showMessageDialog(null, "Operation " + data + " unknown at call " + this + ".\n" + 
                                     "Please re-type-check or correct your specification.", 
                                     "Type warning", JOptionPane.WARNING_MESSAGE);
  
         umlkind = UPDATEOP; 
         type = new Type("boolean",null);         
         elementType = new Type("boolean",null);
-	  }          
+      }          
     }
 
     if (isFunction(data))
@@ -2821,7 +2845,8 @@ class BasicExpression extends Expression
       { type = new Type("double",null); 
         elementType = type; 
       } 
-      else if (data.equals("toLowerCase") || data.equals("toUpperCase"))
+      else if (data.equals("toLowerCase") || data.equals("toUpperCase") ||
+               data.equals("replace") || data.equals("replaceAll") )
       { type = new Type("String",null); 
         elementType = type; 
       }
@@ -3923,6 +3948,16 @@ class BasicExpression extends Expression
         return "Set.insertAt(" + pre + "," + par1 + "," + par2 + ")"; 
         // ".add(" + par1 + ", " + par2 + ")"; 
       } 
+      else if (data.equals("replace") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryForm(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryForm(env,local); 
+        return "Set.replace(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
+      else if (data.equals("replaceAll") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryForm(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryForm(env,local); 
+        return "Set.replaceAll(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
       else if (data.equals("count") && parameters != null && parameters.size() > 0)  
       // for strings or collections
       { String par1 = 
@@ -4227,12 +4262,12 @@ class BasicExpression extends Expression
         { if (variable != null && "String".equals(variable.getType() + ""))
           { return "(" + data + ".charAt(" + indopt + ") + \"\")"; } 
           
-		  if (arrayIndex.type != null && arrayIndex.type.getName().equals("int"))
+          if (arrayIndex.type != null && arrayIndex.type.getName().equals("int"))
 		  // if (Type.isPrimitiveType(type))
           { return unwrap(data + ".get(" + indopt + ")"); }
-		  else if (arrayIndex.type != null && arrayIndex.type.getName().equals("String"))
-		  { return unwrap(data + ".get(" + ind + ")"); }
-		  else if (Type.isPrimitiveType(type))
+          else if (arrayIndex.type != null && arrayIndex.type.getName().equals("String"))
+          { return unwrap(data + ".get(" + ind + ")"); }
+          else if (Type.isPrimitiveType(type))
           { return unwrap(data + ".get(" + indopt + ")"); } 
           String jType = type.getJava6(); 
           return "((" + jType + ") " + data + ".get(" + indopt + "))"; 
@@ -4241,13 +4276,13 @@ class BasicExpression extends Expression
       } // unwrap it, also for primitive types
       else if (parameters != null && variable != null && variable.getType().isFunctionType()) // application of a Function(S,T)
       { String pars = ""; 
-	    for (int h = 0; h < parameters.size(); h++) 
-		{ Expression par = (Expression) parameters.get(h); 
-		  pars = pars + par.queryFormJava6(env,local); 
-		  if (h < parameters.size()-1) 
-		  { pars = pars + ","; } 
-		} 
-	    return data + ".evaluate(" + pars + ")"; 
+        for (int h = 0; h < parameters.size(); h++) 
+        { Expression par = (Expression) parameters.get(h); 
+          pars = pars + par.queryFormJava6(env,local); 
+          if (h < parameters.size()-1) 
+          { pars = pars + ","; } 
+        } 
+        return data + ".evaluate(" + pars + ")"; 
       }
       else 
       { return data; }  
@@ -4391,6 +4426,16 @@ class BasicExpression extends Expression
         String par2 = ((Expression) parameters.get(1)).queryFormJava6(env,local); 
         return "Set.insertAt(" + pre + "," + par1 + "," + par2 + ")"; 
         // ".add(" + par1 + ", " + par2 + ")"; 
+      } 
+      else if (data.equals("replace") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormJava6(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormJava6(env,local); 
+        return "Set.replace(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
+      else if (data.equals("replaceAll") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormJava6(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormJava6(env,local); 
+        return "Set.replaceAll(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
       else if (data.equals("count"))  // for strings or collections
       { if (parameters != null && parameters.size() > 0)
@@ -4679,9 +4724,9 @@ class BasicExpression extends Expression
           if (arrayIndex.type != null && arrayIndex.type.getName().equals("int"))
 		  // if (Type.isPrimitiveType(type))
           { return unwrap(data + ".get(" + indopt + ")"); }
-		  else if (arrayIndex.type != null && arrayIndex.type.getName().equals("String"))
-		  { return unwrap(data + ".get(" + ind + ")"); }
-		  else if (Type.isPrimitiveType(type))
+          else if (arrayIndex.type != null && arrayIndex.type.getName().equals("String"))
+          { return unwrap(data + ".get(" + ind + ")"); }
+          else if (Type.isPrimitiveType(type))
           { return unwrap(data + ".get(" + indopt + ")"); } 
           String jType = type.getJava7(elementType); 
           return "((" + jType + ") " + data + ".get(" + indopt + "))"; 
@@ -4690,13 +4735,13 @@ class BasicExpression extends Expression
       } // unwrap it, also for primitive types
       else if (parameters != null && variable != null && variable.getType().isFunctionType()) // application of a Function(S,T)
       { String pars = ""; 
-	    for (int h = 0; h < parameters.size(); h++) 
-		{ Expression par = (Expression) parameters.get(h); 
-		  pars = pars + par.queryFormJava7(env,local); 
-		  if (h < parameters.size()-1) 
-		  { pars = pars + ","; } 
-		} 
-	    return data + ".evaluate(" + pars + ")"; 
+        for (int h = 0; h < parameters.size(); h++) 
+        { Expression par = (Expression) parameters.get(h); 
+          pars = pars + par.queryFormJava7(env,local); 
+          if (h < parameters.size()-1) 
+          { pars = pars + ","; } 
+        } 
+        return data + ".evaluate(" + pars + ")"; 
       }
 
       else 
@@ -4843,6 +4888,16 @@ class BasicExpression extends Expression
         return "Ocl.insertAt(" + pre + "," + par1 + "," + par2 + ")"; 
         // ".add(" + par1 + ", " + par2 + ")"; 
       } 
+      else if (data.equals("replace") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormJava7(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormJava7(env,local); 
+        return "Ocl.replace(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
+      else if (data.equals("replaceAll") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormJava7(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormJava7(env,local); 
+        return "Ocl.replaceAll(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
       else if (data.equals("count"))  // for strings or collections
       { if (parameters != null && parameters.size() > 0)
         { String par1 = 
@@ -4976,8 +5031,8 @@ class BasicExpression extends Expression
         String var = findEntityVariable(env); // could be null, or ""
 
         String res = var + ".get" + data + "()";
-		if (var == null || var.length() == 0) 
-		{ res = data; }
+        if (var == null || var.length() == 0) 
+        { res = data; }
 		
         if (arrayIndex != null) 
         { String etype = elementType + ""; 
@@ -5137,13 +5192,13 @@ class BasicExpression extends Expression
       }
       else if (parameters != null && variable != null && variable.getType().isFunctionType()) // application of a Function(S,T)
       { String pars = ""; 
-	    for (int h = 0; h < parameters.size(); h++) 
-		{ Expression par = (Expression) parameters.get(h); 
-		  pars = pars + par.queryFormCSharp(env,local); 
-		  if (h < parameters.size()-1) 
-		  { pars = pars + ","; } 
-		} 
-	    return data + "(" + pars + ")"; 
+        for (int h = 0; h < parameters.size(); h++) 
+        { Expression par = (Expression) parameters.get(h); 
+          pars = pars + par.queryFormCSharp(env,local); 
+          if (h < parameters.size()-1) 
+          { pars = pars + ","; } 
+        } 
+        return data + "(" + pars + ")"; 
       }
       return data;  
     } 
@@ -5280,6 +5335,16 @@ class BasicExpression extends Expression
         String par2 = ((Expression) parameters.get(1)).queryFormCSharp(env,local); 
         return "SystemTypes.insertAt(" + pre + "," + par1 + "," + par2 + ")"; 
         // ".add(" + par1 + ", " + par2 + ")"; 
+      } 
+      else if (data.equals("replace") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormCSharp(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormCSharp(env,local); 
+        return "SystemTypes.replace(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
+      else if (data.equals("replaceAll") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormCSharp(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormCSharp(env,local); 
+        return "SystemTypes.replaceAll(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
       else if (data.equals("count"))  // for strings or collections
       { if (parameters != null && parameters.size() > 0)
@@ -5528,13 +5593,13 @@ class BasicExpression extends Expression
       }
       else if (parameters != null && variable != null && variable.getType().isFunctionType()) // application of a Function(S,T)
       { String pars = ""; 
-	    for (int h = 0; h < parameters.size(); h++) 
-		{ Expression par = (Expression) parameters.get(h); 
-		  pars = pars + par.queryFormCPP(env,local); 
-		  if (h < parameters.size()-1) 
-		  { pars = pars + ","; } 
-		} 
-	    return "(*" + data + ")(" + pars + ")"; 
+        for (int h = 0; h < parameters.size(); h++) 
+        { Expression par = (Expression) parameters.get(h); 
+          pars = pars + par.queryFormCPP(env,local); 
+          if (h < parameters.size()-1) 
+          { pars = pars + ","; } 
+        } 
+        return "(*" + data + ")(" + pars + ")"; 
       }
       return data;  
     } 
@@ -5680,7 +5745,17 @@ class BasicExpression extends Expression
         String par2 = ((Expression) parameters.get(1)).queryFormCPP(env,local); 
         return "UmlRsdsLib<" + cetype + ">::insertAt(" + pre + "," + par1 + "," + par2 + ")"; 
         // ".add(" + par1 + ", " + par2 + ")"; 
+      }
+      else if (data.equals("replaceAll") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormCPP(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormCPP(env,local); 
+        return "UmlRsdsLib<string>::replaceAll(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
+      else if (data.equals("replace") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormCPP(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormCPP(env,local); 
+        return "UmlRsdsLib<string>::replace(" + pre + "," + par1 + "," + par2 + ")"; 
+      }  
       else if (data.equals("count"))  // for strings or collections
       { if (parameters == null || parameters.size() > 0)
         { String par1 = 

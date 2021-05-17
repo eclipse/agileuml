@@ -59,7 +59,200 @@ public class AuxMath
     { return l; }
   }       
 
+  public static double numericSum(Vector xvect)
+  { double sum = 0; 
+    for (int j = 0; j < xvect.size(); j++) 
+    { if (xvect.get(j) instanceof Double)
+      { sum += ((Double) xvect.get(j)).doubleValue(); } 
+      else if (xvect.get(j) instanceof Integer)
+      { sum += ((Integer) xvect.get(j)).intValue(); } 
+      else if (xvect.get(j) instanceof String) 
+      { try 
+        { double xx = Double.parseDouble((String) xvect.get(j)); 
+          sum = sum+xx; 
+        }
+        catch (Exception _x) 
+        { } 
+      }
+    }
+    return sum; 
+  } 
 
+  public static String stringSum(Vector xvect)
+  { String sum = ""; 
+    for (int j = 0; j < xvect.size(); j++) 
+    { sum = sum + dequote("" + xvect.get(j)); }
+    return "\"" + sum + "\""; 
+  } 
+
+  public static double numericPrd(Vector xvect)
+  { double sum = 1; 
+    for (int j = 0; j < xvect.size(); j++) 
+    { if (xvect.get(j) instanceof Double)
+      { sum *= ((Double) xvect.get(j)).doubleValue(); } 
+      else if (xvect.get(j) instanceof Integer)
+      { sum *= ((Integer) xvect.get(j)).intValue(); } 
+      else if (xvect.get(j) instanceof String) 
+      { try 
+        { double xx = Double.parseDouble((String) xvect.get(j)); 
+          sum = sum*xx; 
+        }
+        catch (Exception _x) 
+        { } 
+      }
+    }
+    return sum; 
+  } 
+
+  public static double numericMin(Vector xvect)
+  { double sum = 1.7976931348623157E308; 
+    for (int j = 0; j < xvect.size(); j++) 
+    { if (xvect.get(j) instanceof Double)
+      { sum = Math.min(sum,((Double) xvect.get(j)).doubleValue()); } 
+      else if (xvect.get(j) instanceof Integer)
+      { sum = Math.min(sum,((Integer) xvect.get(j)).intValue()); } 
+      else if (xvect.get(j) instanceof String) 
+      { try 
+        { double xx = Double.parseDouble((String) xvect.get(j)); 
+          sum = Math.min(sum,xx); 
+        }
+        catch (Exception _x) 
+        { } 
+      }
+    }
+    return sum; 
+  } 
+
+  public static String stringMin(Vector xvect)
+  { if (xvect.size() == 0) 
+    { return null; } 
+
+    String res = xvect.get(0) + ""; 
+    for (int j = 1; j < xvect.size(); j++) 
+    { String xx = "" + xvect.get(j); 
+      if (xx.compareTo(res) < 0)
+      { res = xx; }
+    }
+    return res; 
+  } 
+
+  public static String stringMax(Vector xvect)
+  { if (xvect.size() == 0) 
+    { return null; } 
+
+    String res = xvect.get(0) + ""; 
+    for (int j = 1; j < xvect.size(); j++) 
+    { String xx = "" + xvect.get(j); 
+      if (xx.compareTo(res) > 0)
+      { res = xx; }
+    }
+    return res; 
+  } 
+
+  public static double numericMax(Vector xvect)
+  { double sum = -1.7976931348623157E308; 
+    for (int j = 0; j < xvect.size(); j++) 
+    { if (xvect.get(j) instanceof Double)
+      { sum = Math.max(sum,((Double) xvect.get(j)).doubleValue()); } 
+      else if (xvect.get(j) instanceof Integer)
+      { sum = Math.max(sum,((Integer) xvect.get(j)).intValue()); } 
+      else if (xvect.get(j) instanceof String) 
+      { try 
+        { double xx = Double.parseDouble((String) xvect.get(j)); 
+          sum = Math.max(sum,xx); 
+        }
+        catch (Exception _x) 
+        { } 
+      }
+    }
+    return sum; 
+  } 
+
+  public static Vector setUnion(Vector v1, Vector v2)
+  { if (v1 == null) 
+    { return v2; } 
+    else if (v2 == null) 
+    { return v1; } 
+
+    Vector res = new Vector(); 
+    
+    for (int i = 0; i < v1.size(); i++)
+    { Object obj = v1.get(i); 
+      if (res.contains(obj)) { } 
+      else 
+      { res.add(obj); }
+    } 
+
+    for (int i = 0; i < v2.size(); i++)
+    { Object obj = v2.get(i); 
+      if (res.contains(obj)) { } 
+      else 
+      { res.add(obj); }
+    }
+
+    return res; 
+  } 
+
+  public static Vector subrange(Vector v, int st, int en)
+  { Vector res = new Vector(); 
+
+    if (v == null) 
+    { return res; } 
+    else if (st > en) 
+    { return res; } 
+
+    if (st < 1) 
+    { st = 1; } 
+    
+    for (int i = st-1; i < en && i < v.size(); i++)
+    { Object obj = v.get(i); 
+      res.add(obj); 
+    } 
+
+    return res; 
+  } 
+
+  public static Vector tailSequences(Vector[] v)
+  { Vector res = new Vector(); 
+    
+    for (int i = 0; i < v.length; i++)
+    { Vector obj = v[i]; 
+      Vector tobj = subrange(obj,2,obj.size());
+      res.add(tobj); 
+    } 
+
+    return res; 
+  } 
+
+  public static Vector frontSequences(Vector[] v)
+  { Vector res = new Vector(); 
+    
+    for (int i = 0; i < v.length; i++)
+    { Vector obj = v[i]; 
+      Vector fobj = subrange(obj,1,obj.size()-1);
+      res.add(fobj); 
+    } 
+
+    return res; 
+  } 
+
+  public static boolean equalsSequence(Vector v1, Vector v2)
+  { if (v1.size() != v2.size())
+    { return false; } 
+
+    for (int i = 0; i < v1.size(); i++) 
+    { Object v1x = v1.get(i); 
+      Object v2x = v2.get(i); 
+      if (v1x == null && v2x == null) { } 
+      else if (v1x != null && v1x.equals(v2x)) { } 
+      else if (v2x != null && v2x.equals(v1x)) { } 
+      else 
+      { return false; } 
+    } 
+    return true; 
+  } 
+
+        
   public static boolean isFunctional(double[] xs, double[] ys) 
   { // For each x : xs, only one y : ys
     java.util.HashMap valueSets = new java.util.HashMap(); 
@@ -88,9 +281,9 @@ public class AuxMath
         // System.out.println("!!! GCD with " + oldgcd + " " + diff); 
 
         if (diff >= 0) 
-	   { oldgcd = AuxMath.gcd(oldgcd, (int) diff); } 
-	   else 
-	   { return 1; } 
+        { oldgcd = AuxMath.gcd(oldgcd, (int) diff); } 
+        else 
+        { return 1; } 
 
         if (oldgcd == 1)
         { return 1; } 
@@ -111,11 +304,11 @@ public class AuxMath
 	  
       for (int i = 0; i < xs.length && i < ys.length; i++) 
       { if (ys[i] == 0) 
-	    { lowerBound = Math.max(xs[i],lowerBound); } 
-		else if (ys[i] > 0) 
-		{ double diff = xs[i]/ys[i]; 
-	      double diff1 = xs[i]/(ys[i] + 1); 
-	      upperBound = Math.min(upperBound,diff); 
+        { lowerBound = Math.max(xs[i],lowerBound); } 
+        else if (ys[i] > 0) 
+        { double diff = xs[i]/ys[i]; 
+          double diff1 = xs[i]/(ys[i] + 1); 
+          upperBound = Math.min(upperBound,diff); 
           lowerBound = Math.max(lowerBound,diff1); 
           System.out.println(">> Upper bound = " + upperBound); 
           System.out.println(">> Lower bound = " + lowerBound); 
@@ -140,15 +333,15 @@ public class AuxMath
 	  { boolean validK = true; 
         for (int i = 0; i < xs.length && i < ys.length; i++) 
         { int xint = (int) xs[i]; 
-	      int yint = (int) ys[i]; 
+          int yint = (int) ys[i]; 
           if (yint == xint/k) {}
-		  else 
-		  { validK = false; } 
-	    } 
-		if (validK) { return k; }
-	  } 
+          else 
+          { validK = false; } 
+        } 
+        if (validK) { return k; }
+      } 
 	  
-	  return 0;   // search in the range for a valid K. 
+      return 0;   // search in the range for a valid K. 
     } 
 
   public static boolean isFunctional(String[] xs, String[] ys) 
@@ -220,16 +413,33 @@ public class AuxMath
 	  return false; 
 	}
 
-    public static boolean isConstant(Vector[] ys)
+    public static boolean isConstantSets(Vector[] ys)
     { if (ys.length > 1)
 	 { Vector y0 = ys[0]; 
          for (int i = 1; i < ys.length; i++)
-         { if (ys[i] == null && y0 == null) { }
+         { if (ys[i] == null && y0 == null) 
+           { }
            else if (ys[i] != null && y0 != null && 
                     ys[i].containsAll(y0) && 
                     y0.containsAll(ys[i]))
            { }  // Assuming they are sets.   
            else { return false; }
+	    }
+	    return true; 
+	  } 
+	  return false; 
+	}
+
+    public static boolean isConstantSequences(Vector[] ys)
+    { if (ys.length > 1)
+	 { Vector y0 = ys[0]; 
+         for (int i = 1; i < ys.length; i++)
+         { if (ys[i] == null && y0 == null) { }
+           else if (ys[i] != null && y0 != null && 
+                    equalsSequence(ys[i],y0))
+           { }  // Assuming they are sequences.   
+           else 
+           { return false; }
 	    }
 	    return true; 
 	  } 
@@ -276,7 +486,7 @@ public class AuxMath
     }
 
     // Version for sets: 
-    public static boolean allDifferent(Vector[] ys)
+    public static boolean allDifferentSets(Vector[] ys)
     { if (ys.length > 1)
       { java.util.HashSet values = new java.util.HashSet(); 
         for (int i = 0; i < ys.length; i++)
@@ -286,6 +496,24 @@ public class AuxMath
         }
         if (values.size() < ys.length)
         { return false; } 
+        return true; 
+      } 
+      return false; 
+    }
+
+    // Version for sets: 
+    public static boolean allDifferentSequences(Vector[] ys)
+    { if (ys.length > 1)
+      { java.util.HashSet values = new java.util.HashSet(); 
+        for (int i = 0; i < ys.length; i++)
+        { java.util.ArrayList value = new java.util.ArrayList(); 
+          value.addAll(ys[i]);
+          values.add(value); 
+        }
+
+        if (values.size() < ys.length)
+        { return false; } 
+
         return true; 
       } 
       return false; 
@@ -330,7 +558,7 @@ public class AuxMath
                   sum = sum+xx; 
                 }
                 catch (Exception _x) 
-				{ return false; } 
+                { return false; } 
               }
             }
             if (sum == dd) 
@@ -824,7 +1052,7 @@ public class AuxMath
 	  return false; 
 	}
 
-    public static boolean isCopy(Vector[] xs, Vector[] ys, ModelSpecification mod)
+    public static boolean isCopySets(Vector[] xs, Vector[] ys, ModelSpecification mod)
     { // Assume they are both sets
 
        if (ys.length > 1 && xs.length == ys.length)
@@ -840,8 +1068,161 @@ public class AuxMath
 	  return false; 
 	}
 
-    public static boolean isSubset(Vector[] xs, Vector[] ys, ModelSpecification mod)
-    { // Assume they are both sets
+    public static boolean isCopySequences(Vector[] xs, Vector[] ys, ModelSpecification mod)
+    { // Assume they both represent sequences
+
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { Vector xvect = xs[i]; 
+          Vector yvect = ys[i]; 
+
+          if (mod.correspondingObjectSequences(xvect,yvect)) { }
+          else { return false; }
+        }
+        return true; 
+      } 
+      return false; 
+    }
+
+    public static boolean isSingletonSequences(ObjectSpecification[] xs, Vector[] ys, ModelSpecification mod)
+    { // Is each ys[i] = Sequence{ xs[i]' } ? 
+
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { ObjectSpecification xx = xs[i]; 
+          Vector yvect = ys[i]; 
+
+          if (yvect.size() == 1) 
+          { ObjectSpecification yy = (ObjectSpecification) yvect.get(0); 
+            if (mod.correspondingObjects(xx,yy)) { }
+            else 
+            { return false; }
+          } 
+          else 
+          { return false; } 
+        }
+        return true; 
+      } 
+      return false; 
+    }
+
+    public static boolean isSingletonSequences(String[] xs, Vector[] ys, ModelSpecification mod)
+    { // Is each ys[i] = Sequence{ xs[i] } ? 
+
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { String xx = xs[i]; 
+          Vector yvect = ys[i]; 
+
+          if (yvect.size() == 1) 
+          { String yy = (String) yvect.get(0); 
+            if (xx != null && yy != null && xx.equals(yy)) 
+            { }
+            else 
+            { return false; }
+          } 
+          else 
+          { return false; } 
+        }
+        return true; 
+      } 
+      return false; 
+    }
+
+    public static boolean isPrependSequences(ObjectSpecification[] xs, Vector[] ys, ModelSpecification mod)
+    { // Is each ys[i] = Sequence{ xs[i]' } ^ something ? 
+
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { ObjectSpecification xx = xs[i]; 
+          Vector yvect = ys[i]; 
+
+          if (yvect.size() >= 1) 
+          { ObjectSpecification yy = (ObjectSpecification) yvect.get(0); 
+            if (mod.correspondingObjects(xx,yy)) 
+            { }
+            else 
+            { return false; }
+          } 
+          else 
+          { return false; } 
+        }
+        return true; 
+      } 
+      return false; 
+    }
+
+    public static boolean isPrependSequences(String[] xs, Vector[] ys, ModelSpecification mod)
+    { // Is each ys[i] = Sequence{ xs[i] } ^ something ? 
+
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { String xx = xs[i]; 
+          Vector yvect = ys[i]; 
+
+          if (yvect.size() >= 1) 
+          { String yy = (String) yvect.get(0); 
+            if (xx != null && yy != null && xx.equals(yy)) 
+            { }
+            else 
+            { return false; }
+          } 
+          else 
+          { return false; } 
+        }
+        return true; 
+      } 
+      return false; 
+    }
+
+    public static boolean isAppendSequences(ObjectSpecification[] xs, Vector[] ys, ModelSpecification mod)
+    { // Is each ys[i] = something ^ Sequence{ xs[i]' }  ? 
+
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { ObjectSpecification xx = xs[i]; 
+          Vector yvect = ys[i]; 
+
+          if (yvect.size() >= 1) 
+          { ObjectSpecification yy = (ObjectSpecification) yvect.get(yvect.size()-1); 
+            if (mod.correspondingObjects(xx,yy)) 
+            { }
+            else 
+            { return false; }
+          } 
+          else 
+          { return false; } 
+        }
+        return true; 
+      } 
+      return false; 
+    }
+
+    public static boolean isAppendSequences(String[] xs, Vector[] ys, ModelSpecification mod)
+    { // Is each ys[i] = something ^ Sequence{ xs[i] }  ? 
+
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { String xx = xs[i]; 
+          Vector yvect = ys[i]; 
+
+          if (yvect.size() >= 1) 
+          { String yy = (String) yvect.get(yvect.size()-1); 
+            if (xx != null && yy != null && xx.equals(yy)) 
+            { }
+            else 
+            { return false; }
+          } 
+          else 
+          { return false; } 
+        }
+        return true; 
+      } 
+      return false; 
+    }
+
+    public static boolean allSubsets(Vector[] xs, Vector[] ys, ModelSpecification mod)
+    { // Each ys[i] is superset of xs[i]'
 
        if (ys.length > 1 && xs.length == ys.length)
        { for (int i = 0; i < xs.length; i++)
@@ -855,12 +1236,40 @@ public class AuxMath
 	  } 
 	  return false; 
 	}
+
+    public static boolean allIncludes(Vector[] ys, Type yelementType, ObjectSpecification[] xs, ModelSpecification mod)
+    { // Each ys[i] includes 
+      // xs[i]'->intersection(yelementType.allInstances())
+
+       if (ys.length > 1 && xs.length == ys.length)
+       { for (int i = 0; i < xs.length; i++)
+         { ObjectSpecification xx = xs[i]; 
+           Vector yvect = ys[i]; 
+
+           Vector xobjs = new Vector(); 
+           xobjs.add(xx); // for non-objects
+ 
+           if (yelementType != null && yelementType.isEntity())
+           { Entity tElem = yelementType.getEntity(); 
+             xobjs = mod.getCorrespondingObjects(xx,tElem);
+           }  
+           
+           System.out.println(">>> Checking if " + xobjs + " <: " + yvect); 
+
+           if (yvect.containsAll(xobjs)) { }
+           else 
+           { return false; }
+	    }
+	    return true; 
+	  } 
+	  return false; 
+	}
 	
     public static boolean isConstantSequence(Vector[] ys)
     { if (ys.length > 1)
 	 { Vector y0 = ys[0]; 
 	   for (int i = 1; i < ys.length; i++)
-	   { if (y0.equals(ys[i])) { }
+	   { if (equalsSequence(y0,ys[i])) { }
 		else 
 		{ return false; }
 	   }
@@ -1477,7 +1886,10 @@ public class AuxMath
        if (xsize < ysize) 
        { Vector yfront = new Vector(); 
          for (int j = 0; j < (ysize-xsize); j++) 
-         { yfront.add(yval.get(j)); } 
+         { yfront.add(yval.get(j)); }
+
+         System.out.println(">> Prefix of " + yval + " before " + xval + " is: " + yfront);  
+
          prefixes.add(yfront); 
          prefix = yfront; 
 	  } 
@@ -1515,6 +1927,100 @@ public class AuxMath
      return true; 
    } 
 
+   public static boolean isSuffixedSequences(Vector[] xs, Vector[] ys, ModelSpecification mod) 
+   { for (int i = 0; i < xs.length && i < ys.length; i++) 
+     { Vector xval = xs[i]; 
+       Vector yval = ys[i];
+       int xsize = xval.size(); 
+       int ysize = yval.size(); 
+       if (xsize < ysize) 
+       { Vector yfront = new Vector(); 
+         for (int j = 0; j < xsize; j++) 
+         { yfront.add(yval.get(j)); } 
+       
+         System.out.println(">> xval is: " + xval); 
+         System.out.println(">> yval is: " + yval); 
+         System.out.println(">> yfront is: " + yfront); 
+
+         if (mod.correspondingObjectSequences(xval,yfront)) { } 
+         else 
+         { return false; }
+       }
+       else 
+       { return false; } 
+     } 
+     return true; 
+   } 
+
+   public static Vector removePrefixSequences(Vector[] strs, Vector[] prefs)
+   { // each strs[i] is prefs[i]^something
+
+     Vector res = new Vector(); 
+
+     if (strs.length < 1) 
+     { return res; } 
+
+     for (int i = 0; i < strs.length && i < prefs.length; i++) 
+     { Vector str = strs[i]; 
+       int slen = str.size(); 
+       int plen = prefs[i].size();
+       Vector remp = subrange(str,plen+1,slen); 
+       System.out.println(">>> " + str + " - prefix " + prefs[i] + " is: " + remp);  
+       res.add(remp); 
+     } 
+
+     return res; 
+   } 
+
+   public static boolean isPrefixedSequences(Vector[] xs, Vector[] ys, ModelSpecification mod) 
+   { // Each ys[i] is something ^ xs[i]' 
+
+     for (int i = 0; i < xs.length && i < ys.length; i++) 
+     { Vector xval = xs[i]; 
+       Vector yval = ys[i];
+       int xsize = xval.size(); 
+       int ysize = yval.size(); 
+       if (xsize < ysize) 
+       { Vector ytail = new Vector(); 
+         for (int j = xsize; j < xsize; j++) 
+         { ytail.add(yval.get(j)); } 
+       
+         System.out.println(">> xval is: " + xval); 
+         System.out.println(">> yval is: " + yval); 
+         System.out.println(">> ytail is: " + ytail); 
+
+         if (mod.correspondingObjectSequences(xval,ytail)) { } 
+         else 
+         { return false; }
+       }
+       else 
+       { return false; } 
+     } 
+     return true; 
+   } 
+
+
+   public static Vector removeSuffixSequences(Vector[] strs, Vector[] suffs)
+   { // each strs[i] is something ^ suffs[i]
+     Vector res = new Vector(); 
+     
+     if (strs.length < 1) 
+     { return res; } 
+
+     for (int i = 0; i < strs.length && i < suffs.length; i++) 
+     { Vector str = strs[i]; 
+       int slen = str.size();
+       int plen = suffs[i].size();  
+       Vector remp = AuxMath.subrange(str,1,slen - plen);
+       System.out.println(">>> " + str + " - suffix " + suffs[i] + " is: " + remp);  
+       res.add(remp); 
+     } 
+
+     return res; 
+   } 
+
+
+
    public static Vector commonSequenceSuffix(Vector[] xs, Vector[] ys) 
    { java.util.HashSet suffixes = new java.util.HashSet(); 
      Vector suffix = new Vector(); 
@@ -1535,10 +2041,10 @@ public class AuxMath
        { return null; } 
      } 
 	 
-	 if (suffixes.size() == 1)
+     if (suffixes.size() == 1)
      { return suffix; } 
-	 return null;  
-    } 
+     return null;  
+   } 
 
    public static boolean isSubsetSet(Vector[] xs, Vector[] ys, ModelSpecification mod) 
    { for (int i = 0; i < xs.length && i < ys.length; i++) 
@@ -1612,7 +2118,26 @@ public class AuxMath
      return null; 
    } 
 
-   public static boolean isUnion(Vector[] xs, Vector xs1[], Vector[] ys, ModelSpecification mod) 
+   public static boolean isConcatenation(Vector[] xs, Vector xs1[], Vector[] ys, ModelSpecification mod) 
+   { // assuming they are collections of objects
+   
+     for (int i = 0; i < xs.length && i < xs1.length && i < ys.length; i++) 
+     { Vector xval = xs[i]; 
+       Vector xval1 = xs1[i]; 
+       Vector yval = ys[i];
+       Vector vals = new Vector(); 
+       vals.addAll(xval);
+       vals.addAll(xval1);    
+       if (mod.correspondingObjectSequences(vals,yval)) 
+       { System.out.println(">>> Concatenation " + xval + " ^ " + xval1 + " |--> " + yval); }
+       else 
+       { return false; } 
+     } 
+     return true; 
+   } 
+
+
+   public static boolean isUnionSets(Vector[] xs, Vector xs1[], Vector[] ys, ModelSpecification mod) 
    { // assuming they are collections of objects
    
      for (int i = 0; i < xs.length && i < xs1.length && i < ys.length; i++) 
@@ -1632,7 +2157,51 @@ public class AuxMath
      return true; 
    } 
 
-   public static boolean isUnion(ObjectSpecification[] xs, ObjectSpecification[] xs1, ObjectSpecification[] ys, String tent, ModelSpecification mod) 
+   public static Vector removeSubsets(Vector[] ys, Vector[] xs, ModelSpecification mod) 
+   { // assuming they are collections of objects
+     Vector res = new Vector(); 
+   
+     for (int i = 0; i < xs.length && i < ys.length; i++) 
+     { Vector xval = xs[i]; 
+       Vector yval = ys[i];
+       Vector vals = new Vector(); 
+       vals.addAll(xval);
+       Vector tvals = mod.getCorrespondingElements(vals); 
+
+       Vector rval = new Vector(); 
+       rval.addAll(yval); 
+       rval.removeAll(tvals);
+
+       System.out.println(">>> " + yval + " with " + vals + " removed is: " + rval); 
+ 
+       res.add(rval); 
+     } 
+     return res; 
+   } 
+
+   public static Vector removeElements(Vector[] ys, ObjectSpecification[] xs, ModelSpecification mod) 
+   { // assuming they are collections of objects
+     Vector res = new Vector(); 
+   
+     for (int i = 0; i < xs.length && i < ys.length; i++) 
+     { ObjectSpecification xval = xs[i]; 
+       Vector yval = ys[i];
+       Vector vals = new Vector(); 
+       vals.add(xval);
+       Vector tvals = mod.getCorrespondingElements(vals); 
+
+       Vector rval = new Vector(); 
+       rval.addAll(yval); 
+       rval.removeAll(tvals);
+
+       System.out.println(">>> " + yval + " with " + vals + " removed is: " + rval); 
+ 
+       res.add(rval); 
+     } 
+     return res; 
+   } 
+
+   public static boolean isUnionSets(ObjectSpecification[] xs, ObjectSpecification[] xs1, ObjectSpecification[] ys, String tent, ModelSpecification mod) 
    { // assuming they are collections of objects
      Vector imageofxvals = new Vector(); 
 
@@ -1662,15 +2231,65 @@ public class AuxMath
    } 
 
    public static void main(String[] args)
-   { double[] xs = {19601123,19700316,20010101,20001119,19501209,20090101}; 
+   { Vector vvx1 = new Vector(); 
+     Vector vvy1 = new Vector(); 
+     Vector vvx2 = new Vector(); 
+     Vector vvy2 = new Vector(); 
+
+     // vvx1.add("aa"); vvx1.add("bb"); vvx1.add("cc"); 
+     vvx1.add("dd"); vvx1.add("cc"); 
+
+     vvy1.add("aa"); vvy1.add("bb"); 
+     vvy1.add("cc");  
+
+     // vvx2.add("uu"); vvx2.add("ww"); vvx2.add("aa"); vvx2.add("bb"); 
+     vvx2.add("cc"); vvx2.add("dd");
+     vvy2.add("zz"); vvy2.add("zz"); vvy2.add("uu"); vvy2.add("ww");  
+
+     Vector[] vvxs = { vvx1, vvx2 }; 
+     Vector[] vvys = { vvy1, vvy2 };
+
+     // System.out.println(">> Suffixes: " + AuxMath.removePrefixSequences(vvxs,vvys)); 
+ 
+     System.out.println(">> Suffixes: " + AuxMath.removeSuffixSequences(vvys,vvxs)); 
+
+     System.out.println(">> Tails: " + AuxMath.tailSequences(vvys)); 
+     System.out.println(">> Fronts: " + AuxMath.frontSequences(vvys)); 
+
+     System.out.println(AuxMath.isConstantSequences(vvxs)); 
+     System.out.println(AuxMath.isConstantSets(vvxs)); 
+
+
+
+     String[] strs = { "long", "tilda", "tremble" };  
+     String[] xss = { "ng", "da", "ble" }; 
+
+     System.out.println(">> Suffixes: " + AuxMath.removeSuffix(strs,xss)); 
+     
+
+     double[] xs = {19601123,19700316,20010101,20001119,19501209,20090101}; 
      double[] ys = {1960,1970,2001,2000,1950,2009};
 
-     System.out.println(AuxMath.divFunction(xs,ys)); 
+     Vector v1 = new Vector(); 
+     v1.add(10); v1.add("2"); v1.add("-1.1"); v1.add(-0.9); 
+     System.out.println(AuxMath.numericSum(v1)); 
+     System.out.println(AuxMath.numericPrd(v1)); 
+     System.out.println(AuxMath.numericMin(v1)); 
+     System.out.println(AuxMath.numericMax(v1)); 
+
+     Vector v2 = new Vector(); 
+     v2.add("abba"); v2.add("ab"); v2.add("xyz"); 
+     System.out.println(AuxMath.stringSum(v2)); 
+     System.out.println(AuxMath.stringMax(v2)); 
+     System.out.println(AuxMath.stringMin(v2)); 
+
+
+     /* System.out.println(AuxMath.divFunction(xs,ys)); 
 
      System.out.println(gcd(1,1)); 
      System.out.println(gcd(-1,1)); 
      System.out.println(gcd(0,1)); 
-     System.out.println(gcd(0,0)); 
+     System.out.println(gcd(0,0)); */ 
 
 	 
 	 /* Vector x1 = new Vector(); 

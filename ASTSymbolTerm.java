@@ -14,6 +14,9 @@ public class ASTSymbolTerm extends ASTTerm
   public ASTSymbolTerm(String s) 
   { symbol = s; } 
 
+  public String cg(CGSpec cgs)
+  { return symbol; } 
+
   public String toString()
   { return symbol; } 
 
@@ -60,6 +63,28 @@ public class ASTSymbolTerm extends ASTTerm
     { return " * "; } 
     if ("/".equals(symbol)) 
     { return " / "; } 
+
+    if ("this".equals(symbol))
+    { return "self"; } 
+
+    if ("List".equals(symbol)) 
+    { return "Sequence"; } 
+    if ("ArrayList".equals(symbol)) 
+    { return "Sequence"; } 
+    if ("Vector".equals(symbol)) 
+    { return "Sequence"; } 
+    if ("LinkedList".equals(symbol)) 
+    { return "Sequence"; } 
+    if ("Set".equals(symbol)) 
+    { return "Set"; } 
+    if ("HashSet".equals(symbol)) 
+    { return "Set"; } 
+    if ("TreeSet".equals(symbol)) 
+    { return "Set"; } 
+    if ("HashMap".equals(symbol)) 
+    { return "Map"; } 
+    if ("TreeMap".equals(symbol)) 
+    { return "Map"; } 
 
     return symbol; 
   } 

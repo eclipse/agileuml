@@ -61,7 +61,7 @@ public class KM3Editor extends JFrame implements DocumentListener
 
     String systemName = "app"; 
     Vector entities = new Vector(); // of Entity 
-	Vector types = new Vector(); 
+    Vector types = new Vector(); 
     Vector useCases = new Vector(); // of UseCase
 
     String ownerName = ""; 
@@ -71,7 +71,8 @@ public class KM3Editor extends JFrame implements DocumentListener
     Vector ops = new Vector();  // BehaviouralFeature - all static for use cases
     UCDArea classArea = null; 
     ActivityEditDialog actDialog; 
-  
+    private JLabel thisLabel;
+
     public KM3Editor(UCDArea parent, Vector ents, Vector ucs) 
     {
         super("KM3 Editor");
@@ -90,27 +91,30 @@ public class KM3Editor extends JFrame implements DocumentListener
         { doc = (AbstractDocument) styledDoc;
           doc.addDocumentListener(this); 
         } 
-		else 
-		{
+	   else 
+	   {
             System.err.println("Error: invalid document");
         }
         
-		JScrollPane scrollPane = new JScrollPane(textPane);
+        JScrollPane scrollPane = new JScrollPane(textPane);
         scrollPane.setPreferredSize(new Dimension(100, 300));
 
-        messageArea = new JTextArea(15, 80);
+        messageArea = new JTextArea(10, 50);
         messageArea.setEditable(false);
         JScrollPane scrollPaneForLog = new JScrollPane(messageArea);
 
         JSplitPane splitPane = new JSplitPane(
-                                       JSplitPane.VERTICAL_SPLIT,
-                                       scrollPane, scrollPaneForLog);
+                       JSplitPane.VERTICAL_SPLIT,
+                       scrollPane, scrollPaneForLog);
         splitPane.setOneTouchExpandable(true);
 
-        JPanel statusPane = new JPanel(new GridLayout(1, 1));
+        JPanel statusPane = new JPanel(new GridLayout(2, 1));
 
         getContentPane().add(splitPane, BorderLayout.CENTER);
-        getContentPane().add(statusPane, BorderLayout.PAGE_END);
+        getContentPane().add(statusPane, BorderLayout.EAST);
+        thisLabel = 
+          new JLabel("Type & click within the framed area.");
+        getContentPane().add(thisLabel, java.awt.BorderLayout.SOUTH); 
 
         actions = createActionTable(textPane);
         JMenu fileMenu = createFileMenu(); 
@@ -129,6 +133,8 @@ public class KM3Editor extends JFrame implements DocumentListener
         pack();
         setVisible(true);
     }
+
+    // thisLabel.setText()
 
     public Vector getInvs() 
     { return invs; } 
@@ -230,8 +236,8 @@ public class KM3Editor extends JFrame implements DocumentListener
         } */ 
 
        String sysName = "app"; 
-	   if (systemName != null && !systemName.equals(""))
-	   { sysName = systemName; }
+       if (systemName != null && !systemName.equals(""))
+       { sysName = systemName; }
 	   
        try 
        { doc.insertString(0, "package " + sysName + " { \n\r\n\r" , attrs[1]); 
@@ -249,7 +255,6 @@ public class KM3Editor extends JFrame implements DocumentListener
            { doc.insertString(doc.getLength(), ent.getKM3() + "\n\r\n\r", attrs[1]); } 
           }
 
-
            doc.insertString(doc.getLength(), "\n\r", attrs[1]); 
            Vector seen = new Vector(); 
 
@@ -265,7 +270,8 @@ public class KM3Editor extends JFrame implements DocumentListener
       { System.err.println("Couldn't insert initial text."); }
    } 
 
-    protected SimpleAttributeSet[] initAttributes(int length) {
+    protected SimpleAttributeSet[] initAttributes(int length) 
+    {
         SimpleAttributeSet[] attrs = new SimpleAttributeSet[length];
 
         attrs[0] = new SimpleAttributeSet();
@@ -285,18 +291,20 @@ public class KM3Editor extends JFrame implements DocumentListener
     }
 
     private HashMap createActionTable(JTextComponent textComponent) 
-	{ HashMap actions = new HashMap();
+    { HashMap actions = new HashMap();
       Action[] actionsArray = textComponent.getActions();
       for (int i = 0; i < actionsArray.length; i++) 
-	  { Action a = actionsArray[i];
+      { Action a = actionsArray[i];
         actions.put(a.getValue(Action.NAME), a);
       }
-	  return actions;
+      return actions;
     }
 
    public int getClassStart(String txt, int en)
    { int st = 0; 
      int linestart = 0; // start position of the current line
+
+     int linecount = 0; // line count of current line. 
 
      StringBuffer line = new StringBuffer(); 
      StringBuffer conbuffer = new StringBuffer(); 
@@ -304,7 +312,8 @@ public class KM3Editor extends JFrame implements DocumentListener
      for (int i = 0; i < en; i++)
      { char c = txt.charAt(i); 
        if (c == '\n')
-       { String ls = line.toString(); 
+       { linecount++; 
+         String ls = line.toString(); 
          String tls = ls.trim(); 
          if (tls.startsWith("abstract class") || 
              tls.startsWith("class") || 
@@ -330,6 +339,8 @@ public class KM3Editor extends JFrame implements DocumentListener
        { line.append(c); } 
      } 
 
+     thisLabel.setText("Line number: " + (linecount+1) + " Position: " + linestart); 
+
      conbuffer.append(line.toString()); 
      cons.add(conbuffer.toString()); 
      // System.out.println("CONSTRAINT: " + cons); 
@@ -337,27 +348,51 @@ public class KM3Editor extends JFrame implements DocumentListener
      return st; 
    } 
 
-    private Action getActionByName(String name) {
-        return (Action) actions.get(name);
-    }
+    private Action getActionByName(String name) 
+    { return (Action) actions.get(name); }
 	
 	public void changedUpdate(DocumentEvent e)
 	{ int offset = e.getOffset(); 
 	  int pos = textPane.getCaretPosition();
-      // System.out.println("Update event at: " + offset + " " + pos); 
+        // System.out.println("Update event at: " + offset + " " + pos); 
 	}
 
 	public void insertUpdate(DocumentEvent e)
 	{ int offset = e.getOffset(); 
 	  int pos = textPane.getCaretPosition();
+        
 	  try 
 	  { String ch = textPane.getText(pos,1); 
 	    // System.out.println("Insert event at: " + offset + " " + pos + " " + textPane.getText(pos,1)); 
+
          String txt = textPane.getText(0,pos); 
+         
+         char cc = ch.charAt(0); 
+         if (Character.isLetterOrDigit(cc))
+         { // look back to see what is the identifier/number
+           String curriden = Compiler2.matchPrecedingIdentifier(cc,txt,txt.length()); 
+           // System.out.println(">>> Identifier: " + curriden); 
+           if (curriden != null && curriden.length() > 0)
+           { String[] mess = {""}; 
+             String keywd = Compiler2.isKeywordOrPart(curriden,mess); 
+             if (keywd != null) 
+             { thisLabel.setText(">>> Keyword: " + keywd); 
+               if (mess[0] != null && mess[0].length() > 0)
+               { messageArea.setText(mess[0] + "\n\r"); } 
+             } 
+             else 
+             { String idendefinition = Compiler2.findIdentifierDefinition(curriden,txt); 
+               if (idendefinition != null && idendefinition.length() > 0) 
+               { thisLabel.setText(">>> Identifier " + curriden + " defined at " + idendefinition); } 
+             } 
+           }  
+         } 
+
          Vector errors = new Vector();
-		 Vector colours = new Vector();  
+         Vector colours = new Vector();
+  
          if ("}".equals(ch) || ")".equals(ch) || "]".equals(ch))
-		 { int posb = Compiler2.matchPrecedingBracket(ch,txt,errors,colours);
+         { int posb = Compiler2.matchPrecedingBracket(ch,txt,errors,colours);
 		// System.out.println("Preceding bracket at: " + posb); 
            if (posb < 0) 
            { messageArea.append("No matching opening bracket for " + ch + "!\n"); } 

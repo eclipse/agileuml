@@ -30,6 +30,67 @@ public class ASTCompositeTerm extends ASTTerm
     return res; 
   } 
 
+  public String cg(CGSpec cgs)
+  { // Find the cgs rules r for tag, match the terms to 
+    // the r LHS, then apply first rule to the cg results of 
+    // the LHS matchings. 
+
+    Vector rules = cgs.getRulesForCategory(tag); 
+    for (int i = 0; i < rules.size(); i++) 
+    { CGRule r = (CGRule) rules.get(i);
+      Vector tokens = r.lhsTokens; 
+      Vector vars = r.getVariables(); 
+
+      if (tokens.size() != terms.size())
+      { System.out.println("> " + tag + " rule " + r + " does not match " + this);  
+        System.out.println(" Different numbers of elements on rule LHS (" + tokens.size() + ") to subterms: (" + terms.size() + ")"); 
+        continue; 
+      } 
+
+      System.out.println("> Trying to match tokens of rule " + r + " for " + this);  
+        
+      Vector args = new Vector(); 
+        // Strings resulting from terms[k].cg(cgs)
+      Vector eargs = new Vector(); 
+        // the actual terms[k]
+
+      int k = 0; 
+      boolean failed = false; 
+      for (int j = 0; j < tokens.size() && !failed; j++) 
+      { String tok = (String) tokens.get(j); 
+        if (vars.contains(tok))
+        { // allocate terms(j) to tok
+          eargs.add(terms.get(j)); 
+          k++; 
+        } 
+        else if (tok.equals(terms.get(j) + ""))
+        { } 
+        else 
+        { System.out.println("> " + tag + " rule " + r + " does not match " + this); 
+          System.out.println(tok + " /= " + terms.get(j)); 
+          failed = true; // try next rule 
+        } 
+      } 
+
+      if (failed == false) 
+      { System.out.println("> Matched " + tag + " rule " + r + " for " + this);  
+
+        for (int p = 0; p < eargs.size(); p++)
+        { ASTTerm term = (ASTTerm) eargs.get(p); 
+          String textp = term.cg(cgs); 
+          args.add(textp); 
+        } 
+
+        Vector ents = new Vector(); 
+
+        if (r.satisfiesConditions(eargs,ents))
+        { return r.applyRule(args,eargs,cgs); }  
+      }
+    }  
+    return toString(); 
+  }
+
+
   public boolean isAssignment()
   { if ("expression".equals(tag) && terms.size() == 3)
     { ASTTerm op = (ASTTerm) terms.get(1);
@@ -102,6 +163,22 @@ public class ASTCompositeTerm extends ASTTerm
     return null;  
   } 
 
+  public Vector getCallArguments(ASTTerm t) 
+  { Vector res = new Vector(); 
+    if (t instanceof ASTCompositeTerm) 
+    { ASTCompositeTerm tt = (ASTCompositeTerm) t; 
+      if ("expressionList".equals(tt.tag))
+      { for (int i = 0; i < tt.terms.size(); i++) 
+        { ASTTerm telem = (ASTTerm) tt.terms.get(i); 
+          if (telem instanceof ASTSymbolTerm) { } 
+          else 
+          { res.add(telem); } 
+        } 
+      } 
+    } 
+    return res; 
+  } 
+
   public String featureAccess(ASTTerm arg, ASTTerm call, String args, String calls)
   { if (call instanceof ASTCompositeTerm)
     { ASTCompositeTerm callterm = (ASTCompositeTerm) call; 
@@ -109,7 +186,37 @@ public class ASTCompositeTerm extends ASTTerm
       { Vector callterms = callterm.terms; 
         String called = callterms.get(0) + "";
  
-        if ("add".equals(called))
+        if ("max".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          ASTTerm callarg2 = (ASTTerm) cargs.get(1);
+          String callp1 = callarg1.toKM3(); 
+          String callp2 = callarg2.toKM3(); 
+
+          return "Set{" + callp1 + ", " + callp2 + "}->max()"; 
+        }  
+        else if ("min".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          ASTTerm callarg2 = (ASTTerm) cargs.get(1);
+          String callp1 = callarg1.toKM3(); 
+          String callp2 = callarg2.toKM3(); 
+
+          return "Set{" + callp1 + ", " + callp2 + "}->min()"; 
+        }  
+        else if ("put".equals(called) && callterms.size() >= 3)
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          ASTTerm callarg2 = (ASTTerm) cargs.get(1);
+          String callp1 = callarg1.toKM3(); 
+          String callp2 = callarg2.toKM3(); 
+
+          return args + "[" + callp1 + "] := " + callp2; 
+        }  
+        else if ("add".equals(called))
         { ASTTerm callarg = (ASTTerm) callterms.get(2); 
           String callp = callarg.toKM3(); 
           return args + " := " + args + "->including(" + callp + ")"; 
@@ -124,6 +231,21 @@ public class ASTCompositeTerm extends ASTTerm
           String callp = callarg.toKM3(); 
           return args + "[" + callp + " + 1]"; 
         }
+        else if ("indexOf".equals(called))
+        { ASTTerm callarg = (ASTTerm) callterms.get(2); 
+          String callp = callarg.toKM3(); 
+          return "(" + args + "->indexOf(" + callp + ") - 1)"; 
+        }
+        else if ("substring".equals(called))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          ASTTerm callarg2 = (ASTTerm) cargs.get(1);
+          String callp1 = callarg1.toKM3(); 
+          String callp2 = callarg2.toKM3(); 
+
+          return args + ".subrange(" + callp1 + " + 1, " + callp2 + ")"; 
+        }  
         else if ("concat".equals(called))
         { ASTTerm callarg = (ASTTerm) callterms.get(2); 
           String callp = callarg.toKM3(); 
@@ -202,6 +324,11 @@ public class ASTCompositeTerm extends ASTTerm
       String args1 = args.toKM3(); 
       return "create" + clsname + args1; 
     } 
+
+    if ("createdName".equals(tag))
+    { ASTTerm mainclass = (ASTTerm) terms.get(0);
+      return mainclass.toKM3(); 
+    } // Ignore type parameters in creation. 
 
     if ("expression".equals(tag))
     { System.out.println(">> Expression with " + terms.size() + " terms " + terms);
@@ -383,6 +510,12 @@ public class ASTCompositeTerm extends ASTTerm
         
         return res; 
       } 
+      else if (terms.size() > 3 && "assert".equals(terms.get(0) + ""))
+      { ASTTerm expr = (ASTTerm) terms.get(1);
+        ASTTerm mess = (ASTTerm) terms.get(3);
+        String res = "  assert " + expr.toKM3() + " do ExceptionManager.createEnvironmentException(\"AssertionError\"," + mess.toKM3() + ")"; 
+        return res; 
+      } 
       else if (terms.size() > 2 && "return".equals(terms.get(0) + ""))
       { ASTTerm texpr = (ASTTerm) terms.get(1);
         String res = "return " + texpr.toKM3() + " "; 
@@ -440,7 +573,7 @@ public class ASTCompositeTerm extends ASTTerm
     } 
       
 
-    if ("localVariableDeclaration".equals(tag))
+    if ("localVariableDeclaration".equals(tag) && terms.size() > 1)
     { ASTTerm typeTerm = (ASTTerm) terms.get(0); 
       ASTCompositeTerm varTerm = (ASTCompositeTerm) terms.get(1); 
       String km3type = typeTerm.toKM3(); 
@@ -450,6 +583,18 @@ public class ASTCompositeTerm extends ASTTerm
       if (km3init != null) 
       { res = res + " := " + km3init; }  
       return res; 
+    }   
+
+    if ("fieldDeclaration".equals(tag) && terms.size() > 1)
+    { ASTTerm typeTerm = (ASTTerm) terms.get(0); 
+      ASTCompositeTerm varTerm = (ASTCompositeTerm) terms.get(1); 
+      String km3type = typeTerm.toKM3(); 
+      String km3var = varTerm.toKM3Var(); 
+      String km3init = varTerm.toKM3VarInit(); 
+      String res = "  attribute " + km3var + " : " + km3type; 
+      // if (km3init != null) 
+      // { res = res + " := " + km3init; }  
+      return res + ";\n"; 
     }   
 
     if ("typeType".equals(tag))
@@ -464,6 +609,31 @@ public class ASTCompositeTerm extends ASTTerm
         } 
         return tt;  
       } 
+    } 
+
+    if ("classOrInterfaceType".equals(tag))
+    { if (terms.size() > 1)  // A parameterised type 
+      { ASTTerm baseType = (ASTTerm) terms.get(0); 
+        ASTTerm typepars = (ASTTerm) terms.get(1); 
+        String btype = baseType.toKM3();
+        String pars = typepars.toKM3(); 
+        return btype + "(" + pars + ")"; 
+      }
+      else 
+      { ASTTerm t0 = (ASTTerm) terms.get(0);
+        return t0.toKM3(); 
+      } // should never occur
+    } 
+ 
+    if ("typeArguments".equals(tag) && terms.size() > 1)
+    { // < arg >   or   < arg1 , arg2 >
+      ASTTerm typepar0 = (ASTTerm) terms.get(1); 
+      String res = typepar0.toKM3(); 
+      if (terms.size() > 3)
+      { ASTTerm typepar1 = (ASTTerm) terms.get(3); 
+        res = res + ", " + typepar1.toKM3(); 
+      } 
+      return res; 
     } 
 
     if ("enhancedForControl".equals(tag))
@@ -531,6 +701,67 @@ public class ASTCompositeTerm extends ASTTerm
       }  
       return res + "  ;\n"; 
     }
+
+    if ("constructorDeclaration".equals(tag))
+    { ASTTerm mname = (ASTTerm) terms.get(0);
+      ASTTerm mparams = (ASTTerm) terms.get(1); 
+ 
+      String res = "\n  operation initialise" + mname + mparams.toKM3() + " : " + mname + "\n" + 
+              "  pre: true\n" + "  post: true\n"; 
+      if (terms.size() > 2)
+      { res = res + "  activity:\n"; 
+        for (int i = 2; i < terms.size(); i++) 
+        { ASTTerm tt = (ASTTerm) terms.get(i); 
+          res = res + "   " + tt.toKM3();
+          if (i < terms.size() - 1) 
+          { res = res + "\n"; }
+          else 
+          { res = res + ";\n"; }  
+        }
+      }  
+      return res + "    return self;\n"; 
+    }
+
+    if ("formalParameter".equals(tag))
+    { ASTTerm mtype = (ASTTerm) terms.get(0); 
+      ASTTerm mname = (ASTTerm) terms.get(1);
+      
+      String res = mname.toKM3() + " : " + mtype.toKM3();  
+      return res;
+    }
+
+    if ("enumDeclaration".equals(tag) && 
+        terms.size() > 3)
+    { ASTTerm ename = (ASTTerm) terms.get(1); 
+      ASTTerm literals = (ASTTerm) terms.get(3); 
+      return "enumeration " + ename +
+             " {\n" + literals.toKM3() + "}"; 
+    }  
+
+    if ("modifier".equals(tag))
+    { return ""; } 
+
+    if ("enumConstants".equals(tag))
+    { String res = ""; 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm lit = (ASTTerm) terms.get(i); 
+        if (",".equals(lit + "")) { } 
+        else
+        { res = res + "  literal " + lit.toKM3() +
+                ";\n";
+        } 
+      } 
+      return res;  
+    }  
+
+    if ("classDeclaration".equals(tag) && 
+        terms.size() > 2)
+    { ASTTerm ename = (ASTTerm) terms.get(1); 
+      ASTTerm contents = (ASTTerm) terms.get(2); 
+      return "class " + ename +
+             " {\n" + contents.toKM3() + "}"; 
+    }  
+
 
     if (terms.size() == 1) // Identifier or literal
     { ASTTerm t = (ASTTerm) terms.get(0); 

@@ -234,24 +234,26 @@ public class NLPSentence
     Vector res = new Vector();
     NLPPhrase p1 = (NLPPhrase) phrases.get(0); 
     String noun = p1.getPrincipalNoun(); 
-	if (noun == null || noun.length() == 0) 
-	{ return res; }
-	if (NLPWord.isKeyword(noun))
-	{ return res; } 
+    if (noun == null || noun.length() == 0) 
+    { return res; }
+    
+    if (NLPWord.isKeyword(noun))
+    { return res; } 
 	
-	String singular = NLPWord.getSingular(noun); 
+    String singular = noun; 
+      // NLPWord.getSingular(noun); 
 	
     NLPPhrase p2 = (NLPPhrase) phrases.get(1);
     Entity ent = null; 
-	Object obj = ModelElement.lookupByNameIgnoreCase(singular, modelElements); 
+    Object obj = ModelElement.lookupByNameIgnoreCase(singular, modelElements); 
     if (obj == null) 
     { ent = ModelElement.featureBelongsTo(noun, modelElements); 
-	  if (ent != null) // it is a feature, a boolean or effective enumeration
-	  { Attribute att = ent.getDefinedPropertyIgnoreCase(noun); 
-	    p2.extractAlternativeValues(att, ent, modelElements); 
-		derivedElements.add(att); 
-		return res; 
-	  }
+      if (ent != null) // it is a feature, a boolean or effective enumeration
+      { Attribute att = ent.getDefinedPropertyIgnoreCase(noun); 
+        p2.extractAlternativeValues(att, ent, modelElements); 
+        derivedElements.add(att); 
+        return res; 
+      }
 	
 	  ent = new Entity(Named.capitalise(singular));
 	  System.out.println(">>> New entity: " + singular);
@@ -305,42 +307,42 @@ public class NLPSentence
     Vector res = new Vector();
     NLPPhraseElement p1 = (NLPPhraseElement) phrases.get(0); 
     String noun = p1.getPrincipalNoun(); 
-	if (noun == null || noun.length() == 0)
-	{ return res; }
+    if (noun == null || noun.length() == 0)
+    { return res; }
 	
-	if (phrases.size() < 2) 
-	{ return res; }
+    if (phrases.size() < 2) 
+    { return res; }
 	
     NLPPhraseElement p2 = (NLPPhraseElement) phrases.get(1);
-	boolean notfound = true; 
+    boolean notfound = true; 
     for (int x = 1; x < phrases.size() && notfound; x++) 
-	{ p2 = (NLPPhraseElement) phrases.get(x);
-	  if (p2.isVerbPhrase()) 
-	  { notfound = false; }
-	} 
+    { p2 = (NLPPhraseElement) phrases.get(x);
+      if (p2.isVerbPhrase()) 
+      { notfound = false; }
+    } 
 	
-	Entity ent = null; 
-	String singular = NLPWord.getSingular(noun); 
+    Entity ent = null; 
+    String singular = noun; // NLPWord.getSingular(noun); 
 	
-	Object obj = ModelElement.lookupByNameIgnoreCase(singular, modelElements); 
+    Object obj = ModelElement.lookupByNameIgnoreCase(singular, modelElements); 
     if (obj == null) 
     { ent = new Entity(Named.capitalise(singular));
       System.out.println(">>> New class: " + ent.getName()); 
       modelElements.add(ent); 
-	  res.add(ent); 
-  	  derivedElements.add(ent); 
-	  ent.addStereotype("originator=\"" + id + "\""); 
+      res.add(ent); 
+      derivedElements.add(ent); 
+      ent.addStereotype("originator=\"" + id + "\""); 
     } 
     else 
     { System.out.println(">>> Existing model element: " + singular); 
-	  if (obj instanceof Entity) 
-	  { ent = (Entity) obj; }
-	} 
+      if (obj instanceof Entity) 
+      { ent = (Entity) obj; }
+    } 
    
     if (notfound)
-	{ System.err.println("!!! No subject part in this sentence: " + this); 
-	  return res; 
-	}
+    { System.err.println("!!! No subject part in this sentence: " + this); 
+      return res; 
+    }
 	
     String verb = p2.getMostSignificantVerb();    
     if (ent != null && verb != null && verb.length() > 0)
@@ -353,7 +355,7 @@ public class NLPSentence
   public String getKM3(Vector elems, java.util.Map fromBackground)
   { String res = ""; 
     Vector quals = new Vector(); 
-	java.util.HashMap verbClassifications = new java.util.HashMap(); 
+    java.util.HashMap verbClassifications = new java.util.HashMap(); 
 	
     if (isSVO() && isSystemDefinition())
     { System.out.println(">>> System definition: " + this); 
@@ -678,68 +680,68 @@ public class NLPSentence
   { int index = 0; 
     Vector quals = new Vector(); 
     String uc = ""; 
-	String shortName = ""; 
+    String shortName = ""; 
     String actor = null; // Normally the noun of the noun clause (if any) which precedes the first verb. 
 	
-	if (np1.size() > 0)
-	{ actor = NLPPhrase.getPrincipalNoun(np1); 
-	  if (actor != null && actor.length() > 0)
-	  { System.out.println(">>> Use case Actor is " + Named.capitalise(actor)); }
-	  else 
-	  { actor = null; }
-	}
+    if (np1.size() > 0)
+    { actor = NLPPhrase.getPrincipalNoun(np1); 
+      if (actor != null && actor.length() > 0)
+      { System.out.println(">>> Use case Actor is " + Named.capitalise(actor)); }
+      else 
+      { actor = null; }
+    }
 	
-	if (vb1.size() == 0 && rem.size() == 0) // take all words from np1
-	{ for (int j = 0; j < np1.size(); j++) 
+    if (vb1.size() == 0 && rem.size() == 0) // take all words from np1
+    { for (int j = 0; j < np1.size(); j++) 
       { NLPWord wd = (NLPWord) np1.get(j); 
         uc = uc + wd.text;   
-		shortName = shortName + wd.text; 
+        shortName = shortName + wd.text; 
       }
-	}
-	else if (np1.size() > 0)
-	{ for (int j = 0; j < np1.size() && index == 0; j++) 
+    }
+    else if (np1.size() > 0)
+    { for (int j = 0; j < np1.size() && index == 0; j++) 
       { NLPWord wd = (NLPWord) np1.get(j); 
         if (wd.isVerbPhraseWord(quals,mp))
-		{ uc = uc + wd.text; 
-		  index = j+1; 
-		}  
-	  } 
+        { uc = uc + wd.text; 
+          index = j+1; 
+        }  
+      } 
 		
       if (index > 0)
-	  { for (int j = index; j < np1.size(); j++) 
+      { for (int j = index; j < np1.size(); j++) 
         { NLPWord wd = (NLPWord) np1.get(j); 
           if (wd.isVerbPhraseWord(quals,mp) || wd.isAdjective() || wd.isNounPhraseWord() || wd.isConjunctionWord())
           { uc = uc + wd.text; }  
-		} 
+        } 
       }
-	}
+    }
 	  
-	index = 0; 
+    index = 0; 
 	
     if (vb1.size() > 0)
-	{ // starts with a verb "Update/create/add etc ...."
+    { // starts with a verb "Update/create/add etc ...."
 	
-	  if (actor == null) 
-	  { actor = NLPPhrase.getPrincipalNoun(vb1); 
-	    if (actor != null && actor.length() > 0)
-	    { System.out.println(">>> Use case Actor is " + Named.capitalise(actor)); }
-		else 
-		{ actor = null; }
-	  }
+      if (actor == null) 
+      { actor = NLPPhrase.getPrincipalNoun(vb1); 
+        if (actor != null && actor.length() > 0)
+        { System.out.println(">>> Use case Actor is " + Named.capitalise(actor)); }
+        else 
+        { actor = null; }
+      }
 	  
-	  for (int j = 0; j < vb1.size(); j++) 
+      for (int j = 0; j < vb1.size(); j++) 
       { NLPWord wd = (NLPWord) vb1.get(j); 
         if (index == 0 && wd.isSignificantVerbPhraseWord(verbClassifications,quals,mp))
-		{ uc = uc + wd.text; 
-		  index = j+1;
-		  shortName = shortName + wd.text;  
-		} 
-		else if (wd.isVerbPhraseWord(quals,mp) || wd.isAdjective() || 
+        { uc = uc + wd.text; 
+          index = j+1;
+          shortName = shortName + wd.text;  
+        } 
+        else if (wd.isVerbPhraseWord(quals,mp) || wd.isAdjective() || 
 		      wd.isNounPhraseWord() || wd.isConjunctionWord())
         { uc = uc + Named.capitalise(wd.text); 
-	      if (index > 0) 
-	      { shortName = shortName + Named.capitalise(wd.text); } 
-		}    
+          if (index > 0) 
+          { shortName = shortName + Named.capitalise(wd.text); } 
+        }    
 		
         // Entity ent = (Entity) ModelElement.lookupByNameIgnoreCase(wd.text,elems);
 		// if (ent != null) 
@@ -960,11 +962,11 @@ public class NLPSentence
         String stereotype = (String) mp.get(wd.text + ""); 
         if (stereotype != null)
         { System.out.println("Current stereotype >> " + stereotype); 
-	      if (foundStereotypes.size() == 0) 
+          if (foundStereotypes.size() == 0) 
           { foundStereotypes.add(stereotype); 
             uc.addStereotype(stereotype); 
           } 
-	    }
+        }
       } 
     }
   }
@@ -973,14 +975,14 @@ public class NLPSentence
   { // System.out.println("MP= " + mp); 
 	// System.out.println("UC= " + uc); 
 	 
-	if (uc == null) 
-	{ return; }
-	else 
+    if (uc == null) 
+    { return; }
+    else 
     { ModelElement elm = ModelElement.findElementByNameIgnoreCase(wd.text,elems);
-	  if (elm == null && wd.isPlural()) 
-	  { String sing = wd.getSingular(); 
-	    elm = ModelElement.findElementByNameIgnoreCase(sing,elems);
-	  }
+      if (elm == null && wd.isPlural()) 
+      { String sing = wd.getSingular(); 
+        elm = ModelElement.findElementByNameIgnoreCase(sing,elems);
+      }
 	  
       if (elm != null) 
       { System.out.println(">>> Linked existing model element: " + elm); 
@@ -990,8 +992,8 @@ public class NLPSentence
           Vector stereos = uc.getStereotypes(); 
           if (stereos.contains("create") && uc.hasNoResult())
           { uc.setResultType(new Type(uc.ent)); 
-		    uc.defineCreateCode(uc.ent); 
-		  }  // Only for the *first* entity after the main verb. 
+            uc.defineCreateCode(uc.ent); 
+          }  // Only for the *first* entity after the main verb. 
           if (stereos.contains("edit") ||
                 stereos.contains("persistent") ||
                 stereos.contains("delete") || 
@@ -1003,9 +1005,9 @@ public class NLPSentence
           }
           // resolve any unattached attributes at this point
         } 
-	  }
-	  else 
-	  { Vector knd = (Vector) fromBackground.get(wd.text); 
+      }
+      else 
+      { Vector knd = (Vector) fromBackground.get(wd.text); 
         if (knd != null && knd.size() > 0)
         { System.out.println(">>> Model element from knowledge base: " + wd.text + " --> " + knd); 
           elm = (ModelElement) knd.get(0);

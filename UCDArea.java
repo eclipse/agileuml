@@ -245,7 +245,7 @@ public class UCDArea extends JPanel
   public void addUseCases(Vector ucs)
   { for (int i = 0; i < ucs.size(); i++) 
     { if (ucs.get(i) instanceof UseCase)
-	  { UseCase uc = (UseCase) ucs.get(i);
+      { UseCase uc = (UseCase) ucs.get(i);
         String nme = uc.getName();  
         UseCase uc0 = (UseCase) ModelElement.lookupByName(nme,useCases); 
         if (uc0 != null) 
@@ -305,7 +305,7 @@ public class UCDArea extends JPanel
   { for (int i = 0; i < entities.size(); i++) 
     { Entity e = (Entity) entities.get(i); 
       e.typeCheckOps(types,entities); 
-	  e.typeCheckInvariants(types,entities); 
+      e.typeCheckInvariants(types,entities); 
     } 
 
     for (int j = 0; j < useCases.size(); j++) 
@@ -3010,7 +3010,12 @@ public class UCDArea extends JPanel
 
   public void generateSwiftUIApp()
   { IOSAppGenerator gen = new IOSAppGenerator(); 
-    CGSpec cgs = loadCSTL("cgSwift.cstl"); 
+    Vector auxcstls = new Vector(); 
+    auxcstls.add("cgswiftmain.cstl"); 
+    auxcstls.add("cgprotocol.cstl"); 
+
+    CGSpec cgs = loadCSTL("cgSwift.cstl",auxcstls); 
+
     // System.out.println(">>> Using loaded code generator: " + cgs); 
 
     String appName = systemName; 
@@ -3019,6 +3024,7 @@ public class UCDArea extends JPanel
 
 
     CGSpec cgswiftmain = CSTL.getTemplate("cgswiftmain.cstl"); 
+    // CGSpec cgprotocol = CSTL.getTemplate("cgprotocol.cstl"); 
   
     if (cgs == null || cgswiftmain == null) 
     { System.err.println("!! No cg/cgSwift.cstl or cg/cgswiftmain.cstl file defined!"); 
@@ -3512,10 +3518,16 @@ public class UCDArea extends JPanel
 
   public void generateIOSApp()
   { IOSAppGenerator gen = new IOSAppGenerator(); 
-    CGSpec cgs = loadCSTL("cgSwift.cstl"); 
+    Vector auxcstls = new Vector(); 
+    auxcstls.add("cgswiftmain.cstl"); 
+    auxcstls.add("cgprotocol.cstl"); 
+
+    CGSpec cgs = loadCSTL("cgSwift.cstl",auxcstls); 
+    
     // System.out.println(">>> Using loaded code generator: " + cgs); 
 
     CGSpec cgswiftmain = CSTL.getTemplate("cgswiftmain.cstl"); 
+    CGSpec cgprotocol = CSTL.getTemplate("cgprotocol.cstl"); 
   
     if (cgs == null || cgswiftmain == null) 
     { System.err.println("!! No cg/cgSwift.cstl or cg/cgswiftmain.cstl file defined!"); 
@@ -3965,7 +3977,12 @@ public class UCDArea extends JPanel
   
   public void generateAndroidLayouts(PrintWriter out)
   { AndroidAppGenerator agen = new AndroidAppGenerator(); 
-    CGSpec cgs = loadCSTL("cgJava8.cstl"); 
+    Vector auxcstls = new Vector(); 
+    auxcstls.add("cgmain.cstl"); 
+    auxcstls.add("cginterface.cstl"); 
+    auxcstls.add("jwrap.cstl"); 
+
+    CGSpec cgs = loadCSTL("cgJava8.cstl",auxcstls); 
 
     if (cgs == null) 
     { System.err.println("!! No cg/cgJava8.cstl file defined!"); 
@@ -4311,7 +4328,7 @@ public class UCDArea extends JPanel
     { Entity ent = (Entity) entities.get(j);
       if (ent.isDerived()) { continue; } 
       if (ent.isComponent()) { continue; } 
-	  if (predefinedComponents.contains(ent)) { continue; }
+      if (predefinedComponents.contains(ent)) { continue; }
 	 
       ent.generateOperationDesigns(types,entities);  
            
@@ -4340,7 +4357,7 @@ public class UCDArea extends JPanel
 		 
         ffout.close();
 		
-		PrintWriter simplefout = new PrintWriter(
+        PrintWriter simplefout = new PrintWriter(
                                    new BufferedWriter(
                                      new FileWriter(simpleentff)));
         simplefout.println("import java.util.*;"); 
@@ -4355,7 +4372,7 @@ public class UCDArea extends JPanel
         simplefout.println(); 
         cgs.displayText(entcode,simplefout); 
 		 
-		simplefout.close(); 
+        simplefout.close(); 
       } catch (Exception e) { } 
 
       if (ent.isRemote()) // Remote data source
@@ -4451,8 +4468,23 @@ public class UCDArea extends JPanel
                                 new FileWriter(mff)));
       agen.modelFacade(nestedPackageName,useCases,cgs,persistentEntities,clouds,types,remotecalls,needsMaps,mfout);
       mfout.close(); 
-    } catch (Exception e) 
-      { e.printStackTrace(); } 
+     } catch (Exception e) 
+       { e.printStackTrace(); } 
+
+    String testcode = GUIBuilder.buildTestsGUIJava8(useCases,"",false,types,entities); 
+    File testsguifile = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + "/TestsGUI.java");
+    try
+    { PrintWriter testsout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(testsguifile)));
+      if (nestedPackageName != null && nestedPackageName.length() > 0)
+      { testsout.println("package " + nestedPackageName + ";\n\n"); }  
+      testsout.println(testcode); 
+      testsout.close();
+    }
+    catch (Exception ex) { }
+
+     generateMutationTesterJava8(systemName, nestedPackageName); 
 
 	if (needsMaps && screencount == 1)
 	{ agen.singlePageMapApp(primaryUC,systemName,image,cgs,types,entities,out); 
@@ -4505,12 +4537,12 @@ public class UCDArea extends JPanel
 
         String nme = od.getName();
 		
-	    if (nme.startsWith("list"))
-	    { Entity ent = od.getEntity(); 
-		  String ename = ent.getName();
-	      File fraglayout = new File("output/" + systemName + "/src/main/res/layout/fragment_" + ename.toLowerCase() + ".xml");
-		  try
-          { PrintWriter fragout = new PrintWriter(
+         if (nme.startsWith("list"))
+         { Entity ent = od.getEntity(); 
+           String ename = ent.getName();
+           File fraglayout = new File("output/" + systemName + "/src/main/res/layout/fragment_" + ename.toLowerCase() + ".xml");
+           try
+           { PrintWriter fragout = new PrintWriter(
                                  new BufferedWriter(
                                    new FileWriter(fraglayout)));
             AndroidAppGenerator.listItemLayout(ent,fragout);
@@ -4643,6 +4675,8 @@ public class UCDArea extends JPanel
 
     /* out.println(generateDbiPool());  */ 
 
+
+
     System.out.println(); 
     System.out.println(">>> App code is generated in directory " + dirName); 
     System.out.println(); 
@@ -4654,8 +4688,14 @@ public class UCDArea extends JPanel
     if (systemName != null && systemName.length() > 0)
     { appName = systemName; }
 
-    CGSpec cgs = loadCSTL("cgJava8.cstl"); 
+    Vector auxcstls = new Vector(); 
+    auxcstls.add("cgmain.cstl"); 
+    auxcstls.add("cginterface.cstl"); 
+    auxcstls.add("jwrap.cstl"); 
 
+    CGSpec cgs = loadCSTL("cgJava8.cstl",auxcstls); 
+
+    
     if (cgs == null) 
     { System.err.println("!! No cg/cgJava8.cstl file defined!"); 
       return; 
@@ -4932,8 +4972,14 @@ public class UCDArea extends JPanel
     // if (systemName != null && systemName.length() > 0)
     // { appname = systemName; }
 
-    CGSpec cgs = loadCSTL("cgJava8.cstl"); 
+    Vector auxcstls = new Vector(); 
+    auxcstls.add("cgmain.cstl"); 
+    auxcstls.add("cginterface.cstl"); 
+    auxcstls.add("jwrap.cstl"); 
 
+    CGSpec cgs = loadCSTL("cgJava8.cstl",auxcstls); 
+
+    
     if (cgs == null) 
     { System.err.println("!! No cg/cgJava8.cstl file defined!"); 
       return; 
@@ -5146,14 +5192,21 @@ public class UCDArea extends JPanel
   }
 
   public Type lookupType(String tname) 
-  { Entity e = (Entity) ModelElement.lookupByName(tname,entities);
+  { if (tname == null) 
+    { System.err.println("ERROR!: Invalid/unknown type: " + tname);
+      return null; 
+    } 
+
+    Entity e = (Entity) ModelElement.lookupByName(tname,entities);
     if (e != null) 
-    { return new Type(e); } 
+    { return new Type(e); }
+ 
     Type tt = (Type) ModelElement.lookupByName(tname,types); 
     if (tt != null) 
     { return tt; } 
     if ("int".equals(tname) || "long".equals(tname) || tname.equals("String") || 
          tname.equals("Set") || tname.equals("Sequence") ||
+         tname.equals("Map") || tname.equals("Function") ||
          tname.equals("double") || tname.equals("boolean"))
     { // System.out.println("Creating standard type " + tname);
       return new Type(tname,null);
@@ -8153,6 +8206,8 @@ public class UCDArea extends JPanel
   { out.println("using System;"); 
     out.println("using System.Collections;"); 
     out.println("using System.IO;"); 
+    out.println("using System.Text;"); 
+    out.println("using System.Text.RegularExpressions;"); 
     out.println("using System.Linq;");
     out.println("using System.Threading.Tasks;");
     out.println("using System.Windows.Forms;\n\n");
@@ -8245,6 +8300,7 @@ public class UCDArea extends JPanel
     out2.println("#include <fstream>"); 
     out2.println("#include <cmath>"); 
     out2.println("#include <algorithm>"); 
+    out2.println("#include <regex>"); 
     out2.println("#include \"controller.h\""); 
  
     out2.println(""); 
@@ -8326,7 +8382,7 @@ public class UCDArea extends JPanel
     }
     catch (Exception ex) { }
 
-    System.out.println("classes ordered by inheritance are: " + orderedByInheritance);
+    System.out.println(">>> classes ordered by inheritance are: " + orderedByInheritance);
   }
 
 public void produceCUI(PrintWriter out)
@@ -8447,6 +8503,8 @@ public void produceCUI(PrintWriter out)
     }
     catch (Exception ex) { }
 
+    generateMutationTesterJava6(); 
+
     try
     { out.close();
       out2.close(); 
@@ -8535,6 +8593,8 @@ public void produceCUI(PrintWriter out)
     }
     catch (Exception ex) { }
 
+    generateMutationTesterJava7(); 
+
     try
     { out.close();
       out2.close(); 
@@ -8548,7 +8608,9 @@ public void produceCUI(PrintWriter out)
     out.println("import java.util.Date;"); 
     out.println("import java.util.Map;"); 
     out.println("import java.util.HashMap;"); 
-    out.println("import java.util.Vector;\n");
+    out.println("import java.util.Vector;");
+    out.println("import java.util.Collections;\n"); 
+ 
     out.println("import java.lang.*;");
     out.println("import java.lang.reflect.*;"); 
     out.println("import java.util.StringTokenizer;"); 
@@ -8696,6 +8758,7 @@ public void produceCUI(PrintWriter out)
     }
     catch (Exception ex) { }
 
+    generateMutationTester(); 
   } 
 
   public void exportClass(Entity ent, PrintWriter out)
@@ -8875,7 +8938,7 @@ public void produceCUI(PrintWriter out)
   { String dirName = "output"; 
   
     Date d0 = new Date(); 
-	long startTime = d0.getTime(); 
+    long startTime = d0.getTime(); 
 
     if (systemName != null && systemName.length() > 0)
     { out.println("package " + systemName + ";\n\n"); 
@@ -8910,7 +8973,8 @@ public void produceCUI(PrintWriter out)
           String nme = uc.getName(); 
           mainOp = mainOp + "\n  " + uc.genOperation(entities,types) + "\n";
         } 
-      } 
+      }
+ 
       /* UseCase lastuc = (UseCase) useCases.get(nn - 1); 
       mainOp = mainOp + 
           "  public static void main(String[] args)\n" + 
@@ -8943,12 +9007,56 @@ public void produceCUI(PrintWriter out)
     File testsguifile = new File(dirName + "/TestsGUI.java");
     try
     { PrintWriter testsout = new PrintWriter(
-                              new BufferedWriter(
-                                new FileWriter(testsguifile)));
+                               new BufferedWriter(
+                                 new FileWriter(testsguifile)));
       if (systemName != null && systemName.length() > 0)
       { testsout.println("package " + systemName + ";\n\n"); }  
       testsout.println(testcode); 
       testsout.close();
+    }
+    catch (Exception ex) { }
+
+    generateMutationTester(); 
+
+    File xmlatt = new File(dirName + "/XMLAttribute.java"); 
+    try
+    { PrintWriter xmlattout = 
+          new PrintWriter(new BufferedWriter(
+                new FileWriter(xmlatt)));
+      if (systemName != null && systemName.length() > 0)
+      { XMLComponentsGenerator.generateXMLAttribute(systemName,xmlattout); }  
+      else 
+      { XMLComponentsGenerator.generateXMLAttribute("",xmlattout); }  
+
+      xmlattout.close();
+    }
+    catch (Exception ex) { }
+
+    File xmlnode = new File(dirName + "/XMLNode.java"); 
+    try
+    { PrintWriter xmlnodeout = 
+          new PrintWriter(new BufferedWriter(
+                new FileWriter(xmlnode)));
+      if (systemName != null && systemName.length() > 0)
+      { XMLComponentsGenerator.generateXMLNode(systemName,xmlnodeout); }  
+      else 
+      { XMLComponentsGenerator.generateXMLNode("",xmlnodeout); }  
+
+      xmlnodeout.close();
+    }
+    catch (Exception ex) { }
+
+    File xmlparser = new File(dirName + "/XMLParser.java"); 
+    try
+    { PrintWriter xmlparserout = 
+          new PrintWriter(new BufferedWriter(
+                new FileWriter(xmlparser)));
+      if (systemName != null && systemName.length() > 0)
+      { XMLComponentsGenerator.generateXMLParser(systemName,xmlparserout); }  
+      else 
+      { XMLComponentsGenerator.generateXMLParser("",xmlparserout); }  
+
+      xmlparserout.close();
     }
     catch (Exception ex) { }
 
@@ -9116,6 +9224,15 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);
     mop = BSystemTypes.generateHasMatchOp(); 
     out.println("\n" + mop);
+    mop = BSystemTypes.generateAllMatchesOp(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateSplitOp(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateReplaceOp(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateReplaceAllOp(); 
+    out.println("\n" + mop);
+
 
 
     /* Map operations - optional */ 
@@ -9303,6 +9420,14 @@ public void produceCUI(PrintWriter out)
     mop = BSystemTypes.generateAfterOp(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateHasMatchOp(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateAllMatchesOpJava6(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateSplitOpJava6(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateReplaceOp(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateReplaceAllOp(); 
     out.println("\n" + mop);
 
     /* Map operations - optional */ 
@@ -9493,6 +9618,14 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);
     mop = BSystemTypes.generateHasMatchOp(); 
     out.println("\n" + mop);
+    mop = BSystemTypes.generateAllMatchesOpJava7(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateSplitOpJava7(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateReplaceOpJava7(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateReplaceAllOp(); 
+    out.println("\n" + mop);
 
     /* Map operations - optional */ 
 
@@ -9641,6 +9774,18 @@ public void produceCUI(PrintWriter out)
     mop = BSystemTypes.generateBeforeOpCSharp(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateAfterOpCSharp(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateHasMatchOpCSharp(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateIsMatchOpCSharp(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateAllMatchesOpCSharp(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateReplaceOpCSharp(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateReplaceAllOpCSharp(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateSplitOpCSharp(); 
     out.println("\n" + mop);
 
     /* Map operations - optional */ 
@@ -9836,6 +9981,20 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);  
     mop = BSystemTypes.generateIsLongOpCPP(); 
     out.println("\n" + mop);  
+    mop = BSystemTypes.generateHasMatchOpCPP(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateIsMatchOpCPP(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateAllMatchesOpCPP(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateReplaceAllOpCPP(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateSplitOpCPP(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateReplaceOpCPP(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateTrimOpCPP(); 
+    out.println("\n" + mop);
 
     /* Map operations - optional */ 
 
@@ -10800,19 +10959,22 @@ public void produceCUI(PrintWriter out)
           new PrintWriter(
             new BufferedWriter(new FileWriter(file)));
 			
-	    if (systemName != null && !(systemName.equals("")))
-		{ out.println("Metamodel:"); 
-		  out.println(systemName); 
-		  out.println(); 
-		}
-		
-        Vector locals = saveComponents(out); 
-        locals.addAll(constraints); 
+         if (systemName != null && !(systemName.equals("")))
+         { out.println("Metamodel:"); 
+           out.println(systemName); 
+           out.println(); 
+         }
+	
         Expression.saveOperators(out); 
+        	
+        Vector locals = saveComponents(out); 
+        
+        locals.addAll(constraints); 
         for (int i = 0; i < locals.size(); i++) 
         { Constraint inv = (Constraint) locals.get(i); 
           inv.saveData(out); 
-        } 
+        }
+ 
         for (int p = 0; p < useCases.size(); p++) 
         { ModelElement uc = (ModelElement) useCases.get(p); 
           if (uc instanceof UseCase) 
@@ -10841,10 +11003,12 @@ public void produceCUI(PrintWriter out)
 	    out.println(systemName); 
 	    out.println(); 
 	  }
-		
-	  Vector locals = saveComponents(out); 
-      locals.addAll(constraints); 
+
       Expression.saveOperators(out); 
+		
+      Vector locals = saveComponents(out); 
+     
+      locals.addAll(constraints); 
       for (int i = 0; i < locals.size(); i++) 
       { Constraint inv = (Constraint) locals.get(i); 
         inv.saveData(out); 
@@ -11499,7 +11663,8 @@ public void produceCUI(PrintWriter out)
       if (file == null) { return; }
     } catch (Exception e) { return; } 
 
-    CGSpec spec = loadCSTL(file); 
+    Vector vs = new Vector(); 
+    CGSpec spec = loadCSTL(file,vs); 
 
     if (spec == null) 
     { System.err.println("!! ERROR: No file " + file.getName()); 
@@ -11582,7 +11747,7 @@ public void produceCUI(PrintWriter out)
     return res; 
   }
 
-  public CGSpec loadCSTL(String fname)
+  public CGSpec loadCSTL(String fname, Vector fnames)
   { CGSpec res = new CGSpec(entities); 
     
     File f = new File("./cg/" + fname);   
@@ -11591,18 +11756,18 @@ public void produceCUI(PrintWriter out)
 
     // System.out.println(">>> Parsed: " + res);
  
-    CSTL.loadTemplates(types,entities); 
+    CSTL.loadTemplates(fnames,types,entities); 
     return res; 
   }
 
-  public CGSpec loadCSTL(File f)
+  public CGSpec loadCSTL(File f, Vector subfiles)
   { CGSpec res = new CGSpec(entities); 
     
     res = CSTL.loadCSTL(f,types,entities);
 
     // System.out.println(">>> Parsed: " + res);
  
-    CSTL.loadTemplates(types,entities); 
+    CSTL.loadTemplates(subfiles,types,entities); 
     return res; 
   }
 
@@ -12681,17 +12846,17 @@ public void produceCUI(PrintWriter out)
                 AttributeMatching amx = readEntityMapping(br,em);
                 while (amx != null)
                 { amx = readEntityMapping(br,em); } 
-			  }  
+	        }  
             }   
           } 
         } catch (IOException _ex) { } 
       }         
-	  else if (s.startsWith("Metamodel:"))
-	  { try 
-	    { String pname = br.readLine(); 
-	      setSystemName(pname.trim()); 
-		} catch (Exception _w) { }
-	  } // appimage="imagefile"
+      else if (s.startsWith("Metamodel:"))
+      { try 
+        { String pname = br.readLine(); 
+          setSystemName(pname.trim()); 
+        } catch (Exception _w) { }
+      } // appimage="imagefile"
       else if (s.startsWith("Entity:"))
       { PreEntity pe = parseEntity(br); 
         if (pe != null)
@@ -12700,7 +12865,9 @@ public void produceCUI(PrintWriter out)
       else if (s.equals("Operator:"))
       { PreOperator pop = parseOperator(br); 
         if (pop != null)
-        { preoperators.add(pop); }
+        { Compiler2.addOperator(pop.name); 
+          preoperators.add(pop); 
+        }
       } 
       else if (s.equals("Association:"))
       { PreAssociation pa = parseAssociation(br); 
@@ -12814,6 +12981,8 @@ public void produceCUI(PrintWriter out)
       { Expression.addOperatorJava(preop.name, preop.javacode); } 
       if (preop.csharpcode != null && preop.csharpcode.length() > 0)
       { Expression.addOperatorCSharp(preop.name, preop.csharpcode); } 
+      if (preop.cppcode != null && preop.cppcode.length() > 0)
+      { Expression.addOperatorCPP(preop.name, preop.cppcode); } 
     } // C++ also 
 
     for (int q = 0; q < pregeneralisations.size(); q++)
@@ -12855,7 +13024,7 @@ public void produceCUI(PrintWriter out)
     } 
 
     typeCheckOps(); 
-	typeCheckInvariants(); 
+    typeCheckInvariants(); 
 
     repaint(); 
   }
@@ -12933,13 +13102,13 @@ public void produceCUI(PrintWriter out)
             System.out.println("Map: " + sents + " to " + tents); 
           } 
         } catch (IOException _ex) { } 
-      }         
-	  else if (s.startsWith("Metamodel:"))
-	  { try 
-	    { String pname = br.readLine(); 
-	      setSystemName(pname.trim()); 
-		} catch (Exception _w) { }
-	  }
+      }   
+      else if (s.startsWith("Metamodel:"))
+      { try 
+        { String pname = br.readLine(); 
+          setSystemName(pname.trim()); 
+        } catch (Exception _w) { }
+      }
       else if (s.equals("Entity:"))
       { PreEntity pe = parseEntity(br); 
         if (pe != null)
@@ -12948,7 +13117,9 @@ public void produceCUI(PrintWriter out)
       else if (s.equals("Operator:"))
       { PreOperator pop = parseOperator(br); 
         if (pop != null)
-        { preoperators.add(pop); }
+        { Compiler2.addOperator(pop.name); 
+          preoperators.add(pop); 
+        }
       } 
       else if (s.equals("Association:"))
       { PreAssociation pa = parseAssociation(br); 
@@ -13058,6 +13229,8 @@ public void produceCUI(PrintWriter out)
       { Expression.addOperatorJava(preop.name, preop.javacode); } 
       if (preop.csharpcode != null && preop.csharpcode.length() > 0)
       { Expression.addOperatorCSharp(preop.name, preop.csharpcode); } 
+      if (preop.cppcode != null && preop.cppcode.length() > 0)
+      { Expression.addOperatorCPP(preop.name, preop.cppcode); } 
     } // and C++
 
     for (int q = 0; q < pregeneralisations.size(); q++)
@@ -13099,7 +13272,7 @@ public void produceCUI(PrintWriter out)
     } 
 
     typeCheckOps(); 
-	typeCheckInvariants(); 
+    typeCheckInvariants(); 
 
     repaint(); 
   }
@@ -14484,10 +14657,12 @@ public void produceCUI(PrintWriter out)
 
     java.util.Map preentities = new java.util.HashMap(); 
     java.util.Map preproperties = new java.util.HashMap(); 
-    // Vector preassociations = new Vector(); 
+    Vector propertynames = new Vector(); 
+
     java.util.Map pregeneralisations = new java.util.HashMap();
     java.util.Map preconstraints = new java.util.HashMap(); 
     Vector preassertions = new Vector(); 
+
     java.util.Map preops = new java.util.HashMap(); 
     java.util.Map preucs = new java.util.HashMap(); 
     java.util.Map preexps = new java.util.HashMap(); 
@@ -14526,6 +14701,9 @@ public void produceCUI(PrintWriter out)
         else if (str.endsWith("Property"))
         { String alabel = strs[0]; 
           preproperties.put(alabel, new PreProperty(alabel)); 
+          if (propertynames.contains(alabel)) { } 
+          else 
+          { propertynames.add(alabel); } 
         } 
         else if (str.endsWith("Generalization"))
         { String glabel = strs[0]; 
@@ -14849,14 +15027,16 @@ public void produceCUI(PrintWriter out)
             { if (preops.keySet().contains(val))
               { BehaviouralFeature bf = (BehaviouralFeature) preops.get(val);
                 PreProperty pp = (PreProperty) preproperties.get(x);
-                if (pp != null) { pp.setOp(bf); }
+                if (pp != null) 
+                { pp.setOp(bf); }
               }
             }
             else if ("objectRef".equals(prop))
             { if (preexps.keySet().contains(val) && preexps.keySet().contains(x))
               { BasicExpression bx = (BasicExpression) preexps.get(val);
                 Expression ee = (Expression) preexps.get(x);
-                if (bx != null) { bx.setObjectRef(ee); }
+                if (bx != null) 
+                { bx.setObjectRef(ee); }
               }
             }
           }
@@ -14869,11 +15049,11 @@ public void produceCUI(PrintWriter out)
 
 
     java.util.Set preprops = preproperties.keySet();
-    Vector preps = new Vector(); 
-    preps.addAll(preprops); 
+    // Vector preps = new Vector(); 
+    // preps.addAll(preprops); 
 
-    for (int i = 0; i < preps.size(); i++)
-    { String pname = (String) preps.get(i);
+    for (int i = 0; i < propertynames.size(); i++)
+    { String pname = (String) propertynames.get(i);
       PreProperty pp = (PreProperty) preproperties.get(pname);
 
       System.out.println(">>> Found property " + pp.name + " owner: " + pp.owner + " type: " + pp.type + " " + pp.elementType); 
@@ -15141,6 +15321,7 @@ public void produceCUI(PrintWriter out)
   { String line1; // name and type
     String line2; // java
     String line3; // C# 
+    String line4; // C++
 
     try { line1 = br.readLine(); }
     catch (IOException e)
@@ -15160,9 +15341,15 @@ public void produceCUI(PrintWriter out)
       return null; 
     }  // will be "void" if no return
 
-    /* and C++ */ 
+    /* and C++ */
+ 
+    try { line4 = br.readLine(); } 
+    catch (IOException e)
+    { System.err.println("Reading operator C++ failed"); 
+      return null; 
+    }  // will be "void" if no return
 
-    return new PreOperator(line1,line2,line3); 
+    return new PreOperator(line1,line2,line3,line4); 
   } 
 
   private PreAssociation parseAssociation(BufferedReader br) 
@@ -18736,47 +18923,128 @@ public void produceCUI(PrintWriter out)
       // Compiler2 comp = new Compiler2();  
       // comp.nospacelexicalanalysis(xmlstring); 
       for (int i = 0; i < items.size(); i++) 
-	  { if (items.get(i) instanceof UseCase)
-	    { UseCase uc = (UseCase) items.get(i); 
+      { if (items.get(i) instanceof UseCase)
+        { UseCase uc = (UseCase) items.get(i); 
           if (uc != null) 
           { addGeneralUseCase(uc); } 
-		} 
-	  }
+	   } 
+      }
 	  
-	  System.out.println(); 
-	  System.out.println();   
+      System.out.println(); 
+      System.out.println();   
     } 
     else 
     { System.err.println("!! No TL specification loaded"); } 
   } 
 
+
+  public void verifyInvariants()
+  { // read in a model, and check global & class invariants
+    // hold in the model. 
+
+    ModelSpecification modelspec = new ModelSpecification(); 
+    int correspondenceCount = readModel(modelspec, "output/out.txt");
+    modelspec.defineComposedFeatureValues(entities,types); 
+    System.out.println("--- checking metamodel constraints ---");
+    modelspec.checkMetamodelConstraints(constraints,entities,types);  
+    System.out.println();
+    String expr = 
+          JOptionPane.showInputDialog("Enter expression to evaluate in model: ");
+    if (expr != null) 
+    { Compiler2 c = new Compiler2(); 
+      c.nospacelexicalanalysis(expr); 
+      Expression ee = c.parseExpression(); 
+      System.out.println(">>> Parsed expression: " + ee);
+      if (ee != null)  
+      { Vector contexts = new Vector(); 
+        Vector env = new Vector(); 
+        ee.typeCheck(types,entities,contexts,env);
+        System.out.println(">>> Type is: " + ee.type); 
+
+        ObjectSpecification nullobj = ObjectSpecification.getDefaultInstance(); 
+        Object res = nullobj.getValueOf(ee,modelspec); 
+        System.out.println(">>> Value is: " + res); 
+      } 
+    }  
+  } 
+
+
   public void checkTLmodel()
-  { Date d1 = new Date(); 
-    long startTime = d1.getTime(); 
+  { // Date d1 = new Date(); 
+    // long startTime = d1.getTime(); 
 	
-	int correspondenceCount = 0; 
+    int correspondenceCount = 0; 
 	
     if (tlspecification != null) 
     { ModelSpecification modelspec = new ModelSpecification(); 
-	
-      BufferedReader br = null;
-      Vector res = new Vector();
-      String s;
-      boolean eof = false;
-      File file = new File("output/out.txt");  /* default location of model */ 
 
-      try
-      { br = new BufferedReader(new FileReader(file)); }
-      catch (FileNotFoundException e)
-      { System.out.println("!! ERROR: File not found: " + file);
-        return; 
+      correspondenceCount = readModel(modelspec, "output/out.txt");
+	  
+      System.out.println(">>> As ILP: " + modelspec.toILP()); 
+      System.out.println(); 
+	  
+      if (correspondenceCount == 0)
+      { System.err.println("!! No correspondences are defined in the model. Please specify how to correspond source |-> target objects"); 
+        String sourceFeature = 
+          JOptionPane.showInputDialog("Match objects by equal values of Source feature = Target feature? (f1 = f2):");
+        if (sourceFeature != null) 
+        { int eqind = sourceFeature.indexOf("="); 
+          String sf = sourceFeature.substring(0,eqind).trim(); 
+          String tf = sourceFeature.substring(eqind+1,sourceFeature.length()).trim(); 
+          if (sf != null && tf != null && sf.length() > 0 && tf.length() > 0)
+          { System.out.println(">>> Matching source objects x to target y by x." + sf + " = y." + tf); 
+            modelspec.defineCorrespondences(sf,tf); 
+	     }
+	   } 
       }
+	  
+      modelspec.defineComposedFeatureValues(entities,types); 
+      System.out.println("--- checking metamodel constraints ---");
+      modelspec.checkMetamodelConstraints(constraints,entities,types);  
+      System.out.println();
+      tlspecification.checkModel(modelspec,entities,types);
+	  
+      System.out.println(">>> Enhanced specification: "); 
+      System.out.println(tlspecification + "");
+	  
+      try
+      { PrintWriter fout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter("output/final.tl")));
+        fout.println(tlspecification + ""); 
+        fout.close(); 
+      } catch (Exception _except) { } 
+
+      System.out.println("----- Written result TL transformation to output/final.tl ----------");   
+    } 
+    else 
+    { System.err.println("!! ERROR: no TL specification"); } 
+	
+	// Date d2 = new Date(); 
+	// long endTime = d2.getTime(); 
+	// System.out.println(">>> MTBE took " + (endTime - startTime) + "ms"); 
+  } 
+
+  private int readModel(ModelSpecification modelspec, String fname)
+  { int correspondenceCount = 0; 
+    BufferedReader br = null;
+    Vector res = new Vector();
+    String s;
+    boolean eof = false;
+    File file = new File(fname);
+
+    try
+    { br = new BufferedReader(new FileReader(file)); }
+    catch (FileNotFoundException e)
+    { System.out.println("!! ERROR: File not found: " + file);
+      return 0; 
+    }
 
       while (!eof)
       { try { s = br.readLine(); }
         catch (IOException e)
         { System.err.println("!! Reading file failed.");
-          return; 
+          return 0; 
         }
 
         if (s == null) 
@@ -18843,7 +19111,7 @@ public void produceCUI(PrintWriter out)
           { String lft = strs[0]; // source element
             String rgt = strs[2]; // target element
             System.out.println("LINE: " + lft + " |-> " + rgt);
-			correspondenceCount++;  
+            correspondenceCount++;  
             ObjectSpecification xspec = modelspec.getObject(lft); 
             if (xspec == null)
             { System.err.println("!! ERROR: no object called " + lft); }
@@ -18853,61 +19121,17 @@ public void produceCUI(PrintWriter out)
               { modelspec.addCorrespondence(xspec,yspec); }
               else 
               { System.err.println("!! ERROR: no object called " + rgt); } 
-            }
-          }  
-          else 
-          { System.err.println("!!! Unrecognised line: " + str); } 
+          }
         }  
-        // file.close();
+        else 
+        { System.err.println("!!! Unrecognised line: " + str); } 
       }  
-	  System.out.println(">>> Read model " + modelspec); 
-	  System.out.println("");
-	  System.out.println(">>> As ILP: " + modelspec.toILP()); 
-	  System.out.println(); 
-	  
-	  if (correspondenceCount == 0)
-	  { System.err.println("!! No correspondences are defined in the model. Please specify how to correspond source |-> target objects"); 
-        String sourceFeature = 
-          JOptionPane.showInputDialog("Match objects by equal values of Source feature = Target feature? (f1 = f2):");
-		if (sourceFeature != null) 
-		{ int eqind = sourceFeature.indexOf("="); 
-		  String sf = sourceFeature.substring(0,eqind).trim(); 
-		  String tf = sourceFeature.substring(eqind+1,sourceFeature.length()).trim(); 
-		  if (sf != null && tf != null && sf.length() > 0 && tf.length() > 0)
-		  { System.out.println(">>> Matching source objects x to target y by x." + sf + " = y." + tf); 
-		    modelspec.defineCorrespondences(sf,tf); 
-		  }
-		} 
-      }
-	  
-	  modelspec.defineComposedFeatureValues(entities,types); 
-	  System.out.println(); 
-
-	  tlspecification.checkModel(modelspec,entities,types);
-	  
-	  System.out.println(">>> Enhanced specification: "); 
-	  System.out.println(tlspecification + "");
-	  
-	  try
-      { PrintWriter fout = new PrintWriter(
-                              new BufferedWriter(
-                                new FileWriter("output/final.tl")));
-        fout.println(tlspecification + ""); 
-        fout.close(); 
-      } catch (Exception _except) { } 
-
-      System.out.println("----- Written result TL transformation to output/final.tl ----------");   
-    } 
-    else 
-    { System.err.println("!! ERROR: no TL specification"); } 
-	
-	Date d2 = new Date(); 
-	long endTime = d2.getTime(); 
-	System.out.println(">>> MTBE took " + (endTime - startTime) + "ms"); 
+        // file.close();
+    }  
+    System.out.println(">>> Read model " + modelspec); 
+    System.out.println("");
+    return correspondenceCount; 
   } 
-
-
-
 
 
   public void ontologicalSimilarity(Vector thesaurus)
@@ -21839,7 +22063,8 @@ public void produceCUI(PrintWriter out)
 	  
       String testfile = "test" + e.getName() + "_in.txt"; 
 	  
-      Vector tests = e.testCases(); 
+      Vector tests = e.testCases();
+ 
       try
       { String testsdirName = "output/tests"; 
         File testsdir = new File(testsdirName); 
@@ -21859,7 +22084,44 @@ public void produceCUI(PrintWriter out)
         rout.close(); 
       } 
       catch (Exception _x) { } 
-      
+
+      e.generateOperationMutants(); 
+    }   
+  
+        
+    for (int i = 0; i < useCases.size(); i++) 
+    { if (useCases.get(i) instanceof UseCase) 
+      { UseCase uc = (UseCase) useCases.get(i); 
+        Vector tests = uc.testCases(); 
+        System.out.println("*** Test cases for use case " + uc.getName() + " written to output/tests"); 
+        for (int j = 0; j < tests.size(); j++) 
+        { String tst = (String) tests.get(j); 
+          try
+          { PrintWriter rout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter("output/tests/test" + uc.getName() + "_" + j + ".txt")));
+            rout.println(tst); 
+            rout.close(); 
+          } 
+          catch (Exception _x) { }
+        }
+      }
+    }
+  } 
+
+  public void generateMutationTester()
+  { Vector mutationtests = new Vector();   
+
+    String dirName = "output"; 
+
+    if (systemName != null && systemName.length() > 0)
+    { dirName = systemName; } 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity e = (Entity) entities.get(i); 
+      if (e.isDerived() || e.isComponent() || e.isAbstract() || e.isInterface()) 
+      { continue; }
+	
       Vector optests = e.operationTestCases(mutationtests);
  
       System.out.println("*** Test cases for entity " + e.getName() + " operations written to output/tests"); 
@@ -21897,6 +22159,11 @@ public void produceCUI(PrintWriter out)
 
       mtout.println("import java.util.Vector;"); 
       mtout.println("import java.util.List;"); 
+      mtout.println("import java.util.HashSet;"); 
+      mtout.println("import java.util.ArrayList;");
+      mtout.println("import java.util.Map;"); 
+      mtout.println("import java.util.HashMap;"); 
+       
       mtout.println(); 
       mtout.println("public class MutationTest"); 
       mtout.println("{"); 
@@ -21911,25 +22178,220 @@ public void produceCUI(PrintWriter out)
     catch (Exception _x) { } 
    
     System.out.println("*** Mutation tester operations written to " + dirName + "/MutationTest.java"); 
+  } 
+
+  public void generateMutationTesterJava6()
+  { Vector mutationtests = new Vector();   
+
+    String dirName = "output"; 
+
+    if (systemName != null && systemName.length() > 0)
+    { dirName = systemName; } 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity e = (Entity) entities.get(i); 
+      if (e.isDerived() || e.isComponent() || e.isAbstract() || e.isInterface()) 
+      { continue; }
+	
+      Vector optests = e.operationTestCasesJava6(mutationtests);
+ 
+      System.out.println("*** Test cases for entity " + e.getName() + " operations written to output/tests"); 
     
-    for (int i = 0; i < useCases.size(); i++) 
-    { if (useCases.get(i) instanceof UseCase) 
-      { UseCase uc = (UseCase) useCases.get(i); 
-        Vector tests = uc.testCases(); 
-        System.out.println("*** Test cases for use case " + uc.getName() + " written to output/tests"); 
-        for (int j = 0; j < tests.size(); j++) 
-        { String tst = (String) tests.get(j); 
+      for (int j = 0; j < optests.size(); j++) 
+      { if (optests.get(j) instanceof Vector)
+        { Vector otest = (Vector) optests.get(j); 
+          String oname = otest.get(0) + "";
+          String otxt = otest.get(1) + "";  
           try
           { PrintWriter rout = new PrintWriter(
-                              new BufferedWriter(
-                                new FileWriter("output/tests/test" + uc.getName() + "_" + j + ".txt")));
-            rout.println(tst); 
+                                new BufferedWriter(
+                                  new FileWriter("output/tests/" + oname + "test" + e.getName() + "_" + j + ".txt")));
+            rout.println(otxt); 
             rout.close(); 
           } 
-          catch (Exception _x) { }
+          catch (Exception _x) { } 
         }
+      } 
+    }   
+  
+    try
+    { File dir = new File(dirName); 
+      if (dir.exists()) { } 
+      else 
+      { dir.mkdir(); }
+      PrintWriter mtout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(dirName + "/MutationTest.java")));
+      if ("output".equals(dirName)) { } 
+      else 
+      { mtout.println("package " + dirName + ";"); 
+        mtout.println(); 
+      } 
+
+      mtout.println("import java.util.Vector;"); 
+      mtout.println("import java.util.List;"); 
+      mtout.println("import java.util.HashSet;"); 
+      mtout.println("import java.util.ArrayList;");
+      mtout.println("import java.util.Map;"); 
+      mtout.println("import java.util.HashMap;"); 
+       
+      mtout.println(); 
+      mtout.println("public class MutationTest"); 
+      mtout.println("{"); 
+      for (int k = 0; k < mutationtests.size(); k++) 
+      { String mtest = (String) mutationtests.get(k); 
+        mtout.println(mtest);
+        mtout.println();  
       }
-    }
+      mtout.println("}");  
+      mtout.close(); 
+    } 
+    catch (Exception _x) { } 
+   
+    System.out.println("*** Mutation tester operations written to " + dirName + "/MutationTest.java"); 
+  } 
+
+  public void generateMutationTesterJava7()
+  { Vector mutationtests = new Vector();   
+
+    String dirName = "output"; 
+
+    if (systemName != null && systemName.length() > 0)
+    { dirName = systemName; } 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity e = (Entity) entities.get(i); 
+      if (e.isDerived() || e.isComponent() || e.isAbstract() || e.isInterface()) 
+      { continue; }
+	
+      Vector optests = e.operationTestCasesJava7(mutationtests);
+ 
+      System.out.println("*** Test cases for entity " + e.getName() + " operations written to output/tests"); 
+    
+      for (int j = 0; j < optests.size(); j++) 
+      { if (optests.get(j) instanceof Vector)
+        { Vector otest = (Vector) optests.get(j); 
+          String oname = otest.get(0) + "";
+          String otxt = otest.get(1) + "";  
+          try
+          { PrintWriter rout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter("output/tests/" + oname + "test" + e.getName() + "_" + j + ".txt")));
+            rout.println(otxt); 
+            rout.close(); 
+          } 
+          catch (Exception _x) { } 
+        }
+      } 
+    }   
+  
+    try
+    { File dir = new File(dirName); 
+      if (dir.exists()) { } 
+      else 
+      { dir.mkdir(); }
+      PrintWriter mtout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(dirName + "/MutationTest.java")));
+      if ("output".equals(dirName)) { } 
+      else 
+      { mtout.println("package " + dirName + ";"); 
+        mtout.println(); 
+      } 
+
+      mtout.println("import java.util.Vector;"); 
+      mtout.println("import java.util.List;"); 
+      mtout.println("import java.util.HashSet;"); 
+      mtout.println("import java.util.ArrayList;");
+      mtout.println("import java.util.Map;"); 
+      mtout.println("import java.util.HashMap;"); 
+       
+      mtout.println(); 
+      mtout.println("public class MutationTest"); 
+      mtout.println("{"); 
+      for (int k = 0; k < mutationtests.size(); k++) 
+      { String mtest = (String) mutationtests.get(k); 
+        mtout.println(mtest);
+        mtout.println();  
+      }
+      mtout.println("}");  
+      mtout.close(); 
+    } 
+    catch (Exception _x) { } 
+   
+    System.out.println("*** Mutation tester operations written to " + dirName + "/MutationTest.java"); 
+  } 
+
+  public void generateMutationTesterJava8(String sysName, String nestedPackageName)
+  { Vector mutationtests = new Vector();   
+
+    String dirName = "output/app"; 
+
+    if (systemName != null && systemName.length() > 0)
+    { dirName = systemName; } 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity e = (Entity) entities.get(i); 
+      if (e.isDerived() || e.isComponent() || e.isAbstract() || e.isInterface()) 
+      { continue; }
+	
+      Vector optests = e.operationTestCasesJava8(mutationtests);
+ 
+      System.out.println("*** Test cases for entity " + e.getName() + " operations written to output/tests"); 
+    
+      for (int j = 0; j < optests.size(); j++) 
+      { if (optests.get(j) instanceof Vector)
+        { Vector otest = (Vector) optests.get(j); 
+          String oname = otest.get(0) + "";
+          String otxt = otest.get(1) + "";  
+          try
+          { PrintWriter rout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter("output/tests/" + oname + "test" + e.getName() + "_" + j + ".txt")));
+            rout.println(otxt); 
+            rout.close(); 
+          } 
+          catch (Exception _x) { } 
+        }
+      } 
+    }   
+  
+    try
+    { File dir = new File(dirName); 
+      if (dir.exists()) { } 
+      else 
+      { dir.mkdir(); }
+      PrintWriter mtout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter("output/" + sysName + "/src/main/java/com/example/" + sysName + "/" + "/MutationTest.java")));
+
+      mtout.println("package " + nestedPackageName + ";"); 
+      mtout.println(); 
+      
+
+      mtout.println("import java.util.Vector;"); 
+      mtout.println("import java.util.List;"); 
+      mtout.println("import java.util.HashSet;"); 
+      mtout.println("import java.util.ArrayList;");
+      mtout.println("import java.util.Map;"); 
+      mtout.println("import java.util.HashMap;"); 
+      mtout.println("import java.util.Collection;"); 
+      mtout.println("import java.util.Collections;");
+       
+      mtout.println(); 
+      mtout.println("public class MutationTest"); 
+      mtout.println("{"); 
+      for (int k = 0; k < mutationtests.size(); k++) 
+      { String mtest = (String) mutationtests.get(k); 
+        mtout.println(mtest);
+        mtout.println();  
+      }
+      mtout.println("}");  
+      mtout.close(); 
+    } 
+    catch (Exception _x) { } 
+   
+    System.out.println("*** Mutation tester operations written to " + dirName + "/MutationTest.java"); 
   } 
   
   public void qualityCheck()

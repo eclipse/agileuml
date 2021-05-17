@@ -4250,10 +4250,10 @@ Binding etlTargetMap(String trgvar, Attribute preatt, Vector path, Expression se
            System.out.println(">>> Corrected mapping is: ");
            System.out.println(ybools[0] + " |--> " + trg);
            added.add(new AttributeMatching(new BasicExpression(ybools[0]),trg)); 
-		   System.out.println(); 
+           System.out.println(); 
          }
-		 else if (AuxMath.isNegation(xbools,ybools))
-		 { System.out.println(">>> " + trg + " is negation of " + src + ".");
+         else if (AuxMath.isNegation(xbools,ybools))
+         { System.out.println(">>> " + trg + " is negation of " + src + ".");
            System.out.println(">>> Corrected mapping is: ");
            System.out.println("not(" + src + ") |--> " + trg);
            added.add(new AttributeMatching(new UnaryExpression("not", new BasicExpression(src)),trg)); 
@@ -4264,8 +4264,8 @@ Binding etlTargetMap(String trgvar, Attribute preatt, Vector path, Expression se
       } 
 	  
 	  
-	  if (!valid && src.isString() && trg.isString())
-	  { // System.out.println(xstrs[0]); 
+	 if (!valid && src.isString() && trg.isString())
+	 { // System.out.println(xstrs[0]); 
 	    // System.out.println(ystrs[0]); 
 		removed.add(this); 
 		
@@ -4333,10 +4333,10 @@ Binding etlTargetMap(String trgvar, Attribute preatt, Vector path, Expression se
 	   return; 
      }
 	 
-	 if (!valid && src.isSequence() && trg.isSequence())
+	 if (!valid && trg.isSequence())
       { 
 	   if (AuxMath.isConstantSequence(yvect))
-        { System.out.println(">>> " + trg + " is constant.");
+        { System.out.println(">>> " + trg + " is a constant sequence.");
           System.out.println(">>> Corrected mapping is: ");
           System.out.println(yvect[0] + " |--> " + trg);
           removed.add(this); 

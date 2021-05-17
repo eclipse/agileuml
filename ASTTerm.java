@@ -10,7 +10,26 @@
 public abstract class ASTTerm
 { String id = ""; 
 
+  java.util.Map metafeatures = new java.util.HashMap(); 
+     // String --> String, eg., recording the conceptual
+     // type of the element. 
+
   public abstract String toString(); 
+
+  public abstract String cg(CGSpec cgs); 
+
+  public boolean hasMetafeature(String f) 
+  { String val = (String) metafeatures.get(f); 
+    return val != null; 
+  } 
+
+  public void setMetafeature(String f, String val) 
+  { metafeatures.put(f,val); } 
+
+  public String getMetafeatureValue(String f) 
+  { String val = (String) metafeatures.get(f); 
+    return val;  
+  } 
 
   public abstract String toKM3(); 
 

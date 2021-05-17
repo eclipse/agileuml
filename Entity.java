@@ -8023,6 +8023,20 @@ public class Entity extends ModelElement implements Comparable
     return isDescendantOrEqualTo(s,ename); 
   } 
 
+  public static boolean isDescendantOrEqualTo(Entity e, Entity ansc)
+  { if (ansc == null) 
+    { return false; } 
+
+    if (e.getName().equals(ansc.getName()))
+    { return true; } 
+
+    Entity s = e.getSuperclass(); 
+    if (s == null) 
+    { return false; } 
+
+    return isDescendantOrEqualTo(s,ansc); 
+  } 
+
   public static boolean inheritanceRelated(Entity a, Entity b)
   { if (a == null) 
     { return false; } 
@@ -14332,11 +14346,31 @@ public BehaviouralFeature designAbstractKillOp()
     return res; 
   }
 
+  public void generateOperationMutants()
+  { Vector newoperations = new Vector(); 
+
+    for (int i = 0; i < operations.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i);
+      if (bf.isAbstract() || bf.isDerived()) { } 
+      else 
+      { 
+        if (bf.isMutatable())
+        { String bfname = bf.getName(); 
+          Expression post = bf.postcondition();
+ 
+          Vector mutants = post.singleMutants();
+          Vector mutantoperations = bf.formMutantOperations(mutants); 
+          newoperations.addAll(mutantoperations);  
+        } 
+      } 
+    } 
+    operations.addAll(newoperations); 
+  } 
+
   public Vector operationTestCases(Vector mtests)
   { Vector res = new Vector(); 
     String nme = getName(); 
     // String x = nme.toLowerCase() + "$x"; 
-    Vector newoperations = new Vector(); 
 
     for (int i = 0; i < operations.size(); i++) 
     { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i);
@@ -14345,18 +14379,13 @@ public BehaviouralFeature designAbstractKillOp()
       { Vector opTests = new Vector(); 
         Vector bfcases = bf.testCases(opTests); 
         res.addAll(bfcases);
-
-        if (bf.isMutatable())
-        { String bfname = bf.getName(); 
-          Expression post = bf.postcondition();
- 
-        // System.out.println(">>> Definedness precondition for " + bfname + " is: " + post.definedness());
-
-          Vector mutants = post.singleMutants();
-          Vector mutantoperations = bf.formMutantOperations(mutants); 
-          newoperations.addAll(mutantoperations);  
-          System.out.println(">>> Tests for " + bfname + " are: " + opTests);
+        String bfname = bf.getName(); 
+        System.out.println(">>> Tests for " + bfname + " are: " + opTests);
   
+        if (bf.isMutatable())
+        { 
+          Vector mutantoperations = bf.getMutants();  
+    
           Vector mutationTests = bf.formMutantCalls(mutantoperations,bfcases,opTests); 
           String bfmutanttest = "  public static void " + bfname + "_mutation_tests(" + nme + " _self, int[] _counts, int[] _totals)\n" + 
           "  { "; 
@@ -14375,9 +14404,133 @@ public BehaviouralFeature designAbstractKillOp()
         }   
       }
     } 
-    operations.addAll(newoperations); 
+
     return res;  
   }  
+
+  public Vector operationTestCasesJava6(Vector mtests)
+  { Vector res = new Vector(); 
+    String nme = getName(); 
+    // String x = nme.toLowerCase() + "$x"; 
+
+    for (int i = 0; i < operations.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i);
+      if (bf.isAbstract() || bf.isDerived()) { } 
+      else 
+      { Vector opTests = new Vector(); 
+        Vector bfcases = bf.testCasesJava6(opTests); 
+        res.addAll(bfcases);
+        String bfname = bf.getName(); 
+        System.out.println(">>> Tests for " + bfname + " are: " + opTests);
+  
+        if (bf.isMutatable())
+        { 
+          Vector mutantoperations = bf.getMutants();  
+    
+          Vector mutationTests = bf.formMutantCallsJava6(mutantoperations,bfcases,opTests); 
+          String bfmutanttest = "  public static void " + bfname + "_mutation_tests(" + nme + " _self, int[] _counts, int[] _totals)\n" + 
+          "  { "; 
+          for (int j = 0; j < mutationTests.size(); j++) 
+          { String tst = (String) mutationTests.get(j); 
+            bfmutanttest = bfmutanttest + tst + "\n"; 
+          } 
+          bfmutanttest = bfmutanttest + "\n" + 
+            "   for (int i = 0; i < _counts.length; i++)\n" + 
+            "   { if (_totals[i] > 0)\n" + 
+            "     { System.out.println(\"Test \" + i + \" detects \" + (100.0*_counts[i])/_totals[i] + \"% " + bfname + " mutants\"); }\n" +
+            "     }\n" +  
+            "   }\n\n"; 
+          // System.out.println(bfmutanttest);
+          mtests.add(bfmutanttest);  
+        }   
+      }
+    } 
+
+    return res;  
+  }  
+
+  public Vector operationTestCasesJava7(Vector mtests)
+  { Vector res = new Vector(); 
+    String nme = getName(); 
+    // String x = nme.toLowerCase() + "$x"; 
+
+    for (int i = 0; i < operations.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i);
+      if (bf.isAbstract() || bf.isDerived()) { } 
+      else 
+      { Vector opTests = new Vector(); 
+        Vector bfcases = bf.testCasesJava7(opTests); 
+        res.addAll(bfcases);
+        String bfname = bf.getName(); 
+        System.out.println(">>> Tests for " + bfname + " are: " + opTests);
+  
+        if (bf.isMutatable())
+        { 
+          Vector mutantoperations = bf.getMutants();  
+    
+          Vector mutationTests = bf.formMutantCallsJava7(mutantoperations,bfcases,opTests); 
+          String bfmutanttest = "  public static void " + bfname + "_mutation_tests(" + nme + " _self, int[] _counts, int[] _totals)\n" + 
+          "  { "; 
+          for (int j = 0; j < mutationTests.size(); j++) 
+          { String tst = (String) mutationTests.get(j); 
+            bfmutanttest = bfmutanttest + tst + "\n"; 
+          } 
+          bfmutanttest = bfmutanttest + "\n" + 
+            "   for (int i = 0; i < _counts.length; i++)\n" + 
+            "   { if (_totals[i] > 0)\n" + 
+            "     { System.out.println(\"Test \" + i + \" detects \" + (100.0*_counts[i])/_totals[i] + \"% " + bfname + " mutants\"); }\n" +
+            "     }\n" +  
+            "   }\n\n"; 
+          // System.out.println(bfmutanttest);
+          mtests.add(bfmutanttest);  
+        }   
+      }
+    } 
+
+    return res;  
+  }  
+
+  public Vector operationTestCasesJava8(Vector mtests)
+  { Vector res = new Vector(); 
+    String nme = getName(); 
+    // String x = nme.toLowerCase() + "$x"; 
+
+    for (int i = 0; i < operations.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i);
+      if (bf.isAbstract() || bf.isDerived()) { } 
+      else 
+      { Vector opTests = new Vector(); 
+        Vector bfcases = bf.testCasesJava8(opTests); 
+        res.addAll(bfcases);
+        String bfname = bf.getName(); 
+        System.out.println(">>> Tests for " + bfname + " are: " + opTests);
+  
+        if (bf.isMutatable())
+        { 
+          Vector mutantoperations = bf.getMutants();  
+    
+          Vector mutationTests = bf.formMutantCallsJava8(mutantoperations,bfcases,opTests); 
+          String bfmutanttest = "  public static void " + bfname + "_mutation_tests(" + nme + " _self, int[] _counts, int[] _totals)\n" + 
+          "  { "; 
+          for (int j = 0; j < mutationTests.size(); j++) 
+          { String tst = (String) mutationTests.get(j); 
+            bfmutanttest = bfmutanttest + tst + "\n"; 
+          } 
+          bfmutanttest = bfmutanttest + "\n" + 
+            "   for (int i = 0; i < _counts.length; i++)\n" + 
+            "   { if (_totals[i] > 0)\n" + 
+            "     { System.out.println(\"Test \" + i + \" detects \" + (100.0*_counts[i])/_totals[i] + \"% " + bfname + " mutants\"); }\n" +
+            "     }\n" +  
+            "   }\n\n"; 
+          // System.out.println(bfmutanttest);
+          mtests.add(bfmutanttest);  
+        }   
+      }
+    } 
+
+    return res;  
+  }  
+
 
   public void generateRemoteDAO(String appName, String packageName)
   { String ename = getName(); 

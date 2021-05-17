@@ -888,6 +888,13 @@ public void findPlugins()
     // desMenuItem.setMnemonic(KeyEvent.VK_D);
     synthMenu.add(tcMenuItem); 
 
+    JMenuItem testsMI = new JMenuItem("Generate tests"); 
+    testsMI.addActionListener(this);
+    testsMI.setToolTipText(
+      "Generates MutationTest.java & tests for TestsGUI.java");
+    // testsMI.setEnabled(false); 
+    synthMenu.add(testsMI); 
+
     JMenuItem desMenuItem = new JMenuItem("Generate Design"); 
     desMenuItem.addActionListener(this); 
     desMenuItem.setToolTipText(
@@ -1031,14 +1038,12 @@ public void findPlugins()
 
     synthMenu.addSeparator(); 
 
-    JMenuItem testsMI = new JMenuItem("Generate tests"); 
-    testsMI.addActionListener(this);
-    // testsMI.setEnabled(false); 
-    synthMenu.add(testsMI); 
 
-    verifyMI = new JMenuItem("Verify Invariant"); 
+    verifyMI = new JMenuItem("Verify Invariants"); 
     verifyMI.addActionListener(this);
-    verifyMI.setEnabled(false); 
+    verifyMI.setToolTipText(
+      "Checks system constraints against a model in output/out.txt");
+    verifyMI.setEnabled(true); 
     synthMenu.add(verifyMI); 
 
 
@@ -1567,6 +1572,8 @@ public void findPlugins()
       } 
       else if (label.equals("Generate tests"))
       { ucdArea.testCases(); } 
+      else if (label.equals("Verify Invariants"))
+      { ucdArea.verifyInvariants(); } 
       else if (label.equals("Generate Java4"))
       { String sysName = ucdArea.getSystemName(); 
         String dirName = "output";         

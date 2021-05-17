@@ -42,12 +42,16 @@ public class Compiler2
   static final int INSYMBOL = 2; 
   static final int INSTRING = 3; 
 
+  static Vector extensionOperators = new Vector(); 
+
   Vector lexicals; // of StringBuffer
   Vector lexs = new Vector(); // of String 
   int[] bcount; // bracket count at this point in the lexical list
   Vector ops = new Vector(); // of OpOccurrence
   Expression finalexpression; 
 
+  public static void addOperator(String op) 
+  { extensionOperators.add(op); } 
 
   public boolean isStringDelimiter(char c)
   { return (c == '"' || c == '`' || c == '\''); } 
@@ -317,7 +321,8 @@ public class Compiler2
         str.equals("hasSuffix") || str.equals("isEmpty") || str.equals("notEmpty") ||
         str.equals("isUnique") || str.equals("prd") || str.equals("sortedBy") || 
         str.equals("sqrt") || str.equals("abs") || "flatten".equals(str) || 
-        str.equals("oclAsType") || str.equals("oclIsKindOf") || str.equals("or") ||
+        str.equals("oclAsType") || str.equals("oclIsKindOf") || str.equals("oclIsNew") || 
+        str.equals("or") ||
         str.equals("indexOf") || str.equals("isDeleted") || str.equals("iterate"))
     { return true; } 
     return false; 
@@ -1124,18 +1129,17 @@ public class Compiler2
       { String lhs = rule.substring(0,i); 
         nospacelexicalanalysis(lhs); 
         Expression lhsexp = parseExpression(); 
-		if (lhsexp == null) 
-		{ lhsexp = parseATLExpression(); }
+        if (lhsexp == null) 
+        { lhsexp = parseATLExpression(); }
 
         if (lhsexp != null) 
         { if (lhsexp instanceof BinaryExpression)
-		  { BinaryExpression bexp = (BinaryExpression) lhsexp; 
-		    if (bexp.operator.equals("/=")) 
-			{ bexp.operator = "<>"; } 
-		  } 
-		
-		
-		  String rhs = rule.substring(i+4,rule.length());
+          { BinaryExpression bexp = (BinaryExpression) lhsexp; 
+            if (bexp.operator.equals("/=")) 
+            { bexp.operator = "<>"; } 
+          } 
+			
+          String rhs = rule.substring(i+4,rule.length());
           for (int j = 0; j < rhs.length(); j++) 
           { char d = rhs.charAt(j); 
             if (d == '<' && j+5 < rhs.length() &&
@@ -1169,18 +1173,17 @@ public class Compiler2
       { String lhs = rule.substring(0,i); 
         nospacelexicalanalysis(lhs); 
         Expression lhsexp = parseExpression();
-		if (lhsexp == null)
-		{ lhsexp = parseLambdaExpression(); } 
+        if (lhsexp == null)
+        { lhsexp = parseLambdaExpression(); } 
 
         if (lhsexp != null) 
         { if (lhsexp instanceof BinaryExpression)
-		  { BinaryExpression bexp = (BinaryExpression) lhsexp; 
-		    if (bexp.operator.equals("/=")) 
-			{ bexp.operator = "<>"; } 
-		  } 
+          { BinaryExpression bexp = (BinaryExpression) lhsexp; 
+            if (bexp.operator.equals("/=")) 
+            { bexp.operator = "<>"; } 
+          } 
 		
-		
-		  String rhs = rule.substring(i+4,rule.length());
+          String rhs = rule.substring(i+4,rule.length());
           for (int j = 0; j < rhs.length(); j++) 
           { char d = rhs.charAt(j); 
             if (d == '<' && j+5 < rhs.length() &&
@@ -1268,7 +1271,7 @@ public class Compiler2
           { variables.add(lex); } 
         } 
 
-        System.out.println("LHS variables = " + variables); 
+        System.out.println(">> LHS variables = " + variables); 
 
         if (lhs != null) 
         { String rhs = rule.substring(i+4,rule.length());
@@ -1307,7 +1310,7 @@ public class Compiler2
       { String lhs = rule.substring(0,i); 
         nospacelexicalanalysis(lhs); 
         Type lhsexp = parseType(new Vector(),new Vector()); 
-        System.out.println("LHS of type rule = " + lhsexp); 
+        System.out.println(">> LHS of type rule = " + lhsexp); 
 
         if (lhsexp != null) 
         { String rhs = rule.substring(i+4,rule.length());
@@ -1327,7 +1330,7 @@ public class Compiler2
             } 
           } 
           CGRule res = new CGRule(lhsexp,rhs);
-		  System.out.println("Variables of rule " + res + " are: " + res.variables);  
+          System.out.println("Variables of rule " + res + " are: " + res.variables);  
           return res; 
         } 
       } 
@@ -1380,6 +1383,11 @@ public class Compiler2
     return null; 
   } 
 
+  // For the following, assume broken into tokens by: 
+  //
+  // nospacelexicalanalysisText(xstring);
+  // int sz = lexicals.size();  
+    
   public CGRule parse_TextCodegenerationrule(String rule)
   { String buff = ""; 
     for (int i = 0; i < rule.length(); i++) 
@@ -1387,15 +1395,28 @@ public class Compiler2
       if (c == '|' && i + 2 < rule.length() && rule.charAt(i+1) == '-' && 
           rule.charAt(i+2) == '-' && rule.charAt(i+3) == '>') 
       { String lhs = rule.substring(0,i); 
-        
-        Vector variables = new Vector(); 
-        for (int k = 0; k + 1 < lhs.length(); k++) 
+        nospacelexicalanalysisText(lhs);
+        int sz = lexicals.size();
+
+        Vector variables = new Vector();
+        Vector tokens = new Vector(); 
+ 
+        /* for (int k = 0; k + 1 < lhs.length(); k++) 
         { char lex = lhs.charAt(k); 
           if (lex == '_')
           { variables.add("_" + lhs.charAt(k+1)); } 
+        } */ 
+
+        for (int k = 0; k < sz; k++) 
+        { String lex = lexicals.get(k) + ""; 
+          if (lex.startsWith("_")) // and it matches "_\\d"
+          { variables.add(lex); } 
+          tokens.add(lex); 
         } 
 
-        // System.out.println("LHS variables = " + variables); 
+
+        System.out.println(">> Text rule " + rule + " LHS variables = " + variables); 
+        System.out.println(">> Text rule " + rule + " LHS tokens = " + tokens); 
 
         if (lhs != null) 
         { String rhs = rule.substring(i+4,rule.length());
@@ -1407,19 +1428,33 @@ public class Compiler2
                 rhs.charAt(j+3) == 'e' &&
                 rhs.charAt(j+4) == 'n' &&
                 rhs.charAt(j+5) == '>') 
-            { String conditions = rhs.substring(j+6,rhs.length()); 
+            { // Could be actions also 
+              String conditions = rhs.substring(j+6,rhs.length()); 
               Vector conds = parse_conditions(conditions); 
               String rhstext = rhs.substring(0,j); 
               CGRule r = new CGRule(lhs,rhstext,variables,conds); 
+              r.setLHSTokens(tokens); 
               return r; 
             } 
+            else if (d == '<' && j+7 < rhs.length() &&
+                rhs.charAt(j+1) == 'a' &&
+                rhs.charAt(j+2) == 'c' &&
+                rhs.charAt(j+3) == 't' &&
+                rhs.charAt(j+4) == 'i' &&
+                rhs.charAt(j+5) == 'o' &&
+                rhs.charAt(j+6) == 'n' &&
+                rhs.charAt(j+7) == '>') 
+            { String actions = rhs.substring(j+8,rhs.length()); 
+              System.out.println(">> Rule actions are: " + actions); 
+            }               
           } 
           CGRule res = new CGRule(lhs,rhs,variables,new Vector()); 
+          res.setLHSTokens(tokens); 
           return res; 
         } 
       } 
     } 
-    System.err.println(">>> Invalid rule: " + rule); 
+    System.err.println("!! Invalid rule: " + rule); 
     return null; 
   } 
   
@@ -1439,7 +1474,7 @@ public class Compiler2
           { variables.add(lex); } 
         } 
 
-        System.out.println("LHS variables = " + variables); 
+        System.out.println(">> LHS variables = " + variables); 
 
         if (lhs != null) 
         { String rhs = rule.substring(i+4,rule.length());
@@ -1511,17 +1546,18 @@ public class Compiler2
     return null; 
   } 
 
+  // For CSTL rule conditions and actions: 
   public static Vector parse_conditions(String str)
   { Vector conds = new Vector();
     Compiler2 newc = new Compiler2(); 
-	newc.nospacelexicalanalysis(str);
-	Vector lexs = newc.lexicals;
+    newc.nospacelexicalanalysis(str);
+    Vector lexs = newc.lexicals;
 	
-	CGCondition cg = new CGCondition(); 
+    CGCondition cg = new CGCondition(); 
 	 
-	for (int i = 0; i < lexs.size(); i++)
-	{ String se = lexs.get(i) + ""; 
-	  if (",".equals(se))
+    for (int i = 0; i < lexs.size(); i++)
+    { String se = lexs.get(i) + ""; 
+      if (",".equals(se))
       { conds.add(cg); 
         cg = new CGCondition(); 
       } 
@@ -1534,7 +1570,7 @@ public class Compiler2
     }
     conds.add(cg); 
     return conds; 
-  } 
+  } // Could be metafeatures: _i`mf value
 	
 	
   public Vector parseCGconditions(String str) 
@@ -2020,9 +2056,11 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     { String ss = lexicals.get(i).toString(); 
       if // (ss.equals("+") || ss.equals("-") || 
          (ss.equals("/\\") || ss.equals("^") ||
-          ss.equals("*") || ss.equals("/") || ss.equals("div") || 
+          ss.equals("*") || ss.equals("/") || 
+          ss.equals("div") || 
           ss.equals("mod"))
-      { Expression e1 = parse_basic_expression(bc,pstart,i-1);  // factor2
+      { Expression e1 = parse_basic_expression(bc,pstart,i-1);  
+        // or factor2
         Expression e2 = parse_factor_expression(bc,i+1,pend);
         if (e1 == null || e2 == null)
         { } // return null; }
@@ -2060,13 +2098,16 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
              "toInteger".equals(ss2) || "isReal".equals(ss2) || "toReal".equals(ss2) ||
              "exp".equals(ss2) || "log".equals(ss2) || "log10".equals(ss2) || 
              "sin".equals(ss2) || "cos".equals(ss2) || "allInstances".equals(ss2) ||
-             "tan".equals(ss2) || "oclIsUndefined".equals(ss2) || "unionAll".equals(ss2) || 
+             "tan".equals(ss2) || 
+             "oclIsNew".equals(ss2) || "oclIsUndefined".equals(ss2) || 
+             "unionAll".equals(ss2) || 
              "intersectAll".equals(ss2) || "concatenateAll".equals(ss2) ||
              "floor".equals(ss2) || "ceil".equals(ss2) || "round".equals(ss2) ||
              "abs".equals(ss2) || "cbrt".equals(ss2) || "asin".equals(ss2) ||
              "acos".equals(ss2) || "atan".equals(ss2) || "isLong".equals(ss2) ||
              "sinh".equals(ss2) || "cosh".equals(ss2) || "tanh".equals(ss2) ||
-             "values".equals(ss2) || "keys".equals(ss2) ) )
+             "values".equals(ss2) || "keys".equals(ss2) ||
+             extensionOperators.contains(ss2) ) )
         { Expression ee2 = parse_factor_expression(bc,pstart,i-1); 
           if (ee2 == null) 
           { // System.err.println("Invalid unary -> expression at: " + showLexicals(pstart,pend)); 
@@ -3008,11 +3049,11 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
   { // expecting AST1 ... ASTn 
   
     Vector res = new Vector(); 
-	String lex = lexicals.get(st) + ""; 
+    String lex = lexicals.get(st) + ""; 
 	
-	if ("(".equals(lex) && ")".equals(lexicals.get(en) + "")) {}
-	else 
-	{ return null; }
+    if ("(".equals(lex) && ")".equals(lexicals.get(en) + "")) {}
+    else 
+    { return null; }
 	
 	for (int i = st+1; i <= en; i++) 
 	{ String lexend = lexicals.get(i) + ""; 
@@ -3039,7 +3080,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
   { nospacelexicalanalysisText(xstring);
     int sz = lexicals.size();  
     ASTTerm res = parseGeneralAST(0,sz-1); 
-	return res;
+    return res;
   }
   
   public ASTTerm parseGeneralAST(int st, int en)
@@ -3291,7 +3332,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
              "toInteger".equals(ss2) || "isReal".equals(ss2) || "toReal".equals(ss2) ||
              "exp".equals(ss2) || "log".equals(ss2) || "log10".equals(ss2) || 
              "sin".equals(ss2) || "cos".equals(ss2) || "keys".equals(ss2) || "values".equals(ss2) ||  
-             "tan".equals(ss2) || "oclIsUndefined".equals(ss2) || "oclType".equals(ss2) || 
+             "tan".equals(ss2) || 
+             "oclIsUndefined".equals(ss2) || "oclIsNew".equals(ss2) || "oclType".equals(ss2) || 
              "unionAll".equals(ss2) || 
              "intersectAll".equals(ss2) || "concatenateAll".equals(ss2) ||
              "floor".equals(ss2) || "ceil".equals(ss2) || "round".equals(ss2) ||
@@ -3873,6 +3915,355 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 	{ System.err.println("!! Too many } brackets (opening: " + ocb + ", closing: " + ccb + ") in   " + showLexicals(st,en)); }
 
 	return false; 
+  } 
+
+  public static String isKeywordOrPart(String st, String[] mess)
+  { if (st.length() < 2) 
+    { return null; } 
+
+    if ("if".equals(st)) 
+    { mess[0] = "Conditional expression: if expr then expr1 else expr2 endif\nor statement: if expr then statmt1 else statmt2"; 
+      return "if"; 
+    } 
+
+    if ("then".startsWith(st)) 
+    { mess[0] = "then part of if-expression or if-statement"; 
+      return "then"; 
+    }
+
+    if ("else".startsWith(st)) 
+    { mess[0] = "else part of if-expression or if-statement"; 
+      return "else"; 
+    }
+ 
+    if ("while".startsWith(st)) 
+    { mess[0] = "Unbounded loop statement: while expr do statement\nCan only be used in an activity"; 
+      return "while"; 
+    }
+
+    if ("for".startsWith(st)) 
+    { mess[0] = "Bounded loop statement: for variable : collection do statement\nCan only be used in an activity"; 
+      return "for"; 
+    }
+
+    if ("var".startsWith(st)) 
+    { mess[0] = "Declaration/creation statement: var variable : Type\nCan only be used in an activity"; 
+      return "var"; 
+    } 
+ 
+    if ("operation".startsWith(st)) 
+    { mess[0] = "Operation declaration: operation name(parameters) : Type"; 
+      return "operation"; 
+    } 
+    
+    if ("query".startsWith(st)) 
+    { mess[0] = "Query operation declaration: query name(parameters) : Type"; 
+      return "query"; 
+    }
+ 
+    if ("pre".startsWith(st)) 
+    { mess[0] = "Operation precondition, eg: pre: true"; 
+      return "pre:"; 
+    } 
+ 
+    if ("post".startsWith(st)) 
+    { mess[0] = "Operation postcondition, eg: post: true"; 
+      return "post:"; 
+    }
+ 
+    if ("activity".startsWith(st)) 
+    { mess[0] = "Operation or usecase code, activity: statement;"; 
+      return "activity:"; 
+    }
+ 
+    if ("class".startsWith(st)) 
+    { mess[0] = "Class declaration, eg: class Name { ... }"; 
+      return "class"; 
+    } 
+
+    if ("usecase".startsWith(st)) 
+    { mess[0] = "usecase declaration, eg: usecase name : Type { ... }"; 
+      return "usecase"; 
+    } 
+
+    if ("parameter".startsWith(st)) 
+    { mess[0] = "usecase parameter, eg: parameter name : Type;"; 
+      return "parameter"; 
+    } 
+
+
+    if ("attribute".startsWith(st)) 
+    { mess[0] = "attribute declaration, eg: attribute name : Type;"; 
+      return "attribute"; 
+    }
+
+    if (st.length() > 3) 
+    { if ("reference".startsWith(st)) 
+      { mess[0] = "reference declaration, eg: reference name : Type;\nType is a class type or collection (of class element type)"; 
+        return "reference"; 
+      }
+
+      if ("result".startsWith(st)) 
+      { mess[0] = "result variable of usecase/query/operation with non-void result type\nEg., result = true"; 
+        return "result"; 
+      }
+
+      if ("return".startsWith(st)) 
+      { mess[0] = "return statement, eg: return result\nEnds control flow in the current activity branch\nCan only be used in an activity"; 
+        return "return"; 
+      }
+
+      if ("break".startsWith(st)) 
+      { mess[0] = "break statement, eg: break\nEnds control flow in the current activity branch\nCan only be used in an activity"; 
+        return "break"; 
+      }
+
+      if ("continue".startsWith(st)) 
+      { mess[0] = "continue statement, eg: continue\nJump to next iteration of enclosing loop\nCan only be used in an activity"; 
+        return "continue"; 
+      }
+
+    } 
+
+    if (st.length() > 2)
+    { if ("stereotype".startsWith(st)) 
+      { mess[0] = "usecase stereotype, eg: stereotype \"private\";";  
+        return "stereotype"; 
+      } 
+ 
+      if ("static".startsWith(st)) 
+      { mess[0] = "static feature, ie., of class scope"; 
+        return "static"; 
+      } 
+
+      if ("String".startsWith(st)) 
+      { mess[0] = "String type. Empty string is \"\""; 
+        return "String"; 
+      }
+ 
+      if ("int".startsWith(st)) 
+      { mess[0] = "Integer type, from -(2->pow(31)) to 2->pow(31)-1"; 
+        return "int"; 
+      } 
+
+      if ("includes".startsWith(st)) 
+      { mess[0] = "usecase included in another, eg: includes subroutine;"; 
+        return "includes"; 
+      } 
+    } 
+
+    if ("true".startsWith(st)) 
+    { mess[0] = "true value of boolean type"; 
+      return "true"; 
+    }
+ 
+    if ("false".startsWith(st)) 
+    { mess[0] = "false value of boolean type"; 
+      return "false"; 
+    }
+ 
+    if ("null".startsWith(st)) 
+    { mess[0] = "null object/value"; 
+      return "null"; 
+    } 
+
+    if ("self".startsWith(st)) 
+    { mess[0] = "self object"; 
+      return "self"; 
+    } 
+
+    if (st.length() > 2)
+    { if ("double".startsWith(st)) 
+      { mess[0] = "Real-values type, from -1.7976931348623157*(10->pow(308)) to 1.7976931348623157*(10->pow(308))"; 
+        return "double"; 
+      } 
+
+      if ("void".startsWith(st)) 
+      { mess[0] = "void type, used as operation/usecase return type to indicate there is no return value"; 
+        return "void"; 
+      } 
+
+      if ("Sequence".startsWith(st)) 
+      { mess[0] = "Sequence type, eg., Sequence(String)"; 
+        return "Sequence(Type)"; 
+      }
+ 
+      if ("Set".startsWith(st)) 
+      { mess[0] = "Set type, eg., Set(String)"; 
+        return "Set(Type)"; 
+      }
+ 
+      if ("Map".startsWith(st)) 
+      { mess[0] = "Map type, eg., Map(String,int)"; 
+        return "Map(String,Type)"; 
+      } 
+
+      if ("Function".startsWith(st)) 
+      { mess[0] = "Function type, eg., Function(String,int)"; 
+        return "Function(String,Type)"; 
+      } 
+    } 
+
+    if (st.length() > 6)
+    { if ("extends".startsWith(st))
+      { mess[0] = "Class inheritance, eg., class User extends Person {"; 
+        return "extends"; 
+      }
+ 
+      if ("extendedBy".startsWith(st))
+      { mess[0] = "Use case extension, eg., extendedBy errorCase;"; 
+        return "extendedBy"; 
+      }
+    } 
+
+
+    if ("long".startsWith(st)) 
+    { mess[0] = "long Integer type, from -(2->pow(63)) to (2->pow(63)-1)"; 
+      return "long"; 
+    } 
+    
+    
+    if ("boolean".startsWith(st)) 
+    { mess[0] = "Boolean-values type, values are true and false"; 
+      return "boolean"; 
+    } 
+
+    return null; 
+  } 
+
+  public static String matchPrecedingIdentifier(char cc, String txt, int pos)
+  { String res = "" + cc; 
+    for (int i = pos-1; i >= 0; i--) 
+    { char cx = txt.charAt(i); 
+      if (Character.isLetterOrDigit(cx) || cx == '_' || 
+          cx == '$')
+      { res = cx + res; } 
+      else 
+      { return res; } 
+    } 
+    return res; 
+  } 
+
+  public static String findIdentifierDefinition(String iden, String txt)
+  { if (iden.length() == 0) 
+    { return null; } 
+
+    // System.out.println(">>> Searching for " + iden + " definition"); 
+
+    char idenlast = iden.charAt(iden.length()-1); 
+
+    for (int i = txt.length()-1; i >= 0; i--) 
+    { // Look for previous definitions  iden = something 
+      // or  iden : sometype
+
+      char cx = txt.charAt(i); 
+      if (cx == '=' || cx == ':')
+      { // is iden on LHS? 
+        boolean scanning = true; 
+
+        for (int j = i-1; j >= 0 && scanning; j--)
+        { char cj = txt.charAt(j); 
+          if (Character.isWhitespace(cj)) { } 
+          else if (cj == idenlast && Character.isWhitespace(txt.charAt(j+1)))
+          { String piden = matchPrecedingIdentifier(cj,txt,j);
+            // System.out.println(">>> Matched: " + piden); 
+ 
+            if (iden.equals(piden)) // Found definition
+            { String subtext = txt.substring(j);
+              int packageindex = subtext.indexOf("package "); 
+              int classindex = subtext.indexOf("class "); 
+              if (classindex >= 0 || packageindex >= 0) 
+              { System.out.println(">>> identifier defined in different class/package: " + piden); 
+                return null; 
+              } 
+              else 
+              { int usecaseindex = subtext.indexOf("usecase "); 
+                if (usecaseindex >= 0) 
+                { System.out.println(">>> identifier defined in different usecase: " + piden); 
+                  return null; 
+                } 
+                else if (cx == ':')  
+                { String prevblock = getPreviousTextBlock(j - iden.length(), txt); 
+                  String trimdec = prevblock.trim(); 
+                  if ("attribute".equals(trimdec) || 
+                      "reference".equals(trimdec) || 
+                      "parameter".equals(trimdec))
+                  { System.out.println(">> Identifier defined in current classifier: " + trimdec); } 
+                  else 
+                  { int operationindex = subtext.indexOf("operation "); 
+                    int queryindex = subtext.indexOf("query "); 
+                    if (operationindex >= 0 || queryindex >= 0) 
+                    { System.out.println(">>> identifier defined in different operation: " + piden); }
+                  } 
+
+                  // if attribute or parameter or reference
+
+                  String block = getNextTextBlock(i+1,txt); 
+                  return iden + " " + cx + " " + block; 
+
+                  // otherwise, an operation parameter
+                } 
+                else // an = definition 
+                { int operationindex = subtext.indexOf("operation "); 
+                  int queryindex = subtext.indexOf("query "); 
+                  if (operationindex >= 0 || queryindex >= 0) 
+                  { System.out.println(">>> identifier defined in different operation: " + piden); 
+                    return null; 
+                  } 
+                  else  
+                  { String block = getNextTextBlock(i+1,txt); 
+                    return iden + " " + cx + " " + block; 
+                  } 
+                }             
+              }
+            }
+          }
+          else 
+          { scanning = false; 
+            break; 
+          } // continue going back with i 
+        }  
+      }
+    } 
+    return null; 
+  } 
+
+  public static String getNextTextBlock(int pos, String txt)
+  { String res = ""; 
+    int i = pos; 
+    for ( ; i < txt.length(); i++) 
+    { char cx = txt.charAt(i); 
+      if (Character.isWhitespace(cx)) { } 
+      else 
+      { break; } 
+    } 
+
+    for ( ; i < txt.length(); i++) 
+    { char cx = txt.charAt(i); 
+      if (Character.isWhitespace(cx)) 
+      { return res; }
+      res = res + cx;  
+    } 
+    return res; 
+  } 
+
+  public static String getPreviousTextBlock(int pos, String txt)
+  { String res = ""; 
+    int i = pos; 
+    for ( ; i >= 0; i--) 
+    { char cx = txt.charAt(i); 
+      if (Character.isWhitespace(cx)) { } 
+      else 
+      { break; } 
+    } 
+
+    for ( ; i >= 0; i--) 
+    { char cx = txt.charAt(i); 
+      if (Character.isWhitespace(cx)) 
+      { return res; }
+      res = cx + res;  
+    } 
+    return res; 
   } 
 
   public static int matchPrecedingBracket(String ch, String txt, Vector errors, Vector colours)
@@ -7389,8 +7780,77 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 
     // c = new Compiler2(); 
  
+    Vector v1 = new Vector(); 
+    Vector v2 = new Vector(); 
+    File cg = new File("cg/cg.cstl");
+
+    Vector auxcstls = new Vector(); 
+    auxcstls.add("mapExpressionStatements.cstl"); 
+    // auxcstls.add("cgprotocol.cstl"); 
+ 
+    CGSpec cgs = CSTL.loadCSTL(cg,v1,v2); 
+    CSTL.loadTemplates(auxcstls,v1,v2); 
+
+    System.out.println(">>> CSTL ruleset: " + cgs); 
+
     ASTTerm xx =
-	 c.parseGeneralAST("(statement (block { (blockStatement (statement switch (parExpression ( (expression (primary v)) )) { (switchBlockStatementGroup (switchLabel case (expression (primary (literal true))) :) (blockStatement (statement (expression (expression (primary x)) = (expression (primary (literal (integerLiteral 1))))) ;)) (blockStatement (statement break ;))) (switchBlockStatementGroup (switchLabel case (expression (primary (literal false))) :) (blockStatement (statement (expression (expression (primary x)) = (expression (primary (literal (integerLiteral 2))))) ;)) (blockStatement (statement break ;))) (switchBlockStatementGroup (switchLabel default :) (blockStatement (statement (expression (expression (primary x)) = (expression (primary (literal (integerLiteral 3))))) ;))) })) }))"); 
+      c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (classOrInterfaceType String)) (variableDeclarators (variableDeclarator (variableDeclaratorId x) = (variableInitializer (expression (primary (literal \"str\"))))))) ;) (blockStatement (statement (expression (expression (primary x)) = (expression (expression (primary x)) + (expression (primary (literal \"tail\"))))) ;)) (blockStatement (localVariableDeclaration (typeType (primitiveType int)) (variableDeclarators (variableDeclarator (variableDeclaratorId f) = (variableInitializer (expression (expression (primary x)) . (methodCall length ( ))))))) ;) }))");
+
+      // c.parseGeneralAST("(statement (block { (blockStatement (statement throw (expression new (creator (createdName Exception) (classCreatorRest (arguments ( (expressionList (expression (primary (literal \"message\")))) ))))) ;)) }))");
+
+       // c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (classOrInterfaceType Map (typeArguments < (typeArgument (typeType (classOrInterfaceType String))) , (typeArgument (typeType (classOrInterfaceType Integer))) >))) (variableDeclarators (variableDeclarator (variableDeclaratorId corr) = (variableInitializer (expression new (creator (createdName HashMap (typeArgumentsOrDiamond (typeArguments < (typeArgument (typeType (classOrInterfaceType String))) , (typeArgument (typeType (classOrInterfaceType Integer))) >))) (classCreatorRest (arguments ( ))))))))) ;) }))");
+
+      // c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (classOrInterfaceType Vector)) (variableDeclarators (variableDeclarator (variableDeclaratorId r)))) ;) (blockStatement (statement (expression (expression (primary r)) = (expression new (creator (createdName Vector) (classCreatorRest (arguments ( )))))) ;)) }))"); 
+
+   // c.parseGeneralAST("(statement (block { (blockStatement (statement (expression (expression (expression (primary this)) . x) = (expression (primary y))) ;)) }))"); 
+
+    // c.parseGeneralAST("(typeType (classOrInterfaceType HashMap (typeArguments < (typeArgument (typeType (classOrInterfaceType String))) , (typeArgument (typeType (classOrInterfaceType Integer))) >)))"); 
+
+   // "(typeType (classOrInterfaceType List (typeArguments < (typeArgument (typeType (primitiveType byte))) >)))"); 
+
+    // (typeType (classOrInterfaceType Integer) [ ])"); 
+
+    // (expression (expression (primary line1)) . (methodCall length ( )) )"); 
+
+  // (methodCall put ( (expressionList (expression (primary (literal \"a\"))) , (expression (primary x))) ))"); 
+
+  // (methodCall max ( (expressionList (expression (primary y)) , (expression (primary z))) ) )"); 
+
+    System.out.println(xx); 
+    System.out.println(xx.toKM3()); 
+
+    String tt = xx.cg(cgs); 
+    System.out.println(tt); 
+
+    System.out.println(); 
+
+   // c = new Compiler2(); 
+
+   // ASTTerm yy = c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (classOrInterfaceType Map (typeArguments < (typeArgument (typeType (classOrInterfaceType String))) , (typeArgument (typeType (classOrInterfaceType Integer))) >))) (variableDeclarators (variableDeclarator (variableDeclaratorId corr) = (variableInitializer (expression new (creator (createdName HashMap (typeArgumentsOrDiamond (typeArguments < (typeArgument (typeType (classOrInterfaceType String))) , (typeArgument (typeType (classOrInterfaceType Integer))) >))) (classCreatorRest (arguments ( ))))))))) ;) }))"); 
+
+   // "(statement (block { (blockStatement (localVariableDeclaration (typeType (classOrInterfaceType List (typeArguments < (typeArgument (typeType (primitiveType byte))) >))) (variableDeclarators (variableDeclarator (variableDeclaratorId rr)))) ;) (blockStatement (statement (expression (expression (primary rr)) = (expression new (creator (createdName ArrayList (typeArgumentsOrDiamond (typeArguments < (typeArgument (typeType (primitiveType byte))) >))) (classCreatorRest (arguments ( )))))) ;)) }))"); 
+
+
+    // "(statement (block { (blockStatement (localVariableDeclaration (typeType (classOrInterfaceType Vector)) (variableDeclarators (variableDeclarator (variableDeclaratorId r)))) ;) (blockStatement (statement (expression (expression (primary r)) = (expression new (creator (createdName Vector) (classCreatorRest (arguments ( )))))) ;)) }))"); 
+
+    // System.out.println(yy); 
+    // System.out.println(yy.toKM3()); 
+
+  // (statement (block { (blockStatement (localVariableDeclaration (typeType (classOrInterfaceType List (typeArguments < (typeArgument (typeType (classOrInterfaceType String))) >))) (variableDeclarators (variableDeclarator (variableDeclaratorId rr)))) ;) (blockStatement (statement (expression (expression (primary rr)) = (expression new (creator (createdName ArrayList (typeArgumentsOrDiamond (typeArguments < (typeArgument (typeType (classOrInterfaceType String))) >))) (classCreatorRest (arguments ( )))))) ;)) }))
+
+     // c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (primitiveType int)) (variableDeclarators (variableDeclarator (variableDeclaratorId x) = (variableInitializer (expression (expression (primary Math)) . (methodCall max ( (expressionList (expression (primary y)) , (expression (primary z))) ))))))) ;) (blockStatement (localVariableDeclaration (typeType (classOrInterfaceType Map)) (variableDeclarators (variableDeclarator (variableDeclaratorId m) = (variableInitializer (expression new (creator (createdName HashMap) (classCreatorRest (arguments ( ))))))))) ;) (blockStatement (statement (expression (expression (primary m)) . (methodCall put ( (expressionList (expression (primary (literal \"a\"))) , (expression (primary x))) ))) ;)) }))"); 
+
+     // c.parseGeneralAST("(statement (block { (blockStatement (statement assert (expression (primary ( (expression (expression (primary x)) < (expression (primary (literal (integerLiteral 10))))) ))) : (expression (primary (literal \"failure\"))) ;)) }))"); 
+
+   //  c.parseGeneralAST("(enumDeclaration enum Gender { (enumConstants (enumConstant male) , (enumConstant female) , (enumConstant other)) })"); 
+
+   // c.parseGeneralAST("(classDeclaration class PreOperator (classBody { (classBodyDeclaration (memberDeclaration (fieldDeclaration (typeType (classOrInterfaceType String)) (variableDeclarators (variableDeclarator (variableDeclaratorId name))) ;))) (classBodyDeclaration (memberDeclaration (fieldDeclaration (typeType (classOrInterfaceType String)) (variableDeclarators (variableDeclarator (variableDeclaratorId type))) ;))) (classBodyDeclaration (memberDeclaration (fieldDeclaration (typeType (classOrInterfaceType String)) (variableDeclarators (variableDeclarator (variableDeclaratorId javacode))) ;))) (classBodyDeclaration (memberDeclaration (fieldDeclaration (typeType (classOrInterfaceType String)) (variableDeclarators (variableDeclarator (variableDeclaratorId csharpcode))) ;))) (classBodyDeclaration (memberDeclaration (fieldDeclaration (typeType (classOrInterfaceType String)) (variableDeclarators (variableDeclarator (variableDeclaratorId cppcode))) ;))) (classBodyDeclaration (modifier (classOrInterfaceModifier public)) (memberDeclaration (constructorDeclaration PreOperator (formalParameters ( (formalParameterList (formalParameter (typeType (classOrInterfaceType String)) (variableDeclaratorId line1)) , (formalParameter (typeType (classOrInterfaceType String)) (variableDeclaratorId line2)) , (formalParameter (typeType (classOrInterfaceType String)) (variableDeclaratorId line3)) , (formalParameter (typeType (classOrInterfaceType String)) (variableDeclaratorId line4))) )) (block { (blockStatement (localVariableDeclaration (typeType (primitiveType int)) (variableDeclarators (variableDeclarator (variableDeclaratorId i) = (variableInitializer (expression (expression (primary line1)) . (methodCall indexOf ( (expressionList (expression (primary (literal ' ')))) ))))))) ;) (blockStatement (statement (expression (expression (primary name)) = (expression (expression (expression (primary line1)) . (methodCall substring ( (expressionList (expression (primary (literal (integerLiteral 0)))) , (expression (primary i))) ))) . (methodCall trim ( )))) ;)) (blockStatement (statement (expression (expression (primary type)) = (expression (expression (expression (primary line1)) . (methodCall substring ( (expressionList (expression (primary i)) , (expression (expression (primary line1)) . (methodCall length ( )))) ))) . (methodCall trim ( )))) ;)) (blockStatement (statement (expression (expression (primary javacode)) = (expression (primary line2))) ;)) (blockStatement (statement (expression (expression (primary csharpcode)) = (expression (primary line3))) ;)) (blockStatement (statement (expression (expression (primary cppcode)) = (expression (primary line4))) ;)) })))) }))"); 
+
+   // c.parseGeneralAST("(classDeclaration class Person (classBody { (classBodyDeclaration (memberDeclaration (fieldDeclaration (typeType (primitiveType int)) (variableDeclarators (variableDeclarator (variableDeclaratorId age) = (variableInitializer (expression (primary (literal (integerLiteral 0))))))) ;))) (classBodyDeclaration (memberDeclaration (fieldDeclaration (typeType (classOrInterfaceType String)) (variableDeclarators (variableDeclarator (variableDeclaratorId name) = (variableInitializer (expression (primary (literal null)))))) ;))) (classBodyDeclaration (memberDeclaration (constructorDeclaration Person (formalParameters ( (formalParameterList (formalParameter (typeType (classOrInterfaceType String)) (variableDeclaratorId nme))) )) (block { (blockStatement (statement (expression (expression (primary name)) = (expression (primary nme))) ;)) })))) }))"); 
+
+    //  c.parseGeneralAST("(methodDeclaration (typeTypeOrVoid (typeType (primitiveType int))) nextInt (formalParameters ( (formalParameterList (formalParameter (typeType (primitiveType int)) (variableDeclaratorId x)) , (formalParameter (typeType (primitiveType int)) (variableDeclaratorId y))) )) (methodBody (block { (blockStatement (statement return (expression (expression (expression (primary x)) + (expression (primary y))) - (expression (expression (primary x)) * (expression (primary y)))) ;)) })))"); 
+
+	// c.parseGeneralAST("(statement (block { (blockStatement (statement switch (parExpression ( (expression (primary v)) )) { (switchBlockStatementGroup (switchLabel case (expression (primary (literal true))) :) (blockStatement (statement (expression (expression (primary x)) = (expression (primary (literal (integerLiteral 1))))) ;)) (blockStatement (statement break ;))) (switchBlockStatementGroup (switchLabel case (expression (primary (literal false))) :) (blockStatement (statement (expression (expression (primary x)) = (expression (primary (literal (integerLiteral 2))))) ;)) (blockStatement (statement break ;))) (switchBlockStatementGroup (switchLabel default :) (blockStatement (statement (expression (expression (primary x)) = (expression (primary (literal (integerLiteral 3))))) ;))) })) }))"); 
 
 	 // c.parseGeneralAST("(statement (block { (blockStatement (statement try (block { (blockStatement (statement (expression (expression (primary y)) = (expression (expression (primary x)) / (expression (primary (literal (floatLiteral 1.0)))))) ;)) }) (catchClause catch ( (catchType (qualifiedName Exception)) e ) (block { (blockStatement (statement (expression (expression (primary e)) . (methodCall printStackTrace ( ))) ;)) })) (finallyBlock finally (block { (blockStatement (statement return ;)) })))) }))"); 
 
@@ -7439,8 +7899,6 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 	
 	// (expression (expression (primary a)) . (methodCall met ( (expressionList (expression (primary x)) , (expression (primary y))) )))
 	
-	System.out.println(xx); 
-	System.out.println(xx.toKM3()); 
 	
 	/* java.util.Date d1 = new java.util.Date(); 
 	long t1 = d1.getTime(); 

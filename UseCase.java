@@ -1185,9 +1185,9 @@ public class UseCase extends ModelElement
     for (int i = 0; i < orderedPostconditions.size(); i++) 
     { ConstraintOrGroup cc = (ConstraintOrGroup) orderedPostconditions.get(i); 
       Vector ccrd = cc.readFrame(); 
-	  Vector ccwr = cc.wr(assocs); 
-	  DataDependency dd = cc.getDataFlows();
-        System.out.println("Data flows for " + cc + " are: " + dd); 
+      Vector ccwr = cc.wr(assocs); 
+      DataDependency dd = cc.getDataFlows();
+      System.out.println("Data flows for " + cc + " are: " + dd); 
        // DataDependency dd = cc.rhsDataDependency(); 
 	  System.out.println(">> read in constraint " + i + " = " + ccrd); 
 	  System.out.println(">> written in constraint " + i + " = " + ccwr);
@@ -1472,10 +1472,10 @@ public class UseCase extends ModelElement
   { Vector newparams = new Vector(); 
     newparams.addAll(parameters); 
     newparams.addAll(ownedAttribute); // static attributes
-	if (resultType != null)
-	{ Attribute resultPar = getResultParameter(); 
-	  newparams.add(resultPar); 
-	}
+    if (resultType != null)
+    { Attribute resultPar = getResultParameter(); 
+      newparams.add(resultPar); 
+    }
     Vector context0 = new Vector(); 
 
     for (int i = 0; i < ownedAttribute.size(); i++) 
@@ -1818,7 +1818,7 @@ public class UseCase extends ModelElement
       { System.err.println("ERROR: No type for parameter " + att); 
         continue; 
       }  
-            res = res + typ.getCPP(att.getElementType()) + " " + attnme; 
+      res = res + typ.getCPP(att.getElementType()) + " " + attnme; 
       if (i < parameters.size() - 1)
       { res = res + ","; } 
     }
@@ -2182,7 +2182,7 @@ public void generateCUIcode(PrintWriter out)
     { return ""; } 
 
     if (classifierBehaviour == null) 
-    { System.err.println("No design exists for this use case");
+    { System.err.println("ERROR!: No design exists for this use case");
       return ""; 
     }
 
@@ -2195,8 +2195,8 @@ public void generateCUIcode(PrintWriter out)
     if (resultType == null) 
     { typ = "void"; } 
     else 
-    { typ = resultType.getCSharp(); 
-      ini = "    " + typ + " result = " + resultType.getDefaultCPP(elementType.getCPP()) + ";\n"; 
+    { typ = resultType.getCPP(elementType); 
+      ini = "    " + typ + " result = " + resultType.getDefaultCPP(elementType) + ";\n"; 
       ret = "    return result;\n"; 
     } 
 
@@ -2733,9 +2733,9 @@ public void generateCUIcode(PrintWriter out)
 
     String nme = getName();
 	
-	String retType = "void"; 
-	if (resultType != null)
-	{ retType = resultType + ""; }
+    String retType = "void"; 
+    if (resultType != null)
+    { retType = resultType + ""; }
 
     if (saved.contains(nme)) { }     
     else 
@@ -4303,7 +4303,8 @@ public void generateCUIcode(PrintWriter out)
     { Vector newres = new Vector(); 
       Attribute att = (Attribute) allattributes.get(i); 
 
-      Vector testassignments = att.testCases("parameters", lowerBounds, upperBounds);
+      Vector tcases = new Vector(); 
+      Vector testassignments = att.testCases("parameters", lowerBounds, upperBounds, tcases);
  
       for (int j = 0; j < res.size(); j++) 
       { String tst = (String) res.get(j); 

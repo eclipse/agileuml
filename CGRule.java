@@ -22,6 +22,8 @@ public class CGRule
   String lhsop = "";
   Expression lhsexp = null; // For expression rules
 
+  Vector lhsTokens = new Vector(); // String
+
   Vector conditions;
   String lhspattern = ""; // The LHS string as a regex pattern
   Vector lhspatternlist = new Vector(); 
@@ -140,6 +142,12 @@ public class CGRule
     conditions = whens;
     metafeatures = metafeatures(rhs); 
   }
+
+  public Vector getVariables()
+  { return variables; } 
+
+  public void setLHSTokens(Vector toks)
+  { lhsTokens = toks; } 
 
   public boolean equalsLHS(CGRule r) 
   { return r.lhs.equals(lhs); } 
@@ -436,21 +444,21 @@ public class CGRule
         else if ("formalName".equals(mffeat) && obj instanceof Expression)
         { Expression e = (Expression) obj; 
           Attribute fp = e.formalParameter; 
-		  
-		  System.out.println(">> Replacing " + e + "`formalName by " + fp); 
+
+          System.out.println(">> Replacing " + e + "`formalName by " + fp); 
 		  
           if (fp != null) 
           { String repl = fp.getName(); 
             res = res.replaceAll(mf,repl);
           } 
-		  else 
-		  { res = res.replaceAll(mf,"_"); }
+          else 
+          { res = res.replaceAll(mf,"_"); }
         }
         else if ("upper".equals(mffeat) && obj instanceof Expression)
         { Expression e = (Expression) obj; 
           int upper = e.upperBound(); 
 		  
-		  System.out.println(">> Replacting " + e + "`upper by " + upper); 
+          System.out.println(">> Replacing " + e + "`upper by " + upper); 
 		  
           res = res.replaceAll(mf,upper + ""); 
         }
@@ -458,7 +466,7 @@ public class CGRule
         { Attribute e = (Attribute) obj; 
           int upper = e.upperBound(); 
 		  
-		  System.out.println(">> Replacting " + e + "`upper by " + upper); 
+          System.out.println(">> Replacing " + e + "`upper by " + upper); 
 		  
           res = res.replaceAll(mf,upper + ""); 
         }
@@ -466,7 +474,7 @@ public class CGRule
         { Expression e = (Expression) obj; 
           int lower = e.lowerBound(); 
 		  
-		  System.out.println(">> Replacing " + e + "`lower by " + lower); 
+          System.out.println(">> Replacing " + e + "`lower by " + lower); 
 		  
           res = res.replaceAll(mf,lower + ""); 
         }
@@ -474,7 +482,7 @@ public class CGRule
         { Attribute e = (Attribute) obj; 
           int lower = e.lowerBound(); 
 		  
-		  System.out.println(">> Replacing " + e + "`lower by " + lower); 
+          System.out.println(">> Replacing " + e + "`lower by " + lower); 
 		  
           res = res.replaceAll(mf,lower + ""); 
         }
@@ -496,6 +504,10 @@ public class CGRule
           { ModelElement e = (ModelElement) obj; 
             repl = e.cg(template);
           } 
+          else if (obj instanceof ASTTerm)
+          { ASTTerm e = (ASTTerm) obj; 
+            repl = e.cg(template);
+          } 
           else if (obj instanceof Vector)
           { Vector v = (Vector) obj;
             repl = "";  
@@ -510,6 +522,19 @@ public class CGRule
             res = res.replaceAll(mf,repl1); 
           }  // _1`file for template file.cstl
         } 
+        else if (obj instanceof ASTTerm)
+        { ASTTerm term = (ASTTerm) obj; 
+          if (term.hasMetafeature(mffeat))
+          { String repl = term.getMetafeatureValue(mffeat); 
+            if (repl != null) 
+            { String repl1 = correctNewlines(repl); 
+                // System.out.println(">--> Replacing " + mf + " by " + repl1); 
+              res = res.replaceAll(mf,repl1);
+            }
+          } 
+        }
+        else
+        { System.err.println("!! Warning: could not apply metafeature " + mffeat + " to " + obj); } 
       } 
     }
 

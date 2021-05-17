@@ -73,10 +73,15 @@ public class CGCondition
           else if (m instanceof String && 
                    cond.conditionSatisfied((String) m, entities)) 
           { }
+          else if (m instanceof ASTTerm && 
+                   cond.conditionSatisfied((ASTTerm) m, entities))
+          { System.out.println("||| Condition " + cond + " satisfied by term " + m); 
+            System.out.println(); 
+          } 
           else 
           { return false; } 
 		  
-		  System.out.println(">>> Condition " + cond + " is satisfied by " + m); 
+          System.out.println(">>> Condition " + cond + " is satisfied by " + m); 
         } 
       } 
     } 
@@ -86,8 +91,10 @@ public class CGCondition
   public boolean stereotypeConditionSatisfied(ModelElement m, Vector entities)
   { if (m.hasStereotype(stereotype))
     { return positive; }
-	if (!m.hasStereotype(stereotype))
-	{ return !positive; }
+
+    if (!m.hasStereotype(stereotype))
+    { return !positive; }
+
     return false; 
   } 
 
@@ -259,12 +266,12 @@ public class CGCondition
       else
       { return e.umlkind != Expression.ROLE; }
     }
-	else // _i is T   T is int, double, long, etc, or a enumeration or class name 
-	{ if (positive) 
-	  { return stereotype.equals(tname); }
-	  else 
-	  { return !(stereotype.equals(tname)); }
-	}
+    else // _i is T   T is int, double, long, etc, or a enumeration or class name 
+    { if (positive) 
+      { return stereotype.equals(tname); }
+      else 
+      { return !(stereotype.equals(tname)); }
+    }
     // return false;
   }
 
@@ -276,6 +283,29 @@ public class CGCondition
     } 
     return false; 
   } // and for other kinds of statement also 
+
+  public boolean conditionSatisfied(ASTTerm a, Vector entities)
+  { if (a instanceof ASTCompositeTerm)
+    { ASTCompositeTerm ac = (ASTCompositeTerm) a; 
+      
+      if (ac.tag.equalsIgnoreCase(stereotype))
+      { return positive; }
+    } 
+    else if (a instanceof ASTBasicTerm)
+    { ASTBasicTerm ac = (ASTBasicTerm) a; 
+      
+      if (ac.tag.equalsIgnoreCase(stereotype))
+      { return positive; }
+    }
+    else if (a instanceof ASTSymbolTerm)
+    { ASTSymbolTerm ac = (ASTSymbolTerm) a; 
+      
+      if (ac.symbol.equalsIgnoreCase(stereotype))
+      { return positive; }
+    } 
+
+    return false;
+  }
 
   public boolean conditionSatisfied(String e, Vector entities)
   { if (e != null && e.equals(stereotype)) 

@@ -96,6 +96,7 @@ abstract class Expression
     alloperators.add("!=");  // now it is /= or <>
     alloperators.add("/="); 
     alloperators.add("mod"); 
+    alloperators.add("div"); 
     alloperators.add("+"); 
     alloperators.add("-"); 
     alloperators.add("/"); 
@@ -121,6 +122,7 @@ abstract class Expression
   public static java.util.Map extensionoperators = new java.util.HashMap(); 
   public static java.util.Map extensionopjava = new java.util.HashMap(); 
   public static java.util.Map extensionopcsharp = new java.util.HashMap(); 
+  public static java.util.Map extensionopcpp = new java.util.HashMap(); 
 
 
   public static String negateOp(String op)
@@ -433,6 +435,9 @@ abstract class Expression
   public static void addOperatorCSharp(String op, String cscode)
   { extensionopcsharp.put(op,cscode); } 
 
+  public static void addOperatorCPP(String op, String cppcode)
+  { extensionopcpp.put(op,cppcode); } 
+
   public static Type getOperatorType(String op) 
   { return (Type) extensionoperators.get(op); } 
 
@@ -442,6 +447,9 @@ abstract class Expression
   public static String getOperatorCSharp(String op) 
   { return (String) extensionopcsharp.get(op); } 
 
+  public static String getOperatorCPP(String op) 
+  { return (String) extensionopcpp.get(op); } 
+
   public static void saveOperators(PrintWriter out)
   { java.util.Iterator keys = extensionoperators.keySet().iterator();
     while (keys.hasNext())
@@ -450,16 +458,28 @@ abstract class Expression
       String typ = extensionoperators.get(k) + ""; 
       out.println("Operator:"); 
       out.println(opname + " " + typ); 
+
       String opjava = (String) extensionopjava.get(k);
       if (opjava != null) 
       { out.println(opjava); }
       else 
       { out.println(); }   
+
       String opcsharp = (String) extensionopcsharp.get(k);
       if (opcsharp != null) 
       { out.println(opcsharp); }
       else 
+      { out.println(); }
+   
+      String opcpp = (String) extensionopcpp.get(k);
+      if (opcpp != null) 
+      { out.println(opcpp); }
+      else 
       { out.println(); }   
+
+      out.println();
+      out.println(); 
+      out.println(); 
     } 
   } 
 
@@ -789,6 +809,7 @@ abstract class Expression
     if (op.equals("=")) { return "=="; }
     if (op.equals("/=")) { return "!="; }
     if (op.equals("mod")) { return "%"; }
+    if (op.equals("div")) { return "/"; }
     return op;
   }
 
@@ -1209,6 +1230,7 @@ abstract class Expression
         d.equals("atan") || d.equals("acos") || d.equals("asin") || d.equals("oclAsType") || 
         d.equals("abs") || d.equals("max") || d.equals("subcollections") || d.equals("Prd") || 
         d.equals("size") || d.equals("toLowerCase") || d.equals("pow") || d.equals("Sum") ||
+        d.equals("replace") || d.equals("replaceAll") || 
         d.equals("toUpperCase") || d.equals("closure") || d.equals("asSet") || d.equals("asSequence") ||
         d.equals("min") || d.equals("sum") || d.equals("reverse") || d.equals("allInstances") || 
         d.equals("sort") || d.equals("prd") || d.equals("last") || d.equals("insertAt") ||
@@ -1290,7 +1312,7 @@ abstract class Expression
     { return li - ri; } 
     if ("*".equals(op))
     { return li * ri; } 
-    if ("/".equals(op))
+    if ("/".equals(op) || "div".equals(op))
     { return li / ri; } 
     if ("mod".equals(op))
     { return li % ri; } 
@@ -1304,7 +1326,7 @@ abstract class Expression
     { return li - ri; } 
     if ("*".equals(op))
     { return li * ri; } 
-    if ("/".equals(op))
+    if ("/".equals(op) || "div".equals(op))
     { return li / ri; } 
     if ("mod".equals(op))
     { return li % ri; } 
@@ -1318,7 +1340,7 @@ abstract class Expression
     { return li - ri; } 
     if ("*".equals(op))
     { return li * ri; } 
-    if ("/".equals(op))
+    if ("/".equals(op) || "div".equals(op))
     { return li / ri; } 
     return 0; 
   } 

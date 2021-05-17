@@ -4503,12 +4503,55 @@ public class BSystemTypes extends BComponent
                  "  }\n\n" + 
                  "  public static string subrange(string s, int i, int j)\n";
     res = res + "  { return s.Substring(i-1, j-i+1); }\n\n";
+
     res = res + "  public static ArrayList subrange(ArrayList l, int i, int j)\n";
     res = res + "  { ArrayList tmp = new ArrayList(); \n" + 
+                "    if (i < 1) { i = 1; }\n" + 
                 "    for (int k = i-1; k < j; k++)\n" + 
                 "    { tmp.Add(l[k]); } \n" + 
                 "    return tmp; \n" + 
                 "  }\n\n";  
+    res = res + 
+                "  public static int indexOfSubList(ArrayList a, ArrayList b)\n" +
+                "  { /* Index of a subsequence a of sequence b in b */\n" +
+                "    if (a.Count == 0 || b.Count == 0)\n" +
+                "    { return 0; }\n" +
+                "\n" +
+                "    int i = 0;\n" +
+                "    while (i < b.Count && b[i] != a[0])\n" +
+                "    { i++; }\n" +
+                "\n" +
+                "    if (i >= b.Count)\n" +
+                "    { return 0; }\n" +
+                "\n" +
+                "    int j = 0;\n" +
+                "    while (j < a.Count && i + j < b.Count && b[i + j] == a[j])\n" +
+                "    { j++; }\n" +
+                "\n" +
+                "    if (j >= a.Count)\n" +
+                "    { return i + 1; }\n" +
+                "\n" +
+                "    ArrayList subr = subrange(b, i + 2, b.Count);\n" +
+                "    int res1 = indexOfSubList(a, subr);\n" +
+                "    if (res1 == 0)\n" +
+                "    { return 0; }\n" +
+                "    return res1 + i + 1;\n" +
+                "  }\n\n"; 
+    res = res + 
+                "  public static int lastIndexOfSubList(ArrayList a, ArrayList b)\n" +
+                "  { int res = 0;\n" +
+                "    if (a.Count == 0 || b.Count == 0)\n" +
+                "    { return res; }\n" +
+                "\n" +
+                "    ArrayList arev = reverse(a);\n" +
+                "    ArrayList brev = reverse(b);\n" +
+                "    int i = indexOfSubList(arev, brev);\n" +
+                "    if (i == 0)\n" +
+                "    { return res; }\n" +
+                "    res = b.Count - i - a.Count + 2;\n" +
+                "    return res;\n" +
+                "  }\n\n"; 
+
     return res;
   }
 
@@ -4936,9 +4979,13 @@ public class BSystemTypes extends BComponent
                  "    return tmp;\n" + 
                  "  }\n\n" + 
                  "  static string subrange(string s, int i, int j)\n";
-    res = res + "  { return s.substr(i-1,j-i+1); }\n\n";
+    res = res + "  { if (i < 1) { i = 1; }\n" + 
+                "    return s.substr(i-1,j-i+1);\n" + 
+                "  }\n\n";
     res = res + "  static vector<_T>* subrange(vector<_T>* l, int i, int j)\n";
-    res = res + "  { vector<_T>* tmp = new vector<_T>(); \n" + 
+    res = res + "  { if (i < 1) { i = 1; }\n" + 
+                "    if (j > l->size()) { j = l->size(); }\n" + 
+                "    vector<_T>* tmp = new vector<_T>(); \n" + 
                 "    tmp->insert(tmp->end(), (l->begin()) + (i - 1), (l->begin()) + j);\n" +  
                 "    return tmp; \n" + 
                 "  }\n\n";  
@@ -5276,6 +5323,323 @@ public class BSystemTypes extends BComponent
     return res; 
   } 
 
+  public static String generateSplitOp()
+  { String res = "  public static Vector split(String str, String delim)\n" + 
+      "  { String[] splits = str.split(delim);\n" +        
+      "    Vector res = new Vector();\n" +  
+      "    for (int j = 0; j < splits.length; j++)\n" + 
+      "    { if (splits[j].length() > 0)\n" + 
+      "      { res.add(splits[j]); }\n" +
+      "    }\n" + 
+      "    return res;\n" +
+      "  }\n"; 
+    return res;  
+  }
+  
+  public static String generateAllMatchesOp()
+  { String res = "  public static Vector allMatches(String str, String regex)\n" + 
+      "  { java.util.regex.Pattern patt = java.util.regex.Pattern.compile(regex);\n" +  
+      "    java.util.regex.Matcher matcher = patt.matcher(str);\n" +  
+      "    Vector res = new Vector();\n" + 
+      "    while (matcher.find())\n" +
+      "    { res.add(matcher.group() + \"\"); }\n" +
+      "    return res; \n" +
+      "  }\n"; 
+    return res; 
+  } 
+
+  public static String generateSplitOpJava6()
+  { String res = "  public static ArrayList split(String str, String delim)\n" + 
+      "  { String[] splits = str.split(delim);\n" +        
+      "    ArrayList res = new ArrayList();\n" +  
+      "    for (int j = 0; j < splits.length; j++)\n" + 
+      "    { if (splits[j].length() > 0)\n" + 
+      "      { res.add(splits[j]); }\n" +
+      "    }\n" + 
+      "    return res;\n" +
+      "  }\n"; 
+    return res;  
+  }
+  
+  public static String generateAllMatchesOpJava6()
+  { String res = "  public static ArrayList allMatches(String str, String regex)\n" + 
+      "  { java.util.regex.Pattern patt = java.util.regex.Pattern.compile(regex);\n" +  
+      "    java.util.regex.Matcher matcher = patt.matcher(str);\n" +  
+      "    ArrayList res = new ArrayList();\n" + 
+      "    while (matcher.find())\n" +
+      "    { res.add(matcher.group() + \"\"); }\n" +
+      "    return res; \n" +
+      "  }\n"; 
+    return res; 
+  } 
+
+  public static String generateSplitOpJava7()
+  { String res = "  public static ArrayList<String> split(String str, String delim)\n" + 
+      "  { String[] splits = str.split(delim);\n" +        
+      "    ArrayList<String> res = new ArrayList<String>();\n" +  
+      "    for (int j = 0; j < splits.length; j++)\n" + 
+      "    { if (splits[j].length() > 0) \n" + 
+      "      { res.add(splits[j]); }\n" +
+      "    }\n" + 
+      "    return res;\n" +
+      "  }\n"; 
+    return res;  
+  }
+  
+  public static String generateAllMatchesOpJava7()
+  { String res = "  public static ArrayList<String> allMatches(String str, String regex)\n" + 
+      "  { java.util.regex.Pattern patt = java.util.regex.Pattern.compile(regex);\n" +  
+      "    java.util.regex.Matcher matcher = patt.matcher(str);\n" +  
+      "    ArrayList<String> res = new ArrayList<String>();\n" + 
+      "    while (matcher.find())\n" +
+      "    { res.add(matcher.group() + \"\"); }\n" +
+      "    return res; \n" +
+      "  }\n"; 
+    return res; 
+  } 
+
+  public static String generateHasMatchOpCSharp()
+  { String res = "  public static bool hasMatch(string s, string patt)\n" +
+      "  { Regex r = new Regex(patt);\n" + 
+      "    return r.IsMatch(s);\n" + 
+      "  }\n";  
+    return res; 
+  } 
+
+  public static String generateIsMatchOpCSharp()
+  { String res = "  public static bool isMatch(string s, string patt)\n" +
+      "  { Regex r = new Regex(patt);\n" + 
+      "    Match m = r.Match(s);\n" + 
+      "    return (m + \"\").Equals(s);\n" + 
+      "  }\n"; 
+    return res; 
+  } 
+
+
+  public static String generateAllMatchesOpCSharp()
+  { String res = "  public static ArrayList allMatches(string s, string patt)\n" +
+      "  { Regex r = new Regex(patt);\n" + 
+      "    MatchCollection col = r.Matches(s);\n" +  
+      "    ArrayList res = new ArrayList();\n" +  
+      "    foreach (Match mm in col)\n" + 
+      "    { res.Add(mm + \"\"); }\n" + 
+      "    return res;\n" + 
+      "  }\n"; 
+    return res; 
+  } 
+
+  public static String generateIsMatchOpCPP()
+  { String res = "  static bool isMatch(string str, string patt)\n" + 
+                 "  { std::regex rr(patt);\n" + 
+                 "    return std::regex_match(str,rr);\n" + 
+                 "  }\n\n"; 
+    return res;
+  }
+
+  public static String generateHasMatchOpCPP()
+  { String res = "  static bool hasMatch(string str, string patt)\n" + 
+                 "  { std::regex rr(patt);\n" + 
+                 "    return std::regex_search(str,rr);\n" + 
+                 "  }\n\n"; 
+    return res; 
+  } 
+
+  public static String generateTrimOpCPP()
+  { String res = "  static string trim(string str)\n" + 
+      "  { int i = str.find_first_not_of(\"\\n\\t \");\n" +  
+      "    int j = str.find_last_not_of(\"\\n\\t \");\n" + 
+      "    if (i > j) \n" +
+      "    { return \"\"; }\n" +
+      "    return str.substr(i, j-i+1);\n" + 
+      "  } \n"; 
+    return res; 
+  } 
+
+  public static String generateAllMatchesOpCPP()
+  { String res = 
+      "  static vector<string>* allMatches(string s, string patt)\n" + 
+      "  { int slen = s.length(); \n" + 
+      "    vector<string>* res = new vector<string>(); \n" +
+      "    if (slen == 0)  \n" +
+      "    { return res; }  \n" +
+      "    std::regex patt_regex(patt);\n" + 
+      "    auto words_begin = std::sregex_iterator(s.begin(), s.end(), patt_regex);\n" + 
+      "    auto words_end = std::sregex_iterator();\n" + 
+      "    \n" + 
+      "    for (std::sregex_iterator i = words_begin; i != words_end; ++i)\n" + 
+      "    { std::smatch match = *i;\n" +  
+      "      std::string match_str = match.str();\n" + 
+      "      if (match_str.length() > 0)\n" + 
+      "      { res->push_back(match_str); }\n" +    
+      "    }\n" +    
+      "    return res;\n" +  
+      "  }\n"; 
+    return res; 
+  }  
+
+  public static String generateReplaceOpCPP()
+  { String res = 
+      "  static string replace(string s1, string s2, string rep)\n" +
+      "  { int s1len = s1.length(); \n" +
+      "    int s2len = s2.length(); \n" +
+      "    int replen = rep.length(); \n" +
+      "    if (s1len == 0 || s2len == 0 || replen == 0)\n" + 
+      "    { return s1; } \n" +
+      "    string result = \"\";\n" + 
+      "    int prev = 0; \n" +
+      "    int m1 = s1.find(s2);\n" + 
+      "    if (m1 >= 0)\n" + 
+      "    { result = result + s1.substr(prev, m1 - prev) + rep; \n" +
+      "      string remainder = s1.substr(m1 + s2len, s1len - (m1 + s2len)); \n" +
+      "      return result + replace(remainder, s2, rep);\n" + 
+      "    } \n" +
+      "    return s1;\n" + 
+      "  } \n"; 
+    return res; 
+  } 
+
+  public static String generateReplaceAllOpCPP()
+  { String res = "  static string replaceAll(string text, string patt, string rep)\n" + 
+                 "  { std::regex patt_re(patt);\n" + 
+                 "    std::string res = std::regex_replace(text, patt_re, rep);\n" +    
+                 "    return res;\n" +  
+                 "  }\n"; 
+    return res; 
+  } 
+ 
+  public static String generateSplitOpCPP()
+  { String res = "  static vector<string>* split(string s, string patt)\n" +
+      "  { int slen = s.length();\n" + 
+      "    vector<string>* res = new vector<string>();\n" +
+      "    if (slen == 0) \n" +
+      "    { res->push_back(s);\n" + 
+      "      return res; \n" +
+      "    } \n" +
+      "    std::regex patt_regex(patt);\n" +
+      "    auto words_begin = std::sregex_iterator(s.begin(), s.end(), patt_regex);\n" +
+      "    auto words_end = std::sregex_iterator();\n" +
+      "    int prev = 0; \n" +
+      "    for (std::sregex_iterator i = words_begin; i != words_end; ++i)\n" +
+      "    { std::smatch match = *i;\n" +
+      "      int pos = match.position(0);\n" + 
+      "      int ln = match.length(0); \n" +
+      "      if (ln > 0)\n" +
+      "      { string subst = s.substr(prev, pos - prev + 1);\n" + 
+      "        res->push_back(subst);\n" + 
+      "        prev = pos + ln; \n" +
+      "      } \n" +
+      "    }\n" +
+      "    if (prev <= slen)\n" +
+      "    { string lastst = s.substr(prev,slen - prev + 1);\n" + 
+      "      res->push_back(lastst);\n" + 
+      "    } \n" +
+      "    return res;\n" +
+      "  }\n"; 
+    return res; 
+  } 
+
+  public static String generateReplaceOp()
+  { String res = "  public static String replace(String str, String delim, String rep)\n" + 
+      "  { String result = \"\";\n" + 
+      "    String s = str + \"\";\n" +  
+      "    int i = (s.indexOf(delim) + 1);\n" + 
+      "    if (i == 0)\n" +  
+      "    { return s; }\n" + 
+      "    \n" + 
+      "    int sublength = delim.length();\n" + 
+      "    if (sublength == 0)\n" + 
+      "    { return s; }\n" +
+      "    \n" + 
+      "    while (i > 0)\n" +
+      "    { result = result + Set.subrange(s,1,i - 1) + rep;\n" + 
+      "      s = Set.subrange(s,i + delim.length(),s.length());\n" + 
+      "      i = (s.indexOf(delim) + 1);\n" + 
+      "    }\n" + 
+      "    result = result + s;\n" + 
+      "    return result;\n" + 
+      "  }\n"; 
+    return res; 
+  } 
+
+  public static String generateReplaceOpJava7()
+  { String res = "  public static String replace(String str, String delim, String rep)\n" + 
+      "  { String result = \"\";\n" + 
+      "    String s = str + \"\";\n" +  
+      "    int i = (s.indexOf(delim) + 1);\n" + 
+      "    if (i == 0)\n" +  
+      "    { return s; }\n" + 
+      "    \n" + 
+      "    int sublength = delim.length();\n" + 
+      "    if (sublength == 0)\n" + 
+      "    { return s; }\n" +
+      "    \n" + 
+      "    while (i > 0)\n" +
+      "    { result = result + Ocl.subrange(s,1,i - 1) + rep;\n" + 
+      "      s = Ocl.subrange(s,i + delim.length(),s.length());\n" + 
+      "      i = (s.indexOf(delim) + 1);\n" + 
+      "    }\n" + 
+      "    result = result + s;\n" + 
+      "    return result;\n" + 
+      "  }\n"; 
+    return res; 
+  } 
+
+  public static String generateReplaceAllOp()
+  { String res = "  public static String replaceAll(String str, String regex, String rep)\n" + 
+      "  { java.util.regex.Pattern patt = java.util.regex.Pattern.compile(regex);\n" +  
+      "    java.util.regex.Matcher matcher = patt.matcher(str);\n" +  
+      "    return matcher.replaceAll(rep);\n" +  
+      "  }\n"; 
+    return res; 
+  } 
+
+  public static String generateReplaceOpCSharp()
+  { String res = "  public static string replace(string str, string delim, string rep)\n" + 
+        "  { String result = \"\";\n" +
+        "    String s = str + \"\";\n" +
+        "    int i = (s.IndexOf(delim) + 1);\n" +
+        "    if (i == 0)\n" +
+        "    { return s; }\n" +
+        "\n" +
+        "    int sublength = delim.Length;\n" +
+        "    if (sublength == 0)\n" +
+        "    { return s; }\n" +
+        "\n" +
+        "    while (i > 0)\n" +
+        "    { result = result + SystemTypes.subrange(s, 1, i - 1) + rep;\n" +
+        "      s = SystemTypes.subrange(s, i + delim.Length, s.Length);\n" +
+        "      i = (s.IndexOf(delim) + 1);\n" +
+        "    }\n" +
+        "    result = result + s;\n" +
+        "    return result;\n" +
+        "  }\n"; 
+     return res; 
+  } 
+
+
+
+  public static String generateReplaceAllOpCSharp()
+  { String res = "  public static string replaceAll(string s, string patt, string rep)\n" +
+      "  { Regex r = new Regex(patt);\n" + 
+      "    return \"\" + r.Replace(s, rep);\n" + 
+      "  }\n"; 
+    return res; 
+  }  
+ 
+  public static String generateSplitOpCSharp()
+  { String res = "  public static ArrayList split(string s, string patt)\n" +
+      "  { Regex r = new Regex(patt);\n" + 
+      "    ArrayList res = new ArrayList();\n" +  
+      "    string[] wds = r.Split(s);\n" + 
+      "    for (int x = 0; x < wds.Length; x++)\n" + 
+      "    { if (wds[x].Length > 0)\n" + 
+      "      { res.Add(wds[x]); }\n" + 
+      "    }\n" + 
+      "    return res;\n" + 
+      "  }\n"; 
+    return res; 
+  } 
+ 
   public static String generateBeforeOpCSharp()
   { String res = "  public static string before(string s, string sep)\n" +
       "  { if (sep.Length == 0) { return s; }\n" +
@@ -7579,9 +7943,51 @@ public class BSystemTypes extends BComponent
       "  static int indexOf(_T x, vector<_T>* a)\n" + 
       "  { int res = 0; \n" +
       "    for (int i = 0; i < a->size(); i++)\n" + 
-      "    { if (x == (*a)[i]) { return i+1; } }\n" +
+      "    { if (x == (*a)[i])\n" + 
+      "      { return i+1; } }\n" +
       "    return res; \n" +
       "  }\n\n"; 
+
+    res = res + "  static int indexOf(vector<_T>* a, vector<_T>* b)\n" + 
+      "  { /* Index of a subsequence a of sequence b in b */\n" + 
+      "\n" + 
+      "    if (a->size() == 0 || b->size() == 0)\n" +  
+      "    { return 0; }\n" +  
+      "    int i = 0; \n" +
+      "    while (i < b->size() && (*b)[i] != (*a)[0])\n" + 
+      "    { i++; } \n" +
+      "\n" + 
+      "    if (i >= b->size())\n" + 
+      "    { return 0; } \n" +
+      "\n" + 
+      "    int j = 0; \n" +
+      "    while (j < a->size() && i+j < b->size() && (*b)[i+j] == (*a)[j]) \n" +
+      "    { j++; }\n" +
+      "\n" +
+      "    if (j >= a->size())\n" + 
+      "    { return i+1; }\n" +
+      "\n" +
+      "    vector<_T>* subr = subrange(b, i+2, b->size());\n" + 
+      "    int res1 = indexOf(a,subr); \n" +
+      "    if (res1 == 0) \n" +
+      "    { return 0; } \n" +
+      "    return res1 + i + 1;\n" + 
+      "  }\n\n"; 
+
+    res = res + "  static int lastIndexOf(vector<_T>* a, vector<_T>* b)\n" +
+      "  { int res = 0; \n" +
+      "    if (a->size() == 0 || b->size() == 0)\n" + 
+      "    { return res; }\n" +
+      "\n" +
+      "    vector<_T>* arev = reverse(a); \n" +
+      "    vector<_T>* brev = reverse(b);\n" +
+      "    int i = indexOf(arev,brev);\n" + 
+      "    if (i == 0) \n" +
+      "    { return res; }\n" +
+      "    res = b->size() - i - a->size() + 2;\n" + 
+      "    return res;\n" + 
+      "  }\n\n"; 
+
     res = res + "  static int indexOf(string x, string str)\n" + 
       "  { int res = str.find(x); \n" +
       "    if (res == string::npos) { return 0; }\n" + 
@@ -7590,9 +7996,11 @@ public class BSystemTypes extends BComponent
       "  static int lastIndexOf(_T x, vector<_T>* a)\n" + 
       "  { int res = 0; \n" +
       "    for (int i = a->size() - 1; i >= 0; i--)\n" + 
-      "    { if (x == (*a)[i]) { return i+1; } }\n" +
+      "    { if (x == (*a)[i])\n" + 
+      "      { return i+1; } }\n" +
       "    return res; \n" +
       "  }\n\n"; 
+
     res = res + "  static int lastIndexOf(string x, string str)\n" + 
       "  { int res = str.rfind(x); \n" +
       "    if (res == string::npos) { return 0; }\n" + 
@@ -7620,8 +8028,10 @@ public class BSystemTypes extends BComponent
       "    int len2 = str2.length();\n" + 
       "    if (len1 != len2) { return false; }\n" + 
       "    for (int i = 0; i < len1; i++)\n" +  
-      "    { if (tolower(str1[i]) == tolower(str2[i])) { }\n" + 
-      "      else { return false; }\n" +
+      "    { if (tolower(str1[i]) == tolower(str2[i]))\n" + 
+      "      { }\n" + 
+      "      else \n" + 
+      "      { return false; }\n" +
       "    }\n" + 
       "    return true;\n" + 
       "  }\n\n";
@@ -8134,7 +8544,7 @@ public class BSystemTypes extends BComponent
   } 
 
   public static String generateIsLongOpCSharp()
-  { String res = " public static boolean isLong(string str)\n" + 
+  { String res = " public static bool isLong(string str)\n" + 
       "  { try { long.Parse(str); return true; }\n" + 
       "    catch (Exception _e) { return false; }\n" + 
       "  }\n"; 

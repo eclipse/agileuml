@@ -1034,6 +1034,69 @@ public class Constraint extends ConstraintOrGroup
     return res;  
   } 
 
+  public String queryFormJava6(java.util.Map env, boolean local)
+  { String res = ""; 
+    boolean previous = false; 
+    if (cond0 != null) 
+    { String cond0eval = cond0.queryFormJava6(env,local); 
+      if (cond0eval.equals("true")) {} 
+      else 
+      { res = "!(" + cond0eval + ")"; 
+        previous = true; 
+      }
+    } 
+    if (cond != null)
+    { String condeval = cond.queryFormJava6(env,local); 
+      if (condeval.equals("true")) {} 
+      else 
+      { if (previous)
+        { res = res + " || !(" + condeval + ")"; } 
+        else 
+        { res = "!(" + condeval + ")"; 
+          previous = true;
+        } 
+      }
+    } 
+    String rhs = succ.queryFormJava6(env,local); 
+    if (previous) 
+    { res = res + " || (" + rhs + ")"; } 
+    else 
+    { res = rhs; } 
+    return res;  
+  } 
+
+  public String queryFormJava7(java.util.Map env, boolean local)
+  { String res = ""; 
+    boolean previous = false; 
+    if (cond0 != null) 
+    { String cond0eval = cond0.queryFormJava7(env,local); 
+      if (cond0eval.equals("true")) {} 
+      else 
+      { res = "!(" + cond0eval + ")"; 
+        previous = true; 
+      }
+    } 
+    if (cond != null)
+    { String condeval = cond.queryFormJava7(env,local); 
+      if (condeval.equals("true")) {} 
+      else 
+      { if (previous)
+        { res = res + " || !(" + condeval + ")"; } 
+        else 
+        { res = "!(" + condeval + ")"; 
+          previous = true;
+        } 
+      }
+    } 
+
+    String rhs = succ.queryFormJava7(env,local); 
+    if (previous) 
+    { res = res + " || (" + rhs + ")"; } 
+    else 
+    { res = rhs; } 
+    return res;  
+  } 
+
   public String updateForm(java.util.Map env, boolean local)
   { String res = ""; 
     if (behavioural == false) 
@@ -5048,9 +5111,13 @@ public Constraint generalType0inverse()
   }   // no analysis of groups? 
 
   public String mapToCheckOp(String language, UseCase usecase, int num, Vector types, Vector entities)
-  { if (owner == null) 
-    { return null; }   // return ""; 
-    this.usecase = usecase; 
+  { // if (owner == null) 
+    // { return null; }   // return ""; 
+    this.usecase = usecase;
+    String ucname = ""; 
+    if (usecase != null) 
+    { ucname = usecase.getName(); } 
+ 
     BasicExpression betrue = new BasicExpression(true); 
 
     Expression ante = antecedent();
@@ -5110,7 +5177,7 @@ public Constraint generalType0inverse()
             new BinaryExpression("!",new BinaryExpression(":",qvar,qrange),body); 
         } 
         else 
-        { System.err.println("Unquantified variable, not permitted: " + var); } 
+        { System.err.println("Unquantified variable, not permitted in precondition: " + var); } 
       } 
     } 
     else 
@@ -5140,23 +5207,23 @@ public Constraint generalType0inverse()
     
     // query form of owner->forAll(ante => sc)
     String q = exp.queryForm(language,env,false); 
-    if ("Java4".equals(language) || "Java6".equals(language))
+    if ("Java4".equals(language) || "Java6".equals(language) || "Java7".equals(language))
     { return "  if (" + q + ")\n" + 
-           "  { System.out.println(\"Constraint " + num + " is true on source model\"); }\n" +
+           "  { System.out.println(\"Use case " + ucname + " assumption " + num + " is true\"); }\n" +
            "  else\n" + 
-           "  { System.out.println(\"Constraint " + num + " is false on source model\"); }\n";
+           "  { System.out.println(\"Use case " + ucname + " assumption " + num + " is false\"); }\n";
     } 
     else if ("CSharp".equals(language))
     { return "  if (" + q + ")\n" + 
-           "  { Console.WriteLine(\"Constraint " + num + " is true on source model\"); }\n" +
+           "  { Console.WriteLine(\"Assumption " + num + " is true on source model\"); }\n" +
            "  else\n" + 
-           "  { Console.WriteLine(\"Constraint " + num + " is false on source model\"); }\n";
+           "  { Console.WriteLine(\"Assumption " + num + " is false on source model\"); }\n";
     } 
     else
     { return " if (" + q + ")\n" + 
-           "  { cout << \"Constraint \" << num << \" is true on source model\" << endl; }\n" +
+           "  { cout << \"Assumption \" << " + num + " << \" is true\" << endl; }\n" +
            "  else\n" + 
-           "  { cout << \"Constraint \" << num << \" is false on source model\" << endl; }\n";
+           "  { cout << \"Assumption \" << " + num + " << \" is false\" << endl; }\n";
     }  
   } // Also cases of implicit quantifiers, qvars.size() > 0
 

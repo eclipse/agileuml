@@ -98,6 +98,8 @@ public class NLPPhrase extends NLPPhraseElement
     return phr.getPrincipalNoun(); 
   } 
 
+  // Also, restrict only to NNPS, NNP
+
   public String getPrincipalNoun()
   { String noun = ""; 
     for (int i = 0; i < elements.size(); i++) 
@@ -700,6 +702,7 @@ public class NLPPhrase extends NLPPhraseElement
      { NLPPhrase nphrase = (NLPPhrase) np; 
        String noun = nphrase.identifyNoun(); 
        String singular = NLPWord.getSingular(noun); 
+         // Use the other version of this
 
        Entity entnew = (Entity) ModelElement.lookupByNameIgnoreCase(singular, modelElements); 
        if (entnew == null) 
@@ -716,7 +719,7 @@ public class NLPPhrase extends NLPPhraseElement
      else if (np instanceof NLPWord && ((NLPWord) np).isNoun())
      { NLPWord npword = (NLPWord) np; 
        String noun = npword.text; 
-       String singular = NLPWord.getSingular(noun); 
+       String singular = npword.getSingular(); 
        
        Entity entnew = (Entity) ModelElement.lookupByNameIgnoreCase(singular, modelElements); 
        if (entnew == null) 

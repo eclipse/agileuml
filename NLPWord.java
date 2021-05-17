@@ -154,7 +154,7 @@ public class NLPWord extends NLPPhraseElement
 		  lctext.equals("load") || lctext.equals("republish") || lctext.startsWith("tag") || lctext.startsWith("sign") ||
 		  lctext.startsWith("reproduc") || lctext.startsWith("deposit") || lctext.startsWith("segment") || lctext.startsWith("redact") || 
 		  lctext.startsWith("partition") || lctext.startsWith("compos") || lctext.equals("say") || lctext.equals("flag") ||
-		  lctext.equals("upgrade") || lctext.equals("migrate") || lctext.startsWith("link") || lctext.startsWith("manag") || 
+		  lctext.startsWith("upgrad") || lctext.equals("migrate") || lctext.startsWith("link") || lctext.startsWith("manag") || 
 		  lctext.startsWith("replicat") || lctext.equals("queue") || lctext.startsWith("encrypt") || lctext.startsWith("grant") || 
 		  lctext.equals("merg") || lctext.equals("combin") || lctext.startsWith("customiz") || lctext.startsWith("customis"))) 
        || lctext.equals("enqueue") || (lctext.equals("make") && isVerb()) || lctext.equals("expose") || lctext.equals("move") || 
@@ -267,7 +267,11 @@ public class NLPWord extends NLPPhraseElement
 		(lctext.startsWith("act") && isVerb()) || lctext.equals("ensure") || 
 		lctext.equals("establish") ||
 		(isVerb() && 
-		 (lctext.startsWith("highlight") || lctext.startsWith("translat") || lctext.startsWith("offer") || lctext.startsWith("constr") || 
+		 (lctext.startsWith("highlight") ||
+             lctext.startsWith("leverage") ||
+             lctext.startsWith("translat") || 
+             lctext.startsWith("offer") || 
+             lctext.startsWith("constr") || 
 		  lctext.startsWith("redirect") || lctext.startsWith("arrang") || lctext.startsWith("plan") || lctext.startsWith("reus") || 
 		  lctext.startsWith("form") || lctext.startsWith("reform") || lctext.startsWith("preinstall") || lctext.startsWith("rearrang") ||
 		  lctext.startsWith("reply") || lctext.startsWith("forward") || lctext.startsWith("host") || lctext.startsWith("sync") ||
@@ -290,7 +294,8 @@ public class NLPWord extends NLPPhraseElement
 		(lctext.equals("recruit") && isVerb()) || (lctext.equals("continue") && isVerb()) || lctext.equals("deploy") || 
 		(lctext.startsWith("demonstrat") && isVerb()) || (lctext.startsWith("visit") && isVerb()) ||
 		(lctext.startsWith("revisit") && isVerb()) || (lctext.startsWith("elect") && isVerb()) || 
-		(lctext.startsWith("narrow") && isVerb()) || (lctext.startsWith("expan") && isVerb()) || // (lctext.equals("want") && isVerb()) ||  
+		(lctext.startsWith("narrow") && isVerb()) || (lctext.startsWith("expan") && isVerb()) ||  
+           (lctext.equals("want") && isVerb()) ||  
 		(lctext.startsWith("integrat") && isVerb()) || (lctext.startsWith("map") && isVerb()) || lctext.equals("relieve") || 
 		lctext.equals("pay") || (lctext.startsWith("connect") && isVerb()) || lctext.equals("keep") || lctext.equals("accept") || 
 	    lctext.equals("put") || (lctext.startsWith("refer") && isVerb()) || (lctext.equals("handle") && isVerb()) || 
@@ -360,15 +365,18 @@ public class NLPWord extends NLPPhraseElement
   // but not for punctuation, etc. 
 
   public String getSingular()
-  { if (text.endsWith("ies"))
-    { return text.substring(0,text.length()-3) + "y"; } 
-    else if (text.endsWith("s"))
-    { return text.substring(0,text.length()-1); } 
-    else if (text.endsWith("es"))
-    { return text.substring(0,text.length()-2); } 
+  { if (isPlural())
+    { if (text.endsWith("ies"))
+      { return text.substring(0,text.length()-3) + "y"; } 
+      else if (text.endsWith("s"))
+      { return text.substring(0,text.length()-1); } 
+      else if (text.endsWith("es"))
+      { return text.substring(0,text.length()-2); } 
+    }
     return text; 
   } 
 
+  /* Depricated, do not use: */
   public static String getSingular(String txt)
   { if (txt.endsWith("ies"))
     { return txt.substring(0,txt.length()-3) + "y"; } 
@@ -377,7 +385,7 @@ public class NLPWord extends NLPPhraseElement
     else if (txt.endsWith("es"))
     { return txt.substring(0,txt.length()-2); } 
     return txt; 
-  } 
+  }  
 
   public Type identifyType(String text, java.util.Map qm, java.util.Map types, Vector modelems)
   { Type res = null; 

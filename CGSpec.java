@@ -13,6 +13,7 @@ import java.io.*;
 import java.util.regex.Matcher; 
 import java.util.regex.Pattern; 
 
+
 public class CGSpec
 { Vector typeDefinitionRules;
   Vector typeUseRules;
@@ -32,6 +33,9 @@ public class CGSpec
   Vector enumerationRules;
   Vector textRules; 
   Vector entities; 
+
+  java.util.Map categoryRules = new java.util.HashMap(); 
+                // String -> Vector of CGRule
 
   public CGSpec(Vector ents)
   { typeDefinitionRules = new Vector();
@@ -53,6 +57,23 @@ public class CGSpec
     textRules = new Vector();
     entities = ents;  
   }
+
+  public void addCategoryRule(String category, CGRule r)
+  { Vector rules = (Vector) categoryRules.get(category); 
+    if (rules == null) 
+    { rules = new Vector(); } 
+    rules.add(r); 
+    categoryRules.put(category,rules); 
+  } 
+
+  public Vector getRulesForCategory(String category)
+  { Vector res = (Vector) categoryRules.get(category); 
+    if (res == null) 
+    { System.err.println("!! Warning: no rules for category " + category); 
+      res = new Vector(); 
+    } 
+    return res; 
+  } 
 
   public void addTypeUseRule(CGRule r)
   { typeUseRules.add(r); }
@@ -308,6 +329,25 @@ public class CGSpec
 
     res = res + "\n"; 
 
+
+    java.util.Set ks = categoryRules.keySet(); 
+    Vector catkeys = new Vector(); 
+    catkeys.addAll(ks); 
+    for (int p = 0; p < catkeys.size(); p++) 
+    { String catg = (String) catkeys.get(p); 
+      Vector crules = (Vector) categoryRules.get(catg); 
+      if (crules != null && crules.size() > 0) 
+      { res = res + catg + "::\n";
+        for (int x = 0; x < crules.size(); x++)
+        { CGRule r = (CGRule) crules.get(x);
+          res = res + r + "\n"; 
+        } 
+      }
+    } 
+
+    res = res + "\n"; 
+
+
     return res; 
   } 
 
@@ -433,7 +473,7 @@ public class CGSpec
     { CGRule r = (CGRule) unaryExpressionRules.get(x);
       CGRule selected = null; 
 	  
-	  String trimmedlhs = r.lhs.trim(); 
+      String trimmedlhs = r.lhs.trim(); 
 
       if (etext.equals(trimmedlhs))
       { selected = r; } // exact match
@@ -700,7 +740,7 @@ public class CGSpec
         args.add(pars.get(0)); 
         args.add(pars.get(1)); 
       }  
-     /* else if (pars != null && pars.size() == 2 && 
+      else if (pars != null && pars.size() == 2 && 
                e.data.equals("replace") && trimmedlhs.equals("_1.replace(_2,_3)"))
       { selected = r; 
         args.add(obj); 
@@ -713,7 +753,7 @@ public class CGSpec
         args.add(obj); 
         args.add(pars.get(0)); 
         args.add(pars.get(1)); 
-      } */  
+      }   
       else if (ind != null && pars == null && trimmedlhs.equals("_1[_2]"))
       { selected = r;
         BasicExpression e1 = (BasicExpression) e.clone(); 

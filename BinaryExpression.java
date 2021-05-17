@@ -31,8 +31,8 @@ class BinaryExpression extends Expression
     { operator = "/="; } 
     else if ("->one".equals(op)) 
     { operator = "->exists1"; } 
-    else if ("div".equals(op)) 
-    { operator = "/"; } 
+    // else if ("div".equals(op)) 
+    // { operator = "/"; } 
 
     left = ll; 
     right = rr; 
@@ -123,7 +123,8 @@ class BinaryExpression extends Expression
     Expression dr = right.definedness();
     Expression res = simplify("&",dl,dr,null);  // simplifyAnd(dl,dr); 
       
-    if ("/".equals(operator) || "mod".equals(operator) || "div".equals(operator)) 
+    if ("/".equals(operator) || 
+        "mod".equals(operator) || "div".equals(operator)) 
     { Expression zero = new BasicExpression(0);
       Expression neqz = new BinaryExpression("/=",right,zero);
       return simplify("&",res,neqz,null);
@@ -663,6 +664,36 @@ class BinaryExpression extends Expression
       lft = ((BinaryExpression) left).right;  
       out.println(id + ".variable = \"" + ((BinaryExpression) left).left + "\""); 
     } 
+    else if (operator.equals("|unionAll"))
+    { op = "->unionAll"; 
+      lft = ((BinaryExpression) left).right;  
+      out.println(id + ".variable = \"" + ((BinaryExpression) left).left + "\""); 
+    } 
+    else if (operator.equals("|intersectAll"))
+    { op = "->intersectAll"; 
+      lft = ((BinaryExpression) left).right;  
+      out.println(id + ".variable = \"" + ((BinaryExpression) left).left + "\""); 
+    } 
+    else if (operator.equals("|concatenateAll"))
+    { op = "->concatenateAll"; 
+      lft = ((BinaryExpression) left).right;  
+      out.println(id + ".variable = \"" + ((BinaryExpression) left).left + "\""); 
+    } 
+    else if (operator.equals("|selectMaximals"))
+    { op = "->selectMaximals"; 
+      lft = ((BinaryExpression) left).right;  
+      out.println(id + ".variable = \"" + ((BinaryExpression) left).left + "\""); 
+    } 
+    else if (operator.equals("|selectMinimals"))
+    { op = "->selectMinimals"; 
+      lft = ((BinaryExpression) left).right;  
+      out.println(id + ".variable = \"" + ((BinaryExpression) left).left + "\""); 
+    } 
+    else if (operator.equals("|sortedBy"))
+    { op = "->sortedBy"; 
+      lft = ((BinaryExpression) left).right;  
+      out.println(id + ".variable = \"" + ((BinaryExpression) left).left + "\""); 
+    } 
     else if (operator.equals("->exists") || operator.equals("->exists1") || 
              "->existsLC".equals(operator) || 
              operator.equals("->forAll") || operator.equals("->select") ||
@@ -732,12 +763,14 @@ class BinaryExpression extends Expression
     { res.add("->after"); }
     else if ("->after".equals(op))
     { res.add("->before"); }
-    else if ("->endsWith".equals(op))
-    { res.add("->startsWith"); }
-    else if ("->startsWith".equals(op))
-    { res.add("->endsWith"); }
+    else if ("->hasPrefix".equals(op))
+    { res.add("->hasSuffix"); }
+    else if ("->hasSuffix".equals(op))
+    { res.add("->hasPrefix"); }
     else if (left.isNumeric() && right.isNumeric() && op.equals("+"))
-    { res.add("-"); }
+    { res.add("-"); 
+      res.add("*"); 
+    }
     else if (left.isNumeric() && right.isNumeric() && op.equals("-"))
     { res.add("+"); }
 	
@@ -983,7 +1016,8 @@ class BinaryExpression extends Expression
              operator.equals("->intersectAll") || operator.equals("->unionAll") ||
              operator.equals("->count") || operator.equals("->indexOf") || operator.equals("->lastIndexOf") || 
              operator.equals("->equalsIgnoreCase") || operator.equals("->before") || operator.equals("->after") || 
-             operator.equals("->hasMatch") || operator.equals("->isMatch") || 
+             operator.equals("->hasMatch") || operator.equals("->isMatch") ||
+             operator.equals("->split") || operator.equals("->allMatches") || 
              operator.equals("->at") || operator.equals("->closure") || 
              operator.equals("->intersection") || operator.equals("->symmetricDifference"))   
     { basicString = left + operator + "(" + right + ")"; } 
@@ -1818,14 +1852,14 @@ class BinaryExpression extends Expression
   public boolean isPrimitive()  
   { if (operator.equals("->count") || operator.equals("->indexOf") || operator.equals("->lastIndexOf") || 
         operator.equals("->oclIsKindOf") || operator.equals("->oclIsTypeOf") || 
-		operator.equals("->pow") || 
+        operator.equals("->pow") || 
         operator.equals("->hasPrefix") || operator.equals("->hasSuffix") ||
         operator.equals("->exists") || "->existsLC".equals(operator) ||
-        operator.equals("->exists1") || operator.equals("->isUnique") || 
+        operator.equals("->exists1") || operator.equals("->isUnique") || operator.equals("|isUnique") || 
         operator.equals("->forAll") || operator.equals("<:") || operator.equals("=") ||
         operator.equals("/=") || operator.equals("->includes") || operator.equals("->excludes") ||
         operator.equals("!=") || operator.equals("<>") || 
-		operator.equals("#") || operator.equals("#LC") || 
+        operator.equals("#") || operator.equals("#LC") || 
         operator.equals("/<:") ||
         operator.equals("!") || operator.equals("#1") || operator.equals("->excludesAll") ||
         operator.equals("->includesAll") || comparitors.contains(operator))
@@ -1838,7 +1872,10 @@ class BinaryExpression extends Expression
         operator.equals("|C") || operator.equals("->symmetricDifference") || 
         operator.equals("->intersection") || operator.equals("->prepend") || 
         operator.equals("->unionAll") || operator.equals("->intersectAll") || 
+        operator.equals("|unionAll") || operator.equals("|intersectAll") || operator.equals("|sortedBy") ||
         operator.equals("->selectMaximals") || operator.equals("->selectMinimals") ||
+        "|selectMinimals".equals(operator) ||  
+        "|selectMaximals".equals(operator) ||
         operator.equals("->append") || operator.equals("->including") || operator.equals("->restrict") || 
         operator.equals("->excluding")) 
     { return false; } 
@@ -2570,6 +2607,8 @@ public void findClones(java.util.Map clones, String rule, String op)
     { javaop = "!="; } 
     else if (operator.equals("mod"))
     { javaop = "%"; } 
+    else if (operator.equals("div"))
+    { javaop = "/"; } 
     else 
     { javaop = operator; } 
 
@@ -2592,6 +2631,8 @@ public void findClones(java.util.Map clones, String rule, String op)
     { javaop = "!="; } 
     else if (operator.equals("mod"))
     { javaop = "%"; } 
+    else if (operator.equals("div"))
+    { javaop = "/"; } 
     else
     { javaop = operator; }
 
@@ -2703,8 +2744,8 @@ public void findClones(java.util.Map clones, String rule, String op)
       boolean rtc = right.typeCheck(types,entities,context,env1);
       // type = new Type("Function",accumulator.getType(),right.type);
       // elementType = right.type; 
-	  type = right.type; 
-	  elementType = right.elementType;  
+      type = right.type; 
+      elementType = right.elementType;  
       System.out.println(">>> Typechecked let expression: " + lrt + " " + rtc + " " + type); 
       return true; 
     }
@@ -2888,7 +2929,7 @@ public void findClones(java.util.Map clones, String rule, String op)
       // System.out.println("TYPE OF " + this + " IS " + type + ", " + elementType); 
       return true;
     }
-	else if (operator.equals("->any"))
+    else if (operator.equals("->any"))
     { left.typeCheck(types,entities,contexts,env);
       Vector ccontext = new Vector(); 
       Type ctleft = left.getType();
@@ -2920,9 +2961,10 @@ public void findClones(java.util.Map clones, String rule, String op)
       boolean lrt = lexp.right.typeCheck(types,entities,contexts,env);
       Type et = lexp.right.elementType;
       if (et == null)
-      { System.err.println("!! TYPE ERROR: no element type for " + lexp.right + " in " + this);                     
-	    JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this,
-		                                       "Type error", JOptionPane.ERROR_MESSAGE);
+      { System.err.println("!! TYPE ERROR: no element type for " + lexp.right + " in " + this);
+                     
+        JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this,
+		            "Type error", JOptionPane.ERROR_MESSAGE);
         et = new Type("void", null); 
       }
 
@@ -3063,7 +3105,9 @@ public void findClones(java.util.Map clones, String rule, String op)
 
     // ->oclAsType(T)? T.umlkind == CLASSID, and type = T.elementType
 
-    if ("->count".equals(operator) || "->indexOf".equals(operator) || operator.equals("->lastIndexOf"))
+    if ("->count".equals(operator) || 
+        "->indexOf".equals(operator) || operator.equals("div") ||
+        operator.equals("->lastIndexOf"))
     { type = new Type("int",null); } 
     else if ("->oclAsType".equals(operator))
     { type = Type.getTypeFor(right + "", types, entities); 
@@ -3101,6 +3145,11 @@ public void findClones(java.util.Map clones, String rule, String op)
     { type = new Type("boolean",null); } 
     else if (operator.equals("->before") || operator.equals("->after")) 
     { type = new Type("String",null); }  
+    else if ("->split".equals(operator) || "->allMatches".equals(operator))
+    { type = new Type("Sequence",null); 
+      elementType = new Type("String",null);
+      type.elementType = elementType;  
+    } 
     else if (comparitors.contains(operator))
     { tcEq(tleft,tright,eleft,eright); }
     else if (operator.equals("+"))
@@ -3443,7 +3492,7 @@ public void findClones(java.util.Map clones, String rule, String op)
       { left.setType(tright);
         type = tright; // new Type("Set",null);
       }
-      else 
+      else if (tleft == null && tright == null) 
       {        
         // JOptionPane.showMessageDialog(null, "Null types in " + this, 
         //                              "Type error", JOptionPane.ERROR_MESSAGE);
@@ -3908,11 +3957,11 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->forAll") || operator.equals("!"))
     { return forAllQueryForm(env,local); } 
 	
-	if (operator.equals("let"))
-	{ String acc = accumulator.getName(); 
-	  Expression sbst = right.substituteEq(acc,left); 
-	  return sbst.queryForm(env,local); 
-	} // Or, extend env by acc |-> left
+    if (operator.equals("let"))
+    { String acc = accumulator.getName(); 
+      Expression sbst = right.substituteEq(acc,left); 
+      return sbst.queryForm(env,local); 
+    } // Or, extend env by acc |-> left
 
     boolean lmult = left.isMultiple();
     boolean rmult = right.isMultiple();
@@ -3929,10 +3978,10 @@ public boolean conflictsWithIn(String op, Expression el,
 
 
     String typ = ""; 
-	if (type != null) 
-	{ typ = type.getJava(); } 
-	else 
-	{ System.err.println("!! Warning: no type for " + this); }
+    if (type != null) 
+    { typ = type.getJava(); } 
+    else 
+    { System.err.println("!! Warning: no type for " + this); }
 	 
     String javaOp = javaOpOf(operator);
     res = lqf + " " + javaOp + " " + rqf; // default
@@ -3997,19 +4046,20 @@ public boolean conflictsWithIn(String op, Expression el,
     { return "Set.excludesKey(" + lqf + "," + rw + ")"; } 
 
     if (operator.equals("->at"))
-    { if ("String".equals(left.type + ""))
+    { if (left.type != null && "String".equals(left.type.getName()))
       { return "(" + lqf + ".charAt(" + rqf + " - 1) + \"\")"; }  // and for Java6, 7, etc. 
 
       if (left.type == null) 
-      { if ("String".equals(right.type + ""))
+      { if (right.type != null && 
+            "String".equals(right.type.getName()))
         { lqf = "((Map) " + lqf + ")"; 
           left.type = new Type("Map", null);
-		  left.type.elementType = type;  
+          left.type.elementType = type;  
         } 
         else 
         { lqf = "((List) " + lqf + ")"; 
           left.type = new Type("Sequence", null);
-		  left.type.elementType = type;  
+          left.type.elementType = type;  
         } 
       } 
 
@@ -4017,9 +4067,9 @@ public boolean conflictsWithIn(String op, Expression el,
       String getind = lqf + ".get(" + rqf + " - 1)";
 	   
       if (left.type != null && left.type.isMapType())
-	  { return "((" + typ + ") " + ind + ")"; }
+      { return "((" + typ + ") " + ind + ")"; }
       
-	  if ("String".equals(right.type + ""))  // a map lookup
+      if ("String".equals(right.type + ""))  // a map lookup
       { getind = lqf + ".get(" + rqf + ")"; } 
 
       if (type == null) 
@@ -4027,8 +4077,8 @@ public boolean conflictsWithIn(String op, Expression el,
         { return getind; } 
         else 
         { type = left.elementType; 
-		  typ = type.getJava(); 
-		} 
+          typ = type.getJava(); 
+        } 
       } 
 
       if (Type.isPrimitiveType(type))
@@ -4192,7 +4242,7 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = composeComparitorQueryForms(lqf,rqf,lprim,rprim); } 
       else if (operator.equals("+") || operator.equals("-") || 
                operator.equals("*") || operator.equals("/") || 
-               operator.equals("mod"))
+               operator.equals("mod") || operator.equals("div"))
       { res = composeMathOpQueryForms(lqf,rqf,lprim,rprim); } 
       else if (operator.equals("->indexOf"))
       { res = lqf + ".indexOf(" + rqf + ") + 1"; 
@@ -4228,6 +4278,10 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "Set.before(" + lqf + "," + rqf + ")"; } 
       else if (operator.equals("->after"))
       { res = "Set.after(" + lqf + "," + rqf + ")"; } 
+      else if (operator.equals("->split"))
+      { res = "Set.split(" + lqf + "," + rqf + ")"; } 
+      else if (operator.equals("->allMatches"))
+      { res = "Set.allMatches(" + lqf + "," + rqf + ")"; } 
     }
     else if (lmult && !rmult) // convert right to mult
     { String rss = right.makeSet(rw);
@@ -4281,7 +4335,7 @@ public boolean conflictsWithIn(String op, Expression el,
       } 
       else   
       { // res = lqf + " " + operator + " " + rqf;
-	    res = composeSetQueryForms(lqf,rqf); 
+        res = composeSetQueryForms(lqf,rqf); 
         bNeeded = true; 
       } // composeSetQueryForms(lqf,rs,rqf); }  
     }
@@ -4321,7 +4375,20 @@ public boolean conflictsWithIn(String op, Expression el,
       } // composeSetQueryForms(ls,rqf); }
     }
     else // both sets
-    { res = composeSetQueryForms(lqf,rqf); }
+    if (operator.equals("->indexOf"))
+    { res = "Collections.indexOfSubList(" + lqf + "," + rqf + ")+1"; 
+      bNeeded = true; 
+    } 
+    else if (operator.equals("->lastIndexOf"))
+    { res = "Collections.lastIndexOfSubList(" + lqf + "," + rqf + ") + 1"; 
+      bNeeded = true; 
+    } 
+    else   
+    { // res = lqf + " " + operator + " " + rqf;
+      res = composeSetQueryForms(lqf,rqf); 
+      bNeeded = true; 
+    }
+    // { res = composeSetQueryForms(lqf,rqf); }
 
     if (bNeeded)
     { return "( " + res + " )"; }
@@ -4409,10 +4476,10 @@ public boolean conflictsWithIn(String op, Expression el,
     { String getind = lqf + ".get(" + rqf + " - 1)"; 
       String ind = lqf + ".get(" + rqf + ")"; 
       
-	  if ("String".equals(left.type + ""))
+      if ("String".equals(left.type + ""))
       { return "(" + lqf + ".charAt(" + rqf + " - 1) + \"\")"; }  // and for Java6, 7, etc. 
       else if (left.type != null && left.type.isMapType())
-	  { return "((" + typ + ") " + ind + ")"; }
+      { return "((" + typ + ") " + ind + ")"; }
       else if (Type.isPrimitiveType(type))
       { return unwrap(getind); } 
       return "((" + typ + ") " + getind + ")"; 
@@ -4525,7 +4592,7 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = composeComparitorQueryForms(lqf,rqf,lprim,rprim); } 
       else if (operator.equals("+") || operator.equals("-") || 
                operator.equals("*") || operator.equals("/") || 
-               operator.equals("mod"))
+               operator.equals("mod") || operator.equals("div"))
       { res = composeMathOpQueryForms(lqf,rqf,lprim,rprim); } 
       else if (operator.equals("->count"))
       { res = "Set.count(" + lqf + "," + rw + ")"; } 
@@ -4546,7 +4613,11 @@ public boolean conflictsWithIn(String op, Expression el,
       else if (operator.equals("->before"))
       { res = "Set.before(" + lqf + "," + rqf + ")"; } 
       else if (operator.equals("->after"))
-      { res = "Set.after(" + lqf + "," + rqf + ")"; } 
+      { res = "Set.after(" + lqf + "," + rqf + ")"; }
+      else if (operator.equals("->split"))
+      { res = "Set.split(" + lqf + "," + rqf + ")"; } 
+      else if (operator.equals("->allMatches"))
+      { res = "Set.allMatches(" + lqf + "," + rqf + ")"; } 
     }
     else if (lmult && !rmult) // convert right to mult
     { String rss = right.makeSetJava6(rw);
@@ -4629,9 +4700,20 @@ public boolean conflictsWithIn(String op, Expression el,
       else if (operator.equals("->excludesAll"))
       { res = "Collections.disjoint(" + ls + "," + rqf + ")"; } 
       else 
-      { res = composeSetQueryFormsJava6(ls,rqf); }
+      { res = "(" + lqf + " " + operator + " " + rqf + ")"; 
+        // bNeeded = true; 
+      } // composeSetQueryForms(ls,rqf); }
+      // else 
+      // { res = composeSetQueryFormsJava6(ls,rqf); }
     }
     else // both sets
+    if (operator.equals("->indexOf"))
+    { res = "(Collections.indexOfSubList(" + lqf + "," + rqf + ")+1)"; 
+    } 
+    else if (operator.equals("->lastIndexOf"))
+    { res = "(Collections.lastIndexOfSubList(" + lqf + "," + rqf + ") + 1)";  
+    } 
+    else 
     { res = composeSetQueryFormsJava6(lqf,rqf); }
 
     if (needsBracket)
@@ -4666,10 +4748,10 @@ public boolean conflictsWithIn(String op, Expression el,
     String javaOp = javaOpOf(operator);
 
     String typ = ""; 
-	if (type != null) 
-	{ typ = type.getJava7(elementType); } 
-	else 
-	{ System.err.println("!! Warning: no type for " + this); }
+    if (type != null) 
+    { typ = type.getJava7(elementType); } 
+    else 
+    { System.err.println("!! Warning: no type for " + this); }
 	
     res = lqf + " " + javaOp + " " + rqf; // default
     // if & or or: &&, ||
@@ -4722,8 +4804,8 @@ public boolean conflictsWithIn(String op, Expression el,
       
       if ("String".equals(left.type + ""))
       { return "(" + lqf + ".charAt(" + rqf + " - 1) + \"\")"; }  // and for Java6, 7, etc. 
-	  else if (left.type != null && left.type.isMapType())
-	  { return "((" + typ + ") " + ind + ")"; }
+      else if (left.type != null && left.type.isMapType())
+      { return "((" + typ + ") " + ind + ")"; }
       else if (Type.isPrimitiveType(type))
       { return unwrap(getind); } 
       return "((" + typ + ") " + getind + ")"; 
@@ -4837,7 +4919,7 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = composeComparitorQueryForms(lqf,rqf,lprim,rprim); } 
       else if (operator.equals("+") || operator.equals("-") || 
                operator.equals("*") || operator.equals("/") || 
-               operator.equals("mod"))
+               operator.equals("mod") || operator.equals("div"))
       { res = composeMathOpQueryFormsJava7(lqf,rqf,lprim,rprim); } 
       else if (operator.equals("->count"))
       { res = "Ocl.count(" + lqf + "," + rw + ")"; } 
@@ -4859,6 +4941,10 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "Ocl.before(" + lqf + "," + rqf + ")"; } 
       else if (operator.equals("->after"))
       { res = "Ocl.after(" + lqf + "," + rqf + ")"; } 
+      else if (operator.equals("->split"))
+      { res = "Ocl.split(" + lqf + "," + rqf + ")"; } 
+      else if (operator.equals("->allMatches"))
+      { res = "Ocl.allMatches(" + lqf + "," + rqf + ")"; }    
     }
     else if (lmult && !rmult) // convert right to mult
     { String rss = right.makeSetJava7(rw);
@@ -4938,9 +5024,22 @@ public boolean conflictsWithIn(String op, Expression el,
       else if (operator.equals("->excludesAll"))
       { res = "Collections.disjoint(" + ls + "," + rqf + ")"; } 
       else 
-      { res = composeSetQueryFormsJava7(ls,rqf); }
+      { res = "(" + lqf + " " + operator + " " + rqf + ")"; 
+        // bNeeded = true; 
+      } 
+      // else 
+      // { res = composeSetQueryFormsJava7(ls,rqf); }
     }
     else // both sets
+    if (operator.equals("->indexOf"))
+    { res = "(Collections.indexOfSubList(" + lqf + "," + rqf + ")+1)"; 
+      // bNeeded = true; 
+    } 
+    else if (operator.equals("->lastIndexOf"))
+    { res = "(Collections.lastIndexOfSubList(" + lqf + "," + rqf + ") + 1)"; 
+      // bNeeded = true; 
+    } 
+    else 
     { res = composeSetQueryFormsJava7(lqf,rqf); }
 
     if (needsBracket)
@@ -5011,11 +5110,11 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->at") && type != null)
     { String typ = type.getCSharp(); 
       
-	  if ("String".equals(left.type + ""))
+      if ("String".equals(left.type + ""))
       { return "(" + lqf + ").Substring(" + rqf + "-1 , 1)"; } 
       
-	  if (left.type != null && left.type.isMapType())
-	  { return "((" + typ + ") " + lqf + "[" + rqf + "])"; }
+      if (left.type != null && left.type.isMapType())
+      { return "((" + typ + ") " + lqf + "[" + rqf + "])"; }
 	  
       return "((" + typ + ") " + lqf + "[" + rqf + " - 1])"; 
     } 
@@ -5129,7 +5228,7 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = composeComparitorQueryFormsCSharp(lqf,rqf,lprim,rprim); } 
       else if (operator.equals("+") || operator.equals("-") || 
                operator.equals("*") || operator.equals("/") || 
-               operator.equals("mod"))
+               operator.equals("mod") || operator.equals("div"))
       { res = composeMathOpQueryFormsCSharp(lqf,rqf,lprim,rprim); } 
       else if (operator.equals("->indexOf"))
       { res = "(" + lqf + ".IndexOf(" + rqf + ") + 1)"; } 
@@ -5141,12 +5240,20 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "(" + lqf + ".StartsWith(" + rqf + "))"; } 
       else if (operator.equals("->hasSuffix"))
       { res = "(" + lqf + ".EndsWith(" + rqf + "))"; } 
+      else if (operator.equals("->hasMatch"))
+      { res = "SystemTypes.hasMatch(" + lqf + ", " + rqf + ")"; } 
+      else if (operator.equals("->isMatch"))
+      { res = "SystemTypes.isMatch(" + lqf + "," + rqf + ")"; } 
       else if (operator.equals("->equalsIgnoreCase"))
-      { res = "(" + lqf + ".ToLower().equals(" + rqf + ".ToLower()))"; } 
+      { res = "(" + lqf + ".ToLower().Equals(" + rqf + ".ToLower()))"; } 
       else if (operator.equals("->before"))
       { res = "SystemTypes.before(" + lqf + "," + rqf + ")"; } 
       else if (operator.equals("->after"))
-      { res = "SystemTypes.after(" + lqf + "," + rqf + ")"; } 
+      { res = "SystemTypes.after(" + lqf + "," + rqf + ")"; }
+      else if (operator.equals("->split"))
+      { res = "SystemTypes.split(" + lqf + "," + rqf + ")"; } 
+      else if (operator.equals("->allMatches"))
+      { res = "SystemTypes.allMatches(" + lqf + "," + rqf + ")"; } 
     }
     else if (lmult && !rmult) // convert right to mult
     { String rw = rqf; 
@@ -5200,6 +5307,10 @@ public boolean conflictsWithIn(String op, Expression el,
         { res = "(" + lqf + ".IndexOf(" + rqf + ") + 1)"; } 
         else if (operator.equals("->lastIndexOf"))
         { res = "(" + lqf + ".LastIndexOf(" + rqf + ") + 1)"; } 
+        else if (operator.equals("->hasMatch"))
+        { res = "SystemTypes.hasMatch(" + lqf + ", " + rqf + ")"; } 
+        else if (operator.equals("->isMatch"))
+        { res = "SystemTypes.isMatch(" + lqf + "," + rqf + ")"; } 
         /* else if (operator.equals("->hasPrefix"))
         { res = "(" + lqf + ".StartsWith(" + rqf + "))"; } 
         else if (operator.equals("->hasSuffix"))
@@ -5231,9 +5342,22 @@ public boolean conflictsWithIn(String op, Expression el,
       else if (operator.equals("->excludesAll"))
       { res = "(SystemTypes.intersection(" + rqf + "," + ls + ").Count == 0)"; } 
       else 
-      { res = composeSetQueryFormsCSharp(ls,rqf); }
+      { res = "(" + lqf + " " + operator + " " + rqf + ")"; 
+        // bNeeded = true; 
+      } 
+      // else 
+      // { res = composeSetQueryFormsCSharp(ls,rqf); }
     }
     else // both sets
+    if (operator.equals("->indexOf"))
+    { res = "SystemTypes.indexOfSubList(" + lqf + "," + rqf + ")+1"; 
+      // bNeeded = true; 
+    } 
+    else if (operator.equals("->lastIndexOf"))
+    { res = "SystemTypes.lastIndexOfSubList(" + lqf + "," + rqf + ") + 1"; 
+      // bNeeded = true; 
+    } 
+    else 
     { res = composeSetQueryFormsCSharp(lqf,rqf); }
 
     if (needsBracket)
@@ -5460,7 +5584,17 @@ public boolean conflictsWithIn(String op, Expression el,
       return lqf;
     } 
 
+
     // No extension ops for C++? 
+    if (extensionoperators.containsKey(operator))
+    { String op = operator;
+      String opcpp = Expression.getOperatorCPP(op); 
+      if (opcpp != null && opcpp.length() > 0)
+      { return opcpp.replaceAll("_1",lqf).replaceAll("_2",rqf); } 
+      if (operator.startsWith("->"))
+      { op = operator.substring(2,operator.length()); } 
+      return lqf + "." + op + "(" + rqf + ")";
+    } 
 
     if (!lmult && !rmult)
     { if (operator.equals("=")) // and comparitors
@@ -5471,16 +5605,28 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = composeComparitorQueryFormsCPP(lqf,rqf,lprim,rprim); } 
       else if (operator.equals("+") || operator.equals("-") || 
                operator.equals("*") || operator.equals("/") || 
-               operator.equals("mod"))
+               operator.equals("mod") || operator.equals("div"))
       { res = composeMathOpQueryFormsCPP(lqf,rqf,lprim,rprim); } 
       else if (operator.equals("->indexOf"))
       { res = "UmlRsdsLib<" + lcet + ">::indexOf(" + rqf + ", " + lqf + ")"; } 
+      else if (operator.equals("->lastIndexOf"))
+      { res = "UmlRsdsLib<" + lcet + ">::lastIndexOf(" + rqf + ", " + lqf + ")"; } 
       else if (operator.equals("->count"))
       { res = "UmlRsdsLib<" + lcet + ">::count(" + lqf + ", " + rqf + ")"; } 
+      else if (operator.equals("->equalsIgnoreCase"))
+      { res = "UmlRsdsLib<string>::equalsIgnoreCase(" + lqf + ", " + rqf + ")"; } 
       else if (operator.equals("->hasPrefix"))
       { res = "UmlRsdsLib<string>::startsWith(" + lqf + ", " + rqf + ")"; } 
       else if (operator.equals("->hasSuffix"))
       { res = "UmlRsdsLib<string>::endsWith(" + lqf + ", " + rqf + ")"; } 
+      else if (operator.equals("->isMatch"))
+      { res = "UmlRsdsLib<string>::isMatch(" + lqf + ", " + rqf + ")"; } 
+      else if (operator.equals("->hasMatch"))
+      { res = "UmlRsdsLib<string>::hasMatch(" + lqf + ", " + rqf + ")"; } 
+      else if (operator.equals("->allMatches"))
+      { res = "UmlRsdsLib<string>::allMatches(" + lqf + ", " + rqf + ")"; } 
+      else if (operator.equals("->split"))
+      { res = "UmlRsdsLib<string>::split(" + lqf + ", " + rqf + ")"; } 
     }
     else if (lmult && !rmult) // convert right to mult
     { String rw = rqf; 
@@ -5543,6 +5689,8 @@ public boolean conflictsWithIn(String op, Expression el,
         { res = "UmlRsdsLib<" + lcet + ">::count(" + lqf + ", " + rqf + ")"; } 
         else if (operator.equals("->indexOf"))
         { res = "UmlRsdsLib<" + lcet + ">::indexOf(" + rqf + ", " + lqf + ")"; } 
+        else if (operator.equals("->lastIndexOf"))
+        { res = "UmlRsdsLib<" + lcet + ">::lastIndexOf(" + rqf + ", " + lqf + ")"; } 
         /* else if (operator.equals("->hasPrefix"))
         { res = "UmlRsdsLib<string>::startsWith(" + lqf + ", " + rqf + ")"; } 
         else if (operator.equals("->hasSuffix"))
@@ -5574,9 +5722,18 @@ public boolean conflictsWithIn(String op, Expression el,
       else if (operator.equals("->excludesAll"))
       { res = "(UmlRsdsLib<" + lcet + ">::intersection(" + rqf + ", " + ls + ")->size() == 0)"; } 
       else 
-      { res = composeSetQueryFormsCPP(ls,rqf,lcet); }
+      { res = "(" + lqf + " " + operator + " " + rqf + ")"; 
+        // bNeeded = true; 
+      } 
+      // else 
+      // { res = composeSetQueryFormsCPP(ls,rqf,lcet); }
     }
     else // both sets
+    if (operator.equals("->indexOf"))
+    { res = "UmlRsdsLib<" + lcet + ">::indexOf(" + rqf + ", " + lqf + ")"; } 
+    else if (operator.equals("->lastIndexOf"))
+    { res = "UmlRsdsLib<" + lcet + ">::lastIndexOf(" + rqf + ", " + lqf + ")"; } 
+    else 
     { res = composeSetQueryFormsCPP(lqf,rqf,lcet); }
 
     if (needsBracket)
@@ -9146,6 +9303,8 @@ public boolean conflictsWithIn(String op, Expression el,
     String op = operator; 
     if (operator.equals("mod"))
     { op = "%"; } 
+    else if (operator.equals("div"))
+    { op = "/"; } 
 
     if (operator.equals("-") && "String".equals(left.getType() + "") && 
         "String".equals(right.getType() + ""))
@@ -9165,6 +9324,10 @@ public boolean conflictsWithIn(String op, Expression el,
       String ll = left.unwrap(lqf); 
       res = ll + " " + op + " " + rr;
     }
+
+    if ("div".equals(operator))
+    { res = "((int) (" + res + "))"; } 
+
     return res;
   }
 
@@ -9176,6 +9339,8 @@ public boolean conflictsWithIn(String op, Expression el,
     String op = operator; 
     if (operator.equals("mod"))
     { op = "%"; } 
+    else if (operator.equals("div"))
+    { op = "/"; } 
 
     if (operator.equals("-") && "String".equals(left.getType() + "") && 
         "String".equals(right.getType() + ""))
@@ -9195,6 +9360,10 @@ public boolean conflictsWithIn(String op, Expression el,
       String ll = left.unwrap(lqf); 
       res = ll + " " + op + " " + rr;
     }
+
+    if ("div".equals(operator))
+    { res = "((int) (" + res + "))"; } 
+
     return res;
   }
 
@@ -9206,12 +9375,17 @@ public boolean conflictsWithIn(String op, Expression el,
     String op = operator; 
     if (operator.equals("mod"))
     { op = "%"; } 
+    else if (operator.equals("div"))
+    { op = "/"; } 
 
     if (operator.equals("-") && "String".equals(left.getType().getName()) && 
         "String".equals(right.getType().getName()))
     { res = "SystemTypes.subtract(" + lqf + "," + rqf + ")"; } 
     else 
     { res = lqf + " " + op + " " + rqf; }
+
+    if ("div".equals(operator))
+    { res = "((int) (" + res + "))"; } 
     
     return res;
   }
@@ -9224,6 +9398,8 @@ public boolean conflictsWithIn(String op, Expression el,
     String op = operator; 
     if (operator.equals("mod"))
     { op = "%"; } 
+    else if (operator.equals("div"))
+    { op = "/"; } 
 
     if (operator.equals("+"))
     { if ("String".equals(left.getType().getName()))
@@ -9247,6 +9423,9 @@ public boolean conflictsWithIn(String op, Expression el,
     else 
     { res = lqf + " " + op + " " + rqf; }
     
+    if ("div".equals(operator))
+    { res = "((int) (" + res + "))"; } 
+
     return res;
   }
 
@@ -12761,7 +12940,8 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
         operator.equals("|") || operator.equals("|R") || operator.equals("|C") || 
         operator.equals("->collect") || operator.equals("->selectMinimals") ||
         operator.equals("->selectMaximals") || operator.equals("->unionAll") || operator.equals("->concatenateAll") || 
-        operator.equals("->intersectAll") || operator.equals("->symmetricDifference"))
+        operator.equals("->intersectAll") || operator.equals("->symmetricDifference") ||
+        operator.equals("->split") || operator.equals("->allMatches"))
     { return true; } 
 
     if (operator.equals("->at") || operator.equals("->any") || operator.equals("|A"))

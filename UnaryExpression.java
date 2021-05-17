@@ -705,15 +705,35 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     } 
     else if ("->display".equals(operator))
     { BasicExpression dispop = null; 
-	  if (argument.type != null) 
-	  { dispop = new BasicExpression("display" + argument.type.getName()); }
-	  else 
-	  { dispop = new BasicExpression("display"); }
+      if (argument.type != null) 
+      { dispop = new BasicExpression("display" + argument.type.getName()); }
+      else 
+      { dispop = new BasicExpression("display"); }
 	  
       dispop.umlkind = UPDATEOP; 
       dispop.addParameter(argument); 
       return new InvocationStatement(dispop); 
     } // could also distinguish the type in the programming language, not here. 
+    else if ("->oclIsNew".equals(operator) && (argument instanceof BasicExpression))
+    { if (argument.type != null && argument.type.isEntity())
+      { Entity aent = argument.type.getEntity(); 
+        String ename = aent.getName(); 
+        Statement skp = new InvocationStatement("skip");
+        Expression isundefined = new UnaryExpression("->oclIsUndefined", argument); 
+        isundefined.setType(new Type("boolean", null));
+        BasicExpression createE = new BasicExpression("create" + ename); 
+        createE.setParameters(new Vector()); 
+        createE.setUmlKind(Expression.UPDATEOP); 
+        createE.setType(new Type(aent)); 
+        createE.setElementType(new Type(aent)); 
+  
+        AssignStatement creat = new AssignStatement(argument,createE); 
+        ConditionalStatement cstat = new ConditionalStatement(isundefined, creat, skp); 
+        return cstat;
+      } 
+      else 
+      { return new InvocationStatement("skip"); }  
+    }         
     else 
     { return new InvocationStatement("skip"); }  // None of the others have an update form
   }  
@@ -846,6 +866,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { String aqf = argument.queryForm(env,local); 
       return "  System.out.println(\"\" + " + aqf + ");\n"; 
     } 
+    else if ("->oclIsNew".equals(operator) && (argument instanceof BasicExpression))
+    { Type argt = argument.getType(); 
+      if (argt != null && argt.isEntity())
+      { Entity argent = argt.getEntity(); 
+        String ename = argent.getName(); 
+        String aqf = argument.queryForm(env,local); 
+        return "  if (" + aqf + " == null) { " + aqf + " = Controller.inst().create" + ename + "(); }\n"; 
+      } 
+      return " /* No valid update form for " + this + " */ ";    
+    } 
     else 
     { return " /* No valid update form for " + this + " */ "; }  
     // None of the others have an update form
@@ -893,6 +923,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { String aqf = argument.queryFormJava6(env,local); 
       return "  System.out.println(\"\" + " + aqf + ");\n"; 
     } 
+    else if ("->oclIsNew".equals(operator) && (argument instanceof BasicExpression))
+    { Type argt = argument.getType(); 
+      if (argt != null && argt.isEntity())
+      { Entity argent = argt.getEntity(); 
+        String ename = argent.getName(); 
+        String aqf = argument.queryFormJava6(env,local); 
+        return "  if (" + aqf + " == null) { " + aqf + " = Controller.inst().create" + ename + "(); }\n"; 
+      } 
+      return " /* No valid update form for " + this + " */ ";    
+    } 
     else 
     { return " /* No valid update form for " + this + " */ "; }  
     // None of the others have an update form
@@ -939,6 +979,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     else if ("->display".equals(operator))
     { String aqf = argument.queryFormJava7(env,local); 
       return "  System.out.println(\"\" + " + aqf + ");\n"; 
+    } 
+    else if ("->oclIsNew".equals(operator) && (argument instanceof BasicExpression))
+    { Type argt = argument.getType(); 
+      if (argt != null && argt.isEntity())
+      { Entity argent = argt.getEntity(); 
+        String ename = argent.getName(); 
+        String aqf = argument.queryFormJava7(env,local); 
+        return "  if (" + aqf + " == null) { " + aqf + " = Controller.inst().create" + ename + "(); }\n"; 
+      } 
+      return " /* No valid update form for " + this + " */ ";    
     } 
     else 
     { return " /* No valid update form for: " + this + " */ "; }  
@@ -988,6 +1038,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { String aqf = argument.queryFormCSharp(env,local); 
       return "  Console.WriteLine(\"\" + " + aqf + ");\n"; 
     } 
+    else if ("->oclIsNew".equals(operator) && (argument instanceof BasicExpression))
+    { Type argt = argument.getType(); 
+      if (argt != null && argt.isEntity())
+      { Entity argent = argt.getEntity(); 
+        String ename = argent.getName(); 
+        String aqf = argument.queryFormCSharp(env,local); 
+        return "  if (" + aqf + " == null) { " + aqf + " = Controller.inst().create" + ename + "(); }\n"; 
+      } 
+      return " /* No valid update form for " + this + " */ ";    
+    } 
     else 
     { return " /* No valid update form for: " + this + " */ "; }  
     // None of the others have an update form
@@ -1028,6 +1088,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       if (argument.getType() != null && argument.getType().isEntity())
       { return "  cout << *" + aqf + " << endl;\n"; } 
       return "  cout << " + aqf + " << endl;\n"; 
+    } 
+    else if ("->oclIsNew".equals(operator) && (argument instanceof BasicExpression))
+    { Type argt = argument.getType(); 
+      if (argt != null && argt.isEntity())
+      { Entity argent = argt.getEntity(); 
+        String ename = argent.getName(); 
+        String aqf = argument.queryFormCSharp(env,local); 
+        return "  if (" + aqf + " == NULL) { " + aqf + " = Controller::inst->create" + ename + "(); }\n"; 
+      } 
+      return " /* No valid update form for " + this + " */ ";    
     } 
     else 
     { return " /* No update form for: " + this + " */ "; }  
@@ -1300,7 +1370,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         operator.equals("->sinh") || operator.equals("->cosh") ||
         operator.equals("->tanh") || operator.equals("->asin") ||
         operator.equals("->acos") || operator.equals("->atan") ||
-        operator.equals("->oclIsUndefined") || operator.equals("->isReal") || 
+        operator.equals("->oclIsUndefined") || operator.equals("->oclIsNew") ||
+        operator.equals("->isReal") || 
         operator.equals("->isInteger") || operator.equals("->isLong") || 
         operator.equals("->toInteger") || operator.equals("->toReal") || 
         operator.equals("->toLong") || 
@@ -1328,9 +1399,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
   public boolean typeCheck(final Vector typs, final Vector ents,
                            final Vector contexts, final Vector env)
-  { 
-  
-    if (operator.equals("lambda") && accumulator != null)
+  { if (operator.equals("lambda") && accumulator != null)
     { Vector context = new Vector(); 
 	  context.addAll(contexts); 
 
@@ -1344,8 +1413,6 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return true; 
     }
 
-
-  
     boolean res = argument.typeCheck(typs,ents,contexts,env); 
     multiplicity = ModelElement.ONE; 
 
@@ -1401,7 +1468,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     }
 
     if (operator.equals("->isDeleted") || operator.equals("->display") ||
-        operator.equals("->oclIsUndefined") || "->isLong".equals(operator) || 
+        operator.equals("->oclIsUndefined") || operator.equals("->oclIsNew") ||
+        "->isLong".equals(operator) || 
         operator.equals("not") || operator.equals("->isInteger") || operator.equals("->isReal") ||
         operator.equals("->isEmpty") || operator.equals("->notEmpty"))
     { type = new Type("boolean",null); 
@@ -1600,7 +1668,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     }  
     else if (extensionoperators.containsKey(operator))
     { type = getOperatorType(operator); 
-      elementType = type; 
+      elementType = type.getElementType(); 
     }  
     System.out.println("**Type of " + this + " is " + type);
       
@@ -1761,6 +1829,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == null)"; } 
+
+    if (operator.equals("->oclIsNew")) 
+    { return "(" + qf + " != null)"; } 
 
     String pre = qf;
     String data = operator.substring(2,operator.length()); 
@@ -1987,15 +2058,19 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == null)"; } 
 
-    if (operator.equals("->sqr")) { return "((" + qf + ")*(" + qf + "))"; } 
+    if (operator.equals("->oclIsNew")) 
+    { return "(" + qf + " != null)"; } 
+
+    if (operator.equals("->sqr")) 
+    { return "((" + qf + ")*(" + qf + "))"; } 
 
     if (operator.equals("->concatenateAll")) 
     { return "Set.concatenateAll(" + qf + ")"; } 
     
-	if (operator.equals("->unionAll"))
+    if (operator.equals("->unionAll"))
     { return "Set.unionAll(" + qf + ")"; } 
     
-	if (operator.equals("->intersectAll"))
+    if (operator.equals("->intersectAll"))
     { return "Set.intersectAll(" + qf + ")"; } 
 
     if (operator.equals("->flatten")) 
@@ -2077,9 +2152,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     else if (data.equals("asSet") || data.equals("asSequence"))
     { return "Set." + data + "(" + pre + ")"; } 
     else if (data.equals("keys"))
-	{ return pre + ".keySet()"; }
-	else if (data.equals("values"))
-	{ return pre + ".values()"; }
+    { return pre + ".keySet()"; }
+    else if (data.equals("values"))
+    { return pre + ".values()"; }
     else if (data.equals("closure"))
     { String rel = ((BasicExpression) argument).data; 
       Expression arg = ((BasicExpression) argument).objectRef; 
@@ -2146,9 +2221,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     String cont = "Controller.inst()"; 
 
     if (operator.equals("lambda") && accumulator != null)
-	{ String acc = accumulator.getName(); 
-	  return "(" + acc + ") -> { return " + qf + "; }"; // for Java8+ 
-	}
+    { String acc = accumulator.getName(); 
+      return "(" + acc + ") -> { return " + qf + "; }"; // for Java8+ 
+    }
 
     if (operator.equals("-"))
     { return "-" + qf; } 
@@ -2215,22 +2290,26 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == null)"; } 
 
-    if (operator.equals("->sqr")) { return "((" + qf + ")*(" + qf + "))"; } 
+    if (operator.equals("->oclIsNew")) 
+    { return "(" + qf + " != null)"; } 
+
+    if (operator.equals("->sqr")) 
+    { return "((" + qf + ")*(" + qf + "))"; } 
 
     if (operator.equals("->concatenateAll")) 
     { String jtype = type.getJava7(elementType); 
       return "((" + jtype + ") Ocl.concatenateAll(" + qf + "))"; 
-	} 
+    } 
     
-	if (operator.equals("->unionAll"))
+    if (operator.equals("->unionAll"))
     { String jtype = type.getJava7(elementType); 
       return "((" + jtype + ") Ocl.unionAll(" + qf + "))"; 
 	} 
     
-	if (operator.equals("->intersectAll"))
+    if (operator.equals("->intersectAll"))
     { String jtype = type.getJava7(elementType); 
       return "((" + jtype + ") Ocl.intersectAll(" + qf + "))"; 
-	} 
+    } 
 
     if (operator.equals("->flatten")) 
     { String jtype = type.getJava7(elementType); 
@@ -2386,9 +2465,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     String cont = "Controller.inst()"; 
 
     if (operator.equals("lambda") && accumulator != null)
-	{ String acc = accumulator.getName(); 
-	  return acc + " => (" + qf + ")"; // for C# 3+ 
-	}
+    { String acc = accumulator.getName(); 
+      return acc + " => (" + qf + ")"; // for C# 3+ 
+    }
 
     if (operator.equals("-"))
     { return "-" + qf; } 
@@ -2445,6 +2524,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == null)"; } 
+
+    if (operator.equals("->oclIsNew")) 
+    { return "(" + qf + " != null)"; } 
 
     if (operator.equals("->sqr")) 
     { return "((" + qf + ")*(" + qf + "))"; } 
@@ -2672,13 +2754,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == NULL)"; } 
 
+    if (operator.equals("->oclIsNew")) 
+    { return "(" + qf + " != NULL)"; } 
+
     if (operator.equals("->concatenateAll")) 
     { return "UmlRsdsLib<" + celtype + ">::concatenateAll(" + qf + ")"; } 
     
-	if (operator.equals("->unionAll"))
+    if (operator.equals("->unionAll"))
     { return "UmlRsdsLib<" + celtype + ">::unionAll(" + qf + ")"; } 
     
-	if (operator.equals("->intersectAll"))
+    if (operator.equals("->intersectAll"))
     { return "UmlRsdsLib<" + celtype + ">::intersectAll(" + qf + ")"; } 
 
     if (operator.equals("->flatten")) 
@@ -2688,6 +2773,17 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       { return "UmlRsdsLib<" + celtype + ">::unionAll(" + qf + ")"; } 
       return qf; 
     } // but only goes one level down. 
+
+    if (extensionoperators.containsKey(operator))
+    { String op = operator;
+      String opcpp = Expression.getOperatorCPP(op); 
+      if (opcpp != null && opcpp.length() > 0)
+      { return opcpp.replaceAll("_1",qf); } 
+      if (operator.startsWith("->"))
+      { op = operator.substring(2,operator.length()); } 
+      return qf + "." + op + "()";
+    } 
+
 
     String pre = qf;
     String data = operator.substring(2,operator.length()); 
@@ -3670,21 +3766,22 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
   public String cg(CGSpec cgs)
   { String etext = this + "";
     Vector args = new Vector();
-	Vector eargs = new Vector(); 
-	if (operator.equals("lambda") && accumulator != null)
-	{ args.add(accumulator.getName()); 
-	  eargs.add(accumulator); 
-	  args.add(accumulator.getType().cg(cgs)); 
-	  eargs.add(accumulator.getType()); 
-	}
+    Vector eargs = new Vector(); 
+    if (operator.equals("lambda") && accumulator != null)
+    { args.add(accumulator.getName()); 
+      eargs.add(accumulator); 
+      args.add(accumulator.getType().cg(cgs)); 
+      eargs.add(accumulator.getType()); 
+    }
     args.add(argument.cg(cgs));
-	eargs.add(argument); 
+    eargs.add(argument);
+ 
     CGRule r = cgs.matchedUnaryExpressionRule(this,etext);
     if (r != null)
     { String res = r.applyRule(args,eargs,cgs);
-	  System.out.println(">>> matched unary expression rule " + r + " for " + this + " args: " + args + " eargs: " + eargs); 
-	  System.out.println(">>> " + r.variables); 
-	  System.out.println(); 
+      System.out.println(">>> matched unary expression rule " + r + " for " + this + " args: " + args + " eargs: " + eargs); 
+      System.out.println(">>> " + r.variables); 
+      System.out.println(); 
 	  
       if (needsBracket) 
       { return "(" + res + ")"; } 

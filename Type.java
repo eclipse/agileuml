@@ -83,6 +83,21 @@ public class Type extends ModelElement
   public boolean isVoidType() 
   { return "void".equals(name); } 
 
+  public boolean isSet() 
+  { return "Set".equals(name); } 
+
+  public boolean isSequence() 
+  { return "Sequence".equals(name); } 
+
+  public boolean isMap() 
+  { return "Map".equals(name); } 
+
+  public boolean isFunction() 
+  { return "Function".equals(name); } 
+
+  public boolean isVoid() 
+  { return "void".equals(name); } 
+
   public Object clone()
   { Type result; 
     if (isEntity) 
@@ -123,7 +138,8 @@ public class Type extends ModelElement
   public boolean isSorted()
   { return sorted; } 
 
-  public Entity getEntity() { return entity; } 
+  public Entity getEntity() 
+  { return entity; } 
   
   public Entity getEntityOrElementEntity() 
   { if (entity != null) 

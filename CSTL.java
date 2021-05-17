@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -35,6 +35,22 @@ public class CSTL
     }
   }
 
+  public static void loadTemplates(Vector fileNames, Vector types, Vector entities)
+  { File dir = new File("./cg");
+    String[] dirfiles = dir.list();
+    for (int i = 0; i < dirfiles.length; i++)
+    { File sub = new File("./cg/" + dirfiles[i]);
+      if (sub != null && dirfiles[i].endsWith(".cstl") && 
+          fileNames.contains(dirfiles[i]))
+      { System.out.println(">>> Found CSTL template: " + dirfiles[i]); 
+        CGSpec cg = new CGSpec(entities); 
+        CGSpec res = loadCSTL(cg, sub,types,entities); 
+        if (res != null) 
+        { addTemplate(dirfiles[i], res); }         
+      }
+    }
+  }
+
   public static CGSpec loadCSTL(File file, Vector types, Vector entities)
   { CGSpec cg = new CGSpec(entities); 
     return loadCSTL(cg, file, types, entities);
@@ -56,6 +72,7 @@ public class CSTL
 
     int noflines = 0; 
     String mode = "none"; 
+    String category = null; 
 
     while (!eof)
     { try { s = br.readLine(); }
@@ -63,6 +80,7 @@ public class CSTL
       { System.out.println("ERROR!!: Reading CSTL file failed.");
         return null; 
       }
+
       if (s == null) 
       { eof = true; 
         break; 
@@ -81,8 +99,6 @@ public class CSTL
       { mode = "types"; }         
       else if (s.equals("Enumeration::"))
       { mode = "enumerations"; }         
-      else if (s.equals("Text::"))
-      { mode = "texts"; }         
       else if (s.equals("BasicExpression::"))
       { mode = "basicexpressions"; }  
       else if (s.equals("UnaryExpression::"))
@@ -109,13 +125,18 @@ public class CSTL
       { mode = "packages"; }  
       else if (s.equals("UseCase::"))
       { mode = "usecases"; }  
+      else if (s.endsWith("::"))
+      { mode = "texts";
+        int colonindex = s.indexOf(":");  
+        category = s.substring(0,colonindex); 
+      }         
       else if ("types".equals(mode))
       { Compiler2 c = new Compiler2(); 
         CGRule r = c.parse_TypeCodegenerationrule(s.trim());
         if (r != null) 
         { res.addTypeUseRule(r); } 
-		else 
-		{ alertRule("Type", s); }
+        else 
+        { alertRule("Type", s); }
       }  
       else if ("basicexpressions".equals(mode))
       { Compiler2 c = new Compiler2(); 
@@ -123,7 +144,7 @@ public class CSTL
         if (r != null) 
         { res.addBasicExpressionRule(r); } 
         else 
-		{ alertRule("Basic expression", s); }
+        { alertRule("Basic expression", s); }
       }  
       else if ("unaryexpressions".equals(mode))
       { Compiler2 c = new Compiler2(); 
@@ -131,7 +152,7 @@ public class CSTL
         if (r != null) 
         { res.addUnaryExpressionRule(r); } 
         else 
-		{ alertRule("Unary expression", s); }
+        { alertRule("Unary expression", s); }
       }  
       else if ("binaryexpressions".equals(mode))
       { Compiler2 c = new Compiler2(); 
@@ -139,7 +160,7 @@ public class CSTL
         if (r != null) 
         { res.addBinaryExpressionRule(r); } 
         else 
-		{ alertRule("Binary expression", s); }
+        { alertRule("Binary expression", s); }
       }  
       else if ("setexpressions".equals(mode))
       { Compiler2 c = new Compiler2(); 
@@ -205,7 +226,7 @@ public class CSTL
         if (r != null) 
         { res.addParameterRule(r); }
         else 
-		{ alertRule("Parameter", s); } 
+        { alertRule("Parameter", s); } 
       }       
       else if ("parameterarguments".equals(mode))
       { Compiler2 c = new Compiler2(); 
@@ -213,7 +234,7 @@ public class CSTL
         if (r != null) 
         { res.addParameterArgumentRule(r); } 
         else 
-		{ alertRule("Parameter argument", s); } 
+        { alertRule("Parameter argument", s); } 
       }       
       else if ("statements".equals(mode))
       { Compiler2 c = new Compiler2(); 
@@ -221,7 +242,7 @@ public class CSTL
         if (r != null) 
         { res.addStatementRule(r); } 
         else 
-		{ alertRule("Statement", s); } 
+        { alertRule("Statement", s); } 
       }         
       else if ("usecases".equals(mode))
       { Compiler2 c = new Compiler2(); 
@@ -229,15 +250,15 @@ public class CSTL
         if (r != null) 
         { res.addUseCaseRule(r); }
         else 
-		{ alertRule("UseCase", s); }  
+        { alertRule("UseCase", s); }  
       }         
-      else if ("texts".equals(mode))
+      else if ("texts".equals(mode) && category != null)
       { Compiler2 c = new Compiler2(); 
         CGRule r = c.parse_TextCodegenerationrule(s.trim()); 
         if (r != null) 
-        { res.addTextRule(r); }
+        { res.addCategoryRule(category,r); }
         else 
-		{ alertRule("Text", s); }  
+        { alertRule("Could not parse category " + category + " rule", s); }  
       }         
     }
     System.out.println(">>> Parsed: " + res); 
