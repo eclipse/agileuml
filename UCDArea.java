@@ -18944,7 +18944,7 @@ public void produceCUI(PrintWriter out)
 
     ModelSpecification modelspec = new ModelSpecification(); 
     int correspondenceCount = readModel(modelspec, "output/out.txt");
-    modelspec.defineComposedFeatureValues(entities,types); 
+    modelspec.defineComposedFeatureValues(1,2,entities,types); 
     System.out.println("--- checking metamodel constraints ---");
     modelspec.checkMetamodelConstraints(constraints,entities,types);  
     System.out.println();
@@ -18997,16 +18997,31 @@ public void produceCUI(PrintWriter out)
 	     }
 	   } 
       }
+
+      String compositionDepth = JOptionPane.showInputDialog("Max source feature chain length? (<= 3, >= 1): ");
+      int scdepth = Integer.parseInt(compositionDepth); 
+      compositionDepth = JOptionPane.showInputDialog("Max target feature chain length? (<= 3, >= 1): ");
+      int tcdepth = Integer.parseInt(compositionDepth);
+
 	  
-      modelspec.defineComposedFeatureValues(entities,types); 
+      modelspec.defineComposedFeatureValues(scdepth,tcdepth,entities,types); 
       System.out.println("--- checking metamodel constraints ---");
       modelspec.checkMetamodelConstraints(constraints,entities,types);  
       System.out.println();
+
+      Date d1 = new Date(); 
+      long startTime = d1.getTime(); 
+	
       tlspecification.checkModel(modelspec,entities,types);
 	  
+      
+      Date d2 = new Date(); 
+      long endTime = d2.getTime(); 
+      System.out.println(">>> MTBE took " + (endTime - startTime) + "ms");
+  
       System.out.println(">>> Enhanced specification: "); 
       System.out.println(tlspecification + "");
-	  
+      
       try
       { PrintWriter fout = new PrintWriter(
                               new BufferedWriter(
@@ -19020,9 +19035,7 @@ public void produceCUI(PrintWriter out)
     else 
     { System.err.println("!! ERROR: no TL specification"); } 
 	
-	// Date d2 = new Date(); 
-	// long endTime = d2.getTime(); 
-	// System.out.println(">>> MTBE took " + (endTime - startTime) + "ms"); 
+	 
   } 
 
   private int readModel(ModelSpecification modelspec, String fname)

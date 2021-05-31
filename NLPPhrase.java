@@ -156,7 +156,7 @@ public class NLPPhrase extends NLPPhraseElement
   public Vector extractNouns(java.util.Map quals, java.util.Map types, java.util.Map fromBackground, Vector currentQuals)
   { Vector nouns = new Vector(); 
     String current = "";
-	NLPWord currentWord = null; 
+    NLPWord currentWord = null; 
 	// Vector currentQuals = new Vector(); 
 	 
     for (int i = 0; i < elements.size(); i++) 
@@ -165,25 +165,25 @@ public class NLPPhrase extends NLPPhraseElement
       { NLPWord word = (NLPWord) elem; 
         String lex = word.tag;
 		
-		Object obj = fromBackground.get(word.text); 
+        Object obj = fromBackground.get(word.text); 
 	    // System.out.println(">>> " + word.text + " background ==> " + obj); 
 		
-		if (obj != null)
-		{ Vector sem = (Vector) obj; 
-		  if (sem.size() > 0 && sem.get(0) instanceof Attribute)
-		  { Attribute att = (Attribute) sem.get(0); 
-		    Type t = att.getType(); 
-		    System.out.println(">>> " + word.text + " is likely to be an attribute of type " + t); 
+        if (obj != null)
+        { Vector sem = (Vector) obj; 
+          if (sem.size() > 0 && sem.get(0) instanceof Attribute)
+          { Attribute att = (Attribute) sem.get(0); 
+            Type t = att.getType(); 
+            System.out.println(">>> " + word.text + " is likely to be an attribute of type " + t); 
 		    
-		    if (t != null) 
-		    { currentQuals.add(t.getName()); 
-			  types.put(word.text, t); 
-			} 
+            if (t != null) 
+            { currentQuals.add(t.getName()); 
+              types.put(word.text, t); 
+            } 
 			
-			if (att.isIdentity())
-			{ currentQuals.add("identity"); }
-		  }  
-		}
+            if (att.isIdentity())
+            { currentQuals.add("identity"); }
+          }  
+        }
 		
         if (word.isQualifier()) 
         { currentQuals.add(word.text); }  
@@ -191,7 +191,7 @@ public class NLPPhrase extends NLPPhraseElement
             lex.equals("NN") || lex.equals("NNP"))
         { // System.out.println(">>> noun " + word.text + " " + current + " " + currentWord); 
 		
-		  if (current.equals(""))
+          if (current.equals(""))
           { current = word.text; 
             currentWord = word; 
           }
@@ -238,8 +238,8 @@ public class NLPPhrase extends NLPPhraseElement
       }  
     } 
 	
-	if (currentWord != null && currentWord.isNoun())
-	{ nouns.add(current); 
+    if (currentWord != null && currentWord.isNoun())
+    { nouns.add(current); 
       quals.put(current,currentQuals); 
     }
 	    
@@ -266,6 +266,32 @@ public class NLPPhrase extends NLPPhraseElement
     } 
     return nouns; 
   }   
+
+  public NLPWord identifyNounForEntity() // Expect just one. 
+  { String res = ""; 
+    String tag = "NN"; 
+
+    for (int i = 0; i < elements.size(); i++) 
+    { NLPPhraseElement elem = (NLPPhraseElement) elements.get(i); 
+      if (elem instanceof NLPWord) 
+      { NLPWord word = (NLPWord) elem; 
+        if (word.isNoun() || word.isAdjective())
+        { res = res + Named.capitalise(word.text); 
+          tag = word.tag; 
+        } 
+      } 
+      else if (elem instanceof NLPPhrase)
+      { NLPPhrase phr = (NLPPhrase) elem; 
+        NLPWord subword = phr.identifyNounForEntity();
+        res = res + subword.text; 
+        tag = subword.tag;  
+      } 
+    } 
+
+    return new NLPWord(tag,res); 
+  }
+
+
 
   public String identifyNoun() // Expect just one. 
   { String res = ""; 
@@ -394,6 +420,32 @@ public class NLPPhrase extends NLPPhraseElement
     return verb; 
   }   
 
+  public NLPWord getMainVerb()
+  { NLPWord verb = null; 
+    for (int i = 0; i < elements.size(); i++) 
+    { NLPPhraseElement elem = (NLPPhraseElement) elements.get(i); 
+      if (elem instanceof NLPWord) 
+      { NLPWord word = (NLPWord) elem; 
+        String lex = word.tag; 
+        if (lex.equals("VB") || lex.equals("VBZ") || 
+            lex.equals("VBG") || lex.equals("VBD") ||
+            lex.equals("VBN") || lex.equals("VBP"))
+        { return word; }
+        else if (lex.equals("SYM") && word.text.equals("="))
+        { return word; } 
+        else if (lex.equals(":") && word.text.equals(":"))
+        { return word; } 
+      } 
+      else if (elem instanceof NLPPhrase)
+      { NLPPhrase phr = (NLPPhrase) elem; 
+        verb = phr.getMainVerb(); 
+        if (verb != null)
+        { return verb; } 
+      } 
+    } 
+    return verb; 
+  }   
+
   public String getPrincipalVerbOrPreposition()
   { String verb = ""; 
     for (int i = 0; i < elements.size(); i++) 
@@ -512,10 +564,11 @@ public class NLPPhrase extends NLPPhraseElement
           { tent = new Entity(Named.capitalise(attname)); 
             System.out.println(">>> Creating new class: " + attname);
             modelElements.add(tent);  
-			String id = sentence.id; 
-	        tent.addStereotype("originator=\"" + id + "\""); 
-	        sentence.derivedElements.add(tent);
+            String id = sentence.id; 
+            tent.addStereotype("originator=\"" + id + "\""); 
+            sentence.derivedElements.add(tent);
           }
+          
           String role2 = attname.toLowerCase();
           if (role != null) 
           { role2 = role; }
@@ -524,21 +577,24 @@ public class NLPPhrase extends NLPPhraseElement
           if (quals.contains("unique"))
           { card1 = ModelElement.ZEROONE; } 
           int card2 = ModelElement.ONE;  
-		  if (quals.contains("many") || quals.contains("several") || quals.contains("more") ||
-		      quals.contains("list") || quals.contains("series") || quals.contains("collection") || 
-			  quals.contains("sequence") || quals.contains("set") || 
-			  quals.contains("some") || quals.contains("multiple") || attword.isPlural()) // or if the object is plural
-		  { card2 = ModelElement.MANY; }
-		  if (ent.hasRole(role2))
-		  { System.err.println("Possible conflict in requirements: role " + role2 + " of class " + attname + " already exists"); 
-		    role2 = role2 + "_" + ent.getAssociations().size(); 
-		  }
-          Association newast = new Association(ent,tent,card1,card2,"",role2); 
-          System.out.println(">>> new association " + newast + " for class " + ent.getName()); 
-          ent.addAssociation(newast); 
-		  String id = sentence.id; 
-	      ent.addStereotype("modifiedBy=\"" + id + "\""); 
-	      sentence.derivedElements.add(newast);
+          if (quals.contains("many") || quals.contains("several") || quals.contains("more") ||
+              quals.contains("list") || quals.contains("series") || quals.contains("collection") || 
+              quals.contains("sequence") || quals.contains("set") || 
+              quals.contains("some") || quals.contains("multiple") || attword.isPlural()) // or if the object is plural
+          { card2 = ModelElement.MANY; }
+
+          if (ent.hasRole(role2))
+          { System.err.println("Possible conflict in requirements: role " + role2 + " of class " + attname + " already exists"); 
+            // role2 = role2 + "_" + ent.getAssociations().size(); 
+          }
+          else 
+          { Association newast = new Association(ent,tent,card1,card2,"",role2); 
+            System.out.println(">>> new association " + newast + " for class " + ent.getName()); 
+            ent.addAssociation(newast); 
+            String id = sentence.id; 
+            ent.addStereotype("modifiedBy=\"" + id + "\""); 
+            sentence.derivedElements.add(newast);
+          } 
         }  
         return; 
       } 
@@ -558,33 +614,24 @@ public class NLPPhrase extends NLPPhraseElement
   } 
 
   public void extractRelationshipDefinitions(Entity ent, Vector modelElements)
-  { if ("VP".equals(tag) && elements.size() > 1)
-    { NLPPhraseElement np = (NLPPhraseElement) elements.get(1); 
-
-      if ("NP".equals(np.tag) && np instanceof NLPPhrase)
-      { NLPPhrase nphrase = (NLPPhrase) np; 
-         // Could be a specialisation, generalisation or abstraction statement 
-         // System.out.println(elements.get(1));
-         // if first element of np.elements is a (CC either) then it is a disjunction (cc either) (np subtype1) ... (CC or) (np subtype2)
-         // Look for (CC either) (CC or) and at least 2 (NP )
+  { System.out.println(">>> Identifying alternative subclasses of " + ent.getName() + " in " + this); 
   
-        if (nphrase.isDisjunction())
-        { nphrase.extractRelations(ent,modelElements); }
-      }
-      else if ("ADVP".equals(np.tag) && elements.size() > 2) 
-      { // and np is (ADVP (RB either)) or similar
-        NLPPhraseElement np2 = (NLPPhraseElement) elements.get(2);
-        if (np2 instanceof NLPPhrase && ((NLPPhrase) np2).isDisjunction())
-        { ((NLPPhrase) np2).extractRelations(ent,modelElements); } 
-      } 
-      /* else if ("PP".equals(np.tag) && elements.size() > 2) 
-      { // and np is (PP (IN for) np2) or similar
-        NLPPhraseElement np2 = (NLPPhraseElement) elements.get(2);
-        if (np2 instanceof NLPPhrase && ((NLPPhrase) np2).isDisjunction())
-        { ((NLPPhrase) np2).extractRelations(ent,modelElements); } 
-      } */ 
+    if ("VP".equals(tag) && elements.size() > 1)
+    { NLPPhraseElement np = (NLPPhraseElement) elements.get(1); 
+      np.extractRelationshipDefinitions(ent,modelElements); 
+      return; 
+    } 
+
+    if ("NP".equals(tag))
+    { if (isDisjunction())
+      { extractRelations(ent,modelElements); }
     }
-     
+    else if ("ADVP".equals(tag) && elements.size() > 2) 
+    { // and np is (ADVP (RB either)) or similar
+      NLPPhraseElement np2 = (NLPPhraseElement) elements.get(2);
+      if (np2 instanceof NLPPhrase && ((NLPPhrase) np2).isDisjunction())
+      { ((NLPPhrase) np2).extractRelations(ent,modelElements); } 
+    }      
   } 
 
   public void extractAlternativeValues(Attribute att, Entity ent, Vector modelElements)
@@ -611,11 +658,11 @@ public class NLPPhrase extends NLPPhraseElement
         NLPPhraseElement np2 = (NLPPhraseElement) elements.get(2);
         if (np2 instanceof NLPPhrase && ((NLPPhrase) np2).isDisjunction())
         { vals = ((NLPPhrase) np2).extractValues(att,ent,modelElements,atts); }
-	  } 
+      } 
       else if (((NLPPhrase) np).isDisjunction() && ((NLPPhrase) np).elements.size() > 1)
-	  { System.out.println(">>>> ADJP: " + ((NLPPhrase) np).elements); 
+      { System.out.println(">>>> ADJP: " + ((NLPPhrase) np).elements); 
         vals = ((NLPPhrase) np).extractValues(att,ent,modelElements,atts); 
-	  } 
+      } 
     } 
       /* else if ("PP".equals(np.tag) && elements.size() > 2) 
       { // and np is (PP (IN for) np2) or similar
@@ -626,7 +673,7 @@ public class NLPPhrase extends NLPPhraseElement
 
     if (vals != null && vals.size() > 0) 
     { String tname = Named.capitalise(att.getName()) + "TYPE"; 
-	  Type enumt = new Type(tname, vals); 
+      Type enumt = new Type(tname, vals); 
       modelElements.add(enumt); 
       System.out.println("New enumerated type: " + enumt + " = " + vals); 
       sentence.derivedElements.add(enumt); 
@@ -646,7 +693,7 @@ public class NLPPhrase extends NLPPhraseElement
          // System.out.println(elements.get(1));
          // if first element of np.elements is a (CC either) then it is a disjunction (cc either) (np subtype1) ... (CC or) (np subtype2)
          // Look for (CC either) (CC or) and at least 2 (NP )  
-          nphrase.extractClassReferences(ent,role, fromBackground, modelElements);
+          nphrase.extractClassReferences(ent, role, fromBackground, modelElements);
           return;  
         } 
       }
@@ -679,6 +726,19 @@ public class NLPPhrase extends NLPPhraseElement
     return res;
   } 
 
+  public static boolean isDisjunction(Vector words)
+  { boolean res = false; 
+  
+    for (int i = 0; i < words.size(); i++) 
+    { NLPWord wd = (NLPWord) words.get(i); 
+      if (wd.tag.equals("CC")) 
+      { if ("or".equals(wd.text.toLowerCase()) || "either".equals(wd.text.toLowerCase()))
+        { return true; }
+      } 
+    }
+    return res;
+  } 
+
   public boolean isConjunction()
   { boolean res = false; 
   
@@ -693,17 +753,32 @@ public class NLPPhrase extends NLPPhraseElement
     return res;
   } 
 
+  public NLPPhrase getObjectPart()
+  { if ("NP".equals(tag))
+    { return this; } 
+
+    if ("VP".equals(tag) && elements.size() > 1)
+    { NLPPhrase p1 = (NLPPhrase) elements.get(1); 
+      return p1.getObjectPart(); 
+    } 
+
+    return null; 
+
+  } 
+
   public void extractRelations(Entity ent, Vector modelElements)
   { // Find the NP disjunctions which name alternatives and identify the classes & specialisation relations
+
+    System.out.println(">>> Identifying alternative subclasses of " + ent.getName() + " in " + this); 
   
     for (int i = 0; i < elements.size(); i++) 
     { NLPPhraseElement np = (NLPPhraseElement) elements.get(i); 
      if ("NP".equals(np.tag) && np instanceof NLPPhrase)
      { NLPPhrase nphrase = (NLPPhrase) np; 
-       String noun = nphrase.identifyNoun(); 
-       String singular = NLPWord.getSingular(noun); 
-         // Use the other version of this
-
+       NLPWord nounwd = nphrase.identifyNounForEntity(); 
+       System.out.println(">>> Alternative subclass " + nounwd.text + " of " + nphrase); 
+       String singular = nounwd.getSingular(); 
+         
        Entity entnew = (Entity) ModelElement.lookupByNameIgnoreCase(singular, modelElements); 
        if (entnew == null) 
        { entnew = new Entity(Named.capitalise(singular));
@@ -714,7 +789,7 @@ public class NLPPhrase extends NLPPhraseElement
        }
        entnew.setSuperclass(ent);
        ent.addSubclass(entnew);  
-       System.out.println(">>> alternative class: " + entnew.getName()); 
+       System.out.println(">>> possible alternative subclass: " + entnew.getName()); 
      }
      else if (np instanceof NLPWord && ((NLPWord) np).isNoun())
      { NLPWord npword = (NLPWord) np; 
@@ -732,7 +807,7 @@ public class NLPPhrase extends NLPPhraseElement
        entnew.setSuperclass(ent);
        ent.addSubclass(entnew);  
        System.out.println(">>> alternative class: " + entnew.getName()); 
-	 } 	   
+      } 	   
     }
   } 
 
@@ -760,8 +835,8 @@ public class NLPPhrase extends NLPPhraseElement
       }
       else if ("ADJP".equals(np.tag) && np instanceof NLPPhrase)
       { Vector vals1 = ((NLPPhrase) np).extractValues(att, ent, modelElements, atts); 
-	    values.addAll(vals1); 
-	  }
+        values.addAll(vals1); 
+      }
       else if (np instanceof NLPWord && ((NLPWord) np).isNounOrAdjective())
       { NLPWord npword = (NLPWord) np; 
         String noun = npword.text; 
@@ -775,7 +850,7 @@ public class NLPPhrase extends NLPPhraseElement
           atts.add(otheratt); 
         } 
         System.out.println(">>> alternative value: " + noun); 
-	  } 	   
+      } 	   
     }
     return values;
   } 

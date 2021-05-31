@@ -17,6 +17,8 @@ public class NLPWord extends NLPPhraseElement
   NLPWord qualifies = null;  // If this is an adjectival modifier of the qualifies word.
   int index = 0; // the word position in the original sentence.  
   
+  static char[] consonants = {'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'z'}; 
+  static char[] vowels = {'a', 'e', 'i', 'o', 'u', 'y'}; 
 
   public NLPWord(String tg, String wd)
   { super(tg); 
@@ -25,6 +27,22 @@ public class NLPWord extends NLPPhraseElement
 
   public String toString()
   { return "(" + tag + " " + text + ")_" + index; }  
+
+  public static boolean isConsonant(char c)
+  { for (int i = 0; i < consonants.length; i++) 
+    { if (c == consonants[i]) 
+      { return true; } 
+    } 
+    return false; 
+  } 
+
+  public static boolean isVowel(char c)
+  { for (int i = 0; i < vowels.length; i++) 
+    { if (c == vowels[i]) 
+      { return true; } 
+    } 
+    return false; 
+  } 
 
   public void linkToPhrases(NLPSentence s)
   { sentence = s; }
@@ -209,10 +227,15 @@ public class NLPWord extends NLPPhraseElement
     } 
 
 
-    if ((lctext.startsWith("delet") && isVerb()) || (lctext.startsWith("remov") && isVerb()) || 
-	    (lctext.startsWith("eras") && isVerb()) || lctext.equals("unpublish") || (lctext.startsWith("cut") && isVerb()) || 
-	    lctext.equals("terminate") || (lctext.equals("fire") && isVerb()) ||
-	    lctext.startsWith("destroy") )
+    if ((lctext.startsWith("delet") && isVerb()) || 
+        (lctext.startsWith("remov") && isVerb()) || 
+        (lctext.startsWith("eras") && isVerb()) ||
+        (lctext.equals("cancel") && isVerb()) || 
+        lctext.equals("unpublish") || 
+        (lctext.startsWith("cut") && isVerb()) || 
+	   lctext.equals("terminate") || 
+        (lctext.equals("fire") && isVerb()) ||
+	   lctext.startsWith("destroy") )
     { quals.add("delete");
       wordQuals.put(text, "delete");  
  
@@ -332,17 +355,24 @@ public class NLPWord extends NLPPhraseElement
   }
   
   public boolean isVerb()
-  { if (tag.equals("VB") || tag.equals("VBZ") || tag.equals("TO") || tag.equals("VBG") || 
+  { if (tag.equals("VB") || tag.equals("VBZ") || 
+        tag.equals("TO") || tag.equals("VBG") || 
         tag.equals("VBD") ||
-	    tag.equals("VBN") || tag.equals("VBP"))
+        tag.equals("VBN") || tag.equals("VBP"))
     { return true; }
-	return false; 
+    return false; 
   } 
+
+  public boolean isModalVerb()
+  { if (tag.equals("MD"))
+    { return true; }
+    return false; 
+  } // should, shall, must, will, etc. 
 
   public boolean isConjunctionWord()
   { if (tag.equals("IN") || tag.equals("CC"))
     { return true; }
-	return false; 
+    return false; 
   }
 
   public boolean isConjunction()
@@ -367,11 +397,11 @@ public class NLPWord extends NLPPhraseElement
   public String getSingular()
   { if (isPlural())
     { if (text.endsWith("ies"))
-      { return text.substring(0,text.length()-3) + "y"; } 
+      { return text.substring(0,text.length()-3) + "y"; }
+      else if (text.endsWith("es"))
+      { return text.substring(0,text.length()-2); }  
       else if (text.endsWith("s"))
       { return text.substring(0,text.length()-1); } 
-      else if (text.endsWith("es"))
-      { return text.substring(0,text.length()-2); } 
     }
     return text; 
   } 
@@ -380,11 +410,30 @@ public class NLPWord extends NLPPhraseElement
   public static String getSingular(String txt)
   { if (txt.endsWith("ies"))
     { return txt.substring(0,txt.length()-3) + "y"; } 
-    else if (txt.endsWith("s"))
-    { return txt.substring(0,txt.length()-1); } 
     else if (txt.endsWith("es"))
     { return txt.substring(0,txt.length()-2); } 
+    else if (txt.endsWith("s"))
+    { return txt.substring(0,txt.length()-1); } 
     return txt; 
+  }  
+
+  public static String getPlural(String txt)
+  { if (txt.endsWith("s") || txt.endsWith("x") ||
+        txt.endsWith("sh") || txt.endsWith("ch"))
+    { return txt + "es"; } 
+
+    if (txt.endsWith("y") && txt.length() > 2 && 
+        isConsonant(txt.charAt(txt.length()-2)))
+    { String substr = txt.substring(0,txt.length()-1); 
+      return substr + "ies"; 
+    } 
+
+    if (txt.endsWith("elf"))
+    { String substr = txt.substring(0,txt.length()-3); 
+      return substr + "elves"; 
+    } 
+
+    return txt + "s"; 
   }  
 
   public Type identifyType(String text, java.util.Map qm, java.util.Map types, Vector modelems)
@@ -447,7 +496,7 @@ public class NLPWord extends NLPPhraseElement
           "latitude".equals(text) || "altitude".equals(text) || 
           "duration".equals(text) || "distance".equals(text) || 
           "radius".equals(text) || "magnitude".equals(text) ||
-		  "year".equals(text) || "frequency".equals(text) || 
+          "year".equals(text) || "frequency".equals(text) || 
           "velocity".equals(text) || text.startsWith("score") || 
           "acceleration".equals(text) || "speed".equals(text) || "depth".equals(text))
       { res = new Type("double", null); } 
@@ -500,7 +549,7 @@ public class NLPWord extends NLPPhraseElement
     if (tc != null && tc.verbType.length() > 0)
     { res.put(text, tc.verbType); }
 	
-	return res; 
+    return res; 
   } 
 
   public java.util.HashMap classifyWords(Vector background, Vector modelElems)
@@ -574,6 +623,12 @@ public class NLPWord extends NLPPhraseElement
     return noun; 
   }   
 
+  public NLPWord identifyNounForEntity()
+  { if (isNoun())
+    { return this; } 
+    return null; 
+  }   
+
   public String getMostSignificantVerb()
   { String verb = ""; 
     String lex = tag; 
@@ -588,15 +643,32 @@ public class NLPWord extends NLPPhraseElement
   public void extractAssociationDefinitions(Entity ent, String role, java.util.Map fromBackground, Vector modelElements)
   { extractClassReferences(ent,role, fromBackground, modelElements); } 
 
+  public void extractRelationshipDefinitions(Entity ent, Vector modelElements)
+  { if (isNoun())
+    { String singular = getSingular(); 
+      Entity entnew = (Entity) ModelElement.lookupByNameIgnoreCase(singular, modelElements); 
+      if (entnew == null) 
+      { entnew = new Entity(Named.capitalise(singular));
+        modelElements.add(entnew);
+        String id = sentence.id; 
+        entnew.addStereotype("originator=\"" + id + "\""); 
+        sentence.derivedElements.add(entnew);
+      }
+      entnew.setSuperclass(ent);
+      ent.addSubclass(entnew);  
+      System.out.println(">>> alternative class: " + entnew.getName()); 
+    }
+  }
+   
   public void extractClassReferences(Entity ent, String role, java.util.Map fromBackground, Vector modelElements)
   { 
     String attname = text; // singular form of it.
 
     if (NLPWord.isKeyword(attname)) 
-	{ return; } 
+    { return; } 
 	
     if (isPlural())
-	{ attname = getSingular(); }
+    { attname = getSingular(); }
 	
     Entity tent = (Entity) ModelElement.lookupByNameIgnoreCase(attname,modelElements); 
     if (tent != null) 
@@ -605,9 +677,9 @@ public class NLPWord extends NLPPhraseElement
     { tent = new Entity(Named.capitalise(attname)); 
       System.out.println(">>> Creating new class: " + attname);
       modelElements.add(tent);  
-  	  String id = sentence.id; 
-	  sentence.derivedElements.add(tent); 
-  	  tent.addStereotype("originator=\"" + id + "\""); 
+      String id = sentence.id; 
+      sentence.derivedElements.add(tent); 
+      tent.addStereotype("originator=\"" + id + "\""); 
     }
 
     String role2 = attname.toLowerCase();
@@ -627,6 +699,16 @@ public class NLPWord extends NLPPhraseElement
     Association newast = new Association(ent,tent,card1,card2,"",role2);   
     System.out.println(">>> new association " + newast + " for class " + ent.getName()); 
     ent.addAssociation(newast); 
+  } 
+
+  public static void main(String[] args)
+  { System.out.println(NLPWord.getSingular("Classes")); 
+    System.out.println(NLPWord.getPlural("Class")); 
+    System.out.println(NLPWord.getPlural("lash")); 
+    System.out.println(NLPWord.getPlural("ice")); 
+    System.out.println(NLPWord.getPlural("boy")); 
+    System.out.println(NLPWord.getPlural("try")); 
+    System.out.println(NLPWord.getPlural("self")); 
   } 
 
 } 

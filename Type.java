@@ -1547,7 +1547,8 @@ public class Type extends ModelElement
 
   public boolean isPrimitive()
   { String nme = getName();
-    if (nme.equals("int") || nme.equals("double") || nme.equals("boolean") ||
+    if (nme.equals("int") || 
+        nme.equals("double") || nme.equals("boolean") ||
         nme.equals("long") || values != null)
     { return true; }
     return false;
@@ -1556,7 +1557,8 @@ public class Type extends ModelElement
   public static boolean isPrimitiveType(Type t)
   { if (t == null) { return false; } 
     String nme = t.getName();
-    if (nme.equals("int") || nme.equals("double") || nme.equals("boolean") ||
+    if (nme.equals("int") || nme.equals("double") || 
+        nme.equals("boolean") ||
         nme.equals("long") || t.values != null)
     { return true; }
     return false;

@@ -29,8 +29,19 @@ public class ASTBasicTerm extends ASTTerm
     return res; 
   } 
 
+  public String literalForm()
+  { String res = value; 
+    return res; 
+  } 
+
   public String cg(CGSpec cgs)
   { Vector rules = cgs.getRulesForCategory(tag); 
+    return cgRules(cgs,rules); 
+  } 
+
+  public String cgRules(CGSpec cgs, Vector rules)
+  { if (rules == null) 
+    { return value; } 
 
     for (int i = 0; i < rules.size(); i++) 
     { CGRule r = (CGRule) rules.get(i);
@@ -253,6 +264,37 @@ public class ASTBasicTerm extends ASTTerm
     if ("ArrayIndexOutOfBoundsException".equals(value))
     { return "ProgramException"; } 
 
+    String type = (String) types.get(value); 
+    if (type != null) 
+    { System.out.println(">>> Type of " + value + " is " + type); } 
+    else if (tag.equals("integerLiteral"))
+    { System.out.println(">>> Type of " + value + " is integer"); }
+    else if (tag.equals("floatLiteral"))
+    { System.out.println(">>> Type of " + value + " is double"); }
+    else if (tag.equals("literal") && value.endsWith("\"") && 
+             value.startsWith("\""))
+    { System.out.println(">>> Type of " + value + " is String"); }
+
     return value; 
   } 
+
+  public String getType()
+  { String type = (String) types.get(value); 
+    if (type != null) 
+    { return type; } 
+    else if (tag.equals("integerLiteral"))
+    { return "integer"; }
+    else if (tag.equals("floatLiteral"))
+    { return "double"; }
+    else if (tag.equals("literal") && value.endsWith("\"") && 
+             value.startsWith("\""))
+    { return "String"; }
+    else if (tag.equals("literal") && 
+             (value.equals("true") || value.equals("false"))
+            )
+    { return "boolean"; } 
+  
+         
+    return "OclAny"; 
+  }
 } 

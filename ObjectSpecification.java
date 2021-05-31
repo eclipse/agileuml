@@ -388,7 +388,17 @@ public class ObjectSpecification extends ModelElement
       Expression lft = be.getLeft(); 
       Expression rgt = be.getRight(); 
       
-      if (be.operator.equals("+"))
+      if ("->at".equals(be.operator))
+      { Vector col = getCollectionValue(lft,mod); 
+        if (col == null || col.size() == 0) 
+        { return 0.0; }
+        double indx = getNumericValue(rgt,mod);
+        
+        if (indx > 0)
+        { return ((Double) col.get((int) (indx-1))).doubleValue(); }
+        return 0.0; 
+      } // Only for sequences, not maps
+      else if (be.operator.equals("+"))
       { double d1 = getNumericValue(lft,mod); 
         double d2 = getNumericValue(rgt,mod); 
         return d1 + d2; 
@@ -442,6 +452,20 @@ public class ObjectSpecification extends ModelElement
         { s2 = "" + getNumericValue(rgt,mod); } 
         return s1 + s2; 
       } 
+      else if ("->at".equals(be.operator))
+      { Vector col = getCollectionValue(lft,mod); 
+        if (col == null || col.size() == 0) 
+        { return ""; }
+
+        System.out.println(">> Collection value is " + col); 
+
+        double indx = getNumericValue(rgt,mod);
+        
+        if (indx > 0)
+        { return "" + col.get((int) (indx-1)); }
+        return ""; 
+      } // Only for sequences, not maps
+
     } 
     else if (expr instanceof UnaryExpression) 
     { UnaryExpression ue = (UnaryExpression) expr; 
@@ -478,13 +502,16 @@ public class ObjectSpecification extends ModelElement
       { Vector v1 = getCollectionValue(arg,mod); 
         if (v1 != null && v1.size() > 0)
         { int vsize = v1.size(); 
-          return (String) v1.get(vsize/2);
+          return "" + v1.get(vsize/2);
         }  
         return null; 
       } 
     } 
     else if (expr instanceof BasicExpression) 
-    { Vector atts = ((BasicExpression) expr).decompose(); 
+    { BasicExpression bexpr = (BasicExpression) expr; 
+      if (bexpr.isValue())
+      { return bexpr.getData(); } 
+      Vector atts = bexpr.decompose(); 
       Attribute att = new Attribute(atts); 
       return getStringValue(att,mod); 
     } 
@@ -682,10 +709,14 @@ public class ObjectSpecification extends ModelElement
     { SetExpression sexpr = (SetExpression) expr; 
       Vector res = new Vector();
       Vector elems = sexpr.getElements();  
+
       if (expr.isOrdered())
       { for (int i = 0; i < elems.size(); i++) 
         { Expression elem = (Expression) elems.get(i); 
           Object val = getActualValueOf(elem,mod);
+
+          System.out.println(">> Actual value of " + elem + " is " + val); 
+
           if (val != null) 
           { res.add(val); }
         }  
@@ -981,9 +1012,9 @@ public class ObjectSpecification extends ModelElement
   { // Where we know that att represents a boolean value
   
     if ("true".equals(att)) 
-	{ return true; }
-	else if ("false".equals(att))
-	{ return false; }
+    { return true; }
+    else if ("false".equals(att))
+    { return false; }
 	 
     String val = (String) attvalues.get(att); 
     if (val != null)
@@ -1130,6 +1161,7 @@ public class ObjectSpecification extends ModelElement
           { String idx = (String) vect.get(i); 
             objx = mod.getObject(idx); 
           } 
+
           if (objx != null) 
           { Object val = objx.getValueOf(tail, mod); 
             if (val != null) 
@@ -1207,6 +1239,32 @@ public class ObjectSpecification extends ModelElement
     { return getEnumerationValue(expr,mod); }
 	
     return getStringValue(expr,mod);  // Strings
+  } 
+
+  public Object getActualValueOf(Attribute att, ModelSpecification mod)
+  { if (att.isBoolean())
+    { if (satisfiesBasicCondition(att,mod))
+      { return true; } 
+      else
+      { return false; }
+    } 
+	
+    if (att.isNumeric())
+    { return getNumericValue(att,mod); }
+	
+    if (att.isCollection())
+    { return getCollectionValue(att,mod); } 
+	
+    if (att.isEntity())
+    { if ("self".equals(att + ""))
+      { return this; } 
+      return getObjectValue(att,mod); 
+    } // and self.att, etc. 
+	
+    if (att.isEnumerated()) // must be a BasicExpression
+    { return getEnumerationValue(att,mod); }
+	
+    return getStringValue(att,mod);  // Strings
   } 
 
 
@@ -1422,6 +1480,13 @@ public class ObjectSpecification extends ModelElement
 
   public boolean satisfiesBasicCondition(BasicExpression cond, ModelSpecification mod)
   { String val = getValue(cond,mod); 
+    if ("true".equals(val + "")) 
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean satisfiesBasicCondition(Attribute cond, ModelSpecification mod)
+  { Object val = getValueOf(cond,mod); 
     if ("true".equals(val + "")) 
     { return true; } 
     return false; 

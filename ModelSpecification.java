@@ -25,6 +25,11 @@ public class ModelSpecification
   java.util.Map objectsOfClass = new java.util.HashMap(); 
                       // String -> Vector
 
+  public static int maxSourcePath = 1; 
+  public static int maxTargetPath = 1; 
+  // The maximum feature composition lengths considered 
+  // for feature mappings. 
+
   public Vector getObjectsOf(String ename)
   { Vector res = (Vector) objectsOfClass.get(ename); 
     if (res == null) 
@@ -124,22 +129,31 @@ public class ModelSpecification
       Vector tobjs = correspondence.getAll(obj); 
       for (int j = 0; j < tobjs.size(); j++) 
       { ObjectSpecification tobj = (ObjectSpecification) tobjs.get(j); 
-	    res = res + obj.correspondence2ILP(tobj) + "\n"; 
-	  } 
+        res = res + obj.correspondence2ILP(tobj) + "\n"; 
+      } 
     } 
     return res; 
   } 
 
-  public void defineComposedFeatureValues(Vector entities, Vector types)
+  public void defineComposedFeatureValues(int slen, int tlen, Vector entities, Vector types)
   { // For 2-step source features f.g define the value of
     // the feature in each source object
+
+    maxSourcePath = slen; 
+    maxTargetPath = tlen; 
 
     for (int i = 0; i < entities.size(); i++) 
     { Entity sent = (Entity) entities.get(i); 
       if (sent != null) // && sent.isSource()) 
-      { sent.defineExtendedNonLocalFeatures(); 
+      { if (sent.isSource())
+        { sent.defineExtendedNonLocalFeatures(slen); } 
+        else 
+        { sent.defineExtendedNonLocalFeatures(tlen); } 
+         
         Vector allFeatures = sent.getNonLocalFeatures();
         String sentname = sent.getName(); 
+
+        System.out.println(">> Non-local features of " + sentname + " are: " + allFeatures); 
         
         Vector sobjs = (Vector) objectsOfClass.get(sentname); 
         if (sobjs == null)
@@ -149,7 +163,7 @@ public class ModelSpecification
         { ObjectSpecification obj = (ObjectSpecification) sobjs.get(j); 
           for (int k = 0; k < allFeatures.size(); k++) 
           { Attribute attk = (Attribute) allFeatures.get(k); 
-            Object val = obj.getValueOf(attk,this); 
+            Object val = obj.getActualValueOf(attk,this); 
             System.out.println(">> Value of (" + obj + ")." + attk + " = " + val);
             String attkname = attk.getName(); 
             obj.setValue(attkname, val);  
@@ -636,11 +650,13 @@ public class ModelSpecification
     if (sobjs.size() == 0) 
     { return res; }
 	
-	ObjectSpecification sobj0 = (ObjectSpecification) sobjs.get(0); 
-	Entity sent = (Entity) ModelElement.lookupByName(sobj0.objectClass,entities); 
-	if (sent == null) 
-	{ return res; }
-	sent.defineNonLocalFeatures(); 
+    ObjectSpecification sobj0 = (ObjectSpecification) sobjs.get(0); 
+    Entity sent = (Entity) ModelElement.lookupByName(sobj0.objectClass,entities); 
+
+    if (sent == null) 
+    { return res; }
+
+    sent.defineNonLocalFeatures(); 
     Vector sourceFeatures = sent.allDefinedProperties(); 
     sourceFeatures.addAll(sent.getNonLocalFeatures()); 
 	
@@ -2061,18 +2077,18 @@ public class ModelSpecification
 		  res.add(rejexp);  
         }
       }  
-	  else if (att.isEnumeration())
-	  { Vector pvals = new Vector(); 
-	    Vector rvals = new Vector();
-		boolean areDisjoint = disjointValueSets(att,svals,tvals,pvals,rvals); 
-		if (areDisjoint)
-		{ Expression expr = Expression.disjoinCases(att,pvals); 
-		  System.out.println(">> Identified discriminator condition: " + att + " : " + pvals + " ie: " + expr);
-		  Expression selexp = new BinaryExpression("->select", sexpr, expr);
-		  selexp.setType(sexpr.getType()); 
-		  selexp.setElementType(sexpr.getElementType());
-		  res.add(selexp);
-	    }
+      else if (att.isEnumeration())
+      { Vector pvals = new Vector(); 
+        Vector rvals = new Vector();
+        boolean areDisjoint = disjointValueSets(att,svals,tvals,pvals,rvals); 
+        if (areDisjoint)
+        { Expression expr = Expression.disjoinCases(att,pvals); 
+          System.out.println(">> Identified discriminator condition: " + att + " : " + pvals + " ie: " + expr);
+          Expression selexp = new BinaryExpression("->select", sexpr, expr);
+          selexp.setType(sexpr.getType()); 
+          selexp.setElementType(sexpr.getElementType());
+          res.add(selexp);
+        }
 	  
 	  /* Type enumt = att.getType(); 
 	    Vector values = enumt.getValues();
@@ -2080,8 +2096,8 @@ public class ModelSpecification
  
         for (int g = 0; g < values.size(); g++) 
         { String valg = (String) values.get(g); 
-	      Vector[] sourceswithval = new Vector[sn]; 
-	      Vector[] sourceswithNotval = new Vector[sn]; 
+          Vector[] sourceswithval = new Vector[sn]; 
+          Vector[] sourceswithNotval = new Vector[sn]; 
         
           for (int k = 0; k < sn; k++) 
           { Vector srcs = svals[k]; 
@@ -2326,9 +2342,9 @@ public class ModelSpecification
             pair.add(sobj); pair.add(tobj); 
             res.add(pair); 
           }
-	    }
-	  }
-    } 
+        }
+	 }
+     } 
 	
 	System.out.println(">> The instantiating pairs of mapping "); 
 	System.out.println(em); 
@@ -2356,51 +2372,60 @@ public class ModelSpecification
       else 
       { trgent.defineLocalFeatures(); 
         identifyConstantAttributeMatchings(trgent,em,pairs);
-        em.realsrc.defineNonLocalFeatures(); 
-        identifyCopyAttributeMatchings(em.realsrc,trgent,em,pairs,ems,tms); 
-	    identifyManyToOneAttributeMatchings(em.realsrc,trgent,em,pairs,ems);
-	    identifyTwoToOneAttributeMatchings(em.realsrc,trgent,em,pairs,ems);
-		identifyTargetQueryFunctions(em.realsrc,trgent,em,pairs,ems,tms); 
+
+        if (maxSourcePath > 1) 
+        { em.realsrc.defineNonLocalFeatures(); }
+ 
+        identifyCopyAttributeMatchings(em.realsrc, trgent, em, pairs, ems, tms); 
+        identifyPrimitiveTypeAttributeMatchings(em.realsrc, trgent, em, pairs, ems, tms);
+
+        identifyManyToOneAttributeMatchings(em.realsrc, trgent, em, pairs, ems);
+        identifyTwoToOneAttributeMatchings(em.realsrc, trgent, em, pairs, ems);
+        identifyTargetQueryFunctions(em.realsrc, trgent, em, pairs, ems, tms); 
       
-     Vector tatts = trgent.getLocalFeatures();
+        Vector tatts = trgent.getLocalFeatures();
 
-     System.out.println(">>> Checking composed sequence functions for " + tatts); 
-     System.out.println(); 
+        System.out.println(">>> Checking composed sequence functions for " + tatts); 
+        System.out.println(); 
 
-     for (int p = 0; p < tatts.size(); p++) 
-     { Attribute tatt = (Attribute) tatts.get(p);
+        for (int p = 0; p < tatts.size(); p++) 
+        { Attribute tatt = (Attribute) tatts.get(p);
 
-       System.out.println(tatt + " is unused: " + em.isUnusedTargetByName(tatt)); 
-       System.out.println(tatt + " is sequence: " + tatt.isSequence()); 
+          System.out.println(tatt + " is unused: " + em.isUnusedTargetByName(tatt)); 
+          System.out.println(tatt + " is sequence: " + tatt.isSequence()); 
   
-       if (em.isUnusedTargetByName(tatt) && 
+          if (em.isUnusedTargetByName(tatt) && 
            // ModelMatching.isUnusedTarget(tatt,ems) && 
-           tatt.isSequence())
-       { System.out.println(">>> Checking composed functions for " + tatt);
+              tatt.isSequence())
+          { System.out.println(">>> Checking composed functions for " + tatt);
  
-         Vector newams = identifyComposedSequenceFunctions(tatt, em.realsrc, trgent, pairs,em,ems);
-         System.out.println(">>> New attribute mappings: " + newams);  
-         for (int q = 0; q < newams.size(); q++) 
-         { AttributeMatching amx = (AttributeMatching) newams.get(q); 
-           em.addAttributeMapping(amx); 
-         } 
-       } 
-       else if (em.isUnusedTargetByName(tatt) && 
+            Vector newams = identifyComposedSequenceFunctions(tatt, em.realsrc, trgent, pairs,em,ems);
+            System.out.println(">>> New attribute mappings: " + newams);  
+            if (newams != null)
+            { for (int q = 0; q < newams.size(); q++) 
+              { AttributeMatching amx = (AttributeMatching) newams.get(q); 
+                em.addAttributeMapping(amx); 
+              } 
+            } 
+          } 
+          else if (em.isUnusedTargetByName(tatt) && 
            // ModelMatching.isUnusedTarget(tatt,ems) && 
-           tatt.isSet())
-       { System.out.println(">>> Checking composed functions for " + tatt);
+                   tatt.isSet())
+          { System.out.println(">>> Checking composed functions for " + tatt);
  
-         Vector newams = identifyComposedSetFunctions(tatt, em.realsrc, trgent, pairs,em,ems);
-         System.out.println(">>> New attribute mappings: " + newams);  
-         for (int q = 0; q < newams.size(); q++) 
-         { AttributeMatching amx = (AttributeMatching) newams.get(q); 
-           em.addAttributeMapping(amx); 
-         } 
-       } 
-     } 
+            Vector newams = identifyComposedSetFunctions(tatt, em.realsrc, trgent, pairs,em,ems);
+            System.out.println(">>> New attribute mappings: " + newams);  
+            if (newams != null) 
+            { for (int q = 0; q < newams.size(); q++) 
+              { AttributeMatching amx = (AttributeMatching) newams.get(q); 
+                em.addAttributeMapping(amx); 
+              }
+            }  
+          } 
+        } 
 		// checkMissingTargetIdentities(em.realsrc,trgent,em,pairs,ems); 
-	  } 
-	} 
+      } 
+    } 
 	
     ems.removeAll(removed);     
   }   
@@ -2434,49 +2459,50 @@ public class ModelSpecification
     Vector t2atts = tent.getNonLocalFeatures(); 
     Vector tattributes = new Vector(); 
     tattributes.addAll(t1atts); 
-    tattributes.addAll(t2atts); 
+    if (maxTargetPath > 1) 
+    { tattributes.addAll(t2atts); } 
 	
-	java.util.Map sattcount = new java.util.HashMap(); 
+    java.util.Map sattcount = new java.util.HashMap(); 
 	// sattname |-> Vector  identifies how many target ids this satt has already been used for, so we can 
 	// suggest a different id conversion function for each different target from satt. 
 	 
     Vector unusedids = new Vector(); 
 	
     for (int i = 0; i < tattributes.size(); i++)
-	{ Attribute tatt = (Attribute) tattributes.get(i); 
-	  Attribute fatt = tatt.getFinalFeature(); 
-	  if (ModelMatching.isUnusedTarget(fatt,ems)) 
-	  { System.out.println(); 
-	    System.out.println(">> Target feature " + fatt + " of " + tatt + " unused in any class mapping");
+    { Attribute tatt = (Attribute) tattributes.get(i); 
+      Attribute fatt = tatt.getFinalFeature(); 
+      if (ModelMatching.isUnusedTarget(fatt,ems)) 
+      { System.out.println(); 
+        System.out.println(">> Target feature " + fatt + " of " + tatt + " unused in any class mapping");
 	  
-	    if (tatt.endsWithIdentity())
-	    { System.out.println("!! ERROR: Unused target identity feature " + fatt + " --> it must be assigned for transformation to be valid");
-           unusedids.add(tatt); 
-	    }
-	  }
-     }
+        if (tatt.endsWithIdentity())
+        { System.out.println("!! ERROR: Unused target identity feature " + fatt + " --> it must be assigned for transformation to be valid");
+          unusedids.add(tatt); 
+        }
+      }
+    }
 	
-	for (int i = 0; i < unusedids.size(); i++) 
-	{ Attribute tatt = (Attribute) unusedids.get(i); 
-	  Attribute fatt = tatt.getFinalFeature();
+    for (int i = 0; i < unusedids.size(); i++) 
+    { Attribute tatt = (Attribute) unusedids.get(i); 
+      Attribute fatt = tatt.getFinalFeature();
 	  
-	  for (int j = 0; j < sattributes.size(); j++)
+      for (int j = 0; j < sattributes.size(); j++)
       { Attribute satt = (Attribute) sattributes.get(j); 
         String sattname = satt.getName(); 
 		  
         Type stype = satt.getType(); 
         if (satt.isIdentity())
-	    { if ((stype + "").equals(fatt.getType() + ""))
+        { if ((stype + "").equals(fatt.getType() + ""))
           { System.out.println(">> Matching source identity attribute: " + satt); 
             Vector usedtargets = (Vector) sattcount.get(sattname); 
             if (usedtargets == null) 
             { usedtargets = new Vector(); 
-  		      sattcount.put(sattname, usedtargets); 
-			}
-		    int cnt = usedtargets.size(); 
+              sattcount.put(sattname, usedtargets); 
+            }
+            int cnt = usedtargets.size(); 
 			  
-		    System.out.println(">> Add feature mapping \"" + cnt + "_\" + " + satt + " |--> " + tatt + " or alternative?"); 
-		    String yn = 
+            System.out.println(">> Add feature mapping \"" + cnt + "_\" + " + satt + " |--> " + tatt + " or alternative?"); 
+            String yn = 
                   JOptionPane.showInputDialog("Use this feature mapping or enter your alternative?: " + cnt + "_" + satt + " |--> " + tatt);
  
             if (yn != null)
@@ -2713,7 +2739,9 @@ public class ModelSpecification
     Vector s1atts = sent.allDefinedProperties();
     Vector s2atts = sent.getNonLocalFeatures(); 
     sattributes.addAll(s1atts); 
-    sattributes.addAll(s2atts); 
+    if (maxSourcePath > 1) 
+    { sattributes.addAll(s2atts); }
+ 
     System.out.println(">>> All attributes of " + sent + " are " + sattributes);
     Attribute selfattx = new Attribute("self", new Type(sent), ModelElement.INTERNAL); 
     selfattx.setType(new Type(sent)); 
@@ -2724,7 +2752,8 @@ public class ModelSpecification
     Vector t2atts = tent.getNonLocalFeatures(); 
     Vector tattributes = new Vector(); 
     tattributes.addAll(t1atts); 
-    tattributes.addAll(t2atts); 
+    if (maxTargetPath > 1)
+    { tattributes.addAll(t2atts); }  
 	 
     Vector res = new Vector();
 	 
@@ -2736,10 +2765,10 @@ public class ModelSpecification
       else 
       { continue; } 
 	  
-	  System.out.println(); 
-	  System.out.println(">> Unused target feature: " + tattname);
+      System.out.println(); 
+      System.out.println(">> Unused target feature: " + tattname);
 	   
-	  Vector satts = ModelMatching.findCompatibleSourceAttributes(tatt,sattributes,emx,ems); 
+      Vector satts = ModelMatching.findCompatibleSourceAttributes(tatt,sattributes,emx,ems); 
        boolean found = false; 
 	  
        for (int k = 0; k < satts.size() && !found; k++)   
@@ -2759,13 +2788,13 @@ public class ModelSpecification
 	      double[] tattvalues = new double[en]; 
 	      boolean alldefined = true; 
 		
-            for (int j = 0; j < en; j++) 
-		 { Vector pair = (Vector) pairs.get(j); 
-	        ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
-	        ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
-	        if (sobj.hasDefinedValue(sattname) && tobj.hasDefinedValue(tattname)) { } 
-	        else 
-	        { alldefined = false; } 
+           for (int j = 0; j < en; j++) 
+           { Vector pair = (Vector) pairs.get(j); 
+             ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+             ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+             if (sobj.hasDefinedValue(sattname) && tobj.hasDefinedValue(tattname)) { } 
+             else 
+             { alldefined = false; } 
              sattvalues[j] = sobj.getNumericValue(satt,this);
              tattvalues[j] = tobj.getNumericValue(tatt,this); 
     	      }
@@ -2777,7 +2806,7 @@ public class ModelSpecification
 	        emx.addMapping(amx);
 	        found = true;  
 	  	 }
-		 else if (alldefined && AuxMath.linearCorrelation(sattvalues,tattvalues) > 0.98)
+		 else if (alldefined && en > 2 &&  AuxMath.linearCorrelation(sattvalues,tattvalues) > 0.98)
             { double slope = AuxMath.linearSlope(); 
               double offset = AuxMath.linearOffset();
               slope = AuxMath.to3dp(slope); 
@@ -2793,52 +2822,80 @@ public class ModelSpecification
 		   lhsbe.setType(new Type("double", null));   
 		   AttributeMatching amx = new AttributeMatching(lhsbe, tatt); 
               res.add(amx); 
-		    emx.addMapping(amx);
-		    found = true;  
-	  	  }
-		  else if (alldefined && satt.isInteger() && tatt.isInteger() && AuxMath.isFunctional(sattvalues,tattvalues))
-		  { int possibleK = AuxMath.modFunction(sattvalues,tattvalues); 
-		    if (possibleK != 1)
-			{ System.out.println(">> " + sattname + " mod " + possibleK + " |--> " + tattname); 
-			  BasicExpression slopebe = new BasicExpression(possibleK); 
-			  BasicExpression sattbe = new BasicExpression(satt); 
-			  sattbe.setUmlKind(Expression.ATTRIBUTE); 
-			  BinaryExpression mbe = new BinaryExpression("mod", sattbe, slopebe);
-			  mbe.setType(new Type("int", null));   
-			  AttributeMatching amx = new AttributeMatching(mbe, tatt); 
+              emx.addMapping(amx);
+              found = true;  
+            }
+            else if (alldefined && satt.isInteger() && 
+              tatt.isInteger() && en > 2 &&
+              AuxMath.isFunctional(sattvalues,tattvalues))
+            { int possibleK = AuxMath.modFunction(sattvalues,tattvalues); 
+              if (possibleK != 1)
+               { System.out.println(">> " + sattname + " mod " + possibleK + " |--> " + tattname); 
+                 BasicExpression slopebe = new BasicExpression(possibleK); 
+                 BasicExpression sattbe = new BasicExpression(satt); 
+                 sattbe.setUmlKind(Expression.ATTRIBUTE); 
+                 BinaryExpression mbe = new BinaryExpression("mod", sattbe, slopebe);
+                 mbe.setType(new Type("int", null));   
+                 AttributeMatching amx = new AttributeMatching(mbe, tatt); 
 		      res.add(amx); 
 		      emx.addMapping(amx);
-			  found = true; 
-			}  
-			else 
-			{ possibleK = AuxMath.divFunction(sattvalues,tattvalues); 
-			  if (possibleK != 0)
-			  { System.out.println(">> " + sattname + " div " + possibleK + " |--> " + tattname); 
-			    BasicExpression slopebe = new BasicExpression(possibleK); 
-			    BasicExpression sattbe = new BasicExpression(satt); 
-				sattbe.setUmlKind(Expression.ATTRIBUTE);
-			    BinaryExpression mbe = new BinaryExpression("/", sattbe, slopebe);
-			    mbe.setType(new Type("int", null));   
-			    AttributeMatching amx = new AttributeMatching(mbe, tatt); 
+                 found = true; 
+               }  
+               else 
+               { possibleK = AuxMath.divFunction(sattvalues,tattvalues); 
+                 if (possibleK != 0)
+                 { System.out.println(">> " + sattname + " div " + possibleK + " |--> " + tattname); 
+                   BasicExpression slopebe = new BasicExpression(possibleK); 
+                   BasicExpression sattbe = new BasicExpression(satt); 
+                   sattbe.setUmlKind(Expression.ATTRIBUTE);
+                   BinaryExpression mbe = new BinaryExpression("/", sattbe, slopebe);
+                   mbe.setType(new Type("int", null));   
+                   AttributeMatching amx = new AttributeMatching(mbe, tatt); 
 		        res.add(amx); 
 		        emx.addMapping(amx);
-			    found = true;
-			  }  
-			}
+                   found = true;
+                 }  
+               }
 		  }
 	    }
-	    else if (satt.isString() && tatt.isString())
-	    { String[] sattvalues = new String[en]; 
-	      String[] tattvalues = new String[en];
-		  boolean alldefined = true; 
+	    else if (satt.isNumeric() && tatt.isNumericCollection())
+	    { double[] sattvalues = new double[en]; 
+	      Vector[] tattvalues = new Vector[en]; 
+	      boolean alldefined = true; 
 		
-          System.out.println(">> Checking string-to-string feature mapping " + satt + " |--> " + tatt); 
+           // JOptionPane.showInputDialog("Numeric to numeric collection mapping for: " + satt + " |--> " + tatt);
 
-  		  for (int j = 0; j < en; j++) 
-		  { Vector pair = (Vector) pairs.get(j); 
-		    ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
-		    ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
-		    if (sobj.hasDefinedValue(sattname) && tobj.hasDefinedValue(tattname)) { } 
+           for (int j = 0; j < en; j++) 
+           { Vector pair = (Vector) pairs.get(j); 
+             ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+             ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+             if (sobj.hasDefinedValue(sattname) && tobj.hasDefinedValue(tattname)) { } 
+	        else 
+	        { alldefined = false; } 
+             sattvalues[j] = sobj.getNumericValue(satt,this);
+             tattvalues[j] = tobj.getCollectionValue(tatt,this); 
+    	      }
+		
+		 if (alldefined && AuxMath.isCopy(sattvalues,tattvalues))
+	      { System.out.println(">> Singleton feature mapping " + sattname + " |--> " + tattname); 
+	        AttributeMatching amx = new AttributeMatching(satt, tatt); 
+	        res.add(amx); 
+	        emx.addMapping(amx);
+	        found = true;  
+	  	 }
+          }
+          else if (satt.isString() && tatt.isString())
+          { String[] sattvalues = new String[en]; 
+            String[] tattvalues = new String[en];
+            boolean alldefined = true; 
+		
+            System.out.println(">> Checking string-to-string feature mapping " + satt + " |--> " + tatt); 
+
+            for (int j = 0; j < en; j++) 
+            { Vector pair = (Vector) pairs.get(j); 
+              ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+              ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+              if (sobj.hasDefinedValue(sattname) && tobj.hasDefinedValue(tattname)) { } 
 		    else 
 		    { alldefined = false; } 
 		    sattvalues[j] = sobj.getString(sattname); // sobj.getStringValue(satt,this); 
@@ -2874,7 +2931,7 @@ public class ModelSpecification
 		    AttributeMatching amx = new AttributeMatching(lowerc, tatt); 
 		    res.add(amx); 
 		    emx.addMapping(amx); 
-			found = true; 
+              found = true; 
 		  }  
 	  	  else if (alldefined && AuxMath.isSuffixed(sattvalues,tattvalues))
 		  { String suff = AuxMath.commonSuffix(sattvalues,tattvalues); 
@@ -2963,122 +3020,148 @@ public class ModelSpecification
 			  removesuff.setElementType(new Type("String", null));  
 			  AttributeMatching amx = new AttributeMatching(removesuff, tatt); 
 		      res.add(amx); 
-		      emx.addMapping(amx);
-			  found = true;  
-			} 
+              emx.addMapping(amx);
+              found = true;  
+            } 
             else 
-			{ Vector prefs = AuxMath.allPrefixes(tattvalues,sattvalues); 
-			  System.out.println(">> all prefixes = " + prefs); 
-			  String csuff = AuxMath.longestCommonSuffix(prefs); 
-			  System.out.println(">> Longest common suffix = " + csuff); 
-			  if (csuff != null && csuff.length() > 0)
-			  { System.out.println(">> feature mapping " + sattname + "->after(\"" + csuff + "\") |--> " + tattname);
-			    BasicExpression sattbe = new BasicExpression(satt); 
-			    sattbe.setUmlKind(Expression.ATTRIBUTE);
+            { Vector prefs = AuxMath.allPrefixes(tattvalues,sattvalues); 
+              System.out.println(">> all prefixes = " + prefs); 
+              String csuff = AuxMath.longestCommonSuffix(prefs); 
+              System.out.println(">> Longest common suffix = " + csuff); 
+              if (csuff != null && csuff.length() > 0)
+              { System.out.println(">> feature mapping " + sattname + "->after(\"" + csuff + "\") |--> " + tattname);
+                BasicExpression sattbe = new BasicExpression(satt); 
+                sattbe.setUmlKind(Expression.ATTRIBUTE);
 		       
-		        BinaryExpression removepref = new BinaryExpression("->after", sattbe, 
+                BinaryExpression removepref = new BinaryExpression("->after", sattbe, 
 			                                                  new BasicExpression("\"" + csuff + "\"")); 
-			    removepref.setType(new Type("String", null));  
-			    removepref.setElementType(new Type("String", null));  
-			    AttributeMatching amx = new AttributeMatching(removepref, tatt); 
-		        res.add(amx); 
-		        emx.addMapping(amx);
-			    found = true;  
-			  } 
-			} 
-
-		  }
+                removepref.setType(new Type("String", null));  
+                removepref.setElementType(new Type("String", null));  
+                AttributeMatching amx = new AttributeMatching(removepref, tatt); 
+                res.add(amx); 
+                emx.addMapping(amx);
+                found = true;  
+              } 
+            } 
+          }
 		  // Or - identify a specific string-to-string mapping. Eg., "Real" |-> "double", etc. 
-		  else if (alldefined && AuxMath.isFunctional(sattvalues,tattvalues))
-		  { System.out.println(">>>> Create a specific string-to-string function for " + satt + " to " + tatt + " conversion?"); 
+          else if (alldefined && AuxMath.isFunctional(sattvalues,tattvalues))
+          { System.out.println(">>>> Create a specific string-to-string function for " + satt + " to " + tatt + " conversion?"); 
             for (int mk = 0; mk < en; mk++) 
             { System.out.println("  " + sattvalues[mk] + " |--> " + tattvalues[mk]); }
             String fname = "f" + sent + satt.underscoreName() + "2" + tent + tatt.underscoreName(); 
-			String yn = 
+            String yn = 
                    JOptionPane.showInputDialog("Create a String-to-String function " + fname + "? (y/n):");
 
             if (yn != null && "y".equals(yn))
             { TypeMatching newfunction = new TypeMatching(satt.getType(), tatt.getType()); 
-			  newfunction.setName(fname); 
+              newfunction.setName(fname); 
               newfunction.setStringValues(sattvalues,tattvalues);
               System.out.println(">>> New function: " + newfunction);
-			  BasicExpression fsatt = new BasicExpression(fname);
-			  fsatt.setUmlKind(Expression.QUERY);  
-			  BasicExpression sattbe = new BasicExpression(satt); 
-			  sattbe.setUmlKind(Expression.ATTRIBUTE);
+              BasicExpression fsatt = new BasicExpression(fname);
+              fsatt.setUmlKind(Expression.QUERY);  
+              BasicExpression sattbe = new BasicExpression(satt); 
+              sattbe.setUmlKind(Expression.ATTRIBUTE);
 		      
-			  fsatt.addParameter(sattbe); 
-			  fsatt.setType(new Type("String", null)); 
-			  fsatt.setElementType(new Type("String", null)); 
+              fsatt.addParameter(sattbe); 
+              fsatt.setType(new Type("String", null)); 
+              fsatt.setElementType(new Type("String", null)); 
 			    
-      	      AttributeMatching amx = new AttributeMatching(fsatt, tatt); 
+              AttributeMatching amx = new AttributeMatching(fsatt, tatt); 
               res.add(amx); 
               emx.addMapping(amx);
-			  tms.add(newfunction);
-			  found = true;   
-		    }  
-		  } 
-	    }	
-	    else if (satt.isBoolean() && tatt.isBoolean())
-	    { boolean[] sattvalues = new boolean[en]; 
-          boolean[] tattvalues = new boolean[en];
-  	      boolean alldefined = true; 
-		 
-	      for (int j = 0; j < en; j++) 
-		  { Vector pair = (Vector) pairs.get(j); 
-		    ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
-		    ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
-		    if (sobj.hasDefinedValue(sattname) && tobj.hasDefinedValue(tattname)) { } 
-		    else 
-		    { alldefined = false; } 
-		    sattvalues[j] = sobj.getBoolean(sattname); 
-            tattvalues[j] = tobj.getBoolean(tattname); 
-		  }
-		
-		  if (alldefined && AuxMath.isCopy(sattvalues,tattvalues))
- 		  { System.out.println(">> Copy feature mapping " + sattname + " |--> " + tattname); 
-		    AttributeMatching amx = new AttributeMatching(satt, tatt); 
-		    res.add(amx); 
-		    emx.addMapping(amx);
-			found = true;  
-		  }
-		  else if (alldefined && AuxMath.isNegation(sattvalues,tattvalues))
- 		  { System.out.println(">> Copy feature mapping not(" + sattname + ") |--> " + tattname);
-		    BasicExpression sattbe = new BasicExpression(satt); 
-	        sattbe.setUmlKind(Expression.ATTRIBUTE);
-		       
-		    UnaryExpression notatt = new UnaryExpression("not", sattbe);
-			notatt.setType(new Type("boolean", null));  
-			AttributeMatching amx = new AttributeMatching(notatt, tatt); 
-		    res.add(amx); 
-		    emx.addMapping(amx);
-			found = true;  
-		  }
-		} 
-	    else if (satt.isEntity() && tatt.isEntity())
-	    { ObjectSpecification[] sattvalues = new ObjectSpecification[en]; 
-          ObjectSpecification[] tattvalues = new ObjectSpecification[en];
-  	      boolean alldefined = true; 
-
-          System.out.println(">> Checking entity feature mapping " + satt + " |--> " + tatt); 
-						 	 
+              tms.add(newfunction);
+              found = true;   
+            }  
+          } 
+        }	
+        else if (satt.isString() && tatt.isStringCollection())
+        { String[] sattvalues = new String[en];     
+          Vector[] tattvalues = new Vector[en]; 
+          boolean alldefined = true;
+ 
           for (int j = 0; j < en; j++) 
           { Vector pair = (Vector) pairs.get(j); 
             ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
             ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
-            if (sobj.hasDefinedValue(satt,this) && tobj.hasDefinedValue(tattname)) { } 
+            if (sobj.hasDefinedValue(sattname) && tobj.hasDefinedValue(tattname)) { } 
             else 
             { alldefined = false; } 
-		    sattvalues[j] = sobj.getReferredObject(sattname,this); 
-            tattvalues[j] = tobj.getReferredObject(tattname,this); 
-		  }
+            sattvalues[j] = sobj.getStringValue(satt,this); 
+            tattvalues[j] = tobj.getCollectionValue(tatt,this); 
+          }
+	
+          // JOptionPane.showInputDialog("Create a String-to-String-set function " + alldefined + " " + satt + " " + tatt + "? (y/n):");
+        	
+          if (alldefined && AuxMath.isCopy(sattvalues,tattvalues))
+          { System.out.println(">> Copy String-to-StringSet mapping " + sattname + " |--> " + tattname); 
+            AttributeMatching amx = new AttributeMatching(satt, tatt); 
+            res.add(amx); 
+            emx.addMapping(amx); 
+            found = true; 
+          } 
+          // JOptionPane.showInputDialog("Create a String-to-String-set function " + satt + " " + tatt + "? (y/n):");
+        }   
+        else if (satt.isBoolean() && tatt.isBoolean())
+        { boolean[] sattvalues = new boolean[en]; 
+          boolean[] tattvalues = new boolean[en];
+          boolean alldefined = true; 
+		 
+          for (int j = 0; j < en; j++) 
+          { Vector pair = (Vector) pairs.get(j); 
+            ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+             ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+             if (sobj.hasDefinedValue(sattname) && tobj.hasDefinedValue(tattname)) { } 
+             else 
+             { alldefined = false; } 
+             sattvalues[j] = sobj.getBoolean(sattname); 
+             tattvalues[j] = tobj.getBoolean(tattname); 
+           }
 		
-		  if (alldefined && AuxMath.isCopy(sattvalues,tattvalues,this))
- 		  { System.out.println(">> Copy feature mapping " + sattname + " |--> " + tattname); 
-		    AttributeMatching amx = new AttributeMatching(satt, tatt); 
-		    res.add(amx); 
+           if (alldefined && AuxMath.isCopy(sattvalues,tattvalues))
+           { System.out.println(">> Copy feature mapping " + sattname + " |--> " + tattname); 
+             AttributeMatching amx = new AttributeMatching(satt, tatt); 
+             res.add(amx); 
+             emx.addMapping(amx);
+             found = true;  
+           }
+           else if (alldefined && AuxMath.isNegation(sattvalues,tattvalues))
+           { System.out.println(">> Copy feature mapping not(" + sattname + ") |--> " + tattname);
+             BasicExpression sattbe = new BasicExpression(satt); 
+             sattbe.setUmlKind(Expression.ATTRIBUTE);
+		       
+             UnaryExpression notatt = new UnaryExpression("not", sattbe);
+             notatt.setType(new Type("boolean", null));  
+             AttributeMatching amx = new AttributeMatching(notatt, tatt); 
+             res.add(amx); 
+             emx.addMapping(amx);
+             found = true;  
+           }
+         } 
+         else if (satt.isEntity() && tatt.isEntity())
+         { ObjectSpecification[] sattvalues = new ObjectSpecification[en]; 
+           ObjectSpecification[] tattvalues = new ObjectSpecification[en];
+           boolean alldefined = true; 
+
+           System.out.println(">> Checking entity feature mapping " + satt + " |--> " + tatt); 
+						 	 
+           for (int j = 0; j < en; j++) 
+           { Vector pair = (Vector) pairs.get(j); 
+             ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+             ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+             if (sobj.hasDefinedValue(satt,this) && tobj.hasDefinedValue(tattname)) { } 
+             else 
+             { alldefined = false; } 
+             sattvalues[j] = sobj.getReferredObject(sattname,this); 
+             tattvalues[j] = tobj.getReferredObject(tattname,this); 
+           }
+		
+           if (alldefined && AuxMath.isCopy(sattvalues,tattvalues,this))
+           { System.out.println(">> Copy feature mapping " + sattname + " |--> " + tattname); 
+             AttributeMatching amx = new AttributeMatching(satt, tatt); 
+             res.add(amx); 
 		    emx.addMapping(amx);
-			found = true;  
+               found = true;  
 		  }
 		} 
 	    else if (satt.isCollection() && tatt.isCollection())
@@ -3219,6 +3302,310 @@ public class ModelSpecification
 	return res; 
   }
 
+  public Vector identifyPrimitiveTypeAttributeMatchings(Entity sent, Entity tent, EntityMatching emx, Vector pairs, Vector ems, Vector tms)
+  { int en = pairs.size();  
+    if (en <= 1)
+    { return null; }
+	
+    Vector res = new Vector(); 
+
+    System.out.println(); 
+    System.out.println(">>>> Trying to identify type-conversion feature mappings for { " + emx.condition + " } " + sent + " |--> " + tent); 
+    System.out.println(); 
+
+    Vector sattributes = new Vector(); 
+
+    Vector s1atts = sent.allDefinedProperties();
+    Vector s2atts = sent.getNonLocalFeatures(); 
+    sattributes.addAll(s1atts); 
+    if (maxSourcePath > 1)
+    { sattributes.addAll(s2atts); }
+     
+    Vector tattributes = tent.allDefinedProperties(); 
+    Vector t2atts = tent.getNonLocalFeatures(); 
+    Vector tatts = new Vector(); 
+    tatts.addAll(tattributes); 
+    if (maxTargetPath > 1)
+    { tatts.addAll(t2atts); }  	 
+    
+    for (int i = 0; i < tatts.size(); i++)
+    { Attribute tatt = (Attribute) tatts.get(i);
+      String tattname = tatt.getName();
+      
+      if (emx.isUnusedTargetByName(tatt)) { }
+      else 
+      { continue; } 
+	
+      if (tatt.isValueType())
+      { } 
+      else 
+      { continue; } 
+  
+      System.out.println(); 
+      System.out.println(">> Unused target feature: " + tattname);
+      boolean found = false; 
+	   
+      for (int k = 0; k < sattributes.size() && !found; k++) 
+      { Attribute satt = (Attribute) sattributes.get(k);
+        if (satt.isPrimitiveType()) { } 
+        else 
+        { continue; } 
+
+        String sattname = satt.getName();  
+	 
+        System.out.println(">> Checking possible map " + satt + " : " + satt.getType() + 
+		                     " |--> " + tatt + " : " + tatt.getType()); 
+	   	  
+        if (satt.isBoolean() && tatt.isEnumeration())
+        { // functional relationship? 
+          boolean[] sattvalues = new boolean[en]; 
+          String[] tattvalues = new String[en];
+          boolean alldefined = true; 
+		 
+          for (int j = 0; j < en; j++) 
+          { Vector pair = (Vector) pairs.get(j); 
+            ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+            ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+            if (sobj.hasDefinedValue(sattname) && tobj.hasDefinedValue(tattname)) { } 
+            else 
+            { alldefined = false; } 
+            sattvalues[j] = (boolean) sobj.getActualValueOf(satt,this); 
+            tattvalues[j] = (String) tobj.getActualValueOf(tatt,this); 
+          }
+		
+          if (alldefined && AuxMath.isFunctional(sattvalues,tattvalues))
+          { System.out.println(">> Functional boolean-to-Enumeration mapping " + sattname + " |--> " + tattname); 
+            /* int acceptIt = JOptionPane.showConfirmDialog(null,
+"Accept this?", "Type conversion", JOptionPane.YES_NO_OPTION);
+            */ 
+
+            // if (acceptIt == JOptionPane.YES_OPTION)
+            { TypeMatching newfunction = new TypeMatching(satt.getType(), tatt.getType()); 
+              String fname = "convert_" + sent.getName() + satt.underscoreName() + "_to_" + tent.getName() + tatt.underscoreName(); 
+              newfunction.setName(fname); 
+           
+              newfunction.setValues(sattvalues, tattvalues);
+              BasicExpression fsatt = new BasicExpression(fname);
+              fsatt.setUmlKind(Expression.QUERY);  
+              BasicExpression sattbe = new BasicExpression(satt); 
+              sattbe.setUmlKind(Expression.ATTRIBUTE);
+		      
+              fsatt.addParameter(sattbe); 
+              fsatt.setType(new Type("String", null)); 
+              fsatt.setElementType(new Type("String", null)); 
+              tms.add(newfunction);
+
+              AttributeMatching amx = new AttributeMatching(fsatt, tatt); 
+              res.add(amx); 
+              emx.addMapping(amx);
+              System.out.println(">>> Added new function: " + newfunction);
+              found = true; 
+            }  
+          }
+        }
+        else if (satt.isEnumeration() && tatt.isBoolean())
+        { // functional relationship? 
+          String[] sattvalues = new String[en]; 
+          boolean[] tattvalues = new boolean[en];
+          boolean alldefined = true; 
+		 
+          for (int j = 0; j < en; j++) 
+          { Vector pair = (Vector) pairs.get(j); 
+            ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+            ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+            if (sobj.hasDefinedValue(sattname) && tobj.hasDefinedValue(tattname)) { } 
+            else 
+            { alldefined = false; } 
+            tattvalues[j] = (boolean) tobj.getActualValueOf(tatt,this); 
+            sattvalues[j] = (String) sobj.getActualValueOf(satt,this); 
+          }
+		
+          if (alldefined && AuxMath.isFunctional(sattvalues,tattvalues))
+          { System.out.println(">> Functional Enumeration-to-boolean mapping " + sattname + " |--> " + tattname); 
+            int acceptIt = JOptionPane.showConfirmDialog(null,
+"Accept this?", "Type conversion", JOptionPane.YES_NO_OPTION);
+            
+
+            if (acceptIt == JOptionPane.YES_OPTION)
+            { TypeMatching newfunction = new TypeMatching(satt.getType(), tatt.getType()); 
+              String fname = "convert_" + sent.getName() + satt.underscoreName() + "_to_" + tent.getName() + tatt.underscoreName(); 
+              newfunction.setName(fname); 
+           
+              newfunction.setValues(sattvalues, tattvalues);
+              BasicExpression fsatt = new BasicExpression(fname);
+              fsatt.setUmlKind(Expression.QUERY);  
+              BasicExpression sattbe = new BasicExpression(satt); 
+              sattbe.setUmlKind(Expression.ATTRIBUTE);
+		      
+              fsatt.addParameter(sattbe); 
+              fsatt.setType(new Type("boolean", null)); 
+              fsatt.setElementType(new Type("boolean", null)); 
+              tms.add(newfunction);
+
+              AttributeMatching amx = new AttributeMatching(fsatt, tatt); 
+              res.add(amx); 
+              emx.addMapping(amx);
+              System.out.println(">>> Added new function: " + newfunction);
+              found = true; 
+            }  
+          }
+        }
+        // and other cases, enum-to-enum, enum-to-boolean, etc 
+        else if (satt.isEnumeration() && tatt.isEnumeration())
+        { // functional relationship? 
+          String[] sattvalues = new String[en]; 
+          String[] tattvalues = new String[en];
+          boolean alldefined = true; 
+		 
+          for (int j = 0; j < en; j++) 
+          { Vector pair = (Vector) pairs.get(j); 
+            ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+            ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+            if (sobj.hasDefinedValue(sattname) && tobj.hasDefinedValue(tattname)) { } 
+            else 
+            { alldefined = false; } 
+            sattvalues[j] = (String) sobj.getActualValueOf(satt,this); 
+            tattvalues[j] = (String) tobj.getActualValueOf(tatt,this); 
+          }
+		
+          if (alldefined && AuxMath.isFunctional(sattvalues,tattvalues))
+          { System.out.println(">> Functional Enumeration-to-Enumeration mapping " + sattname + " |--> " + tattname); 
+            int acceptIt = JOptionPane.showConfirmDialog(null,
+"Accept this?", "Type conversion", JOptionPane.YES_NO_OPTION);
+             
+
+            if (acceptIt == JOptionPane.YES_OPTION)
+            { TypeMatching newfunction = new TypeMatching(satt.getType(), tatt.getType()); 
+              String fname = "convert_" + sent.getName() + satt.underscoreName() + "_to_" + tent.getName() + tatt.underscoreName(); 
+              newfunction.setName(fname); 
+           
+              newfunction.setStringValues(sattvalues, tattvalues);
+              BasicExpression fsatt = new BasicExpression(fname);
+              fsatt.setUmlKind(Expression.QUERY);  
+              BasicExpression sattbe = new BasicExpression(satt); 
+              sattbe.setUmlKind(Expression.ATTRIBUTE);
+		      
+              fsatt.addParameter(sattbe); 
+              fsatt.setType(new Type("String", null)); 
+              fsatt.setElementType(new Type("String", null)); 
+              tms.add(newfunction);
+
+              AttributeMatching amx = new AttributeMatching(fsatt, tatt); 
+              res.add(amx); 
+              emx.addMapping(amx);
+              System.out.println(">>> Added new function: " + newfunction);
+              found = true; 
+            }  
+          }
+        }
+        else if (satt.isNumeric() && tatt.isString())
+        { // functional relationship? 
+          double[] sattvalues = new double[en]; 
+          String[] tattvalues = new String[en];
+          boolean alldefined = true; 
+		 
+          // JOptionPane.showConfirmDialog(null,
+          // "Numeric to string mapping?", 
+          // "Type conversion", JOptionPane.YES_NO_OPTION);
+            
+          for (int j = 0; j < en; j++) 
+          { Vector pair = (Vector) pairs.get(j); 
+            ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+            ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+            if (sobj.hasDefinedValue(sattname) && tobj.hasDefinedValue(tattname)) { } 
+            else 
+            { alldefined = false; } 
+            sattvalues[j] = sobj.getNumericValue(satt,this); 
+            tattvalues[j] = (String) tobj.getActualValueOf(tatt,this); 
+          }
+		
+          if (alldefined && AuxMath.isFunctional(sattvalues,tattvalues))
+          { System.out.println(">> Functional numeric-to-String mapping " + sattname + " |--> " + tattname); 
+            int acceptIt = JOptionPane.showConfirmDialog(null,
+"Accept this?", "Type conversion", JOptionPane.YES_NO_OPTION);
+             
+
+            if (acceptIt == JOptionPane.YES_OPTION)
+            { TypeMatching newfunction = new TypeMatching(satt.getType(), tatt.getType()); 
+              String fname = "convert_" + sent.getName() + satt.underscoreName() + "_to_" + tent.getName() + tatt.underscoreName(); 
+              newfunction.setName(fname); 
+           
+              newfunction.setValues(sattvalues, tattvalues);
+              BasicExpression fsatt = new BasicExpression(fname);
+              fsatt.setUmlKind(Expression.QUERY);  
+              BasicExpression sattbe = new BasicExpression(satt); 
+              sattbe.setUmlKind(Expression.ATTRIBUTE);
+		      
+              fsatt.addParameter(sattbe); 
+              fsatt.setType(new Type("String", null)); 
+              fsatt.setElementType(new Type("String", null)); 
+              tms.add(newfunction);
+
+              AttributeMatching amx = new AttributeMatching(fsatt, tatt); 
+              res.add(amx); 
+              emx.addMapping(amx);
+              System.out.println(">>> Added new function: " + newfunction);
+              found = true; 
+            }  
+          }
+        }
+        else if (satt.isNumeric() && tatt.isStringCollection())
+        { // functional relationship? 
+          double[] sattvalues = new double[en]; 
+          Vector[] tattvalues = new Vector[en];
+          boolean alldefined = true; 
+		 
+          // JOptionPane.showConfirmDialog(null,
+          // "Functional numeric to string collection", 
+          // "Type conversion", JOptionPane.YES_NO_OPTION);
+            
+          for (int j = 0; j < en; j++) 
+          { Vector pair = (Vector) pairs.get(j); 
+            ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+            ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+            if (sobj.hasDefinedValue(sattname) && tobj.hasDefinedValue(tattname)) { } 
+            else 
+            { alldefined = false; } 
+            sattvalues[j] = sobj.getNumericValue(satt,this); 
+            tattvalues[j] = tobj.getCollectionValue(tatt,this); 
+          }
+		
+          if (alldefined && AuxMath.isFunctionalToSingletons(sattvalues,tattvalues))
+          { System.out.println(">> Functional numeric-to-String collection mapping " + sattname + " |--> " + tattname); 
+            int acceptIt = JOptionPane.showConfirmDialog(null,
+"Accept this?", "Type conversion", JOptionPane.YES_NO_OPTION);
+             
+
+            if (acceptIt == JOptionPane.YES_OPTION)
+            { TypeMatching newfunction = new TypeMatching(satt.getType(), tatt.getType()); 
+              String fname = "convert_" + sent.getName() + satt.underscoreName() + "_to_" + tent.getName() + tatt.underscoreName(); 
+              newfunction.setName(fname); 
+           
+              newfunction.setValues(sattvalues, tattvalues);
+              BasicExpression fsatt = new BasicExpression(fname);
+              fsatt.setUmlKind(Expression.QUERY);  
+              BasicExpression sattbe = new BasicExpression(satt); 
+              sattbe.setUmlKind(Expression.ATTRIBUTE);
+		      
+              fsatt.addParameter(sattbe); 
+              fsatt.setType(new Type("String", null)); 
+              fsatt.setElementType(new Type("String", null)); 
+              tms.add(newfunction);
+
+              AttributeMatching amx = new AttributeMatching(fsatt, tatt); 
+              amx.unionSemantics = true; 
+              res.add(amx); 
+              emx.addMapping(amx);
+              System.out.println(">>> Added new function: " + newfunction);
+              found = true; 
+            }  
+          }
+        }
+      } 
+    } 
+    return res; 
+  } 
+
   public Vector identifyManyToOneAttributeMatchings(Entity sent, Entity tent, EntityMatching emx, Vector pairs, Vector ems)
   { int en = pairs.size();  
     if (en <= 1)
@@ -3233,7 +3620,8 @@ public class ModelSpecification
     Vector s1atts = sent.allDefinedProperties();
     Vector s2atts = sent.getNonLocalFeatures(); 
     sattributes.addAll(s1atts); 
-    sattributes.addAll(s2atts); 
+    if (maxSourcePath > 1)
+    { sattributes.addAll(s2atts); }  
      
     Vector tattributes = tent.allDefinedProperties(); 
     Vector res = new Vector();
@@ -3248,7 +3636,7 @@ public class ModelSpecification
 	  
       System.out.println(); 
       System.out.println(">> Unused target feature: " + tattname);
-	  boolean found = false; 
+      boolean found = false; 
 	   
       Vector satts = ModelMatching.findBaseTypeCompatibleSourceAttributes(tatt,sattributes,emx,ems); 
 
@@ -3258,6 +3646,11 @@ public class ModelSpecification
 	 
         System.out.println(">> Checking possible map " + satt + " : " + satt.getType() + 
 		                     " |--> " + tatt + " : " + tatt.getType()); 
+
+        // JOptionPane.showConfirmDialog(null,
+        // "" + sattname + " to " + tattname, 
+        // "Many-to-one", JOptionPane.YES_NO_OPTION);
+             
 	   	  
         if (satt.isNumeric() && tatt.isNumeric())
         { double[] sattvalues = new double[en]; 
@@ -3280,10 +3673,10 @@ public class ModelSpecification
             AttributeMatching amx = new AttributeMatching(satt, tatt); 
             res.add(amx); 
             emx.addMapping(amx);
-			found = true;  // no need to look for another satt for tatt 
+            found = true;  // no need to look for another satt for tatt 
           }
         }   
-        else if (satt.isCollection() && tatt.isNumeric())
+        else if (satt.isNumericCollection() && tatt.isNumeric())
         { Vector[] sattvalues = new Vector[en]; 
           Vector[] tattvalues = new Vector[en]; 
           boolean alldefined = true; 
@@ -3360,7 +3753,7 @@ public class ModelSpecification
             found = true;  
           }
         }   
-        else if (satt.isCollection() && tatt.isString())
+        else if (satt.isStringCollection() && tatt.isString())
         { Vector[] sattvalues = new Vector[en]; 
           Vector[] tattvalues = new Vector[en]; 
           boolean alldefined = true; 
@@ -3420,6 +3813,9 @@ public class ModelSpecification
           Vector[] tattvalues = new Vector[en];
           boolean alldefined = true; 
 	
+          // JOptionPane.showConfirmDialog(null,
+          // "collection-to-collection", 
+          // sattname + "|-->" + tattname, JOptionPane.YES_NO_OPTION);
 							 	 
           for (int j = 0; j < en; j++) 
           { Vector pair = (Vector) pairs.get(j); 
@@ -3429,12 +3825,12 @@ public class ModelSpecification
             else 
             { alldefined = false; } 
             sattvalues[j] = sobj.getCollectionValue(satt,this); 
-	        tattvalues[j] = tobj.getCollectionValue(tatt,this); 
+            tattvalues[j] = tobj.getCollectionValue(tatt,this); 
           }
 		
           if (alldefined &&
-            satt.isSet() && tatt.isSet() && 
-            AuxMath.isCopySets(sattvalues,tattvalues,this))
+              satt.isSet() && tatt.isSet() && 
+              AuxMath.isCopySets(sattvalues,tattvalues,this))
           { System.out.println(">> Copy set feature mapping " + sattname + " |--> " + tattname); 
             AttributeMatching amx = new AttributeMatching(satt, tatt); 
             res.add(amx); 
@@ -3451,12 +3847,17 @@ public class ModelSpecification
             found = true;  
           }
         } // ->flatten() and ->reverse() cases. 
-        else if (satt.isCollection() && tatt.isEntity())
+        else if (satt.isEntityCollection() && tatt.isEntity())
         { Vector[] sattvalues = new Vector[en]; 
           Vector[] tattvalues = new Vector[en];
           boolean alldefined = true; 
 	
-							 	 
+          // JOptionPane.showConfirmDialog(null,
+          // "Entity-coll-to-entity", 
+          // sattname + "|-->" + tattname, 
+          // JOptionPane.YES_NO_OPTION);
+             
+					 	 
           for (int j = 0; j < en; j++) 
           { Vector pair = (Vector) pairs.get(j); 
             ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
@@ -3473,15 +3874,20 @@ public class ModelSpecification
           }
 		
           if (alldefined && AuxMath.isCopySets(sattvalues,tattvalues,this))
-          { System.out.println(">> Collection-to-object feature mapping " + sattname + "->any() |--> " + tattname); 
-            BasicExpression sattbe = new BasicExpression(satt);
-            sattbe.setUmlKind(Expression.ROLE);  
-            UnaryExpression anysatt = new UnaryExpression("->any", sattbe);
-            anysatt.setType(satt.getElementType());  
-            AttributeMatching amx = new AttributeMatching(anysatt, tatt); 
-            res.add(amx); 
-            emx.addMapping(amx);
-            found = true;  
+          { System.out.println(">> Collection-to-object feature mapping " + sattname + "->any() |--> " + tattname);
+            int acceptIt = JOptionPane.showConfirmDialog(null,
+"Accept this?", "Imprecise: RHS <: LHS", JOptionPane.YES_NO_OPTION);
+            if (acceptIt == JOptionPane.YES_OPTION) 
+            { 
+              BasicExpression sattbe = new BasicExpression(satt);
+              sattbe.setUmlKind(Expression.ROLE);  
+              UnaryExpression anysatt = new UnaryExpression("->any", sattbe);
+              anysatt.setType(satt.getElementType());  
+              AttributeMatching amx = new AttributeMatching(anysatt, tatt); 
+              res.add(amx); 
+              emx.addMapping(amx);
+              found = true;
+            }  
           }
         } 
       }   
@@ -3505,7 +3911,9 @@ public class ModelSpecification
     Vector s1atts = sent.allDefinedProperties();
     Vector s2atts = sent.getNonLocalFeatures(); 
     sattributes.addAll(s1atts); 
-    sattributes.addAll(s2atts); 
+    if (maxSourcePath > 1)
+    { sattributes.addAll(s2atts); } 
+
     Attribute selfatt = new Attribute("self", new Type(sent), ModelElement.INTERNAL); 
     selfatt.setType(new Type(sent)); 
     selfatt.setElementType(new Type(sent)); 
@@ -3536,19 +3944,19 @@ public class ModelSpecification
         { Attribute satt1 = (Attribute) satts.get(p);  
           String satt1name = satt1.getName(); 
 	 
-          System.out.println(">> Checking possible map " + satt + " : " + satt.getType() + " ->op " + satt1 + " : " + 
+          System.out.println(">> Checking possible maps " + satt + " : " + satt.getType() + " ->op " + satt1 + " : " + 
 		                     satt1.getType() + 
 		                     " |--> " + tatt + " : " + tatt.getType());
-	      if (satt.isNumeric() && satt1.isNumeric() && tatt.isNumeric())
-	      { double[] sattvalues = new double[en];
-              double[] satt1values = new double[en];
-		    double[] tattvalues = new double[en];
-		    boolean alldefined = true; 
+           if (satt.isNumeric() && satt1.isNumeric() && tatt.isNumeric())
+           { double[] sattvalues = new double[en];
+             double[] satt1values = new double[en];
+             double[] tattvalues = new double[en];
+             boolean alldefined = true; 
 		
-		    BasicExpression sattbe = new BasicExpression(satt); 
-			sattbe.setUmlKind(Expression.ATTRIBUTE); 
-			BasicExpression satt1be = new BasicExpression(satt1); 
-			satt1be.setUmlKind(Expression.ATTRIBUTE); 
+             BasicExpression sattbe = new BasicExpression(satt); 
+             sattbe.setUmlKind(Expression.ATTRIBUTE); 
+             BasicExpression satt1be = new BasicExpression(satt1); 
+             satt1be.setUmlKind(Expression.ATTRIBUTE); 
 		        
             for (int j = 0; j < en; j++) 
             { Vector pair = (Vector) pairs.get(j); 
@@ -3571,28 +3979,28 @@ public class ModelSpecification
               found = true;
             }
             else if (alldefined && AuxMath.isNumericProduct(sattvalues,satt1values,tattvalues))
-			{ BinaryExpression add1st = new BinaryExpression("*", sattbe, satt1be); 
-			  AttributeMatching amx = new AttributeMatching(add1st, tatt); 
-		      res.add(amx); 
-		      emx.addMapping(amx); 
+            { BinaryExpression add1st = new BinaryExpression("*", sattbe, satt1be); 
+              AttributeMatching amx = new AttributeMatching(add1st, tatt); 
+              res.add(amx); 
+              emx.addMapping(amx); 
               found = true;
-			}
-	  	    else if (alldefined && AuxMath.isNumericSubtraction(sattvalues,satt1values,tattvalues))
-			{ BinaryExpression add1st = new BinaryExpression("-", sattbe, satt1be); 
-			  AttributeMatching amx = new AttributeMatching(add1st, tatt); 
-		      res.add(amx); 
-		      emx.addMapping(amx); 
+            }
+            else if (alldefined && AuxMath.isNumericSubtraction(sattvalues,satt1values,tattvalues))
+            { BinaryExpression add1st = new BinaryExpression("-", sattbe, satt1be); 
+              AttributeMatching amx = new AttributeMatching(add1st, tatt); 
+              res.add(amx); 
+              emx.addMapping(amx); 
               found = true;
-			}
-	  	    else if (alldefined && AuxMath.isNumericDivision(sattvalues,satt1values,tattvalues))
-			{ BinaryExpression add1st = new BinaryExpression("/", sattbe, satt1be); 
-			  AttributeMatching amx = new AttributeMatching(add1st, tatt); 
-		      res.add(amx); 
-		      emx.addMapping(amx); 
+            }
+            else if (alldefined && AuxMath.isNumericDivision(sattvalues,satt1values,tattvalues))
+            { BinaryExpression add1st = new BinaryExpression("/", sattbe, satt1be); 
+              AttributeMatching amx = new AttributeMatching(add1st, tatt); 
+              res.add(amx); 
+              emx.addMapping(amx); 
               found = true;
-			}
-		  } 
-	      else if (satt.isString() && satt1.isString() && tatt.isString())
+            }
+          } 
+          else if (satt.isString() && satt1.isString() && tatt.isString())
 	      { String[] sattvalues = new String[en]; 
             String[] satt1values = new String[en]; 
 	        String[] tattvalues = new String[en];
@@ -3653,6 +4061,67 @@ public class ModelSpecification
                  }
                }  
 		  }
+		  else if (satt.isCollection() && satt1.isEntity() && tatt.isCollection())
+             { // could be satt->including(satt1)  |--> tatt
+               // or satt->excluding(satt1) |--> tatt
+
+               Vector[] sattvalues = new Vector[en]; 
+               ObjectSpecification[] satt1values = new ObjectSpecification[en]; 
+               Vector[] tattvalues = new Vector[en];
+               boolean alldefined = true; 
+	
+							 	 
+               for (int j = 0; j < en; j++) 
+               { Vector pair = (Vector) pairs.get(j); 
+                 ObjectSpecification sobj = (ObjectSpecification) pair.get(0); 
+                 ObjectSpecification tobj = (ObjectSpecification) pair.get(1); 
+                 if (sobj.hasDefinedValue(satt,this) && sobj.hasDefinedValue(satt1,this) && tobj.hasDefinedValue(tattname)) { } 
+                 else 
+                 { alldefined = false; } 
+                 sattvalues[j] = sobj.getCollectionValue(satt,this);
+                 satt1values[j] = sobj.getObjectValue(satt1,this); 
+                 tattvalues[j] = tobj.getCollectionValue(tatt,this); 
+               }
+
+               BasicExpression sattbe = new BasicExpression(satt); 
+               sattbe.setUmlKind(Expression.ATTRIBUTE); 
+               BasicExpression satt1be = new BasicExpression(satt1); 
+               satt1be.setUmlKind(Expression.ATTRIBUTE); 
+			   
+               if (tatt.isSequence() && satt.isSequence() && 
+                   AuxMath.isAppendSequences(sattvalues,satt1values,tattvalues,this))
+               { System.out.println(">> Concatenation feature mapping " + sattname + "->append(" + satt1name + ") |--> " + tattname); 
+                 BinaryExpression add1st = new BinaryExpression("->append", sattbe, satt1be); 
+                 add1st.setType(satt.getType()); 
+                 add1st.setElementType(satt.getElementType());  
+                 AttributeMatching amx = new AttributeMatching(add1st, tatt); 
+                 res.add(amx); 
+                 emx.addMapping(amx); 
+                 found = true; 
+               }
+               else if (tatt.isSet() && satt.isSet() && 
+                   AuxMath.isIncludingSets(sattvalues,satt1values,tattvalues,this))
+               { System.out.println(">> Set union feature mapping " + sattname + "->including(" + satt1name + ") |--> " + tattname); 
+                 BinaryExpression add1st = new BinaryExpression("->incuding", sattbe, satt1be); 
+                 add1st.setType(satt.getType()); 
+                 add1st.setElementType(satt.getElementType());  
+                 AttributeMatching amx = new AttributeMatching(add1st, tatt); 
+                 res.add(amx); 
+                 emx.addMapping(amx); 
+                 found = true; 
+               }
+               else if (tatt.isSet() && satt.isSet() && 
+                   AuxMath.isExcludingSets(sattvalues,satt1values,tattvalues,this))
+               { System.out.println(">> Set subtraction feature mapping " + sattname + "->excluding(" + satt1name + ") |--> " + tattname); 
+                 BinaryExpression add1st = new BinaryExpression("->excluding", sattbe, satt1be); 
+                 add1st.setType(satt.getType()); 
+                 add1st.setElementType(satt.getElementType());  
+                 AttributeMatching amx = new AttributeMatching(add1st, tatt); 
+                 res.add(amx); 
+                 emx.addMapping(amx); 
+                 found = true; 
+               }
+             }
 		  else if (satt.isCollection() && satt1.isCollection() && tatt.isCollection())
              { // could be satt->union(satt1)  |--> tatt
                Vector[] sattvalues = new Vector[en]; 
@@ -3691,7 +4160,7 @@ public class ModelSpecification
                }
                else if (tatt.isSet() && satt.isSet() && 
                    AuxMath.isUnionSets(sattvalues,satt1values,tattvalues,this))
-               { System.out.println(">> Union feature mapping " + sattname + "->union(" + satt1name + ") |--> " + tattname); 
+               { System.out.println(">> Set union feature mapping " + sattname + "->union(" + satt1name + ") |--> " + tattname); 
                  BinaryExpression add1st = new BinaryExpression("->union", sattbe, satt1be); 
                  add1st.setType(satt.getType()); 
 			   add1st.setElementType(satt.getElementType());  
@@ -3713,7 +4182,7 @@ public class ModelSpecification
                } 
                else if (tatt.isSet() && satt1.isSet() &&  
                       AuxMath.isUnionSets(satt1values,sattvalues,tattvalues,this))
-               { System.out.println(">> Union feature mapping " + satt1name + "->union(" + sattname + ") |--> " + tattname); 
+               { System.out.println(">> Set union feature mapping " + satt1name + "->union(" + sattname + ") |--> " + tattname); 
                  BinaryExpression add1st = new BinaryExpression("->union", satt1be, sattbe);
                  add1st.setType(satt1.getType()); 
 			   add1st.setElementType(satt1.getElementType());  
@@ -3748,7 +4217,8 @@ public class ModelSpecification
     Vector s1atts = sent.allDefinedProperties();
     Vector s2atts = sent.getNonLocalFeatures(); 
     sattributes.addAll(s1atts); 
-    sattributes.addAll(s2atts); 
+    if (maxSourcePath > 1)
+    { sattributes.addAll(s2atts); }  
 	
 	System.out.println(">> All source attributes are: " + sattributes); 
      
@@ -3881,7 +4351,7 @@ public class ModelSpecification
       if (cexpr != null) 
       { System.out.println(">>> Composed string function " + cexpr + " |--> " + tatt); 
         AttributeMatching amx = new AttributeMatching(cexpr, tatt);
-		emx.addMapping(amx);  
+        emx.addMapping(amx);  
         res.add(amx); 
       }
     }
@@ -3904,8 +4374,9 @@ public class ModelSpecification
 
     Vector s1atts = tent.allDefinedProperties();
     Vector s2atts = tent.getNonLocalFeatures(); 
-    sattributes.addAll(s1atts); 
-    sattributes.addAll(s2atts); 
+    sattributes.addAll(s1atts);
+    if (maxTargetPath > 1) 
+    { sattributes.addAll(s2atts); }  
 	
     System.out.println(">> All source attributes are: " + sattributes); 
      
@@ -4196,16 +4667,16 @@ public class ModelSpecification
            sumsatt.setType(new Type("String", null));  
            sumsatt.setElementType(new Type("String", null));  
 		   
-		   Vector tailtvalues = new Vector();
-		   boolean allEmpty = true;  
-		   for (int q = 0; q < en; q++)
-		   { tailtvalues.add(newtvalues[q]); 
-		     if (newtvalues[q] != null && newtvalues[q].length() > 0) 
-		     { allEmpty = false; }
-		   } 
+           Vector tailtvalues = new Vector();
+           boolean allEmpty = true;  
+           for (int q = 0; q < en; q++)
+           { tailtvalues.add(newtvalues[q]); 
+             if (newtvalues[q] != null && newtvalues[q].length() > 0) 
+             { allEmpty = false; }
+           } 
 		   
-          if (allEmpty) // no tail
-          { return sumsatt; }
+           if (allEmpty) // no tail
+           { return sumsatt; }
 		    
            Expression subexpr = composedStringFunction(tatt,sourceatts,sattvalueMap,newtvalues,tailtvalues,tms); 
 	  
@@ -4232,27 +4703,28 @@ public class ModelSpecification
       // BasicExpression sattbe = new BasicExpression(satt); 
       // sattbe.setUmlKind(Expression.ATTRIBUTE);
       // Remove the common prefix from the targetValues and tattvalues and recurse, prepend the prefix to the result:
+
       Vector removedtvalues = AuxMath.removeCommonPrefix(tvalues,cpref); 
       System.out.println(">> removed prefix " + cpref + " of target values = " + removedtvalues); 
        
       int vlen = targetValues.length; 
       String[] newTargetValues = new String[vlen];  
 
-	  for (int i = 0; i < vlen && i < removedtvalues.size(); i++) 
-	  { newTargetValues[i] = (String) removedtvalues.get(i); }
+      for (int i = 0; i < vlen && i < removedtvalues.size(); i++) 
+      { newTargetValues[i] = (String) removedtvalues.get(i); }
 	  
 	  Expression subexpr = composedStringFunction(tatt,sourceatts,sattvalueMap,newTargetValues,removedtvalues,tms); 
 	  
-	  if (subexpr != null)
-      { BasicExpression prefexpr = new BasicExpression("\"" + cpref + "\"");  
-        prefexpr.setType(new Type("String", null));  
-        prefexpr.setElementType(new Type("String", null));  
-        Expression res = new BinaryExpression("+", prefexpr, subexpr); 
-        res.setType(new Type("String", null));  
-        res.setElementType(new Type("String", null));
-        return res; 
-      }  
-	}
+       if (subexpr != null)
+       { BasicExpression prefexpr = new BasicExpression("\"" + cpref + "\"");  
+         prefexpr.setType(new Type("String", null));  
+         prefexpr.setElementType(new Type("String", null));  
+         Expression res = new BinaryExpression("+", prefexpr, subexpr); 
+         res.setType(new Type("String", null));  
+         res.setElementType(new Type("String", null));
+         return res; 
+       }  
+     }
     // Do targetValues have a common suffix? If so, remove it and recursively check the remainder of the targetValues
 	
     String csuff = AuxMath.longestCommonSuffix(tvalues); 
@@ -4279,20 +4751,21 @@ public class ModelSpecification
         res.setElementType(new Type("String", null));
         return res; 
       }  
-	} 
+    } 
 
-	for (int i = 0; i < sourceatts.size(); i++) 
-	{ Attribute satt = (Attribute) sourceatts.get(i); 
+    for (int i = 0; i < sourceatts.size(); i++) 
+    { Attribute satt = (Attribute) sourceatts.get(i); 
 	  // check if tatt = f(satt) for custom function, either already defined or new
 
-       if (satt.isCollection()) 
-       { continue; }
+      if (satt.isCollection()) 
+      { continue; }
 	  
       String[] sattvalues = (String[]) sattvalueMap.get(satt); 
       int en = sattvalues.length; 
 	  	   
       if (AuxMath.isFunctional(sattvalues,targetValues))
       { System.out.println(">>>> Create or reuse a specific string-to-string function for " + satt + " to " + tatt + " conversion?"); 
+
         for (int mk = 0; mk < en; mk++) 
         { System.out.println("  " + sattvalues[mk] + " |--> " + targetValues[mk]); }
           Entity sent = satt.getOwner(); 
@@ -4303,25 +4776,25 @@ public class ModelSpecification
 		TypeMatching newfunction = null; 
 		TypeMatching tm = TypeMatching.lookupByName(fname,tms); 
 		if (tm != null) 
-		{ System.out.println(">> Use this existing type matching?: " + tm); 
-          String yn = 
+           { System.out.println(">> Use this existing type matching?: " + tm); 
+             String yn = 
                    JOptionPane.showInputDialog("Use the String-to-String function " + fname + "? (y/n):");
-		  if (yn != null && "y".equals(yn))
-          { newfunction = tm; 
-            BasicExpression fsatt = new BasicExpression(fname);
-            fsatt.setUmlKind(Expression.QUERY);  
-            BasicExpression sattbe = new BasicExpression(satt); 
-            sattbe.setUmlKind(Expression.ATTRIBUTE);
+             if (yn != null && "y".equals(yn))
+             { newfunction = tm; 
+               BasicExpression fsatt = new BasicExpression(fname);
+               fsatt.setUmlKind(Expression.QUERY);  
+               BasicExpression sattbe = new BasicExpression(satt); 
+               sattbe.setUmlKind(Expression.ATTRIBUTE);
 		      
-            fsatt.addParameter(sattbe); 
-            fsatt.setType(new Type("String", null)); 
-            fsatt.setElementType(new Type("String", null)); 
-            return fsatt; 
-          }  
-        } 
+               fsatt.addParameter(sattbe); 
+               fsatt.setType(new Type("String", null)); 
+               fsatt.setElementType(new Type("String", null)); 
+               return fsatt; 
+             }  
+           } 
 		
-         String yn2 = 
-            JOptionPane.showInputDialog("Create a custom String-to-String function " + fname + "? (y/n):");
+           String yn2 = 
+              JOptionPane.showInputDialog("Create a custom String-to-String function " + fname + "? (y/n):");
 
         if (yn2 != null && "y".equals(yn2))
         { newfunction = new TypeMatching(satt.getType(), tatt.getType()); 
@@ -4371,7 +4844,9 @@ public class ModelSpecification
     Vector s1atts = sent.allDefinedProperties();
     Vector s2atts = sent.getNonLocalFeatures(); 
     sattributes.addAll(s1atts); 
-    sattributes.addAll(s2atts); 
+    if (maxSourcePath > 1)
+    { sattributes.addAll(s2atts); } 
+
     Attribute selfatt = new Attribute("self", new Type(sent), ModelElement.INTERNAL); 
     selfatt.setType(new Type(sent)); 
     selfatt.setElementType(new Type(sent)); 
@@ -4651,7 +5126,9 @@ public class ModelSpecification
     Vector s1atts = sent.allDefinedProperties();
     Vector s2atts = sent.getNonLocalFeatures(); 
     sattributes.addAll(s1atts); 
-    sattributes.addAll(s2atts); 
+    if (maxSourcePath > 1)
+    { sattributes.addAll(s2atts); }
+ 
     Attribute selfatt = new Attribute("self", new Type(sent), ModelElement.INTERNAL); 
     selfatt.setType(new Type(sent)); 
     selfatt.setElementType(new Type(sent)); 
@@ -4796,21 +5273,27 @@ public class ModelSpecification
         System.out.println(">> removed the " + satt + " elements, leaving remainders: " + remd);
         System.out.println(); 
 		
+        boolean changed = false; 
         int vlen = targetValues.length; 
         Vector[] newTargetValues = new Vector[vlen];  
         for (int j = 0; j < vlen && j < remd.size(); j++) 
-        { newTargetValues[j] = (Vector) remd.get(j); }
+        { newTargetValues[j] = (Vector) remd.get(j); 
+          if (newTargetValues[j].size() != targetValues[j].size())
+          { changed = true; }
+        } 
 	
-        Expression subexpr = composedSetFunction(tatt,sourceatts,sattvalueMap,newTargetValues,remd); 
+        if (changed == true)
+        { Expression subexpr = composedSetFunction(tatt,sourceatts,sattvalueMap,newTargetValues,remd); 
 	  
-        if (subexpr != null)
-        { BasicExpression sattbe = new BasicExpression(satt); 
-          sattbe.setUmlKind(Expression.ATTRIBUTE);
-          BinaryExpression addsuff = new BinaryExpression("->including", subexpr, sattbe); 
-          addsuff.setType(new Type("Set", null));  
-          addsuff.setElementType(satt.getElementType());
-          return addsuff; 
-        }    
+          if (subexpr != null)
+          { BasicExpression sattbe = new BasicExpression(satt); 
+            sattbe.setUmlKind(Expression.ATTRIBUTE);
+            BinaryExpression addsuff = new BinaryExpression("->including", subexpr, sattbe); 
+            addsuff.setType(new Type("Set", null));  
+            addsuff.setElementType(satt.getElementType());
+            return addsuff; 
+          }   
+        }  
       }
     } 
 

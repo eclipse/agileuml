@@ -1330,6 +1330,7 @@ public class Compiler2
             } 
           } 
           CGRule res = new CGRule(lhsexp,rhs);
+
           System.out.println("Variables of rule " + res + " are: " + res.variables);  
           return res; 
         } 
@@ -1433,7 +1434,10 @@ public class Compiler2
               Vector conds = parse_conditions(conditions); 
               String rhstext = rhs.substring(0,j); 
               CGRule r = new CGRule(lhs,rhstext,variables,conds); 
-              r.setLHSTokens(tokens); 
+              r.setLHSTokens(tokens);
+              System.out.println(">***> Rule variables are: " + r.variables); 
+              System.out.println(">***> Rule metafeatures are: " + r.metafeatures); 
+ 
               return r; 
             } 
             else if (d == '<' && j+7 < rhs.length() &&
@@ -1450,6 +1454,10 @@ public class Compiler2
           } 
           CGRule res = new CGRule(lhs,rhs,variables,new Vector()); 
           res.setLHSTokens(tokens); 
+ 
+          System.out.println(">***> Rule variables are: " + res.variables); 
+          System.out.println(">***> Rule metafeatures are: " + res.metafeatures); 
+ 
           return res; 
         } 
       } 
@@ -3087,23 +3095,23 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
   { ASTTerm res = null; 
     String lex = lexicals.get(st) + ""; 
 	
-	if ("(".equals(lex) && ")".equals(lexicals.get(en) + "")) {}
-	else 
-	{ return null; }
+    if ("(".equals(lex) && ")".equals(lexicals.get(en) + "")) {}
+    else 
+    { return null; }
 	
-	String tag = lexicals.get(st+1) + ""; 
-	String value = lexicals.get(en-1) + ""; 
+    String tag = lexicals.get(st+1) + ""; 
+    String value = lexicals.get(en-1) + ""; 
 	
-	if (st+3 >= en && isSimpleIdentifier(tag))
-	{ res = new ASTBasicTerm(tag,value); 
-	  return res; 
-	}
+    if (st+3 >= en && isSimpleIdentifier(tag))
+    { res = new ASTBasicTerm(tag,value); 
+      return res; 
+    }
 	
-	Vector subtrees = parseGeneralASTSequence(st+2, en-1); 
-	if (subtrees != null) 
-	{ res = new ASTCompositeTerm(tag,subtrees); }
+    Vector subtrees = parseGeneralASTSequence(st+2, en-1); 
+    if (subtrees != null) 
+    { res = new ASTCompositeTerm(tag,subtrees); }
 
-	return res; 
+    return res; 
   }
 
   public Vector parseGeneralASTSequence(int st, int en) 
@@ -3111,19 +3119,19 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     // #opening brackets must = #closing
 	
     Vector res = new Vector(); 
-	if (st > en)
-	{ return res; }
+    if (st > en)
+    { return res; }
 	
-	String lex = lexicals.get(st) + ""; 
+    String lex = lexicals.get(st) + ""; 
 	
-	if (st == en) 
-	{ ASTSymbolTerm sym = new ASTSymbolTerm(lex); 
-	  res.add(sym); 
+    if (st == en) 
+    { ASTSymbolTerm sym = new ASTSymbolTerm(lex); 
+      res.add(sym); 
       return res; 
     }
 	
-	if ("(".equals(lex) && st < en && isSimpleIdentifier(lexicals.get(st+1) + ""))
-	{ // we expect an ASTTerm followed by the rest of the sequence
+    if ("(".equals(lex) && st < en && isSimpleIdentifier(lexicals.get(st+1) + ""))
+    { // we expect an ASTTerm followed by the rest of the sequence
 	  int ocount = 1; 
 	  int ccount = 0; 
 	  
@@ -7616,14 +7624,19 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 	//     { String lex2 = lexicals.get(j) + ""; 
 	// 	  if ("Dependency".equals(lex2) && j+1 < en && "parse".equals(lexicals.get(j+1) + ""))
 	
-	System.out.println(); 
-	System.out.println(">>> Trying to parse " + showLexicals(0,en-1)); 
-	
-    NLPSentence res = parseRoot(0,en-1); 
-	if (res == null) 
-	{ System.err.println("!! Failed to parse sentence"); }
-    return res; 
-  }
+   System.out.println(); 
+   System.out.println(">>> Trying to parse " + showLexicals(0,en-1)); 
+
+   // ASTTerm r1 = parseGeneralAST(0, en-1); 
+   System.out.println(); 
+
+   // System.out.println(">>> As general AST: " + r1); 
+  
+   NLPSentence res = parseRoot(0,en-1); 
+   if (res == null) 
+   { System.err.println("!! Failed to parse sentence"); }
+   return res; 
+ }
 	//	} 
 	//  } 
 	// }
@@ -7676,17 +7689,17 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
   public NLPPhrase parsePhrase(int st, int en) 
   { String lex0 = "" + lexicals.get(st); 
     String lex1 = "" + lexicals.get(en); 
-	if (en == st + 7 && "(".equals(lex0) && ")".equals(lex1) && 
+    if (en == st + 7 && "(".equals(lex0) && ")".equals(lex1) && 
 	         "-".equals(lexicals.get(st+1) + "") && "-".equals(lexicals.get(en-1) + ""))
-	{ NLPPhrase res = new NLPPhrase("BRACKET", new Vector()); 
+    { NLPPhrase res = new NLPPhrase("BRACKET", new Vector()); 
 	  return res; 
-	}
-	else if (en == st + 5 && "(".equals(lex0) && ")".equals(lex1) && 
+    }
+    else if (en == st + 5 && "(".equals(lex0) && ")".equals(lex1) && 
 	         "-".equals(lexicals.get(st+1) + "") && "{".equals(lexicals.get(en-1) + ""))
-	{ NLPPhrase res = new NLPPhrase("OBRACKET", new Vector()); 
-	  return res; 
-	}
-	else if (en == st + 5 && "(".equals(lex0) && ")".equals(lex1) && 
+    { NLPPhrase res = new NLPPhrase("OBRACKET", new Vector()); 
+      return res; 
+    }
+    else if (en == st + 5 && "(".equals(lex0) && ")".equals(lex1) && 
 	         "-".equals(lexicals.get(st+1) + "") && "}".equals(lexicals.get(en-1) + ""))
 	{ NLPPhrase res = new NLPPhrase("CBRACKET", new Vector()); 
 	  return res; 
@@ -7699,7 +7712,7 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 	    return null; 
 	  }
 	  else 
-	  {	return new NLPPhrase(tag,phs); } 
+	  { return new NLPPhrase(tag,phs); } 
 	} 
 	return null;  
   }
@@ -7707,34 +7720,95 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
   public Vector parsePhraseList(int st, int en)
   { // a sequence of either words (Tag Wd) or phrases.
     if (st >= en) 
-	{ return new Vector(); }
+    { return new Vector(); }
     if (en < st+3) 
-	{ return null; } 
+    { return null; } 
 	
     NLPWord wd = parseWord(st,st+3); 
-	if (wd != null) 
-	{ Vector rest = parsePhraseList(st+4,en); 
-	  if (rest == null) 
-	  { return null; }
-	  Vector res = new Vector(); 
-	  res.add(wd); res.addAll(rest); 
-	  return res; 
-	} 
-	else 
-	{ for (int i = st+4; i <= en; i++) 
-	  { NLPPhrase pr = parsePhrase(st,i); 
-	    if (pr != null) 
-		{ Vector rem = parsePhraseList(i+1,en); 
-		  if (rem == null) { return null; } 
-		  Vector result = new Vector(); 
-		  result.add(pr); result.addAll(rem);
-		  return result; 
+    if (wd != null) 
+    { Vector rest = parsePhraseList(st+4,en); 
+      if (rest == null) 
+      { return null; }
+      Vector res = new Vector(); 
+      res.add(wd); 
+      res.addAll(rest); 
+      return res; 
+    } 
+    else 
+    { int ocount = 1; 
+      int ccount = 0; 
+	  
+      for (int i = st+1; i <= en; i++) 
+      { String lexend = lexicals.get(i) + ""; 
+        if ("(".equals(lexend))
+        { ocount++; }
+        else if (")".equals(lexend))
+        { ccount++; }
+		
+        if (")".equals(lexend) && ocount == ccount)
+        { NLPPhrase pr = parsePhrase(st,i); 
+          if (pr != null) 
+          { Vector rem = parsePhraseList(i+1,en); 
+            if (rem == null) { return null; } 
+            Vector result = new Vector(); 
+            result.add(pr); 
+            result.addAll(rem);
+            return result; 
+          }
         }
       }
     }
     return null; 
   } 
   
+	 /* int ocount = 1; 
+	  int ccount = 0; 
+	  
+	  for (int i = st+1; i <= en; i++) 
+	  { String lexend = lexicals.get(i) + ""; 
+	    if ("(".equals(lexend))
+		{ ocount++; }
+		else if (")".equals(lexend))
+		{ ccount++; }
+		
+	    if (")".equals(lexend) && ocount == ccount)
+	    { ASTTerm pn = parseGeneralAST(st,i); 
+	      if (pn != null && i < en) 
+		  { Vector rest = parseGeneralASTSequence(i+1,en); 
+		    if (rest != null)
+		    { res.add(pn); 
+		      res.addAll(rest); 
+		      return res; 
+		    }
+		  }
+		  else if (pn != null && i >= en) 
+		  { res.add(pn); 
+		    return res; 
+		  }
+	    }
+	  }
+	}
+	else if ("(".equals(lex) && st < en)
+	{ // the ( is a symbol  
+	  ASTSymbolTerm sym = new ASTSymbolTerm("("); 
+	  Vector rem = parseGeneralASTSequence(st+1,en); 
+      if (rem != null)
+      { res.add(sym); 
+        res.addAll(rem); 
+        return res; 
+      }
+	}
+	else if (st < en)
+	{ ASTSymbolTerm sym = new ASTSymbolTerm(lex); 
+	  Vector rem = parseGeneralASTSequence(st+1,en); 
+      if (rem != null)
+      { res.add(sym); 
+        res.addAll(rem); 
+        return res; 
+      }
+	} */ 
+
+
   public NLPSentence parseSentence(int st, int en) 
   { String lex0 = "" + lexicals.get(st); 
     String lex1 = "" + lexicals.get(en); 
@@ -7765,10 +7839,10 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 	  if (sent == null) 
 	  { System.err.println("!! Not a sentence: " + showLexicals(st+2,en-1)); 
 	    return null; 
-	  }
-      return sent; 
-	} 
-	return null;  
+       }
+       return sent; 
+     } 
+     return null;  
   }
 
   public static void main(String[] args)
@@ -7785,7 +7859,7 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
     File cg = new File("cg/cg.cstl");
 
     Vector auxcstls = new Vector(); 
-    auxcstls.add("mapExpressionStatements.cstl"); 
+    // auxcstls.add("mapExpressionStatements.cstl"); 
     // auxcstls.add("cgprotocol.cstl"); 
  
     CGSpec cgs = CSTL.loadCSTL(cg,v1,v2); 
@@ -7794,11 +7868,55 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
     System.out.println(">>> CSTL ruleset: " + cgs); 
 
     ASTTerm xx =
-      c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (classOrInterfaceType String)) (variableDeclarators (variableDeclarator (variableDeclaratorId x) = (variableInitializer (expression (primary (literal \"str\"))))))) ;) (blockStatement (statement (expression (expression (primary x)) = (expression (expression (primary x)) + (expression (primary (literal \"tail\"))))) ;)) (blockStatement (localVariableDeclaration (typeType (primitiveType int)) (variableDeclarators (variableDeclarator (variableDeclaratorId f) = (variableInitializer (expression (expression (primary x)) . (methodCall length ( ))))))) ;) }))");
+      c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (primitiveType int)) (variableDeclarators (variableDeclarator (variableDeclaratorId x) = (variableInitializer (expression (expression (primary Short)) . MAX_VALUE))))) ;) (blockStatement (localVariableDeclaration (typeType (classOrInterfaceType List)) (variableDeclarators (variableDeclarator (variableDeclaratorId p) = (variableInitializer (expression (expression (primary Collections)) . EMPTY_LIST))))) ;) (blockStatement (statement (expression (expression (primary x)) = (expression (expression (primary Collections)) . (methodCall min ( (expressionList (expression (primary p))) )))) ;)) }))"); 
+
+     // c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (classOrInterfaceType List)) (variableDeclarators (variableDeclarator (variableDeclaratorId pr) = (variableInitializer (expression new (creator (createdName LinkedList) (classCreatorRest (arguments ( ))))))))) ;) (blockStatement (statement (expression (expression (primary v)) = (expression (expression (primary pr)) . (methodCall getFirst ( )))) ;)) (blockStatement (statement (expression (expression (primary pr)) . (methodCall getLast ( ))) ;)) (blockStatement (statement (expression (expression (primary pr)) . (methodCall addAll ( (expressionList (expression (primary st))) ))) ;)) }))"); 
+
+     // c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (primitiveType int)) (variableDeclarators (variableDeclarator (variableDeclaratorId x) = (variableInitializer (expression (expression (primary Math)) . (methodCall floor ( (expressionList (expression (primary (literal (floatLiteral 5.0))))) ))))))) ;) (blockStatement (localVariableDeclaration (typeType (primitiveType double)) (variableDeclarators (variableDeclarator (variableDeclaratorId y) = (variableInitializer (expression (expression (primary Math)) . (methodCall sin ( (expressionList (expression (primary x))) ))))))) ;) (blockStatement (localVariableDeclaration (typeType (primitiveType double)) (variableDeclarators (variableDeclarator (variableDeclaratorId z) = (variableInitializer (expression (expression (primary Math)) . (methodCall pow ( (expressionList (expression (primary x)) , (expression (primary y))) ))))))) ;) }))"); 
+
+   // c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (primitiveType double)) (variableDeclarators (variableDeclarator (variableDeclaratorId p) = (variableInitializer (expression (expression (primary Math)) . PI))))) ;) }))"); 
+
+      // c.parseGeneralAST("(statement (expression (expression (primary xseq)) . (methodCall add ( (expressionList (expression (primary p))) ))) ;)");
+ 
+    // c.parseGeneralAST("(statement for ( (forControl (enhancedForControl (typeType (classOrInterfaceType Integer)) (variableDeclaratorId x) : (expression (primary Lst)))) ) (statement (block { (blockStatement (statement (expression (expression (expression (primary System)) . out) . (methodCall println ( (expressionList (expression (primary x))) ))) ;)) })))"); 
+
+   //  c.parseGeneralAST("(statement for ( (forControl (forInit (localVariableDeclaration (typeType (primitiveType int)) (variableDeclarators (variableDeclarator (variableDeclaratorId i) = (variableInitializer (expression (primary (literal (integerLiteral 0))))))))) ; (expression (expression (primary i)) < (expression (primary (literal (integerLiteral 10))))) ; (expressionList (expression (expression (primary i)) ++))) ) (statement (block { (blockStatement (statement (expression (expression (primary x)) *= (expression (primary i))) ;)) })))"); 
+
+     // c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (primitiveType double)) (variableDeclarators (variableDeclarator (variableDeclaratorId x)))) ;) (blockStatement (statement (expression (expression (primary x)) = (expression (primary (literal (floatLiteral 3.0))))) ;)) (blockStatement (statement (expression (expression (primary y)) = (expression (expression (primary ( (expression (expression (primary x)) > (expression (primary (literal (floatLiteral 1.0))))) ))) ? (expression (primary (literal (integerLiteral 0)))) : (expression (primary (literal (integerLiteral 1)))))) ;)) }))"); 
+
+  //  c.parseGeneralAST("(expression (expression (expression (primary System)) . out) . (methodCall println ( (expressionList (expression (primary x))) )))"); 
+
+   //   c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (primitiveType short) [ ]) (variableDeclarators (variableDeclarator (variableDeclaratorId sq) = (variableInitializer (expression new (creator (createdName (primitiveType int)) (arrayCreatorRest [ (expression (primary (literal (integerLiteral 3)))) ]))))))) ;) (blockStatement (statement for ( (forControl (forInit (localVariableDeclaration (typeType (primitiveType int)) (variableDeclarators (variableDeclarator (variableDeclaratorId i) = (variableInitializer (expression (primary (literal (integerLiteral 0))))))))) ; (expression (expression (primary i)) < (expression (expression (primary sq)) . length)) ; (expressionList (expression (expression (primary i)) ++))) ) (statement (block { (blockStatement (statement (expression (expression (expression (primary System)) . out) . (methodCall println ( (expressionList (expression (expression (primary sq)) [ (expression (primary i)) ])) ))) ;)) })))) }))"); 
+
+      // c.parseGeneralAST("(statement (block { (blockStatement (statement while (parExpression ( (expression (expression (primary x)) > (expression (primary (literal (integerLiteral 0))))) )) (statement (block { (blockStatement (statement if (parExpression ( (expression (expression (primary x)) == (expression (primary (literal (integerLiteral 5))))) )) (statement (block { (blockStatement (statement break ;)) })) else (statement (block { (blockStatement (statement continue ;)) })))) })))) }))"); 
+
+     // c.parseGeneralAST("(statement (block { (blockStatement (statement do (statement (block { (blockStatement (statement (expression (expression (primary x)) = (expression (expression (primary x)) * (expression (primary y)))) ;)) })) while (parExpression ( (expression (expression (primary x)) < (expression (primary (literal (integerLiteral 10))))) )) ;)) (blockStatement (statement (expression (methodCall call ( (expressionList (expression (primary x))) ))) ;)) }))"); 
+
+    // c.parseGeneralAST("(statement (block { (blockStatement (statement try (block { (blockStatement (localVariableDeclaration (typeType (primitiveType char)) (variableDeclarators (variableDeclarator (variableDeclaratorId c) = (variableInitializer (expression (expression (primary str)) . (methodCall charAt ( (expressionList (expression (primary (literal (integerLiteral 2))))) ))))))) ;) }) (catchClause catch ( (catchType (qualifiedName Exception)) e ) (block { (blockStatement (statement (expression (expression (primary e)) . (methodCall printStackTrace ( ))) ;)) })))) }))"); 
+
+     // c.parseGeneralAST("(statement (block { (blockStatement (statement try (block { (blockStatement (statement (expression (expression (primary y)) = (expression (expression (primary x)) / (expression (primary (literal (floatLiteral 1.0)))))) ;)) }) (catchClause catch ( (catchType (qualifiedName Exception)) e ) (block { (blockStatement (statement (expression (expression (primary e)) . (methodCall printStackTrace ( ))) ;)) })) (finallyBlock finally (block { (blockStatement (statement return ;)) })))) }))"); 
+
+   //  c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (primitiveType int)) (variableDeclarators (variableDeclarator (variableDeclaratorId x) = (variableInitializer (expression (expression (primary Math)) . (methodCall max ( (expressionList (expression (primary y)) , (expression (primary z))) ))))))) ;) (blockStatement (localVariableDeclaration (typeType (classOrInterfaceType Map)) (variableDeclarators (variableDeclarator (variableDeclaratorId m) = (variableInitializer (expression new (creator (createdName HashMap) (classCreatorRest (arguments ( ))))))))) ;) (blockStatement (statement (expression (expression (primary m)) . (methodCall put ( (expressionList (expression (primary (literal \"a\"))) , (expression (primary x))) ))) ;)) }))"); 
+
+     // c.parseGeneralAST("(statement (block { (blockStatement (statement assert (expression (primary ( (expression (expression (primary x)) < (expression (primary (literal (integerLiteral 10))))) ))) : (expression (primary (literal \"failure\"))) ;)) }))"); 
+
+   // c.parseGeneralAST("(enumDeclaration enum Gender { (enumConstants (enumConstant male) , (enumConstant female) , (enumConstant other)) })"); 
+
+     // c.parseGeneralAST("(methodDeclaration (typeTypeOrVoid (typeType (primitiveType int))) nextInt (formalParameters ( (formalParameterList (formalParameter (typeType (primitiveType int)) (variableDeclaratorId x)) , (formalParameter (typeType (primitiveType int)) (variableDeclaratorId y))) )) (methodBody (block { (blockStatement (statement return (expression (expression (expression (primary x)) + (expression (primary y))) - (expression (expression (primary x)) * (expression (primary y)))) ;)) })))"); 
+
+     // c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (primitiveType double) [ ] [ ]) (variableDeclarators (variableDeclarator (variableDeclaratorId rr) = (variableInitializer (arrayInitializer { (variableInitializer (arrayInitializer { (variableInitializer (expression (primary (literal (floatLiteral 1.0))))) , (variableInitializer (expression (primary (literal (floatLiteral 3.0))))) })) , (variableInitializer (arrayInitializer { (variableInitializer (expression (primary (literal (floatLiteral 4.1))))) , (variableInitializer (expression (primary (literal (floatLiteral 5.9))))) })) }))))) ;) (blockStatement (statement (expression (expression (expression (expression (primary rr)) [ (expression (primary (literal (integerLiteral 1)))) ]) [ (expression (primary (literal (integerLiteral 2)))) ]) = (expression (primary (literal (floatLiteral 5.0))))) ;)) }))"); 
+
+
+         // c.parseGeneralAST("(statement (block { (blockStatement (statement switch (parExpression ( (expression (primary v)) )) { (switchBlockStatementGroup (switchLabel case (expression (primary (literal true))) :) (blockStatement (statement (expression (expression (primary x)) = (expression (primary (literal (integerLiteral 1))))) ;)) (blockStatement (statement break ;))) (switchBlockStatementGroup (switchLabel case (expression (primary (literal false))) :) (blockStatement (statement (expression (expression (primary x)) = (expression (primary (literal (integerLiteral 2))))) ;)) (blockStatement (statement break ;))) (switchBlockStatementGroup (switchLabel default :) (blockStatement (statement (expression (expression (primary x)) = (expression (primary (literal (integerLiteral 3))))) ;))) })) }))"); 
+
+
+      // c.parseGeneralAST("(statement (block { (blockStatement (statement while (parExpression ( (expression (expression (primary x)) > (expression (primary (literal (integerLiteral 0))))) )) (statement (block { (blockStatement (statement if (parExpression ( (expression (expression (primary x)) == (expression (primary (literal (integerLiteral 5))))) )) (statement (block { (blockStatement (statement break ;)) })) else (statement (block { (blockStatement (statement continue ;)) })))) })))) }))"); 
+
+     // c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (classOrInterfaceType String)) (variableDeclarators (variableDeclarator (variableDeclaratorId x) = (variableInitializer (expression (primary (literal \"str\"))))))) ;) (blockStatement (statement (expression (expression (primary x)) = (expression (expression (primary x)) + (expression (primary (literal \"tail\"))))) ;)) (blockStatement (localVariableDeclaration (typeType (primitiveType int)) (variableDeclarators (variableDeclarator (variableDeclaratorId f) = (variableInitializer (expression (expression (primary x)) . (methodCall length ( ))))))) ;) }))");
 
       // c.parseGeneralAST("(statement (block { (blockStatement (statement throw (expression new (creator (createdName Exception) (classCreatorRest (arguments ( (expressionList (expression (primary (literal \"message\")))) ))))) ;)) }))");
 
-       // c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (classOrInterfaceType Map (typeArguments < (typeArgument (typeType (classOrInterfaceType String))) , (typeArgument (typeType (classOrInterfaceType Integer))) >))) (variableDeclarators (variableDeclarator (variableDeclaratorId corr) = (variableInitializer (expression new (creator (createdName HashMap (typeArgumentsOrDiamond (typeArguments < (typeArgument (typeType (classOrInterfaceType String))) , (typeArgument (typeType (classOrInterfaceType Integer))) >))) (classCreatorRest (arguments ( ))))))))) ;) }))");
+      // c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (classOrInterfaceType Map (typeArguments < (typeArgument (typeType (classOrInterfaceType String))) , (typeArgument (typeType (classOrInterfaceType Integer))) >))) (variableDeclarators (variableDeclarator (variableDeclaratorId corr) = (variableInitializer (expression new (creator (createdName HashMap (typeArgumentsOrDiamond (typeArguments < (typeArgument (typeType (classOrInterfaceType String))) , (typeArgument (typeType (classOrInterfaceType Integer))) >))) (classCreatorRest (arguments ( ))))))))) ;) }))");
 
       // c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (classOrInterfaceType Vector)) (variableDeclarators (variableDeclarator (variableDeclaratorId r)))) ;) (blockStatement (statement (expression (expression (primary r)) = (expression new (creator (createdName Vector) (classCreatorRest (arguments ( )))))) ;)) }))"); 
 
@@ -7817,12 +7935,14 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
   // (methodCall max ( (expressionList (expression (primary y)) , (expression (primary z))) ) )"); 
 
     System.out.println(xx); 
-    System.out.println(xx.toKM3()); 
+    
 
     String tt = xx.cg(cgs); 
     System.out.println(tt); 
 
     System.out.println(); 
+
+    System.out.println(xx.toKM3()); 
 
    // c = new Compiler2(); 
 
@@ -7879,8 +7999,7 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
       // c.parseGeneralAST("(statement (expression (expression (primary xseq)) . (methodCall add ( (expressionList (expression (primary p))) ))) ;)"); 
       // c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (primitiveType double)) (variableDeclarators (variableDeclarator (variableDeclaratorId x)))) ;) (blockStatement (statement (expression (expression (primary x)) = (expression (primary (literal (floatLiteral 3.0))))) ;)) (blockStatement (statement (expression (expression (primary y)) = (expression (expression (primary ( (expression (expression (primary x)) > (expression (primary (literal (floatLiteral 1.0))))) ))) ? (expression (primary (literal (integerLiteral 0)))) : (expression (primary (literal (integerLiteral 1)))))) ;)) }))"); 
 
-     // c.parseGeneralAST("(statement for ( (forControl (enhancedForControl (typeType (classOrInterfaceType Integer)) (variableDeclaratorId x) : (expression (primary Lst)))) ) (statement (block { (blockStatement (statement (expression (expression (expression (primary System)) . out) . (methodCall println ( (expressionList (expression (primary x))) ))) ;)) })))"); 
-     //  c.parseGeneralAST("(statement for ( (forControl (forInit (localVariableDeclaration (typeType (primitiveType int)) (variableDeclarators (variableDeclarator (variableDeclaratorId i) = (variableInitializer (expression (primary (literal (integerLiteral 0))))))))) ; (expression (expression (primary i)) < (expression (primary (literal (integerLiteral 10))))) ; (expressionList (expression (expression (primary i)) ++))) ) (statement (block { (blockStatement (statement (expression (expression (primary x)) *= (expression (primary i))) ;)) })))"); 
+     
 
 	 // c.parseGeneralAST("(methodDeclaration (typeTypeOrVoid void) m (formalParameters ( )) (methodBody (block { (blockStatement (statement return (expression (primary (literal (integerLiteral 1)))) ;)) })))"); 
 	 // c.parseGeneralAST("(statement while (parExpression ( (expression (expression (primary i)) < (expression (primary (literal (integerLiteral 10))))) )) (statement (block { (blockStatement (statement (expression (expression (primary i)) += (expression (primary (literal (integerLiteral 5))))) ;)) })))"); 

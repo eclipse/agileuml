@@ -251,6 +251,11 @@ public class Attribute extends ModelElement
            elementType != null && elementType.isString(); 
   } 
 
+  public boolean isPrimitiveCollection()
+  { return type != null && type.isCollectionType() && 
+           elementType != null && elementType.isPrimitive(); 
+  } 
+
   public boolean isSet()
   { return type != null && type.isSetType(); } 
 
@@ -1024,6 +1029,17 @@ public class Attribute extends ModelElement
     { removeStereotype("readOnly"); }
   }  
   
+  public boolean isValueType()
+  { if (type != null && type.isValueType())
+    { return true; } 
+    return false; 
+  } 
+    
+  public boolean isPrimitiveType()
+  { return isInteger() || isDouble() || isString() ||
+           isBoolean() || isEnumeration(); 
+  } 
+
   public boolean isInteger()
   { return isInt() || isLong(); }
 
@@ -1066,8 +1082,8 @@ public class Attribute extends ModelElement
   public void setDerived(boolean deriv)
   { if (deriv) 
     { kind = ModelElement.DERIVED; } 
-	else 
-	{ kind = ModelElement.INTERNAL; } 
+    else 
+    { kind = ModelElement.INTERNAL; } 
   } 
   
   public void setVisibility(int visib)

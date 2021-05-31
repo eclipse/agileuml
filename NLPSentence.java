@@ -35,7 +35,7 @@ public class NLPSentence
     { NLPPhraseElement elem = (NLPPhraseElement) phrases.get(i); 
       st = elem.indexing(st);
       elem.sentence = this;  
-	  elem.linkToPhrases(this); 
+      elem.linkToPhrases(this); 
     }
   }
   
@@ -52,9 +52,9 @@ public class NLPSentence
     for (int i = 0; i < phrases.size(); i++) 
     { NLPPhraseElement elem = (NLPPhraseElement) phrases.get(i); 
       Vector st = elem.sequentialise(); 
-	  res.addAll(st); 
+      res.addAll(st); 
     }
-	return res; 
+    return res; 
   }
 
   public void addElement(NLPPhrase elem)
@@ -83,11 +83,11 @@ public class NLPSentence
       return p3.tag.equals("VP"); 
     } 
 	
-	if (p1.tag.equals("PP") && p2.tag.equals("VP"))
-	{ return true; }
+    if (p1.tag.equals("PP") && p2.tag.equals("VP"))
+    { return true; }
 	
-	if (p1.tag.equals("PP") && p2.tag.equals(",") && phrases.size() > 2)
-	{ NLPPhraseElement p3 = (NLPPhraseElement) phrases.get(2);
+    if (p1.tag.equals("PP") && p2.tag.equals(",") && phrases.size() > 2)
+    { NLPPhraseElement p3 = (NLPPhraseElement) phrases.get(2);
       return p3.tag.equals("VP"); 
     } 
 
@@ -98,16 +98,16 @@ public class NLPSentence
   { // first noun is "system", "application", etc
     NLPPhraseElement p1 = (NLPPhraseElement) phrases.get(0); 
     if (p1 instanceof NLPPhrase && p1.tag.equals("NP"))
-	{ NLPPhrase pr = (NLPPhrase) p1; 
-	  Vector nouns = pr.getNouns(); 
-	  if (nouns.contains("System") || nouns.contains("system") || nouns.contains("Application") || 
-	      nouns.contains("application") || nouns.contains("app") || nouns.contains("App") || 
-		  nouns.contains("software") || nouns.contains("Software") || nouns.contains("Program") || 
-		  nouns.contains("program") || 
-		  nouns.contains("database") || nouns.contains("Database"))
-	  { return true; }
-	}
-	return false; 
+    { NLPPhrase pr = (NLPPhrase) p1; 
+      Vector nouns = pr.getNouns(); 
+      if (nouns.contains("System") || nouns.contains("system") || nouns.contains("Application") || 
+          nouns.contains("application") || nouns.contains("app") || nouns.contains("App") || 
+          nouns.contains("software") || nouns.contains("Software") || nouns.contains("Program") || 
+          nouns.contains("program") || 
+          nouns.contains("database") || nouns.contains("Database"))
+       { return true; }
+     }
+     return false; 
   }
   
   public String getMainVerb()
@@ -137,6 +137,26 @@ public class NLPSentence
     return verb; 
   } 
 
+  public NLPPhrase getObjectPart()
+  { // The part after the main verb:
+    // ((subject) (VP ... main verb ... (NP object)))
+	
+    if (phrases.get(1) instanceof NLPPhrase) { } 
+    else 
+    { return null; }
+	
+    String verb = ""; 
+    NLPPhrase p2 = (NLPPhrase) phrases.get(1);
+    if (p2.tag.equals("VP"))
+    { return p2.getObjectPart(); }  
+    else if (p2.tag.equals("ADVP") && phrases.size() > 2 && phrases.get(2) instanceof NLPPhrase)
+    { NLPPhrase p3 = (NLPPhrase) phrases.get(2);
+      return p3.getObjectPart(); 
+    } 
+	
+    return p2; 
+  } 
+
   public String getMainVerbOrPreposition()
   { // The VP verb is "consists"/"has"/"have", etc
     if (phrases.get(1) instanceof NLPPhrase) { } 
@@ -161,23 +181,57 @@ public class NLPSentence
     return verb; 
   } 
 
-  public boolean isClassDefinition(Vector quals)
+  public boolean isClassDefinition(Vector np, Vector vb, Vector quals)
   { // The VP verb is "consists"/"has"/"have", etc
     
-    String verb = getMainVerb(); 
+    String verb0 = getMainVerb(); 
+    if (verb0 == null) 
+    { return false; } 
 	
-	System.out.println(">>> Main verb is: " + verb); 
+    String verb = verb0.toLowerCase(); 
+
+    System.out.println(">>> Main verb is: " + verb); 
 	
-    if ("has".equals(verb) || "have".equals(verb) || "=".equals(verb) || "equals".equals(verb) || verb.startsWith("define") || 
-        verb.startsWith("compris") || verb.startsWith("consist") || verb.equals("composed") || verb.equals("made")) 
+    if ("has".equals(verb) || "have".equals(verb) || 
+        "=".equals(verb) || "equals".equals(verb) || 
+        verb.startsWith("define") || 
+        verb.startsWith("compris") || verb.startsWith("consist") || 
+        verb.equals("composed") ||
+        verb.equalsIgnoreCase("specify") ||
+        verb.startsWith("include") || verb.equals("made")) 
 	{ return true; } 
-	else if (verb.startsWith("record") || verb.startsWith("store") || verb.startsWith("persist") || verb.startsWith("retain"))
+	else if (verb.startsWith("record") || verb.startsWith("store") || 
+        verb.startsWith("persist") || verb.startsWith("retain"))
     { quals.add("persistent"); 
-	  return true; 
-	} // but likely to be a system/app in the subject. 
+      return true; 
+    } // but likely to be a system/app in the subject.
+ 
     return false; 
   } 
  
+  public boolean isGeneralisationDefinition(Vector np, Vector vb, Vector rem)
+  { // np non-empty, vb is "shall be" or "is", 
+    // rem is disjunctive. 
+    
+    if (np.size() > 0 && vb.size() >= 2)
+    { NLPWord v1 = (NLPWord) vb.get(0); 
+      NLPWord v2 = (NLPWord) vb.get(1); 
+      if (v1.isModalVerb() && "be".equalsIgnoreCase(v2.text) &&
+          NLPPhrase.isDisjunction(rem))
+      { return true; } 
+    }
+    else if (vb.size() > 0 && NLPPhrase.isDisjunction(rem))
+    { NLPWord v1 = (NLPWord) vb.get(0); 
+      if ("is".equals(v1.text) || "are".equals(v1.text))
+      { return true; } 
+    }
+
+    if (isGeneralDefinition()) 
+    { return true; } 
+
+    return false; 
+  } 
+
   public boolean isGeneralDefinition()
   { // The VP verb is "is"/"are", etc
     String verb = getMainVerb(); 
@@ -201,41 +255,46 @@ public class NLPSentence
     Vector res = new Vector();
     NLPPhrase p1 = (NLPPhrase) phrases.get(0); 
     String noun = p1.getPrincipalNoun(); 
-	if (noun == null || noun.length() == 0) 
-	{ return res; }
+    if (noun == null || noun.length() == 0) 
+    { return res; }
 	
     NLPPhrase p2 = (NLPPhrase) phrases.get(1);
     if (p2.tag.equals("ADVP"))
     { p2 = (NLPPhrase) phrases.get(2); }
 	
-	Entity ent = null; 
+    Entity ent = null; 
     Object obj = ModelElement.lookupByNameIgnoreCase(noun, modelElements); 
     if (obj == null) 
     { String nme = Named.capitalise(noun); 
-	  ent = new Entity(nme);
+      ent = new Entity(nme);
       modelElements.add(ent); 
       res.add(ent);  
       System.out.println(">>> New entity " + nme); 
-	  derivedElements.add(ent); 
-	  ent.addStereotype("originator=\"" + id + "\""); 
+      derivedElements.add(ent); 
+      ent.addStereotype("originator=\"" + id + "\""); 
     } 
-	else if (obj instanceof Entity)
-	{ ent = (Entity) obj; }
+    else if (obj instanceof Entity)
+    { ent = (Entity) obj; }
 	
     if (ent != null) 
-	{ p2.extractAttributeDefinitions(ent, fromBackground, modelElements); } 
+    { p2.extractAttributeDefinitions(ent, fromBackground, modelElements); } 
 	
     return res;  
   } 
 
+  public Vector generalisationElements(Vector rem, Vector melems)
+  { return relationElements(melems); } 
+
   public Vector relationElements(Vector modelElements)
-  { // assuming SVO && isGeneralDefinition
+  { // assuming SVO && isGeneralisationDefinition
 
     Vector res = new Vector();
     NLPPhrase p1 = (NLPPhrase) phrases.get(0); 
     String noun = p1.getPrincipalNoun(); 
     if (noun == null || noun.length() == 0) 
     { return res; }
+
+    System.out.println(">> Principal subject noun is: " + noun); 
     
     if (NLPWord.isKeyword(noun))
     { return res; } 
@@ -243,7 +302,9 @@ public class NLPSentence
     String singular = noun; 
       // NLPWord.getSingular(noun); 
 	
-    NLPPhrase p2 = (NLPPhrase) phrases.get(1);
+    NLPPhrase p2 = (NLPPhrase) getObjectPart();
+    System.out.println(">>> Object part of sentence = " + p2); 
+
     Entity ent = null; 
     Object obj = ModelElement.lookupByNameIgnoreCase(singular, modelElements); 
     if (obj == null) 
@@ -255,18 +316,18 @@ public class NLPSentence
         return res; 
       }
 	
-	  ent = new Entity(Named.capitalise(singular));
-	  System.out.println(">>> New entity: " + singular);
+      ent = new Entity(Named.capitalise(singular));
+      System.out.println(">>> New entity: " + ent.getName());
       modelElements.add(ent); 
-	  res.add(ent); 
- 	  derivedElements.add(ent); 
-	  ent.addStereotype("originator=\"" + id + "\""); 
+      res.add(ent); 
+      derivedElements.add(ent); 
+      ent.addStereotype("originator=\"" + id + "\""); 
     } 
-	else if (obj instanceof Entity)
-	{ ent = (Entity) obj; }
+    else if (obj instanceof Entity)
+    { ent = (Entity) obj; }
 	
     if (ent != null) 
-	{ p2.extractRelationshipDefinitions(ent,modelElements); }
+    { p2.extractRelationshipDefinitions(ent,modelElements); }
 	
     return res;  
   }
@@ -278,22 +339,22 @@ public class NLPSentence
     NLPPhrase p1 = (NLPPhrase) phrases.get(0); 
     String noun = p1.getPrincipalNoun(); 
     if (noun == null || noun.length() == 0) 
-	{ return res; }
+    { return res; }
 	
-	NLPPhrase p2 = (NLPPhrase) phrases.get(1);
+    NLPPhrase p2 = (NLPPhrase) phrases.get(1);
     Entity ent = null; 
 	
-	Object obj = ModelElement.lookupByNameIgnoreCase(noun, modelElements); 
+    Object obj = ModelElement.lookupByNameIgnoreCase(noun, modelElements); 
     if (obj == null) 
     { ent = new Entity(Named.capitalise(noun));
       modelElements.add(ent);
-	  res.add(ent);  
+      res.add(ent);  
       derivedElements.add(ent); 
-	  ent.addStereotype("originator=\"" + id + "\""); 
+      ent.addStereotype("originator=\"" + id + "\""); 
       System.out.println(">>> Added new class: " + ent.getName()); 
     } 
-	else if (obj instanceof Entity)
-	{ ent = (Entity) obj; }
+    else if (obj instanceof Entity)
+    { ent = (Entity) obj; }
 	
     if (ent != null) 
 	{ p2.extractAssociationDefinitions(ent,null,fromBackground,modelElements); } 
@@ -306,12 +367,14 @@ public class NLPSentence
 
     Vector res = new Vector();
     NLPPhraseElement p1 = (NLPPhraseElement) phrases.get(0); 
-    String noun = p1.getPrincipalNoun(); 
-    if (noun == null || noun.length() == 0)
+    NLPWord nounwd = p1.identifyNounForEntity();  
+    if (nounwd == null || nounwd.text.length() == 0)
     { return res; }
 	
     if (phrases.size() < 2) 
     { return res; }
+
+    System.out.println(">>> Principal noun: " + nounwd); 
 	
     NLPPhraseElement p2 = (NLPPhraseElement) phrases.get(1);
     boolean notfound = true; 
@@ -322,11 +385,12 @@ public class NLPSentence
     } 
 	
     Entity ent = null; 
-    String singular = noun; // NLPWord.getSingular(noun); 
+    String singular = nounwd.getSingular(); 
 	
     Object obj = ModelElement.lookupByNameIgnoreCase(singular, modelElements); 
     if (obj == null) 
     { ent = new Entity(Named.capitalise(singular));
+
       System.out.println(">>> New class: " + ent.getName()); 
       modelElements.add(ent); 
       res.add(ent); 
@@ -347,6 +411,7 @@ public class NLPSentence
     String verb = p2.getMostSignificantVerb();    
     if (ent != null && verb != null && verb.length() > 0)
     { System.out.println(">>> possible association corresponding to verb " + verb); 
+
       p2.extractAssociationDefinitions(ent, verb, fromBackground, modelElements); 
     } 
     return res;  
@@ -356,21 +421,22 @@ public class NLPSentence
   { String res = ""; 
     Vector quals = new Vector(); 
     java.util.HashMap verbClassifications = new java.util.HashMap(); 
+    Vector seqs = sequentialise(); 
+    Vector np1 = new Vector(); 
+    Vector vb1 = new Vector(); 
+    Vector rem = new Vector();   
+    Vector comment = new Vector(); 
+
+    splitIntoPhrases(seqs,np1,vb1,rem,comment); 
+
+    System.out.println(">>> Sentence split as: " + np1 + "; " + vb1 + "; " + rem + "; " + comment); 
 	
-    if (isSVO() && isSystemDefinition())
+    if (isSVO() && isSystemDefinition() && !describesUseCase(np1,vb1,rem))
     { System.out.println(">>> System definition: " + this); 
-	  Vector seqs = sequentialise(); 
-	  Vector np1 = new Vector(); 
-	  Vector vb1 = new Vector(); 
-	  Vector rem = new Vector();   
-	  Vector comment = new Vector(); 
-	  Vector quals1 = new Vector(); 
-	  splitIntoPhrases(seqs,np1,vb1,rem,comment); 
-	  System.out.println(">>> Sentence split as: " + np1 + "; " + vb1 + "; " + rem + "; " + comment); 
-	  
-	  identifyClassesAndFeatures(fromBackground,rem,elems,quals1);
+      Vector quals1 = new Vector(); 	  
+      identifyClassesAndFeatures(fromBackground, rem, elems, quals1);
     }
-	else if (isSVO() && isClassDefinition(quals))
+    else if (isSVO() && isClassDefinition(np1,vb1,quals))
     { System.out.println(">>> Class definition: " + this); 
       modelElements(fromBackground,elems);	 
     }
@@ -378,58 +444,51 @@ public class NLPSentence
     { System.out.println(">>> Association definition: " + this); 
       associationElements(fromBackground,elems);
     }
-    else if (isSVO() && isGeneralDefinition())
+    else if (isSVO() && isGeneralisationDefinition(np1,vb1,rem))
     { System.out.println(">>> Generalisation definition: " + this); 
-      relationElements(elems);
-    }
-    else if (isSVO())
-    { System.out.println(">>> Constraint definition: " + this); 
-      otherRelationElements(fromBackground,elems); 
+      generalisationElements(rem,elems);
     }
     else 
-    { Vector seqs = sequentialise(); 
-      Vector np1 = new Vector(); 
-      Vector vb1 = new Vector(); 
-      Vector rem = new Vector();   
-	  Vector comment = new Vector(); 
-      Vector quals1 = new Vector(); 
-      splitIntoPhrases(seqs,np1,vb1,rem,comment); 
-      System.out.println(">>> Not recognised as model elements definition: " + np1 + "; " + vb1 + "; " + rem);
-      if (describesSystem(np1))
-      { System.out.println(">>> It may be a system-level requirement"); 
-	    identifyClassesAndFeatures(fromBackground,rem,elems,quals1); 
-	  }  
-      else if (describesUseCase(np1,vb1,rem))
-      { System.out.println(">>> It may be a use case description"); 
+    { if (describesUseCase(np1,vb1,rem))
+      { System.out.println(">>> This may be a use case description"); 
 	    // identifyUseCase(rem,elems); 
         
         System.out.println(">>> Split as follows (noun phrase, verb phrase, remainder, comment): " + np1 + "; " + vb1 + "; " + 
 	                   rem + "; " + comment);
         java.util.Map mp = new java.util.HashMap(); 
-	    UseCase uc = identifyUseCase(np1,vb1,rem,elems,mp,verbClassifications); 
-	    System.out.println(">>> Identified use case " + uc); 
+        UseCase uc = identifyUseCase(np1,vb1,rem,elems,mp,verbClassifications); 
+        System.out.println(">>> Identified use case " + uc); 
 		
-  	    identifyModelElements(uc,np1,vb1,rem,fromBackground,verbClassifications,mp,elems);   
-	  }
-	  else 
-	  { identifyClassesAndFeatures(fromBackground,rem,elems,quals1); }
+        identifyModelElements(uc, np1, vb1, rem, fromBackground, verbClassifications, mp, elems);   
+      }
+      else if (describesSystem(np1))
+      { System.out.println(">>> This may be a system-level requirement"); 
+        Vector quals1 = new Vector(); 	  
+        identifyClassesAndFeatures(fromBackground, rem, elems, quals1); 
+      }  
+      else if (isSVO() || constraintDefinition(np1,vb1,rem))
+      { System.out.println(">>> Possible constraint definition: " + this); 
+        otherRelationElements(fromBackground,elems); 
+        Vector quals1 = new Vector(); 	  
+        identifyClassesAndFeatures(fromBackground, rem, elems, quals1); 
+      }
     }  
       
-	String ucs = ""; 
-	for (int i = 0; i < elems.size(); i++) 
+    String ucs = ""; 
+    for (int i = 0; i < elems.size(); i++) 
     { if (elems.get(i) instanceof Type) 
       { Type tt = (Type) elems.get(i); 
         res = res + tt.getKM3() + "\n\n";
       }
-	}
+    }
 	
 	
-	for (int i = 0; i < elems.size(); i++) 
+    for (int i = 0; i < elems.size(); i++) 
     { if (elems.get(i) instanceof Entity) 
       { Entity ent = (Entity) elems.get(i); 
         res = res + ent.getKM3() + "\n\n";
       }
-	} 
+    } 
 	
 	 
     for (int i = 0; i < elems.size(); i++) 
@@ -446,7 +505,7 @@ public class NLPSentence
   { int i = 0; 
     int en = seq.size(); 
     Vector quals1 = new Vector(); 
-	java.util.HashMap mp = new java.util.HashMap(); 
+    java.util.HashMap mp = new java.util.HashMap(); 
 	
     boolean innoun1 = true; 
     while (i < en && innoun1)
@@ -465,8 +524,8 @@ public class NLPSentence
     while (i < en && inverb1)
     { NLPWord lex = (NLPWord) seq.get(i); 
       if (i < en-1 && "so".equalsIgnoreCase(lex.text.trim()) && "that".equalsIgnoreCase(((NLPWord) seq.get(i+1)).text.trim()))
-	  { inverb1 = false; }
-	  else if (lex.isVerbPhraseWord(quals1,mp))
+      { inverb1 = false; }
+      else if (lex.isVerbPhraseWord(quals1,mp))
       { vb1.add(lex); 
         i++; 
       }
@@ -476,23 +535,22 @@ public class NLPSentence
       { i++; } 
     } 
 	
-	int k = 0; 
+    int k = 0; 
 	
     for (int j = i; j < en && k == 0; j++)
     { NLPWord lex = (NLPWord) seq.get(j); 
-      if (j < en-1 && "so".equalsIgnoreCase(lex.text.trim()) && "that".equalsIgnoreCase(((NLPWord) seq.get(i+1)).text.trim()))
-	  { k = j; 
-	    break; 
-	  }
-	  else 
-	  { rem.add(lex); }  
-	  
+      if (j < en-1 && "so".equalsIgnoreCase(lex.text.trim()) && "that".equalsIgnoreCase(((NLPWord) seq.get(j+1)).text.trim()))
+      { k = j; 
+        break; 
+      }
+      else 
+      { rem.add(lex); }    
     }
 	
-	if (k > 0) 
-	{ for (int h = k; h < en; h++)
-	  { comment.add(seq.get(h)); }
-	} 
+    if (k > 0) 
+    { for (int h = k; h < en; h++)
+      { comment.add(seq.get(h)); }
+    } 
   }
   
   public boolean describesSystem(Vector np)
@@ -536,7 +594,7 @@ public class NLPSentence
     { mainent = new Entity(Named.capitalise(firstNoun)); 
       modelElements.add(mainent); 
       derivedElements.add(mainent); 
-	  mainent.addStereotype("originator=\"" + id + "\""); 
+      mainent.addStereotype("originator=\"" + id + "\""); 
       System.out.println(">>> Added new class " + mainent.getName()); 
     } 
 	
@@ -618,9 +676,56 @@ public class NLPSentence
       if (vb.text.equalsIgnoreCase("As"))
       { return true; }
     } 
+
+    if (vb1.size() >= 2)
+    { NLPWord v1 = (NLPWord) vb1.get(0); 
+      NLPWord v2 = (NLPWord) vb1.get(1); 
+      if (v1.isModalVerb() && "be".equalsIgnoreCase(v2.text) &&
+          rem.size() > 2)
+      { NLPWord v3 = (NLPWord) rem.get(0); 
+        NLPWord v4 = (NLPWord) rem.get(1); 
+        if ("able".equalsIgnoreCase(v3.text) && 
+            "to".equalsIgnoreCase(v4.text))
+        { return true; } 
+      } 
+      else if (v1.isModalVerb() && "provide".equalsIgnoreCase(v2.text))
+      { return true; } 
+      else if (v1.isModalVerb() && "support".equalsIgnoreCase(v2.text))
+      { return true; } 
+    }
+
     return false; 
   }	  
-	  
+
+  public boolean constraintDefinition(Vector np, Vector vb1, Vector rem)
+  { System.out.println(">>> Checking constraint definition " + vb1 + "; " + rem); 
+
+    if (vb1.size() >= 2 && rem.size() >= 1)
+    { NLPWord v1 = (NLPWord) vb1.get(0); 
+      NLPWord v2 = (NLPWord) vb1.get(1); 
+      if (v1.isModalVerb() && 
+          ("have".equalsIgnoreCase(v2.text) || 
+           "comprise".equalsIgnoreCase(v2.text)))
+      { if (nounClause(rem))
+        { return true; } 
+      }
+    } 
+
+    return false; 
+  }	  
+	 
+  boolean nounClause(Vector rem)
+  { // a noun before any verb-like 
+    for (int i = 0; i < rem.size(); i++) 
+    { NLPWord wd = (NLPWord) rem.get(i); 
+      if (wd.isNoun())
+      { return true; } 
+      if (wd.isVerb())
+      { return false; } 
+    } 
+    return false; 
+  } 
+ 
   /* No longer used */ 
   public java.util.Map identifyUseCase(Vector rem, Vector elems)
   { int index = 0; 
@@ -656,7 +761,7 @@ public class NLPSentence
       { ucase = new UseCase(uc);
         System.out.println(">>> New use case: " + uc); 
         elems.add(ucase); 
-	    derivedElements.add(ucase); 
+        derivedElements.add(ucase); 
         ucase.addStereotype("originator=\"" + id + "\""); 
       } 
 	  
@@ -664,12 +769,14 @@ public class NLPSentence
       { System.out.println(">>> use case on entity " + ent); 
         if (uc.indexOf("creat") >= 0) 
         { ucase.setResultType(new Type(ent)); 
-		  ucase.defineCreateCode(ent); 
-		} 
-		if (uc.indexOf("edit") >= 0 || uc.indexOf("delete") >= 0)
-		{ String ex = ent.getName().toLowerCase(); 
-		  ucase.addParameter(ex, new Type(ent)); 
-		}
+          ucase.defineCreateCode(ent); 
+        } 
+        
+        if (uc.indexOf("edit") >= 0 || 
+            uc.indexOf("delete") >= 0)
+        { String ex = ent.getName().toLowerCase(); 
+          ucase.addParameter(ex, new Type(ent)); 
+        }
       } // and other cases
     }  
 	
@@ -747,37 +854,37 @@ public class NLPSentence
 		// if (ent != null) 
 		// { System.out.println(">>> verb clause refers to entity " + ent); } 
       }
-	}
+    }
 	
     /* for (int i = 0; i < rem.size(); i++) 
     { NLPWord wd = (NLPWord) rem.get(i); 
       String textlc = wd.text.toLowerCase(); 
       if (textlc.startsWith("wish") || textlc.startsWith("want"))
       { index = i+2; } 
-    }
+      }
 	
-    if (index == 0) { return; }
+        if (index == 0) { return; }
 	*/ 
 	
 	// index = 0; 
 
-	if (actor == null && index == 0) // no verb yet 
-	{ actor = NLPPhrase.getPrincipalNoun(rem); 
+    if (actor == null && index == 0) // no verb yet 
+    { actor = NLPPhrase.getPrincipalNoun(rem); 
       if (actor != null && actor.length() > 0)
       { System.out.println(">>> Use case Actor is " + Named.capitalise(actor)); }
-	  else 
-	  { actor = null; }
+      else 
+      { actor = null; }
     }
     
     for (int j = 0; j < rem.size(); j++) 
     { NLPWord wd = (NLPWord) rem.get(j); 
       if (wd.text.equals("so"))
-	  { break; } 
+      { break; } 
 
       if (index == 0 && wd.isSignificantVerbPhraseWord(verbClassifications,quals,mp))
       { uc = uc + wd.text; 
         index = j+1;
-	    shortName = shortName + wd.text;  
+        shortName = shortName + wd.text;  
       } 
       else if (wd.isVerbPhraseWord(quals,mp) || wd.isAdjective() || 
 		       wd.isNounPhraseWord() || wd.isConjunctionWord())
@@ -787,22 +894,22 @@ public class NLPSentence
       }    
     }
 	
-	UseCase ucase = null; 
+    UseCase ucase = null; 
 	
     if (shortName.length() == 0)
-	{ shortName = uc; }
+    { shortName = uc; }
 	
-	if (shortName.length() > 0)
+    if (shortName.length() > 0)
     { Object obj = ModelElement.lookupByNameIgnoreCase(shortName,elems); 
       if (obj != null) 
       { System.out.println(">>> Duplicate element: " + shortName); } 
       else 
       { String sname = Named.decapitalise(shortName); 
-	    ucase = new UseCase(sname);
+        ucase = new UseCase(sname);
         System.out.println(">>> New use case: " + sname + " qualifiers: " + quals + " mapping: " + mp); 
         elems.add(ucase);
-   	    derivedElements.add(ucase); 
-	    ucase.addStereotype("originator=\"" + id + "\""); 
+        derivedElements.add(ucase); 
+        ucase.addStereotype("originator=\"" + id + "\""); 
 
         /* Vector vals = new Vector(); 
         vals.addAll(mp.values()); 
@@ -811,27 +918,27 @@ public class NLPSentence
         { ucase.addStereotype("other"); } */ 
 		
         if (actor != null) 
-		{ String actr = Named.capitalise(actor); 
-		  ucase.addStereotype("actor=\"" + actr + "\""); 
-		  Object actobj = ModelElement.lookupByNameIgnoreCase(actr,elems);
-		  if (actobj != null && (actobj instanceof Entity))
-		  { String aname = actor.toLowerCase() + "x"; 
-		    ucase.addParameter(aname, new Type((Entity) actobj)); 
-		  }
-		  else 
-		  { Entity newent = new Entity(actr); 
-   		    System.out.println(">>> New entity for use case actor: " + actr); 
+        { String actr = Named.capitalise(actor); 
+          ucase.addStereotype("actor=\"" + actr + "\""); 
+          Object actobj = ModelElement.lookupByNameIgnoreCase(actr,elems);
+          if (actobj != null && (actobj instanceof Entity))
+          { String aname = actor.toLowerCase() + "x"; 
+            ucase.addParameter(aname, new Type((Entity) actobj)); 
+          }
+          else 
+          { Entity newent = new Entity(actr); 
+            System.out.println(">>> New entity for use case actor: " + actr); 
             elems.add(newent);
-    	    derivedElements.add(newent); 
-	        newent.addStereotype("originator=\"" + id + "\""); 
-		    String aname = actor.toLowerCase() + "x"; 
-		    ucase.addParameter(aname, new Type(newent)); 
-		  }	   
-		}  
+            derivedElements.add(newent); 
+            newent.addStereotype("originator=\"" + id + "\""); 
+            String aname = actor.toLowerCase() + "x"; 
+            ucase.addParameter(aname, new Type(newent)); 
+          }	   
+        }  
       } 
     }  
 	
-	return ucase; 
+    return ucase; 
   } 
 
 
@@ -915,54 +1022,54 @@ public class NLPSentence
   { // check if the definite classes and features already exist, if not, create them 
   
     // After a "create", "delete" we expect a class name 
-	// After an "edit", "read" expect attributes & posssibly a class.
+    // After an "edit", "read" expect attributes & posssibly a class.
 	
 	// System.out.println("MP= " + mp); 
 	// System.out.println("UC= " + uc); 
 	
-	if (uc == null) 
-	{ return; }
+    if (uc == null) 
+    { return; }
 	 
-	int index = 0; 
-	Vector quals = new Vector(); 
-	Vector localElems = new Vector(); // in this use case
+    int index = 0; 
+    Vector quals = new Vector(); 
+    Vector localElems = new Vector(); // in this use case
 	// String currStereo = null; 
-	Vector foundStereotypes = new Vector(); 
+    Vector foundStereotypes = new Vector(); 
 	
     if (vb1.size() > 0)
-	{ // starts with a verb "Update/create/add etc ...."
+    { // starts with a verb "Update/create/add etc ...."
 	
-	  for (int j = 0; j < vb1.size(); j++) 
+      for (int j = 0; j < vb1.size(); j++) 
       { NLPWord wd = (NLPWord) vb1.get(j); 
         if (index > 0) 
-		{ addWordSemantics(wd,uc,elems,localElems,fromBackground,mp); }
+         { addWordSemantics(wd,uc,elems,localElems,fromBackground,mp); }
 		
         if (wd.isSignificantVerbPhraseWord(verbClassifications,quals,mp))
-		{ index = j+1;     
-		  String stereotype = (String) mp.get(wd.text + ""); 
+        { index = j+1;     
+          String stereotype = (String) mp.get(wd.text + ""); 
           if (stereotype != null)
           { System.out.println("Found stereotype >> " + stereotype); 
-	        if (foundStereotypes.size() == 0) 
-			{ foundStereotypes.add(stereotype); 
-			  uc.addStereotype(stereotype); 
-			} 
-	      }
+            if (foundStereotypes.size() <= 1) 
+            { foundStereotypes.add(stereotype); 
+              uc.addStereotype(stereotype); 
+            } 
+          }
         } 		    
       }
-	}
+    }
 	
 	
     for (int j = 0; j < rem.size(); j++) 
     { NLPWord wd = (NLPWord) rem.get(j); 
       if (index > 0) 
-	  { addWordSemantics(wd,uc,elems,localElems,fromBackground,mp); }
+      { addWordSemantics(wd,uc,elems,localElems,fromBackground,mp); }
 		
       if (wd.isSignificantVerbPhraseWord(verbClassifications,quals,mp))
-	  { index = j+1; 
+      { index = j+1; 
         String stereotype = (String) mp.get(wd.text + ""); 
         if (stereotype != null)
         { System.out.println("Current stereotype >> " + stereotype); 
-          if (foundStereotypes.size() == 0) 
+          if (foundStereotypes.size() <= 1) 
           { foundStereotypes.add(stereotype); 
             uc.addStereotype(stereotype); 
           } 
@@ -1016,23 +1123,25 @@ public class NLPSentence
             System.out.println(">>> Added new class " + wd.text);  
             elems.add(mainent);
             localElems.add(mainent);
-			derivedElements.add(mainent); 
-	        mainent.addStereotype("originator=\"" + id + "\""); 
+            derivedElements.add(mainent); 
+            mainent.addStereotype("originator=\"" + id + "\""); 
 
             if (uc != null) 
             { uc.ent = mainent;  
-  		      Vector stereos = uc.getStereotypes(); 
+              Vector stereos = uc.getStereotypes(); 
+
               if (stereos.contains("create") && uc.hasNoResult())
               { uc.setResultType(new Type(uc.ent)); 
-			    uc.defineCreateCode(uc.ent); 
-		      }
+                uc.defineCreateCode(uc.ent); 
+              }
+
               if (stereos.contains("edit") ||
                   stereos.contains("persistent") || 
                   stereos.contains("delete") || stereos.contains("other") ||  
                   stereos.contains("read"))
               { String ex = uc.ent.getName().toLowerCase() + "x";
-			    if (stereos.contains("read"))
-				{ uc.defineReadCode(ex,uc.ent); } 
+                if (stereos.contains("read"))
+                { uc.defineReadCode(ex,uc.ent); } 
                 uc.addParameter(ex, new Type(uc.ent)); 
               }
             }
@@ -1058,8 +1167,8 @@ public class NLPSentence
                     ent = (Entity) mm; 
                     ent.addAttribute(newatt); 
                     addedToClass = true; 
-				    derivedElements.add(newatt); 
-	                ent.addStereotype("modifiedFeatures=\"" + id + "\""); 
+                    derivedElements.add(newatt); 
+                    ent.addStereotype("modifiedFeatures=\"" + id + "\""); 
                   }
                 } 
               }

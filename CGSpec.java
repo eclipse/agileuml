@@ -66,6 +66,14 @@ public class CGSpec
     categoryRules.put(category,rules); 
   } 
 
+  public boolean hasRuleset(String category)
+  { Vector rules = (Vector) categoryRules.get(category); 
+    if (rules == null) 
+    { return false; } 
+    return true; 
+  } 
+
+
   public Vector getRulesForCategory(String category)
   { Vector res = (Vector) categoryRules.get(category); 
     if (res == null) 
@@ -73,6 +81,15 @@ public class CGSpec
       res = new Vector(); 
     } 
     return res; 
+  } 
+
+  public String applyRuleset(String category, ASTTerm obj)
+  { Vector res = (Vector) categoryRules.get(category); 
+    if (res == null) 
+    { System.err.println("!! Warning: no rules for category " + category); 
+      return obj + ""; 
+    } 
+    return obj.cgRules(this,res); 
   } 
 
   public void addTypeUseRule(CGRule r)

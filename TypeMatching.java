@@ -79,7 +79,61 @@ public class TypeMatching
       BasicExpression t = new BasicExpression(tvals[i]); 
       s.setType(stringtype); 
       t.setType(stringtype);  
-	  setValueMapping(s,t); 
+      setValueMapping(s,t); 
+    } 
+  }
+
+  public void setValues(boolean[] svals, String[] tvals)
+  { Type stringtype = new Type("String", null); 
+    Type booltype = new Type("boolean", null); 
+    
+    for (int i = 0; i < svals.length && i < tvals.length; i++) 
+    { BasicExpression s = new BasicExpression(svals[i]);
+      BasicExpression t = new BasicExpression(tvals[i]); 
+      s.setType(booltype); 
+      t.setType(stringtype);  
+      setValueMapping(s,t); 
+    } 
+  }
+
+  public void setValues(String[] svals, boolean[] tvals)
+  { Type stringtype = new Type("String", null); 
+    Type booltype = new Type("boolean", null); 
+    
+    for (int i = 0; i < svals.length && i < tvals.length; i++) 
+    { BasicExpression s = new BasicExpression(svals[i]);
+      BasicExpression t = new BasicExpression(tvals[i]); 
+      s.setType(stringtype); 
+      t.setType(booltype);  
+      setValueMapping(s,t); 
+    } 
+  }
+
+  public void setValues(double[] svals, String[] tvals)
+  { Type stringtype = new Type("String", null); 
+    Type doubletype = new Type("double", null); 
+    
+    for (int i = 0; i < svals.length && i < tvals.length; i++) 
+    { BasicExpression s = new BasicExpression(svals[i]);
+      BasicExpression t = new BasicExpression(tvals[i]); 
+      s.setType(doubletype); 
+      t.setType(stringtype);  
+      setValueMapping(s,t); 
+    } 
+  }
+
+  public void setValues(double[] svals, Vector[] tvals)
+  { Type stringtype = new Type("String", null); 
+    Type doubletype = new Type("double", null); 
+    
+    for (int i = 0; i < svals.length && i < tvals.length; i++) 
+    { BasicExpression s = new BasicExpression(svals[i]);
+      Vector tv = tvals[i]; 
+      
+      BasicExpression t = new BasicExpression("" + tv.get(0)); 
+      s.setType(doubletype); 
+      t.setType(stringtype);  
+      setValueMapping(s,t); 
     } 
   }
 

@@ -188,7 +188,11 @@ public class CGRule
             found = true; 
           } 
         } 
+
         System.out.println(">>> found metafeature " + f + " for " + var); 
+        if (res.contains(f)) { } 
+        else 
+        { res.add(f); } 
       } 
     } 
     return res; 
@@ -268,16 +272,23 @@ public class CGRule
   { // substitute metafeatures[j] by the value of eargs[j] metafeature
     // substitute variables[i] by args[i] in rhs
     
+    System.out.println(">***> Metafeatures of rule " + this + " are " + metafeatures); 
+
     String res = rhs + "";
     for (int j = 0; j < metafeatures.size(); j++) 
     { String mf = (String) metafeatures.get(j); 
       String mfvar = mf.substring(0,2); 
       String mffeat = mf.substring(3,mf.length());
       int k = Integer.parseInt(mfvar.charAt(1) + "");  
+
+      System.out.println(">***> Trying to apply metafeature " + mffeat + " to " + eargs + "[" + k + "]"); 
+      System.out.println(); 
+
       if (k >= 1 && k <= eargs.size())
       { Object obj = eargs.get(k-1);
-        System.out.println(">>> Applying metafeature " + mffeat + " to " + obj); 
-
+  
+        System.out.println(">***> Applying metafeature " + mffeat + " to " + obj + " : " + obj.getClass().getName()); 
+        System.out.println(); 
 
         if ("defaultValue".equals(mffeat) && obj instanceof Type)
         { Type ee = (Type) obj; 
@@ -524,14 +535,34 @@ public class CGRule
         } 
         else if (obj instanceof ASTTerm)
         { ASTTerm term = (ASTTerm) obj; 
-          if (term.hasMetafeature(mffeat))
-          { String repl = term.getMetafeatureValue(mffeat); 
+
+          System.out.println(">***> Applying " + mffeat + " to " + obj); 
+          System.out.println(); 
+          
+          if (cgs.hasRuleset(mffeat))
+          { System.out.println(">***> Valid ruleset " + mffeat);  
+            System.out.println(); 
+            String repl = cgs.applyRuleset(mffeat,(ASTTerm) obj);
+            System.out.println(">***> Applying ruleset " + mffeat + " to " + obj); 
+            System.out.println(); 
+
             if (repl != null) 
             { String repl1 = correctNewlines(repl); 
-                // System.out.println(">--> Replacing " + mf + " by " + repl1); 
+              System.out.println(">--> Replacing " + mf + " by " + repl1); 
               res = res.replaceAll(mf,repl1);
-            }
+            } 
           } 
+          else 
+          { System.out.println(">!!!> Invalid ruleset: " + mffeat); 
+            if (term.hasMetafeature(mffeat))
+            { String repl = term.getMetafeatureValue(mffeat); 
+              if (repl != null) 
+              { String repl1 = correctNewlines(repl); 
+                // System.out.println(">--> Replacing " + mf + " by " + repl1); 
+                res = res.replaceAll(mf,repl1);
+              }
+            }
+          }  
         }
         else
         { System.err.println("!! Warning: could not apply metafeature " + mffeat + " to " + obj); } 
@@ -543,6 +574,8 @@ public class CGRule
     // Extend this to allow users to define their own metafeatures in the specification
     // def: _x`f = _x.expr for some abstract syntax OCL expr. 
  
+    System.out.println(">***> RHS after replacement of metafeatures: " + res); 
+    System.out.println(); 
 
     for (int x = 0; x < args.size() && x < variables.size(); x++)
     { String var = (String) variables.get(x);

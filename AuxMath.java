@@ -271,6 +271,92 @@ public class AuxMath
     return true; 
   } 
 
+  public static boolean isFunctional(boolean[] xs, String[] ys) 
+  { // For each x : xs, only one y : ys
+    java.util.HashMap valueSets = new java.util.HashMap(); 
+
+    for (int i = 0; i < xs.length; i++) 
+    { Boolean xval = new Boolean(xs[i]); 
+      java.util.HashSet yvals = (java.util.HashSet) valueSets.get(xval); 
+      if (yvals == null) 
+      { yvals = new java.util.HashSet(); } 
+      yvals.add(ys[i]); 
+      valueSets.put(xval,yvals); 
+      if (yvals.size() > 1) 
+      { return false; }
+      // System.out.println(valueSets);  
+    } 
+    return true; 
+  } 
+
+  public static boolean isFunctionalToSingletons(double[] xs, Vector[] ys) 
+  { // For each x : xs, each ys.size() == 1, and unique ys for x
+
+    java.util.HashMap valueSets = new java.util.HashMap(); 
+
+    for (int i = 0; i < xs.length; i++) 
+    { Double xval = new Double(xs[i]); 
+      java.util.HashSet yvals = (java.util.HashSet) valueSets.get(xval); 
+      if (yvals == null) 
+      { yvals = new java.util.HashSet(); } 
+
+      if (ys[i].size() != 1) 
+      { return false; } 
+
+      Object yy = ys[i].get(0); 
+
+      yvals.add(yy); 
+      valueSets.put(xval,yvals); 
+      if (yvals.size() > 1) 
+      { return false; }
+      // System.out.println(valueSets);  
+    } 
+    return true; 
+  } 
+
+  public static boolean isFunctional(String[] xs, boolean[] ys) 
+  { // For each x : xs, only one y : ys
+    java.util.HashMap valueSets = new java.util.HashMap(); 
+
+    for (int i = 0; i < xs.length; i++) 
+    { String xval = xs[i];
+ 
+      java.util.HashSet yvals = (java.util.HashSet) valueSets.get(xval); 
+
+      if (yvals == null) 
+      { yvals = new java.util.HashSet(); } 
+
+      yvals.add(new Boolean(ys[i])); 
+      valueSets.put(xval,yvals); 
+
+      if (yvals.size() > 1) 
+      { return false; }
+      // System.out.println(valueSets);  
+    } 
+    return true; 
+  } 
+
+  public static boolean isFunctional(double[] xs, String[] ys) 
+  { // For each x : xs, only one y : ys
+    java.util.HashMap valueSets = new java.util.HashMap(); 
+
+    for (int i = 0; i < xs.length; i++) 
+    { Double xval = new Double(xs[i]); 
+      java.util.HashSet yvals = (java.util.HashSet) valueSets.get(xval); 
+
+      if (yvals == null) 
+      { yvals = new java.util.HashSet(); } 
+      yvals.add(ys[i]); 
+
+      valueSets.put(xval,yvals); 
+
+      if (yvals.size() > 1) 
+      { return false; }
+      // System.out.println(valueSets);  
+    } 
+    return true; 
+  } 
+
     public static int modFunction(double[] xs, double[] ys) 
     { // the xs[i] - y[i] have a common divisor > 1
       int oldgcd = 0; 
@@ -534,14 +620,68 @@ public class AuxMath
     public static boolean isCopy(double[] xs, double[] ys)
     { if (ys.length > 1 && xs.length == ys.length)
 	 { for (int i = 0; i < xs.length; i++)
-	    { if (xs[i] == ys[i]) { }
-		 else 
-	      { return false; }
+         { if (xs[i] == ys[i]) { }
+           else 
+           { return false; }
 	    }
 	    return true; 
 	  } 
 	  return false; 
 	}
+
+    public static boolean isCopy(double[] xs, Vector[] ys)
+    { // Each ys[i] is singleton of xs[i]
+
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { Vector yval = ys[i];
+
+          // System.err.println(yval + " =? " + xs[i]); 
+ 
+          if (yval.size() == 1)
+          { Double dd; 
+            if (yval.get(0) instanceof Double)
+            { dd = (Double) yval.get(0); } 
+            else 
+            { dd = Double.parseDouble(yval.get(0) + ""); } 
+ 
+            if (((1.0*xs[i]) + "").equals((1.0*dd.doubleValue()) + ""))
+            { }
+            else 
+            { return false; } 
+          }  
+          else 
+          { return false; }
+        }
+        return true; 
+      } 
+      return false; 
+    }
+
+    public static boolean isCopy(String[] xs, Vector[] ys)
+    { // Each ys[i] is singleton of xs[i]
+
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { Vector yval = ys[i];
+
+          System.err.println("???? " + yval + " =? " + xs[i]); 
+ 
+          if (yval.size() == 1)
+          { String dd = yval.get(0) + ""; 
+            if (xs[i] != null && 
+                ("\"" + xs[i] + "\"").equals(dd))
+            { } 
+            else 
+            { return false; }
+          } 
+          else 
+          { return false; }
+        }
+        return true; 
+      } 
+      return false; 
+    }
 
     public static boolean isNumericSum(Vector[] xs, Vector[] ys)
     { if (ys.length > 1 && xs.length == ys.length)
@@ -561,6 +701,7 @@ public class AuxMath
                 { return false; } 
               }
             }
+ 
             if (sum == dd) 
             { System.out.println(">>> Numeric sum of " + xvect + " = " + dd); } 
             else 
@@ -2136,6 +2277,23 @@ public class AuxMath
      return true; 
    } 
 
+   public static boolean isAppendSequences(Vector[] xs, ObjectSpecification xs1[], Vector[] ys, ModelSpecification mod) 
+   { // assuming they are collections of objects
+   
+     for (int i = 0; i < xs.length && i < xs1.length && i < ys.length; i++) 
+     { Vector xval = xs[i]; 
+       ObjectSpecification xval1 = xs1[i]; 
+       Vector yval = ys[i];
+       Vector vals = new Vector(); 
+       vals.addAll(xval);
+       vals.add(xval1);    
+       if (mod.correspondingObjectSequences(vals,yval)) 
+       { System.out.println(">>> Concatenation " + xval + "->append(" + xval1 + ") |--> " + yval); }
+       else 
+       { return false; } 
+     } 
+     return true; 
+   } 
 
    public static boolean isUnionSets(Vector[] xs, Vector xs1[], Vector[] ys, ModelSpecification mod) 
    { // assuming they are collections of objects
@@ -2151,6 +2309,48 @@ public class AuxMath
 
        if (yval.containsAll(tvals) && tvals.containsAll(yval))
        { System.out.println(">>> Union of " + xval + " and " + xval1 + " |--> " + yval); }
+       else 
+       { return false; } 
+     } 
+     return true; 
+   } 
+
+   public static boolean isIncludingSets(Vector[] xs, ObjectSpecification xs1[], Vector[] ys, ModelSpecification mod) 
+   { // assuming they are collections of objects
+   
+     for (int i = 0; i < xs.length && i < xs1.length && i < ys.length; i++) 
+     { Vector xval = xs[i]; 
+       ObjectSpecification xval1 = xs1[i]; 
+       Vector yval = ys[i];
+       Vector vals = new Vector(); 
+       vals.addAll(xval);
+       vals.add(xval1);    
+       Vector tvals = mod.getCorrespondingElements(vals); 
+
+       if (yval.containsAll(tvals) && tvals.containsAll(yval))
+       { System.out.println(">>> Union " + xval + "->including(" + xval1 + ") |--> " + yval); }
+       else 
+       { return false; } 
+     } 
+     return true; 
+   } 
+
+   public static boolean isExcludingSets(Vector[] xs, ObjectSpecification xs1[], Vector[] ys, ModelSpecification mod) 
+   { // assuming they are collections of objects
+   
+     for (int i = 0; i < xs.length && i < xs1.length && i < ys.length; i++) 
+     { Vector xval = xs[i]; 
+       ObjectSpecification xval1 = xs1[i]; 
+       Vector yval = ys[i];
+       Vector vals = new Vector(); 
+       vals.addAll(xval);
+       Vector xvals1 = new Vector(); 
+       xvals1.add(xval1); 
+       vals.removeAll(xvals1);    
+       Vector tvals = mod.getCorrespondingElements(vals); 
+
+       if (yval.containsAll(tvals) && tvals.containsAll(yval))
+       { System.out.println(">>> Subtraction " + xval + "->excluding(" + xval1 + ") |--> " + yval); }
        else 
        { return false; } 
      } 

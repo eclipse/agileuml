@@ -4508,16 +4508,19 @@ public class EntityMatching implements SystemTypes
             boolean found = false; 
             Vector passedAttValues = ObjectSpecification.getAllValuesOf(att,restrictedsources,mod); 
             System.out.println(">>> Values of " + att + " on source objects are: " + passedAttValues); 
-	        if (passedAttValues.containsAll(enumvals)) { } 
+
+            if (passedAttValues.containsAll(enumvals)) { } 
             else 
             { Expression expr = Expression.disjoinCases(att,passedAttValues); 
               System.out.println(">> Identified discriminator condition for " + att + ": " + expr);
-              expr.setBrackets(true); 
-              addCondition(expr);
-              System.out.println();  
+              if (expr != null) 
+              { expr.setBrackets(true); 
+                addCondition(expr);
+                System.out.println();
+              }  
             }
           }
-		}
+        }
         else if (att.isString())
         { /* System.out.println(">>> Possible source string condition is: " + att + " = \"" + trgname + "\"");
           // No, take the value of one of the restrictedsources.att
@@ -4770,7 +4773,7 @@ public class EntityMatching implements SystemTypes
         }
         else 
         { System.out.println(">>> Mis-matching types in " + am); 
-          removed.add(am); 
+          // removed.add(am); 
         }
 		// Other possibilities: enum to enum, enum/String, enum/boolean either way round
 		// Entity to Collection, Collection to Entity. Others are invalid and should be removed. 

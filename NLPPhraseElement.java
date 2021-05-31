@@ -37,7 +37,12 @@ public abstract class NLPPhraseElement
   
   public abstract String getPrincipalNoun();
 
+  public abstract NLPWord identifyNounForEntity(); 
+
   public abstract String getMostSignificantVerb(); 
   
   public abstract void extractAssociationDefinitions(Entity ex,String nme,java.util.Map mp,Vector modelems); 
+
+  public abstract void extractRelationshipDefinitions(Entity ent, Vector modelElements);
+
 } 

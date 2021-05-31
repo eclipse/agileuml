@@ -46,7 +46,7 @@ public class Entity extends ModelElement implements Comparable
   public boolean isEmpty()
   { if (attributes.size() == 0 && associations.size() == 0 && operations.size() == 0)
     { return true; }
-	return false; 
+    return false; 
   }
   
   public boolean notEmpty()
@@ -100,14 +100,14 @@ public class Entity extends ModelElement implements Comparable
       eargs.add(superclass);
     }
     
-	if (interfaces != null && interfaces.size() > 0)
+    if (interfaces != null && interfaces.size() > 0)
     { String allinterfaces = ""; 
       // int nsup = superclasses.size(); 
       // for (int i = 0; i < nsup-1; i++) 
 	  for (int i = 0; i < interfaces.size(); i++) 
       { allinterfaces = allinterfaces + ((Entity) interfaces.get(i)).getName(); 
         if (i < interfaces.size() - 1)
-		{ allinterfaces = allinterfaces + ", "; }  
+        { allinterfaces = allinterfaces + ", "; }  
       } 
       args.add(allinterfaces); 
       eargs.add(interfaces); 
@@ -126,11 +126,11 @@ public class Entity extends ModelElement implements Comparable
 
     for (int y = 0; y < associations.size(); y++)
     { Attribute ast = new Attribute((Association) associations.get(y));
-	  alist.add(ast);
+      alist.add(ast);
 	  
 	  // System.out.println(">>>> Converted association to attribute: " + ast + " : " + ast.getType());  
       
-	  String astx = ast.cgReference(cgs);
+      String astx = ast.cgReference(cgs);
 
 	  // System.out.println(">>>> Converted association to: " + astx);  
 
@@ -140,18 +140,18 @@ public class Entity extends ModelElement implements Comparable
     for (int z = 0; z < operations.size(); z++)
     { BehaviouralFeature op = (BehaviouralFeature) operations.get(z);
       String opx = op.cg(cgs);
-	  alist.add(op); 
+      alist.add(op); 
       arg = arg + opx;
     }
 
     args.add(arg);
-	eargs.add(alist); 
+    eargs.add(alist); 
 	
     CGRule r = cgs.matchedEntityRule(this,etext);
     if (r != null)
     { System.out.println(">>> Matched class rule " + r + " for " + getName()); 
-	  return r.applyRule(args,eargs,cgs); 
-	} 
+      return r.applyRule(args,eargs,cgs); 
+    } 
 	
     return etext;
   }
@@ -387,7 +387,8 @@ public class Entity extends ModelElement implements Comparable
       { Attribute step2 = (Attribute) v1.get(j); 
 
         Vector path = new Vector();        
-        path.add(step1); path.add(step2); 
+        path.add(step1); 
+        path.add(step2); 
         Attribute newatt = new Attribute(path); 
         nonlocalFeatures.add(newatt); 
       } 
@@ -399,13 +400,44 @@ public class Entity extends ModelElement implements Comparable
         else if (step1.isForbiddenInverse(step2)) { } 
         else 
         { Vector path = new Vector(); 
-          path.add(step1); path.add(step2); 
+          path.add(step1); 
+          path.add(step2); 
           Attribute newatt = new Attribute(path); 
           nonlocalFeatures.add(newatt); 
         } 
       } 
     }       
   } 
+
+  public void defineExtendedNonLocalFeatures(int len)
+  { if (len <= 1) 
+    { defineLocalFeatures(); 
+      nonlocalFeatures.clear(); 
+      // nonlocalFeatures.addAll(localFeatures); 
+      return; 
+    }
+
+    if (len <= 2) 
+    { defineExtendedNonLocalFeatures(); 
+      return; 
+    } 
+
+    nonlocalFeatures.clear(); 
+    
+    HashSet seen = new HashSet(); 
+    seen.add(this); 
+    Vector comps = composedProperties1(seen,len,false);  
+
+    for (int i = 0; i < comps.size(); i++) 
+    { Vector props = (Vector) comps.get(i); 
+      if (props.size() <= 1) { }  
+      else  
+      { Attribute att = new Attribute(props); 
+        att.setEntity(this);  
+        nonlocalFeatures.add(att);
+      }  
+    } 
+  }
 
   public void defineExtendedNonLocalFeatures()
   { nonlocalFeatures.clear(); 
@@ -416,14 +448,14 @@ public class Entity extends ModelElement implements Comparable
 
       Entity e2 = ast.getEntity2(); 
       Vector v1 = e2.allDefinedAttributes(); 
-	  if (e2.isAbstract())
-	  { Vector e2leaves = e2.getActualLeafSubclasses(); 
-	    for (int j = 0; j < e2leaves.size(); j++) 
-		{ Entity leaf = (Entity) e2leaves.get(j); 
-		  v1.addAll(leaf.attributes); 
-		}
-	  } 
-	  System.out.println("Two-step attribute features of " + this + " are: " + v1); 
+      if (e2.isAbstract())
+      { Vector e2leaves = e2.getActualLeafSubclasses(); 
+        for (int j = 0; j < e2leaves.size(); j++) 
+        { Entity leaf = (Entity) e2leaves.get(j); 
+          v1.addAll(leaf.attributes); 
+        }
+      } 
+      System.out.println("Two-step attribute features of " + this + " are: " + v1); 
 	   
 	  
       Vector v2 = e2.allDefinedAssociations(); 
@@ -443,7 +475,8 @@ public class Entity extends ModelElement implements Comparable
         else if (step1.isForbiddenInverse(step2)) { } 
         else 
         { Vector path = new Vector(); 
-          path.add(step1); path.add(step2); 
+          path.add(step1); 
+          path.add(step2); 
           Attribute newatt = new Attribute(path); 
           nonlocalFeatures.add(newatt); 
         } 

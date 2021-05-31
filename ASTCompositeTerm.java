@@ -30,12 +30,28 @@ public class ASTCompositeTerm extends ASTTerm
     return res; 
   } 
 
+  public String literalForm()
+  { String res = ""; 
+    for (int i = 0; i < terms.size(); i++) 
+    { ASTTerm t = (ASTTerm) terms.get(i); 
+      res = res + t.literalForm(); 
+    } 
+    return res; 
+  } 
+
   public String cg(CGSpec cgs)
   { // Find the cgs rules r for tag, match the terms to 
     // the r LHS, then apply first rule to the cg results of 
     // the LHS matchings. 
 
-    Vector rules = cgs.getRulesForCategory(tag); 
+    Vector rules = cgs.getRulesForCategory(tag);
+    return cgRules(cgs,rules); 
+  } 
+
+  public String cgRules(CGSpec cgs, Vector rules)
+  { if (rules == null) 
+    { return this + ""; }
+ 
     for (int i = 0; i < rules.size(); i++) 
     { CGRule r = (CGRule) rules.get(i);
       Vector tokens = r.lhsTokens; 
@@ -47,7 +63,7 @@ public class ASTCompositeTerm extends ASTTerm
         continue; 
       } 
 
-      System.out.println("> Trying to match tokens of rule " + r + " for " + this);  
+      // System.out.println("> Trying to match tokens of rule " + r + " for " + this);  
         
       Vector args = new Vector(); 
         // Strings resulting from terms[k].cg(cgs)
@@ -58,16 +74,18 @@ public class ASTCompositeTerm extends ASTTerm
       boolean failed = false; 
       for (int j = 0; j < tokens.size() && !failed; j++) 
       { String tok = (String) tokens.get(j); 
+        ASTTerm tm = (ASTTerm) terms.get(j); 
+
         if (vars.contains(tok))
         { // allocate terms(j) to tok
-          eargs.add(terms.get(j)); 
+          eargs.add(tm); 
           k++; 
         } 
-        else if (tok.equals(terms.get(j) + ""))
+        else if (tok.equals(tm.literalForm()))
         { } 
         else 
         { System.out.println("> " + tag + " rule " + r + " does not match " + this); 
-          System.out.println(tok + " /= " + terms.get(j)); 
+          System.out.println(tok + " /= " + tm.literalForm()); 
           failed = true; // try next rule 
         } 
       } 
@@ -84,9 +102,13 @@ public class ASTCompositeTerm extends ASTTerm
         Vector ents = new Vector(); 
 
         if (r.satisfiesConditions(eargs,ents))
-        { return r.applyRule(args,eargs,cgs); }  
+        { System.out.println(">>>> Applying rule " + r); 
+          return r.applyRule(args,eargs,cgs); 
+        }  
       }
     }  
+
+    System.out.println(); 
     return toString(); 
   }
 
@@ -206,6 +228,176 @@ public class ASTCompositeTerm extends ASTTerm
 
           return "Set{" + callp1 + ", " + callp2 + "}->min()"; 
         }  
+        else if ("abs".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->abs()"; 
+        }  
+        else if ("floor".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->floor()"; 
+        }  
+        else if ("round".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->round()"; 
+        }  
+        else if ("ceil".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->ceil()"; 
+        }  
+        else if ("sin".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->sin()"; 
+        }  
+        else if ("cos".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->cos()"; 
+        }  
+        else if ("tan".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->tan()"; 
+        }  
+        else if ("log".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->log()"; 
+        }  
+        else if ("asin".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->asin()"; 
+        }  
+        else if ("acos".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->acos()"; 
+        }  
+        else if ("atan".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->atan()"; 
+        }  
+        else if ("exp".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->exp()"; 
+        }  
+        else if ("sinh".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->sinh()"; 
+        }  
+        else if ("cosh".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->cosh()"; 
+        }  
+        else if ("tanh".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->tanh()"; 
+        }  
+        else if ("log10".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->log10()"; 
+        }  
+        else if ("sqrt".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->sqrt()"; 
+        }  
+        else if ("cbrt".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->cbrt()"; 
+        }  
+        else if ("pow".equals(called) && "Math".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          ASTTerm callarg2 = (ASTTerm) cargs.get(1);
+          String callp1 = callarg1.toKM3(); 
+          String callp2 = callarg2.toKM3(); 
+
+          return "(" + callp1 + ")->pow(" + callp2 + ")"; 
+        }  
+        else if ("min".equals(called) && "Collections".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->min()"; 
+        }  
+        else if ("max".equals(called) && "Collections".equals(args))
+        { ASTTerm callargs = (ASTTerm) callterms.get(2);
+          Vector cargs = getCallArguments(callargs); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          return "(" + callp1 + ")->max()"; 
+        }  
         else if ("put".equals(called) && callterms.size() >= 3)
         { ASTTerm callargs = (ASTTerm) callterms.get(2);
           Vector cargs = getCallArguments(callargs); 
@@ -221,7 +413,7 @@ public class ASTCompositeTerm extends ASTTerm
           String callp = callarg.toKM3(); 
           return args + " := " + args + "->including(" + callp + ")"; 
         }
-        else if ("addAll".equals(called))
+        else if ("addAll".equals(called) || "putAll".equals(called))
         { ASTTerm callarg = (ASTTerm) callterms.get(2); 
           String callp = callarg.toKM3(); 
           return args + " := " + args + "->union(" + callp + ")"; 
@@ -285,6 +477,16 @@ public class ASTCompositeTerm extends ASTTerm
         { // ASTTerm callarg = (ASTTerm) callterms.get(2); 
           // String callp = callarg.toKM3(); 
           return args + "->size()"; 
+        }
+        else if ("getFirst".equals(called))
+        { // ASTTerm callarg = (ASTTerm) callterms.get(2); 
+          // String callp = callarg.toKM3(); 
+          return args + "->first()"; 
+        }
+        else if ("getLast".equals(called))
+        { // ASTTerm callarg = (ASTTerm) callterms.get(2); 
+          // String callp = callarg.toKM3(); 
+          return args + "->last()"; 
         }
         else if ("toString".equals(called))
         { // ASTTerm callarg = (ASTTerm) callterms.get(2); 
@@ -371,7 +573,31 @@ public class ASTCompositeTerm extends ASTTerm
         String opx = op.toKM3(); 
         String e1x = e1.toKM3(); 
         String e2x = e2.toKM3();
+        String e1literal = e1.literalForm(); 
  
+        if ("PI".equals(e2 + "") && "Math".equals(e1literal))
+        { return "MathLib.PI"; } 
+        if ("E".equals(e2 + "") && "Math".equals(e1literal))
+        { return "MathLib.E"; } 
+        if ("MIN_VALUE".equals(e2 + "") && "Byte".equals(e1literal))
+        { return "-128"; } 
+        if ("MAX_VALUE".equals(e2 + "") && "Byte".equals(e1literal))
+        { return "127"; } 
+        if ("MIN_VALUE".equals(e2 + "") && "Short".equals(e1literal))
+        { return "-(2->pow(15))"; } 
+        if ("MAX_VALUE".equals(e2 + "") && "Short".equals(e1literal))
+        { return "(2->pow(15) - 1)"; } 
+        if ("MIN_VALUE".equals(e2 + "") && "Float".equals(e1literal))
+        { return "(2->pow(-149))"; } 
+        if ("MAX_VALUE".equals(e2 + "") && "Float".equals(e1literal))
+        { return "3.4028234663852886*(10->pow(38))"; } 
+        if ("EMPTY_LIST".equals(e2 + "") && "Collections".equals(e1x))
+        { return "Sequence{}"; }  
+        if ("EMPTY_SET".equals(e2 + "") && "Collections".equals(e1x))
+        { return "Set{}"; }  
+        if ("EMPTY_MAP".equals(e2 + "") && "Collections".equals(e1x))
+        { return "Map{}"; }  
+
         if ("+=".equals(op + ""))
         { return e1x + " := " + e1x + " + " + e2x; } 
         if ("*=".equals(op + ""))
@@ -582,6 +808,8 @@ public class ASTCompositeTerm extends ASTTerm
       String res = "var " + km3var + " : " + km3type; 
       if (km3init != null) 
       { res = res + " := " + km3init; }  
+      types.put(km3var,km3type); 
+      System.out.println(">> Type of " + km3var + " is " + km3type); 
       return res; 
     }   
 
@@ -594,6 +822,8 @@ public class ASTCompositeTerm extends ASTTerm
       String res = "  attribute " + km3var + " : " + km3type; 
       // if (km3init != null) 
       // { res = res + " := " + km3init; }  
+      types.put(km3var,km3type); 
+      System.out.println(">> Type of " + km3var + " is " + km3type); 
       return res + ";\n"; 
     }   
 

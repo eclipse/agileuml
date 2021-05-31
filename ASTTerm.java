@@ -7,6 +7,8 @@
 * SPDX-License-Identifier: EPL-2.0
 * *****************************/
 
+import java.util.Vector; 
+
 public abstract class ASTTerm
 { String id = ""; 
 
@@ -14,9 +16,16 @@ public abstract class ASTTerm
      // String --> String, eg., recording the conceptual
      // type of the element. 
 
+  java.util.Map types = new java.util.HashMap(); 
+     // String --> String for general type of identifiers
+
   public abstract String toString(); 
 
+  public abstract String literalForm(); 
+
   public abstract String cg(CGSpec cgs); 
+
+  public abstract String cgRules(CGSpec cgs, Vector rules); 
 
   public boolean hasMetafeature(String f) 
   { String val = (String) metafeatures.get(f); 

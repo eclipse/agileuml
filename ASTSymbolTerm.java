@@ -7,6 +7,7 @@
 * SPDX-License-Identifier: EPL-2.0
 * *****************************/
 
+import java.util.Vector; 
 
 public class ASTSymbolTerm extends ASTTerm
 { String symbol = ""; 
@@ -17,7 +18,13 @@ public class ASTSymbolTerm extends ASTTerm
   public String cg(CGSpec cgs)
   { return symbol; } 
 
+  public String cgRules(CGSpec cgs, Vector rules)
+  { return symbol; } 
+
   public String toString()
+  { return symbol; } 
+
+  public String literalForm()
   { return symbol; } 
 
   public String toKM3()
