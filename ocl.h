@@ -2255,7 +2255,7 @@ struct ocltnode* oclSubtractMap(struct ocltnode* m1, struct ocltnode* m2)
  
 
 /* Utility functions to parse strings and build formats        */ 
-/* isMatch, hasMatch, allMatches and replaceAll need the 
+/* isMatch, hasMatch, firstMatch, allMatches and replaceAllMatches need the 
    regex.h library */
 
 unsigned char hasMatch(char* str, char* patt) 
@@ -2276,6 +2276,36 @@ unsigned char isMatch(char* str, char* patt)
   } 
   return FALSE; 
 }  
+
+char* firstMatch(char* str, char* patt)
+{ int strsize = strlen(str); 
+  int pattsize = strlen(patt);
+ 
+  if (strsize == 0 || pattsize == 0)
+  { return NULL; } 
+
+  char* res = (char*) calloc(strsize, sizeof(char));
+
+  regexp* expression = regcomp(patt); 
+  int r = regexec(expression, str); 
+
+  if (r == TRUE)
+  {  
+    if (expression->startp[0] != NULL && 
+        expression->endp[0] != NULL)
+    { char* st = expression->startp[0];
+      int stlen = strlen(st);  
+      char* en = expression->endp[0]; 
+      int enlen = strlen(en);  
+      int j = 0; 
+      for ( ; j < stlen - enlen ; j++)
+      { res[j] = st[j]; } 
+      res[j] = '\0'; 
+      return res; 
+    } 
+  } 
+  return NULL; 
+}
 
 char** allMatches(char* str, char* patt)
 { int strsize = strlen(str); 
@@ -2318,7 +2348,7 @@ char** allMatches(char* str, char* patt)
   return res; 
 } 
 
-char* replaceAll(char* str, char* patt, char* rep)
+char* replaceAllMatches(char* str, char* patt, char* rep)
 { int strsize = strlen(str); 
   int pattsize = strlen(patt); 
   int repsize = strlen(rep); 
@@ -2371,6 +2401,53 @@ char* replaceAll(char* str, char* patt, char* rep)
   return s; 
 } 
 
+char* replaceFirstMatch(char* str, char* patt, char* rep)
+{ int strsize = strlen(str); 
+  int pattsize = strlen(patt); 
+  int repsize = strlen(rep); 
+
+  if (strsize == 0 || pattsize == 0) 
+  { return str; } 
+  if (repsize == 0) 
+  { return str; }
+
+  char* mtch = firstMatch(str,patt); 
+  if (mtch == NULL) 
+  { return str; } 
+
+  char* s = (char*) malloc((strsize + repsize + 1)*sizeof(char)); 
+  /* copy of s + space for replacement. */
+ 
+  int mlen = strlen(mtch); 
+  
+  int i = 0; 
+  char* remainderOfstr = str; 
+ 
+  int k = indexOfString(remainderOfstr,mtch); 
+    /* printf("Match %s occurs at position %d\n", mtch, k); */ 
+  int j = 0; 
+  for ( ; j < k-1; j++)
+  { s[i] = remainderOfstr[j]; 
+    i++; 
+  } 
+  int r = 0; 
+  for ( ; r < repsize; r++) 
+  { s[i] = rep[r]; 
+    i++; 
+  } 
+  
+  remainderOfstr = &remainderOfstr[k+mlen-1];  
+  
+  int remainderlen = strlen(remainderOfstr); 
+  int t = 0; 
+  for ( ; t < remainderlen; t++) 
+  { s[i] = remainderOfstr[t]; 
+    i++; 
+  } 
+
+  s[i] = '\0'; 
+  return s; 
+} 
 
 unsigned char isCSVseparator(char c)
 { if (c == ',') { return TRUE; } 

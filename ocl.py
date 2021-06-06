@@ -160,7 +160,7 @@ def lastIndexOf(s,d) :
 def hasPrefixSequence(sq,sq1,j) : 
   m = len(sq1)
   n = len(sq)
-  if m == 0 or n == 0 or n < m : 
+  if m == 0 or n == 0 or n < j+m : 
     return False
   i = 0
   while i < m and i+j < n : 
@@ -244,6 +244,14 @@ def hasMatch(str, pattern) :
     return True
 
 
+def firstMatch(str, pattern) : 
+  m = re.search(pattern,str)
+  if m == None :  
+    return None
+  else : 
+    return m.group()
+
+
 def allMatches(str, pattern) : 
   res = []
   res.extend(re.findall(pattern,str)) 
@@ -253,6 +261,11 @@ def allMatches(str, pattern) :
 def replaceAll(str, pattern, repl) : 
   res = '' + str
   res = re.sub(pattern, repl, res)
+  return res
+
+def replaceFirstMatch(str, pattern, repl) : 
+  res = '' + str
+  res = re.sub(pattern, repl, res, 1)
   return res
 
 
