@@ -263,6 +263,13 @@ def replaceAll(str, pattern, repl) :
   res = re.sub(pattern, repl, res)
   return res
 
+
+def replaceAllMatches(str, pattern, repl) : 
+  res = '' + str
+  res = re.sub(pattern, repl, res)
+  return res
+
+
 def replaceFirstMatch(str, pattern, repl) : 
   res = '' + str
   res = re.sub(pattern, repl, res, 1)
