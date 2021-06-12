@@ -306,7 +306,11 @@ public class Compiler2
         str.equals("front") || str.equals("tail") || str.equals("insertAt") || 
         str.equals("trim") || str.equals("lastIndexOf") ||
         str.equals("equalsIgnoreCase") || str.equals("split") ||
-        str.equals("matches") || str.equals("allMatches") ||
+        str.equals("isMatch") || str.equals("hasMatch") ||
+        str.equals("allMatches") || 
+        str.equals("firstMatch") ||
+        str.equals("replaceAllMatches") ||
+        str.equals("replaceFirstMatch") ||
         str.equals("replace") || str.equals("replaceAll") ||
         str.equals("subrange") || str.equals("characters") || str.equals("isLong") || 
         str.equals("closure") || str.equals("asSet") || str.equals("asSequence") || 
@@ -321,12 +325,14 @@ public class Compiler2
         str.equals("hasSuffix") || str.equals("isEmpty") || str.equals("notEmpty") ||
         str.equals("isUnique") || str.equals("prd") || str.equals("sortedBy") || 
         str.equals("sqrt") || str.equals("abs") || "flatten".equals(str) || 
-        str.equals("oclAsType") || str.equals("oclIsKindOf") || str.equals("oclIsNew") || 
+        str.equals("oclAsType") || str.equals("oclIsKindOf") ||
+        str.equals("oclIsTypeOf") ||  str.equals("oclIsNew") || 
         str.equals("or") ||
         str.equals("indexOf") || str.equals("isDeleted") || str.equals("iterate"))
     { return true; } 
     return false; 
   } 
+  // Also toBoolean
 
   public boolean checkSyntax(Entity context, Vector entities, 
                              Vector varsymbs, Vector messages)
@@ -2295,6 +2301,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
       { // System.err.println("!!! ERROR: Invalid basic expression: " + ss); 
         return null; 
       } 
+
       if (isKeyword(ss))
       { System.err.println(">>>: Invalid basic expression: keyword: " + ss); 
         return null;
@@ -3989,6 +3996,11 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       return "class"; 
     } 
 
+    if ("abstract".startsWith(st)) 
+    { mess[0] = "Abstract class declaration, eg: abstract class Name { ... }"; 
+      return "abstract class"; 
+    } 
+
     if ("usecase".startsWith(st)) 
     { mess[0] = "usecase declaration, eg: usecase name : Type { ... }"; 
       return "usecase"; 
@@ -4045,12 +4057,14 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       } 
 
       if ("String".startsWith(st)) 
-      { mess[0] = "String type. Empty string is \"\""; 
+      { mess[0] = "String type. Empty string is \"\"\nOperators include:  s->size()  s1 + s2  s1->indexOf(s2)  s->at(index)  s->display()  s->tail()  s->first()\ns.subrange(i,j)  s->isMatch(pattern)  s->allMatches(patt)  s->trim()\n"; 
         return "String"; 
       }
  
       if ("int".startsWith(st)) 
-      { mess[0] = "Integer type, from -(2->pow(31)) to 2->pow(31)-1"; 
+      { mess[0] = "Integer type, from -(2->pow(31)) to 2->pow(31)-1\n" + 
+          "Operators include: x mod y  x div y\n" + 
+          "and usual arithmetic operators * / - + < <= > >= = /= etc"; 
         return "int"; 
       } 
 
@@ -4082,7 +4096,9 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
     if (st.length() > 2)
     { if ("double".startsWith(st)) 
-      { mess[0] = "Real-values type, from -1.7976931348623157*(10->pow(308)) to 1.7976931348623157*(10->pow(308))"; 
+      { mess[0] = "Real-values type, from -1.7976931348623157*(10->pow(308)) to 1.7976931348623157*(10->pow(308))\n" + 
+          "Operators include: d->sqrt()  d1->pow(d2)  d->exp()  d->log()\n" + 
+          "and usual arithmetic operators * / - + < <= > >= = /= etc"; 
         return "double"; 
       } 
 
@@ -4092,17 +4108,20 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       } 
 
       if ("Sequence".startsWith(st)) 
-      { mess[0] = "Sequence type, eg., Sequence(String)"; 
+      { mess[0] = "Sequence type, eg., Sequence(String)\nOperators include:  sq->size()  sq->at(index)  sq1->union(sq2)\n" + 
+           "sq->select(x|P)  sq->collect(x|P)  sq->forAll(x|P)\n"; 
         return "Sequence(Type)"; 
       }
  
       if ("Set".startsWith(st)) 
-      { mess[0] = "Set type, eg., Set(String)"; 
+      { mess[0] = "Set type, eg., Set(String)\nOperators include:  st->size()  st->includes(elem)  st1->union(st2)\n" + 
+           "st->select(x|P)  st->collect(x|P)  st->forAll(x|P)\n"; 
         return "Set(Type)"; 
       }
  
       if ("Map".startsWith(st)) 
-      { mess[0] = "Map type, eg., Map(String,int)"; 
+      { mess[0] = "Map type, eg., Map(String,int)\nOperators include:  m->size()  m->at(key)  m1->union(m2)\n" + 
+           "m->select(x|P)  m->keys()  m->values()\n"; 
         return "Map(String,Type)"; 
       } 
 
@@ -4110,6 +4129,17 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       { mess[0] = "Function type, eg., Function(String,int)"; 
         return "Function(String,Type)"; 
       } 
+
+      if ("enumeration".startsWith(st)) 
+      { mess[0] = "Enumeration, eg., enumeration { literal red literal blue literal green }"; 
+        return "enumeration"; 
+      } 
+
+      if ("endif".startsWith(st)) 
+      { mess[0] = "endif ends conditional expression  if e then e1 else e2 endif"; 
+        return "endif"; 
+      } 
+
     } 
 
     if (st.length() > 6)
@@ -4124,17 +4154,154 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       }
     } 
 
+    if (st.length() > 4)
+    { 
+      if ("->front".startsWith(st))
+      { mess[0] = "arg->front() operator on strings, sequences\n" + 
+          "Returns  arg.subrange(1,(arg->size())-1)"; 
+        return "arg->front()"; 
+      }
+
+      if ("->tail".startsWith(st))
+      { mess[0] = "arg->tail() operator on strings, sequences\n" + 
+          "Returns  arg.subrange(2,arg->size())"; 
+        return "arg->tail()"; 
+      }
+
+      if ("->trim".startsWith(st))
+      { mess[0] = "arg->trim() operator on strings\n" + 
+          "Copy of arg with leading and trailing whitespace removed"; 
+        return "arg->trim()"; 
+      }
+
+      if ("->isMatch".startsWith(st))
+      { mess[0] = "arg->isMatch(patt) operator on strings\n" + 
+          "True if arg matches against pattern patt"; 
+        return "arg->isMatch(patt)"; 
+      }
+
+      if ("->allMatches".startsWith(st))
+      { mess[0] = "arg->allMatches(patt) operator on strings\n" + 
+          "Returns sequence of matches in arg for pattern patt"; 
+        return "arg->allMatches(patt)"; 
+      }
+
+      if ("->reverse".startsWith(st))
+      { mess[0] = "arg->reverse() operator on strings, sequences\n" + 
+          "Returns arg in reverse order"; 
+        return "arg->reverse()"; 
+      }
+
+      if ("->first".startsWith(st))
+      { mess[0] = "arg->first() operator on non-empty strings, sequences\n" + 
+          "Returns  arg->at(1)"; 
+        return "arg->first()"; 
+      }
+
+      if ("->last".startsWith(st))
+      { mess[0] = "arg->last() operator on non-empty strings, sequences\n" + 
+          "Returns  arg->at(arg->size())"; 
+        return "arg->last()"; 
+      }
+
+      if ("->exists".startsWith(st))
+      { mess[0] = "->exists or ->exists1 operators on sets, sequences\n" + 
+          "Can also be used to create concrete class C instances: C->exists(x|predicate)"; 
+        return "arg1->exists(x|Predicate) or arg1->exists1(x|Predicate)"; 
+      }
+
+      if ("->forAll".startsWith(st))
+      { mess[0] = "->forAll operator on sets, sequences\n" + 
+          "true if all elements of LHS satisfies predicate"; 
+        return "arg1->forAll(x|Predicate)"; 
+      }
+
+      if ("->union".startsWith(st))
+      { mess[0] = "Union (merge, concatenate, override) operator on sets, sequences and maps"; 
+        return "arg1->union(arg2)"; 
+      }
+
+      if ("->intersection".startsWith(st))
+      { mess[0] = "Intersection operator on sets, sequences and maps"; 
+        return "arg1->intersection(arg2)"; 
+      }
+
+      if ("->includes".startsWith(st) || "->includesAll".startsWith(st) || 
+          "->including".startsWith(st))
+      { mess[0] = "arg1->includes(elem) operator on sets, sequences. true if elem is in arg1\n" + 
+          "Or arg1->includesAll(arg2)  true if all arg2 elements are in arg1\n" + 
+          "Or arg1->including(elem)  The same as arg1->union(Set{elem})"; 
+        return "arg1->includes(elem)  or  arg1->includesAll(arg2)  or  arg1->including(elem)"; 
+      }
+
+      if ("->excludes".startsWith(st) ||
+          "->excludesAll".startsWith(st) ||  
+          "->excluding".startsWith(st))
+      { mess[0] = "arg1->excludes(elem) operator on sets, sequences. true if elem is not in arg1\n" + 
+          "Or arg1->excludesAll(arg2)  True if arg1, arg2 have no common elements\n" + 
+          "Or arg1->excluding(elem)  The same as arg1 - Set{elem}"; 
+        return "arg1->excludes(elem)  or  arg1->excludesAll(arg2)  or  arg1->excluding(elem)"; 
+      }
+    
+      if ("->select".startsWith(st))
+      { mess[0] = "Selection (filter) operator on sets, sequences and maps"; 
+        return "arg1->select(x | Predicate)"; 
+      }
+
+      if ("->reject".startsWith(st))
+      { mess[0] = "Rejection (negative filter) operator on sets, sequences and maps"; 
+        return "arg1->reject(x | Predicate)"; 
+      }
+
+      if ("->collect".startsWith(st))
+      { mess[0] = "Collection operator on sets and sequences -- this always returns a sequence\n" + 
+          "so that duplicated expression values are preserved"; 
+        return "arg1->collect(x | Expression)"; 
+      }
+  
+      if ("->max".startsWith(st))
+      { mess[0] = "Maximum element operator on sets & sequences of numbers/strings"; 
+        return "arg->max()"; 
+      }
+
+      if ("->min".startsWith(st))
+      { mess[0] = "Minimum element operator on sets & sequences of numbers/strings"; 
+        return "arg->min()"; 
+      }
+
+      if ("->sum".startsWith(st))
+      { mess[0] = "Summation operator on sets & sequences of numbers/strings"; 
+        return "arg->sum()"; 
+      }
+
+      if ("->prd".startsWith(st))
+      { mess[0] = "Product operator on sets & sequences of numbers"; 
+        return "arg->prd()"; 
+      }
+
+      if ("->display".startsWith(st))
+      { mess[0] = "Display operator on strings"; 
+        return "arg->display()"; 
+      }
+
+      
+    } 
+
 
     if ("long".startsWith(st)) 
-    { mess[0] = "long Integer type, from -(2->pow(63)) to (2->pow(63)-1)"; 
+    { mess[0] = "long Integer type, from -(2->pow(63)) to (2->pow(63)-1)\n" +  
+          "Operators include: x mod y  x div y\n" + 
+          "and usual arithmetic operators * / - + < <= > >= = /= etc"; 
+ 
       return "long"; 
     } 
     
     
     if ("boolean".startsWith(st)) 
-    { mess[0] = "Boolean-values type, values are true and false"; 
+    { mess[0] = "Boolean-values type, values are true and false\nOperators include:  b1 & b2  b1 or b2  not(b)  b1 => b2"; 
       return "boolean"; 
     } 
+
 
     return null; 
   } 
@@ -4146,6 +4313,24 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       if (Character.isLetterOrDigit(cx) || cx == '_' || 
           cx == '$')
       { res = cx + res; } 
+      else 
+      { return res; } 
+    } 
+    return res; 
+  } 
+
+  public static String matchPrecedingOperator(char cc, String txt, int pos)
+  { String res = "" + cc; 
+    for (int i = pos-1; i >= 0; i--) 
+    { char cx = txt.charAt(i); 
+      if (Character.isLetterOrDigit(cx) || cx == '_' || 
+          cx == '$')
+      { res = cx + res; } 
+      else if (cx == '>' && i > 0 && 
+               txt.charAt(i-1) == '-')
+      { res = "->" + res; 
+        return res; 
+      } 
       else 
       { return res; } 
     } 
@@ -4865,11 +5050,11 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     { String lx2 = lexicals.get(i) + ""; 
       if ("attribute".equals(lx2) || "reference".equals(lx2) || "operation".equals(lx2) ||
           "query".equals(lx2) || "static".equals(lx2) || "invariant".equals(lx2) || 
-		  "stereotype".equals(lx2)) 
+          "stereotype".equals(lx2)) 
       { String lxr = lexicals.get(reached) + ""; 
         if ("attribute".equals(lxr) || "reference".equals(lxr) || "query".equals(lxr) || 
             "operation".equals(lxr) || "static".equals(lxr) || "invariant".equals(lxr) ||
-			"stereotype".equals(lxr)) 
+            "stereotype".equals(lxr)) 
         { if ("static".equals(lxr))
           { if ("attribute".equals(lexicals.get(reached+1) + ""))
             { Attribute attr = parseAttributeClause(reached+1, i - 1, entities, types);
@@ -5468,12 +5653,25 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       } 
     }
 
-    if (";".equals(lexicals.get(reached) + "")) 
+    String rlex = lexicals.get(reached) + ""; 
+      // token after type name if any
+
+    if (";".equals(rlex)) 
     { return res; } 
-    else if ("oppositeOf".equals(lexicals.get(reached) + ""))
+    else if ("oppositeOf".equals(rlex))
     { res.role1 = lexicals.get(reached+1) + ""; 
       return res; 
     }  
+    else if ("Set".equals(res.e2name) && "(".equals(rlex))
+    { res.e2name = lexicals.get(reached+1) + ""; 
+      res.card2 = ModelElement.MANY; 
+    } 
+    else if ("Sequence".equals(res.e2name) && 
+"(".equals(rlex))
+    { res.e2name = lexicals.get(reached+1) + ""; 
+      res.card2 = ModelElement.MANY; 
+      res.stereotypes.add("ordered"); 
+    }
     return res; 
   } 
 

@@ -1961,7 +1961,7 @@ public class ModelSpecification
       for (int i = 0; i < tvals.length; i++) 
       { Vector trgs = tvals[i]; 
        
-	    Vector sobjs = correspondingObjectSupset(sourcesinsubc[i],trgs); 
+        Vector sobjs = correspondingObjectSupset(sourcesinsubc[i],trgs); 
         if (sobjs != null && 
             sobjs.containsAll(sourcesinsubc[i]) &&
             sourcesinsubc[i].containsAll(sobjs))
@@ -1987,19 +1987,19 @@ public class ModelSpecification
 	// also be possible. 
     boolean allEmpty = true; // ignore cases where sources and targets are all empty
 	
-	if (tvals.length == 0) 
-	{ return res; } 
+    if (tvals.length == 0) 
+    { return res; } 
 	  
     for (int i = 0; i < tvals.length; i++) 
     { Vector trgs = tvals[i]; 
       if (trgs.size() == 0) 
-	  { }
-	  else 
-	  { allEmpty = false; }
-	} 
+      { }
+      else 
+      { allEmpty = false; }
+    } 
 	
-	if (allEmpty) 
-	{ return res; }
+    if (allEmpty) 
+    { return res; }
 	
     BasicExpression sexpr = new BasicExpression(src);
     sexpr.setUmlKind(Expression.ATTRIBUTE);
@@ -2048,12 +2048,12 @@ public class ModelSpecification
 		}
             
 	    if (validPositiveCondition)
-		{ BasicExpression oftype = new BasicExpression(att); 
-		  Expression selexp = new BinaryExpression("->select", sexpr, oftype);
-		  selexp.setType(sexpr.getType()); 
-		  selexp.setElementType(sexpr.getElementType());
-		  res.add(selexp);   
-		}
+	    { BasicExpression oftype = new BasicExpression(att); 
+	      Expression selexp = new BinaryExpression("->select", sexpr, oftype);
+	      selexp.setType(sexpr.getType()); 
+	      selexp.setElementType(sexpr.getElementType());
+	      res.add(selexp);   
+	    }
 
         boolean validNegativeCondition = true;  
         for (int k = 0; k < tvals.length; k++) 
@@ -2240,9 +2240,9 @@ public class ModelSpecification
        if (exprs.size() > 0)
        { Expression newlhs = Expression.formConjunction(exprs); 
          Expression selexp = new BinaryExpression("->select", sexpr, newlhs);
-		 selexp.setType(sexpr.getType()); 
-		 selexp.setElementType(sexpr.getElementType());
-		 res.add(selexp);  
+         selexp.setType(sexpr.getType()); 
+         selexp.setElementType(sexpr.getElementType());
+         res.add(selexp);  
        } 
       }
     } 
@@ -2879,8 +2879,9 @@ public class ModelSpecification
 		 if (alldefined && AuxMath.isCopy(sattvalues,tattvalues))
 	      { System.out.println(">> Singleton feature mapping " + sattname + " |--> " + tattname); 
 	        AttributeMatching amx = new AttributeMatching(satt, tatt); 
-	        res.add(amx); 
-	        emx.addMapping(amx);
+	        res.add(amx);
+               amx.unionSemantics = true; 
+             emx.addMapping(amx);
 	        found = true;  
 	  	 }
           }
@@ -2912,15 +2913,15 @@ public class ModelSpecification
           else if (alldefined && AuxMath.isUpperCased(sattvalues,tattvalues)) 
           { BasicExpression sattbe = new BasicExpression(satt); 
             sattbe.setUmlKind(Expression.ATTRIBUTE);
-		    UnaryExpression upperc = new UnaryExpression("->toUpperCase", sattbe); 
-		    upperc.setType(new Type("String", null)); 
-		    upperc.setElementType(new Type("String", null)); 
-		    System.out.println(">> Uppercased mapping " + sattname + "->toUpperCase() |--> " + tattname); 
-		    AttributeMatching amx = new AttributeMatching(upperc, tatt); 
-		    res.add(amx); 
-		    emx.addMapping(amx); 
-			found = true; 
-		  }  
+            UnaryExpression upperc = new UnaryExpression("->toUpperCase", sattbe); 
+            upperc.setType(new Type("String", null)); 
+            upperc.setElementType(new Type("String", null)); 
+            System.out.println(">> Uppercased mapping " + sattname + "->toUpperCase() |--> " + tattname); 
+            AttributeMatching amx = new AttributeMatching(upperc, tatt); 
+            res.add(amx); 
+            emx.addMapping(amx); 
+            found = true; 
+          }  
           else if (alldefined && AuxMath.isLowerCased(sattvalues,tattvalues)) 
           { BasicExpression sattbe = new BasicExpression(satt); 
             sattbe.setUmlKind(Expression.ATTRIBUTE);
@@ -3090,13 +3091,12 @@ public class ModelSpecification
             sattvalues[j] = sobj.getStringValue(satt,this); 
             tattvalues[j] = tobj.getCollectionValue(tatt,this); 
           }
-	
-          // JOptionPane.showInputDialog("Create a String-to-String-set function " + alldefined + " " + satt + " " + tatt + "? (y/n):");
-        	
+	        	
           if (alldefined && AuxMath.isCopy(sattvalues,tattvalues))
           { System.out.println(">> Copy String-to-StringSet mapping " + sattname + " |--> " + tattname); 
             AttributeMatching amx = new AttributeMatching(satt, tatt); 
             res.add(amx); 
+            amx.unionSemantics = true; 
             emx.addMapping(amx); 
             found = true; 
           } 
@@ -4943,7 +4943,12 @@ public class ModelSpecification
                       sattvalueMap,tattvalues,tvalues); 
     if (cexpr != null) 
     { System.out.println(">>> Composed function " + cexpr + " |--> " + tatt); 
-      AttributeMatching amx = new AttributeMatching(cexpr, tatt);
+      Vector auxvariables = new Vector(); 
+      Attribute var = new Attribute(Identifier.nextIdentifier("var$"),cexpr.getElementType(),
+                                  ModelElement.INTERNAL);
+      var.setElementType(cexpr.getElementType());
+      auxvariables.add(var);   
+      AttributeMatching amx = new AttributeMatching(cexpr, tatt, var, auxvariables); 
         // emx.addMapping(amx);  
       res.add(amx); 
         // tent.addQueryOperation(tatt,cexpr); 
@@ -5225,7 +5230,12 @@ public class ModelSpecification
                       sattvalueMap,tattvalues,tvalues); 
     if (cexpr != null) 
     { System.out.println(">>> Composed function " + cexpr + " |--> " + tatt); 
-      AttributeMatching amx = new AttributeMatching(cexpr, tatt);
+      Vector auxvariables = new Vector(); 
+      Attribute var = new Attribute(Identifier.nextIdentifier("var$"),cexpr.getElementType(),
+                                  ModelElement.INTERNAL);
+      var.setElementType(cexpr.getElementType());
+      auxvariables.add(var);   
+      AttributeMatching amx = new AttributeMatching(cexpr, tatt, var, auxvariables); 
         // emx.addMapping(amx);  
       res.add(amx); 
         // tent.addQueryOperation(tatt,cexpr); 

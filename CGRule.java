@@ -632,11 +632,37 @@ public class CGRule
     if (str.length() == 0) 
     { return res; } 
 
+    boolean instring = false; 
+
     for (int i = 0; i < str.length() - 1; i++) 
     { char c1 = str.charAt(i); 
-      char c2 = str.charAt(i+1); 
-      if (c1 == '\\' && c2 == 'n')
+      char c2 = str.charAt(i+1);
+
+      if (c1 == '"' && instring) 
+      { instring = false; } 
+      else if (c1 == '"')
+      { instring = true; } 
+ 
+      if (c1 == '\\' && c2 == 'n' && !instring)
       { res = res + '\n'; 
+        i++;
+        if (i == str.length() - 1)
+        { return res; }  
+      } 
+      else if (c1 == '\\' && c2 == 'n' && instring)
+      { res = res + "\\\\n"; 
+        i++;
+        if (i == str.length() - 1)
+        { return res; }  
+      } 
+      else if (c1 == '\\' && c2 == '(' && instring)
+      { res = res + "\\\\("; 
+        i++;
+        if (i == str.length() - 1)
+        { return res; }  
+      } 
+      else if (c1 == '\\' && c2 == ')' && instring)
+      { res = res + "\\\\)"; 
         i++;
         if (i == str.length() - 1)
         { return res; }  
@@ -644,6 +670,7 @@ public class CGRule
       else 
       { res = res + c1; } 
     } 
+
     return res + str.charAt(str.length()-1); 
   } 
   

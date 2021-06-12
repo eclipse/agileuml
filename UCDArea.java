@@ -9226,11 +9226,15 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);
     mop = BSystemTypes.generateAllMatchesOp(); 
     out.println("\n" + mop);
+    mop = BSystemTypes.generateFirstMatchOp(); 
+    out.println("\n" + mop);
     mop = BSystemTypes.generateSplitOp(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateReplaceOp(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateReplaceAllOp(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateReplaceFirstOp(); 
     out.println("\n" + mop);
 
 
@@ -9423,11 +9427,15 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);
     mop = BSystemTypes.generateAllMatchesOpJava6(); 
     out.println("\n" + mop);
+    mop = BSystemTypes.generateFirstMatchOp(); 
+    out.println("\n" + mop);
     mop = BSystemTypes.generateSplitOpJava6(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateReplaceOp(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateReplaceAllOp(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateReplaceFirstOp(); 
     out.println("\n" + mop);
 
     /* Map operations - optional */ 
@@ -9620,11 +9628,15 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);
     mop = BSystemTypes.generateAllMatchesOpJava7(); 
     out.println("\n" + mop);
+    mop = BSystemTypes.generateFirstMatchOp(); 
+    out.println("\n" + mop);
     mop = BSystemTypes.generateSplitOpJava7(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateReplaceOpJava7(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateReplaceAllOp(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateReplaceFirstOp(); 
     out.println("\n" + mop);
 
     /* Map operations - optional */ 
@@ -9784,6 +9796,10 @@ public void produceCUI(PrintWriter out)
     mop = BSystemTypes.generateReplaceOpCSharp(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateReplaceAllOpCSharp(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateReplaceFirstOpCSharp(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateFirstMatchOpCSharp(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateSplitOpCSharp(); 
     out.println("\n" + mop);
@@ -9987,7 +10003,12 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);
     mop = BSystemTypes.generateAllMatchesOpCPP(); 
     out.println("\n" + mop);
+    mop = BSystemTypes.generateFirstMatchOpCPP(); 
+    out.println("\n" + mop);
+
     mop = BSystemTypes.generateReplaceAllOpCPP(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateReplaceFirstOpCPP(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateSplitOpCPP(); 
     out.println("\n" + mop);
@@ -14334,7 +14355,7 @@ public void produceCUI(PrintWriter out)
   
   public void loadKM3FromFile(String f)
   { File file = new File("output/" + f);  /* default */ 
-	loadKM3FromFile(file); 
+    loadKM3FromFile(file); 
   }
 	
   public void loadKM3FromFile(File file)
@@ -14387,7 +14408,7 @@ public void produceCUI(PrintWriter out)
     System.out.println(linecount + " lines in file mm.km3"); 
     System.out.println("Packages " + pnames + " in file mm.km3"); 
     if (pnames.size() > 0) 
-	{ setSystemName((String) pnames.get(0)); }
+    { setSystemName((String) pnames.get(0)); }
 	
     Vector passocs = new Vector(); 
     passocs.addAll(preassocs); 
@@ -14409,19 +14430,29 @@ public void produceCUI(PrintWriter out)
     int ecount = 0; 
 
     Vector newentities = new Vector(); 
-	newentities.addAll(entities); 
-	newentities.removeAll(oldentities); 
+    newentities.addAll(entities); 
+    newentities.removeAll(oldentities); 
 	
     for (int i = 0; i < newentities.size(); i++) 
-    { Entity enode = (Entity) newentities.get(i); 
-      addEntity(enode, 200 + (ecount/5)*delta + ((ecount % 5)*delta)/5, 
-                              150 + (ecount % 5)*delta);
+    { Entity enode = (Entity) newentities.get(i);
+      int xval = 200 + (ecount/5)*delta + ((ecount % 5)*delta)/5; 
+      int yval = 150 + (ecount % 5)*delta; 
+ 
+      String ex = enode.getTaggedValue("x"); 
+      if (ex != null) 
+      { xval = Integer.parseInt(ex); } 
+
+      String ey = enode.getTaggedValue("y"); 
+      if (ey != null) 
+      { yval = Integer.parseInt(ey); } 
+
+      addEntity(enode, xval, yval);  
       ecount++; 
     } 
 
     Vector newtypes = new Vector(); 
-	newtypes.addAll(types); 
-	newtypes.removeAll(oldtypes); 
+    newtypes.addAll(types); 
+    newtypes.removeAll(oldtypes); 
 
     for (int j = 0; j < newtypes.size(); j++) 
     { Type tt = (Type) newtypes.get(j); 
@@ -14459,10 +14490,19 @@ public void produceCUI(PrintWriter out)
       if (e1 != null && e2 != null) 
       { RectData rd1 = (RectData) getVisualOf(e1); 
         RectData rd2 = (RectData) getVisualOf(e2);
-        int xs = rd1.sourcex + 50;
-        int ys = rd1.sourcey; 
-        int xe = rd2.sourcex + 100; 
-        int ye = rd2.sourcey;   
+        Vector linecoords = lineCoordinates(rd1, rd2, e1, e2); 
+
+        int xs = ((Integer) linecoords.get(0)).intValue();
+        int ys = ((Integer) linecoords.get(1)).intValue(); 
+        int xe = ((Integer) linecoords.get(2)).intValue(); 
+        int ye = ((Integer) linecoords.get(3)).intValue();   
+
+        if (rd1 == rd2)
+        { xs = rd2.sourcex + 10; 
+          xe = rd2.sourcex + rd2.width - 10;
+          ys = rd2.sourcey + 10;  
+          ye = rd2.sourcey + rd2.height - 10; 
+        }
 
         reconstructAssociation(pa.e1name,pa.e2name,xs,ys,
                              xe,ye,pa.card1,pa.card2,
@@ -14520,24 +14560,31 @@ public void produceCUI(PrintWriter out)
 
     for (int i = 0; i < ents.size(); i++) 
     { Entity enode = (Entity) ents.get(i); 
+      int xval = 200 + (ecount/5)*delta + ((ecount % 5)*delta)/5; 
+      int yval = 150 + (ecount % 5)*delta; 
+
+      String ex = enode.getTaggedValue("x"); 
+      if (ex != null) 
+      { xval = Integer.parseInt(ex); } 
+
+      String ey = enode.getTaggedValue("y"); 
+      if (ey != null) 
+      { yval = Integer.parseInt(ey); } 
+
       Entity oldent = (Entity) ModelElement.lookupByName(enode.getName(), oldentities); 
       if (oldent != null) 
       { RectData rd = (RectData) getVisualOf(oldent); 
         if (rd == null)
-		{ addEntity(enode, 200 + (ecount/5)*delta + ((ecount % 5)*delta)/5, 
-                              150 + (ecount % 5)*delta);
-        }
+        { addEntity(enode, xval, yval); }
         else 
-		{ entities.add(enode); 
-		  rd.setModelElement(enode); 
+        { entities.add(enode); 
+          rd.setModelElement(enode); 
           oldVisuals.remove(rd); 
-		} 
+        } 
         // addEntity(enode, rd.sourcex, rd.sourcey); 
       } 
       else 
-      { addEntity(enode, 200 + (ecount/5)*delta + ((ecount % 5)*delta)/5, 
-                              150 + (ecount % 5)*delta);
-      } 
+      { addEntity(enode, xval, yval); } 
       ecount++; 
     } 
 
@@ -14545,17 +14592,17 @@ public void produceCUI(PrintWriter out)
     { Type tt = (Type) typs.get(j); 
       if (tt.isEnumeration())
       { RectData rd = (RectData) getVisualOf(tt);
-	    if (rd == null) 
+        if (rd == null) 
         { rd = new RectData(100 + 150*j, 20, getForeground(),
                                  componentMode,
                                  rectcount);
           rectcount++;
-		  visuals.add(rd);
-		} 
-		else 
-		{ rd.setModelElement(tt); 
+          visuals.add(rd);
+        } 
+        else 
+        { rd.setModelElement(tt); 
           oldVisuals.remove(rd); 
-		}
+        }
         rd.setLabel(tt.getName());
         rd.setModelElement(tt); 
       } 
@@ -14603,15 +14650,20 @@ public void produceCUI(PrintWriter out)
         else 
         { RectData rd1 = (RectData) getVisualOf(e1); 
           RectData rd2 = (RectData) getVisualOf(e2);
-          int xs = rd1.sourcex + 10;
-          int ys = rd1.sourcey + 10; 
-          int xe = rd2.sourcex + 10; 
-          int ye = rd2.sourcey + 10;   
+          Vector aline = lineCoordinates(rd1,rd2,e1,e2); 
+
+          int xs = ((Integer) aline.get(0)).intValue();
+          int ys = ((Integer) aline.get(1)).intValue(); 
+          int xe = ((Integer) aline.get(2)).intValue(); 
+          int ye = ((Integer) aline.get(3)).intValue();   
 
           if (rd1 == rd2)
-		  { xe = rd2.sourcex + 80; 
-		    ye = rd2.sourcey + 40; 
+          { xs = rd2.sourcex + 10; 
+            xe = rd2.sourcex + rd2.width - 10;
+            ys = rd2.sourcey + 10;  
+            ye = rd2.sourcey + rd2.height - 10; 
           }
+
           reconstructAssociation(pa.e1name,pa.e2name,xs,ys,
                              xe,ye,pa.card1,pa.card2,
                              pa.role2, pa.role1, pa.stereotypes, new Vector());
@@ -14637,6 +14689,82 @@ public void produceCUI(PrintWriter out)
 
     repaint(); 
   }
+
+  private Vector lineCoordinates(RectData rd1, RectData rd2, Entity e1, Entity e2) 
+  { // result is [xs,ys,xe,ye] of line from rd1 to rd2
+    // assuming rd1 != rd2
+    
+    
+    int x1 = rd1.sourcex;
+    int y1 = rd1.sourcey; 
+    int w1 = rd1.width; 
+    int h1 = rd1.height; 
+
+    int x2 = rd2.sourcex;
+    int y2 = rd2.sourcey; 
+    int w2 = rd2.width; 
+    int h2 = rd2.height; 
+ 
+    int xs = x1 + 10; 
+    int ys = y1 + 10; 
+    int xe = x2 + 10; 
+    int ye = y2 + 10; 
+
+    int delx = (x2 - x1); 
+    int dely = (y2 - y1); 
+
+    int c1 = e1.getAssociations().size();
+    Vector assocsTo = e2.associationsToThis(associations); 
+    // System.out.println(">> Associations " + assocsTo + " end at " + e2);  
+    int c2 = assocsTo.size(); 
+
+    // first case: delx >= 0, delx > abs(dely)
+    // Line goes from RHS of rd1 to LHS of rd2
+    
+    if (delx >= 0 && delx >= Math.abs(dely))
+    { xs = x1 + w1; 
+      xe = x2; 
+      // ys = (y1 + y1 + h1)/2;  // midpoint of RHS
+      ys = y1 + 8*(1 + c1); 
+      // ye = (y2 + y2 + h2)/2;  // midpoint of LHS
+      ye = y2 + (1+c2)*8; 
+    } 
+    else if (dely >= 0 && dely >= Math.abs(delx))
+    { // line from bottom edge of rd1 to top of rd2
+      // xs = (x1 + x1 + w1)/2;
+      xs = x1 + 10*(1 + c1);  
+      // xe = (x2 + x2 + w2)/2;
+      xe = x2 + 10*(1 + c2);  
+      ys = y1 + h1; 
+      ye = y2 - 5; 
+    } 
+    else if (delx < 0 && Math.abs(delx) >= Math.abs(dely))
+    { // line from LHS of rd1 to RHS of rd2
+      xs = x1; 
+      xe = x2 + w2; 
+      // ys = (y1 + y1 + h1)/2;  // midpoint of RHS
+      ys = y1 + 8*(1 + c1); 
+      // ye = (y2 + y2 + h2)/2;  // midpoint of LHS
+      ye = y2 + 8*(1 + c2); 
+    } 
+    else if (dely < 0 && Math.abs(dely) >= Math.abs(delx))
+    { // line from top of rd1 to bottom of rd2
+      // xs = (x1 + x1 + w1)/2;
+      xs = x1 + 10*(1 + c1);  
+      // xe = (x2 + x2 + w2)/2;
+      xe = x2 + 10*(1 + c2); 
+      ys = y1; 
+      ye = y2 + h2 + 8; 
+    } 
+
+    Vector res = new Vector(); 
+    res.add(new Integer(xs)); 
+    res.add(new Integer(ys)); 
+    res.add(new Integer(xe)); 
+    res.add(new Integer(ye)); 
+    return res; 
+  } 
+    
 
   public void loadModelFromFile()
   { BufferedReader br = null;
@@ -16682,6 +16810,7 @@ public void produceCUI(PrintWriter out)
       if (me == ast && (vd instanceof LineData))
       { ld = (LineData) vd; } 
     }
+
     if (ld != null)
     { int x1 = ld.getx(); 
       int x2 = ld.getx2(); 

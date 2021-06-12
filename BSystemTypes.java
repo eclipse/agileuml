@@ -5348,6 +5348,18 @@ public class BSystemTypes extends BComponent
     return res; 
   } 
 
+  public static String generateFirstMatchOp()
+  { String res = "  public static String firstMatch(String str, String regex)\n" + 
+      "  { java.util.regex.Pattern patt = java.util.regex.Pattern.compile(regex);\n" +  
+      "    java.util.regex.Matcher matcher = patt.matcher(str);\n" +  
+      "    String res = null;\n" + 
+      "    if (matcher.find())\n" +
+      "    { res = matcher.group() + \"\"; }\n" +
+      "    return res; \n" +
+      "  }\n"; 
+    return res; 
+  } 
+
   public static String generateSplitOpJava6()
   { String res = "  public static ArrayList split(String str, String delim)\n" + 
       "  { String[] splits = str.split(delim);\n" +        
@@ -5422,8 +5434,19 @@ public class BSystemTypes extends BComponent
       "    MatchCollection col = r.Matches(s);\n" +  
       "    ArrayList res = new ArrayList();\n" +  
       "    foreach (Match mm in col)\n" + 
-      "    { res.Add(mm + \"\"); }\n" + 
+      "    { res.Add(mm.Value + \"\"); }\n" + 
       "    return res;\n" + 
+      "  }\n"; 
+    return res; 
+  } 
+
+  public static String generateFirstMatchOpCSharp()
+  { String res = "  public static string firstMatch(string s, string patt)\n" +
+      "  { Regex r = new Regex(patt);\n" + 
+      "    Match m = r.Match(s);\n" + 
+      "    if (m.Success)\n" + 
+      "    { return m.Value + \"\"; }\n" + 
+      "    return null;\n" + 
       "  }\n"; 
     return res; 
   } 
@@ -5477,6 +5500,28 @@ public class BSystemTypes extends BComponent
     return res; 
   }  
 
+  public static String generateFirstMatchOpCPP()
+  { String res = 
+      "  static string firstMatch(string s, string patt)\n" + 
+      "  { int slen = s.length(); \n" + 
+      "    string res = \"\"; \n" +
+      "    if (slen == 0)  \n" +
+      "    { return res; }  \n" +
+      "    std::regex patt_regex(patt);\n" + 
+      "    auto words_begin = std::sregex_iterator(s.begin(), s.end(), patt_regex);\n" + 
+      "    auto words_end = std::sregex_iterator();\n" + 
+      "    \n" + 
+      "    for (std::sregex_iterator i = words_begin; i != words_end; ++i)\n" + 
+      "    { std::smatch match = *i;\n" +  
+      "      std::string match_str = match.str();\n" + 
+      "      if (match_str.length() > 0)\n" + 
+      "      { return match_str; }\n" +    
+      "    }\n" +    
+      "    return res;\n" +  
+      "  }\n"; 
+    return res; 
+  }  
+
   public static String generateReplaceOpCPP()
   { String res = 
       "  static string replace(string s1, string s2, string rep)\n" +
@@ -5496,12 +5541,25 @@ public class BSystemTypes extends BComponent
       "    return s1;\n" + 
       "  } \n"; 
     return res; 
-  } 
+  } // substituteAll
 
   public static String generateReplaceAllOpCPP()
   { String res = "  static string replaceAll(string text, string patt, string rep)\n" + 
                  "  { std::regex patt_re(patt);\n" + 
                  "    std::string res = std::regex_replace(text, patt_re, rep);\n" +    
+                 "    return res;\n" +  
+                 "  }\n"; 
+    return res; 
+  } // replaceAllMatches
+
+  public static String generateReplaceFirstOpCPP()
+  { String res = "  static string replaceFirstMatch(string text, string patt, string rep)\n" + 
+                 "  { std::regex patt_re(patt);\n" + 
+                 "    std::regex_constants::match_flag_type fonly =\n" + 
+                 "           std::regex_constants::format_first_only;\n" + 
+
+                 "    std::string res = std::regex_replace(text, patt_re, rep, fonly);\n" + 
+
                  "    return res;\n" +  
                  "  }\n"; 
     return res; 
@@ -5593,6 +5651,15 @@ public class BSystemTypes extends BComponent
     return res; 
   } 
 
+  public static String generateReplaceFirstOp()
+  { String res = "  public static String replaceFirstMatch(String str, String regex, String rep)\n" + 
+      "  { java.util.regex.Pattern patt = java.util.regex.Pattern.compile(regex);\n" +  
+      "    java.util.regex.Matcher matcher = patt.matcher(str);\n" +  
+      "    return matcher.replaceFirst(rep);\n" +  
+      "  }\n"; 
+    return res; 
+  } 
+
   public static String generateReplaceOpCSharp()
   { String res = "  public static string replace(string str, string delim, string rep)\n" + 
         "  { String result = \"\";\n" +
@@ -5622,6 +5689,14 @@ public class BSystemTypes extends BComponent
   { String res = "  public static string replaceAll(string s, string patt, string rep)\n" +
       "  { Regex r = new Regex(patt);\n" + 
       "    return \"\" + r.Replace(s, rep);\n" + 
+      "  }\n"; 
+    return res; 
+  }  
+
+  public static String generateReplaceFirstOpCSharp()
+  { String res = "  public static string replaceFirstMatch(string s, string patt, string rep)\n" +
+      "  { Regex r = new Regex(patt);\n" + 
+      "    return \"\" + r.Replace(s, rep, 1);\n" + 
       "  }\n"; 
     return res; 
   }  

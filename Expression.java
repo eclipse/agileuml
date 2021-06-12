@@ -1230,7 +1230,11 @@ abstract class Expression
         d.equals("atan") || d.equals("acos") || d.equals("asin") || d.equals("oclAsType") || 
         d.equals("abs") || d.equals("max") || d.equals("subcollections") || d.equals("Prd") || 
         d.equals("size") || d.equals("toLowerCase") || d.equals("pow") || d.equals("Sum") ||
-        d.equals("replace") || d.equals("replaceAll") || 
+        d.equals("replace") || d.equals("replaceAll") ||
+        d.equals("replaceAllMatches") ||
+        d.equals("replaceFirstMatch") || 
+        // d.equals("toBoolean") || d.equals("toInteger") || 
+        // d.equals("toReal") || d.equals("toLong") || 
         d.equals("toUpperCase") || d.equals("closure") || d.equals("asSet") || d.equals("asSequence") ||
         d.equals("min") || d.equals("sum") || d.equals("reverse") || d.equals("allInstances") || 
         d.equals("sort") || d.equals("prd") || d.equals("last") || d.equals("insertAt") ||

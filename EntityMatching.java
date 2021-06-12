@@ -3340,6 +3340,8 @@ public class EntityMatching implements SystemTypes
   String umlrsdsrule2(Vector ems) 
   { // if (src == trg) { return ""; } 
 
+    System.out.println(">>> Creating UML-RSDS for rule " + this); 
+
     Vector auxattmaps = new Vector(); 
     auxattmaps.addAll(attributeMappings); 
 
@@ -3401,6 +3403,9 @@ public class EntityMatching implements SystemTypes
 
     for (int i = 0; i < ams2.size(); i++)
     { AttributeMatching am = (AttributeMatching) ams2.get(i);
+
+      System.out.println(">>> Mapping " + am + " to UML-RSDS"); 
+
       if (am.isDirectTarget())
       { if (am.isStringAssignment())
         { String trgeq = trgvar + "." + am.trg + " = " + am.srcvalue; 
@@ -3455,6 +3460,9 @@ public class EntityMatching implements SystemTypes
         }
       } 
     } 
+
+    System.out.println(">>> After all direct mappings: " + targetbody); 
+
 
     ams2.removeAll(processed);  
     // Only indirect targets are left. Process primary key & 
@@ -3559,6 +3567,8 @@ public class EntityMatching implements SystemTypes
       postconstraint = postconstraint + "  => (" + post + ")\n\n"; 
       res = res + "\n\n" + postconstraint;
     } 
+
+    System.out.println(">>> Overall 2nd phase constraint is: " + res); 
 
     return res; 
   } // use targetTemplate to rationalise the remainder. 

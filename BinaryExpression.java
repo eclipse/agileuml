@@ -1017,7 +1017,7 @@ class BinaryExpression extends Expression
              operator.equals("->count") || operator.equals("->indexOf") || operator.equals("->lastIndexOf") || 
              operator.equals("->equalsIgnoreCase") || operator.equals("->before") || operator.equals("->after") || 
              operator.equals("->hasMatch") || operator.equals("->isMatch") ||
-             operator.equals("->split") || operator.equals("->allMatches") || 
+             operator.equals("->split") || operator.equals("->allMatches") || operator.equals("->firstMatch") || 
              operator.equals("->at") || operator.equals("->closure") || 
              operator.equals("->intersection") || operator.equals("->symmetricDifference"))   
     { basicString = left + operator + "(" + right + ")"; } 
@@ -3143,7 +3143,7 @@ public void findClones(java.util.Map clones, String rule, String op)
              operator.equals("->equalsIgnoreCase") ||
              "->oclIsKindOf".equals(operator) || "->oclIsTypeOf".equals(operator))
     { type = new Type("boolean",null); } 
-    else if (operator.equals("->before") || operator.equals("->after")) 
+    else if (operator.equals("->before") || operator.equals("->after") || operator.equals("->firstMatch")) 
     { type = new Type("String",null); }  
     else if ("->split".equals(operator) || "->allMatches".equals(operator))
     { type = new Type("Sequence",null); 
@@ -4282,6 +4282,8 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "Set.split(" + lqf + "," + rqf + ")"; } 
       else if (operator.equals("->allMatches"))
       { res = "Set.allMatches(" + lqf + "," + rqf + ")"; } 
+      else if (operator.equals("->firstMatch"))
+      { res = "Set.firstMatch(" + lqf + ", " + rqf + ")"; } 
     }
     else if (lmult && !rmult) // convert right to mult
     { String rss = right.makeSet(rw);
@@ -4618,6 +4620,8 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "Set.split(" + lqf + "," + rqf + ")"; } 
       else if (operator.equals("->allMatches"))
       { res = "Set.allMatches(" + lqf + "," + rqf + ")"; } 
+      else if (operator.equals("->firstMatch"))
+      { res = "Set.firstMatch(" + lqf + ", " + rqf + ")"; } 
     }
     else if (lmult && !rmult) // convert right to mult
     { String rss = right.makeSetJava6(rw);
@@ -4945,6 +4949,8 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "Ocl.split(" + lqf + "," + rqf + ")"; } 
       else if (operator.equals("->allMatches"))
       { res = "Ocl.allMatches(" + lqf + "," + rqf + ")"; }    
+      else if (operator.equals("->firstMatch"))
+      { res = "Ocl.firstMatch(" + lqf + ", " + rqf + ")"; } 
     }
     else if (lmult && !rmult) // convert right to mult
     { String rss = right.makeSetJava7(rw);
@@ -5254,6 +5260,8 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "SystemTypes.split(" + lqf + "," + rqf + ")"; } 
       else if (operator.equals("->allMatches"))
       { res = "SystemTypes.allMatches(" + lqf + "," + rqf + ")"; } 
+      else if (operator.equals("->firstMatch"))
+      { res = "SystemTypes.firstMatch(" + lqf + "," + rqf + ")"; } 
     }
     else if (lmult && !rmult) // convert right to mult
     { String rw = rqf; 
@@ -5625,6 +5633,8 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "UmlRsdsLib<string>::hasMatch(" + lqf + ", " + rqf + ")"; } 
       else if (operator.equals("->allMatches"))
       { res = "UmlRsdsLib<string>::allMatches(" + lqf + ", " + rqf + ")"; } 
+      else if (operator.equals("->firstMatch"))
+      { res = "UmlRsdsLib<string>::firstMatch(" + lqf + ", " + rqf + ")"; } 
       else if (operator.equals("->split"))
       { res = "UmlRsdsLib<string>::split(" + lqf + ", " + rqf + ")"; } 
     }

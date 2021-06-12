@@ -46,9 +46,9 @@ public class TypeMatching
     for (int x = 0; x < valueMappings.size(); x++)
     { ValueMatching vm = (ValueMatching) valueMappings.get(x);
       if (val.equals(vm.src + ""))
-	  { return vm; };
+      { return vm; };
     }
-	return res; 
+    return res; 
   }
   
   public void setName(String nme)
@@ -65,11 +65,11 @@ public class TypeMatching
   public void setValueMapping(Expression s, Expression t)
   { ValueMatching v = lookupBySource(s + ""); 
     if (v == null) 
-	{ v = new ValueMatching(s,t); 
-	  valueMappings.add(v); 
-	} 
-	else 
-	{ v.trg = t; }
+    { v = new ValueMatching(s,t); 
+      valueMappings.add(v); 
+    } 
+    else 
+    { v.trg = t; }
   } // update or create, so there is no duplication of value mappings. 
 
   public void setStringValues(String[] svals, String[] tvals)
@@ -211,6 +211,17 @@ public class TypeMatching
       }
       res = res + " \"\" " + restail + ";\n\n";  
     } 
+    else if (src.isNumeric() && trg.isString())
+    { res = res + "(s : Real) : String =\n    "; 
+      for (int i = 0; i < valueMappings.size(); i++) 
+      { ValueMatching vm = (ValueMatching) valueMappings.get(i); 
+        String vals = vm.src + ""; 
+        String valt = "\"" + vm.trg + "\""; 
+        res = res + "if s = " + vals + " then " + valt + " else "; 
+        restail = restail + " endif "; 
+      }
+      res = res + " \"\" " + restail + ";\n\n";  
+    } 
     return res;
   } 
 
@@ -220,15 +231,76 @@ public class TypeMatching
       
 
     if (src.isEnumeration() && trg.isEnumeration())
-    { res = Type.enum2enumOp(src,trg); } 
+    { res = res + "(s : " + src.getName() + ") : " + trg.getName() + "\n"; 
+      res = res + "  pre: true\n"; 
+      res = res + "  post: \n"; 
+	   
+      String dft = trg.getDefault(); 
+
+      for (int i = 0; i < valueMappings.size(); i++) 
+      { ValueMatching vm = (ValueMatching) valueMappings.get(i); 
+        String vals = vm.src + ""; 
+        String valt = vm.trg + ""; 
+        res = res + "    ( s = " + vals + " => result = " + valt + " ) &\n";  
+      }
+      res = res + "    ( true => result = " + dft + " );\n\n";  
+    } 
     else if (src.isString() && trg.isEnumeration())
-    { res = trg.string2EnumOp(); } 
+    { res = res + "(s : String) : " + trg.getName() + "\n"; 
+      res = res + "  pre: true\n"; 
+      res = res + "  post: \n"; 
+	   
+      String dft = trg.getDefault(); 
+
+      for (int i = 0; i < valueMappings.size(); i++) 
+      { ValueMatching vm = (ValueMatching) valueMappings.get(i); 
+        String vals = "\"" + vm.src + "\""; 
+        String valt = vm.trg + ""; 
+        res = res + "    ( s = " + vals + " => result = " + valt + " ) &\n";  
+      }
+      res = res + "    ( true => result = " + dft + " );\n\n";  
+    } 
     else if (trg.isString() && src.isEnumeration())
-    { res = src.enum2StringOp(); } 
+    { res = res + "(s : " + src.getName() + ") : String\n"; 
+      res = res + "  pre: true\n"; 
+      res = res + "  post: \n"; 
+	   
+      for (int i = 0; i < valueMappings.size(); i++) 
+      { ValueMatching vm = (ValueMatching) valueMappings.get(i); 
+        String vals = vm.src + ""; 
+        String valt = "\"" + vm.trg + "\""; 
+        res = res + "    ( s = " + vals + " => result = " + valt + " ) &\n";  
+      }
+      res = res + "    ( true => result = \"\" );\n\n";  
+    } 
     else if (trg.isBoolean() && src.isEnumeration())
-    { res = Type.enumBooleanOp(src); } 
+    { res = res + "(s : " + src.getName() + ") : boolean\n"; 
+      res = res + "  pre: true\n"; 
+      res = res + "  post: \n"; 
+	   
+      for (int i = 0; i < valueMappings.size(); i++) 
+      { ValueMatching vm = (ValueMatching) valueMappings.get(i); 
+        String vals = vm.src + ""; 
+        String valt = vm.trg + ""; 
+        res = res + "    ( s = " + vals + " => result = " + valt + " ) &\n";  
+      }
+      res = res + "    ( true => result = false );\n\n";
+    } 
     else if (src.isBoolean() && trg.isEnumeration())
-    { res = Type.booleanEnumOp(trg); } 
+    { res = res + "(s : boolean) : " + trg.getName() + "\n"; 
+      res = res + "  pre: true\n"; 
+      res = res + "  post: \n"; 
+	   
+      String dft = trg.getDefault(); 
+
+      for (int i = 0; i < valueMappings.size(); i++) 
+      { ValueMatching vm = (ValueMatching) valueMappings.get(i); 
+        String vals = vm.src + ""; 
+        String valt = vm.trg + ""; 
+        res = res + "    ( s = " + vals + " => result = " + valt + " ) &\n";  
+      }
+      res = res + "    ( true => result = " + dft + " );\n\n";  
+    } 
     else if (src.isString() && trg.isString())
     { res = res + "(s : String) : String\n"; 
       res = res + "  pre: true\n"; 
@@ -237,6 +309,19 @@ public class TypeMatching
       for (int i = 0; i < valueMappings.size(); i++) 
       { ValueMatching vm = (ValueMatching) valueMappings.get(i); 
         String vals = "\"" + vm.src + "\""; 
+        String valt = "\"" + vm.trg + "\""; 
+        res = res + "    ( s = " + vals + " => result = " + valt + " ) &\n";  
+      }
+      res = res + "    ( true => result = \"\" );\n\n";  
+    } 
+    else if (src.isNumeric() && trg.isString())
+    { res = res + "(s : double) : String\n"; 
+      res = res + "  pre: true\n"; 
+      res = res + "  post: \n"; 
+	   
+      for (int i = 0; i < valueMappings.size(); i++) 
+      { ValueMatching vm = (ValueMatching) valueMappings.get(i); 
+        String vals = vm.src + ""; 
         String valt = "\"" + vm.trg + "\""; 
         res = res + "    ( s = " + vals + " => result = " + valt + " ) &\n";  
       }

@@ -1343,6 +1343,7 @@ public class ModelMatching implements SystemTypes
 
     res = res + "  usecase tauphase2 : void {\n"; 
 
+  /* 
     for (int i = 0; i < econvs.size(); i++) 
     { Maplet mt = (Maplet) econvs.get(i); 
       Type t1 = (Type) mt.source; 
@@ -1374,6 +1375,13 @@ public class ModelMatching implements SystemTypes
       if (et.isEnumeration())
       { res = res + "  " + Type.enumBooleanOp(et) + "\n\n"; } 
     } // Only include functions that are actually used
+
+   */ 
+
+    for (int i = 0; i < helpers.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) helpers.get(i); 
+      res = res + bf.getKM3() + "\n"; 
+    } 
 
     for (int i = 0; i < typematches.size(); i++) 
     { TypeMatching tm = (TypeMatching) typematches.get(i); 

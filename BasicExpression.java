@@ -787,7 +787,8 @@ class BasicExpression extends Expression
                data.equals("reverse") || data.equals("sort") || data.equals("asSequence") || 
                data.equals("front") || data.equals("tail") || data.equals("insertAt") || 
                data.equals("subrange") ||
-               data.equals("replace") || data.equals("replaceAll") ||
+               data.equals("replace") || data.equals("replaceAll") || 
+               data.equals("replaceAllMatches") ||
                data.equals("characters") || data.equals("allInstances") || 
                data.equals("closure") || data.equals("asSet") || data.equals("subcollections"))
       { return false; }   // but strings don't need to be wrapped 
@@ -2467,7 +2468,7 @@ class BasicExpression extends Expression
       umlkind = VALUE; 
       multiplicity = ModelElement.ONE; 
       System.out.println("***Type of " + this + " is: " + type); 
-	  return true; 
+      return true; 
     } 
 
     if ("self".equals(data))
@@ -2587,7 +2588,7 @@ class BasicExpression extends Expression
       if (staticent != null) 
       { objectRef.umlkind = Expression.CLASSID; 
 	  
-	    BehaviouralFeature bf = staticent.getOperation(data);  // parameters
+        BehaviouralFeature bf = staticent.getOperation(data);  // parameters
         if (bf != null && bf.isStatic()) 
         { if (bf.parametersMatch(parameters)) { } 
           else 
@@ -2649,11 +2650,16 @@ class BasicExpression extends Expression
       umlkind = FUNCTION; 
     } // this should not arise. 
 
-    if (isEvent && !data.equals("subrange") && !data.equals("indexOf") && 
+    if (isEvent && 
+        !data.equals("subrange") && 
+        !data.equals("indexOf") && 
         !(data.equals("replace")) && 
+        !(data.equals("replaceFirstMatch")) && 
         !(data.equals("replaceAll")) && 
+        !(data.equals("replaceAllMatches")) && 
         !(data.equals("Sum")) && !(data.equals("Prd")) &&  
-        !(data.equals("oclIsKindOf")) && !(data.equals("oclAsType")))
+        !(data.equals("oclIsKindOf")) && 
+        !(data.equals("oclAsType")))
     { // data must be an event of the owning class, the elementType of 
       // the objectRef, or of an ancestor of it. 
       BehaviouralFeature bf; 
@@ -2813,8 +2819,9 @@ class BasicExpression extends Expression
         multiplicity = ModelElement.MANY; 
         adjustTypeForArrayIndex(); 
       } 
-      else if (data.equals("isDeleted") || data.equals("oclIsKindOf") ||
-               data.equals("isReal") || data.equals("isInteger") || data.equals("isLong") ||
+      else if (data.equals("isDeleted") || data.equals("oclIsKindOf") || data.equals("oclIsTypeOf") ||
+               data.equals("isReal") || data.equals("toBoolean") || 
+               data.equals("isInteger") || data.equals("isLong") ||
                data.equals("hasPrefix") || data.equals("hasSuffix"))
       { type = new Type("boolean",null);
         elementType = type; 
@@ -2845,8 +2852,12 @@ class BasicExpression extends Expression
       { type = new Type("double",null); 
         elementType = type; 
       } 
-      else if (data.equals("toLowerCase") || data.equals("toUpperCase") ||
-               data.equals("replace") || data.equals("replaceAll") )
+      else if (data.equals("toLowerCase") || 
+               data.equals("toUpperCase") ||
+               data.equals("replace") || 
+               data.equals("replaceAll") ||
+               data.equals("replaceFirstMatch") || 
+               data.equals("replaceAllMatches") )
       { type = new Type("String",null); 
         elementType = type; 
       }
@@ -2981,8 +2992,9 @@ class BasicExpression extends Expression
         multiplicity = ast.getCard2();
         elementType = new Type(ast.getEntity2()); 
         modality = ModelElement.INTERNAL; // ???
-		if (ast.isQualified() && arrayIndex == null) // a naked qualified role, it is a map
-		{ type = ast.getRole2Type(); }
+        
+        if (ast.isQualified() && arrayIndex == null) // a naked qualified role, it is a map
+        { type = ast.getRole2Type(); }
         else if (multiplicity == ModelElement.ONE) 
         { type = new Type(ast.getEntity2()); } 
         else 
@@ -3079,12 +3091,12 @@ class BasicExpression extends Expression
       if (arrayIndex != null) 
       { adjustTypeForArrayIndex(var); } 
 	  
-	  if (parameters != null && var.getType().isFunctionType()) // application of a Function(S,T)
+      if (parameters != null && var.getType().isFunctionType()) // application of a Function(S,T)
       { Type ftype = var.getType(); 
-	    type = ftype.getElementType(); 
-		elementType = type.getElementType(); 
+        type = ftype.getElementType(); 
+        elementType = type.getElementType(); 
         System.out.println(">>>> TYPE CHECKED: Type of variable expression " + this + " is " + type + " entity: " + entity); 
-	  }
+      }
 	  
       entity = var.getEntity(); 
       if (entity == null && elementType != null) 
@@ -3958,6 +3970,16 @@ class BasicExpression extends Expression
         String par2 = ((Expression) parameters.get(1)).queryForm(env,local); 
         return "Set.replaceAll(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
+      else if (data.equals("replaceAllMatches") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryForm(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryForm(env,local); 
+        return "Set.replaceAll(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
+      else if (data.equals("replaceFirstMatch") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryForm(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryForm(env,local); 
+        return "Set.replaceFirstMatch(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
       else if (data.equals("count") && parameters != null && parameters.size() > 0)  
       // for strings or collections
       { String par1 = 
@@ -4437,6 +4459,16 @@ class BasicExpression extends Expression
         String par2 = ((Expression) parameters.get(1)).queryFormJava6(env,local); 
         return "Set.replaceAll(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
+      else if (data.equals("replaceAllMatches") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormJava6(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormJava6(env,local); 
+        return "Set.replaceAll(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
+      else if (data.equals("replaceFirstMatch") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormJava6(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormJava6(env,local); 
+        return "Set.replaceFirstMatch(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
       else if (data.equals("count"))  // for strings or collections
       { if (parameters != null && parameters.size() > 0)
         { String par1 = 
@@ -4898,6 +4930,16 @@ class BasicExpression extends Expression
         String par2 = ((Expression) parameters.get(1)).queryFormJava7(env,local); 
         return "Ocl.replaceAll(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
+      else if (data.equals("replaceAllMatches") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormJava7(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormJava7(env,local); 
+        return "Ocl.replaceAll(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
+      else if (data.equals("replaceFirstMatch") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormJava7(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormJava7(env,local); 
+        return "Ocl.replaceFirstMatch(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
       else if (data.equals("count"))  // for strings or collections
       { if (parameters != null && parameters.size() > 0)
         { String par1 = 
@@ -5346,6 +5388,16 @@ class BasicExpression extends Expression
         String par2 = ((Expression) parameters.get(1)).queryFormCSharp(env,local); 
         return "SystemTypes.replaceAll(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
+      else if (data.equals("replaceAllMatches") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormCSharp(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormCSharp(env,local); 
+        return "SystemTypes.replaceAll(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
+      else if (data.equals("replaceFirstMatch") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormCSharp(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormCSharp(env,local); 
+        return "SystemTypes.replaceFirstMatch(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
       else if (data.equals("count"))  // for strings or collections
       { if (parameters != null && parameters.size() > 0)
         { String par1 = 
@@ -5750,6 +5802,16 @@ class BasicExpression extends Expression
       { String par1 = ((Expression) parameters.get(0)).queryFormCPP(env,local); 
         String par2 = ((Expression) parameters.get(1)).queryFormCPP(env,local); 
         return "UmlRsdsLib<string>::replaceAll(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
+      else if (data.equals("replaceAllMatches") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormCPP(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormCPP(env,local); 
+        return "UmlRsdsLib<string>::replaceAll(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
+      else if (data.equals("replaceFirstMatch") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormCPP(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormCPP(env,local); 
+        return "UmlRsdsLib<string>::replaceFirstMatch(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
       else if (data.equals("replace") && parameters != null && parameters.size() > 1)
       { String par1 = ((Expression) parameters.get(0)).queryFormCPP(env,local); 

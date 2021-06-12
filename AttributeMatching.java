@@ -4110,7 +4110,7 @@ Binding etlTargetMap(String trgvar, Attribute preatt, Vector path, Expression se
           else 
           { System.out.println("!! objects " + sobj + " and"); 
             System.out.println(tobj + " fail to satisfy matching " + this); 
-	        valid = false;
+            valid = false;
 			// removed.add(this); 
           }  
           System.out.println("----------------------");
@@ -4162,27 +4162,35 @@ Binding etlTargetMap(String trgvar, Attribute preatt, Vector path, Expression se
            Vector pars = new Vector(); 
            pars.add(src); 
            Type returntype = trg.getType(); 
+           Attribute resvar = new Attribute("result", returntype, ModelElement.INTERNAL); 
+           BasicExpression resexp = new BasicExpression(resvar); 
+
            BehaviouralFeature bf = new BehaviouralFeature("f_" + src + "_" + trg + "_" + qs, pars, true, returntype);
-           Expression post = new BasicExpression(trg);  
-	     for (int i = 0; i < xstrs.length; i++)
-	     { System.out.println("  " + xstrs[i] + " |--> " + ystrs[i]); 
-            BinaryExpression test = 
-              new BinaryExpression("=", new BasicExpression(src), new BasicExpression(xstrs[i])); 
-             post = new ConditionalExpression(test,
-                      new BasicExpression(ystrs[i]),post); 
+
+           Expression post = new BasicExpression(true);  
+           for (int i = 0; i < xstrs.length; i++)
+           { System.out.println("  " + xstrs[i] + " |--> " + ystrs[i]); 
+             BinaryExpression test = 
+               new BinaryExpression("=", new BasicExpression(src), new BasicExpression(xstrs[i])); 
+             BinaryExpression assign = 
+               new BinaryExpression("=", resexp, new BasicExpression(ystrs[i]));  
+             BinaryExpression impl = new BinaryExpression("=>", test, assign); 
+             impl.setBrackets(true); 
+             post = Expression.simplifyAnd(impl,post); 
            }
            bf.setPostcondition(post); 
-           queries.add(bf); 
-	     System.out.println(">>> for " + src + " |--> " + trg); 
-		 added.add(new AttributeMatching(new BasicExpression("f_" + src + "_" + trg + "_" + qs + "(" + src + ")"), trg)); 
-         System.out.println(); 
-       }    
+           bf.setQuery(true); 
 
-	}
-     else if (!valid && src.isNumeric() && trg.isNumeric())
-	{ // check if the x and y are constant, or 
-       // linearly or quadratically correlated. 
-       // If so, derive the x to y function
+           queries.add(bf); 
+           System.out.println(">>> for " + src + " |--> " + trg); 
+           added.add(new AttributeMatching(new BasicExpression("f_" + src + "_" + trg + "_" + qs + "(" + src + ")"), trg)); 
+           System.out.println(); 
+         }    
+       }
+       else if (!valid && src.isNumeric() && trg.isNumeric())
+	  { // check if the x and y are constant, or 
+         // linearly or quadratically correlated. 
+         // If so, derive the x to y function
 	   removed.add(this); 
 	   
 	   if (AuxMath.isFunctional(xs,ys)) { } 

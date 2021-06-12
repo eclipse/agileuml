@@ -2300,10 +2300,15 @@ public class BehaviouralFeature extends ModelElement
   { if (derived) { return ""; } 
     String res = ""; 
 
-    if (isStatic())
-    { res = "    static operation "; } 
+    if (isQuery())
+    { res = " query "; } 
     else 
-    { res = "    operation "; }
+    { res = " operation "; } 
+
+    if (isStatic())
+    { res = "    static" + res; } 
+    else 
+    { res = "   " + res; }
  
     res = res + getName() + "(";
 
@@ -6403,7 +6408,9 @@ public class BehaviouralFeature extends ModelElement
     { et = elementType.getCPP(elementType.getElementType()); } 
 
     String allrest = "vector<void*>*";
-    if (resultType != null)
+    if ("void".equals(resultType + ""))
+    { allrest = "vector<void*>*"; } 
+    else if (resultType != null)
     { allrest = "vector<" + resT + ">*"; } 
 
     String header2 = header + " " + allrest + " Controller::All" + ename + 

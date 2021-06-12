@@ -2057,7 +2057,9 @@ public class Type extends ModelElement
       { return "new HashMap()"; } 
       return "null";    // for class types, functions
     }
-    return (String) values.get(0);
+    if (values.size() > 0)
+    { return (String) values.get(0); } 
+    return "null";
   }
   // Set and Sequence?
 
@@ -2072,8 +2074,8 @@ public class Type extends ModelElement
       { res = new BasicExpression("\"\""); }
       else if (nme.equals("boolean"))
       { return new BasicExpression(false); }
-	  else if (nme.equals("double"))
-	  { return new BasicExpression(0.0); }
+      else if (nme.equals("double"))
+      { return new BasicExpression(0.0); }
       else if (nme.equals("int") || nme.equals("long"))
       { return new BasicExpression(0); }
       else if (nme.equals("Set") || nme.equals("Sequence") || nme.equals("Map"))
@@ -2088,17 +2090,17 @@ public class Type extends ModelElement
         res.setType(this); 
         res.setElementType(elemt); 
       } 
-	  else if (nme.equals("Function"))
-	  { // lambda x : keyType in elementType.defaultValueExpression()
-	    Expression elementDefault = null; 
-		if (elementType != null) 
-		{ elementDefault = elementType.getDefaultValueExpression(); }
-		else 
-		{ elementDefault = new BasicExpression("null"); }
+      else if (nme.equals("Function"))
+      { // lambda x : keyType in elementType.defaultValueExpression()
+        Expression elementDefault = null; 
+        if (elementType != null) 
+        { elementDefault = elementType.getDefaultValueExpression(); }
+        else 
+        { elementDefault = new BasicExpression("null"); }
 		 
-	    res = new UnaryExpression("lambda", elementDefault); 
-		((UnaryExpression) res).setAccumulator(new Attribute("_x", keyType, ModelElement.INTERNAL)); 
-		return res; 
+        res = new UnaryExpression("lambda", elementDefault); 
+        ((UnaryExpression) res).setAccumulator(new Attribute("_x", keyType, ModelElement.INTERNAL));  
+        return res; 
       }
       else // unknown type
       { res = new BasicExpression(0); } 
@@ -2127,7 +2129,9 @@ public class Type extends ModelElement
       { return "new HashMap()"; } 
       return "null";    // for class types, functions
     }
-    return (String) values.get(0);
+    else if (values.size() > 0) 
+    { return (String) values.get(0); } 
+    return "null"; 
   }
   // Set and Sequence?
 
@@ -2160,7 +2164,9 @@ public class Type extends ModelElement
       }  
       return "null";    // for class types, functions
     } 
-    return (String) values.get(0);
+    else if (values.size() > 0) 
+    { return (String) values.get(0); } 
+    return "null"; 
   }
   // Set and Sequence?
 

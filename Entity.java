@@ -3738,6 +3738,20 @@ public class Entity extends ModelElement implements Comparable
     } 
   } 
       
+  public Vector associationsToThis(Vector assocs)
+  { Vector res = new Vector(); 
+    for (int i = 0; i < assocs.size(); i++) 
+    { Association ast = (Association) assocs.get(i); 
+      Entity e2 = ast.getEntity2(); 
+      
+      if (this == e2 || getName().equals(e2.getName()))
+      { res.add(ast); } 
+
+    } 
+    return res; 
+  } 
+
+
   public int displayMeasures(PrintWriter out, java.util.Map clones)
   { out.println("*** Class " + getName()); 
 
@@ -7018,7 +7032,8 @@ public class Entity extends ModelElement implements Comparable
         { out.println("  " + par + "\n"); }
 
         // if (isInterface())
-        // { par = ""; } // att.setAllInterfaceOperation(getName()); } 
+        // { par = ""; } 
+           // att.setAllInterfaceOperation(getName()); } 
         // else 
         par = att.setAllOperationCPP(getName(),declarations);  
 

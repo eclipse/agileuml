@@ -370,13 +370,13 @@ public class KM3Editor extends JFrame implements DocumentListener
          char cc = ch.charAt(0); 
          if (Character.isLetterOrDigit(cc))
          { // look back to see what is the identifier/number
-           String curriden = Compiler2.matchPrecedingIdentifier(cc,txt,txt.length()); 
+           String curriden = Compiler2.matchPrecedingOperator(cc,txt,txt.length()); 
            // System.out.println(">>> Identifier: " + curriden); 
            if (curriden != null && curriden.length() > 0)
            { String[] mess = {""}; 
              String keywd = Compiler2.isKeywordOrPart(curriden,mess); 
              if (keywd != null) 
-             { thisLabel.setText(">>> Keyword: " + keywd); 
+             { thisLabel.setText(">>> Keyword/operator: " + keywd); 
                if (mess[0] != null && mess[0].length() > 0)
                { messageArea.setText(mess[0] + "\n\r"); } 
              } 
@@ -387,6 +387,11 @@ public class KM3Editor extends JFrame implements DocumentListener
              } 
            }  
          } 
+         else if (':' == cc)
+         { messageArea.setText("iden : Type for data declaration or\n  ::\n  P => Q;\n for usecase postcondition\n\r"); } 
+         else if ('[' == cc)
+         { messageArea.setText("col[val]\n access to val-indexed element of sequence or map col for read or update.\nEquivalent to col->at(val) for read access.\n\r"); } 
+
 
          Vector errors = new Vector();
          Vector colours = new Vector();

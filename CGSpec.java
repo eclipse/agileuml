@@ -403,17 +403,25 @@ public class CGSpec
   { int n = str.length();
     StringBuffer res = new StringBuffer(); 
  
+    boolean instring = false; 
+
     for (int i = 0; i < n; i++) 
     { char x = str.charAt(i); 
+
+      // if (x == '"' && !instring) 
+      // { instring = true; } 
+      // else if (x == '"' && instring) 
+      // { instring = false; } 
+
       if (x == '\n')
       { out.println(res); 
         res = new StringBuffer(); 
       } 
-      else if (i < n-1 && x == '\\' && str.charAt(i+1) == 'n')
-      { out.println(res); 
-        res = new StringBuffer(); 
-        i++; 
-      } 
+      // else if (i < n-1 && x == '\\' && str.charAt(i+1) == 'n')
+      // { out.println(res); 
+      //   res = new StringBuffer(); 
+      //   i++; 
+      // } 
       else 
       { res.append(x); } 
     }
@@ -771,6 +779,20 @@ public class CGSpec
         args.add(pars.get(0)); 
         args.add(pars.get(1)); 
       }   
+      else if (pars != null && pars.size() == 2 && 
+               e.data.equals("replaceAllMatches") && trimmedlhs.equals("_1.replaceAllMatches(_2,_3)"))
+      { selected = r; 
+        args.add(obj); 
+        args.add(pars.get(0)); 
+        args.add(pars.get(1)); 
+      }   
+      else if (pars != null && pars.size() == 2 && 
+               e.data.equals("replaceFirstMatch") && trimmedlhs.equals("_1.replaceFirstMatch(_2,_3)"))
+      { selected = r; 
+        args.add(obj); 
+        args.add(pars.get(0)); 
+        args.add(pars.get(1)); 
+      }   
       else if (ind != null && pars == null && trimmedlhs.equals("_1[_2]"))
       { selected = r;
         BasicExpression e1 = (BasicExpression) e.clone(); 
@@ -1016,8 +1038,8 @@ public class CGSpec
           { return r; } 
           else if (r.hasCondition("function"))
           { } 
-		  else if (r.hasNoCondition())
-		  { return r; }
+          else if (r.hasNoCondition())
+          { return r; }
         }
 		
 		if (t.isCollectionType()) 
