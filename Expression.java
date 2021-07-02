@@ -1229,7 +1229,7 @@ abstract class Expression
         d.equals("log") || d.equals("floor") || d.equals("round") || d.equals("ceil") || 
         d.equals("atan") || d.equals("acos") || d.equals("asin") || d.equals("oclAsType") || 
         d.equals("abs") || d.equals("max") || d.equals("subcollections") || d.equals("Prd") || 
-        d.equals("size") || d.equals("toLowerCase") || d.equals("pow") || d.equals("Sum") ||
+        d.equals("size") || d.equals("toLowerCase") || d.equals("pow") || d.equals("gcd") || d.equals("Sum") ||
         d.equals("replace") || d.equals("replaceAll") ||
         d.equals("replaceAllMatches") ||
         d.equals("replaceFirstMatch") || 

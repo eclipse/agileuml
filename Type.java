@@ -30,16 +30,18 @@ public class Type extends ModelElement
 
   // cached type correspondence for MT synthesis: 
   static java.util.Map simMap = new java.util.HashMap(); 
+
+  Type alias = null;  // For datatypes 
    
   public Type(String nme, Vector vals)
   { super(nme);
     if ("Map".equals(nme))
     { keyType = new Type("String", null); } 
-    if ("Boolean".equals(nme))
+    if ("Boolean".equalsIgnoreCase(nme))
     { setName("boolean"); } 
-    else if ("Integer".equals(nme))
+    else if ("Integer".equalsIgnoreCase(nme))
     { setName("int"); } 
-    else if ("Real".equals(nme))
+    else if ("Real".equalsIgnoreCase(nme))
     { setName("double"); } 
     values = vals;
   } // also convert EInt, ELong, etc to our types
@@ -117,6 +119,8 @@ public class Type extends ModelElement
     else 
     { result.setKeyType(keyType); } 
  
+    result.setAlias(alias); 
+
     return result; 
   } 
 
@@ -137,6 +141,12 @@ public class Type extends ModelElement
 
   public boolean isSorted()
   { return sorted; } 
+
+  public void setAlias(Type a)
+  { alias = a; } 
+
+  public Type getAlias()
+  { return alias; } 
 
   public Entity getEntity() 
   { return entity; } 
@@ -1031,7 +1041,10 @@ public class Type extends ModelElement
     if ("boolean".equals(getName())) { return "false"; }
     if (isEntity) { return "null"; }  
     if ("String".equals(getName())) { return "\"\""; } 
-    if (isFunctionType(this)) { return "null"; }  
+    if (isFunctionType(this)) { return "null"; }
+    if (alias != null)    // For datatypes
+    { return alias.initialValueJava6(); } 
+   
     return "0"; 
   } 
 
@@ -1046,11 +1059,16 @@ public class Type extends ModelElement
     if (isEntity) { return "null"; }  
     if ("String".equals(getName())) { return "\"\""; } 
     if (isFunctionType(this)) { return "null"; }  
+    if (alias != null)    // For datatypes
+    { return alias.initialValueJava7(); } 
     return "0"; 
   } 
 
   public String getJava8Definition(String packageName) 
-  { String res = "package " + packageName + ";\n\r" + 
+  { if (values == null) 
+    { return ""; } 
+
+    String res = "package " + packageName + ";\n\r" + 
                  "\n\r" + 
                  "public enum " + name + " { ";
     for (int i = 0; i < values.size(); i++) 
@@ -1545,6 +1563,20 @@ public class Type extends ModelElement
     return score; 
   } // There exists a value with similar name to the boolean attribute. 
 
+  public static boolean isDatatype(String nme, Vector types)
+  { if (nme.equals("int") || nme.equals("String") ||  
+        nme.equals("double") || nme.equals("boolean") ||
+        nme.equals("long"))
+    { return true; }
+    Type tt = (Type) ModelElement.lookupByName(nme, types); 
+    if (tt == null) 
+    { return false; } 
+    return true; 
+  } 
+
+  public boolean isDatatype()
+  { return values == null && alias != null; } 
+     
   public boolean isPrimitive()
   { String nme = getName();
     if (nme.equals("int") || 
@@ -1565,7 +1597,8 @@ public class Type extends ModelElement
   } 
 
   public static boolean isBasicType(Type e)
-  { if (e == null) { return false; } 
+  { if (e == null) 
+    { return false; } 
     if ("String".equals("" + e))
     { return true; } 
     return e.isPrimitive(); 
@@ -1704,10 +1737,14 @@ public class Type extends ModelElement
 
   public String getUMLModelName(PrintWriter out)
   { String nme = getName(); 
-    if (nme.equals("int")) { return "Integer"; } 
-    if (nme.equals("long")) { return "Long"; } 
-    if (nme.equals("double")) { return "Real"; } 
-    if (nme.equals("boolean")) { return "Boolean"; } 
+    if (nme.equals("int")) 
+    { return "Integer"; } 
+    if (nme.equals("long")) 
+    { return "Long"; } 
+    if (nme.equals("double")) 
+    { return "Real"; } 
+    if (nme.equals("boolean")) 
+    { return "Boolean"; } 
 	
     if (nme.equals("Set")) 
     { String tid = Identifier.nextIdentifier(""); 
@@ -1796,7 +1833,11 @@ public class Type extends ModelElement
 
       out.println("FunctionType" + tid + ".typeId = \"" + tid + "\""); 
       return "FunctionType" + tid; 
-    } 
+    }
+
+    if (values == null && alias != null)  
+    { return alias.getUMLModelName(out); } 
+
     return nme; 
   } // Function types for the future. 
 
@@ -1862,7 +1903,11 @@ public class Type extends ModelElement
   public String getKM3()
   { String res = ""; 
     if (values == null)  // for basic types only
-    { res = "  datatype " + name + ";\n"; 
+    { if (alias != null) 
+      { res = "  datatype " + name + " = " + alias.getName() + ";\n"; } 
+      else 
+      { res = "  datatype " + name + ";\n"; } 
+
       return res; 
     } 
     
@@ -1880,7 +1925,10 @@ public class Type extends ModelElement
   public void saveKM3(PrintWriter out)
   { String res = ""; 
     if (values == null)  // for basic types only
-    { out.println("  datatype " + name + ";"); 
+    { if (alias != null) 
+      { out.println("  datatype " + name + " = " + alias.getName() + ";\n"); } 
+      else 
+      { out.println("  datatype " + name + ";"); }
       return; 
     } 
     res = "  enumeration " + name + " {";
@@ -2055,10 +2103,15 @@ public class Type extends ModelElement
       { return "new Vector()"; }
       if (nme.equals("Map")) 
       { return "new HashMap()"; } 
+      if (alias != null)    // For datatypes
+      { return alias.getDefault(); } 
+
       return "null";    // for class types, functions
     }
+
     if (values.size() > 0)
     { return (String) values.get(0); } 
+
     return "null";
   }
   // Set and Sequence?
@@ -2102,6 +2155,8 @@ public class Type extends ModelElement
         ((UnaryExpression) res).setAccumulator(new Attribute("_x", keyType, ModelElement.INTERNAL));  
         return res; 
       }
+      else if (alias != null)    // For datatypes
+      { return alias.getDefaultValueExpression(); } 
       else // unknown type
       { res = new BasicExpression(0); } 
     }
@@ -2127,6 +2182,8 @@ public class Type extends ModelElement
       { return "new ArrayList()"; }
       if (nme.equals("Map"))
       { return "new HashMap()"; } 
+      if (alias != null)    // For datatypes
+      { return alias.getDefaultJava6(); } 
       return "null";    // for class types, functions
     }
     else if (values.size() > 0) 
@@ -2162,6 +2219,8 @@ public class Type extends ModelElement
         else 
         { return "new HashMap()"; }
       }  
+      if (alias != null)    // For datatypes
+      { return alias.getDefaultJava7(); } 
       return "null";    // for class types, functions
     } 
     else if (values.size() > 0) 
@@ -2183,6 +2242,9 @@ public class Type extends ModelElement
       { return "new ArrayList()"; }
       if (nme.equals("Map"))
       { return "new Hashtable()"; }
+      if (alias != null)    // For datatypes
+      { return alias.getDefaultCSharp(); } 
+
       return "null";    // for class types, functions
     }
     return "0"; // (String) values.get(0);
@@ -2212,6 +2274,8 @@ public class Type extends ModelElement
       { return "new vector<" + et + ">()"; }
       if (nme.equals("Map"))
       { return "new map<string, " + et + ">()"; }
+      if (alias != null)    // For datatypes
+      { return alias.getDefaultCPP(et); } 
       return "NULL";    // for class types, functions
     }
     return "0"; // (String) values.get(0);
@@ -2243,7 +2307,10 @@ public class Type extends ModelElement
     { return "Func"; }
     if (nme.equals("String")) { return "string"; }  
     if (nme.equals("boolean")) { return "bool"; } 
-    if (nme.equals("long")) { return "long"; } 
+    if (nme.equals("long")) { return "long"; }
+    if (alias != null)    // For datatypes
+    { return alias.getCSharp(); } 
+ 
     if (values == null) { return nme; } 
     return "int";   
   } 
@@ -2255,19 +2322,19 @@ public class Type extends ModelElement
     if (nme.equals("Sequence"))
     { return "[" + elemType + "]"; } 
     
-	if (nme.equals("Map"))
+    if (nme.equals("Map"))
     { String kt = "String"; 
-	  if (keyType != null) 
-	  { kt = keyType.getSwift(""); }
-	  return "Dictionary<" + kt + ", " + elemType + ">"; 
-	}
-	 
+      if (keyType != null) 
+      { kt = keyType.getSwift(""); }
+      return "Dictionary<" + kt + ", " + elemType + ">"; 
+    } 
+
     if (nme.equals("Function"))
     { String kt = "String"; 
-	  if (keyType != null) 
-	  { kt = keyType.getSwift(""); }
-	  return "(" + kt + ") -> " + elemType; 
-	} 
+      if (keyType != null) 
+      { kt = keyType.getSwift(""); }
+      return "(" + kt + ") -> " + elemType; 
+    } 
 	
     if (nme.equals("String")) { return "String"; }  
     if (nme.equals("boolean")) { return "Bool"; } 
@@ -2275,6 +2342,8 @@ public class Type extends ModelElement
     if (nme.equals("long")) { return "Int"; } 
     if (nme.equals("double")) { return "Double"; } 
     if (isEntity) { return nme; } 
+    if (alias != null)    // For datatypes
+    { return alias.getSwift(); } 
     return nme;  // enumerations 
   } 
 
@@ -2286,6 +2355,8 @@ public class Type extends ModelElement
     if (nme.equals("long")) { return "Int"; } 
     if (nme.equals("double")) { return "Double"; } 
     if (isEntity) { return nme; } 
+    if (alias != null)    // For datatypes
+    { return alias.getSwift(); } 
     if (isEnumeration()) { return nme; }
 
     String elemType = elementType.getSwift();  
@@ -2309,6 +2380,8 @@ public class Type extends ModelElement
     if (nme.equals("double")) 
     { return "0.0"; } 
 
+    if (alias != null)    // For datatypes
+    { return alias.getSwiftDefaultValue(); } 
 
     if (nme.equals("WebDisplay")) 
     { return "WebDisplay.defaultInstance()"; } 
@@ -2343,8 +2416,11 @@ public class Type extends ModelElement
     if (nme.equals("String")) { return "string"; }  
     if (nme.equals("boolean")) { return "bool"; } 
     if (isEntity) { return nme + "*"; } 
-	if (nme.equals("Function"))
+    if (nme.equals("Function"))
     { return elemType + " (*)(String)"; } 
+
+    if (alias != null)    // For datatypes
+    { return alias.getCPP(elemType); } 
 
     return nme;  // enumerations, long, int and double 
   } 
@@ -2364,9 +2440,15 @@ public class Type extends ModelElement
   { String nme = getName();
     if (nme.equals("Set") || nme.equals("Sequence") || nme.equals("Map") || nme.equals("Function"))
     { return "void*"; }
-    if (nme.equals("String")) { return "string"; }  
-    if (nme.equals("boolean")) { return "bool"; } 
-    if (isEntity) { return nme + "*"; } 
+    if (nme.equals("String")) 
+    { return "string"; }  
+    if (nme.equals("boolean")) 
+    { return "bool"; } 
+    if (isEntity) 
+    { return nme + "*"; }
+    if (alias != null)    // For datatypes
+    { return alias.getCPP(); } 
+ 
     return nme;  // enumerations, int, long and double 
   } 
 
@@ -2381,6 +2463,12 @@ public class Type extends ModelElement
         out.println(nme + "_" + val + ".name = \"" + val + "\""); 
         out.println(nme + "_" + val + " : " + nme + ".ownedLiteral");
       }
+    } 
+    else if (alias != null) 
+    { String aname = alias.getUMLName(); 
+      String nme = getName(); 
+      out.println(nme + " : PrimitiveType"); 
+      out.println(aname + " : " + nme + ".alias"); 
     } 
   } 
 
@@ -2495,6 +2583,9 @@ public class Type extends ModelElement
       { return "Evaluation<String, String>"; } 
     } 
 
+    if (alias != null)    // For datatypes
+    { return alias.getJava(); } 
+
     if (values == null)
     { return nme; }
     return "int"; 
@@ -2517,6 +2608,9 @@ public class Type extends ModelElement
       else 
       { return "Evaluation<String, String>"; } 
     } 
+
+    if (alias != null)    // For datatypes
+    { return alias.getJava6(); } 
 
     if (values == null)
     { return nme; }
@@ -2563,6 +2657,9 @@ public class Type extends ModelElement
       else 
       { return "Evaluation<String,Object>"; } 
     } 
+
+    if (alias != null)    // For datatypes
+    { return alias.getJava7(); } 
 
     if (values == null)
     { return nme; }
@@ -2616,6 +2713,9 @@ public class Type extends ModelElement
       { return "Evaluation<String,Object>"; } 
     } 
 
+    if (alias != null)    // For datatypes
+    { return alias.getJava7(); } 
+
     if (values == null)
     { return nme; }
     // if (nme.equals("long")) { return "long"; } 
@@ -2649,6 +2749,9 @@ public class Type extends ModelElement
 
     if (nme.equals("Function"))
     { return "Evaluation<" + kt + ", " + et + ">"; } 
+
+    if (typ.alias != null)    // For datatypes
+    { return typ.alias.typeWrapperJava7(); } 
 
     if (typ.values == null)
     { return typ.typeWrapperJava7(); }
@@ -2696,7 +2799,10 @@ public class Type extends ModelElement
       else 
       { return "Evaluation<String,Object>"; } 
     } 
-	
+
+    if (alias != null)    // For datatypes
+    { return alias.typeWrapperJava8(); } 
+
     return nme;  
   }
 
@@ -2709,6 +2815,8 @@ public class Type extends ModelElement
     if ("double".equals(nme)) { return "Double"; } 
     if ("long".equals(nme)) { return "Long"; } 
     if ("boolean".equals(nme)) { return "Boolean"; } 
+    if (alias != null)    // For datatypes
+    { return alias.typeWrapper(); } 
     if (values != null) { return "Integer"; } 
     return nme; 
   } 
@@ -2723,6 +2831,8 @@ public class Type extends ModelElement
     if ("double".equals(nme)) { return "Double"; } 
     if ("long".equals(nme)) { return "Long"; } 
     if ("boolean".equals(nme)) { return "Boolean"; } 
+    if (alias != null)    // For datatypes
+    { return alias.typeWrapperJava6(); } 
     if (values != null) { return "Integer"; } 
     return nme; 
   } 
@@ -2769,7 +2879,10 @@ public class Type extends ModelElement
     if ("int".equals(nme)) { return "Integer"; } 
     if ("double".equals(nme)) { return "Double"; } 
     if ("long".equals(nme)) { return "Long"; } 
-    if ("boolean".equals(nme)) { return "Boolean"; } 
+    if ("boolean".equals(nme)) { return "Boolean"; }
+    if (alias != null)    // For datatypes
+    { return alias.typeWrapperJava7(); } 
+ 
     if (values != null) { return "Integer"; } 
     return nme; 
   } // For enumerations, would be better to represent as Java enums. 
@@ -2818,6 +2931,10 @@ public class Type extends ModelElement
     if ("double".equals(nme)) { return "Double"; } 
     if ("long".equals(nme)) { return "Long"; } 
     if ("boolean".equals(nme)) { return "Boolean"; } 
+
+    if (alias != null)    // For datatypes
+    { return alias.typeWrapperJava8(); } 
+ 
     return nme; 
   } // For enumerations, would be better to represent as Java enums. 
   
@@ -2864,10 +2981,13 @@ public class Type extends ModelElement
     { out.print("  enum " + getName() + " { "); 
       for (int i = 0; i < values.size(); i++)
       { out.print(values.get(i)); 
-        if (i < values.size() - 1) { out.print(", "); } 
+        if (i < values.size() - 1) 
+        { out.print(", "); } 
       }
       out.println(" };\n");
     }
+    else if (alias != null) 
+    { out.println("  typedef " + alias.getCPP() + " " + getName() + ";"); } 
   }
 
   public static Type getTypeFor(String typ, Vector types, Vector entities)
@@ -3069,9 +3189,16 @@ public class Type extends ModelElement
   public String saveData()
   { String res = ""; 
     if (values == null)
-    { return "\n"; } 
-    for (int i = 0; i < values.size(); i++)
-    { res = res + values.get(i) + " "; }
+    { res = "\n"; } 
+    else 
+    { for (int i = 0; i < values.size(); i++)
+      { res = res + values.get(i) + " "; }
+      res = res + "\n"; 
+    } 
+  
+    if (alias != null) 
+    { res = res + alias + "\n"; }
+ 
     return res; 
   }
 
@@ -3205,8 +3332,30 @@ public class Type extends ModelElement
     return typetext;
   }
 
+  public String cgDatatype(CGSpec cgs)
+  { // primitive type with alias != null
+
+    String typetext = this + "";
+    Vector args = new Vector();
+    Vector eargs = new Vector();  
+
+    args.add(getName()); 
+    args.add(alias.cg(cgs)); 
+
+    eargs.add(getName()); 
+    eargs.add(alias); 
+
+    CGRule r = cgs.matchedDatatypeRule(this,typetext);
+    if (r != null)
+    { return r.applyRule(args,eargs,cgs); }
+    return typetext;
+  }
+
   public String cgEnum(CGSpec cgs)
   { String typetext = this + "";
+    if (values == null) 
+    { return typetext; } 
+
     Vector args = new Vector();
     String arg = ""; 
     Vector lits = new Vector(); 

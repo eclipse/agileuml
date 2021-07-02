@@ -1,12 +1,31 @@
 # OCL library ocl.py
 import re
 
+
 def sqr(x) : 
   return x*x
 
 def cbrt(x) : 
   return pow(x, 1.0/3)
 
+def abs(x) : 
+  if x < 0 : 
+    return -x
+  else : 
+    return x
+
+def gcd(xx,yy) :
+  x = abs(xx)
+  y = abs(yy) 
+  while (x != 0 and y != 0) :
+    z = y 
+    y = x % y 
+    x = z
+  if (y == 0) :
+    return x  
+  if (x == 0) :
+    return y 
+  return 0
 
 def isUnique(s) : 
   return len(set(s)) == len(s)

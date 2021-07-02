@@ -93,7 +93,7 @@ public class KM3Editor extends JFrame implements DocumentListener
         } 
 	   else 
 	   {
-            System.err.println("Error: invalid document");
+          System.err.println("Error: invalid document");
         }
         
         JScrollPane scrollPane = new JScrollPane(textPane);

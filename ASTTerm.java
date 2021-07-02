@@ -8,6 +8,7 @@
 * *****************************/
 
 import java.util.Vector; 
+import java.io.*; 
 
 public abstract class ASTTerm
 { String id = ""; 
@@ -16,16 +17,22 @@ public abstract class ASTTerm
      // String --> String, eg., recording the conceptual
      // type of the element. 
 
-  java.util.Map types = new java.util.HashMap(); 
+  static java.util.Map types = new java.util.HashMap(); 
      // String --> String for general type of identifiers
+     // valid at the scope of the current term. 
 
   public abstract String toString(); 
 
   public abstract String literalForm(); 
 
+  public abstract String asTextModel(PrintWriter out); 
+
   public abstract String cg(CGSpec cgs); 
 
   public abstract String cgRules(CGSpec cgs, Vector rules); 
+
+  // Only for programming languages. 
+  public abstract boolean updatesObject(); 
 
   public boolean hasMetafeature(String f) 
   { String val = (String) metafeatures.get(f); 
@@ -37,6 +44,19 @@ public abstract class ASTTerm
 
   public String getMetafeatureValue(String f) 
   { String val = (String) metafeatures.get(f); 
+    return val;  
+  } 
+
+  public static void setType(String f, String val) 
+  { types.put(f,val); } 
+
+  public static String getType(String f) 
+  { String val = (String) types.get(f); 
+    return val;  
+  } 
+
+  public static String getType(ASTTerm t) 
+  { String val = (String) types.get(t.literalForm()); 
     return val;  
   } 
 
@@ -53,12 +73,14 @@ public abstract class ASTTerm
       "int".equals(typ) || "short".equals(typ) || 
       "byte".equals(typ) || "Integer".equals(typ) || 
       "Short".equals(typ) || "Byte".equals(typ) ||
+      "BigInteger".equals(typ) ||  
       "long".equals(typ) || "Long".equals(typ); 
   } 
 
   public static boolean isReal(String typ) 
   { return 
       "float".equals(typ) || "double".equals(typ) || 
+      "BigDecimal".equals(typ) || 
       "Float".equals(typ) || "Double".equals(typ); 
   } 
 
@@ -67,6 +89,13 @@ public abstract class ASTTerm
       "String".equals(typ) || "Character".equals(typ) || 
       "StringBuffer".equals(typ) || "char".equals(typ) || 
       "StringBuilder".equals(typ); 
+  } 
+
+  public boolean isCollection()
+  { String typ = ASTTerm.getType(literalForm()); 
+    if ("Sequence".equals(typ) || "Set".equals(typ))
+    { return true; } 
+    return false; 
   } 
 
   public String getDefaultValue(String typ) 

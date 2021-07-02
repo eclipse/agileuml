@@ -3369,7 +3369,7 @@ public class ModelSpecification
             if (sobj.hasDefinedValue(sattname) && tobj.hasDefinedValue(tattname)) { } 
             else 
             { alldefined = false; } 
-            sattvalues[j] = (boolean) sobj.getActualValueOf(satt,this); 
+            sattvalues[j] = ((Boolean) sobj.getActualValueOf(satt,this)).booleanValue(); 
             tattvalues[j] = (String) tobj.getActualValueOf(tatt,this); 
           }
 		
@@ -3416,7 +3416,7 @@ public class ModelSpecification
             if (sobj.hasDefinedValue(sattname) && tobj.hasDefinedValue(tattname)) { } 
             else 
             { alldefined = false; } 
-            tattvalues[j] = (boolean) tobj.getActualValueOf(tatt,this); 
+            tattvalues[j] = ((Boolean) tobj.getActualValueOf(tatt,this)).booleanValue(); 
             sattvalues[j] = (String) sobj.getActualValueOf(satt,this); 
           }
 		

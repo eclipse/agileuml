@@ -847,7 +847,11 @@ class BreakStatement extends Statement
 }
 
 class ContinueStatement extends Statement
-{ public void display()
+{ 
+  public ContinueStatement()
+  { super(); } 
+
+  public void display()
   { System.out.println("  continue;"); }  
 
   public String getOperator() 
@@ -1542,6 +1546,9 @@ class ImplicitInvocationStatement extends Statement
 
   public ImplicitInvocationStatement(Expression ee)
   { callExp = ee; } 
+
+  public ImplicitInvocationStatement(String ss)
+  { callExp = new BasicExpression(ss); } 
 
   public void setEntity(Entity ent)
   { entity = ent; 
@@ -3224,9 +3231,9 @@ class CreationStatement extends Statement
       { return "  " + jType + " " + assignsTo + ";"; } 
       else if (instanceType.isEntity())
       { Entity ent = instanceType.getEntity(); 
-	    String ename = ent.getName(); 
-		if (initialExpression != null)
-		{ return "  " + jType + " " + assignsTo + " = " + initialExpression.toCPP() + ";\n"; }
+        String ename = ent.getName(); 
+        if (initialExpression != null)
+        { return "  " + jType + " " + assignsTo + " = " + initialExpression.toCPP() + ";\n"; }
         else if (ent.hasStereotype("external"))
         { return "  " + jType + " " + assignsTo + " = new " + ename + "();\n"; } 
         else
@@ -4435,6 +4442,175 @@ class ErrorStatement extends Statement
   { String res = Identifier.nextIdentifier("errorstatement_"); 
     out.println(res + ".statId = \"" + res + "\"");  
     out.println(res + " : ErrorStatement"); 
+    return res; 
+  } 
+
+  public String toStringJava()
+  { return " {} /* Unreachable state */"; }
+  
+  public String toEtl()
+  { return ""; }
+
+  public void displayJava(String t, PrintWriter out)
+  { out.println(" {} /* Unreachable state */"); } 
+
+  public boolean typeCheck(Vector types, Vector entities, Vector cs, Vector env)
+  { return true; } 
+  
+  public Expression wpc(Expression post)
+  { return post; }
+
+  public Vector dataDependents(Vector allvars, Vector vars)
+  { return vars; }  
+
+  public boolean updates(Vector v) 
+  { return false; } 
+
+  public String updateForm(java.util.Map env, boolean local, Vector types, Vector entities, 
+                           Vector vars)
+  { return toStringJava(); }
+
+  public String updateFormJava6(java.util.Map env, boolean local)
+  { return toStringJava(); }
+
+  public String updateFormJava7(java.util.Map env, boolean local)
+  { return toStringJava(); }
+
+  public String updateFormCSharp(java.util.Map env, boolean local)
+  { return toStringJava(); }
+
+  public String updateFormCPP(java.util.Map env, boolean local)
+  { return toStringJava(); }
+
+  public Vector readFrame()
+  { Vector res = new Vector(); 
+    return res; 
+  } 
+
+  public Vector writeFrame()
+  { Vector res = new Vector(); 
+    return res; 
+  } 
+
+  public Statement checkConversions(Entity e, Type propType, Type propElemType, java.util.Map interp)
+  { return this; } 
+
+  public Statement replaceModuleReferences(UseCase uc)
+  { return this; } 
+
+  public int syntacticComplexity()
+  { return 1; } 
+
+  public int cyclomaticComplexity()
+  { return 0; } 
+
+  public int epl()
+  { return 0; } 
+
+  public Vector allOperationsUsedIn()
+  { Vector res = new Vector(); 
+    return res; 
+  } 
+
+  public Vector equivalentsUsedIn()
+  { Vector res = new Vector(); 
+    return res; 
+  } 
+
+  public Vector metavariables()
+  { Vector res = new Vector(); 
+    return res; 
+  } 
+}
+
+class TryStatement extends Statement
+{ // This represents a try,catch,finally statement
+  Statement body; 
+  Vector catchClauses = new Vector(); // CatchStatement 
+  Statement endStatement = null; 
+
+  public void display()
+  { if (body == null) 
+    { return; } 
+
+    System.out.println("  try "); 
+    body.display(); 
+ 
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cs = (Statement) catchClauses.get(i); 
+      cs.display(); 
+    }
+
+    if (endStatement != null) 
+    { System.out.println("  endtry ("); 
+      endStatement.display(); 
+      System.out.println("    )"); 
+    }  
+  }
+
+  public String getOperator() 
+  { return "try"; } 
+
+  public Object clone() { return this; } 
+
+  public Statement dereference(BasicExpression var) { return this; } 
+
+  public Statement substituteEq(String oldE, Expression newE)
+  { // try
+    { return (ErrorStatement) clone(); } 
+    // catch (CloneNotSupportedException e)
+    // { return this; } 
+  } 
+
+  public void display(PrintWriter out)
+  { if (body == null) 
+    { return; } 
+
+    out.println("  try "); 
+    body.display(out); 
+ 
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cs = (Statement) catchClauses.get(i); 
+      cs.display(out); 
+    }
+
+    if (endStatement != null) 
+    { out.println("  endtry ("); 
+      endStatement.display(out); 
+      out.println("    )"); 
+    }  
+  }
+
+  public String bupdateForm()
+  { return "SELECT false THEN skip END\n"; }
+
+  public BStatement bupdateForm(java.util.Map env, boolean local)
+  { return new BBasicStatement("SELECT false THEN skip END"); }
+
+  public void displayJava(String t)
+  { if (body == null) 
+    { return; } 
+
+    System.out.println("  try { "); 
+    body.displayJava(t); 
+    System.out.println(" }");
+ 
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cs = (Statement) catchClauses.get(i); 
+      cs.displayJava(t); 
+    }
+
+    if (endStatement != null) 
+    { System.out.println("  finally { "); 
+      endStatement.displayJava(t); 
+      System.out.println("  }"); 
+    }  
+  }
+
+  public String saveModelData(PrintWriter out)
+  { String res = Identifier.nextIdentifier("trystatement_"); 
+    out.println(res + ".statId = \"" + res + "\"");  
+    out.println(res + " : TryStatement"); 
     return res; 
   } 
 

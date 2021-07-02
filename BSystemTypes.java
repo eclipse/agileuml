@@ -4945,6 +4945,62 @@ public class BSystemTypes extends BComponent
     return res; 
   } 
 
+  public static String generateGCDOp()
+  { String res = "  public static long gcd(long xx, long yy)\n" +
+                 "  { long x = Math.abs(xx);\n" + 
+                 "    long y = Math.abs(yy);\n" + 
+                 "    while (x != 0 && y != 0)\n" +
+                 "    { long z = y; \n" +
+                 "      y = x % y; \n" +
+                 "      x = z;\n" + 
+                 "    } \n" +
+                 "    if (y == 0)\n" +
+                 "    { return x; }\n" + 
+                 "    if (x == 0)\n" +
+                 "    { return y; }\n" + 
+                 "    return 0;\n" + 
+                 "  } \n"; 
+    return res; 
+  } 
+
+  public static String generateGCDOpCSharp()
+  { String res = "  public static long gcd(long xx, long yy)\n" +
+                 "  { long x = Math.Abs(xx);\n" + 
+                 "    long y = Math.Abs(yy);\n" + 
+                 "    while (x != 0 && y != 0)\n" +
+                 "    { long z = y; \n" +
+                 "      y = x % y; \n" +
+                 "      x = z;\n" + 
+                 "    } \n" +
+                 "    if (y == 0)\n" +
+                 "    { return x; }\n" + 
+                 "    if (x == 0)\n" +
+                 "    { return y; }\n" + 
+                 "    return 0;\n" + 
+                 "  } \n"; 
+    return res; 
+  } 
+
+
+  public static String generateGCDOpCPP()
+  { String res = "  static long gcd(long xx, long yy)\n" +
+                 "  { long x = labs(xx);\n" + 
+                 "    long y = labs(yy);\n" + 
+                 "    while (x != 0 && y != 0)\n" +
+                 "    { long z = y; \n" +
+                 "      y = x % y; \n" +
+                 "      x = z;\n" + 
+                 "    } \n" +
+                 "    if (y == 0)\n" +
+                 "    { return x; }\n" + 
+                 "    if (x == 0)\n" +
+                 "    { return y; }\n" + 
+                 "    return 0;\n" + 
+                 "  } \n"; 
+    return res; 
+  } 
+
+
   public static String generateRoundOpCPP()
   { String res = 
       "  static int oclRound(double d)\n" + 

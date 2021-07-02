@@ -3138,6 +3138,8 @@ public void findClones(java.util.Map clones, String rule, String op)
     }  // and right must be of type int. 
     else if ("->pow".equals(operator))
     { type = new Type("double",null); } 
+    else if ("->gcd".equals(operator))
+    { type = new Type("long",null); } 
     else if ("->hasPrefix".equals(operator) || "->hasSuffix".equals(operator) ||
              "->hasMatch".equals(operator) || "->isMatch".equals(operator) ||
              operator.equals("->equalsIgnoreCase") ||
@@ -4089,6 +4091,9 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->pow"))
     { return "Math.pow(" + lqf + "," + rqf + ")"; } 
 
+    if (operator.equals("->gcd"))
+    { return "Set.gcd(" + lqf + "," + rqf + ")"; } 
+
     if (operator.equals("->isUnique") || operator.equals("|isUnique"))  // and define for B and for Maps
     { String fcollect = collectQueryForm(lqf,rqf,rprim,env,local);
       return "Set.isUnique(" + fcollect + ")"; 
@@ -4490,6 +4495,9 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->pow"))
     { return "Math.pow(" + lqf + ", " + rqf + ")"; } 
 
+    if (operator.equals("->gcd"))
+    { return "Set.gcd(" + lqf + "," + rqf + ")"; } 
+
     if (operator.equals("->isUnique"))  // and define for B
     { String fcollect = collectQueryFormJava6(lqf,rqf,rprim,env,local);
       return "Set.isUnique(" + fcollect + ")"; 
@@ -4818,6 +4826,9 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->pow"))
     { return "Math.pow(" + lqf + ", " + rqf + ")"; } 
 
+    if (operator.equals("->gcd"))
+    { return "Ocl.gcd(" + lqf + "," + rqf + ")"; } 
+
     if (operator.equals("->isUnique"))  // and define for B
     { String fcollect = collectQueryFormJava7(lqf,rqf,rprim,env,local);
       return "Ocl.isUnique(" + fcollect + ")"; 
@@ -5133,6 +5144,9 @@ public boolean conflictsWithIn(String op, Expression el,
     
     if (operator.equals("->pow"))
     { return "Math.Pow(" + lqf + ", " + rqf + ")"; }      
+
+    if (operator.equals("->gcd"))
+    { return "SystemTypes.gcd(" + lqf + "," + rqf + ")"; } 
 
     if (operator.equals("->isUnique"))  // and define for B
     { String fcollect = collectQueryFormCSharp(lqf,rqf,rprim,env,local);
@@ -5480,7 +5494,7 @@ public boolean conflictsWithIn(String op, Expression el,
       return "((" + typ + ") " + lqf + "->at(" + rqf + " - 1))"; 
     } 
 	
-	if (operator.equals("|A") || operator.equals("->any"))   
+    if (operator.equals("|A") || operator.equals("->any"))   
     { String getany = anyQueryFormCPP(lqf,rqf,env,local); 
       String typ = type.getCPP(elementType); 
       return "((" + typ + ") " + getany + ")"; 
@@ -5489,6 +5503,9 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->pow"))
     { return "pow(" + lqf + ", " + rqf + ")"; }      
+
+    if (operator.equals("->gcd"))
+    { return "UmlRsdsLib<long>::gcd(" + lqf + "," + rqf + ")"; } 
 
     if (operator.equals("->isUnique"))  // and define for B
     { String fcollect = collectQueryFormCPP(lqf,rqf,rprim,env,local);

@@ -315,7 +315,7 @@ public class Compiler2
         str.equals("subrange") || str.equals("characters") || str.equals("isLong") || 
         str.equals("closure") || str.equals("asSet") || str.equals("asSequence") || 
         str.equals("sqr") || str.equals("floor") || str.equals("ceil") ||
-        str.equals("round") || str.equals("exp") || str.equals("pow") ||
+        str.equals("round") || str.equals("exp") || str.equals("pow") || str.equals("gcd") || 
         str.equals("sin") || str.equals("cos") || str.equals("tan") || str.equals("toLong") ||
         str.equals("asin") || str.equals("acos") || str.equals("atan") ||
         str.equals("sinh") || str.equals("cosh") || str.equals("tanh") ||
@@ -849,6 +849,8 @@ public class Compiler2
   { int in = INUNKNOWN; 
     char previous = ' '; 
 
+    boolean instring = false; 
+
     int explen = str.length(); 
     lexicals = new Vector(explen);  /* Sequence of lexicals */ 
     StringBuffer sb = null;    /* Holds current lexical item */ 
@@ -857,21 +859,40 @@ public class Compiler2
 
     for (int i = 0; i < explen; i++)
     { char c = str.charAt(i); 
-	
-      if (isSymbolCharacterText(c))
+
+      if (c == '\"') 
+      { if (instring) 
+        { instring = false; 
+          if (sb != null) 
+          { sb.append(c); 
+            sb = null; 
+          }
+        }  
+        else 
+        { instring = true; 
+          sb = new StringBuffer();     // start new buffer
+          lexicals.addElement(sb);  
+          sb.append(c); 
+        } 
+      } 	
+      else if (isSymbolCharacterText(c))
       { sb = new StringBuffer();     // start new buffer for the symbol
         lexicals.addElement(sb);  
         sb.append(c); 
-		sb = null; 
+        sb = null; 
       }        
-	  else if (c == ' ' || c == '\n' || c == '\t' || c == '\r') 
-      { sb = null; } 
+      else if (c == ' ' || c == '\n' || c == '\t' || c == '\r') 
+      { if (instring && sb != null)
+        { sb.append(c); } 
+        else  
+        { sb = null; } // end current buffer
+      }  
       else // if (isBasicExpCharacter(c))
       { if (sb != null) 
-	    { sb.append(c); } 
-		else 
-		{ sb = new StringBuffer();     // start new buffer for the text
-		  lexicals.add(sb); 
+        { sb.append(c); } 
+        else 
+        { sb = new StringBuffer();     // start new buffer for the text
+          lexicals.add(sb); 
           sb.append(c); 
         }           
       } 
@@ -3090,6 +3111,62 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 	}
 	return null; 
   }
+
+  public void parseDataFeatureDefinition(String xstring, Entity currentclass, Vector entities, Vector types, Vector assocs)
+  { nospacelexicalanalysisText(xstring);
+    int sz = lexicals.size();  
+    // Should be 2
+    if (sz < 2) 
+    { return; } 
+
+    String typ = ""; 
+    Type fulltype = null; 
+
+    String f = lexicals.get(0) + ""; 
+    String t1 = lexicals.get(1) + ""; 
+    if ("array".equals(t1))
+    { // array ( t )
+      String t2 = lexicals.get(2) + ""; 
+      if ("(".equals(t2))
+      { String t = lexicals.get(3) + ""; 
+        // System.out.println(">>> Feature " + f + " : Sequence(" + t + ")"); 
+        typ = t; 
+        Type elemt = Type.getTypeFor(typ,types,entities); 
+        fulltype = new Type("Sequence",null);
+        if (elemt == null) 
+        { elemt = new Type(typ,null); } 
+        fulltype.setElementType(elemt); 
+      } 
+      else 
+      { // System.out.println(">>> Feature " + f + " : Sequence(" + t2 + ")");
+        typ = t2; 
+        Type elemt = Type.getTypeFor(typ,types,entities); 
+        fulltype = new Type("Sequence",null); 
+        if (elemt == null) 
+        { elemt = new Type(typ,null); } 
+        fulltype.setElementType(elemt); 
+      }
+    } 
+    else 
+    { // System.out.println(">>> Feature " + f + " : " + t1);
+      typ = t1; 
+      fulltype = Type.getTypeFor(typ,types,entities); 
+      if (fulltype == null) 
+      { fulltype = new Type(typ,null); } 
+    } 
+
+    if (Type.isDatatype(typ, types))
+    { System.out.println(">>> attribute " + f + " : " + fulltype + ";"); 
+      currentclass.addAttribute(f,fulltype); 
+    } 
+    else 
+    { System.out.println(">>> reference " + f + " : " + fulltype + ";"); 
+      currentclass.addReference(f,fulltype,assocs); 
+    } 
+  
+  } 
+     
+
   
   public ASTTerm parseGeneralAST(String xstring)
   { nospacelexicalanalysisText(xstring);
@@ -4135,6 +4212,12 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         return "enumeration"; 
       } 
 
+      if ("datatype".startsWith(st)) 
+      { mess[0] = "New basic type, eg., datatype DateTime;\n" + 
+                  "or alias type, eg.:  datatype Float = double;\n"; 
+        return "datatype"; 
+      } 
+
       if ("endif".startsWith(st)) 
       { mess[0] = "endif ends conditional expression  if e then e1 else e2 endif"; 
         return "endif"; 
@@ -4976,7 +5059,17 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       rname = lexicals.get(st + 1) + "";
     } 
     else if ("datatype".equals(lx))
-    { return new Type(lexicals.get(st + 1) + "", null); } 
+    { Type dt = new Type(lexicals.get(st + 1) + "", null); 
+      if (st + 3 < lexicals.size() && 
+          "=".equals(lexicals.get(st+2) + ""))
+      { String aname = lexicals.get(st+3) + ""; 
+        start = st+4; 
+        dt.setAlias(new Type(aname,null)); 
+        return dt; 
+      }  
+      dt.setAlias(new Type("String", null)); 
+      return dt; 
+    } 
     else if ("enumeration".equals(lx))
     { int j = st + 2; 
       Vector values = new Vector(); 
@@ -8067,6 +8160,16 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 
     ASTTerm xx =
       c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (primitiveType int)) (variableDeclarators (variableDeclarator (variableDeclaratorId x) = (variableInitializer (expression (expression (primary Short)) . MAX_VALUE))))) ;) (blockStatement (localVariableDeclaration (typeType (classOrInterfaceType List)) (variableDeclarators (variableDeclarator (variableDeclaratorId p) = (variableInitializer (expression (expression (primary Collections)) . EMPTY_LIST))))) ;) (blockStatement (statement (expression (expression (primary x)) = (expression (expression (primary Collections)) . (methodCall min ( (expressionList (expression (primary p))) )))) ;)) }))"); 
+
+    File chtml = new File("output/out.txt"); 
+    try
+    { PrintWriter chout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(chtml)));
+      xx.asTextModel(chout); 
+      chout.close(); 
+    } catch (Exception __e) { }  
+    
 
      // c.parseGeneralAST("(statement (block { (blockStatement (localVariableDeclaration (typeType (classOrInterfaceType List)) (variableDeclarators (variableDeclarator (variableDeclaratorId pr) = (variableInitializer (expression new (creator (createdName LinkedList) (classCreatorRest (arguments ( ))))))))) ;) (blockStatement (statement (expression (expression (primary v)) = (expression (expression (primary pr)) . (methodCall getFirst ( )))) ;)) (blockStatement (statement (expression (expression (primary pr)) . (methodCall getLast ( ))) ;)) (blockStatement (statement (expression (expression (primary pr)) . (methodCall addAll ( (expressionList (expression (primary st))) ))) ;)) }))"); 
 

@@ -107,6 +107,8 @@ public class CGCondition
     { return positive; }
     if ("enumerated".equals(stereotype.toLowerCase()) && t.isEnumeratedType())
     { return positive; }
+    if ("datatype".equals(stereotype.toLowerCase()) && t.isDatatype())
+    { return positive; }
     if ("map".equals(stereotype.toLowerCase()) && t.isMapType())
     { return positive; }
     if ("function".equals(stereotype.toLowerCase()) && t.isFunctionType())
@@ -302,6 +304,17 @@ public class CGCondition
       
       if (ac.symbol.equalsIgnoreCase(stereotype))
       { return positive; }
+    } 
+
+    // String str = ASTTerm.getType(a.literalForm()); 
+    // if (str != null && str.equals(stereotype))
+    // { return positive; } 
+
+    if ("updatesObject".equals(stereotype))
+    { if (a.updatesObject())
+      { return positive; } 
+      else 
+      { return !positive; } 
     } 
 
     return false;

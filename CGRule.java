@@ -172,17 +172,19 @@ public class CGRule
   } 
 
   public static Vector metafeatures(String str) 
-  { Vector res = new Vector(); 
+  { Vector res = new Vector();
+    String substr = "" + str; 
+ 
     for (int i = 1; i < 10; i++) 
     { String var = "_" + i + "`"; 
-      if (str.indexOf(var) > -1) 
-      { int j = str.indexOf(var); 
+      while (substr.indexOf(var) > -1) 
+      { int j = substr.indexOf(var); 
         String f = var; 
 
         boolean found = false; 
-        for (int k = j+3; k < str.length() && !found; k++) 
-        { if (Character.isLetter(str.charAt(k)))
-          { f = f + str.charAt(k); } 
+        for (int k = j+3; k < substr.length() && !found; k++) 
+        { if (Character.isLetter(substr.charAt(k)))
+          { f = f + substr.charAt(k); } 
           else 
           { res.add(f);
             found = true; 
@@ -192,7 +194,8 @@ public class CGRule
         System.out.println(">>> found metafeature " + f + " for " + var); 
         if (res.contains(f)) { } 
         else 
-        { res.add(f); } 
+        { res.add(f); }
+        substr = substr.substring(j+4);  
       } 
     } 
     return res; 
@@ -269,7 +272,8 @@ public class CGRule
   }
 
   public String applyRule(Vector args, Vector eargs, CGSpec cgs)
-  { // substitute metafeatures[j] by the value of eargs[j] metafeature
+  { // substitute metafeatures[j] by the cgs transformation 
+    // of the value of eargs[j] metafeature
     // substitute variables[i] by args[i] in rhs
     
     System.out.println(">***> Metafeatures of rule " + this + " are " + metafeatures); 
@@ -316,6 +320,16 @@ public class CGRule
           { String repl = esub.getName(); 
             System.out.println(">--> Replacing " + mf + " by " + repl); 
             res = res.replace(mf,repl);
+          } 
+        }
+        else if ("alias".equals(mffeat) && obj instanceof Type)
+        { Type ee = (Type) obj; 
+          Type t = ee.getAlias(); 
+          if (t != null) 
+          { String repl = t.cg(cgs); 
+            String repl1 = correctNewlines(repl); 
+            // System.out.println(">--> Replacing " + mf + " by " + repl1); 
+            res = res.replaceAll(mf,repl1);
           } 
         }
         else if ("elementType".equals(mffeat) && obj instanceof Expression)
@@ -508,30 +522,32 @@ public class CGRule
         } 
         else if (CSTL.hasTemplate(mffeat + ".cstl")) 
         { CGSpec template = CSTL.getTemplate(mffeat + ".cstl"); 
-          System.out.println(">>> Applying template " + mffeat + " to " + obj); 
+          if (template != null) 
+          { System.out.println(">>> Applying CSTL template " + mffeat + " to " + obj); 
 
-          String repl = null; 
-          if (obj instanceof ModelElement)
-          { ModelElement e = (ModelElement) obj; 
-            repl = e.cg(template);
-          } 
-          else if (obj instanceof ASTTerm)
-          { ASTTerm e = (ASTTerm) obj; 
-            repl = e.cg(template);
-          } 
-          else if (obj instanceof Vector)
-          { Vector v = (Vector) obj;
-            repl = "";  
-            for (int p = 0; p < v.size(); p++) 
-            { ModelElement kme = (ModelElement) v.get(p); 
-              repl = repl + kme.cg(template); 
+            String repl = null; 
+            if (obj instanceof ModelElement)
+            { ModelElement e = (ModelElement) obj; 
+              repl = e.cg(template);
             } 
-          } 
+            else if (obj instanceof ASTTerm)
+            { ASTTerm e = (ASTTerm) obj; 
+              repl = e.cg(template);
+            } 
+            else if (obj instanceof Vector)
+            { Vector v = (Vector) obj;
+              repl = "";  
+              for (int p = 0; p < v.size(); p++) 
+              { ModelElement kme = (ModelElement) v.get(p); 
+                repl = repl + kme.cg(template); 
+              } 
+            } 
 
-          if (repl != null) 
-          { String repl1 = correctNewlines(repl);
-            res = res.replaceAll(mf,repl1); 
-          }  // _1`file for template file.cstl
+            if (repl != null) 
+            { String repl1 = correctNewlines(repl);
+              res = res.replaceAll(mf,repl1); 
+            }  // _1`file for template file.cstl
+          } 
         } 
         else if (obj instanceof ASTTerm)
         { ASTTerm term = (ASTTerm) obj; 
@@ -539,7 +555,64 @@ public class CGRule
           System.out.println(">***> Applying " + mffeat + " to " + obj); 
           System.out.println(); 
           
-          if (cgs.hasRuleset(mffeat))
+          if ("first".equals(mffeat))
+          { // get first subterm of obj
+            if (obj instanceof ASTCompositeTerm)
+            { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
+              if (ct.terms.size() > 0)
+              { ASTTerm ct1 = (ASTTerm) ct.terms.get(0); 
+                String repl = ct1.cg(cgs); 
+                String repl1 = correctNewlines(repl); 
+              
+                res = res.replaceAll(mf,repl1);
+              } 
+            } 
+            else // it is the term itself
+            { String repl = ((ASTTerm) obj).cg(cgs); 
+              String repl1 = correctNewlines(repl); 
+              
+              res = res.replaceAll(mf,repl1);
+            } 
+          }   
+          else if ("second".equals(mffeat))
+          { // get second subterm of obj
+            if (obj instanceof ASTCompositeTerm)
+            { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
+              if (ct.terms.size() > 1)
+              { ASTTerm ct1 = (ASTTerm) ct.terms.get(1); 
+                String repl = ct1.cg(cgs); 
+                String repl1 = correctNewlines(repl); 
+              
+                res = res.replaceAll(mf,repl1);
+              } 
+            } 
+          }   
+          else if ("third".equals(mffeat))
+          { // get third subterm of obj
+            if (obj instanceof ASTCompositeTerm)
+            { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
+              if (ct.terms.size() > 2)
+              { ASTTerm ct1 = (ASTTerm) ct.terms.get(2); 
+                String repl = ct1.cg(cgs); 
+                String repl1 = correctNewlines(repl); 
+              
+                res = res.replaceAll(mf,repl1);
+              } 
+            } 
+          }   
+          else if ("last".equals(mffeat))
+          { // get first subterm of obj
+            if (obj instanceof ASTCompositeTerm)
+            { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
+              int tsize = ct.terms.size(); 
+              ASTTerm ct1 = (ASTTerm) ct.terms.get(tsize-1); 
+              String repl = ct1.cg(cgs); 
+              String repl1 = correctNewlines(repl); 
+              
+              res = res.replaceAll(mf,repl1);
+            } 
+          }   
+          else if (cgs.hasRuleset(mffeat))
           { System.out.println(">***> Valid ruleset " + mffeat);  
             System.out.println(); 
             String repl = cgs.applyRuleset(mffeat,(ASTTerm) obj);
@@ -564,7 +637,18 @@ public class CGRule
             }
           }  
         }
-        else
+        /* else if (obj instanceof Vector)
+        { Vector v = (Vector) obj;
+          String repl = "";
+          if ("first".equals(mffeat))
+          { Object v1 = v.get(0);   
+            repl = v1.cg(cgs); 
+            String repl1 = correctNewlines(repl); 
+              
+            res = res.replaceAll(mf,repl1);
+          }
+        } */  
+        else 
         { System.err.println("!! Warning: could not apply metafeature " + mffeat + " to " + obj); } 
       } 
     }
@@ -649,7 +733,9 @@ public class CGRule
         if (i == str.length() - 1)
         { return res; }  
       } 
-      else if (c1 == '\\' && c2 == 'n' && instring)
+      else if (c1 == '\\' && instring) 
+      { res = res + "\\\\"; } 
+      /* else if (c1 == '\\' && c2 == 'n' && instring)
       { res = res + "\\\\n"; 
         i++;
         if (i == str.length() - 1)
@@ -666,7 +752,7 @@ public class CGRule
         i++;
         if (i == str.length() - 1)
         { return res; }  
-      } 
+      } */ 
       else 
       { res = res + c1; } 
     } 
@@ -792,10 +878,10 @@ public class CGRule
 
     for (int i = 0; i < str.length(); i++) 
     { char c1 = str.charAt(i); 
-	  if (c1 == '(')
-	  { res = res + "\\("; }
-	  else if (c1 == ')')
-	  { res = res + "\\)"; }
+      if (c1 == '(')
+      { res = res + "\\("; }
+      else if (c1 == ')')
+      { res = res + "\\)"; }
       else if (c1 == '[' || c1 == ']' ||
           c1 == '*' || c1 == '.' || c1 == '?' || c1 == '{' ||
           c1 == '}')
@@ -823,17 +909,38 @@ public class CGRule
 
   public static void main(String[] args) 
   { // System.out.println(metafeatures("for (_1`elementType _2 : _1) do { _3 }")); 
-    Vector vars = new Vector(); 
+    /* Vector vars = new Vector(); 
     vars.add("_1");
-	vars.add("_2");
+    vars.add("_2");
     CGRule r = new CGRule("createByPK_1(_2)", "createByPK_1(index: _2)", vars, new Vector());
     String rr = r.applyTextRule("createByPKPerson(x)");
     System.out.println(rr);  
 	
-	Vector patts = convertToPatterns("createByPK_1(_2)");
-	r.lhspatternlist = patts; 
-	Vector matched = new Vector(); 
-	boolean b = r.checkPatternList("createByPKPerson(x)", matched);
-	System.out.println(b);   
+    Vector patts = convertToPatterns("createByPK_1(_2)");
+    r.lhspatternlist = patts; 
+    Vector matched = new Vector(); 
+    boolean b = r.checkPatternList("createByPKPerson(x)", matched);
+    System.out.println(b); */    
+
+    Pattern expr = Pattern.compile("([a-z]+)...([a-z]+)"); 
+
+    Matcher m = expr.matcher("x = abc"); 
+
+    boolean found = m.find(); 
+	  
+    if (found)
+    { int c = m.groupCount(); 
+      System.out.println(m + " " + c);
+	  
+      for (int x = 0; x+1 <= c; x++)
+      { // String var = (String) variables.get(x);
+        String arg = m.group(x+1);
+        // String arg1 = correctNewlines(arg); 
+        // System.out.println(">--> Replacing " + var + " by " + arg); 
+        // res = res.replaceAll(var,arg);
+        System.out.println("Group " + (x+1) + " is " + arg); 
+      }
+    } 
+
   } 
 }

@@ -10,7 +10,7 @@
 /*
  * Classname : UCDArea
  * 
- * Version information : 1.9-2.0
+ * Version information : 2.0
  *
  * Date :  January 2021
  * 
@@ -204,7 +204,7 @@ public class UCDArea extends JPanel
   { Vector res = new Vector(); 
     for (int j = 0; j < types.size(); j++) 
     { Type typ = (Type) types.get(j);
-      if (typ.isEnumeration()) 
+      // if (typ.isEnumeration()) 
       { res.add(typ.getKM3() + "\n\r"); } 
     }
     return res; 
@@ -6198,10 +6198,10 @@ public class UCDArea extends JPanel
     { ent.setCardinality(ecard); }
     ent.setStereotypes(stereotypes);  
 	
-	if (ent.isRemote())
-	{ addDerivedRemoteComponents(ent); }
+    if (ent.isRemote())
+    { addDerivedRemoteComponents(ent); }
     else if (ent.isCloud())
-	{ addDerivedCloudComponents(ent); }
+    { addDerivedCloudComponents(ent); }
 
     return ent;
   }
@@ -6597,17 +6597,32 @@ public class UCDArea extends JPanel
       RectData rd1 = (RectData) getVisualOf(e1);       
       RectData rd2 = (RectData) getVisualOf(e2);
       if (rd1 == null || rd2 == null) { return; }  
-      int x1 = rd1.getx(); 
-      int y1 = rd1.gety(); 
-      int x = rd2.getx(); 
-      int y = rd2.gety(); 
-      if (x1 <= x) { x1 = x1 + rd1.width - 5; } 
-      else if (x < x1) { x = x + rd2.width - 5; } 
-      if (y1 <= y) { y1 = y1 + rd1.height - 10; } 
-      else if (y < y1) { y = y + rd2.height - 10; } 
+      
+      Vector linecoords = lineCoordinates(rd1, rd2, e1, e2); 
+
+      int xs = ((Integer) linecoords.get(0)).intValue();
+      int ys = ((Integer) linecoords.get(1)).intValue(); 
+      int xe = ((Integer) linecoords.get(2)).intValue(); 
+      int ye = ((Integer) linecoords.get(3)).intValue();   
+
+      if (rd1 == rd2)
+      { xs = rd2.sourcex + 10; 
+        xe = rd2.sourcex + rd2.width - 10;
+        ys = rd2.sourcey + 10;  
+        ye = rd2.sourcey + rd2.height - 10; 
+      }
+
+      // int x1 = rd1.getx(); 
+      // int y1 = rd1.gety(); 
+      // int x = rd2.getx(); 
+      // int y = rd2.gety(); 
+      // if (x1 <= x) { x1 = x1 + rd1.width - 5; } 
+      // else if (x < x1) { x = x + rd2.width - 5; } 
+      // if (y1 <= y) { y1 = y1 + rd1.height - 10; } 
+      // else if (y < y1) { y = y + rd2.height - 10; } 
 
       LineData sline = 
-        new LineData(x1,y1,x,y,linecount,SOLID);
+        new LineData(xs,ys,xe,ye,linecount,SOLID);
       // create Flow for it. 
       Flow flw = new Flow("f" + linecount); 
       flw.setSource(rd1); 
@@ -9158,6 +9173,9 @@ public void produceCUI(PrintWriter out)
     mop = BSystemTypes.generateIsUniqueOp();
     out.println("\n" + mop);
 
+    mop = BSystemTypes.generateGCDOp();
+    out.println("\n" + mop);
+
     mop = BSystemTypes.generateSumOps();
     out.println("\n" + mop);
     mop = BSystemTypes.generatePrdOps();
@@ -9361,6 +9379,9 @@ public void produceCUI(PrintWriter out)
     mop = BSystemTypes.generateIsUniqueOpJava6();
     out.println("\n" + mop);
 
+    mop = BSystemTypes.generateGCDOp();
+    out.println("\n" + mop);
+
     mop = BSystemTypes.generateSumOpsJava6();
     out.println("\n" + mop);
     mop = BSystemTypes.generatePrdOpsJava6();
@@ -9562,6 +9583,9 @@ public void produceCUI(PrintWriter out)
     mop = BSystemTypes.generateIsUniqueOpJava7();
     out.println("\n" + mop);
 
+    mop = BSystemTypes.generateGCDOp();
+    out.println("\n" + mop);
+
     mop = BSystemTypes.generateSumOpsJava7();
     out.println("\n" + mop);
     mop = BSystemTypes.generatePrdOpsJava7();
@@ -9731,6 +9755,9 @@ public void produceCUI(PrintWriter out)
     mop = BSystemTypes.symmetricDifferenceOpCSharp();
     out.println("\n" + mop);
     mop = BSystemTypes.generateIsUniqueOpCSharp();
+    out.println("\n" + mop);
+
+    mop = BSystemTypes.generateGCDOpCSharp();
     out.println("\n" + mop);
 
     mop = BSystemTypes.generateSumOpsCSharp();
@@ -9935,6 +9962,9 @@ public void produceCUI(PrintWriter out)
     mop = BSystemTypes.symmetricDifferenceOpCPP();
     out.println("\n" + mop);
     mop = BSystemTypes.generateIsUniqueOpCPP();
+    out.println("\n" + mop);
+
+    mop = BSystemTypes.generateGCDOpCPP();
     out.println("\n" + mop);
 
     mop = BSystemTypes.generateSumOpsCPP();
@@ -11254,8 +11284,8 @@ public void produceCUI(PrintWriter out)
     { VisualData vd = (VisualData) visuals.get(i);
       if (vd instanceof OvalData) { continue; }   // ignore it  
       ModelElement me = (ModelElement) vd.getModelElement(); 
-	  if (me == null) { continue; } 
-	  if (me.isDerived()) { continue; }
+      if (me == null) { continue; } 
+      if (me.isDerived()) { continue; }
 
       if (vd instanceof RectData) // Entity or Type
       { if (me instanceof Entity) // Don't save derived entities 
@@ -11289,9 +11319,13 @@ public void produceCUI(PrintWriter out)
           out.println(saveWaypoints(ld));
         }
       } 
+
       if (me != null) 
       { out.println(me.saveData()); }  
+
       out.println(); 
+      out.println(); 
+
       if (me != null && me instanceof Entity) 
       { Entity ent = (Entity) me; 
         locals.addAll(ent.getInvariants());
@@ -11340,8 +11374,9 @@ public void produceCUI(PrintWriter out)
     // out.println("SetType : CollectionType"); 
     // out.println("SetType.name = \"Set\""); 
     // out.println("SequenceType : CollectionType"); 
-    // out.println("SequenceType.name = \"Sequence\""); 
-  }     
+    // out.println("SequenceType.name = \"Sequence\"");
+    out.println();  
+  } // Also the datatypes, with their aliases?     
 
   private Vector saveModel(PrintWriter out)
   { Vector locals = new Vector(); 
@@ -11388,6 +11423,8 @@ public void produceCUI(PrintWriter out)
     { Entity e = (Entity) realentities.get(i);
       e.asTextModel2(out,entities,types); 
     } 
+
+    System.out.println(">>> Design model saved to output/model.txt"); 
 
     return realentities; 
   } 
@@ -11663,6 +11700,90 @@ public void produceCUI(PrintWriter out)
     tlspecification = res; 
   }
 
+  public void applyCSTLtoAST()
+  { File file = null; 
+    try 
+    { JFileChooser fc = new JFileChooser();
+      File startingpoint = new File("./cg");
+      fc.setCurrentDirectory(startingpoint);
+      fc.setDialogTitle("Select a *.cstl file");
+      // fc.addChoosableFileFilter(new TextFileFilter()); 
+
+	  
+      int returnVal = fc.showOpenDialog(null);
+      if (returnVal == JFileChooser.APPROVE_OPTION)
+      { file = fc.getSelectedFile(); }
+      else
+      { System.err.println("Load aborted");
+        return; 
+      }
+	  
+      if (file == null) { return; }
+    } catch (Exception e) { return; } 
+
+    Vector vs = new Vector(); 
+    CGSpec spec = loadCSTL(file,vs); 
+
+    if (spec == null) 
+    { System.err.println("!! ERROR: No file " + file.getName()); 
+      return; 
+    } 
+
+    BufferedReader br = null;
+    Vector res = new Vector();
+    String s;
+    boolean eof = false;
+    File sourcefile = new File("output/ast.txt");  
+      /* default */ 
+
+    try
+    { br = new BufferedReader(new FileReader(sourcefile)); }
+    catch (FileNotFoundException _e)
+    { System.out.println("File not found: " + sourcefile);
+      return; 
+    }
+
+    String sourcestring = ""; 
+    int noflines = 0; 
+
+    while (!eof)
+    { try { s = br.readLine(); }
+      catch (IOException _ex)
+      { System.out.println("Reading AST file failed.");
+        return; 
+      }
+      if (s == null) 
+      { eof = true; 
+        break; 
+      }
+      else 
+      { sourcestring = sourcestring + s + " "; } 
+      noflines++; 
+    }
+
+    System.out.println(">>> Read " + noflines + " lines"); 
+
+    Compiler2 c = new Compiler2();    
+
+    ASTTerm xx =
+      c.parseGeneralAST(sourcestring); 
+
+    if (xx == null) 
+    { System.err.println(">>> Invalid text for general AST"); 
+      System.err.println(c.lexicals); 
+      return; 
+    } 
+
+    String tt = xx.cg(spec); 
+    System.out.println(tt); 
+    System.out.println(); 
+
+    System.out.println(xx.toKM3()); 
+
+  } 
+
+
+
   public void applyCSTLSpecification()
   { File file = null; 
     try 
@@ -11704,9 +11825,14 @@ public void produceCUI(PrintWriter out)
 
     for (int i = 0; i < types.size(); i++) 
     { Type t = (Type) types.get(i); 
-      String newt = t.cgEnum(spec);
-      newtypes = newtypes + newt + '\n'; 
-      // System.out.println("Transformed type usage " + t + " is " + newt); 
+      if (t.isEnumeration())
+      { String newt = t.cgEnum(spec);
+        newtypes = newtypes + newt + '\n'; 
+      } 
+      else if (t.isDatatype())
+      { String newt = t.cgDatatype(spec);
+        newtypes = newtypes + newt + '\n'; 
+      } 
     } 
 
     /* Argument _3 of the package rule */ 
@@ -14337,15 +14463,15 @@ public void produceCUI(PrintWriter out)
       { createImageDisplay(); }
       else if ("GraphDisplay".equals(componentName))
       { createGraphDisplay(); }
-	  else if ("FirebaseAuthenticator".equals(componentName))
-	  { createFirebaseAuthenticatorComponent(); }
-	  else if ("SMSComponent".equals(componentName))
-	  { createSMSComponent(); }
-	  else if ("MediaComponent".equals(componentName))
-	  { createMediaComponent(); }
+      else if ("FirebaseAuthenticator".equals(componentName))
+      { createFirebaseAuthenticatorComponent(); }
+      else if ("SMSComponent".equals(componentName))
+      { createSMSComponent(); }
+      else if ("MediaComponent".equals(componentName))
+      { createMediaComponent(); }
       else if ("PhoneComponent".equals(componentName))
-	  { createPhoneComponent(); }
-	  else 
+      { createPhoneComponent(); }
+      else 
       { System.err.println("!! Unknown predefined component: " + componentName); }
     } 
   }
@@ -14456,7 +14582,7 @@ public void produceCUI(PrintWriter out)
 
     for (int j = 0; j < newtypes.size(); j++) 
     { Type tt = (Type) newtypes.get(j); 
-      if (tt.isEnumeration())
+      // if (tt.isEnumeration())
       { RectData rd = new RectData(120*j,20,getForeground(),
                                  componentMode,
                                  rectcount);
@@ -14560,7 +14686,7 @@ public void produceCUI(PrintWriter out)
 
     for (int i = 0; i < ents.size(); i++) 
     { Entity enode = (Entity) ents.get(i); 
-      int xval = 200 + (ecount/5)*delta + ((ecount % 5)*delta)/5; 
+      int xval = 200 + (ecount/4)*delta + ((ecount % 4)*delta)/4; 
       int yval = 150 + (ecount % 5)*delta; 
 
       String ex = enode.getTaggedValue("x"); 
@@ -14590,22 +14716,28 @@ public void produceCUI(PrintWriter out)
 
     for (int j = 0; j < typs.size(); j++) 
     { Type tt = (Type) typs.get(j); 
-      if (tt.isEnumeration())
-      { RectData rd = (RectData) getVisualOf(tt);
-        if (rd == null) 
-        { rd = new RectData(100 + 150*j, 20, getForeground(),
+
+      System.out.println(">>> Type " + tt + " alias = " + tt.alias); 
+
+      RectData rd = (RectData) getVisualOf(tt);
+      if (rd == null) 
+      { rd = new RectData(100 + 150*j, 20, getForeground(),
                                  componentMode,
                                  rectcount);
-          rectcount++;
-          visuals.add(rd);
-        } 
-        else 
-        { rd.setModelElement(tt); 
-          oldVisuals.remove(rd); 
-        }
-        rd.setLabel(tt.getName());
-        rd.setModelElement(tt); 
+        rectcount++;
+        visuals.add(rd);
       } 
+      else 
+      { rd.setModelElement(tt); 
+        oldVisuals.remove(rd); 
+      }
+      rd.setLabel(tt.getName());
+      rd.setModelElement(tt); 
+      ModelElement oldtype =  ModelElement.lookupByName(tt.getName(), oldtypes);
+      if (oldtype == null) 
+      { types.add(tt); }  
+      else if (oldtype instanceof Type)
+      { ((Type) oldtype).setAlias(tt.getAlias()); } 
     } // preserve the existing one if it exists
 
     for (int p = 0; p < pregens.size(); p++) 
@@ -15697,6 +15829,8 @@ public void produceCUI(PrintWriter out)
   private Type parseType(BufferedReader br) 
   { String line1; // has the name + xx + yy
     String line2; // values, if any
+    String line3; // alias, if any
+
     Vector line1vals = new Vector(); 
 
     try
@@ -15710,6 +15844,13 @@ public void produceCUI(PrintWriter out)
     { line2 = br.readLine(); }
     catch (Exception e)
     { System.out.println("Failed to read type values");
+      return null;
+    }
+
+    try
+    { line3 = br.readLine(); }
+    catch (Exception ee)
+    { System.out.println("Failed to read alias");
       return null;
     }
 
@@ -15730,8 +15871,8 @@ public void produceCUI(PrintWriter out)
       }
     } 
 
-    if (line1vals.size() != 3) 
-    { System.out.println("Failed to read type name");
+    if (line1vals.size() < 3) 
+    { System.out.println("ERROR!: Failed to read type name & coordinates");
       return null;
     }
 
@@ -15741,27 +15882,32 @@ public void produceCUI(PrintWriter out)
     try
     { xx = Integer.parseInt(xs); }
     catch (NumberFormatException nfe)
-    { System.err.println("X coordinate not a number! " + xs);
+    { System.err.println("ERROR!: X coordinate not a number! " + xs);
       return null;
     }
     try
     { yy = Integer.parseInt(ys); }
     catch (NumberFormatException nfe)
-    { System.err.println("Y coordinate not a number! " + ys);
+    { System.err.println("ERROR!: Y coordinate not a number! " + ys);
       return null;
     }
 
     Type t = new Type(nme,vals); 
     types.add(t); 
-    if (vals != null) 
-    { RectData rd = new RectData(xx,yy,getForeground(),
+
+    if (line3 != null && line3.trim().length() > 0) 
+    { t.setAlias(new Type(line3.trim(), null)); } 
+    else if (vals == null || vals.size() == 0)
+    { t.setAlias(new Type("String",null)); } 
+    
+    RectData rd = new RectData(xx,yy,getForeground(),
                                  componentMode,
                                  rectcount);
-      rectcount++;
-      rd.setLabel(nme);
-      rd.setModelElement(t); 
-      visuals.add(rd); 
-    } 
+    rectcount++;
+    rd.setLabel(nme);
+    rd.setModelElement(t); 
+    visuals.add(rd); 
+    
     // System.out.println("retrieved type " + t); 
     return t; 
   } 
@@ -19869,6 +20015,122 @@ public void produceCUI(PrintWriter out)
     return res; 
   } 
 
+  // Formalise Operations
+  public void formaliseOperationRequirements()
+  { System.out.println("Input file output/nlpout.txt should be the parse tree output from Stanford NLP."); 
+    System.out.println(); 
+
+    Vector background = Thesarus.loadThesaurus("output/background.txt");
+	  
+     File infile = new File("output/nlpout.txt");
+     BufferedReader br = null;
+     Vector res = new Vector();
+     String s;
+     boolean eof = false;
+    
+
+     try
+     { br = new BufferedReader(new FileReader(infile)); }
+     catch (FileNotFoundException e)
+     { System.out.println("File not found: " + infile.getName());
+       return; 
+     }
+
+     System.out.println("Input file output/nlpout.txt should be the output from Stanford tagger & parser."); 
+     System.out.println("Background information file output/background.txt should be in thesaurus format."); 
+     System.out.println(); 
+     System.out.println(); 
+    
+     String xmlstring = ""; 
+     int linecount = 0; 
+     boolean flag = false; 
+     Vector sentences = new Vector(); 
+	 
+     while (!eof)
+     { try { s = br.readLine(); }
+       catch (IOException e)
+       { System.out.println("Reading failed.");
+         return; 
+       }
+	   
+       if (s == null) 
+       { eof = true; 
+         break; 
+       }
+       else if (s.startsWith("Constituency parse:"))
+       { flag = true; }
+       else if (s.startsWith("Dependency Parse (enhanced plus plus dependencies):"))
+       { flag = false; 
+         sentences.add(xmlstring); 
+         System.out.println(">> Read: " + xmlstring); 
+         xmlstring = ""; 
+       }
+       else if (flag) 
+       { xmlstring = xmlstring + s + " "; } 
+       linecount++; 
+     } 
+     // replace ' and " in s by harmless characters. Remove - within a string or number. 
+	 
+     Vector nlpsentences = new Vector(); 
+     Vector mes = new Vector(); // entities and usecases from the model.
+     mes.addAll(entities); 
+     for (int x = 0; x < useCases.size(); x++)
+     { Object ob = useCases.get(x); 
+       if (ob instanceof UseCase)
+       { mes.add(ob); } // but not OperationDescription instances
+     } 
+	  
+     Vector elems = new Vector(); 
+
+     for (int i = 0; i < sentences.size(); i++) 
+     { String xstring = (String) sentences.get(i); 
+       Compiler2 c0 = new Compiler2(); 
+       c0.nospacelexicalanalysisText(xstring); 
+       NLPSentence xres = c0.parseNLP();
+       if (xres != null) 
+       { xres.indexing(); 
+         xres.setId("" + (i+1)); 
+         xres.linkToPhrases(); 
+		 
+         nlpsentences.add(xres); 
+         System.out.println(">>> Sentence " + (i+1) + ": " + xres); 
+         java.util.Map classifications = xres.classifyWords(background,mes); 
+         System.out.println(">>> Using word classifications >>> " + classifications);
+         elems = xres.getOperationsKM3(mes,classifications); 
+         System.out.println(); 
+       }  
+     } 	 
+	     
+     String km3model = NLPSentence.operationsKM3(elems); 
+
+     String outfile = "mm.km3"; 
+     File appout = new File("output/" + outfile); 
+     try
+     { PrintWriter appfile = new PrintWriter(
+                                new BufferedWriter(new FileWriter(appout)));
+      
+       appfile.println("package app {\n" + km3model + "\n}\n"); 
+       appfile.close(); 
+     }
+     catch(Exception _dd) { }
+	
+     for (int i = 0; i < nlpsentences.size(); i++) 
+     { NLPSentence ss = (NLPSentence) nlpsentences.get(i); 
+       System.out.println(">>> Sentence " + (i+1)); 
+       System.out.println(">>> Derived elements: " + ss.derivedElements); 
+       System.out.println(); 
+     }
+	
+     System.out.println(">>> Output model written to output/mm.km3."); 
+     System.out.println(); 
+    
+	
+    // java.util.Date d2 = new java.util.Date(); 
+    // long t2 = d2.getTime(); 
+    // System.out.println(">>> Time taken = " + (t2-t1)); 
+  } 	
+
+
   // Formalise User Stories
   public void formaliseBehaviourRequirements()
   { System.out.println("Input file output/tagged.txt should be the POS-tagged output from Stanford or OpenNLP tagger."); 
@@ -19878,8 +20140,8 @@ public void produceCUI(PrintWriter out)
     Date d1 = new Date(); 
     long startTime = d1.getTime(); 
 	
-	Vector background = Thesarus.loadThesaurus("output/background.txt");
-	Vector verbs = Thesarus.loadThesaurus("output/verbs.txt");
+    Vector background = Thesarus.loadThesaurus("output/background.txt");
+    Vector verbs = Thesarus.loadThesaurus("output/verbs.txt");
 
     BufferedReader br = null;
     Vector res = new Vector();
@@ -19890,8 +20152,110 @@ public void produceCUI(PrintWriter out)
     try
     { br = new BufferedReader(new FileReader(file)); }
     catch (FileNotFoundException e)
-    { System.out.println("File not found: " + file);
-      return; 
+    { System.out.println("Tagged file not found: " + file);
+      // Assume raw file input
+      File rawfile = new File("output/requirements.txt"); 
+      try 
+      { br = new BufferedReader(new FileReader(rawfile));
+        Entity currentclass = null; 
+        int delta = 280; 
+
+        while (!eof)
+        { try { s = br.readLine(); }
+          catch (IOException ioe)
+          { System.out.println("!! Reading failed.");
+            return; 
+          }
+          if (s == null) 
+          { eof = true; 
+            break; 
+          }
+          else if (s.startsWith("--")) 
+          { } 
+          else if (s.trim().endsWith(":")) 
+          { String cname = s.trim(); 
+            cname = cname.substring(0,cname.length()-1); 
+            System.out.println(">> Class definition of " + cname); 
+            Object cobj = ModelElement.lookupByName(cname,entities); 
+            if (cobj == null) 
+            { currentclass = new Entity(cname);
+              int ecount = entities.size(); 
+              int xval = 200 + (ecount/2)*delta + ((ecount % 5)*delta)/2; 
+              int yval = 250 + (ecount % 5)*delta; 
+
+              addEntity(currentclass, xval, yval); 
+            }
+            else 
+            { currentclass = (Entity) cobj; } 
+          } 
+        } 
+
+        try { br.close(); } 
+        catch (Exception _p) {} 
+
+        br = new BufferedReader(new FileReader(rawfile));
+        // br.reset(); 
+        eof = false; 
+
+        while (!eof)
+        { try { s = br.readLine(); }
+          catch (IOException ioe)
+          { System.out.println("!! Reading failed.");
+            return; 
+          }
+          if (s == null) 
+          { eof = true; 
+            break; 
+          }
+          else if (s.startsWith("--")) 
+          { } 
+          else if (s.trim().endsWith(":")) 
+          { String cname = s.trim(); 
+            cname = cname.substring(0,cname.length()-1); 
+            System.out.println(); 
+            System.out.println(">> Class definition of " + cname); 
+            Object cobj = ModelElement.lookupByName(cname,entities); 
+            /* if (cobj == null) 
+            { currentclass = new Entity(cname);
+              int ecount = entities.size(); 
+              int xval = 200 + (ecount/5)*delta + ((ecount % 5)*delta)/5; 
+              int yval = 150 + (ecount % 5)*delta; 
+
+              addEntity(currentclass, xval, yval); 
+            }
+            else */ 
+
+            if (cobj != null) 
+            { currentclass = (Entity) cobj; } 
+          } 
+          else if (s.trim().length() > 0) 
+          { // System.out.println(">> Data feature definition: " + s.trim() + " of " + currentclass);
+            
+            Compiler2 comp = new Compiler2();  
+            if (currentclass != null) 
+            { Vector newassocs = new Vector(); 
+              comp.parseDataFeatureDefinition(s.trim(), currentclass, entities, types, newassocs); 
+              addAssociations(newassocs); 
+            }       
+          } 
+          // linecount++; 
+        }
+
+        try { br.close(); } 
+        catch (Exception _p) {} 
+        return; 
+      }  
+      catch (Exception _e)
+      { formaliseOperationRequirements(); 
+  	   System.out.println(">>> Output model written to output/mm.km3."); 
+        System.out.println(); 
+    
+	
+      	java.util.Date d2 = new java.util.Date(); 
+	  long t2 = d2.getTime(); 
+	  System.out.println(">>> Time taken = " + (t2-startTime)); 
+        return;
+      }  
     }
 
     Vector reqstrings = new Vector(); 
@@ -20003,10 +20367,10 @@ public void produceCUI(PrintWriter out)
   { System.out.println("Input file output/nlpout.txt should be the output from Stanford tagger & parser."); 
     System.out.println(); 
     
-	java.util.Date d1 = new java.util.Date(); 
-	long t1 = d1.getTime(); 
+    java.util.Date d1 = new java.util.Date(); 
+    long t1 = d1.getTime(); 
 
-     Vector background = Thesarus.loadThesaurus("output/background.txt");
+    Vector background = Thesarus.loadThesaurus("output/background.txt");
 	 // System.out.println(">>> Background information assumed: " + background); 
 	  
      File infile = new File("output/nlpout.txt");

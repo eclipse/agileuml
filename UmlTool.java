@@ -305,6 +305,11 @@ public void findPlugins()
     loadbehaviourRequirements.addActionListener(this);
     fileMenu.add(loadbehaviourRequirements);
 
+    JMenuItem loadopRequirements = 
+      new JMenuItem("Formalise operation requirements"); 
+    loadopRequirements.addActionListener(this);
+    fileMenu.add(loadopRequirements);
+
     fileMenu.addSeparator(); 
 
     JMenuItem loadGenericMI = 
@@ -1108,6 +1113,9 @@ public void findPlugins()
     cstlGenerator.addActionListener(this);
     buildMenu.add(cstlGenerator); 
 
+    JMenuItem cstl4ast = new JMenuItem("Apply CSTL to AST"); 
+    cstl4ast.addActionListener(this);
+    buildMenu.add(cstl4ast); 
 
     buildMenu.addSeparator(); 
 
@@ -1757,6 +1765,8 @@ public void findPlugins()
       }
       else if (label.equals("Use CSTL specification"))
       { ucdArea.applyCSTLSpecification(); } 
+      else if (label.equals("Apply CSTL to AST"))
+      { ucdArea.applyCSTLtoAST(); } 
       else if (label.equals("Generate Python"))
       { ucdArea.saveModelToFile("output/model.txt"); 
 
@@ -2075,6 +2085,10 @@ public void findPlugins()
       else if (label.equals("Formalise behaviour requirements"))
       { 
         ucdArea.formaliseBehaviourRequirements(); 
+      } 
+      else if (label.equals("Formalise operation requirements"))
+      { 
+        ucdArea.formaliseOperationRequirements(); 
       } 
       else if (label.equals("Use Case Dependencies"))
       { ucdArea.showUCDependencies(); } 

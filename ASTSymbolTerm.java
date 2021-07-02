@@ -8,6 +8,7 @@
 * *****************************/
 
 import java.util.Vector; 
+import java.io.*; 
 
 public class ASTSymbolTerm extends ASTTerm
 { String symbol = ""; 
@@ -26,6 +27,9 @@ public class ASTSymbolTerm extends ASTTerm
 
   public String literalForm()
   { return symbol; } 
+
+  public String asTextModel(PrintWriter out)
+  { return "\"" + symbol + "\""; } 
 
   public String toKM3()
   { if ("{".equals(symbol)) 
@@ -59,6 +63,8 @@ public class ASTSymbolTerm extends ASTTerm
     { return "\""; } 
     if ("^".equals(symbol)) 
     { return " xor "; } 
+    if ("!".equals(symbol) || "~".equals(symbol)) 
+    { return " not "; } 
     if ("%".equals(symbol)) 
     { return " mod "; } 
 
@@ -95,4 +101,7 @@ public class ASTSymbolTerm extends ASTTerm
 
     return symbol; 
   } 
+
+  public boolean updatesObject()
+  { return false; } 
 } 

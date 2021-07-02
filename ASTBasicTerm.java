@@ -8,6 +8,8 @@
 * *****************************/
 
 import java.util.Vector; 
+import java.io.*; 
+
 
 public class ASTBasicTerm extends ASTTerm
 { String tag = ""; 
@@ -34,6 +36,13 @@ public class ASTBasicTerm extends ASTTerm
     return res; 
   } 
 
+  public String asTextModel(PrintWriter out)
+  { String id = Identifier.nextIdentifier(tag); 
+    out.println(id + " : " + tag);  
+    out.println(id + ".value = \"" + value + "\"");
+    return id;  
+  } 
+
   public String cg(CGSpec cgs)
   { Vector rules = cgs.getRulesForCategory(tag); 
     return cgRules(cgs,rules); 
@@ -49,7 +58,7 @@ public class ASTBasicTerm extends ASTTerm
       Vector vars = r.getVariables(); 
 
       if (vars.size() > 1 || tokens.size() > 1)
-      { System.out.println("> Rule " + r + " has too many variables/tokens to match basic term " + this); 
+      { // System.out.println("> Rule " + r + " has too many variables/tokens to match basic term " + this); 
         continue; 
       } 
       
@@ -57,7 +66,7 @@ public class ASTBasicTerm extends ASTTerm
       // Either one variable _i (and token) or 
       // no variable and one token. 
 
-      System.out.println("> Trying to match variables/tokens of rule " + r + " for " + this);  
+      // System.out.println("> Trying to match variables/tokens of rule " + r + " for " + this);  
         
       Vector args = new Vector(); 
         // Strings resulting from terms[k].cg(cgs)
@@ -76,8 +85,8 @@ public class ASTBasicTerm extends ASTTerm
         else if (tok.equals(value))
         { } 
         else 
-        { System.out.println("> Rule " + r + " does not match " + this); 
-          System.out.println(tok + " /= " + value); 
+        { // System.out.println("> Rule " + r + " does not match " + this); 
+          // System.out.println(tok + " /= " + value); 
           failed = true; // try next rule 
         } 
       } 
@@ -131,7 +140,11 @@ public class ASTBasicTerm extends ASTTerm
     { return "double"; } 
     if ("float".equals(value))
     { return "double"; } 
-
+    if ("BigDecimal".equals(value))
+    { return "double"; } 
+    
+    if ("BigInteger".equals(value))
+    { return "long"; } 
     if ("Long".equals(value))
     { return "long"; } 
 
@@ -180,91 +193,93 @@ public class ASTBasicTerm extends ASTTerm
     if ("Properties".equals(value))
     { return "Map"; } 
 
+    if ("File".equals(value))
+    { return "OclFile"; } 
     if ("Formatter".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("Scanner".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("ObjectInputStream".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("ObjectOutputStream".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("ObjectInput".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("ObjectOutput".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("DataInput".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("DataOutput".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("DataInputStream".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("DataOutputStream".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("PipedInputStream".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("PipedOutputStream".equals(value))
-    { return "File"; }
+    { return "OclFile"; }
     if ("FilterInputStream".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("FilterOutputStream".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("BufferedInputStream".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("BufferedOutputStream".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("PrintStream".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("Reader".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("Writer".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("BufferedReader".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("BufferedWriter".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("InputStreamReader".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
     if ("InputStreamWriter".equals(value))
-    { return "File"; }
+    { return "OclFile"; }
     if ("PrintWriter".equals(value))
-    { return "File"; } 
+    { return "OclFile"; } 
  
     if ("Throwable".equals(value))
-    { return "Exception"; } 
+    { return "OclException"; } 
 
     if ("Error".equals(value))
-    { return "EnvironmentException"; } 
+    { return "SystemException"; } 
     if ("AWTError".equals(value))
-    { return "EnvironmentException"; } 
+    { return "SystemException"; } 
     if ("ThreadDeath".equals(value))
-    { return "EnvironmentException"; }
-	if ("VirtualMachineError".equals(value))
-    { return "EnvironmentException"; } 
-	if ("AssertionError".equals(value))
-    { return "EnvironmentException"; } 
+    { return "SystemException"; }
+    if ("VirtualMachineError".equals(value))
+    { return "SystemException"; } 
+    if ("AssertionError".equals(value))
+    { return "AssertionException"; } 
  
     if ("Exception".equals(value))
     { return "ProgramException"; } 
     if ("RuntimeException".equals(value))
     { return "ProgramException"; } 
     if ("IOException".equals(value))
-    { return "ProgramException"; } 
+    { return "IOException"; } 
     if ("ClassCastException".equals(value))
-    { return "ProgramException"; } 
+    { return "CastingException"; } 
     if ("NullPointerException".equals(value))
-    { return "ProgramException"; } 
+    { return "NullAccessException"; } 
     if ("ArithmeticException".equals(value))
-    { return "ProgramException"; }
+    { return "ArithmeticException"; }
     if ("IndexOutOfBoundsException".equals(value))
-    { return "ProgramException"; } 
+    { return "IndexingException"; } 
     if ("NoSuchElementException".equals(value))
-    { return "ProgramException"; }
+    { return "IncorrectElementException"; }
     if ("InputMismatchException".equals(value))
-    { return "ProgramException"; }
+    { return "IncorrectElementException"; }
     if ("ArrayIndexOutOfBoundsException".equals(value))
-    { return "ProgramException"; } 
+    { return "IndexingException"; } 
 
-    String type = (String) types.get(value); 
+    String type = ASTTerm.getType(value); 
     if (type != null) 
     { System.out.println(">>> Type of " + value + " is " + type); } 
     else if (tag.equals("integerLiteral"))
@@ -274,7 +289,16 @@ public class ASTBasicTerm extends ASTTerm
     else if (tag.equals("literal") && value.endsWith("\"") && 
              value.startsWith("\""))
     { System.out.println(">>> Type of " + value + " is String"); }
-
+    else if (tag.equals("literal") && value.endsWith("\'") && 
+             value.startsWith("\'"))
+    { System.out.println(">>> Type of " + value + " is String"); 
+      value = "\"" + value.substring(1,value.length()-1) + "\""; 
+    }
+    else if (tag.equals("literal") && 
+             (value.equals("true") || value.equals("false"))
+            )
+    { System.out.println(">>> Type of " + value + " is String"); } 
+  
     return value; 
   } 
 
@@ -289,12 +313,17 @@ public class ASTBasicTerm extends ASTTerm
     else if (tag.equals("literal") && value.endsWith("\"") && 
              value.startsWith("\""))
     { return "String"; }
+    else if (tag.equals("literal") && value.endsWith("\'") && 
+             value.startsWith("\'"))
+    { return "String"; }
     else if (tag.equals("literal") && 
              (value.equals("true") || value.equals("false"))
             )
     { return "boolean"; } 
   
-         
     return "OclAny"; 
   }
+
+  public boolean updatesObject()
+  { return false; } 
 } 

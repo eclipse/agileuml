@@ -91,6 +91,22 @@ public class BehaviouralFeature extends ModelElement
     return res; 
   } // and copy the use case, readfr, etc? 
 
+  public UseCase toUseCase()
+  { // usecase name : resultType 
+    // { parameter ... assumptions ... postconditions }
+
+    UseCase res = new UseCase(getName()); 
+    res.addParameters(parameters); 
+    res.setResultType(resultType); 
+    res.setElementType(elementType); 
+    if (pre != null) 
+    { res.addPrecondition(pre); } 
+    if (post != null) 
+    { res.addPostcondition(post); } 
+    res.setActivity(activity); 
+    return res; 
+  } 
+
   public boolean isMutatable()
   { if (isDerived())
     { return false; } 
@@ -311,6 +327,12 @@ public class BehaviouralFeature extends ModelElement
     return res; 
   } 
 
+  public boolean hasParameter(String nme) 
+  { Attribute att = (Attribute) ModelElement.lookupByName(nme,parameters); 
+    if (att != null) 
+    { return true; } 
+    return false; 
+  } 
 
   public String parameterInitialisationCode(String strs) 
   { String res = ""; 
@@ -464,6 +486,30 @@ public class BehaviouralFeature extends ModelElement
   } 
 
 
+  public void defineParameters(Entity inPars, Entity outPars)
+  { // parameters = new Vector();
+    if (inPars != null)  
+    { parameters.addAll(inPars.getAttributes()); } 
+
+    if (outPars != null) 
+    { Vector outparams = outPars.getAttributes(); 
+      if (outparams.size() > 0)
+      { Attribute res = (Attribute) outparams.get(0); 
+        resultType = res.getType(); 
+      } 
+    } 
+  }
+
+  public void addParameters(Vector atts)
+  { for (int i = 0; i < atts.size(); i++) 
+    { Attribute par = (Attribute) atts.get(i); 
+      if (hasParameter(par.getName())) { } 
+      else 
+      { parameters.add(par); }
+    } 
+  } 
+ 
+    
   public void addParameter(Attribute att)
   { parameters.add(att); } 
 
@@ -1130,8 +1176,40 @@ public class BehaviouralFeature extends ModelElement
   public void setPre(Expression p)
   { pre = p; }
 
+  public void addPrecondition(Object obj)
+  { if (obj != null) 
+    { Expression pp = new BasicExpression("\"" + obj + "\""); 
+      pre = Expression.simplifyAnd(pre,pp); 
+    } 
+  } 
+
+
   public void setPost(Expression p)
   { post = p; }
+
+  public void addPostcondition(Object obj)
+  { if (obj != null) 
+    { Expression pp = new BasicExpression("\"" + obj + "\""); 
+      post = Expression.simplifyAnd(post,pp); 
+    } 
+  } 
+
+  public void addActivity(Object obj)
+  { Statement newstat = new ImplicitInvocationStatement("\"" + obj + "\"");
+ 
+    if (activity == null) 
+    { activity = newstat; } 
+    else if (activity instanceof SequenceStatement) 
+    { ((SequenceStatement) activity).addStatement(newstat); } 
+    else 
+    { SequenceStatement res = new SequenceStatement(); 
+      res.addStatement(activity); 
+      res.addStatement(newstat); 
+      activity = res;
+    } 
+  } 
+
+
 
   public void setPrecondition(Expression p)
   { pre = p; }

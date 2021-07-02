@@ -20,10 +20,16 @@ public abstract class NLPPhraseElement
   
   public abstract void linkToPhrases(NLPSentence s); 
 
+  public abstract String literalForm(); 
+
   public abstract boolean isVerbPhrase(); 
   
   public NLPPhraseElement(String tg)
   { tag = tg; }
+
+  public abstract boolean isInputPhrase(); 
+
+  public abstract boolean isOutputPhrase(); 
 
   public abstract String formQualifier(); 
 
@@ -34,6 +40,10 @@ public abstract class NLPPhraseElement
   public abstract java.util.HashMap classifyWords(Vector background, Vector modelElements); 
   
   public abstract java.util.HashMap classifyVerbs(Vector verbs); 
+
+  public abstract Vector extractVerbedNouns(java.util.Map quals, java.util.Map types, java.util.Map fromBackground, Vector currentQuals); 
+
+  public abstract Vector extractNouns(java.util.Map quals, java.util.Map types, java.util.Map fromBackground, Vector currentQuals); 
   
   public abstract String getPrincipalNoun();
 

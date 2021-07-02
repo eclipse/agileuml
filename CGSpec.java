@@ -31,7 +31,9 @@ public class CGSpec
   Vector parameterArgumentRules; 
   Vector operationRules;
   Vector enumerationRules;
+  Vector datatypeRules;
   Vector textRules; 
+
   Vector entities; 
 
   java.util.Map categoryRules = new java.util.HashMap(); 
@@ -54,6 +56,7 @@ public class CGSpec
     parameterArgumentRules = new Vector(); 
     operationRules = new Vector();
     enumerationRules = new Vector();
+    datatypeRules = new Vector();
     textRules = new Vector();
     entities = ents;  
   }
@@ -180,6 +183,9 @@ public class CGSpec
   public void addEnumerationRule(CGRule r)
   { enumerationRules.add(r); }
 
+  public void addDatatypeRule(CGRule r)
+  { datatypeRules.add(r); }
+
   public void addTextRule(CGRule r)
   { // r.lhspattern = r.convertToPattern(r.lhs);
     // r.lhspatternlist = r.convertToPatterns(r.lhs);           
@@ -203,6 +209,15 @@ public class CGSpec
     { res = res + "Enumeration::\n";
       for (int x = 0; x < enumerationRules.size(); x++)
       { CGRule r = (CGRule) enumerationRules.get(x);
+        res = res + r + "\n"; 
+      } 
+    }   
+    res = res + "\n"; 
+
+    if (datatypeRules.size() > 0) 
+    { res = res + "Datatype::\n";
+      for (int x = 0; x < datatypeRules.size(); x++)
+      { CGRule r = (CGRule) datatypeRules.get(x);
         res = res + r + "\n"; 
       } 
     }   
@@ -417,11 +432,11 @@ public class CGSpec
       { out.println(res); 
         res = new StringBuffer(); 
       } 
-      // else if (i < n-1 && x == '\\' && str.charAt(i+1) == 'n')
-      // { out.println(res); 
-      //   res = new StringBuffer(); 
-      //   i++; 
-      // } 
+      else if (i < n-1 && x == '\\' && str.charAt(i+1) == 'n')
+      { out.println(res); 
+        res = new StringBuffer(); 
+        i++; 
+      } 
       else 
       { res.append(x); } 
     }
@@ -445,45 +460,62 @@ public class CGSpec
     return null;
   } 
 
+  public CGRule matchedDatatypeRule(Object t, String typetext)
+  { for (int x = 0; x < datatypeRules.size(); x++)
+    { CGRule r = (CGRule) datatypeRules.get(x);
+      if (typetext.equals(r.lhs))
+      { return r; } // exact match
+      else if (t instanceof Type && 
+               ((Type) t).isDatatype() && r.lhs.startsWith("datatype"))
+      { return r; }
+    }
+    return null;
+  } 
+
   public CGRule matchedTypeUseRule(Type t, String typetext)
   { String tname = t.getName(); 
     Type elemT = t.getElementType(); 
+    Vector args = new Vector(); 
+    args.add(t); 
 	
     for (int x = 0; x < typeUseRules.size(); x++)
     { CGRule r = (CGRule) typeUseRules.get(x);
       String trimmedlhs = r.lhs.trim(); 
       // int varcount = r.variables().size(); 
 	  
-	  // System.out.println(">>> " + t + " is map type: " + t.isMapType() + " lhs: " + trimmedlhs); 
+	 System.out.println(">++>++> " + t + " is: " + typetext + " lhs: " + trimmedlhs); 
 	  
       if (typetext.equals(trimmedlhs))
       { return r; } // exact match
       // else if (t.isMapType() && trimmedlhs.startsWith("Map"))
       // { return r; }
-	  else if (t.isMapType() && trimmedlhs.equals("Map(_1,_2)"))
-	  { return r; }
-	  else if (t.isFunctionType() && trimmedlhs.equals("Function(_1,_2)"))
-	  { return r; }
+      else if (t.isMapType() && trimmedlhs.equals("Map(_1,_2)"))
+      { return r; }
+      else if (t.isFunctionType() && trimmedlhs.equals("Function(_1,_2)"))
+      { return r; }
       else if (t.isEnumeratedType() && r.hasCondition("enumerated"))
       { return r; }
       else if (t.isEntityType() && r.hasCondition("class"))
       { return r; }
       else if (t.isSetType() && trimmedlhs.startsWith("Set"))
       { if (elemT != null && trimmedlhs.equals("Set(" + elemT + ")"))
-	    { return r; }
-		else if (elemT == null && trimmedlhs.equals("Set()"))
-		{ return r; }
-		else if (trimmedlhs.equals("Set(_1)"))
-		{ return r; } 
-	  } 
+        { return r; }
+        else if (elemT == null && trimmedlhs.equals("Set()"))
+        { return r; }
+        else if (trimmedlhs.equals("Set(_1)"))
+        { return r; } 
+      } 
       else if (t.isSequenceType() && trimmedlhs.startsWith("Sequence"))
       { if (elemT != null && trimmedlhs.equals("Sequence(" + elemT + ")"))
-	    { return r; }
-		else if (elemT == null && trimmedlhs.equals("Sequence()"))
-		{ return r; }
-		else if (trimmedlhs.equals("Sequence(_1)"))
-		{ return r; }
-	  } 
+        { return r; }
+        else if (elemT == null && trimmedlhs.equals("Sequence()"))
+        { return r; }
+        else if (trimmedlhs.equals("Sequence(_1)"))
+        { return r; }
+      }
+      else if (trimmedlhs.equals("_1") && 
+               r.satisfiesConditions(args,entities))
+      { return r; } 
     }
     return null;
   } // _1 binds to type or elementType

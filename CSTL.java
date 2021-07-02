@@ -99,6 +99,8 @@ public class CSTL
       { mode = "types"; }         
       else if (s.equals("Enumeration::"))
       { mode = "enumerations"; }         
+      else if (s.equals("Datatype::"))
+      { mode = "datatypes"; }         
       else if (s.equals("BasicExpression::"))
       { mode = "basicexpressions"; }  
       else if (s.equals("UnaryExpression::"))
@@ -192,8 +194,16 @@ public class CSTL
         if (r != null) 
         { res.addEnumerationRule(r); } 
         else 
-		{ alertRule("Enumeration", s); }
-      }         
+        { alertRule("Enumeration", s); }
+      } 
+      else if ("datatypes".equals(mode))
+      { Compiler2 c = new Compiler2(); 
+        CGRule r = c.parse_EntityCodegenerationrule(s.trim());
+        if (r != null) 
+        { res.addDatatypeRule(r); } 
+        else 
+        { alertRule("Datatype", s); }
+      }          
       else if ("packages".equals(mode))
       { Compiler2 c = new Compiler2(); 
         CGRule r = c.parse_EntityCodegenerationrule(s.trim()); 

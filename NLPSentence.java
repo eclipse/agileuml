@@ -14,7 +14,16 @@ public class NLPSentence
 { Vector phrases = new Vector();  // of NLPPhraseElement
   Vector derivedElements = new Vector(); // of ModelElement
   String id = "0"; 
-   
+
+  public static double NMS_THRESHOLD = 0.5; 
+  
+  /* Used for operationsKM3: */ 
+  private static Entity currentEntity = null; 
+  private static BehaviouralFeature currentOperation = null; 
+  private static java.util.Map inputEntities = new java.util.HashMap(); 
+  private static java.util.Map outputEntities = new java.util.HashMap(); 
+
+
   public NLPSentence()
   { }
 
@@ -94,21 +103,181 @@ public class NLPSentence
     return false; 
   }  
   
-  public boolean isSystemDefinition()
+  public boolean isSystemDefinition(java.util.Map fromBackground)
   { // first noun is "system", "application", etc
     NLPPhraseElement p1 = (NLPPhraseElement) phrases.get(0); 
     if (p1 instanceof NLPPhrase && p1.tag.equals("NP"))
     { NLPPhrase pr = (NLPPhrase) p1; 
       Vector nouns = pr.getNouns(); 
-      if (nouns.contains("System") || nouns.contains("system") || nouns.contains("Application") || 
-          nouns.contains("application") || nouns.contains("app") || nouns.contains("App") || 
-          nouns.contains("software") || nouns.contains("Software") || nouns.contains("Program") || 
-          nouns.contains("program") || 
-          nouns.contains("database") || nouns.contains("Database"))
-       { return true; }
+
+      for (int i = 0; i < nouns.size(); i++) 
+      { String noun = (String) nouns.get(i); 
+
+        if (noun.equals("System") || noun.equals("system") || noun.equals("Application") || 
+          noun.equals("application") || noun.equals("app") || noun.equals("App") || 
+          noun.equals("software") || noun.equals("Software") || noun.equals("Program") || 
+          noun.equals("program") || 
+          noun.equals("database") || noun.equals("Database"))
+        { return true; }
+
+        Object obj = fromBackground.get(noun); 
+        System.out.println(">>> " + noun + " background ==> " + obj); 
+		
+        if (obj != null)
+        { Vector sem = (Vector) obj; 
+          if (sem.size() > 0 && sem.get(0) instanceof UMLPackage)
+          { return true; } 
+        } 
+       }
      }
+     // Or if a noun has "system" semantics in the 
+     // knowledge base. 
+
      return false; 
   }
+
+  public boolean isOperationDefinition(Vector modelElems, java.util.Map fromBackground, Vector res)
+  { // first noun includes "operation", "service", etc
+    // or subject contains an operation name. 
+
+    String opname = ""; 
+
+    NLPPhraseElement p1 = (NLPPhraseElement) phrases.get(0); 
+    if (p1 instanceof NLPPhrase && p1.tag.equals("NP"))
+    { NLPPhrase pr = (NLPPhrase) p1; 
+      Vector nouns = pr.getNouns(); 
+
+      for (int i = 0; i < nouns.size(); i++) 
+      { String noun = (String) nouns.get(i); 
+
+        BehaviouralFeature bf = ModelElement.lookupOperationNMS(noun,modelElems,NMS_THRESHOLD); 
+        if (bf != null) 
+        { System.out.println(">> Operation " + noun);
+          res.add(bf.getName()); 
+          return true; 
+        } 
+
+        if (noun.equalsIgnoreCase("operation") || 
+          noun.equalsIgnoreCase("service") || 
+          noun.equalsIgnoreCase("procedure") || 
+          noun.equalsIgnoreCase("function") || 
+          noun.startsWith("function") || 
+          noun.equalsIgnoreCase("usecase") || 
+          noun.equalsIgnoreCase("process") || 
+          noun.equalsIgnoreCase("routine") || 
+          noun.equalsIgnoreCase("utility"))
+        { System.out.println(">> Operation " + opname);
+          res.add(opname);  
+          return true; 
+        }
+        else if ("".equals(opname))
+        { opname = noun; } 
+        else 
+        { opname = opname + Named.capitalise(noun); } 
+
+        /* Object obj = fromBackground.get(noun); 
+        System.out.println(">>> " + noun + " background ==> " + obj); 
+		
+        if (obj != null)
+        { Vector sem = (Vector) obj; 
+          if (sem.size() > 0 && sem.get(0) instanceof Package)
+          { return true; } 
+        } */ 
+ 
+       } 
+     }
+     // Or if a noun is already known to be an operation
+
+     return false; 
+  }
+
+  public boolean isOperationDefinition(Vector modelElems, java.util.Map fromBackground, Vector np1, Vector vb1, Vector res)
+  { // first noun includes "operation", "service", etc
+    // or subject contains an operation name. 
+
+    String opname = ""; 
+
+    Vector possibleOpNames = new Vector(); 
+    possibleOpNames.addAll(np1); 
+    possibleOpNames.addAll(vb1); 
+
+    for (int i = 0; i < possibleOpNames.size(); i++) 
+    { NLPWord wd = (NLPWord) possibleOpNames.get(i); 
+      String noun = wd.text;  
+
+      BehaviouralFeature bf = ModelElement.lookupOperationNMS(noun,modelElems,NMS_THRESHOLD); 
+      if (bf != null) 
+      { System.out.println(">> Operation " + noun);
+        res.add(bf.getName()); 
+        return true; 
+      } 
+
+      if (noun.equalsIgnoreCase("operation") || 
+          noun.equalsIgnoreCase("service") || 
+          noun.equalsIgnoreCase("procedure") || 
+          noun.equalsIgnoreCase("function") || 
+          noun.toLowerCase().startsWith("function") || 
+          noun.equalsIgnoreCase("process") || 
+          noun.equalsIgnoreCase("routine") ||
+          noun.equalsIgnoreCase("usecase") ||  
+          noun.equalsIgnoreCase("utility"))
+      { System.out.println(">> Operation " + opname);
+        res.add(opname);  
+        return true; 
+      }
+      else if ("".equals(opname))
+      { opname = noun; } 
+      else 
+      { opname = opname + Named.capitalise(noun); } 
+
+        /* Object obj = fromBackground.get(noun); 
+        System.out.println(">>> " + noun + " background ==> " + obj); 
+		
+        if (obj != null)
+        { Vector sem = (Vector) obj; 
+          if (sem.size() > 0 && sem.get(0) instanceof Package)
+          { return true; } 
+        } */  
+     }
+     // Or if a noun is already known to be an operation
+
+     return false; 
+  }
+
+  public Vector identifyOperations(Vector modelElems, java.util.Map fromBackground, Vector words)
+  { // A word or successive words are a known operation 
+    Vector res = new Vector(); 
+
+    for (int i = 0; i < words.size(); i++) 
+    { NLPWord wd = (NLPWord) words.get(i); 
+      String noun = wd.text.toLowerCase();  
+
+      BehaviouralFeature bf = ModelElement.lookupOperationNMS(noun,modelElems,NMS_THRESHOLD); 
+      if (bf != null) 
+      { System.out.println(">> Operation " + noun);
+        res.add(bf); 
+      } 
+      else if (i+1 < words.size())
+      { NLPWord wd2 = (NLPWord) words.get(i+1); 
+        String nme = noun + Named.capitalise(wd2.text); 
+        bf = ModelElement.lookupOperationNMS(nme, modelElems, NMS_THRESHOLD); 
+        if (bf != null) 
+        { System.out.println(">> Operation " + nme);
+          res.add(bf); 
+        } 
+        else if (i+2 < words.size())
+        { NLPWord wd3 = (NLPWord) words.get(i+2); 
+          String nme2 = noun + Named.capitalise(wd2.text) + Named.capitalise(wd3.text); 
+          bf = ModelElement.lookupOperationNMS(nme2, modelElems, NMS_THRESHOLD); 
+          if (bf != null) 
+          { System.out.println(">> Operation " + nme2);
+            res.add(bf); 
+          }
+        }  
+      } 
+    }
+    return res; 
+  } 
   
   public String getMainVerb()
   { // The VP verb is "consists"/"has"/"have", etc
@@ -208,7 +377,178 @@ public class NLPSentence
  
     return false; 
   } 
+
+  public boolean isOperationBehaviourDefinition(Vector np, Vector vb, Vector rem)
+  { // The main verb is classified as an update, deletion, creation, etc
+    
+    String verb0 = getMainVerb(); 
+    if (verb0 == null) 
+    { return false; } 
+	
+    String verb = verb0.toLowerCase(); 
+
+    System.out.println(">>> Main verb is: " + verb); 
+
+    NLPWord vrb = new NLPWord("VB", verb); 
+	
+    java.util.Map mp = new java.util.HashMap(); 
+    Vector quals = new Vector(); 
+
+    if (vrb.isSignificantVerbPhraseWord(quals,mp)) 
+    { return true; } 
+
+    // Or, it features some result parameter of the operation
+
+    // Get the extractOperationDefs from np1, vb1
+    // if not null, return true. 
+	
+    return false; 
+  } 
+
+  public boolean isOperationBehaviourDefinition(
+      BehaviouralFeature op, 
+      java.util.Map bk, 
+      Vector elems, Vector np1, Vector vb1, Vector rem)
+  { // Is an identifier from outputEntities[op.name] also
+    // in  np1^vb1^rem?
+
+    if (op == null) 
+    { return false; } 
  
+    String opname = op.getName(); 
+
+    NLPPhrase pr = new NLPPhrase("NP"); 
+    pr.sentence = this; 
+    
+    pr.elements.addAll(np1); 
+    pr.elements.addAll(vb1); 
+    pr.elements.addAll(rem); 
+    
+    // java.util.Map mp = new java.util.HashMap(); 
+    // Vector currentQuals = new Vector(); 
+    // java.util.Map types1 = new java.util.HashMap(); 
+    Entity ex = new Entity("Behaviour" + opname);  
+    Vector anal = 
+            pr.extractAttributeDefinitions(ex, bk, elems); 
+ 
+    System.out.println(">>-->> Extracted nouns: " + anal); 
+ 
+    Entity outEnt = (Entity) outputEntities.get(opname); 
+    Entity inEnt = (Entity) inputEntities.get(opname); 
+
+    System.out.println(">>-->> for behaviour of: " + opname);
+    System.out.println(">>-->> input entity: " + inEnt);
+    System.out.println(">>-->> output entity: " + outEnt);
+ 
+    String sem = NLPWord.literalForm(pr.elements); 
+
+    if (outEnt != null && outEnt.hasAnyAttribute(anal)) 
+    { System.out.println(">>> " + sem + " is Postcondition/effect on: " + anal);
+      op.addPostcondition(sem); 
+      return true; 
+    }
+    else if (inEnt != null && inEnt.hasAnyAttribute(anal)) 
+    { System.out.println(">>> " + sem + " is Precondition on: " + anal);
+      op.addPrecondition(sem); 
+      return true; 
+    }  
+    else 
+    { System.out.println(">>> " + sem + " is activity of: " + opname);
+      op.addActivity(sem); 
+      return true; 
+    } 
+
+     
+  } 
+
+  public boolean refersToOperation(Vector elems, Vector np1, Vector vb1, Vector rem, Vector ops)
+  { Vector allwords = new Vector(); 
+    allwords.addAll(np1); 
+    allwords.addAll(vb1); 
+    allwords.addAll(rem); 
+    NLPPhrase p1 = new NLPPhrase("VP", allwords); 
+    Vector opnames = p1.possibleOperationNames(); 
+   
+    for (int i = 0; i < opnames.size(); i++) 
+    { String opname = (String) opnames.get(i); 
+      BehaviouralFeature bf = 
+        ModelElement.lookupOperationNMS(opname, elems, NMS_THRESHOLD); 
+      if (bf != null) 
+      { ops.add(bf); } 
+    } 
+    
+    if (ops.size() > 0)
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isClassOperationsDefinition(Vector np, Vector vb, Vector quals)
+  { // The VP verb is "provides"/"supports"/"supplies", etc
+    
+    String verb0 = getMainVerb(); 
+    if (verb0 == null) 
+    { return false; } 
+	
+    String verb = verb0.toLowerCase(); 
+
+    System.out.println(">>> Main verb is: " + verb); 
+	
+    if ("has".equals(verb) || "supplies".equals(verb) || 
+        "offers".equals(verb) || 
+        "provides".equals(verb) || "supports".equals(verb) || 
+        verb.startsWith("define") || 
+        verb.equalsIgnoreCase("specify") ||
+        verb.startsWith("include")) 
+    { return true; } 
+ 
+    return false; 
+  } 
+
+  public boolean isClassOperationsDefinition(Vector np1, Vector vb1, Vector rem, Vector elems)
+  { if (np1.size() > 0 && vb1.size() > 0)
+    { NLPWord subj = (NLPWord) np1.get(0); 
+      String wd = subj.text.toLowerCase(); 
+      if ("services".equals(wd) || 
+          "operations".equals(wd) || 
+          "methods".equals(wd) || 
+          "functionalities".equals(wd) ||
+          "functions".equals(wd))
+      { NLPWord vb = (NLPWord) vb1.get(0); 
+        String vbwd = vb.text.toLowerCase(); 
+        if ("provided".equals(vbwd) ||
+            "offered".equals(vbwd) ||
+            "supported".equals(vbwd)) 
+        { return true; } 
+      } 
+    }
+    return false; 
+  } 
+
+  public boolean isClassOperationsDefinition2(Vector np1, Vector vb1, Vector rem, Vector elems)
+  { if (rem.size() > 0 && vb1.size() > 0)
+    { NLPWord subj = (NLPWord) rem.get(0); 
+      String wd = subj.text.toLowerCase(); 
+      if ("services".equals(wd) || 
+          "operations".equals(wd) || 
+          "methods".equals(wd) || 
+          "functionalities".equals(wd) ||
+          "functions".equals(wd))
+      { NLPWord vb = (NLPWord) vb1.get(0); 
+        String vbwd = vb.text.toLowerCase(); 
+        if ("provides".equals(vbwd) ||
+            "supplies".equals(vbwd) || 
+            "offers".equals(vbwd) ||
+            "has".equals(vbwd) || 
+            "supports".equals(vbwd) ||
+            vbwd.startsWith("define") || 
+            vbwd.equalsIgnoreCase("specify") ||
+            vbwd.startsWith("include")) 
+        { return true; } 
+      } 
+    }
+    return false; 
+  } 
+
   public boolean isGeneralisationDefinition(Vector np, Vector vb, Vector rem)
   { // np non-empty, vb is "shall be" or "is", 
     // rem is disjunctive. 
@@ -282,6 +622,108 @@ public class NLPSentence
     return res;  
   } 
 
+  public Vector operationModelElements(java.util.Map fromBackground, Vector modelElements)
+  { // assuming SVO && isClassOperationsDefinition
+
+    Vector res = new Vector();
+    NLPPhrase p1 = (NLPPhrase) phrases.get(0); 
+    String noun = p1.getPrincipalNoun(); 
+    if (noun == null || noun.length() == 0) 
+    { return res; }
+	
+    NLPPhrase p2 = (NLPPhrase) phrases.get(1);
+    if (p2.tag.equals("ADVP"))
+    { p2 = (NLPPhrase) phrases.get(2); }
+	
+    Entity ent = null; 
+    Object obj = ModelElement.lookupByNameIgnoreCase(noun, modelElements); 
+    if (obj == null) 
+    { String nme = Named.capitalise(noun); 
+      ent = new Entity(nme);
+      modelElements.add(ent); 
+      res.add(ent);  
+      System.out.println(">>> New entity " + nme); 
+      derivedElements.add(ent); 
+      ent.addStereotype("originator=\"" + id + "\""); 
+    } 
+    else if (obj instanceof Entity)
+    { ent = (Entity) obj; }
+	
+    if (ent != null) 
+    { p2.extractOperationDefinitions(ent, fromBackground, modelElements); } 
+	
+    return res;  
+  } 
+
+  public Vector operationModelElements(Vector np1, Vector vb1, Vector rem, java.util.Map fromBackground, Vector modelElements)
+  { // for isClassOperationsDefinition
+
+    Vector res = new Vector();
+    NLPPhrase p1 = new NLPPhrase("NP");
+    p1.elements = rem;
+    p1.sentence = this; 
+  
+    String noun = p1.getPrincipalNoun(); 
+    if (noun == null || noun.length() == 0) 
+    { return res; }
+		
+    Entity ent = null; 
+    Object obj = ModelElement.lookupByNameIgnoreCase(noun, modelElements); 
+    if (obj == null) 
+    { String nme = Named.capitalise(noun); 
+      ent = new Entity(nme);
+      modelElements.add(ent); 
+      res.add(ent);  
+      System.out.println(">>> New entity " + nme); 
+      derivedElements.add(ent); 
+      ent.addStereotype("originator=\"" + id + "\""); 
+    } 
+    else if (obj instanceof Entity)
+    { ent = (Entity) obj; }
+	
+    if (ent != null) 
+    { p1.extractOperationDefs(ent, fromBackground, modelElements); } 
+	
+    return res;  
+  } 
+
+  public Vector operationModelElements2(Vector np1, Vector vb1, Vector rem, java.util.Map fromBackground, Vector modelElements)
+  { // for isClassOperationsDefinition
+
+    Vector res = new Vector();
+    NLPPhrase p1 = new NLPPhrase("NP");
+    p1.elements = np1;
+    p1.sentence = this; 
+  
+    String noun = p1.getPrincipalNoun(); 
+    if (noun == null || noun.length() == 0) 
+    { return res; }
+		
+    Entity ent = null; 
+    Object obj = ModelElement.lookupByNameIgnoreCase(noun, modelElements); 
+    if (obj == null) 
+    { String nme = Named.capitalise(noun); 
+      ent = new Entity(nme);
+      modelElements.add(ent); 
+      res.add(ent);  
+      System.out.println(">>> New entity " + nme); 
+      derivedElements.add(ent); 
+      ent.addStereotype("originator=\"" + id + "\""); 
+    } 
+    else if (obj instanceof Entity)
+    { ent = (Entity) obj; }
+
+    NLPPhrase p2 = new NLPPhrase("NP");
+    p2.elements = rem;
+    p2.sentence = this; 
+	
+    if (ent != null) 
+    { p2.extractOperationDefs(ent, fromBackground, modelElements); } 
+	
+    return res;  
+  } 
+
+
   public Vector generalisationElements(Vector rem, Vector melems)
   { return relationElements(melems); } 
 
@@ -303,7 +745,7 @@ public class NLPSentence
       // NLPWord.getSingular(noun); 
 	
     NLPPhrase p2 = (NLPPhrase) getObjectPart();
-    System.out.println(">>> Object part of sentence = " + p2); 
+    System.out.println(">===> Object part of sentence = " + p2); 
 
     Entity ent = null; 
     Object obj = ModelElement.lookupByNameIgnoreCase(singular, modelElements); 
@@ -431,7 +873,7 @@ public class NLPSentence
 
     System.out.println(">>> Sentence split as: " + np1 + "; " + vb1 + "; " + rem + "; " + comment); 
 	
-    if (isSVO() && isSystemDefinition() && !describesUseCase(np1,vb1,rem))
+    if (isSVO() && isSystemDefinition(fromBackground) && !describesUseCase(np1,vb1,rem))
     { System.out.println(">>> System definition: " + this); 
       Vector quals1 = new Vector(); 	  
       identifyClassesAndFeatures(fromBackground, rem, elems, quals1);
@@ -500,6 +942,285 @@ public class NLPSentence
     }
     return res + ucs; 
   } 
+
+  public Vector getOperationsKM3(Vector elems, java.util.Map fromBackground)
+  { Vector quals = new Vector(); 
+    java.util.HashMap verbClassifications = new java.util.HashMap(); 
+    Vector seqs = sequentialise(); 
+    Vector np1 = new Vector(); 
+    Vector vb1 = new Vector(); 
+    Vector rem = new Vector();   
+    Vector comment = new Vector();
+ 
+    // Entity currentEntity = null; 
+    // java.util.Map inputEntities = new java.util.HashMap(); 
+    // java.util.Map outputEntities = new java.util.HashMap(); 
+ 
+    splitIntoPhrases(seqs,np1,vb1,rem,comment); 
+
+    System.out.println(">>> Sentence split as: " + np1 + "; " + vb1 + "; " + rem + "; " + comment); 
+	
+    Vector ops = new Vector(); 
+    // BehaviouralFeature currentOperation = null; 
+
+    if (isSVO() && isClassOperationsDefinition(np1, vb1, quals))
+    { System.out.println(">>> Class operations definition (1): " + this);
+      Vector ents = operationModelElements(fromBackground,elems);	
+      if (ents.size() > 0) 
+      { currentEntity = (Entity) ents.get(0); 
+        currentOperation = null; 
+      } // and reset the inputEntities, outputEntities 
+    } 
+    else  
+    if (isClassOperationsDefinition(np1,vb1,rem,elems))
+    { System.out.println(">>> Class operations definition (2): " + this);
+      Vector ents = operationModelElements(np1,vb1,rem,fromBackground,elems);	
+      if (ents.size() > 0) 
+      { currentEntity = (Entity) ents.get(0); 
+        currentOperation = null; 
+      } // and reset the inputEntities, outputEntities  
+    } 
+    else if (isClassOperationsDefinition2(np1,vb1,rem,elems))
+    { System.out.println(">>> Class operations definition (3): " + this);
+      Vector ents = operationModelElements2(np1,vb1,rem,fromBackground,elems);	
+      if (ents.size() > 0) 
+      { currentEntity = (Entity) ents.get(0); 
+        currentOperation = null; 
+      } // and reset the inputEntities, outputEntities  
+    } 
+    else if (isSVO() && isOperationDefinition(elems,fromBackground,ops))
+    { System.out.println(); 
+      System.out.println(">>> Operation definition (1): " + this); 
+      // Vector quals1 = new Vector();
+      if (ops.size() > 0) 
+      { String opname = (String) ops.get(0);
+        ops.clear(); 
+        BehaviouralFeature bf = 
+           // (BehaviouralFeature)     
+           // ModelElement.lookupByNameNMS(opname,elems,0.4); 
+           ModelElement.lookupOperationNMS(opname,elems,NMS_THRESHOLD); 
+        currentOperation = bf; 
+
+        Entity entin;
+        Entity entout; 
+ 
+        if (bf == null) // Not a known entity operation
+        { bf = new BehaviouralFeature(opname);
+          currentOperation = bf; 
+          elems.add(bf);
+          entin = new Entity(opname + "Inputs"); 
+          inputEntities.put(opname, entin); 
+          entout = new Entity(opname + "Outputs");  
+          outputEntities.put(opname, entout); 
+        }  // effectively, a use case.  
+        else 
+        { entin = (Entity) inputEntities.get(opname); 
+          if (entin == null) 
+          { entin = new Entity(opname + "Inputs"); 
+            inputEntities.put(opname, entin); 
+          }
+          entout = (Entity) outputEntities.get(opname);
+          if (entout == null) 
+          { entout = new Entity(opname + "Outputs"); 
+            outputEntities.put(opname, entout); 
+          }
+        } 
+
+        NLPPhrase inphrase = identifyInputPhrases();
+        if (inphrase != null) 
+        { inphrase.extractAttributeDefinitions(entin, fromBackground, elems);
+        } 
+       
+        NLPPhrase outphrase = identifyOutputPhrases(); 	  
+        if (outphrase != null) 
+        { outphrase.extractAttributeDefinitions(entout, fromBackground, elems); } 
+
+        if (inphrase == null && outphrase == null) 
+        { // is it a precondition/postcondition? 
+          // It is a postcondition if any entout variable 
+          // occurs in it, otherwise a precondition. 
+
+          // NLPPhrase objpart = getObjectPart(); 
+          NLPPhrase pr = new NLPPhrase("NP"); 
+          pr.elements.addAll(vb1); 
+          pr.elements.addAll(rem); 
+          pr.sentence = this; 
+
+          System.out.println(">===> Operation assertion: " + pr);
+    
+          // java.util.Map mp = new java.util.HashMap(); 
+          // Vector currentQuals = new Vector(); 
+          // java.util.Map types1 = new java.util.HashMap();
+          Entity ex = new Entity("Behaviour" + opname);  
+          Vector anal = 
+            pr.extractAttributeDefinitions(ex, fromBackground, elems); 
+ 
+          if (bf != null) 
+          { String sem = NLPWord.literalForm(pr.elements); 
+            if (entout != null && entout.hasAnyAttribute(anal))
+            { bf.addPostcondition(sem); } 
+            else if (entin != null && entin.hasAnyAttribute(anal))
+            { bf.addPrecondition(sem); }
+            else 
+            { bf.addActivity(sem); }  
+          } 
+        } 
+
+        if (bf != null) 
+        { System.out.println(">>> Defining " + bf + " from " + entin + " and " + entout); 
+          bf.defineParameters(entin,entout);
+          if (inphrase != null) 
+          { bf.addPrecondition(inphrase.literalForm()); } 
+          if (outphrase != null) 
+          { bf.addPostcondition(outphrase.literalForm()); }  
+        } 
+      } 
+      // Derive the operation from the entin, entout
+      // conjoin preconditions & postconditions
+      // precondition if main verb is "assumes", "requires"
+      // "is"
+      // postcondition if "establishes", "ensures"
+    }
+    else if (isOperationDefinition(elems, fromBackground, np1, vb1, ops))
+    { System.out.println(">>> Operation definition (2): " + ops); 
+      if (ops.size() > 0) 
+      { String opname = (String) ops.get(0);
+        ops.clear(); 
+        BehaviouralFeature bf = 
+           // (BehaviouralFeature)     
+           // ModelElement.lookupByNameNMS(opname,elems,0.4); 
+           ModelElement.lookupOperationNMS(opname, elems, NMS_THRESHOLD); 
+        Entity entin = (Entity) inputEntities.get(opname); 
+        Entity entout = (Entity) outputEntities.get(opname); 
+        if (bf != null) 
+        { currentOperation = bf; }  
+        Vector quals1 = new Vector();
+        identifyInputsAndOutputs(bf, entin, entout, fromBackground, vb1, rem, elems, quals1);
+      } 
+      else 
+      { Vector quals1 = new Vector(); 	  
+        identifyClassesAndFeatures(fromBackground, rem, elems, quals1);
+      } 
+    }
+    else if (isConditionalBehaviour(np1,vb1,rem))
+    { // if something ...  
+      // assumed to be a postcondition
+      System.out.println(">>> Conditional behaviour: " + np1 + vb1 + rem); 
+      
+      NLPPhrase p1 = new NLPPhrase("NP");
+      p1.elements = new Vector();
+      p1.elements.addAll(np1); 
+      p1.elements.addAll(vb1); 
+      p1.elements.addAll(rem); 
+      p1.sentence = this; 
+      Vector op1s = identifyOperations(elems, fromBackground, p1.elements); 
+      if (op1s.size() > 0)
+      { BehaviouralFeature bf1 = (BehaviouralFeature) op1s.get(0); 
+        currentOperation = bf1; 
+        bf1.addActivity(
+               NLPWord.literalForm(p1.elements)); 
+      } 
+      else if (currentOperation != null) 
+      { currentOperation.addActivity(
+            NLPWord.literalForm(p1.elements)); 
+      } 
+    } 
+    else if (isOperationBehaviourDefinition(np1,vb1,rem))
+    { System.out.println(">>> Processing behaviour (1): " + np1 + vb1 + rem);
+      Vector wds = new Vector(); 
+      wds.addAll(np1); 
+      wds.addAll(vb1); 
+      wds.addAll(rem); 
+      Vector op1s = identifyOperations(elems, fromBackground, wds); 
+      System.out.println(">>> for operation: " + op1s);
+
+      Vector wds1 = new Vector(); 
+      wds1.addAll(vb1); 
+      wds1.addAll(rem); 
+          
+      if (op1s.size() > 0)
+      { BehaviouralFeature bf1 = (BehaviouralFeature) op1s.get(0); 
+        currentOperation = bf1; 
+        bf1.addActivity(
+               NLPWord.literalForm(wds1)); 
+      } 
+      else if (currentOperation != null) 
+      { currentOperation.addActivity( 
+                NLPWord.literalForm(wds1) );
+      }  
+    } 
+    else if (refersToOperation(elems, np1, vb1, rem, ops))
+    { System.out.println(">>> Processing behaviour (2): " + np1 + vb1 + rem);
+      
+      Vector wds1 = new Vector(); 
+      wds1.addAll(vb1); 
+      wds1.addAll(rem); 
+          
+      if (ops.size() > 0)
+      { BehaviouralFeature bf2 = (BehaviouralFeature) ops.get(0); 
+        ops.clear(); 
+        currentOperation = bf2; 
+        bf2.addActivity(
+               NLPWord.literalForm(wds1)); 
+      } 
+      else if (currentOperation != null) 
+      { currentOperation.addActivity( 
+                NLPWord.literalForm(wds1) );
+      }
+    } 
+    else if (isSVO() && isClassDefinition(np1,vb1,quals))
+    { System.out.println(">>> Class definition: " + this); 
+      modelElements(fromBackground,elems);	 
+    }
+    else 
+    { Vector quals1 = new Vector(); 	  
+      identifyClassesAndFeatures(fromBackground, rem, elems, quals1);
+    } 
+    
+    return elems; 
+  } 
+
+  public static String operationsKM3(Vector elems)
+  { String res = ""; 
+
+    currentOperation = null; 
+    inputEntities = new java.util.HashMap(); 
+    outputEntities = new java.util.HashMap(); 
+
+    for (int i = 0; i < elems.size(); i++) 
+    { if (elems.get(i) instanceof Type) 
+      { Type tt = (Type) elems.get(i); 
+        res = res + tt.getKM3() + "\n\n";
+      }
+    }
+	
+	
+    for (int i = 0; i < elems.size(); i++) 
+    { if (elems.get(i) instanceof Entity) 
+      { Entity ent = (Entity) elems.get(i); 
+        res = res + ent.getKM3() + "\n\n";
+      }
+    }
+
+    for (int i = 0; i < elems.size(); i++) 
+    { if (elems.get(i) instanceof BehaviouralFeature) 
+      { BehaviouralFeature bf = (BehaviouralFeature) elems.get(i); 
+        UseCase uc = bf.toUseCase(); 
+        res = res + uc.getKM3() + "\n\n";
+      }
+    } 
+ 
+    return res; 
+  } 
+
+  public boolean isConditionalBehaviour(Vector np, Vector vb, Vector rem)
+  { // if ...; when ...; 
+    if (NLPPhrase.isConditional(np)) 
+    { return true; } 
+    else if (np.size() == 0 && NLPPhrase.isConditional(vb))
+    { return true; } 
+    return false; 
+  } 
   
   public void splitIntoPhrases(Vector seq, Vector np1, Vector vb1, Vector rem, Vector comment)
   { int i = 0; 
@@ -557,12 +1278,54 @@ public class NLPSentence
   { for (int i = 0; i < np.size(); i++) 
     { NLPWord wd = (NLPWord) np.get(i); 
       String textlc = wd.text.toLowerCase(); 
-      if (textlc.startsWith("system") || textlc.startsWith("app"))
-	  { return true; }
-	}
+      if (textlc.startsWith("system") || textlc.startsWith("app") ||
+          textlc.startsWith("software") || 
+          textlc.equals("program"))
+      { return true; }
+    }
     return false; 
-  } 
+  } // Or wd is known to be a system. 
   
+  public NLPPhrase identifyInputPhrases()
+  { for (int i = 0; i < phrases.size(); i++) 
+    { NLPPhraseElement pr = (NLPPhraseElement) phrases.get(i); 
+      if (pr instanceof NLPPhrase)
+      { NLPPhrase phr = (NLPPhrase) pr; 
+         
+        if (phr.isPureInputPhrase())
+        { System.out.println(">> Input phrase: " + pr);
+          return phr; 
+        }
+        else 
+        { NLPPhrase res = phr.identifyInputPhrases(); 
+          if (res != null) 
+          { return res; }
+        } 
+      }  
+    } 
+    return null; 
+  } 
+
+  public NLPPhrase identifyOutputPhrases()
+  { for (int i = 0; i < phrases.size(); i++) 
+    { NLPPhraseElement pr = (NLPPhraseElement) phrases.get(i); 
+      if (pr instanceof NLPPhrase)
+      { NLPPhrase phr = (NLPPhrase) pr; 
+        if (phr.isPureOutputPhrase())
+        { System.out.println(">> Output phrase: " + phr); 
+          return phr; 
+        }
+        else 
+        { NLPPhrase res = phr.identifyOutputPhrases();
+          if (res != null) 
+          { return res; }
+        } 
+      } 
+    } 
+    return null; 
+  } 
+
+
   public void identifyClassesAndFeatures(java.util.Map fromBackground, Vector rem, Vector modelElements, Vector quals)
   { // First noun is usually a class, others features.
     // But may be a series of nouns "Patient Details"
@@ -621,6 +1384,7 @@ public class NLPSentence
 
     NLPPhrase newpr = new NLPPhrase("NP"); 
     newpr.elements = remwords; 
+    newpr.sentence = this; 
     java.util.Map mp = new java.util.HashMap(); 
     Vector currentQuals = new Vector(); 
     java.util.Map types1 = new java.util.HashMap(); 
@@ -628,8 +1392,141 @@ public class NLPSentence
     System.out.println(">>> identified features: " + anal); 
     System.out.println(">>> identified qualifiers: " + mp);
     System.out.println(">>> identified types: " + types1);
-	applyTypes(mainent,anal,types1); 
+    applyTypes(mainent,anal,types1); 
     applyQualifiers(mainent,anal,mp);  
+  }
+
+  public void identifyInputsAndOutputs(BehaviouralFeature op, Entity inputEnt, Entity outputEnt, java.util.Map fromBackground, Vector vb1, Vector rem, Vector modelElements, Vector quals)
+  { // After "inputs" is the input part, after "outputs"
+    // is the output part
+
+    if (op == null) 
+    { return; } 
+    String opname = op.getName(); 
+
+    Vector inputPart = new Vector(); 
+    Vector outputPart = new Vector(); 
+	 
+    boolean inInput = false; 
+    boolean inOutput = false; 
+
+    for (int i = 0; i < vb1.size(); i++) 
+    { NLPWord wd = (NLPWord) vb1.get(i); 
+      
+      String lctext = wd.text.toLowerCase(); 
+
+      if (lctext.startsWith("input") || 
+          lctext.equals("receives") || 
+          lctext.startsWith("parameter"))
+      { inInput = true; } 
+      else if (inInput)
+      { inputPart.add(wd); } 
+    } 
+
+    for (int i = 0; i < rem.size(); i++) 
+    { NLPWord wd = (NLPWord) rem.get(i); 
+       
+      String lctext = wd.text.toLowerCase(); 
+
+      if (lctext.startsWith("input") || 
+          lctext.equals("receives") || 
+          lctext.startsWith("parameter"))
+      { inInput = true; } 
+      else if (lctext.startsWith("return") || 
+            lctext.startsWith("result") ||
+            lctext.equals("sends") ||
+            lctext.startsWith("output"))
+      { inOutput = true; } 
+      else if (inInput) 
+      { inputPart.add(wd); } 
+      else if (inOutput) 
+      { outputPart.add(wd); } 
+    } 
+
+    if (inputEnt == null) 
+    { inputEnt = new Entity(opname + "Inputs"); } 
+
+    if (outputEnt == null)  
+    { outputEnt = new Entity(opname + "Outputs"); } 
+     
+    System.out.println(">>> Input part: " + inputPart); 
+    System.out.println(">>> Output part: " + outputPart); 
+
+    java.util.Map quals1 = new java.util.HashMap(); 
+
+    if (inputPart.size() > 0)
+    { NLPPhrase newpr = new NLPPhrase("NP"); 
+      newpr.elements = inputPart; 
+      newpr.sentence = this; 
+    
+      op.addPrecondition(newpr.literalForm()); 
+
+      java.util.Map mp = new java.util.HashMap(); 
+      Vector currentQuals = new Vector(); 
+      java.util.Map types1 = new java.util.HashMap(); 
+      Vector anal = 
+        newpr.extractNouns(mp, types1, fromBackground, currentQuals); 
+      System.out.println(">>> identified features: " + anal); 
+      System.out.println(">>> identified qualifiers: " + mp);
+      System.out.println(">>> identified types: " + types1);
+      for (int i = 0; i < anal.size(); i++) 
+      { String f = (String) anal.get(i); 
+        if (f != null && f.trim().length() > 0)
+        { inputEnt.addAttribute(f, new Type("String", null)); 
+          System.out.println(">>> Added attribute " + f + " to " + inputEnt); 
+        } 
+      } 
+      applyTypes(inputEnt,anal,types1); 
+      applyQualifiers(inputEnt,anal,mp);
+    } 
+
+    System.out.println(); 
+
+    /* for (int j = 0; j < inputPart.size(); j++) 
+    { NLPWord attx = (NLPWord) inputPart.get(j); 
+      if (attx.isNoun())
+      { String attname = attx.text; 
+        java.util.Map types = new java.util.HashMap(); 
+        NLPPhrase.extractAtt(this,attx,attname,quals1,types,inputEnt,modelElements); 
+      } 
+    } */ 
+
+    if (outputPart.size() > 0)
+    { NLPPhrase outpr = new NLPPhrase("NP"); 
+      outpr.elements = outputPart; 
+      outpr.sentence = this; 
+    
+      op.addPostcondition(outpr.literalForm()); 
+
+      java.util.Map mp = new java.util.HashMap(); 
+      Vector currentQuals = new Vector(); 
+      java.util.Map types1 = new java.util.HashMap(); 
+      Vector anal = 
+        outpr.extractNouns(mp, types1, fromBackground, currentQuals); 
+      System.out.println(">>> identified features: " + anal); 
+      System.out.println(">>> identified qualifiers: " + mp);
+      System.out.println(">>> identified types: " + types1);
+      for (int i = 0; i < anal.size(); i++) 
+      { String f = (String) anal.get(i); 
+        if (f != null && f.trim().length() > 0)
+        { outputEnt.addAttribute(f, new Type("String", null)); 
+          System.out.println(">>> Added attribute " + f + " to " + outputEnt); 
+        } 
+      } 
+      applyTypes(outputEnt,anal,types1); 
+      applyQualifiers(outputEnt,anal,mp);
+    } 
+
+    /* for (int j = 0; j < outputPart.size(); j++) 
+    { NLPWord attx = (NLPWord) outputPart.get(j); 
+      if (attx.isNoun())
+      { String attname = attx.text; 
+        java.util.Map types = new java.util.HashMap(); 
+        NLPPhrase.extractAtt(this,attx,attname,quals1,types,outputEnt,modelElements); 
+      }   
+    } */ 
+
+    op.defineParameters(inputEnt,outputEnt);
   }
 
   public void applyTypes(Entity ent, Vector features, java.util.Map types)
@@ -641,7 +1538,7 @@ public class NLPSentence
  
       Type t = (Type) types.get(f.getName()); 
       if (t != null) 
-	  { f.setType(t); }
+      { f.setType(t); }
     }
   }
   

@@ -28,6 +28,18 @@ public class NLPWord extends NLPPhraseElement
   public String toString()
   { return "(" + tag + " " + text + ")_" + index; }  
 
+  public String literalForm()
+  { return text; }  
+
+  public static String literalForm(Vector words)
+  { String res = ""; 
+    for (int i = 0; i < words.size(); i++) 
+    { NLPWord wd = (NLPWord) words.get(i); 
+      res = res + " " + wd.text; 
+    }
+    return res; 
+  }   
+
   public static boolean isConsonant(char c)
   { for (int i = 0; i < consonants.length; i++) 
     { if (c == consonants[i]) 
@@ -63,6 +75,35 @@ public class NLPWord extends NLPPhraseElement
     res.add(this); 
     return res; 
   } 
+
+  public boolean isInputPhrase()
+  { boolean res = false; 
+    String lctext = text.toLowerCase(); 
+
+    if (lctext.startsWith("input") || 
+        lctext.equals("receives") ||
+        lctext.equals("requires") || 
+        lctext.startsWith("parameter"))
+    { return true; }
+  
+    return res;
+  } 
+
+  public boolean isOutputPhrase()
+  { boolean res = false; 
+  
+    String lctext = text.toLowerCase(); 
+
+    if (lctext.startsWith("return") || 
+        lctext.startsWith("result") ||
+        lctext.equals("sends") || 
+        lctext.equals("delivers") || 
+        lctext.startsWith("output"))
+    { return true; }
+
+    return res; 
+  } 
+
 
   public boolean isKeyword() 
   { return text.equalsIgnoreCase("integer") || text.equalsIgnoreCase("numeric") || 
@@ -139,6 +180,15 @@ public class NLPWord extends NLPPhraseElement
     { return true; } 
     return false; 
   } 
+
+
+  public boolean isConditional()
+  { String lctext = text.toLowerCase(); 
+    return ("if".equals(lctext) || "when".equals(lctext) ||
+            "normally".equals(lctext) || "otherwise".equals(lctext) ||
+            "unless".equals(lctext)); 
+  } 
+
   
   public boolean isSignificantVerbPhraseWord(java.util.Map verbClassifications, Vector quals, java.util.Map wordQuals)
   { String lctext = text.toLowerCase(); 
@@ -363,6 +413,15 @@ public class NLPWord extends NLPPhraseElement
     return false; 
   } 
 
+  public boolean isPureVerb()
+  { if (tag.equals("VB") || tag.equals("VBZ") || 
+        tag.equals("VBG") || 
+        tag.equals("VBD") ||
+        tag.equals("VBN") || tag.equals("VBP"))
+    { return true; }
+    return false; 
+  } 
+
   public boolean isModalVerb()
   { if (tag.equals("MD"))
     { return true; }
@@ -378,6 +437,18 @@ public class NLPWord extends NLPPhraseElement
   public boolean isConjunction()
   { if (isSeparator() ||
         text.equalsIgnoreCase("and") || text.equalsIgnoreCase("of"))
+    { return true; }
+    return false; 
+  }
+
+  public boolean isPreposition()
+  { if (tag.equals("IN"))
+    { return true; }
+    return false; 
+  }
+
+  public boolean isArticle()
+  { if (tag.equals("DT"))
     { return true; }
     return false; 
   }
@@ -435,6 +506,19 @@ public class NLPWord extends NLPPhraseElement
 
     return txt + "s"; 
   }  
+
+  public Vector extractVerbedNouns(java.util.Map quals, java.util.Map types, java.util.Map fromBackground, Vector currentQuals)
+  { Vector nouns = new Vector(); 
+    nouns.add(text); 
+    return nouns; 
+  } 
+
+  public Vector extractNouns(java.util.Map quals, java.util.Map types, java.util.Map fromBackground, Vector currentQuals)
+  { Vector nouns = new Vector(); 
+    nouns.add(text); 
+    return nouns; 
+  } 
+
 
   public Type identifyType(String text, java.util.Map qm, java.util.Map types, Vector modelems)
   { Type res = null; 

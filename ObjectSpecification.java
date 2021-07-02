@@ -314,18 +314,18 @@ public class ObjectSpecification extends ModelElement
       { double d1 = getNumericValue(arg,mod);
         return Math.tan(d1); 
       } 
-      else if (ue.operator.equals("->sinh"))
-      { double d1 = getNumericValue(arg,mod);
-        return Math.sinh(d1); 
-      } 
-      else if (ue.operator.equals("->cosh"))
-      { double d1 = getNumericValue(arg,mod);
-        return Math.cosh(d1); 
-      } 
-      else if (ue.operator.equals("->tanh"))
-      { double d1 = getNumericValue(arg,mod);
-        return Math.tanh(d1); 
-      } 
+      // else if (ue.operator.equals("->sinh"))
+      // { double d1 = getNumericValue(arg,mod);
+      //   return Math.sinh(d1); 
+      // } 
+      // else if (ue.operator.equals("->cosh"))
+      // { double d1 = getNumericValue(arg,mod);
+      //   return Math.cosh(d1); 
+      // } 
+      // else if (ue.operator.equals("->tanh"))
+      // { double d1 = getNumericValue(arg,mod);
+      //  return Math.tanh(d1); 
+      // } 
       else if (ue.operator.equals("->round"))
       { double d1 = getNumericValue(arg,mod);
         return (int) Math.round(d1); 
@@ -1218,13 +1218,13 @@ public class ObjectSpecification extends ModelElement
   { // assume for the present, expr is boolean. 
     if (expr.isBoolean())
     { if (satisfiesCondition(expr,mod))
-      { return true; } 
+      { return new Boolean(true); } 
       else
-      { return false; }
+      { return new Boolean(false); }
     } 
 	
     if (expr.isNumeric())
-    { return getNumericValue(expr,mod); }
+    { return new Double(getNumericValue(expr,mod)); }
 	
     if (expr.isCollection())
     { return getCollectionValue(expr,mod); } 
@@ -1244,13 +1244,13 @@ public class ObjectSpecification extends ModelElement
   public Object getActualValueOf(Attribute att, ModelSpecification mod)
   { if (att.isBoolean())
     { if (satisfiesBasicCondition(att,mod))
-      { return true; } 
+      { return new Boolean(true); } 
       else
-      { return false; }
+      { return new Boolean(false); }
     } 
 	
     if (att.isNumeric())
-    { return getNumericValue(att,mod); }
+    { return new Double(getNumericValue(att,mod)); }
 	
     if (att.isCollection())
     { return getCollectionValue(att,mod); } 

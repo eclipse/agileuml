@@ -218,6 +218,25 @@ int oclCeil(double x)
 double cbrt(double x)
 { return pow(x, 1.0/3); }
 
+long gcd(long xx, long yy)
+{ long x = labs(xx); 
+  long y = labs(yy); 
+
+  while (x != 0 && y != 0)
+  { long z = y; 
+    y = x % y; 
+    x = z; 
+  } 
+
+  if (y == 0)
+  { return x; } 
+
+  if (x == 0)
+  { return y; } 
+
+  return 0; 
+} 
+
 char* toLowerCase(const char* s)
 { int n = strlen(s);
   char* result = (char*) calloc(n+1,sizeof(char));
@@ -697,7 +716,7 @@ char** concatenateString(char* _col1[], char* _col2[])
   }
 
   char** reverseString(char** s)
-  { int n = length(s);
+  { int n = length((void**) s);
     char** result = (char**) calloc(n+1,sizeof(char*));
     int x = n-1;
     int i = 0;
@@ -708,7 +727,7 @@ char** concatenateString(char* _col1[], char* _col2[])
   }
 
   int** reverseint(int** s)
-  { int n = length(s);
+  { int n = length((void**) s);
     int** result = (int**) calloc(n+1,sizeof(int*));
     int x = n-1;
     int i = 0;
@@ -719,7 +738,7 @@ char** concatenateString(char* _col1[], char* _col2[])
   }
 
   long** reverselong(long** s)
-  { int n = length(s);
+  { int n = length((void**) s);
     long** result = (long**) calloc(n+1,sizeof(long*));
     int x = n-1;
     int i = 0;
@@ -730,7 +749,7 @@ char** concatenateString(char* _col1[], char* _col2[])
   }
 
   double** reversedouble(double** s)
-  { int n = length(s);
+  { int n = length((void**) s);
     double** result = (double**) calloc(n+1,sizeof(double*));
     int x = n-1;
     int i = 0;
@@ -1016,6 +1035,25 @@ void displayboolean(unsigned char s)
   else
   { printf("%s\n", "false"); }
 }
+
+void displaySequence(char** ss)
+{ int x = 0; 
+  printf("Sequence{ "); 
+  int len = length((void**) ss);
+  for ( ; x < len; x++) 
+  { printf("%s, ", ss[x]); }
+  printf(" }\n");  
+} 
+
+void displaySet(char** ss)
+{ int x = 0; 
+  printf("Set{ "); 
+  int len = length((void**) ss);
+  for ( ; x < len; x++) 
+  { printf("%s, ", ss[x]); }
+  printf(" }\n");  
+} 
+
 
 char* toString_String(void* self)
 { return (char*) self; } 
@@ -2068,7 +2106,7 @@ struct ocltnode* oclCollectMap(struct ocltnode* self, void* (*f)(void*))
 { if (self == NULL)
   { return NULL; }
   struct ocltnode* res = (struct ocltnode*) malloc(sizeof(struct ocltnode));
-  struct oclmnode* maplet = self->object;
+  struct oclmnode* maplet = (struct oclmnode*) self->object;
   struct oclmnode* emaplet = (struct oclmnode*) malloc(sizeof(struct oclmnode));
   emaplet->key = maplet->key;
   emaplet->value = (*f)(maplet->value);
@@ -2148,7 +2186,7 @@ struct ocltnode* oclIncludingMap(struct ocltnode* m, char* key, void* value)
  
 char** oclKeyset(struct ocltnode* m)
 { struct oclmnode** maplets = (struct oclmnode**) oclAsSequence(m);
-  int n = length(maplets);
+  int n = length((void**) maplets);
   char** res = (char**) calloc(n+1, sizeof(char*));
   int x = 0;
   for ( ; x < n; x++)
@@ -2161,7 +2199,7 @@ char** oclKeyset(struct ocltnode* m)
 
 void** oclValues(struct ocltnode* m)
 { struct oclmnode** maplets = (struct oclmnode**) oclAsSequence(m);
-  int n = length(maplets);
+  int n = length((void**) maplets);
   void** res = calloc(n+1, sizeof(void*));
   int x = 0;
   for ( ; x < n; x++)
@@ -2252,6 +2290,18 @@ struct ocltnode* oclSubtractMap(struct ocltnode* m1, struct ocltnode* m2)
   struct ocltnode* result = oclAntirestrictMap(m1,keyset2); 
   return result; 
 } 
+
+void displayMap(struct ocltnode* m)
+{ struct oclmnode** maplets = (struct oclmnode**) oclAsSequence(m);
+  int n = length((void**) maplets);
+  int x = 0;
+  for ( ; x < n; x++)
+  { struct oclmnode* mx = maplets[x];
+    char* key = mx->key; 
+    char* val = (char*) mx->value;
+    printf("%s |-> %s, ", key, val); 
+  }
+}
  
 
 /* Utility functions to parse strings and build formats        */ 

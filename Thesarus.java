@@ -273,6 +273,18 @@ public class Thesarus
             } 
             else if (ndef.equals("reference"))
             { } 
+            else if (ndef.equals("system"))
+            { UMLPackage p = new UMLPackage(c.name); 
+              c.addSemantics(p); 
+            }
+            else if (ndef.equals("operation"))
+            { // String xsitype = sb.getAttributeValue("type"); 
+              // System.out.println(">> type = " + xsitype);
+              // if (xsitype == null) 
+              // { xsitype = "String"; } 
+              BehaviouralFeature bf = new BehaviouralFeature(c.name); 
+              c.addSemantics(bf); 
+            }  
             else if (c.partOfSpeech.equals("VB"))
             { c.verbType = ndef; } 
           } 

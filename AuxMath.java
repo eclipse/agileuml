@@ -643,7 +643,7 @@ public class AuxMath
             if (yval.get(0) instanceof Double)
             { dd = (Double) yval.get(0); } 
             else 
-            { dd = Double.parseDouble(yval.get(0) + ""); } 
+            { dd = new Double(Double.parseDouble(yval.get(0) + "")); } 
  
             if (((1.0*xs[i]) + "").equals((1.0*dd.doubleValue()) + ""))
             { }
@@ -2471,7 +2471,7 @@ public class AuxMath
      double[] ys = {1960,1970,2001,2000,1950,2009};
 
      Vector v1 = new Vector(); 
-     v1.add(10); v1.add("2"); v1.add("-1.1"); v1.add(-0.9); 
+     // v1.add(10); v1.add("2"); v1.add("-1.1"); v1.add(-0.9); 
      System.out.println(AuxMath.numericSum(v1)); 
      System.out.println(AuxMath.numericPrd(v1)); 
      System.out.println(AuxMath.numericMin(v1)); 

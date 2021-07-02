@@ -367,6 +367,47 @@ public abstract class ModelElement implements SystemTypes
     return result; 
   }  
 
+  public static BehaviouralFeature lookupOperationNMS(String nme, Vector mes, double threshold) 
+  { Vector v = new Vector();
+    double bestsim = 0;  
+    BehaviouralFeature result = null; 
+
+    for (int i = 0; i < mes.size(); i++) 
+    { ModelElement me = (ModelElement) mes.get(i);
+      if (me instanceof Entity) 
+      { Entity ent = (Entity) me; 
+        Vector ops = ent.getOperations(); 
+        for (int j = 0; j < ops.size(); j++) 
+        { BehaviouralFeature bf = (BehaviouralFeature) ops.get(j); 
+ 
+          String menme = bf.getName(); 
+          String lcnme = nme.toLowerCase(); 
+          String lcmenme = menme.toLowerCase(); 
+          double sim = Entity.nmsSimilarity(lcnme,lcmenme,v); 
+          if (sim > bestsim && sim > threshold) 
+          { bestsim = sim; 
+            result = bf; 
+            System.out.println(">> Similarity of " + nme + " to " + menme + " = " + sim);
+          } 
+        } 
+      } 
+      else if (me instanceof BehaviouralFeature)
+      { BehaviouralFeature bf = (BehaviouralFeature) me; 
+ 
+        String menme = bf.getName(); 
+        String lcnme = nme.toLowerCase(); 
+        String lcmenme = menme.toLowerCase(); 
+        double sim = Entity.nmsSimilarity(lcnme,lcmenme,v); 
+        if (sim > bestsim && sim > threshold) 
+        { bestsim = sim; 
+          result = bf; 
+          System.out.println(">> Similarity of " + nme + " to " + menme + " = " + sim);
+        } 
+      } 
+    } 
+    return result; 
+  }  
+
   public static Expression lookupExpressionByName(String nme, Vector mes)
   { for (int i = 0; i < mes.size(); i++) 
     { Expression me = (Expression) mes.get(i); 
@@ -804,3 +845,17 @@ public static Vector splitIntoWords(String str)
   } 
 
 }
+
+
+class UMLPackage extends ModelElement
+{ public UMLPackage(String nme)
+  { super(nme); }  
+
+  public String generateJava()
+  { return "package " + name + "{ }"; } 
+
+  public void generateJava(PrintWriter out)
+  { out.println("package " + name + "{ }"); } 
+
+} 
+

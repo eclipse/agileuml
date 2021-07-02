@@ -112,7 +112,7 @@ class RectData extends RectForm
       }
       else if (e.isExternal() || e.isExternalApp())
       { g.drawString(label,namex,namey);
-        g.drawString("<<component>>",namex,namey-5);
+        g.drawString("<<component>>",namex,namey-6);
         FontMetrics fm = g.getFontMetrics(); 
         if (fm.stringWidth("<<component>>") + (namex - sourcex) >= width) 
         { width = fm.stringWidth("<<component>>") + (namex - sourcex) + 5; }
@@ -140,12 +140,21 @@ class RectData extends RectForm
     else if (modelElement != null && modelElement instanceof Type)
     { Type typ = (Type) modelElement; 
       Font ff = g.getFont(); 
-      g.drawString(label,namex,namey+5); 
+      g.drawString(label,namex,namey+6); 
       g.setFont(ff); 
-      g.drawString("<<enumeration>>",namex,namey-5);
-      FontMetrics fm = g.getFontMetrics(); 
-      if (fm.stringWidth("<<enumeration>>") + (namex - sourcex) >= width) 
-      { width = fm.stringWidth("<<enumeration>>") + (namex - sourcex) + 5; }
+      if (typ.isEnumeration())
+      { g.drawString("<<enumeration>>",namex,namey-7);
+        FontMetrics fm = g.getFontMetrics(); 
+        if (fm.stringWidth("<<enumeration>>") + (namex - sourcex) >= width) 
+        { width = fm.stringWidth("<<enumeration>>") + (namex - sourcex) + 5; }
+      } 
+      else 
+      { g.drawString("<<datatype>>",namex,namey-7);
+        FontMetrics fm = g.getFontMetrics(); 
+        if (fm.stringWidth("<<datatype>>") + (namex - sourcex) >= width) 
+        { width = fm.stringWidth("<<datatype>>") + (namex - sourcex) + 5; }
+      } 
+
     } 
     else 
     { g.drawString(label,namex,namey); }
@@ -214,7 +223,8 @@ class RectData extends RectForm
     if (modelElement == null) { return; }
     if (modelElement instanceof Entity)
     { drawEntityFeatures(g,fm,widest); } 
-    else if (modelElement instanceof Type)
+    else if (modelElement instanceof Type && 
+             ((Type) modelElement).isEnumeration())
     { drawTypeFeatures(g,fm,widest); } 
     else if (modelElement instanceof Requirement)
     { drawRequirementFeatures(g,fm,widest); } 

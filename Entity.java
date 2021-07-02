@@ -689,9 +689,15 @@ public class Entity extends ModelElement implements Comparable
 	
 	return res; 
   }
+
+  public void addAttribute(String nme, Type t) 
+  { Attribute att = new Attribute(nme, t, ModelElement.INTERNAL); 
+    addAttribute(att); 
+  } 
  
   public void addAttribute(Attribute att)
-  { if (att == null || attributes.contains(att)) { return; } 
+  { if (att == null || attributes.contains(att)) 
+    { return; } 
 
     Attribute oldatt = getAttribute(att.getName()); 
     if (oldatt != null) 
@@ -699,7 +705,7 @@ public class Entity extends ModelElement implements Comparable
     else 
     { Attribute supatt = getDefinedAttribute(att.getName()); 
       if (supatt != null) 
-      { System.err.println("WARNING: " + att + " is already declared in a superclass.");  
+      { System.err.println("WARNING!: " + att + " is already declared in a superclass.");  
         // return; 
       }
     } 
@@ -709,7 +715,7 @@ public class Entity extends ModelElement implements Comparable
     { if (att.isClassScope() && att.isFrozen()) { } 
       else 
       { System.err.println("DECLARATION ERROR: Only frozen class-scope attributes " +
-                           "allowed in interfaces!"); 
+                           "are allowed in interfaces!"); 
         // return; 
       }
       att.setVisibility(PUBLIC);  
@@ -3929,6 +3935,15 @@ public class Entity extends ModelElement implements Comparable
   public boolean hasAttribute(String att)
   { return ModelElement.lookupByName(att,attributes) != null; } 
 
+  public boolean hasAnyAttribute(Vector attnames)
+  { for (int i = 0; i < attnames.size(); i++) 
+    { String attname = (String) attnames.get(i); 
+      if (hasAttribute(attname))
+      { return true; } 
+    } 
+    return false; 
+  } 
+
   public boolean hasAttributeIgnoreCase(String att)
   { return ModelElement.lookupByNameIgnoreCase(att,attributes) != null; } 
 
@@ -4290,6 +4305,15 @@ public class Entity extends ModelElement implements Comparable
     return false; 
   } 
 
+  public boolean hasOperationIgnoreCase(String nme)
+  { for (int i = 0; i < operations.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i); 
+      if (nme.equalsIgnoreCase(bf.getName())) 
+      { return true; } 
+    } 
+    return false; 
+  } 
+
   public boolean hasConcreteOperation(String nme)
   { for (int i = 0; i < operations.size(); i++) 
     { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i); 
@@ -4436,6 +4460,24 @@ public class Entity extends ModelElement implements Comparable
       return 0;
     }
   }
+ 
+  public void addReference(String nme, Type typ, Vector assocs) 
+  { Association res; 
+    if (typ.isCollection())
+    { Type et = typ.getElementType(); 
+      Entity e2 = et.getEntity(); 
+      res = new Association(this,e2,nme);
+      res.setCard2(ModelElement.MANY); 
+      res.setOrdered(true); 
+    } 
+    else 
+    { Entity e2 = typ.getEntity(); 
+      res = new Association(this,e2,nme);
+      res.setCard2(ModelElement.ONE); 
+    } 
+    assocs.add(res); 
+    addAssociation(res); 
+  }  
  
   public void addAssociation(Association ast)
   { if (isInterface())

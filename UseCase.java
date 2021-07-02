@@ -93,10 +93,10 @@ public class UseCase extends ModelElement
 	    continue; 
       }
 	  
-	  String nme = ucinc.getName(); 
-	  for (int i = 0; i < useCases.size(); i++) 
+      String nme = ucinc.getName(); 
+      for (int i = 0; i < useCases.size(); i++) 
       { if (useCases.get(i) instanceof UseCase)
-	    { UseCase uc1 = (UseCase) useCases.get(i); 
+        { UseCase uc1 = (UseCase) useCases.get(i); 
           if (uc1.hasExtension(ucinc))
           { System.err.println("!! Error: Cannot have " + nme + " as extension (of " + 
 		                       uc1.getName() + ") and inclusion (of " + getName() + ")!"); 
@@ -191,6 +191,13 @@ public class UseCase extends ModelElement
     par.setElementType(typ.getElementType()); 
     parameters.add(par); 
   } 
+
+  public void addParameters(Vector pars) 
+  { for (int i = 0; i < pars.size(); i++) 
+    { Attribute par = (Attribute) pars.get(i); 
+      addParameter(par.getName(), par.getType()); 
+    }
+  }
 
   public Object clone()
   { UseCase uc = new UseCase(getName(), ent); // copies the classifier
@@ -384,6 +391,13 @@ public class UseCase extends ModelElement
   public void addPrecondition(Constraint pre)
   { if (pre != null) 
     { preconditions.add(pre); }
+  }  
+
+  public void addPrecondition(Expression pre)
+  { if (pre != null) 
+    { Expression betrue = new BasicExpression(true); 
+      preconditions.add(new Constraint(betrue,pre)); 
+    }
   }  
 
   public void addInvariant(Constraint inv)
