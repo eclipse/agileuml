@@ -787,6 +787,7 @@ class BasicExpression extends Expression
                data.equals("reverse") || data.equals("sort") || data.equals("asSequence") || 
                data.equals("front") || data.equals("tail") || data.equals("insertAt") || 
                data.equals("subrange") ||
+               data.equals("setAt") ||
                data.equals("replace") || data.equals("replaceAll") || 
                data.equals("replaceAllMatches") ||
                data.equals("characters") || data.equals("allInstances") || 
@@ -989,7 +990,8 @@ class BasicExpression extends Expression
 
       if (objectRef.isOrdered())
       { if (data.equals("front") || data.equals("reverse") || data.equals("tail") ||
-            data.equals("insertAt") || data.equals("subrange"))
+            data.equals("insertAt") || data.equals("setAt") ||
+            data.equals("subrange"))
         { return true; } 
       } 
       else if ("Integer".equals("" + objectRef) && "subrange".equals(data))
@@ -1055,7 +1057,8 @@ class BasicExpression extends Expression
 
       if (objectRef.isOrderedB())
       { if (data.equals("front") || data.equals("reverse") || data.equals("tail") ||
-            data.equals("insertAt") || data.equals("subrange"))
+            data.equals("insertAt") ||
+            data.equals("setAt") || data.equals("subrange"))
         { return true; } 
       } 
       else if ("Integer".equals("" + objectRef) && "subrange".equals(data))
@@ -1115,6 +1118,7 @@ class BasicExpression extends Expression
 
       if (objectRef.isSorted())
       { if (data.equals("front") || data.equals("reverse") || data.equals("tail") ||
+            // data.equals("removeAt") || 
             data.equals("subrange"))
         { return true; } 
       } 
@@ -1922,9 +1926,10 @@ class BasicExpression extends Expression
       { res = res + "(" + data + " " + pre + ")"; } 
       else if (data.equals("subrange"))  // Integer.subrange is special case
       { // if a String, substring, otherwise subSequence
-        res = "(" + data + " " + pre + " " + parameters.get(0) + " " + 
-                                             parameters.get(1) + ")";
-         
+        if (parameters.size() == 2) 
+        { res = "(" + data + " " + pre + " " + parameters.get(0) + " " + parameters.get(1) + ")"; } 
+        else if (parameters.size() == 1)
+        { res = "(" + data + " " + pre + " " + parameters.get(0) + ")"; } 
       } 
       else if (data.equals("first"))
       { res = "(head " + pre + ")"; } 
@@ -1976,7 +1981,7 @@ class BasicExpression extends Expression
           data.equals("sqrt") || data.equals("toUpperCase") ||
           data.equals("toLowerCase"))
       { res = res + "." + data + "()"; } 
-      else if (data.equals("subrange") || data.equals("pow"))
+      else if (data.equals("subrange") || data.equals("pow") || data.equals("setAt") || data.equals("insertAt"))
       { // if a String, substring, otherwise subSequence
         if (parameters != null && parameters.size() > 1)
         { res = res + "." + data + "(" + parameters.get(0) + "," + 
@@ -2327,7 +2332,8 @@ class BasicExpression extends Expression
   } 
     
 
-  // for UMLRSDS: also do doubles. 
+  // for UMLRSDS: also do doubles with E-, E+ syntax.
+ 
   public boolean typeCheck(final Vector types, final Vector entities,
                            final Vector contexts, final Vector env)
   { boolean res = true;
@@ -2339,7 +2345,7 @@ class BasicExpression extends Expression
     Vector context = new Vector(); // local context
 
     if ("null".equals(data))
-    { type = new Type("void", null); 
+    { type = new Type("OclAny", null); 
       entity = null; 
       umlkind = VALUE; 
       multiplicity = ModelElement.ONE;
@@ -2444,7 +2450,7 @@ class BasicExpression extends Expression
     }  // could have an array index. Also deduce elementType
 
     if ("int".equals(data) || "long".equals(data) || "double".equals(data))
-    { type = new Type("Sequence", null); 
+    { type = new Type("OclType", null); 
       elementType = new Type(data, null); 
       umlkind = TYPE; 
       type.elementType = elementType; 
@@ -2588,11 +2594,12 @@ class BasicExpression extends Expression
       if (staticent != null) 
       { objectRef.umlkind = Expression.CLASSID; 
 	  
-        BehaviouralFeature bf = staticent.getOperation(data);  // parameters
+        BehaviouralFeature bf = staticent.getOperation(data,parameters); 
+
         if (bf != null && bf.isStatic()) 
         { if (bf.parametersMatch(parameters)) { } 
           else 
-          { JOptionPane.showMessageDialog(null, "Actual parameters do not match formal pars: " + this + " " + bf, 
+          { JOptionPane.showMessageDialog(null, "Actual parameters do not match formal pars: " + this + " /= " + bf, 
                                     "Type warning", JOptionPane.WARNING_MESSAGE); 
           }  
 
@@ -2627,8 +2634,8 @@ class BasicExpression extends Expression
             isStatic = true; 
 
             adjustTypeForArrayIndex(att); 
-            // System.out.println("**Type of " + data + " is static ATTRIBUTE in entity " +
-            //                    staticent + " type is " + type + " Modality = " + modality); 
+            // System.out.println("*** Type of " + data + " is static ATTRIBUTE in entity " +
+            //                    staticent + " type is " + type + "(" + elementType + ") Modality = " + modality); 
             return res;
           } 
         } 
@@ -2653,6 +2660,8 @@ class BasicExpression extends Expression
     if (isEvent && 
         !data.equals("subrange") && 
         !data.equals("indexOf") && 
+        !data.equals("setAt") && 
+        !data.equals("insertAt") && 
         !(data.equals("replace")) && 
         !(data.equals("replaceFirstMatch")) && 
         !(data.equals("replaceAll")) && 
@@ -2691,7 +2700,8 @@ class BasicExpression extends Expression
           { umlkind = UPDATEOP; 
             type = bf.getResultType(); 
             elementType = bf.getElementType(); 
-            if (type == null || type.equals("") || type.equals("void"))
+            if (type == null || 
+                type.equals("") || type.equals("void"))
             { type = new Type("boolean",null); }  
             // System.out.println("UPDATE OPERATION, type: " + type); 
           }  // shouldn't be object ref of anything. Should 
@@ -2747,7 +2757,7 @@ class BasicExpression extends Expression
         if (type != null && type.isFunctionType())
         { umlkind = UPDATEOP; 
           elementType = fvar.getElementType();
-          System.out.println(">> Function parameter " + data + " of type " + type); 
+          System.out.println(">> Function parameter " + data + " of type " + type + "(" + elementType + ")"); 
         } 
         else 
         { JOptionPane.showMessageDialog(null, data + " is not a function parameter or known function in " + this + ".\n" + 
@@ -2756,9 +2766,8 @@ class BasicExpression extends Expression
         }
       } // default
       else 
-      { JOptionPane.showMessageDialog(null, "Operation " + data + " unknown at call " + this + ".\n" + 
-                                    "Please re-type-check or correct your specification.", 
-                                    "Type warning", JOptionPane.WARNING_MESSAGE);
+      { System.err.println("Warning!: Unknown operation " + data + " at call " + this + ".\n" + 
+                                    "Please re-type-check or correct your specification.");
  
         umlkind = UPDATEOP; 
         type = new Type("boolean",null);         
@@ -2800,7 +2809,7 @@ class BasicExpression extends Expression
         return true;  
       } 
 
-      if (data.equals("toLong"))
+      if (data.equals("toLong") || data.equals("gcd"))
       { type = new Type("long", null); 
         elementType = type; 
       } 
@@ -2833,7 +2842,9 @@ class BasicExpression extends Expression
         elementType = type; 
       } 
       else if (data.equals("reverse") || data.equals("tail") || 
-               data.equals("front") || data.equals("insertAt") || 
+               data.equals("front") || 
+               data.equals("insertAt") || 
+               data.equals("setAt") ||
                data.equals("subrange"))  
       { type = objectRef.getType(); 
         elementType = objectRef.elementType; // Sequence or String 
@@ -2926,7 +2937,8 @@ class BasicExpression extends Expression
       { entity = elementType.getEntity(); } 
       if (entity == null && type != null) 
       { entity = type.getEntity(); } 
-    } // default
+      adjustTypeForArrayIndex(paramvar);
+    } // And adjust type for any array index. 
 
     for (int j = 0; j < context.size(); j++)
     { Entity ent = (Entity) context.get(j);
@@ -2935,7 +2947,7 @@ class BasicExpression extends Expression
         multiplicity = ModelElement.ONE;
         Attribute att = ent.getDefinedAttribute(data);
         if (att == null)   // something very bad has happened
-        { System.err.println("TYPE ERROR: attribute: " + data + " is not defined in class " + ent.getName()); 
+        { System.err.println("!! TYPE ERROR: attribute: " + data + " is not defined in class " + ent.getName()); 
           return false; 
         } 
         modality = att.getKind(); 
@@ -2948,10 +2960,18 @@ class BasicExpression extends Expression
         { res = true; }
         else 
         { setObjectRefType(); } 
+        
+        if (arrayIndex != null) 
+        { System.out.println("** Unadjusted type of " + this + " is ATTRIBUTE in entity " +
+                            ent + " type is " + type + "(" + elementType + ") Modality = " + modality); 
+        }
+        
         adjustTypeForObjectRef(att); 
         adjustTypeForArrayIndex(att); 
-        // System.out.println("**Type of " + data + " is ATTRIBUTE in entity " +
-        //                    ent + " type is " + type + " Modality = " + modality); 
+        
+        if (arrayIndex != null) 
+        { System.out.println("** Adjusted type of " + this + " is " + type + "(" + elementType + ") Modality = " + modality); } 
+ 
         return res;
       } // couldn't it have an array ref if objectRef was a sequence?
       else 
@@ -3323,13 +3343,20 @@ class BasicExpression extends Expression
     { elementType = new Type("String", null); 
       multiplicity = ModelElement.ONE; 
     } 
-    else if (arrayIndex != null && type != null && elementType != null) 
-    { type = elementType; 
-      elementType = elementType.getElementType(); 
-      if (Type.isCollectionType(type))
-      { multiplicity = ModelElement.MANY; } 
-      else 
-      { multiplicity = ModelElement.ONE; } 
+    else if (arrayIndex != null) 
+    { if (elementType == null) 
+      { type = new Type("OclAny", null);
+        elementType = new Type("OclAny", null);
+        multiplicity = ModelElement.ONE;  // assume
+      } 
+      else  
+      { type = elementType; 
+        elementType = elementType.getElementType(); 
+        if (Type.isCollectionType(type))
+        { multiplicity = ModelElement.MANY; } 
+        else 
+        { multiplicity = ModelElement.ONE; } 
+      } 
       // System.out.println("TYPE CHECKED: Type of " + this + " is " + type); 
     } 
   }  
@@ -3341,16 +3368,21 @@ class BasicExpression extends Expression
     { elementType = new Type("String", null); 
       multiplicity = ModelElement.ONE; 
     } 
-    else if (arrayIndex != null && type != null && elementType != null) 
-    { type = bf.getElementType(); 
-      if (type != null) 
-      { elementType = type.getElementType(); } 
- 
-      if (Type.isCollectionType(type))
-      { multiplicity = ModelElement.MANY; } 
-      else 
-      { multiplicity = ModelElement.ONE; } 
-      // System.out.println("TYPE CHECKED: Type of " + this + " is " + type); 
+    else if (arrayIndex != null) 
+    { if (bf.getElementType() == null) 
+      { type = new Type("OclAny", null); 
+        elementType = new Type("OclAny", null);
+        multiplicity = ModelElement.ONE;
+      } 
+      else
+      { type = bf.getElementType(); 
+        elementType = type.getElementType(); 
+           
+        if (Type.isCollectionType(type))
+        { multiplicity = ModelElement.MANY; } 
+        else 
+        { multiplicity = ModelElement.ONE; } 
+      }  
     } 
   }  
 
@@ -3361,16 +3393,21 @@ class BasicExpression extends Expression
     { elementType = new Type("String", null); 
       multiplicity = ModelElement.ONE; 
     } 
-    else if (arrayIndex != null && type != null && elementType != null) 
-    { type = var.getElementType(); 
-      if (type != null) 
-      { elementType = type.getElementType(); }  
-
-      if (Type.isCollectionType(type))
-      { multiplicity = ModelElement.MANY; } 
-      else 
-      { multiplicity = ModelElement.ONE; } 
-      // System.out.println("TYPE CHECKED: Type of " + this + " is " + type); 
+    else if (arrayIndex != null) 
+    { if (var.getElementType() == null) 
+      { type = new Type("OclAny", null);
+        elementType = new Type("OclAny", null);
+        multiplicity = ModelElement.ONE;  // assume
+      } 
+      else
+      { type = var.getElementType(); 
+        elementType = type.getElementType(); 
+        
+        if (Type.isCollectionType(type))
+        { multiplicity = ModelElement.MANY; } 
+        else 
+        { multiplicity = ModelElement.ONE; } 
+      } 
     } 
   }  
 
@@ -3708,6 +3745,16 @@ class BasicExpression extends Expression
     else if (data.equals("$fin") && parameters.size() > 0)
     { return "$fin_" + parameters.get(0); }
 
+    if (data.equals("systemTime") && "OclDate".equals(objectRef + ""))
+    { return "Set.getTime()"; } 
+
+    if (data.startsWith("new"))
+    { String createdClass = data.substring(3); 
+      if ("OclDate".equals(createdClass))
+      { return "new Date()"; }
+    } 
+
+      
     if (umlkind == VALUE || umlkind == CONSTANT)
     { if (data.equals("{}") || data.equals("Set{}") || data.equals("Sequence{}"))
       { return "new Vector()"; }    // new Set really
@@ -3752,19 +3799,19 @@ class BasicExpression extends Expression
       { if (env.containsValue("self"))
         { return data; } 
         else if (type != null && type.isEntity())
-		{ // System.out.println("^^^^^^^^ Type of self = " + type); 
-		  String tname = type.getName(); 
-		  Object obj = env.get(tname); 
-		  if (obj != null) 
-		  { return obj + ""; }
-		  else 
-		  { return "this"; }
-		}
+        { // System.out.println("^^^^^^^^ Type of self = " + type); 
+          String tname = type.getName(); 
+          Object obj = env.get(tname); 
+          if (obj != null) 
+          { return obj + ""; }
+          else 
+          { return "this"; }
+        }
         else 
-		{ return "this"; }
+        { return "this"; }
       } 
       else if (data.equals("now")) 
-	  { return "Set.getTime()"; } 
+      { return "Set.getTime()"; } 
       else // entity == null) 
       if (arrayIndex != null)
       { String ind = arrayIndex.queryForm(env,local); 
@@ -3936,6 +3983,13 @@ class BasicExpression extends Expression
         { return "Set.integerSubrange(" + par1 + "," + par2 + ")"; } 
         return "Set.subrange(" + pre + "," + par1 + "," + par2 + ")";
       } 
+      else if (data.equals("subrange") && parameters != null && parameters.size() == 1)
+      { String par1 = ((Expression) parameters.get(0)).queryForm(env,local);
+        UnaryExpression ue = new UnaryExpression("->size", objectRef); 
+        ue.setType(new Type("int", null)); 
+        String par2 = ue.queryForm(env,local); 
+        return "Set.subrange(" + pre + "," + par1 + "," + par2 + ")";
+      } 
       else if (data.equals("indexOf") && parameters != null && parameters.size() > 0)  
       // for strings or sequences
       { Expression par1 = (Expression) parameters.get(0); 
@@ -3959,6 +4013,11 @@ class BasicExpression extends Expression
         String par2 = ((Expression) parameters.get(1)).queryForm(env,local); 
         return "Set.insertAt(" + pre + "," + par1 + "," + par2 + ")"; 
         // ".add(" + par1 + ", " + par2 + ")"; 
+      }
+      else if (data.equals("setAt") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryForm(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryForm(env,local); 
+        return "Set.setAt(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
       else if (data.equals("replace") && parameters != null && parameters.size() > 1)
       { String par1 = ((Expression) parameters.get(0)).queryForm(env,local); 
@@ -4132,8 +4191,8 @@ class BasicExpression extends Expression
         String var = findEntityVariable(env);
 
         String res = var + ".get" + data + "()";
-		if (var == null || var.length() == 0)
-		{ res = data; }
+        if (var == null || var.length() == 0)
+        { res = data; }
 
         if (arrayIndex != null) 
         { String etype = elementType + ""; 
@@ -4221,6 +4280,15 @@ class BasicExpression extends Expression
   { // already type-checked. Ignores prestate
     String ename = ""; 
     String cont = "Controller.inst()"; 
+
+    if (data.equals("systemTime") && "OclDate".equals(objectRef + ""))
+    { return "Set.getTime()"; } 
+
+    if (data.startsWith("new"))
+    { String createdClass = data.substring(3); 
+      if ("OclDate".equals(createdClass))
+      { return "new Date()"; }
+    } 
 
     if (umlkind == VALUE || umlkind == CONSTANT)
     { if (data.equals("{}") || data.equals("Set{}")) 
@@ -4425,6 +4493,13 @@ class BasicExpression extends Expression
         { return "Set.integerSubrange(" + par1 + "," + par2 + ")"; } 
         return "Set.subrange(" + pre + "," + par1 + "," + par2 + ")";
       } 
+      else if (data.equals("subrange") && parameters != null && parameters.size() == 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormJava6(env,local);
+        UnaryExpression ue = new UnaryExpression("->size", objectRef); 
+        ue.setType(new Type("int", null)); 
+        String par2 = ue.queryFormJava6(env,local); 
+        return "Set.subrange(" + pre + "," + par1 + "," + par2 + ")";
+      } 
       else if (data.equals("indexOf") && parameters != null && parameters.size() > 0)  
       // for strings or sequences
       { Expression par1 = (Expression) parameters.get(0); 
@@ -4447,7 +4522,11 @@ class BasicExpression extends Expression
       { String par1 = ((Expression) parameters.get(0)).queryFormJava6(env,local); 
         String par2 = ((Expression) parameters.get(1)).queryFormJava6(env,local); 
         return "Set.insertAt(" + pre + "," + par1 + "," + par2 + ")"; 
-        // ".add(" + par1 + ", " + par2 + ")"; 
+      } 
+      else if (data.equals("setAt") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormJava6(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormJava6(env,local); 
+        return "Set.setAt(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
       else if (data.equals("replace") && parameters != null && parameters.size() > 1)
       { String par1 = ((Expression) parameters.get(0)).queryFormJava6(env,local); 
@@ -4690,6 +4769,15 @@ class BasicExpression extends Expression
     String ename = ""; 
     String cont = "Controller.inst()"; 
 
+    if (data.equals("systemTime") && "OclDate".equals(objectRef + ""))
+    { return "Ocl.getTime()"; } 
+
+    if (data.startsWith("new"))
+    { String createdClass = data.substring(3); 
+      if ("OclDate".equals(createdClass))
+      { return "new Date()"; }
+    } 
+
     if (umlkind == VALUE || umlkind == CONSTANT)
     { if (data.equals("{}") || data.equals("Set{}")) 
       { return "new HashSet<Object>()"; }    // new Set really
@@ -4896,6 +4984,13 @@ class BasicExpression extends Expression
         { return "Ocl.integerSubrange(" + par1 + "," + par2 + ")"; } 
         return "Ocl.subrange(" + pre + "," + par1 + "," + par2 + ")";
       } 
+      else if (data.equals("subrange") && parameters != null && parameters.size() == 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormJava7(env,local);
+        UnaryExpression ue = new UnaryExpression("->size", objectRef); 
+        ue.setType(new Type("int", null)); 
+        String par2 = ue.queryFormJava7(env,local); 
+        return "Ocl.subrange(" + pre + "," + par1 + "," + par2 + ")";
+      } 
       else if (data.equals("indexOf") && parameters != null && parameters.size() > 0)  
       // for strings or sequences
       { Expression par1 = (Expression) parameters.get(0); 
@@ -4918,6 +5013,11 @@ class BasicExpression extends Expression
       { String par1 = ((Expression) parameters.get(0)).queryFormJava7(env,local); 
         String par2 = ((Expression) parameters.get(1)).queryFormJava7(env,local); 
         return "Ocl.insertAt(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
+      else if (data.equals("setAt") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormJava7(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormJava7(env,local); 
+        return "Ocl.setAt(" + pre + "," + par1 + "," + par2 + ")"; 
         // ".add(" + par1 + ", " + par2 + ")"; 
       } 
       else if (data.equals("replace") && parameters != null && parameters.size() > 1)
@@ -5178,6 +5278,21 @@ class BasicExpression extends Expression
     String ename = ""; 
     String cont = "Controller.inst()"; 
 
+    if ("getMessage".equals(data) && objectRef != null &&
+        Type.isOclExceptionType(objectRef))
+    { String rqf = objectRef.queryFormCSharp(env,local); 
+      return rqf + ".Message"; 
+    }  
+
+    if (data.equals("systemTime") && "OclDate".equals(objectRef + ""))
+    { return "SystemTypes.getTime()"; } 
+
+    if (data.startsWith("new"))
+    { String createdClass = data.substring(3); 
+      if ("OclDate".equals(createdClass))
+      { return "DateTime.Now"; }
+    } 
+
     if (umlkind == VALUE || umlkind == CONSTANT)
     { if (data.equals("{}") || data.equals("Set{}") || data.equals("Sequence{}"))
       { return "new ArrayList()"; }    // new Set really
@@ -5355,6 +5470,13 @@ class BasicExpression extends Expression
         { return "SystemTypes.integerSubrange(" + par1 + "," + par2 + ")"; } 
         return "SystemTypes.subrange(" + pre + "," + par1 + "," + par2 + ")";
       } 
+      else if (data.equals("subrange") && parameters != null && parameters.size() == 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormCSharp(env,local);
+        UnaryExpression ue = new UnaryExpression("->size", objectRef); 
+        ue.setType(new Type("int", null)); 
+        String par2 = ue.queryFormCSharp(env,local); 
+        return "SystemTypes.subrange(" + pre + "," + par1 + "," + par2 + ")";
+      } 
       else if (data.equals("indexOf") && parameters != null && parameters.size() > 0)  // for strings or sequences
       { String par1 = ((Expression) parameters.get(0)).queryFormCSharp(env,local); 
         return "(" + pre + ".IndexOf(" + par1 + ") + 1)"; 
@@ -5376,7 +5498,11 @@ class BasicExpression extends Expression
       { String par1 = ((Expression) parameters.get(0)).queryFormCSharp(env,local); 
         String par2 = ((Expression) parameters.get(1)).queryFormCSharp(env,local); 
         return "SystemTypes.insertAt(" + pre + "," + par1 + "," + par2 + ")"; 
-        // ".add(" + par1 + ", " + par2 + ")"; 
+      } 
+      else if (data.equals("setAt") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormCSharp(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormCSharp(env,local); 
+        return "SystemTypes.setAt(" + pre + "," + par1 + "," + par2 + ")"; 
       } 
       else if (data.equals("replace") && parameters != null && parameters.size() > 1)
       { String par1 = ((Expression) parameters.get(0)).queryFormCSharp(env,local); 
@@ -5595,11 +5721,28 @@ class BasicExpression extends Expression
     if (elemT != null) 
     { cetype = elemT.getCPP(elemT.getElementType()); }  
 
+    if ("getMessage".equals(data) && objectRef != null &&
+        Type.isOclExceptionType(objectRef))
+    { String rqf = objectRef.queryFormCPP(env,local); 
+      return rqf + ".what()"; 
+    }  
+
+    if (data.equals("systemTime") && "OclDate".equals(objectRef + ""))
+    { return "UmlRsdsLib<long>::getTime()"; } 
+
+    if (data.startsWith("new"))
+    { String createdClass = data.substring(3); 
+      if ("OclDate".equals(createdClass))
+      { return "UmlRsdsLib<long>::getDate()"; }
+    } 
+
     if (umlkind == VALUE || umlkind == CONSTANT)
     { if (data.equals("{}") || data.equals("Set{}"))
       { return "(new set<" + cetype + ">())"; }  
       if (data.equals("Sequence{}"))
       { return "(new vector<" + cetype + ">())"; }  
+      if (data.equals("Map{}"))
+      { return "(new map<" + cetype + ">())"; } 
 
       if (data.equals("null")) { return "NULL"; } 
 
@@ -5769,6 +5912,13 @@ class BasicExpression extends Expression
         { return "UmlRsdsLib<int>::integerSubrange(" + par1 + "," + par2 + ")"; } 
         return "UmlRsdsLib<" + cetype + ">::subrange(" + pre + "," + par1 + "," + par2 + ")";
       } 
+      else if (data.equals("subrange") && parameters != null && parameters.size() == 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormCPP(env,local);
+        UnaryExpression ue = new UnaryExpression("->size", objectRef); 
+        ue.setType(new Type("int", null)); 
+        String par2 = ue.queryFormCPP(env,local); 
+        return "UmlRsdsLib<" + cetype + ">::subrange(" + pre + "," + par1 + "," + par2 + ")";
+      } 
       else if (data.equals("indexOf") && parameters != null && parameters.size() > 0)  // for strings or sequences
       { String par1 = ((Expression) parameters.get(0)).queryFormCPP(env,local); 
         Type oreftype = objectRef.getType(); 
@@ -5798,6 +5948,11 @@ class BasicExpression extends Expression
         return "UmlRsdsLib<" + cetype + ">::insertAt(" + pre + "," + par1 + "," + par2 + ")"; 
         // ".add(" + par1 + ", " + par2 + ")"; 
       }
+      else if (data.equals("setAt") && parameters != null && parameters.size() > 1)
+      { String par1 = ((Expression) parameters.get(0)).queryFormCPP(env,local); 
+        String par2 = ((Expression) parameters.get(1)).queryFormCPP(env,local); 
+        return "UmlRsdsLib<" + cetype + ">::setAt(" + pre + "," + par1 + "," + par2 + ")"; 
+      } 
       else if (data.equals("replaceAll") && parameters != null && parameters.size() > 1)
       { String par1 = ((Expression) parameters.get(0)).queryFormCPP(env,local); 
         String par2 = ((Expression) parameters.get(1)).queryFormCPP(env,local); 
@@ -6638,6 +6793,12 @@ public Statement generateDesignSubtract(Expression rhs)
   { String pars = "(" + parametersQueryFormCSharp(env,local); 
     String cont = "Controller.inst()"; 
 
+    if ("printStackTrace".equals(data) && objectRef != null &&
+        Type.isOclExceptionType(objectRef))
+    { String rqf = objectRef.queryFormCSharp(env,local); 
+      return "Console.WriteLine(" + rqf + ".StackTrace);";  
+    }  
+
     if (isEvent) // an operation of entity
     { 
       if (entity == null) 
@@ -6742,6 +6903,12 @@ public Statement generateDesignSubtract(Expression rhs)
   public String updateFormCPP(java.util.Map env, boolean local) 
   { String pars = "(" + parametersQueryFormCPP(env,local); 
     String cont = "Controller::inst->"; 
+
+    if ("printStackTrace".equals(data) && objectRef != null &&
+        Type.isOclExceptionType(objectRef))
+    { String rqf = objectRef.queryFormCPP(env,local); 
+      return "cerr << " + rqf + ".what() << endl;";  
+    }  
 
     if (isEvent) // an operation of entity
     { 
@@ -8130,11 +8297,13 @@ public Statement generateDesignSubtract(Expression rhs)
 
     if (umlkind == VARIABLE && Type.isCollectionType(type))
     { String pre = data; 
+
       if (arrayIndex != null) 
       { String indopt = arrayIndex.queryFormCPP(env,local); 
         pre = "((*" + data + ")[" + indopt + " -1])"; 
       }
-      if (isOrdered()) 
+
+      if (isOrdered() || isSequenceValued()) 
       { return "((vector<void*>) " + pre + ")->push_back(" + val2 + ");"; }   
       else 
       { return "((set<void*>) " + pre + ")->insert(" + val2 + ");"; }   
@@ -8146,7 +8315,7 @@ public Statement generateDesignSubtract(Expression rhs)
     if (objectRef == null)
     { if (umlkind == ATTRIBUTE)
       { if (type != null && Type.isCollectionType(type)) 
-        { if (isOrdered()) 
+        { if (isOrdered() || isSequenceValued()) 
           { return data + "->push_back(" + val2 + ");"; }  
           else 
           { return data + "->insert(" + val2 + ");"; } 
@@ -8154,6 +8323,7 @@ public Statement generateDesignSubtract(Expression rhs)
         else 
         { return "{} /* can't add to single-valued attribute */"; }
       } 
+
       if (umlkind == ROLE)
       { if (multiplicity == ModelElement.ONE)
         { return "{} /* can't add to ONE role: " + this + " */"; }
@@ -8170,7 +8340,7 @@ public Statement generateDesignSubtract(Expression rhs)
         }
 
         if (local) 
-        { if (isOrdered()) 
+        { if (isOrdered() || isSequenceValued()) 
           { return data + "->push_back(" + val2 + ");"; }  
           else 
           { return data + "->insert(" + val2 + ");"; } 
@@ -8583,7 +8753,8 @@ public Statement generateDesignSubtract(Expression rhs)
     { if (arrayIndex != null) 
       { String indopt = arrayIndex.queryFormCPP(env,local);
         String coll = "set"; 
-        if (isOrdered()) { coll = "vector"; } 
+        if (isOrdered() || isSequenceValued()) 
+        { coll = "vector"; } 
         return "(" + data + "->at(" + indopt + " -1))->erase(" + val2 + ");"; 
       }
       return data + "->erase(" + val2 + ");"; 
@@ -8606,14 +8777,23 @@ public Statement generateDesignSubtract(Expression rhs)
         { if (arrayIndex != null) 
           { String indopt = arrayIndex.queryFormCPP(env,local);
             String coll = "set"; 
-            if (isOrdered()) { coll = "vector"; } 
+            if (isOrdered() || isSequenceValued()) 
+            { coll = "vector"; 
+              return "(" + data + "->at(" + indopt + " -1)->erase(find(" + data + "->at(" + indopt + " -1)->begin(), " + data + "->at(" + indopt + " -1)->end(), " + val2 + ")));"; 
+            } 
             return "(" + data + "->at(" + indopt + " -1))->erase(" + val2 + ");"; 
           }
+
+          if (isOrdered() || isSequenceValued())
+          { return 
+              data + "->erase(find(" + data + "->begin(), " + data + "->end(), " + val2 + "));"; 
+          } 
           return data + "->erase(" + val2 + ");"; 
         }
         else 
         { return "{} /* can't remove from single-valued attribute: " + this + " */"; } 
       }
+
       if (umlkind == ROLE) // and not addOnly
       { if (multiplicity == ModelElement.ONE)
         { return "{} /* can't remove from ONE role: " + this + " */"; }
@@ -12255,7 +12435,7 @@ public Statement generateDesignSubtract(Expression rhs)
         //                    " to BinaryExpression " + bexp); 
         return bexp.cg(cgs); 
       }
-      // case of _1.pow(_2), etc
+      // case of _1.pow(_2), _1.subrange(_2) etc
     } 
 
 

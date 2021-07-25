@@ -823,14 +823,14 @@ public class Association extends ModelElement
         else if (ordered) 
         { out.println("map<string, vector<" + e2name + ">*>* " + role2 + ";"); }
         else 
-        { out.println("map<string, set<" + e2name + ">*>* " + role2 + ";"); }
+        { out.println("map<string, std::set<" + e2name + ">*>* " + role2 + ";"); }
       } 
       else if (card2 == ONE)
       { out.println(e2name + " " + role2 + ";"); }
       else if (ordered) 
       { out.println("vector<" + e2name + ">* " + role2 + ";"); }
       else 
-      { out.println("set<" + e2name + ">* " + role2 + ";"); }
+      { out.println("std::set<" + e2name + ">* " + role2 + ";"); }
     }
   }  // not valid for a..b a > 0. Should be array then?
 
@@ -1020,7 +1020,7 @@ String qual = "";
       else if (frozen)
       { if (ordered) { return "vector<" + e2name + ">* " + role2 + "_x"; } 
         else 
-        { return "set<" + e2name + ">* " + role2 + "_x"; } 
+        { return "std::set<" + e2name + ">* " + role2 + "_x"; } 
       } 
     }
     return null; 
@@ -1050,7 +1050,7 @@ String qual = "";
     if (ordered)
     { role2type = "vector<" + role2type + ">"; } 
     else 
-    { role2type = "set<" + role2type + ">"; } 
+    { role2type = "std::set<" + role2type + ">"; } 
     
     if (qualifier != null) // for card2 != ONE
     { role2type = "map<string, " + role2type + "*>"; } 
@@ -1148,7 +1148,7 @@ String qual = "";
       }
       else if (cc.getEvent() == null && cc.involvesFeature(nme))
       { Constraint cpre = (Constraint) cc.substituteEq(nme,valbe); 
-        System.out.println("Possible precond for set" + nme + ": " + cpre); 
+        System.out.println(">> Possible precondition for set" + nme + ": " + cpre); 
       }
 
     }
@@ -1351,7 +1351,7 @@ String qual = "";
       }
       else if (cc.getEvent() == null && cc.involvesFeature(nme))
       { Constraint cpre = (Constraint) cc.substituteEq(nme,valbe); 
-        System.out.println("Possible precond for set" + nme + ": " + cpre); 
+        System.out.println(">> Possible precond for set" + nme + ": " + cpre); 
       }
 
     }
@@ -1776,7 +1776,7 @@ String qual = "";
       { Constraint cc = (Constraint) cons.get(j);
         Constraint cnew = cc.matches("add",nme,ent,val,addevent);
         // must type check new constraint. 
-        System.out.println("Match add: " + cnew); 
+        System.out.println(">> constraint matches add: " + cnew); 
         if (cnew != null)
         { Vector cntxs = new Vector(); 
           if (cnew.getOwner() != null) 
@@ -1794,7 +1794,7 @@ String qual = "";
       { Constraint cc = (Constraint) cons.get(j);
         Constraint cnew = cc.matches("remove",nme,ent,val,removeevent);
         // must type check new constraint. 
-        System.out.println("Match remove: " + cnew); 
+        System.out.println(">> constraint matches remove: " + cnew); 
         if (cnew != null)
         { Vector cntxs = new Vector(); 
           if (cnew.getOwner() != null) 
@@ -2020,7 +2020,7 @@ String qual = "";
         argtype = "vector<" + e2name + ">*"; 
       }
       else 
-      { argtype = "set<" + e2name + ">*"; } 
+      { argtype = "std::set<" + e2name + ">*"; } 
 
       if (card2 == ZEROONE)
       { if (addOnly)
@@ -2719,7 +2719,7 @@ String qual = "";
     { if (ordered) 
       { argtype0 = "vector<" + e2name + "*>"; }
       else 
-      { argtype0 = "set<" + e2name + "*>"; } 
+      { argtype0 = "std::set<" + e2name + "*>"; } 
     }  
     else 
     { argtype0 = e2name; } 
@@ -3276,9 +3276,9 @@ String qual = "";
     { if (ordered) 
       { typ = "vector<" + e2name + "*>*"; }
       else 
-      { typ = "set<" + e2name + "*>*"; }
+      { typ = "std::set<" + e2name + "*>*"; }
     } 
-    String argtyp1 = "set<" + ename + "*>*"; 
+    String argtyp1 = "std::set<" + ename + "*>*"; 
     String argtyp2 = "vector<" + ename + "*>*"; 
 
     String es = ename.toLowerCase() + "s";
@@ -3288,7 +3288,7 @@ String qual = "";
     String declaration = "  static void setAll" + role2;
     declaration = declaration + "(" + argtyp1 + " " + es + ", " + qualt + typ + " _val);\n";
 
-    res = res + "  { set<" + ename + "*>::iterator _pos;\n";
+    res = res + "  { std::set<" + ename + "*>::iterator _pos;\n";
     res = res + "    for (_pos = " + es + "->begin(); _pos != " + es + "->end(); ++_pos)\n";
     res = res + "    { " + ename + "* " + ex + " = *_pos;\n";
     res = res + "      Controller::inst->set" + role2 + "(" + ex + ", " + qual + " _val); } }\n\n";
@@ -3310,7 +3310,7 @@ String qual = "";
       res = res + "\n\n" + 
             "  void " + ename + "::setAll" + role2;
       res = res + "(" + argtyp1 + " " + es + ", int _ind, " + e2name + "* _val)\n";
-      res = res + "  { set<" + ename + "*>::iterator _pos;\n";
+      res = res + "  { std::set<" + ename + "*>::iterator _pos;\n";
       res = res + "    for (_pos = " + es + "->begin(); _pos != " + es + "->end(); ++_pos)\n";
       res = res + "    { " + ename + "* " + ex + " = *_pos;\n";
       res = res + "      Controller::inst->set" + role2 + "(" + ex + ", _ind, _val); } }";
@@ -3435,7 +3435,7 @@ String qual = "";
     String ex = ename.toLowerCase() + "x";
     String e2name = entity2.getName();
     String typ = e2name + "*"; 
-    String argtyp1 = "set<" + ename + "*>*"; 
+    String argtyp1 = "std::set<" + ename + "*>*"; 
     String argtyp2 = "vector<" + ename + "*>*"; 
 
     String es = ename.toLowerCase() + "s";
@@ -3445,7 +3445,7 @@ String qual = "";
     String declaration = "  static void addAll" + role2;
     declaration = declaration + "(" + argtyp1 + " " + es + ", " + qualt + typ + " _val);\n";
 
-    res = res + "  { set<" + ename + "*>::iterator _pos;\n";
+    res = res + "  { std::set<" + ename + "*>::iterator _pos;\n";
     res = res + "    for (_pos = " + es + "->begin(); _pos != " + es + "->end(); ++_pos)\n";
     res = res + "    { " + ename + "* " + ex + " = *_pos;\n";
     res = res + "      Controller::inst->add" + role2 + "(" + ex + ", " + qual + " _val); } }\n\n";
@@ -3576,7 +3576,7 @@ String qual = "";
     String ex = ename.toLowerCase() + "x";
     String e2name = entity2.getName();
     String typ = e2name + "*"; 
-    String argtyp1 = "set<" + ename + "*>*"; 
+    String argtyp1 = "std::set<" + ename + "*>*"; 
     String argtyp2 = "vector<" + ename + "*>*"; 
 
     String es = ename.toLowerCase() + "s";
@@ -3586,7 +3586,7 @@ String qual = "";
     String declaration = "  static void removeAll" + role2;
     declaration = declaration + "(" + argtyp1 + " " + es + "," + qualt + typ + " _val);\n";
 
-    res = res + "  { set<" + ename + "*>::iterator _pos;\n";
+    res = res + "  { std::set<" + ename + "*>::iterator _pos;\n";
     res = res + "    for (_pos = " + es + "->begin(); _pos != " + es + "->end(); ++_pos)\n";
     res = res + "    { " + ename + "* " + ex + " = *_pos;\n";
     res = res + "      Controller::inst->remove" + role2 + "(" + ex + "," + qual + " _val); } }\n\n";
@@ -3730,7 +3730,7 @@ String qual = "";
     { if (ordered) 
       { typ = "vector<" + e2name + "*>*"; }
       else 
-      { typ = "set<" + e2name + "*>*"; }
+      { typ = "std::set<" + e2name + "*>*"; }
     } // but actually need 2 versions as val could be any collection, independent of role2's type
 
     String argtyp1 = "set<" + ename + "*>*"; 
@@ -3743,7 +3743,7 @@ String qual = "";
     String declaration = "  static void unionAll" + role2;
     declaration = declaration + "(" + argtyp1 + " " + es + "," + qualt + typ + " _val);\n";
 
-    res = res + "  { set<" + ename + "*>::iterator _pos;\n";
+    res = res + "  { std::set<" + ename + "*>::iterator _pos;\n";
     res = res + "    for (_pos = " + es + "->begin(); _pos != " + es + "->end(); ++_pos)\n";
     res = res + "    { " + ename + "* " + ex + " = *_pos;\n";
     res = res + "      Controller::inst->union" + role2 + "(" + ex + "," + qual + " _val); } }\n\n";
@@ -3889,9 +3889,9 @@ String qual = "";
     { if (ordered) 
       { typ = "vector<" + e2name + "*>*"; }
       else 
-      { typ = "set<" + e2name + "*>*"; }
+      { typ = "std::set<" + e2name + "*>*"; }
     } 
-    String argtyp1 = "set<" + ename + "*>*"; 
+    String argtyp1 = "std::set<" + ename + "*>*"; 
     String argtyp2 = "vector<" + ename + "*>*"; 
 
     String es = ename.toLowerCase() + "s";
@@ -3901,7 +3901,7 @@ String qual = "";
     String declaration = "  static void subtractAll" + role2;
     declaration = declaration + "(" + argtyp1 + " " + es + "," + qualt + typ + " _val);\n";
 
-    res = res + "  { set<" + ename + "*>::iterator _pos;\n";
+    res = res + "  { std::set<" + ename + "*>::iterator _pos;\n";
     res = res + "    for (_pos = " + es + "->begin(); _pos != " + es + "->end(); ++_pos)\n";
     res = res + "    { " + ename + "* " + ex + " = *_pos;\n";
     res = res + "      Controller::inst->subtract" + role2 + "(" + ex + ", " + qual + " _val); } }\n\n";
@@ -4069,9 +4069,9 @@ String qual = "";
 			 "  map<string,vector<" + e2name + ">*>* get" + role2 + "() { return " + role2 + "; }\n";
       }
       else 
-      { return "  set<" + e2name + ">* get" +
+      { return "  std::set<" + e2name + ">* get" +
              role2 + "(string _ind) { return (*" + role2 + ")[_ind]; }\n\n" +
-			 "  map<string,set<" + e2name + ">*>* get" + role2 + "() { return " + role2 + "; }\n";
+			 "  map<string, std::set<" + e2name + ">*>* get" + role2 + "() { return " + role2 + "; }\n";
       } 
     }
     else if (card2 == ONE)
@@ -4083,7 +4083,7 @@ String qual = "";
            role2 + "() { return " + role2 + "; }";
     } 
     else 
-    { return "  set<" + e2name + ">* get" +
+    { return "  std::set<" + e2name + ">* get" +
            role2 + "() { return " + role2 + "; }";
     } 
   } // not cloned, but copied when set, instead. 
@@ -4301,8 +4301,8 @@ String qual = "";
     }
     
     String e2name = entity2.getName(); 
-    String returntype1 = "set<" + e2name + "*>*"; 
-    String argtype1 = "set<" + ename + "*>*"; 
+    String returntype1 = "std::set<" + e2name + "*>*"; 
+    String argtype1 = "std::set<" + ename + "*>*"; 
     String returntype2 = "vector<" + e2name + "*>*"; 
     String argtype2 = "vector<" + ename + "*>*"; 
 
@@ -4310,7 +4310,7 @@ String qual = "";
     String res = "  static " + returntype1 + " getAll" + role2;
     res = res + "(" + argtype1 + " " + es + ")\n";
     res = res + "  { " + returntype1 + " result = new set<" + e2name + "*>();\n";
-    res = res + "    set<" + ename + "*>::iterator _pos;\n";
+    res = res + "    std::set<" + ename + "*>::iterator _pos;\n";
     res = res + "    for (_pos = " + es + "->begin(); _pos != " + es + "->end(); ++_pos)\n";
     res = res + "    { " + ename + "* " + ex + " = *_pos;\n";
     res = res + "      " + body1 + " }\n";
@@ -4324,7 +4324,7 @@ String qual = "";
     else 
     { res = res + "  static " + returntype1 + " getAll" + role2;
       res = res + "(" + argtype2 + " " + es + ")\n";
-      res = res + "  { " + returntype1 + " result = new set<" + e2name + "*>();\n";
+      res = res + "  { " + returntype1 + " result = new std::set<" + e2name + "*>();\n";
       res = res + "    vector<" + ename + "*>::iterator _pos;\n";
       res = res + "    for (_pos = " + es + "->begin(); _pos != " + es + "->end(); ++_pos)\n";
       res = res + "    { " + ename + "* " + ex + " = *_pos;\n";
@@ -4960,7 +4960,7 @@ String qual = "";
         return res + text + "\n" + tab(index) + "}";
       }
       if (card2 != ONE && !ordered) 
-      { res = tab(index) + "for (set<" + e2name + "*>::iterator " + lvar + " = " + 
+      { res = tab(index) + "for (std::set<" + e2name + "*>::iterator " + lvar + " = " + 
               var1 + "->get" + role2 + "()->begin(); " +
               lvar + " != " + var1 + "->get" + role2 + "()->end();" +
               lvar + "++)\n" + tab(index) + 
@@ -7323,16 +7323,16 @@ String qual = "";
     // else 
     { unionop = unionop + 
              "  void union" + role2 + "(" + ename + "* " + ex +
-             ", set<" + e2name + "*>* " + role2 + "x)\n" +
-             "  { set<" + e2name + "*>::iterator _pos; \n" + 
+             ", std::set<" + e2name + "*>* " + role2 + "x)\n" +
+             "  { std::set<" + e2name + "*>::iterator _pos; \n" + 
              "    for (_pos = " + role2 + "x->begin() ; _pos != " + role2 + "x->end(); ++_pos)\n" +
              "    { " + e2name + "* " + e2x + role2 + " = *_pos;\n" + 
              "      add" + role2 + "(" + ex + "," + e2x + role2 + ");\n" + 
              "     } } \n\n";   
       subtractop = subtractop + 
              "  void subtract" + role2 + "(" + ename + "* " + ex +
-             ", set<" + e2name + "*>* " + role2 + "x)\n" +
-             "  { set<" + e2name + "*>::iterator _pos; \n" + 
+             ", std::set<" + e2name + "*>* " + role2 + "x)\n" +
+             "  { std::set<" + e2name + "*>::iterator _pos; \n" + 
              "    for (_pos = " + role2 + "x->begin() ; _pos != " + role2 + "x->end(); ++_pos)\n" +
              "    { " + e2name + "* " + e2x + role2 + " = *_pos;\n" + 
              "      remove" + role2 + "(" + ex + "," + e2x + role2 + ");\n" + 
@@ -7592,7 +7592,7 @@ String qual = "";
     else if (ordered)  // actually need both, just in case. 
     { argtype0 = "vector<" + e2name + "*>"; } 
     else 
-    { argtype0 = "set<" + e2name + "*>"; } 
+    { argtype0 = "std::set<" + e2name + "*>"; } 
     String argtype = argtype0 + "*"; 
 
     if (card2 == ONE) 
@@ -8578,13 +8578,13 @@ String qual = "";
         { setinverse = "    if (" + ex + "->get" + role2 + "() != 0)\n" + 
                        "    { " + e2name + "* _old_value = " + ex + "->get" + role2 + "();\n" + 
                        "      _old_value->remove" + role1 + "(" + ex + ");\n" + 
-                       "      set<" + e1name + "*>* _old_role1 = " + attx + "->get" + role1 + "();\n" +
-                       "      for (set<" + e1name + "*>::iterator _p = _old_role1->begin(); _p != _old_role1->end(), ++_p)\n" + 
+                       "      std::set<" + e1name + "*>* _old_role1 = " + attx + "->get" + role1 + "();\n" +
+                       "      for (std::set<" + e1name + "*>::iterator _p = _old_role1->begin(); _p != _old_role1->end(), ++_p)\n" + 
                        "      { " + e1name + "* _p_xx = *_p;\n" + 
                        "        _p_xx->set" + role2 + "(0);\n" + 
                        "      }\n" + 
                        "    }\n" + 
-                       "    set<" + e1name + "*>* _exvect = new set<" + e1name + "*>();\n" + 
+                       "    std::set<" + e1name + "*>* _exvect = new std::set<" + e1name + "*>();\n" + 
                        "    _exvect->insert(" + ex + ");\n" + 
                        "    " + attx + "->set" + role1 + "(_exvect);\n";
         }
@@ -8607,7 +8607,7 @@ String qual = "";
     }
     else           // card2 == MANY or ZEROONE
     { String forheader = 
-              "    for (set<" + e2name + "*>::iterator _j = " + oldrole2xx + 
+              "    for (std::set<" + e2name + "*>::iterator _j = " + oldrole2xx + 
                     "->begin(); _j != " + oldrole2xx + "->end(); ++_j)\n" + 
               "    { " + entity2 + "* _yy = *_j;\n"; 
       Type coltype; 
@@ -8624,7 +8624,7 @@ String qual = "";
       { coltype = new Type("Set",null); 
         coltype.setElementType(new Type(entity2)); 
         apar = new Attribute(attx,new Type("Set",null),INTERNAL); 
-        t2 = "set<" + e2name + "*>*";
+        t2 = "std::set<" + e2name + "*>*";
       }
       apar.setElementType(new Type(entity2)); 
 
@@ -8653,7 +8653,7 @@ String qual = "";
               "      else { _yy->remove" + role1 + "(" + ex + "); }\n" + 
               "    }\n"; 
 
-          role1set = "    set<" + e1name + "*>* _xxNewValue = new set<" + e1name + "*>();\n" + 
+          role1set = "    std::set<" + e1name + "*>* _xxNewValue = new std::set<" + e1name + "*>();\n" + 
                        "    _xxNewValue->insert(" + ex + ");\n" + 
                        "    _xx->set" + role1 + "(_xxNewValue);\n"; 
           e1removexx = entity1 + "::removeAll" + nme + "(_xx->get" + role1 + "(),_xx);";
@@ -8681,7 +8681,7 @@ String qual = "";
       } 
       else 
       { setinverse = 
-          "  for (set<" + e2name + "*>::iterator _i = " + attx + "->begin(); _i != " + 
+          "  for (std::set<" + e2name + "*>::iterator _i = " + attx + "->begin(); _i != " + 
                   attx + "->end(); ++_i)\n" + 
           "  { " + entity2 + "* _xx = *_i;\n" + 
           "    if (UmlRsdsLib<" + e2name + "*>::isIn(_xx, " + oldrole2xx + ")) { }\n" + 
@@ -8879,7 +8879,7 @@ String qual = "";
     } 
     else 
     { res.add(" void set" + role2 + "(" + edec + 
-                   ", string _ind, set<" + e2name + "*>* " + val + ")\n  " +
+                   ", string _ind, std::set<" + e2name + "*>* " + val + ")\n  " +
               " { " + ex + "->set" + role2 + "(_ind, " + val + "); }\n"); 
     } 
     return res; 
@@ -9001,7 +9001,7 @@ String qual = "";
       insertop = "insert(" + oldrole2 + "->end(), "; 
     } 
     else 
-    { argtype = "set<" + e2name + "*>"; 
+    { argtype = "std::set<" + e2name + "*>"; 
       insertop = "insert("; 
     } 
 
@@ -9103,7 +9103,7 @@ String qual = "";
     else if (ordered)
     { ini = "new vector<" + e2name + "*>()"; }
     else 
-    { ini = "new set<" + e2name + "*>()"; }
+    { ini = "new std::set<" + e2name + "*>()"; }
 
     return op + ini + ");\n"; 
   } // order so multi are last?
@@ -9646,21 +9646,21 @@ String qual = "";
       "  }\n"; 
     } 
     else 
-    { res = "  static set<" + supname + "*>* closure" + e1name + role2 + 
-                                                    "(set<" + e1name + "*>* _r)\n" +
-            "  { set<" + supname + "*>* _path = new set<" + supname + "*>();\n" +  
-            "    for (set<" + e1name + "*>::iterator _i = _r->begin(); _i != _r->end(); _i++)\n" +  
+    { res = "  static std::set<" + supname + "*>* closure" + e1name + role2 + 
+                                                    "(std::set<" + e1name + "*>* _r)\n" +
+            "  { std::set<" + supname + "*>* _path = new std::set<" + supname + "*>();\n" +  
+            "    for (std::set<" + e1name + "*>::iterator _i = _r->begin(); _i != _r->end(); _i++)\n" +  
             "    { " + e1name + "* " + e1x + " = (*_i);\n" + 
             "      closure" + e1name + role2 + "(" + e1x + ", _path);\n" +  
             "    }\n" +  
             "    return _path;\n" +  
             "  }\n\n" +        
       "  static void closure" + e1name + role2 + "(" + e1name + "* " + e1x + 
-                                                ", set<" + supname + "*>* _path)\n" + 
+                                                ", std::set<" + supname + "*>* _path)\n" + 
       "  { if (UmlRsdsLib<" + supname + "*>::isIn(" + e1x + ", _path)) { return; }\n" + 
       "    _path->insert(" + e1x + ");\n" +  
-      "    set<" + e2name + "*>* " + rolex + " = " + e1x + "->get" + role2 + "();\n" +  
-      "    for (set<" + e2name + "*>::iterator _i = " + rolex + "->begin(); _i != " 
+      "    std::set<" + e2name + "*>* " + rolex + " = " + e1x + "->get" + role2 + "();\n" +  
+      "    for (std::set<" + e2name + "*>::iterator _i = " + rolex + "->begin(); _i != " 
                                                               + rolex + "->end(); _i++)\n" +  
       "    { " + e2name + "* " + e1xx + " = (*_i);\n" +  
       "      if (UmlRsdsLib<" + e1name + "*>::isIn(" + e1xx + ", " + e1s + "))\n" + 

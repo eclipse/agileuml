@@ -295,7 +295,9 @@ class BinaryExpression extends Expression
        return new BinaryExpression(operator,leftres,rightres); 
      } 
      else if (operator.equals("->append") || operator.equals("->including") ||
-              operator.equals("->prepend") || operator.equals("->excluding"))
+              operator.equals("->prepend") || operator.equals("->excluding") ||
+              operator.equals("->excludingAt") ||
+              operator.equals("->excludingFirst"))
      { leftres = left.checkConversions(propType, propElemType, interp); 
        rightres = right.checkConversions(propElemType, propElemType, interp); 
        return new BinaryExpression(operator,leftres,rightres); 
@@ -1001,7 +1003,10 @@ class BinaryExpression extends Expression
              operator.equals("->excludesAll") || operator.equals("->append") ||
              operator.equals("->prepend") || operator.equals("->select") || 
              operator.equals("->reject") || operator.equals("->including") ||
-             operator.equals("->excluding") || operator.equals("->includes") ||
+             operator.equals("->excluding") ||
+             operator.equals("->excludingAt") ||
+             operator.equals("->excludingFirst") ||
+             operator.equals("->includes") ||
              operator.equals("->excludes") || operator.equals("->pow") || 
              operator.equals("->sortedBy") || operator.equals("->hasSuffix") ||
              operator.equals("->hasPrefix") || "->isUnique".equals(operator) ||
@@ -1876,7 +1881,11 @@ class BinaryExpression extends Expression
         operator.equals("->selectMaximals") || operator.equals("->selectMinimals") ||
         "|selectMinimals".equals(operator) ||  
         "|selectMaximals".equals(operator) ||
-        operator.equals("->append") || operator.equals("->including") || operator.equals("->restrict") || 
+        operator.equals("->append") || 
+        operator.equals("->including") || 
+        operator.equals("->restrict") || 
+        operator.equals("->excludingAt") ||
+        operator.equals("->excludingFirst") ||
         operator.equals("->excluding")) 
     { return false; } 
 
@@ -2761,9 +2770,9 @@ public void findClones(java.util.Map clones, String rule, String op)
 
       if (et == null)
       { System.err.println("!!! TYPE ERROR: null element type in " + lexp.right + " in " + this); 
-        JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this, 
-                                      "Type error", JOptionPane.ERROR_MESSAGE);
-        et = new Type("void", null); 
+        // JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this, 
+        //   "Type error", JOptionPane.ERROR_MESSAGE);
+        et = new Type("OclAny", null); 
       } 
 
       context.addAll(contexts); 
@@ -2813,12 +2822,19 @@ public void findClones(java.util.Map clones, String rule, String op)
 
       // lexp.right must be multiple 
 
-      Type et = lexp.right.elementType; 
+      Type et = lexp.right.elementType;
+      if (et == null) 
+      { Type tt = lexp.right.getType(); 
+        if (tt != null) 
+        { et = tt.getElementType(); } 
+        System.out.println(">> Type of " + lexp.right + " = " + tt + "(" + et + ")"); 
+      }  
+
       if (et == null)
-      { System.err.println("!!! TYPE ERROR: no element type for " + lexp.right + " in " + this); 
-        JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this, 
-                                      "Type error", JOptionPane.ERROR_MESSAGE); 
-        et = new Type("void", null); 
+      { System.err.println("Warning: no element type for " + lexp.right + " in " + this); 
+        // JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this, 
+        //      "Type error", JOptionPane.ERROR_MESSAGE); 
+        et = new Type("OclAny", null); 
       } 
 
       //  && et.isEntity())
@@ -2856,8 +2872,8 @@ public void findClones(java.util.Map clones, String rule, String op)
       { scontext.add(stleft.getEntity()); }   
       else if (seltype == null) 
       { System.err.println("!!! TYPE ERROR: no valid element type in " + left + " in " + this); 
-        JOptionPane.showMessageDialog(null, "no element type for " + left + " in " + this, 
-                                      "Type error", JOptionPane.ERROR_MESSAGE);
+        // JOptionPane.showMessageDialog(null, "no element type for " + left + " in " + this, 
+        //        "Type error", JOptionPane.ERROR_MESSAGE);
       } 
 
       scontext.addAll(contexts); 
@@ -2880,9 +2896,10 @@ public void findClones(java.util.Map clones, String rule, String op)
       else if (ctleft != null && ctleft.isEntity())
       { ccontext.add(ctleft.getEntity()); }   
       else if (celtype == null) 
-      { System.err.println("!!! TYPE ERROR: no element type in " + left + " in " + this); 
-        JOptionPane.showMessageDialog(null, "no element type for " + left + " in " + this, 
-                                      "Type error", JOptionPane.ERROR_MESSAGE);
+      { System.err.println("Warning: no element type in " + left + " in " + this); 
+        // JOptionPane.showMessageDialog(null, "no element type for " + left + " in " + this, 
+        //      "Type error", JOptionPane.ERROR_MESSAGE);
+        celtype = new Type("OclAny", null); 
       } 
 
       ccontext.addAll(contexts); 
@@ -2900,11 +2917,19 @@ public void findClones(java.util.Map clones, String rule, String op)
 
       boolean lrt = lexp.right.typeCheck(types,entities,contexts,env);
       Type et = lexp.right.elementType;
+
+      if (et == null) 
+      { Type tt = lexp.right.getType(); 
+        if (tt != null) 
+        { et = tt.getElementType(); } 
+        System.out.println(">> Type of " + lexp.right + " = " + tt + "(" + et + ")"); 
+      }  
+
       if (et == null)
-      { System.err.println("!! TYPE ERROR: no element type for " + lexp.right + " in " + this);                     
-	    JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this,
-		                                       "Type error", JOptionPane.ERROR_MESSAGE);
-        et = new Type("void", null); 
+      { System.err.println("Warning: no element type for " + lexp.right + " in " + this);                     
+        // JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this,
+        //  "Type error", JOptionPane.ERROR_MESSAGE);
+        et = new Type("OclAny", null); 
       }
 
       context.addAll(contexts);
@@ -2940,9 +2965,10 @@ public void findClones(java.util.Map clones, String rule, String op)
       else if (ctleft != null && ctleft.isEntity())
       { ccontext.add(ctleft.getEntity()); }   
       else if (celtype == null) 
-      { System.err.println("!!! TYPE ERROR: no element type in " + left + " in " + this); 
-        JOptionPane.showMessageDialog(null, "no element type for " + left + " in " + this, 
-                                      "Type error", JOptionPane.ERROR_MESSAGE);
+      { System.err.println("Warning: no element type in " + left + " in " + this); 
+        // JOptionPane.showMessageDialog(null, "no element type for " + left + " in " + this, 
+        //  "Type error", JOptionPane.ERROR_MESSAGE);
+        celtype = new Type("OclAny", null); 
       } 
 
       ccontext.addAll(contexts); 
@@ -2961,11 +2987,11 @@ public void findClones(java.util.Map clones, String rule, String op)
       boolean lrt = lexp.right.typeCheck(types,entities,contexts,env);
       Type et = lexp.right.elementType;
       if (et == null)
-      { System.err.println("!! TYPE ERROR: no element type for " + lexp.right + " in " + this);
+      { System.err.println("Warning: no element type for " + lexp.right + " in " + this);
                      
-        JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this,
-		            "Type error", JOptionPane.ERROR_MESSAGE);
-        et = new Type("void", null); 
+        // JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this,
+        //   "Type error", JOptionPane.ERROR_MESSAGE);
+        et = new Type("OclAny", null); 
       }
 
       context.addAll(contexts);
@@ -3035,7 +3061,7 @@ public void findClones(java.util.Map clones, String rule, String op)
       } 
       else 
       { System.err.println("!! ERROR: no entity for " + this);
-	    elementType = left.elementType; 
+        elementType = left.elementType; 
         type.setElementType(elementType); 
       } 
       multiplicity = ModelElement.MANY;
@@ -3127,12 +3153,15 @@ public void findClones(java.util.Map clones, String rule, String op)
         if (type != null) 
         { elementType = type.getElementType(); } 
         else 
-        { System.err.println("ERROR: no element type in " + this + " " + env); 
+        { System.err.println("Warning: no element type in " + this + " " + env); 
           Attribute leftvar = (Attribute) ModelElement.lookupByName(left + "", env); 
           if (leftvar != null) 
           { type = leftvar.getType(); 
             elementType = leftvar.getElementType(); 
           }
+
+          if (elementType == null) 
+          { elementType = new Type("OclAny", null); } 
         }  
       } 
     }  // and right must be of type int. 
@@ -3161,11 +3190,15 @@ public void findClones(java.util.Map clones, String rule, String op)
     else if (operator.equals("\\/") || operator.equals("^") || operator.equals("->append") ||
              operator.equals("->union") || operator.equals("->including") ||
              operator.equals("->symmetricDifference") || 
-             operator.equals("->excluding") || operator.equals("->prepend") || 
-             operator.equals("->intersection") || operator.equals("/\\"))
+             operator.equals("->excluding") ||
+             operator.equals("->excludingAt") ||
+             operator.equals("->excludingFirst") ||
+             operator.equals("->prepend") || 
+             operator.equals("->intersection") || 
+             operator.equals("/\\"))
     { tcSetOps(tleft,tright,eleft,eright); }
     else if (operator.equals("*") || operator.equals("mod") ||
-             operator.equals("/"))
+             operator.equals("div") || operator.equals("/"))
     { tcMathOps(tleft,tright,eleft,eright); }
     else if (operator.equals("|->"))
     { type = tright; } // hack
@@ -3236,10 +3269,10 @@ public void findClones(java.util.Map clones, String rule, String op)
     else 
     { type = Expression.getOperatorType(operator); } 
 
-    // System.out.println("Type checked: " + this + " Type is: " + type);
     if (type == null)
-    { JOptionPane.showMessageDialog(null, "No type found for " + this, 
-                                    "Type error", JOptionPane.WARNING_MESSAGE);
+    { System.out.println("Warning: No type found for " + this); 
+      type = new Type("OclAny", null);  
+                                    
       return false; 
     }
     return true;
@@ -3295,8 +3328,8 @@ public void findClones(java.util.Map clones, String rule, String op)
       }
       else 
       { System.err.println("!!! TYPE ERROR: Unable to type: " + this);
-        JOptionPane.showMessageDialog(null, "Unable to type " + this, 
-                                      "Type error", JOptionPane.ERROR_MESSAGE);
+        // JOptionPane.showMessageDialog(null, "Unable to type " + this, 
+        //         "Type error", JOptionPane.ERROR_MESSAGE);
         type = null; 
       }
     }
@@ -3340,7 +3373,7 @@ public void findClones(java.util.Map clones, String rule, String op)
       { System.err.println("TYPE ERROR: disallowed types " + tleft + " " + tright + " in +: " + this);
         // JOptionPane.showMessageDialog(null, "Disallowed types in " + this, 
         //                              "Type error", JOptionPane.ERROR_MESSAGE);
-        type = new Type("void", null); 
+        type = new Type("OclAny", null); 
       }
     }
   }
@@ -3407,7 +3440,7 @@ public void findClones(java.util.Map clones, String rule, String op)
         type = tright;
       }
       else 
-      { type = new Type("void", null); }
+      { type = new Type("OclAny", null); }
     }
     Type etleft = left.getElementType(); 
     Type etright = right.getElementType(); 
@@ -3448,6 +3481,8 @@ public void findClones(java.util.Map clones, String rule, String op)
       }  
     } 
     else if (operator.equals("->excluding") || 
+             operator.equals("->excludingAt") ||
+             operator.equals("->excludingFirst") ||
              operator.equals("->including") ||
              operator.equals("->restrict") || 
              operator.equals("->intersection") ||
@@ -3523,7 +3558,10 @@ public void findClones(java.util.Map clones, String rule, String op)
     if (operator.equals("->intersection") || 
         operator.equals("/\\") || 
         operator.equals("->restrict") ||
-        operator.equals("->excluding"))
+        operator.equals("->excluding") ||
+        operator.equals("->excludingAt") ||                 
+        operator.equals("->excludingFirst")
+       )
     { elementType = etleft;
       type.setElementType(elementType); 
     } 
@@ -4300,10 +4338,16 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "!(" + lqf + ".contains(" + rw + "))"; }
       else if (operator.equals("->excluding"))
       { res = "Set.subtract(" + lqf + "," + rss + ")"; }
+      else if (operator.equals("->excludingAt"))
+      { res = "Set.removeAt(" + lqf + "," + rqf + ")"; }
+      else if (operator.equals("->excludingFirst"))
+      { res = "Set.removeFirst(" + lqf + "," + rw + ")"; }
       else if (operator.equals("->append"))
       { res = "Set.concatenate(" + lqf + "," + rss + ")"; }
-      else if (operator.equals("->including"))
+      else if (operator.equals("->including") && left.isSetValued())
       { res = "Set.union(" + lqf + "," + rss + ")"; }
+      else if (operator.equals("->including") && left.isSequenceValued())
+      { res = "Set.concatenate(" + lqf + "," + rss + ")"; }
       else if (operator.equals("->prepend"))
       { 
         res = "Set.concatenate(" + rss + "," + lqf + ")"; 
@@ -4642,6 +4686,10 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "!(" + lqf + ".contains(" + rw + "))"; }
       else if (operator.equals("->excluding"))
       { res = "Set.subtract(" + lqf + "," + rss + ")"; }
+      else if (operator.equals("->excludingAt"))
+      { res = "Set.removeAt(" + lqf + "," + rqf + ")"; }
+      else if (operator.equals("->excludingFirst"))
+      { res = "Set.removeFirst(" + lqf + "," + rw + ")"; }
       else if (operator.equals("->append"))
       { res = "Set.concatenate(" + lqf + "," + rss + ")"; }
       else if (operator.equals("->including"))
@@ -4669,6 +4717,10 @@ public boolean conflictsWithIn(String op, Expression el,
         { res = "Set.union(" + lqf + "," + rs + ")"; } 
         else if (operator.equals("->excluding"))
         { res = "Set.subtract(" + lqf + "," + rs + ")"; } 
+        else if (operator.equals("->excludingAt"))
+        { res = "Set.removeAt(" + lqf + "," + rqf + ")"; } 
+        else if (operator.equals("->excludingFirst"))
+        { res = "Set.removeFirst(" + lqf + "," + rw + ")"; } 
         else if (operator.equals("->prepend"))
         { res = "Set.concatenate(" + rs + "," + lqf + ")"; } 
         else if (operator.equals("->append"))
@@ -4974,6 +5026,10 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "!(" + lqf + ".contains(" + rw + "))"; }
       else if (operator.equals("->excluding"))
       { res = "Ocl.subtract(" + lqf + "," + rss + ")"; }
+      else if (operator.equals("->excludingAt"))
+      { res = "Ocl.removeAt(" + lqf + "," + rqf + ")"; }
+      else if (operator.equals("->excludingFirst"))
+      { res = "Ocl.removeFirst(" + lqf + "," + rw + ")"; }
       else if (operator.equals("->append"))
       { res = "Ocl.concatenate(" + lqf + "," + rss + ")"; }
       else if (operator.equals("->including"))
@@ -5001,6 +5057,8 @@ public boolean conflictsWithIn(String op, Expression el,
         { res = "Ocl.union(" + lqf + "," + rs + ")"; } 
         else if (operator.equals("->excluding"))
         { res = "Ocl.subtract(" + lqf + "," + rs + ")"; } 
+        else if (operator.equals("->excluding"))
+        { res = "Ocl.removeAt(" + lqf + "," + rqf + ")"; } 
         else if (operator.equals("->prepend"))
         { res = "Ocl.concatenate(" + rs + "," + lqf + ")"; } 
         else if (operator.equals("->append"))
@@ -5287,7 +5345,13 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "!(" + lqf + ".Contains(" + rw + "))"; }
       else if (operator.equals("->excluding"))
       { res = "SystemTypes.subtract(" + lqf + "," + rss + ")"; }
+      else if (operator.equals("->excludingAt"))
+      { res = "SystemTypes.removeAt(" + lqf + "," + rqf + ")"; }
+      else if (operator.equals("->excludingFirst"))
+      { res = "SystemTypes.removeFirst(" + lqf + "," + rw + ")"; }
       else if (operator.equals("->append"))
+      { res = "SystemTypes.concatenate(" + lqf + "," + rss + ")"; }
+      else if (operator.equals("->including") && left.isOrdered())
       { res = "SystemTypes.concatenate(" + lqf + "," + rss + ")"; }
       else if (operator.equals("->including"))
       { res = "SystemTypes.union(" + lqf + "," + rss + ")"; }
@@ -5554,7 +5618,7 @@ public boolean conflictsWithIn(String op, Expression el,
       return "UmlRsdsLib<" + right + "*>::isIn(" + lqf + ", " + rinstances + ")";
     } 
 	
-	if (right.umlkind == CLASSID && 
+    if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsTypeOf"))  
     { String rinstances = cont + "get" + ("" + right).toLowerCase() + "_s()"; 
       return "UmlRsdsLib<" + right + "*>::isIn(" + lqf + ", " + rinstances + ")";
@@ -5666,13 +5730,23 @@ public boolean conflictsWithIn(String op, Expression el,
       { String rss = right.makeSetCPP(rw);
         res = "UmlRsdsLib<" + lcet + ">::subtract(" + lqf + "," + rss + ")";  
       }
+      else if (operator.equals("->excludingAt"))
+      { res = "UmlRsdsLib<" + lcet + ">::removeAt(" + lqf + "," + rqf + ")"; }
+      else if (operator.equals("->excludingFirst"))
+      { res = "UmlRsdsLib<" + lcet + ">::removeFirst(" + lqf + "," + rw + ")"; }
       else if (operator.equals("->append"))   // Only for sequences
       { String rss = right.makeSequenceCPP(rw);
         res = "UmlRsdsLib<" + lcet + ">::concatenate(" + lqf + "," + rss + ")"; 
       }
       else if (operator.equals("->including")) // Only for sets
-      { String rss = right.makeSetCPP(rw);
-        res = "UmlRsdsLib<" + lcet + ">::unionSet(" + lqf + "," + rss + ")"; 
+      { if (left.isOrdered())
+        { String rssq = right.makeSequenceCPP(rw);
+          res = "UmlRsdsLib<" + lcet + ">::concatenate(" + rssq + "," + lqf + ")"; 
+        } 
+        else 
+        { String rss = right.makeSetCPP(rw);
+          res = "UmlRsdsLib<" + lcet + ">::unionSet(" + lqf + "," + rss + ")";
+        }  
       }
       else if (operator.equals("->prepend")) // Only for sequences
       { String rss = right.makeSequenceCPP(rw);
@@ -5780,9 +5854,9 @@ public boolean conflictsWithIn(String op, Expression el,
       existsleft = left; 
       // localentity = left.getEntity(); // or entity of the elementType
       if (left.elementType == null) 
-      { System.err.println("DESIGN ERROR: no element type for: " + left); 
-        JOptionPane.showMessageDialog(null, "no element type for " + left + " in " + this, 
-                                      "Design error", JOptionPane.ERROR_MESSAGE);
+      { System.err.println("Warning: no element type for: " + left); 
+        // JOptionPane.showMessageDialog(null, "no element type for " + left + " in " + this, 
+        // "Design error", JOptionPane.ERROR_MESSAGE);
       } 
       else
       { localentity = left.elementType.getEntity(); }  
@@ -5794,9 +5868,9 @@ public boolean conflictsWithIn(String op, Expression el,
       existsvar = beleft.left + ""; 
       // localentity = beleft.right.getEntity(); // or entity of the elementType
       if (beleft.right == null || beleft.right.elementType == null)
-      { System.err.println("DESIGN ERROR: no element type of: " + beleft); 
-        JOptionPane.showMessageDialog(null, "no element type for " + beleft + " in " + this, 
-                                      "Design error", JOptionPane.ERROR_MESSAGE);
+      { System.err.println("Warning: no element type of: " + beleft); 
+        // JOptionPane.showMessageDialog(null, "no element type for " + beleft + " in " + this, 
+        // "Design error", JOptionPane.ERROR_MESSAGE);
       }
       else  
       { localentity = beleft.right.elementType.getEntity(); }  
@@ -9489,10 +9563,10 @@ public boolean conflictsWithIn(String op, Expression el,
     { res = "Set.subtract(" + lqf + "," + rqf + ")"; } 
     else if (operator.equals("\\/") || operator.equals("->union")) 
     { if (left.isMap())
-	  { res = "Set.unionMap(" + lqf + "," + rqf + ")"; }
-	  else if (left.isOrdered() && right.isOrdered())
+      { res = "Set.unionMap(" + lqf + "," + rqf + ")"; }
+      else if (left.isOrdered())
       { res = "Set.concatenate(" + lqf + ", " + rqf + ")"; } 
-	  else 
+      else 
       { res = "Set.union(" + lqf + "," + rqf + ")"; }
     } 
     else if (operator.equals("->including"))
@@ -9681,8 +9755,8 @@ public boolean conflictsWithIn(String op, Expression el,
     { res = "SystemTypes.subtract(" + lqf + "," + rqf + ")"; } 
     else if (operator.equals("\\/") || operator.equals("->union")) 
     { if (left.isMap() && right.isMap())
-	  { res = "SystemTypes.unionMap(" + lqf + "," + rqf + ")"; }
-	  else if (left.isOrdered() && right.isOrdered())
+      { res = "SystemTypes.unionMap(" + lqf + "," + rqf + ")"; }
+      else if (left.isOrdered())
       { res = "SystemTypes.concatenate(" + lqf + ", " + rqf + ")"; } 
       else 
       { res = "SystemTypes.union(" + lqf + "," + rqf + ")"; }
@@ -9760,9 +9834,9 @@ public boolean conflictsWithIn(String op, Expression el,
     else if (operator.equals("\\/") || operator.equals("->union"))
     { if (left.isMap() && right.isMap())
 	  { res = "UmlRsdsLib<" + lcet + ">::unionMap(" + lqf + "," + rqf + ")"; }
-	  else if (left.isOrdered() && right.isOrdered())
+	  else if (left.isOrdered())
       { res = "UmlRsdsLib<" + lcet + ">::concatenate(" + lqf + ", " + rqf + ")"; } 
-      else // BOTH sets
+      else // left is a set
       { res = "UmlRsdsLib<" + lcet + ">::unionSet(" + lqf + ", " + rqf + ")"; }
     } 
     else if (operator.equals("/\\") || operator.equals("->intersection"))
@@ -12957,7 +13031,9 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   public boolean isMultiple()
   { if (operator.equals("\\/") || operator.equals("->union") ||
         operator.equals("->intersection") || operator.equals("->prepend") ||
-        operator.equals("->including") || operator.equals("->excluding") || 
+        operator.equals("->including") || operator.equals("->excluding") ||
+        operator.equals("->excludingAt") || 
+        operator.equals("->excludingFirst") || 
         operator.equals("/\\") || operator.equals("^") || operator.equals("->append") ||
         (operator.equals("-") && left.isMultiple())) 
     { return true; }
@@ -12971,11 +13047,15 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
         operator.equals("->split") || operator.equals("->allMatches"))
     { return true; } 
 
+    // And map operators: 
+    if (operator.equals("->restrict")) 
+    { return true; } 
+
     if (operator.equals("->at") || operator.equals("->any") || operator.equals("|A"))
     { return Type.isCollectionType(left.elementType); } 
 
     if (operator.equals("let"))
-	{ return right.isMultiple(); }
+    { return right.isMultiple(); }
 	
     return false;
   }
@@ -12985,10 +13065,14 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     if (operator.equals("->sortedBy")) { return true; } 
 
     if (operator.equals("\\/") || operator.equals("->union")) 
-    { return left.isSorted() && right.isSorted(); } 
+    { return left.isSorted() && right.isSorted(); }
+    // Union of two sorted collections uses a merge sort
+    // merging.  
 
     if (operator.equals("->intersection") ||
-        operator.equals("->including") || operator.equals("->excluding") || 
+        operator.equals("->including") || operator.equals("->excluding") ||
+        operator.equals("->excludingAt") ||
+        operator.equals("->excludingFirst") || 
         operator.equals("/\\") || 
         (operator.equals("-") && left.isMultiple()) ) 
     { return left.isSorted(); }
@@ -12996,7 +13080,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     if (operator.equals("|") || operator.equals("|R"))
     { return ((BinaryExpression) left).right.isSorted(); }
  
-    if (operator.equals("->select") || operator.equals("->reject"))
+    if (operator.equals("->select") || operator.equals("->reject") || operator.equals("->restrict"))
     { return left.isSorted(); } 
 	
 	if (operator.equals("let"))
@@ -13018,8 +13102,13 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     { return left.isOrdered() && right.isOrdered(); } 
 
     if (operator.equals("->intersection") || operator.equals("->prepend") ||
-        operator.equals("->including") || operator.equals("->excluding") || 
-        operator.equals("/\\") || operator.equals("^") || operator.equals("->append") ||
+        operator.equals("->including") || 
+        operator.equals("->excluding") || 
+        operator.equals("->excludingAt") ||
+        operator.equals("->excludingFirst") || 
+        operator.equals("/\\") || 
+        operator.equals("^") || 
+        operator.equals("->append") ||
         (operator.equals("-") && left.isMultiple())) 
     { return left.isOrdered(); }
 
@@ -13036,10 +13125,10 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     { return Type.isSequenceType(left.elementType); } 
 
     if (operator.equals("|A"))
-	{ return Type.isSequenceType(((BinaryExpression) left).right.elementType); } 
+    { return Type.isSequenceType(((BinaryExpression) left).right.elementType); } 
 
-	if (operator.equals("let"))
-	{ return right.isOrdered(); }
+    if (operator.equals("let"))
+    { return right.isOrdered(); }
 
     return false;
   }
@@ -13054,7 +13143,9 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     { return left.isOrderedB() && right.isOrderedB(); } 
 
     if (operator.equals("->intersection") || operator.equals("->prepend") ||
-        operator.equals("->including") || operator.equals("->excluding") || 
+        operator.equals("->including") || operator.equals("->excluding") ||
+        operator.equals("->excludingAt") ||
+        operator.equals("->excludingFirst") ||  
         operator.equals("/\\") || operator.equals("^") || operator.equals("->append") ||
         (operator.equals("-") && left.isMultiple())) 
     { return left.isOrderedB(); }
@@ -13360,7 +13451,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     } // or ApplySet if objectRef.isMultiple()
     res.setBrackets(needsBracket); 
     return res; 
-  } 
+  } // ->excludingAt, ->restrict, etc. 
 
   private BExpression selectBinvariantForm(BExpression bel, BExpression ber, 
                                            java.util.Map env, boolean local)

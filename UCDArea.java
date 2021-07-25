@@ -295,10 +295,42 @@ public class UCDArea extends JPanel
   } 
 
   public void addImport(String imprt) 
-  { if (importList.contains(imprt)) { } 
-    else 
-    { importList.add(imprt); } 
-  } 
+  { // if (importList.contains(imprt)) { } 
+    // else 
+    // { importList.add(imprt); }
+
+    // Check for imprt.km3 in libraries 
+    // and load it if present.
+
+    try 
+    { JFileChooser fc = new JFileChooser();
+      File startingpoint = new File("./libraries");
+      fc.setCurrentDirectory(startingpoint);
+      fc.setDialogTitle("Select a .km3 file");
+      // fc.addChoosableFileFilter(new TextFileFilter()); 
+
+      File file = null; 
+	  
+      int returnVal = fc.showOpenDialog(null);
+      if (returnVal == JFileChooser.APPROVE_OPTION)
+      { file = fc.getSelectedFile(); }
+      else
+      { System.err.println("Load aborted");
+        return; 
+      }
+	  
+      if (file == null) { return; }
+	  
+      String nme = file.getName(); 
+   
+      System.out.println(">>> Loading library " + nme);
+ 
+      loadKM3FromFile(file);  
+	   
+    } catch(Exception e)
+      { System.err.println(">>> No library found"); }
+  }
+
 
 
   public void typeCheck()
@@ -3013,6 +3045,7 @@ public class UCDArea extends JPanel
     Vector auxcstls = new Vector(); 
     auxcstls.add("cgswiftmain.cstl"); 
     auxcstls.add("cgprotocol.cstl"); 
+    auxcstls.add("catchTestSwift.cstl");
 
     CGSpec cgs = loadCSTL("cgSwift.cstl",auxcstls); 
 
@@ -3521,6 +3554,7 @@ public class UCDArea extends JPanel
     Vector auxcstls = new Vector(); 
     auxcstls.add("cgswiftmain.cstl"); 
     auxcstls.add("cgprotocol.cstl"); 
+    auxcstls.add("catchTestSwift.cstl");
 
     CGSpec cgs = loadCSTL("cgSwift.cstl",auxcstls); 
     
@@ -3981,6 +4015,7 @@ public class UCDArea extends JPanel
     auxcstls.add("cgmain.cstl"); 
     auxcstls.add("cginterface.cstl"); 
     auxcstls.add("jwrap.cstl"); 
+    auxcstls.add("catchTest.cstl");
 
     CGSpec cgs = loadCSTL("cgJava8.cstl",auxcstls); 
 
@@ -6128,7 +6163,10 @@ public class UCDArea extends JPanel
   { System.out.println("********** Available types are: ************"); 
     for (int i = 0; i < types.size(); i++) 
     { Type tt = (Type) types.get(i); 
-      System.out.println(tt.getName() + " = " + tt.getValues()); 
+      if (tt.isEnumerated())
+      { System.out.println(tt.getName() + " = " + tt.getValues()); } 
+      else 
+      { System.out.println(tt); }  
     } 
   } 
 
@@ -8224,6 +8262,8 @@ public class UCDArea extends JPanel
     out.println("using System.Text;"); 
     out.println("using System.Text.RegularExpressions;"); 
     out.println("using System.Linq;");
+    out.println("using System.Diagnostics;"); 
+
     out.println("using System.Threading.Tasks;");
     out.println("using System.Windows.Forms;\n\n");
 
@@ -8314,6 +8354,7 @@ public class UCDArea extends JPanel
     out2.println("#include <iostream>"); 
     out2.println("#include <fstream>"); 
     out2.println("#include <cmath>"); 
+    out2.println("#include <ctime>"); 
     out2.println("#include <algorithm>"); 
     out2.println("#include <regex>"); 
     out2.println("#include \"controller.h\""); 
@@ -8335,7 +8376,9 @@ public class UCDArea extends JPanel
 
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i); 
-      out.println("class " + ent.getName() + ";"); 
+      if (ent.isComponent() || ent.isExternal()) { } 
+      else 
+      { out.println("class " + ent.getName() + ";"); } 
     } 
 
     Vector orderedByInheritance = new Vector(); 
@@ -8689,7 +8732,9 @@ public void produceCUI(PrintWriter out)
   { out.println("using System;"); 
     out.println("using System.Collections;"); 
     out.println("using System.IO;"); 
-    out.println("using System.Linq;");  
+    out.println("using System.Linq;");
+     out.println("using System.Diagnostics;"); 
+  
     out.println("using System.Threading.Tasks;"); 
     out.println("using System.Windows.Forms;");
 
@@ -8929,7 +8974,10 @@ public void produceCUI(PrintWriter out)
 
     // out2.println(); 
     // out2.print("public "); 
+
     out2.println("using System;"); 
+    out2.println("using System.IO;"); 
+    out2.println("using System.Diagnostics;"); 
     out2.println("using System.Collections;\n\n");
     generateSystemTypesCSharp(out2);
   } 
@@ -9226,6 +9274,9 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);  
     mop = BSystemTypes.generateInsertAtOp(); 
     out.println("\n" + mop);  
+    mop = BSystemTypes.generateRemoveSetAtOps(); 
+    out.println("\n" + mop);  
+
     mop = BSystemTypes.generateIsIntegerOp(); 
     out.println("\n" + mop);  
     mop = BSystemTypes.generateIsRealOp(); 
@@ -9305,6 +9356,10 @@ public void produceCUI(PrintWriter out)
     // should use real sets
     out.println("  public class Set"); 
     out.println("  { \n"); 
+
+    String timeops = BSystemTypes.generateTimeOp();
+    out.println(timeops);
+
     String sops = BSystemTypes.getSelectOps();
     out.println(sops);
 
@@ -9432,6 +9487,10 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);  
     mop = BSystemTypes.generateInsertAtOpJava6(); 
     out.println("\n" + mop);  
+    mop = BSystemTypes.generateRemoveSetAtOpsJava6(); 
+    out.println("\n" + mop);  
+
+
     mop = BSystemTypes.generateIsIntegerOp(); 
     out.println("\n" + mop);  
     mop = BSystemTypes.generateIsRealOp(); 
@@ -9509,6 +9568,10 @@ public void produceCUI(PrintWriter out)
     // should use real sets
     out.println("  public class Ocl"); 
     out.println("  { \n"); 
+
+    String timeops = BSystemTypes.generateTimeOp();
+    out.println(timeops);
+
     String sops = BSystemTypes.getSelectOps();
     out.println(sops);
 
@@ -9636,6 +9699,10 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);  
     mop = BSystemTypes.generateInsertAtOpJava7(); 
     out.println("\n" + mop);  
+    mop = BSystemTypes.generateRemoveSetAtOpsJava7(); 
+    out.println("\n" + mop);  
+
+
     mop = BSystemTypes.generateIsIntegerOp(); 
     out.println("\n" + mop);  
     mop = BSystemTypes.generateIsRealOp(); 
@@ -9691,8 +9758,8 @@ public void produceCUI(PrintWriter out)
   { // out.println("using System;"); 
     // out.println("using System.Collections;\n\n");
 
-    if (systemName != null && systemName.length() > 0)
-    { out.println("namespace " + systemName + " {\n\n"); } 
+    // if (systemName != null && systemName.length() > 0)
+    // { out.println("namespace " + systemName + " {\n\n"); } 
 
     for (int i = 0; i < types.size(); i++)
     { Type t = (Type) types.get(i);
@@ -9707,6 +9774,11 @@ public void produceCUI(PrintWriter out)
     // should use real sets
     // out.println("  public class Set"); 
     // out.println("  { private ArrayList elements = new ArrayList();\n"); 
+
+    String timeops = BSystemTypes.generateTimeOpCSharp();
+    out.println(timeops);
+
+
     String sops = BSystemTypes.getSelectOps();
     out.println(sops);
 
@@ -9804,6 +9876,10 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);  
     mop = BSystemTypes.generateInsertAtOpCSharp(); 
     out.println("\n" + mop);  
+    mop = BSystemTypes.generateRemoveSetAtOpsCSharp(); 
+    out.println("\n" + mop);  
+
+
     mop = BSystemTypes.generateIsIntegerOpCSharp(); 
     out.println("\n" + mop);  
     mop = BSystemTypes.generateIsRealOpCSharp(); 
@@ -9853,8 +9929,8 @@ public void produceCUI(PrintWriter out)
     // out.println("  }"); 
 
     out.println("}");
-    if (systemName != null && systemName.length() > 0)
-    { out.println("}\n\n"); } 
+    // if (systemName != null && systemName.length() > 0)
+    // { out.println("}\n\n"); } 
 
   }
 
@@ -9877,6 +9953,9 @@ public void produceCUI(PrintWriter out)
     out.println("public: "); 
     
     // prototypes first
+
+    String timeops = BSystemTypes.generateTimeOpCPP();
+    out.println(timeops);
     
     // should use real sets
     String sops = BSystemTypes.getSelectOps();
@@ -9899,24 +9978,24 @@ public void produceCUI(PrintWriter out)
     String aops = BSystemTypes.getAnyOps();
     out.println(aops);
 
-    out.println("    static bool isIn(_T x, set<_T>* st)"); 
+    out.println("    static bool isIn(_T x, std::set<_T>* st)"); 
     out.println("    { return (st->find(x) != st->end()); }\n"); 
     out.println("    static bool isIn(_T x, vector<_T>* sq)"); 
     out.println("    { return (find(sq->begin(), sq->end(), x) != sq->end()); }\n"); 
 
-    out.println("    static bool isSubset(set<_T>* s1, set<_T>* s2)"); 
+    out.println("    static bool isSubset(std::set<_T>* s1, set<_T>* s2)"); 
     out.println("    { bool res = true; "); 
-    out.println("      for (set<_T>::iterator _pos = s1->begin(); _pos != s1->end(); ++_pos)"); 
+    out.println("      for (std::set<_T>::iterator _pos = s1->begin(); _pos != s1->end(); ++_pos)"); 
     out.println("      { if (isIn(*_pos, s2)) { } else { return false; } }"); 
     out.println("      return res; }\n\n"); 
-    out.println("    static bool isSubset(set<_T>* s1, vector<_T>* s2)"); 
+    out.println("    static bool isSubset(std::set<_T>* s1, vector<_T>* s2)"); 
     out.println("    { bool res = true; "); 
-    out.println("      for (set<_T>::iterator _pos = s1->begin(); _pos != s1->end(); ++_pos)"); 
+    out.println("      for (std::set<_T>::iterator _pos = s1->begin(); _pos != s1->end(); ++_pos)"); 
     out.println("      { if (isIn(*_pos, s2)) { } else { return false; } }"); 
     out.println("      return res; }\n\n"); 
 
-    out.println("    static set<_T>* makeSet(_T x)"); 
-    out.println("    { set<_T>* res = new set<_T>();"); 
+    out.println("    static std::set<_T>* makeSet(_T x)"); 
+    out.println("    { std::set<_T>* res = new std::set<_T>();"); 
     out.println("      if (x != NULL) { res->insert(x); }"); 
     out.println("      return res;"); 
     out.println("    }\n"); 
@@ -9924,20 +10003,20 @@ public void produceCUI(PrintWriter out)
     out.println("    { vector<_T>* res = new vector<_T>();"); 
     out.println("      if (x != NULL) { res->push_back(x); } return res;"); 
     out.println("    }\n"); 
-    out.println("    static set<_T>* addSet(set<_T>* s, _T x)"); 
+    out.println("    static std::set<_T>* addSet(std::set<_T>* s, _T x)"); 
     out.println("    { if (x != NULL) { s->insert(x); }"); 
     out.println("      return s; }\n"); 
     out.println("    static vector<_T>* addSequence(vector<_T>* s, _T x)"); 
     out.println("    { if (x != NULL) { s->push_back(x); }"); 
     out.println("      return s; }\n"); 
 
-    out.println("    static vector<_T>* asSequence(set<_T>* c)"); 
+    out.println("    static vector<_T>* asSequence(std::set<_T>* c)"); 
     out.println("    { vector<_T>* res = new vector<_T>();");
-    out.println("      for (set<_T>::iterator _pos = c->begin(); _pos != c->end(); ++_pos)"); 
+    out.println("      for (std::set<_T>::iterator _pos = c->begin(); _pos != c->end(); ++_pos)"); 
     out.println("      { res->push_back(*_pos); } "); 
     out.println("      return res; }\n"); 
-    out.println("    static set<_T>* asSet(vector<_T>* c)"); 
-    out.println("    { set<_T>* res = new set<_T>(); "); 
+    out.println("    static std::set<_T>* asSet(vector<_T>* c)"); 
+    out.println("    { std::set<_T>* res = new std::set<_T>(); "); 
     out.println("      for (vector<_T>::iterator _pos = c->begin(); _pos != c->end(); ++_pos)"); 
     out.println("      { res->insert(*_pos); } "); 
     out.println("      return res; \n"); 
@@ -10017,6 +10096,10 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);  
     mop = BSystemTypes.generateIndexOfOpCPP(); 
     out.println("\n" + mop);  
+    mop = BSystemTypes.generateRemoveSetAtOpsCPP(); 
+    out.println("\n" + mop);  
+
+
     mop = BSystemTypes.generateUCLCOpsCPP(); 
     out.println("\n" + mop);  
     mop = BSystemTypes.generateSWEWOpsCPP(); 
@@ -10308,7 +10391,7 @@ public void produceCUI(PrintWriter out)
     { Entity e = (Entity) entities.get(i);
       if (e.hasStereotype("external") || e.hasStereotype("externalApp")) { continue; } 
 
-      Vector v = e.sensorOperationsCode(constraints,entities,types);  // Java6?
+      Vector v = e.sensorOperationsCodeJava6(constraints,entities,types); 
       v.addAll(e.associationOperationsCodeJava6(constraints,entities,types)); 
       for (int j = 0; j < v.size(); j++)
       { String op = (String) v.get(j);
@@ -11774,11 +11857,17 @@ public void produceCUI(PrintWriter out)
       return; 
     } 
 
+    System.out.println(xx.toKM3()); 
+    System.out.println(); 
+    System.out.println(); 
+
     String tt = xx.cg(spec); 
     System.out.println(tt); 
     System.out.println(); 
 
     System.out.println(xx.toKM3()); 
+    System.out.println(); 
+    System.out.println(); 
 
   } 
 

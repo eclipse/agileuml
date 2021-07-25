@@ -621,7 +621,9 @@ public class SetExpression extends Expression
     elementType = Type.determineType(elements); 
     type.setElementType(elementType); 
     if (elementType == null) 
-    { System.out.println("!!! ERROR: cannot determine element type of " + this); } 
+    { System.out.println("Warning: cannot determine element type of " + this);
+      elementType = new Type("OclAny", null); 
+    } 
 
     umlkind = VALUE; // ???
     multiplicity = ModelElement.MANY; 
@@ -637,7 +639,7 @@ public class SetExpression extends Expression
       Entity eent = e.getEntity(); 
       if (entity == null)
       { entity = eent; 
-        System.out.println(">>!! No entity for: " + e); 
+        System.out.println(">> Warning!!: No entity for: " + e); 
       } 
       else if (eent != null && Entity.isAncestor(eent,entity))
       { entity = eent; } // most general entity of the elements

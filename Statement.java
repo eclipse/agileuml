@@ -22,6 +22,9 @@ implements Cloneable
   public static final int WHILE = 0; 
   public static final int FOR = 1; 
 
+  public static final String[] spaces = { "", "  ", "    ", "      ", "        ", "          ", "            ", "              ", "                ", "                  ", "                    " }; 
+  // spaces[i] is i*2 spaces
+
   public void setEntity(Entity e)
   { entity = e; } 
 
@@ -587,7 +590,7 @@ class ReturnStatement extends Statement
 
   public String updateForm(java.util.Map env, boolean local, Vector types, Vector entities,
                            Vector vars)
-  { String res = "  return"; 
+  { String res = "    return"; 
     if (value != null)
     { res = res + " " + value.queryForm(env,local); } 
     res = res + ";"; 
@@ -595,7 +598,7 @@ class ReturnStatement extends Statement
   }  
 
   public String updateFormJava6(java.util.Map env, boolean local)
-  { String res = "  return"; 
+  { String res = "    return"; 
     if (value != null)
     { res = res + " " + value.queryFormJava6(env,local); } 
     res = res + ";"; 
@@ -603,7 +606,7 @@ class ReturnStatement extends Statement
   }  
 
   public String updateFormJava7(java.util.Map env, boolean local)
-  { String res = "  return"; 
+  { String res = "    return"; 
     if (value != null)
     { res = res + " " + value.queryFormJava7(env,local); } 
     res = res + ";"; 
@@ -611,7 +614,7 @@ class ReturnStatement extends Statement
   }  
 
   public String updateFormCSharp(java.util.Map env, boolean local)
-  { String res = "  return"; 
+  { String res = "    return"; 
     if (value != null)
     { res = res + " " + value.queryFormCSharp(env,local); } 
     res = res + ";"; 
@@ -619,7 +622,7 @@ class ReturnStatement extends Statement
   }  
 
   public String updateFormCPP(java.util.Map env, boolean local)
-  { String res = "  return"; 
+  { String res = "    return"; 
     if (value != null)
     { res = res + " " + value.queryFormCPP(env,local); } 
     res = res + ";"; 
@@ -1235,7 +1238,7 @@ class InvocationStatement extends Statement
           if (assignsTo != null && assignsTo.length() > 0)
           { return call + " = " + uf; } 
           else 
-          { return "   " + uf; }  
+          { return "    " + uf; }  
         }
       }
       else 
@@ -1259,7 +1262,7 @@ class InvocationStatement extends Statement
           if (assignsTo != null && assignsTo.length() > 0)
           { return call + " = " + uf; } 
           else 
-          { return "   " + uf; }  
+          { return "    " + uf; }  
         }
       }
       else 
@@ -1283,7 +1286,7 @@ class InvocationStatement extends Statement
           if (assignsTo != null && assignsTo.length() > 0)
           { return call + " = " + uf; } 
           else 
-          { return "   " + uf; }  
+          { return "    " + uf; }  
         }
       }
       else 
@@ -1307,7 +1310,7 @@ class InvocationStatement extends Statement
           if (assignsTo != null && assignsTo.length() > 0)
           { return call + " = " + uf; } 
           else 
-          { return "   " + uf; }  
+          { return "    " + uf; }  
         }
       }
       else 
@@ -1332,7 +1335,7 @@ class InvocationStatement extends Statement
           if (assignsTo != null && assignsTo.length() > 0)
           { return call + " = " + uf; } 
           else 
-          { return "   " + uf; }  
+          { return "    " + uf; }  
         }
       }
       else 
@@ -1356,7 +1359,7 @@ class InvocationStatement extends Statement
           if (assignsTo != null && assignsTo.length() > 0)
           { return call + " = " + uf; } 
           else 
-          { return "   " + uf; }  
+          { return "    " + uf; }  
         }
       }
       else 
@@ -2105,14 +2108,18 @@ class WhileStatement extends Statement
 
  
   public void displayJava(String t) 
-  { if (brackets)
-    { System.out.println(" ( while ( " + loopTest.toJava() + " )"); 
+  { String loop = "while"; 
+    if (loopKind == FOR)
+    { loop = "for"; } 
+
+    if (brackets)
+    { System.out.println(" ( " + loop + " ( " + loopTest.toJava() + " )"); 
       System.out.println("   {\n "); 
       body.displayJava(t); 
       System.out.println("   } )"); 
     } 
     else 
-    { System.out.println("  while ( " + loopTest.toJava() + " )"); 
+    { System.out.println("  " + loop + " ( " + loopTest.toJava() + " )"); 
       System.out.println("  {\n "); 
       body.displayJava(t); 
       System.out.println("  }");
@@ -2314,10 +2321,12 @@ class WhileStatement extends Statement
         lr.setIsEvent(); 
         lr.setParameters(null);  
         lr.type = loopRange.type; 
-        lr.elementType = loopRange.elementType; 
-        lr.setObjectRef(loopRange); 
+        lr.elementType = loopRange.elementType;
+        BasicExpression lrang = (BasicExpression) loopRange.clone(); 
+        lrang.setObjectRef(null);  
+        lr.setObjectRef(lrang); 
         result.loopRange = lr; 
-      } 
+      } // only if loopRange.objectRef == null
     } 
     result.body = bdy; 
     return result; 
@@ -2336,7 +2345,7 @@ class WhileStatement extends Statement
     { if (loopVar != null && loopRange != null)
       { String lv = loopVar.queryForm(new java.util.HashMap(), local);  // env?
         String lr; 
-        if (loopRange instanceof BasicExpression)
+        if (loopRange instanceof BasicExpression &&  loopRange.umlkind == Expression.CLASSID)
         { BasicExpression lran = (BasicExpression) loopRange; 
           lr = lran.classqueryForm(env, local); 
         } 
@@ -2395,7 +2404,9 @@ class WhileStatement extends Statement
         } 
         else 
         { lr = lt.right.queryForm(env, local); } 
-        Type et = lt.right.getElementType(); 
+        Type et = lt.right.getElementType();
+        if (et == null) 
+        { et = new Type("OclAny", null); }  
         String etr = et.getJava(); 
         String ind = Identifier.nextIdentifier("_i");
         String rang = Identifier.nextIdentifier("_range"); 
@@ -2435,11 +2446,13 @@ class WhileStatement extends Statement
         Type et = loopRange.getElementType(); 
         String etr = "Object"; 
         if (et == null) 
-        { System.err.println("Error: null element type for " + loopRange);
-          JOptionPane.showMessageDialog(null, "ERROR: No element type for: " + loopRange,
-                                        "Type error", JOptionPane.ERROR_MESSAGE); 
+        { System.err.println("!! Error: null element type for " + loopRange);
+          // JOptionPane.showMessageDialog(null, "ERROR: No element type for: " + loopRange,
+          //    "Type error", JOptionPane.ERROR_MESSAGE); 
           if (loopVar.getType() != null)
           { etr = loopVar.getType().getJava6(); }
+          else 
+          { etr = "Object"; }  
         }  
         else
         { etr = et.getJava6(); }
@@ -2485,8 +2498,8 @@ class WhileStatement extends Statement
         { lr = lt.right.queryFormJava6(env, local); } 
         Type et = lt.right.getElementType();   
         if (et == null) 
-        { System.err.println("ERROR: no element type for loop iteration " + this); 
-          et = new Type("int", null); 
+        { System.err.println("Warning!: no element type for loop iteration " + this); 
+          et = new Type("OclAny", null); 
         } 
         String etr = et.typeWrapperJava6();  // ok for String, entities, collections. Not prims
         String ind = Identifier.nextIdentifier("_i");
@@ -2527,8 +2540,8 @@ class WhileStatement extends Statement
         String etr = "Object"; 
         if (et == null) 
         { System.err.println("Error: null element type for " + loopRange);
-          JOptionPane.showMessageDialog(null, "ERROR: No element type for: " + loopRange,
-                                        "Type error", JOptionPane.ERROR_MESSAGE); 
+          // JOptionPane.showMessageDialog(null, "ERROR: No element type for: " + loopRange,
+          // "Type error", JOptionPane.ERROR_MESSAGE); 
           if (loopVar.getType() != null)
           { etr = loopVar.getType().getJava7(loopVar.getElementType()); }
         }  
@@ -2553,7 +2566,9 @@ class WhileStatement extends Statement
         else if ("boolean".equals(etr))
         { extract = "((Boolean) " + rang + ".get(" + ind + ")).booleanValue()"; } 
 
-        return "  ArrayList<" + etr + "> " + rang + " = new ArrayList<" + etr + ">();\n" +
+        String wrappedElemType = Type.typeWrapperJava(et); 
+
+        return "  ArrayList<" + wrappedElemType + "> " + rang + " = new ArrayList<" + wrappedElemType + ">();\n" +
                "  " + rang + ".addAll(" + lr + ");\n" + 
                "  for (int " + ind + " = 0; " + ind + " < " + rang + ".size(); " + ind + "++)\n" + 
                "  { " + etr + " " + lv + " = " + extract + ";\n" +
@@ -2576,9 +2591,10 @@ class WhileStatement extends Statement
         { lr = lt.right.queryFormJava7(env, local); } 
         Type et = lt.right.getElementType(); 
         if (et == null) 
-        { System.err.println("ERROR: no element type for loop iteration " + this); 
-          et = new Type("int", null); 
+        { System.err.println("Warning!: no element type for loop iteration " + this); 
+          et = new Type("OclAny", null); 
         } 
+
         String etr = et.typeWrapperJava7();  
         String ind = Identifier.nextIdentifier("_i");
         String rang = Identifier.nextIdentifier("_range"); 
@@ -2652,7 +2668,10 @@ class WhileStatement extends Statement
         } 
         else 
         { lr = lt.right.queryFormCSharp(env, local); } 
-        Type et = lt.right.getElementType(); 
+        Type et = lt.right.getElementType();
+        if (et == null) 
+        { et = new Type("OclAny", null); } 
+ 
         String etr = et.getCSharp(); 
         String ind = Identifier.nextIdentifier("_i");
         String rang = Identifier.nextIdentifier("_range"); 
@@ -2690,7 +2709,7 @@ class WhileStatement extends Statement
         Type et = loopRange.getElementType(); 
         String etr = "void*"; 
         if (et == null) 
-        { System.err.println("Error: null element type for " + loopRange);
+        { System.err.println("!! Error: null element type for " + loopRange);
           if (loopVar.getType() != null)
           { etr = loopVar.getType().getCPP(); }
         }  
@@ -2699,6 +2718,7 @@ class WhileStatement extends Statement
  
         String ind = Identifier.nextIdentifier("_i");
         String rang = Identifier.nextIdentifier("_range"); 
+        String rangesource = Identifier.nextIdentifier("_range_source"); 
 
         java.util.Map env1 = (java.util.HashMap) ((java.util.HashMap) env).clone();
         env1.put(etr,lv); 
@@ -2706,12 +2726,14 @@ class WhileStatement extends Statement
         Vector preterms = body.allPreTerms(lv); 
         String newbody = processPreTermsCPP(body, preterms, env1, local); 
 
-        return "  vector<" + etr + ">* " + rang + " = new vector<" + etr + ">();\n" + 
-               "  " + rang + "->insert(" + rang + "->end(), " + lr + "->begin(), " + 
-                                       lr + "->end());\n" + 
-               "  for (int " + ind + " = 0; " + ind + " < " + rang + "->size(); " + ind + "++)\n" + 
-               "  { " + etr + " " + lv + " = (*" + rang + ")[" + ind + "];\n" +
-               "    " + newbody + " }"; 
+        return "    vector<" + etr + ">* " + rangesource + " = " + lr + ";\n" + 
+               "    vector<" + etr + ">* " + rang + " = new vector<" + etr + ">();\n" + 
+               "    " + rang + "->insert(" + rang + "->end(), " + rangesource + "->begin(), " + 
+                                       rangesource + "->end());\n" + 
+               "    for (int " + ind + " = 0; " + ind + " < " + rang + "->size(); " + ind + "++)\n" + 
+               "    { " + etr + " " + lv + " = (*" + rang + ")[" + ind + "];\n" +
+               "      " + newbody + "\n" + 
+               "    }"; 
       } 
       else if (loopTest != null && (loopTest instanceof BinaryExpression))
       { // assume it is  var : exp 
@@ -2727,20 +2749,28 @@ class WhileStatement extends Statement
         } 
         else 
         { lr = lt.right.queryFormCPP(env, local); } 
+
         Type et = lt.right.getElementType(); 
+        if (et == null) 
+        { et = new Type("OclAny", null); } 
+
         String etr = et.getCPP(); 
         String ind = Identifier.nextIdentifier("_i");
-        String rang = Identifier.nextIdentifier("_range"); 
+        String rang = Identifier.nextIdentifier("_range");
+        String rangesource = Identifier.nextIdentifier("_range_source"); 
+ 
         env1.put(etr,lv); 
         Vector preterms = body.allPreTerms(lv); 
         String newbody = processPreTermsCPP(body, preterms, env1, local); 
 
-        return "  vector<" + etr + ">* " + rang + " = new vector<" + etr + ">();\n" + 
-               "  " + rang + "->insert(" + rang + "->end(), " + lr + "->begin(), " + 
-                                       lr + "->end());\n" + 
-               "  for (int " + ind + " = 0; " + ind + " < " + rang + "->size(); " + ind + "++)\n" + 
-               "  { " + etr + " " + lv + " = (*" + rang + ")[" + ind + "];\n" +
-               "    " + newbody + " }"; 
+        return "    vector<" + etr + ">* " + rangesource + " = " + lr + ";\n" + 
+               "    vector<" + etr + ">* " + rang + " = new vector<" + etr + ">();\n" + 
+               "    " + rang + "->insert(" + rang + "->end(), " + rangesource + "->begin(), " + 
+                                       rangesource + "->end());\n" + 
+               "    for (int " + ind + " = 0; " + ind + " < " + rang + "->size(); " + ind + "++)\n" + 
+               "    { " + etr + " " + lv + " = (*" + rang + ")[" + ind + "];\n" +
+               "      " + newbody + "\n" + 
+               "    }"; 
       } 
       return "  for (" + loopTest.queryFormCPP(env,local) + ") \n" + 
              "  { " + body.updateFormCPP(env,local) + " }"; 
@@ -3246,10 +3276,13 @@ class CreationStatement extends Statement
     { cet = elementType.getCPP(); }
 
     if (createsInstanceOf.startsWith("Set"))
-    { return "  set<" + cet + ">* " + assignsTo + ";"; } 
+    { return "  std::set<" + cet + ">* " + assignsTo + ";"; } 
 
     if (createsInstanceOf.startsWith("Sequence"))
     { return "  vector<" + cet + ">* " + assignsTo + ";"; } 
+
+    if (createsInstanceOf.startsWith("Map"))
+    { return "  map<string, " + cet + ">* " + assignsTo + ";"; } 
 
     if (createsInstanceOf.equals("boolean")) 
     { cstype = "bool"; 
@@ -4407,26 +4440,41 @@ class CaseStatement extends Statement
 
 class ErrorStatement extends Statement
 { // This represents a throw, raise or abort statement
+  Expression thrownObject = null; 
+
+  public ErrorStatement(Expression expr) 
+  { thrownObject = expr; } 
 
   public void display()
-  { System.out.println("SELECT false THEN skip END"); }
+  { // System.out.println("SELECT false THEN skip END"); 
+    System.out.println("  error " + thrownObject); 
+  }
 
   public String getOperator() 
   { return "error"; } 
 
-  public Object clone() { return this; } 
+  public Object clone() 
+  { return new ErrorStatement(thrownObject); } 
 
-  public Statement dereference(BasicExpression var) { return this; } 
+  public Statement dereference(BasicExpression var) 
+  { if (thrownObject != null) 
+    { return new ErrorStatement(thrownObject.dereference(var)); }
+    return new ErrorStatement(null); 
+  }  
 
   public Statement substituteEq(String oldE, Expression newE)
-  { // try
-    { return (ErrorStatement) clone(); } 
-    // catch (CloneNotSupportedException e)
-    // { return this; } 
+  { if (thrownObject != null) 
+    { Expression tobj = thrownObject.substituteEq(oldE,newE); 
+      return new ErrorStatement(tobj); 
+    } 
+    return new ErrorStatement(null); 
   } 
 
+  public String toString()
+  { return "  error " + thrownObject; }
+
   public void display(PrintWriter out)
-  { out.println("SELECT false THEN skip END"); }
+  { out.println("  error " + thrownObject); }
 
   public String bupdateForm()
   { return "SELECT false THEN skip END\n"; }
@@ -4435,27 +4483,49 @@ class ErrorStatement extends Statement
   { return new BBasicStatement("SELECT false THEN skip END"); }
 
   public void displayJava(String t)
-  { System.out.println(" {} /* Unreachable state */");
+  { if (thrownObject == null) 
+    { System.out.println("  throw null;"); } 
+    else 
+    { java.util.Map env = new java.util.HashMap(); 
+      String qf = thrownObject.throwQueryForm(env,true); 
+      System.out.println("  throw " + qf + ";"); 
+    } 
   }
 
   public String saveModelData(PrintWriter out)
   { String res = Identifier.nextIdentifier("errorstatement_"); 
     out.println(res + ".statId = \"" + res + "\"");  
     out.println(res + " : ErrorStatement"); 
+    if (thrownObject == null) 
+    { out.println(res + ".thrownObject = null"); } 
+    else 
+    { String expId = thrownObject.saveModelData(out);
+      out.println(res + ".thrownObject = " + expId);
+    } 
     return res; 
   } 
 
   public String toStringJava()
-  { return " {} /* Unreachable state */"; }
+  { if (thrownObject == null) 
+    { return "  throw null;"; } 
+    else 
+    { java.util.Map env = new java.util.HashMap(); 
+      String qf = thrownObject.throwQueryForm(env,true); 
+      return "  throw " + qf + ";"; 
+    }
+  }
   
   public String toEtl()
   { return ""; }
 
   public void displayJava(String t, PrintWriter out)
-  { out.println(" {} /* Unreachable state */"); } 
+  { out.println(toStringJava()); } 
 
   public boolean typeCheck(Vector types, Vector entities, Vector cs, Vector env)
-  { return true; } 
+  { if (thrownObject != null) 
+    { thrownObject.typeCheck(types,entities,cs,env); } 
+    return true;
+  } 
   
   public Expression wpc(Expression post)
   { return post; }
@@ -4468,22 +4538,54 @@ class ErrorStatement extends Statement
 
   public String updateForm(java.util.Map env, boolean local, Vector types, Vector entities, 
                            Vector vars)
-  { return toStringJava(); }
+  { if (thrownObject == null) 
+    { return "  throw null;"; } 
+    else 
+    { String qf = thrownObject.throwQueryForm(env,true); 
+      return "  throw " + qf + ";"; 
+    }
+ }
 
   public String updateFormJava6(java.util.Map env, boolean local)
-  { return toStringJava(); }
+  { if (thrownObject == null) 
+    { return "  throw null;"; } 
+    else 
+    { String qf = thrownObject.throwQueryForm(env,true); 
+      return "  throw " + qf + ";"; 
+    }
+  }
 
   public String updateFormJava7(java.util.Map env, boolean local)
-  { return toStringJava(); }
+  { if (thrownObject == null) 
+    { return "  throw null;"; } 
+    else 
+    { String qf = thrownObject.throwQueryForm(env,true); 
+      return "  throw " + qf + ";"; 
+    }
+  }
 
   public String updateFormCSharp(java.util.Map env, boolean local)
-  { return toStringJava(); }
+  { if (thrownObject == null) 
+    { return "  throw null;"; } 
+    else 
+    { String qf = thrownObject.throwQueryFormCSharp(env,true); 
+      return "  throw " + qf + ";"; 
+    } 
+  }
 
   public String updateFormCPP(java.util.Map env, boolean local)
-  { return toStringJava(); }
+  { if (thrownObject == null) 
+    { return "  throw null;"; } 
+    else 
+    { String qf = thrownObject.throwQueryFormCPP(env,true); 
+      return "  throw " + qf + ";"; 
+    }
+  }
 
   public Vector readFrame()
-  { Vector res = new Vector(); 
+  { Vector res = new Vector();
+    if (thrownObject != null) 
+    { res.addAll(thrownObject.readFrame()); }  
     return res; 
   } 
 
@@ -4499,7 +4601,10 @@ class ErrorStatement extends Statement
   { return this; } 
 
   public int syntacticComplexity()
-  { return 1; } 
+  { if (thrownObject != null) 
+    { return 1 + thrownObject.syntacticComplexity(); } 
+    return 1;
+  } 
 
   public int cyclomaticComplexity()
   { return 0; } 
@@ -4509,25 +4614,548 @@ class ErrorStatement extends Statement
 
   public Vector allOperationsUsedIn()
   { Vector res = new Vector(); 
+    if (thrownObject != null) 
+    { res = thrownObject.allOperationsUsedIn(); } 
     return res; 
   } 
 
   public Vector equivalentsUsedIn()
   { Vector res = new Vector(); 
+    if (thrownObject != null) 
+    { res = thrownObject.equivalentsUsedIn(); } 
     return res; 
   } 
 
   public Vector metavariables()
   { Vector res = new Vector(); 
+    if (thrownObject != null) 
+    { res = thrownObject.metavariables(); } 
     return res; 
   } 
+
+  public Vector cgparameters()
+  { Vector args = new Vector();
+    if (thrownObject != null) 
+    { args.add(thrownObject); } 
+    return args; 
+  } 
+
+  public String cg(CGSpec cgs)
+  { String etext = this + "";
+    Vector args = new Vector();
+    if (thrownObject != null) 
+    { args.add(thrownObject.cg(cgs)); } 
+
+    CGRule r = cgs.matchedStatementRule(this,etext);
+
+    if (r != null)
+    { return r.applyRule(args); }
+
+    return etext;
+  }
+
+}
+
+class AssertStatement extends Statement
+{ // This represents an assert statement
+  Expression condition = null; 
+  Expression message = null; 
+
+  public AssertStatement(Expression expr) 
+  { condition = expr; } 
+
+  public AssertStatement(Expression expr, Expression msg) 
+  { condition = expr; 
+    message = msg; 
+  } 
+
+  public void display()
+  { // System.out.println("SELECT false THEN skip END"); 
+    if (message == null) 
+    { System.out.println("  assert " + condition); } 
+    else 
+    { System.out.println("  assert " + condition + " do " + message); } 
+  }
+
+  public String getOperator() 
+  { return "assert"; } 
+
+  public Object clone() 
+  { return new AssertStatement(condition,message); } 
+
+  public Statement dereference(BasicExpression var) 
+  { Expression newcond = condition; 
+    if (condition != null) 
+    { newcond = condition.dereference(var); }
+    Expression newmessage = message; 
+    if (message != null) 
+    { newmessage = message.dereference(var); }
+    return new AssertStatement(newcond,newmessage); 
+  }  
+
+  public Statement substituteEq(String oldE, Expression newE)
+  { Expression newcond = condition; 
+    if (condition != null) 
+    { newcond = condition.substituteEq(oldE,newE); }
+    Expression newmessage = message; 
+    if (message != null) 
+    { newmessage = message.substituteEq(oldE,newE); }
+    return new AssertStatement(newcond,newmessage); 
+  } 
+
+  public String toString()
+  { if (message == null) 
+    { return "  assert " + condition; } 
+    else 
+    { return "  assert " + condition + " do " + message; }
+  }
+
+  public void display(PrintWriter out)
+  { if (message == null) 
+    { out.println("  assert " + condition); } 
+    else 
+    { out.println("  assert " + condition + " do " + message); }
+  }
+
+  public String bupdateForm()
+  { return "SELECT false THEN skip END\n"; }
+
+  public BStatement bupdateForm(java.util.Map env, boolean local)
+  { return new BBasicStatement("SELECT false THEN skip END"); }
+
+  public void displayJava(String t)
+  { if (message == null) 
+    { System.out.println("  assert " + condition); } 
+    else 
+    { System.out.println("  assert " + condition + " : " + message); } 
+  }
+
+  public String saveModelData(PrintWriter out)
+  { String res = Identifier.nextIdentifier("assertstatement_"); 
+    out.println(res + ".statId = \"" + res + "\"");  
+    out.println(res + " : AssertStatement"); 
+    if (condition == null) 
+    { } 
+    else 
+    { String expId = condition.saveModelData(out);
+      out.println(res + ".condition = " + expId);
+    } 
+    if (message == null) 
+    { } 
+    else 
+    { String expIdm = message.saveModelData(out);
+      out.println(res + ".message = " + expIdm);
+    } 
+    return res; 
+  } 
+
+  public String toStringJava()
+  { java.util.Map env = new java.util.HashMap(); 
+    String qf = condition.queryForm(env,true); 
+    if (message == null) 
+    { return "    assert " + qf + ";\n"; }
+    else 
+    { String mqf = message.queryForm(env,true); 
+      return "    assert " + qf + " : " + mqf + ";\n"; 
+    } 
+  }
+  
+  public String toEtl()
+  { return ""; }
+
+  public void displayJava(String t, PrintWriter out)
+  { out.println(toStringJava()); } 
+
+  public boolean typeCheck(Vector types, Vector entities, Vector cs, Vector env)
+  { condition.typeCheck(types,entities,cs,env); 
+    if (message != null) 
+    { message.typeCheck(types,entities,cs,env); } 
+    return true;
+  } 
+  
+  public Expression wpc(Expression post)
+  { return post; }
+
+  public Vector dataDependents(Vector allvars, Vector vars)
+  { return vars; }  
+
+  public boolean updates(Vector v) 
+  { return false; } 
+
+  public String updateForm(java.util.Map env, boolean local, Vector types, Vector entities, 
+                           Vector vars)
+  { String qf = condition.queryForm(env,local); 
+    if (message == null) 
+    { return "    assert " + qf + ";\n"; }
+    else 
+    { String mqf = message.queryForm(env,local); 
+      return "    assert " + qf + " : " + mqf + ";\n"; 
+    }
+  }
+
+  public String updateFormJava6(java.util.Map env, boolean local)
+  { String qf = condition.queryFormJava6(env,local); 
+    if (message == null) 
+    { return "    assert " + qf + ";\n"; }
+    else 
+    { String mqf = message.queryFormJava6(env,local); 
+      return "    assert " + qf + " : " + mqf + ";\n"; 
+    }
+  }
+
+  public String updateFormJava7(java.util.Map env, boolean local)
+  { String qf = condition.queryFormJava7(env,local); 
+    if (message == null) 
+    { return "    assert " + qf + ";\n"; }
+    else 
+    { String mqf = message.queryFormJava7(env,local); 
+      return "    assert " + qf + " : " + mqf + ";\n"; 
+    }
+  }
+
+  public String updateFormCSharp(java.util.Map env, boolean local)
+  { String qf = condition.queryFormCSharp(env,local); 
+    if (message == null) 
+    { return "    Debug.Assert(" + qf + ");\n"; }
+    else 
+    { String mqf = message.queryFormCSharp(env,local); 
+      return "    Debug.Assert(" + qf + ", " + mqf + ");\n"; 
+    }
+  }
+
+  public String updateFormCPP(java.util.Map env, boolean local)
+  { String qf = condition.queryFormCPP(env,local); 
+    return "    assert(" + qf + ");";
+  }
+
+  public Vector readFrame()
+  { Vector res = new Vector();
+    res = condition.readFrame(); 
+    
+    if (message != null) 
+    { res = VectorUtil.union(res,message.readFrame()); }  
+    return res; 
+  } 
+
+  public Vector writeFrame()
+  { Vector res = new Vector(); 
+    res = condition.writeFrame(); 
+    
+    if (message != null) 
+    { res = VectorUtil.union(res,message.writeFrame()); }  
+    return res; 
+  } 
+
+  public Statement checkConversions(Entity e, Type propType, Type propElemType, java.util.Map interp)
+  { return this; } 
+
+  public Statement replaceModuleReferences(UseCase uc)
+  { return this; } 
+
+  public int syntacticComplexity()
+  { int res = condition.syntacticComplexity(); 
+    res++; 
+    if (message != null) 
+    { return res + message.syntacticComplexity(); } 
+    return res;
+  } 
+
+  public int cyclomaticComplexity()
+  { return 1; } 
+
+  public int epl()
+  { return 0; } 
+
+  public Vector allOperationsUsedIn()
+  { Vector res = new Vector(); 
+    res = condition.allOperationsUsedIn(); 
+    
+    if (message != null) 
+    { res = VectorUtil.union(res, message.allOperationsUsedIn()); } 
+    return res; 
+  } 
+
+  public Vector equivalentsUsedIn()
+  { Vector res = new Vector(); 
+    res = condition.equivalentsUsedIn(); 
+    
+    if (message != null) 
+    { res = VectorUtil.union(res, message.equivalentsUsedIn()); } 
+    return res; 
+  } 
+
+  public Vector metavariables()
+  { Vector res = new Vector(); 
+    res = condition.metavariables(); 
+    
+    if (message != null) 
+    { res = VectorUtil.union(res, message.metavariables()); } 
+    return res; 
+  } 
+
+  public Vector cgparameters()
+  { Vector args = new Vector();
+    if (condition != null) 
+    { args.add(condition); } 
+    if (message != null) 
+    { args.add(message); }
+    return args; 
+  } 
+
+  public String cg(CGSpec cgs)
+  { String etext = this + "";
+    Vector args = new Vector();
+    if (condition != null) 
+    { args.add(condition.cg(cgs)); } 
+    if (message != null) 
+    { args.add(message.cg(cgs)); } 
+    CGRule r = cgs.matchedStatementRule(this,etext);
+    if (r != null)
+    { return r.applyRule(args); }
+    return etext;
+  }
+
+}
+
+class CatchStatement extends Statement
+{ // This represents a catch clause
+
+  Expression caughtObject = null; 
+  Statement action = null; 
+  // Expect both to be non-null
+
+  public CatchStatement(Expression expr, Statement stat) 
+  { caughtObject = expr; 
+    action = stat; 
+  } 
+
+  public void display()
+  { // System.out.println("SELECT false THEN skip END"); 
+    System.out.println("  catch ( " + caughtObject + ") do " + action); 
+  }
+
+  public String toString()
+  { return "  catch ( " + caughtObject + ") do " + action; }
+
+  public String getOperator() 
+  { return "catch"; } 
+
+  public Object clone() 
+  { return new CatchStatement(caughtObject,action); } 
+
+  public Statement dereference(BasicExpression var) 
+  { return new CatchStatement(caughtObject.dereference(var), action.dereference(var)); }
+
+  public Statement substituteEq(String oldE, Expression newE)
+  { Expression cobj = caughtObject.substituteEq(oldE,newE); 
+    Statement astat = action.substituteEq(oldE,newE); 
+    return new CatchStatement(cobj,astat); 
+  } 
+  
+  public void display(PrintWriter out)
+  { out.println("  catch (" + caughtObject + ") do " + action); }
+
+  public String bupdateForm()
+  { return "SELECT false THEN skip END\n"; }
+
+  public BStatement bupdateForm(java.util.Map env, boolean local)
+  { return new BBasicStatement("SELECT false THEN skip END"); }
+
+  public void displayJava(String t)
+  { java.util.Map env = new java.util.HashMap(); 
+    String qf = caughtObject.declarationQueryForm(env,true); 
+    System.out.println("  catch (" + qf + ") { ");
+    action.displayJava(t); 
+    System.out.println("  }");  
+  }
+
+  public String saveModelData(PrintWriter out)
+  { String res = Identifier.nextIdentifier("catchstatement_"); 
+    out.println(res + ".statId = \"" + res + "\"");  
+    out.println(res + " : CatchStatement"); 
+
+    if (caughtObject == null) 
+    { out.println(res + ".caughtObject = null"); } 
+    else 
+    { String expId = caughtObject.saveModelData(out);
+      out.println(res + ".caughtObject = " + expId);
+    } 
+
+    if (action == null) 
+    { out.println(res + ".action = null"); } 
+    else 
+    { String sId = action.saveModelData(out);
+      out.println(res + ".action = " + sId);
+    } 
+
+    return res; 
+  } 
+
+  public String toStringJava()
+  { java.util.Map env = new java.util.HashMap(); 
+    String qf = caughtObject.declarationQueryForm(env,true); 
+    return "    catch (" + qf + ") {\n" + 
+           "      " + action.toStringJava() + "\n" + 
+           "    }"; 
+  }
+  
+  public String toEtl()
+  { return ""; }
+
+  public void displayJava(String t, PrintWriter out)
+  { out.println(toStringJava()); } 
+
+  public boolean typeCheck(Vector types, Vector entities, Vector cs, Vector env)
+  { Vector localEnv = new Vector(); 
+    localEnv.addAll(env); 
+
+    // The caught exception variable is added to the localEnv
+
+    caughtObject.typeCheck(types,entities,cs,localEnv);
+    action.typeCheck(types,entities,cs,localEnv);  
+    return true;
+  } 
+  
+  public Expression wpc(Expression post)
+  { return post; }
+
+  public Vector dataDependents(Vector allvars, Vector vars)
+  { return vars; }  
+
+  public boolean updates(Vector v) 
+  { return action.updates(v); } 
+
+  public String updateForm(java.util.Map env, boolean local, Vector types, Vector entities, 
+                           Vector vars)
+  { String qf = caughtObject.declarationQueryForm(env,true); 
+    return "    catch (" + qf + ") {\n" + 
+           "      " + action.updateForm(env,local,types,entities,vars) + "\n" + 
+           "    }"; 
+  }
+
+  public String updateFormJava6(java.util.Map env, boolean local)
+  { String qf = caughtObject.declarationQueryForm(env,true); 
+    return "    catch (" + qf + ") {\n" + 
+           "      " + action.updateFormJava6(env,local) + "\n" + 
+           "    }";
+  }
+
+  public String updateFormJava7(java.util.Map env, boolean local)
+  { String qf = caughtObject.declarationQueryForm(env,true); 
+    return "    catch (" + qf + ") {\n" + 
+           "      " + action.updateFormJava7(env,local) + "\n" + 
+           "    }";
+  }
+
+  public String updateFormCSharp(java.util.Map env, boolean local)
+  { String qf = caughtObject.declarationQueryFormCSharp(env,local); 
+    return "    catch (" + qf + ") {\n" + 
+           "      " + action.updateFormCSharp(env,local) + "\n" + 
+           "    }"; 
+  }
+
+  public String updateFormCPP(java.util.Map env, boolean local)
+  { String qf = caughtObject.declarationQueryFormCPP(env,local); 
+    return "    catch (" + qf + ") {\n" + 
+           "      " + action.updateFormCPP(env,local) + "\n" + 
+           "    }";
+  }
+
+  public Vector readFrame()
+  { Vector res = new Vector();
+    res.addAll(action.readFrame());  
+    return res; 
+  } 
+
+  public Vector writeFrame()
+  { Vector res = new Vector(); 
+    res.addAll(action.writeFrame());  
+
+    return res; 
+  } 
+
+  public Statement checkConversions(Entity e, Type propType, Type propElemType, java.util.Map interp)
+  { return this; } 
+
+  public Statement replaceModuleReferences(UseCase uc)
+  { return this; } 
+
+  public int syntacticComplexity()
+  { return 1 + action.syntacticComplexity(); } 
+  
+  public int cyclomaticComplexity()
+  { return 1 + action.cyclomaticComplexity(); } 
+
+  public int epl()
+  { return 0; } 
+
+  public Vector allOperationsUsedIn()
+  { Vector res = new Vector(); 
+    res = action.allOperationsUsedIn();  
+    return res; 
+  } 
+
+  public Vector equivalentsUsedIn()
+  { Vector res = new Vector(); 
+    res = action.equivalentsUsedIn();  
+    return res; 
+  } 
+
+  public Vector metavariables()
+  { Vector res = new Vector(); 
+    res = caughtObject.metavariables(); 
+    res.addAll(action.metavariables());  
+    return res; 
+  } 
+
+  public Vector cgparameters()
+  { Vector args = new Vector();
+    args.add(caughtObject);  
+    args.add(action); 
+    return args; 
+  } 
+
+  public String cg(CGSpec cgs)
+  { String etext = this + "";
+    Vector args = new Vector();
+    Vector eargs = new Vector();
+    args.add(caughtObject.cg(cgs));  
+    args.add(action.cg(cgs));  
+    eargs.add(caughtObject);  
+    eargs.add(action);  
+    CGRule r = cgs.matchedStatementRule(this,etext);
+   
+    if (r != null)
+    { return r.applyRule(args,eargs,cgs); }
+    
+    return etext;
+  }
+
 }
 
 class TryStatement extends Statement
 { // This represents a try,catch,finally statement
-  Statement body; 
+  Statement body = null; 
   Vector catchClauses = new Vector(); // CatchStatement 
   Statement endStatement = null; 
+
+  public TryStatement(Statement stat) 
+  { body = stat; } 
+
+  public void setClauses(Vector stats)
+  { catchClauses = stats; } 
+
+  public void addClause(Statement stat)
+  { if (stat instanceof CatchStatement) 
+    { catchClauses.add(stat); } 
+    else if (stat instanceof FinalStatement)
+    { endStatement = stat; } 
+    else 
+    { System.err.println("!! Warning: can only have catch and finally statements in a try statement: " + stat); } 
+  } 
+
+  public void setEndStatement(Statement stat)
+  { endStatement = stat; } 
 
   public void display()
   { if (body == null) 
@@ -4542,24 +5170,80 @@ class TryStatement extends Statement
     }
 
     if (endStatement != null) 
-    { System.out.println("  endtry ("); 
-      endStatement.display(); 
-      System.out.println("    )"); 
-    }  
+    { endStatement.display(); }  
+  }
+
+  public String toString()
+  { String res = ""; 
+    if (body == null) 
+    { return res; } 
+
+    res = "    try\n" + 
+          "  " + body;
+  
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cs = (Statement) catchClauses.get(i); 
+      res = res + cs; 
+    }
+
+    if (endStatement != null) 
+    { res = res + "  " + endStatement + "\n"; }
+  
+    return res; 
   }
 
   public String getOperator() 
   { return "try"; } 
 
-  public Object clone() { return this; } 
+  public Object clone() 
+  { Statement s1 = null; 
+    if (body != null) 
+    { s1 = (Statement) body.clone(); }  
+    TryStatement res = new TryStatement(s1);
+    Vector catchClones = new Vector(); 
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      Statement ccClone = (Statement) cc.clone(); 
+      catchClones.add(ccClone); 
+    } 
+    res.setClauses(catchClones); 
+    if (endStatement != null) 
+    { res.setEndStatement((Statement) endStatement.clone()); } 
+    return res; 
+  } 
 
-  public Statement dereference(BasicExpression var) { return this; } 
+  public Statement dereference(BasicExpression var) 
+  { Statement s1 = null; 
+    if (body != null) 
+    { s1 = body.dereference(var); }  
+    TryStatement res = new TryStatement(s1);
+    Vector catchClones = new Vector(); 
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      Statement ccClone = cc.dereference(var); 
+      catchClones.add(ccClone); 
+    } 
+    res.setClauses(catchClones); 
+    if (endStatement != null) 
+    { res.setEndStatement(endStatement.dereference(var)); } 
+    return res;
+  } 
 
   public Statement substituteEq(String oldE, Expression newE)
-  { // try
-    { return (ErrorStatement) clone(); } 
-    // catch (CloneNotSupportedException e)
-    // { return this; } 
+  { Statement s1 = null; 
+    if (body != null) 
+    { s1 = body.substituteEq(oldE,newE); }  
+    TryStatement res = new TryStatement(s1);
+    Vector catchClones = new Vector(); 
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      Statement ccClone = cc.substituteEq(oldE,newE); 
+      catchClones.add(ccClone); 
+    } 
+    res.setClauses(catchClones); 
+    if (endStatement != null) 
+    { res.setEndStatement(endStatement.substituteEq(oldE,newE)); } 
+    return res; 
   } 
 
   public void display(PrintWriter out)
@@ -4575,10 +5259,7 @@ class TryStatement extends Statement
     }
 
     if (endStatement != null) 
-    { out.println("  endtry ("); 
-      endStatement.display(out); 
-      out.println("    )"); 
-    }  
+    { endStatement.display(out); }  
   }
 
   public String bupdateForm()
@@ -4601,30 +5282,85 @@ class TryStatement extends Statement
     }
 
     if (endStatement != null) 
-    { System.out.println("  finally { "); 
-      endStatement.displayJava(t); 
-      System.out.println("  }"); 
-    }  
+    { endStatement.displayJava(t); }  
   }
 
   public String saveModelData(PrintWriter out)
   { String res = Identifier.nextIdentifier("trystatement_"); 
     out.println(res + ".statId = \"" + res + "\"");  
     out.println(res + " : TryStatement"); 
-    return res; 
+
+    if (body != null) 
+    { String s1 = body.saveModelData(out); 
+      out.println(res + ".body = " + s1); 
+    }
+  
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      String ccid = cc.saveModelData(out); 
+      out.println(ccid + " : " + res + ".catchClauses");  
+    } 
+
+    if (endStatement != null) 
+    { String endId = endStatement.saveModelData(out); 
+      out.println(res + ".endStatement = " + endId);  
+    } 
+
+    return res;
   } 
 
   public String toStringJava()
-  { return " {} /* Unreachable state */"; }
-  
+  { String res = "  try"; 
+    if (body == null) 
+    { res = res + " { }\n"; }
+    else  
+    { res = res + "  { " + body.toStringJava() + " }\n"; }
+ 
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cs = (Statement) catchClauses.get(i); 
+      res = res + cs.toStringJava(); 
+    }
+
+    if (endStatement != null) 
+    { res = res + endStatement.toStringJava(); }  
+    return res; 
+  }
+  /* This syntax is identical for C# also */
+
   public String toEtl()
   { return ""; }
 
   public void displayJava(String t, PrintWriter out)
-  { out.println(" {} /* Unreachable state */"); } 
+  { out.println("  try"); 
+    if (body == null) 
+    { out.println(" { }"); }
+    else  
+    { out.println("  { "); 
+      body.displayJava(t,out); 
+      out.println("  }"); 
+    }
+ 
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cs = (Statement) catchClauses.get(i); 
+      cs.displayJava(t,out); 
+    }
+
+    if (endStatement != null) 
+    { endStatement.displayJava(t,out); }  
+ } 
 
   public boolean typeCheck(Vector types, Vector entities, Vector cs, Vector env)
-  { return true; } 
+  { if (body != null) 
+    { body.typeCheck(types,entities,cs,env); }  
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      cc.typeCheck(types,entities,cs,env);
+    } 
+
+    if (endStatement != null) 
+    { endStatement.typeCheck(types,entities,cs,env); } 
+    return true; 
+  }  
   
   public Expression wpc(Expression post)
   { return post; }
@@ -4633,31 +5369,146 @@ class TryStatement extends Statement
   { return vars; }  
 
   public boolean updates(Vector v) 
-  { return false; } 
+  { boolean res = false; 
+    if (body != null) 
+    { if (body.updates(v))
+      { return true; }
+    }   
+
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      if (cc.updates(v))
+      { return true; } 
+    } 
+
+    if (endStatement != null) 
+    { if (endStatement.updates(v))
+      { return true; }
+    }  
+
+    return res; 
+  } 
 
   public String updateForm(java.util.Map env, boolean local, Vector types, Vector entities, 
                            Vector vars)
-  { return toStringJava(); }
+  { String res = "  try"; 
+    if (body == null) 
+    { res = res + " { }\n"; }
+    else  
+    { res = res + "  { " + body.updateForm(env,local,entities,types,vars) + " }\n"; }
+ 
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cs = (Statement) catchClauses.get(i); 
+      res = res + cs.updateForm(env,local,entities,types,vars); 
+    }
+
+    if (endStatement != null) 
+    { res = res + endStatement.updateForm(env,local,entities,types,vars); }  
+    return res; 
+ }
 
   public String updateFormJava6(java.util.Map env, boolean local)
-  { return toStringJava(); }
+  { String res = "  try"; 
+    if (body == null) 
+    { res = res + " { }\n"; }
+    else  
+    { res = res + "  { " + body.updateFormJava6(env,local) + " }\n"; }
+ 
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cs = (Statement) catchClauses.get(i); 
+      res = res + cs.updateFormJava6(env,local); 
+    }
+
+    if (endStatement != null) 
+    { res = res + endStatement.updateFormJava6(env,local); }  
+    return res; 
+ }
 
   public String updateFormJava7(java.util.Map env, boolean local)
-  { return toStringJava(); }
+  { String res = "  try"; 
+    if (body == null) 
+    { res = res + " { }\n"; }
+    else  
+    { res = res + "  { " + body.updateFormJava7(env,local) + " }\n"; }
+ 
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cs = (Statement) catchClauses.get(i); 
+      res = res + cs.updateFormJava7(env,local); 
+    }
+
+    if (endStatement != null) 
+    { res = res + endStatement.updateFormJava7(env,local); }  
+    return res; 
+ }
 
   public String updateFormCSharp(java.util.Map env, boolean local)
-  { return toStringJava(); }
+  { String res = "  try"; 
+    if (body == null) 
+    { res = res + " { }\n"; }
+    else  
+    { res = res + "  { " + body.updateFormCSharp(env,local) + " }\n"; }
+ 
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cs = (Statement) catchClauses.get(i); 
+      res = res + cs.updateFormCSharp(env,local); 
+    }
+
+    if (endStatement != null) 
+    { res = res + endStatement.updateFormCSharp(env,local); }  
+    return res; 
+ }
 
   public String updateFormCPP(java.util.Map env, boolean local)
-  { return toStringJava(); }
+  { String res = "  try"; 
+    if (body == null) 
+    { res = res + " { }\n"; }
+    else  
+    { res = res + "  { " + body.updateFormCPP(env,local) + " }\n"; }
+ 
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cs = (Statement) catchClauses.get(i); 
+      res = res + cs.updateFormCPP(env,local); 
+    }
+
+    if (endStatement != null) 
+    { res = res + endStatement.updateFormCPP(env,local); }  
+    return res; 
+  }
 
   public Vector readFrame()
   { Vector res = new Vector(); 
+    if (body != null) 
+    { res = VectorUtil.union(res,body.readFrame()); }   
+
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      Vector vv = cc.readFrame(); 
+      res = VectorUtil.union(res,vv); 
+    } 
+
+    if (endStatement != null) 
+    { Vector endrd = endStatement.readFrame(); 
+      res = VectorUtil.union(res,endrd); 
+    }  
+
     return res; 
   } 
 
   public Vector writeFrame()
   { Vector res = new Vector(); 
+    if (body != null) 
+    { res = VectorUtil.union(res,body.writeFrame()); }   
+
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      Vector vv = cc.writeFrame(); 
+      res = VectorUtil.union(res,vv); 
+    } 
+
+    if (endStatement != null) 
+    { Vector endrd = endStatement.writeFrame(); 
+      res = VectorUtil.union(res,endrd); 
+    }  
     return res; 
   } 
 
@@ -4668,28 +5519,142 @@ class TryStatement extends Statement
   { return this; } 
 
   public int syntacticComplexity()
-  { return 1; } 
+  { int res = 1; 
+    if (body != null) 
+    { res = res + body.syntacticComplexity(); }   
+
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      int vv = cc.syntacticComplexity(); 
+      res = res + vv; 
+    } 
+
+    if (endStatement != null) 
+    { int endsc = endStatement.syntacticComplexity(); 
+      res = res + endsc; 
+    }  
+    return res; 
+  } 
 
   public int cyclomaticComplexity()
-  { return 0; } 
+  { int res = 1; 
+    if (body != null) 
+    { res = res + body.cyclomaticComplexity(); }   
+
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      int vv = cc.cyclomaticComplexity(); 
+      res = res + vv; 
+    } 
+
+    if (endStatement != null) 
+    { int endsc = endStatement.cyclomaticComplexity(); 
+      res = res + endsc; 
+    }  
+    return res; 
+  }
 
   public int epl()
   { return 0; } 
 
   public Vector allOperationsUsedIn()
   { Vector res = new Vector(); 
+    if (body != null) 
+    { res = VectorUtil.union(res,body.allOperationsUsedIn()); }   
+
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      Vector vv = cc.allOperationsUsedIn(); 
+      res = VectorUtil.union(res,vv); 
+    } 
+
+    if (endStatement != null) 
+    { Vector endrd = endStatement.allOperationsUsedIn(); 
+      res = VectorUtil.union(res,endrd); 
+    }  
     return res; 
   } 
 
   public Vector equivalentsUsedIn()
   { Vector res = new Vector(); 
+    if (body != null) 
+    { res = VectorUtil.union(res,body.equivalentsUsedIn()); }   
+
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      Vector vv = cc.equivalentsUsedIn(); 
+      res = VectorUtil.union(res,vv); 
+    } 
+
+    if (endStatement != null) 
+    { Vector endrd = endStatement.equivalentsUsedIn(); 
+      res = VectorUtil.union(res,endrd); 
+    }  
     return res; 
   } 
 
   public Vector metavariables()
   { Vector res = new Vector(); 
+    if (body != null) 
+    { res = VectorUtil.union(res,body.metavariables()); }   
+
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      Vector vv = cc.metavariables(); 
+      res = VectorUtil.union(res,vv); 
+    } 
+
+    if (endStatement != null) 
+    { Vector endrd = endStatement.metavariables(); 
+      res = VectorUtil.union(res,endrd); 
+    }  
     return res; 
   } 
+
+  public Vector cgparameters()
+  { Vector args = new Vector();
+    if (body != null) 
+    { args.add(body); } 
+    if (catchClauses != null) 
+    { args.add(catchClauses); }
+    if (endStatement != null) 
+    { args.add(endStatement); }
+    return args; 
+  } 
+
+  public String cg(CGSpec cgs)
+  { String etext = this + "";
+    Vector args = new Vector();
+    Vector eargs = new Vector();
+
+    if (body != null) 
+    { args.add(body.cg(cgs)); 
+      eargs.add(body); 
+    } 
+
+    if (catchClauses != null) 
+    { String ccres = ""; 
+      for (int i = 0; i < catchClauses.size(); i++) 
+      { Statement cc = (Statement) catchClauses.get(i); 
+        ccres = ccres + cc.cg(cgs); 
+      }   
+      args.add(ccres); 
+      eargs.add(catchClauses); 
+    }
+
+    if (endStatement != null) 
+    { args.add(endStatement.cg(cgs)); 
+      eargs.add(endStatement); 
+    } 
+ 
+    CGRule r = cgs.matchedStatementRule(this,etext);
+
+    if (r != null)
+    { return r.applyRule(args,eargs,cgs); }
+
+    return etext;
+  }
+
 }
 
 
@@ -5880,19 +6845,19 @@ class AssignStatement extends Statement
   { // if (entity != null) 
     // { env.put(entity.getName(),"this"); } 
     if (copyValue && type != null && type.isCollectionType())
-    { String res = "  " + type.getCSharp() + " " + lhs + " = new ArrayList();\n"; 
-      res = res + "  " + lhs + ".AddRange(" + rhs.queryFormCSharp(env,local) + ");\n"; 
+    { String res = "    " + type.getCSharp() + " " + lhs + " = new ArrayList();\n"; 
+      res = res + "    " + lhs + ".AddRange(" + rhs.queryFormCSharp(env,local) + ");\n"; 
       return res; 
     } // For type.isEntityType() or strings, clone the rhs. 
     else if (copyValue && lhs.getType() != null && lhs.getType().isCollectionType())
-    { String res = "  " + lhs + " = new ArrayList();\n"; 
-      res = res + "  " + lhs + ".AddRange(" + rhs.queryFormCSharp(env,local) + ");\n"; 
+    { String res = "    " + lhs + " = new ArrayList();\n"; 
+      res = res + "    " + lhs + ".AddRange(" + rhs.queryFormCSharp(env,local) + ");\n"; 
       return res; 
     } // For type.isEntityType() or strings, clone the rhs. 
 
     String res = (new BinaryExpression("=",lhs,rhs)).updateFormCSharp(env,local);  
     if (type != null) 
-    { res = "  " + type.getCSharp() + " " + res; } 
+    { res = "    " + type.getCSharp() + "   " + res; } 
     
     return res; 
   } 
@@ -5911,7 +6876,7 @@ class AssignStatement extends Statement
     } // For type.isEntityType() or strings, clone the rhs. 
     else if (copyValue && type != null && Type.isSetType(type))
     { String elemt = rhs.getElementType().getCPP(); 
-      String res = "  set<" + elemt + ">* " + lhs + " = new set<" + elemt + ">();\n"; 
+      String res = "  std::set<" + elemt + ">* " + lhs + " = new std::set<" + elemt + ">();\n"; 
       String rqf = rhs.queryFormCPP(env,local); 
       res = res + "  " + lhs + "->insert(" + rqf + "->begin(), " + rqf + "->end());\n"; 
       return res; 
@@ -5927,7 +6892,7 @@ class AssignStatement extends Statement
     else if (copyValue && lhs.getType() != null && Type.isSetType(lhs.getType()))
     { String elemt = rhs.getElementType().getCPP(); 
       String rqf = rhs.queryFormCPP(env,local); 
-      String res = "  " + lhs + " = new set<" + elemt + ">();\n"; 
+      String res = "  " + lhs + " = new std::set<" + elemt + ">();\n"; 
       res = res + "  " + lhs + "->insert(" + rqf + "->begin(), " + 
                                          rqf + "->end());\n"; 
       return res; 
@@ -6660,6 +7625,189 @@ class ConditionalStatement extends Statement
     res.addAll(ifPart.metavariables());  
     if (elsePart != null) 
     { res.addAll(elsePart.metavariables()); }   
+    return res;  
+  }  
+}
+
+
+class FinalStatement extends Statement
+{ Statement body;
+
+  FinalStatement(Statement s)
+  { body = s; }
+
+  public String getOperator() 
+  { return "finally"; } 
+
+  public String cg(CGSpec cgs)
+  { String etext = this + "";
+    Vector args = new Vector();
+	
+    args.add(body.cg(cgs));
+    
+    CGRule r = cgs.matchedStatementRule(this,etext);
+    if (r != null)
+    { return r.applyRule(args); }
+    return etext;
+  }
+
+  public Object clone()
+  { Statement ifc = (Statement) body.clone(); 
+    return new FinalStatement(ifc); 
+  }  
+
+  public Statement generateDesign(java.util.Map env, boolean local)
+  { return this; }  
+
+  public String toString()
+  { String res = "    finally " + body;
+    return res;
+  }
+
+  public String toStringJava()
+  { String jb = body.toStringJava();
+    return "    finally " + jb; 
+  }
+
+  public String toEtl()
+  { return toStringJava(); }
+
+  public void display(java.io.PrintWriter out)
+  { out.println(toString()); }
+
+  public void display()
+  { System.out.println(toString()); }
+
+  public void displayJava(String v, java.io.PrintWriter out)
+  { System.out.println(toStringJava()); }
+
+  public void displayJava(String v)
+  { System.out.println(toStringJava()); }
+
+  public String saveModelData(PrintWriter out)
+  { String res = Identifier.nextIdentifier("finalstatement_");
+    out.println(res + " : FinalStatement");
+    out.println(res + ".statId = \"" + res + "\"");
+    String bodyid = body.saveModelData(out);
+    out.println(res + ".body = " + bodyid);
+    return res;
+  }
+
+  public Statement dereference(BasicExpression v)
+  { Statement bodyc = body.dereference(v); 
+    return new FinalStatement(bodyc); 
+  }  
+
+  public Statement substituteEq(String oldE, Expression newE)
+  { Statement ifc = body.substituteEq(oldE, newE); 
+    return new FinalStatement(ifc); 
+  }  
+
+  public boolean typeCheck(Vector types, Vector entities, Vector cs, Vector env)
+  { boolean res = body.typeCheck(types,entities,cs,env);
+    return res; 
+  }
+
+  public Expression wpc(Expression post)
+  { return body.wpc(post); }  
+
+  public Vector dataDependents(Vector allvars, Vector vars)
+  { return vars; }  
+
+  public boolean updates(Vector v) 
+  { return body.updates(v); }  
+
+
+  public String updateForm(java.util.Map env, boolean local, Vector types,
+                           Vector entities, Vector vars)
+  { String bup = body.updateForm(env,local,types,entities,vars);  
+    return "    finally " + bup; 	
+  } 
+
+  public String updateFormJava6(java.util.Map env, boolean local)
+  { String bup = body.updateFormJava6(env,local);  
+    return "    finally " + bup; 	
+  } 
+
+  public String updateFormJava7(java.util.Map env, boolean local)
+  { String bup = body.updateFormJava7(env,local);  
+    return "    finally { " + bup + " }\n";
+  } 
+
+  public String updateFormCSharp(java.util.Map env, boolean local)
+  { String bup = body.updateFormCSharp(env,local);  
+    return "    finally { " + bup + " }\n";
+  } 
+
+  public String updateFormCPP(java.util.Map env, boolean local)
+  { String bup = body.updateFormCPP(env,local);  
+    return "    catch(...) { " + bup + " }\n";
+  } 
+
+  public BStatement bupdateForm(java.util.Map env, boolean local)
+  { BStatement ifstat = body.bupdateForm(env,local);
+    return ifstat; 
+  } 
+
+  public String bupdateForm()
+  { String ifstat = body.bupdateForm();
+    return ifstat; 
+  } 
+
+  public Vector allPreTerms()
+  { return body.allPreTerms(); }  
+
+  public Vector allPreTerms(String var)
+  { return body.allPreTerms(var); }  
+
+  public Vector readFrame()
+  { return body.readFrame(); }  
+
+  public Vector writeFrame()
+  { return body.writeFrame(); }  
+
+  public Statement checkConversions(Entity e, Type propType, Type propElemType, 
+                                    java.util.Map interp)
+  { Statement ifc = body.checkConversions(e,propType,propElemType,interp); 
+    return ifc; 
+  }  
+
+  public Statement replaceModuleReferences(UseCase uc)
+  { Statement ifc = body.replaceModuleReferences(uc);
+    return ifc; 
+  }  
+
+
+  public int syntacticComplexity()
+  { int res = body.syntacticComplexity(); 
+    return res + 1;
+  }
+
+  public int cyclomaticComplexity()
+  { int res = body.cyclomaticComplexity();
+    return res; 
+  }
+
+  public int epl()
+  { int res = body.epl();
+    return res; 
+  }
+
+  public Vector allOperationsUsedIn()
+  { Vector res = new Vector();
+    res.addAll(body.allOperationsUsedIn()); 
+    return res;  
+  }  
+
+  public Vector equivalentsUsedIn()
+  { Vector res = new Vector();
+    res.addAll(body.equivalentsUsedIn()); 
+    return res;  
+  }  
+
+  public Vector metavariables()
+  { Vector res = new Vector();
+    res.addAll(body.metavariables());  
     return res;  
   }  
 }

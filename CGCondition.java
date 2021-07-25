@@ -292,6 +292,9 @@ public class CGCondition
       
       if (ac.tag.equalsIgnoreCase(stereotype))
       { return positive; }
+
+      if ("multiple".equals(stereotype) && ac.terms.size() > 1)
+      { return positive; } 
     } 
     else if (a instanceof ASTBasicTerm)
     { ASTBasicTerm ac = (ASTBasicTerm) a; 
@@ -306,9 +309,11 @@ public class CGCondition
       { return positive; }
     } 
 
-    // String str = ASTTerm.getType(a.literalForm()); 
-    // if (str != null && str.equals(stereotype))
-    // { return positive; } 
+    String str = ASTTerm.getType(a.literalForm()); 
+    if (str != null && str.equals(stereotype))
+    { System.out.println(">>> Type of " + a + " = " + stereotype); 
+      return positive; 
+    } 
 
     if ("updatesObject".equals(stereotype))
     { if (a.updatesObject())

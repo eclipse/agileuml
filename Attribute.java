@@ -1730,7 +1730,8 @@ public class Attribute extends ModelElement
     String code = ""; 
     String sync = ""; 
 
-    if (entity.isSequential()) { sync = " synchronized"; } 
+    if (entity.isSequential()) 
+    { sync = " synchronized"; } 
     
     if (ent != entity && !entity.isInterface()) 
     { code = "super.set" + nme + "(" + val + ");"; }
@@ -1778,6 +1779,73 @@ public class Attribute extends ModelElement
         System.out.println("Possible precond for set" + nme + ": " + cpre); 
       }
     }
+    return opheader + "  }\n"; 
+  }  // actuators -- include a message?  Should not be local?
+
+  // setattindex operation for the entity:
+  public String setIndexOperation(Entity ent, Vector cons,
+                             Vector entities, Vector types) 
+  { // setatt(int index, type attx) 
+    // if ent != entity, creates subclass ent extension op for att
+
+    if (frozen) { return ""; }
+    String nme = getName();
+    if (type == null || ent == null || entity == null) // error
+    { System.err.println("ERROR: null type or entity in attribute " + nme); 
+      return ""; 
+    } 
+    
+    Type eType = elementType; 
+    if (eType == null) 
+    { eType = new Type("OclAny", null); } 
+
+    String val = nme + "_x"; 
+    Attribute par = new Attribute(val,eType,ModelElement.INTERNAL);
+    // par.setElementType(elementType); 
+    Attribute ind = new Attribute("_ind", new Type("int", null), ModelElement.INTERNAL); 
+
+    Vector v1 = new Vector();
+    v1.add(ind); 
+    v1.add(par);
+    String t = eType.getJava(); 
+    // if (v == null) // int or double, String or boolean
+    // { t = type.getName(); }
+    // else 
+    // { t = "int"; } 
+
+    if (ent.isInterface())
+    { return " void set" + nme + "(int _ind, " + t + " _x);\n"; } 
+
+
+    BehaviouralFeature event =
+      new BehaviouralFeature("set" + nme,v1,false,null);
+
+    String qual = " "; 
+    String code = ""; 
+    String sync = ""; 
+
+    if (entity.isSequential()) 
+    { sync = " synchronized"; } 
+    
+    if (ent != entity && !entity.isInterface()) 
+    { code = "super.set" + nme + "(_ind, " + val + ");"; }
+    else if (!instanceScope)
+    { qual = " static "; 
+      code = nme + ".set(_ind, " + val + ");";
+    }
+    else 
+    { code = nme + ".set(_ind, " + val + ");"; } // controller sets static atts, once only 
+ 
+    String opheader; 
+    opheader = "public" + sync + qual + "void set" + nme + "(int _ind, " + t +
+             " " + val + ") { " + code; 
+
+    if (!instanceScope)
+    { opheader = opheader + " }\n\n" + 
+        "public" + sync + " void localSet" + nme + "(int _ind, " + t +
+             " " + val + ") { "; 
+    }
+       
     return opheader + "  }\n"; 
   }  // actuators -- include a message?  Should not be local?
 
@@ -1869,6 +1937,140 @@ public class Attribute extends ModelElement
     return opheader + "  }\n"; 
   }  // actuators -- include a message?  Should not be local?
 
+  // setattindex operation for the entity:
+  public String setIndexOperationJava6(Entity ent, Vector cons,
+                             Vector entities, Vector types) 
+  { // setatt(int index, type attx) 
+    // if ent != entity, creates subclass ent extension op for att
+
+    if (frozen) { return ""; }
+    String nme = getName();
+    if (type == null || ent == null || entity == null) // error
+    { System.err.println("ERROR: null type or entity in attribute " + nme); 
+      return ""; 
+    } 
+    
+    Type eType = elementType; 
+    if (eType == null) 
+    { eType = new Type("OclAny", null); } 
+
+    String val = nme + "_x"; 
+    Attribute par = new Attribute(val,eType,ModelElement.INTERNAL);
+    // par.setElementType(elementType); 
+    Attribute ind = new Attribute("_ind", new Type("int", null), ModelElement.INTERNAL); 
+
+    Vector v1 = new Vector();
+    v1.add(ind); 
+    v1.add(par);
+    String t = eType.getJava6(); 
+    // if (v == null) // int or double, String or boolean
+    // { t = type.getName(); }
+    // else 
+    // { t = "int"; } 
+
+    if (ent.isInterface())
+    { return " void set" + nme + "(int _ind, " + t + " _x);\n"; } 
+
+
+    BehaviouralFeature event =
+      new BehaviouralFeature("set" + nme,v1,false,null);
+
+    String qual = " "; 
+    String code = ""; 
+    String sync = ""; 
+
+    if (entity.isSequential()) 
+    { sync = " synchronized"; } 
+    
+    if (ent != entity && !entity.isInterface()) 
+    { code = "super.set" + nme + "(_ind, " + val + ");"; }
+    else if (!instanceScope)
+    { qual = " static "; 
+      code = nme + ".set(_ind, " + val + ");";
+    }
+    else 
+    { code = nme + ".set(_ind, " + val + ");"; } // controller sets static atts, once only 
+ 
+    String opheader; 
+    opheader = "public" + sync + qual + "void set" + nme + "(int _ind, " + t +
+             " " + val + ") { " + code; 
+
+    if (!instanceScope)
+    { opheader = opheader + " }\n\n" + 
+        "public" + sync + " void localSet" + nme + "(int _ind, " + t +
+             " " + val + ") { "; 
+    }
+       
+    return opheader + "  }\n"; 
+  }  
+
+  // setattindex operation for the entity:
+  public String setIndexOperationJava7(Entity ent, Vector cons,
+                             Vector entities, Vector types) 
+  { // setatt(int index, type attx) 
+    // if ent != entity, creates subclass ent extension op for att
+
+    if (frozen) { return ""; }
+    String nme = getName();
+    if (type == null || ent == null || entity == null) // error
+    { System.err.println("ERROR: null type or entity in attribute " + nme); 
+      return ""; 
+    } 
+    
+    Type eType = elementType; 
+    if (eType == null) 
+    { eType = new Type("OclAny", null); } 
+
+    String val = nme + "_x"; 
+    Attribute par = new Attribute(val,eType,ModelElement.INTERNAL);
+    // par.setElementType(elementType); 
+    Attribute ind = new Attribute("_ind", new Type("int", null), ModelElement.INTERNAL); 
+
+    Vector v1 = new Vector();
+    v1.add(ind); 
+    v1.add(par);
+    String t = eType.getJava7(); 
+    // if (v == null) // int or double, String or boolean
+    // { t = type.getName(); }
+    // else 
+    // { t = "int"; } 
+
+    if (ent.isInterface())
+    { return " void set" + nme + "(int _ind, " + t + " _x);\n"; } 
+
+
+    BehaviouralFeature event =
+      new BehaviouralFeature("set" + nme,v1,false,null);
+
+    String qual = " "; 
+    String code = ""; 
+    String sync = ""; 
+
+    if (entity.isSequential()) 
+    { sync = " synchronized"; } 
+    
+    if (ent != entity && !entity.isInterface()) 
+    { code = "super.set" + nme + "(_ind, " + val + ");"; }
+    else if (!instanceScope)
+    { qual = " static "; 
+      code = nme + ".set(_ind, " + val + ");";
+    }
+    else 
+    { code = nme + ".set(_ind, " + val + ");"; } 
+ 
+    String opheader; 
+    opheader = "public" + sync + qual + "void set" + nme + "(int _ind, " + t +
+             " " + val + ") { " + code; 
+
+    if (!instanceScope)
+    { opheader = opheader + " }\n\n" + 
+        "public" + sync + " void localSet" + nme + "(int _ind, " + t +
+             " " + val + ") { "; 
+    }
+       
+    return opheader + "  }\n"; 
+  }  
+
   public String setOperationJava7(Entity ent, Vector cons,
                              Vector entities, Vector types) 
   { // setatt(type attx) 
@@ -1956,6 +2158,68 @@ public class Attribute extends ModelElement
     return opheader + "  }\n"; 
   }  // actuators -- include a message?  Should not be local?
 
+  public String setIndexOperationCSharp(Entity ent, Vector cons,
+                             Vector entities, Vector types) 
+  { // setatt(int _ind, type attx) 
+    // if ent != entity, creates subclass ent extension op for att
+
+    if (frozen) { return ""; }
+    String nme = getName();
+
+    Type eType = elementType; 
+    if (eType == null) 
+    { eType = new Type("OclAny", null); } 
+
+    String val = nme + "_x"; 
+    Attribute par = new Attribute(val,eType,ModelElement.INTERNAL);
+    // par.setElementType(elementType); 
+    Attribute ind = new Attribute("_ind", new Type("int", null), ModelElement.INTERNAL); 
+
+    Vector v1 = new Vector();
+    v1.add(ind); 
+    v1.add(par);
+    String t = eType.getCSharp(); 
+
+    // if (v == null) // int or double, String or boolean
+    // { t = type.getCSharp(); }
+    // else 
+    // { t = "int"; } 
+
+    if (ent.isInterface())
+    { return " void set" + nme + "(int _ind, " + t + " _x);\n"; } 
+
+
+    BehaviouralFeature event =
+      new BehaviouralFeature("set" + nme,v1,false,null);
+
+    String qual = " "; 
+    String code = ""; 
+    String sync = ""; 
+
+    // if (entity.isSequential()) { sync = " synchronized"; } 
+    
+    if (ent != entity && !entity.isInterface()) 
+    { code = "base.set" + nme + "(_ind, " + val + ");"; }
+    else if (!instanceScope)
+    { qual = " static "; 
+      code = nme + "[_ind] = " + val + ";";
+    }
+    else 
+    { code = nme + "[_ind] = " + val + ";"; } 
+ 
+    String opheader; 
+    opheader = "public" + sync + qual + "void set" + nme + "(int _ind, " + t +
+             " " + val + ") { " + code; 
+
+    if (!instanceScope)
+    { opheader = opheader + " }\n\n" + 
+        "public" + sync + " void localSet" + nme + "(int _ind, " + t +
+             " " + val + ") { "; 
+    }
+       
+    return opheader + "  }\n"; 
+  }  
+
   public String setOperationCSharp(Entity ent, Vector cons,
                              Vector entities, Vector types) 
   { // setatt(type attx) 
@@ -2038,6 +2302,63 @@ public class Attribute extends ModelElement
     return opheader + "  }\n"; 
   }  // actuators -- include a message?  Should not be local?
 
+  public String setIndexOperationCPP(Entity ent, Vector cons,
+                             Vector entities, Vector types) 
+  { // setatt(int _ind, type attx) 
+    // if ent != entity, creates subclass ent extension op for att
+
+    if (frozen) { return ""; }
+    String nme = getName();
+    String val = nme + "_x"; 
+
+    Attribute par = new Attribute(val,type,ModelElement.INTERNAL);
+    par.setElementType(elementType); 
+
+    Type eType = elementType; 
+    if (eType == null) 
+    { eType = new Type("OclAny", null); } 
+
+    Attribute ind = new Attribute("_ind", new Type("int", null), ModelElement.INTERNAL); 
+
+    Vector v1 = new Vector();
+    v1.add(ind); 
+    v1.add(par);
+    String et = eType.getCSharp(); 
+
+    String t = type.getCPP(elementType); 
+
+
+
+    BehaviouralFeature event =
+      new BehaviouralFeature("set" + nme,v1,false,null);
+
+    String qual = " "; 
+    String code = ""; 
+    String sync = ""; 
+
+    // if (entity.isSequential()) { sync = " synchronized"; } 
+    
+    // if (ent != entity && !entity.isInterface()) 
+    // { code = "super.set" + nme + "(" + val + ");"; }
+    // else 
+    if (!instanceScope)
+    { qual = " static "; 
+      code = "(*" + nme + ")[_ind] = " + val + ";";
+    }
+    else 
+    { code = "(*" + nme + ")[_ind] = " + val + ";"; } // controller sets static atts, once only 
+ 
+    String opheader; 
+    opheader = "  " + qual + "void set" + nme + "(int _ind, " + et + " " + val + ") { " + code; 
+
+    if (!instanceScope)
+    { opheader = opheader + " }\n\n" + 
+        "  " + " void localSet" + nme + "(int _ind, " + et + " " + val + ") { "; 
+    }
+       
+    return opheader + "  }\n"; 
+  }  
+
   public String setOperationCPP(Entity ent, Vector cons,
                              Vector entities, Vector types) 
   { // setatt(type attx) 
@@ -2098,7 +2419,7 @@ public class Attribute extends ModelElement
     { Constraint cc = (Constraint) cons.get(j);
       Constraint cnew = cc.matches("set",nme,ent,val,event);
       // must type check new constraint. 
-      System.out.println("Match set of " + cc + " is: " + cnew);
+      System.out.println(">>** Match set of " + cc + " is: " + cnew);
        
       if (cnew != null)
       { Vector contx = new Vector(); 
@@ -2123,12 +2444,14 @@ public class Attribute extends ModelElement
   public String addremOperation(Entity ent)
   { String res = "";
     if (!isMultiple()) { return res; }
-    if (elementType == null) { return res; }
+    Type eType = elementType; 
+    if (elementType == null) 
+    { eType = new Type("OclAny", null); } 
 
     String nme = getName();
     String attx = nme + "_x";
-    String et = elementType.getJava();
-    String wattx = Expression.wrap(elementType,attx); 
+    String et = eType.getJava();
+    String wattx = Expression.wrap(eType,attx); 
 
     if (ent.isInterface())
     { return "  void add" + nme + "(" + et + " " + attx + ");\n\n" +
@@ -2138,15 +2461,169 @@ public class Attribute extends ModelElement
     { return "  public void add" + nme + "(" + et + " " + attx + ")\n" + 
              "  { " + nme + ".add(" + wattx + "); }\n\n" +
           "  public void remove" + nme + "(" + et + " " + attx + ")\n" + 
-          "  { " + nme + ".remove(" + wattx + "); }\n\n";
+          "  { Vector _removed" + nme + " = new Vector();\n" + 
+          "    _removed" + nme + ".add(" + wattx + ");\n" + 
+          "    " + nme + ".removeAll(_removed" + nme + ");\n" + 
+          "  }\n\n";
     }
     else // static
     { return "  public static void add" + nme + "(" + et + " " + attx + ")\n" + 
              "  { " + nme + ".add(" + wattx + "); }\n\n" +
           "  public static void remove" + nme + "(" + et + " " + attx + ")\n" + 
-          "  { " + nme + ".remove(" + wattx + "); }\n\n";
+          "  { Vector _removed" + nme + " = new Vector();\n" + 
+          "    _removed" + nme + ".add(" + wattx + ");\n" + 
+          "    " + nme + ".removeAll(_removed" + nme + ");\n" + 
+          "  }\n\n";
     }
   }
+
+  public String addremOperationJava6(Entity ent)
+  { String res = "";
+    if (!isMultiple()) { return res; }
+    Type eType = elementType; 
+    if (elementType == null) 
+    { eType = new Type("OclAny", null); } 
+    
+    String nme = getName();
+    String attx = nme + "_x";
+    String et = eType.getJava6();
+    String wattx = Expression.wrap(eType,attx); 
+
+    if (ent.isInterface())
+    { return "  void add" + nme + "(" + et + " " + attx + ");\n\n" +
+             "  void remove" + nme + "(" + et + " " + attx + ");\n\n";
+    }
+    else if (instanceScope)
+    { return "  public void add" + nme + "(" + et + " " + attx + ")\n" + 
+          "  { " + nme + ".add(" + wattx + "); }\n\n" +
+          "  public void remove" + nme + "(" + et + " " + attx + ")\n" + 
+          "  { ArrayList _removed" + nme + " = new ArrayList();\n" + 
+          "    _removed" + nme + ".add(" + wattx + ");\n" + 
+          "    " + nme + ".removeAll(_removed" + nme + ");\n" + 
+          "  }\n\n";
+    }
+    else // static
+    { return "  public static void add" + nme + "(" + et + " " + attx + ")\n" + 
+             "  { " + nme + ".add(" + wattx + "); }\n\n" +
+          "  public static void remove" + nme + "(" + et + " " + attx + ")\n" + 
+          "  { ArrayList _removed" + nme + " = new ArrayList();\n" + 
+          "    _removed" + nme + ".add(" + wattx + ");\n" + 
+          "    " + nme + ".removeAll(_removed" + nme + ");\n" + 
+          "  }\n\n";
+    }
+  }
+
+  public String addremOperationJava7(Entity ent)
+  { String res = "";
+    if (!isMultiple()) { return res; }
+    Type eType = elementType; 
+    if (elementType == null) 
+    { eType = new Type("OclAny", null); } 
+
+    
+    String nme = getName();
+    String attx = nme + "_x";
+    String et = eType.getJava7();
+    String wattx = Expression.wrap(eType,attx); 
+
+    if (ent.isInterface())
+    { return "  void add" + nme + "(" + et + " " + attx + ");\n\n" +
+             "  void remove" + nme + "(" + et + " " + attx + ");\n\n";
+    }
+    else if (instanceScope)
+    { return "  public void add" + nme + "(" + et + " " + attx + ")\n" + 
+             "  { " + nme + ".add(" + wattx + "); }\n\n" +
+          "  public void remove" + nme + "(" + et + " " + attx + ")\n" + 
+          "  { ArrayList<" + et + "> _removed" + nme + " = new ArrayList<" + et + ">();\n" + 
+          "    _removed" + nme + ".add(" + wattx + ");\n" + 
+          "    " + nme + ".removeAll(_removed" + nme + ");\n" + 
+          "  }\n\n";
+    }
+    else // static
+    { return "  public static void add" + nme + "(" + et + " " + attx + ")\n" + 
+             "  { " + nme + ".add(" + wattx + "); }\n\n" +
+          "  public static void remove" + nme + "(" + et + " " + attx + ")\n" + 
+          "  { ArrayList<" + et + "> _removed" + nme + " = new ArrayList<" + et + ">();\n" + 
+          "    _removed" + nme + ".add(" + wattx + ");\n" + 
+          "    " + nme + ".removeAll(_removed" + nme + ");\n" + 
+          "  }\n\n";
+    }
+  }
+
+  public String addremOperationCSharp(Entity ent)
+  { String res = "";
+    if (!isMultiple()) { return res; }
+    Type eType = elementType; 
+    if (elementType == null) 
+    { eType = new Type("OclAny", null); } 
+
+    
+    String nme = getName();
+    String attx = nme + "_x";
+    String et = eType.getCSharp();
+    String wattx = Expression.wrapCSharp(eType,attx); 
+
+    if (ent.isInterface())
+    { return "  void add" + nme + "(" + et + " " + attx + ");\n\n" +
+             "  void remove" + nme + "(" + et + " " + attx + ");\n\n";
+    }
+    else if (instanceScope)
+    { return "  public void add" + nme + "(" + et + " " + attx + ")\n" + 
+             "  { " + nme + ".Add(" + wattx + "); }\n\n" +
+          "  public void remove" + nme + "(" + et + " " + attx + ")\n" + 
+          "  { " + nme + " = SystemTypes.subtract(" + nme + ", " + wattx + "); }\n\n";
+    }
+    else // static
+    { return "  public static void add" + nme + "(" + et + " " + attx + ")\n" + 
+             "  { " + nme + ".Add(" + wattx + "); }\n\n" +
+          "  public static void remove" + nme + "(" + et + " " + attx + ")\n" + 
+          "  { " + nme + " = SystemTypes.subtract(" + nme + ", " + wattx + "); }\n\n";
+    }
+  }
+
+  public String addremOperationCPP(Entity ent)
+  { String res = "";
+    if (!isMultiple()) { return res; }
+    Type eType = elementType; 
+    if (elementType == null) 
+    { eType = new Type("OclAny", null); } 
+
+    
+    String nme = getName();
+    String attx = nme + "_x";
+    String et = eType.getCPP();
+    // String wattx = Expression.wrap(eType,attx); 
+
+    String remassign = "  vector<" + et + ">::iterator _pos = find(" + nme + "->begin(), " + 
+                                          nme + "->end(), " + attx + ");\n" + 
+                "  while (_pos != " + nme + "->end())\n" + 
+                "  { " + nme + "->erase(_pos);\n" + 
+                "    _pos = find(" + nme + "->begin(), " + nme + "->end(), " + attx + ");\n" +
+                "  }\n\n"; 
+
+    String qual = ""; 
+    if (instanceScope) { } 
+    else 
+    { qual = "static "; } 
+
+    if (ent.isInterface())
+    { return "  void add" + nme + "(" + et + " " + attx + ");\n\n" +
+             "  void remove" + nme + "(" + et + " " + attx + ");\n\n";
+    }
+    else if (isSequence())
+    { return "  " + qual + "void add" + nme + "(" + et + " " + attx + ")\n" + 
+             "  { " + nme + "->push_back(" + attx + "); }\n\n" +
+             "  " + qual + "void remove" + nme + "(" + et + " " + attx + ")\n" + 
+             "  { " + remassign + "  }\n\n";
+    }
+    else if (isSet())
+    { return "  " + qual + "void add" + nme + "(" + et + " " + attx + ")\n" + 
+             "  { " + nme + "->insert(" + attx + "); }\n\n" +
+             "  " + qual + "void remove" + nme + "(" + et + " " + attx + ")\n" + 
+             "  { " + nme + "->erase(" + attx + ");  }\n\n";
+    }
+    return ""; // Unknown type, we cannot have maps. 
+  }  
 
   public Vector sqlSetOperations(Entity ent, Vector cons,
                                  Vector entities, Vector types) 
@@ -2346,7 +2823,7 @@ public class Attribute extends ModelElement
     String nme = getName();
     String update = "Controller::inst->set" + nme + "(" + ex + ",val);";
     String argtyp1 = "vector<" + ename + "*>*";
-    String argtyp2 = "set<" + ename + "*>*"; 
+    String argtyp2 = "std::set<" + ename + "*>*"; 
     String tname = type.getCPP(elementType);
 
     String es = ename.toLowerCase() + "s";
@@ -2366,7 +2843,7 @@ public class Attribute extends ModelElement
 
     res = res + "  void " + ename + "::setAll" + nme;
     res = res + "(" + argtyp2 + " " + es + "," + tname + " val)\n";
-    res = res + "  { set<" + ename + "*>::iterator _pos;\n";
+    res = res + "  { std::set<" + ename + "*>::iterator _pos;\n";
     res = res + "    for (_pos = " + es + "->begin(); _pos != " + es + "->end(); ++_pos)\n";
     res = res + "    { " + ename + "* " + ex + " = *_pos;\n";
     res = res + "      " + update + " }\n";
@@ -2638,15 +3115,15 @@ public class Attribute extends ModelElement
     String nme = getName();
     String elem = ex + "->get" + nme + "()";
     String tname = type.getCPP(elementType);
-    String returntype = "set<" + tname + ">*"; 
-    String argtype = "set<" + ename + "*>*"; 
+    String returntype = "std::set<" + tname + ">*"; 
+    String argtype = "std::set<" + ename + "*>*"; 
 
     String es = ename.toLowerCase() + "s";
 
     String res = "  static " + returntype + " getAll" + nme;
     res = res + "(" + argtype + " " + es + ")\n";
     res = res + "  { " + returntype + " result = new set<" + tname + ">();\n";
-    res = res + "    set<" + ename + "*>::iterator _pos;\n";
+    res = res + "    std::set<" + ename + "*>::iterator _pos;\n";
     res = res + "    for (_pos = " + es + "->begin(); _pos != " + es + "->end(); ++_pos)\n";
     res = res + "    { " + ename + "* " + ex + " = *_pos;\n";
     res = res + "      result->insert(" + elem + "); }\n";
@@ -2866,6 +3343,9 @@ public class Attribute extends ModelElement
     BehaviouralFeature event =
       new BehaviouralFeature("set" + nme,v1,false,null);
     String t = type.getJava(); 
+    String et = "Object"; 
+    if (elementType != null) 
+    { et = elementType.getJava(); } 
 
     // if (vals == null)
     // { t = type.getName(); } 
@@ -2885,7 +3365,13 @@ public class Attribute extends ModelElement
              indexmap + ".put(" + wattx + "," + ex + ");\n  "; 
     } // should be for any key managed by ent, including superclass atts. 
     else if (instanceScope) 
-    { opheader = "public void set" + nme + "(" + ename + " " +
+    { if (type.isSequence())
+      { opheader = "public void set" + nme + "(" + ename + " " +
+             ex + ", int _ind, " + et + " " + attx + ") \n  { " +
+           ex + ".set" + nme + "(_ind, " + attx + "); }\n\n  ";
+       } 
+
+       opheader = opheader + "public void set" + nme + "(" + ename + " " +
              ex + ", " + t +
              " " + attx + ") \n  { " +
            ex + ".set" + nme + "(" + attx + ");\n  "; 
@@ -2934,14 +3420,17 @@ public class Attribute extends ModelElement
   public Vector addremOperationsCode(Entity ent)
   { Vector res = new Vector();
     if (!isMultiple()) { return res; }
-    if (elementType == null) { return res; }
+
+    String et = "Object"; 
+    if (elementType != null) 
+    { et = elementType.getJava(); } 
 
     String opheader = "";
     String ename = ent.getName();
     String ex = ename.toLowerCase() + "x";
     String nme = getName();
     String attx = nme + "_x";
-    String et = elementType.getJava();
+    
 
     if (instanceScope)
     { opheader = "  public void add" + nme + "(" + ename + " " + ex + ", " + et + " " + attx + ")\n" +
@@ -2988,6 +3477,11 @@ public class Attribute extends ModelElement
     BehaviouralFeature event =
       new BehaviouralFeature("set" + nme,v1,false,null);
     String t = type.getJava6(); 
+    if ("List".equals(t))
+    { t = "ArrayList"; } 
+    String et = "Object"; 
+    if (elementType != null) 
+    { et = elementType.getJava6(); } 
 
     // if (vals == null)
     // { t = type.getName(); } 
@@ -3007,7 +3501,12 @@ public class Attribute extends ModelElement
              indexmap + ".put(" + wattx + "," + ex + ");\n  "; 
     } 
     else if (instanceScope) 
-    { opheader = "public void set" + nme + "(" + ename + " " +
+    { if (type.isSequence())
+      { opheader = "public void set" + nme + "(" + ename + " " +
+             ex + ", int _ind, " + et + " " + attx + ") \n  { " +
+           ex + ".set" + nme + "(_ind, " + attx + "); }\n\n  ";
+       } 
+       opheader = opheader + "public void set" + nme + "(" + ename + " " +
              ex + ", " + t +
              " " + attx + ") \n  { " +
            ex + ".set" + nme + "(" + attx + ");\n  "; 
@@ -3053,6 +3552,39 @@ public class Attribute extends ModelElement
     return res; 
   }
 
+  public Vector addremOperationsCodeJava6(Entity ent)
+  { Vector res = new Vector();
+    if (!isMultiple()) { return res; }
+    String et = "Object"; 
+    if (elementType != null) 
+    { et = elementType.getJava6(); } 
+
+    String opheader = "";
+    String ename = ent.getName();
+    String ex = ename.toLowerCase() + "x";
+    String nme = getName();
+    String attx = nme + "_x";
+
+    if (instanceScope)
+    { opheader = "  public void add" + nme + "(" + ename + " " + ex + ", " + et + " " + attx + ")\n" +
+         "  { " + ex + ".add" + nme + "(" + attx + "); }\n\n";
+       res.add(opheader);
+       String removeop = "  public void remove" + nme + "(" + ename + " " + ex + ", " + et + " " + attx + ")\n" +
+         "  { " + ex + ".remove" + nme + "(" + attx + "); }\n\n";
+       res.add(removeop);
+    }
+   else
+    { opheader = "  public void add" + nme + "(" + et + " " + attx + ")\n" +
+         "  { " + ename + ".add" + nme + "(" + attx + "); }\n\n";
+       res.add(opheader);
+       String removeop = "  public void remove" + nme + "(" + et + " " + attx + ")\n" +
+         "  { " + ename + ".remove" + nme + "(" + attx + "); }\n\n";
+       res.add(removeop);
+    }
+    return res;
+  }  
+
+
   // setatt operation for Controller:
   public Vector senOperationsCodeJava7(Vector cons,
                                   Entity ent,Vector entities,Vector types)
@@ -3078,6 +3610,9 @@ public class Attribute extends ModelElement
     BehaviouralFeature event =
       new BehaviouralFeature("set" + nme,v1,false,null);
     String t = type.getJava7(elementType); 
+    String et = "Object"; 
+    if (elementType != null) 
+    { et = elementType.getJava7(); } 
 
     // if (vals == null)
     // { t = type.getName(); } 
@@ -3097,7 +3632,12 @@ public class Attribute extends ModelElement
              indexmap + ".put(" + wattx + "," + ex + ");\n  "; 
     } 
     else if (instanceScope) 
-    { opheader = "public void set" + nme + "(" + ename + " " +
+    { if (type.isSequence())
+      { opheader = "public void set" + nme + "(" + ename + " " +
+             ex + ", int _ind, " + et + " " + attx + ") \n  { " +
+           ex + ".set" + nme + "(_ind, " + attx + "); }\n\n  ";
+       } 
+       opheader = opheader + "public void set" + nme + "(" + ename + " " +
              ex + ", " + t +
              " " + attx + ") \n  { " +
            ex + ".set" + nme + "(" + attx + ");\n  "; 
@@ -3143,6 +3683,38 @@ public class Attribute extends ModelElement
     return res; 
   }
 
+  public Vector addremOperationsCodeJava7(Entity ent)
+  { Vector res = new Vector();
+    if (!isMultiple()) { return res; }
+    String et = "Object"; 
+    if (elementType != null) 
+    { et = elementType.getJava7(); } 
+
+    String opheader = "";
+    String ename = ent.getName();
+    String ex = ename.toLowerCase() + "x";
+    String nme = getName();
+    String attx = nme + "_x";
+
+    if (instanceScope)
+    { opheader = "  public void add" + nme + "(" + ename + " " + ex + ", " + et + " " + attx + ")\n" +
+         "  { " + ex + ".add" + nme + "(" + attx + "); }\n\n";
+       res.add(opheader);
+       String removeop = "  public void remove" + nme + "(" + ename + " " + ex + ", " + et + " " + attx + ")\n" +
+         "  { " + ex + ".remove" + nme + "(" + attx + "); }\n\n";
+       res.add(removeop);
+    }
+   else
+    { opheader = "  public void add" + nme + "(" + et + " " + attx + ")\n" +
+         "  { " + ename + ".add" + nme + "(" + attx + "); }\n\n";
+       res.add(opheader);
+       String removeop = "  public void remove" + nme + "(" + et + " " + attx + ")\n" +
+         "  { " + ename + ".remove" + nme + "(" + attx + "); }\n\n";
+       res.add(removeop);
+    }
+    return res;
+  }  
+
   public Vector senOperationsCodeCSharp(Vector cons,
                                   Entity ent,Vector entities,Vector types)
   { Vector res = new Vector();
@@ -3165,6 +3737,9 @@ public class Attribute extends ModelElement
     BehaviouralFeature event =
       new BehaviouralFeature("set" + nme,v1,false,null);
     String t = type.getCSharp(); 
+    String et = "object"; 
+    if (elementType != null) 
+    { et = elementType.getCSharp(); } 
 
     // if (vals == null)
     // { t = type.getCSharp(); } 
@@ -3184,7 +3759,12 @@ public class Attribute extends ModelElement
              indexmap + "[" + wattx + "] = " + ex + ";\n  "; 
     } 
     else if (instanceScope) 
-    { opheader = "public void set" + nme + "(" + ename + " " +
+    { if (type.isSequence())
+      { opheader = "public void set" + nme + "(" + ename + " " +
+             ex + ", int _ind, " + et + " " + attx + ") \n  { " +
+           ex + ".set" + nme + "(_ind, " + attx + "); }\n\n  ";
+       } 
+       opheader = opheader + "public void set" + nme + "(" + ename + " " +
              ex + ", " + t + " " + attx + ") \n  { " +
            ex + ".set" + nme + "(" + attx + ");\n  "; 
     } 
@@ -3229,6 +3809,39 @@ public class Attribute extends ModelElement
     return res; 
   }
 
+  public Vector addremOperationsCodeCSharp(Entity ent)
+  { Vector res = new Vector();
+    if (!isMultiple()) { return res; }
+    String et = "object"; 
+    if (elementType != null) 
+    { et = elementType.getCSharp(); } 
+
+    String opheader = "";
+    String ename = ent.getName();
+    String ex = ename.toLowerCase() + "x";
+    String nme = getName();
+    String attx = nme + "_x";
+
+    if (instanceScope)
+    { opheader = "  public void add" + nme + "(" + ename + " " + ex + ", " + et + " " + attx + ")\n" +
+         "  { " + ex + ".add" + nme + "(" + attx + "); }\n\n";
+       res.add(opheader);
+       String removeop = "  public void remove" + nme + "(" + ename + " " + ex + ", " + et + " " + attx + ")\n" +
+         "  { " + ex + ".remove" + nme + "(" + attx + "); }\n\n";
+       res.add(removeop);
+    }
+   else
+    { opheader = "  public void add" + nme + "(" + et + " " + attx + ")\n" +
+         "  { " + ename + ".add" + nme + "(" + attx + "); }\n\n";
+       res.add(opheader);
+       String removeop = "  public void remove" + nme + "(" + et + " " + attx + ")\n" +
+         "  { " + ename + ".remove" + nme + "(" + attx + "); }\n\n";
+       res.add(removeop);
+    }
+    return res;
+  }  
+
+
   public Vector senOperationsCodeCPP(Vector cons,
                                   Entity ent,Vector entities,Vector types)
   { Vector res = new Vector();
@@ -3253,6 +3866,9 @@ public class Attribute extends ModelElement
     BehaviouralFeature event =
       new BehaviouralFeature("set" + nme,v1,false,null);
     String t = type.getCPP(elementType); 
+    String et = "void*"; 
+    if (elementType != null) 
+    { et = elementType.getCPP(); } 
 
     // if (vals == null)
     // { t = type.getCSharp(); } 
@@ -3272,7 +3888,12 @@ public class Attribute extends ModelElement
              indexmap + "[" + wattx + "] = " + ex + ";\n  "; 
     } 
     else if (instanceScope) 
-    { opheader = "  void set" + nme + "(" + ename + "* " +
+    { if (type.isSequence())
+      { opheader = "void set" + nme + "(" + ename + "* " +
+             ex + ", int _ind, " + et + " " + attx + ") \n  { " +
+           ex + "->set" + nme + "(_ind, " + attx + "); }\n\n  ";
+       } 
+       opheader = opheader + "  void set" + nme + "(" + ename + "* " +
              ex + ", " + t +
              " " + attx + ") \n  { " +
            ex + "->set" + nme + "(" + attx + ");\n  "; 
@@ -3317,6 +3938,32 @@ public class Attribute extends ModelElement
     res.add(opheader + "  }\n\n");
     return res; 
   }
+
+  public Vector addremOperationsCodeCPP(Entity ent)
+  { Vector res = new Vector();
+    if (!isMultiple()) { return res; }
+    String et = "void*"; 
+    if (elementType != null) 
+    { et = elementType.getCPP(); } 
+
+    String opheader = "";
+    String ename = ent.getName();
+    String ex = ename.toLowerCase() + "x";
+    String nme = getName();
+    String attx = nme + "_x";
+
+    if (instanceScope)
+    { opheader = "  void add" + nme + "(" + ename + "* " + ex + ", " + et + " " + attx + ")\n" +
+         "  { " + ex + "->add" + nme + "(" + attx + "); }\n\n";
+       res.add(opheader);
+       String removeop = "  void remove" + nme + "(" + ename + "* " + ex + ", " + et + " " + attx + ")\n" +
+         "  { " + ex + "->remove" + nme + "(" + attx + "); }\n\n";
+       res.add(removeop);
+    }
+    return res;
+  }  
+
+
 
   // For controller:
   public Vector senBOperationsCode(Vector cons, Entity ent, 

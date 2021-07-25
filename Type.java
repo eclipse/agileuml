@@ -32,6 +32,67 @@ public class Type extends ModelElement
   static java.util.Map simMap = new java.util.HashMap(); 
 
   Type alias = null;  // For datatypes 
+
+  static java.util.Map exceptions2java = new java.util.HashMap(); 
+  static 
+  { exceptions2java.put("OclException", "Throwable"); 
+    exceptions2java.put("ProgramException", "Exception"); 
+    // also, "RuntimeException"
+    exceptions2java.put("SystemException", "Error"); 
+    exceptions2java.put("IOException", "IOException"); 
+    exceptions2java.put("CastingException", "ClassCastException"); 
+    exceptions2java.put("NullAccessException", "NullPointerException"); 
+    exceptions2java.put("IndexingException", "IndexOutOfBoundsException");
+    // also "ArrayStoreException"
+    exceptions2java.put("ArithmeticException", "ArithmeticException");
+    exceptions2java.put("IncorrectElementException", "InputMismatchException");
+    // Also, "NoSuchElementException"
+    exceptions2java.put("AssertionException", "AssertionError");
+    exceptions2java.put("AccessingException", "IllegalAccessException");
+    // also, "NoClassDefFoundError" ?? 
+  } 
+
+  static java.util.Map exceptions2csharp = new java.util.HashMap(); 
+  static 
+  { exceptions2csharp.put("OclException", "Exception"); 
+    exceptions2csharp.put("ProgramException", "ApplicationException"); 
+    // also, "RuntimeException"
+    exceptions2csharp.put("SystemException", "SystemException"); 
+    exceptions2csharp.put("IOException", "IOException"); 
+    exceptions2csharp.put("CastingException", "InvalidCastException"); 
+    exceptions2csharp.put("NullAccessException", "NullReferenceException"); 
+    exceptions2csharp.put("IndexingException", "IndexOutOfRangeException");
+    // also "ArrayStoreException"
+    exceptions2csharp.put("ArithmeticException", "ArithmeticException");
+    // also "DivideByZeroException
+    exceptions2csharp.put("IncorrectElementException", "ArgumentException");
+    // Also, "NoSuchElementException"
+    exceptions2csharp.put("AssertionException", "Exception");
+    exceptions2csharp.put("AccessingException", "AccessViolationException");
+    // also, "NoClassDefFoundError" ?? 
+  } 
+
+  static java.util.Map exceptions2cpp = new java.util.HashMap(); 
+  static 
+  { exceptions2cpp.put("OclException", "exception"); 
+    exceptions2cpp.put("ProgramException", "logic_error"); 
+    // also, "runtime_error"
+    exceptions2cpp.put("SystemException", "system_error"); 
+    exceptions2cpp.put("IOException", "ios_base::failure"); 
+    exceptions2cpp.put("CastingException", "bad_cast"); 
+    exceptions2cpp.put("NullAccessException", "runtime_error"); 
+    exceptions2cpp.put("IndexingException", "out_of_range");
+    
+    exceptions2cpp.put("ArithmeticException", "runtime_error");
+    // also "DivideByZeroException
+    exceptions2cpp.put("IncorrectElementException", "invalid_argument");
+    // Also, "range_error" for incorrect values
+    // exceptions2cpp.put("AssertionException", "AssertionError");
+    // exceptions2cpp.put("AccessingException", "IllegalAccessException");
+    // also, "NoClassDefFoundError" ?? 
+  } 
+
+
    
   public Type(String nme, Vector vals)
   { super(nme);
@@ -40,7 +101,7 @@ public class Type extends ModelElement
     if ("Boolean".equalsIgnoreCase(nme))
     { setName("boolean"); } 
     else if ("Integer".equalsIgnoreCase(nme))
-    { setName("int"); } 
+    { setName("long"); } 
     else if ("Real".equalsIgnoreCase(nme))
     { setName("double"); } 
     values = vals;
@@ -99,6 +160,16 @@ public class Type extends ModelElement
 
   public boolean isVoid() 
   { return "void".equals(name); } 
+
+  public static boolean isOclExceptionType(Expression expr)
+  { Type t = expr.getType(); 
+    if (t == null) 
+    { return false; } 
+    String nme = t.getName(); 
+    if (exceptions2java.get(nme) != null) 
+    { return true; } 
+    return false; 
+  } 
 
   public Object clone()
   { Type result; 
@@ -1053,6 +1124,8 @@ public class Type extends ModelElement
     { return "new ArrayList<" + elementType.typeWrapperJava7() + ">()"; } 
     if (isSetType(this))
     { return "new HashSet<" + elementType.typeWrapperJava7() + ">()"; } 
+    // Take account of sortedness
+
     if (isMapType(this))
     { return "new HashMap<String, " + elementType.typeWrapperJava7() + ">()"; } 
     if ("boolean".equals(getName())) { return "false"; }
@@ -2245,7 +2318,7 @@ public class Type extends ModelElement
       if (alias != null)    // For datatypes
       { return alias.getDefaultCSharp(); } 
 
-      return "null";    // for class types, functions
+      return "null";    // for class types, functions, OclAny
     }
     return "0"; // (String) values.get(0);
   }
@@ -2269,14 +2342,14 @@ public class Type extends ModelElement
       if (nme.equals("int") || nme.equals("double") || nme.equals("long"))
       { return "0"; }
       if (nme.equals("Set"))
-      { return "new set<" + et + ">()"; } 
+      { return "new std::set<" + et + ">()"; } 
       if (nme.equals("Sequence"))
       { return "new vector<" + et + ">()"; }
       if (nme.equals("Map"))
       { return "new map<string, " + et + ">()"; }
       if (alias != null)    // For datatypes
       { return alias.getDefaultCPP(et); } 
-      return "NULL";    // for class types, functions
+      return "NULL";    // for class types, OclAny, functions
     }
     return "0"; // (String) values.get(0);
   }
@@ -2311,6 +2384,15 @@ public class Type extends ModelElement
     if (alias != null)    // For datatypes
     { return alias.getCSharp(); } 
  
+    if (nme.equals("OclDate"))
+    { return "DateTime"; } 
+    if (nme.equals("OclAny"))
+    { return "object"; } 
+
+    String jex = (String) exceptions2csharp.get(nme); 
+    if (jex != null) 
+    { return jex; } 
+
     if (values == null) { return nme; } 
     return "int";   
   } 
@@ -2344,6 +2426,10 @@ public class Type extends ModelElement
     if (isEntity) { return nme; } 
     if (alias != null)    // For datatypes
     { return alias.getSwift(); } 
+
+    if (nme.equals("OclAny"))
+    { return "Any"; } 
+
     return nme;  // enumerations 
   } 
 
@@ -2351,8 +2437,8 @@ public class Type extends ModelElement
   { String nme = getName();
     if (nme.equals("String")) { return "String"; }  
     if (nme.equals("boolean")) { return "Bool"; } 
-    if (nme.equals("int")) { return "Int"; } 
-    if (nme.equals("long")) { return "Int"; } 
+    if (nme.equals("int")) { return "Int32"; } 
+    if (nme.equals("long")) { return "Int64"; } 
     if (nme.equals("double")) { return "Double"; } 
     if (isEntity) { return nme; } 
     if (alias != null)    // For datatypes
@@ -2368,6 +2454,10 @@ public class Type extends ModelElement
     { return "Dictionary<String, " + elemType + ">"; } 
     if (nme.equals("Function"))
     { return "(String) -> " + elemType; } 
+
+    if (nme.equals("OclAny"))
+    { return "Any"; } 
+
     return nme; 
   } 
     
@@ -2390,8 +2480,9 @@ public class Type extends ModelElement
     else if (nme.equals("GraphDisplay"))
     { return "GraphDisplay.defaultInstance()"; } 
 
-    if (isEntity) 
+    if (isEntity || "OclAny".equals(nme)) 
     { return "nil"; } 
+
     if (isEnumeration()) 
     { return nme + "." + values.get(0); }
 
@@ -2408,7 +2499,7 @@ public class Type extends ModelElement
   public String getCPP(String elemType)
   { String nme = getName();
     if (nme.equals("Set")) 
-    { return "set<" + elemType + ">*"; } 
+    { return "std::set<" + elemType + ">*"; } 
     if (nme.equals("Sequence"))
     { return "vector<" + elemType + ">*"; } 
     if (nme.equals("Map"))
@@ -2421,6 +2512,9 @@ public class Type extends ModelElement
 
     if (alias != null)    // For datatypes
     { return alias.getCPP(elemType); } 
+
+    if (nme.equals("OclAny"))
+    { return "void*"; } 
 
     return nme;  // enumerations, long, int and double 
   } 
@@ -2444,11 +2538,21 @@ public class Type extends ModelElement
     { return "string"; }  
     if (nme.equals("boolean")) 
     { return "bool"; } 
-    if (isEntity) 
-    { return nme + "*"; }
     if (alias != null)    // For datatypes
     { return alias.getCPP(); } 
  
+    String jex = (String) exceptions2cpp.get(nme); 
+    if (jex != null) 
+    { return jex; } 
+
+    if (nme.equals("OclDate"))
+    { return "struct tm*"; } 
+    if (nme.equals("OclAny"))
+    { return "void*"; } 
+
+    if (isEntity) 
+    { return nme + "*"; }
+
     return nme;  // enumerations, int, long and double 
   } 
 
@@ -2586,8 +2690,19 @@ public class Type extends ModelElement
     if (alias != null)    // For datatypes
     { return alias.getJava(); } 
 
+    if (nme.equals("OclDate"))
+    { return "Date"; } 
+
+    if (nme.equals("OclAny"))
+    { return "Object"; } 
+
+    String jex = (String) exceptions2java.get(nme); 
+    if (jex != null) 
+    { return jex; } 
+
     if (values == null)
     { return nme; }
+
     return "int"; 
   }
 
@@ -2612,8 +2727,19 @@ public class Type extends ModelElement
     if (alias != null)    // For datatypes
     { return alias.getJava6(); } 
 
+    if (nme.equals("OclAny"))
+    { return "Object"; } 
+
+    if (nme.equals("OclDate"))
+    { return "Date"; } 
+
+    String jex = (String) exceptions2java.get(nme); 
+    if (jex != null) 
+    { return jex; } 
+
     if (values == null)
     { return nme; }
+
     // if (nme.equals("long")) { return "long"; } 
     return "int"; 
   }
@@ -2661,8 +2787,19 @@ public class Type extends ModelElement
     if (alias != null)    // For datatypes
     { return alias.getJava7(); } 
 
+    if (nme.equals("OclAny"))
+    { return "Object"; } 
+
+    if (nme.equals("OclDate"))
+    { return "Date"; } 
+
+    String jex = (String) exceptions2java.get(nme); 
+    if (jex != null) 
+    { return jex; } 
+
     if (values == null)
     { return nme; }
+
     // if (nme.equals("long")) { return "long"; } 
     return "int"; 
   }
@@ -2716,9 +2853,13 @@ public class Type extends ModelElement
     if (alias != null)    // For datatypes
     { return alias.getJava7(); } 
 
+    if (nme.equals("OclAny"))
+    { return "Object"; } 
+
     if (values == null)
     { return nme; }
     // if (nme.equals("long")) { return "long"; } 
+
     return "int"; 
   }
 
@@ -2752,6 +2893,9 @@ public class Type extends ModelElement
 
     if (typ.alias != null)    // For datatypes
     { return typ.alias.typeWrapperJava7(); } 
+
+    if (nme.equals("OclAny"))
+    { return "Object"; } 
 
     if (typ.values == null)
     { return typ.typeWrapperJava7(); }
@@ -2800,6 +2944,16 @@ public class Type extends ModelElement
       { return "Evaluation<String,Object>"; } 
     } 
 
+    if (nme.equals("OclAny"))
+    { return "Object"; } 
+
+    if (nme.equals("OclDate"))
+    { return "Date"; } 
+
+    String jex = (String) exceptions2java.get(nme); 
+    if (jex != null) 
+    { return jex; } 
+
     if (alias != null)    // For datatypes
     { return alias.typeWrapperJava8(); } 
 
@@ -2817,6 +2971,9 @@ public class Type extends ModelElement
     if ("boolean".equals(nme)) { return "Boolean"; } 
     if (alias != null)    // For datatypes
     { return alias.typeWrapper(); } 
+    if (nme.equals("OclAny"))
+    { return "Object"; } 
+
     if (values != null) { return "Integer"; } 
     return nme; 
   } 
@@ -2833,8 +2990,18 @@ public class Type extends ModelElement
     if ("boolean".equals(nme)) { return "Boolean"; } 
     if (alias != null)    // For datatypes
     { return alias.typeWrapperJava6(); } 
+    if (nme.equals("OclAny"))
+    { return "Object"; } 
+
     if (values != null) { return "Integer"; } 
     return nme; 
+  } 
+
+  public static String typeWrapperJava(Type t)
+  { if (t == null) 
+    { return "Object"; } 
+    else 
+    { return t.typeWrapperJava7(); } 
   } 
 
   public String typeWrapperJava7()  // for Java7
@@ -2882,6 +3049,8 @@ public class Type extends ModelElement
     if ("boolean".equals(nme)) { return "Boolean"; }
     if (alias != null)    // For datatypes
     { return alias.typeWrapperJava7(); } 
+    if (nme.equals("OclAny"))
+    { return "Object"; } 
  
     if (values != null) { return "Integer"; } 
     return nme; 
@@ -2934,6 +3103,8 @@ public class Type extends ModelElement
 
     if (alias != null)    // For datatypes
     { return alias.typeWrapperJava8(); } 
+    if (nme.equals("OclAny"))
+    { return "Object"; } 
  
     return nme; 
   } // For enumerations, would be better to represent as Java enums. 
@@ -2994,6 +3165,7 @@ public class Type extends ModelElement
   { if (typ == null) { return null; } 
 
     if ("int".equals(typ) || "double".equals(typ) || "boolean".equals(typ) ||
+        "OclAny".equals(typ) || 
         "long".equals(typ) || "String".equals(typ))
     { return new Type(typ,null); } 
 

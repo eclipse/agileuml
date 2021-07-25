@@ -92,7 +92,7 @@ public class ASTBasicTerm extends ASTTerm
       } 
 
       if (!failed)
-      { System.out.println("> Matched rule " + r + " for " + this);  
+      { System.out.println("> Matched " + tag + " rule " + r + " for " + this);  
 
         for (int p = 0; p < eargs.size(); p++)
         { String textp = (String) eargs.get(p); 
@@ -104,6 +104,8 @@ public class ASTBasicTerm extends ASTTerm
     return toString(); 
   }
 
+  public String queryForm()
+  { return toKM3(); } 
 
   public String toKM3()
   { 
@@ -153,8 +155,36 @@ public class ASTBasicTerm extends ASTTerm
 
     if ("Object".equals(value))
     { return "OclAny"; }
-    // if ("Collection".equals(value))
-    // { return "Collection"; }
+    if ("Collection".equals(value))
+    { return "OclCollection"; }
+    if ("Class".equals(value))
+    { return "OclType"; }
+    if ("Comparable".equals(value))
+    { return "OclComparable"; }
+    if ("Constructor".equals(value))
+    { return "OclOperation"; }
+    if ("Method".equals(value))
+    { return "OclOperation"; }
+    if ("Field".equals(value))
+    { return "OclAttribute"; }
+
+    if ("Thread".equals(value) || "Runnable".equals(value) ||
+        "Process".equals(value))
+    { return "OclProcess"; } 
+
+    if ("ThreadGroup".equals(value))
+    { return "OclProcessGroup"; } 
+
+    if ("Date".equals(value))
+    { return "OclDate"; }
+    if ("Calendar".equals(value))
+    { return "OclDate"; }
+
+    if ("Pattern".equals(value) || 
+        "FileFilter".equals(value) ||
+        "FilenameFilter".equals(value) || 
+        "Matcher".equals(value))
+    { return "OclRegex"; } 
 
     if ("ArrayList".equals(value))
     { return "Sequence"; } 
@@ -192,6 +222,15 @@ public class ASTBasicTerm extends ASTTerm
     { return "Map"; } 
     if ("Properties".equals(value))
     { return "Map"; } 
+
+    if ("Enumeration".equals(value))
+    { return "OclIterator"; } 
+    if ("Iterator".equals(value))
+    { return "OclIterator"; } 
+    if ("ListIterator".equals(value))
+    { return "OclIterator"; } 
+    if ("StringTokenizer".equals(value))
+    { return "OclIterator"; } 
 
     if ("File".equals(value))
     { return "OclFile"; } 
@@ -257,6 +296,7 @@ public class ASTBasicTerm extends ASTTerm
     { return "SystemException"; } 
     if ("AssertionError".equals(value))
     { return "AssertionException"; } 
+    
  
     if ("Exception".equals(value))
     { return "ProgramException"; } 
@@ -270,34 +310,50 @@ public class ASTBasicTerm extends ASTTerm
     { return "NullAccessException"; } 
     if ("ArithmeticException".equals(value))
     { return "ArithmeticException"; }
-    if ("IndexOutOfBoundsException".equals(value))
+    if (value.endsWith("IndexOutOfBoundsException"))
     { return "IndexingException"; } 
     if ("NoSuchElementException".equals(value))
     { return "IncorrectElementException"; }
-    if ("InputMismatchException".equals(value))
+    if ("InputMismatchException".equals(value) ||
+        "NumberFormatException".equals(value))
     { return "IncorrectElementException"; }
-    if ("ArrayIndexOutOfBoundsException".equals(value))
-    { return "IndexingException"; } 
+    // if ("ArrayIndexOutOfBoundsException".equals(value) ||
+    //     "StringIndexOutOfBoundsException".equals(value))
+    // { return "IndexingException"; } 
+    if ("IllegalAccessException".equals(value) || 
+        "NoClassDefFoundError".equals(value))
+    { return "AccessingException"; } 
 
-    String type = ASTTerm.getType(value); 
+    String type = ASTTerm.getType(value);
+   
+      
     if (type != null) 
     { System.out.println(">>> Type of " + value + " is " + type); } 
     else if (tag.equals("integerLiteral"))
-    { System.out.println(">>> Type of " + value + " is integer"); }
+    { System.out.println(">>> Type of " + value + " is integer"); 
+      ASTTerm.setType(value,"integer"); 
+    }
     else if (tag.equals("floatLiteral"))
-    { System.out.println(">>> Type of " + value + " is double"); }
+    { System.out.println(">>> Type of " + value + " is double"); 
+      ASTTerm.setType(value,"real"); 
+    }
     else if (tag.equals("literal") && value.endsWith("\"") && 
              value.startsWith("\""))
-    { System.out.println(">>> Type of " + value + " is String"); }
+    { System.out.println(">>> Type of " + value + " is String"); 
+      ASTTerm.setType(value,"String"); 
+    }
     else if (tag.equals("literal") && value.endsWith("\'") && 
              value.startsWith("\'"))
     { System.out.println(">>> Type of " + value + " is String"); 
       value = "\"" + value.substring(1,value.length()-1) + "\""; 
+      ASTTerm.setType(value,"String"); 
     }
     else if (tag.equals("literal") && 
              (value.equals("true") || value.equals("false"))
             )
-    { System.out.println(">>> Type of " + value + " is String"); } 
+    { System.out.println(">>> Type of " + value + " is String"); 
+      ASTTerm.setType(value,"boolean"); 
+    } 
   
     return value; 
   } 
@@ -312,6 +368,9 @@ public class ASTBasicTerm extends ASTTerm
     { return "double"; }
     else if (tag.equals("literal") && value.endsWith("\"") && 
              value.startsWith("\""))
+    { return "String"; }
+    else if (tag.equals("literal") && value.endsWith("\'") && 
+             value.startsWith("\'"))
     { return "String"; }
     else if (tag.equals("literal") && value.endsWith("\'") && 
              value.startsWith("\'"))

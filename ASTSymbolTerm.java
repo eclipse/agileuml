@@ -31,6 +31,9 @@ public class ASTSymbolTerm extends ASTTerm
   public String asTextModel(PrintWriter out)
   { return "\"" + symbol + "\""; } 
 
+  public String queryForm()
+  { return toKM3(); } 
+
   public String toKM3()
   { if ("{".equals(symbol)) 
     { return ""; } 
@@ -54,8 +57,8 @@ public class ASTSymbolTerm extends ASTTerm
     { return " < "; } 
     if (">".equals(symbol)) 
     { return " > "; } 
-    if ("=<".equals(symbol)) 
-    { return " =< "; } 
+    if ("<=".equals(symbol)) 
+    { return " <= "; } 
     if (">=".equals(symbol)) 
     { return " >= "; } 
 
@@ -69,9 +72,9 @@ public class ASTSymbolTerm extends ASTTerm
     { return " mod "; } 
 
     if ("+".equals(symbol)) 
-    { return " + "; } 
+    { return "+"; } 
     if ("-".equals(symbol)) 
-    { return " - "; } 
+    { return "-"; } 
     if ("*".equals(symbol)) 
     { return " * "; } 
     if ("/".equals(symbol)) 
@@ -98,6 +101,9 @@ public class ASTSymbolTerm extends ASTTerm
     { return "Map"; } 
     if ("TreeMap".equals(symbol)) 
     { return "Map"; } 
+
+    if ("else".equals(symbol))
+    { return " else "; } 
 
     return symbol; 
   } 

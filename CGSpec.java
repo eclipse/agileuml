@@ -38,6 +38,8 @@ public class CGSpec
 
   java.util.Map categoryRules = new java.util.HashMap(); 
                 // String -> Vector of CGRule
+  java.util.Map umlRules = new java.util.HashMap(); 
+                // String -> Vector of CGRule
 
   public CGSpec(Vector ents)
   { typeDefinitionRules = new Vector();
@@ -58,6 +60,19 @@ public class CGSpec
     enumerationRules = new Vector();
     datatypeRules = new Vector();
     textRules = new Vector();
+
+    // umlRules.put("", typeDefinitionRules); 
+    umlRules.put("Type", typeUseRules); 
+    umlRules.put("BasicExpression", basicExpressionRules); 
+    umlRules.put("BinaryExpression", binaryExpressionRules); 
+    umlRules.put("ConditionalExpression", conditionalExpressionRules); 
+    umlRules.put("UnaryExpression", unaryExpressionRules); 
+    umlRules.put("SetExpression", setExpressionRules); 
+    umlRules.put("Statement", statementRules); 
+    umlRules.put("Class", classRules); 
+    umlRules.put("UseCase", usecaseRules); 
+    umlRules.put("Attribute", attributeRules); 
+    
     entities = ents;  
   }
 
@@ -88,6 +103,15 @@ public class CGSpec
 
   public String applyRuleset(String category, ASTTerm obj)
   { Vector res = (Vector) categoryRules.get(category); 
+    if (res == null) 
+    { System.err.println("!! Warning: no rules for category " + category); 
+      return obj + ""; 
+    } 
+    return obj.cgRules(this,res); 
+  } 
+
+  public String applyUMLRuleset(String category, ModelElement obj)
+  { Vector res = (Vector) umlRules.get(category); 
     if (res == null) 
     { System.err.println("!! Warning: no rules for category " + category); 
       return obj + ""; 
@@ -592,6 +616,22 @@ public class CGSpec
       { return r; }
       else if (op.equals("continue") && trimmedlhs.startsWith(op))
       { return r; }
+      else if (op.equals("error") && trimmedlhs.startsWith(op))
+      { return r; }
+      else if (op.equals("catch") && trimmedlhs.startsWith(op))
+      { return r; }
+      else if (op.equals("finally") && trimmedlhs.startsWith(op))
+      { return r; }
+      else if (op.equals("assert") && trimmedlhs.startsWith(op))
+      { Vector args = ((AssertStatement) e).cgparameters(); 
+        if (r.variables.size() == args.size())
+        { return r; }
+      }
+      else if (op.equals("try") && trimmedlhs.startsWith(op))
+      { Vector args = ((TryStatement) e).cgparameters(); 
+        if (r.variables.size() == args.size())
+        { return r; }
+      }
       else if (e instanceof SequenceStatement && (trimmedlhs.indexOf(";") > -1))
       { return r; }
       else if (op.equals("var") && trimmedlhs.startsWith(op) && 
@@ -792,6 +832,13 @@ public class CGSpec
       }  
       else if (pars != null && pars.size() == 2 && 
                e.data.equals("insertAt") && trimmedlhs.equals("_1.insertAt(_2,_3)"))
+      { selected = r; 
+        args.add(obj); 
+        args.add(pars.get(0)); 
+        args.add(pars.get(1)); 
+      }  
+      else if (pars != null && pars.size() == 2 && 
+               e.data.equals("setAt") && trimmedlhs.equals("_1.setAt(_2,_3)"))
       { selected = r; 
         args.add(obj); 
         args.add(pars.get(0)); 

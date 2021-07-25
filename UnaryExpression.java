@@ -682,7 +682,27 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         killop.addParameter(killset); 
         return new InvocationStatement(killop); 
       } // Could be abstract class
-      String eename = argument.type.getName(); 
+
+      Type argtype = argument.type; 
+      if (argtype == null || !argtype.isEntity())
+      { System.err.println("!! Warning: can only delete class instances, not: " + argument);
+        // But remove the argument 
+        // element from any collection it belongs
+        // to, as far as possible. 
+
+        if (argument instanceof BasicExpression && 
+((BasicExpression) argument).arrayIndex != null) 
+        { // remove this element of the argument
+          BasicExpression argcopy = (BasicExpression) argument.clone(); 
+          argcopy.arrayIndex = null; 
+          BinaryExpression deleteAt = new BinaryExpression("->excludingAt", argcopy, ((BasicExpression) argument).arrayIndex); 
+          AssignStatement assign = new AssignStatement(argcopy, deleteAt); 
+          return assign;   
+        }
+        return new SequenceStatement();  
+      }  
+ 
+      String eename = argtype.getName(); 
       Entity ent = null; 
       String all = ""; 
       String opname = ""; 
@@ -752,7 +772,24 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         killop.addParameter(killset); 
         return new InvocationStatement(killop); 
       } // Could be abstract class
-      String eename = argument.type.getName(); 
+
+      Type argtype = argument.type; 
+      if (argtype == null || !argtype.isEntity())
+      { System.err.println("!! Warning: can only delete class instances, not: " + argument);
+
+        if (argument instanceof BasicExpression && 
+((BasicExpression) argument).arrayIndex != null) 
+        { // remove this element of the argument
+          BasicExpression argcopy = (BasicExpression) argument.clone(); 
+          argcopy.arrayIndex = null; 
+          BinaryExpression deleteAt = new BinaryExpression("->excludingAt", argcopy, ((BasicExpression) argument).arrayIndex); 
+          AssignStatement assign = new AssignStatement(argcopy, deleteAt); 
+          return assign;   
+        }
+        return new SequenceStatement();  
+      }  
+ 
+      String eename = argtype.getName(); 
       Entity ent = null; 
       String all = ""; 
       String opname = ""; 
@@ -847,16 +884,34 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
                "  _" + data + ".addAll(" + cont + "." + datas + "); \n" + 
                "  " + cont + ".killAll" + data + "(_" + data + ");\n"; 
       } // Could be abstract class
-      String eename = argument.type.getName(); 
+
+      Type argtype = argument.type; 
+      if (argtype == null || !argtype.isEntity())
+      { System.err.println("!! Warning: can only delete class instances, not: " + argument);
+
+        if (argument instanceof BasicExpression && 
+((BasicExpression) argument).arrayIndex != null) 
+        { // remove this element of the argument
+          BasicExpression argcopy = (BasicExpression) argument.clone(); 
+          argcopy.arrayIndex = null; 
+          String precopy = argcopy.queryForm(env,local);
+          String ind = ((BasicExpression) argument).arrayIndex.queryForm(env,local); 
+          return precopy + ".remove(" + ind + " - 1);";   
+        }
+        return "{}";  
+      }  
+ 
+
+      String eename = argtype.getName(); 
       Entity ent = null; 
       String all = ""; 
-      if (argument.isMultiple()) 
+      if (argument.isMultiple() && argument.elementType != null) 
       { all = "All";
         eename = argument.elementType.getName();
         ent = argument.elementType.entity;  
       }
       else 
-      { ent = argument.type.entity; } 
+      { ent = argtype.entity; } 
 
       if (ent.isAbstract())
       { return cont + ".killAbstract" + eename + "(" + pre + ");"; } 
@@ -904,10 +959,27 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
                "  _" + data + ".addAll(" + cont + "." + datas + "); \n" + 
                "  " + cont + ".killAll" + data + "(_" + data + ");\n"; 
       } // Could be abstract class
+
+      Type argtype = argument.type; 
+      if (argtype == null || !argtype.isEntity())
+      { System.err.println("!! Warning: can only delete class instances, not: " + argument);
+
+        if (argument instanceof BasicExpression && 
+((BasicExpression) argument).arrayIndex != null) 
+        { // remove this element of the argument
+          BasicExpression argcopy = (BasicExpression) argument.clone(); 
+          argcopy.arrayIndex = null; 
+          String precopy = argcopy.queryFormJava6(env,local);
+          String ind = ((BasicExpression) argument).arrayIndex.queryFormJava6(env,local); 
+          return precopy + ".remove(" + ind + " - 1);";   
+        }
+        return "{}";  
+      }  
+
       String eename = argument.type.getName(); 
       Entity ent = null; 
       String all = ""; 
-      if (argument.isMultiple()) 
+      if (argument.isMultiple() && argument.elementType != null) 
       { all = "All";
         eename = argument.elementType.getName();
         ent = argument.elementType.entity;  
@@ -961,6 +1033,23 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
                "  _" + data + ".addAll(" + cont + "." + datas + "); \n" + 
                "  " + cont + ".killAll" + data + "(_" + data + ");\n"; 
       } // Could be abstract class
+
+      Type argtype = argument.type; 
+      if (argtype == null || !argtype.isEntity())
+      { System.err.println("!! Warning: can only delete class instances, not: " + argument);
+
+        if (argument instanceof BasicExpression && 
+((BasicExpression) argument).arrayIndex != null) 
+        { // remove this element of the argument
+          BasicExpression argcopy = (BasicExpression) argument.clone(); 
+          argcopy.arrayIndex = null; 
+          String precopy = argcopy.queryFormJava7(env,local);
+          String ind = ((BasicExpression) argument).arrayIndex.queryFormJava7(env,local); 
+          return precopy + ".remove(" + ind + " - 1);";   
+        }
+        return "{}";  
+      }  
+    
       String eename = argument.type.getName(); 
       Entity ent = null; 
       String all = ""; 
@@ -1019,10 +1108,27 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
                "  _" + data + ".AddRange(" + cont + ".get" + datas + "()); \n" + 
                "  " + cont + ".killAll" + data + "(_" + data + ");\n"; 
       } // Could be abstract class
+
+      Type argtype = argument.type; 
+      if (argtype == null || !argtype.isEntity())
+      { System.err.println("!! Warning: can only delete class instances, not: " + argument);
+
+        if (argument instanceof BasicExpression && 
+((BasicExpression) argument).arrayIndex != null) 
+        { // remove this element of the argument
+          BasicExpression argcopy = (BasicExpression) argument.clone(); 
+          argcopy.arrayIndex = null; 
+          String precopy = argcopy.queryFormCSharp(env,local);
+          String ind = ((BasicExpression) argument).arrayIndex.queryFormCSharp(env,local); 
+          return precopy + ".RemoveAt(" + ind + " - 1);";   
+        }
+        return "{}";  
+      }  
+
       String eename = argument.type.getName(); 
       Entity ent = null; 
       String all = ""; 
-      if (argument.isMultiple()) 
+      if (argument.isMultiple() && argument.elementType != null) 
       { all = "All";
         eename = argument.elementType.getName();
         ent = argument.elementType.entity;  
@@ -1066,11 +1172,28 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
                                         datas + "->end()); \n" + 
                "  " + cont + "killAll" + data + "(_" + data + ");\n"; 
       } // Could be abstract class
+
+      Type argtype = argument.type; 
+      if (argtype == null || !argtype.isEntity())
+      { System.err.println("!! Warning: can only delete class instances, not: " + argument);
+
+        if (argument instanceof BasicExpression && 
+((BasicExpression) argument).arrayIndex != null) 
+        { // remove this element of the argument
+          BasicExpression argcopy = (BasicExpression) argument.clone(); 
+          argcopy.arrayIndex = null; 
+          String precopy = argcopy.queryFormCPP(env,local);
+          String ind = ((BasicExpression) argument).arrayIndex.queryFormCPP(env,local); 
+          return precopy + "->erase(" + precopy + "->begin() + (" + ind + "-1));";   
+        }
+        return "{}";  
+      }  
+
       String pre = argument.queryFormCPP(env,local);
       String eename = argument.type.getName(); 
       Entity ent = null; 
       String all = ""; 
-      if (argument.isMultiple()) 
+      if (argument.isMultiple() && argument.elementType != null) 
       { all = "All";
         eename = argument.elementType.getName();
         ent = argument.elementType.entity;  
@@ -1375,6 +1498,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         operator.equals("->isInteger") || operator.equals("->isLong") || 
         operator.equals("->toInteger") || operator.equals("->toReal") || 
         operator.equals("->toLong") || 
+        operator.equals("->toBoolean") || 
         operator.equals("->isEmpty") || operator.equals("->notEmpty")) 
     { return true; } 
 
@@ -1401,7 +1525,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
                            final Vector contexts, final Vector env)
   { if (operator.equals("lambda") && accumulator != null)
     { Vector context = new Vector(); 
-	  context.addAll(contexts); 
+      context.addAll(contexts); 
 
       Vector env1 = new Vector(); 
       env1.addAll(env); 
@@ -1409,7 +1533,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       boolean rtc = argument.typeCheck(typs,ents,context,env1);
       type = new Type("Function",accumulator.getType(),argument.type);
       elementType = argument.elementType; 
-	  System.out.println(">>> Typechecked lambda expression: " + rtc + " " + type); 
+      System.out.println(">>> Typechecked lambda expression: " + rtc + " " + type); 
       return true; 
     }
 
@@ -1467,11 +1591,17 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return res; 
     }
 
-    if (operator.equals("->isDeleted") || operator.equals("->display") ||
-        operator.equals("->oclIsUndefined") || operator.equals("->oclIsNew") ||
+    if (operator.equals("->isDeleted") || 
+        operator.equals("->display") ||
+        operator.equals("->oclIsUndefined") || 
+        operator.equals("->oclIsNew") ||
         "->isLong".equals(operator) || 
-        operator.equals("not") || operator.equals("->isInteger") || operator.equals("->isReal") ||
-        operator.equals("->isEmpty") || operator.equals("->notEmpty"))
+        operator.equals("not") || 
+        operator.equals("->isInteger") || 
+        operator.equals("->isReal") ||
+        operator.equals("->toBoolean") || 
+        operator.equals("->isEmpty") || 
+        operator.equals("->notEmpty"))
     { type = new Type("boolean",null); 
       elementType = type; 
       return res; 
@@ -1486,7 +1616,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return res; 
     }
 
-    if (operator.equals("->allInstances") || operator.equals("->characters"))
+    if (operator.equals("->allInstances"))
     { type = new Type("Sequence",null); 
       elementType = argument.getElementType(); 
       type.setElementType(elementType); 
@@ -1616,6 +1746,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       elementType = new Type("String",null); 
       type.setElementType(elementType); 
       multiplicity = ModelElement.MANY; 
+      System.out.println(">>> Type of " + this + " is " + type + "(" + elementType + ")"); 
+
       return res; 
     } 
 
@@ -1804,13 +1936,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
 
     if (operator.equals("->toInteger")) 
-    { return "Integer.parseInt(" + qf + ")"; } 
+    { return "Integer.decode(" + qf + ").intValue()"; } 
 
     if (operator.equals("->toLong")) 
-    { return "Long.parseLong(" + qf + ")"; } 
+    { return "Long.decode(" + qf + ").longValue()"; } 
 
     if (operator.equals("->toReal")) 
     { return "Double.parseDouble(" + qf + ")"; } 
+
+    if (operator.equals("->toBoolean")) 
+    { return "\"true\".equals(" + qf + " + \"\")"; } 
 
     if (operator.equals("->toLower")) 
     { return qf + ".toLowerCase()"; } 
@@ -2032,13 +2167,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "Set.isReal(" + qf + ")"; } 
 
     if (operator.equals("->toInteger")) 
-    { return "Integer.parseInt(" + qf + ")"; } 
+    { return "Integer.decode(" + qf + ").intValue()"; } 
 
     if (operator.equals("->toLong")) 
-    { return "Long.parseLong(" + qf + ")"; } 
+    { return "Long.decode(" + qf + ").longValue()"; } 
 
     if (operator.equals("->toReal")) 
     { return "Double.parseDouble(" + qf + ")"; } 
+
+    if (operator.equals("->toBoolean")) 
+    { return "\"true\".equals(" + qf + " + \"\")"; } 
 
     if (operator.equals("->toLower")) 
     { return qf + ".toLowerCase()"; } 
@@ -2264,13 +2402,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "Ocl.isReal(" + qf + ")"; } 
 
     if (operator.equals("->toInteger")) 
-    { return "Integer.parseInt(" + qf + ")"; } 
+    { return "Integer.decode(" + qf + ").intValue()"; } 
 
     if (operator.equals("->toLong")) 
-    { return "Long.parseLong(" + qf + ")"; } 
+    { return "Long.decode(" + qf + ").longValue()"; } 
 
     if (operator.equals("->toReal")) 
     { return "Double.parseDouble(" + qf + ")"; } 
+
+    if (operator.equals("->toBoolean")) 
+    { return "\"true\".equals(" + qf + " + \"\")"; } 
 
     if (operator.equals("->toLower")) 
     { return qf + ".toLowerCase()"; } 

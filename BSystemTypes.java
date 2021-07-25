@@ -593,9 +593,9 @@ public class BSystemTypes extends BComponent
     else if ("Set".equals(ename))
     { tname = e.getCPP(e.getElementType()); } // "set<void*>*"; } 
 
-    String restype1 = "set<" + tname + ">"; 
+    String restype1 = "std::set<" + tname + ">"; 
     String addop1 = "insert"; 
-    String restype2 = "vector<" + tname + ">"; 
+    String restype2 = "std::vector<" + tname + ">"; 
     String addop2 = "push_back"; 
     
     String pp = "" + pred + " " + ename + "(" + signature + ")"; 
@@ -1081,8 +1081,8 @@ public class BSystemTypes extends BComponent
     else if ("Set".equals(ename))
     { tname = e.getCPP(e.getElementType()); } 
 
-    String argtype1 = "vector<" + tname + ">"; 
-    String argtype2 = "set<" + tname + ">"; 
+    String argtype1 = "std::vector<" + tname + ">"; 
+    String argtype2 = "std::set<" + tname + ">"; 
 
     Type re = exp.getType(); 
     String restype = "void*"; 
@@ -1184,8 +1184,8 @@ public class BSystemTypes extends BComponent
     else if ("Set".equals(ename))
     { tname = e.getCPP(e.getElementType()); } 
 
-    String argtype1 = "vector<" + tname + ">"; 
-    String argtype2 = "set<" + tname + ">"; 
+    String argtype1 = "std::vector<" + tname + ">"; 
+    String argtype2 = "std::set<" + tname + ">"; 
 
     Type re = left.getElementType(); 
     String restype = "void*"; 
@@ -1798,9 +1798,9 @@ public class BSystemTypes extends BComponent
     if (e != null) 
     { tname = e.getCPP(e.getElementType()); } 
 
-    String restype1 = "set<" + tname + ">"; 
+    String restype1 = "std::set<" + tname + ">"; 
     String addop1 = "insert"; 
-    String restype2 = "vector<" + tname + ">"; 
+    String restype2 = "std::vector<" + tname + ">"; 
     String addop2 = "push_back"; 
    
     // System.out.println(left + " element type is " + e); 
@@ -2956,8 +2956,8 @@ public class BSystemTypes extends BComponent
       String cet = argtype; 
 
 
-      String argtype1 = "vector<" + argtype + ">"; 
-      String argtype2 = "set<" + argtype + ">"; 
+      String argtype1 = "std::vector<" + argtype + ">"; 
+      String argtype2 = "std::set<" + argtype + ">"; 
 
       int oldindex = index; 
       index++; 
@@ -3609,9 +3609,9 @@ public class BSystemTypes extends BComponent
 
 
       if (left.isOrdered())
-      { argtype = "vector<" + argtype + ">"; } 
+      { argtype = "std::vector<" + argtype + ">"; } 
       else 
-      { argtype = "set<" + argtype + ">"; } 
+      { argtype = "std::set<" + argtype + ">"; } 
       // Both are needed. 
 
       int oldindex = index; 
@@ -4213,9 +4213,9 @@ public class BSystemTypes extends BComponent
 
 
       if (left.isOrdered())
-      { argtype = "vector<" + argtype + ">"; } 
+      { argtype = "std::vector<" + argtype + ">"; } 
       else 
-      { argtype = "set<" + argtype + ">"; } 
+      { argtype = "std::set<" + argtype + ">"; } 
 
       int oldindex = index; 
       index++; 
@@ -4874,9 +4874,9 @@ public class BSystemTypes extends BComponent
 
   public static String generateKeysMapOpCPP()
   { String res = 
-      "  static set<string>* keys(map<string,_T>* s)\n" +  
+      "  static std::set<string>* keys(map<string,_T>* s)\n" +  
       "  { map<string,_T>::iterator iter;\n" + 
-      "    set<string>* res = new set<string>();\n" + 
+      "    std::set<string>* res = new std::set<string>();\n" + 
       "  \n" + 
       "    for (iter = s->begin(); iter != s->end(); ++iter)\n" + 
       "    { string key = iter->first;\n" + 
@@ -4904,12 +4904,27 @@ public class BSystemTypes extends BComponent
   
   public static String generateRestrictOpCPP()
   { String res = 
-      "  static map<string,_T>* restrict(map<string,_T>* m1, set<string>* ks)\n" +  
+      "  static map<string,_T>* restrict(map<string,_T>* m1, std::set<string>* ks)\n" +  
       "  { map<string,_T>* res = new map<string,_T>();\n" + 
       "    map<string,_T>::iterator iter;\n" + 
       "    for (iter = m1->begin(); iter != m1->end(); ++iter)\n" + 
       "    { string key = iter->first;\n" + 
       "      if (ks->find(key) != ks->end())\n" + 
+      "      { (*res)[key] = iter->second; }\n" + 
+      "    }    \n" + 
+      "    return res;\n" + 
+      "  }\n"; 
+	return res; 
+  } 
+
+  public static String generateAntirestrictOpCPP()
+  { String res = 
+      "  static map<string,_T>* antirestrict(map<string,_T>* m1, std::set<string>* ks)\n" +  
+      "  { map<string,_T>* res = new map<string,_T>();\n" + 
+      "    map<string,_T>::iterator iter;\n" + 
+      "    for (iter = m1->begin(); iter != m1->end(); ++iter)\n" + 
+      "    { string key = iter->first;\n" + 
+      "      if (ks->find(key) == ks->end())\n" + 
       "      { (*res)[key] = iter->second; }\n" + 
       "    }    \n" + 
       "    return res;\n" + 
@@ -5089,9 +5104,9 @@ public class BSystemTypes extends BComponent
     "    { if (v->size() == 0) { return 0; }\n" +
     "      return v->at(0);\n" +
     "    }\n\n" +
-    "  static _T any(set<_T>* v)\n" +
+    "  static _T any(std::set<_T>* v)\n" +
     "    { if (v->size() == 0) { return 0; }\n" +
-    "      set<_T>::iterator _pos = v->begin();\n" + 
+    "      std::set<_T>::iterator _pos = v->begin();\n" + 
     "      return *_pos;\n" +
     "    }\n\n";
     return res;
@@ -5134,11 +5149,19 @@ public class BSystemTypes extends BComponent
     "    { if (v->size() == 0) { return 0; }\n" +
     "      return v->at(0);\n" +
     "    }\n\n" +
-    "  static _T first(set<_T>* v)\n" +
+    "  static _T first(std::set<_T>* v)\n" +
     "    { if (v->size() == 0) { return 0; }\n" +
-    "      set<_T>::iterator _pos = v->begin();\n" + 
+    "      std::set<_T>::iterator _pos = v->begin();\n" + 
     "      return *_pos;\n" +
     "    }\n\n";
+    return res;
+  }
+
+  public static String generateTimeOpCSharp()
+  { String res = "    public static long getTime()\n" +
+    "    { DateTimeOffset d = new DateTimeOffset(DateTime.Now);\n" + 
+    "      return d.ToUnixTimeMilliseconds();\n" + 
+    "    }\n";
     return res;
   }
 
@@ -5146,6 +5169,17 @@ public class BSystemTypes extends BComponent
   { String res = "    public static long getTime()\n" +
     "    { java.util.Date d = new java.util.Date();\n" +
     "      return d.getTime();\n" +
+    "    }\n";
+    return res;
+  }
+
+  public static String generateTimeOpCPP()
+  { String res = "    static long getTime()\n" +
+    "    { return time(NULL); }\n\n";
+    res = res + "    static struct tm* getDate()\n" +
+    "    { time_t t = time(NULL);\n" + 
+    "      struct tm* res = localtime(&t);\n" + 
+    "      return res;\n" + 
     "    }\n";
     return res;
   }
@@ -5280,7 +5314,7 @@ public class BSystemTypes extends BComponent
   } // map
 
   public static String generateMaxOpCPP()  // for C++
-  { String res = "  static _T max(set<_T>* l)\n";
+  { String res = "  static _T max(std::set<_T>* l)\n";
     res = res + "  { return *std::max_element(l->begin(), l->end()); }\n";
     res = res + "  static _T max(vector<_T>* l)\n";
     res = res + "  { return *std::max_element(l->begin(), l->end()); }\n";
@@ -5334,7 +5368,7 @@ public class BSystemTypes extends BComponent
   } // map
 
   public static String generateMinOpCPP()  // for C++
-  { String res = "  static _T min(set<_T>* l)\n";
+  { String res = "  static _T min(std::set<_T>* l)\n";
     res = res + "  { return *std::min_element(l->begin(), l->end()); }\n";
     res = res + "  static _T min(vector<_T>* l)\n";
     res = res + "  { return *std::min_element(l->begin(), l->end()); }\n";
@@ -5811,7 +5845,7 @@ public class BSystemTypes extends BComponent
     return res;
   }
 
-  public static String generateUnionOp()  // Should only be used if at least one is a set. 
+  public static String generateUnionOp()  // Should only be used if first one is a set. 
   { String res = "  public static List union(List a, List b)\n" +
       "  { List res = new Vector(); \n" +
       "    for (int i = 0; i < a.size(); i++)\n" +
@@ -5831,14 +5865,10 @@ public class BSystemTypes extends BComponent
       "  { HashSet res = new HashSet(); \n" +
       "    res.addAll(a); res.addAll(b);\n" +
       "    return res; }\n\n" + 
-      "  public static HashSet union(ArrayList a, HashSet b)\n" +
-      "  { HashSet res = new HashSet(); \n" +
-      "    res.addAll(a); res.addAll(b);\n" +
-      "    return res; }\n\n" + 
-      "  public static ArrayList union(ArrayList a, ArrayList b)\n" +
+      "  public static ArrayList union(ArrayList a, Collection b)\n" +
       "  { ArrayList res = new ArrayList(); \n" +
       "    res.addAll(a); res.addAll(b);\n" +
-      "    return res; }\n";
+      "    return res; }\n\n";  
     return res;
   }
 
@@ -5851,11 +5881,7 @@ public class BSystemTypes extends BComponent
       "  { TreeSet<T> res = new TreeSet<T>(); \n" +
       "    res.addAll(a); res.addAll(b);\n" +
       "    return res; }\n\n" + 
-      "  public static <T> HashSet<T> union(ArrayList<T> a, Set<T> b)\n" +
-      "  { HashSet<T> res = new HashSet<T>(); \n" +
-      "    res.addAll(a); res.addAll(b);\n" +
-      "    return res; }\n\n" + 
-      "  public static <T> ArrayList<T> union(ArrayList<T> a, ArrayList<T> b)\n" +
+      "  public static <T> ArrayList<T> union(ArrayList<T> a, Collection<T> b)\n" +
       "  { ArrayList<T> res = new ArrayList<T>(); \n" +
       "    res.addAll(a); res.addAll(b);\n" +
       "    return res; }\n";
@@ -5874,18 +5900,18 @@ public class BSystemTypes extends BComponent
   } // if both are sequences, concatenate is used. 
 
   public static String generateUnionOpCPP()
-  { String res = "  static set<_T>* unionSet(set<_T>* a, set<_T>* b)\n" +
-      "  { set<_T>* res = new set<_T>(); \n" +
+  { String res = "  static std::set<_T>* unionSet(std::set<_T>* a, std::set<_T>* b)\n" +
+      "  { std::set<_T>* res = new std::set<_T>(); \n" +
       "    res->insert(a->begin(),a->end()); \n" +
       "    res->insert(b->begin(),b->end()); \n" +
       "    return res; }\n";
-    res = res + "  static set<_T>* unionSet(vector<_T>* a, set<_T>* b)\n" +
-      "  { set<_T>* res = new set<_T>(); \n" +
+    res = res + "  static std::set<_T>* unionSet(vector<_T>* a, std::set<_T>* b)\n" +
+      "  { std::set<_T>* res = new std::set<_T>(); \n" +
       "    res->insert(a->begin(),a->end()); \n" +
       "    res->insert(b->begin(),b->end()); \n" +
       "    return res; }\n";
-    res = res + "  static set<_T>* unionSet(set<_T>* a, vector<_T>* b)\n" +
-      "  { set<_T>* res = new set<_T>(); \n" +
+    res = res + "  static std::set<_T>* unionSet(std::set<_T>* a, vector<_T>* b)\n" +
+      "  { std::set<_T>* res = new std::set<_T>(); \n" +
       "    res->insert(a->begin(),a->end()); \n" +
       "    res->insert(b->begin(),b->end()); \n" +
       "    return res; }\n";
@@ -5930,6 +5956,11 @@ public class BSystemTypes extends BComponent
 
   public static String generateConcatOpCPP()
   { String res = "  static vector<_T>* concatenate(vector<_T>* a, vector<_T>* b)\n" +
+      "  { vector<_T>* res = new vector<_T>(); \n" +
+      "    res->insert(res->end(), a->begin(),a->end()); \n" +
+      "    res->insert(res->end(), b->begin(),b->end()); \n" +
+      "    return res; }\n\n";
+    res = res + "  static vector<_T>* concatenate(vector<_T>* a, std::set<_T>* b)\n" +
       "  { vector<_T>* res = new vector<_T>(); \n" +
       "    res->insert(res->end(), a->begin(),a->end()); \n" +
       "    res->insert(res->end(), b->begin(),b->end()); \n" +
@@ -6026,7 +6057,7 @@ public class BSystemTypes extends BComponent
       "    }\n" + 
       "    return res;\n" + 
       "  }\n\n" +
-      "  static vector<_T>* subtract(vector<_T>* a, set<_T>* b)\n" +
+      "  static vector<_T>* subtract(vector<_T>* a, std::set<_T>* b)\n" +
       "  { vector<_T>* res = new vector<_T>(); \n" +
       "    for (int i = 0; i < a->size(); i++)\n" +
       "    { if ((*a)[i] == NULL || UmlRsdsLib<_T>::isIn((*a)[i],b)) { }\n" +
@@ -6034,17 +6065,17 @@ public class BSystemTypes extends BComponent
       "    }\n" + 
       "    return res;\n" + 
       "  }\n\n" +
-      "  static set<_T>* subtract(set<_T>* a, set<_T>* b)\n" +
-      "  { set<_T>* res = new set<_T>(); \n" +
-      "    for (set<_T>::iterator _pos = a->begin(); _pos != a->end(); ++_pos)\n" +
+      "  static std::set<_T>* subtract(std::set<_T>* a, std::set<_T>* b)\n" +
+      "  { std::set<_T>* res = new std::set<_T>(); \n" +
+      "    for (std::set<_T>::iterator _pos = a->begin(); _pos != a->end(); ++_pos)\n" +
       "    { if (*_pos == NULL || UmlRsdsLib<_T>::isIn(*_pos,b)) { }\n" +
       "      else { res->insert(*_pos); }\n" +
       "    }\n" +
       "    return res;\n" + 
       "  }\n\n" +  
-      "  static set<_T>* subtract(set<_T>* a, vector<_T>* b)\n" +
-      "  { set<_T>* res = new set<_T>(); \n" +
-      "    for (set<_T>::iterator _pos = a->begin(); _pos != a->end(); ++_pos)\n" +
+      "  static std::set<_T>* subtract(std::set<_T>* a, vector<_T>* b)\n" +
+      "  { std::set<_T>* res = new std::set<_T>(); \n" +
+      "    for (std::set<_T>::iterator _pos = a->begin(); _pos != a->end(); ++_pos)\n" +
       "    { if (*_pos == NULL || UmlRsdsLib<_T>::isIn(*_pos,b)) { }\n" +
       "      else { res->insert(*_pos); }\n" +
       "    }\n" + 
@@ -6110,17 +6141,17 @@ public class BSystemTypes extends BComponent
   }
 
   public static String generateIntersectionOpCPP()
-  { String res = "  static set<_T>* intersection(set<_T>* a, set<_T>* b)\n" +
-      "  { set<_T>* res = new set<_T>(); \n" +
-      "    for (set<_T>::iterator _pos = a->begin(); _pos != a->end(); ++_pos)\n" +
+  { String res = "  static std::set<_T>* intersection(std::set<_T>* a, std::set<_T>* b)\n" +
+      "  { std::set<_T>* res = new std::set<_T>(); \n" +
+      "    for (std::set<_T>::iterator _pos = a->begin(); _pos != a->end(); ++_pos)\n" +
       "    { if (*_pos != NULL && UmlRsdsLib<_T>::isIn(*_pos, b)) { res->insert(*_pos); } }\n" +
       "    return res; }\n\n" +
-      "  static set<_T>* intersection(set<_T>* a, vector<_T>* b)\n" +
-      "  { set<_T>* res = new set<_T>(); \n" +
-      "    for (set<_T>::iterator _pos = a->begin(); _pos != a->end(); ++_pos)\n" +
+      "  static std::set<_T>* intersection(std::set<_T>* a, vector<_T>* b)\n" +
+      "  { std::set<_T>* res = new std::set<_T>(); \n" +
+      "    for (std::set<_T>::iterator _pos = a->begin(); _pos != a->end(); ++_pos)\n" +
       "    { if (*_pos != NULL && UmlRsdsLib<_T>::isIn(*_pos, b)) { res->insert(*_pos); } }\n" +
       "    return res; }\n\n" +
-      "  static vector<_T>* intersection(vector<_T>* a, set<_T>* b)\n" +
+      "  static vector<_T>* intersection(vector<_T>* a, std::set<_T>* b)\n" +
       "  { vector<_T>* res = new vector<_T>(); \n" +
       "    for (int i = 0; i < a->size(); i++)\n" +
       "    { if ((*a)[i] != NULL && UmlRsdsLib<_T>::isIn((*a)[i], b)) { res->push_back((*a)[i]); } } \n" +
@@ -6182,21 +6213,21 @@ public class BSystemTypes extends BComponent
   }
 
   public static String generateIntersectAllOpCPP()  // for s->intersectAll(e)
-  { String res = "  static set<_T>* intersectAll(set<set<_T>*>* se)\n" +
-      "  { set<_T>* res = new set<_T>(); \n" +
+  { String res = "  static std::set<_T>* intersectAll(std::set<std::set<_T>*>* se)\n" +
+      "  { std::set<_T>* res = new std::set<_T>(); \n" +
       "    if (se->size() == 0) { return res; }\n" + 
-      "    set<set<_T>*>::iterator _pos = se->begin();\n" + 
-      "    set<_T>* frst = *_pos;\n" + 
+      "    std::set<set<_T>*>::iterator _pos = se->begin();\n" + 
+      "    std::set<_T>* frst = *_pos;\n" + 
       "    res->insert(frst->begin(), frst->end());\n" + 
       "    ++_pos; \n" + 
       "    for (; _pos != se->end(); ++_pos)\n" +  
       "    { res = UmlRsdsLib<_T>::intersection(res, *_pos); }\n" +
       "    return res;\n" + 
       "  }\n\n" +
-      "  static set<_T>* intersectAll(set<vector<_T>*>* se)\n" +
-      "  { set<_T>* res = new set<_T>(); \n" +
+      "  static std::set<_T>* intersectAll(std::set<vector<_T>*>* se)\n" +
+      "  { std::set<_T>* res = new std::set<_T>(); \n" +
       "    if (se->size() == 0) { return res; }\n" + 
-      "    set<vector<_T>*>::iterator _pos = se->begin();\n" + 
+      "    std::set<vector<_T>*>::iterator _pos = se->begin();\n" + 
       "    vector<_T>* frst = *_pos;\n" + 
       "    res->insert(frst->begin(), frst->end());\n" + 
       "    ++_pos; \n" + 
@@ -6204,10 +6235,10 @@ public class BSystemTypes extends BComponent
       "    { res = UmlRsdsLib<_T>::intersection(res, *_pos); }\n" +
       "    return res;\n" + 
       "  }\n\n" +
-      "  static set<_T>* intersectAll(vector<set<_T>*>* se)\n" +
-      "  { set<_T>* res = new set<_T>(); \n" +
+      "  static std::set<_T>* intersectAll(vector<std::set<_T>*>* se)\n" +
+      "  { std::set<_T>* res = new std::set<_T>(); \n" +
       "    if (se->size() == 0) { return res; }\n" + 
-      "    set<_T>* frst = (*se)[0];\n" + 
+      "    std::set<_T>* frst = (*se)[0];\n" + 
       "    res->insert(frst->begin(), frst->end());\n" + 
       "    for (int i = 1; i < se->size(); ++i)\n" +  
       "    { res = UmlRsdsLib<_T>::intersection(res, (*se)[i]); }\n" +
@@ -6276,24 +6307,24 @@ public class BSystemTypes extends BComponent
   }  // and eliminate duplicates
 
   public static String generateUnionAllOpCPP()  // for s->unionAll(e)
-  { String res = "  static set<_T>* unionAll(set<set<_T>*>* se)\n" +
-      "  { set<_T>* res = new set<_T>(); \n" +
+  { String res = "  static std::set<_T>* unionAll(std::set<set<_T>*>* se)\n" +
+      "  { std::set<_T>* res = new std::set<_T>(); \n" +
       "    if (se->size() == 0) { return res; }\n" + 
-      "    set<set<_T>*>::iterator _pos;\n" + 
+      "    std::set<set<_T>*>::iterator _pos;\n" + 
       "    for (_pos = se->begin(); _pos != se->end(); ++_pos)\n" +  
       "    { res = UmlRsdsLib<_T>::unionSet(res, *_pos); }\n" +
       "    return res;\n" + 
       "  }\n\n";
-    res = res + "  static set<_T>* unionAll(set<vector<_T>*>* se)\n" +
-      "  { set<_T>* res = new set<_T>(); \n" +
+    res = res + "  static std::set<_T>* unionAll(std::set<vector<_T>*>* se)\n" +
+      "  { std::set<_T>* res = new std::set<_T>(); \n" +
       "    if (se->size() == 0) { return res; }\n" + 
-      "    set<vector<_T>*>::iterator _pos;\n" + 
+      "    std::set<vector<_T>*>::iterator _pos;\n" + 
       "    for (_pos = se->begin(); _pos != se->end(); ++_pos)\n" +  
       "    { res = UmlRsdsLib<_T>::unionSet(res, *_pos); }\n" +
       "    return res;\n" + 
       "  }\n\n";
-    res = res + "  static set<_T>* unionAll(vector<set<_T>*>* se)\n" +
-      "  { set<_T>* res = new set<_T>(); \n" +
+    res = res + "  static std::set<_T>* unionAll(vector<set<_T>*>* se)\n" +
+      "  { std::set<_T>* res = new std::set<_T>(); \n" +
       "    if (se->size() == 0) { return res; }\n" + 
       "    for (int i = 0; i < se->size(); ++i)\n" +  
       "    { res = UmlRsdsLib<_T>::unionSet(res, (*se)[i]); }\n" +
@@ -6719,9 +6750,9 @@ public class BSystemTypes extends BComponent
       "    for (int i = 0; i < a->size(); i++)\n" +
       "    { _sum.append( (*a)[i] ); }\n" + 
       "    return _sum; }\n\n";
-    res = res + "  static string sumString(set<string>* a)\n" +
+    res = res + "  static string sumString(std::set<string>* a)\n" +
       "  { string _sum(\"\"); \n" +
-      "    set<string>::iterator _pos;\n" + 
+      "    std::set<string>::iterator _pos;\n" + 
       "    for (_pos = a->begin(); _pos != a->end(); ++_pos)\n" +
       "    { _sum.append( *_pos ); }\n" +  
       "    return _sum; }\n\n"; 
@@ -6730,9 +6761,9 @@ public class BSystemTypes extends BComponent
       "    for (int i = 0; i < a->size(); i++)\n" +
       "    { _sum += (*a)[i]; }\n" + 
       "    return _sum; }\n\n";
-    res = res + "  static _T sum(set<_T>* a)\n" +
+    res = res + "  static _T sum(std::set<_T>* a)\n" +
       "  { _T _sum(0); \n" +
-      "    set<_T>::iterator _pos;\n" + 
+      "    std::set<_T>::iterator _pos;\n" + 
       "    for (_pos = a->begin(); _pos != a->end(); ++_pos)\n" +
       "    { _sum += *_pos; }\n" +  
       "    return _sum; }\n\n";
@@ -6745,9 +6776,9 @@ public class BSystemTypes extends BComponent
       "    for (int i = 0; i < a->size(); i++)\n" +
       "    { _prd *= (*a)[i]; }\n" + 
       "    return _prd; }\n\n";
-    res = res + "  static _T prd(set<_T>* a)\n" +
+    res = res + "  static _T prd(std::set<_T>* a)\n" +
       "  { _T _prd(1); \n" +
-      "    set<_T>::iterator _pos;\n" + 
+      "    std::set<_T>::iterator _pos;\n" + 
       "    for (_pos = a->begin(); _pos != a->end(); ++_pos)\n" +
       "    { _prd *= *_pos; }\n" +  
       "    return _prd; }\n\n";
@@ -6984,7 +7015,7 @@ public class BSystemTypes extends BComponent
       "    std::sort(res->begin(), res->end());\n" + 
       "    return res;\n" +   
       "  }\n\n";
-    res = res + "  static vector<_T>* sort(set<_T>* a)\n" + 
+    res = res + "  static vector<_T>* sort(std::set<_T>* a)\n" + 
       "  { vector<_T>* res = new vector<_T>();\n" + 
       "    res->insert(res->end(), a->begin(), a->end());\n" +
       "    std::sort(res->begin(), res->end());\n" + 
@@ -7769,7 +7800,7 @@ public class BSystemTypes extends BComponent
 
   public static String countOpCPP()
   { String res = 
-      "  static int count(set<_T>* l, _T obj)\n" + 
+      "  static int count(std::set<_T>* l, _T obj)\n" + 
       "  { if (l->find(obj) != l->end()) { return 1; } else { return 0; } \n" + 
       "  }\n\n" + 
       "  static int count(vector<_T>* l, _T obj)\n" + 
@@ -7984,6 +8015,35 @@ public class BSystemTypes extends BComponent
     return res; 
   } 
 
+  public static String generateRemoveSetAtOps()
+  { String res = 
+      "  public static List removeAt(List l, int ind)\n" + 
+      "  { List res = new Vector();\n" +
+      "    res.addAll(l); \n" +
+      "    if (ind <= res.size() && ind >= 1)\n" +
+      "    { res.remove(ind - 1); } \n" +
+      "    return res;\n" +
+      "  }\n\n"; 
+
+    res = res + 
+      "  public static List removeFirst(List l, Object x)\n" + 
+      "  { List res = new Vector();\n" +
+      "    res.addAll(l); \n" +
+      "    res.remove(x);\n" +
+      "    return res;\n" +
+      "  }\n\n"; 
+
+    res = res + 
+      "  public static List setAt(List l, int ind, Object val)\n" +
+      "  { List res = new Vector();\n" +
+      "    res.addAll(l); \n" +
+      "    if (ind <= res.size() && ind >= 1)\n" +
+      "    { res.set(ind - 1,val); } \n" +
+      "    return res;\n" +
+      "  }\n"; 
+    return res; 
+  } 
+
   public static String generateInsertAtOpJava6()  // also used for l->including(ob)
   { String res = 
       "  public static ArrayList insertAt(ArrayList l, int ind, Object ob)\n" + 
@@ -8003,6 +8063,35 @@ public class BSystemTypes extends BComponent
       "    for (int i = ind-1; i < l.length(); i++)\n" +  
       "    { res = res + l.charAt(i); }\n" + 
       "    return res;\n" + 
+      "  }\n"; 
+    return res; 
+  } 
+
+  public static String generateRemoveSetAtOpsJava6()
+  { String res = 
+      "  public static ArrayList removeAt(ArrayList l, int ind)\n" + 
+      "  { ArrayList res = new ArrayList();\n" +
+      "    res.addAll(l); \n" +
+      "    if (ind <= res.size() && ind >= 1)\n" +
+      "    { res.remove(ind - 1); } \n" +
+      "    return res;\n" +
+      "  }\n\n"; 
+
+    res = res + 
+      "  public static ArrayList removeFirst(ArrayList l, Object x)\n" + 
+      "  { ArrayList res = new ArrayList();\n" +
+      "    res.addAll(l); \n" +
+      "    res.remove(x);\n" +
+      "    return res;\n" +
+      "  }\n\n"; 
+
+    res = res + 
+      "  public static ArrayList setAt(ArrayList l, int ind, Object val)\n" +
+      "  { ArrayList res = new ArrayList();\n" +
+      "    res.addAll(l); \n" +
+      "    if (ind <= res.size() && ind >= 1)\n" +
+      "    { res.set(ind - 1,val); } \n" +
+      "    return res;\n" +
       "  }\n"; 
     return res; 
   } 
@@ -8030,6 +8119,35 @@ public class BSystemTypes extends BComponent
     return res; 
   } 
 
+  public static String generateRemoveSetAtOpsJava7()
+  { String res = 
+      "  public static <T> ArrayList<T> removeAt(List<T> l, int ind)\n" + 
+      "  { ArrayList<T> res = new ArrayList<T>();\n" +
+      "    res.addAll(l); \n" +
+      "    if (ind <= res.size() && ind >= 1)\n" +
+      "    { res.remove(ind - 1); } \n" +
+      "    return res;\n" +
+      "  }\n\n"; 
+
+    res = res + 
+      "  public static <T> ArrayList<T> removeFirst(List<T> l, T x)\n" + 
+      "  { ArrayList<T> res = new ArrayList<T>();\n" +
+      "    res.addAll(l); \n" +
+      "    res.remove(x);\n" +
+      "    return res;\n" +
+      "  }\n\n"; 
+
+    res = res + 
+      "  public static <T> ArrayList<T> setAt(List<T> l, int ind, T val)\n" +
+      "  { ArrayList<T> res = new ArrayList<T>();\n" +
+      "    res.addAll(l); \n" +
+      "    if (ind <= res.size() && ind >= 1)\n" +
+      "    { res.set(ind - 1,val); } \n" +
+      "    return res;\n" +
+      "  }\n"; 
+    return res; 
+  } 
+
   public static String generateInsertAtOpCSharp()  
   { String res = 
       "  public static ArrayList insertAt(ArrayList l, int ind, object ob)\n" + 
@@ -8053,6 +8171,36 @@ public class BSystemTypes extends BComponent
     return res; 
   } 
 
+  public static String generateRemoveSetAtOpsCSharp()  
+  { String res = 
+       "  public static ArrayList removeFirst(ArrayList a, object x)\n" +
+       "  { ArrayList res = new ArrayList();\n" +
+       "    res.AddRange(a);\n" +
+       "    res.Remove(x);\n" +
+       "    return res; \n" +
+       "   }\n\n"; 
+    res = res + 
+       "  public static ArrayList removeAt(ArrayList a, int i)\n" +
+       "  {\n" +
+       "    ArrayList res = new ArrayList();\n" +
+       "    res.AddRange(a);\n" +
+       "    if (i <= res.Count && i >= 1)\n" +
+       "    { res.RemoveAt(i - 1); }\n" +
+       "    return res;\n" +
+       "  }\n\n"; 
+     res = res + 
+       "  public static ArrayList setAt(ArrayList a, int i, object x)\n" +
+       "  {\n" +
+       "    ArrayList res = new ArrayList();\n" +
+       "    res.AddRange(a);\n" +
+       "    if (i <= res.Count && i >= 1)\n" +
+       "    { res[i - 1] = x; }\n" +
+       "    return res;\n" +
+       "  }\n\n"; 
+    return res; 
+  } 
+
+
   public static String generateInsertAtOpCPP()  
   { String res = 
       "  static vector<_T>* insertAt(vector<_T>* l, int ind, _T ob)\n" + 
@@ -8068,6 +8216,38 @@ public class BSystemTypes extends BComponent
       "  }\n"; 
     return res; 
   } 
+
+  public static String generateRemoveSetAtOpsCPP()  
+  { String res = 
+      "  static vector<_T>* setAt(vector<_T>* l, int ind, _T ob)\n" +
+      "  { vector<_T>* res = new vector<_T>();\n" +
+      "    res->insert(res->end(), l->begin(), l->end());\n" +
+      "    if (ind >= 1 && ind <= res->size())\n" +
+      "    { (*res)[(ind - 1)] = ob; }\n" +
+      "    return res; \n" +
+      "  }\n\n"; 
+    res = res + 
+      "  static vector<_T>* removeAt(vector<_T>* l, int ind)\n" +
+      "  { if (ind >= 1 && ind <= l->size())\n" +
+      "    { vector<_T>* res = new vector<_T>();\n" +
+      "      res->insert(res->end(), l->begin(), l->begin() + (ind - 1));\n" +
+      "      res->insert(res->end(), l->begin() + ind, l->end());\n" +
+      "      return res;\n" +
+      "    }\n" +
+      "    return l;\n" + 
+      "  }\n\n"; 
+    res = res + 
+      "  static vector<_T>* removeFirst(vector<_T>* sq, _T x)\n" +
+      "  { vector<_T>* res = new vector<_T>();\n" +
+      "    res->insert(res->end(), sq->begin(), sq->end());\n" +
+      "    auto iter = find(res->begin(), res->end(), x);\n" + 
+      "    if (iter != res->end())\n" +
+      "    { res->erase(iter); }\n" +
+      "    return res;\n" + 
+      "  }\n\n"; 
+    return res; 
+  }  
+
 
   public static String generateIndexOfOpCPP()  // also used for l->including(ob)
   { String res = 
@@ -8243,10 +8423,11 @@ public class BSystemTypes extends BComponent
     "  { if (v->size() == 0) { return 0; }\n" +
     "    return v->at(v->size() - 1);\n" +
     "  }\n\n" + 
-    "  static _T last(set<_T>* v)\n" +
+    "  static _T last(std::set<_T>* v)\n" +
     "  { if (v->size() == 0) { return 0; }\n" +
-    "    set<_T>::iterator _pos = v->end();\n" +
-    "    _pos--; return *_pos;\n" + 
+    "    std::set<_T>::iterator _pos = v->end();\n" +
+    "    _pos--;\n" + 
+    "    return *_pos;\n" + 
     "  }\n\n";
     return res;
   }  // and for set<_T>*
@@ -8362,23 +8543,26 @@ public class BSystemTypes extends BComponent
     "      return res;\n" +
     "    }\n\n";
     res = res +
-    "     static set<set<_T>*>* subcollections(set<_T>* v)\n" +
-    "    { set<set<_T>*>* res = new set<set<_T>*>();\n" +
-    "      set<_T>* r = new set<_T>();\n" +
+    "     static std::set<set<_T>*>* subcollections(std::set<_T>* v)\n" +
+    "    { std::set<set<_T>*>* res = new std::set<set<_T>*>();\n" +
+    "      std::set<_T>* r = new std::set<_T>();\n" +
     "      if (v->size() == 0)\n" +
     "      { res->insert(r); return res; }\n" +
-    "      if (v->size() == 1) { res->insert(r); res->insert(v); return res;\n " +
+    "      if (v->size() == 1)\n" + 
+    "      { res->insert(r);\n" + 
+    "        res->insert(v);\n" + 
+    "        return res;\n " +
     "      }\n" +
-    "      set<_T>::iterator _pos = v->begin();\n" +
+    "      std::set<_T>::iterator _pos = v->begin();\n" +
     "      _T x = *_pos;\n" +
     "      _pos++; \n" +
     "      for (; _pos != v->end(); _pos++)\n" +
     "      { r->insert(*_pos); }\n" +  
-    "      set<set<_T>*>* scs = UmlRsdsLib<_T>::subcollections(r);\n" +
+    "      std::set<set<_T>*>* scs = UmlRsdsLib<_T>::subcollections(r);\n" +
     "      res->insert(scs->begin(), scs->end());\n" +
-    "      for (set<set<_T>*>::iterator _obj = scs->begin(); _obj != scs->end(); _obj++)\n" +
-    "      { set<_T>* sc = *_obj;\n" +
-    "        set<_T>* scc = new set<_T>();\n" +
+    "      for (std::set<set<_T>*>::iterator _obj = scs->begin(); _obj != scs->end(); _obj++)\n" +
+    "      { std::set<_T>* sc = *_obj;\n" +
+    "        std::set<_T>* scc = new std::set<_T>();\n" +
     "        scc->insert(x); \n" +
     "        scc->insert(sc->begin(), sc->end());\n" +
     "        res->insert(scc); \n" +
@@ -8469,8 +8653,8 @@ public class BSystemTypes extends BComponent
 
   public String generateAsSortedSetOpJava7()
   { String res = 
-    "    public static <T> Set<T> asSortedSet(Collection<T> c)\n" +
-    "    { Set<T> res = new TreeSet<T>();\n" +
+    "    public static <T> TreeSet<T> asSortedSet(Collection<T> c)\n" +
+    "    { TreeSet<T> res = new TreeSet<T>();\n" +
     "      res.addAll(c);\n" +
     "      return res;\n" +
     "    }\n\n";
@@ -8478,12 +8662,12 @@ public class BSystemTypes extends BComponent
   }
 
   public String generateAsSetOpCPP()
-  { String res = "     static set<_T>* asSet(vector<_T>* c)\n" +
-    "    { set<_T>* res = new set<_T>();\n" +
+  { String res = "     static std::set<_T>* asSet(vector<_T>* c)\n" +
+    "    { std::set<_T>* res = new std::set<_T>();\n" +
     "      res->insert(c->begin(), c->end());\n" +
     "      return res;\n" +
     "    }\n\n" +
-    "    static set<_T>* asSet(set<_T>* c)\n" +
+    "    static std::set<_T>* asSet(std::set<_T>* c)\n" +
     "    { return c; }\n\n";
     return res;
   }
@@ -8507,7 +8691,7 @@ public class BSystemTypes extends BComponent
   }
 
   public String generateAsSequenceOpCPP()
-  { String res = "     static vector<_T>* asSequence(set<_T>* c)\n" +
+  { String res = "     static vector<_T>* asSequence(std::set<_T>* c)\n" +
     "    { vector<_T>* res = new vector<_T>();\n" +
     "      res->insert(res->end(), c->begin(), c->end());\n" +
     "      return res;\n" +
@@ -8518,8 +8702,8 @@ public class BSystemTypes extends BComponent
   }
 
   public static String symmetricDifferenceOpCPP()
-  { String res = "     static set<_T>* symmetricDifference(vector<_T>* a, vector<_T>* b)\n" +
-    "    { set<_T>* res = new set<_T>();\n" +
+  { String res = "     static std::set<_T>* symmetricDifference(vector<_T>* a, vector<_T>* b)\n" +
+    "    { std::set<_T>* res = new std::set<_T>();\n" +
     "      for (int i = 0; i < a->size(); i++)\n" +
     "      { if (UmlRsdsLib<_T>::isIn((*a)[i], b)) { }\n" +
     "        else { res->insert((*a)[i]); }\n" +
@@ -8530,9 +8714,9 @@ public class BSystemTypes extends BComponent
     "      }\n" +
     "      return res;\n" +
     "    }\n\n" +
-    "    static set<_T>* symmetricDifference(set<_T>* a, vector<_T>* b)\n" +
-    "    { set<_T>* res = new set<_T>();\n" +
-    "      for (set<_T>::iterator _pos = a->begin(); _pos != a->end(); _pos++)\n" +
+    "    static std::set<_T>* symmetricDifference(std::set<_T>* a, vector<_T>* b)\n" +
+    "    { std::set<_T>* res = new std::set<_T>();\n" +
+    "      for (std::set<_T>::iterator _pos = a->begin(); _pos != a->end(); _pos++)\n" +
     "      { if (UmlRsdsLib<_T>::isIn(*_pos, b)) { }\n" +
     "        else { res->insert(*_pos); }\n" +
     "      }\n" +
@@ -8542,25 +8726,25 @@ public class BSystemTypes extends BComponent
     "      }\n" +
     "      return res;\n" +
     "    }\n\n" +
-    "     static set<_T>* symmetricDifference(vector<_T>* a, set<_T>* b)\n" +
-    "    { set<_T>* res = new set<_T>();\n" +
+    "     static std::set<_T>* symmetricDifference(vector<_T>* a, std::set<_T>* b)\n" +
+    "    { std::set<_T>* res = new std::set<_T>();\n" +
     "      for (int i = 0; i < a->size(); i++)\n" +
     "      { if (UmlRsdsLib<_T>::isIn((*a)[i], b)) { }\n" +
     "        else { res->insert((*a)[i]); }\n" +
     "      }\n" +
-    "      for (set<_T>::iterator _pos = b->begin(); _pos != b->end(); _pos++)\n" +
+    "      for (std::set<_T>::iterator _pos = b->begin(); _pos != b->end(); _pos++)\n" +
     "      { if (UmlRsdsLib<_T>::isIn(*_pos, a)) { }\n" +
     "        else { res->insert(*_pos); }\n" +
     "      }\n" +
     "      return res;\n" +
     "    }\n\n" +
-    "    static set<_T>* symmetricDifference(set<_T>* a, set<_T>* b)\n" +
-    "    { set<_T>* res = new set<_T>();\n" +
-    "      for (set<_T>::iterator _pos = a->begin(); _pos != a->end(); _pos++)\n" +
+    "    static std::set<_T>* symmetricDifference(std::set<_T>* a, std::set<_T>* b)\n" +
+    "    { std::set<_T>* res = new std::set<_T>();\n" +
+    "      for (std::set<_T>::iterator _pos = a->begin(); _pos != a->end(); _pos++)\n" +
     "      { if (UmlRsdsLib<_T>::isIn(*_pos, b)) { }\n" +
     "        else { res->insert(*_pos); }\n" +
     "      }\n" +
-    "      for (set<_T>::iterator _pos = b->begin(); _pos != b->end(); _pos++)\n" +
+    "      for (std::set<_T>::iterator _pos = b->begin(); _pos != b->end(); _pos++)\n" +
     "      { if (UmlRsdsLib<_T>::isIn(*_pos, a)) { }\n" +
     "        else { res->insert(*_pos); }\n" +
     "      }\n" +
@@ -8627,7 +8811,7 @@ public class BSystemTypes extends BComponent
   public static String generateIsUniqueOpCPP()
   { String res = 
       "  static bool isUnique(vector<_T>* evals)\n" +
-      "  { set<_T> vals; \n" +
+      "  { std::set<_T> vals; \n" +
       "    for (int i = 0; i < evals->size(); i++)\n" + 
       "    { _T ob = (*evals)[i]; \n" +
       "      if (vals.find(ob) != vals.end()) { return false; }\n" + 
@@ -8635,7 +8819,7 @@ public class BSystemTypes extends BComponent
       "    }\n" +
       "    return true;\n" +  
       "  }\n";  
-    res = res + "  static bool isUnique(set<_T>* evals)\n" +
+    res = res + "  static bool isUnique(std::set<_T>* evals)\n" +
       "  { return true; }\n";  
     return res; 
   } 

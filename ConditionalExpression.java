@@ -44,6 +44,12 @@ public class ConditionalExpression extends Expression
   public Expression getElseExp()
   { return elseExp; } 
 
+  public Expression getIf()
+  { return ifExp; } 
+
+  public Expression getElse()
+  { return elseExp; } 
+
   public String queryForm(java.util.Map env, boolean local)
   { String tqf = test.queryForm(env, local);
     String lqf = ifExp.queryForm(env, local);
@@ -94,8 +100,9 @@ public class ConditionalExpression extends Expression
   { String tqf = test.queryFormJava6(env, local);
     String lqf = ifExp.updateFormJava6(env, local);
     if ("true".equals(test + ""))
-	{ return lqf; }
-	String rqf = elseExp.updateFormJava6(env, local);
+    { return lqf; }
+
+    String rqf = elseExp.updateFormJava6(env, local);
     return "  if (" + tqf + ") { " + lqf + " }\n" +
            "  else { " + rqf + " }";
   }
@@ -104,8 +111,9 @@ public class ConditionalExpression extends Expression
   { String tqf = test.queryFormJava7(env, local);
     String lqf = ifExp.updateFormJava7(env, local);
     if ("true".equals(test + ""))
-	{ return lqf; }
-	String rqf = elseExp.updateFormJava7(env, local);
+    { return lqf; }
+    
+    String rqf = elseExp.updateFormJava7(env, local);
     return "  if (" + tqf + ") { " + lqf + " }\n" +
            "  else { " + rqf + " }";
   }

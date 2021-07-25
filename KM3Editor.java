@@ -61,6 +61,7 @@ public class KM3Editor extends JFrame implements DocumentListener
 
     String systemName = "app"; 
     Vector entities = new Vector(); // of Entity 
+    Vector km3types = new Vector(); 
     Vector types = new Vector(); 
     Vector useCases = new Vector(); // of UseCase
 
@@ -78,7 +79,9 @@ public class KM3Editor extends JFrame implements DocumentListener
         super("KM3 Editor");
         systemName = parent.getSystemName(); 
         entities = ents; 
-        types = parent.getKM3Types(); 
+        km3types = parent.getKM3Types(); 
+        types = new Vector(); 
+        types.addAll(parent.getTypes()); 
         useCases = ucs; 
 
         classArea = parent; 
@@ -242,8 +245,8 @@ public class KM3Editor extends JFrame implements DocumentListener
        try 
        { doc.insertString(0, "package " + sysName + " { \n\r\n\r" , attrs[1]); 
          
-         for (int j = 0; j < types.size(); j++) 
-         { String typ = (String) types.get(j);
+         for (int j = 0; j < km3types.size(); j++) 
+         { String typ = (String) km3types.get(j);
 		   // System.out.println(typ.class);  
            doc.insertString(doc.getLength(), typ, attrs[1]);  
          }
@@ -387,8 +390,8 @@ public class KM3Editor extends JFrame implements DocumentListener
              } 
            }  
          } 
-         else if (':' == cc)
-         { messageArea.setText("iden : Type for data declaration or\n  ::\n  P => Q;\n for usecase postcondition\n\r"); } 
+         // else if (':' == cc)
+         // { messageArea.setText("iden : Type for data declaration or\n  ::\n  P => Q;\n for usecase postcondition\n\r"); } 
          else if ('[' == cc)
          { messageArea.setText("col[val]\n access to val-indexed element of sequence or map col for read or update.\nEquivalent to col->at(val) for read access.\n\r"); } 
 
@@ -445,13 +448,17 @@ public class KM3Editor extends JFrame implements DocumentListener
         return; 
       }
       ASTTerm xx = comp.parseGeneralAST(post);
+      if (xx == null)
+      { System.out.println(">>>>> Invalid code: " + post); 
+        return; 
+      }
       String km3code = xx.toKM3(); 
       System.out.println(">>>>> Translated code: " + km3code); 
         
       SimpleAttributeSet[] attrs = initAttributes(4);
 
       try {
-        doc.insertString(pos, km3code, attrs[1]);
+            doc.insertString(pos, km3code, attrs[1]);
           }
           catch (BadLocationException ble) {
             System.err.println("Couldn't insert code text.");
@@ -483,10 +490,15 @@ public class KM3Editor extends JFrame implements DocumentListener
         Object cls = comp.parseKM3classifier(entities,types,pregens,preassocs,errors);
         // classArea.processKM3(ents,typs,pregens,preassocs,items); 
 
+        System.out.println(">>> Types = " + types); 
+
         if (cls != null && errors.size() == 0) 
-        { if (cls instanceof Entity) 
+        { textPane.setSelectedTextColor(Color.green);  
+ 
+          if (cls instanceof Entity) 
           { Entity clsx = (Entity) cls; 
-		  
+		 System.out.println("PARSED class:\n" + clsx.getKM3());
+            
             for (int q = 0; q < preassocs.size(); q++) 
             { PreAssociation pa = (PreAssociation) preassocs.get(q);  
               Entity e1 =
@@ -505,7 +517,6 @@ public class KM3Editor extends JFrame implements DocumentListener
 			  
               ast.updateAssociation(pa.card1, pa.card2, pa.role1, pa.role2, pa.stereotypes);   
             } 
-            System.out.println("PARSED class:\n" + clsx.getKM3()); 
           }
           else if (cls instanceof UseCase)     
           { System.out.println("PARSED use case:\n" + ((UseCase) cls).getKM3()); } 
@@ -533,7 +544,12 @@ public class KM3Editor extends JFrame implements DocumentListener
           } 
         }  */ 
      
-      } catch (Exception ee) { } 
+      } 
+      catch (Exception ee) 
+      { System.err.println("!! Parsing errors: ");
+        ee.printStackTrace();  
+        textPane.setSelectedTextColor(Color.red);  
+      } 
     }
   }
 

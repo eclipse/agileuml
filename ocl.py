@@ -303,6 +303,19 @@ def insertAt(x,i,s) :
   x1.extend(x2)
   return x1
 
+def setAt(sq,i,val) : 
+  res = []
+  res.extend(sq)
+  if i >= 1 and i <= len(sq) : 
+    res[i-1] = val
+  return res
+
+def removeAt(sq,i) : 
+  res = []
+  res.extend(sq)
+  if i >= 1 and i <= len(sq) :
+    del res[i-1]
+  return res
 
 def includingSequence(s,x) :
   res = []

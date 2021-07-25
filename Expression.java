@@ -115,6 +115,7 @@ abstract class Expression
     oppriority.put("=>",new Integer(1)); 
     oppriority.put("#",new Integer(2)); 
     oppriority.put("or",new Integer(3)); 
+    oppriority.put("xor",new Integer(3)); 
     oppriority.put("&",new Integer(4)); 
   }  // and? 
 
@@ -605,6 +606,9 @@ abstract class Expression
     { return "((Integer) " + se + ").intValue()"; } // for enumerated
     if (tname.equals("Set") || tname.equals("Sequence"))
     { return se; }  // "(Vector) " + se
+    if (tname.equals("OclAny"))
+    { return se; } 
+
     return "(" + tname + ") " + se;   // for strings or objects
   }
 
@@ -661,7 +665,7 @@ abstract class Expression
     if (t.isEntity())
     { return tname + ".getByPK" + tname + "(index: " + se + ")"; } 
 
-    return se;   // no unwrap -- for strings
+    return se;   // no unwrap -- for strings, OclAny
   }
 
   public static String unwrapSwiftOptional(String se, Type t)
@@ -949,9 +953,13 @@ abstract class Expression
 
   public static String wrap(Type t, String qf)
   { if (t != null)
-    { if (t.isEntity()) { return qf; } 
+    { if (t.isEntity()) 
+      { return qf; } 
       String tname = t.getName();
-      if (tname.equals("Set") || tname.equals("Sequence") || tname.equals("String"))
+      if (tname.equals("Set") || tname.equals("Sequence") ||
+          tname.equals("String") || tname.equals("Map") ||
+          tname.equals("Function") ||
+          tname.equals("OclAny"))
       { return qf; }
       if (tname.equals("boolean"))
       { return "new Boolean(" + qf + ")"; }
@@ -973,7 +981,8 @@ abstract class Expression
   { if (t != null)
     { if (t.isEntity()) { return qf; } 
       String tname = t.getName();
-      if (tname.equals("Set") || tname.equals("Sequence") || tname.equals("String"))
+      if (tname.equals("Set") || tname.equals("Sequence") || tname.equals("String") || tname.equals("Map") ||
+          tname.equals("OclAny"))
       { return qf; }
       if (tname.equals("boolean"))
       { return "((bool) " + qf + ")"; }
@@ -1181,6 +1190,12 @@ abstract class Expression
   public boolean isCollection()
   { return type != null && type.isCollection(); }
 
+  public boolean isSetValued()
+  { return type != null && type.isSet(); }
+
+  public boolean isSequenceValued()
+  { return type != null && type.isSequence(); }
+
   public static boolean isBoolean(String data)
   { return data.equals("true") || data.equals("false"); }
 
@@ -1238,6 +1253,7 @@ abstract class Expression
         d.equals("toUpperCase") || d.equals("closure") || d.equals("asSet") || d.equals("asSequence") ||
         d.equals("min") || d.equals("sum") || d.equals("reverse") || d.equals("allInstances") || 
         d.equals("sort") || d.equals("prd") || d.equals("last") || d.equals("insertAt") ||
+        d.equals("setAt") ||
         d.equals("first") || d.equals("tail") || d.equals("front") || d.equals("oclIsUndefined") || 
         d.equals("subrange") || d.equals("indexOf") || d.equals("count") ||
         d.equals("characters") || d.equals("isDeleted") || 
@@ -1373,6 +1389,94 @@ abstract class Expression
   { return queryFormCPP(env,local); }   // default  
 
   abstract public String queryForm(java.util.Map env, boolean local); 
+
+  public String declarationQueryForm(java.util.Map env, boolean local)
+  { if (this instanceof BinaryExpression)
+    { BinaryExpression be = (BinaryExpression) this; 
+      if (":".equals(be.operator))
+      { Expression typeexpr = be.right; 
+        String typeqf = typeexpr.queryForm(env,local); 
+        if (typeexpr.elementType != null) 
+        { typeqf = typeexpr.elementType.getJava(); } 
+
+        return typeqf + " " + be.left; 
+      } 
+    } 
+    return queryForm(env,local); 
+  } 
+
+  public String declarationQueryFormCSharp(java.util.Map env, boolean local)
+  { if (this instanceof BinaryExpression)
+    { BinaryExpression be = (BinaryExpression) this; 
+      if (":".equals(be.operator))
+      { Expression typeexpr = be.right; 
+        String typeqf = typeexpr.queryFormCSharp(env,local); 
+        if (typeexpr.elementType != null) 
+        { typeqf = typeexpr.elementType.getCSharp(); } 
+        return typeqf + " " + be.left; 
+      } 
+    } 
+    return queryFormCSharp(env,local); 
+  } 
+
+  public String declarationQueryFormCPP(java.util.Map env, boolean local)
+  { if (this instanceof BinaryExpression)
+    { BinaryExpression be = (BinaryExpression) this; 
+      if (":".equals(be.operator))
+      { Expression typeexpr = be.right; 
+        String typeqf = typeexpr.queryFormCPP(env,local); 
+        if (typeexpr.elementType != null) 
+        { typeqf = typeexpr.elementType.getCPP(); } 
+        return typeqf + " " + be.left; 
+      } 
+    } 
+    return queryFormCPP(env,local); 
+  } 
+
+  public String throwQueryForm(java.util.Map env, boolean local)
+  { if (this instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) this; 
+      if (be.data.startsWith("new"))
+      { String createdException = be.data.substring(3); 
+        String jexception = (String) Type.exceptions2java.get(createdException); 
+        if (jexception != null)
+        { return "new " + jexception + "()"; }
+        else 
+        { return "new " + createdException + "()"; }  
+      } 
+    } 
+    return queryForm(env,local); 
+  } 
+
+  public String throwQueryFormCSharp(java.util.Map env, boolean local)
+  { if (this instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) this; 
+      if (be.data.startsWith("new"))
+      { String createdException = be.data.substring(3); 
+        String jexception = (String) Type.exceptions2csharp.get(createdException); 
+        if (jexception != null)
+        { return "new " + jexception + "()"; }
+        else 
+        { return "new " + createdException + "()"; }  
+      } 
+    } 
+    return queryFormCSharp(env,local); 
+  } 
+
+  public String throwQueryFormCPP(java.util.Map env, boolean local)
+  { if (this instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) this; 
+      if (be.data.startsWith("new"))
+      { String createdException = be.data.substring(3); 
+        String jexception = (String) Type.exceptions2cpp.get(createdException); 
+        if (jexception != null)
+        { return jexception + "()"; }
+        else 
+        { return createdException + "()"; }  
+      } 
+    } 
+    return queryFormCPP(env,local); 
+  } 
 
   public String queryForm(String language, java.util.Map env, boolean local)
   { if ("Java4".equals(language))

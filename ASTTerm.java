@@ -47,6 +47,12 @@ public abstract class ASTTerm
     return val;  
   } 
 
+
+  public static void setType(ASTTerm t, String val) 
+  { String f = t.literalForm(); 
+    types.put(f,val); 
+  } 
+
   public static void setType(String f, String val) 
   { types.put(f,val); } 
 
@@ -56,9 +62,15 @@ public abstract class ASTTerm
   } 
 
   public static String getType(ASTTerm t) 
-  { String val = (String) types.get(t.literalForm()); 
+  { String val = (String) types.get(t.literalForm());
+    if (val == null && t instanceof ASTBasicTerm) 
+    { ASTBasicTerm bt = (ASTBasicTerm) t; 
+      return bt.getType(); 
+    } 
     return val;  
   } 
+
+  public abstract String queryForm(); 
 
   public abstract String toKM3(); 
 
@@ -73,14 +85,14 @@ public abstract class ASTTerm
       "int".equals(typ) || "short".equals(typ) || 
       "byte".equals(typ) || "Integer".equals(typ) || 
       "Short".equals(typ) || "Byte".equals(typ) ||
-      "BigInteger".equals(typ) ||  
+      "BigInteger".equals(typ) || "integer".equals(typ) ||  
       "long".equals(typ) || "Long".equals(typ); 
   } 
 
   public static boolean isReal(String typ) 
   { return 
       "float".equals(typ) || "double".equals(typ) || 
-      "BigDecimal".equals(typ) || 
+      "BigDecimal".equals(typ) || "real".equals(typ) || 
       "Float".equals(typ) || "Double".equals(typ); 
   } 
 
@@ -91,9 +103,32 @@ public abstract class ASTTerm
       "StringBuilder".equals(typ); 
   } 
 
+  public boolean isString() 
+  { String typ = ASTTerm.getType(literalForm()); 
+    return 
+      "String".equals(typ) || "Character".equals(typ) || 
+      "StringBuffer".equals(typ) || "char".equals(typ) || 
+      "StringBuilder".equals(typ); 
+  } 
+
   public boolean isCollection()
   { String typ = ASTTerm.getType(literalForm()); 
-    if ("Sequence".equals(typ) || "Set".equals(typ))
+    if ("Sequence".equals(typ) || "Set".equals(typ) ||
+        typ.startsWith("Sequence(") || typ.startsWith("Set("))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isSet()
+  { String typ = ASTTerm.getType(literalForm()); 
+    if ("Set".equals(typ) || typ.startsWith("Set("))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isSequence()
+  { String typ = ASTTerm.getType(literalForm()); 
+    if ("Sequence".equals(typ) || typ.startsWith("Sequence("))
     { return true; } 
     return false; 
   } 
@@ -105,6 +140,7 @@ public abstract class ASTTerm
     { return "0.0"; } 
     if (isString(typ))
     { return "\"\""; } 
+    
     return "null"; 
   } 
 

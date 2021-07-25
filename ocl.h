@@ -1359,6 +1359,49 @@ int* intSubrange(int a, int b)
     return result;
   }
 
+  char* removeAtStrings(char* st1, int ind)
+  { /* OCL indexing 1..st1.size */
+    if (ind <= 0) 
+    { return st1; }
+
+    int n = strlen(st1);
+    if (ind > n) 
+    { return st1; } 
+
+    char* result = (char*) calloc(n + 1, sizeof(char));
+    int i = 0;
+    for ( ; i < ind - 1; i++)
+    { result[i] = st1[i]; }
+    
+    for ( ; i < n-1; i++)
+    { result[i] = st1[i + 1]; }
+   
+    result[i] = '\0';
+    return result;
+  }
+
+  char* setAtStrings(char* st1, int ind, char* val)
+  { /* OCL indexing 1..st1.size */
+    if (ind <= 0) 
+    { return st1; }
+
+    int n = strlen(st1);
+    if (ind > n) 
+    { return st1; } 
+
+    char* result = (char*) calloc(n + 1, sizeof(char));
+    int i = 0;
+    for ( ; i < ind - 1; i++)
+    { result[i] = st1[i]; }
+    result[ind-1] = val[0];
+    i = ind;
+    for ( ; i < n; i++)
+    { result[i] = st1[i]; }
+   
+    result[i] = '\0';
+    return result;
+  }
+
  int compareTo_String(const void* s1, const void* s2)
  { char* c1 = (char*) s1;
    char* c2 = (char*) s2;

@@ -733,7 +733,7 @@ public class BehaviouralFeature extends ModelElement
     } 
 
     opTests.addAll(flattenTests(allOpTests));
-    System.out.println(">>> Flattened tests = " + opTests);  
+    // System.out.println(">>> Flattened tests = " + opTests);  
         
     return res; 
   }
@@ -802,7 +802,7 @@ public class BehaviouralFeature extends ModelElement
     } 
 
     opTests.addAll(flattenTests(allOpTests));
-    System.out.println(">>> Flattened tests = " + opTests);  
+    // System.out.println(">>> Flattened tests = " + opTests);  
         
     return res; 
   }
@@ -871,7 +871,7 @@ public class BehaviouralFeature extends ModelElement
     } 
 
     opTests.addAll(flattenTests(allOpTests));
-    System.out.println(">>> Flattened tests = " + opTests);  
+    // System.out.println(">>> Flattened tests = " + opTests);  
         
     return res; 
   }
@@ -1424,7 +1424,7 @@ public class BehaviouralFeature extends ModelElement
   { for (int i = 0; i < parameters.size() && i < pars.size(); i++) 
     { Attribute par = (Attribute) parameters.get(i); 
       Expression arg = (Expression) pars.get(i); 
-	  arg.formalParameter = par; 
+      arg.formalParameter = par; 
     } 
   } // Used in code generation, eg., for Swift. 
 
@@ -2083,12 +2083,12 @@ public class BehaviouralFeature extends ModelElement
       return res; 
     } 
     
-	res = res + ")\n";
+    res = res + ")\n";
     res = res + "  { " + resultType.getJava() + " " +
           " result = " + resultType.getDefault() +
           ";\n";
     
-	for (int j = 0; j < cons.size(); j++)
+    for (int j = 0; j < cons.size(); j++)
     { Constraint con = (Constraint) cons.get(j);
       if (con.getEvent() != null &&
           con.getEvent().equals(this))
@@ -2096,7 +2096,7 @@ public class BehaviouralFeature extends ModelElement
           con.queryOperation(ent) + "\n";
     }
     
-	res = res + "    return result;\n";
+    res = res + "    return result;\n";
     res = res + "  }\n\n";
     return res;
   }
@@ -2127,7 +2127,7 @@ public class BehaviouralFeature extends ModelElement
       res = res + dec;
     }
     
-	if (isAbstract())
+    if (isAbstract())
     { res = res + ");\n\n"; 
       return res; 
     } 
@@ -2272,6 +2272,7 @@ public class BehaviouralFeature extends ModelElement
       { dec = dec + ", "; }
       res = res + dec;
     }
+
     if (isAbstract())
     { res = res + ");\n\n"; 
       return res; 
@@ -2280,6 +2281,7 @@ public class BehaviouralFeature extends ModelElement
     res = res + "  { " + resultType.getCPP(getElementType()) + " " +
           " result = " + resultType.getDefaultCPP(elementType) +
           ";\n";
+
     for (int j = 0; j < cons.size(); j++)
     { Constraint con = (Constraint) cons.get(j);
       if (con.getEvent() != null &&
@@ -3076,7 +3078,7 @@ public class BehaviouralFeature extends ModelElement
           BasicExpression prebe = new BasicExpression(pre_var); 
 
           if (preterm.isMultiple())
-          { if (preterm.isOrdered())
+          { if (preterm.isOrdered() || preterm.isSequenceValued())
             { actualtyp = new Type("Sequence",null); } 
             else 
             { actualtyp = new Type("Set",null); } 
@@ -3248,7 +3250,7 @@ public class BehaviouralFeature extends ModelElement
           BasicExpression prebe = new BasicExpression(pre_var); 
 
           if (preterm.isMultiple())
-          { if (preterm.isOrdered())
+          { if (preterm.isOrdered() || preterm.isSequenceValued())
             { actualtyp = new Type("Sequence",null); 
               newdec =  "ArrayList " + pre_var + " = new ArrayList();\n" + 
                      "    " + pre_var + ".addAll(" + pretermqf + ");\n";
@@ -3408,7 +3410,7 @@ public class BehaviouralFeature extends ModelElement
       Vector preterms = activity.allPreTerms(); 
       if (preterms.size() > 0) 
       { Statement newpost = (Statement) activity.clone(); 
-        // System.out.println("Pre terms: " + preterms); 
+        System.out.println("Pre terms: " + preterms); 
         Vector processed = new Vector(); 
         String newdecs = ""; 
         for (int i = 0; i < preterms.size(); i++)
@@ -3422,7 +3424,7 @@ public class BehaviouralFeature extends ModelElement
           BasicExpression prebe = new BasicExpression(pre_var); 
 
           if (preterm.isMultiple())
-          { if (preterm.isOrdered())
+          { if (preterm.isOrdered() || preterm.isSequenceValued())
             { actualtyp = new Type("Sequence",null); 
               actualtyp.setElementType(preterm.getElementType());
               String jType = actualtyp.getJava7(preterm.getElementType()); 
@@ -3445,8 +3447,8 @@ public class BehaviouralFeature extends ModelElement
           newdecs = newdecs + "    " + newdec; 
           prebe.type = actualtyp; 
           prebe.elementType = preterm.elementType; 
-          // System.out.println("Pre variable " + prebe + " type= " + actualtyp + 
-          //                    " elemtype= " + prebe.elementType); 
+          System.out.println("Pre variable " + prebe + " type= " + actualtyp + 
+                             " elemtype= " + prebe.elementType); 
           
           Attribute preatt = 
             new Attribute(pre_var,actualtyp,ModelElement.INTERNAL); 
@@ -3537,7 +3539,7 @@ public class BehaviouralFeature extends ModelElement
         if (ent != null && ent.isInterface())
         { return "  public " + ts + " " + name + "(" + pars + ");\n"; } 
  
-        if (tp != null)
+        if (tp != null && !("void".equals(ts)))
         { res = res + ts + " result;\n"; }
         localatts.addAll(parameters);   
         cde.typeCheck(types,entities,context,localatts); 
@@ -3577,7 +3579,7 @@ public class BehaviouralFeature extends ModelElement
 
       res = "  public " + header + ts + " " + name + "(" + pars + ")\n  {  "; 
 
-      if (tp != null)
+      if (tp != null && !("void".equals(ts)))
       { res = res + ts + " result;\n"; }
       localatts.addAll(parameters);   
       Vector preterms = activity.allPreTerms(); 
@@ -3597,7 +3599,7 @@ public class BehaviouralFeature extends ModelElement
           BasicExpression prebe = new BasicExpression(pre_var); 
 
           if (preterm.isMultiple())
-          { if (preterm.isOrdered())
+          { if (preterm.isOrdered() || preterm.isSequenceValued())
             { actualtyp = new Type("Sequence",null); } 
             else 
             { actualtyp = new Type("Set",null); } 
@@ -3703,7 +3705,7 @@ public class BehaviouralFeature extends ModelElement
         // if (ent.isInterface())
         // { return "  public " + ts + " " + name + "(" + pars + ");\n"; } 
  
-        if (tp != null)
+        if (tp != null && !("void".equals(ts)))
         { res = res + ts + " result;\n"; }
         localatts.addAll(parameters);   
         cde.typeCheck(types,entities,context,localatts); 
@@ -3748,7 +3750,7 @@ public class BehaviouralFeature extends ModelElement
       res = "  " + ts + " " + ename + "::" + name + "(" + pars + ")\n  {  "; 
       decs.add("  " + isstatic + ts + " " + name + "(" + pars + ");\n"); 
 
-      if (tp != null)
+      if (tp != null && !("void".equals(ts)))
       { res = res + ts + " result;\n"; }
       localatts.addAll(parameters);   
       Vector preterms = activity.allPreTerms(); 
@@ -3773,7 +3775,7 @@ public class BehaviouralFeature extends ModelElement
             if (pelemT != null) 
             { pcet = pelemT.getCPP(pelemT.getElementType()); }
  
-            if (preterm.isOrdered())
+            if (preterm.isOrdered() || preterm.isSequenceValued())
             { actualtyp = new Type("Sequence",null);  
               newdec = "vector<" + pcet + ">* " + pre_var + " = new vector<" + pcet + ">();\n" + 
                      "    " + pre_var + "->insert(" + pre_var + "->end(), " + 
@@ -3782,7 +3784,7 @@ public class BehaviouralFeature extends ModelElement
             }  
             else 
             { actualtyp = new Type("Set",null);  
-              newdec = "set<" + pcet + ">* " + pre_var + " = new set<" + pcet + ">();\n" + 
+              newdec = "std::set<" + pcet + ">* " + pre_var + " = new std::set<" + pcet + ">();\n" + 
                      "    " + pre_var + "->insert(" + pretermqf + "->begin(), " + 
                                                       pretermqf + "->end());\n";
             }  
@@ -4808,6 +4810,8 @@ public class BehaviouralFeature extends ModelElement
       else 
       { return header + basicQueryCaseJava6(pst,resT,env0,types,entities,atts); } 
     }
+    else if (postcond instanceof ConditionalExpression)
+    { return header + basicQueryCaseJava6(postcond,resT,env0,types,entities,atts); }
     return header; 
   } 
 
@@ -4859,6 +4863,8 @@ public class BehaviouralFeature extends ModelElement
       else 
       { return header + basicQueryCaseJava7(pst,resT,env0,types,entities,atts); } 
     }
+    else if (postcond instanceof ConditionalExpression)
+    { return header + basicQueryCaseJava7(postcond,resT,env0,types,entities,atts); }
     return header; 
   } 
 
@@ -4910,6 +4916,8 @@ public class BehaviouralFeature extends ModelElement
       else 
       { return header + basicQueryCaseCSharp(pst,resT,env0,types,entities,atts); } 
     }
+    else if (postcond instanceof ConditionalExpression)
+    { return header + basicQueryCaseCSharp(postcond,resT,env0,types,entities,atts); }
     return header; 
   } 
 
@@ -4962,6 +4970,9 @@ public class BehaviouralFeature extends ModelElement
       else 
       { return header + basicQueryCaseCPP(pst,resT,env0,types,entities,atts); } 
     }
+    else if (postcond instanceof ConditionalExpression)
+    { return header + basicQueryCaseCPP(postcond,resT,env0,types,entities,atts); }
+
     return header; 
   } 
 
@@ -5365,7 +5376,7 @@ public class BehaviouralFeature extends ModelElement
       BasicExpression prebe = new BasicExpression(pre_var); 
       
       if (preterm.isMultiple())
-      { if (preterm.isOrdered())
+      { if (preterm.isOrdered() || preterm.isSequenceValued())
         { actualtyp = new Type("Sequence",null); } 
         else 
         { actualtyp = new Type("Set",null); } 
@@ -5483,12 +5494,17 @@ public class BehaviouralFeature extends ModelElement
       String pretermqf = preterm.queryFormJava6(env0,true); 
       BasicExpression prebe = new BasicExpression(pre_var); 
       
+      // System.out.println(">>> Preterm " + preterm + " type = " + typ); 
+      // System.out.println(">>> isOrdered: " + preterm.isOrdered() + " isMultiple: " + preterm.isMultiple() + " isSequenceValued: " + preterm.isSequenceValued()); 
+
       if (preterm.isMultiple())
-      { if (preterm.isOrdered())
+      { if (preterm.isOrdered() || preterm.isSequenceValued())
         { actualtyp = new Type("Sequence", null); } 
         else 
         { actualtyp = new Type("Set",null); } 
         actualtyp.setElementType(preterm.getElementType()); 
+
+        
 
         if (preterm.umlkind == Expression.CLASSID && preterm.arrayIndex == null) 
         { pretermqf = "Controller.inst()." + pretermqf.toLowerCase() + "s"; } 
@@ -5573,7 +5589,7 @@ public class BehaviouralFeature extends ModelElement
       if ("true".equals("" + pre)) { } 
       else 
       { Expression npre = pre.computeNegation4succ();
-	    Expression npre1 = npre.removePrestate();  
+        Expression npre1 = npre.removePrestate();  
          
         preheader = "  //  if (" + npre1.queryFormJava7(env0,true) + 
                     ")) { return" + returning + "; } \n  "; 
@@ -5603,7 +5619,7 @@ public class BehaviouralFeature extends ModelElement
       BasicExpression prebe = new BasicExpression(pre_var); 
       
       if (preterm.isMultiple())
-      { if (preterm.isOrdered())
+      { if (preterm.isOrdered() || preterm.isSequenceValued())
         { actualtyp = new Type("Sequence", null); } 
         else 
         { actualtyp = new Type("Set",null); } 
@@ -5611,8 +5627,8 @@ public class BehaviouralFeature extends ModelElement
 
         if (preterm.umlkind == Expression.CLASSID && preterm.arrayIndex == null) 
         { pretermqf = "Controller.inst()." + pretermqf.toLowerCase() + "s"; } 
-        String j6type = actualtyp.getJava7(preterm.elementType); 
-        newdec = j6type + " " + pre_var + " = new " + j6type + "();\n" + 
+        String j7type = actualtyp.getJava7(preterm.elementType); 
+        newdec = j7type + " " + pre_var + " = new " + j7type + "();\n" + 
                  "    " + pre_var + ".addAll(" + pretermqf + ");\n"; 
       } 
       else 
@@ -5723,7 +5739,7 @@ public class BehaviouralFeature extends ModelElement
       BasicExpression prebe = new BasicExpression(pre_var); 
       
       if (preterm.isMultiple())
-      { if (preterm.isOrdered())
+      { if (preterm.isOrdered() || preterm.isSequenceValued())
         { actualtyp = new Type("Sequence",null); } 
         else
         { actualtyp = new Type("Set",null); }
@@ -5856,7 +5872,7 @@ public class BehaviouralFeature extends ModelElement
       if (preterm.isMultiple())
       { if (preterm.umlkind == Expression.CLASSID && preterm.arrayIndex == null) 
         { pretermqf = "Controller::inst->get" + pretermqf.toLowerCase() + "_s()"; } 
-        if (preterm.isOrdered())
+        if (preterm.isOrdered() || preterm.isSequenceValued())
         { actualtyp = new Type("Sequence",null); 
           newdec =  "  vector<" + pcet + ">* " + pre_var + " = new vector<" + pcet + ">();\n" + 
                  "    " + pre_var + "->insert(" + pre_var + "->end(), " + 
@@ -5865,7 +5881,7 @@ public class BehaviouralFeature extends ModelElement
         } 
         else 
         { actualtyp = new Type("Set",null); 
-          newdec =  "  set<" + pcet + ">* " + pre_var + " = new set<" + pcet + ">();\n" + 
+          newdec =  "  std::set<" + pcet + ">* " + pre_var + " = new std::set<" + pcet + ">();\n" + 
                  "    " + pre_var + "->insert(" + pretermqf + "->begin(), " + 
                                               pretermqf + "->end());\n";
         }  
@@ -6473,12 +6489,12 @@ public class BehaviouralFeature extends ModelElement
     if (javaPars.equals(""))
     { javaPars = ename + "* " + ex;
       java2Pars = "vector<" + ename + "*>* " + exs; 
-      java3Pars = "set<" + ename + "*>* " + exs; 
+      java3Pars = "std::set<" + ename + "*>* " + exs; 
     } 
     else 
     { java2Pars = "vector<" + ename + "*>* " + exs + ", " + javaPars; 
       javaPars = ename + "* " + ex + ", " + javaPars; 
-      java3Pars = "set<" + ename + "*>* " + exs + ", " + javaPars; 
+      java3Pars = "std::set<" + ename + "*>* " + exs + ", " + javaPars; 
     } 
 
     String et = "void*"; 
@@ -6547,7 +6563,7 @@ public class BehaviouralFeature extends ModelElement
     String endbody = ""; 
     header2 = header2 + "  for (int _i = 0; _i < " + exs + "->size(); _i++)\n" +
               "    { " + ename + "* " + ex + " = (*" + exs + ")[_i];\n"; 
-    header3 = header3 + "  for (set<" + ename + "*>::iterator _i = " + exs + "->begin(); _i != " + exs + "->end(); _i++)\n" +
+    header3 = header3 + "  for (std::set<" + ename + "*>::iterator _i = " + exs + "->begin(); _i != " + exs + "->end(); _i++)\n" +
               "    { " + ename + "* " + ex + " = *_i;\n"; 
 
     String parlist = parameterList(); 
@@ -7005,11 +7021,11 @@ public class BehaviouralFeature extends ModelElement
     if (javaPars.equals(""))
     { javaPars = ename + "* " + ex;
       java2Pars = "vector<" + ename + "*>* " + exs; 
-      java3Pars = "set<" + ename + "*>* " + exs; 
+      java3Pars = "std::set<" + ename + "*>* " + exs; 
     } 
     else 
     { java2Pars = "vector<" + ename + "*>* " + exs + "," + javaPars; 
-      java3Pars = "set<" + ename + "*>* " + exs + "," + javaPars; 
+      java3Pars = "std::set<" + ename + "*>* " + exs + "," + javaPars; 
       javaPars = ename + "* " + ex + "," + javaPars; 
     } 
 
@@ -7067,7 +7083,7 @@ public class BehaviouralFeature extends ModelElement
      
     header2 = header2 + "  for (int _i = 0; _i < " + exs + "->size(); _i++)\n" +
               "    { " + ename + "* " + ex + " = (*" + exs + ")[_i];\n"; 
-    header3 = header3 + "  for (set<" + ename + "*>::iterator _i = " + exs + "->begin(); _i != " + exs + "->end(); _i++)\n" +
+    header3 = header3 + "  for (std::set<" + ename + "*>::iterator _i = " + exs + "->begin(); _i != " + exs + "->end(); _i++)\n" +
               "    { " + ename + "* " + ex + " = *_i;\n"; 
 
     String parlist = parameterList(); 

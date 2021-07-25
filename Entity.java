@@ -4325,6 +4325,17 @@ public class Entity extends ModelElement implements Comparable
   public BehaviouralFeature getOperation(String nme) 
   { return (BehaviouralFeature) ModelElement.lookupByName(nme,operations); } 
 
+  public BehaviouralFeature getOperation(String nme, Vector parameters)
+  { BehaviouralFeature res = null; 
+    for (int i = 0; i < operations.size(); i++) 
+    { res = (BehaviouralFeature) operations.get(i); 
+      if (nme.equals(res.getName()) && res.parametersMatch(parameters))
+      { return res; } 
+    }  
+
+    return getOperation(nme); 
+  } 
+
   public BehaviouralFeature getDefinedOperation(String nme)
   { BehaviouralFeature res = getOperation(nme); 
     if (res != null) 
@@ -5063,9 +5074,9 @@ public class Entity extends ModelElement implements Comparable
               "    }\n" + 
               "    return res; \n" + 
               "  }\n\n" +
-              "  set<" + nme + "*>* get" + nme + "ByPK(set<" + tname + ">* " + attx + ")\n" + 
-              "  { set<" + nme + "*>* res = new set<" + nme + "*>(); \n" + 
-              "    set<" + tname + ">::iterator _pos; \n" + 
+              "  std::set<" + nme + "*>* get" + nme + "ByPK(std::set<" + tname + ">* " + attx + ")\n" + 
+              "  { std::set<" + nme + "*>* res = new std::set<" + nme + "*>(); \n" + 
+              "    std::set<" + tname + ">::iterator _pos; \n" + 
               "    for (_pos = " + attx + "->begin(); _pos != " + attx + "->end(); ++_pos)\n" + 
               "    { " + nme + "* " + ex + " = get" + nme + "ByPK(*_pos);\n" + 
               "      if (" + ex + " != 0) { res->insert(" + ex + "); }\n" + 
@@ -5104,9 +5115,9 @@ public class Entity extends ModelElement implements Comparable
               "    }\n" + 
               "    return res; \n" + 
               "  }\n\n" +
-              "  set<" + nme + "*>* get" + nme + "ByPK(set<" + tname + ">* " + attx + ")\n" + 
-              "  { set<" + nme + "*>* res = new set<" + nme + "*>(); \n" + 
-              "    set<" + tname + ">::iterator _pos; \n" + 
+              "  std::set<" + nme + "*>* get" + nme + "ByPK(std::set<" + tname + ">* " + attx + ")\n" + 
+              "  { std::set<" + nme + "*>* res = new std::set<" + nme + "*>(); \n" + 
+              "    std::set<" + tname + ">::iterator _pos; \n" + 
               "    for (_pos = " + attx + "->begin(); _pos != " + attx + "->end(); ++_pos)\n" + 
               "    { " + nme + "* " + ex + " = get" + nme + "ByPK(*_pos);\n" + 
               "      if (" + ex + " != 0) { res->insert(" + ex + "); }\n" + 
@@ -5720,7 +5731,10 @@ public class Entity extends ModelElement implements Comparable
   }
 
   public void generateCPP(Vector entities, Vector types, PrintWriter out, PrintWriter out2)
-  { if (hasStereotype("external") || hasStereotype("externalApp")) 
+  { if (hasStereotype("component"))
+    { return; } 
+
+    if (hasStereotype("external") || hasStereotype("externalApp")) 
     { out2.println("#include \"" + getName() + ".h\""); 
       return; 
     }  // It will be #included in the .cpp
@@ -6319,8 +6333,11 @@ public class Entity extends ModelElement implements Comparable
       { String par = att.setOperation(this,invariants,entities,types);
         if (par != null)
         { out.println("  " + par + "\n"); }
-        if (att.isMultiple())
-        { par = att.addremOperation(this); 
+        if (att.isSequence())
+        { String par1 = att.setIndexOperation(this,invariants,entities,types);
+          if (par1 != null) 
+          { out.println("  " + par1 + "\n"); }
+          par = att.addremOperation(this); 
           if (par != null) 
           { out.println("  " + par + "\n"); }
         } 
@@ -6513,6 +6530,15 @@ public class Entity extends ModelElement implements Comparable
       { String par = att.setOperationJava6(this,invariants,entities,types);
         if (par != null)
         { out.println("  " + par + "\n"); }
+        if (att.isSequence())
+        { String par1 = 
+            att.setIndexOperationJava6(this, invariants, entities, types);
+          if (par1 != null) 
+          { out.println("  " + par1 + "\n"); }
+          par = att.addremOperationJava6(this); 
+          if (par != null) 
+          { out.println("  " + par + "\n"); }
+        } 
 
         if (isInterface())
         { par = "";  // att.setAllInterfaceOperation(getName()); }
@@ -6705,6 +6731,16 @@ public class Entity extends ModelElement implements Comparable
         if (par != null)
         { out.println("  " + par + "\n"); }
 
+        if (att.isSequence())
+        { String par1 = 
+            att.setIndexOperationJava7(this, invariants, entities, types);
+          if (par1 != null) 
+          { out.println("  " + par1 + "\n"); }
+          par = att.addremOperationJava7(this); 
+          if (par != null) 
+          { out.println("  " + par + "\n"); }
+        } 
+
         if (isInterface())
         { par = "";  // att.setAllInterfaceOperation(getName()); }
           interfaceinnerclass = interfaceinnerclass + "  " + 
@@ -6894,6 +6930,14 @@ public class Entity extends ModelElement implements Comparable
       { String par = att.setOperationCSharp(this,invariants,entities,types);
         if (par != null)
         { out.println("  " + par + "\n"); }
+        if (att.isSequence())
+        { String par1 = att.setIndexOperationCSharp(this, invariants, entities, types);
+          if (par1 != null) 
+          { out.println("  " + par1 + "\n"); }
+          par = att.addremOperationCSharp(this); 
+          if (par != null) 
+          { out.println("  " + par + "\n"); }
+        } 
 
         par = att.setAllOperationCSharp(getName());
         if (par != null) 
@@ -7073,6 +7117,15 @@ public class Entity extends ModelElement implements Comparable
         if (par != null)
         { out.println("  " + par + "\n"); }
 
+        if (att.isSequence())
+        { String par1 = att.setIndexOperationCPP(this, invariants, entities, types);
+          if (par1 != null) 
+          { out.println("  " + par1 + "\n"); }
+          par = att.addremOperationCPP(this); 
+          if (par != null) 
+          { out.println("  " + par + "\n"); }
+        } 
+
         // if (isInterface())
         // { par = ""; } 
            // att.setAllInterfaceOperation(getName()); } 
@@ -7233,12 +7286,42 @@ public class Entity extends ModelElement implements Comparable
     { Attribute att = (Attribute) allatts.get(i);
       if (att.isFrozen()) { }  // why externalise this?
       else 
-      { res.addAll(att.senOperationsCode(cons,this,entities,types)); } 
-      if (att.isMultiple())
-      { res.addAll(att.addremOperationsCode(this)); } 
+      { res.addAll(att.senOperationsCode(cons, this, entities, types)); 
+        if (att.isMultiple())
+        { res.addAll(att.addremOperationsCode(this)); }
+      }  
     }
     return res;
   }  // But only setatt for sensor atts goes in the external interface
+
+  public Vector sensorOperationsCodeJava6(Vector cons,Vector entities,
+                                     Vector types) 
+  { Vector res = new Vector();
+    // if (isInterface()) { return res; }   
+    // The operations should be provided instead for subclasses
+
+    Vector allatts = new Vector(); 
+
+    Vector vec = new Vector(); 
+    Attribute atind = getPrincipalUK(this,vec);   // There should not also be a primary key in this
+    if (atind != null && this == (Entity) vec.get(0))  // a key defined as unique in this class
+    { if (attributes.contains(atind)) { } 
+      else { allatts.add(atind); }
+    }  
+    allatts.addAll(attributes); 
+
+    for (int i = 0; i < allatts.size(); i++)
+    { Attribute att = (Attribute) allatts.get(i);
+      if (att.isFrozen()) { }  // why externalise this?
+      else 
+      { res.addAll(att.senOperationsCodeJava6(cons, this, entities,types)); 
+        if (att.isMultiple())
+        { res.addAll(att.addremOperationsCodeJava6(this)); } 
+      }
+    }
+    return res;
+  }  // But only setatt for sensor atts goes in the external interface
+
 
   public Vector sensorOperationsCodeJava7(Vector cons,Vector entities,
                                      Vector types) 
@@ -7260,7 +7343,10 @@ public class Entity extends ModelElement implements Comparable
     { Attribute att = (Attribute) allatts.get(i);
       if (att.isFrozen()) { }  // why externalise this?
       else 
-      { res.addAll(att.senOperationsCodeJava7(cons,this,entities,types)); } 
+      { res.addAll(att.senOperationsCodeJava7(cons, this, entities, types)); 
+        if (att.isMultiple())
+        { res.addAll(att.addremOperationsCodeJava7(this)); } 
+      } 
     }
     return res;
   }  // But only setatt for sensor atts goes in the external interface
@@ -7283,7 +7369,10 @@ public class Entity extends ModelElement implements Comparable
     { Attribute att = (Attribute) allatts.get(i);
       if (att.isFrozen()) { }  // why externalise this?
       else 
-      { res.addAll(att.senOperationsCodeCSharp(cons,this,entities,types)); } 
+      { res.addAll(att.senOperationsCodeCSharp(cons, this, entities, types)); 
+        if (att.isMultiple())
+        { res.addAll(att.addremOperationsCodeCSharp(this)); } 
+      } 
     }
     return res;
   }  // But only setatt for sensor atts goes in the external interface
@@ -7306,7 +7395,10 @@ public class Entity extends ModelElement implements Comparable
     { Attribute att = (Attribute) allatts.get(i);
       if (att.isFrozen()) { }  // why externalise this?
       else 
-      { res.addAll(att.senOperationsCodeCPP(cons,this,entities,types)); } 
+      { res.addAll(att.senOperationsCodeCPP(cons, this, entities, types)); 
+        if (att.isMultiple())
+        { res.addAll(att.addremOperationsCodeCPP(this)); } 
+      } 
     }
     return res;
   }  // But only setatt for sensor atts goes in the external interface
@@ -9872,8 +9964,8 @@ public class Entity extends ModelElement implements Comparable
                   "      killAbstract" + ename + "(_e);\n" + 
                   "    }\n" + 
                   "  }\n\n" + 
-                  "  void killAbstract" + ename + "(set<" + ename + "*>* _l)\n" + 
-                  "  { for (set<" + ename + "*>::iterator _i = _l->begin(); _i != _l->end(); ++_i)\n" + 
+                  "  void killAbstract" + ename + "(std::set<" + ename + "*>* _l)\n" + 
+                  "  { for (std::set<" + ename + "*>::iterator _i = _l->begin(); _i != _l->end(); ++_i)\n" + 
                   "    { " + ename + "* _e = *_i;\n" + 
                   "      killAbstract" + ename + "(_e);\n" + 
                   "    }\n" + 
@@ -9920,8 +10012,8 @@ public class Entity extends ModelElement implements Comparable
     res = res + "  { for (int _i = 0; _i < " + ex + "->size(); _i++)\n" + 
           "    { kill" + ename + "((*" + ex + ")[_i]); }\n" + 
           "  }\n\n" + 
-          "  void killAll" + ename + "(set<" + ename + "*>* " + ex + ")\n" + 
-          "  { for (set<" + ename + "*>::iterator _i = " + ex + "->begin(); _i != " + ex + "->end(); ++_i)\n" + 
+          "  void killAll" + ename + "(std::set<" + ename + "*>* " + ex + ")\n" + 
+          "  { for (std::set<" + ename + "*>::iterator _i = " + ex + "->begin(); _i != " + ex + "->end(); ++_i)\n" + 
           "    { kill" + ename + "(*_i); }\n" + 
           "  }\n\n"; 
     return res; 
@@ -13511,7 +13603,7 @@ public void iosDbiOperations(PrintWriter out)
       if (ast.isOrdered())
       { e2roletype = "vector<" + e2name + "*>"; }
       else 
-      { e2roletype = "set<" + e2name + "*>"; }
+      { e2roletype = "std::set<" + e2name + "*>"; }
  
       // If ent2.isAbstract() print out elements based on their concrete
       // classes, not ent2. 
@@ -13644,7 +13736,11 @@ public void iosDbiOperations(PrintWriter out)
       Type t = att.getType();
       String tname = t.getName();
       String valc = "val";
-      if ("String".equals(tname))
+      if ("Sequence".equals(tname) || "Set".equals(tname))
+      { valc = "new ArrayList()"; } 
+      else if ("Map".equals(tname))
+      { valc = "new Hashtable()"; } 
+      else if ("String".equals(tname))
       { valc = "val.Substring(1,val.Length-2)"; }
       else if ("double".equals(tname))
       { valc = "double.Parse(val)"; }
@@ -13652,9 +13748,11 @@ public void iosDbiOperations(PrintWriter out)
       { valc = "val.Equals(\"true\")"; }
       else if ("long".equals(tname))
       { valc = "Int64.Parse(val)"; }
-      else 
+      else if ("int".equals(tname) || t.isEnumeration()) 
       { valc = "int.Parse(val)"; }
-      // enumerations, long?
+      else if ("OclAny".equals(tname) || 
+               "Function".equals(name))
+      { valc = "null"; } 
 
       res = res + 
         "  if (\"" + cname + "\".Equals(classmap[a]) && f.Equals(\"" + aname + "\"))\n" +
@@ -13698,6 +13796,13 @@ public void iosDbiOperations(PrintWriter out)
       String aname = att.getName();
       Type t = att.getType();
       String tname = t.getName();
+      String et = "void*";   
+      if (att.getElementType() != null) 
+      { Type elemT = att.getElementType(); 
+        et = 
+           elemT.getCPP(elemT.getElementType()); 
+      } 
+
       String valc = "val";
       if ("String".equals(tname))
       { valc = "val.substr(1,val.length()-2)"; }
@@ -13707,9 +13812,19 @@ public void iosDbiOperations(PrintWriter out)
       { valc = "(val == \"true\")"; }
       else if ("long".equals(tname))
       { valc = "std::stol(val)"; }
-      else 
+      else if ("int".equals(tname) || t.isEnumeration())
       { valc = "std::stoi(val)"; }
-      // enumerations?
+      else if ("OclAny".equals(tname) || 
+               "Function".equals(name))
+      { valc = "NULL"; }
+      else if ("Sequence".equals(tname))
+      { valc = "new vector<" + et + ">()"; } 
+      else if ("Set".equals(tname))
+      { valc = "new std::set<" + et + ">()"; } 
+      else if ("Map".equals(tname))
+      { valc = "new map<string," + et + ">()"; } 
+ 
+      
 
       res = res + 
         "  if (\"" + cname + "\" == classmap[a] && f == \"" + aname + "\")\n" +

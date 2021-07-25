@@ -294,18 +294,24 @@ public abstract class ModelElement implements SystemTypes
 
   public static ModelElement lookupByName(String nme, List mes)
   { for (int i = 0; i < mes.size(); i++) 
-    { ModelElement me = (ModelElement) mes.get(i); 
-      if (me.getName().equals(nme))
-      { return me; } 
+    { Object obj = mes.get(i); 
+      if (obj instanceof ModelElement) 
+      { ModelElement me = (ModelElement) obj; 
+        if (me.getName().equals(nme))
+        { return me; }
+      }  
     } 
     return null; 
   } 
 
   public static ModelElement lookupByName(String nme, Vector mes)
   { for (int i = 0; i < mes.size(); i++) 
-    { ModelElement me = (ModelElement) mes.get(i); 
-      if (me.getName().equals(nme))
-      { return me; } 
+    { Object obj = mes.get(i); 
+      if (obj instanceof ModelElement) 
+      { ModelElement me = (ModelElement) obj; 
+        if (me.getName().equals(nme))
+        { return me; }
+      } 
     } 
     return null; 
   } 
