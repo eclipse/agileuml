@@ -3,6 +3,8 @@ import java.util.List;
 import java.util.HashSet;  
 import java.io.*; 
 import javax.swing.*;
+import java.util.StringTokenizer; 
+
 
 /******************************
 * Copyright (c) 2003--2021 Kevin Lano
@@ -20,7 +22,7 @@ public class Entity extends ModelElement implements Comparable
     // The associations in which this is entity1
   private Vector operations = new Vector();   // BehaviouralFeature
   private Entity superclass = null; 
-  private Vector superclasses = null; // in case of C++ only 
+  private Vector superclasses = null; // multiple in case of C++ only 
   private Vector subclasses = new Vector();  // Entity
   private Vector invariants = new Vector();  // Constraint
   private Vector interfaces = new Vector();  // Interface classes
@@ -690,6 +692,16 @@ public class Entity extends ModelElement implements Comparable
 	return res; 
   }
 
+  public void addModelElements(Vector modElems)
+  { for (int i = 0; i < modElems.size(); i++) 
+    { ModelElement me = (ModelElement) modElems.get(i); 
+      if (me instanceof Attribute) 
+      { addAttribute((Attribute) me); } 
+      else if (me instanceof BehaviouralFeature)
+      { addOperation((BehaviouralFeature) me); } 
+    } 
+  } 
+
   public void addAttribute(String nme, Type t) 
   { Attribute att = new Attribute(nme, t, ModelElement.INTERNAL); 
     addAttribute(att); 
@@ -937,10 +949,39 @@ public class Entity extends ModelElement implements Comparable
     } 
   } 
 
+  public void addInterfaces(String iList, Vector entities)
+  { StringTokenizer st = new StringTokenizer(iList, ", "); 
+    Vector newInterfaces = new Vector(); 
+
+    while (st.hasMoreTokens())
+    { newInterfaces.add(st.nextToken()); } 
+
+    for (int i = 0; i < newInterfaces.size(); i++) 
+    { String iname = (String) newInterfaces.get(i); 
+      if ("Runnable".equals(iname)) 
+      { // <<active>> stereotype
+        addStereotype("active"); 
+      }
+      else if ("Serializable".equals(iname) ||
+               "Comparable".equals(iname) || 
+               "List".equals(iname) || 
+               "Collection".equals(iname) ||  
+               "Cloneable".equals(iname))
+      { } 
+      else  
+      { ModelElement me = ModelElement.lookupByName(iname.trim(), entities); 
+        if (me != null && me instanceof Entity)
+        { addInterface((Entity) me); }
+      } 
+    } 
+  } 
+
   public void addInterface(Entity intf)
   { // Check that all ops of intf are also in this
+
     Vector iops = intf.getOperations(); 
     Vector allops = allOperations(); 
+
     for (int i = 0; i < iops.size(); i++) 
     { BehaviouralFeature bf = (BehaviouralFeature) iops.get(i); 
       boolean found = false; 
@@ -953,11 +994,16 @@ public class Entity extends ModelElement implements Comparable
       } 
       if (found) { } 
       else 
-      { System.err.println("!!!!!! Operation " + sig + " of interface " + intf.getName() + 
+      { System.err.println("!Warning!: Operation " + sig + " of interface " + intf.getName() + 
                            " is not implemented in class " + getName()); 
       }  
     } 
-    interfaces.add(intf);  
+
+    if (interfaces.contains(intf)) { } 
+    else 
+    { interfaces.add(intf); }   
+    System.out.println(">> Added interface " + intf.getName() + " to " + getName()); 
+    System.out.println(); 
   }
        
   public void removeInterface(Entity e)
@@ -1143,7 +1189,7 @@ public class Entity extends ModelElement implements Comparable
     res.addAll(attributes); 
     res.addAll(allInheritedAttributes()); 
     return res; 
-  } 
+  } // Also include the interfaces. 
 
   public Vector allProperties()
   { Vector res = new Vector();
@@ -3798,7 +3844,7 @@ public class Entity extends ModelElement implements Comparable
 
     out.println("*** Total complexity of " + getName() + " is: " + totalComplexity); 
     if (totalComplexity > 1000)
-    { System.err.println("!! Excessively large class: " + getName() + " has c=" + totalComplexity); } 
+    { System.err.println("!! Excessively large class: " + getName() + " has c = " + totalComplexity); } 
 
     return totalComplexity; 
   } 
@@ -3817,6 +3863,32 @@ public class Entity extends ModelElement implements Comparable
     return res; 
   }       
 
+  public boolean hasConstructor()
+  { return hasOperation("new" + getName()); } 
+
+  public void addDefaultConstructor()
+  { // static operation newE() : E
+    // operation initialise() : void
+  
+    String nme = getName(); 
+    Vector pars = new Vector(); 
+
+    BehaviouralFeature constr = 
+        BehaviouralFeature.newConstructor(nme,pars); 
+    constr.setStatic(true); 
+    addOperation(constr); 
+
+    Statement initCode = new InvocationStatement("skip"); 
+
+    BehaviouralFeature bfInit = 
+        new BehaviouralFeature("initialise"); 
+    bfInit.setParameters(pars); 
+    bfInit.setActivity(initCode); 
+    bfInit.setPrecondition(new BasicExpression(true)); 
+    bfInit.setPostcondition(new BasicExpression(true)); 
+    
+    addOperation(bfInit); 
+  } 
 
   public Map getCallGraph()
   { Map res = new Map(); 
@@ -3895,16 +3967,35 @@ public class Entity extends ModelElement implements Comparable
   { superclass = s; } 
 
   public void addSuperclass(Entity e) 
-  { if (superclasses == null) 
-    { superclasses = new Vector(); } 
-    superclasses.add(e); 
+  { if (e == null) 
+    { return; } 
+
+    if (e.isInterface())
+    { addInterface(e);
+      return; 
+    } 
+
+    if (superclass != null && 
+        !superclass.getName().equals(e.getName())) 
+    { System.err.println("! Warning: multiple inheritance: " + 
+        getName() + " inherits from " + 
+        superclass.getName() + " and " + e.getName()); 
+  
+
+      if (superclasses == null) 
+      { superclasses = new Vector(); } 
+      superclasses.add(e); 
+    }
+    else 
+    { superclass = e; }  
   } 
 
   public void addSubclass(Entity s)
   { if (isLeaf())
-    { System.err.println("Leaf entities cannot have subclasses"); 
+    { System.err.println("! Warning: Leaf entities cannot have subclasses"); 
       return; 
     }
+
     if (subclasses.contains(s)) { } 
     else 
     { subclasses.add(s); }  
@@ -3963,7 +4054,7 @@ public class Entity extends ModelElement implements Comparable
   { if (hasAttribute(att))
     { return true; } 
     return hasInheritedAttribute(att); 
-  } 
+  } // *and* those from interfaces
 
   public Vector allInheritedAttributes()
   { Vector res = new Vector(); 
@@ -7688,6 +7779,8 @@ public class Entity extends ModelElement implements Comparable
   public void asTextModel2(PrintWriter out, Vector entities, Vector types) 
   { String nme = getName(); 
 
+    
+
     Vector allops = allOperations(); 
     // Vector subs = getAllSubclasses();
     Vector subs = getActualLeafSubclasses();   
@@ -7708,7 +7801,9 @@ public class Entity extends ModelElement implements Comparable
       } 
     }
 
-    if (superclass != null) 
+    System.out.println(">>> Class " + nme + " has superclass " + superclass); 
+
+    if (superclass != null && !superclass.isInterface()) 
     { out.println(superclass.getName() + " : " + nme + ".superclass"); 
       /* Vector inheritedops = superclass.allInheritedOperations(); 
       for (int k = 0; k < inheritedops.size(); k++) 
@@ -7718,10 +7813,12 @@ public class Entity extends ModelElement implements Comparable
       }     */ 
     } 
 
-    for (int j = 0; j < subclasses.size(); j++) 
-    { Entity sub = (Entity) subclasses.get(j); 
-      out.println(sub.getName() + " : " + nme + ".subclasses"); 
-    } 
+    if (!isInterface())
+    { for (int j = 0; j < subclasses.size(); j++) 
+      { Entity sub = (Entity) subclasses.get(j); 
+        out.println(sub.getName() + " : " + nme + ".subclasses"); 
+      }
+    }  
 
 
   } // is Abstract also
@@ -7744,12 +7841,43 @@ public class Entity extends ModelElement implements Comparable
     out.println("}\n\n");   
   } 
 
+  public String stereotypesKM3() 
+  { String res = ""; 
+
+    for (int i = 0; i < stereotypes.size(); i++) 
+    { String stereo = (String) stereotypes.get(i); 
+      res = res + "  stereotype " + stereo + ";\n"; 
+    }
+
+    return res; 
+  } 
+
+
   public String getKM3()
   { String nme = "class " + getName();
-    if (isAbstract())
+
+    if (isInterface()) { } 
+    else if (isAbstract())
     { nme = "abstract " + nme; } 
+
     if (superclass != null) 
-    { nme = nme + " extends " + superclass; }
+    { nme = nme + " extends " + superclass; 
+      if (interfaces.size() > 0)
+      { for (int k = 0; k < interfaces.size(); k++) 
+        { Entity intf = (Entity) interfaces.get(k); 
+          nme = nme + ", " + intf.getName(); 
+        } 
+      } 
+    } 
+    else if (interfaces.size() > 0) 
+    { nme = nme + " implements " + 
+                  ((Entity) interfaces.get(0)).getName(); 
+      for (int k = 1; k < interfaces.size(); k++) 
+      { Entity intf = (Entity) interfaces.get(k); 
+        nme = nme + ", " + intf.getName(); 
+      } 
+    } 
+
   
     String res = "  " + nme + " {\n\r";
 
@@ -7798,10 +7926,29 @@ public class Entity extends ModelElement implements Comparable
 
   public void saveKM3(PrintWriter out)
   { String nme = "class " + getName();
-    if (isAbstract())
-    { nme = "abstract " + nme; } 
+
+    if (isInterface()) { } 
+    else if (isAbstract())
+    { nme = "abstract " + nme; }
+ 
     if (superclass != null) 
-    { nme = nme + " extends " + superclass; }  
+    { nme = nme + " extends " + superclass; 
+      if (interfaces.size() > 0)
+      { for (int k = 0; k < interfaces.size(); k++) 
+        { Entity intf = (Entity) interfaces.get(k); 
+          nme = nme + ", " + intf.getName(); 
+        } 
+      } 
+    } 
+    else if (interfaces.size() > 0) 
+    { nme = nme + " implements " + 
+                  ((Entity) interfaces.get(0)).getName(); 
+      for (int k = 1; k < interfaces.size(); k++) 
+      { Entity intf = (Entity) interfaces.get(k); 
+        nme = nme + ", " + intf.getName(); 
+      } 
+    } 
+
     out.println("  " + nme + " {");
 
     for (int i = 0; i < stereotypes.size(); i++) 
@@ -9146,6 +9293,50 @@ public class Entity extends ModelElement implements Comparable
     }
     res = res + upds + 
     createActionsCPP(ex,ename,cons,entities,types) + 
+    "\n    return " + ex + ";\n"; 
+    res = res + "  }\n\n";
+    res = res + buildCloneOpCPP(cons,entities,types); 
+    return res; 
+  }
+
+  public String buildCloneOpCPP(Vector cons, Vector entities, Vector types)
+  { if (isAbstract() || isInterface()) { return ""; } 
+    String ename = getName();
+    String ex = ename.toLowerCase() + "x";
+    String es = ename.toLowerCase() + "_s";
+    String tests = ""; 
+    String upds = ""; 
+    String header = "  " + ename + "* copy" + ename +
+                 "(const " + ename + "* self)\n";
+    String inits = ""; 
+
+    Vector allatts = new Vector(); 
+
+    Vector vec = new Vector(); 
+    Attribute atind = getPrincipalUK(this,vec); 
+    if (atind != null && this == (Entity) vec.get(0))  // a key defined as unique in this class
+    { if (attributes.contains(atind)) { } 
+      else { allatts.add(atind); }
+    }  
+    allatts.addAll(attributes); 
+
+    for (int i = 0; i < allatts.size(); i++)
+    { Attribute att = (Attribute) allatts.get(i);
+      // tests = tests + att.getUniqueCheckCodeCPP(this,ename);
+      inits = inits + att.getCopyCodeCPP(this,ex);
+      // upds = upds + att.getUniqueUpdateCodeCPP(this,ename); 
+    }
+    // String cardcheck = cardinalityCheckCode(es); 
+    // String res = createAllOpCPP(ename,ex) + "\n" + 
+    //             header + "  { \n" + cardcheck + tests + "    " + 
+    String res = header + "  { " + ename + "* " + ex + " = new " + ename + "();\n";
+    res = res + "    add" + ename + "(" + ex + ");\n";
+    res = res + inits; 
+    for (int j = 0; j < associations.size(); j++)
+    { Association ast = (Association) associations.get(j);
+      res = res + ast.getCopyCodeCPP(ex);
+    }
+    res = res + 
     "\n    return " + ex + ";\n"; 
     return res + "  }\n\n";
   }

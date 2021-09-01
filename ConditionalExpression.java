@@ -8,7 +8,8 @@
 * *****************************/
 /* Package: OCL */ 
 
-import java.util.Vector; 
+import java.util.Vector;
+import java.io.*;  
 
 
 public class ConditionalExpression extends Expression
@@ -649,7 +650,7 @@ public Vector singleMutants()
       return true; 
     } 
     else 
-    { System.err.println("WARNING: types in if,else of " + this + " are different"); 
+    { System.err.println("!! WARNING: types in if,else of " + this + " are different"); 
       type = ifExp.type; 
       elementType = ifExp.elementType; 
       return false; 
@@ -821,6 +822,21 @@ public Vector singleMutants()
     ifExp.setPre();  
     elseExp.setPre(); 
   } 
+
+  public String saveModelData(PrintWriter out) 
+  { String id = Identifier.nextIdentifier("conditionalexpression_");
+    out.println(id + " : ConditionalExpression"); 
+    out.println(id + ".expId = \"" + id + "\""); 
+
+    String testId = test.saveModelData(out); 
+    String leftId = ifExp.saveModelData(out); 
+    String rightId = elseExp.saveModelData(out); 
+    out.println(id + ".test = " + testId); 
+    out.println(id + ".ifExp = " + leftId); 
+    out.println(id + ".elseExp = " + rightId); 
+    return id; 
+  } 
+
 
 }
  

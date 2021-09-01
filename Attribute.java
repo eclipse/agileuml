@@ -54,6 +54,21 @@ public class Attribute extends ModelElement
   public Attribute(String nme, Type t) 
   { this(nme,t,ModelElement.INTERNAL); } 
 
+  public static Attribute newAttribute(String nme, String typ)
+  { Type t = Type.getTypeFor(typ);
+    if (t == null) 
+    { t = new Type("OclAny", null); }  
+    return new Attribute(nme, t, ModelElement.INTERNAL); 
+  } 
+
+  public static Attribute newAttribute(String nme, String typ, 
+                   Vector types, Vector ents)
+  { Type t = Type.getTypeFor(typ,types,ents); 
+    if (t == null) 
+    { t = new Type("OclAny", null); }  
+    return new Attribute(nme, t, ModelElement.INTERNAL); 
+  } 
+
   public Attribute(BasicExpression e)
   { super(e.getData()); 
     type = e.getType(); 
@@ -4282,6 +4297,14 @@ public class Attribute extends ModelElement
     { ini = type.getDefaultCPP(elementType); }
     if (ini == null) { return ""; }
     return op + ini + ");\n";
+  } // order so derived are last?
+
+  public String getCopyCodeCPP(Entity ent, String ex)
+  { // setatt(ex,self.att) 
+    String nme = getName();
+    
+    String op = "    set" + nme + "(" + ex + ", self->get" + nme + "());\n";
+    return op; 
   } // order so derived are last?
 
   public String toXml()

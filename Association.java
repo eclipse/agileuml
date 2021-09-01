@@ -9108,6 +9108,14 @@ String qual = "";
     return op + ini + ");\n"; 
   } // order so multi are last?
 
+  public String getCopyCodeCPP(String ex)
+  { // setrole2(ex,initval) -- initval is nmex for ONE
+    
+    String op = "    set" + role2 + "(" + ex + ", self->get" + role2 + "());\n"; 
+
+    return op; 
+  } // order so multi are last?
+
   public String genSQLWhere(Vector rels)
   { if (rels.size() == 0)
     { return ""; } // cond.toSQL() 

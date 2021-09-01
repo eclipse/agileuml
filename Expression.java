@@ -167,6 +167,8 @@ abstract class Expression
   public int getUMLKind()
   { return umlkind; } 
 
+  public void setStatic(boolean s)
+  { isStatic = s; } 
 
   public Expression firstConjunct()
   { return this; } 
@@ -958,7 +960,10 @@ abstract class Expression
       String tname = t.getName();
       if (tname.equals("Set") || tname.equals("Sequence") ||
           tname.equals("String") || tname.equals("Map") ||
-          tname.equals("Function") ||
+          tname.equals("Function") || 
+          tname.equals("OclType") ||
+          tname.equals("OclDate") || 
+          tname.equals("OclIterator") || 
           tname.equals("OclAny"))
       { return qf; }
       if (tname.equals("boolean"))
@@ -967,10 +972,10 @@ abstract class Expression
       { return "new Double(" + qf + ")"; }
       else if (tname.equals("long"))
       { return "new Long(" + qf + ")"; }
-      else
+      else // int or enumeration
       { return "new Integer(" + qf + ")"; }
     }
-    else // already an object
+    else // assume already an object
     { return qf; }
   }
 
@@ -981,7 +986,11 @@ abstract class Expression
   { if (t != null)
     { if (t.isEntity()) { return qf; } 
       String tname = t.getName();
-      if (tname.equals("Set") || tname.equals("Sequence") || tname.equals("String") || tname.equals("Map") ||
+      if (tname.equals("Set") || tname.equals("Sequence") || 
+          tname.equals("String") || tname.equals("Map") ||
+          tname.equals("OclType") || 
+          tname.equals("OclIterator") || 
+          tname.equals("OclDate") || 
           tname.equals("OclAny"))
       { return qf; }
       if (tname.equals("boolean"))
@@ -1132,7 +1141,10 @@ abstract class Expression
 
   public static boolean isInteger(Object ob) 
   { try
-    { int nn = Integer.parseInt("" + ob); 
+    { Integer intx = Integer.decode("" + ob); 
+      if (intx == null) 
+      { return false; } 
+      int nn = intx.intValue(); 
       return true; 
     } 
     catch (Exception e) 
@@ -1141,7 +1153,10 @@ abstract class Expression
 
   public static boolean isLong(Object ob) 
   { try
-    { long nn = Long.parseLong("" + ob); 
+    { Long longx = Long.decode("" + ob); 
+      if (longx == null) 
+      { return false; } 
+      long nn = longx.longValue(); 
       return true; 
     } 
     catch (Exception e) 
@@ -1249,7 +1264,8 @@ abstract class Expression
         d.equals("replaceAllMatches") ||
         d.equals("replaceFirstMatch") || 
         // d.equals("toBoolean") || d.equals("toInteger") || 
-        // d.equals("toReal") || d.equals("toLong") || 
+        // d.equals("toReal") || d.equals("toLong") ||
+        // d.equals("compareTo") ||  
         d.equals("toUpperCase") || d.equals("closure") || d.equals("asSet") || d.equals("asSequence") ||
         d.equals("min") || d.equals("sum") || d.equals("reverse") || d.equals("allInstances") || 
         d.equals("sort") || d.equals("prd") || d.equals("last") || d.equals("insertAt") ||

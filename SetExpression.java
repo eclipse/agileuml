@@ -17,6 +17,9 @@ public class SetExpression extends Expression
 
   public SetExpression() { }
 
+  public SetExpression(boolean b) 
+  { ordered = b; }
+
   public SetExpression(Vector v)
   { if (v == null || v.size() == 0 ||
         (v.get(0) instanceof Expression))
@@ -34,6 +37,12 @@ public class SetExpression extends Expression
   { this(v); 
     ordered = ord; 
   }
+
+  public static SetExpression newMapSetExpression()
+  { SetExpression res = new SetExpression(); 
+    res.setType(new Type("Map", null)); 
+    return res; 
+  } 
 
   public Expression getExpression(int i) 
   { if (i < elements.size())
@@ -153,6 +162,11 @@ public class SetExpression extends Expression
 
   public void addElement(int i, Expression e)
   { elements.add(i,e); }
+
+  public void addMapElement(Expression lhs, Expression rhs)
+  { Expression maplet = new BinaryExpression("|->", lhs, rhs); 
+    elements.add(maplet); 
+  } 
 
   public String toString()
   { String res;

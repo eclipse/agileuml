@@ -38,6 +38,11 @@ class BinaryExpression extends Expression
     right = rr; 
   } // change <> to /=, ->one to ->exists1, etc
 
+  public static BinaryExpression newBinaryExpression(String op, Expression lx, Expression rx)
+  { if (lx == null || rx == null) 
+    { return null; } 
+    return new BinaryExpression(op,lx,rx); 
+  } 
 
   public Object clone()
   { BinaryExpression res = 
@@ -1016,7 +1021,9 @@ class BinaryExpression extends Expression
              operator.equals("->selectMaximals") || operator.equals("->oclIsKindOf") || 
              operator.equals("->oclIsTypeOf") || operator.equals("->includesKey") || 
              operator.equals("->excludesKey") || operator.equals("->includesValue") || 
-             operator.equals("->excludesValue") || operator.equals("->restrict") ||  
+             operator.equals("->excludesValue") || 
+             operator.equals("->restrict") ||
+             operator.equals("->antirestrict") ||  
              operator.equals("->selectMinimals") || operator.equals("->union") ||
              operator.equals("->intersectAll") || operator.equals("->unionAll") ||
              operator.equals("->count") || operator.equals("->indexOf") || operator.equals("->lastIndexOf") || 
@@ -1855,19 +1862,25 @@ class BinaryExpression extends Expression
      
 
   public boolean isPrimitive()  
-  { if (operator.equals("->count") || operator.equals("->indexOf") || operator.equals("->lastIndexOf") || 
+  { // Strings are not counted as primitive
+
+    if (operator.equals("->count") || operator.equals("->indexOf") || operator.equals("->lastIndexOf") || 
         operator.equals("->oclIsKindOf") || operator.equals("->oclIsTypeOf") || 
         operator.equals("->pow") || 
         operator.equals("->hasPrefix") || operator.equals("->hasSuffix") ||
         operator.equals("->exists") || "->existsLC".equals(operator) ||
         operator.equals("->exists1") || operator.equals("->isUnique") || operator.equals("|isUnique") || 
         operator.equals("->forAll") || operator.equals("<:") || operator.equals("=") ||
-        operator.equals("/=") || operator.equals("->includes") || operator.equals("->excludes") ||
+        operator.equals("/=") || operator.equals("->includes") || 
+        operator.equals("->excludes") ||
         operator.equals("!=") || operator.equals("<>") || 
         operator.equals("#") || operator.equals("#LC") || 
         operator.equals("/<:") ||
-        operator.equals("!") || operator.equals("#1") || operator.equals("->excludesAll") ||
-        operator.equals("->includesAll") || comparitors.contains(operator))
+        operator.equals("!") || operator.equals("#1") || 
+        operator.equals("->excludesAll") ||
+        operator.equals("->includesAll") ||
+        operator.equals("->compareTo") || 
+        comparitors.contains(operator))
     { return true; } 
 
     if (operator.equals("\\/") || operator.equals("/\\") || operator.equals("^") ||
@@ -1883,7 +1896,8 @@ class BinaryExpression extends Expression
         "|selectMaximals".equals(operator) ||
         operator.equals("->append") || 
         operator.equals("->including") || 
-        operator.equals("->restrict") || 
+        operator.equals("->restrict") ||
+        operator.equals("->antirestrict") || 
         operator.equals("->excludingAt") ||
         operator.equals("->excludingFirst") ||
         operator.equals("->excluding")) 
@@ -3133,14 +3147,15 @@ public void findClones(java.util.Map clones, String rule, String op)
 
     if ("->count".equals(operator) || 
         "->indexOf".equals(operator) || operator.equals("div") ||
-        operator.equals("->lastIndexOf"))
+        operator.equals("->lastIndexOf") ||
+        operator.equals("->compareTo"))
     { type = new Type("int",null); } 
     else if ("->oclAsType".equals(operator))
     { type = Type.getTypeFor(right + "", types, entities); 
       if (type == null) 
       { System.err.println("ERROR: unrecognised type in cast expression: " + this);
-        JOptionPane.showMessageDialog(null, "Unrecognised type in cast " + this, 
-                                      "Type error", JOptionPane.ERROR_MESSAGE);
+        // JOptionPane.showMessageDialog(null, "Unrecognised type in cast " + this, 
+        // "Type error", JOptionPane.ERROR_MESSAGE);
       }
     }  
     else if ("->at".equals(operator))
@@ -3175,7 +3190,13 @@ public void findClones(java.util.Map clones, String rule, String op)
              "->oclIsKindOf".equals(operator) || "->oclIsTypeOf".equals(operator))
     { type = new Type("boolean",null); } 
     else if (operator.equals("->before") || operator.equals("->after") || operator.equals("->firstMatch")) 
-    { type = new Type("String",null); }  
+    { type = new Type("String",null); 
+      elementType = new Type("String", null); 
+    }  
+    else if (operator.equals("->excludingAt") && left.isString()) 
+    { type = new Type("String",null);
+      elementType = new Type("String", null); 
+    }  
     else if ("->split".equals(operator) || "->allMatches".equals(operator))
     { type = new Type("Sequence",null); 
       elementType = new Type("String",null);
@@ -3217,8 +3238,8 @@ public void findClones(java.util.Map clones, String rule, String op)
       { }
       else 
       { System.err.println("!! TYPE ERROR: RHS of " + this + " must be a collection");
-        JOptionPane.showMessageDialog(null, "RHS of " + this + " must be a collection!", 
-                                      "Type error", JOptionPane.ERROR_MESSAGE);
+        // JOptionPane.showMessageDialog(null, "RHS of " + this + " must be a collection!", 
+        //    "Type error", JOptionPane.ERROR_MESSAGE);
       } // deduce type of one side from that of other
 
       if (tleft == null && tright != null)
@@ -3484,7 +3505,8 @@ public void findClones(java.util.Map clones, String rule, String op)
              operator.equals("->excludingAt") ||
              operator.equals("->excludingFirst") ||
              operator.equals("->including") ||
-             operator.equals("->restrict") || 
+             operator.equals("->restrict") ||
+             operator.equals("->antirestrict") || 
              operator.equals("->intersection") ||
              operator.equals("/\\"))
     { if ("Sequence".equals(tlname))
@@ -3544,7 +3566,8 @@ public void findClones(java.util.Map clones, String rule, String op)
       }
     }
 
-    if (operator.equals("->restrict"))
+    if (operator.equals("->restrict") ||
+        operator.equals("->antirestrict"))
     { if (tleft == null && tright == null) 
       { type = new Type("Map", null); } 
     } 
@@ -3558,6 +3581,7 @@ public void findClones(java.util.Map clones, String rule, String op)
     if (operator.equals("->intersection") || 
         operator.equals("/\\") || 
         operator.equals("->restrict") ||
+        operator.equals("->antirestrict") ||
         operator.equals("->excluding") ||
         operator.equals("->excludingAt") ||                 
         operator.equals("->excludingFirst")
@@ -4077,7 +4101,10 @@ public boolean conflictsWithIn(String op, Expression el,
     { return "Set.count(" + lqf + "," + rw + ")"; } 
 
     if (operator.equals("->restrict"))
-    { return "Set.restrictMap(" + lqf + "," + rw + ")"; } 
+    { return "Set.restrictMap(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("->antirestrict"))
+    { return "Set.antirestrictMap(" + lqf + "," + rqf + ")"; } 
 
     if (operator.equals("->includesKey"))
     { return "Set.includesKey(" + lqf + "," + rw + ")"; } 
@@ -4131,6 +4158,14 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->gcd"))
     { return "Set.gcd(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("->compareTo")) 
+    { if (left.isNumeric() && right.isNumeric())
+      { res = "(" + lqf + " < " + rqf + ")?-1:((" + lqf + " > " + rqf + ")?1:0)"; } 
+      else 
+      { res = lqf + ".compareTo(" + rqf + ")"; }  
+      return res; 
+    } 
 
     if (operator.equals("->isUnique") || operator.equals("|isUnique"))  // and define for B and for Maps
     { String fcollect = collectQueryForm(lqf,rqf,rprim,env,local);
@@ -4224,7 +4259,7 @@ public boolean conflictsWithIn(String op, Expression el,
 	
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsTypeOf"))  
-    { return "(" + lqf + " instanceof " + right + ")"; } 
+    { return "(" + lqf + ".getClass() == " + right + ".class)"; } 
 
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("<:"))  
@@ -4521,7 +4556,10 @@ public boolean conflictsWithIn(String op, Expression el,
     { return "Collections.frequency(" + lqf + "," + rw + ")"; } 
 
     if (operator.equals("->restrict"))
-    { return "Set.restrictMap(" + lqf + "," + rw + ")"; } 
+    { return "Set.restrictMap(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("->antirestrict"))
+    { return "Set.antirestrictMap(" + lqf + "," + rqf + ")"; } 
 
     if (operator.equals("->at") && type != null)
     { String getind = lqf + ".get(" + rqf + " - 1)"; 
@@ -4538,6 +4576,14 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->pow"))
     { return "Math.pow(" + lqf + ", " + rqf + ")"; } 
+
+    if (operator.equals("->compareTo")) 
+    { if (left.isNumeric() && right.isNumeric())
+      { res = "(" + lqf + " < " + rqf + ")?-1:((" + lqf + " > " + rqf + ")?1:0)"; } 
+      else 
+      { res = lqf + ".compareTo(" + rqf + ")"; }  
+      return res; 
+    } 
 
     if (operator.equals("->gcd"))
     { return "Set.gcd(" + lqf + "," + rqf + ")"; } 
@@ -4584,7 +4630,7 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsTypeOf"))  
-    { return "(" + lqf + " instanceof " + right + ")"; } 
+    { return "(" + lqf + ".getClass() == " + right + ".class)"; } 
 
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("/:")) 
@@ -4860,7 +4906,10 @@ public boolean conflictsWithIn(String op, Expression el,
     { return "Collections.frequency(" + lqf + "," + rw + ")"; } 
 
     if (operator.equals("->restrict"))
-    { return "Ocl.restrictMap(" + lqf + "," + rw + ")"; } 
+    { return "Ocl.restrictMap(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("->antirestrict"))
+    { return "Ocl.antirestrictMap(" + lqf + "," + rqf + ")"; } 
 
     if (operator.equals("->at") && type != null)
     { String getind = lqf + ".get(" + rqf + " - 1)"; 
@@ -4877,6 +4926,14 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->pow"))
     { return "Math.pow(" + lqf + ", " + rqf + ")"; } 
+
+    if (operator.equals("->compareTo")) 
+    { if (left.isNumeric() && right.isNumeric())
+      { res = "(" + lqf + " < " + rqf + ") ? -1 : ((" + lqf + " > " + rqf + ") ? 1 : 0)"; } 
+      else 
+      { res = lqf + ".compareTo(" + rqf + ")"; }  
+      return res; 
+    } 
 
     if (operator.equals("->gcd"))
     { return "Ocl.gcd(" + lqf + "," + rqf + ")"; } 
@@ -4924,7 +4981,7 @@ public boolean conflictsWithIn(String op, Expression el,
 	
 	if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsTypeOf"))  
-    { return "(" + lqf + " instanceof " + right + ")"; } 
+    { return "(" + lqf + ".getClass() == " + right + ".class)"; } 
 
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("/:")) 
@@ -5182,6 +5239,9 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->restrict"))
     { return "SystemTypes.restrictMap(" + lqf + "," + rqf + ")"; } 
 
+    if (operator.equals("->antirestrict"))
+    { return "SystemTypes.antirestrictMap(" + lqf + "," + rqf + ")"; } 
+
     if (operator.equals("->at") && type != null)
     { String typ = type.getCSharp(); 
       
@@ -5205,6 +5265,14 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->gcd"))
     { return "SystemTypes.gcd(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("->compareTo")) 
+    { if (left.isNumeric() && right.isNumeric())
+      { res = "(" + lqf + " < " + rqf + ")?-1:((" + lqf + " > " + rqf + ")?1:0)"; } 
+      else 
+      { res = lqf + ".CompareTo(" + rqf + ")"; }  
+      return res; 
+    } 
 
     if (operator.equals("->isUnique"))  // and define for B
     { String fcollect = collectQueryFormCSharp(lqf,rqf,rprim,env,local);
@@ -5514,6 +5582,12 @@ public boolean conflictsWithIn(String op, Expression el,
       return "UmlRsdsLib<" + lcet + ">::minimalElements(" + lqf + ", " + col + ")"; 
     } 
 
+    if (operator.equals("->restrict"))
+    { return "UmlRsdsLib<" + lcet + ">::restrict(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("->antirestrict"))
+    { return "UmlRsdsLib<" + lcet + ">::antirestrict(" + lqf + "," + rqf + ")"; } 
+
     if (operator.equals("->sortedBy"))
     { // String col = collectQueryFormCPP(lqf,rqf,rprim,env,local);
       java.util.Map enva = (java.util.Map) ((java.util.HashMap) env).clone(); 
@@ -5545,6 +5619,12 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->equalsIgnoreCase"))
     { return "UmlRsdsLib<" + lcet + ">::equalsIgnoreCase(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("->compareTo")) 
+    { res = "(" + lqf + " < " + rqf + ")?-1:((" + lqf + " > " + rqf + ")?1:0)";
+      return res; 
+    } 
+    // But the user must define such an operation in their classes
 
     if (operator.equals("->at") && type != null)
     { String typ = type.getCPP(elementType); 
@@ -9977,17 +10057,17 @@ public boolean conflictsWithIn(String op, Expression el,
       return ufl + "\n    " + ufr;
     }
 	
-	if (operator.equals("let"))
-	{ // { var acc : T := e; ... E ... }
-	  String acc = accumulator.getName(); 
-	  Type acct = accumulator.getType(); 
-	  String lett = acct.getJava(); 
-	  String val = left.queryForm(env,local); 
-	  java.util.Map env1 = new java.util.HashMap(); 
-	  env1.putAll(env); 
-	  String stats = right.updateForm(env1,local); 
-	  return "\n    { final " + lett + " " + acc + " = " + val + ";\n" + stats + "\n    }"; 
-	} 
+    if (operator.equals("let"))
+    { // { var acc : T := e; ... E ... }
+      String acc = accumulator.getName(); 
+      Type acct = accumulator.getType(); 
+      String lett = acct.getJava(); 
+      String val = left.queryForm(env,local); 
+      java.util.Map env1 = new java.util.HashMap(); 
+      env1.putAll(env); 
+      String stats = right.updateForm(env1,local); 
+      return "\n    { final " + lett + " " + acc + " = " + val + ";\n" + stats + "\n    }"; 
+    } 
 
     if (operator.equals("or"))
     { String ufl = left.updateForm(env,local);
@@ -10921,6 +11001,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
    { // left->at(right) = val; left evaluates to a sequence or map
      return BasicExpression.updateFormEqIndex(language,left,right,val,var,env,local); 
    }  
+
    if ("->select".equals(operator))
    { // (left - (left->select(right) - var))->union(var->select(right))
      BinaryExpression se = (BinaryExpression) clone();
@@ -11177,11 +11258,11 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     }
     else if (operator.equals("=") && left instanceof UnaryExpression)
     { val2 = right.queryFormJava6(env,local);
-      return left.updateForm("Java6",env,((UnaryExpression) left).operator,val2,right,local);
+      return ((UnaryExpression) left).updateFormEq("Java6", env, ((UnaryExpression) left).operator,val2,right,local);
     }
     else if (operator.equals("=") && left instanceof BinaryExpression)
     { val2 = right.queryFormJava6(env,local);
-      return left.updateForm("Java6",env,((BinaryExpression) left).operator,val2,right,local);
+      return ((BinaryExpression) left).updateFormEq("Java6", env, ((BinaryExpression) left).operator,val2,right,local);
     }
     else if (operator.equals("->includesAll") && left instanceof BasicExpression)
     { val2 = right.queryFormJava6(env,local);
@@ -11357,11 +11438,11 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     }
     else if (operator.equals("=") && left instanceof UnaryExpression)
     { val2 = right.queryFormJava7(env,local);
-      return left.updateForm("Java7",env,((UnaryExpression) left).operator,val2,right,local);
+      return ((UnaryExpression) left).updateFormEq("Java7", env, ((UnaryExpression) left).operator,val2,right,local);
     }
     else if (operator.equals("=") && left instanceof BinaryExpression)
     { val2 = right.queryFormJava7(env,local);
-      return left.updateForm("Java7",env,((BinaryExpression) left).operator,val2,right,local);
+      return ((BinaryExpression) left).updateFormEq("Java7", env, ((BinaryExpression) left).operator,val2,right,local);
     }
     else if (operator.equals("->includesAll") && left instanceof BasicExpression)
     { val2 = right.queryFormJava7(env,local);
@@ -11513,11 +11594,11 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     }
     else if (operator.equals("=") && left instanceof UnaryExpression)
     { val2 = right.queryFormCSharp(env,local);
-      return left.updateForm("CSharp",env,((UnaryExpression) left).operator,val2,right,local);
+      return ((UnaryExpression) left).updateFormEq("CSharp", env, ((UnaryExpression) left).operator,val2,right,local);
     }
     else if (operator.equals("=") && left instanceof BinaryExpression)
     { val2 = right.queryFormCSharp(env,local);
-      return left.updateForm("CSharp",env,((BinaryExpression) left).operator,val2,right,local);
+      return ((BinaryExpression) left).updateFormEq("CSharp", env, ((BinaryExpression) left).operator,val2,right,local);
     }
     else if (operator.equals("->includesAll") && left instanceof BasicExpression)
     { val2 = right.queryFormCSharp(env,local);
@@ -13048,7 +13129,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     { return true; } 
 
     // And map operators: 
-    if (operator.equals("->restrict")) 
+    if (operator.equals("->restrict") || operator.equals("->antirestrict")) 
     { return true; } 
 
     if (operator.equals("->at") || operator.equals("->any") || operator.equals("|A"))
@@ -13080,11 +13161,14 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     if (operator.equals("|") || operator.equals("|R"))
     { return ((BinaryExpression) left).right.isSorted(); }
  
-    if (operator.equals("->select") || operator.equals("->reject") || operator.equals("->restrict"))
+    if (operator.equals("->select") || 
+        operator.equals("->reject") || 
+        operator.equals("->restrict") || 
+        operator.equals("->antirestrict"))
     { return left.isSorted(); } 
 	
-	if (operator.equals("let"))
-	{ return right.isSorted(); }
+    if (operator.equals("let"))
+    { return right.isSorted(); }
 
 
     // if (operator.equals("->at"))

@@ -59,6 +59,115 @@ public abstract class ModelElement implements SystemTypes
   public String cg(CGSpec cgs)
   { return this + ""; }
 
+  public Vector cgparameters()
+  { return new Vector(); } 
+
+  public String cgRules(CGSpec cgs, Vector rules)
+  { if (rules == null) 
+    { return this + ""; }
+
+    Vector terms = cgparameters(); 
+    // all top-level sub-modelelements
+ 
+    for (int i = 0; i < rules.size(); i++) 
+    { CGRule r = (CGRule) rules.get(i);
+      Vector tokens = r.lhsTokens; 
+      Vector vars = r.getVariables(); 
+
+      if (tokens.size() > terms.size())
+      { continue; } 
+      else if (vars.contains("_*") && terms.size() >= tokens.size())
+      { } // ok 
+      else if (tokens.size() == terms.size())
+      { } // ok
+      else 
+      { continue; } 
+
+      Vector args = new Vector(); 
+        // Strings resulting from terms[k].cg(cgs)
+      Vector eargs = new Vector(); 
+        // the actual terms[k]
+
+      int k = 0; 
+      boolean failed = false; 
+      for (int j = 0; j < tokens.size() && k < terms.size() && !failed; j++) 
+      { String tok = (String) tokens.get(j); 
+        ModelElement tm = (ModelElement) terms.get(k); 
+
+        if ("_*".equals(tok) && vars.contains(tok))
+        { // remainder of terms is processed as a list
+          // _* should be the last token, or terminated by 
+          // nextTok
+
+          String nextTok = null; 
+          if (tokens.size() > j+1)
+          { nextTok = (String) tokens.get(j+1); } 
+
+          boolean finished = false; 
+
+          Vector rem = new Vector(); 
+          for (int p = j ; p < terms.size() && !finished; p++)
+          { ModelElement pterm = (ModelElement) terms.get(p); 
+            if (nextTok != null && pterm.toString().equals(nextTok))
+            { finished = true; } 
+            else 
+            { rem.add(pterm); 
+              k++;
+            }  
+          } 
+          eargs.add(rem); 
+        } 
+        else if (vars.contains(tok))
+        { // allocate terms(j) to tok
+          eargs.add(tm); 
+          k++; 
+        } 
+        else if (tok.equals(tm.toString()))
+        { k++; } 
+        else 
+        { // System.out.println("> " + tag + " rule " + r + " does not match " + this); 
+          // System.out.println(tok + " /= " + tm.literalForm()); 
+          k++; 
+          failed = true; // try next rule 
+        } 
+      } 
+
+      if (failed == false) 
+      { // System.out.println("> Matched " + tag + " rule " + r + " for " + this);  
+
+        for (int p = 0; p < eargs.size(); p++)
+        { Object obj = eargs.get(p);
+          if (obj instanceof ModelElement) 
+          { ModelElement term = (ModelElement) obj;  
+            String textp = term.cg(cgs); 
+            args.add(textp);
+          } 
+          else if (obj instanceof Vector) 
+          { Vector vterms = (Vector) obj; 
+            String textp = ""; 
+            for (int q = 0; q < vterms.size(); q++) 
+            { ModelElement vterm = (ModelElement) vterms.get(q); 
+              textp = textp + vterm.cg(cgs); 
+            } 
+            args.add(textp); 
+          }     
+        } 
+
+        Vector ents = new Vector(); 
+
+        if (r.satisfiesConditions(eargs,ents))
+        { // System.out.println(">>>> Applying " + tag + " rule " + r); 
+          return r.applyRule(args,eargs,cgs); 
+        }  
+      }
+    }  
+
+    System.out.println(); 
+    return toString(); 
+  }
+
+
+
   public static Vector getNames(Vector elems)
   { Vector res = new Vector(); 
     for (int i = 0; i < elems.size(); i++) 

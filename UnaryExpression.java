@@ -34,6 +34,12 @@ public class UnaryExpression extends Expression
     elementType = be.getElementType();  
   } 
 
+  public static UnaryExpression newUnaryExpression(String op, Expression expr) 
+  { if (expr == null) 
+    { return null; } 
+    return new UnaryExpression(op,expr); 
+  } 
+
   public String getOperator()
   { return operator; } 
 
@@ -239,7 +245,9 @@ public void findClones(java.util.Map clones, String rule, String op)
 
     if (operator.equals("->last") || operator.equals("->first") ||
         operator.equals("->front") || operator.equals("->tail") || operator.equals("->flatten") || 
-        operator.equals("->any") || operator.equals("->max") || operator.equals("->reverse") ||
+        operator.equals("->any") || operator.equals("->max") || operator.equals("->reverse") || 
+        operator.equals("->copy") ||
+        operator.equals("->iterator") || 
         operator.equals("->asSequence") || operator.equals("->asSet") || 
         operator.equals("->min") || operator.equals("->sort"))
     { if (elementType != null && elementType.isEntity())
@@ -259,7 +267,9 @@ public void findClones(java.util.Map clones, String rule, String op)
           // if (isMultiple())
           if (operator.equals("->front") || operator.equals("->tail") || operator.equals("->sort") ||
               operator.equals("->reverse") || operator.equals("->asSet") || 
-              operator.equals("->flatten") || operator.equals("->asSequence"))
+              operator.equals("->flatten") ||
+              // operator.equals("->copy") ||
+              operator.equals("->asSequence"))
           { BinaryExpression ind = 
               new BinaryExpression("->collect",this,new BasicExpression("$id"));
             ind.setType(type);  
@@ -1299,8 +1309,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         "->reverse".equals(operator) || "->sort".equals(operator))
     { return true; } 
 	
-	if ("lambda".equals(operator))
-	{ return argument.isOrdered(); }
+    if ("lambda".equals(operator) || operator.equals("->copy") )
+    { return argument.isOrdered(); }
 
     return false; 
   } 
@@ -1311,14 +1321,17 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     //     "->any".equals(operator))
     // { return Type.isSequenceType(argument.getElementType()); } 
 
-    if ("->sort".equals(operator)) { return true; } 
+    if ("->sort".equals(operator)) 
+    { return true; } 
 
-    if ("->front".equals(operator) || "->tail".equals(operator) ||
+    if ("->front".equals(operator) || 
+        "->tail".equals(operator) || 
+        operator.equals("->copy") || 
         "->asSequence".equals(operator)) // || "->reverse".equals(operator))
     { return argument.isSorted(); } 
 
-	if ("lambda".equals(operator))
-	{ return argument.isSorted(); }
+    if ("lambda".equals(operator))
+    { return argument.isSorted(); }
 
     return false; 
   } 
@@ -1337,7 +1350,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         "->reverse".equals(operator) || "->sort".equals(operator))
     { return true; } 
 
-	if ("lambda".equals(operator))
+	if ("lambda".equals(operator) || operator.equals("->copy"))
 	{ return argument.isOrderedB(); }
 
     return false; 
@@ -1482,7 +1495,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
   public boolean isPrimitive()   // needs to be wrapped in Java
   { if (operator.equals("->size") || operator.equals("->isDeleted") ||
-        operator.equals("-") || operator.equals("not") || 
+        operator.equals("-") || operator.equals("not") ||
+        operator.equals("?") ||  
         operator.equals("->display") || operator.equals("->abs") ||
         operator.equals("->sqrt") || operator.equals("->sqr") ||
         operator.equals("->ceil") || operator.equals("->round") ||
@@ -1493,12 +1507,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         operator.equals("->sinh") || operator.equals("->cosh") ||
         operator.equals("->tanh") || operator.equals("->asin") ||
         operator.equals("->acos") || operator.equals("->atan") ||
-        operator.equals("->oclIsUndefined") || operator.equals("->oclIsNew") ||
+        operator.equals("->oclIsUndefined") ||
+        operator.equals("->oclIsInvalid") || 
+        operator.equals("->oclIsNew") ||
         operator.equals("->isReal") || 
         operator.equals("->isInteger") || operator.equals("->isLong") || 
         operator.equals("->toInteger") || operator.equals("->toReal") || 
         operator.equals("->toLong") || 
         operator.equals("->toBoolean") || 
+        operator.equals("->char2byte") || 
+        operator.equals("->byte2char") || 
         operator.equals("->isEmpty") || operator.equals("->notEmpty")) 
     { return true; } 
 
@@ -1542,18 +1560,34 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("->size") || operator.equals("->toInteger") ||
         operator.equals("->ceil") || operator.equals("->round") ||
+        operator.equals("->char2byte") || 
         operator.equals("->floor"))
     { type = new Type("int",null); 
       elementType = type; 
       return res; 
     } 
 
-    if (operator.equals("->toLong"))
+    if (operator.equals("->toLong") || operator.equals("?"))
     { type = new Type("long",null); 
       elementType = type; 
       return res; 
     } 
     
+    if (operator.equals("->copy"))
+    { type = argument.type; 
+      elementType = argument.elementType; 
+      multiplicity = argument.multiplicity; 
+      return res; 
+    }  
+
+    if (operator.equals("->iterator"))
+    { type = new Type("OclIterator", null); 
+      elementType = argument.elementType; 
+      return res; 
+    }  
+    // An OclIterator is a sequence view of a 
+    // collection, via which the collection can 
+    // be navigated & modified. 
     
     if (operator.equals("->last") || operator.equals("->first"))
     { type = argument.elementType; 
@@ -1591,9 +1625,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return res; 
     }
 
+    if (operator.equals("->oclType"))
+    { type = new Type("OclType", null); 
+      elementType = new Type("OclType", null); 
+      return res; 
+    }
+
     if (operator.equals("->isDeleted") || 
         operator.equals("->display") ||
         operator.equals("->oclIsUndefined") || 
+        operator.equals("->oclIsInvalid") || 
         operator.equals("->oclIsNew") ||
         "->isLong".equals(operator) || 
         operator.equals("not") || 
@@ -1673,6 +1714,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->keys"))
     { type = new Type("Set",null); 
       elementType = new Type("String",null); 
+         // or keyType of the map 
+      if (argument.type != null && 
+          argument.type.keyType != null) 
+      { elementType = argument.type.keyType; } 
       type.setElementType(elementType); 
       multiplicity = ModelElement.MANY; 
       return res; 
@@ -1746,7 +1791,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       elementType = new Type("String",null); 
       type.setElementType(elementType); 
       multiplicity = ModelElement.MANY; 
-      System.out.println(">>> Type of " + this + " is " + type + "(" + elementType + ")"); 
+      // System.out.println(">>> Type of " + this + " is " + type + "(" + elementType + ")"); 
 
       return res; 
     } 
@@ -1791,6 +1836,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         operator.equals("->toUpper") ||
         operator.equals("->toLower") || 
         operator.equals("->toUpperCase") || 
+        operator.equals("->byte2char") || 
         operator.equals("->trim"))  
     { modality = argument.modality; 
       type = new Type("String",null); 
@@ -1798,10 +1844,12 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       multiplicity = ModelElement.ONE; 
       return res; 
     }  
-    else if (extensionoperators.containsKey(operator))
+
+    if (extensionoperators.containsKey(operator))
     { type = getOperatorType(operator); 
       elementType = type.getElementType(); 
-    }  
+    }
+  
     System.out.println("**Type of " + this + " is " + type);
       
     return res; 
@@ -1833,6 +1881,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return (argelemtype != null && argelemtype.isCollectionType());  
     } 
 
+    if ("->copy".equals(operator))
+    { return argument.isMultiple(); }  
+       
     return false; 
   } 
 
@@ -1855,12 +1906,15 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     String cont = "Controller.inst()"; 
 
     if (operator.equals("lambda") && accumulator != null)
-	{ String acc = accumulator.getName(); 
-	  return "(" + acc + ") -> { return " + qf + "; }"; // for Java8+ 
-	}
+    { String acc = accumulator.getName(); 
+      return "(" + acc + ") -> { return " + qf + "; }"; // for Java8+ 
+    }
 	
     if (operator.equals("-"))
     { return "-" + qf; } 
+
+    if (operator.equals("?"))
+    { return qf; } 
 
     if (operator.equals("not"))
     { return "!(" + qf + ")"; } 
@@ -1898,10 +1952,34 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     } 
 
     if (operator.equals("->asSequence")) 
-	{ return qf; }  // but maps cannot be converted 
+    { return qf; }  // but maps cannot be converted 
+
+    if ("->copy".equals(operator))
+    { if (type == null) 
+      { return qf; } 
+      if (type.isEntity())
+      { String tcs = type.getJava(); 
+        return "((" + tcs + ") " + qf + ".clone())"; 
+      }
+      String tname = type.getName(); 
+      if ("String".equals(tname))
+      { return "(\"\"" + qf + ")"; } 
+      if ("Set".equals(tname) || "Sequence".equals(tname))
+      { return "Set.copyCollection(" + qf + ")"; } 
+      if ("Map".equals(tname))
+      { return "Set.copyMap(" + qf + ")"; } 
+      return qf; 
+    }    
+
+    if (operator.equals("->iterator"))
+    { if (argument.isSequenceValued())
+      { return "OclIterator.newOclIterator_Sequence(" + qf + ")"; }
+      else 
+      { return "OclIterator.newOclIterator_Set(" + qf + ")"; }
+    }
 
     if (operator.equals("->sqr")) 
-	{ return "((" + qf + ")*(" + qf + "))"; } 
+    { return "((" + qf + ")*(" + qf + "))"; } 
 
 
     if (operator.equals("->concatenateAll")) 
@@ -1938,6 +2016,12 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->toInteger")) 
     { return "Integer.decode(" + qf + ").intValue()"; } 
 
+    if (operator.equals("->char2byte")) 
+    { return "((int) (" + qf + ").getBytes()[0])"; } 
+
+    if (operator.equals("->byte2char")) 
+    { return "Set.byte2char(" + qf + ")"; } 
+
     if (operator.equals("->toLong")) 
     { return "Long.decode(" + qf + ").longValue()"; } 
 
@@ -1965,8 +2049,17 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == null)"; } 
 
+    if (operator.equals("->oclIsInvalid")) 
+    { return "Double.isNaN(" + qf + ")"; } 
+
     if (operator.equals("->oclIsNew")) 
-    { return "(" + qf + " != null)"; } 
+    { return "(" + qf + " != null)"; }
+
+    if (operator.equals("->oclType"))
+    { String wqf = argument.wrap(qf); 
+      return "(" + wqf + ").getClass()"; 
+    } // wrapped so that 1->oclType() becomes 
+      // (new Integer(1)).getClass()  
 
     String pre = qf;
     String data = operator.substring(2,operator.length()); 
@@ -2131,6 +2224,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("-"))
     { return "-" + qf; } 
 
+    if (operator.equals("?"))
+    { return qf; } 
+
     if (operator.equals("not"))
     { return "!(" + qf + ")"; } 
 
@@ -2178,6 +2274,12 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->toBoolean")) 
     { return "\"true\".equals(" + qf + " + \"\")"; } 
 
+    if (operator.equals("->char2byte")) 
+    { return "((int) (" + qf + ").getBytes()[0])"; } 
+
+    if (operator.equals("->byte2char")) 
+    { return "Set.byte2char(" + qf + ")"; } 
+
     if (operator.equals("->toLower")) 
     { return qf + ".toLowerCase()"; } 
 
@@ -2196,8 +2298,42 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == null)"; } 
 
+    if (operator.equals("->oclIsInvalid")) 
+    { return "Double.isNaN(" + qf + ")"; } 
+
     if (operator.equals("->oclIsNew")) 
     { return "(" + qf + " != null)"; } 
+
+    if (operator.equals("->oclType"))
+    { String wqf = argument.wrap(qf); 
+      return "(" + wqf + ").getClass()"; 
+    }  
+
+    if ("->copy".equals(operator))
+    { if (type == null) 
+      { return qf; } 
+      if (type.isEntity())
+      { String tcs = type.getJava6(); 
+        return "((" + tcs + ") " + qf + ".clone()"; 
+      }
+      String tname = type.getName(); 
+      if ("String".equals(tname))
+      { return "(\"\"" + qf + ")"; } 
+      if ("Set".equals(tname))
+      { return "Set.copySet(" + qf + ")"; } 
+      if ("Sequence".equals(tname))
+      { return "Set.copySequence(" + qf + ")"; } 
+      if ("Map".equals(tname))
+      { return "Set.copyMap(" + qf + ")"; } 
+      return qf; 
+    }    
+
+    if (operator.equals("->iterator"))
+    { if (argument.isSequenceValued())
+      { return "OclIterator.newOclIterator_Sequence(" + qf + ")"; }
+      else 
+      { return "OclIterator.newOclIterator_Set(" + qf + ")"; }
+    }
 
     if (operator.equals("->sqr")) 
     { return "((" + qf + ")*(" + qf + "))"; } 
@@ -2366,6 +2502,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("-"))
     { return "-" + qf; } 
 
+    if (operator.equals("?"))
+    { return qf; } 
+
     if (operator.equals("not"))
     { return "!(" + qf + ")"; } 
 
@@ -2413,6 +2552,12 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->toBoolean")) 
     { return "\"true\".equals(" + qf + " + \"\")"; } 
 
+    if (operator.equals("->char2byte")) 
+    { return "((int) (" + qf + ").getBytes()[0])"; } 
+
+    if (operator.equals("->byte2char")) 
+    { return "Ocl.byte2char(" + qf + ")"; } 
+
     if (operator.equals("->toLower")) 
     { return qf + ".toLowerCase()"; } 
 
@@ -2431,8 +2576,42 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == null)"; } 
 
+    if (operator.equals("->oclIsInvalid")) 
+    { return "Double.isNaN(" + qf + ")"; } 
+
     if (operator.equals("->oclIsNew")) 
     { return "(" + qf + " != null)"; } 
+
+    if (operator.equals("->oclType"))
+    { String wqf = argument.wrap(qf); 
+      return "(" + wqf + ").getClass()"; 
+    }  
+
+    if ("->copy".equals(operator))
+    { if (type == null) 
+      { return qf; } 
+      if (type.isEntity())
+      { return qf + ".clone()"; }
+      String tname = type.getName(); 
+      if ("String".equals(tname))
+      { return "(\"\"" + qf + ")"; } 
+      if ("Set".equals(tname) && isSorted())
+      { return "Ocl.copySortedSet(" + qf + ")"; } 
+      if ("Set".equals(tname))
+      { return "Ocl.copySet(" + qf + ")"; } 
+      if ("Sequence".equals(tname))
+      { return "Ocl.copySequence(" + qf + ")"; } 
+      if ("Map".equals(tname))
+      { return "Ocl.copyMap(" + qf + ")"; } 
+      return qf; 
+    }    
+
+    if (operator.equals("->iterator"))
+    { if (argument.isSequenceValued())
+      { return "OclIterator.newOclIterator_Sequence(" + qf + ")"; }
+      else 
+      { return "OclIterator.newOclIterator_Set(" + qf + ")"; }
+    }
 
     if (operator.equals("->sqr")) 
     { return "((" + qf + ")*(" + qf + "))"; } 
@@ -2613,6 +2792,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("-"))
     { return "-" + qf; } 
 
+    if (operator.equals("?"))
+    { return qf; } 
+
     if (operator.equals("not"))
     { return "!(" + qf + ")"; } 
 
@@ -2643,7 +2825,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       }  
     } 
 
-    if (operator.equals("->asSequence")) { return qf; } 
+    if (operator.equals("->asSequence")) 
+    { return qf; } 
 
     if (operator.equals("->isInteger")) 
     { return "SystemTypes.isInteger(" + qf + ")"; } 
@@ -2663,11 +2846,48 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->toReal")) 
     { return "double.Parse(" + qf + ")"; } 
 
+    if (operator.equals("->char2byte")) 
+    { return "Char.ConvertToUtf32(" + qf + ", 0)"; } 
+
+    if (operator.equals("->byte2char")) 
+    { return "Char.ConvertFromUtf32(" + qf + ")"; } 
+
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == null)"; } 
 
+    if (operator.equals("->oclIsInvalid")) 
+    { return "double.isNaN(" + qf + ")"; } 
+
     if (operator.equals("->oclIsNew")) 
     { return "(" + qf + " != null)"; } 
+
+    if (operator.equals("->oclType"))
+    { return "(" + qf + ").GetType()"; }  
+
+    if ("->copy".equals(operator))
+    { if (type == null) 
+      { return qf; } 
+      if (type.isEntity())
+      { String tcs = type.getCSharp(); 
+        return "((" + tcs + ")" + qf + ".MemberwiseClone())"; 
+      }
+      String tname = type.getName(); 
+      if ("String".equals(tname))
+      { return "(\"\"" + qf + ")"; } 
+      if ("Set".equals(tname) || "Sequence".equals(tname))
+      { return "SystemTypes.copyCollection(" + qf + ")"; } 
+      if ("Map".equals(tname))
+      { return "SystemTypes.copyMap(" + qf + ")"; } 
+      return qf; 
+    }    
+
+    if (operator.equals("->iterator"))
+    { if (argument.isSequenceValued())
+      { return "OclIterator.newOclIterator_Sequence(" + qf + ")"; }
+      else 
+      { return "OclIterator.newOclIterator_Set(" + qf + ")"; }
+    }
+
 
     if (operator.equals("->sqr")) 
     { return "((" + qf + ")*(" + qf + "))"; } 
@@ -2675,10 +2895,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->concatenateAll")) 
     { return "SystemTypes.concatenateAll(" + qf + ")"; } 
     
-	if (operator.equals("->unionAll"))
+    if (operator.equals("->unionAll"))
     { return "SystemTypes.unionAll(" + qf + ")"; } 
     
-	if (operator.equals("->intersectAll"))
+    if (operator.equals("->intersectAll"))
     { return "SystemTypes.intersectAll(" + qf + ")"; } 
 
     if (operator.equals("->flatten")) 
@@ -2848,6 +3068,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("-"))
     { return "-" + qf; } 
 
+    if (operator.equals("?"))
+    { return "&" + qf; } 
+
     if (operator.equals("not"))
     { return "!(" + qf + ")"; } 
 
@@ -2874,6 +3097,31 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       }  
     } 
 
+    if ("->copy".equals(operator))
+    { if (type == null) 
+      { return qf; } 
+      String tname = type.getName(); 
+      if (type.isEntity())
+      { return "Controller::inst->copy" + tname + "(" + qf + ")"; }
+      if ("String".equals(tname))
+      { return "(\"\"" + qf + ")"; } 
+      if ("Set".equals(tname))
+      { return "UmlRsdsLib<" + celtype + ">::copySet(" + qf + ")"; } 
+      if ("Sequence".equals(tname))
+      { return "UmlRsdsLib<" + celtype + ">::copySequence(" + qf + ")"; } 
+      if ("Map".equals(tname))
+      { return "UmlRsdsLib<" + celtype + ">::copyMap(" + qf + ")"; } 
+      return qf; 
+    }    
+
+    if (operator.equals("->iterator"))
+    { if (argument.isSequenceValued())
+      { return "OclIterator::newOclIterator_Sequence(" + qf + ")"; }
+      else 
+      { return "OclIterator::newOclIterator_Set(" + qf + ")"; }
+    }
+
+
     if (operator.equals("->isInteger")) 
     { return "UmlRsdsLib<string>::isInteger(" + qf + ")"; } 
 
@@ -2892,11 +3140,30 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->toReal")) 
     { return "std::stod(" + qf + ")"; } 
 
+    if (operator.equals("->char2byte")) 
+    { return "((int) (" + qf + ")[0])"; } 
+
+    if (operator.equals("->byte2char")) 
+    { return "UmlRsdsLib<int>::byte2char(" + qf + ")"; } 
+
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == NULL)"; } 
 
     if (operator.equals("->oclIsNew")) 
     { return "(" + qf + " != NULL)"; } 
+
+    if (operator.equals("->oclIsInvalid")) 
+    { return "std::isnan(" + qf + ")"; } 
+
+    if (operator.equals("->oclType"))
+    { if (type != null) 
+      { return "\"" + type.getName() + "\""; }
+      else 
+      { return "NULL"; } 
+      // An alternative is 
+      // #include <typeinfo>
+      // string(typeid(qf).name())
+    }   
 
     if (operator.equals("->concatenateAll")) 
     { return "UmlRsdsLib<" + celtype + ">::concatenateAll(" + qf + ")"; } 

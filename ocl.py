@@ -2,6 +2,7 @@
 import re
 
 
+
 def sqr(x) : 
   return x*x
 
@@ -26,6 +27,25 @@ def gcd(xx,yy) :
   if (x == 0) :
     return y 
   return 0
+
+def toInteger(sx) :
+  ss = str(sx)
+  ind = ss.find(".")
+  if ind >= 0 : 
+    ss = ss[0:ind] 
+  if ss.startswith("0x") : 
+    return int(ss[2:],16)
+  if ss.startswith("0b") : 
+    return int(ss[2:],2)
+  if ss.startswith("0") and len(ss) > 1 :
+    return int(ss[1:],8)
+  return int(ss)
+
+
+def toLong(sx) :
+  return toInteger(sx)
+
+
 
 def isUnique(s) : 
   return len(set(s)) == len(s)
@@ -119,10 +139,19 @@ def characters(str) :
 
 def insertAtString(x,i,s) :
   # i must be > 0
+  if i <= 0 : 
+    return x
   x1 = x[0:i-1]
   x2 = x[i-1:]
   return x1 + s + x2
 
+def setAtString(x,i,s) :
+  # i must be > 0, s is length 1
+  if i <= 0 : 
+    return x
+  x1 = x[0:i-1]
+  x2 = x[i:]
+  return x1 + s + x2
 
 def reverseString(st) :
   if len(st) == 0 : 
@@ -147,6 +176,13 @@ def equalsIgnoreCase(s1,s2) :
     result = True
   return result
 
+def compareTo(s1,s2) : 
+  result = 0
+  if s1 < s2 : 
+    return -1
+  if s1 > s2 : 
+    return 1
+  return result
 
 def indexOfSequence(sq,x) : 
   if x in sq : 
@@ -295,13 +331,25 @@ def replaceFirstMatch(str, pattern, repl) :
   return res
 
 
-def insertAt(x,i,s) :
+def insertInto(x,i,s) :
   # i must be > 0
+  if i <= 0 : 
+    return x
   x1 = x[0:i-1]
   x2 = x[i-1:]
   x1.extend(s)
   x1.extend(x2)
   return x1
+
+def insertAt(x,i,s) :
+  # i must be > 0
+  if i <= 0 : 
+    return x
+  sq = []
+  sq.extend(x)
+  sq.insert(i-1,s)
+  return sq
+
 
 def setAt(sq,i,val) : 
   res = []
@@ -316,6 +364,26 @@ def removeAt(sq,i) :
   if i >= 1 and i <= len(sq) :
     del res[i-1]
   return res
+
+def removeAtString(ss,i) : 
+  res = "" + ss
+  if i == 1 and i <= len(ss) : 
+    return res[1:]
+  if i >= 2 and i <= len(ss) :
+    return ss[0:(i-1)] + ss[i:]
+  return res
+
+
+def excludingFirst(sq,x) : 
+  res = []
+  res.extend(sq)
+  try : 
+    res.remove(x)
+  except : 
+    pass
+  return res
+
+
 
 def includingSequence(s,x) :
   res = []
@@ -371,6 +439,17 @@ def append(s,x) :
   res = []
   res.extend(s)
   res.append(x)
+  return res
+
+
+def union(s,t) :
+  res = []
+  res.extend(s)
+  for x in t : 
+    if x in s : 
+      pass
+    else : 
+      res.append(x)
   return res
 
 
@@ -588,7 +667,13 @@ def maxSet(col) :
 def sum(col) : 
   result = 0
   for x in col : 
-    result += x
+    result = result + x
+  return result
+
+def sumString(col) : 
+  result = ""
+  for x in col : 
+    result = result + x
   return result
 
 
@@ -734,6 +819,16 @@ def restrict(m,ks) :
   res = dict({})
   for x in m :
     if x in ks :
+      res[x] = m[x]
+  return res
+
+
+def antirestrict(m,ks) :
+  res = dict({})
+  for x in m :
+    if x in ks :
+      pass
+    else : 
       res[x] = m[x]
   return res
 

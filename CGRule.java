@@ -16,8 +16,8 @@ import java.util.regex.Pattern;
 public class CGRule
 { String lhs;
   String rhs;
-  Vector variables; // The _i in lhs -- 
-                    // no additional _i should be in rhs
+  Vector variables; // The _i or _* in the lhs -- 
+                    // no additional variable should be in rhs
   Vector metafeatures; // The _i`f in rhs
   String lhsop = "";
   Expression lhsexp = null; // For expression rules
@@ -175,8 +175,12 @@ public class CGRule
   { Vector res = new Vector();
     String substr = "" + str; 
  
-    for (int i = 1; i < 10; i++) 
+    for (int i = 0; i < 10; i++) 
     { String var = "_" + i + "`";
+
+      if (i == 0) 
+      { var = "_*`"; } 
+
       substr = "" + str; 
       while (substr.indexOf(var) > -1) 
       { int j = substr.indexOf(var); 
@@ -288,10 +292,14 @@ public class CGRule
       String mfvar = mf.substring(0,2); 
       String mffeat = mf.substring(3,mf.length());
 
-      if ("*".equals(mfvar.charAt(1) + "")) 
-      { continue; } // No metafeatures on _* variable
+      // if ("*".equals(mfvar.charAt(1) + "")) 
+      // { continue; } 
 
-      int k = Integer.parseInt(mfvar.charAt(1) + "");  
+      int k = 0; 
+      if ("*".equals(mfvar.charAt(1) + ""))
+      { k = eargs.size(); } // the last parameter
+      else 
+      { k = Integer.parseInt(mfvar.charAt(1) + ""); }  
 
       System.out.println(">***> Trying to apply metafeature " + mffeat + " to " + eargs + "[" + k + "]"); 
       System.out.println(); 
@@ -345,65 +353,68 @@ public class CGRule
         else if ("elementType".equals(mffeat) && obj instanceof Expression)
         { Expression e = (Expression) obj; 
           Type t = e.getElementType(); 
-          if (t != null) 
-          { String repl = t.cg(cgs); 
-            String repl1 = correctNewlines(repl); 
+          System.out.println(">--> Element type of " + e + " is: " + t);
+          System.out.println(); 
+ 
+          if (t == null) 
+          { t = new Type("OclAny", null); } 
+          String repl = t.cg(cgs); 
+          String repl1 = correctNewlines(repl); 
             // System.out.println(">--> Replacing metafeature " + mf + " by " + repl1); 
             // res = res.replaceAll(mf,repl1);
-            res = res.replace(mf,repl1);
-          } 
+          res = res.replace(mf,repl1);
         }
         else if ("elementType".equals(mffeat) && obj instanceof Type)
         { Type ee = (Type) obj; 
           Type t = ee.getElementType(); 
-          if (t != null) 
-          { String repl = t.cg(cgs); 
-            String repl1 = correctNewlines(repl); 
+          if (t == null) 
+          { t = new Type("OclAny", null); } 
+          String repl = t.cg(cgs); 
+          String repl1 = correctNewlines(repl); 
             // System.out.println(">--> Replacing " + mf + " by " + repl1); 
             // res = res.replaceAll(mf,repl1);
-            res = res.replace(mf,repl1);
-          } 
+          res = res.replace(mf,repl1);
         }
         else if ("elementType".equals(mffeat) && obj instanceof Attribute)
         { Attribute att = (Attribute) obj; 
           Type t = att.getElementType(); 
-          if (t != null) 
-          { String repl = t.cg(cgs); 
-            String repl1 = correctNewlines(repl); 
+          if (t == null) 
+          { t = new Type("OclAny", null); } 
+          String repl = t.cg(cgs); 
+          String repl1 = correctNewlines(repl); 
             // System.out.println(">--> Replacing " + mf + " by " + repl1); 
             // res = res.replaceAll(mf,repl1);
-            res = res.replace(mf,repl1);
-          } 
+          res = res.replace(mf,repl1);
         } 
         else if ("type".equals(mffeat) && obj instanceof Expression)
         { Expression e = (Expression) obj; 
           Type t = e.getType(); 
-          if (t != null) 
-          { String repl = t.cg(cgs); 
-            String repl1 = correctNewlines(repl); 
+          if (t == null) 
+          { t = new Type("OclAny", null); } 
+          String repl = t.cg(cgs); 
+          String repl1 = correctNewlines(repl); 
             // System.out.println(">--> Replacing " + mf + " by " + repl1); 
-            res = res.replace(mf,repl1);
-          } 
+          res = res.replace(mf,repl1);
         }
         else if ("type".equals(mffeat) && obj instanceof Attribute)
         { Attribute att = (Attribute) obj; 
           Type t = att.getType(); 
-          if (t != null) 
-          { String repl = t.cg(cgs); 
-            String repl1 = correctNewlines(repl); 
+          if (t == null) 
+          { t = new Type("OclAny", null); } 
+          String repl = t.cg(cgs); 
+          String repl1 = correctNewlines(repl); 
             // System.out.println(">--> Replacing " + mf + " by " + repl1); 
-            res = res.replace(mf,repl1);
-          } 
+          res = res.replace(mf,repl1);
         } 
         else if ("type".equals(mffeat) && obj instanceof BehaviouralFeature)
         { BehaviouralFeature e = (BehaviouralFeature) obj; 
           Type t = e.getType(); 
-          if (t != null) 
-          { String repl = t.cg(cgs); 
-            String repl1 = correctNewlines(repl); 
+          if (t == null) 
+          { t = new Type("OclAny", null); } 
+          String repl = t.cg(cgs); 
+          String repl1 = correctNewlines(repl); 
             // System.out.println(">--> Replacing " + mf + " by " + repl1); 
-            res = res.replace(mf,repl1);
-          } 
+          res = res.replace(mf,repl1);
         } 
         else if ("typename".equals(mffeat) && obj instanceof Expression)
         { Expression e = (Expression) obj; 
@@ -412,6 +423,8 @@ public class CGRule
           { String repl = t.getName(); 
             res = res.replace(mf,repl);
           } 
+          else 
+          { res = res.replace(mf,"OclAny"); } 
         }
         else if ("typename".equals(mffeat) && obj instanceof Attribute)
         { Attribute att = (Attribute) obj; 
@@ -420,6 +433,8 @@ public class CGRule
           { String repl = t.getName(); 
             res = res.replace(mf,repl);
           } 
+          else 
+          { res = res.replace(mf,"OclAny"); } 
         } 
         else if ("typename".equals(mffeat) && obj instanceof BehaviouralFeature)
         { BehaviouralFeature e = (BehaviouralFeature) obj; 
@@ -428,16 +443,18 @@ public class CGRule
           { String repl = t.getName(); 
             res = res.replace(mf,repl);
           } 
+          else 
+          { res = res.replace(mf,"OclAny"); } 
         } 
         else if ("elementType".equals(mffeat) && obj instanceof BehaviouralFeature)
         { BehaviouralFeature bf = (BehaviouralFeature) obj; 
           Type t = bf.getElementType(); 
-          if (t != null) 
-          { String repl = t.cg(cgs); 
-            String repl1 = correctNewlines(repl); 
+          if (t == null) 
+          { t = new Type("OclAny", null); } 
+          String repl = t.cg(cgs); 
+          String repl1 = correctNewlines(repl); 
             // System.out.println(">--> Replacing " + mf + " by " + repl1); 
-            res = res.replace(mf,repl1);
-          } 
+          res = res.replace(mf,repl1);
         }
         else if ("owner".equals(mffeat) && obj instanceof Attribute)
         { Attribute att = (Attribute) obj; 
@@ -543,6 +560,10 @@ public class CGRule
             { ModelElement e = (ModelElement) obj; 
               repl = e.cg(template);
             } 
+            else if (obj instanceof Expression)
+            { Expression e = (Expression) obj; 
+              repl = e.cg(template);
+            } 
             else if (obj instanceof ASTTerm)
             { ASTTerm e = (ASTTerm) obj; 
               repl = e.cg(template);
@@ -571,7 +592,10 @@ public class CGRule
           System.out.println(); 
           
           if ("type".equals(mffeat))
-          { String repl = ASTTerm.getType(term); 
+          { String repl = ASTTerm.getType(term);
+            System.out.println(">>> Type of " + term + " is " + repl); 
+            System.out.println(); 
+ 
             if (repl != null)   
             { res = res.replace(mf,repl); }  
           }   
@@ -717,17 +741,38 @@ public class CGRule
             }
           }  
         }
-        /* else if (obj instanceof Vector)
+        else if (obj instanceof Vector)
         { Vector v = (Vector) obj;
           String repl = "";
-          if ("first".equals(mffeat))
+          /* if ("first".equals(mffeat))
           { Object v1 = v.get(0);   
             repl = v1.cg(cgs); 
             String repl1 = correctNewlines(repl); 
               
             res = res.replaceAll(mf,repl1);
           }
-        } */  
+          else */ 
+          if (cgs.hasRuleset(mffeat))
+          { System.out.println(">***> Valid ruleset " + mffeat);  
+            System.out.println(); 
+            String replv = ""; 
+            for (int p = 0; p < v.size(); p++)
+            { if (v.get(p) instanceof ASTTerm)
+              { ASTTerm x = (ASTTerm) v.get(p); 
+                replv = replv + cgs.applyRuleset(mffeat,x);
+              } 
+            } 
+            System.out.println(">***> Applying ruleset " + mffeat + " to ASTTerm " + obj); 
+            System.out.println(); 
+
+            if (replv != null) 
+            { String repl1v = correctNewlines(replv); 
+              System.out.println(">--> Replacing " + mf + " by " + repl1v); 
+              res = res.replace(mf,repl1v);
+            } 
+          } 
+
+        }   
         else 
         { System.err.println("!! Warning: could not apply metafeature " + mffeat + " to " + obj); } 
       } 

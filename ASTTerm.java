@@ -13,6 +13,19 @@ import java.io.*;
 public abstract class ASTTerm
 { String id = ""; 
 
+  // A term represents one of the following UML/OCL things:
+
+  
+  Expression expression = null; 
+  Statement statement = null; 
+  ModelElement modelElement = null; 
+  Vector modelElements = null;   
+  Vector expressions = null; // for parameter/argument lists
+
+  static String packageName = null; 
+  static Vector enumtypes; 
+  static Vector entities; 
+
   java.util.Map metafeatures = new java.util.HashMap(); 
      // String --> String, eg., recording the conceptual
      // type of the element. 
@@ -32,7 +45,16 @@ public abstract class ASTTerm
   public abstract String cgRules(CGSpec cgs, Vector rules); 
 
   // Only for programming languages. 
-  public abstract boolean updatesObject(); 
+  public abstract boolean updatesObject(ASTTerm t); 
+
+  // Only for programming languages. 
+  public abstract boolean hasSideEffect(); 
+
+  public abstract boolean isIdentifier(); 
+
+  public abstract String preSideEffect(); 
+
+  public abstract String postSideEffect(); 
 
   public boolean hasMetafeature(String f) 
   { String val = (String) metafeatures.get(f); 
@@ -68,7 +90,57 @@ public abstract class ASTTerm
       return bt.getType(); 
     } 
     return val;  
-  } 
+  }
+
+  public static String getElementType(ASTTerm t) 
+  { String val = ASTTerm.getType(t);
+    if (val != null)
+    { Type typ = Type.getTypeFor(val, ASTTerm.enumtypes, ASTTerm.entities); 
+      if (typ != null && typ.elementType != null) 
+      { return typ.elementType + ""; } 
+    } 
+    return "OclAny";  
+  }
+
+
+  public boolean hasType(String str)
+  { if ("integer".equals(str))
+    { return isInteger(); } 
+    if ("real".equals(str))
+    { return isReal(); } 
+    if ("boolean".equals(str))
+    { return isBoolean(); } 
+
+    if ("Sequence".equals(str))
+    { return isSequence(); } 
+    if ("StringSequence".equals(str))
+    { return isStringSequence(); } 
+    if ("IntegerSequence".equals(str))
+    { return isIntegerSequence(); }
+    if ("RealSequence".equals(str))
+    { return isRealSequence(); }
+    if ("BooleanSequence".equals(str))
+    { return isBooleanSequence(); }
+ 
+    if ("Set".equals(str))
+    { return isSet(); } 
+    if ("Map".equals(str))
+    { return isMap(); } 
+    if ("Collection".equals(str))
+    { return isCollection(); } 
+    if ("File".equals(str))
+    { return isFile(); } 
+    if ("Date".equals(str))
+    { return isDate(); } 
+    if ("Process".equals(str))
+    { return isProcess(); } 
+
+    String typ = ASTTerm.getType(this);
+    if (typ == null) 
+    { return false; } 
+ 
+    return typ.equals(str); 
+  }  
 
   public abstract String queryForm(); 
 
@@ -103,16 +175,52 @@ public abstract class ASTTerm
       "StringBuilder".equals(typ); 
   } 
 
+  public static boolean isBoolean(String typ) 
+  { return 
+      "boolean".equals(typ) || "Boolean".equals(typ); 
+  } 
+
   public boolean isString() 
   { String typ = ASTTerm.getType(literalForm()); 
+    if (typ == null) 
+    { return false; } 
     return 
       "String".equals(typ) || "Character".equals(typ) || 
       "StringBuffer".equals(typ) || "char".equals(typ) || 
       "StringBuilder".equals(typ); 
   } 
 
+  public boolean isInteger() 
+  { String typ = ASTTerm.getType(literalForm()); 
+    if (typ == null) 
+    { return false; } 
+    return ASTTerm.isInteger(typ); 
+  } 
+
+  public boolean isReal() 
+  { String typ = ASTTerm.getType(literalForm()); 
+    if (typ == null) 
+    { return false; } 
+    return ASTTerm.isReal(typ); 
+  } 
+
+  public boolean isNumber() 
+  { String typ = ASTTerm.getType(literalForm()); 
+    return ASTTerm.isReal(typ) || ASTTerm.isInteger(typ); 
+  } 
+
+  public boolean isBoolean() 
+  { String typ = ASTTerm.getType(literalForm()); 
+    if (typ == null) 
+    { return false; } 
+    return 
+      "boolean".equals(typ) || "Boolean".equals(typ); 
+  } 
+
   public boolean isCollection()
   { String typ = ASTTerm.getType(literalForm()); 
+    if (typ == null) 
+    { return false; } 
     if ("Sequence".equals(typ) || "Set".equals(typ) ||
         typ.startsWith("Sequence(") || typ.startsWith("Set("))
     { return true; } 
@@ -121,6 +229,8 @@ public abstract class ASTTerm
 
   public boolean isSet()
   { String typ = ASTTerm.getType(literalForm()); 
+    if (typ == null) 
+    { return false; } 
     if ("Set".equals(typ) || typ.startsWith("Set("))
     { return true; } 
     return false; 
@@ -128,10 +238,94 @@ public abstract class ASTTerm
 
   public boolean isSequence()
   { String typ = ASTTerm.getType(literalForm()); 
+    if (typ == null) 
+    { return false; } 
     if ("Sequence".equals(typ) || typ.startsWith("Sequence("))
     { return true; } 
     return false; 
   } 
+
+  public boolean isMap()
+  { String typ = ASTTerm.getType(literalForm()); 
+    if (typ == null) 
+    { return false; } 
+    if ("Map".equals(typ) || typ.startsWith("Map("))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isDate()
+  { String typ = ASTTerm.getType(literalForm()); 
+    if (typ == null) 
+    { return false; } 
+    if ("OclDate".equals(typ))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isFile()
+  { String typ = ASTTerm.getType(literalForm()); 
+    if (typ == null) 
+    { return false; } 
+    if ("OclFile".equals(typ))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isOclFile()
+  { return isFile(); } 
+
+  public boolean isProcess()
+  { String typ = ASTTerm.getType(literalForm()); 
+    if (typ == null) 
+    { return false; } 
+    if ("OclProcess".equals(typ))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isStringSequence()
+  { String typ = ASTTerm.getType(literalForm()); 
+    if (typ == null) 
+    { return false; } 
+    if (typ.equals("Sequence(String)"))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isIntegerSequence()
+  { String typ = ASTTerm.getType(literalForm()); 
+    if (typ == null) 
+    { return false; } 
+    if (typ.equals("Sequence(int)"))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isRealSequence()
+  { return isDoubleSequence(); } 
+
+  public boolean isDoubleSequence()
+  { String typ = ASTTerm.getType(literalForm()); 
+    if (typ == null) 
+    { return false; } 
+    if (typ.equals("Sequence(double)"))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isBooleanSequence()
+  { String typ = ASTTerm.getType(literalForm()); 
+    if (typ == null) 
+    { return false; } 
+    if (typ.equals("Sequence(boolean)"))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isBitSet()
+  { return isBooleanSequence(); } 
+  // and original jtype is "BitSet". 
 
   public String getDefaultValue(String typ) 
   { if (isInteger(typ))
@@ -140,8 +334,22 @@ public abstract class ASTTerm
     { return "0.0"; } 
     if (isString(typ))
     { return "\"\""; } 
+    if (isBoolean(typ))
+    { return "false"; } 
     
     return "null"; 
   } 
+
+  public Expression getExpression()
+  { return expression; } 
+
+  public Statement getStatement()
+  { return statement; } 
+
+  public Entity getEntity()
+  { if (modelElement != null && modelElement instanceof Entity)
+    { return (Entity) modelElement; }
+    return null; 
+  }  
 
 } 

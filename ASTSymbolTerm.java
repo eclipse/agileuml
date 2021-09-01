@@ -35,12 +35,15 @@ public class ASTSymbolTerm extends ASTTerm
   { return toKM3(); } 
 
   public String toKM3()
-  { if ("{".equals(symbol)) 
+  { if ("<EOF>".equals(symbol))
+    { return ""; }
+    if ("{".equals(symbol)) 
     { return ""; } 
     if ("}".equals(symbol)) 
     { return ""; } 
     if (";".equals(symbol)) 
     { return ""; } 
+    
     if ("=".equals(symbol)) 
     { return " := "; } 
     if ("==".equals(symbol)) 
@@ -76,31 +79,66 @@ public class ASTSymbolTerm extends ASTTerm
     if ("-".equals(symbol)) 
     { return "-"; } 
     if ("*".equals(symbol)) 
-    { return " * "; } 
+    { return "*"; } 
     if ("/".equals(symbol)) 
-    { return " / "; } 
+    { return "/"; } 
 
     if ("this".equals(symbol))
-    { return "self"; } 
+    { expression = new BasicExpression("self"); 
+      return "self";
+    } 
+
+    if ("break".equals(symbol))
+    { statement = new BreakStatement();
+      return "  break "; 
+    } 
+
+    if ("continue".equals(symbol))
+    { statement = new ContinueStatement(); 
+      return "  continue "; 
+    } 
 
     if ("List".equals(symbol)) 
-    { return "Sequence"; } 
+    { modelElement = new Type("Sequence", null); 
+      return "Sequence"; 
+    }
+ 
     if ("ArrayList".equals(symbol)) 
-    { return "Sequence"; } 
+    { modelElement = new Type("Sequence", null); 
+      return "Sequence"; }
+ 
     if ("Vector".equals(symbol)) 
-    { return "Sequence"; } 
+    { modelElement = new Type("Sequence", null); 
+      return "Sequence"; } 
+
     if ("LinkedList".equals(symbol)) 
-    { return "Sequence"; } 
+    { modelElement = new Type("Sequence", null); 
+      return "Sequence"; } 
+
+    if ("PriorityQueue".equals(symbol)) 
+    { modelElement = new Type("Sequence", null); 
+      return "Sequence"; }
+ 
     if ("Set".equals(symbol)) 
-    { return "Set"; } 
+    { modelElement = new Type("Set", null); 
+      return "Set"; } 
     if ("HashSet".equals(symbol)) 
-    { return "Set"; } 
+    { modelElement = new Type("Set", null); 
+      return "Set"; } 
     if ("TreeSet".equals(symbol)) 
-    { return "Set"; } 
-    if ("HashMap".equals(symbol)) 
-    { return "Map"; } 
+    { modelElement = new Type("Set", null); 
+      return "Set"; } 
+
+    if ("HashMap".equals(symbol) || "Map".equals(symbol)) 
+    { modelElement = new Type("Map", null); 
+      return "Map"; } 
     if ("TreeMap".equals(symbol)) 
-    { return "Map"; } 
+    { modelElement = new Type("Map", null); 
+      return "Map"; } 
+
+    if ("Thread".equals(symbol) || "Process".equals(symbol)) 
+    { modelElement = new Type("OclProcess", null); 
+      return "OclProcess"; } 
 
     if ("else".equals(symbol))
     { return " else "; } 
@@ -108,6 +146,19 @@ public class ASTSymbolTerm extends ASTTerm
     return symbol; 
   } 
 
-  public boolean updatesObject()
+  public boolean isIdentifier()
+  { return false; }
+
+  public boolean updatesObject(ASTTerm t)
   { return false; } 
+
+  public boolean hasSideEffect()
+  { return false; }
+
+  public String preSideEffect()
+  { return null; } 
+
+  public String postSideEffect()
+  { return null; } 
+
 } 

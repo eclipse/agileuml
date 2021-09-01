@@ -4440,6 +4440,106 @@ public class BSystemTypes extends BComponent
     return res; 
   }     
 
+  public static String generateCopyOps() // Java4
+  { String res = "  public static Vector copyCollection(Vector s)\n" + 
+      "  { Vector result = new Vector();\n" +  
+      "    result.addAll(s);\n" +  
+      "    return result;\n" + 
+      "  }\n"; 
+    res = res + 
+      "  public static HashMap copyMap(Map s)\n" + 
+      "  { HashMap result = new HashMap();\n" +  
+      "    result.putAll(s);\n" +  
+      "    return result;\n" +  
+      "  }"; 
+    return res; 
+  }  
+
+  public static String generateCopyOpsJava6() 
+  { String res = "  public static HashSet copySet(HashSet s)\n" + 
+      "  { HashSet result = new HashSet();\n" +  
+      "    result.addAll(s);\n" +  
+      "    return result;\n" + 
+      "  }\n";
+    res = "  public static ArrayList copySequence(ArrayList s)\n" + 
+      "  { ArrayList result = new ArrayList();\n" +  
+      "    result.addAll(s);\n" +  
+      "    return result;\n" + 
+      "  }\n"; 
+    res = res + 
+      "  public static HashMap copyMap(Map s)\n" + 
+      "  { HashMap result = new HashMap();\n" +  
+      "    result.putAll(s);\n" +  
+      "    return result;\n" +  
+      "  }"; 
+    return res; 
+  }  
+
+  public static String generateCopyOpsJava7() 
+  { String res = "  public static <T> HashSet<T> copySet(Collection<T> s)\n" + 
+      "  { HashSet<T> result = new HashSet<T>();\n" +  
+      "    result.addAll(s);\n" +  
+      "    return result;\n" +  
+      "  }\n";  
+    res = res + "  public static <T> TreeSet<T> copySortedSet(Collection<T> s)\n" + 
+      "  { TreeSet<T> result = new TreeSet<T>();\n" +  
+      "    result.addAll(s);\n" +  
+      "    return result;\n" +  
+      "  }\n";  
+    res = res + "  public static <T> ArrayList<T> copySequence(Collection<T> s)\n" + 
+      "  { ArrayList<T> result = new ArrayList<T>();\n" + 
+      "    result.addAll(s); \n" +
+      "    return result; \n" +
+      "  }\n";  
+    res = res + 
+      "  public static <K,T> HashMap<K,T> copyMap(Map<K,T> s)\n" +
+      "  { HashMap<K,T> result = new HashMap<K,T>();\n" + 
+      "    result.putAll(s);\n" + 
+      "    return result;\n" + 
+      "  }\n"; 
+    return res;  
+  }
+
+
+  public static String generateCopyOpsCSharp() 
+  { String res = "  public static ArrayList copyCollection(ArrayList a)\n" +
+      "  { ArrayList res = new ArrayList();\n" +
+      "    res.AddRange(a); \n" +
+      "    return res; \n" + 
+      "  }\n"; 
+    res = res + 
+      "  public static Hashtable copyMap(Hashtable m)\n" + 
+      "  { Hashtable res = new Hashtable(); \n" +
+      "    foreach (DictionaryEntry pair in m) \n" +
+      "    { res.Add(pair.Key, pair.Value); } \n" +
+      "    return res; \n" + 
+      "  }\n"; 
+    return res; 
+  } 
+
+  public static String generateCopyOpsCPP() 
+  { String res = "  static set<_T>* copySet(set<_T>* a)\n" +
+      "  { set<_T>* res = new set<_T>(); \n" +
+      "    res->insert(a->begin(),a->end()); \n" +
+      "    return res; \n" +
+      "  }\n\n" +
+      "  static vector<_T>* copySequence(vector<_T>* a)\n" +
+      "  { vector<_T>* res = new vector<_T>(); \n" +
+      "    res->insert(res->end(), a->begin(),a->end());\n" + 
+      "    return res; \n" +
+      "  }\n\n" +
+      "  static map<string,_T>* copyMap(map<string,_T>* m)\n" +  
+      "  { map<string,_T>* res = new map<string,_T>();\n" + 
+      "    map<string,_T>::iterator iter; \n" +
+      "    for (iter = m->begin(); iter != m->end(); ++iter)\n" + 
+      "    { string key = iter->first;\n" + 
+      "      (*res)[key] = iter->second;  \n" +
+      "    }     \n" +
+      "    return res;\n" + 
+      "  } \n"; 
+    return res; 
+  }
+
   public static String generateSubrangeOp()  // for Java
   { String res = "  public static List integerSubrange(int i, int j)\n" + 
                  "  { List tmp = new Vector(); \n" + 
@@ -4679,6 +4779,17 @@ public class BSystemTypes extends BComponent
      "     return res; \n" +
      "   } \n\n"; 
 	 res = res + 
+	 "   public static Hashtable antirestrictMap(Hashtable m1, ArrayList ks) \n" +
+     "   { Hashtable res = new Hashtable();  \n" +
+     "     foreach (DictionaryEntry pair in m1) \n" +
+     "     { object key = pair.Key; \n" +
+     "       if (ks.Contains(key)) { }\n" +
+     "       else \n" + 
+     "       { res.Add(key, pair.Value); } \n" +
+     "     } \n" +
+     "     return res; \n" +
+     "   } \n\n"; 
+	 res = res + 
 	 "   public static ArrayList mapKeys(Hashtable m) \n" +
      "   { ArrayList res = new ArrayList();  \n" +
      "     res.AddRange(m.Keys);\n" +
@@ -4913,12 +5024,8 @@ public class BSystemTypes extends BComponent
       "      { (*res)[key] = iter->second; }\n" + 
       "    }    \n" + 
       "    return res;\n" + 
-      "  }\n"; 
-	return res; 
-  } 
-
-  public static String generateAntirestrictOpCPP()
-  { String res = 
+      "  }\n\n"; 
+    res = res +  
       "  static map<string,_T>* antirestrict(map<string,_T>* m1, std::set<string>* ks)\n" +  
       "  { map<string,_T>* res = new map<string,_T>();\n" + 
       "    map<string,_T>::iterator iter;\n" + 
@@ -4929,7 +5036,7 @@ public class BSystemTypes extends BComponent
       "    }    \n" + 
       "    return res;\n" + 
       "  }\n"; 
-	return res; 
+    return res; 
   } 
   
 
@@ -8041,6 +8148,15 @@ public class BSystemTypes extends BComponent
       "    { res.set(ind - 1,val); } \n" +
       "    return res;\n" +
       "  }\n"; 
+    res = res + "  public static String setAt(String ss, int ind, Object val)\n" +
+      "  { String res = ss;\n" + 
+      "    if (ind <= res.length() && ind >= 1)\n" +
+      "    { res = ss.substring(0,ind-1); \n" +
+      "      res = res + val + ss.substring(ind);\n" + 
+      "    } \n" +
+      "    return res;\n" +
+      "  }\n"; 
+
     return res; 
   } 
 
@@ -8092,7 +8208,17 @@ public class BSystemTypes extends BComponent
       "    if (ind <= res.size() && ind >= 1)\n" +
       "    { res.set(ind - 1,val); } \n" +
       "    return res;\n" +
+      "  }\n\n";
+ 
+    res = res + "  public static String setAt(String ss, int ind, Object val)\n" +
+      "  { String res = ss;\n" + 
+      "    if (ind <= res.length() && ind >= 1)\n" +
+      "    { res = ss.substring(0,ind-1); \n" +
+      "      res = res + val + ss.substring(ind);\n" + 
+      "    } \n" +
+      "    return res;\n" +
       "  }\n"; 
+
     return res; 
   } 
 
@@ -8144,7 +8270,17 @@ public class BSystemTypes extends BComponent
       "    if (ind <= res.size() && ind >= 1)\n" +
       "    { res.set(ind - 1,val); } \n" +
       "    return res;\n" +
+      "  }\n\n"; 
+
+    res = res + "  public static String setAt(String ss, int ind, Object val)\n" +
+      "  { String res = ss;\n" + 
+      "    if (ind <= res.length() && ind >= 1)\n" +
+      "    { res = ss.substring(0,ind-1); \n" +
+      "      res = res + val + ss.substring(ind);\n" + 
+      "    } \n" +
+      "    return res;\n" +
       "  }\n"; 
+
     return res; 
   } 
 
@@ -8226,6 +8362,7 @@ public class BSystemTypes extends BComponent
       "    { (*res)[(ind - 1)] = ob; }\n" +
       "    return res; \n" +
       "  }\n\n"; 
+
     res = res + 
       "  static vector<_T>* removeAt(vector<_T>* l, int ind)\n" +
       "  { if (ind >= 1 && ind <= l->size())\n" +
@@ -8236,6 +8373,16 @@ public class BSystemTypes extends BComponent
       "    }\n" +
       "    return l;\n" + 
       "  }\n\n"; 
+
+    res = res + "  static string removeAt(string ss, int ind)\n" +
+      "  { if (ind >= 1 && ind <= ss.length())\n" +
+      "    { string res = ss.substr(0,ind-1);\n" +
+      "      res = res + ss.substr(ind);\n" + 
+      "      return res;\n" +
+      "    } \n" +
+      "    return ss;\n" + 
+      "  }\n"; 
+
     res = res + 
       "  static vector<_T>* removeFirst(vector<_T>* sq, _T x)\n" +
       "  { vector<_T>* res = new vector<_T>();\n" +
@@ -8824,6 +8971,26 @@ public class BSystemTypes extends BComponent
     return res; 
   } 
 
+  public static String generateByte2CharOp()
+  { String res = " public static String byte2char(int b)\n" + 
+      "  { try { byte[] bb = {(byte) b}; \n" + 
+      "      return new String(bb); }\n" + 
+      "    catch (Exception _e)\n" + 
+      "    { return \"\"; }\n" + 
+      "  }\n"; 
+    return res; 
+  } 
+
+  public static String generateByte2CharOpCPP()
+  { String res = " public static String byte2char(int b)\n" + 
+      "  { int arr[] = {0};\n" +  
+      "    arr[0] = b;\n" + 
+      "    string str = string((char*) arr);\n" +  
+      "    return str;\n" + 
+      "  }\n"; 
+    return res; 
+  } 
+
   public static String generateIsIntegerOp()
   { String res = " public static boolean isInteger(String str)\n" + 
       "  { try { Integer.parseInt(str); return true; }\n" + 
@@ -9037,7 +9204,20 @@ public class BSystemTypes extends BComponent
       "    for (int x = 0; x < keys.size(); x++)\n" +
       "    { Object key = keys.get(x);\n" +
       "      if (ks.contains(key))\n" +
-      "      { res.put(key,m1.get(key));  }\n" +
+      "      { res.put(key,m1.get(key)); }\n" +
+      "    }    \n" +
+      "    return res;\n" +
+      "  }\n\n"; 
+	res = res + 
+      "  public static HashMap antirestrictMap(Map m1, Vector ks) \n" +
+      "  { Vector keys = new Vector();\n" +
+      "    keys.addAll(m1.keySet());\n" +
+      "    HashMap res = new HashMap();\n" +
+      "  \n" +
+      "    for (int x = 0; x < keys.size(); x++)\n" +
+      "    { Object key = keys.get(x);\n" +
+      "      if (ks.contains(key)) { }\n" +
+      "      else { res.put(key,m1.get(key)); }\n" +
       "    }    \n" +
       "    return res;\n" +
       "  }\n\n"; 
@@ -9206,8 +9386,71 @@ public class BSystemTypes extends BComponent
       "    }    \n" +
       "    return res;\n" +
       "  }\n"; 
+	res = res + 
+	  "  public static <D,R> HashMap<D,R> antirestrictMap(Map<D,R> m1, Set<D> ks) \n" +
+      "  { Set<D> keys = new HashSet<D>();\n" +
+      "    keys.addAll(m1.keySet());\n" +
+      "    HashMap<D,R> res = new HashMap<D,R>();\n" +
+      "  \n" +
+      "    for (D key : keys)\n" +
+      "    { if (ks.contains(key)) { }\n" +
+      "      else \n" + 
+      "      { res.put(key,m1.get(key)); }\n" +
+      "    }    \n" +
+      "    return res;\n" +
+      "  }\n"; 
     return res; 
   } 
+
+  public static String cppExceptionClass(String exceptionName, String exceptionText)
+  { String res = "  class " + exceptionName + " : exception\n" +
+      "  { public: \n" +
+      "      " + exceptionName + "() : message(" + exceptionText + ") { }\n" +
+      "\n" +
+      "      " + exceptionName + "* copy" + exceptionName + "(" + exceptionName + "* self)\n" +
+      "      { " + exceptionName + "* ex = new " + exceptionName + "();\n" +
+      "        ex->message = self->message;\n" + 
+      "        return ex; \n" +
+      "      }\n" +
+      "\n" +
+      "      const char* what() const { return message; }\n" +
+      "\n" +
+      "   private: \n" +
+      "     const char* message;\n" +
+      "  };\n\n"; 
+    return res; 
+  }
+
+
+  public static String exceptionsCPP()
+  { String exceptionName = "io_exception"; 
+    String exceptionText = "\"IO exception\""; 
+
+    String res = "  class " + exceptionName + " : exception\n" +
+      "  { public: \n" +
+      "      " + exceptionName + "() : message(" + exceptionText + ") { }\n" +
+      "\n" +
+      "      " + exceptionName + "* copy" + exceptionName + "(" + exceptionName + "* self)\n" +
+      "      { " + exceptionName + "* ex = new " + exceptionName + "();\n" +
+      "        ex->message = self->message;\n" + 
+      "        return ex; \n" +
+      "      }\n" +
+      "\n" +
+      "      const char* what() const { return message; }\n" +
+      "\n" +
+      "   private: \n" +
+      "     const char* message;\n" +
+      "  };\n\n"; 
+
+    exceptionName = "null_access_exception"; 
+    exceptionText = "\"Null access exception\""; 
+    res = res + cppExceptionClass(exceptionName, exceptionText); 
+
+    exceptionName = "assertion_exception"; 
+    exceptionText = "\"Assertion exception\""; 
+    res = res + cppExceptionClass(exceptionName, exceptionText); 
+    return res; 
+  }
 
   public static void main(String[] args)
   { Vector test = new Vector(); 

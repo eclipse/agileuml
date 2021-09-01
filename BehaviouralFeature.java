@@ -91,6 +91,53 @@ public class BehaviouralFeature extends ModelElement
     return res; 
   } // and copy the use case, readfr, etc? 
 
+  public static BehaviouralFeature newConstructor(String ename, Vector pars)
+  { BehaviouralFeature bf = new BehaviouralFeature("new" + ename); 
+    bf.setParameters(pars); 
+    Entity e = new Entity(ename); 
+    Type etype = new Type(e); 
+    bf.setType(etype); 
+    bf.setPostcondition(new BasicExpression(true)); 
+    SequenceStatement code = new SequenceStatement();
+
+    BasicExpression res = BasicExpression.newVariableBasicExpression("result", etype); 
+ 
+    CreationStatement cs = new CreationStatement("result", etype); 
+    code.addStatement(cs); 
+
+    BasicExpression createCall = new BasicExpression("create" + ename); 
+    createCall.setUmlKind(Expression.UPDATEOP); 
+    createCall.setParameters(new Vector()); 
+    createCall.setIsEvent(); 
+    createCall.setType(etype); 
+    createCall.setStatic(true); 
+
+    AssignStatement assgn = new AssignStatement(res,createCall); 
+    code.addStatement(assgn); 
+
+    BasicExpression initialiseCall = new BasicExpression("initialise"); 
+    initialiseCall.setUmlKind(Expression.UPDATEOP);
+    initialiseCall.setIsEvent(); 
+    Vector parNames = bf.getParameterExpressions(); 
+    // System.out.println(">>=== " + pars + " " + parNames); 
+ 
+    initialiseCall.setParameters(parNames); 
+    initialiseCall.setObjectRef(res); 
+    InvocationStatement callInit = new InvocationStatement(initialiseCall);
+    callInit.setParameters(parNames);  
+    code.addStatement(callInit); 
+
+    ReturnStatement rs = new ReturnStatement(res); 
+    code.addStatement(rs); 
+
+    code.setBrackets(true); 
+
+    bf.setActivity(code); 
+    bf.setStatic(true); 
+
+    return bf; 
+  } 
+
   public UseCase toUseCase()
   { // usecase name : resultType 
     // { parameter ... assumptions ... postconditions }
@@ -1603,6 +1650,15 @@ public class BehaviouralFeature extends ModelElement
     return res;
   }
 
+  public Vector getParameterExpressions()
+  { Vector res = new Vector();
+    for (int i = 0; i < parameters.size(); i++)
+    { Attribute att = (Attribute) parameters.get(i);
+      res.add(new BasicExpression(att));
+    }
+    return res;
+  }
+
   public String getJavaParameterDec()
   { String res = ""; 
     // System.out.println("PARAMETERS = " + parameters); 
@@ -2507,6 +2563,8 @@ public class BehaviouralFeature extends ModelElement
     { postid = "true"; }  
     out.println(opid + ".precondition = " + preid);
     out.println(opid + ".postcondition = " + postid);
+
+    System.out.println(">> Operation " + getName() + " activity is: " + activity); 
 
     if (activity == null) 
     { Statement des = generateDesign(ent, entities, types); 

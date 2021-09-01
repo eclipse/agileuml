@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003,2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -12,7 +12,7 @@
  * 
  * Version information : 2.0
  *
- * Date : February 2021
+ * Date : August 2021
  * 
  * Description : This describes the GUI interface of 
  * the UML RSDS tool,
@@ -313,10 +313,12 @@ public void findPlugins()
     fileMenu.addSeparator(); 
 
     JMenuItem loadGenericMI = 
-      new JMenuItem("Load generic use case",openIcon);
+      new JMenuItem("From Java AST",openIcon);
     loadGenericMI.addActionListener(this);
     // loadDataMI.setMnemonic(KeyEvent.VK_L);
     fileMenu.add(loadGenericMI);
+
+    fileMenu.addSeparator(); 
 
     JMenu loadComponentMenu = 
       new JMenu("Load component");
@@ -1205,7 +1207,7 @@ public void findPlugins()
       "To define external libraries and extensions");
     menuBar.add(extensionsMenu);
     
-    JMenuItem newImport = new JMenuItem("Add import"); 
+    JMenuItem newImport = new JMenuItem("Import library"); 
     newImport.addActionListener(this); 
     extensionsMenu.add(newImport); 
 
@@ -1527,7 +1529,7 @@ public void findPlugins()
       { ucdArea.loadQVT();
          // saved = true; 
       }
-      else if (label.equals("Load generic use case")) 
+      else if (label.equals("From Java AST")) 
       { ucdArea.loadGenericUseCase();
         saved = true; 
       }
@@ -2312,10 +2314,10 @@ public void findPlugins()
       { implicitCopy(); }  
       else if (label.equals("Auxiliary Metamodel"))
       { ucdArea.auxiliaryMetamodel(); }  
-      else if (label.equals("Add import"))
-      { String tname = 
-          JOptionPane.showInputDialog("Enter import (in Java syntax):");
-        ucdArea.addImport(tname); 
+      else if (label.equals("Import library"))
+      { // String tname = 
+        //   JOptionPane.showInputDialog("Enter import (in Java syntax):");
+        ucdArea.addImport(""); 
       } 
       else if (label.equals("Add -> operator"))
       { OperatorEditDialog oed = new OperatorEditDialog(this); 

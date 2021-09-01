@@ -78,17 +78,23 @@ public class Type extends ModelElement
     exceptions2cpp.put("ProgramException", "logic_error"); 
     // also, "runtime_error"
     exceptions2cpp.put("SystemException", "system_error"); 
-    exceptions2cpp.put("IOException", "ios_base::failure"); 
+    exceptions2cpp.put("IOException", "io_exception");
+        // user-defined exception 
     exceptions2cpp.put("CastingException", "bad_cast"); 
     exceptions2cpp.put("NullAccessException", "runtime_error"); 
     exceptions2cpp.put("IndexingException", "out_of_range");
     
-    exceptions2cpp.put("ArithmeticException", "runtime_error");
+    exceptions2cpp.put("ArithmeticException", "arithmetic_exception");
+    // user-defined 
+
     // also "DivideByZeroException
     exceptions2cpp.put("IncorrectElementException", "invalid_argument");
     // Also, "range_error" for incorrect values
     // exceptions2cpp.put("AssertionException", "AssertionError");
-    // exceptions2cpp.put("AccessingException", "IllegalAccessException");
+
+    exceptions2cpp.put("AccessingException", "accessing_exception");
+    // User-defined exception
+
     // also, "NoClassDefFoundError" ?? 
   } 
 
@@ -1217,8 +1223,44 @@ public class Type extends ModelElement
     return false;  
   } 
 
+  public boolean isInteger()
+  { String nme = getName();
+    if ("int".equals(nme))
+    { return true; } 
+    if ("long".equals(nme))
+    { return true; } 
+    return false;  
+  } 
+
+  public boolean isInt()
+  { String nme = getName();
+    if ("int".equals(nme))
+    { return true; } 
+    return false;  
+  } 
+
   public boolean isEntity()
   { return isEntity; } 
+
+  public boolean isEntity(Vector ents)
+  { if (isEntity)
+    { return true; }
+
+    Entity ent = (Entity) ModelElement.lookupByName(getName(), ents); 
+    if (ent != null) 
+    { return true; } 
+    return false; 
+  }  
+
+  public Entity getEntity(Vector ents)
+  { if (isEntity)
+    { return entity; }
+
+    Entity ent = (Entity) ModelElement.lookupByName(getName(), ents); 
+    if (ent != null) 
+    { return ent; } 
+    return null; 
+  }  
 
   public boolean isAbstractEntity()
   { return entity != null && entity.isAbstract(); } 
@@ -1797,13 +1839,13 @@ public class Type extends ModelElement
 
     if (nme.equals("Map") || nme.equals("Function"))
     { String kt = "String"; 
-	  if (keyType != null) 
+      if (keyType != null) 
       { kt = keyType.getUMLName(); } 
       String et = "String"; 
       if (elementType != null) 
-	  { et = elementType.getUMLName(); } 
+      { et = elementType.getUMLName(); } 
       return nme + "(" + kt + ", " + et + ")"; 
-	} 
+    } 
 
     return nme; 
   } 
@@ -2179,7 +2221,7 @@ public class Type extends ModelElement
       if (alias != null)    // For datatypes
       { return alias.getDefault(); } 
 
-      return "null";    // for class types, functions
+      return "null";    // for class types, functions, OclAny
     }
 
     if (values.size() > 0)
@@ -2211,7 +2253,11 @@ public class Type extends ModelElement
         res.setType(this); 
         res.setElementType(elemt); 
       }
-      else if (isEntity())
+      else if (isEntity() || "OclAny".equals(nme) || 
+               "OclType".equals(nme) ||
+               "OclDate".equals(nme) || 
+               "OclVoid".equals(nme) || 
+               "OclIterator".equals(nme))
       { res = new BasicExpression("null"); 
         res.setType(this); 
         res.setElementType(elemt); 
@@ -2231,7 +2277,7 @@ public class Type extends ModelElement
       else if (alias != null)    // For datatypes
       { return alias.getDefaultValueExpression(); } 
       else // unknown type
-      { res = new BasicExpression(0); } 
+      { res = new BasicExpression("null"); } 
     }
     else // values != null
     { res = new BasicExpression((String) values.get(0)); } 
@@ -2300,7 +2346,7 @@ public class Type extends ModelElement
     { return (String) values.get(0); } 
     return "null"; 
   }
-  // Set and Sequence?
+  // sorted sets?
 
   public String getDefaultCSharp()
   { if (values == null) // so not enumerated
@@ -2388,12 +2434,16 @@ public class Type extends ModelElement
     { return "DateTime"; } 
     if (nme.equals("OclAny"))
     { return "object"; } 
+    if (nme.equals("OclType"))
+    { return "Type"; } 
 
     String jex = (String) exceptions2csharp.get(nme); 
     if (jex != null) 
     { return jex; } 
 
-    if (values == null) { return nme; } 
+    if (values == null) 
+    { return nme; }  // OclIterator, for example
+ 
     return "int";   
   } 
 
@@ -2428,9 +2478,11 @@ public class Type extends ModelElement
     { return alias.getSwift(); } 
 
     if (nme.equals("OclAny"))
-    { return "Any"; } 
+    { return "Any?"; } 
+    if (nme.equals("OclType"))
+    { return "Any.Type?"; } 
 
-    return nme;  // enumerations 
+    return nme;  // enumerations, OclIterator
   } 
 
   public String getSwift()
@@ -2445,7 +2497,10 @@ public class Type extends ModelElement
     { return alias.getSwift(); } 
     if (isEnumeration()) { return nme; }
 
-    String elemType = elementType.getSwift();  
+    String elemType = "Any"; 
+    if (elementType != null) 
+    { elemType = elementType.getSwift(); }
+  
     if (nme.equals("Set")) 
     { return "Set<" + elemType + ">"; } 
     if (nme.equals("Sequence"))
@@ -2456,7 +2511,9 @@ public class Type extends ModelElement
     { return "(String) -> " + elemType; } 
 
     if (nme.equals("OclAny"))
-    { return "Any"; } 
+    { return "Any?"; } 
+    if (nme.equals("OclType"))
+    { return "Any.Type?"; } 
 
     return nme; 
   } 
@@ -2480,13 +2537,18 @@ public class Type extends ModelElement
     else if (nme.equals("GraphDisplay"))
     { return "GraphDisplay.defaultInstance()"; } 
 
-    if (isEntity || "OclAny".equals(nme)) 
+    if (isEntity || "OclAny".equals(nme) || "OclType".equals(nme) || 
+        "OclVoid".equals(nme) || 
+        "OclIterator".equals(nme)) 
     { return "nil"; } 
 
     if (isEnumeration()) 
     { return nme + "." + values.get(0); }
 
-    String elemType = elementType.getSwift();  
+    String elemType = "Any?"; 
+    if (elementType != null) 
+    { elemType = elementType.getSwift(); }
+
     if (nme.equals("Set")) 
     { return "Set<" + elemType + ">()"; } 
     if (nme.equals("Sequence"))
@@ -2515,6 +2577,9 @@ public class Type extends ModelElement
 
     if (nme.equals("OclAny"))
     { return "void*"; } 
+    if (nme.equals("OclType"))
+    { return "char*"; } 
+
 
     return nme;  // enumerations, long, int and double 
   } 
@@ -2549,6 +2614,8 @@ public class Type extends ModelElement
     { return "struct tm*"; } 
     if (nme.equals("OclAny"))
     { return "void*"; } 
+    if (nme.equals("OclType"))
+    { return "char*"; } 
 
     if (isEntity) 
     { return nme + "*"; }
@@ -2696,6 +2763,9 @@ public class Type extends ModelElement
     if (nme.equals("OclAny"))
     { return "Object"; } 
 
+    if (nme.equals("OclType"))
+    { return "Class"; } 
+
     String jex = (String) exceptions2java.get(nme); 
     if (jex != null) 
     { return jex; } 
@@ -2729,6 +2799,9 @@ public class Type extends ModelElement
 
     if (nme.equals("OclAny"))
     { return "Object"; } 
+
+    if (nme.equals("OclAny"))
+    { return "Class"; } 
 
     if (nme.equals("OclDate"))
     { return "Date"; } 
@@ -2789,6 +2862,9 @@ public class Type extends ModelElement
 
     if (nme.equals("OclAny"))
     { return "Object"; } 
+
+    if (nme.equals("OclType"))
+    { return "Class"; } 
 
     if (nme.equals("OclDate"))
     { return "Date"; } 
@@ -2856,6 +2932,12 @@ public class Type extends ModelElement
     if (nme.equals("OclAny"))
     { return "Object"; } 
 
+    if (nme.equals("OclDate"))
+    { return "Date"; } 
+
+    if (nme.equals("OclType"))
+    { return "Class"; } 
+
     if (values == null)
     { return nme; }
     // if (nme.equals("long")) { return "long"; } 
@@ -2877,8 +2959,8 @@ public class Type extends ModelElement
     if (nme.equals("Set"))
     { String tname = "HashSet"; 
 
-    if (typ.isSorted()) 
-    { tname = "TreeSet"; } 
+      if (typ.isSorted()) 
+      { tname = "TreeSet"; } 
       return tname + "<" + et + ">"; 
     } 
 
@@ -2896,6 +2978,12 @@ public class Type extends ModelElement
 
     if (nme.equals("OclAny"))
     { return "Object"; } 
+
+    if (nme.equals("OclType"))
+    { return "Class"; } 
+
+    if (nme.equals("OclDate"))
+    { return "Date"; } 
 
     if (typ.values == null)
     { return typ.typeWrapperJava7(); }
@@ -2947,6 +3035,9 @@ public class Type extends ModelElement
     if (nme.equals("OclAny"))
     { return "Object"; } 
 
+    if (nme.equals("OclType"))
+    { return "Class"; } 
+
     if (nme.equals("OclDate"))
     { return "Date"; } 
 
@@ -2973,6 +3064,10 @@ public class Type extends ModelElement
     { return alias.typeWrapper(); } 
     if (nme.equals("OclAny"))
     { return "Object"; } 
+    if (nme.equals("OclType"))
+    { return "Class"; } 
+    if (nme.equals("OclDate"))
+    { return "Date"; } 
 
     if (values != null) { return "Integer"; } 
     return nme; 
@@ -2992,6 +3087,10 @@ public class Type extends ModelElement
     { return alias.typeWrapperJava6(); } 
     if (nme.equals("OclAny"))
     { return "Object"; } 
+    if (nme.equals("OclType"))
+    { return "Class"; } 
+    if (nme.equals("OclDate"))
+    { return "Date"; } 
 
     if (values != null) { return "Integer"; } 
     return nme; 
@@ -3051,6 +3150,10 @@ public class Type extends ModelElement
     { return alias.typeWrapperJava7(); } 
     if (nme.equals("OclAny"))
     { return "Object"; } 
+    if (nme.equals("OclType"))
+    { return "Class"; } 
+    if (nme.equals("OclDate"))
+    { return "Date"; } 
  
     if (values != null) { return "Integer"; } 
     return nme; 
@@ -3105,6 +3208,10 @@ public class Type extends ModelElement
     { return alias.typeWrapperJava8(); } 
     if (nme.equals("OclAny"))
     { return "Object"; } 
+    if (nme.equals("OclType"))
+    { return "Class"; } 
+    if (nme.equals("OclDate"))
+    { return "Date"; } 
  
     return nme; 
   } // For enumerations, would be better to represent as Java enums. 
@@ -3161,11 +3268,21 @@ public class Type extends ModelElement
     { out.println("  typedef " + alias.getCPP() + " " + getName() + ";"); } 
   }
 
+  public static Type getTypeFor(String typ)
+  { Vector typs = new Vector(); 
+    Vector ents = new Vector(); 
+    return getTypeFor(typ, typs, ents); 
+  } 
+
   public static Type getTypeFor(String typ, Vector types, Vector entities)
   { if (typ == null) { return null; } 
 
     if ("int".equals(typ) || "double".equals(typ) || "boolean".equals(typ) ||
-        "OclAny".equals(typ) || 
+        "OclAny".equals(typ) || "OclType".equals(typ) ||
+        "OclFile".equals(typ) || "OclAttribute".equals(typ) || 
+        "OclOperation".equals(typ) || 
+        "OclProcess".equals(typ) ||  
+        "OclIterator".equals(typ) || "OclDate".equals(typ) || 
         "long".equals(typ) || "String".equals(typ))
     { return new Type(typ,null); } 
 
@@ -3236,15 +3353,15 @@ public class Type extends ModelElement
 	  { if (",".equals(typ.charAt(i) + ""))
 	    { String nt = typ.substring(9,i);
           Type innerT = getTypeFor(nt, types, entities);
-		  String rt = typ.substring(i+1,typ.length()-1);
+          String rt = typ.substring(i+1,typ.length()-1);
           Type restT = getTypeFor(rt, types, entities); 
-		  if (innerT != null && restT != null) 
-		  { Type resT = new Type("Function",null);
+          if (innerT != null && restT != null) 
+          { Type resT = new Type("Function",null);
             resT.setKeyType(innerT);  
             resT.setElementType(restT); 
             return resT; 
-		  } 
-		}
+          } 
+        }
       }
     }   
 
@@ -3294,6 +3411,12 @@ public class Type extends ModelElement
     if (t2 == null) { return t1; } 
     String t1name = t1.getName(); 
     String t2name = t2.getName(); 
+    
+    if (t1name.equals("OclAny"))
+    { return t2; } 
+    if (t2name.equals("OclAny"))
+    { return t1; } 
+
     if (t1name.equals(t2name))  
     { if ("Set".equals(t1name) || "Sequence".equals(t1name) || "Map".equals(t1name) || "Function".equals(t1name))
       { Type et1 = t1.getElementType(); 
@@ -3328,6 +3451,11 @@ public class Type extends ModelElement
     if (t2 == null) { return t1; } 
     String t1name = t1.getName(); 
     String t2name = t2.getName(); 
+
+    if (t1name.equals("OclAny"))
+    { return t1; } 
+    if (t2name.equals("OclAny"))
+    { return t2; } 
 
     if (t1name.equals(t2name))  
     { if ("Set".equals(t1name) || "Sequence".equals(t1name) || "Map".equals(t1name) || "Function".equals(t1name))
@@ -3387,7 +3515,14 @@ public class Type extends ModelElement
     } 
 
     if ("Map".equals(nme) || "Function".equals(nme))
-    { return nme + "(" + keyType + "," + elementType + ")"; } 
+    { String kt = keyType + ""; 
+      String et = elementType + ""; 
+      if (keyType == null) 
+      { kt = "String"; } 
+      if (elementType == null)
+      { et = "OclAny"; } 
+      return nme + "(" + kt + "," + et + ")"; 
+    } 
 
     return nme; 
   } 
@@ -3473,8 +3608,8 @@ public class Type extends ModelElement
     { args.add(keyType.cg(cgs)); 
       eargs.add(keyType); 
       if (elementType == null) 
-      { args.add("Void"); 
-        eargs.add(new Type("void", null)); 
+      { args.add("OclAny"); 
+        eargs.add(new Type("OclAny", null)); 
       } 
       else 
       { args.add(elementType.cg(cgs)); 
@@ -3483,8 +3618,8 @@ public class Type extends ModelElement
     } 
     else if (isCollectionType())
     { if (elementType == null) 
-	 { args.add("Void"); 
-	   eargs.add(new Type("void", null)); 
+	 { args.add("OclAny"); 
+	   eargs.add(new Type("OclAny", null)); 
 	 } 
 	 else 
       { args.add(elementType.cg(cgs)); 
@@ -3500,7 +3635,10 @@ public class Type extends ModelElement
     System.out.println(">>> Matched type rule " + r + " for type " + this + " " + typetext + " " +  args); 
 	
     if (r != null)
-    { return r.applyRule(args,eargs,cgs); }
+    { String res = r.applyRule(args,eargs,cgs); 
+      System.out.println(">>> Resulting type = " + res); 
+      return res;
+    }
     return typetext;
   }
 

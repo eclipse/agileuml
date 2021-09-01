@@ -28,6 +28,8 @@ class BasicExpression extends Expression
     // new Vector();  // for operation calls
   Attribute variable = null;  // in the case of umlkind == VARIABLE 
 
+  private String atTime = "";  // e@t 
+
   BasicExpression(String dd, int i) 
   { data = dd; } 
 
@@ -41,7 +43,8 @@ class BasicExpression extends Expression
     }
     else
     { data = dd.substring(0,preindex);
-      System.out.println("Prestate expression: " + data); 
+      atTime = dd.substring(preindex+1); 
+      System.out.println(">> At-time expression: " + data + " at " + atTime); 
       prestate = true;
       /* if (dd.length() > preindex+4)
       { String d2 = dd.substring(preindex+5,dd.length()); 
@@ -233,28 +236,35 @@ class BasicExpression extends Expression
     data = t.getName(); 
     if ("Set".equals(data) || "Sequence".equals(data))
     { Type tp = t.getElementType(); 
-      if (tp != null && tp.isEntity())
-      { BasicExpression eexp = new BasicExpression(tp.getEntity()); 
-        data = "subcollections";
-        objectRef = eexp; 
-        umlkind = FUNCTION;  
-      } 
-      else 
-      { data = data + "(" + tp.getName() + ")"; 
-        umlkind = TYPE;
+      if (tp != null)
+      { data = data + "(" + tp.getName() + ")";
+        type = new Type("OclType", null);
+        umlkind = TYPE;  
       } 
     } 
-    else if ("Set".equals(data) || "Sequence".equals(data))
+    else if ("Map".equals(data) || "Function".equals(data))
     { Type tp = t.getElementType(); 
+      Type kt = t.getKeyType(); 
+      if (kt != null) 
+      { data = data + "(" + kt.getName() + ","; } 
+      else
+      { data = data + "(String,"; } 
+
       if (tp != null)
-      { data = data + "(" + tp.getName() + ")"; } 
+      { data = data + tp.getName() + ")"; }
+      else 
+      { data = data + "OclAny)"; }
+ 
+      type = new Type("OclType", null); 
       umlkind = TYPE;
     }
+    else 
+    { type = new Type("OclType", null); 
+      umlkind = TYPE;
+    } 
+
+    elementType = type; 
     multiplicity = ModelElement.MANY; 
-    type = new Type("Set", null); 
-    type.setElementType(t); 
-    elementType = t; 
-     
   } 
 
   BasicExpression(ObjectSpecification obj) 
@@ -271,6 +281,167 @@ class BasicExpression extends Expression
     umlkind = VALUE; 
   } 
 
+  public static BasicExpression newBasicExpression(Expression obj, String feat) 
+  { BasicExpression res = new BasicExpression(feat); 
+    res.objectRef = obj; 
+    return res; 
+  } 
+
+  public static BasicExpression newValueBasicExpression(String value) 
+  { BasicExpression res = new BasicExpression(value); 
+    res.umlkind = VALUE; 
+    return res; 
+  } 
+
+  public static BasicExpression newValueBasicExpression(String value, String typ) 
+  { BasicExpression res = new BasicExpression(value); 
+    res.umlkind = VALUE;
+    if (typ != null)
+    { Type tt = Type.getTypeFor(typ); 
+      res.type = tt; 
+    }  
+    return res; 
+  } 
+
+  public static BasicExpression newVariableBasicExpression(String value) 
+  { BasicExpression res = new BasicExpression(value); 
+    res.umlkind = VARIABLE;
+    return res; 
+  } 
+
+  public static BasicExpression newVariableBasicExpression(String value, String typ) 
+  { BasicExpression res = new BasicExpression(value); 
+    res.umlkind = VARIABLE;
+    if (typ != null)
+    { Type tt = Type.getTypeFor(typ); 
+      res.type = tt; 
+      if (tt != null) 
+      { res.multiplicity = tt.typeMultiplicity(); 
+        res.elementType = tt.getElementType(); 
+      } 
+    }  
+    return res; 
+  } 
+
+  public static BasicExpression newVariableBasicExpression(
+            String value, String typ, 
+            Vector types, Vector entities) 
+  { BasicExpression res = new BasicExpression(value); 
+    res.umlkind = VARIABLE;
+    if (typ != null)
+    { Type tt = Type.getTypeFor(typ,types,entities); 
+      res.type = tt; 
+      if (tt != null) 
+      { res.multiplicity = tt.typeMultiplicity(); 
+        res.elementType = tt.getElementType(); 
+      } 
+    }  
+    return res; 
+  } 
+
+  public static BasicExpression newVariableBasicExpression(String value, Type typ) 
+  { BasicExpression res = new BasicExpression(value); 
+    res.umlkind = VARIABLE;
+    res.type = typ; 
+    if (typ != null) 
+    { res.multiplicity = typ.typeMultiplicity(); 
+      res.elementType = typ.getElementType();  
+    }  
+    return res; 
+  } 
+
+  public static BasicExpression newFunctionBasicExpression(String f, Expression obj, Vector pars) 
+  { BasicExpression res = new BasicExpression(f);
+    res.setObjectRef(obj);  
+    res.umlkind = FUNCTION;
+    res.parameters = pars; 
+    return res; 
+  } 
+
+  public static BasicExpression newFunctionBasicExpression(String f, Expression obj, Expression par) 
+  { BasicExpression res = new BasicExpression(f);
+    res.setObjectRef(obj);  
+    res.umlkind = FUNCTION;
+    Vector pars = new Vector(); 
+    pars.add(par); 
+    res.parameters = pars; 
+    return res; 
+  } 
+
+  public static BasicExpression newFunctionBasicExpression(String f, String obj, Vector pars) 
+  { BasicExpression res = new BasicExpression(f);
+    res.setObjectRef(new BasicExpression(obj));  
+    res.umlkind = FUNCTION;
+    res.parameters = pars; 
+    return res; 
+  } 
+
+  public static BasicExpression newCallBasicExpression(String f, Expression obj, Vector pars) 
+  { BasicExpression res = new BasicExpression(f);
+    res.setObjectRef(obj);  
+    res.umlkind = UPDATEOP;
+    res.parameters = pars; 
+    return res; 
+  } 
+
+  public static BasicExpression newCallBasicExpression(String f, Expression obj) 
+  { BasicExpression res = new BasicExpression(f);
+    res.setObjectRef(obj);  
+    res.umlkind = UPDATEOP;
+    res.parameters = new Vector(); 
+    return res; 
+  } 
+
+  public static BasicExpression newStaticCallBasicExpression(String f, String arg, Vector pars) 
+  { BasicExpression res = new BasicExpression(f);
+    BasicExpression obj = new BasicExpression(arg); 
+    obj.umlkind = CLASSID; 
+    res.setObjectRef(obj);  
+    res.umlkind = UPDATEOP;
+    res.isStatic = true; 
+    res.parameters = pars; 
+    return res; 
+  } 
+
+  public static BasicExpression newStaticCallBasicExpression(String f, String arg, Expression par) 
+  { Vector pars = new Vector(); 
+    pars.add(par); 
+    BasicExpression res = new BasicExpression(f);
+    BasicExpression obj = new BasicExpression(arg); 
+    obj.umlkind = CLASSID; 
+    res.setObjectRef(obj);  
+    res.umlkind = UPDATEOP;
+    res.isStatic = true; 
+    res.parameters = pars; 
+    return res; 
+  } 
+
+  public static BasicExpression newStaticCallBasicExpression(String f, String arg) 
+  { Vector pars = new Vector(); 
+    
+    BasicExpression res = new BasicExpression(f);
+    BasicExpression obj = new BasicExpression(arg); 
+    obj.umlkind = CLASSID; 
+    res.setObjectRef(obj);  
+    res.umlkind = UPDATEOP;
+    res.isStatic = true; 
+    res.parameters = pars; 
+    return res; 
+  } 
+
+  public static Expression newIndexedBasicExpression(Expression base, Expression ind)
+  { if (base instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) base; 
+      if (be.arrayIndex == null) 
+      { BasicExpression res = (BasicExpression) be.clone(); 
+        res.arrayIndex = ind; 
+        return res; 
+      } 
+      else // multiple indexes
+      { return new BinaryExpression("->at", base, ind); } 
+    } 
+    return new BinaryExpression("->at", base, ind);
+  } 
 
   public Expression getObjectRef() 
   { return objectRef; } 
@@ -310,7 +481,8 @@ class BasicExpression extends Expression
         res.parameters.add(pclone); 
       } 
     } 
-    res.prestate = prestate; 
+    res.prestate = prestate;
+    res.atTime = atTime;  
     res.downcast = downcast; 
     return res; 
   }
@@ -1185,6 +1357,8 @@ class BasicExpression extends Expression
     for (int i = 0; i < data.length() - 1; i++) 
     { if ('_' == data.charAt(i) && Character.isDigit(data.charAt(i+1))) 
       { res.add(data.charAt(i) + "" + data.charAt(i+1)); }
+      if ('_' == data.charAt(i) && '*' == data.charAt(i+1)) 
+      { res.add(data.charAt(i) + "*"); }
     }  
 
     if (arrayIndex != null) 
@@ -1344,7 +1518,7 @@ class BasicExpression extends Expression
   { int n = data.length();
     if (n > 0 &&
         data.charAt(n-1) == '}')
-    { System.out.println("Found set expression: " + this); 
+    { System.out.println(">>> Found set expression: " + this); 
       return buildSetExpression(data);
     }
     // return checkIfObjectExpression();
@@ -2344,13 +2518,24 @@ class BasicExpression extends Expression
     // Also doubles. 
     Vector context = new Vector(); // local context
 
+
     if ("null".equals(data))
     { type = new Type("OclAny", null); 
       entity = null; 
       umlkind = VALUE; 
       multiplicity = ModelElement.ONE;
       return true;
-    } // But please don't use this in your own specifications, it's just for internal use
+    } 
+
+    if ("Math_NaN".equals(data) || 
+        "Math_PINFINITY".equals(data) || 
+        "Math_NINFINITY".equals(data))
+    { type = new Type("double", null); 
+      entity = null; 
+      umlkind = VALUE; 
+      multiplicity = ModelElement.ONE;
+      return true;
+    } // double values that represent invalid doubles
 
     if (isInteger(data))
     { type = new Type("int",null);
@@ -2358,6 +2543,7 @@ class BasicExpression extends Expression
       entity = null;
       umlkind = VALUE;
       multiplicity = ModelElement.ONE;
+      data = "" + Integer.decode(data).intValue(); 
       // System.out.println("**Type of " + data + " is int");
       return true;
     }
@@ -2368,7 +2554,8 @@ class BasicExpression extends Expression
       entity = null;
       umlkind = VALUE;
       multiplicity = ModelElement.ONE;
-      // System.out.println("**Type of " + data + " is long");
+      data = "" + Long.decode(data).longValue(); 
+      System.out.println("**Type of " + data + " is long");
       return true;
     }
 
@@ -2449,7 +2636,12 @@ class BasicExpression extends Expression
       return true;
     }  // could have an array index. Also deduce elementType
 
-    if ("int".equals(data) || "long".equals(data) || "double".equals(data))
+    if ("int".equals(data) || "long".equals(data) || 
+        "boolean".equals(data) || 
+        "double".equals(data) || "String".equals(data) ||
+        "OclDate".equals(data) || "OclAny".equals(data) || 
+        "OclType".equals(data) || "OclFile".equals(data) || 
+        "OclProcess".equals(data))
     { type = new Type("OclType", null); 
       elementType = new Type(data, null); 
       umlkind = TYPE; 
@@ -2555,6 +2747,178 @@ class BasicExpression extends Expression
       } 
     }
 
+    if ("newOclDate".equals(data))
+    { type = new Type("OclDate", null); 
+      umlkind = UPDATEOP;
+      isStatic = true;  
+      multiplicity = ModelElement.ONE; 
+      return true; 
+    } 
+    
+
+    if ("time".equals(data) && objectRef != null) 
+    { objectRef.typeCheck(types,entities,contexts,env); 
+      if (objectRef.type != null && 
+          objectRef.type.getName().equals("OclDate")) 
+      { type = new Type("long", null);
+        umlkind = ATTRIBUTE; 
+        multiplicity = ModelElement.ONE; 
+ 
+        return true;
+      }  
+    } 
+
+    if ("getTime".equals(data) && objectRef != null) 
+    { objectRef.typeCheck(types,entities,contexts,env); 
+      if (objectRef.type != null && 
+          objectRef.type.getName().equals("OclDate")) 
+      { umlkind = QUERY; 
+        multiplicity = ModelElement.ONE; 
+        type = new Type("long", null); 
+        return true;
+      }  
+    } 
+
+    if ("setTime".equals(data) && objectRef != null) 
+    { objectRef.typeCheck(types,entities,contexts,env); 
+      if (objectRef.type != null && 
+          objectRef.type.getName().equals("OclDate")) 
+      { type = new Type("void", null); 
+        umlkind = UPDATEOP; 
+        multiplicity = ModelElement.ONE; 
+        return true;
+      }  
+    } 
+
+    if ("dateAfter".equals(data) && objectRef != null) 
+    { objectRef.typeCheck(types,entities,contexts,env); 
+      if (objectRef.type != null && 
+          objectRef.type.getName().equals("OclDate")) 
+      { type = new Type("boolean", null); 
+        umlkind = QUERY; 
+        multiplicity = ModelElement.ONE; 
+        return true;
+      }  
+    } 
+
+    if ("dateBefore".equals(data) && objectRef != null) 
+    { objectRef.typeCheck(types,entities,contexts,env); 
+      if (objectRef.type != null && 
+          objectRef.type.getName().equals("OclDate")) 
+      { type = new Type("boolean", null); 
+        umlkind = QUERY; 
+        multiplicity = ModelElement.ONE; 
+        return true;
+      }  
+    } 
+
+    if ("elements".equals(data) && objectRef != null) 
+    { objectRef.typeCheck(types,entities,contexts,env);
+      if (objectRef.type != null && 
+          objectRef.type.getName().equals("OclIterator")) 
+      { type = new Type("Sequence", null);
+        umlkind = ATTRIBUTE; 
+        multiplicity = ModelElement.MANY; 
+ 
+        return true;
+      }  
+    } 
+
+    if (("getCurrent".equals(data) || "read".equals(data) ||
+         "readLine".equals(data) || "getName".equals(data) ||
+         "getAbsolutePath".equals(data) || 
+         "readAll".equals(data) || "getPath".equals(data) ||
+         "getParent".equals(data))
+        && objectRef != null) 
+    { objectRef.typeCheck(types,entities,contexts,env);
+      if (objectRef.type != null && 
+          objectRef.type.getName().equals("OclFile")) 
+      { type = new Type("String", null);
+        umlkind = QUERY; 
+        multiplicity = ModelElement.ONE; 
+ 
+        return true;
+      }  
+    } 
+
+    if (("lastModified".equals(data) || "length".equals(data))
+        && objectRef != null) 
+    { objectRef.typeCheck(types,entities,contexts,env);
+      if (objectRef.type != null && 
+          objectRef.type.getName().equals("OclFile")) 
+      { type = new Type("long", null);
+        umlkind = QUERY; 
+        multiplicity = ModelElement.ONE; 
+ 
+        return true;
+      }  
+    } 
+
+    if (("hasNext".equals(data) || "canRead".equals(data) ||
+         "canWrite".equals(data) || "exists".equals(data) || 
+         "isFile".equals(data) || "mkdir".equals(data) ||  
+         "isDirectory".equals(data) || 
+         "isAbsolute".equals(data))
+        && objectRef != null) 
+    { objectRef.typeCheck(types,entities,contexts,env);
+      if (objectRef.type != null && 
+          objectRef.type.getName().equals("OclFile")) 
+      { type = new Type("boolean", null);
+        umlkind = QUERY; 
+        multiplicity = ModelElement.ONE; 
+ 
+        return true;
+      }  
+    } 
+
+    if (("isAlive".equals(data) || "isDaemon".equals(data))
+        && objectRef != null) 
+    { objectRef.typeCheck(types,entities,contexts,env);
+      if (objectRef.type != null && 
+          objectRef.type.getName().equals("OclProcess")) 
+      { type = new Type("boolean", null);
+        umlkind = QUERY; 
+        multiplicity = ModelElement.ONE; 
+        return true;
+      }  
+    } 
+
+    if ("getName".equals(data)
+        && objectRef != null) 
+    { objectRef.typeCheck(types,entities,contexts,env);
+      if (objectRef.type != null && 
+          objectRef.type.getName().equals("OclProcess")) 
+      { type = new Type("String", null);
+        umlkind = QUERY; 
+        multiplicity = ModelElement.ONE; 
+        return true;
+      }  
+    } 
+
+    if ("currentThread".equals(data)
+        && "OclProcess".equals(objectRef + "")) 
+    { objectRef.typeCheck(types,entities,contexts,env);
+      type = new Type("OclProcess", null);
+      umlkind = QUERY; 
+      multiplicity = ModelElement.ONE; 
+      isStatic = true; 
+      return true;
+    } 
+
+    if (("getPriority".equals(data) || "activeCount".equals(data))
+        && objectRef != null) 
+    { objectRef.typeCheck(types,entities,contexts,env);
+      if (objectRef.type != null && 
+          objectRef.type.getName().equals("OclProcess")) 
+      { type = new Type("int", null);
+        umlkind = QUERY; 
+        multiplicity = ModelElement.ONE; 
+ 
+        return true;
+      }  
+    } 
+
+
     if (arrayIndex != null)
     { boolean res1 = arrayIndex.typeCheck(types,entities,contexts,env);
       res = res && res1;
@@ -2641,10 +3005,10 @@ class BasicExpression extends Expression
         } 
       } 
     
-      if (objectRef.elementType != null && objectRef.elementType.isEntity())
-      { context.add(0,objectRef.elementType.getEntity()); } 
-      else if (objectRef.type != null && objectRef.type.isEntity()) 
-      { context.add(0,objectRef.type.getEntity()); } 
+      if (objectRef.elementType != null && objectRef.elementType.isEntity(entities))
+      { context.add(0,objectRef.elementType.getEntity(entities)); } 
+      else if (objectRef.type != null && objectRef.type.isEntity(entities)) 
+      { context.add(0,objectRef.type.getEntity(entities)); } 
     }
     else 
     { context.addAll(contexts); } 
@@ -2668,6 +3032,7 @@ class BasicExpression extends Expression
         !(data.equals("replaceAllMatches")) && 
         !(data.equals("Sum")) && !(data.equals("Prd")) &&  
         !(data.equals("oclIsKindOf")) && 
+        !(data.equals("oclIsTypeOf")) && 
         !(data.equals("oclAsType")))
     { // data must be an event of the owning class, the elementType of 
       // the objectRef, or of an ancestor of it. 
@@ -2751,6 +3116,8 @@ class BasicExpression extends Expression
         } 
       } 
 
+      // If it is a function parameter of the current operation:
+
       Attribute fvar = (Attribute) ModelElement.lookupByName(data,env); 
       if (fvar != null) 
       { type = fvar.getType(); 
@@ -2765,13 +3132,28 @@ class BasicExpression extends Expression
                                         "Type warning", JOptionPane.WARNING_MESSAGE);
         }
       } // default
-      else 
-      { System.err.println("Warning!: Unknown operation " + data + " at call " + this + ".\n" + 
-                                    "Please re-type-check or correct your specification.");
- 
-        umlkind = UPDATEOP; 
-        type = new Type("boolean",null);         
-        elementType = new Type("boolean",null);
+      else if (objectRef != null)
+      { if (objectRef.type != null) 
+        { String ename = objectRef.type.getName(); 
+          Entity cent = 
+           (Entity) ModelElement.lookupByName(ename, entities); 
+          if (cent != null) 
+          { BehaviouralFeature op = cent.getOperation(data); 
+            if (op != null) 
+            { System.out.println(">>> Found operation " + op + " of class " + cent); 
+              umlkind = UPDATEOP; 
+              type = op.getType();         
+              elementType = op.getElementType();
+            } 
+          }       
+        }
+        else  
+        { System.err.println("Warning!: Unknown operation " + data + " at call " + this + ".\n");  
+          System.out.println(objectRef + " of type: " + objectRef.type); 
+          type = new Type("boolean",null);         
+          elementType = new Type("boolean",null);
+        } 
+        umlkind = UPDATEOP;   
       }          
     }
 
@@ -2928,8 +3310,11 @@ class BasicExpression extends Expression
       }
     }   // if T1.value and T2.value may both occur, must be distinguished by the type name
 
+
+    // Parameters of the current operation/usecase: 
+
     Attribute paramvar = (Attribute) ModelElement.lookupByName(data,env); 
-    if (paramvar != null) 
+    if (paramvar != null && objectRef == null) 
     { type = paramvar.getType(); 
       elementType = paramvar.getElementType(); 
       entity = paramvar.getEntity(); 
@@ -2937,7 +3322,15 @@ class BasicExpression extends Expression
       { entity = elementType.getEntity(); } 
       if (entity == null && type != null) 
       { entity = type.getEntity(); } 
+      if (elementType == null && type != null) 
+      { elementType = type.getElementType(); } 
       adjustTypeForArrayIndex(paramvar);
+      
+      System.out.println(">>> Parameter/local variable: " + this + " type= " + type + " (" + elementType + ")"); 
+      System.out.println(); 
+      umlkind = VARIABLE; 
+
+      return true; 
     } // And adjust type for any array index. 
 
     for (int j = 0; j < context.size(); j++)
@@ -2952,6 +3345,9 @@ class BasicExpression extends Expression
         } 
         modality = att.getKind(); 
         type = att.getType();
+        if (att.isStatic())
+        { isStatic = true; } 
+
         elementType = att.getElementType(); 
         if (Type.isCollectionType(type))
         { multiplicity = ModelElement.MANY; } 
@@ -2972,6 +3368,9 @@ class BasicExpression extends Expression
         if (arrayIndex != null) 
         { System.out.println("** Adjusted type of " + this + " is " + type + "(" + elementType + ") Modality = " + modality); } 
  
+        System.out.println(">>> Attribute: " + this + " type= " + type + " (" + elementType + ")"); 
+        System.out.println(); 
+      
         return res;
       } // couldn't it have an array ref if objectRef was a sequence?
       else 
@@ -2987,6 +3386,9 @@ class BasicExpression extends Expression
           } 
           modality = att.getKind();
           downcast = true;  
+          if (att.isStatic())
+          { isStatic = true; } 
+
           type = att.getType();
           elementType = att.getElementType(); 
           if (Type.isCollectionType(type))
@@ -3082,7 +3484,7 @@ class BasicExpression extends Expression
     // prestate == true only for VARIABLE, ATTRIBUTE, ROLE, CONSTANT
 
     if (data.equals("Integer"))
-    { type = new Type("Sequence",null); 
+    { type = new Type("OclType",null); 
       elementType = new Type("int",null); 
       type.setElementType(elementType); 
       umlkind = TYPE;    
@@ -3756,10 +4158,20 @@ class BasicExpression extends Expression
 
       
     if (umlkind == VALUE || umlkind == CONSTANT)
-    { if (data.equals("{}") || data.equals("Set{}") || data.equals("Sequence{}"))
+    { if (data.equals("Set{}") || data.equals("Sequence{}"))
       { return "new Vector()"; }    // new Set really
+      if (data.equals("Map{}"))
+      { return "new HashMap()"; }
+	 
+      if (data.equals("null")) 
+      { return "null"; } 
 
-      if (data.equals("null")) { return "null"; } 
+      if (data.equals("Math_NaN")) 
+      { return "Double.NaN"; } 
+      if (data.equals("Math_PINFINITY")) 
+      { return "Double.POSITIVE_INFINITY"; } 
+      if (data.equals("Math_NINFINITY")) 
+      { return "Double.NEGATIVE_INFINITY"; } 
 
       if (isSet(data))
       { Expression se = buildSetExpression(data); 
@@ -3996,7 +4408,7 @@ class BasicExpression extends Expression
         String qpar1 = par1.queryForm(env,local); 
         String wpar1 = par1.wrap(qpar1); 
         return "(" + pre + ".indexOf(" + wpar1 + ") + 1)"; 
-      }      
+      }  // Surely it should be qpar1 not wpar1 here.     
       else if (data.equals("pow") && parameters != null && parameters.size() > 0)
       { String par1 = ((Expression) parameters.get(0)).queryForm(env,local); 
         return "Math.pow(" + pre + ", " + par1 + ")"; 
@@ -4291,12 +4703,22 @@ class BasicExpression extends Expression
     } 
 
     if (umlkind == VALUE || umlkind == CONSTANT)
-    { if (data.equals("{}") || data.equals("Set{}")) 
+    { if (data.equals("Set{}")) 
       { return "new HashSet()"; }    // new Set really
       if (data.equals("Sequence{}"))
       { return "new ArrayList()"; } 
+      if (data.equals("Map{}"))
+      { return "new HashMap()"; }
+	 
+      if (data.equals("null")) 
+      { return "null"; } 
 
-      if (data.equals("null")) { return "null"; } 
+      if (data.equals("Math_NaN")) 
+      { return "Double.NaN"; } 
+      if (data.equals("Math_PINFINITY")) 
+      { return "Double.POSITIVE_INFINITY"; } 
+      if (data.equals("Math_NINFINITY")) 
+      { return "Double.NEGATIVE_INFINITY"; } 
 
       if (isSet(data))
       { Expression se = buildSetExpression(data); 
@@ -4786,7 +5208,15 @@ class BasicExpression extends Expression
       if (data.equals("Map{}"))
       { return "new HashMap<String,Object>()"; }
 	  
-      if (data.equals("null")) { return "null"; } 
+      if (data.equals("null")) 
+      { return "null"; } 
+
+      if (data.equals("Math_NaN")) 
+      { return "Double.NaN"; } 
+      if (data.equals("Math_PINFINITY")) 
+      { return "Double.POSITIVE_INFINITY"; } 
+      if (data.equals("Math_NINFINITY")) 
+      { return "Double.NEGATIVE_INFINITY"; } 
 
       if (isSet(data))
       { Expression se = buildSetExpression(data); 
@@ -5284,7 +5714,8 @@ class BasicExpression extends Expression
       return rqf + ".Message"; 
     }  
 
-    if (data.equals("systemTime") && "OclDate".equals(objectRef + ""))
+    if (data.equals("systemTime") && 
+        "OclDate".equals(objectRef + ""))
     { return "SystemTypes.getTime()"; } 
 
     if (data.startsWith("new"))
@@ -5296,13 +5727,24 @@ class BasicExpression extends Expression
     if (umlkind == VALUE || umlkind == CONSTANT)
     { if (data.equals("{}") || data.equals("Set{}") || data.equals("Sequence{}"))
       { return "new ArrayList()"; }    // new Set really
+      if (data.equals("Map{}"))
+      { return "new Hashtable()"; }
+	 
+      if (data.equals("null")) 
+      { return "null"; } 
 
-      if (data.equals("null")) { return "null"; } 
+      if (data.equals("Math_NaN")) 
+      { return "double.NaN"; } 
+      if (data.equals("Math_PINFINITY")) 
+      { return "double.PositiveInfinity"; } 
+      if (data.equals("Math_NINFINITY")) 
+      { return "double.NegativeInfinity"; } 
 
       if (isSet(data))
       { Expression se = buildSetExpression(data); 
         return se.queryFormCSharp(env,local);
       }
+
       if (isSequence(data))
       { Expression se = buildSetExpression(data); 
         if (arrayIndex != null)
@@ -5313,15 +5755,18 @@ class BasicExpression extends Expression
         }
         return se.queryFormCSharp(env,local); 
       } 
+
       if (isString(data) && arrayIndex != null)
       { String ind = arrayIndex.queryFormCSharp(env,local); 
         String indopt = evaluateString("-",ind,"1"); 
         return "(\"" + "\" + " + data + "[" + indopt + "])"; 
       } 
+
       if (type != null && type.isEnumeration())
       { return "(int) " + type.getName() + "." + data; } 
+
       return data;
-    }
+    } // literal maps? 
 
     if (umlkind == VARIABLE)
     { if (data.equals("self"))  // but return "self" if it is a genuine variable
@@ -5744,7 +6189,15 @@ class BasicExpression extends Expression
       if (data.equals("Map{}"))
       { return "(new map<" + cetype + ">())"; } 
 
-      if (data.equals("null")) { return "NULL"; } 
+      if (data.equals("null")) 
+      { return "NULL"; } 
+
+      if (data.equals("Math_NaN")) 
+      { return "std::numeric_limits<double>::quiet_NaN()"; } 
+      if (data.equals("Math_PINFINITY")) 
+      { return "std::numeric_limits<double>::infinity()"; } 
+      if (data.equals("Math_NINFINITY")) 
+      { return "-(std::numeric_limits<double>::infinity())"; } 
 
       if (isSet(data))
       { Expression se = buildSetExpression(data); 
@@ -7097,12 +7550,27 @@ public Statement generateDesignSubtract(Expression rhs)
 
   public static String updateFormEqIndex(String lang, Expression obj, Expression ind,  
                              String val2, Expression var, java.util.Map env, boolean local)
-  { return updateFormEqIndex(obj,ind,val2,var,env,local); } 
+  { if ("Java4".equals(lang))
+    { return updateFormEqIndex(obj,ind,val2,var,env,local); } 
+    else if ("Java6".equals(lang))
+    { return updateFormEqIndexJava6(obj,ind,val2,var,env,local); }
+    else if ("Java7".equals(lang))
+    { return updateFormEqIndexJava7(obj,ind,val2,var,env,local); }
+    else if ("CSharp".equals(lang))
+    { return updateFormEqIndexCSharp(obj,ind,val2,var,env,local); }
+    else if ("CSharp".equals(lang))
+    { return updateFormEqIndexCPP(obj,ind,val2,var,env,local); }
+    else 
+    { return "/* Unsupported language for arr[x]->at(y) := z */"; }  
+  } 
 
   public static String updateFormEqIndex(Expression obj, Expression ind,  
                              String val2, Expression var, java.util.Map env, boolean local)
-  { // obj[ind] = val2 where obj is complex expression, either a sequence or map
-    if (ind != null) 
+  { // obj[ind] = val2 where obj is complex expression, 
+    // either a sequence or map, or 
+    // itself an indexed expression
+ 
+   if (ind != null) 
     { String indopt = ind.queryForm(env,local);
       String lexp = obj.queryForm(env,local); 
       String wind = ind.wrap(indopt); 
@@ -7112,6 +7580,96 @@ public Statement generateDesignSubtract(Expression rhs)
       { return "((Map) " + lexp + ").put(" + wind + ", " + wval + ");"; }  // map[ind] = val2 
       else 
       { return "((Vector) " + lexp + ").set((" + indopt + " -1), " + wval + ");"; }  
+    } 
+    return "/* Error: null index */"; 
+  } 
+
+  public static String updateFormEqIndexJava6(Expression obj, Expression ind,  
+                             String val2, Expression var, java.util.Map env, boolean local)
+  { // obj[ind] = val2 where obj is complex expression, 
+    // either a sequence or map, or 
+    // itself an indexed expression
+ 
+   if (ind != null) 
+    { String indopt = ind.queryFormJava6(env,local);
+      String lexp = obj.queryFormJava6(env,local); 
+      String wind = ind.wrap(indopt); 
+      String wval = var.wrap(val2); 
+ 
+      if (ind.type != null && "String".equals(ind.type.getName()))
+      { return "((HashMap) " + lexp + ").put(" + wind + ", " + wval + ");"; }  // map[ind] = val2 
+      else 
+      { return "((ArrayList) " + lexp + ").set((" + indopt + " -1), " + wval + ");"; }  
+    } 
+    return "/* Error: null index */"; 
+  } 
+
+  public static String updateFormEqIndexJava7(Expression obj, Expression ind,  
+                             String val2, Expression var, java.util.Map env, boolean local)
+  { // obj[ind] = val2 where obj is complex expression, 
+    // either a sequence or map, or 
+    // itself an indexed expression
+
+   
+ 
+   Type objt = obj.getType();
+   if (objt == null) 
+   { return "/* No type for: " + obj + " */"; } 
+ 
+   Type objet = obj.getElementType(); 
+   String j7type = objt.getJava7(objet); 
+
+   if (ind != null) 
+    { String indopt = ind.queryFormJava7(env,local);
+      String lexp = obj.queryFormJava7(env,local); 
+      String wind = ind.wrap(indopt); 
+      String wval = var.wrap(val2); 
+ 
+      if (objt.isMapType())
+      { return "((" + j7type + ") " + lexp + ").put(" + wind + ", " + wval + ");"; }  // map[ind] = val2 
+      else 
+      { return "((" + j7type + ") " + lexp + ").set((" + indopt + " -1), " + wval + ");"; }  
+    } 
+    return "/* Error: null index */"; 
+  } 
+
+  public static String updateFormEqIndexCSharp(Expression obj, Expression ind,  
+                             String val2, Expression var, java.util.Map env, boolean local)
+  { // obj[ind] = val2 where obj is complex expression, 
+    // either a sequence or map, or 
+    // itself an indexed expression
+ 
+   if (ind != null) 
+    { String indopt = ind.queryFormCSharp(env,local);
+      String lexp = obj.queryFormCSharp(env,local); 
+      String wind = ind.wrapCSharp(indopt); 
+      String wval = var.wrapCSharp(val2); 
+ 
+      if (ind.type != null && "String".equals(ind.type.getName()))
+      { return "((Hashtable) " + lexp + ")[" + wind + "] = " + wval + ";"; }  // map[ind] = val2 
+      else 
+      { return "((ArrayList) " + lexp + ")[" + indopt + " -1] = " + wval + ";"; }  
+    } 
+    return "/* Error: null index */"; 
+  } 
+
+  public static String updateFormEqIndexCPP(Expression obj, Expression ind,  
+                             String val2, Expression var, java.util.Map env, boolean local)
+  { // (*obj)[ind] = val2 where obj is complex expression, 
+    // either a sequence or map, or 
+    // itself an indexed expression
+    
+ 
+   if (ind != null) 
+    { String indopt = ind.queryFormCPP(env,local);
+      String lexp = obj.queryFormCPP(env,local); 
+      String wind = indopt; 
+      String wval = var.queryFormCPP(env,local); 
+ 
+      if (ind.type != null && "String".equals(ind.type.getName()))
+      { return "(*" + lexp + ")[" + indopt + "] = " + wval + ";"; }   
+      else 
+      { return "(*" + lexp + ")[" + indopt + " -1] = " + wval + ";"; }  
     } 
     return "/* Error: null index */"; 
   } 
@@ -12294,7 +12852,17 @@ public Statement generateDesignSubtract(Expression rhs)
 
   public static void main(String[] args)
   { // System.out.println(Math.log10(100)); 
-    System.out.println(Math.log(100)/Math.log(10)); 
+    // System.out.println(Math.log(100)/Math.log(10)); 
+    BasicExpression expr = new BasicExpression("x@100"); 
+    System.out.println(expr); 
+    BasicExpression expr1 = new BasicExpression("0xFFFFFFFFFFFFFFFFFFFF"); 
+    System.out.println(expr1);
+    Vector t = new Vector(); 
+    Vector e = new Vector();
+    Vector v = new Vector();  
+    expr1.typeCheck(t,e,v);  
+    System.out.println(">>> Type of " + expr1 + " is: " + expr1.type + " ( " + expr1.elementType + " )"); 
+
   } 
 
   public int syntacticComplexity() 
@@ -12442,7 +13010,13 @@ public Statement generateDesignSubtract(Expression rhs)
     if (arrayIndex != null) // no parametrs
     { BasicExpression arg = (BasicExpression) clone();
       arg.arrayIndex = null;
-      arg.parameters = null; 
+      arg.parameters = null;
+      arg.elementType = type; 
+      if (arrayIndex.type != null && arrayIndex.type.isInteger())
+      { arg.type = new Type("Sequence", null); } 
+      else 
+      { arg.type = new Type("Map", null); } 
+
       args.add(arg.cg(cgs)); // but need to retype it
       args.add(arrayIndex.cg(cgs));
       eargs.add(arg);

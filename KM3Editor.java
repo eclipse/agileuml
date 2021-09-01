@@ -444,14 +444,21 @@ public class KM3Editor extends JFrame implements DocumentListener
       String post = actDialog.getPost(); 
       Compiler2 comp = new Compiler2(); 
       if (post == null)
-      { System.out.println(">>>>> Invalid code: " + post); 
+      { System.out.println(">>>>> Invalid AST text: " + post); 
         return; 
       }
+
       ASTTerm xx = comp.parseGeneralAST(post);
       if (xx == null)
-      { System.out.println(">>>>> Invalid code: " + post); 
+      { System.out.println(">>>>> Invalid AST text: " + post); 
         return; 
       }
+
+      ASTTerm.enumtypes = new Vector(); 
+      ASTTerm.enumtypes.addAll(types); 
+      ASTTerm.entities = new Vector(); 
+      ASTTerm.entities.addAll(entities); 
+
       String km3code = xx.toKM3(); 
       System.out.println(">>>>> Translated code: " + km3code); 
         

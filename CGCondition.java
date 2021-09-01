@@ -75,7 +75,7 @@ public class CGCondition
           { }
           else if (m instanceof ASTTerm && 
                    cond.conditionSatisfied((ASTTerm) m, entities))
-          { System.out.println("||| Condition " + cond + " satisfied by term " + m); 
+          { System.out.println("||| ASTTerm condition " + cond + " satisfied by term " + m); 
             System.out.println(); 
           } 
           else 
@@ -309,14 +309,20 @@ public class CGCondition
       { return positive; }
     } 
 
-    String str = ASTTerm.getType(a.literalForm()); 
-    if (str != null && str.equals(stereotype))
-    { System.out.println(">>> Type of " + a + " = " + stereotype); 
+    if (a.hasType(stereotype))
+    { System.out.println("||| condition that type of " + a + " = " + stereotype + " is satisfied"); 
       return positive; 
     } 
 
     if ("updatesObject".equals(stereotype))
-    { if (a.updatesObject())
+    { if (a.updatesObject(null))
+      { return positive; } 
+      else 
+      { return !positive; } 
+    } 
+
+    if ("hasSideEffect".equals(stereotype))
+    { if (a.hasSideEffect())
       { return positive; } 
       else 
       { return !positive; } 

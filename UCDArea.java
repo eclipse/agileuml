@@ -6155,6 +6155,26 @@ public class UCDArea extends JPanel
     } 
   } 
 
+  public void addType(Type t, int x, int y)
+  { for (int i = 0; i < types.size(); i++) 
+    { Type tt = (Type) types.get(i); 
+      if (tt.valueClash(t.getValues()))
+      { System.err.println("Warning: Duplicate value in different types: " + tt + " and " + t); } 
+    } 
+
+    types.add(t); 
+    if (t.getValues() != null) // enumerated type
+    { RectData rd = new RectData(x,y,
+                                 getForeground(),
+                                 componentMode,
+                                 rectcount);
+      rectcount++;
+      rd.setLabel(t.getName());
+      rd.setModelElement(t); 
+      visuals.add(rd); 
+      repaint(); 
+    } 
+  } 
 
   public Type getType(String tname)
   { return (Type) ModelElement.lookupByName(tname,types); }
@@ -6259,6 +6279,7 @@ public class UCDArea extends JPanel
     visuals.add(rd);
     componentNames.add(nme);
     rd.setModelElement(ent);
+    System.out.println(">>> Added entity " + nme); 
   } 
 
   public void addEntity(Entity srcent, Entity trgent, int xx) 
@@ -6444,9 +6465,16 @@ public class UCDArea extends JPanel
    }
 
    Generalisation g = new Generalisation(e1,e2);
+   int lineKind = SOLID; 
+   if (e1.isInterface())
+   { lineKind = DASHED; 
+     g.setRealization(true);
+   } 
+
    InheritLineData line =
      new InheritLineData(pg.xs,pg.ys,pg.xe,pg.ye,
-                         linecount,SOLID);
+                         linecount, lineKind);
+
    line.setModelElement(g);
    line.setWaypoints(pg.waypoints); 
 
@@ -6504,23 +6532,26 @@ public class UCDArea extends JPanel
       RectData rdent = (RectData) getVisualOf(ent); 
       if (rdent == null) 
       { continue; } 
-      Generalisation gen = new Generalisation(e, ent); 
+
+      Generalisation gen = new Generalisation(e, ent);
+
+      int lineKind = SOLID; 
+      if (e.isInterface())
+      { lineKind = DASHED; 
+        gen.setRealization(true); 
+      } 
+ 
       InheritLineData line =
         new InheritLineData(rdent.getx() + 5,rdent.gety(),
                             rde.getx() + 5,rde.gety() + rde.height - 10,
-                            linecount,SOLID);
+                            linecount,lineKind);
+
       line.setModelElement(gen);
       generalisations.add(gen);
       Entity oldsuper = ent.getSuperclass(); 
 
-      if (oldsuper == null) 
-      { ent.setSuperclass(e); } 
-      else 
-      { ent.addSuperclass(e); 
-        System.err.println("!! Warning: Multiple inheritance: " + ent.getName() + " inherits from " + oldsuper.getName() + " and " + 
-		                   e.getName()); 
-      } 
- 
+      ent.addSuperclass(e); 
+      
       e.addSubclass(ent); 
       linecount++;
       visuals.add(line);
@@ -6532,20 +6563,30 @@ public class UCDArea extends JPanel
   { RectData rde = (RectData) getVisualOf(e); 
     RectData rdent = (RectData) getVisualOf(ent); 
     if (rde == null || rdent == null) 
-    { System.err.println("Missing visuals for " + e + " " + ent); 
+    { System.err.println("! Error: Missing visuals for " + e + " " + ent); 
       return; 
     }
- 
+
+    int lineKind = SOLID;  
+    if (e.isInterface())
+    { lineKind = DASHED; 
+      g.setRealization(true); 
+    } 
+
     InheritLineData line =
         new InheritLineData(rdent.getx() + 5,rdent.gety(),
-                            rde.getx() + 5,rde.gety() + rde.height - 10,
-                            linecount,SOLID);
+                            rde.getx() + 5,
+                            rde.gety() + rde.height - 10,
+                            linecount, lineKind);
+
     line.setModelElement(g);
     generalisations.add(g);
-    ent.setSuperclass(e); 
+    ent.addSuperclass(e); 
     e.addSubclass(ent); 
     linecount++;
     visuals.add(line);
+    System.out.println(">>> Added inheritance: " + g); 
+    System.out.println(); 
     formFamilies(g);
   }
 
@@ -6559,11 +6600,19 @@ public class UCDArea extends JPanel
         RectData rsup = (RectData) getVisualOf(esup);  
         RectData rsub = (RectData) getVisualOf(esub); 
         if (rsup == null || rsub == null) 
-        { continue; } 
+        { continue; }
+        
+        int lineKind = SOLID; 
+        if (esup.isInterface())
+        { lineKind = DASHED; 
+          g.setRealization(true); 
+        } 
+ 
         InheritLineData line =
           new InheritLineData(rsub.getx() + 10,rsub.gety(),
                             rsup.getx() + 10,rsup.gety() + rsup.height - 15,
-                            linecount,SOLID);
+                            linecount, lineKind);
+
         line.setModelElement(g);
         generalisations.add(g);
         esub.setSuperclass(esup); 
@@ -6613,13 +6662,18 @@ public class UCDArea extends JPanel
       RectData rsub = (RectData) getVisualOf(esub); 
       if (rsup == null || rsub == null) 
       { continue; } 
+
+      int lineKind = SOLID; 
+      if (esup.isInterface())
+      { lineKind = DASHED; } 
+
       InheritLineData line =
         new InheritLineData(rsub.getx() + 10,rsub.gety(),
                             rsup.getx() + 10,rsup.gety() + rsup.height - 15,
-                            linecount,SOLID);
+                            linecount,lineKind);
       line.setModelElement(g);
       generalisations.add(g);
-      esub.setSuperclass(esup); 
+      esub.addSuperclass(esup); 
       esup.addSubclass(esub); 
       linecount++;
       visuals.add(line);
@@ -9206,7 +9260,9 @@ public void produceCUI(PrintWriter out)
     out.println("      return this; }\n"); 
     out.println("    public List getElements() { return elements; }\n"); 
     
-    String mop = BSystemTypes.generateMaxOp(); 
+    String mop = BSystemTypes.generateCopyOps(); 
+    out.println("\n" + mop); 
+    mop = BSystemTypes.generateMaxOp(); 
     out.println("\n" + mop); 
     mop = BSystemTypes.generateMinOp();
     out.println("\n" + mop);
@@ -9283,8 +9339,12 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);  
     mop = BSystemTypes.generateIsLongOp(); 
     out.println("\n" + mop);  
+    mop = BSystemTypes.generateByte2CharOp(); 
+    out.println("\n" + mop);  
+
     mop = BSystemTypes.generateIsTypeOfOp(); 
     out.println("\n" + mop);  
+
     mop = BSystemTypes.generateTokeniseCSVOp(); 
     out.println("\n" + mop);  
     mop = BSystemTypes.generateBeforeOp(); 
@@ -9357,6 +9417,9 @@ public void produceCUI(PrintWriter out)
     out.println("  public class Set"); 
     out.println("  { \n"); 
 
+    String mop = BSystemTypes.generateCopyOpsJava6(); 
+    out.println("\n" + mop); 
+
     String timeops = BSystemTypes.generateTimeOp();
     out.println(timeops);
 
@@ -9419,7 +9482,7 @@ public void produceCUI(PrintWriter out)
     out.println("    public static HashSet asSet(Collection c)"); 
     out.println("    { HashSet res = new HashSet(); res.addAll(c); return res; }\n"); 
     
-    String mop = BSystemTypes.generateMaxOpJava6(); 
+    mop = BSystemTypes.generateMaxOpJava6(); 
     out.println("\n" + mop); 
     mop = BSystemTypes.generateMinOpJava6();
     out.println("\n" + mop);
@@ -9497,8 +9560,12 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);  
     mop = BSystemTypes.generateIsLongOp(); 
     out.println("\n" + mop);  
+    mop = BSystemTypes.generateByte2CharOp(); 
+    out.println("\n" + mop);  
+
     mop = BSystemTypes.generateIsTypeOfOp(); 
     out.println("\n" + mop);  
+
     mop = BSystemTypes.generateBeforeOp(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateAfterOp(); 
@@ -9569,6 +9636,9 @@ public void produceCUI(PrintWriter out)
     out.println("  public class Ocl"); 
     out.println("  { \n"); 
 
+    String mop = BSystemTypes.generateCopyOpsJava7(); 
+    out.println("\n" + mop); 
+
     String timeops = BSystemTypes.generateTimeOp();
     out.println(timeops);
 
@@ -9635,7 +9705,7 @@ public void produceCUI(PrintWriter out)
     // out.println("\n" + mop); 
     // mop = BSystemTypes.generateMinOpJava7();
     // out.println("\n" + mop);
-    String mop = BSystemTypes.generateUnionOpJava7(); 
+    mop = BSystemTypes.generateUnionOpJava7(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateSubtractOpJava7(); 
     out.println("\n" + mop);
@@ -9709,8 +9779,12 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);  
     mop = BSystemTypes.generateIsLongOp(); 
     out.println("\n" + mop);  
+    mop = BSystemTypes.generateByte2CharOp(); 
+    out.println("\n" + mop);  
+
     mop = BSystemTypes.generateIsTypeOfOp(); 
     out.println("\n" + mop);  
+
     mop = BSystemTypes.generateBeforeOp(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateAfterOp(); 
@@ -9818,6 +9892,8 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop); 
     mop = BSystemTypes.generateMinOpCSharp();
     out.println("\n" + mop);
+    mop = BSystemTypes.generateCopyOpsCSharp(); 
+    out.println("\n" + mop); 
     mop = BSystemTypes.generateUnionOpCSharp(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateSubtractOpCSharp(); 
@@ -9886,6 +9962,10 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);  
     mop = BSystemTypes.generateIsLongOpCSharp(); 
     out.println("\n" + mop);  
+    // mop = BSystemTypes.generateByte2CharOpCSharp(); 
+    // out.println("\n" + mop);  
+
+
     mop = BSystemTypes.generateBeforeOpCSharp(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateAfterOpCSharp(); 
@@ -10024,6 +10104,9 @@ public void produceCUI(PrintWriter out)
 
     String mop = BSystemTypes.generateTokeniseOpCPP(); 
     out.println("\n" + mop); 
+
+    mop = BSystemTypes.generateCopyOpsCPP(); 
+    out.println("\n" + mop); 
     
     mop = BSystemTypes.generateRoundOpCPP(); 
     out.println("\n" + mop); 
@@ -10045,6 +10128,9 @@ public void produceCUI(PrintWriter out)
 
     mop = BSystemTypes.generateGCDOpCPP();
     out.println("\n" + mop);
+    mop = BSystemTypes.generateByte2CharOpCPP(); 
+    out.println("\n" + mop);  
+
 
     mop = BSystemTypes.generateSumOpsCPP();
     out.println("\n" + mop);
@@ -10756,6 +10842,9 @@ public void produceCUI(PrintWriter out)
     String initstring = ""; 
     String destructor = "  ~Controller() { \n"; 
         
+    out.println(BSystemTypes.exceptionsCPP()); 
+    out.println(); 
+    out.println(); 
     out.println("class Controller");
     out.println("{ private: ");
     out.println("    map<string,void*> objectmap;"); 
@@ -11341,7 +11430,10 @@ public void produceCUI(PrintWriter out)
     for (int i = 0; i < visuals.size(); i++)
     { VisualData vd = (VisualData) visuals.get(i); 
       ModelElement me2 = (ModelElement) vd.getModelElement(); 
-      if (me2 == me)
+      if (me2 == me || 
+          (me2 != null && me != null && 
+           me2.getName().equals(me.getName()) )
+         )
       { return vd; } 
     } 
     return res; 
@@ -11438,22 +11530,44 @@ public void produceCUI(PrintWriter out)
   { out.println("Integer : PrimitiveType"); 
     out.println("Integer.name = \"int\""); 
     out.println("Integer.typeId = \"-5\""); 
+
     out.println("Boolean : PrimitiveType"); 
     out.println("Boolean.name = \"boolean\""); 
     out.println("Boolean.typeId = \"-1\""); 
+
     out.println("Real : PrimitiveType"); 
     out.println("Real.name = \"double\"");
     out.println("Real.typeId = \"-2\""); 
+
     out.println("Long : PrimitiveType"); 
     out.println("Long.name = \"long\""); 
     out.println("Long.typeId = \"-3\""); 
     
     out.println("String : PrimitiveType"); 
     out.println("String.name = \"String\""); 
-    out.println("String.typeId = \"-4\""); 
+    out.println("String.typeId = \"-4\"");
+ 
     out.println("void : PrimitiveType"); 
     out.println("void.name = \"void\""); 
     out.println("void.typeId = \"void\""); 
+
+    out.println("OclType : PrimitiveType"); 
+    out.println("OclType.name = \"OclType\""); 
+    out.println("OclType.typeId = \"-10\""); 
+
+    out.println("OclAny : PrimitiveType"); 
+    out.println("OclAny.name = \"OclAny\""); 
+    out.println("OclAny.typeId = \"-12\""); 
+
+    out.println("OclDate : PrimitiveType"); 
+    out.println("OclDate.name = \"OclDate\""); 
+    out.println("OclDate.typeId = \"-14\""); 
+
+    out.println("OclProcess : PrimitiveType"); 
+    out.println("OclProcess.name = \"OclProcess\""); 
+    out.println("OclProcess.typeId = \"-16\""); 
+
+
     // out.println("SetType : CollectionType"); 
     // out.println("SetType.name = \"Set\""); 
     // out.println("SequenceType : CollectionType"); 
@@ -11466,11 +11580,18 @@ public void produceCUI(PrintWriter out)
     Vector realentities = new Vector(); 
 
     saveBasicTypes(out); 
+
+    for (int i = 0; i < visuals.size(); i++)
+    { VisualData vd = (VisualData) visuals.get(i); 
+      ModelElement me = (ModelElement) vd.getModelElement(); 
+      if (vd instanceof RectData && me instanceof Type) 
+      { me.asTextModel(out); }  
+    } 
     
     for (int i = 0; i < visuals.size(); i++)
     { VisualData vd = (VisualData) visuals.get(i); 
       ModelElement me = (ModelElement) vd.getModelElement(); 
-      if (vd instanceof RectData) // Entity or Type
+      if (vd instanceof RectData && me instanceof Entity)
       { me.asTextModel(out); }  
       else if (vd instanceof LineData) // Association or Generalisation
       { LineData ld = (LineData) vd;
@@ -11507,7 +11628,9 @@ public void produceCUI(PrintWriter out)
       e.asTextModel2(out,entities,types); 
     } 
 
+    System.out.println(); 
     System.out.println(">>> Design model saved to output/model.txt"); 
+    System.out.println(); 
 
     return realentities; 
   } 
@@ -11857,9 +11980,17 @@ public void produceCUI(PrintWriter out)
       return; 
     } 
 
+    xx.entities = new Vector(); 
+    xx.entities.addAll(entities); 
+    xx.enumtypes = new Vector(); 
+    xx.enumtypes.addAll(types); 
+
     System.out.println(xx.toKM3()); 
     System.out.println(); 
     System.out.println(); 
+
+    Date d1 = new Date(); 
+    long time1 = d1.getTime(); 
 
     String tt = xx.cg(spec); 
     System.out.println(tt); 
@@ -11869,6 +12000,70 @@ public void produceCUI(PrintWriter out)
     System.out.println(); 
     System.out.println(); 
 
+    Date d2 = new Date(); 
+    long time2 = d2.getTime(); 
+
+    System.out.println(">>> Time for abstraction = " + (time2-time1)); 
+
+    Vector newentities = new Vector(); 
+
+    if (xx.modelElement != null) 
+    { if (xx.modelElement instanceof Entity) 
+      { addEntity((Entity) xx.modelElement, 100, 100); 
+        newentities.add(xx.modelElement); 
+      } 
+      else if (xx.modelElement instanceof Type) 
+      { addType((Type) xx.modelElement, 100, 100); } 
+      else if (xx.modelElement instanceof BehaviouralFeature)
+      { Entity e = new Entity("FromJava"); 
+        e.addOperation((BehaviouralFeature) xx.modelElement); 
+        addEntity(e, 100, 100); 
+      } 
+    } 
+    else if (xx.modelElements != null) 
+    { for (int i = 0; i < xx.modelElements.size(); i++) 
+      { ModelElement me = (ModelElement) xx.modelElements.get(i); 
+        if (me instanceof Entity) 
+        { addEntity((Entity) me, 100+((i/4)*200), 100 + 150*i);
+          newentities.add(me); 
+        } 
+        else if (me instanceof BehaviouralFeature)
+        { Entity e = new Entity("FromJava"); 
+          e.addOperation((BehaviouralFeature) me); 
+          addEntity(e, 100+((i/4)*200), 100 + i*100); 
+        }
+        else if (me instanceof Type) 
+        { addType((Type) me, 100+((i/4)*200), 100 + i*150); } 
+      } // and add inheritances. 
+    }
+
+    repaint(); 
+
+    for (int k = 0; k < newentities.size(); k++) 
+    { Entity nent = (Entity) newentities.get(k); 
+
+      if (nent.getSuperclass() != null) 
+      { Entity supc = nent.getSuperclass(); 
+        Generalisation g = new Generalisation(supc,nent);
+        addInheritance(g,supc,nent);
+      } 
+
+      Vector itfs = nent.getInterfaces(); 
+      System.out.println(">>> Interfaces of " + nent + " are: " + itfs); 
+
+      for (int q = 0; q < itfs.size(); q++) 
+      { Entity supi = (Entity) itfs.get(q);
+        Entity supx = 
+          (Entity) ModelElement.lookupByName(
+                                  supi.getName(),entities);
+        System.out.println(">>> Interface " + supx);   
+        Generalisation gi = new Generalisation(supx,nent);
+        gi.setRealization(true); 
+        addInheritance(gi,supx,nent);
+      } 
+    }    
+
+    repaint(); 
   } 
 
 
@@ -12614,7 +12809,177 @@ public void produceCUI(PrintWriter out)
 
 
   public void loadGenericUseCase()
-  { BufferedReader br = null;
+  { Vector auxcstls = new Vector(); 
+  
+    CGSpec spec = loadCSTL("cgJava2UML.cstl",auxcstls); 
+
+    if (spec == null) 
+    { System.err.println("!! Error: No cg/cgJava2UML.cstl file defined!"); 
+      return; 
+    } 
+
+    BufferedReader br = null;
+    Vector res = new Vector();
+    String s;
+    boolean eof = false;
+    File sourcefile = new File("output/ast.txt");  
+      /* default */ 
+
+    try
+    { br = new BufferedReader(new FileReader(sourcefile)); }
+    catch (FileNotFoundException _e)
+    { System.out.println("File not found: " + sourcefile);
+      return; 
+    }
+
+    String sourcestring = ""; 
+    int noflines = 0; 
+
+    while (!eof)
+    { try { s = br.readLine(); }
+      catch (IOException _ex)
+      { System.out.println("Reading AST file output/ast.txt failed.");
+        return; 
+      }
+      if (s == null) 
+      { eof = true; 
+        break; 
+      }
+      else 
+      { sourcestring = sourcestring + s + " "; } 
+      noflines++; 
+    }
+
+    System.out.println(">>> Read " + noflines + " lines"); 
+
+    Compiler2 c = new Compiler2();    
+
+    ASTTerm xx =
+      c.parseGeneralAST(sourcestring); 
+
+    if (xx == null) 
+    { System.err.println(">>> Invalid text for general AST"); 
+      System.err.println(c.lexicals); 
+      return; 
+    } 
+
+    xx.entities = new Vector(); 
+    xx.entities.addAll(entities); 
+    xx.enumtypes = new Vector(); 
+    xx.enumtypes.addAll(types); 
+
+    System.out.println(xx.toKM3()); 
+    System.out.println(); 
+    System.out.println(); 
+
+    Date d1 = new Date(); 
+    long time1 = d1.getTime(); 
+
+    String tt = xx.cg(spec); 
+    System.out.println(tt); 
+    System.out.println(); 
+
+    System.out.println(xx.toKM3()); 
+    System.out.println(); 
+    System.out.println(); 
+
+    Date d2 = new Date(); 
+    long time2 = d2.getTime(); 
+
+    System.out.println(">>> Time for abstraction = " + (time2-time1)); 
+
+    Vector newentities = new Vector(); 
+    String pname = ASTTerm.packageName; 
+    if (pname != null) 
+    { System.out.println(">>> System name is: " + pname); 
+      systemName = pname; 
+    } 
+
+    if (xx.modelElement != null) 
+    { if (xx.modelElement instanceof Entity) 
+      { Entity newent = (Entity) xx.modelElement; 
+        if (newent.isInterface() || newent.hasConstructor()) 
+        { } 
+        else 
+        { newent.addDefaultConstructor(); } 
+
+        addEntity(newent, 100, 100); 
+        newentities.add(xx.modelElement); 
+      } 
+      else if (xx.modelElement instanceof Type) 
+      { addType((Type) xx.modelElement, 100, 100); } 
+      else if (xx.modelElement instanceof BehaviouralFeature)
+      { Entity e = new Entity("FromJava"); 
+        e.addOperation((BehaviouralFeature) xx.modelElement); 
+        addEntity(e, 100, 100); 
+      } 
+    } 
+    else if (xx.modelElements != null) 
+    { for (int i = 0; i < xx.modelElements.size(); i++) 
+      { ModelElement me = (ModelElement) xx.modelElements.get(i); 
+        if (me instanceof Entity) 
+        { Entity newent = (Entity) me; 
+          if (newent.isInterface() ||
+              newent.hasConstructor()) 
+          { } 
+          else 
+          { newent.addDefaultConstructor(); } 
+
+          addEntity(newent, 100+(i*50), 100 + (150*i % 600));
+          newentities.add(newent); 
+        } 
+        else if (me instanceof BehaviouralFeature)
+        { Entity e = new Entity("FromJava"); 
+          e.addOperation((BehaviouralFeature) me); 
+          addEntity(e, 100+(i*50), 100 + i*100); 
+        }
+        else if (me instanceof Type) 
+        { addType((Type) me, 100+(i*50), 100 + (i*150 % 600)); } 
+      } // and add inheritances. 
+    }
+
+    repaint(); 
+
+    for (int k = 0; k < newentities.size(); k++) 
+    { Entity nent = (Entity) newentities.get(k);
+      // System.out.println(">>> Entity " + nent + " has attributes " + nent.allAttributes());    
+ 
+      if (nent.getSuperclass() != null) 
+      { Entity supc = nent.getSuperclass();
+        Entity actualSup = 
+          (Entity) ModelElement.lookupByName(supc.getName(), 
+                                             entities); 
+        if (actualSup != null)  
+        { Generalisation g = new Generalisation(actualSup,nent);
+          addInheritance(g,actualSup,nent);
+          nent.setSuperclass(actualSup); 
+
+          // System.out.println(">>> Entity " + nent + " inherits " + 
+          // actualSup + " attributes: " + actualSup.allAttributes() + " " + 
+          // nent.allAttributes() + " " + actualSup.getAttributes());
+        }  
+      } 
+
+      Vector itfs = nent.getInterfaces(); 
+      System.out.println(">>> Interfaces of " + nent + " are: " + itfs); 
+
+      for (int q = 0; q < itfs.size(); q++) 
+      { Entity supi = (Entity) itfs.get(q);
+        // Entity supx = 
+        //   (Entity) ModelElement.lookupByName(
+        //                           supi.getName(),entities);
+        // System.out.println(">>> Interface " + supx);   
+        Generalisation gi = new Generalisation(supi,nent);
+        gi.setRealization(true); 
+        addInheritance(gi,supi,nent);
+      } 
+
+    }    
+
+    repaint(); 
+  }
+
+  /* BufferedReader br = null;
     Vector res = new Vector();
     String s;
     boolean eof = false;
@@ -12724,6 +13089,8 @@ public void produceCUI(PrintWriter out)
       useCases.add(newuc); 
     } 
   } // the generic use case is in its own file
+
+   */ 
 
   public void typeCheckOps()
   { System.out.println(">> Rechecking operations"); 
@@ -14600,7 +14967,7 @@ public void produceCUI(PrintWriter out)
     while (!eof)
     { try { s = br.readLine(); }
       catch (IOException e)
-      { System.out.println("Reading failed.");
+      { System.out.println("!! Reading " + file.getName() + " failed.");
         return; 
       }
       if (s == null) 
@@ -14609,7 +14976,11 @@ public void produceCUI(PrintWriter out)
       }
       else if (s.startsWith("--")) { } 
       else 
-      { xmlstring = xmlstring + s + " "; } 
+      { int cindex = s.indexOf("//"); 
+        if (cindex > 0) 
+        { s = s.substring(0, cindex); } 
+        xmlstring = xmlstring + s + " "; 
+      } 
       linecount++; 
     }
 
@@ -16369,7 +16740,7 @@ public void produceCUI(PrintWriter out)
       families.add(ff);
     }
     else if (f1 == f2)
-    { System.out.println("Error: duplicate " +
+    { System.out.println("Error!!: duplicate " +
             "inheritance " + g);
       f1.invalidate();
       return false; 
@@ -16380,8 +16751,8 @@ public void produceCUI(PrintWriter out)
     { if (f1.hasMaximal(desc))
       { f1.replaceMaximal(desc,ansc); }
       else
-      { System.out.println("Error: multiple " +
-                           "inheritance for " + desc);
+      { System.out.println("Warning!: multiple " +
+                           "direct supertypes for " + desc);
         f1.addMaximal(ansc);
         f1.invalidate();
         return false; 
@@ -16393,7 +16764,7 @@ public void produceCUI(PrintWriter out)
         families.remove(f2);
       }
       else
-      { System.out.println("Error: multiple inheritance"
+      { System.out.println("Warning!: multiple direct supertypes"
                            + " for " + desc);
         f1.impureUnion(f2);
         families.remove(f2);
@@ -17308,9 +17679,14 @@ public void produceCUI(PrintWriter out)
     "            String role = right.substring(i2+1,right.length());\n" +  
     "            Object objinst = objectmap.get(obj); \n" +
     "            if (objinst == null) \n" +
-    "            { continue; }\n" + 
+    "            { System.err.println(\"Warning: no object \" + obj); continue; }\n" + 
     "            Object val = objectmap.get(left);\n" + 
-    "            if (val == null) \n" +
+    "            if (val == null &&\n" +  
+    "                left.length() > 1 &&\n" +  
+    "                left.startsWith(\"\\\"\") &&\n" +  
+    "                left.endsWith(\"\\\"\"))\n" + 
+    "            { val = left.substring(1,left.length()-1); }\n" +  
+    "            else if (val == null) \n" +
     "            { continue; }\n" + 
     "            Class objC = objinst.getClass();\n" + 
     "            Class typeclass = val.getClass(); \n" +

@@ -72,7 +72,15 @@ public class CGSpec
     umlRules.put("Class", classRules); 
     umlRules.put("UseCase", usecaseRules); 
     umlRules.put("Attribute", attributeRules); 
-    
+    umlRules.put("Operation", operationRules); 
+    umlRules.put("Enumeration", enumerationRules); 
+    umlRules.put("Datatype", datatypeRules); 
+    umlRules.put("Attribute", attributeRules); 
+    umlRules.put("Package", packageRules); 
+    umlRules.put("Parameter", parameterRules); 
+    umlRules.put("ParameterArgument", parameterArgumentRules); 
+   
+
     entities = ents;  
   }
 
@@ -110,14 +118,14 @@ public class CGSpec
     return obj.cgRules(this,res); 
   } 
 
-  public String applyUMLRuleset(String category, ModelElement obj)
-  { Vector res = (Vector) umlRules.get(category); 
+/*  public String applyUMLRuleset(String category, ModelElement obj)
+  { Vector res = (Vector) categoryRules.get(category); 
     if (res == null) 
     { System.err.println("!! Warning: no rules for category " + category); 
       return obj + ""; 
     } 
-    return obj.cgRules(this,res); 
-  } 
+    
+  } */  
 
   public void addTypeUseRule(CGRule r)
   { typeUseRules.add(r); }
@@ -521,20 +529,24 @@ public class CGSpec
       { return r; }
       else if (t.isEntityType() && r.hasCondition("class"))
       { return r; }
-      else if (t.isSetType() && trimmedlhs.startsWith("Set"))
+      else if (t.isSetType() && trimmedlhs.startsWith("Set") )
       { if (elemT != null && trimmedlhs.equals("Set(" + elemT + ")"))
         { return r; }
-        else if (elemT == null && trimmedlhs.equals("Set()"))
+        else if (elemT == null && 
+                 (trimmedlhs.equals("Set()") ||
+                  trimmedlhs.equals("Set")))
         { return r; }
-        else if (trimmedlhs.equals("Set(_1)"))
+        else if (elemT != null && trimmedlhs.equals("Set(_1)"))
         { return r; } 
       } 
       else if (t.isSequenceType() && trimmedlhs.startsWith("Sequence"))
       { if (elemT != null && trimmedlhs.equals("Sequence(" + elemT + ")"))
         { return r; }
-        else if (elemT == null && trimmedlhs.equals("Sequence()"))
+        else if (elemT == null && 
+                 (trimmedlhs.equals("Sequence()") || 
+                  trimmedlhs.equals("Sequence")))
         { return r; }
-        else if (trimmedlhs.equals("Sequence(_1)"))
+        else if (elemT != null && trimmedlhs.equals("Sequence(_1)"))
         { return r; }
       }
       else if (trimmedlhs.equals("_1") && 
@@ -876,20 +888,30 @@ public class CGSpec
       { selected = r;
         BasicExpression e1 = (BasicExpression) e.clone(); 
         e1.arrayIndex = null; 
+        e1.elementType = e.type; 
+        // type of e1 could be either a map or sequence.
+        System.out.println(">>> " + e1 + " element type is: " + e1.elementType); 
+        System.out.println(); 
+ 
+        if (ind.type != null && ind.type.isInteger())
+        { e1.type = new Type("Sequence", null); } 
+        else 
+        { e1.type = new Type("Map", null); } 
+
         args.add(e1); // But again the type can be different. 
         args.add(ind); // condition is on _2 
       }
       else if (ind == null && obj != null && pars == null && trimmedlhs.equals("_1._2"))
       { selected = r; 
-	    args.add(obj); 
-	    args.add(cl); 
-	  }
+        args.add(obj); 
+        args.add(cl); 
+      }
       else if (obj != null && ind == null && pars != null && trimmedlhs.equals("_1._2(_3)"))
       { selected = r; 
-	    args.add(obj); 
-	    args.add(cl); 
-	    args.add(pars); 
-	  }
+        args.add(obj); 
+        args.add(cl); 
+        args.add(pars); 
+      }
       else if (obj == null && ind == null && pars != null && trimmedlhs.equals("_1(_2)"))
       { selected = r; 
         args.add(cl); 
@@ -911,12 +933,12 @@ public class CGSpec
 	  else if (trimmedlhs.endsWith("(_1)") && pars != null && ModelElement.haveCommonPrefix(etext,trimmedlhs))
 	  { String prefix = ModelElement.longestCommonPrefix(etext,trimmedlhs); 
         if (prefix.length() == trimmedlhs.length() - 4) 
-		{ selected = r; 
+        { selected = r; 
           args.add(pars);
           matchedtextrules.add(r);
-		}  
-	  }
-	  else if (trimmedlhs.endsWith("_1()") && (pars == null || pars.size() == 0) && 
+        }  
+      }
+      else if (trimmedlhs.endsWith("_1()") && (pars == null || pars.size() == 0) && 
 	           ModelElement.haveCommonPrefix(etext,trimmedlhs))
 	  { String prefix = ModelElement.longestCommonPrefix(etext,trimmedlhs); 
         if (prefix.length() == trimmedlhs.length() - 4)
