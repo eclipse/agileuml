@@ -751,6 +751,10 @@ public class CGSpec
       args.add(e.getRight()); 
 	  // add v as a reference to the right? 
     } // and for ->sortedBy, etc
+    else if ("->oclAsType".equals(op) && e.getType() != null)
+    { args.add(e.getLeft()); 
+      args.add(e.getType()); 
+    } // likewise for ->oclIsKindOf, ->oclIsTypeOf
     else 
     { args.add(e.getLeft()); 
       args.add(e.getRight()); 
@@ -773,8 +777,8 @@ public class CGSpec
 
       if (selected != null && selected.satisfiesConditions(args,entities))
       { return selected; } 
-   }
-   return null;
+    }
+    return null;
   } // _1 binds to left, _2 to right
 
   public CGRule matchedConditionalExpressionRule(ConditionalExpression e, String etext)
@@ -1071,9 +1075,9 @@ public class CGSpec
       else if (r.lhs.indexOf("identity") < 0 && r.lhs.indexOf("static") < 0)   
       { selected = r; }
     
-	  if (selected != null && selected.satisfiesConditions(args,entities))
+      if (selected != null && selected.satisfiesConditions(args,entities))
       { return selected; } 
-	}
+    }
 
     return null;
   } 
@@ -1082,57 +1086,52 @@ public class CGSpec
   { for (int x = 0; x < attributeRules.size(); x++)
     { CGRule r = (CGRule) attributeRules.get(x);
 	
-	  System.out.println(">> matching reference " + e + " with type " + e.getType()); 
-	  System.out.println(r.conditions); 
-	  System.out.println(); 
+      System.out.println(">> Trying to match reference " + e + " with type " + e.getType()); 
+      System.out.println(">> Trying Rule: " + r); 
+      System.out.println(); 
+      System.out.println(">> Entities are: " + entities); 
+      System.out.println(); 
+
 	  
       if (r.lhs.startsWith("reference")) 
       { Type t = e.getType(); 
-	    if (t == null) { continue; }
+        if (t == null) { continue; }
 		
-		String tname = t.getName(); 
+        String tname = t.getName(); 
 		
-	    if (t.isEntityType()) 
+        if (t.isEntityType(entities)) 
         { if (r.hasCondition("class"))
           { return r; }
           else if (r.hasNegativeCondition("class"))
           { } 
-		  else if (r.hasNoCondition()) 
-		  { return r; }
+          else if (r.hasNoCondition()) 
+          { return r; }
         } 
-	    else 
+        else 
         { if (r.hasNegativeCondition("class"))
           { return r; }
           else if (r.hasCondition("class"))
           { } 
-		  else if (r.hasNoCondition()) 
-		  { return r; }
+          else if (r.hasNoCondition()) 
+          { return r; }
         } 
 		
-		if (t.isMapType()) 
+        if (t.isMapType()) 
         { if (r.hasCondition("map"))
           { return r; }
           else if (r.hasNegativeCondition("map"))
           { } 
-		  else if (r.hasNoCondition())
-		  { return r; }
-        } 
-		else  
-        { if (r.hasCondition("map"))
+          else if (r.hasNoCondition())
           { return r; }
-          else if (r.hasNegativeCondition("map"))
-          { } 
-		  else if (r.hasNoCondition())
-		  { return r; }
         } 
-		
-		if (t.isFunctionType()) 
+        	
+        if (t.isFunctionType()) 
         { if (r.hasCondition("function"))
           { return r; }
           else if (r.hasNegativeCondition("function"))
           { } 
-		  else if (r.hasNoCondition())
-		  { return r; }
+          else if (r.hasNoCondition())
+          { return r; }
         } 
         else 
         { if (r.hasNegativeCondition("function"))
@@ -1142,8 +1141,42 @@ public class CGSpec
           else if (r.hasNoCondition())
           { return r; }
         }
+
+        if (t.isSequenceType()) 
+        { if (r.hasCondition("Sequence"))
+          { return r; }
+          else if (r.hasNegativeCondition("Sequence"))
+          { } 
+          else if (r.hasNoCondition())
+          { return r; } 
+        } 
+        else 
+        { if (r.hasNegativeCondition("Sequence"))
+          { return r; } 
+          else if (r.hasCondition("Sequence"))
+          { } 
+          else if (r.hasNoCondition())
+          { return r; }
+        }
+
+        if (t.isSetType()) 
+        { if (r.hasCondition("Set"))
+          { return r; }
+          else if (r.hasNegativeCondition("Set"))
+          { } 
+          else if (r.hasNoCondition())
+          { return r; } 
+        } 
+        else 
+        { if (r.hasNegativeCondition("Set"))
+          { return r; } 
+          else if (r.hasCondition("Set"))
+          { } 
+          else if (r.hasNoCondition())
+          { return r; }
+        }
 		
-		if (t.isCollectionType()) 
+        if (t.isCollectionType()) 
         { if (r.hasCondition("collection"))
           { return r; }
           else if (r.hasNegativeCondition("collection"))

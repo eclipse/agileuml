@@ -1064,12 +1064,19 @@ public class Compiler2
     String typ = lexicals.get(st) + ""; 
 
     if (st == en && 
-        ("int".equals(typ) || "long".equals(typ) || typ.equals("String") || 
-         "Integer".equals(typ) || "Real".equals(typ) || typ.equals("Boolean") || 
-         "void".equals(typ) || typ.equals("double") || typ.equals("boolean") ||
+        ("int".equals(typ) || "long".equals(typ) || 
+         typ.equals("String") || 
+         "Integer".equals(typ) || "Real".equals(typ) || 
+         typ.equals("Boolean") || 
+         "void".equals(typ) || typ.equals("double") || 
+         typ.equals("boolean") ||
          "OclAny".equals(typ) || "OclVoid".equals(typ) ||
          "OclType".equals(typ) || "OclDate".equals(typ) ||
-         "OclIterator".equals(typ) ||  
+         "OclIterator".equals(typ) || 
+         "OclFile".equals(typ) ||
+         "OclProcess".equals(typ) || 
+         "OclException".equals(typ) ||  
+         Type.isOCLExceptionType(typ) ||  
          typ.startsWith("_")))
     { // System.out.println("Creating new basic type " + typ);
       return new Type(typ,null);
@@ -3011,9 +3018,10 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
 
 
 public BehaviouralFeature operationDefinition(int st, int en, Vector entities, Vector types)
-{ // query|operation name(pars) : returnType 
+{ // query|operation name<typepars>(pars) : returnType 
   // pre: expr1
-  // post: expr2; 
+  // post: expr2
+  // activity: stat; 
   
   if (en <= st) { return null; }
   boolean valid = false; 
@@ -3021,13 +3029,28 @@ public BehaviouralFeature operationDefinition(int st, int en, Vector entities, V
   boolean foundpost = false; 
 
   String opname = lexicals.get(st) + "";
+   
   BehaviouralFeature bf = new BehaviouralFeature(opname);
   int st0 = st + 1;
+  int parsStart = st0; 
+
+  if (st0+2 < en && 
+      "<".equals(lexicals.get(st0) + "") && 
+      ">".equals(lexicals.get(st0+2) + ""))
+  { String parType = lexicals.get(st0+1) + "";
+    Entity ptEnt = new Entity(parType); 
+    Type pt = new Type(ptEnt); 
+    bf.addTypeParameter(pt);  
+    entities.add(ptEnt); 
+    st0 = st0+3; 
+    parsStart = st0; 
+  } 
+
   for (int i = st0; i < en; i++)
   { String lx = lexicals.get(i) + "";
     String lx1 = lexicals.get(i+1) + "";
     if (lx.equals("pre") && lx1.equals(":"))
-    { parseOpDecs(st+1,i-1,entities,types,bf); 
+    { parseOpDecs(parsStart,i-1,entities,types,bf); 
       foundpre = true; 
       st0 = i+2;
     }
@@ -3062,6 +3085,9 @@ public BehaviouralFeature operationDefinition(int st, int en, Vector entities, V
             checkBrackets(j+2,en); 
           } 
           bf.setActivity(act); 
+
+          removeTypeParameters(bf.getTypeParameters(), entities); 
+
           return bf;  
         }    
       }
@@ -3080,7 +3106,7 @@ public BehaviouralFeature operationDefinition(int st, int en, Vector entities, V
 
   if (foundpost == false)
   { System.err.println("**** Invalid operation definition, no postcondition: " + showLexicals(st,en)); 
-    parseOpDecs(st+1,en,entities,types,bf); 
+    parseOpDecs(parsStart,en,entities,types,bf); 
   }
   else 
   { Expression pst = parse_expression(0,st0,en);
@@ -3093,6 +3119,8 @@ public BehaviouralFeature operationDefinition(int st, int en, Vector entities, V
       valid = true; 
     }
   } 
+
+  removeTypeParameters(bf.getTypeParameters(), entities); 
 
   return bf;
 }
@@ -3151,6 +3179,7 @@ private void parseOpDecs(int st, int en, Vector entities, Vector types, Behaviou
           break; 
         } 
       }
+
       if (att == null) 
       { att = parseParameterDec(j-1, bracketend-1, entities, types); 
         if (att != null) 
@@ -4439,6 +4468,13 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         return "static"; 
       } 
 
+      if ("implements".startsWith(st))
+      { mess[0] = "implements a list of interfaces, eg.,\n" + 
+                  "class A implements IA, IB { ... }"; 
+        return "implements"; 
+      } 
+
+
       if ("String".startsWith(st)) 
       { mess[0] = "String type. Empty string is \"\"\nOperators include:  s->size()  s1 + s2  s1->indexOf(s2)  s->at(index)  s->display()  s->tail()  s->first()\ns.subrange(i,j)  s.subrange(i)  s->isMatch(pattern)  s->allMatches(patt)  s->trim()\n"; 
         return "String"; 
@@ -5570,8 +5606,24 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     } 
 
     // Parsing a class
+
+    Entity res = new Entity(rname); 
+    res.setCardinality("*"); 
 	
     String supr = ""; 
+
+    if ("<".equals(lexicals.get(start) + "") && 
+        ">".equals(lexicals.get(start + 2) + ""))
+    { System.out.println(">>> Generic class, parameter " + lexicals.get(start + 1));
+      String parType = lexicals.get(start + 1) + ""; 
+      Entity parEnt = new Entity(parType);
+      parEnt.addStereotype("derived"); 
+ 
+      Type parT = new Type(parEnt); 
+      res.addTypeParameter(parT); 
+      entities.add(parEnt); 
+      start = start + 3;  
+    } 
 
     if ("extends".equals(lexicals.get(start) + "") || 
         "implements".equals(lexicals.get(start) + ""))
@@ -5602,8 +5654,6 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     { start = start + 1; } 
 
     
-    Entity res = new Entity(rname); 
-    res.setCardinality("*"); 
 
     if (abstr) 
     { res.setAbstract(true); } 
@@ -5825,18 +5875,18 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 	    }
         else 
         { System.err.println("!! Invalid invariant expression: " + showLexicals(reached+1,en-2)); 
-	      checkBrackets(reached+1,en-2); 
+          checkBrackets(reached+1,en-2); 
           Vector error5 = new Vector(); 
-	 	  error5.add("Invalid invariant"); 
-		  error5.add(showLexicals(reached+1,en-2)); 
-		  errors.add(error5); 
-		}
-	  }  
+          error5.add("Invalid invariant"); 
+          error5.add(showLexicals(reached+1,en-2)); 
+          errors.add(error5); 
+        }
+      }  
       else if ("stereotype".equals(lexicals.get(reached) + ""))
 	  { /* Expression expr = parse_expression(0,reached+1,en-2); 
-		if (expr != null) 
-    	{ if (expr instanceof BasicExpression) 
-		  { res.addStereotype(expr + ""); }
+         if (expr != null) 
+    	    { if (expr instanceof BasicExpression) 
+           { res.addStereotype(expr + ""); }
 		  else if (expr instanceof BinaryExpression)
 		  { BinaryExpression binexpr = (BinaryExpression) expr; 
 		    res.addStereotype(binexpr.left + "" + binexpr.operator + "" + binexpr.right); 
@@ -5862,7 +5912,21 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 	  }   
     } 
 
+    // remove res.typeParameters from entities
+    Vector tpars = res.getTypeParameters();
+    removeTypeParameters(tpars, entities);
+ 
     return res; 
+  } 
+
+  private void removeTypeParameters(Vector tpars, Vector entities)
+  { Vector parEnts = new Vector(); 
+    for (int i = 0; i < tpars.size(); i++) 
+    { Type tp = (Type) tpars.get(i); 
+      if (tp.isEntity())
+      { parEnts.add(tp.getEntity()); } 
+    } 
+    entities.removeAll(parEnts); 
   } 
 
   public void parseUseCaseParameters(UseCase uc, int st, int en, Vector entities, Vector types)  

@@ -149,6 +149,11 @@ public class UseCase extends ModelElement
     return null; 
   } 
 
+  public void setTypeParameters(Vector tpars)
+  { if (classifier != null) 
+    { classifier.setTypeParameters(tpars); } 
+  } 
+
   public Entity getClassifier() 
   { return classifier; } 
 

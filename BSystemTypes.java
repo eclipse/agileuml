@@ -8977,17 +8977,30 @@ public class BSystemTypes extends BComponent
       "      return new String(bb); }\n" + 
       "    catch (Exception _e)\n" + 
       "    { return \"\"; }\n" + 
-      "  }\n"; 
+      "  }\n\n"; 
+    res = res + "  public static int char2byte(String s)\n" +
+      "  { if (s == null || s.length() == 0)\n" +
+      "    { return -1; } \n" +
+      "    return (int) s.charAt(0);\n" +  
+      "  }\n\n";
+
     return res; 
   } 
 
   public static String generateByte2CharOpCPP()
-  { String res = " public static String byte2char(int b)\n" + 
+  { String res = "  static string byte2char(int b)\n" + 
       "  { int arr[] = {0};\n" +  
       "    arr[0] = b;\n" + 
       "    string str = string((char*) arr);\n" +  
       "    return str;\n" + 
-      "  }\n"; 
+      "  }\n\n"; 
+    res = res + 
+      "  static int char2byte(string str)\n" + 
+      "  { if (str.length() == 0)\n" + 
+      "    { return -1; } \n" + 
+      "    char x = str[0];\n" + 
+      "    return (int) x;\n" + 
+      "  } \n"; 
     return res; 
   } 
 

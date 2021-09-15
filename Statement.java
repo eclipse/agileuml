@@ -1462,7 +1462,11 @@ class InvocationStatement extends Statement
     if (callExp instanceof BasicExpression)
     { BasicExpression callbe = (BasicExpression) callExp; 
       String callString = callbe.data;
+
       Vector callpars = callbe.getParameters();
+      if (callpars == null) 
+      { callpars = new Vector(); } 
+
       for (int i = 0; i < callpars.size(); i++) 
       { Expression callpar = (Expression) callpars.get(i); 
         res.addAll(callpar.allReadFrame()); 
@@ -1473,6 +1477,9 @@ class InvocationStatement extends Statement
         if (op != null) 
         { Expression post = op.getPost(); 
           Vector params = op.getParameters(); 
+          if (params == null) 
+          { params = new Vector(); } 
+
           Vector postrd = post.allReadFrame(); 
           // subtract each params name:
           res.addAll(postrd);  
@@ -1496,6 +1503,8 @@ class InvocationStatement extends Statement
     { BasicExpression callbe = (BasicExpression) callExp; 
       String callString = callbe.data;
       Vector callpars = callbe.getParameters();
+      if (callpars == null) 
+      { callpars = new Vector(); } 
       
       if (entity != null) 
       { BehaviouralFeature op = entity.getDefinedOperation(callString); 
@@ -2971,16 +2980,30 @@ class WhileStatement extends Statement
 
     Vector eargs = new Vector(); 
     Vector args = new Vector();
+
+    String bodyText = ""; 
+    if (body != null) 
+    { bodyText = body.cg(cgs); } 
+    else 
+    { bodyText = (new SequenceStatement()).cg(cgs); } 
+
+    Expression ltest = loopTest; 
+    if (loopTest == null) 
+    { ltest = new BasicExpression(true); } 
+    
     if (loopKind == WHILE) 
-    { args.add(loopTest.cg(cgs));
-      args.add(body.cg(cgs));
-      eargs.add(loopTest); 
+    { args.add(ltest.cg(cgs));  
+      args.add(bodyText);
+      eargs.add(ltest); 
       eargs.add(body); 
     } 
     else 
     { args.add(loopVar + ""); 
-      args.add(loopRange.cg(cgs)); 
-      args.add(body.cg(cgs)); 
+      if (loopRange != null) 
+      { args.add(loopRange.cg(cgs)); } 
+      else 
+      { args.add(""); }  
+      args.add(bodyText); 
       eargs.add(loopVar); 
       eargs.add(loopRange); 
       eargs.add(body); 
@@ -7562,14 +7585,14 @@ class ConditionalStatement extends Statement
   { String etext = this + "";
     Vector args = new Vector();
 	
-	if ("true".equals(test + ""))
-	{ return ifPart.cg(cgs); }
+    if ("true".equals(test + ""))
+    { return ifPart.cg(cgs); }
 	
     args.add(test.cg(cgs));
     args.add(ifPart.cg(cgs));
     if (elsePart == null) 
-	{ elsePart = new SequenceStatement(); } 
-	args.add(elsePart.cg(cgs));
+    { elsePart = new SequenceStatement(); } 
+    args.add(elsePart.cg(cgs));
 
     CGRule r = cgs.matchedStatementRule(this,etext);
     if (r != null)
@@ -7606,7 +7629,7 @@ class ConditionalStatement extends Statement
   public Statement generateDesign(java.util.Map env, boolean local)
   { Statement ifc = ifPart.generateDesign(env,local);
     if ("true".equals(test + ""))
-	{ return ifc; } 
+    { return ifc; } 
     Statement elsec = null; 
     if (elsePart != null) 
     { elsec = elsePart.generateDesign(env,local); }
@@ -7615,8 +7638,12 @@ class ConditionalStatement extends Statement
 
   public String toString()
   { String res = "if " + test + " then " + ifPart;
-    if (elsePart != null)
-    { res = res + " else " + elsePart; }
+
+    if (elsePart == null || "skip".equals(elsePart + "")) 
+    { res = res + " else skip "; } 
+    else 
+    { res = res + " else ( " + elsePart + " )"; }
+
     return res;
   }
 

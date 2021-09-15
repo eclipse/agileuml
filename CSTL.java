@@ -85,7 +85,8 @@ public class CSTL
       { eof = true; 
         break; 
       }
-      else if (s.startsWith("--")) { } 
+      else if (s.startsWith("/*") && s.endsWith("*/")) 
+      { } 
       else if (s.trim().length() == 0) { } 
       // else if (s.startsWith("import "))
       // { String[] strs = s.split(" "); 

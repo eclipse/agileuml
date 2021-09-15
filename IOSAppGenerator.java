@@ -217,22 +217,29 @@ public class IOSAppGenerator extends AppGenerator
       out.println(); 
 
       for (int k = 0; k < atts.size(); k++) 
-      { Attribute byatt = (Attribute) atts.get(k); 
+      { Attribute byatt = (Attribute) atts.get(k);
+        if (byatt.isMultiple())
+        { continue; }  
+
+        String eqop = "=="; 
+        if (byatt.isEntity())
+        { eqop = "==="; } 
+ 
         String attname = byatt.getName(); 
         String intype = byatt.getType().getSwift(); 
         out.println("  func searchBy" + item + attname + "(_val : " + intype + ") -> [" + item + "VO]"); 
         if (ee.isPersistent())
-		{ out.println("  { if dbi != nil"); 
+        { out.println("  { if dbi != nil"); 
           out.println("    { let _res = (dbi?.searchBy" + item + attname + "(_val: _val))!");
           out.println("      return _res"); 
           out.println("    }");
-		} 
-		else 
-		{ out.println("  {"); } 
+        } 
+        else 
+        { out.println("  {"); } 
         out.println("    current" + item + "s = [" + item + "VO]()"); 
         out.println("    let _list : [" + item + "] = " + item + "_allInstances"); 
         out.println("    for (_,x) in _list.enumerated()"); 
-        out.println("    { if x." + attname + " == _val"); 
+        out.println("    { if x." + attname + " " + eqop + " _val"); 
         out.println("      { current" + item + "s.append(" + item + "VO(_x: x)) }");
         out.println("    }");  
         out.println("    return current" + item + "s"); 
@@ -247,18 +254,21 @@ public class IOSAppGenerator extends AppGenerator
         out.println("  func get" + item + "ByPK(_val : String) -> " + item + "?"); 
         out.println("  { var _res : " + item + "? = " + item + ".getByPK" + item + "(index: _val)"); 
         if (ee.isPersistent())
-		{ out.println("    if _res == nil && dbi != nil"); 
+        { out.println("    if _res == nil && dbi != nil"); 
           out.println("    { let _list = dbi!.searchBy" + item + pk + "(_val: _val) ");
           out.println("      if _list.count > 0"); 
           out.println("      { _res = createByPK" + item + "(key: _val)"); 
           for (int i = 0; i < atts.size(); i++) 
           { Attribute att = (Attribute) atts.get(i);
-            String attname = att.getName();  
+            String attname = att.getName(); 
+            if (att.isMultiple())
+            { continue; }  
+ 
             out.println("        _res!." + attname + " = _list[0]." + attname); 
           } 
           out.println("      }"); 
           out.println("    }"); 
-		} 
+	   } 
         out.println("    return _res");  
         out.println("  }"); 
         out.println();
@@ -269,7 +279,7 @@ public class IOSAppGenerator extends AppGenerator
         out.println(); 
         out.println("  func persist" + item + "(_x : " + item + ")"); 
         out.println("  { // This assumes that the element is already in the database"); 
-		out.println("    let _vo : " + item + "VO = " + item + "VO(_x: _x)"); 
+        out.println("    let _vo : " + item + "VO = " + item + "VO(_x: _x)"); 
         out.println("    edit" + item + "(_x: _vo) "); 
         out.println("  }"); 
         out.println(); 
@@ -297,15 +307,18 @@ public class IOSAppGenerator extends AppGenerator
         out.println("    if _res != nil {");  
         for (int i = 0; i < atts.size(); i++) 
         { Attribute att = (Attribute) atts.get(i);
+
+          if (att.isMultiple()) { continue; } 
+
           String attname = att.getName();  
           out.println("      _res!." + attname + " = _x." + attname); 
         } 
         out.println("    }");
         out.println("    current" + item + " = _x"); 
         if (ee.isPersistent())
-		{ out.println("    if dbi != nil"); 
+	   { out.println("    if dbi != nil"); 
           out.println("    { dbi!.edit" + item + "(" + itemvo + ": _x) }");
-		} 
+        } 
         out.println("  }"); 
         out.println();
       } 
@@ -323,14 +336,16 @@ public class IOSAppGenerator extends AppGenerator
          out.println("  { let _res : " + item + " = createByPK" + item + "(key: _x." + pk + ")"); 
          for (int i = 0; i < atts.size(); i++) 
          { Attribute att = (Attribute) atts.get(i);
+           if (att.isMultiple())
+           { continue; }  
            String attname = att.getName();  
            out.println("    _res." + attname + " = _x." + attname); 
          } 
          out.println("    current" + item + " = _x"); 
          if (ee.isPersistent())
-		 { out.println("    do { try dbi?.create" + item + "(" + itemvo + ": _x) }"); 
+	    { out.println("    do { try dbi?.create" + item + "(" + itemvo + ": _x) }"); 
            out.println("    catch { print(\"Error creating " + item + "\") }"); 
-		 }
+         }
          out.println("  }"); 
          out.println();
        } 
@@ -340,19 +355,21 @@ public class IOSAppGenerator extends AppGenerator
          out.println("    current" + item + " = _x"); 
          out.println("  }"); 
          out.println(); 
-	   } 
+       } 
 	  
-       out.println("  func delete" + item + "(_id : String)"); 
-       if (ee.isPersistent())
-	   { out.println("  { if dbi != nil"); 
-         out.println("    { dbi!.delete" + item + "(_val: _id) }");
-	   } 
-	   else 
-	   { out.println("  {"); }  
-       out.println("    current" + item + " = nil"); 
-       out.println("    kill" + item + "(key: _id)"); 
-       out.println("  }");
-       out.println();  
+       if (key != null) 
+       { out.println("  func delete" + item + "(_id : String)"); 
+         if (ee.isPersistent())
+         { out.println("  { if dbi != nil"); 
+           out.println("    { dbi!.delete" + item + "(_val: _id) }");
+         } 
+         else 
+         { out.println("  {"); }  
+         out.println("    current" + item + " = nil"); 
+         out.println("    kill" + item + "(key: _id)"); 
+         out.println("  }");
+         out.println();
+       }   
      }  
 
      for (int j = 0; j < clouds.size(); j++) 
@@ -427,11 +444,13 @@ public class IOSAppGenerator extends AppGenerator
 
        out.println("  func edit" + item + "(_x : " + itemvo + ")"); 
        out.println("  { if let _obj = get" + item + "ByPK(_val: _x." + pk + ") {"); 
-	   for (int k = 0; k < atts.size(); k++)
- 	   { Attribute att = (Attribute) atts.get(k); 
-	     String attname = att.getName(); 
-          if (att != key)
-          { out.println("      _obj." + attname + " = _x." + attname); }  
+       for (int k = 0; k < atts.size(); k++)
+       { Attribute att = (Attribute) atts.get(k); 
+         if (att.isMultiple())
+         { continue; }  
+         String attname = att.getName(); 
+         if (att != key)
+         { out.println("      _obj." + attname + " = _x." + attname); }  
        } 
        out.println("      cdbi.persist" + item + "(ex: _obj)"); 
        out.println("    }"); 
@@ -439,29 +458,35 @@ public class IOSAppGenerator extends AppGenerator
        out.println("  }"); 
        out.println(); 
 	  
-       out.println("  func create" + item + "(_x : " + itemvo + ")"); 
-       out.println("  { if let _obj = get" + item + "ByPK(_val: _x." + pk + ")"); 
-       out.println("    { cdbi.persist" + item + "(ex: _obj) }"); 
-       out.println("    else "); 
-       out.println("    { let _item = " + item + ".createByPK" + item + "(key: _x." + pk + ")");
-       for (int k = 0; k < atts.size(); k++)
-       { Attribute att = (Attribute) atts.get(k); 
-         String attname = att.getName(); 
-         if (att != key)
-         { out.println("      _item." + attname + " = _x." + attname); } 
-	   } 
-	   out.println("      cdbi.persist" + item + "(ex: _item)"); 
-       out.println("    }");
-       out.println("    current" + item + " = _x"); 
-       out.println("  }");  
-       out.println(); 
+       if (key != null) 
+       { pk = key.getName(); 
+       
+         out.println("  func create" + item + "(_x : " + itemvo + ")"); 
+         out.println("  { if let _obj = get" + item + "ByPK(_val: _x." + pk + ")"); 
+         out.println("    { cdbi.persist" + item + "(ex: _obj) }"); 
+         out.println("    else "); 
+         out.println("    { let _item = " + item + ".createByPK" + item + "(key: _x." + pk + ")");
+         for (int k = 0; k < atts.size(); k++)
+         { Attribute att = (Attribute) atts.get(k); 
+           if (att.isMultiple())
+           { continue; }  
+           String attname = att.getName(); 
+           if (att != key)
+           { out.println("      _item." + attname + " = _x." + attname); } 
+         } 
+         out.println("      cdbi.persist" + item + "(ex: _item)"); 
+         out.println("    }");
+         out.println("    current" + item + " = _x"); 
+         out.println("  }");  
+         out.println(); 
 	  
-       out.println("  func delete" + item + "(_id : String)"); 
-       out.println("  { if let _obj = get" + item + "ByPK(_val: _id)"); 
-       out.println("    { cdbi.delete" + item + "(ex: _obj) }"); 
-       out.println("    current" + item + " = nil"); 
-       out.println("  }");
-       out.println();   
+         out.println("  func delete" + item + "(_id : String)"); 
+         out.println("  { if let _obj = get" + item + "ByPK(_val: _id)"); 
+         out.println("    { cdbi.delete" + item + "(ex: _obj) }"); 
+         out.println("    current" + item + " = nil"); 
+         out.println("  }");
+         out.println(); 
+       }   
      } 
 
      out.println("}");
@@ -509,6 +534,8 @@ public class IOSAppGenerator extends AppGenerator
       String partext = ""; 
       for (int i = 0; i < pars.size(); i++) 
       { Attribute par = (Attribute) pars.get(i);
+        if (par.isMultiple())
+        { continue; }  
         Type partype = par.getType();  
         partext = partext + par.getName() + " : " + partype.getSwift(); 
         if (i < pars.size()-1)
@@ -660,25 +687,25 @@ public class IOSAppGenerator extends AppGenerator
     } 
 
     if (localPersistent.size() > 0)
-	{ out.println("  // Some class is locally persistent, include an SQLite Dbi:"); 
+    { out.println("  // Some class is locally persistent, include an SQLite Dbi:"); 
       out.println("  var dbi : Dbi?");
       out.println("  let dbpath : String = \"absolute path of app.db\"");   
       out.println(); 
       out.println("  init()"); 
       out.println("  { ");
       out.println("    dbi = Dbi.obtainDatabase(path: dbpath)"); 
-	  for (int j = 0; j < localPersistent.size(); j++) 
-	  { Entity pent = (Entity) localPersistent.get(j); 
-	    String pname = pent.getName(); 
-		out.println("    load" + pname + "()"); 
-	  } 
+      for (int j = 0; j < localPersistent.size(); j++) 
+      { Entity pent = (Entity) localPersistent.get(j); 
+        String pname = pent.getName(); 
+        out.println("    load" + pname + "()"); 
+      } 
       out.println("  }");  
       out.println(); 
-	} 
-	else 
-	{ out.println("  init() { }"); 
+    } 
+    else 
+    { out.println("  init() { }"); 
       out.println(); 
-	}
+    }
 	   
     for (int y = 0; y < usecases.size(); y++)
     { UseCase uc = (UseCase) usecases.get(y);
@@ -693,6 +720,9 @@ public class IOSAppGenerator extends AppGenerator
 	   
       for (int i = 0; i < pars.size(); i++) 
       { Attribute par = (Attribute) pars.get(i);
+        if (par.isMultiple())
+        { continue; }  
+
         String parname = par.getName(); 
         Type partype = par.getType();  
 
@@ -770,14 +800,14 @@ public class IOSAppGenerator extends AppGenerator
       String itemvo = item.toLowerCase() + "vo"; 
     
       out.println("  func list" + item + "() -> [" + item + "VO]"); 
-	  if (ee.isPersistent())
-	  { out.println("  { if dbi != nil"); 
+      if (ee.isPersistent())
+      { out.println("  { if dbi != nil"); 
         out.println("    { current" + item + "s = (dbi?.list" + item + "())!"); 
         out.println("      return current" + item + "s"); 
         out.println("    }");
-	  } 
-	  else 
-	  { out.println("  {"); } 
+      } 
+      else 
+      { out.println("  {"); } 
       out.println("    current" + item + "s = [" + item + "VO]()"); 
       out.println("    let _list : [" + item + "] = " + item + "_allInstances"); 
       out.println("    for (_,x) in _list.enumerated()"); 
@@ -797,21 +827,28 @@ public class IOSAppGenerator extends AppGenerator
 
       for (int k = 0; k < atts.size(); k++) 
       { Attribute byatt = (Attribute) atts.get(k); 
+        if (byatt.isMultiple())
+        { continue; }  
+
+        String eqop = "=="; 
+        if (byatt.isEntity())
+        { eqop = "==="; } 
+
         String attname = byatt.getName(); 
         String intype = byatt.getType().getSwift(); 
         out.println("  func searchBy" + item + attname + "(_val : " + intype + ") -> [" + item + "VO]"); 
         if (ee.isPersistent())
-		{ out.println("  { if dbi != nil"); 
+        { out.println("  { if dbi != nil"); 
           out.println("    { let _res = (dbi?.searchBy" + item + attname + "(_val: _val))!");
           out.println("      return _res"); 
           out.println("    }");
-		} 
-		else 
-		{ out.println("  {"); } 
+        } 
+        else 
+        { out.println("  {"); } 
         out.println("    current" + item + "s = [" + item + "VO]()"); 
         out.println("    let _list : [" + item + "] = " + item + "_allInstances"); 
         out.println("    for (_,x) in _list.enumerated()"); 
-        out.println("    { if x." + attname + " == _val"); 
+        out.println("    { if x." + attname + " " + eqop + " _val"); 
         out.println("      { current" + item + "s.append(" + item + "VO(_x: x)) }");
         out.println("    }");  
         out.println("    return current" + item + "s"); 
@@ -826,18 +863,19 @@ public class IOSAppGenerator extends AppGenerator
         out.println("  func get" + item + "ByPK(_val : String) -> " + item + "?"); 
         out.println("  { var _res : " + item + "? = " + item + ".getByPK" + item + "(index: _val)"); 
         if (ee.isPersistent())
-		{ out.println("    if _res == nil && dbi != nil"); 
+        { out.println("    if _res == nil && dbi != nil"); 
           out.println("    { let _list = dbi!.searchBy" + item + pk + "(_val: _val) ");
           out.println("      if _list.count > 0"); 
           out.println("      { _res = createByPK" + item + "(key: _val)"); 
           for (int i = 0; i < atts.size(); i++) 
           { Attribute att = (Attribute) atts.get(i);
+            if (att.isMultiple()) { continue; } 
             String attname = att.getName();  
             out.println("        _res!." + attname + " = _list[0]." + attname); 
           } 
           out.println("      }"); 
           out.println("    }"); 
-		} 
+        } 
         out.println("    return _res");  
         out.println("  }"); 
         out.println();
@@ -875,15 +913,16 @@ public class IOSAppGenerator extends AppGenerator
         out.println("    if _res != nil {");  
         for (int i = 0; i < atts.size(); i++) 
         { Attribute att = (Attribute) atts.get(i);
-          String attname = att.getName();  
+          String attname = att.getName(); 
+          if (att.isMultiple()) { continue; }  
           out.println("      _res!." + attname + " = _x.get" + attname + "()"); 
         } 
         out.println("    }");
         out.println("    current" + item + " = _x"); 
         if (ee.isPersistent())
-		{ out.println("    if dbi != nil"); 
+        { out.println("    if dbi != nil"); 
           out.println("    { dbi!.edit" + item + "(" + itemvo + ": _x) }");
-		} 
+        } 
         out.println("  }"); 
         out.println();
       } 
@@ -908,12 +947,14 @@ public class IOSAppGenerator extends AppGenerator
          out.println("    let _res : " + item + " = createByPK" + item + "(key: _x." + pk + ")"); 
          for (int i = 0; i < atts.size(); i++) 
          { Attribute att = (Attribute) atts.get(i);
+           if (att.isMultiple()) { continue; } 
+
            String attname = att.getName();  
            out.println("    _res." + attname + " = _x.get" + attname + "()"); 
          } 
          out.println("    current" + item + " = _x"); 
          if (ee.isPersistent())
-		 { out.println("    do { try dbi?.create" + item + "(" + itemvo + ": _x) }"); 
+         { out.println("    do { try dbi?.create" + item + "(" + itemvo + ": _x) }"); 
            out.println("    catch { print(\"Error creating " + item + "\") }"); 
 		 }
          out.println("  }"); 
@@ -927,21 +968,23 @@ public class IOSAppGenerator extends AppGenerator
          out.println(); 
        } 
 	  
-       out.println("  func delete" + item + "(_id : String)"); 
-       if (ee.isPersistent())
-	   { out.println("  { if dbi != nil"); 
-         out.println("    { dbi!.delete" + item + "(_val: _id) }");
-	   } 
-	   else 
-	   { out.println("  {"); }  
-       out.println("    kill" + item + "(key: _id)");
-       out.println("  }");
-       out.println();
+       if (key != null) 
+       { out.println("  func delete" + item + "(_id : String)"); 
+         if (ee.isPersistent())
+         { out.println("  { if dbi != nil"); 
+           out.println("    { dbi!.delete" + item + "(_val: _id) }");
+         } 
+         else 
+         { out.println("  {"); }  
+         out.println("    kill" + item + "(key: _id)");
+         out.println("  }");
+         out.println();
+       } 
        out.println();
        out.println(); 
        out.println("  func persist" + item + "(_x : " + item + ")"); 
        out.println("  { // This assumes that the element is already in the database"); 
-	   out.println("    let _vo : " + item + "VO = " + item + "VO(_x: _x)"); 
+       out.println("    let _vo : " + item + "VO = " + item + "VO(_x: _x)"); 
        out.println("    edit" + item + "(_x: _vo) "); 
        out.println("  }"); 
        out.println();  
@@ -960,7 +1003,7 @@ public class IOSAppGenerator extends AppGenerator
        Attribute key = ee.getPrincipalPK();
        String pk = "";  
        if (key == null) 
-	   { System.err.println("!! Warning: a string-typed primary key is needed for class " + item); }
+       { System.err.println("!! Warning: a string-typed primary key is needed for class " + item); }
 	   
        out.println("  func list" + item + "() -> [" + itemvo + "]"); 
        out.println("  { var " + items + " : [" + item + "] " + " = " + item + "." + item + "_allInstances"); 
@@ -1023,6 +1066,8 @@ public class IOSAppGenerator extends AppGenerator
        out.println("  { if let _obj = get" + item + "ByPK(_val: _x." + pk + ") {"); 
 	   for (int k = 0; k < atts.size(); k++)
  	   { Attribute att = (Attribute) atts.get(k); 
+          if (att.isMultiple())
+          { continue; }  
 	     String attname = att.getName(); 
 	     if (att != key)
           { out.println("      _obj." + attname + " = _x.get" + attname + "()"); }  
@@ -1035,29 +1080,34 @@ public class IOSAppGenerator extends AppGenerator
 
        out.println("  func cancelcreate" + item + "() { }"); 
        out.println(); 
-       out.println("  func create" + item + "(_x : " + itemvo + ")"); 
-       out.println("  { if let _obj = get" + item + "ByPK(_val: _x." + pk + ")"); 
-       out.println("    { cdbi.persist" + item + "(ex: _obj) }"); 
-       out.println("    else "); 
-       out.println("    { let _item = " + item + ".createByPK" + item + "(key: _x." + pk + ")");
-       for (int k = 0; k < atts.size(); k++)
-       { Attribute att = (Attribute) atts.get(k); 
-         String attname = att.getName(); 
-         if (att != key)
-         { out.println("      _item." + attname + " = _x.get" + attname + "()"); } 
-	   } 
-	   out.println("      cdbi.persist" + item + "(ex: _item)"); 
-	   out.println("    }");
-       out.println("    current" + item + " = _x"); 
-	   out.println("  }");  
-       out.println(); 
+       if (key != null)
+       { out.println("  func create" + item + "(_x : " + itemvo + ")"); 
+         out.println("  { if let _obj = get" + item + "ByPK(_val: _x." + pk + ")"); 
+         out.println("    { cdbi.persist" + item + "(ex: _obj) }"); 
+         out.println("    else "); 
+         out.println("    { let _item = " + item + ".createByPK" + item + "(key: _x." + pk + ")");
+         for (int k = 0; k < atts.size(); k++)
+         { Attribute att = (Attribute) atts.get(k); 
+           if (att.isMultiple())
+           { continue; }  
+
+           String attname = att.getName(); 
+           if (att != key)
+           { out.println("      _item." + attname + " = _x.get" + attname + "()"); } 
+         } 
+         out.println("      cdbi.persist" + item + "(ex: _item)"); 
+         out.println("    }");
+         out.println("    current" + item + " = _x"); 
+         out.println("  }");  
+         out.println(); 
 	  
-       out.println("  func delete" + item + "(_id : String)"); 
-       out.println("  { if let _obj = get" + item + "ByPK(_val: _id)"); 
-       out.println("    { cdbi.delete" + item + "(ex: _obj) }"); 
-       out.println("    // current" + item + " = nil"); 
-       out.println("  }");
-       out.println();   
+         out.println("  func delete" + item + "(_id : String)"); 
+         out.println("  { if let _obj = get" + item + "ByPK(_val: _id)"); 
+         out.println("    { cdbi.delete" + item + "(ex: _obj) }"); 
+         out.println("    // current" + item + " = nil"); 
+         out.println("  }");
+         out.println();  
+       }  
      } 
 
      out.println("}");
@@ -1081,19 +1131,19 @@ public class IOSAppGenerator extends AppGenerator
     out.println("  }");
     out.println(""); 
     out.println("  init() {}");
-	out.println(""); 
-	out.println("  func connectByURL(_ url: String)");  
+    out.println(""); 
+    out.println("  func connectByURL(_ url: String)");  
     out.println("  { self.database = Database.database(url: url).reference()");
-	out.println("    if self.database == nil"); 
-	out.println("    { print(\"Invalid database url\")"); 
-	out.println("      return"); 
-	out.println("    }"); 
-	for (int i = 0; i < clouds.size(); i++) 
-	{ Entity ent = (Entity) clouds.get(i); 
-	  ent.generateCloudUpdateCodeIOS(out); 
-	}
-	out.println("  }");
-	out.println();  
+    out.println("    if self.database == nil"); 
+    out.println("    { print(\"Invalid database url\")"); 
+    out.println("      return"); 
+    out.println("    }"); 
+    for (int i = 0; i < clouds.size(); i++) 
+    { Entity ent = (Entity) clouds.get(i); 
+      ent.generateCloudUpdateCodeIOS(out); 
+    }
+    out.println("  }");
+    out.println();  
 	
 	for (int i = 0; i < clouds.size(); i++) 
 	{ Entity ent = (Entity) clouds.get(i); 
@@ -1163,7 +1213,7 @@ public class IOSAppGenerator extends AppGenerator
     String parlist = ""; 
     for (int x = 0; x < atts.size(); x++)
     { Attribute att = (Attribute) atts.get(x);
-	  String attname = att.getName(); 
+      String attname = att.getName(); 
       String iosdeclaration = att.uiKitDeclaration(); 
       out.println(iosdeclaration);
       
@@ -1346,7 +1396,7 @@ public class IOSAppGenerator extends AppGenerator
     String parlist = ""; 
     for (int x = 0; x < atts.size(); x++)
     { Attribute att = (Attribute) atts.get(x);
-	  String attnme = att.getName(); 
+      String attnme = att.getName(); 
 	  
       String iosdeclaration = att.uiKitDeclaration(); 
       out.println(iosdeclaration);
@@ -1382,15 +1432,15 @@ public class IOSAppGenerator extends AppGenerator
       String extop = extension.getName();  
       Vector extpars = extension.getParameters();
       Attribute extres = extension.getResultParameter(); 
-	  String extvalidationBean = extop + "ValidationBean"; 
+      String extvalidationBean = extop + "ValidationBean"; 
       // String evocreate = createVOStatement(e,atts);
       String extvalidator = extop + "Validator";  
       // extraops = extraops + UseCase.spinnerListenerOperations(extop,extpars); 
       // String extbeanclass = extop + "Bean";
       // String extbean = extbeanclass.toLowerCase();
-	  String extrestype = ""; 
+      String extrestype = ""; 
       out.println("  var " + extvalidator + " : " + extvalidationBean + " = " + extvalidationBean + "()"); 
-	  if (extres != null && "WebDisplay".equals(extres.getType().getName()))
+      if (extres != null && "WebDisplay".equals(extres.getType().getName()))
       { out.println("  @IBOutlet var " + extop + "resultOutput: WKWebView!"); 
         extrestype = "WebDisplay"; 
       } 
@@ -1668,9 +1718,9 @@ public class IOSAppGenerator extends AppGenerator
     out.println("    xAxis.valueFormatter = self"); 
     out.println("  "); 
     out.println("    let lineChartDataSet = LineChartDataSet(entries: dataEntries, label: yname)"); 
-	out.println("    lineChartDataSet.colors = [NSUIColor.blue]"); 
+    out.println("    lineChartDataSet.colors = [NSUIColor.blue]"); 
     out.println("    let lineChartData = LineChartData()");
-	out.println("    lineChartData.addDataSet(lineChartDataSet)"); 
+    out.println("    lineChartData.addDataSet(lineChartDataSet)"); 
     out.println("    if zvalues.count > 0");
     out.println("    { var zdataEntries: [ChartDataEntry] = []");
     out.println("      for i in 0..<dataPoints.count");
@@ -1894,7 +1944,7 @@ public void iOSViewController(String systemName, String op, String feature, Enti
     Vector invariants = entity.getAllInvariants(); 
 
     Attribute res = null; 
-	String validator = "validator" + ename; 
+    String validator = "validator" + ename; 
 	
     // String evocreate = createVOStatement(e,atts);
 
@@ -1905,7 +1955,7 @@ public void iOSViewController(String systemName, String op, String feature, Enti
     out.println("{");
     out.println("  var " + bean + " : " + ebean + " = " + ebean + ".getInstance()");
     out.println("  var " + validator + " : " + ename + "Bean = " + ename + "Bean()");
-	out.println(); 
+    out.println(); 
 
     String parlist = ""; 
     String parlistx = ""; 
@@ -2077,7 +2127,7 @@ public void iOSViewController(String systemName, String op, String feature, Enti
     Vector invariants = entity.getAllInvariants(); 
 
     Attribute res = null; 
-	String validator = "validator" + ename; 
+    String validator = "validator" + ename; 
 	
     // String evocreate = createVOStatement(e,atts);
 
@@ -2093,7 +2143,7 @@ public void iOSViewController(String systemName, String op, String feature, Enti
     String parlistx = ""; 
     for (int x = 0; x < atts.size(); x++)
     { Attribute att = (Attribute) atts.get(x);
-	  String attname = att.getName(); 
+      String attname = att.getName(); 
       // if (att.isPassword() || att.isHidden()) { } else
       out.println("  @IBOutlet weak var " + att + "Input: UITextField!");
       
@@ -2435,20 +2485,20 @@ public static void generateIOSFileAccessor(PrintWriter out)
   public static void generateSwiftUIAppDelegate(PrintWriter out, boolean needsFirebase)
   { out.println("import UIKit");
     if (needsFirebase)
-	{ out.println("import Firebase"); }
+    { out.println("import Firebase"); }
     out.println("");
     out.println("@UIApplicationMain");
     out.println("class AppDelegate: UIResponder, UIApplicationDelegate");
     out.println("{");
     out.println("  func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool");
     if (needsFirebase)
-	{ out.println("  { FirebaseApp.configure()"); 
-	  out.println("    return true"); 
-	  out.println("  }"); 
-	}
+    { out.println("  { FirebaseApp.configure()"); 
+      out.println("    return true"); 
+      out.println("  }"); 
+    }
     else 
-	{ out.println("  { return true }"); } 
-	out.println("");
+    { out.println("  { return true }"); } 
+    out.println("");
     out.println("  func applicationWillTerminate(_ application: UIApplication) { }");
     out.println("");
     out.println("  func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration");
@@ -2644,8 +2694,8 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("        Button(action: { self.model." + op + "(_x: bean) } ) { Text(\"" + label + "\") }"); 
     out.println("      }.buttonStyle(DefaultButtonStyle())"); 
     out.println("    }.padding(.top).onAppear(perform: "); 
-	out.println("                      { bean = model.current" + ename + " })");
-	out.println("  }"); 
+    out.println("                      { bean = model.current" + ename + " })");
+    out.println("  }"); 
     out.println("}");
   }
 
@@ -2680,8 +2730,8 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("        Button(action: { self.model." + op + "(_id: objectId) } ) { Text(\"" + label + "\") }"); 
     out.println("      }.buttonStyle(DefaultButtonStyle())"); 
     out.println("    }.padding(.top).onAppear(perform: "); 
-	out.println("                    { objectId = model.current" + ename + "." + pk + " })");
-	out.println("  }"); 
+    out.println("                    { objectId = model.current" + ename + "." + pk + " })");
+    out.println("  }"); 
     out.println("}");
   }
   
@@ -2715,7 +2765,7 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("");
     out.println("struct ContentView : View");
     out.println("{ @ObservedObject var model : ModelFacade");
-	out.println();   
+    out.println();   
     out.println("  var body: some View {");
     out.println("    TabView {");
     for (int i = 0; i < operations.size(); i++) 
@@ -2764,17 +2814,17 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
 
     out.println("  func createDatabase(db : Dbi) throws"); 
     out.println("  { do "); 
-	out.println("    { " + createCode);
-	out.println("      print(\"Created database\")"); 
-	out.println("    }"); 
-	out.println("    catch { print(\"Errors: \" + errorMessage) }");
+    out.println("    { " + createCode);
+    out.println("      print(\"Created database\")"); 
+    out.println("    }"); 
+    out.println("    catch { print(\"Errors: \" + errorMessage) }");
     out.println("  }"); 
     out.println();  
 	
 	
-	out.println("  static func obtainDatabase(path: String) -> Dbi?"); 
-	out.println("  { var dbi : Dbi? = nil"); 
-	out.println("    if FileAccessor.fileExistsAbsolutePath(filename: path)"); 
+    out.println("  static func obtainDatabase(path: String) -> Dbi?"); 
+    out.println("  { var dbi : Dbi? = nil"); 
+    out.println("    if FileAccessor.fileExistsAbsolutePath(filename: path)"); 
     out.println("    { print(\"Database already exists\")"); 
     out.println("      do");
     out.println("      { try dbi = Dbi.open(path: path)"); 
@@ -2784,8 +2834,8 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("        { print(\"Failed to open existing database\") }"); 
     out.println("      }"); 
     out.println("      catch { print(\"Error opening existing database\") "); 
-	out.println("              return nil "); 
-	out.println("            }"); 
+    out.println("              return nil "); 
+    out.println("            }"); 
     out.println("    }"); 
     out.println("    else"); 
     out.println("    { print(\"New database will be created\")"); 
@@ -2793,15 +2843,15 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("      { try dbi = Dbi.open(path: path)"); 
     out.println("        if dbi != nil"); 
     out.println("        { print(\"Opened new database\") "); 
-	out.println("          try dbi!.createDatabase(db: dbi!) "); 
-	out.println("        }"); 
+    out.println("          try dbi!.createDatabase(db: dbi!) "); 
+    out.println("        }"); 
     out.println("        else"); 
     out.println("        { print(\"Failed to open new database\") }"); 
     out.println("      }"); 
     out.println("      catch { print(\"Error opening new database\")  "); 
-	out.println("              return nil }"); 
+    out.println("              return nil }"); 
     out.println("    }");
-	out.println("    return dbi");  
+    out.println("    return dbi");  
     out.println("  }"); 
     out.println(); 
 

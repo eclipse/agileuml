@@ -39,6 +39,7 @@ public class Entity extends ModelElement implements Comparable
   private Entity flattenedCopy = null; 
   private Entity realEntity = null; 
 
+  private Vector typeParameters = new Vector(); // of Type
   
   public Entity(String nme)
   { super(nme); 
@@ -292,6 +293,21 @@ public class Entity extends ModelElement implements Comparable
     } 
 
     return res; 
+  } 
+
+  public void setTypeParameters(Vector tpars)
+  { typeParameters = tpars; } 
+
+  public Vector typeParameterEntities()
+  { Vector v = new Vector(); 
+    if (typeParameters != null)
+    { for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        if (tp.isEntity())
+        { v.add(tp.getEntity()); } 
+      } 
+    } 
+    return v; 
   } 
 
   public Vector zeroOneRoles()
@@ -700,6 +716,20 @@ public class Entity extends ModelElement implements Comparable
       else if (me instanceof BehaviouralFeature)
       { addOperation((BehaviouralFeature) me); } 
     } 
+  } 
+
+  public void addTypeParameter(Type t)
+  { if (typeParameters.contains(t)) { } 
+    else 
+    { typeParameters.add(t); } 
+  } 
+
+  public Vector getTypeParameters()
+  { return typeParameters; } 
+
+  public boolean hasTypeParameters()
+  { return typeParameters != null &&
+           typeParameters.size() > 0; 
   } 
 
   public void addAttribute(String nme, Type t) 
@@ -5510,7 +5540,22 @@ public class Entity extends ModelElement implements Comparable
     { out.print("abstract "); }
     else if (isLeaf())
     { out.print("final "); }
-    out.println(intorclass + " " + getName()); 
+    
+
+    String pars = ""; 
+    if (typeParameters != null && typeParameters.size() > 0) 
+    { pars = "<"; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        pars = pars + tp.getJava(); 
+        if (i < typeParameters.size() - 1) 
+        { pars = pars + ","; } 
+      } 
+      pars = pars + ">"; 
+    } 
+ 
+    out.println(intorclass + " " + getName() + pars);
+
     if (superclass != null) 
     { out.println("  extends " + superclass.getName()); } 
     
@@ -5598,7 +5643,21 @@ public class Entity extends ModelElement implements Comparable
     { out.print("abstract "); }
     else if (isLeaf())
     { out.print("final "); }
-    out.println(intorclass + " " + getName()); 
+
+    String pars = ""; 
+    if (typeParameters != null && typeParameters.size() > 0) 
+    { pars = "<"; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        pars = pars + tp.getJava6(); 
+        if (i < typeParameters.size() - 1) 
+        { pars = pars + ","; } 
+      } 
+      pars = pars + ">"; 
+    } 
+
+    out.println(intorclass + " " + getName() + pars); 
+
     if (superclass != null) 
     { out.println("  extends " + superclass.getName()); } 
     
@@ -5681,7 +5740,21 @@ public class Entity extends ModelElement implements Comparable
     { out.print("abstract "); }
     else if (isLeaf())
     { out.print("final "); }
-    out.println(intorclass + " " + getName()); 
+
+    String pars = ""; 
+    if (typeParameters != null && typeParameters.size() > 0) 
+    { pars = "<"; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        pars = pars + tp.getJava7(); 
+        if (i < typeParameters.size() - 1) 
+        { pars = pars + ","; } 
+      } 
+      pars = pars + ">"; 
+    } 
+
+    out.println(intorclass + " " + getName() + pars);
+ 
     if (superclass != null) 
     { out.println("  extends " + superclass.getName()); } 
     
@@ -5765,7 +5838,20 @@ public class Entity extends ModelElement implements Comparable
     { out.print("abstract "); }
     else if (isLeaf())
     { out.print("sealed "); }
-    out.print(intorclass + " " + getName()); 
+
+    String pars = ""; 
+    if (typeParameters != null && typeParameters.size() > 0) 
+    { pars = "<"; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        pars = pars + tp.getCSharp(); 
+        if (i < typeParameters.size() - 1) 
+        { pars = pars + ","; } 
+      } 
+      pars = pars + ">"; 
+    } 
+
+    out.print(intorclass + " " + getName() + pars); 
     // out.print("  : SystemTypes");
     if (superclass != null) 
     { out.println(" : " + superclass.getName()); } 
@@ -5821,6 +5907,21 @@ public class Entity extends ModelElement implements Comparable
     out.println("}\n");
   }
 
+  public String getTemplateCPP()
+  { String pars = ""; 
+    if (typeParameters != null && typeParameters.size() > 0) 
+    { pars = "template<"; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        pars = pars + " class " + tp.getName(); 
+        if (i < typeParameters.size() - 1) 
+        { pars = pars + ","; } 
+      } 
+      pars = pars + ">"; 
+    } 
+    return pars; 
+  } 
+
   public void generateCPP(Vector entities, Vector types, PrintWriter out, PrintWriter out2)
   { if (hasStereotype("component"))
     { return; } 
@@ -5841,6 +5942,20 @@ public class Entity extends ModelElement implements Comparable
     // { out.print("abstract "); }
     // else if (isLeaf())
     // { out.print("final "); }
+
+    String pars = ""; 
+    if (typeParameters != null && typeParameters.size() > 0) 
+    { pars = "template<"; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        pars = pars + " class " + tp.getName(); 
+        if (i < typeParameters.size() - 1) 
+        { pars = pars + ","; } 
+      } 
+      pars = pars + ">"; 
+      out.println(pars); 
+    } 
+
     out.print(intorclass + " " + getName()); 
 
     boolean previous = false; 
@@ -7221,7 +7336,7 @@ public class Entity extends ModelElement implements Comparable
         // { par = ""; } 
            // att.setAllInterfaceOperation(getName()); } 
         // else 
-        par = att.setAllOperationCPP(getName(),declarations);  
+        par = att.setAllOperationCPP(this, declarations);  
 
         if (par != null)
         { out2.println("  " + par + "\n"); }
@@ -7257,7 +7372,7 @@ public class Entity extends ModelElement implements Comparable
       String par = ast.setOperationCPP(this,invariants,entities,types); 
       if (par != null)
       { out.println("  " + par + "\n"); }  // includes add, rem
-      par = ast.setAllOperationCPP(getName(), declarations); 
+      par = ast.setAllOperationCPP(this, declarations); 
       if (par != null)
       { out2.println("  " + par + "\n"); }  
       if (ast.getCard2() != ONE)
@@ -7856,6 +7971,11 @@ public class Entity extends ModelElement implements Comparable
   public String getKM3()
   { String nme = "class " + getName();
 
+    if (typeParameters.size() > 0)
+    { String tp = ((Type) typeParameters.get(0)).getName(); 
+      nme = nme + "<" + tp + ">"; 
+    } 
+
     if (isInterface()) { } 
     else if (isAbstract())
     { nme = "abstract " + nme; } 
@@ -7926,6 +8046,11 @@ public class Entity extends ModelElement implements Comparable
 
   public void saveKM3(PrintWriter out)
   { String nme = "class " + getName();
+
+    if (typeParameters.size() > 0)
+    { String tp = ((Type) typeParameters.get(0)).getName(); 
+      nme = nme + "<" + tp + ">"; 
+    } 
 
     if (isInterface()) { } 
     else if (isAbstract())
@@ -11250,27 +11375,35 @@ public class Entity extends ModelElement implements Comparable
   { String res = "";
     String nme = getName();  
     res = res + "import Foundation\n\n" + 
-	      "class " + nme + "VO\n" + 
-          "{ \n"; 
+          "class " + nme + "VO\n" + "{ \n"; 
+    int attcount = 0; 
+
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
+      if (att.isMultiple()) 
+      { continue; } 
       String attnme = att.getName(); 
       String tname = att.getType().getSwift(); 
       String dflt = att.getType().getSwiftDefaultValue(); 
       res = res + "  var " + attnme + " : " + tname + " = " + dflt + "\n"; 
+      attcount++; 
     } 
+
     res = res + "\n" +
           "  init() {}\n\n"; 
 
     String stringtext = ""; 
 		  
-    if (attributes.size() > 0)
+    if (attcount > 0)
     { res = res + "  init(";
 		  
       boolean previous = false;
 	
       for (int i = 0; i < attributes.size(); i++)
       { Attribute att = (Attribute) attributes.get(i);
+        if (att.isMultiple())
+        { continue; } 
+
         String tname = att.getType().getSwift();
         String attname = att.getName(); 
  
@@ -11299,29 +11432,36 @@ public class Entity extends ModelElement implements Comparable
 
       for (int i = 0; i < attributes.size(); i++) 
       { Attribute att = (Attribute) attributes.get(i); 
+        if (att.isMultiple())
+        { continue; } 
+
         String attnme = att.getName(); 
         res = res + "    " + attnme + " = " + attnme + "x\n"; 
       }
       res = res + "  }\n\n"; 
-	} 
+    } 
 	
     res = res + "  init(_x : " + nme + ")  {\n"; 
     for (int i = 0; i < attributes.size(); i++) 
-    { Attribute att = (Attribute) attributes.get(i); 
+    { Attribute att = (Attribute) attributes.get(i);
+      if (att.isMultiple())
+      { continue; }  
       String attnme = att.getName(); 
       res = res + "    " + attnme + " = _x." + attnme + "\n"; 
     }
     res = res + "  }\n\n"; 
  
     res = res + "  func toString() -> String\n"; 
-    if (attributes.size() > 0) 
+    if (attcount > 0) 
     { res = res + "  { return (" + stringtext + ") }\n\n"; } 
     else 
     { res = res + "  { return \"\" }\n\n"; } 
  
  
     for (int i = 0; i < attributes.size(); i++) 
-    { Attribute att = (Attribute) attributes.get(i); 
+    { Attribute att = (Attribute) attributes.get(i);
+      if (att.isMultiple())
+      { continue; }  
       String attnme = att.getName(); 
       String tname = att.getType().getSwift(); 
       
@@ -11330,7 +11470,10 @@ public class Entity extends ModelElement implements Comparable
     } 
 
     for (int i = 0; i < attributes.size(); i++) 
-    { Attribute att = (Attribute) attributes.get(i); 
+    { Attribute att = (Attribute) attributes.get(i);
+      if (att.isMultiple())
+      { continue; }  
+ 
       String attnme = att.getName(); 
       String tname = att.getType().getSwift(); 
 
@@ -11348,8 +11491,12 @@ public class Entity extends ModelElement implements Comparable
     String ename = getName();  
     res = res + "class " + ename + "VO : Hashable, Identifiable\n" + 
           "{ \n"; 
+
+    int attcount = 0; 
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
+      if (att.isMultiple())
+      { continue; }  
       String attnme = att.getName(); 
       String tname = att.getType().getSwift(); 
       String dflt = att.getType().getSwiftDefaultValue();
@@ -11358,6 +11505,7 @@ public class Entity extends ModelElement implements Comparable
         dflt = "\"\""; 
       } 
       res = res + "  var " + attnme + " : " + tname + " = " + dflt + "\n"; 
+      attcount++; 
     } // But entity instances are represented by their key values, a string. 
 
     res = res + "  static var defaultInstance : " + ename + "VO? = nil\n"; 
@@ -11375,7 +11523,7 @@ public class Entity extends ModelElement implements Comparable
 
     String stringtext = "\"\""; 
 		  
-    if (attributes.size() > 0)
+    if (attcount > 0)
     { res = res + "  init(";
 		  
       boolean previous = false;
@@ -11383,6 +11531,8 @@ public class Entity extends ModelElement implements Comparable
       for (int i = 0; i < attributes.size(); i++)
       { Attribute att = (Attribute) attributes.get(i);
         String tname = att.getType().getSwift();
+        if (att.isMultiple())
+        { continue; }  
         if (att.isEntity())
         { tname = "String"; }
 		
@@ -11411,6 +11561,8 @@ public class Entity extends ModelElement implements Comparable
       res = res + ")  {\n"; 
       for (int i = 0; i < attributes.size(); i++) 
       { Attribute att = (Attribute) attributes.get(i); 
+        if (att.isMultiple())
+        { continue; }  
         String attnme = att.getName(); 
         res = res + "    " + attnme + " = " + attnme + "x\n"; 
       }
@@ -11420,12 +11572,22 @@ public class Entity extends ModelElement implements Comparable
     res = res + "  init(_x : " + ename + ")  {\n"; 
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
+      if (att.isMultiple())
+      { continue; }  
+
       String attnme = att.getName(); 
       if (att.isEntity())  
       { Type atype = att.getType();    
         Entity enttype = atype.getEntity(); 
         Attribute primkey = enttype.getPrincipalPrimaryKey(); 
-        res = res + "    " + attnme + " = _x." + attnme + "." + primkey.getName() + "\n";
+        if (primkey == null)
+        { System.err.println(
+            "ERROR!: no primary key for entity " + enttype); 
+        } 
+        else 
+        { res = res + "    " + attnme + " = _x." + 
+                  attnme + "." + primkey.getName() + "\n"; 
+        }
       } 
       else 
       { res = res + "    " + attnme + " = _x." + attnme + "\n"; } 
@@ -11438,6 +11600,8 @@ public class Entity extends ModelElement implements Comparable
  
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
+      if (att.isMultiple())
+      { continue; }  
       String attnme = att.getName(); 
       String tname = att.getType().getSwift(); 
 	  
@@ -11446,7 +11610,15 @@ public class Entity extends ModelElement implements Comparable
       { Type atype = att.getType(); 
         Entity enttype = atype.getEntity(); 
         String refname = enttype.getName(); 
-        res = res + "  { return " + refname + "." + refname + "_index[" + attnme + "]! }\n\n";
+        Attribute primkey = enttype.getPrincipalPrimaryKey(); 
+        if (primkey == null)
+        { System.err.println(
+            "ERROR!: no primary key for entity " + enttype); 
+          res = res + "  { return " + refname + ".defaultInstance() }\n\n"; 
+        } 
+        else 
+        { res = res + "  { return " + refname + "." + refname + "_index[" + attnme + "]! }\n\n";
+        }
       } 
       else 
       { res = res + "  { return " + attnme + " }\n\n"; } 
@@ -11454,6 +11626,8 @@ public class Entity extends ModelElement implements Comparable
 
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
+      if (att.isMultiple())
+      { continue; }  
       String attnme = att.getName(); 
       String tname = att.getType().getSwift(); 
 
@@ -11462,8 +11636,11 @@ public class Entity extends ModelElement implements Comparable
       { Type atype = att.getType(); 
         Entity enttype = atype.getEntity(); 
         Attribute primkey = enttype.getPrincipalPrimaryKey(); 
-        res = res + "  { " + attnme + " = _x." + primkey.getName() + " }\n\n";
-	  } 
+        if (primkey != null) 
+        { res = res + 
+            "  { " + attnme + " = _x." + primkey.getName() + " }\n\n";
+         }
+       } 
 	  else 
 	  { res = res + "  { " + attnme + " = _x }\n\n"; } 
       }
@@ -11526,36 +11703,43 @@ public class Entity extends ModelElement implements Comparable
     } */ 
 	
     res = res + "  func errors() -> String\n" + 
-	            "  { var res : String = \"\"\n" +
-				"    for (_,x) in errorlist.enumerated()\n" + 
-				"    { res = res + x + \", \" }\n" +  
-	            "    return res\n" + 
-				"  }\n\n"; 
+                "  { var res : String = \"\"\n" +
+                "    for (_,x) in errorlist.enumerated()\n" + 
+                "    { res = res + x + \", \" }\n" +  
+                "    return res\n" + 
+                "  }\n\n"; 
 				
     res = res + "  static func ==(lhs: " + ename + "VO, rhs: " + ename + "VO) -> Bool\n";
-	res = res + "  { return\n";
-	if (attributes.size() == 0)
-	{ res = res + "      (lhs === rhs)\n"; }
-	else   
-    { for (int i = 0; i < attributes.size(); i++) 
+    res = res + "  { return  ";
+
+    if (attcount == 0)
+    { res = res + "(lhs === rhs)\n"; }
+    else   
+    { boolean previousAtt = false; 
+
+      for (int i = 0; i < attributes.size(); i++) 
       { Attribute att = (Attribute) attributes.get(i); 
+        if (att.isMultiple())
+        { continue; }  
         String attnme = att.getName();
-        res = res + "      lhs." + attnme + " == rhs." + attnme;
-	    if (i < attributes.size() - 1)
-	    { res = res + " &&"; } 
-	    res = res + "\n"; 
+        if (previousAtt) 
+        { res = res + " && "; } 
+        res = res + "lhs." + attnme + " == rhs." + attnme;
+        previousAtt = true; 
       }
-	} 
-	res = res + "  }\n\n"; 
+    } 
+    res = res + "\n  }\n\n"; 
 	
 
     res = res + "  func hash(into hasher: inout Hasher) {\n"; 
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
+      if (att.isMultiple())
+      { continue; }  
       String attnme = att.getName();
       res = res + "    hasher.combine(" + attnme + ")\n"; 
     }
-	res = res + "  }\n"; 
+    res = res + "  }\n"; 
 
     return res + "}\n\n"; 
   } 

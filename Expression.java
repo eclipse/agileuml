@@ -167,6 +167,9 @@ abstract class Expression
   public int getUMLKind()
   { return umlkind; } 
 
+  public static boolean isComparator(String opx)
+  { return comparitors.contains(opx); } 
+
   public void setStatic(boolean s)
   { isStatic = s; } 
 

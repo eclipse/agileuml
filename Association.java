@@ -3257,17 +3257,21 @@ String qual = "";
     return res;
   }
 
-  public String setAllOperationCPP(String ename, Vector declarations)
+  public String setAllOperationCPP(Entity ent, Vector declarations)
   { // static void setAllrole(set<ename*>* es, T val)
     // static void setAllrole(vector<ename*>* es, T val)
     // { update e.role for e in es }
-    if (frozen) { return ""; } 
+    if (frozen || ent == null) 
+    { return ""; } 
+    String ename = ent.getName(); 
     String qualt = ""; 
     String qual = ""; 
     if (qualifier != null) 
     { qualt = "string _arg, "; 
       qual = "_arg, "; 
     } 
+
+    String template = ent.getTemplateCPP();
 
     String ex = ename.toLowerCase() + "x";
     String e2name = entity2.getName();
@@ -3282,7 +3286,8 @@ String qual = "";
     String argtyp2 = "vector<" + ename + "*>*"; 
 
     String es = ename.toLowerCase() + "s";
-    String res = "  void " + ename + "::setAll" + role2;
+    String res = "  " + template + "\n" + 
+                 "  void " + ename + "::setAll" + role2;
     res = res + "(" + argtyp1 + " " + es + ", " + qualt + typ + " _val)\n";
 
     String declaration = "  static void setAll" + role2;
@@ -3296,7 +3301,8 @@ String qual = "";
     declaration = declaration + "  static void setAll" + role2;
     declaration = declaration + "(" + argtyp2 + " " + es + "," + qualt + typ + " _val);\n";
 
-    res = res + "  void " + ename + "::setAll" + role2;
+    res = res + "  " + template + "\n" + 
+                "  void " + ename + "::setAll" + role2;
     res = res + "(" + argtyp2 + " " + es + ", " + qualt + typ + " _val)\n";
     res = res + "  { vector<" + ename + "*>::iterator _pos;\n";
     res = res + "    for (_pos = " + es + "->begin(); _pos != " + es + "->end(); ++_pos)\n";

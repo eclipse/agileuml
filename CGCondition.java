@@ -99,10 +99,15 @@ public class CGCondition
   } 
 
   public boolean conditionSatisfied(Type t, Vector entities)
-  { if ("string".equals(stereotype.toLowerCase()) && t.isStringType())
+  { System.out.println(">> Checking type condition " + t + " " + stereotype); 
+    System.out.println(); 
+
+    if ("string".equals(stereotype.toLowerCase()) && t.isStringType())
     { return positive; }
-    if ("class".equals(stereotype.toLowerCase()) && t.isEntityType())
-    { return positive; }
+    if ("class".equals(stereotype.toLowerCase()) && t.isEntityType(entities))
+    { System.out.println(t + " is a class"); 
+      return positive; 
+    }
     if ("void".equals(stereotype.toLowerCase()) && (t == null || t.isVoidType()))
     { return positive; }
     if ("enumerated".equals(stereotype.toLowerCase()) && t.isEnumeratedType())
@@ -119,10 +124,21 @@ public class CGCondition
     { return positive; }
     if ("set".equals(stereotype.toLowerCase()) && t.isSetType())
     { return positive; }
-    if ("class".equals(stereotype.toLowerCase()) && !(t.isEntityType()))
+    if ("integer".equals(stereotype.toLowerCase()) && t.isInteger())
+    { return positive; }
+    if ("real".equals(stereotype.toLowerCase()) && t.isReal())
+    { return positive; }
+    if ("int".equals(stereotype.toLowerCase()) && t.isInt())
+    { return positive; }
+    if ("long".equals(stereotype.toLowerCase()) && t.isLong())
+    { return positive; }
+
+    if ("class".equals(stereotype.toLowerCase()) && !(t.isEntityType(entities)))
+    { System.out.println(t + " is not a class"); 
+      return !positive; 
+    }
+    if ("void".equals(stereotype.toLowerCase()) && t != null && !t.isVoidType())
     { return !positive; }
-	if ("void".equals(stereotype.toLowerCase()) && t != null && !t.isVoidType())
-	{ return !positive; }
     if ("enumerated".equals(stereotype.toLowerCase()) && !(t.isEnumeratedType()))
     { return !positive; }
     if ("map".equals(stereotype.toLowerCase()) && !t.isMapType())
@@ -135,6 +151,15 @@ public class CGCondition
     { return !positive; }
     if ("set".equals(stereotype.toLowerCase()) && !(t.isSetType()))
     { return !positive; }
+    if ("integer".equals(stereotype.toLowerCase()) && !(t.isInteger()))
+    { return !positive; }
+    if ("real".equals(stereotype.toLowerCase()) && !(t.isReal()))
+    { return !positive; }
+    if ("int".equals(stereotype.toLowerCase()) && !(t.isInt()))
+    { return !positive; }
+    if ("long".equals(stereotype.toLowerCase()) && !(t.isLong()))
+    { return !positive; }
+
     return false;
   }
 
@@ -149,9 +174,13 @@ public class CGCondition
   public boolean conditionSatisfied(Vector v, Vector entities)
   { if ("empty".equals(stereotype.toLowerCase()) && (v == null || v.size() == 0))
     { return positive; }
-	if ("empty".equals(stereotype.toLowerCase()) && v != null && v.size() > 0)
-	{ return !positive; }
-	return false; 
+    if ("empty".equals(stereotype.toLowerCase()) && v != null && v.size() > 0)
+    { return !positive; }
+    if ("multiple".equals(stereotype.toLowerCase()) && (v == null || v.size() <= 1))
+    { return !positive; }
+    if ("multiple".equals(stereotype.toLowerCase()) && v != null && v.size() > 1)
+    { return positive; }
+    return false; 
   } 
 
   public boolean conditionSatisfied(Expression e, Vector entities)
@@ -222,9 +251,21 @@ public class CGCondition
     }
     else if ("object".equals(stereotype))
     { if (positive)
-      { return t.isEntityType() && ent == null; }
-      else
-      { return !(t.isEntityType() && ent == null); }
+      { if ("self".equals(edata) || "super".equals(edata))
+        { return true; } 
+        else if (t.isEntityType(entities) && ent == null)
+        { return true; }
+        else
+        { return false; }
+      }  
+      else 
+      { if ("self".equals(edata) || "super".equals(edata))
+        { return false; } 
+        else if (t.isEntityType(entities) && ent == null)
+        { return false; }
+        else
+        { return true; }
+      }  
     }
     else if ("enumerated".equals(stereotype))
     { if (positive)

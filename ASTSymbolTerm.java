@@ -16,6 +16,9 @@ public class ASTSymbolTerm extends ASTTerm
   public ASTSymbolTerm(String s) 
   { symbol = s; } 
 
+  public boolean hasTag(String tagx) 
+  { return false; } 
+
   public String cg(CGSpec cgs)
   { return symbol; } 
 

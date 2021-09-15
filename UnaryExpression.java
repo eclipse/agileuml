@@ -2017,7 +2017,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "Integer.decode(" + qf + ").intValue()"; } 
 
     if (operator.equals("->char2byte")) 
-    { return "((int) (" + qf + ").getBytes()[0])"; } 
+    { return "Set.char2byte(" + qf + ")"; } 
 
     if (operator.equals("->byte2char")) 
     { return "Set.byte2char(" + qf + ")"; } 
@@ -2275,7 +2275,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "\"true\".equals(" + qf + " + \"\")"; } 
 
     if (operator.equals("->char2byte")) 
-    { return "((int) (" + qf + ").getBytes()[0])"; } 
+    { return "Set.char2byte(" + qf + ")"; } 
 
     if (operator.equals("->byte2char")) 
     { return "Set.byte2char(" + qf + ")"; } 
@@ -2553,7 +2553,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "\"true\".equals(" + qf + " + \"\")"; } 
 
     if (operator.equals("->char2byte")) 
-    { return "((int) (" + qf + ").getBytes()[0])"; } 
+    { return "Ocl.char2byte(" + qf + ")"; } 
 
     if (operator.equals("->byte2char")) 
     { return "Ocl.byte2char(" + qf + ")"; } 
@@ -3141,7 +3141,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "std::stod(" + qf + ")"; } 
 
     if (operator.equals("->char2byte")) 
-    { return "((int) (" + qf + ")[0])"; } 
+    { return "UmlRsdsLib<string>::char2byte(" + qf + ")"; } 
 
     if (operator.equals("->byte2char")) 
     { return "UmlRsdsLib<int>::byte2char(" + qf + ")"; } 
@@ -3153,7 +3153,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "(" + qf + " != NULL)"; } 
 
     if (operator.equals("->oclIsInvalid")) 
-    { return "std::isnan(" + qf + ")"; } 
+    { // return "std::isnan(" + qf + ")";
+      return "_isnan((double) " + qf + ")"; 
+    } 
 
     if (operator.equals("->oclType"))
     { if (type != null) 

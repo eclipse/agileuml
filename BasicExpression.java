@@ -380,7 +380,18 @@ class BasicExpression extends Expression
   { BasicExpression res = new BasicExpression(f);
     res.setObjectRef(obj);  
     res.umlkind = UPDATEOP;
+    res.isEvent = true; 
     res.parameters = pars; 
+    return res; 
+  } 
+
+  public static BasicExpression newCallBasicExpression(String f, Expression obj, Expression par) 
+  { BasicExpression res = new BasicExpression(f);
+    res.setObjectRef(obj);  
+    res.umlkind = UPDATEOP;
+    res.parameters = new Vector();
+    res.parameters.add(par);  
+    res.isEvent = true; 
     return res; 
   } 
 
@@ -389,6 +400,7 @@ class BasicExpression extends Expression
     res.setObjectRef(obj);  
     res.umlkind = UPDATEOP;
     res.parameters = new Vector(); 
+    res.isEvent = true; 
     return res; 
   } 
 
@@ -399,6 +411,7 @@ class BasicExpression extends Expression
     res.setObjectRef(obj);  
     res.umlkind = UPDATEOP;
     res.isStatic = true; 
+    res.isEvent = true; 
     res.parameters = pars; 
     return res; 
   } 
@@ -412,6 +425,7 @@ class BasicExpression extends Expression
     res.setObjectRef(obj);  
     res.umlkind = UPDATEOP;
     res.isStatic = true; 
+    res.isEvent = true; 
     res.parameters = pars; 
     return res; 
   } 
@@ -425,6 +439,7 @@ class BasicExpression extends Expression
     res.setObjectRef(obj);  
     res.umlkind = UPDATEOP;
     res.isStatic = true; 
+    res.isEvent = true; 
     res.parameters = pars; 
     return res; 
   } 
@@ -458,7 +473,7 @@ class BasicExpression extends Expression
     { res.objectRef = (BasicExpression) ((BasicExpression) objectRef).clone(); }  // clone it?
     else if (objectRef != null) 
     { res.objectRef = (Expression) objectRef.clone(); } 
-	res.formalParameter = formalParameter; 
+    res.formalParameter = formalParameter; 
  
     res.isEvent = isEvent; 
     res.modality = modality; // Surely? 
@@ -2752,6 +2767,14 @@ class BasicExpression extends Expression
       umlkind = UPDATEOP;
       isStatic = true;  
       multiplicity = ModelElement.ONE; 
+      // set the formal parameters
+      if (parameters != null && parameters.size() > 0) 
+      { Expression par1 = (Expression) parameters.get(0); 
+        Attribute fpar1 = new Attribute("t", 
+                                new Type("long", null),  
+                                ModelElement.INTERNAL); 
+        par1.formalParameter = fpar1; 
+      }
       return true; 
     } 
     
@@ -2786,6 +2809,15 @@ class BasicExpression extends Expression
       { type = new Type("void", null); 
         umlkind = UPDATEOP; 
         multiplicity = ModelElement.ONE; 
+        // set the formal parameters
+        if (parameters != null && parameters.size() > 0) 
+        { Expression par1 = (Expression) parameters.get(0); 
+          Attribute fpar1 = new Attribute("t", 
+                                new Type("long", null),  
+                                ModelElement.INTERNAL); 
+          par1.formalParameter = fpar1; 
+        }
+        
         return true;
       }  
     } 
@@ -2797,6 +2829,15 @@ class BasicExpression extends Expression
       { type = new Type("boolean", null); 
         umlkind = QUERY; 
         multiplicity = ModelElement.ONE; 
+        // set the formal parameters
+        if (parameters != null && parameters.size() > 0) 
+        { Expression par1 = (Expression) parameters.get(0); 
+          Attribute fpar1 = new Attribute("d", 
+                                new Type("OclDate", null),  
+                                ModelElement.INTERNAL); 
+          par1.formalParameter = fpar1; 
+        }
+      
         return true;
       }  
     } 
@@ -2808,7 +2849,17 @@ class BasicExpression extends Expression
       { type = new Type("boolean", null); 
         umlkind = QUERY; 
         multiplicity = ModelElement.ONE; 
+        if (parameters != null && parameters.size() > 0) 
+        { Expression par1 = (Expression) parameters.get(0); 
+          Attribute fpar1 = new Attribute("d", 
+                                new Type("OclDate", null),  
+                                ModelElement.INTERNAL); 
+          par1.formalParameter = fpar1; 
+        }
         return true;
+
+        // set the formal parameters
+        
       }  
     } 
 
@@ -2866,7 +2917,8 @@ class BasicExpression extends Expression
       { type = new Type("boolean", null);
         umlkind = QUERY; 
         multiplicity = ModelElement.ONE; 
- 
+        // set the formal parameters
+        
         return true;
       }  
     } 
@@ -3013,7 +3065,8 @@ class BasicExpression extends Expression
     else 
     { context.addAll(contexts); } 
 
-    // System.out.println("Context of " + this + " is " + context); 
+    System.out.println("Context of " + this + "( " + isEvent + " ) is " + context);
+    System.out.println();  
 
 
     if (isEvent && isFunction(data))
@@ -3026,6 +3079,7 @@ class BasicExpression extends Expression
         !data.equals("indexOf") && 
         !data.equals("setAt") && 
         !data.equals("insertAt") && 
+        !data.equals("insertInto") && 
         !(data.equals("replace")) && 
         !(data.equals("replaceFirstMatch")) && 
         !(data.equals("replaceAll")) && 
@@ -3041,9 +3095,10 @@ class BasicExpression extends Expression
 
       for (int i = 0; i < context.size(); i++) 
       { Entity e = (Entity) context.get(i); 
-        bf = e.getDefinedOperation(data,parameters);  
+        bf = e.getDefinedOperation(data,parameters);
+  
         if (bf != null) 
-        { // System.out.println("**Type of " + data + " is operation, of: " + e);
+        { System.out.println("**Type of " + data + " is operation, of: " + e);
           entity = e;
           if (bf.parametersMatch(parameters)) { } 
           else 
@@ -3051,6 +3106,9 @@ class BasicExpression extends Expression
                                     "Type warning", JOptionPane.WARNING_MESSAGE);
             continue; 
           }  
+
+          System.out.println("** Setting formal parameters of " + data + " operation: " + parameters);
+          System.out.println(); 
 
           bf.setFormalParameters(parameters); 
 

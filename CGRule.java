@@ -232,7 +232,7 @@ public class CGRule
   public boolean hasCondition(String prop)
   { for (int x = 0; x < conditions.size(); x++)
     { CGCondition cond = (CGCondition) conditions.get(x);
-      if (prop.equals(cond.stereotype) && cond.positive)
+      if (prop.equalsIgnoreCase(cond.stereotype) && cond.positive)
       { return true; }
     }
     return false;
@@ -285,6 +285,7 @@ public class CGRule
     // substitute variables[i] by args[i] in rhs
     
     System.out.println(">***> Metafeatures of rule " + this + " are " + metafeatures); 
+    Vector entities = cgs.entities; 
 
     String res = rhs + "";
     for (int j = 0; j < metafeatures.size(); j++) 
@@ -331,13 +332,16 @@ public class CGRule
           } 
         }
         else if ("defaultSubclass".equals(mffeat) && obj instanceof Type)
-        { Entity ee = ((Type) obj).getEntity(); 
-          Entity esub = ee.getDefaultSubclass(); 
-          if (esub != null) 
-          { String repl = esub.getName(); 
-            System.out.println(">--> Replacing " + mf + " by " + repl); 
-            res = res.replace(mf,repl);
-          } 
+        { Type etype = (Type) obj; 
+          if (etype.isEntity(entities))
+          { Entity ee = etype.getEntity(entities); 
+            Entity esub = ee.getDefaultSubclass(); 
+            if (esub != null) 
+            { String repl = esub.getName(); 
+              System.out.println(">--> Replacing " + mf + " by " + repl); 
+              res = res.replace(mf,repl);
+            }
+          }  
         }
         else if ("alias".equals(mffeat) && obj instanceof Type)
         { Type ee = (Type) obj; 

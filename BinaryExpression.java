@@ -14038,7 +14038,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       { Expression newR = right.substitute(oldE,newE);
         Expression newL = left.substitute(oldE,newE);   // Added 9.1.2016
         Expression result = new BinaryExpression(operator,newL,newR); 
-		result.formalParameter = formalParameter; 
+        result.formalParameter = formalParameter; 
         result.setBrackets(needsBracket); 
         return result; 
       } // Surely should substitute in left.right ??? 

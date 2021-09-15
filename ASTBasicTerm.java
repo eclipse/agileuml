@@ -23,6 +23,9 @@ public class ASTBasicTerm extends ASTTerm
   public void setTag(String t)
   { tag = t; } 
 
+  public boolean hasTag(String tagx) 
+  { return tagx.equals(tag); } 
+
   public void setValue(String v)
   { value = v; } 
 
@@ -115,6 +118,7 @@ public class ASTBasicTerm extends ASTTerm
       return "self";
     } 
 
+   
     if ("String".equals(value))
     { modelElement = new Type("String", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -267,10 +271,16 @@ public class ASTBasicTerm extends ASTTerm
     { modelElement = new Type("OclDate", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclDate"; }
-    if ("Calendar".equals(value))
+    if ("Calendar".equals(value) || 
+        "GregorianCalendar".equals(value))
     { modelElement = new Type("OclDate", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclDate"; }
+
+    if ("Random".equals(value))
+    { modelElement = new Type("OclRandom", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclRandom"; }
 
     if ("Pattern".equals(value) || 
         "FileFilter".equals(value) ||
@@ -577,6 +587,13 @@ public class ASTBasicTerm extends ASTTerm
     { modelElement = new Type("ProgramException", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "ProgramException"; } // default 
+
+    if ("typeParameter".equals(tag))
+    { modelElement = new Type(value, null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return value; 
+    } 
+
 
     String typ = ASTTerm.getType(value);
     expression = 

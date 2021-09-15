@@ -352,4 +352,6 @@ public abstract class ASTTerm
     return null; 
   }  
 
+  public abstract boolean hasTag(String tagx); 
+
 } 

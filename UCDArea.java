@@ -1091,7 +1091,8 @@ public class UCDArea extends JPanel
 
     String params = opDialog.getParams(); // pairs var type
     Vector oppars = 
-      BehaviouralFeature.reconstructParameters(params,types,entities);
+      BehaviouralFeature.reconstructParameters(uc.classifier,
+                                      params,types,entities);
     String pre = opDialog.getPre(); 
     String post = opDialog.getPost(); 
 
@@ -1163,7 +1164,8 @@ public class UCDArea extends JPanel
       } 
     } 
 
-    // add op to entity, so it can be used recursively in its own post:
+    // add op to entity, so it can be used 
+    // recursively in its own post:
     BehaviouralFeature op = new BehaviouralFeature(nme,oppars,query,tt);
     op.setElementType(elemType); 
     if (resultvar != null) 
@@ -1250,7 +1252,8 @@ public class UCDArea extends JPanel
 
     String params = opDialog.getParams(); // pairs var type
     Vector oppars = 
-      BehaviouralFeature.reconstructParameters(params,types,entities);
+      BehaviouralFeature.reconstructParameters(
+                                    params,types,entities);
     String pre = opDialog.getPre(); 
     String post = opDialog.getPost(); 
 
@@ -3046,7 +3049,8 @@ public class UCDArea extends JPanel
     auxcstls.add("cgswiftmain.cstl"); 
     auxcstls.add("cgprotocol.cstl"); 
     auxcstls.add("catchTestSwift.cstl");
-
+    auxcstls.add("swiftCopyOperation.cstl"); 
+    
     CGSpec cgs = loadCSTL("cgSwift.cstl",auxcstls); 
 
     // System.out.println(">>> Using loaded code generator: " + cgs); 
@@ -3328,9 +3332,13 @@ public class UCDArea extends JPanel
           PrintWriter voout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(entvof)));
-          voout.println(ent.getSwiftUIValueObject("app",types,entities,useCases,cgs));
+          voout.println(
+            ent.getSwiftUIValueObject(
+              "app",types,entities,useCases,cgs));
           voout.close(); 
-        } catch (Exception e) { }
+        } catch (Exception e) 
+          { JOptionPane.showMessageDialog(null, "ERROR!: cannot generate Value Object for " + ent, "", JOptionPane.ERROR_MESSAGE); 
+          }
       }
     }   
 
@@ -3555,6 +3563,7 @@ public class UCDArea extends JPanel
     auxcstls.add("cgswiftmain.cstl"); 
     auxcstls.add("cgprotocol.cstl"); 
     auxcstls.add("catchTestSwift.cstl");
+    auxcstls.add("swiftCopyOperation.cstl"); 
 
     CGSpec cgs = loadCSTL("cgSwift.cstl",auxcstls); 
     
@@ -5359,7 +5368,8 @@ public class UCDArea extends JPanel
 
     params = opDialog.getParams(); // pairs var type
     Vector oppars = 
-      BehaviouralFeature.reconstructParameters(params," ",types,entities);
+      BehaviouralFeature.reconstructParameters(ent, 
+                                    params," ",types,entities);
     vars.addAll(oppars); 
 
     boolean tc = spre.typeCheck(types,entities,contexts,vars);
@@ -5504,7 +5514,9 @@ public class UCDArea extends JPanel
 
     String params = opDialog.getParams(); // pairs var type
     Vector oppars = 
-      BehaviouralFeature.reconstructParameters(params,types,entities);
+      BehaviouralFeature.reconstructParameters(
+                                     ent, params, 
+                                     types, entities);
     String pre = opDialog.getPre(); 
     String post = opDialog.getPost(); 
 
@@ -5728,7 +5740,7 @@ public class UCDArea extends JPanel
 
     while (effect == null)
     { System.out.println(">>>>> ERROR: Syntax error in activity: " + post); 
-	  comp.checkBrackets(); 
+      comp.checkBrackets(); 
 	  
       actDialog.setOldFields(nme,"","","",post,true);
       actDialog.setVisible(true);
@@ -5755,6 +5767,26 @@ public class UCDArea extends JPanel
     Vector pres = effect.allPreTerms(); 
     // System.out.println("All pre-expressions used: " + pres); 
 
+    if (op != null)
+    { op.setActivity(effect); 
+      System.out.println("Set activity for operation " + nme + " of entity " + ent); 
+      updateActivities(ent, op, effect); 
+      // activities.add(new Behaviour(ent,op,effect)); 
+    }
+  }
+
+  public void addOperationActivities(Entity ent)
+  { Vector ops = ent.getOperations(); 
+    for (int i = 0; i < ops.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) ops.get(i);
+      Statement effect = bf.getActivity();  
+      if (effect != null) 
+      { addOperationActivity(ent,bf,effect); } 
+    } 
+  } 
+
+  public void addOperationActivity(Entity ent, BehaviouralFeature op, Statement effect)
+  { String nme = op.getName(); 
     if (op != null)
     { op.setActivity(effect); 
       System.out.println("Set activity for operation " + nme + " of entity " + ent); 
@@ -7284,7 +7316,7 @@ public class UCDArea extends JPanel
 
     String params = p.params; // pairs var type
     Vector oppars = 
-      BehaviouralFeature.reconstructParameters(params," ",types,entities);
+      BehaviouralFeature.reconstructParameters(ent,params," ",types,entities);
     String pre = p.pre; 
     String post = p.post; 
    
@@ -14974,7 +15006,7 @@ public void produceCUI(PrintWriter out)
       { eof = true; 
         break; 
       }
-      else if (s.startsWith("--")) { } 
+      // else if (s.startsWith("--")) { } 
       else 
       { int cindex = s.indexOf("//"); 
         if (cindex > 0) 
@@ -15032,7 +15064,8 @@ public void produceCUI(PrintWriter out)
       if (ey != null) 
       { yval = Integer.parseInt(ey); } 
 
-      addEntity(enode, xval, yval);  
+      addEntity(enode, xval, yval);
+      addOperationActivities(enode);   
       ecount++; 
     } 
 
@@ -15171,6 +15204,7 @@ public void produceCUI(PrintWriter out)
       } 
       else 
       { addEntity(enode, xval, yval); } 
+      addOperationActivities(enode); 
       ecount++; 
     } 
 

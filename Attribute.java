@@ -203,6 +203,22 @@ public class Attribute extends ModelElement
     kind = INTERNAL; 
   } 
 
+  public boolean typeCheck(Vector types, Vector entities)
+  { if (type == null) 
+    { type = new Type("OclAny", null); 
+      return true; 
+    } 
+
+    String tname = type + ""; 
+    Type t = Type.getTypeFor(tname, types, entities); 
+    if (t == null) 
+    { type = new Type("OclAny", null); 
+      return true; 
+    } 
+    type = t; 
+    return true; 
+  } 
+
   public boolean isMany()
   { return upper == 0; }
 
@@ -2827,13 +2843,18 @@ public class Attribute extends ModelElement
     return res;
   }
 
-  public String setAllOperationCPP(String ename, Vector declarations)
+  public String setAllOperationCPP(Entity ent, Vector declarations)
   { // static void setAllatt(vector<ename*>* es, T val)
     // static void setAllatt(set<ename*>* es, T val)
     // { update e.att for e in es }
     // Declarations are in class E, coding in Controller.cpp
 
-    if (frozen || isMultiple()) { return ""; } 
+    if (frozen || isMultiple() || ent == null) 
+    { return ""; }
+
+    String ename = ent.getName(); 
+    String template = ent.getTemplateCPP(); 
+ 
     String ex = ename.toLowerCase() + "x";
     String nme = getName();
     String update = "Controller::inst->set" + nme + "(" + ex + ",val);";
@@ -2845,7 +2866,8 @@ public class Attribute extends ModelElement
     String declaration = "  static void setAll" + nme;
     declaration = declaration + "(" + argtyp1 + " " + es + "," + tname + " val);\n";
 
-    String res = "  void " + ename + "::setAll" + nme;
+    String res = "  " + template + "\n" + 
+                 "  void " + ename + "::setAll" + nme;
     res = res + "(" + argtyp1 + " " + es + "," + tname + " val)\n";
     res = res + "  { vector<" + ename + "*>::iterator _pos;\n";
     res = res + "    for (_pos = " + es + "->begin(); _pos != " + es + "->end(); ++_pos)\n";
@@ -2856,7 +2878,8 @@ public class Attribute extends ModelElement
     declaration = declaration + "  static void setAll" + nme;
     declaration = declaration + "(" + argtyp2 + " " + es + "," + tname + " val);\n";
 
-    res = res + "  void " + ename + "::setAll" + nme;
+    res = res + "  " + template + "\n" + 
+                "  void " + ename + "::setAll" + nme;
     res = res + "(" + argtyp2 + " " + es + "," + tname + " val)\n";
     res = res + "  { std::set<" + ename + "*>::iterator _pos;\n";
     res = res + "    for (_pos = " + es + "->begin(); _pos != " + es + "->end(); ++_pos)\n";
@@ -6685,7 +6708,9 @@ public String androidTableEntryField(String ent, String op)
   } 
 
 public String swiftUIEntryField(String ent, String op, Vector decs, Vector actions)
-{ String nme = getName();
+{ if (isMultiple())
+  { return ""; } 
+  String nme = getName();
   String label = Named.capitalise(nme);
   String hint = ent + " " + nme; 
   String bean = "bean"; 
