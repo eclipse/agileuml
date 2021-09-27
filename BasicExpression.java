@@ -20,6 +20,8 @@ class BasicExpression extends Expression
   String data; 
   Expression objectRef = null;   // can be complex expression, but normally a BasicExpression
   Expression arrayIndex = null;  // multiple indexes data[i][j] represented by data[i]->at(j)
+  Type arrayType = null; // in e[i] the type of e
+
   int kind = Statemachine.NONE;
      // Statemachine.STATE, Statemachine.STATEMACHINE, etc
   int mult = 1;  // multiplicity of the owning statemachine
@@ -465,6 +467,9 @@ class BasicExpression extends Expression
   public Expression getArrayIndex() 
   { return arrayIndex; } 
 
+  public Type getArrayType() 
+  { return arrayType; } 
+
   public Object clone()
   { BasicExpression res = new BasicExpression(data);
     if (javaForm != null) 
@@ -484,8 +489,11 @@ class BasicExpression extends Expression
     res.entity = entity; 
     res.mult = mult; 
     res.multiplicity = multiplicity; 
+
     if (arrayIndex != null) 
     { res.arrayIndex = (Expression) arrayIndex.clone(); }
+    res.arrayType = arrayType; 
+
     if (parameters == null) 
     { res.parameters = null; } 
     else 
@@ -496,6 +504,7 @@ class BasicExpression extends Expression
         res.parameters.add(pclone); 
       } 
     } 
+
     res.prestate = prestate;
     res.atTime = atTime;  
     res.downcast = downcast; 
@@ -2656,6 +2665,8 @@ class BasicExpression extends Expression
         "double".equals(data) || "String".equals(data) ||
         "OclDate".equals(data) || "OclAny".equals(data) || 
         "OclType".equals(data) || "OclFile".equals(data) || 
+        "OclRandom".equals(data) ||
+        Type.isOclExceptionType(data) ||  
         "OclProcess".equals(data))
     { type = new Type("OclType", null); 
       elementType = new Type(data, null); 
@@ -2753,7 +2764,7 @@ class BasicExpression extends Expression
         multiplicity = ModelElement.ONE; 
         return true; 
       } 
-    } 
+    } // Only for formalisation of ETL
 
     if (parameters != null) 
     { for (int i = 0; i < parameters.size(); i++) 
@@ -2875,6 +2886,18 @@ class BasicExpression extends Expression
       }  
     } 
 
+    if ("printStackTrace".equals(data) && objectRef != null) 
+    { objectRef.typeCheck(types,entities,contexts,env); 
+      if (objectRef.type != null && 
+          objectRef.type.isOclException()) 
+      { type = new Type("void", null); 
+        umlkind = UPDATEOP; 
+        multiplicity = ModelElement.ONE; 
+        
+        return true;
+      }  
+    } 
+
     if (("getCurrent".equals(data) || "read".equals(data) ||
          "readLine".equals(data) || "getName".equals(data) ||
          "getAbsolutePath".equals(data) || 
@@ -2973,6 +2996,7 @@ class BasicExpression extends Expression
 
     if (arrayIndex != null)
     { boolean res1 = arrayIndex.typeCheck(types,entities,contexts,env);
+      arrayType = type; 
       res = res && res1;
     } // might reduce multiplicity to ONE - although not for --* qualified roles 
 
@@ -3010,9 +3034,9 @@ class BasicExpression extends Expression
       if (staticent != null) 
       { objectRef.umlkind = Expression.CLASSID; 
 	  
-        BehaviouralFeature bf = staticent.getOperation(data,parameters); 
+        BehaviouralFeature bf = staticent.getStaticOperation(data,parameters); 
 
-        if (bf != null && bf.isStatic()) 
+        if (bf != null) 
         { if (bf.parametersMatch(parameters)) { } 
           else 
           { JOptionPane.showMessageDialog(null, "Actual parameters do not match formal pars: " + this + " /= " + bf, 
@@ -3020,6 +3044,7 @@ class BasicExpression extends Expression
           }  
 
           bf.setFormalParameters(parameters); 
+          System.out.println("** Setting formal parameters of " + this);
 
           type = bf.getResultType(); 
           elementType = bf.getElementType(); 
@@ -3033,7 +3058,7 @@ class BasicExpression extends Expression
             if (type == null || type.equals("") || type.equals("void"))
             { type = new Type("boolean",null); }  
           }
-          // System.out.println("**Type of " + this + " is static operation, of: " + entity);
+          // System.out.println("**Type of " + this + " is static operation call, of: " + entity);
           return true;  
         } 
         else if (staticent.hasDefinedAttribute(data))  
@@ -3049,6 +3074,7 @@ class BasicExpression extends Expression
             entity = staticent;
             isStatic = true; 
 
+            arrayType = type; 
             adjustTypeForArrayIndex(att); 
             // System.out.println("*** Type of " + data + " is static ATTRIBUTE in entity " +
             //                    staticent + " type is " + type + "(" + elementType + ") Modality = " + modality); 
@@ -3062,11 +3088,23 @@ class BasicExpression extends Expression
       else if (objectRef.type != null && objectRef.type.isEntity(entities)) 
       { context.add(0,objectRef.type.getEntity(entities)); } 
     }
-    else 
+    else // objectRef == null
     { context.addAll(contexts); } 
 
-    System.out.println("Context of " + this + "( " + isEvent + " ) is " + context);
-    System.out.println();  
+    // System.out.println("Context of " + this + "(event: " + isEvent + ") is " + context);
+ 
+    if (context.size() == 0)
+    { if (entity == null) 
+      { System.out.println(">> Warning: No context or entity for " + this);
+        System.out.println();  
+        //  + 
+        //         " -- it must be a local variable/parameter");
+        // System.out.println(">> Or static feature/global use case"); 
+        // System.out.println(">> Static features should be prefixed by their class: C.f"); 
+      } 
+    } 
+
+    // System.out.println();  
 
 
     if (isEvent && isFunction(data))
@@ -3131,7 +3169,10 @@ class BasicExpression extends Expression
              // only occur as part of action invariant.
 
           setObjectRefType(); 
+          
           adjustTypeForObjectRef(bf); 
+          arrayType = type; 
+
           adjustTypeForArrayIndex(bf); 
           return true; 
         }   // type check the actual parameters, also 
@@ -3143,6 +3184,7 @@ class BasicExpression extends Expression
           setObjectRefType(); 
           // adjustTypeForObjectRef(bf); 
           // adjustTypeForArrayIndex(bf); 
+          arrayType = type; 
 
           return true; 
         } // else, downcast if in a subclass
@@ -3167,6 +3209,7 @@ class BasicExpression extends Expression
               } 
               setObjectRefType(); 
               adjustTypeForObjectRef(bf); 
+              arrayType = type; 
               adjustTypeForArrayIndex(bf); 
               return true;
             } 
@@ -3179,6 +3222,8 @@ class BasicExpression extends Expression
       Attribute fvar = (Attribute) ModelElement.lookupByName(data,env); 
       if (fvar != null) 
       { type = fvar.getType(); 
+        arrayType = type; 
+
         if (type != null && type.isFunctionType())
         { umlkind = UPDATEOP; 
           elementType = fvar.getElementType();
@@ -3265,7 +3310,9 @@ class BasicExpression extends Expression
       { type = new Type("Sequence",null); 
         elementType = objectRef.elementType; 
         type.setElementType(elementType); 
-        multiplicity = ModelElement.MANY; 
+        multiplicity = ModelElement.MANY;
+        arrayType = type; 
+ 
         adjustTypeForArrayIndex(); 
       } 
       else if (data.equals("isDeleted") || data.equals("oclIsKindOf") || data.equals("oclIsTypeOf") ||
@@ -3290,6 +3337,7 @@ class BasicExpression extends Expression
         elementType = objectRef.elementType; // Sequence or String 
         if (type != null && type.isCollectionType())
         { multiplicity = ModelElement.MANY;
+          arrayType = type; 
           adjustTypeForArrayIndex(); 
           return res;
         } 
@@ -3382,9 +3430,10 @@ class BasicExpression extends Expression
       { entity = type.getEntity(); } 
       if (elementType == null && type != null) 
       { elementType = type.getElementType(); } 
+      arrayType = type; 
       adjustTypeForArrayIndex(paramvar);
       
-      System.out.println(">>> Parameter/local variable: " + this + " type= " + type + " (" + elementType + ")"); 
+      // System.out.println(">>> Parameter/local variable: " + this + " type= " + type + " (" + elementType + ")"); 
       System.out.println(); 
       umlkind = VARIABLE; 
 
@@ -3420,7 +3469,8 @@ class BasicExpression extends Expression
                             ent + " type is " + type + "(" + elementType + ") Modality = " + modality); 
         }
         
-        adjustTypeForObjectRef(att); 
+        adjustTypeForObjectRef(att);
+        arrayType = type;  
         adjustTypeForArrayIndex(att); 
         
         if (arrayIndex != null) 
@@ -3452,7 +3502,8 @@ class BasicExpression extends Expression
           if (Type.isCollectionType(type))
           { multiplicity = ModelElement.MANY; } 
           entity = subent;
-          adjustTypeForObjectRef(att); 
+          adjustTypeForObjectRef(att);
+          arrayType = type;  
           adjustTypeForArrayIndex(att); 
           // System.out.println("**Type of " + data + " is downcast ATTRIBUTE in entity " +
           //                    subent + " type is " + type); 
@@ -3488,7 +3539,9 @@ class BasicExpression extends Expression
         }   // index must be int type, 
             // and ast is ordered/sorted. Also for any att or role
 
-        adjustTypeForObjectRef(); 
+        adjustTypeForObjectRef();
+        arrayType = type; 
+ 
         if (arrayIndex != null && !ast.isQualified())  
         { adjustTypeForArrayIndex(); } 
 
@@ -3529,7 +3582,8 @@ class BasicExpression extends Expression
             { type = new Type("Set",null); } 
             type.setElementType(elementType); 
           }
-          adjustTypeForObjectRef(); 
+          adjustTypeForObjectRef();
+          arrayType = type;  
           if (arrayIndex != null && !ast.isQualified())  
           { adjustTypeForArrayIndex(); } 
           // System.out.println("**Type of " + data + " is downcast ROLE in entity " +
@@ -3568,6 +3622,7 @@ class BasicExpression extends Expression
       else 
       { multiplicity = ModelElement.ONE; }   // assume
       
+      arrayType = type; 
       if (arrayIndex != null) 
       { adjustTypeForArrayIndex(var); } 
 	  
@@ -3641,6 +3696,57 @@ class BasicExpression extends Expression
     { Type oret = objectRef.getElementType(); 
       if (oret != null && oret.isEntity())
       { entity = oret.getEntity(); } 
+    } 
+
+    if (isEvent && type == null && objectRef == null && 
+        context.size() == 0)
+    { // A usecase, or a static operation of the local class
+ 
+      BehaviouralFeature bf; 
+
+      for (int i = 0; i < entities.size(); i++) 
+      { Entity e = (Entity) entities.get(i); 
+        bf = e.getDefinedOperation(data,parameters);
+  
+        if (bf != null && bf.isStatic()) 
+        { System.out.println("**Type of " + data + " is static operation, of class: " + e);
+          entity = e;
+          if (bf.parametersMatch(parameters)) { } 
+          else 
+          { JOptionPane.showMessageDialog(null, "Parameters do not match operation pars: " + this + " " + bf, 
+                                    "Type warning", JOptionPane.WARNING_MESSAGE);
+            continue; 
+          }  
+
+          System.out.println("** Setting formal parameters of " + data + " operation: " + parameters);
+          System.out.println(); 
+
+          bf.setFormalParameters(parameters); 
+
+          if (bf.isQuery())
+          { umlkind = QUERY; 
+            type = bf.getResultType(); 
+            elementType = bf.getElementType(); 
+            // System.out.println("QUERY OPERATION, type: " + type); 
+            // System.out.println("QUERY OPERATION, element type: " + elementType); 
+          }
+          else 
+          { umlkind = UPDATEOP; 
+            type = bf.getResultType(); 
+            elementType = bf.getElementType(); 
+            if (type == null || 
+                type.equals("") || type.equals("void"))
+            { type = new Type("boolean",null); }  
+            // System.out.println("UPDATE OPERATION, type: " + type); 
+          }  // shouldn't be object ref of anything. Should 
+             // only occur as part of action invariant.
+
+          arrayType = type; 
+
+          adjustTypeForArrayIndex(bf); 
+          return true; 
+        }   // type check the actual parameters, also 
+      }
     } 
 
     if (type == null) 
@@ -12983,7 +13089,7 @@ public Statement generateDesignSubtract(Expression rhs)
 
     if (umlkind == FUNCTION) 
     { // process as the corresponding unary or binary expression
-	 if ("allInstances".equals(data))
+      if ("allInstances".equals(data))
 	 { args.add(objectRef + ""); 
 	   eargs.add(objectRef); 
 	   CGRule r = cgs.matchedBasicExpressionRule(this,etext,textrules); 
@@ -12991,18 +13097,18 @@ public Statement generateDesignSubtract(Expression rhs)
 	   { // System.out.println(">> Matched rule: " + r + " to: " + etext + " with arguments= " + args); 
          String res = r.applyRule(args,eargs,cgs);
          return res;
-	   }  
-      }
-	 else if ("size".equals(data) || 
-                "reverse".equals(data) || 
-                "toLowerCase".equals(data) ||
-                "toUpperCase".equals(data) || 
-                "first".equals(data) || "last".equals(data) ||
-                "front".equals(data) || "tail".equals(data))
-	 { // args.add(objectRef + ""); 
+       }  
+     }
+     else if ("size".equals(data) || 
+              "reverse".equals(data) || 
+              "toLowerCase".equals(data) ||
+              "toUpperCase".equals(data) || 
+              "first".equals(data) || "last".equals(data) ||
+              "front".equals(data) || "tail".equals(data))
+     { // args.add(objectRef + ""); 
 	   // eargs.add(objectRef); 
-        UnaryExpression uexp = new UnaryExpression(this); 
-        System.out.println(">> Converted basic expression " + this + 
+       UnaryExpression uexp = new UnaryExpression(this); 
+       System.out.println(">> Converted basic expression " + this + 
                             " to UnaryExpression " + uexp); 
         return uexp.cg(cgs); 
       }

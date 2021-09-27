@@ -62,14 +62,14 @@ public class Entity extends ModelElement implements Comparable
   public boolean allSubclassesAreEmpty()
   { boolean res = true;
     if (subclasses.size() == 0) 
-	{ return false; }
+    { return false; }
 	 
     for (int i = 0; i < subclasses.size(); i++) 
-	{ Entity sub = (Entity) subclasses.get(i); 
-	  if (sub.notEmpty())
-	  { return false; }
-	}
-	return res;
+    { Entity sub = (Entity) subclasses.get(i); 
+      if (sub.notEmpty())
+      { return false; }
+    }
+    return res;
   } 
   
   public int featureCount()
@@ -107,7 +107,7 @@ public class Entity extends ModelElement implements Comparable
     { String allinterfaces = ""; 
       // int nsup = superclasses.size(); 
       // for (int i = 0; i < nsup-1; i++) 
-	  for (int i = 0; i < interfaces.size(); i++) 
+      for (int i = 0; i < interfaces.size(); i++) 
       { allinterfaces = allinterfaces + ((Entity) interfaces.get(i)).getName(); 
         if (i < interfaces.size() - 1)
         { allinterfaces = allinterfaces + ", "; }  
@@ -293,6 +293,28 @@ public class Entity extends ModelElement implements Comparable
     } 
 
     return res; 
+  } 
+
+  public void setTypeParameters(String generics, Vector entities, Vector types)
+  { String gens = generics.trim(); 
+    if (gens.length() == 0) 
+    { return; } 
+
+    StringTokenizer stok = new StringTokenizer(gens, "<>, "); 
+    Vector pars = new Vector(); 
+    while (stok.hasMoreTokens())
+    { String par = stok.nextToken(); 
+      Type tt = Type.getTypeFor(par,types,entities); 
+      if (tt != null) 
+      { pars.add(tt); }
+      else 
+      { Entity entpar = new Entity(par); 
+        tt = new Type(entpar); 
+        pars.add(tt); 
+      } 
+      System.out.println(">> Added type parameter " + tt); 
+    } 
+    setTypeParameters(pars);  
   } 
 
   public void setTypeParameters(Vector tpars)
@@ -894,8 +916,8 @@ public class Entity extends ModelElement implements Comparable
     BehaviouralFeature bf = getOperation(fname); 
     if (bf == null)
     { bf = new BehaviouralFeature(fname, new Vector(), true, fatt.getType()); 
-	  bf.setPre(new BasicExpression(true)); 
-	  bf.setStatic(fatt.isStatic()); 
+      bf.setPre(new BasicExpression(true)); 
+      bf.setStatic(fatt.isStatic()); 
     } 
 	
     BasicExpression res = new BasicExpression("result"); 
@@ -931,12 +953,23 @@ public class Entity extends ModelElement implements Comparable
 
     operations.removeAll(removals); 
 
+    if (superclass != null) 
+    { String nme = f.getName(); 
+      Vector pars = f.getParameters(); 
+
+      BehaviouralFeature overriddenOp = superclass.getDefinedOperation(nme, pars); 
+      if (overriddenOp != null) 
+      { System.out.println(">>> Operation " + nme + " overrides a superclass operation"); 
+        f.addStereotype("override"); 
+      } 
+    }
+
     f.setEntity(this);
     operations.add(f);
 
     if (isInterface())
     { f.addStereotype("abstract"); } 
-  }  // If f is abstract, this must also be
+  }  // If f is abstract, this class must also be
 
   public void removeOperation(BehaviouralFeature f)
   { operations.remove(f); }  // may invalidate an activity or call of this
@@ -4457,6 +4490,17 @@ public class Entity extends ModelElement implements Comparable
     return getOperation(nme); 
   } 
 
+  public BehaviouralFeature getStaticOperation(String nme, Vector parameters)
+  { BehaviouralFeature res = null; 
+    for (int i = 0; i < operations.size(); i++) 
+    { res = (BehaviouralFeature) operations.get(i); 
+      if (nme.equals(res.getName()) && res.isStatic() &&
+          res.parametersMatch(parameters))
+      { return res; } 
+    }  
+    return null; 
+  } 
+
   public BehaviouralFeature getDefinedOperation(String nme)
   { BehaviouralFeature res = getOperation(nme); 
     if (res != null) 
@@ -5527,6 +5571,22 @@ public class Entity extends ModelElement implements Comparable
     else 
     { generateCPP(entities,types,out,out2); } 
   } 
+
+  public String getParameterisedName() 
+  { String res = getName(); 
+    if (typeParameters != null && typeParameters.size() > 0) 
+    { res = res + "<"; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        res = res + tp.getName(); 
+        if (i < typeParameters.size() - 1) 
+        { res = res + ","; } 
+      } 
+      res = res + ">"; 
+    } 
+    return res; 
+  } 
+
  
   public void generateJava(Vector entities, Vector types, PrintWriter out)
   { if (hasStereotype("external") || hasStereotype("externalApp")) { return; } 
@@ -7889,7 +7949,7 @@ public class Entity extends ModelElement implements Comparable
     { Attribute att = (Attribute) attributes.get(i); 
       String attid = att.saveModelData(out); 
     }     
-  } 
+  } // And generic parameters
 
   public void asTextModel2(PrintWriter out, Vector entities, Vector types) 
   { String nme = getName(); 
@@ -8048,8 +8108,14 @@ public class Entity extends ModelElement implements Comparable
   { String nme = "class " + getName();
 
     if (typeParameters.size() > 0)
-    { String tp = ((Type) typeParameters.get(0)).getName(); 
-      nme = nme + "<" + tp + ">"; 
+    { nme = nme + "<"; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { String tp = ((Type) typeParameters.get(i)).getName(); 
+        nme = nme + tp;
+        if (i < typeParameters.size()-1) 
+        { nme = nme + ","; } 
+      } 
+      nme = nme + ">";  
     } 
 
     if (isInterface()) { } 

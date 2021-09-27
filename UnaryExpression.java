@@ -1597,6 +1597,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       } 
       else if (type == null)
       { JOptionPane.showMessageDialog(null, "No type for: " + this, "Type error", JOptionPane.ERROR_MESSAGE); 
+        type = new Type("OclAny", null); 
       } 
       else 
       { 
@@ -1755,7 +1756,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       }
     } 
 
-    if (operator.equals("->asSequence") || operator.equals("->sort") || operator.equals("->values"))
+    if (operator.equals("->asSequence") || 
+        operator.equals("->sort") || 
+        operator.equals("->values"))
     { type = new Type("Sequence",null); 
       elementType = argument.elementType; 
       type.setElementType(elementType); 

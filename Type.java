@@ -186,6 +186,20 @@ public class Type extends ModelElement
     return false; 
   } 
 
+  public static boolean isOclExceptionType(String nme)
+  { if (exceptions2java.get(nme) != null) 
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isOclException()
+  { String nme = getName(); 
+    if (exceptions2java.get(nme) != null) 
+    { return true; } 
+    return false; 
+  } 
+
+
   public Object clone()
   { Type result; 
     if (isEntity) 
@@ -254,8 +268,11 @@ public class Type extends ModelElement
     else if ("Set".equals(name) && elementType != null)
     { return elementType.metavariables(); } 
     else if ("Map".equals(name) || "Function".equals(name))
-    { Vector vars = keyType.metavariables(); 
-      vars.addAll(elementType.metavariables());
+    { Vector vars = new Vector(); 
+	  if (keyType != null) 
+	  { vars.addAll(keyType.metavariables()); } 
+	  if (elementType != null) 
+      { vars.addAll(elementType.metavariables()); } 
       return vars;  
     } 
     return res; 
@@ -3315,6 +3332,15 @@ public class Type extends ModelElement
     { return true; } 
     return false; 
   } 
+
+  public static Type typeCheck(Type t, Vector types, Vector entities)
+  { // instantiate t by any generic types
+    if (t == null) 
+    { return new Type("OclAny", null); } 
+    String tname = t + "";
+    return Type.getTypeFor(tname, types, entities); 
+  }  
+    
 
   public static Type getTypeFor(String typ)
   { Vector typs = new Vector(); 

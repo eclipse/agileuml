@@ -518,7 +518,7 @@ public class CGSpec
 	 System.out.println(">++>++> " + t + " is: " + typetext + " lhs: " + trimmedlhs); 
 	  
       if (typetext.equals(trimmedlhs))
-      { return r; } // exact match
+      { return r; } // exact match -- assume no variables
       // else if (t.isMapType() && trimmedlhs.startsWith("Map"))
       // { return r; }
       else if (t.isMapType() && trimmedlhs.equals("Map(_1,_2)"))
@@ -654,10 +654,16 @@ public class CGSpec
         { return r; }
         else if (r.variables.size() == 2 && cse.initialExpression == null && r.satisfiesConditions(args,entities))
         { return r; }
+        // else if (r.variables.size() == 1 &&
+        //          cse.initialExpression == null && 
+        //          r.satisfiesConditions(args,entities))
+        // { return r; }
       } 
-      else if (op.equals(":=") && (trimmedlhs.indexOf(op) > -1))
+      else if (op.equals(":=") && 
+               (trimmedlhs.indexOf(op) > -1))
       { Vector args = ((AssignStatement) e).cgparameters(); 
-        if (r.variables.size() == args.size() && r.satisfiesConditions(args,entities))
+        if (r.variables.size() == args.size() && 
+            r.satisfiesConditions(args,entities))
         { return r; }
       }
       else if (op.equals("execute") && trimmedlhs.startsWith(op))
@@ -809,9 +815,9 @@ public class CGSpec
     Expression ind = e.getArrayIndex();
     Vector pars = e.getParameters(); 
     
-	BasicExpression cl = (BasicExpression) e.clone(); 
-	cl.objectRef = null; 
-	cl.setParameters(null);
+    BasicExpression cl = (BasicExpression) e.clone(); 
+    cl.objectRef = null; 
+    cl.setParameters(null);
 	// c1.typeCheck(types,entities,context,env);  
 	// But the type and multiplicity can actually be different to e's. 
 	
@@ -822,88 +828,114 @@ public class CGSpec
       String trimmedlhs = r.lhs.trim(); 
 
       if (etext.equals(r.lhs) && r.variableCount() == 0)
-      { return r; } // exact match
+      { return r; } // exact match of literal. 
       // else if ("null".equals(r.lhs) && "null".equals(etext))
       // { return r; } 
-      else if (e.data.equals("allInstances") && trimmedlhs.equals("_1.allInstances"))
+      else if (e.data.equals("allInstances") && 
+               trimmedlhs.equals("_1.allInstances"))
       { return r; }
       else if (pars != null && pars.size() == 2 && 
-               e.data.equals("subrange") && "Integer".equals(e.getObjectRef() + "") && 
+               e.data.equals("subrange") && 
+               "Integer".equals(e.getObjectRef() + "") && 
                trimmedlhs.equals("Integer.subrange(_1,_2)"))
       { return r; }  
       else if (pars != null && pars.size() == 4 && 
-               e.data.equals("Sum") && "Integer".equals(e.getObjectRef() + "") && 
+               e.data.equals("Sum") && 
+               "Integer".equals(e.getObjectRef() + "") && 
                trimmedlhs.equals("Integer.Sum(_1,_2,_3,_4)"))
       { return r; }  
       else if (pars != null && pars.size() == 4 && 
-               e.data.equals("Prd") && "Integer".equals(e.getObjectRef() + "") && 
+               e.data.equals("Prd") && 
+               "Integer".equals(e.getObjectRef() + "") && 
                trimmedlhs.equals("Integer.Prd(_1,_2,_3,_4)"))
       { return r; }  
       else if (pars != null && pars.size() == 2 && 
-               e.data.equals("subrange") && trimmedlhs.equals("_1.subrange(_2,_3)"))
+               e.data.equals("subrange") && 
+               trimmedlhs.equals("_1.subrange(_2,_3)"))
+      { selected = r; 
+        args.add(obj); 
+        args.add(pars.get(0)); 
+        args.add(pars.get(1)); 
+      }  
+      else if (pars != null && pars.size() == 1 && 
+               e.data.equals("subrange") && 
+               trimmedlhs.equals("_1.subrange(_2)"))
+      { selected = r; 
+        args.add(obj); 
+        args.add(pars.get(0)); 
+      }  
+      else if (pars != null && pars.size() == 2 && 
+               e.data.equals("insertAt") && 
+               trimmedlhs.equals("_1.insertAt(_2,_3)"))
       { selected = r; 
         args.add(obj); 
         args.add(pars.get(0)); 
         args.add(pars.get(1)); 
       }  
       else if (pars != null && pars.size() == 2 && 
-               e.data.equals("insertAt") && trimmedlhs.equals("_1.insertAt(_2,_3)"))
+               e.data.equals("setAt") && 
+               trimmedlhs.equals("_1.setAt(_2,_3)"))
       { selected = r; 
         args.add(obj); 
         args.add(pars.get(0)); 
         args.add(pars.get(1)); 
       }  
       else if (pars != null && pars.size() == 2 && 
-               e.data.equals("setAt") && trimmedlhs.equals("_1.setAt(_2,_3)"))
+               e.data.equals("replace") && 
+               trimmedlhs.equals("_1.replace(_2,_3)"))
       { selected = r; 
         args.add(obj); 
         args.add(pars.get(0)); 
         args.add(pars.get(1)); 
       }  
       else if (pars != null && pars.size() == 2 && 
-               e.data.equals("replace") && trimmedlhs.equals("_1.replace(_2,_3)"))
-      { selected = r; 
-        args.add(obj); 
-        args.add(pars.get(0)); 
-        args.add(pars.get(1)); 
-      }  
-      else if (pars != null && pars.size() == 2 && 
-               e.data.equals("replaceAll") && trimmedlhs.equals("_1.replaceAll(_2,_3)"))
+               e.data.equals("replaceAll") && 
+               trimmedlhs.equals("_1.replaceAll(_2,_3)"))
       { selected = r; 
         args.add(obj); 
         args.add(pars.get(0)); 
         args.add(pars.get(1)); 
       }   
       else if (pars != null && pars.size() == 2 && 
-               e.data.equals("replaceAllMatches") && trimmedlhs.equals("_1.replaceAllMatches(_2,_3)"))
+               e.data.equals("replaceAllMatches") && 
+               trimmedlhs.equals("_1.replaceAllMatches(_2,_3)"))
       { selected = r; 
         args.add(obj); 
         args.add(pars.get(0)); 
         args.add(pars.get(1)); 
       }   
       else if (pars != null && pars.size() == 2 && 
-               e.data.equals("replaceFirstMatch") && trimmedlhs.equals("_1.replaceFirstMatch(_2,_3)"))
+               e.data.equals("replaceFirstMatch") && 
+               trimmedlhs.equals("_1.replaceFirstMatch(_2,_3)"))
       { selected = r; 
         args.add(obj); 
         args.add(pars.get(0)); 
         args.add(pars.get(1)); 
       }   
-      else if (ind != null && pars == null && trimmedlhs.equals("_1[_2]"))
+      else if (ind != null && pars == null && 
+               trimmedlhs.equals("_1[_2]"))
       { selected = r;
         BasicExpression e1 = (BasicExpression) e.clone(); 
         e1.arrayIndex = null; 
         e1.elementType = e.type; 
-        // type of e1 could be either a map or sequence.
+
+        // type of e1 could be either a map or sequence or string.
+        System.out.println(); 
+        System.out.println(">>> " + e1 + " type is: " + e.arrayType); 
+
         System.out.println(">>> " + e1 + " element type is: " + e1.elementType); 
         System.out.println(); 
  
-        if (ind.type != null && ind.type.isInteger())
+        e1.type = e.arrayType; 
+        if (e1.type == null && 
+            ind.type != null && 
+            ind.type.isInteger())
         { e1.type = new Type("Sequence", null); } 
-        else 
+        else if (e1.type == null)  
         { e1.type = new Type("Map", null); } 
 
         args.add(e1); // But again the type can be different. 
-        args.add(ind); // condition is on _2 
+        args.add(ind); // condition must be on _2 
       }
       else if (ind == null && obj != null && pars == null && trimmedlhs.equals("_1._2"))
       { selected = r; 
@@ -925,16 +957,16 @@ public class CGSpec
       { selected = r; 
         args.add(e); 
       }
-	  else if (trimmedlhs.endsWith("_1(_2)") && pars != null && ModelElement.haveCommonPrefix(etext,trimmedlhs))
-	  { String prefix = ModelElement.longestCommonPrefix(etext,trimmedlhs);
-	    if (prefix.length() == trimmedlhs.length() - 6) 
+      else if (trimmedlhs.endsWith("_1(_2)") && pars != null && ModelElement.haveCommonPrefix(etext,trimmedlhs))
+      { String prefix = ModelElement.longestCommonPrefix(etext,trimmedlhs);
+        if (prefix.length() == trimmedlhs.length() - 6) 
         { selected = r; 
           args.add(e);   // should be for _1 
           args.add(pars);
           matchedtextrules.add(r);
-		}  
-	  }
-	  else if (trimmedlhs.endsWith("(_1)") && pars != null && ModelElement.haveCommonPrefix(etext,trimmedlhs))
+        }  
+      }
+      else if (trimmedlhs.endsWith("(_1)") && pars != null && ModelElement.haveCommonPrefix(etext,trimmedlhs))
 	  { String prefix = ModelElement.longestCommonPrefix(etext,trimmedlhs); 
         if (prefix.length() == trimmedlhs.length() - 4) 
         { selected = r; 
@@ -1228,29 +1260,43 @@ public class CGSpec
   } 
 
   public CGRule matchedOperationRule(BehaviouralFeature e, String ctext)
-  { for (int x = 0; x < operationRules.size(); x++)
+  { Vector args = new Vector(); 
+    args.add(e); 
+    args.add(e.getParameters()); 
+    args.add(e.getType()); 
+    args.add(e.getPre()); 
+    args.add(e.getPost()); 
+    args.add(e.getActivity()); 
+    
+    CGRule selected = null; 
+    for (int x = 0; x < operationRules.size(); x++)
     { CGRule r = (CGRule) operationRules.get(x);
       if (ctext.equals(r.lhs))
-      { return r; } // exact match
+      { selected = r; } // exact match
       else if (e.isQuery())
       { if (r.lhs.indexOf("query") > -1) 
         { if (e.isStatic())
           { if (r.lhs.indexOf("static") > -1)     
-            { return r; }
+            { selected = r; }
           } 
           else if (r.lhs.indexOf("static") < 0)
-          { return r; } 
+          { selected = r; } 
         } 
       }
       else if (r.lhs.indexOf("operation") > -1) 
       { if (e.isStatic())
         { if (r.lhs.indexOf("static") > -1)     
-          { return r; }
+          { selected = r; }
         }
         else if (r.lhs.indexOf("static") < 0)   
-        { return r; }
+        { selected = r; }
       } 
+    
+
+      if (selected != null && selected.satisfiesConditions(args,entities))
+      { return selected; } 
     }
+
     return null;
   } // distinguish queries and operations 
 

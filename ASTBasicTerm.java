@@ -542,7 +542,9 @@ public class ASTBasicTerm extends ASTTerm
     { modelElement = new Type("ProgramException", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "ProgramException"; } 
-    if ("IOException".equals(value))
+    if ("IOException".equals(value) || 
+        "EOFException".equals(value) ||
+        "SocketException".equals(value))
     { modelElement = new Type("IOException", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "IOException"; } 
@@ -562,11 +564,14 @@ public class ASTBasicTerm extends ASTTerm
         "ArrayStoreException".equals(value))
     { modelElement = new Type("IndexingException", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "IndexingException"; } 
-    if ("NoSuchElementException".equals(value))
+      return "IndexingException"; 
+    } 
+    if ("NoSuchElementException".equals(value) ||
+        "UnknownHostException".equals(value))
     { modelElement = new Type("IncorrectElementException", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "IncorrectElementException"; }
+      return "IncorrectElementException"; 
+    }
     if ("InputMismatchException".equals(value) ||
         "UnsupportedOperationException".equals(value) ||
         "NumberFormatException".equals(value))
@@ -579,7 +584,8 @@ public class ASTBasicTerm extends ASTTerm
     if ("IllegalAccessException".equals(value) ||
         "LinkageError".equals(value) || 
         "SecurityException".equals(value) ||  
-        "NoClassDefFoundError".equals(value))
+        "NoClassDefFoundError".equals(value) ||
+        "BindException".equals(value))
     { modelElement = new Type("AccessingException", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "AccessingException"; }

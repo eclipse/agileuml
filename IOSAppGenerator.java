@@ -29,6 +29,10 @@ public class IOSAppGenerator extends AppGenerator
     out.println("import Foundation");
     out.println("import Darwin");
     out.println("");
+    printOclFileInitialisation(out); 
+    printOclTypeInitialisation(out,entities); 
+    out.println("");
+   
     out.print("class ModelFacade");
     if (remoteCalls > 0) 
     { out.println(" : InternetCallback"); } 
@@ -55,7 +59,10 @@ public class IOSAppGenerator extends AppGenerator
     out.println(); 
     out.println("  static func getInstance() -> ModelFacade"); 
     out.println("  { if (instance == nil)"); 
-    out.println("    { instance = ModelFacade() }"); 
+    out.println("    { instance = ModelFacade() "); 
+    out.println("      initialiseOclFile()"); 
+    out.println("      initialiseOclType()"); 
+    out.println("    }"); 
     out.println("    return instance! }"); 
     out.println(); 
 
@@ -79,7 +86,7 @@ public class IOSAppGenerator extends AppGenerator
     Vector persistentEntities = new Vector(); 
     persistentEntities.addAll(entities); 
     persistentEntities.removeAll(clouds); 
-	Vector localPersistent = new Vector(); 
+    Vector localPersistent = new Vector(); 
 
     for (int i = 0; i < persistentEntities.size(); i++) 
     { Entity ent = (Entity) persistentEntities.get(i); 
@@ -94,8 +101,8 @@ public class IOSAppGenerator extends AppGenerator
         out.println();  
       } 
 	  
-	  if (ent.isPersistent())
-	  { localPersistent.add(ent); }
+      if (ent.isPersistent())
+      { localPersistent.add(ent); }
     } 
 
     for (int i = 0; i < clouds.size(); i++) 
@@ -113,25 +120,25 @@ public class IOSAppGenerator extends AppGenerator
     } 
 
     if (localPersistent.size() > 0)
-	{ out.println("  // Some class is locally persistent, include an SQLite Dbi:"); 
+    { out.println("  // Some class is locally persistent, include an SQLite Dbi:"); 
       out.println("  var dbi : Dbi?");
       out.println("  let dbpath : String = \"absolute path of app.db\"");   
       out.println(); 
       out.println("  init()"); 
       out.println("  { ");
       out.println("    dbi = Dbi.obtainDatabase(path: dbpath)");
-	  for (int j = 0; j < localPersistent.size(); j++) 
-	  { Entity pent = (Entity) localPersistent.get(j); 
-	    String pname = pent.getName(); 
-		out.println("    load" + pname + "()"); 
-	  } 
+      for (int j = 0; j < localPersistent.size(); j++) 
+      { Entity pent = (Entity) localPersistent.get(j); 
+        String pname = pent.getName(); 
+        out.println("    load" + pname + "()"); 
+      } 
       out.println("  }");  // and load the dbi sets of instances for each persistant entity E. 
       out.println(); 
-	} 
-	else 
-	{ out.println("  init() { }"); 
+    } 
+    else 
+    { out.println("  init() { }"); 
       out.println(); 
-	}
+    }
 	   
     for (int y = 0; y < usecases.size(); y++)
     { UseCase uc = (UseCase) usecases.get(y);
@@ -507,6 +514,10 @@ public class IOSAppGenerator extends AppGenerator
     out.println("import Foundation");
     out.println("import Darwin");
     out.println("");
+    out.println("");
+    printOclFileInitialisation(out); 
+    printOclTypeInitialisation(out,entities); 
+    out.println("");
     out.print("class ModelFacade");
     out.println(); 
 	
@@ -516,13 +527,17 @@ public class IOSAppGenerator extends AppGenerator
     out.println(); 
     out.println("  static func getInstance() -> ModelFacade"); 
     out.println("  { if (instance == nil)"); 
-    out.println("    { instance = ModelFacade() }"); 
-    out.println("    return instance! }"); 
+    out.println("    { instance = ModelFacade() "); 
+    out.println("      initialiseOclFile()"); 
+    out.println("      initialiseOclType()"); 
+    out.println("    }"); 
+    out.println("    return instance!"); 
+    out.println("  }"); 
     out.println(); 
 
     Vector persistentEntities = new Vector(); 
     persistentEntities.addAll(entities); 
-	Vector localPersistent = new Vector(); 
+    Vector localPersistent = new Vector(); 
 
     out.println("  init() { }"); 
     out.println(); 
@@ -583,7 +598,11 @@ public class IOSAppGenerator extends AppGenerator
     out.println("import Combine");
     out.println("import SwiftUI");
     out.println("import CoreLocation"); 
-	
+    out.println("");
+    printOclFileInitialisation(out);
+    printOclTypeInitialisation(out,entities); 
+    out.println("");
+   
     out.println("");
     out.print("class ModelFacade : ObservableObject");
     if (needsMap) 
@@ -3549,6 +3568,104 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
 	  out.close(); 
 	} catch (Exception _w) { } 
   }
+
+  public static void printOclFileInitialisation(PrintWriter out)
+  { // creates files for standard streams
+    out.println(); 
+    out.println("/* This code requires OclFile.swift */"); 
+    out.println(); 
+    out.println("func initialiseOclFile()"); 
+    out.println("{ let systemIn = createByPKOclFile(key: \"System.in\")"); 
+    out.println("  let systemOut = createByPKOclFile(key: \"System.out\")"); 
+    out.println("  let systemErr = createByPKOclFile(key: \"System.err\")"); 
+    out.println("}");
+    out.println();  
+  } 
+
+
+  public static void printOclTypeInitialisation(PrintWriter out, 
+                                             Vector entities)
+  { // creates an OclType instance for each class, with 
+    // attributes and operations represented.
+
+    out.println(); 
+    out.println("/* This metatype code requires OclType.swift */"); 
+    out.println(); 
+    out.println("func initialiseOclType()"); 
+    out.println("{ let int_OclType = createByPKOclType(key: \"int\")"); 
+    out.println("  int_OclType.actualMetatype = Int.self"); 
+    out.println("  let double_OclType = createByPKOclType(key: \"double\")"); 
+    out.println("  double_OclType.actualMetatype = Double.self"); 
+    out.println("  let long_OclType = createByPKOclType(key: \"long\")"); 
+    out.println("  long_OclType.actualMetatype = Int64.self"); 
+    out.println("  let string_OclType = createByPKOclType(key: \"String\")"); 
+    out.println("  string_OclType.actualMetatype = String.self"); 
+    out.println("  let sequence_OclType = createByPKOclType(key: \"Sequence\")"); 
+    out.println("  sequence_OclType.actualMetatype = type(of: [])"); 
+    out.println("  let _anyset : Set<AnyHashable> = Set<AnyHashable>()"); 
+    out.println("  let set_OclType = createByPKOclType(key: \"Set\")"); 
+    out.println("  set_OclType.actualMetatype = type(of: _anyset)"); 
+    out.println("  let map_OclType = createByPKOclType(key: \"Map\")"); 
+    out.println("  map_OclType.actualMetatype = type(of: [:])"); 
+    out.println(); 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ent = (Entity) entities.get(i);
+      if (ent.isComponent()) 
+      { continue; } 
+
+      String ename = ent.getName(); 
+      String lcename = ename.toLowerCase();
+      String ocltype = lcename + "_OclType";    
+      out.println("  let " + ocltype + 
+          " = createByPKOclType(key: \"" + ename + "\")"); 
+      out.println("  " + ocltype + ".actualMetatype = " + ename + ".self"); 
+      Vector attribs = ent.getAttributes(); 
+      for (int j = 0; j < attribs.size(); j++)
+      { Attribute att = (Attribute) attribs.get(j); 
+        String attname = att.getName();
+        String aname = lcename + "_" + attname;  
+        out.println("  let " + aname + " = createOclAttribute()"); 
+        out.println("  " + aname + ".name = \"" + attname + "\""); 
+        if (att.getType() != null) 
+        { String typename = att.getType().getName();
+          String tname = typename.toLowerCase() + "_OclType";  
+          out.println("  " + aname + ".type = " + tname); 
+        } 
+        out.println("  " + ocltype + ".attributes.append(" + aname + ")"); 
+      } 
+    }
+    out.println("}");
+    out.println();  
+    IOSAppGenerator.printDecodeOperation(out,entities); 
+    out.println();
+    out.println();   
+  } 
+
+  private static void printDecodeOperation(PrintWriter out, 
+                                           Vector entities)
+  { out.println("func instanceFromJSON(typeName: String, json: String) -> AnyObject?"); 
+    out.println("{ let jdata = json.data(using: .utf8)!"); 
+    out.println("  let decoder = JSONDecoder()"); 
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ent = (Entity) entities.get(i);
+      String ename = ent.getName(); 
+      String lcename = ename.toLowerCase();
+      String ocltype = lcename + "_OclType";    
+    
+      out.println("  if typeName == \"" + ename + "\""); 
+      out.println("  { let x = try! decoder.decode(" + ename + ".self, from: jdata)"); 
+      out.println("    return x"); 
+      out.println("  }");  
+    }
+    out.println("  return nil"); 
+    out.println("}"); 
+  } 
+
+/* print(String(describing: type(of: [])))
+   let anyset : Set<AnyHashable> = Set<AnyHashable>()
+   print(String(describing: type(of: anyset)))
+   print(String(describing: type(of: [:]))) */ 
 
   public static void main(String[] args)
   { // System.out.println(Double.MAX_VALUE); 

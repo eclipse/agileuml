@@ -53,6 +53,9 @@ public abstract class ModelElement implements SystemTypes
   public String getName()
   { return name; }
 
+  public String getParameterisedName()
+  { return name; }
+
   public void setName(String newname)
   { name = newname; }
 

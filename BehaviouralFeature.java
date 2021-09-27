@@ -80,6 +80,29 @@ public class BehaviouralFeature extends ModelElement
   public void setBx(boolean b)
   { bx = b; } 
 
+  public void setTypeParameters(String generics, Vector entities, Vector types)
+  { String gens = generics.trim(); 
+    if (gens.length() == 0) 
+    { return; } 
+
+    StringTokenizer stok = new StringTokenizer(gens, "<>, "); 
+    Vector pars = new Vector(); 
+    while (stok.hasMoreTokens())
+    { String par = stok.nextToken(); 
+      Type tt = Type.getTypeFor(par,types,entities); 
+      if (tt != null) 
+      { pars.add(tt); }
+      else 
+      { Entity entpar = new Entity(par); 
+        tt = new Type(entpar); 
+        pars.add(tt); 
+      } 
+      System.out.println(">> Added type parameter " + tt); 
+    } 
+
+    typeParameters = pars;  
+  } 
+
   public Object clone()
   { BehaviouralFeature res = new BehaviouralFeature(getName(), parameters, query, resultType); 
     res.setElementType(elementType); 
@@ -644,7 +667,8 @@ public class BehaviouralFeature extends ModelElement
         // ReturnStatement returnstat = null; 
       CreationStatement cres = new CreationStatement(resultType + "", "result");
       cres.setInstanceType(resultType);
-      cres.setElementType(elementType);   
+      if (elementType != null) 
+      { cres.setElementType(elementType); }    
       ((SequenceStatement) newstat).addStatement(cres);
 	     // returnstat = new ReturnStatement(new BasicExpression(att));   
   
@@ -653,7 +677,9 @@ public class BehaviouralFeature extends ModelElement
         // if (returnstat != null) 
 	   // { ((SequenceStatement) newstat).addStatement(returnstat); }
       
-        
+      JOptionPane.showMessageDialog(null, "Result declaration:  result : " + resultType + "(" + elementType + ")", 
+                                      "", JOptionPane.INFORMATION_MESSAGE);  
+         
       // newstat.typeCheck(types,entities,contexts,newparams); 
       return newstat; 
     } 
@@ -664,7 +690,7 @@ public class BehaviouralFeature extends ModelElement
   public String cg(CGSpec cgs)
   { String etext = this + "";
     Vector args = new Vector();
-    args.add(getName());
+    args.add(getParameterisedName());
     Vector eargs = new Vector();
     eargs.add(this);
     String pars = "";
@@ -1544,7 +1570,18 @@ public class BehaviouralFeature extends ModelElement
     return res; 
   } 
 
-  public Vector allTypeParameterEntities()
+  private void typeCheckParameters(Vector pars, Vector types, Vector entities)
+  { for (int i = 0; i < pars.size(); i++) 
+    { Attribute par = (Attribute) pars.get(i); 
+      Type partype = par.getType(); 
+      Type newtype = Type.typeCheck(partype,types,entities);   
+      par.setType(newtype); 
+      System.out.println(">> parameter " + par.getName() + 
+                         " has type " + newtype + "(" + newtype.getElementType() + ")"); 
+    } 
+  } 
+
+  public Vector allTypeParameterEntities(Entity ent)
   { Vector localEntities = new Vector();
  
     if (typeParameters != null) 
@@ -1555,8 +1592,8 @@ public class BehaviouralFeature extends ModelElement
       } 
     } 
 
-    if (entity != null) 
-    { Vector etpars = entity.getTypeParameters(); 
+    if (ent != null) 
+    { Vector etpars = ent.getTypeParameters(); 
       if (etpars != null)
       { for (int i = 0; i < etpars.size(); i++) 
         { Type tp = (Type) etpars.get(i); 
@@ -1569,6 +1606,14 @@ public class BehaviouralFeature extends ModelElement
     return localEntities; 
   } 
 
+  public Vector allTypeParameterEntities()
+  { Vector localEntities = allTypeParameterEntities(entity);     
+
+    System.out.println(">>> All local entities for " + name + " are " + localEntities); 
+
+    return localEntities; 
+  } 
+
   public boolean typeCheck(Vector types, Vector entities)
   { // System.err.println("ERRROR -- calling wrong type-check for " + name); 
 
@@ -1578,8 +1623,12 @@ public class BehaviouralFeature extends ModelElement
 
     Vector contexts = new Vector(); 
     if (entity != null && instanceScope) 
-    { contexts.add(entity); } 
-    Vector env = new Vector(); 
+    { contexts.add(entity); }
+    else if (entity != null && !instanceScope)
+    { localEntities.add(0,entity); } 
+ 
+    Vector env = new Vector();
+    typeCheckParameters(parameters,types,localEntities);  
     env.addAll(parameters);
 
     if (resultType != null && !("void".equals(resultType + "")))
@@ -1599,9 +1648,12 @@ public class BehaviouralFeature extends ModelElement
     }
  
     if (activity != null) 
-    { res = activity.typeCheck(
+    { System.out.println(">>> Type-checking activity " + activity); 
+      res = activity.typeCheck(
               types,localEntities,contexts,env);
     } 
+
+    System.out.println(">>> Parameters = " + parameters); 
 
     return res;  
   } // and the activity? 
@@ -1616,16 +1668,21 @@ public class BehaviouralFeature extends ModelElement
     } 
     contexts1.addAll(contexts); 
  
-    Vector env1 = new Vector(); 
-    env1.addAll(parameters);
-    env1.addAll(env); 
 
     // System.err.println("Type-check for " + name + " WITH " + env1 + " " + contexts1); 
 
     Vector localEntities = allTypeParameterEntities();
      
     localEntities.addAll(entities); 
+    if (entity != null && !instanceScope)
+    { localEntities.add(0,entity); } 
+    // The static context. 
 
+    typeCheckParameters(parameters,types,localEntities);  
+
+    Vector env1 = new Vector(); 
+    env1.addAll(parameters);
+    env1.addAll(env); 
  
     if (pre != null) 
     { pre.typeCheck(types,localEntities,contexts1,env1); } 
@@ -1666,11 +1723,10 @@ public class BehaviouralFeature extends ModelElement
     while (st.hasMoreTokens())
     { parvals.add(st.nextToken()); } 
 
-    // Vector localEntities = allTypeParameterEntities();    
-    // localEntities.addAll(entities); 
     Vector localEntities = new Vector(); 
     if (ent != null) 
     { localEntities.addAll(ent.typeParameterEntities()); } 
+    localEntities.addAll(entities); 
     
     for (int i = 0; i < parvals.size() - 1; i = i + 2) 
     { String var = (String) parvals.get(i); 
@@ -1697,8 +1753,8 @@ public class BehaviouralFeature extends ModelElement
 
       if (t == null) // must be standard type or an entity
       { System.err.println("ERROR: Invalid type name: " + typ);
-        JOptionPane.showMessageDialog(null, "ERROR: Invalid type for parameter: " + typ,
-                                      "Type error", JOptionPane.ERROR_MESSAGE); 
+       JOptionPane.showMessageDialog(null, "ERROR: Invalid type for parameter: " + typ,
+                                     "Type error", JOptionPane.ERROR_MESSAGE); 
       }
       else 
       { Attribute att = new Attribute(var,t,ModelElement.INTERNAL); 
@@ -1744,7 +1800,9 @@ public class BehaviouralFeature extends ModelElement
   { Vector res = new Vector();
     for (int i = 0; i < parameters.size(); i++)
     { Attribute att = (Attribute) parameters.get(i);
-      res.add(new BasicExpression(att));
+      Expression expr = new BasicExpression(att);
+      expr.formalParameter = att; 
+      res.add(expr); 
     }
     return res;
   }
@@ -2548,10 +2606,25 @@ public class BehaviouralFeature extends ModelElement
     return res;
   }
 
+  public String getParameterisedName() 
+  { String res = getName(); 
+    if (typeParameters != null && typeParameters.size() > 0) 
+    { res = res + "<"; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        res = res + tp.getName(); 
+        if (i < typeParameters.size() - 1) 
+        { res = res + ","; } 
+      } 
+      res = res + ">"; 
+    } 
+    return res; 
+  } 
+
   public void saveData(PrintWriter out)
   { if (derived) { return; } 
     out.println("Operation:");
-    out.println(getName());
+    out.println(getParameterisedName());
     if (useCase != null) 
     { out.println("null " + useCase.getName()); } 
     else 
@@ -3136,6 +3209,8 @@ public class BehaviouralFeature extends ModelElement
 
   public Statement generateDesign(Entity ent, Vector entities, Vector types)
   { Statement res = new SequenceStatement(); 
+    Vector localEntities = allTypeParameterEntities(ent); 
+    localEntities.addAll(entities); 
 
     String name = getName();
     String ename = ""; 
@@ -3158,9 +3233,14 @@ public class BehaviouralFeature extends ModelElement
       if (sm != null) 
       { Statement rc = sm.runCode(); 
         // add run_state : T to ent, and the type. 
-        rc.typeCheck(types,entities,context,new Vector()); 
+        rc.typeCheck(types,localEntities,context,new Vector()); 
         return rc; 
       } // should be rc.updateForm(env0,true)
+      else if (activity != null) 
+      { activity.typeCheck(types,localEntities,context,new Vector()); 
+        return activity; 
+      } 
+
       return res; 
     }  
 
@@ -3170,7 +3250,12 @@ public class BehaviouralFeature extends ModelElement
       return cde; 
     } 
     else if (activity != null) 
-    { return activity; } 
+    { Vector env1 = new Vector(); 
+      env1.addAll(parameters); 
+      activity.typeCheck(types, 
+                         localEntities,context,env1); 
+      return activity; 
+    } 
 
     Vector atts = new Vector(); 
     ReturnStatement rets = null; 
@@ -3205,13 +3290,13 @@ public class BehaviouralFeature extends ModelElement
     if (query)
     { Vector cases = Expression.caselist(post); 
 	
-	  System.out.println(">>> Caselist = " + cases); 
+      System.out.println(">>> Caselist = " + cases); 
 	  
-      Statement qstat = designQueryList(cases, resT, env0, types, entities, atts);
+      Statement qstat = designQueryList(cases, resT, env0, types, localEntities, atts);
       
-	  System.out.println(">>> qstat = " + qstat); 
+      System.out.println(">>> qstat = " + qstat); 
 	  
-	  ((SequenceStatement) res).addStatement(qstat); 
+      ((SequenceStatement) res).addStatement(qstat); 
       ((SequenceStatement) res).addStatement(rets); 
       return res; 
     } 

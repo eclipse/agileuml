@@ -1073,7 +1073,7 @@ public class Compiler2
          "OclAny".equals(typ) || "OclVoid".equals(typ) ||
          "OclType".equals(typ) || "OclDate".equals(typ) ||
          "OclIterator".equals(typ) || 
-         "OclFile".equals(typ) ||
+         "OclFile".equals(typ) || "OclRandom".equals(typ) ||
          "OclProcess".equals(typ) || 
          "OclException".equals(typ) ||  
          Type.isOCLExceptionType(typ) ||  
@@ -1152,7 +1152,7 @@ public class Compiler2
       }  
     } 
 
-    // System.err.println("ERROR: unknown type: " + typ + " in " + showLexicals(st,en)); 
+    System.err.println("ERROR: unknown type: " + typ + " in " + showLexicals(st,en)); 
         
     return null; 
   } // also need OrderedSet, Bag, Tuple for ATL. 
@@ -3027,6 +3027,7 @@ public BehaviouralFeature operationDefinition(int st, int en, Vector entities, V
   boolean valid = false; 
   boolean foundpre = false; 
   boolean foundpost = false; 
+  Vector localEntities = new Vector(); 
 
   String opname = lexicals.get(st) + "";
    
@@ -3041,16 +3042,19 @@ public BehaviouralFeature operationDefinition(int st, int en, Vector entities, V
     Entity ptEnt = new Entity(parType); 
     Type pt = new Type(ptEnt); 
     bf.addTypeParameter(pt);  
-    entities.add(ptEnt); 
+    localEntities.add(ptEnt); 
     st0 = st0+3; 
     parsStart = st0; 
+    System.out.println(">> Generic operation " + opname + "<" + pt + ">"); 
   } 
+
+  localEntities.addAll(entities); 
 
   for (int i = st0; i < en; i++)
   { String lx = lexicals.get(i) + "";
     String lx1 = lexicals.get(i+1) + "";
     if (lx.equals("pre") && lx1.equals(":"))
-    { parseOpDecs(parsStart,i-1,entities,types,bf); 
+    { parseOpDecs(parsStart,i-1,localEntities,types,bf); 
       foundpre = true; 
       st0 = i+2;
     }
@@ -3079,19 +3083,20 @@ public BehaviouralFeature operationDefinition(int st, int en, Vector entities, V
           } 
           else 
           { bf.setPost(pots); } 
-          Statement act = parseStatement(j+2,en,entities,types); 
+          Statement act = parseStatement(j+2,en,localEntities,types); 
           if (act == null) 
           { System.err.println("ERROR: Invalid activity syntax: " + showLexicals(j+2,en)); 
             checkBrackets(j+2,en); 
           } 
           bf.setActivity(act); 
 
-          removeTypeParameters(bf.getTypeParameters(), entities); 
+          // removeTypeParameters(bf.getTypeParameters(), entities); 
 
           return bf;  
         }    
       }
     }
+    // removeTypeParameters(bf.getTypeParameters(), entities); 
   }
 
   /* Expression pst = parse_expression(0,st0,en);
@@ -3106,7 +3111,7 @@ public BehaviouralFeature operationDefinition(int st, int en, Vector entities, V
 
   if (foundpost == false)
   { System.err.println("**** Invalid operation definition, no postcondition: " + showLexicals(st,en)); 
-    parseOpDecs(parsStart,en,entities,types,bf); 
+    parseOpDecs(parsStart,en,localEntities,types,bf); 
   }
   else 
   { Expression pst = parse_expression(0,st0,en);
@@ -3120,7 +3125,7 @@ public BehaviouralFeature operationDefinition(int st, int en, Vector entities, V
     }
   } 
 
-  removeTypeParameters(bf.getTypeParameters(), entities); 
+  // removeTypeParameters(bf.getTypeParameters(), entities); 
 
   return bf;
 }
@@ -3147,7 +3152,7 @@ private void parseOpDecs(int st, int en, Vector entities, Vector types, Behaviou
   } 
   bcnt = 0;  
 
-  // System.out.println(np + " Parameters"); 
+  System.out.println(np + " Parameters, with entities: " + entities); 
   
 
   Vector res = new Vector();
@@ -3195,12 +3200,14 @@ private void parseOpDecs(int st, int en, Vector entities, Vector types, Behaviou
       if (rt == null)
       { System.err.println("*** ERROR: Invalid return type: " + showLexicals(j+1, en)); 
         bf.setQuery(false); 
+        rt = new Type("void", null); 
       }
       else if ("void".equals(rt + ""))
       { bf.setQuery(false); } 
       else 
       { bf.setQuery(true); } 
       bf.setResultType(rt);
+      bf.setElementType(rt.getElementType()); 
     } // it is query unless the result type is null or void. 
   }
 
@@ -5433,6 +5440,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
   public Vector parseKM3(Vector entities, Vector types, Vector gens, Vector pasts, Vector pnames)
   { Vector res = new Vector(); 
     int en = lexicals.size()-1; 
+    Vector importList = new Vector(); 
     
     // retain the package name, it becomes the system name. 
     int prevstart = 0; 
@@ -5442,7 +5450,15 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       { prevstart = i; 
         break; 
       } 
+      else if ("import".equals(lex))
+      { i++; 
+        String imp = lexicals.get(i) + ""; 
+        importList.add(imp); 
+      } 
     } 
+
+    System.out.println(">>> Importing: " + importList); 
+    System.out.println(); 
 
     int st = prevstart; 
 

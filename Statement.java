@@ -1940,6 +1940,15 @@ class WhileStatement extends Statement
   public void setLoopRange(Expression lv, Expression lr)
   { loopVar = lv;
     loopRange = lr;
+  }
+
+  public void setLoopRange(Expression expr)
+  { if (expr != null && 
+        expr instanceof BinaryExpression)
+    { BinaryExpression binexpr = (BinaryExpression) expr; 
+      loopVar = binexpr.getLeft(); 
+      loopRange = binexpr.getRight(); 
+    } 
   } 
 
   public void setEntity(Entity e)
@@ -2364,17 +2373,33 @@ class WhileStatement extends Statement
   public boolean typeCheck(Vector types, Vector entities, Vector ctxs, Vector env)
   { Vector env1 = new Vector(); 
     env1.addAll(env);
-    /* A copy should be made of env, but lots of bad things happen if this is done. We 
+    /* A copy should be made of env, 
+       but lots of bad things happen if this is done. We 
        don't know why. */
+
+    System.out.println(">>> Type-checking " + this + " " + loopRange); 
  
-    boolean res = loopTest.typeCheck(types,entities,ctxs,env);  
+    boolean res = loopTest.typeCheck(types,entities,ctxs,env1);
+  
     if (loopRange != null) 
-    { res = loopRange.typeCheck(types,entities,ctxs,env);
+    { res = loopRange.typeCheck(types,entities,ctxs,env1);
       Type lrt = loopRange.getType(); 
       Type lret = loopRange.getElementType(); 
 
-      // System.out.println(">>> Type of loop range " + loopRange + " is " + lrt + "(" + lret + ")");   
+      // JOptionPane.showMessageDialog(null, 
+      //    ">>> Type of loop range " + loopRange + " is " + lrt + "(" + lret + ")",
+      //    "Type error", JOptionPane.ERROR_MESSAGE); 
+      System.out.println(">>> Type of loop range " + loopRange + " is " + lrt + "(" + lret + ")");
+      System.out.println(); 
+      if (lret == null)
+      { if (loopVar.type != null) 
+        { lret = loopVar.type; } 
+        else 
+        { lret = new Type("OclAny", null); } 
+      } 
+   
       Attribute lv = new Attribute(loopVar + "", lret, ModelElement.INTERNAL); 
+
       if (lret != null) 
       { lv.setElementType(lret.getElementType()); 
         if (lret.isEntity())
@@ -2440,7 +2465,7 @@ class WhileStatement extends Statement
         Type et = loopRange.getElementType(); 
         String etr = "Object"; 
         if (et == null) 
-        { System.err.println("!1 Error: null element type for loop range: " + loopRange);
+        { System.err.println("!! Error: null element type for loop range: " + loopRange);
           JOptionPane.showMessageDialog(null, "ERROR: No element type for: " + loopRange,
                                         "Type error", JOptionPane.ERROR_MESSAGE); 
           if (loopVar.getType() != null)
@@ -6738,7 +6763,8 @@ class AssignStatement extends Statement
     { BasicExpression lhsbe = (BasicExpression) lhs; 
       if (lhsbe.arrayIndex != null) 
       { BasicExpression lhs0 = (BasicExpression) lhsbe.clone(); 
-        lhs0.arrayIndex = null; 
+        lhs0.arrayIndex = null;
+        lhs0.type = lhsbe.arrayType;  
         args.add(lhs0); 
         args.add(lhsbe.arrayIndex); 
         args.add(rhsnopre);

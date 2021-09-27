@@ -307,7 +307,7 @@ public class UCDArea extends JPanel
       File startingpoint = new File("./libraries");
       fc.setCurrentDirectory(startingpoint);
       fc.setDialogTitle("Select a .km3 file");
-      // fc.addChoosableFileFilter(new TextFileFilter()); 
+      fc.addChoosableFileFilter(new KM3FileFilter()); 
 
       File file = null; 
 	  
@@ -331,6 +331,29 @@ public class UCDArea extends JPanel
       { System.err.println(">>> No library found"); }
   }
 
+  public void importKM3File(String imprt) 
+  { // if (importList.contains(imprt)) { } 
+    // else 
+    // { importList.add(imprt); }
+
+    // Check for imprt.km3 in libraries 
+    // and load it if present.
+
+    try 
+    { File file = new File("./libraries/" + imprt + ".km3");
+	  
+      if (file == null) { return; }
+	  
+      String nme = file.getName(); 
+   
+      System.out.println(">>> Loading library " + nme);
+ 
+      loadKM3FromFile(file);  
+	   
+    } catch(Exception e)
+      { System.err.println(">>> No file library/" + imprt + ".km3 found"); }
+  }
+
 
 
   public void typeCheck()
@@ -347,12 +370,12 @@ public class UCDArea extends JPanel
       } 
     } 
 	
-	Vector contexts = new Vector(); 
+    Vector contexts = new Vector(); 
 	
-	for (int i = 0; i < constraints.size(); i++) 
-	{ Constraint con = (Constraint) constraints.get(i); 
-	  con.typeCheck(types,entities,contexts); 
-	}
+    for (int i = 0; i < constraints.size(); i++) 
+    { Constraint con = (Constraint) constraints.get(i); 
+      con.typeCheck(types,entities,contexts); 
+    }
   } // and entity activities. 
 
 
@@ -3268,7 +3291,7 @@ public class UCDArea extends JPanel
      if (graphcomponent != null) 
      { // generate its screen and view controller
        IOSAppGenerator.generateSwiftUIGraphDisplay("swiftuiapp");
-	   IOSAppGenerator.generateLineView("swiftuiapp");  
+       IOSAppGenerator.generateLineView("swiftuiapp");  
      }
 
     if (smsComponent != null) 
@@ -3298,8 +3321,8 @@ public class UCDArea extends JPanel
         File entf = new File("output/swiftuiapp/" + entfile); 
         try
         { PrintWriter entfout = new PrintWriter(
-                              new BufferedWriter(
-                                new FileWriter(entf)));
+                                  new BufferedWriter(
+                                    new FileWriter(entf)));
           entfout.println("import Foundation"); 
           entfout.println("import Darwin"); 
           entfout.println(); 
@@ -6264,14 +6287,25 @@ public class UCDArea extends JPanel
   public Entity reconstructEntity(String nme, int xx,
                                   int yy, String fname, String ecard,
                                   Vector stereotypes)
-  { Entity e1 =
+  { String generics = ""; 
+    int gsindex = nme.indexOf("<"); 
+    if (gsindex > -1) 
+    { generics = nme.substring(gsindex); 
+      nme = nme.substring(0,gsindex); 
+      System.out.println(">> Generic class " + nme + " " + generics); 
+    } 
+
+    Entity e1 =
       (Entity) ModelElement.lookupByName(nme,entities);
     if (e1 != null)
-    { e1.setStereotypes(stereotypes);  
+    { e1.setStereotypes(stereotypes);
+      e1.setTypeParameters(generics,entities,types);   
       return e1;
     } 
 
     Entity ent = new Entity(nme); // not null or empty
+    ent.setTypeParameters(generics,entities,types);   
+
     RectData rd =
       new RectData(xx,yy,getForeground(),componentMode,
                    rectcount);
@@ -7291,6 +7325,16 @@ public class UCDArea extends JPanel
   private BehaviouralFeature reconstructOperation(PreOp p)
   { // look up the entity or use case. Should allow multiple post and pre's
     
+    String nme = p.name; 
+
+    String generics = ""; 
+    int gsindex = nme.indexOf("<"); 
+    if (gsindex > -1) 
+    { generics = nme.substring(gsindex); 
+      nme = nme.substring(0,gsindex); 
+      System.out.println(">> Generic operation " + nme + " " + generics); 
+    } 
+
     String pucn = p.entname.toLowerCase();
     Entity ent = null; 
     UseCase uc = null; 
@@ -7343,21 +7387,22 @@ public class UCDArea extends JPanel
 
     boolean tc = cond.typeCheck(types,entities,contexts,vars);
     if (!tc) 
-    { System.err.println("!! ERROR: Invalid precondition: " + cond); 
+    { System.err.println("!! Type error in precondition: " + cond); 
       // return null; 
-      JOptionPane.showMessageDialog(null, "ERROR: Invalid precondition " + cond + " for: " + p.name,
-                                    "Expression error", JOptionPane.ERROR_MESSAGE); 
+      // JOptionPane.showMessageDialog(null, "ERROR: Invalid precondition " + cond + " for: " + nme,
+      //    "Expression error", JOptionPane.ERROR_MESSAGE); 
     }
 
     Compiler2 comp1 = new Compiler2(); 
     comp1.nospacelexicalanalysis(post); 
     Expression effect = comp1.parse(); 
     if (post == null || post.equals("null"))
-    { System.err.println("ERROR: Invalid postcondition " + post); 
+    { System.err.println("ERROR!!: Invalid postcondition " + post); 
       effect = null; 
     } 
 
-    BehaviouralFeature op = new BehaviouralFeature(p.name,oppars,query,tt);
+    BehaviouralFeature op = new BehaviouralFeature(nme,oppars,query,tt);
+    op.setTypeParameters(generics,entities,types); 
     if (tt != null)
     { op.setElementType(elemType); } 
     if (resultvar != null) 
@@ -11500,7 +11545,7 @@ public void produceCUI(PrintWriter out)
         else 
         { out.println("Type:"); } 
         RectData rd = (RectData) vd;
-        out.println(me.getName() + " " + rd.getx() + " " + rd.gety());
+        out.println(me.getParameterisedName() + " " + rd.getx() + " " + rd.gety());
         // and all its attributes 
       } 
       else if (vd instanceof LineData && me != null) // Association or Generalisation or Flow
@@ -11510,10 +11555,10 @@ public void produceCUI(PrintWriter out)
         { out.println("Association:"); 
           Association ast = (Association) me; 
           out.print(ast.getEntity1() + " " + 
-                      ast.getEntity2() + " " + 
-                      ast.getCard1() + " " + ld.xstart + " " + ld.ystart + " " +
-                      ld.xend + " " + ld.yend + " " + ast.getCard2() + " " + 
-                      ast.getRole2() + " " + ast.getRole1() + " "); 
+                    ast.getEntity2() + " " + 
+                    ast.getCard1() + " " + ld.xstart + " " + ld.ystart + " " +
+                    ld.xend + " " + ld.yend + " " + ast.getCard2() + " " + 
+                    ast.getRole2() + " " + ast.getRole1() + " "); 
           out.println(saveWaypoints(ld)); 
         } // should also save waypoints
         else if (me instanceof Generalisation)
@@ -14881,10 +14926,10 @@ public void produceCUI(PrintWriter out)
       allcomponents.add("WebDisplay");  
       allcomponents.add("ImageDisplay");  
       allcomponents.add("GraphDisplay");
-	  allcomponents.add("FirebaseAuthenticator"); 
-	  allcomponents.add("SMSComponent"); 
-	  allcomponents.add("MediaComponent"); 
-	  allcomponents.add("PhoneComponent"); 
+      allcomponents.add("FirebaseAuthenticator"); 
+      allcomponents.add("SMSComponent"); 
+      allcomponents.add("MediaComponent"); 
+      allcomponents.add("PhoneComponent"); 
 	  // Others: NLPComponent, MLComponent
 	  
       listShowDialog.setOldFields(allcomponents);
@@ -14900,9 +14945,9 @@ public void produceCUI(PrintWriter out)
     } 
     else if ("c".equals(predef))
     { File file;
-	  System.out.println(">>> Load the component specification as a KM3 file.");
-	  System.out.println(">>> You will need to provide .java or .swift implementations for your target platform(s).");
-	  System.out.println();  
+      System.out.println(">>> Load the component specification as a KM3 file.");
+      System.out.println(">>> You will need to provide .java or .swift implementations for your target platform(s).");
+      System.out.println();  
 
       File startingpoint = new File("output");
       JFileChooser fc = new JFileChooser();
@@ -14997,16 +15042,19 @@ public void produceCUI(PrintWriter out)
     int linecount = 0; 
 
     while (!eof)
-    { try { s = br.readLine(); }
+    { try 
+      { s = br.readLine(); }
       catch (IOException e)
       { System.out.println("!! Reading " + file.getName() + " failed.");
         return; 
       }
+
       if (s == null) 
       { eof = true; 
         break; 
       }
-      // else if (s.startsWith("--")) { } 
+      else if (s.startsWith("import ")) 
+      { System.out.println(">> Import directive: " + s); } 
       else 
       { int cindex = s.indexOf("//"); 
         if (cindex > 0) 
@@ -15172,7 +15220,7 @@ public void produceCUI(PrintWriter out)
       } 
     } 
 
-    int delta = 180; // visual displacement 
+    int delta = 200; // visual displacement 
     int ecount = 0; 
 
     // Use the existing coordinates if possible. 
@@ -15951,6 +15999,7 @@ public void produceCUI(PrintWriter out)
     }
 
     String nme = (String) line1vals.get(0);
+      // Can be name<T> for generic. 
     String xs = (String) line1vals.get(1);
     String ys = (String) line1vals.get(2);
     int xx;
@@ -16016,7 +16065,7 @@ public void produceCUI(PrintWriter out)
   } 
 
   private PreOp parseOperation(BufferedReader br)
-  { String line1; // name
+  { String line1; // name, possibly name<pars>
     String line2; // entity name, use case name
     String line3; // result type -- void means update op.
     String line4; // parameter list
@@ -23437,7 +23486,8 @@ class TextFileFilter extends javax.swing.filechooser.FileFilter
 { public boolean accept(File f) 
   { if (f.isDirectory()) { return true; } 
 
-    if (f.getName().endsWith(".txt")) { return true; } 
+    if (f.getName().endsWith(".txt")) 
+    { return true; } 
 
     return false; 
   } 
@@ -23450,7 +23500,8 @@ class KM3FileFilter extends javax.swing.filechooser.FileFilter
 { public boolean accept(File f) 
   { if (f.isDirectory()) { return true; } 
 
-    if (f.getName().endsWith(".km3")) { return true; } 
+    if (f.getName().endsWith(".km3")) 
+    { return true; } 
 
     return false; 
   } 
@@ -23461,9 +23512,11 @@ class KM3FileFilter extends javax.swing.filechooser.FileFilter
 
 class ATLFileFilter extends javax.swing.filechooser.FileFilter
 { public boolean accept(File f) 
-  { if (f.isDirectory()) { return true; } 
+  { if (f.isDirectory()) 
+    { return true; } 
 
-    if (f.getName().endsWith(".atl")) { return true; } 
+    if (f.getName().endsWith(".atl")) 
+    { return true; } 
 
     return false; 
   } 
@@ -23474,13 +23527,30 @@ class ATLFileFilter extends javax.swing.filechooser.FileFilter
 
 class ETLFileFilter extends javax.swing.filechooser.FileFilter
 { public boolean accept(File f) 
-  { if (f.isDirectory()) { return true; } 
+  { if (f.isDirectory()) 
+    { return true; } 
 
-    if (f.getName().endsWith(".etl")) { return true; } 
+    if (f.getName().endsWith(".etl")) 
+    { return true; } 
 
     return false; 
   } 
 
   public String getDescription()
   { return "Select an .etl file"; } 
+}
+
+class QVTFileFilter extends javax.swing.filechooser.FileFilter
+{ public boolean accept(File f) 
+  { if (f.isDirectory()) 
+    { return true; } 
+
+    if (f.getName().endsWith(".qvt")) 
+    { return true; } 
+
+    return false; 
+  } 
+
+  public String getDescription()
+  { return "Select an .qvt file"; } 
 }

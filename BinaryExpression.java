@@ -3184,10 +3184,13 @@ public void findClones(java.util.Map clones, String rule, String op)
     { type = new Type("double",null); } 
     else if ("->gcd".equals(operator))
     { type = new Type("long",null); } 
-    else if ("->hasPrefix".equals(operator) || "->hasSuffix".equals(operator) ||
-             "->hasMatch".equals(operator) || "->isMatch".equals(operator) ||
+    else if ("->hasPrefix".equals(operator) || 
+             "->hasSuffix".equals(operator) ||
+             "->hasMatch".equals(operator) || 
+             "->isMatch".equals(operator) ||
              operator.equals("->equalsIgnoreCase") ||
-             "->oclIsKindOf".equals(operator) || "->oclIsTypeOf".equals(operator))
+             "->oclIsKindOf".equals(operator) || 
+             "->oclIsTypeOf".equals(operator))
     { type = new Type("boolean",null); } 
     else if (operator.equals("->before") || operator.equals("->after") || operator.equals("->firstMatch")) 
     { type = new Type("String",null); 
@@ -3201,6 +3204,15 @@ public void findClones(java.util.Map clones, String rule, String op)
     { type = new Type("Sequence",null); 
       elementType = new Type("String",null);
       type.elementType = elementType;  
+    } 
+    else if ("->restrict".equals(operator) || 
+             "->antirestrict".equals(operator))
+    { if (tleft != null) 
+      { type = tleft; 
+        elementType = left.elementType; 
+      } 
+      else 
+      { type = new Type("Map", null); } 
     } 
     else if (comparitors.contains(operator))
     { tcEq(tleft,tright,eleft,eright); }
@@ -3568,7 +3580,7 @@ public void findClones(java.util.Map clones, String rule, String op)
 
     if (operator.equals("->restrict") ||
         operator.equals("->antirestrict"))
-    { if (tleft == null && tright == null) 
+    { if (type == null) 
       { type = new Type("Map", null); } 
     } 
 
