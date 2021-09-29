@@ -1025,8 +1025,9 @@ public class Entity extends ModelElement implements Comparable
       { // <<active>> stereotype
         addStereotype("active"); 
       }
-      else if ("Serializable".equals(iname) ||
-               "Comparable".equals(iname) || 
+      else if ("Serializable".equals(iname))
+      { addStereotype("serializable"); } 
+      else if ("Comparable".equals(iname) || 
                "List".equals(iname) || 
                "Collection".equals(iname) ||  
                "Cloneable".equals(iname))

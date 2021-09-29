@@ -721,13 +721,14 @@ public class ASTCompositeTerm extends ASTTerm
   public String queryForm(ASTTerm arg, ASTTerm call)
   { // arg . call
 
+    String args = arg.toKM3(); 
+    String calls = call.toKM3(); 
+        
     if (call instanceof ASTCompositeTerm)
     { ASTCompositeTerm callterm = (ASTCompositeTerm) call; 
       if (callterm.tag.equals("methodCall"))
       { Vector callterms = callterm.terms; 
         String called = callterms.get(0) + "";
-        String args = arg.toKM3(); 
-        String calls = call.toKM3(); 
         ASTTerm callargs = (ASTTerm) callterms.get(2);
         Vector cargs = getCallArguments(callargs); 
           
@@ -1113,7 +1114,14 @@ public class ASTCompositeTerm extends ASTTerm
         { return featureAccess(arg,call,args,calls); } 
       } // also: removeRange, removeElement
     }
-    return "null"; 
+
+    if (arg.expression != null && call.expression != null &&
+        call.expression instanceof BasicExpression) 
+    { expression = (BasicExpression) call.expression; 
+      ((BasicExpression) expression).setObjectRef(arg.expression); 
+    } 
+
+    return args + "." + calls;  
   }  
   
 
@@ -5987,6 +5995,44 @@ public class ASTCompositeTerm extends ASTTerm
         return "OclFile.newOclFile_Write(" + arg1.toKM3() + ")"; 
       }
 
+      if ("FileOutputStream".equals(cls.literalForm()))
+      { ASTTerm.setType(this,"OclFile");
+        ASTTerm arg1 = (ASTTerm) cargs.get(0); 
+        if (arg1.isString())
+        { ASTTerm.setType(args,"String");
+          if (arg1.expression != null) 
+          { expression = BasicExpression.newStaticCallBasicExpression("newOclFile", "OclFile", arg1.expression);   
+          }
+          return "OclFile.newOclFile(" + arg1.toKM3() + ")"; 
+        }
+  
+        // Else, arg1 is already an OclFile 
+        ASTTerm.setType(args,"OclFile");
+          
+        if (arg1.expression != null) 
+        { expression = arg1.expression; }  
+
+        return arg1.toKM3(); 
+      }
+
+      if ("FileInputStream".equals(cls.literalForm()))
+      { ASTTerm.setType(this,"OclFile");
+        ASTTerm arg1 = (ASTTerm) cargs.get(0); 
+        if (arg1.isString())
+        { if (arg1.expression != null) 
+          { expression = BasicExpression.newStaticCallBasicExpression("newOclFile", "OclFile", arg1.expression);   
+          }
+          return "OclFile.newOclFile(" + arg1.toKM3() + ")"; 
+        }
+  
+        // Else, arg1 is already an OclFile 
+
+        if (arg1.expression != null) 
+        { expression = arg1.expression; }  
+
+        return arg1.toKM3(); 
+      }
+
       if ("Formatter".equals(cls.literalForm()))
       { ASTTerm.setType(this,"OclFile");
         ASTTerm arg1 = (ASTTerm) cargs.get(0); 
@@ -6040,7 +6086,8 @@ public class ASTCompositeTerm extends ASTTerm
       { ASTTerm.setType(this,"OclFile");
         ASTTerm arg1 = (ASTTerm) cargs.get(0); 
         if (arg1.isString())
-        { 
+        { ASTTerm.setType(args,"String");
+          
           if (arg1.expression != null) 
           { Vector pars = new Vector(); 
             pars.add(arg1.expression);
@@ -6053,6 +6100,8 @@ public class ASTCompositeTerm extends ASTTerm
           } 
           return "OclFile.newOclFile_WriteB(OclFile.newOclFile" + args1 + ")"; }  
 
+        ASTTerm.setType(args,"OclFile");
+          
         if (arg1.expression != null) 
         { Vector pars = new Vector(); 
           pars.add(arg1.expression); 

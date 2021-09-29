@@ -396,7 +396,8 @@ public class ASTBasicTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement); 
       return "OclIterator"; } 
 
-    if ("File".equals(value))
+    if ("File".equals(value) || 
+        "FileDescriptor".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; } 
@@ -465,6 +466,11 @@ public class ASTBasicTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; } 
     if ("PrintStream".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("FileOutputStream".equals(value) ||
+        "FileInputStream".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; } 

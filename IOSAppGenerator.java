@@ -633,7 +633,10 @@ public class IOSAppGenerator extends AppGenerator
     out.println(); 
     out.println("  static func getInstance() -> ModelFacade"); 
     out.println("  { if instance == nil"); 
-    out.println("    { instance = ModelFacade() }"); 
+    out.println("    { instance = ModelFacade()");  
+    out.println("      initialiseOclFile()"); 
+    out.println("      initialiseOclType()"); 
+    out.println("    }"); 
     out.println("    return instance!"); 
     out.println("  }"); 
     out.println(); 
@@ -3607,6 +3610,8 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("  set_OclType.actualMetatype = type(of: _anyset)"); 
     out.println("  let map_OclType = createByPKOclType(key: \"Map\")"); 
     out.println("  map_OclType.actualMetatype = type(of: [:])"); 
+    out.println("  let void_OclType = createByPKOclType(key: \"void\")"); 
+    out.println("  void_OclType.actualMetatype = Void.self"); 
     out.println(); 
 
     for (int i = 0; i < entities.size(); i++) 
@@ -3634,7 +3639,30 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
         } 
         out.println("  " + ocltype + ".attributes.append(" + aname + ")"); 
       } 
+
+      Vector opers = ent.getOperations();
+      Vector operationNames = new Vector(); 
+ 
+      for (int j = 0; j < opers.size(); j++)
+      { BehaviouralFeature op = (BehaviouralFeature) opers.get(j); 
+        String opname = op.getName();
+        if (operationNames.contains(opname)) { } 
+        else 
+        { operationNames.add(opname); 
+          String opopname = lcename + "_" + opname;  
+          out.println("  let " + opopname + " = createOclOperation()"); 
+          out.println("  " + opopname + ".name = \"" + opname + "\""); 
+          if (op.getType() != null) 
+          { String typename = op.getType().getName();
+            String tname = typename.toLowerCase() + "_OclType";  
+            out.println("  " + opopname + ".type = " + tname); 
+          } 
+          out.println("  " + ocltype + ".operations.append(" + opopname + ")"); 
+        }
+      } 
+      out.println(); 
     }
+
     out.println("}");
     out.println();  
     IOSAppGenerator.printDecodeOperation(out,entities); 
@@ -3649,6 +3677,9 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("  let decoder = JSONDecoder()"); 
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i);
+      if (ent.isComponent()) 
+      { continue; } 
+
       String ename = ent.getName(); 
       String lcename = ename.toLowerCase();
       String ocltype = lcename + "_OclType";    
