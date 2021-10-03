@@ -25,6 +25,7 @@ public abstract class ASTTerm
   static String packageName = null; 
   static Vector enumtypes; 
   static Vector entities; 
+  static Entity currentClass = null; // Current context class
 
   java.util.Map metafeatures = new java.util.HashMap(); 
      // String --> String, eg., recording the conceptual
@@ -126,6 +127,8 @@ public abstract class ASTTerm
     { return isSet(); } 
     if ("Map".equals(str))
     { return isMap(); } 
+    if ("Function".equals(str))
+    { return isFunction(); } 
     if ("Collection".equals(str))
     { return isCollection(); } 
     if ("File".equals(str))
@@ -250,6 +253,15 @@ public abstract class ASTTerm
     if (typ == null) 
     { return false; } 
     if ("Map".equals(typ) || typ.startsWith("Map("))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isFunction()
+  { String typ = ASTTerm.getType(literalForm()); 
+    if (typ == null) 
+    { return false; } 
+    if ("Function".equals(typ) || typ.startsWith("Function("))
     { return true; } 
     return false; 
   } 

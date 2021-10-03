@@ -2790,6 +2790,20 @@ class BasicExpression extends Expression
     } 
     
 
+    if ("length".equals(data) && objectRef != null) 
+    { objectRef.typeCheck(types,entities,contexts,env); 
+      if (objectRef.type != null && 
+          objectRef.type.getName().equals("String")) 
+      { type = new Type("int", null);
+        umlkind = FUNCTION;
+        data = "size"; 
+        parameters = null;  
+        multiplicity = ModelElement.ONE; 
+ 
+        return true;
+      }  
+    } 
+
     if ("time".equals(data) && objectRef != null) 
     { objectRef.typeCheck(types,entities,contexts,env); 
       if (objectRef.type != null && 

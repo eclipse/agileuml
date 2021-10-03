@@ -1881,7 +1881,7 @@ public class Type extends ModelElement
     { String kt = "String"; 
       if (keyType != null) 
       { kt = keyType.getUMLName(); } 
-      String et = "String"; 
+      String et = "OclAny"; 
       if (elementType != null) 
       { et = elementType.getUMLName(); } 
       return nme + "(" + kt + ", " + et + ")"; 
@@ -1976,7 +1976,7 @@ public class Type extends ModelElement
         out.println("FunctionType" + tid + ".elementType = " + etype); 
       } 
       else 
-      { out.println("FunctionType" + tid + ".elementType = String"); } 
+      { out.println("FunctionType" + tid + ".elementType = OclAny"); } 
       // assume key type is String
 
       if (keyType != null) 

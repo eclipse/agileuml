@@ -40,6 +40,50 @@ public class UnaryExpression extends Expression
     return new UnaryExpression(op,expr); 
   } 
 
+  public static UnaryExpression newUnaryExpression(String op, Attribute letvar, Statement stat, Entity cclass) 
+  { if (stat == null) 
+    { return null; }
+
+    if ("lambda".equals(op))
+    { if (Statement.isSingleReturnStatement(stat))
+      { Expression expr = Statement.getReturnExpression(stat); 
+        return new UnaryExpression(op,expr); 
+      } 
+
+      String opid; 
+      BehaviouralFeature oper = null; 
+
+      if (cclass != null) 
+      { oper = cclass.getIdenticalOperation(stat); }
+
+      if (oper != null)  
+      { opid = oper.getName(); } 
+      else 
+      { opid = Identifier.nextIdentifier("lambdaFunction"); 
+        BehaviouralFeature bf = new BehaviouralFeature(opid);
+        bf.addParameter(letvar);  
+        bf.setActivity(stat); 
+        bf.setPost(new BasicExpression(true));
+          // Find the implicit return type of the stat.
+        Vector returnExpressions = 
+            Statement.getReturnValues(stat);  
+        System.out.println(">>> Return values: " + returnExpressions); 
+ 
+        if (cclass != null)
+        { bf.setEntity(cclass); 
+          cclass.addOperation(bf);
+        }  
+      } 
+      BasicExpression call = new BasicExpression(opid); 
+      call.umlkind = QUERY; 
+      call.setIsEvent(); 
+      call.addParameter(new BasicExpression(letvar)); 
+      return new UnaryExpression(op,call);
+    } 
+
+    return null;  
+  } 
+
   public String getOperator()
   { return operator; } 
 
@@ -3849,12 +3893,36 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
     { return new BUnaryExpression(data,pre); } 
   } 
 
+  public void setKeyType(String ktype)
+  { if ("lambda".equals(operator) && ktype != null) 
+    { Type keytype = new Type(ktype,null); 
+      if (accumulator != null)
+      { accumulator.setType(keytype); }
+      if (type != null)
+      { type.setKeyType(keytype); } 
+    }   
+  } 
+
+  public void setElementType(String ktype)
+  { if ("lambda".equals(operator) && ktype != null && 
+        type != null)
+    { type.setElementType(new Type(ktype,null)); } 
+  } 
+
   public String toString()  // RSDS version of expression
   { if (operator.equals("lambda"))
-    { return "lambda " + accumulator.getName() + " : " + accumulator.getType() + " in " + argument; }
+    { String res = "lambda " + accumulator.getName() + " : " + accumulator.getType() + " in " + argument;
+      if (needsBracket)
+      { return "(" + res + ")"; }
+      return res; 
+    } 
   
     if (operator.equals("-"))
-    { return "-" + argument; }
+    { String res = "-" + argument; 
+      if (needsBracket)
+      { return "(" + res + ")"; }
+      return res;
+    }
   
     if (operator.equals("_"))
     { return "_" + argument; }

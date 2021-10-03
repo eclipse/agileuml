@@ -47,6 +47,70 @@ implements Cloneable
     return false; 
   } 
 
+  public static boolean isSingleReturnStatement(Statement st)
+  { if (st == null) { return false; } 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      if (sq.size() == 1) 
+      { Statement stat = sq.getStatement(0); 
+        if (stat instanceof ReturnStatement) 
+        { return true; }
+      } 
+      return false;  
+    } 
+    return (st instanceof ReturnStatement); 
+  } 
+
+  public static Expression getReturnExpression(Statement st)
+  { if (st == null) 
+    { return new BasicExpression("null"); }
+ 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      if (sq.size() == 1) 
+      { Statement stat = sq.getStatement(0); 
+        if (stat instanceof ReturnStatement) 
+        { return getReturnExpression(stat); }
+      } 
+      return new BasicExpression("null");
+    } 
+    
+    if (st instanceof ReturnStatement)
+    { ReturnStatement ret = (ReturnStatement) st; 
+      Expression res = ret.getExpression(); 
+      if (res == null) 
+      { return new BasicExpression("null"); }
+      return res; 
+    } 
+    return new BasicExpression("null");
+  } 
+
+  public static Vector getReturnValues(Statement st)
+  { Vector res = new Vector(); 
+    if (st == null) 
+    { return res; }
+ 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      if (sq.size() >= 1) 
+      { Statement stat = sq.getStatement(sq.size()-1); 
+        if (stat instanceof ReturnStatement) 
+        { return getReturnValues(stat); }
+      } 
+      return res;
+    } 
+    
+    if (st instanceof ReturnStatement)
+    { ReturnStatement ret = (ReturnStatement) st; 
+      Expression retExpr = ret.getExpression(); 
+      if (retExpr == null) 
+      { return res; }
+      res.add(retExpr); 
+      return res; 
+    } 
+    return res;
+  } // Other cases, for all other forms of statement. 
+
   public static boolean hasResultDeclaration(Statement st)
   { if (st == null) { return false; } 
     if (st instanceof SequenceStatement) 
@@ -490,6 +554,9 @@ class ReturnStatement extends Statement
 
   public String getOperator() 
   { return "return"; } 
+
+  public Expression getExpression() 
+  { return value; } 
 
   public Object clone()
   { return new ReturnStatement(value); } 
@@ -3155,6 +3222,12 @@ class CreationStatement extends Statement
     { createsInstanceOf = instanceType.getName(); }
   }  
 
+  public void setKeyType(Type t)
+  { // keyType = t; 
+    if (instanceType != null) 
+    { instanceType.setKeyType(t); }  
+  } 
+
   public void setElementType(Type t)
   { elementType = t; 
     if (instanceType != null) 
@@ -3522,19 +3595,21 @@ class CreationStatement extends Statement
           new Attribute(assignsTo,instanceType,ModelElement.INTERNAL); 
 
     Type typ = Type.getTypeFor(createsInstanceOf, types, entities); 
-    instanceType = typ; 
+    if (instanceType == null && typ != null) 
+    { instanceType = typ; } 
     if (elementType != null) 
     { instanceType.setElementType(elementType); } 
  
-    att.setType(typ); 
+    if (instanceType == null) 
+    { att.setType(typ); } 
     
     if (elementType != null) 
     { att.setElementType(elementType); } 
  
     env.add(att); 
 	
-	if (initialExpression != null) 
-	{ initialExpression.typeCheck(types,entities,ctxs,env); }
+    if (initialExpression != null) 
+    { initialExpression.typeCheck(types,entities,ctxs,env); }
 	
     return true; 
   }  // createsInstanceOf must be a primitive type, String or entity, if Sequence, Set

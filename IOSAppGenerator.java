@@ -3675,6 +3675,12 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
   { out.println("func instanceFromJSON(typeName: String, json: String) -> AnyObject?"); 
     out.println("{ let jdata = json.data(using: .utf8)!"); 
     out.println("  let decoder = JSONDecoder()"); 
+
+    out.println("  if typeName == \"String\""); 
+    out.println("  { let x = try! decoder.decode(String.self, from: jdata)"); 
+    out.println("    return x"); 
+    out.println("  }");  
+
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i);
       if (ent.isComponent()) 

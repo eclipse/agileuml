@@ -143,6 +143,20 @@ public class ASTSymbolTerm extends ASTTerm
     { modelElement = new Type("OclProcess", null); 
       return "OclProcess"; } 
 
+    if ("Predicate".equals(symbol)) 
+    { modelElement = new Type("Function", null);
+      ((Type) modelElement).elementType = 
+                               new Type("boolean", null);   
+      return "Function"; 
+    }
+
+    if ("Function".equals(symbol)) 
+    { modelElement = new Type("Function", null);
+      ((Type) modelElement).elementType = 
+                               new Type("OclAny", null);   
+      return "Function"; 
+    }
+
     if ("else".equals(symbol))
     { return " else "; } 
 

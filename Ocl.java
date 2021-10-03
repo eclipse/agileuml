@@ -22,14 +22,16 @@ import java.util.TreeSet;
 import java.util.HashSet;
 import java.util.Collection;
 import java.util.Collections;
-
+// import java.util.function;
+ 
+@FunctionalInterface
 interface Predicate<T> {
     boolean test(T t);
 }
 
-
+@FunctionalInterface
 interface Evaluation<S,T> {
-    T evaluate(S s);
+     T evaluate(S s);
 }
 
 class OclMaplet<K,T>
@@ -93,7 +95,7 @@ class OclMaplet<K,T>
     { ArrayList<T> result = new ArrayList<T>(); 
       for (int i = 0; i < _s.size(); i++)  
       { T _x = (T) _s.get(i); 
-	    if (_f.test(_x))
+        if (_f.test(_x))
         { result.add(_x); }
       } 
       return result; 
@@ -103,9 +105,9 @@ class OclMaplet<K,T>
     { ArrayList<T> result = new ArrayList<T>(); 
       for (int i = 0; i < _s.size(); i++) 
       { T _x = (T) _s.get(i); 
-	    if (_f.test(_x)) { } 
+        if (_f.test(_x)) { } 
         else 
-		{ result.add(_x); }
+        { result.add(_x); }
       } 
       return result; 
     } 
@@ -114,7 +116,7 @@ class OclMaplet<K,T>
     { ArrayList<T> result = new ArrayList<T>(); 
       for (int i = 0; i < _s.size(); i++) 
       { S _x = (S) _s.get(i); 
-	    result.add(_f.evaluate(_x)); 
+        result.add(_f.evaluate(_x)); 
       }
       return result; 
     } 
@@ -223,6 +225,12 @@ class OclMaplet<K,T>
 	  return result; 
 	} 
 
+    public static <T> TreeSet<T> copySortedSet(Collection<T> s)
+    { TreeSet<T> result = new TreeSet<T>(); 
+      result.addAll(s); 
+      return result; 
+    } 
+
 	public static <T> ArrayList<T> copySequence(Collection<T> s)
 	{ ArrayList<T> result = new ArrayList<T>(); 
       result.addAll(s); 
@@ -249,15 +257,34 @@ class OclMaplet<K,T>
 
     public static <T extends Comparable> T max(Collection<T> s)
     { ArrayList<T> slist = new ArrayList<T>(); 
-	  slist.addAll(s); 
-	  T result = slist.get(0); 
+      slist.addAll(s); 
+      T result = slist.get(0); 
       for (int i = 1; i < slist.size(); i++) 
       { T val = slist.get(i); 
-	    if (0 < val.compareTo(result)) 
+        if (0 < val.compareTo(result)) 
         { result = val; } 
       } 
       return result; 
     } 
+
+    public static long gcd(long xx, long yy)
+    { long x = Math.abs(xx); 
+      long y = Math.abs(yy); 
+      while (x != 0 && y != 0)
+      { long z = y; 
+        y = x % y; 
+        x = z; 
+      } 
+
+      if (y == 0)
+      { return x; } 
+
+      if (x == 0)
+      { return y; } 
+
+      return 0; 
+    } 
+
 
 
     public static <T> HashSet<T> addSet(HashSet<T> s, T x)
@@ -335,16 +362,10 @@ class OclMaplet<K,T>
     res.addAll(a); res.addAll(b);
     return res; }
 
-  public static <T> HashSet<T> union(ArrayList<T> a, Set<T> b)
-  { HashSet<T> res = new HashSet<T>(); 
-    res.addAll(a); res.addAll(b);
-    return res; }
-
-  public static <T> ArrayList<T> union(ArrayList<T> a, ArrayList<T> b)
+  public static <T> ArrayList<T> union(ArrayList<T> a, Collection<T> b)
   { ArrayList<T> res = new ArrayList<T>(); 
     res.addAll(a); res.addAll(b);
-    return res; 
-  }
+    return res; }
 
 
   public static <T> HashSet<T> subtract(HashSet<T> a, Collection<T> b)
@@ -808,6 +829,29 @@ class OclMaplet<K,T>
     return res;
   }
 
+  public static <T> ArrayList<T> removeAt(List<T> l, int ind)
+  { ArrayList<T> res = new ArrayList<T>();
+    res.addAll(l); 
+    if (ind <= res.size() && ind >= 1)
+    { res.remove(ind - 1); } 
+    return res;
+  }
+
+  public static <T> ArrayList<T> setAt(List<T> l, int ind, T val)
+  { ArrayList<T> res = new ArrayList<T>();
+    res.addAll(l); 
+    if (ind <= res.size() && ind >= 1)
+    { res.set(ind - 1,val); } 
+    return res;
+  }
+
+  public static <T> ArrayList<T> removeFirst(List<T> l, T obj)
+  { ArrayList<T> res = new ArrayList<T>();
+    res.addAll(l); 
+    res.remove(obj);  
+    return res;
+  }
+
   public static String insertAt(String l, int ind, Object ob)
   { String res = "";
     for (int i = 0; i < ind-1 && i < l.length(); i++)
@@ -817,6 +861,20 @@ class OclMaplet<K,T>
     { res = res + l.charAt(i); }
     return res;
   }
+
+  public static String byte2char(int b) 
+  { try { byte[] bb = {(byte) b}; 
+      return new String(bb); } 
+    catch (Exception _e) 
+    { return ""; }
+  } 
+
+  public static int char2byte(String s)
+  { if (s == null || s.length() == 0)
+    { return -1; } 
+    return (int) s.charAt(0);  
+  }
+
 
  public static boolean isInteger(String str)
   { try { Integer.parseInt(str); return true; }
@@ -835,10 +893,10 @@ class OclMaplet<K,T>
  public static boolean isLong(String str)
   { try 
     { Long.parseLong(str); 
-	  return true; 
-	}
+      return true; 
+    }
     catch (Exception _e) 
-	{ return false; }
+    { return false; }
   }
 
 
@@ -858,7 +916,7 @@ class OclMaplet<K,T>
     { return s; }
     int ind = s.indexOf(sep);
     if (ind < 0) 
-	{ return s; }
+    { return s; }
     return s.substring(0,ind); 
   }
 
@@ -916,11 +974,28 @@ class OclMaplet<K,T>
     return res; 
   }
 
+  public static String firstMatch(String str, String regex)
+  { java.util.regex.Pattern patt = java.util.regex.Pattern.compile(regex);
+    java.util.regex.Matcher matcher = patt.matcher(str);
+    String res = null;
+    if (matcher.find())
+    { res = matcher.group() + ""; }
+    return res; 
+  }
+
+
   public static String replaceAll(String str, String regex, String rep)
   { java.util.regex.Pattern patt = java.util.regex.Pattern.compile(regex); 
     java.util.regex.Matcher matcher = patt.matcher(str); 
     return matcher.replaceAll(rep); 
   }
+
+  public static String replaceFirstMatch(String str, String regex, String rep)
+  { java.util.regex.Pattern patt = java.util.regex.Pattern.compile(regex);
+    java.util.regex.Matcher matcher = patt.matcher(str);
+    return matcher.replaceFirst(rep);
+  }
+
 
   public static boolean hasMatch(String str, String regex)
   { java.util.regex.Pattern patt = java.util.regex.Pattern.compile(regex); 
@@ -1006,6 +1081,18 @@ class OclMaplet<K,T>
   
     for (D key : keys)
     { if (ks.contains(key))
+      { res.put(key,m1.get(key));  }
+    }    
+    return res;
+  }
+
+  public static <D,R> HashMap<D,R> antirestrictMap(Map<D,R> m1, Set<D> ks)
+  { HashMap<D,R> res = new HashMap<D,R>();
+    Set<D> keys = m1.keySet(); 
+  
+    for (D key : keys)
+    { if (ks.contains(key)) { } 
+      else 
       { res.put(key,m1.get(key));  }
     }    
     return res;

@@ -1,12 +1,33 @@
 //
 //  Ocl.swift
-//  app2swiftui
+//  cdoapp
 //
-//  Created by Kevin Lano on 03/05/2021.
+//  Created by Kevin Lano on 07/09/2021.
 //
 
 import Foundation
 import Darwin
+
+func displayString(_ s: String)
+{ print(s) }
+
+func displayint(_ s: Int)
+{ print(String(s)) }
+
+func displaylong(_ s: Int64)
+{ print(String(s)) }
+
+func displaydouble(_ s: Double)
+{ print(String(s)) }
+
+func displayboolean(_ s: Bool)
+{ print(String(s)) }
+
+func displaySequence<T>(_ s: [T])
+{ print(String(describing: s)) }
+
+func displaySet<T>(_ s: Set<T>)
+{ print(String(describing: s)) }
 
 
 class Ocl
@@ -55,7 +76,27 @@ class Ocl
     return result
   }
 
+  static func excludingSequence<T : AnyObject>(s : [T], x : T) -> [T]
+  { var result : [T] = [T]()
+    for y in s
+    { if x === y {}
+      else
+      { result.append(y) }
+    }
+    return result
+  }
+
   static func sequenceSubtract<T : Equatable>(s1 : [T], s2 : [T]) -> [T]
+  { var result : [T] = [T]()
+    for y in s1
+    { if containsSequence(s: s2, x: y) {}
+      else
+      { result.append(y) }
+    }
+    return result
+  }
+
+  static func sequenceSubtract<T : AnyObject>(s1 : [T], s2 : [T]) -> [T]
   { var result : [T] = [T]()
     for y in s1
     { if containsSequence(s: s2, x: y) {}
@@ -84,10 +125,27 @@ class Ocl
     return result
   }
 
+  static func intersectionSequence<T : AnyObject>(s1 : [T], s2 : [T]) -> [T]
+  { var result : [T] = [T]()
+    for y in s1
+    { if containsSequence(s: s2, x: y)
+      { result.append(y) }
+    }
+    return result
+  }
+
 
   static func containsSequence<T : Equatable>(s : [T], x : T) -> Bool
   { for y in s
     { if x == y
+      { return true }
+    }
+    return false
+  }
+
+  static func containsSequence<T : AnyObject>(s : [T], x : T) -> Bool
+  { for y in s
+    { if x === y
       { return true }
     }
     return false
@@ -113,6 +171,15 @@ class Ocl
     return result
   }
 
+  static func subrange<T>(s : [T], st : Int) -> [T]
+  { var result : [T] = [T]()
+    for (i,x) in s.enumerated()
+    { if i+1 >= st
+      { result.append(x) }
+    }
+    return result
+  }
+
   static func front<T>(s : [T]) -> [T]
   { var result : [T] = [T]()
     result = result + s
@@ -127,15 +194,43 @@ class Ocl
     return result
   }
 
+    static func gcd(_ x : Int64, _ y : Int64) -> Int64
+    { var xx = abs(x)
+      var yy = abs(y)
+      while (xx > 0 && yy > 0)
+      { let zz = yy
+        yy = xx % yy
+        xx = zz
+      }
+      if (xx == 0)
+      { return yy }
+      if (yy == 0)
+      { return xx }
+      return 0
+    }
+
   static func count<T : Equatable>(s : [T], x : T) -> Int
   { var result : Int = 0
     result = s.filter{ $0 == x }.count
     return result
   }
   // But it may be more efficient just to loop over s, testing ==
+
+  static func count<T : AnyObject>(s : [T], x : T) -> Int
+  { var result : Int = 0
+    result = s.filter{ $0 === x }.count
+    return result
+  }
   
   static func sum(s : [Int]) -> Int
   { var result : Int = 0
+    for x in s
+    { result += x }
+    return result
+  }
+
+  static func sum(s : [Int64]) -> Int64
+  { var result : Int64 = 0
     for x in s
     { result += x }
     return result
@@ -162,6 +257,13 @@ class Ocl
     return result
   }
 
+  static func sum(s : Set<Int64>) -> Int64
+  { var result : Int64 = 0
+    for x in s
+    { result += x }
+    return result
+  }
+
   static func sum(s : Set<Double>) -> Double
   { var result : Double = 0
     for x in s
@@ -183,6 +285,13 @@ class Ocl
     return result
   }
 
+  static func prd(s : [Int64]) -> Int64
+  { var result : Int64 = 1
+    for x in s
+    { result *= x }
+    return result
+  }
+
   static func prd(s : [Double]) -> Double
   { var result : Double = 1.0
     for x in s
@@ -192,6 +301,13 @@ class Ocl
 
   static func prd(s : Set<Int>) -> Int
   { var result : Int = 1
+    for x in s
+    { result *= x }
+    return result
+  }
+
+  static func prd(s : Set<Int64>) -> Int64
+  { var result : Int64 = 1
     for x in s
     { result *= x }
     return result
@@ -303,6 +419,15 @@ class Ocl
   { var result : Int = 0
     for (_,v) in s
     { if v == x
+      { result = result + 1 }
+    }
+    return result
+  }
+
+  static func count<T : AnyObject>(s : Dictionary<String,T>, x : T) -> Int
+  { var result : Int = 0
+    for (_,v) in s
+    { if v === x
       { result = result + 1 }
     }
     return result
@@ -455,6 +580,44 @@ class Ocl
     return true
   }
 
+  static func max<T : Comparable>(s: [T]) -> T
+  { var result : T = s[0]
+    for x in s
+    { if x > result
+      { result = x }
+    }
+    return result
+  }
+
+  static func min<T : Comparable>(s: [T]) -> T
+  { var result : T = s[0]
+    for x in s
+    { if x < result
+      { result = x }
+    }
+    return result
+  }
+
+  static func max<T : Comparable>(s: Set<T>) -> T
+  { var result : T = Ocl.any(s: s)!
+    for x in s
+    { if x > result
+      { result = x }
+    }
+    return result
+  }
+
+  static func min<T : Comparable>(s: Set<T>) -> T
+  { var result : T = Ocl.any(s: s)!
+    for x in s
+    { if x < result
+      { result = x }
+    }
+    return result
+  }
+
+
+
     static func selectMaximals<T,R: Comparable>(s : [T], f : (T) -> R) -> [T]
     { var result : [T] = [T]()
       var values : [R] = [R]()
@@ -509,8 +672,11 @@ class Ocl
       return result
     }
     
+  static func collectSequence<T,R>(_ s : [T], _ f: (T) -> R) -> [R]
+  { return s.map(f) } 
 
- static func includingMap<T>(m : Dictionary<String,T>, k : String, val : T) -> Dictionary<String,T>
+
+  static func includingMap<T>(m : Dictionary<String,T>, k : String, val : T) -> Dictionary<String,T>
   { var res: Dictionary<String,T> = [String:T]()
     for (key,value) in m
     { res[key] = value }
@@ -536,6 +702,15 @@ class Ocl
     return res
   }
 
+  static func intersectionMap<T : AnyObject>(m1 : Dictionary<String,T>, m2 : Dictionary<String,T>) -> Dictionary<String,T>
+  { var res : Dictionary<String,T> = [String:T]()
+    for (key,value) in m1
+    { if (m2[key] === value)
+      { res[key] = value }
+    }
+    return res
+  }
+
   static func excludeAllMap<T>(m1 : Dictionary<String,T>, m2 : Dictionary<String,T>) -> Dictionary<String,T>
   { var res : Dictionary<String,T> = [String:T]()
     for (key,value) in m1
@@ -550,6 +725,15 @@ class Ocl
   { var res : Dictionary<String,T> = [String:T]()
     for (key,value) in m
     { if (value != v)
+      { res[key] = value }
+    }
+    return res
+  }
+
+  static func excludingMapValue<T : AnyObject>(m : Dictionary<String,T>, v : T) -> Dictionary<String,T>
+  { var res : Dictionary<String,T> = [String:T]()
+    for (key,value) in m
+    { if (value !== v)
       { res[key] = value }
     }
     return res
@@ -602,6 +786,28 @@ class Ocl
     return result
   }
 
+  static func antirestrict<T>(m : Dictionary<String,T>, ks : Set<String>) -> Dictionary<String,T>
+  { var result : Dictionary<String,T> = [String:T]()
+    for (k,v) in m
+    { if ks.contains(k)
+      { }
+      else
+      { result[k] = v }
+    }
+    return result
+  }
+
+  static func copyMap<T>(m : Dictionary<String,T>) -> Dictionary<String,T>
+  { var result : Dictionary<String,T> = [String:T]()
+
+    for (k,v) in m
+    { result[k] = v }
+
+    return result
+  }
+
+
+
   static func mapRange<T>(m : Dictionary<String,T>) -> [T]
   { var result : [T] = [T]()
     for (_,v) in m
@@ -609,10 +815,10 @@ class Ocl
     return result
   }
 
-  static func mapKeys<T>(m : Dictionary<String,T>) -> [String]
-  { var result : [String] = [String]()
+  static func mapKeys<T>(m : Dictionary<String,T>) -> Set<String>
+  { var result : Set<String> = Set([])
     for (k,_) in m
-    { result.append(k) }
+    { result.insert(k) }
     return result
   }
 
@@ -672,16 +878,36 @@ class Ocl
     return true
   }
 
- static func at(str: String, ind: Int) -> String
-{ var count = 0
-  for index in str.indices
-  { let c : Character = str[index]
-    count = count + 1
-    if (count == ind)
-    { return String(c) }
+ 
+  static func includesAllSequence<T: AnyObject>(s1 : [T], s2 : [T]) -> Bool
+  { for (_,y) in s2.enumerated()
+    { if containsSequence(s: s1, x: y)
+      {}
+      else
+      { return false }
+    }
+    return true
   }
-  return ""
-}
+
+
+ static func at(str: String, ind: Int) -> String
+ { var count = 0
+   for index in str.indices
+   { let c : Character = str[index]
+     count = count + 1
+     if (count == ind)
+     { return String(c) }
+   }
+   return ""
+ }
+
+    static func charAt(str: String, ind: Int) -> String
+    { var res : String = ""
+      let sq = Ocl.chars(str: str)
+      if ind > 0 && ind <= sq.count
+      { res = String(sq[ind-1])    
+      return res
+    }
 
 
   static func iswhitespace(s: String) -> Bool
@@ -798,6 +1024,49 @@ class Ocl
     return String(result)
   }
 
+  static func stringSubrange(str : String, st : Int) -> String
+  { var result : [Character] = [Character]()
+    var count : Int = 0
+    
+    for index in str.indices
+    { let c : Character = str[index]
+      count = count + 1
+      if count >= st
+      { result.append(c) }
+    }
+    return String(result)
+  }
+
+  static func toInteger(str : String) -> Int
+  {
+    if str.hasPrefix("0x")
+    { return Int(Ocl.stringSubrange(str: str, st: 3), radix: 16)! }
+    if str.hasPrefix("0b")
+    { return Int(Ocl.stringSubrange(str: str, st: 3), radix: 2)! }
+    if str.hasPrefix("0") && str.count > 1
+    { return Int(str, radix: 8)! }
+    return Int(str)!
+  }
+
+    static func toLong(str : String) -> Int64
+    {
+      if str.hasPrefix("0x")
+      { return Int64(Ocl.stringSubrange(str: str, st: 3), radix: 16)! }
+      if str.hasPrefix("0b")
+      { return Int64(Ocl.stringSubrange(str: str, st: 3), radix: 2)! }
+      if str.hasPrefix("0") && str.count > 1
+      { return Int64(str, radix: 8)! }
+      return Int64(str)!
+    }
+
+  static func toReal(str: String) -> Double
+  { let res : Double? = Double(str)
+    if res == nil
+    { return Double.nan } 
+    return res!
+  } 
+
+    
  static func stringSubtract(s1 : String, s2 : String) -> String
   { var result : [Character] = [Character]()
     var subtracted : Set<Character> = Set<Character>()
@@ -819,7 +1088,38 @@ class Ocl
     return String(result)
   }
 
-  static func insertAt<T : Equatable>(s1 : [T], s2 : [T], ind : Int) -> [T]
+  static func insertAt<T>(s1 : [T], s2 : [T], ind : Int) -> [T]
+  { var result : [T] = [T]()
+    for (i,x) in s1.enumerated()
+    { if i < ind-1
+      { result.append(x) }
+    }
+    for y in s2
+    { result.append(y) }
+    for (j,z) in s1.enumerated()
+    { if j >= ind-1
+      { result.append(z) }
+    }
+    return result
+  }
+
+  static func insertAt<T>(s1 : [T], s2 : T, ind : Int) -> [T]
+  { var result : [T] = [T]()
+    for (i,x) in s1.enumerated()
+    { if i < ind-1
+      { result.append(x) }
+    }
+
+    result.append(s2)
+
+    for (j,z) in s1.enumerated()
+    { if j >= ind-1
+      { result.append(z) }
+    }
+    return result
+  }
+
+  static func insertInto<T>(s1 : [T], s2 : [T], ind : Int) -> [T]
   { var result : [T] = [T]()
     for (i,x) in s1.enumerated()
     { if i < ind-1
@@ -848,6 +1148,15 @@ class Ocl
     return res
   }
 
+  static func firstCharacter(str: String) -> Character
+  { var res : [Character] = [Character]()
+    for ind in str.indices
+    { res.add(str[ind])
+      return str[ind]
+    }
+    return res[0]!
+  }
+
   static func insertAtString(s1 : String, s2 : String, ind : Int) -> String
   { var result : [Character] = [Character]()
     let seq1 = Ocl.chars(str: s1)
@@ -855,6 +1164,25 @@ class Ocl
     result = Ocl.insertAt(s1: seq1, s2: seq2, ind: ind)
     return String(result)
   }
+
+    static func removeAtString(str : String, ind : Int) -> String
+    { var result : [Character] = []
+      let sq = Ocl.chars(str: str)
+      for (i,x) in sq.enumerated()
+      { if i < ind-1 || i >= ind
+        { result.append(x) }
+      }
+      return String(result)
+    }
+    
+    static func setAtString(str : String, ind: Int, value: String) -> String
+    { var result : [Character] = []
+      let sq = Ocl.chars(str: str)
+      result = result + sq
+      if ind >= 1 && ind < result.count
+      { result[ind-1] = Ocl.firstCharacter(str: value) }
+      return String(result)
+    }
 
   static func reverseString(str : String) -> String
   { let result : [Character] = Ocl.chars(str: str)
@@ -914,6 +1242,22 @@ class Ocl
      return res.length == str.count
   }
 
+   static func replaceFirstMatch(str: String, pattern: String, rep: String) -> String
+   { let rge = NSRange(location: 0, length: str.utf16.count)
+     let regexp = try! NSRegularExpression(pattern: pattern)
+     let p = regexp.rangeOfFirstMatch(in: str, options: [], range: rge)
+     var result : String = str
+
+     if p.length <= 0
+     { return result }
+
+     let modText =
+        regexp.stringByReplacingMatches(in: str, options: [],
+              range: NSRange(location: 0, length: p.location + p.length), withTemplate: rep)
+    return modText
+ }
+
+
   static func replaceAll(str: String, pattern: String, rep: String) -> String
   { let regex = try! NSRegularExpression(pattern: pattern)
     
@@ -937,6 +1281,18 @@ class Ocl
      return result
   }
   
+  static func firstMatch(str: String, pattern: String) -> String?
+   { let rge = NSRange(location: 0, length: str.utf16.count)
+     let regexp = try! NSRegularExpression(pattern: pattern)
+     let p = regexp.rangeOfFirstMatch(in: str, options: [], range: rge)
+     var result : String? = nil
+
+     if p.length <= 0
+     { return result }
+
+     let matchString = Ocl.stringSubrange(str: str, st: p.location+1, en: p.location + p.length)
+     return matchString
+ }
 
    static func split(str: String, pattern: String) -> [String]
    { let rge = NSRange(location: 0, length: str.utf16.count)
@@ -953,7 +1309,7 @@ class Ocl
        { result.append(splitString) }
      }
 
-     if prev < str.count
+     if prev <= str.count
      { result.append(Ocl.stringSubrange(str: str, st: prev, en: str.count)) }
      return result
   }
@@ -977,6 +1333,56 @@ class Ocl
     return result
   }
 
+  static func setAt<T>(sq : [T], ind: Int, value: T) -> [T]
+  { var result : [T] = [T]()
+    result = result + sq
+    if ind >= 1 && ind < result.count
+    { result[ind-1] = value }
+    return result
+  }
+
+
+  static func removeFirst<T : Equatable>(sq : [T], x : T) -> [T]
+  { var res : [T] = [T]()
+    res = res + sq
+
+    for (i,y) in sq.enumerated()
+    { if x == y
+      { res.remove(at: i)
+        return res
+      }
+    }
+    return res
+  }
+
+  static func removeFirst<T : AnyObject>(sq : [T], x : T) -> [T]
+  { var res : [T] = [T]()
+    res = res + sq
+
+    for (i,y) in sq.enumerated()
+    { if x === y
+      { res.remove(at: i)
+        return res
+      }
+    }
+    return res
+  }
+
+  static func removeAt<T>(sq : [T], ind : Int) -> [T]
+  { var result : [T] = [T]()
+    for (i,x) in sq.enumerated()
+    { if i < ind-1 || i >= ind
+      { result.append(x) }
+    }
+    return result
+  }
+
+  static func removeObject<T : AnyObject>(sq : [T], obj: T) -> [T]
+  { var result : [T] =
+          sq.filter{ $0 !== obj }
+    return result
+  }
+
   static func indexOfSequence<T : Equatable>(sq : [T], x : T) -> Int
   { for (i,y) in sq.enumerated()
     { if x == y
@@ -984,8 +1390,28 @@ class Ocl
     }
     return 0
   }
+
+  static func indexOfSequence<T : AnyObject>(sq : [T], x : T) -> Int
+  { for (i,y) in sq.enumerated()
+    { if x === y
+      { return i+1 }
+    }
+    return 0
+  }
   
   static func lastIndexOfSequence<T : Equatable>(sq : [T], x : T) -> Int
+  { if sq.count == 0
+    { return 0 }
+
+    let revsq = reverse(s: sq)
+    let i = indexOfSequence(sq: revsq, x: x)
+    
+    if i == 0
+    { return 0 }
+    return sq.count - i + 1
+  }
+
+  static func lastIndexOfSequence<T : AnyObject>(sq : [T], x : T) -> Int
   { if sq.count == 0
     { return 0 }
 
@@ -1012,10 +1438,43 @@ class Ocl
     return true
   }
   
+  static func hasPrefixSequence<T : AnyObject>(sq : [T], sq1 : [T], i : Int) -> Bool
+  { let n = sq.count
+    let m = sq1.count
+    if n == 0 || m == 0 || i+m > n
+    { return false }
+    
+    var j : Int = 0
+    while j < m && i+j < n
+    { if sq[i+j] !== sq1[j]
+      { return false }
+      j = j+1
+    }
+    return true
+  }
+
   static func hasPrefixSequence<T : Equatable>(sq : [T], sq1 : [T]) -> Bool
+  { return hasPrefixSequence(sq: sq, sq1: sq1, i: 0) }
+
+  static func hasPrefixSequence<T : AnyObject>(sq : [T], sq1 : [T]) -> Bool
   { return hasPrefixSequence(sq: sq, sq1: sq1, i: 0) }
   
   static func indexOfSubSequence<T : Equatable>(sq : [T], sq1 : [T]) -> Int
+  { let m = sq1.count
+    let n = sq.count
+    if m == 0 || n == 0 || n < m
+    { return 0 }
+    var i : Int = 0
+
+    while i+m <= n
+    { if hasPrefixSequence(sq: sq, sq1: sq1, i: i)
+      { return i+1 }
+      i = i + 1
+    }
+    return 0
+  }
+
+  static func indexOfSubSequence<T : AnyObject>(sq : [T], sq1 : [T]) -> Int
   { let m = sq1.count
     let n = sq.count
     if m == 0 || n == 0 || n < m
@@ -1045,8 +1504,38 @@ class Ocl
       }
       return 0
     }
+
+    static func lastIndexOfSubSequence<T : AnyObject>(sq : [T], sq1 : [T]) -> Int
+    { let m = sq1.count
+      let n = sq.count
+      if m == 0 || n == 0 || n < m
+      { return 0 }
+        
+      var i : Int = n - m
+
+      while i >= 0
+      { if hasPrefixSequence(sq: sq, sq1: sq1, i: i)
+        { return i+1 }
+        i = i - 1
+      }
+      return 0
+    }
+
+  static func char2byte(ch: String) -> Int
+  { if let res = Unicode.Scalar(ch)
+    { return Int(res.value) }
+    else
+    { return -1 }
+  }
+
+  static func byte2char(n: Int) -> String
+  { if let res = Unicode.Scalar(n)
+    { return String(res) }
+    else
+    { return "" }
+  }
     
-    static func tokeniseCSV(line: String) -> [String]
+  static func tokeniseCSV(line: String) -> [String]
   { // Assumes the separator is a comma
     var buff : String = ""
     // var x : Int = 0
@@ -1104,3 +1593,289 @@ class Ocl
     return res
   }
 }
+
+
+
+class IndexingException : Error
+{  var message : String
+    
+    init()
+    { message = "Indexing exception" }
+    
+    init(copyFrom: IndexingException)
+    { message = copyFrom.message }
+    
+    func getMessage() -> String
+    { return message }
+    
+    static func newIndexingException() -> IndexingException
+    { let ex = IndexingException()
+      return ex
+    }
+    
+    static func newIndexingException(m : String) -> IndexingException
+    { let ex = IndexingException()
+      ex.message = m
+      return ex
+    }
+
+    func printStackTrace() -> Void
+    { print(localizedDescription) }
+}
+
+class IOException : Error
+{  var message : String
+    
+    init()
+    { message = "IO exception" }
+    
+    init(copyFrom: IOException)
+    { message = copyFrom.message }
+    
+    func getMessage() -> String
+    { return message }
+    
+    static func newIOException() -> IOException
+    { let ex = IOException()
+      return ex
+    }
+    
+    static func newIOException(m : String) -> IOException
+    { let ex = IOException()
+      ex.message = m
+      return ex
+    }
+
+    func printStackTrace() -> Void
+    { print(localizedDescription) }
+
+}
+
+class IncorrectElementException : Error
+{
+    var message : String
+        
+        init()
+        { message = "Incorrect element exception" }
+        
+        init(copyFrom: IncorrectElementException)
+        { message = copyFrom.message }
+        
+        func getMessage() -> String
+        { return message }
+        
+        static func newIncorrectElementException() -> IncorrectElementException
+        { let ex = IncorrectElementException()
+          return ex
+        }
+        
+        static func newIncorrectElementException(m : String) -> IncorrectElementException
+        { let ex = IncorrectElementException()
+          ex.message = m
+          return ex
+        }
+
+    func printStackTrace() -> Void
+    { print(localizedDescription) }
+
+}
+
+class CastingException : Error
+{
+    var message : String
+        
+    init()
+    { message = "Casting exception" }
+        
+    init(copyFrom: CastingException)
+    { message = copyFrom.message }
+        
+    func getMessage() -> String
+    { return message }
+        
+    static func newCastingException() -> CastingException
+    { let ex = CastingException()
+      return ex
+    }
+        
+    static func newCastingException(m : String) -> CastingException
+    { let ex = CastingException()
+      ex.message = m
+      return ex
+    }
+
+    func printStackTrace() -> Void
+    { print(localizedDescription) }
+
+}
+
+class ArithmeticException : Error
+{
+    var message : String
+        
+    init()
+    { message = "Arithmetic exception" }
+        
+    init(copyFrom: ArithmeticException)
+    { message = copyFrom.message }
+        
+    func getMessage() -> String
+    { return message }
+        
+    static func newArithmeticException() -> ArithmeticException
+    { let ex = ArithmeticException()
+      return ex
+    }
+        
+    static func newArithmeticException(m : String) -> ArithmeticException
+    { let ex = ArithmeticException()
+      ex.message = m
+      return ex
+    }
+
+    func printStackTrace() -> Void
+    { print(localizedDescription) }
+}
+
+class AssertionException : Error
+{
+    var message : String
+        
+    init()
+    { message = "Assertion exception" }
+        
+    init(copyFrom: AssertionException)
+    { message = copyFrom.message }
+        
+    func getMessage() -> String
+    { return message }
+        
+    static func newAssertionException() -> AssertionException
+    { let ex = AssertionException()
+      return ex
+    }
+        
+    static func newAssertionException(m : String) -> AssertionException
+    { let ex = AssertionException()
+      ex.message = m
+      return ex
+    }
+    
+    func printStackTrace() -> Void
+    { print(localizedDescription) }
+}
+
+
+class ProgramException : Error
+{
+    var message : String
+        
+    init()
+    { message = "Program exception" }
+        
+    init(copyFrom: ProgramException)
+    { message = copyFrom.message }
+        
+    func getMessage() -> String
+    { return message }
+        
+    static func newProgramException() -> ProgramException
+    { let ex = ProgramException()
+      return ex
+    }
+        
+    static func newProgramException(m : String) -> ProgramException
+    { let ex = ProgramException()
+      ex.message = m
+      return ex
+    }
+    
+    func printStackTrace() -> Void
+    { print(localizedDescription) }
+    
+}
+
+class SystemException : Error
+{
+    var message : String
+        
+    init()
+    { message = "System exception" }
+        
+    init(copyFrom: SystemException)
+    { message = copyFrom.message }
+        
+    func getMessage() -> String
+    { return message }
+        
+    static func newSystemException() -> SystemException
+    { let ex = SystemException()
+      return ex
+    }
+        
+    static func newSystemException(m : String) -> SystemException
+    { let ex = SystemException()
+      ex.message = m
+      return ex
+    }
+    
+    func printStackTrace() -> Void
+    { print(localizedDescription) }
+}
+
+class NullAccessException : Error
+{  var message : String
+    
+    init()
+    { message = "Null access exception" }
+        
+    init(copyFrom: NullAccessException)
+    { message = copyFrom.message }
+        
+    func getMessage() -> String
+    { return message }
+        
+    static func newNullAccessException() -> NullAccessException
+    { let ex = NullAccessException()
+      return ex
+    }
+        
+    static func newNullAccessException(m : String) -> NullAccessException
+    { let ex = NullAccessException()
+      ex.message = m
+      return ex
+    }
+    
+    func printStackTrace() -> Void
+    { print(localizedDescription) }
+    
+}
+
+class AccessingException : Error
+{
+    var message : String
+        
+    init()
+    { message = "Accessing exception" }
+        
+    init(copyFrom: AccessingException)
+    { message = copyFrom.message }
+        
+    func getMessage() -> String
+    { return message }
+        
+    static func newAccessingException() -> AccessingException
+    { let ex = AccessingException()
+      return ex
+    }
+        
+    static func newAccessingException(m : String) -> AccessingException
+    { let ex = AccessingException()
+      ex.message = m
+      return ex
+    }
+    
+    func printStackTrace() -> Void
+    { print(localizedDescription) }
+}
+

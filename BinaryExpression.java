@@ -176,7 +176,8 @@ class BinaryExpression extends Expression
         "->isUnique".equals(operator) || "->unionAll".equals(operator) ||
         "->intersectAll".equals(operator) || "->symmetricDifference".equals(operator) ||
         "->selectMaximals".equals(operator) || "->sortedBy".equals(operator) ||
-        "->selectMinimals".equals(operator) || "->at".equals(operator))
+        "->selectMinimals".equals(operator) || "->at".equals(operator) || 
+        "->apply".equals(operator))
     { Expression leftdet = left.determinate(); 
       Expression rightdet = right.determinate(); 
       return (new BinaryExpression("&",leftdet,rightdet)).simplify(); 
@@ -292,7 +293,8 @@ class BinaryExpression extends Expression
        } 
      }  
  
-     if (operator.equals("^") || operator.equals("\\/") || operator.equals("->at") || 
+     if (operator.equals("^") || operator.equals("\\/") || 
+         operator.equals("->at") || operator.equals("->apply") || 
          operator.equals("/\\") || operator.equals("->union") ||
          operator.equals("->intersection") || operator.equals("->symmetricDifference")) 
      { leftres = left.checkConversions(propType, propElemType, interp); 
@@ -542,7 +544,7 @@ class BinaryExpression extends Expression
     } 
     if (operator.equals("&"))
     { return "(and " + leftz3 + " " + rightz3 + ")"; } 
-    if (operator.equals("->at"))
+    if (operator.equals("->at") || operator.equals("->apply"))
     { return "(" + leftz3 + " " + rightz3 + ")"; } 
     if (operator.equals(":"))
     { return "(member" + memberEnt + " " + leftz3 + " " + rightz3 + ")"; } 
@@ -1030,7 +1032,9 @@ class BinaryExpression extends Expression
              operator.equals("->equalsIgnoreCase") || operator.equals("->before") || operator.equals("->after") || 
              operator.equals("->hasMatch") || operator.equals("->isMatch") ||
              operator.equals("->split") || operator.equals("->allMatches") || operator.equals("->firstMatch") || 
-             operator.equals("->at") || operator.equals("->closure") || 
+             operator.equals("->at") || 
+             operator.equals("->apply") ||
+             operator.equals("->closure") || 
              operator.equals("->intersection") || operator.equals("->symmetricDifference"))   
     { basicString = left + operator + "(" + right + ")"; } 
 
@@ -1916,6 +1920,9 @@ class BinaryExpression extends Expression
 
     if (operator.equals("->at") || operator.equals("|A") || operator.equals("->any"))
     { return Type.isPrimitiveType(left.elementType); } 
+
+    if (operator.equals("->apply"))
+    { return Type.isPrimitiveType(type); } 
 
     // for +, -, *, /
     return left.isPrimitive() && right.isPrimitive(); 
@@ -3179,7 +3186,21 @@ public void findClones(java.util.Map clones, String rule, String op)
           { elementType = new Type("OclAny", null); } 
         }  
       } 
-    }  // and right must be of type int. 
+    }  // and right must be of type int.
+    else if ("->apply".equals(operator)) 
+    { // lhs must be a function
+      Type ftype = left.getType(); 
+
+      if (ftype != null) 
+      { type = ftype.getElementType(); }
+
+      if (type == null) 
+      { System.err.println("Warning: no function result type in " + this); 
+        type = new Type("OclAny", null); 
+      } 
+      else 
+      { elementType = type.elementType; } 
+    }  
     else if ("->pow".equals(operator))
     { type = new Type("double",null); } 
     else if ("->gcd".equals(operator))
@@ -4123,6 +4144,9 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->excludesKey"))
     { return "Set.excludesKey(" + lqf + "," + rw + ")"; } 
+
+    if (operator.equals("->apply"))
+    { return "(" + lqf + ").apply(" + rqf + ")"; } 
 
     if (operator.equals("->at"))
     { if (left.type != null && "String".equals(left.type.getName()))

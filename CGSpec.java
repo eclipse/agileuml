@@ -572,7 +572,7 @@ public class CGSpec
       { selected = r; } // exact match
       else if (op.startsWith("->") && trimmedlhs.endsWith(op + "()"))
       { selected = r; }
-      else if (etext.startsWith(op) && trimmedlhs.startsWith(op))
+      else if (trimmedlhs.startsWith(op))
       { selected = r; }
 
       if (selected != null && selected.satisfiesConditions(args,entities))

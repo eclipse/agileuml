@@ -127,7 +127,8 @@ public class ASTBasicTerm extends ASTTerm
     { modelElement = new Type("String", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "String"; } 
-    if ("Character".equals(value))
+    if ("Character".equals(value) || 
+        "InetAddress".equals(value))
     { modelElement = new Type("String", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "String"; } 
@@ -465,7 +466,7 @@ public class ASTBasicTerm extends ASTTerm
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; } 
-    if ("PrintStream".equals(value))
+    if ("PrintStream".equals(value) || "Socket".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; } 

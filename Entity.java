@@ -4469,6 +4469,26 @@ public class Entity extends ModelElement implements Comparable
     return false; 
   } 
 
+  public BehaviouralFeature getIdenticalOperation(Statement stat)
+  { String statText = stat + ""; 
+    for (int i = 0; i < operations.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i); 
+      if (statText.equals(bf.getActivity() + "")) 
+      { return bf; } 
+    } 
+    return null; 
+  } 
+
+  public boolean hasIdenticalOperation(Statement stat)
+  { String statText = stat + ""; 
+    for (int i = 0; i < operations.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i); 
+      if (statText.equals(bf.getActivity() + "")) 
+      { return true; } 
+    } 
+    return false; 
+  } 
+
   public boolean hasConcreteOperation(String nme)
   { for (int i = 0; i < operations.size(); i++) 
     { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i); 

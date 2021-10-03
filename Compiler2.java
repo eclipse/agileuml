@@ -296,6 +296,7 @@ public class Compiler2
         str.equals("includes") || str.equals("including") || str.equals("excludes") ||
         str.equals("excluding") || str.equals("intersection") || str.equals("union") ||
         str.equals("unionAll") || str.equals("intersectAll") || str.equals("at") ||
+        str.equals("apply") || 
         str.equals("selectMaximals") || str.equals("selectMinimals") || str.equals("not") ||
         str.equals("any") || str.equals("size") || str.equals("last") ||
         str.equals("first") || str.equals("includesAll") || str.equals("excludesAll") ||
@@ -924,9 +925,9 @@ public class Compiler2
           if (sb != null) 
           { sb.append(c); 
             sb = null; 
-          }
+          } // ends a literal string. 
         }  
-        else 
+        else // starts a literal string. 
         { instring = true; 
           sb = new StringBuffer();     // start new buffer
           lexicals.addElement(sb);  
@@ -934,7 +935,7 @@ public class Compiler2
         } 
       } 
       else if (instring)
-      { if (sb != null) 
+      { if (sb != null) // should always be true. 
         { sb.append(c); } 
         else 
         { sb = new StringBuffer();     // start new buffer for the text
@@ -1825,6 +1826,11 @@ public class Compiler2
     //   if (ee != null) { return ee; } 
     // } 
 
+    // if ("lambda".equals(lexicals.get(pstart) + ""))
+    // { ee = parse_lambda_expression(bcount,pstart,pend); 
+    //   if (ee != null) { return ee; } 
+    // } 
+
     if ("not".equals(lexicals.get(pstart) + ""))
     { ee = parse_expression(bcount,pstart+1,pend); 
       if (ee != null) 
@@ -2524,6 +2530,14 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
       // System.out.println("Parsed basic expression: " + ss + " " + ee + " " + ef); 
       return ef;
     }
+
+    if (pstart < pend && "lambda".equals(lexicals.get(pstart) + ""))
+    { Vector v1 = new Vector(); 
+      Vector v2 = new Vector(); 
+      Expression ee = parse_lambda_expression(bc,pstart,pend,v1,v2); 
+      if (ee != null) 
+      { return ee; } 
+    } 
 
     if (pstart < pend && "}".equals(lexicals.get(pend) + "") && 
         "Map".equals(lexicals.get(pstart) + "") &&
@@ -3491,18 +3505,29 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
   public ASTTerm parseGeneralAST(int st, int en)
   { ASTTerm res = null; 
     String lex = lexicals.get(st) + ""; 
+
+    if (st == en) 
+    { ASTSymbolTerm sym = new ASTSymbolTerm(lex);
+      return sym;  
+    }
 	
     if ("(".equals(lex) && ")".equals(lexicals.get(en) + "")) {}
     else 
     { return null; }
 	
+
     String tag = lexicals.get(st+1) + ""; 
-    String value = lexicals.get(en-1) + ""; 
+    String value = lexicals.get(en-1) + "";
+
+    if (st+1 == en-1)
+    { ASTSymbolTerm sym = new ASTSymbolTerm(tag);
+      return sym; 
+    } // But actually this is an error: ( tag )
 	
-    if (st+3 >= en && isSimpleIdentifier(tag))
+    if (en <= st + 3 && isSimpleIdentifier(tag))
     { res = new ASTBasicTerm(tag,value); 
       return res; 
-    }
+    } // (tag value)
 	
     Vector subtrees = parseGeneralASTSequence(st+2, en-1); 
     if (subtrees != null) 
@@ -5285,6 +5310,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
           { System.out.println("Creation statement var " + varname + " : " + typ1 + " with initialisation " + expr);
             CreationStatement cs1 = new CreationStatement(typ1 + "",varname); 
             cs1.setType(typ1); 
+            cs1.setKeyType(typ1.getKeyType()); 
             cs1.setElementType(typ1.getElementType());  
             cs1.setInitialisation(expr);
             return cs1;
@@ -5295,6 +5321,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       if (typ != null) 
       { CreationStatement cs = new CreationStatement(typ + "", varname); 
         cs.setType(typ); 
+        cs.setKeyType(typ.getKeyType()); 
         cs.setElementType(typ.getElementType());  
         return cs; 
       } 
@@ -8756,8 +8783,12 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
     // cc.nospacelexicalanalysis("(if b.subrange(10+1, b.size)->indexOf(\"a\"+\"\") > 0 then (b.subrange(10+1, b.size)->indexOf(\"a\"+\"\") + 10 - 1) else -1 endif)");
     // cc.nospacelexicalanalysis("x->oclAsType(E).att"); 
 
-    cc.nospacelexicalanalysis("?(x) = ?y[10]"); 
-    System.out.println(cc.lexicals); 
+    // cc.nospacelexicalanalysis("?(x) = ?y[10]"); 
+    // System.out.println(cc.lexicals); 
+    cc.nospacelexicalanalysis("(lambda s : String in (s->size() > 1))->apply(_var)"); 
+    // cc.nospacelexicalanalysis("f->apply(_var)"); 
+    // cc.nospacelexicalanalysis("lambda s : String in (s->size() > 1)"); 
+
     System.out.println(cc.parseExpression()); 
 
     // System.out.println(cc.parseATLExpression()); 

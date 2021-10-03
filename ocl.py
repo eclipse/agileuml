@@ -670,6 +670,18 @@ def sum(col) :
     result = result + x
   return result
 
+def sumint(col) : 
+  return sum(col)
+
+def sumlong(col) : 
+  return sum(col)
+
+def sumdouble(col) : 
+  result = 0.0
+  for x in col : 
+    result = result + x
+  return result
+
 def sumString(col) : 
   result = ""
   for x in col : 

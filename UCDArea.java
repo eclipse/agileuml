@@ -3588,6 +3588,9 @@ public class UCDArea extends JPanel
     auxcstls.add("catchTestSwift.cstl");
     auxcstls.add("swiftCopyOperation.cstl"); 
 
+    java.util.Date d1 = new java.util.Date(); 
+    long t1 = d1.getTime(); 
+
     CGSpec cgs = loadCSTL("cgSwift.cstl",auxcstls); 
     
     // System.out.println(">>> Using loaded code generator: " + cgs); 
@@ -4035,6 +4038,11 @@ public class UCDArea extends JPanel
     catch(Exception _dd) { }   
 	  // generateSwiftUIApp(); 
 
+    java.util.Date d2 = new java.util.Date(); 
+    long t2 = d2.getTime(); 
+
+    System.out.println(">>> Code generation time = " + (t2-t1)); 
+ 
     System.out.println(); 
     System.out.println(">>> App code is generated in directory " + dirName); 
     System.out.println(); 
@@ -12060,7 +12068,8 @@ public void produceCUI(PrintWriter out)
     xx.entities = new Vector(); 
     xx.entities.addAll(entities); 
     xx.enumtypes = new Vector(); 
-    xx.enumtypes.addAll(types); 
+    xx.enumtypes.addAll(types);
+    xx.currentClass = new Entity("FromJava");  
 
     System.out.println(xx.toKM3()); 
     System.out.println(); 
