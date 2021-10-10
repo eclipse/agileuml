@@ -4602,7 +4602,15 @@ public class BSystemTypes extends BComponent
                  "    return tmp;\n" + 
                  "  }\n\n" + 
                  "  public static string subrange(string s, int i, int j)\n";
-    res = res + "  { return s.Substring(i-1, j-i+1); }\n\n";
+
+    res = res + "  { if (i < 1)\n" + 
+                     "     { i = 1; }\n" + 
+                     "     if (j > s.Length)\n" + 
+                     "     { j = s.Length; }\n" + 
+                     "     if (i > s.Length || i > j)\n" + 
+                     "     { return \"\";  }\n" + 
+                     "     return s.Substring(i-1, j-i+1);\n" + 
+                "  }\n\n";
 
     res = res + "  public static ArrayList subrange(ArrayList l, int i, int j)\n";
     res = res + "  { ArrayList tmp = new ArrayList(); \n" + 
@@ -5099,7 +5107,36 @@ public class BSystemTypes extends BComponent
                  "    if (x == 0)\n" +
                  "    { return y; }\n" + 
                  "    return 0;\n" + 
-                 "  } \n"; 
+                 "  } \n\n"; 
+    res = res + 
+        "  public static bool toBoolean(String sx)\n" + 
+        "  { if (\"true\".Equals(sx) || \"True\".Equals(sx))\n" + 
+        "    { return true; }\n" + 
+        "   return false;\n" + 
+        "  }\n\n";  
+
+    res = res +         
+       "  public static int toInteger(String sx)\n" + 
+       "  { if (sx.StartsWith(\"0x\"))\n" + 
+       "    { return Convert.ToInt32(sx, 16); }\n" + 
+       "    if (sx.StartsWith(\"0b\"))\n" + 
+       "    { return Convert.ToInt32(sx, 2); }\n" + 
+       "    if (sx.StartsWith(\"0\") && sx.Length > 1)\n" + 
+       "    { return Convert.ToInt32(sx, 8); }\n" + 
+       "    return int.Parse(sx);\n" + 
+       "  } \n\n"; 
+
+    res = res +         
+       "  public static long toLong(String sx)\n" + 
+       "  { if (sx.StartsWith(\"0x\"))\n" + 
+       "    { return Convert.ToInt64(sx, 16); }\n" + 
+       "    if (sx.StartsWith(\"0b\"))\n" + 
+       "    { return Convert.ToInt64(sx, 2); }\n" + 
+       "    if (sx.StartsWith(\"0\") && sx.Length > 1)\n" + 
+       "    { return Convert.ToInt64(sx, 8); }\n" + 
+       "    return long.Parse(sx);\n" + 
+       "  } \n\n"; 
+
     return res; 
   } 
 
@@ -6952,11 +6989,14 @@ public class BSystemTypes extends BComponent
       "      else { res.add(obj); }\n" + 
       "    } \n" + 
       "    return res; \n" + 
-      "  }\n";
+      "  }\n\n";
+    res = res + "  public static List asOrderedSet(List a)\n" + 
+      "  { return asSet(a); }\n\n";  
     res = res + "  public static List asSet(Map m)\n" + 
       "  { List range = new Vector();\n" +  
       "    range.addAll(m.values());\n" +  
-      "    return asSet(range);  }\n\n"; 
+      "    return asSet(range);\n" + 
+      "  }\n\n"; 
  
     return res;
   }
@@ -8315,6 +8355,7 @@ public class BSystemTypes extends BComponent
        "    res.Remove(x);\n" +
        "    return res; \n" +
        "   }\n\n"; 
+
     res = res + 
        "  public static ArrayList removeAt(ArrayList a, int i)\n" +
        "  {\n" +
@@ -8324,6 +8365,16 @@ public class BSystemTypes extends BComponent
        "    { res.RemoveAt(i - 1); }\n" +
        "    return res;\n" +
        "  }\n\n"; 
+
+     res = res + "  public static string removeAtString(string a, int i)\n" +
+         "  { string res = \"\";\n" +
+         "    for (int x = 0; x < i-1 && x < a.Length; x++)\n" +
+         "    { res = res + a[x]; }\n" +
+         "    for (int x = i; x >= 0 && x < a.Length; x++)\n" +
+         "    { res = res + a[x]; }\n" +
+         "    return res;\n" +
+         "  }\n\n"; 
+
      res = res + 
        "  public static ArrayList setAt(ArrayList a, int i, object x)\n" +
        "  {\n" +
@@ -8333,6 +8384,18 @@ public class BSystemTypes extends BComponent
        "    { res[i - 1] = x; }\n" +
        "    return res;\n" +
        "  }\n\n"; 
+
+      res = res + "  public static string setAt(string a, int i, string x)\n" + 
+         "  { string res = \"\";\n" + 
+         "    for (int j = 0; j < i-1 && j < a.Length; j++)\n" + 
+         "    { res = res + a[j]; }\n" + 
+         "    if (i <= a.Length && i >= 1)\n" + 
+         "    { res = res + x; }\n" + 
+         "    for (int j = i; j >= 0 && j < a.Length; j++)\n" + 
+         "    { res = res + a[j]; }\n" + 
+         "    return res;\n" + 
+         "  }\n\n"; 
+
     return res; 
   } 
 
@@ -8785,6 +8848,17 @@ public class BSystemTypes extends BComponent
     "      res.addAll(c);\n" +
     "      return res;\n" +
     "    }\n\n";
+
+    res = res + "    public static ArrayList asOrderedSet(Collection c)\n" + 
+    "    { ArrayList res = new ArrayList();\n" +  
+    "      for (T x : c)\n" + 
+    "      { if (res.contains(x)) { }\n" +  
+    "        else \n" + 
+    "        { res.add(x); }\n" +  
+    "      } \n" + 
+    "      return res; \n" + 
+    "    }\n\n"; 
+
     return res;
   }
 
@@ -8795,6 +8869,17 @@ public class BSystemTypes extends BComponent
     "      res.addAll(c);\n" +
     "      return res;\n" +
     "    }\n\n";
+
+    res = res + "    public static <T> ArrayList<T> asOrderedSet(Collection<T> c)\n" + 
+    "    { ArrayList<T> res = new ArrayList<T>();\n" +  
+    "      for (T x : c)\n" + 
+    "      { if (res.contains(x)) { }\n" +  
+    "        else \n" + 
+    "        { res.add(x); }\n" +  
+    "      } \n" + 
+    "      return res;\n" +  
+    "    }\n\n"; 
+
     return res;
   }
 
@@ -8816,6 +8901,24 @@ public class BSystemTypes extends BComponent
     "    }\n\n" +
     "    static std::set<_T>* asSet(std::set<_T>* c)\n" +
     "    { return c; }\n\n";
+
+    res = res + "    static vector<_T>* asOrderedSet(vector<_T>* c)\n" + 
+    "    { vector<_T>* res = new vector<_T>();\n" + 
+    "      for (vector<_T>::iterator _pos = c->begin(); _pos != c->end(); ++_pos)\n" + 
+    "      { if (isIn(*_pos, res)) { }\n" +  
+    "        else \n" + 
+    "        { res->push_back(*_pos); }\n" +  
+    "    } \n" + 
+    "    return res;\n" +  
+    "  }\n\n"; 
+
+    res = res + "    static vector<_T>* asOrderedSet(set<_T>* c)\n" + 
+    "    { vector<_T>* res = new vector<_T>();\n" + 
+    "      for (set<_T>::iterator _pos = c->begin(); _pos != c->end(); ++_pos)\n" + 
+    "      { res->push_back(*_pos); }\n" +  
+    "      return res;\n" +  
+    "    }\n\n"; 
+
     return res;
   }
 
@@ -8825,6 +8928,16 @@ public class BSystemTypes extends BComponent
     "      res.addAll(c);\n" +
     "      return res;\n" +
     "    }\n\n";
+
+  res = res + 
+    "    public static HashSet asBag(HashSet c)\n" + 
+    "    { return c; }\n\n" +   
+    "    public static ArrayList asBag(ArrayList c)\n" + 
+    "    { ArrayList res = new ArrayList(); \n" + 
+    "      res.addAll(c); \n" + 
+    "      Collections.shuffle(res);\n" +  
+    "      return res;\n" +  
+    "    }\n\n";  
     return res;
   }
 
@@ -8834,6 +8947,17 @@ public class BSystemTypes extends BComponent
     "      res.addAll(c);\n" +
     "      return res;\n" +
     "    }\n\n";
+
+    res = res + 
+    "    public static <T> HashSet<T> asBag(HashSet<T> c)\n" + 
+    "    { return c; }\n\n" +   
+    "    public static <T> ArrayList<T> asBag(ArrayList<T> c)\n" + 
+    "    { ArrayList<T> res = new ArrayList<T>(); \n" + 
+    "      res.addAll(c); \n" + 
+    "      Collections.shuffle(res);\n" +  
+    "      return res;\n" +  
+    "    }\n\n";  
+
     return res;
   }
 

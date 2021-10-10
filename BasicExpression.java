@@ -289,6 +289,13 @@ class BasicExpression extends Expression
     return res; 
   } 
 
+  public static BasicExpression newTypeBasicExpression(String value) 
+  { BasicExpression res = new BasicExpression(value); 
+    res.umlkind = TYPE; 
+    return res; 
+  } 
+
+
   public static BasicExpression newValueBasicExpression(String value) 
   { BasicExpression res = new BasicExpression(value); 
     res.umlkind = VALUE; 
@@ -2789,6 +2796,33 @@ class BasicExpression extends Expression
       return true; 
     } 
     
+    if (data.startsWith("new"))
+    { String createdClass = data.substring(3); 
+      if (Type.isExceptionType(createdClass))
+      { type = new Type(createdClass,null); 
+        umlkind = UPDATEOP;
+        isStatic = true;  
+        multiplicity = ModelElement.ONE;
+        if (parameters != null) 
+        { for (int i = 0; i < parameters.size(); i++) 
+          { Expression par = (Expression) parameters.get(i); 
+            if (par.isString())
+            { Attribute fparmessage = 
+                new Attribute("m", new Type("String", null), 
+                              ModelElement.INTERNAL); 
+              par.formalParameter = fparmessage; 
+            }
+            else 
+            { Attribute fparcause = 
+                new Attribute("c", new Type("OclException", null), ModelElement.INTERNAL); 
+              par.formalParameter = fparcause; 
+            } 
+          }
+        }  
+             
+        return true;
+      }   
+    } // and the parameters
 
     if ("length".equals(data) && objectRef != null) 
     { objectRef.typeCheck(types,entities,contexts,env); 
@@ -5886,11 +5920,33 @@ class BasicExpression extends Expression
     String ename = ""; 
     String cont = "Controller.inst()"; 
 
+    String pars = ""; 
+    if (parameters != null)
+    { for (int h = 0; h < parameters.size(); h++) 
+      { Expression par = (Expression) parameters.get(h); 
+        pars = pars + par.queryFormCSharp(env,local); 
+        if (h < parameters.size()-1) 
+        { pars = pars + ","; } 
+      } 
+    }
+   
     if ("getMessage".equals(data) && objectRef != null &&
         Type.isOclExceptionType(objectRef))
     { String rqf = objectRef.queryFormCSharp(env,local); 
       return rqf + ".Message"; 
     }  
+
+    if ("getCause".equals(data) && objectRef != null &&
+        Type.isOclExceptionType(objectRef))
+    { String rqf = objectRef.queryFormCSharp(env,local); 
+      return rqf + ".InnerException"; 
+    }  
+
+    // if ("printStackTrace".equals(data) && objectRef != null &&
+    //     Type.isOclExceptionType(objectRef))
+    // { String rqf = objectRef.queryFormCSharp(env,local); 
+    //   return "Console.WriteLine(" + rqf + ".StackTrace)"; 
+    // }  
 
     if (data.equals("systemTime") && 
         "OclDate".equals(objectRef + ""))
@@ -5900,6 +5956,11 @@ class BasicExpression extends Expression
     { String createdClass = data.substring(3); 
       if ("OclDate".equals(createdClass))
       { return "DateTime.Now"; }
+      if (Type.isExceptionType(createdClass))
+      { String csharpClass = 
+          (String) Type.exceptions2csharp.get(createdClass); 
+        return "new " + csharpClass + "(" + pars + ")"; 
+      } 
     } 
 
     if (umlkind == VALUE || umlkind == CONSTANT)
@@ -5971,15 +6032,8 @@ class BasicExpression extends Expression
         return "((" + cstype + ") " + data + "[" + indopt + "])";
       }
       else if (parameters != null && variable != null && variable.getType().isFunctionType()) // application of a Function(S,T)
-      { String pars = ""; 
-        for (int h = 0; h < parameters.size(); h++) 
-        { Expression par = (Expression) parameters.get(h); 
-          pars = pars + par.queryFormCSharp(env,local); 
-          if (h < parameters.size()-1) 
-          { pars = pars + ","; } 
-        } 
-        return data + "(" + pars + ")"; 
-      }
+      { return data + "(" + pars + ")"; }
+
       return data;  
     } 
 
@@ -7141,7 +7195,8 @@ public Statement generateDesignSubtract(Expression rhs)
       { return ename + "." + data + pars + ";"; } 
       else if ("self".equals(objectRef + ""))
       { return "this." + data + pars + ";"; } 
-      else if (local || "super".equals(objectRef + ""))
+      else if (local || "super".equals(objectRef + "") ||
+               entity.isComponent())
       { String pre = objectRef.queryForm(env,local);
         return pre + "." + data + pars + ";"; 
       }
@@ -7247,7 +7302,8 @@ public Statement generateDesignSubtract(Expression rhs)
       { return ename + "." + data + pars + ";"; } 
       else if ("self".equals(objectRef + ""))
       { return "this." + data + pars + ";"; } 
-      else if (local || "super".equals(objectRef + ""))
+      else if (local || "super".equals(objectRef + "") ||
+               entity.isComponent())
       { String pre = objectRef.queryFormJava6(env,local);
         return pre + "." + data + pars + ";"; 
       }
@@ -7352,7 +7408,8 @@ public Statement generateDesignSubtract(Expression rhs)
       { return ename + "." + data + pars + ";"; } 
       else if ("self".equals(objectRef + ""))
       { return "this." + data + pars + ";"; } 
-      else if (local || "super".equals(objectRef + ""))
+      else if (local || "super".equals(objectRef + "") ||
+               entity.isComponent())
       { String pre = objectRef.queryFormJava7(env,local);
         return pre + "." + data + pars + ";"; 
       }
@@ -7463,7 +7520,8 @@ public Statement generateDesignSubtract(Expression rhs)
       { return ename + "." + data + pars + ";"; } 
       else if ("self".equals(objectRef + ""))
       { return "this." + data + pars + ";"; } 
-      else if (local || "super".equals(objectRef + ""))
+      else if (local || "super".equals(objectRef + "") ||
+               entity.isComponent())
       { String pre = objectRef.queryFormCSharp(env,local);  // base?    
         return pre + "." + data + pars + ";"; 
       }
@@ -7572,7 +7630,8 @@ public Statement generateDesignSubtract(Expression rhs)
       { return ename + "::" + data + pars + ";"; } 
       else if ("self".equals(objectRef + ""))
       { return "this->" + data + pars + ";"; } 
-      else if (local || "super".equals(objectRef + ""))
+      else if (local || "super".equals(objectRef + "") ||
+               entity.isComponent())
       { String pre = objectRef.queryFormCPP(env,local);  // base?    
         return pre + "->" + data + pars + ";"; 
       }

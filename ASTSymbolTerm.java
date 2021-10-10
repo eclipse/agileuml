@@ -121,6 +121,10 @@ public class ASTSymbolTerm extends ASTTerm
     if ("PriorityQueue".equals(symbol)) 
     { modelElement = new Type("Sequence", null); 
       return "Sequence"; }
+
+    if ("Stream".equals(symbol)) 
+    { modelElement = new Type("Sequence", null); 
+      return "Sequence"; }
  
     if ("Set".equals(symbol)) 
     { modelElement = new Type("Set", null); 
@@ -168,6 +172,9 @@ public class ASTSymbolTerm extends ASTTerm
 
   public boolean updatesObject(ASTTerm t)
   { return false; } 
+
+  public boolean callSideEffect()
+  { return false; }
 
   public boolean hasSideEffect()
   { return false; }

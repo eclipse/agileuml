@@ -319,6 +319,15 @@ public class Type extends ModelElement
     return "Function".equals(nme); 
   } 
 
+  public static boolean isExceptionType(Type t)
+  { if (t == null) { return false; } 
+    String nme = t.getName(); 
+    return exceptions2java.get(nme) != null;
+  }
+
+  public static boolean isExceptionType(String t)
+  { return exceptions2java.get(t) != null; }
+
   public boolean isCollection()
   { return isCollectionType(this); } 
 
@@ -2252,8 +2261,10 @@ public class Type extends ModelElement
       { return "\"\""; }
       if (nme.equals("boolean"))
       { return "false"; }
-      if (nme.equals("int") || nme.equals("double") || nme.equals("long"))
+      if (nme.equals("int") || nme.equals("long"))
       { return "0"; }
+      if (nme.equals("double"))
+      { return "0.0"; } 
       if (nme.equals("Set") || nme.equals("Sequence"))
       { return "new Vector()"; }
       if (nme.equals("Map")) 
@@ -2342,8 +2353,10 @@ public class Type extends ModelElement
       { return "\"\""; }
       if (nme.equals("boolean"))
       { return "false"; }
-      if (nme.equals("int") || nme.equals("double") || nme.equals("long"))
+      if (nme.equals("int") || nme.equals("long"))
       { return "0"; }
+      if (nme.equals("double"))
+      { return "0.0"; }
       if (nme.equals("Set"))
       { return "new HashSet()"; } 
       if (nme.equals("Sequence"))
@@ -2367,8 +2380,10 @@ public class Type extends ModelElement
       { return "\"\""; }
       if (nme.equals("boolean"))
       { return "false"; }
-      if (nme.equals("int") || nme.equals("double") || nme.equals("long"))
+      if (nme.equals("int") || nme.equals("long"))
       { return "0"; }
+      if (nme.equals("double"))
+      { return "0.0"; }
       if (nme.equals("Set"))
       { if (elementType != null) 
         { return "new HashSet<" + elementType.typeWrapperJava7() + ">()"; }
@@ -2404,8 +2419,10 @@ public class Type extends ModelElement
       { return "\"\""; }
       if (nme.equals("boolean"))
       { return "false"; }
-      if (nme.equals("int") || nme.equals("double") || nme.equals("long"))
+      if (nme.equals("int") || nme.equals("long"))
       { return "0"; }
+      if (nme.equals("double"))
+      { return "0.0"; }
       if (nme.equals("Set") || nme.equals("Sequence"))
       { return "new ArrayList()"; }
       if (nme.equals("Map"))
@@ -2434,8 +2451,11 @@ public class Type extends ModelElement
       { return "\"\""; }
       if (nme.equals("boolean"))
       { return "false"; }
-      if (nme.equals("int") || nme.equals("double") || nme.equals("long"))
+      if (nme.equals("int") || nme.equals("long"))
       { return "0"; }
+      if (nme.equals("double"))
+      { return "0.0"; }
+
       if (nme.equals("Set"))
       { return "new std::set<" + et + ">()"; } 
       if (nme.equals("Sequence"))
@@ -2485,6 +2505,10 @@ public class Type extends ModelElement
     { return "object"; } 
     if (nme.equals("OclType"))
     { return "Type"; } 
+    if (nme.equals("OclRandom"))
+    { return "OclRandom"; } 
+    if (nme.equals("OclIterator"))
+    { return "OclIterator"; } 
 
     String jex = (String) exceptions2csharp.get(nme); 
     if (jex != null) 

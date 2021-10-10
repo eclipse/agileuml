@@ -3221,6 +3221,10 @@ public void findClones(java.util.Map clones, String rule, String op)
     { type = new Type("String",null);
       elementType = new Type("String", null); 
     }  
+    else if (operator.equals("->excludingAt") && left.isCollection()) 
+    { type = left.type;
+      elementType = left.elementType; 
+    }  
     else if ("->split".equals(operator) || "->allMatches".equals(operator))
     { type = new Type("Sequence",null); 
       elementType = new Type("String",null);
@@ -4610,6 +4614,9 @@ public boolean conflictsWithIn(String op, Expression el,
       return "((" + typ + ") " + getind + ")"; 
     } 
 
+    if (operator.equals("->apply"))
+    { return "(" + lqf + ").apply(" + rqf + ")"; } 
+
     if (operator.equals("->pow"))
     { return "Math.pow(" + lqf + ", " + rqf + ")"; } 
 
@@ -4960,6 +4967,9 @@ public boolean conflictsWithIn(String op, Expression el,
       return "((" + typ + ") " + getind + ")"; 
     } 
 
+    if (operator.equals("->apply"))
+    { return "(" + lqf + ").apply(" + rqf + ")"; } 
+
     if (operator.equals("->pow"))
     { return "Math.pow(" + lqf + ", " + rqf + ")"; } 
 
@@ -5278,17 +5288,29 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->antirestrict"))
     { return "SystemTypes.antirestrictMap(" + lqf + "," + rqf + ")"; } 
 
-    if (operator.equals("->at") && type != null)
-    { String typ = type.getCSharp(); 
-      
-      if ("String".equals(left.type + ""))
+    if (operator.equals("->at"))
+    { if ("String".equals(left.type + ""))
       { return "(" + lqf + ").Substring(" + rqf + "-1 , 1)"; } 
-      
-      if (left.type != null && left.type.isMapType())
-      { return "((" + typ + ") " + lqf + "[" + rqf + "])"; }
+
+      if (left.getElementType() != null)
+      { String typ = left.getElementType().getCSharp(); 
+       
+        if (left.type != null && left.type.isMapType())
+        { return "((" + typ + ") " + lqf + "[" + rqf + "])"; }
 	  
-      return "((" + typ + ") " + lqf + "[" + rqf + " - 1])"; 
+        return "((" + typ + ") " + lqf + "[" + rqf + " - 1])";
+      } 
+      
+      System.err.println("WARNING!: no element type in " + left); 
+
+      if (left.type != null && left.type.isMapType())
+      { return "(" + lqf + ")[" + rqf + "]"; }
+
+      return "(" + lqf + ")[" + rqf + " - 1]";
     } 
+
+    if (operator.equals("->apply"))
+    { return "(" + lqf + ")(" + rqf + ")"; } 
 
     if (operator.equals("|A") || operator.equals("->any"))   
     { String getany = anyQueryFormCSharp(lqf,rqf,rprim,env,local); 
@@ -5304,9 +5326,9 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->compareTo")) 
     { if (left.isNumeric() && right.isNumeric())
-      { res = "(" + lqf + " < " + rqf + ")?-1:((" + lqf + " > " + rqf + ")?1:0)"; } 
+      { res = "((" + lqf + " < " + rqf + ") ? -1 : ((" + lqf + " > " + rqf + ") ? 1 : 0))"; } 
       else 
-      { res = lqf + ".CompareTo(" + rqf + ")"; }  
+      { res = "((IComparable) " + lqf + ").CompareTo(" + rqf + ")"; }  
       return res; 
     } 
 
@@ -5438,6 +5460,10 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "SystemTypes.allMatches(" + lqf + "," + rqf + ")"; } 
       else if (operator.equals("->firstMatch"))
       { res = "SystemTypes.firstMatch(" + lqf + "," + rqf + ")"; } 
+      else if (operator.equals("->excludingAt") && left.isString())
+      { res = "SystemTypes.removeAtString(" + 
+                                      lqf + "," + rqf + ")"; 
+      }
     }
     else if (lmult && !rmult) // convert right to mult
     { String rw = rqf; 
@@ -5450,7 +5476,15 @@ public boolean conflictsWithIn(String op, Expression el,
       else if (operator.equals("->excluding"))
       { res = "SystemTypes.subtract(" + lqf + "," + rss + ")"; }
       else if (operator.equals("->excludingAt"))
-      { res = "SystemTypes.removeAt(" + lqf + "," + rqf + ")"; }
+      { if (left.isString())
+        { res = "SystemTypes.removeAtString(" + 
+                                      lqf + "," + rqf + ")"; 
+        }
+        else 
+        { res = "SystemTypes.removeAt(" + 
+                                      lqf + "," + rqf + ")"; 
+        }
+      } 
       else if (operator.equals("->excludingFirst"))
       { res = "SystemTypes.removeFirst(" + lqf + "," + rw + ")"; }
       else if (operator.equals("->append"))
@@ -5673,6 +5707,9 @@ public boolean conflictsWithIn(String op, Expression el,
 
       return "((" + typ + ") " + lqf + "->at(" + rqf + " - 1))"; 
     } 
+
+    if (operator.equals("->apply"))
+    { return "(" + lqf + ")(" + rqf + ")"; } 
 	
     if (operator.equals("|A") || operator.equals("->any"))   
     { String getany = anyQueryFormCPP(lqf,rqf,env,local); 

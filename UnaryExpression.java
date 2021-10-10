@@ -40,26 +40,68 @@ public class UnaryExpression extends Expression
     return new UnaryExpression(op,expr); 
   } 
 
-  public static UnaryExpression newUnaryExpression(String op, Attribute letvar, Statement stat, Entity cclass) 
+  public static UnaryExpression newUnaryExpression(String op, 
+    Attribute letvar, Statement stat, Entity cclass, 
+    Vector types, Vector entities) 
   { if (stat == null) 
     { return null; }
 
     if ("lambda".equals(op))
     { if (Statement.isSingleReturnStatement(stat))
       { Expression expr = Statement.getReturnExpression(stat); 
-        return new UnaryExpression(op,expr); 
+        
+        UnaryExpression res = new UnaryExpression(op,expr);
+        if (expr != null) 
+        { Vector contexts = new Vector(); 
+          contexts.add(cclass); 
+          Vector env = new Vector();
+          env.add(letvar);  
+          expr.typeCheck(types,entities,contexts,env); 
+          if (expr.type != null) 
+          { res.type = new Type("Function",null); 
+            res.type.setKeyType(letvar.getType()); 
+            res.type.setElementType(expr.type); 
+          } 
+        }  
+        return res; 
       } 
 
       String opid; 
       BehaviouralFeature oper = null; 
+      BasicExpression call = null; 
+      UnaryExpression res = null;
+      BasicExpression selfvar = 
+        BasicExpression.newVariableBasicExpression("self"); 
 
       if (cclass != null) 
-      { oper = cclass.getIdenticalOperation(stat); }
+      { oper = cclass.getIdenticalOperation(stat);
+        selfvar.setType(new Type(cclass)); 
+      }
 
       if (oper != null)  
-      { opid = oper.getName(); } 
+      { opid = oper.getName(); 
+        call = new BasicExpression(opid); 
+        call.umlkind = QUERY; 
+        call.setIsEvent(); 
+        call.addParameter(new BasicExpression(letvar));
+        call.setObjectRef(selfvar);    
+        res = new UnaryExpression(op,call);
+        Type retType = oper.getType(); 
+        if (retType != null) 
+        { res.type = new Type("Function",null); 
+          res.type.setKeyType(letvar.getType()); 
+          res.type.setElementType(retType); 
+        } 
+      } 
       else 
       { opid = Identifier.nextIdentifier("lambdaFunction"); 
+        call = new BasicExpression(opid); 
+        call.umlkind = QUERY; 
+        call.setIsEvent(); 
+        call.addParameter(new BasicExpression(letvar));
+        call.setObjectRef(selfvar);    
+        res = new UnaryExpression(op,call);
+
         BehaviouralFeature bf = new BehaviouralFeature(opid);
         bf.addParameter(letvar);  
         bf.setActivity(stat); 
@@ -68,17 +110,32 @@ public class UnaryExpression extends Expression
         Vector returnExpressions = 
             Statement.getReturnValues(stat);  
         System.out.println(">>> Return values: " + returnExpressions); 
+
+        if (returnExpressions.size() > 0)
+        { Expression expr = 
+            (Expression) returnExpressions.get(0); 
+        
+          if (expr != null) 
+          { Vector contexts = new Vector(); 
+            contexts.add(cclass); 
+            Vector env = new Vector();
+            env.add(letvar);  
+            expr.typeCheck(types,entities,contexts,env); 
+            if (expr.type != null) 
+            { res.type = new Type("Function",null); 
+              res.type.setKeyType(letvar.getType()); 
+              res.type.setElementType(expr.type); 
+              bf.setType(expr.type); 
+            } 
+          }  
+        }
  
         if (cclass != null)
         { bf.setEntity(cclass); 
           cclass.addOperation(bf);
         }  
       } 
-      BasicExpression call = new BasicExpression(opid); 
-      call.umlkind = QUERY; 
-      call.setIsEvent(); 
-      call.addParameter(new BasicExpression(letvar)); 
-      return new UnaryExpression(op,call);
+      return res;
     } 
 
     return null;  
@@ -191,14 +248,24 @@ public class UnaryExpression extends Expression
       return simplify("&",res,isone,null);
     }
 
-    if ("->asSequence".equals(operator))
+    if ("->asSequence".equals(operator) || 
+        "->asOrderedSet".equals(operator))
     { if ("Set".equals(argument.getType().getName()))
       { return new BinaryExpression("<=", new UnaryExpression("->size",argument),
                                     new BasicExpression(1)); 
       } 
       else 
-      { return new BasicExpression(true); } 
-    } 
+      { return res; } 
+    } // Introducing an arbitrary order on the collection. 
+
+    if ("->asBag".equals(operator))
+    { return res; 
+      // if ("Set".equals(argument.getType().getName()))
+      // { return new BasicExpression(true); } 
+      // return new BinaryExpression("<=", 
+      //              new UnaryExpression("->size",argument),
+      //              new BasicExpression(1));  
+    } // A canonical order, same as ->sort. 
 
     if ("->flatten".equals(operator))
     { Type et = argument.elementType; 
@@ -292,7 +359,10 @@ public void findClones(java.util.Map clones, String rule, String op)
         operator.equals("->any") || operator.equals("->max") || operator.equals("->reverse") || 
         operator.equals("->copy") ||
         operator.equals("->iterator") || 
-        operator.equals("->asSequence") || operator.equals("->asSet") || 
+        operator.equals("->asSequence") || 
+        operator.equals("->asSet") || 
+        operator.equals("->asBag") || 
+        operator.equals("->asOrderedSet") ||
         operator.equals("->min") || operator.equals("->sort"))
     { if (elementType != null && elementType.isEntity())
       { Entity ent = elementType.getEntity(); 
@@ -310,8 +380,11 @@ public void findClones(java.util.Map clones, String rule, String op)
           res.setUmlKind(Expression.CLASSID); 
           // if (isMultiple())
           if (operator.equals("->front") || operator.equals("->tail") || operator.equals("->sort") ||
-              operator.equals("->reverse") || operator.equals("->asSet") || 
+              operator.equals("->reverse") || 
+              operator.equals("->asSet") || 
+              operator.equals("->asBag") || 
               operator.equals("->flatten") ||
+              operator.equals("->asOrderedSet") || 
               // operator.equals("->copy") ||
               operator.equals("->asSequence"))
           { BinaryExpression ind = 
@@ -1348,12 +1421,17 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if ("->flatten".equals(operator) && Type.isSequenceType(argument.type))
     { return true; } 
 
-    if ("->front".equals(operator) || "->tail".equals(operator) ||
+    if ("->front".equals(operator) || 
+        "->tail".equals(operator) || 
+        "->asBag".equals(operator) ||
         "->asSequence".equals(operator) ||
-        "->reverse".equals(operator) || "->sort".equals(operator))
+        "->asOrderedSet".equals(operator) || 
+        "->sort".equals(operator))
     { return true; } 
 	
-    if ("lambda".equals(operator) || operator.equals("->copy") )
+    if ( 
+        "->reverse".equals(operator) || 
+        operator.equals("->copy") )
     { return argument.isOrdered(); }
 
     return false; 
@@ -1374,7 +1452,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         "->asSequence".equals(operator)) // || "->reverse".equals(operator))
     { return argument.isSorted(); } 
 
-    if ("lambda".equals(operator))
+    if ("->asOrderedSet".equals(operator))
     { return argument.isSorted(); }
 
     return false; 
@@ -1389,13 +1467,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if ("->flatten".equals(operator) && Type.isSequenceType(argument.type))
     { return true; } 
 
-    if ("->front".equals(operator) || "->tail".equals(operator) ||
+    if ("->front".equals(operator) || 
+        "->tail".equals(operator) ||
+        "->asBag".equals(operator) || 
         "->asSequence".equals(operator) ||
-        "->reverse".equals(operator) || "->sort".equals(operator))
+        "->asOrderedSet".equals(operator) || "->sort".equals(operator))
     { return true; } 
 
-	if ("lambda".equals(operator) || operator.equals("->copy"))
-	{ return argument.isOrderedB(); }
+    if ("->reverse".equals(operator) || 
+        operator.equals("->copy"))
+    { return argument.isOrderedB(); }
 
     return false; 
   } 
@@ -1800,15 +1881,17 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       }
     } 
 
-    if (operator.equals("->asSequence") || 
-        operator.equals("->sort") || 
+    if (operator.equals("->asSequence") ||
+        operator.equals("->asOrderedSet") ||  
+        operator.equals("->sort") ||
+        "->asBag".equals(operator) ||  
         operator.equals("->values"))
     { type = new Type("Sequence",null); 
       elementType = argument.elementType; 
       type.setElementType(elementType); 
       multiplicity = ModelElement.MANY; 
       return res; 
-    } 
+    }         
  
     if (operator.equals("->toReal") || operator.equals("->sqrt") || 
         operator.equals("->sqr") || operator.equals("->log") ||
@@ -1913,7 +1996,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         operator.equals("->concatenateAll") || 
         operator.equals("->closure") || operator.equals("->asSet") || operator.equals("->values") ||
         operator.equals("->flatten") || operator.equals("->characters") || operator.equals("->keys") ||
-        operator.equals("->asSequence") || operator.equals("->sort"))  
+        operator.equals("->asSequence") ||
+        operator.equals("->asOrderedSet") ||
+        operator.equals("->asBag") || 
+        operator.equals("->sort"))  
     { return true; } 
 
     if (argument.isMultiple() &&
@@ -2000,6 +2086,12 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("->asSequence")) 
     { return qf; }  // but maps cannot be converted 
+
+    if (operator.equals("->asSet") && type != null && type.isSet()) 
+    { return qf; }  // but maps cannot be converted 
+
+    if (operator.equals("->asBag") && type != null && type.isSet()) 
+    { return qf; }  
 
     if ("->copy".equals(operator))
     { if (type == null) 
@@ -2148,7 +2240,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       if (sumtype == null) 
       { sumtype = type; } 
       if (sumtype == null) 
-      { JOptionPane.showMessageDialog(null, "No type for: " + this, "Type error", JOptionPane.ERROR_MESSAGE);
+      { JOptionPane.showMessageDialog(null, "No element type for: " + argument, "Type error", JOptionPane.ERROR_MESSAGE);
         return "Set.sumString(" + pre + ")"; 
       } 
       String tname = sumtype.getName();   // only int, long, double, String are valid
@@ -2165,7 +2257,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       if (prdtype == null) 
       { prdtype = type; } 
       if (prdtype == null) 
-      { JOptionPane.showMessageDialog(null, "No type for: " + this, "Type error", JOptionPane.ERROR_MESSAGE);
+      { JOptionPane.showMessageDialog(null, "No element type for: " + argument, "Type error", JOptionPane.ERROR_MESSAGE);
         return "Set.prddouble(" + pre + ")"; 
       } 
       String tname = prdtype.getName();   // only int, double, long are valid
@@ -2181,12 +2273,13 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     else if (data.equals("notEmpty"))
     { return "(" + pre + ".size() != 0)"; } 
     else if (data.equals("reverse") || data.equals("sort") ||
-             data.equals("asSet")) 
+             data.equals("asSet") || data.equals("asBag") || 
+             data.equals("asOrderedSet")) 
     { return "Set." + data + "(" + pre + ")"; } 
-	else if (data.equals("keys"))
-	{ return pre + ".keySet()"; }
-	else if (data.equals("values"))
-	{ return pre + ".values()"; }
+    else if (data.equals("keys"))
+    { return pre + ".keySet()"; }
+    else if (data.equals("values"))
+    { return pre + ".values()"; }
     else if (data.equals("closure"))
     { String rel = ((BasicExpression) argument).data; 
       Expression arg = ((BasicExpression) argument).objectRef; 
@@ -2264,9 +2357,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     String cont = "Controller.inst()"; 
 
     if (operator.equals("lambda") && accumulator != null)
-	{ String acc = accumulator.getName(); 
-	  return "(" + acc + ") -> { return " + qf + "; }"; // for Java8+ 
-	}
+    { String acc = accumulator.getName(); 
+      return "(" + acc + ") -> { return " + qf + "; }"; // for Java8+ 
+    }
 
     if (operator.equals("-"))
     { return "-" + qf; } 
@@ -2470,7 +2563,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         { return bqf; }  
       } 
     } 
-    else if (data.equals("asSet") || data.equals("asSequence"))
+    else if (data.equals("asSet") || 
+             data.equals("asSequence") ||
+             data.equals("asBag") || 
+             data.equals("asOrderedSet"))
     { return "Set." + data + "(" + pre + ")"; } 
     else if (data.equals("keys"))
     { return pre + ".keySet()"; }
@@ -2671,7 +2767,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->unionAll"))
     { String jtype = type.getJava7(elementType); 
       return "((" + jtype + ") Ocl.unionAll(" + qf + "))"; 
-	} 
+    } 
     
     if (operator.equals("->intersectAll"))
     { String jtype = type.getJava7(elementType); 
@@ -2758,7 +2854,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         { return bqf; }  
       } 
     } 
-    else if (data.equals("asSet") || data.equals("asSequence"))
+    else if (data.equals("asSet") || data.equals("asBag") ||
+             data.equals("asOrderedSet") ||
+             data.equals("asSequence"))
     { return "Ocl." + data + "(" + pre + ")"; } 
     else if (data.equals("keys"))
     { return pre + ".keySet()"; }
@@ -2875,6 +2973,14 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->asSequence")) 
     { return qf; } 
 
+    if (operator.equals("->asSet") && type != null && 
+        type.isSet())
+    { return qf; } 
+
+    if (operator.equals("->asBag") && type != null && 
+        type.isSet())
+    { return qf; } 
+
     if (operator.equals("->isInteger")) 
     { return "SystemTypes.isInteger(" + qf + ")"; } 
 
@@ -2885,13 +2991,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "SystemTypes.isReal(" + qf + ")"; } 
 
     if (operator.equals("->toInteger")) 
-    { return "int.Parse(" + qf + ")"; } 
+    { return "SystemTypes.toInteger(" + qf + ")"; } 
 
     if (operator.equals("->toLong")) 
-    { return "long.Parse(" + qf + ")"; } 
+    { return "SystemTypes.toLong(" + qf + ")"; } 
 
     if (operator.equals("->toReal")) 
     { return "double.Parse(" + qf + ")"; } 
+
+    if (operator.equals("->toBoolean")) 
+    { return "SystemTypes.toBoolean(" + qf + ")"; } 
 
     if (operator.equals("->char2byte")) 
     { return "Char.ConvertToUtf32(" + qf + ", 0)"; } 
@@ -2903,7 +3012,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "(" + qf + " == null)"; } 
 
     if (operator.equals("->oclIsInvalid")) 
-    { return "double.isNaN(" + qf + ")"; } 
+    { return "double.IsNaN(" + qf + ")"; } 
 
     if (operator.equals("->oclIsNew")) 
     { return "(" + qf + " != null)"; } 
@@ -3109,7 +3218,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { String acc = accumulator.getName(); 
       String acct = accumulator.getType().getCPP(accumulator.getElementType()); 
 	  
-      return "[](" + acct + " " + acc + ") -> " + cargtype + " { return " + qf + "; }"; // for C++11 onwards
+      return "[=](" + acct + " " + acc + ") -> " + 
+             cargtype + " { return " + qf + "; }"; 
+      // for C++11 onwards
     }
      
     if (operator.equals("-"))
@@ -3288,7 +3399,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     else if (data.equals("notEmpty"))
     { return "(" + pre + "->size() != 0)"; } 
     else if (data.equals("reverse") || data.equals("sort") ||
-             data.equals("asSet") || data.equals("asSequence")) 
+             data.equals("asSet") || data.equals("asBag") || 
+             data.equals("asOrderedSet") ||
+             data.equals("asSequence")) 
     { return "UmlRsdsLib<" + celtype + ">::" + data + "(" + pre + ")"; } 
     else if (data.equals("keys"))
     { return "UmlRsdsLib<string>::keys(" + pre + ")"; }

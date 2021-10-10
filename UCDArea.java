@@ -8402,7 +8402,7 @@ public class UCDArea extends JPanel
     out.println("using System.Text.RegularExpressions;"); 
     out.println("using System.Linq;");
     out.println("using System.Diagnostics;"); 
-
+    out.println("using System.Reflection;");
     out.println("using System.Threading.Tasks;");
     out.println("using System.Windows.Forms;\n\n");
 
@@ -10825,7 +10825,9 @@ public void produceCUI(PrintWriter out)
 
     for (int i = 0; i < entities.size(); i++)
     { Entity e = (Entity) entities.get(i);
-      res = res + e.getCSharpAddObjOp();
+      if (e.isExternal() || e.isComponent()) { } 
+      else 
+      { res = res + e.getCSharpAddObjOp(); } 
     }
     res = res + "  }\n\n"; 
 
@@ -10834,7 +10836,9 @@ public void produceCUI(PrintWriter out)
 
     for (int i = 0; i < entities.size(); i++)
     { Entity e = (Entity) entities.get(i);
-      res = res + e.getCSharpAddRoleOp();
+      if (e.isExternal() || e.isComponent()) { } 
+      else 
+      { res = res + e.getCSharpAddRoleOp(); } 
     }
     res = res + " }\n\n";
 
@@ -10843,7 +10847,9 @@ public void produceCUI(PrintWriter out)
 
     for (int i = 0; i < entities.size(); i++)
     { Entity e = (Entity) entities.get(i);
-      res = res + e.getCSharpSetFeatureOp();
+      if (e.isExternal() || e.isComponent()) { } 
+      else 
+      { res = res + e.getCSharpSetFeatureOp(); } 
     }
 
     return res + " }\n\n";

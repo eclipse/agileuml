@@ -92,10 +92,10 @@ implements Cloneable
  
     if (st instanceof SequenceStatement) 
     { SequenceStatement sq = (SequenceStatement) st; 
-      if (sq.size() >= 1) 
-      { Statement stat = sq.getStatement(sq.size()-1); 
-        if (stat instanceof ReturnStatement) 
-        { return getReturnValues(stat); }
+      Vector stats = sq.getStatements(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { Statement stat = (Statement) stats.get(i); 
+        res.addAll(getReturnValues(stat)); 
       } 
       return res;
     } 
@@ -108,6 +108,31 @@ implements Cloneable
       res.add(retExpr); 
       return res; 
     } 
+
+    if (st instanceof ConditionalStatement) 
+    { ConditionalStatement cs = (ConditionalStatement) st; 
+      res.addAll(getReturnValues(cs.ifPart())); 
+      res.addAll(getReturnValues(cs.elsePart())); 
+      return res; 
+    } 
+
+    if (st instanceof WhileStatement) 
+    { WhileStatement ws = (WhileStatement) st; 
+      res.addAll(getReturnValues(ws.getLoopBody())); 
+      return res; 
+    } 
+
+    if (st instanceof TryStatement) 
+    { TryStatement ts = (TryStatement) st; 
+      res.addAll(getReturnValues(ts.getBody())); 
+      Vector stats = ts.getClauses(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { Statement stat = (Statement) stats.get(i); 
+        res.addAll(getReturnValues(stat)); 
+      } 
+      res.addAll(getReturnValues(ts.getEndStatement())); 
+    } 
+
     return res;
   } // Other cases, for all other forms of statement. 
 
@@ -2027,6 +2052,9 @@ class WhileStatement extends Statement
   public Statement getBody()
   { return body; } 
 
+  public Statement getLoopBody()
+  { return body; } 
+
   public Expression getTest()
   { return loopTest; } 
 
@@ -3370,6 +3398,8 @@ class CreationStatement extends Statement
     { return "  Object " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclType"))
     { return "  Class " + assignsTo + ";"; }
+    else if (createsInstanceOf.equals("OclRandom"))
+    { return "  OclRandom " + assignsTo + ";"; }
 
     return "  " + mode + createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
            "  Controller.inst().add" + createsInstanceOf + "(" + assignsTo + ");"; 
@@ -3417,6 +3447,8 @@ class CreationStatement extends Statement
     { return "  Object " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclType"))
     { return "  Class " + assignsTo + ";"; }
+    else if (createsInstanceOf.equals("OclRandom"))
+    { return "  OclRandom " + assignsTo + ";"; }
 
     return "  " + createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
            "  Controller.inst().add" + createsInstanceOf + "(" + assignsTo + ");"; 
@@ -3466,6 +3498,8 @@ class CreationStatement extends Statement
     { return "  Object " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclType"))
     { return "  Class " + assignsTo + ";"; }
+    else if (createsInstanceOf.equals("OclRandom"))
+    { return "  OclRandom " + assignsTo + ";"; }
 
     return createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
            "  Controller.inst().add" + createsInstanceOf + "(" + assignsTo + ");"; 
@@ -3473,9 +3507,15 @@ class CreationStatement extends Statement
 
 
   public String toStringCSharp()
-  { String cstype = createsInstanceOf; 
+  { String cstype = createsInstanceOf;
+
+ 
     if (instanceType != null)
     { String jType = instanceType.getCSharp(); 
+
+      System.out.println(">>> Instance type: " + instanceType); 
+      System.out.println(">>> C# type: " + jType); 
+
       if (initialExpression != null)
       { return "  " + jType + " " + assignsTo + " = " + initialExpression.toCSharp() + ";\n"; }
       else if (Type.isBasicType(instanceType)) 
@@ -3485,7 +3525,9 @@ class CreationStatement extends Statement
       else if (Type.isMapType(instanceType))
       { return "  Hashtable " + assignsTo + ";"; }
       else if (Type.isFunctionType(instanceType))
-      { return "  Func " + assignsTo + ";"; }    
+      { return "  Func " + assignsTo + ";"; }   
+      else if (Type.isExceptionType(instanceType))
+      { return "  " + jType + " " + assignsTo + ";"; }  
       else if (instanceType.isEntity())
       { Entity ent = instanceType.getEntity(); 
         if (ent.hasStereotype("external"))
@@ -3518,6 +3560,10 @@ class CreationStatement extends Statement
     { return "  object " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclType"))
     { return "  Type " + assignsTo + ";"; }
+    else if (createsInstanceOf.equals("OclRandom"))
+    { return "  OclRandom " + assignsTo + ";"; } 
+    else if (createsInstanceOf.equals("OclProcess"))
+    { return "  OclProcess " + assignsTo + ";"; }
 
     return createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
                  "  Controller.inst().add" + createsInstanceOf + "(" + assignsTo + ");";  
@@ -5546,6 +5592,15 @@ class TryStatement extends Statement
 
   public String getOperator() 
   { return "try"; } 
+
+  public Statement getBody() 
+  { return body; } 
+
+  public Vector getClauses() 
+  { return catchClauses; }
+
+  public Statement getEndStatement()
+  { return endStatement; }  
 
   public Object clone() 
   { Statement s1 = null; 
@@ -7681,6 +7736,12 @@ class ConditionalStatement extends Statement
 
   public Expression getTest()
   { return test; } 
+
+  public Statement ifPart()
+  { return ifPart; } 
+
+  public Statement elsePart()
+  { return elsePart; } 
 
   public String cg(CGSpec cgs)
   { String etext = this + "";

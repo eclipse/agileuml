@@ -5932,24 +5932,42 @@ public class Entity extends ModelElement implements Comparable
       pars = pars + ">"; 
     } 
 
+    boolean hasColon = false; 
+
     out.print(intorclass + " " + getName() + pars); 
     // out.print("  : SystemTypes");
     if (superclass != null) 
-    { out.println(" : " + superclass.getName()); } 
+    { out.println(" : " + superclass.getName());
+      hasColon = true;
+    } 
     
+    if (interfaces.size() > 0) 
+    { if (hasColon) { }
+      else 
+      { out.print(" : "); 
+        hasColon = true; 
+      } 
+    } 
 
     for (int j = 0; j < interfaces.size(); j++)
     { Entity intf = (Entity) interfaces.get(j); 
       String iname = intf.getName(); 
-      out.print(", " + iname); 
+      out.print(iname); 
+      if (j < interfaces.size()-1)
+      { out.print(", "); } 
     }
 
-    /* if (isActive())
-    { out.print(", Runnable"); 
+    if (isActive())
+    { if (hasColon) 
+      { out.print(", Runnable"); } 
+      else 
+      { out.print(" : Runnable"); } 
+ 
       BehaviouralFeature bf = getOperation("run"); 
       if (bf != null && bf.getSm() != null)
       { addRunStates(bf.getSm()); } 
-    } */ 
+    } 
+
     out.println(); 
     out.println("{");
 
@@ -7361,7 +7379,7 @@ public class Entity extends ModelElement implements Comparable
     }
 
     if (isActive())
-    { out.println("  private synchronized void run_step() { "); 
+    { out.println("  private void run_step() { "); 
       BehaviouralFeature bf = getOperation("run"); 
       if (bf != null && bf.getSm() != null)
       { Statement ss = bf.getSm().methodStepCode(); 

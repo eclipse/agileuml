@@ -331,6 +331,10 @@ public class ASTBasicTerm extends ASTTerm
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; } 
+    if ("Stream".equals(value))
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; } 
      
     if ("BitSet".equals(value))
     { modelElement = new Type("Sequence", null);
@@ -704,6 +708,9 @@ public class ASTBasicTerm extends ASTTerm
 
   public boolean updatesObject(ASTTerm t)
   { return false; } 
+
+  public boolean callSideEffect()
+  { return false; }
 
   public boolean hasSideEffect()
   { return false; } 
