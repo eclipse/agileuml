@@ -1768,6 +1768,11 @@ public class UCDArea extends JPanel
       Constraint cc = (Constraint) cons.clone(); 
       System.out.println("OCL Form: " + cc.toOcl()); 
     } 
+
+    for (int i = 0; i < entities.size(); i++)
+    { Entity ent = (Entity) entities.get(i); 
+      System.out.println(ent.toAST()); 
+    } 
   }
 
   public void listEntities()
@@ -8403,7 +8408,11 @@ public class UCDArea extends JPanel
     out.println("using System.Linq;");
     out.println("using System.Diagnostics;"); 
     out.println("using System.Reflection;");
+    out.println("using System.Threading;");
     out.println("using System.Threading.Tasks;");
+    out.println("using System.Xml.Serialization;"); 
+    out.println("using System.Text.Json;"); 
+    out.println("using System.Text.Json.Serialization;"); 
     out.println("using System.Windows.Forms;\n\n");
 
     out.println(""); 

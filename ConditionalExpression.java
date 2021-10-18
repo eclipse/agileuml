@@ -569,6 +569,13 @@ public Vector singleMutants()
     return res; 
   } 
 
+  public String toAST()
+  { String res = "(ConditionalExpression if " + test.toAST() + " then " + ifExp.toAST() + " else " + elseExp.toAST() + " endif )"; 
+    if (needsBracket) 
+    { res = "(BracketedExpression ( " + res + " ) )"; } 
+    return res; 
+  } 
+
   public BExpression binvariantForm(java.util.Map env, boolean local)
   { BExpression tsmv = test.binvariantForm(env,local); 
     BExpression case1 = new BBinaryExpression("=>", tsmv, ifExp.binvariantForm(env,local)); 

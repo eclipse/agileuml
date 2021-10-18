@@ -144,6 +144,7 @@ public class BehaviouralFeature extends ModelElement
     createCall.setIsEvent(); 
     createCall.setType(etype); 
     createCall.setStatic(true); 
+    // createCall.entity = e; 
 
     AssignStatement assgn = new AssignStatement(res,createCall); 
     code.addStatement(assgn); 
@@ -657,8 +658,6 @@ public class BehaviouralFeature extends ModelElement
       Attribute att = new Attribute("result",resultType,ModelElement.INTERNAL); 
       att.setElementType(elementType); 
         // newparams.add(att);
-     
-      
 
       System.out.println(">>> Enhanced activity = " + stat);   Vector contexts = new Vector(); 
       // newparams.addAll(ownedAttribute); 
@@ -2760,6 +2759,56 @@ public class BehaviouralFeature extends ModelElement
     return res;  
   } 
 
+  public String toAST()
+  { if (derived) { return ""; } 
+    String result = "(Operation "; 
+    String res = ""; 
+
+    if (isQuery())
+    { res = " query "; } 
+    else 
+    { res = " operation "; } 
+
+    if (isStatic())
+    { res = " static" + res; } 
+    
+    String tpars = ""; 
+    if (typeParameters != null && typeParameters.size() > 0)
+    { Type tp = (Type) typeParameters.get(0); 
+      tpars = " < " + tp.getName() + " > "; 
+    }
+	
+    res = res + getName() + tpars + " ( ";
+
+    for (int i = 0; i < parameters.size(); i++)
+    { Attribute par = (Attribute) parameters.get(i);
+      String pnme = par.getName();
+      res = res + pnme + " : " + par.getType().toAST() + " ";
+      if (i < parameters.size() - 1)
+      { res = res + " , "; } 
+    }
+    res = res + " ) : "; 
+
+    if (resultType == null)
+    { res = res + "void "; }
+    else
+    { res = res + resultType.toAST() + " "; } 
+
+    if (pre != null) 
+    { res = res + "pre: " + pre.toAST() + " "; } 
+    else 
+    { res = res + "pre: true "; } 
+     
+    if (activity != null) 
+    { res = res + "post: " + post.toAST() + " ";
+      res = res + "activity: " + activity + " "; 
+    } 
+    else 
+    { res = res + "post: " + post.toAST() + " "; } 
+    return result + res + ")";  
+  } 
+
+
   /* Save text model */ 
   public String saveModelData(PrintWriter out, Entity ent, Vector entities, Vector types)
   { if (stereotypes.contains("auxiliary"))
@@ -3882,10 +3931,14 @@ public class BehaviouralFeature extends ModelElement
   { String name = getName();
     Vector context = new Vector(); 
     String ename = ""; 
+    String epars = ""; 
+
     if (ent != null) 
     { context.add(ent);  
       ename = ent.getName();
+      epars = ent.typeParameterTextCSharp(); 
     }  
+
     String ex = ename.toLowerCase() + "x"; 
     java.util.Map env0 = new java.util.HashMap(); 
     String pars = getCSharpParameterDec(); 
@@ -3935,7 +3988,7 @@ public class BehaviouralFeature extends ModelElement
         cde.typeCheck(types,entities,context,localatts); 
         if (ent == null || isClassScope() || isStatic()) { } 
         else 
-        { res = res + ename + " " + ex + " = this;\n  "; }   
+        { res = res + ename + epars + " " + ex + " = this;\n  "; }   
         return res + cde.updateFormCSharp(env0,true) + "\n  }";
       }   
     } 
@@ -3969,8 +4022,12 @@ public class BehaviouralFeature extends ModelElement
 
       res = "  public " + header + ts + " " + name + "(" + pars + ")\n  {  "; 
 
-      if (tp != null && !("void".equals(ts)))
+      if (Statement.hasResultDeclaration(activity))
+      {  } 
+      else if (tp != null && !("void".equals(ts)))
       { res = res + ts + " result;\n"; }
+
+
       localatts.addAll(parameters);   
       Vector preterms = activity.allPreTerms(); 
       if (preterms.size() > 0) 
@@ -4018,13 +4075,13 @@ public class BehaviouralFeature extends ModelElement
         newpost.typeCheck(types,entities,context,localatts);
         if (ent == null || isClassScope() || isStatic()) { } 
         else 
-        { res = res + ename + " " + ex + " = this;\n  "; }   
+        { res = res + ename + epars + " " + ex + " = this;\n  "; }   
         return res + newdecs + newpost.updateFormCSharp(env0,false) + "\n  }\n";   
       }     // updateForm(, true)? 
       activity.typeCheck(types,entities,context,localatts);
       if (ent == null || isClassScope() || isStatic()) { } 
       else 
-      { res = res + ename + " " + ex + " = this;\n  "; }   
+      { res = res + ename + epars + " " + ex + " = this;\n  "; }   
       return res + activity.updateFormCSharp(env0,false) + "\n  }\n";   
     } 
       

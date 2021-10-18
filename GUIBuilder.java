@@ -489,7 +489,8 @@ public class GUIBuilder
           mutationTestsOp = mutationTestsOp + 
           "      int[] " + es + "_" + bfname + "_counts = new int[100]; \n" +   
           "      int[] " + es + "_" + bfname + "_totals = new int[100]; \n" +   
-          "      for (int _i = 0; _i < Controller.inst()." + es + ".size(); _i++)\n" + 
+          "      int " + es + "_" + bfname + "_instances = Controller.inst()." + es + ".size();\n" +  
+          "      for (int _i = 0; _i < " + es + "_" + bfname + "_instances; _i++)\n" + 
           "      { " + ename + " _ex = (" + ename + ") Controller.inst()." + es + ".get(_i);\n" +  
           "        MutationTest." + bfname + "_mutation_tests(_ex," + es + "_" + bfname + "_counts, " + es + "_" + bfname + "_totals);\n" + 
           "      }\n" + 
@@ -724,8 +725,9 @@ public class GUIBuilder
               { eeinvariants.addAll(ee.getInvariants()); }
 
               testscript = testscript + 
-                  indent + "\n" + 
-                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < Controller.inst()." + ename + ".size(); " + indexvar + "++)\n" + 
+                  indent + "\n" +
+                  indent + "int _" + ename + "_instances = Controller.inst()." + ename + ".size();\n" +   
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < _" + ename + "_instances; " + indexvar + "++)\n" + 
                   indent + "{ " + tname + " " + parnme + " = (" + tname + ") Controller.inst()." + ename + ".get(" + indexvar + ");\n";
               for (int p = 0; p < eeinvariants.size(); p++)
               { java.util.Map env = new java.util.HashMap(); 
@@ -822,7 +824,8 @@ public class GUIBuilder
 			    
                 testscript = testscript + 
                   indent + "\n" + 
-                  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= Controller.inst()." + etname + ".size(); " + indexvar + "++)\n" + 
+                  indent + "int _" + eename + "_instances = Controller.inst()." + etname + ".size();\n" +  
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= _" + eename + "_instances; " + indexvar + "++)\n" + 
                   indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n";  
                 testscript = testscript + 
                   indent + "  if (" + indexvar + " < Controller.inst()." + etname + ".size())\n" + 
@@ -927,7 +930,8 @@ public class GUIBuilder
           mutationTestsOp = mutationTestsOp + 
           "      int[] " + es + "_" + bfname + "_counts = new int[100]; \n" +   
           "      int[] " + es + "_" + bfname + "_totals = new int[100]; \n" +   
-          "      for (int _i = 0; _i < " + einstances + ".size(); _i++)\n" + 
+          "      int _" + es + "_instances = " + einstances + ".size();\n" + 
+          "      for (int _i = 0; _i < _" + es + "_instances ; _i++)\n" + 
           "      { " + ename + " _ex = (" + ename + ") " + einstances + ".get(_i);\n" +  
           "        MutationTest." + bfname + "_mutation_tests(_ex," + es + "_" + bfname + "_counts, " + es + "_" + bfname + "_totals);\n" + 
           "      }\n" + 
@@ -1350,7 +1354,8 @@ public class GUIBuilder
           mutationTestsOp = mutationTestsOp + 
           "      int[] " + es + "_" + bfname + "_counts = new int[100]; \n" +   
           "      int[] " + es + "_" + bfname + "_totals = new int[100]; \n" +   
-          "      for (int _i = 0; _i < Controller.inst()." + es + ".size(); _i++)\n" + 
+          "      int _" + es + "_instances = Controller.inst()." + es + ".size();\n" + 
+          "      for (int _i = 0; _i < _" + es + "_instances; _i++)\n" + 
           "      { " + ename + " _ex = (" + ename + ") Controller.inst()." + es + ".get(_i);\n" +  
           "        MutationTest." + bfname + "_mutation_tests(_ex," + es + "_" + bfname + "_counts, " + es + "_" + bfname + "_totals);\n" + 
           "      }\n" + 
@@ -1487,8 +1492,8 @@ public class GUIBuilder
           { Attribute par = (Attribute) pars.get(j); 
             String parnme = par.getName();
             Type typ = par.getType(); 
-			String tname = typ + ""; 
-			Vector testassignments = par.testValues("parameters", lowerBounds, upperBounds);
+            String tname = typ + ""; 
+            Vector testassignments = par.testValues("parameters", lowerBounds, upperBounds);
 			
             if ("int".equals(tname))
             { aper = aper + 
@@ -1622,7 +1627,8 @@ public class GUIBuilder
 
               testscript = testscript + 
                   indent + "\n" + 
-                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < Controller.inst()." + ename + ".size(); " + indexvar + "++)\n" + 
+                  indent + "int _" + ename + "_instances = Controller.inst()." + ename + ".size();\n" +  
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < _" + ename + "_instances; " + indexvar + "++)\n" + 
                   indent + "{ " + tname + " " + parnme + " = (" + tname + ") Controller.inst()." + ename + ".get(" + indexvar + ");\n";
               for (int p = 0; p < eeinvariants.size(); p++)
               { java.util.Map env = new java.util.HashMap(); 
@@ -1740,7 +1746,7 @@ public class GUIBuilder
 		
 		call = indent + "  try { " + call + ";\n" + 
 		       indent + "  }\n" + 
-			   indent + "  catch(Exception _e) { System.out.println(\" !! Exception occurred: test failed !! \"); }\n"; 
+			   indent + "  catch (Throwable _e) { System.out.println(\" !! Exception occurred: test failed !! \"); }\n"; 
 			   
            if (teststring.equals(""))
            { teststring = "\"\""; } 
@@ -1915,7 +1921,7 @@ public class GUIBuilder
               "    File file" + parnme + " = new File((String) _values.get(" + j + "));\n" +
               "    BufferedReader br" + parnme + " = null;\n" + 
               "    try { br" + parnme + " = new BufferedReader(new FileReader(file" + parnme + ")); }\n" + 
-              "    catch(Exception _e) { System.err.println(\"no file\"); return; }\n" + 
+              "    catch (Exception _e) { System.err.println(\"no file\"); return; }\n" + 
               "    while (true)\n" + 
               "    { String _s = null; \n" + 
               "      try { _s = br" + parnme + ".readLine(); }\n" + 

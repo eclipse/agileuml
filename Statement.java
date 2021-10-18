@@ -3500,6 +3500,8 @@ class CreationStatement extends Statement
     { return "  Class " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclRandom"))
     { return "  OclRandom " + assignsTo + ";"; }
+    else if (createsInstanceOf.equals("OclIterator"))
+    { return "  OclIterator " + assignsTo + ";"; }
 
     return createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
            "  Controller.inst().add" + createsInstanceOf + "(" + assignsTo + ");"; 
@@ -3520,12 +3522,19 @@ class CreationStatement extends Statement
       { return "  " + jType + " " + assignsTo + " = " + initialExpression.toCSharp() + ";\n"; }
       else if (Type.isBasicType(instanceType)) 
       { return "  " + jType + " " + assignsTo + ";"; } 
-      else if (Type.isCollectionType(instanceType))
-      { return "  ArrayList " + assignsTo + ";"; } 
       else if (Type.isMapType(instanceType))
       { return "  Hashtable " + assignsTo + ";"; }
+      else if (Type.isCollectionType(instanceType))
+      { return "  ArrayList " + assignsTo + ";"; } 
       else if (Type.isFunctionType(instanceType))
-      { return "  Func " + assignsTo + ";"; }   
+      { String kt = "object"; 
+        if (instanceType.getKeyType() != null) 
+        { kt = instanceType.getKeyType().getCSharp(); } 
+        String rt = "object"; 
+        if (instanceType.getElementType() != null) 
+        { rt = instanceType.getElementType().getCSharp(); } 
+        return "  Func<" + kt + "," + rt + "> " + assignsTo + ";"; 
+      }   
       else if (Type.isExceptionType(instanceType))
       { return "  " + jType + " " + assignsTo + ";"; }  
       else if (instanceType.isEntity())
@@ -3543,7 +3552,7 @@ class CreationStatement extends Statement
     else if (createsInstanceOf.startsWith("Map"))
     { return "  Hashtable "  + assignsTo + ";"; }
     else if (createsInstanceOf.startsWith("Function"))
-    { return "  Func " + assignsTo + ";"; }
+    { return "  Func<object,object> " + assignsTo + ";"; }
     
     if (createsInstanceOf.equals("boolean")) 
     { cstype = "bool"; 
@@ -3564,6 +3573,12 @@ class CreationStatement extends Statement
     { return "  OclRandom " + assignsTo + ";"; } 
     else if (createsInstanceOf.equals("OclProcess"))
     { return "  OclProcess " + assignsTo + ";"; }
+    else if (createsInstanceOf.equals("OclDate"))
+    { return "  DateTime " + assignsTo + ";"; }
+    else if (createsInstanceOf.equals("OclIterator"))
+    { return "  OclIterator " + assignsTo + ";"; }
+    else if (createsInstanceOf.equals("OclFile"))
+    { return "  OclFile " + assignsTo + ";"; }
 
     return createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
                  "  Controller.inst().add" + createsInstanceOf + "(" + assignsTo + ");";  

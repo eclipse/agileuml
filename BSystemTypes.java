@@ -979,6 +979,8 @@ public class BSystemTypes extends BComponent
                                            Vector pars)
   { String signature = Attribute.parList(pars); 
 
+   
+
     if (Expression.isSimpleEntity(left)) 
     { BasicExpression lbe = (BasicExpression) left;
       String lbedata = lbe.data;  
@@ -1019,14 +1021,17 @@ public class BSystemTypes extends BComponent
       String res = "  public static ArrayList collect_" + oldindex + "(ArrayList _l"; 
       for (int i = 0; i < pars.size(); i++) 
       { Attribute par = (Attribute) pars.get(i); 
+        System.out.println(">> Collect parameter " + par + " " + par.getType()); 
+
         res = res + ", " + par.getType().getCSharp() + " " + par.getName(); 
       } 
       res = res + ")\n"; 
       res = res + "  { // Implements: " + left + "->collect( " +  var + " | " + exp + " )\n" +
                   "    ArrayList _results_" + oldindex + " = new ArrayList();\n" + 
-                  "    for (int _i = 0; _i < _l.Count; _i++)\n" + 
-                  "    { " + tname + " " + var + " = (" + tname + ") _l[_i];\n"; 
+                  "    for (int _icollect = 0; _icollect < _l.Count; _icollect++)\n" + 
+                  "    { " + tname + " " + var + " = (" + tname + ") _l[_icollect];\n"; 
       java.util.Map newenv = (java.util.Map) ((java.util.HashMap) env).clone(); 
+
       if (collectvar == null && e != null && e.isEntity())
       { newenv.put(ename,var); } 
  
@@ -1745,14 +1750,23 @@ public class BSystemTypes extends BComponent
         // { newenv.put(par.getType().getName(),"self"); } 
       } 
       res = res + ")\n"; 
-      res = res + "  { // implements: " + left + "->reject( " +  var + " | " + pred + " )\n" +
+      res = res + "  { // implements: " + left + "->reject( " +  var + " | " + pred + " )\n\n" +
                   "    ArrayList _results_" + oldindex + 
                                     " = new ArrayList();\n" + 
-                  "    for (int _i = 0; _i < _l.Count; _i++)\n" + 
-                  "    { " + tname + " " + var + " = (" + tname + ") _l[_i];\n"; 
-      String test = pred.queryFormCSharp(newenv,false); 
+                  "    for (int _ireject = 0; _ireject < _l.Count; _ireject++)\n" + 
+                  "    { " + tname + " " + var + " = (" + tname + ") _l[_ireject];\n";
+
+      String test = ""; 
+      if (Expression.isLambdaApplication(pred))
+      { Expression subs = Expression.simplifyApply(pred);
+        test = subs.queryFormCSharp(newenv,false);
+      } 
+      else
+      { test = pred.queryFormCSharp(newenv,false); }  
+ 
       res = res + "      if (" + test + ") { } \n" + 
                   "      else { _results_" + oldindex + ".Add(" + var + "); }\n"; 
+      
       res = res + "    }\n"; 
       res = res + "    return _results_" + oldindex + ";\n  }"; 
 
@@ -4506,14 +4520,22 @@ public class BSystemTypes extends BComponent
       "  { ArrayList res = new ArrayList();\n" +
       "    res.AddRange(a); \n" +
       "    return res; \n" + 
-      "  }\n"; 
+      "  }\n\n"; 
     res = res + 
       "  public static Hashtable copyMap(Hashtable m)\n" + 
       "  { Hashtable res = new Hashtable(); \n" +
       "    foreach (DictionaryEntry pair in m) \n" +
       "    { res.Add(pair.Key, pair.Value); } \n" +
       "    return res; \n" + 
+      "  }\n\n"; 
+    res = res + 
+      "  public static ArrayList collectSequence(ArrayList col, Func<object,object> f)\n" + 
+      "  { ArrayList res = new ArrayList();\n" +  
+      "    for (int i = 0; i < col.Count; i++)\n" + 
+      "    { res.Add(f(col[i]));  }\n" + 
+      "    return res; \n" + 
       "  }\n"; 
+
     return res; 
   } 
 
@@ -5137,6 +5159,13 @@ public class BSystemTypes extends BComponent
        "    return long.Parse(sx);\n" + 
        "  } \n\n"; 
 
+      res = res + 
+        "  public static int char2byte(string qf) \n" + 
+        "  { return Char.ConvertToUtf32(qf, 0); }\n" +  
+        "\n" + 
+        "  public static string byte2char(int qf)\n" +  
+        "  { return Char.ConvertFromUtf32(qf); }\n\n"; 
+
     return res; 
   } 
 
@@ -5305,8 +5334,14 @@ public class BSystemTypes extends BComponent
   { String res = "    public static long getTime()\n" +
     "    { DateTimeOffset d = new DateTimeOffset(DateTime.Now);\n" + 
     "      return d.ToUnixTimeMilliseconds();\n" + 
-    "    }\n";
-    return res;
+    "    }\n\n";
+    res = res + 
+    "    public static long getTime(DateTime d)\n" +
+    "    { DateTimeOffset doff = new DateTimeOffset(d);\n" + 
+    "      return doff.ToUnixTimeMilliseconds();\n" + 
+    "    }\n\n";
+ 
+   return res;
   }
 
   public static String generateTimeOp()
@@ -6094,7 +6129,25 @@ public class BSystemTypes extends BComponent
       "  { ArrayList res = new ArrayList(); \n" +
       "    res.AddRange(a); \n" + 
       "    res.AddRange(b); \n" + 
-     "    return res; }\n";
+      "    return res; }\n";
+    res = res + 
+      "  public static ArrayList prepend(ArrayList a, object x)\n" +
+      "  {\n" +
+      "    ArrayList res = new ArrayList();\n" +
+      "    res.Add(x);\n" +
+      "    res.AddRange(a);\n" +
+      "    return res;\n" +
+      "  }\n\n";
+
+    res = res +
+      "  public static ArrayList append(ArrayList a, object x)\n" +
+      "  {\n" +
+      "    ArrayList res = new ArrayList();\n" +    
+      "    res.AddRange(a);\n" +
+      "    res.Add(x); \n" +
+      "    return res;\n" +
+      "  }\n\n";
+
     return res;
   }
 
@@ -7003,6 +7056,15 @@ public class BSystemTypes extends BComponent
 
   public static String generateAsSetOpCSharp()
   { String res = "  public static ArrayList asSet(ArrayList a)\n" +
+      "  { ArrayList res = new ArrayList(); \n" +
+      "    for (int i = 0; i < a.Count; i++)\n" +
+      "    { object obj = a[i];\n" +
+      "      if (res.Contains(obj)) { } \n" + 
+      "      else { res.Add(obj); }\n" + 
+      "    } \n" + 
+      "    return res; \n" + 
+      "  }\n\n"; 
+    res = res + "  public static ArrayList asOrderedSet(ArrayList a)\n" +
       "  { ArrayList res = new ArrayList(); \n" +
       "    for (int i = 0; i < a.Count; i++)\n" +
       "    { object obj = a[i];\n" +

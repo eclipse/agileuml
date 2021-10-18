@@ -46,6 +46,11 @@ public class Entity extends ModelElement implements Comparable
     realEntity = this; 
   }
 
+  public boolean isGeneric()
+  { return typeParameters != null && 
+           typeParameters.size() > 0; 
+  } 
+
   public boolean isEmpty()
   { if (attributes.size() == 0 && associations.size() == 0 && operations.size() == 0)
     { return true; }
@@ -89,6 +94,9 @@ public class Entity extends ModelElement implements Comparable
   
   public boolean isPersistent()
   { return hasStereotype("persistent"); }
+
+  public boolean isSerializable()
+  { return hasStereotype("serializable"); }
 
   public String cg(CGSpec cgs)
   { String etext = this + "";
@@ -5906,6 +5914,23 @@ public class Entity extends ModelElement implements Comparable
     out.println("}\n");
   }
 
+  public String typeParameterTextCSharp()
+  { String pars = ""; 
+    if (typeParameters != null && typeParameters.size() > 0) 
+    { pars = "<"; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        pars = pars + tp.getCSharp(); 
+        if (i < typeParameters.size() - 1) 
+        { pars = pars + ","; } 
+      } 
+      pars = pars + ">"; 
+      return pars; 
+    } 
+    return ""; 
+  } 
+
+
   public void generateCSharp(Vector entities, Vector types, PrintWriter out)
   { if (hasStereotype("external") || hasStereotype("externalApp")) { return; } 
     String intorclass = "class"; 
@@ -5919,30 +5944,23 @@ public class Entity extends ModelElement implements Comparable
     { out.print("abstract "); }
     else if (isLeaf())
     { out.print("sealed "); }
+    else if (isSerializable())
+    { out.print("public "); } 
 
-    String pars = ""; 
-    if (typeParameters != null && typeParameters.size() > 0) 
-    { pars = "<"; 
-      for (int i = 0; i < typeParameters.size(); i++) 
-      { Type tp = (Type) typeParameters.get(i); 
-        pars = pars + tp.getCSharp(); 
-        if (i < typeParameters.size() - 1) 
-        { pars = pars + ","; } 
-      } 
-      pars = pars + ">"; 
-    } 
+    String pars = typeParameterTextCSharp(); 
 
     boolean hasColon = false; 
 
     out.print(intorclass + " " + getName() + pars); 
     // out.print("  : SystemTypes");
     if (superclass != null) 
-    { out.println(" : " + superclass.getName());
+    { out.print(" : " + superclass.getName());
       hasColon = true;
     } 
     
     if (interfaces.size() > 0) 
-    { if (hasColon) { }
+    { if (hasColon) 
+      { out.print(", "); }
       else 
       { out.print(" : "); 
         hasColon = true; 
@@ -5977,7 +5995,8 @@ public class Entity extends ModelElement implements Comparable
       { att.generateInterfaceCSharp(out); } 
       else 
       { att.generateCSharp(out); } 
-    }
+    } // static variables are initialised at declaration, 
+      // not in the constructor. 
 
     for (int i = 0; i < associations.size(); i++)
     { Association ast = (Association) associations.get(i);
@@ -6419,10 +6438,13 @@ public class Entity extends ModelElement implements Comparable
   private void buildConstructorCodeCSharp(PrintWriter out)
   { for (int i = 0; i < attributes.size(); i++)
     { Attribute att = (Attribute) attributes.get(i);
+      if (att.isStatic()) 
+      { continue; } 
       String ini = att.initialiserCSharp();
       if (ini != null)
       { out.println("    " + ini); }
     }
+
     for (int i = 0; i < associations.size(); i++)
     { Association ast = (Association) associations.get(i);
       String ini = ast.initialiser();
@@ -6446,17 +6468,19 @@ public class Entity extends ModelElement implements Comparable
   { if (isInterface()) { return; } 
     String nme = getName(); 
     String vis = "public"; 
+    String pars = typeParameterTextCSharp(); 
+
     if (isSingleton()) 
     { vis = "private";
       String inst = "instance_" + nme; 
-      out.println("  public static " + nme + " inst()"); 
+      out.println("  public static " + nme + pars + " inst()"); 
       out.println("  { if (" + inst + " == null) { " + 
-                           inst + " = new " + nme + "(); }"); 
+                           inst + " = new " + nme + pars + "(); }"); 
       out.println("    return " + inst + ";"); 
       out.println("  }\n"); 
     } 
 
-    out.print("  " + vis + " " + nme + "(");
+    out.print("  " + vis + " " + nme + pars + "(");
     boolean previous = false;
     String res = "";
     for (int i = 0; i < attributes.size(); i++)
@@ -6471,6 +6495,7 @@ public class Entity extends ModelElement implements Comparable
         }
       }
     }
+
     for (int i = 0; i < associations.size(); i++)
     { Association ast = (Association) associations.get(i);
       String par = ast.constructorParameterCSharp();
@@ -7244,7 +7269,7 @@ public class Entity extends ModelElement implements Comparable
           { out.println("  " + par + "\n"); }
         } 
 
-        par = att.setAllOperationCSharp(getName());
+        par = att.setAllOperationCSharp(this, getName());
         if (par != null) 
         { if (isInterface())
           { interfaceinnerclass = interfaceinnerclass + par + "\n  "; } 
@@ -7287,6 +7312,7 @@ public class Entity extends ModelElement implements Comparable
         else
         { out.println("  " + par + "\n"); }
       }   
+
       if (ast.getCard2() != ONE)
       { String pp = ast.addAllOperationCSharp(getName());
         if (pp != null)
@@ -7917,7 +7943,7 @@ public class Entity extends ModelElement implements Comparable
 
   public String generateCSharpToStringOp()
   { if (isInterface())
-    { return "  public override string ToString();\n"; } 
+    { return ""; }  // "  public string ToString();\n"; } 
 
     String nme = "(" + getName() + ")";
     String res = "  public override string ToString()\n" +
@@ -7934,8 +7960,9 @@ public class Entity extends ModelElement implements Comparable
       { getop = getop + " + \",\""; }
       res = res + "    _res_ = _res_ + " + getop + ";\n";
     }
+
     if (superclass != null) 
-    { res = res + "    return _res_ + base.ToString();\n  }"; } 
+    { res = res + "    return _res_ + \" \" + base.ToString();\n  }"; } 
     else 
     { res = res + "    return _res_;\n  }"; }
     return res;
@@ -8054,6 +8081,75 @@ public class Entity extends ModelElement implements Comparable
     }
     out.println("}\n\n");   
   } 
+
+  public String toAST()
+  { String res = "(Class ";
+    String nme = "class " + getName() + " ";
+
+    if (typeParameters.size() > 0)
+    { String tp = ((Type) typeParameters.get(0)).getName(); 
+      nme = nme + "< " + tp + " > "; 
+    } 
+
+    if (isInterface()) { } 
+    else if (isAbstract())
+    { nme = "abstract " + nme; } 
+
+    if (superclass != null) 
+    { nme = nme + " extends " + superclass; 
+      if (interfaces.size() > 0)
+      { for (int k = 0; k < interfaces.size(); k++) 
+        { Entity intf = (Entity) interfaces.get(k); 
+          nme = nme + " , " + intf.getName(); 
+        } 
+      } 
+    } 
+    else if (interfaces.size() > 0) 
+    { nme = nme + " implements " + 
+                  ((Entity) interfaces.get(0)).getName(); 
+      for (int k = 1; k < interfaces.size(); k++) 
+      { Entity intf = (Entity) interfaces.get(k); 
+        nme = nme + " , " + intf.getName(); 
+      } 
+    } 
+
+  
+    res = res + " " + nme + " { ";
+
+    for (int i = 0; i < stereotypes.size(); i++) 
+    { String stereo = (String) stereotypes.get(i); 
+      res = res + "  stereotype " + stereo + " ; "; 
+    }
+
+    for (int i = 0; i < invariants.size(); i++) 
+    { Constraint con = (Constraint) invariants.get(i);
+      Expression ante = con.antecedent(); 
+      Expression succ = con.succedent(); 
+      if (ante == null || "true".equals(ante + ""))
+      { res = res + "  invariant " + succ.toAST() + " ; "; }  
+      else  
+      { res = res + "  invariant " + ante.toAST() + " => " + succ.toAST() + " ; "; }
+    }
+
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      res = res + att.toAST() + " ; "; 
+    }
+
+    for (int i = 0; i < associations.size(); i++) 
+    { Association ast = (Association) associations.get(i); 
+      res = res + ast.toAST() + " ; "; 
+    }
+      
+    for (int i = 0; i < operations.size(); i++) 
+    { BehaviouralFeature op = (BehaviouralFeature) operations.get(i); 
+      res = res + op.toAST() + " ; "; 
+    } 
+
+    res = res + "  } )";
+    return res;    
+  } // and operations
+
 
   public String stereotypesKM3() 
   { String res = ""; 
@@ -9333,7 +9429,8 @@ public class Entity extends ModelElement implements Comparable
     String es = ename.toLowerCase() + "_s";
     String tests = ""; 
     String upds = ""; 
-    String header = "  public " + ename + " create" + ename +
+    String pars = typeParameterTextCSharp(); 
+    String header = "  public " + ename + pars + " create" + ename +
                  "(" + createOpParametersCSharp() + ")\n";
     String inits = ""; 
 
@@ -9356,8 +9453,8 @@ public class Entity extends ModelElement implements Comparable
     String cardcheck = cardinalityCheckCodeCSharp(es); 
     String res = createAllOpCSharp(ename,ex) + "\n" + 
                  header + "  { \n" + cardcheck + tests + "    " + 
-                 ename + " " + ex + " = new " +
-                 ename + "(" + createOpArgs() + ");\n";
+                 ename + pars + " " + ex + " = new " +
+                 ename + pars + "(" + createOpArgs() + ");\n";
     res = res + "    add" + ename + "(" + ex + ");\n";
     res = res + inits; 
     for (int j = 0; j < associations.size(); j++)
@@ -13540,14 +13637,15 @@ public void iosDbiOperations(PrintWriter out)
     if (hasStereotype("external") || hasStereotype("externalApp")) { return ""; } 
 
     String cname = getName();
+    String pars = typeParameterTextCSharp(); 
     String cx = cname.toLowerCase() + "x";
-    String res = "  if (c.Equals(\"" + cname + "\"))\n" +
-      "  { " + cname + " " + cx + " = new " + cname + "();\n" +
-      "     objectmap[a] = " + cx + ";\n" +
-      "     classmap[a] = c;\n" +
-      "     add" + cname + "(" + cx + ");\n" +
-      "    return;\n" + 
-      "  }\n";
+    String res = "\n    if (c.Equals(\"" + cname + "\"))\n" +
+      "    { " + cname + pars + " " + cx + " = new " + cname + pars + "();\n" +
+      "      objectmap[a] = " + cx + ";\n" +
+      "      classmap[a] = c;\n" +
+      "      add" + cname + "(" + cx + ");\n" +
+      "      return;\n" + 
+      "    }\n";
     return res;
   } 
 
@@ -13557,11 +13655,11 @@ public void iosDbiOperations(PrintWriter out)
 
     String cname = getName();
     String cx = cname.toLowerCase() + "x";
-    String res = " if (c == \"" + cname + "\")\n" +
+    String res = "\n    if (c == \"" + cname + "\")\n" +
       "    { " + cname + "* " + cx + " = new " + cname + "();\n" +
-      "       objectmap[a] = " + cx + ";\n" +
-      "       classmap[a] = c;\n" +
-      "       add" + cname + "(" + cx + ");\n" +
+      "      objectmap[a] = " + cx + ";\n" +
+      "      classmap[a] = c;\n" +
+      "      add" + cname + "(" + cx + ");\n" +
       "      return;\n" + 
       "    }\n";
     return res;
@@ -13631,10 +13729,12 @@ public void iosDbiOperations(PrintWriter out)
 
     String res = "";
     String ename = getName();
+    String pars = typeParameterTextCSharp(); 
+
     String es = ename.toLowerCase() + "_s";
     String ex = ename.toLowerCase() + "x_";
     res = "  for (int _i = 0; _i < " + es + ".Count; _i++)\n" +
-             "  { " + ename + " " + ex + " = (" + ename + ") " + es + "[_i];\n" + 
+             "  { " + ename + pars + " " + ex + " = (" + ename + pars + ") " + es + "[_i];\n" + 
              "    outfile.WriteLine(\"" + ex  + "\" + _i + \" : " + ename + "\");\n";
 
     Vector allAttributes = new Vector(); 
@@ -14161,12 +14261,13 @@ public void iosDbiOperations(PrintWriter out)
         String r2 = ast.getRole2();
         String e2x = ent2.toLowerCase() + r2 + "x";
         res = res + 
-          "  if (\"" + cname + "\".Equals(classmap[a]) && role.Equals(\"" + r2 + "\"))\n" +
-          "  { " + cname + " " + cx + " = (" + cname + ") objectmap[a];\n" +
-          "    " + ent2 + " " + e2x + " = (" + ent2 + ") objectmap[b];\n" +
-          "    add" + r2 + "(" + cx + "," + e2x + ");\n" +
-          "    return;\n" +
-          "  }\n"; 
+          "\n" + 
+          "    if (\"" + cname + "\".Equals(classmap[a]) && role.Equals(\"" + r2 + "\"))\n" +
+          "    { " + cname + " " + cx + " = (" + cname + ") objectmap[a];\n" +
+          "      " + ent2 + " " + e2x + " = (" + ent2 + ") objectmap[b];\n" +
+          "      add" + r2 + "(" + cx + "," + e2x + ");\n" +
+          "      return;\n" +
+          "    }\n"; 
       }
     }
     return res;
@@ -14228,34 +14329,41 @@ public void iosDbiOperations(PrintWriter out)
       { valc = "val.Equals(\"true\")"; }
       else if ("long".equals(tname))
       { valc = "Int64.Parse(val)"; }
-      else if ("int".equals(tname) || t.isEnumeration()) 
+      else if ("int".equals(tname)) 
       { valc = "int.Parse(val)"; }
-      else if ("OclAny".equals(tname) || 
+      else if (t.isEnumeration())
+      { valc = "(" + tname + ") int.Parse(val)"; } 
+      else if (t.isEntity())
+      { String ent2 = tname;
+        valc = "(" + ent2 + ") objectmap[val]\n"; 
+      } 
+      else if ("OclAny".equals(tname) ||
+               "OclFile".equals(tname) ||  
                "Function".equals(name))
       { valc = "null"; } 
 
-      res = res + 
-        "  if (\"" + cname + "\".Equals(classmap[a]) && f.Equals(\"" + aname + "\"))\n" +
-        "  { " + cname + " " + cx + " = (" + cname + ") objectmap[a];\n" +
-        "    set" + aname + "(" + cx + "," + valc + ");\n" +
-        "    return;\n" +
-        "  }\n"; 
+      res = res + "\n" +  
+        "    if (\"" + cname + "\".Equals(classmap[a]) && f.Equals(\"" + aname + "\"))\n" +
+        "    { " + cname + " " + cx + " = (" + cname + ") objectmap[a];\n" +
+        "      set" + aname + "(" + cx + "," + valc + ");\n" +
+        "      return;\n" +
+        "    }\n"; 
     }
 
     for (int i = 0; i < assts.size(); i++)
     { Association ast = (Association) assts.get(i);
-     if (ast.isQualified()) { } 
-     else if (ast.getCard2() == ONE) 
+      if (ast.isQualified()) { } 
+      else if (ast.getCard2() == ONE) 
       { String ent2 = ast.getEntity2() + "";
         String r2 = ast.getRole2();
         String fx = ent2.toLowerCase() + r2 + "x";
         res = res + 
-          "  if (\"" + cname + "\".Equals(classmap[a]) && f.Equals(\"" + r2 + "\"))\n" +
-          "  { " + cname + " " + cx + " = (" + cname + ") objectmap[a];\n" +
-          "    " + ent2 + " " + fx + " = (" + ent2 + ") objectmap[val];\n" +
-          "    set" + r2 + "(" + cx + "," + fx + ");\n" +
-          "    return;\n" +
-          "  }\n"; 
+          "    if (\"" + cname + "\".Equals(classmap[a]) && f.Equals(\"" + r2 + "\"))\n" +
+          "    { " + cname + " " + cx + " = (" + cname + ") objectmap[a];\n" +
+          "      " + ent2 + " " + fx + " = (" + ent2 + ") objectmap[val];\n" +
+          "      set" + r2 + "(" + cx + "," + fx + ");\n" +
+          "      return;\n" +
+          "    }\n"; 
       }
     }
     return res;

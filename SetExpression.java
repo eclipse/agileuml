@@ -187,6 +187,26 @@ public class SetExpression extends Expression
     return res;
   }
 
+  public String toAST()
+  { String res = "(SetExpression ";
+
+    if (isMap())
+    { res = res + " Map { "; }
+    else if (ordered) 
+    { res = res + " Sequence { "; } 
+    else 
+    { res = res + " Set { "; }
+
+    for (int i = 0; i < elements.size(); i++)
+    { Expression elem = (Expression) elements.get(i); 
+      res = res + elem.toAST();
+      if (i < elements.size() - 1)
+      { res = res + " , "; }
+    }
+    res = res + " } )";
+    return res;
+  }
+
   public Expression invertEq(BasicExpression left) 
   { // inverts  left = this   as  elements(0) = left[1] & ... 
     Expression res = new BasicExpression(true); 

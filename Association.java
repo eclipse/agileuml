@@ -413,8 +413,10 @@ public class Association extends ModelElement
     if (isQualified())
     { if (card2 == ONE)
       { Type mapres = new Type("Map",null); 
+        mapres.setKeyType(new Type("String",null)); 
         mapres.setElementType(e2type); 
       } 
+
       Type res;
       if (ordered)
       { res = new Type("Sequence", null); }
@@ -422,6 +424,7 @@ public class Association extends ModelElement
       { res = new Type("Set",null); }
  
       Type mres = new Type("Map", null); 
+      mres.setKeyType(new Type("String",null)); 
       mres.setElementType(res);       
       return mres;
     } 
@@ -5771,6 +5774,13 @@ String qual = "";
 	{ return "    reference " + role2 + mult + " qualified " + ord + agg + ": " + entity2 + opp + ";"; }
 
     return "    reference " + role2 + mult + " " + ord + agg + ": " + entity2 + opp + ";";  
+  } 
+
+  public String toAST()
+  { String res = "(Attribute " + role2 + " : "; 
+    Type t2 = getRole2Type(); 
+    res = res + t2.toAST(); 
+    return res + " )"; 
   } 
 
   public void saveEcore(PrintWriter out)

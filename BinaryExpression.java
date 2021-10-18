@@ -785,7 +785,7 @@ class BinaryExpression extends Expression
 	
     res.add(op); 
     return res; 
-  }
+  } // ->compareTo: swap left & right. 
   
   public Vector mutants()
   { Vector lms = left.mutants(); 
@@ -803,7 +803,9 @@ class BinaryExpression extends Expression
           mutant.operator = mop; 
           mutant.left = lm; 
           mutant.right = rm;  
-          res.add(mutant); 
+          if (VectorUtil.containsEqualString(mutant + "",res)) { } 
+          else 
+          { res.add(mutant); } 
         } 
 	 }
      }
@@ -1043,6 +1045,183 @@ class BinaryExpression extends Expression
 	
     if (needsBracket) 
     { return "( " + basicString + " )"; }  // eg, for or inside &  }
+    return basicString; 
+  } 
+
+  public String toAST()
+  { String leftast = left.toAST(); 
+    String rightast = right.toAST(); 
+    String basicString = 
+            "(BinaryExpression " + leftast + " " + operator + " " + rightast + ")"; 
+     
+    if ("let".equals(operator) && accumulator != null)
+    { String res = "(BinaryExpression let " + accumulator.getName() + " : " + accumulator.getType().toAST() + " = " + leftast + " in ( " + rightast + " ) )"; 
+      if (needsBracket)
+      { return "(BracketedExpression ( " + res + " ) )"; }
+      return res; 
+    }  
+
+    if (operator.equals("#"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = range.toAST(); 
+
+      basicString = "(BinaryExpression " + rangestring + " ->exists ( " + 
+             ((BinaryExpression) left).left + " | " + rightast + " ) )";
+    }
+    else if ("#LC".equals(operator))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = range.toAST(); 
+
+      basicString = "(BinaryExpression " + rangestring + " ->existsLC ( " + 
+             ((BinaryExpression) left).left + " | " + rightast + " ) )";
+    }
+    else if (operator.equals("#1"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = range.toAST(); 
+
+      basicString = "(BinaryExpression " + rangestring + " ->exists1 ( " + 
+             ((BinaryExpression) left).left + " | " + rightast + " ) )";
+    } 
+    else if (operator.equals("!"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = range.toAST(); 
+
+      basicString = "(BinaryExpression " + rangestring + " ->forAll ( " + 
+             ((BinaryExpression) left).left + " | " + rightast + " ) )";
+    } 
+    else if (operator.equals("|"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = range.toAST(); 
+
+      basicString = "(BinaryExpression " + rangestring + " ->select ( " + 
+             ((BinaryExpression) left).left + " | " + rightast + " ) )";
+    }
+    else if (operator.equals("|C"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = range.toAST(); 
+
+      basicString = "(BinaryExpression " + rangestring + " ->collect ( " + 
+             ((BinaryExpression) left).left + " | " + rightast + " ) )";
+    }
+    else if (operator.equals("|A"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = range.toAST(); 
+
+      basicString = "(BinaryExpression " + rangestring + " ->any ( " + 
+             ((BinaryExpression) left).left + " | " + rightast + " ) )";
+    }
+    else if (operator.equals("|R"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = range.toAST(); 
+
+      basicString = "(BinaryExpression " + rangestring + " ->reject ( " + 
+             ((BinaryExpression) left).left + " | " + rightast + " ) )";
+    }
+  /*  else if (operator.equals("|selectMinimals"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = "" + range; 
+      if (range.needsBracket)
+      { rangestring = "(" + rangestring + ")"; } 
+
+      basicString = rangestring + "->selectMinimals( " + 
+             ((BinaryExpression) left).left + " | " + right + " )";
+    }
+    else if (operator.equals("|selectMaximals"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = "" + range; 
+      if (range.needsBracket)
+      { rangestring = "(" + rangestring + ")"; } 
+
+      basicString = rangestring + "->selectMaximals( " + 
+             ((BinaryExpression) left).left + " | " + right + " )";
+    }
+    else if (operator.equals("|unionAll"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = "" + range; 
+      if (range.needsBracket)
+      { rangestring = "(" + rangestring + ")"; } 
+
+      basicString = rangestring + "->unionAll( " + 
+             ((BinaryExpression) left).left + " | " + right + " )";
+    }
+    else if (operator.equals("|intersectAll"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = "" + range; 
+      if (range.needsBracket)
+      { rangestring = "(" + rangestring + ")"; } 
+
+      basicString = rangestring + "->intersectAll( " + 
+             ((BinaryExpression) left).left + " | " + right + " )";
+    }
+    else if (operator.equals("|concatenateAll"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = "" + range; 
+      if (range.needsBracket)
+      { rangestring = "(" + rangestring + ")"; } 
+
+      basicString = rangestring + "->concatenateAll( " + 
+             ((BinaryExpression) left).left + " | " + right + " )";
+    }
+    else if (operator.equals("|sortedBy"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = "" + range; 
+      if (range.needsBracket)
+      { rangestring = "(" + rangestring + ")"; } 
+
+      basicString = rangestring + "->sortedBy( " + 
+             ((BinaryExpression) left).left + " | " + right + " )";
+    }
+    else if (operator.equals("|isUnique"))
+    { Expression range = ((BinaryExpression) left).right; 
+      String rangestring = "" + range; 
+      if (range.needsBracket)
+      { rangestring = "(" + rangestring + ")"; } 
+
+      basicString = rangestring + "->isUnique( " + 
+             ((BinaryExpression) left).left + " | " + right + " )";
+    } 
+    else if (operator.equals("->including") && keyValue != null) 
+    { basicString = left + "->including(" + keyValue + ", " + right + ")"; } 
+    else if (operator.equals("->excluding") && keyValue != null) 
+    { basicString = left + "->excluding(" + keyValue + ", " + right + ")"; } */ 
+    else if (operator.equals("->includesAll") || operator.equals("->collect") || 
+             operator.equals("->excludesAll") || operator.equals("->append") ||
+             operator.equals("->prepend") || operator.equals("->select") || 
+             operator.equals("->reject") || operator.equals("->including") ||
+             operator.equals("->excluding") ||
+             operator.equals("->excludingAt") ||
+             operator.equals("->excludingFirst") ||
+             operator.equals("->includes") ||
+             operator.equals("->excludes") || operator.equals("->pow") || 
+             operator.equals("->sortedBy") || operator.equals("->hasSuffix") ||
+             operator.equals("->hasPrefix") || "->isUnique".equals(operator) ||
+             operator.equals("->oclAsType") || "->forAll".equals(operator) ||
+             "->exists".equals(operator) || "->exists1".equals(operator) || 
+             "->existsLC".equals(operator) || "->any".equals(operator) ||
+             operator.equals("->selectMaximals") || operator.equals("->oclIsKindOf") || 
+             operator.equals("->oclIsTypeOf") || operator.equals("->includesKey") || 
+             operator.equals("->excludesKey") || operator.equals("->includesValue") || 
+             operator.equals("->excludesValue") || 
+             operator.equals("->restrict") ||
+             operator.equals("->antirestrict") ||  
+             operator.equals("->selectMinimals") || operator.equals("->union") ||
+             operator.equals("->intersectAll") || operator.equals("->unionAll") ||
+             operator.equals("->count") || operator.equals("->indexOf") || operator.equals("->lastIndexOf") || 
+             operator.equals("->equalsIgnoreCase") || operator.equals("->before") || operator.equals("->after") || 
+             operator.equals("->hasMatch") || operator.equals("->isMatch") ||
+             operator.equals("->split") || operator.equals("->allMatches") || operator.equals("->firstMatch") || 
+             operator.equals("->at") || 
+             operator.equals("->apply") ||
+             operator.equals("->closure") || 
+             operator.equals("->intersection") || operator.equals("->symmetricDifference"))   
+    { basicString = "(BinaryExpression " + leftast + " " + operator + " ( " + rightast + " ) )"; } 
+
+    if (operator.startsWith("->"))
+    { basicString = "(BinaryExpression " + leftast + " " + operator + " ( " + rightast + " ) )"; }
+	
+    if (needsBracket) 
+    { return "(BracketedExpression ( " + basicString + " ) )"; }  
+
     return basicString; 
   } 
 
@@ -3252,6 +3431,7 @@ public void findClones(java.util.Map clones, String rule, String op)
              operator.equals("->excludingAt") ||
              operator.equals("->excludingFirst") ||
              operator.equals("->prepend") || 
+             operator.equals("->append") || 
              operator.equals("->intersection") || 
              operator.equals("/\\"))
     { tcSetOps(tleft,tright,eleft,eright); }
@@ -4129,8 +4309,8 @@ public boolean conflictsWithIn(String op, Expression el,
       { lqf = ((BasicExpression) left).classExtentQueryForm(env,local); }   // And pass lqf to collectQueryForm? 
       else if (operator.equals("|sortedBy") && ((BinaryExpression) left).right.umlkind == CLASSID)
       { BinaryExpression leftbe = (BinaryExpression) left; 
-	    lqf = ((BasicExpression) leftbe.right).classExtentQueryForm(env,local); 
-	  }      
+        lqf = ((BasicExpression) leftbe.right).classExtentQueryForm(env,local); 
+      }      
       return "Set.sortedBy(" + lqf + ", " + col + ")"; 
     } 
 
@@ -4227,7 +4407,7 @@ public boolean conflictsWithIn(String op, Expression el,
       else if (left instanceof SetExpression)
       { entity = ((SetExpression) left).findEntity(); 
         type = new Type("Set", null);
-		typ = type.getJava();  
+        typ = type.getJava();  
       } 
 
       if (entity == null) 
@@ -4361,7 +4541,9 @@ public boolean conflictsWithIn(String op, Expression el,
       else if (operator.equals("+") || operator.equals("-") || 
                operator.equals("*") || operator.equals("/") || 
                operator.equals("mod") || operator.equals("div"))
-      { res = composeMathOpQueryForms(lqf,rqf,lprim,rprim); } 
+      { res = composeMathOpQueryForms(lqf,rqf,lprim,rprim);
+        bNeeded = needsBracket;
+      } 
       else if (operator.equals("->indexOf"))
       { res = lqf + ".indexOf(" + rqf + ") + 1"; 
         bNeeded = true; 
@@ -5248,6 +5430,8 @@ public boolean conflictsWithIn(String op, Expression el,
     // if (lqf == null || rqf == null) 
     // { return null; } 
 
+    boolean bNeeded = false; 
+
     String javaOp = javaOpOf(operator);
     res = lqf + " " + javaOp + " " + rqf; // default
     // if & or or: &&, ||
@@ -5285,8 +5469,15 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->restrict"))
     { return "SystemTypes.restrictMap(" + lqf + "," + rqf + ")"; } 
 
+
     if (operator.equals("->antirestrict"))
     { return "SystemTypes.antirestrictMap(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("->prepend"))
+    { return "SystemTypes.prepend(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("->append"))
+    { return "SystemTypes.append(" + lqf + "," + rqf + ")"; } 
 
     if (operator.equals("->at"))
     { if ("String".equals(left.type + ""))
@@ -5310,7 +5501,7 @@ public boolean conflictsWithIn(String op, Expression el,
     } 
 
     if (operator.equals("->apply"))
-    { return "(" + lqf + ")(" + rqf + ")"; } 
+    { return lqf + ".Invoke(" + rqf + ")"; } 
 
     if (operator.equals("|A") || operator.equals("->any"))   
     { String getany = anyQueryFormCSharp(lqf,rqf,rprim,env,local); 
@@ -5331,6 +5522,36 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "((IComparable) " + lqf + ").CompareTo(" + rqf + ")"; }  
       return res; 
     } 
+
+    if (operator.equals("+"))
+    { String pres = lqf + " + " + rqf;
+      if (needsBracket)
+      { pres = "(" + pres + ")"; } 
+ 
+      if ("null".equals(lqf) || "null".equals(rqf))
+      { return pres; } 
+      if (left.isPrimitive() && right.isPrimitive())
+      { return pres; } 
+      if (left.isString() && right.isString())
+      { return pres; } 
+      if (left.isString() && right.isPrimitive())
+      { return pres; } 
+      if (left.isPrimitive() && right.isString())
+      { return pres; } 
+
+      if (left.isString())
+      { pres = lqf + " + " + rqf + ".ToString()"; 
+        if (needsBracket)
+        { pres = "(" + pres + ")"; } 
+      } 
+      else if (right.isString())
+      { pres = lqf + ".ToString() + " + rqf;
+        if (needsBracket)
+        { pres = "(" + pres + ")"; } 
+      }
+
+      return pres; 
+    }  
 
     if (operator.equals("->isUnique"))  // and define for B
     { String fcollect = collectQueryFormCSharp(lqf,rqf,rprim,env,local);
@@ -5429,11 +5650,15 @@ public boolean conflictsWithIn(String op, Expression el,
       else if (operator.equals("/=") || operator.equals("!=") || operator.equals("<>"))
       { res = composeNeqQueryFormsCSharp(lqf,rqf,lprim,rprim); }
       else if (comparitors.contains(operator))
-      { res = composeComparitorQueryFormsCSharp(lqf,rqf,lprim,rprim); } 
+      { res = composeComparitorQueryFormsCSharp(lqf,rqf,lprim,rprim); 
+        bNeeded = needsBracket; 
+      } 
       else if (operator.equals("+") || operator.equals("-") || 
                operator.equals("*") || operator.equals("/") || 
                operator.equals("mod") || operator.equals("div"))
-      { res = composeMathOpQueryFormsCSharp(lqf,rqf,lprim,rprim); } 
+      { res = composeMathOpQueryFormsCSharp(lqf,rqf,lprim,rprim);
+        bNeeded = needsBracket; 
+      } 
       else if (operator.equals("->indexOf"))
       { res = "(" + lqf + ".IndexOf(" + rqf + ") + 1)"; } 
       else if (operator.equals("->lastIndexOf"))
@@ -5487,14 +5712,10 @@ public boolean conflictsWithIn(String op, Expression el,
       } 
       else if (operator.equals("->excludingFirst"))
       { res = "SystemTypes.removeFirst(" + lqf + "," + rw + ")"; }
-      else if (operator.equals("->append"))
-      { res = "SystemTypes.concatenate(" + lqf + "," + rss + ")"; }
       else if (operator.equals("->including") && left.isOrdered())
       { res = "SystemTypes.concatenate(" + lqf + "," + rss + ")"; }
       else if (operator.equals("->including"))
       { res = "SystemTypes.union(" + lqf + "," + rss + ")"; }
-      else if (operator.equals("->prepend"))
-      { res = "SystemTypes.concatenate(" + rss + "," + lqf + ")"; }
       else 
       { String rs = right.makeSetCSharp(rqf);
         if (operator.equals("="))
@@ -5574,17 +5795,17 @@ public boolean conflictsWithIn(String op, Expression el,
     }
     else // both sets
     if (operator.equals("->indexOf"))
-    { res = "SystemTypes.indexOfSubList(" + lqf + "," + rqf + ")+1"; 
-      // bNeeded = true; 
+    { res = "SystemTypes.indexOfSubList(" + lqf + "," + rqf + ") + 1"; 
+      bNeeded = true; 
     } 
     else if (operator.equals("->lastIndexOf"))
     { res = "SystemTypes.lastIndexOfSubList(" + lqf + "," + rqf + ") + 1"; 
-      // bNeeded = true; 
+      bNeeded = true; 
     } 
     else 
     { res = composeSetQueryFormsCSharp(lqf,rqf); }
 
-    if (needsBracket)
+    if (needsBracket || bNeeded)
     { return "( " + res + " )"; }
     return res;
   } // add brackets if needed
@@ -6377,9 +6598,17 @@ public boolean conflictsWithIn(String op, Expression el,
         env1.put(use.getType().getName(), "self");  
       } 
       else if (use.getType() != null) 
-      { Attribute par = 
-          new Attribute(use.data,use.getType(),ModelElement.INTERNAL); 
-        par.setElementType(use.getElementType()); 
+      { Type useType = use.getType(); 
+        Type useElementType = use.getElementType(); 
+
+        if (use.arrayIndex != null)
+        { useType = use.arrayType; 
+          useElementType = use.getType(); 
+        }
+
+        Attribute par = 
+          new Attribute(use.data,useType,ModelElement.INTERNAL); 
+        par.setElementType(useElementType); 
         pars.add(par);
         parnames.add(use.data); 
         callpars = callpars + "," + use.data;    
@@ -6896,9 +7125,17 @@ public boolean conflictsWithIn(String op, Expression el,
         env1.put(use.getType().getName(), "self");  
       } 
       else if (use.getType() != null) 
-      { Attribute par = 
-          new Attribute(use.data,use.getType(),ModelElement.INTERNAL); 
-        par.setElementType(use.getElementType()); 
+      { Type useType = use.getType(); 
+        Type useElementType = use.getElementType(); 
+
+        if (use.arrayIndex != null)
+        { useType = use.arrayType; 
+          useElementType = use.getType(); 
+        }
+
+        Attribute par = 
+          new Attribute(use.data,useType,ModelElement.INTERNAL); 
+        par.setElementType(useElementType); 
         pars.add(par);
         parnames.add(use.data); 
         callpars = callpars + "," + use.data;    
@@ -7402,9 +7639,17 @@ public boolean conflictsWithIn(String op, Expression el,
         env1.put(use.getType().getName(), "self");  
       } 
       else if (use.getType() != null) 
-      { Attribute par = 
-          new Attribute(use.data,use.getType(),ModelElement.INTERNAL); 
-        par.setElementType(use.getElementType()); 
+      { Type useType = use.getType(); 
+        Type useElementType = use.getElementType(); 
+
+        if (use.arrayIndex != null)
+        { useType = use.arrayType; 
+          useElementType = use.getType(); 
+        }
+
+        Attribute par = 
+          new Attribute(use.data,useType,ModelElement.INTERNAL); 
+        par.setElementType(useElementType); 
         pars.add(par);
         parnames.add(use.data); 
         callpars = callpars + "," + use.data;    
@@ -7910,9 +8155,17 @@ public boolean conflictsWithIn(String op, Expression el,
         env1.put(use.getType().getName(), "self");  
       } 
       else if (use.getType() != null) 
-      { Attribute par = 
-          new Attribute(use.data,use.getType(),ModelElement.INTERNAL); 
-        par.setElementType(use.getElementType()); 
+      { Type useType = use.getType(); 
+        Type useElementType = use.getElementType(); 
+
+        if (use.arrayIndex != null)
+        { useType = use.arrayType; 
+          useElementType = use.getType(); 
+        }
+
+        Attribute par = 
+          new Attribute(use.data,useType,ModelElement.INTERNAL); 
+        par.setElementType(useElementType); 
         pars.add(par);
         parnames.add(use.data); 
         callpars = callpars + "," + use.data;    
@@ -8394,7 +8647,10 @@ public boolean conflictsWithIn(String op, Expression el,
     } 
 
     for (int i = 0; i < uses.size(); i++) 
-    { BasicExpression use = (BasicExpression) uses.get(i); 
+    { BasicExpression use = (BasicExpression) uses.get(i);
+
+      System.out.println(">> Variable use: " + use + " " + use.getType() + " " + use.arrayType + " " + use.getElementType()); 
+ 
       if (parnames.contains(use.data) || (use.data + "").equals(collectvar) || 
           (collectvar == null && (use.data + "").equals("self"))) 
       {}  
@@ -8408,9 +8664,17 @@ public boolean conflictsWithIn(String op, Expression el,
         env1.put(use.getType().getName(), "self");  
       } 
       else if (use.getType() != null) 
-      { Attribute par = 
-          new Attribute(use.data,use.getType(),ModelElement.INTERNAL); 
-        par.setElementType(use.getElementType()); 
+      { Type useType = use.getType(); 
+        Type useElementType = use.getElementType(); 
+
+        if (use.arrayIndex != null)
+        { useType = use.arrayType; 
+          useElementType = use.getType(); 
+        }
+
+        Attribute par = 
+          new Attribute(use.data,useType,ModelElement.INTERNAL); 
+        par.setElementType(useElementType); 
         pars.add(par);
         parnames.add(use.data); 
         callpars = callpars + "," + use.data;    
@@ -8808,9 +9072,17 @@ public boolean conflictsWithIn(String op, Expression el,
         env1.put(use.getType().getName(), "self");  
       } 
       else if (use.getType() != null) 
-      { Attribute par = 
-          new Attribute(use.data,use.getType(),ModelElement.INTERNAL); 
-        par.setElementType(use.getElementType()); 
+      { Type useType = use.getType(); 
+        Type useElementType = use.getElementType(); 
+
+        if (use.arrayIndex != null)
+        { useType = use.arrayType; 
+          useElementType = use.getType(); 
+        }
+
+        Attribute par = 
+          new Attribute(use.data,useType,ModelElement.INTERNAL); 
+        par.setElementType(useElementType); 
         pars.add(par);
         parnames.add(use.data); 
         callpars = callpars + "," + use.data;    
@@ -9314,11 +9586,20 @@ public boolean conflictsWithIn(String op, Expression el,
         env1.put(use.getType().getName(), "self");  
       } 
       else if (use.getType() != null) 
-      { Attribute par = new Attribute(use.data,use.getType(),ModelElement.INTERNAL); 
-        par.setElementType(use.getElementType()); 
+      { Type useType = use.getType(); 
+        Type useElementType = use.getElementType(); 
+
+        if (use.arrayIndex != null)
+        { useType = use.arrayType; 
+          useElementType = use.getType(); 
+        }
+
+        Attribute par = 
+          new Attribute(use.data,useType,ModelElement.INTERNAL); 
+        par.setElementType(useElementType); 
         pars.add(par);
         parnames.add(use.data); 
-        callpars = callpars + "," + use.data;   
+        callpars = callpars + "," + use.data;    
       } 
     } 
     // System.out.println("Creating forAll query form " + uses + " " + env1); 
@@ -9470,7 +9751,12 @@ public boolean conflictsWithIn(String op, Expression el,
                    String rqf, boolean lprim, 
                    boolean rprim)
   { String res;
-    if (lprim && rprim)
+
+    if (left.isString())
+    { res = "((String) " + lqf + ").equals(" + rqf + ")"; } 
+    else if (right.isString())
+    { res = "((String) " + rqf + ").equals(" + lqf + ")"; } 
+    else if (lprim && rprim)
     { res = lqf + " == " + rqf; }
     else if (lprim) // also for booleans, doubles
     { String rr = right.unwrap(rqf);
@@ -9490,7 +9776,11 @@ public boolean conflictsWithIn(String op, Expression el,
                    String rqf, boolean lprim, 
                    boolean rprim)
   { String res;
-    if (lprim || rprim)
+    if (left.isString())
+    { res = "((string) " + lqf + ").Equals(" + rqf + ")"; } 
+    else if (right.isString())
+    { res = "((string) " + rqf + ").Equals(" + lqf + ")"; } 
+    else if (lprim || rprim)
     { res = lqf + " == " + rqf; }
     else // both objects. Special case for sets: lqf.containsAll(rqf) && 
          // rqf.containsAll(lqf)
@@ -9631,6 +9921,27 @@ public boolean conflictsWithIn(String op, Expression el,
     { op = "%"; } 
     else if (operator.equals("div"))
     { op = "/"; } 
+
+    if (operator.equals("+"))
+    { if ("null".equals(lqf) || "null".equals(rqf))
+      { return lqf + " + " + rqf; } 
+      if (left.isPrimitive() && right.isPrimitive())
+      { return lqf + " + " + rqf; } 
+      if (left.isString() && right.isString())
+      { return lqf + " + " + rqf; } 
+      if (left.isString() && right.isPrimitive())
+      { return lqf + " + " + rqf; } 
+      if (left.isPrimitive() && right.isString())
+      { return lqf + " + " + rqf; } 
+      if (left.isString())
+      { return lqf + " + " + rqf + ".ToString()"; } 
+      if (right.isString())
+      { return lqf + ".ToString() + " + rqf; }
+
+      return lqf + " + " + rqf; 
+    }  
+
+
 
     if (operator.equals("-") && "String".equals(left.getType().getName()) && 
         "String".equals(right.getType().getName()))

@@ -55,7 +55,7 @@ public class Type extends ModelElement
   static java.util.Map exceptions2csharp = new java.util.HashMap(); 
   static 
   { exceptions2csharp.put("OclException", "Exception"); 
-    exceptions2csharp.put("ProgramException", "ApplicationException"); 
+    exceptions2csharp.put("ProgramException", "Exception"); 
     // also, "RuntimeException"
     exceptions2csharp.put("SystemException", "SystemException"); 
     exceptions2csharp.put("IOException", "IOException"); 
@@ -250,6 +250,29 @@ public class Type extends ModelElement
 
   public Entity getEntity() 
   { return entity; } 
+
+  public static Type correctElementType(Type typ, Type et, 
+                              Vector types, Vector entities)
+  { System.out.println(">> Type = " + typ + " Element type = " + et); 
+
+    if (et == null && typ != null)
+    { String tname = typ + ""; 
+      if ((tname.startsWith("Sequence") || 
+           tname.startsWith("Set")) && 
+          tname.indexOf("(") > 0)
+      { Type realtype = Type.getTypeFor(tname, types, entities); 
+        System.out.println(">> Real type = " + realtype + " (" + realtype.elementType + ")"); 
+
+        if (realtype != null) 
+        { typ.name = realtype.getName(); 
+          return realtype.getElementType();  
+        } 
+      }
+      else if (typ.elementType != null) 
+      { return typ.elementType; }  
+    } 
+    return et; 
+  } 
   
   public Entity getEntityOrElementEntity() 
   { if (entity != null) 
@@ -698,6 +721,80 @@ public class Type extends ModelElement
     { Type et1 = t1.getElementType(); 
       Type et2 = t2.getElementType(); 
       return Type.isSubType(et1,et2,mm,entities); 
+    } 
+
+    return false; 
+  } 
+
+  public static boolean isSpecialisedOrEqualType(Type t1, Type t2) 
+  { // Assignment  v2 := v1  does not need a conversion, 
+    // otherwise should be  v2 := v1->oclAsType(t2)
+
+    if (t1 == null || t2 == null) 
+    { return false; } 
+    
+    String t1name = t1.getName(); 
+    String t2name = t2.getName(); 
+    
+    if (t1.isEntity() && t2.isEntity()) 
+    { Entity tsrc = t1.getEntity(); 
+      Entity ttrg = t2.getEntity();
+       
+      if (Entity.isAncestor(ttrg,tsrc))
+      { return true; } 
+      else 
+      { return t1name.equals(t2name); }
+    }  
+
+    if (t2.getName().equals("double"))
+    { if (t1.getName().equals("int")) { return true; } 
+      if (t1.getName().equals("long")) { return true; } 
+      if (t1.getName().equals("double")) { return true; } 
+      return false; 
+    } 
+
+    if (t2.getName().equals("long"))
+    { if (t1.getName().equals("int")) { return true; } 
+      if (t1.getName().equals("long")) { return true; } 
+      return false; 
+    } 
+
+    if (t2.getName().equals("int"))
+    { if (t1.getName().equals("int")) { return true; } 
+      return false; 
+    } 
+
+    if (t1name.equals("Sequence") && t2name.equals("Sequence"))
+    { Type et1 = t1.getElementType(); 
+      Type et2 = t2.getElementType(); 
+      if (et1 == null) 
+      { return et2 == null; } 
+      if (et2 == null) 
+      { return true; } 
+      return et1.getName().equals(et2.getName()); 
+    } 
+
+    if (t1name.equals("Set") && t2name.equals("Sequence"))
+    { return false; } 
+
+    if (t1name.equals("Set") && t2name.equals("Set"))
+    { Type et1 = t1.getElementType(); 
+      Type et2 = t2.getElementType(); 
+      if (et1 == null) 
+      { return et2 == null; } 
+      if (et2 == null) 
+      { return true; } 
+      return et1.getName().equals(et2.getName()); 
+    } 
+
+    if (t1name.equals("Map") && t2name.equals("Map"))
+    { Type et1 = t1.getElementType(); 
+      Type et2 = t2.getElementType(); 
+      if (et1 == null) 
+      { return et2 == null; } 
+      if (et2 == null) 
+      { return true; } 
+      return et1.getName().equals(et2.getName()); 
     } 
 
     return false; 
@@ -2413,9 +2510,10 @@ public class Type extends ModelElement
   // sorted sets?
 
   public String getDefaultCSharp()
-  { if (values == null) // so not enumerated
-    { String nme = getName();
-      if (nme.equals("String"))
+  { String nme = getName();
+      
+    if (values == null) // so not enumerated
+    { if (nme.equals("String"))
       { return "\"\""; }
       if (nme.equals("boolean"))
       { return "false"; }
@@ -2432,7 +2530,7 @@ public class Type extends ModelElement
 
       return "null";    // for class types, functions, OclAny
     }
-    return "0"; // (String) values.get(0);
+    return nme + "." + values.get(0);
   }
 
   public String getDefaultCPP(Type et)
@@ -2492,7 +2590,15 @@ public class Type extends ModelElement
     if (nme.equals("Map"))
     { return "Hashtable"; }
     if (nme.equals("Function"))
-    { return "Func"; }
+    { String key = "object"; 
+      if (keyType != null) 
+      { key = keyType.getCSharp(); }
+      String restype = "object"; 
+      if (elementType != null) 
+      { restype = elementType.getCSharp(); } 
+
+      return "Func<" + key + "," + restype + ">"; 
+    }
     if (nme.equals("String")) { return "string"; }  
     if (nme.equals("boolean")) { return "bool"; } 
     if (nme.equals("long")) { return "long"; }
@@ -2509,15 +2615,27 @@ public class Type extends ModelElement
     { return "OclRandom"; } 
     if (nme.equals("OclIterator"))
     { return "OclIterator"; } 
+    if (nme.equals("OclProcess"))
+    { return "OclProcess"; } 
 
     String jex = (String) exceptions2csharp.get(nme); 
     if (jex != null) 
     { return jex; } 
 
-    if (values == null) 
-    { return nme; }  // OclIterator, for example
- 
-    return "int";   
+    if (entity != null && 
+        entity.isGeneric())
+    { String res = nme + "<"; 
+      Vector v = entity.getTypeParameters(); 
+      for (int i = 0; i < v.size(); i++) 
+      { res = res + "object"; 
+        if (i < v.size() - 1)
+        { res = res + ","; }
+      }
+      res = res + ">"; 
+      return res; 
+    } 
+
+    return nme; 
   } 
 
   public String getSwift(String elemType)

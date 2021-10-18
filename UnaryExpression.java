@@ -153,6 +153,9 @@ public class UnaryExpression extends Expression
   public void setArgument(Expression arg) 
   { argument = arg; } 
 
+  public Attribute getAccumulator() 
+  { return accumulator; } 
+
   public void setAccumulator(Attribute att) 
   { accumulator = att; } 
 
@@ -1526,7 +1529,18 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
   { return argument.getBaseEntityUses(); }  
 
   public Vector getVariableUses()
-  { return argument.getVariableUses(); }  
+  { if (operator.equals("lambda"))
+    { Vector ss = argument.getVariableUses(); 
+      Vector removals = new Vector(); 
+      if (accumulator != null)
+      { removals.add(new BasicExpression(accumulator)); } 
+    
+      ss.removeAll(removals);
+      return ss; 
+    } 
+    
+    return argument.getVariableUses(); 
+  }  
 
   public Vector getUses(String feature)
   { return argument.getUses(feature); } 
@@ -4046,6 +4060,32 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
     return operator + "(" + argument + ")";  
   } 
 
+  public String toAST()
+  { String res = "(UnaryExpression "; 
+    
+    if (operator.equals("lambda"))
+    { res = res + "lambda " + accumulator.getName() + " : " + accumulator.getType().toAST() + " in " + argument.toAST() + ")";
+      if (needsBracket)
+      { return "(BracketedExpression ( " + res + " ) )"; }
+      return res; 
+    } 
+  
+    if (operator.equals("-"))
+    { res = res + "- " + argument.toAST() + ")"; 
+      if (needsBracket)
+      { return "(BracketedExpression ( " + res + " ) )"; }
+      return res;
+    }
+  
+    if (operator.equals("_"))
+    { return "_" + argument; }
+  
+    if (operator.startsWith("->"))
+    { return res + argument.toAST() + " " + operator + " ( ) )"; } 
+
+    return res + operator + " ( " + argument.toAST() + " ) )";  
+  } 
+
   public String saveModelData(PrintWriter out) 
   { String id = Identifier.nextIdentifier("unaryexpression_");
     out.println(id + " : UnaryExpression"); 
@@ -4147,7 +4187,15 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
 
   public Expression substituteEq(final String var,
                                  final Expression val)
-  { Expression newarg = argument.substituteEq(var,val);
+  { if (operator.equals("lambda") && 
+        accumulator != null && 
+        var.equals(accumulator.getName()))
+    { return this; }
+
+    /* (lambda v : T in e)[val/v] is (lambda v : T in e) */ 
+    /* Also v should not occur in val. */ 
+ 
+    Expression newarg = argument.substituteEq(var,val);
     UnaryExpression res = new UnaryExpression(operator,newarg);
     res.needsBracket = needsBracket; 
     res.umlkind = umlkind; 

@@ -605,9 +605,14 @@ public class ASTBasicTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement); 
       return "ProgramException"; } // default 
 
-    if ("typeParameter".equals(tag))
-    { modelElement = new Type(value, null); 
-      expression = new BasicExpression((Type) modelElement); 
+    if ("typeParameter".equals(tag) || 
+        "classOrInterfaceType".equals(tag))
+    { modelElement = Type.getTypeFor(value, enumtypes, entities); 
+      if (modelElement == null)
+      { modelElement = new Type(value, null); }  
+      expression = new BasicExpression((Type) modelElement);
+      System.out.println(">> Identified type " + this + " ==> " + modelElement); 
+ 
       return value; 
     } 
 

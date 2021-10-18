@@ -160,7 +160,8 @@ abstract class Expression
 
   public static String getCInputType(Type t) 
   { String tname = t.getName(); 
-    if ("String".equals(tname)) { return "char"; } 
+    if ("String".equals(tname)) 
+    { return "char"; } 
     return tname; 
   } 
 
@@ -223,6 +224,8 @@ abstract class Expression
   public Entity getEntity() { return entity; } 
 
   public abstract void setPre(); 
+
+  public abstract String toAST(); 
 
   public Vector mutants()
   { Vector res = new Vector(); 
@@ -1690,6 +1693,7 @@ abstract class Expression
     if (op.equals("or")) { return simplifyOr(e1,e2); }
     if (op.equals("=>")) { return simplifyImp(e1,e2); } 
     if (op.equals("=")) { return simplifyEq(e1,e2,vars); }
+    // if (op.equals("->apply")) { return simplifyApply(e1,e2,vars); }
     if (op.equals("!=") || op.equals("/=")) { return simplifyNeq(e1,e2,vars); } 
     if (op.equals(":")) { return simplifyIn(e1,e2,vars); }
     if (comparitors.contains(op)) { return simplifyIneq(op,e1,e2); } 
@@ -1709,11 +1713,13 @@ abstract class Expression
     else if (op.equals("=")) { res = simplifyEq(e1,e2); }
     else if (op.equals("!=") || op.equals("/=")) { res = simplifyNeq(e1,e2); } 
     else if (op.equals(":")) { res = simplifyIn(e1,e2); } 
+    else if (op.equals("->apply")) { res = simplifyApply(e1,e2); } 
     else if (comparitors.contains(op)) { res = simplifyIneq(op,e1,e2); } 
     else { res = new BinaryExpression(op,e1,e2); } 
     res.setBrackets(needsBrackets); 
     return res; 
   }
+
 
   public static List simplifyAnd(final List e1s, final List e2s) 
   { if (e1s == null) { return e2s; } 
@@ -1765,6 +1771,43 @@ abstract class Expression
     { return new BasicExpression("false"); } 
     return new BinaryExpression("&",e1,e2);  
   }   // if (e1.subformulaOf(e2)) { return e2; } 
+
+
+  public static boolean isLambdaApplication(Expression pred)
+  { if (pred instanceof BinaryExpression)
+    { BinaryExpression be = (BinaryExpression) pred; 
+      if (be.getOperator().equals("->apply") && 
+          be.getLeft() instanceof UnaryExpression) 
+      { UnaryExpression f = (UnaryExpression) be.getLeft(); 
+        if (f.getOperator().equals("lambda") && 
+            f.getAccumulator() != null) 
+        { return true; } 
+      } 
+    } 
+    return false; 
+  } 
+
+  public static Expression simplifyApply(Expression be) 
+  { if (be instanceof BinaryExpression) 
+    { BinaryExpression fapp = (BinaryExpression) be; 
+      return Expression.simplifyApply(fapp.getLeft(), fapp.getRight()); 
+    } 
+    return be; 
+  } 
+
+  public static Expression simplifyApply(Expression func, Expression arg)
+  { if (func instanceof UnaryExpression) 
+    { UnaryExpression f = (UnaryExpression) func; 
+      if (f.getOperator().equals("lambda") && 
+          f.getAccumulator() != null) 
+      { Attribute var = f.getAccumulator(); 
+        String vname = var.getName(); 
+        Expression lbody = f.getArgument(); 
+        return lbody.substituteEq(vname,arg); 
+      } 
+    } 
+    return new BinaryExpression("->apply", func, arg); 
+  }  
 
   public static Expression simplifyExistsAnd(final Expression e1,
                                        final Expression e2)

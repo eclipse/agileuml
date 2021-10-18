@@ -295,7 +295,7 @@ public class ASTCompositeTerm extends ASTTerm
   { if ("variableDeclarators".equals(tag))
     { ASTCompositeTerm vd1 = (ASTCompositeTerm) terms.get(0);
       String res = vd1.toKM3VarInit();
-      // expression = vd1.expression; 
+      expression = vd1.expression; 
       statement = vd1.statement; 
       return res; 
     } 
@@ -305,7 +305,7 @@ public class ASTCompositeTerm extends ASTTerm
       
       ASTTerm expr = (ASTTerm) terms.get(2); 
       String res = expr.toKM3();
-      // expression = expr.expression;
+      expression = expr.expression;
       statement = expr.statement;  
       return res;  
     } 
@@ -3375,7 +3375,8 @@ public class ASTCompositeTerm extends ASTTerm
             if (arg.expression != null && 
                 callarg1.expression != null) 
             { expression = 
-                new UnaryExpression("->prepend", 
+                new BinaryExpression("->prepend",
+                                arg.expression, 
                                 callarg1.expression); 
               statement = 
                 new AssignStatement(arg.expression, 
@@ -3396,7 +3397,8 @@ public class ASTCompositeTerm extends ASTTerm
             if (arg.expression != null && 
                 callarg1.expression != null) 
             { expression = 
-                new UnaryExpression("->append", 
+                new BinaryExpression("->append",
+                                arg.expression, 
                                 callarg1.expression); 
               statement = 
                 new AssignStatement(arg.expression, 
@@ -5134,8 +5136,8 @@ public class ASTCompositeTerm extends ASTTerm
             BinaryExpression rlhs = 
               new BinaryExpression(":", varexpr, 
                                    arg.expression);
-            BinaryExpression rrhs = 
-              new BinaryExpression("->apply", 
+            Expression rrhs = 
+              Expression.simplifyApply( 
                           callarg.expression, varexpr);   
             expression = 
               new BinaryExpression("|R", rlhs, rrhs); 
@@ -5166,8 +5168,8 @@ public class ASTCompositeTerm extends ASTTerm
             BinaryExpression rlhs = 
               new BinaryExpression(":", varexpr, 
                                    arg.expression);
-            BinaryExpression rrhs = 
-              new BinaryExpression("->apply", 
+            Expression rrhs = 
+              Expression.simplifyApply( 
                           callarg.expression, varexpr);   
             expression = 
               new BinaryExpression("|", rlhs, rrhs); 
@@ -5197,8 +5199,8 @@ public class ASTCompositeTerm extends ASTTerm
             BinaryExpression rlhs = 
               new BinaryExpression(":", varexpr, 
                                    arg.expression);
-            BinaryExpression rrhs = 
-              new BinaryExpression("->apply", 
+            Expression rrhs = 
+              Expression.simplifyApply( 
                           callarg.expression, varexpr);   
             expression = 
               new BinaryExpression("|C", rlhs, rrhs); 
@@ -5228,8 +5230,8 @@ public class ASTCompositeTerm extends ASTTerm
             BinaryExpression rlhs = 
               new BinaryExpression(":", varexpr, 
                                    arg.expression);
-            BinaryExpression rrhs = 
-              new BinaryExpression("->apply", 
+            Expression rrhs = 
+              Expression.simplifyApply( 
                           callarg.expression, varexpr);   
             expression = 
               new BinaryExpression("|C", rlhs, rrhs); 
@@ -5258,8 +5260,8 @@ public class ASTCompositeTerm extends ASTTerm
             BinaryExpression rlhs = 
               new BinaryExpression(":", varexpr, 
                                    arg.expression);
-            BinaryExpression rrhs = 
-              new BinaryExpression("->apply", 
+            Expression rrhs = 
+              Expression.simplifyApply( 
                           callarg.expression, varexpr);   
             expression = 
               new BinaryExpression("|C", rlhs, rrhs); 
@@ -5286,8 +5288,8 @@ public class ASTCompositeTerm extends ASTTerm
             BinaryExpression rlhs = 
               new BinaryExpression(":", varexpr, 
                                    arg.expression);
-            BinaryExpression rrhs = 
-              new BinaryExpression("->apply", 
+            Expression rrhs = 
+              Expression.simplifyApply( 
                           callarg.expression, varexpr);   
             expression = 
               new BinaryExpression("|C", rlhs, rrhs); 
@@ -5319,8 +5321,8 @@ public class ASTCompositeTerm extends ASTTerm
             BasicExpression varexpr = 
               BasicExpression.newVariableBasicExpression( 
                                    "(_acc,_var)");
-            BinaryExpression rrhs = 
-              new BinaryExpression("->apply", 
+            Expression rrhs = 
+              Expression.simplifyApply( 
                           callarg.expression, varexpr);   
             BinaryExpression iter = 
               new BinaryExpression("->iterate",
@@ -5346,8 +5348,8 @@ public class ASTCompositeTerm extends ASTTerm
               new BinaryExpression(":", loopVar, arg.expression); 
             forTest.setType(
                             new Type("boolean", null));
-            BinaryExpression lambdaApp = 
-              new BinaryExpression("->apply", 
+            Expression lambdaApp = 
+              Expression.simplifyApply( 
                           callarg.expression, loopVar);   
             ImplicitInvocationStatement lBody = 
               new ImplicitInvocationStatement(lambdaApp);  
@@ -5377,8 +5379,8 @@ public class ASTCompositeTerm extends ASTTerm
             BinaryExpression rlhs = 
               new BinaryExpression(":", varexpr, 
                                    arg.expression);
-            BinaryExpression rrhs = 
-              new BinaryExpression("->apply", 
+            Expression rrhs = 
+              Expression.simplifyApply( 
                           callarg.expression, varexpr);   
             expression = 
               new BinaryExpression("!", rlhs, rrhs); 
@@ -5404,8 +5406,8 @@ public class ASTCompositeTerm extends ASTTerm
             BinaryExpression rlhs = 
               new BinaryExpression(":", varexpr, 
                                    arg.expression);
-            BinaryExpression rrhs = 
-              new BinaryExpression("->apply", 
+            Expression rrhs = 
+              Expression.simplifyApply( 
                           callarg.expression, varexpr);   
             expression = 
               new BinaryExpression("#", rlhs, rrhs); 
@@ -5431,8 +5433,8 @@ public class ASTCompositeTerm extends ASTTerm
             BinaryExpression rlhs = 
               new BinaryExpression(":", varexpr, 
                                    arg.expression);
-            BinaryExpression rrhs = 
-              new BinaryExpression("->apply", 
+            Expression rrhs = 
+              Expression.simplifyApply( 
                           callarg.expression, varexpr);
             UnaryExpression nrrhs = 
               new UnaryExpression("not", rrhs);    
@@ -6230,10 +6232,42 @@ public class ASTCompositeTerm extends ASTTerm
             new BasicExpression(new Type("OclDate", null)); 
           
           expression = 
-              BasicExpression.newCallBasicExpression(
+              BasicExpression.newStaticCallBasicExpression(
                 "getSystemTime", dateExpr); 
           
           return "OclDate.getSystemTime()"; 
+        } 
+        else if ("getProperty".equals(called) && "System".equals(args))
+        { ASTTerm.setType(thisliteral,"String"); 
+          ASTTerm arg1 = (ASTTerm) cargs.get(0);
+          String callp1 = arg1.toKM3(); 
+       
+          Expression procExpr = 
+            new BasicExpression(new Type("OclProcess", null)); 
+          
+          expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "getEnvironmentProperty", procExpr, arg1.expression); 
+          
+          return "OclProcess.getEnvironmentProperty(" + callp1 + ")"; 
+        } 
+        else if ("exit".equals(called) && "System".equals(args))
+        { // ASTTerm.setType(thisliteral,"String"); 
+          ASTTerm arg1 = (ASTTerm) cargs.get(0);
+          String callp1 = arg1.toKM3(); 
+       
+          Expression procExpr = 
+            new BasicExpression(new Type("OclProcess", null)); 
+          
+          expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "exit", procExpr, arg1.expression); 
+          statement =               
+            InvocationStatement.newInvocationStatement(
+                expression, arg1.expression); 
+
+
+          return "OclProcess.exit(" + callp1 + ")"; 
         } 
         else if (arg.isDate() && 
                  ("getTimeInMillis".equals(called) || 
@@ -9425,13 +9459,20 @@ public class ASTCompositeTerm extends ASTTerm
       // { res = res + " := " + km3init; }  
       ASTTerm.setType(km3var,km3type);
       Attribute att = Attribute.newAttribute(km3var, km3type, ASTTerm.enumtypes, ASTTerm.entities); 
+
       if (actualType != null) 
-      { att.setType(actualType); } 
+      { att.setType(actualType); 
+        att.setElementType(actualType.getElementType()); 
+      }
+ 
+      if (varTerm.expression != null) 
+      { att.setInitialExpression(varTerm.expression); }
+
       modelElement = att;  
       // and set its initialisation. 
 
-      System.out.println(">> Type of " + km3var + " is " + km3type); 
-      System.out.println(">> Attribute = " + att); 
+      System.out.println(">> Type of " + km3var + " is " + km3type + " = " + km3init); 
+      System.out.println(">> Attribute = " + att + " " + att.getType() + " (" + att.getElementType() + ")"); 
       System.out.println(); 
       return res + ";\n"; 
     }   
@@ -9585,6 +9626,7 @@ public class ASTCompositeTerm extends ASTTerm
         String btype = baseType.toKM3();
         modelElement = baseType.modelElement; 
         expression = baseType.expression; // Not valid
+
         if (modelElement != null)
         { if (targs.size() > 1) // Maps, Functions
           { Type ktype = (Type) targs.get(0); 
@@ -9597,7 +9639,7 @@ public class ASTCompositeTerm extends ASTTerm
             ((Type) modelElement).setElementType(etype);
           }  
           expression = new BasicExpression((Type) modelElement); 
-          System.out.println(modelElement);
+          System.out.println(">> Parameterised type: " + modelElement);
           System.out.println(expression); 
           System.out.println(); 
         }  

@@ -1,6 +1,7 @@
 
 import java.util.Vector; 
 import java.io.*; 
+import javax.swing.JOptionPane; 
 
 /******************************
 * Copyright (c) 2003--2021 Kevin Lano
@@ -1212,6 +1213,17 @@ public class Attribute extends ModelElement
     { out.println("    attribute " + getName() + " : " + getType() + ";"); } 
   } 
 
+  public String toAST()
+  { if (isStatic())
+    { return "(Attribute static attribute " + getName() + " : " + getType().toAST() + " )"; } 
+    else if (isIdentity())
+    { return "(Attribute attribute " + getName() + " identity : " + getType().toAST() + " )"; }
+    else if (isDerived())
+    { return "(Attribute attribute " + getName() + " derived : " + getType().toAST() + " )"; }
+    else  
+    { return "(Attribute attribute " + getName() + " : " + getType().toAST() + " )"; } 
+  } 
+
   public String getKM3()
   { if (isStatic())
     { return "    static attribute " + getName() + " : " + getType() + ";"; } 
@@ -1360,9 +1372,11 @@ public class Attribute extends ModelElement
   public String methodDeclarationCSharp()
   { String res = ""; 
     res = "    " + getType().getCSharp() + " " + getName(); 
-    String initval = getInitialValue(); 
+    Expression initval = getInitialExpression(); 
     if (initval != null) 
-    { res = res + " = " + initval; } 
+    { java.util.Map env = new java.util.HashMap(); 
+      res = res + " = " + initval.queryFormCSharp(env,true); 
+    } 
     else 
     { res = res + " = " + getType().getDefaultCSharp(); } 
     res = res + ";\n";
@@ -1382,10 +1396,16 @@ public class Attribute extends ModelElement
     if (!instanceScope) { out.print("static "); } 
     if (isFinal()) { out.print("const "); } 
     type.generateCSharp(out);
-    if (isFinal() && initialValue != null) 
-    { out.print(getName() + " = " + initialValue + ";"); } 
+
+    java.util.Map env = new java.util.HashMap(); 
+
+    if (isFinal() && initialExpression != null) 
+    { out.print(getName() + " = " + initialExpression.queryFormCSharp(env,true) + ";"); } 
+    else if (!instanceScope && initialExpression != null) 
+    { out.print(getName() + " = " + initialExpression.queryFormCSharp(env,true) + ";"); }
     else 
     { out.print(getName() + ";"); }
+
     if (kind == ModelElement.INTERNAL)
     { out.println(" // internal"); }
     else if (kind == ModelElement.SEN)
@@ -1690,6 +1710,9 @@ public class Attribute extends ModelElement
     if (frozen && initialExpression == null)   
     { return nme + " = " + nme + "x;"; }
     if (isFinal()) { return ""; }
+
+    System.out.println(">> Initial expression/value of " + this + " is " + initialExpression + " " + initialValue); 
+    System.out.println(); 
 
     if (initialExpression != null) 
     { java.util.Map env = new java.util.HashMap();
@@ -2586,7 +2609,10 @@ public class Attribute extends ModelElement
     if (!isMultiple()) { return res; }
     Type eType = elementType; 
     if (elementType == null) 
-    { eType = new Type("OclAny", null); } 
+    { JOptionPane.showMessageDialog(null, "Warning: null element type in attribute " + this, 
+        "", JOptionPane.ERROR_MESSAGE);  
+      eType = new Type("OclAny", null); 
+    } 
 
     
     String nme = getName();
@@ -2816,7 +2842,7 @@ public class Attribute extends ModelElement
     return res;
   }
 
-  public String setAllOperationCSharp(String ename)
+  public String setAllOperationCSharp(Entity ent, String ename)
   { // public static void setAllatt(ArrayList es, T val)
     // { update e.att for e in es }
     if (frozen || isMultiple()) { return ""; } 
@@ -2832,13 +2858,15 @@ public class Attribute extends ModelElement
     // else // enum or int
     // { typ = "int"; }
 
+    String epars = ent.typeParameterTextCSharp(); 
+
     String es = ename.toLowerCase() + "_s";
     String res = "  public static void setAll" + nme;
     res = res + "(ArrayList " + es + "," + typ + " val)\n";
     res = res + "  { for (int i = 0; i < " + es +
           ".Count; i++)\n";
-    res = res + "    { " + ename + " " + ex + " = (" +
-          ename + ") " + es + "[i];\n";
+    res = res + "    { " + ename + epars + " " + ex + " = (" +
+          ename + epars + ") " + es + "[i];\n";
     res = res + "      " + update + " } }\n";
     return res;
   }
@@ -3123,7 +3151,8 @@ public class Attribute extends ModelElement
     { elem = ename + "." + nme; } 
     String item = elem;
     String tname = type.getCSharp();
-    
+
+    String epars = ent.typeParameterTextCSharp(); 
     String es = ename.toLowerCase() + "_s";
 
 
@@ -3136,7 +3165,7 @@ public class Attribute extends ModelElement
     } 
     else  
     { res = res + "    for (int _i = 0; _i < " + es + ".Count; _i++)\n";
-      res = res + "    { " + ename + " " + ex + " = (" + ename + ") " + es + "[_i];\n";
+      res = res + "    { " + ename + epars + " " + ex + " = (" + ename + ") " + es + "[_i];\n";
       res = res + "      if (result.Contains(" + item + ")) { }\n"; 
       res = res + "      else { result.Add(" + item + "); } }\n";
     } 
@@ -3760,6 +3789,8 @@ public class Attribute extends ModelElement
     String opheader = ""; 
     String nme = getName();
     String ename = ent.getName(); 
+    String epars = ent.typeParameterTextCSharp(); 
+
     String ex = ename.toLowerCase() + "x"; 
     String es = ename.toLowerCase() + "_s"; 
     Vector vals = type.getValues();
@@ -3788,7 +3819,7 @@ public class Attribute extends ModelElement
     { String indexmap = ename.toLowerCase() + nme + "index";
       String wattx = attx; 
       String oldatt = ex + ".get" + nme + "()"; 
-      opheader = "public void set" + nme + "(" + ename + " " +
+      opheader = "public void set" + nme + "(" + ename + epars + " " +
              ex + ", " + t +
              " " + attx + ") \n  { if (" + indexmap + 
              "[" + wattx + "] != null) { return; }\n  " +
@@ -3798,23 +3829,23 @@ public class Attribute extends ModelElement
     } 
     else if (instanceScope) 
     { if (type.isSequence())
-      { opheader = "public void set" + nme + "(" + ename + " " +
+      { opheader = "public void set" + nme + "(" + ename + epars + " " +
              ex + ", int _ind, " + et + " " + attx + ") \n  { " +
            ex + ".set" + nme + "(_ind, " + attx + "); }\n\n  ";
        } 
-       opheader = opheader + "public void set" + nme + "(" + ename + " " +
+       opheader = opheader + "public void set" + nme + "(" + ename + epars + " " +
              ex + ", " + t + " " + attx + ") \n  { " +
            ex + ".set" + nme + "(" + attx + ");\n  "; 
     } 
     else 
     { opheader = "public void set" + nme + "(" + t +
              " " + attx + ") \n  { " +
-             ename + ".set" + nme + "(" + attx + ");\n  " + 
+             ename + epars + ".set" + nme + "(" + attx + ");\n  " + 
              "for (int i = 0; i < " + es + ".Count; i++)\n" + 
-             "  { " + ename + " " + ex + " = (" + ename + ") " + es + "[i];\n" +
+             "  { " + ename + epars + " " + ex + " = (" + ename + ") " + es + "[i];\n" +
              "    set" + nme + "(" + ex + "," + attx + "); } }\n\n";
       opheader = opheader + 
-             "  public void set" + nme + "(" + ename + " " +
+             "  public void set" + nme + "(" + ename + epars + " " +
              ex + ", " + t +
              " " + attx + ") \n  { " +
              ex + ".localSet" + nme + "(" + attx + ");\n  ";  
@@ -3856,24 +3887,26 @@ public class Attribute extends ModelElement
 
     String opheader = "";
     String ename = ent.getName();
+    String epars = ent.typeParameterTextCSharp(); 
+
     String ex = ename.toLowerCase() + "x";
     String nme = getName();
     String attx = nme + "_x";
 
     if (instanceScope)
-    { opheader = "  public void add" + nme + "(" + ename + " " + ex + ", " + et + " " + attx + ")\n" +
+    { opheader = "  public void add" + nme + "(" + ename + epars + " " + ex + ", " + et + " " + attx + ")\n" +
          "  { " + ex + ".add" + nme + "(" + attx + "); }\n\n";
        res.add(opheader);
-       String removeop = "  public void remove" + nme + "(" + ename + " " + ex + ", " + et + " " + attx + ")\n" +
+       String removeop = "  public void remove" + nme + "(" + ename + epars + " " + ex + ", " + et + " " + attx + ")\n" +
          "  { " + ex + ".remove" + nme + "(" + attx + "); }\n\n";
        res.add(removeop);
     }
    else
     { opheader = "  public void add" + nme + "(" + et + " " + attx + ")\n" +
-         "  { " + ename + ".add" + nme + "(" + attx + "); }\n\n";
+         "  { " + ename + epars + ".add" + nme + "(" + attx + "); }\n\n";
        res.add(opheader);
        String removeop = "  public void remove" + nme + "(" + et + " " + attx + ")\n" +
-         "  { " + ename + ".remove" + nme + "(" + attx + "); }\n\n";
+         "  { " + ename + epars + ".remove" + nme + "(" + attx + "); }\n\n";
        res.add(removeop);
     }
     return res;
