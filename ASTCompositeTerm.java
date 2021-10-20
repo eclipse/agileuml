@@ -1200,14 +1200,14 @@ public class ASTCompositeTerm extends ASTTerm
         System.out.println(); 
  
         if ("getRuntime".equals(called) && "Runtime".equals(args))
-        { ASTTerm.setType(this, "Runtime"); 
+        { ASTTerm.setType(this, "OclProcess"); 
           expression = 
             BasicExpression.newStaticCallBasicExpression(
-                                  "getRuntime", "Runtime"); 
-          return "Runtime.getRuntime()"; 
+                                  "getRuntime", "OclProcess"); 
+          return "OclProcess.getRuntime()"; 
         } 
         else if ("exec".equals(called) && 
-                 "Runtime".equals(ASTTerm.getType(arg)))
+                 "OclProcess".equals(ASTTerm.getType(arg)))
         { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
           String callp1 = callarg1.toKM3(); 
           ASTTerm.setType(thisliteral,"OclProcess");
@@ -6250,6 +6250,18 @@ public class ASTCompositeTerm extends ASTTerm
                 "getEnvironmentProperty", procExpr, arg1.expression); 
           
           return "OclProcess.getEnvironmentProperty(" + callp1 + ")"; 
+        } 
+        else if ("getProperties".equals(called) && "System".equals(args))
+        { ASTTerm.setType(thisliteral,"Map(String,String)"); 
+          
+          Expression procExpr = 
+            new BasicExpression(new Type("OclProcess", null)); 
+          
+          expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "getEnvironmentProperties", procExpr); 
+          
+          return "OclProcess.getEnvironmentProperties()"; 
         } 
         else if ("exit".equals(called) && "System".equals(args))
         { // ASTTerm.setType(thisliteral,"String"); 

@@ -257,7 +257,7 @@ public class ASTBasicTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement); 
       return "OclAttribute"; }
 
-    if ("Thread".equals(value) || 
+    if ("Thread".equals(value) || "Runtime".equals(value) || 
         "Process".equals(value))
     { modelElement = new Type("OclProcess", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -608,8 +608,10 @@ public class ASTBasicTerm extends ASTTerm
     if ("typeParameter".equals(tag) || 
         "classOrInterfaceType".equals(tag))
     { modelElement = Type.getTypeFor(value, enumtypes, entities); 
+
       if (modelElement == null)
       { modelElement = new Type(value, null); }  
+
       expression = new BasicExpression((Type) modelElement);
       System.out.println(">> Identified type " + this + " ==> " + modelElement); 
  

@@ -481,6 +481,8 @@ public class GUIBuilder
       String ename = ent.getName();
       String es = ename.toLowerCase() + "s"; 
       Vector eops = ent.getOperations();  
+      mutationTestsOp = mutationTestsOp +
+         "      int " + es + "_instances = Controller.inst()." + es + ".size();\n"; 
       
       for (int j = 0; j < eops.size(); j++) 
       { BehaviouralFeature bf = (BehaviouralFeature) eops.get(j); 
@@ -489,8 +491,7 @@ public class GUIBuilder
           mutationTestsOp = mutationTestsOp + 
           "      int[] " + es + "_" + bfname + "_counts = new int[100]; \n" +   
           "      int[] " + es + "_" + bfname + "_totals = new int[100]; \n" +   
-          "      int " + es + "_" + bfname + "_instances = Controller.inst()." + es + ".size();\n" +  
-          "      for (int _i = 0; _i < " + es + "_" + bfname + "_instances; _i++)\n" + 
+          "      for (int _i = 0; _i < " + es + "_instances; _i++)\n" + 
           "      { " + ename + " _ex = (" + ename + ") Controller.inst()." + es + ".get(_i);\n" +  
           "        MutationTest." + bfname + "_mutation_tests(_ex," + es + "_" + bfname + "_counts, " + es + "_" + bfname + "_totals);\n" + 
           "      }\n" + 
@@ -921,6 +922,9 @@ public class GUIBuilder
       String ename = ent.getName();
       String es = ename.toLowerCase(); 
       String einstances = ename + "." + ename + "_allInstances"; 
+      mutationTestsOp = mutationTestsOp +
+         "      int _" + es + "_instances = Controller.inst()." + es + ".size();\n"; 
+
       Vector eops = ent.getOperations();  
       
       for (int j = 0; j < eops.size(); j++) 
@@ -930,7 +934,6 @@ public class GUIBuilder
           mutationTestsOp = mutationTestsOp + 
           "      int[] " + es + "_" + bfname + "_counts = new int[100]; \n" +   
           "      int[] " + es + "_" + bfname + "_totals = new int[100]; \n" +   
-          "      int _" + es + "_instances = " + einstances + ".size();\n" + 
           "      for (int _i = 0; _i < _" + es + "_instances ; _i++)\n" + 
           "      { " + ename + " _ex = (" + ename + ") " + einstances + ".get(_i);\n" +  
           "        MutationTest." + bfname + "_mutation_tests(_ex," + es + "_" + bfname + "_counts, " + es + "_" + bfname + "_totals);\n" + 
@@ -1346,6 +1349,8 @@ public class GUIBuilder
       String ename = ent.getName();
       String es = ename.toLowerCase() + "s"; 
       Vector eops = ent.getOperations();  
+      mutationTestsOp = mutationTestsOp + 
+        "      int _" + es + "_instances = Controller.inst()." + es + ".size();\n";  
       
       for (int j = 0; j < eops.size(); j++) 
       { BehaviouralFeature bf = (BehaviouralFeature) eops.get(j); 
@@ -1354,7 +1359,6 @@ public class GUIBuilder
           mutationTestsOp = mutationTestsOp + 
           "      int[] " + es + "_" + bfname + "_counts = new int[100]; \n" +   
           "      int[] " + es + "_" + bfname + "_totals = new int[100]; \n" +   
-          "      int _" + es + "_instances = Controller.inst()." + es + ".size();\n" + 
           "      for (int _i = 0; _i < _" + es + "_instances; _i++)\n" + 
           "      { " + ename + " _ex = (" + ename + ") Controller.inst()." + es + ".get(_i);\n" +  
           "        MutationTest." + bfname + "_mutation_tests(_ex," + es + "_" + bfname + "_counts, " + es + "_" + bfname + "_totals);\n" + 

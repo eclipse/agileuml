@@ -161,6 +161,8 @@ implements Cloneable
 
   public abstract Vector cgparameters(); 
 
+  public abstract Vector singleMutants(); 
+
   abstract String bupdateForm(); 
 
   public abstract BStatement bupdateForm(java.util.Map env, boolean local);
@@ -184,6 +186,8 @@ implements Cloneable
   abstract Vector dataDependents(Vector allvars, Vector vars); 
 
   abstract String toStringJava(); 
+
+  abstract String toAST(); 
 
   abstract String saveModelData(PrintWriter out); 
 
@@ -625,6 +629,24 @@ class ReturnStatement extends Statement
     return "return " + value;
   } 
 
+  public String toAST()
+  { if (value == null)
+    { return "(Statement return)"; } 
+    return "(Statement return " + value.toAST() + ")";
+  } 
+
+  public Vector singleMutants()
+  { if (value == null) 
+    { return new Vector(); } 
+    Vector exprs = value.singleMutants(); 
+    Vector res = new Vector(); 
+    for (int i = 0; i < exprs.size(); i++) 
+    { Expression mvalue = (Expression) exprs.get(i); 
+      res.add(new ReturnStatement(mvalue)); 
+    } 
+    return res; 
+  } 
+
   public String saveModelData(PrintWriter out)
   { String res = Identifier.nextIdentifier("returnstatement_"); 
     out.println(res + " : ReturnStatement"); 
@@ -837,6 +859,16 @@ class BreakStatement extends Statement
   public String toString() 
   { return "break"; } 
 
+  public String toAST() 
+  { return "(Statement break)"; } 
+
+  public Vector singleMutants()
+  { Vector res = new Vector(); 
+    res.add(new ContinueStatement()); 
+    // res.add(new ReturnStatement()); 
+    return res; 
+  } 
+
   public String bupdateForm()
   { return " "; } 
 
@@ -973,6 +1005,15 @@ class ContinueStatement extends Statement
 
   public String toString() 
   { return "continue"; } 
+
+  public String toAST()
+  { return "(Statement continue)"; } 
+
+  public Vector singleMutants()
+  { Vector res = new Vector(); 
+    res.add(new BreakStatement()); 
+    return res; 
+  } 
 
   public String bupdateForm()
   { return " "; } 
@@ -1156,6 +1197,19 @@ class InvocationStatement extends Statement
     callExp = be; 
   } 
 
+  InvocationStatement(Expression be)
+  { action = be + ""; 
+    target = null; 
+    assignsTo = null; 
+    parameters = new Vector();
+    if (be instanceof BasicExpression) 
+    { BasicExpression bexpr = (BasicExpression) be; 
+      if (bexpr.getParameters() != null)  
+      { parameters.addAll(bexpr.getParameters()); } 
+    }  
+    callExp = be; 
+  } 
+
   InvocationStatement(String act)
   { action = act; 
     target = null; 
@@ -1283,6 +1337,20 @@ class InvocationStatement extends Statement
     res = res + callExp; 
     return res; 
   } 
+
+  public String toAST()
+  { return "(Statement call " + callExp.toAST() + " )"; } 
+
+  public Vector singleMutants()
+  { Vector res = new Vector(); 
+    Vector exprs = callExp.singleMutants(); 
+    for (int i = 0; i < exprs.size(); i++) 
+    { Expression mut = (Expression) exprs.get(i); 
+      res.add(new InvocationStatement(mut));
+    }  
+    return res; 
+  } 
+
 
   public String saveModelData(PrintWriter out)
   { String res = Identifier.nextIdentifier("operationcallstatement_"); 
@@ -1763,6 +1831,20 @@ class ImplicitInvocationStatement extends Statement
   { String res = "execute ( " + callExp + " )"; 
     return res; 
   } 
+
+  public String toAST()
+  { return "(Statement execute " + callExp.toAST() + " )"; } 
+
+  public Vector singleMutants()
+  { Vector res = new Vector(); 
+    Vector exprs = callExp.singleMutants(); 
+    for (int i = 0; i < exprs.size(); i++) 
+    { Expression expr = (Expression) exprs.get(i); 
+      res.add(new ImplicitInvocationStatement(expr)); 
+    } 
+    return res; 
+  } 
+
 
   public String saveModelData(PrintWriter out)
   { String res = Identifier.nextIdentifier("implicitcallstatement_"); 
@@ -2462,6 +2544,40 @@ class WhileStatement extends Statement
     res = res + loopTest + " do " + body + " "; 
     if (brackets)
     { res = "( " + res + " )"; } 
+    return res; 
+  } 
+
+  public String toAST()
+  { String res = "(Statement "; 
+    if (loopKind == FOR)
+    { res = res + "for " + loopVar + " : " + loopRange.toAST() + " do " + body.toAST() + " )"; }
+    else 
+    { res = res + "while " + loopTest.toAST() + " do " + 
+            body.toAST() + " )"; }
+    return res;  
+  }  
+
+  public Vector singleMutants()
+  { Vector res = new Vector();
+
+    if (loopKind == WHILE)
+    { Vector exprs = loopTest.singleMutants(); 
+      for (int i = 0; i < exprs.size(); i++) 
+      { Expression mut = (Expression) exprs.get(i); 
+        WhileStatement clne = (WhileStatement) clone(); 
+        clne.loopTest = mut; 
+        res.add(clne);
+      } 
+    }  // FOR -> mutate the loopRange.
+
+    Vector bodymutants = body.singleMutants(); 
+    for (int i = 0; i < bodymutants.size(); i++) 
+    { Statement mut = (Statement) bodymutants.get(i); 
+      WhileStatement clne = (WhileStatement) clone(); 
+      clne.body = mut; 
+      res.add(clne);
+    } 
+ 
     return res; 
   } 
 
@@ -3304,6 +3420,14 @@ class CreationStatement extends Statement
       { return "  var " + assignsTo + " : " + createsInstanceOf + " := " + initialExpression; } 
       return "  var " + assignsTo + " : " + createsInstanceOf; 
     }
+  } 
+
+  public String toAST()
+  { return "(Statement var " + assignsTo + " : " + instanceType.toAST() + " )"; } 
+
+  public Vector singleMutants()
+  { Vector res = new Vector(); 
+    return res; 
   } 
 
   public String saveModelData(PrintWriter out) 
@@ -4153,12 +4277,83 @@ class SequenceStatement extends Statement
       { res = res + ss + " ; "; }
       else 
       { res = res + ss + " "; } 
-    } 
+    }
+ 
     if (brackets)
     { res = "( " + res + " )"; } 
+
     return res; 
   }
 
+  public String toAST()
+  { if (statements.size() == 0)
+    { return "(Statement skip)"; }
+    String res = "(Statement ";  
+    if (statements.size() == 1)
+    { Statement s1 = (Statement) statements.get(0); 
+      res = res + s1.toAST() + " )"; 
+    } 
+    else 
+    { Statement s1 = (Statement) statements.get(0); 
+      res = res + s1.toAST() + " ; ";
+      Vector remstats = new Vector(); 
+      remstats.addAll(statements); 
+      remstats.remove(0); 
+      Statement seqrem = new SequenceStatement(remstats); 
+      res = res + seqrem.toAST(); 
+      res = res + " )";  
+    }
+
+    if (brackets)
+    { res = "(Statement ( " + res + " ) )"; } 
+
+    return res; 
+  }
+
+  public Vector singleMutants()
+  { // a single mutant of s1 followed by seqrem, or 
+    // s1 followed by single mutant of seqrem
+
+    Vector res = new Vector(); 
+
+    if (statements.size() == 0)
+    { return res; }
+
+    if (statements.size() == 1)
+    { Statement s1 = (Statement) statements.get(0); 
+      res = s1.singleMutants(); 
+    } 
+    else 
+    { Statement s1 = (Statement) statements.get(0); 
+      Vector s1muts = s1.singleMutants();
+      Vector remstats = new Vector(); 
+      remstats.addAll(statements); 
+      remstats.remove(0); 
+
+      for (int k = 0; k < s1muts.size(); k++)
+      { Statement s1mut = (Statement) s1muts.get(k); 
+        Vector s1rem = new Vector(); 
+        s1rem.add(s1mut); 
+        s1rem.addAll(remstats); 
+        Statement seqrem = new SequenceStatement(s1rem); 
+        res.add(seqrem);
+      }
+
+      Statement srest = new SequenceStatement(remstats); 
+      Vector restmuts = srest.singleMutants(); 
+
+      for (int k = 0; k < restmuts.size(); k++)
+      { Statement restmut = (Statement) restmuts.get(k); 
+        Vector s1rem = new Vector(); 
+        s1rem.add(s1); 
+        s1rem.add(restmut); 
+        Statement seqrem = new SequenceStatement(s1rem); 
+        res.add(seqrem);
+      }
+ 
+    }
+    return res; 
+  } 
 
   public boolean typeCheck(Vector types, Vector entities, Vector cs, Vector env)
   { boolean res = true;  
@@ -4496,6 +4691,24 @@ class CaseStatement extends Statement
     { System.out.print("END  "); } 
     System.out.println(" "); 
   } 
+
+  public String toAST()
+  { String res = "(Statement "; 
+
+    int n = cases.elements.size();
+
+    for (int i = 0; i < n; i++)
+    { Maplet mm = (Maplet) cases.elements.elementAt(i);
+      res = res + "if " + ((Named) mm.source).label + " then ";
+      res = res + ((Statement) mm.dest).toAST() + " "; 
+      if (i < n-1) 
+      { res = res + "else "; } 
+    }
+    return res + ")";  
+  } 
+
+  public Vector singleMutants() 
+  { return new Vector(); } 
 
   public String saveModelData(PrintWriter out)
   { String res = Identifier.nextIdentifier("sequencestatement_"); 
@@ -4847,6 +5060,22 @@ class ErrorStatement extends Statement
   public String toString()
   { return "  error " + thrownObject; }
 
+  public String toAST()
+  { return "(Statement error " + thrownObject.toAST() + " )"; } 
+
+  public Vector singleMutants()
+  { if (thrownObject == null) 
+    { return new Vector(); } 
+    Vector exprs = thrownObject.singleMutants(); 
+    Vector res = new Vector(); 
+    for (int i = 0; i < exprs.size(); i++) 
+    { Expression mvalue = (Expression) exprs.get(i); 
+      res.add(new ErrorStatement(mvalue)); 
+    } 
+    return res; 
+  } 
+
+
   public void display(PrintWriter out)
   { out.println("  error " + thrownObject); }
 
@@ -5093,6 +5322,25 @@ class AssertStatement extends Statement
     { return "  assert " + condition + " do " + message; }
   }
 
+  public String toAST()
+  { if (message == null)
+    { return "(Statement assert " + condition.toAST() + " )"; } 
+    return "(Statement assert " + condition.toAST() + " do " + message.toAST() + " )";
+  } 
+
+  public Vector singleMutants()
+  { if (condition == null) 
+    { return new Vector(); } 
+    Vector exprs = condition.singleMutants(); 
+    Vector res = new Vector(); 
+    for (int i = 0; i < exprs.size(); i++) 
+    { Expression mvalue = (Expression) exprs.get(i); 
+      res.add(new AssertStatement(mvalue,message)); 
+    } 
+    return res; 
+  } 
+
+
   public void display(PrintWriter out)
   { if (message == null) 
     { out.println("  assert " + condition); } 
@@ -5336,6 +5584,12 @@ class CatchStatement extends Statement
   public String getOperator() 
   { return "catch"; } 
 
+  public String toAST()
+  { return "(Statement catch " + caughtObject.toAST() + " )"; } 
+
+  public Vector singleMutants()
+  { return new Vector(); }
+
   public Object clone() 
   { return new CatchStatement(caughtObject,action); } 
 
@@ -5555,6 +5809,12 @@ class TryStatement extends Statement
   public TryStatement(Statement stat) 
   { body = stat; } 
 
+  public TryStatement(Statement stat, Vector cclauses, Statement es) 
+  { body = stat; 
+    catchClauses = cclauses; 
+    endStatement = es; 
+  } 
+
   public void setClauses(Vector stats)
   { catchClauses = stats; } 
 
@@ -5604,6 +5864,36 @@ class TryStatement extends Statement
   
     return res; 
   }
+
+  public String toAST()
+  { String res = "(Statement try ";
+    if (body != null) 
+    { res = res + body.toAST() + " "; } 
+
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cs = (Statement) catchClauses.get(i); 
+      res = res + cs.toAST() + " "; 
+    }
+
+    if (endStatement != null) 
+    { res = res + endStatement.toAST() + " "; }
+  
+    return res + ")"; 
+  }
+
+  public Vector singleMutants()
+  { if (body == null) 
+    { return new Vector(); } 
+    
+    Vector stats = body.singleMutants(); 
+    Vector res = new Vector(); 
+    for (int i = 0; i < stats.size(); i++) 
+    { Statement mvalue = (Statement) stats.get(i); 
+      res.add(new TryStatement(mvalue, catchClauses, endStatement)); 
+    } 
+
+    return res; 
+  } 
 
   public String getOperator() 
   { return "try"; } 
@@ -6448,6 +6738,27 @@ class IfStatement extends Statement
      return res;
    }
 
+   public String toAST()
+   { int n = cases.size();
+     String res = "(Statement if ";
+     for (int i = 0; i < n; i++)
+     { IfCase ic = (IfCase) cases.get(i);
+       Expression test = ic.getTest();
+       Statement stat = ic.getIf();
+       if ("true".equals(test + ""))
+       { res = res + stat.toAST() + " "; }
+       else 
+       { res = res + "  if " + test.toAST() + " then " + stat.toAST() + " ";
+         if (i < n-1)
+         { res = res + " else "; }
+       }
+     }
+     return res + ")";
+   }
+
+  public Vector singleMutants() 
+  { return new Vector(); } 
+
   public boolean typeCheck(Vector types, Vector entities, Vector cs, Vector env)
   { boolean res = true;
     for (int i = 0; i < cases.size(); i++) 
@@ -7052,6 +7363,21 @@ class AssignStatement extends Statement
     else 
     { return lhs + " : " + type + " := " + rhs + " "; } 
   }  
+
+  public String toAST() 
+  { String res = "(Statement " + lhs.toAST() + " := " + rhs.toAST() + " )"; 
+    return res;  
+  }  
+
+  public Vector singleMutants()
+  { Vector exprs = rhs.singleMutants(); 
+    Vector res = new Vector(); 
+    for (int i = 0; i < exprs.size(); i++) 
+    { Expression mut = (Expression) exprs.get(i); 
+      res.add(new AssignStatement(lhs,mut)); 
+    } 
+    return res; 
+  } // also lhs? 
 
   public String saveModelData(PrintWriter out) 
   { String res = Identifier.nextIdentifier("assignstatement_"); 
@@ -7752,11 +8078,20 @@ class ConditionalStatement extends Statement
   public Expression getTest()
   { return test; } 
 
+  public void setTest(Expression tst)
+  { test = tst; } 
+
   public Statement ifPart()
   { return ifPart; } 
 
   public Statement elsePart()
   { return elsePart; } 
+
+  public void setIfPart(Statement st)
+  { ifPart = st; } 
+
+  public void setElsePart(Statement st)
+  { elsePart = st; } 
 
   public String cg(CGSpec cgs)
   { String etext = this + "";
@@ -7823,6 +8158,53 @@ class ConditionalStatement extends Statement
 
     return res;
   }
+
+  public String toAST()
+  { String res = "(Statement if " + test.toAST() + " then " + ifPart.toAST() + " ";
+
+    if (elsePart == null || "skip".equals(elsePart + "")) 
+    { res = res + " else skip )"; } 
+    else 
+    { res = res + " else ( " + elsePart.toAST() + " ) )"; }
+
+    return res;
+  }
+
+  public Vector singleMutants()
+  { Vector res = new Vector(); 
+    
+    Vector exprs = test.singleMutants(); 
+    for (int i = 0; i < exprs.size(); i++) 
+    { Expression mut = (Expression) exprs.get(i); 
+      ConditionalStatement ifclone = (ConditionalStatement) clone(); 
+      ifclone.setTest(mut); 
+      res.add(ifclone); 
+    } 
+
+    if (ifPart == null) 
+    { return res; } 
+
+    Vector ifmuts = ifPart.singleMutants(); 
+    for (int i = 0; i < ifmuts.size(); i++) 
+    { Statement mut = (Statement) ifmuts.get(i); 
+      ConditionalStatement ifclone = (ConditionalStatement) clone(); 
+      ifclone.setIfPart(mut); 
+      res.add(ifclone); 
+    } 
+    
+    if (elsePart == null) 
+    { return res; } 
+
+    Vector elsemuts = elsePart.singleMutants(); 
+    for (int i = 0; i < elsemuts.size(); i++) 
+    { Statement mut = (Statement) elsemuts.get(i); 
+      ConditionalStatement ifclone = (ConditionalStatement) clone(); 
+      ifclone.setElsePart(mut); 
+      res.add(ifclone); 
+    } 
+
+    return res;
+  } 
 
   public String toStringJava()
   { String res = "if (" + test + ") { " + ifPart + " } ";
@@ -8162,6 +8544,25 @@ class FinalStatement extends Statement
   public String toString()
   { String res = "    finally " + body;
     return res;
+  }
+
+  public String toAST()
+  { String res = "(Statement finally " + body.toAST() + " )";
+    return res;
+  }
+
+  public Vector singleMutants()
+  { Vector res = new Vector(); 
+
+    if (body == null) 
+    { return res; } 
+
+    Vector jb = body.singleMutants();
+    for (int i = 0; i < jb.size(); i++) 
+    { Statement st = (Statement) jb.get(i); 
+      res.add(new FinalStatement(st)); 
+    } 
+    return res; 
   }
 
   public String toStringJava()

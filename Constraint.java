@@ -3675,6 +3675,16 @@ public Constraint generalType0inverse()
     return res; 
   }  // the baseEntities are regenerated
 
+  public String toAST()
+  { String ostring = ""; 
+    if (owner != null) 
+    { ostring = owner.getName(); } 
+
+    String res = "(Constraint " + ostring + " :: "; 
+    res = res + antecedent().toAST() + " => " + succedent().toAST() + " ; )"; 
+    return res; 
+  }  // the baseEntities are regenerated
+
   public String saveAssertion(PrintWriter out)
   { out.println("Assumption:"); 
     out.println(cond0); 

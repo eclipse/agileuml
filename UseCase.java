@@ -2824,6 +2824,101 @@ public void generateCUIcode(PrintWriter out)
     } 
   }  
 
+  public String toAST()
+  { Vector saved = new Vector(); 
+    return toAST(saved); 
+  } 
+
+  public String toAST(Vector saved)
+  { // if (derived) { return; } 
+    String res = ""; 
+
+    Vector extlist = new Vector(); 
+    Vector inclist = new Vector(); 
+
+    // and extensions, inclusions
+    for (int j = 0; j < extend.size(); j++) 
+    { Extend ee = (Extend) extend.get(j); 
+      UseCase ext = ee.extension; 
+      extlist.add(ext.getName()); 
+    }       
+  
+    for (int j = 0; j < include.size(); j++) 
+    { Include ee = (Include) include.get(j); 
+       
+      UseCase inc = ee.addition; 
+      inclist.add(inc.getName()); 
+
+      if (saved.contains(inc.getName())) { } 
+      else 
+      { res = res + inc.toAST(saved) + "\n"; }  
+    }       
+    res = res + "\n";
+    
+
+    String nme = getName();
+    String retType = "void"; 
+    if (resultType != null)
+    { retType = resultType.toAST(); }
+
+    if (saved.contains(nme)) { }     
+    else 
+    { res = res + " (UseCase " + nme + " : " + retType + " { ";
+         
+      for (int i = 0; i < inclist.size(); i++) 
+      { res = res + " includes " + inclist.get(i) + " ; "; }  
+    
+      for (int i = 0; i < extlist.size(); i++) 
+      { res = res + " extendedBy " + extlist.get(i) + " ; "; }  
+
+      saved.add(nme); 
+    
+      for (int i = 0; i < parameters.size(); i++) 
+      { Attribute par = (Attribute) parameters.get(i); 
+        res = res + " parameter " + par.getName() + " : " + par.getType().toAST() + " ; ";  
+      }  // and initial value
+
+      for (int i = 0; i < stereotypes.size(); i++) 
+      { String stereo = (String) stereotypes.get(i); 
+        res = res + " stereotype " + stereo + " ; "; 
+      }
+
+      for (int i = 0; i < ownedAttribute.size(); i++) 
+      { Attribute par = (Attribute) ownedAttribute.get(i); 
+        res = res + " attribute " + par.getName() + " : " + par.getType().toAST() + " ; ";  
+      }  // and initial value
+
+      for (int i = 0; i < ownedOperations.size(); i++) 
+      { BehaviouralFeature op = (BehaviouralFeature) ownedOperations.get(i); 
+        res = res + "  " + op.toAST() + " ; ";  
+      }  
+	   
+      for (int i = 0; i < preconditions.size(); i++) 
+      { Constraint con = (Constraint) preconditions.get(i); 
+        Expression ante = con.antecedent(); 
+        Expression succ = con.succedent(); 
+        if (ante == null || "true".equals(ante + ""))
+        { res = res + " precondition " + succ.toAST() + " ; "; } 
+        else 
+        { res = res + " precondition (BinaryExpression " + ante.toAST() + " => " + succ.toAST() + " ) ; "; } 
+      }  
+	
+      for (int i = 0; i < orderedPostconditions.size(); i++) 
+      { ConstraintOrGroup con = (ConstraintOrGroup) orderedPostconditions.get(i); 
+        res = res + con.toAST() + " ";
+      } 
+
+      if (activity != null) 
+      { res = res + " activity: ";  
+        res = res + activity.toAST() + " ; "; 
+      }
+
+      res = res + "  } )"; 
+    } 
+    return res; 
+  }  
+
+  
   public String getKM3()
   { Vector saved = new Vector(); 
     return getKM3(saved); 
@@ -2884,7 +2979,7 @@ public void generateCUIcode(PrintWriter out)
 
       for (int i = 0; i < stereotypes.size(); i++) 
       { String stereo = (String) stereotypes.get(i); 
-        res = res + "  stereotype " + stereo + ";\n"; 
+        res = res + "    stereotype " + stereo + ";\n"; 
       }
 
       res = res + "\n";

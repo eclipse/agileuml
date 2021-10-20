@@ -216,6 +216,23 @@ public class BehaviouralFeature extends ModelElement
       res.add(bfclone); 
     } 
 
+
+    if (res.size() == 0 && activity != null) 
+    { Vector statmuts = activity.singleMutants(); 
+      for (int i = 0; i < statmuts.size(); i++) 
+      { Statement statmut = (Statement) statmuts.get(i); 
+        BehaviouralFeature bfclone = (BehaviouralFeature) this.clone(); 
+        bfclone.setName(nme + "_mutant_" + i); 
+        bfclone.setActivity(statmut); 
+        bfclone.setDerived(true); 
+        res.add(bfclone); 
+      }
+
+    }  
+
+    JOptionPane.showMessageDialog(null, "Mutant versions of " + getName() + " are: " + res, 
+                "", JOptionPane.INFORMATION_MESSAGE);  
+
     myMutants = new Vector(); 
     myMutants.addAll(res); 
 
@@ -262,7 +279,7 @@ public class BehaviouralFeature extends ModelElement
             "    }\n";  
         } 
         testcode = testcode +
-             "  } catch (Exception _e) { _e.printStackTrace(); }\n"; 
+             "  } catch (Throwable _e) { _e.printStackTrace(); }\n"; 
         res.add(testcode); 
       }  
     }  
@@ -309,7 +326,7 @@ public class BehaviouralFeature extends ModelElement
             "    }\n";  
         } 
         testcode = testcode +
-             "  } catch (Exception _e) { _e.printStackTrace(); }\n"; 
+             "  } catch (Throwable _e) { _e.printStackTrace(); }\n"; 
         res.add(testcode); 
       }  
     }  
@@ -356,7 +373,7 @@ public class BehaviouralFeature extends ModelElement
             "    }\n";  
         } 
         testcode = testcode +
-             "  } catch (Exception _e) { _e.printStackTrace(); }\n"; 
+             "  } catch (Throwable _e) { _e.printStackTrace(); }\n"; 
         res.add(testcode); 
       }  
     }  
@@ -403,7 +420,7 @@ public class BehaviouralFeature extends ModelElement
             "    }\n";  
         } 
         testcode = testcode +
-             "  } catch (Exception _e) { _e.printStackTrace(); }\n"; 
+             "  } catch (Throwable _e) { _e.printStackTrace(); }\n"; 
         res.add(testcode); 
       }  
     }  
@@ -2801,7 +2818,7 @@ public class BehaviouralFeature extends ModelElement
      
     if (activity != null) 
     { res = res + "post: " + post.toAST() + " ";
-      res = res + "activity: " + activity + " "; 
+      res = res + "activity: " + activity.toAST() + " "; 
     } 
     else 
     { res = res + "post: " + post.toAST() + " "; } 

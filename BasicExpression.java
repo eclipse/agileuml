@@ -1823,7 +1823,7 @@ class BasicExpression extends Expression
     if (objectRef != null)
     { res = res + objectRef.toAST() + " . " + data; } 
     else 
-    { res = data; } 
+    { res = res + data; } 
 
     if (prestate)
     { res = res + " @pre"; }
@@ -1841,7 +1841,7 @@ class BasicExpression extends Expression
     if (arrayIndex != null)
     { res = res + " [ " + arrayIndex.toAST() + " ]"; } 
 
-    return res; 
+    return res + " )"; 
   }
 
   public String saveModelData(PrintWriter out) // the RSDS internal representation

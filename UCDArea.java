@@ -1766,13 +1766,25 @@ public class UCDArea extends JPanel
   { for (int i = 0; i < constraints.size(); i++) 
     { Constraint cons = (Constraint) constraints.get(i); 
       Constraint cc = (Constraint) cons.clone(); 
-      System.out.println("OCL Form: " + cc.toOcl()); 
+      System.out.println("OCL Form of global constraint: " + cc.toOcl()); 
     } 
+
+    System.out.println(">>> AST of classes and use cases: "); 
+    System.out.println(); 
 
     for (int i = 0; i < entities.size(); i++)
     { Entity ent = (Entity) entities.get(i); 
       System.out.println(ent.toAST()); 
     } 
+
+    Vector saved = new Vector(); 
+
+    for (int i = 0; i < useCases.size(); i++) 
+    { if (useCases.get(i) instanceof UseCase)
+      { UseCase uc = (UseCase) useCases.get(i);
+        System.out.println(uc.toAST(saved)); 
+      } 
+    }  
   }
 
   public void listEntities()
@@ -8400,7 +8412,10 @@ public class UCDArea extends JPanel
   } 
 
   public void generateCSharp(PrintWriter out, PrintWriter out2)
-  { out.println("using System;"); 
+  { java.util.Date d1 = new java.util.Date(); 
+    long t1 = d1.getTime(); 
+
+    out.println("using System;"); 
     out.println("using System.Collections;"); 
     out.println("using System.IO;"); 
     out.println("using System.Text;"); 
@@ -8476,6 +8491,9 @@ public class UCDArea extends JPanel
     }
     catch (Exception ex) { }
 
+    java.util.Date d2 = new java.util.Date(); 
+    long t2 = d2.getTime();
+    System.out.println(">>> Time taken for code-generation: " + (t2-t1));  
   }
 
   public void generateCPP(PrintWriter out, PrintWriter out2)
