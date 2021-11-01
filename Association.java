@@ -9442,7 +9442,14 @@ String qual = "";
   }  
 
   public String generateClosureOperation() // for x-* self-associations only
-  { if (card2 == ONE) { return ""; } 
+  { if (entity1.isExternal() || entity1.isComponent())
+    { return ""; } 
+    if (entity2.isExternal() || entity2.isComponent())
+    { return ""; } 
+
+
+    if (card2 == ONE) 
+    { return ""; } 
     Entity sup; 
     if (entity1 == entity2) 
     { sup = entity1; }
@@ -9486,7 +9493,12 @@ String qual = "";
   }
 
   public String generateClosureOperationJava6() // for x-* self-associations only
-  { if (card2 == ONE) { return ""; } 
+  { if (entity1.isExternal() || entity1.isComponent())
+    { return ""; } 
+    if (entity2.isExternal() || entity2.isComponent())
+    { return ""; } 
+
+    if (card2 == ONE) { return ""; } 
     Entity sup; 
     if (entity1 == entity2) 
     { sup = entity1; }
@@ -9532,7 +9544,12 @@ String qual = "";
   }
 
   public String generateClosureOperationJava7() // for x-* self-associations only
-  { // if (entity1 != entity2) { return ""; } 
+  { if (entity1.isExternal() || entity1.isComponent())
+    { return ""; } 
+    if (entity2.isExternal() || entity2.isComponent())
+    { return ""; } 
+
+    // if (entity1 != entity2) { return ""; } 
     if (card2 == ONE) { return ""; } 
     Entity sup; 
     if (entity1 == entity2) 
@@ -9583,7 +9600,12 @@ String qual = "";
   }
 
   public String generateClosureOperationCSharp() // for x-* self-associations only
-  { if (card2 == ONE) { return ""; } 
+  { if (entity1.isExternal() || entity1.isComponent())
+    { return ""; } 
+    if (entity2.isExternal() || entity2.isComponent())
+    { return ""; } 
+
+    if (card2 == ONE) { return ""; } 
     Entity sup; 
     if (entity1 == entity2) 
     { sup = entity1; }
@@ -9625,7 +9647,12 @@ String qual = "";
   }
 
   public String generateClosureOperationCPP() // for x-* self-associations only
-  { if (card2 == ONE) { return ""; } 
+  { if (entity1.isExternal() || entity1.isComponent())
+    { return ""; } 
+    if (entity2.isExternal() || entity2.isComponent())
+    { return ""; } 
+
+    if (card2 == ONE) { return ""; } 
     Entity sup; 
     if (entity1 == entity2) 
     { sup = entity1; }

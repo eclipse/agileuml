@@ -3537,7 +3537,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { mutantop = "->notEmpty"; }
     else if (operator.equals("->notEmpty"))
     { mutantop = "->isEmpty"; }
-    else if (operator.equals("->sum"))
+    else if (operator.equals("->sum") && argument.isNumericCollection())
     { mutantop = "->prd"; }
     else if (operator.equals("->prd"))
     { mutantop = "->sum"; }

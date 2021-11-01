@@ -308,6 +308,7 @@ public class KM3Editor extends JFrame implements DocumentListener
      int linestart = 0; // start position of the current line
 
      int linecount = 0; // line count of current line. 
+     int charcount = 0; // position in current line.
 
      StringBuffer line = new StringBuffer(); 
      StringBuffer conbuffer = new StringBuffer(); 
@@ -316,10 +317,12 @@ public class KM3Editor extends JFrame implements DocumentListener
      { char c = txt.charAt(i); 
        if (c == '\n')
        { linecount++; 
+         charcount = 0; 
          String ls = line.toString(); 
          String tls = ls.trim(); 
          if (tls.startsWith("abstract class") || 
-             tls.startsWith("class") || 
+             tls.startsWith("class") ||
+             tls.startsWith("interface") ||  
              tls.startsWith("usecase") || 
              tls.startsWith("enumeration") || 
              tls.startsWith("datatype"))
@@ -339,10 +342,12 @@ public class KM3Editor extends JFrame implements DocumentListener
          linestart = i+1; 
        } 
        else if (c != '\r') 
-       { line.append(c); } 
+       { line.append(c); 
+         charcount++; 
+       }  
      } 
 
-     thisLabel.setText("Line number: " + (linecount+1) + " Position: " + linestart); 
+     thisLabel.setText("Line number: " + (linecount+1) + " Position: " + (charcount+1)); 
 
      conbuffer.append(line.toString()); 
      cons.add(conbuffer.toString()); 
@@ -367,6 +372,9 @@ public class KM3Editor extends JFrame implements DocumentListener
 	  try 
 	  { String ch = textPane.getText(pos,1); 
 	    // System.out.println("Insert event at: " + offset + " " + pos + " " + textPane.getText(pos,1)); 
+         String prevpos = null; 
+         if (pos > 0)
+         { prevpos = textPane.getText(pos-1,1); } 
 
          String txt = textPane.getText(0,pos); 
          
@@ -394,6 +402,11 @@ public class KM3Editor extends JFrame implements DocumentListener
          // { messageArea.setText("iden : Type for data declaration or\n  ::\n  P => Q;\n for usecase postcondition\n\r"); } 
          else if ('[' == cc)
          { messageArea.setText("col[val]\n access to val-indexed element of sequence or map col for read or update.\nEquivalent to col->at(val) for read access.\n\r"); } 
+         else if (":".equals(prevpos) && ':' == cc)
+         { messageArea.setText(":: or EntityName::\n Scope definition for use case postcondition.\n\r"); } 
+         else if ("=".equals(prevpos) && '>' == cc)
+         { messageArea.setText("Implication =>\n Pre => Post for use case postconditions or operation postconditions.\n\r"); } 
+         
 
 
          Vector errors = new Vector();

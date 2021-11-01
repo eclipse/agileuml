@@ -34,8 +34,19 @@ public class ASTBasicTerm extends ASTTerm
     return res; 
   } 
 
+  public String toJSON()
+  { String res = "{ \"root\" : \"" + value + "\", \"children\" : [] }"; 
+    return res; 
+  } 
+
   public String literalForm()
   { String res = value; 
+    return res; 
+  } 
+
+  public Vector tokenSequence()
+  { Vector res = new Vector(); 
+    res.add("\"" + value + "\""); 
     return res; 
   } 
 

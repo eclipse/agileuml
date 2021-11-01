@@ -35,6 +35,22 @@ public class CSTL
     }
   }
 
+  public static void loadTemplates(Vector types, Vector entities, String excluding)
+  { File dir = new File("./cg");
+    String[] dirfiles = dir.list();
+    for (int i = 0; i < dirfiles.length; i++)
+    { File sub = new File("./cg/" + dirfiles[i]);
+      if (sub != null && dirfiles[i].endsWith(".cstl") && 
+          !(dirfiles[i].equals(excluding)))
+      { System.out.println(">>> Loading CSTL template: " + dirfiles[i]); 
+        CGSpec cg = new CGSpec(entities); 
+        CGSpec res = loadCSTL(cg, sub,types,entities); 
+        if (res != null) 
+        { addTemplate(dirfiles[i], res); }         
+      }
+    }
+  }
+
   public static void loadTemplates(Vector fileNames, Vector types, Vector entities)
   { File dir = new File("./cg");
     String[] dirfiles = dir.list();
@@ -85,9 +101,12 @@ public class CSTL
       { eof = true; 
         break; 
       }
-      else if (s.startsWith("/*") && s.endsWith("*/")) 
+      
+      s = s.trim(); 
+
+      if (s.startsWith("/*") && s.endsWith("*/")) 
       { } 
-      else if (s.trim().length() == 0) { } 
+      else if (s.length() == 0) { } 
       // else if (s.startsWith("import "))
       // { String[] strs = s.split(" "); 
       //   if (strs.length > 1) 

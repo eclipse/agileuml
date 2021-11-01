@@ -755,7 +755,37 @@ public class Entity extends ModelElement implements Comparable
   } 
 
   public Vector getTypeParameters()
-  { return typeParameters; } 
+  { return typeParameters; }
+
+  public Vector getTypeParameterNames()
+  { Vector res = new Vector(); 
+    for (int i = 0; i < typeParameters.size(); i++) 
+    { Type tp = (Type) typeParameters.get(i); 
+      res.add(tp.getName()); 
+    }
+    return res; 
+  } 
+
+  public static String getAllTypeParameters(Vector entities)
+  { Vector tps = new Vector(); 
+    for (int i = 0; i < entities.size(); i++)
+    { Entity ent = (Entity) entities.get(i); 
+      Vector tpsent = ent.getTypeParameterNames(); 
+      tps = VectorUtil.union(tps, tpsent); 
+    } 
+
+    String res = ""; 
+    if (tps.size() == 0) 
+    { return res; } 
+    res = "<"; 
+    for (int i = 0; i < tps.size(); i++)  
+    { res = res + tps.get(i); 
+      if (i < tps.size()-1) 
+      { res = res + ","; } 
+    } 
+    res = res + ">"; 
+    return res; 
+  } 
 
   public boolean hasTypeParameters()
   { return typeParameters != null &&
@@ -6468,19 +6498,19 @@ public class Entity extends ModelElement implements Comparable
   { if (isInterface()) { return; } 
     String nme = getName(); 
     String vis = "public"; 
-    String pars = typeParameterTextCSharp(); 
+    String tpars = typeParameterTextCSharp(); 
 
     if (isSingleton()) 
     { vis = "private";
       String inst = "instance_" + nme; 
-      out.println("  public static " + nme + pars + " inst()"); 
+      out.println("  public static " + nme + tpars + " inst()"); 
       out.println("  { if (" + inst + " == null) { " + 
-                           inst + " = new " + nme + pars + "(); }"); 
+                           inst + " = new " + nme + tpars + "(); }"); 
       out.println("    return " + inst + ";"); 
       out.println("  }\n"); 
     } 
 
-    out.print("  " + vis + " " + nme + pars + "(");
+    out.print("  " + vis + " " + nme + "(");
     boolean previous = false;
     String res = "";
     for (int i = 0; i < attributes.size(); i++)
@@ -9429,8 +9459,8 @@ public class Entity extends ModelElement implements Comparable
     String es = ename.toLowerCase() + "_s";
     String tests = ""; 
     String upds = ""; 
-    String pars = typeParameterTextCSharp(); 
-    String header = "  public " + ename + pars + " create" + ename +
+    String tpars = typeParameterTextCSharp(); 
+    String header = "  public " + ename + tpars + " create" + ename +
                  "(" + createOpParametersCSharp() + ")\n";
     String inits = ""; 
 
@@ -9453,8 +9483,8 @@ public class Entity extends ModelElement implements Comparable
     String cardcheck = cardinalityCheckCodeCSharp(es); 
     String res = createAllOpCSharp(ename,ex) + "\n" + 
                  header + "  { \n" + cardcheck + tests + "    " + 
-                 ename + pars + " " + ex + " = new " +
-                 ename + pars + "(" + createOpArgs() + ");\n";
+                 ename + tpars + " " + ex + " = new " +
+                 ename + tpars + "(" + createOpArgs() + ");\n";
     res = res + "    add" + ename + "(" + ex + ");\n";
     res = res + inits; 
     for (int j = 0; j < associations.size(); j++)
@@ -10199,9 +10229,11 @@ public class Entity extends ModelElement implements Comparable
     String precode = ""; 
     String endcode = "";
     String midcode = ""; 
+    String tpars = typeParameterTextCSharp(); 
+
     String res = killAllOpCSharp(ename,ex); 
     res = res + "  public void kill" + ename +
-                 "(" + ename + " " + ex + ")\n";
+                 "(" + ename + tpars + " " + ex + ")\n";
     res = res + "  { " + es + ".Remove(" + ex + ");\n";
     for (int i = 0; i < assocs.size(); i++)
     { Association ast = (Association) assocs.get(i);
@@ -10518,9 +10550,11 @@ public class Entity extends ModelElement implements Comparable
   }  
 
   private String killAllOpCSharp(String ename, String ex)
-  { String res = "  public void killAll" + ename + "(ArrayList " + ex + ")\n"; 
+  { String tpars = typeParameterTextCSharp(); 
+
+    String res = "  public void killAll" + ename + "(ArrayList " + ex + ")\n"; 
     res = res + "  { for (int _i = 0; _i < " + ex + ".Count; _i++)\n" + 
-          "    { kill" + ename + "((" + ename + ") " + ex + "[_i]); }\n" + 
+          "    { kill" + ename + "((" + ename + tpars + ") " + ex + "[_i]); }\n" + 
           "  }\n\n"; 
     return res; 
   }  
@@ -10710,11 +10744,13 @@ public class Entity extends ModelElement implements Comparable
   }  // and addename for each
 
   private String createAllOpCSharp(String ename, String ex)
-  { String exx = ex + "_x"; 
+  { String exx = ex + "_x";
+    String tpars = typeParameterTextCSharp(); 
+ 
     String res = "  public void createAll" + ename + "(ArrayList " + ex + ")\n"; 
     res = res + 
           "  { for (int i = 0; i < " + ex + ".Count; i++)\n" + 
-          "    { " + ename + " " + exx + " = new " + ename + "();\n" + 
+          "    { " + ename + tpars + " " + exx + " = new " + ename + tpars + "();\n" + 
           "      " + ex + "[i] = " + exx + ";\n" +
           "      add" + ename + "(" + exx + ");\n" +
           "    }\n" +   
@@ -11816,7 +11852,7 @@ public class Entity extends ModelElement implements Comparable
         if (primkey == null)
         { System.err.println(
             "ERROR!: no primary key for entity " + enttype); 
-          res = res + "  { return " + refname + ".defaultInstance() }\n\n"; 
+          res = res + "  { return " + refname + ".defaultInstance" + refname + "() }\n\n"; 
         } 
         else 
         { res = res + "  { return " + refname + "." + refname + "_index[" + attnme + "]! }\n\n";
@@ -14301,6 +14337,7 @@ public void iosDbiOperations(PrintWriter out)
   }
 
 
+  // For Controller::setObjectFeatureValue
   public String getCSharpSetFeatureOp()
   { if (isAbstract() || isInterface()) { return ""; } 
 
@@ -14309,6 +14346,7 @@ public void iosDbiOperations(PrintWriter out)
     String res = "";
     Vector atts = allDefinedAttributes(); 
     Vector assts = allDefinedAssociations(); 
+    String gpar = typeParameterTextCSharp(); 
 
     for (int j = 0; j < atts.size(); j++)
     { Attribute att = (Attribute) atts.get(j);
@@ -14334,7 +14372,7 @@ public void iosDbiOperations(PrintWriter out)
       else if (t.isEnumeration())
       { valc = "(" + tname + ") int.Parse(val)"; } 
       else if (t.isEntity())
-      { String ent2 = tname;
+      { String ent2 = t.getCSharp(); 
         valc = "(" + ent2 + ") objectmap[val]\n"; 
       } 
       else if ("OclAny".equals(tname) ||
@@ -14344,7 +14382,7 @@ public void iosDbiOperations(PrintWriter out)
 
       res = res + "\n" +  
         "    if (\"" + cname + "\".Equals(classmap[a]) && f.Equals(\"" + aname + "\"))\n" +
-        "    { " + cname + " " + cx + " = (" + cname + ") objectmap[a];\n" +
+        "    { " + cname + gpar + " " + cx + " = (" + cname + gpar + ") objectmap[a];\n" +
         "      set" + aname + "(" + cx + "," + valc + ");\n" +
         "      return;\n" +
         "    }\n"; 
@@ -15174,24 +15212,31 @@ public BehaviouralFeature designAbstractKillOp()
         res.addAll(bfcases);
         String bfname = bf.getName(); 
         System.out.println(">>> Tests for " + bfname + " are: " + opTests);
+        System.out.println(">>> A maximum of 100 tests will be included in MutationTest.java");
+        System.out.println(); 
   
         if (bf.isMutatable())
         { 
           Vector mutantoperations = bf.getMutants();  
-    
-          Vector mutationTests = bf.formMutantCalls(mutantoperations,bfcases,opTests); 
+          Vector testcalls = new Vector(); 
+
+          Vector mutationTests = bf.formMutantCalls(nme,mutantoperations,bfcases,opTests,testcalls); 
+
           String bfmutanttest = "  public static void " + bfname + "_mutation_tests(" + nme + " _self, int[] _counts, int[] _totals)\n" + 
           "  { "; 
-          for (int j = 0; j < mutationTests.size(); j++) 
-          { String tst = (String) mutationTests.get(j); 
-            bfmutanttest = bfmutanttest + tst + "\n"; 
+
+          for (int j = 0; j < mutationTests.size() && j < testcalls.size() && j < 100; j++) 
+          { String tst = (String) testcalls.get(j); 
+            bfmutanttest = bfmutanttest + tst + "\n";
+            mtests.add(mutationTests.get(j));  
           } 
+
           bfmutanttest = bfmutanttest + "\n" + 
-            "   for (int i = 0; i < _counts.length; i++)\n" + 
-            "   { if (_totals[i] > 0)\n" + 
-            "     { System.out.println(\"Test \" + i + \" detects \" + (100.0*_counts[i])/_totals[i] + \"% " + bfname + " mutants\"); }\n" +
-            "     }\n" +  
-            "   }\n\n"; 
+            "    for (int i = 0; i < _counts.length; i++)\n" + 
+            "    { if (_totals[i] > 0)\n" + 
+            "      { System.out.println(\"Test \" + i + \" detects \" + (100.0*_counts[i])/_totals[i] + \"% " + bfname + " mutants\"); }\n" +
+            "    }\n" +  
+            "  }\n\n"; 
           // System.out.println(bfmutanttest);
           mtests.add(bfmutanttest);  
         }   
@@ -15215,18 +15260,22 @@ public BehaviouralFeature designAbstractKillOp()
         res.addAll(bfcases);
         String bfname = bf.getName(); 
         System.out.println(">>> Tests for " + bfname + " are: " + opTests);
+        System.out.println(">>> A maximum of 100 tests will be included in MutationTest.java");
+        System.out.println(); 
   
         if (bf.isMutatable())
         { 
           Vector mutantoperations = bf.getMutants();  
     
           Vector mutationTests = bf.formMutantCallsJava6(mutantoperations,bfcases,opTests); 
+
           String bfmutanttest = "  public static void " + bfname + "_mutation_tests(" + nme + " _self, int[] _counts, int[] _totals)\n" + 
           "  { "; 
-          for (int j = 0; j < mutationTests.size(); j++) 
+          for (int j = 0; j < mutationTests.size() && j < 100; j++) 
           { String tst = (String) mutationTests.get(j); 
             bfmutanttest = bfmutanttest + tst + "\n"; 
           } 
+
           bfmutanttest = bfmutanttest + "\n" + 
             "   for (int i = 0; i < _counts.length; i++)\n" + 
             "   { if (_totals[i] > 0)\n" + 
@@ -15256,6 +15305,8 @@ public BehaviouralFeature designAbstractKillOp()
         res.addAll(bfcases);
         String bfname = bf.getName(); 
         System.out.println(">>> Tests for " + bfname + " are: " + opTests);
+        System.out.println(">>> A maximum of 100 tests will be included in MutationTest.java");
+        System.out.println(); 
   
         if (bf.isMutatable())
         { 
@@ -15264,10 +15315,11 @@ public BehaviouralFeature designAbstractKillOp()
           Vector mutationTests = bf.formMutantCallsJava7(mutantoperations,bfcases,opTests); 
           String bfmutanttest = "  public static void " + bfname + "_mutation_tests(" + nme + " _self, int[] _counts, int[] _totals)\n" + 
           "  { "; 
-          for (int j = 0; j < mutationTests.size(); j++) 
+          for (int j = 0; j < mutationTests.size() && j < 100; j++) 
           { String tst = (String) mutationTests.get(j); 
             bfmutanttest = bfmutanttest + tst + "\n"; 
           } 
+
           bfmutanttest = bfmutanttest + "\n" + 
             "   for (int i = 0; i < _counts.length; i++)\n" + 
             "   { if (_totals[i] > 0)\n" + 
@@ -15297,6 +15349,8 @@ public BehaviouralFeature designAbstractKillOp()
         res.addAll(bfcases);
         String bfname = bf.getName(); 
         System.out.println(">>> Tests for " + bfname + " are: " + opTests);
+        System.out.println(">>> A maximum of 100 tests will be included in MutationTest.java");
+        System.out.println(); 
   
         if (bf.isMutatable())
         { 
@@ -15305,10 +15359,11 @@ public BehaviouralFeature designAbstractKillOp()
           Vector mutationTests = bf.formMutantCallsJava8(mutantoperations,bfcases,opTests); 
           String bfmutanttest = "  public static void " + bfname + "_mutation_tests(" + nme + " _self, int[] _counts, int[] _totals)\n" + 
           "  { "; 
-          for (int j = 0; j < mutationTests.size(); j++) 
+          for (int j = 0; j < mutationTests.size() && j < 100; j++) 
           { String tst = (String) mutationTests.get(j); 
             bfmutanttest = bfmutanttest + tst + "\n"; 
           } 
+
           bfmutanttest = bfmutanttest + "\n" + 
             "   for (int i = 0; i < _counts.length; i++)\n" + 
             "   { if (_totals[i] > 0)\n" + 

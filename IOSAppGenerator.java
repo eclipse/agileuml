@@ -3625,6 +3625,14 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
       out.println("  let " + ocltype + 
           " = createByPKOclType(key: \"" + ename + "\")"); 
       out.println("  " + ocltype + ".actualMetatype = " + ename + ".self"); 
+
+      if (ent.getSuperclass() != null)
+      { Entity sup = ent.getSuperclass();
+        String supname = sup.getName();  
+        out.println("  " + ocltype + ".addSuperclass(sup: createByPKOclType(key: \"" + supname + "\"))"); 
+      } 
+      out.println(); 
+
       Vector attribs = ent.getAttributes(); 
       for (int j = 0; j < attribs.size(); j++)
       { Attribute att = (Attribute) attribs.get(j); 
@@ -3639,6 +3647,7 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
         } 
         out.println("  " + ocltype + ".attributes.append(" + aname + ")"); 
       } 
+      out.println(); 
 
       Vector opers = ent.getOperations();
       Vector operationNames = new Vector(); 
@@ -3658,7 +3667,7 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
             out.println("  " + opopname + ".type = " + tname); 
           } 
           out.println("  " + ocltype + ".operations.append(" + opopname + ")"); 
-        }
+        } // And parameters and their types. 
       } 
       out.println(); 
     }

@@ -37,7 +37,11 @@ public abstract class ASTTerm
 
   public abstract String toString(); 
 
-  public abstract String literalForm(); 
+  public abstract String literalForm();
+
+  public abstract Vector tokenSequence(); 
+
+  public abstract String toJSON(); 
 
   public abstract String asTextModel(PrintWriter out); 
 
@@ -107,11 +111,11 @@ public abstract class ASTTerm
 
 
   public boolean hasType(String str)
-  { if ("integer".equals(str))
+  { if ("integer".equalsIgnoreCase(str))
     { return isInteger(); } 
-    if ("real".equals(str))
+    if ("real".equalsIgnoreCase(str))
     { return isReal(); } 
-    if ("boolean".equals(str))
+    if ("boolean".equalsIgnoreCase(str))
     { return isBoolean(); } 
 
     if ("Sequence".equals(str))
@@ -368,4 +372,165 @@ public abstract class ASTTerm
 
   public abstract boolean hasTag(String tagx); 
 
+  public static Vector generateASTExamples(Vector javaASTs)
+  { /* Generate corresponding OCL and Java example ASTs */
+    Vector res = new Vector(); 
+
+    /* Basic numeric expressions: */ 
+
+    for (int i = 500; i < 700; i++)
+    { ASTBasicTerm tocl = new ASTBasicTerm("BasicExpression", ""+i); 
+      res.add(tocl); 
+      ASTBasicTerm javat1 = new ASTBasicTerm("integerLiteral", ""+i); 
+      ASTCompositeTerm javat2 = new ASTCompositeTerm("literal", javat1);
+      ASTCompositeTerm javat3 = new ASTCompositeTerm("expression", javat2);
+      javaASTs.add(javat3); 
+    }
+
+    /* Unary expressions: */ 
+
+    Vector oclunary = new Vector(); 
+    Vector junary = new Vector();
+ 
+    for (int i = 0; i < 200; i++)
+    { Vector args = new Vector(); 
+      args.add(new ASTSymbolTerm("-")); 
+      args.add(res.get(i)); 
+      ASTCompositeTerm ounary = 
+        new ASTCompositeTerm("UnaryExpression", args); 
+      oclunary.add(ounary); 
+     
+      Vector jargs = new Vector(); 
+      jargs.add(new ASTSymbolTerm("-")); 
+      jargs.add(javaASTs.get(i)); 
+      ASTCompositeTerm jx = 
+        new ASTCompositeTerm("expression", jargs); 
+      junary.add(jx); 
+    } 
+
+    res.addAll(oclunary); 
+    javaASTs.addAll(junary); 
+      
+
+    return res;  
+
+  /* (expression (primary (literal (floatLiteral 0.33)))) */ 
+  /* (expression (primary (literal "double"))) */ 
+  /* (expression (primary (literal true))) */ 
+  /* (expression (primary id)) */ 
+
+
+    /* Binary numeric expressions: 
+
+    ASTBasicTerm t1 = new ASTBasicTerm("BasicExpression", "1"); 
+    ASTSymbolTerm st = new ASTSymbolTerm("+"); 
+    ASTBasicTerm t2 = new ASTBasicTerm("BasicExpression", "2"); 
+    Vector args = new Vector(); 
+    args.add(t1); args.add(st); args.add(t2); 
+    ASTCompositeTerm t = new ASTCompositeTerm("BinaryExpression", args); 
+    res.add(t); 
+
+    ASTBasicTerm jt1 = new ASTBasicTerm("integerLiteral", "1"); 
+    ASTCompositeTerm jt2 = new ASTCompositeTerm("literal", jt1);
+    ASTCompositeTerm jt3 = new ASTCompositeTerm("expression", jt2);
+    ASTBasicTerm jt4 = new ASTBasicTerm("integerLiteral", "2"); 
+    ASTCompositeTerm jt5 = new ASTCompositeTerm("literal", jt4);
+    ASTCompositeTerm jt6 = new ASTCompositeTerm("expression", jt5); 
+    ASTSymbolTerm stj = new ASTSymbolTerm("+"); 
+    Vector jargs = new Vector(); 
+    jargs.add(jt3); jargs.add(stj); jargs.add(jt6);
+    ASTCompositeTerm tj = 
+      new ASTCompositeTerm("expression", jargs); 
+    javaASTs.add(tj); 
+    return res; */ 
+  }  
 } 
+
+/* tree2tree dataset format: */ 
+
+/* {"target_ast": 
+      {"root": "<LET>", 
+       "children": 
+          [{"root": "blank", 
+              "children": []}, 
+           {"root": "<IF>", 
+              "children": 
+                [{"root": "<CMP>", 
+                  "children": 
+                     [{"root": "<Expr>", 
+                       "children": 
+                          [{"root": "0", 
+                               "children": []}]
+                      }, 
+                      {"root": ">", 
+                          "children": []}, 
+                      {"root": "<Expr>", 
+                          "children": 
+                            [{"root": "x", 
+                              "children": []}]
+                      }
+                     ]
+                 }, 
+
+                 {"root": "<LET>", 
+                     "children": 
+                        [{"root": "y", 
+                             "children": []}, 
+                         {"root": "<Expr>", 
+                          "children": 
+                             [{"root": "y", "children": []}]
+                         }, 
+                         {"root": "<UNIT>", "children": []}
+                        ]
+                 }, 
+                 {"root": "<LET>", 
+                     "children": 
+                        [{"root": "y", "children": []}, 
+                         {"root": "<Expr>", 
+                             "children": 
+                                [{"root": "y", 
+                                  "children": []}]
+                         }, 
+                         {"root": "<UNIT>", 
+                             "children": []}
+                        ]
+                 }
+               ]}, 
+             {"root": "<LET>", "children": [{"root": "x", "children": []}, {"root": "<Expr>", "children": [{"root": "1", "children": []}]}, {"root": "<LET>", "children": [{"root": "y", "children": []}, {"root": "<Expr>", "children": [{"root": "1", "children": []}]}, {"root": "<UNIT>", "children": []}]}]}]}, 
+
+"source_prog": ["if", "0", ">", "x", "then", "y", "=", "y", "else", "y", "=", "y", "endif", ";", "x", "=", "1", ";", "y", "=", "1"], 
+
+"source_ast": {"root": "<SEQ>", "children": [{"root": "<IF>", "children": [{"root": "<CMP>", "children": [{"root": "<Expr>", "children": [{"root": "0", "children": []}]}, {"root": ">", "children": []}, {"root": "<Expr>", "children": [{"root": "x", "children": []}]}]}, {"root": "<ASSIGN>", "children": [{"root": "y", "children": []}, {"root": "<Expr>", "children": [{"root": "y", "children": []}]}]}, {"root": "<ASSIGN>", "children": [{"root": "y", "children": []}, {"root": "<Expr>", "children": [{"root": "y", "children": []}]}]}]}, {"root": "<SEQ>", "children": [{"root": "<ASSIGN>", "children": [{"root": "x", "children": []}, {"root": "<Expr>", "children": [{"root": "1", "children": []}]}]}, {"root": "<ASSIGN>", "children": [{"root": "y", "children": []}, {"root": "<Expr>", "children": [{"root": "1", "children": []}]}]}]}]}, 
+
+"target_prog": ["let", "blank", "=", "if", "0", ">", "x", "then", "let", "y", "=", "y", "in", "()", "else", "let", "y", "=", "y", "in", "()", "in", "let", "x", "=", "1", "in", "let", "y", "=", "1", "in", "()"]} */ 
+
+/* Raw format: 
+{"for_tree": 
+   ["<SEQ>", ["<ASSIGN>", "y", ["<Expr>", "y"]], 
+             ["<SEQ>", 
+                ["<IF>", 
+                   ["<CMP>", ["<Expr>", 1], "<", ["<Expr>", 0]], 
+                   ["<ASSIGN>", "x", ["<Expr>", 0]], 
+                   ["<ASSIGN>", "x", ["<Expr>", 0]]
+                ], 
+                ["<ASSIGN>", "y", ["<Expr>", 1]]
+              ]
+    ], 
+
+  "raw_for": "y = y ; if 1 < 0 then x = 0 else x = 0 endif ; y = 1", "raw_lam": "let y = y in let blank = if 1 < 0 then let x = 0 in () else let x = 0 in () in let y = 1 in ()", 
+
+  "lam_tree": 
+     ["<LET>", "y", 
+        ["<Expr>", "y"], 
+        ["<LET>", "blank", 
+            ["<IF>", 
+                ["<CMP>", ["<Expr>", 1], "<", ["<Expr>", 0]], 
+                ["<LET>", "x", 
+                        ["<Expr>", 0], "<UNIT>"], 
+                        ["<LET>", "x", ["<Expr>", 0], "<UNIT>"]
+                 ], 
+                 ["<LET>", "y", ["<Expr>", 1], "<UNIT>"]
+             ]
+      ]
+   } */ 
+

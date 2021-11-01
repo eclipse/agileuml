@@ -10,9 +10,9 @@
 /*
  * Classname : UCDArea
  * 
- * Version information : 2.0
+ * Version information : 2.1
  *
- * Date :  January 2021
+ * Date :  October 2021
  * 
  * Description: This class describes the area that all the painting for 
  * the CD diagram will be performed and deals with painting them
@@ -1769,12 +1769,16 @@ public class UCDArea extends JPanel
       System.out.println("OCL Form of global constraint: " + cc.toOcl()); 
     } 
 
-    System.out.println(">>> AST of classes and use cases: "); 
+    System.out.println(">>> ASTs of classes and use cases: "); 
     System.out.println(); 
+
+    Vector entasts = new Vector(); 
 
     for (int i = 0; i < entities.size(); i++)
     { Entity ent = (Entity) entities.get(i); 
-      System.out.println(ent.toAST()); 
+      String entast = ent.toAST(); 
+      entasts.add(entast); 
+      System.out.println(entast); 
     } 
 
     Vector saved = new Vector(); 
@@ -1785,6 +1789,52 @@ public class UCDArea extends JPanel
         System.out.println(uc.toAST(saved)); 
       } 
     }  
+
+  /*  System.out.println(); 
+    System.out.println(">>> Token sequences of classes: "); 
+    System.out.println(); 
+
+    for (int i = 0; i < entasts.size(); i++) 
+    { String tt = (String) entasts.get(i);
+      Compiler2 cc = new Compiler2(); 
+      ASTTerm trm = cc.parseGeneralAST(tt); 
+      if (trm != null)  
+      { System.out.println(trm.tokenSequence());
+        System.out.println();  
+        System.out.println(trm.toJSON());
+        System.out.println();   
+      }  
+    } */ 
+
+    File chtml = new File("output/preprocessed_progs_train.json"); 
+    try
+    { PrintWriter chout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(chtml)));
+      chout.print("[ "); 
+      Vector jasts = new Vector(); 
+      Vector oclasts = ASTTerm.generateASTExamples(jasts); 
+      for (int i = 0; i < oclasts.size() && i < jasts.size(); i++)
+      { ASTTerm oclexample = (ASTTerm) oclasts.get(i); 
+        ASTTerm jexample = (ASTTerm) jasts.get(i);
+
+        String dataitem = 
+          "{ \"target_ast\": " + jexample.toJSON() + ", " + 
+          "  \"source_prog\": " + oclexample.tokenSequence() + ", " + 
+          "  \"source_ast\": " + oclexample.toJSON() + ", " + 
+          "  \"target_prog\": " + jexample.tokenSequence() + "}"; 
+
+        chout.print(dataitem); 
+        if (i < oclasts.size()-1)
+        { chout.println(", "); } 
+        else
+        { chout.println(" ]"); }
+      }
+      chout.close(); 
+    
+    } 
+    catch (Exception _fex) 
+    { System.err.println("! No file: output/preprocessed_progs_train.json"); }      
   }
 
   public void listEntities()
@@ -8435,12 +8485,37 @@ public class UCDArea extends JPanel
     if (systemName != null && systemName.length() > 0)
     { out.println("namespace " + systemName + " {\n\n"); } 
  
+    // Collect OclType.cs from libraries: 
+    try
+    { File ocltypeCS = new File("libraries/OclType.cs.txt"); 
+      BufferedReader br = null;
+      String sline = null;
+      boolean eof = false; 
+      br = new BufferedReader(new FileReader(ocltypeCS));
+      out.println(); 
+ 
+      while (!eof)
+      { sline = br.readLine();
+        if (sline == null) 
+        { eof = true; } 
+        else 
+        { out.println(sline); }
+      } 
+      out.println(); 
+
+      br.close();  
+    } 
+    catch (IOException _ex)
+    { System.err.println("!! ERROR: libraries/OclType.cs.txt not found"); }
+
     String mainOp = ""; 
 
     // If any entity has an activity, this becomes the main operation: 
 
     for (int i = 0; i < entities.size(); i++) 
-    { Entity ent = (Entity) entities.get(i); 
+    { Entity ent = (Entity) entities.get(i);
+      if (ent.isExternal() || ent.isComponent()) 
+      { continue; }  
       ent.generateCSharp(entities,types,out); 
       String mop = ent.genMainOperation(entities,types); 
       if (mop != null)
@@ -8613,6 +8688,9 @@ public void produceCUI(PrintWriter out)
 { out.println("#include \"app.c\"");
   out.println();
   out.println(); 
+
+  /* Plus save_E(struct E* self, struct OclFile* outfile)
+     for each application entity E */ 
 
   out.println("int main(int _argc, char* _argv[])"); 
   out.println("{ char** res = getFileLines(\"app.itf\");");  
@@ -10726,17 +10804,27 @@ public void produceCUI(PrintWriter out)
 
     // String controllerInterface = "public interface ControllerInterface\n" + "{\n"; 
         
-    out.println("class Controller");
+    /* It should have a type parameter for each distinct 
+       type parameter of its classes */ 
+
+    String alltypepars = Entity.getAllTypeParameters(entities); 
+
+    out.println("class Controller" + alltypepars);
     out.println("{");
     out.println("  Hashtable objectmap = new Hashtable();"); 
     out.println("  Hashtable classmap = new Hashtable();"); 
 
     for (int i = 0; i < entities.size(); i++)
     { Entity e = (Entity) entities.get(i);
-      if (e.hasStereotype("external") || e.hasStereotype("externalApp")) { continue; } 
+      if (e.hasStereotype("external") ||
+          e.isComponent() || 
+          e.hasStereotype("externalApp")) 
+      { continue; } 
 
       Entity es = e.getSuperclass(); 
       String nme = e.getName();
+      String gpars = e.typeParameterTextCSharp(); 
+
       String lcnme = nme.toLowerCase();
       lcnme = lcnme + "_s";
       out.println("  ArrayList " + lcnme + " = new ArrayList();");
@@ -10745,7 +10833,7 @@ public void produceCUI(PrintWriter out)
 
       addops = addops +
                "  public void add" + nme + "(" +
-               nme + " oo) { " + lcnme + ".Add(oo);"; 
+               nme + gpars + " oo) { " + lcnme + ".Add(oo);"; 
       // controllerInterface = controllerInterface + 
       //         "  public void add" + nme + "(" + nme + " oo);\n  ";
       // controllerInterface += e.interfaceCreateOp(); 
@@ -10786,13 +10874,18 @@ public void produceCUI(PrintWriter out)
                                                           constraints); 
       } 
     }  // and set and others
-    out.println("  private static Controller uniqueInstance; \n\n"); 
+ 
+   out.println("  private static Controller" + alltypepars + " uniqueInstance; \n\n"); 
     out.println("  private Controller() { } \n\n"); 
-    out.println("  public static Controller inst() \n  " + 
+    out.println("  public static Controller" + alltypepars + " inst() \n" + 
                 "  { if (uniqueInstance == null) \n" + 
-                "    { uniqueInstance = new Controller(); }\n" + 
-                "    return uniqueInstance; } \n\n"); 
+                "    { uniqueInstance = new Controller" + alltypepars + "(); \n" + 
+                "      uniqueInstance.initialiseOclTypes();\n" + 
+                "    }\n" + 
+                "    return uniqueInstance;\n" + 
+                "  } \n\n"); 
 
+    out.println(initialiseOclTypesOpCSharp()); 
     out.println(getLoadModelOpCSharp()); 
     // out.println(getCheckCompletenessOp()); 
     out.println(getSaveModelOpCSharp()); 
@@ -10807,7 +10900,10 @@ public void produceCUI(PrintWriter out)
     // generate their code.
     for (int i = 0; i < entities.size(); i++)
     { Entity e = (Entity) entities.get(i);
-      if (e.hasStereotype("external") || e.hasStereotype("externalApp")) { continue; } 
+      if (e.hasStereotype("external") || 
+          e.isComponent() || 
+          e.hasStereotype("externalApp")) 
+      { continue; } 
 
       Vector v = e.sensorOperationsCodeCSharp(constraints,entities,types);
       v.addAll(e.associationOperationsCodeCSharp(constraints,entities,types)); 
@@ -10822,6 +10918,26 @@ public void produceCUI(PrintWriter out)
     // controllerInterface = controllerInterface + "}\n"; 
     // out3.println(controllerInterface); 
   }
+
+  public String initialiseOclTypesOpCSharp()
+  { String res = "  public void initialiseOclTypes()\n";
+    res = res + "  {\n"; 
+    for (int i = 0; i < entities.size(); i++)
+    { Entity ent = (Entity) entities.get(i); 
+      if (ent.isDerived() || ent.isExternal() ||
+          ent.isComponent()) 
+      { } 
+      else 
+      { String ename = ent.getName();
+        String gpars = ent.typeParameterTextCSharp(); 
+ 
+        res = res + "    OclType.newOclType(\"" + ename + "\", typeof(" + ename + gpars + "));\n"; 
+      } 
+    } 
+    res = res + "  }\n\n"; 
+ 
+    return res; 
+  } 
 
   public String getLoadModelOpCSharp()
   { String res = "  public void loadModel()\n" + 
@@ -12098,7 +12214,7 @@ public void produceCUI(PrintWriter out)
       return; 
     } 
 
-    xx.entities = new Vector(); 
+  /*  xx.entities = new Vector(); 
     xx.entities.addAll(entities); 
     xx.enumtypes = new Vector(); 
     xx.enumtypes.addAll(types);
@@ -12106,7 +12222,7 @@ public void produceCUI(PrintWriter out)
 
     System.out.println(xx.toKM3()); 
     System.out.println(); 
-    System.out.println(); 
+    System.out.println(); */ 
 
     Date d1 = new Date(); 
     long time1 = d1.getTime(); 
@@ -12115,9 +12231,9 @@ public void produceCUI(PrintWriter out)
     System.out.println(tt); 
     System.out.println(); 
 
-    System.out.println(xx.toKM3()); 
+  /*  System.out.println(xx.toKM3()); 
     System.out.println(); 
-    System.out.println(); 
+    System.out.println(); */ 
 
     Date d2 = new Date(); 
     long time2 = d2.getTime(); 
@@ -12216,6 +12332,9 @@ public void produceCUI(PrintWriter out)
       return; 
     } 
 
+    System.out.println(">>> Loaded " + file.getName()); 
+
+    CSTL.loadTemplates(types,entities,file.getName()); 
 
     String newtypes = ""; 
     String newclasses = ""; 
@@ -12265,7 +12384,6 @@ public void produceCUI(PrintWriter out)
     }  // Ignores OperationDescriptions, which are only used for web/eis/mobile generation
 
     java.util.Date d2 = new java.util.Date(); 
-    System.out.println(">>> Time taken for code generation = " + (d2.getTime() - d1.getTime())); 
 
     File chtml = new File("output/cgout.txt"); 
     try
@@ -12280,6 +12398,8 @@ public void produceCUI(PrintWriter out)
       chout.println(); 
 
       chout.close(); 
+      System.out.println(">>> Time taken for code generation = " + (d2.getTime() - d1.getTime())); 
+      System.out.println(">>> Code written to output/cgout.txt"); 
     } catch (Exception e) { } 
 
   }  

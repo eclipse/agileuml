@@ -1087,7 +1087,7 @@ public class Compiler2
     else if ("Map".equals(typ) || "Function".equals(typ))  // for ATL and extensions
     { Type tt = null; 
       if (st == en) 
-      { System.err.println("!! Warning, map/function types must have parameters"); 
+      { System.err.println("!! Warning, map/function types must have type parameters"); 
         return new Type(typ, null); 
       } 
 
@@ -4394,6 +4394,17 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
   { if (st.length() < 2) 
     { return null; } 
 
+    /* if ("::".equals(st))
+    { mess[0] = "Scope declaration in usecase postcondition: \n:: cond => pred;\nor\nEntityName:: cond => pred;"; 
+      return "::"; 
+    } 
+
+    if ("=>".equals(st))
+    { mess[0] = "Logical implication, same as  implies : \ncond => pred"; 
+      return "implies"; 
+    } */ 
+
+
     if ("if".equals(st)) 
     { mess[0] = "Conditional expression: if expr then expr1 else expr2 endif\nor statement: if expr then statmt1 else statmt2"; 
       return "if"; 
@@ -4425,12 +4436,15 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     } 
  
     if ("operation".startsWith(st)) 
-    { mess[0] = "Operation declaration: operation name(parameters) : Type"; 
+    { mess[0] = "Operation declaration:\noperation name(parameters) : Type\n" + 
+                "pre: expression\npost: expression\nactivity: statement;"; 
       return "operation"; 
     } 
     
     if ("query".startsWith(st)) 
-    { mess[0] = "Query operation declaration: query name(parameters) : Type"; 
+    { mess[0] = "Query operation declaration, returning a result value:\n" + 
+                "query name(parameters) : Type\n" + 
+                "pre: expression\npost: expression\nactivity: statement;"; 
       return "query"; 
     }
  
@@ -4440,7 +4454,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     } 
  
     if ("post".startsWith(st)) 
-    { mess[0] = "Operation postcondition, eg: post: true"; 
+    { mess[0] = "Operation postcondition, eg: post: true\n" + 
+                "or post: result = expression"; 
       return "post:"; 
     }
  
@@ -4522,6 +4537,11 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         return "finally"; 
       }
 
+      if ("lambda".startsWith(st))
+      { mess[0] = "lambda expression to define function:\n lambda x : SourceType in expr"; 
+        return "lambda"; 
+      } 
+
     } 
 
     if (st.length() > 2)
@@ -4548,7 +4568,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       }
  
       if ("int".startsWith(st)) 
-      { mess[0] = "Integer type, from -(2->pow(31)) to 2->pow(31)-1\n" + 
+      { mess[0] = "32-bit integer type, from -(2->pow(31)) to 2->pow(31)-1\n" + 
           "Operators include: x mod y  x div y\n" + 
           "and usual arithmetic operators * / - + < <= > >= = /= etc"; 
         return "int"; 
@@ -4617,7 +4637,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       } 
 
       if ("Function".startsWith(st)) 
-      { mess[0] = "Function type, eg., Function(String,int)"; 
+      { mess[0] = "Function type, eg., Function(String,int)\n Operators include:  lambda x : S in T\n f->apply(x)\n"; 
         return "Function(String,Type)"; 
       } 
 
@@ -4785,12 +4805,15 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         return "arg->display()"; 
       }
 
-      
+      if ("->apply".startsWith(st))
+      { mess[0] = "Function application on functions f : Function(S,T)"; 
+        return "f->apply(x)"; 
+      } 
     } 
 
 
     if ("long".startsWith(st)) 
-    { mess[0] = "long Integer type, from -(2->pow(63)) to (2->pow(63)-1)\n" +  
+    { mess[0] = "64-bit integer type, from -(2->pow(63)) to (2->pow(63)-1)\n" +  
           "Operators include: x mod y  x div y\n" + 
           "and usual arithmetic operators * / - + < <= > >= = /= etc"; 
  

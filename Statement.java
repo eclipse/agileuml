@@ -3662,12 +3662,15 @@ class CreationStatement extends Statement
       else if (Type.isExceptionType(instanceType))
       { return "  " + jType + " " + assignsTo + ";"; }  
       else if (instanceType.isEntity())
-      { Entity ent = instanceType.getEntity(); 
+      { Entity ent = instanceType.getEntity();
+        String gpars = ent.typeParameterTextCSharp(); 
+        String ename = ent.getName(); 
+
         if (ent.hasStereotype("external"))
         { return "  " + jType + " " + assignsTo + " = new " + jType + "();\n"; } 
         else
         { return "  " + jType + " " + assignsTo + " = new " + jType + "();\n" + 
-                 "  Controller.inst().add" + jType + "(" + assignsTo + ");"; 
+                 "  Controller.inst().add" + ename + "(" + assignsTo + ");"; 
         } 
       } 
     } 
@@ -3692,7 +3695,7 @@ class CreationStatement extends Statement
     else if (createsInstanceOf.equals("OclAny"))
     { return "  object " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclType"))
-    { return "  Type " + assignsTo + ";"; }
+    { return "  OclType " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclRandom"))
     { return "  OclRandom " + assignsTo + ";"; } 
     else if (createsInstanceOf.equals("OclProcess"))

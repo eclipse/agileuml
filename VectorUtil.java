@@ -270,17 +270,27 @@ class VectorUtil
     return res; } 
 
   public static Vector union(Vector a, Vector b)
-  { Vector res = new Vector();
+  { if (a == null) 
+    { return b; } 
+
+    Vector res = new Vector();
     for (int i = 0; i < a.size(); i++)
     { Object aobj = a.elementAt(i);
       if (res.contains(aobj)) {}
-      else { res.add(aobj); } 
+      else 
+      { res.add(aobj); } 
     }
+
+    if (b == null) 
+    { return res; } 
+
     for (int j = 0; j < b.size(); j++)
     { Object bobj = b.elementAt(j);
       if (res.contains(bobj)) {}
-      else { res.add(bobj); } 
+      else 
+      { res.add(bobj); } 
     }
+
     return res; 
   }
 

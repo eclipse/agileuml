@@ -5584,13 +5584,7 @@ public String iosDbiExtractOp(String ent, int i)
       } 
     } 
     else if ("double".equals(t))
-    { res.add(nme + " = 0"); 
-      res.add(nme + " = -1");
-      res.add(nme + " = 1"); 
-      opTests.add(attname + " = 0;"); 
-      opTests.add(attname + " = -1;");
-      opTests.add(attname + " = 1;"); 
-	  
+    {  
       if (ubnd != null && lbnd != null)
       { try
         { double ud = Double.parseDouble(ubnd + ""); 
@@ -5598,34 +5592,97 @@ public String iosDbiExtractOp(String ent, int i)
           double midd = (ud + ld)/2; 	
           res.add(nme + " = " + midd);
           opTests.add(attname + " = " + midd + ";");
-	   } catch (Exception _e) { } 
+          if (ld != midd) 
+          { res.add(nme + " = " + ld); 
+            opTests.add(attname + " = " + ld + ";");
+          }
+          if (ud != midd) 
+          { res.add(nme + " = " + ud); 
+            opTests.add(attname + " = " + ud + ";");
+          } 
+          if (ld < 0.0 && 0.0 < ud && 0.0 != midd)
+          { res.add(nme + " = 0.0"); 
+            opTests.add(attname + " = 0.0;"); 
+          } 
+        } catch (Exception _e) { } 
       }
-
-      if (ubnd != null) 
+      else if (ubnd != null) // No lower bound
       { String upperval = ubnd + ""; 
-        if ("0".equals(upperval) || "1".equals(upperval) || "-1".equals(upperval)) { } 
-        else 
-        { res.add(nme + " = " + upperval);
-          opTests.add(attname + " = " + upperval + ";");
-        }
-      }  
-      else 
-      { res.add(nme + " = " + Double.MAX_VALUE); 
-        opTests.add(attname + " = " + Double.MAX_VALUE + ";"); 
-      } 
-	  
-      if (lbnd != null) 
-      { String lowerval = lbnd + ""; 
-        if ("0".equals(lowerval) || "1".equals(lowerval) || "-1".equals(lowerval)) { } 
-        else 
-        { res.add(nme + " = " + lowerval);
-          opTests.add(attname + " = " + lowerval + ";");
-        }
-      }  
-      else 
-      { res.add(nme + " = " + Double.MIN_VALUE); 
-        opTests.add(attname + " = " + Double.MIN_VALUE + ";"); 
+        res.add(nme + " = " + upperval);
+        opTests.add(attname + " = " + upperval + ";");
+        
+        try
+        { double ud = Double.parseDouble(ubnd + "");
+ 
+          res.add(nme + " = " + ud); 
+          opTests.add(attname + " = " + ud + ";");
+          
+          if (ud < -1) 
+          { res.add(nme + " = " + -Double.MAX_VALUE); 
+            opTests.add(attname + " = " + -Double.MAX_VALUE + ";"); 
+          } 
+          else if (ud < 0 && ud != -1.0) 
+          { res.add(nme + " = -1.0");
+            opTests.add(attname + " = -1.0;");
+            res.add(nme + " = " + -Double.MAX_VALUE); 
+            opTests.add(attname + " = " + -Double.MAX_VALUE + ";"); 
+          } 
+          else if (ud < 1 && ud != 0.0)          
+          { res.add(nme + " = 0.0"); 
+            res.add(nme + " = -1.0");
+            opTests.add(attname + " = 0.0;"); 
+            opTests.add(attname + " = -1.0;");
+            res.add(nme + " = " + -Double.MAX_VALUE); 
+            opTests.add(attname + " = " + -Double.MAX_VALUE + ";"); 
+          } 
+          else  
+          { // res.add(nme + " = 0.0"); 
+            // res.add(nme + " = -1.0");
+            // res.add(nme + " = 1.0"); 
+            // opTests.add(attname + " = 0.0;"); 
+            // opTests.add(attname + " = -1.0;");
+            // opTests.add(attname + " = 1.0;");
+            res.add(nme + " = " + -Double.MAX_VALUE); 
+            opTests.add(attname + " = " + -Double.MAX_VALUE + ";"); 
+          }
+        } catch (Exception _ex) { } 
       }
+      else if (lbnd != null) // No upper bound. 
+      { String lowerval = lbnd + "";
+        try 
+        { double ld = Double.parseDouble(lbnd + ""); 
+          res.add(nme + " = " + lowerval);
+          opTests.add(attname + " = " + lowerval + ";");
+           
+          if (ld > 1.0) 
+          { res.add(nme + " = " + Double.MAX_VALUE); 
+            opTests.add(attname + " = " + Double.MAX_VALUE + ";");     } 
+          else if (ld > 0.0 && ld != 1.0)
+          { res.add(nme + " = 1.0"); 
+            opTests.add(attname + " = 1.0;");
+            res.add(nme + " = " + Double.MAX_VALUE); 
+            opTests.add(attname + " = " + Double.MAX_VALUE + ";");     } 
+          else if (ld > -1.0 && ld != 0.0)
+          { res.add(nme + " = 0.0"); 
+            opTests.add(attname + " = 0.0;");
+            res.add(nme + " = " + Double.MAX_VALUE); 
+            opTests.add(attname + " = " + Double.MAX_VALUE + ";");     } 
+          else 
+          { res.add(nme + " = " + Double.MAX_VALUE); 
+            opTests.add(attname + " = " + Double.MAX_VALUE + ";");     } 
+        } catch (Exception _ef) { } 
+      }  
+      else // no bounding values.  
+      { res.add(nme + " = 0.0"); 
+        res.add(nme + " = -1.0");
+        res.add(nme + " = 1.0"); 
+        opTests.add(attname + " = 0.0;"); 
+        opTests.add(attname + " = -1.0;");
+        opTests.add(attname + " = 1.0;");
+        res.add(nme + " = " + -Double.MAX_VALUE); 
+        opTests.add(attname + " = " + -Double.MAX_VALUE + ";"); 
+        res.add(nme + " = " + Double.MAX_VALUE); 
+        opTests.add(attname + " = " + Double.MAX_VALUE + ";"); }
     } 
     else if ("boolean".equals(t))
     { res.add(nme + " = true"); 

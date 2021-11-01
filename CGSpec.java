@@ -959,6 +959,10 @@ public class CGSpec
       }
       else if (trimmedlhs.endsWith("_1(_2)") && pars != null && ModelElement.haveCommonPrefix(etext,trimmedlhs))
       { String prefix = ModelElement.longestCommonPrefix(etext,trimmedlhs);
+        System.out.println(); 
+        System.out.println(">>> matched text rule: " + r + " for " + etext); 
+        System.out.println(); 
+
         if (prefix.length() == trimmedlhs.length() - 6) 
         { selected = r; 
           args.add(e);   // should be for _1 
@@ -976,13 +980,13 @@ public class CGSpec
       }
       else if (trimmedlhs.endsWith("_1()") && (pars == null || pars.size() == 0) && 
 	           ModelElement.haveCommonPrefix(etext,trimmedlhs))
-	  { String prefix = ModelElement.longestCommonPrefix(etext,trimmedlhs); 
+      { String prefix = ModelElement.longestCommonPrefix(etext,trimmedlhs); 
         if (prefix.length() == trimmedlhs.length() - 4)
-		{ selected = r; 
+        { selected = r; 
           args.add(e);
           matchedtextrules.add(r);
-		}  
-	  }
+        }  
+      }
 
       if (selected != null && selected.satisfiesConditions(args,entities))
       { return selected; } 

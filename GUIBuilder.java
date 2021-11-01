@@ -1361,7 +1361,9 @@ public class GUIBuilder
           "      int[] " + es + "_" + bfname + "_totals = new int[100]; \n" +   
           "      for (int _i = 0; _i < _" + es + "_instances; _i++)\n" + 
           "      { " + ename + " _ex = (" + ename + ") Controller.inst()." + es + ".get(_i);\n" +  
-          "        MutationTest." + bfname + "_mutation_tests(_ex," + es + "_" + bfname + "_counts, " + es + "_" + bfname + "_totals);\n" + 
+          "        try {\n" + 
+          "          MutationTest." + bfname + "_mutation_tests(_ex," + es + "_" + bfname + "_counts, " + es + "_" + bfname + "_totals);\n" + 
+          "        } catch (Throwable _thrw) { }\n" + 
           "      }\n" + 
           "      System.out.println();\n";  
         } 

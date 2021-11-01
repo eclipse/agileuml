@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003,2021 Kevin Lano
+* Copyright (c) 2003--2021 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -10,9 +10,9 @@
 /* 
  * Classname : UmlTool
  * 
- * Version information : 2.0
+ * Version information : 2.1
  *
- * Date : August 2021
+ * Date : October 2021
  * 
  * Description : This describes the GUI interface of 
  * the UML RSDS tool,
@@ -315,6 +315,8 @@ public void findPlugins()
     JMenuItem loadGenericMI = 
       new JMenuItem("From Java AST",openIcon);
     loadGenericMI.addActionListener(this);
+    loadGenericMI.setToolTipText(
+      "Creates UML/OCL from AST produced by Antlr Java parser, in output/ast.txt");
     // loadDataMI.setMnemonic(KeyEvent.VK_L);
     fileMenu.add(loadGenericMI);
 
@@ -723,7 +725,7 @@ public void findPlugins()
     ucsMI.addActionListener(this);
     viewMenu.add(ucsMI);
 
-    JMenuItem oclMI = new JMenuItem("OCL"); 
+    JMenuItem oclMI = new JMenuItem("OCL & ASTs"); 
     oclMI.addActionListener(this);
     viewMenu.add(oclMI);
 
@@ -1338,7 +1340,7 @@ public void findPlugins()
       { buildGUI(); } 
       else if (label.equals("Component"))
       { ucdArea.loadComponent(); } 
-      else if (label.equals("OCL"))
+      else if (label.equals("OCL & ASTs"))
       { ucdArea.printOCL(); } 
       else if (label.equals("Type"))
       { String tname = 
@@ -1704,7 +1706,7 @@ public void findPlugins()
         catch (IOException ex)
         { System.out.println("Error generating C#"); }
 
-        new TextDisplay("C# code","output/Controller.cs");
+        new TextDisplay("C# code","output/Program.cs");
       } 
       else if (label.equals("Generate C++"))
       { File file = new File("output/controller.h");
@@ -2228,14 +2230,14 @@ public void findPlugins()
                   "4. Java compiler errors of undeclared variables?\n" + 
                   "   Check that all identifiers are valid. In a\n" + 
                   "   constraint on class E, only features of E can be\n" +
-                  "   used by themselves, other features need an \n" + 
-                  "   object reference.\n\n" +  
+                  "   used unqualified, other features need an \n" + 
+                  "   object reference obj.f or C.f.\n\n" +  
                   "5. Java compiler errors of duplicate variables?\n" + 
-                  "   Check that there are not multiple copies of \n" + 
-                  "   constraints in a use case - all their variables\n" +
-                  "   go into the same Controller operation.\n\n" +  
+                  "   Use distinct let variables in postcondition \n" + 
+                  "   constraints in a use case uc - all these variables\n" +
+                  "   go into the same Controller operation for uc.\n\n" +  
                   "For more help, please read the manual:\n" + 
-                  "http://www.dcs.kcl.ac.uk/staff/kcl/umlrsds.pdf\n\n");
+                  "https://www.agilemde.co.uk/umlrsds.pdf\n\n");
         int w = getWidth(); 
         int h = getHeight(); 
  
@@ -3742,7 +3744,7 @@ public void findPlugins()
 
   public static void main(String[] args) 
   { UmlTool window = new UmlTool();  
-    window.setTitle("Agile UML Toolset, Eclipse Incubation Project Version 2.0");
+    window.setTitle("Agile UML Toolset, Eclipse Incubation Project Version 2.1");
     window.setControllerName("Controller"); 
     window.setSize(500, 400);
     window.setVisible(true);   

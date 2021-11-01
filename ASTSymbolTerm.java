@@ -28,8 +28,20 @@ public class ASTSymbolTerm extends ASTTerm
   public String toString()
   { return symbol; } 
 
+  public String toJSON()
+  { String res = "{ \"root\" : \"" + symbol + "\", \"children\" : [] }"; 
+    return res; 
+  } 
+
+
   public String literalForm()
   { return symbol; } 
+
+  public Vector tokenSequence()
+  { Vector res = new Vector(); 
+    res.add("\"" + symbol + "\""); 
+    return res; 
+  } 
 
   public String asTextModel(PrintWriter out)
   { return "\"" + symbol + "\""; } 

@@ -103,6 +103,11 @@ public class BehaviouralFeature extends ModelElement
     typeParameters = pars;  
   } 
 
+  public boolean isGeneric()
+  { return typeParameters != null && 
+           typeParameters.size() > 0; 
+  } 
+
   public Object clone()
   { BehaviouralFeature res = new BehaviouralFeature(getName(), parameters, query, resultType); 
     res.setElementType(elementType); 
@@ -239,7 +244,7 @@ public class BehaviouralFeature extends ModelElement
     return res; 
   } 
 
-  public Vector formMutantCalls(Vector mutants, Vector tests, Vector alltests) 
+  public Vector formMutantCalls(String ename, Vector mutants, Vector tests, Vector alltests, Vector testcalls) 
   { // for each m : mutants, t : tests, set up a call to 
     // m(t.values)
  
@@ -262,25 +267,37 @@ public class BehaviouralFeature extends ModelElement
         call = call + 
             "    System.out.println(\"Test " + j + " of " + nme + " on \" + _self + \" result = \" + " + nme + "_result);\n";
  
-        String testcode = "  try {\n" + 
-                          "    " + code + "\n" + 
-                          "    " + call + "\n";  
+        // Should use "  try {\n"
+
+        String testcode = 
+          "  public static void " + nme + "_mutation_tests_" + j + "(" + ename + " _self, int[] _counts, int[] _totals)\n" + 
+          "  {\n" + 
+          "    " + code + "\n" + 
+          "    " + call + "\n";  
      
         for (int i = 0; i < muts; i++) 
         { BehaviouralFeature m = (BehaviouralFeature) mutants.get(i); 
           String mname = m.getName(); 
           String mutantcall = "_self." + m.toString(); 
           testcode = testcode +  
-            "    " + resultType + " " + mname + "_result = " + mutantcall + ";\n" +    
-            "    if ((\"\" + " + nme + "_result).equals(\"\" + " + mname + "_result)) { _totals[" + j + "]++; } else\n" + 
-            "    { System.out.println(\"Test " + j + " of " + tsts + " detects " + nme + " mutant " + i + " of " + muts + "\");\n" +
-            "      _counts[" + j + "]++; \n" +   
-            "      _totals[" + j + "]++;\n" + 
-            "    }\n";  
+            "    try {\n" + 
+            "      " + javaType + " " + mname + "_result = " + mutantcall + ";\n" +    
+            "      if ((\"\" + " + nme + "_result).equals(\"\" + " + mname + "_result)) { _totals[" + j + "]++; } else\n" + 
+            "      { System.out.println(\"Test " + j + " of " + tsts + " detects " + nme + " mutant " + i + " of " + muts + "\");\n" +
+            "        _counts[" + j + "]++; \n" +   
+            "        _totals[" + j + "]++;\n" + 
+            "      }\n" + 
+            "    } catch (Throwable _e) { }\n"; 
         } 
-        testcode = testcode +
-             "  } catch (Throwable _e) { _e.printStackTrace(); }\n"; 
+        testcode = testcode + "  }\n\n"; 
+
+ /* Should be: 
+             "  } catch (Throwable _e) { _e.printStackTrace(); }\n"; */ 
+ 
         res.add(testcode); 
+
+        String testcall = "    MutationTest." + nme + "_mutation_tests_" + j + "(_self,_counts,_totals);\n"; 
+        testcalls.add(testcall); 
       }  
     }  
     return res; 
@@ -318,7 +335,7 @@ public class BehaviouralFeature extends ModelElement
           String mname = m.getName(); 
           String mutantcall = "_self." + m.toString(); 
           testcode = testcode +  
-            "    " + resultType + " " + mname + "_result = " + mutantcall + ";\n" +    
+            "    " + java6Type + " " + mname + "_result = " + mutantcall + ";\n" +    
             "    if ((\"\" + " + nme + "_result).equals(\"\" + " + mname + "_result)) { _totals[" + j + "]++; } else\n" + 
             "    { System.out.println(\"Test " + j + " of " + tsts + " detects " + nme + " mutant " + i + " of " + muts + "\");\n" +
             "      _counts[" + j + "]++; \n" +   
@@ -365,7 +382,7 @@ public class BehaviouralFeature extends ModelElement
           String mname = m.getName(); 
           String mutantcall = "_self." + m.toString(); 
           testcode = testcode +  
-            "    " + resultType + " " + mname + "_result = " + mutantcall + ";\n" +    
+            "    " + java7Type + " " + mname + "_result = " + mutantcall + ";\n" +    
             "    if ((\"\" + " + nme + "_result).equals(\"\" + " + mname + "_result)) { _totals[" + j + "]++; } else\n" + 
             "    { System.out.println(\"Test " + j + " of " + tsts + " detects " + nme + " mutant " + i + " of " + muts + "\");\n" +
             "      _counts[" + j + "]++; \n" +   
@@ -397,9 +414,9 @@ public class BehaviouralFeature extends ModelElement
         String code = parInitCodeJava8(tst);  
            // parameterInitialisationCode(tvals); 
 
-        String java7Type = resultType.getJava8(); 
+        String java8Type = resultType.getJava8(); 
 
-        String call = java7Type + " " + nme + "_result = _self." + this.toString() + ";\n";  
+        String call = java8Type + " " + nme + "_result = _self." + this.toString() + ";\n";  
         call = call + 
             "    System.out.println(\"Test " + j + " of " + nme + " on \" + _self + \" result = \" + " + nme + "_result);\n";
  
@@ -412,7 +429,7 @@ public class BehaviouralFeature extends ModelElement
           String mname = m.getName(); 
           String mutantcall = "_self." + m.toString(); 
           testcode = testcode +  
-            "    " + resultType + " " + mname + "_result = " + mutantcall + ";\n" +    
+            "    " + java8Type + " " + mname + "_result = " + mutantcall + ";\n" +    
             "    if ((\"\" + " + nme + "_result).equals(\"\" + " + mname + "_result)) { _totals[" + j + "]++; } else\n" + 
             "    { System.out.println(\"Test " + j + " of " + tsts + " detects " + nme + " mutant " + i + " of " + muts + "\");\n" +
             "      _counts[" + j + "]++; \n" +   
@@ -789,8 +806,12 @@ public class BehaviouralFeature extends ModelElement
   { Vector allattributes = getParameters();
     Vector preattributes = new Vector(); 
     preattributes.addAll(allattributes); 
+
     if (entity != null) 
     { preattributes.addAll(entity.getLocalFeatures()); }  
+
+    // We are only interested in those that are *read* 
+    // by the operation - its readFrame. 
 	
     String nme = getName();  
     Vector res = new Vector(); 
@@ -818,9 +839,9 @@ public class BehaviouralFeature extends ModelElement
     
       identifyUpperBounds(allattributes,aBounds,upperBounds); 
       identifyLowerBounds(allattributes,aBounds,lowerBounds); 
-      // System.out.println(".>> Parameter bounds for operation " + nme + " : " + aBounds);  
-      // System.out.println(".>> Upper bounds map for operation " + nme + " : " + upperBounds);  
-      // System.out.println(".>> Lower bounds map for operation " + nme + " : " + lowerBounds);  
+      System.out.println(".>> Parameter bounds for operation " + nme + " : " + aBounds);  
+      System.out.println(".>> Upper bounds map for operation " + nme + " : " + upperBounds);  
+      System.out.println(".>> Lower bounds map for operation " + nme + " : " + lowerBounds);  
     }
 	
     for (int i = 0; i < allattributes.size(); i++) 
@@ -2471,14 +2492,14 @@ public class BehaviouralFeature extends ModelElement
 
     String genPars = ""; 
     if (typeParameters != null && typeParameters.size() > 0)
-    { genPars = " <"; 
+    { genPars = "<"; 
       for (int i = 0; i < typeParameters.size(); i++) 
       { Type tp = (Type) typeParameters.get(i); 
         genPars = genPars + tp.getCSharp(); 
         if (i < typeParameters.size() - 1) 
         { genPars = genPars + ", "; } 
       } 
-      genPars = genPars + "> "; 
+      genPars = genPars + ">"; 
     } 
  
     res = res + resultType.getCSharp() +
@@ -3956,6 +3977,19 @@ public class BehaviouralFeature extends ModelElement
       epars = ent.typeParameterTextCSharp(); 
     }  
 
+    String genPars = ""; 
+    if (typeParameters != null && typeParameters.size() > 0)
+    { genPars = "<"; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        genPars = genPars + tp.getCSharp(); 
+        if (i < typeParameters.size() - 1) 
+        { genPars = genPars + ", "; } 
+      } 
+      genPars = genPars + ">"; 
+    } 
+
+
     String ex = ename.toLowerCase() + "x"; 
     java.util.Map env0 = new java.util.HashMap(); 
     String pars = getCSharpParameterDec(); 
@@ -3994,10 +4028,10 @@ public class BehaviouralFeature extends ModelElement
         if (ent == null || isClassScope() || isStatic()) 
         { statc = "static "; } 
 
-        res = "  public " + statc + ts + " " + name + "(" + pars + ")\n{  "; 
+        res = "  public " + statc + ts + " " + name + genPars + "(" + pars + ")\n{  "; 
 
         if (ent != null && ent.isInterface())
-        { return "  public " + ts + " " + name + "(" + pars + ");\n"; } 
+        { return "  public " + ts + " " + name + genPars + "(" + pars + ");\n"; } 
  
         if (tp != null && !("void".equals(ts)))
         { res = res + ts + " result;\n"; }
@@ -4026,7 +4060,7 @@ public class BehaviouralFeature extends ModelElement
       { ts = tp.getCSharp(); } 
 
       if (ent != null && ent.isInterface())
-      { return "  public " + ts + " " + name + "(" + pars + ");\n"; } 
+      { return "  public " + ts + " " + name + genPars + "(" + pars + ");\n"; } 
 
       // if (isSequential())
       // { header = header + "synchronized "; } 
@@ -4037,7 +4071,7 @@ public class BehaviouralFeature extends ModelElement
       if (isClassScope() || isStatic())
       { header = header + "static "; } 
 
-      res = "  public " + header + ts + " " + name + "(" + pars + ")\n  {  "; 
+      res = "  public " + header + ts + " " + name + genPars + "(" + pars + ")\n  {  "; 
 
       if (Statement.hasResultDeclaration(activity))
       {  } 
@@ -4109,7 +4143,7 @@ public class BehaviouralFeature extends ModelElement
     { resT = resultType.getCSharp(); }
 
     if (ent != null && ent.isInterface())
-    { return "  public " + resT + " " + name + "(" + pars + ");\n"; } 
+    { return "  public " + resT + " " + name + genPars + "(" + pars + ");\n"; } 
 
     if (query)
     { return buildQueryOpCSharp(ent,name,resultType,resT,entities,types); }
@@ -7022,6 +7056,8 @@ public class BehaviouralFeature extends ModelElement
 
     if (ent == null) { return ""; } 
     
+    String genPars = csharpGenericParameters(ent); 
+
     String header = "  public "; 
     // if (isAbstract())
     // { header = header + "abstract "; } 
@@ -7042,7 +7078,7 @@ public class BehaviouralFeature extends ModelElement
 
     if (!instanceScope)
     { if (resT == null || resT.equals("void")) 
-      { return "  public static void " + opname + "(" + javaPars + ")\n" + 
+      { return "  public static void " + opname + genPars + "(" + javaPars + ")\n" + 
                "  { " + ename + "." + opname + "(" + parlist + "); }\n\n"; 
       } 
       return " public static " + resT + " " + opname + "(" + javaPars + ")\n" + 
@@ -7055,7 +7091,7 @@ public class BehaviouralFeature extends ModelElement
     } 
     else 
     { java2Pars = "ArrayList " + exs + "," + javaPars; 
-      javaPars = ename + " " + ex + "," + javaPars; 
+      javaPars = ename + genPars + " " + ex + "," + javaPars; 
     } 
 
     String header2 = header + " ArrayList All" + ename + 
@@ -7096,7 +7132,7 @@ public class BehaviouralFeature extends ModelElement
     String body = "  " + ex + "." + call + ";"; 
     String endbody = ""; 
     header2 = header2 + "  for (int _i = 0; _i < " + exs + ".Count; _i++)\n" +
-              "    { " + ename + " " + ex + " = (" + ename + ") " + exs + "[_i];\n"; 
+              "    { " + ename + genPars + " " + ex + " = (" + ename + genPars + ") " + exs + "[_i];\n"; 
 
     if (parlist.length() > 0)
     { parlist = "," + parlist; } 
@@ -7592,6 +7628,25 @@ public class BehaviouralFeature extends ModelElement
     return header2;
   }
 
+  public String csharpGenericParameters(Entity ent)
+  { String genPars = ""; 
+    Vector alltypePars = new Vector(); 
+    alltypePars.addAll(ent.getTypeParameters()); 
+    if (typeParameters != null)
+    { alltypePars.addAll(typeParameters); } 
+    if (alltypePars.size() > 0)
+    { genPars = "<"; 
+      for (int i = 0; i < alltypePars.size(); i++) 
+      { Type tp = (Type) alltypePars.get(i); 
+        genPars = genPars + tp.getCSharp(); 
+        if (i < alltypePars.size() - 1) 
+        { genPars = genPars + ", "; } 
+      } 
+      genPars = genPars + ">"; 
+    } 
+    return genPars; 
+  } 
+
   public String buildGlobalQueryOpCSharp(Entity ent, String opname,
                                    Type t, String resT, 
                                    Vector entities, Vector types)
@@ -7602,6 +7657,22 @@ public class BehaviouralFeature extends ModelElement
     String preheader = ""; 
     String javaPars = getCSharpParameterDec(); 
     
+    String genPars = ""; 
+    Vector alltypePars = new Vector(); 
+    alltypePars.addAll(ent.getTypeParameters()); 
+    if (typeParameters != null)
+    { alltypePars.addAll(typeParameters); } 
+    if (alltypePars.size() > 0)
+    { genPars = "<"; 
+      for (int i = 0; i < alltypePars.size(); i++) 
+      { Type tp = (Type) alltypePars.get(i); 
+        genPars = genPars + tp.getCSharp(); 
+        if (i < alltypePars.size() - 1) 
+        { genPars = genPars + ", "; } 
+      } 
+      genPars = genPars + ">"; 
+    } 
+
     String header = "  public "; 
     // if (isAbstract())
     // { header = header + "abstract "; } 
@@ -7661,7 +7732,7 @@ public class BehaviouralFeature extends ModelElement
     String call = toString();
      
     header2 = header2 + "  for (int _i = 0; _i < " + exs + ".Count; _i++)\n" +
-              "    { " + ename + " " + ex + " = (" + ename + ") " + exs + "[_i];\n"; 
+              "    { " + ename + genPars + " " + ex + " = (" + ename + genPars + ") " + exs + "[_i];\n"; 
 
     // if (parlist.length() > 0)
     // { parlist = "," + parlist; } 

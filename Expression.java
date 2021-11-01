@@ -1211,6 +1211,11 @@ abstract class Expression
   public boolean isCollection()
   { return type != null && type.isCollection(); }
 
+  public boolean isNumericCollection()
+  { return type != null && type.isCollection() && 
+           elementType != null && elementType.isNumeric(); 
+  }
+
   public boolean isSetValued()
   { return type != null && type.isSet(); }
 

@@ -4377,4 +4377,32 @@ public static void generateGraphComponentVC(String systemName, String packageNam
 	} catch(Exception _e) { } 
   } 
 
+  public static void printOclTypeInitialisation(PrintWriter out, 
+                                             Vector entities)
+  { // creates an OclType instance for each class, with 
+    // attributes and operations represented.
+
+    out.println(); 
+    out.println("/* This metatype code requires OclType.java, OclAttribute.java, OclOperation.java */"); 
+    out.println(); 
+    out.println("  public void initialiseOclType()"); 
+    out.println("  { "); 
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ent = (Entity) entities.get(i);
+      if (ent.isComponent()) 
+      { continue; } 
+
+      String ename = ent.getName(); 
+      String lcename = ename.toLowerCase();
+      String ocltype = lcename + "_OclType";    
+      out.println("    OclType " + ocltype + 
+          " = OclType.createByPKOclType(\"" + ename + "\");");  
+      out.println("    " + ocltype + ".setMetatype(" + ename + ".class);");  
+      out.println(); 
+    }
+    out.println("  }");
+    out.println();  
+  } 
+
+
 }  

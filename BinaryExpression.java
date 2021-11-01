@@ -776,6 +776,10 @@ class BinaryExpression extends Expression
     { res.add("->hasSuffix"); }
     else if ("->hasSuffix".equals(op))
     { res.add("->hasPrefix"); }
+    else if ("->restrict".equals(op))
+    { res.add("->antirestrict"); } 
+    else if ("->antirestrict".equals(op))
+    { res.add("->restrict"); } 
     else if (left.isNumeric() && right.isNumeric() && op.equals("+"))
     { res.add("-"); 
       res.add("*"); 

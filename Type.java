@@ -143,6 +143,9 @@ public class Type extends ModelElement
     Entity ex = (Entity) ModelElement.lookupByName(name, ents);
     if (ex != null) 
     { return true; } 
+    if ("OclType".equals(name) || "OclAny".equals(name) || 
+        "OclFile".equals(name) || "OclRandom".equals(name))
+    { return true; } 
     return false; 
  } 
 
@@ -2583,6 +2586,43 @@ public class Type extends ModelElement
   public void generateCPP(PrintWriter out, Type elemType)
   { out.print(getCPP(elemType) + " "); }
 
+  public static String resolveTypeParametersCSharp(Vector tpars, Vector fpars, Vector apars)
+  { String res = "<"; 
+    for (int i = 0; i < tpars.size(); i++) 
+    { Type typ = (Type) tpars.get(i); 
+      String tpname = typ.getName(); // T is just an ident
+      boolean found = false; 
+
+      for (int j = 0; j < fpars.size() && !found; j++) 
+      { Attribute fpar = (Attribute) fpars.get(j); 
+        Expression apar = (Expression) apars.get(j); 
+
+        if (tpname.equals(fpar.getType() + ""))
+        { res = res + apar.getType().getCSharp();
+          found = true; 
+        } 
+        else if (fpar.isSequence() || fpar.isSet())
+        { Type fpelemtype = fpar.getElementType(); 
+          Type apelemtype = apar.getElementType(); 
+          if (tpname.equals(fpelemtype + ""))
+          { res = res + apelemtype.getCSharp(); 
+            found = true; 
+          } 
+        } 
+      }
+
+      if (!found)
+      { res = res + "object"; } 
+
+      if (i < tpars.size()-1)
+      { res = res + ","; }  
+    }
+
+    return res + ">"; 
+  } 
+
+
+
   public String getCSharp()  
   { String nme = getName();
     if (nme.equals("Set") || nme.equals("Sequence"))
@@ -2610,7 +2650,7 @@ public class Type extends ModelElement
     if (nme.equals("OclAny"))
     { return "object"; } 
     if (nme.equals("OclType"))
-    { return "Type"; } 
+    { return "OclType"; } 
     if (nme.equals("OclRandom"))
     { return "OclRandom"; } 
     if (nme.equals("OclIterator"))
@@ -2627,7 +2667,8 @@ public class Type extends ModelElement
     { String res = nme + "<"; 
       Vector v = entity.getTypeParameters(); 
       for (int i = 0; i < v.size(); i++) 
-      { res = res + "object"; 
+      { Type tt = (Type) v.get(i); 
+        res = res + tt.getName(); 
         if (i < v.size() - 1)
         { res = res + ","; }
       }

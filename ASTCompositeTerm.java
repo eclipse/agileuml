@@ -27,6 +27,12 @@ public class ASTCompositeTerm extends ASTTerm
     terms = subtrees; 
   } 
 
+  public ASTCompositeTerm(String t, ASTTerm trm)
+  { tag = t; 
+    terms = new Vector();
+    terms.add(trm);  
+  } 
+
   public boolean hasTag(String tagx)
   { return (tagx.equals(tag)); } 
 
@@ -44,11 +50,33 @@ public class ASTCompositeTerm extends ASTTerm
     return res; 
   } 
 
+  public String toJSON()
+  { String res = "{ \"root\" : \"" + tag + "\", \"children\" : ["; 
+    for (int i = 0; i < terms.size(); i++) 
+    { ASTTerm trm = (ASTTerm) terms.get(i); 
+      res = res + trm.toJSON(); 
+      if (i < terms.size()-1)
+      res = res + ", "; 
+    }  
+    res = res + "] }"; 
+    return res; 
+  } 
+
+
   public String literalForm()
   { String res = ""; 
     for (int i = 0; i < terms.size(); i++) 
     { ASTTerm t = (ASTTerm) terms.get(i); 
       res = res + t.literalForm(); 
+    } 
+    return res; 
+  } 
+
+  public Vector tokenSequence()
+  { Vector res = new Vector();  
+    for (int i = 0; i < terms.size(); i++) 
+    { ASTTerm t = (ASTTerm) terms.get(i); 
+      res.addAll(t.tokenSequence()); 
     } 
     return res; 
   } 
@@ -773,7 +801,18 @@ public class ASTCompositeTerm extends ASTTerm
   { // arg . call
 
     String args = arg.toKM3(); 
-    String calls = call.toKM3(); 
+    String calls = call.toKM3();
+
+    if ("class".equals(calls))
+    { String res = "OclType[\"" + args + "\"]"; 
+      Expression texpr = 
+        BasicExpression.newTypeBasicExpression("OclType"); 
+      expression = BasicExpression.newIndexedBasicExpression(
+                     texpr,
+                     new BasicExpression("\"" + args + "\"")); 
+      ASTTerm.setType(this, "OclType"); 
+      return res; 
+    }  
         
     if (call instanceof ASTCompositeTerm)
     { ASTCompositeTerm callterm = (ASTCompositeTerm) call; 
@@ -7489,6 +7528,18 @@ public class ASTCompositeTerm extends ASTTerm
     { System.out.println(">> parExpression with " + terms.size() + " terms " + terms);
       String res = ""; 
 
+      if (terms.size() == 3 && "class".equals(((ASTTerm) terms.get(2)).literalForm()))
+      { String args = ((ASTTerm) terms.get(0)).literalForm(); 
+        String classcallres = "OclType[\"" + args + "\"]"; 
+        Expression texpr = 
+          BasicExpression.newTypeBasicExpression("OclType"); 
+        expression = BasicExpression.newIndexedBasicExpression(
+                     texpr,
+                     new BasicExpression("\"" + args + "\"")); 
+        ASTTerm.setType(this, "OclType"); 
+        return classcallres; 
+      }  
+
       if (terms.size() == 3)  // ( t ) 
       { ASTTerm tt = (ASTTerm) terms.get(1); 
         res = tt.toKM3();
@@ -7715,6 +7766,7 @@ public class ASTCompositeTerm extends ASTTerm
         String e2x = e2.toKM3();
         String e1literal = e1.literalForm(); 
  
+
         if ("PI".equals(e2 + "") && "Math".equals(e1literal))
         { ASTTerm.setType(this,"double"); 
           expression = new BasicExpression(3.141592653589793); 
@@ -7783,14 +7835,14 @@ public class ASTCompositeTerm extends ASTTerm
 
         if ("TYPE".equals(e2 + "") && "Void".equals(e1literal))
         { ASTTerm.setType(this, "OclType"); 
-          expression = new BasicExpression(new Type("Void",null));
+          expression = new BasicExpression(new Type("void",null));
           return "OclType[\"void\"]"; 
         }
 
         if ("void".equals(e1literal) && 
             "class".equals(e2 + ""))
         { ASTTerm.setType(this, "OclType"); 
-          expression = new BasicExpression(new Type("Void",null));
+          expression = new BasicExpression(new Type("void",null));
           return "OclType[\"void\"]"; 
         }
 
@@ -8034,6 +8086,19 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm.setType(this, "OclType"); 
           return "OclType[\"long\"]"; 
         }
+
+        if ("class".equals(e2 + ""))
+        { String tres = "OclType[\"" + e1literal + "\"]"; 
+          Expression texpr = 
+            BasicExpression.newTypeBasicExpression("OclType"); 
+          expression = 
+            BasicExpression.newIndexedBasicExpression(
+                     texpr,
+                     new BasicExpression("\"" + e1literal + "\"")); 
+          ASTTerm.setType(this, "OclType"); 
+          return tres; 
+        }  
+
 
         if ("Thread".equals(e1literal))
         { ASTTerm.setType(this, "int"); 

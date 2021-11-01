@@ -4333,6 +4333,8 @@ class BasicExpression extends Expression
     { String ind = arrayIndex.queryFormCSharp(env,local);
       if (data.equals("OclFile"))
       { return "OclFile.getOclFileByPK(" + ind + ")"; } 
+      if (data.equals("OclType"))
+      { return "OclType.getOclTypeByPK(" + ind + ")"; } 
         
       return cont + ".get" + data + "ByPK(" + ind + ")"; 
     } 
@@ -6232,6 +6234,8 @@ class BasicExpression extends Expression
       { String ind = arrayIndex.queryFormCSharp(env,local);
         if (data.equals("OclFile"))
         { return "OclFile.getOclFileByPK(" + ind + ")"; } 
+        if (data.equals("OclType"))
+        { return "OclType.getOclTypeByPK(" + ind + ")"; } 
         return cont + ".get" + data + "ByPK(" + ind + ")"; 
       } 
       return data;  
@@ -6438,8 +6442,20 @@ class BasicExpression extends Expression
       if (entity == null && objectRef == null) // use case
       { return cont + "." + res + parString; } 
 
+      BehaviouralFeature bf = null; 
+
       if (entity != null) 
-      { ename = entity.getName(); } 
+      { ename = entity.getName();
+        bf = entity.getDefinedOperation(data); 
+      } 
+
+      if (bf != null && bf.isGeneric())
+      { String tpars = 
+          Type.resolveTypeParametersCSharp( 
+             bf.getTypeParameters(), 
+             bf.getParameters(), parameters); 
+        res = data + tpars + "("; 
+      } 
 
       if (entity != null && entity.isExternalApplication())
       { res = ename + "." + cont + "." + res + parString; 
@@ -13605,6 +13621,7 @@ public Statement generateDesignSubtract(Expression rhs)
     
     System.out.println(">>> Found basic expression rule: " + r + " for " + this + " args= " + args + 
 	                   " eargs= " + eargs); 
+    System.out.println(); 
 
     if (r != null)
     { if (textrules.size() > 0)
