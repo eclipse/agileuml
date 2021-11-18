@@ -1116,6 +1116,22 @@ public class EntityMatching implements SystemTypes
     return res; 
   } 
 
+  public String toCSTL(CGSpec cg)
+  { String res = ""; 
+    Entity baseclass = realsrc.getRootSuperclass(); 
+    if (baseclass != null) 
+    { String rootClass = baseclass.getName(); 
+      res = rootClass + "::\n";
+      cg.addCategory(rootClass); 
+         
+      for (int i = 0; i < attributeMappings.size(); i++) 
+      { AttributeMatching am = (AttributeMatching) attributeMappings.get(i); 
+        res = res + am.toCSTL(rootClass,condition,cg) + "\n"; 
+      }
+    }  
+    return res + "\n"; 
+  } 
+
   public Vector bidirectionalassociationMatchings()
   { // AttributeMatching am where am.src and am.trg are both bidirectional
 
@@ -4434,13 +4450,13 @@ public class EntityMatching implements SystemTypes
         { System.out.println(">>> " + condition + " is a valid condition for rule " + this);
           System.out.println(">>> adding its negation to other rules from " + srcname); 
           addToConditionIfNull(notcond,otherrules); 
-		  conditionError = false; 
+          conditionError = false; 
         }
         else 
         { System.err.println("!! Some instances of " + othersources + " are not mapped to " + trgname + " but satisfy the " + 
                              srcname + " |--> " + trgname + " mapping condition " + condition);
           conditionError = true; 
-	    } 
+        } 
       
 	
         if (conditionError)
@@ -4450,8 +4466,8 @@ public class EntityMatching implements SystemTypes
  
           if (yn != null && yn.equals("y"))
           { condition = null; }  
-        }          
-	  }
+        }   
+      }
 	  
 	  
       if (srcobjects.size() > 0 && 
@@ -4556,10 +4572,10 @@ public class EntityMatching implements SystemTypes
           if (mod.isConstant(att,restrictedsources))
           { System.out.println(">>> Attribute " + att + " is constant on these source objects");
             String val = ((ObjectSpecification) restrictedsources.get(0)).getString(attnme); 
-	        BasicExpression valbe = new BasicExpression("\"" + val + "\""); 
-			valbe.setType(new Type("String", null)); 
-			valbe.setElementType(new Type("String", null));
-			valbe.setUmlKind(Expression.VALUE); 
+            BasicExpression valbe = new BasicExpression("\"" + val + "\""); 
+            valbe.setType(new Type("String", null)); 
+            valbe.setElementType(new Type("String", null));
+            valbe.setUmlKind(Expression.VALUE); 
 			
             Expression possibleCond = new BinaryExpression("=", new BasicExpression(att), valbe); 
             // negCond = new BinaryExpression("/=", new BasicExpression(att), valbe);
@@ -4635,7 +4651,7 @@ public class EntityMatching implements SystemTypes
            { System.out.println(">>> Only subclasses " + classesOfSources + " of " + attent + " are permitted for " + att + 
 			                     " for this mapping"); 
              Expression membershipCond = Expression.classMembershipPredicate(att,classesOfSources);
-			 membershipCond.setBrackets(true);  
+             membershipCond.setBrackets(true);  
              addCondition(membershipCond); 	
              System.out.println(">> Adding the condition " + membershipCond); 
              System.out.println(); 
@@ -4667,7 +4683,7 @@ public class EntityMatching implements SystemTypes
            boolean cvalid4 = mod.checkConditionInModel(possCond4,restrictedsources); 
            if (cvalid4) 
            { System.out.println(">>> Condition " + att + "->size() > 1  is valid. Adding to mapping"); 
-		     possCond4.setBrackets(true); 
+             possCond4.setBrackets(true); 
              addCondition(possCond4); 
              System.out.println(); 
            }
@@ -4691,11 +4707,11 @@ public class EntityMatching implements SystemTypes
            boolean cvalid3 = mod.checkConditionInModel(possCond3,restrictedsources); 
            if (cvalid3) 
            { System.out.println(">>> Condition " + att + "->size() = 1  is valid. Adding to mapping"); 
-		     possCond3.setBrackets(true); 
+             possCond3.setBrackets(true); 
              addCondition(possCond3); 
              System.out.println(); 
             }
-		  }
+          }
         }
 	  }   
     } 

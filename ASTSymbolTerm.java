@@ -16,7 +16,13 @@ public class ASTSymbolTerm extends ASTTerm
   public ASTSymbolTerm(String s) 
   { symbol = s; } 
 
+  public String getTag()
+  { return symbol; } 
+
   public boolean hasTag(String tagx) 
+  { return false; } 
+
+  public boolean hasSingleTerm() 
   { return false; } 
 
   public String cg(CGSpec cgs)
@@ -28,14 +34,31 @@ public class ASTSymbolTerm extends ASTTerm
   public String toString()
   { return symbol; } 
 
+  public String getSymbol()
+  { return symbol; } 
+
   public String toJSON()
   { String res = "{ \"root\" : \"" + symbol + "\", \"children\" : [] }"; 
     return res; 
   } 
 
+  public boolean equals(Object obj)
+  { if (obj instanceof ASTSymbolTerm) 
+    { return symbol.equals(((ASTSymbolTerm) obj).symbol); } 
+    return false; 
+  } 
 
   public String literalForm()
   { return symbol; } 
+
+  public int arity()
+  { return 0; } 
+
+  public ASTTerm removeOuterTag()
+  { return null; }  
+
+  public ASTTerm getTerm(int i) 
+  { return null; }
 
   public Vector tokenSequence()
   { Vector res = new Vector(); 

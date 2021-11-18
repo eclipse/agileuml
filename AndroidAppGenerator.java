@@ -15,8 +15,9 @@ import java.io.*;
 public class AndroidAppGenerator extends AppGenerator
 { 
 
-  public void modelFacade(String packageName, Vector usecases, CGSpec cgs, Vector entities, Vector clouds, Vector types, 
-                          int remoteCalls, boolean needsMap, PrintWriter out)
+  public void modelFacade(String packageName, Vector usecases, CGSpec cgs, Vector allentities, 
+     Vector entities, Vector clouds, Vector types, 
+     int remoteCalls, boolean needsMap, PrintWriter out)
   { // String ename = e.getName();
     // Vector atts = e.getAttributes(); 
 	
@@ -51,11 +52,11 @@ public class AndroidAppGenerator extends AppGenerator
     if (hasDbi) 
     { out.println("  Dbi dbi; "); } 
     
-	if (hasCloud)
+    if (hasCloud)
     { out.println("  FirebaseDbi cdbi = FirebaseDbi.getInstance();"); }
 	
     if (needsMap) 
-	{ out.println("  MapLocation currentLocation;"); 
+    { out.println("  MapLocation currentLocation;"); 
       out.println("  private MapsComponent mapDelegate;"); 
     }
 	
@@ -66,12 +67,17 @@ public class AndroidAppGenerator extends AppGenerator
     out.println(); 
     out.println("  public static ModelFacade getInstance(Context context)"); 
     out.println("  { if (instance == null) "); 
-    out.println("    { instance = new ModelFacade(context); }"); 
+    out.println("    { instance = new ModelFacade(context);"); 
+    out.println("      ModelFacade.initialiseOclTypes();"); 
+    out.println("    }"); 
     out.println("    return instance;");  
     out.println("  }");  
     out.println(); 
     out.println(); 
 	
+    printOclTypeInitialisation(out, 
+                               allentities); 
+  
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i); 
       if (ent.isDerived()) { } 
@@ -4385,7 +4391,7 @@ public static void generateGraphComponentVC(String systemName, String packageNam
     out.println(); 
     out.println("/* This metatype code requires OclType.java, OclAttribute.java, OclOperation.java */"); 
     out.println(); 
-    out.println("  public void initialiseOclType()"); 
+    out.println("  public static void initialiseOclTypes()"); 
     out.println("  { "); 
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i);

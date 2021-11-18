@@ -294,6 +294,10 @@ public class Attribute extends ModelElement
   public boolean isSequence()
   { return type != null && type.isSequenceType(); } 
 
+  public boolean isTree()
+  { return type != null && "OclAny".equals(type.getName()); } 
+  // Should have an actual OclTree type. 
+
   public boolean isBoolean()
   { return type != null && type.getName().equals("boolean"); } 
 
@@ -1215,13 +1219,17 @@ public class Attribute extends ModelElement
 
   public String toAST()
   { if (isStatic())
-    { return "(Attribute static attribute " + getName() + " : " + getType().toAST() + " )"; } 
+    { return "(OclAttribute static attribute " + getName() + " : " + getType().toAST() + " )"; } 
     else if (isIdentity())
-    { return "(Attribute attribute " + getName() + " identity : " + getType().toAST() + " )"; }
+    { return "(OclAttribute attribute " + getName() + " identity : " + getType().toAST() + " )"; }
     else if (isDerived())
-    { return "(Attribute attribute " + getName() + " derived : " + getType().toAST() + " )"; }
+    { return "(OclAttribute attribute " + getName() + " derived : " + getType().toAST() + " )"; }
     else  
-    { return "(Attribute attribute " + getName() + " : " + getType().toAST() + " )"; } 
+    { return "(OclAttribute attribute " + getName() + " : " + getType().toAST() + " )"; } 
+  } 
+
+  public String toASTParameter()
+  { return "(Parameter " + getName() + " : " + getType().toAST() + " )";  
   } 
 
   public String getKM3()
@@ -1419,11 +1427,18 @@ public class Attribute extends ModelElement
   public String methodDeclarationCPP()
   { String res = ""; 
     res = "    " + getType().getCPP(getElementType()) + " " + getName(); 
-    String initval = getInitialValue(); 
-    if (initval != null) 
-    { res = res + " = " + initval; } 
+    java.util.Map env = new java.util.HashMap(); 
+
+    if (initialExpression != null) 
+    { res = res + " = " + initialExpression.queryFormCPP(env,true); } 
     else 
-    { res = res + " = " + getType().getDefaultCPP(getElementType()); } 
+    { String initval = getInitialValue(); 
+      if (initval != null) 
+      { res = res + " = " + initval; } 
+      else 
+      { res = res + " = " + getType().getDefaultCPP(getElementType()); } 
+    }
+
     res = res + ";\n";
     return res;  
   } // initialExpression & convert to C++, etc, also for C#
@@ -3923,7 +3938,7 @@ public class Attribute extends ModelElement
     String ex = ename.toLowerCase() + "x"; 
     String es = ename.toLowerCase() + "_s"; 
     Vector vals = type.getValues();
-    String attx = nme + "_x"; 
+    String attx = nme + "_xx"; 
     BasicExpression attxbe = new BasicExpression(attx); 
 
     Attribute epar = new Attribute(ex,new Type(ent),ModelElement.INTERNAL); 

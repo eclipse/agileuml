@@ -511,7 +511,7 @@ public class UCDArea extends JPanel
           tt = new Type(typ,null);
         }
         else
-        { System.out.println("!!! Unknown type name: " + typ);
+        { System.err.println("!!! Unknown type name: " + typ);
           JOptionPane.showMessageDialog(null, "Warning: unknown type " + typ, 
                                       "", JOptionPane.ERROR_MESSAGE);  
  
@@ -3999,7 +3999,7 @@ public class UCDArea extends JPanel
                                 new FileWriter(entbeanf)));
       System.out.println(">>> Writing " + entbeanf + " for " + entusecases); 
 		
-      gen.modelFacade(systemName,entusecases,cgs,entities,clouds,
+      gen.modelFacade(systemName,entusecases,cgs,entities,entities,clouds,
                       types,internetCalls,needsMaps,beanout);
       // beanout.flush(); 
       beanout.close(); 
@@ -4153,7 +4153,7 @@ public class UCDArea extends JPanel
         System.out.println(">>> I will add one for you."); 
         String keyname = eename.toLowerCase() + "Id"; 
         eekey = new Attribute(keyname,new Type("String",null), ModelElement.INTERNAL); 
-		eekey.setIdentity(true); 
+        eekey.setIdentity(true); 
         ee.addAttribute(eekey); 
       }  
 	  
@@ -4220,8 +4220,8 @@ public class UCDArea extends JPanel
    // Entity graphcomponent = (Entity) ModelElement.lookupByName("GraphComponent", entities); 
    // if (graphcomponent != null) 
    // { predefinedComponents.add(graphcomponent); 
-	//  predefinedUseCases.add("graph"); 
-	//  screencount++; 
+   //  predefinedUseCases.add("graph"); 
+   //  screencount++; 
    // }
 
     Entity mapcomponent = (Entity) ModelElement.lookupByName("MapsComponent", entities); 
@@ -4425,13 +4425,21 @@ public class UCDArea extends JPanel
     { Type typ = (Type) types.get(j);
       if (typ.isEnumeration()) 
       { String typef = typ.getName() + ".java"; 
+        String tdef = 
+          typ.getJava8Definition(nestedPackageName); 
         File typefile = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + typef); 
         try
         { PrintWriter typeout = new PrintWriter(
                                   new BufferedWriter(
                                     new FileWriter(typefile)));
-          typeout.println(typ.getJava8Definition(nestedPackageName));
+          typeout.println(tdef);
           typeout.close(); 
+
+          PrintWriter localtypeout = 
+            new PrintWriter(new BufferedWriter(
+                  new FileWriter("output/" + typef))); 
+          localtypeout.println(tdef);
+          localtypeout.close(); 
         } catch (Exception e) { } 
       }
     } 
@@ -4466,6 +4474,9 @@ public class UCDArea extends JPanel
 
     int remotecalls = 0; 
 
+    Date dd1 = new Date(); 
+    long tt1 = dd1.getTime(); 
+
     for (int j = 0; j < entities.size(); j++) 
     { Entity ent = (Entity) entities.get(j);
       if (ent.isDerived()) { continue; } 
@@ -4492,6 +4503,8 @@ public class UCDArea extends JPanel
         ffout.println("import java.util.HashSet;");
         ffout.println("import java.util.TreeSet;");
         ffout.println("import java.util.Collections;");
+        ffout.println("import java.util.function.Function;"); 
+        ffout.println("import java.io.Serializable;"); 
         ffout.println(); 
         // ent.generateJava7(entities,types,ffout);
         String entcode = ent.cg(cgs);
@@ -4511,6 +4524,8 @@ public class UCDArea extends JPanel
         simplefout.println("import java.util.HashSet;");
         simplefout.println("import java.util.TreeSet;");
         simplefout.println("import java.util.Collections;");
+        simplefout.println("import java.util.function.Function;"); 
+        simplefout.println("import java.io.Serializable;"); 
         simplefout.println(); 
         cgs.displayText(entcode,simplefout); 
 		 
@@ -4548,6 +4563,10 @@ public class UCDArea extends JPanel
         } catch (Exception _e) { }  
       } 
     } 
+
+    Date dd2 = new Date(); 
+    long tt2 = dd2.getTime(); 
+    System.out.println(">>> Code generation time = " + (tt2 - tt1)); 
 
     if (remotecalls > 0) 
     { AndroidAppGenerator.generateInternetAccessor(systemName, nestedPackageName); } 
@@ -4608,7 +4627,7 @@ public class UCDArea extends JPanel
     { PrintWriter mfout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(mff)));
-      agen.modelFacade(nestedPackageName,useCases,cgs,persistentEntities,clouds,types,remotecalls,needsMaps,mfout);
+      agen.modelFacade(nestedPackageName,useCases,cgs,entities,persistentEntities,clouds,types,remotecalls,needsMaps,mfout);
       mfout.close(); 
      } catch (Exception e) 
        { e.printStackTrace(); } 
@@ -8572,7 +8591,7 @@ public class UCDArea extends JPanel
   }
 
   public void generateCPP(PrintWriter out, PrintWriter out2)
-  { out.println("// controller.h"); 
+  { out.println("// Controller.h"); 
     // out.println("#include <string>"); 
     // out.println("#include <vector>");
     // out.println("#include <set>"); 
@@ -8584,8 +8603,8 @@ public class UCDArea extends JPanel
     out.println(""); 
     out.println("using namespace std;\n"); 
 
-    if (systemName != null && systemName.length() > 0)
-    { out.println("namespace " + systemName + " {\n\n"); } 
+  //  if (systemName != null && systemName.length() > 0)
+  //  { out.println("namespace " + systemName + " {\n\n"); } 
  
     out2.println("// Controller.cc"); 
     out2.println("#include <string>"); 
@@ -8598,7 +8617,7 @@ public class UCDArea extends JPanel
     out2.println("#include <ctime>"); 
     out2.println("#include <algorithm>"); 
     out2.println("#include <regex>"); 
-    out2.println("#include \"controller.h\""); 
+    out2.println("#include \"Controller.h\""); 
  
     out2.println(""); 
     out2.println("using namespace std;\n"); 
@@ -8672,8 +8691,8 @@ public class UCDArea extends JPanel
       out2.println(opcode); 
     } 
 
-    if (systemName != null && systemName.length() > 0)
-    { out.println("} \n\n"); } 
+    // if (systemName != null && systemName.length() > 0)
+    // { out.println("} \n\n"); } 
 
     try
     { out.close();
@@ -8685,7 +8704,29 @@ public class UCDArea extends JPanel
   }
 
 public void produceCUI(PrintWriter out)
-{ out.println("#include \"app.c\"");
+{ String initialiseTypesCode = 
+    "  struct OclType* intType = createOclType(\"int\");\n" +  
+    "  struct OclType* stringType = createOclType(\"String\");\n" +  
+    "  struct OclType* longType = createOclType(\"long\");\n" +  
+    "  struct OclType* booleanType = createOclType(\"boolean\");\n" + 
+    "  struct OclType* doubleType = createOclType(\"double\");\n" + 
+    "  struct OclType* voidType = createOclType(\"void\");\n";
+ 
+  for (int i = 0; i < entities.size(); i++) 
+  { Entity ent = (Entity) entities.get(i); 
+    if (ent.isDerived() || ent.isComponent() || ent.isExternal()) 
+    { continue; }
+
+    String ename = ent.getName(); 
+    String enamelc = ename.toLowerCase(); 
+ 
+    initialiseTypesCode = 
+      initialiseTypesCode + 
+        "  struct OclType* " + enamelc + "Type = createOclType(\"" + ename + "\");\n"; 
+  } 
+
+
+  out.println("#include \"app.c\"");
   out.println();
   out.println(); 
 
@@ -8693,7 +8734,8 @@ public void produceCUI(PrintWriter out)
      for each application entity E */ 
 
   out.println("int main(int _argc, char* _argv[])"); 
-  out.println("{ char** res = getFileLines(\"app.itf\");");  
+  out.println("{ " + initialiseTypesCode); 
+  out.println("  char** res = getFileLines(\"app.itf\");");  
   out.println("  int ncommands = length(res);");
   out.println("  int i = 0;");
   out.println("  printf(\"Available use cases are:\\n\");");  
@@ -10266,19 +10308,22 @@ public void produceCUI(PrintWriter out)
 
     out.println("    static std::set<_T>* makeSet(_T x)"); 
     out.println("    { std::set<_T>* res = new std::set<_T>();"); 
-    out.println("      if (x != NULL) { res->insert(x); }"); 
+    out.println("      res->insert(x);"); 
     out.println("      return res;"); 
     out.println("    }\n"); 
     out.println("    static vector<_T>* makeSequence(_T x)"); 
     out.println("    { vector<_T>* res = new vector<_T>();"); 
-    out.println("      if (x != NULL) { res->push_back(x); } return res;"); 
+    out.println("      res->push_back(x);"); 
+    out.println("      return res;"); 
     out.println("    }\n"); 
     out.println("    static std::set<_T>* addSet(std::set<_T>* s, _T x)"); 
-    out.println("    { if (x != NULL) { s->insert(x); }"); 
-    out.println("      return s; }\n"); 
+    out.println("    { s->insert(x); "); 
+    out.println("      return s;"); 
+    out.println("    }\n"); 
     out.println("    static vector<_T>* addSequence(vector<_T>* s, _T x)"); 
-    out.println("    { if (x != NULL) { s->push_back(x); }"); 
-    out.println("      return s; }\n"); 
+    out.println("    { s->push_back(x); "); 
+    out.println("      return s;");  
+    out.println("    }\n"); 
 
     out.println("    static vector<_T>* asSequence(std::set<_T>* c)"); 
     out.println("    { vector<_T>* res = new vector<_T>();");
@@ -12127,9 +12172,9 @@ public void produceCUI(PrintWriter out)
         else if (s.indexOf(":") > 0) // A named function definition
 	  { int inddot = s.indexOf(":"); 
 	    String ff = s.substring(0,inddot); 
-	    String f = ff.trim(); 
-		System.out.println(">> Named type mapping function: " + f);
-		currentTypeMappingName = f; 
+         String f = ff.trim(); 
+         System.out.println(">> Named type mapping function: " + f);
+         currentTypeMappingName = f; 
       }        
       // System.out.println(s); 
     }
@@ -13045,6 +13090,37 @@ public void produceCUI(PrintWriter out)
     pwout.close(); 
     // System.out.println("New associations: " + assocs);    
   }
+
+  public void java2python()
+  { File ocltypes = new File("libraries/ocltype.km3"); 
+    if (ocltypes.exists())
+    { loadKM3FromFile(ocltypes); }
+    else 
+    { System.err.println("! Warning: no file libraries/ocltype.km3"); } 
+
+    File oclfile = new File("libraries/oclfile.km3"); 
+    if (oclfile.exists())
+    { loadKM3FromFile(oclfile); }
+    else 
+    { System.err.println("! Warning: no file libraries/oclfile.km3"); } 
+
+    File ocldate = new File("libraries/ocldate.km3"); 
+    if (ocldate.exists())
+    { loadKM3FromFile(ocldate); }
+    else 
+    { System.err.println("! Warning: no file libraries/ocldate.km3"); } 
+
+    File oclprocess = new File("libraries/oclprocess.km3"); 
+    if (oclprocess.exists())
+    { loadKM3FromFile(oclprocess); }
+    else 
+    { System.err.println("! Warning: no file libraries/oclprocess.km3"); } 
+ 
+    loadGenericUseCase();
+    typeCheck(); 
+    typeCheck(); 
+    // Generate Python
+  } 
 
 
   public void loadGenericUseCase()
@@ -19839,8 +19915,11 @@ public void produceCUI(PrintWriter out)
                               new BufferedWriter(
                                 new FileWriter("output/tl.cstl")));
 
-  
-        java.util.Map cstlVersion = tlspecification.convert2CSTL();
+        CGSpec cg = new CGSpec(entities); 
+        tlspecification.toCSTL(cg);
+        cout.println(cg);   
+
+      /*   java.util.Map cstlVersion = tlspecification.convert2CSTL();
         Vector cstlcats = new Vector(); 
         cstlcats.addAll(cstlVersion.keySet()); 
         for (int i = 0; i < cstlcats.size(); i++) 
@@ -19852,7 +19931,8 @@ public void produceCUI(PrintWriter out)
             cout.println(r); 
           }
           cout.println(); 
-        }  
+        }  */ 
+
         cout.close(); 
       } catch (Exception _fex) 
       { _fex.printStackTrace(); } 
@@ -20015,7 +20095,11 @@ public void produceCUI(PrintWriter out)
         fout.close(); 
       } catch (Exception _except) { } 
 
-      System.out.println("----- Written result TL transformation to output/final.tl ----------");   
+      System.out.println("----- Written result TL transformation to output/final.tl ----------");  
+
+      CGSpec cg = new CGSpec(entities); 
+      tlspecification.toCSTL(cg);
+      System.out.println(cg);   
     } 
     else 
     { System.err.println("!! ERROR: no TL specification"); } 
@@ -23340,6 +23424,7 @@ public void produceCUI(PrintWriter out)
 	
       Vector optests = e.operationTestCases(mutationtests);
  
+   /*   
       System.out.println("*** Test cases for entity " + e.getName() + " operations written to output/tests"); 
     
       for (int j = 0; j < optests.size(); j++) 
@@ -23356,8 +23441,9 @@ public void produceCUI(PrintWriter out)
           } 
           catch (Exception _x) { } 
         }
-      } 
-    }   
+      } */ 
+ 
+    }    
   
     try
     { File dir = new File(dirName); 
@@ -23411,7 +23497,7 @@ public void produceCUI(PrintWriter out)
 	
       Vector optests = e.operationTestCasesJava6(mutationtests);
  
-      System.out.println("*** Test cases for entity " + e.getName() + " operations written to output/tests"); 
+   /*    System.out.println("*** Test cases for entity " + e.getName() + " operations written to output/tests"); 
     
       for (int j = 0; j < optests.size(); j++) 
       { if (optests.get(j) instanceof Vector)
@@ -23427,7 +23513,8 @@ public void produceCUI(PrintWriter out)
           } 
           catch (Exception _x) { } 
         }
-      } 
+      } */ 
+ 
     }   
   
     try
@@ -23482,6 +23569,7 @@ public void produceCUI(PrintWriter out)
 	
       Vector optests = e.operationTestCasesJava7(mutationtests);
  
+  /* 
       System.out.println("*** Test cases for entity " + e.getName() + " operations written to output/tests"); 
     
       for (int j = 0; j < optests.size(); j++) 
@@ -23498,8 +23586,9 @@ public void produceCUI(PrintWriter out)
           } 
           catch (Exception _x) { } 
         }
-      } 
-    }   
+      } */ 
+ 
+    }  
   
     try
     { File dir = new File(dirName); 
@@ -23553,6 +23642,7 @@ public void produceCUI(PrintWriter out)
 	
       Vector optests = e.operationTestCasesJava8(mutationtests);
  
+  /* 
       System.out.println("*** Test cases for entity " + e.getName() + " operations written to output/tests"); 
     
       for (int j = 0; j < optests.size(); j++) 
@@ -23569,8 +23659,9 @@ public void produceCUI(PrintWriter out)
           } 
           catch (Exception _x) { } 
         }
-      } 
-    }   
+      } */ 
+ 
+    } 
   
     try
     { File dir = new File(dirName); 

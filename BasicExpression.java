@@ -283,6 +283,40 @@ class BasicExpression extends Expression
     umlkind = VALUE; 
   } 
 
+  BasicExpression(ASTTerm t)
+  { if (t instanceof ASTBasicTerm)
+    { ASTBasicTerm bt = (ASTBasicTerm) t; 
+      data = bt.getTag();
+      BasicExpression arg = new BasicExpression(bt.getValue());
+      arg.umlkind = VALUE;   
+      umlkind = QUERY;
+      isEvent = true; 
+      Vector pars = new Vector(); 
+      pars.add(arg); 
+      parameters = pars;  
+    } 
+    else if (t instanceof ASTSymbolTerm)
+    { data = ((ASTSymbolTerm) t).getSymbol(); 
+      umlkind = VALUE; 
+    } 
+    else if (t instanceof ASTCompositeTerm)
+    { ASTCompositeTerm tree = (ASTCompositeTerm) t; 
+      data = tree.getTag(); 
+      umlkind = QUERY;
+      isEvent = true; 
+      Vector trms = tree.getTerms(); 
+      Vector pars = new Vector(); 
+      for (int i = 0; i < trms.size(); i++)
+      { ASTTerm trm = (ASTTerm) trms.get(i); 
+        Expression arg = new BasicExpression(trm); 
+        pars.add(arg); 
+      } 
+      parameters = pars; 
+    } 
+
+  } 
+
+
   public static BasicExpression newBasicExpression(Expression obj, String feat) 
   { BasicExpression res = new BasicExpression(feat); 
     res.objectRef = obj; 
@@ -543,9 +577,13 @@ class BasicExpression extends Expression
     else 
     { res.parameters = new Vector(); 
       for (int i = 0; i < parameters.size(); i++) 
-      { Expression par = (Expression) parameters.get(i); 
-        Expression pclone = (Expression) par.clone(); 
-        res.parameters.add(pclone); 
+      { if (parameters.get(i) instanceof Expression)
+	    { Expression par = (Expression) parameters.get(i); 
+          Expression pclone = (Expression) par.clone(); 
+          res.parameters.add(pclone); 
+        }
+        else 
+        { res.parameters.add(parameters.get(i)); }
       } 
     } 
 
@@ -793,6 +831,15 @@ class BasicExpression extends Expression
 
   public void setParameters(Vector pars)
   { parameters = pars; } 
+
+  public void setParameter(int ind, Expression par)
+  { if (parameters == null) 
+    { parameters = new Vector(); }
+    if (parameters.size() >= ind)
+    { parameters.set(ind-1,par); } 
+    else 
+    { parameters.add(par); }  
+  }  
 
   public void addParameter(Expression v)
   { if (parameters == null)
@@ -1844,6 +1891,45 @@ class BasicExpression extends Expression
     return res + " )"; 
   }
 
+  public String toCSTL()
+  { String res = data;
+ 
+    if (parameters != null && parameters.size() > 0)
+    { res = ""; 
+      for (int i = 0; i < parameters.size(); i++)
+      { res = res + parameters.get(i) + " "; } 
+    } 
+    return res; 
+  }  
+
+  public String toLiteralCSTL()
+  { String res = data;
+ 
+    if (umlkind == FUNCTION)
+    { if (parameters != null && parameters.size() == 1)
+      { res = parameters.get(0) + "`" + data; }
+      return res;  
+    } 
+
+    if (parameters != null && parameters.size() > 0)
+    { res = ""; 
+      for (int i = 0; i < parameters.size(); i++)
+      { String par = ((BasicExpression) parameters.get(i)).toLiteralCSTL(); 
+        if (res.length() > 0 && 
+            par.startsWith("_") && 
+            ( Character.isDigit(res.charAt(res.length()-1)) ||
+              Character.isLetter(res.charAt(res.length()-1)) )
+           )
+        { res = res + " " + par; } 
+        else 
+        { res = res + par; } 
+      } 
+    } 
+    return res; 
+  }  
+
+
+
   public String saveModelData(PrintWriter out) // the RSDS internal representation
   { String res = Identifier.nextIdentifier("basicexpression_");
     out.println(res + " : BasicExpression"); 
@@ -2642,13 +2728,13 @@ class BasicExpression extends Expression
       return true;
     }
 
-    if (isLong(data))
+    if (Expression.isLong(data))
     { type = new Type("long",null);
       elementType = type; 
       entity = null;
       umlkind = VALUE;
       multiplicity = ModelElement.ONE;
-      data = "" + Long.decode(data).longValue(); 
+      data = "" + Expression.convertLong(data); 
       System.out.println("**Type of " + data + " is long");
       return true;
     }
@@ -6656,6 +6742,7 @@ class BasicExpression extends Expression
       { Expression se = buildSetExpression(data); 
         return se.queryFormCPP(env,local);
       }
+
       if (isSequence(data))
       { Expression se = buildSetExpression(data); 
         if (arrayIndex != null)
@@ -6665,6 +6752,7 @@ class BasicExpression extends Expression
         }
         return se.queryFormCPP(env,local); 
       } 
+
       if (isString(data) && arrayIndex != null)
       { String ind = arrayIndex.queryFormCPP(env,local); 
         String indopt = evaluateString("-",ind,"1"); 
@@ -6743,10 +6831,12 @@ class BasicExpression extends Expression
         String rinstances = cont + "get" + arg1s.toLowerCase() + "_s()"; 
         return "UmlRsdsLib<" + arg1s + "*>::isIn(" + pre + ", " + rinstances + ")";
       } 
+
       if (data.equals("oclAsType") && parameters != null)  
       { Expression arg1 = (Expression) parameters.get(0); 
         return "((" + arg1 + "*) " + pre + ")";  // casting - assuming it is an entity 
       } 
+
       if (data.equals("sqr"))
       { return "(" + pre + ") * (" + pre + ")"; } 
       else if (data.equals("abs") || data.equals("sin") || data.equals("cos") ||
@@ -6943,9 +7033,9 @@ class BasicExpression extends Expression
 	  
       String var = findEntityVariable(env);
       if (var != null && var.length() > 0) 
-	  { return var + "->" + res + parString; } 
-	  else 
-	  { return res + parString; }      
+      { return var + "->" + res + parString; } 
+      else 
+      { return res + parString; }      
     } // may also be an arrayIndex
       
 
@@ -6986,8 +7076,8 @@ class BasicExpression extends Expression
         String var = findEntityVariable(env);
 
         String res = var + "->get" + data + "()";
-		if (var == null || var.length() == 0)
-		{ res = data; }
+        if (var == null || var.length() == 0)
+        { res = data; }
 		
         if (arrayIndex != null) 
         { String etype = type.getCPP(elementType); 
@@ -7025,7 +7115,7 @@ class BasicExpression extends Expression
           { res = pre + "->get" + data + "()"; }  // E[ind].data
         } 
         else if (entity.isClassScope(data))
-        { res = pre + "->get" + data + "()"; }   // E.data
+        { res = pre + "::get" + data + "()"; }   // E.data
         else 
         { pre = cont + "get" + ename.toLowerCase() + "_s()"; 
           res = ename + "::getAll" + data + "(" + pre + ")";
@@ -7044,9 +7134,13 @@ class BasicExpression extends Expression
       }
       else
       { if (downcast)
-        { pre = "((" + ename + "*) " + pre + ")"; } 
-        res = pre + "->get" + data + "()";
+        { pre = "((" + ename + "*) " + pre + ")"; }
+        if (entity != null && entity.isClassScope(data))
+        { res = pre + "::get" + data + "()"; } 
+        else 
+        { res = pre + "->get" + data + "()"; }
       }
+
       if (arrayIndex != null) 
       { String ind = arrayIndex.queryFormCPP(env,local); 
         if (isQualified())
@@ -7940,7 +8034,7 @@ public Statement generateDesignSubtract(Expression rhs)
       return cont + "kill" + all + eename + "(" + pre + ");"; 
     } 
     else 
-    { return "{} // No update form for: " + this; } 
+    { return "{} /* Update form for: " + this + " */"; } 
       // Controller.inst()." + data + pars + ";"; } 
       // no sensible update form?; 
   }

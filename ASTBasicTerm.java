@@ -23,16 +23,48 @@ public class ASTBasicTerm extends ASTTerm
   public void setTag(String t)
   { tag = t; } 
 
+  public String getTag()
+  { return tag; } 
+
   public boolean hasTag(String tagx) 
   { return tagx.equals(tag); } 
 
+  public boolean hasSingleTerm() 
+  { return true; } 
+
+  public int arity()
+  { return 1; } 
+
+
+  public ASTTerm removeOuterTag()
+  { return new ASTSymbolTerm(value); }  
+
+  public ASTTerm getTerm(int i) 
+  { if (i == 0)
+    { return new ASTSymbolTerm(value); } 
+    return null; 
+  }
+
   public void setValue(String v)
   { value = v; } 
+
+  public String getValue()
+  { return value; } 
 
   public String toString()
   { String res = "(" + tag + " " + value + ")"; 
     return res; 
   } 
+
+  public boolean equals(Object obj)
+  { if (obj instanceof ASTBasicTerm) 
+    { ASTBasicTerm other = (ASTBasicTerm) obj; 
+      return tag.equals(other.tag) && 
+             value.equals(other.value); 
+    } 
+    return false; 
+  } 
+
 
   public String toJSON()
   { String res = "{ \"root\" : \"" + value + "\", \"children\" : [] }"; 
@@ -269,15 +301,18 @@ public class ASTBasicTerm extends ASTTerm
       return "OclAttribute"; }
 
     if ("Thread".equals(value) || "Runtime".equals(value) || 
-        "Process".equals(value))
+        "Process".equals(value) || "Timer".equals(value) || 
+        "TimerTask".equals(value))
     { modelElement = new Type("OclProcess", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclProcess"; } 
+      return "OclProcess"; 
+    } 
 
     if ("ThreadGroup".equals(value))
     { modelElement = new Type("OclProcessGroup", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclProcessGroup"; } 
+      return "OclProcessGroup"; 
+    } 
 
     if ("Date".equals(value))
     { modelElement = new Type("OclDate", null); 
@@ -663,7 +698,13 @@ public class ASTBasicTerm extends ASTTerm
       ASTTerm.setType(value,"double");
  
       if (value.endsWith("F"))
-      { return value.substring(0,value.length()-1); } 
+      { String baseValue = 
+                     value.substring(0,value.length()-1); 
+        expression = 
+          BasicExpression.newValueBasicExpression(
+                                         baseValue,typ);
+        return baseValue;  
+      } 
     }
     else if (tag.equals("literal") && value.endsWith("\"") && 
              value.startsWith("\""))
@@ -692,6 +733,29 @@ public class ASTBasicTerm extends ASTTerm
   
     return value; 
   } 
+
+  public boolean isInteger()
+  { if (tag.equals("integerLiteral")) 
+    { return true; } 
+    if (Expression.isInteger(value) || 
+        Expression.isLong(value))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isDouble()
+  { if (tag.equals("floatLiteral")) 
+    { return true; } 
+    if (Expression.isDouble(value))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isBoolean()
+  { if (value.equals("true") || value.equals("false"))
+    { return true; } 
+    return false; 
+  } // Ok for Java and OCL. 
 
   public boolean isIdentifier()
   { return "primary".equals(tag) && 

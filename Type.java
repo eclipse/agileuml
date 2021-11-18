@@ -361,7 +361,7 @@ public class Type extends ModelElement
   { if (t == null) { return false; } 
     String nme = t.getName(); 
     return ("Sequence".equals(nme) || "Set".equals(nme) || "Map".equals(nme)); 
-  } 
+  } // But really, should exclude Map from this. 
 
   public static boolean isNumericType(String t)
   { if ("int".equals(t) || "double".equals(t) || "long".equals(t))
@@ -1868,6 +1868,18 @@ public class Type extends ModelElement
     return e.isPrimitive(); 
   } 
 
+  public static boolean isClassifierType(Type e)
+  { if (e == null) 
+    { return false; } 
+    String estr = e + ""; 
+    if ("String".equals(estr) || "OclDate".equals(estr) ||
+        "OclAny".equals(estr) || "OclType".equals(estr) || 
+        "OclProcess".equals(estr) || "OclFile".equals(estr) ||
+        "OclRandom".equals(estr))
+    { return true; } 
+    return false; 
+  } 
+
   public boolean isValueType()
   { if (isBasicType(this)) 
     { return true; }
@@ -2549,7 +2561,7 @@ public class Type extends ModelElement
   { if (values == null) // so not enumerated
     { String nme = getName();
       if (nme.equals("String"))
-      { return "\"\""; }
+      { return "string(\"\")"; }
       if (nme.equals("boolean"))
       { return "false"; }
       if (nme.equals("int") || nme.equals("long"))
@@ -2802,7 +2814,7 @@ public class Type extends ModelElement
     if (nme.equals("boolean")) { return "bool"; } 
     if (isEntity) { return nme + "*"; } 
     if (nme.equals("Function"))
-    { return elemType + " (*)(String)"; } 
+    { return elemType + " (*)(string)"; } 
 
     if (alias != null)    // For datatypes
     { return alias.getCPP(elemType); } 
@@ -2810,7 +2822,11 @@ public class Type extends ModelElement
     if (nme.equals("OclAny"))
     { return "void*"; } 
     if (nme.equals("OclType"))
-    { return "char*"; } 
+    { return "OclType*"; } 
+    if (nme.equals("OclRandom"))
+    { return "OclRandom*"; } 
+    if (nme.equals("OclDate"))
+    { return "OclDate*"; } 
 
 
     return nme;  // enumerations, long, int and double 
@@ -2843,11 +2859,13 @@ public class Type extends ModelElement
     { return jex; } 
 
     if (nme.equals("OclDate"))
-    { return "struct tm*"; } 
+    { return "OclDate*"; } 
     if (nme.equals("OclAny"))
     { return "void*"; } 
     if (nme.equals("OclType"))
-    { return "char*"; } 
+    { return "OclType*"; } 
+    if (nme.equals("OclRandom"))
+    { return "OclRandom*"; } 
 
     if (isEntity) 
     { return nme + "*"; }
@@ -3788,13 +3806,13 @@ public class Type extends ModelElement
   } 
 
   public String toAST()
-  { String res = "(Type "; 
+  { String res = "(OclType "; 
     String nme = getName(); 
     if ("Set".equals(nme) || "Sequence".equals(nme))
     { if (elementType == null)
       { return res + nme + ")"; } 
       else  
-      { return res + nme + " " + elementType.toAST() + " )"; } 
+      { return res + nme + " ( " + elementType.toAST() + " ) )"; } 
     } 
 
     if ("Map".equals(nme) || "Function".equals(nme))
@@ -3808,7 +3826,7 @@ public class Type extends ModelElement
       { et = "OclAny"; } 
       else 
       { et = elementType.toAST(); } 
-      return nme + " " + kt + " " + et + ")"; 
+      return res + nme + " ( " + kt + " , " + et + " ) )"; 
     } 
 
     return res + nme + ")"; 

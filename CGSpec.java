@@ -84,12 +84,69 @@ public class CGSpec
     entities = ents;  
   }
 
+  public void addCategory(String category)
+  { Vector rules = (Vector) categoryRules.get(category); 
+    if (rules == null) 
+    { rules = new Vector(); } 
+    categoryRules.put(category,rules); 
+  } 
+
   public void addCategoryRule(String category, CGRule r)
   { Vector rules = (Vector) categoryRules.get(category); 
     if (rules == null) 
     { rules = new Vector(); } 
     rules.add(r); 
     categoryRules.put(category,rules); 
+  } 
+
+  public void addCategoryRuleInOrder(String category, CGRule r)
+  { Vector rules = (Vector) categoryRules.get(category); 
+    if (rules == null) 
+    { rules = new Vector(); } 
+
+    if (rules.contains(r)) { } 
+    else 
+    { rules = insertRuleInOrder(r,rules); } 
+
+    categoryRules.put(category,rules); 
+  } 
+
+  private Vector insertRuleInOrder(CGRule r, Vector rs)
+  { Vector res = new Vector(); 
+    if (rs.size() == 0)
+    { res.add(r); 
+      return res; 
+    } 
+
+    CGRule fst = (CGRule) rs.get(0); 
+    if (fst.equals(r)) 
+    { return rs; } 
+
+    if (r.compareTo(fst) < 0) // r more specific than fst
+    { res.add(r); 
+      res.addAll(rs); 
+      return res; 
+    } 
+
+    if (r.compareTo(fst) == 1) // r more general than fst
+    { res.add(fst);  
+      Vector tailrs = new Vector(); 
+      tailrs.addAll(rs); 
+      tailrs.remove(0); 
+      res.addAll(insertRuleInOrder(r,tailrs)); 
+      return res; 
+    }
+
+    if (r.compareTo(fst) == 0) // same lhs. 
+                               // Ok if different conditions
+    { System.err.println(">>> Possible conflict between rules " + r + " and " + fst); 
+      return rs; 
+    } 
+    else 
+    { res.add(r); 
+      res.addAll(rs); 
+      return res; 
+    }      
   } 
 
   public boolean hasRuleset(String category)
@@ -407,6 +464,7 @@ public class CGSpec
           res = res + r + "\n"; 
         } 
       }
+      res = res + "\n"; 
     } 
 
     res = res + "\n"; 
@@ -998,10 +1056,9 @@ public class CGSpec
   { boolean ordered = e.isOrdered();
     Vector elems = e.getElements(); 
 	
-
     for (int x = 0; x < setExpressionRules.size(); x++)
     { CGRule r = (CGRule) setExpressionRules.get(x);
-	  String trimmedlhs = r.lhs.trim(); 
+      String trimmedlhs = r.lhs.trim(); 
 	  
       if (etext.equals(trimmedlhs))
       { return r; } // exact match
@@ -1015,7 +1072,7 @@ public class CGSpec
       else if (etext.startsWith("Sequence{") && etext.endsWith("}") && 
                trimmedlhs.startsWith("Sequence{") && trimmedlhs.endsWith("}"))
       { if (elems.size() == 0 && r.variables.size() == 0)
-        { return r; } // r is empty set
+        { return r; } // r is empty sequence
         else if (elems.size() > 0 && r.variables.size() > 0) 
         { return r; } 
       } 
@@ -1028,7 +1085,7 @@ public class CGSpec
       } 
     }
     return null;
-  } // _1 binds to elements if any
+  } // _1 binds to elements if any. Could also be _*
 
   public CGRule matchedEntityRule(Entity e, String ctext)
   { Vector args = new Vector(); 

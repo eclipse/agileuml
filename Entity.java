@@ -2377,6 +2377,8 @@ public class Entity extends ModelElement implements Comparable
     return superclass.getTopSuperclass(); 
   } 
 
+  public Entity getRootSuperclass()
+  { return getTopSuperclass(); } 
 
   public Vector getAllSubclasses() // recursively
   { Vector seen = new Vector(); 
@@ -4076,6 +4078,9 @@ public class Entity extends ModelElement implements Comparable
     { addInterface(e);
       return; 
     } 
+
+    if (e.isActive())
+    { addStereotype("active"); } 
 
     if (superclass != null && 
         !superclass.getName().equals(e.getName())) 
@@ -9664,7 +9669,7 @@ public class Entity extends ModelElement implements Comparable
     String tests = ""; 
     String upds = ""; 
     String header = "  " + ename + "* copy" + ename +
-                 "(const " + ename + "* self)\n";
+                 "(" + ename + "* self)\n";
     String inits = ""; 
 
     Vector allatts = new Vector(); 
@@ -15211,7 +15216,7 @@ public BehaviouralFeature designAbstractKillOp()
         Vector bfcases = bf.testCases(opTests); 
         res.addAll(bfcases);
         String bfname = bf.getName(); 
-        System.out.println(">>> Tests for " + bfname + " are: " + opTests);
+        System.out.println(">>> There are " + opTests.size() + " generated tests for " + bfname);
         System.out.println(">>> A maximum of 100 tests will be included in MutationTest.java");
         System.out.println(); 
   
@@ -15259,7 +15264,7 @@ public BehaviouralFeature designAbstractKillOp()
         Vector bfcases = bf.testCasesJava6(opTests); 
         res.addAll(bfcases);
         String bfname = bf.getName(); 
-        System.out.println(">>> Tests for " + bfname + " are: " + opTests);
+        System.out.println(">>> There are " + opTests.size() + " generated tests for " + bfname);
         System.out.println(">>> A maximum of 100 tests will be included in MutationTest.java");
         System.out.println(); 
   
@@ -15304,7 +15309,7 @@ public BehaviouralFeature designAbstractKillOp()
         Vector bfcases = bf.testCasesJava7(opTests); 
         res.addAll(bfcases);
         String bfname = bf.getName(); 
-        System.out.println(">>> Tests for " + bfname + " are: " + opTests);
+        System.out.println(">>> There are " + opTests.size() + " generated tests for " + bfname);
         System.out.println(">>> A maximum of 100 tests will be included in MutationTest.java");
         System.out.println(); 
   
@@ -15348,7 +15353,7 @@ public BehaviouralFeature designAbstractKillOp()
         Vector bfcases = bf.testCasesJava8(opTests); 
         res.addAll(bfcases);
         String bfname = bf.getName(); 
-        System.out.println(">>> Tests for " + bfname + " are: " + opTests);
+        System.out.println(">>> There are " + opTests.size() + " generated tests for " + bfname);
         System.out.println(">>> A maximum of 100 tests will be included in MutationTest.java");
         System.out.println(); 
   

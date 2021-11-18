@@ -197,13 +197,20 @@ public class SetExpression extends Expression
     else 
     { res = res + " Set { "; }
 
+    if (elements.size() == 0)
+    { res = res + " } )"; 
+      return res; 
+    } 
+
+    res = res + " (ElementList "; 
+
     for (int i = 0; i < elements.size(); i++)
     { Expression elem = (Expression) elements.get(i); 
       res = res + elem.toAST();
       if (i < elements.size() - 1)
       { res = res + " , "; }
     }
-    res = res + " } )";
+    res = res + " ) } )";
     return res;
   }
 
@@ -411,17 +418,18 @@ public class SetExpression extends Expression
 
     if (isMap())
     { String result = "(new map<string," + cet + ">())"; 
-	  for (int i = 0; i < elements.size(); i++)
+      for (int i = 0; i < elements.size(); i++)
       { BinaryExpression e = (BinaryExpression) elements.get(i);
-	    Expression key = e.getLeft(); 
-		Expression value = e.getRight(); 
-        result = "UmlRsdsLib<" + cet + ">::includingMap(" + result + "," + key.queryFormCPP(env,local) + "," + 
-		                           value.queryFormCPP(env,local) + ")";
+        Expression key = e.getLeft(); 
+        Expression value = e.getRight(); 
+        result = "UmlRsdsLib<" + cet + ">::includingMap(" + 
+          result + "," + key.queryFormCPP(env,local) + "," + 
+          value.queryFormCPP(env,local) + ")";
       }
-	  return result; 
-	}
-	
-	String collkind = "Set"; 
+      return result; 
+    }
+
+    String collkind = "Set"; 
     String res = "(new set<" + cet + ">())";
     if (ordered) 
     { res = "(new vector<" + cet + ">())"; 

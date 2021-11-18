@@ -4578,6 +4578,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       { mess[0] = "usecase included in another, eg: includes subroutine;"; 
         return "includes"; 
       } 
+
     } 
 
     if ("true".startsWith(st)) 
@@ -4657,6 +4658,19 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         return "endif"; 
       } 
 
+      if ("OclType".startsWith(st) || "OclAny".startsWith(st) ||
+          "OclProcess".startsWith(st) || 
+          "OclRandom".startsWith(st) || 
+          "OclFile".startsWith(st) || 
+          "OclIterator".startsWith(st))
+      { mess[0] = "OclAny -- universal type.\n" + 
+                  "OclType -- type of types. Requires ocltype.km3 library\n" + 
+                  "OclProcess -- type of processes. Requires oclprocess.km3 library\n" + 
+                  "OclRandom -- random number generator. Needs oclrandom.km3\n" + 
+                  "OclFile -- type of files. Needs oclfile.km3\n" + 
+                  "OclIterator -- type of iterators. Needs ocliterator.km3\n"; 
+        return "Ocl library type"; 
+      } 
     } 
 
     if (st.length() > 6)

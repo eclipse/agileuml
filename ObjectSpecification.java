@@ -1,5 +1,6 @@
 import java.util.*; 
 import java.io.*; 
+import javax.swing.JOptionPane; 
 
 /******************************
 * Copyright (c) 2003--2021 Kevin Lano
@@ -21,6 +22,7 @@ public class ObjectSpecification extends ModelElement
   java.util.Map attvalues = new HashMap(); // String --> Object
     // basic values are stored as strings, as are object names
     // Collections are stored as Vectors
+    // ASTs as ASTTerm instances. 
 
   List elements = new ArrayList(); // ObjectSpecification
   boolean isSwingObject = true; 
@@ -679,6 +681,11 @@ public class ObjectSpecification extends ModelElement
     return objs; 
   } 
 
+  public ASTTerm getTreeValue(Attribute att, ModelSpecification mod) 
+  { String nme = att.getName(); 
+    return getTree(nme); 
+  } 
+
   public Vector getCollectionValue(Attribute att, ModelSpecification mod) 
   { Vector rawvalues = getRawCollectionValue(att, mod); 
     Vector res = new Vector(); 
@@ -984,6 +991,25 @@ public class ObjectSpecification extends ModelElement
     Vector res = new Vector(); 
     res.add(x); 
     return res; 
+  }  
+
+  public ASTTerm getTree(String att) 
+  { Object x = attvalues.get(att); 
+    if (x == null) 
+    { return null; }
+    if (x instanceof ASTTerm)
+    { return (ASTTerm) x; }
+    if (x instanceof String) 
+    { String stree = (String) x; 
+      Compiler2 cc = new Compiler2(); 
+      ASTTerm tt = cc.parseGeneralAST(stree);
+      if (tt == null) 
+      { JOptionPane.showMessageDialog(null, "Warning: invalid AST: " + stree, 
+           "", JOptionPane.ERROR_MESSAGE);  
+      }
+      return tt;  
+    } 
+    return null; 
   }  
 
   public String getSetValue(Vector objs) 
@@ -1565,6 +1591,7 @@ public class ObjectSpecification extends ModelElement
     attvalues.put(att,value); 
   } 
   // numbers, booleans, objects & enums are entered as a string with no quotes, but actual string values have "". 
+  // ASTs begin and end with ( )
 
   public void addAttribute(String att, Vector value)
   { if (atts.contains(att)) { } 

@@ -23,6 +23,8 @@ public class AttributeMatching
   String srcname = ""; 
   String trgname = ""; 
   Expression srcvalue = null; // in cases where a value is mapped to the target
+  Expression trgvalue = null; 
+
   EntityMatching dependsOn;  // in cases where src : E or Collection(E) and E maps to F
   Attribute elementVariable = null; // for  expr -> trg
   Vector auxVariables = new Vector();     // for  expr -> trg
@@ -42,6 +44,7 @@ public class AttributeMatching
 
     srcvalue = source; 
     trg = target; 
+    trgvalue = new BasicExpression(target); 
     srcname = srcvalue + ""; 
     trgname = trg.getName(); 
   } 
@@ -54,6 +57,7 @@ public class AttributeMatching
 
     srcvalue = source; 
     trg = target; 
+    trgvalue = new BasicExpression(target); 
     elementVariable = var; 
     srcname = srcvalue + ""; 
     trgname = trg.getName();
@@ -67,12 +71,30 @@ public class AttributeMatching
  
 
     srcvalue = source; 
+    trgvalue = target; 
     trg = new Attribute("" + target, target.getType(), 
                         ModelElement.INTERNAL);
     trg.setElementType(target.getElementType()); 
  
     srcname = srcvalue + ""; 
     trgname = trg.getName(); 
+  } 
+
+  public AttributeMatching(Expression source, Expression target, Attribute var, 
+                           Vector auxvars) 
+  { src = new Attribute("" + source, source.getType(), ModelElement.INTERNAL); 
+    src.setType(source.getType()); 
+    src.setElementType(source.getElementType()); 
+
+    srcvalue = source;
+    trgvalue = target; 
+ 
+    trg = new Attribute("" + target, target.getType(), 
+                        ModelElement.INTERNAL);
+    elementVariable = var; 
+    srcname = srcvalue + ""; 
+    trgname = trg.getName();
+    auxVariables = auxvars;  
   } 
 
   public void setElementVariable(Attribute var) 
@@ -90,7 +112,9 @@ public class AttributeMatching
     src.setElementType(source.getElementType()); 
 
     srcvalue = source; 
-    trg = target; 
+    trg = target;
+    trgvalue = new BasicExpression(target); 
+ 
     elementVariable = var; 
     srcname = srcvalue + ""; 
     trgname = trg.getName();
@@ -110,6 +134,25 @@ public class AttributeMatching
 
   public String toString()
   { return "    " + srcname + " |--> " + trgname; } 
+
+  public String toCSTL(String category, Expression cond, CGSpec cg)
+  { if (srcvalue != null && trgvalue != null &&
+        srcvalue instanceof BasicExpression && 
+        trgvalue instanceof BasicExpression) 
+    { String rulelhs = ((BasicExpression) srcvalue).toCSTL(); 
+      String rulerhs = ((BasicExpression) trgvalue).toLiteralCSTL();
+      CGRule rle = new CGRule(rulelhs, rulerhs); 
+      if (cond != null) 
+      { CGCondition cc = new CGCondition(cond); 
+        rle.addCondition(cc); 
+      } 
+      cg.addCategoryRuleInOrder(category,rle); 
+      String res = rulelhs + " |--> " + rulerhs; 
+      return res; 
+    } 
+    return ""; 
+  } 
+
 
   boolean isDirect() // either source or target is a direct attribute
   { if (src.getNavigation().size() <= 1) 

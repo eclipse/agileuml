@@ -151,6 +151,20 @@ public class TypeMatching
     return res;
   }
 
+  public String toCSTL(CGSpec cg)
+  { String res = name + "::\n"; 
+    cg.addCategory(name); 
+    for (int x = 0; x < valueMappings.size(); x++)
+    { ValueMatching vm = (ValueMatching) valueMappings.get(x);
+      res = res + vm.src + " |-->" + vm.trg + "\n";
+      CGRule rr = new CGRule("" + vm.src, "" + vm.trg); 
+      cg.addCategoryRule(name,rr); 
+    }
+
+    return res;
+  }
+
+
   public boolean equals(Object obj) 
   { if (obj instanceof TypeMatching)
     { TypeMatching tm = (TypeMatching) obj; 

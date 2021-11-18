@@ -143,6 +143,29 @@ public class ModelMatching implements SystemTypes
     return res; 
   }  
 
+  public String toCSTL(CGSpec cg)
+  { String res = "\n"; 
+    /* for (int i = 0; i < helpers.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) helpers.get(i); 
+      res = res + bf.display() + "\n\n"; 
+    } */ 
+	
+    for (int i = 0; i < typematches.size(); i++) 
+    { TypeMatching tm = (TypeMatching) typematches.get(i); 
+      res = res + tm.toCSTL(cg) + "\n\n"; 
+    }
+	
+    for (int i = 0; i < entitymatches.size(); i++) 
+    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
+      // Entity s = em.realsrc; 
+      // Entity t = em.realtrg; 
+      // res = res + "  " + s + " |--> " + t + "\n"; 
+      res = res + em.toCSTL(cg) + "\n\n";  
+    }
+
+    return res; 
+  }  
+
   public Vector enumConversions()
   { Vector res = new Vector(); 
 

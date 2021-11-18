@@ -37,7 +37,13 @@ public abstract class ASTTerm
 
   public abstract String toString(); 
 
+  public abstract String getTag(); 
+
   public abstract String literalForm();
+
+  public abstract ASTTerm removeOuterTag(); 
+
+  public abstract ASTTerm getTerm(int i); 
 
   public abstract Vector tokenSequence(); 
 
@@ -372,6 +378,435 @@ public abstract class ASTTerm
 
   public abstract boolean hasTag(String tagx); 
 
+  public abstract boolean hasSingleTerm(); 
+
+  public abstract int arity(); 
+
+  public static boolean constantTrees(ASTTerm[] trees)
+  { if (trees.length == 0) 
+    { return false; }
+    ASTTerm t0 = trees[0]; 
+    for (int i = 1; i < trees.length; i++) 
+    { ASTTerm tx = trees[i]; 
+	  if (tx == null) 
+	  { return false; }
+      if (tx.equals(t0)) { } 
+      else 
+      { return false; } 
+    } 
+    return true; 
+  }   
+
+  public static boolean allSymbolTerms(ASTTerm[] trees)
+  { if (trees.length == 0) 
+    { return false; }
+    for (int i = 0; i < trees.length; i++) 
+    { ASTTerm tx = trees[i]; 
+      if (tx instanceof ASTSymbolTerm) { } 
+      else 
+      { return false; } 
+    } 
+    return true; 
+  }   
+
+  public static boolean functionalSymbolMapping(ASTTerm[] strees, ASTTerm[] ttrees)
+  { // The correspondence is functional.
+    String[] sattvalues = new String[strees.length]; 
+    String[] tattvalues = new String[ttrees.length]; 
+
+    for (int i = 0; i < strees.length; i++) 
+    { sattvalues[i] = strees[i].literalForm(); } 
+
+    for (int i = 0; i < ttrees.length; i++) 
+    { tattvalues[i] = ttrees[i].literalForm(); } 
+ 
+    return AuxMath.isFunctional(sattvalues,tattvalues); 
+  } 
+
+  public static TypeMatching createNewFunctionalMapping(String name, ASTTerm[] strees, ASTTerm[] ttrees)
+  { // The correspondence is functional.
+    Type str = new Type("String", null); 
+    TypeMatching tm = new TypeMatching(str,str);
+    tm.setName(name);  
+
+    String[] sattvalues = new String[strees.length]; 
+    String[] tattvalues = new String[ttrees.length]; 
+
+    for (int i = 0; i < strees.length; i++) 
+    { sattvalues[i] = strees[i].literalForm(); } 
+
+    for (int i = 0; i < ttrees.length; i++) 
+    { tattvalues[i] = ttrees[i].literalForm(); } 
+
+    tm.setStringValues(sattvalues,tattvalues); 
+    return tm; 
+  } 
+
+  public static String commonTag(ASTTerm[] trees)
+  { if (trees == null || trees.length == 0) 
+    { return null; }
+    ASTTerm t0 = trees[0]; 
+    if (t0 == null) { return null; }
+	
+    if (t0 instanceof ASTBasicTerm) 
+    { return ((ASTBasicTerm) t0).getTag(); } 
+    else if (t0 instanceof ASTCompositeTerm) 
+    { return ((ASTCompositeTerm) t0).getTag(); } 
+    else 
+    { return null; } 
+  }
+
+  public static boolean sameTag(ASTTerm[] trees)
+  { if (trees == null || trees.length == 0) 
+    { return false; }
+    String tag0 = ""; 
+    ASTTerm t0 = trees[0]; 
+    if (t0 == null) { return false; }
+	
+    if (t0 instanceof ASTBasicTerm) 
+    { tag0 = ((ASTBasicTerm) t0).getTag(); } 
+    else if (t0 instanceof ASTCompositeTerm) 
+    { tag0 = ((ASTCompositeTerm) t0).getTag(); } 
+    else 
+    { return false; } 
+
+    for (int i = 1; i < trees.length; i++) 
+    { ASTTerm tx = trees[i]; 
+      if (tx.hasTag(tag0)) { } 
+      else 
+      { return false; } 
+    } 
+    return true; 
+  }   
+
+  public static boolean sameTails(ASTTerm[] trees)
+  { if (trees.length == 0) 
+    { return false; }
+    Vector tail0 = new Vector(); 
+    ASTTerm t0 = trees[0]; 
+
+    if (t0 instanceof ASTCompositeTerm) 
+    { Vector trms = new Vector(); 
+      trms.addAll(((ASTCompositeTerm) t0).getTerms());
+      if (trms.size() == 0) 
+      { return false; } 
+      trms.remove(0); 
+      tail0.addAll(trms);  
+    } 
+    else 
+    { return false; } 
+
+    for (int i = 1; i < trees.length; i++) 
+    { ASTTerm tx = trees[i]; 
+      if (tx instanceof ASTCompositeTerm) 
+      { Vector trms = new Vector(); 
+        trms.addAll(((ASTCompositeTerm) tx).getTerms());
+        if (trms.size() == 0) 
+        { return false; } 
+        trms.remove(0); 
+        if (tail0.equals(trms)) { } 
+        else 
+        { return false; } 
+      } 
+      else 
+      { return false; } 
+    } 
+    return true; 
+  }   
+
+  public static boolean sameTagSingleArgument(ASTTerm[] trees)
+  { if (trees == null || trees.length == 0) 
+    { return false; }
+    String tag0 = ""; 
+    ASTTerm t0 = trees[0]; 
+    if (t0 == null) 
+    { return false;} 
+
+    if (t0 instanceof ASTBasicTerm) 
+    { tag0 = ((ASTBasicTerm) t0).getTag(); } 
+    else if (t0 instanceof ASTCompositeTerm && 
+             t0.hasSingleTerm()) 
+    { tag0 = ((ASTCompositeTerm) t0).getTag(); } 
+    else 
+    { return false; } 
+
+    for (int i = 1; i < trees.length; i++) 
+    { ASTTerm tx = trees[i]; 
+      if (tx == null) 
+      { return false; } 
+      else if (tx.hasTag(tag0) && tx.hasSingleTerm()) { } 
+      else 
+      { return false; } 
+    } 
+    return true; 
+  }   
+
+  public static boolean sameTagSameArity(ASTTerm[] trees)
+  { if (trees == null || trees.length == 0) 
+    { return false; }
+    String tag0 = ""; 
+    ASTTerm t0 = trees[0];
+    if (t0 == null) 
+    { return false;} 
+ 
+    int arit = t0.arity(); 
+
+    if (t0 instanceof ASTBasicTerm) 
+    { tag0 = ((ASTBasicTerm) t0).getTag(); } 
+    else if (t0 instanceof ASTCompositeTerm) 
+    { tag0 = ((ASTCompositeTerm) t0).getTag(); } 
+    else 
+    { return false; } 
+
+    for (int i = 1; i < trees.length; i++) 
+    { ASTTerm tx = trees[i]; 
+      if (tx == null) 
+      { return false; } 
+      else if (tx.hasTag(tag0) && tx.arity() == arit) { } 
+      else 
+      { return false; } 
+    } 
+    return true; 
+  }   
+
+  public static ASTTerm[] removeOuterTag(ASTTerm[] trees, Vector remd)
+  { if (trees == null || trees.length == 0) 
+    { return trees; }
+
+    ASTTerm[] result = new ASTTerm[trees.length]; 
+
+    for (int i = 0; i < trees.length; i++) 
+    { ASTTerm tx = trees[i];
+      if (tx == null) 
+      { remd.add(null); } 
+      else  
+      { ASTTerm tnew = tx.removeOuterTag(); 
+        result[i] = tnew; 
+        remd.add(tnew); 
+      } 
+    } 
+    return result; 
+  }   
+
+  public static ASTTerm[] subterms(ASTTerm[] trees, int i, Vector remd)
+  { if (trees == null || trees.length == 0) 
+    { return trees; }
+
+    ASTTerm[] result = new ASTTerm[trees.length]; 
+
+    for (int j = 0; j < trees.length; j++) 
+    { ASTTerm tx = trees[j]; 
+      if (tx == null)
+      { result[j] = null; 
+        remd.add(null); 
+      }
+      else 
+      { ASTTerm tnew = tx.getTerm(i); 
+        result[j] = tnew; 
+        remd.add(tnew);
+      }  
+    } // terms indexed from 0
+
+    return result; 
+  }   
+
+ public static boolean equalTrees(ASTTerm[] xs, ASTTerm[] ys, ModelSpecification mod)
+    { // Is each ys[i] = xs[i]? 
+
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { ASTTerm xx = xs[i]; 
+          ASTTerm yvect = ys[i]; 
+
+          System.out.println(">>>> Comparing " + xx + " to " + yvect); 
+          if (xx == null) 
+          { return false; } 
+          else if (xx.equals(yvect)) { } 
+          else  
+          { return false; }
+        }
+        return true; 
+      } 
+      return false; 
+    }
+
+    public static boolean matchingTrees(ASTTerm[] xs, ASTTerm[] ys, ModelSpecification mod)
+    { // Is each ys[i] = xs[i], or corresponding under mod? 
+
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { ASTTerm xx = xs[i]; 
+          ASTTerm yvect = ys[i]; 
+
+          System.out.println(">>>> Comparing " + xx + " to " + yvect); 
+          if (xx == null) 
+          { return false; } 
+          else if (xx.equals(yvect)) { } 
+          else if (mod.correspondingTrees(xx,yvect)) { } 
+          else  
+          { return false; }
+        }
+        return true; 
+      } 
+      return false; 
+    }
+
+    public static boolean matchingTrees(ASTTerm xx, ASTTerm yy, ModelSpecification mod)
+    { System.out.println(">>>> Comparing " + xx + " to " + yy); 
+      if (xx == null) 
+      { return false; } 
+      else if (xx.equals(yy)) 
+      { return true; } 
+      else if (mod.correspondingTrees(xx,yy)) 
+      { return true; } 
+      return false; 
+    }
+    
+  public static boolean singletonTrees(ASTTerm[] xs, ASTTerm[] ys, ModelSpecification mod)
+    { // Is each ys[i] = (tag xs[i]') for the same tag? 
+
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { ASTTerm xx = xs[i]; 
+          ASTTerm yvect = ys[i]; 
+
+          if (xx == null || yvect == null)
+          { return false; } 
+
+          System.out.println(">>>> Comparing " + xx + " to " + yvect); 
+
+          if (yvect instanceof ASTBasicTerm && 
+              xx instanceof ASTSymbolTerm) 
+          { String yy = ((ASTBasicTerm) yvect).getValue();
+            String xsym = ((ASTSymbolTerm) xx).getSymbol();  
+            if (yy.equals(xsym)) { }
+            else 
+            { return false; }
+          } 
+          else if (yvect instanceof ASTCompositeTerm && 
+                   ((ASTCompositeTerm) yvect).getTerms().size() == 1)
+          { ASTCompositeTerm ct = (ASTCompositeTerm) yvect; 
+            ASTTerm ct0 = (ASTTerm) ct.getTerms().get(0); 
+            if (xx.equals(ct0) || 
+                mod.correspondingTrees(xx,ct0)) { } 
+            else 
+            { return false; } 
+          } 
+          else 
+          { return false; } 
+        }
+        return true; 
+      } 
+      return false; 
+    }
+
+    public static boolean sameArityTrees(ASTTerm[] xs, ASTTerm[] ys)
+    { // Is each ys[i].terms.size() == xs[i].terms.size()? 
+
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { ASTTerm xx = xs[i]; 
+          ASTTerm yvect = ys[i]; 
+
+          if (xx == null || yvect == null)
+          { return false; } 
+
+          int n = xx.arity(); 
+          int m = yvect.arity(); 
+          if (n != m) 
+          { return false; } 
+        } 
+        return true; 
+      } 
+      return false; 
+    }
+
+    public static boolean embeddedTrees(ASTTerm[] xs, ASTTerm[] ys, ModelSpecification mod)
+    { // Is each ys[i] = (tag xs[i]' ..terms..) for same tag? 
+
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { ASTTerm xx = xs[i]; 
+          ASTTerm yvect = ys[i]; 
+
+          System.out.println(">>>> Comparing " + xx + " to " + yvect); 
+
+          if (yvect instanceof ASTCompositeTerm && 
+              ((ASTCompositeTerm) yvect).getTerms().size() > 1)
+          { ASTCompositeTerm ct = (ASTCompositeTerm) yvect; 
+            ASTTerm ct0 = (ASTTerm) ct.getTerms().get(0); 
+            if (xx.equals(ct0) || 
+                mod.correspondingTrees(xx,ct0)) { } 
+            else 
+            { return false; } 
+          } 
+          else 
+          { return false; } 
+        }
+        return true; 
+      } 
+      return false; 
+    }
+
+  public static boolean nestedSingletonTrees(ASTTerm[] xs, ASTTerm[] ys, ModelSpecification mod)
+    { // Is each xs[i] = (tag1 pi) where ys[i] = (tag2 pi) 
+
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { ASTTerm xx = xs[i]; 
+          ASTTerm yvect = ys[i]; 
+
+          System.out.println(">>>> Comparing " + xx + " to " + yvect); 
+
+          if (yvect instanceof ASTBasicTerm && 
+              xx instanceof ASTBasicTerm) 
+          { String yy = ((ASTBasicTerm) yvect).getValue();
+            String xsym = ((ASTBasicTerm) xx).getValue();  
+            if (yy.equals(xsym)) { }
+            else 
+            { return false; }
+          } 
+          else if (yvect instanceof ASTCompositeTerm && 
+                   ((ASTCompositeTerm) yvect).getTerms().size() == 1 && 
+                   xx instanceof ASTCompositeTerm && 
+                   ((ASTCompositeTerm) xx).getTerms().size() == 1)
+          { ASTCompositeTerm ct = (ASTCompositeTerm) yvect; 
+            ASTTerm ct0 = (ASTTerm) ct.getTerms().get(0); 
+            ASTCompositeTerm xt = (ASTCompositeTerm) xx; 
+            ASTTerm xt0 = (ASTTerm) xt.getTerms().get(0); 
+            if (xt0.equals(ct0) || 
+                mod.correspondingTrees(xt0,ct0)) { } 
+            else 
+            { return false; } 
+          } 
+          else 
+          { return false; } 
+        }
+        return true; 
+      } 
+      return false; 
+    }
+
+  public static ASTTerm[] composeIntoTrees(Vector termSeqs, Vector res)
+  { int n = termSeqs.size(); 
+    if (n == 0) 
+    { return null; } 
+    ASTTerm[] terms0 = (ASTTerm[]) termSeqs.get(0); 
+    ASTTerm[] trees = new ASTTerm[terms0.length]; 
+
+    for (int i = 0; i < terms0.length; i++) 
+    { ASTCompositeTerm ct = 
+        new ASTCompositeTerm("TAG"); 
+      for (int j = 0; j < n; j++) 
+      { ASTTerm[] termsj = (ASTTerm[]) termSeqs.get(j); 
+        ct.addTerm(termsj[i]); 
+      } 
+      trees[i] = ct; 
+      res.add(ct); 
+    } 
+    return trees; 
+  } 
+
   public static Vector generateASTExamples(Vector javaASTs)
   { /* Generate corresponding OCL and Java example ASTs */
     Vector res = new Vector(); 
@@ -444,6 +879,12 @@ public abstract class ASTTerm
     javaASTs.add(tj); 
     return res; */ 
   }  
+
+  public static void main(String[] args) 
+  { ASTBasicTerm t = new ASTBasicTerm("OclBasicExpression", "true"); 
+    System.out.println(t.isInteger()); 
+    System.out.println(t.isBoolean()); 
+  } 
 } 
 
 /* tree2tree dataset format: */ 

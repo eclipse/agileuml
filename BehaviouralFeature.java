@@ -1077,7 +1077,7 @@ public class BehaviouralFeature extends ModelElement
     } 
 
     opTests.addAll(flattenTests(allOpTests));
-    System.out.println(">>> Flattened tests = " + opTests);  
+    // System.out.println(">>> Flattened tests = " + opTests);  
         
     return res; 
   }
@@ -2818,13 +2818,16 @@ public class BehaviouralFeature extends ModelElement
 	
     res = res + getName() + tpars + " ( ";
 
-    for (int i = 0; i < parameters.size(); i++)
-    { Attribute par = (Attribute) parameters.get(i);
-      String pnme = par.getName();
-      res = res + pnme + " : " + par.getType().toAST() + " ";
-      if (i < parameters.size() - 1)
-      { res = res + " , "; } 
-    }
+    if (parameters != null && parameters.size() > 0)
+    { res = res + "(ParameterList "; 
+      for (int i = 0; i < parameters.size(); i++)
+      { Attribute par = (Attribute) parameters.get(i);
+        String pnme = par.toASTParameter();
+        if (i < parameters.size() - 1)
+        { res = res + " , "; } 
+      }
+      res = res + " ) "; 
+    } 
     res = res + " ) : "; 
 
     if (resultType == null)

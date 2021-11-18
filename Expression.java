@@ -1166,7 +1166,41 @@ abstract class Expression
       return true; 
     } 
     catch (Exception e) 
-    { return false; } 
+    { String slong = "" + ob; 
+      if (slong.endsWith("L"))
+      { String sfront = slong.substring(0,slong.length()-1);
+        // System.out.println(sfront);  
+        try
+        { Long lx = Long.decode(sfront); 
+          long mm = lx.longValue(); 
+          // System.out.println(mm); 
+          return true; 
+        } catch (Exception _e) { return false; }
+      } 
+      return false; 
+    }  
+  } 
+
+  public static long convertLong(Object ob) 
+  { try
+    { Long longx = Long.decode("" + ob); 
+      if (longx == null) 
+      { return 0; } 
+      long nn = longx.longValue(); 
+      return nn; 
+    } 
+    catch (Exception e) 
+    { String slong = "" + ob; 
+      if (slong.endsWith("L"))
+      { String sfront = slong.substring(0,slong.length()-1);
+        try
+        { Long lx = Long.decode(sfront); 
+          long mm = lx.longValue(); 
+          return mm; 
+        } catch (Exception _e) { return 0; }
+      } 
+      return 0; 
+    }  
   } 
 
   public static boolean isDouble(Object ob) 
@@ -2568,11 +2602,17 @@ public static boolean conflictsReverseOp(String op1, String op2)
     CGRule r = cgs.matchedParameterArgumentRule(this,partail,atext);
     if (r != null)
     { String res = r.applyRule(args,eargs,cgs); 
-	  System.out.println(">>> Applied parameter rule " + r + " to " + this + " giving " + res); 
-	  return res; 
-	}
+      System.out.println(">>> Applied parameter rule " + r + " to " + this + " giving " + res); 
+      return res; 
+    }
     return cg(cgs);
   } // but omit initialisations for parameters
 
+  public static void main(String[] args) 
+  { if (Expression.isLong("10000000000000L"))
+    { long xx = Expression.convertLong("10000000000000L"); 
+      System.out.println(xx); 
+    }
+  }   
 } 
 

@@ -22,6 +22,12 @@ public class ASTCompositeTerm extends ASTTerm
   public static Expression emptyStringExpression = 
          BasicExpression.newValueBasicExpression("\"\""); 
 
+
+  public ASTCompositeTerm(String t)
+  { tag = t; 
+    terms = new Vector(); 
+  } 
+
   public ASTCompositeTerm(String t, Vector subtrees)
   { tag = t; 
     terms = subtrees; 
@@ -37,7 +43,29 @@ public class ASTCompositeTerm extends ASTTerm
   { return (tagx.equals(tag)); } 
 
   public String getTag()
-  { return tag; } 
+  { return tag; }
+
+  public boolean hasSingleTerm() 
+  { return terms.size() == 1; } 
+
+  public int arity()
+  { return terms.size(); } 
+ 
+
+  public ASTTerm removeOuterTag()
+  { if (terms.size() > 0)
+    { return (ASTTerm) terms.get(0); } 
+    return null; 
+  }  
+
+  public ASTTerm getTerm(int i) 
+  { if (terms.size() > i)
+    { return (ASTTerm) terms.get(i); } 
+    return null; 
+  }
+
+  public Vector getTerms()
+  { return terms; }  
 
   public void addTerm(ASTTerm t) 
   { terms.add(t); } 
@@ -49,6 +77,26 @@ public class ASTCompositeTerm extends ASTTerm
     res = res + ")"; 
     return res; 
   } 
+
+  public boolean equals(Object obj)
+  { if (obj instanceof ASTCompositeTerm) 
+    { ASTCompositeTerm other = (ASTCompositeTerm) obj; 
+      if (other.tag.equals(tag))
+      { Vector trms = other.getTerms(); 
+        if (trms.size() != terms.size())
+        { return false; } 
+        for (int i = 0; i < terms.size(); i++) 
+        { ASTTerm tt = (ASTTerm) terms.get(i); 
+          if (tt.equals(trms.get(i))) { } 
+          else 
+          { return false; } 
+        }
+        return true;  
+      } 
+    } 
+    return false; 
+  } 
+  
 
   public String toJSON()
   { String res = "{ \"root\" : \"" + tag + "\", \"children\" : ["; 
@@ -158,7 +206,7 @@ public class ASTCompositeTerm extends ASTTerm
               k++;
             }  
           } 
-          eargs.add(rem); 
+          eargs.add(rem); // corresponds to _* variable
         } 
         else if (vars.contains(tok))
         { // allocate terms(j) to tok
@@ -2871,6 +2919,69 @@ public class ASTCompositeTerm extends ASTTerm
                   expression, pars); 
             } 
             return "    OclProcess.wait(" + args + "," + callp1 + " + " + callp2 + "/1000000.0)"; 
+          }  
+        } 
+        else if (("schedule".equals(called) ||
+                  "scheduleAtFixedRate".equals(called))
+                 && arg.isProcess())
+        { if (cargs.size() == 2)
+          { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+            String callp1 = callarg1.toKM3(); 
+            ASTTerm callarg2 = (ASTTerm) cargs.get(1); 
+            String callp2 = callarg2.toKM3();
+
+            if (arg.expression != null && 
+                callarg1.expression != null && 
+                callarg2.expression != null) 
+            { Vector pars = new Vector(); 
+              pars.add(callarg2.expression); 
+              expression = 
+                BasicExpression.newCallBasicExpression(
+                            "setDelay", callarg1.expression, 
+                            callarg2.expression); 
+              statement = 
+                InvocationStatement.newInvocationStatement(
+                  expression, callarg2.expression); 
+            } 
+            return "    " + callp1 + ".setDelay(" + callp2 + ")"; 
+          }  
+          else if (cargs.size() == 3)
+          { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+            String callp1 = callarg1.toKM3(); 
+            ASTTerm callarg2 = (ASTTerm) cargs.get(1); 
+            String callp2 = callarg2.toKM3();
+            ASTTerm callarg3 = (ASTTerm) cargs.get(2); 
+            String callp3 = callarg3.toKM3();
+
+            if (arg.expression != null && 
+                callarg1.expression != null && 
+                callarg2.expression != null && 
+                callarg3.expression != null) 
+            { Vector pars = new Vector(); 
+              pars.add(callarg2.expression); 
+              Expression expression1 = 
+                BasicExpression.newCallBasicExpression(
+                            "setDelay", callarg1.expression, 
+                            callarg2.expression); 
+              Statement statement1 = 
+                InvocationStatement.newInvocationStatement(
+                  expression1, callarg2.expression); 
+              Expression expression2 = 
+                BasicExpression.newCallBasicExpression(
+                            "setPeriod", callarg1.expression, 
+                            callarg3.expression);
+              Statement statement2 = 
+                InvocationStatement.newInvocationStatement(
+                  expression2, callarg3.expression);
+              SequenceStatement sstat = 
+                new SequenceStatement(); 
+              sstat.addStatement(statement1); 
+              sstat.addStatement(statement2);  
+              statement = sstat; 
+            } 
+            return 
+              "    " + callp1 + ".setDelay(" + callp2 + ") ;\n" +  
+              "    " + callp1 + ".setPeriod(" + callp3 + ")"; 
           }  
         } 
         else if ("Thread".equals(args) && 
@@ -6922,6 +7033,22 @@ public class ASTCompositeTerm extends ASTTerm
         return "OclProcess.newOclProcess" + args1; 
       } // but mark it as a stream, not a file. 
 
+      if ("Timer".equals(cls.literalForm()))
+      { ASTTerm.setType(this,"OclProcess");
+        
+        // No argument. 
+
+        Vector pars = new Vector(); 
+        long now = (new java.util.Date()).getTime(); 
+        pars.add(new BasicExpression("\"\"")); 
+        pars.add(new BasicExpression("\"TimerThread-" + now + "\"")); 
+        expression = 
+          BasicExpression.newStaticCallBasicExpression(
+                "newOclProcess", "OclProcess", pars); 
+        String targs1 = "(\"\", \"TimerThread-" + now + "\")"; 
+ 
+        return "OclProcess.newOclProcess" + targs1; 
+      } // but mark it as a stream, not a file. 
  
       if ("Boolean".equals(cls.literalForm()))
       { ASTTerm.setType(this,"boolean"); 

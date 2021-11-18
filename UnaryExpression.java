@@ -3330,10 +3330,12 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     } 
 
     if (operator.equals("->oclType"))
-    { if (type != null) 
+    { return "Controller::inst->getOclTypeByPK(string(typeid(" + qf + ").name()))"; 
+
+   /* if (type != null) 
       { return "\"" + type.getName() + "\""; }
       else 
-      { return "NULL"; } 
+      { return "NULL"; } */  
       // An alternative is 
       // #include <typeinfo>
       // string(typeid(qf).name())

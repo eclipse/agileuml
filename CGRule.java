@@ -8,6 +8,10 @@
 * *****************************/
 /* Package: CSTL */ 
 
+/* Changed in 13.11.2021: metafeatures can consist of letters
+   *and* digits, eg. _1`2nd
+*/ 
+
 import java.util.Vector; 
 import java.util.regex.Matcher; 
 import java.util.regex.Pattern; 
@@ -143,6 +147,24 @@ public class CGRule
     metafeatures = metafeatures(rhs); 
   }
 
+  public CGRule(String ls, String rs)
+  { lhs = ls; 
+    rhs = rs; 
+    variables = metavariables(ls); 
+
+    Vector rvariables = metavariables(rs); 
+    if (variables.containsAll(rvariables)) { } 
+    else 
+    { System.err.println("!! Error: some extra metavariables on RHS of " + this); }
+
+    conditions = new Vector();
+    metafeatures = metafeatures(rhs);
+    String[] toks = ls.split(" "); 
+    for (int i = 0; i < toks.length; i++) 
+    { lhsTokens.add(toks[i]); }  
+  }
+
+
   public Vector getVariables()
   { return variables; } 
 
@@ -188,7 +210,7 @@ public class CGRule
 
         boolean found = false; 
         for (int k = j+3; k < substr.length() && !found; k++) 
-        { if (Character.isLetter(substr.charAt(k)))
+        { if (Character.isLetterOrDigit(substr.charAt(k)))
           { f = f + substr.charAt(k); } 
           else 
           { if (res.contains(f)) { } 
@@ -206,7 +228,7 @@ public class CGRule
       } 
     } 
     return res; 
-  } // look for identifier starting from the `
+  } // look for identifier/with digits starting from the `
 
   public String toString() 
   { String res = lhs + " |-->" + rhs; 
@@ -222,15 +244,114 @@ public class CGRule
     return res;  
   } 
 
+  public boolean equals(Object other)
+  { if (other instanceof CGRule)
+    { String ostring = other + ""; 
+      if (ostring.equals(toString()))
+      { return true; } 
+    } 
+    return false; 
+  } 
+
+  public int compareTo(CGRule r)
+  { String rlhs = r.lhs + ""; 
+
+    if (rlhs.equals(lhs + ""))
+    { if (conditions == null && r.conditions != null) 
+      { return 1; } // More general than r
+
+      if (conditions != null && r.conditions == null) 
+      { return -1; } // More specific than r
+
+      if (conditions != null && r.conditions != null && 
+          conditions.containsAll(r.conditions))
+      { if (r.conditions.containsAll(conditions))
+        { return 0; } // Conflict
+        else 
+        { return -1; } 
+      } 
+
+      if (conditions != null && r.conditions != null && 
+          r.conditions.containsAll(conditions))
+      { return 1; } // r is more specialised 
+    } 
+
+    if (rlhs.indexOf(lhs + "") >= 0)
+    { // lhs is substring of rlhs, 
+      // this rule is more general than r
+      // It must follow r if they are in one ruleset.
+ 
+      return 1; 
+    } 
+
+    if (lhsTokens.size() == r.lhsTokens.size() && 
+        variables.size() > r.variables.size())
+    { // r has more non-variable terms, so is more specific
+      return 1; 
+    } 
+
+    if (lhsTokens.size() < r.lhsTokens.size() && 
+        variables.size() == r.variables.size())
+    { // r has more non-variable terms, so is more specific
+      return 1; 
+    } 
+
+    /* if (r.variables.containsAll(variables) && 
+        r.variables.size() > variables.size())
+    { // r has strictly more variables - so is more specific
+      return -1; 
+    } 
+
+    if (r.variables.size() > variables.size())
+    { // r has strictly more variables - so is more specific
+      return -1; 
+    } */ 
+
+
+    if ((lhs + "").indexOf(rlhs) >= 0)
+    { return -1; } 
+    // this goes before r
+
+    if (lhsTokens.size() == r.lhsTokens.size() && 
+        variables.size() < r.variables.size())
+    { // this has more non-variable terms, so is more specific
+      return -1; 
+    } 
+
+    if (lhsTokens.size() > r.lhsTokens.size() && 
+        variables.size() == r.variables.size())
+    { // this has more non-variable terms, so is more specific
+      return -1; 
+    } 
+
+/*  if (variables.containsAll(r.variables) && 
+        variables.size() > r.variables.size())
+    { // this has strictly more variables - so more specific
+      return 1; 
+    } 
+
+    if (variables.size() > r.variables.size())
+    { // this has strictly more variables - more specific
+      return 1; 
+    } */ 
+
+    return Integer.MAX_VALUE; // incomparable 
+  } 
+
   public Expression getLhsExpression()
   { return lhsexp; } 
  
 
   public void addCondition(CGCondition cond)
-  { conditions.add(cond); }
+  { if (conditions == null) 
+    { conditions = new Vector(); } 
+    conditions.add(cond); 
+  }
 
   public boolean hasCondition(String prop)
-  { for (int x = 0; x < conditions.size(); x++)
+  { if (conditions == null) 
+    { return false; } 
+    for (int x = 0; x < conditions.size(); x++)
     { CGCondition cond = (CGCondition) conditions.get(x);
       if (prop.equalsIgnoreCase(cond.stereotype) && cond.positive)
       { return true; }
@@ -239,7 +360,9 @@ public class CGRule
   }
 
   public boolean hasNegativeCondition(String prop)
-  { for (int x = 0; x < conditions.size(); x++)
+  { if (conditions == null) 
+    { return false; } 
+    for (int x = 0; x < conditions.size(); x++)
     { CGCondition cond = (CGCondition) conditions.get(x);
       if (prop.equalsIgnoreCase(cond.stereotype) && !cond.positive)
       { return true; }
@@ -248,7 +371,9 @@ public class CGRule
   }
 
   public boolean hasCondition(String prop, String var)
-  { for (int x = 0; x < conditions.size(); x++)
+  { if (conditions == null) 
+    { return false; } 
+    for (int x = 0; x < conditions.size(); x++)
     { CGCondition cond = (CGCondition) conditions.get(x);
       if (prop.equalsIgnoreCase(cond.stereotype) && var.equals(cond.variable) && cond.positive)
       { return true; }
@@ -257,7 +382,7 @@ public class CGRule
   }
 
   public boolean hasNoCondition()
-  { if (conditions.size() == 0)
+  { if (conditions == null || conditions.size() == 0)
     { return true; } 
     return false;
   }
@@ -1038,7 +1163,19 @@ public class CGRule
   } 
 
   public static void main(String[] args) 
-  { // System.out.println(metafeatures("for (_1`elementType _2 : _1) do { _3 }")); 
+  { CGRule r = new CGRule("_1 _2", "_1>_2"); 
+    System.out.println(r.lhsTokens); 
+    System.out.println(r.variables); 
+
+    CGRule r1 = new CGRule("error _2", "throw _2"); 
+    System.out.println(r1.lhsTokens); 
+    System.out.println(r1.variables); 
+
+    System.out.println(r.compareTo(r1)); 
+    System.out.println(r1.compareTo(r)); 
+
+
+    // System.out.println(metafeatures("for (_1`elementType _2 : _1) do { _3 }")); 
     /* Vector vars = new Vector(); 
     vars.add("_1");
     vars.add("_2");
@@ -1050,7 +1187,7 @@ public class CGRule
     r.lhspatternlist = patts; 
     Vector matched = new Vector(); 
     boolean b = r.checkPatternList("createByPKPerson(x)", matched);
-    System.out.println(b); */    
+    System.out.println(b); 
 
     Pattern expr = Pattern.compile("([a-z]+)...([a-z]+)"); 
 
@@ -1070,7 +1207,7 @@ public class CGRule
         // res = res.replaceAll(var,arg);
         System.out.println("Group " + (x+1) + " is " + arg); 
       }
-    } 
+    } */ 
 
   } 
 }

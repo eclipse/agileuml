@@ -16,6 +16,7 @@ public class IOSAppGenerator extends AppGenerator
 { 
 
   public void modelFacade(String nestedPackageName, Vector usecases, CGSpec cgs, 
+                          Vector allentities, 
                           Vector entities, Vector clouds, Vector types, int remoteCalls, boolean needsMap,
                           PrintWriter out)
   { // String ename = e.getName();

@@ -3744,12 +3744,30 @@ public void findPlugins()
 
   public static void main(String[] args) 
   { UmlTool window = new UmlTool();  
+    if (args.length == 1 && "-java2python".equals(args[0]))
+    { window.ucdArea.java2python(); 
+      window.ucdArea.saveModelToFile("output/model.txt"); 
+
+      RunApp rapp1 = new RunApp("uml2py"); 
+
+      try
+      { rapp1.setFile("app.py"); 
+        Thread appthread = new Thread(rapp1); 
+        appthread.start(); 
+      } 
+      catch (Exception ee2) 
+      { System.err.println("Unable to run uml2py"); } 
+      return; 
+    } 
+
     window.setTitle("Agile UML Toolset, Eclipse Incubation Project Version 2.1");
     window.setControllerName("Controller"); 
     window.setSize(500, 400);
     window.setVisible(true);   
+
     if (args.length == 1) 
-    { window.ucdArea.loadFromFile("mm.txt");
+    { 
+      window.ucdArea.loadFromFile("mm.txt");
       if ("-jsp".equals(args[0]))
       { File file = new File("output/tmp");
         try

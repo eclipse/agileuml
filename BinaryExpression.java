@@ -9979,7 +9979,11 @@ public boolean conflictsWithIn(String op, Expression el,
           { res = lqf + ".append(" + rqf + ")"; }
         }  
         else 
-        { res = lqf + ".append(std::to_string(" + rqf + "))"; } 
+        { if (left.umlkind == VALUE)
+          { res = "string(" + lqf + ").append(std::to_string(" + rqf + "))"; } 
+          else 
+          { res = lqf + ".append(std::to_string(" + rqf + "))"; }
+        } 
       } 
       else if ("String".equals(right.getType().getName()))
       { res = "std::to_string(" + lqf + ").append(" + rqf + ")"; } 

@@ -631,8 +631,8 @@ class ReturnStatement extends Statement
 
   public String toAST()
   { if (value == null)
-    { return "(Statement return)"; } 
-    return "(Statement return " + value.toAST() + ")";
+    { return "(OclStatement return)"; } 
+    return "(OclStatement return " + value.toAST() + ")";
   } 
 
   public Vector singleMutants()
@@ -860,7 +860,7 @@ class BreakStatement extends Statement
   { return "break"; } 
 
   public String toAST() 
-  { return "(Statement break)"; } 
+  { return "(OclStatement break)"; } 
 
   public Vector singleMutants()
   { Vector res = new Vector(); 
@@ -1007,7 +1007,7 @@ class ContinueStatement extends Statement
   { return "continue"; } 
 
   public String toAST()
-  { return "(Statement continue)"; } 
+  { return "(OclStatement continue)"; } 
 
   public Vector singleMutants()
   { Vector res = new Vector(); 
@@ -1339,7 +1339,7 @@ class InvocationStatement extends Statement
   } 
 
   public String toAST()
-  { return "(Statement call " + callExp.toAST() + " )"; } 
+  { return "(OclStatement call " + callExp.toAST() + " )"; } 
 
   public Vector singleMutants()
   { Vector res = new Vector(); 
@@ -1833,7 +1833,7 @@ class ImplicitInvocationStatement extends Statement
   } 
 
   public String toAST()
-  { return "(Statement execute " + callExp.toAST() + " )"; } 
+  { return "(OclStatement execute " + callExp.toAST() + " )"; } 
 
   public Vector singleMutants()
   { Vector res = new Vector(); 
@@ -2548,7 +2548,7 @@ class WhileStatement extends Statement
   } 
 
   public String toAST()
-  { String res = "(Statement "; 
+  { String res = "(OclStatement "; 
     if (loopKind == FOR)
     { res = res + "for " + loopVar + " : " + loopRange.toAST() + " do " + body.toAST() + " )"; }
     else 
@@ -3423,7 +3423,7 @@ class CreationStatement extends Statement
   } 
 
   public String toAST()
-  { return "(Statement var " + assignsTo + " : " + instanceType.toAST() + " )"; } 
+  { return "(OclStatement var " + assignsTo + " : " + instanceType.toAST() + " )"; } 
 
   public Vector singleMutants()
   { Vector res = new Vector(); 
@@ -4290,11 +4290,11 @@ class SequenceStatement extends Statement
 
   public String toAST()
   { if (statements.size() == 0)
-    { return "(Statement skip)"; }
-    String res = "(Statement ";  
+    { return "(OclStatement skip)"; }
+    String res = "(OclStatement ";  
     if (statements.size() == 1)
     { Statement s1 = (Statement) statements.get(0); 
-      res = res + s1.toAST() + " )"; 
+      return s1.toAST(); 
     } 
     else 
     { Statement s1 = (Statement) statements.get(0); 
@@ -4308,7 +4308,7 @@ class SequenceStatement extends Statement
     }
 
     if (brackets)
-    { res = "(Statement ( " + res + " ) )"; } 
+    { res = "(OclStatement ( " + res + " ) )"; } 
 
     return res; 
   }
@@ -4696,7 +4696,7 @@ class CaseStatement extends Statement
   } 
 
   public String toAST()
-  { String res = "(Statement "; 
+  { String res = "(OclStatement "; 
 
     int n = cases.elements.size();
 
@@ -5064,7 +5064,7 @@ class ErrorStatement extends Statement
   { return "  error " + thrownObject; }
 
   public String toAST()
-  { return "(Statement error " + thrownObject.toAST() + " )"; } 
+  { return "(OclStatement error " + thrownObject.toAST() + " )"; } 
 
   public Vector singleMutants()
   { if (thrownObject == null) 
@@ -5327,8 +5327,8 @@ class AssertStatement extends Statement
 
   public String toAST()
   { if (message == null)
-    { return "(Statement assert " + condition.toAST() + " )"; } 
-    return "(Statement assert " + condition.toAST() + " do " + message.toAST() + " )";
+    { return "(OclStatement assert " + condition.toAST() + " )"; } 
+    return "(OclStatement assert " + condition.toAST() + " do " + message.toAST() + " )";
   } 
 
   public Vector singleMutants()
@@ -5588,7 +5588,7 @@ class CatchStatement extends Statement
   { return "catch"; } 
 
   public String toAST()
-  { return "(Statement catch " + caughtObject.toAST() + " )"; } 
+  { return "(OclStatement catch " + caughtObject.toAST() + " )"; } 
 
   public Vector singleMutants()
   { return new Vector(); }
@@ -5869,7 +5869,7 @@ class TryStatement extends Statement
   }
 
   public String toAST()
-  { String res = "(Statement try ";
+  { String res = "(OclStatement try ";
     if (body != null) 
     { res = res + body.toAST() + " "; } 
 
@@ -6743,7 +6743,7 @@ class IfStatement extends Statement
 
    public String toAST()
    { int n = cases.size();
-     String res = "(Statement if ";
+     String res = "(OclStatement if ";
      for (int i = 0; i < n; i++)
      { IfCase ic = (IfCase) cases.get(i);
        Expression test = ic.getTest();
@@ -7368,7 +7368,7 @@ class AssignStatement extends Statement
   }  
 
   public String toAST() 
-  { String res = "(Statement " + lhs.toAST() + " := " + rhs.toAST() + " )"; 
+  { String res = "(OclStatement " + lhs.toAST() + " := " + rhs.toAST() + " )"; 
     return res;  
   }  
 
@@ -8163,10 +8163,10 @@ class ConditionalStatement extends Statement
   }
 
   public String toAST()
-  { String res = "(Statement if " + test.toAST() + " then " + ifPart.toAST() + " ";
+  { String res = "(OclStatement if " + test.toAST() + " then " + ifPart.toAST() + " ";
 
     if (elsePart == null || "skip".equals(elsePart + "")) 
-    { res = res + " else skip )"; } 
+    { res = res + " else (OclStatement skip) )"; } 
     else 
     { res = res + " else ( " + elsePart.toAST() + " ) )"; }
 
@@ -8550,7 +8550,7 @@ class FinalStatement extends Statement
   }
 
   public String toAST()
-  { String res = "(Statement finally " + body.toAST() + " )";
+  { String res = "(OclStatement finally " + body.toAST() + " )";
     return res;
   }
 

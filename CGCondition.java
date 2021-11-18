@@ -23,6 +23,16 @@ public class CGCondition
     variable = var;
   }
 
+  public CGCondition(Expression expr) 
+  { if (expr instanceof BinaryExpression) 
+    { BinaryExpression ee = (BinaryExpression) expr; 
+      variable = "_1"; 
+      if ("/=".equals(ee.getOperator()))
+      { positive = false; } 
+      stereotype = ee.getRight() + ""; 
+    } 
+  } 
+
   public void setVariable(String v) 
   { variable = v; } 
 
@@ -41,6 +51,15 @@ public class CGCondition
     else  
     { res = res + " not"; } 
     return res + " " + stereotype; 
+  } 
+
+  public boolean equals(Object other)
+  { if (other instanceof CGCondition)
+    { CGCondition cc = (CGCondition) other; 
+      if (toString().equals(cc + ""))
+      { return true; } 
+    } 
+    return false; 
   } 
 
   public static boolean conditionsSatisfied(Vector conditions, Vector args, Vector entities) 
