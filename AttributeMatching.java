@@ -135,11 +135,26 @@ public class AttributeMatching
   public String toString()
   { return "    " + srcname + " |--> " + trgname; } 
 
-  public String toCSTL(String category, Expression cond, CGSpec cg)
+  public String toCSTL(String category, Expression cond, 
+                       CGSpec cg, Vector typematches)
   { if (srcvalue != null && trgvalue != null &&
         srcvalue instanceof BasicExpression && 
         trgvalue instanceof BasicExpression) 
-    { String rulelhs = ((BasicExpression) srcvalue).toCSTL(); 
+    { String rulelhs = ((BasicExpression) srcvalue).toCSTL();
+      BasicExpression rbe = (BasicExpression) trgvalue; 
+
+      System.out.println(">>> Mapping: " + this + " " + rbe.isFunctionApplication()); 
+
+      if (rbe.isFunctionApplication())
+      { String func = rbe.getAppliedFunction(); 
+        TypeMatching tm = 
+             TypeMatching.lookupByName(func,typematches);
+        if (tm != null) 
+        { String res = tm.toCSTL(category,cg); 
+          return res; 
+        }  
+      } 
+ 
       String rulerhs = ((BasicExpression) trgvalue).toLiteralCSTL();
       CGRule rle = new CGRule(rulelhs, rulerhs); 
       if (cond != null) 

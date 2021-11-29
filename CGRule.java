@@ -164,6 +164,15 @@ public class CGRule
     { lhsTokens.add(toks[i]); }  
   }
 
+  public static boolean hasDefaultRule(Vector rules)
+  { for (int i = 0; i < rules.size(); i++) 
+    { CGRule rr = (CGRule) rules.get(i); 
+      if ("_0".equals(rr.lhs.trim()) && 
+          "_0".equals(rr.rhs.trim())) 
+      { return true; } 
+    } 
+    return false; 
+  } // Could add conditions. 
 
   public Vector getVariables()
   { return variables; } 
@@ -284,6 +293,12 @@ public class CGRule
       return 1; 
     } 
 
+    if ("_*".equals(lhs + ""))
+    { return 1; } 
+
+    if ("_*".equals(rlhs + ""))
+    { return -1; } 
+
     if (lhsTokens.size() == r.lhsTokens.size() && 
         variables.size() > r.variables.size())
     { // r has more non-variable terms, so is more specific
@@ -390,6 +405,24 @@ public class CGRule
   public boolean satisfiesConditions(Vector args, Vector entities)
   { return CGCondition.conditionsSatisfied(conditions,args,entities); } 
 
+  public int variablePosition(String var)
+  { // The index of var in the arguments in the LHS
+    int varCount = 0; 
+    for (int i = 0; i < lhsTokens.size(); i++) 
+    { String tok = (String) lhsTokens.get(i); 
+      
+      if (var.equals(tok))
+      { return varCount+1; } 
+      
+      if (tok.startsWith("_") && 
+          tok.length() >= 2 && 
+          (tok.charAt(1) == '*' || 
+           Character.isDigit(tok.charAt(1))))
+      { varCount++; } 
+    } 
+    return -1; 
+  } 
+
   public String applyRule(Vector args)
   { // substitute variables[i] by args[i] in rhs
     String res = rhs + "";
@@ -410,6 +443,8 @@ public class CGRule
     // substitute variables[i] by args[i] in rhs
     
     System.out.println(">***> Metafeatures of rule " + this + " are " + metafeatures); 
+    System.out.println(">***> LHS tokens: " + lhsTokens); 
+      
     Vector entities = cgs.entities; 
 
     String res = rhs + "";
@@ -423,9 +458,10 @@ public class CGRule
 
       int k = 0; 
       if ("*".equals(mfvar.charAt(1) + ""))
-      { k = eargs.size(); } // the last parameter
+      { k = variablePosition("_*"); } // the position of * in the vbls
       else 
       { k = Integer.parseInt(mfvar.charAt(1) + ""); }  
+      // Actually the argument corresponding to _k
 
       System.out.println(">***> Trying to apply metafeature " + mffeat + " to " + eargs + "[" + k + "]"); 
       System.out.println(); 
@@ -870,6 +906,21 @@ public class CGRule
             }
           }  
         }
+        else if (obj instanceof String && 
+                 cgs.hasRuleset(mffeat))
+        { System.out.println(">***> Valid ruleset " + mffeat);  
+          System.out.println();
+          ASTSymbolTerm asymbol = new ASTSymbolTerm(obj + "");  
+          String repl = cgs.applyRuleset(mffeat, asymbol);
+          System.out.println(">***> Applying ruleset " + mffeat + " to ASTSymbolTerm " + obj); 
+          System.out.println(); 
+
+          if (repl != null) 
+          { String repl1 = correctNewlines(repl); 
+            System.out.println(">--> Replacing " + mf + " by " + repl1); 
+            res = res.replace(mf,repl1);
+          } 
+        }  // Other string functions could be added.  
         else if (obj instanceof Vector)
         { Vector v = (Vector) obj;
           String repl = "";

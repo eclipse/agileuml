@@ -509,16 +509,16 @@ public class Compiler2
     return false; 
   } 
 
-  private static boolean isSimpleIdentifier(String s)
+  public static boolean isSimpleIdentifier(String s)
   { boolean res = true; 
     if (Character.isLetter(s.charAt(0))) {}
-	else 
-	{ return false; } 
+    else 
+    { return false; } 
 
     for (int i = 0; i < s.length(); i++) 
     { if (Character.isLetterOrDigit(s.charAt(i)) || 
           (i >= 1 && s.charAt(i) == '_')) 
-	  { } 
+      { } 
       else 
       { return false; } 
     } 
@@ -1801,6 +1801,12 @@ public class Compiler2
     return ee; 
   } 
 
+  public Expression parseExpression(Vector entities, Vector types) 
+  { Expression ee = parse_expression(0,0,lexicals.size()-1,entities,types); 
+    finalexpression = ee; 
+    return ee; 
+  } 
+
   public Expression parseATLExpression() 
   { // System.out.println("LEXICALS: " + lexicals);
     Vector ents = new Vector(); 
@@ -2207,6 +2213,10 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     { res.add(lexicals.get(i)); } 
     return res; 
   } 
+
+  public String getLexical(int st)
+  { return "" + lexicals.get(st); } 
+
 
   /* public BinaryExpression parse_or_expression(int pstart, 
                                               int pend)
@@ -3054,7 +3064,20 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
   }  
 
 
-
+  public BehaviouralFeature parseOperation(Vector entities, Vector types)
+  { int n = lexicals.size(); 
+    if (n == 0) 
+    { return null; } 
+    String modality = "" + lexicals.get(0); 
+    BehaviouralFeature bf = operationDefinition(1,n-1,entities,types); 
+    if (bf == null) 
+    { return null; } 
+    if ("query".equals(modality))
+    { bf.setQuery(true); } 
+    else 
+    { bf.setQuery(false); } 
+    return bf; 
+  } 
 
   public BehaviouralFeature operationDefinition(Vector entities, Vector types)
   { return operationDefinition(0, lexicals.size()-1, entities, types); } 
@@ -3257,6 +3280,26 @@ private void parseOpDecs(int st, int en, Vector entities, Vector types, Behaviou
   if (bcnt > 0)
   { System.err.println("*** Unclosed bracket in declaration: " + showLexicals(st,en)); }
 }
+
+public Attribute parseAttribute(Vector entities, Vector types)
+{ int n = lexicals.size(); 
+  if (n <= 1) 
+  { return null; } 
+  String modality = "" + lexicals.get(0); 
+  if ("attribute".equals(modality))
+  { Attribute att = 
+      parseParameterDec(1,n-1,entities,types); 
+    return att; 
+  } 
+  else if ("static".equals(modality) && 
+           "attribute".equals("" + lexicals.get(1)))
+  { Attribute att = 
+      parseParameterDec(2,n-1,entities,types); 
+    att.setStatic(true);
+    return att; 
+  } 
+  return null; 
+} 
 
 private Attribute parseParameterDec(int st, int en, Vector entities, Vector types)
 { // should be att : Type
@@ -5647,6 +5690,14 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       
     return res; 
   } 
+
+  public Object parseKM3Class(Vector entities, Vector types)
+  { Vector gens = new Vector(); 
+    Vector pasts = new Vector(); 
+    Vector errors = new Vector(); 
+    return parseKM3classifier(entities,types,gens,pasts,errors); 
+  } 
+
 
   public Object parseKM3classifier(Vector entities, Vector types, 
                                    Vector gens, Vector pasts, Vector errors)
@@ -8857,13 +8908,20 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 
     // cc.nospacelexicalanalysis("?(x) = ?y[10]"); 
     // System.out.println(cc.lexicals); 
-    cc.nospacelexicalanalysis("(lambda s : String in (s->size() > 1))->apply(_var)"); 
+    // cc.nospacelexicalanalysis("(lambda s : String in (s->size() > 1))->apply(_var)"); 
     // cc.nospacelexicalanalysis("f->apply(_var)"); 
     // cc.nospacelexicalanalysis("lambda s : String in (s->size() > 1)"); 
 
-    System.out.println(cc.parseExpression()); 
+    // System.out.println(cc.parseExpression()); 
 
     // System.out.println(cc.parseATLExpression()); 
+
+    // cc.nospacelexicalanalysis("query op() : String pre: true post: true activity: skip"); 
+    // BehaviouralFeature tt = cc.parseOperation(new Vector(), new Vector()); 
+       
+    cc.nospacelexicalanalysis("attribute sq : Sequence(String)"); 
+    Attribute tt = cc.parseAttribute(new Vector(), new Vector());  
+    System.out.println(tt.toAST()); 
 
     /* 
  

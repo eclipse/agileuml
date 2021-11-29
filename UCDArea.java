@@ -12259,6 +12259,14 @@ public void produceCUI(PrintWriter out)
       return; 
     } 
 
+    System.out.println(">>> Parsed AST: " + xx); 
+    System.out.println(">>> arity = " + xx.arity());
+    for (int i = 0; i < xx.arity(); i++) 
+    { ASTTerm tt = xx.getTerm(i); 
+      System.out.println(tt); 
+    }  
+    System.out.println(); 
+
   /*  xx.entities = new Vector(); 
     xx.entities.addAll(entities); 
     xx.enumtypes = new Vector(); 
@@ -12283,7 +12291,7 @@ public void produceCUI(PrintWriter out)
     Date d2 = new Date(); 
     long time2 = d2.getTime(); 
 
-    System.out.println(">>> Time for abstraction = " + (time2-time1)); 
+    System.out.println(">>> Time for processing AST = " + (time2-time1)); 
 
     Vector newentities = new Vector(); 
 

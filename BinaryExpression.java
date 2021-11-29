@@ -1056,70 +1056,71 @@ class BinaryExpression extends Expression
   { String leftast = left.toAST(); 
     String rightast = right.toAST(); 
     String basicString = 
-            "(BinaryExpression " + leftast + " " + operator + " " + rightast + ")"; 
+            "(OclBinaryExpression " + leftast + " " + operator + " " + rightast + ")"; 
      
     if ("let".equals(operator) && accumulator != null)
-    { String res = "(BinaryExpression let " + accumulator.getName() + " : " + accumulator.getType().toAST() + " = " + leftast + " in ( " + rightast + " ) )"; 
-      if (needsBracket)
-      { return "(BracketedExpression ( " + res + " ) )"; }
+    { String res = "(OclBinaryExpression let " + accumulator.getName() + " : " + accumulator.getType().toAST() + " = " + leftast + " in ( " + rightast + " ) )"; 
+      // if (needsBracket)
+      // { return "(BracketedExpression ( " + res + " ) )"; }
       return res; 
     }  
 
     if (operator.equals("#"))
     { Expression range = ((BinaryExpression) left).right; 
-      String rangestring = range.toAST(); 
+      String rangestring = range.toAST();
+      String varstring = ((BinaryExpression) left).left.toAST();  
 
-      basicString = "(BinaryExpression " + rangestring + " ->exists ( " + 
-             ((BinaryExpression) left).left + " | " + rightast + " ) )";
+      basicString = "(OclBinaryExpression " + rangestring + " ->exists ( " + varstring + " | " + rightast + " ) )";
     }
     else if ("#LC".equals(operator))
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = range.toAST(); 
+      String varstring = ((BinaryExpression) left).left.toAST();  
 
-      basicString = "(BinaryExpression " + rangestring + " ->existsLC ( " + 
-             ((BinaryExpression) left).left + " | " + rightast + " ) )";
+      basicString = "(OclBinaryExpression " + rangestring + " ->existsLC ( " + varstring + " | " + rightast + " ) )";
     }
     else if (operator.equals("#1"))
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = range.toAST(); 
+      String varstring = ((BinaryExpression) left).left.toAST();  
 
-      basicString = "(BinaryExpression " + rangestring + " ->exists1 ( " + 
-             ((BinaryExpression) left).left + " | " + rightast + " ) )";
+      basicString = "(OclBinaryExpression " + rangestring + " ->exists1 ( " + varstring + " | " + rightast + " ) )";
     } 
     else if (operator.equals("!"))
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = range.toAST(); 
+      String varstring = ((BinaryExpression) left).left.toAST();  
 
-      basicString = "(BinaryExpression " + rangestring + " ->forAll ( " + 
-             ((BinaryExpression) left).left + " | " + rightast + " ) )";
+      basicString = "(OclBinaryExpression " + rangestring + " ->forAll ( " + varstring + " | " + rightast + " ) )";
     } 
     else if (operator.equals("|"))
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = range.toAST(); 
+      String varstring = ((BinaryExpression) left).left.toAST();  
 
-      basicString = "(BinaryExpression " + rangestring + " ->select ( " + 
-             ((BinaryExpression) left).left + " | " + rightast + " ) )";
+      basicString = "(OclBinaryExpression " + rangestring + " ->select ( " + varstring + " | " + rightast + " ) )";
     }
     else if (operator.equals("|C"))
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = range.toAST(); 
+      String varstring = ((BinaryExpression) left).left.toAST();
 
-      basicString = "(BinaryExpression " + rangestring + " ->collect ( " + 
-             ((BinaryExpression) left).left + " | " + rightast + " ) )";
+      basicString = "(OclBinaryExpression " + rangestring + " ->collect ( " + varstring + " | " + rightast + " ) )";
     }
     else if (operator.equals("|A"))
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = range.toAST(); 
 
-      basicString = "(BinaryExpression " + rangestring + " ->any ( " + 
-             ((BinaryExpression) left).left + " | " + rightast + " ) )";
+      String varstring = ((BinaryExpression) left).left.toAST();
+
+      basicString = "(OclBinaryExpression " + rangestring + " ->any ( " + varstring + " | " + rightast + " ) )";
     }
     else if (operator.equals("|R"))
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = range.toAST(); 
+      String varstring = ((BinaryExpression) left).left.toAST();
 
-      basicString = "(BinaryExpression " + rangestring + " ->reject ( " + 
-             ((BinaryExpression) left).left + " | " + rightast + " ) )";
+      basicString = "(OclBinaryExpression " + rangestring + " ->reject ( " + varstring + " | " + rightast + " ) )";
     }
   /*  else if (operator.equals("|selectMinimals"))
     { Expression range = ((BinaryExpression) left).right; 
@@ -1218,13 +1219,13 @@ class BinaryExpression extends Expression
              operator.equals("->apply") ||
              operator.equals("->closure") || 
              operator.equals("->intersection") || operator.equals("->symmetricDifference"))   
-    { basicString = "(BinaryExpression " + leftast + " " + operator + " ( " + rightast + " ) )"; } 
+    { basicString = "(OclBinaryExpression " + leftast + " " + operator + " ( " + rightast + " ) )"; } 
 
     if (operator.startsWith("->"))
-    { basicString = "(BinaryExpression " + leftast + " " + operator + " ( " + rightast + " ) )"; }
+    { basicString = "(OclBinaryExpression " + leftast + " " + operator + " ( " + rightast + " ) )"; }
 	
-    if (needsBracket) 
-    { return "(BracketedExpression ( " + basicString + " ) )"; }  
+    // if (needsBracket) 
+    // { return "(BracketedExpression ( " + basicString + " ) )"; }  
 
     return basicString; 
   } 

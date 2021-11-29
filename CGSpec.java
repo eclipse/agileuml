@@ -99,6 +99,14 @@ public class CGSpec
     categoryRules.put(category,rules); 
   } 
 
+  public void addInitialCategoryRule(String category, CGRule r)
+  { Vector rules = (Vector) categoryRules.get(category); 
+    if (rules == null) 
+    { rules = new Vector(); } 
+    rules.add(0,r); 
+    categoryRules.put(category,rules); 
+  } 
+
   public void addCategoryRuleInOrder(String category, CGRule r)
   { Vector rules = (Vector) categoryRules.get(category); 
     if (rules == null) 

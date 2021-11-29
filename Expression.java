@@ -1256,6 +1256,23 @@ abstract class Expression
   public boolean isSequenceValued()
   { return type != null && type.isSequence(); }
 
+  public String getOclType()
+  { if (type == null) 
+    { return null; } 
+
+    if (Expression.isBoolean("" + this))
+    { return "Boolean"; }
+    if ("null".equals("" + this))
+    { return "Object"; }  
+    if (Type.isIntegerType(type))
+    { return "Integer"; } 
+    if (type.isRealType())
+    { return "Real"; } 
+    if (type.isStringType())
+    { return "String"; } 
+    return null; 
+  } 
+
   public static boolean isBoolean(String data)
   { return data.equals("true") || data.equals("false"); }
 
@@ -1322,6 +1339,183 @@ abstract class Expression
     { return true; }  
     return false;
   } // oclAsType should be BinaryExpression??? flatten??
+
+  public static boolean isOclValue(Expression expr)
+  { if (expr instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) expr; 
+      return be.umlkind == VALUE; 
+    } 
+    return false; 
+  } 
+
+  public static boolean isOclIdentifier(Expression expr)
+  { if (expr instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) expr; 
+      if (be.umlkind == VALUE) 
+      { return false; }  
+      if (be.arrayIndex == null && be.objectRef == null && 
+          be.getParameters() == null && 
+          Compiler2.isSimpleIdentifier(be.data)) 
+      { return true; }  
+    } 
+    return false; 
+  } 
+
+  public static boolean isOclFieldAccess(Expression expr)
+  { if (expr instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) expr; 
+      if (be.umlkind == VALUE) 
+      { return false; }  
+      if (be.arrayIndex == null && be.objectRef != null && 
+          be.getParameters() == null && 
+          Compiler2.isSimpleIdentifier(be.data)) 
+      { return true; }  
+    } 
+    return false; 
+  } 
+
+  public static boolean isOclOperationCall0(Expression expr)
+  { if (expr instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) expr; 
+      if (be.umlkind == VALUE) 
+      { return false; }  
+      if (be.arrayIndex == null && 
+          be.getParameters() != null && 
+          be.getParameters().size() == 0) 
+      { return true; }  
+    } 
+    return false; 
+  } 
+
+  public static boolean isOclOperationCallN(Expression expr)
+  { if (expr instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) expr; 
+      if (be.umlkind == VALUE) 
+      { return false; }  
+      if (be.arrayIndex == null && 
+          be.getParameters() != null && 
+          be.getParameters().size() > 0) 
+      { return true; }  
+    } 
+    return false; 
+  } 
+
+  public static boolean isOclArrayAccess(Expression expr)
+  { if (expr instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) expr; 
+      if (be.umlkind == VALUE) 
+      { return false; }  
+      if (be.arrayIndex != null) 
+      { return true; }  
+    } 
+    return false; 
+  } 
+
+  public static boolean isOclUnaryPrefix(Expression expr)
+  { if (expr instanceof UnaryExpression)
+    { UnaryExpression ue = (UnaryExpression) expr; 
+      String op = ue.getOperator(); 
+      if ("not".equals(op) || "-".equals(op))
+      { return true; } 
+    } 
+    return false; 
+  } 
+
+  public static boolean isOclUnaryPostfix(Expression expr)
+  { if (expr instanceof UnaryExpression)
+    { UnaryExpression ue = (UnaryExpression) expr; 
+      String op = ue.getOperator(); 
+      if ("not".equals(op) || "-".equals(op) || 
+          "lambda".equals(op))
+      { return false; } 
+      return true; 
+    } 
+    return false; 
+  } 
+
+  public static boolean isOclUnaryLambda(Expression expr)
+  { if (expr instanceof UnaryExpression)
+    { UnaryExpression ue = (UnaryExpression) expr; 
+      String op = ue.getOperator(); 
+      if ("lambda".equals(op))
+      { return true; } 
+    } 
+    return false; 
+  } 
+
+  public static boolean isOclBinaryInfix(Expression expr)
+  { if (expr instanceof BinaryExpression)
+    { BinaryExpression ue = (BinaryExpression) expr; 
+      String op = ue.getOperator(); 
+      if ("+".equals(op) || "-".equals(op) || 
+          "*".equals(op) || "&".equals(op) || 
+          "^".equals(op) || 
+          "/".equals(op) || "div".equals(op) || 
+          "mod".equals(op) || "and".equals(op) || 
+          "or".equals(op) || "xor".equals(op) || 
+          "<".equals(op) || "<=".equals(op) || 
+          "=".equals(op) || "/=".equals(op) ||
+          ">".equals(op) || ">=".equals(op))
+      { return true; } 
+      if (op.startsWith("->"))
+      { return false; } 
+    } 
+    return false; 
+  } 
+
+  public static boolean isOclIteratorExpression(Expression expr)
+  { if (expr instanceof BinaryExpression)
+    { BinaryExpression ue = (BinaryExpression) expr; 
+      String op = ue.getOperator(); 
+      if (op.startsWith("|") || op.startsWith("#") || 
+          op.equals("!") )
+      { return true; } 
+    } 
+    return false; 
+  } // They must have an iterator variable. 
+
+  public static boolean isOclBinaryArrow(Expression expr)
+  { if (expr instanceof BinaryExpression)
+    { BinaryExpression ue = (BinaryExpression) expr; 
+      String op = ue.getOperator(); 
+      if (op.startsWith("->"))
+      { return true; } 
+    } 
+    return false; 
+  } 
+
+  public static boolean isEmptyCollectionExpression(Expression expr)
+  { if (expr instanceof SetExpression)
+    { SetExpression ue = (SetExpression) expr; 
+      if (ue.isEmpty()) 
+      { return true; } 
+    } 
+    return false; 
+  } 
+
+  public static boolean isNonEmptySetExpression(Expression expr)
+  { if (expr instanceof SetExpression)
+    { SetExpression ue = (SetExpression) expr; 
+      if (ue.isEmpty()) 
+      { return false; }
+      if (ue.isOrdered())
+      { return false; } 
+      return true;  
+    } 
+    return false; 
+  } 
+
+  public static boolean isNonEmptySequenceExpression(Expression expr)
+  { if (expr instanceof SetExpression)
+    { SetExpression ue = (SetExpression) expr; 
+      if (ue.isEmpty()) 
+      { return false; }
+      if (ue.isOrdered())
+      { return true; }   
+    } 
+    return false; 
+  } 
+
 
   public boolean isRuleCall(Vector rules)
   { return false; } 

@@ -51,7 +51,35 @@ public class ASTCompositeTerm extends ASTTerm
   public int arity()
   { return terms.size(); } 
  
+  public int nonSymbolArity()
+  { int res = 0; 
+    for (int i = 0; i < terms.size(); i++)
+    { if (terms.get(i) instanceof ASTSymbolTerm) { } 
+      else 
+      { res++; }
+    } 
+    return res; 
+  }  
 
+  public Vector symbolTerms()
+  { Vector res = new Vector(); 
+    for (int i = 0; i < terms.size(); i++)
+    { if (terms.get(i) instanceof ASTSymbolTerm) 
+      { res.add(terms.get(i)); } 
+    } 
+    return res; 
+  }  
+
+  public Vector nonSymbolTerms()
+  { Vector res = new Vector(); 
+    for (int i = 0; i < terms.size(); i++)
+    { if (terms.get(i) instanceof ASTSymbolTerm) { } 
+      else  
+      { res.add(terms.get(i)); } 
+    } 
+    return res;
+  } 
+ 
   public ASTTerm removeOuterTag()
   { if (terms.size() > 0)
     { return (ASTTerm) terms.get(0); } 
@@ -224,7 +252,7 @@ public class ASTCompositeTerm extends ASTTerm
       } 
 
       if (failed == false) 
-      { System.out.println("> Matched " + tag + " rule " + r + " for " + this);  
+      { System.out.println("> Matched ruleset rule " + r + " for " + this);  
 
         for (int p = 0; p < eargs.size(); p++)
         { Object obj = eargs.get(p);
@@ -247,13 +275,20 @@ public class ASTCompositeTerm extends ASTTerm
         Vector ents = new Vector(); 
 
         if (r.satisfiesConditions(eargs,ents))
-        { System.out.println(">>>> Applying " + tag + " rule " + r); 
+        { System.out.println(">>>> Applying ruleset rule " + r); 
           return r.applyRule(args,eargs,cgs); 
         }  
       }
     }  
 
     System.out.println(); 
+    if (CGRule.hasDefaultRule(rules))
+    { Vector tagrules = cgs.getRulesForCategory(tag);
+      if (tagrules.equals(rules)) 
+      { return toString(); }
+      System.out.println(">> Applying default rule _0 |-->_0 to " + this);  
+      return this.cgRules(cgs,tagrules); 
+    } 
     return toString(); 
   }
 

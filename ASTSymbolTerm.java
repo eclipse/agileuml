@@ -29,7 +29,30 @@ public class ASTSymbolTerm extends ASTTerm
   { return symbol; } 
 
   public String cgRules(CGSpec cgs, Vector rules)
-  { return symbol; } 
+  { if (rules == null) 
+    { return symbol; } 
+
+    for (int i = 0; i < rules.size(); i++) 
+    { CGRule r = (CGRule) rules.get(i);
+      Vector tokens = r.lhsTokens; 
+      Vector vars = r.getVariables(); 
+
+      if (vars.size() > 0 || tokens.size() > 1)
+      { // System.out.println("> Rule " + r + " has too many variables/tokens to match basic term " + this); 
+        continue; 
+      } 
+
+      if (tokens.size() == 0) 
+      { return symbol; } 
+
+      String tok = (String) tokens.get(0); 
+
+      if (symbol.equals(tok))
+      { return r.rhs; } 
+     }
+
+     return symbol; 
+  } 
 
   public String toString()
   { return symbol; } 
@@ -53,6 +76,15 @@ public class ASTSymbolTerm extends ASTTerm
 
   public int arity()
   { return 0; } 
+
+  public int nonSymbolArity()
+  { return 0; } 
+
+  public Vector symbolTerms()
+  { return new Vector(); }  
+
+  public Vector nonSymbolTerms()
+  { return new Vector(); } 
 
   public ASTTerm removeOuterTag()
   { return null; }  

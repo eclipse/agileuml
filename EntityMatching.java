@@ -1116,7 +1116,7 @@ public class EntityMatching implements SystemTypes
     return res; 
   } 
 
-  public String toCSTL(CGSpec cg)
+  public String toCSTL(CGSpec cg, Vector typematches)
   { String res = ""; 
     Entity baseclass = realsrc.getRootSuperclass(); 
     if (baseclass != null) 
@@ -1125,8 +1125,9 @@ public class EntityMatching implements SystemTypes
       cg.addCategory(rootClass); 
          
       for (int i = 0; i < attributeMappings.size(); i++) 
-      { AttributeMatching am = (AttributeMatching) attributeMappings.get(i); 
-        res = res + am.toCSTL(rootClass,condition,cg) + "\n"; 
+      { AttributeMatching am = 
+          (AttributeMatching) attributeMappings.get(i); 
+        res = res + am.toCSTL(rootClass,condition,cg,typematches) + "\n"; 
       }
     }  
     return res + "\n"; 

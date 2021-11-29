@@ -35,6 +35,15 @@ public class ASTBasicTerm extends ASTTerm
   public int arity()
   { return 1; } 
 
+  public int nonSymbolArity()
+  { return 0; } 
+
+  public Vector symbolTerms()
+  { return new Vector(); }  
+
+  public Vector nonSymbolTerms()
+  { return new Vector(); } 
+
 
   public ASTTerm removeOuterTag()
   { return new ASTSymbolTerm(value); }  
@@ -147,6 +156,16 @@ public class ASTBasicTerm extends ASTTerm
         return r.applyRule(args,eargs,cgs);
       }   
     } 
+
+
+    if (CGRule.hasDefaultRule(rules))
+    { Vector tagrules = cgs.getRulesForCategory(tag);
+      if (tagrules.equals(rules)) 
+      { return toString(); }
+      System.out.println(">> Applying default rule _0 |-->_0 to " + this);  
+      return this.cgRules(cgs,tagrules); 
+    } 
+
     return toString(); 
   }
 

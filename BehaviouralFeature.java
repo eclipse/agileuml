@@ -1406,7 +1406,61 @@ public class BehaviouralFeature extends ModelElement
                      // result in succ as only updated feature
 
   public boolean isUpdate()
-  { return query == false; } 
+  { return query == false; }
+
+  public static boolean isQuery0(ModelElement mm)
+  { if (mm instanceof BehaviouralFeature)
+    { BehaviouralFeature bf = (BehaviouralFeature) mm; 
+      if (bf.query) { }  
+      else 
+      { return false; } 
+      if (bf.parameters != null && 
+          bf.parameters.size() == 0)
+      { return true; } 
+      return false; 
+    }
+    return false; 
+  }  
+
+  public static boolean isQueryN(ModelElement mm)
+  { if (mm instanceof BehaviouralFeature)
+    { BehaviouralFeature bf = (BehaviouralFeature) mm; 
+      if (bf.query) { }  
+      else 
+      { return false; } 
+      if (bf.parameters != null && 
+          bf.parameters.size() > 0)
+      { return true; } 
+      return false; 
+    }
+    return false; 
+  }  
+
+  public static boolean isUpdate0(ModelElement mm)
+  { if (mm instanceof BehaviouralFeature)
+    { BehaviouralFeature bf = (BehaviouralFeature) mm; 
+      if (bf.query) 
+      { return false; }  
+
+      if (bf.parameters != null && 
+          bf.parameters.size() == 0)
+      { return true; }
+    } 
+    return false; 
+  } 
+
+  public static boolean isUpdateN(ModelElement mm)
+  { if (mm instanceof BehaviouralFeature)
+    { BehaviouralFeature bf = (BehaviouralFeature) mm; 
+      if (bf.query) 
+      { return false; } 
+
+      if (bf.parameters != null && 
+          bf.parameters.size() > 0)
+      { return true; }
+    }  
+    return false; 
+  } 
 
   public boolean isAbstract()
   { return hasStereotype("abstract"); } 
@@ -2799,7 +2853,7 @@ public class BehaviouralFeature extends ModelElement
 
   public String toAST()
   { if (derived) { return ""; } 
-    String result = "(Operation "; 
+    String result = "(OclOperation "; 
     String res = ""; 
 
     if (isQuery())
@@ -2819,10 +2873,11 @@ public class BehaviouralFeature extends ModelElement
     res = res + getName() + tpars + " ( ";
 
     if (parameters != null && parameters.size() > 0)
-    { res = res + "(ParameterList "; 
+    { res = res + "(OclParameterList "; 
       for (int i = 0; i < parameters.size(); i++)
       { Attribute par = (Attribute) parameters.get(i);
         String pnme = par.toASTParameter();
+        res = res + pnme; 
         if (i < parameters.size() - 1)
         { res = res + " , "; } 
       }

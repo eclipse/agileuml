@@ -160,7 +160,7 @@ public class ModelMatching implements SystemTypes
       // Entity s = em.realsrc; 
       // Entity t = em.realtrg; 
       // res = res + "  " + s + " |--> " + t + "\n"; 
-      res = res + em.toCSTL(cg) + "\n\n";  
+      res = res + em.toCSTL(cg,typematches) + "\n\n";  
     }
 
     return res; 

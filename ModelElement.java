@@ -59,6 +59,9 @@ public abstract class ModelElement implements SystemTypes
   public void setName(String newname)
   { name = newname; }
 
+  public String toAST()
+  { return ""; }
+
   public String cg(CGSpec cgs)
   { return this + ""; }
 

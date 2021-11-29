@@ -403,6 +403,12 @@ public class Type extends ModelElement
     return false; 
   } 
 
+  public boolean isRealType()
+  { if ("double".equals(name))
+    { return true; } 
+    return false; 
+  } 
+
   public static Type getImageType(Type t, Vector ems) 
   { if (t == null) 
     { return null; } 
@@ -3819,11 +3825,11 @@ public class Type extends ModelElement
     { String kt; 
       String et; 
       if (keyType == null) 
-      { kt = "String"; }
+      { kt = "(OclType String)"; }
       else 
       { kt = keyType.toAST(); }  
       if (elementType == null)
-      { et = "OclAny"; } 
+      { et = "(OclType OclAny)"; } 
       else 
       { et = elementType.toAST(); } 
       return res + nme + " ( " + kt + " , " + et + " ) )"; 

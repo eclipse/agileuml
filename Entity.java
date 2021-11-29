@@ -8117,8 +8117,29 @@ public class Entity extends ModelElement implements Comparable
     out.println("}\n\n");   
   } 
 
+  public static boolean isEmptyClass(Object obj)
+  { if (obj instanceof Entity)
+    { Entity e = (Entity) obj; 
+      if (e.attributes.size() == 0 && 
+          e.operations.size() == 0) 
+      { return true; } 
+    } 
+    return false; 
+  } 
+
+  public static boolean isNonEmptyClass(Object obj)
+  { if (obj instanceof Entity)
+    { Entity e = (Entity) obj; 
+      if (e.attributes.size() > 0 || 
+          e.operations.size() > 0) 
+      { return true; } 
+    } 
+    return false; 
+  } 
+
+
   public String toAST()
-  { String res = "(Class ";
+  { String res = "(OclClass ";
     String nme = "class " + getName() + " ";
 
     if (typeParameters.size() > 0)
@@ -8148,8 +8169,10 @@ public class Entity extends ModelElement implements Comparable
       } 
     } 
 
-  
-    res = res + " " + nme + " { ";
+    if (Entity.isEmptyClass(this)) 
+    { res = res + " " + nme + " { "; } 
+    else 
+    { res = res + " " + nme + " (OclClassContents { "; }
 
     for (int i = 0; i < stereotypes.size(); i++) 
     { String stereo = (String) stereotypes.get(i); 
@@ -8181,7 +8204,11 @@ public class Entity extends ModelElement implements Comparable
       res = res + op.toAST() + " ; "; 
     } 
 
-    res = res + "  } )";
+    if (Entity.isEmptyClass(this)) 
+    { res = res + " } )"; }  
+    else 
+    { res = res + " } ) )"; }
+
     return res;    
   } // and operations
 

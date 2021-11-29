@@ -1229,7 +1229,7 @@ public class Attribute extends ModelElement
   } 
 
   public String toASTParameter()
-  { return "(Parameter " + getName() + " : " + getType().toAST() + " )";  
+  { return "(OclParameter " + getName() + " : " + getType().toAST() + " )";  
   } 
 
   public String getKM3()

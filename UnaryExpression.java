@@ -4063,19 +4063,26 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
   } 
 
   public String toAST()
-  { String res = "(UnaryExpression "; 
+  { String res = "(OclUnaryExpression "; 
     
     if (operator.equals("lambda"))
     { res = res + "lambda " + accumulator.getName() + " : " + accumulator.getType().toAST() + " in " + argument.toAST() + ")";
-      if (needsBracket)
-      { return "(BracketedExpression ( " + res + " ) )"; }
+      // if (needsBracket)
+      // { return "(BracketedExpression ( " + res + " ) )"; }
       return res; 
     } 
   
     if (operator.equals("-"))
     { res = res + "- " + argument.toAST() + ")"; 
-      if (needsBracket)
-      { return "(BracketedExpression ( " + res + " ) )"; }
+      // if (needsBracket)
+      // { return "(BracketedExpression ( " + res + " ) )"; }
+      return res;
+    }
+
+    if (operator.equals("not"))
+    { res = res + "not " + argument.toAST() + ")"; 
+      // if (needsBracket)
+      // { return "(BracketedExpression ( " + res + " ) )"; }
       return res;
     }
   
@@ -4085,7 +4092,7 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
     if (operator.startsWith("->"))
     { return res + argument.toAST() + " " + operator + " ( ) )"; } 
 
-    return res + operator + " ( " + argument.toAST() + " ) )";  
+    return res + operator + " " + argument.toAST() + " )";  
   } 
 
   public String saveModelData(PrintWriter out) 

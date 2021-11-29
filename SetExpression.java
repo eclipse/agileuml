@@ -188,7 +188,7 @@ public class SetExpression extends Expression
   }
 
   public String toAST()
-  { String res = "(SetExpression ";
+  { String res = "(OclSetExpression ";
 
     if (isMap())
     { res = res + " Map { "; }

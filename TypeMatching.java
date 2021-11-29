@@ -22,6 +22,12 @@ public class TypeMatching
   Type trg;
   Vector valueMappings = new Vector();
 
+  public TypeMatching(String nme)
+  { name = nme; 
+    src = new Type("String", null); 
+    trg = new Type("String", null); 
+  } 
+
   public TypeMatching(Type s, Type t)
   { src = s;
     trg = t;
@@ -59,6 +65,13 @@ public class TypeMatching
 
   public void addValueMapping(Expression s, Expression t)
   { ValueMatching v = new ValueMatching(s,t);
+    valueMappings.add(v);
+  }
+
+  public void addValueMapping(String ss, String tt)
+  { BasicExpression s = new BasicExpression(ss); 
+    BasicExpression t = new BasicExpression(tt); 
+    ValueMatching v = new ValueMatching(s,t);
     valueMappings.add(v);
   }
 
@@ -159,6 +172,18 @@ public class TypeMatching
       res = res + vm.src + " |-->" + vm.trg + "\n";
       CGRule rr = new CGRule("" + vm.src, "" + vm.trg); 
       cg.addCategoryRule(name,rr); 
+    }
+
+    return res;
+  }
+
+  public String toCSTL(String category, CGSpec cg)
+  { String res = ""; 
+    for (int x = 0; x < valueMappings.size(); x++)
+    { ValueMatching vm = (ValueMatching) valueMappings.get(x);
+      res = res + vm.src + " |-->" + vm.trg + "\n";
+      CGRule rr = new CGRule("" + vm.src, "" + vm.trg); 
+      cg.addInitialCategoryRule(category,rr); 
     }
 
     return res;

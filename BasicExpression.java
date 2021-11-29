@@ -1866,7 +1866,7 @@ class BasicExpression extends Expression
   }
 
   public String toAST() 
-  { String res = "(BasicExpression ";
+  { String res = "(OclBasicExpression ";
     if (objectRef != null)
     { res = res + objectRef.toAST() + " . " + data; } 
     else 
@@ -1876,13 +1876,21 @@ class BasicExpression extends Expression
     { res = res + " @pre"; }
 
     if (parameters != null)
-    { res = res + " ( (ParameterArgument "; 
+    { res = res + " ( "; 
+
+      if (parameters.size() > 0)
+      { res = res + "(ParameterArgument "; } 
+ 
       for (int i = 0; i < parameters.size(); i++)
       { res = res + ((Expression) parameters.get(i)).toAST(); 
         if (i < parameters.size() - 1)
         { res = res + " , "; } 
       }
-      res = res + ") )"; 
+
+      if (parameters.size() > 0)
+      { res = res + " ) "; } 
+  
+      res = res + " )"; 
     }
 
     if (arrayIndex != null)
@@ -1897,17 +1905,79 @@ class BasicExpression extends Expression
     if (parameters != null && parameters.size() > 0)
     { res = ""; 
       for (int i = 0; i < parameters.size(); i++)
-      { res = res + parameters.get(i) + " "; } 
+      { String par = ((BasicExpression) parameters.get(i)).toCSTL(); 
+        res = res + par + " "; 
+      } 
     } 
     return res; 
   }  
+
+  public static int starIndex(BasicExpression be)
+  { if (be.parameters == null) 
+    { return 0; } 
+    for (int i = 0; i < be.parameters.size(); i++) 
+    { if ("_*".equals(be.parameters.get(i) + ""))
+      { return i+1; } 
+    } 
+    return 0; 
+  } 
+
+  public boolean isSingleListTerm()
+  { // contents of expression are constants, with no "_v"
+    // except _*
+
+    if (parameters != null)
+    { for (int i = 0; i < parameters.size(); i++) 
+      { String par = "" + parameters.get(i); 
+        if (par.startsWith("_*")) { }
+        else if (par.startsWith("_"))
+        { return false; } 
+      }  
+      return true; 
+    }
+ 
+    return false; 
+  } 
+
+  public boolean isFunctionApplication()
+  { if (umlkind == FUNCTION && parameters != null && 
+        parameters.size() == 1)
+    { String par = "" + parameters.get(0); 
+      if ("_*".equals(par))
+      { return false; } 
+      return true; 
+    }
+ 
+    if (parameters != null && parameters.size() == 1) 
+    { BasicExpression par = ((BasicExpression) parameters.get(0));
+      return par.isFunctionApplication(); 
+    }  
+
+    return false; 
+  } 
+
+  public String getAppliedFunction()
+  { if (umlkind == FUNCTION && parameters != null && 
+        parameters.size() == 1)
+    { return data; }
+ 
+    if (parameters != null && parameters.size() == 1) 
+    { BasicExpression par = ((BasicExpression) parameters.get(0));
+      return par.getAppliedFunction(); 
+    }  
+
+    return null; 
+  } 
+
 
   public String toLiteralCSTL()
   { String res = data;
  
     if (umlkind == FUNCTION)
     { if (parameters != null && parameters.size() == 1)
-      { res = parameters.get(0) + "`" + data; }
+      { String par = ((BasicExpression) parameters.get(0)).toLiteralCSTL(); 
+        res = par + "`" + data; 
+      }
       return res;  
     } 
 
@@ -2823,7 +2893,8 @@ class BasicExpression extends Expression
         "OclType".equals(data) || "OclFile".equals(data) || 
         "OclRandom".equals(data) ||
         Type.isOclExceptionType(data) ||  
-        "OclProcess".equals(data))
+        "OclProcess".equals(data) || 
+        "OclProcessGroup".equals(data))
     { type = new Type("OclType", null); 
       elementType = new Type(data, null); 
       umlkind = TYPE; 
