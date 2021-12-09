@@ -1831,15 +1831,16 @@ public class ASTCompositeTerm extends ASTTerm
           System.out.println(">>> enumeration of map values: " + this); 
           
           ASTTerm.setType(thisliteral,"OclIterator"); 
+          // With same element type as arg. 
 
           if (arg.expression != null) 
           { Expression vals = new UnaryExpression("->values", arg.expression); 
             expression = 
               BasicExpression.newStaticCallBasicExpression(
-                "newOclIterator_Set", "OclIterator", vals); 
+                "newOclIterator_Sequence", "OclIterator", vals); 
           } 
 
-          return "OclIterator.newOclIterator_Set(" + args + "->values())"; 
+          return "OclIterator.newOclIterator_Sequence(" + args + "->values())"; 
         }  
         else if ("min".equals(called) && "Collections".equals(args))
         { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
@@ -10188,7 +10189,21 @@ public class ASTCompositeTerm extends ASTTerm
       String vv = mname.toKM3(); 
       ASTTerm.setType(vv,typ);
 
-      modelElement = Attribute.newAttribute(vv, typ, ASTTerm.enumtypes, ASTTerm.entities);  
+      Type tt = Type.getTypeFor(typ, ASTTerm.enumtypes, ASTTerm.entities); 
+      Type elemT = null; 
+
+      if (tt != null)
+      { System.out.println(">>> Type for parameter " + mname + " is " + tt + " ( " + tt.getElementType() + " )"); 
+        elemT = tt.getElementType(); 
+      } 
+      else 
+      { System.out.println("! Warning: no type for parameter " + mname); }  
+      System.out.println(); 
+
+      modelElement = new Attribute(vv, tt, ModelElement.INTERNAL); 
+      // Attribute.newAttribute(vv, tt, 
+      //    ASTTerm.enumtypes, ASTTerm.entities);  
+      ((Attribute) modelElement).setElementType(elemT); 
   
       String res = vv + " : " + typ;  
       return res;

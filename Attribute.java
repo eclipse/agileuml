@@ -1750,12 +1750,14 @@ public class Attribute extends ModelElement
     if (isFinal()) { return ""; }
     // if (initialValue != null && !initialValue.equals(""))
     // { return "" + nme + " = " + initialValue + ";"; } 
+
     if (initialExpression != null) 
     { java.util.Map env = new java.util.HashMap();
       if (entity != null) 
       { env.put(entity.getName(), "this"); } 
       return nme + " = " + initialExpression.queryFormCPP(env,true) + ";"; 
     } 
+
     String def = type.getDefaultCPP(elementType);
     if (def == null) { return ""; }
     return nme + " = " + def + ";";
@@ -2392,7 +2394,7 @@ public class Attribute extends ModelElement
     Vector v1 = new Vector();
     v1.add(ind); 
     v1.add(par);
-    String et = eType.getCSharp(); 
+    String et = eType.getCPP(); 
 
     String t = type.getCPP(elementType); 
 

@@ -1256,6 +1256,12 @@ abstract class Expression
   public boolean isSequenceValued()
   { return type != null && type.isSequence(); }
 
+  public boolean hasSetType()
+  { return type != null && type.isSet(); }
+
+  public boolean hasSequenceType()
+  { return type != null && type.isSequence(); }
+
   public String getOclType()
   { if (type == null) 
     { return null; } 

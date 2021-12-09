@@ -3344,10 +3344,15 @@ public void findClones(java.util.Map clones, String rule, String op)
     else if ("->oclAsType".equals(operator))
     { type = Type.getTypeFor(right + "", types, entities); 
       if (type == null) 
-      { System.err.println("ERROR: unrecognised type in cast expression: " + this);
+      { System.err.println("!! ERROR: unrecognised type in cast expression: " + this);
         // JOptionPane.showMessageDialog(null, "Unrecognised type in cast " + this, 
         // "Type error", JOptionPane.ERROR_MESSAGE);
+        type = left.getType(); 
       }
+      else if (type.getElementType() != null) 
+      { elementType = type.getElementType(); } 
+      else 
+      { elementType = left.getElementType(); } 
     }  
     else if ("->at".equals(operator))
     { if ("String".equals(left.type + ""))
@@ -3359,15 +3364,16 @@ public void findClones(java.util.Map clones, String rule, String op)
         if (type != null) 
         { elementType = type.getElementType(); } 
         else 
-        { System.err.println("Warning: no element type in " + this + " " + env); 
-          Attribute leftvar = (Attribute) ModelElement.lookupByName(left + "", env); 
+        { Attribute leftvar = (Attribute) ModelElement.lookupByName(left + "", env); 
           if (leftvar != null) 
           { type = leftvar.getType(); 
             elementType = leftvar.getElementType(); 
           }
 
           if (elementType == null) 
-          { elementType = new Type("OclAny", null); } 
+          { System.err.println("! Warning: no element type for " + left + " in environment " + env); 
+            elementType = new Type("OclAny", null); 
+          } 
         }  
       } 
     }  // and right must be of type int.
@@ -3810,6 +3816,21 @@ public void findClones(java.util.Map clones, String rule, String op)
        )
     { elementType = etleft;
       type.setElementType(elementType); 
+    } 
+    else if (operator.equals("->including") || 
+             operator.equals("->prepend") || 
+             operator.equals("->append"))
+    { Type newleftET = Type.refineType(etleft,right.getType()); 
+      System.out.println(">> Deduced element type of " + this + " = " + newleftET); 
+      elementType = newleftET; 
+      type.setElementType(newleftET); 
+    } 
+    else if (operator.equals("->union") || 
+             operator.equals("^"))
+    { Type newleftET = Type.refineType(etleft,etright); 
+      System.out.println(">> Deduced element type of " + this + " = " + newleftET); 
+      elementType = newleftET; 
+      type.setElementType(newleftET); 
     } 
     else if (etleft != null) // if classes, take closest common super
     { elementType = maxtype;
@@ -5694,6 +5715,10 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "SystemTypes.removeAtString(" + 
                                       lqf + "," + rqf + ")"; 
       }
+      else if (operator.equals("->excludingAt"))
+      { res = "SystemTypes.removeAt(" + 
+                                      lqf + "," + rqf + ")"; 
+      }
     }
     else if (lmult && !rmult) // convert right to mult
     { String rw = rqf; 
@@ -5922,16 +5947,28 @@ public boolean conflictsWithIn(String op, Expression el,
     } 
     // But the user must define such an operation in their classes
 
-    if (operator.equals("->at") && type != null)
-    { String typ = type.getCPP(elementType); 
+    if (operator.equals("->at") && left.getType() != null)
+    { Type lefttype = left.getType();
+      Type lelemtype = left.getElementType();  
 
-      if ("String".equals(left.type + ""))
+      if ("String".equals(lefttype.getName()))
       { return "(" + lqf + ").substr(" + rqf + "-1 , 1)"; } 
 
-      if (left.type != null && left.type.isMapType())
-	  { return "((" + typ + ") " + lqf + "->at(" + rqf + "))"; }
+      if (lefttype.isMapType())
+      { if (lelemtype != null) 
+        { String etyp = 
+             lelemtype.getCPP(lelemtype.getElementType()); 
+          return "((" + etyp + ") (" + lqf + ")->at(" + rqf + "))"; 
+        }
+        return "(" + lqf + ")->at(" + rqf + ")"; 
+      } 
 
-      return "((" + typ + ") " + lqf + "->at(" + rqf + " - 1))"; 
+      if (lelemtype != null) 
+      { String etyp = 
+             lelemtype.getCPP(lelemtype.getElementType());
+        return "((" + etyp + ") (" + lqf + ")->at(" + rqf + " - 1))"; 
+      }
+      return "(" + lqf + ")->at(" + rqf + " - 1)"; 
     } 
 
     if (operator.equals("->apply"))
@@ -5949,6 +5986,43 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->gcd"))
     { return "UmlRsdsLib<long>::gcd(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("+"))
+    { String pres = lqf + " + " + rqf;
+      if (needsBracket)
+      { pres = "(" + pres + ")"; } 
+ 
+      if ("null".equals(lqf) || "null".equals(rqf))
+      { return pres; } 
+      if (left.isPrimitive() && right.isPrimitive())
+      { return pres; } 
+      if (left.isString() && right.isString())
+      { pres = "string(" + lqf + ").append(" + rqf + ")"; 
+        return pres; 
+      } 
+      else if (left.isString())
+      { return "string(" + lqf + ").append(std::to_string(" + rqf + "))"; } 
+      else if ("String".equals(right.getType().getName()))
+      { return "std::to_string(" + lqf + ").append(" + rqf + ")"; } 
+       
+     /* if (left.isString() && right.isPrimitive())
+      { return pres; } 
+      if (left.isPrimitive() && right.isString())
+      { return pres; } 
+
+      if (left.isString())
+      { pres = lqf + " + " + rqf + ".ToString()"; 
+        if (needsBracket)
+        { pres = "(" + pres + ")"; } 
+      } 
+      else if (right.isString())
+      { pres = lqf + ".ToString() + " + rqf;
+        if (needsBracket)
+        { pres = "(" + pres + ")"; } 
+      } */ 
+
+      return pres; 
+    }  
 
     if (operator.equals("->isUnique"))  // and define for B
     { String fcollect = collectQueryFormCPP(lqf,rqf,rprim,env,local);
@@ -6038,7 +6112,9 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->oclAsType"))
     { if (type != null) 
-      { String jtyp = type.getCPP(elementType); 
+      { String jtyp = type.getCPP(elementType);
+        if ("string".equals(jtyp))
+        { return "string(" + lqf + ")"; }  
         return "((" + jtyp + ") " + lqf + ")"; 
       }
       return lqf;
@@ -6047,10 +6123,10 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->at"))
     { if (type != null) 
       { String jtyp = type.getCPP(elementType); 
-        return "((" + jtyp + ") " + lqf + "->at(" + rqf + " -1))"; 
+        return "((" + jtyp + ") (" + lqf + ")->at(" + rqf + " -1))"; 
       }
       return lqf;
-    } 
+    } // plus version for strings
 
 
     // No extension ops for C++? 
@@ -6097,6 +6173,8 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "UmlRsdsLib<string>::firstMatch(" + lqf + ", " + rqf + ")"; } 
       else if (operator.equals("->split"))
       { res = "UmlRsdsLib<string>::split(" + lqf + ", " + rqf + ")"; } 
+      else if (operator.equals("->excludingAt"))
+      { res = "UmlRsdsLib<" + lcet + ">::removeAt(" + lqf + "," + rqf + ")"; }
     }
     else if (lmult && !rmult) // convert right to mult
     { String rw = rqf; 
@@ -6118,7 +6196,7 @@ public boolean conflictsWithIn(String op, Expression el,
         res = "UmlRsdsLib<" + lcet + ">::concatenate(" + lqf + "," + rss + ")"; 
       }
       else if (operator.equals("->including")) // Only for sets
-      { if (left.isOrdered())
+      { if (left.isOrdered() || left.hasSequenceType())
         { String rssq = right.makeSequenceCPP(rw);
           res = "UmlRsdsLib<" + lcet + ">::concatenate(" + rssq + "," + lqf + ")"; 
         } 
@@ -6135,19 +6213,19 @@ public boolean conflictsWithIn(String op, Expression el,
       { String rs = right.makeSetCPP(rqf);
         String rsq = right.makeSequenceCPP(rqf); 
         if (operator.equals("="))
-        { if (left.isOrdered())
+        { if (left.isOrdered() || left.hasSequenceType())
           { res = "(*(" + lqf + ") == *(" + rsq + "))"; } 
           else 
           { res = "(*(" + lqf + ") == *(" + rs + "))"; }
         }  
         else if (operator.equals("/=") || operator.equals("!=") || operator.equals("<>"))
-        { if (left.isOrdered())
+        { if (left.isOrdered() || left.hasSequenceType())
           { res = "(*(" + lqf + ") != *(" + rsq + "))"; } 
           else 
           { res = "(*(" + lqf + ") != *(" + rs + "))"; }
         }
         else if (operator.equals(":") || operator.equals("<:"))
-        { if (left.isOrdered()) 
+        { if (left.isOrdered() || left.hasSequenceType()) 
           { lqf = "UmlRsdsLib<" + lcet + ">::asSet(" + lqf + ")"; } 
           res = "UmlRsdsLib<" + lcet + ">::isSubset(" + lqf + ", " + rs + ")"; 
         } 

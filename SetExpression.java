@@ -663,8 +663,8 @@ public class SetExpression extends Expression
     elementType = Type.determineType(elements); 
     type.setElementType(elementType); 
     if (elementType == null) 
-    { System.out.println("Warning: cannot determine element type of " + this);
-      elementType = new Type("OclAny", null); 
+    { System.out.println("! Warning: cannot determine element type of " + this);
+      // elementType = new Type("OclAny", null); 
     } 
 
     umlkind = VALUE; // ???

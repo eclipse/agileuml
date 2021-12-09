@@ -1,5 +1,6 @@
 import java.util.Vector; 
 import java.util.List; 
+import java.io.*; 
 
 /******************************
 * Copyright (c) 2003--2021 Kevin Lano
@@ -543,8 +544,8 @@ public class BSystemTypes extends BComponent
       res = res + ")\n"; 
       res = res + "  { // Implements: " + left + "->select(" + var + " | " + pred + ")\n" + 
                   "    ArrayList _results_" + oldindex + " = new ArrayList();\n" + 
-                  "    for (int _i = 0; _i < _l.Count; _i++)\n" + 
-                  "    { " + tname + " " + var + " = (" + tname + ") _l[_i];\n"; 
+                  "    for (int _iselect = 0; _iselect < _l.Count; _iselect++)\n" + 
+                  "    { " + tname + " " + var + " = (" + tname + ") _l[_iselect];\n"; 
 
       String test = pred.queryFormCSharp(newenv,false); 
       res = res + "      if (" + test + ")\n" + 
@@ -631,12 +632,12 @@ public class BSystemTypes extends BComponent
       res1 = res1 + ")\n"; 
       res1 = res1 + "  { // implements: " + left + "->select( " + var + " | " + pred + " )\n" + 
                   "    " + restype1 + "* _results_" + oldindex + " = new " + restype1 + "();\n" + 
-                  "    for (" + restype1 + "::iterator _i = _l->begin(); _i != _l->end(); ++_i)\n" + 
-                  "    { " + tname + " " + var + " = *_i;\n"; 
+                  "    for (" + restype1 + "::iterator _iselect = _l->begin(); _iselect != _l->end(); ++_iselect)\n" + 
+                  "    { " + tname + " " + var + " = *_iselect;\n"; 
       res2 = res2 + ")\n"; 
       res2 = res2 + "  { " + restype2 + "* _results_" + oldindex + " = new " + restype2 + "();\n" + 
-                  "    for (" + restype2 + "::iterator _i = _l->begin(); _i != _l->end(); ++_i)\n" + 
-                  "    { " + tname + " " + var + " = *_i;\n"; 
+                  "    for (" + restype2 + "::iterator _iselect = _l->begin(); _iselect != _l->end(); ++_iselect)\n" + 
+                  "    { " + tname + " " + var + " = *_iselect;\n"; 
 
       String test = pred.queryFormCPP(newenv,false); 
       res1 = res1 + "      if (" + test + ")\n" + 
@@ -1126,14 +1127,14 @@ public class BSystemTypes extends BComponent
             "  { // Implements: " + left + "->collect( " + var + " | " + exp + " )\n" + 
             "    vector<" + restype + ">* _results_" + oldindex + 
                          " = new vector<" + restype + ">();\n" + 
-            "    for (int _i = 0; _i < _l->size(); _i++)\n" + 
-            "    { " + tname + " " + var + " = (*_l)[_i];\n"; 
+            "    for (int _icollect = 0; _icollect < _l->size(); _icollect++)\n" + 
+            "    { " + tname + " " + var + " = (*_l)[_icollect];\n"; 
 
       res2 = res2 + ")\n"; 
       res2 = res2 + "  { vector<" + restype + ">* _results_" + oldindex + 
                          " = new vector<" + restype + ">();\n" + 
-            "    for (" + argtype2 + "::iterator _i = _l->begin(); _i != _l->end(); ++_i)\n" + 
-            "    { " + tname + " " + var + " = *_i;\n"; 
+            "    for (" + argtype2 + "::iterator _icollect = _l->begin(); _icollect != _l->end(); ++_icollect)\n" + 
+            "    { " + tname + " " + var + " = *_icollect;\n"; 
 
       java.util.Map newenv = (java.util.Map) ((java.util.HashMap) env).clone(); 
       if (collectvar == null && e != null && e.isEntity())
@@ -1265,14 +1266,14 @@ public class BSystemTypes extends BComponent
             "  { // Implements: " + left + "->any( " + var + " | " + exp + " )\n" + 
             "    " + restype + " _result_" + oldindex + 
                          " = NULL;\n" + 
-            "    for (int _i = 0; _i < _l->size(); _i++)\n" + 
-            "    { " + tname + " " + var + " = (*_l)[_i];\n"; 
+            "    for (int _iany = 0; _iany < _l->size(); _iany++)\n" + 
+            "    { " + tname + " " + var + " = (*_l)[_iany];\n"; 
 
       res2 = res2 + ")\n"; 
       res2 = res2 + "  { " + restype + " _result_" + oldindex + 
                          " = NULL;\n" + 
-            "    for (" + argtype2 + "::iterator _i = _l->begin(); _i != _l->end(); ++_i)\n" + 
-            "    { " + tname + " " + var + " = *_i;\n"; 
+            "    for (" + argtype2 + "::iterator _iany = _l->begin(); _iany != _l->end(); ++_iany)\n" + 
+            "    { " + tname + " " + var + " = *_iany;\n"; 
 
 
       res1 = res1 + "     if (" + elem + ") { return " + var +  "; }\n"; 
@@ -1853,12 +1854,12 @@ public class BSystemTypes extends BComponent
       res1 = res1 + ")\n"; 
       res1 = res1 + "  { // implements: " + left + "->reject( " +  var + " | " + pred + " )\n" +
                   "    " + restype1 + "* _results_" + oldindex + " = new " + restype1 + "();\n" + 
-                  "    for (" + restype1 + "::iterator _i = _l->begin(); _i != _l->end(); ++_i)\n" + 
-                  "    { " + tname + " " + var + " = *_i;\n"; 
+                  "    for (" + restype1 + "::iterator _ireject = _l->begin(); _ireject != _l->end(); ++_ireject)\n" + 
+                  "    { " + tname + " " + var + " = *_ireject;\n"; 
       res2 = res2 + ")\n"; 
       res2 = res2 + "  { " + restype2 + "* _results_" + oldindex + " = new " + restype2 + "();\n" + 
-                  "    for (" + restype2 + "::iterator _i = _l->begin(); _i != _l->end(); ++_i)\n" + 
-                  "    { " + tname + " " + var + " = *_i;\n"; 
+                  "    for (" + restype2 + "::iterator _ireject = _l->begin(); _ireject != _l->end(); ++_ireject)\n" + 
+                  "    { " + tname + " " + var + " = *_ireject;\n"; 
 
       String test = pred.queryFormCPP(newenv,false); 
       res1 = res1 + "      if (" + test + ") { }\n" + 
@@ -1892,7 +1893,7 @@ public class BSystemTypes extends BComponent
   { String signature = Attribute.parList(pars); 
 
     if (left == null) 
-    { System.err.println("!!!! Null quantifier range: " + lqf + "->any(" + 
+    { System.err.println("!!!! ERROR: Null quantifier range: " + lqf + "->any(" + 
                           exvar + "|" + pred + ")");
       return "/* error in ->any */"; 
     }  
@@ -3032,16 +3033,16 @@ public class BSystemTypes extends BComponent
 
 
       res1 = res1 + "  { // Implements: " + left + "->exists(" + var + "|" + pred + ")\n" + 
-            "    for (" + argtype1 + "::iterator _i = _l->begin(); _i != _l->end(); ++_i)\n" + 
-            "    { " + cet + " " + var + " = *_i;\n";
+            "    for (" + argtype1 + "::iterator _iexists = _l->begin(); _iexists != _l->end(); ++_iexists)\n" + 
+            "    { " + cet + " " + var + " = *_iexists;\n";
       String test = pred.queryFormCPP(newenv,false); 
       res1 = res1 + "      if (" + test + ") { return true; }\n"; 
       res1 = res1 + "    }\n"; 
       res1 = res1 + "    return false;\n  }"; 
 
       res2 = res2 + "  { // Implements: " + left + "->exists(" + var + "|" + pred + ")\n" + 
-            "    for (" + argtype2 + "::iterator _i = _l->begin(); _i != _l->end(); ++_i)\n" + 
-            "    { " + cet + " " + var + " = *_i;\n";
+            "    for (" + argtype2 + "::iterator _iexists = _l->begin(); _iexists != _l->end(); ++_iexists)\n" + 
+            "    { " + cet + " " + var + " = *_iexists;\n";
       res2 = res2 + "      if (" + test + ") { return true; }\n"; 
       res2 = res2 + "    }\n"; 
       res2 = res2 + "    return false;\n  }"; 
@@ -3540,8 +3541,8 @@ public class BSystemTypes extends BComponent
 
       res = res + "  { \n" + 
             "    bool _alreadyfound = false;\n" + 
-            "    for (int _i = 0; _i < _l.Count; _i++)\n" + 
-            "    { " + ename + " " + var + " = (" + ename + ") _l[_i];\n"; 
+            "    for (int _iexists1 = 0; _iexists1 < _l.Count; _iexists1++)\n" + 
+            "    { " + ename + " " + var + " = (" + ename + ") _l[_iexists1];\n"; 
       String test = pred.queryFormCSharp(newenv,false); 
       res = res + "      if (" + test + ")\n" + 
                   "      { if (_alreadyfound) { return false; }\n" + 
@@ -3687,8 +3688,8 @@ public class BSystemTypes extends BComponent
 
 
       res = res + "  { bool _alreadyfound = false;\n" + 
-                  "    for (" + argtype + "::iterator _i = _l->begin(); _i != _l->end(); ++_i)\n" + 
-                  "    { " + cet + " " + var + " = *_i;\n";
+                  "    for (" + argtype + "::iterator _iexists1 = _l->begin(); _iexists1 != _l->end(); ++_iexists1)\n" + 
+                  "    { " + cet + " " + var + " = *_iexists1;\n";
       String test = pred.queryFormCPP(newenv,false); 
       res = res + "      if (" + test + ")\n" + 
                   "      { if (_alreadyfound) { return false; }\n" + 
@@ -4155,8 +4156,8 @@ public class BSystemTypes extends BComponent
       } 
 
       res = res + "  { \n" + 
-            "    for (int _i = 0; _i < _l.Count; _i++)\n" + 
-            "    { " + ename + " " + var + " = (" + ename + ") _l[_i];\n"; 
+            "    for (int _iforall = 0; _iforall < _l.Count; _iforall++)\n" + 
+            "    { " + ename + " " + var + " = (" + ename + ") _l[_iforall];\n"; 
       String test = pred.queryFormCSharp(newenv,false); 
       res = res + "      if (" + test + ") { }\n" + 
                   "      else { return false; } \n"; 
@@ -4285,8 +4286,8 @@ public class BSystemTypes extends BComponent
       } 
 
       res = res + "  { // implements " + left + "->forAll( " + var + " | " + pred + " )\n" + 
-                  "    for (" + argtype + "::iterator _i = _l->begin(); _i != _l->end(); ++_i)\n" + 
-                  "    { " + cet + " " + var + " = *_i;\n";
+                  "    for (" + argtype + "::iterator _iforall = _l->begin(); _iforall != _l->end(); ++_iforall)\n" + 
+                  "    { " + cet + " " + var + " = *_iforall;\n";
       
       String test = pred.queryFormCPP(newenv,false); 
       res = res + "      if (" + test + ") { }\n" + 
@@ -4558,7 +4559,30 @@ public class BSystemTypes extends BComponent
       "      (*res)[key] = iter->second;  \n" +
       "    }     \n" +
       "    return res;\n" + 
-      "  } \n"; 
+      "  } \n\n";
+   
+   res = res + 
+     "  static string collectionToString(vector<_T>* c)\n" +
+     "  { string res = \"Sequence{\"; \n" +
+     "    for (vector<_T>::iterator _pos = c->begin(); _pos != c->end(); ++_pos)\n" +
+     "    { res = res.append(string(*_pos));\n" + 
+     "      if (_pos + 1 < c->end())\n" +
+     "      { res = res.append(\", \"); }\n" +
+     "    }\n" +
+     "    return res.append(\"}\");\n" + 
+     "  }\n\n"; 
+
+   res = res + 
+     "  static string collectionToString(set<_T>* c)\n" +
+     "  { string res = \"Set{\"; \n" +
+     "    for (set<_T>::iterator _pos = c->begin(); _pos != c->end(); ++_pos)\n" +
+     "    { res = res.append(string(*_pos));\n" + 
+     "      if (_pos + 1 < c->end())\n" +
+     "      { res = res.append(\", \"); }\n" +
+     "    }\n" +
+     "    return res.append(\"}\");\n" + 
+     "  }\n\n"; 
+ 
     return res; 
   }
 
@@ -6083,17 +6107,26 @@ public class BSystemTypes extends BComponent
       "  { std::set<_T>* res = new std::set<_T>(); \n" +
       "    res->insert(a->begin(),a->end()); \n" +
       "    res->insert(b->begin(),b->end()); \n" +
-      "    return res; }\n";
+      "    return res;\n" + 
+      "  }\n\n";
     res = res + "  static std::set<_T>* unionSet(vector<_T>* a, std::set<_T>* b)\n" +
       "  { std::set<_T>* res = new std::set<_T>(); \n" +
       "    res->insert(a->begin(),a->end()); \n" +
       "    res->insert(b->begin(),b->end()); \n" +
-      "    return res; }\n";
+      "    return res;\n" + 
+      "  }\n\n";
     res = res + "  static std::set<_T>* unionSet(std::set<_T>* a, vector<_T>* b)\n" +
       "  { std::set<_T>* res = new std::set<_T>(); \n" +
       "    res->insert(a->begin(),a->end()); \n" +
       "    res->insert(b->begin(),b->end()); \n" +
-      "    return res; }\n";
+      "    return res;\n" + 
+      "  }\n\n";
+    res = res + "  static std::set<_T>* unionSet(std::vector<_T>* a, vector<_T>* b)\n" +
+      "  { std::set<_T>* res = new std::set<_T>(); \n" +
+      "    res->insert(a->begin(),a->end()); \n" +
+      "    res->insert(b->begin(),b->end()); \n" +
+      "    return res;\n" + 
+      "  }\n\n";
     return res;
   }
 
@@ -6102,7 +6135,8 @@ public class BSystemTypes extends BComponent
       "  { List res = new Vector(); \n" +
       "    res.addAll(a); \n" + 
       "    res.addAll(b); \n" + 
-      "    return res; }\n";
+      "    return res;\n" + 
+      "  }\n";
     return res;
   }
 
@@ -6111,7 +6145,8 @@ public class BSystemTypes extends BComponent
       "  { ArrayList res = new ArrayList(); \n" +
       "    res.addAll(a); \n" + 
       "    res.addAll(b); \n" + 
-     "    return res; }\n";
+      "    return res;\n" + 
+      "  }\n";
     return res;
   }
 
@@ -6120,7 +6155,8 @@ public class BSystemTypes extends BComponent
       "  { ArrayList<T> res = new ArrayList<T>(); \n" +
       "    res.addAll(a); \n" + 
       "    res.addAll(b); \n" + 
-     "    return res; }\n";
+      "    return res;\n" + 
+      "  }\n";
     return res;
   }
 
@@ -6129,7 +6165,8 @@ public class BSystemTypes extends BComponent
       "  { ArrayList res = new ArrayList(); \n" +
       "    res.AddRange(a); \n" + 
       "    res.AddRange(b); \n" + 
-      "    return res; }\n";
+      "    return res;\n" + 
+      "  }\n";
     res = res + 
       "  public static ArrayList prepend(ArrayList a, object x)\n" +
       "  {\n" +
@@ -6156,12 +6193,14 @@ public class BSystemTypes extends BComponent
       "  { vector<_T>* res = new vector<_T>(); \n" +
       "    res->insert(res->end(), a->begin(),a->end()); \n" +
       "    res->insert(res->end(), b->begin(),b->end()); \n" +
-      "    return res; }\n\n";
+      "    return res;\n" + 
+      "  }\n\n";
     res = res + "  static vector<_T>* concatenate(vector<_T>* a, std::set<_T>* b)\n" +
       "  { vector<_T>* res = new vector<_T>(); \n" +
       "    res->insert(res->end(), a->begin(),a->end()); \n" +
       "    res->insert(res->end(), b->begin(),b->end()); \n" +
-      "    return res; }\n";
+      "    return res;\n" + 
+      "  }\n";
     return res;
   }
 
@@ -6170,12 +6209,16 @@ public class BSystemTypes extends BComponent
       "  { List res = new Vector(); \n" +
       "    res.addAll(a);\n" +
       "    res.removeAll(b);\n" +
-      "    return res; }\n\n" + 
+      "    return res;\n" + 
+      "  }\n\n" + 
       "  public static String subtract(String a, String b)\n" +
       "  { String res = \"\"; \n" +
       "    for (int i = 0; i < a.length(); i++)\n" +
-      "    { if (b.indexOf(a.charAt(i)) < 0) { res = res + a.charAt(i); } }\n" +
-      "    return res; }\n\n";
+      "    { if (b.indexOf(a.charAt(i)) < 0)\n" + 
+      "      { res = res + a.charAt(i); }\n" + 
+      "    }\n" +
+      "    return res;\n" + 
+      "  }\n\n";
     return res;
   }
 
@@ -6184,12 +6227,14 @@ public class BSystemTypes extends BComponent
       "  { HashSet res = new HashSet(); \n" +
       "    res.addAll(a);\n" +
       "    res.removeAll(b);\n" +
-      "    return res; }\n\n" + 
+      "    return res;\n" + 
+      "  }\n\n" + 
       "  public static ArrayList subtract(ArrayList a, Collection b)\n" +
       "  { ArrayList res = new ArrayList(); \n" +
       "    res.addAll(a);\n" +
       "    res.removeAll(b);\n" +
-      "    return res; }\n\n" + 
+      "    return res;\n" + 
+      "  }\n\n" + 
       "  public static String subtract(String a, String b)\n" +
       "  { String res = \"\"; \n" +
       "    for (int i = 0; i < a.length(); i++)\n" +
@@ -6249,7 +6294,7 @@ public class BSystemTypes extends BComponent
   { String res = "  static vector<_T>* subtract(vector<_T>* a, vector<_T>* b)\n" +
       "  { vector<_T>* res = new vector<_T>(); \n" +
       "    for (int i = 0; i < a->size(); i++)\n" +
-      "    { if ((*a)[i] == NULL || UmlRsdsLib<_T>::isIn((*a)[i],b)) { }\n" +
+      "    { if (UmlRsdsLib<_T>::isIn((*a)[i],b)) { }\n" +
       "      else { res->push_back((*a)[i]); }\n" +
       "    }\n" + 
       "    return res;\n" + 
@@ -6257,24 +6302,27 @@ public class BSystemTypes extends BComponent
       "  static vector<_T>* subtract(vector<_T>* a, std::set<_T>* b)\n" +
       "  { vector<_T>* res = new vector<_T>(); \n" +
       "    for (int i = 0; i < a->size(); i++)\n" +
-      "    { if ((*a)[i] == NULL || UmlRsdsLib<_T>::isIn((*a)[i],b)) { }\n" +
-      "      else { res->push_back((*a)[i]); }\n" +
+      "    { if (UmlRsdsLib<_T>::isIn((*a)[i],b)) { }\n" +
+      "      else\n" + 
+      "      { res->push_back((*a)[i]); }\n" +
       "    }\n" + 
       "    return res;\n" + 
       "  }\n\n" +
       "  static std::set<_T>* subtract(std::set<_T>* a, std::set<_T>* b)\n" +
       "  { std::set<_T>* res = new std::set<_T>(); \n" +
       "    for (std::set<_T>::iterator _pos = a->begin(); _pos != a->end(); ++_pos)\n" +
-      "    { if (*_pos == NULL || UmlRsdsLib<_T>::isIn(*_pos,b)) { }\n" +
-      "      else { res->insert(*_pos); }\n" +
+      "    { if (UmlRsdsLib<_T>::isIn(*_pos,b)) { }\n" +
+      "      else\n" + 
+      "      { res->insert(*_pos); }\n" +
       "    }\n" +
       "    return res;\n" + 
       "  }\n\n" +  
       "  static std::set<_T>* subtract(std::set<_T>* a, vector<_T>* b)\n" +
       "  { std::set<_T>* res = new std::set<_T>(); \n" +
       "    for (std::set<_T>::iterator _pos = a->begin(); _pos != a->end(); ++_pos)\n" +
-      "    { if (*_pos == NULL || UmlRsdsLib<_T>::isIn(*_pos,b)) { }\n" +
-      "      else { res->insert(*_pos); }\n" +
+      "    { if (UmlRsdsLib<_T>::isIn(*_pos,b)) { }\n" +
+      "      else\n" + 
+      "      { res->insert(*_pos); }\n" +
       "    }\n" + 
       "    return res;\n" + 
       "  }\n\n" +  
@@ -6341,23 +6389,35 @@ public class BSystemTypes extends BComponent
   { String res = "  static std::set<_T>* intersection(std::set<_T>* a, std::set<_T>* b)\n" +
       "  { std::set<_T>* res = new std::set<_T>(); \n" +
       "    for (std::set<_T>::iterator _pos = a->begin(); _pos != a->end(); ++_pos)\n" +
-      "    { if (*_pos != NULL && UmlRsdsLib<_T>::isIn(*_pos, b)) { res->insert(*_pos); } }\n" +
-      "    return res; }\n\n" +
+      "    { if (UmlRsdsLib<_T>::isIn(*_pos, b))\n" + 
+      "      { res->insert(*_pos); }\n" + 
+      "    }\n" +
+      "    return res;\n" + 
+      "  }\n\n" +
       "  static std::set<_T>* intersection(std::set<_T>* a, vector<_T>* b)\n" +
       "  { std::set<_T>* res = new std::set<_T>(); \n" +
       "    for (std::set<_T>::iterator _pos = a->begin(); _pos != a->end(); ++_pos)\n" +
-      "    { if (*_pos != NULL && UmlRsdsLib<_T>::isIn(*_pos, b)) { res->insert(*_pos); } }\n" +
-      "    return res; }\n\n" +
+      "    { if (UmlRsdsLib<_T>::isIn(*_pos, b))\n" + 
+      "      { res->insert(*_pos); }\n" + 
+      "    }\n" +
+      "    return res;\n" + 
+      "  }\n\n" +
       "  static vector<_T>* intersection(vector<_T>* a, std::set<_T>* b)\n" +
       "  { vector<_T>* res = new vector<_T>(); \n" +
       "    for (int i = 0; i < a->size(); i++)\n" +
-      "    { if ((*a)[i] != NULL && UmlRsdsLib<_T>::isIn((*a)[i], b)) { res->push_back((*a)[i]); } } \n" +
-      "    return res; }\n\n" +  
+      "    { if (UmlRsdsLib<_T>::isIn((*a)[i], b))\n" + 
+      "      { res->push_back((*a)[i]); }\n" + 
+      "    } \n" +
+      "    return res;\n" + 
+      "  }\n\n" +  
       "  static vector<_T>* intersection(vector<_T>* a, vector<_T>* b)\n" +
       "  { vector<_T>* res = new vector<_T>(); \n" +
       "    for (int i = 0; i < a->size(); i++)\n" +
-      "    { if ((*a)[i] != NULL && UmlRsdsLib<_T>::isIn((*a)[i], b)) { res->push_back((*a)[i]); } } \n" +
-      "    return res; }\n\n";
+      "    { if (UmlRsdsLib<_T>::isIn((*a)[i], b))\n" + 
+      "      { res->push_back((*a)[i]); }\n" + 
+      "    } \n" +
+      "    return res;\n" + 
+      "  }\n\n";
     return res;
   } // use the standard library op for sets. 
 
@@ -8234,6 +8294,14 @@ public class BSystemTypes extends BComponent
       "    return res;\n" +
       "  }\n\n"; 
 
+    res = res +
+      "  public static String removeAt(String ss, int ind)\n" + 
+      "  { StringBuffer sb = new StringBuffer(ss); \n" +
+      "    if (ind <= ss.length() && ind >= 1)\n" +
+      "    { sb.deleteCharAt(ind - 1); } \n" +
+      "    return sb.toString();\n" +
+      "  }\n\n"; 
+
     res = res + 
       "  public static List removeFirst(List l, Object x)\n" + 
       "  { List res = new Vector();\n" +
@@ -8293,6 +8361,14 @@ public class BSystemTypes extends BComponent
       "    if (ind <= res.size() && ind >= 1)\n" +
       "    { res.remove(ind - 1); } \n" +
       "    return res;\n" +
+      "  }\n\n"; 
+
+    res = res +
+      "  public static String removeAt(String ss, int ind)\n" + 
+      "  { StringBuffer sb = new StringBuffer(ss); \n" +
+      "    if (ind <= ss.length() && ind >= 1)\n" +
+      "    { sb.deleteCharAt(ind - 1); } \n" +
+      "    return sb.toString();\n" +
       "  }\n\n"; 
 
     res = res + 
@@ -8355,6 +8431,14 @@ public class BSystemTypes extends BComponent
       "    if (ind <= res.size() && ind >= 1)\n" +
       "    { res.remove(ind - 1); } \n" +
       "    return res;\n" +
+      "  }\n\n"; 
+
+    res = res +
+      "  public static String removeAt(String ss, int ind)\n" + 
+      "  { StringBuffer sb = new StringBuffer(ss); \n" +
+      "    if (ind <= ss.length() && ind >= 1)\n" +
+      "    { sb.deleteCharAt(ind - 1); } \n" +
+      "    return sb.toString();\n" +
       "  }\n\n"; 
 
     res = res + 
@@ -8485,6 +8569,16 @@ public class BSystemTypes extends BComponent
       "    res->insert(res->end(), l->begin(), l->end());\n" +
       "    if (ind >= 1 && ind <= res->size())\n" +
       "    { (*res)[(ind - 1)] = ob; }\n" +
+      "    return res; \n" +
+      "  }\n\n";
+
+  res = res + 
+      "  static string setAt(string st, int ind, string ch)\n" +
+      "  { string res = \"\";\n" +
+      "    if (ind >= 1 && ind <= st.length())\n" +
+      "    { res = st.substr(0,ind-1).append(ch).append(st.substr(ind, st.length()-ind)); }\n" +
+      "    else\n" + 
+      "    { res = st; }\n" +
       "    return res; \n" +
       "  }\n\n"; 
 
@@ -9262,7 +9356,77 @@ public class BSystemTypes extends BComponent
   { String res = " static bool isReal(string str)\n" + 
       "  { try { std::stod(str); return true; }\n" + 
       "    catch (exception _e) { return false; }\n" + 
-      "  }\n"; 
+      "  }\n\n"; 
+
+    res = res + "  static bool toBoolean(string str)\n" +
+                "  { if (\"true\" == str || \"1\" == str)\n" +
+                "    { return true; }\n" +
+                "    return false; \n" +
+                "  }\n\n"; 
+
+    res = res + 
+       "  static int toInteger(string str)\n" +
+       "  { if (str.length() == 0)\n" +
+       "    { return 0; }\n" +
+       "\n" +
+       "    if (str[0] == '0' && str.length() > 1 && str[1] == 'x')\n" +
+       "    { try {\n" +
+       "        int x = std::stoi(str, 0, 16);\n" + 
+       "        return x; \n" +
+       "      }\n" +
+       "      catch (exception e) { return 0; }\n" +
+       "    }\n" +
+       "    else if (str[0] == '0' && str.length() > 1)\n" +
+       "    { try { \n" +
+       "        int y = std::stoi(str, 0, 8);\n" + 
+       "        return y;\n" +
+       "      } catch (exception f)\n" +
+       "        { return 0; }\n" +
+       "    }  \n" +
+       "    try { int z = std::stoi(str, 0, 10);\n" + 
+       "          return z;\n" +
+       "    } \n" +
+       "    catch (exception g) { return 0; } \n" +
+       "    return 0;\n" +
+       "  }\n\n";
+
+     res = res + 
+       "  static long toLong(string str)\n" +
+       "  { if (str.length() == 0)\n" +
+       "    { return 0; }\n" +
+       "\n" +
+       "    if (str[0] == '0' && str.length() > 1 && str[1] == 'x')\n" +
+       "    { try {\n" +
+       "        long x = std::stol(str, 0, 16);\n" + 
+       "        return x; \n" +
+       "      }\n" +
+       "      catch (exception e) { return 0; }\n" +
+       "    }\n" +
+       "    else if (str[0] == '0' && str.length() > 1)\n" +
+       "    { try { \n" +
+       "        long y = std::stol(str, 0, 8);\n" + 
+       "        return y;\n" +
+       "      } catch (exception f)\n" +
+       "        { return 0; }\n" +
+       "    }  \n" +
+       "    try { long z = std::stol(str, 0, 10);\n" + 
+       "          return z;\n" +
+       "    } \n" +
+       "    catch (exception g) { return 0; } \n" +
+       "    return 0;\n" +
+       "  }\n\n";
+    res = res + 
+       "  static double toReal(string str)\n" +
+       "  { if (str.length() == 0)\n" +
+       "    { return 0.0; }\n" +
+       "\n" +
+       "    try {\n" +
+       "      double x = std::stod(str);\n" + 
+       "      return x; \n" +
+       "    }\n" +
+       "    catch (exception e) { return 0.0; }\n" +
+       "  }\n\n"; 
+
     return res; 
   } 
 
@@ -9601,7 +9765,8 @@ public class BSystemTypes extends BComponent
     return res; 
   } 
 
-  public static String cppExceptionClass(String exceptionName, String exceptionText)
+  public static String cppExceptionClass(
+    String exceptionName, String oclname, String exceptionText)
   { String res = "  class " + exceptionName + " : exception\n" +
       "  { public: \n" +
       "      " + exceptionName + "() : message(" + exceptionText + ") { }\n" +
@@ -9614,6 +9779,19 @@ public class BSystemTypes extends BComponent
       "\n" +
       "      const char* what() const { return message; }\n" +
       "\n" +
+      "      string getMessage() { return string(message); }\n" +
+      "\n" + 
+      "      void printStackTrace()\n" +  
+      "      { cout << what() << endl; }\n" + 
+      "\n" +  
+      "      exception* getCause()\n" +  
+      "      { return this; }\n" + 
+      "\n" +  
+      "      static " + exceptionName + "* new" + oclname + "(string m)\n" + 
+      "      { " + exceptionName + "* res = new " + exceptionName + "();\n" +  
+      "        res->message = m.c_str();\n" +  
+      "        return res;\n" +  
+      "      }\n" + 
       "   private: \n" +
       "     const char* message;\n" +
       "  };\n\n"; 
@@ -9624,32 +9802,82 @@ public class BSystemTypes extends BComponent
   public static String exceptionsCPP()
   { String exceptionName = "io_exception"; 
     String exceptionText = "\"IO exception\""; 
+    String oclName = "IOException"; 
 
-    String res = "  class " + exceptionName + " : exception\n" +
-      "  { public: \n" +
-      "      " + exceptionName + "() : message(" + exceptionText + ") { }\n" +
-      "\n" +
-      "      " + exceptionName + "* copy" + exceptionName + "(" + exceptionName + "* self)\n" +
-      "      { " + exceptionName + "* ex = new " + exceptionName + "();\n" +
-      "        ex->message = self->message;\n" + 
-      "        return ex; \n" +
-      "      }\n" +
-      "\n" +
-      "      const char* what() const { return message; }\n" +
-      "\n" +
-      "   private: \n" +
-      "     const char* message;\n" +
-      "  };\n\n"; 
+    String res = cppExceptionClass(exceptionName, oclName, exceptionText); 
 
     exceptionName = "null_access_exception"; 
-    exceptionText = "\"Null access exception\""; 
-    res = res + cppExceptionClass(exceptionName, exceptionText); 
+    exceptionText = "\"Null access exception\"";
+    oclName = "NullAccessException";  
+    res = res + cppExceptionClass(exceptionName, oclName, exceptionText); 
 
     exceptionName = "assertion_exception"; 
-    exceptionText = "\"Assertion exception\""; 
-    res = res + cppExceptionClass(exceptionName, exceptionText); 
+    exceptionText = "\"Assertion exception\"";
+    oclName = "AssertionException";  
+    res = res + cppExceptionClass(exceptionName, oclName, exceptionText); 
+
+    exceptionName = "accessing_exception"; 
+    exceptionText = "\"Accessing exception\"";
+    oclName = "AccessingException";  
+    res = res + cppExceptionClass(exceptionName, oclName, exceptionText); 
+
     return res; 
   }
+
+  public static void generateLibraryCPP(String lib, 
+                                 PrintWriter out)
+  { // retrieve library code from libraries/lib.cpp & print 
+    // to out. 
+
+    try
+    { File libCPP = new File("libraries/" + lib + ".cpp"); 
+      BufferedReader br = null;
+      String sline = null;
+      boolean eof = false; 
+      br = new BufferedReader(new FileReader(libCPP));
+      out.println(); 
+ 
+      while (!eof)
+      { sline = br.readLine();
+        if (sline == null) 
+        { eof = true; } 
+        else 
+        { out.println(sline); }
+      } 
+      out.println(); 
+      br.close();  
+    } 
+    catch (IOException _ex)
+    { System.err.println("!! ERROR: libraries/" + lib + ".cpp not found"); }
+  } 
+
+  public static void generateLibraryHPP(String lib, 
+                                 PrintWriter out)
+  { // retrieve library code from libraries/lib.hpp & print 
+    // to out. 
+
+    try
+    { File libHPP = new File("libraries/" + lib + ".hpp"); 
+      BufferedReader br = null;
+      String sline = null;
+      boolean eof = false; 
+      br = new BufferedReader(new FileReader(libHPP));
+      out.println(); 
+ 
+      while (!eof)
+      { sline = br.readLine();
+        if (sline == null) 
+        { eof = true; } 
+        else 
+        { out.println(sline); }
+      } 
+      out.println(); 
+      br.close();  
+    } 
+    catch (IOException _ex)
+    { System.err.println("!! ERROR: libraries/" + lib + ".hpp not found"); }
+  } 
+
 
   public static void main(String[] args)
   { Vector test = new Vector(); 

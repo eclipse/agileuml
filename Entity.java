@@ -4004,7 +4004,9 @@ public class Entity extends ModelElement implements Comparable
       Vector opuses = op.operationsUsedIn(); 
 
       if (opuses.size() > 5) 
-      { System.err.println("*** Bad smell: > 5 operations used in " + getName() + "::" + opname); } 
+      { System.err.println("*** Bad smell (EFO): > 5 operations used in " + getName() + "::" + opname); 
+        System.err.println(">>> Suggest refactoring by functional decomposition"); 
+      } 
 
       String entop = getName() + "::" + opname; 
       for (int j = 0; j < opuses.size(); j++) 
@@ -4552,6 +4554,16 @@ public class Entity extends ModelElement implements Comparable
     }  
 
     return getOperation(nme); 
+  } 
+
+  public BehaviouralFeature getOperationBySignature(String sig)
+  { BehaviouralFeature res = null; 
+    for (int i = 0; i < operations.size(); i++) 
+    { res = (BehaviouralFeature) operations.get(i); 
+      if (sig.equals(res.getSignature()))
+      { return res; } 
+    }  
+    return null; 
   } 
 
   public BehaviouralFeature getStaticOperation(String nme, Vector parameters)
@@ -6133,6 +6145,15 @@ public class Entity extends ModelElement implements Comparable
       }  
     }
 
+    if (isActive())
+    { if (previous) 
+      { out.print(", public Runnable"); } 
+      else 
+      { out.print(" : public Runnable"); 
+        previous = true; 
+      }  
+    } // expected to have a run() : void operation
+
     /* if (isActive())
     { out.print(", Runnable"); 
       BehaviouralFeature bf = getOperation("run"); 
@@ -6638,6 +6659,8 @@ public class Entity extends ModelElement implements Comparable
   private void buildConstructorCodeCPP(PrintWriter out)
   { for (int i = 0; i < attributes.size(); i++)
     { Attribute att = (Attribute) attributes.get(i);
+      if (att.isStatic()) 
+      { continue; } 
       String ini = att.initialiserCPP();
       if (ini != null)
       { out.println("    " + ini); }
@@ -14470,8 +14493,10 @@ public void iosDbiOperations(PrintWriter out)
       { valc = "(val == \"true\")"; }
       else if ("long".equals(tname))
       { valc = "std::stol(val)"; }
-      else if ("int".equals(tname) || t.isEnumeration())
+      else if ("int".equals(tname))
       { valc = "std::stoi(val)"; }
+      else if (t.isEnumeration())
+      { valc = t.getName() + "(std::stoi(val))"; }
       else if ("OclAny".equals(tname) || 
                "Function".equals(name))
       { valc = "NULL"; }

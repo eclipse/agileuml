@@ -708,15 +708,23 @@ public class PreProcessModels
         String keyword = comp.getLexical(0); 
         ModelElement tt = null; 
 
+        if ("static".equals(keyword))
+        { keyword = comp.getLexical(1); }  
+        
         if ("query".equals(keyword) || 
             "operation".equals(keyword)) 
         { tt = comp.parseOperation(entities,types); } 
-        else if ("attribute".equals(keyword) || "static".equals(keyword))
-        { tt = comp.parseAttribute(entities,types); } 
+        else if ("attribute".equals(keyword))
+        { tt = comp.parseAttribute(entities,types); }
         else if ("class".equals(keyword))
         { tt = (ModelElement) 
                   comp.parseKM3Class(entities,types); 
         } 
+        else if ("enumeration".equals(keyword))
+        { tt = (ModelElement) 
+                  comp.parseKM3Enumeration(entities,types); 
+        } 
+        
 
         if (tt != null) 
         { operationExamples.add(tt); 
@@ -729,6 +737,25 @@ public class PreProcessModels
           } 
           else if (tt instanceof Entity && Entity.isNonEmptyClass(tt))
           { modelString = exampleName + " : OclNonEmptyClass\n" + 
+              exampleName + ".ast = " + tt.toAST() + "\n"; 
+             
+            oclOperationModel = oclOperationModel + modelString + "\n";
+          } 
+          else if (tt instanceof Type) 
+          { modelString = exampleName + " : OclEnumeration\n" + 
+              exampleName + ".ast = " + 
+                 ((Type) tt).toDeclarationAST() + "\n"; 
+             
+            oclOperationModel = oclOperationModel + modelString + "\n";
+          } 
+          else if (BehaviouralFeature.isStatic0(tt))
+          { modelString = exampleName + " : OclStaticOp0\n" + 
+              exampleName + ".ast = " + tt.toAST() + "\n"; 
+             
+            oclOperationModel = oclOperationModel + modelString + "\n";
+          } 
+          else if (BehaviouralFeature.isStaticN(tt))
+          { modelString = exampleName + " : OclStaticOpN\n" + 
               exampleName + ".ast = " + tt.toAST() + "\n"; 
              
             oclOperationModel = oclOperationModel + modelString + "\n";
@@ -811,7 +838,11 @@ public class PreProcessModels
         { p = proc.exec("parseClassBodyDeclaration.bat"); 
           dec = "ProgramAttribute"; 
         } 
-        else 
+        else if (operationExamples.get(i) instanceof Type) 
+        { p = proc.exec("parseEnumDeclaration.bat"); 
+          dec = "ProgramEnumeration"; 
+        } 
+        else
         { p = proc.exec("parseClassDeclaration.bat"); 
           dec = "ProgramClass"; 
         } 

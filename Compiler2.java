@@ -3068,8 +3068,17 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
   { int n = lexicals.size(); 
     if (n == 0) 
     { return null; } 
-    String modality = "" + lexicals.get(0); 
-    BehaviouralFeature bf = operationDefinition(1,n-1,entities,types); 
+    BehaviouralFeature bf;
+
+    String modality = "" + lexicals.get(0);
+    if ("static".equals(modality)) 
+    { bf = operationDefinition(2,n-1,entities,types); 
+      if (bf != null) 
+      { bf.setStatic(true); }
+    } 
+    else 
+    { bf = operationDefinition(1,n-1,entities,types); }
+ 
     if (bf == null) 
     { return null; } 
     if ("query".equals(modality))
@@ -3084,7 +3093,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
 
 
 public BehaviouralFeature operationDefinition(int st, int en, Vector entities, Vector types)
-{ // query|operation name<typepars>(pars) : returnType 
+{ // name<typepars>(pars) : returnType 
   // pre: expr1
   // post: expr2
   // activity: stat; 
@@ -4663,13 +4672,19 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       } 
 
       if ("Sequence".startsWith(st)) 
-      { mess[0] = "Sequence type, eg., Sequence(String)\nOperators include:  sq->size()  sq->at(index)  sq1->union(sq2)\n" + 
+      { mess[0] = "Sequence type, eg., Sequence(String), Sequence(boolean),\n" + 
+          "Sequence(double) or Sequence(C) for class C.\n" + 
+          "But Sequence(OclAny) is bad practice & non-portable.\n" + 
+          "Operators include:  sq->size()  sq->at(index)  sq1->union(sq2)\n" + 
            "sq->select(x|P)  sq->collect(x|P)  sq->forAll(x|P)\n"; 
         return "Sequence(Type)"; 
       }
  
       if ("Set".startsWith(st)) 
-      { mess[0] = "Set type, eg., Set(String)\nOperators include:  st->size()  st->includes(elem)  st1->union(st2)\n" + 
+      { mess[0] = "Set type, eg., Set(String), Set(boolean), \n" + 
+          "Set(double) or Set(C) for class C.\n" + 
+          "But Set(OclAny) is bad practice & non-portable.\n" + 
+          "Operators include:  st->size()  st->includes(elem)  st1->union(st2)\n" + 
            "st->select(x|P)  st->collect(x|P)  st->forAll(x|P)\n"; 
         return "Set(Type)"; 
       }
@@ -5692,6 +5707,13 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
   } 
 
   public Object parseKM3Class(Vector entities, Vector types)
+  { Vector gens = new Vector(); 
+    Vector pasts = new Vector(); 
+    Vector errors = new Vector(); 
+    return parseKM3classifier(entities,types,gens,pasts,errors); 
+  } 
+
+  public Object parseKM3Enumeration(Vector entities, Vector types)
   { Vector gens = new Vector(); 
     Vector pasts = new Vector(); 
     Vector errors = new Vector(); 

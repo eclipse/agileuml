@@ -1556,7 +1556,7 @@ public class UseCase extends ModelElement
       res = res + ";\n\n"; 
     } 
 
-    System.out.println("*** Number of attributes = " + attsSize); 
+    System.out.println("*** Number of use case attributes = " + attsSize); 
 
     res = res + "Operations: \n"; 
 
@@ -1567,7 +1567,7 @@ public class UseCase extends ModelElement
       res = res + "\n\n"; 
     } 
 
-    System.out.println("*** Number of operations = " + opsSize); 
+    System.out.println("*** Number of use case operations = " + opsSize); 
 
 
     for (int i = 0; i < preconditions.size(); i++) 
@@ -1584,6 +1584,7 @@ public class UseCase extends ModelElement
       int consize = con.syntacticComplexity(); 
       if (consize > 100) 
       { System.err.println("*** Warning: Constraint " + i + " too large: " + consize); 
+        System.err.println(">>> Suggest refactoring by functional decomposition"); 
         highcount++; 
       } 
       else if (consize > 50) 
@@ -1618,13 +1619,20 @@ public class UseCase extends ModelElement
 
 
   public int displayMeasures(PrintWriter out, java.util.Map clones)
-  { out.println("----------------------------------------------\n" + 
-                "*** Use Case, name: " + getName() + "\n"); 
-    out.println("*** Number of parameters: " + parameters.size() + "\n"); 
+  { out.println(
+      "----------------------------------------------\n" + 
+      "*** Use Case, name: " + getName() + " ********\n"); 
+
+    int epl = parameters.size(); 
+    out.println("*** Number of parameters: " + epl + "\n");
+    if (epl > 5) 
+    { System.err.println("*** Bad smell (EPL): too many parameters (" + epl + ") in " + getName()); 
+      System.err.println(">>> Suggest refactoring by sequential decomposition of transformation"); 
+    }  
 
     int attsSize = ownedAttribute.size(); 
 
-    out.println("*** Number of attributes = " + attsSize + "\n"); 
+    out.println("*** Number of use case attributes = " + attsSize + "\n"); 
 
     int totalSize = 0; 
     int highcount = 0; 
@@ -1649,19 +1657,24 @@ public class UseCase extends ModelElement
 
     out.println("*** Number of operations = " + opsSize + "\n"); 
     if (opsSize > 10) 
-    { System.err.println("*** Bad smell: too many operations (" + opsSize + ") in " + getName()); }  
+    { System.err.println("*** Bad smell (ENO): too many operations (" + opsSize + ") in " + getName()); 
+      System.err.println(">>> Suggest refactoring by sequential decomposition of this use case into 2+ smaller use cases"); 
+    }  
 
     int rulesSize = orderedPostconditions.size(); 
     out.println("*** Number of rules = " + rulesSize + "\n"); 
     if (rulesSize > 10) 
-    { System.err.println("*** Bad smell: too many rules (" + rulesSize + ") in " + getName()); }  
+    { System.err.println("*** Bad smell (ENR): too many rules (" + rulesSize + ") in " + getName()); 
+      System.err.println(">>> Suggest refactoring by sequential decomposition of this use case into 2+ smaller use cases"); 
+    }  
 
     for (int i = 0; i < rulesSize; i++) 
     { ConstraintOrGroup con = (ConstraintOrGroup) orderedPostconditions.get(i); 
       int consize = con.syntacticComplexity(); 
       out.println("*** Postcondition " + i + " size = " + consize + "\n"); 
       if (consize > 100) 
-      { System.err.println("*** Bad smell: rule too large (" + consize + ") for " + getName() + i); 
+      { System.err.println("*** Bad smell (ERS): rule too large (" + consize + ") for " + getName() + i); 
+        System.err.println(">>> Suggest refactoring by functional decomposition of this rule"); 
         highcount++; 
       }
       else if (consize > 50) 
@@ -1673,7 +1686,9 @@ public class UseCase extends ModelElement
       int concc = con.cyclomaticComplexity(); 
       out.println("*** Postcondition " + i + " cyclomatic complexity = " + concc + "\n"); 
       if (concc > 10) 
-      { System.err.println("*** Bad smell: rule cyclomatic complexity too high (" + concc + ") for " + getName() + i); }  
+      { System.err.println("*** Bad smell (CC): rule cyclomatic complexity too high (" + concc + ") for " + getName() + i); 
+        System.err.println(">>> Suggest refactoring by functional decomposition of this rule"); 
+      }  
 
       con.findClones(clones); 
 
@@ -1681,7 +1696,9 @@ public class UseCase extends ModelElement
       if (opuses.size() > 0) 
       { out.println("*** Postcondition " + i + " uses operations: " + opuses); 
         if (opuses.size() > 10) 
-        { System.err.println("*** Bad smell: rule uses too many operations (" + opuses.size() + ") for " + getName() + i); }  
+        { System.err.println("*** Bad smell (EFO): rule uses too many operations (" + opuses.size() + ") for " + getName() + i);
+          System.err.println(">>> Suggest refactoring by functional decomposition of this rule"); 
+        }  
         out.println(); 
       } 
     } 
@@ -1706,7 +1723,9 @@ public class UseCase extends ModelElement
     out.println("*** " + lowcount + " other rules/operations over 50 complexity"); 
 
     if (totalSize > 1000) 
-    { System.err.println("*** Bad smell: transformation too large (" + totalSize + ") " + getName()); }  
+    { System.err.println("*** Bad smell (ETS): transformation too large (" + totalSize + ") " + getName()); 
+      System.err.println(">>> Suggest refactoring by decomposition of this use case into 2+ included cases"); 
+    }  
     return totalSize; 
   } 
 

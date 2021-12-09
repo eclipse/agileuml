@@ -2861,7 +2861,8 @@ public class UCDArea extends JPanel
       Vector clonedIn = (Vector) clones.get(k); 
       if (clonedIn.size() > 1)
       { out.println("*** " + k + " is cloned in: " + clonedIn); 
-        System.err.println("*** Bad smell: Cloned expression in " + clonedIn); 
+        System.err.println("*** Bad smell (DC): Cloned expression " + k + " in " + clonedIn); 
+        System.err.println(">>> Recommend refactoring by extracting the " + clonedIn.size() + " expression copies as new helper"); 
         clonecount++; 
       } 
     }  
@@ -2906,7 +2907,9 @@ public class UCDArea extends JPanel
     int selfcallsn = selfcalls.size();  
  
     if (selfcallsn > 0) 
-    { System.err.println("*** Bad smell: complex call graph with " + selfcallsn + " recursive dependencies"); } 
+    { System.err.println("*** Bad smell (CBR2): complex call graph with " + selfcallsn + " recursive dependencies"); 
+      System.err.println(">>> Suggest refactoring using Map Objects Before Links"); 
+    } 
 
 
     Vector allused = new Vector(); 
@@ -2933,20 +2936,23 @@ public class UCDArea extends JPanel
           { out.println("*** " + me + " has no dependencies"); }
           
           if (rang.size() > 10) 
-          { System.err.println("*** Bad smell: " + me + " uses too many operations: " + rang.size()); } 
+          { System.err.println("*** Bad smell (EFO): " + me + " uses too many operations: " + rang.size());
+            System.err.println(">>> Suggest refactoring by sequential decomposition"); 
+          } 
           
           Map domrestr = Map.domainRestriction(rang,res); 
           int totalcgsize = domrestr.size() + ucg.size(); 
           out.println("*** Total call graph size of " + me + " is " + totalcgsize); 
           if (totalcgsize > uc.ruleCount() + uc.operationsCount() + rang.size()) 
-          { System.err.println("*** Bad smell: " + me + " call graph too large: " + totalcgsize); } 
+          { System.err.println("*** Bad smell (CBR1): " + me + " call graph too large: " + totalcgsize); } 
 
           Vector selfcallsuc = VectorUtil.intersection(selfcalls,rang); 
           int selfcallsucn = selfcallsuc.size(); 
 
           if (selfcallsucn > 0) 
           { out.println("*** " + selfcallsucn + " calls in recursive loops in " + me + " : " + selfcallsuc);  
-            System.err.println("*** Bad smell: " + selfcallsucn + " calls in recursive loops in " + me + " : " + selfcallsuc); 
+            System.err.println("*** Bad smell (CBR2): " + selfcallsucn + " calls in recursive loops in " + me + " : " + selfcallsuc); 
+            System.err.println(">>> Suggest refactoring using Map Objects Before Links"); 
           } 
 
 
@@ -2973,12 +2979,15 @@ public class UCDArea extends JPanel
           { String clonelocation = (String) clonedIn.get(0); 
             if (clonelocation.startsWith(ucname + "_"))
             { out.println(k + " is cloned in: " + ucname); 
-              System.err.println("*** Bad smell: Cloned expression in " + ucname); 
+              System.err.println("*** Bad smell (DC): Cloned expression in " + ucname); 
+              System.err.println(">>> Suggest refactoring using Extract Function"); 
+
               ucclonecount++;
             } 
             else if (rang.contains(clonelocation))
             { out.println("*** " + k + " is cloned in: " + ucname); 
-              System.err.println("*** Bad smell: Cloned expression in " + ucname); 
+              System.err.println("*** Bad smell (DC): Cloned expression in " + ucname); 
+              System.err.println(">>> Suggest refactoring using Extract Function"); 
               ucclonecount++;
             } 
           } 
@@ -2986,7 +2995,9 @@ public class UCDArea extends JPanel
 
         if (ucclonecount > 0) 
         { out.println("*** " + ucclonecount + " clones in " + me);  
-          System.err.println("*** Bad smell: " + ucclonecount + " clones in " + me); 
+          System.err.println("*** Bad smell (DC): " + ucclonecount + " clones in " + me); 
+          System.err.println(">>> Suggest refactoring using Extract Function"); 
+
           System.err.println(); 
           out.println(); 
         } 
@@ -8617,16 +8628,47 @@ public class UCDArea extends JPanel
     out2.println("#include <ctime>"); 
     out2.println("#include <algorithm>"); 
     out2.println("#include <regex>"); 
-    out2.println("#include \"Controller.h\""); 
- 
+    out2.println("#include <thread>"); 
+    out2.println("#include <functional>"); 
+    out2.println("#include <cstdlib>"); 
+    out2.println("#include <condition_variable>"); 
+    out2.println(); 
+    out2.println("#pragma warning(disable : 4996)"); 
     out2.println(""); 
     out2.println("using namespace std;\n"); 
+    out2.println("#include \"Controller.h\"\n"); 
 
     out2.println("Controller* Controller::inst = new Controller();\n\n"); 
+    out2.println("map<string,OclType*>* OclType::ocltypenameindex = new map<string,OclType*>();\n\n"); 
+
+
+    Entity mathlib = (Entity) ModelElement.lookupByName("MathLib", entities); 
+    if (mathlib != null) 
+    { BSystemTypes.generateLibraryCPP("MathLib",out2); }
+
+    Entity ocldate = (Entity) ModelElement.lookupByName("OclDate", entities); 
+    if (ocldate != null) 
+    { BSystemTypes.generateLibraryCPP("OclDate",out2); } 
+
+    Entity ocliterator = (Entity) ModelElement.lookupByName("OclIterator", entities); 
+    if (ocliterator != null) 
+    { BSystemTypes.generateLibraryCPP("OclIterator",out2); }
+
+    Entity oclrandom = (Entity) ModelElement.lookupByName("OclRandom", entities); 
+    if (oclrandom != null) 
+    { BSystemTypes.generateLibraryCPP("OclRandom",out2); }
+
+    Entity oclprocess = (Entity)    
+        ModelElement.lookupByName("OclProcess", entities); 
+    if (oclprocess != null) 
+    { BSystemTypes.generateLibraryCPP("OclProcess",out2); }
+
 
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i); 
-      ent.staticAttributeDefinitions(out2);  
+      if (ent.isComponent() || ent.isExternal()) { } 
+      else 
+      { ent.staticAttributeDefinitions(out2); }  
     } 
 
  
@@ -8644,18 +8686,28 @@ public class UCDArea extends JPanel
     Vector orderedByInheritance = new Vector(); 
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i); 
-      if (ent.isRoot())
+      if (ent.isComponent() || ent.isExternal()) { } 
+      else if (ent.isRoot())
       { ent.levelOrder(orderedByInheritance); }  
     } 
     
 
     out.println("class Controller;"); 
     out.println(); 
+    out.println("class Runnable"); 
+    out.println("{ public:");  
+    out.println("    virtual void run() { };"); 
+    out.println("}; // Interface for <<active>> classes"); 
+    out.println(); 
+
     generateSystemTypesCPP(out); 
     out.println(); 
 
     for (int i = 0; i < orderedByInheritance.size(); i++) 
     { Entity ent = (Entity) orderedByInheritance.get(i); 
+      if (ent.isComponent() || ent.isExternal()) 
+      { continue; } 
+
       ent.generateCPP(entities,types,out,out2); 
       String mop = ent.genMainOperation(entities,types); 
       if (mop != null)
@@ -8691,8 +8743,50 @@ public class UCDArea extends JPanel
       out2.println(opcode); 
     } 
 
+    String initTypes = initialiseOclTypesCPP(); 
+    out2.println(initTypes); 
+
     // if (systemName != null && systemName.length() > 0)
     // { out.println("} \n\n"); } 
+
+    try
+    { File ocltypeHPP = new File("libraries/OclType.hpp"); 
+      BufferedReader br = null;
+      String sline = null;
+      boolean eof = false; 
+      br = new BufferedReader(new FileReader(ocltypeHPP));
+      out.println(); 
+ 
+      while (!eof)
+      { sline = br.readLine();
+        if (sline == null) 
+        { eof = true; } 
+        else 
+        { out.println(sline); }
+      } 
+      out.println(); 
+
+      br.close();  
+    } 
+    catch (IOException _ex)
+    { System.err.println("!! ERROR: libraries/OclType.hpp not found"); }
+
+    if (mathlib != null) 
+    { // Collect MathLib.hpp from libraries: 
+      BSystemTypes.generateLibraryHPP("MathLib", out); 
+    }
+
+    if (ocliterator != null) 
+    { // Collect OclIterator.hpp from libraries: 
+      BSystemTypes.generateLibraryHPP("OclIterator", out); 
+    }
+
+    if (oclprocess != null) 
+    { // Collect OclProcess.hpp from libraries: 
+      BSystemTypes.generateLibraryHPP("OclProcess", out); 
+    }
+
+
 
     try
     { out.close();
@@ -8702,6 +8796,39 @@ public class UCDArea extends JPanel
 
     System.out.println(">>> classes ordered by inheritance are: " + orderedByInheritance);
   }
+
+private String initialiseOclTypesCPP()
+{ String res = 
+    "int main(int argc, char* argv[])\n" + 
+    "{ OclType* intType = OclType::createOclType(\"int\");\n" + 
+    "  intType->setname(typeid(1).name());\n" +  
+    "  OclType* longType = OclType::createOclType(\"long\");\n" + 
+    "  longType->setname(typeid(0L).name());\n" +  
+    "  OclType* doubleType = OclType::createOclType(\"double\");\n" + 
+    "  doubleType->setname(typeid(1.0).name());\n" +  
+    "  OclType* booleanType = OclType::createOclType(\"boolean\");\n" +  
+    "  booleanType->setname(typeid(true).name());\n" +  
+    "  OclType* stringType = OclType::createOclType(\"String\");\n" +  
+    "  stringType->setname(typeid(string(\"\")).name());\n" +
+    "  OclType* voidType = OclType::createOclType(\"void\");\n" +  
+    "  voidType->setname(\"void\");\n" +   
+    "  OclType* anyType = OclType::createOclType(\"OclAny\");\n" +  
+    "  anyType->setname(\"void *\");\n" +   
+    "\n"; 
+  for (int i = 0; i < entities.size(); i++) 
+  { Entity ent = (Entity) entities.get(i); 
+    if (ent.isComponent() || ent.isExternal()) { } 
+    else 
+    { String ename = ent.getName(); 
+      String lcname = ename.toLowerCase(); 
+      res = res + 
+          "  OclType* " + lcname + " = OclType::createOclType(\"" + ename + "\");\n" +  
+          "  " + lcname + "->setname(\"" + ename + " *\");\n"; 
+    } // add its attributes, operations
+  } 
+  return res + "  return 0;\n}\n"; 
+}  
+
 
 public void produceCUI(PrintWriter out)
 { String initialiseTypesCode = 
@@ -8723,7 +8850,7 @@ public void produceCUI(PrintWriter out)
     initialiseTypesCode = 
       initialiseTypesCode + 
         "  struct OclType* " + enamelc + "Type = createOclType(\"" + ename + "\");\n"; 
-  } 
+  } // add its attributes, operations
 
 
   out.println("#include \"app.c\"");
@@ -10298,13 +10425,35 @@ public void produceCUI(PrintWriter out)
     out.println("    static bool isSubset(std::set<_T>* s1, set<_T>* s2)"); 
     out.println("    { bool res = true; "); 
     out.println("      for (std::set<_T>::iterator _pos = s1->begin(); _pos != s1->end(); ++_pos)"); 
-    out.println("      { if (isIn(*_pos, s2)) { } else { return false; } }"); 
-    out.println("      return res; }\n\n"); 
+    out.println("      { if (isIn(*_pos, s2)) { } "); 
+    out.println("        else { return false; } "); 
+    out.println("      }"); 
+    out.println("      return res;"); 
+    out.println("    }\n"); 
     out.println("    static bool isSubset(std::set<_T>* s1, vector<_T>* s2)"); 
     out.println("    { bool res = true; "); 
     out.println("      for (std::set<_T>::iterator _pos = s1->begin(); _pos != s1->end(); ++_pos)"); 
-    out.println("      { if (isIn(*_pos, s2)) { } else { return false; } }"); 
-    out.println("      return res; }\n\n"); 
+    out.println("      { if (isIn(*_pos, s2)) { }"); 
+    out.println("        else { return false; } "); 
+    out.println("      }"); 
+    out.println("      return res;"); 
+    out.println("    }\n"); 
+    out.println("    static bool isSubset(std::vector<_T>* s1, vector<_T>* s2)"); 
+    out.println("    { bool res = true; "); 
+    out.println("      for (std::vector<_T>::iterator _pos = s1->begin(); _pos != s1->end(); ++_pos)"); 
+    out.println("      { if (isIn(*_pos, s2)) { }"); 
+    out.println("        else { return false; } "); 
+    out.println("      }"); 
+    out.println("      return res;"); 
+    out.println("    }\n"); 
+    out.println("    static bool isSubset(std::vector<_T>* s1, set<_T>* s2)"); 
+    out.println("    { bool res = true; "); 
+    out.println("      for (std::vector<_T>::iterator _pos = s1->begin(); _pos != s1->end(); ++_pos)"); 
+    out.println("      { if (isIn(*_pos, s2)) { }"); 
+    out.println("        else { return false; } "); 
+    out.println("      }"); 
+    out.println("      return res;"); 
+    out.println("    }\n"); 
 
     out.println("    static std::set<_T>* makeSet(_T x)"); 
     out.println("    { std::set<_T>* res = new std::set<_T>();"); 
@@ -10324,6 +10473,9 @@ public void produceCUI(PrintWriter out)
     out.println("    { s->push_back(x); "); 
     out.println("      return s;");  
     out.println("    }\n"); 
+    out.println("    static vector<string>* addSequenceString(vector<string>* s, string x)"); 
+    out.println("    { s->push_back(x);");  
+    out.println("      return s; }\n"); 
 
     out.println("    static vector<_T>* asSequence(std::set<_T>* c)"); 
     out.println("    { vector<_T>* res = new vector<_T>();");
@@ -11079,7 +11231,9 @@ public void produceCUI(PrintWriter out)
 
     for (int i = 0; i < entities.size(); i++)
     { Entity e = (Entity) entities.get(i);
-      res = res + e.getCPPAddObjOp();
+      if (e.isExternal() || e.isComponent()) { } 
+      else 
+      { res = res + e.getCPPAddObjOp(); }
     }
     res = res + "  }\n\n"; 
 
@@ -11088,7 +11242,9 @@ public void produceCUI(PrintWriter out)
 
     for (int i = 0; i < entities.size(); i++)
     { Entity e = (Entity) entities.get(i);
-      res = res + e.getCPPAddRoleOp();
+      if (e.isExternal() || e.isComponent()) { } 
+      else 
+      { res = res + e.getCPPAddRoleOp(); }
     }
     res = res + " }\n\n";
 
@@ -11097,7 +11253,9 @@ public void produceCUI(PrintWriter out)
 
     for (int i = 0; i < entities.size(); i++)
     { Entity e = (Entity) entities.get(i);
-      res = res + e.getCPPSetFeatureOp();
+      if (e.isExternal() || e.isComponent()) { } 
+      else 
+      { res = res + e.getCPPSetFeatureOp(); }
     }
 
     return res + " }\n\n";
@@ -11133,7 +11291,10 @@ public void produceCUI(PrintWriter out)
 
     for (int i = 0; i < entities.size(); i++)
     { Entity e = (Entity) entities.get(i);
-      if (e.hasStereotype("external") || e.hasStereotype("externalApp")) { continue; } 
+      if (e.hasStereotype("external") ||
+          e.isComponent() ||
+          e.hasStereotype("externalApp"))
+      { continue; } 
 
       Entity es = e.getSuperclass(); 
       String nme = e.getName();
@@ -11159,7 +11320,11 @@ public void produceCUI(PrintWriter out)
       Vector intfs = e.getInterfaces(); 
       for (int j = 0; j < intfs.size(); j++)
       { Entity intf = (Entity) intfs.get(j); 
-        addops = addops + " add" + intf.getName() + "(_oo);"; 
+        if (intf.isExternal() || intf.isComponent()) { } 
+        else 
+        { addops = 
+            addops + " add" + intf.getName() + "(_oo);"; 
+        } 
       }      
       addops = addops + " }\n\n" + indexop;
 
@@ -11201,7 +11366,10 @@ public void produceCUI(PrintWriter out)
     // generate their code.
     for (int i = 0; i < entities.size(); i++)
     { Entity e = (Entity) entities.get(i);
-      if (e.hasStereotype("external") || e.hasStereotype("externalApp")) { continue; } 
+      if (e.hasStereotype("external") ||
+          e.isComponent() ||
+          e.hasStereotype("externalApp")) 
+      { continue; } 
 
       Vector v = e.sensorOperationsCodeCPP(constraints,entities,types);
       v.addAll(e.associationOperationsCodeCPP(constraints,entities,types)); 
@@ -12587,7 +12755,7 @@ public void produceCUI(PrintWriter out)
     int selfcallsn = selfcalls.size();  
  
     if (selfcallsn > 0) 
-    { System.err.println("*** Bad smell: complex call graph with " + selfcallsn + " recursive dependencies"); } 
+    { System.err.println("*** Bad smell (CBR2): complex call graph with " + selfcallsn + " recursive dependencies"); } 
 
 
     System.out.println(); 
@@ -12758,7 +12926,7 @@ public void produceCUI(PrintWriter out)
     int selfcallsn = selfcalls.size();  
  
     if (selfcallsn > 0) 
-    { System.err.println("Bad smell: complex call graph with " + selfcallsn + " recursive dependencies"); } 
+    { System.err.println("Bad smell (CBR2): complex call graph with " + selfcallsn + " recursive dependencies"); } 
 
 
     System.out.println(); 
@@ -13052,7 +13220,7 @@ public void produceCUI(PrintWriter out)
     int selfcallsn = selfcalls.size();  
  
     if (selfcallsn > 0) 
-    { pwout.println("*** Bad smell: complex call graph with " + 
+    { pwout.println("*** Bad smell (CBR2): complex call graph with " + 
                     selfcallsn + " cyclic dependencies"); 
       qvtflaws += selfcallsn; // CBR_2 flaws    
     } 
@@ -20105,9 +20273,9 @@ public void produceCUI(PrintWriter out)
 
       System.out.println("----- Written result TL transformation to output/final.tl ----------");  
 
-      CGSpec cg = new CGSpec(entities); 
-      tlspecification.toCSTL(cg);
-      System.out.println(cg);   
+      // CGSpec cg = new CGSpec(entities); 
+      // tlspecification.toCSTL(cg);
+      // System.out.println(cg);   
     } 
     else 
     { System.err.println("!! ERROR: no TL specification"); } 

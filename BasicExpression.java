@@ -593,6 +593,60 @@ class BasicExpression extends Expression
     return res; 
   }
 
+  public static boolean isMapAccess(Expression expr) 
+  { if (expr instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) expr; 
+      if (be.arrayIndex != null && 
+          be.arrayType != null && 
+          be.arrayType.isMap())
+      { return true; } 
+    } 
+    return false; 
+  } 
+
+  public static void updateMapType(Expression lhs, Expression rhs) 
+  { if (lhs instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) lhs; 
+      if (be.arrayIndex != null && 
+          be.arrayType != null && 
+          be.arrayType.isMap())
+      { Type elemType = rhs.getType(); 
+        Type oldElemType = be.arrayType.getElementType(); 
+        be.arrayType.elementType = 
+          Type.refineType(oldElemType,elemType);
+        System.out.println(">> From " + lhs + " := " + rhs + " deduced element type " + be.arrayType.elementType + " for map " + be.data);
+
+        Type indType = be.arrayIndex.getType(); 
+        Type oldKeyType = be.arrayType.getKeyType(); 
+        be.arrayType.keyType = 
+          Type.refineType(oldKeyType,indType);  
+        System.out.println(">> From " + lhs + " := " + rhs + " deduced key type " + be.arrayType.keyType + " for map " + be.data);
+      } 
+    } 
+  } 
+
+  public static boolean hasVariable(Expression expr) 
+  { if (expr instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) expr; 
+      if (be.variable != null)
+      { return true; } 
+    } 
+    return false; 
+  } 
+
+  public static void updateVariableType(Expression lhs, Expression rhs) 
+  { if (lhs instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) lhs; 
+      if (be.variable != null)
+      { Type elemType = rhs.getElementType(); 
+        Type oldElemType = be.variable.getElementType(); 
+        be.variable.setElementType( 
+          Type.refineType(oldElemType,elemType));
+        System.out.println(">> From " + lhs + " := " + rhs + " deduced element type " + be.variable.getElementType() + " for " + be.data);
+      } 
+    } 
+  } 
+
   public Vector decompose()
   { // assuming it represents a navigation path r1.r2.r3.att
     Vector res = new Vector(); 
@@ -2887,7 +2941,7 @@ class BasicExpression extends Expression
     }  // could have an array index. Also deduce elementType
 
     if ("int".equals(data) || "long".equals(data) || 
-        "boolean".equals(data) || 
+        "boolean".equals(data) || "void".equals(data) ||  
         "double".equals(data) || "String".equals(data) ||
         "OclDate".equals(data) || "OclAny".equals(data) || 
         "OclType".equals(data) || "OclFile".equals(data) || 
@@ -2924,12 +2978,12 @@ class BasicExpression extends Expression
 
     if ("self".equals(data))
     { if (contexts.size() == 0)
-      { System.err.println("WARNING: Invalid occurrence of self, not in instance context"); 
+      { System.err.println("WARNING!: Invalid occurrence of self, not in instance context"); 
         // JOptionPane.showMessageDialog(null, "ERROR: Invalid occurrence of self, not in instance context", "Semantic error", JOptionPane.ERROR_MESSAGE); 
       }
       else 
       { if (contexts.size() > 1)
-        { System.err.println("WARNING: Ambiguous occurrence of self, contexts: " + contexts);
+        { System.err.println("WARNING!: Ambiguous occurrence of self, contexts: " + contexts);
         } 
         entity = (Entity) contexts.get(0); // the most local context
         type = new Type(entity); 
@@ -2945,19 +2999,19 @@ class BasicExpression extends Expression
     if ("super".equals(data))
     { if (contexts.size() == 0)
       { if (objectRef == null) 
-        { System.err.println("ERROR: Invalid occurrence of super, not instance context"); 
-          JOptionPane.showMessageDialog(null, "ERROR: Invalid occurrence of super, not in instance context", "Semantic error", JOptionPane.ERROR_MESSAGE);
+        { System.err.println("ERROR!!: Invalid occurrence of super, not instance context"); 
+          JOptionPane.showMessageDialog(null, "ERROR!!: Invalid occurrence of super, not in instance context", "Semantic error", JOptionPane.ERROR_MESSAGE);
         } 
         else if (objectRef.elementType != null && objectRef.elementType.isEntity()) 
         { entity = objectRef.elementType.getEntity(); 
           type = new Type(entity.getSuperclass()); 
         } 
         else 
-        { System.err.println("ERROR: Invalid occurrence of super: " + this + " no defined instance context"); }           
+        { System.err.println("ERROR!!: Invalid occurrence of super: " + this + " no defined instance context"); }           
       }
       else 
       { if (contexts.size() > 1)
-        { System.err.println("WARNING: Ambiguous occurrence of super, contexts: " + contexts);
+        { System.err.println("WARNING!: Ambiguous occurrence of super, contexts: " + contexts);
         } 
 
         for (int i = 0; i < contexts.size(); i++) 
@@ -2978,8 +3032,8 @@ class BasicExpression extends Expression
 
     if ("equivalent".equals(data))
     { if (contexts.size() == 0)
-      { System.err.println("ERROR: no context for equivalent"); 
-        JOptionPane.showMessageDialog(null, "ERROR: Invalid occurrence of equivalent, not in instance context", "Semantic error", JOptionPane.ERROR_MESSAGE); 
+      { System.err.println("ERROR!!: no context for ETL equivalent() operator"); 
+        JOptionPane.showMessageDialog(null, "ERROR!!: Invalid occurrence of equivalent, not in instance context", "Semantic error", JOptionPane.ERROR_MESSAGE); 
       }
       else 
       { // entity = (Entity) contexts.get(0); // the most local context
@@ -3042,6 +3096,38 @@ class BasicExpression extends Expression
              
         return true;
       }   
+      else if (createdClass.startsWith("OclIterator"))
+      { type = new Type("OclIterator",null); 
+        umlkind = UPDATEOP;
+        isStatic = true;  
+        multiplicity = ModelElement.ONE;
+        if (parameters != null && parameters.size() > 0) 
+        { Expression par1 = (Expression) parameters.get(0); 
+          if (par1.isString())
+          { elementType = new Type("String", null); } 
+          else 
+          { elementType = par1.getElementType(); }
+
+          if (createdClass.equals("OclIterator_Sequence"))
+          { Attribute fparsq = 
+                new Attribute("sq", new Type("Sequence", null), ModelElement.INTERNAL); 
+            par1.formalParameter = fparsq;
+          }
+          else if (createdClass.equals("OclIterator_Set"))
+          { Attribute fparst = 
+                new Attribute("st", new Type("Set", null), ModelElement.INTERNAL); 
+            par1.formalParameter = fparst;
+          }
+          else if (createdClass.startsWith("OclIterator_String"))
+          { Attribute fparss = 
+                new Attribute("ss", new Type("String", null), ModelElement.INTERNAL); 
+            par1.formalParameter = fparss;
+          }
+        }
+
+        return true;  
+      }
+        
     } // and the parameters
 
     if ("length".equals(data) && objectRef != null) 
@@ -3156,6 +3242,7 @@ class BasicExpression extends Expression
       if (objectRef.type != null && 
           objectRef.type.getName().equals("OclIterator")) 
       { type = new Type("Sequence", null);
+        
         umlkind = ATTRIBUTE; 
         multiplicity = ModelElement.MANY; 
  
@@ -3244,7 +3331,7 @@ class BasicExpression extends Expression
         umlkind = QUERY; 
         multiplicity = ModelElement.ONE; 
         return true;
-      }  
+      }  // and for OclType
     } 
 
     if ("currentThread".equals(data)
@@ -3350,6 +3437,7 @@ class BasicExpression extends Expression
             { multiplicity = ModelElement.MANY; } 
             entity = staticent;
             isStatic = true; 
+            // variable = att; // For precise type-analysis
 
             arrayType = type; 
             adjustTypeForArrayIndex(att); 
@@ -3372,7 +3460,7 @@ class BasicExpression extends Expression
  
     if (context.size() == 0)
     { if (entity == null) 
-      { System.out.println(">> Warning: No context or entity for " + this);
+      { System.out.println(">> No owning class found for " + this);
         System.out.println();  
         //  + 
         //         " -- it must be a local variable/parameter");
@@ -3642,8 +3730,21 @@ class BasicExpression extends Expression
                data.equals("insertAt") || 
                data.equals("setAt"))  
       { type = objectRef.getType(); // Sequence or String
-        elementType = objectRef.elementType;  
-        if (type != null && type.isCollectionType())
+        elementType = objectRef.elementType; 
+
+        if (data.equals("insertAt") || 
+            data.equals("setAt"))
+        { Expression par2 = (Expression) parameters.get(1);
+          Type partyp = par2.getType(); 
+          Type newleftET = 
+            Type.refineType(elementType,partyp); 
+          System.out.println(">> Deduced element type of " + this + " = " + newleftET); 
+          elementType = newleftET; 
+          type.setElementType(newleftET); 
+        } 
+
+        if (type != null && 
+            type.isCollectionType())
         { multiplicity = ModelElement.MANY;
           arrayType = type; 
           adjustTypeForArrayIndex(); 
@@ -3725,7 +3826,8 @@ class BasicExpression extends Expression
     }   // if T1.value and T2.value may both occur, must be distinguished by the type name
 
 
-    // Parameters of the current operation/usecase: 
+    // Parameters or local variables of the 
+    // current operation/usecase: 
 
     Attribute paramvar = (Attribute) ModelElement.lookupByName(data,env); 
     if (paramvar != null && objectRef == null) 
@@ -3742,8 +3844,10 @@ class BasicExpression extends Expression
       adjustTypeForArrayIndex(paramvar);
       
       // System.out.println(">>> Parameter/local variable: " + this + " type= " + type + " (" + elementType + ")"); 
-      System.out.println(); 
+      // System.out.println();
+      variable = paramvar;  
       umlkind = VARIABLE; 
+      modality = paramvar.getKind(); 
 
       return true; 
     } // And adjust type for any array index. 
@@ -3772,22 +3876,22 @@ class BasicExpression extends Expression
         else 
         { setObjectRefType(); } 
         
-        if (arrayIndex != null) 
+        /* if (arrayIndex != null) 
         { System.out.println("** Unadjusted type of " + this + " is ATTRIBUTE in entity " +
                             ent + " type is " + type + "(" + elementType + ") Modality = " + modality); 
-        }
+        } */ 
         
         adjustTypeForObjectRef(att);
         arrayType = type;  
         adjustTypeForArrayIndex(att); 
         
-        if (arrayIndex != null) 
-        { System.out.println("** Adjusted type of " + this + " is " + type + "(" + elementType + ") Modality = " + modality); } 
+        /* if (arrayIndex != null) 
+        { System.out.println("** Adjusted type of " + this + " is " + type + "(" + elementType + ") Modality = " + modality); } */  
  
         System.out.println(">>> Attribute: " + this + " type= " + type + " (" + elementType + ")"); 
         elementType = Type.correctElementType(type,elementType,types,entities); 
         att.setElementType(elementType); 
-
+        // variable = att; 
         System.out.println(); 
       
         return res;
@@ -3818,6 +3922,7 @@ class BasicExpression extends Expression
           adjustTypeForArrayIndex(att); 
           // System.out.println("**Type of " + data + " is downcast ATTRIBUTE in entity " +
           //                    subent + " type is " + type); 
+          // variable = att; 
           return res;
         }  
       } 
@@ -3869,6 +3974,8 @@ class BasicExpression extends Expression
         else 
         { setObjectRefType(); } 
 
+        // variable = attribute for the role? 
+
         return res;
       }
       else 
@@ -3900,6 +4007,8 @@ class BasicExpression extends Expression
           // System.out.println("**Type of " + data + " is downcast ROLE in entity " +
           //                    subent + " type is " + type); 
           entity = subent;
+
+          // variable = attribute for the role? 
           return res;
         } // objectRefTypeAssignment 
       }  // or it could be a query op of the entity
@@ -4512,6 +4621,8 @@ class BasicExpression extends Expression
 
     if (arrayIndex != null) 
     { String ind = arrayIndex.queryFormCPP(env,local);
+      if (data.equals("OclType"))
+      { return "OclType::getOclTypeByPK(" + ind + ")"; } 
       return cont + "->get" + data + "ByPK(" + ind + ")"; 
     } 
     return cont + "->get" + data.toLowerCase() + "_s()";  
@@ -6785,10 +6896,57 @@ class BasicExpression extends Expression
         "OclDate".equals(objectRef + ""))
     { return "UmlRsdsLib<long>::getTime()"; } 
 
+    if (("time".equals(data) || "getTime".equals(data)) && 
+        objectRef != null) 
+    { if (objectRef.type != null && 
+          objectRef.type.getName().equals("OclDate")) 
+      { String rqf = objectRef.queryFormCPP(env,local); 
+        return rqf + "->getTime()"; 
+      }  
+    } 
+
     if (data.startsWith("new"))
     { String createdClass = data.substring(3); 
+      String pars = ""; 
+      if (parameters != null) 
+      { for (int h = 0; h < parameters.size(); h++) 
+        { Expression par = (Expression) parameters.get(h); 
+          pars = pars + par.queryFormCPP(env,local); 
+          if (h < parameters.size()-1) 
+          { pars = pars + ","; } 
+        }
+      } 
+
       if ("OclDate".equals(createdClass))
-      { return "UmlRsdsLib<long>::getDate()"; }
+      { return "OclDate::newOclDate(" + pars + ")"; }
+
+      if (createdClass.startsWith("OclIterator") && 
+          parameters != null && 
+          parameters.size() > 0)
+      { Expression par1 = (Expression) parameters.get(0); 
+        Type et = par1.getElementType(); 
+        if (et != null) 
+        { String cpptype = et.getCPP(et.getElementType()); 
+          return "OclIterator<" + cpptype + ">::" + data + "(" + pars + ")"; 
+        } 
+        else 
+        { System.err.println("!! ERROR: No element type for: " + par1); } 
+      }  
+
+      if (Type.isExceptionType(createdClass))
+      { String cppClass = 
+          (String) Type.exceptions2cpp.get(createdClass);
+        if (cppClass == null) 
+        { cppClass = createdClass; }
+ 
+        return cppClass + "::" + data + "(" + pars + ")"; 
+      }            
+    } 
+
+    if ("elements".equals(data) && objectRef != null) 
+    { if (objectRef.type != null && 
+          objectRef.type.getName().equals("OclIterator")) 
+      { return objectRef.queryFormCPP(env,local) + "->getelements()"; }
     } 
 
     if (umlkind == VALUE || umlkind == CONSTANT)
@@ -6841,6 +6999,16 @@ class BasicExpression extends Expression
         else 
         { return "this"; }
       } 
+      else if (data.equals("super"))  
+      { if (env.containsValue("super"))
+        { return data; } 
+        else if (entity != null && entity.getSuperclass() != null)
+        { return entity.getSuperclass().getName(); }
+        else 
+        { System.err.println(">> Warning!: cannot find superclass for " + this); 
+          return data; 
+        } 
+      } 
       else // entity == null) 
       if (arrayIndex != null)
       { String ind = arrayIndex.queryFormCPP(env,local); 
@@ -6867,6 +7035,10 @@ class BasicExpression extends Expression
     if (umlkind == CLASSID)
     { if (arrayIndex != null)
       { String ind = arrayIndex.queryFormCPP(env,local);
+        if (data.equals("OclFile"))
+        { return "OclFile::getOclFileByPK(" + ind + ")"; } 
+        if (data.equals("OclType"))
+        { return "OclType::getOclTypeByPK(" + ind + ")"; } 
         return cont + "get" + data + "ByPK(" + ind + ")"; 
       } 
       return data;  // But library classes may map to language-specific name
@@ -6972,7 +7144,7 @@ class BasicExpression extends Expression
       else if (data.equals("reverse") || data.equals("sort") ||
                data.equals("asSet") || data.equals("characters")) 
       { return "UmlRsdsLib<" + cetype + ">::" + data + "(" + pre + ")"; } 
-      else if (data.equals("subrange") && parameters != null)
+      else if (data.equals("subrange") && parameters != null && parameters.size() >= 2)
       { String par1 = ((Expression) parameters.get(0)).queryFormCPP(env,local); 
         String par2 = ((Expression) parameters.get(1)).queryFormCPP(env,local); 
         if ("Integer".equals(objectRef + ""))
@@ -7078,6 +7250,12 @@ class BasicExpression extends Expression
       { res = ename + "::" + cont + res + parString; 
         return res; 
       } 
+      
+      if (entity != null && data.startsWith("create") &&
+               objectRef == null) 
+      { if (data.substring(6).equals(ename))
+        { return cont + res + parString; } 
+      } 
 
       if (entity != null && entity.isClassScope(data))
       { res = ename + "::" + res + parString; 
@@ -7085,6 +7263,12 @@ class BasicExpression extends Expression
       } 
       else if (objectRef != null)
       { String pre = objectRef.queryFormCPP(env,local);
+
+        if ("super".equals(objectRef + ""))
+        { res = pre + "::" + res + parString;
+          return res; 
+        } 
+
         if (objectRef.umlkind == CLASSID)
         { pre = ((BasicExpression) objectRef).classExtentQueryFormCPP(env,local); }
 
@@ -7143,6 +7327,7 @@ class BasicExpression extends Expression
           }
           return nme + "::" + data; 
         }  
+
         
         String var = findEntityVariable(env);
 
@@ -7191,6 +7376,10 @@ class BasicExpression extends Expression
         { pre = cont + "get" + ename.toLowerCase() + "_s()"; 
           res = ename + "::getAll" + data + "(" + pre + ")";
         } 
+      } 
+      else if ("super".equals(objectRef + ""))
+      { res = pre + "::" + res;
+        return res; 
       } 
       else if (objectRef.isMultiple())
       { if (objectRef.isOrdered())
@@ -8010,10 +8199,20 @@ public Statement generateDesignSubtract(Expression rhs)
       return "cerr << " + rqf + ".what() << endl;";  
     }  
 
+    if (data.startsWith("create") && objectRef == null) 
+    { String entname = data.substring(6);
+      System.out.println(">>> Creation operation for " + entname); 
+         
+      // Entity entx = (Entity) ModelElement.lookupByName(entname,entities); 
+      if (entity != null && entity.getName().equals(entname)) 
+      { return cont + data + pars + ";"; }
+    } 
+
+
     if (isEvent) // an operation of entity
     { 
       if (entity == null) 
-      { System.err.println("No defined entity for: " + this); 
+      { System.err.println("Warning!: No defined entity for: " + this); 
         if (objectRef == null) 
         { return cont + data + pars + ";"; } 
         else 
@@ -8035,13 +8234,18 @@ public Statement generateDesignSubtract(Expression rhs)
         String var = findEntityVariable(env);
         return var + "->" + data + pars + ";";
       }
+      else if ("super".equals(objectRef + ""))
+      { String pre = objectRef.queryFormCPP(env,local);
+        String res = pre + "::" + data + pars + ";";
+        return res; 
+      } 
       else if (objectRef.umlkind == CLASSID && entity.isExternalApplication())
       { return ename + "::" + cont + data + pars + ";"; } 
       else if (objectRef.umlkind == CLASSID && entity.isClassScope(data))  // E.op()
       { return ename + "::" + data + pars + ";"; } 
       else if ("self".equals(objectRef + ""))
       { return "this->" + data + pars + ";"; } 
-      else if (local || "super".equals(objectRef + "") ||
+      else if (local || 
                entity.isComponent())
       { String pre = objectRef.queryFormCPP(env,local);  // base?    
         return pre + "->" + data + pars + ";"; 
@@ -11468,7 +11672,7 @@ public Statement generateDesignSubtract(Expression rhs)
         return res; 
       }
       else if ("super".equals("" + objectRef))
-      { System.out.println("Super entity: " + entity); 
+      { System.out.println(">> Super entity: " + entity); 
         if (entity != null) //  && entity.getSuperclass() != null)
         { // Entity sup = entity.getSuperclass(); 
           BehaviouralFeature supop = entity.getOperation(data); 

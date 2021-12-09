@@ -3248,7 +3248,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("->size"))
     { if (argument.umlkind == CLASSID && (argument instanceof BasicExpression))
-      { qf = ((BasicExpression) argument).classExtentQueryFormCPP(env,local); } 
+      { qf = ((BasicExpression) argument).classExtentQueryFormCPP(env,local); }
+      if (argument.isString())
+      { return "(" + qf + ").length()"; }  
       return qf + "->size()";
     } 
 
@@ -3304,13 +3306,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "UmlRsdsLib<string>::isReal(" + qf + ")"; } 
 
     if (operator.equals("->toInteger")) 
-    { return "std::stoi(" + qf + ")"; } 
+    { return "UmlRsdsLib<int>::toInteger(" + qf + ")"; } 
 
     if (operator.equals("->toLong")) 
-    { return "std::stol(" + qf + ")"; } 
+    { return "UmlRsdsLib<long>::toLong(" + qf + ")"; } 
 
     if (operator.equals("->toReal")) 
-    { return "std::stod(" + qf + ")"; } 
+    { return "UmlRsdsLib<double>::toReal(" + qf + ")"; } 
+
+    if (operator.equals("->toBoolean")) 
+    { return "UmlRsdsLib<bool>::toBoolean(" + qf + ")"; } 
 
     if (operator.equals("->char2byte")) 
     { return "UmlRsdsLib<string>::char2byte(" + qf + ")"; } 
@@ -3330,7 +3335,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     } 
 
     if (operator.equals("->oclType"))
-    { return "Controller::inst->getOclTypeByPK(string(typeid(" + qf + ").name()))"; 
+    { return "OclType::getOclTypeByPK(string(typeid(" + qf + ").name()))"; 
 
    /* if (type != null) 
       { return "\"" + type.getName() + "\""; }

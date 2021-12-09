@@ -3339,6 +3339,7 @@ class CreationStatement extends Statement
   String initialValue = null;
   Expression initialExpression = null;  
   boolean isFrozen = false;  // true when a constant is declared. 
+  Attribute variable = null; // for the LHS
 
   public CreationStatement(String cio, String ast)
   { createsInstanceOf = cio;
@@ -3775,7 +3776,12 @@ class CreationStatement extends Statement
       { return "  " + jType + " " + assignsTo + ";"; } 
       else if (Type.isCollectionType(instanceType) || 
                Type.isMapType(instanceType))
-      { return "  " + jType + " " + assignsTo + ";"; } 
+      { if (variable != null && elementType == null) 
+        { elementType = variable.getElementType(); 
+          jType = instanceType.getCPP(elementType);    
+        }     
+        return "  " + jType + " " + assignsTo + ";"; 
+      } 
       else if (instanceType.isEntity())
       { Entity ent = instanceType.getEntity(); 
         String ename = ent.getName(); 
@@ -3788,9 +3794,30 @@ class CreationStatement extends Statement
                  "  Controller::inst->add" + ename + "(" + assignsTo + ");";
         }  
       } 
+      else if (Type.isExceptionType(instanceType))
+      { return "  " + jType + "* " + assignsTo + ";"; }  
+      else if (instanceType.getName().equals("OclType"))
+      { return "  OclType* " + assignsTo + ";"; }
+      else if (instanceType.getName().equals("OclDate"))
+      { return "  OclDate* " + assignsTo + ";"; }
+      else if (instanceType.getName().equals("OclIterator"))
+      { if (elementType != null) 
+        { String celemt = elementType.getCPP(); 
+          return "  OclIterator<" + celemt + ">* " + assignsTo + ";"; 
+        } 
+        if (variable != null && variable.getElementType() != null) 
+        { String celemt = variable.getElementType().getCPP();
+          return "  OclIterator<" + celemt + ">* " + assignsTo + ";"; 
+        } 
+ 
+        return "  OclIterator* " + assignsTo + ";"; 
+      }
     } 
     else if (elementType != null) 
     { cet = elementType.getCPP(); }
+    else if (variable != null && 
+             variable.getElementType() != null) 
+    { cet = variable.getElementType().getCPP(); }
 
     if (createsInstanceOf.startsWith("Set"))
     { return "  std::set<" + cet + ">* " + assignsTo + ";"; } 
@@ -3815,7 +3842,15 @@ class CreationStatement extends Statement
     else if (createsInstanceOf.equals("OclAny"))
     { return "  void* " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclType"))
-    { return "  string " + assignsTo + ";"; }
+    { return "  OclType* " + assignsTo + ";"; }
+    else if (createsInstanceOf.equals("OclDate"))
+    { return "  OclDate* " + assignsTo + ";"; }
+    else if (createsInstanceOf.equals("OclIterator"))
+    { return "  OclIterator<" + cet + ">* " + assignsTo + ";"; }
+    else if (createsInstanceOf.equals("OclProcess"))
+    { return "  OclProcess* " + assignsTo + ";"; }
+    else if (Type.isExceptionType(createsInstanceOf))
+    { return "  " + createsInstanceOf + "* " + assignsTo + ";"; }  
 
     return createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
                  "  Controller::inst->add" + createsInstanceOf + "(" + assignsTo + ");"; 
@@ -3842,6 +3877,7 @@ class CreationStatement extends Statement
     { instanceType = typ; } 
     if (elementType != null) 
     { instanceType.setElementType(elementType); } 
+    // else { elementType = typ.elementType; }
  
     if (instanceType == null) 
     { att.setType(typ); } 
@@ -3849,6 +3885,7 @@ class CreationStatement extends Statement
     if (elementType != null) 
     { att.setElementType(elementType); } 
  
+    variable = att; 
     env.add(att); 
 	
     if (initialExpression != null) 
@@ -3856,7 +3893,9 @@ class CreationStatement extends Statement
 	
     return true; 
   }  // createsInstanceOf must be a primitive type, String or entity, if Sequence, Set
-     // there is not necessarily an element type. Needs be set when the statement is parsed. 
+     // there is not necessarily an element type. 
+     // The element type needs be set when the statement is 
+     // parsed or analysed. 
 
   public Expression wpc(Expression post)
   { return post; }
@@ -7610,6 +7649,13 @@ class AssignStatement extends Statement
     { lhs.elementType = rhs.elementType; } 
     else if (lhs.elementType != null && rhs.elementType == null) 
     { rhs.elementType = lhs.elementType; } 
+
+    if (BasicExpression.hasVariable(lhs))
+    { BasicExpression.updateVariableType(lhs,rhs); } 
+    else if (BasicExpression.isMapAccess(lhs))
+    { // update key and element types appropriately
+      BasicExpression.updateMapType(lhs,rhs); 
+    } 
 
     if (type != null)  // declare it
     { Attribute att = new Attribute(lhs + "", rhs.type, ModelElement.INTERNAL); 

@@ -1408,6 +1408,34 @@ public class BehaviouralFeature extends ModelElement
   public boolean isUpdate()
   { return query == false; }
 
+  public static boolean isStatic0(ModelElement mm)
+  { if (mm instanceof BehaviouralFeature)
+    { BehaviouralFeature bf = (BehaviouralFeature) mm; 
+      if (bf.isStatic()) { }  
+      else 
+      { return false; } 
+      if (bf.parameters != null && 
+          bf.parameters.size() == 0)
+      { return true; } 
+      return false; 
+    }
+    return false; 
+  }  
+
+  public static boolean isStaticN(ModelElement mm)
+  { if (mm instanceof BehaviouralFeature)
+    { BehaviouralFeature bf = (BehaviouralFeature) mm; 
+      if (bf.isStatic()) { }  
+      else 
+      { return false; } 
+      if (bf.parameters != null && 
+          bf.parameters.size() > 0)
+      { return true; } 
+      return false; 
+    }
+    return false; 
+  }  
+
   public static boolean isQuery0(ModelElement mm)
   { if (mm instanceof BehaviouralFeature)
     { BehaviouralFeature bf = (BehaviouralFeature) mm; 
@@ -1470,6 +1498,40 @@ public class BehaviouralFeature extends ModelElement
 
   public boolean isStatic()
   { return hasStereotype("static"); } 
+
+  public boolean isVirtual(Entity ent) 
+  { // if same op is in ent & ent superclass or ent subclass
+    if (ent.isInterface() || ent.isAbstract())
+    { return true; } 
+
+    String sig = getSignature(); 
+    if (ent != null) 
+    { Entity esup = ent.getSuperclass(); 
+      if (esup != null) 
+      { BehaviouralFeature bf = esup.getOperationBySignature(sig); 
+        if (bf != null) 
+        { return true; } 
+      } 
+
+      for (int j = 0; j < ent.getInterfaces().size(); j++)
+      { Entity intf = (Entity) ent.getInterfaces().get(j); 
+        BehaviouralFeature bfintf = 
+          intf.getOperationBySignature(sig); 
+        if (bfintf != null) 
+        { return true; } 
+      }    
+
+      Vector subs = ent.getSubclasses(); 
+      for (int i = 0; i < subs.size(); i++) 
+      { Entity sub = (Entity) subs.get(i); 
+        BehaviouralFeature bfsub = 
+          sub.getOperationBySignature(sig); 
+        if (bfsub != null) 
+        { return true; } 
+      }       
+    } 
+    return false; 
+  } 
 
   public boolean isFinal()
   { return hasStereotype("final"); } 
@@ -1860,6 +1922,10 @@ public class BehaviouralFeature extends ModelElement
 
   public String getParList()
   { String res = ""; 
+
+    if (parameters == null) 
+    { return res; } 
+
     for (int i = 0; i < parameters.size(); i++) 
     { Attribute att = (Attribute) parameters.get(i); 
       res = res + att.getName() + " " + att.getType() + " "; 
@@ -1869,6 +1935,10 @@ public class BehaviouralFeature extends ModelElement
 
   public String getSignature()
   { String res = getName() + "(";
+
+    if (parameters == null) 
+    { return res + ")"; } 
+
     for (int i = 0; i < parameters.size(); i++) 
     { Attribute att = (Attribute) parameters.get(i); 
       res = res + att.getName() + ": " + att.getType(); 
@@ -2221,7 +2291,9 @@ public class BehaviouralFeature extends ModelElement
 
     out.println("*** Number of parameters of operation " + nme + " = " + pars); 
     if (pars > 10) 
-    { System.err.println("*** Bad smell: too many parameters (" + pars + ") for " + nme); }  
+    { System.err.println("*** Bad smell (EPL): too many parameters (" + pars + ") for " + nme); 
+      System.err.println(">>> Recommend refactoring by introducing value object for parameters or splitting operation into parts"); 
+    }  
 
     int complexity = 0; 
     int cyc = 0; 
@@ -2244,9 +2316,13 @@ public class BehaviouralFeature extends ModelElement
     out.println("*** Total complexity of operation " + nme + " = " + complexity); 
     out.println(); 
     if (cyc > 10) 
-    { System.err.println("*** Bad smell: high cyclomatic complexity (" + cyc + ") for " + nme); }  
+    { System.err.println("*** Bad smell (CC): high cyclomatic complexity (" + cyc + ") for " + nme);
+      System.err.println(">>> Recommend refactoring by functional decomposition"); 
+    }  
     if (complexity > 100) 
-    { System.err.println("*** Bad smell: too high complexity (" + complexity + ") for " + nme); }  
+    { System.err.println("*** Bad smell (EHS): too high complexity (" + complexity + ") for " + nme); 
+      System.err.println(">>> Recommend refactoring by functional decomposition"); 
+    }  
     else if (complexity > 50) 
     { System.err.println("*** Warning: high complexity (" + complexity + ") for " + nme); }  
 
@@ -2283,7 +2359,7 @@ public class BehaviouralFeature extends ModelElement
 
     System.out.println("*** Number of parameters of operation " + nme + " = " + pars); 
     if (pars > 10) 
-    { System.err.println("*** Bad smell: too many parameters (" + pars + ") for " + nme); }  
+    { System.err.println("*** Bad smell (EPL): too many parameters (" + pars + ") for " + nme); }  
 
     int complexity = 0; 
     int cyc = 0; 
@@ -2306,9 +2382,9 @@ public class BehaviouralFeature extends ModelElement
     System.out.println("*** Total complexity of operation " + nme + " = " + complexity); 
     System.out.println(); 
     if (cyc > 10) 
-    { System.err.println("*** Bad smell: high cyclomatic complexity (" + cyc + ") for " + nme); }  
+    { System.err.println("*** Bad smell (CC): high cyclomatic complexity (" + cyc + ") for " + nme); }  
     if (complexity > 100) 
-    { System.err.println("*** Bad smell: too high complexity (" + complexity + ") for " + nme); }  
+    { System.err.println("*** Bad smell (EHS): too high complexity (" + complexity + ") for " + nme); }  
 
     return cyc; 
   } 
@@ -4291,6 +4367,8 @@ public class BehaviouralFeature extends ModelElement
     String isstatic = "";  
     if (isClassScope() || isStatic())
     { isstatic = "static "; } 
+    else if (isVirtual(ent))
+    { isstatic = "virtual "; } 
 
     if (sm != null) 
     { Statement cde = sm.getSequentialCode(); // sequential code
@@ -4308,6 +4386,9 @@ public class BehaviouralFeature extends ModelElement
         // if (ent.isInterface())
         // { return "  public " + ts + " " + name + "(" + pars + ");\n"; } 
  
+        // if (Statement.hasResultDeclaration(activity))
+        // {  } 
+        // else 
         if (tp != null && !("void".equals(ts)))
         { res = res + ts + " result;\n"; }
         localatts.addAll(parameters);   
@@ -4353,7 +4434,9 @@ public class BehaviouralFeature extends ModelElement
       res = header + "  " + ts + " " + exname + "::" + name + "(" + pars + ")\n  {  "; 
       decs.add(opGenPars + "  " + isstatic + ts + " " + name + "(" + pars + ");\n"); 
 
-      if (tp != null && !("void".equals(ts)))
+      if (Statement.hasResultDeclaration(activity))
+      { } 
+      else if (tp != null && !("void".equals(ts)))
       { res = res + ts + " result;\n"; }
       localatts.addAll(parameters);   
       Vector preterms = activity.allPreTerms(); 

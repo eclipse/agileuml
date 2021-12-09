@@ -5741,7 +5741,8 @@ public class ModelSpecification
           return amx;   
         } // sattbe.data:: sattbe.parameters |--> addtag
       }
-      else if (ASTTerm.sameTagSameArity(targetValues))
+      
+      if (ASTTerm.sameTagSameArity(targetValues))
       { // More than 1 subterm (ttag trm1 trm2 ...)
         // Look for matches of (stag trms...) term-by-term
         // to the target terms.
@@ -6120,6 +6121,64 @@ public class ModelSpecification
       String fid = 
           Identifier.nextIdentifier("ruleset");
       TypeMatching tmnew = new TypeMatching(fid);
+
+    Vector ssTerms = new Vector(); 
+    Vector deletedSymbols = new Vector(); 
+    for (int y = 0; y < sSymbolTerms.size(); y++) 
+    { String slf = 
+        ((ASTTerm) sSymbolTerms.get(y)).literalForm();
+      ssTerms.add(slf);  
+      if (deletedSymbols.contains(slf)) { } 
+      else 
+      { deletedSymbols.add(slf); } 
+    }  
+
+    Vector ttTerms = new Vector(); 
+    for (int y = 0; y < tSymbolTerms.size(); y++) 
+    { String tlf = 
+        ((ASTTerm) tSymbolTerms.get(y)).literalForm();
+      ttTerms.add(tlf);  
+    }  
+
+    Vector replacedSymbols = new Vector(); 
+    Vector replacements = new Vector(); 
+    for (int j = 0; j < deletedSymbols.size(); j++) 
+    { String ds = (String) deletedSymbols.get(j); 
+      if (replacedSymbols.contains(ds)) { } 
+      else if (ttTerms.contains(ds)) { } 
+      else 
+      { boolean replacementFound = false; 
+        for (int z = 0; z < ttTerms.size() && 
+                        !replacementFound; z++) 
+        { String rs = (String) ttTerms.get(z); 
+          if (replacements.contains(rs)) { } 
+          else if (Collections.frequency(ttTerms, rs) == 
+                   Collections.frequency(ssTerms, ds))
+          { // Look for a replacement
+            replacedSymbols.add(ds); 
+            replacements.add(rs);
+            replacementFound = true;  
+            System.out.println(">> " + ds + " |--> " + rs); 
+          } 
+        }
+      } 
+    } 
+    deletedSymbols.removeAll(ttTerms); 
+    deletedSymbols.removeAll(replacedSymbols); 
+    System.out.println(">>-- Deleted symbols: " + deletedSymbols); 
+
+      for (int r = 0; r < replacedSymbols.size(); r++) 
+      { String rs = (String) replacedSymbols.get(r);
+        String repls = (String) replacements.get(r);  
+        tmnew.addValueMapping(rs, repls); 
+      } 
+
+      for (int d = 0; d < deletedSymbols.size(); d++) 
+      { String ds = (String) deletedSymbols.get(d); 
+        tmnew.addValueMapping(ds, " "); 
+      } 
+
+
       String slhs = 
         ((BasicExpression) amjx.srcvalue).toCSTL(); 
       String rrhs = 

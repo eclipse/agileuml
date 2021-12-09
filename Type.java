@@ -81,7 +81,7 @@ public class Type extends ModelElement
     exceptions2cpp.put("IOException", "io_exception");
         // user-defined exception 
     exceptions2cpp.put("CastingException", "bad_cast"); 
-    exceptions2cpp.put("NullAccessException", "runtime_error"); 
+    exceptions2cpp.put("NullAccessException", "null_access_exception"); 
     exceptions2cpp.put("IndexingException", "out_of_range");
     
     exceptions2cpp.put("ArithmeticException", "arithmetic_exception");
@@ -90,7 +90,7 @@ public class Type extends ModelElement
     // also "DivideByZeroException
     exceptions2cpp.put("IncorrectElementException", "invalid_argument");
     // Also, "range_error" for incorrect values
-    // exceptions2cpp.put("AssertionException", "AssertionError");
+    exceptions2cpp.put("AssertionException", "assertion_exception");
 
     exceptions2cpp.put("AccessingException", "accessing_exception");
     // User-defined exception
@@ -2872,6 +2872,8 @@ public class Type extends ModelElement
     { return "OclType*"; } 
     if (nme.equals("OclRandom"))
     { return "OclRandom*"; } 
+    if (nme.equals("OclProcess"))
+    { return "OclProcess*"; } 
 
     if (isEntity) 
     { return nme + "*"; }
@@ -3690,6 +3692,52 @@ public class Type extends ModelElement
     return expectedType;
   }
 
+  public static Type refineType(Type oldType, Type t)
+  { if (t == null) 
+    { return oldType; }
+    
+    if (oldType == null)
+    { return t; }
+    
+    if (oldType.equals(t)) 
+    { return oldType; }
+    
+    String tn1 = oldType.getName();
+    String tn2 = t.getName();
+        
+    if (tn1.equals("double") && (tn2.equals("int") || tn2.equals("long")))
+    { return oldType; }
+
+    if (tn1.equals("long") && tn2.equals("int"))
+    { return oldType; }
+
+    if (tn2.equals("double") && (tn1.equals("int") || tn1.equals("long")))
+    { return oldType; }
+    
+    if (tn2.equals("long") && tn1.equals("int"))
+    { return t; }
+    
+    Entity e1 = oldType.getEntity(); 
+    Entity e2 = t.getEntity(); 
+    if (e1 != null && e2 != null)
+    { if (e1 == e2) 
+      { return oldType; } 
+      
+      Entity e = Entity.commonSuperclass(e1,e2); 
+      if (e == null) 
+      { System.err.println("! Warning: incompatible element types " + e1 + " " + e2);
+        return oldType;
+      }
+
+      return new Type(e);
+    }
+
+    System.err.println("! Warning: unexpected combination of types in a collection: " + oldType + " " + t); 
+
+    return oldType;
+  }
+
+
   public static Type mostSpecificType(Type t1, Type t2) 
   { if (t1 == null) { return t2; } 
     if (t2 == null) { return t1; } 
@@ -3836,6 +3884,21 @@ public class Type extends ModelElement
     } 
 
     return res + nme + ")"; 
+  } 
+
+  public String toDeclarationAST()
+  { if (values == null) 
+    { return ""; }
+ 
+    String res = "(OclEnumeration enumeration "; 
+    String nme = getName(); 
+    res = res + nme + " { (OclLiterals ";
+    for (int i = 0; i < values.size(); i++) 
+    { res = res + "(OclLiteral literal " + values.get(i) + ") "; 
+      if (i < values.size() - 1) 
+      { res = res + " ; "; } 
+    }
+    return res + " ) } )";  
   } 
 
   public static Type composedType(Vector properties) 
