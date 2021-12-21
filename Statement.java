@@ -3719,13 +3719,18 @@ class CreationStatement extends Statement
       { return "  " + jType + " " + assignsTo + ";"; }  
       else if (instanceType.isEntity())
       { Entity ent = instanceType.getEntity();
-        String gpars = ent.typeParameterTextCSharp(); 
         String ename = ent.getName(); 
 
+        if (ent.genericParameter)
+        { return "  " + ename + " " + assignsTo + ";\n"; } 
+
+        String gpars = ent.typeParameterTextCSharp(); 
+       
+
         if (ent.hasStereotype("external"))
-        { return "  " + jType + " " + assignsTo + " = new " + jType + "();\n"; } 
+        { return "  " + jType + gpars + " " + assignsTo + " = new " + jType + gpars + "();\n"; } 
         else
-        { return "  " + jType + " " + assignsTo + " = new " + jType + "();\n" + 
+        { return "  " + jType + gpars + " " + assignsTo + " = new " + jType + gpars + "();\n" + 
                  "  Controller.inst().add" + ename + "(" + assignsTo + ");"; 
         } 
       } 
@@ -3775,7 +3780,8 @@ class CreationStatement extends Statement
       if (Type.isBasicType(instanceType)) 
       { return "  " + jType + " " + assignsTo + ";"; } 
       else if (Type.isCollectionType(instanceType) || 
-               Type.isMapType(instanceType))
+               Type.isMapType(instanceType) || 
+               Type.isFunctionType(instanceType))
       { if (variable != null && elementType == null) 
         { elementType = variable.getElementType(); 
           jType = instanceType.getCPP(elementType);    
@@ -3785,12 +3791,18 @@ class CreationStatement extends Statement
       else if (instanceType.isEntity())
       { Entity ent = instanceType.getEntity(); 
         String ename = ent.getName(); 
+
+        if (ent.genericParameter)
+        { return "  " + ename + " " + assignsTo + ";\n"; } 
+
+        String gpars = ent.typeParameterTextCPP(); 
+
         if (initialExpression != null)
-        { return "  " + jType + " " + assignsTo + " = " + initialExpression.toCPP() + ";\n"; }
+        { return "  " + jType + gpars + " " + assignsTo + " = " + initialExpression.toCPP() + ";\n"; }
         else if (ent.hasStereotype("external"))
-        { return "  " + jType + " " + assignsTo + " = new " + ename + "();\n"; } 
+        { return "  " + jType + gpars + " " + assignsTo + " = new " + ename + gpars + "();\n"; } 
         else
-        { return "  " + jType + " " + assignsTo + " = new " + ename + "();\n" + 
+        { return "  " + jType + gpars + " " + assignsTo + " = new " + ename + gpars + "();\n" + 
                  "  Controller::inst->add" + ename + "(" + assignsTo + ");";
         }  
       } 
@@ -3800,6 +3812,12 @@ class CreationStatement extends Statement
       { return "  OclType* " + assignsTo + ";"; }
       else if (instanceType.getName().equals("OclDate"))
       { return "  OclDate* " + assignsTo + ";"; }
+      else if (instanceType.getName().equals("OclRandom"))
+      { return "  OclRandom* " + assignsTo + ";"; }
+      else if (instanceType.getName().equals("OclFile"))
+      { return "  OclFile* " + assignsTo + ";"; }
+      else if (instanceType.getName().equals("OclProcess"))
+      { return "  OclProcess* " + assignsTo + ";"; }
       else if (instanceType.getName().equals("OclIterator"))
       { if (elementType != null) 
         { String celemt = elementType.getCPP(); 
@@ -3828,6 +3846,10 @@ class CreationStatement extends Statement
     if (createsInstanceOf.startsWith("Map"))
     { return "  map<string, " + cet + ">* " + assignsTo + ";"; } 
 
+    if (createsInstanceOf.startsWith("Function"))
+    { return "function<" + cet + "(string)> " + assignsTo + ";"; } 
+
+
     if (createsInstanceOf.equals("boolean")) 
     { cstype = "bool"; 
       return "  " + cstype + " " + assignsTo + ";";   
@@ -3845,6 +3867,10 @@ class CreationStatement extends Statement
     { return "  OclType* " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclDate"))
     { return "  OclDate* " + assignsTo + ";"; }
+    else if (createsInstanceOf.equals("OclRandom"))
+    { return "  OclRandom* " + assignsTo + ";"; }
+    else if (createsInstanceOf.equals("OclFile"))
+    { return "  OclFile* " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclIterator"))
     { return "  OclIterator<" + cet + ">* " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclProcess"))

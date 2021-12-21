@@ -5992,8 +5992,13 @@ public boolean conflictsWithIn(String op, Expression el,
       if (needsBracket)
       { pres = "(" + pres + ")"; } 
  
-      if ("null".equals(lqf) || "null".equals(rqf))
-      { return pres; } 
+      if ("null".equals(lqf) && "null".equals(rqf))
+      { return "\"\""; }
+      if ("null".equals(lqf))
+      { return cppStringOf(rqf, right.getType()); }
+      if ("null".equals(rqf))
+      { return cppStringOf(lqf, left.getType()); }
+ 
       if (left.isPrimitive() && right.isPrimitive())
       { return pres; } 
       if (left.isString() && right.isString())
@@ -6001,9 +6006,9 @@ public boolean conflictsWithIn(String op, Expression el,
         return pres; 
       } 
       else if (left.isString())
-      { return "string(" + lqf + ").append(std::to_string(" + rqf + "))"; } 
-      else if ("String".equals(right.getType().getName()))
-      { return "std::to_string(" + lqf + ").append(" + rqf + ")"; } 
+      { return "string(" + lqf + ").append(" + cppStringOf(rqf, right.getType()) + ")"; } 
+      else if (right.isString())
+      { return "(" + cppStringOf(lqf, left.getType()) + ").append(" + rqf + ")"; } 
        
      /* if (left.isString() && right.isPrimitive())
       { return pres; } 
@@ -6062,25 +6067,25 @@ public boolean conflictsWithIn(String op, Expression el,
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals(":"))  
     { String rinstances = cont + "get" + ("" + right).toLowerCase() + "_s()"; 
-      return "UmlRsdsLib<" + right + "*>::isIn(" + lqf + ", " + rinstances + ")";
+      return "UmlRsdsLib<" + right + "*>::isIn((" + right + "*) " + lqf + ", " + rinstances + ")";
     } 
 
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsKindOf"))  
     { String rinstances = cont + "get" + ("" + right).toLowerCase() + "_s()"; 
-      return "UmlRsdsLib<" + right + "*>::isIn(" + lqf + ", " + rinstances + ")";
+      return "UmlRsdsLib<" + right + "*>::isIn((" + right + "*) " + lqf + ", " + rinstances + ")";
     } 
 	
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("->oclIsTypeOf"))  
     { String rinstances = cont + "get" + ("" + right).toLowerCase() + "_s()"; 
-      return "UmlRsdsLib<" + right + "*>::isIn(" + lqf + ", " + rinstances + ")";
+      return "UmlRsdsLib<" + right + "*>::isIn((" + right + "*) " + lqf + ", " + rinstances + ")";
     }
 
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals("/:")) 
     { String rinstances = cont + "get" + ("" + right).toLowerCase() + "_s()"; 
-      return "!(UmlRsdsLib<" + right + "*>::isIn(" + lqf + ", " + rinstances + "))";
+      return "!(UmlRsdsLib<" + right + "*>::isIn((" + right + "*) " + lqf + ", " + rinstances + "))";
     } 
 
     if (right.umlkind == CLASSID && 

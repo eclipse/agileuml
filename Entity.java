@@ -40,6 +40,7 @@ public class Entity extends ModelElement implements Comparable
   private Entity realEntity = null; 
 
   private Vector typeParameters = new Vector(); // of Type
+  boolean genericParameter = false; // This class is itself a par
   
   public Entity(String nme)
   { super(nme); 
@@ -1080,6 +1081,8 @@ public class Entity extends ModelElement implements Comparable
 
   public void addInterface(Entity intf)
   { // Check that all ops of intf are also in this
+
+    intf.setInterface(true); 
 
     Vector iops = intf.getOperations(); 
     Vector allops = allOperations(); 
@@ -4930,7 +4933,7 @@ public class Entity extends ModelElement implements Comparable
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       if (att.isStatic())
-      { att.staticAttributeDefinition(out, ename); } 
+      { att.staticAttributeDefinition(out, this, ename); } 
     } 
   } 
 
@@ -5976,6 +5979,56 @@ public class Entity extends ModelElement implements Comparable
     } 
     return ""; 
   } 
+
+  public String typeParameterTextCPP()
+  { String pars = ""; 
+    if (typeParameters != null && typeParameters.size() > 0) 
+    { pars = "<"; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        Type et = tp.getElementType(); 
+        pars = pars + tp.getCPP(et); 
+        if (i < typeParameters.size() - 1) 
+        { pars = pars + ","; } 
+      } 
+      pars = pars + ">"; 
+      return pars; 
+    } 
+    return ""; 
+  } 
+
+  public String cppFullClassName()
+  { String nme = getName(); 
+    if (typeParameters != null && typeParameters.size() > 0) 
+    { nme = nme + "<"; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        nme = nme + tp.getName(); 
+        if (i < typeParameters.size() - 1) 
+        { nme = nme + ","; } 
+      } 
+      nme = nme + ">"; 
+      return nme; 
+    } 
+    return nme; 
+  } 
+
+  public String cppClassDeclarator()
+  { String res = ""; 
+    if (typeParameters != null && typeParameters.size() > 0)
+    { res = "template<"; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        res = res + "class " + tp.getName(); 
+        if (i < typeParameters.size() - 1) 
+        { res = res + ","; } 
+      } 
+      res = res + ">\n"; 
+    } 
+    res = res + 
+          "class " + getName() + ";\n";
+    return res; 
+  }
 
 
   public void generateCSharp(Vector entities, Vector types, PrintWriter out)
@@ -8027,13 +8080,20 @@ public class Entity extends ModelElement implements Comparable
   } // and roles
 
   public String generateToStringOpCPP()
-  { // if (isInterface())
-    // { return "  public override string ToString();\n"; } 
+  { String ename = getName(); 
+    String nme = "(" + ename + ") ";
+   
+    if (isInterface())
+    { return "  virtual string toString()\n" + 
+             "  { return \"" + nme + "\"; }\n"; 
+    } 
 
-    String ename = getName(); 
-    String nme = "(" + ename + ")";
+    String stringop = "  virtual string toString() {\n"; 
+
     String res = "  friend ostream& operator<<(ostream& s, " + ename + "& x)\n" +
       "  { return s << \"" + nme + " \" ";
+
+    stringop = stringop + "    return \"(" + ename + ") \" "; 
     
     // Vector datts = new Vector(); 
     // datts.addAll(attributes); 
@@ -8041,12 +8101,20 @@ public class Entity extends ModelElement implements Comparable
 
     for (int i = 0; i < attributes.size(); i++)
     { Attribute att = (Attribute) attributes.get(i);
-      String getop = "x.get" + att.getName() + "()";
+      String attname = att.getName(); 
+      String getop = "get" + attname + "()";
+      res = res + " << \"" + attname + " = \" << x." + getop;
+      
+      stringop = stringop + " + " + Expression.cppStringOf(getop,att.getType()); 
+
       if (i < attributes.size() - 1)
-      { getop = getop + " << \",\""; }
-      res = res + " << " + getop;
+      { res = res + " << \",\""; 
+        stringop = stringop + " + \", \" "; 
+      }
+
     }
     res = res + " << endl; }\n\n"; 
+    res = res + stringop + ";\n  }\n\n"; 
     // if (superclass != null) 
     // { res = res + "    return _res_ + base.ToString();\n  }"; } 
     // else 
@@ -14498,6 +14566,10 @@ public void iosDbiOperations(PrintWriter out)
       else if (t.isEnumeration())
       { valc = t.getName() + "(std::stoi(val))"; }
       else if ("OclAny".equals(tname) || 
+               "OclProcess".equals(tname) || 
+               "OclFile".equals(tname) || 
+               "OclRandom".equals(tname) || 
+               "OclIterator".equals(tname) || 
                "Function".equals(name))
       { valc = "NULL"; }
       else if ("Sequence".equals(tname))
@@ -14506,7 +14578,11 @@ public void iosDbiOperations(PrintWriter out)
       { valc = "new std::set<" + et + ">()"; } 
       else if ("Map".equals(tname))
       { valc = "new map<string," + et + ">()"; } 
- 
+      else if (t.isEntity())
+      { String ent2 = t.getCPP(); 
+        valc = "(" + ent2 + ") objectmap[val]"; 
+      } 
+      
       
 
       res = res + 

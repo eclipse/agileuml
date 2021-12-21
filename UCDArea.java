@@ -8612,18 +8612,26 @@ public class UCDArea extends JPanel
     // out.println("#include <algorithm>"); 
     
     out.println(""); 
+    out.println("#undef max"); 
+    out.println("#undef min"); 
+    out.println(); 
     out.println("using namespace std;\n"); 
+
+    java.util.Date d1 = new java.util.Date(); 
+    long t1 = d1.getTime(); 
 
   //  if (systemName != null && systemName.length() > 0)
   //  { out.println("namespace " + systemName + " {\n\n"); } 
  
-    out2.println("// Controller.cc"); 
+    out2.println("// Controller.cc");
+    out2.println("#include <stdio.h>");  
     out2.println("#include <string>"); 
     out2.println("#include <vector>");
     out2.println("#include <set>"); 
     out2.println("#include <map>");
     out2.println("#include <iostream>"); 
-    out2.println("#include <fstream>"); 
+    out2.println("#include <fstream>");
+    out2.println("#include <sstream>");  
     out2.println("#include <cmath>"); 
     out2.println("#include <ctime>"); 
     out2.println("#include <algorithm>"); 
@@ -8631,7 +8639,11 @@ public class UCDArea extends JPanel
     out2.println("#include <thread>"); 
     out2.println("#include <functional>"); 
     out2.println("#include <cstdlib>"); 
-    out2.println("#include <condition_variable>"); 
+    out2.println("#include <condition_variable>");
+    out2.println("#include <sys/stat.h>"); 
+    out2.println("#include <direct.h>");  
+    out2.println("#include <windows.h>"); 
+
     out2.println(); 
     out2.println("#pragma warning(disable : 4996)"); 
     out2.println(""); 
@@ -8646,22 +8658,21 @@ public class UCDArea extends JPanel
     if (mathlib != null) 
     { BSystemTypes.generateLibraryCPP("MathLib",out2); }
 
-    Entity ocldate = (Entity) ModelElement.lookupByName("OclDate", entities); 
-    if (ocldate != null) 
-    { BSystemTypes.generateLibraryCPP("OclDate",out2); } 
 
     Entity ocliterator = (Entity) ModelElement.lookupByName("OclIterator", entities); 
     if (ocliterator != null) 
     { BSystemTypes.generateLibraryCPP("OclIterator",out2); }
 
-    Entity oclrandom = (Entity) ModelElement.lookupByName("OclRandom", entities); 
-    if (oclrandom != null) 
-    { BSystemTypes.generateLibraryCPP("OclRandom",out2); }
 
     Entity oclprocess = (Entity)    
         ModelElement.lookupByName("OclProcess", entities); 
     if (oclprocess != null) 
     { BSystemTypes.generateLibraryCPP("OclProcess",out2); }
+
+    Entity oclfile = (Entity)    
+        ModelElement.lookupByName("OclFile", entities); 
+    if (oclfile != null) 
+    { BSystemTypes.generateLibraryCPP("OclFile",out2); }
 
 
     for (int i = 0; i < entities.size(); i++) 
@@ -8680,7 +8691,7 @@ public class UCDArea extends JPanel
     { Entity ent = (Entity) entities.get(i); 
       if (ent.isComponent() || ent.isExternal()) { } 
       else 
-      { out.println("class " + ent.getName() + ";"); } 
+      { out.println(ent.cppClassDeclarator()); } 
     } 
 
     Vector orderedByInheritance = new Vector(); 
@@ -8701,6 +8712,56 @@ public class UCDArea extends JPanel
     out.println(); 
 
     generateSystemTypesCPP(out); 
+    out.println(); 
+
+    try
+    { File ocltypeHPP = new File("libraries/OclType.hpp"); 
+      BufferedReader br = null;
+      String sline = null;
+      boolean eof = false; 
+      br = new BufferedReader(new FileReader(ocltypeHPP));
+      out.println(); 
+ 
+      while (!eof)
+      { sline = br.readLine();
+        if (sline == null) 
+        { eof = true; } 
+        else 
+        { out.println(sline); }
+      } 
+      out.println(); 
+
+      br.close();  
+    } 
+    catch (IOException _ex)
+    { System.err.println("!! ERROR: libraries/OclType.hpp not found"); }
+
+    if (mathlib != null) 
+    { // Collect MathLib.hpp from libraries: 
+      BSystemTypes.generateLibraryHPP("MathLib", out); 
+    }
+
+    if (ocliterator != null) 
+    { // Collect OclIterator.hpp from libraries: 
+      BSystemTypes.generateLibraryHPP("OclIterator", out); 
+    }
+
+    if (oclprocess != null) 
+    { // Collect OclProcess.hpp from libraries: 
+      BSystemTypes.generateLibraryHPP("OclProcess", out); 
+    }
+
+    Entity ocldate = (Entity) ModelElement.lookupByName("OclDate", entities); 
+    if (ocldate != null) 
+    { BSystemTypes.generateLibraryHPP("OclDate",out); } 
+
+    Entity oclrandom = (Entity) ModelElement.lookupByName("OclRandom", entities); 
+    if (oclrandom != null) 
+    { BSystemTypes.generateLibraryHPP("OclRandom",out); }
+
+    if (oclfile != null) 
+    { BSystemTypes.generateLibraryHPP("OclFile",out); }
+
     out.println(); 
 
     for (int i = 0; i < orderedByInheritance.size(); i++) 
@@ -8750,49 +8811,14 @@ public class UCDArea extends JPanel
     // { out.println("} \n\n"); } 
 
     try
-    { File ocltypeHPP = new File("libraries/OclType.hpp"); 
-      BufferedReader br = null;
-      String sline = null;
-      boolean eof = false; 
-      br = new BufferedReader(new FileReader(ocltypeHPP));
-      out.println(); 
- 
-      while (!eof)
-      { sline = br.readLine();
-        if (sline == null) 
-        { eof = true; } 
-        else 
-        { out.println(sline); }
-      } 
-      out.println(); 
-
-      br.close();  
-    } 
-    catch (IOException _ex)
-    { System.err.println("!! ERROR: libraries/OclType.hpp not found"); }
-
-    if (mathlib != null) 
-    { // Collect MathLib.hpp from libraries: 
-      BSystemTypes.generateLibraryHPP("MathLib", out); 
-    }
-
-    if (ocliterator != null) 
-    { // Collect OclIterator.hpp from libraries: 
-      BSystemTypes.generateLibraryHPP("OclIterator", out); 
-    }
-
-    if (oclprocess != null) 
-    { // Collect OclProcess.hpp from libraries: 
-      BSystemTypes.generateLibraryHPP("OclProcess", out); 
-    }
-
-
-
-    try
     { out.close();
       out2.close(); 
     }
     catch (Exception ex) { }
+
+    java.util.Date d2 = new java.util.Date(); 
+    long t2 = d2.getTime();
+    System.out.println(">>> Time taken for code-generation: " + (t2-t1));
 
     System.out.println(">>> classes ordered by inheritance are: " + orderedByInheritance);
   }
@@ -8800,7 +8826,11 @@ public class UCDArea extends JPanel
 private String initialiseOclTypesCPP()
 { String res = 
     "int main(int argc, char* argv[])\n" + 
-    "{ OclType* intType = OclType::createOclType(\"int\");\n" + 
+    "{ // OclFile::newOclFile(\"System.in\");\n" +  
+    "  // OclFile::newOclFile(\"System.out\");\n" +  
+    "  // OclFile::newOclFile(\"System.err\");\n\n" +  
+
+    "  OclType* intType = OclType::createOclType(\"int\");\n" + 
     "  intType->setname(typeid(1).name());\n" +  
     "  OclType* longType = OclType::createOclType(\"long\");\n" + 
     "  longType->setname(typeid(0L).name());\n" +  
@@ -8810,11 +8840,27 @@ private String initialiseOclTypesCPP()
     "  booleanType->setname(typeid(true).name());\n" +  
     "  OclType* stringType = OclType::createOclType(\"String\");\n" +  
     "  stringType->setname(typeid(string(\"\")).name());\n" +
+    "  OclType* sequenceType = OclType::createOclType(\"Sequence\");\n" +  
+    "  sequenceType->setname(typeid(vector<void*>()).name());\n" +
+    "  OclType* setType = OclType::createOclType(\"Set\");\n" +  
+    "  setType->setname(typeid(set<void*>()).name());\n" +
     "  OclType* voidType = OclType::createOclType(\"void\");\n" +  
     "  voidType->setname(\"void\");\n" +   
-    "  OclType* anyType = OclType::createOclType(\"OclAny\");\n" +  
-    "  anyType->setname(\"void *\");\n" +   
+    "  OclType* oclanyType = OclType::createOclType(\"OclAny\");\n" +  
+    "  oclanyType->setname(\"void *\");\n" +   
+    "  OclType* oclfileType = OclType::createOclType(\"OclFile\");\n" +  
+    "  oclfileType->setname(\"OclFile *\");\n" +   
     "\n"; 
+
+  for (int i = 0; i < types.size(); i++) 
+  { Type typ = (Type) types.get(i); 
+    String tname = typ.getName(); 
+    String lctname = tname.toLowerCase(); 
+    res = res + 
+          "  OclType* " + lctname + "Type = OclType::createOclType(\"" + tname + "\");\n" +  
+          "  " + lctname + "Type->setname(\"" + tname + "\");\n"; 
+  } 
+
   for (int i = 0; i < entities.size(); i++) 
   { Entity ent = (Entity) entities.get(i); 
     if (ent.isComponent() || ent.isExternal()) { } 
@@ -8822,10 +8868,59 @@ private String initialiseOclTypesCPP()
     { String ename = ent.getName(); 
       String lcname = ename.toLowerCase(); 
       res = res + 
-          "  OclType* " + lcname + " = OclType::createOclType(\"" + ename + "\");\n" +  
-          "  " + lcname + "->setname(\"" + ename + " *\");\n"; 
+          "  OclType* " + lcname + "Type = OclType::createOclType(\"" + ename + "\");\n" +  
+          "  " + lcname + "Type->setname(\"" + ename + " *\");\n"; 
+
+      Vector attrs = ent.getAttributes(); 
+      for (int j = 0; j < attrs.size(); j++) 
+      { Attribute att = (Attribute) attrs.get(j); 
+        String attnme = att.getName(); 
+        Type atttype = att.getType();
+        String attid = attnme + "_" + ename + "Attribute";
+        String typeid = atttype.getName().toLowerCase() + "Type";   
+        res = res + 
+          "  OclAttribute* " + attid + " = new OclAttribute();\n" + 
+          "  " + attid + "->setname(\"" + attnme + "\");\n" +  
+          "  " + attid + "->settype(" + typeid + ");\n" +  
+          "  " + lcname + "Type->addattributes(" + attid + ");\n"; 
+      } 
+
+      Vector ops = ent.getOperations();
+      Vector opnames = new Vector();  
+      for (int j = 0; j < ops.size(); j++) 
+      { BehaviouralFeature bf = (BehaviouralFeature) ops.get(j);
+        String opnme = bf.getName(); 
+        String opid = opnme + "_" + ename + "Operation";
+        if (opnames.contains(opid)) { } 
+        else 
+        { res = res + 
+            "  OclOperation* " + opid + " = new OclOperation();\n" + 
+            "  " + opid + "->setname(\"" + opnme + "\");\n" +  
+            "  " + lcname + "Type->addoperations(" + opid + ");\n"; 
+          opnames.add(opid); 
+        } 
+      } 
+        
     } // add its attributes, operations
   } 
+
+  for (int i = 0; i < entities.size(); i++) 
+  { Entity ent = (Entity) entities.get(i); 
+    if (ent.isComponent() || ent.isExternal()) { } 
+    else 
+    { Entity sup = ent.getSuperclass(); 
+      if (sup != null) 
+      { String ename = ent.getName(); 
+        String lcname = ename.toLowerCase(); 
+        String supname = sup.getName(); 
+        String suplcname = supname.toLowerCase(); 
+        res = res + 
+              "  " + lcname + "Type->addsuperclasses(" + 
+                                      suplcname + "Type);\n"; 
+      } 
+    } 
+  }
+
   return res + "  return 0;\n}\n"; 
 }  
 
@@ -10481,13 +10576,18 @@ public void produceCUI(PrintWriter out)
     out.println("    { vector<_T>* res = new vector<_T>();");
     out.println("      for (std::set<_T>::iterator _pos = c->begin(); _pos != c->end(); ++_pos)"); 
     out.println("      { res->push_back(*_pos); } "); 
-    out.println("      return res; }\n"); 
-    out.println("    static std::set<_T>* asSet(vector<_T>* c)"); 
+    out.println("      return res;"); 
+    out.println("   }\n");
+
+    out.println("    static vector<_T>* asSequence(std::vector<_T>* c)"); 
+    out.println("    { return c; }\n"); 
+ 
+ /*   out.println("    static std::set<_T>* asSet(vector<_T>* c)"); 
     out.println("    { std::set<_T>* res = new std::set<_T>(); "); 
     out.println("      for (vector<_T>::iterator _pos = c->begin(); _pos != c->end(); ++_pos)"); 
     out.println("      { res->insert(*_pos); } "); 
     out.println("      return res; \n"); 
-    out.println("    }\n"); 
+    out.println("    }\n"); */ 
 
     String mop = BSystemTypes.generateTokeniseOpCPP(); 
     out.println("\n" + mop); 
@@ -10527,8 +10627,8 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop); 
     mop = BSystemTypes.generateClosureOpsCPP(associations); 
     out.println("\n" + mop); 
-    // mop = BSystemTypes.generateAsSetOp(); 
-    // out.println("\n" + mop);
+    mop = BSystemTypes.generateAsSetOpCPP(); 
+    out.println("\n" + mop);
     mop = BSystemTypes.generateReverseOpCPP(); 
     out.println("\n" + mop);  
     mop = BSystemTypes.generateFrontOpCPP(); 

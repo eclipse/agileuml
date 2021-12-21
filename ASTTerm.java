@@ -161,6 +161,8 @@ public abstract class ASTTerm
     return typ.equals(str); 
   }  
 
+  public abstract Expression cexpressionToKM3(java.util.Map vartypes, java.util.Map varelemtypes, Vector types, Vector entities); 
+  
   public abstract String queryForm(); 
 
   public abstract String toKM3(); 

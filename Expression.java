@@ -956,6 +956,26 @@ abstract class Expression
 
   public abstract Expression invert(); 
 
+  public static String cppStringOf(String expr, Type t)
+  { if (t == null) 
+    { return expr; } 
+    String tname = t.getName(); 
+    if (tname.equals("String"))
+    { return expr; } 
+    if (t.isNumeric() || t.isEnumeration() || t.isBoolean())
+    { return "std::to_string(" + expr + ")"; } 
+    if (t.isCollection())
+    { Type elemT = t.getElementType(); 
+      if (elemT != null) 
+	  { String cet = elemT.getCPP(); 
+        return "UmlRsdsLib<" + cet + ">::collectionToString(" + expr + ")";
+	  } 
+	  else 
+	  { return "UmlRsdsLib<void*>::collectionToString(" + expr + ")"; } 
+    } 
+    return "(" + expr + ")->toString()";
+  } 
+
   public String wrap(String qf)
   { return wrap(type,qf); }
 

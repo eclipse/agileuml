@@ -444,6 +444,19 @@ public class SetExpression extends Expression
     return res; 
   }  
 
+  public String toCSequence(java.util.Map env, boolean local)
+  { String cet = "void*"; 
+    
+    String res = "(new vector<" + cet + ">())"; 
+       
+    for (int i = 0; i < elements.size(); i++)
+    { Expression e = (Expression) elements.get(i);
+      res = "addCSequence" + 
+               "(" + res + "," + e.queryFormCPP(env,local) + ")";
+    }
+    return res; 
+  }  
+
   public BExpression bqueryForm(java.util.Map env)
   { Vector elems = new Vector();
     if (elements.size() == 1)

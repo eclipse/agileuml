@@ -3115,6 +3115,7 @@ public BehaviouralFeature operationDefinition(int st, int en, Vector entities, V
       ">".equals(lexicals.get(st0+2) + ""))
   { String parType = lexicals.get(st0+1) + "";
     Entity ptEnt = new Entity(parType); 
+    ptEnt.genericParameter = true; 
     Type pt = new Type(ptEnt); 
     bf.addTypeParameter(pt);  
     localEntities.add(ptEnt); 
@@ -5805,6 +5806,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     { System.out.println(">>> Generic class, parameter " + lexicals.get(start + 1));
       String parType = lexicals.get(start + 1) + ""; 
       Entity parEnt = new Entity(parType);
+      parEnt.genericParameter = true; 
       parEnt.addStereotype("derived"); 
  
       Type parT = new Type(parEnt); 

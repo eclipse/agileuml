@@ -101,6 +101,10 @@ public class ASTSymbolTerm extends ASTTerm
   public String asTextModel(PrintWriter out)
   { return "\"" + symbol + "\""; } 
 
+  public Expression cexpressionToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return new BasicExpression(symbol); } 
+
   public String queryForm()
   { return toKM3(); } 
 

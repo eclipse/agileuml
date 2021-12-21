@@ -1840,8 +1840,8 @@ public class BSystemTypes extends BComponent
       if (selectvar == null && e != null && e.isEntity()) 
       { newenv.put(ename,var); } 
 
-      String res1 = "  static " + restype1 + "* select_" + oldindex + "(" + restype1 + "* _l"; 
-      String res2 = "  static " + restype2 + "* select_" + oldindex + "(" + restype2 + "* _l"; 
+      String res1 = "  static " + restype1 + "* reject_" + oldindex + "(" + restype1 + "* _l"; 
+      String res2 = "  static " + restype2 + "* reject_" + oldindex + "(" + restype2 + "* _l"; 
 
       for (int i = 0; i < pars.size(); i++) 
       { Attribute par = (Attribute) pars.get(i);
@@ -4563,24 +4563,47 @@ public class BSystemTypes extends BComponent
    
    res = res + 
      "  static string collectionToString(vector<_T>* c)\n" +
-     "  { string res = \"Sequence{\"; \n" +
+     "  { ostringstream buff;\n" + 
+     "    buff << \"Sequence{\";\n" + 
      "    for (vector<_T>::iterator _pos = c->begin(); _pos != c->end(); ++_pos)\n" +
-     "    { res = res.append(string(*_pos));\n" + 
+     "    { buff << *_pos;\n" +
      "      if (_pos + 1 < c->end())\n" +
-     "      { res = res.append(\", \"); }\n" +
+     "      { buff << \", \"; }\n" +
      "    }\n" +
-     "    return res.append(\"}\");\n" + 
+     "    buff << \"}\";\n" + 
+     "    return buff.str(); \n" +
      "  }\n\n"; 
 
    res = res + 
      "  static string collectionToString(set<_T>* c)\n" +
-     "  { string res = \"Set{\"; \n" +
+     "  { ostringstream buff;\n" +
+     "    buff << \"Set{\"; \n" +
      "    for (set<_T>::iterator _pos = c->begin(); _pos != c->end(); ++_pos)\n" +
-     "    { res = res.append(string(*_pos));\n" + 
+     "    { buff << *_pos;\n" +
      "      if (_pos + 1 < c->end())\n" +
-     "      { res = res.append(\", \"); }\n" +
+     "      { buff << \", \"; }\n" +
      "    }\n" +
-     "    return res.append(\"}\");\n" + 
+     "    buff << \"}\";\n" +
+     "    return buff.str(); \n" +
+     "  }\n\n"; 
+
+   res = res + 
+     "  static string collectionToString(map<string, _T>* c)\n" + 
+     "  { ostringstream buff;\n" +
+     "    buff << \"Map{\";\n" + 
+     "    int sze = c->size();\n" +  
+     "    int count = 0;\n" +  
+     "    for (auto it = c->begin(); it != c->end(); it++)\n" + 
+     "    {\n" + 
+     "      buff << (*it).first;\n" + 
+     "      buff << \" |-> \";\n" + 
+     "      buff << (*it).second;\n" + 
+     "      if (count + 1 < sze)\n" + 
+     "      { buff << \", \"; }\n" + 
+     "      count++; \n" + 
+     "    }\n" + 
+     "    buff << \"}\";\n" +
+     "    return buff.str();\n" +  
      "  }\n\n"; 
  
     return res; 
@@ -9049,7 +9072,7 @@ public class BSystemTypes extends BComponent
     return res;
   }
 
-  public String generateAsSetOpCPP()
+  public static String generateAsSetOpCPP()
   { String res = "     static std::set<_T>* asSet(vector<_T>* c)\n" +
     "    { std::set<_T>* res = new std::set<_T>();\n" +
     "      res->insert(c->begin(), c->end());\n" +
@@ -9075,8 +9098,16 @@ public class BSystemTypes extends BComponent
     "      return res;\n" +  
     "    }\n\n"; 
 
+    res = res + "    static vector<_T>* randomiseSequence(vector<_T>* sq)\n" + 
+    "    { vector<_T>* res = new vector<_T>();\n" + 
+    "      for (vector<_T>::iterator _pos = sq->begin(); _pos != sq->end(); ++_pos)\n" + 
+    "      { res->push_back(*_pos); }\n" +  
+    "      std::random_shuffle(res->begin(), res->end());\n" + 
+    "      return res; \n" + 
+    "    }\n\n"; 
+
     return res;
-  }
+  } // also need asBag operations - same as sort
 
   public String generateAsSequenceOpJava6()
   { String res = "    public static ArrayList asSequence(Collection c)\n" +

@@ -1430,7 +1430,10 @@ public class Attribute extends ModelElement
     java.util.Map env = new java.util.HashMap(); 
 
     if (initialExpression != null) 
-    { res = res + " = " + initialExpression.queryFormCPP(env,true); } 
+    { if (initialExpression.getElementType() == null)
+      { initialExpression.setElementType(elementType); } 
+      res = res + " = " + initialExpression.queryFormCPP(env,true); 
+    } 
     else 
     { String initval = getInitialValue(); 
       if (initval != null) 
@@ -1444,11 +1447,13 @@ public class Attribute extends ModelElement
   } // initialExpression & convert to C++, etc, also for C#
 
 
-  public void staticAttributeDefinition(PrintWriter out, String ename) 
-  { String res = "    " + getType().getCPP(getElementType()) + " " + ename + "::" + getName(); 
-    String initval = getInitialValue(); // initialExpression is better 
+  public void staticAttributeDefinition(PrintWriter out, 
+                                Entity ent, String ename) 
+  { String res = "    " + getType().getCPP(getElementType()) + " " + ent.cppFullClassName() + "::" + getName(); 
+    Expression initval = getInitialExpression(); 
+    java.util.Map env = new java.util.HashMap(); 
     if (initval != null) 
-    { res = res + " = " + initval; } 
+    { res = res + " = " + initval.queryFormCPP(env,true); } 
     else 
     { res = res + " = " + getType().getDefaultCPP(getElementType()); } 
     res = res + ";\n";
@@ -1752,10 +1757,18 @@ public class Attribute extends ModelElement
     // { return "" + nme + " = " + initialValue + ";"; } 
 
     if (initialExpression != null) 
-    { java.util.Map env = new java.util.HashMap();
+    { if (initialExpression.getElementType() == null)
+      { initialExpression.setElementType(elementType); } 
+      
+      java.util.Map env = new java.util.HashMap();
       if (entity != null) 
-      { env.put(entity.getName(), "this"); } 
-      return nme + " = " + initialExpression.queryFormCPP(env,true) + ";"; 
+      { env.put(entity.getName(), "this"); }
+      String qf = initialExpression.queryFormCPP(env,true);
+      
+      System.out.println(">>> INITIALISER: " + initialExpression + " " + qf); 
+      System.out.println(); 
+   
+      return nme + " = " + qf + ";"; 
     } 
 
     String def = type.getDefaultCPP(elementType);
@@ -3942,6 +3955,7 @@ public class Attribute extends ModelElement
     Vector vals = type.getValues();
     String attx = nme + "_xx"; 
     BasicExpression attxbe = new BasicExpression(attx); 
+    String gpars = ent.typeParameterTextCPP(); 
 
     Attribute epar = new Attribute(ex,new Type(ent),ModelElement.INTERNAL); 
     Attribute apar = new Attribute(attx,type,ModelElement.INTERNAL);
@@ -3977,11 +3991,11 @@ public class Attribute extends ModelElement
     } 
     else if (instanceScope) 
     { if (type.isSequence())
-      { opheader = "void set" + nme + "(" + ename + "* " +
+      { opheader = "void set" + nme + "(" + ename + gpars + "* " +
              ex + ", int _ind, " + et + " " + attx + ") \n  { " +
            ex + "->set" + nme + "(_ind, " + attx + "); }\n\n  ";
        } 
-       opheader = opheader + "  void set" + nme + "(" + ename + "* " +
+       opheader = opheader + "  void set" + nme + "(" + ename + gpars + "* " +
              ex + ", " + t +
              " " + attx + ") \n  { " +
            ex + "->set" + nme + "(" + attx + ");\n  "; 
@@ -3991,10 +4005,10 @@ public class Attribute extends ModelElement
              " " + attx + ") \n  { " +
              ename + "::set" + nme + "(" + attx + ");\n  " + 
              "for (int _i = 0; _i < " + es + "->size(); _i++)\n" + 
-             "  { " + ename + "* " + ex + " = " + es + "->at(_i);\n" +
+             "  { " + ename + gpars + "* " + ex + " = " + es + "->at(_i);\n" +
              "    set" + nme + "(" + ex + "," + attx + "); } }\n\n";
       opheader = opheader + 
-             "  void set" + nme + "(" + ename + "* " +
+             "  void set" + nme + "(" + ename + gpars + "* " +
              ex + ", " + t +
              " " + attx + ") \n  { " +
              ex + "->localSet" + nme + "(" + attx + ");\n  ";  
@@ -4034,6 +4048,7 @@ public class Attribute extends ModelElement
     if (elementType != null) 
     { et = elementType.getCPP(); } 
 
+    String gpars = ent.typeParameterTextCPP(); 
     String opheader = "";
     String ename = ent.getName();
     String ex = ename.toLowerCase() + "x";
@@ -4041,10 +4056,10 @@ public class Attribute extends ModelElement
     String attx = nme + "_x";
 
     if (instanceScope)
-    { opheader = "  void add" + nme + "(" + ename + "* " + ex + ", " + et + " " + attx + ")\n" +
+    { opheader = "  void add" + nme + "(" + ename + gpars + "* " + ex + ", " + et + " " + attx + ")\n" +
          "  { " + ex + "->add" + nme + "(" + attx + "); }\n\n";
        res.add(opheader);
-       String removeop = "  void remove" + nme + "(" + ename + "* " + ex + ", " + et + " " + attx + ")\n" +
+       String removeop = "  void remove" + nme + "(" + ename + gpars + "* " + ex + ", " + et + " " + attx + ")\n" +
          "  { " + ex + "->remove" + nme + "(" + attx + "); }\n\n";
        res.add(removeop);
     }

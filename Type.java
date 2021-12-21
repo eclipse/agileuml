@@ -1869,7 +1869,7 @@ public class Type extends ModelElement
   public static boolean isBasicType(Type e)
   { if (e == null) 
     { return false; } 
-    if ("String".equals("" + e))
+    if ("String".equals(e.getName()))
     { return true; } 
     return e.isPrimitive(); 
   } 
@@ -2585,7 +2585,7 @@ public class Type extends ModelElement
       { return alias.getDefaultCPP(et); } 
       return "NULL";    // for class types, OclAny, functions
     }
-    return "0"; // (String) values.get(0);
+    return getName() + "(0)"; // (String) values.get(0);
   }
 
 
@@ -2631,6 +2631,42 @@ public class Type extends ModelElement
 
       if (!found)
       { res = res + "object"; } 
+
+      if (i < tpars.size()-1)
+      { res = res + ","; }  
+    }
+
+    return res + ">"; 
+  } 
+
+
+  public static String resolveTypeParametersCPP(Vector tpars, Vector fpars, Vector apars)
+  { String res = "<"; 
+    for (int i = 0; i < tpars.size(); i++) 
+    { Type typ = (Type) tpars.get(i); 
+      String tpname = typ.getName(); // T is just an ident
+      boolean found = false; 
+
+      for (int j = 0; j < fpars.size() && !found; j++) 
+      { Attribute fpar = (Attribute) fpars.get(j); 
+        Expression apar = (Expression) apars.get(j); 
+
+        if (tpname.equals(fpar.getType() + ""))
+        { res = res + apar.getType().getCPP();
+          found = true; 
+        } 
+        else if (fpar.isSequence() || fpar.isSet())
+        { Type fpelemtype = fpar.getElementType(); 
+          Type apelemtype = apar.getElementType(); 
+          if (tpname.equals(fpelemtype + ""))
+          { res = res + apelemtype.getCPP(); 
+            found = true; 
+          } 
+        } 
+      }
+
+      if (!found)
+      { res = res + "void*"; } 
 
       if (i < tpars.size()-1)
       { res = res + ","; }  
@@ -2818,9 +2854,25 @@ public class Type extends ModelElement
     { return "map<string, " + elemType + ">*"; } 
     if (nme.equals("String")) { return "string"; }  
     if (nme.equals("boolean")) { return "bool"; } 
-    if (isEntity) { return nme + "*"; } 
     if (nme.equals("Function"))
-    { return elemType + " (*)(string)"; } 
+    { return "function<" + elemType + "(string)>"; } 
+    if (isEntity) 
+    { if (entity.genericParameter)
+      { return nme; } 
+      if (entity.isGeneric())
+      { String res = nme + "<"; 
+        Vector v = entity.getTypeParameters(); 
+        for (int i = 0; i < v.size(); i++) 
+        { Type tt = (Type) v.get(i); 
+          res = res + tt.getName(); 
+          if (i < v.size() - 1)
+          { res = res + ","; }
+        }
+        res = res + ">*"; 
+        return res; 
+      } 
+      return nme + "*"; 
+    } 
 
     if (alias != null)    // For datatypes
     { return alias.getCPP(elemType); } 
@@ -2833,6 +2885,12 @@ public class Type extends ModelElement
     { return "OclRandom*"; } 
     if (nme.equals("OclDate"))
     { return "OclDate*"; } 
+    if (nme.equals("OclProcess"))
+    { return "OclProcess*"; } 
+    if (nme.equals("OclFile"))
+    { return "OclFile*"; } 
+    if (nme.equals("OclIterator"))
+    { return "OclIterator*"; } 
 
 
     return nme;  // enumerations, long, int and double 
@@ -2874,9 +2932,29 @@ public class Type extends ModelElement
     { return "OclRandom*"; } 
     if (nme.equals("OclProcess"))
     { return "OclProcess*"; } 
+    if (nme.equals("OclFile"))
+    { return "OclFile*"; } 
+    if (nme.equals("OclIterator"))
+    { return "OclIterator*"; } 
 
     if (isEntity) 
-    { return nme + "*"; }
+    { if (entity.genericParameter) 
+      { return nme; } 
+      if (entity.isGeneric())
+      { String res = nme + "<"; 
+        Vector v = entity.getTypeParameters(); 
+        for (int i = 0; i < v.size(); i++) 
+        { Type tt = (Type) v.get(i); 
+          res = res + tt.getName(); 
+          if (i < v.size() - 1)
+          { res = res + ","; }
+        }
+        res = res + ">*"; 
+        return res; 
+      } 
+
+      return nme + "*"; 
+    }
 
     return nme;  // enumerations, int, long and double 
   } 

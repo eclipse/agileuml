@@ -169,6 +169,14 @@ public class ASTBasicTerm extends ASTTerm
     return toString(); 
   }
 
+
+  public Expression cexpressionToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { if ("primaryExpression".equals(tag))
+    { return new BasicExpression(value); } 
+    return null; 
+  } 
+
   public String queryForm()
   { return toKM3(); } 
 

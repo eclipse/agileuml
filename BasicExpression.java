@@ -4623,6 +4623,8 @@ class BasicExpression extends Expression
     { String ind = arrayIndex.queryFormCPP(env,local);
       if (data.equals("OclType"))
       { return "OclType::getOclTypeByPK(" + ind + ")"; } 
+      if (data.equals("OclFile"))
+      { return "OclFile::getOclFileByPK(" + ind + ")"; } 
       return cont + "->get" + data + "ByPK(" + ind + ")"; 
     } 
     return cont + "->get" + data.toLowerCase() + "_s()";  
@@ -6885,6 +6887,9 @@ class BasicExpression extends Expression
     if (elemT != null) 
     { cetype = elemT.getCPP(elemT.getElementType()); }  
 
+    if ("null".equals(data)) 
+    { return "NULL"; } 
+
     if ("getMessage".equals(data) && objectRef != null &&
         Type.isOclExceptionType(objectRef))
     { String rqf = objectRef.queryFormCPP(env,local); 
@@ -6947,6 +6952,30 @@ class BasicExpression extends Expression
     { if (objectRef.type != null && 
           objectRef.type.getName().equals("OclIterator")) 
       { return objectRef.queryFormCPP(env,local) + "->getelements()"; }
+    } 
+
+    if ("delete".equals(data) && objectRef != null) 
+    { if (objectRef.type != null && 
+          objectRef.type.getName().equals("OclFile"))
+      { return objectRef.queryFormCPP(env,local) + 
+               "->deleteFile()"; 
+      } 
+    } 
+
+    if ("printf".equals(data) && objectRef != null) 
+    { if (objectRef.type != null && 
+          objectRef.type.getName().equals("OclFile") && 
+          parameters != null && 
+          parameters.size() > 1 && 
+          parameters.get(1) instanceof SetExpression)
+      { Expression format = (Expression) parameters.get(0); 
+        Expression sq = (Expression) parameters.get(1);
+        String p1 = format.queryFormCPP(env,local);  
+        String cseq = 
+          ((SetExpression) sq).toCSequence(env,local); 
+        return objectRef.queryFormCPP(env,local) + 
+               "->printf(" + p1 + "," + cseq + ")"; 
+      } 
     } 
 
     if (umlkind == VALUE || umlkind == CONSTANT)
@@ -7256,6 +7285,22 @@ class BasicExpression extends Expression
       { if (data.substring(6).equals(ename))
         { return cont + res + parString; } 
       } 
+
+      BehaviouralFeature bf = null; 
+
+      if (entity != null) 
+      { ename = entity.getName();
+        bf = entity.getDefinedOperation(data); 
+      } 
+
+      if (bf != null && bf.isGeneric())
+      { String tpars = 
+          Type.resolveTypeParametersCPP( 
+             bf.getTypeParameters(), 
+             bf.getParameters(), parameters); 
+        res = data + tpars + "("; 
+      } 
+
 
       if (entity != null && entity.isClassScope(data))
       { res = ename + "::" + res + parString; 
@@ -8206,6 +8251,30 @@ public Statement generateDesignSubtract(Expression rhs)
       // Entity entx = (Entity) ModelElement.lookupByName(entname,entities); 
       if (entity != null && entity.getName().equals(entname)) 
       { return cont + data + pars + ";"; }
+    } 
+
+    if ("delete".equals(data) && objectRef != null) 
+    { if (objectRef.type != null && 
+          objectRef.type.getName().equals("OclFile"))
+      { return objectRef.queryFormCPP(env,local) + 
+               "->deleteFile();"; 
+      } 
+    } 
+
+    if ("printf".equals(data) && objectRef != null) 
+    { if (objectRef.type != null && 
+          objectRef.type.getName().equals("OclFile") && 
+          parameters != null && 
+          parameters.size() > 1 && 
+          parameters.get(1) instanceof SetExpression)
+      { Expression format = (Expression) parameters.get(0); 
+        Expression sq = (Expression) parameters.get(1);
+        String p1 = format.queryFormCPP(env,local);  
+        String cseq = 
+          ((SetExpression) sq).toCSequence(env,local); 
+        return objectRef.queryFormCPP(env,local) + 
+               "->printf(" + p1 + "," + cseq + ");"; 
+      } 
     } 
 
 

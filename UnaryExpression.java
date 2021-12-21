@@ -1340,6 +1340,14 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       // If argument is a single object, dereference it: 
       if (argument.getType() != null && argument.getType().isEntity())
       { return "  cout << *" + aqf + " << endl;\n"; } 
+      if (argument.getType() != null && 
+          argument.getType().isCollection() && 
+          argument.getElementType() != null)
+      { Type elemT = argument.getElementType(); 
+        String cet = elemT.getCPP(); 
+        return "  cout << UmlRsdsLib<" + cet + ">::collectionToString(" + aqf + ") << endl;\n"; 
+      } 
+      
       return "  cout << " + aqf + " << endl;\n"; 
     } 
     else if ("->oclIsNew".equals(operator) && (argument instanceof BasicExpression))
@@ -1635,7 +1643,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
   public boolean isPrimitive()   // needs to be wrapped in Java
   { if (operator.equals("->size") || operator.equals("->isDeleted") ||
         operator.equals("-") || operator.equals("not") ||
-        operator.equals("?") ||  
+        operator.equals("?") || operator.equals("!") ||  
         operator.equals("->display") || operator.equals("->abs") ||
         operator.equals("->sqrt") || operator.equals("->sqr") ||
         operator.equals("->ceil") || operator.equals("->round") ||
@@ -2060,7 +2068,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("-"))
     { return "-" + qf; } 
 
-    if (operator.equals("?"))
+    if (operator.equals("?") || operator.equals("!"))
     { return qf; } 
 
     if (operator.equals("not"))
@@ -2105,7 +2113,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return qf; }  // but maps cannot be converted 
 
     if (operator.equals("->asBag") && type != null && type.isSet()) 
-    { return qf; }  
+    { return "Set.sort(" + qf + ")"; }  
 
     if ("->copy".equals(operator))
     { if (type == null) 
@@ -2463,6 +2471,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return "(" + wqf + ").getClass()"; 
     }  
 
+    if (operator.equals("->asBag"))
+    { return "Set.sort(" + qf + ")"; } 
+
     if ("->copy".equals(operator))
     { if (type == null) 
       { return qf; } 
@@ -2744,6 +2755,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return "(" + wqf + ").getClass()"; 
     }  
 
+    if (operator.equals("->asBag"))
+    { return "Ocl.sort(" + qf + ")"; } 
+
     if ("->copy".equals(operator))
     { if (type == null) 
       { return qf; } 
@@ -2991,9 +3005,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         type.isSet())
     { return qf; } 
 
-    if (operator.equals("->asBag") && type != null && 
-        type.isSet())
-    { return qf; } 
+    if (operator.equals("->asBag"))
+    { return "SystemTypes.sort(" + qf + ")"; } 
 
     if (operator.equals("->isInteger")) 
     { return "SystemTypes.isInteger(" + qf + ")"; } 
@@ -3241,7 +3254,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "-" + qf; } 
 
     if (operator.equals("?"))
-    { return "&" + qf; } 
+    { if (Type.isBasicType(argument.type))
+      { return "&" + qf; } 
+      return qf; 
+    } // objects and collections are already pointers
 
     if (operator.equals("not"))
     { return "!(" + qf + ")"; } 
@@ -3270,6 +3286,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
                   cont + "get" + objstype.toLowerCase() + "_s()))"; 
       }  
     } 
+
+    if ("->asBag".equals(operator))
+    { return "UmlRsdsLib<" + celtype + ">::sort(" + qf + ")"; } 
 
     if ("->copy".equals(operator))
     { if (type == null) 
@@ -4063,6 +4082,14 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
   
     if (operator.startsWith("->"))
     { return argument + operator + "()"; } 
+
+    if (operator.equals("?") || operator.equals("!"))
+    { String res = operator + argument; 
+      if (needsBracket)
+      { return "(" + res + ")"; }
+      return res; 
+    } 
+
 
     return operator + "(" + argument + ")";  
   } 

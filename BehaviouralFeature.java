@@ -1504,6 +1504,9 @@ public class BehaviouralFeature extends ModelElement
     if (ent.isInterface() || ent.isAbstract())
     { return true; } 
 
+    if (ent.isActive() && "run".equals(name))
+    { return true; } 
+
     String sig = getSignature(); 
     if (ent != null) 
     { Entity esup = ent.getSuperclass(); 
@@ -2683,6 +2686,7 @@ public class BehaviouralFeature extends ModelElement
     String ename = ""; 
     String eTypePars = ""; 
     Vector etpars = new Vector(); 
+    String gpars = ent.typeParameterTextCPP(); 
 
     if (ent == null) 
     { ent = entity; } 
@@ -4290,6 +4294,8 @@ public class BehaviouralFeature extends ModelElement
   { String name = getName();
     Vector context = new Vector();
 
+    String gpars = ent.typeParameterTextCPP(); 
+
     String ename = "";  
     String eTypePars = ""; 
     Vector etpars = new Vector(); 
@@ -5107,6 +5113,7 @@ public class BehaviouralFeature extends ModelElement
       return ""; 
     }
     
+    String gpars = ent.typeParameterTextCPP(); 
 
     String ename = ""; 
     String eTypePars = ""; 
@@ -5143,6 +5150,8 @@ public class BehaviouralFeature extends ModelElement
     String isstatic = ""; 
     if (isClassScope() || isStatic())
     { isstatic = "static "; } 
+    else if (isVirtual(ent))
+    { isstatic = "virtual "; } 
 
     // if (isAbstract())
     // { header = header + resT + " " +
@@ -6599,6 +6608,8 @@ public class BehaviouralFeature extends ModelElement
     String eTypePars = ""; 
     Vector etpars = new Vector(); 
  
+    String gpars = ent.typeParameterTextCPP(); 
+
     Vector context = new Vector(); 
     if (ent != null) 
     { ename = ent.getName(); 
@@ -6623,6 +6634,8 @@ public class BehaviouralFeature extends ModelElement
     String isstatic = ""; 
     if (isClassScope() || isStatic())
     { isstatic = "static "; } 
+    else if (isVirtual(ent))
+    { isstatic = "virtual "; } 
 
     // if (isAbstract())
     // { header = header + resT + " " +
@@ -7333,6 +7346,8 @@ public class BehaviouralFeature extends ModelElement
 
     if (ent == null) { return ""; } 
     
+    String gpars = ent.typeParameterTextCPP(); 
+
     String header = "  "; 
     // if (isAbstract())
     // { header = header + "abstract "; } 
@@ -7349,14 +7364,14 @@ public class BehaviouralFeature extends ModelElement
     { context.add(ent); } 
     
     if (javaPars.equals(""))
-    { javaPars = ename + "* " + ex;
-      java2Pars = "vector<" + ename + "*>* " + exs; 
-      java3Pars = "std::set<" + ename + "*>* " + exs; 
+    { javaPars = ename + gpars + "* " + ex;
+      java2Pars = "vector<" + ename + gpars + "*>* " + exs; 
+      java3Pars = "std::set<" + ename + gpars + "*>* " + exs; 
     } 
     else 
-    { java2Pars = "vector<" + ename + "*>* " + exs + ", " + javaPars; 
-      javaPars = ename + "* " + ex + ", " + javaPars; 
-      java3Pars = "std::set<" + ename + "*>* " + exs + ", " + javaPars; 
+    { java2Pars = "vector<" + ename + gpars + "*>* " + exs + ", " + javaPars; 
+      javaPars = ename + gpars + "* " + ex + ", " + javaPars; 
+      java3Pars = "std::set<" + ename + gpars + "*>* " + exs + ", " + javaPars; 
     } 
 
     String et = "void*"; 
@@ -7424,9 +7439,9 @@ public class BehaviouralFeature extends ModelElement
     String body = "  " + ex + "->" + call + ";"; 
     String endbody = ""; 
     header2 = header2 + "  for (int _i = 0; _i < " + exs + "->size(); _i++)\n" +
-              "    { " + ename + "* " + ex + " = (*" + exs + ")[_i];\n"; 
-    header3 = header3 + "  for (std::set<" + ename + "*>::iterator _i = " + exs + "->begin(); _i != " + exs + "->end(); _i++)\n" +
-              "    { " + ename + "* " + ex + " = *_i;\n"; 
+              "    { " + ename + gpars + "* " + ex + " = (*" + exs + ")[_i];\n"; 
+    header3 = header3 + "  for (std::set<" + ename + gpars + "*>::iterator _i = " + exs + "->begin(); _i != " + exs + "->end(); _i++)\n" +
+              "    { " + ename + gpars + "* " + ex + " = *_i;\n"; 
 
     String parlist = parameterList(); 
     if (parlist.length() > 0)
@@ -7989,13 +8004,14 @@ public class BehaviouralFeature extends ModelElement
 
     String newitem = ex + "->" + opname + "(" + parlist + ")"; 
 
-    if (resultType != null && Type.isCollectionType(resultType))
+    if (resultType != null)
+    /*  && Type.isCollectionType(resultType))
     { header2 = header2 + "      result->insert(result->end(), " + newitem + "->begin(), " +
                                                 newitem + "->end());\n"; 
       header3 = header3 + "      result->insert(result->end(), " + newitem + "->begin(), " +
                                                 newitem + "->end());\n"; 
     }
-    else 
+    else */ 
     { header2 = header2 + "      result->push_back(" + newitem + ");\n"; 
       header3 = header3 + "      result->push_back(" + newitem + ");\n"; 
     }
