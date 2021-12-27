@@ -202,6 +202,11 @@ public class Type extends ModelElement
     return false; 
   } 
 
+  public Type getType()
+  { return new Type("OclType", null); } 
+
+  public void setType(Type t) 
+  { } 
 
   public Object clone()
   { Type result; 
@@ -353,6 +358,9 @@ public class Type extends ModelElement
 
   public static boolean isExceptionType(String t)
   { return exceptions2java.get(t) != null; }
+
+  public boolean isReference()
+  { return ("Ref".equals(name)); } 
 
   public boolean isCollection()
   { return isCollectionType(this); } 
@@ -3919,7 +3927,8 @@ public class Type extends ModelElement
 
   public String toString()
   { String nme = getName(); 
-    if ("Set".equals(nme) || "Sequence".equals(nme))
+    if ("Set".equals(nme) || "Sequence".equals(nme) || 
+        "Ref".equals(nme))
     { if (elementType != null) 
       { return nme + "(" + elementType + ")"; } 
     } 

@@ -121,6 +121,11 @@ public class Association extends ModelElement
     role2 = r2;
   }
 
+  public void setType(Type t) { } 
+
+  public Type getType() 
+  { return getRole2Type(); } 
+
   public Association generateSubAssociation(Entity e1, Entity e2)
   { // assume e1 is ancestor of entity1, e2 of entity2
     int c1 = card1; 

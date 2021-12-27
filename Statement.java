@@ -3353,6 +3353,23 @@ class CreationStatement extends Statement
     assignsTo = vbl; 
   }
 
+  /* public CreationStatement(Attribute vbl, Type typ)
+  { createsInstanceOf = typ.getName();
+    instanceType = typ; 
+    elementType = vbl.getElementType(); 
+    assignsTo = vbl.getName();
+    variable = vbl;  
+  } */ 
+
+  public CreationStatement(Attribute vbl)
+  { Type typ = vbl.getType(); 
+    createsInstanceOf = typ.getName();
+    instanceType = typ; 
+    elementType = vbl.getElementType(); 
+    assignsTo = vbl.getName();
+    variable = vbl;  
+  }
+
   public static CreationStatement newCreationStatement(String vbl, String typ) 
   { CreationStatement cs = new CreationStatement(typ, vbl); 
     Type t = Type.getTypeFor(typ);
@@ -3455,21 +3472,16 @@ class CreationStatement extends Statement
   } 
 
   public String toString()
-  { if (instanceType != null)
-    { if (initialValue != null) 
-      { return "  var " + assignsTo + " : " + instanceType + " := " + initialValue; } 
-      else if (initialExpression != null) 
-      { return "  var " + assignsTo + " : " + instanceType + " := " + initialExpression; } 
-      else
-      { return "  var " + assignsTo + " : " + instanceType; }
-    } 
-    else 
-    { if (initialValue != null) 
-      { return "  var " + assignsTo + " := " + initialValue; } 
-      else if (initialExpression != null) 
-      { return "  var " + assignsTo + " : " + createsInstanceOf + " := " + initialExpression; } 
-      return "  var " + assignsTo + " : " + createsInstanceOf; 
-    }
+  { String declType = createsInstanceOf; 
+    if (instanceType != null) 
+    { declType = instanceType.toString(); } 
+
+    if (initialValue != null) 
+    { return "  var " + assignsTo + " : " + declType + " := " + initialValue; } 
+    else if (initialExpression != null) 
+    { return "  var " + assignsTo + " : " + declType + " := " + initialExpression; } 
+    else
+    { return "  var " + assignsTo + " : " + declType; }
   } 
 
   public String toAST()

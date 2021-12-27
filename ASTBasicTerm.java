@@ -170,12 +170,111 @@ public class ASTBasicTerm extends ASTTerm
   }
 
 
+  public Vector cexpressionListToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+
+  { // if ("argumentExpressionList".equals(tag))
+    Vector res = new Vector();
+    return res;  
+  }
+
+  public Type cdeclarationToType(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { if ("typeSpecifier".equals(tag) || 
+        "typedefName".equals(tag))
+    { String tname = value; 
+      if ("char".equals(tname) || "short".equals(tname))
+      { return new Type("int", null); }
+      if ("_Bool".equals(tname))
+      { return new Type("boolean", null); }  
+      if ("float".equals(tname))
+      { return new Type("double", null); } 
+      if ("int".equals(tname) || "long".equals(tname) || 
+          "double".equals(tname) || "void".equals(tname))
+      { return new Type(tname,null); } 
+    
+      Type t = (Type) ModelElement.lookupByName(tname,types); 
+      if (t != null) 
+      { return t; } 
+    } 
+
+    return null; 
+  }
+
+  public ModelElement cdeclaratorToModelElement(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { System.out.println(">>> BasicTerm declarator to ModelElement: (" + tag + " " + value + ")"); 
+
+    if ("directDeclarator".equals(tag) || 
+        "typedefName".equals(tag))
+    { return new Attribute(value, new Type("OclAny", null), 
+                           ModelElement.INTERNAL); 
+    } 
+    return null; 
+  } 
+
+  public Vector cparameterListToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return new Vector(); } 
+
+  public Attribute cparameterToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return null; } 
+
+
+  public Vector cstatementListToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { Vector res = new Vector();
+    return res;  
+  }
+
+
+  public Statement cstatementToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return null; } 
+
+  public Statement cupdateForm(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return null; } 
+
   public Expression cexpressionToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
   { if ("primaryExpression".equals(tag))
-    { return new BasicExpression(value); } 
+    { System.out.println(">> Basic primary expression: " + value); 
+
+      if ("NULL".equals(value))
+      { return new BasicExpression("null"); } 
+      if ("true".equals(value))
+      { return new BasicExpression(true); } 
+      if ("false".equals(value))
+      { return new BasicExpression(false); } 
+
+      BasicExpression v = new BasicExpression(value); 
+      if (Expression.isString(value))
+      { if ('\'' == value.charAt(0))
+        { v = new BasicExpression("\"" + value.substring(1,value.length()-1) + "\""); } 
+        v.setType(new Type("String",null)); 
+        v.setUmlKind(Expression.VALUE); 
+      }
+      else if (Expression.isDouble(value))
+      { v.setType(new Type("double",null)); 
+        v.setUmlKind(Expression.VALUE); 
+      }
+      else if (Expression.isInteger(value))
+      { v.setType(new Type("int",null)); 
+        v.setUmlKind(Expression.VALUE); 
+      }
+      else if (Expression.isLong(value))
+      { v.setType(new Type("long",null)); 
+        v.setUmlKind(Expression.VALUE); 
+      }
+      return v; 
+    } 
+     
     return null; 
   } 
+
+
 
   public String queryForm()
   { return toKM3(); } 

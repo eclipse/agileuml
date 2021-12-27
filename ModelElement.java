@@ -59,6 +59,12 @@ public abstract class ModelElement implements SystemTypes
   public void setName(String newname)
   { name = newname; }
 
+  public abstract void setType(Type t); 
+  // Only makes sense for Attribute, 
+  // BehaviouralFeature, UseCase
+
+  public abstract Type getType(); 
+
   public String toAST()
   { return ""; }
 
@@ -977,6 +983,11 @@ class UMLPackage extends ModelElement
 
   public void generateJava(PrintWriter out)
   { out.println("package " + name + "{ }"); } 
+
+  public void setType(Type t) { } 
+
+  public Type getType() { return null; } 
+
 
 } 
 

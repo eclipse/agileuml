@@ -293,21 +293,979 @@ public class ASTCompositeTerm extends ASTTerm
   }
 
 
+  public Vector elementList()
+  { Vector res = new Vector(); 
+    for (int i = 0; i < terms.size(); i++) 
+    { ASTTerm t = (ASTTerm) terms.get(i); 
+      String ss = t.literalForm();
+      if (",".equals(ss)) { } 
+      else 
+      { res.add(ss); }  
+    } 
+    return res; 
+  } 
+
+  public ModelElement cprogramToKM3(Entity sys, java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { System.out.println(">> Processing program tag " + tag + " with " + terms.size() + " terms"); 
+    System.out.println(); 
+
+    if ("translationUnit".equals(tag))
+    { Entity ent = new Entity("FromC");
+      for (int k = 0; k < terms.size(); k++) 
+      { ASTCompositeTerm t = (ASTCompositeTerm) terms.get(k); 
+        ModelElement me = 
+          t.cprogramToKM3(ent, vartypes, varelemtypes, types, entities); 
+        if (me instanceof BehaviouralFeature)
+        { BehaviouralFeature bf = (BehaviouralFeature) me; 
+          ent.addOperation(bf);
+          bf.setOwner(ent); 
+        }
+        else if (me instanceof Attribute)
+        { Attribute att = (Attribute) me; 
+          ent.addAttribute(att); 
+          att.setEntity(ent); 
+        } 
+      }
+
+      entities.add(ent); 
+        
+      return ent;  
+    } 
+
+    if ("externalDeclaration".equals(tag))
+    { ASTCompositeTerm term = (ASTCompositeTerm) terms.get(0); 
+      return term.cprogramToKM3(sys, vartypes, varelemtypes, types, entities);
+    } 
+ 
+    if ("functionDefinition".equals(tag) && 
+        terms.size() == 3)
+    { // (functionDefinition dectype declarator code)
+      ASTTerm typeTerm = (ASTTerm) terms.get(0); 
+      Type typ = typeTerm.cdeclarationToType(vartypes, varelemtypes, types, entities); 
+      ASTTerm declaratorTerm = 
+                (ASTTerm) terms.get(1); 
+      BehaviouralFeature bf = 
+        (BehaviouralFeature) 
+          declaratorTerm.cdeclaratorToModelElement(vartypes, varelemtypes, types, entities); 
+      ASTTerm code = (ASTTerm) terms.get(2);
+      Statement stat = code.cstatementToKM3(vartypes,
+                              varelemtypes,types,entities); 
+      if (bf != null) 
+      { bf.setType(typ); 
+        bf.setActivity(stat); 
+        bf.setPre(new BasicExpression(true)); 
+        bf.setPost(new BasicExpression(true)); 
+
+        System.out.println(">>> Operation " + bf.display()); 
+        return bf;
+      }   
+    } 
+
+    if ("declaration".equals(tag))
+    { Type t = cdeclarationToType(vartypes,varelemtypes,types,entities); 
+      ModelElement mt = cdeclaratorToModelElement(vartypes, varelemtypes, types, entities);
+      if (mt != null && mt instanceof Attribute) 
+      { System.out.println(">> Global feature: " + mt);
+        return mt;
+      } 
+
+      if (t != null && t.isEntity())
+      { entities.add(t.getEntity());
+        return t; 
+      } 
+
+      if (t != null && t.isEnumeration())
+      { types.add(t);
+        return t; 
+      } 
+
+    } 
+      
+
+    return null; 
+  } 
+
+  public ModelElement cdeclaratorToModelElement(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { System.out.println(">> Declarator to ModelElement " + tag + 
+                       " with " + terms.size() + " terms"); 
+    System.out.println();
+
+    if ("declaration".equals(tag) && terms.size() == 3)
+    { ASTTerm typeSpec = (ASTTerm) terms.get(0); 
+      Type typ = typeSpec.cdeclarationToType(vartypes,varelemtypes,types,entities);
+      ASTTerm varSpec = (ASTTerm) terms.get(1); 
+      Attribute att = 
+        (Attribute) varSpec.cdeclaratorToModelElement(vartypes,varelemtypes,types,entities);
+
+      // System.out.println(att + " type = " + att.getType() + " " + typ); 
+
+      if (att == null) 
+      { return null; } 
+
+      if (att.isCollection() || att.isReferenceType())
+      { att.setElementType(typ); 
+        Type atttype = att.getType(); 
+        atttype.setElementType(typ); 
+      } 
+      else if (typ != null) 
+      { att.setType(typ);
+        att.setElementType(typ.getElementType()); 
+      }
+
+      System.out.println(">> Attribute " + att + " type = " + att.getType() + " " + att.getElementType()); 
+ 
+      Expression init = varSpec.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      if (init != null) 
+      { BasicExpression lhs = new BasicExpression(att);
+
+        if ("null".equals(init + "") && 
+            att.isCollection())
+        { init = new SetExpression(true); } 
+ 
+        att.setInitialExpression(init); 
+      } 
+      return att; 
+    } 
+
+    if ("declaration".equals(tag) && terms.size() == 2)
+    { ASTTerm typeSpec = (ASTTerm) terms.get(0); 
+      Type typ = typeSpec.cdeclarationToType(vartypes,varelemtypes,types,entities);
+      return typ; 
+    } // Could be an uninitialised attribute. 
+
+    if ("initDeclaratorList".equals(tag))
+    { ASTTerm tt = (ASTTerm) terms.get(0); 
+      return tt.cdeclaratorToModelElement(vartypes,varelemtypes,types,entities); 
+    }
+
+    if ("initDeclarator".equals(tag))
+    { ASTTerm tt = (ASTTerm) terms.get(0); 
+      return tt.cdeclaratorToModelElement(vartypes,varelemtypes,types,entities); 
+    }
+    
+
+    if ("declarator".equals(tag))
+    { if (terms.size() == 1)
+      { ASTTerm tt = (ASTTerm) terms.get(0); 
+        return tt.cdeclaratorToModelElement(vartypes,varelemtypes,types,entities); 
+      } 
+      else if (terms.size() > 1)
+      { // (pointer ...) (directDeclarator ...)
+        ASTTerm pt = (ASTTerm) terms.get(0); 
+        ASTTerm tt = (ASTTerm) terms.get(1); 
+        ModelElement me = tt.cdeclaratorToModelElement(vartypes,varelemtypes,types,entities);
+        if (pt.hasTag("pointer"))
+        { Type met = me.getType(); 
+          Type newtype = new Type("Ref", null); 
+          newtype.setElementType(met); 
+          me.setType(newtype); 
+          return me; 
+        } 
+        return me;  
+      } 
+    } 
+
+    if ("directDeclarator".equals(tag))
+    { if (terms.size() == 1) 
+      { String nme = ((ASTTerm) terms.get(0)).literalForm(); 
+        return new Attribute(nme,new Type("OclAny", null), 
+                             ModelElement.INTERNAL); 
+      } 
+      else if (terms.size() == 4 && 
+               "(".equals(terms.get(1) + "") && 
+               ")".equals(terms.get(3) + ""))
+      { // Function with parameters
+        String fnme = ((ASTTerm) terms.get(0)).literalForm();
+        ASTTerm tt = (ASTTerm) terms.get(2); 
+        Vector pars = tt.cparameterListToKM3(vartypes,varelemtypes,types,entities); 
+        BehaviouralFeature bf = new BehaviouralFeature(fnme); 
+        bf.setParameters(pars); 
+
+        System.out.println(">> Operation " + fnme); 
+
+        return bf; 
+      } 
+      else if (terms.size() == 3 && 
+               "[".equals(terms.get(1) + "") && 
+               "]".equals(terms.get(2) + ""))
+      { // array of unspecified size
+        String anme = ((ASTTerm) terms.get(0)).literalForm();
+
+        System.out.println(">> Sequence attribute " + anme); 
+
+        return new Attribute(anme,new Type("Sequence", null), 
+                             ModelElement.INTERNAL); 
+      } 
+      else if (terms.size() == 4 && 
+               "[".equals(terms.get(1) + "") && 
+               "]".equals(terms.get(3) + ""))
+      { // array of size terms.get(2)
+        String anme = ((ASTTerm) terms.get(0)).literalForm();
+
+        System.out.println(">> Sequence attribute " + anme); 
+
+        return new Attribute(anme,new Type("Sequence", null), 
+                             ModelElement.INTERNAL); 
+      } 
+    }
+
+    if ("declarationSpecifiers".equals(tag))
+    { for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        if (tt instanceof ASTCompositeTerm)
+        { ASTCompositeTerm trm = (ASTCompositeTerm) tt; 
+          ModelElement typ = trm.cdeclaratorToModelElement(vartypes,varelemtypes,types,entities); 
+          if (typ != null) 
+          { return typ; } 
+        } 
+      }
+    }
+
+    if ("declarationSpecifier".equals(tag))
+    { ASTTerm tt = (ASTTerm) terms.get(0); 
+      return tt.cdeclaratorToModelElement(vartypes,varelemtypes,types,entities); 
+    } 
+
+    if ("typeSpecifier".equals(tag))
+    { ASTTerm tt = (ASTTerm) terms.get(0); 
+      return tt.cdeclaratorToModelElement(vartypes,varelemtypes,types,entities); 
+    } 
+
+    if ("typedefName".equals(tag))
+    { String nme = ((ASTTerm) terms.get(0)).literalForm();
+      return new Attribute(nme, new Type("OclAny", null), 
+                           ModelElement.INTERNAL); 
+    } 
+
+    if ("structDeclaration".equals(tag) && terms.size() < 3)
+    { ASTTerm tt = (ASTTerm) terms.get(0); 
+      return tt.cdeclaratorToModelElement(vartypes,varelemtypes,types,entities); 
+    } 
+
+    if ("structDeclaration".equals(tag) && terms.size() == 3)
+    { ASTTerm tt = (ASTTerm) terms.get(1); 
+      return tt.cdeclaratorToModelElement(vartypes,varelemtypes,types,entities); 
+    } 
+
+    if ("structDeclaratorList".equals(tag))
+    { ASTTerm tt = (ASTTerm) terms.get(0); 
+      return tt.cdeclaratorToModelElement(vartypes,varelemtypes,types,entities); 
+    } 
+
+    if ("structDeclarator".equals(tag))
+    { ASTTerm tt = (ASTTerm) terms.get(0); 
+      return tt.cdeclaratorToModelElement(vartypes,varelemtypes,types,entities); 
+    } 
+
+    if ("specifierQualifierList".equals(tag) && 
+        terms.size() > 1)
+    { ASTTerm tt = (ASTTerm) terms.get(1); 
+      return tt.cdeclaratorToModelElement(vartypes,varelemtypes,types,entities); 
+    } 
+
+    if ("specifierQualifierList".equals(tag) && 
+        terms.size() == 1)
+    { ASTTerm tt = (ASTTerm) terms.get(0); 
+      return tt.cdeclaratorToModelElement(vartypes,varelemtypes,types,entities); 
+    } 
+
+    return null; 
+  } 
+
+
+  public Vector structDeclarationToFeatures(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { if ("structDeclarationList".equals(tag))
+    { Vector res = new Vector(); 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm trm = (ASTTerm) terms.get(i);
+
+        System.out.println(">> Processing struct declaration " + trm); 
+ 
+        Type t = trm.cdeclarationToType(vartypes,varelemtypes,types,entities); 
+        Attribute att = (Attribute) trm.cdeclaratorToModelElement(vartypes,varelemtypes,types,entities); 
+        if (att != null) 
+        { if (att.isCollection() || att.isReferenceType())
+          { att.setElementType(t);
+            Type tt = att.getType(); 
+            tt.setElementType(t); 
+          } 
+          else 
+          { att.setType(t); } 
+          res.add(att); 
+        } 
+      } 
+      return res; 
+    } 
+    return null; 
+  } 
+
+  public Type cdeclarationToType(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { System.out.println(">> cdeclaration to type: " + tag + " " + terms.size()); 
+
+    if ("declaration".equals(tag) && terms.size() == 3)
+    { ASTTerm typeSpec = (ASTTerm) terms.get(0); 
+      Type typ = typeSpec.cdeclarationToType(vartypes,varelemtypes,types,entities);
+      return typ; 
+    } 
+
+    if ("declaration".equals(tag) && terms.size() == 2)
+    { ASTTerm typeSpec = (ASTTerm) terms.get(0); 
+      Type typ = typeSpec.cdeclarationToType(vartypes,varelemtypes,types,entities);
+      return typ; 
+    } 
+
+
+    if ("declarationSpecifiers".equals(tag))
+    { Vector typs = new Vector(); 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        if (tt instanceof ASTCompositeTerm)
+        { ASTCompositeTerm trm = (ASTCompositeTerm) tt; 
+          Type typ = trm.cdeclarationToType(vartypes,varelemtypes,types,entities); 
+          if (typ != null) 
+          { typs.add(typ); } 
+        } 
+      }
+
+      if (typs.size() > 0)
+      { return (Type) typs.get(typs.size()-1); } 
+    }
+
+    if ("declarationSpecifier".equals(tag))
+    { ASTTerm tt = (ASTTerm) terms.get(0); 
+      return tt.cdeclarationToType(vartypes,varelemtypes,types,entities); 
+    } 
+
+    if ("typeSpecifier".equals(tag) && terms.size() == 1)
+    { ASTTerm t1 = (ASTTerm) terms.get(0);
+
+      if (t1.hasTag("structOrUnionSpecifier"))
+      { return t1.cdeclarationToType(vartypes,varelemtypes,types,entities); } 
+
+      if (t1.hasTag("enumSpecifier"))
+      { return t1.cdeclarationToType(vartypes, varelemtypes, types, entities); } 
+      
+ 
+      String tname = t1.literalForm(); 
+      if ("char".equals(tname) || "short".equals(tname))
+      { return new Type("int", null); }
+      if ("_Bool".equals(tname))
+      { return new Type("boolean",null); }  
+      if ("float".equals(tname))
+      { return new Type("double", null); } 
+      if ("int".equals(tname) || "long".equals(tname) || 
+          "double".equals(tname) || "void".equals(tname))
+      { return new Type(tname,null); } 
+
+      Type t = (Type) ModelElement.lookupByName(tname,types); 
+      if (t != null) 
+      { return t; } 
+
+      return t1.cdeclarationToType(vartypes,varelemtypes,types,entities); 
+    } 
+
+    if ("typeSpecifier".equals(tag) && terms.size() > 1)
+    { ASTTerm t1 = (ASTTerm) terms.get(0); 
+      ASTTerm t2 = (ASTTerm) terms.get(1);
+      String tname = t1.literalForm(); 
+      Type baseType = t1.cdeclarationToType(vartypes,varelemtypes,types,entities);  
+
+      if ("*".equals(t2.literalForm()))
+      { if ("char".equals(tname))
+        { return new Type("String", null); } 
+
+        System.out.println(">> Pointer type Ref(" + baseType + ")"); 
+
+        if (baseType != null) 
+        { Type res = new Type("Ref",null); 
+          res.setElementType(baseType); 
+          return res; 
+        } 
+        else 
+        { Type res = new Type("Ref",null); 
+          return res; 
+        } 
+      } 
+    }  
+
+
+    if ("enumSpecifier".equals(tag) && 
+        terms.size() == 5 && 
+        "{".equals(terms.get(2) + "") && 
+        "}".equals(terms.get(4) + ""))
+    { // enum name { (decls) }    
+      String sname = ((ASTTerm) terms.get(1)).literalForm(); 
+      ASTCompositeTerm sdecls = (ASTCompositeTerm) terms.get(3);
+      Vector values = sdecls.elementList(); 
+      Type et = new Type(sname,values); 
+      return et; 
+    } 
+
+
+    if ("structOrUnionSpecifier".equals(tag) && 
+        terms.size() == 2)
+    { // (structOrUnion struct) name
+      String sname = ((ASTTerm) terms.get(1)).literalForm(); 
+      Entity ent = (Entity) ModelElement.lookupByName(sname,entities); 
+      if (ent == null) 
+      { ent = new Entity(sname); }  
+      return new Type(ent); 
+    } 
+
+    if ("structOrUnionSpecifier".equals(tag) && 
+        terms.size() == 5 && 
+        "{".equals(terms.get(2) + "") && 
+        "}".equals(terms.get(4) + ""))
+    { // (structOrUnion struct) name { (decls) }
+      String sname = ((ASTTerm) terms.get(1)).literalForm(); 
+      ASTCompositeTerm sdecls = (ASTCompositeTerm) terms.get(3);
+      Entity ent = new Entity(sname); 
+      Vector atts = sdecls.structDeclarationToFeatures(vartypes, varelemtypes, types, entities);
+      System.out.println(">>> Class " + sname); 
+      System.out.println(">>> Attributes = ");
+      for (int j = 0; j < atts.size(); j++) 
+      { Attribute att = (Attribute) atts.get(j); 
+        System.out.println(" attribute " + att.getName() + " : " + att.getType()); 
+      } 
+
+      ent.setAttributes(atts);   
+      return new Type(ent);  
+    }
+
+    if ("structDeclaration".equals(tag))
+    { ASTTerm t = (ASTTerm) terms.get(0); 
+      return t.cdeclarationToType(vartypes,varelemtypes,types,entities); 
+    } 
+
+    if ("specifierQualifierList".equals(tag))
+    { ASTTerm t = (ASTTerm) terms.get(0); 
+      return t.cdeclarationToType(vartypes,varelemtypes,types,entities); 
+    } 
+
+    if ("typedefName".equals(tag))
+    { ASTTerm trm = (ASTTerm) terms.get(0); 
+      String tname = trm.literalForm(); 
+      Type t = (Type) ModelElement.lookupByName(tname,types); 
+      if (t != null) 
+      { return t; } 
+      return new Type(tname, null); 
+    } 
+
+    return null; 
+  } 
+
+  public Statement cstatementToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { System.out.println(">> Processing tag " + tag + " with " + terms.size() + " terms"); 
+    System.out.println(); 
+
+    if (terms.size() == 1)
+    { ASTTerm t1 = (ASTTerm) terms.get(0); 
+      return t1.cstatementToKM3(vartypes, varelemtypes, types, entities); 
+    } 
+
+    if ("declaration".equals(tag) && terms.size() == 3)
+    { ASTTerm typeSpec = (ASTTerm) terms.get(0); 
+      ASTTerm varSpec = (ASTTerm) terms.get(1); 
+      Type typ = typeSpec.cdeclarationToType(vartypes,varelemtypes,types,entities);
+      Attribute att = 
+        (Attribute) varSpec.cdeclaratorToModelElement(vartypes, varelemtypes, types, entities);
+
+      // System.out.println(att + " type = " + att.getType() + " " + typ); 
+
+      if (att == null) 
+      { return null; } 
+
+      if (att.isCollection() || att.isReferenceType())
+      { att.setElementType(typ); 
+        Type atttype = att.getType(); 
+        atttype.setElementType(typ); 
+      } 
+      else if (typ != null) 
+      { att.setType(typ);
+        att.setElementType(typ.getElementType()); 
+      }
+
+      System.out.println(">> Attribute " + att + " type = " + att.getType() + " " + att.getElementType()); 
+ 
+      CreationStatement cs = 
+        new CreationStatement(att);
+      Expression init = varSpec.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      if (init != null) 
+      { BasicExpression lhs = new BasicExpression(att);
+
+        if ("null".equals(init + "") && 
+            att.isCollection())
+        { init = new SetExpression(true); } 
+ 
+        AssignStatement ast = 
+          new AssignStatement(lhs,init); 
+        SequenceStatement ss = new SequenceStatement(); 
+        ss.addStatement(cs); 
+        ss.addStatement(ast); 
+        return ss;
+      } 
+      return cs;  
+    } 
+
+    if ("declaration".equals(tag) && terms.size() == 2)
+    { ASTTerm typeSpec = (ASTTerm) terms.get(0); 
+      Type typ = typeSpec.cdeclarationToType(vartypes,varelemtypes,types,entities);
+      Attribute att = 
+        (Attribute) typeSpec.cdeclaratorToModelElement(vartypes,varelemtypes,types,entities);
+
+      System.out.println(att + " type = " + typ); 
+
+      if (att == null) 
+      { return null; } 
+
+      if (att.isCollection() || att.isReferenceType())
+      { att.setElementType(typ);
+        Type atttype = att.getType(); 
+        atttype.setElementType(typ);
+      } 
+      else if (typ != null) 
+      { att.setType(typ); 
+        att.setElementType(typ.getElementType()); 
+      }
+
+      // System.out.println(att + " type = " + att.getType() + " " + att.getElementType()); 
+ 
+      CreationStatement cs = 
+        new CreationStatement(att);
+      return cs;  
+    } 
+
+    if ("jumpStatement".equals(tag) && terms.size() > 1)
+    { ASTTerm keywd = (ASTTerm) terms.get(0);
+      String keyword = keywd.literalForm();  
+      if ("break".equals(keyword))
+      { return new BreakStatement(); } 
+      if ("continue".equals(keyword))
+      { return new ContinueStatement(); } 
+      if ("return".equals(keyword))
+      { if (terms.size() == 2)
+        { return new ReturnStatement(); } 
+        ASTTerm val = (ASTTerm) terms.get(1); 
+        Expression retval = val.cexpressionToKM3(vartypes, varelemtypes, types, entities); 
+        return new ReturnStatement(retval); 
+      } 
+      // also goto
+    } 
+    
+    if ("iterationStatement".equals(tag) && terms.size() > 1)
+    { ASTTerm keywd = (ASTTerm) terms.get(0);
+      String keyword = keywd.literalForm();  
+      if ("while".equals(keyword) && terms.size() > 4)
+      { ASTTerm test = (ASTTerm) terms.get(2); 
+        ASTTerm body = (ASTTerm) terms.get(4);
+        Expression loopTest = test.cexpressionToKM3(vartypes, varelemtypes, types, entities); 
+        Statement lbody = body.cstatementToKM3(vartypes, varelemtypes, types, entities); 
+        return new WhileStatement(loopTest,lbody); 
+      }
+      else if ("do".equals(keyword) && terms.size() > 5)
+      { ASTTerm test = (ASTTerm) terms.get(4); 
+        ASTTerm body = (ASTTerm) terms.get(1);
+        Expression loopTest = test.cexpressionToKM3(vartypes, varelemtypes, types, entities); 
+        Statement lbody = body.cstatementToKM3(vartypes, varelemtypes, types, entities); 
+        WhileStatement ws = new WhileStatement(loopTest,lbody);
+        SequenceStatement stat = new SequenceStatement(); 
+        stat.addStatement(lbody); 
+        stat.addStatement(ws); 
+        return stat;  
+      } 
+      else if ("for".equals(keyword)) 
+      { ASTCompositeTerm forCond = (ASTCompositeTerm) terms.get(2);
+        int sze = forCond.terms.size(); 
+
+        ASTTerm code = (ASTTerm) terms.get(terms.size()-1); 
+           
+        ASTTerm init = (ASTTerm) (forCond.terms.get(0)); 
+        if (";".equals(init.literalForm()))
+        { // (forCondition ; test ; incr )
+ 
+          ASTTerm test = (ASTTerm) forCond.terms.get(1);
+          ASTTerm incr = (ASTTerm) forCond.terms.get(sze-1); 
+          Expression cond = new BasicExpression(true);
+          Statement increment = null;
+          Statement body = null;    
+
+          if (";".equals(test.literalForm())) { } 
+          else 
+          { cond = test.cexpressionToKM3(
+                     vartypes, varelemtypes, types, entities); 
+          } 
+
+          if (";".equals(incr.literalForm())) { } 
+          else 
+          { increment = 
+              incr.cupdateForm(vartypes, varelemtypes, 
+                               types, entities); 
+          } 
+ 
+          body = code.cstatementToKM3(vartypes, varelemtypes, 
+                               types, entities);
+          if (increment == null)
+          { return new WhileStatement(cond, body); } 
+          else 
+          { SequenceStatement loopBody = new SequenceStatement();
+            loopBody.addStatement(body); 
+            loopBody.addStatement(increment); 
+            loopBody.setBrackets(true); 
+            return new WhileStatement(cond,loopBody); 
+          } 
+        } 
+        else 
+        { // (forCondition init ; test ; incr )
+          Statement ini = init.cupdateForm(vartypes, 
+                            varelemtypes, types, entities);
+          SequenceStatement res = new SequenceStatement(); 
+          res.addStatement(ini); 
+ 
+          ASTTerm test = (ASTTerm) forCond.terms.get(2);
+          ASTTerm incr = (ASTTerm) forCond.terms.get(sze-1); 
+          Expression cond = new BasicExpression(true);
+          Statement increment = null;
+          Statement body = null;    
+
+          if (";".equals(test.literalForm())) { } 
+          else 
+          { cond = test.cexpressionToKM3(
+                     vartypes, varelemtypes, types, entities); 
+          } 
+
+          if (";".equals(incr.literalForm())) { } 
+          else 
+          { increment = 
+              incr.cupdateForm(vartypes, varelemtypes, 
+                               types, entities); 
+          } 
+ 
+          body = code.cstatementToKM3(vartypes, varelemtypes, 
+                               types, entities);
+          if (increment == null)
+          { WhileStatement ws = new WhileStatement(cond, body); 
+            res.addStatement(ws); 
+            return res; 
+          } 
+          else 
+          { SequenceStatement loopBody = new SequenceStatement();
+            loopBody.addStatement(body); 
+            loopBody.addStatement(increment); 
+            loopBody.setBrackets(true); 
+            WhileStatement ws = new WhileStatement(cond,loopBody); 
+            res.addStatement(ws); 
+            return res; 
+          } 
+        } 
+      }  
+    } 
+
+    if ("selectionStatement".equals(tag) && terms.size() > 1)
+    { ASTTerm keywd = (ASTTerm) terms.get(0);
+      String keyword = keywd.literalForm();  
+      if ("if".equals(keyword) && terms.size() > 6)
+      { // if with else 
+        ASTTerm test = (ASTTerm) terms.get(2); 
+        ASTTerm ifbody = (ASTTerm) terms.get(4);
+        ASTTerm elsebody = (ASTTerm) terms.get(6); 
+        Expression ifTest = test.cexpressionToKM3(vartypes, varelemtypes, types, entities); 
+        Statement ifstat = ifbody.cstatementToKM3(vartypes, varelemtypes, types, entities); 
+        Statement elsestat = elsebody.cstatementToKM3(vartypes, varelemtypes, types, entities); 
+
+        return new ConditionalStatement(ifTest, 
+                                        ifstat, elsestat); 
+      } 
+      else if ("if".equals(keyword) && terms.size() == 5)
+      { // if without else 
+        ASTTerm test = (ASTTerm) terms.get(2); 
+        ASTTerm ifbody = (ASTTerm) terms.get(4);
+        Expression ifTest = test.cexpressionToKM3(vartypes, varelemtypes, types, entities); 
+        Statement ifstat = ifbody.cstatementToKM3(vartypes, varelemtypes, types, entities); 
+        Statement elsestat = new InvocationStatement("skip"); 
+        return new ConditionalStatement(ifTest, 
+                                        ifstat, elsestat); 
+      } 
+         
+      // and switch
+    } 
+
+    if ("compoundStatement".equals(tag) && terms.size() > 1)
+    { ASTTerm items = (ASTTerm) terms.get(1); 
+      Vector stats = items.cstatementListToKM3(vartypes,varelemtypes,types,entities);  
+      SequenceStatement stat = new SequenceStatement(stats); 
+      stat.setBrackets(true); 
+      return stat; 
+    } 
+
+    if ("expressionStatement".equals(tag) && terms.size() > 1)
+    { ASTTerm expr = (ASTTerm) terms.get(0); 
+      Statement stat = expr.cupdateForm(vartypes,varelemtypes,types,entities);
+      return stat; 
+    } 
+
+    return null; 
+  } 
+
+  public Vector cparameterListToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { if ("parameterTypeList".equals(tag))
+    { ASTTerm ptl = (ASTTerm) terms.get(0); 
+      return ptl.cparameterListToKM3(vartypes,varelemtypes,types,entities); 
+    } 
+
+    if ("parameterList".equals(tag))
+    { Vector res = new Vector(); 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i);
+        if (",".equals(tt.literalForm())) 
+        { continue; } 
+        Attribute expr = tt.cparameterToKM3(vartypes,varelemtypes,types,entities); 
+        if (expr != null) 
+        { res.add(expr); }
+      } 
+      return res;  
+    } 
+
+    return new Vector(); 
+  } 
+
+  public Attribute cparameterToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { if ("parameterDeclaration".equals(tag))
+    { if (terms.size() == 2) 
+      { ASTTerm typeSpec = (ASTTerm) terms.get(0); 
+        ASTTerm dec = (ASTTerm) terms.get(1); 
+        Type typ = typeSpec.cdeclarationToType(vartypes,varelemtypes,types,entities); 
+        Attribute att = (Attribute) dec.cdeclaratorToModelElement(vartypes, varelemtypes, types, entities); 
+        att.setType(typ);
+        return att; 
+      } 
+    }
+   
+    return null; 
+  }        
+
+
+  public Vector cstatementListToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+
+  { // if ("blockItemList".equals(tag))
+    Vector res = new Vector(); 
+    for (int i = 0; i < terms.size(); i++) 
+    { ASTTerm tt = (ASTTerm) terms.get(i);
+      Statement expr = tt.cstatementToKM3(vartypes,varelemtypes,types,entities); 
+      if (expr != null) 
+      { res.add(expr); } 
+    } 
+    return res; 
+  } 
+
+  public Vector cexpressionListToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+
+  { // if ("argumentExpressionList".equals(tag))
+    Vector res = new Vector(); 
+    for (int i = 0; i < terms.size(); i++) 
+    { ASTTerm tt = (ASTTerm) terms.get(i);
+      if (",".equals(tt + "")) 
+      { continue; }  
+      Expression expr = tt.cexpressionToKM3(vartypes,varelemtypes,types,entities); 
+      if (expr != null) 
+      { res.add(expr); } 
+    } 
+    return res; 
+  } 
+
+  public Statement cupdateForm(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { System.out.println(">> Processing tag " + tag + " with " + terms.size() + " terms"); 
+    System.out.println(); 
+
+    if (terms.size() == 1)
+    { ASTTerm t1 = (ASTTerm) terms.get(0); 
+      return t1.cupdateForm(vartypes, varelemtypes, types, entities); 
+    } 
+
+    if ("expression".equals(tag) && terms.size() == 3)
+    { // e1 , e2
+      ASTTerm tt = (ASTTerm) terms.get(0); 
+      Statement s1 = tt.cupdateForm(vartypes, varelemtypes, types, entities); 
+      ASTTerm t2 = (ASTTerm) terms.get(2); 
+      Statement s2 = t2.cupdateForm(vartypes, varelemtypes, types, entities); 
+      if (s1 == null) 
+      { return s2; } 
+      if (s2 == null) 
+      { return s1; } 
+      SequenceStatement ss = new SequenceStatement(); 
+      ss.addStatement(s1); 
+      ss.addStatement(s2); 
+      return ss; 
+    } 
+
+    if ("postfixExpression".equals(tag))
+    { if (terms.size() == 2 && 
+          "++".equals(terms.get(1) + ""))
+      { // t1++
+        ASTTerm t1 = (ASTTerm) terms.get(0); 
+        Expression res = t1.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+        BinaryExpression incr = 
+          new BinaryExpression("+", res, unitExpression); 
+        return new AssignStatement(res, incr); 
+      } 
+
+      if (terms.size() == 2 && 
+          "--".equals(terms.get(1) + ""))
+      { // t1++
+        ASTTerm t1 = (ASTTerm) terms.get(0); 
+        Expression res = t1.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+        BinaryExpression decr = 
+          new BinaryExpression("-", res, unitExpression); 
+        return new AssignStatement(res, decr); 
+      } 
+
+      if (terms.size() == 4 && 
+          "(".equals(terms.get(1) + "") && 
+          ")".equals(terms.get(3) + ""))
+      { ASTTerm arr = (ASTTerm) terms.get(0);
+        ASTTerm pars = (ASTTerm) terms.get(2); 
+        // (argumentExpressionList e1 , ... en)
+        Expression arre = arr.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+        
+        Vector args = pars.cexpressionListToKM3(vartypes, varelemtypes, types, entities);
+        return cfunctioncallUpdateForm(arr.literalForm(),arre,args); 
+      } 
+    } 
+
+    if ("unaryExpression".equals(tag) && terms.size() == 2)
+    { String op = ((ASTTerm) terms.get(0)).literalForm(); 
+      ASTTerm arg = (ASTTerm) terms.get(1); 
+      Expression res = arg.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      
+      if ("++".equals(op))
+      { BinaryExpression incr = new BinaryExpression("+", res, unitExpression); 
+        return new AssignStatement(res, incr); 
+      } 
+
+      if ("--".equals(op))
+      { BinaryExpression decr = new BinaryExpression("-", res, unitExpression);
+        return new AssignStatement(res, decr);
+      } 
+    } 
+
+    if ("assignmentExpression".equals(tag) && terms.size() == 3)
+    { String op = ((ASTTerm) terms.get(1)).literalForm(); 
+      ASTTerm arg1 = (ASTTerm) terms.get(0); 
+      Expression res1 = arg1.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      Expression res2 = this.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+
+      return new AssignStatement(res1, res2); 
+    }
+
+    return null; 
+  }
+
+
   public Expression cexpressionToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
-  { if (terms.size() == 1)
+  { System.out.println(">> Processing tag " + tag + " with " + terms.size() + " terms"); 
+    System.out.println(); 
+
+    if (terms.size() == 1)
     { ASTTerm t1 = (ASTTerm) terms.get(0); 
       return t1.cexpressionToKM3(vartypes, varelemtypes, types, entities); 
     } 
 
+    if ("initDeclaratorList".equals(tag))
+    { ASTTerm t1 = (ASTTerm) terms.get(0); 
+      return t1.cexpressionToKM3(vartypes, varelemtypes, types, entities); 
+    } 
+
+    if ("initDeclarator".equals(tag) && terms.size() == 3)
+    { ASTTerm tinit = (ASTTerm) terms.get(2); 
+      return tinit.cexpressionToKM3(vartypes, varelemtypes, types, entities); 
+    } 
+
+    if ("initializer".equals(tag) && terms.size() == 1)
+    { ASTTerm t1 = (ASTTerm) terms.get(0); 
+      return t1.cexpressionToKM3(vartypes, varelemtypes, types, entities); 
+    } 
+
+    if ("initializer".equals(tag) && terms.size() == 3 && 
+        "{".equals(terms.get(0) + "") && 
+        "}".equals(terms.get(2) + ""))
+    { ASTTerm t1 = (ASTTerm) terms.get(1); 
+      Vector exprs = t1.cexpressionListToKM3(vartypes, varelemtypes, types, entities); 
+      SetExpression st = new SetExpression(exprs,true); 
+      return st; 
+    } 
+
+
+    if ("expression".equals(tag) && terms.size() == 3)
+    { // e1 , e2
+      ASTTerm tt = (ASTTerm) terms.get(2); 
+      return tt.cexpressionToKM3(vartypes, varelemtypes, types, entities); 
+    } 
+
     if ("primaryExpression".equals(tag) && 
-        terms.size() == 3) 
+        terms.size() == 3 && "(".equals(terms.get(0) + "") &&
+        ")".equals(terms.get(2) + "")) 
     { // (expr)
       ASTTerm tt = (ASTTerm) terms.get(1); 
       Expression res = tt.cexpressionToKM3(vartypes,
                              varelemtypes,types,entities); 
       res.setBrackets(true); 
       return res; 
+    } 
+
+    if ("primaryExpression".equals(tag) && 
+        terms.size() > 1 && 
+        '\'' == (terms.get(0) + "").charAt(0))
+    { String actualTerm = ""; 
+      for (int i = 0; i < terms.size(); i++) 
+      { actualTerm = actualTerm + 
+          ((ASTTerm) terms.get(i)).literalForm();
+        if (i < terms.size() -1)
+        { actualTerm = actualTerm + " "; }  
+      } 
+      ASTBasicTerm bt = 
+        new ASTBasicTerm(tag, actualTerm); 
+      return bt.cexpressionToKM3(vartypes,varelemtypes,types,entities); 
+    } 
+
+    if ("postfixExpression".equals(tag) && 
+        terms.size() == 3 && "(".equals(terms.get(1) + "") &&
+        ")".equals(terms.get(2) + "")) 
+    { // f()
+      ASTTerm tt = (ASTTerm) terms.get(0); 
+      Expression res = tt.cexpressionToKM3(vartypes,
+                             varelemtypes,types,entities); 
+      return cfunctioncallToKM3(tt.literalForm(),res,new Vector()); 
+    } 
+
+    if ("postfixExpression".equals(tag) && 
+        terms.size() == 5 && ".".equals(terms.get(1) + "") &&
+        "(".equals(terms.get(3) + "") &&
+        ")".equals(terms.get(4) + "")) 
+    { // x.f()
+      ASTTerm tt = (ASTTerm) terms.get(0); 
+      Expression obj = tt.cexpressionToKM3(vartypes,
+                             varelemtypes,types,entities);
+      ASTTerm fld = (ASTTerm) terms.get(2); 
+      Expression f = fld.cexpressionToKM3(vartypes,
+                             varelemtypes,types,entities); 
+      if (f instanceof BasicExpression)
+      { BasicExpression be = (BasicExpression) f; 
+        be.setIsEvent();
+        be.setParameters(new Vector());
+        be.setObjectRef(obj); 
+        return be; 
+      }   
+      return f; 
     } 
 
     if ("postfixExpression".equals(tag))
@@ -324,9 +1282,8 @@ public class ASTCompositeTerm extends ASTTerm
         BinaryExpression res = 
           new BinaryExpression("->at", arre, umlindex); 
         return res; 
-      } 
+      } // really !(arre+inde)
 
-  /* 
       if (terms.size() == 4 && 
           "(".equals(terms.get(1) + "") && 
           ")".equals(terms.get(3) + ""))
@@ -336,10 +1293,8 @@ public class ASTCompositeTerm extends ASTTerm
         Expression arre = arr.cexpressionToKM3(vartypes, varelemtypes, types, entities);
         
         Vector args = pars.cexpressionListToKM3(vartypes, varelemtypes, types, entities);
-        arre.setParameters(args); 
-        arre.setIsEvent(); 
-        return res; 
-      } */ 
+        return cfunctioncallToKM3(arr.literalForm(),arre,args); 
+      } 
 
       if (terms.size() == 3 && 
           ".".equals(terms.get(1) + ""))
@@ -380,9 +1335,906 @@ public class ASTCompositeTerm extends ASTTerm
       } 
      
     } 
+
+    if ("unaryExpression".equals(tag) && terms.size() == 2)
+    { String op = ((ASTTerm) terms.get(0)).literalForm(); 
+      ASTTerm arg = (ASTTerm) terms.get(1); 
+      Expression res = arg.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      
+      if ("&".equals(op))
+      { return new UnaryExpression("?", res); } 
+      if ("*".equals(op))
+      { return new UnaryExpression("!", res); } 
+      if ("!".equals(op))
+      { return new UnaryExpression("not", res); }
+      if ("++".equals(op))
+      { return new BinaryExpression("+", res, unitExpression); } 
+      if ("--".equals(op))
+      { return new BinaryExpression("-", res, unitExpression); }
+      if ("+".equals(op))
+      { return res; } 
+      if ("sizeof".equals(op))
+      { return sizeofExpression(res); }  
+      return new UnaryExpression(op,res); 
+    } 
+
+    if ("unaryExpression".equals(tag) && terms.size() == 4)
+    { String op = ((ASTTerm) terms.get(0)).literalForm(); 
+      if ("sizeof".equals(op))
+      { String typ = ((ASTTerm) terms.get(2)).literalForm(); 
+        return sizeofExpression(typ); 
+      } 
+    } 
+
+    if ("additiveExpression".equals(tag) && terms.size() == 3)
+    { String op = ((ASTTerm) terms.get(1)).literalForm(); 
+      ASTTerm arg1 = (ASTTerm) terms.get(0); 
+      Expression res1 = arg1.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      ASTTerm arg2 = (ASTTerm) terms.get(2); 
+      Expression res2 = arg2.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      
+      return new BinaryExpression(op, res1, res2);   
+    } 
+
+    if ("multiplicativeExpression".equals(tag) && terms.size() == 3)
+    { String op = ((ASTTerm) terms.get(1)).literalForm(); 
+      ASTTerm arg1 = (ASTTerm) terms.get(0); 
+      Expression res1 = arg1.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      ASTTerm arg2 = (ASTTerm) terms.get(2); 
+      Expression res2 = arg2.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      
+      if ("%".equals(op))
+      { return new BinaryExpression("mod", res1, res2); } 
+      return new BinaryExpression(op, res1, res2);   
+    } 
+
+    if ("shiftExpression".equals(tag) && terms.size() == 3)
+    { String op = ((ASTTerm) terms.get(1)).literalForm(); 
+      ASTTerm arg1 = (ASTTerm) terms.get(0); 
+      Expression res1 = arg1.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      ASTTerm arg2 = (ASTTerm) terms.get(2); 
+      Expression res2 = arg2.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      
+      BinaryExpression res2pow2 = 
+        new BinaryExpression("->pow", 
+              new BasicExpression(2), res2); 
+
+      if ("<<".equals(op))
+      { return new BinaryExpression("*", res1, res2pow2); } 
+      else if (">>".equals(op))
+      { return new BinaryExpression("div", res1, res2pow2); } 
+
+      return new BinaryExpression(op, res1, res2);   
+    } 
+
+    if ("castExpression".equals(tag) && terms.size() == 4 && 
+        "(".equals(terms.get(0) + "") && 
+        ")".equals(terms.get(2) + ""))
+    { String castType = ((ASTTerm) terms.get(1)).literalForm(); 
+      ASTTerm arg = (ASTTerm) terms.get(3); 
+      Expression res = arg.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      return new BinaryExpression("->oclAsType", res, 
+                                  new BasicExpression(castType)); 
+    } 
+
+    if ("relationalExpression".equals(tag) && terms.size() == 3)
+    { String op = ((ASTTerm) terms.get(1)).literalForm(); 
+      ASTTerm arg1 = (ASTTerm) terms.get(0); 
+      Expression res1 = arg1.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      ASTTerm arg2 = (ASTTerm) terms.get(2); 
+      Expression res2 = arg2.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      
+      return new BinaryExpression(op, res1, res2);   
+    } 
+
+    if ("equalityExpression".equals(tag) && terms.size() == 3)
+    { String op = ((ASTTerm) terms.get(1)).literalForm(); 
+      ASTTerm arg1 = (ASTTerm) terms.get(0); 
+      Expression res1 = arg1.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      ASTTerm arg2 = (ASTTerm) terms.get(2); 
+      Expression res2 = arg2.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      
+      if ("!=".equals(op))
+      { return new BinaryExpression("/=", res1, res2); } 
+      return new BinaryExpression(op, res1, res2);   
+    } 
+
+    if ("andExpression".equals(tag) && terms.size() == 3)
+    { String op = ((ASTTerm) terms.get(1)).literalForm(); 
+      ASTTerm arg1 = (ASTTerm) terms.get(0); 
+      Expression res1 = arg1.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      ASTTerm arg2 = (ASTTerm) terms.get(2); 
+      Expression res2 = arg2.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+
+      if ("&".equals(op))
+      { Vector pars = new Vector(); 
+        pars.add(res1); 
+        pars.add(res2); 
+         
+        return BasicExpression.newStaticCallBasicExpression(
+          "bitwiseAnd", "MathLib", pars);
+      }
+  
+      return new BinaryExpression(op, res1, res2);   
+    } 
+
+    if ("exclusiveOrExpression".equals(tag) && terms.size() == 3)
+    { String op = ((ASTTerm) terms.get(1)).literalForm(); 
+      ASTTerm arg1 = (ASTTerm) terms.get(0); 
+      Expression res1 = arg1.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      ASTTerm arg2 = (ASTTerm) terms.get(2); 
+      Expression res2 = arg2.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+
+      if ("^".equals(op))
+      { Vector pars = new Vector(); 
+        pars.add(res1); 
+        pars.add(res2); 
+         
+        return BasicExpression.newStaticCallBasicExpression(
+          "bitwiseXor", "MathLib", pars);
+      }
+  
+      return new BinaryExpression(op, res1, res2);   
+    } 
+
+    if ("inclusiveOrExpression".equals(tag) && terms.size() == 3)
+    { String op = ((ASTTerm) terms.get(1)).literalForm(); 
+      ASTTerm arg1 = (ASTTerm) terms.get(0); 
+      Expression res1 = arg1.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      ASTTerm arg2 = (ASTTerm) terms.get(2); 
+      Expression res2 = arg2.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+
+      if ("|".equals(op))
+      { Vector pars = new Vector(); 
+        pars.add(res1); 
+        pars.add(res2); 
+         
+        return BasicExpression.newStaticCallBasicExpression(
+          "bitwiseOr", "MathLib", pars);
+      }
+  
+      return new BinaryExpression(op, res1, res2);   
+    } 
+
+    if ("logicalAndExpression".equals(tag) && terms.size() == 3)
+    { String op = ((ASTTerm) terms.get(1)).literalForm(); 
+      ASTTerm arg1 = (ASTTerm) terms.get(0); 
+      Expression res1 = arg1.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      ASTTerm arg2 = (ASTTerm) terms.get(2); 
+      Expression res2 = arg2.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+
+      if ("&&".equals(op))
+      { return new BinaryExpression("&", res1, res2); }
+  
+      return new BinaryExpression(op, res1, res2);   
+    } 
+
+    if ("logicalOrExpression".equals(tag) && terms.size() == 3)
+    { String op = ((ASTTerm) terms.get(1)).literalForm(); 
+      ASTTerm arg1 = (ASTTerm) terms.get(0); 
+      Expression res1 = arg1.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      ASTTerm arg2 = (ASTTerm) terms.get(2); 
+      Expression res2 = arg2.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+
+      if ("||".equals(op))
+      { return new BinaryExpression("or", res1, res2); }
+  
+      return new BinaryExpression(op, res1, res2);   
+    } 
+
+    if ("conditionalExpression".equals(tag) && terms.size() == 5)
+    { ASTTerm test = (ASTTerm) terms.get(0); 
+      ASTTerm ifPart = (ASTTerm) terms.get(2); 
+      ASTTerm elsePart = (ASTTerm) terms.get(4);
+      Expression testExpr = test.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      Expression ifExpr = ifPart.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      Expression elseExpr = elsePart.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      return new ConditionalExpression(testExpr, 
+                                       ifExpr, elseExpr); 
+    } 
+
+    if ("assignmentExpression".equals(tag) && terms.size() == 3)
+    { String op = ((ASTTerm) terms.get(1)).literalForm(); 
+      ASTTerm arg1 = (ASTTerm) terms.get(0); 
+      Expression res1 = arg1.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+      ASTTerm arg2 = (ASTTerm) terms.get(2); 
+      Expression res2 = arg2.cexpressionToKM3(vartypes, varelemtypes, types, entities);
+
+      if ("=".equals(op))
+      { return res2; } 
+      if ("+=".equals(op))
+      { return new BinaryExpression("+", res1, res2); } 
+      if ("-=".equals(op))
+      { return new BinaryExpression("-", res1, res2); } 
+      if ("*=".equals(op))
+      { return new BinaryExpression("*", res1, res2); } 
+      if ("/=".equals(op))
+      { return new BinaryExpression("/", res1, res2); } 
+      if ("%=".equals(op))
+      { return new BinaryExpression("mod", res1, res2); } 
+      if ("<<=".equals(op))
+      { BinaryExpression res2pow2 = 
+          new BinaryExpression("->pow", 
+              new BasicExpression(2), res2); 
+        return new BinaryExpression("*", res1, res2pow2); 
+      } 
+      if (">>=".equals(op))
+      { BinaryExpression res2pow2 = 
+          new BinaryExpression("->pow", 
+              new BasicExpression(2), res2); 
+        return new BinaryExpression("div", res1, res2pow2); 
+      } 
+      if ("|=".equals(op))
+      { Vector pars = new Vector(); 
+        pars.add(res1); 
+        pars.add(res2); 
+         
+        return BasicExpression.newStaticCallBasicExpression(
+          "bitwiseOr", "MathLib", pars);
+      }
+      if ("^=".equals(op))
+      { Vector pars = new Vector(); 
+        pars.add(res1); 
+        pars.add(res2); 
+         
+        return BasicExpression.newStaticCallBasicExpression(
+          "bitwiseXor", "MathLib", pars);
+      }
+      if ("&=".equals(op))
+      { Vector pars = new Vector(); 
+        pars.add(res1); 
+        pars.add(res2); 
+         
+        return BasicExpression.newStaticCallBasicExpression(
+          "bitwiseAnd", "MathLib", pars);
+      }
+
+
+      return new BinaryExpression(op, res1, res2);   
+    } 
+
     return null; 
 
   } 
+
+  private Expression sizeofExpression(Expression res)
+  { Type t = res.getType(); 
+    if (t == null) 
+    { return new BasicExpression(4); } 
+    String tname = t.getName(); 
+    return sizeofExpression(tname); 
+  } // records - classes; sequences
+
+  private Expression sizeofExpression(String tname)
+  { if ("double".equals(tname) || tname.startsWith("long")) 
+    { return new BasicExpression(8); } 
+    if ("char".equals(tname)) 
+    { return new BasicExpression(1); } 
+    return new BasicExpression(4); 
+  } // records - classes; sequences
+
+  public Statement cfunctioncallUpdateForm(String fname, Expression arre, Vector args)
+  { if ("strcpy".equals(fname) && args.size() == 2)
+    { Expression arg0 = (Expression) args.get(0);
+      Expression arg1 = (Expression) args.get(1);
+      arg1.setType(new Type("String", null)); 
+      return new AssignStatement(arg0, arg1);  
+    } // and side-effect 
+    else if ("strncpy".equals(fname) && args.size() == 3)
+    { Expression arg0 = (Expression) args.get(0);
+      Expression arg1 = (Expression) args.get(1);
+      arg1.setType(new Type("String", null));
+      Expression argn = (Expression) args.get(2);
+      Vector pars = new Vector(); 
+      pars.add(unitExpression); 
+      pars.add(argn);  
+      BasicExpression fbe = 
+        BasicExpression.newFunctionBasicExpression("subrange", arg1, pars);  
+      fbe.setType(new Type("String", null));
+      return new AssignStatement(arg0, fbe); 
+    } // and side-effect 
+    else if ("strcat".equals(fname) && args.size() == 2)
+    { Expression arg1 = (Expression) args.get(0);
+      arg1.setType(new Type("String", null));
+      Expression arg2 = (Expression) args.get(1);
+      BinaryExpression sumstr = 
+        new BinaryExpression("+", arg1, arg2); 
+      sumstr.setType(new Type("String", null));
+      return new AssignStatement(arg1,sumstr); 
+    } // and side-effect 
+    else if ("strncat".equals(fname) && args.size() == 3)
+    { Expression arg1 = (Expression) args.get(0);
+      arg1.setType(new Type("String", null));
+      Expression arg2 = (Expression) args.get(1);
+      Expression argn = (Expression) args.get(2); 
+      Vector pars = new Vector(); 
+      pars.add(unitExpression); 
+      pars.add(argn);  
+      BasicExpression fbe = 
+        BasicExpression.newFunctionBasicExpression("subrange", arg2, pars);  
+      fbe.setType(new Type("String", null));
+
+      BinaryExpression sumstr = 
+        new BinaryExpression("+", arg1, fbe); 
+      sumstr.setType(new Type("String", null));
+      return new AssignStatement(arg1, sumstr); 
+    } 
+    else if ("srand".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0);
+      Vector pars = new Vector();
+      pars.add(new BinaryExpression("mod", arg1, 
+                        new BasicExpression(30269))); 
+      pars.add(new BinaryExpression("mod", arg1, 
+                        new BasicExpression(30307))); 
+      pars.add(new BinaryExpression("mod", arg1, 
+                        new BasicExpression(30323))); 
+ 
+      Expression mcall = 
+        BasicExpression.newStaticCallBasicExpression(
+          "setSeeds", 
+          "MathLib", pars); 
+      InvocationStatement stat = 
+        InvocationStatement.newInvocationStatement(
+                                         mcall,pars); 
+      return stat; 
+    } 
+    else if ("free".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0);
+      Expression delarg = 
+        new UnaryExpression("->isDeleted", arg1); 
+      ImplicitInvocationStatement ee = 
+        new ImplicitInvocationStatement(delarg); 
+      return ee; 
+    } 
+    else if ("abort".equals(fname) && args.size() == 0)
+    { Expression fail = 
+        BasicExpression.newStaticCallBasicExpression("exit",
+          "OclProcess", unitExpression); 
+      InvocationStatement ee = 
+        InvocationStatement.newInvocationStatement(fail, 
+                                         unitExpression); 
+      return ee; 
+    } 
+    else if ("exit".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0);
+      Expression fail = 
+        BasicExpression.newStaticCallBasicExpression("exit",
+          "OclProcess", arg1); 
+      InvocationStatement ee = 
+        InvocationStatement.newInvocationStatement(fail, 
+                                                   arg1); 
+      return ee; 
+    } 
+
+    return null; 
+  } 
+
+  public Expression cfunctioncallToKM3(String fname, Expression arre, Vector args)
+  { if ("sin".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->sin", arg1); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    } 
+    else if ("cos".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->cos", arg1); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    }
+    else if ("tan".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->tan", arg1); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    }
+    else if ("asin".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->asin", arg1); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    } 
+    else if ("acos".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->acos", arg1); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    }
+    else if ("atan".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->atan", arg1); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    }
+    else if ("sinh".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->sinh", arg1); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    } 
+    else if ("cosh".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->cosh", arg1); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    }
+    else if ("tanh".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->tanh", arg1); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    }
+    else if ("exp".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->exp", arg1); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    } 
+    else if ("log".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->log", arg1); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    }
+    else if ("log10".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->log10", arg1); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    }
+    else if ("sqrt".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->sqrt", arg1); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    } 
+    else if ("ceil".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->ceil", arg1); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    }
+    else if ("floor".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->floor", arg1); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    }
+    else if ("fabs".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->abs", arg1); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    }
+    else if ("abs".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->abs", arg1); 
+      res.setType(new Type("int", null)); 
+      return res; 
+    }
+    else if ("labs".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->abs", arg1); 
+      res.setType(new Type("long", null)); 
+      return res; 
+    }
+    else if ("pow".equals(fname) && args.size() == 2)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      Expression arg2 = (Expression) args.get(1); 
+      BinaryExpression res = new BinaryExpression("->pow", arg1, arg2); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    }
+    else if ("atan2".equals(fname) && args.size() == 2)
+    { Expression arg1 = (Expression) args.get(0); 
+      Expression arg2 = (Expression) args.get(1); 
+      BinaryExpression res0 = new BinaryExpression("/", arg1, arg2); 
+      res0.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->atan", res0); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    }
+    else if ("ldexp".equals(fname) && args.size() == 2)
+    { Expression arg1 = (Expression) args.get(0); 
+      Expression arg2 = (Expression) args.get(1); 
+      BinaryExpression res0 = new BinaryExpression("->pow", new BasicExpression(2), arg2); 
+      BinaryExpression res = new BinaryExpression("*", arg1, res0); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    }
+    else if ("fmod".equals(fname) && args.size() == 2)
+    { Expression arg1 = (Expression) args.get(0); 
+      Expression arg2 = (Expression) args.get(1); 
+      BinaryExpression res = new BinaryExpression("mod", arg1, arg2); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    }
+    else if ("atof".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->toReal", arg1); 
+      res.setType(new Type("double", null)); 
+      return res; 
+    }
+    else if ("atoi".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->toInteger", arg1); 
+      res.setType(new Type("int", null)); 
+      return res; 
+    }
+    else if ("atol".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->toLong", arg1); 
+      res.setType(new Type("long", null)); 
+      return res; 
+    }
+    else if ("isalphanum".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      Expression arg2 = new BasicExpression("\"[a-zA-Z0-9]\""); 
+      BinaryExpression res = new BinaryExpression("->matches", arg1, arg2); 
+      res.setType(new Type("boolean", null)); 
+      return res; 
+    }
+    else if ("isalpha".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      Expression arg2 = new BasicExpression("\"[a-zA-Z]\""); 
+      BinaryExpression res = new BinaryExpression("->matches", arg1, arg2); 
+      res.setType(new Type("boolean", null)); 
+      return res; 
+    }
+    else if ("isdigit".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      Expression arg2 = new BasicExpression("\"[0-9]\""); 
+      BinaryExpression res = new BinaryExpression("->matches", arg1, arg2); 
+      res.setType(new Type("boolean", null)); 
+      return res; 
+    }
+    else if ("islower".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      Expression arg2 = new BasicExpression("\"[a-z]\""); 
+      BinaryExpression res = new BinaryExpression("->matches", arg1, arg2); 
+      res.setType(new Type("boolean", null)); 
+      return res; 
+    }
+    else if ("isupper".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      Expression arg2 = new BasicExpression("\"[A-Z]\""); 
+      BinaryExpression res = new BinaryExpression("->matches", arg1, arg2); 
+      res.setType(new Type("boolean", null)); 
+      return res; 
+    }
+    else if ("isspace".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      Expression arg2 = new BasicExpression("\"[ \\t\\n\\r]\""); 
+      BinaryExpression res = new BinaryExpression("->matches", arg1, arg2); 
+      res.setType(new Type("boolean", null)); 
+      return res; 
+    }
+    else if ("isxdigit".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      Expression arg2 = new BasicExpression("\"[a-fA-F0-9]\""); 
+      BinaryExpression res = new BinaryExpression("->matches", arg1, arg2); 
+      res.setType(new Type("boolean", null)); 
+      return res; 
+    }
+    else if ("tolower".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->toLowerCase", arg1); 
+      res.setType(new Type("String", null));
+      UnaryExpression r1 = new UnaryExpression("->char2byte", res);
+      r1.setType(new Type("int", null));  
+      return r1; 
+    }
+    else if ("toupper".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+      arg1.setBrackets(true); 
+      UnaryExpression res = new UnaryExpression("->toUpperCase", arg1); 
+      res.setType(new Type("String", null)); 
+      UnaryExpression r1 = new UnaryExpression("->char2byte", res);
+      r1.setType(new Type("int", null));  
+      return r1; 
+    }
+    else if ("strcpy".equals(fname) && args.size() == 2)
+    { Expression arg1 = (Expression) args.get(1);
+      arg1.setType(new Type("String", null)); 
+      return arg1; 
+    } // and side-effect 
+    else if ("strncpy".equals(fname) && args.size() == 3)
+    { Expression arg1 = (Expression) args.get(1);
+      arg1.setType(new Type("String", null));
+      Expression argn = (Expression) args.get(2);
+      Vector pars = new Vector(); 
+      pars.add(unitExpression); 
+      pars.add(argn);  
+      BasicExpression fbe = 
+        BasicExpression.newFunctionBasicExpression("subrange", arg1, pars);  
+      fbe.setType(new Type("String", null));
+      return fbe; 
+    } // and side-effect 
+    else if ("strcat".equals(fname) && args.size() == 2)
+    { Expression arg1 = (Expression) args.get(0);
+      arg1.setType(new Type("String", null));
+      Expression arg2 = (Expression) args.get(1);
+      BinaryExpression sumstr = 
+        new BinaryExpression("+", arg1, arg2); 
+      sumstr.setType(new Type("String", null));
+      return sumstr; 
+    } // and side-effect 
+    else if ("strncat".equals(fname) && args.size() == 3)
+    { Expression arg1 = (Expression) args.get(0);
+      arg1.setType(new Type("String", null));
+      Expression arg2 = (Expression) args.get(1);
+      Expression argn = (Expression) args.get(2); 
+      Vector pars = new Vector(); 
+      pars.add(unitExpression); 
+      pars.add(argn);  
+      BasicExpression fbe = 
+        BasicExpression.newFunctionBasicExpression("subrange", arg2, pars);  
+      fbe.setType(new Type("String", null));
+
+      BinaryExpression sumstr = 
+        new BinaryExpression("+", arg1, fbe); 
+      sumstr.setType(new Type("String", null));
+      return sumstr; 
+    } // and side-effect 
+    else if ("strcmp".equals(fname) && args.size() == 2) 
+    { // arg1->compareTo(arg2)
+      Expression arg1 = (Expression) args.get(0);
+      arg1.setType(new Type("String", null));
+      Expression arg2 = (Expression) args.get(1);
+      BinaryExpression res = 
+        new BinaryExpression("->compareTo", arg1, arg2); 
+      res.setType(new Type("int", null)); 
+      return res; 
+    } 
+    else if ("strncmp".equals(fname) && args.size() == 3) 
+    { // arg1->compareTo(arg2)
+      Expression arg1 = (Expression) args.get(0);
+      arg1.setType(new Type("String", null));
+      Expression arg2 = (Expression) args.get(1);
+      Expression argn = (Expression) args.get(2); 
+      Vector pars = new Vector(); 
+      pars.add(unitExpression); 
+      pars.add(argn);  
+      BasicExpression fbe1 = 
+        BasicExpression.newFunctionBasicExpression("subrange", arg1, pars);  
+      fbe1.setType(new Type("String", null));
+      BasicExpression fbe2 = 
+        BasicExpression.newFunctionBasicExpression("subrange", arg2, pars);  
+      fbe2.setType(new Type("String", null));
+
+      BinaryExpression res = 
+        new BinaryExpression("->compareTo", fbe1, fbe2); 
+      res.setType(new Type("int", null)); 
+      return res; 
+    }
+    else if ("strchr".equals(fname) && args.size() == 2)
+    { // if arg1->indexOf(arg2) = 0 then null 
+      // else arg1.substring(arg1->indexOf(arg2)) endif
+      Expression arg1 = (Expression) args.get(0);
+      arg1.setType(new Type("String", null));
+      Expression arg2 = (Expression) args.get(1);
+      Expression ind = 
+        new BinaryExpression("->indexOf", arg1, arg2); 
+      Expression test = 
+        new BinaryExpression("=", ind, zeroExpression); 
+      BasicExpression fbe = 
+        BasicExpression.newFunctionBasicExpression("subrange", arg1, ind);  
+      fbe.setType(new Type("String", null));
+      ConditionalExpression conde = 
+        new ConditionalExpression(test, 
+              new BasicExpression("null"), 
+              fbe); 
+      conde.setType(new Type("String", null)); 
+      return conde; 
+    } 
+    else if ("strrchr".equals(fname) && args.size() == 2)
+    { // if arg1->lastIndexOf(arg2) = 0 then null 
+      // else arg1.substring(arg1->lastIndexOf(arg2)) endif
+      Expression arg1 = (Expression) args.get(0);
+      arg1.setType(new Type("String", null));
+      Expression arg2 = (Expression) args.get(1);
+      Expression ind = 
+        new BinaryExpression("->lastIndexOf", arg1, arg2); 
+      Expression test = 
+        new BinaryExpression("=", ind, zeroExpression); 
+      BasicExpression fbe = 
+        BasicExpression.newFunctionBasicExpression("subrange", arg1, ind);  
+      fbe.setType(new Type("String", null));
+      ConditionalExpression conde = 
+        new ConditionalExpression(test, 
+              new BasicExpression("null"), 
+              fbe); 
+      conde.setType(new Type("String", null)); 
+      return conde; 
+    } 
+    else if ("strlen".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0);
+      arg1.setType(new Type("String", null));
+      arg1.setBrackets(true); 
+      UnaryExpression res = 
+        new UnaryExpression("->size", arg1); 
+      res.setType(new Type("int", null));
+      return res; 
+    } 
+    else if ("strstr".equals(fname) && args.size() == 2)
+    { Expression arg1 = (Expression) args.get(0);
+      arg1.setType(new Type("String", null));
+      Expression arg2 = (Expression) args.get(1);
+      arg1.setBrackets(true); 
+
+      BinaryExpression inde = 
+        new BinaryExpression("->indexOf", arg1, arg2); 
+
+      BinaryExpression test = 
+        new BinaryExpression(">", inde, zeroExpression); 
+
+      BasicExpression fbe = 
+        BasicExpression.newFunctionBasicExpression("subrange", arg1, inde);  
+      fbe.setType(new Type("String", null));
+
+      ConditionalExpression conde = 
+        new ConditionalExpression(test, fbe, 
+              new BasicExpression("null")); 
+      return conde;  
+    }  
+    else if ("strspn".equals(fname) && args.size() == 2)
+    { Expression arg1 = (Expression) args.get(0);
+      arg1.setType(new Type("String", null));
+      Expression arg2 = (Expression) args.get(1);
+      arg1.setBrackets(true); 
+      Expression matchExpr = 
+        new BasicExpression("\"[\" + " + arg2 + " + \"]+\""); 
+      matchExpr.setType(new Type("String", null)); 
+
+      BinaryExpression inde = 
+        new BinaryExpression("->firstMatch", arg1, matchExpr); 
+
+      BinaryExpression test = 
+        new BinaryExpression("->hasMatch", arg1, matchExpr); 
+
+      ConditionalExpression cond1 = 
+        new ConditionalExpression(
+          new BinaryExpression("->hasPrefix", arg1, inde), 
+          new UnaryExpression("->size", inde), 
+          zeroExpression); 
+
+      ConditionalExpression conde = 
+        new ConditionalExpression(test, cond1, 
+                                  zeroExpression); 
+      conde.setType(new Type("int", null));  
+      return conde;  
+    }  
+    else if ("strcspn".equals(fname) && args.size() == 2)
+    { Expression arg1 = (Expression) args.get(0);
+      arg1.setType(new Type("String", null));
+      Expression arg2 = (Expression) args.get(1);
+      arg1.setBrackets(true); 
+      Expression matchExpr = 
+        new BasicExpression("\"[^\" + " + arg2 + " + \"]+\""); 
+      matchExpr.setType(new Type("String", null)); 
+
+      BinaryExpression inde = 
+        new BinaryExpression("->firstMatch", arg1, matchExpr); 
+
+      BinaryExpression test = 
+        new BinaryExpression("->hasMatch", arg1, matchExpr); 
+
+      ConditionalExpression cond1 = 
+        new ConditionalExpression(
+          new BinaryExpression("->hasPrefix", arg1, inde), 
+          new UnaryExpression("->size", inde), 
+          zeroExpression); 
+
+      ConditionalExpression conde = 
+        new ConditionalExpression(test, cond1, 
+                                  zeroExpression); 
+      conde.setType(new Type("int", null));  
+      return conde;  
+    }  
+    else if ("strpbrk".equals(fname) && args.size() == 2)
+    { Expression arg1 = (Expression) args.get(0);
+      arg1.setType(new Type("String", null));
+      Expression arg2 = (Expression) args.get(1);
+      arg1.setBrackets(true); 
+      Expression matchExpr = 
+        new BasicExpression("\"[\" + " + arg2 + " + \"]+\""); 
+      matchExpr.setType(new Type("String", null)); 
+
+      BinaryExpression inde = 
+        new BinaryExpression("->firstMatch", arg1, matchExpr); 
+      BinaryExpression indexExpr = 
+        new BinaryExpression("->indexOf", arg1, inde); 
+      BasicExpression fbe = 
+        BasicExpression.newFunctionBasicExpression("subrange",
+          arg1, indexExpr); 
+
+      BinaryExpression test = 
+        new BinaryExpression("->hasMatch", arg1, matchExpr); 
+
+      ConditionalExpression conde = 
+        new ConditionalExpression(test, fbe, 
+                                  new BasicExpression("null"));
+      conde.setType(new Type("String", null));  
+      return conde;  
+    }  
+    else if ("strerror".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0);
+      BinaryExpression res = 
+        new BinaryExpression("+", 
+          new BasicExpression("\"Error: \""), arg1); 
+      return res; 
+    } 
+    else if ("rand".equals(fname) && args.size() == 0)
+    { Expression mrand = 
+        BasicExpression.newStaticCallBasicExpression(
+          "random", "MathLib"); 
+      BinaryExpression mlt = 
+        new BinaryExpression("*", mrand, 
+             new BasicExpression(2147483647));
+      mlt.setBrackets(true);  
+      UnaryExpression res = 
+        new UnaryExpression("->floor", mlt); 
+      res.setType(new Type("int", null)); 
+      return res; 
+    } 
+    else if ("calloc".equals(fname) && args.size() == 2) 
+    { SetExpression res = 
+        SetExpression.newRefSetExpression(); 
+      return res; 
+    } // Element type? 
+    else if ("malloc".equals(fname) && args.size() == 1) 
+    { SetExpression res = 
+        SetExpression.newRefSetExpression(); 
+      return res; 
+    } // Element type? 
+    else if ("realloc".equals(fname) && args.size() == 2) 
+    { SetExpression res = 
+        SetExpression.newRefSetExpression(); 
+      return res; 
+    } // Element type? 
+      
+
+    if (arre instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) arre; 
+      be.setParameters(args); 
+      be.setIsEvent();
+      return be; 
+    }  
+    return arre; 
+  } 
+
+
+
 
   public boolean isAssignment()
   { if ("expression".equals(tag) && terms.size() == 3)
@@ -11465,7 +13317,21 @@ public class ASTCompositeTerm extends ASTTerm
     Vector v1 = new Vector();
     Vector v2 = new Vector(); 
 
-    System.out.println(xx.cexpressionToKM3(m1,m2,v1,v2)); 
+    // System.out.println(xx.cstatementToKM3(m1,m2,v1,v2));
+    // System.out.println(xx.cdeclarationToType()); 
+    // System.out.println(xx.cdeclaratorToModelElement());
+    ModelElement mx = ((ASTCompositeTerm) xx).cprogramToKM3(null,m1,m2,v1,v2);
+    System.out.println(mx + "");    
+
+    for (int i = 0; i < v1.size(); i++) 
+    { Type tt = (Type) v1.get(i); 
+      System.out.println(tt.getKM3()); 
+    } 
+
+    for (int i = 0; i < v2.size(); i++) 
+    { Entity ent = (Entity) v2.get(i); 
+      System.out.println(ent.getKM3()); 
+    } 
   } 
 
 } 

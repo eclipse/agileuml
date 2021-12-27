@@ -1256,6 +1256,10 @@ abstract class Expression
         data.charAt(0) == '\"' &&
         data.charAt(len-1) == '\"')
     { return true; }
+    else if (len > 1 &&
+        data.charAt(0) == '\'' &&
+        data.charAt(len-1) == '\'')
+    { return true; }
     return false;
   }
   

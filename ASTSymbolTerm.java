@@ -101,9 +101,51 @@ public class ASTSymbolTerm extends ASTTerm
   public String asTextModel(PrintWriter out)
   { return "\"" + symbol + "\""; } 
 
+
+
+
+  public Vector cexpressionListToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+
+  { Vector res = new Vector(); 
+    return res; 
+  } 
+
+  public Type cdeclarationToType(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return null; } 
+
+  public ModelElement cdeclaratorToModelElement(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return null; } 
+
+  public Vector cparameterListToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return new Vector(); } 
+
+  public Attribute cparameterToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return null; } 
+
+  public Vector cstatementListToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { Vector res = new Vector();
+    return res;  
+  }
+
+  public Statement cstatementToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return null; } 
+
+  public Statement cupdateForm(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return null; } 
+
   public Expression cexpressionToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
   { return new BasicExpression(symbol); } 
+
+
 
   public String queryForm()
   { return toKM3(); } 

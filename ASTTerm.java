@@ -161,8 +161,31 @@ public abstract class ASTTerm
     return typ.equals(str); 
   }  
 
+
+  public abstract Type cdeclarationToType(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities);
+
+  public abstract ModelElement cdeclaratorToModelElement(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities);
+
+  public abstract Vector cparameterListToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities);
+
+  public abstract Attribute cparameterToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities);
+
+  public abstract Statement cstatementToKM3(java.util.Map vartypes, java.util.Map varelemtypes, Vector types, Vector entities); 
+
+  public abstract Statement cupdateForm(java.util.Map vartypes, java.util.Map varelemtypes, Vector types, Vector entities); 
+
+  public abstract Vector cstatementListToKM3(java.util.Map vartypes, java.util.Map varelemtypes, Vector types, Vector entities); 
+
+  public abstract Vector cexpressionListToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities);
+
   public abstract Expression cexpressionToKM3(java.util.Map vartypes, java.util.Map varelemtypes, Vector types, Vector entities); 
   
+
   public abstract String queryForm(); 
 
   public abstract String toKM3(); 
@@ -486,6 +509,27 @@ public abstract class ASTTerm
     tm.setStringValues(sattvalues,tattvalues); 
     return tm; 
   } 
+
+  public static boolean functionalTermMapping(Vector strees, Vector ttrees)
+  { // The correspondence is functional.
+    String[] sattvalues = new String[strees.size()]; 
+    String[] tattvalues = new String[ttrees.size()]; 
+
+    for (int i = 0; i < strees.size(); i++) 
+    { ASTTerm st = (ASTTerm) strees.get(i); 
+      if (st == null) { return false; } 
+      sattvalues[i] = st.literalForm(); 
+    } 
+
+    for (int i = 0; i < ttrees.size(); i++) 
+    { ASTTerm tt = (ASTTerm) ttrees.get(i); 
+      if (tt == null) { return false; }
+      tattvalues[i] = tt.literalForm(); 
+    } 
+ 
+    return AuxMath.isFunctional(sattvalues,tattvalues); 
+  } 
+
 
   public static String commonTag(ASTTerm[] trees)
   { if (trees == null || trees.length == 0) 

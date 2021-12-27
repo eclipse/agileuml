@@ -44,6 +44,12 @@ public class SetExpression extends Expression
     return res; 
   } 
 
+  public static SetExpression newRefSetExpression()
+  { SetExpression res = new SetExpression(); 
+    res.setType(new Type("Ref", null)); 
+    return res; 
+  } 
+
   public Expression getExpression(int i) 
   { if (i < elements.size())
     { return (Expression) elements.get(i); } 
@@ -171,8 +177,11 @@ public class SetExpression extends Expression
   public String toString()
   { String res;
 
+    if (type != null && "Ref".equals(type.getName()))
+    { return "Ref{}"; } 
+
     if (isMap())
-	{ res = "Map{"; }
+    { res = "Map{"; }
     else if (ordered) 
     { res = "Sequence{"; } 
     else 

@@ -268,6 +268,9 @@ public class Attribute extends ModelElement
   public boolean isCollection()
   { return type != null && type.isCollectionType(); } 
 
+  public boolean isReferenceType()
+  { return type != null && type.isReference(); } 
+
   public boolean isEntityCollection()
   { return type != null && type.isCollectionType() && 
            elementType != null && elementType.isEntity(); 

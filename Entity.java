@@ -99,6 +99,12 @@ public class Entity extends ModelElement implements Comparable
   public boolean isSerializable()
   { return hasStereotype("serializable"); }
 
+
+  public void setType(Type t) { } 
+
+  public Type getType() 
+  { return new Type("OclType", null); } 
+
   public String cg(CGSpec cgs)
   { String etext = this + "";
     Vector args = new Vector();

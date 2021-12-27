@@ -1866,6 +1866,13 @@ public class Compiler2
       { return new UnaryExpression("?", ee); } 
     } 
  
+    if ("!".equals(lexicals.get(pstart) + ""))
+    { ee = parse_basic_expression(bcount,pstart+1,pend,
+                                  entities,types); 
+      if (ee != null) 
+      { return new UnaryExpression("!", ee); } 
+    } 
+ 
     if ("_".equals(lexicals.get(pstart) + "") && pend == pstart+1)
     { ee = parse_expression(bcount,pstart+1,pend,
                             entities,types); 
@@ -1930,6 +1937,12 @@ public class Compiler2
     { ee = parse_basic_expression(bcount,pstart+1,pend,entities,types); 
       if (ee != null) 
       { return new UnaryExpression("?", ee); } 
+    } 
+
+    if ("!".equals(lexicals.get(pstart) + ""))
+    { ee = parse_basic_expression(bcount,pstart+1,pend,entities,types); 
+      if (ee != null) 
+      { return new UnaryExpression("!", ee); } 
     } 
  
     if ("_".equals(lexicals.get(pstart) + "") && pend == pstart+1)

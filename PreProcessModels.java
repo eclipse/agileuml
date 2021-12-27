@@ -107,6 +107,16 @@ public class PreProcessModels
               exampleName + ".ast = " + tt.toAST() + "\n\n"; 
             oclTypeModel = oclTypeModel + modelString; 
           } 
+          else if ("String".equals(tt.getName()))
+          { modelString = exampleName + " : OclStringType\n" + 
+              exampleName + ".ast = " + tt.toAST() + "\n\n"; 
+            oclTypeModel = oclTypeModel + modelString; 
+          } 
+          else if ("OclAny".equals(tt.getName()))
+          { modelString = exampleName + " : OclAnyType\n" + 
+              exampleName + ".ast = " + tt.toAST() + "\n\n"; 
+            oclTypeModel = oclTypeModel + modelString; 
+          } 
           else if (Type.isPrimitiveType(tt))
           { modelString = exampleName + " : OclBasicType\n" + 
               exampleName + ".ast = " + tt.toAST() + "\n\n"; 

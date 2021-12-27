@@ -5822,26 +5822,30 @@ public class ModelSpecification
                 newSMap.put(satt, sourceJValues);
 
                 System.out.println(">>-->> Trying to map " + srcJValues + " to " + trgJValues); 
-                System.out.println(); 
+                // If not functional, fail. 
+                if (ASTTerm.functionalTermMapping(srcJValues,                    
+                                                 trgJValues))
+                { System.out.println(">>-->> Functional mapping "); 
   
-                AttributeMatching amjx = 
-                  composedTreeFunction(sent,
-                     tatt,sourceatts,newSMap,     
-                     targetJValues, trgJValues, tms); 
-                if (amjx != null) 
-                { System.out.println(">>-->> Found nested mapping for source term " + (sindex+1) + ": " + amjx);
-                  sfoundvars.add("_" + (sindex+1)); 
-                  if ((amjx.trgvalue + "").indexOf("_*") >= 0)
-                  { foundstermpars.add("_*"); 
-                    ttermpars.add(amjx.trgvalue); 
-                  } 
-                  else 
-                  { Expression newtjexpr = 
-                       amjx.trgvalue.substituteEq("_1", new BasicExpression("_" + (sindex+1))); 
-                    ttermpars.add(newtjexpr); 
-                    foundstermpars.add("_" + (sindex+1));
-                  }  
-                  foundsource = true; 
+                  AttributeMatching amjx = 
+                    composedTreeFunction(sent,
+                       tatt,sourceatts,newSMap,     
+                       targetJValues, trgJValues, tms); 
+                  if (amjx != null) 
+                  { System.out.println(">>-->> Found nested mapping for source term " + (sindex+1) + ": " + amjx);
+                    sfoundvars.add("_" + (sindex+1)); 
+                    if ((amjx.trgvalue + "").indexOf("_*") >= 0)
+                    { foundstermpars.add("_*"); 
+                      ttermpars.add(amjx.trgvalue); 
+                    } 
+                    else 
+                    { Expression newtjexpr = 
+                         amjx.trgvalue.substituteEq("_1", new BasicExpression("_" + (sindex+1))); 
+                      ttermpars.add(newtjexpr); 
+                      foundstermpars.add("_" + (sindex+1));
+                    }  
+                    foundsource = true; 
+                  }
                 } 
               }
             }

@@ -1719,6 +1719,14 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       elementType = type; 
       return res; 
     } 
+
+    if (operator.equals("!"))
+    { Type argtype = argument.getType(); 
+      if (argtype != null && "Ref".equals(argtype.getName()))
+      { type = argtype.getElementType(); } 
+      else 
+      { type = new Type("OclAny", null); } 
+    } 
     
     if (operator.equals("->copy"))
     { type = argument.type; 
