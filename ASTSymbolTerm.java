@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -102,7 +102,19 @@ public class ASTSymbolTerm extends ASTTerm
   { return "\"" + symbol + "\""; } 
 
 
+  public String getLabel()
+  { return null; } 
 
+  public boolean isLabeledStatement()
+  { return false; } 
+
+  public Statement cpreSideEffect(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return null; } 
+
+  public Statement cpostSideEffect(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return null; } 
 
   public Vector cexpressionListToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
@@ -111,11 +123,18 @@ public class ASTSymbolTerm extends ASTTerm
     return res; 
   } 
 
+  public Type pointersToRefType(String tname, Type t)
+  { return t; } 
+
   public Type cdeclarationToType(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
   { return null; } 
 
   public ModelElement cdeclaratorToModelElement(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return null; } 
+
+  public Vector cdeclaratorToModelElements(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
   { return null; } 
 
@@ -138,6 +157,10 @@ public class ASTSymbolTerm extends ASTTerm
   { return null; } 
 
   public Statement cupdateForm(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return null; } 
+
+  public Statement cbasicUpdateForm(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
   { return null; } 
 

@@ -3,7 +3,7 @@ import java.io.*;
 import java.util.StringTokenizer; 
 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -96,6 +96,17 @@ public class Type extends ModelElement
     // User-defined exception
 
     // also, "NoClassDefFoundError" ?? 
+  } 
+
+  static java.util.Map cexceptions = 
+     new java.util.HashMap(); 
+  static 
+  { cexceptions.put("SIGABRT", "AssertionException"); 
+    cexceptions.put("SIGFPE", "ArithmeticException"); 
+    cexceptions.put("SIGILL", "SystemException"); 
+    cexceptions.put("SIGINT", "IOException"); 
+    cexceptions.put("SIGSEGV", "AccessingException"); 
+    cexceptions.put("SIGTERM", "OclException"); 
   } 
 
 
@@ -202,11 +213,20 @@ public class Type extends ModelElement
     return false; 
   } 
 
+  public static String getOCLExceptionForC(String sig)
+  { return (String) cexceptions.get(sig); } 
+
   public Type getType()
   { return new Type("OclType", null); } 
 
   public void setType(Type t) 
   { } 
+
+  public void addParameter(Attribute p)
+  { } 
+
+  public Vector getParameters()
+  { return new Vector(); } 
 
   public Object clone()
   { Type result; 
@@ -234,6 +254,23 @@ public class Type extends ModelElement
 
   public void setElementType(Type e)
   { elementType = e; } 
+
+  public void setInnerElementType(Type e)
+  { if ("Function".equals(name) || "Ref".equals(name) || 
+        "Sequence".equals(name) || "Set".equals(name) || 
+        "Map".equals(name))
+    { if (elementType == null) 
+      { elementType = e; } 
+      else if ("OclAny".equals(elementType.getName()))
+      { elementType = e; } 
+      else if ("void".equals(elementType.getName()))
+      { elementType = e; } 
+      else 
+      { elementType.setInnerElementType(e); } 
+    } 
+    else 
+    { elementType = e; } 
+  } 
 
   public Type getElementType()
   { return elementType; } 
@@ -361,6 +398,66 @@ public class Type extends ModelElement
 
   public boolean isReference()
   { return ("Ref".equals(name)); } 
+
+  public boolean isNestedReference()
+  { if ("Ref".equals(name) && 
+        elementType == null)
+    { return true; }
+
+    if ("int".equals(name) || "double".equals(name) ||
+        "String".equals(name) || "long".equals(name) ||
+        "boolean".equals(name) || isEntity() || 
+        values != null) 
+    { return false; } 
+
+    if (elementType == null)
+    { return false; } 
+
+    String etname = elementType.getName(); 
+
+    if ("Ref".equals(name) && 
+        "void".equals(etname))
+    { return true; } 
+
+    if ("Ref".equals(name) && 
+        "OclAny".equals(etname))
+    { return true; } 
+
+    return elementType.isNestedReference(); 
+  } 
+
+  public static Type replaceInnerType(Type t, Type r)
+  { String tname = t.getName(); 
+    Type et = t.getElementType(); 
+
+    if ("Ref".equals(tname) && 
+        et == null)
+    { return r; }
+
+    if ("int".equals(tname) || "double".equals(tname) ||
+        "String".equals(tname) || "long".equals(tname) ||
+        "boolean".equals(tname) || t.isEntity() || 
+        t.values != null) 
+    { return t; } 
+
+    if (et == null)
+    { return t; } 
+
+    String etname = et.getName(); 
+
+    if ("Ref".equals(tname) && 
+        "void".equals(etname))
+    { return r; } 
+
+    if ("Ref".equals(tname) && 
+        "OclAny".equals(etname))
+    { return r; } 
+
+    Type ret = Type.replaceInnerType(et,r);
+    Type res = new Type(tname, null); 
+    res.setElementType(ret); 
+    return res;  
+  } 
 
   public boolean isCollection()
   { return isCollectionType(this); } 
@@ -2557,7 +2654,7 @@ public class Type extends ModelElement
       if (alias != null)    // For datatypes
       { return alias.getDefaultCSharp(); } 
 
-      return "null";    // for class types, functions, OclAny
+      return "null";    // for classes, functions, Ref, OclAny
     }
     return nme + "." + values.get(0);
   }
@@ -2591,7 +2688,7 @@ public class Type extends ModelElement
       { return "new map<string, " + et + ">()"; }
       if (alias != null)    // For datatypes
       { return alias.getDefaultCPP(et); } 
-      return "NULL";    // for class types, OclAny, functions
+      return "NULL";    // for classes, Ref, OclAny, functions
     }
     return getName() + "(0)"; // (String) values.get(0);
   }
@@ -2687,10 +2784,20 @@ public class Type extends ModelElement
 
   public String getCSharp()  
   { String nme = getName();
+
+    if (nme.equals("Ref"))
+    { String restype = "object"; 
+      if (elementType != null) 
+      { restype = elementType.getCSharp(); } 
+      return "*" + restype; 
+    } 
+
     if (nme.equals("Set") || nme.equals("Sequence"))
     { return "ArrayList"; }
+
     if (nme.equals("Map"))
     { return "Hashtable"; }
+
     if (nme.equals("Function"))
     { String key = "object"; 
       if (keyType != null) 
@@ -2701,9 +2808,11 @@ public class Type extends ModelElement
 
       return "Func<" + key + "," + restype + ">"; 
     }
+
     if (nme.equals("String")) { return "string"; }  
     if (nme.equals("boolean")) { return "bool"; } 
     if (nme.equals("long")) { return "long"; }
+
     if (alias != null)    // For datatypes
     { return alias.getCSharp(); } 
  
@@ -2719,6 +2828,8 @@ public class Type extends ModelElement
     { return "OclIterator"; } 
     if (nme.equals("OclProcess"))
     { return "OclProcess"; } 
+    if (nme.equals("OclFile"))
+    { return "OclFile"; } 
 
     String jex = (String) exceptions2csharp.get(nme); 
     if (jex != null) 
@@ -3745,6 +3856,9 @@ public class Type extends ModelElement
     for (int j = 0; j < exps.size(); j++)
     { Expression be = (Expression) exps.get(j);
       Type t = be.getType();
+
+      System.out.println(">> Type of " + be + " = " + t); 
+
       if (t == null) { }
       else if (expectedType == null)
       { expectedType = t; }

@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.JOptionPane;
 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -109,7 +109,7 @@ implements Cloneable
       Vector stats = sq.getStatements(); 
       for (int i = 0; i < stats.size(); i++) 
       { Statement stat = (Statement) stats.get(i); 
-        res.addAll(getReturnValues(stat)); 
+        res.addAll(Statement.getReturnValues(stat)); 
       } 
       return res;
     } 
@@ -4069,6 +4069,70 @@ class SequenceStatement extends Statement
   public SequenceStatement(Vector stats)
   { statements = stats; } 
 
+  public SequenceStatement(Statement s1, Statement s2)
+  { statements = new Vector(); 
+    statements.add(s1); 
+    statements.add(s2); 
+  } 
+
+  public static Statement composedStatement(
+                   Statement s1, Statement s2)
+  { if (s1 == null) 
+    { return s2; } 
+    if (s2 == null) 
+    { return s1; }
+    return new SequenceStatement(s1,s2);
+  } 
+
+  public static Statement composedStatement(
+                   Statement s1, Statement s2, Statement s3)
+  { if (s1 == null && s2 == null) 
+    { return s3; } 
+    if (s1 == null && s3 == null) 
+    { return s2; } 
+    if (s2 == null && s3 == null) 
+    { return s1; }
+    if (s1 == null) 
+    { return new SequenceStatement(s2,s3); } 
+    if (s2 == null) 
+    { return new SequenceStatement(s1,s3); } 
+    if (s3 == null)
+    { return new SequenceStatement(s1,s2); }
+    SequenceStatement res = new SequenceStatement(); 
+    res.addStatement(s1); 
+    res.addStatement(s2);
+    res.addStatement(s3); 
+    return res; 
+  } 
+ 
+
+  public static Statement combineSequenceStatements(Statement s1, Statement s2) 
+  { if (s1 == null) 
+    { return s2; } 
+    if (s2 == null) 
+    { return s1; }
+    
+    if (s1 instanceof SequenceStatement)
+    { SequenceStatement sqstat1 = (SequenceStatement) s1; 
+      if (s2 instanceof SequenceStatement)
+      { SequenceStatement sqstat2 = (SequenceStatement) s2; 
+        sqstat1.addStatements(sqstat2.getStatements()); 
+        return sqstat1; 
+      } 
+      else  
+      { sqstat1.addStatement(s2); 
+        return sqstat1; 
+      } 
+    } 
+    else if (s2 instanceof SequenceStatement) 
+    { SequenceStatement res = (SequenceStatement) s2; 
+      res.addStatement(0,s1); 
+      return res; 
+    } 
+    return new SequenceStatement(s1,s2); 
+  }          
+
+    
   public String getOperator() 
   { return ";"; } 
 
@@ -4246,6 +4310,10 @@ class SequenceStatement extends Statement
   { if (s != null) 
     { statements.add(s); }
   } 
+
+  public void addStatements(Vector stats)
+  { statements.addAll(stats); }
+  
 
   public void addStatement(int pos, Statement s)
   { if (pos >= statements.size())
@@ -8323,6 +8391,37 @@ class ConditionalStatement extends Statement
 
   public void setElsePart(Statement st)
   { elsePart = st; } 
+
+  public static void addToIfBranch(Statement st, Statement sx)
+  { if (sx == null) 
+    { return; } 
+
+    if (st instanceof ConditionalStatement)
+    { ConditionalStatement cs = (ConditionalStatement) st; 
+      Statement ifp = cs.ifPart(); 
+      if (ifp instanceof SequenceStatement)
+      { ((SequenceStatement) ifp).addStatement(sx); } 
+      else 
+      { SequenceStatement ss = new SequenceStatement(); 
+        ss.addStatement(ifp); 
+        ss.addStatement(sx); 
+        cs.ifPart = ss; 
+      } 
+    } 
+  } 
+
+  public static Statement mergeConditionals(Expression tst, 
+                            Statement stat)
+  { if (stat instanceof ConditionalStatement)
+    { ConditionalStatement cs = (ConditionalStatement) stat; 
+      Expression newexpr = 
+        new BinaryExpression("or", tst, cs.test); 
+      cs.test = newexpr; 
+      return cs; 
+    } 
+    Statement els = new InvocationStatement("skip"); 
+    return new ConditionalStatement(tst,stat,els); 
+  } 
 
   public String cg(CGSpec cgs)
   { String etext = this + "";

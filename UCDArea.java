@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -3143,6 +3143,51 @@ public class UCDArea extends JPanel
     } catch (Exception e) { } 
 
   }
+
+  public void generateGo()
+  { Vector auxcstls = new Vector(); 
+    auxcstls.add("cgGooperations.cstl"); 
+    auxcstls.add("cgGoattributes.cstl"); 
+    auxcstls.add("cgGomain.cstl");
+    
+    CGSpec cgs = loadCSTL("cgGo.cstl",auxcstls); 
+
+    for (int j = 0; j < entities.size(); j++) 
+    { Entity ent = (Entity) entities.get(j); 
+      String ename = ent.getName(); 
+
+      if (ent.isDerived()) { }
+      else if (ent.isComponent()) { }
+      else 
+      { String entfile = ename + ".go"; 
+        File entf = new File("output/gotests/" + entfile); 
+        try
+        { PrintWriter entfout = new PrintWriter(
+                                  new BufferedWriter(
+                                    new FileWriter(entf)));
+          entfout.println("import \"container/list\""); 
+          entfout.println("import \"fmt\""); 
+          entfout.println("import \"./ocl\""); 
+          entfout.println("import \"strings\""); 
+          entfout.println("import \"math\""); 
+          entfout.println(); 
+		  					
+          ent.generateOperationDesigns(types,entities);  
+          String entcode = ent.cg(cgs);    
+          cgs.displayText(entcode,entfout);
+
+          entfout.println(); 
+          entfout.println(); 
+
+          // String maincode = ent.cg(cgswiftmain); 
+          // cgswiftmain.displayText(maincode,entfout); 
+
+          entfout.close();
+        } catch (Exception _e1) { _e1.printStackTrace(); }
+      }
+    } 			
+  } 
+
 
   public void generateSwiftUIApp()
   { IOSAppGenerator gen = new IOSAppGenerator(); 
@@ -13570,118 +13615,143 @@ public void produceCUI(PrintWriter out)
     repaint(); 
   }
 
-  /* BufferedReader br = null;
+  public void fromCAST()
+  { BufferedReader br = null;
     Vector res = new Vector();
     String s;
     boolean eof = false;
-    File file;
-
-    File startingpoint = new File("output");
-    JFileChooser fc = new JFileChooser();
-    fc.setCurrentDirectory(startingpoint);
-    fc.setDialogTitle("Load generic use case");
-    int returnVal = fc.showOpenDialog(this);
-    if (returnVal == JFileChooser.APPROVE_OPTION)
-    { file = fc.getSelectedFile(); }
-    else
-    { System.err.println("Load aborted");
-      return; 
-    }
+    File sourcefile = new File("output/ast.txt");  
+      /* default */ 
 
     try
-    { br = new BufferedReader(new FileReader(file)); }
-    catch (FileNotFoundException e)
-    { System.out.println("File not found: " + file);
+    { br = new BufferedReader(new FileReader(sourcefile)); }
+    catch (FileNotFoundException _e)
+    { System.out.println("File not found: " + sourcefile);
       return; 
     }
 
-    Vector preconstraints = new Vector(); 
-    Vector preassertions = new Vector(); 
-    Vector genericucs = new Vector(); 
-    Vector preucinvs = new Vector(); 
+    String sourcestring = ""; 
+    int noflines = 0; 
 
     while (!eof)
     { try { s = br.readLine(); }
-      catch (IOException e)
-      { System.out.println("Reading failed.");
+      catch (IOException _ex)
+      { System.out.println("Reading AST file output/ast.txt failed.");
         return; 
       }
-      System.out.println("Reading file"); 
-
       if (s == null) 
       { eof = true; 
-        System.out.println("End of file"); 
         break; 
       }
-      else if (s.equals("Constraint:"))
-      { PreConstraint c = parseConstraint(br);
-        if (c != null)
-        { preconstraints.add(c); }
-      } 
-      else if (s.equals("Assumption:"))
-      { PreConstraint ac = parseConstraint(br);
-        if (ac != null)
-        { preassertions.add(ac); }
-      } 
-      else if (s.equals("UseCaseInvariant:"))
-      { PreConstraint ac = parseConstraint(br);
-        if (ac != null)
-        { preucinvs.add(ac); }
-      } 
-      else if (s.equals("GeneralUseCase:"))
-      { UseCase uc = parseGeneralUseCase(br); 
-        // useCases.add(uc); 
-        genericucs.add(uc); 
-      } 
       else 
-      { System.out.println("Unrecognised input: " + s); } 
+      { sourcestring = sourcestring + s + " "; } 
+      noflines++; 
+    }
+
+    System.out.println(">>> Read " + noflines + " lines"); 
+
+    Compiler2 c = new Compiler2();    
+
+    ASTTerm xx =
+      c.parseGeneralAST(sourcestring); 
+
+    if (xx == null) 
+    { System.err.println(">>> Invalid text for general AST"); 
+      System.err.println(c.lexicals); 
+      return; 
     } 
-    try { br.close(); } catch(IOException e) { }
 
-    // add each pre and post condition to the corresponding uc, but do not 
-    // type check until instantiated: 
+    java.util.Map m1 = new java.util.HashMap();
+    java.util.Map m2 = new java.util.HashMap();
+    Vector v1 = new Vector();
+    Vector v2 = new Vector(); 
+    // v1.addAll(types); 
+    // v2.addAll(entities); 
 
-    for (int i = 0; i < preassertions.size(); i++) 
-    { PreConstraint pc = (PreConstraint) preassertions.get(i); 
-      addGenericAssertion(pc,genericucs); 
+    Date d1 = new Date(); 
+    long time1 = d1.getTime(); 
+
+    Vector mxs = 
+      ((ASTCompositeTerm) xx).cprogramToKM3(null,m1,m2,v1,v2); 
+
+    Date d2 = new Date(); 
+    long time2 = d2.getTime(); 
+
+    System.out.println(">>> Time for abstraction = " + (time2-time1)); 
+
+    System.out.println(); 
+
+    for (int i = 0; i < v1.size(); i++) 
+    { Type tt = (Type) v1.get(i); 
+      System.out.println(tt.getKM3()); 
     } 
 
-    for (int i = 0; i < preconstraints.size(); i++) 
-    { PreConstraint pc = (PreConstraint) preconstraints.get(i); 
-      addGenericInvariant(pc,genericucs); 
+    for (int i = 0; i < v2.size(); i++) 
+    { Entity ent = (Entity) v2.get(i); 
+      System.out.println(ent.getKM3()); 
     } 
 
-    for (int i = 0; i < genericucs.size(); i++) 
-    { UseCase gen = (UseCase) genericucs.get(i); 
-      Vector pars = gen.getParameters(); 
-      Vector avals = new Vector(); 
+    System.out.println(); 
 
-      if (pars.size() > 0)
-      { 
-        System.out.println("Define actual values for parameters " + pars); 
-        for (int j = 0; j < pars.size(); j++)
-        { String apar = 
-            JOptionPane.showInputDialog("Actual value of " + pars.get(j) + ":");
-          Compiler2 comp = new Compiler2(); 
-          comp.nospacelexicalanalysis(apar); 
-          Expression parexp = comp.parse();
-          while (parexp == null) 
-          { System.err.println("ERROR: Invalid parameter expression: " + parexp); 
-            apar = 
-              JOptionPane.showInputDialog("Actual value of " + pars.get(j) + ": ");
-            comp = new Compiler2(); 
-            comp.nospacelexicalanalysis(apar); 
-            parexp = comp.parse();
-          } 
-          avals.add(parexp);
-        } 
+    Vector newentities = new Vector(); 
+
+    for (int i = 0; i < v2.size(); i++) 
+    { Entity newent = (Entity) v2.get(i); 
+      if (newent.isInterface() ||
+          newent.hasConstructor()) 
+      { } 
+      else 
+      { newent.addDefaultConstructor(); } 
+
+      addEntity(newent, 100+(i*50), 100 + (150*i % 600));
+      newentities.add(newent); 
+    } 
+
+    for (int i = 0; i < v1.size(); i++) 
+    { Type tt = (Type) v1.get(i); 
+      addType(tt, 100+(i*50), 100 + (i*150 % 600)); 
+    }
+
+    repaint(); 
+
+    for (int k = 0; k < newentities.size(); k++) 
+    { Entity nent = (Entity) newentities.get(k);
+      // System.out.println(">>> Entity " + nent + " has attributes " + nent.allAttributes());    
+ 
+      if (nent.getSuperclass() != null) 
+      { Entity supc = nent.getSuperclass();
+        Entity actualSup = 
+          (Entity) ModelElement.lookupByName(supc.getName(), 
+                                             entities); 
+        if (actualSup != null)  
+        { Generalisation g = new Generalisation(actualSup,nent);
+          addInheritance(g,actualSup,nent);
+          nent.setSuperclass(actualSup); 
+
+          // System.out.println(">>> Entity " + nent + " inherits " + 
+          // actualSup + " attributes: " + actualSup.allAttributes() + " " + 
+          // nent.allAttributes() + " " + actualSup.getAttributes());
+        }  
       } 
-      UseCase newuc = gen.instantiate(avals,types,entities,associations); 
-      useCases.add(newuc); 
-    } 
-  } // the generic use case is in its own file
 
-   */ 
+      Vector itfs = nent.getInterfaces(); 
+      System.out.println(">>> Interfaces of " + nent + " are: " + itfs); 
+
+      for (int q = 0; q < itfs.size(); q++) 
+      { Entity supi = (Entity) itfs.get(q);
+        // Entity supx = 
+        //   (Entity) ModelElement.lookupByName(
+        //                           supi.getName(),entities);
+        // System.out.println(">>> Interface " + supx);   
+        Generalisation gi = new Generalisation(supi,nent);
+        gi.setRealization(true); 
+        addInheritance(gi,supi,nent);
+      } 
+
+    }    
+
+    repaint(); 
+  }
 
   public void typeCheckOps()
   { System.out.println(">> Rechecking operations"); 

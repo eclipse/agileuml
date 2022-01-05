@@ -4,7 +4,7 @@ import java.io.*;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -31,6 +31,7 @@ public class Attribute extends ModelElement
   private int upper = 1; // 0 represents * 
   private String role1 = null;  // for associations represented as properties
   private int card1 = ModelElement.MANY; 
+  private Vector parameters = new Vector(); 
  
   public Attribute(String nme, Type t, int k)
   { super(nme);
@@ -175,16 +176,23 @@ public class Attribute extends ModelElement
     // result type. 
 
     type = qf.getResultType();
-    int tm = type.typeMultiplicity(); 
-    if (tm == ModelElement.ONE) 
-    { upper = 1; 
-      lower = 1; 
-    } 
-    else 
-    { upper = 0; 
-      lower = 0; 
-    } 
- 
+	if (type == null)
+	{ upper = 1; 
+	  lower = 1; 
+	}
+    else
+    { int tm = type.typeMultiplicity(); 
+      if (tm == ModelElement.ONE) 
+      { upper = 1; 
+        lower = 1; 
+      } 
+      else 
+      { upper = 0; 
+        lower = 0; 
+      } 
+      elementType = type.getElementType(); 
+    }
+	
     setStatic(qf.isStatic()); 
 	
     entity = qf.getOwner(); 
@@ -200,9 +208,65 @@ public class Attribute extends ModelElement
     if (entity != null && entity.isTarget())
     { addStereotype("target"); } 
 
-    elementType = type.getElementType(); 
     kind = INTERNAL; 
   } 
+
+  public static Attribute fromOperation(BehaviouralFeature qf) 
+  { Attribute res = new Attribute(qf.getName(),null,ModelElement.INTERNAL); 
+    Type restype = qf.getResultType();
+
+    if (restype == null)
+    { res.upper = 1; 
+      res.lower = 1;
+      restype = new Type("void", null);  
+    }
+    else
+    { int tm = restype.typeMultiplicity(); 
+      if (tm == ModelElement.ONE) 
+      { res.upper = 1; 
+        res.lower = 1; 
+      } 
+      else 
+      { res.upper = 0; 
+        res.lower = 0; 
+      } 
+    }
+
+    Type ftype = restype; 
+    Vector pars = qf.getParameters();
+    if (pars.size() == 0)
+    { ftype = new Type("Function", null); 
+      ftype.setKeyType(new Type("void", null)); 
+      ftype.setElementType(restype); 
+      res.setType(ftype); 
+    } 
+    else  
+    { for (int k = 0; k < pars.size(); k++) 
+      { Attribute par = (Attribute) pars.get(k); 
+        Type domtype = par.getType();
+        Type typ = new Type("Function", null); 
+        typ.setKeyType(domtype); 
+        typ.setElementType(ftype); 
+        ftype = typ; 
+      } 
+      res.setType(ftype);
+      System.out.println(">> Attribute from operation: " + ftype);  
+    } 
+	
+    res.setStatic(qf.isStatic()); 
+	
+    res.entity = qf.getOwner(); 
+
+    res.kind = INTERNAL;
+
+    return res;  
+  } 
+
+  public void setParameters(Vector pars)
+  { parameters = pars; } 
+
+  public Vector getParameters()
+  { return parameters; } 
 
   public boolean typeCheck(Vector types, Vector entities)
   { if (type == null) 
@@ -259,6 +323,17 @@ public class Attribute extends ModelElement
     return res; 
   } 
 
+  public int sizeof(String tname, Vector types, Vector entities)
+  { if ("double".equals(tname) || tname.startsWith("long")) 
+    { return 8; } 
+    Entity ent = 
+      (Entity) ModelElement.lookupByName(tname,entities); 
+    if (ent != null) 
+    { return ent.sizeof(types,entities); } 
+    return 4; 
+  } // records - classes; sequences
+
+
   public boolean isNumeric()
   { return type != null && type.isNumericType(); } 
 
@@ -270,6 +345,12 @@ public class Attribute extends ModelElement
 
   public boolean isReferenceType()
   { return type != null && type.isReference(); } 
+
+  public boolean isNestedReferenceType()
+  { return type != null && type.isNestedReference(); } 
+
+  public boolean isFunctionType()
+  { return type != null && type.isFunction(); } 
 
   public boolean isEntityCollection()
   { return type != null && type.isCollectionType() && 
@@ -393,6 +474,11 @@ public class Attribute extends ModelElement
     { return r.applyRule(args); }
     return atext;
   } // but omit initialisations for parameters
+
+  public void setInnerElementType(Type t)
+  { if (type != null) 
+    { type.setInnerElementType(t); } 
+  } 
 
   public Type getReverseType()
   { if (entity != null) 
@@ -864,6 +950,9 @@ public class Attribute extends ModelElement
     { initialValue = t.getDefault(); } 
   } 
 
+  public void addParameter(Attribute att) 
+  { parameters.add(att); } 
+
   public void setNavigation(Vector p) 
   { navigation = p; } 
 
@@ -874,6 +963,12 @@ public class Attribute extends ModelElement
   } 
 
   public boolean isEntityInstance()
+  { if (type == null) 
+    { return false; } 
+    return type.isEntity(); 
+  } 
+
+  public boolean isEntityType()
   { if (type == null) 
     { return false; } 
     return type.isEntity(); 

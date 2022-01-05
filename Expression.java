@@ -317,6 +317,23 @@ abstract class Expression
      }
   } 
 
+  public static Vector parametersFromTypeMap(java.util.Map vartypes)
+  { Vector pars = new Vector(); 
+    java.util.Set keys = vartypes.keySet(); 
+    Vector keyvect = new Vector(); 
+    keyvect.addAll(keys); 
+    for (int i = 0; i < keyvect.size(); i++) 
+    { String key = (String) keyvect.get(i); 
+      Type vtype = (Type) vartypes.get(key); 
+      if (key != null && vtype != null) 
+      { BasicExpression att = 
+          BasicExpression.newVariableBasicExpression(
+                                           key,vtype); 
+        pars.add(att); 
+      } // and avoid duplicates
+    } 
+    return pars; 
+  } 
 
   public static Expression combineBySum(Vector atts)
   { Expression res = null; 

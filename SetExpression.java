@@ -178,9 +178,8 @@ public class SetExpression extends Expression
   { String res;
 
     if (type != null && "Ref".equals(type.getName()))
-    { return "Ref{}"; } 
-
-    if (isMap())
+    { res = "Ref{"; } 
+    else if (isMap())
     { res = "Map{"; }
     else if (ordered) 
     { res = "Sequence{"; } 
@@ -199,7 +198,9 @@ public class SetExpression extends Expression
   public String toAST()
   { String res = "(OclSetExpression ";
 
-    if (isMap())
+    if (type != null && "Ref".equals(type.getName()))
+    { res = "Ref { "; } 
+    else if (isMap())
     { res = res + " Map { "; }
     else if (ordered) 
     { res = res + " Sequence { "; } 
@@ -398,16 +399,29 @@ public class SetExpression extends Expression
   }  // different for sequences?
 
   public String queryFormCSharp(java.util.Map env, boolean local)
-  { if (isMap())
+  { if (type != null && "Ref".equals(type.getName()))
+    { Type et = getElementType();
+      String cset = "object"; 
+      if (et != null) 
+      { cset = et.getCSharp(); }
+      String refsze = "1";  
+      if (elements.size() > 0) 
+      { Expression refsize = (Expression) elements.get(0); 
+        refsze = refsize.queryFormCSharp(env,local); 
+      } 
+      return " stackalloc " + cset + "[" + refsze + "]"; 
+    } 
+
+    if (isMap())
     { String result = "(new Hashtable())"; 
-	  for (int i = 0; i < elements.size(); i++)
+      for (int i = 0; i < elements.size(); i++)
       { BinaryExpression e = (BinaryExpression) elements.get(i);
-	    Expression key = e.getLeft(); 
-		Expression value = e.getRight(); 
+        Expression key = e.getLeft(); 
+        Expression value = e.getRight(); 
         result = "System.includingMap(" + result + "," + key.queryFormCSharp(env,local) + "," + 
 		                              value.queryFormCSharp(env,local) + ")";
       }
-	  return result; 
+      return result; 
     }
   
     String res = "(new ArrayList())"; 

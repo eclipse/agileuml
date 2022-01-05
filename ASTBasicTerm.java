@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -170,6 +170,12 @@ public class ASTBasicTerm extends ASTTerm
   }
 
 
+  public String getLabel()
+  { return null; } 
+
+  public boolean isLabeledStatement()
+  { return false; } 
+
   public Vector cexpressionListToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
 
@@ -177,6 +183,31 @@ public class ASTBasicTerm extends ASTTerm
     Vector res = new Vector();
     return res;  
   }
+
+  public Statement cpreSideEffect(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return null; } 
+
+  public Statement cpostSideEffect(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return null; } 
+
+  public Type pointersToRefType(String tname, Type m)
+  { Type res = m; 
+
+    if ("*".equals(value))
+    { if ("char".equals(tname))
+      { res = new Type("String", null); } 
+      else if ("FILE".equals(tname))
+      { res = new Type("OclFile", null); }
+      else 
+      { res = new Type("Ref", null); 
+        res.setElementType(m);
+      }  
+      return res; 
+    } 
+    return m; 
+  } 
 
   public Type cdeclarationToType(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
@@ -200,6 +231,17 @@ public class ASTBasicTerm extends ASTTerm
 
     return null; 
   }
+
+  public Vector cdeclaratorToModelElements(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { ModelElement mx = 
+      cdeclaratorToModelElement(vartypes,varelemtypes,types,
+                                entities); 
+    Vector res = new Vector(); 
+    if (mx != null) 
+    { res.add(mx); } 
+    return res; 
+  } 
 
   public ModelElement cdeclaratorToModelElement(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
@@ -237,11 +279,127 @@ public class ASTBasicTerm extends ASTTerm
     java.util.Map varelemtypes, Vector types, Vector entities)
   { return null; } 
 
+  public Statement cbasicUpdateForm(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return null; } 
+
   public Expression cexpressionToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
   { if ("primaryExpression".equals(tag))
     { System.out.println(">> Basic primary expression: " + value); 
 
+      Type t = (Type) vartypes.get(value); 
+      if (t != null) 
+      { BasicExpression be = new BasicExpression(value); 
+        be.setType(t); 
+        be.setElementType((Type) varelemtypes.get(value)); 
+        return be; 
+      } 
+
+      if ("stdout".equals(value))
+      { BasicExpression be = new BasicExpression("System_out"); 
+        be.setType(new Type("OclFile", null)); 
+        return be; 
+      } 
+
+      if ("stdin".equals(value))
+      { BasicExpression be = new BasicExpression("System_in"); 
+        be.setType(new Type("OclFile", null)); 
+        return be; 
+      } 
+
+      if ("stderr".equals(value))
+      { BasicExpression be = new BasicExpression("System_err"); 
+        be.setType(new Type("OclFile", null)); 
+        return be; 
+      } 
+
+      if ("EOF".equals(value))
+      { return new BasicExpression(-1); }
+      if ("HUGE_VAL".equals(value))
+      { return new BasicExpression("Math_PINFINITY"); } 
+
+      if ("CHAR_BIT".equals(value))
+      { return new BasicExpression(8); } 
+      if ("CHAR_MAX".equals(value))
+      { return new BasicExpression(255); } 
+      if ("CHAR_MIN".equals(value))
+      { return new BasicExpression(0); } 
+      if ("INT_MAX".equals(value))
+      { return new BasicExpression(2147483647); } 
+      if ("INT_MIN".equals(value))
+      { return new BasicExpression(-2147483647); } 
+      if ("LONG_MAX".equals(value))
+      { return new BasicExpression(9223372036854775807L); } 
+      if ("LONG_MIN".equals(value))
+      { return new BasicExpression(-9223372036854775808L); } 
+      if ("SCHAR_MAX".equals(value))
+      { return new BasicExpression(127); } 
+      if ("SCHAR_MIN".equals(value))
+      { return new BasicExpression(-127); } 
+      if ("UCHAR_MAX".equals(value))
+      { return new BasicExpression(255); } 
+      if ("UCHAR_MIN".equals(value))
+      { return new BasicExpression(0); } 
+      if ("SHRT_MAX".equals(value))
+      { return new BasicExpression(32767); } 
+      if ("SHRT_MIN".equals(value))
+      { return new BasicExpression(-32767); } 
+      if ("UINT_MAX".equals(value))
+      { return new BasicExpression(4294967295L); } 
+      if ("USHRT_MAX".equals(value))
+      { return new BasicExpression(65535); } 
+      if ("ULONG_MAX".equals(value))
+      { long mm = 1 + 2*(9223372036854775807L); 
+        return new BasicExpression(mm); 
+      } 
+      if ("FLT_RADIX".equals(value))
+      { return new BasicExpression(2); } 
+      if ("FLT_ROUNDS".equals(value))
+      { return new BasicExpression(1); } 
+      if ("FLT_DIG".equals(value))
+      { return new BasicExpression(6); } 
+      if ("FLT_EPSILON".equals(value))
+      { double d = 1.0/100000; 
+        return new BasicExpression(d);
+      } 
+      if ("FLT_MANT_DIG".equals(value))
+      { return new BasicExpression(24); } 
+      if ("FLT_MAX".equals(value))
+      { double d = 1.0*Math.pow(10,37); 
+        return new BasicExpression(d); 
+      } 
+      if ("FLT_MAX_EXP".equals(value))
+      { return new BasicExpression(128); }
+      if ("FLT_MIN".equals(value))
+      { double d = 1.0/Math.pow(10,37); 
+        return new BasicExpression(d); 
+      }
+      if ("FLT_MIN_EXP".equals(value))
+      { return new BasicExpression(-125); } 
+      if ("DBL_DIG".equals(value))
+      { return new BasicExpression(10); } 
+      if ("DBL_EPSILON".equals(value))
+      { double d = 1.0/1000000000; 
+        return new BasicExpression(d);
+      } 
+      if ("DBL_MANT_DIG".equals(value))
+      { return new BasicExpression(53); } 
+      if ("DBL_MAX".equals(value))
+      { double d = 1.0*Math.pow(10,37); 
+        return new BasicExpression(d); 
+      } 
+      if ("DBL_MAX_EXP".equals(value))
+      { return new BasicExpression(1024); }
+      if ("DBL_MIN".equals(value))
+      { double d = 1.0/Math.pow(10,37); 
+        return new BasicExpression(d); 
+      }
+      if ("DBL_MIN_EXP".equals(value))
+      { return new BasicExpression(-1021); } 
+ 
+
+ 
       if ("NULL".equals(value))
       { return new BasicExpression("null"); } 
       if ("true".equals(value))
@@ -252,12 +410,15 @@ public class ASTBasicTerm extends ASTTerm
       BasicExpression v = new BasicExpression(value); 
       if (Expression.isString(value))
       { if ('\'' == value.charAt(0))
-        { v = new BasicExpression("\"" + value.substring(1,value.length()-1) + "\""); } 
+        { BasicExpression ve = new BasicExpression("\"" + value.substring(1,value.length()-1) + "\""); 
+          ve.setType(new Type("String",null)); 
+          ve.setUmlKind(Expression.VALUE);
+          UnaryExpression res = 
+            new UnaryExpression("->char2byte", ve); 
+          res.setType(new Type("int", null)); 
+          return res; 
+        } 
         v.setType(new Type("String",null)); 
-        v.setUmlKind(Expression.VALUE); 
-      }
-      else if (Expression.isDouble(value))
-      { v.setType(new Type("double",null)); 
         v.setUmlKind(Expression.VALUE); 
       }
       else if (Expression.isInteger(value))
@@ -266,6 +427,10 @@ public class ASTBasicTerm extends ASTTerm
       }
       else if (Expression.isLong(value))
       { v.setType(new Type("long",null)); 
+        v.setUmlKind(Expression.VALUE); 
+      }
+      else if (Expression.isDouble(value))
+      { v.setType(new Type("double",null)); 
         v.setUmlKind(Expression.VALUE); 
       }
       return v; 

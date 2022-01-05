@@ -4,7 +4,7 @@ import java.util.StringTokenizer;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -64,6 +64,10 @@ public abstract class ModelElement implements SystemTypes
   // BehaviouralFeature, UseCase
 
   public abstract Type getType(); 
+
+  public abstract void addParameter(Attribute att); 
+
+  public abstract Vector getParameters(); 
 
   public String toAST()
   { return ""; }
@@ -988,6 +992,10 @@ class UMLPackage extends ModelElement
 
   public Type getType() { return null; } 
 
+  public void addParameter(Attribute att) 
+  { } 
 
+  public Vector getParameters()
+  { return new Vector(); } 
 } 
 

@@ -482,6 +482,21 @@ class VectorUtil
     return best; 
   } 
 
+  public static Vector vectorTail(Vector vect)
+  { Vector res = new Vector(); 
+    res.addAll(vect); 
+    vect.remove(0); 
+    return res; 
+  } 
+
+  public static Vector vectorTail(int i, Vector vect)
+  { // tail from i onwards
+    Vector res = new Vector(); 
+    for (int x = i; x < vect.size(); x++) 
+    { res.add(vect.get(x)); } 
+    return res; 
+  } 
+
 
   public static void main(String[] args) 
   { Vector coll = new Vector(); 

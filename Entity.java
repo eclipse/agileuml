@@ -7,7 +7,7 @@ import java.util.StringTokenizer;
 
 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -101,6 +101,12 @@ public class Entity extends ModelElement implements Comparable
 
 
   public void setType(Type t) { } 
+
+  public void addParameter(Attribute att) 
+  { } 
+
+  public Vector getParameters()
+  { return new Vector(); } 
 
   public Type getType() 
   { return new Type("OclType", null); } 
@@ -3976,6 +3982,45 @@ public class Entity extends ModelElement implements Comparable
     return res; 
   }       
 
+  public static Expression makeInitialisation(Entity ent,
+                             Expression expr)
+  { // E.newE(expr.elements)
+    if (expr instanceof SetExpression)
+    { SetExpression se = (SetExpression) expr; 
+      String ename = ent.getName(); 
+      Expression res = 
+        BasicExpression.newStaticCallBasicExpression(
+            "new" + ename, ename, se.getElements()); 
+      return res; 
+    } 
+    return expr; 
+  } 
+ 
+  public static Expression makeCollectionInitialisation(
+                             Entity ent,
+                             Expression expr)
+  { // SetExpression of E.newE(elems)
+    SetExpression res = new SetExpression(); 
+
+    if (expr instanceof SetExpression)
+    { SetExpression se = (SetExpression) expr;
+      res.setOrdered(se.isOrdered()); 
+      Vector elems = se.getElements(); 
+ 
+      String ename = ent.getName(); 
+
+      for (int i = 0; i < elems.size(); i++) 
+      { Expression eleminit = (Expression) elems.get(i); 
+        Expression objinit = 
+                      makeInitialisation(ent,eleminit);
+        res.addElement(objinit); 
+      }  
+      return res; 
+    } 
+    return expr; 
+  } 
+ 
+             
   public boolean hasConstructor()
   { return hasOperation("new" + getName()); } 
 
@@ -4003,6 +4048,26 @@ public class Entity extends ModelElement implements Comparable
     addOperation(bfInit); 
   } 
 
+  public int sizeof(Vector types, Vector entities)
+  { int sze = 0; 
+    boolean isUnion = hasStereotype("union"); 
+
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      Type tt = att.getType();
+      String tname = tt.getName();  
+      int satt = att.sizeof(tname,types,entities); 
+      if (isUnion)
+      { sze = Math.max(sze,satt); } 
+      else 
+      { sze += satt; }  
+    } 
+    return sze; 
+  } 
+
+
+           
+  
   public Map getCallGraph()
   { Map res = new Map(); 
 

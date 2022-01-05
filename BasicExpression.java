@@ -4,7 +4,7 @@ import javax.swing.JOptionPane;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -136,6 +136,31 @@ class BasicExpression extends Expression
     { multiplicity = ModelElement.ONE; }  
   } 
 
+  BasicExpression(BehaviouralFeature bf)
+  { if (bf == null) 
+    { data = ""; 
+      return; 
+    } 
+    data = bf.getName(); 
+    umlkind = UPDATEOP; 
+    elementType = bf.getElementType(); 
+    type = bf.getType(); 
+    if (type != null) 
+    { type.setElementType(elementType); } 
+    entity = bf.getEntity(); 
+    if (type != null) 
+    { multiplicity = type.typeMultiplicity(); } 
+    else 
+    { multiplicity = ModelElement.ONE; }  
+    isEvent = true; 
+    Vector pars = bf.getParameters();
+    parameters = new Vector();  
+    for (int i = 0; i < pars.size(); i++) 
+    { Attribute att = (Attribute) pars.get(i); 
+      parameters.add(new BasicExpression(att));
+    }  
+  } 
+
   BasicExpression(int i)
   { data = i + ""; 
     umlkind = VALUE; 
@@ -235,11 +260,15 @@ class BasicExpression extends Expression
   BasicExpression(Type t)
   { // if (t == null) 
     
-    data = t.getName(); 
+    data = t + ""; 
+    type = new Type("OclType", null);
+    umlkind = TYPE;
+
+    /* 
     if ("Set".equals(data) || "Sequence".equals(data))
     { Type tp = t.getElementType(); 
       if (tp != null)
-      { data = data + "(" + tp.getName() + ")";
+      { // data = data + "(" + tp.getName() + ")";
         type = new Type("OclType", null);
         umlkind = TYPE;  
       } 
@@ -263,7 +292,7 @@ class BasicExpression extends Expression
     else 
     { type = new Type("OclType", null); 
       umlkind = TYPE;
-    } 
+    } */ 
 
     elementType = type; 
     multiplicity = ModelElement.MANY; 
@@ -416,6 +445,22 @@ class BasicExpression extends Expression
     res.setObjectRef(new BasicExpression(obj));  
     res.umlkind = FUNCTION;
     res.parameters = pars; 
+    return res; 
+  } 
+
+  public static BasicExpression newCallBasicExpression(String f) 
+  { BasicExpression res = new BasicExpression(f);
+    res.umlkind = UPDATEOP;
+    res.isEvent = true; 
+    res.parameters = new Vector(); 
+    return res; 
+  } 
+
+  public static BasicExpression newCallBasicExpression(String f, Vector vars) 
+  { BasicExpression res = new BasicExpression(f);
+    res.umlkind = UPDATEOP;
+    res.isEvent = true; 
+    res.parameters = vars; 
     return res; 
   } 
 
@@ -1915,6 +1960,9 @@ class BasicExpression extends Expression
 
     if (arrayIndex != null)
     { res = res + "[" + arrayIndex + "]"; } 
+
+    if (needsBracket) 
+    { res = "(" + res + ")"; } 
 
     return res; 
   }

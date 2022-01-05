@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -34,6 +34,64 @@ public abstract class ASTTerm
   static java.util.Map types = new java.util.HashMap(); 
      // String --> String for general type of identifiers
      // valid at the scope of the current term. 
+
+  static Vector cqueryfunctions = new Vector(); 
+  static
+  { cqueryfunctions.add("sin"); 
+    cqueryfunctions.add("cos"); 
+    cqueryfunctions.add("tan"); 
+    cqueryfunctions.add("asin"); 
+    cqueryfunctions.add("acos"); 
+    cqueryfunctions.add("atan");
+    cqueryfunctions.add("sinh"); 
+    cqueryfunctions.add("cosh"); 
+    cqueryfunctions.add("tanh"); 
+    cqueryfunctions.add("exp"); 
+    cqueryfunctions.add("log"); 
+    cqueryfunctions.add("log10"); 
+    cqueryfunctions.add("sqrt"); 
+    cqueryfunctions.add("ceil"); 
+    cqueryfunctions.add("floor"); 
+    cqueryfunctions.add("fabs"); 
+    cqueryfunctions.add("abs"); 
+    cqueryfunctions.add("labs"); 
+    cqueryfunctions.add("pow"); 
+    cqueryfunctions.add("atan2"); 
+    cqueryfunctions.add("ldexp"); 
+    cqueryfunctions.add("fmod"); 
+    cqueryfunctions.add("atof"); 
+    cqueryfunctions.add("atoi"); 
+    cqueryfunctions.add("atol"); 
+    cqueryfunctions.add("isalnum"); 
+    cqueryfunctions.add("isalpha"); 
+    cqueryfunctions.add("isspace"); 
+    cqueryfunctions.add("isdigit"); 
+    cqueryfunctions.add("isupper");
+    cqueryfunctions.add("islower"); 
+    cqueryfunctions.add("iscntrl"); 
+    cqueryfunctions.add("isgraph"); 
+    cqueryfunctions.add("isprint"); 
+    cqueryfunctions.add("ispunct"); 
+    cqueryfunctions.add("isxdigit"); 
+    cqueryfunctions.add("calloc"); 
+    cqueryfunctions.add("malloc"); 
+    cqueryfunctions.add("realloc"); 
+    cqueryfunctions.add("strcmp"); 
+    cqueryfunctions.add("strncmp"); 
+    cqueryfunctions.add("strchr"); 
+    cqueryfunctions.add("strrchr"); 
+    cqueryfunctions.add("strlen"); 
+    cqueryfunctions.add("strstr"); 
+    cqueryfunctions.add("strpsn"); 
+    cqueryfunctions.add("strcpsn"); 
+    cqueryfunctions.add("strpbrk"); 
+    cqueryfunctions.add("strerror"); 
+    cqueryfunctions.add("getenv"); 
+    cqueryfunctions.add("bsearch"); 
+    cqueryfunctions.add("time"); 
+    cqueryfunctions.add("difftime"); 
+    
+  }
 
   public abstract String toString(); 
 
@@ -162,10 +220,19 @@ public abstract class ASTTerm
   }  
 
 
+  public abstract boolean isLabeledStatement();  
+
+  public abstract String getLabel();  
+
+  public abstract Type pointersToRefType(String tname, Type t);
+ 
   public abstract Type cdeclarationToType(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities);
 
   public abstract ModelElement cdeclaratorToModelElement(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities);
+
+  public abstract Vector cdeclaratorToModelElements(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities);
 
   public abstract Vector cparameterListToKM3(java.util.Map vartypes, 
@@ -178,7 +245,16 @@ public abstract class ASTTerm
 
   public abstract Statement cupdateForm(java.util.Map vartypes, java.util.Map varelemtypes, Vector types, Vector entities); 
 
+  public abstract Statement cbasicUpdateForm(java.util.Map vartypes, java.util.Map varelemtypes, Vector types, Vector entities); 
+
+  public abstract Statement cpreSideEffect(java.util.Map vartypes, java.util.Map varelemtypes, Vector types, Vector entities); 
+
+  public abstract Statement cpostSideEffect(java.util.Map vartypes, java.util.Map varelemtypes, Vector types, Vector entities); 
+
   public abstract Vector cstatementListToKM3(java.util.Map vartypes, java.util.Map varelemtypes, Vector types, Vector entities); 
+
+  public static boolean cqueryFunction(String fname)
+  { return cqueryfunctions.contains(fname); } 
 
   public abstract Vector cexpressionListToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities);
@@ -412,6 +488,19 @@ public abstract class ASTTerm
   public abstract int arity(); 
 
   public abstract int nonSymbolArity(); 
+
+  public static ASTTerm removeFirstTerm(ASTTerm t)
+  { if (t instanceof ASTCompositeTerm)
+    { ASTCompositeTerm tt = (ASTCompositeTerm) t; 
+      Vector newterms = new Vector(); 
+      newterms.addAll(tt.getTerms()); 
+      newterms.remove(0); 
+      return new ASTCompositeTerm(tt.getTag(), newterms); 
+    }
+    else if (t instanceof ASTBasicTerm)
+    { return new ASTCompositeTerm(t.getTag()); }  
+    return t; 
+  } 
 
   public static boolean constantTrees(ASTTerm[] trees)
   { if (trees.length == 0) 

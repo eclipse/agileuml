@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.*;
 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -126,6 +126,15 @@ public class UseCase extends ModelElement
     operation.setElementType(et); 
   } 
 
+  public Type getType()
+  { return resultType; }
+
+  public void setType(Type t)
+  { resultType = t;
+    if (t != null) 
+    { elementType = t.getElementType(); }
+  }
+
   public Type getResultType()
   { return resultType; }
 
@@ -153,6 +162,10 @@ public class UseCase extends ModelElement
   { if (classifier != null) 
     { classifier.setTypeParameters(tpars); } 
   } 
+
+  public void addParameter(Attribute att) 
+  { parameters.add(att); } 
+
 
   public Entity getClassifier() 
   { return classifier; } 

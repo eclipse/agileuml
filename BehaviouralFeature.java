@@ -177,6 +177,14 @@ public class BehaviouralFeature extends ModelElement
     return bf; 
   } 
 
+  public static BehaviouralFeature fromAttribute(Attribute att)
+  { BehaviouralFeature res = 
+      new BehaviouralFeature(att.getName()); 
+    res.parameters = att.getParameters(); 
+    res.resultType = att.getType(); 
+    return res; 
+  } 
+
   public UseCase toUseCase()
   { // usecase name : resultType 
     // { parameter ... assumptions ... postconditions }
@@ -657,6 +665,9 @@ public class BehaviouralFeature extends ModelElement
     { return true; } 
     return false; 
   } 
+
+  public boolean hasResultType()
+  { return hasResult(); } 
 
   public void setResultType(Type t)
   { resultType = t; } 
@@ -1563,6 +1574,21 @@ public class BehaviouralFeature extends ModelElement
 
   public void setParameters(Vector pars)
   { parameters = pars; } 
+
+  public void setParameters(java.util.Map vartypes)
+  { parameters = new Vector(); 
+    java.util.Set keys = vartypes.keySet(); 
+    Vector keyvect = new Vector(); 
+    keyvect.addAll(keys); 
+    for (int i = 0; i < keyvect.size(); i++) 
+    { String key = (String) keyvect.get(i); 
+      Type vtype = (Type) vartypes.get(key); 
+      if (key != null && vtype != null) 
+      { Attribute att = new Attribute(key,vtype,ModelElement.INTERNAL); 
+        parameters.add(att); 
+      } // and avoid duplicates
+    } 
+  } 
 
   public void setElementType(Type et)
   { elementType = et; } 
