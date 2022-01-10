@@ -1138,6 +1138,11 @@ public class Entity extends ModelElement implements Comparable
   public boolean isInterface()
   { return hasStereotype("interface"); } 
 
+  public boolean isStruct()
+  { return hasStereotype("struct") ||
+           hasStereotype("union"); 
+  } 
+
   public void setInterface(boolean intf)
   { if (intf) 
     { addStereotype("interface"); } 
@@ -6103,13 +6108,19 @@ public class Entity extends ModelElement implements Comparable
 
 
   public void generateCSharp(Vector entities, Vector types, PrintWriter out)
-  { if (hasStereotype("external") || hasStereotype("externalApp")) { return; } 
+  { if (hasStereotype("external") ||
+        hasStereotype("component") ||  
+        hasStereotype("externalApp")) 
+    { return; } 
+
     String intorclass = "class"; 
     out.println(); 
 
     clearAux(); 
 
-    if (isInterface())
+    if (isStruct())
+    { intorclass = "unsafe struct"; } 
+    else if (isInterface())
     { intorclass = "interface"; } 
     else if (isAbstract())
     { out.print("abstract "); }
@@ -6164,6 +6175,8 @@ public class Entity extends ModelElement implements Comparable
     { Attribute att = (Attribute) attributes.get(i);
       if (isInterface())
       { att.generateInterfaceCSharp(out); } 
+      else if (isStruct())
+      { att.generateStructCSharp(out); } 
       else 
       { att.generateCSharp(out); } 
     } // static variables are initialised at declaration, 
@@ -6649,6 +6662,37 @@ public class Entity extends ModelElement implements Comparable
     String nme = getName(); 
     String vis = "public"; 
     String tpars = typeParameterTextCSharp(); 
+
+    if (isStruct())
+    { out.print("  " + vis + " " + nme + "(");
+      boolean sprevious = false;
+      String sres = "";
+      String assigns = ""; 
+      for (int i = 0; i < attributes.size(); i++)
+      { Attribute att = (Attribute) attributes.get(i);
+        String aname = att.getName(); 
+
+        if (att.getType() == null) 
+        { continue; } 
+        String par = att.getType().getCSharp() + " " + aname + "_x";
+        if (par != null)
+        { if (sprevious)
+          { sres = sres + ", " + par; }
+          else        
+          { sres = par;
+            sprevious = true;
+          }
+        }
+        assigns = assigns + 
+                  "    " + aname + " = " + aname + "_x;\n"; 
+      }
+      out.println(sres + ")"); 
+      out.println("  {\n"); 
+      out.println(assigns); 
+      out.println("  }\n"); 
+      return; 
+    } 
+
 
     if (isSingleton()) 
     { vis = "private";

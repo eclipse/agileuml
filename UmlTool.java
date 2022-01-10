@@ -12,7 +12,7 @@
  * 
  * Version information : 2.1
  *
- * Date : October 2021
+ * Date : January 2022
  * 
  * Description : This describes the GUI interface of 
  * the UML RSDS tool,
@@ -319,6 +319,14 @@ public void findPlugins()
       "Creates UML/OCL from AST produced by Antlr Java parser, in output/ast.txt");
     // loadDataMI.setMnemonic(KeyEvent.VK_L);
     fileMenu.add(loadGenericMI);
+
+    JMenuItem fromCMI = 
+      new JMenuItem("From C AST",openIcon);
+    fromCMI.addActionListener(this);
+    fromCMI.setToolTipText(
+      "Creates UML/OCL from AST produced by Antlr C parser, in output/ast.txt");
+    // loadDataMI.setMnemonic(KeyEvent.VK_L);
+    fileMenu.add(fromCMI);
 
     fileMenu.addSeparator(); 
 
@@ -1111,6 +1119,10 @@ public void findPlugins()
     // javaMenu.setEnabled(false); 
     buildMenu.add(pyMenu); 
 
+    JMenuItem goMenu = new JMenuItem("Generate Go"); 
+    goMenu.addActionListener(this);
+    buildMenu.add(goMenu); 
+
     buildMenu.addSeparator(); 
 
     JMenuItem cstlGenerator = new JMenuItem("Use CSTL specification"); 
@@ -1535,6 +1547,10 @@ public void findPlugins()
       { ucdArea.loadGenericUseCase();
         saved = true; 
       }
+      else if (label.equals("From C AST")) 
+      { ucdArea.fromCAST();
+        saved = true; 
+      }
       else if (label.equals("Print"))
       { printData(); } 
       else if (label.equals("B for entities"))
@@ -1785,6 +1801,8 @@ public void findPlugins()
         catch (Exception ee2) 
         { System.err.println("Unable to run application"); } 
       }
+      else if (label.equals("Generate Go"))
+      { ucdArea.generateGo(); } 
       else if (label.equals("Type-check"))
       { ucdArea.typeCheck(); } 
       else if (label.equals("Generate Design"))

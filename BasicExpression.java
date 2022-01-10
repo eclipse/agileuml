@@ -381,6 +381,12 @@ class BasicExpression extends Expression
     return res; 
   } 
 
+  public static BasicExpression newVariableBasicExpression(Attribute att) 
+  { BasicExpression res = new BasicExpression(att); 
+    res.umlkind = VARIABLE;
+    return res; 
+  } 
+
   public static BasicExpression newVariableBasicExpression(String value, String typ) 
   { BasicExpression res = new BasicExpression(value); 
     res.umlkind = VARIABLE;
@@ -6390,6 +6396,11 @@ class BasicExpression extends Expression
     //   return "Console.WriteLine(" + rqf + ".StackTrace)"; 
     // }  
 
+    if (data.equals("System_in") || 
+        data.equals("System_out") ||
+        data.equals("System_err"))
+    { return "OclFile." + data; } 
+
     if ((data.equals("systemTime") || 
          "getSystemTime".equals(data)) && 
         "OclDate".equals(objectRef + ""))
@@ -9230,6 +9241,10 @@ public Statement generateDesignSubtract(Expression rhs)
         }
         return nme + ".set" + data + "(" + val2 + ");"; 
       }   // and with array
+
+      if (objectRef instanceof UnaryExpression && 
+          "!".equals(((UnaryExpression) objectRef).operator))
+      { return "(" + pre + ")." + data + " = " + val2; } 
 
       if (objectRef.umlkind == CLASSID && (objectRef instanceof BasicExpression)) 
       { BasicExpression objref = (BasicExpression) objectRef; 

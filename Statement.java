@@ -2161,6 +2161,9 @@ class WhileStatement extends Statement
     loopRange = lr;
   }
 
+  public void setLoopVar(Expression lv)
+  { loopVar = lv; }
+
   public void setLoopRange(Expression expr)
   { if (expr != null && 
         expr instanceof BinaryExpression)
@@ -3331,8 +3334,8 @@ class WhileStatement extends Statement
  
 
 class CreationStatement extends Statement
-{ String createsInstanceOf;
-  String assignsTo;
+{ String createsInstanceOf = null;
+  String assignsTo = null;
   private Type instanceType = null; 
   private Type elementType = null; 
   boolean declarationOnly = false; 
@@ -3396,6 +3399,9 @@ class CreationStatement extends Statement
   { initialExpression = expr; 
     initialValue = expr + ""; 
   } 
+
+  public void setAssignsTo(Expression expr)
+  { assignsTo = expr + ""; } 
 
   public void setFrozen(boolean froz)
   { isFrozen = froz; } 
@@ -3710,8 +3716,20 @@ class CreationStatement extends Statement
       System.out.println(">>> Instance type: " + instanceType); 
       System.out.println(">>> C# type: " + jType); 
 
-      if (initialExpression != null)
+      if (initialExpression != null && assignsTo != null)
       { return "  " + jType + " " + assignsTo + " = " + initialExpression.toCSharp() + ";\n"; }
+      else if (Type.isRefType(instanceType))
+      { String rt = "object"; 
+        if (instanceType.getElementType() != null) 
+        { Type elemT = instanceType.getElementType();
+          rt = elemT.getCSharp(); 
+          if (Type.isBasicType(elemT) ||
+              elemT.isStructEntityType() ||  
+              "Ref".equals(elemT.getName()))
+          { return "  " + rt + "* " + assignsTo + ";"; }
+        }
+        return "  " + rt + " " + assignsTo + ";";   
+      }   
       else if (Type.isBasicType(instanceType)) 
       { return "  " + jType + " " + assignsTo + ";"; } 
       else if (Type.isMapType(instanceType))

@@ -3,7 +3,7 @@ import java.util.List;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -5208,10 +5208,14 @@ public class BSystemTypes extends BComponent
 
       res = res + 
         "  public static int char2byte(string qf) \n" + 
-        "  { return Char.ConvertToUtf32(qf, 0); }\n" +  
+        "  { if (qf.Length < 1) { return -1; }\n" + 
+        "    return Char.ConvertToUtf32(qf, 0);\n" + 
+        "  }\n" +  
         "\n" + 
         "  public static string byte2char(int qf)\n" +  
-        "  { return Char.ConvertFromUtf32(qf); }\n\n"; 
+        "  { if (qf < 0) { return \"\"; }\n" + 
+        "    return Char.ConvertFromUtf32(qf);\n" + 
+        "  }\n\n"; 
 
     return res; 
   } 
@@ -7155,7 +7159,24 @@ public class BSystemTypes extends BComponent
       "      else { res.Add(obj); }\n" + 
       "    } \n" + 
       "    return res; \n" + 
-      "  }\n"; 
+      "  }\n\n"; 
+
+    res = res + 
+      "  public static T[] asReference<T>(ArrayList sq, T[] r)\n" +
+      "  {\n" +
+      "    for (int i = 0; i < sq.Count && i < r.Length; i++)\n" +
+      "    { r[i] = (T) sq[i]; }\n" +
+      "    return r;\n" +
+      "  }\n\n"; 
+
+    res = res + 
+      "  public static ArrayList asSequence<T>(T[] r)\n" +
+      "  { ArrayList res = new ArrayList(); \n" +
+      "    for (int i = 0; i < r.Length; i++)\n" +
+      "    { res.Add(r[i]); }\n" +
+      "    return res;\n" +
+      "  }\n\n";   
+
     return res;
   } // and map
 
@@ -9854,6 +9875,33 @@ public class BSystemTypes extends BComponent
 
     return res; 
   }
+
+  public static void generateLibraryCSharp(String lib, 
+                                 PrintWriter out)
+  { // retrieve library code from libraries/lib.cs & print 
+    // to out. 
+
+    try
+    { File libCPP = new File("libraries/" + lib + ".cs"); 
+      BufferedReader br = null;
+      String sline = null;
+      boolean eof = false; 
+      br = new BufferedReader(new FileReader(libCPP));
+      out.println(); 
+ 
+      while (!eof)
+      { sline = br.readLine();
+        if (sline == null) 
+        { eof = true; } 
+        else 
+        { out.println(sline); }
+      } 
+      out.println(); 
+      br.close();  
+    } 
+    catch (IOException _ex)
+    { System.err.println("!! ERROR: libraries/" + lib + ".cpp not found"); }
+  } 
 
   public static void generateLibraryCPP(String lib, 
                                  PrintWriter out)

@@ -77,6 +77,14 @@ public class ObjectSpecification extends ModelElement
     return res; 
   }
 
+  public Vector getParameters() { return new Vector(); } 
+
+  public void addParameter(Attribute att) { } 
+
+  public Type getType() { return null; } 
+
+  public void setType(Type t) { } 
+
   public String toILP()
   { String nme = getName();
     String cls = objectClass.toLowerCase();

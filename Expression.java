@@ -3,7 +3,7 @@ import java.util.List;
 import java.io.*;
 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -50,6 +50,8 @@ abstract class Expression
                                    // multiplicity of the feature, if a feature
   protected boolean needsBracket = false; 
   protected boolean isStatic = false; 
+
+  protected Type sizeofType = null; 
 
   protected static Vector comparitors = new Vector(); 
   static 
@@ -183,6 +185,12 @@ abstract class Expression
   } 
 
   public Type getType() { return type; }
+
+  public void setsizeofType(Type t)
+  { sizeofType = t; } 
+
+  public Type getsizeofType()
+  { return sizeofType; } 
 
   public boolean isMap() 
   { if (type != null && type.getName().equals("Map"))
@@ -1302,6 +1310,15 @@ abstract class Expression
 
   public boolean hasSequenceType()
   { return type != null && type.isSequence(); }
+
+  public boolean isClassEntityType()
+  { return type != null && type.isClassEntityType(); }
+
+  public boolean isFunctionType()
+  { return type != null && type.isFunctionType(); }
+
+  public boolean isRef()
+  { return type != null && type.isRef(); }
 
   public String getOclType()
   { if (type == null) 

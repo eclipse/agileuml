@@ -352,6 +352,27 @@ public class Attribute extends ModelElement
   public boolean isFunctionType()
   { return type != null && type.isFunction(); } 
 
+  public boolean isFunctionRef()
+  { if (type == null)
+    { return false; }
+    if ("Ref".equals(type.getName()))
+    { return type.getElementType() != null && 
+             type.getElementType().isFunction(); 
+    }
+    return false; 
+  } 
+
+  public boolean isCollectionRef()
+  { if (type == null)
+    { return false; }
+    if ("Ref".equals(type.getName()))
+    { return type.getElementType() != null && 
+             type.getElementType().isCollectionType(); 
+    }
+    return false; 
+  } 
+ 
+
   public boolean isEntityCollection()
   { return type != null && type.isCollectionType() && 
            elementType != null && elementType.isEntity(); 
@@ -1522,6 +1543,32 @@ public class Attribute extends ModelElement
     { out.println(" // derived"); } 
   }
 
+  public void generateStructCSharp(PrintWriter out)
+  { out.print("  public ");
+    
+    if (!instanceScope) { out.print("static "); } 
+    if (isFinal()) { out.print("const "); } 
+    type.generateCSharp(out);
+
+    java.util.Map env = new java.util.HashMap(); 
+
+    if (isFinal() && initialExpression != null) 
+    { out.print(getName() + " = " + initialExpression.queryFormCSharp(env,true) + ";"); } 
+    else if (!instanceScope && initialExpression != null) 
+    { out.print(getName() + " = " + initialExpression.queryFormCSharp(env,true) + ";"); }
+    else 
+    { out.print(getName() + ";"); }
+
+    if (kind == ModelElement.INTERNAL)
+    { out.println(" // internal"); }
+    else if (kind == ModelElement.SEN)
+    { out.println(" // sensor"); }
+    else if (kind == ModelElement.ACT)
+    { out.println(" // actuator"); }
+    else if (kind == ModelElement.DERIVED)
+    { out.println(" // derived"); } 
+  }
+
   public String methodDeclarationCPP()
   { String res = ""; 
     res = "    " + getType().getCPP(getElementType()) + " " + getName(); 
@@ -2435,7 +2482,7 @@ public class Attribute extends ModelElement
 
     // if (entity.isSequential()) { sync = " synchronized"; } 
     
-    if (ent != entity && !entity.isInterface()) 
+    if (entity != null && ent != entity && !entity.isInterface()) 
     { code = "base.set" + nme + "(" + val + ");"; }
     else if (!instanceScope)
     { qual = " static "; 
@@ -2973,7 +3020,10 @@ public class Attribute extends ModelElement
   public String setAllOperationCSharp(Entity ent, String ename)
   { // public static void setAllatt(ArrayList es, T val)
     // { update e.att for e in es }
-    if (frozen || isMultiple()) { return ""; } 
+    if (frozen || isMultiple()) { return ""; }
+    if (ent.isStruct())
+    { return ""; } 
+ 
     String ex = ename.toLowerCase() + "x";
     String nme = getName();
     String update = "Controller.inst().set" + nme + "(" + ex + ",val);";

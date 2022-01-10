@@ -90,7 +90,9 @@ public abstract class ASTTerm
     cqueryfunctions.add("bsearch"); 
     cqueryfunctions.add("time"); 
     cqueryfunctions.add("difftime"); 
-    
+    cqueryfunctions.add("toupper"); 
+    cqueryfunctions.add("tolower");
+    cqueryfunctions.add("fopen");  
   }
 
   public abstract String toString(); 

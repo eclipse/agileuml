@@ -144,6 +144,11 @@ public class Type extends ModelElement
   // public boolean isEnumeration() 
   // { return values != null; } 
 
+  public boolean isClassEntityType() 
+  { return entity != null && !(entity.isStruct()); } 
+
+  public boolean isStructEntityType() 
+  { return entity != null && entity.isStruct(); } 
 
   public boolean isEntityType() 
   { return entity != null; } 
@@ -399,6 +404,9 @@ public class Type extends ModelElement
   public boolean isReference()
   { return ("Ref".equals(name)); } 
 
+  public boolean isRef()
+  { return ("Ref".equals(name)); } 
+
   public boolean isNestedReference()
   { if ("Ref".equals(name) && 
         elementType == null)
@@ -467,6 +475,12 @@ public class Type extends ModelElement
     String nme = t.getName(); 
     return ("Sequence".equals(nme) || "Set".equals(nme) || "Map".equals(nme)); 
   } // But really, should exclude Map from this. 
+
+  public static boolean isRefType(Type t) 
+  { if (t == null) { return false; } 
+    String nme = t.getName(); 
+    return ("Ref".equals(nme)); 
+  }
 
   public static boolean isNumericType(String t)
   { if ("int".equals(t) || "double".equals(t) || "long".equals(t))
@@ -2788,8 +2802,17 @@ public class Type extends ModelElement
     if (nme.equals("Ref"))
     { String restype = "object"; 
       if (elementType != null) 
-      { restype = elementType.getCSharp(); } 
-      return "*" + restype; 
+      { restype = elementType.getCSharp();
+        if (isBasicType(elementType) ||
+            elementType.isStructEntityType() ||  
+            "Ref".equals(elementType.getName()) || 
+            "void".equals(elementType.getName()))
+        { return restype + "*"; } 
+        else 
+        { return restype; }
+      }  
+      else 
+      { return "void*"; } 
     } 
 
     if (nme.equals("Set") || nme.equals("Sequence"))
@@ -2965,6 +2988,8 @@ public class Type extends ModelElement
 
   public String getCPP(String elemType)
   { String nme = getName();
+    if (nme.equals("Ref"))
+    { return elemType + "*"; } 
     if (nme.equals("Set")) 
     { return "std::set<" + elemType + ">*"; } 
     if (nme.equals("Sequence"))
@@ -3028,7 +3053,9 @@ public class Type extends ModelElement
 
   public String getCPP()  /* For attribute/simple types */ 
   { String nme = getName();
-    if (nme.equals("Set") || nme.equals("Sequence") || nme.equals("Map") || nme.equals("Function"))
+    if (nme.equals("Set") || nme.equals("Sequence") ||
+        nme.equals("Ref") ||
+        nme.equals("Map") || nme.equals("Function"))
     { return "void*"; }
     if (nme.equals("String")) 
     { return "string"; }  
@@ -4375,6 +4402,13 @@ public class Type extends ModelElement
     System.out.println(b.booleanValue()); */ 
     System.out.println(getTypeFor("Function(double,Function(int,double))",new Vector(),new Vector()));
     System.out.println(getTypeFor("Map(Map(int,double),double)",new Vector(),new Vector()));
+
+   System.out.println(Type.isBasicType(new Type("void", null))); 
+
+   Type ref = new Type("Ref", null); 
+   ref.setElementType(new Type("void", null)); 
+
+   System.out.println(ref.getCSharp()); 
 
     /* Type t1 = new Type("Sequence",null); t1.setElementType(new Type("int", null)); 
     Type t2 = new Type("Sequence",null); t2.setElementType(new Type("long", null)); 

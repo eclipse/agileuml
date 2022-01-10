@@ -2,7 +2,7 @@ import java.util.Vector;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -54,6 +54,14 @@ public class SetExpression extends Expression
   { if (i < elements.size())
     { return (Expression) elements.get(i); } 
     return null; 
+  } 
+
+  public static boolean isRefSetExpression(Expression expr)
+  { if (expr.type == null) 
+    { return false; } 
+    if ("Ref".equals(expr.type.getName()))
+    { return true; } 
+    return false; 
   } 
 
   public int size()
@@ -312,15 +320,15 @@ public class SetExpression extends Expression
   public String queryForm(java.util.Map env, boolean local)
   { if (isMap())
     { String result = "(new HashMap())"; 
-	  for (int i = 0; i < elements.size(); i++)
+      for (int i = 0; i < elements.size(); i++)
       { BinaryExpression e = (BinaryExpression) elements.get(i);
-	    Expression key = e.getLeft(); 
-		Expression value = e.getRight(); 
+        Expression key = e.getLeft(); 
+        Expression value = e.getRight(); 
         result = "Set.includingMap(" + result + "," + key.queryForm(env,local) + "," + 
 		                           value.queryForm(env,local) + ")";
       }
-	  return result; 
-	}
+      return result; 
+    }
 	
     String res = "(new SystemTypes.Set())"; 
     for (int i = 0; i < elements.size(); i++)
@@ -399,7 +407,10 @@ public class SetExpression extends Expression
   }  // different for sequences?
 
   public String queryFormCSharp(java.util.Map env, boolean local)
-  { if (type != null && "Ref".equals(type.getName()))
+  { System.out.println(">>> Query form of " + this + " " + 
+                       type + " " + elementType); 
+
+    if (type != null && "Ref".equals(type.getName()))
     { Type et = getElementType();
       String cset = "object"; 
       if (et != null) 
@@ -678,6 +689,16 @@ public class SetExpression extends Expression
   public boolean typeCheck(final Vector types, final Vector entities,
                            final Vector contexts, final Vector env)
   { boolean res = true;
+
+    if (type != null && "Ref".equals(type.getName()))
+    { if (elements.size() == 1)
+      { Expression e = (Expression) elements.get(0);
+        e.typeCheck(types,entities,contexts,env);
+        System.out.println(">>> Reference type Ref(" + elementType + ") size " + e + " of type " + e.getType()); 
+      } 
+      return res; 
+    } 
+
     for (int i = 0; i < elements.size(); i++)
     { Expression e = (Expression) elements.get(i);
       e.typeCheck(types,entities,contexts,env);

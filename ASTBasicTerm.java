@@ -296,6 +296,31 @@ public class ASTBasicTerm extends ASTTerm
         return be; 
       } 
 
+      if ("strcmp".equals(value))
+      { Type stringtype = new Type("String", null); 
+        Attribute x1 = 
+          new Attribute("_x1", stringtype, 
+                        ModelElement.INTERNAL); 
+        Attribute x2 = 
+          new Attribute("_x2", stringtype, 
+                        ModelElement.INTERNAL);
+        BasicExpression x1be = 
+          BasicExpression.newVariableBasicExpression(x1); 
+        BasicExpression x2be = 
+          BasicExpression.newVariableBasicExpression(x2); 
+ 
+        UnaryExpression letexpr = 
+          new UnaryExpression("lambda", 
+                new BinaryExpression("->compareTo", 
+                                     x1be, x2be));
+        letexpr.setAccumulator(x2); 
+
+        UnaryExpression res = 
+          new UnaryExpression("lambda", letexpr); 
+        res.setAccumulator(x1); 
+        return res; 
+      }  
+
       if ("stdout".equals(value))
       { BasicExpression be = new BasicExpression("System_out"); 
         be.setType(new Type("OclFile", null)); 

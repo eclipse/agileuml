@@ -8562,7 +8562,7 @@ public class UCDArea extends JPanel
  
     // Collect OclType.cs from libraries: 
     try
-    { File ocltypeCS = new File("libraries/OclType.cs.txt"); 
+    { File ocltypeCS = new File("libraries/OclType.cs"); 
       BufferedReader br = null;
       String sline = null;
       boolean eof = false; 
@@ -8581,7 +8581,22 @@ public class UCDArea extends JPanel
       br.close();  
     } 
     catch (IOException _ex)
-    { System.err.println("!! ERROR: libraries/OclType.cs.txt not found"); }
+    { System.err.println("!! ERROR: libraries/OclType.cs not found"); }
+
+    Entity mathlib = 
+      (Entity) ModelElement.lookupByName("MathLib", entities); 
+    if (mathlib != null) 
+    { BSystemTypes.generateLibraryCSharp("MathLib",out); }
+
+    Entity oclfile = 
+      (Entity) ModelElement.lookupByName("OclFile", entities); 
+    if (oclfile != null) 
+    { BSystemTypes.generateLibraryCSharp("OclFile",out); }
+
+    Entity oclprocess = 
+      (Entity) ModelElement.lookupByName("OclProcess", entities); 
+    if (oclprocess != null) 
+    { BSystemTypes.generateLibraryCSharp("OclProcess",out); }
 
     String mainOp = ""; 
 
@@ -9286,9 +9301,12 @@ public void produceCUI(PrintWriter out)
     out.println("using System.Collections;"); 
     out.println("using System.IO;"); 
     out.println("using System.Linq;");
-     out.println("using System.Diagnostics;"); 
+    out.println("using System.Diagnostics;"); 
   
     out.println("using System.Threading.Tasks;"); 
+    out.println("using System.Xml.Serialization;"); 
+    out.println("using System.Text.Json;"); 
+    out.println("using System.Text.Json.Serialization;"); 
     out.println("using System.Windows.Forms;");
 
     for (int i = 0; i < importList.size(); i++) 

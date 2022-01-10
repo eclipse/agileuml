@@ -141,6 +141,20 @@ public class UnaryExpression extends Expression
     return null;  
   } 
 
+  public static Expression argumentsToLambdaCall(String fname,
+                                                 Vector args)
+  { BasicExpression f = 
+      BasicExpression.newVariableBasicExpression(fname); 
+    Expression res = f; 
+
+    for (int i = 0; i < args.size(); i++) 
+    { Expression arg = (Expression) args.get(i); 
+      res = new BinaryExpression("->apply", res, arg); 
+    } 
+    return res; 
+  } 
+
+
   public String getOperator()
   { return operator; } 
 
@@ -625,6 +639,16 @@ public void findClones(java.util.Map clones, String rule, String op)
     { UnaryExpression mins = new UnaryExpression("-", var);
       BinaryExpression be = new BinaryExpression("=", argument, mins);
       return be.updateForm(language, env, local);
+    }
+    else if ("!".equals(operator))
+    { String lhs = queryForm(language, env, local); 
+      String rhs = var.queryForm(language, env, local); 
+      return "    " + lhs + " = " + rhs + ";";
+    }
+    else if ("?".equals(operator))
+    { String lhs = queryForm(language, env, local); 
+      String rhs = var.queryForm(language, env, local); 
+      return "    " + lhs + " = " + rhs + ";";
     }
     return " /* No update form for " + this + " := " + var + " */ "; 
   }
@@ -1643,7 +1667,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
   public boolean isPrimitive()   // needs to be wrapped in Java
   { if (operator.equals("->size") || operator.equals("->isDeleted") ||
         operator.equals("-") || operator.equals("not") ||
-        operator.equals("?") || operator.equals("!") ||  
+        operator.equals("?") ||   
         operator.equals("->display") || operator.equals("->abs") ||
         operator.equals("->sqrt") || operator.equals("->sqr") ||
         operator.equals("->ceil") || operator.equals("->round") ||
@@ -1670,7 +1694,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     // otherwise, if the argument element type is primitive
     if (operator.equals("->any") || operator.equals("->last") ||
         operator.equals("->first") || operator.equals("->max") ||
-        operator.equals("->min") || operator.equals("->sum") ||
+        operator.equals("->min") || 
+        operator.equals("->sum") || operator.equals("!") ||
         operator.equals("->prd"))
     { if (argument.elementType != null) 
       { return argument.elementType.isPrimitive(); } 
@@ -1726,6 +1751,12 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       { type = argtype.getElementType(); } 
       else 
       { type = new Type("OclAny", null); } 
+    } 
+
+    if (operator.equals("?"))
+    { Type argtype = argument.getType(); 
+      type = new Type("Ref", null); 
+      type.setElementType(argtype);  
     } 
     
     if (operator.equals("->copy"))
@@ -2394,7 +2425,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("-"))
     { return "-" + qf; } 
 
-    if (operator.equals("?"))
+    if (operator.equals("?") || operator.equals("!"))
     { return qf; } 
 
     if (operator.equals("not"))
@@ -2678,7 +2709,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("-"))
     { return "-" + qf; } 
 
-    if (operator.equals("?"))
+    if (operator.equals("?") || operator.equals("!"))
     { return qf; } 
 
     if (operator.equals("not"))
@@ -2974,7 +3005,22 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "-" + qf; } 
 
     if (operator.equals("?"))
-    { return qf; } 
+    { if (argument.isCollection() || 
+          argument.isFunctionType() || 
+          argument.isClassEntityType())
+      { return qf; } 
+      return "&" + qf; 
+    } 
+
+    if (operator.equals("!"))
+    { Type argelemtype = argument.getElementType(); 
+      if (argelemtype != null && 
+          (argelemtype.isCollection() || 
+           argelemtype.isFunctionType() || 
+           argelemtype.isClassEntityType()))
+      { return qf; } 
+      return "*" + qf; 
+    } // functions, classes, collections, maps have ?x = x
 
     if (operator.equals("not"))
     { return "!(" + qf + ")"; } 
@@ -3007,7 +3053,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     } 
 
     if (operator.equals("->asSequence")) 
-    { return qf; } 
+    { if (argument.isRef())
+      { return "SystemTypes.asSequence(" + qf + ")"; } 
+      return qf; 
+    } 
 
     if (operator.equals("->asSet") && type != null && 
         type.isSet())
@@ -3015,6 +3064,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("->asBag"))
     { return "SystemTypes.sort(" + qf + ")"; } 
+
+    if (operator.equals("->asReference"))
+    { return "SystemTypes.asReference(" + qf + ")"; } 
 
     if (operator.equals("->isInteger")) 
     { return "SystemTypes.isInteger(" + qf + ")"; } 
@@ -3038,10 +3090,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "SystemTypes.toBoolean(" + qf + ")"; } 
 
     if (operator.equals("->char2byte")) 
-    { return "Char.ConvertToUtf32(" + qf + ", 0)"; } 
+    { return "SystemTypes.char2byte(" + qf + ")"; } 
 
     if (operator.equals("->byte2char")) 
-    { return "Char.ConvertFromUtf32(" + qf + ")"; } 
+    { return "SystemTypes.byte2char(" + qf + ")"; } 
 
     if (operator.equals("->oclIsUndefined")) 
     { return "(" + qf + " == null)"; } 
@@ -3264,6 +3316,13 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("?"))
     { if (Type.isBasicType(argument.type))
       { return "&" + qf; } 
+      return qf; 
+    } // objects, functions and 
+      // collections are already pointers
+
+    if (operator.equals("!"))
+    { if (Type.isBasicType(argument.getElementType()))
+      { return "*" + qf; } 
       return qf; 
     } // objects and collections are already pointers
 

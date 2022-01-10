@@ -126,6 +126,8 @@ public class Association extends ModelElement
   public void addParameter(Attribute att) 
   { } 
 
+  public Vector getParameters() { return new Vector(); } 
+
   public Type getType() 
   { return getRole2Type(); } 
 

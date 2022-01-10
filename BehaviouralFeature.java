@@ -7,7 +7,7 @@ import java.util.HashSet;
 
 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -1240,6 +1240,22 @@ public class BehaviouralFeature extends ModelElement
     else { removeStereotype("query"); } 
   } 
 
+  public void setVarArgStereotype(Vector pars)
+  { if (pars.size() > 0) 
+    { Attribute va = (Attribute) pars.get(pars.size()-1); 
+      if ("par_varg_sq".equals(va.getName()) && 
+          va.isSequence())
+      { addStereotype("vararg"); } 
+    } 
+  } 
+
+  public void setVarArgStereotype()
+  { setVarArgStereotype(parameters); } 
+
+
+  public boolean isVarArg()
+  { return hasStereotype("vararg"); } 
+
   public void setDerived(boolean d) 
   { derived = d; } 
 
@@ -1510,6 +1526,9 @@ public class BehaviouralFeature extends ModelElement
   public boolean isStatic()
   { return hasStereotype("static"); } 
 
+  public boolean isUnsafe()
+  { return hasStereotype("unsafe"); } 
+
   public boolean isVirtual(Entity ent) 
   { // if same op is in ent & ent superclass or ent subclass
     if (ent.isInterface() || ent.isAbstract())
@@ -1759,7 +1778,7 @@ public class BehaviouralFeature extends ModelElement
       Type newtype = Type.typeCheck(partype,types,entities);   
       par.setType(newtype); 
       System.out.println(">> parameter " + par.getName() + 
-                         " has type " + newtype + "(" + newtype.getElementType() + ")"); 
+                         " has type " + newtype); 
     } 
   } 
 
@@ -2636,6 +2655,8 @@ public class BehaviouralFeature extends ModelElement
 
   public String genQueryCodeCSharp(Entity ent, Vector cons)
   { String res = " public "; 
+    if (isUnsafe())
+    { res = res + "unsafe "; } 
     // if (isSequential())
     // { res = res + "synchronized "; } 
     if (isAbstract())
@@ -4227,7 +4248,9 @@ public class BehaviouralFeature extends ModelElement
       { return "  public " + ts + " " + name + genPars + "(" + pars + ");\n"; } 
 
       // if (isSequential())
-      // { header = header + "synchronized "; } 
+      // { header = header + "synchronized "; }
+      if (isUnsafe())
+      { header = header + "unsafe "; } 
       if (isAbstract())
       { header = header + "abstract "; } 
       if (isFinal())
@@ -5036,7 +5059,10 @@ public class BehaviouralFeature extends ModelElement
     String javaPars = getCSharpParameterDec(); 
     String header = "  public "; 
     // if (isSequential())
-    // { header = header + "synchronized "; } 
+    // { header = header + "synchronized "; }
+
+    if (isUnsafe())
+    { header = header + "unsafe "; } 
     if (isAbstract())
     { header = header + "abstract "; } 
     if (isFinal())
@@ -6095,6 +6121,8 @@ public class BehaviouralFeature extends ModelElement
                                        Vector constraints)
   { // if (!instanceScope) { return ""; } 
 
+    if (isUnsafe()) { return ""; } 
+
     String name = getName();
     String resT = "void";
     if (resultType != null)
@@ -6510,6 +6538,10 @@ public class BehaviouralFeature extends ModelElement
     String javaPars = getCSharpParameterDec(); 
     
     String header = "  public "; 
+
+    if (isUnsafe())
+    { header = header + "unsafe "; } 
+
     if (isAbstract())
     { header = header + "abstract "; } 
     if (isFinal())
