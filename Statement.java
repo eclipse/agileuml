@@ -852,6 +852,9 @@ class ReturnStatement extends Statement
     if (value != null) 
     { args.add(value.cg(cgs)); } 
     CGRule r = cgs.matchedStatementRule(this,etext);
+
+    System.out.println(">> Matched statement rule: " + r + " for " + this); 
+
     if (r != null)
     { return r.applyRule(args); }
     return etext;
@@ -1004,6 +1007,9 @@ class BreakStatement extends Statement
   { String etext = this + "";
     Vector args = new Vector();
     CGRule r = cgs.matchedStatementRule(this,etext);
+
+    System.out.println(">> Matched statement rule: " + r + " for " + this); 
+
     if (r != null)
     { return r.applyRule(args); }
     return etext;
@@ -1156,6 +1162,9 @@ class ContinueStatement extends Statement
   { String etext = this + "";
     Vector args = new Vector();
     CGRule r = cgs.matchedStatementRule(this,etext);
+
+    System.out.println(">> Matched statement rule: " + r + " for " + this); 
+
     if (r != null)
     { return r.applyRule(args); }
     return etext;
@@ -1800,12 +1809,18 @@ class InvocationStatement extends Statement
       Vector eargs = new Vector();
       eargs.add(callExp);  
       CGRule r = cgs.matchedStatementRule(this,etext);
+
+    System.out.println(">> Matched statement rule: " + r + " for " + this); 
+
       if (r != null)
       { return r.applyRule(args,eargs,cgs); }
     } 
     else 
     { CGRule r1 = cgs.matchedStatementRule(this,""); 
       Vector eargs = new Vector();
+
+    System.out.println(">> Matched statement rule: " + r1 + " for " + this); 
+
       if (r1 != null) 
       { return r1.applyRule(args,eargs,cgs); } 
     } 
@@ -2112,6 +2127,9 @@ class ImplicitInvocationStatement extends Statement
     if (callExp != null) 
     { args.add(callExp.cg(cgs)); } 
     CGRule r = cgs.matchedStatementRule(this,etext);
+
+    System.out.println(">> Matched statement rule: " + r + " for " + this); 
+
     if (r != null)
     { return r.applyRule(args); }
     return etext;
@@ -3297,6 +3315,9 @@ class WhileStatement extends Statement
       eargs.add(body); 
     } 
     CGRule r = cgs.matchedStatementRule(this,etext);
+
+    System.out.println(">> Matched statement rule: " + r + " for " + this); 
+
     if (r != null)
     { return r.applyRule(args,eargs,cgs); }
     return etext;
@@ -4073,6 +4094,9 @@ class CreationStatement extends Statement
     }  
 
     CGRule r = cgs.matchedStatementRule(this,etext);
+
+    System.out.println(">> Matched statement rule: " + r + " for " + this); 
+
     if (r != null)
     { return r.applyRule(args,eargs,cgs); }
     return etext;
@@ -4192,6 +4216,9 @@ class SequenceStatement extends Statement
       args.add(tailst.cg(cgs));
     }
     CGRule r = cgs.matchedStatementRule(this,etext);
+
+    System.out.println(">> Matched statement rule: " + r + " for " + this); 
+
     if (r != null)
     { // System.out.println(">>> Sequence rule: " + r + 
       //                    " " + args); 
@@ -5542,6 +5569,8 @@ class ErrorStatement extends Statement
 
     CGRule r = cgs.matchedStatementRule(this,etext);
 
+    System.out.println(">> Matched statement rule: " + r + " for " + this); 
+
     if (r != null)
     { return r.applyRule(args); }
 
@@ -5845,6 +5874,9 @@ class AssertStatement extends Statement
     if (message != null) 
     { args.add(message.cg(cgs)); } 
     CGRule r = cgs.matchedStatementRule(this,etext);
+
+    System.out.println(">> Matched statement rule: " + r + " for " + this); 
+
     if (r != null)
     { return r.applyRule(args); }
     return etext;
@@ -6088,6 +6120,8 @@ class CatchStatement extends Statement
     eargs.add(action);  
     CGRule r = cgs.matchedStatementRule(this,etext);
    
+    System.out.println(">> Matched statement rule: " + r + " for " + this); 
+
     if (r != null)
     { return r.applyRule(args,eargs,cgs); }
     
@@ -6662,6 +6696,8 @@ class TryStatement extends Statement
     } 
  
     CGRule r = cgs.matchedStatementRule(this,etext);
+
+    System.out.println(">> Matched statement rule: " + r + " for " + this); 
 
     if (r != null)
     { return r.applyRule(args,eargs,cgs); }
@@ -7465,6 +7501,9 @@ class IfStatement extends Statement
     { args.add(""); }
 	
     CGRule r = cgs.matchedStatementRule(this,etext);
+
+    System.out.println(">> Matched statement rule: " + r + " for " + this); 
+
     if (r != null)
     { return r.applyRule(args); }
     return etext;
@@ -7558,6 +7597,9 @@ class AssignStatement extends Statement
         args.add(rhsnopre.cg(cgs));
         eargs.add(rhsnopre);
         CGRule r = cgs.matchedStatementRule(this,etext);
+
+    System.out.println(">> Matched statement rule: " + r + " for " + this); 
+
         if (r != null)
         { return r.applyRule(args,eargs,cgs); }
         return etext; 
@@ -7569,6 +7611,9 @@ class AssignStatement extends Statement
     eargs.add(rhsnopre);
  
     CGRule r = cgs.matchedStatementRule(this,etext);
+
+    System.out.println(">> Matched statement rule: " + r + " for " + this); 
+
     if (r != null)
     { return r.applyRule(args,eargs,cgs); }
     return etext; 

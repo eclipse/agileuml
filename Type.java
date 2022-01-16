@@ -159,7 +159,8 @@ public class Type extends ModelElement
     Entity ex = (Entity) ModelElement.lookupByName(name, ents);
     if (ex != null) 
     { return true; } 
-    if ("OclType".equals(name) || "OclAny".equals(name) || 
+    if ("OclType".equals(name) || "OclAny".equals(name) ||
+        "OclProcess".equals(name) ||  
         "OclFile".equals(name) || "OclRandom".equals(name))
     { return true; } 
     return false; 
@@ -340,6 +341,8 @@ public class Type extends ModelElement
     { return elementType.metavariables(); } 
     else if ("Set".equals(name) && elementType != null)
     { return elementType.metavariables(); } 
+    else if ("Ref".equals(name) && elementType != null)
+    { return elementType.metavariables(); } 
     else if ("Map".equals(name) || "Function".equals(name))
     { Vector vars = new Vector(); 
 	  if (keyType != null) 
@@ -403,6 +406,12 @@ public class Type extends ModelElement
 
   public boolean isReference()
   { return ("Ref".equals(name)); } 
+
+  public static boolean isReferenceType(Type t)
+  { if (t == null) { return false; } 
+    String nme = t.getName(); 
+    return "Ref".equals(nme);
+  }
 
   public boolean isRef()
   { return ("Ref".equals(name)); } 
@@ -2534,7 +2543,9 @@ public class Type extends ModelElement
       { return new BasicExpression(0.0); }
       else if (nme.equals("int") || nme.equals("long"))
       { return new BasicExpression(0); }
-      else if (nme.equals("Set") || nme.equals("Sequence") || nme.equals("Map"))
+      else if (nme.equals("Set") || 
+               nme.equals("Sequence") || 
+               nme.equals("Map"))
       { res = new SetExpression();
         if (nme.equals("Sequence"))
         { ((SetExpression) res).setOrdered(true); }
@@ -2551,6 +2562,7 @@ public class Type extends ModelElement
       }
       else if (isEntity() ||  
                "OclDate".equals(nme) || 
+               "OclFile".equals(nme) || 
                "OclVoid".equals(nme) || 
                "OclProcess".equals(nme) || 
                "OclRandom".equals(nme) || 
@@ -3796,7 +3808,9 @@ public class Type extends ModelElement
         "long".equals(typ) || "String".equals(typ))
     { return new Type(typ,null); } 
 
-    if (typ.equals("Sequence") || "Set".equals(typ) || "Map".equals(typ) || "Function".equals(typ))
+    if (typ.equals("Sequence") || "Set".equals(typ) || 
+        "Map".equals(typ) || "Function".equals(typ) ||
+        "Ref".equals(typ))
     { return new Type(typ,null); } 
   
     Entity ent = (Entity) ModelElement.lookupByName(typ,entities); 
@@ -3806,6 +3820,14 @@ public class Type extends ModelElement
     Type res = (Type) ModelElement.lookupByName(typ,types); 
     if (res != null) 
     { return res; } 
+
+    if (typ.startsWith("Ref(") && typ.endsWith(")"))
+    { String nt = typ.substring(4,typ.length()-1);
+      Type innerT = getTypeFor(nt, types, entities); 
+      Type resT = new Type("Ref",null); 
+      resT.setElementType(innerT); 
+      return resT; 
+    }   
     
     if (typ.startsWith("Set(") && typ.endsWith(")"))
     { String nt = typ.substring(4,typ.length()-1);
@@ -4218,7 +4240,7 @@ public class Type extends ModelElement
         eargs.add(elementType); 
       }  
     } 
-    else if (isCollectionType())
+    else if (isCollectionType() || isRef())
     { if (elementType == null) 
 	 { args.add("OclAny"); 
 	   eargs.add(new Type("OclAny", null)); 

@@ -1022,6 +1022,38 @@ public class Entity extends ModelElement implements Comparable
     { f.addStereotype("abstract"); } 
   }  // If f is abstract, this class must also be
 
+  public void replaceOperation(BehaviouralFeature f)
+  { String fname = f.getName(); 
+    Vector removals = new Vector(); 
+
+    for (int i = 0; i < operations.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i); 
+      if (fname.equals(bf.getName()))  // replace bf by f
+      { removals.add(bf); } 
+    } 
+
+    // System.out.println("REMOVING OPERATIONS " + removals); 
+
+    operations.removeAll(removals); 
+
+    if (superclass != null) 
+    { String nme = f.getName(); 
+      Vector pars = f.getParameters(); 
+
+      BehaviouralFeature overriddenOp = superclass.getDefinedOperation(nme, pars); 
+      if (overriddenOp != null) 
+      { System.out.println(">>> Operation " + nme + " overrides a superclass operation"); 
+        f.addStereotype("override"); 
+      } 
+    }
+
+    f.setEntity(this);
+    operations.add(f);
+
+    if (isInterface())
+    { f.addStereotype("abstract"); } 
+  }  // If f is abstract, this class must also be
+
   public void removeOperation(BehaviouralFeature f)
   { operations.remove(f); }  // may invalidate an activity or call of this
 
@@ -1142,6 +1174,9 @@ public class Entity extends ModelElement implements Comparable
   { return hasStereotype("struct") ||
            hasStereotype("union"); 
   } 
+
+  public boolean isUnsafe()
+  { return hasStereotype("unsafe"); } 
 
   public void setInterface(boolean intf)
   { if (intf) 
@@ -3993,9 +4028,12 @@ public class Entity extends ModelElement implements Comparable
     if (expr instanceof SetExpression)
     { SetExpression se = (SetExpression) expr; 
       String ename = ent.getName(); 
+      BasicExpression eexpr = 
+        new BasicExpression(ent); 
       Expression res = 
         BasicExpression.newStaticCallBasicExpression(
-            "new" + ename, ename, se.getElements()); 
+            "new" + ename, eexpr, se.getElements());
+      res.setStatic(true);  
       return res; 
     } 
     return expr; 
@@ -4051,6 +4089,19 @@ public class Entity extends ModelElement implements Comparable
     bfInit.setPostcondition(new BasicExpression(true)); 
     
     addOperation(bfInit); 
+  } 
+
+  public void addStaticConstructor()
+  { // static operation newE(attributes) : E
+    
+    String nme = getName(); 
+    Vector pars = new Vector();
+    pars.addAll(attributes);  
+
+    BehaviouralFeature constr = 
+        BehaviouralFeature.newStaticConstructor(nme,pars); 
+    constr.setStatic(true); 
+    addOperation(constr); 
   } 
 
   public int sizeof(Vector types, Vector entities)
@@ -6119,7 +6170,9 @@ public class Entity extends ModelElement implements Comparable
     clearAux(); 
 
     if (isStruct())
-    { intorclass = "unsafe struct"; } 
+    { intorclass = "unsafe struct"; }
+    else if (isUnsafe())
+    { intorclass = "unsafe class"; }  
     else if (isInterface())
     { intorclass = "interface"; } 
     else if (isAbstract())
@@ -8181,6 +8234,7 @@ public class Entity extends ModelElement implements Comparable
 
     for (int i = 0; i < attributes.size(); i++)
     { Attribute att = (Attribute) attributes.get(i);
+      if (att.isReferenceType()) { continue; } 
       String getop = att.getName();
       if (i < attributes.size() - 1)
       { getop = getop + " + \",\""; }
@@ -9697,8 +9751,13 @@ public class Entity extends ModelElement implements Comparable
     String es = ename.toLowerCase() + "_s";
     String tests = ""; 
     String upds = ""; 
-    String tpars = typeParameterTextCSharp(); 
-    String header = "  public " + ename + tpars + " create" + ename +
+    String tpars = typeParameterTextCSharp();
+
+    String mode = "  public "; 
+    if (isUnsafe())
+    { mode = mode + "unsafe "; } 
+     
+    String header = mode + ename + tpars + " create" + ename +
                  "(" + createOpParametersCSharp() + ")\n";
     String inits = ""; 
 
@@ -9718,6 +9777,7 @@ public class Entity extends ModelElement implements Comparable
       inits = inits + att.getCreateCodeCSharp(this,ex);
       upds = upds + att.getUniqueUpdateCodeCSharp(this,ename); 
     }
+
     String cardcheck = cardinalityCheckCodeCSharp(es); 
     String res = createAllOpCSharp(ename,ex) + "\n" + 
                  header + "  { \n" + cardcheck + tests + "    " + 
@@ -14017,7 +14077,8 @@ public void iosDbiOperations(PrintWriter out)
 
     for (int j = 0; j < allAttributes.size(); j++)
     { Attribute att = (Attribute) allAttributes.get(j);
-      if (att.isMultiple() || att.isStatic()) 
+      if (att.isMultiple() || att.isStatic() || 
+          att.isReferenceType()) 
       { continue; } 
       String attname = att.getName();
       Type attt = att.getType(); 
@@ -14593,6 +14654,8 @@ public void iosDbiOperations(PrintWriter out)
       Type t = att.getType();
       String tname = t.getName();
       String valc = "val";
+      if ("Ref".equals(tname))
+      { continue; } 
       if ("Sequence".equals(tname) || "Set".equals(tname))
       { valc = "new ArrayList()"; } 
       else if ("Map".equals(tname))

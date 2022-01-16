@@ -3149,8 +3149,35 @@ public class UCDArea extends JPanel
     auxcstls.add("cgGooperations.cstl"); 
     auxcstls.add("cgGoattributes.cstl"); 
     auxcstls.add("cgGomain.cstl");
+    auxcstls.add("goReferencedFeatures.cstl"); 
     
     CGSpec cgs = loadCSTL("cgGo.cstl",auxcstls); 
+
+    for (int i = 0; i < types.size(); i++) 
+    { Type tt = (Type) types.get(i);
+      String tname = tt.getName();  
+      String tfile = tname + ".go"; 
+      File tf = new File("gotests/" + tfile); 
+      try
+      { PrintWriter tfout = new PrintWriter(
+                                  new BufferedWriter(
+                                    new FileWriter(tf)));
+        tfout.println("package main"); 
+        tfout.println(); 
+        String typecode = ""; 
+
+        if (tt.isEnumeration())
+        { typecode = tt.cgEnum(cgs); } 
+        else if (tt.isDatatype())
+        { typecode = tt.cgDatatype(cgs); } 
+    
+        cgs.displayText(typecode,tfout);
+
+        tfout.println(); 
+        tfout.println(); 
+        tfout.close();
+      } catch (Exception _e0) { _e0.printStackTrace(); }
+    } 
 
     for (int j = 0; j < entities.size(); j++) 
     { Entity ent = (Entity) entities.get(j); 
@@ -3160,11 +3187,13 @@ public class UCDArea extends JPanel
       else if (ent.isComponent()) { }
       else 
       { String entfile = ename + ".go"; 
-        File entf = new File("output/gotests/" + entfile); 
+        File entf = new File("gotests/" + entfile); 
         try
         { PrintWriter entfout = new PrintWriter(
                                   new BufferedWriter(
                                     new FileWriter(entf)));
+          entfout.println("package main"); 
+          entfout.println(); 
           entfout.println("import \"container/list\""); 
           entfout.println("import \"fmt\""); 
           entfout.println("import \"./ocl\""); 
@@ -13689,6 +13718,8 @@ public void produceCUI(PrintWriter out)
     Date d1 = new Date(); 
     long time1 = d1.getTime(); 
 
+    ((ASTCompositeTerm) xx).identifyCFunctions(null,m1,m2,v1,v2);
+
     Vector mxs = 
       ((ASTCompositeTerm) xx).cprogramToKM3(null,m1,m2,v1,v2); 
 
@@ -13718,8 +13749,10 @@ public void produceCUI(PrintWriter out)
       if (newent.isInterface() ||
           newent.hasConstructor()) 
       { } 
+      else if (newent.isStruct())
+      { newent.addStaticConstructor(); } 
       else 
-      { newent.addDefaultConstructor(); } 
+      { newent.addDefaultConstructor(); }
 
       addEntity(newent, 100+(i*50), 100 + (150*i % 600));
       newentities.add(newent); 

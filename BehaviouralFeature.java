@@ -177,6 +177,52 @@ public class BehaviouralFeature extends ModelElement
     return bf; 
   } 
 
+  public static BehaviouralFeature newStaticConstructor(String ename, Vector pars)
+  { BehaviouralFeature bf = new BehaviouralFeature("new" + ename); 
+    bf.setParameters(pars); 
+    Entity e = new Entity(ename); 
+    Type etype = new Type(e); 
+    bf.setType(etype); 
+    bf.setPostcondition(new BasicExpression(true)); 
+    SequenceStatement code = new SequenceStatement();
+
+    BasicExpression res = BasicExpression.newVariableBasicExpression("result", etype); 
+ 
+    CreationStatement cs = new CreationStatement("result", etype); 
+    code.addStatement(cs); 
+
+    BasicExpression createCall = new BasicExpression("create" + ename); 
+    createCall.setUmlKind(Expression.UPDATEOP); 
+    createCall.setParameters(new Vector()); 
+    createCall.setIsEvent(); 
+    createCall.setType(etype); 
+    createCall.setStatic(true); 
+    // createCall.entity = e; 
+
+    AssignStatement assgn = new AssignStatement(res,createCall); 
+    code.addStatement(assgn); 
+
+    for (int i = 0; i < pars.size(); i++) 
+    { Attribute attr = (Attribute) pars.get(i); 
+      BasicExpression lhs = new BasicExpression(attr); 
+      lhs.setObjectRef(res); 
+      BasicExpression rhs = new BasicExpression(attr); 
+      AssignStatement assgnpar = 
+        new AssignStatement(lhs,rhs); 
+      code.addStatement(assgnpar); 
+    } 
+
+    ReturnStatement rs = new ReturnStatement(res); 
+    code.addStatement(rs); 
+
+    code.setBrackets(true); 
+
+    bf.setActivity(code); 
+    bf.setStatic(true); 
+
+    return bf; 
+  } 
+
   public static BehaviouralFeature fromAttribute(Attribute att)
   { BehaviouralFeature res = 
       new BehaviouralFeature(att.getName()); 

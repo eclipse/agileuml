@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -581,7 +581,7 @@ public class CGSpec
       String trimmedlhs = r.lhs.trim(); 
       // int varcount = r.variables().size(); 
 	  
-	 System.out.println(">++>++> " + t + " is: " + typetext + " lhs: " + trimmedlhs); 
+	 System.out.println(">+ Type +> " + t + " is: " + typetext + " rule lhs: " + trimmedlhs); 
 	  
       if (typetext.equals(trimmedlhs))
       { return r; } // exact match -- assume no variables
@@ -594,7 +594,9 @@ public class CGSpec
       else if (t.isEnumeratedType() && r.hasCondition("enumerated"))
       { return r; }
       else if (t.isEntityType() && r.hasCondition("class"))
-      { return r; }
+      { System.out.println("Condition class satisfied for " + t); 
+        return r; 
+      }
       else if (t.isSetType() && trimmedlhs.startsWith("Set") )
       { if (elemT != null && trimmedlhs.equals("Set(" + elemT + ")"))
         { return r; }
@@ -615,6 +617,17 @@ public class CGSpec
         else if (elemT != null && trimmedlhs.equals("Sequence(_1)"))
         { return r; }
       }
+      else if (t.isRef() && 
+               trimmedlhs.startsWith("Ref"))
+      { if (elemT != null && trimmedlhs.equals("Ref(" + elemT + ")"))
+        { return r; }
+        else if (elemT == null && 
+                 (trimmedlhs.equals("Ref()") || 
+                  trimmedlhs.equals("Ref")))
+        { return r; }
+        else if (elemT != null && trimmedlhs.equals("Ref(_1)"))
+        { return r; }
+      } 
       else if (trimmedlhs.equals("_1") && 
                r.satisfiesConditions(args,entities))
       { return r; } 
@@ -1086,6 +1099,13 @@ public class CGSpec
       } 
       else if (etext.startsWith("Map{") && etext.endsWith("}") && 
                trimmedlhs.startsWith("Map{") && trimmedlhs.endsWith("}"))
+      { if (elems.size() == 0 && r.variables.size() == 0) 
+        { return r; }  // empty map
+        else if (elems.size() > 0 && r.variables.size() > 0) 
+        { return r; } 
+      } 
+      else if (etext.startsWith("Ref(") && etext.endsWith("}") && 
+               trimmedlhs.startsWith("Ref(") && trimmedlhs.endsWith("}"))
       { if (elems.size() == 0 && r.variables.size() == 0) 
         { return r; }  // empty map
         else if (elems.size() > 0 && r.variables.size() > 0) 

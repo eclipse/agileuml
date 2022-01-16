@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -415,18 +415,27 @@ public Vector singleMutants()
   public String cg(CGSpec cgs)
   { String etext = this + "";
     Vector args = new Vector();
-	
-	if ("true".equals(test + ""))
-	{ return ifExp.cg(cgs); }
-	else if ("false".equals(test + ""))
-	{ return elseExp.cg(cgs); }
+    Vector eargs = new Vector(); 
+
+    if ("true".equals(test + ""))
+    { return ifExp.cg(cgs); }
+    else if ("false".equals(test + ""))
+    { return elseExp.cg(cgs); }
 	
     args.add(test.cg(cgs));
     args.add(ifExp.cg(cgs));
     args.add(elseExp.cg(cgs));
-    CGRule r = cgs.matchedConditionalExpressionRule(this,etext);
+    eargs.add(test);
+    eargs.add(ifExp);
+    eargs.add(elseExp);
+
+    CGRule r = 
+      cgs.matchedConditionalExpressionRule(this,etext);
+
+    System.out.println(">>> Matched conditional expression rule " + r); 
+
     if (r != null)
-    { return r.applyRule(args); }
+    { return r.applyRule(args,eargs,cgs); }
     return etext;
   }
 

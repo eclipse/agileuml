@@ -92,7 +92,9 @@ public abstract class ASTTerm
     cqueryfunctions.add("difftime"); 
     cqueryfunctions.add("toupper"); 
     cqueryfunctions.add("tolower");
-    cqueryfunctions.add("fopen");  
+    cqueryfunctions.add("fopen");
+    cqueryfunctions.add("div"); 
+    cqueryfunctions.add("ldiv");   
   }
 
   public abstract String toString(); 
@@ -227,7 +229,40 @@ public abstract class ASTTerm
   public abstract String getLabel();  
 
   public abstract Type pointersToRefType(String tname, Type t);
- 
+
+  public static Entity introduceCStruct(String nme, Vector ents)
+  { Entity ent = (Entity) ModelElement.lookupByName(nme, ents); 
+    if (ent != null) 
+    { return ent; } 
+
+    ent = new Entity(nme); 
+    ent.addStereotype("struct"); 
+    ents.add(ents.size()-1, ent); 
+
+    if ("div_t".equals(nme))
+    { Attribute quot = 
+        new Attribute("quot", new Type("int", null), 
+                      ModelElement.INTERNAL); 
+      ent.addAttribute(quot); 
+      Attribute rem = 
+        new Attribute("rem", new Type("int", null), 
+                      ModelElement.INTERNAL); 
+      ent.addAttribute(rem); 
+    } 
+    else if ("ldiv_t".equals(nme))
+    { Attribute quot = 
+        new Attribute("quot", new Type("long", null), 
+                      ModelElement.INTERNAL); 
+      ent.addAttribute(quot); 
+      Attribute rem = 
+        new Attribute("rem", new Type("long", null), 
+                      ModelElement.INTERNAL); 
+      ent.addAttribute(rem); 
+    } 
+    return ent; 
+  }
+
+     
   public abstract Type cdeclarationToType(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities);
 

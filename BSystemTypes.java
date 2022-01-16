@@ -1977,33 +1977,33 @@ public class BSystemTypes extends BComponent
 
 
       res = res + "  { // Implements: " + left + "->any(" + var + "|" + pred + ")\n" + 
-                  "    for (int _i = 0; _i < _l.size(); _i++)\n"; 
+                  "    for (int _iany = 0; _iany < _l.size(); _i++)\n"; 
       if ("int".equals(ename) || "Integer".equals(tname))
       { res = res + 
-            "    { int " + var + " = ((Integer) _l.get(_i)).intValue();\n";
+            "    { int " + var + " = ((Integer) _l.get(_iany)).intValue();\n";
       } 
       else if ("double".equals(ename))
       { res = res + 
-            "    { double " + var + " = ((Double) _l.get(_i)).doubleValue();\n";
+            "    { double " + var + " = ((Double) _l.get(_iany)).doubleValue();\n";
       } 
       else if (ename.equals("boolean"))
       { res = res + 
-            "    { boolean " + var + " = ((Boolean) _l.get(_i)).booleanValue();\n"; 
+            "    { boolean " + var + " = ((Boolean) _l.get(_iany)).booleanValue();\n"; 
       } 
       else if ("long".equals(ename))
       { res = res + 
-            "    { long " + var + " = ((Long) _l.get(_i)).longValue();\n";
+            "    { long " + var + " = ((Long) _l.get(_iany)).longValue();\n";
       } 
       else
       { res = res + 
-            "    { " + tname + " " + var + " = (" + tname + ") _l.get(_i);\n";
+            "    { " + tname + " " + var + " = (" + tname + ") _l.get(_iany);\n";
       } 
 
 
  
       String test = pred.queryForm(newenv,false); 
       res = res + "      if (" + test + ")\n" + 
-	              "      { return (" + tname + ") _l.get(_i); }\n"; 
+                  "      { return (" + tname + ") _l.get(_iany); }\n"; 
       res = res + "    }\n"; 
       res = res + "    return null;\n  }"; 
 
@@ -2043,8 +2043,8 @@ public class BSystemTypes extends BComponent
     if (e == null) 
     { ename = "Object"; } 
     else if ("Set".equals(e.getName()))
-	{ ename = "HashSet"; } 
-	else if ("Sequence".equals(e.getName()))
+    { ename = "HashSet"; } 
+    else if ("Sequence".equals(e.getName()))
     { ename = "ArrayList"; } 
     else 
     { ename = e.getName(); }
@@ -2113,33 +2113,33 @@ public class BSystemTypes extends BComponent
 
 
       res = res + "  { // Implements: " + left + "->any(" + var + "|" + pred + ")\n" + 
-                  "    for (Object _i : _l)\n"; 
+                  "    for (Object _iany : _l)\n"; 
       if ("int".equals(ename) || "Integer".equals(tname))
       { res = res + 
-            "    { int " + var + " = ((Integer) _i).intValue();\n";
+            "    { int " + var + " = ((Integer) _iany).intValue();\n";
       } 
       else if ("double".equals(ename))
       { res = res + 
-            "    { double " + var + " = ((Double) _i).doubleValue();\n";
+            "    { double " + var + " = ((Double) _iany).doubleValue();\n";
       } 
       else if (ename.equals("boolean"))
       { res = res + 
-            "    { boolean " + var + " = ((Boolean) _i).booleanValue();\n"; 
+            "    { boolean " + var + " = ((Boolean) _iany).booleanValue();\n"; 
       } 
       else if ("long".equals(ename))
       { res = res + 
-            "    { long " + var + " = ((Long) _i).longValue();\n";
+            "    { long " + var + " = ((Long) _iany).longValue();\n";
       } 
       else
       { res = res + 
-            "    { " + tname + " " + var + " = (" + tname + ") _i;\n";
+            "    { " + tname + " " + var + " = (" + tname + ") _iany;\n";
       } 
 
 
  
       String test = pred.queryFormJava6(newenv,false); 
       res = res + "      if (" + test + ")\n" + 
-	              "      { return (" + tname + ") _i; }\n"; 
+                  "      { return (" + tname + ") _iany; }\n"; 
       res = res + "    }\n"; 
       res = res + "    return null;\n  }"; 
 
@@ -2249,33 +2249,33 @@ public class BSystemTypes extends BComponent
 
 
       res = res + "  { // Implements: " + left + "->any(" + var + "|" + pred + ")\n" + 
-                  "    for (Object _i : _l)\n"; 
+                  "    for (Object _iany : _l)\n"; 
       if ("int".equals(ename) || "Integer".equals(tname))
       { res = res + 
-            "    { int " + var + " = ((Integer) _i).intValue();\n";
+            "    { int " + var + " = ((Integer) _iany).intValue();\n";
       } 
       else if ("double".equals(ename))
       { res = res + 
-            "    { double " + var + " = ((Double) _i).doubleValue();\n";
+            "    { double " + var + " = ((Double) _iany).doubleValue();\n";
       } 
       else if (ename.equals("boolean"))
       { res = res + 
-            "    { boolean " + var + " = ((Boolean) _i).booleanValue();\n"; 
+            "    { boolean " + var + " = ((Boolean) _iany).booleanValue();\n"; 
       } 
       else if ("long".equals(ename))
       { res = res + 
-            "    { long " + var + " = ((Long) _i).longValue();\n";
+            "    { long " + var + " = ((Long) _iany).longValue();\n";
       } 
       else
       { res = res + 
-            "    { " + tname + " " + var + " = (" + tname + ") _i;\n";
+            "    { " + tname + " " + var + " = (" + tname + ") _iany;\n";
       } 
 
 
  
       String test = pred.queryFormJava7(newenv,false); 
       res = res + "      if (" + test + ")\n" + 
-	              "      { return (" + tname + ") _i; }\n"; 
+                  "      { return (" + tname + ") _iany; }\n"; 
       res = res + "    }\n"; 
       res = res + "    return null;\n  }"; 
 
@@ -2315,11 +2315,11 @@ public class BSystemTypes extends BComponent
     if (e == null) 
     { ename = "object"; } 
     else if ("Set".equals(e.getName()))
-	{ ename = "ArrayList"; } 
-	else if ("Sequence".equals(e.getName()))
+    { ename = "ArrayList"; } 
+    else if ("Sequence".equals(e.getName()))
     { ename = "ArrayList"; } 
     else
-	{ ename = e.getName(); }
+    { ename = e.getName(); }
 
     String tname = ename; 
     if (ename.equals("String"))
@@ -2390,33 +2390,33 @@ public class BSystemTypes extends BComponent
 
 
       res = res + "  { // Implements: " + left + "->any(" + var + "|" + pred + ")\n" + 
-                  "    for (int _i = 0; _i < _l.Count; _i++)\n"; 
+                  "    for (int _iany = 0; _iany < _l.Count; _iany++)\n"; 
       if ("int".equals(ename) || "Integer".equals(tname))
       { res = res + 
-            "    { int " + var + " = (int) _l[_i];\n";
+            "    { int " + var + " = (int) _l[_iany];\n";
       } 
       else if ("double".equals(ename))
       { res = res + 
-            "    { double " + var + " = (double) _l[_i];\n";
+            "    { double " + var + " = (double) _l[_iany];\n";
       } 
       else if (ename.equals("boolean"))
       { res = res + 
-            "    { bool " + var + " = (bool) _l[_i];\n"; 
+            "    { bool " + var + " = (bool) _l[_iany];\n"; 
       } 
       else if ("long".equals(ename))
       { res = res + 
-            "    { long " + var + " = (long) _l[_i];\n";
+            "    { long " + var + " = (long) _l[_iany];\n";
       } 
       else
       { res = res + 
-            "    { " + tname + " " + var + " = (" + tname + ") _l[_i];\n";
+            "    { " + tname + " " + var + " = (" + tname + ") _l[_iany];\n";
       } 
 
 
  
       String test = pred.queryFormCSharp(newenv,false); 
       res = res + "      if (" + test + ")\n" + 
-	              "      { return (" + tname + ") _l[_i]; }\n"; 
+	              "      { return (" + tname + ") _l[_iany]; }\n"; 
       res = res + "    }\n"; 
       res = res + "    return null;\n  }"; 
 

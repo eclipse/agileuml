@@ -6,7 +6,7 @@ import javax.swing.JTextArea;
 import java.awt.*; 
 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -473,7 +473,7 @@ public class Compiler2
   public boolean invalidBasicExp(String str) 
   { if ("(".equals(str) || ")".equals(str) || "[".equals(str) || "]".equals(str) ||
         "{".equals(str) || "}".equals(str) || Expression.alloperators.contains(str) || 
-        ",".equals(str) || 
+        ",".equals(str) || // "!".equals(str) || 
         "%".equals(str) || "_".equals(str) || "?".equals(str) || "~".equals(str) ) 
     { return true; } 
     return false; 
@@ -1122,7 +1122,8 @@ public class Compiler2
       else 
       { return tt; } 
     }    
-    else if (typ.equals("Set") || typ.equals("Sequence"))
+    else if (typ.equals("Set") || typ.equals("Sequence") ||
+             "Ref".equals(typ))
     { Type tt = new Type(typ,null);
       if (st == en) 
       { return tt; } 
@@ -2620,6 +2621,16 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
         "{".equals(lexicals.get(pstart + 1) + ""))
     { return parse_set_expression(bc,pstart+1,pend,entities,types); } 
 
+    if (pstart < pend && "}".equals(lexicals.get(pend) + "") && 
+        "Ref".equals(lexicals.get(pstart) + "") &&
+        "{".equals(lexicals.get(pstart + 1) + ""))
+    { return parse_ref_expression(bc,pstart+1,pend,entities,types); } 
+
+    if (pstart < pend && "}".equals(lexicals.get(pend) + "") && 
+        "Ref".equals(lexicals.get(pstart) + "") &&
+        "(".equals(lexicals.get(pstart + 1) + ""))
+    { return parse_ref_expression(bc,pstart+1,pend,entities,types); } 
+
     if (pstart < pend && "-".equals(lexicals.get(pstart) + ""))
     { Expression arg = parse_additive_expression(bc,pstart+1,pend,entities,types); 
       if (arg == null) 
@@ -2636,6 +2647,15 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
         return null; 
       } 
       return new UnaryExpression("?",arg); 
+    } // likewise for "not" and "~"
+
+    if (pstart < pend && "!".equals(lexicals.get(pstart) + ""))
+    { Expression arg = parse_basic_expression(bc,pstart+1,pend,entities,types); 
+      if (arg == null) 
+      { System.err.println(">> dereferences must be applied to basic expressions: " + showLexicals(pstart+1, pend)); 
+        return null; 
+      } 
+      return new UnaryExpression("!",arg); 
     } // likewise for "not" and "~"
 
     if (pstart + 1 < pend && ")".equals(lexicals.get(pend) + "") && 
@@ -2817,6 +2837,39 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     { return null; } 
     Expression res = new SetExpression(ve,true); 
     // System.out.println("Parsed sequence expression: " + res); 
+    return res; 
+  } 
+
+  public Expression parse_ref_expression(int bc,int pstart,int pend, Vector entities, Vector types)
+  { String lex = lexicals.get(pstart) + ""; 
+
+    if ("(".equals(lex))
+    { for (int i = pstart+1; i < pend; i++) 
+      { String xx = lexicals.get(i) + ""; 
+        if ("{".equals(xx))
+        { Type rt = parseType(pstart+1,i-2,entities,types); 
+          Vector args = 
+            parse_fe_sequence(bc, i+1, pend-1,entities,types); 
+          if (args == null) 
+          { return null; } 
+          Expression refexpr = 
+            new SetExpression(args,true); 
+          Type reft = new Type("Ref", null); 
+          reft.setElementType(rt); 
+          refexpr.setType(reft); 
+          refexpr.setElementType(rt); 
+          return refexpr; 
+        } 
+      }
+      return null; 
+    }  
+
+    Vector ve = parse_fe_sequence(bc,pstart+1,pend-1,entities,types); 
+    if (ve == null) 
+    { return null; } 
+    Expression res = new SetExpression(ve,true);
+    res.setType(new Type("Ref", null));  
+    // System.out.println("Parsed set expression: " + res); 
     return res; 
   } 
 
@@ -8938,7 +8991,10 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
     // Statement e = c.parseStatement(); 
     // System.out.println(e); 
 
-    Compiler2 cc = new Compiler2(); 
+    Compiler2 cc = new Compiler2();
+    cc.nospacelexicalanalysis("Ref(int){5}"); 
+    System.out.println(cc.parseExpression()); 
+ 
     // cc.nospacelexicalanalysis("a[x][y+1][z*z]");
     // cc.nospacelexicalanalysis("(if b.subrange(10+1, b.size)->indexOf(\"a\"+\"\") > 0 then (b.subrange(10+1, b.size)->indexOf(\"a\"+\"\") + 10 - 1) else -1 endif)");
     // cc.nospacelexicalanalysis("x->oclAsType(E).att"); 
@@ -8956,9 +9012,9 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
     // cc.nospacelexicalanalysis("query op() : String pre: true post: true activity: skip"); 
     // BehaviouralFeature tt = cc.parseOperation(new Vector(), new Vector()); 
        
-    cc.nospacelexicalanalysis("attribute sq : Sequence(String)"); 
-    Attribute tt = cc.parseAttribute(new Vector(), new Vector());  
-    System.out.println(tt.toAST()); 
+    // cc.nospacelexicalanalysis("attribute sq : Sequence(String)"); 
+    // Attribute tt = cc.parseAttribute(new Vector(), new Vector());  
+    // System.out.println(tt.toAST()); 
 
     /* 
  

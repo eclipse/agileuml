@@ -186,7 +186,11 @@ public class SetExpression extends Expression
   { String res;
 
     if (type != null && "Ref".equals(type.getName()))
-    { res = "Ref{"; } 
+    { if (elementType != null) 
+      { res = "Ref(" + elementType + "){"; }
+      else 
+      { res = "Ref{"; }
+    }  
     else if (isMap())
     { res = "Map{"; }
     else if (ordered) 
@@ -567,6 +571,11 @@ public class SetExpression extends Expression
 
   public Vector metavariables()
   { Vector pres = new Vector();
+
+    if (type != null && "Ref".equals(type.getName()) && 
+        elementType != null)
+    { pres.add("_1"); }
+
     for (int i = 0; i < elements.size(); i++)
     { Expression e = (Expression) elements.get(i);
       Vector epres = e.metavariables();
@@ -1099,20 +1108,33 @@ public class SetExpression extends Expression
   public String cg(CGSpec cgs)
   { String etext = this + "";
     Vector args = new Vector();
+    Vector eargs = new Vector(); 
+
     String arg = "";
+    Vector earg = new Vector(); 
+
     for (int x = 0; x < elements.size(); x++)
     { Expression elem = (Expression) elements.get(x);
       String txt = elem.cg(cgs);
       arg = arg + txt;
+      earg.add(elem); 
       if (x < elements.size() - 1)
       { arg = arg + ","; }
     }
+
+    if (type != null && type.isRef() && elementType != null)
+    { args.add(elementType.cg(cgs));
+      eargs.add(elementType); 
+    } 
     args.add(arg);
+    eargs.add(earg); 
+
     CGRule r = cgs.matchedSetExpressionRule(this,etext);
 
+    System.out.println(">> Found set expression rule " + r + " for: " + etext); 
+      
     if (r != null)
-    { System.out.println(">> Found set expression rule " + r + " for: " + etext); 
-      String res = r.applyRule(args);
+    { String res = r.applyRule(args,eargs,cgs);
       if (needsBracket) 
       { return "(" + res + ")"; } 
       else 

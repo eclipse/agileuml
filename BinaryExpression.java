@@ -3337,7 +3337,7 @@ public void findClones(java.util.Map clones, String rule, String op)
     // ->oclAsType(T)? T.umlkind == CLASSID, and type = T.elementType
 
     if ("->count".equals(operator) || 
-        "->indexOf".equals(operator) || operator.equals("div") ||
+        "->indexOf".equals(operator) || 
         operator.equals("->lastIndexOf") ||
         operator.equals("->compareTo"))
     { type = new Type("int",null); } 
@@ -3395,6 +3395,8 @@ public void findClones(java.util.Map clones, String rule, String op)
     { type = new Type("double",null); } 
     else if ("->gcd".equals(operator))
     { type = new Type("long",null); } 
+    else if (operator.equals("div"))
+    { type = left.getType(); } 
     else if ("->hasPrefix".equals(operator) || 
              "->hasSuffix".equals(operator) ||
              "->hasMatch".equals(operator) || 
@@ -5506,8 +5508,14 @@ public boolean conflictsWithIn(String op, Expression el,
     { return "SystemTypes.append(" + lqf + "," + rqf + ")"; } 
 
     if (operator.equals("->at"))
-    { if ("String".equals(left.type + ""))
+    {    
+      System.err.println(this + " with " + left.type + " " + left.elementType); 
+
+      if ("String".equals(left.type + ""))
       { return "(" + lqf + ").Substring(" + rqf + "-1 , 1)"; } 
+
+      if (Type.isReferenceType(left.type))
+      { return lqf + "[" + rqf + "-1]"; } 
 
       if (left.getElementType() != null)
       { String typ = left.getElementType().getCSharp(); 
@@ -9958,7 +9966,11 @@ public boolean conflictsWithIn(String op, Expression el,
     }
 
     if ("div".equals(operator))
-    { res = "((int) (" + res + "))"; } 
+    { if ("int".equals(type + ""))
+      { res = "((int) (" + res + "))"; } 
+      else 
+      { res = "((long) (" + res + "))"; } 
+    } 
 
     return res;
   }
@@ -9994,7 +10006,11 @@ public boolean conflictsWithIn(String op, Expression el,
     }
 
     if ("div".equals(operator))
-    { res = "((int) (" + res + "))"; } 
+    { if ("int".equals(type + ""))
+      { res = "((int) (" + res + "))"; } 
+      else 
+      { res = "((long) (" + res + "))"; } 
+    } 
 
     return res;
   }
@@ -10038,7 +10054,11 @@ public boolean conflictsWithIn(String op, Expression el,
     { res = lqf + " " + op + " " + rqf; }
 
     if ("div".equals(operator))
-    { res = "((int) (" + res + "))"; } 
+    { if ("int".equals(type + ""))
+      { res = "((int) (" + res + "))"; } 
+      else 
+      { res = "((long) (" + res + "))"; } 
+    } 
     
     return res;
   }

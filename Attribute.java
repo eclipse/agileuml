@@ -346,6 +346,9 @@ public class Attribute extends ModelElement
   public boolean isReferenceType()
   { return type != null && type.isReference(); } 
 
+  public boolean isRef()
+  { return type != null && type.isRef(); } 
+
   public boolean isNestedReferenceType()
   { return type != null && type.isNestedReference(); } 
 
@@ -368,6 +371,16 @@ public class Attribute extends ModelElement
     if ("Ref".equals(type.getName()))
     { return type.getElementType() != null && 
              type.getElementType().isCollectionType(); 
+    }
+    return false; 
+  } 
+
+  public boolean isRefRef()
+  { if (type == null)
+    { return false; }
+    if ("Ref".equals(type.getName()))
+    { return type.getElementType() != null && 
+             type.getElementType().isRef(); 
     }
     return false; 
   } 
@@ -1497,15 +1510,25 @@ public class Attribute extends ModelElement
   }
 
   public String methodDeclarationCSharp()
-  { String res = ""; 
-    res = "    " + getType().getCSharp() + " " + getName(); 
+  { String res = "";
+    Type typ = getType(); 
+    String nme = getName(); 
+
+  
+    res = "    " + typ.getCSharp() + " " + nme;
+    
     Expression initval = getInitialExpression(); 
+
+    if (typ != null && typ.isStructEntityType() && 
+        "null".equals(initval + ""))
+    { return "    " + typ.getCSharp() + " " + nme + ";\n"; } 
+
     if (initval != null) 
     { java.util.Map env = new java.util.HashMap(); 
       res = res + " = " + initval.queryFormCSharp(env,true); 
     } 
     else 
-    { res = res + " = " + getType().getDefaultCSharp(); } 
+    { res = res + " = " + typ.getDefaultCSharp(); } 
     res = res + ";\n";
     return res;  
   } 
@@ -1526,7 +1549,10 @@ public class Attribute extends ModelElement
 
     java.util.Map env = new java.util.HashMap(); 
 
-    if (isFinal() && initialExpression != null) 
+    if (type != null && type.isStructEntityType() && 
+        "null".equals(initialExpression + ""))
+    { out.print(getName() + ";"); } 
+    else if (isFinal() && initialExpression != null) 
     { out.print(getName() + " = " + initialExpression.queryFormCSharp(env,true) + ";"); } 
     else if (!instanceScope && initialExpression != null) 
     { out.print(getName() + " = " + initialExpression.queryFormCSharp(env,true) + ";"); }
@@ -1544,7 +1570,10 @@ public class Attribute extends ModelElement
   }
 
   public void generateStructCSharp(PrintWriter out)
-  { out.print("  public ");
+  { if (type == null) 
+    { return; } 
+	
+	out.print("  public ");
     
     if (!instanceScope) { out.print("static "); } 
     if (isFinal()) { out.print("const "); } 
@@ -1552,7 +1581,10 @@ public class Attribute extends ModelElement
 
     java.util.Map env = new java.util.HashMap(); 
 
-    if (isFinal() && initialExpression != null) 
+    if (type != null && type.isStructEntityType() && 
+        "null".equals(initialExpression + ""))
+    { out.print(getName() + ";"); } 
+    else if (isFinal() && initialExpression != null) 
     { out.print(getName() + " = " + initialExpression.queryFormCSharp(env,true) + ";"); } 
     else if (!instanceScope && initialExpression != null) 
     { out.print(getName() + " = " + initialExpression.queryFormCSharp(env,true) + ";"); }
@@ -1878,6 +1910,14 @@ public class Attribute extends ModelElement
 
     System.out.println(">> Initial expression/value of " + this + " is " + initialExpression + " " + initialValue); 
     System.out.println(); 
+
+    if (type != null && type.isStructEntityType() && 
+        "null".equals(initialExpression + ""))
+    { return ""; } 
+
+    if (type != null && Type.isRefType(type) && 
+        "0".equals(initialExpression + ""))
+    { return nme + " = null;"; } 
 
     if (initialExpression != null) 
     { java.util.Map env = new java.util.HashMap();
@@ -2453,6 +2493,8 @@ public class Attribute extends ModelElement
                              Vector entities, Vector types) 
   { // setatt(type attx) 
     // if ent != entity, creates subclass ent extension op for att
+	if (type == null)
+	{ return ""; }
 
     if (frozen) { return ""; }
     String nme = getName();
@@ -3021,6 +3063,8 @@ public class Attribute extends ModelElement
   { // public static void setAllatt(ArrayList es, T val)
     // { update e.att for e in es }
     if (frozen || isMultiple()) { return ""; }
+    if (isReferenceType()) { return ""; } 
+
     if (ent.isStruct())
     { return ""; } 
  
@@ -3320,6 +3364,8 @@ public class Attribute extends ModelElement
   { // public static ArrayList getAllatt(ArrayList es)
     // { return list of e.att for e in es }  es unordered
     if (isMultiple()) { return ""; } 
+    if (isReferenceType()) { return ""; } 
+
     if (ent.isInterface())
     { return ""; } // " ArrayList getAll" + nme + "(ArrayList " + es + ");\n"; } 
     String ex = ename.toLowerCase() + "x";
@@ -3514,6 +3560,7 @@ public class Attribute extends ModelElement
     if (ent.isInterface())
     { return " "; } // ArrayList getAllOrdered" + nme + "(ArrayList " + es + ");\n"; } 
     if (isMultiple()) { return ""; } 
+    if (isReferenceType()) { return ""; } 
 
     String ex = ename.toLowerCase() + "x";
     String nme = getName();
@@ -4496,6 +4543,10 @@ public class Attribute extends ModelElement
   public String getCreateCodeCSharp(Entity ent, String ex)
   { // setatt(ex,initval) -- initval is attx for frozen
     if (frozen) { return ""; }  // passed into constructor instead
+
+    if (type != null && type.isStructEntityType() && 
+        "null".equals(initialExpression + ""))
+    { return ""; } 
 
     String nme = getName();
     String ini;

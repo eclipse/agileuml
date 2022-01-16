@@ -375,6 +375,28 @@ class BasicExpression extends Expression
     return res; 
   } 
 
+  public static BasicExpression newAttributeBasicExpression(String value) 
+  { BasicExpression res = new BasicExpression(value); 
+    res.umlkind = ATTRIBUTE;
+    return res; 
+  } 
+
+  public static BasicExpression newAttributeBasicExpression(String value, Expression obj) 
+  { BasicExpression res = new BasicExpression(value); 
+    res.umlkind = ATTRIBUTE;
+    res.objectRef = obj; 
+    return res; 
+  } 
+
+  public static BasicExpression newStaticAttributeBasicExpression(Attribute att) 
+  { BasicExpression res = new BasicExpression(att.getName()); 
+    res.umlkind = ATTRIBUTE;
+    res.type = att.getType(); 
+    res.elementType = att.getElementType(); 
+    res.isStatic = true; 
+    return res; 
+  } 
+
   public static BasicExpression newVariableBasicExpression(String value) 
   { BasicExpression res = new BasicExpression(value); 
     res.umlkind = VARIABLE;
@@ -498,7 +520,22 @@ class BasicExpression extends Expression
     return res; 
   } 
 
-  public static BasicExpression newStaticCallBasicExpression(String f, String arg, Vector pars) 
+  public static BasicExpression newStaticCallBasicExpression(
+                  BehaviouralFeature bf, Entity ent) 
+  { BasicExpression obj = new BasicExpression(ent.getName());
+    obj.umlkind = CLASSID;
+    BasicExpression res = new BasicExpression(bf);  
+    res.setObjectRef(obj);  
+    res.entity = ent; 
+    res.umlkind = UPDATEOP;
+    res.isStatic = true; 
+    res.isEvent = true; 
+    // res.parameters = pars; 
+    return res; 
+  } 
+
+  public static BasicExpression newStaticCallBasicExpression(
+                            String f, String arg, Vector pars) 
   { BasicExpression res = new BasicExpression(f);
     BasicExpression obj = new BasicExpression(arg); 
     obj.umlkind = CLASSID; 
@@ -510,7 +547,8 @@ class BasicExpression extends Expression
     return res; 
   } 
 
-  public static BasicExpression newStaticCallBasicExpression(String f, Expression obj, Vector pars) 
+  public static BasicExpression newStaticCallBasicExpression(
+                        String f, Expression obj, Vector pars) 
   { BasicExpression res = new BasicExpression(f);
     obj.umlkind = CLASSID; 
     res.setObjectRef(obj);  
@@ -521,7 +559,8 @@ class BasicExpression extends Expression
     return res; 
   } 
 
-  public static BasicExpression newStaticCallBasicExpression(String f, String arg, Expression par) 
+  public static BasicExpression newStaticCallBasicExpression(
+                      String f, String arg, Expression par) 
   { Vector pars = new Vector(); 
     pars.add(par); 
     BasicExpression res = new BasicExpression(f);
@@ -535,7 +574,8 @@ class BasicExpression extends Expression
     return res; 
   } 
 
-  public static BasicExpression newStaticCallBasicExpression(String f, Expression obj, Expression par) 
+  public static BasicExpression newStaticCallBasicExpression(
+               String f, Expression obj, Expression par) 
   { Vector pars = new Vector(); 
     pars.add(par); 
     BasicExpression res = new BasicExpression(f);
@@ -548,7 +588,8 @@ class BasicExpression extends Expression
     return res; 
   } 
 
-  public static BasicExpression newStaticCallBasicExpression(String f, String arg) 
+  public static BasicExpression newStaticCallBasicExpression(
+                                       String f, String arg) 
   { Vector pars = new Vector(); 
     
     BasicExpression res = new BasicExpression(f);
@@ -562,7 +603,8 @@ class BasicExpression extends Expression
     return res; 
   } 
 
-  public static BasicExpression newStaticCallBasicExpression(String f, Expression obj) 
+  public static BasicExpression newStaticCallBasicExpression(
+                                    String f, Expression obj) 
   { Vector pars = new Vector(); 
     
     BasicExpression res = new BasicExpression(f);
@@ -575,7 +617,8 @@ class BasicExpression extends Expression
     return res; 
   } 
 
-  public static Expression newIndexedBasicExpression(Expression base, Expression ind)
+  public static Expression newIndexedBasicExpression(
+                      Expression base, Expression ind)
   { if (base instanceof BasicExpression)
     { BasicExpression be = (BasicExpression) base; 
       if (be.arrayIndex == null) 
@@ -6417,6 +6460,14 @@ class BasicExpression extends Expression
       } 
     } 
 
+    if (data.startsWith("new") && objectRef != null) 
+    { String entname = data.substring(3);
+      System.out.println(">>> Creation operation for " + entname); 
+         
+      if ((objectRef + "").equals(entname)) 
+      { return objectRef + "." + data + "(" + pars + ")"; }
+    } 
+
     if (("time".equals(data) || "getTime".equals(data)) && 
         objectRef != null) 
     { if (objectRef.type != null && 
@@ -6768,6 +6819,9 @@ class BasicExpression extends Expression
     { String res = data + "("; 
       String parString = parametersQueryFormCSharp(env,local); 
 
+      System.out.println(">>> C# query form of: " + this + " " +
+                         isStatic() + " " + entity); 
+
       if (entity == null && objectRef == null) // use case
       { return cont + "." + res + parString; } 
 
@@ -6776,6 +6830,21 @@ class BasicExpression extends Expression
       if (entity != null) 
       { ename = entity.getName();
         bf = entity.getDefinedOperation(data); 
+      } 
+
+      if (bf == null && (objectRef instanceof BasicExpression) 
+          && isStatic() &&
+          objectRef.umlkind == CLASSID && 
+          ((BasicExpression) objectRef).arrayIndex == null)
+      { Type et = objectRef.getElementType(); 
+        if (et != null && et.isEntity())
+        { bf = et.getEntity().getDefinedOperation(data); } 
+        System.out.println(">>> Static call: " + objectRef + " " + et + " " + bf);
+
+        if (bf != null) 
+        { res = et.getName() + "." + res + parString; 
+          return res;
+        }  
       } 
 
       if (bf != null && bf.isGeneric())
@@ -6868,8 +6937,8 @@ class BasicExpression extends Expression
         String var = findEntityVariable(env);
 
         String res = var + ".get" + data + "()";
-		if (var == null || var.length() == 0) 
-		{ res = data; }
+        if (var == null || var.length() == 0) 
+        { res = data; }
 		
         if (arrayIndex != null) 
         { String etype = type.getCSharp(); 
@@ -8190,6 +8259,7 @@ public Statement generateDesignSubtract(Expression rhs)
       { return cont + "." + data + pars + ";"; }
     } 
 
+
     if (isEvent) // an operation of entity
     { 
       if (entity == null) 
@@ -8218,9 +8288,11 @@ public Statement generateDesignSubtract(Expression rhs)
         String var = findEntityVariable(env);
         return var + "." + data + pars + ";";
       }
-      else if (objectRef.umlkind == CLASSID && entity.isExternalApplication())
+      else if (objectRef.umlkind == CLASSID && 
+               entity.isExternalApplication())
       { return ename + "." + cont + "." + data + pars + ";"; } 
-      else if (objectRef.umlkind == CLASSID && entity.isClassScope(data))  // E.op()
+      else if (objectRef.umlkind == CLASSID && 
+               entity.isClassScope(data))  // E.op()
       { return ename + "." + data + pars + ";"; } 
       else if ("self".equals(objectRef + ""))
       { return "this." + data + pars + ";"; } 
@@ -8231,14 +8303,16 @@ public Statement generateDesignSubtract(Expression rhs)
       }
       else if (objectRef.isMultiple())
       { String pre = objectRef.queryFormCSharp(env,local);
-        if (objectRef.umlkind == CLASSID && (objectRef instanceof BasicExpression))
+        if (objectRef.umlkind == CLASSID && 
+            (objectRef instanceof BasicExpression))
         { BasicExpression oref = (BasicExpression) objectRef; 
           if (oref.arrayIndex == null) 
           { ename = oref.data; // pre; 
             pre = cont + ".get" + ename.toLowerCase() + "_s()";
           } 
         } 
-        else if (objectRef.elementType != null && objectRef.elementType.isEntity())
+        else if (objectRef.elementType != null && 
+                 objectRef.elementType.isEntity())
         { Type et = objectRef.elementType; 
           Entity ent = et.getEntity(); 
           if (ent != null)
@@ -8616,7 +8690,7 @@ public Statement generateDesignSubtract(Expression rhs)
   public static String updateFormEqIndexCSharp(Expression obj, Expression ind,  
                              String val2, Expression var, java.util.Map env, boolean local)
   { // obj[ind] = val2 where obj is complex expression, 
-    // either a sequence or map, or 
+    // either a sequence, reference or map, or 
     // itself an indexed expression
  
    if (ind != null) 
@@ -8625,8 +8699,11 @@ public Statement generateDesignSubtract(Expression rhs)
       String wind = ind.wrapCSharp(indopt); 
       String wval = var.wrapCSharp(val2); 
  
-      if (ind.type != null && "String".equals(ind.type.getName()))
+      if (ind.type != null && 
+          "String".equals(ind.type.getName()))
       { return "((Hashtable) " + lexp + ")[" + wind + "] = " + wval + ";"; }  // map[ind] = val2 
+      else if (Type.isReferenceType(obj.type))
+      { return lexp + "[" + indopt + "-1] = " + wval + ";"; } 
       else 
       { return "((ArrayList) " + lexp + ")[" + indopt + " -1] = " + wval + ";"; }  
     } 
@@ -9121,6 +9198,13 @@ public Statement generateDesignSubtract(Expression rhs)
                              String val2, Expression var, boolean local)
   { String cont = "Controller.inst()"; 
 
+    System.out.println(">>> Assignment " + this + " = " + val2); 
+
+    String datax = data;
+    if (objectRef != null) 
+    { datax = objectRef.queryFormCSharp(env,local) + "." + data; } 
+
+
     if (umlkind == VALUE || umlkind == CONSTANT || umlkind == FUNCTION ||
         umlkind == QUERY || umlkind == UPDATEOP || prestate)
     { return "  {} /* can't assign to: " + data + " */"; }
@@ -9137,33 +9221,37 @@ public Statement generateDesignSubtract(Expression rhs)
     } 
 
     if (umlkind == VARIABLE)
-    { if (arrayIndex != null) 
+    { System.out.println(">>> Variable " + this); 
+
+      if (arrayIndex != null) 
       { String indopt = arrayIndex.queryFormCSharp(env,local); 
         String wind = arrayIndex.wrapCSharp(indopt); 
         String wval = var.wrapCSharp(val2); 
         if ("String".equals(arrayIndex.type + ""))
-        { return data + "[" + wind + "] = " + wval + ";"; }  // map[index] = val2 
+        { return datax + "[" + wind + "] = " + wval + ";"; }  // map[index] = val2 
         else 
-        { return data + "[" + indopt + " -1] = " + wval + ";"; } 
+        { return datax + "[" + indopt + " -1] = " + wval + ";"; } 
       }
 
       if (type != null && var.type == null)
       { String cstype = type.getCSharp(); 
-        return data + " = (" + cstype + ") (" + val2 + ");"; 
+        return datax + " = (" + cstype + ") (" + val2 + ");"; 
       } 
       else if (type != null && var.type != null)
       { if (Type.isSpecialisedOrEqualType(var.type, type))
-        { return "  " + data + " = " + val2 + ";"; } 
+        { return "  " + datax + " = " + val2 + ";"; } 
         String cstype = type.getCSharp(); 
-        return "  " + data + " = (" + cstype + ") (" + val2 + ");"; 
+        return "  " + datax + " = (" + cstype + ") (" + val2 + ");"; 
       } 
 
-      return "  " + data + " = " + val2 + ";"; 
+      return "  " + datax + " = " + val2 + ";"; 
     }
 
     String nme = entity.getName();
     if (entity.isBidirectionalRole(data))
-    { local = false; } 
+    { local = false; }
+
+    System.out.println(">> " + this + " objectref = " + objectRef);  
     
     if (objectRef == null)
     { if (umlkind == ATTRIBUTE || umlkind == ROLE)
@@ -9244,7 +9332,7 @@ public Statement generateDesignSubtract(Expression rhs)
 
       if (objectRef instanceof UnaryExpression && 
           "!".equals(((UnaryExpression) objectRef).operator))
-      { return "(" + pre + ")." + data + " = " + val2; } 
+      { return "(" + pre + ")." + data + " = " + val2 + ";"; } 
 
       if (objectRef.umlkind == CLASSID && (objectRef instanceof BasicExpression)) 
       { BasicExpression objref = (BasicExpression) objectRef; 
@@ -9307,7 +9395,7 @@ public Statement generateDesignSubtract(Expression rhs)
         } 
         else if (type != null && var.type != null)
         { if (Type.isSpecialisedOrEqualType(var.type, type))
-          { return data + " = " + val2 + ";"; } 
+          { return datax + " = " + val2 + ";"; } 
           String cstype = type.getCSharp(); 
           return cont + ".set" + data + "(" + pre + ", (" + cstype + ") (" + val2 + "));"; 
         } 

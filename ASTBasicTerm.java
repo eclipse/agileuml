@@ -223,7 +223,16 @@ public class ASTBasicTerm extends ASTTerm
       if ("int".equals(tname) || "long".equals(tname) || 
           "double".equals(tname) || "void".equals(tname))
       { return new Type(tname,null); } 
+      if ("time_t".equals(tname) || "clock_t".equals(tname) ||
+          "size_t".equals(tname) || "fpos_t".equals(tname))
+      { return new Type("long",null); }  
+      
     
+      Entity tent = (Entity) ModelElement.lookupByName(
+                                        tname, entities); 
+      if (tent != null) 
+      { return new Type(tent); } 
+
       Type t = (Type) ModelElement.lookupByName(tname,types); 
       if (t != null) 
       { return t; } 
@@ -342,7 +351,11 @@ public class ASTBasicTerm extends ASTTerm
       if ("EOF".equals(value))
       { return new BasicExpression(-1); }
       if ("HUGE_VAL".equals(value))
-      { return new BasicExpression("Math_PINFINITY"); } 
+      { Expression resx =
+          new BasicExpression("Math_PINFINITY");
+        resx.setType(new Type("double", null)); 
+        return resx; 
+      } 
 
       if ("CHAR_BIT".equals(value))
       { return new BasicExpression(8); } 
@@ -458,6 +471,32 @@ public class ASTBasicTerm extends ASTTerm
       { v.setType(new Type("double",null)); 
         v.setUmlKind(Expression.VALUE); 
       }
+
+      Entity mainC = (Entity) ModelElement.lookupByName(
+                                      "FromC", entities);
+      if (mainC != null) 
+      { BehaviouralFeature bf = mainC.getOperation(value); 
+
+        if (bf != null) 
+        { System.out.println(">>> Function defined in main program: " + value + " " + bf.display() + " " + bf.isVarArg()); 
+          BasicExpression bfcall = 
+            BasicExpression.newStaticCallBasicExpression(
+                                                 bf,mainC); 
+          Expression lam = 
+            UnaryExpression.newLambdaUnaryExpression(bfcall, bf); 
+          return lam; 
+        }
+
+        Attribute att = mainC.getAttribute(value); 
+        if (att != null) 
+        { System.out.println(">>> Global attribute: " + value + " : " + att.getType()); 
+          Expression expr = 
+            BasicExpression.newStaticAttributeBasicExpression(
+                                                    att); 
+          return expr; 
+        }       
+      } 
+
       return v; 
     } 
      

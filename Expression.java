@@ -176,6 +176,9 @@ abstract class Expression
   public void setStatic(boolean s)
   { isStatic = s; } 
 
+  public boolean isStatic()
+  { return isStatic; } 
+
   public Expression firstConjunct()
   { return this; } 
 
@@ -1171,7 +1174,18 @@ abstract class Expression
 
   public boolean isNumeric()
   { if (type != null) 
-    { return type.getName().equals("int") || type.getName().equals("double") || type.getName().equals("long"); } 
+    { return type.getName().equals("int") || 
+        type.getName().equals("double") || 
+        type.getName().equals("long"); 
+    } 
+    return false; 
+  }  
+
+  public boolean isInteger()
+  { if (type != null) 
+    { return type.getName().equals("int") || 
+        type.getName().equals("long"); 
+    } 
     return false; 
   }  
 
@@ -2093,7 +2107,10 @@ abstract class Expression
   } 
 
   public static Expression simplifyApply(Expression func, Expression arg)
-  { if (func instanceof UnaryExpression) 
+  { // (lambda var : T in lbody)->apply(arg)  is 
+    // lbody[arg/var]
+
+    if (func instanceof UnaryExpression) 
     { UnaryExpression f = (UnaryExpression) func; 
       if (f.getOperator().equals("lambda") && 
           f.getAccumulator() != null) 
@@ -2104,6 +2121,26 @@ abstract class Expression
       } 
     } 
     return new BinaryExpression("->apply", func, arg); 
+  }  
+
+  public static Expression simplifyApply(Expression func, Expression arg1, Expression arg2)
+  { // (lambda var1 : T1 in 
+    //   (lambda var2 : T2 in lbody))->apply(arg1)->apply(arg2)  
+    // is 
+    // lbody[arg1/var1,arg2/var2]
+
+    if (func instanceof UnaryExpression) 
+    { UnaryExpression f = (UnaryExpression) func; 
+      if (f.getOperator().equals("lambda") && 
+          f.getAccumulator() != null) 
+      { Attribute var = f.getAccumulator(); 
+        String vname = var.getName(); 
+        Expression lbody = f.getArgument(); 
+        Expression res = lbody.substituteEq(vname,arg1);
+        return Expression.simplifyApply(res,arg2);  
+      } 
+    } 
+    return new BinaryExpression("->apply", func, arg1); 
   }  
 
   public static Expression simplifyExistsAnd(final Expression e1,

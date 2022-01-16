@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -123,32 +123,45 @@ public class CGCondition
 
     if ("string".equals(stereotype.toLowerCase()) && t.isStringType())
     { return positive; }
+
     if ("class".equals(stereotype.toLowerCase()) && t.isEntityType(entities))
-    { System.out.println(t + " is a class"); 
+    { System.out.println(">> Condition class satisfied for " + t); 
       return positive; 
     }
-    if ("void".equals(stereotype.toLowerCase()) && (t == null || t.isVoidType()))
+
+    if ("void".equals(stereotype.toLowerCase()) && (t == null || "void".equals(t.getName()) || t.isVoidType()))
     { return positive; }
+
     if ("enumerated".equals(stereotype.toLowerCase()) && t.isEnumeratedType())
     { return positive; }
+
     if ("datatype".equals(stereotype.toLowerCase()) && t.isDatatype())
     { return positive; }
+
     if ("map".equals(stereotype.toLowerCase()) && t.isMapType())
     { return positive; }
+
     if ("function".equals(stereotype.toLowerCase()) && t.isFunctionType())
     { return positive; }
+
     if ("collection".equals(stereotype.toLowerCase()) && t.isCollectionType())
     { return positive; }
+
     if ("sequence".equals(stereotype.toLowerCase()) && t.isSequenceType())
     { return positive; }
+
     if ("set".equals(stereotype.toLowerCase()) && t.isSetType())
     { return positive; }
+
     if ("integer".equals(stereotype.toLowerCase()) && t.isInteger())
     { return positive; }
+
     if ("real".equals(stereotype.toLowerCase()) && t.isReal())
     { return positive; }
+
     if ("int".equals(stereotype.toLowerCase()) && t.isInt())
     { return positive; }
+
     if ("long".equals(stereotype.toLowerCase()) && t.isLong())
     { return positive; }
 
@@ -156,26 +169,37 @@ public class CGCondition
     { System.out.println(t + " is not a class"); 
       return !positive; 
     }
+
     if ("void".equals(stereotype.toLowerCase()) && t != null && !t.isVoidType())
     { return !positive; }
+
     if ("enumerated".equals(stereotype.toLowerCase()) && !(t.isEnumeratedType()))
     { return !positive; }
+
     if ("map".equals(stereotype.toLowerCase()) && !t.isMapType())
     { return !positive; }
+
     if ("function".equals(stereotype.toLowerCase()) && !t.isFunctionType())
     { return !positive; }
+
     if ("collection".equals(stereotype.toLowerCase()) && !(t.isCollectionType()))
     { return !positive; }
+
     if ("sequence".equals(stereotype.toLowerCase()) && !(t.isSequenceType()))
     { return !positive; }
+
     if ("set".equals(stereotype.toLowerCase()) && !(t.isSetType()))
     { return !positive; }
+
     if ("integer".equals(stereotype.toLowerCase()) && !(t.isInteger()))
     { return !positive; }
+
     if ("real".equals(stereotype.toLowerCase()) && !(t.isReal()))
     { return !positive; }
+
     if ("int".equals(stereotype.toLowerCase()) && !(t.isInt()))
     { return !positive; }
+
     if ("long".equals(stereotype.toLowerCase()) && !(t.isLong()))
     { return !positive; }
 

@@ -34,6 +34,21 @@ public class UnaryExpression extends Expression
     elementType = be.getElementType();  
   } 
 
+  public static Expression newLambdaUnaryExpression(
+                         Expression bcall, 
+                         BehaviouralFeature bf)
+  { // lambda par1 : Par1Type in ... in bcall(par1,...,parn)
+    Vector pars = bf.getParameters(); 
+    Expression res = bcall; 
+    for (int i = pars.size()-1; i >= 0; i--) 
+    { Attribute p = (Attribute) pars.get(i); 
+      res = new UnaryExpression("lambda", res); 
+      ((UnaryExpression) res).setAccumulator(p); 
+    } 
+    return res; 
+  } 
+    
+
   public static UnaryExpression newUnaryExpression(String op, Expression expr) 
   { if (expr == null) 
     { return null; } 
@@ -146,6 +161,17 @@ public class UnaryExpression extends Expression
   { BasicExpression f = 
       BasicExpression.newVariableBasicExpression(fname); 
     Expression res = f; 
+
+    for (int i = 0; i < args.size(); i++) 
+    { Expression arg = (Expression) args.get(i); 
+      res = new BinaryExpression("->apply", res, arg); 
+    } 
+    return res; 
+  } 
+
+  public static Expression argumentsToLambdaCall(Expression x,
+                                                 Vector args)
+  { Expression res = x; 
 
     for (int i = 0; i < args.size(); i++) 
     { Expression arg = (Expression) args.get(i); 
@@ -3005,21 +3031,33 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "-" + qf; } 
 
     if (operator.equals("?"))
-    { if (argument.isCollection() || 
+    { String res = qf; 
+      if (argument.isCollection() || 
           argument.isFunctionType() || 
           argument.isClassEntityType())
-      { return qf; } 
-      return "&" + qf; 
+      { } 
+      else 
+      { res = "&" + qf; } 
+
+      if (needsBracket) 
+      { res = "(" + res + ")"; }
+	  return res;  
     } 
 
     if (operator.equals("!"))
-    { Type argelemtype = argument.getElementType(); 
+    { String res = qf; 
+      Type argelemtype = argument.getElementType(); 
       if (argelemtype != null && 
           (argelemtype.isCollection() || 
            argelemtype.isFunctionType() || 
            argelemtype.isClassEntityType()))
-      { return qf; } 
-      return "*" + qf; 
+      { } 
+      else 
+      { res = "*" + qf; }  
+
+      if (needsBracket) 
+      { res = "(" + res + ")"; }
+	  return res;  
     } // functions, classes, collections, maps have ?x = x
 
     if (operator.equals("not"))
@@ -3153,7 +3191,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     } // but only goes one level down. 
 
     String pre = qf;
-    String data = operator.substring(2,operator.length()); 
+    String data = operator; 
+	
+	if (operator.startsWith("->"))
+	{ data = operator.substring(2,operator.length()); }
 
     if (extensionoperators.containsKey(operator))
     { String op = operator;
@@ -4130,7 +4171,7 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
   } 
 
   public String toString()  // RSDS version of expression
-  { if (operator.equals("lambda"))
+  { if (operator.equals("lambda") && accumulator != null)
     { String res = "lambda " + accumulator.getName() + " : " + accumulator.getType() + " in " + argument;
       if (needsBracket)
       { return "(" + res + ")"; }
@@ -4307,6 +4348,7 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
     UnaryExpression res = new UnaryExpression(operator,newarg);
     res.needsBracket = needsBracket; 
     res.umlkind = umlkind; 
+    res.accumulator = accumulator; 
     // res.type = type; 
     // res.elementType = elementType;  // type of elements if a set
     // res.entity = entity; 
