@@ -227,7 +227,10 @@ public class BehaviouralFeature extends ModelElement
   { BehaviouralFeature res = 
       new BehaviouralFeature(att.getName()); 
     res.parameters = att.getParameters(); 
-    res.resultType = att.getType(); 
+    res.resultType = att.getInnerElementType(); 
+
+    System.out.println("==== Operation from attribute: " + res.display()); 
+
     return res; 
   } 
 
@@ -1650,6 +1653,23 @@ public class BehaviouralFeature extends ModelElement
       Type vtype = (Type) vartypes.get(key); 
       if (key != null && vtype != null) 
       { Attribute att = new Attribute(key,vtype,ModelElement.INTERNAL); 
+        parameters.add(att); 
+      } // and avoid duplicates
+    } 
+  } 
+
+  public void setParameters(java.util.Map vartypes, java.util.Map velemtypes)
+  { parameters = new Vector(); 
+    java.util.Set keys = vartypes.keySet(); 
+    Vector keyvect = new Vector(); 
+    keyvect.addAll(keys); 
+    for (int i = 0; i < keyvect.size(); i++) 
+    { String key = (String) keyvect.get(i); 
+      Type vtype = (Type) vartypes.get(key);
+      Type vetype = (Type) velemtypes.get(key);  
+      if (key != null && vtype != null) 
+      { Attribute att = new Attribute(key,vtype,ModelElement.INTERNAL); 
+        att.setElementType(vetype); 
         parameters.add(att); 
       } // and avoid duplicates
     } 
@@ -3571,10 +3591,14 @@ public class BehaviouralFeature extends ModelElement
     { Vector env1 = new Vector(); 
       env1.addAll(parameters); 
       activity.typeCheck(types, 
-                         localEntities,context,env1); 
+                         localEntities,context,env1);
+
+      System.out.println(">>> Activity of " + name + " is: " + activity); 
+ 
       return activity; 
     } 
 
+    
     Vector atts = new Vector(); 
     ReturnStatement rets = null; 
   

@@ -153,6 +153,10 @@ public class CGCondition
     if ("set".equals(stereotype.toLowerCase()) && t.isSetType())
     { return positive; }
 
+    if ("ref".equals(stereotype.toLowerCase()) && t.isRef())
+    { return positive; }
+    
+
     if ("integer".equals(stereotype.toLowerCase()) && t.isInteger())
     { return positive; }
 
@@ -189,6 +193,9 @@ public class CGCondition
     { return !positive; }
 
     if ("set".equals(stereotype.toLowerCase()) && !(t.isSetType()))
+    { return !positive; }
+
+    if ("ref".equals(stereotype.toLowerCase()) && !(t.isRef()))
     { return !positive; }
 
     if ("integer".equals(stereotype.toLowerCase()) && !(t.isInteger()))
@@ -267,6 +274,12 @@ public class CGCondition
       { return "Function".equals(tname); }
       else
       { return !("Function".equals(tname)); }
+    }
+    else if ("Ref".equals(stereotype))
+    { if (positive)
+      { return "Ref".equals(tname); }
+      else
+      { return !("Ref".equals(tname)); }
     }
     else if ("collection".equals(stereotype.toLowerCase()))
     { if (positive)

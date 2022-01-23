@@ -281,6 +281,19 @@ public class Type extends ModelElement
   public Type getElementType()
   { return elementType; } 
 
+  public Type getInnerElementType()
+  { if ("Function".equals(name) || "Ref".equals(name) || 
+        "Sequence".equals(name) || "Set".equals(name) || 
+        "Map".equals(name))
+    { if (elementType != null) 
+      { return elementType.getInnerElementType(); } 
+      else 
+      { return elementType; } 
+    } 
+    else 
+    { return this; } 
+  } 
+
   public void setKeyType(Type e)
   { keyType = e; } 
 

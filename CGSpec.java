@@ -575,63 +575,71 @@ public class CGSpec
     Type elemT = t.getElementType(); 
     Vector args = new Vector(); 
     args.add(t); 
-	
+
+    
     for (int x = 0; x < typeUseRules.size(); x++)
-    { CGRule r = (CGRule) typeUseRules.get(x);
+    { CGRule selected = null; 
+      CGRule r = (CGRule) typeUseRules.get(x);
       String trimmedlhs = r.lhs.trim(); 
       // int varcount = r.variables().size(); 
 	  
-	 System.out.println(">+ Type +> " + t + " is: " + typetext + " rule lhs: " + trimmedlhs); 
+	 System.out.println(">>+ Type +> " + t + " is: " + typetext + " rule lhs: " + trimmedlhs); 
 	  
       if (typetext.equals(trimmedlhs))
-      { return r; } // exact match -- assume no variables
+      { selected = r; } // exact match -- assume no variables
       // else if (t.isMapType() && trimmedlhs.startsWith("Map"))
       // { return r; }
       else if (t.isMapType() && trimmedlhs.equals("Map(_1,_2)"))
-      { return r; }
+      { selected = r; }
       else if (t.isFunctionType() && trimmedlhs.equals("Function(_1,_2)"))
-      { return r; }
+      { selected = r; }
       else if (t.isEnumeratedType() && r.hasCondition("enumerated"))
-      { return r; }
-      else if (t.isEntityType() && r.hasCondition("class"))
-      { System.out.println("Condition class satisfied for " + t); 
-        return r; 
-      }
+      { selected = r; }
+      // else if (t.isEntityType() && r.hasCondition("class"))
+      // { System.out.println(">> Condition class satisfied for " + t); 
+      //   selected = r; 
+      // }
       else if (t.isSetType() && trimmedlhs.startsWith("Set") )
       { if (elemT != null && trimmedlhs.equals("Set(" + elemT + ")"))
-        { return r; }
+        { selected = r; }
         else if (elemT == null && 
                  (trimmedlhs.equals("Set()") ||
                   trimmedlhs.equals("Set")))
-        { return r; }
+        { selected = r; }
         else if (elemT != null && trimmedlhs.equals("Set(_1)"))
-        { return r; } 
+        { selected = r; } 
       } 
       else if (t.isSequenceType() && trimmedlhs.startsWith("Sequence"))
       { if (elemT != null && trimmedlhs.equals("Sequence(" + elemT + ")"))
-        { return r; }
+        { selected = r; }
         else if (elemT == null && 
                  (trimmedlhs.equals("Sequence()") || 
                   trimmedlhs.equals("Sequence")))
-        { return r; }
+        { selected = r; }
         else if (elemT != null && trimmedlhs.equals("Sequence(_1)"))
-        { return r; }
+        { selected = r; }
       }
       else if (t.isRef() && 
                trimmedlhs.startsWith("Ref"))
       { if (elemT != null && trimmedlhs.equals("Ref(" + elemT + ")"))
-        { return r; }
+        { selected = r; }
         else if (elemT == null && 
                  (trimmedlhs.equals("Ref()") || 
                   trimmedlhs.equals("Ref")))
-        { return r; }
+        { selected = r; }
         else if (elemT != null && trimmedlhs.equals("Ref(_1)"))
-        { return r; }
+        { selected = r; }
       } 
-      else if (trimmedlhs.equals("_1") && 
-               r.satisfiesConditions(args,entities))
-      { return r; } 
-    }
+      else if (!t.isSetType() && !t.isRef() && 
+               !t.isSequenceType() && 
+               !t.isMapType() && !t.isFunctionType() &&
+               trimmedlhs.equals("_1"))
+      { selected = r; } 
+
+      if (selected != null &&
+          selected.satisfiesConditions(args,entities))
+      { return selected; } 
+    } 
     return null;
   } // _1 binds to type or elementType
 
@@ -1038,21 +1046,28 @@ public class CGSpec
       }
       else if (trimmedlhs.endsWith("_1(_2)") && pars != null && ModelElement.haveCommonPrefix(etext,trimmedlhs))
       { String prefix = ModelElement.longestCommonPrefix(etext,trimmedlhs);
-        System.out.println(); 
-        System.out.println(">>> matched text rule: " + r + " for " + etext); 
-        System.out.println(); 
+        int brind = etext.indexOf("("); 
 
-        if (prefix.length() == trimmedlhs.length() - 6) 
+        if (prefix.length() == trimmedlhs.length() - 6 && 
+            prefix.length() == brind) 
         { selected = r; 
+          System.out.println(">>> matched text rule: " + r + " for " + etext + " with prefix " + prefix); 
+          System.out.println(); 
           args.add(e);   // should be for _1 
           args.add(pars);
           matchedtextrules.add(r);
         }  
       }
       else if (trimmedlhs.endsWith("(_1)") && pars != null && ModelElement.haveCommonPrefix(etext,trimmedlhs))
-	  { String prefix = ModelElement.longestCommonPrefix(etext,trimmedlhs); 
-        if (prefix.length() == trimmedlhs.length() - 4) 
+      { String prefix = ModelElement.longestCommonPrefix(etext,trimmedlhs); 
+        int brind = etext.indexOf("("); 
+
+
+        if (prefix.length() == trimmedlhs.length() - 4 &&
+            prefix.length() == brind) 
         { selected = r; 
+          System.out.println(">>> matched text rule: " + r + " for " + etext + " with prefix " + prefix); 
+          System.out.println(); 
           args.add(pars);
           matchedtextrules.add(r);
         }  
@@ -1060,8 +1075,12 @@ public class CGSpec
       else if (trimmedlhs.endsWith("_1()") && (pars == null || pars.size() == 0) && 
 	           ModelElement.haveCommonPrefix(etext,trimmedlhs))
       { String prefix = ModelElement.longestCommonPrefix(etext,trimmedlhs); 
-        if (prefix.length() == trimmedlhs.length() - 4)
-        { selected = r; 
+        int brind = etext.indexOf("("); 
+        if (prefix.length() == trimmedlhs.length() - 4 && 
+            prefix.length() == brind)
+        { System.out.println(">>> matched text rule: " + r + " for " + etext + " with prefix " + prefix); 
+          System.out.println(); 
+          selected = r; 
           args.add(e);
           matchedtextrules.add(r);
         }  
@@ -1104,10 +1123,13 @@ public class CGSpec
         else if (elems.size() > 0 && r.variables.size() > 0) 
         { return r; } 
       } 
+      else if (etext.equals("Ref{}") && 
+               trimmedlhs.equals("Ref{}"))
+      { return r; } 
       else if (etext.startsWith("Ref(") && etext.endsWith("}") && 
                trimmedlhs.startsWith("Ref(") && trimmedlhs.endsWith("}"))
       { if (elems.size() == 0 && r.variables.size() == 0) 
-        { return r; }  // empty map
+        { return r; }  // empty ref
         else if (elems.size() > 0 && r.variables.size() > 0) 
         { return r; } 
       } 
@@ -1167,12 +1189,15 @@ public class CGSpec
     return null;
   } // _1 binds to class name
 
-  public CGRule matchedAttributeRule(Attribute e, String ctext)
+  public CGRule matchedAttributeRule(Attribute e, 
+                                     String ctext)
   { CGRule selected = null;
 
     Vector args = new Vector(); 
     args.add(e); 
     args.add(e.getType());  
+    if (e.getInitialExpression() != null) 
+    { args.add(e.getInitialExpression()); } 
   
     for (int x = 0; x < attributeRules.size(); x++)
     { CGRule r = (CGRule) attributeRules.get(x);
@@ -1183,7 +1208,8 @@ public class CGSpec
 
       if (ctext.equals(r.lhs) && r.variableCount() == 0)
       { selected = r; } // exact match
-      else if (e.isStatic())
+      else if (e.isStatic() && 
+               args.size() == r.variableCount())
       { if (r.lhs.indexOf("static") > -1)     
         { selected = r; }
       }
@@ -1193,10 +1219,14 @@ public class CGSpec
       { if (r.lhs.indexOf("identity") > -1)     
         { selected = r; }
       }
-      else if (r.lhs.indexOf("identity") < 0 && r.lhs.indexOf("static") < 0)   
+      else if (r.lhs.indexOf("identity") < 0 && 
+               r.lhs.indexOf("static") < 0 &&
+               !e.isStatic() && !e.isUnique() &&
+               args.size() == r.variableCount() )   
       { selected = r; }
     
-      if (selected != null && selected.satisfiesConditions(args,entities))
+      if (selected != null && 
+          selected.satisfiesConditions(args,entities))
       { return selected; } 
     }
 

@@ -457,9 +457,15 @@ public class Attribute extends ModelElement
     Vector args = new Vector();
     args.add(getName());
     args.add(type.cg(cgs));
+    if (initialExpression != null) 
+    { args.add(initialExpression.cg(cgs)); } 
+
     Vector eargs = new Vector(); 
     eargs.add(this); 
     eargs.add(type); 
+    if (initialExpression != null) 
+    { eargs.add(initialExpression); } 
+
     // only one Attribute rule?
     // maybe for static/frozen
     CGRule r = cgs.matchedAttributeRule(this,atext);
@@ -467,6 +473,7 @@ public class Attribute extends ModelElement
     { System.out.println(">> Matched attribute rule for " + this + ": " + r); 
       return r.applyRule(args,eargs,cgs); 
     }
+
     return atext;
   }
 
@@ -1045,6 +1052,12 @@ public class Attribute extends ModelElement
 
   public Type getElementType()
   { return elementType; } 
+
+  public Type getInnerElementType()
+  { if (type != null) 
+    { return type.getInnerElementType(); } 
+    return elementType; 
+  } 
 
   public Vector getNavigation()
   { return navigation; } 

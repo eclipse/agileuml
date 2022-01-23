@@ -184,7 +184,7 @@ public class Entity extends ModelElement implements Comparable
   { for (int z = 0; z < operations.size(); z++)
     { BehaviouralFeature op = (BehaviouralFeature) operations.get(z);
       Statement act = op.generateDesign(this,entities,types);
-      System.out.println(">>> Activity for operation " + op + " is " + act); 
+      System.out.println(">>> Generated activity for operation " + op + " is " + act); 
       op.setActivity(act); 
     }
   } 
@@ -1030,6 +1030,74 @@ public class Entity extends ModelElement implements Comparable
     { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i); 
       if (fname.equals(bf.getName()))  // replace bf by f
       { removals.add(bf); } 
+    } 
+
+    // System.out.println("REMOVING OPERATIONS " + removals); 
+
+    operations.removeAll(removals); 
+
+    if (superclass != null) 
+    { String nme = f.getName(); 
+      Vector pars = f.getParameters(); 
+
+      BehaviouralFeature overriddenOp = superclass.getDefinedOperation(nme, pars); 
+      if (overriddenOp != null) 
+      { System.out.println(">>> Operation " + nme + " overrides a superclass operation"); 
+        f.addStereotype("override"); 
+      } 
+    }
+
+    f.setEntity(this);
+    operations.add(f);
+
+    if (isInterface())
+    { f.addStereotype("abstract"); } 
+  }  // If f is abstract, this class must also be
+
+  public void refineOperation(BehaviouralFeature f)
+  { String fname = f.getName(); 
+    Vector removals = new Vector(); 
+
+    for (int i = 0; i < operations.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i); 
+      if (fname.equals(bf.getName()))  // replace bf by f
+      { removals.add(bf); 
+
+        System.out.println("*** Old function version: " + bf.display()); 
+        System.out.println("*** Replaced by version: " + f.display()); 
+
+        if (bf.getResultType() != null && 
+            f.getResultType() == null) 
+        { f.setResultType(bf.getResultType()); }
+        Vector oldpars = bf.getParameters(); 
+        Vector newpars = f.getParameters(); 
+        for (int j = 0; j < oldpars.size(); j++) 
+        { Attribute oldpar = (Attribute) oldpars.get(j);
+
+          System.out.println("++++ Old parameter: " + oldpar + 
+                             " : " + oldpar.getType()); 
+ 
+          if (j < newpars.size())
+          { Attribute newpar = (Attribute) newpars.get(j); 
+
+            System.out.println("++++ New parameter: " + newpar + 
+                               " : " + newpar.getType()); 
+
+            if (newpar.getName().equals(oldpar.getName()))
+            { if (newpar.getType() == null)
+              { newpar.setType(oldpar.getType()); 
+                newpar.setElementType(oldpar.getElementType()); 
+              }
+              else if (oldpar.getType() != null &&
+                       newpar.getType().getName().equals(
+                         oldpar.getType().getName()) && 
+                       newpar.getElementType() == null) 
+              { newpar.setElementType(
+                           oldpar.getElementType()); } 
+            } 
+          } 
+        }    
+      }  
     } 
 
     // System.out.println("REMOVING OPERATIONS " + removals); 

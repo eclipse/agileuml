@@ -3147,10 +3147,13 @@ public class UCDArea extends JPanel
   public void generateGo()
   { Vector auxcstls = new Vector(); 
     auxcstls.add("cgGooperations.cstl"); 
+    // auxcstls.add("cgGoexpressions.cstl"); 
     auxcstls.add("cgGoattributes.cstl"); 
+    auxcstls.add("cgGostatic.cstl"); 
     auxcstls.add("cgGomain.cstl");
     auxcstls.add("goReferencedFeatures.cstl"); 
-    
+    auxcstls.add("cgGointerface.cstl"); 
+
     CGSpec cgs = loadCSTL("cgGo.cstl",auxcstls); 
 
     for (int i = 0; i < types.size(); i++) 

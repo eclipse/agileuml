@@ -50,6 +50,13 @@ public class SetExpression extends Expression
     return res; 
   } 
 
+  public static SetExpression newRefSetExpression(Expression elem)
+  { SetExpression res = new SetExpression(); 
+    res.setType(new Type("Ref", null));
+    res.addElement(elem);  
+    return res; 
+  } 
+
   public Expression getExpression(int i) 
   { if (i < elements.size())
     { return (Expression) elements.get(i); } 
@@ -186,7 +193,7 @@ public class SetExpression extends Expression
   { String res;
 
     if (type != null && "Ref".equals(type.getName()))
-    { if (elementType != null) 
+    { if (elementType != null && elements.size() > 0) 
       { res = "Ref(" + elementType + "){"; }
       else 
       { res = "Ref{"; }

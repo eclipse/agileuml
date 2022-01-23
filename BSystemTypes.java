@@ -1619,52 +1619,52 @@ public class BSystemTypes extends BComponent
       res1 = res1 + "  { // implements: " + left + "->reject( " +  var + " | " + pred + " )\n" +
                   "    " + restype1 + " _results_" + oldindex + 
                                     " = new " + restype1 + "();\n" + 
-                  "    for (int _i = 0; i < _l.size(); _i++)\n";  
+                  "    for (int _ireject = 0; _ireject < _l.size(); _ireject++)\n";  
       if (ename.equals("int") || "Integer".equals(tname))
-      { res1 = res1 + "    { int " + var + " = ((Integer) _l.get(_i)).intValue();\n"; } 
+      { res1 = res1 + "    { int " + var + " = ((Integer) _l.get(_ireject)).intValue();\n"; } 
       else if (ename.equals("double"))
-      { res1 = res1 + "    { double " + var + " = ((Double) _l.get(_i)).doubleValue();\n"; } 
+      { res1 = res1 + "    { double " + var + " = ((Double) _l.get(_ireject)).doubleValue();\n"; } 
       else if (ename.equals("long"))
-      { res1 = res1 + "    { long " + var + " = ((Long) _l.get(_i)).longValue();\n"; } 
+      { res1 = res1 + "    { long " + var + " = ((Long) _l.get(_ireject)).longValue();\n"; } 
       else if (ename.equals("boolean"))
-      { res1 = res1 + "    { boolean " + var + " = ((Boolean) _l.get(_i)).booleanValue();\n"; } 
+      { res1 = res1 + "    { boolean " + var + " = ((Boolean) _l.get(_ireject)).booleanValue();\n"; } 
       else 
       { res1 = res1 +  
-                  "    { " + tname + " " + var + " = (" + tname + ") _l.get(_i);\n";
+                  "    { " + tname + " " + var + " = (" + tname + ") _l.get(_ireject);\n";
       }  
 
       res2 = res2 + ")\n"; 
       res2 = res2 + "  { " + restype2 + " _results_" + oldindex + 
                                     " = new " + restype2 + "();\n" + 
-                  "    for (" + tname + " _i : _l)\n";  
+                  "    for (" + tname + " _ireject : _l)\n";  
       if (ename.equals("int") || "Integer".equals(tname))
-      { res2 = res2 + "    { int " + var + " = ((Integer) _i).intValue();\n"; } 
+      { res2 = res2 + "    { int " + var + " = ((Integer) _ireject).intValue();\n"; } 
       else if (ename.equals("double"))
-      { res2 = res2 + "    { double " + var + " = ((Double) _i).doubleValue();\n"; } 
+      { res2 = res2 + "    { double " + var + " = ((Double) _ireject).doubleValue();\n"; } 
       else if (ename.equals("long"))
-      { res2 = res2 + "    { long " + var + " = ((Long) _i).longValue();\n"; } 
+      { res2 = res2 + "    { long " + var + " = ((Long) _ireject).longValue();\n"; } 
       else if (ename.equals("boolean"))
-      { res2 = res2 + "    { boolean " + var + " = ((Boolean) _i).booleanValue();\n"; } 
+      { res2 = res2 + "    { boolean " + var + " = ((Boolean) _ireject).booleanValue();\n"; } 
       else 
       { res2 = res2 +  
-                  "    { " + tname + " " + var + " = (" + tname + ") _i;\n";
+                  "    { " + tname + " " + var + " = (" + tname + ") _ireject;\n";
       }  
 
       res3 = res3 + ")\n"; 
       res3 = res3 + "  { " + restype3 + " _results_" + oldindex + 
                                     " = new " + restype3 + "();\n" + 
-                  "    for (" + tname + " _i : _l)\n";  
+                  "    for (" + tname + " _ireject : _l)\n";  
       if (ename.equals("int") || "Integer".equals(tname))
-      { res3 = res3 + "    { int " + var + " = ((Integer) _i).intValue();\n"; } 
+      { res3 = res3 + "    { int " + var + " = ((Integer) _ireject).intValue();\n"; } 
       else if (ename.equals("double"))
-      { res3 = res3 + "    { double " + var + " = ((Double) _i).doubleValue();\n"; } 
+      { res3 = res3 + "    { double " + var + " = ((Double) _ireject).doubleValue();\n"; } 
       else if (ename.equals("long"))
-      { res3 = res3 + "    { long " + var + " = ((Long) _i).longValue();\n"; } 
+      { res3 = res3 + "    { long " + var + " = ((Long) _ireject).longValue();\n"; } 
       else if (ename.equals("boolean"))
-      { res3 = res3 + "    { boolean " + var + " = ((Boolean) _i).booleanValue();\n"; } 
+      { res3 = res3 + "    { boolean " + var + " = ((Boolean) _ireject).booleanValue();\n"; } 
       else 
       { res3 = res3 +  
-                  "    { " + tname + " " + var + " = (" + tname + ") _i;\n";
+                  "    { " + tname + " " + var + " = (" + tname + ") _ireject;\n";
       }  
 
       String test = pred.queryFormJava7(newenv,false); 
@@ -2777,18 +2777,18 @@ public class BSystemTypes extends BComponent
 
 
       res = res +   "  { // Implements: " + left + "->exists(" + var + "|" + pred + ")\n" + 
-                    "    for (" + tname + " _i : _l)\n";  
+                    "    for (" + tname + " _iexists : _l)\n";  
       if (ename.equals("int") || "Integer".equals(tname))
-      { res = res + "    { int " + var + " = ((Integer) _i).intValue();\n"; } 
+      { res = res + "    { int " + var + " = ((Integer) _iexists).intValue();\n"; } 
       else if (ename.equals("double"))
-      { res = res + "    { double " + var + " = ((Double) _i).doubleValue();\n"; } 
+      { res = res + "    { double " + var + " = ((Double) _iexists).doubleValue();\n"; } 
       else if (ename.equals("long"))
-      { res = res + "    { long " + var + " = ((Long) _i).longValue();\n"; } 
+      { res = res + "    { long " + var + " = ((Long) _iexists).longValue();\n"; } 
       else if (ename.equals("boolean"))
-      { res = res + "    { boolean " + var + " = ((Boolean) _i).booleanValue();\n"; } 
+      { res = res + "    { boolean " + var + " = ((Boolean) _iexists).booleanValue();\n"; } 
       else 
       { res = res +  
-                    "    { " + tname + " " + var + " = (" + tname + ") _i;\n";
+                    "    { " + tname + " " + var + " = (" + tname + ") _iexists;\n";
       }  
 
       String test = pred.queryFormJava7(newenv,false); 
@@ -2894,8 +2894,8 @@ public class BSystemTypes extends BComponent
 
 
       res = res + "  { // Implements: " + left + "->exists(" + var + "|" + pred + ")\n" + 
-            "    for (int _i = 0; _i < _l.Count; _i++)\n" + 
-            "    { " + tname + " " + var + " = (" + tname + ") _l[_i];\n"; 
+            "    for (int _iexists = 0; _iexists < _l.Count; _iexists++)\n" + 
+            "    { " + tname + " " + var + " = (" + tname + ") _l[_iexists];\n"; 
       String test = pred.queryFormCSharp(newenv,false); 
       res = res + "      if (" + test + ") { return true; }\n"; 
       res = res + "    }\n"; 
@@ -4522,6 +4522,7 @@ public class BSystemTypes extends BComponent
       "    res.AddRange(a); \n" +
       "    return res; \n" + 
       "  }\n\n"; 
+
     res = res + 
       "  public static Hashtable copyMap(Hashtable m)\n" + 
       "  { Hashtable res = new Hashtable(); \n" +
@@ -4529,13 +4530,46 @@ public class BSystemTypes extends BComponent
       "    { res.Add(pair.Key, pair.Value); } \n" +
       "    return res; \n" + 
       "  }\n\n"; 
+
     res = res + 
       "  public static ArrayList collectSequence(ArrayList col, Func<object,object> f)\n" + 
       "  { ArrayList res = new ArrayList();\n" +  
       "    for (int i = 0; i < col.Count; i++)\n" + 
       "    { res.Add(f(col[i]));  }\n" + 
       "    return res; \n" + 
-      "  }\n"; 
+      "  }\n\n"; 
+
+   res = res + 
+      "  public unsafe static T* resizeTo<T>(T* arr, int n) where T : unmanaged\n" + 
+      "  { T* tmp = stackalloc T[n];\n" +
+      "    for (int i = 0; i < arr.Length; i++)\n" +
+      "    { tmp[i] = arr[i]; }\n" +
+      "    return tmp;\n" +
+      "  }\n\n" +
+      "  public unsafe static ArrayList sequenceRange<T>(T* arr, int n) where T : unmanaged\n" + 
+      "  { ArrayList res = new ArrayList();\n" +  
+      "    for (int i = 0; i < n; i++)\n" + 
+      "    { res.Add(arr[i]); }\n" + 
+      "    return res; \n" + 
+      "  }\n\n"; 
+
+    res = res + 
+      "  public static int sequenceCompare(ArrayList sq1, ArrayList sq2)\n" +
+      "  { int res = 0;\n" +
+      "    for (int i = 0; i < sq1.Count && i < sq2.Count; i++)\n" +
+      "    { object elem1 = sq1[i];\n" +
+      "      if (((IComparable)elem1).CompareTo(sq2[i]) < 0)\n" +
+      "      { return -1; }\n" +
+      "      else if (((IComparable)elem1).CompareTo(sq2[i]) > 0)\n" +
+      "      { return 1; }\n" +
+      "    }\n" +
+      "\n" +
+      "    if (sq1.Count > sq2.Count)\n" +
+      "    { return 1; }\n" +
+      "    if (sq2.Count > sq1.Count)\n" +
+      "    { return -1; }\n" +
+      "    return res;\n" +
+      "  }\n\n";
 
     return res; 
   } 

@@ -1032,12 +1032,23 @@ class BinaryExpression extends Expression
              operator.equals("->excludesValue") || 
              operator.equals("->restrict") ||
              operator.equals("->antirestrict") ||  
-             operator.equals("->selectMinimals") || operator.equals("->union") ||
-             operator.equals("->intersectAll") || operator.equals("->unionAll") ||
-             operator.equals("->count") || operator.equals("->indexOf") || operator.equals("->lastIndexOf") || 
-             operator.equals("->equalsIgnoreCase") || operator.equals("->before") || operator.equals("->after") || 
-             operator.equals("->hasMatch") || operator.equals("->isMatch") ||
-             operator.equals("->split") || operator.equals("->allMatches") || operator.equals("->firstMatch") || 
+             operator.equals("->selectMinimals") || 
+             operator.equals("->union") ||
+             operator.equals("->resizeTo") ||
+             operator.equals("->sequenceRange") ||
+             operator.equals("->intersectAll") || 
+             operator.equals("->unionAll") ||
+             operator.equals("->count") || 
+             operator.equals("->indexOf") || 
+             operator.equals("->lastIndexOf") || 
+             operator.equals("->equalsIgnoreCase") || 
+             operator.equals("->before") || 
+             operator.equals("->after") || 
+             operator.equals("->hasMatch") || 
+             operator.equals("->isMatch") ||
+             operator.equals("->split") || 
+             operator.equals("->allMatches") || 
+             operator.equals("->firstMatch") || 
              operator.equals("->at") || 
              operator.equals("->apply") ||
              operator.equals("->closure") || 
@@ -1209,9 +1220,15 @@ class BinaryExpression extends Expression
              operator.equals("->excludesValue") || 
              operator.equals("->restrict") ||
              operator.equals("->antirestrict") ||  
-             operator.equals("->selectMinimals") || operator.equals("->union") ||
-             operator.equals("->intersectAll") || operator.equals("->unionAll") ||
-             operator.equals("->count") || operator.equals("->indexOf") || operator.equals("->lastIndexOf") || 
+             operator.equals("->selectMinimals") || 
+             operator.equals("->union") ||
+             operator.equals("->resizeTo") ||
+             operator.equals("->sequenceRange") ||
+             operator.equals("->intersectAll") || 
+             operator.equals("->unionAll") ||
+             operator.equals("->count") || 
+             operator.equals("->indexOf") || 
+             operator.equals("->lastIndexOf") || 
              operator.equals("->equalsIgnoreCase") || operator.equals("->before") || operator.equals("->after") || 
              operator.equals("->hasMatch") || operator.equals("->isMatch") ||
              operator.equals("->split") || operator.equals("->allMatches") || operator.equals("->firstMatch") || 
@@ -2071,15 +2088,28 @@ class BinaryExpression extends Expression
         comparitors.contains(operator))
     { return true; } 
 
-    if (operator.equals("\\/") || operator.equals("/\\") || operator.equals("^") ||
-        operator.equals("->collect") || operator.equals("->union") ||
-        operator.equals("->sortedBy") || operator.equals("->select") || operator.equals("->closure") || 
-        operator.equals("->reject") || operator.equals("|") || operator.equals("|R") ||
-        operator.equals("|C") || operator.equals("->symmetricDifference") || 
-        operator.equals("->intersection") || operator.equals("->prepend") || 
-        operator.equals("->unionAll") || operator.equals("->intersectAll") || 
-        operator.equals("|unionAll") || operator.equals("|intersectAll") || operator.equals("|sortedBy") ||
-        operator.equals("->selectMaximals") || operator.equals("->selectMinimals") ||
+    if (operator.equals("\\/") || operator.equals("/\\") || 
+        operator.equals("^") || 
+        operator.equals("->sequenceRange") ||
+        operator.equals("->resizeTo") ||
+        operator.equals("->collect") || 
+        operator.equals("->union") ||
+        operator.equals("->sortedBy") || 
+        operator.equals("->select") || 
+        operator.equals("->closure") || 
+        operator.equals("->reject") || 
+        operator.equals("|") || operator.equals("|R") ||
+        operator.equals("|C") || 
+        operator.equals("->symmetricDifference") || 
+        operator.equals("->intersection") || 
+        operator.equals("->prepend") || 
+        operator.equals("->unionAll") || 
+        operator.equals("->intersectAll") || 
+        operator.equals("|unionAll") || 
+        operator.equals("|intersectAll") || 
+        operator.equals("|sortedBy") ||
+        operator.equals("->selectMaximals") || 
+        operator.equals("->selectMinimals") ||
         "|selectMinimals".equals(operator) ||  
         "|selectMaximals".equals(operator) ||
         operator.equals("->append") || 
@@ -3431,6 +3461,18 @@ public void findClones(java.util.Map clones, String rule, String op)
       else 
       { type = new Type("Map", null); } 
     } 
+    else if (operator.equals("->resizeTo"))
+    { type = new Type("Ref", null); 
+      elementType = left.elementType; 
+      type.setElementType(left.elementType); 
+      left.setArray(true); 
+      isArray = true; 
+    }         
+    else if (operator.equals("->sequenceRange"))
+    { type = new Type("Sequence", null); 
+      elementType = left.elementType; 
+      type.setElementType(left.elementType); 
+    }      
     else if (comparitors.contains(operator))
     { tcEq(tleft,tright,eleft,eright); }
     else if (operator.equals("+"))
@@ -5501,6 +5543,12 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->antirestrict"))
     { return "SystemTypes.antirestrictMap(" + lqf + "," + rqf + ")"; } 
 
+    if (operator.equals("->sequenceRange"))
+    { return "SystemTypes.sequenceRange(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("->resizeTo"))
+    { return "SystemTypes.resizeTo(" + lqf + "," + rqf + ")"; } 
+
     if (operator.equals("->prepend"))
     { return "SystemTypes.prepend(" + lqf + "," + rqf + ")"; } 
 
@@ -5526,7 +5574,7 @@ public boolean conflictsWithIn(String op, Expression el,
         return "((" + typ + ") " + lqf + "[" + rqf + " - 1])";
       } 
       
-      System.err.println("WARNING!: no element type in " + left); 
+      System.err.println("!WARNING!: no element type in " + left); 
 
       if (left.type != null && left.type.isMapType())
       { return "(" + lqf + ")[" + rqf + "]"; }
@@ -5552,6 +5600,8 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->compareTo")) 
     { if (left.isNumeric() && right.isNumeric())
       { res = "((" + lqf + " < " + rqf + ") ? -1 : ((" + lqf + " > " + rqf + ") ? 1 : 0))"; } 
+      else if (left.hasSequenceType() && right.hasSequenceType())
+      { res = "SystemTypes.sequenceCompare(" + lqf + "," + rqf + ")"; } 
       else 
       { res = "((IComparable) " + lqf + ").CompareTo(" + rqf + ")"; }  
       return res; 

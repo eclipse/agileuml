@@ -293,7 +293,7 @@ public class ASTBasicTerm extends ASTTerm
   { return null; } 
 
   public Expression cexpressionToKM3(java.util.Map vartypes, 
-    java.util.Map varelemtypes, Vector types, Vector entities)
+    java.util.Map varelemtypes, Vector types, Vector ents)
   { if ("primaryExpression".equals(tag))
     { System.out.println(">> Basic primary expression: " + value); 
 
@@ -473,7 +473,7 @@ public class ASTBasicTerm extends ASTTerm
       }
 
       Entity mainC = (Entity) ModelElement.lookupByName(
-                                      "FromC", entities);
+                                      "FromC", ents);
       if (mainC != null) 
       { BehaviouralFeature bf = mainC.getOperation(value); 
 

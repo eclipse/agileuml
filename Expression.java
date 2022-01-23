@@ -50,6 +50,7 @@ abstract class Expression
                                    // multiplicity of the feature, if a feature
   protected boolean needsBracket = false; 
   protected boolean isStatic = false; 
+  protected boolean isArray = false; // For Ref vbls
 
   protected Type sizeofType = null; 
 
@@ -175,6 +176,9 @@ abstract class Expression
 
   public void setStatic(boolean s)
   { isStatic = s; } 
+
+  public void setArray(boolean s)
+  { isArray = s; } 
 
   public boolean isStatic()
   { return isStatic; } 

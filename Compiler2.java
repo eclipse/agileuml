@@ -317,15 +317,24 @@ public class Compiler2
         str.equals("replaceAllMatches") ||
         str.equals("replaceFirstMatch") ||
         str.equals("replace") || str.equals("replaceAll") ||
-        str.equals("subrange") || str.equals("characters") || str.equals("isLong") || 
+        str.equals("subrange") || str.equals("characters") || 
+        str.equals("isLong") || str.equals("toLong") || 
         str.equals("closure") || 
         str.equals("asSet") || str.equals("asSequence") || 
         str.equals("asOrderedSet") ||
-        str.equals("sqr") || str.equals("floor") || str.equals("ceil") ||
-        str.equals("round") || str.equals("exp") || str.equals("pow") || str.equals("gcd") || 
-        str.equals("sin") || str.equals("cos") || str.equals("tan") || str.equals("toLong") ||
-        str.equals("asin") || str.equals("acos") || str.equals("atan") ||
-        str.equals("sinh") || str.equals("cosh") || str.equals("tanh") ||
+        str.equals("asArray") || 
+        str.equals("resizeTo") || 
+        str.equals("sequenceRange") || 
+        str.equals("sqr") || 
+        str.equals("floor") || str.equals("ceil") ||
+        str.equals("round") || str.equals("exp") || 
+        str.equals("pow") || str.equals("gcd") || 
+        str.equals("sin") || str.equals("cos") || 
+        str.equals("tan") || 
+        str.equals("asin") || str.equals("acos") || 
+        str.equals("atan") ||
+        str.equals("sinh") || str.equals("cosh") || 
+        str.equals("tanh") ||
         str.equals("log10") || str.equals("cbrt") || 
         str.equals("isInteger") ||
         str.equals("toInteger") || 
@@ -334,17 +343,23 @@ public class Compiler2
         str.equals("byte2char") ||
         str.equals("char2byte") ||
         str.equals("oclType") || str.equals("copy") || 
-        str.equals("log") || str.equals("count") || str.equals("hasPrefix") ||
-        str.equals("hasSuffix") || str.equals("isEmpty") || str.equals("notEmpty") ||
-        str.equals("isUnique") || str.equals("prd") || str.equals("sortedBy") ||
+        str.equals("log") || str.equals("count") || 
+        str.equals("hasPrefix") ||
+        str.equals("hasSuffix") || 
+        str.equals("isEmpty") || str.equals("notEmpty") ||
+        str.equals("isUnique") || str.equals("prd") || 
+        str.equals("sortedBy") ||
         // str.equals("excludingAt") || str.equals("excludingFirst") || 
         // str.equals("setAt") || str.equals("restrict") ||
         // str.equals("antirestrict") ||  
         str.equals("sqrt") || str.equals("abs") || "flatten".equals(str) || 
-        str.equals("oclAsType") || str.equals("oclIsKindOf") ||
-        str.equals("oclIsTypeOf") ||  str.equals("oclIsNew") || 
+        str.equals("oclAsType") || 
+        str.equals("oclIsKindOf") ||
+        str.equals("oclIsTypeOf") ||  
+        str.equals("oclIsNew") || 
         str.equals("or") ||
-        str.equals("indexOf") || str.equals("isDeleted") || str.equals("iterate"))
+        str.equals("indexOf") || 
+        str.equals("isDeleted") || str.equals("iterate"))
     { return true; } 
     return false; 
   } 
@@ -2375,18 +2390,29 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
             ("any".equals(ss2) || "size".equals(ss2) || "isDeleted".equals(ss2) ||
              "display".equals(ss2) || "min".equals(ss2) || "max".equals(ss2) ||
              "sum".equals(ss2) || "sort".equals(ss2) || "asSet".equals(ss2) || "asOrderedSet".equals(ss2) || 
-             "sqrt".equals(ss2) || "sqr".equals(ss2) || "asSequence".equals(ss2) ||
-             "last".equals(ss2) || "first".equals(ss2) || "closure".equals(ss2) ||
-             "subcollections".equals(ss2) || "reverse".equals(ss2) || "prd".equals(ss2) ||
-             "tail".equals(ss2) || "front".equals(ss2) || "isEmpty".equals(ss2) ||
-             "notEmpty".equals(ss2) || "toUpperCase".equals(ss2) || "flatten".equals(ss2) ||  
+             "sqrt".equals(ss2) || "sqr".equals(ss2) || 
+             "asSequence".equals(ss2) ||
+             "asArray".equals(ss2) ||
+             "last".equals(ss2) || "first".equals(ss2) || 
+             "closure".equals(ss2) ||
+             "subcollections".equals(ss2) || 
+             "reverse".equals(ss2) || "prd".equals(ss2) ||
+             "tail".equals(ss2) || "front".equals(ss2) || 
+             "isEmpty".equals(ss2) ||
+             "notEmpty".equals(ss2) || 
+             "toUpperCase".equals(ss2) || 
+             "flatten".equals(ss2) ||  
              "trim".equals(ss2) || 
-             "toLowerCase".equals(ss2) || "isInteger".equals(ss2) || "toLong".equals(ss2) ||
+             "toLowerCase".equals(ss2) || 
+             "isInteger".equals(ss2) || 
+             "toLong".equals(ss2) || "isLong".equals(ss2) ||
              "toInteger".equals(ss2) || 
              "toBoolean".equals(ss2) ||
              "isReal".equals(ss2) || "toReal".equals(ss2) ||
-             "exp".equals(ss2) || "log".equals(ss2) || "log10".equals(ss2) || 
-             "sin".equals(ss2) || "cos".equals(ss2) || "allInstances".equals(ss2) ||
+             "exp".equals(ss2) || "log".equals(ss2) || 
+             "log10".equals(ss2) || 
+             "sin".equals(ss2) || "cos".equals(ss2) || 
+             "allInstances".equals(ss2) ||
              "tan".equals(ss2) || 
              "oclIsNew".equals(ss2) || 
              "oclIsUndefined".equals(ss2) || 
@@ -2397,10 +2423,12 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
              "char2byte".equals(ss2) || 
              "byte2char".equals(ss2) || 
              "unionAll".equals(ss2) || 
-             "intersectAll".equals(ss2) || "concatenateAll".equals(ss2) ||
+             "intersectAll".equals(ss2) || 
+             "concatenateAll".equals(ss2) ||
              "floor".equals(ss2) || "ceil".equals(ss2) || "round".equals(ss2) ||
-             "abs".equals(ss2) || "cbrt".equals(ss2) || "asin".equals(ss2) ||
-             "acos".equals(ss2) || "atan".equals(ss2) || "isLong".equals(ss2) ||
+             "abs".equals(ss2) || "cbrt".equals(ss2) || 
+             "asin".equals(ss2) ||
+             "acos".equals(ss2) || "atan".equals(ss2) || 
              "sinh".equals(ss2) || "cosh".equals(ss2) || "tanh".equals(ss2) ||
              "values".equals(ss2) || "keys".equals(ss2) ||
              extensionOperators.contains(ss2) ) )
@@ -3900,7 +3928,9 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
             ("any".equals(ss2) || "size".equals(ss2) || "isDeleted".equals(ss2) ||
              "display".equals(ss2) || "min".equals(ss2) || "max".equals(ss2) ||
              "sum".equals(ss2) || "sort".equals(ss2) || "asSet".equals(ss2) || "asOrderedSet".equals(ss2) || 
-             "sqrt".equals(ss2) || "sqr".equals(ss2) || "asSequence".equals(ss2) ||
+             "sqrt".equals(ss2) || "sqr".equals(ss2) || 
+             "asSequence".equals(ss2) ||
+             "asArray".equals(ss2) ||
              "last".equals(ss2) || "first".equals(ss2) || "closure".equals(ss2) ||
              "subcollections".equals(ss2) || "reverse".equals(ss2) || "prd".equals(ss2) ||
              "tail".equals(ss2) || "front".equals(ss2) || "isEmpty".equals(ss2) ||

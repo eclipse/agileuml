@@ -75,7 +75,7 @@ public abstract class ASTTerm
     cqueryfunctions.add("isxdigit"); 
     cqueryfunctions.add("calloc"); 
     cqueryfunctions.add("malloc"); 
-    cqueryfunctions.add("realloc"); 
+    // cqueryfunctions.add("realloc"); 
     cqueryfunctions.add("strcmp"); 
     cqueryfunctions.add("strncmp"); 
     cqueryfunctions.add("strchr"); 
@@ -259,6 +259,45 @@ public abstract class ASTTerm
                       ModelElement.INTERNAL); 
       ent.addAttribute(rem); 
     } 
+    else if ("tm".equals(nme))
+    { Attribute secs = 
+        new Attribute("tm_sec", new Type("int", null), 
+                      ModelElement.INTERNAL); 
+      ent.addAttribute(secs); 
+      Attribute mins = 
+        new Attribute("tm_min", new Type("int", null), 
+                      ModelElement.INTERNAL); 
+      ent.addAttribute(mins); 
+      Attribute hrs = 
+        new Attribute("tm_hour", new Type("int", null), 
+                      ModelElement.INTERNAL); 
+      ent.addAttribute(hrs); 
+      Attribute days = 
+        new Attribute("tm_mday", new Type("int", null), 
+                      ModelElement.INTERNAL); 
+      ent.addAttribute(days); 
+      Attribute months = 
+        new Attribute("tm_mon", new Type("int", null), 
+                      ModelElement.INTERNAL); 
+      ent.addAttribute(months);
+      Attribute years = 
+        new Attribute("tm_year", new Type("int", null), 
+                      ModelElement.INTERNAL); 
+      ent.addAttribute(years); 
+      Attribute wday = 
+        new Attribute("tm_wday", new Type("int", null), 
+                      ModelElement.INTERNAL); 
+      ent.addAttribute(wday);
+      Attribute yday = 
+        new Attribute("tm_yday", new Type("int", null), 
+                      ModelElement.INTERNAL); 
+      ent.addAttribute(yday); 
+      Attribute isdst = 
+        new Attribute("tm_isdst", new Type("int", null), 
+                      ModelElement.INTERNAL); 
+      ent.addAttribute(isdst);  
+    } 
+
     return ent; 
   }
 

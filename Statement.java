@@ -2191,6 +2191,9 @@ class WhileStatement extends Statement
     } 
   } 
 
+  public void setIterationRange(Expression expr)
+  { loopRange = expr; } 
+
   public void setEntity(Entity e)
   { entity = e; 
     if (body != null) 
@@ -3392,6 +3395,15 @@ class CreationStatement extends Statement
     elementType = vbl.getElementType(); 
     assignsTo = vbl.getName();
     variable = vbl;  
+  }
+
+  public CreationStatement(BasicExpression vbl)
+  { Type typ = vbl.getType(); 
+    createsInstanceOf = typ.getName();
+    instanceType = typ; 
+    elementType = vbl.getElementType(); 
+    assignsTo = vbl.getData();
+    variable = vbl.variable;  
   }
 
   public static CreationStatement newCreationStatement(String vbl, String typ) 
