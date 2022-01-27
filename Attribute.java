@@ -32,6 +32,8 @@ public class Attribute extends ModelElement
   private String role1 = null;  // for associations represented as properties
   private int card1 = ModelElement.MANY; 
   private Vector parameters = new Vector(); 
+  private boolean isArray = false; 
+
  
   public Attribute(String nme, Type t, int k)
   { super(nme);
@@ -267,6 +269,12 @@ public class Attribute extends ModelElement
 
   public Vector getParameters()
   { return parameters; } 
+
+  public boolean isArray()
+  { return isArray; } 
+
+  public void setArray(boolean b)
+  { isArray = b; } 
 
   public boolean typeCheck(Vector types, Vector entities)
   { if (type == null) 

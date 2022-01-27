@@ -3647,7 +3647,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         thisclone.argument = mutant;  
         res.add(thisclone); 
       }
-      else if ("not".equals(operator) || "-".equals(operator))
+      else if ("not".equals(operator) || 
+               "-".equals(operator) || 
+               "->sort".equals(operator) || 
+               "->reverse".equals(operator))
       { res.add(mutant); } 
     }
     return res; 
@@ -3681,7 +3684,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       UnaryExpression thisclone = (UnaryExpression) this.clone();
       thisclone.operator = operator; 
       thisclone.argument = mutant;
-      if (VectorUtil.containsEqualString(thisclone + "",res)) { } 
+      if (VectorUtil.containsEqualString(thisclone + "",res)) 
+      { } 
       else 
       { res.add(thisclone); } 
     }
@@ -3694,8 +3698,14 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       else 
       { res.add(thisclone); } 
     }  
-    else if ("not".equals(operator) || "-".equals(operator))
-    { res.add(argument); } 
+    else if ("not".equals(operator) || "-".equals(operator) ||
+             "->reverse".equals(operator) || 
+             "->sort".equals(operator))
+    { if (VectorUtil.containsEqualString(argument + "",res)) 
+      { } 
+      else 
+      { res.add(argument); }
+    } 
 
     return res; 
   } 

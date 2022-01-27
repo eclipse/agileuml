@@ -729,6 +729,31 @@ public class BehaviouralFeature extends ModelElement
     return true; 
   }
 
+  public Type getFunctionType()
+  { Type res; 
+    if (resultType != null)
+    { res = resultType; } 
+    else 
+    { res = new Type("void", null); }
+    if (parameters == null || parameters.size() == 0)
+    { Type ftype = new Type("Function", null); 
+      ftype.setElementType(res); 
+      ftype.setKeyType(res); 
+      return ftype; 
+    } 
+ 
+    for (int i = parameters.size()-1; i >= 0; i--) 
+    { Attribute par = (Attribute) parameters.get(i); 
+      Type ptype = par.getType(); 
+      Type ftype = new Type("Function", null); 
+      ftype.setElementType(res); 
+      ftype.setKeyType(ptype);
+      res = ftype; 
+    } 
+
+    return res; 
+  } 
+
   public boolean isZeroArgument()
   { return parameters.size() == 0; } 
 

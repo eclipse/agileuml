@@ -794,7 +794,27 @@ class BinaryExpression extends Expression
   public Vector mutants()
   { Vector lms = left.mutants(); 
     Vector rms = right.mutants(); 
-    Vector res = new Vector(); 
+    Vector res = new Vector();
+
+    if ("->compareTo".equals(operator))
+    { for (int i = 0; i < lms.size(); i++) 
+      { Expression lm = (Expression) lms.get(i); 
+        for (int j = 0; j < rms.size(); j++) 
+        { Expression rm = (Expression) rms.get(j); 
+          BinaryExpression mutant = 
+                   (BinaryExpression) this.clone(); 
+          mutant.operator = "->compareTo"; 
+          mutant.left = rm; 
+          mutant.right = lm;  
+          if (VectorUtil.containsEqualString(mutant + "",res)) { } 
+          else 
+          { res.add(mutant); }  
+        }
+      }
+      System.out.println(">>> All mutants of " + this + " are: " + res); 
+      return res; 
+    }
+
     Vector mutantOps = mutantOperators(operator); 
 	
     for (int i = 0; i < lms.size(); i++) 
@@ -822,6 +842,46 @@ class BinaryExpression extends Expression
     Vector rms = right.singleMutants(); 
     Vector res = new Vector(); 
     Vector mutantOps = mutantOperators(operator); 
+
+    if ("->compareTo".equals(operator))
+    { for (int i = 0; i < lms.size(); i++) 
+      { Expression lm = (Expression) lms.get(i); 
+        BinaryExpression mutant = 
+                   (BinaryExpression) this.clone(); 
+        mutant.operator = "->compareTo"; 
+        mutant.left = lm; 
+        mutant.right = right;  
+        if (VectorUtil.containsEqualString(mutant + "",res)) { } 
+        else 
+        { res.add(mutant); }  
+      }
+    
+      for (int i = 0; i < rms.size(); i++) 
+      { Expression rm = (Expression) rms.get(i); 
+        BinaryExpression mutant = 
+                   (BinaryExpression) this.clone(); 
+        mutant.operator = "->compareTo"; 
+        mutant.left = left; 
+        mutant.right = rm;  
+        if (VectorUtil.containsEqualString(mutant + "",res)) { } 
+        else 
+        { res.add(mutant); }  
+      }
+
+      BinaryExpression mut = (BinaryExpression) this.clone();
+      mut.left = right; 
+      mut.right = left; 
+      if (VectorUtil.containsEqualString(mut + "",res)) { } 
+      else 
+      { res.add(mut); }  
+    
+      Vector selfs = new Vector(); 
+      selfs.add(this); 
+      res.removeAll(selfs); 
+    
+      System.out.println(">>> All single mutants of " + this + " are: " + res); 
+      return res; 
+    }
 	
     for (int i = 0; i < lms.size(); i++) 
     { Expression lm = (Expression) lms.get(i); 
@@ -4452,8 +4512,11 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->compareTo")) 
     { if (left.isNumeric() && right.isNumeric())
       { res = "(" + lqf + " < " + rqf + ")?-1:((" + lqf + " > " + rqf + ")?1:0)"; } 
+      else if (left.hasSequenceType() && right.hasSequenceType())
+      { res = "Set.sequenceCompare(" + lqf + "," + rqf + ")"; } 
       else 
-      { res = lqf + ".compareTo(" + rqf + ")"; }  
+      { res = lqf + ".compareTo(" + rqf + ")"; }
+  
       return res; 
     } 
 
@@ -4875,6 +4938,8 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->compareTo")) 
     { if (left.isNumeric() && right.isNumeric())
       { res = "(" + lqf + " < " + rqf + ")?-1:((" + lqf + " > " + rqf + ")?1:0)"; } 
+      else if (left.hasSequenceType() && right.hasSequenceType())
+      { res = "Set.sequenceCompare(" + lqf + "," + rqf + ")"; } 
       else 
       { res = lqf + ".compareTo(" + rqf + ")"; }  
       return res; 
@@ -5228,6 +5293,8 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->compareTo")) 
     { if (left.isNumeric() && right.isNumeric())
       { res = "(" + lqf + " < " + rqf + ") ? -1 : ((" + lqf + " > " + rqf + ") ? 1 : 0)"; } 
+      else if (left.hasSequenceType() && right.hasSequenceType())
+      { res = "Ocl.sequenceCompare(" + lqf + "," + rqf + ")"; } 
       else 
       { res = lqf + ".compareTo(" + rqf + ")"; }  
       return res; 

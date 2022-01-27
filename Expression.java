@@ -183,6 +183,9 @@ abstract class Expression
   public boolean isStatic()
   { return isStatic; } 
 
+  public boolean isArray()
+  { return isArray; } 
+
   public Expression firstConjunct()
   { return this; } 
 

@@ -2607,6 +2607,9 @@ public class ASTCompositeTerm extends ASTTerm
 
         System.out.println(">> Initial expression of " + att + " is " + init); 
 
+        if (init != null && init.isArray())
+        { att.setArray(true); } 
+
         if (init != null && 
             !SetExpression.isRefSetExpression(init)) 
         { BasicExpression lhs = new BasicExpression(att);
@@ -4913,13 +4916,14 @@ public class ASTCompositeTerm extends ASTTerm
           vartypes, varelemtypes, types, entities);
       
       if ("&".equals(op) && res != null)
-      { Expression resx = new UnaryExpression("?", res); 
+      { res.setBrackets(true); 
+        Expression resx = new UnaryExpression("?", res); 
         Type rest = new Type("Ref", null); 
         rest.setElementType(res.getType()); 
         resx.setType(rest); 
         resx.setElementType(res.getType()); 
         return resx; 
-      } 
+      } // a reference to a function is the function
 
       if ("*".equals(op) && res != null)
       { if (res.isString())
@@ -4931,10 +4935,11 @@ public class ASTCompositeTerm extends ASTTerm
           return aschar; 
         } 
 
+        res.setBrackets(true); 
         Expression expr = new UnaryExpression("!", res);
         expr.setType(res.getElementType()); 
         return expr;  
-      } 
+      } // dereference of a function is the function
 
       if ("!".equals(op))
       { Expression resx = new UnaryExpression("not", res); 

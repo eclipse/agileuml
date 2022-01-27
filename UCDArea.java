@@ -12748,9 +12748,10 @@ public void produceCUI(PrintWriter out)
       return; 
     } 
 
-    System.out.println(">>> Loaded " + file.getName()); 
 
     CSTL.loadTemplates(types,entities,file.getName()); 
+
+    System.out.println(">>> Loaded " + file.getName()); 
 
     String newtypes = ""; 
     String newclasses = ""; 

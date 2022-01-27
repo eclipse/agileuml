@@ -322,11 +322,21 @@ public class ASTBasicTerm extends ASTTerm
           new UnaryExpression("lambda", 
                 new BinaryExpression("->compareTo", 
                                      x1be, x2be));
-        letexpr.setAccumulator(x2); 
+        letexpr.setAccumulator(x2);
+        Type ftype1 = new Type("Function", null); 
+        ftype1.setKeyType(stringtype); 
+        ftype1.setElementType(new Type("int", null));  
+        letexpr.setType(ftype1); 
 
         UnaryExpression res = 
           new UnaryExpression("lambda", letexpr); 
         res.setAccumulator(x1); 
+
+        Type ftype2 = new Type("Function", null); 
+        ftype2.setKeyType(stringtype); 
+        ftype2.setElementType(ftype1);  
+        res.setType(ftype2); 
+
         return res; 
       }  
 
@@ -484,15 +494,18 @@ public class ASTBasicTerm extends ASTTerm
                                                  bf,mainC); 
           Expression lam = 
             UnaryExpression.newLambdaUnaryExpression(bfcall, bf); 
+          Type ftype = bf.getFunctionType(); 
+          lam.setType(ftype); 
           return lam; 
         }
 
         Attribute att = mainC.getAttribute(value); 
         if (att != null) 
         { System.out.println(">>> Global attribute: " + value + " : " + att.getType()); 
-          Expression expr = 
+          BasicExpression expr = 
             BasicExpression.newStaticAttributeBasicExpression(
-                                                    att); 
+                                                    att);
+          expr.variable = att;  
           return expr; 
         }       
       } 

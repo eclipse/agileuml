@@ -394,18 +394,21 @@ class BasicExpression extends Expression
     res.type = att.getType(); 
     res.elementType = att.getElementType(); 
     res.isStatic = true; 
+    // res.variable = att; 
     return res; 
   } 
 
   public static BasicExpression newVariableBasicExpression(String value) 
   { BasicExpression res = new BasicExpression(value); 
     res.umlkind = VARIABLE;
+    
     return res; 
   } 
 
   public static BasicExpression newVariableBasicExpression(Attribute att) 
   { BasicExpression res = new BasicExpression(att); 
     res.umlkind = VARIABLE;
+    res.variable = att; 
     return res; 
   } 
 

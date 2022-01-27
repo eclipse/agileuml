@@ -15,6 +15,7 @@
 import java.util.Vector; 
 import java.util.regex.Matcher; 
 import java.util.regex.Pattern; 
+import java.io.*; 
 
 
 public class CGRule
@@ -753,7 +754,7 @@ public class CGRule
         else if (obj instanceof ASTTerm)
         { ASTTerm term = (ASTTerm) obj; 
 
-          System.out.println(">***> Applying " + mffeat + " to " + obj); 
+          System.out.println(">***> Applying " + mffeat + " to ASTTerm " + obj); 
           System.out.println(); 
           
           if ("type".equals(mffeat))
@@ -904,6 +905,34 @@ public class CGRule
                 res = res.replace(mf,repl1);
               }
             }
+            else if (CSTL.hasTemplate(mffeat + ".cstl")) // Try to load a new CSTL specification
+            { System.out.println(">>> Template exists: " + 
+                                 mffeat); 
+              CGSpec newcgs = CSTL.getTemplate(mffeat + ".cstl"); 
+              System.out.println(); 
+              String repl = ((ASTTerm) obj).cg(newcgs);
+            
+              if (repl != null) 
+              { String repl1 = correctNewlines(repl); 
+                System.out.println(">--> Replacing " + mf + " by " + repl1); 
+                res = res.replace(mf,repl1);
+              } 
+            } 
+            else 
+            { System.out.println("!! No template " + mffeat + " exists"); 
+              File sub = new File("./cg/" + mffeat + ".cstl");
+      
+              CGSpec newcgs = new CGSpec(entities); 
+              CGSpec xcgs = 
+                CSTL.loadCSTL(newcgs,sub,types,entities); 
+              if (xcgs != null)
+              { CSTL.addTemplate(mffeat + ".cstl", xcgs); 
+                String rpl = ((ASTTerm) obj).cg(xcgs);   
+                String repl1 = correctNewlines(rpl); 
+                System.out.println(">--> Replacing " + mf + " by " + repl1); 
+                res = res.replace(mf,repl1);
+              }              
+            } 
           }  
         }
         else if (obj instanceof String && 

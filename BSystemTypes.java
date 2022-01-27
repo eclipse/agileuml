@@ -4460,13 +4460,40 @@ public class BSystemTypes extends BComponent
       "  { Vector result = new Vector();\n" +  
       "    result.addAll(s);\n" +  
       "    return result;\n" + 
-      "  }\n"; 
+      "  }\n\n"; 
     res = res + 
       "  public static HashMap copyMap(Map s)\n" + 
       "  { HashMap result = new HashMap();\n" +  
       "    result.putAll(s);\n" +  
       "    return result;\n" +  
-      "  }"; 
+      "  }\n\n";
+
+    res = res + 
+      "  public static Vector sequenceRange(Object[] arr, int n)\n" +
+      "  { Vector res = new Vector();\n" + 
+      "    for (int i = 0; i < n; i++) \n" +
+      "    { res.add(arr[i]); } \n" +
+      "    return res; \n" +
+      "  }\n\n";
+
+   res = res +  
+      "  public static int sequenceCompare(List sq1, List sq2)\n" +
+      "  { int res = 0;\n" +
+      "    for (int i = 0; i < sq1.size() && i < sq2.size(); i++)\n" +
+      "    { Object elem1 = sq1.get(i);\n" +
+      "      if (((Comparable) elem1).compareTo(sq2.get(i)) < 0)\n" +
+      "      { return -1; }\n" +
+      "      else if (((Comparable) elem1).compareTo(sq2.get(i)) > 0)\n" +
+      "      { return 1; }\n" +
+      "    }\n" +
+      "\n" +
+      "    if (sq1.size() > sq2.size())\n" +
+      "    { return 1; }\n" +
+      "    if (sq2.size() > sq1.size())\n" +
+      "    { return -1; }\n" +
+      "    return res;\n" +
+      "  }\n\n"; 
+ 
     return res; 
   }  
 
@@ -4475,18 +4502,45 @@ public class BSystemTypes extends BComponent
       "  { HashSet result = new HashSet();\n" +  
       "    result.addAll(s);\n" +  
       "    return result;\n" + 
-      "  }\n";
+      "  }\n\n";
     res = "  public static ArrayList copySequence(ArrayList s)\n" + 
       "  { ArrayList result = new ArrayList();\n" +  
       "    result.addAll(s);\n" +  
       "    return result;\n" + 
-      "  }\n"; 
+      "  }\n\n"; 
     res = res + 
       "  public static HashMap copyMap(Map s)\n" + 
       "  { HashMap result = new HashMap();\n" +  
       "    result.putAll(s);\n" +  
       "    return result;\n" +  
-      "  }"; 
+      "  }\n\n";
+
+    res = res + 
+      "  public static ArrayList sequenceRange(Object[] arr, int n)\n" +
+      "  { ArrayList res = new ArrayList();\n" + 
+      "    for (int i = 0; i < n; i++) \n" +
+      "    { res.add(arr[i]); } \n" +
+      "    return res; \n" +
+      "  }\n\n"; 
+
+   res = res +  
+      "  public static int sequenceCompare(List sq1, List sq2)\n" +
+      "  { int res = 0;\n" +
+      "    for (int i = 0; i < sq1.size() && i < sq2.size(); i++)\n" +
+      "    { Object elem1 = sq1.get(i);\n" +
+      "      if (((Comparable) elem1).compareTo(sq2.get(i)) < 0)\n" +
+      "      { return -1; }\n" +
+      "      else if (((Comparable) elem1).compareTo(sq2.get(i)) > 0)\n" +
+      "      { return 1; }\n" +
+      "    }\n" +
+      "\n" +
+      "    if (sq1.size() > sq2.size())\n" +
+      "    { return 1; }\n" +
+      "    if (sq2.size() > sq1.size())\n" +
+      "    { return -1; }\n" +
+      "    return res;\n" +
+      "  }\n\n"; 
+  
     return res; 
   }  
 
@@ -4495,23 +4549,50 @@ public class BSystemTypes extends BComponent
       "  { HashSet<T> result = new HashSet<T>();\n" +  
       "    result.addAll(s);\n" +  
       "    return result;\n" +  
-      "  }\n";  
+      "  }\n\n";  
     res = res + "  public static <T> TreeSet<T> copySortedSet(Collection<T> s)\n" + 
       "  { TreeSet<T> result = new TreeSet<T>();\n" +  
       "    result.addAll(s);\n" +  
       "    return result;\n" +  
-      "  }\n";  
+      "  }\n\n";  
     res = res + "  public static <T> ArrayList<T> copySequence(Collection<T> s)\n" + 
       "  { ArrayList<T> result = new ArrayList<T>();\n" + 
       "    result.addAll(s); \n" +
       "    return result; \n" +
-      "  }\n";  
+      "  }\n\n";  
     res = res + 
       "  public static <K,T> HashMap<K,T> copyMap(Map<K,T> s)\n" +
       "  { HashMap<K,T> result = new HashMap<K,T>();\n" + 
       "    result.putAll(s);\n" + 
       "    return result;\n" + 
-      "  }\n"; 
+      "  }\n\n";
+
+    res = res + 
+      "  public static <T> ArrayList<T> sequenceRange(T[] arr, int n)\n" + 
+      "  { ArrayList<T> res = new ArrayList<T>();\n" +
+      "    for (int i = 0; i < n; i++) \n" +
+      "    { res.add(arr[i]); } \n" +
+      "    return res;  \n" +
+      "  }\n\n"; 
+
+   res = res +  
+      "  public static int sequenceCompare(List sq1, List sq2)\n" +
+      "  { int res = 0;\n" +
+      "    for (int i = 0; i < sq1.size() && i < sq2.size(); i++)\n" +
+      "    { Object elem1 = sq1.get(i);\n" +
+      "      if (((Comparable) elem1).compareTo(sq2.get(i)) < 0)\n" +
+      "      { return -1; }\n" +
+      "      else if (((Comparable) elem1).compareTo(sq2.get(i)) > 0)\n" +
+      "      { return 1; }\n" +
+      "    }\n" +
+      "\n" +
+      "    if (sq1.size() > sq2.size())\n" +
+      "    { return 1; }\n" +
+      "    if (sq2.size() > sq1.size())\n" +
+      "    { return -1; }\n" +
+      "    return res;\n" +
+      "  }\n\n"; 
+ 
     return res;  
   }
 
@@ -4542,7 +4623,7 @@ public class BSystemTypes extends BComponent
    res = res + 
       "  public unsafe static T* resizeTo<T>(T* arr, int n) where T : unmanaged\n" + 
       "  { T* tmp = stackalloc T[n];\n" +
-      "    for (int i = 0; i < arr.Length; i++)\n" +
+      "    for (int i = 0; i < n; i++)\n" +
       "    { tmp[i] = arr[i]; }\n" +
       "    return tmp;\n" +
       "  }\n\n" +
