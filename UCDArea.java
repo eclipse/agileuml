@@ -359,6 +359,7 @@ public class UCDArea extends JPanel
   public void typeCheck()
   { for (int i = 0; i < entities.size(); i++) 
     { Entity e = (Entity) entities.get(i); 
+      e.typeCheckAttributes(types,entities); 
       e.typeCheckOps(types,entities); 
       e.typeCheckInvariants(types,entities); 
     } 
@@ -12822,7 +12823,7 @@ public void produceCUI(PrintWriter out)
   }  
 
   public CGSpec loadCSTL()
-  { CGSpec res = new CGSpec(entities); 
+  { CGSpec res = new CGSpec(entities,types); 
     
     File f = new File("./cg/cg.cstl");  /* default */ 
     if (f != null) 
@@ -12835,7 +12836,7 @@ public void produceCUI(PrintWriter out)
   }
 
   public CGSpec loadCSTL(String fname, Vector fnames)
-  { CGSpec res = new CGSpec(entities); 
+  { CGSpec res = new CGSpec(entities,types); 
     
     File f = new File("./cg/" + fname);   
     if (f != null) 
@@ -12848,7 +12849,7 @@ public void produceCUI(PrintWriter out)
   }
 
   public CGSpec loadCSTL(File f, Vector subfiles)
-  { CGSpec res = new CGSpec(entities); 
+  { CGSpec res = new CGSpec(entities,types); 
     
     res = CSTL.loadCSTL(f,types,entities);
 
@@ -20316,7 +20317,7 @@ public void produceCUI(PrintWriter out)
                               new BufferedWriter(
                                 new FileWriter("output/tl.cstl")));
 
-        CGSpec cg = new CGSpec(entities); 
+        CGSpec cg = new CGSpec(entities,types); 
         tlspecification.toCSTL(cg);
         cout.println(cg);   
 

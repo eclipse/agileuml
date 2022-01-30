@@ -447,6 +447,7 @@ public class CGRule
     System.out.println(">***> LHS tokens: " + lhsTokens); 
       
     Vector entities = cgs.entities; 
+    Vector types = cgs.types; 
 
     String res = rhs + "";
     for (int j = 0; j < metafeatures.size(); j++) 
@@ -484,26 +485,29 @@ public class CGRule
             res = res.replace(mf,repl1);
           } 
         }
-        else if ("defaultSubclass".equals(mffeat) && obj instanceof Entity)
-        { Entity ee = (Entity) obj; 
-          Entity esub = ee.getDefaultSubclass(); 
-          if (esub != null) 
-          { String repl = esub.getName(); 
-            System.out.println(">--> Replacing " + mf + " by " + repl); 
-            res = res.replace(mf,repl);
-          } 
-        }
-        else if ("defaultSubclass".equals(mffeat) && obj instanceof Type)
-        { Type etype = (Type) obj; 
-          if (etype.isEntity(entities))
-          { Entity ee = etype.getEntity(entities); 
+        else if ("defaultSubclass".equals(mffeat))
+        { String repl = ""; 
+          if (obj instanceof Entity)
+          { Entity ee = (Entity) obj; 
             Entity esub = ee.getDefaultSubclass(); 
             if (esub != null) 
-            { String repl = esub.getName(); 
+            { repl = esub.getName(); 
               System.out.println(">--> Replacing " + mf + " by " + repl); 
               res = res.replace(mf,repl);
             }
-          }  
+          } 
+          else if (obj instanceof Type)
+          { Type etype = (Type) obj; 
+            Type tsub = etype.defaultSubtype(entities);
+            repl = tsub.cg(cgs);  
+            System.out.println(">--> Replacing " + mf + " by " + repl); 
+            res = res.replace(mf,repl);  
+          }
+       /*   else if (obj instanceof ModelElement)
+          { repl = ((ModelElement) obj).getName(); 
+            System.out.println(">--> Replacing " + mf + " by " + repl); 
+            res = res.replace(mf,repl);
+          } */ 
         }
         else if ("alias".equals(mffeat) && obj instanceof Type)
         { Type ee = (Type) obj; 
@@ -922,7 +926,7 @@ public class CGRule
             { System.out.println("!! No template " + mffeat + " exists"); 
               File sub = new File("./cg/" + mffeat + ".cstl");
       
-              CGSpec newcgs = new CGSpec(entities); 
+              CGSpec newcgs = new CGSpec(entities,types); 
               CGSpec xcgs = 
                 CSTL.loadCSTL(newcgs,sub,types,entities); 
               if (xcgs != null)
@@ -950,17 +954,9 @@ public class CGRule
             res = res.replace(mf,repl1);
           } 
         }  // Other string functions could be added.  
-        else if (obj instanceof Vector)
+        else if (obj instanceof Vector) // Of ASTTerm
         { Vector v = (Vector) obj;
           String repl = "";
-          /* if ("first".equals(mffeat))
-          { Object v1 = v.get(0);   
-            repl = v1.cg(cgs); 
-            String repl1 = correctNewlines(repl); 
-              
-            res = res.replaceAll(mf,repl1);
-          }
-          else */ 
           if (cgs.hasRuleset(mffeat))
           { System.out.println(">***> Valid ruleset " + mffeat);  
             System.out.println(); 
@@ -980,7 +976,36 @@ public class CGRule
               res = res.replace(mf,repl1v);
             } 
           } 
-
+          else if ("front".equals(mffeat) && v.size() > 0 &&
+                   v.get(0) instanceof ASTTerm)
+          { String replv = ""; 
+            for (int p = 0; p < v.size()-1; p++)
+            { if (v.get(p) instanceof ASTTerm)
+              { ASTTerm x = (ASTTerm) v.get(p); 
+                replv = replv + x.cg(cgs);
+              } 
+            } 
+            String repl1 = correctNewlines(replv); 
+              
+            res = res.replace(mf,repl1);
+          }
+          else if ("first".equals(mffeat) && v.size() > 0 &&
+                   v.get(0) instanceof ASTTerm)
+          { ASTTerm v1 = (ASTTerm) v.get(0);   
+            repl = v1.cg(cgs); 
+            String repl1 = correctNewlines(repl); 
+              
+            res = res.replace(mf,repl1);
+          }
+          else if ("last".equals(mffeat) && v.size() > 0 &&
+                   v.get(v.size()-1) instanceof ASTTerm)
+          { ASTTerm v1 = (ASTTerm) v.get(v.size()-1);   
+            repl = v1.cg(cgs); 
+            String repl1 = correctNewlines(repl); 
+              
+            res = res.replace(mf,repl1);
+          }
+          System.out.println(">> Applied vector rule: " + res); 
         }   
         else 
         { System.err.println("!! Warning: could not apply metafeature " + mffeat + " to " + obj); } 

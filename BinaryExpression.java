@@ -3708,6 +3708,12 @@ public void findClones(java.util.Map clones, String rule, String op)
       { type = new Type("String",null); }
       else
       { System.err.println("Warning: disallowed types " + tlname + " " + trname + " in +: " + this);
+
+        if (left.isRef())
+        { left.setArray(true);
+          System.out.println(">>> Pointer arithmetic may not translate correctly!!");
+        }
+ 
         // JOptionPane.showMessageDialog(null, "Disallowed types in " + this, 
         //                              "Type error", JOptionPane.WARNING_MESSAGE);
         type = tleft; // new Type("double",null);

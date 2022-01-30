@@ -35,13 +35,14 @@ public class CGSpec
   Vector textRules; 
 
   Vector entities; 
+  Vector types; 
 
   java.util.Map categoryRules = new java.util.HashMap(); 
                 // String -> Vector of CGRule
   java.util.Map umlRules = new java.util.HashMap(); 
                 // String -> Vector of CGRule
 
-  public CGSpec(Vector ents)
+  public CGSpec(Vector ents, Vector typs)
   { typeDefinitionRules = new Vector();
     typeUseRules = new Vector();
     basicExpressionRules = new Vector();
@@ -81,7 +82,8 @@ public class CGSpec
     umlRules.put("ParameterArgument", parameterArgumentRules); 
    
 
-    entities = ents;  
+    entities = ents;
+    types = typs;   
   }
 
   public void addCategory(String category)
@@ -574,7 +576,7 @@ public class CGSpec
   { String tname = t.getName(); 
     Type elemT = t.getElementType(); 
     Vector args = new Vector(); 
-    args.add(t); 
+    
 
     
     for (int x = 0; x < typeUseRules.size(); x++)
@@ -586,55 +588,83 @@ public class CGSpec
 	 System.out.println(">>+ Type +> " + t + " is: " + typetext + " rule lhs: " + trimmedlhs); 
 	  
       if (typetext.equals(trimmedlhs))
-      { selected = r; } // exact match -- assume no variables
+      { args.add(t); 
+        selected = r; 
+      } // exact match -- assume no variables
       // else if (t.isMapType() && trimmedlhs.startsWith("Map"))
       // { return r; }
       else if (t.isMapType() && trimmedlhs.equals("Map(_1,_2)"))
-      { selected = r; }
+      { args.add(t.getKeyType());
+        args.add(t.getElementType());  
+        selected = r; 
+      }
       else if (t.isFunctionType() && trimmedlhs.equals("Function(_1,_2)"))
-      { selected = r; }
+      { args.add(t.getKeyType());
+        args.add(t.getElementType());  
+        selected = r; 
+      }
       else if (t.isEnumeratedType() && r.hasCondition("enumerated"))
-      { selected = r; }
+      { args.add(t);
+        selected = r; 
+      }
       // else if (t.isEntityType() && r.hasCondition("class"))
       // { System.out.println(">> Condition class satisfied for " + t); 
       //   selected = r; 
       // }
       else if (t.isSetType() && trimmedlhs.startsWith("Set") )
       { if (elemT != null && trimmedlhs.equals("Set(" + elemT + ")"))
-        { selected = r; }
+        { args.add(elemT);
+          selected = r; 
+        }
         else if (elemT == null && 
                  (trimmedlhs.equals("Set()") ||
                   trimmedlhs.equals("Set")))
         { selected = r; }
         else if (elemT != null && trimmedlhs.equals("Set(_1)"))
-        { selected = r; } 
+        { args.add(elemT);
+          selected = r; 
+        } 
       } 
       else if (t.isSequenceType() && trimmedlhs.startsWith("Sequence"))
       { if (elemT != null && trimmedlhs.equals("Sequence(" + elemT + ")"))
-        { selected = r; }
+        { args.add(elemT);
+          selected = r; 
+        }
         else if (elemT == null && 
                  (trimmedlhs.equals("Sequence()") || 
                   trimmedlhs.equals("Sequence")))
         { selected = r; }
         else if (elemT != null && trimmedlhs.equals("Sequence(_1)"))
-        { selected = r; }
+        { args.add(elemT);
+          selected = r; 
+        }
       }
       else if (t.isRef() && 
                trimmedlhs.startsWith("Ref"))
       { if (elemT != null && trimmedlhs.equals("Ref(" + elemT + ")"))
-        { selected = r; }
+        { args.add(elemT);
+          selected = r; 
+        }
         else if (elemT == null && 
                  (trimmedlhs.equals("Ref()") || 
                   trimmedlhs.equals("Ref")))
         { selected = r; }
         else if (elemT != null && trimmedlhs.equals("Ref(_1)"))
-        { selected = r; }
+        { args.add(elemT);
+          selected = r; 
+        }
       } 
       else if (!t.isSetType() && !t.isRef() && 
                !t.isSequenceType() && 
                !t.isMapType() && !t.isFunctionType() &&
                trimmedlhs.equals("_1"))
-      { selected = r; } 
+      { args.add(t);
+        selected = r; 
+      } 
+
+      System.out.println(); 
+      System.out.println(">>>---->>> Selected type rule: " + selected + " for " + args); 
+      System.out.println(); 
 
       if (selected != null &&
           selected.satisfiesConditions(args,entities))
@@ -1095,45 +1125,61 @@ public class CGSpec
   public CGRule matchedSetExpressionRule(SetExpression e, String etext)
   { boolean ordered = e.isOrdered();
     Vector elems = e.getElements(); 
+    Vector args = new Vector(); 
+    
+    CGRule selected = null; 
 	
     for (int x = 0; x < setExpressionRules.size(); x++)
     { CGRule r = (CGRule) setExpressionRules.get(x);
       String trimmedlhs = r.lhs.trim(); 
 	  
       if (etext.equals(trimmedlhs))
-      { return r; } // exact match
+      { selected = r; } // exact match
       else if (etext.startsWith("Set{") && etext.endsWith("}") && 
                trimmedlhs.startsWith("Set{") && trimmedlhs.endsWith("}"))
       { if (elems.size() == 0 && r.variables.size() == 0)
-        { return r; } // r is empty set -- just white space in lhs between {}
+        { selected = r; } // r is empty set -- just white space in lhs between {}
         else if (elems.size() > 0 && r.variables.size() > 0) 
-        { return r; } 
+        { args.add(elems); 
+          selected = r; 
+        } 
       } 
       else if (etext.startsWith("Sequence{") && etext.endsWith("}") && 
                trimmedlhs.startsWith("Sequence{") && trimmedlhs.endsWith("}"))
       { if (elems.size() == 0 && r.variables.size() == 0)
-        { return r; } // r is empty sequence
+        { selected = r; } // r is empty sequence
         else if (elems.size() > 0 && r.variables.size() > 0) 
-        { return r; } 
+        { args.add(elems); 
+          selected = r; 
+        } 
       } 
       else if (etext.startsWith("Map{") && etext.endsWith("}") && 
                trimmedlhs.startsWith("Map{") && trimmedlhs.endsWith("}"))
       { if (elems.size() == 0 && r.variables.size() == 0) 
-        { return r; }  // empty map
+        { selected = r; }  // empty map
         else if (elems.size() > 0 && r.variables.size() > 0) 
-        { return r; } 
+        { args.add(elems); 
+          selected = r; 
+        } 
       } 
       else if (etext.equals("Ref{}") && 
                trimmedlhs.equals("Ref{}"))
-      { return r; } 
+      { selected = r; } 
       else if (etext.startsWith("Ref(") && etext.endsWith("}") && 
                trimmedlhs.startsWith("Ref(") && trimmedlhs.endsWith("}"))
-      { if (elems.size() == 0 && r.variables.size() == 0) 
-        { return r; }  // empty ref
-        else if (elems.size() > 0 && r.variables.size() > 0) 
-        { return r; } 
+      { args.add(e.getElementType()); 
+        if (elems.size() == 0 && r.variables.size() == 1) 
+        { selected = r; }  // empty ref
+        else if (elems.size() > 0 && r.variables.size() > 1) 
+        { args.add(elems); 
+          selected = r; 
+        } 
       } 
     }
+
+    if (selected != null && selected.satisfiesConditions(args,entities))
+    { return selected; } 
+
     return null;
   } // _1 binds to elements if any. Could also be _*
 

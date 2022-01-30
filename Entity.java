@@ -1145,6 +1145,13 @@ public class Entity extends ModelElement implements Comparable
     operations.removeAll(removed); 
   } 
 
+  public void typeCheckAttributes(Vector types, Vector entities)
+  { for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      att.typeCheck(types,entities); 
+    } 
+  } 
+
   public void typeCheckOps(Vector types, Vector entities)
   { for (int i = 0; i < operations.size(); i++) 
     { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i); 

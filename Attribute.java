@@ -277,7 +277,19 @@ public class Attribute extends ModelElement
   { isArray = b; } 
 
   public boolean typeCheck(Vector types, Vector entities)
-  { if (type == null) 
+  { if (initialExpression != null) 
+    { Vector cntx = new Vector(); 
+      if (entity != null) 
+      { cntx.add(entity); } 
+      Vector env = new Vector(); 
+      initialExpression.typeCheck(types,entities,cntx,env); 
+      if (type == null) 
+      { type = initialExpression.type; 
+        elementType = initialExpression.elementType; 
+      } 
+    } 
+
+    if (type == null) 
     { type = new Type("OclAny", null); 
       return true; 
     } 

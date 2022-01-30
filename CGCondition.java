@@ -237,7 +237,8 @@ public class CGCondition
   { Type t = e.getType();
     int kind = e.getUMLKind(); 
     String edata = e + ""; 
-    Entity ent = (Entity) ModelElement.lookupByName(edata,entities); 
+    Entity ent = 
+      (Entity) ModelElement.lookupByName(edata,entities); 
 	
 	// if (ent != null)
 	// { System.out.println(">> Expression " + e + " is a class"); }
@@ -365,6 +366,8 @@ public class CGCondition
       else
       { return e.umlkind != Expression.ROLE; }
     }
+    else if (edata.equals(stereotype))
+    { return positive; } 
     else // _i is T   T is int, double, long, etc, or a enumeration or class name 
     { if (positive) 
       { return stereotype.equals(tname); }

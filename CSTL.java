@@ -27,7 +27,7 @@ public class CSTL
       if (sub != null && dirfiles[i].endsWith(".cstl") && 
           !(dirfiles[i].equals("cg.cstl")))
       { System.out.println(">>> Found CSTL template: " + dirfiles[i]); 
-        CGSpec cg = new CGSpec(entities); 
+        CGSpec cg = new CGSpec(entities,types); 
         CGSpec res = loadCSTL(cg, sub,types,entities); 
         if (res != null) 
         { addTemplate(dirfiles[i], res); }         
@@ -43,7 +43,7 @@ public class CSTL
       if (sub != null && dirfiles[i].endsWith(".cstl") && 
           !(dirfiles[i].equals(excluding)))
       { System.out.println(">>> Loading CSTL template: " + dirfiles[i]); 
-        CGSpec cg = new CGSpec(entities); 
+        CGSpec cg = new CGSpec(entities,types); 
         CGSpec res = loadCSTL(cg, sub,types,entities); 
         if (res != null) 
         { addTemplate(dirfiles[i], res); }         
@@ -59,7 +59,7 @@ public class CSTL
       if (sub != null && dirfiles[i].endsWith(".cstl") && 
           fileNames.contains(dirfiles[i]))
       { System.out.println(">>> Found CSTL template: " + dirfiles[i]); 
-        CGSpec cg = new CGSpec(entities); 
+        CGSpec cg = new CGSpec(entities,types); 
         CGSpec res = loadCSTL(cg, sub,types,entities); 
         if (res != null) 
         { addTemplate(dirfiles[i], res); }         
@@ -68,7 +68,7 @@ public class CSTL
   }
 
   public static CGSpec loadCSTL(File file, Vector types, Vector entities)
-  { CGSpec cg = new CGSpec(entities); 
+  { CGSpec cg = new CGSpec(entities,types); 
     return loadCSTL(cg, file, types, entities);
   }  
 

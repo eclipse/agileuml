@@ -1542,7 +1542,8 @@ public class Type extends ModelElement
   { if (isEntity)
     { return true; }
 
-    Entity ent = (Entity) ModelElement.lookupByName(getName(), ents); 
+    Entity ent = 
+      (Entity) ModelElement.lookupByName(getName(), ents); 
     if (ent != null) 
     { return true; } 
     return false; 
@@ -1552,7 +1553,8 @@ public class Type extends ModelElement
   { if (isEntity)
     { return entity; }
 
-    Entity ent = (Entity) ModelElement.lookupByName(getName(), ents); 
+    Entity ent = 
+      (Entity) ModelElement.lookupByName(getName(), ents); 
     if (ent != null) 
     { return ent; } 
     return null; 
@@ -2513,6 +2515,27 @@ public class Type extends ModelElement
   // public void setEntity(boolean e) 
   // { isEntity = e; } 
 
+  public String defaultSubclass(Vector entities)
+  { if (isEntity(entities))
+    { Entity ee = getEntity(entities); 
+      Entity esub = ee.getDefaultSubclass(); 
+      if (esub != null) 
+      { return esub.getName(); } 
+    }
+    return name; 
+  }  
+
+  public Type defaultSubtype(Vector entities)
+  { if (isEntity(entities))
+    { Entity ee = getEntity(entities); 
+      Entity esub = ee.getDefaultSubclass(); 
+      if (esub != null) 
+      { return new Type(esub); } 
+    }
+    return this; 
+  }  
+
+
   public String getDefault()
   { if (values == null) // so not enumerated
     { String nme = getName();
@@ -2528,6 +2551,11 @@ public class Type extends ModelElement
       { return "new Vector()"; }
       if (nme.equals("Map")) 
       { return "new HashMap()"; } 
+      if (nme.equals("Ref"))
+      { if (elementType != null) 
+        { return "new " + elementType.getJava() + "[]"; } 
+        return "new Object[]"; 
+      } 
       if (alias != null)    // For datatypes
       { return alias.getDefault(); } 
 
@@ -2565,6 +2593,14 @@ public class Type extends ModelElement
         res.setType(this); 
         res.setElementType(elemt); 
       }
+      else if (nme.equals("Ref"))
+      { if (elemt != null && elemt.isFunction())
+        { return elemt.getDefaultValueExpression(); } 
+        res = 
+          SetExpression.newRefSetExpression(
+                          new BasicExpression(1)); 
+        res.setElementType(elemt); 
+      } 
       else if ("OclAny".equals(nme))
       { res = new BasicExpression(0); }
       else if ("OclType".equals(nme))
@@ -2593,7 +2629,10 @@ public class Type extends ModelElement
         { elementDefault = new BasicExpression("null"); }
 		 
         res = new UnaryExpression("lambda", elementDefault); 
-        ((UnaryExpression) res).setAccumulator(new Attribute("_x", keyType, ModelElement.INTERNAL));  
+        res.setType(this); 
+        res.setElementType(elementType);
+        String _x = Identifier.nextIdentifier("_x");  
+        ((UnaryExpression) res).setAccumulator(new Attribute(_x, keyType, ModelElement.INTERNAL));  
         return res; 
       }
       else if (alias != null)    // For datatypes
@@ -2906,7 +2945,9 @@ public class Type extends ModelElement
     { return "Set<" + elemType + ">"; } 
     if (nme.equals("Sequence"))
     { return "[" + elemType + "]"; } 
-    
+    if (nme.equals("Ref"))
+    { return "UnsafeMutableBufferPointer<" + elemType + ">"; } 
+
     if (nme.equals("Map"))
     { String kt = "String"; 
       if (keyType != null) 
@@ -2957,7 +2998,10 @@ public class Type extends ModelElement
     if (nme.equals("Set")) 
     { return "Set<" + elemType + ">"; } 
     if (nme.equals("Sequence"))
-    { return "[" + elemType + "]"; } 
+    { return "[" + elemType + "]"; }
+    if (nme.equals("Ref"))
+    { return "UnsafeMutableBufferPointer<" + elemType + ">"; } 
+ 
     if (nme.equals("Map"))
     { return "Dictionary<String, " + elemType + ">"; } 
     if (nme.equals("Function"))
@@ -3005,7 +3049,10 @@ public class Type extends ModelElement
     if (nme.equals("Set")) 
     { return "Set<" + elemType + ">()"; } 
     if (nme.equals("Sequence"))
-    { return "[]()"; } 
+    { return "[]()"; }
+    if (nme.equals("Ref"))
+    { return "UnsafeMutableBufferPointer<" + elemType + ">(_empty: ())"; } 
+ 
     if (nme.equals("Map"))
     { return "Dictionary<String, " + elemType + ">()"; } 
     return "nil"; 

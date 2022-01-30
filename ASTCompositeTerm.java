@@ -31,6 +31,8 @@ public class ASTCompositeTerm extends ASTTerm
 
   public static Type intType = new Type("int", null); 
   public static Type longType = new Type("long", null); 
+  public static Type doubleType = new Type("double", null); 
+  public static Type voidType = new Type("void", null); 
 
 
   public ASTCompositeTerm(String t)
@@ -208,7 +210,7 @@ public class ASTCompositeTerm extends ASTTerm
       else if (tokens.size() == terms.size())
       { } // ok
       else 
-      { continue; } 
+      { continue; } // this term can't match r's LHS
 
       // System.out.println("> Trying to match tokens of rule " + r + " for " + this);  
         
@@ -237,7 +239,8 @@ public class ASTCompositeTerm extends ASTTerm
           Vector rem = new Vector(); 
           for (int p = j ; p < terms.size() && !finished; p++)
           { ASTTerm pterm = (ASTTerm) terms.get(p); 
-            if (nextTok != null && pterm.literalForm().equals(nextTok))
+            if (nextTok != null && 
+                pterm.literalForm().equals(nextTok))
             { finished = true; } 
             else 
             { rem.add(pterm); 
@@ -6014,8 +6017,9 @@ public class ASTCompositeTerm extends ASTTerm
       BinaryExpression x2powcast = 
          new BinaryExpression("->oclAsType", x2pow, intt); 
 
+      Expression dzero = new BasicExpression(0.0); 
       BinaryExpression eqzero = 
-         new BinaryExpression("=", x, zeroExpression); 
+         new BinaryExpression("=", x, dzero); 
       AssignStatement assignzero = 
          new AssignStatement(deref, zeroExpression); 
       AssignStatement assignpow = 
@@ -7210,16 +7214,22 @@ public class ASTCompositeTerm extends ASTTerm
       ip.setType(refint); 
       Expression deref = 
         new UnaryExpression("!", ip); 
+      deref.setBrackets(true); 
+      Expression cdouble = 
+        new BinaryExpression("->oclAsType", deref, 
+              new BasicExpression(new Type("double", null))); 
+
+      Expression dzero = new BasicExpression(0.0);
 
       Expression xdivpow = 
-        new BinaryExpression("/", x, deref); 
+        new BinaryExpression("/", x, cdouble); 
       xdivpow.setType(new Type("double", null));
 
       BinaryExpression eqzero = 
-         new BinaryExpression("=", x, zeroExpression); 
+         new BinaryExpression("=", x, dzero); 
       eqzero.setType(new Type("boolean", null)); 
       
-      return new ConditionalExpression(eqzero, zeroExpression, 
+      return new ConditionalExpression(eqzero, dzero, 
                                        xdivpow); 
     } 
     else if ("div".equals(fname) && args.size() == 2)
