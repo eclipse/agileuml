@@ -195,11 +195,15 @@ public class CGRule
 
   public static Vector metavariables(String str) 
   { Vector res = new Vector(); 
-    for (int i = 1; i < 10; i++) 
+    for (int i = 0; i < 10; i++) 
     { String var = "_" + i; 
       if (str.indexOf(var) > -1) 
       { res.add(var); } 
     } 
+
+    if (str.indexOf("_*") > -1)
+    { res.add("_*"); } 
+
     return res; 
   } 
 

@@ -1569,7 +1569,7 @@ public class Compiler2
 
         for (int k = 0; k < sz; k++) 
         { String lex = lexicals.get(k) + ""; 
-          if (lex.startsWith("_")) // and it matches "_\\d"
+          if (CSTL.isCSTLVariable(lex))
           { variables.add(lex); } 
           tokens.add(lex); 
         } 

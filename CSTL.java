@@ -17,6 +17,16 @@ import java.util.Vector;
 public class CSTL
 { // All *.cstl files in output directory are loaded
 
+  static boolean isCSTLVariable(String lex)
+  { if ("_*".equals(lex)) 
+    { return true; } 
+    for (int i = 0; i <= 9; i++) 
+    { if (("_" + i).equals(lex))
+      { return true; } 
+    } 
+    return false; 
+  } 
+
   static java.util.Map templates = new java.util.HashMap();
 
   public static void loadTemplates(Vector types, Vector entities)
