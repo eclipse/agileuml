@@ -13488,6 +13488,12 @@ public void produceCUI(PrintWriter out)
     { loadKM3FromFile(oclprocess); }
     else 
     { System.err.println("! Warning: no file libraries/oclprocess.km3"); } 
+
+    File mathlib = new File("libraries/mathlib.km3"); 
+    if (mathlib.exists())
+    { loadKM3FromFile(mathlib); }
+    else 
+    { System.err.println("! Warning: no file libraries/mathlib.km3"); } 
  
     loadGenericUseCase();
     typeCheck(); 

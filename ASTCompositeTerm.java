@@ -16800,7 +16800,8 @@ public class ASTCompositeTerm extends ASTTerm
       String res = ""; 
       ASTTerm typeTerm; 
       ASTCompositeTerm varTerm;
- 
+      SequenceStatement sstatements = new SequenceStatement(); 
+            
       if (terms.size() >= 3) 
       { typeTerm = (ASTTerm) terms.get(terms.size()-2); 
         varTerm = (ASTCompositeTerm) terms.get(terms.size()-1); 
@@ -16823,38 +16824,42 @@ public class ASTCompositeTerm extends ASTTerm
  
           if (res.equals("")) { } 
           else 
-          { res = res + " ; "; } 
+          { res = res + " ; \n  "; } 
  
           res = res + "var " + km3var + " : " + km3type; 
  
           if (km3init != null) 
-          { res = res + " ; " + km3var + " := " + km3init; }  
+          { res = res + " := " + km3init; }  
  
           ASTTerm.setType(km3var,km3type);
  
           BasicExpression varbe =
-            BasicExpression.newVariableBasicExpression(km3var, km3type, 
+            BasicExpression.newVariableBasicExpression(km3var, 
+                         km3type, 
                          ASTTerm.enumtypes, ASTTerm.entities);  
-          statement = CreationStatement.newCreationStatement(km3var, km3type, ASTTerm.enumtypes, ASTTerm.entities);
+          CreationStatement cs = 
+            CreationStatement.newCreationStatement(
+                                   km3var, km3type, 
+                       ASTTerm.enumtypes, ASTTerm.entities);
           if (actualType != null) 
           { varbe.setType(actualType); 
-            ((CreationStatement) statement).setType(actualType); 
+            cs.setType(actualType); 
           } 
+          sstatements.addStatement(cs); 
            
           System.out.println(">> Type of " + varbe + " is " + varbe.getType());
           System.out.println(); 
 
           ASTTerm vInit = tv.varInit(); 
           if (vInit != null && vInit.expression != null)
-          { AssignStatement initStat = new AssignStatement(varbe,vInit.expression); 
-            SequenceStatement sstatement = new SequenceStatement(); 
-            sstatement.addStatement(statement); 
-            sstatement.addStatement(initStat);
+          { AssignStatement initStat = 
+              new AssignStatement(varbe,vInit.expression); 
+            sstatements.addStatement(initStat);
           
             if (tv.statement != null) // post side-effect 
-            { sstatement.addStatement(tv.statement); } 
+            { sstatements.addStatement(tv.statement); } 
            
-            statement = sstatement; 
+            statement = sstatements; 
           }
 
           System.out.println(">> Declaration statements: " + statement);
@@ -16871,31 +16876,75 @@ public class ASTCompositeTerm extends ASTTerm
       String km3type = typeTerm.toKM3();
       Type actualType = (Type) typeTerm.modelElement; 
  
-      String km3var = varTerm.toKM3Var(); 
-      String km3init = varTerm.toKM3VarInit(); 
-      String res = "  attribute " + km3var + " : " + km3type; 
+   /* if (terms.size() >= 3) 
+      { typeTerm = (ASTTerm) terms.get(terms.size()-2); 
+        varTerm = (ASTCompositeTerm) terms.get(terms.size()-1); 
+      } // ignore modifiers 
+      else 
+      { typeTerm = (ASTTerm) terms.get(0); 
+        varTerm = (ASTCompositeTerm) terms.get(1); 
+      } 
+
+      String km3type = typeTerm.toKM3();
+      Type actualType = (Type) typeTerm.modelElement; */ 
+
+      String res = ""; 
+
+      Vector vardeclarators = varTerm.terms; 
+      for (int i = 0; i < vardeclarators.size(); i++) 
+      { ASTTerm vTerm = (ASTTerm) vardeclarators.get(i);
+        if (vTerm instanceof ASTCompositeTerm)  
+        { ASTCompositeTerm tv = (ASTCompositeTerm) vTerm; 
+          String km3var = tv.toKM3Var(); 
+          String km3init = tv.toKM3VarInit(); 
+ 
+          if (res.equals("")) { } 
+          else 
+          { res = res + " ;\n"; } 
+ 
+          res = res + "  attribute " + km3var + " : " + km3type; 
+ 
+          if (km3init != null) 
+          { res = res + " := " + km3init; }  
+
+          
+          ASTTerm.setType(km3var,km3type);
+
+      // String km3var = varTerm.toKM3Var(); 
+      // String km3init = varTerm.toKM3VarInit(); 
+      // String res = "  attribute " + km3var + " : " + km3type; 
       // if (km3init != null) 
       // { res = res + " := " + km3init; }  
-      ASTTerm.setType(km3var,km3type);
-      Attribute att = Attribute.newAttribute(
-        km3var, km3type, ASTTerm.enumtypes, ASTTerm.entities); 
+      // ASTTerm.setType(km3var,km3type);
+          Attribute att = Attribute.newAttribute(
+            km3var, km3type, ASTTerm.enumtypes, ASTTerm.entities); 
 
-      if (actualType != null) 
-      { att.setType(actualType); 
-        att.setElementType(actualType.getElementType()); 
-      }
+          if (actualType != null) 
+          { att.setType(actualType); 
+            att.setElementType(actualType.getElementType()); 
+          }
+    
+          if (tv.expression != null) 
+          { att.setInitialExpression(tv.expression); }
  
-      if (varTerm.expression != null) 
-      { att.setInitialExpression(varTerm.expression); }
+        // if (varTerm.expression != null) 
+        // { att.setInitialExpression(varTerm.expression); }
 
-      modelElement = att;  
-      // and set its initialisation. 
+          modelElement = att;  
+          if (modelElements == null) 
+          { modelElements = new Vector(); } 
+          modelElements.add(att); 
 
-      System.out.println(">> Type of " + km3var + " is " + km3type + " = " + km3init); 
-      System.out.println(">> Attribute = " + att + " " + att.getType() + " (" + att.getElementType() + ")"); 
-      System.out.println(">> Initialisation = " + att.getInitialExpression()); 
+      // but can be several attributes: 
+      // (variableDeclarators (variableDeclarator ...) , ...) 
+
+          System.out.println(">> Type of " + km3var + " is " + km3type + " = " + km3init); 
+          System.out.println(">> Attribute = " + att + " " + att.getType() + " (" + att.getElementType() + ")"); 
+          System.out.println(">> Initialisation = " + att.getInitialExpression());
+        }  
+      } 
       System.out.println(); 
-      return res + ";\n"; 
+      return res + " ; \n"; 
     }   
 
     if ("typeType".equals(tag))
@@ -17287,13 +17336,13 @@ public class ASTCompositeTerm extends ASTTerm
       for (int i = 0; i < terms.size(); i++) 
       { ASTTerm t = (ASTTerm) terms.get(i); 
         res = res + t.toKM3(); 
-        if (t.modelElement != null) 
+        if (t.modelElement != null && t.modelElements == null) 
         { modelElements.add(t.modelElement); }
         else if (t.modelElements != null) 
         { modelElements.addAll(t.modelElements); }  
       } 
       return res; 
-    } 
+    } // WARNING: major revision above. 
          
 
     if ("constructorDeclaration".equals(tag))
@@ -17644,7 +17693,9 @@ public class ASTCompositeTerm extends ASTTerm
       { String km3Contents = contents.toKM3(); 
 
         if (contents.modelElements != null) 
-        { newEnt.addModelElements(contents.modelElements); } 
+        { newEnt.addModelElements(contents.modelElements); 
+          System.out.println(">>> Model elements of " + newEnt + " are: " + contents.modelElements);
+        } 
         modelElement = newEnt; 
 
         // ASTTerm.entities.add(newEnt); 
