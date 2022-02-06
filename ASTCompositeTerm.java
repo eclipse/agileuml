@@ -5705,7 +5705,9 @@ public class ASTCompositeTerm extends ASTTerm
       return astn; 
     } 
     else if ("printf".equals(fname) && args.size() > 1) 
-    { Expression fmt = (Expression) args.get(0);
+    { // System_out.printf(Sequence{args`tail})
+
+      Expression fmt = (Expression) args.get(0);
       Vector elems = new Vector(); 
       for (int i = 1; i < args.size(); i++) 
       { elems.add(args.get(i)); } 
@@ -5874,7 +5876,9 @@ public class ASTCompositeTerm extends ASTTerm
       return ee; 
     }  
     else if ("puts".equals(fname) && args.size() == 1)
-    { Expression chr = (Expression) args.get(0);
+    { // System_out.writeln(_1)
+
+      Expression chr = (Expression) args.get(0);
       BasicExpression systemOut = 
         new BasicExpression("System_out"); 
       systemOut.setType(new Type("OclFile", null)); 
@@ -5888,7 +5892,9 @@ public class ASTCompositeTerm extends ASTTerm
       return ee; 
     }  
     else if ("putchar".equals(fname) && args.size() == 1)
-    { Expression fle = new BasicExpression("System_out"); 
+    { // System_out.write(_1->byte2char())
+
+      Expression fle = new BasicExpression("System_out"); 
       fle.setType(new Type("OclFile", null)); 
         
       Expression chr = (Expression) args.get(0);
@@ -6269,15 +6275,22 @@ public class ASTCompositeTerm extends ASTTerm
     { Expression arg1 = (Expression) args.get(0); 
       arg1.setBrackets(true); 
       UnaryExpression res = new UnaryExpression("->ceil", arg1); 
-      res.setType(new Type("double", null)); 
-      return res; 
+      BinaryExpression resx = 
+        new BinaryExpression("->oclAsType", res,
+          new BasicExpression(new Type("double", null))); 
+
+      resx.setType(new Type("double", null)); 
+      return resx; 
     }
     else if ("floor".equals(fname) && args.size() == 1)
     { Expression arg1 = (Expression) args.get(0); 
       arg1.setBrackets(true); 
       UnaryExpression res = new UnaryExpression("->floor", arg1); 
-      res.setType(new Type("double", null)); 
-      return res; 
+      BinaryExpression resx = 
+        new BinaryExpression("->oclAsType", res,
+          new BasicExpression(new Type("double", null))); 
+      resx.setType(new Type("double", null)); 
+      return resx; 
     }
     else if ("fabs".equals(fname) && args.size() == 1)
     { Expression arg1 = (Expression) args.get(0); 
@@ -6436,7 +6449,9 @@ public class ASTCompositeTerm extends ASTTerm
       return res; 
     }
     else if ("isspace".equals(fname) && args.size() == 1)
-    { Expression arg1 = (Expression) args.get(0); 
+    { // arg1 = 32 or (arg1 <= 13 & arg1 >= 9)
+
+      Expression arg1 = (Expression) args.get(0); 
       arg1.setBrackets(true); 
       BinaryExpression eqspace = 
          new BinaryExpression("=", arg1, 
@@ -6457,7 +6472,8 @@ public class ASTCompositeTerm extends ASTTerm
       return res; 
     }
     else if ("iscntrl".equals(fname) && args.size() == 1)
-    { Expression arg1 = (Expression) args.get(0); 
+    { // arg1 >= 0 & arg1 <= 31
+      Expression arg1 = (Expression) args.get(0); 
       arg1.setBrackets(true); 
       BinaryExpression leqnl = 
          new BinaryExpression("<=", arg1, 
@@ -6472,7 +6488,9 @@ public class ASTCompositeTerm extends ASTTerm
       return res; 
     }
     else if ("isgraph".equals(fname) && args.size() == 1)
-    { Expression arg1 = (Expression) args.get(0); 
+    { // arg1 <= 126 & arg1 >= 33
+
+      Expression arg1 = (Expression) args.get(0); 
       arg1.setBrackets(true); 
       BinaryExpression leqnl = 
          new BinaryExpression("<=", arg1, 
@@ -6487,7 +6505,9 @@ public class ASTCompositeTerm extends ASTTerm
       return res; 
     }
     else if ("isprint".equals(fname) && args.size() == 1)
-    { Expression arg1 = (Expression) args.get(0); 
+    { // arg1 <= 126 & arg1 >= 32
+
+      Expression arg1 = (Expression) args.get(0); 
       arg1.setBrackets(true); 
       BinaryExpression leqnl = 
          new BinaryExpression("<=", arg1, 
@@ -7067,7 +7087,10 @@ public class ASTCompositeTerm extends ASTTerm
       return res; 
     }
     else if ("fopen".equals(fname) && args.size() == 2) 
-    { Expression fle = (Expression) args.get(0);
+    { // OclFile.newOclFile_Read(_1) or 
+      // OclFile.newOclFile_Write(_1)
+
+      Expression fle = (Expression) args.get(0);
       Expression mde = (Expression) args.get(1);
       
       if ("\"r\"".equals(mde + ""))
@@ -7092,7 +7115,9 @@ public class ASTCompositeTerm extends ASTTerm
       } 
     } // freopen? 
     else if ("tmpfile".equals(fname) && args.size() == 0) 
-    { Expression fle = new BasicExpression("tmp");
+    { // OclFile.createTemporaryFile("tmp", "txt")
+
+      Expression fle = new BasicExpression("tmp");
       Expression ext = new BasicExpression("txt");
       Vector pars = new Vector(); 
       pars.add(fle); 
@@ -7105,7 +7130,9 @@ public class ASTCompositeTerm extends ASTTerm
     } 
     else if (("fgetc".equals(fname) || "getc".equals(fname))
              && args.size() == 1) 
-    { Expression fle = (Expression) args.get(0);
+    { // _1.read()->char2byte()
+
+      Expression fle = (Expression) args.get(0);
       BasicExpression res = 
           BasicExpression.newCallBasicExpression(
              "read", fle); 
@@ -7117,7 +7144,9 @@ public class ASTCompositeTerm extends ASTTerm
       return intres; 
     } 
     else if ("fgets".equals(fname) && args.size() == 3) 
-    { Expression n = (Expression) args.get(1);
+    { // fle.readLine().subrange(1,n)
+
+      Expression n = (Expression) args.get(1);
       Expression fle = (Expression) args.get(2);
       BasicExpression res = 
           BasicExpression.newCallBasicExpression(
@@ -7134,7 +7163,8 @@ public class ASTCompositeTerm extends ASTTerm
       return intres; 
     } 
     else if ("getchar".equals(fname) && args.size() == 0) 
-    { Expression fle = 
+    { // System_in.read()->char2byte()
+      Expression fle = 
         new BasicExpression("System_in"); 
       fle.setType(new Type("OclFile", null)); 
       BasicExpression res = 
@@ -7148,7 +7178,9 @@ public class ASTCompositeTerm extends ASTTerm
       return intres; 
     } 
     else if ("gets".equals(fname) && args.size() == 1) 
-    { Expression fle = new BasicExpression("System_in"); 
+    { // System_in.readLine()
+
+      Expression fle = new BasicExpression("System_in"); 
       fle.setType(new Type("OclFile", null)); 
 
       BasicExpression res = 

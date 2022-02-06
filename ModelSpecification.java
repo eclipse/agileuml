@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -5961,25 +5961,25 @@ public class ModelSpecification
       else if (ASTTerm.sameTag(targetValues) && 
          ASTTerm.sameArityTrees(sattvalues,targetValues))
       { 
-        System.out.println(">> Checking sequence of trees mapping: " + sattvalues[0] + " ---> " + targetValues[0]); 
+        System.out.println(">> Checking direct correspondence of subterms of each tree: " + sattvalues[0] + " ---> " + targetValues[0]); 
         System.out.println();           
 
         AttributeMatching amts = 
           treeSequenceMapping(sent,sattvalues,targetValues); 
         
         if (amts != null) 
-        { System.out.println(">> Found sequence of trees mapping: " + amts); 
+        { System.out.println(">> Found direct correspondence of each subterm of source/target trees: " + amts); 
           return amts; 
         } 
 
-        System.out.println(">++> Checking function/sequence of trees mapping: " + sattvalues[0] + " ---> " + targetValues[0]); 
+        System.out.println(">++> Checking tree-tree mapping with indirect correspondence of subterms: " + sattvalues[0] + " ---> " + targetValues[0]); 
         System.out.println();           
 
         amts = treeSequenceMapping2(satt, sent, tatt, 
                  sourceatts, sattvalues, targetValues, 
                  sattvalueMap, tms); 
         if (amts != null) 
-        { System.out.println(">++> Found function sequence of trees mapping: " + amts); 
+        { System.out.println(">++> Found functional subterm mapping of trees: " + amts); 
           return amts; 
         } 
 
@@ -5987,7 +5987,7 @@ public class ModelSpecification
       else if (ASTTerm.sameTag(targetValues) && 
          ASTTerm.sameNonSymbolArity(sattvalues,targetValues))
       { 
-        System.out.println(">**> Checking sequence of trees mapping: " + sattvalues[0] + " ---> " + targetValues[0]); 
+        System.out.println(">**> Checking tree-2-tree mapping with symbol deletion/replacement: " + sattvalues[0] + " ---> " + targetValues[0]); 
         System.out.println();           
 
         AttributeMatching amts = 
@@ -5996,7 +5996,7 @@ public class ModelSpecification
                  sattvalueMap, tms); 
         
         if (amts != null) 
-        { System.out.println(">**> Found sequence of trees mapping: " + amts); 
+        { System.out.println(">**> Found tree-2-tree mapping with symbol deletion/replacement: " + amts); 
           return amts; 
         } 
       }
@@ -6093,7 +6093,7 @@ public class ModelSpecification
           tTreeTerms.add(subtt); 
         } 
         else 
-        { return null; } // non-symbols map to non-symbols
+        { return null; } // non-symbols must go to non-symbols
       }  
     } 
 
@@ -6162,14 +6162,14 @@ public class ModelSpecification
             replacedSymbols.add(ds); 
             replacements.add(rs);
             replacementFound = true;  
-            System.out.println(">> " + ds + " |--> " + rs); 
+            System.out.println(">> replaced symbol " + ds + " |--> " + rs); 
           } 
         }
       } 
     } 
     deletedSymbols.removeAll(ttTerms); 
     deletedSymbols.removeAll(replacedSymbols); 
-    System.out.println(">>-- Deleted symbols: " + deletedSymbols); 
+    System.out.println(">>-- deleted symbols: " + deletedSymbols); 
 
       for (int r = 0; r < replacedSymbols.size(); r++) 
       { String rs = (String) replacedSymbols.get(r);
@@ -6211,6 +6211,7 @@ public class ModelSpecification
     // corresponding ttrees[i] non-symbol element via 
     // a consistent mapping f. Result is 
     // tagsource(_*) |--> tagtarget(_*`f)
+    // Symbols can be consistently deleted or replaced
 
     Vector sSymbolTerms = new Vector(); 
     Vector sTreeTerms = new Vector(); 
@@ -6273,7 +6274,7 @@ public class ModelSpecification
             replacedSymbols.add(ds); 
             replacements.add(rs);
             replacementFound = true;  
-            System.out.println(">> " + ds + " |--> " + rs); 
+            System.out.println(">> Replacement of symbols: " + ds + " |--> " + rs); 
           } 
         }
       } 

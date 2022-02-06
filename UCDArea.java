@@ -3154,7 +3154,8 @@ public class UCDArea extends JPanel
     auxcstls.add("cgGomain.cstl");
     auxcstls.add("goReferencedFeatures.cstl"); 
     auxcstls.add("cgGointerface.cstl"); 
-
+    auxcstls.add("cgGocatchClause.cstl"); 
+    
     CGSpec cgs = loadCSTL("cgGo.cstl",auxcstls); 
 
     for (int i = 0; i < types.size(); i++) 
@@ -3203,6 +3204,8 @@ public class UCDArea extends JPanel
           entfout.println("import \"./ocl\""); 
           entfout.println("import \"strings\""); 
           entfout.println("import \"math\""); 
+          entfout.println("import \"errors\""); 
+          entfout.println("import \"reflect\""); 
           entfout.println(); 
 		  					
           ent.generateOperationDesigns(types,entities);  
@@ -14606,7 +14609,7 @@ public void produceCUI(PrintWriter out)
   public AttributeMatching readEntityMapping(BufferedReader br, EntityMatching em)
   { try 
     { String fmap = br.readLine(); 
-      if (fmap.startsWith(" "))
+      if (fmap != null && fmap.startsWith(" "))
       { String trimemap = fmap.trim(); 
         int mapsymb = trimemap.indexOf("|-"); 
         if (mapsymb > 0) 

@@ -874,13 +874,47 @@ public class CGRule
             } 
           } 
           else if ("tailtail".equals(mffeat))
-          { // Vector of terms except the first
+          { // Vector of terms except the first 2
             if (obj instanceof ASTCompositeTerm)
             { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
               Vector tailterms = new Vector(); 
               tailterms.addAll(ct.terms);
               String repl = ""; 
               for (int q = 2; q < tailterms.size(); q++) 
+              { ASTTerm ct1 = (ASTTerm) tailterms.get(q); 
+                String tcg = ct1.cg(cgs);
+                repl = repl + tcg; 
+              }  
+              String repl1 = correctNewlines(repl); 
+              
+              res = res.replace(mf,repl1);
+            } 
+          } 
+          else if ("tailtailtail".equals(mffeat))
+          { // Vector of terms except the first 3
+            if (obj instanceof ASTCompositeTerm)
+            { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
+              Vector tailterms = new Vector(); 
+              tailterms.addAll(ct.terms);
+              String repl = ""; 
+              for (int q = 3; q < tailterms.size(); q++) 
+              { ASTTerm ct1 = (ASTTerm) tailterms.get(q); 
+                String tcg = ct1.cg(cgs);
+                repl = repl + tcg; 
+              }  
+              String repl1 = correctNewlines(repl); 
+              
+              res = res.replace(mf,repl1);
+            } 
+          } 
+          else if ("tailtailtailtail".equals(mffeat))
+          { // Vector of terms except the first 4
+            if (obj instanceof ASTCompositeTerm)
+            { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
+              Vector tailterms = new Vector(); 
+              tailterms.addAll(ct.terms);
+              String repl = ""; 
+              for (int q = 4; q < tailterms.size(); q++) 
               { ASTTerm ct1 = (ASTTerm) tailterms.get(q); 
                 String tcg = ct1.cg(cgs);
                 repl = repl + tcg; 
