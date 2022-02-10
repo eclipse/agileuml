@@ -9928,7 +9928,10 @@ public boolean conflictsWithIn(String op, Expression el,
                    String rqf, boolean lprim, 
                    boolean rprim)
   { String res; 
-    if (lprim && rprim)
+
+    if (left.isRef() && right.isRef())
+    { res = lqf + " != " + rqf; } 
+    else if (lprim && rprim)
     { res = lqf + " != " + rqf; }
     else if (lprim) // also for booleans, doubles
     { String rr = right.unwrap(rqf);
@@ -9971,7 +9974,9 @@ public boolean conflictsWithIn(String op, Expression el,
                    boolean rprim)
   { String res;
 
-    if (left.isString())
+    if (left.isRef() && right.isRef())
+    { res = lqf + " == " + rqf; } 
+    else if (left.isString())
     { res = "((String) " + lqf + ").equals(" + rqf + ")"; } 
     else if (right.isString())
     { res = "((String) " + rqf + ").equals(" + lqf + ")"; } 

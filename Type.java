@@ -3308,6 +3308,23 @@ public class Type extends ModelElement
       { return "Evaluation<String, String>"; } 
     } 
 
+    if (nme.equals("Ref"))
+    { String restype = "Object"; 
+      if (elementType != null) 
+      { restype = elementType.getJava();
+        if (isBasicType(elementType) ||
+            elementType.isStructEntityType() ||  
+            "Ref".equals(elementType.getName()) || 
+            "void".equals(elementType.getName()))
+        { return restype + "[]"; } 
+        else 
+        { return restype; }
+      }  
+      else 
+      { return restype; } 
+    } 
+
+
     if (alias != null)    // For datatypes
     { return alias.getJava(); } 
 

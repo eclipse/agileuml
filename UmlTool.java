@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -1101,6 +1101,8 @@ public void findPlugins()
 
     JMenuItem cppMenu = new JMenuItem("Generate C++"); 
     cppMenu.addActionListener(this);
+    cppMenu.setToolTipText(
+      "C++11"); 
     // javaMenu.setEnabled(false); 
     buildMenu.add(cppMenu); 
 
@@ -1116,7 +1118,8 @@ public void findPlugins()
 
     JMenuItem pyMenu = new JMenuItem("Generate Python"); 
     pyMenu.addActionListener(this);
-    // javaMenu.setEnabled(false); 
+    pyMenu.setToolTipText(
+      "Python 3.9"); 
     buildMenu.add(pyMenu); 
 
     JMenuItem goMenu = new JMenuItem("Generate Go"); 
@@ -3777,6 +3780,22 @@ public void findPlugins()
       { System.err.println("Unable to run uml2py"); } 
       return; 
     } 
+
+    if (args.length == 1 && "-java2csharp".equals(args[0]))
+    { window.ucdArea.java2csharp(); 
+      return; 
+    } 
+
+    if (args.length == 1 && "-java2cpp".equals(args[0]))
+    { window.ucdArea.java2cpp(); 
+      return; 
+    } 
+
+    if (args.length == 1 && "-java2swift".equals(args[0]))
+    { window.ucdArea.java2swift(); 
+      return; 
+    } 
+
 
     window.setTitle("Agile UML Toolset, Eclipse Incubation Project Version 2.1");
     window.setControllerName("Controller"); 

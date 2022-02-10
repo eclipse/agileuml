@@ -4461,12 +4461,55 @@ public class BSystemTypes extends BComponent
       "    result.addAll(s);\n" +  
       "    return result;\n" + 
       "  }\n\n"; 
+
     res = res + 
       "  public static HashMap copyMap(Map s)\n" + 
       "  { HashMap result = new HashMap();\n" +  
       "    result.putAll(s);\n" +  
       "    return result;\n" +  
       "  }\n\n";
+
+    res = res + 
+      "  public static int[] newRefint(int x)\n" +
+      "  { int[] res = new int[1]; \n" +
+      "    res[0] = x; \n" +
+      "    return res; \n" +
+      "  } \n\n";
+
+    res = res + 
+      "  public static long[] newReflong(long x)\n" +
+      "  { long[] res = new long[1]; \n" +
+      "    res[0] = x; \n" +
+      "    return res; \n" +
+      "  } \n\n";
+
+    res = res + 
+      "  public static double[] newRefdouble(double x)\n" +
+      "  { double[] res = new double[1]; \n" +
+      "    res[0] = x; \n" +
+      "    return res; \n" +
+      "  } \n\n";
+
+    res = res + 
+      "  public static boolean[] newRefboolean(boolean x)\n" +
+      "  { boolean[] res = new boolean[1]; \n" +
+      "    res[0] = x; \n" +
+      "    return res; \n" +
+      "  } \n\n"; 
+
+    res = res + 
+      "  public static String[] newRefString(String x)\n" +
+      "  { String[] res = new String[1]; \n" +
+      "    res[0] = x; \n" +
+      "    return res; \n" +
+      "  } \n\n"; 
+
+    res = res + 
+      "  public static Object[] newRefObject(Object x)\n" +
+      "  { Object[] res = new Object[1]; \n" +
+      "    res[0] = x; \n" +
+      "    return res; \n" +
+      "  } \n\n"; 
 
     res = res + 
       "  public static Vector sequenceRange(Object[] arr, int n)\n" +

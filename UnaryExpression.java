@@ -1765,7 +1765,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return res; 
     } 
 
-    if (operator.equals("->toLong") || operator.equals("?"))
+    if (operator.equals("->toLong"))
     { type = new Type("long",null); 
       elementType = type; 
       return res; 
@@ -2133,8 +2133,44 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("-"))
     { return "-" + qf; } 
 
-    if (operator.equals("?") || operator.equals("!"))
-    { return qf; } 
+    if (operator.equals("?"))
+    { String res = qf; 
+      String elemT = "Object"; 
+      if (argument.type != null) 
+      { elemT = argument.type.getJava(); } 
+
+      // if (argument.isCollection() || 
+      //     argument.isFunctionType() || 
+      //     argument.isClassEntityType())
+      // { } 
+      // else
+      if (argument.hasBasicType()) 
+      { res = "Set.newRef" + elemT + "(" + qf + ")"; } 
+
+      if (needsBracket) 
+      { res = "(" + res + ")"; }
+      return res;  
+    } 
+
+    if (operator.equals("!"))
+    { String res = qf; 
+      Type argelemtype = argument.getElementType(); 
+      // if (argelemtype != null && 
+      //     (argelemtype.isCollection() || 
+      //      argelemtype.isFunctionType() || 
+      //      argelemtype.isClassEntityType()))
+      // { } 
+      // else
+      if (Type.isBasicType(argelemtype)) // or a Ref 
+      { res = qf + "[0]"; }  
+
+      if (needsBracket) 
+      { res = "(" + res + ")"; }
+      return res;  
+    } // functions, classes, collections, maps have ?x = x
+
+    // if (operator.equals("?") || operator.equals("!"))
+    // { return qf; } 
 
     if (operator.equals("not"))
     { return "!(" + qf + ")"; } 

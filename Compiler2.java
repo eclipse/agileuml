@@ -2668,6 +2668,15 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
       return new UnaryExpression("-",arg); 
     } // likewise for "not" and "~" and "?"
 
+    if (pstart < pend && "+".equals(lexicals.get(pstart) + ""))
+    { Expression arg = parse_additive_expression(bc,pstart+1,pend,entities,types); 
+      if (arg == null) 
+      { // System.err.println("Not additive expression: " + showLexicals(pstart+1, pend)); 
+        return null; 
+      } 
+      return arg; 
+    } 
+
     if (pstart < pend && "?".equals(lexicals.get(pstart) + ""))
     { Expression arg = parse_basic_expression(bc,pstart+1,pend,entities,types); 
       if (arg == null) 
@@ -4721,6 +4730,13 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
           "Operators include: x mod y  x div y\n" + 
           "and usual arithmetic operators * / - + < <= > >= = /= etc"; 
         return "int"; 
+      } 
+
+      if ("Ref(".startsWith(st)) 
+      { mess[0] = "Reference/pointer type Ref(T)\n" + 
+          "The operator !x is used to dereference x : Ref(T)\n" + 
+          "and !x has type T.\n"; 
+        return "Ref"; 
       } 
 
       if ("includes".startsWith(st)) 

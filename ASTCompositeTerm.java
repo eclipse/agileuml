@@ -265,7 +265,7 @@ public class ASTCompositeTerm extends ASTTerm
       } 
 
       if (failed == false) 
-      { System.out.println("> Matched ruleset rule " + r + " for " + this);  
+      { System.out.println(">> Matched " + tag + " rule " + r + " for " + this);  
 
         for (int p = 0; p < eargs.size(); p++)
         { Object obj = eargs.get(p);
@@ -288,7 +288,7 @@ public class ASTCompositeTerm extends ASTTerm
         Vector ents = new Vector(); 
 
         if (r.satisfiesConditions(eargs,ents))
-        { System.out.println(">>>> Applying ruleset rule " + r); 
+        { System.out.println(">>>> Applying " + tag + " rule " + r); 
           return r.applyRule(args,eargs,cgs); 
         }  
       }
@@ -6695,6 +6695,7 @@ public class ASTCompositeTerm extends ASTTerm
     else if ("strchr".equals(fname) && args.size() == 2)
     { // if arg1->indexOf(arg2) = 0 then null 
       // else arg1.subrange(arg1->indexOf(arg2)) endif
+
       Expression arg1 = (Expression) args.get(0);
       arg1.setType(new Type("String", null));
       Expression arg2 = (Expression) args.get(1);
@@ -6787,7 +6788,9 @@ public class ASTCompositeTerm extends ASTTerm
       return conde; 
     } 
     else if ("strlen".equals(fname) && args.size() == 1)
-    { Expression arg1 = (Expression) args.get(0);
+    { // _1->size()
+
+      Expression arg1 = (Expression) args.get(0);
       arg1.setType(new Type("String", null));
       arg1.setBrackets(true); 
       UnaryExpression res = 
@@ -6796,7 +6799,10 @@ public class ASTCompositeTerm extends ASTTerm
       return res; 
     } 
     else if ("strstr".equals(fname) && args.size() == 2)
-    { Expression arg1 = (Expression) args.get(0);
+    { // if _1->indexOf(_2) > 0 
+      // then _1.subrange(_1->indexOf(_2)) else "" endif
+
+      Expression arg1 = (Expression) args.get(0);
       arg1.setType(new Type("String", null));
       Expression arg2 = (Expression) args.get(1);
       arg1.setBrackets(true); 

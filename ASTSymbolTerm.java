@@ -49,9 +49,8 @@ public class ASTSymbolTerm extends ASTTerm
 
       if (symbol.equals(tok))
       { return r.rhs; } 
-     }
-
-     return symbol; 
+    }
+    return symbol; 
   } 
 
   public String toString()
@@ -305,6 +304,37 @@ public class ASTSymbolTerm extends ASTTerm
 
   public boolean isIdentifier()
   { return false; }
+
+  public boolean isCharacter()
+  { if (symbol.length() > 2 && 
+        symbol.charAt(0) == '\'' && 
+        symbol.charAt(symbol.length()-1) == '\'')
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isInteger()
+  { if (Expression.isInteger(symbol) || 
+        Expression.isLong(symbol))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isDouble()
+  { if (Expression.isDouble(symbol))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isBoolean()
+  { if (symbol.equals("true") || symbol.equals("false"))
+    { return true; } 
+    return false; 
+  } // Ok for Java and OCL.
+
+  public boolean isString() 
+  { return Expression.isString(symbol); } 
+ 
 
   public boolean updatesObject(ASTTerm t)
   { return false; } 

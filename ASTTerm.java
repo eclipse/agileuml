@@ -183,12 +183,16 @@ public abstract class ASTTerm
 
 
   public boolean hasType(String str)
-  { if ("integer".equalsIgnoreCase(str))
+  { if ("character".equalsIgnoreCase(str))
+    { return isCharacter(); } 
+    if ("integer".equalsIgnoreCase(str))
     { return isInteger(); } 
     if ("real".equalsIgnoreCase(str))
     { return isReal(); } 
     if ("boolean".equalsIgnoreCase(str))
-    { return isBoolean(); } 
+    { return isBoolean(); }
+    if ("String".equalsIgnoreCase(str))
+    { return isString(); }  
 
     if ("Sequence".equals(str))
     { return isSequence(); } 
@@ -377,38 +381,61 @@ public abstract class ASTTerm
   } 
 
   public boolean isString() 
-  { String typ = ASTTerm.getType(literalForm()); 
+  { String litf = literalForm(); 
+    String typ = ASTTerm.getType(litf); 
     if (typ == null) 
-    { return false; } 
+    { return Expression.isString(litf); } 
     return 
       "String".equals(typ) || "Character".equals(typ) || 
       "StringBuffer".equals(typ) || "char".equals(typ) || 
       "StringBuilder".equals(typ); 
   } 
 
+  public boolean isCharacter()
+  { String s = literalForm(); 
+    if (s.length() > 2 && s.startsWith("'") && 
+        s.endsWith("'"))
+    { return true; } 
+    return false; 
+  } 
+
   public boolean isInteger() 
-  { String typ = ASTTerm.getType(literalForm()); 
-    if (typ == null) 
-    { return false; } 
+  { String litf = literalForm(); 
+    String typ = ASTTerm.getType(litf);
+    if (typ == null)
+    { return Expression.isInteger(litf) ||
+             Expression.isLong(litf); 
+    }   
     return ASTTerm.isInteger(typ); 
   } 
 
   public boolean isReal() 
-  { String typ = ASTTerm.getType(literalForm()); 
+  { String litf = literalForm(); 
+    String typ = ASTTerm.getType(litf); 
     if (typ == null) 
-    { return false; } 
+    { return Expression.isDouble(litf); } 
     return ASTTerm.isReal(typ); 
   } 
 
   public boolean isNumber() 
-  { String typ = ASTTerm.getType(literalForm()); 
+  { String litf = literalForm(); 
+    String typ = ASTTerm.getType(litf);
+    if (typ == null) 
+    { return Expression.isInteger(litf) ||
+             Expression.isLong(litf) || 
+             Expression.isDouble(litf); 
+    } 
+ 
     return ASTTerm.isReal(typ) || ASTTerm.isInteger(typ); 
   } 
 
   public boolean isBoolean() 
-  { String typ = ASTTerm.getType(literalForm()); 
+  { String litf = literalForm(); 
+    String typ = ASTTerm.getType(litf); 
     if (typ == null) 
-    { return false; } 
+    { return "true".equalsIgnoreCase(litf) || 
+             "false".equalsIgnoreCase(litf); 
+    } 
     return 
       "boolean".equals(typ) || "Boolean".equals(typ); 
   } 

@@ -3594,6 +3594,18 @@ class CreationStatement extends Statement
     { String jType = instanceType.getJava(); 
       if (initialExpression != null)
       { return "  " + jType + " " + assignsTo + " = " + initialExpression.toJava() + ";\n"; }
+      else if (Type.isRefType(instanceType))
+      { String rt = jType; 
+        if (instanceType.getElementType() != null) 
+        { Type elemT = instanceType.getElementType();
+          rt = elemT.getJava(); 
+          if (Type.isBasicType(elemT) ||
+              elemT.isStructEntityType() ||  
+              "Ref".equals(elemT.getName()))
+          { return "  " + rt + "[] " + assignsTo + ";"; }
+        }
+        return "  " + rt + " " + assignsTo + ";";   
+      }   
       else if (Type.isBasicType(instanceType)) 
       { return "  " + mode + jType + " " + assignsTo + ";"; } 
       else if (declarationOnly) 

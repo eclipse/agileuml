@@ -9338,7 +9338,7 @@ public void produceCUI(PrintWriter out)
     out.println("using System.IO;"); 
     out.println("using System.Linq;");
     out.println("using System.Diagnostics;"); 
-  
+    out.println("using System.Threading;");
     out.println("using System.Threading.Tasks;"); 
     out.println("using System.Xml.Serialization;"); 
     out.println("using System.Text.Json;"); 
@@ -13503,6 +13503,158 @@ public void produceCUI(PrintWriter out)
     typeCheck(); 
     // Generate Python
   } 
+
+  public void java2swift()
+  { File ocltypes = new File("libraries/ocltype.km3"); 
+    if (ocltypes.exists())
+    { loadKM3FromFile(ocltypes); }
+    else 
+    { System.err.println("! Warning: no file libraries/ocltype.km3"); } 
+
+    File oclfile = new File("libraries/oclfile.km3"); 
+    if (oclfile.exists())
+    { loadKM3FromFile(oclfile); }
+    else 
+    { System.err.println("! Warning: no file libraries/oclfile.km3"); } 
+
+    File ocldate = new File("libraries/ocldate.km3"); 
+    if (ocldate.exists())
+    { loadKM3FromFile(ocldate); }
+    else 
+    { System.err.println("! Warning: no file libraries/ocldate.km3"); } 
+
+    File oclprocess = new File("libraries/oclprocess.km3"); 
+    if (oclprocess.exists())
+    { loadKM3FromFile(oclprocess); }
+    else 
+    { System.err.println("! Warning: no file libraries/oclprocess.km3"); } 
+
+    File mathlib = new File("libraries/mathlib.km3"); 
+    if (mathlib.exists())
+    { loadKM3FromFile(mathlib); }
+    else 
+    { System.err.println("! Warning: no file libraries/mathlib.km3"); } 
+ 
+    loadGenericUseCase();
+    typeCheck(); 
+    typeCheck(); 
+
+    // Generate Swift: 
+    generateIOSApp();
+  } 
+
+  public void java2csharp()
+  { File ocltypes = new File("libraries/ocltype.km3"); 
+    if (ocltypes.exists())
+    { loadKM3FromFile(ocltypes); }
+    else 
+    { System.err.println("! Warning: no file libraries/ocltype.km3"); } 
+
+    File oclfile = new File("libraries/oclfile.km3"); 
+    if (oclfile.exists())
+    { loadKM3FromFile(oclfile); }
+    else 
+    { System.err.println("! Warning: no file libraries/oclfile.km3"); } 
+
+    File ocldate = new File("libraries/ocldate.km3"); 
+    if (ocldate.exists())
+    { loadKM3FromFile(ocldate); }
+    else 
+    { System.err.println("! Warning: no file libraries/ocldate.km3"); } 
+
+    File oclprocess = new File("libraries/oclprocess.km3"); 
+    if (oclprocess.exists())
+    { loadKM3FromFile(oclprocess); }
+    else 
+    { System.err.println("! Warning: no file libraries/oclprocess.km3"); } 
+
+    File mathlib = new File("libraries/mathlib.km3"); 
+    if (mathlib.exists())
+    { loadKM3FromFile(mathlib); }
+    else 
+    { System.err.println("! Warning: no file libraries/mathlib.km3"); } 
+ 
+    loadGenericUseCase();
+    typeCheck(); 
+    typeCheck(); 
+
+    // Generate CSharp:
+
+    File file = new File("output/Program.cs");  
+    File file2 = new File("output/SystemTypes.cs");
+
+    try
+    { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(file)));
+      PrintWriter out2 = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(file2)));
+         
+      generateCSharp(out, out2);
+      out.close();
+      out2.close(); 
+    }
+    catch (Throwable tt)
+    { System.err.println("Error generating C#"); } 
+  } 
+
+  public void java2cpp()
+  { File ocltypes = new File("libraries/ocltype.km3"); 
+    if (ocltypes.exists())
+    { loadKM3FromFile(ocltypes); }
+    else 
+    { System.err.println("! Warning: no file libraries/ocltype.km3"); } 
+
+    File oclfile = new File("libraries/oclfile.km3"); 
+    if (oclfile.exists())
+    { loadKM3FromFile(oclfile); }
+    else 
+    { System.err.println("! Warning: no file libraries/oclfile.km3"); } 
+
+    File ocldate = new File("libraries/ocldate.km3"); 
+    if (ocldate.exists())
+    { loadKM3FromFile(ocldate); }
+    else 
+    { System.err.println("! Warning: no file libraries/ocldate.km3"); } 
+
+    File oclprocess = new File("libraries/oclprocess.km3"); 
+    if (oclprocess.exists())
+    { loadKM3FromFile(oclprocess); }
+    else 
+    { System.err.println("! Warning: no file libraries/oclprocess.km3"); } 
+
+    File mathlib = new File("libraries/mathlib.km3"); 
+    if (mathlib.exists())
+    { loadKM3FromFile(mathlib); }
+    else 
+    { System.err.println("! Warning: no file libraries/mathlib.km3"); } 
+ 
+    loadGenericUseCase();
+    typeCheck(); 
+    typeCheck(); 
+
+    // Generate CSharp:
+
+    File file = new File("output/Controller.hpp");  
+    File file2 = new File("output/Controller.cpp");
+
+    try
+    { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(file)));
+      PrintWriter out2 = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(file2)));
+         
+      generateCPP(out, out2);
+      out.close();
+      out2.close(); 
+    }
+    catch (Throwable tt)
+    { System.err.println("Error generating C++"); } 
+  } 
+
 
 
   public void loadGenericUseCase()

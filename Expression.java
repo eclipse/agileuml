@@ -1309,6 +1309,9 @@ abstract class Expression
     return false;
   }
   
+  public boolean hasBasicType()
+  { return Type.isBasicType(type); } 
+
   public boolean isString()
   { return type != null && type.isString(); }
 

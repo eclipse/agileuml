@@ -107,6 +107,8 @@ public class ASTBasicTerm extends ASTTerm
   { if (rules == null) 
     { return value; } 
 
+    ASTTerm term0 = getTerm(0); 
+
     for (int i = 0; i < rules.size(); i++) 
     { CGRule r = (CGRule) rules.get(i);
       Vector tokens = r.lhsTokens; 
@@ -133,8 +135,8 @@ public class ASTBasicTerm extends ASTTerm
       for (int j = 0; j < tokens.size() && !failed; j++) 
       { String tok = (String) tokens.get(j); 
         if (vars.contains(tok))
-        { // allocate terms(j) to tok
-          eargs.add(value); 
+        { // allocate terms(0) to tok
+          eargs.add(term0); 
           k++; 
         } 
         else if (tok.equals(value))
@@ -147,13 +149,18 @@ public class ASTBasicTerm extends ASTTerm
       } 
 
       if (!failed)
-      { System.out.println("> Matched " + tag + " rule " + r + " for " + this);  
-
+      { 
         for (int p = 0; p < eargs.size(); p++)
-        { String textp = (String) eargs.get(p); 
+        { String textp = ((ASTTerm) eargs.get(p)).literalForm(); 
           args.add(textp); 
-        } 
-        return r.applyRule(args,eargs,cgs);
+        }
+
+        Vector ents = new Vector(); 
+
+        if (r.satisfiesConditions(eargs,ents))
+        { System.out.println(">>>> Applying basic term " + tag + " rule " + r + " for " + this); 
+          return r.applyRule(args,eargs,cgs); 
+        }  
       }   
     } 
 
@@ -1102,6 +1109,14 @@ public class ASTBasicTerm extends ASTTerm
     return value; 
   } 
 
+  public boolean isCharacter()
+  { if (value.length() > 2 && 
+        value.charAt(0) == '\'' && 
+        value.charAt(value.length()-1) == '\'')
+    { return true; } 
+    return false; 
+  } 
+
   public boolean isInteger()
   { if (tag.equals("integerLiteral")) 
     { return true; } 
@@ -1123,7 +1138,11 @@ public class ASTBasicTerm extends ASTTerm
   { if (value.equals("true") || value.equals("false"))
     { return true; } 
     return false; 
-  } // Ok for Java and OCL. 
+  } // Ok for Java and OCL.
+
+  public boolean isString() 
+  { return Expression.isString(value); } 
+ 
 
   public boolean isIdentifier()
   { return "primary".equals(tag) && 
@@ -1170,5 +1189,11 @@ public class ASTBasicTerm extends ASTTerm
 
   public String postSideEffect()
   { return null; } 
+
+  public static void main(String[] args)
+  { ASTBasicTerm tt = new ASTBasicTerm("primaryExpression", "'a'"); 
+    System.out.println(tt.isCharacter()); 
+  } 
+
 
 } 

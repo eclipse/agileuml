@@ -329,7 +329,20 @@ public class SetExpression extends Expression
   /* TODO: add operations for MAPS. */ 
   
   public String queryForm(java.util.Map env, boolean local)
-  { if (isMap())
+  { if (type != null && "Ref".equals(type.getName()))
+    { Type et = getElementType();
+      String cset = "object"; 
+      if (et != null) 
+      { cset = et.getJava(); }
+      String refsze = "1";  
+      if (elements.size() > 0) 
+      { Expression refsize = (Expression) elements.get(0); 
+        refsze = refsize.queryForm(env,local); 
+      } 
+      return "new " + cset + "[" + refsze + "]"; 
+    } 
+
+    if (isMap())
     { String result = "(new HashMap())"; 
       for (int i = 0; i < elements.size(); i++)
       { BinaryExpression e = (BinaryExpression) elements.get(i);
@@ -351,19 +364,32 @@ public class SetExpression extends Expression
   }  // different for sequences?
 
   public String queryFormJava6(java.util.Map env, boolean local)
-  { if (isMap())
+  { if (type != null && "Ref".equals(type.getName()))
+    { Type et = getElementType();
+      String cset = "object"; 
+      if (et != null) 
+      { cset = et.getJava6(); }
+      String refsze = "1";  
+      if (elements.size() > 0) 
+      { Expression refsize = (Expression) elements.get(0); 
+        refsze = refsize.queryFormJava6(env,local); 
+      } 
+      return "new " + cset + "[" + refsze + "]"; 
+    } 
+
+    if (isMap())
     { String result = "(new HashMap())"; 
-	  for (int i = 0; i < elements.size(); i++)
+      for (int i = 0; i < elements.size(); i++)
       { BinaryExpression e = (BinaryExpression) elements.get(i);
-	    Expression key = e.getLeft(); 
-		Expression value = e.getRight(); 
+        Expression key = e.getLeft(); 
+        Expression value = e.getRight(); 
         result = "Set.includingMap(" + result + "," + key.queryFormJava6(env,local) + "," + 
 		                           value.queryFormJava6(env,local) + ")";
       }
-	  return result; 
-	}
+      return result; 
+    }
 	
-	String res = "(new HashSet())"; 
+    String res = "(new HashSet())"; 
     if (ordered) 
     { res = "(new ArrayList())"; } 
 
@@ -379,7 +405,19 @@ public class SetExpression extends Expression
   }  // different for sequences?
 
   public String queryFormJava7(java.util.Map env, boolean local)
-  { 
+  { if (type != null && "Ref".equals(type.getName()))
+    { Type et = getElementType();
+      String cset = "object"; 
+      if (et != null) 
+      { cset = et.getJava7(); }
+      String refsze = "1";  
+      if (elements.size() > 0) 
+      { Expression refsize = (Expression) elements.get(0); 
+        refsze = refsize.queryFormJava7(env,local); 
+      } 
+      return "new " + cset + "[" + refsze + "]"; 
+    } 
+
     if (isMap())
     { String mtype = type.getJava7(elementType); 
       String result = "(new " + mtype + "())"; 

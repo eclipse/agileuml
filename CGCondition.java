@@ -235,8 +235,12 @@ public class CGCondition
 
   public boolean conditionSatisfied(Expression e, Vector entities)
   { Type t = e.getType();
+    Type et = e.getElementType(); 
+
     int kind = e.getUMLKind(); 
+
     String edata = e + ""; 
+
     Entity ent = 
       (Entity) ModelElement.lookupByName(edata,entities); 
 	
@@ -251,6 +255,9 @@ public class CGCondition
     } 
 
     String tname = t.getName(); 
+    String etname = ""; 
+    if (et != null) 
+    { etname = et.getName(); } 
 
     if ("Set".equals(stereotype))
     { if (positive)
@@ -366,6 +373,36 @@ public class CGCondition
       else
       { return e.umlkind != Expression.ROLE; }
     }
+    else if ("intRef".equals(stereotype))
+    { if (positive) 
+      { return tname.equals("Ref") && etname.equals("int"); }
+      else 
+      { return !(tname.equals("Ref") && etname.equals("int")); } 
+    } 
+    else if ("longRef".equals(stereotype))
+    { if (positive) 
+      { return tname.equals("Ref") && etname.equals("long"); }
+      else 
+      { return !(tname.equals("Ref") && etname.equals("long")); } 
+    } 
+    else if ("doubleRef".equals(stereotype))
+    { if (positive) 
+      { return tname.equals("Ref") && etname.equals("double"); }
+      else 
+      { return !(tname.equals("Ref") && etname.equals("double")); } 
+    } 
+    else if ("booleanRef".equals(stereotype))
+    { if (positive) 
+      { return tname.equals("Ref") && etname.equals("boolean"); }
+      else 
+      { return !(tname.equals("Ref") && etname.equals("boolean")); } 
+    } 
+    else if ("StringRef".equals(stereotype))
+    { if (positive) 
+      { return tname.equals("Ref") && etname.equals("String"); }
+      else 
+      { return !(tname.equals("Ref") && etname.equals("String")); } 
+    } 
     else if (edata.equals(stereotype))
     { return positive; } 
     else // _i is T   T is int, double, long, etc, or a enumeration or class name 
@@ -410,7 +447,7 @@ public class CGCondition
     } 
 
     if (a.hasType(stereotype))
-    { System.out.println("||| condition that type of " + a + " = " + stereotype + " is satisfied"); 
+    { System.out.println("|||>> condition that type of " + a + " = " + stereotype + " is satisfied"); 
       return positive; 
     } 
 
@@ -432,13 +469,22 @@ public class CGCondition
   }
 
   public boolean conditionSatisfied(String e, Vector entities)
-  { if (e != null && e.equals(stereotype)) 
+  { if (e == null) 
+    { return !positive; }
+
+    // if ("character".equals(stereotype))
+    // { if (e.length() > 1 && e.startsWith("'") && 
+    //       e.endsWith("'"))
+    //   { return !positive; } 
+    // } 
+
+    if (e != null && e.equals(stereotype)) 
     { return positive; } 
-	if (e == null) 
-	{ return !positive; }
-	if (!e.equals(stereotype))
-	{ return !positive; }
-    return false; 
-  } // and for other kinds of statement also 
+    if (!e.equals(stereotype))
+    { return !positive; }
+    return false;    
+  } 
+
+
 }
     
