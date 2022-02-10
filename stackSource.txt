@@ -1,0 +1,12 @@
+public class StackSource
+{ public boolean stackop()
+  { Stack st = new Stack(); 
+    st.push("aa"); 
+    st.push("bb"); 
+    st.push("cc"); 
+    String pp = (String) st.peek(); 
+    int x = st.search("bb"); 
+    pp = (String) st.pop(); 
+    return st.empty(); 
+  }
+}
