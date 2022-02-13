@@ -550,7 +550,8 @@ public class ASTBasicTerm extends ASTTerm
     { modelElement = new Type("String", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "String"; } 
-    if ("CharSequence".equals(value))
+    if ("CharSequence".equals(value) || 
+        "Segment".equals(value))
     { modelElement = new Type("String", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "String"; } 
@@ -913,6 +914,10 @@ public class ASTBasicTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; } 
     if ("FileWriter".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("RandomAccessFile".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; } 

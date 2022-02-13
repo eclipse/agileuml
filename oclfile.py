@@ -2,8 +2,11 @@ import ocl
 import math
 import os
 import pickle
+import socket
+import tempfile
 
 from enum import Enum
+
 
 def free(x):
   del x
@@ -16,13 +19,24 @@ class OclFile:
   def __init__(self):
     self.name = ""
     self.position = 0
+    self.markedPosition = 0
     self.actualFile = None
     self.lastRead = None
+    self.remote = False
+    self.port = 0
     self.eof = False
+    self.readable = False
+    self.writable = False
     OclFile.oclfile_instances.append(self)
 
   def newOclFile(nme) : 
     f = createByPKOclFile(nme)
+    return f
+
+  def newOclFile_Remote(nme,portNumber) : 
+    f = createByPKOclFile(nme)
+    f.port = portNumber
+    f.remote = True
     return f
 
   def newOclFile_Read(f) : 
@@ -44,6 +58,18 @@ class OclFile:
   def getName(self) : 
     return self.name
 
+  def getInetAddress(self) : 
+    return self.name
+
+  def getLocalAddress(self) : 
+    return self.name
+
+  def getPort(self) :
+    return self.port
+
+  def getLocalPort() : 
+    return self.port
+
   def compareTo(self,f) : 
     if self.name < f.name : 
       return -1 
@@ -61,34 +87,69 @@ class OclFile:
       return self.actualFile.writable()
     return False
 
-
   def openWrite(self) : 
     if self.name == "System.out" or self.name == "System.err" : 
       pass 
+    elif self.remote : 
+      pass
     else : 
-      self.actualFile = open(self.name, 'w')
+      try : 
+        self.actualFile = open(self.name, 'r+')
+        self.writable = True
+      except : 
+        self.actualFile = open(self.name, 'w+')
+        self.writable = True
     self.position = 0
 
   def openRead(self) : 
     if self.name == "System.in" : 
       pass
+    elif self.remote : 
+      pass
     else : 
-      self.actualFile = open(self.name, 'r')
+      try : 
+        self.actualFile = open(self.name, 'r')
+        self.readable = True
+      except :
+        pass 
     self.position = 0
 
   def openWriteB(self) : 
     if self.name == "System.out" or self.name == "System.err" : 
-      pass 
+      pass
+    elif self.remote : 
+      self.actualFile = socket.create_connection((self.name,self.port)) 
     else : 
-      self.actualFile = open(self.name, 'wb')
+      self.actualFile = open(self.name, 'r+b')
     self.position = 0
 
   def openReadB(self) : 
     if self.name == "System.in" : 
       pass
+    elif self.remote : 
+      self.actualFile = socket.create_connection((self.name,self.port)) 
     else : 
       self.actualFile = open(self.name, 'rb')
     self.position = 0
+
+  def getInputStream(self) : 
+    self.openReadB()
+    return self
+
+  def getOutputStream(self) : 
+    self.openWriteB()
+    return self
+
+  def createTemporaryFile(nme,ext) : 
+    (fle,pth) = tempfile.mkstemp("." + ext, nme)
+    if fle != None : 
+      res = createByPKOclFile(str(pth))
+      res.actualFile = fle
+      return res
+
+
+  def setPort(self,portNumber) : 
+    self.port = portNumber
 
   def exists(self) : 
     return os.path.isfile(self.name)
@@ -121,12 +182,24 @@ class OclFile:
   def lastModified(self) : 
     return int(os.path.getmtime(self.name))
 
-  def length(self) : 
+  def length(self) :
+    if self.remote : 
+      return 0 
     return os.path.getsize(self.name)
 
   def delete(self) : 
+    if self.remote : 
+      return False
     os.remove("./" + self.name)
+    self.readable = False
+    self.writable = False
     if os.path.isfile(self.name) : 
+      return False
+    return True
+
+  def deleteFile(nme) : 
+    os.remove("./" + nme)
+    if os.path.isfile(nme) : 
       return False
     return True
 
@@ -139,6 +212,13 @@ class OclFile:
     for x in sq : 
       res.append(OclFile.newOclFile(x))
     return res
+
+  def renameFile(oldnme, newnme) : 
+    try: 
+      os.rename(oldnme,newnme)
+    except OSError as error: 
+      return False
+    return True
 
   def mkdir(self) : 
     try: 
@@ -160,21 +240,35 @@ class OclFile:
       self.writeln(s)
 
   def printf(self, f, sq) :
-    print(f % tuple(sq), end="")
+    if self.name == "System.out" or self.name == "System.err" :
+      print(f % tuple(sq), end="")
+    else : 
+      self.write(f % tuple(sq))
 
   def write(self, s) :
     if self.actualFile != None : 
-      self.actualFile.write(s)
+      if self.remote : 
+        self.actualFile.send(s)
+      else : 
+        self.actualFile.write(s)
 
   def writeObject(self, s) :
     if self.actualFile != None : 
-      pickle.dump(s,self.actualFile)
+      if self.remote : 
+        self.actualFile.send(s)
+      else : 
+        pickle.dump(s,self.actualFile)
 
   def writeln(self, s) :
-    if self.actualFile != None : 
-      self.actualFile.write(s + "\n")
+    if self.actualFile != None :
+      if self.remote : 
+        self.actualFile.send(s + "\n")
+      else :  
+        self.actualFile.write(s + "\n")
 
   def flush(self) :
+    if self.remote : 
+      return
     if self.actualFile != None : 
       self.actualFile.flush()
 
@@ -191,13 +285,31 @@ class OclFile:
         self.lastRead = None
         return False
     return False 
-    
+
+  def hasNextLine(self) : 
+    if self.name == "System.in" :
+      if self.eof == True : 
+        return False 
+      try : 
+        s = input("")
+        self.lastRead = s
+        return True
+      except EOFError : 
+        self.eof = True
+        self.lastRead = None
+        return False
+    return False 
 
   def read(self) :
+    if self.remote : 
+      if self.actualFile != None : 
+        s = self.actualFile.recv(1024)
+      return s
     if self.actualFile != None :
       try :  
         s = self.actualFile.read(1)
         self.lastRead = s
+        self.position = self.position + 1
         return s
       except EOFError : 
         self.eof = True
@@ -216,47 +328,118 @@ class OclFile:
         return None
     return ""
 
+  def readN(self,n) : 
+    if self.remote : 
+      if self.actualFile != None : 
+        s = self.actualFile.recv(n)
+      return ocl.characters(s)
+    if self.actualFile != None :
+      ind = 0
+      res = []
+      maxlen = self.length()
+      while ind < n and self.position <= maxlen and self.eof == False : 
+        try : 
+          s = self.actualFile.read(1)
+          self.lastRead = s
+          self.position = self.position + 1
+          res.append(s)
+          ind = ind + 1
+        except Error : 
+          self.eof = True
+          self.lastRead = None
+          break
+      return res
+    return []
+
+  def readByte(self) : 
+    s = self.read()
+    return ocl.char2byte(s)
+
   def getCurrent(self) : 
     return self.lastRead
       
   def readObject(self) :
+    if self.remote : 
+      if self.actualFile != None : 
+        s = self.actualFile.recv(1024)
+      return s
     if self.actualFile != None : 
       return pickle.load(self.actualFile)
     return None
 
   def readLine(self) :
+    if self.remote : 
+      if self.actualFile != None : 
+        s = self.actualFile.recv(1024)
+      return s
     if self.actualFile != None : 
-      return self.actualFile.readline()
+      ss = self.actualFile.readline()
+      position = position + len(ss)
+      return ss
     if self.name == "System.in" : 
       s = input("")
       return s
     return ""
 
   def readAll(self) :
+    if self.remote : 
+      if self.actualFile != None : 
+        s = self.actualFile.recv(4096)
+      return s
     if self.actualFile != None : 
       return self.actualFile.read()
     return ""
 
-  def mark(self) : 
-    if self.actualFile != None : 
-      self.position = self.actualFile.tell()
-    else : 
-      self.position = 0
+  def lineCount(self) :
+    if self.remote : 
+      return 0
+    if self.actualFile != None :
+      cnt = 0
+      for line in self.actualFile :
+        cnt = cnt + 1
+      return cnt
+    return 0
 
-  def reset(self) : 
+  def mark(self) :
+    if self.remote : 
+      return  
     if self.actualFile != None : 
-      self.actualFile.seek(self.position)
+      self.markedPosition = self.actualFile.tell()
+    else : 
+      self.markedPosition = 0
+
+  def reset(self) :
+    if self.remote : 
+      return 
+    if self.actualFile != None : 
+      self.actualFile.seek(self.markedPosition)
+
+  def getPosition(self) : 
+    return self.position
     
   def skipBytes(self,n) : 
+    if self.remote : 
+      return
     if self.actualFile != None : 
       self.position = self.actualFile.tell()
       self.position = self.position + n
       self.actualFile.seek(self.position)
 
+  def setPosition(self,n) : 
+    if self.remote : 
+      return
+    if self.actualFile != None : 
+      self.position = n
+      self.actualFile.seek(n)
+
+  def getEof(self) : 
+    return self.eof
 
   def closeFile(self) : 
     if self.actualFile != None : 
       self.actualFile.close()
+      self.readable = False
+      self.writable = False
       self.actualFile = None
 
 
@@ -297,71 +480,16 @@ def createByPKOclFile(_value):
     return result
 
 
-# f1 = OclFile.newOclFile("./subdir")
-# f2 = OclFile.newOclFile_Read(f1)
-# print(f2.length())
-# print(f2.isFile())
-# print(f2.isDirectory())
-# print(f2.lastModified())
-# print(f2.isAbsolute())
-
-# f2.closeFile()
-# print(f1.mkdir())
-
-# print(f2.canRead())
-
-# f = OclFile.newOclFile("f.txt")
-# print(f.getAbsolutePath())
-# print(f.getParent())
-# d = f.getParentFile()
-# print(d.getName())
-# print(f.getPath())
-
-
-# f = open("w.txt", 'w')
-# f.write("some text")
-# f.write("more text")
-# f.flush()
-# f.close()
 
 System_in = OclFile.newOclFile("System.in")
 System_out = OclFile.newOclFile("System.out")
 System_err = OclFile.newOclFile("System.err")
 
-# f = OclFile.newOclFile("obj.dat")
-# fx = OclFile.newOclFile_ReadB(f)
+ff = OclFile.newOclFile("ff.txt")
+gg = OclFile.newOclFile_Write(ff)
+print(gg.length())
+gg.setPosition(5)
+x = gg.readN(25)
+print(x)
 
-# class Person : 
-#   def __init__(self,nme) : 
-#     self.name = nme
-
-# p1 = Person("Hamlet")
-# p2 = Person("Horatio")
-
-# p1 = fx.readObject()
-# p2 = fx.readObject()
-# fx.closeFile()
-
-# print(p1.name)
-# print(p2.name)
-
-# System_out.printf("%d %s", [120, "degrees"])
-
-# at end of file - go to end of file, find the 
-# position there, return to current position. 
-# EOF if they are the same. 
-# pos = fh.tell()
-# fh.seek(0, 2)
-# file_size = fh.tell()
-# if pos == file_size : 
-#   return True
-# fh.seek(pos)
-# return False
-
-# sq = []
-# while System_in.hasNext() : 
-#   x = System_in.getCurrent()
-#   sq.append(x)
-# print(sq)
-
-
+gg.closeFile()
