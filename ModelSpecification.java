@@ -111,13 +111,19 @@ public class ModelSpecification
   } 
 		  
   public String toString()
-  { String res = "MODEL "; 
+  { String res = ""; 
     for (int i = 0; i < objects.size(); i++) 
-    { res = res + objects.get(i) + "\n"; } 
+    { ObjectSpecification spec = (ObjectSpecification) objects.get(i); 
+      res = res + spec.details() + "\n"; 
+    } 
 	
-	res = res + "Correspondences: \n"; 
-	res = res + correspondence + "\n"; 
-	
+    for (int j = 0; j < correspondence.elements.size(); j++)
+    { Maplet mm = (Maplet) correspondence.elements.get(j); 
+      ObjectSpecification sobj = (ObjectSpecification) mm.source; 
+      ObjectSpecification tobj = (ObjectSpecification) mm.dest; 
+      res = res + sobj.getName() + " |-> " + tobj.getName() + "\n"; 
+    } 
+
     return res; 
   }
 
@@ -212,7 +218,9 @@ public class ModelSpecification
   }  
 
   public boolean correspondingTrees(ASTTerm s, ASTTerm t) 
-  { if (s == null) 
+  { // s, t are the asts of corresponding objects
+
+    if (s == null) 
     { return false; } 
     if (t == null) 
     { return false; } 
@@ -224,6 +232,16 @@ public class ModelSpecification
       if (src.hasAttribute("ast") && trg.hasAttribute("ast"))
       { ASTTerm stree = src.getTree("ast");
         ASTTerm ttree = trg.getTree("ast");  
+
+        if (stree == null) 
+        { System.err.println("!WARNING -- invalid AST for " + src); 
+          return false; 
+        } 
+
+        if (ttree == null) 
+        { System.err.println("!WARNING -- invalid AST for " + trg); 
+          return false; 
+        } 
 
         if (s.equals(stree) && t.equals(ttree))
         { return true; } 
@@ -254,6 +272,7 @@ public class ModelSpecification
 
       // System.out.println(">>> Object " + src + " " + src.entity + " " + src.objectClass); 
 
+      /* These tests should be inverted: */ 
       if (src.entity != null && src.entity.equals(sent)) 
       { continue; } 
       if (sent.getName().equals(src.objectClass)) 
@@ -263,6 +282,16 @@ public class ModelSpecification
       if (src.hasAttribute("ast") && trg.hasAttribute("ast"))
       { ASTTerm stree = src.getTree("ast");
         ASTTerm ttree = trg.getTree("ast");  
+
+        if (stree == null) 
+        { System.err.println("!WARNING -- invalid AST for " + src); 
+          return false; 
+        } 
+
+        if (ttree == null) 
+        { System.err.println("!WARNING -- invalid AST for " + trg); 
+          return false; 
+        } 
 
         if (s.equals(stree) && t.equals(ttree))
         { return true; } 
@@ -2408,6 +2437,7 @@ public class ModelSpecification
    
   public Vector objectPairsForEntityMatching(EntityMatching em, Vector removed)
   { Vector res = new Vector(); 
+    // Set of pairs [s,t] where s |-> t and satisfy em
   
     Entity se = em.realsrc; 
     Entity te = em.realtrg; 
@@ -2520,7 +2550,8 @@ public class ModelSpecification
                    tatt.isTree())
           { System.out.println(">>> Checking composed tree functions for " + tatt);
  
-            Vector newams = identifyComposedTreeFunctions(tatt, em.realsrc, trgent, pairs,em,ems,tms);
+            Vector newams = identifyComposedTreeFunctions(
+                tatt, em.realsrc, trgent, pairs,em,ems,tms);
             System.out.println(">>> New attribute mappings: " + newams);  
             if (newams != null) 
             { for (int q = 0; q < newams.size(); q++) 
@@ -4359,32 +4390,32 @@ public class ModelSpecification
         else 
         { alltdefined = false; } 
         tattvalues[j] = tobj.getString(tattname);
-		tvalues.add(tattvalues[j]);  
-	  }
+        tvalues.add(tattvalues[j]);  
+      }
 	  
-	  if (alltdefined) { } 
-	  else 
-	  { System.err.println("! Not every target instance has a " + tattname + " value"); 
+      if (alltdefined) { } 
+      else 
+      { System.err.println("! Not every target instance has a " + tattname + " value"); 
 	    continue; 
-	  }
+      }
 		
       System.out.println(); 
       System.out.println(">> Target feature: " + tattname);
-	  System.out.println(">> Target values are: " + tvalues); 
-	  System.out.println(); 
+      System.out.println(">> Target values are: " + tvalues); 
+      System.out.println(); 
 	   
       Vector satts = ModelMatching.findBaseTypeCompatibleSourceAttributes(tatt, sattributes, emx, ems); // sattributes,emx,ems); 
       boolean found = false; 
 	  
       Vector sourceattributes = new Vector();  // attributes considered for combination into tatt
-	  java.util.Map sattvalueMap = new java.util.HashMap();  // for each satt in sourceattributes, its values for sobjs of pairs
+      java.util.Map sattvalueMap = new java.util.HashMap();  // for each satt in sourceattributes, its values for sobjs of pairs
 	  
       for (int k = 0; k < satts.size(); k++) 
       { Attribute satt = (Attribute) satts.get(k);
         String sattname = satt.getName(); 
 	 
-	    if (satt.isNumeric())
-	    { String[] sattvalues = new String[en];
+        if (satt.isNumeric())
+        { String[] sattvalues = new String[en];
           boolean alldefined = true; 
 		        
           for (int j = 0; j < en; j++) 
@@ -4396,12 +4427,12 @@ public class ModelSpecification
             sattvalues[j] = sobj.getNumericValue(satt,this) + "";
           }
 		
-		  if (alldefined)
-		  { sattvalueMap.put(satt,sattvalues); 
-		    sourceattributes.add(satt); 
-		  }  
+	     if (alldefined)
+	     { sattvalueMap.put(satt,sattvalues); 
+	       sourceattributes.add(satt); 
+	     }  
 		    // check satt + satt1 = tatt, etc
-	  	} 
+	    } 
 	    else if (satt.isString())
 	    { String[] sattvalues = new String[en]; 
    	  
@@ -4413,29 +4444,29 @@ public class ModelSpecification
             // if (sobj.hasDefinedValue(sattname)) { } 
 		    // else 
   		    // { alldefined = false; } 
-		    Object vv = sobj.getValueOf(satt,this); 
+            Object vv = sobj.getValueOf(satt,this); 
 			// System.out.println(">>> valueof " + sobj + "." + satt + " = " + vv); 
-			if (vv != null && (vv instanceof String) && ((String) vv).startsWith("\"") && ((String) vv).endsWith("\""))
-			{ sattvalues[j] = ((String) vv).substring(1,((String) vv).length()-1); } 
-			else 
-			{ sattvalues[j] = "" + vv; }
+            if (vv != null && (vv instanceof String) && ((String) vv).startsWith("\"") && ((String) vv).endsWith("\""))
+            { sattvalues[j] = ((String) vv).substring(1,((String) vv).length()-1); } 
+            else 
+            { sattvalues[j] = "" + vv; }
 			
 			if (sattvalues[j].length() > 0)
 			{ allempty = false; }
-	      }
+          }
 		
           if (allempty) { } 
-		  else 
-		  { sattvalueMap.put(satt,sattvalues); 
-		    sourceattributes.add(satt); 
-		  } 
-		}
+          else 
+          { sattvalueMap.put(satt,sattvalues); 
+            sourceattributes.add(satt); 
+          } 
+        }
         else if (satt.isStringCollection())
-		{ Vector[] sattvalues = new Vector[en]; 
+        { Vector[] sattvalues = new Vector[en]; 
 		
-		  boolean allempty = true; 
+          boolean allempty = true; 
 		  
-		  for (int j = 0; j < en; j++)
+          for (int j = 0; j < en; j++)
           { Vector pair = (Vector) pairs.get(j); 
             ObjectSpecification srcobj = (ObjectSpecification) pair.get(0); // 0
             Vector srcvect = srcobj.getCollectionValue(satt,this);
@@ -5049,7 +5080,7 @@ public class ModelSpecification
        composedSequenceFunction(tatt,sourceattributes,
                       sattvalueMap,tattvalues,tvalues); 
     if (cexpr != null) 
-    { System.out.println(">>> Composed function " + cexpr + " |--> " + tatt); 
+    { System.out.println(">>> Composed sequence function " + cexpr + " |--> " + tatt); 
       Vector auxvariables = new Vector(); 
       Attribute var = new Attribute(Identifier.nextIdentifier("var$"),cexpr.getElementType(),
                                   ModelElement.INTERNAL);
@@ -5336,7 +5367,7 @@ public class ModelSpecification
        composedSetFunction(tatt,sourceattributes,
                       sattvalueMap,tattvalues,tvalues); 
     if (cexpr != null) 
-    { System.out.println(">>> Composed function " + cexpr + " |--> " + tatt); 
+    { System.out.println(">>> Composed Set function " + cexpr + " |--> " + tatt); 
       Vector auxvariables = new Vector(); 
       Attribute var = new Attribute(Identifier.nextIdentifier("var$"),cexpr.getElementType(),
                                   ModelElement.INTERNAL);
@@ -5459,7 +5490,9 @@ public class ModelSpecification
     return null; 
   } 
 
-  public Vector identifyComposedTreeFunctions(Attribute tatt, Entity sent, Entity tent, Vector pairs, EntityMatching emx, Vector ems, Vector tms)
+  public Vector identifyComposedTreeFunctions(Attribute tatt, 
+    Entity sent, Entity tent, Vector pairs, 
+    EntityMatching emx, Vector ems, Vector tms)
   { int en = pairs.size();  
     if (en <= 1)
     { return null; }
@@ -5553,14 +5586,17 @@ public class ModelSpecification
       } 
     }
 
+    Vector cexprs = new Vector(); 
+
     AttributeMatching cexpr = 
        composedTreeFunction(sent,tatt,sourceattributes,
-                      sattvalueMap,tattvalues,tvalues,tms); 
+                      sattvalueMap,tattvalues,tvalues,
+                      tms,cexprs); 
     if (cexpr != null) 
-    { System.out.println(">>> Composed function " + cexpr.src + " |--> " + cexpr.trg); 
+    { System.out.println(">>> Composed tree functions " + cexprs); 
       res.add(cexpr); 
+      res.addAll(cexprs); 
     }
-  
   
     return res; 
   } 
@@ -5569,15 +5605,20 @@ public class ModelSpecification
          Attribute tatt, Vector sourceatts, 
          java.util.Map sattvalueMap,     
          ASTTerm[] targetValues, Vector tvalues, 
-         Vector tms)
+         Vector tms, Vector ams)
   { // check what combinations of sourceatts values compose to tatt's values targetValues (tvalues)
     // It is assumed that all source trees of the same category
     // (Entity sent) have the same tag 
     // and arity and non-constant terms (variables _i in CSTL).
 
-    Attribute var_1 = new Attribute("_1", new Type("OclAny",null),
+    Attribute var_1 = 
+        new Attribute("_1", new Type("OclAny",null),
                    ModelElement.INTERNAL);
     Expression var1expr = new BasicExpression(var_1); 
+    Attribute var_star = 
+        new Attribute("_*", new Type("OclAny",null),
+                   ModelElement.INTERNAL);
+    Expression varstarexpr = new BasicExpression(var_star); 
 
     System.out.println(">> Checking all combinations of tree functions based on source attributes: " + sourceatts); 
   
@@ -5595,42 +5636,52 @@ public class ModelSpecification
         if (ASTTerm.constantTrees(sattrvalues))
         { ASTTerm constsv = sattrvalues[0]; 
           Expression srcexpr = 
-            new BasicExpression(constsv); 
+            new BasicExpression(constsv);
+          ams = new Vector();  
           return new AttributeMatching(srcexpr, targexpr); 
         } 
-      }      
+      } 
+
+      // Should be _* |--> constv     
         
       Vector auxvariables = new Vector(); 
-      auxvariables.add(var1expr);   
+      auxvariables.add(varstarexpr);   
+      ams = new Vector();  
+          
       AttributeMatching amx = 
-        new AttributeMatching(var1expr, targexpr, 
-                              var_1, auxvariables);
+        new AttributeMatching(varstarexpr, targexpr, 
+                              var_star, auxvariables);
       return amx;   
     }
 
     for (int i = 0; i < sourceatts.size(); i++) 
-    { Attribute satt = (Attribute) sourceatts.get(i); 
+    { Attribute satt = (Attribute) sourceatts.get(i);
+      // There is normally only one ast variable.  
       // check if tatt = satt, if tatt = (K satt) etc. 
 	  	  
       ASTTerm[] sattvalues = 
                  (ASTTerm[]) sattvalueMap.get(satt); 
 
       if (ASTTerm.equalTrees(sattvalues,targetValues,this)) 
-      { BasicExpression targexpr = new BasicExpression(var_1);  
-        BasicExpression sattbe = new BasicExpression(var_1); 
-        System.out.println(">> Identity mapping _1 |--> _1"); 
+      { Vector idmaps = 
+          ASTTerm.createIdentityMappings(
+                     sattvalues,targetValues,this); 
 
-        AttributeMatching amx = 
-          new AttributeMatching(sattbe, targexpr);
+        System.out.println(">> Identity mapping _* |-->_*"); 
+
+        AttributeMatching amx = (AttributeMatching) idmaps.get(0); 
+        ams.addAll(idmaps); 
         return amx;   
-      } // Actually tag:: _1 |--> _1 for each source tag
+      } // Actually tag:: _* |-->_* for each source tag
       else if (ASTTerm.allSymbolTerms(sattvalues) && 
                ASTTerm.allSymbolTerms(targetValues) &&
-               ASTTerm.functionalSymbolMapping(sattvalues,targetValues))
+               ASTTerm.functionalSymbolMapping(
+                            sattvalues,targetValues))
       { String fid = 
           Identifier.nextIdentifier("func"); 
         TypeMatching tm = 
-          ASTTerm.createNewFunctionalMapping(fid, sattvalues, targetValues); 
+          ASTTerm.createNewFunctionalMapping(
+                     fid, sattvalues, targetValues); 
         System.out.println(">> New functional mapping of symbols: " + tm); 
         tms.add(tm);
          
@@ -5638,48 +5689,56 @@ public class ModelSpecification
                           new BasicExpression(fid); 
         fexpr.setUmlKind(Expression.FUNCTION); 
         fexpr.addParameter(var1expr); 
+        ams = new Vector();  
         AttributeMatching amx = 
           new AttributeMatching(var1expr, fexpr);
         return amx;   
       } 
       else if (ASTTerm.allNestedSymbolTerms(sattvalues) && 
                ASTTerm.allSymbolTerms(targetValues) &&
-               ASTTerm.functionalSymbolMapping(sattvalues,targetValues))
+               ASTTerm.functionalSymbolMapping(
+                                sattvalues,targetValues))
       { String fid = 
           Identifier.nextIdentifier("func"); 
         TypeMatching tm = 
           ASTTerm.createNewFunctionalMapping(fid, sattvalues, targetValues); 
-        System.out.println(">> New functional mapping of symbols: " + tm); 
+        System.out.println(">> New nested functional mapping of symbols: " + tm); 
         tms.add(tm);
          
         BasicExpression fexpr = 
                           new BasicExpression(fid); 
         fexpr.setUmlKind(Expression.FUNCTION); 
         fexpr.addParameter(var1expr); 
+        ams = new Vector();  
         AttributeMatching amx = 
           new AttributeMatching(var1expr, fexpr);
         return amx;   
       } 
       else if (ASTTerm.sameTag(targetValues) && 
          ASTTerm.singletonTrees(sent, sattvalues,
-                              targetValues,this)) 
+                                targetValues,this)) 
       { ASTTerm targ0 = targetValues[0]; 
         BasicExpression targexpr = new BasicExpression(targ0);
         Vector newpars = new Vector(); 
         newpars.add(var1expr); 
         targexpr.setParameters(newpars); 
         System.out.println(">> Singleton mapping _1 |--> " + targexpr); 
+        ams = new Vector();  
+          
         AttributeMatching amx = 
           new AttributeMatching(var1expr, targexpr);
         return amx;   
       } // again, for the source tag:: if any. 
       else if (ASTTerm.sameTag(targetValues) && 
          ASTTerm.sameTails(targetValues) && 
-         ASTTerm.embeddedTrees(sent,sattvalues,targetValues,this)) 
+         ASTTerm.embeddedTrees(
+                    sent,sattvalues,targetValues,this)) 
       { ASTTerm targ0 = targetValues[0]; 
         BasicExpression targexpr = new BasicExpression(targ0);
         targexpr.setParameter(1,var1expr); 
         System.out.println(">> Embedded mapping _1 |--> " + targexpr); 
+        ams = new Vector();  
+          
         AttributeMatching amx = 
           new AttributeMatching(var1expr, targexpr);
         return amx;   
@@ -5699,14 +5758,16 @@ public class ModelSpecification
         tpars.add(var1expr); 
         texpr.setParameters(tpars); 
 
-        System.out.println(">> Tag rename mapping " + sexpr + " |--> " + texpr); 
+        System.out.println(">> Tag rename mapping " + sexpr + " |--> " + texpr);
+        ams = new Vector();  
+           
         AttributeMatching amx = 
           new AttributeMatching(sexpr, texpr);
         return amx;   
       } // sexpr.data:: sexpr.parameters |--> texpr
     } 
 
-    System.out.println(">>> Checking compositions for target " + tatt); 
+    System.out.println(">>> Checking composite tree functions for target " + tatt); 
 
     for (int i = 0; i < sourceatts.size(); i++) 
     { Attribute satt = (Attribute) sourceatts.get(i); 
@@ -5717,7 +5778,7 @@ public class ModelSpecification
 	  
       if (ASTTerm.sameTagSingleArgument(targetValues))
       { String commonTag = ASTTerm.commonTag(targetValues); 
-        System.out.println(">> Possible composed mapping " + satt + " |--> " + commonTag + "(" + tatt + ")"); 
+        System.out.println(">***> Possible composed tree mapping " + satt + " |--> " + commonTag + "(" + tatt + ")"); 
 
         Vector remd = new Vector(); 
         ASTTerm[] newTargetValues = 
@@ -5725,7 +5786,7 @@ public class ModelSpecification
 		
         AttributeMatching subexpr = 
           composedTreeFunction(sent, tatt, sourceatts, 
-              sattvalueMap, newTargetValues,remd,tms); 
+              sattvalueMap, newTargetValues,remd,tms,ams); 
 	  
         if (subexpr != null)
         { Expression sattbe = subexpr.srcvalue; 
@@ -5765,6 +5826,8 @@ public class ModelSpecification
         boolean allfound = true;
 
         Vector sfoundvars = new Vector();  
+        Vector localams = new Vector();            
+
         
         for (int tindex = 0; tindex < arit; tindex++) 
         { // if the tterms at tindex are constant, ttermpars 
@@ -5776,9 +5839,12 @@ public class ModelSpecification
           ASTTerm[] targetJValues = 
             ASTTerm.subterms(targetValues,tindex,trgJValues);
 
+          if (ASTTerm.hasNullTerm(trgJValues))
+          { continue; } // Should never happen
+
           if (ASTTerm.constantTrees(targetJValues))
           { ASTTerm constv = targetJValues[0]; 
-            System.out.println(">> Target terms " + (tindex+1) + " are constant: " + constv); 
+            System.out.println(">**> Target terms " + (tindex+1) + " are constant: " + constv); 
 		  
             Expression targexpr = new BasicExpression(constv);
             ttermpars.add(targexpr); 
@@ -5796,9 +5862,13 @@ public class ModelSpecification
                 ASTTerm.subterms( 
                      sattvalues,sindex,srcJValues);
 
+              if (ASTTerm.hasNullTerm(srcJValues))
+              { break; } 
+
               System.out.println(">->->> Comparing source term " + (sindex+1) + " values " + srcJValues + " to target term " + (tindex+1) + " values " + trgJValues); 
 
-              if (correspondingTrees(sent,sourceJValues,targetJValues))
+              if (correspondingTrees(
+                    sent,sourceJValues,targetJValues))
               { int k = tindex+1; 
                 System.out.println(">> Direct correspondence _" + (sindex+1) + " |--> _" + k + " for target terms " + k); 
                 ttermpars.add(new BasicExpression("_" + (sindex+1))); 
@@ -5806,33 +5876,58 @@ public class ModelSpecification
                 sfoundvars.add("_" + (sindex + 1));  
                 foundsource = true; 
               } 
-            }
+            } // cases of simple functional mappings
 
             
             if (!foundsource)
             { for (int sindex = 0; sindex < sarit && 
                                  !foundsource; 
-                 sindex++) 
+                   sindex++) 
               { Vector srcJValues = new Vector(); 
                 ASTTerm[] sourceJValues = 
                   ASTTerm.subterms( 
                      sattvalues,sindex,srcJValues);
-                java.util.Map newSMap = new java.util.HashMap(); 
+
+                if (ASTTerm.hasNullTerm(srcJValues))
+                { break; } 
+
+                java.util.Map newSMap = 
+                     new java.util.HashMap(); 
                 newSMap.putAll(sattvalueMap);
                 newSMap.put(satt, sourceJValues);
 
                 System.out.println(">>-->> Trying to map " + srcJValues + " to " + trgJValues); 
-                // If not functional, fail. 
+                // If not functional, fail.
+ 
                 if (ASTTerm.functionalTermMapping(srcJValues,                    
-                                                 trgJValues))
-                { System.out.println(">>-->> Functional mapping "); 
+                                                  trgJValues))
+                { System.out.println(">>-->> Functional mapping " + srcJValues + " to " + trgJValues);
+                  System.out.println();  
   
                   AttributeMatching amjx = 
                     composedTreeFunction(sent,
-                       tatt,sourceatts,newSMap,     
-                       targetJValues, trgJValues, tms); 
+                           tatt,sourceatts,newSMap,     
+                           targetJValues, trgJValues, 
+                           tms, localams); 
                   if (amjx != null) 
-                  { System.out.println(">>-->> Found nested mapping for source term " + (sindex+1) + ": " + amjx);
+                  { System.out.println(">>-->> Found nested mapping for source term " + (sindex+1) + " to target " + (tindex+1) + ": " + amjx);
+                    // Create new function ff with rule amjx; 
+                    // if non-trivial. Add to tms. 
+
+                    if (srcJValues.get(0) instanceof ASTSymbolTerm) { } 
+                    else 
+                    { String fid = 
+                         Identifier.nextIdentifier("subruleset");
+                      TypeMatching tmnew = new TypeMatching(fid);
+                      String slhs = 
+                        ((BasicExpression) amjx.srcvalue).toCSTL(); 
+                      String rrhs = 
+                        ((BasicExpression) amjx.trgvalue).toLiteralCSTL();  
+                      tmnew.addValueMapping(slhs, rrhs); 
+                      tms.add(tmnew);
+                      System.out.println(">>-->> Found nested mapping for source term _" + (sindex+1) + "`" + fid + " |--> " + "_" + (tindex+1));
+                    }
+
                     sfoundvars.add("_" + (sindex+1)); 
                     if ((amjx.trgvalue + "").indexOf("_*") >= 0)
                     { foundstermpars.add("_*"); 
@@ -5858,7 +5953,8 @@ public class ModelSpecification
               AttributeMatching amjw = 
                   composedTreeFunction(sent,
                      tatt,sourceatts,sattvalueMap,     
-                     targetJValues, trgJValues, tms); 
+                     targetJValues, trgJValues, 
+                     tms, localams); 
               if (amjw != null) 
               { System.out.println(">>> Found mapping of complete source term to target term " + (tindex+1) + ": " + amjw); 
                 foundsource = true; 
@@ -5869,7 +5965,9 @@ public class ModelSpecification
 
                 if ((amjw.trgvalue + "").indexOf("_*") >= 0)
                 { foundstermpars.add("_*"); 
-                  int svarind = BasicExpression.starIndex((BasicExpression) amjw.srcvalue); 
+                  int svarind = 
+                    BasicExpression.starIndex(
+                        (BasicExpression) amjw.srcvalue); 
                   if (svarind > 0)
                   { sfoundvars.add("_" + svarind); } 
                   else 
@@ -5890,6 +5988,7 @@ public class ModelSpecification
 
             if (!foundsource)
             { allfound = false; 
+              ams = new Vector();  
               return null; 
             } // No match for tindex, so abandon search
           } 
@@ -5907,46 +6006,54 @@ public class ModelSpecification
           System.out.println("**** ttermpars = " + ttermpars); 
           System.out.println(); 
 
-          for (int sindex = 0; sindex < sarit; sindex++) 
-          { String svar = "_" + (sindex+1); 
+          // What if the source arities vary? 
+          if (ASTTerm.sameTagSameArity(sattvalues))
+          {
+            for (int sindex = 0; sindex < sarit; sindex++) 
+            { String svar = "_" + (sindex+1); 
 
-            Vector srcJValues = new Vector(); 
-            ASTTerm[] sourceJValues = 
-                ASTTerm.subterms( 
+              Vector srcJValues = new Vector(); 
+              ASTTerm[] sourceJValues = 
+                  ASTTerm.subterms( 
                      sattvalues,sindex,srcJValues);
-            if (ASTTerm.constantTrees(sourceJValues))
-            { Expression termsindex = 
-                new BasicExpression(sourceJValues[0]); 
-              stermpars.add(termsindex); 
-            } 
-            else 
-            { int pindex = sfoundvars.indexOf(svar); 
-              if (pindex >= 0 && pindex < ttermpars.size())
-              { String tvar = ttermpars.get(pindex) + ""; 
-                if (tvar.indexOf("_*") >= 0)
-                { stermpars.add(new BasicExpression("_*")); }
-                else 
-                { stermpars.add(new BasicExpression(svar)); }
+
+            // if (ASTTerm.hasNullTerm(srcJValues))
+            // { break; }
+
+            // boolean hastargetStar = false; 
+            // for (int d = 0; d < ttermpars.size(); d++) 
+            // { String ttermpar = "" + ttermpars.get(d); 
+            //   if (ttermpar.indexOf("_*") >= 0)
+            //   { hastargetStar = true; } 
+            // }  
+
+            // If the ttermpars has a _* or _*`f then 
+            // entire source is _*. 
+
+              if (ASTTerm.constantTrees(sourceJValues))
+              { Expression termsindex = 
+                  new BasicExpression(sourceJValues[0]); 
+                stermpars.add(termsindex); 
               } 
               else 
-              { stermpars.add(new BasicExpression(svar)); }
+              { int pindex = sfoundvars.indexOf(svar); 
+                if (pindex >= 0 && pindex < ttermpars.size())
+                { String tvar = ttermpars.get(pindex) + ""; 
+                  if (tvar.indexOf("_*") >= 0)
+                  { stermpars.add(new BasicExpression("_*")); }
+                  else 
+                  { stermpars.add(new BasicExpression(svar)); }
+                } 
+              // else if (hastargetStar)
+              // { stermpars.add(new BasicExpression("_*")); }
+                else     
+                { stermpars.add(new BasicExpression(svar)); }
+              } 
             } 
-
-            /* if (sindex < foundstermpars.size())
-            { String sind = (String) foundstermpars.get(sindex); 
-              if ("_*".equals(sind))
-              { stermpars.add(new BasicExpression("_*")); } 
-              else  
-              { stermpars.add(new BasicExpression("_" + (sindex+1))); } */ 
-              /* _(sindex+1) occurs in sfoundvars at pindex
-                 ttermpars[pindex] has _*
-                 So put _* in source list instead of 
-                 _(sindex+1) */ 
-            /* }
-            else 
-            { stermpars.add(new BasicExpression("_" + (sindex+1))); } */ 
-          } 
-
+          }
+          else // If arities of sources vary
+          { stermpars.add(new BasicExpression("_*")); } 
+        
           sexpr.setParameters(stermpars); 
           BasicExpression texpr = 
             new BasicExpression(ttag); 
@@ -5954,21 +6061,23 @@ public class ModelSpecification
           texpr.setParameters(ttermpars); 
           AttributeMatching fmx = 
             new AttributeMatching(sexpr,texpr); 
+          ams = new Vector();  
           return fmx; 
         } 
-
       }  
       else if (ASTTerm.sameTag(targetValues) && 
          ASTTerm.sameArityTrees(sattvalues,targetValues))
-      { 
-        System.out.println(">> Checking direct correspondence of subterms of each tree: " + sattvalues[0] + " ---> " + targetValues[0]); 
+      { Vector localams = new Vector(); 
+        System.out.println(">> Checking direct correspondence of subterms of trees of varying arity: " + sattvalues[0] + " ---> " + targetValues[0]); 
         System.out.println();           
 
         AttributeMatching amts = 
-          treeSequenceMapping(sent,sattvalues,targetValues); 
+          treeSequenceMapping(sent,sattvalues,
+                              targetValues,localams); 
         
         if (amts != null) 
         { System.out.println(">> Found direct correspondence of each subterm of source/target trees: " + amts); 
+          ams = new Vector();  
           return amts; 
         } 
 
@@ -5977,44 +6086,56 @@ public class ModelSpecification
 
         amts = treeSequenceMapping2(satt, sent, tatt, 
                  sourceatts, sattvalues, targetValues, 
-                 sattvalueMap, tms); 
+                 sattvalueMap, tms, localams); 
         if (amts != null) 
-        { System.out.println(">++> Found functional subterm mapping of trees: " + amts); 
+        { System.out.println(">++> Found functional subterm mapping of varying arity trees: " + amts); 
+          ams = new Vector();  
           return amts; 
         } 
 
       }
       else if (ASTTerm.sameTag(targetValues) && 
          ASTTerm.sameNonSymbolArity(sattvalues,targetValues))
-      { 
+      { Vector localams = new Vector(); 
+        
         System.out.println(">**> Checking tree-2-tree mapping with symbol deletion/replacement: " + sattvalues[0] + " ---> " + targetValues[0]); 
         System.out.println();           
 
         AttributeMatching amts = 
           treeSequenceMapping3(satt, sent, tatt, 
                  sourceatts, sattvalues, targetValues, 
-                 sattvalueMap, tms); 
+                 sattvalueMap, tms, localams); 
         
         if (amts != null) 
         { System.out.println(">**> Found tree-2-tree mapping with symbol deletion/replacement: " + amts); 
+          ams = new Vector();  
           return amts; 
         } 
       }
     } 
-    
+
+    ams = new Vector();            
     return null; 
   } 
 
   private AttributeMatching treeSequenceMapping(
-      Entity sent, ASTTerm[] strees, ASTTerm[] ttrees)
+      Entity sent, ASTTerm[] strees, ASTTerm[] ttrees,
+      Vector ams)
   { // Each strees[i] has same arity as ttrees[i]
     // and the strees[i].terms match to the ttrees[i].terms
     // Result mapping is  tagsource(_*) |--> tagtarget(_*)
+
+    System.out.println(">> Trying to find tree sequence mapping for " + strees.length + " source terms to " + ttrees.length + " target terms"); 
+    System.out.println();  
 
     int n = strees.length; 
     for (int i = 0; i < n; i++) 
     { ASTTerm st = strees[i]; 
       ASTTerm tt = ttrees[i]; 
+
+      if (st == null || tt == null) 
+      { return null; } 
+
       int sn = st.arity(); 
       int tn = tt.arity(); 
       if (sn != tn) 
@@ -6056,11 +6177,15 @@ public class ModelSpecification
       Entity sent, Attribute tatt, 
       Vector sourceatts, ASTTerm[] strees, ASTTerm[] ttrees, 
       java.util.Map sattvalueMap,     
-      Vector tms)
+      Vector tms, Vector ams)
   { // Each strees[i] has same arity as ttrees[i]
     // Each strees[i] element maps to ttrees[i] via 
     // a consistent mapping f. Result is 
     // tagsource(_*) |--> tagtarget(_*`f)
+
+    System.out.println(">> Trying to find tree sequence function mapping for " + strees.length + " source terms to " + ttrees.length + " target terms"); 
+    System.out.println();  
+
 
     Vector sSymbolTerms = new Vector(); 
     Vector sTreeTerms = new Vector(); 
@@ -6072,6 +6197,10 @@ public class ModelSpecification
     for (int i = 0; i < n; i++) 
     { ASTTerm st = strees[i]; 
       ASTTerm tt = ttrees[i]; 
+
+      if (st == null || tt == null) 
+      { return null; } 
+
       int sn = st.arity(); 
       int tn = tt.arity(); 
       if (sn != tn) 
@@ -6119,57 +6248,57 @@ public class ModelSpecification
     AttributeMatching amjx = 
        composedTreeFunction(sent,
                      tatt,sourceatts,newSMap,     
-                     targetJValues, tTreeTerms, tms); 
+                     targetJValues, tTreeTerms, tms, ams); 
     if (amjx != null) 
     { System.out.println(">>--- List function mapping: " + amjx); 
       String fid = 
           Identifier.nextIdentifier("ruleset");
       TypeMatching tmnew = new TypeMatching(fid);
 
-    Vector ssTerms = new Vector(); 
-    Vector deletedSymbols = new Vector(); 
-    for (int y = 0; y < sSymbolTerms.size(); y++) 
-    { String slf = 
-        ((ASTTerm) sSymbolTerms.get(y)).literalForm();
-      ssTerms.add(slf);  
-      if (deletedSymbols.contains(slf)) { } 
-      else 
-      { deletedSymbols.add(slf); } 
-    }  
+      Vector ssTerms = new Vector(); 
+      Vector deletedSymbols = new Vector(); 
+      for (int y = 0; y < sSymbolTerms.size(); y++) 
+      { String slf = 
+          ((ASTTerm) sSymbolTerms.get(y)).literalForm();
+        ssTerms.add(slf);   
+        if (deletedSymbols.contains(slf)) { } 
+        else 
+        { deletedSymbols.add(slf); } 
+      }  
 
-    Vector ttTerms = new Vector(); 
-    for (int y = 0; y < tSymbolTerms.size(); y++) 
-    { String tlf = 
-        ((ASTTerm) tSymbolTerms.get(y)).literalForm();
-      ttTerms.add(tlf);  
-    }  
+      Vector ttTerms = new Vector(); 
+      for (int y = 0; y < tSymbolTerms.size(); y++) 
+      { String tlf = 
+          ((ASTTerm) tSymbolTerms.get(y)).literalForm();
+        ttTerms.add(tlf);  
+      }  
 
-    Vector replacedSymbols = new Vector(); 
-    Vector replacements = new Vector(); 
-    for (int j = 0; j < deletedSymbols.size(); j++) 
-    { String ds = (String) deletedSymbols.get(j); 
-      if (replacedSymbols.contains(ds)) { } 
-      else if (ttTerms.contains(ds)) { } 
-      else 
-      { boolean replacementFound = false; 
-        for (int z = 0; z < ttTerms.size() && 
+      Vector replacedSymbols = new Vector(); 
+      Vector replacements = new Vector(); 
+      for (int j = 0; j < deletedSymbols.size(); j++) 
+      { String ds = (String) deletedSymbols.get(j); 
+        if (replacedSymbols.contains(ds)) { } 
+        else if (ttTerms.contains(ds)) { } 
+        else 
+        { boolean replacementFound = false; 
+          for (int z = 0; z < ttTerms.size() && 
                         !replacementFound; z++) 
-        { String rs = (String) ttTerms.get(z); 
-          if (replacements.contains(rs)) { } 
-          else if (Collections.frequency(ttTerms, rs) == 
+          { String rs = (String) ttTerms.get(z); 
+            if (replacements.contains(rs)) { } 
+            else if (Collections.frequency(ttTerms, rs) == 
                    Collections.frequency(ssTerms, ds))
-          { // Look for a replacement
-            replacedSymbols.add(ds); 
-            replacements.add(rs);
-            replacementFound = true;  
-            System.out.println(">> replaced symbol " + ds + " |--> " + rs); 
-          } 
-        }
+            { // Look for a replacement
+              replacedSymbols.add(ds); 
+              replacements.add(rs);
+              replacementFound = true;  
+              System.out.println(">> replaced symbol " + ds + " |--> " + rs); 
+            } 
+          }
+        } 
       } 
-    } 
-    deletedSymbols.removeAll(ttTerms); 
-    deletedSymbols.removeAll(replacedSymbols); 
-    System.out.println(">>-- deleted symbols: " + deletedSymbols); 
+      deletedSymbols.removeAll(ttTerms); 
+      deletedSymbols.removeAll(replacedSymbols); 
+      System.out.println(">>-- deleted symbols: " + deletedSymbols); 
 
       for (int r = 0; r < replacedSymbols.size(); r++) 
       { String rs = (String) replacedSymbols.get(r);
@@ -6206,12 +6335,16 @@ public class ModelSpecification
       Entity sent, Attribute tatt, 
       Vector sourceatts, ASTTerm[] strees, ASTTerm[] ttrees, 
       java.util.Map sattvalueMap,     
-      Vector tms)
+      Vector tms, Vector ams)
   { // Each strees[i] non-symbol element maps to 
     // corresponding ttrees[i] non-symbol element via 
     // a consistent mapping f. Result is 
     // tagsource(_*) |--> tagtarget(_*`f)
     // Symbols can be consistently deleted or replaced
+
+    System.out.println(">> Trying to find tree sequence add/delete mapping for " + strees.length + " source terms to " + ttrees.length + " target terms"); 
+    System.out.println();  
+
 
     Vector sSymbolTerms = new Vector(); 
     Vector sTreeTerms = new Vector(); 
@@ -6222,7 +6355,11 @@ public class ModelSpecification
 
     for (int i = 0; i < n; i++) 
     { ASTTerm st = strees[i]; 
-      ASTTerm tt = ttrees[i]; 
+      ASTTerm tt = ttrees[i];
+
+      if (st == null || tt == null) 
+      { return null; } 
+ 
       int sn = st.nonSymbolArity(); 
       int tn = tt.nonSymbolArity(); 
       if (sn != tn) 
@@ -6334,7 +6471,7 @@ public class ModelSpecification
     AttributeMatching amjx = 
        composedTreeFunction(sent,
                      tatt,sourceatts,newSMap,     
-                     targetJValues, tTreeTerms, tms); 
+                     targetJValues, tTreeTerms, tms, ams); 
     if (amjx != null) 
     { System.out.println(">>--- List function mapping: " + amjx); 
       String fid = 
@@ -6357,6 +6494,7 @@ public class ModelSpecification
       String rrhs = 
         ((BasicExpression) amjx.trgvalue).toLiteralCSTL();  
       tmnew.addValueMapping(slhs, rrhs); 
+      tmnew.addValueMapping("_*", "_*`" + fid);    
       tmnew.addValueMapping("_0", "_0");    
       tms.add(tmnew);
       BasicExpression fexpr = new BasicExpression(fid); 
@@ -6369,6 +6507,130 @@ public class ModelSpecification
     } 
     return amjx; 
   }             
+
+  public Vector conditionalTreeMappings(
+      Entity sent, Entity tent, Vector sobjs, Vector tobjs,
+      Vector tms) 
+  { // Look for conditions on sent::ast attribute which 
+    // partition the sobjs-->tobjs pairs that satisfy 
+    // mappings. 
+    Vector res = new Vector(); 
+    Vector ams = new Vector(); 
+
+    int nobjs = sobjs.size(); 
+	
+    if (nobjs != tobjs.size())
+    { System.err.println("!! Non-matching source/target objects: " + sobjs + " " + tobjs); 
+      return res; 
+    }
+
+    
+    Attribute sast = sent.getDefinedAttribute("ast"); 
+    Attribute tast = tent.getDefinedAttribute("ast"); 
+
+    if (sast == null || tast == null) 
+    { return res; } 
+
+    Vector sourceattributes = new Vector(); 
+    sourceattributes.add(sast); 
+
+    // Source trees should all have same tag & same arity
+    // Look for term position i which is always a symbol. 
+    // conditions are  _i = v  for the values v that occur.
+
+    ASTTerm[] srcasts = new ASTTerm[nobjs]; 
+    ASTTerm[] trgasts = new ASTTerm[nobjs]; 
+
+    for (int i = 0; i < nobjs; i++) 
+    { ObjectSpecification sobj = (ObjectSpecification) sobjs.get(i); 
+      ASTTerm trm = (ASTTerm) sobj.getTree("ast"); 
+      srcasts[i] = trm;
+      ObjectSpecification tobj = (ObjectSpecification) tobjs.get(i); 
+      ASTTerm ttrm = (ASTTerm) tobj.getTree("ast"); 
+      trgasts[i] = ttrm; 
+    } 
+
+    if (ASTTerm.sameTagSameArity(srcasts))
+    { } 
+    else 
+    { return res; }
+
+    java.util.Map sattvalueMap = new java.util.HashMap(); 
+
+    int sarity = srcasts[0].arity(); 
+    for (int i = 0; i < sarity; i++) 
+    { if (ASTTerm.alwaysSymbol(i,srcasts))
+      { System.out.println(">> Source term " + i + " is always a symbol"); 
+        Vector svals = ASTTerm.symbolValues(i,srcasts); 
+        System.out.println(">> Symbol values: " + svals);
+
+        // For each distinct val : svals, form EntityMatching
+        // { _(i+1) = val } sent |--> tent
+        // and pairset for this em, & try to find feature map
+
+        Expression _i = 
+          BasicExpression.newVariableBasicExpression("_" + 
+                                                     (i+1)); 
+        
+        java.util.Set distinctVals = new java.util.HashSet();
+        distinctVals.addAll(svals); 
+        if (distinctVals.size() > 1)
+        { Vector dvals = new Vector(); 
+          dvals.addAll(distinctVals); 
+          for (int j = 0; j < dvals.size(); j++) 
+          { String dval = (String) dvals.get(j); 
+            Expression condv = 
+              new BinaryExpression("=", _i, 
+                    new BasicExpression(dval)); 
+            EntityMatching emx = 
+              new EntityMatching(sent,tent); 
+            // emx.setCondition(condv); 
+            System.out.println(">>> New candidate Entity matching: " + emx + " for condition " + condv); 
+
+            Vector svalues = new Vector(); 
+            Vector tvalues = new Vector(); 
+
+            for (int k = 0; k < nobjs; k++) 
+            { if (ASTTerm.hasTermValue(srcasts[k],i,dval))
+              { svalues.add(srcasts[k]); 
+                tvalues.add(trgasts[k]); 
+              } 
+            } 
+              
+            int en = svalues.size();
+            if (en < 2) 
+            { continue; } // next value 
+ 
+            ASTTerm[] sattvalues = new ASTTerm[en]; 
+            ASTTerm[] tattvalues = new ASTTerm[en]; 
+            
+            for (int k = 0; k < en; k++) 
+            { sattvalues[k] = (ASTTerm) svalues.get(k);
+              tattvalues[k] = (ASTTerm) tvalues.get(k); 
+            }
+
+            sattvalueMap.put(sast,sattvalues); 
+
+            AttributeMatching cexpr = 
+              composedTreeFunction(sent,tast,sourceattributes,
+                      sattvalueMap,tattvalues,tvalues,
+                      tms,ams);
+             
+            System.out.println(">>> New candidate attribute matching: " + cexpr); 
+            System.out.println(); 
+            if (cexpr != null) 
+            { emx.addAttributeMapping(cexpr); 
+              res.add(emx); 
+            } 
+          }
+        }    
+      } 
+    }  
+
+    return res;  
+  } 
+
+  //    Entity sent, ASTTerm[] strees, ASTTerm[] ttrees)
 
   public void checkMetamodelConstraints(Vector cons, Vector entities, Vector types)
   { ObjectSpecification anyobj = ObjectSpecification.getDefaultInstance(); 

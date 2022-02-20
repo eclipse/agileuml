@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -65,6 +65,12 @@ public class ObjectSpecification extends ModelElement
       } 
       attvalues.put(att,actualval); 
     }
+    else if (val instanceof ASTTerm)
+    { attvalues.put(att,val); } 
+
+    if (atts.contains(att)) { } 
+    else 
+    { atts.add(att); } 
   } // What about numbers, etc? 
 
   public Object getRawValue(String att) 
@@ -75,6 +81,17 @@ public class ObjectSpecification extends ModelElement
        // + " { " +
        //    attvalues + "; " + elements + " }";
     return res; 
+  }
+
+  public String details()
+  { String res = getName() + " : " + objectClass + "\n"; 
+    for (int i = 0; i < atts.size(); i++) 
+    { String att = (String) atts.get(i); 
+      String attval = "" + attvalues.get(att); 
+      res = res + 
+            name + "." + att + " = " + attval + "\n"; 
+    }   
+    return res + "\n"; 
   }
 
   public Vector getParameters() { return new Vector(); } 

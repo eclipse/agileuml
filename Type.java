@@ -196,6 +196,18 @@ public class Type extends ModelElement
   public boolean isVoid() 
   { return "void".equals(name); } 
 
+  public boolean isStringSequence() 
+  { return "Sequence".equals(name) && 
+      elementType != null && 
+      "String".equals(elementType.getName()); 
+  } 
+
+  public boolean isIntSequence() 
+  { return "Sequence".equals(name) && 
+      elementType != null && 
+      "int".equals(elementType.getName()); 
+  } 
+
   public static boolean isOclExceptionType(Expression expr)
   { Type t = expr.getType(); 
     if (t == null) 
@@ -348,7 +360,7 @@ public class Type extends ModelElement
 
   public Vector metavariables()
   { Vector res = new Vector(); 
-    if (name.startsWith("_"))
+    if (CSTL.isCSTLVariable(name))
     { res.add(name); } 
     if ("Sequence".equals(name) && elementType != null)
     { return elementType.metavariables(); } 
@@ -358,9 +370,9 @@ public class Type extends ModelElement
     { return elementType.metavariables(); } 
     else if ("Map".equals(name) || "Function".equals(name))
     { Vector vars = new Vector(); 
-	  if (keyType != null) 
-	  { vars.addAll(keyType.metavariables()); } 
-	  if (elementType != null) 
+      if (keyType != null) 
+      { vars.addAll(keyType.metavariables()); } 
+      if (elementType != null) 
       { vars.addAll(elementType.metavariables()); } 
       return vars;  
     } 
@@ -372,6 +384,9 @@ public class Type extends ModelElement
     { return 1 + elementType.complexity(); } 
 
     if ("Set".equals(name) && elementType != null)
+    { return 1 + elementType.complexity(); } 
+
+    if ("Ref".equals(name) && elementType != null)
     { return 1 + elementType.complexity(); } 
 
     if ("Map".equals(name) && elementType != null && keyType != null)

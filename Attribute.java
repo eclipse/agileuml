@@ -434,7 +434,7 @@ public class Attribute extends ModelElement
 
   public boolean isTree()
   { return type != null && "OclAny".equals(type.getName()); } 
-  // Should have an actual OclTree type. 
+  // Should have an actual OclTree type, or a kind of collection. 
 
   public boolean isBoolean()
   { return type != null && type.getName().equals("boolean"); } 

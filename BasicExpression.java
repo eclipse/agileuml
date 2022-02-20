@@ -345,6 +345,39 @@ class BasicExpression extends Expression
 
   } 
 
+  public static BasicExpression newASTBasicExpression(ASTTerm t)
+  { BasicExpression res = new BasicExpression(""); 
+    if (t instanceof ASTBasicTerm)
+    { ASTBasicTerm bt = (ASTBasicTerm) t; 
+      res.data = bt.getTag();
+      BasicExpression arg = new BasicExpression("_1");
+      Vector pars = new Vector(); 
+      pars.add(arg); 
+      res.parameters = pars;  
+    } 
+    else if (t instanceof ASTSymbolTerm)
+    { res.data = t.literalForm(); 
+      res.umlkind = VALUE; 
+    } 
+    else if (t instanceof ASTCompositeTerm)
+    { ASTCompositeTerm tree = (ASTCompositeTerm) t; 
+      res.data = tree.getTag(); 
+      Vector trms = tree.getTerms(); 
+      Vector pars = new Vector(); 
+      for (int i = 0; i < trms.size(); i++)
+      { ASTTerm trm = (ASTTerm) trms.get(i); 
+        String val = "_" + (i+1); 
+        if (trm instanceof ASTSymbolTerm)
+        { val = trm.literalForm(); } 
+        Expression arg = new BasicExpression(val); 
+        pars.add(arg); 
+      } 
+      res.parameters = pars; 
+    } 
+    return res; 
+  } 
+
+
 
   public static BasicExpression newBasicExpression(Expression obj, String feat) 
   { BasicExpression res = new BasicExpression(feat); 
@@ -1621,9 +1654,16 @@ class BasicExpression extends Expression
     { res = objectRef.metavariables(); } 
 
     for (int i = 0; i < data.length() - 1; i++) 
-    { if ('_' == data.charAt(i) && Character.isDigit(data.charAt(i+1))) 
+    { if ('_' == data.charAt(i) && 
+          Character.isDigit(data.charAt(i+1)) && 
+          i + 2 < data.length() && 
+          Character.isDigit(data.charAt(i+2))) 
+      { res.add(data.charAt(i) + "" + data.charAt(i+1) + "" + data.charAt(i+2)); }
+      else if ('_' == data.charAt(i) && 
+               Character.isDigit(data.charAt(i+1))) 
       { res.add(data.charAt(i) + "" + data.charAt(i+1)); }
-      if ('_' == data.charAt(i) && '*' == data.charAt(i+1)) 
+      else if ('_' == data.charAt(i) && 
+               '*' == data.charAt(i+1)) 
       { res.add(data.charAt(i) + "*"); }
     }  
 
@@ -2139,14 +2179,32 @@ class BasicExpression extends Expression
     { res = ""; 
       for (int i = 0; i < parameters.size(); i++)
       { String par = ((BasicExpression) parameters.get(i)).toLiteralCSTL(); 
-        if (res.length() > 0 && 
-            par.startsWith("_") && 
-            ( Character.isDigit(res.charAt(res.length()-1)) ||
-              Character.isLetter(res.charAt(res.length()-1)) )
-           )
+        // if (res.length() > 0 && 
+        //     par.startsWith("_") && 
+        //     ( Character.isDigit(res.charAt(res.length()-1)) ||
+        //       Character.isLetter(res.charAt(res.length()-1)) )
+        //    )
+        // { res = res + " " + par; } 
+        // else 
         { res = res + " " + par; } 
-        else 
-        { res = res + par; } 
+      } 
+    } 
+    return res; 
+  }  
+
+  public Vector usesCSTLfunctions()
+  { Vector res = new Vector();
+ 
+    if (umlkind == FUNCTION)
+    { if (parameters != null && parameters.size() == 1)
+      { res.add(data); }
+      return res;  
+    } 
+
+    if (parameters != null && parameters.size() > 0)
+    { for (int i = 0; i < parameters.size(); i++)
+      { BasicExpression par = (BasicExpression) parameters.get(i); 
+        res.addAll(par.usesCSTLfunctions());   
       } 
     } 
     return res; 

@@ -6,7 +6,7 @@ import java.util.List;
 
 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -135,6 +135,16 @@ public class AttributeMatching
   public String toString()
   { return "    " + srcname + " |--> " + trgname; } 
 
+  public Vector usesCSTLfunctions()
+  { Vector res = new Vector(); 
+    if (trgvalue != null &&
+        trgvalue instanceof BasicExpression) 
+    { res = 
+        ((BasicExpression) trgvalue).usesCSTLfunctions();
+    } 
+    return res; 
+  } 
+
   public String toCSTL(String category, Expression cond, 
                        CGSpec cg, Vector typematches)
   { if (srcvalue != null && trgvalue != null &&
@@ -153,7 +163,7 @@ public class AttributeMatching
         { String res = tm.toCSTL(category,cg); 
           return res; 
         }  
-      } 
+      } // It is simply _1 |-->_1`func
  
       String rulerhs = ((BasicExpression) trgvalue).toLiteralCSTL();
       CGRule rle = new CGRule(rulelhs, rulerhs); 
@@ -161,6 +171,7 @@ public class AttributeMatching
       { CGCondition cc = new CGCondition(cond); 
         rle.addCondition(cc); 
       } 
+
       cg.addCategoryRuleInOrder(category,rle); 
       String res = rulelhs + " |--> " + rulerhs; 
       return res; 

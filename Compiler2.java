@@ -926,6 +926,7 @@ public class Compiler2
     char previous = ' '; 
 
     boolean instring = false; 
+    boolean inchar = false; 
 
     int explen = str.length(); 
     lexicals = new Vector(explen);  /* Sequence of lexicals */ 
@@ -956,6 +957,30 @@ public class Compiler2
         { sb.append(c); } 
         else 
         { sb = new StringBuffer();     // start new buffer for the text
+          lexicals.add(sb); 
+          sb.append(c); 
+        }
+      } 
+      else if (c == '\'') 
+      { if (inchar) 
+        { inchar = false; 
+          if (sb != null) 
+          { sb.append(c); 
+            sb = null; 
+          } // ends a literal char string. 
+        }  
+        else // starts a literal char string. 
+        { inchar = true; 
+          sb = new StringBuffer();     // start new buffer
+          lexicals.addElement(sb);  
+          sb.append(c); 
+        } 
+      } 
+      else if (inchar)
+      { if (sb != null) // should always be true. 
+        { sb.append(c); } 
+        else 
+        { sb = new StringBuffer();  // start new buffer for the text
           lexicals.add(sb); 
           sb.append(c); 
         }

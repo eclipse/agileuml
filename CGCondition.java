@@ -26,9 +26,16 @@ public class CGCondition
   public CGCondition(Expression expr) 
   { if (expr instanceof BinaryExpression) 
     { BinaryExpression ee = (BinaryExpression) expr; 
-      variable = "_1"; 
+
+      Vector vars = ee.metavariables(); 
+      if (vars.size() > 0) 
+      { variable = (String) vars.get(0); } 
+      else 
+      { variable = "_1"; } 
+ 
       if ("/=".equals(ee.getOperator()))
       { positive = false; } 
+
       stereotype = ee.getRight() + ""; 
     } 
   } 

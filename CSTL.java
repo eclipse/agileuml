@@ -20,7 +20,7 @@ public class CSTL
   static boolean isCSTLVariable(String lex)
   { if ("_*".equals(lex)) 
     { return true; } 
-    for (int i = 0; i <= 9; i++) 
+    for (int i = 0; i <= 99; i++) 
     { if (("_" + i).equals(lex))
       { return true; } 
     } 

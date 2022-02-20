@@ -123,40 +123,57 @@ public class CGSpec
 
   private Vector insertRuleInOrder(CGRule r, Vector rs)
   { Vector res = new Vector(); 
+
+    if (rs.contains(r))
+    { return rs; } 
+
     if (rs.size() == 0)
     { res.add(r); 
       return res; 
     } 
 
     CGRule fst = (CGRule) rs.get(0); 
-    if (fst.equals(r)) 
-    { return rs; } 
+    Vector newres = new Vector(); 
+    int ind = 0; 
 
-    if (r.compareTo(fst) < 0) // r more specific than fst
-    { res.add(r); 
-      res.addAll(rs); 
-      return res; 
+    while (ind < rs.size())
+    { if (r.compareTo(fst) == 1) 
+      { newres.add(fst); } 
+      else if (r.compareTo(fst) == Integer.MAX_VALUE)
+      { newres.add(fst); } 
+      // else if (r.compareTo(fst) == 0) 
+      // { newres.add(fst); } 
+      else if (r.compareTo(fst) == -1 || 
+               r.compareTo(fst) == 0)
+      { break; } 
+
+      if (ind + 1 < rs.size())
+      { ind++; 
+        fst = (CGRule) rs.get(ind);  
+      } 
+      else 
+      { break; } 
     } 
 
-    if (r.compareTo(fst) == 1) // r more general than fst
-    { res.add(fst);  
-      Vector tailrs = new Vector(); 
-      tailrs.addAll(rs); 
-      tailrs.remove(0); 
-      res.addAll(insertRuleInOrder(r,tailrs)); 
-      return res; 
-    }
-
-    if (r.compareTo(fst) == 0) // same lhs. 
-                               // Ok if different conditions
-    { System.err.println(">>> Possible conflict between rules " + r + " and " + fst); 
-      return rs; 
-    } 
+    if (r.compareTo(fst) == 0 || r.equals(fst)) 
+    { } 
     else 
-    { res.add(r); 
-      res.addAll(rs); 
-      return res; 
-    }      
+    { newres.add(r); }  
+
+    while (ind < rs.size())
+    { if (newres.contains(fst)) { } 
+      else 
+      { newres.add(fst); }
+
+      if (ind + 1 < rs.size())
+      { ind++; 
+        fst = (CGRule) rs.get(ind);  
+      } 
+      else 
+      { break; } 
+    } 
+
+    return newres; 
   } 
 
   public boolean hasRuleset(String category)

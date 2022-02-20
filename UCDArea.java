@@ -1764,7 +1764,9 @@ public class UCDArea extends JPanel
   }  // also add inv comp inv' for inv: constraints and inv': e.invariants each e 
 
   public void printOCL()
-  { for (int i = 0; i < constraints.size(); i++) 
+  { cgbe(); 
+
+    for (int i = 0; i < constraints.size(); i++) 
     { Constraint cons = (Constraint) constraints.get(i); 
       Constraint cc = (Constraint) cons.clone(); 
       System.out.println("OCL Form of global constraint: " + cc.toOcl()); 
@@ -1805,7 +1807,7 @@ public class UCDArea extends JPanel
         System.out.println(trm.toJSON());
         System.out.println();   
       }  
-    } */ 
+    } 
 
     File chtml = new File("output/preprocessed_progs_train.json"); 
     try
@@ -1835,7 +1837,9 @@ public class UCDArea extends JPanel
     
     } 
     catch (Exception _fex) 
-    { System.err.println("! No file: output/preprocessed_progs_train.json"); }      
+    { System.err.println("! No file: output/preprocessed_progs_train.json"); }  
+     */ 
+    
   }
 
   public void listEntities()
@@ -11882,6 +11886,7 @@ public void produceCUI(PrintWriter out)
       { Constraint inv = (Constraint) locals.get(i); 
         inv.saveData(out); 
       } 
+     
       for (int p = 0; p < useCases.size(); p++) 
       { ModelElement uc = (ModelElement) useCases.get(p); 
         if (uc instanceof UseCase) 
@@ -20462,7 +20467,9 @@ public void produceCUI(PrintWriter out)
 
   public void synthesiseFromTL(Vector thesaurus)
   { if (tlspecification != null) 
-    { synthesiseTransformations(tlspecification,entities,thesaurus); } 
+    { synthesiseTransformations(
+           tlspecification,entities,thesaurus);
+    } 
     else 
     { System.err.println("!! No TL specification loaded"); } 
   } 
@@ -20470,8 +20477,6 @@ public void produceCUI(PrintWriter out)
   public void mapTL2CSTL()
   { if (tlspecification != null) 
     { System.out.println(); 
-      System.out.println(">>> CSTL specification corresponding to TL, saved in tl.cstl"); 
-      System.out.println(); 
 	
       try
       { PrintWriter cout = new PrintWriter(
@@ -20497,15 +20502,195 @@ public void produceCUI(PrintWriter out)
         }  */ 
 
         cout.close(); 
+        System.out.println(">>> CSTL specification corresponding to TL, saved in tl.cstl"); 
+        System.out.println(); 
+        System.out.println(cg);
+        System.out.println();  
       } catch (Exception _fex) 
       { _fex.printStackTrace(); } 
     }
   }
+
+  public void cgbe()
+  { // Takes corresponding asts from output/sourceasts.txt 
+    // and output/targetasts.txt 
+    // Builds entities for source & target tags -> mm.txt 
+    // Builds tlspecification of entity mappings -> forward.tl
+    // Builds model for MTBE -> out.txt
+
+      
+    BufferedReader brsource = null;
+    BufferedReader brtarget = null;
+    Vector sourceasts = new Vector();
+    Vector targetasts = new Vector();
+    String s;
+    boolean eof = false;
+    File sfile = new File("output/sourceasts.txt");
+    File tfile = new File("output/targetasts.txt");
+
+    try
+    { brsource = new BufferedReader(new FileReader(sfile)); }
+    catch (FileNotFoundException e)
+    { System.out.println("File not found: " + sfile);
+      return; 
+    }
+
+
+    int slinecount = 0; 
+
+    while (!eof)
+    { try { s = brsource.readLine(); }
+      catch (IOException e)
+      { System.out.println("Reading sourceasts.txt failed.");
+        return; 
+      }
+
+      if (s == null) 
+      { eof = true; 
+        break; 
+      }
+      else if (s.trim().length() == 0) { } 
+      else 
+      { Compiler2 comp = new Compiler2();
+        ASTTerm sast = comp.parseGeneralAST(s);
+        if (sast != null) 
+        { sourceasts.add(sast);
+          slinecount++;
+        }  
+      }        
+    }
+
+    try 
+    { brsource.close(); } 
+    catch (Exception ex) { }
+
+    s = "";  
+    eof = false; 
+	  
+    System.out.println(">> Read " + slinecount + " source asts"); 
+    System.out.println(sourceasts);
+
+    // Create the source entities
+
+    ASTTerm.entitiesFromASTs(sourceasts,"",entities);    
+
+    // read target asts: 
+
+    try
+    { brtarget = new BufferedReader(new FileReader(tfile)); }
+    catch (FileNotFoundException e)
+    { System.out.println("File not found: " + tfile);
+      return; 
+    }
+
+    int tlinecount = 0; 
+
+    while (!eof)
+    { try { s = brtarget.readLine(); }
+      catch (IOException e)
+      { System.out.println("Reading targetasts.txt failed.");
+        return; 
+      }
+
+      if (s == null) 
+      { eof = true; 
+        break; 
+      }
+      else if (s.trim().length() == 0) { } 
+      else 
+      { Compiler2 comp = new Compiler2();
+        ASTTerm tast = comp.parseGeneralAST(s);
+        if (tast != null) 
+        { targetasts.add(tast);
+          tlinecount++;
+        }  
+      }        
+    }
+
+    try 
+    { brtarget.close(); } 
+    catch (Exception ex) { } 
+	  
+    System.out.println(">> Read " + tlinecount + " target asts"); 
+    System.out.println(targetasts);
+
+    if (slinecount != tlinecount) 
+    { System.err.println("!! ERROR: different numbers of source/target asts: " + slinecount + " " + tlinecount); 
+      return; 
+    } 
+
+    ASTTerm.entitiesFromASTs(targetasts,"$T",entities);   
+
+    File file = new File("output/mm.km3");
+    try
+    { PrintWriter out =
+          new PrintWriter(
+            new BufferedWriter(new FileWriter(file)));
+      saveKM3(out); 
+      out.close(); 
+    }
+    catch (Exception _ex) { } 
+	
+    Vector ems = ASTTerm.entityMatchingsFromASTs(sourceasts,
+                             targetasts,entities); 
+    tlspecification = new ModelMatching(ems);
+
+    System.out.println("***>> TL specification: " + tlspecification); 
+
+    File tlfile = new File("output/forward.tl");
+    try
+    { PrintWriter tlout =
+          new PrintWriter(
+            new BufferedWriter(new FileWriter(tlfile)));
+      tlout.println(tlspecification); 
+      tlout.close(); 
+    }
+    catch (Exception tlex) { } 
+
+    ModelSpecification mod = new ModelSpecification(); 
+    ASTTerm.modelSpecificationFromASTs(sourceasts,targetasts,
+                                       entities,mod); 
+
+    System.out.println("***>> model specification: " + mod); 
+
+    File mfile = new File("output/out.txt");
+    try
+    { PrintWriter mout =
+          new PrintWriter(
+            new BufferedWriter(new FileWriter(mfile)));
+      mout.println(mod); 
+      mout.close(); 
+    }
+    catch (Exception _mex) { } 
+
+    Date d1 = new Date(); 
+    long startTime = d1.getTime(); 
+	
+    tlspecification.checkModel(mod,entities,types);
+	  
+    Date d2 = new Date(); 
+    long endTime = d2.getTime(); 
+    System.out.println(">>> MTBE took " + (endTime - startTime) + "ms");
+  
+    System.out.println(">>> Enhanced specification: "); 
+    System.out.println(tlspecification + "");
+      
+    try
+    { PrintWriter fout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter("output/final.tl")));
+      fout.println(tlspecification + ""); 
+      fout.close(); 
+    } catch (Exception _except) { } 
+
+    System.out.println("----- Written result TL transformation to output/final.tl ----------");  
+  } 
   
   public void mapTL2UMLRSDS(Vector thesaurus)
   { if (tlspecification != null) 
     { System.out.println(); 
-      synthesiseTransformationsUMLRSDS(tlspecification,entities,thesaurus); 
+      synthesiseTransformationsUMLRSDS(
+                tlspecification,entities,thesaurus); 
       
       BufferedReader br = null;
       Vector res = new Vector();
@@ -20632,9 +20817,11 @@ public void produceCUI(PrintWriter out)
       int tcdepth = Integer.parseInt(compositionDepth);
 
 	  
-      modelspec.defineComposedFeatureValues(scdepth,tcdepth,entities,types); 
+      modelspec.defineComposedFeatureValues(
+                        scdepth,tcdepth,entities,types); 
       System.out.println("--- checking metamodel constraints ---");
-      modelspec.checkMetamodelConstraints(constraints,entities,types);  
+      modelspec.checkMetamodelConstraints(
+                        constraints,entities,types);  
       System.out.println();
 
       Date d1 = new Date(); 

@@ -1329,6 +1329,12 @@ abstract class Expression
   public boolean isSequenceValued()
   { return type != null && type.isSequence(); }
 
+  public boolean isStringSequence()
+  { return type != null && type.isStringSequence(); } 
+
+  public boolean isIntSequence()
+  { return type != null && type.isIntSequence(); } 
+
   public boolean hasSetType()
   { return type != null && type.isSet(); }
 

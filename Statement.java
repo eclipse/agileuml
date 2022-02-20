@@ -4072,9 +4072,16 @@ class CreationStatement extends Statement
   public Vector metavariables()
   { Vector res = new Vector(); 
     if (assignsTo != null) 
-    { if (assignsTo.startsWith("_"))
+    { if (assignsTo.startsWith("_") && 
+          assignsTo.length() == 2 && 
+          Character.isDigit(assignsTo.charAt(1)))
+      { res.add(assignsTo); }
+      else if (assignsTo.startsWith("_") && 
+          assignsTo.length() == 3 && 
+          Character.isDigit(assignsTo.charAt(1)) && 
+          Character.isDigit(assignsTo.charAt(2)))
       { res.add(assignsTo); } 
-    } 
+    } // can't be _*
     
     if (instanceType != null) 
     { res.addAll(instanceType.metavariables()); }  

@@ -659,10 +659,16 @@ public abstract class ASTTerm
     String[] tattvalues = new String[ttrees.length]; 
 
     for (int i = 0; i < strees.length; i++) 
-    { sattvalues[i] = strees[i].literalForm(); } 
+    { if (strees[i] == null) 
+      { return false; } 
+      sattvalues[i] = strees[i].literalForm(); 
+    } 
 
     for (int i = 0; i < ttrees.length; i++) 
-    { tattvalues[i] = ttrees[i].literalForm(); } 
+    { if (ttrees[i] == null) 
+      { return false; } 
+      tattvalues[i] = ttrees[i].literalForm(); 
+    } 
  
     return AuxMath.isFunctional(sattvalues,tattvalues); 
   } 
@@ -675,10 +681,16 @@ public abstract class ASTTerm
     String[] tattvalues = new String[ttrees.length]; 
 
     for (int i = 0; i < strees.length; i++) 
-    { sattvalues[i] = strees[i].literalForm(); } 
+    { if (strees[i] == null) 
+      { return false; } 
+      sattvalues[i] = strees[i].literalForm(); 
+    } 
 
     for (int i = 0; i < ttrees.length; i++) 
-    { tattvalues[i] = ttrees[i].literalForm(); } 
+    { if (ttrees[i] == null) 
+      { return false; } 
+      tattvalues[i] = ttrees[i].literalForm(); 
+    } 
  
     return AuxMath.isFunctional(sattvalues,tattvalues); 
   } 
@@ -702,6 +714,17 @@ public abstract class ASTTerm
     return tm; 
   } 
 
+  public static boolean hasNullTerm(Vector strees)
+  { for (int i = 0; i < strees.size(); i++) 
+    { ASTTerm st = (ASTTerm) strees.get(i); 
+      if (st == null) 
+      { System.err.println("!WARNING: null element in " + strees + " -- INVALID AST DATA"); 
+        return true; 
+      } 
+    } 
+    return false; 
+  } 
+    
   public static boolean functionalTermMapping(Vector strees, Vector ttrees)
   { // The correspondence is functional.
     String[] sattvalues = new String[strees.size()]; 
@@ -709,13 +732,19 @@ public abstract class ASTTerm
 
     for (int i = 0; i < strees.size(); i++) 
     { ASTTerm st = (ASTTerm) strees.get(i); 
-      if (st == null) { return false; } 
+      if (st == null) 
+      { System.err.println("!WARNING: null element in " + strees + " -- INVALID AST DATA"); 
+        return false; 
+      } 
       sattvalues[i] = st.literalForm(); 
     } 
 
     for (int i = 0; i < ttrees.size(); i++) 
     { ASTTerm tt = (ASTTerm) ttrees.get(i); 
-      if (tt == null) { return false; }
+      if (tt == null) 
+      { System.err.println("!WARNING: null element in " + ttrees + " -- INVALID AST DATA"); 
+        return false; 
+      }
       tattvalues[i] = tt.literalForm(); 
     } 
  
@@ -850,6 +879,55 @@ public abstract class ASTTerm
     return true; 
   }   
 
+  public static boolean alwaysSymbol(int ind, ASTTerm[] trees)
+  { if (trees == null || trees.length == 0) 
+    { return false; }
+    
+    for (int i = 1; i < trees.length; i++) 
+    { ASTTerm tx = trees[i]; 
+      if (tx == null || ind >= tx.arity()) 
+      { return false; } 
+      ASTTerm tsx = tx.getTerm(ind); 
+      if (tsx instanceof ASTSymbolTerm) { } 
+      else 
+      { return false; } 
+    } 
+      
+    return true; 
+  } 
+
+  public static Vector symbolValues(int ind, ASTTerm[] trees)
+  { Vector res = new Vector(); 
+
+    if (trees == null || trees.length == 0) 
+    { return res; }
+    
+    for (int i = 1; i < trees.length; i++) 
+    { ASTTerm tx = trees[i]; 
+      if (tx == null || ind >= tx.arity()) 
+      { continue; } 
+      ASTTerm tsx = tx.getTerm(ind); 
+      if (tsx instanceof ASTSymbolTerm) 
+      { res.add(tsx.literalForm()); } 
+    } 
+      
+    return res; 
+  } 
+
+  public static boolean hasTermValue(ASTTerm trm, int ind, String val) 
+  { if (trm == null) 
+    { return false; } 
+
+    if (ind >= trm.arity())
+    { return false; } 
+
+    ASTTerm tsx = trm.getTerm(ind); 
+    if (val.equals(tsx.literalForm()))
+    { return true; } 
+    return false; 
+  } 
+ 
+
   public static ASTTerm[] removeOuterTag(ASTTerm[] trees, Vector remd)
   { if (trees == null || trees.length == 0) 
     { return trees; }
@@ -909,6 +987,29 @@ public abstract class ASTTerm
         return true; 
       } 
       return false; 
+    }
+
+    public static Vector createIdentityMappings
+        (ASTTerm[] xs, ASTTerm[] ys, ModelSpecification mod)
+    { // Each ys[i] = xs[i] 
+
+      Vector res = new Vector(); 
+
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { ASTTerm xx = xs[i]; 
+          ASTTerm yvect = ys[i]; 
+
+          if (xx != null) 
+          { BasicExpression expr = 
+              BasicExpression.newASTBasicExpression(xx); 
+            AttributeMatching am = 
+              new AttributeMatching(expr,expr); 
+            res.add(am); 
+          } 
+        }
+      } 
+      return res; 
     }
 
  /*   public static boolean matchingTrees(ASTTerm[] xs, ASTTerm[] ys, ModelSpecification mod)
@@ -1024,13 +1125,16 @@ public abstract class ASTTerm
             if (yy.equals(xsym)) { }
             else 
             { return false; }
-          } 
+          } // or vice-versa
           else if (yvect instanceof ASTCompositeTerm && 
                    ((ASTCompositeTerm) yvect).getTerms().size() == 1)
           { ASTCompositeTerm ct = (ASTCompositeTerm) yvect; 
             ASTTerm ct0 = (ASTTerm) ct.getTerms().get(0); 
             if (xx.equals(ct0) || 
-                mod.correspondingTrees(sent, xx, ct0)) { } 
+                mod.correspondingTrees(sent, xx, ct0)) 
+            { System.out.println(">>> corresponding trees: " + 
+                                 xx + " " + ct0); 
+            } 
             else 
             { return false; } 
           } 
@@ -1212,7 +1316,8 @@ public abstract class ASTTerm
             ASTCompositeTerm xt = (ASTCompositeTerm) xx; 
             ASTTerm xt0 = (ASTTerm) xt.getTerms().get(0); 
             if (xt0.equals(ct0) || 
-                mod.correspondingTrees(sent,xt0,ct0)) { } 
+                mod.correspondingTrees(sent,xt0,ct0)) 
+            { System.out.println(">> Corresponding terms: " + xt0 + " " + ct0); } 
             else 
             { return false; } 
           } 
@@ -1316,6 +1421,130 @@ public abstract class ASTTerm
     javaASTs.add(tj); 
     return res; */ 
   }  
+
+  public static void entitiesFromASTs(Vector asts, String suff, Vector es)
+  { // For each tag t, create entity t+suff. Add subclass for 
+    // each different arity of t terms. 
+
+    Type treeType = new Type("OclAny", null); 
+
+    for (int i = 0; i < asts.size(); i++) 
+    { ASTTerm t = (ASTTerm) asts.get(i); 
+      String tg = t.getTag() + suff; 
+      int n = t.arity(); 
+      if (n > 0) 
+      { Entity ee = (Entity) ModelElement.lookupByName(tg,es); 
+        if (ee == null) 
+        { ee = new Entity(tg);
+
+          System.out.println("Created entity: "  + tg); 
+ 
+          if (suff.equals(""))
+          { ee.addStereotype("source"); } 
+          else 
+          { ee.addStereotype("target"); } 
+           
+          ee.setAbstract(true); 
+          Attribute astatt = 
+            new Attribute("ast", treeType, ModelElement.INTERNAL); 
+          ee.addAttribute(astatt); 
+          es.add(ee); 
+        } 
+
+        String enname = tg + "_" + n; 
+        Entity en = 
+          (Entity) ModelElement.lookupByName(enname,es);
+        if (en == null) 
+        { en = new Entity(enname); 
+
+          if (suff.equals(""))
+          { en.addStereotype("source"); } 
+          else 
+          { en.addStereotype("target"); } 
+
+          en.setSuperclass(ee); 
+          ee.addSubclass(en); 
+          System.out.println("Created entity: "  + enname); 
+          es.add(en); 
+        } 
+      } 
+    } 
+  } 
+
+  public static Vector entityMatchingsFromASTs(Vector sasts, 
+                         Vector tasts, Vector es)
+  { // For corresponding s, t create entity matching
+    // s.tag_s.arity |--> t.tag$T_t.arity. 
+
+    Vector ems = new Vector(); 
+
+    for (int i = 0; i < sasts.size() && i < tasts.size(); i++) 
+    { ASTTerm s = (ASTTerm) sasts.get(i); 
+      ASTTerm t = (ASTTerm) tasts.get(i); 
+      
+      int n = s.arity(); 
+      int m = t.arity(); 
+
+      if (n > 0 && m > 0) 
+      { String sentname = s.getTag() + "_" + n; 
+        Entity sent = 
+          (Entity) ModelElement.lookupByName(sentname,es); 
+        String tentname = t.getTag() + "$T_" + m; 
+        Entity tent = 
+          (Entity) ModelElement.lookupByName(tentname,es); 
+        if (sent != null && tent != null) 
+        { EntityMatching em = 
+            new EntityMatching(sent,tent); 
+          if (ems.contains(em)) { }
+          else 
+          { ems.add(em); }  
+        } 
+      } 
+    } 
+    return ems; 
+  } 
+
+  public static void modelSpecificationFromASTs(Vector sasts, 
+                         Vector tasts, Vector es, 
+                         ModelSpecification mod)
+  { // For corresponding s, t create instances
+    // s_inst : s.tag_s.arity 
+    // s_inst.ast = s
+    // t_inst : t.tag$T_t.arity
+    // t_inst.ast = t
+    // s_inst |-> t_inst 
+
+    for (int i = 0; i < sasts.size() && i < tasts.size(); i++) 
+    { ASTTerm s = (ASTTerm) sasts.get(i); 
+      ASTTerm t = (ASTTerm) tasts.get(i); 
+      
+      int n = s.arity(); 
+      int m = t.arity(); 
+
+      if (n > 0 && m > 0) 
+      { String sentname = s.getTag() + "_" + n; 
+        String tentname = t.getTag() + "$T_" + m; 
+        String sinst = sentname.toLowerCase() + "_" + i; 
+        String tinst = tentname.toLowerCase() + "_" + i; 
+        Entity sent = 
+          (Entity) ModelElement.lookupByName(sentname,es); 
+        ObjectSpecification sobj = 
+          new ObjectSpecification(sinst,sentname); 
+        sobj.setEntity(sent);
+        sobj.setValue("ast", s); 
+        Entity tent = 
+          (Entity) ModelElement.lookupByName(tentname,es); 
+        ObjectSpecification tobj = 
+          new ObjectSpecification(tinst,tentname); 
+        tobj.setEntity(tent);
+        tobj.setValue("ast", t); 
+        mod.addObject(sobj); 
+        mod.addObject(tobj); 
+        mod.addCorrespondence(sobj,tobj); 
+      } 
+    } 
+  } 
+
 
   public static void main(String[] args) 
   { ASTBasicTerm t = new ASTBasicTerm("OclBasicExpression", "true"); 

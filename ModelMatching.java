@@ -4,7 +4,7 @@ import java.util.Collections;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -59,6 +59,16 @@ public class ModelMatching implements SystemTypes
     for (int i = 0; i < elems.size(); i++) 
     { Maplet mm = (Maplet) elems.get(i); 
       EntityMatching em = new EntityMatching((Entity) mm.source, (Entity) mm.dest); 
+      entitymatches.add(em); 
+    } 
+  } 
+
+  public ModelMatching(Vector ems) 
+  { mymap = new Map(); 
+    entitymatches.clear(); 
+    for (int i = 0; i < ems.size(); i++) 
+    { EntityMatching em = (EntityMatching) ems.get(i); 
+      mymap.addPair(new Maplet(em.realsrc, em.realtrg)); 
       entitymatches.add(em); 
     } 
   } 
@@ -149,11 +159,22 @@ public class ModelMatching implements SystemTypes
     { BehaviouralFeature bf = (BehaviouralFeature) helpers.get(i); 
       res = res + bf.display() + "\n\n"; 
     } */ 
+
+    Vector usedFunctions = new Vector(); 
+    for (int i = 0; i < entitymatches.size(); i++) 
+    { EntityMatching em = 
+        (EntityMatching) entitymatches.get(i); 
+      usedFunctions.addAll(em.usesCSTLfunctions()); 
+    } 
+
+    System.out.println(">>> Used functions are: " + 
+                       usedFunctions); 
 	
     for (int i = 0; i < typematches.size(); i++) 
-    { TypeMatching tm = (TypeMatching) typematches.get(i); 
-      res = res + tm.toCSTL(cg) + "\n\n"; 
-    }
+    { TypeMatching tm = (TypeMatching) typematches.get(i);
+      if (usedFunctions.contains(tm.getName())) 
+      { res = res + tm.toCSTL(cg) + "\n\n"; } 
+    } // *only* include them if used in some rule. 
 	
     for (int i = 0; i < entitymatches.size(); i++) 
     { EntityMatching em = (EntityMatching) entitymatches.get(i); 
@@ -2392,7 +2413,8 @@ public class ModelMatching implements SystemTypes
                                   ModelElement.INTERNAL);
       var1.setElementType(srctype); 
       am.setExpressionMatch(src1,am.trg,var1);  
-      Attribute var2 = new Attribute(Identifier.nextIdentifier("var$"),srctype,
+      Attribute var2 = 
+        new Attribute(Identifier.nextIdentifier("var$"),srctype,
                                    ModelElement.INTERNAL);
       var2.setElementType(srctype); 
       Vector auxvariables = new Vector(); 
@@ -2412,6 +2434,7 @@ public class ModelMatching implements SystemTypes
 
     Vector removed = new Vector(); 
     Vector functions = new Vector(); 
+    Vector tms = typematches; 
 
   /*  for (int i = 0; i < entities.size(); i++) 
     { Entity tent = (Entity) entities.get(i); 
@@ -2437,22 +2460,30 @@ public class ModelMatching implements SystemTypes
     combineMatches(extraems); // and the mymap. 
 	
     for (int i = 0; i < entitymatches.size(); i++) 
-    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
-      em.checkModelConditions(mod,this,entitymatches,removed,functions); 
+    { EntityMatching em = 
+          (EntityMatching) entitymatches.get(i); 
+      em.checkModelConditions(mod,this,entitymatches,
+                              removed,functions); 
     } // check the conditions for each rule.  
 
     for (int i = 0; i < entitymatches.size(); i++) 
-    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
-      em.recheckModel(mod,this,entitymatches,removed,functions); 
+    { EntityMatching em = 
+           (EntityMatching) entitymatches.get(i); 
+      em.recheckModel(mod,this,
+                entitymatches,removed,functions,tms); 
     } // check feature mappings of each em.  
 
     helpers.addAll(functions); 
     entitymatches.removeAll(removed); 
 	
+    removed = new Vector(); 
+    Vector added = new Vector(); 
 
     Vector unusedSources = unusedSourceEntities(entities);
 
-    Vector cems = mod.completeClassMappings(entities,unusedSources,entitymatches); 
+    
+    Vector cems = mod.completeClassMappings(entities,
+                         unusedSources,entitymatches); 
 
     mod.extraAttributeMatches(entitymatches,typematches); 
 
@@ -2462,9 +2493,15 @@ public class ModelMatching implements SystemTypes
     Vector fcns = new Vector(); 
 	
     for (int i = 0; i < entitymatches.size(); i++) 
-    { System.out.println(">>> Rechecking conditions and mappings"); 
-      EntityMatching em = (EntityMatching) entitymatches.get(i); 
-      em.recheckModel(mod,this,entitymatches,rem,fcns); 
+    { EntityMatching em = 
+        (EntityMatching) entitymatches.get(i); 
+      System.out.println(">>> Rechecking conditions and mappings for " + em); 
+      Vector newems = 
+        em.recheckModel(mod,this,entitymatches,rem,fcns,tms);
+      if (newems.size() > 0) 
+      { removed.add(em); 
+        added.addAll(newems); 
+      }  
     } 
 
     mod.defineTargetQueryFunctions(entitymatches,typematches); 
@@ -2490,14 +2527,23 @@ public class ModelMatching implements SystemTypes
       if (sent.isSource())
       { Vector splitsources = new Vector(); 
         Vector splittargets = new Vector(); 
-        java.util.HashMap splittings = mod.objectSplittings(sent.getName(),splitsources,splittargets); 
+        java.util.HashMap splittings = 
+           mod.objectSplittings(sent.getName(),
+                          splitsources,splittargets); 
         if (splittings != null && splittings.size() > 0)
         { System.out.println(">>> Instance replication in model: " + splittings); 
-          mod.checkSplittingCondition(sent,entities,entitymatches,splittings); 
+          mod.checkSplittingCondition(sent,
+                    entities,entitymatches,splittings); 
         } 
       } 
     } 
 
+
+    System.out.println(">>> Removed: " + removed); 
+    System.out.println(">>> Added: " + added); 
+
+    entitymatches.removeAll(removed); 
+    entitymatches.addAll(added); 
   } 
 
   public java.util.Map convert2CSTL()
@@ -2505,15 +2551,15 @@ public class ModelMatching implements SystemTypes
   
     for (int i = 0; i < typematches.size(); i++) 
     { TypeMatching tm = (TypeMatching) typematches.get(i); 
-	  String ffile = tm.getName(); 
-	  File chtml = new File("output/" + ffile + ".cstl"); 
+      String ffile = tm.getName(); 
+      File chtml = new File("output/" + ffile + ".cstl"); 
       try
       { PrintWriter chout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(chtml)));
         tm.cstlfunction(chout);
-		chout.close(); 
-	  } catch (Exception _e) { }  
+        chout.close(); 
+      } catch (Exception _e) { }  
     }
 
 

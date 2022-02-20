@@ -195,10 +195,15 @@ public class CGRule
 
   public static Vector metavariables(String str) 
   { Vector res = new Vector(); 
-    for (int i = 0; i < 10; i++) 
-    { String var = "_" + i; 
-      if (str.indexOf(var) > -1) 
-      { res.add(var); } 
+    for (int i = 0; i < str.length() - 1; i++) 
+    { char c = str.charAt(i); 
+      if ('_' == c & i + 2 < str.length() && 
+          Character.isDigit(str.charAt(i+1)) && 
+          Character.isDigit(str.charAt(i+2))) 
+      { res.add(c + "" + str.charAt(i+1) + "" + str.charAt(i+2)); }
+      else if ('_' == c && 
+               Character.isDigit(str.charAt(i+1))) 
+      { res.add(c + "" + str.charAt(i+1)); }
     } 
 
     if (str.indexOf("_*") > -1)
@@ -211,7 +216,7 @@ public class CGRule
   { Vector res = new Vector();
     String substr = "" + str; 
  
-    for (int i = 0; i < 10; i++) 
+    for (int i = 0; i < 100; i++) 
     { String var = "_" + i + "`";
 
       if (i == 0) 
@@ -221,9 +226,10 @@ public class CGRule
       while (substr.indexOf(var) > -1) 
       { int j = substr.indexOf(var); 
         String f = var; 
+        int varlength = var.length(); 
 
         boolean found = false; 
-        for (int k = j+3; k < substr.length() && !found; k++) 
+        for (int k = j+varlength; k < substr.length() && !found; k++) 
         { if (Character.isLetterOrDigit(substr.charAt(k)))
           { f = f + substr.charAt(k); } 
           else 
@@ -260,17 +266,24 @@ public class CGRule
 
   public boolean equals(Object other)
   { if (other instanceof CGRule)
-    { String ostring = other + ""; 
-      if (ostring.equals(toString()))
+    { String ostring = (other + "").trim(); 
+      if (ostring.equals(toString().trim()))
       { return true; } 
     } 
     return false; 
   } 
 
   public int compareTo(CGRule r)
-  { String rlhs = r.lhs + ""; 
+  { String rlhs = (r.lhs + "").trim(); 
+    String selflhs = (lhs + "").trim(); 
 
-    if (rlhs.equals(lhs + ""))
+    if ("_*".equals(selflhs))
+    { return 1; } // always more general than others
+
+    if ("_*".equals(rlhs))
+    { return -1; } 
+
+    if (rlhs.equals(selflhs))
     { if (conditions == null && r.conditions != null) 
       { return 1; } // More general than r
 
@@ -290,19 +303,13 @@ public class CGRule
       { return 1; } // r is more specialised 
     } 
 
-    if (rlhs.indexOf(lhs + "") >= 0)
+    if (rlhs.indexOf(selflhs) >= 0 && !(rhs.equals(selflhs)))
     { // lhs is substring of rlhs, 
       // this rule is more general than r
       // It must follow r if they are in one ruleset.
  
       return 1; 
     } 
-
-    if ("_*".equals(lhs + ""))
-    { return 1; } 
-
-    if ("_*".equals(rlhs + ""))
-    { return -1; } 
 
     if (lhsTokens.size() == r.lhsTokens.size() && 
         variables.size() > r.variables.size())
@@ -328,7 +335,7 @@ public class CGRule
     } */ 
 
 
-    if ((lhs + "").indexOf(rlhs) >= 0)
+    if (selflhs.indexOf(rlhs) >= 0 && !(selflhs.equals(rlhs)))
     { return -1; } 
     // this goes before r
 
@@ -1354,9 +1361,10 @@ public class CGRule
   } 
 
   public static void main(String[] args) 
-  { 
-    String res = correctNewlines("\"%d %s\n\""); 
-    System.out.println(res); 
+  { Vector vars = CGRule.metavariables("_1 ffdd _10 iioo _13"); 
+    System.out.println(vars); 
+    // String res = correctNewlines("\"%d %s\n\""); 
+    // System.out.println(res); 
   } 
 
   /* CGRule r = new CGRule("_1 _2", "_1>_2"); 

@@ -201,8 +201,8 @@ public class ASTCompositeTerm extends ASTTerm
       Vector vars = r.getVariables(); 
 
       if (tokens.size() > terms.size())
-      { // System.out.println("> " + tag + " rule " + r + " does not match " + this);  
-        // System.out.println("!! Too many elements on rule LHS (" + tokens.size() + ") to match subterms: (" + terms.size() + ")"); 
+      { System.out.println("> " + tag + " rule " + r + " does not match " + this);  
+        System.out.println("!! Too many elements on rule LHS (" + tokens.size() + ") to match subterms: (" + terms.size() + ")"); 
         continue; 
       } 
       else if (vars.contains("_*") && terms.size() >= tokens.size())
@@ -215,13 +215,14 @@ public class ASTCompositeTerm extends ASTTerm
       // System.out.println("> Trying to match tokens of rule " + r + " for " + this);  
         
       Vector args = new Vector(); 
-        // Strings resulting from terms[k].cg(cgs)
+        // Strings resulting from the terms[k].cg(cgs)
       Vector eargs = new Vector(); 
         // the actual terms[k]
 
       int k = 0; 
       boolean failed = false; 
-      for (int j = 0; j < tokens.size() && k < terms.size() && !failed; j++) 
+      for (int j = 0; j < tokens.size() && 
+                      k < terms.size() && !failed; j++) 
       { String tok = (String) tokens.get(j); 
         ASTTerm tm = (ASTTerm) terms.get(k); 
 
@@ -234,31 +235,45 @@ public class ASTCompositeTerm extends ASTTerm
           if (tokens.size() > j+1)
           { nextTok = (String) tokens.get(j+1); } 
 
+          System.out.println(">> End token for _* is: " + nextTok); 
+          int remainingTokens = tokens.size() - (j+1); 
+
           boolean finished = false; 
 
           Vector rem = new Vector(); 
           for (int p = j ; p < terms.size() && !finished; p++)
-          { ASTTerm pterm = (ASTTerm) terms.get(p); 
+          { ASTTerm pterm = (ASTTerm) terms.get(p);
+            int remainingTerms = terms.size() - (k+1); 
+ 
             if (nextTok != null && 
                 pterm.literalForm().equals(nextTok))
+            { finished = true; } 
+            else if (remainingTokens > remainingTerms)
             { finished = true; } 
             else 
             { rem.add(pterm); 
               k++;
             }  
+            System.out.println(">>> Terms for _* are: " + rem); 
           } 
           eargs.add(rem); // corresponds to _* variable
         } 
         else if (vars.contains(tok))
         { // allocate terms(j) to tok
+
+          System.out.println(">> Matched variable " + tok + 
+                             " and term " + tm); 
           eargs.add(tm); 
           k++; 
         } 
         else if (tok.equals(tm.literalForm()))
-        { k++; } 
+        { System.out.println(">> Matched token " + tok + 
+                             " and term " + tm); 
+          k++; 
+        } 
         else 
-        { // System.out.println("> " + tag + " rule " + r + " does not match " + this); 
-          // System.out.println(tok + " /= " + tm.literalForm()); 
+        { System.out.println("> " + tag + " rule " + r + " does not match " + this); 
+          System.out.println(tok + " /= " + tm.literalForm()); 
           k++; 
           failed = true; // try next rule 
         } 
@@ -5932,6 +5947,57 @@ public class ASTCompositeTerm extends ASTTerm
         return new AssignStatement(data, readN); 
       }
     }   
+    else if ("fwrite".equals(fname) && args.size() == 4)
+    { Expression fle = (Expression) args.get(3);
+      Expression data = (Expression) args.get(0);
+      Expression n = (Expression) args.get(2);
+      if (data.isStringSequence())
+      { Vector pars = new Vector(); 
+        pars.add(unitExpression); 
+        pars.add(n); 
+        Expression subrng = 
+          BasicExpression.newFunctionBasicExpression("subrange", 
+                                data, pars); 
+        Expression sumexpr = 
+          new UnaryExpression("->sum", subrng); 
+        BasicExpression res = 
+          BasicExpression.newCallBasicExpression(
+             "write", fle, sumexpr);
+        InvocationStatement ee = 
+          InvocationStatement.newInvocationStatement(res, 
+                                                     sumexpr); 
+        return ee; 
+      }
+      else if (data.isIntSequence())   
+      { // fle.write(data.subrange(1,n)->collect( 
+        //                _z | _z->byte2char() )->sum()
+        Vector pars = new Vector(); 
+        pars.add(unitExpression); 
+        pars.add(n); 
+        Expression subrng = 
+          BasicExpression.newFunctionBasicExpression("subrange", 
+                                data, pars); 
+        BasicExpression chr = 
+          BasicExpression.newVariableBasicExpression("_chr"); 
+        chr.setType(new Type("int", null)); 
+        Expression coldom = 
+          new BinaryExpression(":", chr, subrng); 
+        Expression par = 
+          new UnaryExpression("->byte2char", chr);
+        Expression colexpr =
+          new BinaryExpression("|C", coldom, par); 
+ 
+        Expression sumexpr = 
+          new UnaryExpression("->sum", colexpr); 
+        BasicExpression res = 
+          BasicExpression.newCallBasicExpression(
+             "write", fle, sumexpr);
+        InvocationStatement ee = 
+          InvocationStatement.newInvocationStatement(res, 
+                                                     sumexpr); 
+        return ee; 
+      } 
+    }  
     else if (("putc".equals(fname) ||
               "fputc".equals(fname)) && args.size() == 2)
     { Expression fle = (Expression) args.get(1);

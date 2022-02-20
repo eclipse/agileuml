@@ -226,6 +226,17 @@ public class Entity extends ModelElement implements Comparable
   }  
 
 
+  public boolean hasTreeAttribute()
+  { Vector attrs = allAttributes(); 
+    for (int i = 0; i < attrs.size(); i++) 
+    { Attribute att = (Attribute) attrs.get(i); 
+      if (att.isTree())
+      { return true; } 
+    } 
+    return false; 
+  } 
+
+
   public Vector getLocalEnumerationFeatures()
   { Vector res = new Vector(); 
 
