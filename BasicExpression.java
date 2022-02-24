@@ -356,8 +356,9 @@ class BasicExpression extends Expression
       res.parameters = pars;  
     } 
     else if (t instanceof ASTSymbolTerm)
-    { res.data = t.literalForm(); 
-      res.umlkind = VALUE; 
+    { res.data = "_1";
+      // Vector pars = new Vector(); 
+      // res.parameters = pars;  
     } 
     else if (t instanceof ASTCompositeTerm)
     { ASTCompositeTerm tree = (ASTCompositeTerm) t; 
@@ -367,8 +368,8 @@ class BasicExpression extends Expression
       for (int i = 0; i < trms.size(); i++)
       { ASTTerm trm = (ASTTerm) trms.get(i); 
         String val = "_" + (i+1); 
-        if (trm instanceof ASTSymbolTerm)
-        { val = trm.literalForm(); } 
+        // if (trm instanceof ASTSymbolTerm)
+        // { val = trm.literalForm(); } 
         Expression arg = new BasicExpression(val); 
         pars.add(arg); 
       } 
@@ -2185,8 +2186,12 @@ class BasicExpression extends Expression
         //       Character.isLetter(res.charAt(res.length()-1)) )
         //    )
         // { res = res + " " + par; } 
-        // else 
-        { res = res + " " + par; } 
+        // else
+ 
+        if (par.endsWith(" "))
+        { res = res + par; } 
+        else 
+        { res = res + par + " "; } 
       } 
     } 
     return res; 

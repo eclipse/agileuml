@@ -896,6 +896,28 @@ public abstract class ASTTerm
     return true; 
   } 
 
+  public static boolean allCompositeSameLength(
+                                   ASTTerm[] trees)
+  { if (trees == null || trees.length == 0) 
+    { return false; }
+
+    if (trees[0] == null) 
+    { return false; } 
+
+    int len0 = trees[0].arity(); 
+
+    if (len0 <= 1) 
+    { return false; } 
+    
+    for (int i = 1; i < trees.length; i++) 
+    { ASTTerm tx = trees[i]; 
+      if (tx == null || tx.arity() != len0) 
+      { return false; } 
+    } 
+      
+    return true; 
+  } 
+
   public static Vector symbolValues(int ind, ASTTerm[] trees)
   { Vector res = new Vector(); 
 
@@ -957,14 +979,15 @@ public abstract class ASTTerm
     { ASTTerm tx = trees[j]; 
       if (tx == null)
       { result[j] = null; 
-        remd.add(null); 
+        remd.add(null);
+        // return null?  
       }
       else 
       { ASTTerm tnew = tx.getTerm(i); 
         result[j] = tnew; 
         remd.add(tnew);
       }  
-    } // terms indexed from 0
+    } // terms are indexed from 0
 
     return result; 
   }   
@@ -992,8 +1015,11 @@ public abstract class ASTTerm
     public static Vector createIdentityMappings
         (ASTTerm[] xs, ASTTerm[] ys, ModelSpecification mod)
     { // Each ys[i] = xs[i] 
+      // Create a separate mapping for each different arity
+      // of terms. Look for constant symbol values. 
 
       Vector res = new Vector(); 
+      java.util.Map aritymap = new java.util.HashMap(); 
 
       if (ys.length > 1 && xs.length == ys.length)
       { for (int i = 0; i < xs.length; i++)
@@ -1001,11 +1027,21 @@ public abstract class ASTTerm
           ASTTerm yvect = ys[i]; 
 
           if (xx != null) 
-          { BasicExpression expr = 
-              BasicExpression.newASTBasicExpression(xx); 
-            AttributeMatching am = 
-              new AttributeMatching(expr,expr); 
-            res.add(am); 
+          { int n = xx.arity(); 
+            Vector aritynterms = 
+               (Vector) aritymap.get(n); 
+            if (aritynterms == null) 
+            { aritynterms = new Vector(); 
+              aritynterms.add(xx);
+              aritymap.put(n,aritynterms);  
+              BasicExpression expr = 
+                BasicExpression.newASTBasicExpression(xx); 
+              AttributeMatching am = 
+                new AttributeMatching(expr,expr); 
+              res.add(am); 
+            }
+            else 
+            { aritynterms.add(xx); }  
           } 
         }
       } 
@@ -1290,44 +1326,103 @@ public abstract class ASTTerm
     } */ 
 
   public static boolean nestedSingletonTrees(Entity sent, ASTTerm[] xs, ASTTerm[] ys, ModelSpecification mod)
-    { // Is each xs[i] = (tag1 pi) where ys[i] = (tag2 pi) 
+  { // Is each xs[i] = (tag1 pi) where ys[i] = (tag2 pi) 
+    // Or (tag1 pi) (tag2 qi) where the pi ~ qi
 
-      if (ys.length > 1 && xs.length == ys.length)
-      { for (int i = 0; i < xs.length; i++)
-        { ASTTerm xx = xs[i]; 
-          ASTTerm yvect = ys[i]; 
+    if (ys.length > 1 && xs.length == ys.length)
+    { for (int i = 0; i < xs.length; i++)
+      { ASTTerm xx = xs[i]; 
+        ASTTerm yvect = ys[i]; 
 
-          System.out.println(">>>> Comparing " + xx + " to " + yvect); 
+        System.out.println(">>>> Comparing " + xx + " to " + yvect); 
 
-          if (yvect instanceof ASTBasicTerm && 
-              xx instanceof ASTBasicTerm) 
-          { String yy = ((ASTBasicTerm) yvect).getValue();
-            String xsym = ((ASTBasicTerm) xx).getValue();  
-            if (yy.equals(xsym)) { }
-            else 
-            { return false; }
-          } 
-          else if (yvect instanceof ASTCompositeTerm && 
-                   ((ASTCompositeTerm) yvect).getTerms().size() == 1 && 
-                   xx instanceof ASTCompositeTerm && 
-                   ((ASTCompositeTerm) xx).getTerms().size() == 1)
-          { ASTCompositeTerm ct = (ASTCompositeTerm) yvect; 
-            ASTTerm ct0 = (ASTTerm) ct.getTerms().get(0); 
-            ASTCompositeTerm xt = (ASTCompositeTerm) xx; 
-            ASTTerm xt0 = (ASTTerm) xt.getTerms().get(0); 
-            if (xt0.equals(ct0) || 
-                mod.correspondingTrees(sent,xt0,ct0)) 
-            { System.out.println(">> Corresponding terms: " + xt0 + " " + ct0); } 
-            else 
-            { return false; } 
-          } 
+        if (yvect instanceof ASTBasicTerm && 
+            xx instanceof ASTBasicTerm) 
+        { String yy = ((ASTBasicTerm) yvect).getValue();
+          String xsym = ((ASTBasicTerm) xx).getValue();  
+          if (yy.equals(xsym)) { }
+          else 
+          { return false; }
+        } 
+        else if (yvect instanceof ASTCompositeTerm && 
+                 ((ASTCompositeTerm) yvect).getTerms().size() == 1 && 
+                 xx instanceof ASTCompositeTerm && 
+                 ((ASTCompositeTerm) xx).getTerms().size() == 1)
+        { ASTCompositeTerm ct = (ASTCompositeTerm) yvect; 
+          ASTTerm ct0 = (ASTTerm) ct.getTerms().get(0); 
+          ASTCompositeTerm xt = (ASTCompositeTerm) xx; 
+          ASTTerm xt0 = (ASTTerm) xt.getTerms().get(0); 
+          if (xt0.equals(ct0) || 
+              mod.correspondingTrees(sent,xt0,ct0)) 
+          { System.out.println(">> Corresponding terms: " + xt0 + " " + ct0); } 
           else 
           { return false; } 
+        } 
+        else 
+        { return false; } 
+      }
+      return true; 
+    } 
+    return false; 
+  }
+
+  public static AttributeMatching 
+    compositeSource2TargetTrees(
+      Entity sent, ASTTerm[] xs, ASTTerm[] ys, 
+      ModelSpecification mod)
+  { // Is there an index j of each xs[i] = (tag1 p1 ... pn) 
+    // each pj = ys[i]  
+    // or pj ~ ys[i]?
+    // The nested mapping is then  _j |-->_1
+    // 
+    // result = null indicates failure. 
+
+    AttributeMatching res = null; 
+
+    if (ys.length > 1 && xs.length == ys.length)
+    { ASTTerm s0 = xs[0]; 
+      int xarity = s0.arity(); 
+
+      for (int j = 0; j < xarity; j++) 
+      { Vector jvect = new Vector(); 
+        ASTTerm[] jterms = 
+          ASTTerm.subterms(xs,j,jvect); 
+        boolean jmatch = true; 
+    
+        for (int i = 0; i < xs.length && jmatch; i++)
+        { ASTTerm xx = jterms[i]; 
+          ASTTerm yy = ys[i]; 
+
+          System.out.println(">>>> Comparing " + (j+1) + "th source subterm " + xx + " to " + yy); 
+
+          if (xx.equals(yy) || 
+              mod.correspondingTrees(xx,yy)) 
+          { System.out.println(">>-- Corresponding terms: " + xx + " " + yy); } 
+          else 
+          { jmatch = false; } 
         }
-        return true; 
-      } 
-      return false; 
-    }
+
+        if (jmatch) 
+        { System.out.println(">> match from " + (j+1) + 
+                             " source subterms to target"); 
+          BasicExpression sexpr = 
+            BasicExpression.newASTBasicExpression(s0);
+          
+          ASTTerm targ0 = ys[0]; 
+          BasicExpression texpr = new BasicExpression(targ0);
+          Vector newpars = new Vector(); 
+          newpars.add(new BasicExpression("_" + (j+1))); 
+          texpr.setParameters(newpars); 
+ 
+          AttributeMatching amx = 
+            new AttributeMatching(sexpr, texpr);
+          return amx;   
+        } 
+      } // try next j
+    } 
+    return null; 
+  }
+
 
   public static ASTTerm[] composeIntoTrees(Vector termSeqs, Vector res)
   { int n = termSeqs.size(); 
@@ -1545,11 +1640,66 @@ public abstract class ASTTerm
     } 
   } 
 
+  public static Vector randomBasicASTTermsForTag(String tag, 
+                                       int n, int numb)
+  { // numb (tag t1 ... tn) terms 
+    Vector res = new Vector(); 
+    for (int i = 0; i < numb; i++) 
+    { Vector args = new Vector(); 
+      for (int j = 0; j < n; j++) 
+      { String rstring = ModelElement.randomString(10); 
+        args.add(new ASTSymbolTerm(rstring)); 
+      } 
+      ASTCompositeTerm ct = 
+        new ASTCompositeTerm(tag,args); 
+      res.add(ct); 
+    } 
+    return res; 
+  }    
 
+  public static Vector randomCompositeASTTermsForTag(
+    String tag, Vector subtermVectors, 
+    int n, int numb)
+  { // numb (tag t1 ... tn) terms where ti is a random
+    // term from subtermVectors[i-1]
+ 
+    Vector res = new Vector(); 
+    for (int i = 0; i < numb; i++) 
+    { Vector args = new Vector(); 
+      for (int j = 0; j < n; j++) 
+      { Vector termsj = (Vector) subtermVectors.get(j); 
+        if (termsj.size() == 1) 
+        { args.add(termsj.get(0)); } 
+        else 
+        { args.add(ModelElement.randomElement(termsj)); } 
+      } 
+      ASTCompositeTerm ct = 
+        new ASTCompositeTerm(tag,args); 
+      res.add(ct); 
+    } 
+    return res; 
+  }    
+    
+ 
   public static void main(String[] args) 
   { ASTBasicTerm t = new ASTBasicTerm("OclBasicExpression", "true"); 
     System.out.println(t.isInteger()); 
-    System.out.println(t.isBoolean()); 
+    System.out.println(t.isBoolean());
+
+    Vector consts = 
+      randomBasicASTTermsForTag("Const", 1, 10);
+    Vector ops = new Vector(); 
+    ops.add(new ASTSymbolTerm("+"));  
+    ops.add(new ASTSymbolTerm("-"));  
+    Vector vars = 
+      randomBasicASTTermsForTag("Var", 1, 10);
+    Vector subs = new Vector(); 
+    subs.add(consts); 
+    subs.add(ops); 
+    subs.add(vars); 
+    Vector tests = 
+      randomCompositeASTTermsForTag("Expr", subs, 3, 20);  
+    System.out.println(tests);  
   } 
 } 
 

@@ -952,8 +952,36 @@ public static Vector splitIntoWords(String str)
     return best; 
   } // also NMS
 
+  public static String randomString(int n) 
+  { String characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$";
+    String res = ""; 
+    // int len = (int) Math.floor(Math.random()*n);
+    for (int i = 0; i < n; i++) 
+    { int code = (int) Math.floor(Math.random()*54); 
+      res = res + characters.charAt(code); 
+    } 
+    return res; 
+  }  
+
+  public static Object randomElement(Vector col)
+  { if (col.size() == 0) 
+    { return null; } 
+    int n = col.size(); 
+    int ind = (int) Math.floor(Math.random()*n);
+    return col.get(ind); 
+  } 
+
   public static void main(String[] args) 
-  { System.out.println(longestCommonPrefix("DType", "Data", 0)); 
+  { Vector col = new Vector(); 
+    col.add("aa"); col.add("bb"); 
+    col.add("cc"); col.add("dd"); 
+    col.add("ee"); col.add("ff"); 
+    System.out.println(randomElement(col)); 
+    System.out.println(randomElement(col)); 
+    System.out.println(randomElement(col)); 
+  } 
+
+  /* System.out.println(longestCommonPrefix("DType", "Data", 0)); 
     System.out.println(longestCommonSuffix("PTArc", "TPARc",0));
 
     System.out.println(splitIntoWords("memberOf.father")); 
@@ -973,7 +1001,7 @@ public static Vector splitIntoWords(String str)
     e.addStereotype("url=\"testtest\"");
     String vvv = e.getTaggedValue("url");  
     System.out.println(vvv); 
-  } 
+  } */ 
 
 }
 

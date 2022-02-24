@@ -5669,7 +5669,8 @@ public class ModelSpecification
 
         System.out.println(">> Identity mapping _* |-->_*"); 
 
-        AttributeMatching amx = (AttributeMatching) idmaps.get(0); 
+        AttributeMatching amx = (AttributeMatching) idmaps.get(0);
+        // idmaps.remove(amx); ??  
         ams.addAll(idmaps); 
         return amx;   
       } // Actually tag:: _* |-->_* for each source tag
@@ -5764,6 +5765,17 @@ public class ModelSpecification
         AttributeMatching amx = 
           new AttributeMatching(sexpr, texpr);
         return amx;   
+      } // sexpr.data:: sexpr.parameters |--> texpr
+      else if (ASTTerm.sameTag(targetValues) && 
+               ASTTerm.sameTag(sattvalues) && 
+               ASTTerm.allCompositeSameLength(sattvalues)) 
+      { AttributeMatching amsub = 
+          ASTTerm.compositeSource2TargetTrees(sent, 
+                       sattvalues,targetValues,this); 
+        if (amsub != null) 
+        { System.out.println(">> Mapping from subterm of source: " + amsub);
+          return amsub; 
+        } 
       } // sexpr.data:: sexpr.parameters |--> texpr
     } 
 
@@ -5867,15 +5879,46 @@ public class ModelSpecification
 
               System.out.println(">->->> Comparing source term " + (sindex+1) + " values " + srcJValues + " to target term " + (tindex+1) + " values " + trgJValues); 
 
+              int k = tindex+1; 
+                
               if (correspondingTrees(
                     sent,sourceJValues,targetJValues))
-              { int k = tindex+1; 
-                System.out.println(">> Direct correspondence _" + (sindex+1) + " |--> _" + k + " for target terms " + k); 
+              { System.out.println(">> Direct correspondence _" + (sindex+1) + " |--> _" + k + " for target terms " + k); 
                 ttermpars.add(new BasicExpression("_" + (sindex+1))); 
                 foundstermpars.add("_" + (sindex + 1));
                 sfoundvars.add("_" + (sindex + 1));  
                 foundsource = true; 
               } 
+              else if ( 
+                 ASTTerm.sameTag(sourceJValues) && 
+                 ASTTerm.allCompositeSameLength(
+                                 sourceJValues)) 
+              { System.out.println(">> Checking for mapping from subterm of source " + 
+                   (sindex + 1) + " to target " + k);
+                AttributeMatching amsub = 
+                  ASTTerm.compositeSource2TargetTrees(sent, 
+                       sourceJValues,targetJValues,this); 
+                if (amsub != null) 
+                { System.out.println(">> Discovered mapping from subterm of source " + amsub);
+                  String fid = 
+                    Identifier.nextIdentifier("subruleset");
+                  TypeMatching tmnew = new TypeMatching(fid);
+                  tmnew.addValueMap(amsub);     
+                  tms.add(tmnew);
+                  BasicExpression svar = 
+                    new BasicExpression("_" + (sindex+1));       
+                  BasicExpression fapp = 
+                    new BasicExpression(fid); 
+                  fapp.setUmlKind(Expression.FUNCTION);
+                  fapp.addParameter(svar);
+
+                  ttermpars.add(fapp);
+                  foundstermpars.add("_" + (sindex + 1));
+                  sfoundvars.add("_" + (sindex + 1));  
+                  foundsource = true;
+                } 
+              } // sexpr.data:: sexpr.parameters |--> texpr
+
             } // cases of simple functional mappings
 
             
@@ -5904,11 +5947,12 @@ public class ModelSpecification
                 { System.out.println(">>-->> Functional mapping " + srcJValues + " to " + trgJValues);
                   System.out.println();  
   
+                  Vector locams = new Vector(); 
                   AttributeMatching amjx = 
                     composedTreeFunction(sent,
                            tatt,sourceatts,newSMap,     
                            targetJValues, trgJValues, 
-                           tms, localams); 
+                           tms, locams); 
                   if (amjx != null) 
                   { System.out.println(">>-->> Found nested mapping for source term " + (sindex+1) + " to target " + (tindex+1) + ": " + amjx);
                     // Create new function ff with rule amjx; 
@@ -5923,9 +5967,11 @@ public class ModelSpecification
                         ((BasicExpression) amjx.srcvalue).toCSTL(); 
                       String rrhs = 
                         ((BasicExpression) amjx.trgvalue).toLiteralCSTL();  
-                      tmnew.addValueMapping(slhs, rrhs); 
+                      tmnew.addValueMapping(slhs, rrhs);
+                      // Also the other locams 
                       tms.add(tmnew);
                       System.out.println(">>-->> Found nested mapping for source term _" + (sindex+1) + "`" + fid + " |--> " + "_" + (tindex+1));
+                      System.out.println(">> With maps " + locams); 
                     }
 
                     sfoundvars.add("_" + (sindex+1)); 

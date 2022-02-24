@@ -9227,7 +9227,58 @@ public class ASTCompositeTerm extends ASTTerm
           { ASTTerm obj = (ASTTerm) cargs.get(1); 
             ASTTerm rep = (ASTTerm) cargs.get(2);
             String objx = obj.toKM3(); 
-            String repx = rep.toKM3(); 
+            String repx = rep.toKM3();
+ 
+            if (callarg1.expression != null && 
+                obj.expression != null && 
+                rep.expression != null) 
+            { String x_1 = Identifier.nextIdentifier("x_"); 
+              Expression xbe = 
+                BasicExpression.newVariableBasicExpression(
+                                                         x_1);
+              Expression objind = 
+                new BinaryExpression("+", obj.expression, 
+                                     unitExpression); 
+              Expression repind = 
+                new BinaryExpression("+", rep.expression, 
+                                     unitExpression); 
+              Expression test1 = 
+                new BinaryExpression("=", xbe, repind);
+              Expression test2 = 
+                new BinaryExpression("=", xbe, objind);
+              
+              Expression argobj = 
+                BasicExpression.newIndexedBasicExpression(
+                  callarg1.expression,objind); 
+              Expression argrep = 
+                BasicExpression.newIndexedBasicExpression(
+                  callarg1.expression,repind); 
+              Expression argx = 
+                BasicExpression.newIndexedBasicExpression(
+                  callarg1.expression,xbe); 
+ 
+              Expression ifstat1 = 
+                new ConditionalExpression(test1,argobj,argx);
+              Expression ifstat2 = 
+                new ConditionalExpression(test2,
+                                          argrep,ifstat1);
+              Vector pars = new Vector(); 
+              pars.add(unitExpression); 
+              pars.add(new UnaryExpression("->size", 
+                                       callarg1.expression)); 
+
+              Expression subrang = 
+                BasicExpression.newFunctionBasicExpression(
+                  "subrange", "Integer", pars); 
+              Expression colldom =
+                new BinaryExpression(":", xbe, subrang);  
+              expression = 
+                new BinaryExpression("|C", colldom, ifstat2); 
+              statement = 
+                new AssignStatement(callarg1.expression,
+                                    expression); 
+            } 
+
             return callp1 + " := Integer.subrange(1," + callp1 + ".size)->collect(x_1 | if x_1 = " + objx + "+1 then " + callp1 + "[" + repx + "+1] else if x_1 = " + repx + "+1 then " + callp1 + "[" + objx + "+1] else " + callp1 + "[x_1] endif endif )"; 
           }  
           return callp1; 
@@ -9242,6 +9293,50 @@ public class ASTCompositeTerm extends ASTTerm
           if (cargs.size() > 1) 
           { ASTTerm nn = (ASTTerm) cargs.get(1); 
             String nx = nn.toKM3(); 
+
+            if (callarg1.expression != null && 
+                nn.expression != null) 
+            { Expression argsize = 
+                new UnaryExpression("->size", 
+                                    callarg1.expression);
+              String x_1 = Identifier.nextIdentifier("x_"); 
+              Expression xbe = 
+                BasicExpression.newVariableBasicExpression(
+                                                         x_1);
+              Expression ind1 = 
+                new BinaryExpression("-", xbe, 
+                                     unitExpression); 
+              Expression ind2 = 
+                new BinaryExpression("-", ind1, 
+                                     nn.expression);
+              ind2.setBrackets(true);  
+              Expression ind3 = 
+                new BinaryExpression("mod", ind2, argsize);
+              ind3.setBrackets(true); 
+              Expression ind4 = 
+                new BinaryExpression("+", ind3, 
+                                     unitExpression);
+              
+              Expression appl = 
+                new BinaryExpression("->at", 
+                       callarg1.expression,ind4); 
+ 
+              Vector pars = new Vector(); 
+              pars.add(unitExpression); 
+              pars.add(argsize); 
+
+              Expression subrang = 
+                BasicExpression.newFunctionBasicExpression(
+                  "subrange", "Integer", pars); 
+              Expression colldom =
+                new BinaryExpression(":", xbe, subrang);  
+              expression = 
+                new BinaryExpression("|C", colldom, appl); 
+              statement = 
+                new AssignStatement(callarg1.expression,
+                                    expression); 
+            } 
+
             return callp1 + " := Integer.subrange(1," + callp1 + ".size)->collect( x_1 | " + callp1 + "->at(((x_1-1-" + nx + ") mod " + callp1 + ".size) + 1) )"; 
           }  
           return callp1; 
@@ -9252,8 +9347,18 @@ public class ASTCompositeTerm extends ASTTerm
           String callp1 = callarg1.toKM3(); 
 
           ASTTerm.setType(thisliteral,"Sequence"); 
+
+          if (callarg1.expression != null) 
+          { expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "randomiseSequence", "OclRandom", 
+                callarg1.expression); 
+            statement = 
+              new AssignStatement(callarg1.expression,
+                                  expression); 
+          } 
           
-          return callp1 + " := Sequence{}->union(" + callp1 + "->asBag())"; 
+          return callp1 + " := OclRandom.randomiseSequence(" + callp1 + ")"; 
         } 
         else if ("forName".equals(called) && "Class".equals(argliteral))
         { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
@@ -13511,6 +13616,16 @@ public class ASTCompositeTerm extends ASTTerm
 
           return "if " + args + ".readByte() = 0 then false else true endif"; 
         } 
+        else if ("readChar".equals(called) && 
+                 arg.isFile())
+        { if (arg.expression != null) 
+          { expression =
+              BasicExpression.newCallBasicExpression("read", arg.expression);
+          }  
+          ASTTerm.setType(this,"String"); 
+          
+          return args + ".read()"; 
+        } 
         else if (("readByte".equals(called) || 
                   "readUnsignedByte".equals(called)) && 
                  arg.isFile())
@@ -13521,7 +13636,53 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm.setType(this,"int"); 
           
           return args + ".readByte()"; 
-        } // TODO: othercases
+        } 
+        else if (("readShort".equals(called) || 
+                  "readUnsignedShort".equals(called)) && 
+                 arg.isFile())
+        { Expression two = new BasicExpression(2); 
+          if (arg.expression != null) 
+          { Expression callexpression =
+              BasicExpression.newCallBasicExpression(
+                "readNbytes", arg.expression, two);
+            expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "bytes2integer", "MathLib", callexpression); 
+          }  
+          ASTTerm.setType(this,"int"); 
+          
+          return "MathLib.bytes2integer(" + args + ".readNbytes(2))"; 
+        } 
+        else if ("readInt".equals(called) && 
+                 arg.isFile())
+        { Expression four = new BasicExpression(4); 
+          if (arg.expression != null) 
+          { Expression callexpression =
+              BasicExpression.newCallBasicExpression(
+                "readNbytes", arg.expression, four);
+            expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "bytes2integer", "MathLib", callexpression); 
+          }  
+          ASTTerm.setType(this,"int"); 
+          
+          return "MathLib.bytes2integer(" + args + ".readNbytes(4))"; 
+        }         
+        else if ("readLong".equals(called) && 
+                 arg.isFile())
+        { Expression eight = new BasicExpression(8); 
+          if (arg.expression != null) 
+          { Expression callexpression =
+              BasicExpression.newCallBasicExpression(
+                "readNbytes", arg.expression, eight);
+            expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "bytes2integer", "MathLib", callexpression); 
+          }  
+          ASTTerm.setType(this,"int"); 
+          
+          return "MathLib.bytes2integer(" + args + ".readNbytes(8))"; 
+        } // TODO: othercases. Float is 4 bytes, Double 8
         else if ("getInputStream".equals(called) && 
                  arg.isFile())
         { ASTTerm.setType(this,"OclFile"); 

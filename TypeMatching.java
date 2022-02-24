@@ -75,6 +75,23 @@ public class TypeMatching
     valueMappings.add(v);
   }
 
+  public void addValueMap(AttributeMatching am)
+  { // _1 _2 .. |-->_j
+
+    if (am != null && am.srcvalue != null && 
+        am.trgvalue != null) 
+    { String rulelhs = 
+        ((BasicExpression) am.srcvalue).toCSTL();
+      String rulerhs = 
+        ((BasicExpression) am.trgvalue).toLiteralCSTL();
+      ValueMatching vm = 
+        new ValueMatching(rulelhs,rulerhs);
+      if (valueMappings.contains(vm)) { } 
+      else 
+      { valueMappings.add(vm); } // if not already there
+    } 
+  }  
+
   public void setValueMapping(Expression s, Expression t)
   { ValueMatching v = lookupBySource(s + ""); 
     if (v == null) 
