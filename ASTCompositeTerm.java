@@ -5950,14 +5950,17 @@ public class ASTCompositeTerm extends ASTTerm
     else if ("fwrite".equals(fname) && args.size() == 4)
     { Expression fle = (Expression) args.get(3);
       Expression data = (Expression) args.get(0);
+      Expression sze = (Expression) args.get(1); 
       Expression n = (Expression) args.get(2);
+      
       if (data.isStringSequence())
-      { Vector pars = new Vector(); 
+      { // fle.write(data.subrange(1,n)->sum())
+        Vector pars = new Vector(); 
         pars.add(unitExpression); 
         pars.add(n); 
         Expression subrng = 
-          BasicExpression.newFunctionBasicExpression("subrange", 
-                                data, pars); 
+          BasicExpression.newFunctionBasicExpression(
+              "subrange", data, pars); 
         Expression sumexpr = 
           new UnaryExpression("->sum", subrng); 
         BasicExpression res = 
@@ -5975,8 +5978,8 @@ public class ASTCompositeTerm extends ASTTerm
         pars.add(unitExpression); 
         pars.add(n); 
         Expression subrng = 
-          BasicExpression.newFunctionBasicExpression("subrange", 
-                                data, pars); 
+          BasicExpression.newFunctionBasicExpression(
+              "subrange", data, pars); 
         BasicExpression chr = 
           BasicExpression.newVariableBasicExpression("_chr"); 
         chr.setType(new Type("int", null)); 
@@ -5997,6 +6000,43 @@ public class ASTCompositeTerm extends ASTTerm
                                                      sumexpr); 
         return ee; 
       } 
+      else if (data.isLongSequence())   
+      { // fle.writeNbytes(data.subrange(1,n)->collect(
+        //   _z| MathLib.integer2Nbytes(_z,sze)),n*sze) 
+
+        Vector pars0 = new Vector(); 
+        pars0.add(unitExpression); 
+        pars0.add(n); 
+        Expression subrng = 
+          BasicExpression.newFunctionBasicExpression(
+              "subrange", data, pars0); 
+        BasicExpression chr = 
+          BasicExpression.newVariableBasicExpression("_z"); 
+        chr.setType(new Type("long", null)); 
+        Expression coldom = 
+          new BinaryExpression(":", chr, subrng);
+        Vector pars1 = new Vector(); 
+        pars1.add(chr); 
+        pars1.add(sze);  
+        Expression colrng = 
+          BasicExpression.newStaticCallBasicExpression(
+            "integer2bytes", "MathLib", pars1);
+        Expression colexpr =
+          new BinaryExpression("|C", coldom, colrng); 
+        Expression prd = 
+          new BinaryExpression("*", n, sze); 
+        Vector pars2 = new Vector(); 
+        pars2.add(colexpr);
+        pars2.add(prd);  
+ 
+        BasicExpression res = 
+          BasicExpression.newCallBasicExpression(
+             "writeNbytes", fle, pars2);
+        InvocationStatement ee = 
+          InvocationStatement.newInvocationStatement(res, 
+                                                     pars2); 
+        return ee; 
+      } 
     }  
     else if (("putc".equals(fname) ||
               "fputc".equals(fname)) && args.size() == 2)
@@ -6004,6 +6044,11 @@ public class ASTCompositeTerm extends ASTTerm
       Expression chr = (Expression) args.get(0);
       Expression par = 
         new UnaryExpression("->byte2char", chr); 
+
+      if (chr instanceof UnaryExpression && 
+          ((UnaryExpression) chr).operator.equals("->char2byte"))
+      { par = ((UnaryExpression) chr).argument; }  
+
       BasicExpression res = 
           BasicExpression.newCallBasicExpression(
              "write", fle, par);
@@ -13912,6 +13957,106 @@ public class ASTCompositeTerm extends ASTTerm
             } 
 
             return args + ".write(" + callp1 + ")"; 
+          } 
+        } 
+        else if (("writeChar".equals(called) || 
+                  "writeShort".equals(called)) && arg.isFile())
+        { if (cargs.size() == 1)
+          { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+            String callp1 = callarg1.toKM3();
+            if (arg.expression != null && 
+                callarg1.expression != null) 
+            { Vector pars1 = new Vector();
+              pars1.add(callarg1.expression); 
+              pars1.add(new BasicExpression(2));  
+              Expression int2byts = 
+                BasicExpression.newStaticCallBasicExpression(
+                  "integer2bytes", "MathLib", pars1);
+              Vector pars2 = new Vector();
+              pars2.add(int2byts); 
+              pars2.add(new BasicExpression(2));  
+              expression = 
+                BasicExpression.newCallBasicExpression(
+                  "writeNbytes", arg.expression, pars2);
+              statement = 
+                InvocationStatement.newInvocationStatement(
+                  expression, pars2);  
+            } 
+
+            return args + ".writeNbytes(MathLib.integer2bytes(" + callp1 + ",2),2)"; 
+          } 
+        } 
+        else if ("writeInt".equals(called) && arg.isFile())
+        { if (cargs.size() == 1)
+          { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+            String callp1 = callarg1.toKM3();
+            if (arg.expression != null && 
+                callarg1.expression != null) 
+            { Vector pars1 = new Vector();
+              pars1.add(callarg1.expression); 
+              pars1.add(new BasicExpression(4));  
+              Expression int2byts = 
+                BasicExpression.newStaticCallBasicExpression(
+                  "integer2bytes", "MathLib", pars1);
+              Vector pars2 = new Vector();
+              pars2.add(int2byts); 
+              pars2.add(new BasicExpression(4));  
+              expression = 
+                BasicExpression.newCallBasicExpression(
+                  "writeNbytes", arg.expression, pars2);
+              statement = 
+                InvocationStatement.newInvocationStatement(
+                  expression, pars2);  
+            } 
+
+            return args + ".writeNbytes(MathLib.integer2bytes(" + callp1 + ",4),4)"; 
+          } 
+        } 
+        else if ("writeLong".equals(called) && arg.isFile())
+        { if (cargs.size() == 1)
+          { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+            String callp1 = callarg1.toKM3();
+            if (arg.expression != null && 
+                callarg1.expression != null) 
+            { Vector pars1 = new Vector();
+              pars1.add(callarg1.expression); 
+              pars1.add(new BasicExpression(8));  
+              Expression int2byts = 
+                BasicExpression.newStaticCallBasicExpression(
+                  "integer2bytes", "MathLib", pars1);
+              Vector pars2 = new Vector();
+              pars2.add(int2byts); 
+              pars2.add(new BasicExpression(8));  
+              expression = 
+                BasicExpression.newCallBasicExpression(
+                  "writeNbytes", arg.expression, pars2);
+              statement = 
+                InvocationStatement.newInvocationStatement(
+                  expression, pars2);  
+            } 
+
+            return args + ".writeNbytes(MathLib.integer2bytes(" + callp1 + ",8),8)"; 
+          } 
+        } 
+        else if ("writeBoolean".equals(called) && arg.isFile())
+        { if (cargs.size() == 1)
+          { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+            String callp1 = callarg1.toKM3();
+            if (arg.expression != null && 
+                callarg1.expression != null) 
+            { Expression int2byts = 
+                new ConditionalExpression(callarg1.expression,
+                                          unitExpression,
+                                          zeroExpression);
+              expression = 
+                BasicExpression.newCallBasicExpression(
+                  "writeByte", arg.expression, int2byts);
+              statement = 
+                InvocationStatement.newInvocationStatement(
+                  expression, int2byts);  
+            } 
+
+            return args + ".writeByte(if " + callp1 + " then 1 else 0 endif)"; 
           } 
         } 
         else if ("newLine".equals(called) && arg.isFile())

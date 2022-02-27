@@ -29,7 +29,8 @@ public class CGRule
 
   Vector lhsTokens = new Vector(); // String
 
-  Vector conditions;
+  Vector conditions = new Vector(); // of CGCondition
+  Vector actions = new Vector(); // of CGCondition
   String lhspattern = ""; // The LHS string as a regex pattern
   Vector lhspatternlist = new Vector(); 
 
@@ -165,6 +166,9 @@ public class CGRule
     { lhsTokens.add(toks[i]); }  
   }
 
+  public void setActions(Vector acts) 
+  { actions = acts; } 
+
   public static boolean hasDefaultRule(Vector rules)
   { for (int i = 0; i < rules.size(); i++) 
     { CGRule rr = (CGRule) rules.get(i); 
@@ -252,6 +256,7 @@ public class CGRule
 
   public String toString() 
   { String res = lhs + " |-->" + rhs; 
+
     if (conditions != null && conditions.size() > 0) 
     { res = res + "<when> "; 
       for (int i = 0; i < conditions.size(); i++) 
@@ -261,6 +266,17 @@ public class CGRule
         { res = res + ", "; }
       } 
     }
+
+    if (actions != null && actions.size() > 0) 
+    { res = res + "<action> "; 
+      for (int i = 0; i < actions.size(); i++) 
+      { CGCondition cnd = (CGCondition) actions.get(i); 
+        res = res + cnd;
+        if (i < actions.size() - 1) 
+        { res = res + ", "; }
+      } 
+    }
+
     return res;  
   } 
 
@@ -783,6 +799,7 @@ public class CGRule
             { res = res.replace(mf,repl); }  
           }   
           else if ("first".equals(mffeat) || 
+                   "1st".equals(mffeat) || 
                    "1".equals(mffeat))
           { // get first subterm of obj
             if (obj instanceof ASTCompositeTerm)
@@ -800,6 +817,7 @@ public class CGRule
             } 
           }   
           else if ("second".equals(mffeat) || 
+                   "2nd".equals(mffeat) || 
                    "2".equals(mffeat))
           { // get second subterm of obj
             if (obj instanceof ASTCompositeTerm)
@@ -813,6 +831,7 @@ public class CGRule
             } 
           }   
           else if ("third".equals(mffeat) || 
+                   "3rd".equals(mffeat) || 
                    "3".equals(mffeat))
           { // get third subterm of obj
             if (obj instanceof ASTCompositeTerm)
@@ -826,6 +845,7 @@ public class CGRule
             } 
           }   
           else if ("fourth".equals(mffeat) || 
+                   "4th".equals(mffeat) || 
                    "4".equals(mffeat))
           { // get 4th subterm of obj
             if (obj instanceof ASTCompositeTerm)
@@ -839,6 +859,7 @@ public class CGRule
             } 
           }   
           else if ("fifth".equals(mffeat) || 
+                   "5th".equals(mffeat) || 
                    "5".equals(mffeat))
           { // get 5th subterm of obj
             if (obj instanceof ASTCompositeTerm)
@@ -1101,14 +1122,24 @@ public class CGRule
     System.out.println(">***> RHS after replacement of metafeatures: " + res); 
     System.out.println(); 
 
+    Vector newargs = new Vector(); 
+
     for (int x = 0; x < args.size() && x < variables.size(); x++)
     { String var = (String) variables.get(x);
       String arg = (String) args.get(x);
       String arg1 = correctNewlines(arg); 
       // System.out.println(">--> Replacing " + var + " by " + arg1); 
       // res = res.replaceAll(var,arg1);
+      newargs.add(arg1); 
       res = res.replace(var,arg1);
     }
+
+    // Apply actions, in order
+    for (int i = 0; i < actions.size(); i++) 
+    { CGCondition act = (CGCondition) actions.get(i); 
+      act.applyAction(variables,eargs,newargs); 
+    } 
+
     return res;
   }
   

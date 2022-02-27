@@ -979,42 +979,56 @@ public class ASTBasicTerm extends ASTTerm
     { modelElement = new Type("ProgramException", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "ProgramException"; } 
-    if ("IOException".equals(value) || 
+    if ("IOException".equals(value) ||
+        "SQLException".equals(value) ||  
         "EOFException".equals(value) ||
         "SocketException".equals(value))
     { modelElement = new Type("IOException", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "IOException"; } 
+      return "IOException"; 
+    }
+ 
     if ("ClassCastException".equals(value))
     { modelElement = new Type("CastingException", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "CastingException"; } 
+      return "CastingException"; 
+    } 
+
     if ("NullPointerException".equals(value))
     { modelElement = new Type("NullAccessException", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "NullAccessException"; } 
+      return "NullAccessException"; 
+    } 
+
     if ("ArithmeticException".equals(value))
     { modelElement = new Type("ArithmeticException", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "ArithmeticException"; }
+      return "ArithmeticException"; 
+    }
+
     if (value.endsWith("IndexOutOfBoundsException") || 
         "ArrayStoreException".equals(value))
     { modelElement = new Type("IndexingException", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "IndexingException"; 
     } 
+
     if ("NoSuchElementException".equals(value) ||
+        "MalformedURLException".equals(value) || 
         "UnknownHostException".equals(value))
     { modelElement = new Type("IncorrectElementException", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "IncorrectElementException"; 
     }
+
     if ("InputMismatchException".equals(value) ||
         "UnsupportedOperationException".equals(value) ||
+        "IllegalStateException".equals(value) || 
         "NumberFormatException".equals(value))
     { modelElement = new Type("IncorrectElementException", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "IncorrectElementException"; }
+      return "IncorrectElementException"; 
+    }
     // if ("ArrayIndexOutOfBoundsException".equals(value) ||
     //     "StringIndexOutOfBoundsException".equals(value))
     // { return "IndexingException"; } 
@@ -1025,7 +1039,8 @@ public class ASTBasicTerm extends ASTTerm
         "BindException".equals(value))
     { modelElement = new Type("AccessingException", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "AccessingException"; }
+      return "AccessingException"; 
+    }
     if (value.endsWith("Exception"))
     { modelElement = new Type("ProgramException", null); 
       expression = new BasicExpression((Type) modelElement); 

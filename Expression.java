@@ -1335,6 +1335,9 @@ abstract class Expression
   public boolean isIntSequence()
   { return type != null && type.isIntSequence(); } 
 
+  public boolean isLongSequence()
+  { return type != null && type.isLongSequence(); } 
+
   public boolean hasSetType()
   { return type != null && type.isSet(); }
 

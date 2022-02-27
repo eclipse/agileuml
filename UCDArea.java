@@ -12557,6 +12557,116 @@ public void produceCUI(PrintWriter out)
     tlspecification = res; 
   }
 
+  public void testCSTLwithASTS()
+  { // Tests a selected CSTL script with ASTs in output/asts.txt
+    File file = null; 
+    try 
+    { JFileChooser fc = new JFileChooser();
+      File startingpoint = new File("./cg");
+      fc.setCurrentDirectory(startingpoint);
+      fc.setDialogTitle("Select a *.cstl file");
+      // fc.addChoosableFileFilter(new TextFileFilter()); 
+
+	  
+      int returnVal = fc.showOpenDialog(null);
+      if (returnVal == JFileChooser.APPROVE_OPTION)
+      { file = fc.getSelectedFile(); }
+      else
+      { System.err.println("Load aborted");
+        return; 
+      }
+
+      if (file == null) { return; }
+    } catch (Exception e) { return; } 
+
+    Vector vs = new Vector(); 
+    CGSpec spec = loadCSTL(file,vs); 
+
+    if (spec == null) 
+    { System.err.println("!! ERROR: No file " + file.getName()); 
+      return; 
+    } 
+
+    BufferedReader br = null;
+    Vector res = new Vector();
+    String s;
+    boolean eof = false;
+    File sourcefile = new File("output/asts.txt");  
+      /* default */ 
+
+    try
+    { br = new BufferedReader(new FileReader(sourcefile)); }
+    catch (FileNotFoundException _e)
+    { System.err.println("!!ERROR: File not found: " + sourcefile);
+      
+      return; 
+    }
+
+    String sourcestring = ""; 
+    int noflines = 1; 
+
+    while (!eof)
+    { try 
+      { s = br.readLine();
+
+        if (s == null) 
+        { eof = true; 
+          break; 
+        }
+
+        Compiler2 c = new Compiler2();    
+        ASTTerm xx =
+          c.parseGeneralAST(s); 
+        if (xx == null) 
+        { System.err.println("!!ERROR: Invalid text for general AST at line " + noflines + ":"); 
+          System.err.println(c.lexicals); 
+          return; 
+        }
+        else 
+        { res.add(xx); }  
+      }
+      catch (IOException _ex)
+      { System.err.println("!! Error: Reading output/asts.txt failed at line " + noflines);
+        return; 
+      }
+
+
+      noflines++; 
+    }
+
+    System.out.println(">>> Read " + noflines + " lines"); 
+
+    Vector results = new Vector(); 
+
+    Date d1 = new Date(); 
+    long t1 = d1.getTime(); 
+
+    for (int i = 0; i < res.size(); i++) 
+    { ASTTerm tt = (ASTTerm) res.get(i); 
+      String outtext = tt.cg(spec); 
+      results.add(outtext); 
+    } 
+
+    Date d2 = new Date(); 
+    long t2 = d2.getTime(); 
+    System.out.println("Total time = " + (t2-t1)); 
+    System.out.println("Time per test = " + (t2-t1)/res.size()); 
+    System.out.println(); 
+
+    try
+    { br.close(); }
+    catch (Exception _e)
+    { }
+
+    for (int i = 0; i < results.size(); i++) 
+    { String tt = (String) results.get(i); 
+      System.out.println(tt);  
+    } 
+    
+  } 
+
+
+
   public void applyCSTLtoAST()
   { File file = null; 
     try 
@@ -12596,7 +12706,8 @@ public void produceCUI(PrintWriter out)
     try
     { br = new BufferedReader(new FileReader(sourcefile)); }
     catch (FileNotFoundException _e)
-    { System.out.println("File not found: " + sourcefile);
+    { System.err.println("!!ERROR: File not found: " + sourcefile);
+      
       return; 
     }
 
@@ -12606,7 +12717,7 @@ public void produceCUI(PrintWriter out)
     while (!eof)
     { try { s = br.readLine(); }
       catch (IOException _ex)
-      { System.out.println("Reading AST file failed.");
+      { System.err.println("!! Error: Reading output/ast.txt failed.");
         return; 
       }
       if (s == null) 
@@ -12626,13 +12737,14 @@ public void produceCUI(PrintWriter out)
       c.parseGeneralAST(sourcestring); 
 
     if (xx == null) 
-    { System.err.println(">>> Invalid text for general AST"); 
+    { System.err.println("!!ERROR: Invalid text for general AST:"); 
       System.err.println(c.lexicals); 
       return; 
     } 
 
     System.out.println(">>> Parsed AST: " + xx); 
     System.out.println(">>> arity = " + xx.arity());
+    System.out.println(">>> Subterms are:");
     for (int i = 0; i < xx.arity(); i++) 
     { ASTTerm tt = xx.getTerm(i); 
       System.out.println(tt); 
@@ -12664,6 +12776,9 @@ public void produceCUI(PrintWriter out)
     long time2 = d2.getTime(); 
 
     System.out.println(">>> Time for processing AST = " + (time2-time1)); 
+
+    /* The following is only used for cases where we are 
+       abstracting a software language to UML/OCL */ 
 
     Vector newentities = new Vector(); 
 
@@ -12722,6 +12837,11 @@ public void produceCUI(PrintWriter out)
         addInheritance(gi,supx,nent);
       } 
     }    
+
+    try
+    { br.close(); }
+    catch (Exception _e)
+    { }
 
     repaint(); 
   } 
@@ -24452,7 +24572,9 @@ public void produceCUI(PrintWriter out)
   } 
   
   public void qualityCheck()
-  { for (int i = 0; i < entities.size(); i++) 
+  { // testCSTLwithASTS(); 
+
+    for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i); 
       if (ent.allSubclassesAreEmpty())
       { System.err.println("! Warning: class " + ent + " has empty immediate subclasses -- these may be redundant."); } 

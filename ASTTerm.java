@@ -12,9 +12,11 @@ import java.io.*;
 
 public abstract class ASTTerm
 { String id = ""; 
+  // Vector stereotypes = new Vector(); 
+  
 
-  // A term represents one of the following UML/OCL things:
-
+  // A programming language AST can be represented by
+  // one of the following UML/OCL things:
   
   Expression expression = null; 
   Statement statement = null; 
@@ -27,9 +29,10 @@ public abstract class ASTTerm
   static Vector entities; 
   static Entity currentClass = null; // Current context class
 
-  java.util.Map metafeatures = new java.util.HashMap(); 
-     // String --> String, eg., recording the conceptual
-     // type of the element. 
+  static java.util.Map metafeatures = new java.util.HashMap(); 
+     // String --> Vector(String), 
+     // eg., recording the conceptual
+     // type of the element & stereotypes. 
 
   static java.util.Map types = new java.util.HashMap(); 
      // String --> String for general type of identifiers
@@ -102,6 +105,44 @@ public abstract class ASTTerm
   public abstract String getTag(); 
 
   public abstract String literalForm();
+
+  public void addStereotype(String str) 
+  { String lit = literalForm(); 
+    Vector stereotypes = 
+      (Vector) ASTTerm.metafeatures.get(lit); 
+    if (stereotypes == null) 
+    { stereotypes = new Vector(); 
+      ASTTerm.metafeatures.put(lit,stereotypes); 
+    } 
+
+    if (stereotypes.contains(str)) {} 
+    else 
+    { stereotypes.add(str); } 
+  } 
+
+  public void removeStereotype(String str) 
+  { String lit = literalForm(); 
+    Vector stereotypes = 
+      (Vector) ASTTerm.metafeatures.get(lit); 
+    if (stereotypes == null) 
+    { stereotypes = new Vector(); 
+      ASTTerm.metafeatures.put(lit,stereotypes); 
+    } 
+    Vector removed = new Vector(); 
+    removed.add(str); 
+    stereotypes.removeAll(removed);  
+  } 
+
+  public boolean hasStereotype(String str) 
+  { String lit = literalForm(); 
+    Vector stereotypes = 
+      (Vector) ASTTerm.metafeatures.get(lit); 
+    if (stereotypes == null) 
+    { stereotypes = new Vector(); 
+      ASTTerm.metafeatures.put(lit,stereotypes); 
+    } 
+    return stereotypes.contains(str); 
+  } 
 
   public abstract ASTTerm removeOuterTag(); 
 
@@ -1682,24 +1723,209 @@ public abstract class ASTTerm
     
  
   public static void main(String[] args) 
-  { ASTBasicTerm t = new ASTBasicTerm("OclBasicExpression", "true"); 
-    System.out.println(t.isInteger()); 
-    System.out.println(t.isBoolean());
+  { // ASTBasicTerm t = new ASTBasicTerm("OclBasicExpression", "true"); 
+    // System.out.println(t.isInteger()); 
+    // System.out.println(t.isBoolean());
 
     Vector consts = 
-      randomBasicASTTermsForTag("Const", 1, 10);
+      randomBasicASTTermsForTag("Const", 1, 50);
     Vector ops = new Vector(); 
     ops.add(new ASTSymbolTerm("+"));  
     ops.add(new ASTSymbolTerm("-"));  
     Vector vars = 
-      randomBasicASTTermsForTag("Var", 1, 10);
+      randomBasicASTTermsForTag("Var", 1, 50);
     Vector subs = new Vector(); 
     subs.add(consts); 
     subs.add(ops); 
     subs.add(vars); 
-    Vector tests = 
-      randomCompositeASTTermsForTag("Expr", subs, 3, 20);  
-    System.out.println(tests);  
+
+
+    Vector exprs = 
+      randomCompositeASTTermsForTag("Expr", subs, 3, 30); 
+      // size 3
+
+    Vector subsx = new Vector(); 
+      subsx.add(exprs); 
+      subsx.add(ops); 
+      subsx.add(exprs); 
+
+    Vector nestedexprs = 
+      randomCompositeASTTermsForTag("Expr", subsx, 3, 30);
+      // size 7
+
+    Vector compars = new Vector(); 
+    compars.add(new ASTSymbolTerm("<")); 
+    compars.add(new ASTSymbolTerm(">")); 
+    compars.add(new ASTSymbolTerm("==")); 
+
+
+    Vector subs1 = new Vector(); 
+    subs1.add(exprs); 
+    subs1.add(compars); 
+    subs1.add(exprs); 
+
+    Vector cmps = 
+      randomCompositeASTTermsForTag("Cmp", subs1, 3, 30);
+  
+    System.out.println(cmps); // each has size 7
+
+    Vector assgn = new Vector(); 
+    assgn.add(new ASTSymbolTerm("=")); 
+
+    Vector subs2 = new Vector(); 
+    subs2.add(vars); 
+    subs2.add(assgn); 
+    subs2.add(exprs); 
+
+    Vector assgns = 
+      randomCompositeASTTermsForTag("Assign", subs2, 3, 30);
+
+    // System.out.println(assgns); 
+    // (Assign v = e) with size 5
+
+    Vector subs2x = new Vector(); 
+    subs2x.add(vars); 
+    subs2x.add(assgn); 
+    subs2x.add(nestedexprs); 
+
+    Vector assgns2 = 
+      randomCompositeASTTermsForTag("Assign", subs2x, 3, 30);
+
+    Vector sqsym = new Vector(); 
+    sqsym.add(new ASTSymbolTerm(";")); 
+
+    Vector subsseq = new Vector(); 
+    subsseq.add(assgns2); 
+    subsseq.add(sqsym); 
+    subsseq.add(assgns2); 
+
+    Vector sqs = 
+      randomCompositeASTTermsForTag("Seq", subsseq, 3, 100);
+
+    Vector ifsym = new Vector(); 
+    ifsym.add(new ASTSymbolTerm("if"));
+
+    Vector thensym = new Vector(); 
+    thensym.add(new ASTSymbolTerm("then"));
+
+    Vector elsesym = new Vector(); 
+    elsesym.add(new ASTSymbolTerm("else"));
+
+    Vector endifsym = new Vector(); 
+    endifsym.add(new ASTSymbolTerm("endif"));
+
+    Vector subifs = new Vector(); 
+    subifs.add(ifsym); 
+    subifs.add(cmps); 
+    subifs.add(thensym); 
+    subifs.add(assgns2); 
+    subifs.add(elsesym); 
+    subifs.add(assgns); 
+    subifs.add(endifsym); 
+
+    Vector simpleifs = 
+      randomCompositeASTTermsForTag("If", subifs, 7, 40);
+    // size 25
+
+    Vector subs3 = new Vector(); 
+    subs3.add(assgns); 
+    subs3.add(sqsym); 
+    subs3.add(assgns); 
+
+    Vector sqs0 = 
+      randomCompositeASTTermsForTag("Seq", subs3, 3, 30);
+    // size 11
+
+    Vector subs3x = new Vector(); 
+    subs3x.add(assgns); 
+    subs3x.add(sqsym); 
+    subs3x.add(sqs0); 
+
+    Vector sqs1x = 
+      randomCompositeASTTermsForTag("Seq", subs3x, 3, 100);
+    // size 17
+
+  
+    Vector subs4 = new Vector(); 
+    subs4.add(ifsym); 
+    subs4.add(cmps); 
+    subs4.add(thensym); 
+    // subs4.add(sqs1x);
+    subs4.add(simpleifs);  
+    subs4.add(elsesym); 
+    // subs4.add(sqs1x); 
+    subs4.add(simpleifs); 
+    subs4.add(endifsym); 
+
+    Vector sqs1 = 
+      randomCompositeASTTermsForTag("If", subs4, 7, 100);
+  
+   
+    // System.out.println(sqs1); 
+    // Size 23 for assgns; Size 33 for sqs0; 45 with sqs1
+    // Size 60 with simpleifs
+
+    Vector subs4x = new Vector(); 
+    subs4x.add(ifsym); 
+    subs4x.add(cmps); 
+    subs4x.add(thensym); 
+    subs4x.add(simpleifs); 
+    subs4x.add(elsesym); 
+    subs4x.add(assgns); 
+    subs4x.add(endifsym); 
+
+    Vector sqs4x = 
+      randomCompositeASTTermsForTag("If", subs4x, 7, 100);
+    // size 61 or 41 with simpleifs
+    
+   
+    Vector forsym = new Vector(); 
+    forsym.add(new ASTSymbolTerm("for"));
+    Vector eqsym = new Vector(); 
+    eqsym.add(new ASTSymbolTerm("="));
+    Vector semisym = new Vector(); 
+    semisym.add(new ASTSymbolTerm(";"));
+    Vector dosym = new Vector(); 
+    dosym.add(new ASTSymbolTerm("do"));
+    Vector endforsym = new Vector(); 
+    endforsym.add(new ASTSymbolTerm("endfor"));
+
+    Vector subs5 = new Vector(); 
+    subs5.add(forsym); 
+    subs5.add(vars); 
+    subs5.add(eqsym); 
+    subs5.add(consts); 
+    subs5.add(semisym); 
+    subs5.add(cmps); 
+    subs5.add(semisym); 
+    subs5.add(exprs); 
+    subs5.add(dosym); 
+    // subs5.add(assgns);
+    subs5.add(simpleifs);  
+    subs5.add(endforsym); 
+
+    Vector fors = 
+      randomCompositeASTTermsForTag("For", subs5, 11, 100);
+    // Each of size 22 with assgns in do body; 
+    // 42 with simpleifs
+         
+
+
+    File chtml = new File("output/asts.txt"); 
+    try
+    { PrintWriter chout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(chtml)));
+      for (int i = 0; i < sqs1.size(); i++)
+      { ASTTerm oclexample = (ASTTerm) sqs1.get(i); 
+        chout.println(oclexample); 
+      }
+      chout.close(); 
+    
+    } 
+    catch (Exception _fex) 
+    { System.err.println("! No file: output/asts.txt"); }  
+
   } 
 } 
 

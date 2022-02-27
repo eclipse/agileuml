@@ -208,6 +208,12 @@ public class Type extends ModelElement
       "int".equals(elementType.getName()); 
   } 
 
+  public boolean isLongSequence() 
+  { return "Sequence".equals(name) && 
+      elementType != null && 
+      "long".equals(elementType.getName()); 
+  } 
+
   public static boolean isOclExceptionType(Expression expr)
   { Type t = expr.getType(); 
     if (t == null) 

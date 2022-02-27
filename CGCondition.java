@@ -69,6 +69,42 @@ public class CGCondition
     return false; 
   } 
 
+  public void applyAction(Vector vars, Vector eargs, Vector reps)
+  { // vv stereo
+    // means ast.setStereotype(stereorep)
+    // where ast is the eargs element of vars variable vv
+    // stereorep is stereo with each var 
+    // replaced by corresponding rep
+
+    String stereo = new String(stereotype); 
+    for (int x = 0; x < reps.size() && x < vars.size(); x++)
+    { String var = (String) vars.get(x);
+      String arg1 = (String) reps.get(x); 
+      stereo = stereo.replace(var,arg1);
+    }
+
+    int ind = vars.indexOf(variable); 
+    if (ind >= 0)
+    { Object obj = eargs.get(ind); 
+      if (obj instanceof ModelElement) 
+      { ModelElement me = (ModelElement) obj; 
+        if (positive) 
+        { me.addStereotype(stereo); } 
+        else 
+        { me.removeStereotype(stereo); } 
+      } 
+      else if (obj instanceof ASTTerm) 
+      { ASTTerm ast = (ASTTerm) obj; 
+        if (positive) 
+        { ast.addStereotype(stereo); } 
+        else 
+        { ast.removeStereotype(stereo); } 
+      } 
+    } 
+
+    System.out.println(">>> Executed action " + variable + " (" + positive + ") " + stereo); 
+  } 
+
   public static boolean conditionsSatisfied(Vector conditions, Vector args, Vector entities) 
   { boolean res = true; 
     for (int i = 0; i < args.size(); i++) 
@@ -471,6 +507,12 @@ public class CGCondition
       else 
       { return !positive; } 
     } 
+
+    if (a.hasStereotype(stereotype))
+    { return positive; }
+
+    if (!a.hasStereotype(stereotype))
+    { return !positive; }
 
     return false;
   }

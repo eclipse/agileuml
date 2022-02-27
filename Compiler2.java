@@ -1633,7 +1633,19 @@ public class Compiler2
                 rhs.charAt(j+6) == 'n' &&
                 rhs.charAt(j+7) == '>') 
             { String actions = rhs.substring(j+8,rhs.length()); 
-              System.out.println(">> Rule actions are: " + actions); 
+              Vector acts = parse_rule_actions(actions); 
+              System.out.println(">> Rule actions are: " + actions + " " + acts); 
+              String rhstext = rhs.substring(0,j); 
+              CGRule res = 
+                new CGRule(lhs,rhstext,
+                           variables,new Vector()); 
+              res.setLHSTokens(tokens); 
+              res.setActions(acts); 
+
+              System.out.println(">***> Rule variables are: " + res.variables); 
+              System.out.println(">***> Rule metafeatures are: " + res.metafeatures); 
+ 
+              return res; 
             }               
           } 
           CGRule res = new CGRule(lhs,rhs,variables,new Vector()); 
@@ -1760,6 +1772,44 @@ public class Compiler2
       else 
       { cg.setStereotype(se); } 
     }
+    conds.add(cg); 
+    return conds; 
+  } // Could be metafeatures: _i`mf value
+	
+  // For CSTL rule actions: 
+  public static Vector parse_rule_actions(String str)
+  { Vector conds = new Vector();
+    Compiler2 newc = new Compiler2(); 
+    newc.nospacelexicalanalysis(str);
+    Vector lexs = newc.lexicals;
+	
+    CGCondition cg = new CGCondition(); 
+	 
+    boolean expectVar = true; 
+    boolean expectStereo = false; 
+
+    for (int i = 0; i < lexs.size(); i++)
+    { String se = lexs.get(i) + ""; 
+      if (",".equals(se))
+      { conds.add(cg); 
+        cg = new CGCondition(); 
+        expectVar = true; 
+        expectStereo = false; 
+      } 
+      else if (se.equals("not"))
+      { cg.setNegative(); } 
+      else if (expectVar)
+      { cg.setVariable(se); 
+        expectVar = false; 
+        expectStereo = true; 
+      } 
+      else if (expectStereo)
+      { cg.setStereotype(se);
+        expectVar = true; 
+        expectStereo = false; 
+      } 
+    }
+
     conds.add(cg); 
     return conds; 
   } // Could be metafeatures: _i`mf value
