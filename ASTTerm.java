@@ -91,13 +91,19 @@ public abstract class ASTTerm
     cqueryfunctions.add("strerror"); 
     cqueryfunctions.add("getenv"); 
     cqueryfunctions.add("bsearch"); 
-    cqueryfunctions.add("time"); 
-    cqueryfunctions.add("difftime"); 
     cqueryfunctions.add("toupper"); 
     cqueryfunctions.add("tolower");
     cqueryfunctions.add("fopen");
     cqueryfunctions.add("div"); 
-    cqueryfunctions.add("ldiv");   
+    cqueryfunctions.add("ldiv");
+
+    cqueryfunctions.add("time"); 
+    cqueryfunctions.add("difftime"); 
+    cqueryfunctions.add("localtime"); 
+    cqueryfunctions.add("mktime"); 
+    cqueryfunctions.add("asctime");
+    cqueryfunctions.add("ctime"); 
+    cqueryfunctions.add("gmtime"); 
   }
 
   public abstract String toString(); 
@@ -276,7 +282,19 @@ public abstract class ASTTerm
   public abstract Type pointersToRefType(String tname, Type t);
 
   public static Entity introduceCStruct(String nme, Vector ents)
-  { Entity ent = (Entity) ModelElement.lookupByName(nme, ents); 
+  { if (nme.equals("tm"))
+    { Entity ent = 
+        (Entity) ModelElement.lookupByName("OclDate", ents); 
+      if (ent != null) 
+      { return ent; }
+      ent = new Entity("OclDate"); 
+      ent.addStereotype("component"); 
+      ent.addStereotype("external"); 
+      ents.add(ents.size()-1, ent); 
+      return ent; 
+    } 
+
+    Entity ent = (Entity) ModelElement.lookupByName(nme, ents); 
     if (ent != null) 
     { return ent; } 
 
@@ -304,7 +322,7 @@ public abstract class ASTTerm
                       ModelElement.INTERNAL); 
       ent.addAttribute(rem); 
     } 
-    else if ("tm".equals(nme))
+    /* else if ("tm".equals(nme))
     { Attribute secs = 
         new Attribute("tm_sec", new Type("int", null), 
                       ModelElement.INTERNAL); 
@@ -341,7 +359,7 @@ public abstract class ASTTerm
         new Attribute("tm_isdst", new Type("int", null), 
                       ModelElement.INTERNAL); 
       ent.addAttribute(isdst);  
-    } 
+    } */ 
 
     return ent; 
   }

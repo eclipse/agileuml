@@ -2297,6 +2297,10 @@ public class ASTCompositeTerm extends ASTTerm
     { // (structOrUnion struct) name
       ASTTerm structOrunion = (ASTTerm) terms.get(0); 
       String sname = ((ASTTerm) terms.get(1)).literalForm(); 
+
+      if (sname.equals("tm"))
+      { sname = "OclDate"; } 
+
       Entity ent = 
         (Entity) ModelElement.lookupByName(sname,entities); 
       if (ent == null) 
@@ -4472,6 +4476,55 @@ public class ASTCompositeTerm extends ASTTerm
   }
 
 
+  public BasicExpression cFieldApplication(Expression obj,
+                                      String f)
+  { if ("tm_sec".equals(f))
+    { return 
+        BasicExpression.newQueryCallBasicExpression(
+                                 "getSecond",obj); 
+    }
+ 
+    if ("tm_min".equals(f))
+    { return 
+        BasicExpression.newQueryCallBasicExpression(
+                                 "getMinute",obj); 
+    }
+ 
+    if ("tm_hour".equals(f))
+    { return 
+        BasicExpression.newQueryCallBasicExpression(
+                                 "getHour",obj); 
+    }
+ 
+    if ("tm_mday".equals(f))
+    { return 
+        BasicExpression.newQueryCallBasicExpression(
+                                 "getDate",obj); 
+    }
+
+    if ("tm_mon".equals(f))
+    { return 
+        BasicExpression.newQueryCallBasicExpression(
+                                 "getMonth",obj); 
+    }
+
+    if ("tm_year".equals(f))
+    { return 
+        BasicExpression.newQueryCallBasicExpression(
+                                 "getYear",obj); 
+    }
+
+    if ("tm_wday".equals(f))
+    { return 
+        BasicExpression.newQueryCallBasicExpression(
+                                 "getDay",obj); 
+    }
+
+    return BasicExpression.newAttributeBasicExpression(
+                                             f, obj); 
+  } 
+
+
   public Expression cexpressionToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
   { System.out.println(">> cexpressionToKM3 for " + tag + " with " + terms.size() + " terms"); 
@@ -4688,11 +4741,10 @@ public class ASTCompositeTerm extends ASTTerm
           ".".equals(terms.get(1) + ""))
       { // t1.f
         ASTTerm t1 = (ASTTerm) terms.get(0); 
-         Expression obj = t1.cexpressionToKM3(
+        String f = terms.get(2) + ""; 
+        Expression obj = t1.cexpressionToKM3(
               vartypes, varelemtypes, types, entities);
-        BasicExpression res = 
-          BasicExpression.newAttributeBasicExpression(
-                            terms.get(2) + "", obj); 
+        BasicExpression res = cFieldApplication(obj,f);  
         return res; 
       }
 
@@ -4741,13 +4793,19 @@ public class ASTCompositeTerm extends ASTTerm
           "->".equals(terms.get(1) + ""))
       { // (!t1).f
         ASTTerm t1 = (ASTTerm) terms.get(0); 
-        BasicExpression res = new BasicExpression(terms.get(2) + ""); 
+        String f = terms.get(2) + ""; 
         Expression obj = t1.cexpressionToKM3(
              vartypes, varelemtypes, types, entities);
-        UnaryExpression deref = new UnaryExpression("!", obj); 
+
+        Expression deref = new UnaryExpression("!", obj); 
+
+        if (obj instanceof UnaryExpression &&
+            ((UnaryExpression) obj).operator.equals("?"))
+        { deref = ((UnaryExpression) obj).argument; } 
         deref.setBrackets(true); 
-        res.setObjectRef(deref); 
-        return res; 
+
+        // res.setObjectRef(deref); 
+        return cFieldApplication(deref,f); 
       } 
 
       if (terms.size() == 5 && 
@@ -4760,7 +4818,10 @@ public class ASTCompositeTerm extends ASTTerm
         res1.setUmlKind(Expression.ATTRIBUTE); 
         Expression obj = t1.cexpressionToKM3(
              vartypes, varelemtypes, types, entities);
-        UnaryExpression deref = new UnaryExpression("!", obj); 
+        Expression deref = new UnaryExpression("!", obj); 
+        if (obj instanceof UnaryExpression &&
+            ((UnaryExpression) obj).operator.equals("?"))
+        { deref = ((UnaryExpression) obj).argument; } 
         deref.setBrackets(true); 
         res1.setObjectRef(deref);
         BasicExpression res = 
@@ -7255,7 +7316,47 @@ public class ASTCompositeTerm extends ASTTerm
     { Expression res = 
         BasicExpression.newStaticCallBasicExpression(
           "getSystemTime", "OclDate"); 
-      res.setType(new Type("long", null)); 
+      res.setType(new Type("long", null));
+      Expression resx = 
+        new BinaryExpression("/", res, 
+                             new BasicExpression(1000)); 
+      resx.setType(new Type("long", null));
+      return resx; 
+    } 
+    else if ("mktime".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0);
+      Expression dte = new UnaryExpression("!", arg1); 
+
+      if (arg1 instanceof UnaryExpression && 
+          ((UnaryExpression) arg1).operator.equals("?"))
+      { dte = ((UnaryExpression) arg1).argument; } 
+
+      dte.setBrackets(true); 
+
+      Expression res = 
+        BasicExpression.newCallBasicExpression(
+                                   "getTime", dte); 
+      res.setType(new Type("long", null));
+      Expression resx = 
+        new BinaryExpression("/", res, 
+                             new BasicExpression(1000)); 
+      resx.setType(new Type("long", null));
+      return resx; 
+    } 
+    else if ("asctime".equals(fname) && args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0);
+      Expression dte = new UnaryExpression("!", arg1); 
+
+      if (arg1 instanceof UnaryExpression && 
+          ((UnaryExpression) arg1).operator.equals("?"))
+      { dte = ((UnaryExpression) arg1).argument; } 
+
+      dte.setBrackets(true); 
+
+      Expression res = 
+        BasicExpression.newCallBasicExpression(
+                                   "toString", dte); 
+      res.setType(new Type("String", null));
       return res; 
     } 
     else if ("difftime".equals(fname) && args.size() == 2)
@@ -7264,7 +7365,54 @@ public class ASTCompositeTerm extends ASTTerm
       Expression res = 
         new BinaryExpression("-", arg1, arg2); 
       res.setType(new Type("double", null)); 
+      res.setBrackets(true); 
       return res; 
+    } 
+    else if (("localtime".equals(fname) ||
+              "gmtime".equals(fname)) && args.size() == 1)
+    { // mktime(t)  is  OclDate.newOclDate_Time(
+      Expression arg1 = (Expression) args.get(0);
+      
+      Expression par = new UnaryExpression("!", arg1);
+
+      if (arg1 instanceof UnaryExpression && 
+          ((UnaryExpression) arg1).operator.equals("?"))
+      { par = ((UnaryExpression) arg1).argument; } 
+
+      Expression par1 = 
+        new BinaryExpression("*",par,
+                             new BasicExpression(1000));
+      Expression res = 
+        BasicExpression.newStaticCallBasicExpression(
+                       "newOclDate_Time", "OclDate", par1); 
+      res.setType(new Type("OclDate", null));
+      Expression resx = 
+        new UnaryExpression("?", res); 
+      resx.setType(new Type("Ref", null)); 
+      resx.setElementType(new Type("OclDate", null));
+      return resx; 
+    } 
+    else if ("ctime".equals(fname) && args.size() == 1)
+    { // create an OclDate for arg1 & display it.
+      Expression arg1 = (Expression) args.get(0);
+      
+      Expression par = new UnaryExpression("!", arg1);
+
+      if (arg1 instanceof UnaryExpression && 
+          ((UnaryExpression) arg1).operator.equals("?"))
+      { par = ((UnaryExpression) arg1).argument; } 
+
+      Expression par1 = 
+        new BinaryExpression("*",par,
+                             new BasicExpression(1000));
+      Expression res = 
+        BasicExpression.newStaticCallBasicExpression(
+                       "newOclDate_Time", "OclDate", par1);
+      Expression resx = 
+        BasicExpression.newCallBasicExpression(
+                       "toString", res);  
+      resx.setType(new Type("String", null));
+      return resx; 
     } 
     else if ("printf".equals(fname) && args.size() > 1) 
     { Expression fmt = (Expression) args.get(0);

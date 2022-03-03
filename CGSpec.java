@@ -86,6 +86,12 @@ public class CGSpec
     types = typs;   
   }
 
+  public void setTypes(Vector typs)
+  { types = typs; } 
+
+  public void setEntities(Vector ents)
+  { entities = ents; } 
+
   public void addCategory(String category)
   { Vector rules = (Vector) categoryRules.get(category); 
     if (rules == null) 
@@ -1054,11 +1060,11 @@ public class CGSpec
         e1.elementType = e.type; 
 
         // type of e1 could be either a map or sequence or string.
-        System.out.println(); 
-        System.out.println(">>> " + e1 + " type is: " + e.arrayType); 
+        // System.out.println(); 
+        // System.out.println(">>> " + e1 + " type is: " + e.arrayType); 
 
-        System.out.println(">>> " + e1 + " element type is: " + e1.elementType); 
-        System.out.println(); 
+        // System.out.println(">>> " + e1 + " element type is: " + e1.elementType); 
+        // System.out.println(); 
  
         e1.type = e.arrayType; 
         if (e1.type == null && 
@@ -1138,6 +1144,7 @@ public class CGSpec
     }
     return null;
   } // _1 binds to objectRef or left part, _2 to right part/index
+
 
   public CGRule matchedSetExpressionRule(SetExpression e, String etext)
   { boolean ordered = e.isOrdered();

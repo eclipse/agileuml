@@ -557,6 +557,16 @@ class BasicExpression extends Expression
     return res; 
   } 
 
+  public static BasicExpression newQueryCallBasicExpression(
+                                  String f, Expression obj) 
+  { BasicExpression res = new BasicExpression(f);
+    res.setObjectRef(obj);  
+    res.umlkind = QUERY;
+    res.parameters = new Vector(); 
+    res.isEvent = true; 
+    return res; 
+  } 
+
   public static BasicExpression newStaticCallBasicExpression(
                   BehaviouralFeature bf, Entity ent) 
   { BasicExpression obj = new BasicExpression(ent.getName());
@@ -14286,13 +14296,15 @@ public Statement generateDesignSubtract(Expression rhs)
         { BasicExpression rootexp = (BasicExpression) clone();
           rootexp.parameters = null; 
           String rootstring = rootexp + ""; 
-	      String prefix = ModelElement.longestCommonPrefix(rootstring,tr.lhs);
-	      String remstring = rootstring.substring(prefix.length(), rootstring.length());
-	      Vector textargs = new Vector(); 
-	      textargs.add(remstring);
-	      String parstring = ""; 
-	      for (int i = 0; i < parameters.size(); i++) 
-	      { Expression par = (Expression) parameters.get(i); 
+          String prefix = ModelElement.longestCommonPrefix(rootstring,tr.lhs);
+          String remstring = 
+            rootstring.substring(
+                prefix.length(), rootstring.length());
+          Vector textargs = new Vector(); 
+          textargs.add(remstring);
+          String parstring = ""; 
+          for (int i = 0; i < parameters.size(); i++) 
+          { Expression par = (Expression) parameters.get(i); 
 	        parstring = parstring + par.cg(cgs); 
 	        if (i < parameters.size() - 1) 
 		   { parstring = parstring + ", "; }
@@ -14336,7 +14348,7 @@ public Statement generateDesignSubtract(Expression rhs)
       if (r != null) 
       { System.out.println(">>> Found basic expression text rule: " + r + " for " + this); 
         return r.applyTextRule(etext); 
-	  }
+      }
     } 
     return etext;
   }

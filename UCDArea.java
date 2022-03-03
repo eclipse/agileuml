@@ -3161,12 +3161,14 @@ public class UCDArea extends JPanel
     auxcstls.add("cgGocatchClause.cstl"); 
     
     CGSpec cgs = loadCSTL("cgGo.cstl",auxcstls); 
+    cgs.setTypes(types); 
+    cgs.setEntities(entities); 
 
     for (int i = 0; i < types.size(); i++) 
     { Type tt = (Type) types.get(i);
       String tname = tt.getName();  
       String tfile = tname + ".go"; 
-      File tf = new File("gotests/" + tfile); 
+      File tf = new File("output/" + tfile); 
       try
       { PrintWriter tfout = new PrintWriter(
                                   new BufferedWriter(
@@ -3196,7 +3198,7 @@ public class UCDArea extends JPanel
       else if (ent.isComponent()) { }
       else 
       { String entfile = ename + ".go"; 
-        File entf = new File("gotests/" + entfile); 
+        File entf = new File("output/" + entfile); 
         try
         { PrintWriter entfout = new PrintWriter(
                                   new BufferedWriter(
@@ -3205,11 +3207,74 @@ public class UCDArea extends JPanel
           entfout.println(); 
           entfout.println("import \"container/list\""); 
           entfout.println("import \"fmt\""); 
-          entfout.println("import \"./ocl\""); 
+          entfout.println("import \"ocl\""); 
           entfout.println("import \"strings\""); 
           entfout.println("import \"math\""); 
-          entfout.println("import \"errors\""); 
-          entfout.println("import \"reflect\""); 
+          // entfout.println("import \"errors\""); 
+          // entfout.println("import \"oclexception\""); 
+          // entfout.println("import \"ocltype\""); 
+          entfout.println("import \"reflect\"");
+
+          Entity mathlib = 
+            (Entity) ModelElement.lookupByName(
+                              "MathLib", entities); 
+
+          if (mathlib != null) 
+          { entfout.println("import \"mathlib\""); } 
+
+          Entity stringlib = 
+            (Entity) ModelElement.lookupByName(
+                              "StringLib", entities); 
+
+          if (stringlib != null) 
+          { entfout.println("import \"stringlib\""); } 
+
+          Entity oclfile = 
+            (Entity) ModelElement.lookupByName(
+                             "OclFile", entities); 
+
+          if (oclfile != null) 
+          { entfout.println("import \"oclfile\""); } 
+
+          Entity ocltype = 
+            (Entity) ModelElement.lookupByName(
+                              "OclType", entities); 
+
+          if (ocltype != null) 
+          { entfout.println("import \"ocltype\""); } 
+
+
+          Entity oclexception = 
+            (Entity) ModelElement.lookupByName(
+                              "OclException", entities); 
+
+          if (oclexception != null) 
+          { entfout.println("import \"oclexception\""); 
+            entfout.println("import \"errors\""); 
+          } 
+
+          Entity oclrandom = 
+            (Entity) ModelElement.lookupByName(
+                             "OclRandom", entities); 
+
+          if (oclrandom != null) 
+          { entfout.println("import \"oclrandom\""); } 
+
+          Entity oclprocess = 
+            (Entity) ModelElement.lookupByName(
+                             "OclProcess", entities); 
+
+          if (oclprocess != null) 
+          { entfout.println("import \"oclprocess\""); } 
+
+          Entity ocldate = 
+            (Entity) ModelElement.lookupByName(
+                             "OclDate", entities); 
+
+          if (ocldate != null) 
+          { entfout.println("import \"ocldate\""); } 
+
+  
           entfout.println(); 
 		  					
           ent.generateOperationDesigns(types,entities);  
@@ -3226,6 +3291,35 @@ public class UCDArea extends JPanel
         } catch (Exception _e1) { _e1.printStackTrace(); }
       }
     } 			
+
+    File mainf = new File("output/app.go"); 
+    try
+    { PrintWriter mainfout = new PrintWriter(
+                                  new BufferedWriter(
+                                    new FileWriter(mainf)));
+      mainfout.println("package main"); 
+      mainfout.println(); 
+      mainfout.println("import \"ocl\""); 
+      mainfout.println("import \"fmt\""); 
+      mainfout.println(); 
+      mainfout.println(); 
+      mainfout.println("func main() {"); 
+      for (int k = 0; k < entities.size(); k++) 
+      { Entity ee = (Entity) entities.get(k);
+        if (ee.isComponent() || ee.isExternal())
+        { continue; } 
+ 
+        String ename = ee.getName(); 
+        mainfout.println("  ocl.TypeMapping[\"" + ename + "\"] = TYPE" + ename); 
+      } 
+      mainfout.println("}"); 
+      mainfout.close();
+    } catch (Exception _em) { _em.printStackTrace(); }
+
+    System.out.println(">>> classes and types E, T are generated in files output/E.go, output/T.go"); 
+    System.out.println(">>> Main app in output/app.go"); 
+    System.out.println(">>> Compile as: go run T.go E.go app.go"); 
+    System.out.println(">>> Remove unnecessary imports"); 
   } 
 
 

@@ -273,6 +273,10 @@ public class CGCondition
     { return !positive; }
     if ("multiple".equals(stereotype.toLowerCase()) && v != null && v.size() > 1)
     { return positive; }
+    if ("singleton".equals(stereotype.toLowerCase()) && (v == null || v.size() != 1))
+    { return !positive; }
+    if ("singleton".equals(stereotype.toLowerCase()) && v != null && v.size() == 1)
+    { return positive; }
     return false; 
   } 
 
@@ -292,12 +296,15 @@ public class CGCondition
 	
 	// System.out.println(">> Testing condition " + stereotype + " on expression " + e + " type = " + t); 
 
+    String tname = ""; 
+
     if (t == null) 
     { System.err.println("!! ERROR: null type in: " + e); 
-      return false; 
+      // return false; 
     } 
+    else 
+    { tname = t.getName(); } 
 
-    String tname = t.getName(); 
     String etname = ""; 
     if (et != null) 
     { etname = et.getName(); } 
@@ -346,21 +353,22 @@ public class CGCondition
     }
     else if ("numeric".equals(stereotype))
     { if (positive)
-      { return t.isNumericType(); }
+      { return t != null && t.isNumericType(); }
       else
-      { return !(t.isNumericType()); }
+      { return t == null || !(t.isNumericType()); }
     }
     else if ("integer".equals(stereotype))
     { if (positive)
-      { return t.isIntegerType(); }
+      { return t != null && t.isIntegerType(); }
       else
-      { return !(t.isIntegerType()); }
+      { return t == null || !(t.isIntegerType()); }
     }
     else if ("object".equals(stereotype))
     { if (positive)
       { if ("self".equals(edata) || "super".equals(edata))
         { return true; } 
-        else if (t.isEntityType(entities) && ent == null)
+        else if (t != null && 
+                 t.isEntityType(entities) && ent == null)
         { return true; }
         else
         { return false; }
@@ -368,23 +376,34 @@ public class CGCondition
       else 
       { if ("self".equals(edata) || "super".equals(edata))
         { return false; } 
-        else if (t.isEntityType(entities) && ent == null)
+        else if (t != null && 
+                 t.isEntityType(entities) && ent == null)
         { return false; }
         else
         { return true; }
       }  
     }
+    else if ("Class".equals(stereotype))
+    { if (positive)
+      { return ent != null; }
+      else
+      { return ent == null; }
+    }
     else if ("enumerated".equals(stereotype))
     { if (positive)
-      { return t.isEnumeratedType(); }
+      { return t != null && t.isEnumeratedType(); }
       else
-      { return !(t.isEnumeratedType()); }
+      { return t == null || !(t.isEnumeratedType()); }
     }
     else if ("enumerationLiteral".equals(stereotype))
     { if (positive)
-      { return t.isEnumeratedType() && t.hasValue(e); }
+      { return t != null && 
+               t.isEnumeratedType() && t.hasValue(e); 
+      }
       else
-      { return !(t.isEnumeratedType() && t.hasValue(e)); }
+      { return t == null || 
+               !(t.isEnumeratedType() && t.hasValue(e));
+      }
     }
     else if ("classId".equals(stereotype))
     { if (positive)
