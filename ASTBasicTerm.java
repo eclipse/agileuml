@@ -406,7 +406,9 @@ public class ASTBasicTerm extends ASTTerm
       { return new BasicExpression(65535); } 
       if ("ULONG_MAX".equals(value))
       { long mm = 1 + 2*(9223372036854775807L); 
-        return new BasicExpression(mm); 
+        Expression umax = new BasicExpression(mm);
+        umax.setBrackets(true); 
+        return umax;  
       } 
       if ("FLT_RADIX".equals(value))
       { return new BasicExpression(2); } 
@@ -452,6 +454,10 @@ public class ASTBasicTerm extends ASTTerm
       }
       if ("DBL_MIN_EXP".equals(value))
       { return new BasicExpression(-1021); } 
+      if ("EDOM".equals(value))
+      { return new BasicExpression(33); } 
+      if ("ERANGE".equals(value))
+      { return new BasicExpression(34); } 
  
 
  

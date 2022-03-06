@@ -1764,7 +1764,9 @@ public class UCDArea extends JPanel
   }  // also add inv comp inv' for inv: constraints and inv': e.invariants each e 
 
   public void printOCL()
-  { cgbe(); 
+  { cgbePreProcess(); 
+
+    cgbe(); 
 
     for (int i = 0; i < constraints.size(); i++) 
     { Constraint cons = (Constraint) constraints.get(i); 
@@ -3159,6 +3161,7 @@ public class UCDArea extends JPanel
     auxcstls.add("goReferencedFeatures.cstl"); 
     auxcstls.add("cgGointerface.cstl"); 
     auxcstls.add("cgGocatchClause.cstl"); 
+    auxcstls.add("cgGolibraryops.cstl"); 
     
     CGSpec cgs = loadCSTL("cgGo.cstl",auxcstls); 
     cgs.setTypes(types); 
@@ -3274,6 +3277,12 @@ public class UCDArea extends JPanel
           if (ocldate != null) 
           { entfout.println("import \"ocldate\""); } 
 
+          Entity ocliterator = 
+            (Entity) ModelElement.lookupByName(
+                             "OclIterator", entities); 
+
+          if (ocliterator != null) 
+          { entfout.println("import \"ocliterator\""); } 
   
           entfout.println(); 
 		  					
@@ -20725,6 +20734,150 @@ public void produceCUI(PrintWriter out)
     }
   }
 
+  public void cgbePreProcess()
+  { // Builds output/sourceasts.txt and output/targetasts.txt
+    // by reading output/typeExamples.txt, 
+    // output/expressionExamples.txt, output/statementExamples.txt
+    // in each case it needs the grammar rule names to use
+    // for source & target languages. 
+
+    String sourceLanguage = ""; 
+    String targetLanguage = ""; 
+
+    System.out.println();
+    String slang = 
+      JOptionPane.showInputDialog("Enter source language name (of Antlr parser): ");
+    if (slang == null) 
+    { return; } 
+    sourceLanguage = slang; 
+
+    System.out.println();
+    String tlang = 
+      JOptionPane.showInputDialog("Enter target language name (of Antlr parser): ");
+    if (tlang == null) 
+    { return; } 
+    targetLanguage = tlang; 
+
+    Vector srcasts = new Vector(); 
+    Vector trgasts = new Vector();
+
+    try { 
+      Runtime proc = Runtime.getRuntime(); 
+
+      String sourceRule = "";  
+      String targetRule = ""; 
+       
+      System.out.println("---- Processing expression examples from output/expressionExamples.txt");
+
+      Vector srcexprs = new Vector(); 
+      Vector trgexprs = new Vector(); 
+ 
+      PreProcessModels.parseExamples(
+        "output/expressionExamples.txt",srcexprs,trgexprs);  
+
+      if (srcexprs.size() != trgexprs.size())
+      { System.err.println("!! ERROR: some lines are missing 2 examples. Format must be source tabs target"); 
+        return; 
+      } 
+
+      String srule = 
+        JOptionPane.showInputDialog("Enter source language rule (for " + sourceLanguage + " expressions): ");
+      if (srule == null) 
+      { return; } 
+      sourceRule = srule; 
+
+      String trule = 
+        JOptionPane.showInputDialog("Enter target language rule (for " + targetLanguage + " expressions): ");
+      if (trule == null) 
+      { return; } 
+      targetRule = trule; 
+
+      for (int i = 0; i < srcexprs.size(); i++) 
+      { String srctext = (String) srcexprs.get(i); 
+        Process p2 = proc.exec("grun.bat " + sourceLanguage + " " + sourceRule + " -tree"); 
+
+        OutputStream sout = p2.getOutputStream(); 
+        OutputStreamWriter outw = new OutputStreamWriter(sout); 
+        BufferedWriter brw = new BufferedWriter(outw);
+        brw.write(srctext + "\n"); 
+        brw.close();  
+  
+        InputStream sin2 = p2.getInputStream(); 
+        InputStreamReader inr2 = new InputStreamReader(sin2); 
+        BufferedReader ibr2 = new BufferedReader(inr2); 
+        String stext = ""; 
+        String oline2 = ibr2.readLine(); 
+        System.out.println("parsing .... " + srctext);
+        while (oline2 != null) 
+        { stext = oline2; 
+          oline2 = ibr2.readLine();
+        }
+        srcasts.add(stext.trim());  
+        int exitjar2 = p2.waitFor(); 
+        System.out.println("Exit code: " + exitjar2);
+      } 
+      
+      System.out.println(">>> Source asts are: " + srcasts); 
+
+      for (int i = 0; i < trgexprs.size(); i++) 
+      { String trgtext = (String) trgexprs.get(i); 
+        Process p2 = proc.exec("grun.bat " + targetLanguage + " " + targetRule + " -tree"); 
+
+        OutputStream sout = p2.getOutputStream(); 
+        OutputStreamWriter outw = new OutputStreamWriter(sout); 
+        BufferedWriter brw = new BufferedWriter(outw);
+        brw.write(trgtext + "\n"); 
+        brw.close();  
+  
+        InputStream sin2 = p2.getInputStream(); 
+        InputStreamReader inr2 = new InputStreamReader(sin2); 
+        BufferedReader ibr2 = new BufferedReader(inr2); 
+        String ttext = ""; 
+        String oline2 = ibr2.readLine(); 
+        System.out.println("parsing .... " + trgtext);
+        while (oline2 != null) 
+        { ttext = oline2; 
+          oline2 = ibr2.readLine();
+        }
+        trgasts.add(ttext.trim());  
+        int exitjar2 = p2.waitFor(); 
+        System.out.println("Exit code: " + exitjar2);
+      } 
+      
+      System.out.println(">>> Target asts are: " + trgasts); 
+
+    } 
+    catch (Exception ee) { ee.printStackTrace(); } 
+
+    File sfile = new File("output/sourceasts.txt");
+    File tfile = new File("output/targetasts.txt");
+
+    try
+    { PrintWriter sout =
+          new PrintWriter(
+            new BufferedWriter(new FileWriter(sfile)));
+      for (int i = 0; i < srcasts.size(); i++) 
+      { String srcast = (String) srcasts.get(i);
+        sout.println(srcast); 
+      }  
+      sout.close(); 
+    }
+    catch (Exception _ex) { } 
+
+    try
+    { PrintWriter tout =
+          new PrintWriter(
+            new BufferedWriter(new FileWriter(tfile)));
+      for (int i = 0; i < trgasts.size(); i++) 
+      { String trgast = (String) trgasts.get(i);
+        tout.println(trgast); 
+      }  
+      tout.close(); 
+    }
+    catch (Exception _ex) { } 
+      
+  }
+
   public void cgbe()
   { // Takes corresponding asts from output/sourceasts.txt 
     // and output/targetasts.txt 
@@ -20732,7 +20885,6 @@ public void produceCUI(PrintWriter out)
     // Builds tlspecification of entity mappings -> forward.tl
     // Builds model for MTBE -> out.txt
 
-      
     BufferedReader brsource = null;
     BufferedReader brtarget = null;
     Vector sourceasts = new Vector();

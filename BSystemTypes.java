@@ -5562,8 +5562,8 @@ public class BSystemTypes extends BComponent
   }
 
   public static String generateTimeOpCPP()
-  { String res = "    static long getTime()\n" +
-    "    { return time(NULL); }\n\n";
+  { String res = "    static long long getTime()\n" +
+    "    { return 1000*time(NULL); }\n\n";
     res = res + "    static struct tm* getDate()\n" +
     "    { time_t t = time(NULL);\n" + 
     "      struct tm* res = localtime(&t);\n" + 

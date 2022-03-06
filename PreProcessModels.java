@@ -972,6 +972,80 @@ public class PreProcessModels
 
   }
 
+  public static void parseExamples(String fname, Vector sexamples, Vector texamples)
+  { // reads file fname, each line is an example 
+    // stext tabs ttext
+    // sexamples will be the LHS texts, texamples the 
+    // RHS texts
+
+    try 
+    { File tfile = new File(fname);
+	  
+      if (tfile == null) { return; }
+	 
+      System.out.println(">>> Loading examples from " + fname);
+ 
+      BufferedReader br = null;
+      String s;
+      boolean eof = false;
+    
+      try
+      { br = new BufferedReader(new FileReader(tfile)); }
+      catch (FileNotFoundException fnfe)
+      { System.out.println("File not found: " + tfile.getName());
+        return; 
+      }
+  
+      int linecount = 0; 
+
+      while (!eof)
+      { try 
+        { s = br.readLine(); }
+        catch (IOException ioe)
+        { System.out.println("!! Reading " + tfile.getName() + " failed.");
+          return; 
+        }
+
+        if (s == null) 
+        { eof = true; 
+          break; 
+        }
+
+        s = s.trim();
+
+        if (s.length() == 0) 
+        { continue; } 
+
+        String progstring = ""; 
+        int tabindex = s.indexOf("\t"); 
+        if (tabindex >= 0) 
+        { progstring = s.substring(tabindex+1,s.length());
+          s = s.substring(0,tabindex);
+          tabindex = progstring.indexOf("\t");   
+          while (tabindex >= 0)
+          { progstring = progstring.substring(tabindex+1,progstring.length()); 
+            tabindex = progstring.indexOf("\t");   
+          }
+
+          System.out.println(">> Source text: " + s); 
+          sexamples.add(s); 
+          
+          System.out.println(">> Target text: " + progstring); 
+          texamples.add(progstring); 
+        }  
+    
+        linecount++;
+      } 
+
+      br.close(); 
+    } catch(Exception e)
+      { System.err.println(">>> Error processing " + fname); }
+
+    System.out.println(">> Source examples: " + sexamples); 
+    System.out.println(">> Target examples: " + texamples);
+  } 
+
+
   public static void main(String[] args)
   { PreProcessModels.preprocess(); } 
 

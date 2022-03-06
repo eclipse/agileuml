@@ -201,8 +201,8 @@ public class ASTCompositeTerm extends ASTTerm
       Vector vars = r.getVariables(); 
 
       if (tokens.size() > terms.size())
-      { System.out.println("> " + tag + " rule " + r + " does not match " + this);  
-        System.out.println("!! Too many elements on rule LHS (" + tokens.size() + ") to match subterms: (" + terms.size() + ")"); 
+      { // System.out.println("> " + tag + " rule " + r + " does not match " + this);  
+        // System.out.println("!! Too many elements on rule LHS (" + tokens.size() + ") to match subterms: (" + terms.size() + ")"); 
         continue; 
       } 
       else if (vars.contains("_*") && terms.size() >= tokens.size())
@@ -235,7 +235,7 @@ public class ASTCompositeTerm extends ASTTerm
           if (tokens.size() > j+1)
           { nextTok = (String) tokens.get(j+1); } 
 
-          System.out.println(">> End token for _* is: " + nextTok); 
+          // System.out.println(">> End token for _* is: " + nextTok); 
           int remainingTokens = tokens.size() - (j+1); 
 
           boolean finished = false; 
@@ -254,26 +254,26 @@ public class ASTCompositeTerm extends ASTTerm
             { rem.add(pterm); 
               k++;
             }  
-            System.out.println(">>> Terms for _* are: " + rem); 
+            // System.out.println(">>> Terms for _* are: " + rem); 
           } 
           eargs.add(rem); // corresponds to _* variable
         } 
         else if (vars.contains(tok))
         { // allocate terms(j) to tok
 
-          System.out.println(">> Matched variable " + tok + 
-                             " and term " + tm); 
+          // System.out.println(">> Matched variable " + tok + 
+          //                    " and term " + tm); 
           eargs.add(tm); 
           k++; 
         } 
         else if (tok.equals(tm.literalForm()))
-        { System.out.println(">> Matched token " + tok + 
-                             " and term " + tm); 
+        { // System.out.println(">> Matched token " + tok + 
+          //                    " and term " + tm); 
           k++; 
         } 
         else 
-        { System.out.println("> " + tag + " rule " + r + " does not match " + this); 
-          System.out.println(tok + " /= " + tm.literalForm()); 
+        { // System.out.println("> " + tag + " rule " + r + " does not match " + this); 
+          // System.out.println(tok + " /= " + tm.literalForm()); 
           k++; 
           failed = true; // try next rule 
         } 
@@ -10759,13 +10759,12 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm.setType(thisliteral,"int"); 
            
           if (arg.expression != null) 
-          { BasicExpression elems = 
-               BasicExpression.newBasicExpression(arg.expression, 
-"elements");
-            expression = new UnaryExpression("->size", elems);   
+          { expression = 
+               BasicExpression.newCallBasicExpression(
+                         "length", arg.expression);   
           }
 
-          return args + ".elements->size()"; 
+          return args + ".length()"; 
         } 
         else if ("get".equals(called) || "elementAt".equals(called)) 
         { ASTTerm callarg = (ASTTerm) callterms.get(2);
@@ -10786,6 +10785,15 @@ public class ASTCompositeTerm extends ASTTerm
                 new BinaryExpression("->at", arg.expression, callarg.expression);
             }   
             return args + "->at(" + callp + ")"; 
+          } 
+          else if ("OclIterator".equals(tt))
+          { if (arg.expression != null && 
+                callarg.expression != null) 
+            { expression = 
+                BasicExpression.newCallBasicExpression(
+                  "at", arg.expression, callarg.expression);
+            }   
+            return args + ".at(" + callp + ")"; 
           } 
           else 
           { if (arg.expression != null && 
@@ -11247,7 +11255,7 @@ public class ASTCompositeTerm extends ASTTerm
                   new AssignStatement(arg.expression, expression); 
               } 
  
-              return args + " := " + args + ".subrange(1, " + callp1 + ")->union(" + callp2 + ")->union(" + args + ".subrange(" + callp1 + "+1))"; 
+              return args + " := " + args + ".insertInto(" + callp1 + "+1, " + callp2 + ")"; 
             } 
             else 
             { if (arg.expression != null && 
@@ -14453,11 +14461,11 @@ public class ASTCompositeTerm extends ASTTerm
 
           if (arg.expression != null) 
           { expression = 
-              BasicExpression.newBasicExpression(
-                 arg.expression, "time"); 
+              BasicExpression.newCallBasicExpression(
+                 "getTime", arg.expression); 
           } 
 
-          return args + ".time"; 
+          return args + ".getTime()"; 
         } 
         else if (arg.isDate() && 
                  "setTimeInMillis".equals(called))
