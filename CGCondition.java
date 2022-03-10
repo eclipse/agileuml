@@ -143,7 +143,7 @@ public class CGCondition
           else 
           { return false; } 
 		  
-          System.out.println(">>> Condition " + cond + " is satisfied by " + m); 
+          System.out.println("||| Condition " + cond + " is satisfied by " + m); 
         } 
       } 
     } 
@@ -161,14 +161,19 @@ public class CGCondition
   } 
 
   public boolean conditionSatisfied(Type t, Vector entities)
-  { System.out.println(">> Checking type condition " + t + " " + stereotype); 
+  { System.out.println("||| Checking type condition " + t + " " + stereotype); 
     System.out.println(); 
 
     if ("string".equals(stereotype.toLowerCase()) && t.isStringType())
     { return positive; }
 
     if ("class".equals(stereotype.toLowerCase()) && t.isEntityType(entities))
-    { System.out.println(">> Condition class satisfied for " + t); 
+    { System.out.println("||| Condition class satisfied for " + t); 
+      return positive; 
+    }
+
+    if ("interface".equals(stereotype.toLowerCase()) && t.isInterfaceType(entities))
+    { System.out.println("||| Condition interface satisfied for " + t); 
       return positive; 
     }
 
@@ -213,9 +218,15 @@ public class CGCondition
     { return positive; }
 
     if ("class".equals(stereotype.toLowerCase()) && !(t.isEntityType(entities)))
-    { System.out.println(t + " is not a class"); 
+    { System.out.println("||| " + t + " is not a class"); 
       return !positive; 
     }
+
+    if ("interface".equals(stereotype.toLowerCase()) && !(t.isInterfaceType(entities)))
+    { System.out.println("||| " + t + " is not an interface"); 
+      return !positive; 
+    }
+
 
     if ("void".equals(stereotype.toLowerCase()) && t != null && !t.isVoidType())
     { return !positive; }
@@ -259,6 +270,8 @@ public class CGCondition
   public boolean conditionSatisfied(Attribute a, Vector entities)
   { if ("primary".equals(stereotype.toLowerCase()) && a.isPrimaryAttribute())
     { return positive; }
+    if ("static".equals(stereotype.toLowerCase()) && a.isStatic())
+    { return positive; }
     if (a.hasStereotype(stereotype))
     { return positive; }
     return false;
@@ -299,7 +312,7 @@ public class CGCondition
     String tname = ""; 
 
     if (t == null) 
-    { System.err.println("!! ERROR: null type in: " + e); 
+    { System.err.println("!! WARNING: null type in: " + e); 
       // return false; 
     } 
     else 
@@ -464,6 +477,12 @@ public class CGCondition
       { return tname.equals("Ref") && etname.equals("String"); }
       else 
       { return !(tname.equals("Ref") && etname.equals("String")); } 
+    } 
+    else if ("static".equals(stereotype))
+    { if (positive) 
+      { return e.isStatic(); }
+      else 
+      { return !(e.isStatic()); } 
     } 
     else if (edata.equals(stereotype))
     { return positive; } 

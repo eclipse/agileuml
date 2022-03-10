@@ -166,6 +166,17 @@ public class Type extends ModelElement
     return false; 
  } 
 
+  public boolean isInterfaceType(Vector ents) 
+  { if (entity != null && entity.isInterface())
+    { return true; } 
+    Entity ex = (Entity) ModelElement.lookupByName(name, ents);
+    if (ex != null && ex.isInterface()) 
+    { return true; } 
+    if ("Runnable".equals(name))
+    { return true; } 
+    return false; 
+ } 
+
   public boolean isSetType() 
   { return "Set".equals(name); } 
 

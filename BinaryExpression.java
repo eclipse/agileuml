@@ -3910,6 +3910,13 @@ public void findClones(java.util.Map clones, String rule, String op)
       { type = new Type("Map", null); } 
     } 
 
+    if (operator.equals("->append") ||
+        operator.equals("->prepend") || 
+		operator.equals("^"))
+    { if (type == null) 
+      { type = new Type("Sequence", null); } 
+    } 
+
     Type etleft = left.getElementType(); 
     Type etright = right.getElementType(); 
     Type maxtype = etleft; 
@@ -3933,6 +3940,8 @@ public void findClones(java.util.Map clones, String rule, String op)
     { Type newleftET = Type.refineType(etleft,right.getType()); 
       System.out.println(">> Deduced element type of " + this + " = " + newleftET); 
       elementType = newleftET; 
+	  if (type == null)
+	  { type = new Type("Sequence", null); }
       type.setElementType(newleftET); 
     } 
     else if (operator.equals("->union") || 
@@ -3940,15 +3949,17 @@ public void findClones(java.util.Map clones, String rule, String op)
     { Type newleftET = Type.refineType(etleft,etright); 
       System.out.println(">> Deduced element type of " + this + " = " + newleftET); 
       elementType = newleftET; 
-      type.setElementType(newleftET); 
+	  if (type != null)
+      { type.setElementType(newleftET); } 
     } 
     else if (etleft != null) // if classes, take closest common super
     { elementType = maxtype;
-      type.setElementType(elementType); 
+      if (type != null) 
+	  { type.setElementType(elementType); }  
       if (etright == null)
       { right.setElementType(etleft); } 
     } // should be the same
-    else if (etright != null) 
+    else if (etright != null && type != null) 
     { elementType = maxtype; 
       type.setElementType(elementType); 
       left.setElementType(etright); 

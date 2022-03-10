@@ -808,11 +808,19 @@ public class BehaviouralFeature extends ModelElement
   public String cg(CGSpec cgs)
   { String etext = this + "";
     Vector args = new Vector();
-    args.add(getParameterisedName());
+    args.add(getName());
     Vector eargs = new Vector();
     eargs.add(this);
-    String pars = "";
 
+    String typePar = ""; 
+    if (typeParameters != null && typeParameters.size() > 0) 
+    { Type tp = (Type) typeParameters.get(0); 
+      typePar = tp.getName(); 
+      args.add(typePar); 
+      eargs.add(tp); 
+    } 
+
+    String pars = "";
     if (parameters == null) {} 
     else if (parameters.size() == 0) {} 
     else 
@@ -879,7 +887,7 @@ public class BehaviouralFeature extends ModelElement
 
     CGRule r = cgs.matchedOperationRule(this,etext);
     if (r != null)
-    { // System.out.println(">>> Matched operation rule: " + r + " with args " + args); 
+    { System.out.println(">>> Matched operation rule: " + r + " with args " + args); 
       return r.applyRule(args,eargs,cgs); 
     }
     System.out.println("!!! No matching rule for operation " + getName()); 

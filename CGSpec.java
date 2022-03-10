@@ -608,7 +608,7 @@ public class CGSpec
       String trimmedlhs = r.lhs.trim(); 
       // int varcount = r.variables().size(); 
 	  
-	 System.out.println(">>+ Type +> " + t + " is: " + typetext + " rule lhs: " + trimmedlhs); 
+	 // System.out.println(">>+ Type +> " + t + " is: " + typetext + " rule lhs: " + trimmedlhs); 
 	  
       if (typetext.equals(trimmedlhs))
       { args.add(t); 
@@ -685,9 +685,9 @@ public class CGSpec
         selected = r; 
       } 
 
-      System.out.println(); 
-      System.out.println(">>>---->>> Selected type rule: " + selected + " for " + args); 
-      System.out.println(); 
+      // System.out.println(); 
+      // System.out.println(">>>---->>> Selected type rule: " + selected + " for " + args); 
+      // System.out.println(); 
 
       if (selected != null &&
           selected.satisfiesConditions(args,entities))
@@ -971,6 +971,30 @@ public class CGSpec
       { return r; } // exact match of literal. 
       // else if ("null".equals(r.lhs) && "null".equals(etext))
       // { return r; } 
+      else if (e.data.equals("displayString") && 
+               trimmedlhs.equals("displayString(_1)"))
+      { return r; }
+      else if (e.data.equals("displayint") && 
+               trimmedlhs.equals("displayint(_1)"))
+      { return r; }
+      else if (e.data.equals("displaylong") && 
+               trimmedlhs.equals("displaylong(_1)"))
+      { return r; }
+      else if (e.data.equals("displaydouble") && 
+               trimmedlhs.equals("displaydouble(_1)"))
+      { return r; }
+      else if (e.data.equals("displayboolean") && 
+               trimmedlhs.equals("displayboolean(_1)"))
+      { return r; }
+      else if (e.data.equals("displaySequence") && 
+               trimmedlhs.equals("displaySequence(_1)"))
+      { return r; }
+      else if (e.data.equals("displaySet") && 
+               trimmedlhs.equals("displaySet(_1)"))
+      { return r; }
+      else if (e.data.equals("displayMap") && 
+               trimmedlhs.equals("displayMap(_1)"))
+      { return r; }
       else if (e.data.equals("allInstances") && 
                trimmedlhs.equals("_1.allInstances"))
       { return r; }
@@ -1081,6 +1105,7 @@ public class CGSpec
       { selected = r; 
         args.add(obj); 
         args.add(cl); 
+        System.out.println("^^^^ " + cl + " is static: " + cl.isStatic); 
       }
       else if (obj != null && ind == null && pars != null && trimmedlhs.equals("_1._2(_3)"))
       { selected = r; 
@@ -1455,30 +1480,60 @@ public class CGSpec
     args.add(e.getType()); 
     args.add(e.getPre()); 
     args.add(e.getPost()); 
-    args.add(e.getActivity()); 
+    args.add(e.getActivity());
+    Vector typepars = e.getTypeParameters();  
+    Type typepar = null; 
+    if (typepars != null && typepars.size() > 0)
+    { typepar = (Type) typepars.get(0); } 
     
     CGRule selected = null; 
     for (int x = 0; x < operationRules.size(); x++)
     { CGRule r = (CGRule) operationRules.get(x);
-      if (ctext.equals(r.lhs))
+      String trimmedlhs = r.lhs.trim(); 
+
+      if (ctext.equals(trimmedlhs))
       { selected = r; } // exact match
       else if (e.isQuery())
-      { if (r.lhs.indexOf("query") > -1) 
+      { if (trimmedlhs.indexOf("query") > -1) 
         { if (e.isStatic())
-          { if (r.lhs.indexOf("static") > -1)     
-            { selected = r; }
+          { if (trimmedlhs.indexOf("static") > -1)     
+            { if (trimmedlhs.indexOf("<") < 0 && 
+                  typepar == null)
+              { selected = r; }
+              else if (trimmedlhs.indexOf("<") > -1 && 
+                       typepar != null) 
+              { selected = r; }
+            }
           } 
-          else if (r.lhs.indexOf("static") < 0)
-          { selected = r; } 
+          else if (trimmedlhs.indexOf("static") < 0)
+          { if (trimmedlhs.indexOf("<") < 0 && 
+                typepar == null)
+            { selected = r; }
+            else if (trimmedlhs.indexOf("<") > -1 && 
+                     typepar != null) 
+            { selected = r; } 
+          } 
         } 
       }
-      else if (r.lhs.indexOf("operation") > -1) 
+      else if (trimmedlhs.indexOf("operation") > -1) 
       { if (e.isStatic())
-        { if (r.lhs.indexOf("static") > -1)     
-          { selected = r; }
+        { if (trimmedlhs.indexOf("static") > -1)     
+          { if (trimmedlhs.indexOf("<") < 0 && 
+              typepar == null)
+            { selected = r; }
+            else if (trimmedlhs.indexOf("<") > -1 && 
+                     typepar != null) 
+            { selected = r; } 
+          }
         }
-        else if (r.lhs.indexOf("static") < 0)   
-        { selected = r; }
+        else if (trimmedlhs.indexOf("static") < 0)   
+        { if (trimmedlhs.indexOf("<") < 0 && 
+              typepar == null)
+          { selected = r; }
+          else if (trimmedlhs.indexOf("<") > -1 && 
+                   typepar != null) 
+          { selected = r; } 
+        } 
       } 
     
 

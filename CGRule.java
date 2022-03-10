@@ -595,6 +595,12 @@ public class CGRule
           String repl = t.cg(cgs); 
           res = replaceByMetafeatureValue(res,mf,repl);
         }
+        else if ("name".equals(mffeat) && 
+                 obj instanceof Expression)
+        { Expression e = (Expression) obj; 
+          String repl = e + ""; 
+          res = replaceByMetafeatureValue(res,mf,repl);
+        }
         else if ("type".equals(mffeat) && 
                  obj instanceof Attribute)
         { Attribute att = (Attribute) obj; 

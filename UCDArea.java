@@ -3315,7 +3315,8 @@ public class UCDArea extends JPanel
       mainfout.println("func main() {"); 
       for (int k = 0; k < entities.size(); k++) 
       { Entity ee = (Entity) entities.get(k);
-        if (ee.isComponent() || ee.isExternal())
+        if (ee.isComponent() || ee.isExternal() || 
+            ee.isInterface())
         { continue; } 
  
         String ename = ee.getName(); 

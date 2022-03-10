@@ -730,7 +730,8 @@ class BasicExpression extends Expression
 
     res.prestate = prestate;
     res.atTime = atTime;  
-    res.downcast = downcast; 
+    res.downcast = downcast;
+    res.isStatic = isStatic;  
     return res; 
   }
 
@@ -3227,7 +3228,8 @@ class BasicExpression extends Expression
       } 
     }
 
-    if ("newOclDate".equals(data))
+    if ("newOclDate".equals(data) ||
+        "newOclDate_Time".equals(data))
     { type = new Type("OclDate", null); 
       umlkind = UPDATEOP;
       isStatic = true;  
@@ -3296,7 +3298,7 @@ class BasicExpression extends Expression
                 new Attribute("ss", new Type("String", null), ModelElement.INTERNAL); 
             par1.formalParameter = fparss;
           }
-        }
+        } // and String_String
 
         return true;  
       }
@@ -3570,7 +3572,8 @@ class BasicExpression extends Expression
 
       if (staticent != null) 
       { objectRef.umlkind = Expression.CLASSID; 
-	  
+        // isStatic = true; 
+
         BehaviouralFeature bf = staticent.getStaticOperation(data,parameters); 
 
         if (bf != null) 
@@ -3614,8 +3617,8 @@ class BasicExpression extends Expression
 
             arrayType = type; 
             adjustTypeForArrayIndex(att); 
-            // System.out.println("*** Type of " + data + " is static ATTRIBUTE in entity " +
-            //                    staticent + " type is " + type + "(" + elementType + ") Modality = " + modality); 
+            System.out.println("*** Type of " + data + " is static ATTRIBUTE in entity " +
+                                staticent + " type is " + type + "(" + elementType + ") Modality = " + modality); 
             return res;
           } 
         } 
@@ -14119,14 +14122,36 @@ public Statement generateDesignSubtract(Expression rhs)
     Vector eargs = new Vector(); 
     Vector textrules = new Vector(); 
 
+    if (("displayString".equals(data) || 
+         "displayint".equals(data) ||
+         "displaylong".equals(data) ||
+         "displaydouble".equals(data) ||
+         "displayboolean".equals(data) || 
+         "displaySequence".equals(data) ||
+         "displaySet".equals(data) ||
+         "displayMap".equals(data)) && 
+        parameters != null &&
+        parameters.size() == 1)
+    { Expression par1 = (Expression) parameters.get(0); 
+      args.add(par1.cg(cgs)); 
+      eargs.add(par1); 
+      CGRule r = cgs.matchedBasicExpressionRule(this,etext,textrules); 
+      if (r != null) 
+      { System.out.println(">> Matched rule: " + r + " to: " + etext + " with arguments= " + args); 
+       String res = r.applyRule(args,eargs,cgs);
+       return res;
+     }  
+   }
+
+
     if (umlkind == FUNCTION) 
     { // process as the corresponding unary or binary expression
       if ("allInstances".equals(data))
-	 { args.add(objectRef + ""); 
-	   eargs.add(objectRef); 
-	   CGRule r = cgs.matchedBasicExpressionRule(this,etext,textrules); 
-	   if (r != null) 
-	   { // System.out.println(">> Matched rule: " + r + " to: " + etext + " with arguments= " + args); 
+      { args.add(objectRef + ""); 
+        eargs.add(objectRef); 
+        CGRule r = cgs.matchedBasicExpressionRule(this,etext,textrules); 
+        if (r != null) 
+        { // System.out.println(">> Matched rule: " + r + " to: " + etext + " with arguments= " + args); 
          String res = r.applyRule(args,eargs,cgs);
          return res;
        }  
@@ -14244,7 +14269,13 @@ public Statement generateDesignSubtract(Expression rhs)
           { parg = parg + ","; } 
           // need special processig for parameters
         } */ 
-        dataexp.parameters = null; 
+        dataexp.parameters = null;
+
+        System.out.println(dataexp + " is static: " + dataexp.isStatic); 
+        String dexcg = dataexp.cg(cgs); 
+        System.out.println(dexcg); 
+        System.out.println(); 
+ 
         args.add(dataexp.cg(cgs));
         args.add(pars); 
         eargs.add(dataexp);
