@@ -1055,6 +1055,12 @@ class BasicExpression extends Expression
     return null; 
   } 
 
+  public int arity() 
+  { if (parameters == null) 
+    { return 0; } 
+    return parameters.size(); 
+  } 
+
   public String getData()
   { return data; } 
 

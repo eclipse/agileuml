@@ -26,6 +26,9 @@ public class ASTBasicTerm extends ASTTerm
   public String getTag()
   { return tag; } 
 
+  public String tagFunction()
+  { return tag; } 
+
   public boolean hasTag(String tagx) 
   { return tagx.equals(tag); } 
 

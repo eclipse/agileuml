@@ -4670,14 +4670,20 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
  
     if ("operation".startsWith(st)) 
     { mess[0] = "Operation declaration:\noperation name(parameters) : Type\n" + 
-                "pre: expression\npost: expression\nactivity: statement;"; 
+                "pre: expression\npost: expression\nactivity: statement;\n\n" + 
+                "Or with a generic type parameter name T:\n" + 
+                "operation name<T>(parameters) : Type\n" + 
+                "pre: expression\npost: expression\nactivity: statement;\n"; 
       return "operation"; 
     } 
     
     if ("query".startsWith(st)) 
     { mess[0] = "Query operation declaration, returning a result value:\n" + 
                 "query name(parameters) : Type\n" + 
-                "pre: expression\npost: expression\nactivity: statement;"; 
+                "pre: expression\npost: expression\nactivity: statement;\n\n" + 
+                "Or with a generic type parameter name T:\n" + 
+                "query name<T>(parameters) : Type\n" + 
+                "pre: expression\npost: expression\nactivity: statement;\n";; 
       return "query"; 
     }
  
@@ -4784,7 +4790,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       } 
  
       if ("static".startsWith(st)) 
-      { mess[0] = "static feature, ie., of class scope"; 
+      { mess[0] = "static attribute or operation, ie., of class scope. Eg:\n" + "static attribute nobjs : int;\n" + 
+              "static query pi() : double\npre: true post: result = 3.14159265\n"; 
         return "static"; 
       } 
 

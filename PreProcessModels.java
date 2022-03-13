@@ -20,15 +20,27 @@ import java.util.Date;
 
 public class PreProcessModels
 { // Reads output/typeExamples.txt
-  //      output/expressionExamples.txt
-  //      output/statementExamples.txt
-  //      output/declarationExamples.txt
+  //       output/expressionExamples.txt
+  //       output/statementExamples.txt
+  //       output/declarationExamples.txt
+  // Parses source (OCL/UML) examples using Compiler2
+  // Parses target (program) examples with Antlr
+  // 
   // Produces output/out.txt 
 
   public static void preprocess()
   { Vector typeExamples = new Vector(); // Type
     String oclTypeModel = ""; 
     Vector programTypeExamples = new Vector(); // String
+
+    System.out.println();
+    String targetLanguage = ""; 
+    String tlang = 
+      JOptionPane.showInputDialog("Enter target language name (of Antlr parser): ");
+    if (tlang == null) 
+    { return; } 
+    targetLanguage = tlang; 
+
 
     Vector entities = new Vector(); 
     Vector types = new Vector();
@@ -152,40 +164,73 @@ public class PreProcessModels
       { System.err.println(">>> Error processing output/typeExamples.txt"); }
 
     System.out.println(">> Type examples: " + typeExamples); 
-    System.out.println(">> Type model: " + oclTypeModel);
+    System.out.println(">> OCL type model: " + oclTypeModel);
 
     String progModelString = ""; 
     String progid = ""; 
+
+    String targetRule = ""; 
+    String trule = 
+        JOptionPane.showInputDialog("Enter target language parser rule (for " + targetLanguage + " types): ");
+    if (trule == null) 
+    { return; } 
+    targetRule = trule; 
+
 
     try 
     { File temp = new File("tmp.txt"); 
       Runtime proc = Runtime.getRuntime(); 
         
       for (int i = 0; i < programTypeExamples.size(); i++) 
-      { BufferedWriter bw = new BufferedWriter(new FileWriter(temp)); 
+      { // BufferedWriter bw = new BufferedWriter(new FileWriter(temp)); 
         String progEx = (String) programTypeExamples.get(i); 
-        bw.write(progEx + "\n");
-        bw.close();
+        // bw.write(progEx + "\n");
+        // bw.close();
         Thread.sleep(50); 
-        Process p = proc.exec("parseProgramType.bat"); 
-        InputStream stdin = p.getInputStream(); 
-        StreamGobble igb = new StreamGobble(stdin); 
-        InputStream stderr = p.getErrorStream(); 
-        StreamGobble egb = new StreamGobble(stderr); 
- 
-        egb.start(); igb.start();   
-        int exitp = p.waitFor();
 
-        File af = new File("ast.txt"); 
-        BufferedReader astbr = new BufferedReader(new FileReader(af));
-        String asttext = astbr.readLine(); 
-        astbr.close(); 
+        // type tmp.txt | java org.antlr.v4.gui.TestRig Java typeTypeOrVoid -tree >ast.txt
+
+        // Process p = proc.exec("parseProgramType.bat"); 
+        // InputStream pstdin = p.getInputStream(); 
+        // StreamGobble igb = new StreamGobble(pstdin); 
+        // InputStream pstderr = p.getErrorStream(); 
+        // StreamGobble egb = new StreamGobble(pstderr); 
+ 
+        // egb.start(); igb.start();   
+        // int exitp = p.waitFor();
+
+        // File af = new File("ast.txt"); 
+        // BufferedReader astbr = new BufferedReader(new FileReader(af));
+        // String asttext = astbr.readLine(); 
+        // astbr.close(); 
+
+        Process p2 = proc.exec("grun.bat " + targetLanguage + " " + targetRule + " -tree"); 
+
+        OutputStream sout = p2.getOutputStream(); 
+        OutputStreamWriter outw = new OutputStreamWriter(sout); 
+        BufferedWriter brw = new BufferedWriter(outw);
+        brw.write(progEx + "\n"); 
+        brw.close();  
+  
+        InputStream sin2 = p2.getInputStream(); 
+        InputStreamReader inr2 = new InputStreamReader(sin2); 
+        BufferedReader ibr2 = new BufferedReader(inr2); 
+        String stext = ""; 
+        String oline2 = ibr2.readLine(); 
+        System.out.println(">>> parsing .... " + progEx);
+        while (oline2 != null) 
+        { stext = oline2; 
+          oline2 = ibr2.readLine();
+        }
+        String asttext = stext.trim();  
+        int exitjar2 = p2.waitFor(); 
+        System.out.println(">>> Exit code: " + exitjar2);
 
         progid = "progtype" + i; 
         progModelString = progModelString + progid + " : ProgramType\n" + 
             progid + ".ast = " + asttext + "\n\n"; 
 
-        System.out.println("--- " + asttext);  
+        System.out.println(">> Parsed: --- " + asttext);  
       } 
     } 
     catch (Exception fex) 
@@ -198,7 +243,8 @@ public class PreProcessModels
 
     System.out.println(">>> Time for pre-processing types: " + (t2-t1)); 
 
-    System.out.println(progModelString); 
+    System.out.println(">>> program model: " + 
+                       progModelString); 
 
     
 
@@ -376,29 +422,57 @@ public class PreProcessModels
     String exprprogModelString = ""; 
     progid = ""; 
 
+    trule = 
+        JOptionPane.showInputDialog("Enter target language parser rule (for " + targetLanguage + " expressions): ");
+    if (trule == null) 
+    { return; } 
+    targetRule = trule; 
+
     try 
     { File temp = new File("tmp.txt"); 
       Runtime proc = Runtime.getRuntime(); 
         
       for (int i = 0; i < programExpressionExamples.size(); i++) 
-      { BufferedWriter bw = new BufferedWriter(new FileWriter(temp)); 
+      { // BufferedWriter bw = new BufferedWriter(new FileWriter(temp)); 
         String progEx = (String) programExpressionExamples.get(i); 
-        bw.write(progEx + "\n");
-        bw.close();
+        // bw.write(progEx + "\n");
+        // bw.close();
         Thread.sleep(50); 
-        Process p = proc.exec("parseProgramExpression.bat"); 
-        InputStream stdin = p.getInputStream(); 
-        StreamGobble igb = new StreamGobble(stdin); 
-        InputStream stderr = p.getErrorStream(); 
-        StreamGobble egb = new StreamGobble(stderr); 
+        // Process p = proc.exec("parseProgramExpression.bat"); 
+        // InputStream stdin = p.getInputStream(); 
+        // StreamGobble igb = new StreamGobble(stdin); 
+        // InputStream stderr = p.getErrorStream(); 
+        // StreamGobble egb = new StreamGobble(stderr); 
  
-        egb.start(); igb.start();   
-        int exitp = p.waitFor();
+        // egb.start(); igb.start();   
+        // int exitp = p.waitFor();
 
-        File af = new File("ast.txt"); 
-        BufferedReader astbr = new BufferedReader(new FileReader(af));
-        String asttext = astbr.readLine(); 
-        astbr.close(); 
+        // File af = new File("ast.txt"); 
+        // BufferedReader astbr = new BufferedReader(new FileReader(af));
+        // String asttext = astbr.readLine(); 
+        // astbr.close(); 
+
+        Process p2 = proc.exec("grun.bat " + targetLanguage + " " + targetRule + " -tree"); 
+
+        OutputStream sout = p2.getOutputStream(); 
+        OutputStreamWriter outw = new OutputStreamWriter(sout); 
+        BufferedWriter brw = new BufferedWriter(outw);
+        brw.write(progEx + "\n"); 
+        brw.close();  
+  
+        InputStream sin2 = p2.getInputStream(); 
+        InputStreamReader inr2 = new InputStreamReader(sin2); 
+        BufferedReader ibr2 = new BufferedReader(inr2); 
+        String stext = ""; 
+        String oline2 = ibr2.readLine(); 
+        System.out.println(">>> parsing .... " + progEx);
+        while (oline2 != null) 
+        { stext = oline2; 
+          oline2 = ibr2.readLine();
+        }
+        String asttext = stext.trim();  
+        int exitjar2 = p2.waitFor(); 
+        System.out.println(">>> Exit code: " + exitjar2);
 
         progid = "progexpr" + i; 
         exprprogModelString = exprprogModelString + progid + " : ProgramExpression\n" + 
@@ -1045,6 +1119,38 @@ public class PreProcessModels
     System.out.println(">> Target examples: " + texamples);
   } 
 
+  public static String applyAntlr(String language, String rulename, String inText)
+  { // Returns AST from grun.bat language rulename -tree
+    try { 
+      Runtime proc = Runtime.getRuntime(); 
+      Process p2 = proc.exec("grun.bat " + language + " " + rulename + " -tree"); 
+
+      OutputStream sout = p2.getOutputStream(); 
+      OutputStreamWriter outw = new OutputStreamWriter(sout); 
+      BufferedWriter brw = new BufferedWriter(outw);
+      brw.write(inText + "\n"); 
+      brw.close();  
+  
+      InputStream sin2 = p2.getInputStream(); 
+      InputStreamReader inr2 = new InputStreamReader(sin2); 
+      BufferedReader ibr2 = new BufferedReader(inr2); 
+      String stext = ""; 
+      String oline2 = ibr2.readLine(); 
+      System.out.println(">>> parsing .... " + inText);
+      while (oline2 != null) 
+      { stext = oline2; 
+        oline2 = ibr2.readLine();
+      }
+      String asttext = stext.trim();  
+      int exitjar2 = p2.waitFor(); 
+      System.out.println(">>> Exit code: " + exitjar2);
+      return asttext; 
+    } 
+    catch (Exception e) 
+    { System.out.println(">>> Error in parsing: " + e);
+      return ""; 
+    } 
+  } 
 
   public static void main(String[] args)
   { PreProcessModels.preprocess(); } 

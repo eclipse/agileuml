@@ -19,6 +19,9 @@ public class ASTSymbolTerm extends ASTTerm
   public String getTag()
   { return symbol; } 
 
+  public String tagFunction()
+  { return "~"; } 
+
   public boolean hasTag(String tagx) 
   { return false; } 
 

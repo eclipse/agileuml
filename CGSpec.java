@@ -103,6 +103,8 @@ public class CGSpec
   { Vector rules = (Vector) categoryRules.get(category); 
     if (rules == null) 
     { rules = new Vector(); } 
+    if (rules.contains(r)) 
+    { return; } 
     rules.add(r); 
     categoryRules.put(category,rules); 
   } 
@@ -546,16 +548,16 @@ public class CGSpec
     for (int i = 0; i < n; i++) 
     { char x = str.charAt(i); 
 
-      // if (x == '"' && !instring) 
-      // { instring = true; } 
-      // else if (x == '"' && instring) 
-      // { instring = false; } 
+      if (x == '"' && !instring) 
+      { instring = true; } 
+      else if (x == '"' && instring) 
+      { instring = false; } 
 
-      if (x == '\n')
+      if (x == '\n' && !instring)
       { out.println(res); 
         res = new StringBuffer(); 
       } 
-      else if (i < n-1 && x == '\\' && str.charAt(i+1) == 'n')
+      else if (i < n-1 && x == '\\' && str.charAt(i+1) == 'n' && !instring)
       { out.println(res); 
         res = new StringBuffer(); 
         i++; 

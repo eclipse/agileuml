@@ -112,6 +112,8 @@ public abstract class ASTTerm
 
   public abstract String literalForm();
 
+  public abstract String tagFunction(); 
+
   public void addStereotype(String str) 
   { String lit = literalForm(); 
     Vector stereotypes = 
@@ -1578,7 +1580,9 @@ public abstract class ASTTerm
 
   public static void entitiesFromASTs(Vector asts, String suff, Vector es)
   { // For each tag t, create entity t+suff. Add subclass for 
-    // each different arity of t terms. 
+    // each different arity of t terms.
+    // Nesting: (t (t1 x) (t2 y)) becomes
+    // t_t1$t_t2, etc.  
 
     Type treeType = new Type("OclAny", null); 
 
@@ -1625,6 +1629,56 @@ public abstract class ASTTerm
     } 
   } 
 
+  public static void deepEntitiesFromASTs(Vector asts, String suff, Vector es)
+  { // For each different term t, create entity t' + suff.
+    // Nesting: (t (t1 x) (t2 y)) entity has name
+    // t_t1$t_t2, etc.  
+
+    Type treeType = new Type("OclAny", null); 
+
+    for (int i = 0; i < asts.size(); i++) 
+    { ASTTerm t = (ASTTerm) asts.get(i); 
+      String tg = t.tagFunction() + suff; 
+      String tgsup = t.getTag() + suff; 
+      int n = t.arity(); 
+      if (n > 0) 
+      { Entity sup = (Entity) ModelElement.lookupByName(tgsup,es); 
+        if (sup == null) 
+        { sup = new Entity(tgsup);
+
+          System.out.println("Created entity: "  + sup); 
+ 
+          if (suff.equals(""))
+          { sup.addStereotype("source"); } 
+          else 
+          { sup.addStereotype("target"); } 
+           
+          sup.setAbstract(true); 
+          Attribute astatt = 
+            new Attribute("ast", treeType, ModelElement.INTERNAL); 
+          sup.addAttribute(astatt); 
+          es.add(sup); 
+        } 
+
+        Entity ee = (Entity) ModelElement.lookupByName(tg,es); 
+        if (ee == null) 
+        { ee = new Entity(tg);
+
+          System.out.println("Created entity: "  + tg); 
+ 
+          if (suff.equals(""))
+          { ee.addStereotype("source"); } 
+          else 
+          { ee.addStereotype("target"); } 
+           
+          ee.setSuperclass(sup); 
+          sup.addSubclass(ee); 
+          es.add(ee); 
+        } 
+      } 
+    } 
+  } 
+
   public static Vector entityMatchingsFromASTs(Vector sasts, 
                          Vector tasts, Vector es)
   { // For corresponding s, t create entity matching
@@ -1640,7 +1694,7 @@ public abstract class ASTTerm
       int m = t.arity(); 
 
       if (n > 0 && m > 0) 
-      { String sentname = s.getTag() + "_" + n; 
+      { String sentname = s.tagFunction(); // Assume it is deep 
         Entity sent = 
           (Entity) ModelElement.lookupByName(sentname,es); 
         String tentname = t.getTag() + "$T_" + m; 
@@ -1676,7 +1730,7 @@ public abstract class ASTTerm
       int m = t.arity(); 
 
       if (n > 0 && m > 0) 
-      { String sentname = s.getTag() + "_" + n; 
+      { String sentname = s.tagFunction(); 
         String tentname = t.getTag() + "$T_" + m; 
         String sinst = sentname.toLowerCase() + "_" + i; 
         String tinst = tentname.toLowerCase() + "_" + i; 
@@ -1745,6 +1799,24 @@ public abstract class ASTTerm
     // System.out.println(t.isInteger()); 
     // System.out.println(t.isBoolean());
 
+    ASTBasicTerm tt1 = new ASTBasicTerm("t1", "aa"); 
+    ASTBasicTerm tt2 = new ASTBasicTerm("t2", "bb");
+    ASTSymbolTerm tts = new ASTSymbolTerm("&"); 
+ 
+
+    Vector vect = new Vector(); 
+    vect.add(tt1); 
+    vect.add(tts); 
+    vect.add(tt2); 
+    
+    ASTCompositeTerm ttc = 
+       new ASTCompositeTerm("ct", vect); 
+
+    System.out.println(ttc.tagFunction()); 
+  }
+} 
+
+  /* 
     Vector consts = 
       randomBasicASTTermsForTag("Const", 1, 50);
     Vector ops = new Vector(); 
@@ -1944,8 +2016,9 @@ public abstract class ASTTerm
     catch (Exception _fex) 
     { System.err.println("! No file: output/asts.txt"); }  
 
-  } 
-} 
+  } */ 
+
+
 
 /* tree2tree dataset format: */ 
 

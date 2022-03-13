@@ -1771,7 +1771,7 @@ public class UCDArea extends JPanel
     for (int i = 0; i < constraints.size(); i++) 
     { Constraint cons = (Constraint) constraints.get(i); 
       Constraint cc = (Constraint) cons.clone(); 
-      System.out.println("OCL Form of global constraint: " + cc.toOcl()); 
+      System.out.println(">>> OCL Form of global constraint: " + cc.toOcl()); 
     } 
 
     System.out.println(">>> ASTs of classes and use cases: "); 
@@ -3247,11 +3247,10 @@ public class UCDArea extends JPanel
           { entfout.println("import \"ocltype\""); } 
 
 
-          Entity oclexception = 
-            (Entity) ModelElement.lookupByName(
-                              "OclException", entities); 
+          boolean hasexceptiontype = 
+            Type.hasOclExceptionType(entities); 
 
-          if (oclexception != null) 
+          if (hasexceptiontype) 
           { entfout.println("import \"oclexception\""); 
             entfout.println("import \"errors\""); 
           } 
@@ -20726,7 +20725,7 @@ public void produceCUI(PrintWriter out)
         }  */ 
 
         cout.close(); 
-        System.out.println(">>> CSTL specification corresponding to TL, saved in tl.cstl"); 
+        System.out.println(">>> CSTL specification corresponding to TL, saved in output/tl.cstl"); 
         System.out.println(); 
         System.out.println(cg);
         System.out.println();  
@@ -20735,12 +20734,44 @@ public void produceCUI(PrintWriter out)
     }
   }
 
+  public void cgbeOCL2Program()
+  { PreProcessModels.preprocess(); 
+    // Writes output/out.txt
+
+    loadFromFile("mmCGBE.txt");
+    // Loads the CGBE metamodel
+
+    loadTL(); 
+    // reads output/forward.tl for initial specification
+
+    if (tlspecification == null) 
+    { System.err.println("!! Invalid initial TL specification in output/forward.tl"); 
+      return; 
+    } 
+
+    checkTLmodel(); 
+    // Loads output/out.txt as a ModelSpecification
+    
+    System.out.println(">>> Enhanced TL specification: "); 
+    System.out.println(tlspecification + "");
+      
+    // Then convert to CSTL. 
+
+    mapTL2CSTL(); 
+  } 
+
+  public void ltbeFromText()
+  { cgbePreProcess(); 
+    cgbe(); 
+  } 
+
   public void cgbePreProcess()
   { // Builds output/sourceasts.txt and output/targetasts.txt
     // by reading output/typeExamples.txt, 
     // output/expressionExamples.txt, output/statementExamples.txt
     // in each case it needs the grammar rule names to use
     // for source & target languages. 
+    // Combine with cgbe for "LTBE from text"
 
     String sourceLanguage = ""; 
     String targetLanguage = ""; 
@@ -20782,13 +20813,13 @@ public void produceCUI(PrintWriter out)
       } 
 
       String srule = 
-        JOptionPane.showInputDialog("Enter source language rule (for " + sourceLanguage + " expressions): ");
+        JOptionPane.showInputDialog("Enter source language parser rule (for " + sourceLanguage + " expressions): ");
       if (srule == null) 
       { return; } 
       sourceRule = srule; 
 
       String trule = 
-        JOptionPane.showInputDialog("Enter target language rule (for " + targetLanguage + " expressions): ");
+        JOptionPane.showInputDialog("Enter target language parser rule (for " + targetLanguage + " expressions): ");
       if (trule == null) 
       { return; } 
       targetRule = trule; 
@@ -20877,7 +20908,7 @@ public void produceCUI(PrintWriter out)
     }
     catch (Exception _ex) { } 
       
-  }
+  } // + same for types, statements, declarations. 
 
   public void cgbe()
   { // Takes corresponding asts from output/sourceasts.txt 
@@ -20885,6 +20916,7 @@ public void produceCUI(PrintWriter out)
     // Builds entities for source & target tags -> mm.txt 
     // Builds tlspecification of entity mappings -> forward.tl
     // Builds model for MTBE -> out.txt
+    // "LTBE from ASTs"
 
     BufferedReader brsource = null;
     BufferedReader brtarget = null;
@@ -20908,7 +20940,7 @@ public void produceCUI(PrintWriter out)
     while (!eof)
     { try { s = brsource.readLine(); }
       catch (IOException e)
-      { System.out.println("Reading sourceasts.txt failed.");
+      { System.out.println("!! Reading sourceasts.txt failed.");
         return; 
       }
 
@@ -20939,14 +20971,14 @@ public void produceCUI(PrintWriter out)
 
     // Create the source entities
 
-    ASTTerm.entitiesFromASTs(sourceasts,"",entities);    
+    ASTTerm.deepEntitiesFromASTs(sourceasts,"",entities);    
 
     // read target asts: 
 
     try
     { brtarget = new BufferedReader(new FileReader(tfile)); }
     catch (FileNotFoundException e)
-    { System.out.println("File not found: " + tfile);
+    { System.out.println("!! File not found: " + tfile);
       return; 
     }
 
@@ -20955,7 +20987,7 @@ public void produceCUI(PrintWriter out)
     while (!eof)
     { try { s = brtarget.readLine(); }
       catch (IOException e)
-      { System.out.println("Reading targetasts.txt failed.");
+      { System.out.println("!! Reading targetasts.txt failed.");
         return; 
       }
 
@@ -21002,7 +21034,7 @@ public void produceCUI(PrintWriter out)
                              targetasts,entities); 
     tlspecification = new ModelMatching(ems);
 
-    System.out.println("***>> TL specification: " + tlspecification); 
+    System.out.println("***>> TL initial specification: " + tlspecification); 
 
     File tlfile = new File("output/forward.tl");
     try
@@ -21018,7 +21050,7 @@ public void produceCUI(PrintWriter out)
     ASTTerm.modelSpecificationFromASTs(sourceasts,targetasts,
                                        entities,mod); 
 
-    System.out.println("***>> model specification: " + mod); 
+    System.out.println("***>> examples model specification: " + mod); 
 
     File mfile = new File("output/out.txt");
     try
@@ -21039,7 +21071,7 @@ public void produceCUI(PrintWriter out)
     long endTime = d2.getTime(); 
     System.out.println(">>> MTBE took " + (endTime - startTime) + "ms");
   
-    System.out.println(">>> Enhanced specification: "); 
+    System.out.println(">>> Enhanced TL specification: "); 
     System.out.println(tlspecification + "");
       
     try
@@ -21051,6 +21083,10 @@ public void produceCUI(PrintWriter out)
     } catch (Exception _except) { } 
 
     System.out.println("----- Written result TL transformation to output/final.tl ----------");  
+
+    // Then convert to CSTL. 
+
+    mapTL2CSTL(); 
   } 
   
   public void mapTL2UMLRSDS(Vector thesaurus)

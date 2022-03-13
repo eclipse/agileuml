@@ -80,15 +80,26 @@ public class TypeMatching
 
     if (am != null && am.srcvalue != null && 
         am.trgvalue != null) 
-    { String rulelhs = 
-        ((BasicExpression) am.srcvalue).toCSTL();
+    { BasicExpression lhs = (BasicExpression) am.srcvalue; 
+      BasicExpression rhs = (BasicExpression) am.trgvalue; 
+      String rulelhs = 
+        lhs.toCSTL();
       String rulerhs = 
-        ((BasicExpression) am.trgvalue).toLiteralCSTL();
+        rhs.toLiteralCSTL();
+
       ValueMatching vm = 
         new ValueMatching(rulelhs,rulerhs);
-      if (valueMappings.contains(vm)) { } 
+      
+      if (rulelhs.trim().equals(rulerhs.trim()) && 
+          lhs.arity() == 1 && rhs.arity() == 1)
+      { vm = new ValueMatching("_1", "_1"); 
+        if (valueMappings.contains(vm)) { } 
+        else 
+        { valueMappings.add(vm); } // at end
+      }  
+      else if (valueMappings.contains(vm)) { } 
       else 
-      { valueMappings.add(vm); } // if not already there
+      { valueMappings.add(0,vm); } // at start
     } 
   }  
 
@@ -187,8 +198,16 @@ public class TypeMatching
     for (int x = 0; x < valueMappings.size(); x++)
     { ValueMatching vm = (ValueMatching) valueMappings.get(x);
       res = res + vm.src + " |-->" + vm.trg + "\n";
+      String lhs = vm.src + ""; 
+      String rhs = vm.trg + "";
+
+      System.out.println(lhs + " |--> " + rhs + " " + vm.src.arity() + " " + vm.trg.arity()); 
+ 
       CGRule rr = new CGRule("" + vm.src, "" + vm.trg); 
-      cg.addCategoryRule(name,rr); 
+      if (lhs.trim().equals(rhs.trim()) && 
+          vm.src.arity() <= 1 && vm.trg.arity() <= 1)
+      { rr = new CGRule("_1", "_1"); } 
+      cg.addCategoryRuleInOrder(name,rr); 
     }
 
     return res;
@@ -199,8 +218,16 @@ public class TypeMatching
     for (int x = 0; x < valueMappings.size(); x++)
     { ValueMatching vm = (ValueMatching) valueMappings.get(x);
       res = res + vm.src + " |-->" + vm.trg + "\n";
+      String lhs = vm.src + ""; 
+      String rhs = vm.trg + ""; 
+
+      System.out.println(lhs + " |--> " + rhs + " " + vm.src.arity() + " " + vm.trg.arity()); 
+
       CGRule rr = new CGRule("" + vm.src, "" + vm.trg); 
-      cg.addInitialCategoryRule(category,rr); 
+      if (lhs.trim().equals(rhs.trim()) && 
+          vm.src.arity() <= 1 && vm.trg.arity() <= 1)
+      { rr = new CGRule("_1", "_1"); } 
+      cg.addCategoryRuleInOrder(category,rr); 
     }
 
     return res;

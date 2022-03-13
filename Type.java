@@ -248,6 +248,17 @@ public class Type extends ModelElement
     return false; 
   } 
 
+  public static boolean hasOclExceptionType(Vector ents)
+  { for (int i = 0; i < ents.size(); i++) 
+    { Entity ent = (Entity) ents.get(i); 
+      String ename = ent.getName(); 
+      if (isOclExceptionType(ename))
+      { return true; } 
+    } 
+    return false; 
+  } 
+
+
   public static String getOCLExceptionForC(String sig)
   { return (String) cexceptions.get(sig); } 
 

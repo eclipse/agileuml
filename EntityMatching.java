@@ -37,8 +37,21 @@ public class EntityMatching implements SystemTypes
   public EntityMatching(Entity asrc, Entity atrg)
   { src = asrc; 
     trg = atrg; 
-    srcname = src.getName(); 
-    trgname = trg.getName(); 
+
+    if (src == null) 
+    { System.err.println("!!! Null source in entity match to " + trg); 
+      return; 
+    }
+
+    if (trg == null) 
+    { System.err.println("!!! Null target in entity match from " + src); 
+      return; 
+    }
+
+    if (src != null) 
+    { srcname = src.getName(); } 
+    if (trg != null)  
+    { trgname = trg.getName(); }  
     realsrc = asrc; 
     realtrg = atrg; 
   } 
@@ -1116,8 +1129,20 @@ public class EntityMatching implements SystemTypes
 
   public String toString()
   { String res = ""; 
+    String sname = ""; 
+    if (realsrc == null) 
+    { sname = ""; } 
+    else 
+    { sname = realsrc.getName(); } 
+
+    String tname = ""; 
+    if (realtrg == null) 
+    { tname = ""; } 
+    else 
+    { tname = realtrg.getName(); } 
+    
     if (condition == null) 
-    { res = realsrc.getName() + " |--> " + realtrg.getName(); } 
+    { res = sname + " |--> " + tname; } 
     else 
     { res = "{ " + condition + " } " + 
             realsrc.getName() + " |--> " + realtrg.getName(); 
@@ -1131,6 +1156,7 @@ public class EntityMatching implements SystemTypes
     { AttributeMatching am = (AttributeMatching) attributeMappings.get(i); 
       res = res + "    " + am + "\n"; 
     } 
+
     return res; 
   } 
 

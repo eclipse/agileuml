@@ -62,6 +62,27 @@ public class ASTCompositeTerm extends ASTTerm
 
   public int arity()
   { return terms.size(); } 
+
+  public String tagFunction()
+  { String res = ""; 
+    for (int i = 0; i < terms.size(); i++)
+    { ASTTerm trm = (ASTTerm) terms.get(i); 
+      if (trm instanceof ASTSymbolTerm) 
+      { if ("".equals(res))
+        { res = tag + "~"; }
+        else 
+        { res = res + "$" + tag + "~"; }
+      }  
+      else 
+      { String tstring = tag + "_" + trm.tagFunction(); 
+        if ("".equals(res))
+        { res = tstring; }
+        else 
+        { res = res + "$" + tstring; } 
+      } 
+    } 
+    return res; 
+  }  
  
   public int nonSymbolArity()
   { int res = 0; 
