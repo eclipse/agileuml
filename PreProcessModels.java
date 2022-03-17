@@ -28,17 +28,46 @@ public class PreProcessModels
   // 
   // Produces output/out.txt 
 
+  static CGBEDialog opDialog = null; 
+
   public static void preprocess()
-  { Vector typeExamples = new Vector(); // Type
+  { if (opDialog == null)
+    { opDialog = new CGBEDialog(null);
+      opDialog.pack();
+      // opDialog.setLocationRelativeTo(this);
+    }
+    opDialog.setOldFields("Java", "typeTypeOrVoid",
+            "expression", "statement",
+            "classBodyDeclaration", "classDeclaration",
+            "localVariableDeclaration", 
+            "enumDeclaration");
+    opDialog.setVisible(true);
+   
+    String tlang = opDialog.getName(); 
+    String typesr = opDialog.getTypesRule(); 
+    String exprsr = opDialog.getExpressionsRule(); 
+    String statsr = opDialog.getStatementsRule(); 
+    String declnsr = opDialog.getDeclarationsRule(); 
+    String classesr = opDialog.getClassesRule(); 
+    String localdecsr = opDialog.getLocalDecsRule(); 
+    String enumsr = opDialog.getEnumsRule(); 
+
+    // System.out.println(">>> " + nme + " " + typr + " " + 
+    //                    expr); 
+
+
+    Vector typeExamples = new Vector(); // Type
     String oclTypeModel = ""; 
     Vector programTypeExamples = new Vector(); // String
 
     System.out.println();
     String targetLanguage = ""; 
-    String tlang = 
-      JOptionPane.showInputDialog("Enter target language name (of Antlr parser): ");
+    // String tlang = 
+    //   JOptionPane.showInputDialog("Enter target language name (of Antlr parser): ");
     if (tlang == null) 
-    { return; } 
+    { System.err.println("!! Invalid language name"); 
+      return; 
+    } 
     targetLanguage = tlang; 
 
 
@@ -61,13 +90,7 @@ public class PreProcessModels
     
       
 
-      try
-      { br = new BufferedReader(new FileReader(tfile)); }
-      catch (FileNotFoundException fnfe)
-      { System.out.println("File not found: " + tfile.getName());
-        return; 
-      }
-
+      br = new BufferedReader(new FileReader(tfile));
       
       int linecount = 0; 
 
@@ -161,7 +184,9 @@ public class PreProcessModels
 
       br.close(); 
     } catch(Exception e)
-      { System.err.println(">>> Error processing output/typeExamples.txt"); }
+      { System.err.println(">>> Error processing output/typeExamples.txt"); 
+        e.printStackTrace(); 
+      }
 
     System.out.println(">> Type examples: " + typeExamples); 
     System.out.println(">> OCL type model: " + oclTypeModel);
@@ -170,15 +195,17 @@ public class PreProcessModels
     String progid = ""; 
 
     String targetRule = ""; 
-    String trule = 
-        JOptionPane.showInputDialog("Enter target language parser rule (for " + targetLanguage + " types): ");
-    if (trule == null) 
-    { return; } 
-    targetRule = trule; 
+    // String trule = 
+    //    JOptionPane.showInputDialog("Enter target language parser rule (for " + targetLanguage + " types): ");
+    if (typesr == null) 
+    { System.err.println("!! Error: no type rule"); 
+      return; 
+    } 
+    targetRule = typesr; 
 
 
     try 
-    { File temp = new File("tmp.txt"); 
+    { // File temp = new File("tmp.txt"); 
       Runtime proc = Runtime.getRuntime(); 
         
       for (int i = 0; i < programTypeExamples.size(); i++) 
@@ -227,10 +254,15 @@ public class PreProcessModels
         System.out.println(">>> Exit code: " + exitjar2);
 
         progid = "progtype" + i; 
-        progModelString = progModelString + progid + " : ProgramType\n" + 
+        if (asttext.startsWith("("))
+        { progModelString = progModelString + progid + " : ProgramType\n" + 
             progid + ".ast = " + asttext + "\n\n"; 
-
-        System.out.println(">> Parsed: --- " + asttext);  
+          System.out.println(">> Parsed: --- " + asttext);
+        } 
+        else 
+        { progModelString = progModelString + progid + " : ProgramType\n"; 
+          System.err.println("!! Error: could not parse " + progEx); 
+        }   
       } 
     } 
     catch (Exception fex) 
@@ -264,13 +296,7 @@ public class PreProcessModels
       String s;
       boolean eof = false;
     
-      try
-      { br = new BufferedReader(new FileReader(efile)); }
-      catch (FileNotFoundException fnfe)
-      { System.out.println("File not found: " + efile.getName());
-        return; 
-      }
-
+      br = new BufferedReader(new FileReader(efile)); 
       
       int linecount = 0; 
 
@@ -422,14 +448,16 @@ public class PreProcessModels
     String exprprogModelString = ""; 
     progid = ""; 
 
-    trule = 
-        JOptionPane.showInputDialog("Enter target language parser rule (for " + targetLanguage + " expressions): ");
-    if (trule == null) 
-    { return; } 
-    targetRule = trule; 
+    // trule = 
+    //     JOptionPane.showInputDialog("Enter target language parser rule (for " + targetLanguage + " expressions): ");
+    if (exprsr == null) 
+    { System.err.println("!! No rule for expressions"); 
+      return; 
+    } 
+    targetRule = exprsr; 
 
     try 
-    { File temp = new File("tmp.txt"); 
+    { // File temp = new File("tmp.txt"); 
       Runtime proc = Runtime.getRuntime(); 
         
       for (int i = 0; i < programExpressionExamples.size(); i++) 
@@ -474,11 +502,16 @@ public class PreProcessModels
         int exitjar2 = p2.waitFor(); 
         System.out.println(">>> Exit code: " + exitjar2);
 
-        progid = "progexpr" + i; 
-        exprprogModelString = exprprogModelString + progid + " : ProgramExpression\n" + 
+        progid = "progexpr" + i;
+        if (asttext.startsWith("(")) 
+        { exprprogModelString = exprprogModelString + progid + " : ProgramExpression\n" + 
             progid + ".ast = " + asttext + "\n\n"; 
-
-        System.out.println("--- " + asttext);  
+          System.out.println("--- " + asttext);  
+        } 
+        else 
+        { exprprogModelString = exprprogModelString + progid + " : ProgramExpression\n"; 
+          System.err.println("!! Error: could not parse " + progEx);  
+        } 
       } 
     } 
     catch (Exception fex) 
@@ -491,8 +524,8 @@ public class PreProcessModels
 
     System.out.println(">>> Time for pre-processing expressions: " + (t3-t2)); 
 
-    System.out.println(exprprogModelString); 
-
+    System.out.println(">>> Expression model: " + 
+                       exprprogModelString); 
 
 
     /* Statements */ 
@@ -512,12 +545,7 @@ public class PreProcessModels
       String s;
       boolean eof = false;
     
-      try
-      { br = new BufferedReader(new FileReader(sfile)); }
-      catch (FileNotFoundException fnfe)
-      { System.out.println("File not found: " + sfile.getName());
-        return; 
-      }
+      br = new BufferedReader(new FileReader(sfile));
 
       
       int linecount = 0; 
@@ -664,47 +692,88 @@ public class PreProcessModels
     System.out.println(">> Statement model: " + oclStatementModel);
 
 
+    // trule = 
+    //    JOptionPane.showInputDialog("Enter target language parser rule (for " + targetLanguage + " statements): ");
+    if (statsr == null) 
+    { System.err.println("!! No statements rule"); 
+      return;
+    } 
 
-    String statprogModelString = ""; 
+    String statTargetRule = statsr; 
+
+    // String trule = 
+    //     JOptionPane.showInputDialog("Enter target language parser rule (for " + targetLanguage + " local declarations): ");
+    if (localdecsr == null) 
+    { System.err.println("!! No local declaration rule"); 
+      return; 
+    } 
+
+    String declTargetRule = localdecsr; 
+
+    String statProgModelString = ""; 
     progid = ""; 
 
     try 
-    { File temp = new File("tmp.txt"); 
+    { // File temp = new File("tmp.txt"); 
       Runtime proc = Runtime.getRuntime(); 
         
       for (int i = 0; i < programStatementExamples.size() && 
                       i < statementExamples.size(); 
            i++) 
-      { BufferedWriter bw = new BufferedWriter(new FileWriter(temp)); 
+      { // BufferedWriter bw = new BufferedWriter(new FileWriter(temp)); 
         String progEx = (String) programStatementExamples.get(i); 
-        bw.write(progEx + "\n");
-        bw.close();
+        // bw.write(progEx + "\n");
+        // bw.close();
         Thread.sleep(50); 
         Process p; 
 
         if (statementExamples.get(i) instanceof CreationStatement)
-        { p = proc.exec("parseProgramVariableDeclaration.bat"); } 
+        { p = proc.exec("grun.bat " + targetLanguage + " " + declTargetRule + " -tree"); } 
         else 
-        { p = proc.exec("parseProgramStatement.bat"); } 
+        { p = proc.exec("grun.bat " + targetLanguage + " " + statTargetRule + " -tree"); } 
  
-        InputStream stdin = p.getInputStream(); 
-        StreamGobble igb = new StreamGobble(stdin); 
-        InputStream stderr = p.getErrorStream(); 
-        StreamGobble egb = new StreamGobble(stderr); 
+        // InputStream stdin = p.getInputStream(); 
+        // StreamGobble igb = new StreamGobble(stdin); 
+        // InputStream stderr = p.getErrorStream(); 
+        // StreamGobble egb = new StreamGobble(stderr); 
  
-        egb.start(); igb.start();   
-        int exitp = p.waitFor();
+        // egb.start(); igb.start();   
+        // int exitp = p.waitFor();
 
-        File af = new File("ast.txt"); 
-        BufferedReader astbr = new BufferedReader(new FileReader(af));
-        String asttext = astbr.readLine(); 
-        astbr.close(); 
+        // File af = new File("ast.txt"); 
+        // BufferedReader astbr = new BufferedReader(new FileReader(af));
+     
+        OutputStream sout = p.getOutputStream(); 
+        OutputStreamWriter outw = new OutputStreamWriter(sout); 
+        BufferedWriter brw = new BufferedWriter(outw);
+        brw.write(progEx + "\n"); 
+        brw.close();  
+  
+        InputStream sin2 = p.getInputStream(); 
+        InputStreamReader inr2 = new InputStreamReader(sin2); 
+        BufferedReader ibr2 = new BufferedReader(inr2); 
+        String stext = ""; 
+        String oline2 = ibr2.readLine(); 
+        System.out.println(">>> parsing .... " + progEx);
+        while (oline2 != null) 
+        { stext = oline2; 
+          oline2 = ibr2.readLine();
+        }
 
-        progid = "progstat" + i; 
-        statprogModelString = statprogModelString + progid + " : ProgramStatement\n" + 
+        String asttext = stext.trim();  
+        int exitjar2 = p.waitFor(); 
+        System.out.println(">>> Exit code: " + exitjar2);
+
+        progid = "progstat" + i;
+        if (asttext.startsWith("(")) 
+        { statProgModelString = statProgModelString + progid + " : ProgramStatement\n" + 
             progid + ".ast = " + asttext + "\n\n"; 
-
-        System.out.println("--- " + asttext);  
+          System.out.println("--- " + asttext);  
+        } 
+        else 
+        { statProgModelString = statProgModelString + progid + " : ProgramStatement\n"; 
+          System.err.println("!! Error: could not parse " + progEx);  
+        } 
       } 
     } 
     catch (Exception fex) 
@@ -717,7 +786,7 @@ public class PreProcessModels
 
     System.out.println(">>> Time for pre-processing statements: " + (t4-t3)); 
 
-    System.out.println(statprogModelString); 
+    System.out.println(">>> Statement model: " + statProgModelString); 
 
 
     /* Declarations */ 
@@ -729,7 +798,8 @@ public class PreProcessModels
     try 
     { File dfile = new File("./output/declarationExamples.txt");
 	  
-      if (dfile == null) { return; }
+      if (dfile == null) 
+      { throw new FileNotFoundException(); }
 	 
       System.out.println(">>> Loading declaration examples");
  
@@ -737,13 +807,7 @@ public class PreProcessModels
       String s;
       boolean eof = false;
     
-      try
-      { br = new BufferedReader(new FileReader(dfile)); }
-      catch (FileNotFoundException fnfe)
-      { System.out.println("File not found: " + dfile.getName());
-        return; 
-      }
-
+      br = new BufferedReader(new FileReader(dfile));
       
       int linecount = 0; 
 
@@ -888,61 +952,118 @@ public class PreProcessModels
 
       br.close(); 
     } catch(Exception _e)
-      { System.err.println(">>> Error processing output/declarationExamples.txt"); }
+      { System.err.println(">>> Error processing output/declarationExamples.txt");
+        _e.printStackTrace();
+      }
 
     System.out.println(">> Declaration examples: " + operationExamples); 
     System.out.println(">> Declaration model: " + oclOperationModel);
 
+
+    // trule = 
+    //    JOptionPane.showInputDialog("Enter target language parser rule (for " + targetLanguage + " attribute declarations): ");
+    if (declnsr == null) 
+    { System.err.println("!! No feature declarations rule"); 
+      return; 
+    } 
+
+    String attTargetRule = declnsr; 
+
+    // trule = 
+    //     JOptionPane.showInputDialog("Enter target language parser rule (for " + targetLanguage + " operation declarations): ");
+    if (declnsr == null) 
+    { return; } 
+
+    String operTargetRule = declnsr; 
+
+    // trule = 
+    //     JOptionPane.showInputDialog("Enter target language parser rule (for " + targetLanguage + " class/struct declarations): ");
+    if (classesr == null) 
+    { System.err.println("!! No class parser rule"); 
+      return; 
+    } 
+
+    String classTargetRule = classesr; 
+
+    // trule = 
+    //     JOptionPane.showInputDialog("Enter target language parser rule (for " + targetLanguage + " enum declarations): ");
+    if (enumsr == null) 
+    { System.err.println("!! No rule for parsing enums"); 
+      return; 
+    } 
+
+    String typeDecTargetRule = enumsr; 
 
 
     String opprogModelString = ""; 
     progid = ""; 
      
     try 
-    { File temp = new File("tmp.txt"); 
+    { // File temp = new File("tmp.txt"); 
       Runtime proc = Runtime.getRuntime(); 
         
       for (int i = 0; i < programOperationExamples.size() && 
                       i < operationExamples.size(); 
            i++) 
-      { BufferedWriter bw = new BufferedWriter(new FileWriter(temp)); 
+      { // BufferedWriter bw = new BufferedWriter(new FileWriter(temp)); 
         String progEx = (String) programOperationExamples.get(i); 
-        bw.write(progEx + "\n");
-        bw.close();
-        Thread.sleep(50); 
+        // bw.write(progEx + "\n");
+        // bw.close();
+        // Thread.sleep(50); 
         Process p; 
 
         String dec = ""; 
 
         if (operationExamples.get(i) instanceof BehaviouralFeature)
-        { p = proc.exec("parseClassBodyDeclaration.bat"); 
+        { p = proc.exec("grun.bat " + targetLanguage + " " + operTargetRule + " -tree"); 
           dec = "ProgramOperation"; 
         } 
         else if (operationExamples.get(i) instanceof Attribute)
-        { p = proc.exec("parseClassBodyDeclaration.bat"); 
+        { p = proc.exec("grun.bat " + targetLanguage + " " + attTargetRule + " -tree"); 
           dec = "ProgramAttribute"; 
         } 
         else if (operationExamples.get(i) instanceof Type) 
-        { p = proc.exec("parseEnumDeclaration.bat"); 
+        { p = proc.exec("grun.bat " + targetLanguage + " " + typeDecTargetRule + " -tree"); 
           dec = "ProgramEnumeration"; 
         } 
         else
-        { p = proc.exec("parseClassDeclaration.bat"); 
+        { p = proc.exec("grun.bat " + targetLanguage + " " + classTargetRule + " -tree"); 
           dec = "ProgramClass"; 
         } 
  
-        InputStream stdin = p.getInputStream(); 
-        StreamGobble igb = new StreamGobble(stdin); 
-        InputStream stderr = p.getErrorStream(); 
-        StreamGobble egb = new StreamGobble(stderr); 
+        // InputStream stdin = p.getInputStream(); 
+        // StreamGobble igb = new StreamGobble(stdin); 
+        // InputStream stderr = p.getErrorStream(); 
+        // StreamGobble egb = new StreamGobble(stderr); 
  
-        egb.start(); igb.start();   
-        int exitp = p.waitFor();
+        // egb.start(); igb.start();   
+        // int exitp = p.waitFor();
 
-        File af = new File("ast.txt"); 
-        BufferedReader astbr = new BufferedReader(new FileReader(af));
-        String asttext = astbr.readLine(); 
-        astbr.close(); 
+        // File af = new File("ast.txt"); 
+        // BufferedReader astbr = new BufferedReader(new FileReader(af));
+        // String asttext = astbr.readLine(); 
+        // astbr.close(); 
+
+        OutputStream sout = p.getOutputStream(); 
+        OutputStreamWriter outw = new OutputStreamWriter(sout); 
+        BufferedWriter brw = new BufferedWriter(outw);
+        brw.write(progEx + "\n"); 
+        brw.close();  
+  
+        InputStream sin2 = p.getInputStream(); 
+        InputStreamReader inr2 = new InputStreamReader(sin2); 
+        BufferedReader ibr2 = new BufferedReader(inr2); 
+        String stext = ""; 
+        String oline2 = ibr2.readLine(); 
+        System.out.println(">>> parsing .... " + progEx);
+        while (oline2 != null) 
+        { stext = oline2; 
+          oline2 = ibr2.readLine();
+        }
+
+        String asttext = stext.trim();  
+        int exitjar2 = p.waitFor(); 
+        System.out.println(">>> Exit code: " + exitjar2);
 
         progid = "progop" + i; 
         opprogModelString = opprogModelString + 
@@ -995,7 +1116,7 @@ public class PreProcessModels
 
         if (statementExamples.size() == programStatementExamples.size())
         { bwout.write(oclStatementModel + "\n");
-          bwout.write(statprogModelString + "\n");
+          bwout.write(statProgModelString + "\n");
           for (int h = 0; h < statementExamples.size(); h++) 
           { String oclObj = "oclstat" + h;
             String progObj = "progstat" + h; 

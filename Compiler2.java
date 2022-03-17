@@ -1115,6 +1115,8 @@ public class Compiler2
          typ.equals("boolean") ||
          "OclAny".equals(typ) || "OclVoid".equals(typ) ||
          "OclType".equals(typ) || "OclDate".equals(typ) ||
+         "OclAttribute".equals(typ) || 
+         "OclOperation".equals(typ) ||
          "OclIterator".equals(typ) || 
          "OclFile".equals(typ) || "OclRandom".equals(typ) ||
          "OclProcess".equals(typ) || 

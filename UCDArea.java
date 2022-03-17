@@ -1764,7 +1764,7 @@ public class UCDArea extends JPanel
   }  // also add inv comp inv' for inv: constraints and inv': e.invariants each e 
 
   public void printOCL()
-  { cgbePreProcess(); 
+  { // cgbePreProcess(); 
 
     cgbe(); 
 
@@ -3309,6 +3309,8 @@ public class UCDArea extends JPanel
       mainfout.println(); 
       mainfout.println("import \"ocl\""); 
       mainfout.println("import \"fmt\""); 
+      mainfout.println("import \"ocltype\""); 
+      mainfout.println("import \"reflect\"");
       mainfout.println(); 
       mainfout.println(); 
       mainfout.println("func main() {"); 
@@ -3320,7 +3322,42 @@ public class UCDArea extends JPanel
  
         String ename = ee.getName(); 
         mainfout.println("  ocl.TypeMapping[\"" + ename + "\"] = TYPE" + ename); 
+        mainfout.println("  tobj" + ename + " := ocltype.CreateByPKOclType(\"" + ename + "\")");
+        mainfout.println("  tobj" + ename + ".SetActualType(reflect.TypeOf(" + ename + "{}))");
+        mainfout.println(); 
+        mainfout.println("  tobjint := ocltype.CreateByPKOclType(\"int\")");
+        mainfout.println("  tobjint.SetActualType(ocl.TYPEint)");
+        mainfout.println("  tobjlong := ocltype.CreateByPKOclType(\"long\")");
+        mainfout.println("  tobjlong.SetActualType(ocl.TYPElong)");
+        mainfout.println("  tobjdouble := ocltype.CreateByPKOclType(\"double\")");
+        mainfout.println("  tobjdouble.SetActualType(ocl.TYPEdouble)");
+        mainfout.println("  tobjboolean := ocltype.CreateByPKOclType(\"boolean\")");
+        mainfout.println("  tobjboolean.SetActualType(ocl.TYPEboolean)");
+        mainfout.println("  tobjString := ocltype.CreateByPKOclType(\"String\")");
+        mainfout.println("  tobjString.SetActualType(ocl.TYPEString)");
+        mainfout.println("  tobjSequence := ocltype.CreateByPKOclType(\"Sequence\")");
+        mainfout.println("  tobjSequence.SetActualType(ocl.TYPESequence)");
+        mainfout.println("  tobjSet := ocltype.CreateByPKOclType(\"Set\")");
+        mainfout.println("  tobjSet.SetActualType(ocl.TYPESet)");
+        mainfout.println("  tobjMap := ocltype.CreateByPKOclType(\"Map\")");
+        mainfout.println("  tobjMap.SetActualType(ocl.TYPEMap)");
+        mainfout.println(); 
       } 
+
+      for (int k = 0; k < entities.size(); k++) 
+      { Entity ee = (Entity) entities.get(k);
+        if (ee.isComponent() || ee.isExternal() || 
+            ee.isInterface())
+        { continue; } 
+ 
+        String ename = ee.getName(); 
+        Entity supee = ee.getSuperclass(); 
+        if (supee != null) 
+        { String supeename = supee.getName(); 
+          mainfout.println("  tobj" + ename + ".AddSuperclass(tobj" + supeename + ")"); 
+        } 
+      }
+
       mainfout.println("}"); 
       mainfout.close();
     } catch (Exception _em) { _em.printStackTrace(); }
@@ -12549,7 +12586,7 @@ public void produceCUI(PrintWriter out)
     }
 
     int noflines = 0; 
-	String currentTypeMappingName = ""; 
+    String currentTypeMappingName = ""; 
 
     while (!eof)
     { try { s = br.readLine(); }
@@ -20767,8 +20804,10 @@ public void produceCUI(PrintWriter out)
 
   public void cgbePreProcess()
   { // Builds output/sourceasts.txt and output/targetasts.txt
-    // by reading output/typeExamples.txt, 
-    // output/expressionExamples.txt, output/statementExamples.txt
+    // by reading files such as 
+    // output/typeExamples.txt, 
+    // output/expressionExamples.txt, 
+    // output/statementExamples.txt
     // in each case it needs the grammar rule names to use
     // for source & target languages. 
     // Combine with cgbe for "LTBE from text"
@@ -20793,93 +20832,110 @@ public void produceCUI(PrintWriter out)
     Vector srcasts = new Vector(); 
     Vector trgasts = new Vector();
 
-    try { 
-      Runtime proc = Runtime.getRuntime(); 
+    boolean hasNextFile = true; 
+    while (hasNextFile) 
+    { System.out.println("Enter examples file name, eg: expressionExamples.txt");
+      String examplesFile = 
+        JOptionPane.showInputDialog("Enter examples file name (in output directory): ");
+      if (examplesFile == null) 
+      { hasNextFile = false; 
+        break; 
+      } 
 
-      String sourceRule = "";  
-      String targetRule = ""; 
+      try { 
+        Runtime proc = Runtime.getRuntime(); 
+
+        String sourceRule = "";  
+        String targetRule = ""; 
        
-      System.out.println("---- Processing expression examples from output/expressionExamples.txt");
+        System.out.println("---- Processing examples from output/" + examplesFile);
 
-      Vector srcexprs = new Vector(); 
-      Vector trgexprs = new Vector(); 
+        Vector srcexprs = new Vector(); 
+        Vector trgexprs = new Vector(); 
  
-      PreProcessModels.parseExamples(
-        "output/expressionExamples.txt",srcexprs,trgexprs);  
+        PreProcessModels.parseExamples(
+          "output/" + examplesFile, srcexprs, trgexprs);  
 
-      if (srcexprs.size() != trgexprs.size())
-      { System.err.println("!! ERROR: some lines are missing 2 examples. Format must be source tabs target"); 
-        return; 
-      } 
+        if (srcexprs.size() != trgexprs.size())
+        { System.err.println("!! ERROR: some lines are missing 2 examples. Format must be source tabs target"); 
+          return; 
+        } 
 
-      String srule = 
-        JOptionPane.showInputDialog("Enter source language parser rule (for " + sourceLanguage + " expressions): ");
-      if (srule == null) 
-      { return; } 
-      sourceRule = srule; 
+        String srule = 
+          JOptionPane.showInputDialog("Enter source language parser rule (for " + sourceLanguage + " examples): ");
+        if (srule == null) 
+        { return; } 
+        sourceRule = srule; 
 
-      String trule = 
-        JOptionPane.showInputDialog("Enter target language parser rule (for " + targetLanguage + " expressions): ");
-      if (trule == null) 
-      { return; } 
-      targetRule = trule; 
+        String trule = 
+          JOptionPane.showInputDialog("Enter target language parser rule (for " + targetLanguage + " examples): ");
+        if (trule == null) 
+        { return; } 
+        targetRule = trule; 
 
-      for (int i = 0; i < srcexprs.size(); i++) 
-      { String srctext = (String) srcexprs.get(i); 
-        Process p2 = proc.exec("grun.bat " + sourceLanguage + " " + sourceRule + " -tree"); 
+        for (int i = 0; i < srcexprs.size(); i++) 
+        { String srctext = (String) srcexprs.get(i); 
+          Process p2 = proc.exec("grun.bat " + sourceLanguage + " " + sourceRule + " -tree"); 
 
-        OutputStream sout = p2.getOutputStream(); 
-        OutputStreamWriter outw = new OutputStreamWriter(sout); 
-        BufferedWriter brw = new BufferedWriter(outw);
-        brw.write(srctext + "\n"); 
-        brw.close();  
+          OutputStream sout = p2.getOutputStream(); 
+          OutputStreamWriter outw = new OutputStreamWriter(sout); 
+          BufferedWriter brw = new BufferedWriter(outw);
+          brw.write(srctext + "\n"); 
+          brw.close();  
   
-        InputStream sin2 = p2.getInputStream(); 
-        InputStreamReader inr2 = new InputStreamReader(sin2); 
-        BufferedReader ibr2 = new BufferedReader(inr2); 
-        String stext = ""; 
-        String oline2 = ibr2.readLine(); 
-        System.out.println("parsing .... " + srctext);
-        while (oline2 != null) 
-        { stext = oline2; 
-          oline2 = ibr2.readLine();
-        }
-        srcasts.add(stext.trim());  
-        int exitjar2 = p2.waitFor(); 
-        System.out.println("Exit code: " + exitjar2);
-      } 
+          InputStream sin2 = p2.getInputStream(); 
+          InputStreamReader inr2 = new InputStreamReader(sin2); 
+          BufferedReader ibr2 = new BufferedReader(inr2); 
+          String stext = ""; 
+          String oline2 = ibr2.readLine(); 
+          System.out.println("parsing .... " + srctext);
+          while (oline2 != null) 
+          { stext = oline2; 
+            oline2 = ibr2.readLine();
+          }
+          srcasts.add(stext.trim());  
+          int exitjar2 = p2.waitFor(); 
+          System.out.println("Exit code: " + exitjar2);
+        } 
       
-      System.out.println(">>> Source asts are: " + srcasts); 
+        System.out.println(">>> Source asts are: " + srcasts); 
 
-      for (int i = 0; i < trgexprs.size(); i++) 
-      { String trgtext = (String) trgexprs.get(i); 
-        Process p2 = proc.exec("grun.bat " + targetLanguage + " " + targetRule + " -tree"); 
+        for (int i = 0; i < trgexprs.size(); i++) 
+        { String trgtext = (String) trgexprs.get(i); 
+          Process p2 = proc.exec("grun.bat " + targetLanguage + " " + targetRule + " -tree"); 
 
-        OutputStream sout = p2.getOutputStream(); 
-        OutputStreamWriter outw = new OutputStreamWriter(sout); 
-        BufferedWriter brw = new BufferedWriter(outw);
-        brw.write(trgtext + "\n"); 
-        brw.close();  
+          OutputStream sout = p2.getOutputStream(); 
+          OutputStreamWriter outw = new OutputStreamWriter(sout); 
+          BufferedWriter brw = new BufferedWriter(outw);
+          brw.write(trgtext + "\n"); 
+          brw.close();  
   
-        InputStream sin2 = p2.getInputStream(); 
-        InputStreamReader inr2 = new InputStreamReader(sin2); 
-        BufferedReader ibr2 = new BufferedReader(inr2); 
-        String ttext = ""; 
-        String oline2 = ibr2.readLine(); 
-        System.out.println("parsing .... " + trgtext);
-        while (oline2 != null) 
-        { ttext = oline2; 
-          oline2 = ibr2.readLine();
-        }
-        trgasts.add(ttext.trim());  
-        int exitjar2 = p2.waitFor(); 
-        System.out.println("Exit code: " + exitjar2);
-      } 
+          InputStream sin2 = p2.getInputStream(); 
+          InputStreamReader inr2 = new InputStreamReader(sin2); 
+          BufferedReader ibr2 = new BufferedReader(inr2); 
+          String ttext = ""; 
+          String oline2 = ibr2.readLine(); 
+          System.out.println("parsing .... " + trgtext);
+          while (oline2 != null) 
+          { ttext = oline2; 
+            oline2 = ibr2.readLine();
+          }
+          trgasts.add(ttext.trim());  
+          int exitjar2 = p2.waitFor(); 
+          System.out.println("Exit code: " + exitjar2);
+        } 
       
-      System.out.println(">>> Target asts are: " + trgasts); 
+        System.out.println(">>> Target asts are: " + trgasts); 
+      } 
+      catch (Exception ee) { ee.printStackTrace(); }
 
-    } 
-    catch (Exception ee) { ee.printStackTrace(); } 
+      String goOn = 
+        JOptionPane.showInputDialog("Another input examples file? (yes/no): ");
+      if (goOn == null || goOn.toLowerCase().startsWith("n")) 
+      { hasNextFile = false; 
+        break; 
+      }
+    }  
 
     File sfile = new File("output/sourceasts.txt");
     File tfile = new File("output/targetasts.txt");
