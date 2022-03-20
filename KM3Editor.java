@@ -14,7 +14,7 @@ import javax.swing.*;
 import javax.swing.text.*;
 import javax.swing.event.*;
 
-/* K. Lano 2010-2021
+/* K. Lano 2010-2022
    
   Adapted from Oracle example of JTextPane
 
@@ -102,7 +102,7 @@ public class KM3Editor extends JFrame implements DocumentListener
         JScrollPane scrollPane = new JScrollPane(textPane);
         scrollPane.setPreferredSize(new Dimension(100, 300));
 
-        messageArea = new JTextArea(10, 50);
+        messageArea = new JTextArea(20, 35);
         messageArea.setEditable(false);
         JScrollPane scrollPaneForLog = new JScrollPane(messageArea);
 

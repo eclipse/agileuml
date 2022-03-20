@@ -1841,8 +1841,10 @@ public class UCDArea extends JPanel
     catch (Exception _fex) 
     { System.err.println("! No file: output/preprocessed_progs_train.json"); }  
      */ 
-    
   }
+
+  public void validateCGBE()
+  { testCSTLwithASTS(); } 
 
   public void listEntities()
   { System.out.println(entities); } 
@@ -12570,13 +12572,16 @@ public void produceCUI(PrintWriter out)
   } 
 
   public void loadTL()
+  { loadTL("forward.tl"); } 
+
+  public void loadTL(String fname)
   { ModelMatching res = new ModelMatching(); 
     Map mm = new Map(); 
 
     BufferedReader br = null;
     String s;
     boolean eof = false;
-    File file = new File("output/forward.tl");  /* default */ 
+    File file = new File("output/" + fname);  
 
     try
     { br = new BufferedReader(new FileReader(file)); }
@@ -20778,11 +20783,11 @@ public void produceCUI(PrintWriter out)
     loadFromFile("mmCGBE.txt");
     // Loads the CGBE metamodel
 
-    loadTL(); 
+    loadTL("forwardCGBE.tl"); 
     // reads output/forward.tl for initial specification
 
     if (tlspecification == null) 
-    { System.err.println("!! Invalid initial TL specification in output/forward.tl"); 
+    { System.err.println("!! Invalid initial TL specification in output/forwardCGBE.tl"); 
       return; 
     } 
 
@@ -21027,7 +21032,7 @@ public void produceCUI(PrintWriter out)
 
     // Create the source entities
 
-    ASTTerm.deepEntitiesFromASTs(sourceasts,"",entities);    
+    ASTTerm.entitiesFromASTs(sourceasts,"",entities);    
 
     // read target asts: 
 

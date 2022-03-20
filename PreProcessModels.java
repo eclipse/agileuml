@@ -864,7 +864,8 @@ public class PreProcessModels
         { tt = comp.parseOperation(entities,types); } 
         else if ("attribute".equals(keyword))
         { tt = comp.parseAttribute(entities,types); }
-        else if ("class".equals(keyword))
+        else if ("class".equals(keyword) || 
+                 "interface".equals(keyword))
         { tt = (ModelElement) 
                   comp.parseKM3Class(entities,types); 
         } 
@@ -872,18 +873,38 @@ public class PreProcessModels
         { tt = (ModelElement) 
                   comp.parseKM3Enumeration(entities,types); 
         } 
-        
+        else 
+        { System.err.println("!! Unrecognised UML/OCL keyword: " + keyword); } 
+        // Warning: no abstract classes. 
 
         if (tt != null) 
         { operationExamples.add(tt); 
 
-          if (tt instanceof Entity && Entity.isEmptyClass(tt))
+          if (tt instanceof Entity && 
+              ((Entity) tt).isInterface() && 
+              Entity.isEmptyClass(tt))
+          { modelString = exampleName + " : OclEmptyInterface\n" + 
+              exampleName + ".ast = " + tt.toAST() + "\n"; 
+             
+            oclOperationModel = oclOperationModel + modelString + "\n";
+          } 
+          else if (tt instanceof Entity && 
+                   ((Entity) tt).isInterface() && 
+                   Entity.isNonEmptyClass(tt))
+          { modelString = exampleName + " : OclNonEmptyInterface\n" + 
+              exampleName + ".ast = " + tt.toAST() + "\n"; 
+             
+            oclOperationModel = oclOperationModel + modelString + "\n";
+          } 
+          else if (tt instanceof Entity && 
+                   Entity.isEmptyClass(tt))
           { modelString = exampleName + " : OclEmptyClass\n" + 
               exampleName + ".ast = " + tt.toAST() + "\n"; 
              
             oclOperationModel = oclOperationModel + modelString + "\n";
           } 
-          else if (tt instanceof Entity && Entity.isNonEmptyClass(tt))
+          else if (tt instanceof Entity && 
+                   Entity.isNonEmptyClass(tt))
           { modelString = exampleName + " : OclNonEmptyClass\n" + 
               exampleName + ".ast = " + tt.toAST() + "\n"; 
              

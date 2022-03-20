@@ -153,7 +153,7 @@ public class AttributeMatching
     { String rulelhs = ((BasicExpression) srcvalue).toCSTL();
       BasicExpression rbe = (BasicExpression) trgvalue; 
 
-      System.out.println(">>> Mapping: " + this + " " + rbe.isFunctionApplication()); 
+      // System.out.println(">>> Mapping: " + this + " " + rbe.isFunctionApplication()); 
 
       if (rbe.isFunctionApplication())
       { String func = rbe.getAppliedFunction(); 
@@ -166,8 +166,9 @@ public class AttributeMatching
       } // It is simply _1 |-->_1`func
  
       String rulerhs = ((BasicExpression) trgvalue).toLiteralCSTL();
-      CGRule rle = new CGRule(rulelhs, rulerhs); 
-      if (cond != null) 
+      CGRule rle = new CGRule(rulelhs, rulerhs);
+      Vector vars = rle.getVariables();  
+      if (cond != null && vars.size() > 0) 
       { CGCondition cc = new CGCondition(cond); 
         rle.addCondition(cc); 
       } 

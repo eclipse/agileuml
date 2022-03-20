@@ -260,6 +260,15 @@ public class ModelSpecification
     return false; 
   } 
 
+  public ASTTerm correspondingTreeTerm(ASTTerm trg, Vector srcs)
+  { for (int i = 0; i < srcs.size(); i++) 
+    { ASTTerm sterm = (ASTTerm) srcs.get(i); 
+      if (correspondingTrees(sterm,trg))
+      { return sterm; } 
+    } 
+    return null; 
+  } 
+
   public boolean correspondingTrees(Entity sent, ASTTerm s, ASTTerm t) 
   { if (s == null) 
     { return false; } 
@@ -5961,8 +5970,10 @@ public class ModelSpecification
                     if (srcJValues.get(0) instanceof ASTSymbolTerm) { } 
                     else 
                     { String fid = 
-                         Identifier.nextIdentifier("subruleset");
-                      TypeMatching tmnew = new TypeMatching(fid);
+                         Identifier.nextIdentifier(
+                                         "subruleset");
+                      TypeMatching tmnew = 
+                          new TypeMatching(fid);
                       String slhs = 
                         ((BasicExpression) amjx.srcvalue).toCSTL(); 
                       String rrhs = 
@@ -6158,6 +6169,24 @@ public class ModelSpecification
           return amts; 
         } 
       }
+      else if (ASTTerm.sameTag(targetValues) && 
+         ASTTerm.lowerNonSymbolArity(sattvalues,targetValues))
+      { Vector localams = new Vector(); 
+        
+        System.out.println(">**> Checking tree-2-tree mapping with selection/filtering: " + sattvalues[0] + " ---> " + targetValues[0]); 
+        System.out.println();           
+
+        AttributeMatching amts = 
+          treeSequenceMapping4(satt, sent, tatt, 
+                 sourceatts, sattvalues, targetValues, 
+                 sattvalueMap, tms, localams); 
+        
+        if (amts != null) 
+        { System.out.println(">**> Found tree-2-tree mapping with selection/filtering: " + amts); 
+          ams = new Vector();  
+          return amts; 
+        } 
+      }  
     } 
 
     ams = new Vector();            
@@ -6540,18 +6569,241 @@ public class ModelSpecification
       String rrhs = 
         ((BasicExpression) amjx.trgvalue).toLiteralCSTL();  
       tmnew.addValueMapping(slhs, rrhs); 
-      tmnew.addValueMapping("_*", "_*`" + fid);    
+      // tmnew.addValueMapping("_*", "_*`" + fid);    
       tmnew.addValueMapping("_0", "_0");    
       tms.add(tmnew);
-      BasicExpression fexpr = new BasicExpression(fid); 
-      fexpr.setUmlKind(Expression.FUNCTION);
-      fexpr.addParameter(new BasicExpression("_*"));  
+      // BasicExpression fexpr = new BasicExpression(fid); 
+      // fexpr.setUmlKind(Expression.FUNCTION);
+      // fexpr.addParameter(new BasicExpression("_*"));
+
+      String subid = 
+         Identifier.nextIdentifier("subruleset");
+      TypeMatching tmsub = 
+                          new TypeMatching(subid);
+      String sublhs = "_*"; 
+      String subrhs = "_*`" + fid; 
+      tmsub.addValueMapping(sublhs, subrhs);
+      tms.add(tmsub);
+
+      BasicExpression subexpr = new BasicExpression(subid); 
+      subexpr.setUmlKind(Expression.FUNCTION);
+      subexpr.addParameter(new BasicExpression("_1"));
+                         
       AttributeMatching amres = 
-        new AttributeMatching(new BasicExpression("_*"), 
-                              fexpr); 
+        new AttributeMatching(new BasicExpression("_1"), 
+                              subexpr);  // _* fexpr 
       return amres; 
     } 
     return amjx; 
+  }             
+
+  private AttributeMatching treeSequenceMapping4(
+      Attribute satt, 
+      Entity sent, Attribute tatt, 
+      Vector sourceatts, ASTTerm[] strees, ASTTerm[] ttrees, 
+      java.util.Map sattvalueMap,     
+      Vector tms, Vector ams)
+  { // Each ttrees[i] non-symbol element originates from a 
+    // corresponding strees[i] non-symbol element via 
+    // a consistent mapping f. But some sources can be 
+    // omitted Result is 
+    // tagsource(_*) |--> tagtarget(_*`f)
+    // Symbols can be consistently deleted or replaced
+
+    System.out.println(">> Trying to find tree sequence select/filter mapping for " + strees.length + " source terms to " + ttrees.length + " target terms"); 
+    System.out.println();  
+
+
+    Vector sSymbolTerms = new Vector(); 
+    // Vector sTreeTerms = new Vector(); 
+    Vector tSymbolTerms = new Vector(); 
+    // Vector tTreeTerms = new Vector(); 
+
+    int n = strees.length; 
+
+    for (int i = 0; i < n; i++) 
+    { ASTTerm st = strees[i]; 
+      ASTTerm tt = ttrees[i];
+
+      if (st == null || tt == null) 
+      { return null; } 
+ 
+      int sn = st.nonSymbolArity(); 
+      int tn = tt.nonSymbolArity(); 
+      if (sn < tn) 
+      { return null; }       
+    
+      sSymbolTerms.addAll(st.symbolTerms()); 
+      tSymbolTerms.addAll(tt.symbolTerms()); 
+      // sTreeTerms.addAll(st.nonSymbolTerms()); 
+      // tTreeTerms.addAll(tt.nonSymbolTerms());   
+    } 
+
+    System.out.println(">>--- Trying to match: " + sSymbolTerms + " and " + tSymbolTerms); 
+    // System.out.println(">>--- And: " + sTreeTerms + " and " + tTreeTerms); 
+    System.out.println(); 
+
+    Vector ssTerms = new Vector(); 
+    Vector deletedSymbols = new Vector(); 
+    for (int y = 0; y < sSymbolTerms.size(); y++) 
+    { String slf = 
+        ((ASTTerm) sSymbolTerms.get(y)).literalForm();
+      ssTerms.add(slf);  
+      if (deletedSymbols.contains(slf)) { } 
+      else 
+      { deletedSymbols.add(slf); } 
+    }  
+
+    Vector ttTerms = new Vector(); 
+    for (int y = 0; y < tSymbolTerms.size(); y++) 
+    { String tlf = 
+        ((ASTTerm) tSymbolTerms.get(y)).literalForm();
+      ttTerms.add(tlf);  
+    }  
+
+    Vector replacedSymbols = new Vector(); 
+    Vector replacements = new Vector(); 
+    for (int j = 0; j < deletedSymbols.size(); j++) 
+    { String ds = (String) deletedSymbols.get(j); 
+      if (replacedSymbols.contains(ds)) { } 
+      else if (ttTerms.contains(ds)) { } 
+      else 
+      { boolean replacementFound = false; 
+        for (int z = 0; z < ttTerms.size() && 
+                        !replacementFound; z++) 
+        { String rs = (String) ttTerms.get(z); 
+          if (replacements.contains(rs)) { } 
+          else if (Collections.frequency(ttTerms, rs) == 
+                   Collections.frequency(ssTerms, ds))
+          { // Look for a replacement
+            replacedSymbols.add(ds); 
+            replacements.add(rs);
+            replacementFound = true;  
+            System.out.println(">> Replacement of symbols: " + ds + " |--> " + rs); 
+          } 
+        }
+      } 
+    } 
+    deletedSymbols.removeAll(ttTerms); 
+    deletedSymbols.removeAll(replacedSymbols); 
+    System.out.println(">>-- Deleted symbols: " + deletedSymbols); 
+
+    Vector sTreeTerms = new Vector(); 
+    Vector tTreeTerms = new Vector(); 
+
+    for (int i = 0; i < n; i++) 
+    { ASTTerm st = strees[i]; 
+      ASTTerm tt = ttrees[i];
+
+      if (st == null || tt == null) 
+      { return null; } 
+ 
+      int sn = st.nonSymbolArity(); 
+      int tn = tt.nonSymbolArity(); 
+
+      // System.out.println(">> Arity of " + st + " is " + sn); 
+      // System.out.println(">> Arity of " + tt + " is " + tn); 
+
+      if (sn < tn) 
+      { return null; }       
+
+      // Try to identify corresponding source->target trees
+      // Each target should have some source. 
+
+      Vector srcterms = st.nonSymbolTerms(); 
+      Vector targterms = tt.nonSymbolTerms(); 
+
+      for (int j = 0; j < tn; j++)
+      { ASTTerm targterm = (ASTTerm) targterms.get(j); 
+        ASTTerm srcterm = 
+           correspondingTreeTerm(targterm,srcterms);
+        if (srcterm == null) 
+        { System.out.println("!! " + targterm + " has no match in " + srcterms); 
+          System.out.println(); 
+          return null; 
+        }  
+        sTreeTerms.add(srcterm); 
+        tTreeTerms.add(targterm); 
+      } 
+
+      System.out.println(">> All target terms " + tTreeTerms + 
+                         " are matched in source terms " + 
+                         sTreeTerms); 
+      System.out.println(); 
+    } 
+                 
+    ASTTerm[] sourceJValues = new ASTTerm[sTreeTerms.size()]; 
+    for (int i = 0; i < sTreeTerms.size(); i++) 
+    { ASTTerm srct = (ASTTerm) sTreeTerms.get(i); 
+      sourceJValues[i] = srct; 
+    } 
+
+    ASTTerm[] targetJValues = new ASTTerm[tTreeTerms.size()]; 
+    for (int i = 0; i < tTreeTerms.size(); i++) 
+    { ASTTerm trgt = (ASTTerm) tTreeTerms.get(i); 
+      targetJValues[i] = trgt; 
+    } 
+
+    java.util.Map newSMap = new java.util.HashMap(); 
+    newSMap.putAll(sattvalueMap);
+    newSMap.put(satt, sourceJValues);  
+    AttributeMatching amjx = 
+       composedTreeFunction(sent,
+                     tatt,sourceatts,newSMap,     
+                     targetJValues, tTreeTerms, tms, ams); 
+    if (amjx != null) 
+    { System.out.println(">>--- List selection mapping: " + amjx); 
+
+      String fid = 
+          Identifier.nextIdentifier("ruleset");
+      TypeMatching tmnew = new TypeMatching(fid);
+
+      for (int r = 0; r < replacedSymbols.size(); r++) 
+      { String rs = (String) replacedSymbols.get(r);
+        String repls = (String) replacements.get(r);  
+        tmnew.addValueMapping(rs, repls); 
+      } 
+
+      for (int d = 0; d < deletedSymbols.size(); d++) 
+      { String ds = (String) deletedSymbols.get(d); 
+        tmnew.addValueMapping(ds, " "); 
+      } 
+
+      String slhs = 
+        ((BasicExpression) amjx.srcvalue).toCSTL(); 
+      String rrhs = 
+        ((BasicExpression) amjx.trgvalue).toLiteralCSTL();  
+      tmnew.addValueMapping(slhs, rrhs); 
+      tmnew.addValueMapping("_*", "");    
+      // tmnew.addValueMapping("_0", "_0");    
+      tms.add(tmnew);
+
+
+      String subid = 
+         Identifier.nextIdentifier("subruleset");
+      TypeMatching tmsub = 
+                          new TypeMatching(subid);
+      String sublhs = "_*"; 
+      String subrhs = "_*`" + fid; 
+      tmsub.addValueMapping(sublhs, subrhs);
+      tms.add(tmsub);
+
+      BasicExpression subexpr = new BasicExpression(subid); 
+      subexpr.setUmlKind(Expression.FUNCTION);
+      subexpr.addParameter(new BasicExpression("_1"));
+                         
+      AttributeMatching amres = 
+        new AttributeMatching(new BasicExpression("_1"), 
+                              subexpr); 
+      // BasicExpression fexpr = new BasicExpression(fid); 
+      // fexpr.setUmlKind(Expression.FUNCTION);
+      // fexpr.addParameter(new BasicExpression("_1"));  
+      // AttributeMatching amres = 
+      //   new AttributeMatching(new BasicExpression("_1"), 
+      //                         fexpr); 
+      return amres;  
+    } 
+    return null; 
   }             
 
   public Vector conditionalTreeMappings(

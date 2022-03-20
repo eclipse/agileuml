@@ -34,6 +34,8 @@ public class ASTCompositeTerm extends ASTTerm
   public static Type doubleType = new Type("double", null); 
   public static Type voidType = new Type("void", null); 
 
+  public static Statement skipStatement = 
+                     new InvocationStatement("skip"); 
 
   public ASTCompositeTerm(String t)
   { tag = t; 
@@ -5612,6 +5614,83 @@ public class ASTCompositeTerm extends ASTTerm
       sqstat.addStatement(forstat);   
       return sqstat; 
     }  
+    else if ("strtok".equals(fname) && args.size() == 2)
+    { // if s /= "" then _tok_string := s else skip ;
+      // if _tok_string->hasMatch(ct) 
+      // then tok_token := _tok_string->firstMatch(ct); 
+      //   _tok_ind := _tok_string->indexOf(_tok_token) + _tok_token.size;
+      //   _tok_string := _tok_string.substring(_tok_ind)
+      // else _tok_token := ""; _tok_ind := 0; 
+      //   _tok_string := "" 
+
+      Expression s = (Expression) args.get(0);
+      Expression ct = (Expression) args.get(1);
+      s.setType(new Type("String", null)); 
+      ct.setType(new Type("String", null));
+
+      Expression indexexpr = 
+         BasicExpression.newVariableBasicExpression("_tok_ind");   
+      indexexpr.setType(new Type("int", null));
+      Expression tokenexpr = 
+         BasicExpression.newVariableBasicExpression(
+                        "_tok_token");   
+      tokenexpr.setType(new Type("String", null));
+      Expression tokstringexpr = 
+         BasicExpression.newVariableBasicExpression(
+                        "_tok_string");   
+      tokstringexpr.setType(new Type("String", null));
+      
+      Expression nonempty = 
+        new BinaryExpression("/=",s,emptyStringExpression);
+      nonempty.setType(new Type("boolean", null)); 
+      AssignStatement assigns = 
+        new AssignStatement(tokstringexpr, s);   
+      ConditionalStatement cond1 = 
+        new ConditionalStatement(
+                   nonempty,assigns,skipStatement);
+      
+      SequenceStatement stat0 = new SequenceStatement();
+      AssignStatement asgn1 = 
+        new AssignStatement(tokenexpr,  
+          new BinaryExpression("->firstMatch", 
+                               tokstringexpr, ct)); 
+      stat0.addStatement(asgn1); 
+      Expression indof = 
+        new BinaryExpression("->indexOf", tokstringexpr, ct);
+      Expression sizetok = 
+        new UnaryExpression("->size", tokenexpr);  
+      AssignStatement asgn2 = 
+        new AssignStatement(indexexpr,  
+          new BinaryExpression("+", indof, sizetok)); 
+      stat0.addStatement(asgn2); 
+      Expression substr = 
+        BasicExpression.newFunctionBasicExpression("substring", 
+                                      tokstringexpr, indexexpr); 
+      AssignStatement asgn3 = 
+        new AssignStatement(tokstringexpr, substr); 
+      stat0.addStatement(asgn3); 
+
+      SequenceStatement stat1 = new SequenceStatement();
+      AssignStatement asgn4 = 
+        new AssignStatement(tokenexpr, emptyStringExpression);   
+      stat1.addStatement(asgn4); 
+      AssignStatement asgn5 = 
+        new AssignStatement(indexexpr, zeroExpression); 
+      stat1.addStatement(asgn5); 
+      AssignStatement asgn6 = 
+        new AssignStatement(
+               tokstringexpr, emptyStringExpression); 
+      stat1.addStatement(asgn6); 
+      
+      Expression test = 
+        new BinaryExpression("->hasMatch", tokstringexpr, ct); 
+      ConditionalStatement cond2 =
+        new ConditionalStatement(test,stat0,stat1);
+      SequenceStatement res = new SequenceStatement(); 
+      res.addStatement(cond1); 
+      res.addStatement(cond2); 
+      return res;   
+    } 
 
     return null; 
   }
@@ -5629,7 +5708,7 @@ public class ASTCompositeTerm extends ASTTerm
       Expression arg1 = (Expression) args.get(1);
       arg1.setType(new Type("String", null)); 
       return new AssignStatement(arg0, arg1);  
-    } // and side-effect 
+    }  
     else if ("strncpy".equals(fname) && args.size() == 3)
     { Expression arg0 = (Expression) args.get(0);
       Expression arg1 = (Expression) args.get(1);
@@ -5642,7 +5721,7 @@ public class ASTCompositeTerm extends ASTTerm
         BasicExpression.newFunctionBasicExpression("subrange", arg1, pars);  
       fbe.setType(new Type("String", null));
       return new AssignStatement(arg0, fbe); 
-    } // and side-effect 
+    }  
     else if (("memcpy".equals(fname) || 
               "memmove".equals(fname)) && args.size() == 3)
     { // for i : 0..argn-1 
@@ -6950,6 +7029,13 @@ public class ASTCompositeTerm extends ASTTerm
       res.setType(new Type("int", null)); 
       return res; 
     }
+    else if ("strtok".equals(fname) && args.size() == 2)
+    { Expression tokenexpr = 
+         BasicExpression.newVariableBasicExpression(
+                        "_tok_token");   
+      tokenexpr.setType(new Type("String", null));
+      return tokenexpr; 
+    } 
     else if ("memcmp".equals(fname) && args.size() == 3) 
     { // arg1.subrange(1,n)->compareTo(arg2.subrange(1,n))
       Expression arg1 = (Expression) args.get(0);

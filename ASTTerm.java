@@ -1291,6 +1291,33 @@ public abstract class ASTTerm
       return false; 
     }
 
+    public static boolean lowerNonSymbolArity(ASTTerm[] xs, ASTTerm[] ys)
+    { // Is number of non-symbols in ys[i].terms <= 
+      // number of non-symbols in xs[i].terms? 
+
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { ASTTerm xx = xs[i]; 
+          ASTTerm yvect = ys[i]; 
+
+          if (xx == null || yvect == null)
+          { return false; } 
+
+          int n = xx.nonSymbolArity();
+          System.out.println(">***> Non-symbol arity of " + xx + " = " + n); 
+ 
+          int m = yvect.nonSymbolArity(); 
+          System.out.println(">***> Non-symbol arity of " + yvect + " = " + m); 
+
+          if (n < m) 
+          { return false; } 
+        } 
+        return true; 
+      } 
+      return false; 
+    }
+
+
 /* 
     public static boolean embeddedTrees(ASTTerm[] xs, ASTTerm[] ys, ModelSpecification mod)
     { // Is each ys[i] = (tag xs[i]' ..terms..) for same tag? 
@@ -1694,6 +1721,39 @@ public abstract class ASTTerm
       int m = t.arity(); 
 
       if (n > 0 && m > 0) 
+      { String sentname = s.getTag() + "_" + n; 
+        Entity sent = 
+          (Entity) ModelElement.lookupByName(sentname,es); 
+        String tentname = t.getTag() + "$T_" + m; 
+        Entity tent = 
+          (Entity) ModelElement.lookupByName(tentname,es); 
+        if (sent != null && tent != null) 
+        { EntityMatching em = 
+            new EntityMatching(sent,tent); 
+          if (ems.contains(em)) { }
+          else 
+          { ems.add(em); }  
+        } 
+      } 
+    } 
+    return ems; 
+  } 
+
+  public static Vector deepEntityMatchingsFromASTs(Vector sasts, 
+                         Vector tasts, Vector es)
+  { // For corresponding s, t create entity matching
+    // s.tag_s.arity |--> t.tag$T_t.arity. 
+
+    Vector ems = new Vector(); 
+
+    for (int i = 0; i < sasts.size() && i < tasts.size(); i++) 
+    { ASTTerm s = (ASTTerm) sasts.get(i); 
+      ASTTerm t = (ASTTerm) tasts.get(i); 
+      
+      int n = s.arity(); 
+      int m = t.arity(); 
+
+      if (n > 0 && m > 0) 
       { String sentname = s.tagFunction(); // Assume it is deep 
         Entity sent = 
           (Entity) ModelElement.lookupByName(sentname,es); 
@@ -1713,6 +1773,47 @@ public abstract class ASTTerm
   } 
 
   public static void modelSpecificationFromASTs(Vector sasts, 
+                         Vector tasts, Vector es, 
+                         ModelSpecification mod)
+  { // For corresponding s, t create instances
+    // s_inst : s.tag_s.arity 
+    // s_inst.ast = s
+    // t_inst : t.tag$T_t.arity
+    // t_inst.ast = t
+    // s_inst |-> t_inst 
+
+    for (int i = 0; i < sasts.size() && i < tasts.size(); i++) 
+    { ASTTerm s = (ASTTerm) sasts.get(i); 
+      ASTTerm t = (ASTTerm) tasts.get(i); 
+      
+      int n = s.arity(); 
+      int m = t.arity(); 
+
+      if (n > 0 && m > 0) 
+      { String sentname = s.getTag() + "_" + n; 
+        String tentname = t.getTag() + "$T_" + m; 
+        String sinst = sentname.toLowerCase() + "_" + i; 
+        String tinst = tentname.toLowerCase() + "_" + i; 
+        Entity sent = 
+          (Entity) ModelElement.lookupByName(sentname,es); 
+        ObjectSpecification sobj = 
+          new ObjectSpecification(sinst,sentname); 
+        sobj.setEntity(sent);
+        sobj.setValue("ast", s); 
+        Entity tent = 
+          (Entity) ModelElement.lookupByName(tentname,es); 
+        ObjectSpecification tobj = 
+          new ObjectSpecification(tinst,tentname); 
+        tobj.setEntity(tent);
+        tobj.setValue("ast", t); 
+        mod.addObject(sobj); 
+        mod.addObject(tobj); 
+        mod.addCorrespondence(sobj,tobj); 
+      } 
+    } 
+  } 
+
+  public static void deepModelSpecificationFromASTs(Vector sasts, 
                          Vector tasts, Vector es, 
                          ModelSpecification mod)
   { // For corresponding s, t create instances

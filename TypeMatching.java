@@ -192,6 +192,22 @@ public class TypeMatching
     return res;
   }
 
+  public Vector usesCSTLfunctions()
+  { // value mappings have substrings `f
+    Vector res = new Vector();  
+    for (int x = 0; x < valueMappings.size(); x++)
+    { ValueMatching vm = (ValueMatching) valueMappings.get(x);
+      String rhs = vm.trg + ""; 
+      Vector mfs = CGRule.metafeatures(rhs);
+      for (int y = 0; y < mfs.size(); y++) 
+      { String mf = (String) mfs.get(y); 
+        int qind = mf.indexOf("`"); 
+        res.add(mf.substring(qind+1));  
+      } 
+    } 
+    return res; 
+  } 
+
   public String toCSTL(CGSpec cg)
   { String res = name + "::\n"; 
     cg.addCategory(name); 

@@ -153,6 +153,8 @@ public class ModelMatching implements SystemTypes
     return res; 
   }  
 
+
+
   public String toCSTL(CGSpec cg)
   { String res = "\n"; 
     /* for (int i = 0; i < helpers.size(); i++) 
@@ -167,9 +169,16 @@ public class ModelMatching implements SystemTypes
       usedFunctions.addAll(em.usesCSTLfunctions()); 
     } 
 
+	
+    for (int i = 0; i < typematches.size(); i++) 
+    { TypeMatching tm = (TypeMatching) typematches.get(i);
+      if (usedFunctions.contains(tm.getName())) 
+      { usedFunctions.addAll(tm.usesCSTLfunctions()); } 
+    } // *only* include them if used in some rule. 
+
     System.out.println(">>> Used functions are: " + 
                        usedFunctions); 
-	
+
     for (int i = 0; i < typematches.size(); i++) 
     { TypeMatching tm = (TypeMatching) typematches.get(i);
       if (usedFunctions.contains(tm.getName())) 

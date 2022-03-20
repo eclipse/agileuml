@@ -996,6 +996,27 @@ public void findPlugins()
 
     synthMenu.addSeparator(); 
 
+    JMenuItem cgbe = 
+      new JMenuItem("CGBE"); 
+    cgbe.addActionListener(this);
+    synthMenu.add(cgbe);
+
+    JMenuItem ltbeFromText = 
+      new JMenuItem("LTBE from text"); 
+    ltbeFromText.addActionListener(this);
+    synthMenu.add(ltbeFromText);
+
+    JMenuItem ltbeFromASTs = 
+      new JMenuItem("LTBE from ASTs"); 
+    ltbeFromASTs.addActionListener(this);
+    synthMenu.add(ltbeFromASTs);
+
+    JMenuItem validateCGBE = 
+      new JMenuItem("Validate CGBE"); 
+    validateCGBE.addActionListener(this);
+    synthMenu.add(validateCGBE);
+
+    synthMenu.addSeparator(); 
 
     JMenuItem normalise = 
       new JMenuItem("Form Contrapositives"); 
@@ -2103,6 +2124,14 @@ public void findPlugins()
       { 
         ucdArea.checkTLmodel(); 
       } 
+      else if (label.equals("CGBE"))
+      { ucdArea.cgbeOCL2Program(); } 
+      else if (label.equals("LTBE from text"))
+      { ucdArea.ltbeFromText(); }
+      else if (label.equals("LTBE from ASTs"))
+      { ucdArea.cgbe(); } 
+      else if (label.equals("Validate CGBE"))
+      { ucdArea.validateCGBE(); } 
       else if (label.equals("Formalise data requirements"))
       { 
         ucdArea.formaliseDataRequirements(); 

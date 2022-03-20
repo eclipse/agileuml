@@ -4462,6 +4462,9 @@ public class EntityMatching implements SystemTypes
     // checks that the condition of rule is valid, or if
     // no condition, creates a valid condition. 
 
+    if (realsrc == null || realtrg == null)
+	{ return; }
+	
     String srcname = realsrc.getName(); 
     String trgname = realtrg.getName(); 
 	
