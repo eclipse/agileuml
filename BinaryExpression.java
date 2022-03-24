@@ -3445,13 +3445,15 @@ public void findClones(java.util.Map clones, String rule, String op)
       { elementType = left.getElementType(); } 
     }  
     else if ("->at".equals(operator))
-    { if ("String".equals(left.type + ""))
+    { if (left.type != null && "String".equals(left.type.getName()))
       { type = new Type("String", null); 
         elementType = type; 
       }  
       else 
       { type = left.elementType;
-        if (type != null) 
+        if (type != null && "String".equals(type.getName()))
+        { elementType = type; } 
+        else if (type != null)  
         { elementType = type.getElementType(); } 
         else 
         { Attribute leftvar = (Attribute) ModelElement.lookupByName(left + "", env); 

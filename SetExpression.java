@@ -273,11 +273,15 @@ public class SetExpression extends Expression
     { String tname = type.getUMLModelName(out); 
       out.println(res + ".type = " + tname); 
     } 
+    // else 
+    // { out.println(res + ".type = Sequence"); } 
 
     if (elementType != null) 
     { String etname = elementType.getUMLModelName(out); 
       out.println(res + ".elementType = " + etname); 
     } 
+    else 
+    { out.println(res + ".elementType = OclAny"); } 
 
     out.println(res + ".needsBracket = " + needsBracket); 
     out.println(res + ".umlKind = " + umlkind); 

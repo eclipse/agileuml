@@ -3376,7 +3376,9 @@ class CreationStatement extends Statement
   public CreationStatement(String vbl, Type typ)
   { createsInstanceOf = typ.getName();
     instanceType = typ; 
-    elementType = typ.getElementType(); 
+    elementType = typ.getElementType();
+    if (Type.isStringType(typ))
+    { elementType = new Type("String", null); }  
     assignsTo = vbl; 
   }
 
@@ -3469,7 +3471,10 @@ class CreationStatement extends Statement
   public void setType(Type t)
   { instanceType = t; 
     if (instanceType != null) 
-    { createsInstanceOf = instanceType.getName(); }
+    { createsInstanceOf = instanceType.getName(); 
+      if ("String".equals(instanceType.getName()))
+      { elementType = new Type("String", null); }
+    } 
   }  
 
   public void setKeyType(Type t)
@@ -3978,7 +3983,11 @@ class CreationStatement extends Statement
     { instanceType = typ; } 
     if (elementType != null) 
     { instanceType.setElementType(elementType); } 
-    // else { elementType = typ.elementType; }
+    else if (typ != null) 
+    { elementType = typ.elementType; 
+      if ("String".equals(typ.getName()))
+      { elementType = new Type("String", null); } 
+    }
  
     if (instanceType == null) 
     { att.setType(typ); } 
@@ -4612,6 +4621,8 @@ class SequenceStatement extends Statement
       if (brackets) 
       { res = res + "( "; } 
 
+      res = res + " (OclStatementList "; 
+
       Statement s1 = (Statement) statements.get(0); 
       res = res + s1.toAST() + " "; 
       
@@ -4625,6 +4636,8 @@ class SequenceStatement extends Statement
         else 
         { res = res + " ; " + s2.toAST(); } 
       }  
+
+      res = res + " ) "; 
 
       if (brackets) 
       { res = res + " )"; } 

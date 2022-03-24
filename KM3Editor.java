@@ -100,9 +100,9 @@ public class KM3Editor extends JFrame implements DocumentListener
         }
         
         JScrollPane scrollPane = new JScrollPane(textPane);
-        scrollPane.setPreferredSize(new Dimension(100, 300));
+        scrollPane.setPreferredSize(new Dimension(150, 300));
 
-        messageArea = new JTextArea(20, 35);
+        messageArea = new JTextArea(15, 45);
         messageArea.setEditable(false);
         JScrollPane scrollPaneForLog = new JScrollPane(messageArea);
 

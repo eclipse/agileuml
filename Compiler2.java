@@ -4805,12 +4805,17 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
 
       if ("String".startsWith(st)) 
-      { mess[0] = "String type. Empty string is \"\"\nOperators include:  s->size()  s1 + s2  s1->indexOf(s2)  s->at(index)  s->display()  s->tail()  s->first()\ns.subrange(i,j)  s.subrange(i)  s->isMatch(pattern)  s->allMatches(patt)  s->trim()\n"; 
+      { mess[0] = "String type String. Empty string is \"\"\n" + 
+          "Operators include:  s->size()  s1 + s2  s1->indexOf(s2)  s->at(index)\n" + 
+          "s->display()  s->tail()  s->first()\n" + 
+          "s.subrange(i,j)  s.subrange(i)  s.setAt(i,ch)\n" + 
+          "s->isMatch(pattern)  s->allMatches(patt)  s->trim()\n"; 
         return "String"; 
       }
  
       if ("int".startsWith(st)) 
-      { mess[0] = "32-bit integer type, from -(2->pow(31)) to 2->pow(31)-1\n" + 
+      { mess[0] = "32-bit integer type int,\n" + 
+          "ranges from -(2->pow(31)) to 2->pow(31)-1\n" + 
           "Operators include: x mod y  x div y\n" + 
           "and usual arithmetic operators * / - + < <= > >= = /= etc"; 
         return "int"; 
@@ -5084,7 +5089,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
 
     if ("long".startsWith(st)) 
-    { mess[0] = "64-bit integer type, from -(2->pow(63)) to (2->pow(63)-1)\n" +  
+    { mess[0] = "64-bit integer type long,\n" + 
+          "ranges from -(2->pow(63)) to (2->pow(63)-1)\n" +  
           "Operators include: x mod y  x div y\n" + 
           "and usual arithmetic operators * / - + < <= > >= = /= etc"; 
  
@@ -5093,7 +5099,9 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     
     
     if ("boolean".startsWith(st)) 
-    { mess[0] = "Boolean-values type, values are true and false\nOperators include:  b1 & b2  b1 or b2  not(b)  b1 => b2"; 
+    { mess[0] = "Boolean-values type boolean,\n" + 
+                "values are true and false\n" + 
+                "Operators include:  b1 & b2  b1 or b2  not(b)  b1 => b2"; 
       return "boolean"; 
     } 
 

@@ -8518,12 +8518,12 @@ public class Entity extends ModelElement implements Comparable
     if (Entity.isEmptyClass(this)) 
     { res = res + " " + nme + " { "; } 
     else 
-    { res = res + " " + nme + " (OclClassContents { "; }
+    { res = res + " " + nme + " { (OclClassContents "; }
 
-    for (int i = 0; i < stereotypes.size(); i++) 
-    { String stereo = (String) stereotypes.get(i); 
-      res = res + "  stereotype " + stereo + " ; "; 
-    }
+    // for (int i = 0; i < stereotypes.size(); i++) 
+    // { String stereo = (String) stereotypes.get(i); 
+    //   res = res + "  stereotype " + stereo + " ; "; 
+    // }
 
     for (int i = 0; i < invariants.size(); i++) 
     { Constraint con = (Constraint) invariants.get(i);
@@ -8553,10 +8553,10 @@ public class Entity extends ModelElement implements Comparable
     if (Entity.isEmptyClass(this)) 
     { res = res + " } )"; }  
     else 
-    { res = res + " } ) )"; }
+    { res = res + " ) } )"; }
 
     return res;    
-  } // and operations
+  } 
 
 
   public String stereotypesKM3() 

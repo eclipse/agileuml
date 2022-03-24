@@ -3099,7 +3099,7 @@ public class BehaviouralFeature extends ModelElement
     res = res + getName() + tpars + " ( ";
 
     if (parameters != null && parameters.size() > 0)
-    { res = res + "(OclParameterList "; 
+    { res = res + " (OclParameterList "; 
       for (int i = 0; i < parameters.size(); i++)
       { Attribute par = (Attribute) parameters.get(i);
         String pnme = par.toASTParameter();

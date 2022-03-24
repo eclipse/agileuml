@@ -587,6 +587,16 @@ public class Type extends ModelElement
     return false; 
   } 
 
+  public static boolean isStringType(Type t)
+  { if (t == null) 
+    { return false; } 
+
+    if ("String".equals(t.getName()))
+    { return true; } 
+
+    return false; 
+  } 
+
   public boolean isRealType()
   { if ("double".equals(name))
     { return true; } 
@@ -2255,6 +2265,27 @@ public class Type extends ModelElement
 
       out.println("SequenceType" + tid + ".typeId = \"" + tid + "\""); 
       return "SequenceType" + tid;
+    } 
+    else if (nme.equals("Ref"))
+    { String tid = Identifier.nextIdentifier(""); 
+      out.println("RefType" + tid + " : CollectionType"); 
+      out.println("RefType" + tid + ".name = \"Ref\""); 
+      if (elementType != null) 
+      { String etype = elementType.getUMLModelName(out); 
+        out.println("RefType" + tid + ".elementType = " + etype);
+      }  
+      else 
+      { out.println("RefType" + tid + ".elementType = void"); }
+
+      if (keyType != null) 
+      { String ktype = keyType.getUMLModelName(out); 
+        out.println("RefType" + tid + ".keyType = " + ktype); 
+      } 
+      else 
+      { out.println("RefType" + tid + ".keyType = void"); } 
+
+      out.println("RefType" + tid + ".typeId = \"" + tid + "\""); 
+      return "RefType" + tid;
     } 
     else if (nme.equals("Map"))
     { String tid = Identifier.nextIdentifier(""); 

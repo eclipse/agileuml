@@ -75,7 +75,8 @@ public abstract class ASTTerm
     cqueryfunctions.add("isgraph"); 
     cqueryfunctions.add("isprint"); 
     cqueryfunctions.add("ispunct"); 
-    cqueryfunctions.add("isxdigit"); 
+    cqueryfunctions.add("isxdigit");
+    cqueryfunctions.add("isnan");  
     cqueryfunctions.add("calloc"); 
     cqueryfunctions.add("malloc"); 
     // cqueryfunctions.add("realloc"); 
@@ -1315,6 +1316,61 @@ public abstract class ASTTerm
         return true; 
       } 
       return false; 
+    }
+
+    public static Vector targetBrackets(ASTTerm[] xs, ASTTerm[] ys)
+    { // Is each ys[i].terms starts with same symbol and 
+      // ends with another or same symbol? Return these symbols 
+      Vector res = new Vector(); 
+      String startSymbol = null; 
+      String endSymbol = null; 
+      
+      if (ys.length > 1 && xs.length == ys.length)
+      { for (int i = 0; i < xs.length; i++)
+        { ASTTerm xx = xs[i]; 
+          ASTTerm yy = ys[i]; 
+
+          if (xx == null || yy == null)
+          { return null; } 
+
+          int n = xx.arity(); 
+          int m = yy.arity(); 
+        
+          if (m < 2) 
+          { return null; } 
+
+          // ASTTerm s0 = xx.getTerm(0); 
+          // ASTTerm sn = xx.getTerm(n-1); 
+
+          ASTTerm t0 = yy.getTerm(0); 
+          ASTTerm tn = yy.getTerm(m-1); 
+
+          if (t0 instanceof ASTSymbolTerm && 
+              tn instanceof ASTSymbolTerm)
+          { if (startSymbol == null) 
+            { startSymbol = t0.literalForm(); } 
+            else if (startSymbol.equals(t0.literalForm())) { } 
+            else 
+            { return null; } // not consistent start symbols
+
+            if (endSymbol == null) 
+            { endSymbol = tn.literalForm(); } 
+            else if (endSymbol.equals(tn.literalForm())) { } 
+            else 
+            { return null; } // not consistent end symbols
+          } 
+          else 
+          { return null; } 
+          // Should also be different to s0, sn
+        } 
+        
+        if (startSymbol != null && endSymbol != null)
+        { res.add(startSymbol); 
+          res.add(endSymbol); 
+          return res; 
+        } 
+      } 
+      return null; 
     }
 
 

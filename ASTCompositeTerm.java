@@ -6955,6 +6955,15 @@ public class ASTCompositeTerm extends ASTTerm
       res.setType(new Type("int", null));  
       return res; 
     }
+    else if ("isnan".equals(fname) && 
+             args.size() == 1)
+    { Expression arg1 = (Expression) args.get(0); 
+          
+      UnaryExpression res = 
+        new UnaryExpression("->oclIsInvalid", arg1); 
+      res.setType(new Type("boolean", null)); 
+      return res; 
+    } 
     else if ("strcpy".equals(fname) && args.size() == 2)
     { Expression arg1 = (Expression) args.get(1);
       arg1.setType(new Type("String", null)); 

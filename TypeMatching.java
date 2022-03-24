@@ -192,6 +192,18 @@ public class TypeMatching
     return res;
   }
 
+  public boolean isVacuous()
+  { // Only has _1 |-->_1 or _0 |-->_0
+
+    for (int x = 0; x < valueMappings.size(); x++)
+    { ValueMatching vm = (ValueMatching) valueMappings.get(x);
+      if (vm.isIdentity()) { } 
+      else 
+      { return false; } 
+    }
+    return true; 
+  }
+
   public Vector usesCSTLfunctions()
   { // value mappings have substrings `f
     Vector res = new Vector();  

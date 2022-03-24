@@ -26,6 +26,18 @@ public class ValueMatching
   public String toString()
   { return src + " |--> " + trg; }
 
+  public boolean isIdentity() 
+  { String ss = (src + "").trim(); 
+    String tt = (trg + "").trim(); 
+    if ("_1".equals(ss) && "_1".equals(tt))
+    { return true; } 
+    if ("_0".equals(ss) && "_0".equals(tt))
+    { return true; } 
+    return false; 
+  } 
+
+    
+
   public ValueMatching invert()
   { return new ValueMatching(trg,src); }
 

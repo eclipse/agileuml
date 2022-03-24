@@ -780,8 +780,14 @@ class BasicExpression extends Expression
   { if (lhs instanceof BasicExpression)
     { BasicExpression be = (BasicExpression) lhs; 
       if (be.variable != null)
-      { Type elemType = rhs.getElementType(); 
+      { Type elemType = rhs.getElementType();
+
+        System.out.println(">>> RHS element type: " + elemType); 
+ 
         Type oldElemType = be.variable.getElementType(); 
+
+        System.out.println(">>> old element type: " + oldElemType); 
+
         be.variable.setElementType( 
           Type.refineType(oldElemType,elemType));
         System.out.println(">> From " + lhs + " := " + rhs + " deduced element type " + be.variable.getElementType() + " for " + be.data);
@@ -2091,7 +2097,7 @@ class BasicExpression extends Expression
     { res = res + " ( "; 
 
       if (parameters.size() > 0)
-      { res = res + "(ParameterArgument "; } 
+      { res = res + " (ParameterArguments "; } 
  
       for (int i = 0; i < parameters.size(); i++)
       { res = res + ((Expression) parameters.get(i)).toAST(); 
@@ -2102,7 +2108,7 @@ class BasicExpression extends Expression
       if (parameters.size() > 0)
       { res = res + " ) "; } 
   
-      res = res + " )"; 
+      res = res + " ) "; 
     }
 
     if (arrayIndex != null)
@@ -2255,7 +2261,7 @@ class BasicExpression extends Expression
       out.println(res + ".elementType = " + tet); 
     } 
     else 
-    { System.err.println("Warning!: no element type for " + this); 
+    { System.err.println("!!! Warning!: no element type for " + this); 
       out.println(res + ".elementType = " + tname); 
     } 
 
@@ -3126,6 +3132,8 @@ class BasicExpression extends Expression
         "OclDate".equals(data) || "OclAny".equals(data) || 
         "OclType".equals(data) || "OclFile".equals(data) || 
         "OclRandom".equals(data) ||
+        "OclAttribute".equals(data) || 
+        "OclOperation".equals(data) || 
         Type.isOclExceptionType(data) ||  
         "OclProcess".equals(data) || 
         "OclProcessGroup".equals(data))
@@ -3239,6 +3247,7 @@ class BasicExpression extends Expression
     { type = new Type("OclDate", null); 
       umlkind = UPDATEOP;
       isStatic = true;  
+      entity = (Entity) ModelElement.lookupByName("OclDate",entities);  
       multiplicity = ModelElement.ONE; 
       // set the formal parameters
       if (parameters != null && parameters.size() > 0) 
@@ -3332,7 +3341,8 @@ class BasicExpression extends Expression
       { type = new Type("long", null);
         umlkind = ATTRIBUTE; 
         multiplicity = ModelElement.ONE; 
- 
+        entity = (Entity) ModelElement.lookupByName("OclDate",entities);  
+
         return true;
       }  
     } 
@@ -3340,8 +3350,12 @@ class BasicExpression extends Expression
     if ("getSystemTime".equals(data) && "OclDate".equals(objectRef + "")) 
     { type = new Type("long", null);
       umlkind = QUERY;
-      isStatic = true;  
+      isStatic = true;
+      entity = (Entity) ModelElement.lookupByName("OclDate",entities);  
+  
       multiplicity = ModelElement.ONE; 
+      entity = 
+       (Entity) ModelElement.lookupByName("OclDate",entities);  
  
       return true;
     } 
@@ -3352,7 +3366,8 @@ class BasicExpression extends Expression
           objectRef.type.getName().equals("OclDate")) 
       { umlkind = QUERY; 
         multiplicity = ModelElement.ONE; 
-        type = new Type("long", null); 
+        type = new Type("long", null);
+        entity = (Entity) ModelElement.lookupByName("OclDate",entities);  
         return true;
       }  
     } 
@@ -3364,6 +3379,8 @@ class BasicExpression extends Expression
       { type = new Type("void", null); 
         umlkind = UPDATEOP; 
         multiplicity = ModelElement.ONE; 
+        entity = 
+          (Entity) ModelElement.lookupByName("OclDate",entities);
         // set the formal parameters
         if (parameters != null && parameters.size() > 0) 
         { Expression par1 = (Expression) parameters.get(0); 
@@ -3383,7 +3400,8 @@ class BasicExpression extends Expression
           objectRef.type.getName().equals("OclDate")) 
       { type = new Type("boolean", null); 
         umlkind = QUERY; 
-        multiplicity = ModelElement.ONE; 
+        multiplicity = ModelElement.ONE;
+        entity = (Entity) ModelElement.lookupByName("OclDate",entities); 
         // set the formal parameters
         if (parameters != null && parameters.size() > 0) 
         { Expression par1 = (Expression) parameters.get(0); 
@@ -3403,7 +3421,9 @@ class BasicExpression extends Expression
           objectRef.type.getName().equals("OclDate")) 
       { type = new Type("boolean", null); 
         umlkind = QUERY; 
-        multiplicity = ModelElement.ONE; 
+        multiplicity = ModelElement.ONE;
+        entity = 
+          (Entity) ModelElement.lookupByName("OclDate",entities); 
         if (parameters != null && parameters.size() > 0) 
         { Expression par1 = (Expression) parameters.get(0); 
           Attribute fpar1 = new Attribute("d", 
@@ -3851,8 +3871,10 @@ class BasicExpression extends Expression
       { type = new Type("int",null); 
         elementType = type; 
       }
-      else if (data.equals("sort") || data.equals("characters") ||
-               data.equals("sortedBy") || data.equals("asSequence") ||
+      else if (data.equals("sort") || 
+               data.equals("characters") ||
+               data.equals("sortedBy") || 
+               data.equals("asSequence") ||
                data.equals("allInstances"))
       { type = new Type("Sequence",null); 
         elementType = objectRef.elementType; 
@@ -3910,6 +3932,7 @@ class BasicExpression extends Expression
                data.equals("tail") || 
                data.equals("front") || 
                data.equals("insertAt") || 
+               data.equals("insertInto") || 
                data.equals("setAt"))  
       { type = objectRef.getType(); // Sequence or String
         elementType = objectRef.elementType; 
@@ -4507,7 +4530,8 @@ class BasicExpression extends Expression
   private void adjustTypeForArrayIndex()
   { // if there is an arrayIndex, make type = elementType, etc
 
-    if (arrayIndex != null && "String".equals(type + ""))
+    if (arrayIndex != null && type != null && 
+        "String".equals(type.getName()))
     { elementType = new Type("String", null); 
       multiplicity = ModelElement.ONE; 
     } 

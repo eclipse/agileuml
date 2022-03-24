@@ -370,9 +370,18 @@ public class ASTBasicTerm extends ASTTerm
 
       if ("EOF".equals(value))
       { return new BasicExpression(-1); }
+
+
       if ("HUGE_VAL".equals(value))
       { Expression resx =
           new BasicExpression("Math_PINFINITY");
+        resx.setType(new Type("double", null)); 
+        return resx; 
+      } 
+
+      if ("NAN".equals(value))
+      { Expression resx =
+          new BasicExpression("Math_NaN");
         resx.setType(new Type("double", null)); 
         return resx; 
       } 

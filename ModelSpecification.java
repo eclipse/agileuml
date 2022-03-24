@@ -6392,7 +6392,8 @@ public class ModelSpecification
       String rrhs = 
         ((BasicExpression) amjx.trgvalue).toLiteralCSTL();  
       tmnew.addValueMapping(slhs, rrhs); 
-      tms.add(tmnew);
+
+
       BasicExpression fexpr = new BasicExpression(fid); 
       fexpr.setUmlKind(Expression.FUNCTION);
       fexpr.addParameter(new BasicExpression("_*"));
@@ -6416,6 +6417,7 @@ public class ModelSpecification
     // a consistent mapping f. Result is 
     // tagsource(_*) |--> tagtarget(_*`f)
     // Symbols can be consistently deleted or replaced
+    // There may be extra symbols in target terms also.
 
     System.out.println(">> Trying to find tree sequence add/delete mapping for " + strees.length + " source terms to " + ttrees.length + " target terms"); 
     System.out.println();  
@@ -6459,14 +6461,14 @@ public class ModelSpecification
       if (deletedSymbols.contains(slf)) { } 
       else 
       { deletedSymbols.add(slf); } 
-    }  
+    } // deletedSymbols are all source symbols.  
 
     Vector ttTerms = new Vector(); 
     for (int y = 0; y < tSymbolTerms.size(); y++) 
     { String tlf = 
         ((ASTTerm) tSymbolTerms.get(y)).literalForm();
       ttTerms.add(tlf);  
-    }  
+    } // ttTerms are all target symbols  
 
     Vector replacedSymbols = new Vector(); 
     Vector replacements = new Vector(); 
@@ -6494,6 +6496,21 @@ public class ModelSpecification
     deletedSymbols.removeAll(ttTerms); 
     deletedSymbols.removeAll(replacedSymbols); 
     System.out.println(">>-- Deleted symbols: " + deletedSymbols); 
+    // Remove all source symbols that are copied to target
+    // or replaced by a target symbol. 
+    // Remainder are deleted. 
+
+    ttTerms.removeAll(ssTerms); 
+    ttTerms.removeAll(replacements); 
+    System.out.println(">>-- Additional symbols in target: " + ttTerms); 
+
+    Vector bracks = null; 
+    if (ttTerms.size() > 0)
+    { System.out.println(">>> Identifying symbol addition mapping"); 
+      bracks = 
+        ASTTerm.targetBrackets(strees,ttrees); 
+      System.out.println(">>> brackets: " + bracks); 
+    } 
 
 
   /*
@@ -6571,7 +6588,10 @@ public class ModelSpecification
       tmnew.addValueMapping(slhs, rrhs); 
       // tmnew.addValueMapping("_*", "_*`" + fid);    
       tmnew.addValueMapping("_0", "_0");    
-      tms.add(tmnew);
+
+      if (tmnew.isVacuous()) { } 
+      else 
+      { tms.add(tmnew); } 
       // BasicExpression fexpr = new BasicExpression(fid); 
       // fexpr.setUmlKind(Expression.FUNCTION);
       // fexpr.addParameter(new BasicExpression("_*"));
@@ -6581,7 +6601,14 @@ public class ModelSpecification
       TypeMatching tmsub = 
                           new TypeMatching(subid);
       String sublhs = "_*"; 
-      String subrhs = "_*`" + fid; 
+      String subrhs = "_*`" + fid;
+      if (tmnew.isVacuous()) 
+      { subrhs = "_*"; }
+      if (bracks != null && bracks.size() == 2 && 
+          ttTerms.containsAll(bracks)) 
+      { subrhs = bracks.get(0) + " " + subrhs + " " + bracks.get(1); }   
+      // And the same for case 4 below. 
+
       tmsub.addValueMapping(sublhs, subrhs);
       tms.add(tmsub);
 
@@ -6688,6 +6715,19 @@ public class ModelSpecification
     deletedSymbols.removeAll(replacedSymbols); 
     System.out.println(">>-- Deleted symbols: " + deletedSymbols); 
 
+    ttTerms.removeAll(ssTerms); 
+    ttTerms.removeAll(replacements); 
+    System.out.println(">>-- Additional symbols in target: " + ttTerms); 
+
+    Vector bracks = null; 
+    if (ttTerms.size() > 0)
+    { System.out.println(">>> Identifying symbol addition mapping"); 
+      bracks = 
+        ASTTerm.targetBrackets(strees,ttrees); 
+      System.out.println(">>> brackets: " + bracks); 
+    } 
+
+
     Vector sTreeTerms = new Vector(); 
     Vector tTreeTerms = new Vector(); 
 
@@ -6785,6 +6825,9 @@ public class ModelSpecification
                           new TypeMatching(subid);
       String sublhs = "_*"; 
       String subrhs = "_*`" + fid; 
+      if (bracks != null && bracks.size() == 2 && 
+          ttTerms.containsAll(bracks)) 
+      { subrhs = bracks.get(0) + " " + subrhs + " " + bracks.get(1); }   
       tmsub.addValueMapping(sublhs, subrhs);
       tms.add(tmsub);
 
