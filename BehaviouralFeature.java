@@ -3181,6 +3181,7 @@ public class BehaviouralFeature extends ModelElement
       String typeid = resultType.getUMLModelName(out); 
       out.println(opid + ".type = " + typeid);  
       if (rtname.equals("Set") || rtname.equals("Sequence") ||
+          rtname.equals("Ref") || 
           rtname.equals("Map") || rtname.equals("Function") )
       { if (elementType == null) 
         { System.err.println("Warning!: No element type for " + this); 
@@ -3278,6 +3279,7 @@ public class BehaviouralFeature extends ModelElement
       if (i < parameters.size() - 1) { res = res + ", "; } 
     }
     res = res + ") "; 
+
     if (resultType != null)
     { String rtname = resultType.getName(); 
       if (rtname.equals("Set") || rtname.equals("Sequence"))

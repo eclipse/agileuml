@@ -3255,6 +3255,7 @@ public class Type extends ModelElement
   { if (values != null) 
     { String nme = getName(); 
       out.println(nme + " : Enumeration"); 
+      out.println(nme + ".typeId = \"" + nme + "\""); 
       out.println(nme + ".name = \"" + nme + "\""); 
       for (int i = 0; i < values.size(); i++) 
       { String val = (String) values.get(i); 
@@ -3267,6 +3268,7 @@ public class Type extends ModelElement
     { String aname = alias.getUMLName(); 
       String nme = getName(); 
       out.println(nme + " : PrimitiveType"); 
+      out.println(nme + ".typeId = \"" + nme + "\""); 
       out.println(aname + " : " + nme + ".alias"); 
     } 
   } 

@@ -695,22 +695,54 @@ public abstract class ASTTerm
   }   
 
   public static boolean allNestedSymbolTerms(ASTTerm[] trees)
-  { if (trees.length == 0) 
+  { // All either symbols or nested symbols
+
+    if (trees.length == 0) 
     { return false; }
+
     for (int i = 0; i < trees.length; i++) 
     { ASTTerm tx = trees[i]; 
       if (tx == null) 
       { return false; } 
-      if (tx.arity() == 1) 
-      { ASTTerm ttx = tx.getTerm(0); 
 
-        if (ttx instanceof ASTSymbolTerm) { } 
-        else 
-        { return false; }
+      if (tx.arity() <= 1 && tx.isNestedSymbolTerm()) 
+      { 
+        System.out.println(">>> Nested symbol term: " + tx); 
       } 
       else 
       { return false; }  
     } 
+    return true; 
+  }   
+
+  public abstract boolean isNestedSymbolTerm(); 
+  
+  public static boolean recursivelyNestedEqual(
+      ASTTerm[] strees, ASTTerm[] ttrees)
+  { // Each strees[i] is a symbol, literally equal 
+    // to the targets
+
+    if (strees.length == 0) 
+    { return false; }
+
+    if (strees.length != ttrees.length) 
+    { return false; } 
+
+    for (int i = 0; i < strees.length; i++) 
+    { ASTTerm sx = strees[i];
+      ASTTerm tx = ttrees[i]; 
+ 
+      if (sx == null || tx == null) 
+      { return false; } 
+
+      String slit = sx.literalForm(); 
+      String tlit = tx.literalForm(); 
+      
+      if (slit.equals(tlit)) { } 
+      else 
+      { return false; } 
+    } 
+
     return true; 
   }   
 
@@ -1109,6 +1141,121 @@ public abstract class ASTTerm
       } 
       return res; 
     }
+
+    public static Vector createGeneralisedMappings
+        (ASTTerm[] xs, Expression trg)
+    { // Each xs[i] maps to same target. 
+      // Create a separate mapping for each different arity
+      // of xs. Extract constant symbol values. 
+
+      Vector res = new Vector(); 
+      java.util.Map aritymap = new java.util.HashMap(); 
+      Vector doms = new Vector(); 
+
+      if (xs.length > 1)
+      { for (int i = 0; i < xs.length; i++)
+        { ASTTerm xx = xs[i]; 
+         
+          if (xx != null) 
+          { int n = xx.arity(); 
+            Integer nx = new Integer(n); 
+            doms.add(nx); 
+            Vector aritynterms = 
+               (Vector) aritymap.get(nx); 
+            if (aritynterms == null) 
+            { aritynterms = new Vector(); 
+              aritynterms.add(xx);
+              aritymap.put(nx,aritynterms);  
+            }
+            else 
+            { aritynterms.add(xx); }  
+          } 
+        }
+      } 
+      else 
+      { return res; } 
+
+      for (int j = 0; j < doms.size(); j++) 
+      { // For each arity set aritymap(doms(j))
+        // identify the generalised form of the terms
+
+        Integer nx = (Integer) doms.get(j); 
+        Vector arityns = (Vector) aritymap.get(nx); 
+
+        System.out.println(">>> Arity " + nx + " source terms are: " + arityns); 
+        System.out.println(); 
+
+        if (arityns.size() == 1) 
+        { ASTTerm st = (ASTTerm) arityns.get(0); 
+          BasicExpression expr = 
+                BasicExpression.newASTBasicExpression(st); 
+          AttributeMatching am = 
+                new AttributeMatching(expr,trg); 
+          res.add(am); 
+        } 
+        else 
+        { ASTTerm st0 = (ASTTerm) arityns.get(0); 
+          BasicExpression expr = 
+                BasicExpression.newASTBasicExpression(st0); 
+          int n = nx.intValue(); 
+          for (int p = 0; p < n; p++) 
+          { if (ASTTerm.constantTerms(arityns,p))
+            { ASTTerm pterm = st0.getTerm(p); 
+              String st0p = pterm.literalForm(); 
+              Expression exprp = 
+                      new BasicExpression(st0p);                    
+              expr.setParameter(p+1, exprp); 
+            }
+            else 
+            { expr.setParameter(p+1,
+                    new BasicExpression("_" + (p+1))); 
+            } 
+          } 
+          AttributeMatching am = 
+                new AttributeMatching(expr,trg); 
+          res.add(am); 
+        }
+      }  
+
+      System.out.println(">>> Generalised matchings: " + res); 
+
+      return res; 
+    }
+
+    public static boolean constantTerms(Vector trms, int p)
+    { // The p subterms of all trms are the same 
+
+      if (trms.size() == 0) 
+      { return false; } 
+   
+      if (trms.size() == 1) 
+      { return true; } 
+
+      ASTTerm t0 = (ASTTerm) trms.get(0); 
+      if (t0.arity() <= p) 
+      { return false; } 
+
+      ASTTerm subtermp = t0.getTerm(p);
+ 
+      String lit = subtermp.literalForm(); 
+      
+      for (int i = 1; i < trms.size(); i++) 
+      { ASTTerm t = (ASTTerm) trms.get(i); 
+        ASTTerm subterm = t.getTerm(p);
+
+        // System.out.println(" " + p + " subterm of " + t + " is " + subterm + " =? " + lit); 
+ 
+        if (subterm != null && 
+            subterm.literalForm().equals(lit))
+        { } 
+        else 
+        { return false; } 
+      } 
+
+      // System.out.println(" " + p + " subterm is constant"); 
+
+      return true; 
+    } 
 
  /*   public static boolean matchingTrees(ASTTerm[] xs, ASTTerm[] ys, ModelSpecification mod)
     { // Is each ys[i] = xs[i], or corresponding under mod? 

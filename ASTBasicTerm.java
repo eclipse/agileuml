@@ -35,6 +35,9 @@ public class ASTBasicTerm extends ASTTerm
   public boolean hasSingleTerm() 
   { return true; } 
 
+  public boolean isNestedSymbolTerm() 
+  { return true; }  
+
   public int arity()
   { return 1; } 
 

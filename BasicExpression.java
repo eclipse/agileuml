@@ -3266,6 +3266,8 @@ class BasicExpression extends Expression
       { type = new Type(createdClass,null); 
         umlkind = UPDATEOP;
         isStatic = true;  
+        entity = (Entity) 
+          ModelElement.lookupByName(createdClass,entities); 
         multiplicity = ModelElement.ONE;
         if (parameters != null) 
         { for (int i = 0; i < parameters.size(); i++) 
@@ -3290,6 +3292,8 @@ class BasicExpression extends Expression
       { type = new Type("OclIterator",null); 
         umlkind = UPDATEOP;
         isStatic = true;  
+        entity = (Entity) 
+          ModelElement.lookupByName("OclIterator",entities); 
         multiplicity = ModelElement.ONE;
         if (parameters != null && parameters.size() > 0) 
         { Expression par1 = (Expression) parameters.get(0); 
@@ -3443,7 +3447,9 @@ class BasicExpression extends Expression
       if (objectRef.type != null && 
           objectRef.type.getName().equals("OclIterator")) 
       { type = new Type("Sequence", null);
-        
+        entity = (Entity) 
+          ModelElement.lookupByName("OclIterator",entities); 
+
         umlkind = ATTRIBUTE; 
         multiplicity = ModelElement.MANY; 
  
@@ -3458,6 +3464,9 @@ class BasicExpression extends Expression
       { type = new Type("void", null); 
         umlkind = UPDATEOP; 
         multiplicity = ModelElement.ONE; 
+        entity = (Entity) 
+          ModelElement.lookupByName(objectRef.type.getName(),
+                                    entities); 
         
         return true;
       }  
@@ -3475,7 +3484,9 @@ class BasicExpression extends Expression
       { type = new Type("String", null);
         umlkind = QUERY; 
         multiplicity = ModelElement.ONE; 
- 
+        entity = (Entity) 
+          ModelElement.lookupByName("OclFile",entities); 
+
         return true;
       }  
     } 
@@ -3488,6 +3499,8 @@ class BasicExpression extends Expression
       { type = new Type("long", null);
         umlkind = QUERY; 
         multiplicity = ModelElement.ONE; 
+        entity = (Entity) 
+          ModelElement.lookupByName("OclFile",entities); 
  
         return true;
       }  
@@ -3506,6 +3519,8 @@ class BasicExpression extends Expression
         umlkind = QUERY; 
         multiplicity = ModelElement.ONE; 
         // set the formal parameters
+        entity = (Entity) 
+          ModelElement.lookupByName("OclFile",entities); 
         
         return true;
       }  
@@ -3519,6 +3534,8 @@ class BasicExpression extends Expression
       { type = new Type("boolean", null);
         umlkind = QUERY; 
         multiplicity = ModelElement.ONE; 
+        entity = (Entity) 
+          ModelElement.lookupByName("OclProcess",entities); 
         return true;
       }  
     } 
@@ -3531,6 +3548,9 @@ class BasicExpression extends Expression
       { type = new Type("String", null);
         umlkind = QUERY; 
         multiplicity = ModelElement.ONE; 
+        entity = (Entity) 
+          ModelElement.lookupByName("OclProcess",entities); 
+
         return true;
       }  // and for OclType
     } 
@@ -3542,6 +3562,8 @@ class BasicExpression extends Expression
       umlkind = QUERY; 
       multiplicity = ModelElement.ONE; 
       isStatic = true; 
+      entity = (Entity) 
+          ModelElement.lookupByName("OclProcess",entities); 
       return true;
     } 
 
@@ -3553,7 +3575,9 @@ class BasicExpression extends Expression
       { type = new Type("int", null);
         umlkind = QUERY; 
         multiplicity = ModelElement.ONE; 
- 
+        entity = (Entity) 
+          ModelElement.lookupByName("OclProcess",entities); 
+
         return true;
       }  
     } 

@@ -55,7 +55,16 @@ public class PreProcessModels
     // System.out.println(">>> " + nme + " " + typr + " " + 
     //                    expr); 
 
+    File outfile = new File("output/out.txt"); 
+    BufferedWriter bwout = null; 
 
+    try {  
+       bwout = new BufferedWriter(new FileWriter(outfile)); 
+    } catch (Exception _e)
+      { System.err.println("!!No file: output/out.txt"); 
+        return; 
+      } 
+    
     Vector typeExamples = new Vector(); // Type
     String oclTypeModel = ""; 
     Vector programTypeExamples = new Vector(); // String
@@ -172,8 +181,13 @@ public class PreProcessModels
               exampleName + ".ast = " + tt.toAST() + "\n\n"; 
             oclTypeModel = oclTypeModel + modelString; 
           } 
-          else if (Type.isCollectionType(tt))
-          { modelString = exampleName + " : OclCollectionType\n" + 
+          else if (Type.isSetType(tt))
+          { modelString = exampleName + " : OclSetType\n" + 
+              exampleName + ".ast = " + tt.toAST() + "\n\n"; 
+            oclTypeModel = oclTypeModel + modelString; 
+          } 
+          else if (Type.isSequenceType(tt))
+          { modelString = exampleName + " : OclSequenceType\n" + 
               exampleName + ".ast = " + tt.toAST() + "\n\n"; 
             oclTypeModel = oclTypeModel + modelString; 
           } 
@@ -597,7 +611,7 @@ public class PreProcessModels
         { statementExamples.add(tt); 
 
           if (SequenceStatement.isBlock1(tt))
-          { modelString = exampleName + " : OclBlock1\n" + 
+          { modelString = exampleName + " : OclBlockN\n" + 
               exampleName + ".ast = " + tt.toAST() + "\n"; 
              
             oclStatementModel = oclStatementModel + modelString + "\n";
@@ -1104,15 +1118,13 @@ public class PreProcessModels
 
     System.out.println(">>> Time for pre-processing declarations: " + (t5-t4)); 
 
-    System.out.println(opprogModelString); 
+    System.out.println(">> Program declarations: " + opprogModelString); 
 
-    File outfile = new File("output/out.txt"); 
 
     if (typeExamples.size() == programTypeExamples.size())
     { // Assume corresponding if no errors.
-       
-      try 
-      { BufferedWriter bwout = new BufferedWriter(new FileWriter(outfile)); 
+      
+      try {  
         bwout.write(oclTypeModel + "\n");
         bwout.write(progModelString + "\n");
         for (int k = 0; k < typeExamples.size(); k++) 
@@ -1122,46 +1134,59 @@ public class PreProcessModels
         } 
 
         bwout.write("\n"); 
-
-        if (expressionExamples.size() == programExpressionExamples.size())
-        { bwout.write(oclExpressionModel + "\n");
-          bwout.write(exprprogModelString + "\n");
-          for (int h = 0; h < expressionExamples.size(); h++) 
-          { String oclObj = "oclexpr" + h;
-            String progObj = "progexpr" + h; 
-            bwout.write(oclObj + " |-> " + progObj + "\n");
-          }
-        }  
-
-        bwout.write("\n"); 
-
-        if (statementExamples.size() == programStatementExamples.size())
-        { bwout.write(oclStatementModel + "\n");
-          bwout.write(statProgModelString + "\n");
-          for (int h = 0; h < statementExamples.size(); h++) 
-          { String oclObj = "oclstat" + h;
-            String progObj = "progstat" + h; 
-            bwout.write(oclObj + " |-> " + progObj + "\n");
-          }
-        }  
-
-        bwout.write("\n"); 
-
-        if (operationExamples.size() == programOperationExamples.size())
-        { bwout.write(oclOperationModel + "\n");
-          bwout.write(opprogModelString + "\n");
-          for (int h = 0; h < operationExamples.size(); h++) 
-          { String oclObj = "oclop" + h;
-            String progObj = "progop" + h; 
-            bwout.write(oclObj + " |-> " + progObj + "\n");
-          }
-        }  
-
-
-        bwout.close(); 
       } 
-      catch (Exception mex) { } 
+      catch (Exception _e)
+      { _e.printStackTrace(); }                    
     } 
+
+    if (expressionExamples.size() == programExpressionExamples.size())
+    { try { 
+        bwout.write(oclExpressionModel + "\n");
+        bwout.write(exprprogModelString + "\n");
+        for (int h = 0; h < expressionExamples.size(); h++) 
+        { String oclObj = "oclexpr" + h;
+          String progObj = "progexpr" + h; 
+          bwout.write(oclObj + " |-> " + progObj + "\n");
+        }
+        bwout.write("\n"); 
+      } catch (Exception _e)
+        { _e.printStackTrace(); }                    
+
+    }  
+
+
+    if (statementExamples.size() == programStatementExamples.size())
+    { try { 
+        bwout.write(oclStatementModel + "\n");
+        bwout.write(statProgModelString + "\n");
+        for (int h = 0; h < statementExamples.size(); h++) 
+        { String oclObj = "oclstat" + h;
+          String progObj = "progstat" + h; 
+          bwout.write(oclObj + " |-> " + progObj + "\n");
+        } 
+        bwout.write("\n"); 
+      } catch (Exception _e)
+        { _e.printStackTrace(); }                    
+    }  
+
+
+    if (operationExamples.size() == programOperationExamples.size())
+    { try 
+      { bwout.write(oclOperationModel + "\n");
+        bwout.write(opprogModelString + "\n");
+        for (int h = 0; h < operationExamples.size(); h++) 
+        { String oclObj = "oclop" + h;
+          String progObj = "progop" + h; 
+          bwout.write(oclObj + " |-> " + progObj + "\n");
+        }  
+      } catch (Exception _e)
+        { _e.printStackTrace(); }                    
+    }  
+
+    try { 
+      bwout.close();
+    } catch (Exception _e)
+    { _e.printStackTrace(); }                    
 
 
     if (typeExamples.size() < programTypeExamples.size())   

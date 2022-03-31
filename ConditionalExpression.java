@@ -848,6 +848,8 @@ public Vector singleMutants()
     String leftId = ifExp.saveModelData(out); 
     String rightId = elseExp.saveModelData(out); 
     out.println(id + ".test = " + testId); 
+    out.println(id + ".ifExpr = " + leftId); 
+    out.println(id + ".elseExpr = " + rightId); 
     out.println(id + ".ifExp = " + leftId); 
     out.println(id + ".elseExp = " + rightId); 
     return id; 

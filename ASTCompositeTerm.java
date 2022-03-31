@@ -62,6 +62,14 @@ public class ASTCompositeTerm extends ASTTerm
   public boolean hasSingleTerm() 
   { return terms.size() == 1; } 
 
+  public boolean isNestedSymbolTerm() 
+  { if (terms.size() == 1)
+    { ASTTerm t0 = (ASTTerm) terms.get(0); 
+      return t0.isNestedSymbolTerm(); 
+    }
+    return false; 
+  }  
+
   public int arity()
   { return terms.size(); } 
 
@@ -2311,6 +2319,15 @@ public class ASTCompositeTerm extends ASTTerm
       ASTCompositeTerm sdecls = (ASTCompositeTerm) terms.get(3);
       Vector values = sdecls.elementList(); 
       Type et = new Type(sname,values); 
+      return et; 
+    } 
+
+    if ("enumSpecifier".equals(tag) && 
+        terms.size() == 2 && 
+        "enum".equals(terms.get(0) + ""))
+    { // enum name    
+      String sname = ((ASTTerm) terms.get(1)).literalForm(); 
+      Type et = new Type(sname,null); 
       return et; 
     } 
 
@@ -10870,7 +10887,7 @@ public class ASTCompositeTerm extends ASTTerm
         } 
         else if ("countTokens".equals(called))
         { String tt = ASTTerm.getType(args); 
-          System.out.println(">>> Type of " + args + " is: " + tt);  
+          // System.out.println(">>> Type of " + args + " is: " + tt);  
           // if ("OclIterator".equals(tt))
           ASTTerm.setType(thisliteral,"int"); 
            

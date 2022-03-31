@@ -1357,13 +1357,19 @@ abstract class Expression
   { return type != null && type.isRef(); }
 
   public String getOclType()
-  { if (type == null) 
-    { return null; } 
+  { 
 
     if (Expression.isBoolean("" + this))
     { return "Boolean"; }
-    if ("null".equals("" + this))
+
+    if ("null".equals("" + this) || 
+        "self".equals("" + this) ||
+        "super".equals("" + this))
     { return "Object"; }  
+    
+    if (type == null) 
+    { return null; }
+ 
     if (Type.isIntegerType(type))
     { return "Integer"; } 
     if (type.isRealType())
@@ -1441,7 +1447,13 @@ abstract class Expression
   } // oclAsType should be BinaryExpression??? flatten??
 
   public static boolean isOclValue(Expression expr)
-  { if (expr instanceof BasicExpression)
+  { if ("self".equals(expr + ""))
+    { return true; } 
+    if ("super".equals(expr + ""))
+    { return true; } 
+    if ("null".equals(expr + ""))
+    { return true; } 
+    if (expr instanceof BasicExpression)
     { BasicExpression be = (BasicExpression) expr; 
       return be.umlkind == VALUE; 
     } 
@@ -1451,7 +1463,10 @@ abstract class Expression
   public static boolean isOclIdentifier(Expression expr)
   { if (expr instanceof BasicExpression)
     { BasicExpression be = (BasicExpression) expr; 
-      if (be.umlkind == VALUE) 
+      if (be.umlkind == VALUE || 
+          be.data.equals("self") || 
+          be.data.equals("super") || 
+          be.data.equals("null")) 
       { return false; }  
       if (be.arrayIndex == null && be.objectRef == null && 
           be.getParameters() == null && 

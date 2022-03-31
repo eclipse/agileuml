@@ -8378,12 +8378,14 @@ public class Entity extends ModelElement implements Comparable
   } // and roles
 
 
+  // saveModelData
   public void asTextModel(PrintWriter out) 
   { String nme = getName(); 
     out.println(nme + " : Entity"); 
     out.println(nme + ".name = \"" + nme + "\"");
     String tid = Identifier.nextIdentifier(10,"");  
-    out.println(nme + ".typeId = \"" + tid + "\""); 
+    out.println(nme + ".typeId = \"" + tid + "\"");
+ 
     if (isAbstract())
     { out.println(nme + ".isAbstract = true"); }
     if (isInterface())
@@ -15393,6 +15395,7 @@ public BehaviouralFeature designKillOp(Vector assocs)
   if (superclass != null)
   { String supname = superclass.getName();
     BasicExpression sup = new BasicExpression(superclass);
+    sup.umlkind = Expression.CLASSID; 
     Type suptype = new Type(superclass);
     BasicExpression exsup = new BasicExpression("super", 0);
     exsup.setObjectRef(ex);
@@ -15403,6 +15406,7 @@ public BehaviouralFeature designKillOp(Vector assocs)
     BasicExpression killsup = new BasicExpression("kill" + supname, 0);
     killsup.setObjectRef(sup);
     killsup.addParameter(exsup);
+    killsup.setStatic(true); 
     killsup.umlkind = Expression.UPDATEOP;
     killsup.setIsEvent();
     InvocationStatement killbx = new InvocationStatement(killsup);
@@ -15416,6 +15420,7 @@ public BehaviouralFeature designKillOp(Vector assocs)
     killsup2.addParameter(castex);
     killsup2.umlkind = Expression.UPDATEOP;
     killsup2.setIsEvent();
+    killsup2.setStatic(true); 
     InvocationStatement killbx2 = new InvocationStatement(killsup2);
     ss.addStatement(killbx2);
   }
@@ -15462,6 +15467,7 @@ public BehaviouralFeature designAbstractKillOp()
     String subname = sub.getName();
     Type subtype = new Type(sub);
     BasicExpression killsub = new BasicExpression("kill" + subname, 0);
+    killsub.setStatic(true); 
     BinaryExpression cst = new BinaryExpression("->oclAsType", ex, subinsts);
     killsub.addParameter(cst);
     killsub.umlkind = Expression.UPDATEOP;

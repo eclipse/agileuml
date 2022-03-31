@@ -1795,9 +1795,21 @@ public class Attribute extends ModelElement
       out.println(cname + ".upper = 1"); 
     } 
 
-    if (!instanceScope) { out.println(cname + ".isStatic = true"); } 
-    if (isFinal()) { out.println(cname + ".isReadOnly = true"); } 
-    if (unique) { out.println(cname + ".isUnique = true"); } 
+    if (instanceScope)
+    { out.println(cname + ".isStatic = false"); } 
+    else  
+    { out.println(cname + ".isStatic = true"); }
+ 
+    if (isFinal()) 
+    { out.println(cname + ".isReadOnly = true"); } 
+    else 
+    { out.println(cname + ".isReadOnly = false"); } 
+
+
+    if (unique) 
+    { out.println(cname + ".isUnique = true"); } 
+    else 
+    { out.println(cname + ".isUnique = false"); } 
 
     if (initialExpression != null) 
     { String ini = initialExpression.saveModelData(out); 

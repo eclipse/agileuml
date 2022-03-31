@@ -5630,6 +5630,8 @@ public class ModelSpecification
     Expression varstarexpr = new BasicExpression(var_star); 
 
     System.out.println(">> Checking all combinations of tree functions based on source attributes: " + sourceatts); 
+    System.out.println(">> Targets: " + tvalues); 
+    System.out.println("----------------------------"); 
   
     // Are the targetvalues constant? If so, return the function  K |--> tatt
     if (ASTTerm.constantTrees(targetValues))
@@ -5649,9 +5651,16 @@ public class ModelSpecification
           ams = new Vector();  
           return new AttributeMatching(srcexpr, targexpr); 
         } 
-      } 
+        else 
+        { Vector newmaps = 
+            ASTTerm.createGeneralisedMappings(sattrvalues,
+                                              targexpr); 
+          if (newmaps.size() > 0) 
+          { return (AttributeMatching) newmaps.get(0); } 
+        } 
+      } // put all in ams?  
 
-      // Should be _* |--> constv     
+      // Should be generalisation of sourceasts |--> constv     
         
       Vector auxvariables = new Vector(); 
       auxvariables.add(varstarexpr);   
@@ -5704,12 +5713,12 @@ public class ModelSpecification
           new AttributeMatching(var1expr, fexpr);
         return amx;   
       } 
-      else if (ASTTerm.allNestedSymbolTerms(sattvalues) && 
-               ASTTerm.allSymbolTerms(targetValues) &&
+      else if (ASTTerm.allSymbolTerms(sattvalues) && 
+               ASTTerm.allNestedSymbolTerms(targetValues) &&
                ASTTerm.functionalSymbolMapping(
                                 sattvalues,targetValues))
       { String fid = 
-          Identifier.nextIdentifier("func"); 
+          Identifier.nextIdentifier("nestedfunc"); 
         TypeMatching tm = 
           ASTTerm.createNewFunctionalMapping(fid, sattvalues, targetValues); 
         System.out.println(">> New nested functional mapping of symbols: " + tm); 
@@ -5828,6 +5837,7 @@ public class ModelSpecification
       { // More than 1 subterm (ttag trm1 trm2 ...)
         // Look for matches of (stag trms...) term-by-term
         // to the target terms.
+        // Strategy 1. 
 
         int sarit = sattvalues[0].arity();  
         int arit = targetValues[0].arity();
@@ -5839,7 +5849,7 @@ public class ModelSpecification
         boolean found = false; 
         boolean allsfound = true; 
 
-        /* 2nd phase, search from target terms */ 
+        /* 2nd phase, find matches for all target subterms */ 
 
         foundstermpars.clear(); 
         stermpars.clear(); 
@@ -5892,10 +5902,28 @@ public class ModelSpecification
                 
               if (correspondingTrees(
                     sent,sourceJValues,targetJValues))
-              { System.out.println(">> Direct correspondence _" + (sindex+1) + " |--> _" + k + " for target terms " + k); 
+              { System.out.println(">> Direct correspondence _" + (sindex+1) + " |--> _" + k + " to target terms " + k); 
                 ttermpars.add(new BasicExpression("_" + (sindex+1))); 
                 foundstermpars.add("_" + (sindex + 1));
                 sfoundvars.add("_" + (sindex + 1));  
+                foundsource = true; 
+              } 
+              else if (ASTTerm.allSymbolTerms(sourceJValues) &&
+                ASTTerm.recursivelyNestedEqual(
+                   sourceJValues,
+                   targetJValues))
+              { System.out.println(">> Recursively equal terms _" + (sindex+1) + " |--> _" + k + " to target terms " + k);
+                BasicExpression betarg = 
+                  BasicExpression.newASTBasicExpression(
+                                        targetJValues[0]);
+                BasicExpression sindexExpr = 
+                  new BasicExpression("_" + (sindex+1)); 
+                Expression subtarg = 
+                  betarg.substituteEq("_1", sindexExpr);  
+                ttermpars.add(subtarg); 
+                foundstermpars.add("_" + (sindex + 1));
+                sfoundvars.add("_" + (sindex + 1));  
+               
                 foundsource = true; 
               } 
               else if ( 
@@ -6133,7 +6161,7 @@ public class ModelSpecification
                               targetValues,localams); 
         
         if (amts != null) 
-        { System.out.println(">> Found direct correspondence of each subterm of source/target trees: " + amts); 
+        { System.out.println(">treesequencemapping> Found direct correspondence of each subterm of source/target trees: " + amts); 
           ams = new Vector();  
           return amts; 
         } 
@@ -6145,7 +6173,7 @@ public class ModelSpecification
                  sourceatts, sattvalues, targetValues, 
                  sattvalueMap, tms, localams); 
         if (amts != null) 
-        { System.out.println(">++> Found functional subterm mapping of varying arity trees: " + amts); 
+        { System.out.println(">+treesequencemapping2+> Found functional subterm mapping of varying arity trees: " + amts); 
           ams = new Vector();  
           return amts; 
         } 
@@ -6164,7 +6192,7 @@ public class ModelSpecification
                  sattvalueMap, tms, localams); 
         
         if (amts != null) 
-        { System.out.println(">**> Found tree-2-tree mapping with symbol deletion/replacement: " + amts); 
+        { System.out.println(">*treesequencemapping3*> Found tree-2-tree mapping with symbol deletion/replacement: " + amts); 
           ams = new Vector();  
           return amts; 
         } 
@@ -6182,7 +6210,7 @@ public class ModelSpecification
                  sattvalueMap, tms, localams); 
         
         if (amts != null) 
-        { System.out.println(">**> Found tree-2-tree mapping with selection/filtering: " + amts); 
+        { System.out.println(">*treesequencemapping4*> Found tree-2-tree mapping with selection/filtering: " + amts); 
           ams = new Vector();  
           return amts; 
         } 
@@ -6200,7 +6228,7 @@ public class ModelSpecification
     // and the strees[i].terms match to the ttrees[i].terms
     // Result mapping is  tagsource(_*) |--> tagtarget(_*)
 
-    System.out.println(">> Trying to find tree sequence mapping for " + strees.length + " source terms to " + ttrees.length + " target terms"); 
+    System.out.println(">treesequence1> Trying to find tree sequence mapping for " + strees.length + " source terms to " + ttrees.length + " target terms"); 
     System.out.println();  
 
     int n = strees.length; 
@@ -6301,7 +6329,7 @@ public class ModelSpecification
       }  
     } 
 
-    System.out.println(">>--- Trying to match: " + sSymbolTerms + " and " + tSymbolTerms); 
+    System.out.println(">treesequence2>--- Trying to match: " + sSymbolTerms + " and " + tSymbolTerms); 
     System.out.println(">>--- And: " + sTreeTerms + " and " + tTreeTerms); 
     System.out.println(); 
                 
@@ -6325,7 +6353,7 @@ public class ModelSpecification
                      tatt,sourceatts,newSMap,     
                      targetJValues, tTreeTerms, tms, ams); 
     if (amjx != null) 
-    { System.out.println(">>--- List function mapping: " + amjx); 
+    { System.out.println(">treesequence2>--- List function mapping: " + amjx); 
       String fid = 
           Identifier.nextIdentifier("ruleset");
       TypeMatching tmnew = new TypeMatching(fid);
@@ -6366,14 +6394,14 @@ public class ModelSpecification
               replacedSymbols.add(ds); 
               replacements.add(rs);
               replacementFound = true;  
-              System.out.println(">> replaced symbol " + ds + " |--> " + rs); 
+              System.out.println(">treesequence2> replaced symbol " + ds + " |--> " + rs); 
             } 
           }
         } 
       } 
       deletedSymbols.removeAll(ttTerms); 
       deletedSymbols.removeAll(replacedSymbols); 
-      System.out.println(">>-- deleted symbols: " + deletedSymbols); 
+      System.out.println(">treesequence2>-- deleted symbols: " + deletedSymbols); 
 
       for (int r = 0; r < replacedSymbols.size(); r++) 
       { String rs = (String) replacedSymbols.get(r);
@@ -6392,13 +6420,15 @@ public class ModelSpecification
       String rrhs = 
         ((BasicExpression) amjx.trgvalue).toLiteralCSTL();  
       tmnew.addValueMapping(slhs, rrhs); 
-
+      
 
       BasicExpression fexpr = new BasicExpression(fid); 
       fexpr.setUmlKind(Expression.FUNCTION);
       fexpr.addParameter(new BasicExpression("_*"));
       BasicExpression srcstar = new BasicExpression("_*");
       tmnew.addValueMapping("_*", "_*`" + fid);    
+      tms.add(tmnew); 
+
       AttributeMatching amres = 
         new AttributeMatching(srcstar, fexpr); 
       return amres; 
@@ -6448,7 +6478,7 @@ public class ModelSpecification
       tTreeTerms.addAll(tt.nonSymbolTerms());   
     } 
 
-    System.out.println(">>--- Trying to match: " + sSymbolTerms + " and " + tSymbolTerms); 
+    System.out.println(">treesequence3>--- Trying to match: " + sSymbolTerms + " and " + tSymbolTerms); 
     System.out.println(">>--- And: " + sTreeTerms + " and " + tTreeTerms); 
     System.out.println(); 
 
@@ -6488,7 +6518,7 @@ public class ModelSpecification
             replacedSymbols.add(ds); 
             replacements.add(rs);
             replacementFound = true;  
-            System.out.println(">> Replacement of symbols: " + ds + " |--> " + rs); 
+            System.out.println(">treesequence3> Replacement of symbols: " + ds + " |--> " + rs); 
           } 
         }
       } 
@@ -6502,7 +6532,7 @@ public class ModelSpecification
 
     ttTerms.removeAll(ssTerms); 
     ttTerms.removeAll(replacements); 
-    System.out.println(">>-- Additional symbols in target: " + ttTerms); 
+    System.out.println(">treesequence3>-- Additional symbols in target: " + ttTerms); 
 
     Vector bracks = null; 
     if (ttTerms.size() > 0)
@@ -6565,7 +6595,7 @@ public class ModelSpecification
                      tatt,sourceatts,newSMap,     
                      targetJValues, tTreeTerms, tms, ams); 
     if (amjx != null) 
-    { System.out.println(">>--- List function mapping: " + amjx); 
+    { System.out.println(">treesequence3>--- List function mapping: " + amjx); 
       String fid = 
           Identifier.nextIdentifier("ruleset");
       TypeMatching tmnew = new TypeMatching(fid);
@@ -6589,7 +6619,10 @@ public class ModelSpecification
       // tmnew.addValueMapping("_*", "_*`" + fid);    
       tmnew.addValueMapping("_0", "_0");    
 
-      if (tmnew.isVacuous()) { } 
+      if (tmnew.isVacuous()) 
+      { // JOptionPane.showMessageDialog(null, "Vacuous type mapping " + tmnew, 
+        //   "",JOptionPane.INFORMATION_MESSAGE);  
+      } 
       else 
       { tms.add(tmnew); } 
       // BasicExpression fexpr = new BasicExpression(fid); 
@@ -6666,7 +6699,7 @@ public class ModelSpecification
       // tTreeTerms.addAll(tt.nonSymbolTerms());   
     } 
 
-    System.out.println(">>--- Trying to match: " + sSymbolTerms + " and " + tSymbolTerms); 
+    System.out.println(">treesequence4>--- Trying to match: " + sSymbolTerms + " and " + tSymbolTerms); 
     // System.out.println(">>--- And: " + sTreeTerms + " and " + tTreeTerms); 
     System.out.println(); 
 
@@ -6706,7 +6739,7 @@ public class ModelSpecification
             replacedSymbols.add(ds); 
             replacements.add(rs);
             replacementFound = true;  
-            System.out.println(">> Replacement of symbols: " + ds + " |--> " + rs); 
+            System.out.println(">treesequence4> Replacement of symbols: " + ds + " |--> " + rs); 
           } 
         }
       } 

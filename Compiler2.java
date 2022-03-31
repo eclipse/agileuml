@@ -5580,9 +5580,13 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     if ("(".equals(lexicals.get(s) + "") &&
         ")".equals(lexicals.get(e) + ""))
     { Statement stat = parseStatement(s+1,e-1,entities,types); 
-      if (stat != null)
-      { stat.setBrackets(true); }
-      return stat; 
+      if (stat == null) 
+      { return null; } 
+
+      SequenceStatement ss = new SequenceStatement(); 
+      ss.addStatement(stat); 
+      ss.setBrackets(true); 
+      return ss; 
     }  // set brackets
     else if ("return".equals(lexicals.get(s) + ""))
     { Expression ret = parse_expression(0,s+1,e,entities,types); 
@@ -9132,9 +9136,12 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
     // System.out.println(e); 
 
     Compiler2 cc = new Compiler2();
-    cc.nospacelexicalanalysis("Ref(int){5}"); 
-    System.out.println(cc.parseExpression()); 
+    // cc.nospacelexicalanalysis("Ref(int){5}"); 
+    // System.out.println(cc.parseExpression()); 
  
+    cc.nospacelexicalanalysis("x <>= y"); 
+    System.out.println(cc.lexicals); 
+
     // cc.nospacelexicalanalysis("a[x][y+1][z*z]");
     // cc.nospacelexicalanalysis("(if b.subrange(10+1, b.size)->indexOf(\"a\"+\"\") > 0 then (b.subrange(10+1, b.size)->indexOf(\"a\"+\"\") + 10 - 1) else -1 endif)");
     // cc.nospacelexicalanalysis("x->oclAsType(E).att"); 

@@ -28,6 +28,9 @@ public class ASTSymbolTerm extends ASTTerm
   public boolean hasSingleTerm() 
   { return false; } 
 
+  public boolean isNestedSymbolTerm() 
+  { return true; } 
+
   public String cg(CGSpec cgs)
   { return symbol; } 
 

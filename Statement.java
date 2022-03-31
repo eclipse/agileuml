@@ -650,8 +650,8 @@ class ReturnStatement extends Statement
     else 
     { res = "(OclStatement return " + value.toAST() + ")"; } 
 
-    if (brackets)
-    { res = "(OclStatement ( " + res + " ) )"; } 
+    // if (brackets)
+    // { res = "(OclStatement ( " + res + " ) )"; } 
 
     return res; 
   } 
@@ -886,8 +886,8 @@ class BreakStatement extends Statement
   public String toAST() 
   { String res = "(OclStatement break)"; 
 
-    if (brackets)
-    { res = "(OclStatement ( " + res + " ) )"; }
+    // if (brackets)
+    // { res = "(OclStatement ( " + res + " ) )"; }
 
     return res;  
   } 
@@ -1042,8 +1042,8 @@ class ContinueStatement extends Statement
   public String toAST()
   { String res = "(OclStatement continue)"; 
 
-    if (brackets)
-    { res = "(OclStatement ( " + res + " ) )"; } 
+    // if (brackets)
+    // { res = "(OclStatement ( " + res + " ) )"; } 
 
     return res; 
   } 
@@ -1383,8 +1383,8 @@ class InvocationStatement extends Statement
   public String toAST()
   { String res = "(OclStatement call " + callExp.toAST() + " )"; 
 
-    if (brackets)
-    { res = "(OclStatement ( " + res + " ) )"; }
+    // if (brackets)
+    // { res = "(OclStatement ( " + res + " ) )"; }
 
     return res;  
   } 
@@ -1889,8 +1889,8 @@ class ImplicitInvocationStatement extends Statement
   public String toAST()
   { String res = "(OclStatement execute " + callExp.toAST() + " )"; 
 
-    if (brackets)
-    { res = "(OclStatement ( " + res + " ) )"; } 
+    // if (brackets)
+    // { res = "(OclStatement ( " + res + " ) )"; } 
 
     return res; 
   } 
@@ -2619,13 +2619,15 @@ class WhileStatement extends Statement
   public String toAST()
   { String res = "(OclStatement "; 
     if (loopKind == FOR)
-    { res = res + "for " + loopVar + " : " + loopRange.toAST() + " do " + body.toAST() + " )"; }
+    { res = res + "for " + loopVar + " : " + loopRange.toAST() + " do " + body.toAST() + " )"; 
+    }
     else 
     { res = res + "while " + loopTest.toAST() + " do " + 
-            body.toAST() + " )"; }
+            body.toAST() + " )"; 
+    }
 
-    if (brackets)
-    { res = "(OclStatement ( " + res + " ) )"; } 
+    // if (brackets)
+    // { res = "(OclStatement ( " + res + " ) )"; } 
 
     return res;  
   }  
@@ -3531,8 +3533,10 @@ class CreationStatement extends Statement
   public String toAST()
   { String res = "(OclStatement var " + assignsTo + " : " + instanceType.toAST() + " )"; 
 
-    if (brackets)
-    { res = "(OclStatement ( " + res + " ) )"; } 
+    // And initialisation. initialExpression != null
+
+    // if (brackets)
+    // { res = "(OclStatement ( " + res + " ) )"; } 
 
     return res; 
   } 
@@ -3563,6 +3567,13 @@ class CreationStatement extends Statement
     } 
     else 
     { out.println(res + ".elementType = " + tname); } 
+
+    if (initialExpression != null) 
+    { String exprId = initialExpression.saveModelData(out); 
+      out.println(exprId + " : " + res + ".initialExpression"); 
+    } 
+
+
     return res; 
   } 
 
@@ -4573,24 +4584,48 @@ class SequenceStatement extends Statement
     return res; 
   }
 
+  public static boolean isBlock0(Statement tt)
+  { if (tt instanceof SequenceStatement)
+    { SequenceStatement ss = (SequenceStatement) tt; 
+      if (ss.statements.size() == 0) 
+      { return true; } 
+    }
+    return false; 
+  } 
+
   public static boolean isBlock1(Statement tt)
   { if (tt instanceof SequenceStatement)
     { SequenceStatement ss = (SequenceStatement) tt; 
-      if (ss.statements.size() == 1 && ss.brackets) 
+      if (ss.statements.size() == 1) 
       { return true; } 
     }
-    else 
-    { return tt.brackets; } 
     return false; 
   } 
 
   public static boolean isBlockN(Statement tt)
   { if (tt instanceof SequenceStatement)
     { SequenceStatement ss = (SequenceStatement) tt; 
-      if (ss.statements.size() > 1 && ss.brackets) 
+      if (ss.statements.size() > 1) 
       { return true; } 
     }
     return false; 
+  } 
+
+  public Vector flattenSequenceStatement()
+  { Vector res = new Vector(); 
+    if (statements.size() == 0) 
+    { return res; } 
+    for (int i = 0; i < statements.size(); i++) 
+    { Statement si = (Statement) statements.get(i);
+      if (si instanceof SequenceStatement)
+      { Vector subseq = 
+          ((SequenceStatement) si).flattenSequenceStatement(); 
+        res.addAll(subseq); 
+      } 
+      else 
+      { res.add(si); } 
+    } 
+    return res; 
   } 
 
   public String toFlatAST()
@@ -4600,7 +4635,7 @@ class SequenceStatement extends Statement
     { res = res + " ; "; } 
 
     for (int i = 0; i < statements.size(); i++)
-    { Statement si = (Statement) statements.get(i); 
+    { Statement si = (Statement) statements.get(i);
       res = res + si.toAST(); 
       if (i < statements.size()-1) 
       { res = res + " ; "; } 
@@ -4612,42 +4647,22 @@ class SequenceStatement extends Statement
   { String res = "";  
     if (statements.size() == 0)
     { res = "(OclStatement call skip)"; }
-    else if (statements.size() == 1)
-    { Statement s1 = (Statement) statements.get(0); 
-      res = s1.toAST(); 
-    } 
     else 
-    { res = "(OclStatement ";
-      if (brackets) 
-      { res = res + "( "; } 
+    { Vector stats = flattenSequenceStatement(); 
 
-      res = res + " (OclStatementList "; 
+      res = "(OclStatement ( (OclStatementList "; 
 
-      Statement s1 = (Statement) statements.get(0); 
+      Statement s1 = (Statement) stats.get(0); 
       res = res + s1.toAST() + " "; 
       
-      for (int i = 1; i < statements.size(); i++) 
-      { Statement s2 = (Statement) statements.get(i); 
-        if (s2 instanceof SequenceStatement) 
-        { SequenceStatement ss2 = (SequenceStatement) s2; 
-          String tailast = ss2.toFlatAST(); 
-          res = res + tailast; 
-        }
-        else 
-        { res = res + " ; " + s2.toAST(); } 
+      for (int i = 1; i < stats.size(); i++) 
+      { Statement s2 = (Statement) stats.get(i); 
+        res = res + " ; " + s2.toAST();  
       }  
 
-      res = res + " ) "; 
-
-      if (brackets) 
-      { res = res + " )"; } 
-
-      res = res + " )";
+      res = res + " ) ) )";
       return res;   
     }
-
-    if (brackets)
-    { res = "(OclStatement ( " + res + " ) )"; } 
 
     return res; 
   }
@@ -5048,8 +5063,8 @@ class CaseStatement extends Statement
     }
     res = res + ")";
 
-    if (brackets)
-    { res = "(OclStatement ( " + res + " ) )"; } 
+    // if (brackets)
+    // { res = "(OclStatement ( " + res + " ) )"; } 
   
     return res; 
   } 
@@ -5410,8 +5425,8 @@ class ErrorStatement extends Statement
   public String toAST()
   { String res = "(OclStatement error " + thrownObject.toAST() + " )"; 
 
-    if (brackets)
-    { res = "(OclStatement ( " + res + " ) )"; } 
+    // if (brackets)
+    // { res = "(OclStatement ( " + res + " ) )"; } 
 
     return res; 
   } 
@@ -5685,8 +5700,8 @@ class AssertStatement extends Statement
     else
     { res = "(OclStatement assert " + condition.toAST() + " do " + message.toAST() + " )"; } 
 
-    if (brackets)
-    { res = "(OclStatement ( " + res + " ) )"; } 
+    // if (brackets)
+    // { res = "(OclStatement ( " + res + " ) )"; } 
 
     return res; 
   } 
@@ -5953,8 +5968,8 @@ class CatchStatement extends Statement
   public String toAST()
   { String res = "(OclStatement catch " + caughtObject.toAST() + " )"; 
 
-    if (brackets)
-    { res = "(OclStatement ( " + res + " ) )"; } 
+    // if (brackets)
+    // { res = "(OclStatement ( " + res + " ) )"; } 
 
     return res; 
   } 
@@ -6254,8 +6269,8 @@ class TryStatement extends Statement
   
     res = res + ")";
 
-    if (brackets)
-    { res = "(OclStatement ( " + res + " ) )"; } 
+    // if (brackets)
+    // { res = "(OclStatement ( " + res + " ) )"; } 
 
     return res; 
   }
@@ -7136,8 +7151,8 @@ class IfStatement extends Statement
      }
      res = res + ")";
 
-    if (brackets)
-    { res = "(OclStatement ( " + res + " ) )"; } 
+    // if (brackets)
+    // { res = "(OclStatement ( " + res + " ) )"; } 
 
     return res; 
   }
@@ -7762,8 +7777,8 @@ class AssignStatement extends Statement
   public String toAST() 
   { String res = "(OclStatement " + lhs.toAST() + " := " + rhs.toAST() + " )";
  
-    if (brackets)
-    { res = "(OclStatement ( " + res + " ) )"; } 
+    // if (brackets)
+    // { res = "(OclStatement ( " + res + " ) )"; } 
 
     return res;  
   }  
@@ -8604,8 +8619,8 @@ class ConditionalStatement extends Statement
     else 
     { res = res + " else " + elsePart.toAST() + " )"; }
 
-    if (brackets)
-    { res = "(OclStatement ( " + res + " ) )"; } 
+    // if (brackets)
+    // { res = "(OclStatement ( " + res + " ) )"; } 
 
     return res;
   }
@@ -8989,8 +9004,8 @@ class FinalStatement extends Statement
   public String toAST()
   { String res = "(OclStatement finally " + body.toAST() + " )";
 
-    if (brackets)
-    { res = "(OclStatement ( " + res + " ) )"; } 
+    // if (brackets)
+    // { res = "(OclStatement ( " + res + " ) )"; } 
 
     return res;
   }

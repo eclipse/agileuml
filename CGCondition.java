@@ -24,7 +24,9 @@ public class CGCondition
   }
 
   public CGCondition(Expression expr) 
-  { if (expr instanceof BinaryExpression) 
+  { // _i = stereo  or  _i /= stereo
+
+    if (expr instanceof BinaryExpression) 
     { BinaryExpression ee = (BinaryExpression) expr; 
 
       Vector vars = ee.metavariables(); 
