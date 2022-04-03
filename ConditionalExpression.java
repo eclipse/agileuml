@@ -840,7 +840,8 @@ public Vector singleMutants()
   } 
 
   public String saveModelData(PrintWriter out) 
-  { String id = Identifier.nextIdentifier("conditionalexpression_");
+  { String id = Identifier.nextIdentifier(
+                    "conditionalexpression_");
     out.println(id + " : ConditionalExpression"); 
     out.println(id + ".expId = \"" + id + "\""); 
 
@@ -851,7 +852,23 @@ public Vector singleMutants()
     out.println(id + ".ifExpr = " + leftId); 
     out.println(id + ".elseExpr = " + rightId); 
     out.println(id + ".ifExp = " + leftId); 
-    out.println(id + ".elseExp = " + rightId); 
+    out.println(id + ".elseExp = " + rightId);
+
+    String tname = "void"; 
+    if (type != null) 
+    { tname = type.getUMLModelName(out); } 
+    out.println(id + ".type = " + tname); 
+ 
+    if (elementType != null) 
+    { String etname = elementType.getUMLModelName(out); 
+      out.println(id + ".elementType = " + etname); 
+    } 
+    else 
+    { out.println(id + ".elementType = " + tname); } 
+
+    out.println(id + ".needsBracket = " + needsBracket); 
+    out.println(id + ".umlKind = " + umlkind); 
+ 
     return id; 
   } 
 

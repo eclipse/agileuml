@@ -124,6 +124,15 @@ public class TypeMatching
     } 
   }
 
+  public void addDefaultMapping(String var, String val)
+  { Type stringtype = new Type("String", null); 
+    BasicExpression s = new BasicExpression(var);
+    BasicExpression t = new BasicExpression(val); 
+    s.setType(stringtype); 
+    t.setType(stringtype);  
+    valueMappings.add(new ValueMatching(s,t)); 
+  }   
+
   public void setValues(boolean[] svals, String[] tvals)
   { Type stringtype = new Type("String", null); 
     Type booltype = new Type("boolean", null); 

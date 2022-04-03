@@ -630,6 +630,7 @@ class BinaryExpression extends Expression
     return le + " " + operator + " " + re; 
   } // - on collections is excludesAll in OCL? Plus set < elem, etc
 
+  // saveTextModel
   public String saveModelData(PrintWriter out) 
   { String id = Identifier.nextIdentifier("binaryexpression_");
     out.println(id + " : BinaryExpression"); 
@@ -3535,7 +3536,8 @@ public void findClones(java.util.Map clones, String rule, String op)
       elementType = left.elementType; 
       type.setElementType(left.elementType); 
     }      
-    else if (comparitors.contains(operator))
+    else if (operator.equals("<>=") ||
+             comparitors.contains(operator))
     { tcEq(tleft,tright,eleft,eright); }
     else if (operator.equals("+"))
     { tcPlus(tleft,tright,eleft,eright); }
@@ -4684,7 +4686,9 @@ public boolean conflictsWithIn(String op, Expression el,
     } 
 
     if (!lmult && !rmult)
-    { if (operator.equals("=")) // and comparitors
+    { if (operator.equals("<>=")) 
+      { res = lqf + " == " + rqf; }
+      else if (operator.equals("=")) // and comparitors
       { res = composeEqQueryForms(lqf,rqf,lprim,rprim); }
       else if (operator.equals("/=") || operator.equals("!=") || operator.equals("<>"))
       { res = composeNeqQueryForms(lqf,rqf,lprim,rprim); }
@@ -4761,6 +4765,8 @@ public boolean conflictsWithIn(String op, Expression el,
       { 
         res = "Set.concatenate(" + rss + "," + lqf + ")"; 
       }
+      else if (operator.equals("<>=")) 
+      { res = lqf + " == " + rqf; }
       else if (operator.equals("="))
       { if (Type.isSetType(left.getType()))
         { res = "Set.equals(" + lqf + "," + rss + ")"; } 
@@ -4815,6 +4821,8 @@ public boolean conflictsWithIn(String op, Expression el,
         else 
         { res = ls + ".equals(" + rqf + ")"; } 
       }
+      else if (operator.equals("<>=")) 
+      { res = lqf + " == " + rqf; }
       else if (operator.equals("/=") || operator.equals("!=") || operator.equals("<>"))
       { if (Type.isSetType(right.getType()))
         { res = "!(Set.equals(" + ls + "," + rqf + "))"; } 
@@ -4843,6 +4851,8 @@ public boolean conflictsWithIn(String op, Expression el,
     { res = "Collections.lastIndexOfSubList(" + lqf + "," + rqf + ") + 1"; 
       bNeeded = true; 
     } 
+    else if (operator.equals("<>=")) 
+    { res = lqf + " == " + rqf; }
     else   
     { // res = lqf + " " + operator + " " + rqf;
       res = composeSetQueryForms(lqf,rqf); 
@@ -4966,6 +4976,13 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->gcd"))
     { return "Set.gcd(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("<>=")) 
+    { res = lqf + " == " + rqf; 
+      if (needsBracket)
+      { res = "(" + res + ")"; }
+      return res; 
+    } 
 
     if (operator.equals("->isUnique"))  // and define for B
     { String fcollect = collectQueryFormJava6(lqf,rqf,rprim,env,local);
@@ -5321,6 +5338,13 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->gcd"))
     { return "Ocl.gcd(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("<>=")) 
+    { res = lqf + " == " + rqf; 
+      if (needsBracket)
+      { res = "(" + res + ")"; }
+      return res; 
+    } 
 
     if (operator.equals("->isUnique"))  // and define for B
     { String fcollect = collectQueryFormJava7(lqf,rqf,rprim,env,local);
@@ -5682,6 +5706,13 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->gcd"))
     { return "SystemTypes.gcd(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("<>=")) 
+    { res = lqf + " == " + rqf; 
+      if (needsBracket)
+      { res = "(" + res + ")"; }
+      return res; 
+    } 
 
     if (operator.equals("->compareTo")) 
     { if (left.isNumeric() && right.isNumeric())
@@ -6084,6 +6115,13 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->equalsIgnoreCase"))
     { return "UmlRsdsLib<" + lcet + ">::equalsIgnoreCase(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("<>=")) 
+    { res = lqf + " == " + rqf; 
+      if (needsBracket)
+      { res = "(" + res + ")"; }
+      return res; 
+    } 
 
     if (operator.equals("->compareTo")) 
     { res = "(" + lqf + " < " + rqf + ")?-1:((" + lqf + " > " + rqf + ")?1:0)";

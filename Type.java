@@ -2337,6 +2337,9 @@ public class Type extends ModelElement
     if (values == null && alias != null)  
     { return alias.getUMLModelName(out); } 
 
+    if (entity != null && entity.isGenericParameter())
+    { return "OclAny"; } 
+
     return nme; 
   } // Function types for the future. 
 

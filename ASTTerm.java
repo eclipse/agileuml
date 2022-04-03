@@ -791,6 +791,12 @@ public abstract class ASTTerm
 
   public static TypeMatching createNewFunctionalMapping(String name, ASTTerm[] strees, ASTTerm[] ttrees)
   { // The correspondence is functional.
+
+    // If an identity mapping, return _1 |-->_1
+
+    // A "default" case _1 |--> v is included where v is the 
+    // most frequent target of different source values. 
+
     Type str = new Type("String", null); 
     TypeMatching tm = new TypeMatching(str,str);
     tm.setName(name);  
@@ -804,7 +810,38 @@ public abstract class ASTTerm
     for (int i = 0; i < ttrees.length; i++) 
     { tattvalues[i] = ttrees[i].literalForm(); } 
 
-    tm.setStringValues(sattvalues,tattvalues); 
+    if (AuxMath.isIdentity(sattvalues,tattvalues))
+    { tm.addDefaultMapping("_1", "_1"); 
+      return tm; 
+    }
+
+    /* Identify default mapping _1 |--> v */ 
+
+    String defaultValue = null; 
+    int defaultCount = 0; 
+    for (int i = 0; i < tattvalues.length; i++) 
+    { String tval = tattvalues[i]; 
+      java.util.HashSet svals = new java.util.HashSet(); 
+      for (int j = 0; j < sattvalues.length && 
+                      j < tattvalues.length; j++) 
+      { if (tattvalues[j].equals(tval))
+        { svals.add(sattvalues[j]); } 
+      } 
+
+      if (svals.size() > defaultCount)
+      { defaultValue = tval;
+        defaultCount = svals.size();
+      }     
+    } 
+
+    System.out.println(">> Default mapping is _1 |-->" + defaultValue); 
+
+
+    tm.setStringValues(sattvalues,tattvalues);
+
+    if (defaultValue != null) 
+    { tm.addDefaultMapping("_1", defaultValue); } 
+ 
     return tm; 
   } 
 

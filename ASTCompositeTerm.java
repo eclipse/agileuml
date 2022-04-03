@@ -5246,9 +5246,22 @@ public class ASTCompositeTerm extends ASTTerm
       
       Expression resx; 
       if ("!=".equals(op))
-      { resx = new BinaryExpression("/=", res1, res2); } 
+      { if (res1.isString() || res1.isCollection())
+        { BinaryExpression ineq = 
+            new BinaryExpression("<>=", res1, res2);
+          resx = new UnaryExpression("not", ineq); 
+        }
+        else 
+        { resx = new BinaryExpression("/=", res1, res2); }
+        resx.setType(new Type("boolean", null)); 
+      } 
       else if ("==".equals(op))
-      { resx = new BinaryExpression("=", res1, res2); } 
+      { if (res1.isString() || res1.isCollection())
+        { resx = new BinaryExpression("<>=", res1, res2); }
+        else 
+        { resx = new BinaryExpression("=", res1, res2); }
+        resx.setType(new Type("boolean", null)); 
+      } 
       else 
       { resx = new BinaryExpression(op, res1, res2); } 
       resx.setType(new Type("boolean", null)); 
@@ -12031,11 +12044,11 @@ public class ASTCompositeTerm extends ASTTerm
           { if (arg.expression != null && 
               callarg1.expression != null) 
             { expression = 
-              new BinaryExpression("=", 
-                new UnaryExpression("?", arg.expression), 
-                new UnaryExpression("?", callarg1.expression)); 
+                new BinaryExpression("<>=", 
+                  arg.expression, 
+                  callarg1.expression); 
             } 
-            return "?" + args + " = ?" + callp1; 
+            return args + " <>= " + callp1; 
           }  
 
           if (arg.expression != null && 
@@ -17166,13 +17179,12 @@ public class ASTCompositeTerm extends ASTTerm
           if (e1.isIdentifier() && e2.isIdentifier()  && 
               (e1.isCollection() || e2.isCollection()))
           { if (e1.expression != null && e2.expression != null) 
-            { UnaryExpression ref1 = new UnaryExpression("?", e1.expression); 
-              UnaryExpression ref2 = new UnaryExpression("?", e2.expression); 
-              expression = new BinaryExpression("=", ref1, ref2); 
+            { expression = new BinaryExpression("<>=", 
+                                  e1.expression, e2.expression); 
               expression.setType(new Type("boolean", null)); 
             } 
-            return "?" + e1xx + " = ?" + e2xx; 
-          } 
+            return e1xx + " <>= " + e2xx; 
+          } // Also for strings and for !=
 
           if (e1.expression != null && e2.expression != null) 
           { expression = new BinaryExpression("=", e1.expression, e2.expression); 
@@ -17189,12 +17201,14 @@ public class ASTCompositeTerm extends ASTTerm
           if (e1.isIdentifier() && e2.isIdentifier()  && 
               (e1.isCollection() || e2.isCollection()))
           { if (e1.expression != null && e2.expression != null) 
-            { UnaryExpression ref1 = new UnaryExpression("?", e1.expression); 
-              UnaryExpression ref2 = new UnaryExpression("?", e2.expression); 
-              expression = new BinaryExpression("/=", ref1, ref2); 
+            { BinaryExpression expr = 
+                new BinaryExpression("<>=", e1.expression, 
+                                     e2.expression);
+              expr.setBrackets(true); 
+              expression = new UnaryExpression("not", expr);  
               expression.setType(new Type("boolean", null)); 
             } 
-            return "?" + e1xx + " /= ?" + e2xx; 
+            return "not(" + e1xx + " <>= " + e2xx + ")"; 
           } 
 
           if (e1.expression != null && e2.expression != null) 

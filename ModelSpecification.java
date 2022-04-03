@@ -5623,11 +5623,12 @@ public class ModelSpecification
     Attribute var_1 = 
         new Attribute("_1", new Type("OclAny",null),
                    ModelElement.INTERNAL);
-    Expression var1expr = new BasicExpression(var_1); 
+    BasicExpression var1expr = new BasicExpression(var_1); 
     Attribute var_star = 
         new Attribute("_*", new Type("OclAny",null),
                    ModelElement.INTERNAL);
-    Expression varstarexpr = new BasicExpression(var_star); 
+    BasicExpression varstarexpr = 
+        new BasicExpression(var_star); 
 
     System.out.println(">> Checking all combinations of tree functions based on source attributes: " + sourceatts); 
     System.out.println(">> Targets: " + tvalues); 
@@ -5722,13 +5723,18 @@ public class ModelSpecification
         TypeMatching tm = 
           ASTTerm.createNewFunctionalMapping(fid, sattvalues, targetValues); 
         System.out.println(">> New nested functional mapping of symbols: " + tm); 
-        tms.add(tm);
+        if (tm.isVacuous()) { } 
+        else 
+        { tms.add(tm); }
          
         BasicExpression fexpr = 
                           new BasicExpression(fid); 
         fexpr.setUmlKind(Expression.FUNCTION); 
         fexpr.addParameter(var1expr); 
-        ams = new Vector();  
+        ams = new Vector();
+
+        if (tm.isVacuous())
+        { fexpr = var1expr; }   
         AttributeMatching amx = 
           new AttributeMatching(var1expr, fexpr);
         return amx;   

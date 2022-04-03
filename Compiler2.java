@@ -2393,7 +2393,8 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     { 
       String ss = lexicals.elementAt(i).toString(); 
       if (ss.equals(":") || ss.equals("<:") ||
-          ss.equals("/:") || ss.equals("/<:") || ss.equals("<>") || 
+          ss.equals("/:") || ss.equals("/<:") || 
+          ss.equals("<>") || ss.equals("<>=") ||  
           Expression.comparitors.contains(ss))
       { e1 = parse_additive_expression(bc,pstart,i-1,entities,types); 
         e2 = parse_additive_expression(bc,i+1,pend,entities,types); 

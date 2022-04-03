@@ -65,6 +65,9 @@ public class Entity extends ModelElement implements Comparable
     return false; 
   } // or associations 
 
+  public boolean isGenericParameter()
+  { return genericParameter; } 
+
   public boolean allSubclassesAreEmpty()
   { boolean res = true;
     if (subclasses.size() == 0) 
