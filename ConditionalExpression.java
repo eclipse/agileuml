@@ -579,9 +579,9 @@ public Vector singleMutants()
   } 
 
   public String toAST()
-  { String res = "(ConditionalExpression if " + test.toAST() + " then " + ifExp.toAST() + " else " + elseExp.toAST() + " endif )"; 
-    if (needsBracket) 
-    { res = "(BracketedExpression ( " + res + " ) )"; } 
+  { String res = "(OclConditionalExpression if " + test.toAST() + " then " + ifExp.toAST() + " else " + elseExp.toAST() + " endif )"; 
+    // if (needsBracket) 
+    // { res = "(BracketedExpression ( " + res + " ) )"; } 
     return res; 
   } 
 

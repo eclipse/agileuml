@@ -12765,7 +12765,7 @@ public void produceCUI(PrintWriter out)
         if (xx == null) 
         { System.err.println("!!ERROR: Invalid text for general AST at line " + noflines + ":"); 
           System.err.println(c.lexicals); 
-          return; 
+          // return; 
         }
         else 
         { res.add(xx); }  

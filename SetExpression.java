@@ -215,7 +215,7 @@ public class SetExpression extends Expression
   }
 
   public String toAST()
-  { String res = "(OclSetExpression ";
+  { String res = "(OclCollectionExpression ";
 
     if (type != null && "Ref".equals(type.getName()))
     { res = "Ref { "; } 
@@ -231,7 +231,7 @@ public class SetExpression extends Expression
       return res; 
     } 
 
-    res = res + " (ElementList "; 
+    res = res + " (OclElementList "; 
 
     for (int i = 0; i < elements.size(); i++)
     { Expression elem = (Expression) elements.get(i); 

@@ -3767,6 +3767,10 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
   
   public ASTTerm parseGeneralAST(int st, int en)
   { ASTTerm res = null; 
+  
+    if (lexicals == null || lexicals.size() == 0) 
+	{ return res; }
+	
     String lex = lexicals.get(st) + ""; 
 
     if (st == en) 
@@ -9120,6 +9124,13 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
     // c.nospacelexicalanalysis(" while (x > 0) do  if (x = 5) then  break else continue"); 
     // Statement stat = c.parseStatement(); 
     // System.out.println(stat); 
+
+    Compiler2 comp = new Compiler2();  
+    Vector vv = new Vector(); 
+    comp.nospacelexicalanalysis("x <>= y"); 
+    Expression tt = comp.parseExpression(vv,vv); 
+        
+    System.out.println(tt); 
 
     // c = new Compiler2(); 
 

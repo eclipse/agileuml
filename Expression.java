@@ -1564,12 +1564,13 @@ abstract class Expression
       String op = ue.getOperator(); 
       if ("+".equals(op) || "-".equals(op) || 
           "*".equals(op) || "&".equals(op) || 
-          "^".equals(op) || 
+          "^".equals(op) || "<>=".equals(op) || 
           "/".equals(op) || "div".equals(op) || 
           "mod".equals(op) || "and".equals(op) || 
           "or".equals(op) || "xor".equals(op) || 
           "<".equals(op) || "<=".equals(op) || 
           "=".equals(op) || "/=".equals(op) ||
+          "=>".equals(op) || 
           ">".equals(op) || ">=".equals(op))
       { return true; } 
       if (op.startsWith("->"))

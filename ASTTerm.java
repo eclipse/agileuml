@@ -794,7 +794,7 @@ public abstract class ASTTerm
 
     // If an identity mapping, return _1 |-->_1
 
-    // A "default" case _1 |--> v is included where v is the 
+    // A "default" case _* |--> v is included where v is the 
     // most frequent target of different source values. 
 
     Type str = new Type("String", null); 
@@ -834,13 +834,13 @@ public abstract class ASTTerm
       }     
     } 
 
-    System.out.println(">> Default mapping is _1 |-->" + defaultValue); 
+    System.out.println(">> Default mapping is _* |-->" + defaultValue); 
 
 
     tm.setStringValues(sattvalues,tattvalues);
 
     if (defaultValue != null) 
-    { tm.addDefaultMapping("_1", defaultValue); } 
+    { tm.addDefaultMapping("_*", defaultValue); } 
  
     return tm; 
   } 

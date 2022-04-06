@@ -507,7 +507,9 @@ public class CGCondition
   } // and for other kinds of statement also 
 
   public boolean conditionSatisfied(ASTTerm a, Vector entities)
-  { if (a instanceof ASTCompositeTerm)
+  { String alit = a.literalForm(); 
+
+    if (a instanceof ASTCompositeTerm)
     { ASTCompositeTerm ac = (ASTCompositeTerm) a; 
       
       if (ac.tag.equalsIgnoreCase(stereotype))
@@ -533,6 +535,13 @@ public class CGCondition
     { System.out.println("|||>> condition that type of " + a + " = " + stereotype + " is satisfied"); 
       return positive; 
     } 
+
+    if ("Class".equals(stereotype))
+    { if (Type.isOclEntityType(alit,entities)) 
+      { return positive; } 
+      else 
+      { return !positive; } 
+    }  
 
     if ("updatesObject".equals(stereotype))
     { if (a.updatesObject(null))

@@ -159,12 +159,20 @@ public class Type extends ModelElement
     Entity ex = (Entity) ModelElement.lookupByName(name, ents);
     if (ex != null) 
     { return true; } 
-    if ("OclType".equals(name) || "OclAny".equals(name) ||
-        "OclProcess".equals(name) ||  
-        "OclFile".equals(name) || "OclRandom".equals(name))
+    if (isOclClassifierType(name))
     { return true; } 
     return false; 
  } 
+
+  public static boolean isOclEntityType(String tname, Vector ents) 
+  { Entity ex = (Entity) ModelElement.lookupByName(tname, ents);
+    if (ex != null) 
+    { return true; } 
+    if (isOclClassifierType(tname))
+    { return true; } 
+    return false; 
+ } 
+
 
   public boolean isInterfaceType(Vector ents) 
   { if (entity != null && entity.isInterface())
@@ -2074,9 +2082,19 @@ public class Type extends ModelElement
   { if (e == null) 
     { return false; } 
     String estr = e + ""; 
+    return isOclClassifierType(estr); 
+  } 
+
+  public static boolean isOclClassifierType(String estr)
+  {
     if ("String".equals(estr) || "OclDate".equals(estr) ||
         "OclAny".equals(estr) || "OclType".equals(estr) || 
-        "OclProcess".equals(estr) || "OclFile".equals(estr) ||
+        "OclAttribute".equals(estr) || 
+        "OclOperation".equals(estr) ||
+        "OclProcess".equals(estr) || 
+        "OclProcessGroup".equals(estr) || 
+        isExceptionType(estr) ||
+        "OclFile".equals(estr) ||
         "OclRandom".equals(estr))
     { return true; } 
     return false; 
