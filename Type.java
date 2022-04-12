@@ -2241,6 +2241,8 @@ public class Type extends ModelElement
     { return "Real"; } 
     if (nme.equals("boolean")) 
     { return "Boolean"; } 
+    if (nme.equals("void")) 
+    { return "void"; } 
 	
     if (nme.equals("Set")) 
     { String tid = Identifier.nextIdentifier(""); 
@@ -2253,12 +2255,14 @@ public class Type extends ModelElement
       else 
       { out.println("SetType" + tid + ".elementType = void"); }
   
-      if (keyType != null) 
+      out.println("SetType" + tid + ".keyType = void");
+    
+   /* if (keyType != null) 
       { String etype = keyType.getUMLModelName(out); 
         out.println("SetType" + tid + ".keyType = " + etype); 
       } 
       else 
-      { out.println("SetType" + tid + ".keyType = void"); } 
+      { out.println("SetType" + tid + ".keyType = void"); } */ 
 
       out.println("SetType" + tid + ".typeId = \"" + tid + "\""); 
       return "SetType" + tid; 
@@ -2274,12 +2278,14 @@ public class Type extends ModelElement
       else 
       { out.println("SequenceType" + tid + ".elementType = void"); }
 
-      if (keyType != null) 
+      out.println("SequenceType" + tid + ".keyType = void"); 
+
+      /* if (keyType != null) 
       { String ktype = keyType.getUMLModelName(out); 
         out.println("SequenceType" + tid + ".keyType = " + ktype); 
       } 
       else 
-      { out.println("SequenceType" + tid + ".keyType = void"); } 
+      { out.println("SequenceType" + tid + ".keyType = void"); } */  
 
       out.println("SequenceType" + tid + ".typeId = \"" + tid + "\""); 
       return "SequenceType" + tid;
@@ -2295,12 +2301,14 @@ public class Type extends ModelElement
       else 
       { out.println("RefType" + tid + ".elementType = void"); }
 
-      if (keyType != null) 
+      out.println("RefType" + tid + ".keyType = void");
+
+      /* if (keyType != null) 
       { String ktype = keyType.getUMLModelName(out); 
         out.println("RefType" + tid + ".keyType = " + ktype); 
       } 
       else 
-      { out.println("RefType" + tid + ".keyType = void"); } 
+      { out.println("RefType" + tid + ".keyType = void"); } */ 
 
       out.println("RefType" + tid + ".typeId = \"" + tid + "\""); 
       return "RefType" + tid;
@@ -2709,6 +2717,9 @@ public class Type extends ModelElement
                "OclFile".equals(nme) || 
                "OclVoid".equals(nme) || 
                "OclProcess".equals(nme) || 
+               "OclProcessGroup".equals(nme) ||
+               "OclAttribute".equals(nme) || 
+               "OclOperation".equals(nme) || 
                "OclRandom".equals(nme) || 
                "OclIterator".equals(nme))
       { res = new BasicExpression("null"); 

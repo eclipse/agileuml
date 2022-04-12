@@ -2231,8 +2231,10 @@ class BasicExpression extends Expression
 
     if (parameters != null && parameters.size() > 0)
     { for (int i = 0; i < parameters.size(); i++)
-      { BasicExpression par = (BasicExpression) parameters.get(i); 
-        res.addAll(par.usesCSTLfunctions());   
+      { if (parameters.get(i) instanceof BasicExpression)
+	    { BasicExpression par = (BasicExpression) parameters.get(i); 
+          res.addAll(par.usesCSTLfunctions());
+		}    
       } 
     } 
     return res; 

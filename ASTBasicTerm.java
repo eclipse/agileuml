@@ -60,6 +60,12 @@ public class ASTBasicTerm extends ASTTerm
     return null; 
   }
 
+  public Vector getTerms()
+  { Vector res = new Vector(); 
+    res.add(new ASTSymbolTerm(value));
+    return res; 
+  }  
+
   public void setValue(String v)
   { value = v; } 
 
@@ -96,6 +102,10 @@ public class ASTBasicTerm extends ASTTerm
     res.add("\"" + value + "\""); 
     return res; 
   } 
+
+  public int termSize() 
+  { return 1; } 
+
 
   public String asTextModel(PrintWriter out)
   { String id = Identifier.nextIdentifier(tag); 

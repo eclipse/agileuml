@@ -235,13 +235,18 @@ public class TypeMatching
     for (int x = 0; x < valueMappings.size(); x++)
     { ValueMatching vm = (ValueMatching) valueMappings.get(x);
       res = res + vm.src + " |-->" + vm.trg + "\n";
-      String lhs = vm.src + ""; 
-      String rhs = vm.trg + "";
+      String lhs = (vm.src + "").trim(); 
+      String rhs = (vm.trg + "").trim();
 
       System.out.println(lhs + " |--> " + rhs + " " + vm.src.arity() + " " + vm.trg.arity()); 
  
-      CGRule rr = new CGRule("" + vm.src, "" + vm.trg); 
-      if (lhs.trim().equals(rhs.trim()) && 
+      CGRule rr = new CGRule("" + vm.src, "" + vm.trg);
+
+      if ("_0".equals(lhs) && "_0".equals(rhs))
+      { } 
+      else if ("_1".equals(lhs) && "_1".equals(rhs))
+      { } 
+      else if (lhs.equals(rhs) && 
           vm.src.arity() <= 1 && vm.trg.arity() <= 1)
       { rr = new CGRule("_1", "_1"); } 
       cg.addCategoryRuleInOrder(name,rr); 
@@ -255,13 +260,18 @@ public class TypeMatching
     for (int x = 0; x < valueMappings.size(); x++)
     { ValueMatching vm = (ValueMatching) valueMappings.get(x);
       res = res + vm.src + " |-->" + vm.trg + "\n";
-      String lhs = vm.src + ""; 
-      String rhs = vm.trg + ""; 
+      String lhs = (vm.src + "").trim(); 
+      String rhs = (vm.trg + "").trim(); 
 
       System.out.println(lhs + " |--> " + rhs + " " + vm.src.arity() + " " + vm.trg.arity()); 
 
       CGRule rr = new CGRule("" + vm.src, "" + vm.trg); 
-      if (lhs.trim().equals(rhs.trim()) && 
+
+      if ("_0".equals(lhs) && "_0".equals(rhs))
+      { } 
+      else if ("_1".equals(lhs) && "_1".equals(rhs))
+      { } 
+      else if (lhs.equals(rhs) && 
           vm.src.arity() <= 1 && vm.trg.arity() <= 1)
       { rr = new CGRule("_1", "_1"); } 
       cg.addCategoryRuleInOrder(category,rr); 

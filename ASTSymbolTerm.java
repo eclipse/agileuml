@@ -91,6 +91,9 @@ public class ASTSymbolTerm extends ASTTerm
   public Vector nonSymbolTerms()
   { return new Vector(); } 
 
+  public Vector getTerms()
+  { return new Vector(); } 
+
   public ASTTerm removeOuterTag()
   { return null; }  
 
@@ -102,6 +105,9 @@ public class ASTSymbolTerm extends ASTTerm
     res.add("\"" + symbol + "\""); 
     return res; 
   } 
+
+  public int termSize() 
+  { return 1; } 
 
   public String asTextModel(PrintWriter out)
   { return "\"" + symbol + "\""; } 

@@ -1762,6 +1762,7 @@ public class Attribute extends ModelElement
     { out.println(";"); } 
   } 
 
+  // saveTextModel
   public String saveModelData(PrintWriter out)
   { String nme = getName(); 
     Entity e = getEntity(); 

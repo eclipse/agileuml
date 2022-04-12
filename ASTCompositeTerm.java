@@ -200,6 +200,15 @@ public class ASTCompositeTerm extends ASTTerm
     return res; 
   } 
 
+  public int termSize()
+  { int res = 0;  
+    for (int i = 0; i < terms.size(); i++) 
+    { ASTTerm t = (ASTTerm) terms.get(i); 
+      res = res + t.termSize(); 
+    } 
+    return res; 
+  } 
+
   public String asTextModel(PrintWriter out)
   { String id = Identifier.nextIdentifier(tag);
  
@@ -231,9 +240,12 @@ public class ASTCompositeTerm extends ASTTerm
       Vector tokens = r.lhsTokens; 
       Vector vars = r.getVariables(); 
 
+      java.util.HashMap matches = new java.util.HashMap(); 
+      // vars --> terms
+
       if (tokens.size() > terms.size())
-      { // System.out.println("> " + tag + " rule " + r + " does not match " + this);  
-        // System.out.println("!! Too many elements on rule LHS (" + tokens.size() + ") to match subterms: (" + terms.size() + ")"); 
+      { System.out.println("> " + tag + " rule " + r + " does not match " + this);  
+        System.out.println("!! Too many elements on rule LHS (" + tokens.size() + ") to match subterms: (" + terms.size() + ")"); 
         continue; 
       } 
       else if (vars.contains("_*") && terms.size() >= tokens.size())
@@ -292,14 +304,31 @@ public class ASTCompositeTerm extends ASTTerm
         else if (vars.contains(tok))
         { // allocate terms(j) to tok
 
-          // System.out.println(">> Matched variable " + tok + 
-          //                    " and term " + tm); 
-          eargs.add(tm); 
-          k++; 
+          System.out.println(">> Matched variable " + tok + 
+                              " and term " + tm);
+
+          ASTTerm oldterm = (ASTTerm) matches.get(tok); 
+          if (oldterm == null)
+          { matches.put(tok,tm); 
+
+            eargs.add(tm); 
+            k++; 
+          } 
+          else if (oldterm.equals(tm)) 
+          { 
+            eargs.add(tm); 
+            k++; 
+          } 
+          else 
+          { System.err.println("!! Same variable " + tok + 
+                               " assigned different terms: " + 
+                               oldterm + " " + tm); 
+            failed = true; 
+          } 
         } 
         else if (tok.equals(tm.literalForm()))
-        { // System.out.println(">> Matched token " + tok + 
-          //                    " and term " + tm); 
+        { System.out.println(">> Matched token " + tok + 
+                              " and term " + tm); 
           k++; 
         } 
         else 
@@ -18391,7 +18420,18 @@ public class ASTCompositeTerm extends ASTTerm
       { ASTTerm mbody = (ASTTerm) terms.get(3);
 
         if (";".equals(mbody.literalForm()))
-        { return res + ";\n"; }  
+        { if (mtype.modelElement != null && 
+              mtype.modelElement instanceof Type) 
+          { Expression retval = 
+              ((Type) mtype.modelElement).getDefaultValueExpression();
+            Statement interfacestat = 
+              new ReturnStatement(retval); 
+            bf.setActivity(interfacestat);  
+            return res + "\n  activity: return " + retval + ";\n"; 
+          } 
+          return res + ";\n"; 
+        }
+  
         res = res + "\n  activity:\n"; 
 
         for (int i = 3; i < terms.size(); i++) 

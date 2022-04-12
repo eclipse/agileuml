@@ -2193,11 +2193,13 @@ public class AuxMath
        int ysize = yval.size(); 
        if (xsize < ysize) 
        { Vector ytail = new Vector(); 
+         // ytail = sequenceSuffix(xval,yval); 
+
          for (int j = xsize; j < ysize; j++) 
          { ytail.add(yval.get(j)); } 
          suffixes.add(ytail); 
          suffix = ytail; 
-	   } 
+       } 
        else 
        { return null; } 
      } 
@@ -2205,7 +2207,16 @@ public class AuxMath
      if (suffixes.size() == 1)
      { return suffix; } 
      return null;  
-   } 
+   }
+
+   public static Vector sequenceSuffix(Vector xx, Vector yy)
+   { int n = xx.size(); 
+     int m = yy.size(); 
+     Vector vv = new Vector(); 
+     for (int i = n; i < m; i++)
+     { vv.add(yy.get(i)); } 
+     return vv; 
+   }  
 
    public static boolean isSubsetSet(Vector[] xs, Vector[] ys, ModelSpecification mod) 
    { for (int i = 0; i < xs.length && i < ys.length; i++) 
@@ -2223,6 +2234,101 @@ public class AuxMath
        else 
        { return false; } 
      } 
+     return true; 
+   } 
+
+   public static boolean isSequencePrefix(Vector lhs, Vector rhs)
+   { int n = lhs.size(); 
+     int m = rhs.size(); 
+     if (n > m)
+     { return false; } 
+
+     for (int i = 0; i < n; i++) 
+     { Object lobj = lhs.get(i); 
+       if (lobj == null) 
+       { return false; } 
+       Object robj = rhs.get(i); 
+       if (robj == null) 
+       { return false; }  
+       if (lobj.equals(robj)) { } 
+       else 
+       { return false; } 
+     } 
+     return true; 
+   } 
+
+   public static boolean isSequencePrefixWithInsertion(Vector lhs1, Vector lhs2, Vector rhs, Vector ins)
+   { // lhs1 ^ ins ^ lhs2 is a prefix of rhs
+
+     int n1 = lhs1.size(); 
+     int n2 = lhs2.size(); 
+     int m = rhs.size(); 
+     if (n1 + n2 > m)
+     { return false; } 
+
+     for (int i = 0; i < n1; i++) 
+     { Object lobj = lhs1.get(i); 
+       if (lobj == null) 
+       { return false; } 
+       Object robj = rhs.get(i); 
+       if (robj == null) 
+       { return false; }  
+       if (lobj.equals(robj)) { } 
+       else 
+       { return false; } 
+     } 
+
+     if (n2 == 0) 
+     { return true; } 
+
+     Object lobjx = lhs2.get(0); 
+     if (lobjx == null) 
+     { return false; } 
+
+     Object robjx = rhs.get(n1); 
+     if (robjx == null) 
+     { return false; }  
+
+     if (lobjx.equals(robjx)) 
+     { for (int i = 0; i < n2; i++) 
+       { Object lobj = lhs2.get(i); 
+         if (lobj == null) 
+         { return false; } 
+         Object robj = rhs.get(n1+i); 
+         if (robj == null) 
+         { return false; }  
+         if (lobj.equals(robj)) { } 
+         else 
+         { return false; } 
+       }
+     } 
+     else 
+     { ins.add(robjx); 
+       int j = n1 + 1; 
+       for ( ; j < m; j++) 
+       { Object robj = rhs.get(j); 
+         if (!(robj.equals(lobjx)))
+         { ins.add(robj); }
+         else 
+         { break; } 
+       }  
+
+       for (int i = 0; i < n2; i++) 
+       { Object lobj = lhs2.get(i); 
+         if (lobj == null) 
+         { return false; } 
+         if (j >= m) 
+         { return false; } 
+         Object robj = rhs.get(j); 
+         if (robj == null) 
+         { return false; }  
+         if (lobj.equals(robj)) { } 
+         else 
+         { return false; } 
+         j++; 
+       }
+     }
+
      return true; 
    } 
 
@@ -2620,7 +2726,23 @@ public class AuxMath
 	 
 	 LComparator comp = new LComparator(f); 
 	 Collections.sort(s1,comp);
-	 System.out.println(s1);   */   
+	 System.out.println(s1);   */
+
+      Vector sbs1 = new Vector(); 
+      Vector sbs2 = new Vector(); 
+      Vector tbs = new Vector(); 
+      sbs1.add("xx"); sbs1.add("bb"); sbs1.add("cc"); 
+      sbs2.add("ff");   
+      tbs.add("aa"); tbs.add("bb"); 
+      tbs.add("cc"); tbs.add("dd"); 
+      tbs.add("ee"); tbs.add("ff"); 
+   
+      Vector vv = new Vector(); 
+      boolean bb = 
+        AuxMath.isSequencePrefixWithInsertion(sbs1,sbs2,
+                                              tbs,vv);
+      System.out.println(bb);
+      System.out.println(vv); 
    }
  }
    

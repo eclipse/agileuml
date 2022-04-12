@@ -153,14 +153,16 @@ public class AttributeMatching
     { String rulelhs = ((BasicExpression) srcvalue).toCSTL();
       BasicExpression rbe = (BasicExpression) trgvalue; 
 
-      // System.out.println(">>> Mapping: " + this + " " + rbe.isFunctionApplication()); 
+      System.out.println(">>> Mapping: " + this + " " + rbe.isFunctionApplication()); 
 
-      if (rbe.isFunctionApplication())
+      if (rbe.isFunctionApplication() && 
+          "_1".equals(rulelhs))
       { String func = rbe.getAppliedFunction(); 
         TypeMatching tm = 
              TypeMatching.lookupByName(func,typematches);
         if (tm != null) 
         { String res = tm.toCSTL(category,cg); 
+          System.out.println(">>> Mapping: " + this + " is " + res); 
           return res; 
         }  
       } // It is simply _1 |-->_1`func

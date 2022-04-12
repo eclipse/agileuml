@@ -1766,7 +1766,7 @@ public class UCDArea extends JPanel
   public void printOCL()
   { // cgbePreProcess(); 
 
-    cgbe(); 
+    // cgbe(); 
 
     for (int i = 0; i < constraints.size(); i++) 
     { Constraint cons = (Constraint) constraints.get(i); 
@@ -1944,8 +1944,8 @@ public class UCDArea extends JPanel
     if (vals != null && vals.length > 0)
     { for (int i = 0; i < vals.length; i++) 
       { System.out.println("Selected: " + vals[i]);
-        UseCase op = (UseCase) vals[i];
-        result.add(op);
+        // UseCase op = (UseCase) vals[i];
+        result.add(vals[i]);
       }  
     } 
     return result; 
@@ -9169,12 +9169,16 @@ private String initialiseOclTypesCPP()
 
 public void produceCUI(PrintWriter out)
 { String initialiseTypesCode = 
-    "  struct OclType* intType = createOclType(\"int\");\n" +  
+    "struct OclType* intType = createOclType(\"int\");\n" +  
     "  struct OclType* stringType = createOclType(\"String\");\n" +  
     "  struct OclType* longType = createOclType(\"long\");\n" +  
     "  struct OclType* booleanType = createOclType(\"boolean\");\n" + 
     "  struct OclType* doubleType = createOclType(\"double\");\n" + 
-    "  struct OclType* voidType = createOclType(\"void\");\n";
+    "  struct OclType* sequenceType = createOclType(\"Sequence\");\n" +  
+    "  struct OclType* setType = createOclType(\"Set\");\n" + 
+    "  struct OclType* functionType = createOclType(\"Function\");\n" +  
+    "  struct OclType* mapType = createOclType(\"Map\");\n" + 
+    "  struct OclType* voidType = createOclType(\"void\");\n\n";
  
   for (int i = 0; i < entities.size(); i++) 
   { Entity ent = (Entity) entities.get(i); 
@@ -9187,8 +9191,63 @@ public void produceCUI(PrintWriter out)
     initialiseTypesCode = 
       initialiseTypesCode + 
         "  struct OclType* " + enamelc + "Type = createOclType(\"" + ename + "\");\n"; 
-  } // add its attributes, operations
 
+    Vector atts = ent.getAttributes(); 
+    for (int j = 0; j < atts.size(); j++) 
+    { Attribute att = (Attribute) atts.get(j);
+      String aname = att.getName(); 
+      Type atype = att.getType(); 
+      if (atype == null) 
+      { continue; } 
+      String atypename = atype.getName(); 
+      String eaname = enamelc + "_" + aname; 
+
+      initialiseTypesCode = initialiseTypesCode + 
+        "  struct OclAttribute* " + eaname + " = createOclAttribute();\n" + 
+        "  " + eaname + "->name = \"" + aname + "\";\n" + 
+        "  " + eaname + "->type = getOclTypeByPK(\"" + atypename + "\");\n" + 
+        "  addOclType_attributes(" + enamelc + "Type, " + eaname + ");\n"; 
+    } 
+
+    Vector ops = ent.getOperations();
+    java.util.HashSet opnames = new java.util.HashSet(); 
+ 
+    for (int j = 0; j < ops.size(); j++) 
+    { BehaviouralFeature op = (BehaviouralFeature) ops.get(j);
+      String opname = op.getName(); 
+      Type optype = op.getType(); 
+      if (optype == null) 
+      { optype = new Type("void", null); } 
+      String optypename = optype.getName(); 
+      String eopname = enamelc + "_" + opname; 
+
+      if (opnames.contains(eopname))
+      { System.err.println("!! Error: two operations of same class have the same name!!: " + eopname); 
+        continue; 
+      } 
+      opnames.add(eopname); 
+
+      initialiseTypesCode = initialiseTypesCode + 
+        "  struct OclOperation* " + eopname + " = createOclOperation();\n" + 
+        "  " + eopname + "->name = \"" + opname + "\";\n" + 
+        "  " + eopname + "->type = getOclTypeByPK(\"" + optypename + "\");\n" + 
+        "  addOclType_operations(" + enamelc + "Type, " + eopname + ");\n"; 
+    } 
+
+    Entity supe = ent.getSuperclass(); 
+    if (supe != null) 
+    { String supname = supe.getName().toLowerCase(); 
+
+      initialiseTypesCode = initialiseTypesCode + 
+        "  setOclType_superclass(" + enamelc + "Type, " + supname + "Type);\n\n"; 
+    } 
+
+  } // add its superclass if any. 
+
+  String initialiseFilesCode = 
+    "createOclFile_Write(\"System.out\");\n" + 
+    "  createOclFile_Write(\"System.out\");\n" +
+    "  createOclFile_Read(\"System.in\");\n"; 
 
   out.println("#include \"app.c\"");
   out.println();
@@ -9199,6 +9258,8 @@ public void produceCUI(PrintWriter out)
 
   out.println("int main(int _argc, char* _argv[])"); 
   out.println("{ " + initialiseTypesCode); 
+  out.println("  " + initialiseFilesCode); 
+  out.println(); 
   out.println("  char** res = getFileLines(\"app.itf\");");  
   out.println("  int ncommands = length(res);");
   out.println("  int i = 0;");
@@ -12749,6 +12810,8 @@ public void produceCUI(PrintWriter out)
 
     String sourcestring = ""; 
     int noflines = 1; 
+    int items = 0; 
+    int totalsize = 0; 
 
     while (!eof)
     { try 
@@ -12768,7 +12831,10 @@ public void produceCUI(PrintWriter out)
           // return; 
         }
         else 
-        { res.add(xx); }  
+        { res.add(xx);
+          items++;  
+          totalsize = totalsize + xx.termSize(); 
+        }  
       }
       catch (IOException _ex)
       { System.err.println("!! Error: Reading output/asts.txt failed at line " + noflines);
@@ -12778,8 +12844,6 @@ public void produceCUI(PrintWriter out)
 
       noflines++; 
     }
-
-    System.out.println(">>> Read " + noflines + " lines"); 
 
     Vector results = new Vector(); 
 
@@ -12794,8 +12858,21 @@ public void produceCUI(PrintWriter out)
 
     Date d2 = new Date(); 
     long t2 = d2.getTime(); 
+
+    System.out.println(">>> Read " + noflines + " lines"); 
+    System.out.println(">>> Read " + res.size() + " ASTs"); 
+
+
+    System.out.println(">>> Total AST size = " + totalsize);
+
+    if (res.size() == 0) 
+    { return; } 
+ 
+    System.out.println(">>> Average AST size = " + (1.0*totalsize)/res.size()); 
+
     System.out.println("Total time = " + (t2-t1)); 
-    System.out.println("Time per test = " + (t2-t1)/res.size()); 
+    System.out.println("Time per test = " + (1.0*(t2-t1))/res.size()); 
+    System.out.println("Time per size unit = " + (1.0*(t2-t1))/totalsize); 
     System.out.println(); 
 
     try
@@ -14766,7 +14843,7 @@ public void produceCUI(PrintWriter out)
 
     for (int w = 0; w < pucs.size(); w++)
     { PreUseCase pu = (PreUseCase) pucs.get(w); 
-      reconstructUseCase(pu.nme,pu.ent,pu.role); 
+      if (pu != null) { reconstructUseCase(pu.nme,pu.ent,pu.role); } 
     } 
 
     for (int z = 0; z < preactivities.size(); z++)

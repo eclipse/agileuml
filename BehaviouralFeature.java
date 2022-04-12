@@ -3131,7 +3131,7 @@ public class BehaviouralFeature extends ModelElement
   } 
 
 
-  /* Save text model */ 
+  /* SaveTextModel */ 
   public String saveModelData(PrintWriter out, Entity ent, Vector entities, Vector types)
   { if (stereotypes.contains("auxiliary"))
     { return ""; } // but derived ops are usually recorded. 

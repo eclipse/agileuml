@@ -269,6 +269,37 @@ public class ModelSpecification
     return null; 
   } 
 
+  public ASTTerm getCorrespondingTree(ASTTerm s) 
+  { // s, t are the asts of corresponding objects
+
+    if (s == null) 
+    { return null; } 
+    
+    for (int i = 0; i < correspondence.elements.size(); i++) 
+    { Maplet mm = (Maplet) correspondence.elements.get(i); 
+      ObjectSpecification src = (ObjectSpecification) mm.source; 
+      ObjectSpecification trg = (ObjectSpecification) mm.dest; 
+      if (src.hasAttribute("ast") && trg.hasAttribute("ast"))
+      { ASTTerm stree = src.getTree("ast");
+        ASTTerm ttree = trg.getTree("ast");  
+
+        if (stree == null) 
+        { System.err.println("!WARNING -- invalid AST for " + src); 
+          return null; 
+        } 
+
+        if (ttree == null) 
+        { System.err.println("!WARNING -- invalid AST for " + trg); 
+          return null; 
+        } 
+
+        if (s.equals(stree))
+        { return ttree; } 
+      } 
+    } 
+    return null; 
+  } 
+
   public boolean correspondingTrees(Entity sent, ASTTerm s, ASTTerm t) 
   { if (s == null) 
     { return false; } 
@@ -1263,39 +1294,40 @@ public class ModelSpecification
                   sattplus.setType(new Type("String", null)); 
                   sattplus.setElementType(new Type("String", null));
                   suffixesexpr.addElement(sattplus); 
-				  suffixesexpr.setType(new Type("Set", null)); 
-				  suffixesexpr.setElementType(new Type("String", null));
+                  suffixesexpr.setType(new Type("Set", null)); 
+                  suffixesexpr.setElementType(new Type("String", null));
                 }
 				
                 if (possibleSourceFeatures.contains(satt)) { } 
-		        else 
-		        { possibleSourceFeatures.add(satt);   
+                else 
+                { possibleSourceFeatures.add(satt);   
                   Attribute x$ = new Attribute("x$", satt.getElementType(), ModelElement.INTERNAL); 
                   BinaryExpression insuffixset = 
 				    new BinaryExpression(":", new BasicExpression(x$), suffixesexpr); 
-				  splittingConds.put(sattname, insuffixset);
-				}  
-			  } 
-			  else if (sattvalues != null && AuxMath.allPrefixed(sattvalues,values)) 
-			  { System.out.println(">> " + sobj + " satisfies feature mapping " + 
+                  splittingConds.put(sattname, insuffixset);
+                }  
+              } 
+              else if (sattvalues != null && AuxMath.allPrefixed(sattvalues,values)) 
+              { System.out.println(">> " + sobj + " satisfies feature mapping " + 
 				                   "prefix + " + sattname + " |--> " + tattname);
                 Vector prefixes = AuxMath.getPrefixes(sattvalues,values); 
-				System.out.println(">> All prefixes = " + prefixes); 
+                System.out.println(">> All prefixes = " + prefixes); 
 				
-				SetExpression prefixesexpr = new SetExpression(); 
-				for (int p = 0; p < prefixes.size(); p++) 
-				{ String pref = (String) prefixes.get(p); 
-				  BasicExpression prefbe = new BasicExpression("\"" + pref + "\""); 
-				  BasicExpression sattbe = new BasicExpression(satt); 
+                SetExpression prefixesexpr = new SetExpression(); 
+                for (int p = 0; p < prefixes.size(); p++) 
+                { String pref = (String) prefixes.get(p); 
+                  BasicExpression prefbe = new BasicExpression("\"" + pref + "\""); 
+                  BasicExpression sattbe = new BasicExpression(satt); 
 				  sattbe.setUmlKind(Expression.ATTRIBUTE); 
-				  BinaryExpression plussatt = new BinaryExpression("+", prefbe, sattbe); 
-				  plussatt.setType(new Type("String", null)); 
-				  plussatt.setElementType(new Type("String", null));
-				  prefixesexpr.addElement(plussatt); 
-				  prefixesexpr.setType(new Type("Set", null)); 
-				  prefixesexpr.setElementType(new Type("String", null));
-				}
-			    if (possibleSourceFeatures.contains(satt)) { } 
+                  BinaryExpression plussatt = new BinaryExpression("+", prefbe, sattbe); 
+                  plussatt.setType(new Type("String", null)); 
+                  plussatt.setElementType(new Type("String", null));
+                  prefixesexpr.addElement(plussatt); 
+                  prefixesexpr.setType(new Type("Set", null)); 
+                  prefixesexpr.setElementType(new Type("String", null));
+                  }
+			  
+                  if (possibleSourceFeatures.contains(satt)) { } 
 		        else 
 		        { possibleSourceFeatures.add(satt);  
 				
@@ -4173,22 +4205,22 @@ public class ModelSpecification
 		    { String infix = AuxMath.commonInfix(sattvalues,satt1values,tattvalues); 
 		      if (infix != null)
               { System.out.println(">> Composition feature mapping " + sattname + " + \"" + infix + "\" + " + satt1name + " |--> " + tattname); 
-			    BasicExpression sattbe = new BasicExpression(satt); 
-				sattbe.setUmlKind(Expression.ATTRIBUTE); 
-				BasicExpression satt1be = new BasicExpression(satt1); 
+                BasicExpression sattbe = new BasicExpression(satt); 
+                sattbe.setUmlKind(Expression.ATTRIBUTE); 
+                BasicExpression satt1be = new BasicExpression(satt1); 
 				satt1be.setUmlKind(Expression.ATTRIBUTE); 
-		        BinaryExpression add1st = new BinaryExpression("+", sattbe, 
+                BinaryExpression add1st = new BinaryExpression("+", sattbe, 
 			                                                  new BasicExpression("\"" + infix + "\"")); 
-			    BinaryExpression add2nd = new BinaryExpression("+", add1st, satt1be);
-				add2nd.setType(new Type("String", null));  
-			    add2nd.setElementType(new Type("String", null));  
-			    AttributeMatching amx = new AttributeMatching(add2nd, tatt); 
-		        res.add(amx); 
-		        emx.addMapping(amx); 
-				found = true; 
-			  }
-			}  
-	  	    else if (alldefined && AuxMath.isConcatenation(satt1values,sattvalues,tattvalues))
+                BinaryExpression add2nd = new BinaryExpression("+", add1st, satt1be);
+                add2nd.setType(new Type("String", null));  
+                add2nd.setElementType(new Type("String", null));  
+                AttributeMatching amx = new AttributeMatching(add2nd, tatt); 
+                res.add(amx); 
+                emx.addMapping(amx); 
+                found = true; 
+              }
+            }  
+            else if (alldefined && AuxMath.isConcatenation(satt1values,sattvalues,tattvalues))
 		    { String infix = AuxMath.commonInfix(satt1values,sattvalues,tattvalues); 
 		      if (infix != null)  
                  { System.out.println(">> Composition feature mapping " + satt1name + " + \"" + infix + "\" + " + sattname + " |--> " + tattname); 
@@ -5719,7 +5751,32 @@ public class ModelSpecification
                ASTTerm.functionalSymbolMapping(
                                 sattvalues,targetValues))
       { String fid = 
-          Identifier.nextIdentifier("nestedfunc"); 
+          Identifier.nextIdentifier("nestedTfunc"); 
+        TypeMatching tm = 
+          ASTTerm.createNewFunctionalMapping(fid, sattvalues, targetValues); 
+        System.out.println(">> New nested functional mapping of symbols: " + tm); 
+        if (tm.isVacuous()) { } 
+        else 
+        { tms.add(tm); }
+         
+        BasicExpression fexpr = 
+                          new BasicExpression(fid); 
+        fexpr.setUmlKind(Expression.FUNCTION); 
+        fexpr.addParameter(var1expr); 
+        ams = new Vector();
+
+        if (tm.isVacuous())
+        { fexpr = var1expr; }   
+        AttributeMatching amx = 
+          new AttributeMatching(var1expr, fexpr);
+        return amx;   
+      } 
+      else if (ASTTerm.allSymbolTerms(targetValues) && 
+               ASTTerm.allNestedSymbolTerms(sattvalues) &&
+               ASTTerm.functionalSymbolMapping(
+                                sattvalues,targetValues))
+      { String fid = 
+          Identifier.nextIdentifier("nestedSfunc"); 
         TypeMatching tm = 
           ASTTerm.createNewFunctionalMapping(fid, sattvalues, targetValues); 
         System.out.println(">> New nested functional mapping of symbols: " + tm); 
@@ -6221,6 +6278,67 @@ public class ModelSpecification
           return amts; 
         } 
       }  
+      else if (ASTTerm.sameTag(sattvalues) &&
+               ASTTerm.sameTag(targetValues) && 
+         ASTTerm.treeconcatenations(
+                    sattvalues,targetValues,this))
+      { Vector localams = new Vector(); 
+        
+        System.out.println(">**> Checking tree-2-tree mapping with concatenation: " + sattvalues[0] + " ---> " + targetValues[0]); 
+
+        AttributeMatching amts = 
+          ASTTerm.concatenationTreeMapping(
+                    sattvalues,targetValues,this,tms); 
+
+        if (amts != null) 
+        { System.out.println(">**> Tree-2-tree mapping with concatenation: " + amts); 
+          return amts; 
+        } 
+
+        // source term with symbols |--> target term 
+        //      formed as concatenation of source non-symbols
+        // Eg: ( _1 ; _2 ) |--> _1 _2
+      } 
+      else if (ASTTerm.sameTagSameArity(sattvalues) &&
+               ASTTerm.sameTag(targetValues) && 
+         ASTTerm.treesuffixes(
+                    sattvalues,targetValues,this))
+      { Vector localams = new Vector(); 
+        
+        System.out.println(">**> Checking tree-2-tree mapping with suffixes: " + sattvalues[0] + " ---> " + targetValues[0]); 
+
+        AttributeMatching amts = 
+          ASTTerm.suffixTreeMapping(
+                    sattvalues,targetValues,this,tms); 
+
+        if (amts != null) 
+        { System.out.println(">**> Tree-2-tree mapping with suffixes: " + amts); 
+          return amts; 
+        } 
+
+        // source term with symbols |--> target term 
+        //      formed as source non-symbols + constant suffix
+        // Eg: - _1 |--> _1 K1 K2
+      } 
+      else if (ASTTerm.sameTagSameArity(sattvalues) &&
+               ASTTerm.sameTag(targetValues) && 
+         ASTTerm.treesuffixFunction(
+                    sattvalues,targetValues,this))
+      { Vector localams = new Vector(); 
+        
+        System.out.println(">**> Checking tree-2-tree mapping with suffix function: " + sattvalues[0] + " ---> " + targetValues[0]); 
+
+        AttributeMatching amts = 
+          ASTTerm.suffixTreeFunctionMapping(
+                    sattvalues,targetValues,this,
+                    sent,satt,tatt,sourceatts,tms,ams); 
+
+        if (amts != null) 
+        { System.out.println(">**> Tree-2-tree mapping with suffix function: " + amts); 
+          return amts; 
+        } 
+
+      } 
     } 
 
     ams = new Vector();            
@@ -6361,7 +6479,7 @@ public class ModelSpecification
     if (amjx != null) 
     { System.out.println(">treesequence2>--- List function mapping: " + amjx); 
       String fid = 
-          Identifier.nextIdentifier("ruleset");
+          Identifier.nextIdentifier("seq2ruleset");
       TypeMatching tmnew = new TypeMatching(fid);
 
       Vector ssTerms = new Vector(); 
@@ -6426,12 +6544,17 @@ public class ModelSpecification
       String rrhs = 
         ((BasicExpression) amjx.trgvalue).toLiteralCSTL();  
       tmnew.addValueMapping(slhs, rrhs); 
-      
+      tmnew.addValueMapping("_0", "_0");    
+
 
       BasicExpression fexpr = new BasicExpression(fid); 
       fexpr.setUmlKind(Expression.FUNCTION);
       fexpr.addParameter(new BasicExpression("_*"));
       BasicExpression srcstar = new BasicExpression("_*");
+
+      // if (tmnew.isVacuous())
+      // { return new AttributeMatching(srcstar,srcstar); } 
+
       tmnew.addValueMapping("_*", "_*`" + fid);    
       tms.add(tmnew); 
 
@@ -6603,7 +6726,7 @@ public class ModelSpecification
     if (amjx != null) 
     { System.out.println(">treesequence3>--- List function mapping: " + amjx); 
       String fid = 
-          Identifier.nextIdentifier("ruleset");
+          Identifier.nextIdentifier("seq3ruleset");
       TypeMatching tmnew = new TypeMatching(fid);
 
       for (int r = 0; r < replacedSymbols.size(); r++) 
@@ -6622,14 +6745,16 @@ public class ModelSpecification
       String rrhs = 
         ((BasicExpression) amjx.trgvalue).toLiteralCSTL();  
       tmnew.addValueMapping(slhs, rrhs); 
+      
       // tmnew.addValueMapping("_*", "_*`" + fid);    
+      
       tmnew.addValueMapping("_0", "_0");    
 
-      if (tmnew.isVacuous()) 
-      { // JOptionPane.showMessageDialog(null, "Vacuous type mapping " + tmnew, 
-        //   "",JOptionPane.INFORMATION_MESSAGE);  
-      } 
-      else 
+     // if (tmnew.isVacuous()) 
+     //  { // JOptionPane.showMessageDialog(null, "Vacuous type mapping " + tmnew, 
+     //   //   "",JOptionPane.INFORMATION_MESSAGE);  
+     // } 
+     // else 
       { tms.add(tmnew); } 
       // BasicExpression fexpr = new BasicExpression(fid); 
       // fexpr.setUmlKind(Expression.FUNCTION);
@@ -6641,8 +6766,9 @@ public class ModelSpecification
                           new TypeMatching(subid);
       String sublhs = "_*"; 
       String subrhs = "_*`" + fid;
-      if (tmnew.isVacuous()) 
-      { subrhs = "_*"; }
+      // if (tmnew.isVacuous()) 
+      // { subrhs = "_*"; }
+
       if (bracks != null && bracks.size() == 2 && 
           ttTerms.containsAll(bracks)) 
       { subrhs = bracks.get(0) + " " + subrhs + " " + bracks.get(1); }   
@@ -6834,7 +6960,7 @@ public class ModelSpecification
     { System.out.println(">>--- List selection mapping: " + amjx); 
 
       String fid = 
-          Identifier.nextIdentifier("ruleset");
+          Identifier.nextIdentifier("seq4ruleset");
       TypeMatching tmnew = new TypeMatching(fid);
 
       for (int r = 0; r < replacedSymbols.size(); r++) 

@@ -5637,6 +5637,7 @@ String qual = "";
     return res;
   }
 
+  // asTextModel
   public void saveModelData(PrintWriter out)
   { String nme = getName(); 
     // String entnme = getEntity() + ""; 
@@ -5668,6 +5669,7 @@ String qual = "";
         out.println("SetType" + tid + " : CollectionType"); 
         out.println("SetType" + tid + ".name = \"Set\""); 
         out.println("SetType" + tid + ".elementType = " + entity1); 
+        out.println("SetType" + tid + ".keyType = void"); 
         out.println("SetType" + tid + ".typeId = \"" + tid + "\""); 
         out.println(end1 + ".type = SetType" + tid); 
         if (card1 == ZEROONE)
@@ -5699,6 +5701,7 @@ String qual = "";
       out.println(colType + " : CollectionType"); 
       out.println(colType + ".name = \"" + colRoot + "\""); 
       out.println(colType + ".elementType = " + entity2); 
+      out.println(colType + ".keyType = void"); 
       out.println(colType + ".typeId = \"" + tid + "\""); 
       out.println(end2 + ".type = " + colType); 
     } 
