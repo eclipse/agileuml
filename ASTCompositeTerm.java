@@ -7949,7 +7949,118 @@ public class ASTCompositeTerm extends ASTTerm
   } 
 
 
+  /* JavaScript abstraction: */ 
 
+  public Expression jsexpressionToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { System.out.println(">> cexpressionToKM3 for " + tag + " with " + terms.size() + " terms"); 
+    System.out.println(); 
+
+    if (terms.size() == 0)
+    { return null; } 
+
+    if (terms.size() == 1)
+    { ASTTerm t1 = (ASTTerm) terms.get(0); 
+      return t1.jsexpressionToKM3(
+         vartypes, varelemtypes, types, entities); 
+    } 
+
+    ASTTerm firstTerm = (ASTTerm) terms.get(0); 
+    ASTTerm lastTerm = (ASTTerm) terms.get(terms.size()-1); 
+
+    if ("singleExpression".equals(tag))
+    { if (terms.size() == 3 && "(".equals(firstTerm + "") &&
+                             ")".equals(lastTerm + ""))
+      { ASTTerm arg = (ASTTerm) terms.get(1); 
+        Expression expr = arg.jsexpressionToKM3(vartypes,
+                                varelemtypes,types,entities); 
+        expr.setBrackets(true); 
+        return expr; 
+      } 
+    } 
+
+    if ("objectLiteral".equals(tag))
+    { // JSON object literal -- 
+      // create a map
+
+      if (terms.size() == 2 && "{".equals(firstTerm + "") &&
+                             "}".equals(lastTerm + ""))
+      { // empty map 
+        Expression expr = SetExpression.newMapSetExpression(); 
+        return expr; 
+      } 
+
+      if (terms.size() > 2 && "{".equals(firstTerm + "") &&
+                             "}".equals(lastTerm + ""))
+      { // non-empty map 
+        SetExpression expr = SetExpression.newMapSetExpression();
+        for (int i = 1; i < terms.size()-1; i++) 
+        { ASTTerm tt = (ASTTerm) terms.get(i);
+          if (tt instanceof ASTSymbolTerm) 
+          { continue; } 
+ 
+          Expression ttmaplet = 
+             tt.jsexpressionToKM3(vartypes,
+                                varelemtypes,types,entities);
+          expr.addElement(ttmaplet); // must be a maplet  x |-> y
+        } 
+        return expr; 
+      } 
+    } 
+ 
+    if ("arrayLiteral".equals(tag))
+    { // JSON array literal -- 
+      // create a sequence
+
+      if (terms.size() == 2 && "[".equals(firstTerm + "") &&
+                             "]".equals(lastTerm + ""))
+      { // empty sequence 
+        Expression expr = new SetExpression(true); 
+        return expr; 
+      } 
+
+      if (terms.size() == 3 && "[".equals(firstTerm + "") &&
+                             "]".equals(lastTerm + ""))
+      { // non-empty sequence
+
+        ASTCompositeTerm elems = (ASTCompositeTerm) terms.get(1); 
+        Vector eterms = elems.getTerms(); 
+  
+        SetExpression expr = new SetExpression(true);
+        for (int i = 0; i < eterms.size(); i++) 
+        { ASTTerm tt = (ASTTerm) eterms.get(i); 
+          if (tt instanceof ASTSymbolTerm) 
+          { continue; } 
+
+          Expression ttelem = 
+             tt.jsexpressionToKM3(vartypes,
+                                varelemtypes,types,entities);
+          expr.addElement(ttelem); 
+        } 
+        return expr; 
+      } 
+    }
+
+    if ("propertyAssignment".equals(tag) && 
+        terms.size() == 3 && 
+        ":".equals(terms.get(1) + ""))
+    { Expression ttlhs = 
+             firstTerm.jsexpressionToKM3(vartypes,
+                                varelemtypes,types,entities);
+          
+      Expression ttrhs = 
+             lastTerm.jsexpressionToKM3(vartypes,
+                                varelemtypes,types,entities);
+      BinaryExpression res = 
+             new BinaryExpression("|->", ttlhs, ttrhs); 
+      return res; 
+    } 
+
+    return null; 
+  } 
+
+
+  /* Java abstraction: */ 
 
   public boolean isAssignment()
   { if ("expression".equals(tag) && terms.size() == 3)
@@ -19894,7 +20005,7 @@ public class ASTCompositeTerm extends ASTTerm
   } 
 
   public static void main(String[] args)
-  { // Testing of C to KM3
+  { // Testing of JS to KM3
 
     BufferedReader br = null;
     Vector res = new Vector();
@@ -19946,14 +20057,18 @@ public class ASTCompositeTerm extends ASTTerm
     Vector v1 = new Vector();
     Vector v2 = new Vector(); 
 
-  
-    Statement stat = xx.cstatementToKM3(m1,m2,v1,v2);
+    Expression expr = xx.jsexpressionToKM3(m1,m2,v1,v2);
+
+    System.out.println(expr); 
+  }
+
+/*    Statement stat = xx.cstatementToKM3(m1,m2,v1,v2);
     Entity fromC = new Entity("FromC"); 
     BehaviouralFeature bf = new BehaviouralFeature("op"); 
     bf.addStereotype("unsafe"); 
     bf.setActivity(stat);
     fromC.addOperation(bf);  
-    v2.add(fromC); 
+    v2.add(fromC); */ 
  
     /* Type t = xx.cdeclarationToType(m1,m2,v1,v2);
     if (t != null && t.isEntity())
@@ -19967,7 +20082,7 @@ public class ASTCompositeTerm extends ASTTerm
     Vector mxs = ((ASTCompositeTerm) xx).cprogramToKM3(null,m1,m2,v1,v2); */ 
     // System.out.println(mx + "");    
 
-    for (int i = 0; i < v1.size(); i++) 
+/*    for (int i = 0; i < v1.size(); i++) 
     { Type tt = (Type) v1.get(i); 
       System.out.println(tt.getKM3()); 
     } 
@@ -20006,6 +20121,6 @@ public class ASTCompositeTerm extends ASTTerm
       { System.err.println("!! Error in file output/Program.cs "); 
         _e.printStackTrace(); 
       }  
-  } 
+  } */ 
 
 } 

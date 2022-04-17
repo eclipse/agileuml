@@ -1439,6 +1439,22 @@ public class AuxMath
 	 return false; 
     }
 
+    public static boolean isConstantSeq(Vector ys)
+    { if (ys.size() > 0)
+      { Object y0 = ys.get(0);
+        if (y0 == null) 
+        { return false; } 
+ 
+        for (int i = 1; i < ys.size(); i++)
+        { if (y0.equals(ys.get(i))) { }
+          else 
+          { return false; }
+        }
+        return true; 
+      } 
+      return false; 
+    }
+
     public static boolean isConstantSet(Vector[] ys)
     { if (ys.length > 1)
 	 { Vector y0 = ys[0]; 
@@ -2218,6 +2234,15 @@ public class AuxMath
      return vv; 
    }  
 
+   public static Vector sequencePrefix(Vector xx, Vector yy)
+   { int n = xx.size(); 
+     int m = yy.size(); 
+     Vector vv = new Vector(); 
+     for (int i = 0; i < m - n; i++)
+     { vv.add(yy.get(i)); } 
+     return vv; 
+   }  
+
    public static boolean isSubsetSet(Vector[] xs, Vector[] ys, ModelSpecification mod) 
    { for (int i = 0; i < xs.length && i < ys.length; i++) 
      { Vector xval = xs[i]; 
@@ -2256,6 +2281,29 @@ public class AuxMath
      } 
      return true; 
    } 
+
+   public static boolean isSequenceSuffix(Vector lhs, Vector rhs)
+   { int n = lhs.size(); 
+     int m = rhs.size(); 
+     if (n > m)
+     { return false; } 
+
+     // Elements of lhs are same as rhs[n..m] elements
+
+     for (int i = 0; i < n; i++) 
+     { Object lobj = lhs.get(i); 
+       if (lobj == null) 
+       { return false; } 
+       Object robj = rhs.get(i + (m - n)); 
+       if (robj == null) 
+       { return false; }  
+       if (lobj.equals(robj)) { } 
+       else 
+       { return false; } 
+     } 
+     return true; 
+   } 
+
 
    public static boolean isSequencePrefixWithInsertion(Vector lhs1, Vector lhs2, Vector rhs, Vector ins)
    { // lhs1 ^ ins ^ lhs2 is a prefix of rhs
@@ -2331,6 +2379,67 @@ public class AuxMath
 
      return true; 
    } 
+
+   public static Vector sequenceComposition(Vector sources, Vector targets, Vector unused)
+   { // Elements of sources compose to give all of targets
+     // Possibly with extra prefix/suffix/insertions
+     // Pattern is list  [_1,K1,_3,_2,K2] etc
+     // Unused is list of unused sources [_4,_5] etc
+
+     int n = sources.size();
+     int m = targets.size(); 
+
+     Vector used = new Vector(); 
+     Vector pattern = new Vector(); 
+
+     int[] startpositions = new int[n]; 
+     int[] endpositions = new int[n]; 
+     
+     for (int i = 0; i < n; i++) 
+     { Vector srci = (Vector) sources.get(i);
+       String id = "_" + (i+1);  
+       int indi = Collections.indexOfSubList(targets,srci); 
+       if (indi >= 0)
+       { startpositions[i] = indi; 
+         endpositions[i] = indi + srci.size() - 1;
+         System.out.println(srci + " is a subsequence of " + targets + " from " + indi + " to " + endpositions[i]); 
+         used.add(new Integer(i));  
+       } 
+       else 
+       { unused.add(id); }  
+     } 
+
+     System.out.println(">> Used sources: " + used); 
+
+     // The ranges [startpositions[i],endpositions[i]]
+     // for i : used must be disjoint. 
+
+     for (int j = 0; j < m; j++) 
+     { boolean found = false; 
+
+       for (int k = 0; k < used.size() && !found; k++) 
+       { Integer iobj = (Integer) used.get(k); 
+         int i = iobj.intValue(); 
+         String id = "_" + (i+1); 
+         if (j >= startpositions[i] && 
+             j <= endpositions[i])
+         { if (pattern.contains(id))
+           { } 
+           else 
+           { pattern.add(id); } 
+           found = true; 
+         } 
+       }
+
+       if (!found)
+       { pattern.add(targets.get(j)); } 
+     } 
+
+     System.out.println(pattern); 
+
+     return pattern; 
+   } 
+
 
    public static boolean isSupsetSet(Vector[] xs, Vector[] ys, ModelSpecification mod) 
    { for (int i = 0; i < xs.length && i < ys.length; i++) 
@@ -2731,9 +2840,13 @@ public class AuxMath
       Vector sbs1 = new Vector(); 
       Vector sbs2 = new Vector(); 
       Vector tbs = new Vector(); 
-      sbs1.add("xx"); sbs1.add("bb"); sbs1.add("cc"); 
+
+      sbs1.add("aa"); sbs1.add("bb"); sbs1.add("cc"); 
       sbs2.add("ff");   
-      tbs.add("aa"); tbs.add("bb"); 
+      Vector sbs = new Vector(); 
+      sbs.add(sbs1); sbs.add(sbs2); 
+
+      tbs.add("xx"); tbs.add("bb"); 
       tbs.add("cc"); tbs.add("dd"); 
       tbs.add("ee"); tbs.add("ff"); 
    
@@ -2743,6 +2856,19 @@ public class AuxMath
                                               tbs,vv);
       System.out.println(bb);
       System.out.println(vv); 
+
+      Vector vv1 = new Vector(); 
+      Vector vv2 = new Vector(); 
+
+      vv2 = sequenceComposition(sbs,tbs,vv1); 
+      System.out.println(vv1); 
+
+      Vector sbs3 = new Vector(); 
+      sbs3.add("ee"); sbs3.add("ff"); 
+      bb = AuxMath.isSequenceSuffix(sbs2,tbs); 
+      System.out.println(bb); 
+      System.out.println(AuxMath.sequencePrefix(sbs3,tbs)); 
+
    }
  }
    

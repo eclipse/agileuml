@@ -435,6 +435,16 @@ public class CGRule
 
   public int variablePosition(String var)
   { // The index of var in the arguments in the LHS
+
+    System.out.println(">>> Trying to find variable position of " + var + " in " + lhsTokens); 
+    System.out.println(); 
+
+    if (lhsTokens.size() == 0) 
+    { String kstring = var.substring(1); 
+      int k = Integer.parseInt(kstring); 
+      return k; 
+    } 
+
     int varCount = 0; 
     for (int i = 0; i < lhsTokens.size(); i++) 
     { String tok = (String) lhsTokens.get(i); 
@@ -449,6 +459,12 @@ public class CGRule
       { varCount++; } 
     } 
     return -1; 
+  } 
+
+  public void replaceParameter(String str) 
+  { // Replaces _$ by str
+    lhs = (lhs + "").replace("_$", str); 
+    rhs = (rhs + "").replace("_$", str); 
   } 
 
   public String applyRule(Vector args)
@@ -484,7 +500,7 @@ public class CGRule
     { String mf = (String) metafeatures.get(j); 
       String mfvar = mf.substring(0,2); 
       String mffeat = mf.substring(3,mf.length());
-      
+      // Actually indexOf("`") in general, not 2
 
       // if ("*".equals(mfvar.charAt(1) + "")) 
       // { continue; } 
@@ -493,7 +509,10 @@ public class CGRule
       if ("*".equals(mfvar.charAt(1) + ""))
       { k = variablePosition("_*"); } // the position of * in the vbls
       else 
-      { k = Integer.parseInt(mfvar.charAt(1) + ""); }  
+      { // k = Integer.parseInt(mfvar.charAt(1) + ""); 
+        k = variablePosition(mfvar); 
+        System.out.println(">***> Variable position of " + mfvar + " is " + k); 
+      }  
       // Actually the argument corresponding to _k
 
       System.out.println(">***> Trying to apply metafeature " + mffeat + " to " + eargs + "[" + k + "]"); 
@@ -599,6 +618,12 @@ public class CGRule
                  obj instanceof Expression)
         { Expression e = (Expression) obj; 
           String repl = e + ""; 
+          res = replaceByMetafeatureValue(res,mf,repl);
+        }
+        else if ("name".equals(mffeat) && 
+                 obj instanceof ASTTerm)
+        { ASTTerm tt = (ASTTerm) obj; 
+          String repl = tt.literalForm(); 
           res = replaceByMetafeatureValue(res,mf,repl);
         }
         else if ("type".equals(mffeat) && 

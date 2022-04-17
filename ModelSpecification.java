@@ -6278,9 +6278,10 @@ public class ModelSpecification
           return amts; 
         } 
       }  
-      else if (ASTTerm.sameTag(sattvalues) &&
-               ASTTerm.sameTag(targetValues) && 
-         ASTTerm.treeconcatenations(
+      
+      if (ASTTerm.sameTag(sattvalues) &&
+          ASTTerm.sameTag(targetValues) && 
+          ASTTerm.treeconcatenations(
                     sattvalues,targetValues,this))
       { Vector localams = new Vector(); 
         
@@ -6298,46 +6299,82 @@ public class ModelSpecification
         // source term with symbols |--> target term 
         //      formed as concatenation of source non-symbols
         // Eg: ( _1 ; _2 ) |--> _1 _2
-      } 
-      else if (ASTTerm.sameTagSameArity(sattvalues) &&
-               ASTTerm.sameTag(targetValues) && 
-         ASTTerm.treesuffixes(
-                    sattvalues,targetValues,this))
-      { Vector localams = new Vector(); 
+      }  
+      
+      if (ASTTerm.sameTagSameArity(sattvalues) &&
+          ASTTerm.sameTag(targetValues))
+      { if (ASTTerm.treesuffixes(
+              sattvalues,targetValues,this))
+        { Vector localams = new Vector(); 
         
-        System.out.println(">**> Checking tree-2-tree mapping with suffixes: " + sattvalues[0] + " ---> " + targetValues[0]); 
+          System.out.println(">**> Checking tree-2-tree mapping with suffixes: " + sattvalues[0] + " ---> " + targetValues[0]); 
 
-        AttributeMatching amts = 
-          ASTTerm.suffixTreeMapping(
+          AttributeMatching amts = 
+            ASTTerm.suffixTreeMapping(
                     sattvalues,targetValues,this,tms); 
 
-        if (amts != null) 
-        { System.out.println(">**> Tree-2-tree mapping with suffixes: " + amts); 
-          return amts; 
-        } 
+          if (amts != null) 
+          { System.out.println(">**> Tree-2-tree mapping with suffixes: " + amts); 
+            return amts; 
+          } 
 
         // source term with symbols |--> target term 
         //      formed as source non-symbols + constant suffix
         // Eg: - _1 |--> _1 K1 K2
-      } 
-      else if (ASTTerm.sameTagSameArity(sattvalues) &&
-               ASTTerm.sameTag(targetValues) && 
-         ASTTerm.treesuffixFunction(
+        } 
+      
+        if (ASTTerm.treesuffixFunction(
                     sattvalues,targetValues,this))
-      { Vector localams = new Vector(); 
+        { Vector localams = new Vector(); 
         
-        System.out.println(">**> Checking tree-2-tree mapping with suffix function: " + sattvalues[0] + " ---> " + targetValues[0]); 
+          System.out.println(">**> Checking tree-2-tree mapping with suffix function: " + sattvalues[0] + " ---> " + targetValues[0]); 
 
-        AttributeMatching amts = 
-          ASTTerm.suffixTreeFunctionMapping(
+          AttributeMatching amts = 
+            ASTTerm.suffixTreeFunctionMapping(
                     sattvalues,targetValues,this,
                     sent,satt,tatt,sourceatts,tms,ams); 
 
-        if (amts != null) 
-        { System.out.println(">**> Tree-2-tree mapping with suffix function: " + amts); 
-          return amts; 
-        } 
+          if (amts != null) 
+          { System.out.println(">**> Tree-2-tree mapping with suffix function: " + amts); 
+            return amts; 
+          } 
 
+        } 
+      
+        if (ASTTerm.treeprefixFunction(
+                    sattvalues,targetValues,this))
+        { Vector localams = new Vector(); 
+        
+          System.out.println(">**> Checking tree-2-tree mapping with prefix function: " + sattvalues[0] + " ---> " + targetValues[0]); 
+
+          AttributeMatching amts = 
+            ASTTerm.prefixTreeFunctionMapping(
+                    sattvalues,targetValues,this,
+                    sent,satt,tatt,sourceatts,tms,ams); 
+
+          if (amts != null) 
+          { System.out.println(">**> Tree-2-tree mapping with prefix function: " + amts); 
+            return amts; 
+          } 
+
+        } 
+      
+        if (ASTTerm.tree2sequenceMapping(
+                    sattvalues,targetValues,this))
+        { Vector localams = new Vector(); 
+        
+          System.out.println(">&&> Checking tree-2-sequence mapping: " + sattvalues[0] + " ---> " + targetValues[0]); 
+
+          AttributeMatching amts = 
+            ASTTerm.tree2SequenceMap(
+                    sattvalues,targetValues,this,
+                    sent,satt,tatt,sourceatts,tms,ams); 
+
+          if (amts != null) 
+          { System.out.println(">**> Tree-2-tree mapping with suffix function: " + amts); 
+            return amts; 
+          } 
+        } // All the tree-sequence cases
       } 
     } 
 

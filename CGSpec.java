@@ -316,6 +316,13 @@ public class CGSpec
     textRules.add(r);
   }
 
+  public void replaceParameter(String str)
+  { for (int i = 0; i < textRules.size(); i++) 
+    { CGRule r = (CGRule) textRules.get(i); 
+      r.replaceParameter(str); 
+    } 
+  } 
+
   public String toString()
   { String res = ""; 
 

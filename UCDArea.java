@@ -20539,9 +20539,13 @@ public void produceCUI(PrintWriter out)
   { 
     String compositionDepth = 
       JOptionPane.showInputDialog("Max source feature chain length? (1 or 2): ");
+    if (compositionDepth == null) 
+    { compositionDepth = "1"; } 
     int scdepth = Integer.parseInt(compositionDepth); 
     compositionDepth = 
       JOptionPane.showInputDialog("Max target feature chain length? (1 or 2): ");
+    if (compositionDepth == null) 
+    { compositionDepth = "1"; } 
     int tcdepth = Integer.parseInt(compositionDepth); 
     
     Vector sources = getSourceEntities(); 
@@ -21353,8 +21357,12 @@ public void produceCUI(PrintWriter out)
       }
 
       String compositionDepth = JOptionPane.showInputDialog("Max source feature chain length? (<= 3, >= 1): ");
+      if (compositionDepth == null) 
+      { compositionDepth = "1"; }
       int scdepth = Integer.parseInt(compositionDepth); 
       compositionDepth = JOptionPane.showInputDialog("Max target feature chain length? (<= 3, >= 1): ");
+      if (compositionDepth == null) 
+      { compositionDepth = "1"; }
       int tcdepth = Integer.parseInt(compositionDepth);
 
 	  

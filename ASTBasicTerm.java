@@ -555,6 +555,98 @@ public class ASTBasicTerm extends ASTTerm
   } 
 
 
+  /* JavaScript processing: */ 
+
+  public Expression jsexpressionToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector ents)
+  { if ("numericLiteral".equals(tag))
+    { 
+      BasicExpression v = new BasicExpression(value); 
+      if (Expression.isInteger(value))
+      { v.setType(new Type("int",null)); 
+        v.setUmlKind(Expression.VALUE); 
+      }
+      else if (Expression.isLong(value))
+      { v.setType(new Type("long",null)); 
+        v.setUmlKind(Expression.VALUE); 
+      }
+      else if (Expression.isDouble(value))
+      { v.setType(new Type("double",null)); 
+        v.setUmlKind(Expression.VALUE); 
+      } 
+      return v; 
+    }
+    else if ("literal".equals(tag) || 
+             "propertyName".equals(tag)) 
+    { if ("null".equals(value))
+      { return new BasicExpression("null"); } 
+      if ("true".equals(value))
+      { return new BasicExpression(true); } 
+      if ("false".equals(value))
+      { return new BasicExpression(false); } 
+
+      BasicExpression v = new BasicExpression(value); 
+      if (Expression.isString(value))
+      { if ('\'' == value.charAt(0))
+        { BasicExpression ve = new BasicExpression("\"" + value.substring(1,value.length()-1) + "\""); 
+          ve.setType(new Type("String",null)); 
+          ve.setUmlKind(Expression.VALUE);
+          UnaryExpression res = 
+            new UnaryExpression("->char2byte", ve); 
+          res.setType(new Type("int", null)); 
+          return res; 
+        } 
+        v.setType(new Type("String",null)); 
+        v.setUmlKind(Expression.VALUE);
+        return v;  
+      }
+    } 
+    else if ("identifier".equals(tag))
+    { Type t = (Type) vartypes.get(value); 
+      if (t != null) 
+      { BasicExpression be = new BasicExpression(value); 
+        be.setType(t); 
+        be.setElementType((Type) varelemtypes.get(value)); 
+        return be; 
+      } 
+
+      Entity mainC = (Entity) ModelElement.lookupByName(
+                                      "FromC", ents);
+      if (mainC != null) 
+      { BehaviouralFeature bf = mainC.getOperation(value); 
+
+        if (bf != null) 
+        { System.out.println(">>> Function defined in main program: " + value + " " + bf.display() + " " + bf.isVarArg()); 
+          BasicExpression bfcall = 
+            BasicExpression.newStaticCallBasicExpression(
+                                                 bf,mainC); 
+          Expression lam = 
+            UnaryExpression.newLambdaUnaryExpression(bfcall, bf); 
+          Type ftype = bf.getFunctionType(); 
+          lam.setType(ftype); 
+          return lam; 
+        }
+
+        Attribute att = mainC.getAttribute(value); 
+        if (att != null) 
+        { System.out.println(">>> Global attribute: " + value + " : " + att.getType()); 
+          BasicExpression expr = 
+            BasicExpression.newStaticAttributeBasicExpression(
+                                                    att);
+          expr.variable = att;  
+          return expr; 
+        }       
+      } 
+
+      BasicExpression v = new BasicExpression(value); 
+      return v; 
+    } 
+     
+    return null; 
+  } 
+
+
+  /* Java processing */ 
 
   public String queryForm()
   { return toKM3(); } 
@@ -567,7 +659,6 @@ public class ASTBasicTerm extends ASTTerm
       return "self";
     } 
 
-   
     if ("String".equals(value))
     { modelElement = new Type("String", null); 
       expression = new BasicExpression((Type) modelElement); 

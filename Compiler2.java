@@ -9121,6 +9121,14 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
   public static void main(String[] args)
   { // System.out.println(Double.MAX_VALUE); 
     Compiler2 c = new Compiler2();
+
+    CGRule rr = c.parse_TextCodegenerationrule("_1 = _2 |-->var _1 : _2`insertSep$_1"); 
+    System.out.println(rr); 
+
+    // rr.replaceParameter("int"); 
+
+    // System.out.println(rr); 
+    
     // c.nospacelexicalanalysis(" while (x > 0) do  if (x = 5) then  break else continue"); 
     // Statement stat = c.parseStatement(); 
     // System.out.println(stat); 

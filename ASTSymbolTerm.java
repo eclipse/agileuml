@@ -180,6 +180,14 @@ public class ASTSymbolTerm extends ASTTerm
   { return new BasicExpression(symbol); } 
 
 
+  /* JavaScript abstraction: */ 
+
+  public Expression jsexpressionToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector ents)
+  { return new BasicExpression(symbol); } 
+
+ 
+  /* Java abstraction: */ 
 
   public String queryForm()
   { return toKM3(); } 
