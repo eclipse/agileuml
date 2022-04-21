@@ -33,7 +33,7 @@ CExpression
 op COperation
  query static
 true
-CBasicExpression->exists( be | be.cexpId = op.name + "_ref" & be.data = op.name & be.type = op.returnType & result = be ) 
+CBasicExpression->exists( be | be.cexpId = op.name + "_ref" & be.data = op.name & be.type = op.returnType & be.elementType = op.elementType & result = be ) 
 
 
 
@@ -335,7 +335,7 @@ boolean
 
  query
 true
-(name = "OclType" => result = false) & (name = "OclAttribute" => result = false) & (name = "OclOperation" => result = false) & (name = "OclProcess" => result = false) & (name = "OclProcessGroup" => result = false) & (name = "ocltnode" => result = false) & (name = "OclIterator" => result = false) & (name = "OclFile" => result = false) & (name = "MathLib" => result = false) & (name = "OclDate" => result = false) & (name = "OclRandom" => result = false) & (true => result = true)
+(name = "OclType" => result = false) & (name = "OclAttribute" => result = false) & (name = "OclOperation" => result = false) & (name = "OclProcess" => result = false) & (name = "OclProcessGroup" => result = false) & (name = "ocltnode" => result = false) & (name = "OclIterator" => result = false) & (name = "OclFile" => result = false) & (name = "MathLib" => result = false) & (name = "OclDate" => result = false) & (name = "OclRandom" => result = false) & (name = "OclException" => result = false) & (name->hasSuffix("Exception") => result = false) & (true => result = true)
 
 
 
@@ -401,7 +401,7 @@ CStatement
 sup String
 
 true
-(returnType.name = "void" => CBasicExpression->exists( cbe | cbe.cexpId = opId & cbe.data = name->before("_") + "_" + sup & cbe.kind = "operation" & cbe.type = returnType & CBasicExpression->exists( c | c.cexpId = opId + "_super" & c.kind = "attribute" & c.data = "super" & c.type = CType[sup] & c.elementType = CType[sup] & CBasicExpression->exists( s | s.data = "self" & s.kind = "variable" & s : c.reference & s.cexpId = opId + "_self" & s.type = CType[classname] & s.elementType = s.type ) & c : cbe.parameters ) & OpCallStatement->exists( ca | ca.cstatId = opId + "_statement" & ca.callExp = cbe & result = ca ) ) ) & (returnType.name /= "void" => CBasicExpression->exists( cbe | cbe.cexpId = opId & cbe.data = name->before("_") + "_" + sup & cbe.kind = "operation" & cbe.type = returnType & CBasicExpression->exists( c | c.cexpId = opId + "_super" & c.kind = "attribute" & c.data = "super" & c.type = CType[sup] & c.elementType = CType[sup] & CBasicExpression->exists( s | s.data = "self" & s.kind = "variable" & s : c.reference & s.cexpId = opId + "_self" & s.type = CType[classname] & s.elementType = s.type ) & c : cbe.parameters ) & CReturnStatement->exists( ca | ca.cstatId = opId + "_statement" & cbe : ca.returnValue & result = ca ) ) )
+(returnType.name = "void" => CBasicExpression->exists( cbe | cbe.cexpId = opId & cbe.data = name->before("_") + "_" + sup & cbe.kind = "operation" & cbe.type = returnType & CBasicExpression->exists( c | c.cexpId = opId + "_super" & c.kind = "attribute" & c.data = "super" & c.type = CType[sup] & c.elementType = CType[sup] & CBasicExpression->exists( s | s.data = "self" & s.kind = "variable" & s : c.reference & s.cexpId = opId + "_self" & s.type = CType[classname] & s.elementType = s.type ) & c : cbe.parameters ) & parameters->forAll( v | v.name /= "self" => newCBasicExpression(v.name,v.type) : cbe.parameters ) & OpCallStatement->exists( ca | ca.cstatId = opId + "_statement" & ca.callExp = cbe & result = ca ) ) ) & (returnType.name /= "void" => CBasicExpression->exists( cbe | cbe.cexpId = opId & cbe.data = name->before("_") + "_" + sup & cbe.kind = "operation" & cbe.type = returnType & CBasicExpression->exists( c | c.cexpId = opId + "_super" & c.kind = "attribute" & c.data = "super" & c.type = CType[sup] & c.elementType = CType[sup] & CBasicExpression->exists( s | s.data = "self" & s.kind = "variable" & s : c.reference & s.cexpId = opId + "_self" & s.type = CType[classname] & s.elementType = s.type ) & c : cbe.parameters ) & parameters->forAll( v | v.name /= "self" => newCBasicExpression(v.name,v.type) : cbe.parameters ) & CReturnStatement->exists( ca | ca.cstatId = opId + "_statement" & cbe : ca.returnValue & result = ca ) ) )
 
 
 
@@ -1556,7 +1556,7 @@ Property Expression -1 664 278 485 116 1 initialValue null 665 226 514 222
 
 
 Association:
-BasicExpression BasicExpression -1 490 353 408 362 -1 objectRef null 552 353 551 402 443 403 
+BasicExpression Expression -1 490 353 408 362 -1 objectRef null 552 353 551 402 443 403 
 
 
 Association:
@@ -1891,7 +1891,7 @@ boolean
 
  query
 true
-(name = "OclType" => result = false) & (name = "OclAttribute" => result = false) & (name = "OclOperation" => result = false) & (name = "OclProcess" => result = false) & (name = "OclProcessGroup" => result = false) & (name = "ocltnode" => result = false) & (name = "OclIterator" => result = false) & (name = "OclFile" => result = false) & (name = "MathLib" => result = false) & (name = "OclDate" => result = false) & (name = "OclRandom" => result = false) & (true => result = true)
+(name = "OclType" => result = false) & (name = "OclAttribute" => result = false) & (name = "OclOperation" => result = false) & (name = "OclProcess" => result = false) & (name = "OclProcessGroup" => result = false) & (name = "ocltnode" => result = false) & (name = "OclIterator" => result = false) & (name = "OclFile" => result = false) & (name = "MathLib" => result = false) & (name = "OclDate" => result = false) & (name = "OclRandom" => result = false) & (name = "OclException" => result = false) & (name->hasSuffix("Exception") => result = false) & (true => result = true)
 
 
 
@@ -1942,7 +1942,7 @@ String
 ent String
  query
 true
-  einst = ent.toLowerCase + "_instances" & result = "struct " + ent + "* create" + ent + "()\n" + "{ struct " + ent + "* result = (struct " + ent + "*) malloc(sizeof(struct " + ent + "));\n" + members->collect( m | m.initialiser() )->sum() + "  " + einst + " = append" + ent + "(" + einst + ", result);\n" + "  " + ent.toLowerCase + "_size++;\n" + interfaces->collect( itf | ("  " + itf.name.toLowerCase + "_instances = append" + itf.name + "(" + itf.name.toLowerCase + "_instances, result);\n  " + itf.name.toLowerCase + "_size++;\n") )->sum() + "  return result;\n" + "}\n"
+  einst = ent.toLowerCase + "_instances" & result = "struct " + ent + "* create" + ent + "(void)\n" + "{ struct " + ent + "* result = (struct " + ent + "*) malloc(sizeof(struct " + ent + "));\n" + members->collect( m | m.initialiser() )->sum() + "  " + einst + " = append" + ent + "(" + einst + ", result);\n" + "  " + ent.toLowerCase + "_size++;\n" + interfaces->collect( itf | ("  " + itf.name.toLowerCase + "_instances = append" + itf.name + "(" + itf.name.toLowerCase + "_instances, result);\n  " + itf.name.toLowerCase + "_size++;\n") )->sum() + "  return result;\n" + "}\n"
 
 
 
@@ -2497,6 +2497,18 @@ COperation->exists( op | op.name = "op_" + operations@pre.size & op.scope = "aux
 
 
 
+Operation:
+defineCOpWithCode
+CProgram
+COperation
+cde CStatement par String pt CType
+query
+true
+COperation->exists( op | op.name = "op_" + operations@pre.size & op.scope = "auxiliary" & op.isStatic = false &  CPrimitiveType->exists( vt | vt.name = "void" & vt.ctypeId = "void_type" & op.returnType = vt ) & op.isQuery = true & op.code = cde & CVariable->exists( v | v.name = par & v.type = pt & v : op.parameters ) &  op : operations & result = op )
+
+
+
+
 
 Operation:
 printOperations
@@ -2529,7 +2541,7 @@ void
 
 
 true
-"#include <ctype.h>"->display() & "#include <stdio.h>"->display() & "#include <string.h>"->display() & "#include <stdlib.h>"->display() & "#include <time.h>"->display() & "#include <math.h>"->display() & "#include <regexp.h>"->display() & "#include <errno.h>"->display() & "\n"->display() & "#define TRUE 1"->display() & "#define FALSE 0\n"->display() & "#include \"ocl.h\"\n"->display() & "#include \"mathlib.h\"\n"->display() & "#include \"ocltype.h\"\n"->display() & "#include \"oclfile.h\"\n#include \"ocldate.h\"\n#include \"oclprocess.h\"\n#include \"oclrandom.h\"\n"->display() & "#include \"app.h\"\n"->display()
+"#include <ctype.h>"->display() & "#include <stdio.h>"->display() & "#include <string.h>"->display() & "#include <stdlib.h>"->display() & "#include <time.h>"->display() & "#include <math.h>"->display() & "#include <regexp.h>"->display() & "#include <errno.h>"->display() & "\n"->display() & "#define TRUE 1"->display() & "#define FALSE 0\n"->display() & "#include \"ocl.h\"\n"->display() & "#include \"mathlib.h\"\n"->display() & "#include \"ocltype.h\"\n"->display() & "#include \"oclfile.h\"\n#include \"ocldate.h\"\n#include \"oclprocess.h\"\n#include \"oclrandom.h\"\n#include \"oclexception.h\"\n"->display() & "#include \"app.h\"\n"->display()
 
 
 
@@ -2662,6 +2674,11 @@ CVariable CType 0 1047 993 937 900 1 type null
 
 Association:
 COperation CType 0 1326 917 901 899 1 returnType null 
+
+
+
+Association:
+COperation CType 0 1326 917 901 899 1 elementType null
 
 
 
@@ -3582,7 +3599,7 @@ false
 Constraint:
 null
 self.isApplicationClass()
-( "struct " + name + "** new" + name + "List()" )->display() & ( "{ return (struct " + name + "**) calloc(ALLOCATIONSIZE, sizeof(struct " + name + "*)); }\n" )->display()
+( "struct " + name + "** new" + name + "List(void)" )->display() & ( "{ return (struct " + name + "**) calloc(ALLOCATIONSIZE, sizeof(struct " + name + "*)); }\n" )->display()
 CStruct printcode
 false
 
@@ -3773,7 +3790,7 @@ false
 Constraint:
 null
 self.isApplicationClass() & BinaryExpression->exists( be | be.operator = "->collect" & be.left.elementType.isValuePrimitiveType() & be.right.type.name = name )
-( "  struct " + name + "** collectint" + name + "(int* col[], struct " + name + "* (*fe)(int))" )->display() & ("   { int n = length((void**) col);")->display() & ("    struct " + name + "** result = (struct " + name + "**) calloc(n+1, sizeof(struct " + name + "*));")->display() & "    int i = 0;"->display() & "    for ( ; i < n; i++)"->display() & ( "    { int* self = col[i];" )->display() & ("      result[i] = (*fe)(*self);")->display() & "    }"->display() & "    result[n] = NULL;"->display() & "    return result;"->display() & "  }\n"->display()
+( "struct " + name + "** collectint" + name + "(int* col[], struct " + name + "* (*fe)(int))" )->display() & ("{ int n = length((void**) col);")->display() & ("  struct " + name + "** result = (struct " + name + "**) calloc(n+1, sizeof(struct " + name + "*));")->display() & "  int i = 0;"->display() & "    for ( ; i < n; i++)"->display() & ( "  { int* self = col[i];" )->display() & ("    result[i] = (*fe)(*self);")->display() & "  }"->display() & "  result[n] = NULL;"->display() & "  return result;"->display() & "}\n"->display() & ( "struct " + name + "** collectString" + name + "(char* col[], struct " + name + "* (*fe)(char*))" )->display() & ("{ int n = length((void**) col);")->display() & ("  struct " + name + "** result = (struct " + name + "**) calloc(n+1, sizeof(struct " + name + "*));")->display() & "  int i = 0;"->display() & "    for ( ; i < n; i++)"->display() & ( "  { char* self = col[i];" )->display() & ("    result[i] = (*fe)(self);")->display() & "  }"->display() & "  result[n] = NULL;"->display() & "  return result;"->display() & "}\n"->display() & ( "struct " + name + "** collectdouble" + name + "(double* col[], struct " + name + "* (*fe)(double))" )->display() & ("{ int n = length((void**) col);")->display() & ("  struct " + name + "** result = (struct " + name + "**) calloc(n+1, sizeof(struct " + name + "*));")->display() & "  int i = 0;"->display() & "    for ( ; i < n; i++)"->display() & ( "  { double* self = col[i];" )->display() & ("    result[i] = (*fe)(*self);")->display() & "  }"->display() & "  result[n] = NULL;"->display() & "  return result;"->display() & "}\n"->display()
 CStruct printcode
 false
 
@@ -3784,7 +3801,7 @@ false
 Constraint:
 null
 self.isApplicationClass() & BinaryExpression->exists( be | be.operator = "->collect" & be.left.elementType.name = name & be.right.type.isValuePrimitiveType() )
-( "struct int** collect" + name + "int(struct " + name + "* col[], int (*fe)(struct " + name + "*))" )->display() & ("{ int n = length((void**) col);")->display() & ("  int** result = (int**) calloc(n+1, sizeof(int*));")->display() & "  int i = 0;"->display() & "  for ( ; i < n; i++)"->display() & ( "  { struct " + name + "* self = col[i];" )->display() & ( "  int* ptr = (int*) malloc(sizeof(int));" )->display() & ("  *ptr = (*fe)(self);")->display() & "  result[i] = ptr;\n  }"->display() & "  result[n] = NULL;"->display() & "  return result;"->display() & "}\n"->display()
+( "struct int** collect" + name + "int(struct " + name + "* col[], int (*fe)(struct " + name + "*))" )->display() & ("{ int n = length((void**) col);")->display() & ("  int** result = (int**) calloc(n+1, sizeof(int*));")->display() & "  int i = 0;"->display() & "  for ( ; i < n; i++)"->display() & ( "  { struct " + name + "* self = col[i];" )->display() & ( "    int* ptr = (int*) malloc(sizeof(int));" )->display() & ("    *ptr = (*fe)(self);")->display() & "    result[i] = ptr;\n  }"->display() & "  result[n] = NULL;"->display() & "  return result;"->display() & "}\n"->display() & ( "struct double** collect" + name + "double(struct " + name + "* col[], double (*fe)(struct " + name + "*))" )->display() & ("{ int n = length((void**) col);")->display() & ("  double** result = (double**) calloc(n+1, sizeof(double*));")->display() & "  int i = 0;"->display() & "  for ( ; i < n; i++)"->display() & ( "  { struct " + name + "* self = col[i];" )->display() & ( "    double* ptr = (double*) malloc(sizeof(double));" )->display() & ("    *ptr = (*fe)(self);")->display() & "    result[i] = ptr;\n  }"->display() & "  result[n] = NULL;"->display() & "  return result;"->display() & "}\n"->display()
 CStruct printcode
 false
 
@@ -4042,7 +4059,7 @@ CStatement
 
 
 true
-result = action.mapStatement()
+OpCallStatement->exists( ca | ca.cstatId = statId + "_statement" & CBasicExpression->exists( sigint | sigint.cexpId = "sigint_" + statId & sigint.data = "SIGINT" & ca.callExp = caughtObject.createCBinOpCall(statId + "_call", "signal", sigint, CExpression.defineCOpRef(CProgram.allInstances.any.defineCOpWithCode(action.mapStatement(), "x", CType["-5"]) ) ) ) & result = ca )
 
 
 
@@ -4087,7 +4104,8 @@ CStatement
 
 
 true
-result = body.mapStatement()
+CSequenceStatement->exists( ss | ss.cstatId = statId & catchClauses.mapStatement() <: ss.statements & body.mapStatement() : ss.statements & endStatement.mapStatement() <: ss.statements & result = ss )
+
 
 
 
@@ -4129,7 +4147,10 @@ CStatement
 
 
 true
-OpCallStatement->exists( ca | ca.cstatId = statId + "_statement" & ca.callExp = thrownObject.createCUnaryOpCall(statId, "raise", thrownObject.mapExpression()) & result = ca )
+CSequenceStatement->exists( ss | ss.cstatId = statId & OpCallStatement->exists( ca0 | ca0.cstatId = statId + "_except" & CBasicExpression->exists( except | except.data = "\"OclException\"" & except.cexpId = thrownObject.expId + "_exception" & except.type = CType[thrownObject.type.typeId] & ca0.callExp = thrownObject.createCUnaryOpCall(statId + "_createOclException", "raiseOclException", except) ) & ca0 : ss.statements ) & OpCallStatement->exists( ca | ca.cstatId = statId + "_statement" & CBasicExpression->exists( sigint | sigint.data = "SIGINT" & sigint.cexpId = thrownObject.expId + "_SIGINT" & sigint.type = CType[thrownObject.type.typeId] & ca.callExp = thrownObject.createCUnaryOpCall(statId + "_raise", "raise", sigint) ) & ca : ss.statements ) & result = ss )
+
+
+
 
 
 

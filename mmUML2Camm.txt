@@ -100,7 +100,7 @@ boolean
 
  query
 true
-(name = "OclType" => result = false) & (name = "OclAttribute" => result = false) & (name = "OclOperation" => result = false) & (name = "OclProcess" => result = false) & (name = "OclProcessGroup" => result = false) & (name = "ocltnode" => result = false) & (name = "OclIterator" => result = false) & (name = "OclFile" => result = false) & (name = "MathLib" => result = false) & (name = "OclDate" => result = false) & (name = "OclRandom" => result = false) & (name = "OclException" => result = false) & (true => result = true)
+(name = "OclType" => result = false) & (name = "OclAttribute" => result = false) & (name = "OclOperation" => result = false) & (name = "OclProcess" => result = false) & (name = "OclProcessGroup" => result = false) & (name = "ocltnode" => result = false) & (name = "OclIterator" => result = false) & (name = "OclFile" => result = false) & (name = "MathLib" => result = false) & (name = "OclDate" => result = false) & (name = "OclRandom" => result = false) & (name = "OclException" => result = false) & (name->hasSuffix("Exception") => result = false) & (true => result = true)
 
 
 
@@ -1129,8 +1129,16 @@ Association:
 CVariable CType 0 1047 993 937 900 1 type null 
 
 
+
 Association:
 COperation CType 0 816 917 901 899 1 returnType null 
+
+
+
+Association:
+COperation CType 0 816 917 901 899 1 elementType null
+
+
 
 
 Association:
@@ -1242,7 +1250,7 @@ Property Expression -1 664 678 335 816 1 initialValue null 665 826 514 822
 
 
 Association:
-BasicExpression BasicExpression -1 490 953 408 1162 -1 objectRef null 552 953 551 1002 443 1203 
+BasicExpression Expression -1 490 953 408 1162 -1 objectRef null 552 953 551 1002 443 1203 
 
 
 Generalisation:
@@ -1606,7 +1614,7 @@ false
 Constraint:
 null
 self.isApplicationClass() & BinaryExpression->exists( be | be.operator = "->collect" & be.left.elementType.name = name )
-( "   void** collect" + name + "(struct " + name + "* col[], void* (*fe)(struct " + name + "*));\n" )->display() & ( "   int* collect" + name + "_int(struct " + name + "* col[], int (*fe)(struct " + name + "*));\n" )->display() & ( "   long* collect" + name + "_long(struct " + name + "* col[], long (*fe)(struct " + name + "*));\n" )->display() & ( "   double* collect" + name + "_double(struct " + name + "* col[], double (*fe)(struct " + name + "*));\n" )->display()
+( "void** collect" + name + "(struct " + name + "* col[], void* (*fe)(struct " + name + "*));\n" )->display() & ( "int** collect" + name + "int(struct " + name + "* col[], int (*fe)(struct " + name + "*));\n" )->display() & ( "long** collect" + name + "long(struct " + name + "* col[], long (*fe)(struct " + name + "*));\n" )->display() & ( "double** collect" + name + "double(struct " + name + "* col[], double (*fe)(struct " + name + "*));\n" )->display() & ( "unsigned char** collect" + name + "boolean(struct " + name + "* col[], unsigned char (*fe)(struct " + name + "*));\n" )->display()
 CStruct printcode
 false
 
@@ -1887,12 +1895,6 @@ false
 
 
 
-Constraint:
-name = "OclAny"
-null
-CPointerType->exists( t | t.ctypeId = typeId & CPrimitiveType->exists( p | p.name = "void" & p.ctypeId = typeId + "_void" & t.pointsTo = p ) )
-PrimitiveType types2C
-false
 
 
 
@@ -1905,12 +1907,25 @@ false
 
 
 
+
+Constraint:
+name = "OclAny"
+null
+CPointerType->exists( t | t.ctypeId = typeId & CPrimitiveType->exists( p | p.name = "void" & p.ctypeId = "void" & t.pointsTo = p ) )
+PrimitiveType types2C
+false
+
+
+
+
 Constraint:
 name = "OclType"
 null
 CPointerType->exists( p | p.ctypeId = typeId & CStruct->exists( c | c.name = name & c.ctypeId = name + "_struct" & p.pointsTo = c ) )
 PrimitiveType types2C
 false
+
+
 
 
 
@@ -2005,7 +2020,7 @@ false
 
 Constraint:
 name = "Function"
-null
+not(keyType->oclIsUndefined())
 CFunctionPointerType->exists( a | a.ctypeId = typeId & a.rangeType = CType@pre[elementType.typeId] & a.domainType = CType@pre[keyType.typeId] )
 CollectionType types2C
 false
@@ -2040,7 +2055,7 @@ false
 Constraint:
 null
 isStatic = false
-COperation->exists( op | op.name = name + "_" + owner.name & op.opId = name + "_" + owner.name & op.inheritedFrom = "" & op.scope = "entity" & op.isQuery = isQuery & op.isStatic = isStatic & op.isAbstract = isAbstract & op.classname = owner.name & op.definers = CStruct[definers.name] & op.returnType = CType[type.typeId] & CVariable->exists( s | s.name = "self" & s.type = CType[owner.typeId] & s : op.parameters ) & parameters->forAll( p | CVariable->exists( v | v.name = p.name & v.type = CType[p.type.typeId] & v : op.parameters ) ) )
+COperation->exists( op | op.name = name + "_" + owner.name & op.opId = name + "_" + owner.name & op.inheritedFrom = "" & op.scope = "entity" & op.isQuery = isQuery & op.isStatic = isStatic & op.isAbstract = isAbstract & op.classname = owner.name & op.definers = CStruct[definers.name] & op.returnType = CType[type.typeId] & op.elementType = CType[elementType.typeId] & CVariable->exists( s | s.name = "self" & s.type = CType[owner.typeId] & s : op.parameters ) & parameters->forAll( p | CVariable->exists( v | v.name = p.name & v.type = CType[p.type.typeId] & v : op.parameters ) ) )
 Operation program2C
 false
 
@@ -2052,7 +2067,7 @@ false
 Constraint:
 iop : inheritedOperations()
 iop.isStatic = false & iop.name /: ownedOperation.name
-COperation->exists( op | op.name = iop.name + "_" + name & op.inheritedFrom = superclass.any.name & op.opId = iop.name + "_" + name & op.scope = "entity" & op.isQuery = iop.isQuery & op.isStatic = false & op.classname = name & op.returnType = CType[iop.type.typeId] & CVariable->exists( s | s.name = "self" & s.type = CType[typeId] & s : op.parameters ) & iop.parameters->forAll( p | CVariable->exists( v | v.name = p.name & v.type = CType[p.type.typeId] & v : op.parameters ) ) )
+COperation->exists( op | op.name = iop.name + "_" + name & op.inheritedFrom = superclass.any.name & op.opId = iop.name + "_" + name & op.scope = "entity" & op.isQuery = iop.isQuery & op.isStatic = false & op.classname = name & op.returnType = CType[iop.type.typeId] & op.elementType = CType[iop.elementType.typeId] & CVariable->exists( s | s.name = "self" & s.type = CType[typeId] & s : op.parameters ) & iop.parameters->forAll( p | CVariable->exists( v | v.name = p.name & v.type = CType[p.type.typeId] & v : op.parameters ) ) )
 Entity program2C
 false
 
@@ -2063,7 +2078,7 @@ false
 Constraint:
 null
 isStatic = true
-COperation->exists( op | op.name = name & op.opId = name + "_" + owner.name & op.scope = "entity" & op.isQuery = isQuery & op.isStatic = isStatic & op.classname = owner.name & op.returnType = CType[type.typeId] & parameters->forAll( p | CVariable->exists( v | v.name = p.name & v.type = CType[p.type.typeId] & v : op.parameters ) ) )
+COperation->exists( op | op.name = name & op.opId = name + "_" + owner.name & op.scope = "entity" & op.isQuery = isQuery & op.isStatic = isStatic & op.classname = owner.name & op.returnType = CType[type.typeId] & op.elementType = CType[elementType.typeId] & parameters->forAll( p | CVariable->exists( v | v.name = p.name & v.type = CType[p.type.typeId] & v : op.parameters ) ) )
 Operation program2C
 false
 
@@ -2423,17 +2438,6 @@ Statement CreationStatement 427 1244 422 1142
 Entity:
 ErrorStatement 572 1025
 Statement  * 
-
-
-
-Operation:
-toPython
-ErrorStatement
-String
-indent int 
- query
-true
-obs = thrownObject.objectRef & pars = thrownObject.parameters => result = Statement.tab(indent) + "raise " + thrownObject.mapErrorCall(obs.toPython(),pars.toPython()) + "\n"
 
 
 
