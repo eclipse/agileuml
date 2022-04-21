@@ -18,7 +18,12 @@ public class SetExpression extends Expression
   public SetExpression() { }
 
   public SetExpression(boolean b) 
-  { ordered = b; }
+  { ordered = b;
+    if (b) 
+    { type = new Type("Sequence", null); }
+    else 
+    { type = new Type("Set", null); } 
+  } 
 
   public SetExpression(Vector v)
   { if (v == null || v.size() == 0 ||
@@ -30,12 +35,20 @@ public class SetExpression extends Expression
         elements.add(new BasicExpression(ss));
       }
     }
+    elementType = Type.determineType(elements); 
+    // type.setElementType(elementType); 
   } // For a map, the elements are BinaryExpressions representing pairs "," key value
   
 
   public SetExpression(Vector v,boolean ord)
   { this(v); 
     ordered = ord; 
+    if (ordered) 
+    { type = new Type("Sequence", null); }
+    else 
+    { type = new Type("Set", null); } 
+    elementType = Type.determineType(v); 
+    type.setElementType(elementType); 
   }
 
   public static SetExpression newMapSetExpression()
@@ -427,15 +440,15 @@ public class SetExpression extends Expression
       String result = "(new " + mtype + "())"; 
 	  for (int i = 0; i < elements.size(); i++)
       { BinaryExpression e = (BinaryExpression) elements.get(i);
-	    Expression key = e.getLeft(); 
-		Expression value = e.getRight(); 
+        Expression key = e.getLeft(); 
+        Expression value = e.getRight(); 
         result = "Ocl.includingMap(" + result + "," + key.queryFormJava7(env,local) + "," + 
 		                           value.queryFormJava7(env,local) + ")";
       }
-	  return result; 
-	}
+      return result; 
+    }
 	
-	if (type == null)
+    if (type == null)
     { if (ordered)
       { type = new Type("Sequence",null); }
       else

@@ -66,6 +66,31 @@ public class BehaviouralFeature extends ModelElement
     { elementType = res; }  // primitive, String, entity type
   }
 
+  public BehaviouralFeature(String nme, Vector pars,
+                            Statement stat)
+  { super(nme);
+    parameters = pars;
+    if (pars == null) 
+    { parameters = new Vector(); } 
+
+    query = false;
+    activity = stat; 
+  }
+
+  public BehaviouralFeature(String nme, Vector pars,
+                            Vector stats)
+  { super(nme);
+    parameters = pars;
+    if (pars == null) 
+    { parameters = new Vector(); } 
+
+    query = false;
+    if (stats.size() == 1)
+    { activity = (Statement) stats.get(0); } 
+    else 
+    { activity = new SequenceStatement(stats); }  
+  }
+
   public BehaviouralFeature(String nme) 
   { // creates update operation
     super(nme); 
@@ -75,7 +100,15 @@ public class BehaviouralFeature extends ModelElement
   } 
 
   public void setType(Type rt)
-  { resultType = rt; } 
+  { resultType = rt; }
+
+  public void setReturnType(Type rt)
+  { 
+    resultType = rt;
+    if (rt != null && Type.isCollectionType(rt)) { } 
+    else 
+    { elementType = rt; }  // primitive, String, entity type
+  } 
 
   public void setBx(boolean b)
   { bx = b; } 
@@ -210,6 +243,55 @@ public class BehaviouralFeature extends ModelElement
       AssignStatement assgnpar = 
         new AssignStatement(lhs,rhs); 
       code.addStatement(assgnpar); 
+    } 
+
+    ReturnStatement rs = new ReturnStatement(res); 
+    code.addStatement(rs); 
+
+    code.setBrackets(true); 
+
+    bf.setActivity(code); 
+    bf.setStatic(true); 
+
+    return bf; 
+  } 
+
+  public static BehaviouralFeature newStaticConstructor(Entity ent)
+  { String ename = ent.getName(); 
+    BehaviouralFeature bf = new BehaviouralFeature("new" + ename); 
+    bf.setParameters(new Vector()); 
+    Type etype = new Type(ent); 
+    bf.setType(etype); 
+    bf.setPostcondition(new BasicExpression(true)); 
+    SequenceStatement code = new SequenceStatement();
+
+    BasicExpression res = BasicExpression.newVariableBasicExpression("result", etype); 
+ 
+    CreationStatement cs = new CreationStatement("result", etype); 
+    code.addStatement(cs); 
+
+    BasicExpression createCall = new BasicExpression("create" + ename); 
+    createCall.setUmlKind(Expression.UPDATEOP); 
+    createCall.setParameters(new Vector()); 
+    createCall.setIsEvent(); 
+    createCall.setType(etype); 
+    createCall.setStatic(true); 
+    // createCall.entity = e; 
+
+    AssignStatement assgn = new AssignStatement(res,createCall); 
+    code.addStatement(assgn); 
+
+    Vector pars = ent.getAttributes(); 
+    for (int i = 0; i < pars.size(); i++) 
+    { Attribute attr = (Attribute) pars.get(i); 
+      BasicExpression lhs = new BasicExpression(attr); 
+      lhs.setObjectRef(res); 
+      Expression rhs = attr.getInitialisation();
+      if (rhs != null) 
+      { AssignStatement assgnpar = 
+          new AssignStatement(lhs,rhs); 
+        code.addStatement(assgnpar);
+      }  
     } 
 
     ReturnStatement rs = new ReturnStatement(res); 

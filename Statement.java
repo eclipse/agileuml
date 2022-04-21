@@ -2164,6 +2164,34 @@ class WhileStatement extends Statement
     { body = b; } 
   } 
 
+  public WhileStatement(Expression e, Vector b)
+  { loopTest = e; 
+    if (b == null) 
+    { body = new SequenceStatement(); } 
+    else if (b.size() == 1)
+    { body = (Statement) b.get(0); }
+    else 
+    { body = new SequenceStatement(b);
+      body.setBrackets(true);
+    }  
+  } 
+
+  public WhileStatement(Expression lv, Expression lr, 
+                        Vector b)
+  { loopTest = new BinaryExpression(":", lv, lr);
+    loopKind = FOR;  
+    if (b == null) 
+    { body = new SequenceStatement(); } 
+    else if (b.size() == 1)
+    { body = (Statement) b.get(0); }
+    else 
+    { body = new SequenceStatement(b);
+      body.setBrackets(true);
+    }  
+    loopVar = lv;
+    loopRange = lr;
+  } 
+
   public String getOperator() 
   { if (loopKind == WHILE) 
     { return "while"; }
@@ -3370,6 +3398,15 @@ class CreationStatement extends Statement
   boolean isFrozen = false;  // true when a constant is declared. 
   Attribute variable = null; // for the LHS
 
+  public Type getType()
+  { return instanceType; } 
+
+  public Type getElementType()
+  { return elementType; } 
+
+  public String getVar()
+  { return assignsTo; } 
+
   public CreationStatement(String cio, String ast)
   { createsInstanceOf = cio;
     assignsTo = ast; 
@@ -3436,6 +3473,9 @@ class CreationStatement extends Statement
   { initialExpression = expr; 
     initialValue = expr + ""; 
   } 
+
+  public Expression getInitialisation()
+  { return initialExpression; } 
 
   public void setAssignsTo(Expression expr)
   { assignsTo = expr + ""; } 
@@ -8488,6 +8528,20 @@ class ConditionalStatement extends Statement
   { test = e;
     ifPart = s1;
     elsePart = s2;
+  }
+
+  ConditionalStatement(Expression e, Vector ss1, Vector ss2)
+  { test = e;
+
+    if (ss1.size() == 1) 
+    { ifPart = (Statement) ss1.get(0); } 
+    else 
+    { ifPart = new SequenceStatement(ss1); } 
+
+    if (ss2.size() == 1) 
+    { elsePart = (Statement) ss2.get(0); } 
+    else 
+    { elsePart = new SequenceStatement(ss2); } 
   }
 
   public void setElse(Statement stat) 

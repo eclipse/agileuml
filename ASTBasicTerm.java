@@ -557,9 +557,38 @@ public class ASTBasicTerm extends ASTTerm
 
   /* JavaScript processing: */ 
 
+  public Vector jsupdateForm(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector ents)
+  { return new Vector(); } 
+
   public Expression jsexpressionToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector ents)
-  { if ("numericLiteral".equals(tag))
+  { if ("this".equals(value))
+    { Expression expr = 
+        BasicExpression.newVariableBasicExpression("self"); 
+      return expr;
+    } 
+
+    if ("super".equals(value))
+    { Expression expr = 
+        BasicExpression.newVariableBasicExpression("super"); 
+      return expr;
+    }
+
+    if ("null".equals(value) || "undefined".equals(value))
+    { Expression expr = 
+        BasicExpression.newVariableBasicExpression("null");
+      expr.setType(new Type("OclAny", null));  
+      return expr;
+    }
+
+    if ("true".equals(value))
+    { return new BasicExpression(true); } 
+    
+    if ("false".equals(value))
+    { return new BasicExpression(false); } 
+
+    if ("numericLiteral".equals(tag))
     { 
       BasicExpression v = new BasicExpression(value); 
       if (Expression.isInteger(value))
@@ -578,13 +607,7 @@ public class ASTBasicTerm extends ASTTerm
     }
     else if ("literal".equals(tag) || 
              "propertyName".equals(tag)) 
-    { if ("null".equals(value))
-      { return new BasicExpression("null"); } 
-      if ("true".equals(value))
-      { return new BasicExpression(true); } 
-      if ("false".equals(value))
-      { return new BasicExpression(false); } 
-
+    { 
       BasicExpression v = new BasicExpression(value); 
       if (Expression.isString(value))
       { if ('\'' == value.charAt(0))
@@ -644,6 +667,27 @@ public class ASTBasicTerm extends ASTTerm
      
     return null; 
   } 
+
+  public Vector jsexpressionListToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { System.out.println(">> jsexpressionListToKM3 for " + tag + " with value " + value); 
+    System.out.println(); 
+
+    Vector res = new Vector(); 
+    return res; 
+  }
+
+  public Vector jsstatementListToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { Vector res = new Vector();
+    return res;  
+  }
+
+
+  public Vector jsstatementToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return new Vector(); } 
+
 
 
   /* Java processing */ 

@@ -186,6 +186,28 @@ public class ASTSymbolTerm extends ASTTerm
     java.util.Map varelemtypes, Vector types, Vector ents)
   { return new BasicExpression(symbol); } 
 
+  public Vector jsexpressionListToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { 
+    Vector res = new Vector(); 
+    return res; 
+  } 
+
+
+  public Vector jsupdateForm(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector ents)
+  { return new Vector(); } 
+
+  public Vector jsstatementListToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { Vector res = new Vector();
+    return res;  
+  }
+
+  public Vector jsstatementToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return new Vector(); } 
+
  
   /* Java abstraction: */ 
 

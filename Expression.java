@@ -92,6 +92,7 @@ abstract class Expression
     alloperators.add("or"); 
     alloperators.add("&"); 
     alloperators.add("="); 
+    alloperators.add("<>="); 
     alloperators.add("<"); 
     alloperators.add("<="); 
     alloperators.add(">");
@@ -354,6 +355,143 @@ abstract class Expression
       } // and avoid duplicates
     } 
     return pars; 
+  } 
+
+  public static Type deduceType(String opr, 
+                                Expression e1, Expression e2)
+  { Type t1 = e1.getType(); 
+    Type t2 = e2.getType(); 
+    Type res = new Type("OclAny", null); 
+
+    if ("?".equals(opr))
+    { if (t1 != null) 
+      { res = t1; 
+        if (t2 == null) 
+        { e2.setType(res); } 
+      }
+      else if (t2 != null)
+      { res = t2; 
+        e1.setType(res); 
+      } 
+      return res; 
+    } 
+
+    if ("*".equals(opr) || "/".equals(opr) || 
+        "->pow".equals(opr))
+    { if (t1 != null) 
+      { res = t1; 
+        if (t2 == null) 
+        { e2.setType(res); } 
+      }
+      else if (t2 != null)
+      { res = t2; 
+        e1.setType(res); 
+      } 
+      else 
+      { res = new Type("double", null); 
+        e1.setType(res); 
+        e2.setType(res); 
+      } 
+      return res; 
+    } 
+
+    if ("mod".equals(opr) || "div".equals(opr) || 
+        "->gcd".equals(opr))
+    { if (t1 != null) 
+      { res = t1; 
+        if (t2 == null) 
+        { e2.setType(new Type("int", null)); } 
+      }
+      else if (t2 != null) // Should be int. 
+      { res = t2; 
+        e1.setType(res); 
+      } 
+      else 
+      { res = new Type("int", null); 
+        e1.setType(res); 
+        e2.setType(res); 
+      } 
+      return res; 
+    } 
+
+    if ("or".equals(opr) || "xor".equals(opr) || 
+        "&".equals(opr))
+    { if (t1 != null) 
+      { res = t1; 
+        if (t2 == null) 
+        { e2.setType(new Type("boolean", null)); } 
+      }
+      else if (t2 != null) // Should be boolean. 
+      { res = t2; 
+        e1.setType(res); 
+      } 
+      else 
+      { res = new Type("boolean", null); 
+        e1.setType(res); 
+        e2.setType(res); 
+      } 
+      return res; 
+    } 
+
+    if ("bitwiseOr".equals(opr) || "bitwiseXor".equals(opr) || 
+        "bitwiseAnd".equals(opr))
+    { if (t1 != null) 
+      { res = t1; 
+        if (t2 == null) 
+        { e2.setType(new Type("int", null)); } 
+      }
+      else if (t2 != null) // Should be int. 
+      { res = t2; 
+        e1.setType(res); 
+      } 
+      else 
+      { res = new Type("int", null); 
+        e1.setType(res); 
+        e2.setType(res); 
+      } 
+      return res; 
+    } 
+
+  
+    return res; 
+  } 
+
+  public static Type deduceType(String opr, 
+                                Expression e1)
+  { Type t1 = e1.getType(); 
+    Type res = new Type("OclAny", null); 
+
+    if ("+".equals(opr) || "-".equals(opr))
+    { if (t1 != null) 
+      { res = t1; } 
+      else 
+      { res = new Type("double", null); 
+        e1.setType(res); 
+      } 
+      return res; 
+    } 
+
+    if ("->reverse".equals(opr))
+    { if (t1 != null) 
+      { res = t1; } 
+      else 
+      { res = new Type("Sequence", null); 
+        e1.setType(res); 
+      } 
+      return res; 
+    } 
+
+    return res; 
+  } 
+
+  public static Expression convertToApply(Expression expr,
+                                          Vector pars)
+  { Expression res = expr; 
+    for (int i = 0; i < pars.size(); i++) 
+    { Expression par = (Expression) pars.get(i); 
+      res = new BinaryExpression("->apply",res,par); 
+    } 
+    return res; 
   } 
 
   public static Expression combineBySum(Vector atts)
@@ -1330,6 +1468,9 @@ abstract class Expression
   { return type != null && type.isSet(); }
 
   public boolean isSequenceValued()
+  { return type != null && type.isSequence(); }
+
+  public boolean isSequence()
   { return type != null && type.isSequence(); }
 
   public boolean isStringSequence()

@@ -276,6 +276,9 @@ public class Attribute extends ModelElement
   public void setArray(boolean b)
   { isArray = b; } 
 
+  public void setInitialisation(Expression expr)
+  { initialExpression = expr; } 
+
   public boolean typeCheck(Vector types, Vector entities)
   { if (initialExpression != null) 
     { Vector cntx = new Vector(); 
@@ -1005,6 +1008,9 @@ public class Attribute extends ModelElement
   public void setEntity(Entity e)
   { entity = e; } 
 
+  public void setOwner(Entity e)
+  { entity = e; } 
+
   public void setType(Type t)
   { type = t; 
     if (t != null && t.getDefault() != null) 
@@ -1317,6 +1323,14 @@ public class Attribute extends ModelElement
 
   public Expression getInitialExpression()
   { return initialExpression; } 
+
+  public Expression getInitialisation()
+  { if (initialExpression != null) 
+    { return initialExpression; } 
+    if (type != null) 
+    { return type.getDefaultValueExpression(); } 
+    return null; 
+  } 
 
   public int getVisibility()
   { return visibility; } 
