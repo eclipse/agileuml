@@ -194,6 +194,9 @@ public class SetExpression extends Expression
   public void addElement(Expression e)
   { elements.add(e); }
 
+  public void addElements(Vector es)
+  { elements.addAll(es); }
+
   public void addElement(int i, Expression e)
   { elements.add(i,e); }
 

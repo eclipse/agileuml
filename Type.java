@@ -138,6 +138,16 @@ public class Type extends ModelElement
     // elementType = new Type(e); 
   } 
 
+  public static boolean isDefinedType(Type t) 
+  { if (t == null) 
+    { return false; } 
+    if ("OclAny".equals(t.getName()))
+    { return false; } 
+    if ("void".equals(t.getName()))
+    { return false; } 
+    return true; 
+  } 
+
   public boolean isEnumeratedType() 
   { return values != null; } 
 
@@ -4092,6 +4102,47 @@ public class Type extends ModelElement
       Type t = be.getType();
 
       System.out.println(">> Type of " + be + " = " + t); 
+
+      if (t == null) { }
+      else if (expectedType == null)
+      { expectedType = t; }
+      else if (expectedType.equals(t)) { }
+      else
+      { String tn1 = expectedType.getName();
+        String tn2 = t.getName();
+        if (tn1.equals("double") && (tn2.equals("int") || tn2.equals("long")))
+        { }
+        else if (tn1.equals("long") && tn2.equals("int"))
+        { }
+        else if (tn2.equals("double") && (tn1.equals("int") || tn1.equals("long")))
+        { expectedType = t; }
+        else if (tn2.equals("long") && tn1.equals("int"))
+        { expectedType = t; }
+        else 
+        { Entity e1 = expectedType.getEntity(); 
+          Entity e2 = t.getEntity(); 
+          if (e1 != null && e2 != null)
+          { if (e1 == e2) { } 
+            else 
+            { Entity e = Entity.commonSuperclass(e1,e2); 
+              expectedType = new Type(e); 
+            } // could be null
+          }
+          else // one is a class and other isn't or both are invalid
+          { return null; }
+        }
+      }
+    }
+    return expectedType;
+  }
+
+  public static Type determineElementType(Vector exps)
+  { Type expectedType = null;
+    for (int j = 0; j < exps.size(); j++)
+    { Expression be = (Expression) exps.get(j);
+      Type t = be.getElementType();
+
+      System.out.println(">> Element type of " + be + " = " + t); 
 
       if (t == null) { }
       else if (expectedType == null)

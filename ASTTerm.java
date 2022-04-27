@@ -419,6 +419,8 @@ public abstract class ASTTerm
   public abstract Vector jsupdateForm(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector ents); 
 
+  public abstract Vector jsvariableDeclarationToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities); 
 
   public abstract Vector jsstatementToKM3(java.util.Map vartypes, java.util.Map varelemtypes, Vector types, Vector entities); 
 

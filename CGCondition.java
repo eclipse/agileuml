@@ -280,18 +280,70 @@ public class CGCondition
   }
 
   public boolean conditionSatisfied(Vector v, Vector entities)
-  { if ("empty".equals(stereotype.toLowerCase()) && (v == null || v.size() == 0))
+  { if ("empty".equals(stereotype.toLowerCase()) && 
+        (v == null || v.size() == 0))
     { return positive; }
-    if ("empty".equals(stereotype.toLowerCase()) && v != null && v.size() > 0)
+
+    if ("empty".equals(stereotype.toLowerCase()) && 
+        v != null && v.size() > 0)
     { return !positive; }
-    if ("multiple".equals(stereotype.toLowerCase()) && (v == null || v.size() <= 1))
+
+    if ("multiple".equals(stereotype.toLowerCase()) && 
+        (v == null || v.size() <= 1))
     { return !positive; }
-    if ("multiple".equals(stereotype.toLowerCase()) && v != null && v.size() > 1)
+
+    if ("multiple".equals(stereotype.toLowerCase()) && 
+        v != null && v.size() > 1)
     { return positive; }
-    if ("singleton".equals(stereotype.toLowerCase()) && (v == null || v.size() != 1))
+
+    if ("singleton".equals(stereotype.toLowerCase()) && 
+        (v == null || v.size() != 1))
     { return !positive; }
-    if ("singleton".equals(stereotype.toLowerCase()) && v != null && v.size() == 1)
+
+    if ("singleton".equals(stereotype.toLowerCase()) && 
+        v != null && v.size() == 1)
     { return positive; }
+
+    if ("1ary".equals(stereotype.toLowerCase()) && 
+        (v == null || v.size() != 1))
+    { return !positive; }
+
+    if ("1ary".equals(stereotype.toLowerCase()) && 
+        v != null && v.size() == 1)
+    { return positive; }
+
+    if ("2ary".equals(stereotype.toLowerCase()) && 
+        (v == null || v.size() != 2))
+    { return !positive; }
+
+    if ("2ary".equals(stereotype.toLowerCase()) && 
+        v != null && v.size() == 2)
+    { return positive; }
+
+    if ("3ary".equals(stereotype.toLowerCase()) && 
+        (v == null || v.size() != 3))
+    { return !positive; }
+
+    if ("3ary".equals(stereotype.toLowerCase()) && 
+        v != null && v.size() == 3)
+    { return positive; }
+
+    if ("4ary".equals(stereotype.toLowerCase()) && 
+        (v == null || v.size() != 4))
+    { return !positive; }
+
+    if ("4ary".equals(stereotype.toLowerCase()) && 
+        v != null && v.size() == 4)
+    { return positive; }
+
+    if ("5ary".equals(stereotype.toLowerCase()) && 
+        (v == null || v.size() != 5))
+    { return !positive; }
+
+    if ("5ary".equals(stereotype.toLowerCase()) && 
+        v != null && v.size() == 5)
+    { return positive; }
+
     return false; 
   } 
 
@@ -515,20 +567,46 @@ public class CGCondition
       if (ac.tag.equalsIgnoreCase(stereotype))
       { return positive; }
 
-      if ("multiple".equals(stereotype) && ac.terms.size() > 1)
-      { return positive; } 
+      if ("multiple".equals(stereotype) || 
+          "singleton".equals(stereotype) ||
+          "1ary".equals(stereotype) ||
+          "2ary".equals(stereotype) ||
+          "3ary".equals(stereotype) ||
+          "4ary".equals(stereotype) ||
+          "5ary".equals(stereotype))
+      { return conditionSatisfied(ac.getTerms(), entities); }
     } 
     else if (a instanceof ASTBasicTerm)
     { ASTBasicTerm ac = (ASTBasicTerm) a; 
       
       if (ac.tag.equalsIgnoreCase(stereotype))
       { return positive; }
+
+      if ("multiple".equals(stereotype) ||
+          "2ary".equals(stereotype) ||
+          "3ary".equals(stereotype) ||
+          "4ary".equals(stereotype) ||
+          "5ary".equals(stereotype)) 
+      { return !positive; } 
+
+      if ("singleton".equals(stereotype) ||
+          "1ary".equals(stereotype)) 
+      { return positive; } 
     }
     else if (a instanceof ASTSymbolTerm)
     { ASTSymbolTerm ac = (ASTSymbolTerm) a; 
       
       if (ac.symbol.equalsIgnoreCase(stereotype))
       { return positive; }
+
+      if ("multiple".equals(stereotype) || 
+          "singleton".equals(stereotype) ||
+          "1ary".equals(stereotype) ||
+          "2ary".equals(stereotype) ||
+          "3ary".equals(stereotype) ||
+          "4ary".equals(stereotype) ||
+          "5ary".equals(stereotype))
+      { return !positive; } 
     } 
 
     if (a.hasType(stereotype))

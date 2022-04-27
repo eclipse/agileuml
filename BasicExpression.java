@@ -567,6 +567,24 @@ class BasicExpression extends Expression
     return res; 
   } 
 
+  public static BasicExpression newQueryCallBasicExpression(
+                                  BehaviouralFeature bf,
+                                  Expression obj,  
+                                  Vector pars) 
+  { BasicExpression res = new BasicExpression(bf);
+    
+    res.setObjectRef(obj);  
+    res.umlkind = QUERY;
+    res.parameters = new Vector(); 
+    for (int i = 0; i < pars.size(); i++) 
+    { // Assumed to be attributes 
+      Attribute par = (Attribute) pars.get(i); 
+      res.parameters.add(new BasicExpression(par)); 
+    } 
+    res.isEvent = true; 
+    return res; 
+  } 
+
   public static BasicExpression newStaticCallBasicExpression(
                   BehaviouralFeature bf, Entity ent) 
   { BasicExpression obj = new BasicExpression(ent.getName());

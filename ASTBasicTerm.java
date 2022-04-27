@@ -613,13 +613,12 @@ public class ASTBasicTerm extends ASTTerm
       { if ('\'' == value.charAt(0))
         { BasicExpression ve = new BasicExpression("\"" + value.substring(1,value.length()-1) + "\""); 
           ve.setType(new Type("String",null)); 
+          ve.setElementType(new Type("String",null)); 
           ve.setUmlKind(Expression.VALUE);
-          UnaryExpression res = 
-            new UnaryExpression("->char2byte", ve); 
-          res.setType(new Type("int", null)); 
-          return res; 
+          return ve; 
         } 
         v.setType(new Type("String",null)); 
+        v.setElementType(new Type("String",null)); 
         v.setUmlKind(Expression.VALUE);
         return v;  
       }
@@ -676,6 +675,20 @@ public class ASTBasicTerm extends ASTTerm
     Vector res = new Vector(); 
     return res; 
   }
+
+  public Vector jsvariableDeclarationToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { System.out.println(">> jsvariableDeclarationToKM3 for " + tag + " with value " + value); 
+    System.out.println(); 
+
+    // if ("identifier".equals(tag))
+    { Attribute attr = 
+        new Attribute(value,new Type("OclAny", null), ModelElement.INTERNAL); 
+      Vector res = new Vector(); 
+      res.add(attr); 
+      return res; 
+    } 
+  } 
 
   public Vector jsstatementListToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)

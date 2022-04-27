@@ -108,8 +108,10 @@ implements Cloneable
     { SequenceStatement sq = (SequenceStatement) st; 
       Vector stats = sq.getStatements(); 
       for (int i = 0; i < stats.size(); i++) 
-      { Statement stat = (Statement) stats.get(i); 
-        res.addAll(Statement.getReturnValues(stat)); 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          res.addAll(Statement.getReturnValues(stat));
+        }  
       } 
       return res;
     } 
@@ -141,8 +143,10 @@ implements Cloneable
       res.addAll(getReturnValues(ts.getBody())); 
       Vector stats = ts.getClauses(); 
       for (int i = 0; i < stats.size(); i++) 
-      { Statement stat = (Statement) stats.get(i); 
-        res.addAll(getReturnValues(stat)); 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          res.addAll(getReturnValues(stat));
+        }  
       } 
       res.addAll(getReturnValues(ts.getEndStatement())); 
     } 
@@ -2159,17 +2163,21 @@ class WhileStatement extends Statement
   public WhileStatement(Expression e, Statement b)
   { loopTest = e; 
     if (b == null) 
-    { body = new SequenceStatement(); } 
+    { body = new InvocationStatement("skip"); } 
     else 
-    { body = b; } 
+    { body = b;
+      body.setBrackets(true);
+    } 
   } 
 
   public WhileStatement(Expression e, Vector b)
   { loopTest = e; 
-    if (b == null) 
-    { body = new SequenceStatement(); } 
+    if (b == null || b.size() == 0) 
+    { body = new InvocationStatement("skip"); } 
     else if (b.size() == 1)
-    { body = (Statement) b.get(0); }
+    { body = (Statement) b.get(0);
+      body.setBrackets(true);
+    }
     else 
     { body = new SequenceStatement(b);
       body.setBrackets(true);
@@ -2179,15 +2187,31 @@ class WhileStatement extends Statement
   public WhileStatement(Expression lv, Expression lr, 
                         Vector b)
   { loopTest = new BinaryExpression(":", lv, lr);
+    loopTest.setType(new Type("boolean", null)); 
+
     loopKind = FOR;  
-    if (b == null) 
-    { body = new SequenceStatement(); } 
+    if (b == null || b.size() == 0) 
+    { body = new InvocationStatement("skip"); } 
     else if (b.size() == 1)
-    { body = (Statement) b.get(0); }
+    { body = (Statement) b.get(0); 
+      body.setBrackets(true);
+    }
     else 
     { body = new SequenceStatement(b);
       body.setBrackets(true);
     }  
+    loopVar = lv;
+    loopRange = lr;
+  } 
+
+  public WhileStatement(Expression lv, Expression lr, 
+                        Statement stat)
+  { loopTest = new BinaryExpression(":", lv, lr);
+    loopTest.setType(new Type("boolean", null)); 
+
+    loopKind = FOR;  
+    body = stat;
+    body.setBrackets(true);
     loopVar = lv;
     loopRange = lr;
   } 
@@ -3421,6 +3445,16 @@ class CreationStatement extends Statement
     assignsTo = vbl; 
   }
 
+  public CreationStatement(Expression vbl, Type typ)
+  { createsInstanceOf = typ.getName();
+    instanceType = typ; 
+    elementType = typ.getElementType();
+    if (Type.isStringType(typ))
+    { elementType = new Type("String", null); }  
+    assignsTo = vbl + ""; 
+  }
+
+
   /* public CreationStatement(Attribute vbl, Type typ)
   { createsInstanceOf = typ.getName();
     instanceType = typ; 
@@ -4611,11 +4645,13 @@ class SequenceStatement extends Statement
   public String toString()
   { String res = ""; 
     for (int i = 0; i < statements.size(); i++)
-    { Statement ss = (Statement) statements.elementAt(i);
-      if (i < statements.size() - 1)     
-      { res = res + ss + " ; "; }
-      else 
-      { res = res + ss + " "; } 
+    { if (statements.get(i) instanceof Statement) 
+	  { Statement ss = (Statement) statements.elementAt(i);
+        if (i < statements.size() - 1)     
+        { res = res + ss + " ; "; }
+        else 
+        { res = res + ss + " "; }
+      }  
     }
  
     if (brackets)
@@ -5995,6 +6031,22 @@ class CatchStatement extends Statement
     action = stat; 
   } 
 
+  public CatchStatement(Expression var, Vector stats) 
+  { Type t = new Type("OclAny", null);
+    if (var.getType() != null) 
+    { t = var.getType(); } 
+ 
+    caughtObject = 
+      new BinaryExpression(":", var, new BasicExpression(t)); 
+
+    if (stats.size() == 0) 
+    { action = new InvocationStatement("skip"); } 
+    else if (stats.size() == 1)
+    { action = (Statement) stats.get(0); } 
+    else 
+    { action = new SequenceStatement(stats); }  
+  } 
+
   public void display()
   { System.out.println("  catch ( " + caughtObject + ") do " + action); 
   }
@@ -6243,6 +6295,50 @@ class TryStatement extends Statement
     catchClauses = cclauses; 
     endStatement = es; 
   } 
+
+  public TryStatement(Vector stats, Vector cclauses, Vector ends)
+  { if (stats.size() == 0) 
+    { body = new InvocationStatement("skip"); } 
+    else if (stats.size() == 1)
+    { body = (Statement) stats.get(0); } 
+    else 
+    { body = new SequenceStatement(stats); }  
+    catchClauses = cclauses; 
+
+    if (ends.size() == 0)
+    { endStatement = null; } 
+    else if (ends.size() == 1)
+    { endStatement = (Statement) ends.get(0); } 
+    else 
+    { endStatement = new SequenceStatement(ends); }  
+ 
+  }
+
+  public TryStatement(Vector stats, Vector ends)
+  { if (stats.size() == 0) 
+    { body = new InvocationStatement("skip"); } 
+    else if (stats.size() == 1)
+    { body = (Statement) stats.get(0); } 
+    else 
+    { body = new SequenceStatement(stats); }  
+
+    if (ends.size() == 0)
+    { endStatement = null; } 
+    else if (ends.size() == 1)
+    { Statement stat = (Statement) ends.get(0); 
+      if (stat instanceof FinalStatement)
+      { endStatement = stat; }
+      else 
+      { catchClauses = ends; 
+        endStatement = null; 
+      } 
+    }  
+    else 
+    { catchClauses = ends; 
+      endStatement = null; 
+    }  
+ 
+  }
 
   public void setClauses(Vector stats)
   { catchClauses = stats; } 
@@ -8533,12 +8629,16 @@ class ConditionalStatement extends Statement
   ConditionalStatement(Expression e, Vector ss1, Vector ss2)
   { test = e;
 
-    if (ss1.size() == 1) 
+    if (ss1.size() == 0)
+    { ifPart = new InvocationStatement("skip"); } 
+    else if (ss1.size() == 1) 
     { ifPart = (Statement) ss1.get(0); } 
     else 
     { ifPart = new SequenceStatement(ss1); } 
 
-    if (ss2.size() == 1) 
+    if (ss2.size() == 0)
+    { elsePart = new InvocationStatement("skip"); } 
+    else if (ss2.size() == 1) 
     { elsePart = (Statement) ss2.get(0); } 
     else 
     { elsePart = new SequenceStatement(ss2); } 
@@ -9010,6 +9110,15 @@ class FinalStatement extends Statement
 
   FinalStatement(Statement s)
   { body = s; }
+
+  FinalStatement(Vector stats)
+  { if (stats.size() == 0)
+    { body = new InvocationStatement("skip"); } 
+    else if (stats.size() == 1)
+    { body = (Statement) stats.get(0); } 
+    else 
+    { body = new SequenceStatement(stats); }  
+  } 
 
   public String getOperator() 
   { return "finally"; } 

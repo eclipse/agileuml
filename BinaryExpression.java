@@ -4094,12 +4094,17 @@ public void findClones(java.util.Map clones, String rule, String op)
     if (tleft != null && tright != null)
     { String tlname = tleft.getName();
       String trname = tright.getName();
-      if (Type.isNumericType(tlname) && Type.isNumericType(trname))
+      if (Type.isNumericType(tlname) && 
+          Type.isNumericType(trname))
       { } 
       else 
-      { System.err.println("TYPE ERROR: arguments must be numeric in: " + this); 
-        JOptionPane.showMessageDialog(null, "Arguments not numeric in: " + this, 
+      { type = Expression.deduceType(operator,left,right); 
+
+        System.err.println("Warning!: arguments must be numeric in: " + this + ". Deduced type: " + type); 
+        if (type == null) 
+        { JOptionPane.showMessageDialog(null, "Arguments not numeric in: " + this, 
                                             "Type error", JOptionPane.ERROR_MESSAGE);
+        } 
       } 
 
       if (trname.equals("double") || tlname.equals("double")) 
@@ -4114,7 +4119,9 @@ public void findClones(java.util.Map clones, String rule, String op)
       }
     } 
     else 
-    { System.err.println("TYPE ERROR: invalid types " + tleft + " " + tright + " in: " + this);
+    { type = Expression.deduceType(operator,left,right); 
+
+      System.err.println("TYPE ERROR: invalid types " + tleft + " " + tright + " in: " + this + ". Deduced type " + type);
       JOptionPane.showMessageDialog(null, "Missing types in: " + this, 
                                           "Type error", JOptionPane.ERROR_MESSAGE);
       if (tleft != null)

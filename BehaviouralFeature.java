@@ -84,11 +84,24 @@ public class BehaviouralFeature extends ModelElement
     if (pars == null) 
     { parameters = new Vector(); } 
 
+    
+
     query = false;
-    if (stats.size() == 1)
-    { activity = (Statement) stats.get(0); } 
+    if (stats == null || stats.size() == 0) 
+    { activity = new InvocationStatement("skip");
+      return; 
+    }
+
+    Vector actualstatements = new Vector();
+    for (int i = 0; i < stats.size(); i++) 
+    { if (stats.get(i) instanceof Statement)
+      { actualstatements.add(stats.get(i)); } 
+    } 
+
+    if (actualstatements.size() == 1)
+    { activity = (Statement) actualstatements.get(0); } 
     else 
-    { activity = new SequenceStatement(stats); }  
+    { activity = new SequenceStatement(actualstatements); }  
   }
 
   public BehaviouralFeature(String nme) 
@@ -293,6 +306,20 @@ public class BehaviouralFeature extends ModelElement
         code.addStatement(assgnpar);
       }  
     } 
+
+    BasicExpression initialiseCall = 
+      new BasicExpression("initialise"); 
+    initialiseCall.setUmlKind(Expression.UPDATEOP);
+    initialiseCall.setIsEvent(); 
+    // Vector parNames = bf.getParameterExpressions(); 
+    // System.out.println(">>=== " + pars + " " + parNames); 
+ 
+    initialiseCall.setParameters(new Vector()); 
+    initialiseCall.setObjectRef(res); 
+    InvocationStatement callInit = 
+       new InvocationStatement(initialiseCall);
+    // callInit.setParameters(parNames);  
+    code.addStatement(callInit); 
 
     ReturnStatement rs = new ReturnStatement(res); 
     code.addStatement(rs); 
@@ -790,6 +817,15 @@ public class BehaviouralFeature extends ModelElement
   public void setActivity(Statement st)
   { activity = st; } 
 
+  public void setActivity(Vector stats)
+  { if (stats == null || stats.size() == 0) 
+    { activity = new InvocationStatement("skip"); }
+    else if (stats.size() == 1) 
+    { activity = (Statement) stats.get(0); } 
+    else 
+    { activity = new SequenceStatement(stats); } 
+  }  
+
   public boolean hasResult()
   { if (resultType != null && 
         !("void".equals(resultType + "")))
@@ -826,6 +862,27 @@ public class BehaviouralFeature extends ModelElement
  
     for (int i = parameters.size()-1; i >= 0; i--) 
     { Attribute par = (Attribute) parameters.get(i); 
+      Type ptype = par.getType(); 
+      Type ftype = new Type("Function", null); 
+      ftype.setElementType(res); 
+      ftype.setKeyType(ptype);
+      res = ftype; 
+    } 
+
+    return res; 
+  } 
+
+  public static Type buildFunctionType(Vector pars)
+  { Type res = new Type("OclAny", null); 
+    if (pars == null || pars.size() == 0)
+    { Type ftype = new Type("Function", null); 
+      ftype.setElementType(res); 
+      ftype.setKeyType(new Type("void", null)); 
+      return ftype; 
+    } 
+ 
+    for (int i = pars.size()-1; i >= 0; i--) 
+    { Attribute par = (Attribute) pars.get(i); 
       Type ptype = par.getType(); 
       Type ftype = new Type("Function", null); 
       ftype.setElementType(res); 
@@ -1796,6 +1853,12 @@ public class BehaviouralFeature extends ModelElement
 
   public Type getResultType()
   { if (resultType == null) { return null; } 
+    return (Type) resultType.clone(); 
+  }
+
+  public Type getReturnType()
+  { if (resultType == null) 
+    { return new Type("void", null); } 
     return (Type) resultType.clone(); 
   }
 

@@ -364,12 +364,13 @@ abstract class Expression
     Type res = new Type("OclAny", null); 
 
     if ("?".equals(opr))
-    { if (t1 != null) 
+    { if (Type.isDefinedType(t1)) 
       { res = t1; 
-        if (t2 == null) 
+        if (Type.isDefinedType(t2)) { }
+        else  
         { e2.setType(res); } 
       }
-      else if (t2 != null)
+      else if (Type.isDefinedType(t2))
       { res = t2; 
         e1.setType(res); 
       } 
@@ -378,12 +379,13 @@ abstract class Expression
 
     if ("*".equals(opr) || "/".equals(opr) || 
         "->pow".equals(opr))
-    { if (t1 != null) 
+    { if (Type.isDefinedType(t1)) 
       { res = t1; 
-        if (t2 == null) 
+        if (Type.isDefinedType(t2)) { } 
+        else  
         { e2.setType(res); } 
       }
-      else if (t2 != null)
+      else if (Type.isDefinedType(t2))
       { res = t2; 
         e1.setType(res); 
       } 
@@ -397,12 +399,13 @@ abstract class Expression
 
     if ("mod".equals(opr) || "div".equals(opr) || 
         "->gcd".equals(opr))
-    { if (t1 != null) 
+    { if (Type.isDefinedType(t1)) 
       { res = t1; 
-        if (t2 == null) 
+        if (Type.isDefinedType(t2)) { } 
+        else  
         { e2.setType(new Type("int", null)); } 
       }
-      else if (t2 != null) // Should be int. 
+      else if (Type.isDefinedType(t2)) // Should be int. 
       { res = t2; 
         e1.setType(res); 
       } 
@@ -416,12 +419,13 @@ abstract class Expression
 
     if ("or".equals(opr) || "xor".equals(opr) || 
         "&".equals(opr))
-    { if (t1 != null) 
+    { if (Type.isDefinedType(t1)) 
       { res = t1; 
-        if (t2 == null) 
+        if (Type.isDefinedType(t2)) { } 
+        else  
         { e2.setType(new Type("boolean", null)); } 
       }
-      else if (t2 != null) // Should be boolean. 
+      else if (Type.isDefinedType(t2)) // Should be boolean. 
       { res = t2; 
         e1.setType(res); 
       } 
@@ -435,12 +439,13 @@ abstract class Expression
 
     if ("bitwiseOr".equals(opr) || "bitwiseXor".equals(opr) || 
         "bitwiseAnd".equals(opr))
-    { if (t1 != null) 
+    { if (Type.isDefinedType(t1)) 
       { res = t1; 
-        if (t2 == null) 
+        if (Type.isDefinedType(t2)) { } 
+        else  
         { e2.setType(new Type("int", null)); } 
       }
-      else if (t2 != null) // Should be int. 
+      else if (Type.isDefinedType(t2)) // Should be int. 
       { res = t2; 
         e1.setType(res); 
       } 
@@ -462,7 +467,7 @@ abstract class Expression
     Type res = new Type("OclAny", null); 
 
     if ("+".equals(opr) || "-".equals(opr))
-    { if (t1 != null) 
+    { if (Type.isDefinedType(t1)) 
       { res = t1; } 
       else 
       { res = new Type("double", null); 
@@ -472,7 +477,7 @@ abstract class Expression
     } 
 
     if ("->reverse".equals(opr))
-    { if (t1 != null) 
+    { if (Type.isDefinedType(t1)) 
       { res = t1; } 
       else 
       { res = new Type("Sequence", null); 
@@ -488,8 +493,10 @@ abstract class Expression
                                           Vector pars)
   { Expression res = expr; 
     for (int i = 0; i < pars.size(); i++) 
-    { Expression par = (Expression) pars.get(i); 
-      res = new BinaryExpression("->apply",res,par); 
+    { Type elemType = res.getElementType(); 
+      Expression par = (Expression) pars.get(i); 
+      res = new BinaryExpression("->apply",res,par);
+      res.type = elemType;  
     } 
     return res; 
   } 
@@ -1132,6 +1139,17 @@ abstract class Expression
 
   public abstract Expression invert(); 
 
+  public static Expression convertToString(Expression expr)
+  { if (expr == null) 
+    { return new BasicExpression("null"); } 
+    if (expr.isString())
+    { return expr; } 
+    Expression res = new BasicExpression("\"" + expr + "\"");
+    res.setType(new Type("String", null)); 
+    res.setElementType(new Type("String", null));
+    return res;  
+  } 
+
   public static String cppStringOf(String expr, Type t)
   { if (t == null) 
     { return expr; } 
@@ -1492,6 +1510,9 @@ abstract class Expression
   { return type != null && type.isClassEntityType(); }
 
   public boolean isFunctionType()
+  { return type != null && type.isFunctionType(); }
+
+  public boolean hasFunctionType()
   { return type != null && type.isFunctionType(); }
 
   public boolean isRef()

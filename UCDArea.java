@@ -25018,7 +25018,151 @@ public void produceCUI(PrintWriter out)
         uc.checkIncludesValidity(useCases); 
       } 
     } 
+
+    // Convert javascript to KM3: 
+    loadFromJavaScript(); 
   }  
+
+  private void loadFromJavaScript()
+  { BufferedReader br = null;
+    Vector res = new Vector();
+    String s;
+    boolean eof = false;
+    File sourcefile = new File("output/ast.txt");  
+      /* default */ 
+
+    try
+    { br = new BufferedReader(new FileReader(sourcefile)); }
+    catch (FileNotFoundException _e)
+    { System.out.println("File not found: " + sourcefile);
+      return; 
+    }
+
+    String sourcestring = ""; 
+    int noflines = 0; 
+
+    while (!eof)
+    { try { s = br.readLine(); }
+      catch (IOException _ex)
+      { System.out.println("Reading AST file output/ast.txt failed.");
+        return; 
+      }
+      if (s == null) 
+      { eof = true; 
+        break; 
+      }
+      else 
+      { sourcestring = sourcestring + s + " "; } 
+      noflines++; 
+    }
+
+    System.out.println(">>> Read " + noflines + " lines"); 
+
+    Compiler2 c = new Compiler2();    
+
+    ASTTerm xx =
+      c.parseGeneralAST(sourcestring); 
+
+    if (xx == null) 
+    { System.err.println(">>> Invalid text for general AST"); 
+      System.err.println(c.lexicals); 
+      return; 
+    } 
+  
+    java.util.Map m1 = new java.util.HashMap();
+    java.util.Map m2 = new java.util.HashMap();
+    Vector v1 = new Vector();
+    Vector v2 = new Vector(); 
+
+    // Statement expr = xx.jsstatementToKM3(m1,m2,v1,v2);
+    Vector expr = 
+     ((ASTCompositeTerm) xx).jsprogramToKM3(
+                                       m1,m2,v1,v2); 
+
+    for (int i = 0; i < expr.size(); i++) 
+    { Object elem = expr.get(i); 
+
+      if (elem instanceof BehaviouralFeature)
+      { BehaviouralFeature bf = 
+          (BehaviouralFeature) elem;
+     
+        System.out.println(bf.getKM3());
+      } 
+      else if (elem instanceof Entity)
+      { Entity ent = 
+          (Entity) elem;
+        // entities.add(ent);  
+        System.out.println(ent.getKM3());
+      } 
+      else
+      { System.out.println(elem); } 
+    }  
+
+    System.out.println(); 
+
+    Vector newentities = new Vector(); 
+
+    for (int i = 0; i < v2.size(); i++) 
+    { Entity newent = (Entity) v2.get(i); 
+    /*  if (newent.isInterface() ||
+          newent.hasConstructor()) 
+      { } 
+      else if (newent.isStruct())
+      { newent.addStaticConstructor(); } 
+      else 
+      { newent.addDefaultConstructor(); }
+     */ 
+
+      addEntity(newent, 100+(i*50), 100 + (150*i % 600));
+      newentities.add(newent); 
+    } 
+
+    for (int i = 0; i < v1.size(); i++) 
+    { Type tt = (Type) v1.get(i); 
+      addType(tt, 100+(i*50), 100 + (i*150 % 600)); 
+    }
+
+    repaint(); 
+
+    for (int k = 0; k < newentities.size(); k++) 
+    { Entity nent = (Entity) newentities.get(k);
+      // System.out.println(">>> Entity " + nent + " has attributes " + nent.allAttributes());    
+ 
+      if (nent.getSuperclass() != null) 
+      { Entity supc = nent.getSuperclass();
+        Entity actualSup = 
+          (Entity) ModelElement.lookupByName(supc.getName(), 
+                                             entities); 
+        if (actualSup != null)  
+        { Generalisation g = new Generalisation(actualSup,nent);
+          addInheritance(g,actualSup,nent);
+          nent.setSuperclass(actualSup); 
+
+          // System.out.println(">>> Entity " + nent + " inherits " + 
+          // actualSup + " attributes: " + actualSup.allAttributes() + " " + 
+          // nent.allAttributes() + " " + actualSup.getAttributes());
+        }  
+      } 
+
+      Vector itfs = nent.getInterfaces(); 
+      System.out.println(">>> Interfaces of " + nent + " are: " + itfs); 
+
+      for (int q = 0; q < itfs.size(); q++) 
+      { Entity supi = (Entity) itfs.get(q);
+        // Entity supx = 
+        //   (Entity) ModelElement.lookupByName(
+        //                           supi.getName(),entities);
+        // System.out.println(">>> Interface " + supx);   
+        Generalisation gi = new Generalisation(supi,nent);
+        gi.setRealization(true); 
+        addInheritance(gi,supi,nent);
+      } 
+
+    }    
+
+    repaint(); 
+  }
+
 } 
 
 

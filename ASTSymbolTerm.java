@@ -198,6 +198,10 @@ public class ASTSymbolTerm extends ASTTerm
     java.util.Map varelemtypes, Vector types, Vector ents)
   { return new Vector(); } 
 
+  public Vector jsvariableDeclarationToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return new Vector(); } 
+
   public Vector jsstatementListToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
   { Vector res = new Vector();

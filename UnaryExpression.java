@@ -34,6 +34,7 @@ public class UnaryExpression extends Expression
     elementType = be.getElementType();  
   } 
 
+
   public static Expression newLambdaUnaryExpression(
                          Expression bcall, 
                          BehaviouralFeature bf)
@@ -41,9 +42,14 @@ public class UnaryExpression extends Expression
     Vector pars = bf.getParameters(); 
     Expression res = bcall; 
     for (int i = pars.size()-1; i >= 0; i--) 
-    { Attribute p = (Attribute) pars.get(i); 
+    { Attribute p = (Attribute) pars.get(i);
+      Type oldtype = res.getType();  
       res = new UnaryExpression("lambda", res); 
       ((UnaryExpression) res).setAccumulator(p); 
+      Type ftype = new Type("Function", null);
+      ftype.setKeyType(p.getType()); 
+      ftype.setElementType(oldtype); 
+      res.type = ftype; 
     } 
     return res; 
   } 
@@ -215,6 +221,9 @@ public class UnaryExpression extends Expression
     }
     return res;   
   }  
+
+  public boolean isLambdaExpression()
+  { return "lambda".equals(operator); } 
 
   public Expression definedness()
   { Expression res = argument.definedness();
