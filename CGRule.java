@@ -34,6 +34,8 @@ public class CGRule
   String lhspattern = ""; // The LHS string as a regex pattern
   Vector lhspatternlist = new Vector(); 
 
+  String rulesetName = null; // ruleset owning the rule
+
   public CGRule(Expression lexp, Expression rexp, Vector whens)
   { Vector lvars = lexp.metavariables();
     Vector rvars = rexp.metavariables();
@@ -165,6 +167,9 @@ public class CGRule
     for (int i = 0; i < toks.length; i++) 
     { lhsTokens.add(toks[i]); }  
   }
+
+  public void setRuleset(String rname)
+  { rulesetName = rname; } 
 
   public void setActions(Vector acts) 
   { actions = acts; } 
@@ -823,11 +828,15 @@ public class CGRule
           
           if ("type".equals(mffeat))
           { String repl = ASTTerm.getType(term);
+            if (repl == null) 
+            { Type tt = term.deduceType();
+              repl = tt + ""; 
+            } 
             System.out.println(">>> Type of " + term + " is " + repl); 
             System.out.println(); 
  
             if (repl != null)   
-            { res = res.replace(mf,repl); }  
+            { res = replaceByMetafeatureValue(res,mf,repl); }  
           }   
           else if ("first".equals(mffeat) || 
                    "1st".equals(mffeat) || 
@@ -1065,6 +1074,7 @@ public class CGRule
           System.out.println(); 
   
           String repl = "";
+          
           if (cgs.hasRuleset(mffeat))
           { System.out.println(">***> Valid ruleset " + mffeat);  
             System.out.println(); 
@@ -1078,6 +1088,14 @@ public class CGRule
 
             if (replv != null) 
             { res = replaceByMetafeatureValue(res,mf,replv); } 
+          }
+          else if ("recurse".equals(mffeat) && v.size() > 0 &&
+                   v.get(0) instanceof ASTTerm && 
+                   rulesetName != null)
+          { ASTTerm newterm = 
+              new ASTCompositeTerm(rulesetName,v); 
+            String replv = newterm.cg(cgs); 
+            res = replaceByMetafeatureValue(res,mf,replv);
           } 
           else if ("front".equals(mffeat) && v.size() > 0 &&
                    v.get(0) instanceof ASTTerm)

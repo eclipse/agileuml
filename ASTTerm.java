@@ -225,6 +225,8 @@ public abstract class ASTTerm
     return val;  
   }
 
+  public abstract Type deduceType(); 
+
   public static String getElementType(ASTTerm t) 
   { String val = ASTTerm.getType(t);
     if (val != null)
@@ -409,6 +411,9 @@ public abstract class ASTTerm
   
 
   /* JavaScript abstraction: */ 
+
+  public abstract Vector jsclassDeclarationToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities);  
 
   public abstract Expression jsexpressionToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector ents); 

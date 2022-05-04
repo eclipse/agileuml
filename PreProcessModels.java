@@ -245,7 +245,7 @@ public class PreProcessModels
         // String asttext = astbr.readLine(); 
         // astbr.close(); 
 
-        Process p2 = proc.exec("grun.bat " + targetLanguage + " " + targetRule + " -tree"); 
+        Process p2 = proc.exec("java org.antlr.v4.gui.TestRig " + targetLanguage + " " + targetRule + " -tree"); 
 
         OutputStream sout = p2.getOutputStream(); 
         OutputStreamWriter outw = new OutputStreamWriter(sout); 
@@ -494,7 +494,7 @@ public class PreProcessModels
         // String asttext = astbr.readLine(); 
         // astbr.close(); 
 
-        Process p2 = proc.exec("grun.bat " + targetLanguage + " " + targetRule + " -tree"); 
+        Process p2 = proc.exec("java org.antlr.v4.gui.TestRig " + targetLanguage + " " + targetRule + " -tree"); 
 
         OutputStream sout = p2.getOutputStream(); 
         OutputStreamWriter outw = new OutputStreamWriter(sout); 
@@ -742,9 +742,9 @@ public class PreProcessModels
         Process p; 
 
         if (statementExamples.get(i) instanceof CreationStatement)
-        { p = proc.exec("grun.bat " + targetLanguage + " " + declTargetRule + " -tree"); } 
+        { p = proc.exec("java org.antlr.v4.gui.TestRig " + targetLanguage + " " + declTargetRule + " -tree"); } 
         else 
-        { p = proc.exec("grun.bat " + targetLanguage + " " + statTargetRule + " -tree"); } 
+        { p = proc.exec("java org.antlr.v4.gui.TestRig " + targetLanguage + " " + statTargetRule + " -tree"); } 
  
         // InputStream stdin = p.getInputStream(); 
         // StreamGobble igb = new StreamGobble(stdin); 
@@ -1050,19 +1050,19 @@ public class PreProcessModels
         String dec = ""; 
 
         if (operationExamples.get(i) instanceof BehaviouralFeature)
-        { p = proc.exec("grun.bat " + targetLanguage + " " + operTargetRule + " -tree"); 
+        { p = proc.exec("java org.antlr.v4.gui.TestRig " + targetLanguage + " " + operTargetRule + " -tree"); 
           dec = "ProgramOperation"; 
         } 
         else if (operationExamples.get(i) instanceof Attribute)
-        { p = proc.exec("grun.bat " + targetLanguage + " " + attTargetRule + " -tree"); 
+        { p = proc.exec("java org.antlr.v4.gui.TestRig " + targetLanguage + " " + attTargetRule + " -tree"); 
           dec = "ProgramAttribute"; 
         } 
         else if (operationExamples.get(i) instanceof Type) 
-        { p = proc.exec("grun.bat " + targetLanguage + " " + typeDecTargetRule + " -tree"); 
+        { p = proc.exec("java org.antlr.v4.gui.TestRig " + targetLanguage + " " + typeDecTargetRule + " -tree"); 
           dec = "ProgramEnumeration"; 
         } 
         else
-        { p = proc.exec("grun.bat " + targetLanguage + " " + classTargetRule + " -tree"); 
+        { p = proc.exec("java org.antlr.v4.gui.TestRig " + targetLanguage + " " + classTargetRule + " -tree"); 
           dec = "ProgramClass"; 
         } 
  
@@ -1290,7 +1290,7 @@ public class PreProcessModels
   { // Returns AST from grun.bat language rulename -tree
     try { 
       Runtime proc = Runtime.getRuntime(); 
-      Process p2 = proc.exec("grun.bat " + language + " " + rulename + " -tree"); 
+      Process p2 = proc.exec("java org.antlr.v4.gui.TestRig " + language + " " + rulename + " -tree"); 
 
       OutputStream sout = p2.getOutputStream(); 
       OutputStreamWriter outw = new OutputStreamWriter(sout); 

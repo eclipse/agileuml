@@ -4290,6 +4290,7 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
     return res + operator + " " + argument.toAST() + " )";  
   } 
 
+  // saveTextModel
   public String saveModelData(PrintWriter out) 
   { String id = Identifier.nextIdentifier("unaryexpression_");
     out.println(id + " : UnaryExpression"); 
@@ -4309,6 +4310,15 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
     { String etname = elementType.getUMLModelName(out); 
       out.println(id + ".elementType = " + etname); 
     } 
+    else if (type != null && 
+             type.getElementType() != null)
+    { String etname = 
+        type.getElementType().getUMLModelName(out); 
+      out.println(id + ".elementType = " + etname);
+    } 
+    else if (type != null && 
+             Type.isBasicType(type))
+    { out.println(id + ".elementType = " + tname); } 
     else 
     { out.println(id + ".elementType = " + tname); } 
 

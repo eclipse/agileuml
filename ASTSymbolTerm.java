@@ -100,6 +100,9 @@ public class ASTSymbolTerm extends ASTTerm
   public ASTTerm getTerm(int i) 
   { return null; }
 
+  public Type deduceType()
+  { return new Type("void", null); } 
+
   public Vector tokenSequence()
   { Vector res = new Vector(); 
     res.add("\"" + symbol + "\""); 
@@ -181,6 +184,10 @@ public class ASTSymbolTerm extends ASTTerm
 
 
   /* JavaScript abstraction: */ 
+
+  public Vector jsclassDeclarationToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return new Vector(); } 
 
   public Expression jsexpressionToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector ents)

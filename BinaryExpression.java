@@ -737,6 +737,15 @@ class BinaryExpression extends Expression
     { String etname = elementType.getUMLModelName(out); 
       out.println(id + ".elementType = " + etname); 
     } 
+    else if (type != null && 
+             type.getElementType() != null)
+    { String etname = 
+        type.getElementType().getUMLModelName(out); 
+      out.println(id + ".elementType = " + etname);
+    } 
+    else if (type != null && 
+             Type.isBasicType(type))
+    { out.println(id + ".elementType = " + tname); } 
     else 
     { out.println(id + ".elementType = " + tname); } 
 
@@ -4146,12 +4155,13 @@ public void findClones(java.util.Map clones, String rule, String op)
     { String tlname = tleft.getName();
       String trname = tright.getName();
       if (tlname.equals("boolean") && trname.equals("boolean"))
-      { type = new Type("boolean",null); }
+      {  }
       else
-      { System.err.println("TYPE ERROR: invalid types in: " + this);
+      { System.err.println("Warning: invalid types in: " + this);
         JOptionPane.showMessageDialog(null, "Arguments must be booleans: " + this, 
-                                            "Type error", JOptionPane.ERROR_MESSAGE);
+                                            "Type error", JOptionPane.ERROR_MESSAGE); 
       }
+      type = new Type("boolean",null);
     } 
     else 
     { System.err.println("TYPE ERROR: invalid types in: " + this);

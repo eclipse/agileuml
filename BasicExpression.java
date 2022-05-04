@@ -2259,7 +2259,7 @@ class BasicExpression extends Expression
   }  
 
 
-
+  // saveTextModel
   public String saveModelData(PrintWriter out) // the RSDS internal representation
   { String res = Identifier.nextIdentifier("basicexpression_");
     out.println(res + " : BasicExpression"); 
@@ -2280,6 +2280,15 @@ class BasicExpression extends Expression
     { String tet = type.elementType.getUMLModelName(out); 
       out.println(res + ".elementType = " + tet); 
     } 
+    else if (type != null && 
+             type.getElementType() != null)
+    { String etname = 
+        type.getElementType().getUMLModelName(out); 
+      out.println(res + ".elementType = " + etname);
+    } 
+    else if (type != null && 
+             Type.isBasicType(type))
+    { out.println(res + ".elementType = " + tname); } 
     else 
     { System.err.println("!!! Warning!: no element type for " + this); 
       out.println(res + ".elementType = " + tname); 

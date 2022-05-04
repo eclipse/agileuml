@@ -1482,11 +1482,18 @@ abstract class Expression
            elementType != null && elementType.isNumeric(); 
   }
 
+
+  public boolean isObject()
+  { return type != null && type.isEntityType(); }
+
   public boolean isSetValued()
   { return type != null && type.isSet(); }
 
   public boolean isSequenceValued()
   { return type != null && type.isSequence(); }
+
+  public boolean isSet()
+  { return type != null && type.isSet(); }
 
   public boolean isSequence()
   { return type != null && type.isSequence(); }

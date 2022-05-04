@@ -106,6 +106,7 @@ public class CGSpec
     if (rules.contains(r)) 
     { return; } 
     rules.add(r); 
+    r.setRuleset(category); 
     categoryRules.put(category,rules); 
   } 
 
@@ -114,6 +115,7 @@ public class CGSpec
     if (rules == null) 
     { rules = new Vector(); } 
     rules.add(0,r); 
+    r.setRuleset(category); 
     categoryRules.put(category,rules); 
   } 
 
@@ -124,7 +126,9 @@ public class CGSpec
 
     if (rules.contains(r)) { } 
     else 
-    { rules = insertRuleInOrder(r,rules); } 
+    { rules = insertRuleInOrder(r,rules); 
+      r.setRuleset(category); 
+    } 
 
     categoryRules.put(category,rules); 
   } 

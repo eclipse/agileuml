@@ -315,6 +315,27 @@ public class ASTBasicTerm extends ASTTerm
     java.util.Map varelemtypes, Vector types, Vector entities)
   { return null; } 
 
+
+  public Type deduceType()
+  { if (Expression.isString(value))
+    { return new Type("String",null); }
+   
+    if (Expression.isInteger(value))
+    { return new Type("int",null); }
+
+    if (Expression.isLong(value))
+    { return new Type("long",null); }
+
+    if (Expression.isDouble(value))
+    { return new Type("double",null); }
+
+    if ("true".equals(value) || "false".equals(value))
+    { return new Type("boolean", null); } 
+
+    return new Type("OclAny", null); 
+  } 
+
+
   public Expression cexpressionToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector ents)
   { if ("primaryExpression".equals(tag))
@@ -557,6 +578,10 @@ public class ASTBasicTerm extends ASTTerm
 
   /* JavaScript processing: */ 
 
+  public Vector jsclassDeclarationToKM3(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { return new Vector(); } 
+
   public Vector jsupdateForm(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector ents)
   { return new Vector(); } 
@@ -587,6 +612,11 @@ public class ASTBasicTerm extends ASTTerm
     
     if ("false".equals(value))
     { return new BasicExpression(false); } 
+
+    if ("templateStringAtom".equals(tag))
+    {  
+      return new BasicExpression(value); 
+    } 
 
     if ("numericLiteral".equals(tag))
     { 
@@ -623,15 +653,19 @@ public class ASTBasicTerm extends ASTTerm
         return v;  
       }
     } 
-    else if ("identifier".equals(tag))
+    else if ("identifier".equals(tag) || 
+             "keyword".equals(tag))
     { Type t = (Type) vartypes.get(value); 
       if (t != null) 
       { BasicExpression be = new BasicExpression(value); 
         be.setType(t); 
-        be.setElementType((Type) varelemtypes.get(value)); 
+		Object elemt = varelemtypes.get(value); 
+        if (elemt != null && elemt instanceof Type)
+        { be.setElementType((Type) elemt); }  
         return be; 
       } 
 
+   /* 
       Entity mainC = (Entity) ModelElement.lookupByName(
                                       "FromC", ents);
       if (mainC != null) 
@@ -658,7 +692,7 @@ public class ASTBasicTerm extends ASTTerm
           expr.variable = att;  
           return expr; 
         }       
-      } 
+      } */  
 
       BasicExpression v = new BasicExpression(value); 
       return v; 

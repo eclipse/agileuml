@@ -61,18 +61,44 @@ implements Cloneable
     return false; 
   } 
 
+  public static boolean isPathEnd(Statement st) 
+  { if (isSingleReturnStatement(st))
+    { return true; } 
+    if (isSingleBreakStatement(st))
+    { return true; } 
+    return false; 
+  } 
+
   public static boolean isSingleReturnStatement(Statement st)
-  { if (st == null) { return false; } 
+  { if (st == null) 
+    { return false; } 
     if (st instanceof SequenceStatement) 
     { SequenceStatement sq = (SequenceStatement) st; 
       if (sq.size() == 1) 
       { Statement stat = sq.getStatement(0); 
-        if (stat instanceof ReturnStatement) 
+        if (stat instanceof ReturnStatement ||
+            isSingleReturnStatement(stat)) 
         { return true; }
       } 
       return false;  
     } 
     return (st instanceof ReturnStatement); 
+  } 
+
+  public static boolean isSingleBreakStatement(Statement st)
+  { if (st == null) 
+    { return false; } 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      if (sq.size() == 1) 
+      { Statement stat = sq.getStatement(0); 
+        if (stat instanceof BreakStatement || 
+            isSingleBreakStatement(stat)) 
+        { return true; }
+      } 
+      return false;  
+    } 
+    return (st instanceof BreakStatement); 
   } 
 
   public static Expression getReturnExpression(Statement st)
@@ -149,6 +175,54 @@ implements Cloneable
         }  
       } 
       res.addAll(getReturnValues(ts.getEndStatement())); 
+    } 
+
+    return res;
+  } // Other cases, for all other forms of statement. 
+
+  public static Vector getAssignments(Statement st)
+  { Vector res = new Vector(); 
+    if (st == null) 
+    { return res; }
+ 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      Vector stats = sq.getStatements(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof AssignStatement)
+        { res.add(stats.get(i)); } 
+        else if (stats.get(i) instanceof SequenceStatement)
+        { Statement stat = (Statement) stats.get(i); 
+          res.addAll(Statement.getAssignments(stat));
+        }  
+      } 
+      return res;
+    } 
+    
+    if (st instanceof ConditionalStatement) 
+    { ConditionalStatement cs = (ConditionalStatement) st; 
+      res.addAll(getAssignments(cs.ifPart())); 
+      res.addAll(getAssignments(cs.elsePart())); 
+      return res; 
+    } 
+
+    if (st instanceof WhileStatement) 
+    { WhileStatement ws = (WhileStatement) st; 
+      res.addAll(getAssignments(ws.getLoopBody())); 
+      return res; 
+    } 
+
+    if (st instanceof TryStatement) 
+    { TryStatement ts = (TryStatement) st; 
+      res.addAll(getAssignments(ts.getBody())); 
+      Vector stats = ts.getClauses(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          res.addAll(getAssignments(stat));
+        }  
+      } 
+      res.addAll(getAssignments(ts.getEndStatement())); 
     } 
 
     return res;
@@ -2186,8 +2260,39 @@ class WhileStatement extends Statement
 
   public WhileStatement(Expression lv, Expression lr, 
                         Vector b)
-  { loopTest = new BinaryExpression(":", lv, lr);
-    loopTest.setType(new Type("boolean", null)); 
+  { 
+
+    if (lv instanceof SetExpression &&
+        lr.isMap()) // [k,v] : map
+    { SetExpression sv = (SetExpression) lv; 
+      if (sv.size() == 2)
+      { lv = (Expression) sv.getElement(0); 
+        Expression mv = (Expression) sv.getElement(1); 
+        UnaryExpression kys = 
+          new UnaryExpression("->keys",lr); 
+        kys.setType(new Type("Set", null)); 
+        // kys.setElementType(lr.getKeyType());  
+        loopTest = 
+          new BinaryExpression(":", lv, kys); 
+        loopTest.setType(new Type("boolean", null)); 
+        CreationStatement cs = 
+          new CreationStatement(mv,lr.getElementType());
+        Expression lrAtlv = 
+          new BinaryExpression("->at", lr, lv);  
+        AssignStatement asgn = 
+          new AssignStatement(mv,lrAtlv); 
+        b.add(0,asgn); 
+        b.add(0,cs); 
+      }  
+      else 
+      { loopTest = new BinaryExpression(":", lv, lr);
+        loopTest.setType(new Type("boolean", null)); 
+      } 
+    } 
+    else 
+    { loopTest = new BinaryExpression(":", lv, lr);
+      loopTest.setType(new Type("boolean", null)); 
+    } 
 
     loopKind = FOR;  
     if (b == null || b.size() == 0) 
@@ -3626,7 +3731,8 @@ class CreationStatement extends Statement
     out.println(res + ".statId = \"" + res + "\"");  
     out.println(res + ".createsInstanceOf = \"" + createsInstanceOf + "\""); 
     out.println(res + ".assignsTo = \"" + assignsTo + "\""); 
-    String tname = "Integer"; // default
+    String tname = "OclAny"; // default
+    String etname = "OclAny"; 
 
     if (instanceType != null) 
     { tname = instanceType.getUMLModelName(out); } 
@@ -3636,11 +3742,20 @@ class CreationStatement extends Statement
     //                    " (" + instanceType.elementType + ")");  
 
     if (elementType != null) 
-    { String etname = elementType.getUMLModelName(out); 
+    { etname = elementType.getUMLModelName(out); 
       out.println(res + ".elementType = " + etname); 
     } 
-    else 
+    else if (instanceType != null && 
+             instanceType.getElementType() != null)
+    { etname = 
+        instanceType.getElementType().getUMLModelName(out); 
+      out.println(res + ".elementType = " + etname);
+    } 
+    else if (instanceType != null && 
+             Type.isBasicType(instanceType))
     { out.println(res + ".elementType = " + tname); } 
+    else 
+    { out.println(res + ".elementType = " + etname); } 
 
     if (initialExpression != null) 
     { String exprId = initialExpression.saveModelData(out); 
@@ -7741,6 +7856,9 @@ class AssignStatement extends Statement
 
   public Expression getLeft()
   { return lhs; } 
+
+  public Expression getRight()
+  { return rhs; } 
 
 
   public void setType(Type t)

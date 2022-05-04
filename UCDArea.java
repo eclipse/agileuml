@@ -9246,7 +9246,7 @@ public void produceCUI(PrintWriter out)
 
   String initialiseFilesCode = 
     "createOclFile_Write(\"System.out\");\n" + 
-    "  createOclFile_Write(\"System.out\");\n" +
+    "  createOclFile_Write(\"System.err\");\n" +
     "  createOclFile_Read(\"System.in\");\n"; 
 
   out.println("#include \"app.c\"");
@@ -12888,7 +12888,22 @@ public void produceCUI(PrintWriter out)
   } 
 
 
+  public void applyCSTLtoAST(String fname, String astname)
+  { File file = new File(fname); 
+    if (file == null) 
+    { System.err.println("Error!: no file " + fname); 
+      return; 
+    } 
 
+    File sourcefile = new File(astname);  
+    if (sourcefile == null) 
+    { System.err.println("Error!: no file " + astname); 
+      return; 
+    }
+  
+    applyCSTLtoAST(file,sourcefile);
+  } 
+    
   public void applyCSTLtoAST()
   { File file = null; 
     try 
@@ -12907,10 +12922,26 @@ public void produceCUI(PrintWriter out)
         return; 
       }
 	  
-      if (file == null) { return; }
-    } catch (Exception e) { return; } 
+      if (file == null) 
+      { System.err.println("Error!: no selected file"); 
+        return; 
+      }
+    } catch (Exception e) 
+      { return; } 
 
-    Vector vs = new Vector(); 
+    File sourcefile = new File("output/ast.txt");  
+      /* default */ 
+    
+    if (sourcefile == null) 
+    { System.err.println("Error!: no file output/ast.txt"); 
+      return; 
+    }
+
+    applyCSTLtoAST(file,sourcefile);
+  } 
+
+  public void applyCSTLtoAST(File file,File sourcefile)
+  { Vector vs = new Vector(); 
     CGSpec spec = loadCSTL(file,vs); 
 
     if (spec == null) 
@@ -12922,8 +12953,6 @@ public void produceCUI(PrintWriter out)
     Vector res = new Vector();
     String s;
     boolean eof = false;
-    File sourcefile = new File("output/ast.txt");  
-      /* default */ 
 
     try
     { br = new BufferedReader(new FileReader(sourcefile)); }
@@ -25068,16 +25097,33 @@ public void produceCUI(PrintWriter out)
       System.err.println(c.lexicals); 
       return; 
     } 
+   
+    if (xx instanceof ASTCompositeTerm)  { } 
+    else 
+    { System.err.println(">>> Not a valid JavaScript AST:"); 
+      System.err.println(c.lexicals); 
+      return; 
+    } 
   
     java.util.Map m1 = new java.util.HashMap();
     java.util.Map m2 = new java.util.HashMap();
     Vector v1 = new Vector();
     Vector v2 = new Vector(); 
 
-    // Statement expr = xx.jsstatementToKM3(m1,m2,v1,v2);
     Vector expr = 
      ((ASTCompositeTerm) xx).jsprogramToKM3(
                                        m1,m2,v1,v2); 
+
+    for (int i = 0; i < expr.size(); i++) 
+    { Object elem = expr.get(i); 
+
+      if (elem instanceof Entity)
+      { Entity ent = 
+          (Entity) elem;
+        // entities.add(ent);  
+        System.out.println(ent.getKM3());
+      } 
+    }  
 
     for (int i = 0; i < expr.size(); i++) 
     { Object elem = expr.get(i); 
@@ -25089,11 +25135,7 @@ public void produceCUI(PrintWriter out)
         System.out.println(bf.getKM3());
       } 
       else if (elem instanceof Entity)
-      { Entity ent = 
-          (Entity) elem;
-        // entities.add(ent);  
-        System.out.println(ent.getKM3());
-      } 
+      { } 
       else
       { System.out.println(elem); } 
     }  
