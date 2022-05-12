@@ -1759,6 +1759,8 @@ public class Compiler2
     newc.nospacelexicalanalysis(str);
     Vector lexs = newc.lexicals;
 	
+    System.out.println("+++ Condition lexicals:: " + lexs); 
+
     CGCondition cg = new CGCondition(); 
 	 
     for (int i = 0; i < lexs.size(); i++)
@@ -1769,6 +1771,12 @@ public class Compiler2
       } 
       else if (se.startsWith("_"))
       { cg.setVariable(se); } 
+      else if (se.equals("`") && 
+               i + 1 < lexs.size())
+      { String mt = "" + lexs.get(i+1); 
+        cg.setVariableMetafeature(mt);
+        i++;
+      } 
       else if (se.equals("not"))
       { cg.setNegative(); } 
       else 

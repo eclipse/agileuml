@@ -9,6 +9,7 @@
 /* Package: CSTL */ 
 
 import java.util.Vector; 
+import javax.swing.*;
 
 public class CGCondition
 { String stereotype = "";
@@ -44,6 +45,9 @@ public class CGCondition
 
   public void setVariable(String v) 
   { variable = v; } 
+
+  public void setVariableMetafeature(String mf) 
+  { variable = variable + "`" + mf; } 
 
   public void setStereotype(String st) 
   { stereotype = st; } 
@@ -102,12 +106,18 @@ public class CGCondition
         else 
         { ast.removeStereotype(stereo); } 
       } 
-    } 
+    
 
-    System.out.println(">>> Executed action " + variable + " (" + positive + ") " + stereo); 
+      System.out.println(">>> Executed action " + obj + " (" + positive + ") " + stereo);  
+      JOptionPane.showMessageDialog(null, 
+         "Executed action " + obj + " (" + positive + ") " + stereo,   "",
+         JOptionPane.INFORMATION_MESSAGE);
+    }  
   } 
 
-  public static boolean conditionsSatisfied(Vector conditions, Vector args, Vector entities) 
+  public static boolean conditionsSatisfied(
+              Vector conditions, Vector args, 
+              Vector entities, CGSpec cgs) 
   { boolean res = true; 
     for (int i = 0; i < args.size(); i++) 
     { Object m = args.get(i); 
@@ -115,44 +125,50 @@ public class CGCondition
  
       for (int j = 0; j < conditions.size(); j++) 
       { CGCondition cond = (CGCondition) conditions.get(j); 
-        if (cond.variable != null && var.equals(cond.variable))
-        { if (m instanceof Type && 
-              cond.conditionSatisfied((Type) m, entities)) 
-          { }
-          else if (m instanceof Expression && 
-                   cond.conditionSatisfied((Expression) m, entities))
-          { } 
-          else if (m instanceof Statement && 
-                   cond.conditionSatisfied((Statement) m, entities) )
-          { } 
-          else if (m instanceof Attribute && 
-                    cond.conditionSatisfied((Attribute) m, entities) )
-          { } 
-          else if (m instanceof ModelElement && 
-                   cond.stereotypeConditionSatisfied((ModelElement) m, entities))
-          { } 
-          else if (m instanceof Vector && 
-                   cond.conditionSatisfied((Vector) m, entities)) 
-          { }
-          else if (m instanceof String && 
-                   cond.conditionSatisfied((String) m, entities)) 
-          { }
-          else if (m instanceof ASTTerm && 
-                   cond.conditionSatisfied((ASTTerm) m, entities))
-          { System.out.println("||| ASTTerm condition " + cond + " satisfied by term " + m); 
-            System.out.println(); 
-          } 
-          else 
-          { return false; } 
+        if (cond.variable != null) 
+        { int mfindex = cond.variable.indexOf("`"); 
+          String cvar = cond.variable; 
+          if (mfindex > 0) 
+          { cvar = cvar.substring(0,mfindex); } 
+          if (var.equals(cvar))
+          { if (m instanceof Type && 
+              cond.conditionSatisfied((Type) m, entities,cgs)) 
+            { }
+            else if (m instanceof Expression && 
+                   cond.conditionSatisfied((Expression) m, entities,cgs))
+            { } 
+            else if (m instanceof Statement && 
+                   cond.conditionSatisfied((Statement) m, entities,cgs) )
+            { } 
+            else if (m instanceof Attribute && 
+                    cond.conditionSatisfied((Attribute) m, entities,cgs) )
+            { } 
+            else if (m instanceof ModelElement && 
+                   cond.stereotypeConditionSatisfied((ModelElement) m, entities,cgs))
+            { } 
+            else if (m instanceof Vector && 
+                   cond.conditionSatisfied((Vector) m, entities,cgs)) 
+            { }
+            else if (m instanceof String && 
+                   cond.conditionSatisfied((String) m, entities,cgs)) 
+            { }
+            else if (m instanceof ASTTerm && 
+                   cond.conditionSatisfied((ASTTerm) m, entities,cgs))
+            { System.out.println("||| ASTTerm condition " + cond + " satisfied by term " + m); 
+              System.out.println(); 
+            } 
+            else 
+            { return false; } 
 		  
-          System.out.println("||| Condition " + cond + " is satisfied by " + m); 
+            System.out.println("||| Condition " + cond + " is satisfied by " + m); 
+          } 
         } 
       } 
     } 
     return res; 
   } 
 
-  public boolean stereotypeConditionSatisfied(ModelElement m, Vector entities)
+  public boolean stereotypeConditionSatisfied(ModelElement m, Vector entities, CGSpec cgs)
   { if (m.hasStereotype(stereotype))
     { return positive; }
 
@@ -162,7 +178,7 @@ public class CGCondition
     return false; 
   } 
 
-  public boolean conditionSatisfied(Type t, Vector entities)
+  public boolean conditionSatisfied(Type t, Vector entities, CGSpec cgs)
   { System.out.println("||| Checking type condition " + t + " " + stereotype); 
     System.out.println(); 
 
@@ -269,7 +285,7 @@ public class CGCondition
     return false;
   }
 
-  public boolean conditionSatisfied(Attribute a, Vector entities)
+  public boolean conditionSatisfied(Attribute a, Vector entities, CGSpec cgs)
   { if ("primary".equals(stereotype.toLowerCase()) && a.isPrimaryAttribute())
     { return positive; }
     if ("static".equals(stereotype.toLowerCase()) && a.isStatic())
@@ -279,7 +295,7 @@ public class CGCondition
     return false;
   }
 
-  public boolean conditionSatisfied(Vector v, Vector entities)
+  public boolean conditionSatisfied(Vector v, Vector entities, CGSpec cgs)
   { if ("empty".equals(stereotype.toLowerCase()) && 
         (v == null || v.size() == 0))
     { return positive; }
@@ -347,7 +363,7 @@ public class CGCondition
     return false; 
   } 
 
-  public boolean conditionSatisfied(Expression e, Vector entities)
+  public boolean conditionSatisfied(Expression e, Vector entities, CGSpec cgs)
   { Type t = e.getType();
     Type et = e.getElementType(); 
 
@@ -549,17 +565,41 @@ public class CGCondition
     // return false;
   }
 
-  public boolean conditionSatisfied(Statement e, Vector entities)
+  public boolean conditionSatisfied(Statement e, Vector entities, CGSpec cgs)
   { if (e instanceof AssignStatement) 
     { AssignStatement st = (AssignStatement) e; 
       Expression left = st.getLeft(); 
-      return conditionSatisfied(left,entities); 
+      return conditionSatisfied(left,entities,cgs); 
     } 
     return false; 
   } // and for other kinds of statement also 
 
-  public boolean conditionSatisfied(ASTTerm a, Vector entities)
+  public boolean conditionSatisfied(ASTTerm a, Vector entities, CGSpec cgs)
   { String alit = a.literalForm(); 
+
+    Vector metafs = CGRule.metafeatures(variable); 
+
+    System.out.println("*** Metafeatures of " + variable + " are: " + metafs); 
+
+    if (metafs.size() > 0)
+    { 
+      // If the variable has a metafeature: _i`mf
+      // evaluate _i`mf in cgs and test result against
+      // stereotype
+
+      String mf = (String) metafs.get(0); 
+      int mfindex = mf.indexOf("`"); 
+      String mfvar = mf.substring(0,mfindex); 
+      String mffeat = mf.substring(mfindex+1,mf.length());
+      String repl = CGRule.applyMetafeature(
+                             mffeat,a,cgs,entities); 
+
+      if (repl != null && repl.equals(stereotype))
+      { return positive; } 
+      else 
+      { return !positive; } 
+    } 
+      
 
     if (a instanceof ASTCompositeTerm)
     { ASTCompositeTerm ac = (ASTCompositeTerm) a; 
@@ -574,7 +614,7 @@ public class CGCondition
           "3ary".equals(stereotype) ||
           "4ary".equals(stereotype) ||
           "5ary".equals(stereotype))
-      { return conditionSatisfied(ac.getTerms(), entities); }
+      { return conditionSatisfied(ac.getTerms(), entities, cgs); }
     } 
     else if (a instanceof ASTBasicTerm)
     { ASTBasicTerm ac = (ASTBasicTerm) a; 
@@ -615,7 +655,8 @@ public class CGCondition
     } 
 
     if ("Class".equals(stereotype))
-    { if (Type.isOclEntityType(alit,entities)) 
+    { if (Type.isOclEntityType(alit,entities) || 
+          a.hasStereotype("Class")) 
       { return positive; } 
       else 
       { return !positive; } 
@@ -644,7 +685,7 @@ public class CGCondition
     return false;
   }
 
-  public boolean conditionSatisfied(String e, Vector entities)
+  public boolean conditionSatisfied(String e, Vector entities, CGSpec cgs)
   { if (e == null) 
     { return !positive; }
 

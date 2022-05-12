@@ -3743,7 +3743,8 @@ public class UCDArea extends JPanel
       { PrintWriter dbiout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(dbif)));
-        IOSAppGenerator.generateIOSDbi("",systemName,persistentEntities,useCases,dbiout);
+        IOSAppGenerator.generateIOSDbi(
+           "",systemName,persistentEntities,useCases,dbiout);
         dbiout.close(); 
       } catch (Exception e) { }
     }  
@@ -13016,7 +13017,8 @@ public void produceCUI(PrintWriter out)
     long time1 = d1.getTime(); 
 
     String tt = xx.cg(spec); 
-    System.out.println(tt); 
+    String arg1 = CGRule.correctNewlines(tt); 
+    System.out.println(arg1); 
     System.out.println(); 
 
   /*  System.out.println(xx.toKM3()); 

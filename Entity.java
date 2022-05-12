@@ -12742,7 +12742,7 @@ public void iosDbiOperations(PrintWriter out)
   }
   
   out.println("    let statement : String = \"UPDATE " + ent + " SET \" + "); 
-  out.println(columnsettings + " WHERE " + entId + " = '\" + " + entlc + "vo.get" + entId + "() + \"'\""); 
+  out.println(columnsettings + "      \" WHERE " + entId + " = '\" + " + entlc + "vo.get" + entId + "() + \"'\""); 
   out.println("    if sqlite3_prepare_v2(dbPointer, statement, -1, &updateStatement, nil) == SQLITE_OK"); 
   out.println("    { sqlite3_step(updateStatement) }"); 
   out.println("    sqlite3_finalize(updateStatement)"); 

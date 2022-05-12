@@ -173,7 +173,7 @@ public class ASTBasicTerm extends ASTTerm
 
         Vector ents = new Vector(); 
 
-        if (r.satisfiesConditions(eargs,ents))
+        if (r.satisfiesConditions(eargs,ents,cgs))
         { System.out.println(">>>> Applying basic term " + tag + " rule " + r + " for " + this); 
           return r.applyRule(args,eargs,cgs); 
         }  

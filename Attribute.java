@@ -13,6 +13,8 @@ import javax.swing.JOptionPane;
 * *****************************/
 /* Package: Class Diagram */ 
 
+/* NB: Please complete dbType and rawDecoder */ 
+
 public class Attribute extends ModelElement
 { private Type type; 
   private Type elementType; 
@@ -4981,7 +4983,8 @@ public String dbType()
   { return "VARCHAR(5)"; }
   else 
   { return tname; }
-}
+} // QUERY: isn't long "int64" in SQLite?
+ 
 
 public String androidExtractOp(String ent)
 { String allcaps = name.toUpperCase();

@@ -703,7 +703,7 @@ public class CGSpec
       // System.out.println(); 
 
       if (selected != null &&
-          selected.satisfiesConditions(args,entities))
+          selected.satisfiesConditions(args,entities,this))
       { return selected; } 
     } 
     return null;
@@ -728,7 +728,8 @@ public class CGSpec
       else if (trimmedlhs.startsWith(op))
       { selected = r; }
 
-      if (selected != null && selected.satisfiesConditions(args,entities))
+      if (selected != null && 
+          selected.satisfiesConditions(args,entities,this))
       { return selected; } 
    }
    return null;
@@ -803,32 +804,38 @@ public class CGSpec
                e instanceof CreationStatement)
       { CreationStatement cse = (CreationStatement) e; 
         Vector args = cse.cgparameters(); 
-        if (r.variables.size() == 3 && cse.initialExpression != null && r.satisfiesConditions(args,entities))
+        if (r.variables.size() == 3 && 
+            cse.initialExpression != null && 
+            r.satisfiesConditions(args,entities,this))
         { return r; }
-        else if (r.variables.size() == 2 && cse.initialExpression == null && r.satisfiesConditions(args,entities))
+        else if (r.variables.size() == 2 && 
+                 cse.initialExpression == null && 
+                 r.satisfiesConditions(args,entities,this))
         { return r; }
         // else if (r.variables.size() == 1 &&
         //          cse.initialExpression == null && 
-        //          r.satisfiesConditions(args,entities))
+        //          r.satisfiesConditions(args,entities,this))
         // { return r; }
       } 
       else if (op.equals(":=") && 
                (trimmedlhs.indexOf(op) > -1))
       { Vector args = ((AssignStatement) e).cgparameters(); 
         if (r.variables.size() == args.size() && 
-            r.satisfiesConditions(args,entities))
+            r.satisfiesConditions(args,entities,this))
         { return r; }
       }
-      else if (op.equals("execute") && trimmedlhs.startsWith(op))
-      { Vector args = ((ImplicitInvocationStatement) e).cgparameters(); 
-        if (r.satisfiesConditions(args,entities))
+      else if (op.equals("execute") && 
+               trimmedlhs.startsWith(op))
+      { Vector args = 
+          ((ImplicitInvocationStatement) e).cgparameters(); 
+        if (r.satisfiesConditions(args,entities,this))
         { return r; }
       }
       else if (op.equals("call") && trimmedlhs.startsWith(op))
       { Vector args = ((InvocationStatement) e).cgparameters();
         System.out.println(">>> Call statement " + e + " matches rule " + r); 
 		 
-        if (r.satisfiesConditions(args,entities))
+        if (r.satisfiesConditions(args,entities,this))
         { return r; }
       }
       else if (op.equals("call") && trimmedlhs.equals("skip"))
@@ -929,12 +936,13 @@ public class CGSpec
       else if (op.startsWith("->") && (r.lhs.indexOf(op) > -1))
       { selected = r; }
       else if (r.lhsexp != null && rexpr instanceof BinaryExpression && 
-	           ((BinaryExpression) rexpr).getOperator().equals(op))
+	   ((BinaryExpression) rexpr).getOperator().equals(op))
       { selected = r; } 
 	  // else if (r.lhs.indexOf(op) > -1)
       // { selected = r; }
 
-      if (selected != null && selected.satisfiesConditions(args,entities))
+      if (selected != null && 
+          selected.satisfiesConditions(args,entities,this))
       { return selected; } 
     }
     return null;
@@ -1135,7 +1143,8 @@ public class CGSpec
       { selected = r; 
         args.add(e); 
       }
-      else if (trimmedlhs.endsWith("_1(_2)") && pars != null && ModelElement.haveCommonPrefix(etext,trimmedlhs))
+      else if (trimmedlhs.endsWith("_1(_2)") && pars != null && 
+            ModelElement.haveCommonPrefix(etext,trimmedlhs))
       { String prefix = ModelElement.longestCommonPrefix(etext,trimmedlhs);
         int brind = etext.indexOf("("); 
 
@@ -1177,7 +1186,8 @@ public class CGSpec
         }  
       }
 
-      if (selected != null && selected.satisfiesConditions(args,entities))
+      if (selected != null && 
+          selected.satisfiesConditions(args,entities,this))
       { return selected; } 
     }
     return null;
@@ -1239,7 +1249,8 @@ public class CGSpec
       } 
     }
 
-    if (selected != null && selected.satisfiesConditions(args,entities))
+    if (selected != null && 
+        selected.satisfiesConditions(args,entities,this))
     { return selected; } 
 
     return null;
@@ -1290,7 +1301,8 @@ public class CGSpec
         }
 	  } 
 	  
-      if (selected != null && selected.satisfiesConditions(args,entities))
+      if (selected != null && 
+          selected.satisfiesConditions(args,entities,this))
       { return selected; } 
 
     }
@@ -1334,7 +1346,7 @@ public class CGSpec
       { selected = r; }
     
       if (selected != null && 
-          selected.satisfiesConditions(args,entities))
+          selected.satisfiesConditions(args,entities,this))
       { return selected; } 
     }
 
@@ -1550,7 +1562,8 @@ public class CGSpec
       } 
     
 
-      if (selected != null && selected.satisfiesConditions(args,entities))
+      if (selected != null && 
+          selected.satisfiesConditions(args,entities,this))
       { return selected; } 
     }
 

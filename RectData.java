@@ -12,7 +12,7 @@
   package: GUI
       */
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003-2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -238,7 +238,7 @@ class RectData extends RectForm
     for (int i = 0; i < atts.size(); i++)
     { Attribute att = (Attribute) atts.get(i);
       String nme = att.getName();
-      String init = att.getInitialValue(); 
+      Expression init = att.getInitialExpression(); 
       boolean uniq = att.isUnique();
       boolean froz = att.isFrozen(); 
       boolean classScope = att.isClassScope();
@@ -249,7 +249,7 @@ class RectData extends RectForm
       else if (kind == ModelElement.DERIVED) { decor = "/ "; } 
 
       String line1 = decor + nme + ": " + att.getType(); 
-      if (init != null && !init.equals(""))
+      if (init != null)
       { line1 = line1 + " = " + init; } 
       if (uniq) 
       { if (froz)

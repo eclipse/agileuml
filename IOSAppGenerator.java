@@ -3,7 +3,7 @@ import java.io.*;
 
 /* Package: Mobile */ 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -131,7 +131,7 @@ public class IOSAppGenerator extends AppGenerator
       for (int j = 0; j < localPersistent.size(); j++) 
       { Entity pent = (Entity) localPersistent.get(j); 
         String pname = pent.getName(); 
-        out.println("    load" + pname + "()"); 
+        out.println("    list" + pname + "()"); 
       } 
       out.println("  }");  // and load the dbi sets of instances for each persistant entity E. 
       out.println(); 
@@ -676,7 +676,7 @@ public class IOSAppGenerator extends AppGenerator
     Vector persistentEntities = new Vector(); 
     persistentEntities.addAll(entities); 
     persistentEntities.removeAll(clouds); 
-	Vector localPersistent = new Vector(); 
+    Vector localPersistent = new Vector(); 
 
     for (int i = 0; i < persistentEntities.size(); i++) 
     { Entity ent = (Entity) persistentEntities.get(i); 
@@ -691,8 +691,8 @@ public class IOSAppGenerator extends AppGenerator
         out.println();  
       }  
 
-	  if (ent.isPersistent())
-	  { localPersistent.add(ent); }
+      if (ent.isPersistent())
+      { localPersistent.add(ent); }
     } 
 
     for (int i = 0; i < clouds.size(); i++) 
@@ -720,7 +720,7 @@ public class IOSAppGenerator extends AppGenerator
       for (int j = 0; j < localPersistent.size(); j++) 
       { Entity pent = (Entity) localPersistent.get(j); 
         String pname = pent.getName(); 
-        out.println("    load" + pname + "()"); 
+        out.println("    list" + pname + "()"); 
       } 
       out.println("  }");  
       out.println(); 
@@ -1029,7 +1029,7 @@ public class IOSAppGenerator extends AppGenerator
        { System.err.println("!! Warning: a string-typed primary key is needed for class " + item); }
 	   
        out.println("  func list" + item + "() -> [" + itemvo + "]"); 
-       out.println("  { var " + items + " : [" + item + "] " + " = " + item + "." + item + "_allInstances"); 
+       out.println("  { var " + items + " : [" + item + "] " + " = " + item + "_allInstances"); 
        out.println("    current" + item + "s.clear()"); 
        out.println("    for (_,obj) in " + items + ".enumerated()"); 
        out.println("    { current" + item + "s.append(" + itemvo + "(_x: obj)) }"); 
@@ -2828,7 +2828,7 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     { Entity e0 = (Entity) ents.get(i); 
       e0.iosDbiDeclarations(out);
       String ent = e0.getName(); 
-      createCode = createCode + "try createTable(table: Dbi." + ent + "_CREATE_SCHEMA)\n    "; 
+      createCode = createCode + "try createTable(table: Dbi." + ent + "_CREATE_SCHEMA)\n      "; 
     }  
 
     out.println("  private init(dbPointer: OpaquePointer?)"); 

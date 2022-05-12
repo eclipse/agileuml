@@ -435,8 +435,11 @@ public class CGRule
     return false;
   }
 
-  public boolean satisfiesConditions(Vector args, Vector entities)
-  { return CGCondition.conditionsSatisfied(conditions,args,entities); } 
+  public boolean satisfiesConditions(Vector args, 
+                           Vector entities, CGSpec cgs)
+  { return CGCondition.conditionsSatisfied(
+                    conditions,args,entities,cgs); 
+  } 
 
   public int variablePosition(String var)
   { // The index of var in the arguments in the LHS
@@ -486,6 +489,259 @@ public class CGRule
     return res;
   }
 
+  public static String applyMetafeature(String mffeat, 
+                                        ASTTerm term,
+                                        CGSpec cgs, Vector entities)
+  { System.out.println(">***> Applying " + mffeat + " to ASTTerm " + term); 
+    System.out.println(); 
+     
+    if (CSTL.hasTemplate(mffeat + ".cstl")) 
+    { CGSpec template = CSTL.getTemplate(mffeat + ".cstl"); 
+          
+      if (template != null) 
+      { System.out.println(">>> Applying CSTL template " + mffeat + ".cstl to " + term); 
+
+        String repl = null; 
+        repl = term.cg(template);
+        return repl; 
+      } 
+    }
+     
+    if ("type".equals(mffeat))
+    { String repl = ASTTerm.getType(term);
+      if (repl == null) 
+      { Type tt = term.deduceType();
+        repl = tt + ""; 
+      } 
+      return repl;  
+    }   
+      
+    if ("first".equals(mffeat) || 
+        "1st".equals(mffeat) || 
+        "1".equals(mffeat))
+    { // get first subterm of obj
+      
+	  if (term instanceof ASTCompositeTerm)
+      { ASTCompositeTerm ct = (ASTCompositeTerm) term; 
+      
+        if (ct.terms.size() > 0)
+        { ASTTerm ct1 = (ASTTerm) ct.terms.get(0); 
+          String repl = ct1.cg(cgs); 
+          return repl;
+        } 
+      }
+         
+      String replx = term.cg(cgs); 
+      return replx;              
+    }
+   
+      if ("second".equals(mffeat) || 
+          "2nd".equals(mffeat) || 
+          "2".equals(mffeat))
+      { // get second subterm of obj
+            
+        if (term instanceof ASTCompositeTerm)
+        { ASTCompositeTerm ct = (ASTCompositeTerm) term; 
+          if (ct.terms.size() > 1)
+          { ASTTerm ct1 = (ASTTerm) ct.terms.get(1); 
+            String repl = ct1.cg(cgs); 
+            return repl;
+          } 
+        } 
+      }   
+          
+      if ("third".equals(mffeat) || 
+          "3rd".equals(mffeat) || 
+          "3".equals(mffeat))
+      { // get third subterm of obj
+        if (term instanceof ASTCompositeTerm)
+        { ASTCompositeTerm ct = (ASTCompositeTerm) term; 
+          if (ct.terms.size() > 2)
+          { ASTTerm ct1 = (ASTTerm) ct.terms.get(2); 
+            String repl = ct1.cg(cgs); 
+              
+            return repl;
+          } 
+        }    
+      }   
+  
+      if ("fourth".equals(mffeat) || 
+          "4th".equals(mffeat) || 
+          "4".equals(mffeat))
+      { // get 4th subterm of obj
+        if (term instanceof ASTCompositeTerm)
+        { ASTCompositeTerm ct = (ASTCompositeTerm) term; 
+          if (ct.terms.size() > 3)
+          { ASTTerm ct1 = (ASTTerm) ct.terms.get(3); 
+            String repl = ct1.cg(cgs); 
+              
+            return repl;
+          } 
+        } 
+      }   
+    
+      if ("fifth".equals(mffeat) || 
+          "5th".equals(mffeat) || 
+          "5".equals(mffeat))
+      { // get 5th subterm of obj
+        if (term instanceof ASTCompositeTerm)
+        { ASTCompositeTerm ct = (ASTCompositeTerm) term; 
+          if (ct.terms.size() > 4)
+          { ASTTerm ct1 = (ASTTerm) ct.terms.get(4); 
+            String repl = ct1.cg(cgs); 
+                
+            return repl; 
+          } 
+        } 
+      }   
+  
+      if ("last".equals(mffeat))
+      { // get first subterm of obj
+        if (term instanceof ASTCompositeTerm)
+        { ASTCompositeTerm ct = (ASTCompositeTerm) term; 
+          int tsize = ct.terms.size(); 
+          ASTTerm ct1 = (ASTTerm) ct.terms.get(tsize-1); 
+          String repl = ct1.cg(cgs); 
+          return repl; 
+        } 
+      }   
+      
+      if ("tail".equals(mffeat))
+      { // Vector of terms except the first
+        if (term instanceof ASTCompositeTerm)
+        { ASTCompositeTerm ct = (ASTCompositeTerm) term; 
+          Vector tailterms = new Vector(); 
+          tailterms.addAll(ct.terms);
+          String repl = ""; 
+          for (int q = 1; q < tailterms.size(); q++) 
+          { ASTTerm ct1 = (ASTTerm) tailterms.get(q); 
+            String tcg = ct1.cg(cgs);
+            repl = repl + tcg; 
+          }  
+          return repl;   
+        } 
+      } 
+    
+     /* if ("tailtail".equals(mffeat) || 
+                   "tail2".equals(mffeat))
+          { // Vector of terms except the first 2
+            if (obj instanceof ASTCompositeTerm)
+            { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
+              Vector tailterms = new Vector(); 
+              tailterms.addAll(ct.terms);
+              String repl = ""; 
+              for (int q = 2; q < tailterms.size(); q++) 
+              { ASTTerm ct1 = (ASTTerm) tailterms.get(q); 
+                String tcg = ct1.cg(cgs);
+                repl = repl + tcg; 
+              }  
+              
+              res = replaceByMetafeatureValue(res,mf,repl);
+            } 
+          } 
+          else if ("tailtailtail".equals(mffeat) || 
+                   "tail3".equals(mffeat))
+          { // Vector of terms except the first 3
+            if (obj instanceof ASTCompositeTerm)
+            { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
+              Vector tailterms = new Vector(); 
+              tailterms.addAll(ct.terms);
+              String repl = ""; 
+              for (int q = 3; q < tailterms.size(); q++) 
+              { ASTTerm ct1 = (ASTTerm) tailterms.get(q); 
+                String tcg = ct1.cg(cgs);
+                repl = repl + tcg; 
+              }  
+              
+              res = replaceByMetafeatureValue(res,mf,repl); 
+            } 
+          } 
+          else if ("tailtailtailtail".equals(mffeat) || 
+                   "tail4".equals(mffeat))
+          { // Vector of terms except the first 4
+            if (obj instanceof ASTCompositeTerm)
+            { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
+              Vector tailterms = new Vector(); 
+              tailterms.addAll(ct.terms);
+              String repl = ""; 
+              for (int q = 4; q < tailterms.size(); q++) 
+              { ASTTerm ct1 = (ASTTerm) tailterms.get(q); 
+                String tcg = ct1.cg(cgs);
+                repl = repl + tcg; 
+              }  
+              res = 
+                replaceByMetafeatureValue(res,mf,repl); 
+            } 
+          } 
+          else if ("front".equals(mffeat))
+          { // Vector of terms except the last
+            if (obj instanceof ASTCompositeTerm)
+            { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
+              Vector tailterms = new Vector(); 
+              tailterms.addAll(ct.terms);
+              String repl = ""; 
+              for (int q = 0; q < tailterms.size() - 1; q++) 
+              { ASTTerm ct1 = (ASTTerm) tailterms.get(q); 
+                String tcg = ct1.cg(cgs);
+                repl = repl + tcg; 
+              }  
+              
+              res = replaceByMetafeatureValue(res,mf,repl);
+            } 
+          } 
+          */ 
+
+     if (cgs.hasRuleset(mffeat))
+     { System.out.println(">***> Valid ruleset " + mffeat);  
+       System.out.println(); 
+       String repl = cgs.applyRuleset(mffeat,term);
+       System.out.println(">***> Applying ruleset " + mffeat + " to ASTTerm " + term); 
+       System.out.println(); 
+
+       if (repl != null) 
+       { return repl; } 
+       else 
+       { System.out.println(">!!!> no ruleset: " + mffeat); 
+         if (term.hasMetafeature(mffeat))
+         { String replx = term.getMetafeatureValue(mffeat); 
+           if (replx != null) 
+           { return replx; }
+         }
+         else if (CSTL.hasTemplate(mffeat + ".cstl")) 
+         { System.out.println(">>> Template exists: " + 
+                                 mffeat + ".cstl"); 
+           CGSpec newcgs = CSTL.getTemplate(mffeat + ".cstl"); 
+           System.out.println(); 
+           String replx = term.cg(newcgs);
+            
+           if (replx != null) 
+           { return replx; } 
+         } 
+         else 
+         { System.out.println("!! No template " + mffeat + ".cstl exists"); 
+           System.out.println(">>> Trying to load template ./cg/" + mffeat + ".cstl"); 
+           System.out.println(); 
+
+           File sub = new File("./cg/" + mffeat + ".cstl");
+      
+	       Vector types = new Vector(); // CGTL.types; 
+		   
+           CGSpec newcgs = new CGSpec(entities,types); 
+           CGSpec xcgs = 
+                CSTL.loadCSTL(newcgs,sub,types,entities); 
+           if (xcgs != null)
+           { CSTL.addTemplate(mffeat + ".cstl", xcgs); 
+             String rpl = term.cg(xcgs);   
+             return rpl;
+           }              
+         } 
+       }
+    } 
+	
+    return null; 
+  } 
+
+ 
   public String applyRule(Vector args, Vector eargs, CGSpec cgs)
   { // substitute each 
     // metafeatures[j] by the cgs transformation 
