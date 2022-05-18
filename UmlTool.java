@@ -328,6 +328,14 @@ public void findPlugins()
     // loadDataMI.setMnemonic(KeyEvent.VK_L);
     fileMenu.add(fromCMI);
 
+    JMenuItem fromJSMI = 
+      new JMenuItem("From JavaScript AST",openIcon);
+    fromJSMI.addActionListener(this);
+    fromJSMI.setToolTipText(
+      "Creates UML/OCL from AST produced by Antlr JavaScript parser, in output/ast.txt");
+    // loadDataMI.setMnemonic(KeyEvent.VK_L);
+    fileMenu.add(fromJSMI);
+
     fileMenu.addSeparator(); 
 
     JMenu loadComponentMenu = 
@@ -1573,6 +1581,10 @@ public void findPlugins()
       }
       else if (label.equals("From C AST")) 
       { ucdArea.fromCAST();
+        saved = true; 
+      }
+      else if (label.equals("From JavaScript AST")) 
+      { ucdArea.loadFromJavaScript();
         saved = true; 
       }
       else if (label.equals("Print"))
@@ -3825,6 +3837,10 @@ public void findPlugins()
       return; 
     } 
 
+    if (args.length == 3 && "-cgtl".equals(args[0]))
+    { window.ucdArea.applyCSTLtoAST(args[1],args[2]); 
+      return; 
+    } 
 
     window.setTitle("Agile UML Toolset, Eclipse Incubation Project Version 2.1");
     window.setControllerName("Controller"); 

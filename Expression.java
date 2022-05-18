@@ -2350,6 +2350,39 @@ abstract class Expression
     return new BinaryExpression("->apply", func, arg1); 
   }  
 
+  public static Expression simplifyApply2(Expression func, Expression arg1, Expression arg2)
+  { // (lambda var1 : T1 in 
+    //   (lambda var2 : T2 in lbody))->apply(arg1)->apply(arg2)  
+    // is 
+    // lbody[arg1/var1,arg2/var2]
+
+    Vector pars = new Vector(); 
+    pars.add(arg1); 
+    pars.add(arg2); 
+
+    if (func instanceof BasicExpression)
+    { // set its parameters to be arg1,arg2
+      BasicExpression fbe = (BasicExpression) func; 
+      BasicExpression res = 
+        BasicExpression.newCallBasicExpression(fbe.data,
+                                fbe.objectRef,pars); 
+      return res; 
+    } 
+
+    if (func instanceof UnaryExpression) 
+    { UnaryExpression f = (UnaryExpression) func; 
+      if (f.getOperator().equals("lambda") && 
+          f.getAccumulator() != null) 
+      { Attribute var = f.getAccumulator(); 
+        String vname = var.getName(); 
+        Expression lbody = f.getArgument(); 
+        Expression res = lbody.substituteEq(vname,arg1);
+        return Expression.simplifyApply(res,arg2);  
+      } 
+    } 
+    return new BinaryExpression("->apply", func, arg1); 
+  }  
+
   public static Expression simplifyExistsAnd(final Expression e1,
                                        final Expression e2)
   { if (e1 instanceof BinaryExpression) 

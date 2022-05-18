@@ -1760,6 +1760,11 @@ public class Compiler2
     Vector lexs = newc.lexicals;
 	
     System.out.println("+++ Condition lexicals:: " + lexs); 
+    // _v id 
+    // _v ` f id
+    // _v not id
+    // _v id ` g
+    // etc
 
     CGCondition cg = new CGCondition(); 
 	 
@@ -1772,9 +1777,15 @@ public class Compiler2
       else if (se.startsWith("_"))
       { cg.setVariable(se); } 
       else if (se.equals("`") && 
-               i + 1 < lexs.size())
+               i + 2 < lexs.size())
       { String mt = "" + lexs.get(i+1); 
         cg.setVariableMetafeature(mt);
+        i++;
+      } 
+      else if (se.equals("`") && 
+               i + 2 == lexs.size())
+      { String mt = "" + lexs.get(i+1); 
+        cg.setStereotypeMetafeature(mt);
         i++;
       } 
       else if (se.equals("not"))
@@ -1792,6 +1803,7 @@ public class Compiler2
     Compiler2 newc = new Compiler2(); 
     newc.nospacelexicalanalysis(str);
     Vector lexs = newc.lexicals;
+    System.out.println("+++ Action lexicals:: " + lexs); 
 	
     CGCondition cg = new CGCondition(); 
 	 
@@ -1808,6 +1820,18 @@ public class Compiler2
       } 
       else if (se.equals("not"))
       { cg.setNegative(); } 
+      else if (se.equals("`") && 
+               i + 2 < lexs.size())
+      { String mt = "" + lexs.get(i+1); 
+        cg.setVariableMetafeature(mt);
+        i++;
+      } 
+      else if (se.equals("`") && 
+               i + 2 == lexs.size())
+      { String mt = "" + lexs.get(i+1); 
+        cg.setStereotypeMetafeature(mt);
+        i++;
+      } 
       else if (expectVar)
       { cg.setVariable(se); 
         expectVar = false; 
@@ -9130,7 +9154,7 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
   { // System.out.println(Double.MAX_VALUE); 
     Compiler2 c = new Compiler2();
 
-    CGRule rr = c.parse_TextCodegenerationrule("_1 = _2 |-->var _1 : _2`insertSep$_1"); 
+    CGRule rr = c.parse_TextCodegenerationrule("_1 = _2 |-->var _1 : _2`type<action> _1 _2`type"); 
     System.out.println(rr); 
 
     // rr.replaceParameter("int"); 

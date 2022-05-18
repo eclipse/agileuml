@@ -6089,6 +6089,13 @@ public class ModelSpecification
                     }  
                     foundsource = true; 
                   }
+                  /* else 
+                  { Vector emxmaps = 
+                      splitOnTargetTagMappings(sent, tent,
+                                      sobjs, tobjs, tms);
+                    if (emxmaps.size() > 0)
+                    {  
+                  } */ 
                 } 
               }
             }
@@ -7167,6 +7174,136 @@ public class ModelSpecification
             } 
           }
         }    
+      } 
+    }  
+
+    return res;  
+  } 
+
+/* 
+  public Vector splitOnTargetTags(
+     Attribute tatt, Vector sourceatts,
+     java.util.Map newSMap,     
+     ASTTerm[] targetJValues, 
+     Vector trgJValues, 
+     java.util.Map tms, Vector locams) */ 
+                  
+  public Vector splitOnTargetTagMappings(
+      Entity sent, Entity tent, Vector sobjs, Vector tobjs,
+      Vector tms) 
+  { // Split the sobjs-->tobjs pairs into groups with 
+    // different target tags
+
+    Vector res = new Vector(); 
+    Vector ams = new Vector(); 
+
+    int nobjs = sobjs.size(); 
+	
+    if (nobjs != tobjs.size())
+    { System.err.println("!! Non-matching source/target objects: " + sobjs + " " + tobjs); 
+      return res; 
+    }
+
+    
+    Attribute sast = sent.getDefinedAttribute("ast"); 
+    Attribute tast = tent.getDefinedAttribute("ast"); 
+
+    if (sast == null || tast == null) 
+    { return res; } 
+
+    Vector sourceattributes = new Vector(); 
+    sourceattributes.add(sast); 
+
+    // Source trees should all have same tag & same arity
+    // But target tags/arities can be different.
+
+    ASTTerm[] srcasts = new ASTTerm[nobjs]; 
+    ASTTerm[] trgasts = new ASTTerm[nobjs]; 
+
+    for (int i = 0; i < nobjs; i++) 
+    { ObjectSpecification sobj = (ObjectSpecification) sobjs.get(i); 
+      ASTTerm trm = (ASTTerm) sobj.getTree("ast"); 
+      srcasts[i] = trm;
+      ObjectSpecification tobj = (ObjectSpecification) tobjs.get(i); 
+      ASTTerm ttrm = (ASTTerm) tobj.getTree("ast"); 
+      trgasts[i] = ttrm; 
+    } 
+
+    if (ASTTerm.sameTagSameArity(srcasts))
+    { } 
+    else 
+    { return res; }
+
+    java.util.Map sattvalueMap = new java.util.HashMap(); 
+
+    
+    Vector ttagvalues = new Vector(); 
+
+    for (int j = 0; j < nobjs; j++) 
+    { int tarity = trgasts[j].arity(); 
+      String ttag = trgasts[j].getTag(); 
+
+      String tag_arity = ttag + "_" + tarity; 
+      if (ttagvalues.contains(tag_arity)) { } 
+      else 
+      { ttagvalues.add(tag_arity); } 
+    } 
+
+    System.out.println(">>> Target tag_arity values: " + ttagvalues); 
+    JOptionPane.showMessageDialog(null, 
+         "Target tag_arity values: " + ttagvalues,   "",
+         JOptionPane.INFORMATION_MESSAGE);
+
+    if (ttagvalues.size() <= 1)
+    { return res; } 
+    
+    // For each tag_arity, define set of pairs with 
+    // that kind of target: 
+
+    for (int p = 0; p < ttagvalues.size(); p++) 
+    { String ttag_value = (String) ttagvalues.get(p); 
+
+      Vector svalues = new Vector(); 
+      Vector tvalues = new Vector(); 
+
+      for (int k = 0; k < nobjs; k++) 
+      { int tarityk = trgasts[k].arity(); 
+        String ttagk = trgasts[k].getTag(); 
+
+        if (ttag_value.equals(ttagk + "_" + tarityk)) 
+        { svalues.add(srcasts[k]); 
+          tvalues.add(trgasts[k]); 
+        } 
+      } 
+      
+      int en = svalues.size();
+      if (en < 2) 
+      { continue; } // next value 
+ 
+      ASTTerm[] sattvalues = new ASTTerm[en]; 
+      ASTTerm[] tattvalues = new ASTTerm[en]; 
+            
+      for (int k = 0; k < en; k++) 
+      { sattvalues[k] = (ASTTerm) svalues.get(k);
+        tattvalues[k] = (ASTTerm) tvalues.get(k); 
+      }
+
+      sattvalueMap.put(sast,sattvalues); 
+
+      AttributeMatching cexpr = 
+              composedTreeFunction(sent,tast,sourceattributes,
+                      sattvalueMap,tattvalues,tvalues,
+                      tms,ams);
+             
+      System.out.println(">>> New candidate attribute matching: " + cexpr); 
+
+
+      System.out.println(); 
+      if (cexpr != null) 
+      { EntityMatching emx = 
+              new EntityMatching(sent,tent); 
+        emx.addAttributeMapping(cexpr); 
+        res.add(emx); 
       } 
     }  
 

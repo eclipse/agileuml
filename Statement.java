@@ -37,6 +37,8 @@ implements Cloneable
 
   abstract String getOperator(); 
 
+  /* public abstract String getOclType(); */ 
+
   public static boolean isOclBasicStatement(Statement st)
   { if (st instanceof ContinueStatement) 
     { return true; } 
@@ -3529,6 +3531,28 @@ class CreationStatement extends Statement
 
   public Type getType()
   { return instanceType; } 
+
+  public String getOclType()
+  { if ("int".equals(createsInstanceOf) || 
+        "long".equals(createsInstanceOf))
+    { return "Integer"; }
+    if ("double".equals(createsInstanceOf))
+    { return "Real"; }
+    if ("boolean".equals(createsInstanceOf))
+    { return "Boolean"; }
+    if ("String".equals(createsInstanceOf))
+    { return "String"; }
+    if (createsInstanceOf.startsWith("Sequence"))
+    { return "Sequence"; } 
+    if (createsInstanceOf.startsWith("Set"))
+    { return "Set"; } 
+    if (createsInstanceOf.startsWith("Map"))
+    { return "Map"; } 
+    if (createsInstanceOf.startsWith("Function"))
+    { return "Function"; } 
+    return "Object"; 
+      // if (Type.isOclClassifierType(createsInstanceOf))
+  } // also case of enumerations. 
 
   public Type getElementType()
   { return elementType; } 

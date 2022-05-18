@@ -12901,8 +12901,29 @@ public void produceCUI(PrintWriter out)
     { System.err.println("Error!: no file " + astname); 
       return; 
     }
+
+    String fxname = file.getName(); 
+
+
+    String outputName = "output/cgout.txt"; 
+
+    int dotindex = fxname.indexOf("."); 
+    if (dotindex < 0)
+    { outputName = "output/" + fxname + "_out.txt"; } 
+    else 
+    { String prefix = fxname.substring(0,dotindex); 
+      outputName = "output/" + prefix + "_out.txt"; 
+    }  
+
+    System.out.println(outputName);
+
+    File targetfile = new File(outputName);  
+    if (targetfile == null) 
+    { System.err.println("Error!: no file " + outputName); 
+      return; 
+    }
   
-    applyCSTLtoAST(file,sourcefile);
+    applyCSTLtoAST(file,sourcefile,targetfile); 
   } 
     
   public void applyCSTLtoAST()
@@ -12938,10 +12959,18 @@ public void produceCUI(PrintWriter out)
       return; 
     }
 
-    applyCSTLtoAST(file,sourcefile);
+    File targetfile = new File("output/cgout.txt"); 
+
+    if (targetfile == null) 
+    { System.err.println("Error!: no file output/cgout.txt"); 
+      return; 
+    }
+
+    applyCSTLtoAST(file,sourcefile,targetfile);
   } 
 
-  public void applyCSTLtoAST(File file,File sourcefile)
+  public void applyCSTLtoAST(File file,File sourcefile,
+                             File targetfile)
   { Vector vs = new Vector(); 
     CGSpec spec = loadCSTL(file,vs); 
 
@@ -13020,6 +13049,15 @@ public void produceCUI(PrintWriter out)
     String arg1 = CGRule.correctNewlines(tt); 
     System.out.println(arg1); 
     System.out.println(); 
+
+    try { 
+      PrintWriter pw = new PrintWriter(targetfile); 
+      pw.println(arg1); 
+      pw.close(); 
+    } catch (Exception _fex) 
+      { System.err.println("!Unable to write " + targetfile); 
+        return; 
+      } 
 
   /*  System.out.println(xx.toKM3()); 
     System.out.println(); 
@@ -25054,7 +25092,7 @@ public void produceCUI(PrintWriter out)
     loadFromJavaScript(); 
   }  
 
-  private void loadFromJavaScript()
+  public void loadFromJavaScript()
   { BufferedReader br = null;
     Vector res = new Vector();
     String s;

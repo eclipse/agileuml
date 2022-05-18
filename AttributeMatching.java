@@ -171,8 +171,10 @@ public class AttributeMatching
       CGRule rle = new CGRule(rulelhs, rulerhs);
       Vector vars = rle.getVariables();  
       if (cond != null && vars.size() > 0) 
-      { CGCondition cc = new CGCondition(cond); 
-        rle.addCondition(cc); 
+      { CGCondition cc = 
+          CGCondition.newCGCondition(category,cond,vars); 
+        if (cc != null) 
+        { rle.addCondition(cc); } 
       } 
 
       cg.addCategoryRuleInOrder(category,rle); 

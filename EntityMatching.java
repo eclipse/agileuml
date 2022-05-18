@@ -4846,13 +4846,24 @@ public class EntityMatching implements SystemTypes
     { System.out.println("!! Possible incompleteness: no feature mappings for " + this); 
       System.out.println(">> Source attributes: " + srcatts); 
       System.out.println(">> Target attributes: " + trgatts);
+
       if (realsrc.hasTreeAttribute() && 
           realtrg.hasTreeAttribute()) 
       { Vector cattmaps = mod.conditionalTreeMappings(
                   realsrc,realtrg,srcobjects,trgobjects,
                   tms);
         System.out.println(">>> Conditional tree mappings: " +
-                           cattmaps);  
+                           cattmaps);
+
+        /* if (cattmaps == null || cattmaps.size() == 0) 
+        { cattmaps = mod.splitOnTargetTagMappings(
+                  realsrc,realtrg,srcobjects,trgobjects,
+                  tms);
+          System.out.println(">>> Target-split mappings: " +
+                           cattmaps);
+          return cattmaps; 
+        } */ 
+  
         return cattmaps; 
       } 
     } 

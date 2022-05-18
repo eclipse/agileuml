@@ -1,6 +1,6 @@
 # OCL library ocl.py
 import re
-
+import random
 
 
 def sqr(x) : 
@@ -45,6 +45,37 @@ def toInteger(sx) :
 def toLong(sx) :
   return toInteger(sx)
 
+def char2byte(ch) : 
+  if ch == "" : 
+    return -1
+  return ord(ch)
+
+def byte2char(bb) : 
+  if bb == -1 : 
+    return ""
+  return chr(bb)
+
+def asBag(sq) : 
+#  ln = len(sq)
+#  if ln == 0 : 
+#    return sq
+#  res = []
+#  inds = random.sample(range(0,ln),ln)
+#  for x in inds :
+#    res.append(sq[x])
+#  return res
+  return sortSequence(sq)
+
+def asOrderedSet(sq) :
+  elems = set([])
+  res = []
+  for x in sq :
+    if x in elems :
+      pass 
+    else :
+      res.append(x)
+      elems.add(x)
+  return res
 
 
 def isUnique(s) : 
@@ -53,7 +84,10 @@ def isUnique(s) :
 def any(s) : 
   return list(s)[0]
 
-
+def anyMap(s) : 
+  for k in s : 
+    return s[k]
+  return None
 
 def includesAll(supset,subset) :
   for x in subset :
@@ -72,6 +106,11 @@ def excludesAll(supset,subset) :
   return True
 
 
+def iterate(sq,init,f) : 
+  acc = init
+  for x in sq : 
+    acc = f(x,acc)
+  return acc
 
 def exists(col,f) :
   for x in col :
@@ -250,6 +289,33 @@ def lastIndexOfSubSequence(sq,sq1) :
     return 0
   return n - i - m + 2
  
+def at(sq,i) : 
+  if i <= 0 : 
+    return None
+  if len(sq) > i : 
+    return None
+  return sq[i-1]
+
+def first(sq) : 
+  if len(sq) == 0 : 
+    return None
+  return sq[0]
+
+def last(sq) : 
+  if len(sq) == 0 : 
+    return None
+  return sq[len(sq)-1]
+
+def front(sq) :
+  if len(sq) == 0 : 
+    return sq 
+  return sq[:-1]
+
+def tail(sq) :
+  if len(sq) == 0 : 
+    return sq 
+  return sq[1:]
+
 
 def trim(str) : 
   res = '' + str
@@ -365,6 +431,16 @@ def removeAt(sq,i) :
     del res[i-1]
   return res
 
+def setAtMap(sq,k,val) : 
+  res = sq.copy()
+  res[k] = val
+  return res
+
+def removeAtMap(sq,k) : 
+  res = sq.copy()
+  del res[k]
+  return res
+
 def removeAtString(ss,i) : 
   res = "" + ss
   if i == 1 and i <= len(ss) : 
@@ -372,6 +448,9 @@ def removeAtString(ss,i) :
   if i >= 2 and i <= len(ss) :
     return ss[0:(i-1)] + ss[i:]
   return res
+
+def excludingAtString(ss,i) : 
+  return removeAtString(ss,i)
 
 
 def excludingFirst(sq,x) : 
@@ -530,6 +609,13 @@ def sortSequence(s) :
 
 def sortSet(s) :
   return s.copy()
+
+def sortMap(s) :
+  ks = sorted(s)
+  m = dict({})
+  for k in ks : 
+    m[k] = s[k]
+  return m
 
 
 def selectSet(s,f) : 
@@ -695,14 +781,6 @@ def prd(col) :
     result *= x
   return result
 
- 
-def iterate(col,init,f) : 
-  result = init
-  for x in col : 
-    result = f(x,result)
-  return result
-
-
 
 def includesAllMap(supset,subset) :
   for x in subset :
@@ -844,6 +922,15 @@ def antirestrict(m,ks) :
       res[x] = m[x]
   return res
 
+def excludingAtMap(m,k) : 
+  res = dict({})
+  for x in m :
+    if x == k :
+      pass
+    else : 
+      res[x] = m[x]
+  return res
+
 
 def keys(m) : 
   res = set({})
@@ -857,5 +944,6 @@ def values(m) :
   for x in m : 
     res.add(m[x])
   return res
+
 
 

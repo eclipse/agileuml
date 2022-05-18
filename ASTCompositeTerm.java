@@ -11729,6 +11729,77 @@ public class ASTCompositeTerm extends ASTTerm
       } 
     } 
 
+    if ("reduce".equals(feature) && 
+        obj.isSequence() && 
+        pars.size() > 1)
+    { // obj.reduce(f,init) is 
+      // obj->iterate(_z; _acc = init | f(_z,_acc)) 
+
+      Expression fexpr = (Expression) pars.get(0);
+      Expression init = (Expression) pars.get(1); 
+
+      Expression targ = 
+        BasicExpression.newVariableBasicExpression("self"); 
+
+      String acc = Identifier.nextIdentifier("_acc"); 
+      String var = Identifier.nextIdentifier("_var"); 
+
+      BasicExpression varexpr = 
+         BasicExpression.newVariableBasicExpression(var);  
+    
+      BasicExpression accexpr = 
+         BasicExpression.newVariableBasicExpression(acc);
+  
+      Expression rrhs = 
+         Expression.simplifyApply2( 
+                          fexpr, varexpr, accexpr);
+   
+      BinaryExpression iter = 
+         new BinaryExpression("->iterate",
+                                   obj, rrhs);
+      iter.iteratorVariable = var; 
+      Attribute accum = new Attribute(acc, init.getType(), 
+                            ModelElement.INTERNAL);
+      accum.setInitialExpression(init); 
+      iter.accumulator = accum; 
+      iter.setType(init.getType()); 
+      return iter; 
+    } 
+
+    if ("reduceRight".equals(feature) && 
+        obj.isSequence() && 
+        pars.size() > 1)
+    { // obj.reduceRight(f,init) is 
+      // obj->reverse()->iterate(_z; _acc = init | f(_z,_acc)) 
+
+      Expression fexpr = (Expression) pars.get(0);
+      Expression init = (Expression) pars.get(1); 
+
+      Expression targ = 
+        BasicExpression.newVariableBasicExpression("self"); 
+
+      String acc = Identifier.nextIdentifier("_acc"); 
+      String var = Identifier.nextIdentifier("_var"); 
+
+      BasicExpression varexpr = 
+         BasicExpression.newVariableBasicExpression( 
+                                   "(" + acc + "," + var + ")");
+      Expression rrhs = 
+         Expression.simplifyApply( 
+                          fexpr, varexpr);
+      Expression rev = new UnaryExpression("->reverse", obj);    
+      BinaryExpression iter = 
+         new BinaryExpression("->iterate",
+                                   rev, rrhs);
+      iter.iteratorVariable = var; 
+      Attribute accum = new Attribute(acc, init.getType(), 
+                            ModelElement.INTERNAL);
+      accum.setInitialExpression(init); 
+      iter.accumulator = accum; 
+      iter.setType(init.getType()); 
+      return iter; 
+    } 
+
     if ("filter".equals(feature) && 
         obj.isSequence() && 
         pars.size() > 0)
@@ -22321,6 +22392,111 @@ public class ASTCompositeTerm extends ASTTerm
           return "(" + e1x + " := " + qf + " ; " + e2x + ")"; 
         } 
 
+        if ("=".equals(op + "") && e1.hasSideEffect() &&
+            e2.hasSideEffect())
+        { // pre sideeffect of e1 ; 
+          // pre sideeffect of e2 ; 
+          // e1x := result of e2 ; 
+          // post sideeffect of e1 -- the e1.toKM3()          
+          // post sideeffect of e2 -- the e2.toKM3()
+
+          System.out.println(">>> Expression with side effects on LHS and RHS: " + this); 
+
+          String prese1 = e1.preSideEffect();
+          Statement preStat1 = e1.statement; 
+          String postse1 = e1.postSideEffect(); 
+          Statement postStat1 = e1.statement;
+
+          String prese = e2.preSideEffect();
+          Statement preStat = e2.statement; 
+          String postse = e2.postSideEffect(); 
+          Statement postStat = e2.statement;
+            
+          if (prese == null && prese1 == null && 
+              postse1 != null && postse != null) 
+          { String qf = e2.queryForm();  
+            
+            String res = "    " + e1x + " := " + 
+                         qf + " ;\n    " + postse1 + 
+                         " ;\n    " + postse;
+            Expression queryExp = e2.expression; 
+            Expression lhs = e1.expression; 
+            if (postStat != null && postStat1 != null &&
+                queryExp != null && 
+                lhs != null) 
+            { SequenceStatement stat = 
+                new SequenceStatement(); 
+              if ((lhs + "").equals(queryExp + "")) { } 
+              else 
+              { stat.addStatement(
+                  new AssignStatement(lhs,queryExp)); 
+              } 
+              stat.addStatement(postStat1); 
+              stat.addStatement(postStat); 
+              statement = stat; 
+            }  
+            return res; 
+          } 
+          else if (postse == null && postse1 == null) 
+          { String qf1 = e1.queryForm();  
+            String qf = e2.queryForm();  
+
+            Expression queryExp = e2.expression; 
+            Expression lhs = e1.expression; 
+            if (preStat != null && preStat1 != null && 
+                queryExp != null && 
+                lhs != null) 
+            { SequenceStatement stat = 
+                new SequenceStatement(); 
+              stat.addStatement(preStat1); 
+              stat.addStatement(preStat); 
+              if ((lhs + "").equals(queryExp + "")) { } 
+              else 
+              { stat.addStatement(
+                  new AssignStatement(lhs,queryExp)); 
+              } 
+              statement = stat; 
+            }  
+
+            return prese1 + " ; " + prese + " ;" +  
+                   "\n    " + qf1 + " := " + qf; 
+          } 
+          else 
+          { String qf = e2.queryForm();  
+
+            Expression queryExp = e2.expression; 
+            Expression lhs = e1.expression; 
+            if (queryExp != null && 
+                lhs != null) 
+            { SequenceStatement stat = 
+                new SequenceStatement();
+
+              if (preStat1 != null) 
+              { stat.addStatement(preStat1); } 
+
+              if (preStat != null) 
+              { stat.addStatement(preStat); } 
+  
+              if ((lhs + "").equals(queryExp + "")) { } 
+              else 
+              { stat.addStatement(
+                  new AssignStatement(lhs,queryExp)); 
+              } 
+
+              if (postStat1 != null)
+              { stat.addStatement(postStat1); } 
+
+              if (postStat != null)
+              { stat.addStatement(postStat); } 
+ 
+              statement = stat; 
+            }  
+
+            return prese1 + " ; " + prese + " ;" +  
+                   "\n    " + e1x + " := " + qf + " ;\n    " + postse1 + " ; " + postse; 
+          }  
+        } 
+
         if ("=".equals(op + "") && e2.hasSideEffect())
         { // pre sideeffect of e2 ; 
           // e1x := result of e2 ; 
@@ -22397,6 +22573,88 @@ public class ASTCompositeTerm extends ASTTerm
 
             return prese + " ;" +  
                    "\n    " + e1x + " := " + qf + " ;\n    " + postse; 
+          }  
+        } 
+
+        if ("=".equals(op + "") && e1.hasSideEffect())
+        { // pre sideeffect of e1 ; 
+          // e1x := result of e1 ; 
+          // post sideeffect of e1 -- the e1.toKM3()
+
+          System.out.println(">>> Expression with side effect: " + this); 
+
+          String prese = e1.preSideEffect();
+          Statement preStat = e1.statement; 
+          String postse = e1.postSideEffect(); 
+          Statement postStat = e1.statement;
+            
+          if (prese == null && postse != null) 
+          { String qf1 = e1.queryForm();  
+            String qf = e2.queryForm();  
+            
+            String res = "    " + qf1 + " := " + 
+                         qf + " ;\n    " + postse;
+            Expression queryExp = e2.expression; 
+            Expression lhs = e1.expression; 
+            if (postStat != null && queryExp != null && 
+                lhs != null) 
+            { SequenceStatement stat = 
+                new SequenceStatement(); 
+              if ((lhs + "").equals(queryExp + "")) { } 
+              else 
+              { stat.addStatement(
+                  new AssignStatement(lhs,queryExp)); 
+              } 
+              stat.addStatement(postStat); 
+              statement = stat; 
+            }  
+            return res; 
+          } 
+          else if (postse == null) 
+          { String qf1 = e1.queryForm();  
+            String qf = e2.queryForm();  
+
+            Expression queryExp = e2.expression; 
+            Expression lhs = e1.expression; 
+            if (preStat != null && queryExp != null && 
+                lhs != null) 
+            { SequenceStatement stat = 
+                new SequenceStatement(); 
+              stat.addStatement(preStat); 
+              if ((lhs + "").equals(queryExp + "")) { } 
+              else 
+              { stat.addStatement(
+                  new AssignStatement(lhs,queryExp)); 
+              } 
+              statement = stat; 
+            }  
+
+            return prese + " ;" +  
+                   "\n    " + qf1 + " := " + qf; 
+          } 
+          else 
+          { String qf1 = e1.queryForm();  
+            String qf = e2.queryForm();  
+
+            Expression queryExp = e2.expression; 
+            Expression lhs = e1.expression; 
+            if (preStat != null && 
+                postStat != null && queryExp != null && 
+                lhs != null) 
+            { SequenceStatement stat = 
+                new SequenceStatement();
+              stat.addStatement(preStat);  
+              if ((lhs + "").equals(queryExp + "")) { } 
+              else 
+              { stat.addStatement(
+                  new AssignStatement(lhs,queryExp)); 
+              } 
+              stat.addStatement(postStat); 
+              statement = stat; 
+            }  
+
+            return prese + " ;" +  
+                   "\n    " + qf1 + " := " + qf + " ;\n    " + postse; 
           }  
         } 
 

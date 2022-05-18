@@ -665,9 +665,16 @@ public class PreProcessModels
             oclStatementModel = oclStatementModel + modelString + "\n";
           } 
           else if (tt instanceof CreationStatement)
-          { modelString = exampleName + " : OclCreationStatement\n" + 
+          { modelString = 
+              exampleName + " : OclCreationStatement\n" + 
               exampleName + ".ast = " + tt.toAST() + "\n"; 
-             
+            String oclStatType = 
+              ((CreationStatement) tt).getOclType();
+            if (oclStatType != null) 
+            { modelString = modelString +  
+                exampleName + ".type = " + oclStatType + "\n"; 
+            } 
+
             oclStatementModel = oclStatementModel + modelString + "\n";
           } 
           else if (tt instanceof WhileStatement && 
@@ -689,6 +696,13 @@ public class PreProcessModels
           else if (tt instanceof SequenceStatement && 
                    SequenceStatement.isBlockN(tt))
           { modelString = exampleName + " : OclBlockN\n" + 
+              exampleName + ".ast = " + tt.toAST() + "\n"; 
+             
+            oclStatementModel = oclStatementModel + modelString + "\n";
+          } 
+          else if (tt instanceof AssertStatement)
+          { modelString = exampleName + 
+              " : OclAssertStatement\n" + 
               exampleName + ".ast = " + tt.toAST() + "\n"; 
              
             oclStatementModel = oclStatementModel + modelString + "\n";

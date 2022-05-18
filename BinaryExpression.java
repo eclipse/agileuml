@@ -938,10 +938,25 @@ class BinaryExpression extends Expression
   { String basicString = 
              left + " " + operator + " " + right; 
      
-    if ("let".equals(operator) && accumulator != null)
+    if ("let".equals(operator) && 
+        accumulator != null)
     { String res = "let " + accumulator.getName() + " : " + accumulator.getType() + " = " + left + " in (" + right + ")"; 
       if (needsBracket)
       { return "(" + res + ")"; }
+      return res; 
+    }  
+
+    if ("->iterate".equals(operator) && 
+        iteratorVariable != null && accumulator != null)
+    { String rangestring = "" + left; 
+      if (left.needsBracket)
+      { rangestring = "(" + rangestring + ")"; }
+ 
+     String res = rangestring + "->iterate(" +
+          iteratorVariable + "; " +
+          accumulator.getName() + " = " + 
+              accumulator.getInitialExpression() + 
+          " | " + right + ")"; 
       return res; 
     }  
 
@@ -3061,6 +3076,40 @@ public void findClones(java.util.Map clones, String rule, String op)
       type = right.type; 
       elementType = right.elementType;  
       System.out.println(">>> Typechecked let expression: " + lrt + " " + rtc + " " + type); 
+      return true; 
+    }
+
+    if (operator.equals("->iterate") && 
+        iteratorVariable != null && 
+        accumulator != null)
+    { boolean lrt = left.typeCheck(types,entities,contexts,env); 
+      context.addAll(contexts); 
+      Expression init = accumulator.getInitialExpression(); 
+      // assumed non-null
+
+      if (init != null) 
+      { init.typeCheck(types,entities,context,env); } 
+
+      Attribute itvar = 
+        new Attribute(iteratorVariable, left.getElementType(),
+                      ModelElement.INTERNAL); 
+      Vector env1 = new Vector(); 
+      env1.addAll(env); 
+      env1.add(itvar); 
+      env1.add(accumulator); 
+      boolean rtc = right.typeCheck(types,entities,context,env1);
+
+      if (init != null) 
+      { type = init.getType();
+        elementType = init.getElementType();
+      } 
+      else
+      { type = right.getType(); 
+        elementType = right.getElementType();
+      } 
+      
+        
+      System.out.println(">>> Typechecked ->iterate expression: " + lrt + " " + rtc + " " + type); 
       return true; 
     }
 

@@ -43,14 +43,53 @@ public class CGCondition
     } 
   } 
 
+  public static CGCondition newCGCondition(
+    String category, Expression expr, Vector rulevars) 
+  { // _i = stereo  or  _i /= stereo
+
+    String stereo = ""; 
+    String var = ""; 
+    boolean pos = true; 
+
+    if (expr instanceof BinaryExpression) 
+    { BinaryExpression ee = (BinaryExpression) expr; 
+
+      Vector vars = ee.metavariables(); 
+      if (vars.size() > 0) 
+      { var = (String) vars.get(0); } 
+      else if (category.equals("OclStatement"))
+      { var = "_4"; } 
+      else 
+      { var = "_1"; } 
+ 
+      if ("/=".equals(ee.getOperator()))
+      { pos = false; } 
+
+      stereo = ee.getRight() + ""; 
+    }
+
+    if (rulevars.contains(var))
+    { CGCondition res = new CGCondition(stereo,var);
+      res.setPositive(pos); 
+      return res; 
+    } 
+    return null;  
+  } 
+
   public void setVariable(String v) 
   { variable = v; } 
 
   public void setVariableMetafeature(String mf) 
   { variable = variable + "`" + mf; } 
 
+  public void setStereotypeMetafeature(String mf) 
+  { stereotype = stereotype + "`" + mf; } 
+
   public void setStereotype(String st) 
   { stereotype = st; } 
+
+  public void setPositive(boolean pos)
+  { positive = pos; }
 
   public void setPositive()
   { positive = true; }
@@ -600,6 +639,7 @@ public class CGCondition
       { return !positive; } 
     } 
       
+    // Also the stereotype could have one. 
 
     if (a instanceof ASTCompositeTerm)
     { ASTCompositeTerm ac = (ASTCompositeTerm) a; 
