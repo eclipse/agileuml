@@ -67,7 +67,7 @@ class OclFile:
   def getPort(self) :
     return self.port
 
-  def getLocalPort() : 
+  def getLocalPort(self) : 
     return self.port
 
   def compareTo(self,f) : 
@@ -344,7 +344,7 @@ class OclFile:
           self.position = self.position + 1
           res.append(s)
           ind = ind + 1
-        except Error : 
+        except Exception as e : 
           self.eof = True
           self.lastRead = None
           break
