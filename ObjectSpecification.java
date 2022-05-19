@@ -1027,7 +1027,7 @@ public class ObjectSpecification extends ModelElement
     if (x instanceof String) 
     { String stree = (String) x; 
       Compiler2 cc = new Compiler2(); 
-      ASTTerm tt = cc.parseGeneralAST(stree);
+      ASTTerm tt = cc.parseSimpleAST(stree); // General
       if (tt == null) 
       { JOptionPane.showMessageDialog(null, "Warning: invalid AST: " + stree, 
            "", JOptionPane.ERROR_MESSAGE);  

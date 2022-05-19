@@ -632,14 +632,19 @@ class BinaryExpression extends Expression
 
   // saveTextModel
   public String saveModelData(PrintWriter out) 
-  { String id = Identifier.nextIdentifier("binaryexpression_");
+  { String id = 
+      Identifier.nextIdentifier("binaryexpression_");
     out.println(id + " : BinaryExpression"); 
     out.println(id + ".expId = \"" + id + "\""); 
 
     String op = operator; 
     Expression lft = left; 
 
-    if (operator.equals("#"))
+    if (operator.equals("->iterate"))
+    { op = "->iterate"; 
+      out.println(id + ".variable = \"" + iteratorVariable + "\""); 
+    } 
+    else if (operator.equals("#"))
     { op = "->exists"; 
       lft = ((BinaryExpression) left).right;  
       out.println(id + ".variable = \"" + ((BinaryExpression) left).left + "\""); 

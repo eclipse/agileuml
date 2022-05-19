@@ -8223,9 +8223,16 @@ public class ASTCompositeTerm extends ASTTerm
     } 
 
     if ("expressionStatement".equals(tag) && terms.size() == 2)
-    { ASTTerm t = (ASTTerm) terms.get(0); 
-      return t.jsupdateForm(vartypes,varelemtypes,types,
+    { ASTTerm t = (ASTTerm) terms.get(0);
+      Vector pse =  
+         t.jspreSideEffect(vartypes,varelemtypes,types,
                                 entities); 
+      Vector upd = t.jsupdateForm(vartypes,varelemtypes,types,
+                                entities);
+      Vector resx = new Vector(); 
+      resx.addAll(pse); 
+      resx.addAll(upd); 
+      return resx;  
     } // t is an expression sequence
 
     if ("variableStatement".equals(tag) && terms.size() == 2)
@@ -9859,7 +9866,19 @@ public class ASTCompositeTerm extends ASTTerm
 
     return res;  
   } 
- 
+
+  public Vector jscompleteUpdateForm(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { Vector r1 = jspreSideEffect(vartypes,
+                                varelemtypes,types,entities);
+    Vector r2 = jsupdateForm(vartypes,
+                                varelemtypes,types,entities);
+    Vector res = new Vector(); 
+    res.addAll(r1); 
+    res.addAll(r2); 
+    return res; 
+  } 
+
   public Vector jsupdateForm(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
   { System.out.println(">> jsupdateFormToKM3 for " + tag + " with " + terms.size() + " terms"); 
@@ -9977,7 +9996,7 @@ public class ASTCompositeTerm extends ASTTerm
       if (terms.size() == 2 && 
             ("--".equals(firstTerm + "") ||
              "++".equals(firstTerm + "")) )
-      { ASTTerm arg = (ASTTerm) terms.get(1); 
+      { /* ASTTerm arg = (ASTTerm) terms.get(1); 
         String op = "" + terms.get(0); 
         Expression expr = arg.jsexpressionToKM3(vartypes,
                                 varelemtypes,types,entities); 
@@ -9987,9 +10006,9 @@ public class ASTCompositeTerm extends ASTTerm
           new BinaryExpression(oper, expr, unitExpression); 
         minusexpr.setType(expr.getType());  
         Statement sx = new AssignStatement(expr,minusexpr);
-        res.add(sx); 
+        res.add(sx); */  
         return res;  
-      } 
+      } // Handled by jspreSideEffect
 
       if (terms.size() == 2 && 
             ("--".equals(lastTerm + "") ||
@@ -10459,6 +10478,305 @@ public class ASTCompositeTerm extends ASTTerm
     return new Vector(); 
   } 
 
+  public Vector jspreSideEffect(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { System.out.println(">> jspreSideEffect for " + tag + " with " + terms.size() + " terms"); 
+    System.out.println(); 
+
+    if (terms.size() == 2 && 
+        "singleExpression".equals(tag) && 
+        "alert".equals(
+           ((ASTTerm) terms.get(0)).literalForm())) 
+    { ASTTerm arg = (ASTTerm) terms.get(1); 
+      Vector res = arg.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities);
+      return res; 
+    } 
+
+    if ("variableDeclarationList".equals(tag) && terms.size() >= 2)
+    { Vector res = new Vector(); 
+      for (int i = 1; i < terms.size(); i++)
+      { ASTTerm arg = (ASTTerm) terms.get(i); 
+        if (arg instanceof ASTSymbolTerm)
+        { } 
+        else 
+        { Vector par = 
+            arg.jspreSideEffect(vartypes,varelemtypes,types,
+                                  entities); 
+          if (par != null) 
+          { res.addAll(par); } 
+        } 
+      } 
+      return res;
+    } 
+
+    if ("variableDeclaration".equals(tag) && 
+        terms.size() == 3 && 
+        "=".equals(terms.get(1) + ""))
+    { ASTTerm lhs = (ASTTerm) terms.get(0); 
+      ASTTerm rhs = (ASTTerm) terms.get(2); 
+      Vector res = rhs.jspreSideEffect(vartypes,
+                              varelemtypes,types,entities);
+      return res; 
+    } 
+
+    if ("variableDeclaration".equals(tag) && 
+        terms.size() == 1)
+    { ASTTerm lhs = (ASTTerm) terms.get(0); 
+      Vector res = lhs.jspreSideEffect(vartypes,
+                              varelemtypes,types,entities);
+      return res; 
+    } 
+
+    if ("expressionSequence".equals(tag))
+    { Vector res = new Vector(); 
+      for (int i = 0; i < terms.size(); i++)
+      { ASTTerm arg = (ASTTerm) terms.get(i); 
+        if (arg instanceof ASTSymbolTerm)
+        { } 
+        else 
+        { Vector par = 
+            arg.jspreSideEffect(vartypes,varelemtypes,types,
+                                  entities); 
+          if (par != null) 
+          { res.addAll(par); } 
+        } 
+      } 
+      return res;
+    } 
+
+    if ("singleExpression".equals(tag))
+    { Vector res = new Vector(); 
+
+      if (terms.size() == 0)
+      { return res; } 
+
+      if (terms.size() == 1)
+      { ASTTerm t1 = (ASTTerm) terms.get(0); 
+        return t1.jspreSideEffect(
+           vartypes, varelemtypes, types, entities); 
+      } 
+
+      ASTTerm firstTerm = (ASTTerm) terms.get(0); 
+      ASTTerm lastTerm = (ASTTerm) terms.get(terms.size()-1); 
+
+      if (terms.size() == 3 && "(".equals(firstTerm + "") &&
+                             ")".equals(lastTerm + ""))
+      { ASTTerm arg = (ASTTerm) terms.get(1); 
+        Vector vect = arg.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities); 
+        return vect; 
+      }
+
+      if (terms.size() == 2 && 
+            ("--".equals(firstTerm + "") ||
+             "++".equals(firstTerm + "")) )
+      { ASTTerm arg = (ASTTerm) terms.get(1); 
+        String op = "" + terms.get(0); 
+        Expression expr = arg.jsexpressionToKM3(vartypes,
+                                varelemtypes,types,entities); 
+        String oper = "" + op.charAt(0); 
+
+        BinaryExpression minusexpr = 
+          new BinaryExpression(oper, expr, unitExpression); 
+        minusexpr.setType(expr.getType());  
+        Statement sx = new AssignStatement(expr,minusexpr);
+        res.add(sx); 
+        return res;  
+      } 
+
+      if (terms.size() == 2 && 
+            ("--".equals(lastTerm + "") ||
+             "++".equals(lastTerm + "")) )
+      { ASTTerm arg = (ASTTerm) terms.get(0); 
+        Vector vect = arg.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities); 
+        
+        return vect;  
+      } 
+
+      if (terms.size() == 4 &&
+          "[".equals(terms.get(1) + "") &&  
+          "]".equals(lastTerm + ""))
+      { // x[f] is x[f+1] unless x is a map: x[f] or x["f"]
+        ASTTerm indterm = (ASTTerm) terms.get(2); 
+        Vector indx = 
+          indterm.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities);
+        return indx; 
+      } 
+
+      if (terms.size() == 2 && 
+          "void".equals(firstTerm + "") )
+      { ASTTerm arg = (ASTTerm) terms.get(1); 
+        Vector vect = arg.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities); 
+        return vect; 
+      } 
+
+      if (terms.size() == 2 && 
+          "delete".equals(firstTerm + "") )
+      { ASTTerm arg = (ASTTerm) terms.get(1); 
+        Vector vect = arg.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities);
+        return vect;   
+      } 
+
+   
+      if (terms.size() == 2 && 
+          "arguments".equals(lastTerm.getTag()) && 
+          lastTerm.arity() == 2)
+      { // ASTCompositeTerm oper = 
+        //     (ASTCompositeTerm) terms.get(0); 
+        Vector pars = new Vector(); 
+        // return oper.jsfeatureAccessUpdateForm(
+        //                 pars,
+        //                 vartypes,
+        //                 varelemtypes,types,entities);
+        return pars; 
+      } // Specialised presideEffect for this case.
+
+      if (terms.size() == 2 && 
+          "arguments".equals(lastTerm.getTag()))
+      { Vector pars = 
+         ((ASTCompositeTerm) 
+             lastTerm).jsexpressionListPreSideEffect(
+                 vartypes,varelemtypes,types,entities);
+        return pars;  
+      } 
+
+
+      if (terms.size() == 2 &&
+          "new".equals(firstTerm + ""))
+      { // new C is C.newC() in the case of class C
+
+        return res;   
+      } 
+
+      if (terms.size() == 3 && "=".equals(terms.get(1) + ""))
+      { // Assignment
+        ASTTerm lhs = (ASTTerm) terms.get(0); 
+        Vector lhsvect = lhs.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities); 
+        ASTTerm rhs = (ASTTerm) terms.get(2); 
+        Vector rhsvect = rhs.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities); 
+
+        res.addAll(lhsvect); 
+        res.addAll(rhsvect); 
+        return res;  
+      } 
+
+      if (terms.size() == 3 && 
+          "+=".equals(((ASTTerm) terms.get(1)).literalForm()))
+      { // Assignment
+        ASTTerm lhs = (ASTTerm) terms.get(0); 
+        Vector lhsvect = lhs.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities); 
+        ASTTerm rhs = (ASTTerm) terms.get(2); 
+        Vector rhsvect = rhs.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities);
+        res.addAll(lhsvect); 
+        res.addAll(rhsvect); 
+        return res;   
+      }  
+
+      if (terms.size() == 3 && 
+          "-=".equals(((ASTTerm) terms.get(1)).literalForm()))
+      { ASTTerm lhs = (ASTTerm) terms.get(0); 
+        Vector lhsvect = lhs.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities); 
+        ASTTerm rhs = (ASTTerm) terms.get(2); 
+        Vector rhsvect = rhs.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities);
+        res.addAll(lhsvect); 
+        res.addAll(rhsvect); 
+        return res;   
+      } 
+
+      if (terms.size() == 3 && 
+          "*=".equals(((ASTTerm) terms.get(1)).literalForm()))
+      { ASTTerm lhs = (ASTTerm) terms.get(0); 
+        Vector lhsvect = lhs.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities); 
+        ASTTerm rhs = (ASTTerm) terms.get(2); 
+        Vector rhsvect = rhs.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities);
+        res.addAll(lhsvect); 
+        res.addAll(rhsvect); 
+        return res;   
+      } 
+
+      if (terms.size() == 3 && 
+          "/=".equals(((ASTTerm) terms.get(1)).literalForm()))
+      { ASTTerm lhs = (ASTTerm) terms.get(0); 
+        Vector lhsvect = lhs.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities); 
+        ASTTerm rhs = (ASTTerm) terms.get(2); 
+        Vector rhsvect = rhs.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities);
+        res.addAll(lhsvect); 
+        res.addAll(rhsvect); 
+        return res;   
+      } 
+ 
+      if (terms.size() == 3 && 
+          "%=".equals(((ASTTerm) terms.get(1)).literalForm()))
+      { ASTTerm lhs = (ASTTerm) terms.get(0); 
+        Vector lhsvect = lhs.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities); 
+        ASTTerm rhs = (ASTTerm) terms.get(2); 
+        Vector rhsvect = rhs.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities);
+        res.addAll(lhsvect); 
+        res.addAll(rhsvect); 
+        return res;   
+      } 
+
+      if (terms.size() == 3 && 
+          "^=".equals(((ASTTerm) terms.get(1)).literalForm()))
+      { ASTTerm lhs = (ASTTerm) terms.get(0); 
+        Vector lhsvect = lhs.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities); 
+        ASTTerm rhs = (ASTTerm) terms.get(2); 
+        Vector rhsvect = rhs.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities);
+        res.addAll(lhsvect); 
+        res.addAll(rhsvect); 
+        return res;   
+      } 
+
+      if (terms.size() == 3 && 
+          "|=".equals(((ASTTerm) terms.get(1)).literalForm()))
+      { ASTTerm lhs = (ASTTerm) terms.get(0); 
+        Vector lhsvect = lhs.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities); 
+        ASTTerm rhs = (ASTTerm) terms.get(2); 
+        Vector rhsvect = rhs.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities);
+        res.addAll(lhsvect); 
+        res.addAll(rhsvect); 
+        return res;   
+      } 
+
+      if (terms.size() == 3 && 
+          "&=".equals(((ASTTerm) terms.get(1)).literalForm()))
+      { ASTTerm lhs = (ASTTerm) terms.get(0); 
+        Vector lhsvect = lhs.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities); 
+        ASTTerm rhs = (ASTTerm) terms.get(2); 
+        Vector rhsvect = rhs.jspreSideEffect(vartypes,
+                                varelemtypes,types,entities);
+        res.addAll(lhsvect); 
+        res.addAll(rhsvect); 
+        return res;   
+      } 
+
+    } 
+
+    return new Vector(); 
+  } 
+
   public Vector jsexpressionListToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
   { System.out.println(">> jsexpressionListToKM3 for " + tag + " with " + terms.size() + " terms"); 
@@ -10477,6 +10795,31 @@ public class ASTCompositeTerm extends ASTTerm
                                   entities); 
           if (par != null) 
           { res.add(par); } 
+        } 
+      } 
+    } 
+    return res; 
+  } 
+
+  public Vector jsexpressionListPreSideEffect(
+    java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector entities)
+  { System.out.println(">> jsexpressionListPreSideEffect for " + tag + " with " + terms.size() + " terms"); 
+    System.out.println(); 
+
+    Vector res = new Vector(); 
+
+    if ("arguments".equals(tag))
+    { for (int i = 0; i < terms.size(); i++)
+      { ASTTerm arg = (ASTTerm) terms.get(i); 
+        if (arg instanceof ASTSymbolTerm)
+        { } 
+        else 
+        { Vector pars = 
+            arg.jspreSideEffect(vartypes,varelemtypes,types,
+                                  entities); 
+          if (pars != null) 
+          { res.addAll(pars); } 
         } 
       } 
     } 
@@ -12277,12 +12620,12 @@ public class ASTCompositeTerm extends ASTTerm
         String op = "" + terms.get(0); 
         Expression expr = arg.jsexpressionToKM3(vartypes,
                                 varelemtypes,types,entities); 
-        String oper = "" + op.charAt(0); 
+        // String oper = "" + op.charAt(0); 
 
-        BinaryExpression minusexpr = 
-          new BinaryExpression(oper, expr, unitExpression); 
-        minusexpr.setType(expr.getType());  
-        return minusexpr; 
+        // BinaryExpression minusexpr = 
+        //   new BinaryExpression(oper, expr, unitExpression); 
+        // minusexpr.setType(expr.getType());  
+        return expr; 
       } 
 
       if (terms.size() == 2 && 

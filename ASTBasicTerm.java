@@ -586,6 +586,10 @@ public class ASTBasicTerm extends ASTTerm
     java.util.Map varelemtypes, Vector types, Vector ents)
   { return new Vector(); } 
 
+  public Vector jspreSideEffect(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector ents)
+  { return new Vector(); } 
+
   public Expression jsexpressionToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector ents)
   { if ("this".equals(value))
@@ -637,7 +641,18 @@ public class ASTBasicTerm extends ASTTerm
     }
     else if ("literal".equals(tag) || 
              "propertyName".equals(tag)) 
-    { 
+    { int sze = value.length(); 
+
+      if (sze > 1 && '/' == value.charAt(0) && '/' == value.charAt(sze))
+      { BasicExpression regexpr = 
+          new BasicExpression("\"" + 
+            value.substring(1,value.length()-1) + "\""); 
+        regexpr.setType(new Type("String",null)); 
+        regexpr.setElementType(new Type("String",null)); 
+        regexpr.setUmlKind(Expression.VALUE);
+        return regexpr; 
+      } 
+
       BasicExpression v = new BasicExpression(value); 
       if (Expression.isString(value))
       { if ('\'' == value.charAt(0))

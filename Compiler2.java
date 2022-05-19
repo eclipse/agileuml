@@ -1003,7 +1003,42 @@ public class Compiler2
         }           
       } 
     }
+  }
 
+  public void nospacelexicalanalysisSimpleText(String str) 
+  { int in = INUNKNOWN; 
+    char previous = ' '; 
+
+    // boolean instring = false; 
+    // boolean inchar = false; 
+
+    int explen = str.length(); 
+    lexicals = new Vector(explen);  /* Sequence of lexicals */ 
+    StringBuffer sb = null;    /* Holds current lexical item */ 
+
+    char prev = ' '; 
+
+    for (int i = 0; i < explen; i++)
+    { char c = str.charAt(i); 
+
+      if (isSymbolCharacterText(c))
+      { sb = new StringBuffer();  // start new buffer for the symbol
+        lexicals.addElement(sb);  
+        sb.append(c); 
+        sb = null; 
+      }        
+      else if (c == ' ' || c == '\n' || c == '\t' || c == '\r') 
+      { sb = null; } // end current buffer - not in a string 
+      else 
+      { if (sb != null) 
+        { sb.append(c); } 
+        else 
+        { sb = new StringBuffer();     // start new buffer for the text
+          lexicals.add(sb); 
+          sb.append(c); 
+        }           
+      } 
+    }
   }
 
   private static boolean validFollowingCharacter(char c1, char c2)
@@ -3796,6 +3831,13 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     ASTTerm res = parseGeneralAST(0,sz-1); 
     return res;
   }
+
+  public ASTTerm parseSimpleAST(String xstring)
+  { nospacelexicalanalysisSimpleText(xstring);
+    int sz = lexicals.size();  
+    ASTTerm res = parseGeneralAST(0,sz-1); 
+    return res;
+  }
   
   public ASTTerm parseGeneralAST(int st, int en)
   { ASTTerm res = null; 
@@ -3858,10 +3900,10 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 	  
 	  for (int i = st+1; i <= en; i++) 
 	  { String lexend = lexicals.get(i) + ""; 
-	    if ("(".equals(lexend))
-		{ ocount++; }
-		else if (")".equals(lexend))
-		{ ccount++; }
+          if ("(".equals(lexend))
+          { ocount++; }
+          else if (")".equals(lexend))
+          { ccount++; }
 		
 	    if (")".equals(lexend) && ocount == ccount)
 	    { ASTTerm pn = parseGeneralAST(st,i); 
@@ -9154,8 +9196,12 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
   { // System.out.println(Double.MAX_VALUE); 
     Compiler2 c = new Compiler2();
 
-    CGRule rr = c.parse_TextCodegenerationrule("_1 = _2 |-->var _1 : _2`type<action> _1 _2`type"); 
-    System.out.println(rr); 
+    ASTTerm tt = c.parseSimpleAST("(lineStringLiteral \" (lineStringContent text) \")"); 
+
+    System.out.println(tt); 
+
+    // CGRule rr = c.parse_TextCodegenerationrule("_1 = _2 |-->var _1 : _2`type<action> _1 _2`type"); 
+    // System.out.println(rr); 
 
     // rr.replaceParameter("int"); 
 
@@ -9165,12 +9211,12 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
     // Statement stat = c.parseStatement(); 
     // System.out.println(stat); 
 
-    Compiler2 comp = new Compiler2();  
-    Vector vv = new Vector(); 
-    comp.nospacelexicalanalysis("x <>= y"); 
-    Expression tt = comp.parseExpression(vv,vv); 
+    // Compiler2 comp = new Compiler2();  
+    // Vector vv = new Vector(); 
+    // comp.nospacelexicalanalysis("x <>= y"); 
+    // Expression tt = comp.parseExpression(vv,vv); 
         
-    System.out.println(tt); 
+    // System.out.println(tt); 
 
     // c = new Compiler2(); 
 
@@ -9187,12 +9233,12 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
     // Statement e = c.parseStatement(); 
     // System.out.println(e); 
 
-    Compiler2 cc = new Compiler2();
+    // Compiler2 cc = new Compiler2();
     // cc.nospacelexicalanalysis("Ref(int){5}"); 
     // System.out.println(cc.parseExpression()); 
  
-    cc.nospacelexicalanalysis("x <>= y"); 
-    System.out.println(cc.lexicals); 
+    // cc.nospacelexicalanalysis("x <>= y"); 
+    // System.out.println(cc.lexicals); 
 
     // cc.nospacelexicalanalysis("a[x][y+1][z*z]");
     // cc.nospacelexicalanalysis("(if b.subrange(10+1, b.size)->indexOf(\"a\"+\"\") > 0 then (b.subrange(10+1, b.size)->indexOf(\"a\"+\"\") + 10 - 1) else -1 endif)");
