@@ -1,5 +1,7 @@
 import threading
 import time
+import ocl 
+import oclfile
 
 class OclProcess:
   oclprocess_instances = []
@@ -52,7 +54,7 @@ class OclProcess:
     self.name = nme
     if self.actualThread != None : 
       self.actualThread.name = nme
-    return result
+
 
   def getPriority(self) :
     return self.priority
@@ -89,7 +91,7 @@ class OclProcess:
 
   def killOclProcess(oclprocess_x) :
     oclprocess_instances = ocl.excludingSet(oclprocess_instances, oclprocess_x)
-    free(oclprocess_x)
+    oclfile.free(oclprocess_x)
 
 def createOclProcess():
   oclprocess = OclProcess()
