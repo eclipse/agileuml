@@ -8250,8 +8250,12 @@ public class ASTCompositeTerm extends ASTTerm
       Expression ee =
         expr.jsexpressionToKM3(vartypes,varelemtypes,types,
                                entities);
+      Vector pse =  
+         expr.jspreSideEffect(vartypes,varelemtypes,types,
+                                entities); 
       Statement sx = new ReturnStatement(ee); 
       Vector res = new Vector(); 
+      res.addAll(pse); 
       res.add(sx); 
       return res;  
     } // expr is an expression sequence
@@ -8358,6 +8362,9 @@ public class ASTCompositeTerm extends ASTTerm
         ")".equals(terms.get(3) + "") && 
         "else".equals(terms.get(5) + ""))
     { ASTTerm cond = (ASTTerm) terms.get(2); 
+      Vector pse =  
+         cond.jspreSideEffect(vartypes,varelemtypes,types,
+                                entities); 
       Expression test = cond.jsexpressionToKM3(
                          vartypes,varelemtypes,types,
                          entities);
@@ -8380,6 +8387,7 @@ public class ASTCompositeTerm extends ASTTerm
       Statement cstat = 
         new ConditionalStatement(test,ifStats,elseStats); 
       Vector res = new Vector(); 
+      res.addAll(pse); 
       res.add(cstat); 
       return res; 
     } 
@@ -8389,6 +8397,9 @@ public class ASTCompositeTerm extends ASTTerm
         "(".equals(terms.get(1) + "") && 
         ")".equals(terms.get(3) + ""))
     { ASTTerm cond = (ASTTerm) terms.get(2); 
+      Vector pse =  
+         cond.jspreSideEffect(vartypes,varelemtypes,types,
+                                entities); 
       Expression test = cond.jsexpressionToKM3(
                          vartypes,varelemtypes,types,
                          entities);
@@ -8410,6 +8421,7 @@ public class ASTCompositeTerm extends ASTTerm
       Statement cstat = 
         new ConditionalStatement(test,ifStats,elseStats); 
       Vector res = new Vector(); 
+      res.addAll(pse); 
       res.add(cstat); 
       return res; 
     } 
@@ -8435,7 +8447,7 @@ public class ASTCompositeTerm extends ASTTerm
       Vector doStats = body.jsstatementToKM3(
                          vartypes,varelemtypes,types,
                          entities);
-      Vector testupdate = cond.jsupdateForm(
+      Vector testupdate = cond.jscompleteUpdateForm(
                          vartypes,varelemtypes,types,
                          entities);
       Vector whileBody = new Vector(); 
@@ -8469,7 +8481,7 @@ public class ASTCompositeTerm extends ASTTerm
       Vector whileStats = body.jsstatementToKM3(
                          vartypes,varelemtypes,types,
                          entities);
-      Vector testupdate = cond.jsupdateForm(
+      Vector testupdate = cond.jscompleteUpdateForm(
                          vartypes,varelemtypes,types,
                          entities);
       Vector whileBody = new Vector(); 
@@ -8572,7 +8584,7 @@ public class ASTCompositeTerm extends ASTTerm
     { // for (init; test; incr) code
 
       ASTTerm loopInit = (ASTTerm) terms.get(2); 
-      Vector linit = loopInit.jsupdateForm(
+      Vector linit = loopInit.jscompleteUpdateForm(
                          vartypes,varelemtypes,types,
                          entities);
       ASTTerm loopTest = (ASTTerm) terms.get(4); 
@@ -8580,7 +8592,7 @@ public class ASTCompositeTerm extends ASTTerm
                          vartypes,varelemtypes,types,
                          entities);
       ASTTerm loopIncr = (ASTTerm) terms.get(6); 
-      Vector lincr = loopIncr.jsupdateForm(
+      Vector lincr = loopIncr.jscompleteUpdateForm(
                          vartypes,varelemtypes,types,
                          entities);
       ASTTerm loopBody = (ASTTerm) terms.get(8); 
@@ -8619,7 +8631,7 @@ public class ASTCompositeTerm extends ASTTerm
     { // for (init; test; ) code
 
       ASTTerm loopInit = (ASTTerm) terms.get(2); 
-      Vector linit = loopInit.jsupdateForm(
+      Vector linit = loopInit.jscompleteUpdateForm(
                          vartypes,varelemtypes,types,
                          entities);
       ASTTerm loopTest = (ASTTerm) terms.get(4); 
@@ -8659,13 +8671,13 @@ public class ASTCompositeTerm extends ASTTerm
     { // for (init; ; incr) code
 
       ASTTerm loopInit = (ASTTerm) terms.get(2); 
-      Vector linit = loopInit.jsupdateForm(
+      Vector linit = loopInit.jscompleteUpdateForm(
                          vartypes,varelemtypes,types,
                          entities);
       
       Expression ltest = new BasicExpression(true);
       ASTTerm loopIncr = (ASTTerm) terms.get(5); 
-      Vector lincr = loopIncr.jsupdateForm(
+      Vector lincr = loopIncr.jscompleteUpdateForm(
                          vartypes,varelemtypes,types,
                          entities);
       ASTTerm loopBody = (ASTTerm) terms.get(7); 
@@ -8696,7 +8708,7 @@ public class ASTCompositeTerm extends ASTTerm
     { // for (init ; ; ) code
 
       ASTTerm loopInit = (ASTTerm) terms.get(2); 
-      Vector linit = loopInit.jsupdateForm(
+      Vector linit = loopInit.jscompleteUpdateForm(
                          vartypes,varelemtypes,types,
                          entities);
       Expression ltest = new BasicExpression(true); 
@@ -8728,7 +8740,7 @@ public class ASTCompositeTerm extends ASTTerm
                          vartypes,varelemtypes,types,
                          entities);
       ASTTerm loopIncr = (ASTTerm) terms.get(5); 
-      Vector lincr = loopIncr.jsupdateForm(
+      Vector lincr = loopIncr.jscompleteUpdateForm(
                          vartypes,varelemtypes,types,
                          entities);
       ASTTerm loopBody = (ASTTerm) terms.get(7); 
@@ -8801,7 +8813,7 @@ public class ASTCompositeTerm extends ASTTerm
 
       Expression ltest = new BasicExpression(true); 
       ASTTerm loopIncr = (ASTTerm) terms.get(4); 
-      Vector lincr = loopIncr.jsupdateForm(
+      Vector lincr = loopIncr.jscompleteUpdateForm(
                          vartypes,varelemtypes,types,
                          entities);
       ASTTerm loopBody = (ASTTerm) terms.get(6); 
@@ -9305,7 +9317,8 @@ public class ASTCompositeTerm extends ASTTerm
       res.add(cs); 
       res.add(asgn); 
       vartypes.put(var, tt); 
-      varelemtypes.put(var, expr.getElementType());
+      if (expr != null)
+      { varelemtypes.put(var, expr.getElementType()); } 
       ASTTerm.setType(lhs, tt.getName()); 
       return res; 
     } 
@@ -11637,6 +11650,75 @@ public class ASTCompositeTerm extends ASTTerm
       return res; 
     } 
 
+    if ("match".equals(feature) && 
+        obj.isString() && pars.size() == 1) 
+    { Expression par1 = (Expression) pars.get(0); 
+      Expression res = 
+         new BinaryExpression("->firstMatch", obj, par1); 
+      res.setType(new Type("String", null));
+      res.setElementType(new Type("String", null));
+      return res; 
+    } // But could be allMatches if par1 ends with "g"
+
+    if ("matchAll".equals(feature) && 
+        obj.isString() && pars.size() == 1) 
+    { Expression par1 = (Expression) pars.get(0); 
+      Expression res = 
+         new BinaryExpression("->allMatches", obj, par1); 
+      res.setType(new Type("Sequence", null));
+      res.setElementType(new Type("String", null));
+      return res; 
+    } 
+
+    if ("search".equals(feature) && 
+        obj.isString() && pars.size() == 1) 
+    { Expression par1 = (Expression) pars.get(0); 
+      Expression res1 = 
+         new BinaryExpression("->firstMatch", obj, par1); 
+      Expression indexExpr = 
+         new BinaryExpression("->indexOf", obj, res1); 
+      indexExpr = 
+         new BinaryExpression("-", indexExpr, unitExpression); 
+      Expression res = 
+        new ConditionalExpression(
+              new UnaryExpression("->oclIsUndefined", res1), 
+              minusOneExpr, indexExpr); 
+      res.setType(new Type("int", null));
+      res.setElementType(new Type("int", null));
+      return res; 
+    } 
+
+
+    if ("replace".equals(feature) && 
+        obj.isString() && pars.size() == 2) 
+    { Expression res = 
+        BasicExpression.newFunctionBasicExpression(
+           "replace", obj, pars);  
+      res.setType(new Type("String", null));
+      res.setElementType(new Type("String", null));
+      return res; 
+    } 
+
+    if ("replaceAll".equals(feature) && 
+        obj.isString() && pars.size() == 2) 
+    { Expression res = 
+        BasicExpression.newFunctionBasicExpression(
+           "replaceAllMatches", obj, pars);  
+      res.setType(new Type("String", null));
+      res.setElementType(new Type("String", null));
+      return res; 
+    } 
+
+    if ("split".equals(feature) && 
+        obj.isString() && pars.size() == 1) 
+    { Expression par1 = (Expression) pars.get(0); 
+      Expression res = 
+        new BinaryExpression("->split", obj, par1); 
+      res.setType(new Type("Sequence", null));
+      res.setElementType(new Type("String", null));
+      return res; 
+    } 
+
     if ("hasOwnProperty".equals(feature) && 
         pars.size() > 0)
     { Expression par1 = (Expression) pars.get(0); 
@@ -12556,6 +12638,29 @@ public class ASTCompositeTerm extends ASTTerm
       return res; 
     } 
 
+    if ("literal".equals(tag) && terms.size() > 1 &&  
+        "/".equals(firstTerm + ""))
+    { String text = "";
+      for (int k = 1; k < terms.size(); k++) 
+      { ASTTerm tk = (ASTTerm) terms.get(k);
+        String tkstring = tk + ""; 
+        if ("/".equals(tkstring)) 
+        { break; }  
+        if (tkstring.endsWith("/"))
+        { text = 
+            text + tkstring.substring(0,tkstring.length()-1); 
+          break; 
+        }  
+        text = text + tk.literalForm(); 
+      } 
+
+      Expression textexpr = 
+            BasicExpression.newValueBasicExpression(
+                                    "\"" + text + "\""); 
+      textexpr.setType(new Type("String", null)); 
+      textexpr.setElementType(new Type("String", null));
+      return textexpr; 
+    } 
   
     if ("singleExpression".equals(tag))
     { if (terms.size() == 3 && "(".equals(firstTerm + "") &&

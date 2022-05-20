@@ -200,6 +200,9 @@ public class ASTSymbolTerm extends ASTTerm
     return res; 
   } 
 
+  public Vector jscompleteUpdateForm(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector ents)
+  { return new Vector(); } 
 
   public Vector jsupdateForm(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector ents)

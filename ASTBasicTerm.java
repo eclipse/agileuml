@@ -586,6 +586,10 @@ public class ASTBasicTerm extends ASTTerm
     java.util.Map varelemtypes, Vector types, Vector ents)
   { return new Vector(); } 
 
+  public Vector jscompleteUpdateForm(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector ents)
+  { return new Vector(); } 
+
   public Vector jspreSideEffect(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector ents)
   { return new Vector(); } 
@@ -643,7 +647,8 @@ public class ASTBasicTerm extends ASTTerm
              "propertyName".equals(tag)) 
     { int sze = value.length(); 
 
-      if (sze > 1 && '/' == value.charAt(0) && '/' == value.charAt(sze))
+      if (sze > 1 && '/' == value.charAt(0) && 
+          '/' == value.charAt(sze-1))
       { BasicExpression regexpr = 
           new BasicExpression("\"" + 
             value.substring(1,value.length()-1) + "\""); 
@@ -653,10 +658,24 @@ public class ASTBasicTerm extends ASTTerm
         return regexpr; 
       } 
 
+      if (sze > 1 && '/' == value.charAt(0) && 
+          value.lastIndexOf("/") > 0)
+      { int indx = value.lastIndexOf("/"); 
+        BasicExpression regexpr = 
+          new BasicExpression("\"" + 
+            value.substring(1,indx) + "\""); 
+        regexpr.setType(new Type("String",null)); 
+        regexpr.setElementType(new Type("String",null)); 
+        regexpr.setUmlKind(Expression.VALUE);
+        return regexpr; 
+      }  
+
       BasicExpression v = new BasicExpression(value); 
       if (Expression.isString(value))
       { if ('\'' == value.charAt(0))
-        { BasicExpression ve = new BasicExpression("\"" + value.substring(1,value.length()-1) + "\""); 
+        { BasicExpression ve = 
+            new BasicExpression("\"" + 
+                  value.substring(1,value.length()-1) + "\""); 
           ve.setType(new Type("String",null)); 
           ve.setElementType(new Type("String",null)); 
           ve.setUmlKind(Expression.VALUE);

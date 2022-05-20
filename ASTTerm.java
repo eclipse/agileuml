@@ -424,6 +424,9 @@ public abstract class ASTTerm
   public abstract Vector jsupdateForm(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector ents); 
 
+  public abstract Vector jscompleteUpdateForm(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector ents); 
+
   public abstract Vector jspreSideEffect(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector ents);
 

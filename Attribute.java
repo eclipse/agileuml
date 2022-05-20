@@ -1788,7 +1788,9 @@ public class Attribute extends ModelElement
     { entnme = Identifier.nextIdentifier("attribute_"); } 
 
     String cname = nme + "_" + entnme; 
-    String tname = type.getUMLModelName(out); 
+    String tname = "OclAny"; 
+    if (type != null) 
+    { tname = type.getUMLModelName(out); } 
 
     out.println(cname + " : Property"); 
     out.println(cname + ".name = \"" + nme + "\""); 
@@ -1800,8 +1802,11 @@ public class Attribute extends ModelElement
     { String etname = elementType.getUMLModelName(out); 
       out.println(cname + ".elementType = " + etname); 
     } 
-    else 
+    else if (Type.isBasicType(type))
     { out.println(cname + ".elementType = " + tname); }
+    else 
+    { out.println(cname + ".elementType = OclAny"); }
+
 
     if (isMultiple())
     { out.println(cname + ".lower = 0"); 
