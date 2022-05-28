@@ -2532,9 +2532,13 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
           ")".equals(lexicals.get(pend) + ""))
       { String ss2 = lexicals.get(i+1).toString(); // must exist
         if (i + 3 == pend &&
-            ("any".equals(ss2) || "size".equals(ss2) || "isDeleted".equals(ss2) ||
-             "display".equals(ss2) || "min".equals(ss2) || "max".equals(ss2) ||
-             "sum".equals(ss2) || "sort".equals(ss2) || "asSet".equals(ss2) || "asOrderedSet".equals(ss2) || 
+            ("any".equals(ss2) || "size".equals(ss2) || 
+             "isDeleted".equals(ss2) ||
+             "display".equals(ss2) || 
+             "min".equals(ss2) || "max".equals(ss2) ||
+             "sum".equals(ss2) || "sort".equals(ss2) || 
+             "asSet".equals(ss2) || "asBag".equals(ss2) ||
+             "asOrderedSet".equals(ss2) || 
              "sqrt".equals(ss2) || "sqr".equals(ss2) || 
              "asSequence".equals(ss2) ||
              "asArray".equals(ss2) ||
@@ -2570,11 +2574,13 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
              "unionAll".equals(ss2) || 
              "intersectAll".equals(ss2) || 
              "concatenateAll".equals(ss2) ||
-             "floor".equals(ss2) || "ceil".equals(ss2) || "round".equals(ss2) ||
+             "floor".equals(ss2) || "ceil".equals(ss2) || 
+             "round".equals(ss2) ||
              "abs".equals(ss2) || "cbrt".equals(ss2) || 
              "asin".equals(ss2) ||
              "acos".equals(ss2) || "atan".equals(ss2) || 
-             "sinh".equals(ss2) || "cosh".equals(ss2) || "tanh".equals(ss2) ||
+             "sinh".equals(ss2) || "cosh".equals(ss2) || 
+             "tanh".equals(ss2) ||
              "values".equals(ss2) || "keys".equals(ss2) ||
              extensionOperators.contains(ss2) ) )
         { Expression ee2 = parse_factor_expression(bc,pstart,i-1,entities,types); 
@@ -2712,6 +2718,41 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
           BinaryExpression be = 
             new BinaryExpression("|A",new BinaryExpression(":",bevar,ee2),ee1); 
           // System.out.println("Parsed: " + be); 
+          return be; 
+        } 
+        else if ("iterate".equals(ss2) && 
+                 i+7 < pend && 
+                 ";".equals(lexicals.get(i+4) + "") &&                               
+                 "=".equals(lexicals.get(i+6) + "") &&                               
+                 ")".equals(lexicals.get(pend) + ""))
+        { // It is ->iterate(v; acc = value | rght )
+          Expression ee1 = null; 
+          Expression ee3 = null; 
+          Expression ee2 = parse_factor_expression(bc,pstart,i-1,entities,types); 
+          if (ee2 == null) { continue; } 
+
+          boolean foundpipe = false; 
+          for (int t = i+7; t < pend && !foundpipe; t++) 
+          { String tlex = lexicals.get(t) + ""; 
+            if ("|".equals(tlex))
+            { ee1 = parse_expression(bc+1,t+1,pend-1,entities,types);
+              ee3 = parse_expression(bc+1,i+7,t-1,entities,types); 
+              if (ee1 != null && ee3 != null) 
+              { foundpipe = true; } 
+            } 
+          } 
+
+          if (ee1 == null || ee3 == null) { continue; } 
+
+          BinaryExpression be = 
+            new BinaryExpression("->iterate",ee2,ee1); 
+          be.setIteratorVariable(lexicals.get(i+3) + "");
+          Attribute acc = 
+            new Attribute(lexicals.get(i+5) + "",
+                          new Type("OclAny", null), 
+                          ModelElement.INTERNAL); 
+          acc.setInitialExpression(ee3); 
+          be.setAccumulator(acc);                
           return be; 
         } 
         else if (pend == i+3) // && "(".equals(lexicals.get(i+2) + "") &&
@@ -4864,168 +4905,6 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
     } 
 
-    if (st.length() > 2)
-    { if ("stereotype".startsWith(st)) 
-      { mess[0] = "usecase stereotype, eg: stereotype private;";  
-        return "stereotype"; 
-      } 
- 
-      if ("static".startsWith(st)) 
-      { mess[0] = "static attribute or operation, ie., of class scope. Eg:\n" + "static attribute nobjs : int;\n" + 
-              "static query pi() : double\npre: true post: result = 3.14159265\n"; 
-        return "static"; 
-      } 
-
-      if ("implements".startsWith(st))
-      { mess[0] = "implements a list of interfaces, eg.,\n" + 
-                  "class A implements IA, IB { ... }"; 
-        return "implements"; 
-      } 
-
-
-      if ("String".startsWith(st)) 
-      { mess[0] = "String type String. Empty string is \"\"\n" + 
-          "Operators include:  s->size()  s1 + s2  s1->indexOf(s2)  s->at(index)\n" + 
-          "s->display()  s->tail()  s->first()\n" + 
-          "s.subrange(i,j)  s.subrange(i)  s.setAt(i,ch)\n" + 
-          "s->isMatch(pattern)  s->allMatches(patt)  s->trim()\n"; 
-        return "String"; 
-      }
- 
-      if ("int".startsWith(st)) 
-      { mess[0] = "32-bit integer type int,\n" + 
-          "ranges from -(2->pow(31)) to 2->pow(31)-1\n" + 
-          "Operators include: x mod y  x div y\n" + 
-          "and usual arithmetic operators * / - + < <= > >= = /= etc"; 
-        return "int"; 
-      } 
-
-      if ("Ref(".startsWith(st)) 
-      { mess[0] = "Reference/pointer type Ref(T)\n" + 
-          "The operator !x is used to dereference x : Ref(T)\n" + 
-          "and !x has type T.\n"; 
-        return "Ref"; 
-      } 
-
-      if ("includes".startsWith(st)) 
-      { mess[0] = "usecase included in another, eg: includes subroutine;"; 
-        return "includes"; 
-      } 
-
-    } 
-
-    if ("true".startsWith(st)) 
-    { mess[0] = "true value of boolean type"; 
-      return "true"; 
-    }
-
-    if ("try".startsWith(st)) 
-    { mess[0] = "try statement, eg: try x := y/z catch (e : ArithmeticException) do return null\nExecution with exception handling\nCan only be used in an activity"; 
-      return "try";
-    }
- 
-    if ("false".startsWith(st)) 
-    { mess[0] = "false value of boolean type"; 
-      return "false"; 
-    }
- 
-    if ("null".startsWith(st)) 
-    { mess[0] = "null object/value"; 
-      return "null"; 
-    } 
-
-    if ("self".startsWith(st)) 
-    { mess[0] = "self object"; 
-      return "self"; 
-    } 
-
-    if (st.length() > 2)
-    { if ("double".startsWith(st)) 
-      { mess[0] = "Real-values type, from -1.7976931348623157*(10->pow(308)) to 1.7976931348623157*(10->pow(308))\n" + 
-          "Operators include: d->sqrt()  d1->pow(d2)  d->exp()  d->log()\n" + 
-          "and usual arithmetic operators * / - + < <= > >= = /= etc"; 
-        return "double"; 
-      } 
-
-      if ("void".startsWith(st)) 
-      { mess[0] = "void type, used as operation/usecase return type to indicate there is no return value"; 
-        return "void"; 
-      } 
-
-      if ("Sequence".startsWith(st)) 
-      { mess[0] = "Sequence type, eg., Sequence(String), Sequence(boolean),\n" + 
-          "Sequence(double) or Sequence(C) for class C.\n" + 
-          "But Sequence(OclAny) is bad practice & non-portable.\n" + 
-          "Operators include:  sq->size()  sq->at(index)  sq1->union(sq2)\n" + 
-           "sq->select(x|P)  sq->collect(x|P)  sq->forAll(x|P)\n"; 
-        return "Sequence(Type)"; 
-      }
- 
-      if ("Set".startsWith(st)) 
-      { mess[0] = "Set type, eg., Set(String), Set(boolean), \n" + 
-          "Set(double) or Set(C) for class C.\n" + 
-          "But Set(OclAny) is bad practice & non-portable.\n" + 
-          "Operators include:  st->size()  st->includes(elem)  st1->union(st2)\n" + 
-           "st->select(x|P)  st->collect(x|P)  st->forAll(x|P)\n"; 
-        return "Set(Type)"; 
-      }
- 
-      if ("Map".startsWith(st)) 
-      { mess[0] = "Map type, eg., Map(String,int)\nOperators include:  m->size()  m->at(key)  m1->union(m2)\n" + 
-           "m->select(x|P)  m->keys()  m->values()\n"; 
-        return "Map(String,Type)"; 
-      } 
-
-      if ("Function".startsWith(st)) 
-      { mess[0] = "Function type, eg., Function(String,int)\n Operators include:  lambda x : S in T\n f->apply(x)\n"; 
-        return "Function(String,Type)"; 
-      } 
-
-      if ("enumeration".startsWith(st)) 
-      { mess[0] = "Enumeration, eg., enumeration { literal red literal blue literal green }"; 
-        return "enumeration"; 
-      } 
-
-      if ("datatype".startsWith(st)) 
-      { mess[0] = "New basic type, eg., datatype DateTime;\n" + 
-                  "or alias type, eg.:  datatype Float = double;\n"; 
-        return "datatype"; 
-      } 
-
-      if ("endif".startsWith(st)) 
-      { mess[0] = "endif ends conditional expression  if e then e1 else e2 endif"; 
-        return "endif"; 
-      } 
-
-      if ("OclType".startsWith(st) || "OclAny".startsWith(st) ||
-          "OclProcess".startsWith(st) || 
-          "OclRandom".startsWith(st) || 
-          "OclFile".startsWith(st) || 
-          "OclException".startsWith(st) ||
-          "OclIterator".startsWith(st))
-      { mess[0] = "OclAny -- universal type.\n" + 
-                  "OclType -- type of types. Requires ocltype.km3 library\n" + 
-                  "OclProcess -- type of processes. Requires oclprocess.km3 library\n" + 
-                  "OclRandom -- random number generator. Needs oclrandom.km3\n" + 
-                  "OclFile -- type of files. Needs oclfile.km3\n" + 
-                  "OclIterator -- type of iterators. Needs ocliterator.km3\n" + 
-                  "OclException -- type of exceptions. Needs oclexception.km3\n"; 
-        return "Ocl library type"; 
-      } 
-    } 
-
-    if (st.length() > 6)
-    { if ("extends".startsWith(st))
-      { mess[0] = "Class inheritance, eg., class User extends Person {"; 
-        return "extends"; 
-      }
- 
-      if ("extendedBy".startsWith(st))
-      { mess[0] = "Use case extension, eg., extendedBy errorCase;"; 
-        return "extendedBy"; 
-      }
-    } 
-
     if (st.length() > 4)
     { 
       if ("->front".startsWith(st))
@@ -5164,7 +5043,186 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       { mess[0] = "Function application on functions f : Function(S,T)"; 
         return "f->apply(x)"; 
       } 
+
+      if ("->asBag".startsWith(st))
+      { mess[0] = "Converts collection to Bag (a sorted sequence)"; 
+        return "x->asBag()"; 
+      }
+
+      if ("->asOrderedSet".startsWith(st))
+      { mess[0] = "Converts collection to OrderedSet (a sequence without duplicate elements)"; 
+        return "x->asOrderedSet()"; 
+      }
+
+      if ("->iterate".startsWith(st))
+      { mess[0] = "Iterate over col, combining elements: acc = arg(x,acc) at each step\n" + 
+           "This is only supported for Python and Java8"; 
+        return "col->iterate(x; acc = init | arg)"; 
+      }
     } 
+
+    if (st.length() > 2)
+    { if ("stereotype".startsWith(st)) 
+      { mess[0] = "usecase stereotype, eg: stereotype private;";  
+        return "stereotype"; 
+      } 
+ 
+      if ("static".startsWith(st)) 
+      { mess[0] = "static attribute or operation, ie., of class scope. Eg:\n" + "static attribute nobjs : int;\n" + 
+              "static query pi() : double\npre: true post: result = 3.14159265\n"; 
+        return "static"; 
+      } 
+
+      if ("implements".startsWith(st))
+      { mess[0] = "implements a list of interfaces, eg.,\n" + 
+                  "class A implements IA, IB { ... }"; 
+        return "implements"; 
+      } 
+
+
+      if ("String".startsWith(st)) 
+      { mess[0] = "String type String. Empty string is \"\"\n" + 
+          "Operators include:  s->size()  s1 + s2  s1->indexOf(s2)  s->at(index)\n" + 
+          "s->display()  s->tail()  s->first()\n" + 
+          "s.subrange(i,j)  s.subrange(i)  s.setAt(i,ch)\n" + 
+          "s->isMatch(pattern)  s->allMatches(patt)  s->trim()\n"; 
+        return "String"; 
+      }
+ 
+      if ("int".startsWith(st)) 
+      { mess[0] = "32-bit integer type int,\n" + 
+          "ranges from -(2->pow(31)) to 2->pow(31)-1\n" + 
+          "Operators include: x mod y  x div y\n" + 
+          "and usual arithmetic operators * / - + < <= > >= = /= etc"; 
+        return "int"; 
+      } 
+
+      if ("Ref(".startsWith(st)) 
+      { mess[0] = "Reference/pointer type Ref(T)\n" + 
+          "The operator !x is used to dereference x : Ref(T)\n" + 
+          "and !x has type T.\n"; 
+        return "Ref"; 
+      } 
+
+      if ("includes".startsWith(st)) 
+      { mess[0] = "usecase included in another, eg: includes subroutine;"; 
+        return "includes"; 
+      } 
+
+    } 
+
+    if ("true".startsWith(st)) 
+    { mess[0] = "true value of boolean type"; 
+      return "true"; 
+    }
+
+    if ("try".startsWith(st)) 
+    { mess[0] = "try statement, eg: try x := y/z catch (e : ArithmeticException) do return null\nExecution with exception handling\nCan only be used in an activity"; 
+      return "try";
+    }
+ 
+    if ("false".startsWith(st)) 
+    { mess[0] = "false value of boolean type"; 
+      return "false"; 
+    }
+ 
+    if ("null".startsWith(st)) 
+    { mess[0] = "null object/value"; 
+      return "null"; 
+    } 
+
+    if ("self".startsWith(st)) 
+    { mess[0] = "self object"; 
+      return "self"; 
+    } 
+
+    if (st.length() > 2)
+    { if ("double".startsWith(st)) 
+      { mess[0] = "Real-values type, from -1.7976931348623157*(10->pow(308)) to 1.7976931348623157*(10->pow(308))\n" + 
+          "Operators include: d->sqrt()  d1->pow(d2)  d->exp()  d->log()\n" + 
+          "and usual arithmetic operators * / - + < <= > >= = /= etc"; 
+        return "double"; 
+      } 
+
+      if ("void".startsWith(st)) 
+      { mess[0] = "void type, used as operation/usecase return type to indicate there is no return value"; 
+        return "void"; 
+      } 
+
+      if ("Sequence".startsWith(st)) 
+      { mess[0] = "Sequence type, eg., Sequence(String), Sequence(boolean),\n" + 
+          "Sequence(double) or Sequence(C) for class C.\n" + 
+          "But Sequence(OclAny) is bad practice & non-portable.\n" + 
+          "Operators include:  sq->size()  sq->at(index)  sq1->union(sq2)  sq->append(x)\n" + 
+           "sq->select(x|P)  sq->collect(x|P)  sq->forAll(x|P)\n"; 
+        return "Sequence(Type)"; 
+      }
+ 
+      if ("Set".startsWith(st)) 
+      { mess[0] = "Set type, eg., Set(String), Set(boolean), \n" + 
+          "Set(double) or Set(C) for class C.\n" + 
+          "But Set(OclAny) is bad practice & non-portable.\n" + 
+          "Operators include:  st->size()  st->includes(elem)  st1->union(st2)\n" + 
+           "st->select(x|P)  st->collect(x|P)  st->forAll(x|P)\n"; 
+        return "Set(Type)"; 
+      }
+ 
+      if ("Map".startsWith(st)) 
+      { mess[0] = "Map type, eg., Map(String,int)\nOperators include:  m->size()  m->at(key)  m1->union(m2)\n" + 
+           "m->select(x|P)  m->keys()  m->values()\n"; 
+        return "Map(String,Type)"; 
+      } 
+
+      if ("Function".startsWith(st)) 
+      { mess[0] = "Function type, eg., Function(String,int)\n Operators include:  lambda x : S in T\n f->apply(x)\n"; 
+        return "Function(String,Type)"; 
+      } 
+
+      if ("enumeration".startsWith(st)) 
+      { mess[0] = "Enumeration, eg., enumeration { literal red literal blue literal green }"; 
+        return "enumeration"; 
+      } 
+
+      if ("datatype".startsWith(st)) 
+      { mess[0] = "New basic type, eg., datatype DateTime;\n" + 
+                  "or alias type, eg.:  datatype Float = double;\n"; 
+        return "datatype"; 
+      } 
+
+      if ("endif".startsWith(st)) 
+      { mess[0] = "endif ends conditional expression  if e then e1 else e2 endif"; 
+        return "endif"; 
+      } 
+
+      if ("OclType".startsWith(st) || "OclAny".startsWith(st) ||
+          "OclProcess".startsWith(st) || 
+          "OclRandom".startsWith(st) || 
+          "OclFile".startsWith(st) || 
+          "OclException".startsWith(st) ||
+          "OclIterator".startsWith(st))
+      { mess[0] = "OclAny -- universal type.\n" + 
+                  "OclType -- type of types. Requires ocltype.km3 library\n" + 
+                  "OclProcess -- type of processes. Requires oclprocess.km3 library\n" + 
+                  "OclRandom -- random number generator. Needs oclrandom.km3\n" + 
+                  "OclFile -- type of files. Needs oclfile.km3\n" + 
+                  "OclIterator -- type of iterators. Needs ocliterator.km3\n" + 
+                  "OclException -- type of exceptions. Needs oclexception.km3\n"; 
+        return "Ocl library type"; 
+      } 
+    } 
+
+    if (st.length() > 6)
+    { if ("extends".startsWith(st))
+      { mess[0] = "Class inheritance, eg., class User extends Person {"; 
+        return "extends"; 
+      }
+ 
+      if ("extendedBy".startsWith(st))
+      { mess[0] = "Use case extension, eg., extendedBy errorCase;"; 
+        return "extendedBy"; 
+      }
+    } 
+
 
 
     if ("long".startsWith(st)) 
@@ -9196,9 +9254,15 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
   { // System.out.println(Double.MAX_VALUE); 
     Compiler2 c = new Compiler2();
 
-    ASTTerm tt = c.parseSimpleAST("(lineStringLiteral \" (lineStringContent text) \")"); 
+    c.nospacelexicalanalysis("sq->iterate(v; acc = 0 | v + acc)"); 
 
-    System.out.println(tt); 
+    Expression xx = c.parseExpression(); 
+
+    System.out.println(xx); 
+
+    // ASTTerm tt = c.parseSimpleAST("(lineStringLiteral \" (lineStringContent text) \")"); 
+
+    // System.out.println(tt); 
 
     // CGRule rr = c.parse_TextCodegenerationrule("_1 = _2 |-->var _1 : _2`type<action> _1 _2`type"); 
     // System.out.println(rr); 

@@ -3112,6 +3112,7 @@ class BasicExpression extends Expression
       return true;
     }
 
+    // Expression.isSetValue(data)
     if (isSet(data))  // convert it to a SetExpression
     { type = new Type("Set",null);  // or Sequence if ordered
       entity = null;
@@ -3124,6 +3125,7 @@ class BasicExpression extends Expression
       return true;
     }  // could have an array index. Also deduce elementType
 
+    // Expression.isSequenceValue(data)
     if (isSequence(data))  // convert it to a SetExpression
     { type = new Type("Sequence",null);  // or Sequence if ordered
       entity = null;
@@ -3143,6 +3145,7 @@ class BasicExpression extends Expression
       return true;
     }  // and deduce elementType
 
+    // Expression.isMapValue(data)
     if (isMap(data))  // convert it to a SetExpression
     { type = new Type("Map",null);  // or Sequence if ordered
       entity = null;

@@ -1500,7 +1500,7 @@ public class CGRule
 
   public static String correctNewlines(String str) 
   { String res = ""; 
-    if (str.length() == 0) 
+    if (str == null || str.length() == 0) 
     { return res; } 
 
     boolean instring = false; 

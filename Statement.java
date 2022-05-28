@@ -12,8 +12,7 @@ import javax.swing.JOptionPane;
 * *****************************/
 /* package: Activity */ 
 
-abstract class Statement 
-implements Cloneable
+abstract class Statement implements Cloneable
 { private int indent = 0; 
   protected Entity entity = null;  // owner of the statement/its method
 
@@ -2236,6 +2235,11 @@ class WhileStatement extends Statement
   private Expression loopVar; // for (loopVar : loopRange) do ...
   private Expression loopRange; 
 
+  public WhileStatement()
+  { loopTest = new BasicExpression(true); 
+    body = new InvocationStatement("skip");
+  } 
+
   public WhileStatement(Expression e, Statement b)
   { loopTest = e; 
     if (b == null) 
@@ -2328,6 +2332,12 @@ class WhileStatement extends Statement
     { return "while"; }
     return "for"; 
   } 
+
+  public void setTest(Expression tst)
+  { loopTest = tst; } 
+
+  public void setBody(Statement stat)
+  { body = stat; } 
  
 
   public void setLoopKind(int lk)
@@ -4457,6 +4467,12 @@ class SequenceStatement extends Statement
 
   public int size()
   { return statements.size(); } 
+
+  public boolean isEmpty()
+  { return statements.size() == 0; } 
+
+  public boolean notEmpty()
+  { return statements.size() > 0; } 
 
   public String cg(CGSpec cgs)
   { String etext = this + "";

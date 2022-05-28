@@ -1320,7 +1320,10 @@ public class ASTBasicTerm extends ASTTerm
     
     if (tag.equals("integerLiteral"))
     { System.out.println(">>> Type of " + value + " is integer"); 
-      if (value.endsWith("L"))
+
+      value = Expression.removeUnderscores(value); 
+
+      if (value.endsWith("L") || value.endsWith("l"))
       { ASTTerm.setType(value,"long");
         ASTTerm.setType(this,"long");
  
@@ -1335,17 +1338,32 @@ public class ASTBasicTerm extends ASTTerm
     }
     else if (tag.equals("floatLiteral"))
     { System.out.println(">>> Type of " + value + " is double"); 
+
+      value = Expression.removeUnderscores(value); 
+
       expression.setType(new Type("double", null)); 
       ASTTerm.setType(this,"double");
       ASTTerm.setType(value,"double");
  
-      if (value.endsWith("F"))
-      { String baseValue = 
-                     value.substring(0,value.length()-1); 
-        expression = 
-          BasicExpression.newValueBasicExpression(
+      String baseValue = value; 
+      
+      if (value.endsWith("F") || value.endsWith("f"))
+      { baseValue = 
+           value.substring(0,value.length()-1);
+      } 
+        
+      try {
+          double nn = Double.parseDouble(baseValue); 
+          long nnlong = Double.doubleToLongBits(nn); 
+          double dx = Double.longBitsToDouble(nnlong); 
+          expression = new BasicExpression(dx); 
+          return "" + dx; 
+      }
+      catch (Exception _ex)
+      { expression = 
+            BasicExpression.newValueBasicExpression(
                                          baseValue,typ);
-        return baseValue;  
+        return baseValue;
       } 
     }
     else if (tag.equals("literal") && value.endsWith("\"") && 
@@ -1375,6 +1393,9 @@ public class ASTBasicTerm extends ASTTerm
   
     return value; 
   } 
+
+  public String typeArgumentsToKM3()
+  { return value; } 
 
   public boolean isCharacter()
   { if (value.length() > 2 && 

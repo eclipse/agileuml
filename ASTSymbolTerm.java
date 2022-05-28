@@ -362,6 +362,9 @@ public class ASTSymbolTerm extends ASTTerm
     return symbol; 
   } 
 
+  public String typeArgumentsToKM3()
+  { return symbol; } 
+
   public boolean isIdentifier()
   { return false; }
 

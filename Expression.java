@@ -1370,9 +1370,27 @@ abstract class Expression
     }  
   } 
 
+  public static String removeUnderscores(String ss)
+  { String res = ""; 
+    for (int i = 0; i < ss.length(); i++) 
+    { if ('_' == ss.charAt(i)) { } 
+      else 
+      { res = res + ss.charAt(i); } 
+    } 
+    return res; 
+  } 
+
   public static boolean isInteger(Object ob) 
-  { try
-    { Integer intx = Integer.decode("" + ob); 
+  { if (ob == null) 
+    { return false; } 
+
+    if ((ob + "").startsWith("_"))
+    { return false; } 
+
+    String cleanValue = removeUnderscores(ob + ""); 
+
+    try
+    { Integer intx = Integer.decode(cleanValue); 
       if (intx == null) 
       { return false; } 
       int nn = intx.intValue(); 
@@ -1383,17 +1401,26 @@ abstract class Expression
   } 
 
   public static boolean isLong(Object ob) 
-  { try
-    { Long longx = Long.decode("" + ob); 
+  { if (ob == null) 
+    { return false; } 
+
+    if ((ob + "").startsWith("_"))
+    { return false; } 
+
+    String cleanValue = removeUnderscores(ob + ""); 
+
+    try
+    { Long longx = Long.decode(cleanValue); 
       if (longx == null) 
       { return false; } 
       long nn = longx.longValue(); 
       return true; 
     } 
     catch (Exception e) 
-    { String slong = "" + ob; 
-      if (slong.endsWith("L"))
-      { String sfront = slong.substring(0,slong.length()-1);
+    { if (cleanValue.endsWith("L") || 
+          cleanValue.endsWith("l"))
+      { String sfront = 
+          cleanValue.substring(0,cleanValue.length()-1);
         // System.out.println(sfront);  
         try
         { Long lx = Long.decode(sfront); 
@@ -1407,16 +1434,24 @@ abstract class Expression
   } 
 
   public static long convertLong(Object ob) 
-  { try
-    { Long longx = Long.decode("" + ob); 
+  { if (ob == null) 
+    { return 0; } 
+
+    if ((ob + "").startsWith("_"))
+    { return 0; } 
+
+    String cleanValue = removeUnderscores(ob + ""); 
+
+    try
+    { Long longx = Long.decode(cleanValue); 
       if (longx == null) 
       { return 0; } 
       long nn = longx.longValue(); 
       return nn; 
     } 
     catch (Exception e) 
-    { String slong = "" + ob; 
-      if (slong.endsWith("L"))
+    { String slong = cleanValue; 
+      if (slong.endsWith("L") || slong.endsWith("l"))
       { String sfront = slong.substring(0,slong.length()-1);
         try
         { Long lx = Long.decode(sfront); 
@@ -1562,6 +1597,8 @@ abstract class Expression
     return false;
   }
 
+  // a more precise check, isSetValue, is needed. 
+
   public static boolean isSequence(String data)
   { int len = data.length();
     if (len > 9 && data.substring(0,9).equals("Sequence{") &&
@@ -1570,6 +1607,8 @@ abstract class Expression
     return false;
   }
 
+  // a more precise check, isSequenceValue, is needed. 
+
   public static boolean isMap(String data)
   { int len = data.length();
     if (data.startsWith("Map{") &&
@@ -1577,6 +1616,8 @@ abstract class Expression
     { return true; }
     return false;
   }
+
+  // a more precise check, isMapValue, is needed. 
 
   public boolean isCall(String data)
   { int n = data.length();

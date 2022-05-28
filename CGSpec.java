@@ -878,7 +878,7 @@ public class CGSpec
       args.add(beleft.getLeft()); 
       args.add(e.getRight()); 
     } 
-    if ("!".equals(op))
+    else if ("!".equals(op))
     { op = "->forAll";
       BinaryExpression beleft = (BinaryExpression) e.getLeft();  
       args.add(beleft.getRight()); 
@@ -906,7 +906,8 @@ public class CGSpec
       args.add(beleft.getLeft()); 
       args.add(e.getRight()); 
     } 
-    else if ("->collect".equals(op) || "->reject".equals(op) || "->any".equals(op) || 
+    else if ("->collect".equals(op) || 
+             "->reject".equals(op) || "->any".equals(op) || 
              "->select".equals(op) || "->exists".equals(op) || 
              "->exists1".equals(op) || "->forAll".equals(op) ||
              "->isUnique".equals(op) || "->sortedBy".equals(op))
@@ -917,6 +918,33 @@ public class CGSpec
       args.add(e.getRight()); 
 	  // add v as a reference to the right? 
     } // and for ->sortedBy, etc
+    else if ("->iterate".equals(op))
+    { args.add(e.getLeft());
+      System.out.println(">>>> Iterate expression: " + e); 
+	   
+      String iter = "self"; 
+      if (e.iteratorVariable != null) 
+      { iter = e.iteratorVariable; } 
+      BasicExpression iterVar = 
+         new BasicExpression(iter); 
+      iterVar.setType(e.getLeft().getElementType()); 
+      args.add(iterVar); 
+      
+      BasicExpression acc = new BasicExpression("_acc");
+ 
+      if (e.accumulator != null) 
+      { acc = new BasicExpression(e.accumulator); 
+        args.add(acc);
+        Expression initval = 
+          e.accumulator.getInitialExpression(); 
+        args.add(initval);
+      } 
+      else 
+      { args.add(acc); 
+        args.add(new BasicExpression(0)); 
+      } 
+      args.add(e.getRight());        
+    } 
     else if ("->oclAsType".equals(op) && e.getType() != null)
     { args.add(e.getLeft()); 
       args.add(e.getType()); 

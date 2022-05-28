@@ -216,7 +216,10 @@ public class UnaryExpression extends Expression
     res.multiplicity = multiplicity;
     res.formalParameter = formalParameter; 
     if (accumulator != null) 
-    { Attribute newacc = new Attribute(accumulator.getName(), accumulator.getType(), ModelElement.INTERNAL); 
+    { Attribute newacc = 
+         new Attribute(accumulator.getName(), 
+                 accumulator.getType(), 
+                 ModelElement.INTERNAL); 
       res.accumulator = newacc; 
     }
     return res;   
@@ -283,7 +286,8 @@ public class UnaryExpression extends Expression
 
   public Expression removePrestate()
   { UnaryExpression res = (UnaryExpression) clone(); 
-    res.argument = argument.removePrestate(); 
+    res.argument = argument.removePrestate();
+    // res.accumulator = accumulator;  
     return res; 
   } 
 
@@ -2219,10 +2223,13 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->asSequence")) 
     { return qf; }  // but maps cannot be converted 
 
-    if (operator.equals("->asSet") && type != null && type.isSet()) 
-    { return qf; }  // but maps cannot be converted 
+    if (operator.equals("->asSet")) 
+    { return "Set.asSet(" + qf + ")"; }
 
-    if (operator.equals("->asBag") && type != null && type.isSet()) 
+    if (operator.equals("->asOrderedSet")) 
+    { return "Set.asOrderedSet(" + qf + ")"; }
+
+    if (operator.equals("->asBag")) 
     { return "Set.sort(" + qf + ")"; }  
 
     if ("->copy".equals(operator))
@@ -2581,8 +2588,6 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return "(" + wqf + ").getClass()"; 
     }  
 
-    if (operator.equals("->asBag"))
-    { return "Set.sort(" + qf + ")"; } 
 
     if ("->copy".equals(operator))
     { if (type == null) 

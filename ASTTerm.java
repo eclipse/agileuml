@@ -38,6 +38,11 @@ public abstract class ASTTerm
      // String --> String for general type of identifiers
      // valid at the scope of the current term. 
 
+  static java.util.Map elementTypes = new java.util.HashMap(); 
+     // String --> String for general elementType 
+     // of identifiers
+     // valid at the scope of the current term. 
+
   static Vector cqueryfunctions = new Vector(); 
   static
   { cqueryfunctions.add("sin"); 
@@ -208,8 +213,16 @@ public abstract class ASTTerm
     types.put(f,val); 
   } 
 
+  public static void setElementType(ASTTerm t, String val) 
+  { String f = t.literalForm(); 
+    elementTypes.put(f,val); 
+  } 
+
   public static void setType(String f, String val) 
   { types.put(f,val); } 
+
+  public static void setElementType(String f, String val) 
+  { elementTypes.put(f,val); } 
 
   public static String getType(String f) 
   { String val = (String) types.get(f); 
@@ -233,6 +246,13 @@ public abstract class ASTTerm
     { Type typ = Type.getTypeFor(val, ASTTerm.enumtypes, ASTTerm.entities); 
       if (typ != null && typ.elementType != null) 
       { return typ.elementType + ""; } 
+    } 
+    val = (String) elementTypes.get(t.literalForm()); 
+    if (val != null) 
+    { Type etyp = 
+         Type.getTypeFor(val, ASTTerm.enumtypes, ASTTerm.entities); 
+      if (etyp != null) 
+      { return etyp + ""; } 
     } 
     return "OclAny";  
   }
@@ -442,6 +462,8 @@ public abstract class ASTTerm
 
   public abstract String toKM3(); 
 
+  public abstract String typeArgumentsToKM3();
+
   public boolean isAssignment() 
   { return false; } 
 
@@ -547,7 +569,14 @@ public abstract class ASTTerm
   } 
 
   public boolean isSet()
-  { String typ = ASTTerm.getType(literalForm()); 
+  { String litform = literalForm(); 
+
+    if (litform != null && 
+        litform.startsWith("Set{") && 
+        litform.endsWith("}"))
+    { return true; } 
+
+    String typ = ASTTerm.getType(litform); 
     if (typ == null) 
     { return false; } 
     if ("Set".equals(typ) || typ.startsWith("Set("))
@@ -556,7 +585,14 @@ public abstract class ASTTerm
   } 
 
   public boolean isSequence()
-  { String typ = ASTTerm.getType(literalForm()); 
+  { String litform = literalForm(); 
+
+    if (litform != null && 
+        litform.startsWith("Sequence{") && 
+        litform.endsWith("}"))
+    { return true; } 
+
+    String typ = ASTTerm.getType(litform); 
     if (typ == null) 
     { return false; } 
     if ("Sequence".equals(typ) || typ.startsWith("Sequence("))
@@ -565,11 +601,20 @@ public abstract class ASTTerm
   } 
 
   public boolean isMap()
-  { String typ = ASTTerm.getType(literalForm()); 
+  { String litform = literalForm(); 
+
+    if (litform != null && 
+        litform.startsWith("Map{") && 
+        litform.endsWith("}"))
+    { return true; } 
+
+    String typ = ASTTerm.getType(litform); 
     if (typ == null) 
     { return false; } 
     if ("Map".equals(typ) || typ.startsWith("Map("))
     { return true; } 
+    
+    
     return false; 
   } 
 

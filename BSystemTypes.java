@@ -4663,6 +4663,14 @@ public class BSystemTypes extends BComponent
       "    return res; \n" + 
       "  }\n\n"; 
 
+    res = res + 
+      "  public static object iterate(ArrayList col, object init, Func<object,Func<object,object>> f)\n" + 
+      "  { object res = init;\n" +  
+      "    for (int i = 0; i < col.Count; i++)\n" + 
+      "    { res = f(col[i])(res);  }\n" + 
+      "    return res; \n" + 
+      "  }\n\n"; 
+
    res = res + 
       "  public unsafe static T* resizeTo<T>(T* arr, int n) where T : unmanaged\n" + 
       "  { T* tmp = stackalloc T[n];\n" +
@@ -7342,7 +7350,16 @@ public class BSystemTypes extends BComponent
   { String res = "  public static List sort(final List a)\n" + 
       "  { int i = a.size()-1;\n" + 
       "    return mergeSort(a,0,i);\n" +  
-      "  }\n\n" +  
+      "  }\n\n"; 
+    res = res + 
+      "  public static List asSequence(final List a)\n" + 
+      "  { return a; }\n\n";
+    res = res + 
+      "  public static List asBag(final List a)\n" + 
+      "  { int i = a.size()-1;\n" + 
+      "    return mergeSort(a,0,i);\n" +  
+      "  }\n\n";
+    res = res +  
       "  static List mergeSort(final List a, int ind1, int ind2)\n" + 
       "  { List res = new Vector();\n" +  
       "    if (ind1 > ind2)\n" +  
@@ -7471,6 +7488,16 @@ public class BSystemTypes extends BComponent
 
   public static String generateSortOpCSharp()
   { String res = "  public static ArrayList sort(ArrayList a)\n" + 
+      "  { ArrayList res = new ArrayList();\n" + 
+      "    res.AddRange(a);\n" +
+      "    res.Sort();\n" + 
+      "    return res;\n" +   
+      "  }\n\n"; 
+    return res; 
+  } 
+
+  public static String generateAsBagOpCSharp()
+  { String res = "  public static ArrayList asBag(ArrayList a)\n" + 
       "  { ArrayList res = new ArrayList();\n" + 
       "    res.AddRange(a);\n" +
       "    res.Sort();\n" + 
@@ -9200,7 +9227,7 @@ public class BSystemTypes extends BComponent
     return res;
   }
 
-  public String generateAsSetOpJava6()
+  public static String generateAsSetOpJava6()
   { String res = "    public static HashSet asSet(Collection c)\n" +
     "    { HashSet res = new HashSet();\n" +
     "      res.addAll(c);\n" +
@@ -9209,7 +9236,7 @@ public class BSystemTypes extends BComponent
 
     res = res + "    public static ArrayList asOrderedSet(Collection c)\n" + 
     "    { ArrayList res = new ArrayList();\n" +  
-    "      for (T x : c)\n" + 
+    "      for (Object x : c)\n" + 
     "      { if (res.contains(x)) { }\n" +  
     "        else \n" + 
     "        { res.add(x); }\n" +  
@@ -9220,7 +9247,7 @@ public class BSystemTypes extends BComponent
     return res;
   }
 
-  public String generateAsSetOpJava7()
+  public static String generateAsSetOpJava7()
   { String res = 
     "    public static <T> Set<T> asSet(Collection<T> c)\n" +
     "    { Set<T> res = new HashSet<T>();\n" +
@@ -9288,26 +9315,25 @@ public class BSystemTypes extends BComponent
     return res;
   } // also need asBag operations - same as sort
 
-  public String generateAsSequenceOpJava6()
+  public static String generateAsSequenceOpJava6()
   { String res = "    public static ArrayList asSequence(Collection c)\n" +
     "    { ArrayList res = new ArrayList();\n" +
     "      res.addAll(c);\n" +
     "      return res;\n" +
     "    }\n\n";
 
-  res = res + 
-    "    public static HashSet asBag(HashSet c)\n" + 
-    "    { return c; }\n\n" +   
-    "    public static ArrayList asBag(ArrayList c)\n" + 
+    res = res + 
+    "    public static ArrayList asBag(Collection c)\n" + 
     "    { ArrayList res = new ArrayList(); \n" + 
     "      res.addAll(c); \n" + 
-    "      Collections.shuffle(res);\n" +  
+    "      Collections.sort(res);\n" +  
     "      return res;\n" +  
     "    }\n\n";  
+
     return res;
   }
 
-  public String generateAsSequenceOpJava7()
+  public static String generateAsSequenceOpJava7()
   { String res = "    public static <T> List<T> asSequence(Collection<T> c)\n" +
     "    { List res = new ArrayList<T>();\n" +
     "      res.addAll(c);\n" +
@@ -9315,19 +9341,17 @@ public class BSystemTypes extends BComponent
     "    }\n\n";
 
     res = res + 
-    "    public static <T> HashSet<T> asBag(HashSet<T> c)\n" + 
-    "    { return c; }\n\n" +   
-    "    public static <T> ArrayList<T> asBag(ArrayList<T> c)\n" + 
-    "    { ArrayList<T> res = new ArrayList<T>(); \n" + 
+    "    public static <T> ArrayList asBag(Collection<T> c)\n" + 
+    "    { ArrayList res = new ArrayList(); \n" + 
     "      res.addAll(c); \n" + 
-    "      Collections.shuffle(res);\n" +  
+    "      Collections.sort(res);\n" +  
     "      return res;\n" +  
     "    }\n\n";  
 
     return res;
   }
 
-  public String generateAsSequenceOpCPP()
+  public static String generateAsSequenceOpCPP()
   { String res = "     static vector<_T>* asSequence(std::set<_T>* c)\n" +
     "    { vector<_T>* res = new vector<_T>();\n" +
     "      res->insert(res->end(), c->begin(), c->end());\n" +

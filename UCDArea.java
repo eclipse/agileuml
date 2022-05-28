@@ -4597,7 +4597,8 @@ public class UCDArea extends JPanel
          AndroidAppGenerator.generateMapComponentLayout(maplayout); 
          // AndroidAppGenerator.generateGraphComponentVC(packageName,nestedPackageName); 
          maplayout.close(); 
-       } catch (Exception e) { }
+       } catch (Exception e) 
+         { e.printStackTrace(); }
      } 
 
      /* if (graphcomponent != null) 
@@ -4656,7 +4657,7 @@ public class UCDArea extends JPanel
         AndroidAppGenerator.generateFirebaseAuthenticator(authout,systemName,nestedPackageName);
         authout.close(); 
       } 
-      catch (Exception _fac) { }
+      catch (Exception _fac) { _fac.printStackTrace(); }
 	  needsFirebase = true;  
     }
 
@@ -4679,7 +4680,7 @@ public class UCDArea extends JPanel
                   new FileWriter("output/" + typef))); 
           localtypeout.println(tdef);
           localtypeout.close(); 
-        } catch (Exception e) { } 
+        } catch (Exception e) { e.printStackTrace(); } 
       }
     } 
 
@@ -4698,7 +4699,7 @@ public class UCDArea extends JPanel
                                 new FileWriter(entvof)));
         voout.println(ent.getAndroidVO(nestedPackageName));
         voout.close(); 
-      } catch (Exception e) { } 
+      } catch (Exception e) { e.printStackTrace(); } 
       
       String entbean = ent.getName() + "Bean.java"; 
       File entbeanf = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entbean); 
@@ -4708,7 +4709,7 @@ public class UCDArea extends JPanel
                                 new FileWriter(entbeanf)));
         beanout.println(ent.generateAndroidBean(nestedPackageName,useCases,constraints,persistentEntities,types,cgs));
         beanout.close(); 
-      } catch (Exception e) { } 
+      } catch (Exception e) { e.printStackTrace(); } 
     }
 
     int remotecalls = 0; 
@@ -4769,7 +4770,7 @@ public class UCDArea extends JPanel
         cgs.displayText(entcode,simplefout); 
 		 
         simplefout.close(); 
-      } catch (Exception e) { } 
+      } catch (Exception e) { e.printStackTrace(); } 
 
       if (ent.isRemote()) // Remote data source
       { ent.generateRemoteDAO(systemName,nestedPackageName); 
@@ -4789,7 +4790,7 @@ public class UCDArea extends JPanel
                                 new FileWriter(entvof)));
           voout.println(ent.getAndroidVO(nestedPackageName));
           voout.close(); 
-        } catch (Exception e) { } 
+        } catch (Exception e) { e.printStackTrace(); } 
 
         String entbean = ent.getName() + "Bean.java"; 
         File entbeanf = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + entbean); 
@@ -4799,7 +4800,7 @@ public class UCDArea extends JPanel
                                   new FileWriter(entbeanf)));
           beanout.println(ent.generateAndroidBean(nestedPackageName,useCases,constraints,persistentEntities,types,cgs));
           beanout.close(); 
-        } catch (Exception _e) { }  
+        } catch (Exception _e) { _e.printStackTrace(); }  
       } 
     } 
 
@@ -4824,7 +4825,7 @@ public class UCDArea extends JPanel
                                 new FileWriter(ucvof)));
           voout.println(uc.getAndroidValueObject(nestedPackageName));
           voout.close(); 
-        } catch (Exception e) { } 
+        } catch (Exception e) { e.printStackTrace(); } 
       
         String ucbean = uc.getName() + "Bean.java"; 
         File ucbeanf = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + ucbean); 
@@ -4834,7 +4835,7 @@ public class UCDArea extends JPanel
                                 new FileWriter(ucbeanf)));
           beanout.println(uc.generateAndroidBean(nestedPackageName,persistentEntities,types,cgs));
           beanout.close(); 
-        } catch (Exception e) { }
+        } catch (Exception e) { e.printStackTrace(); }
       } 
     }
 
@@ -4846,7 +4847,7 @@ public class UCDArea extends JPanel
                                 new FileWriter(dbif)));
         AndroidAppGenerator.generateAndroidDbi(nestedPackageName,systemName,persistentEntities,useCases,dbiout);
         dbiout.close(); 
-      } catch (Exception e) { }
+      } catch (Exception e) { e.printStackTrace(); }
     }  
 	
     if (clouds.size() > 0) 
@@ -4857,7 +4858,7 @@ public class UCDArea extends JPanel
                                 new FileWriter(clouddbif)));
 	    AndroidAppGenerator.generateFirebaseDbi(clouds,systemName,nestedPackageName,clouddbiout);
         clouddbiout.close(); 
-      } catch (Exception e) { }
+      } catch (Exception e) { e.printStackTrace(); }
     }  
 		
 	
@@ -4882,7 +4883,7 @@ public class UCDArea extends JPanel
       testsout.println(testcode); 
       testsout.close();
     }
-    catch (Exception ex) { }
+    catch (Exception ex) { ex.printStackTrace(); }
 
      generateMutationTesterJava8(systemName, nestedPackageName); 
 
@@ -4904,7 +4905,8 @@ public class UCDArea extends JPanel
                                 new FileWriter(chtml)));
       AndroidAppGenerator.androidLayoutTabs(useCases,chout);   
       chout.close(); 
-    } catch (Exception e) { }  // Only needed if more than 1 separate usecase/operationdescription
+    } catch (Exception e) 
+      { e.printStackTrace(); }  // Only needed if more than 1 separate usecase/operationdescription
 
     File codefile = new File("output/" + systemName + "/src/main/java/MainActivity.java"); 
     try
@@ -4914,7 +4916,7 @@ public class UCDArea extends JPanel
       
       AndroidAppGenerator.androidMainVCTabs(useCases,packageName, needsGraph,codeout); 
       codeout.close(); 
-    } catch (Exception e) { }   
+    } catch (Exception e) { e.printStackTrace(); }   
 
     Vector tabnames = new Vector(); 
 	
@@ -4932,7 +4934,7 @@ public class UCDArea extends JPanel
                                          new FileWriter(odlayout)));
           AndroidAppGenerator.androidScreenTabs(od,odlayoutfile);
           odlayoutfile.close();    
-        } catch (Exception e) { } 
+        } catch (Exception e) { e.printStackTrace(); } 
 
 
         String nme = od.getName();
@@ -4947,7 +4949,7 @@ public class UCDArea extends JPanel
                                    new FileWriter(fraglayout)));
             AndroidAppGenerator.listItemLayout(ent,fragout);
 		    fragout.close(); 
-		  } catch (Exception _r) { }
+		  } catch (Exception _r) { _r.printStackTrace(); }
 		  
 		  File recycler = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + ename + "RecyclerViewAdapter.java");
 		  try
@@ -4956,7 +4958,7 @@ public class UCDArea extends JPanel
                                    new FileWriter(recycler)));
             AndroidAppGenerator.generateRecyclerViewAdapter(ent,packageName,rout);
             rout.close(); 
-          } catch (Exception _x) { }  
+          } catch (Exception _x) { _x.printStackTrace(); }  
         }
 	 
         File odjsp = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + nme + "Fragment.java"); 
@@ -4966,7 +4968,7 @@ public class UCDArea extends JPanel
                                    new FileWriter(odjsp)));
           AndroidAppGenerator.androidViewFragment(packageName,od,jspout); 
           jspout.close(); 
-        } catch (Exception e) { } 
+        } catch (Exception e) { e.printStackTrace(); } 
       } 
       else if (obj instanceof UseCase && !(predefinedUseCases.contains(((UseCase) obj).getName())))
       { UseCase uc = (UseCase) obj; 
@@ -4995,7 +4997,7 @@ public class UCDArea extends JPanel
             else
             { AndroidAppGenerator.androidTableLayoutForOp(nme,".ui.main." + nme + "Fragment", image, atts,res,opout); }   
             opout.close(); 
-          } catch (Exception e) { } 
+          } catch (Exception e) { e.printStackTrace(); } 
 
           File odact = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + nme + "Fragment.java"); 
           try
@@ -5004,7 +5006,7 @@ public class UCDArea extends JPanel
                                      new FileWriter(odact)));
             AndroidAppGenerator.androidOpViewFragment(nme,packageName,nme + "Fragment",lcnme + "_layout",atts,res,extensions,actout); 
             actout.close(); 
-          } catch (Exception e) { }
+          } catch (Exception e) { e.printStackTrace(); }
         }  
       }
     } 
@@ -5041,7 +5043,7 @@ public class UCDArea extends JPanel
         cgs.displayText(entcode,ffout); 
 		 
         ffout.close(); 
-      } catch (Exception e) { } 
+      } catch (Exception e) { e.printStackTrace(); } 
     } 
 	
     if (screencount == 0) 
@@ -5057,7 +5059,7 @@ public class UCDArea extends JPanel
         AndroidAppGenerator.generatePagerAdapter(packageName, tabnames, spaout); 
         spaout.close(); 
       } 
-      catch (Exception _y) { } 
+      catch (Exception _y) { _y.printStackTrace(); } 
     } 
 
     // The app-level build file
@@ -5069,7 +5071,7 @@ public class UCDArea extends JPanel
 	  AndroidAppGenerator.generateBuildGradle(systemName,needsFirebase,gradle); 
          // AndroidAppGenerator.generateGraphComponentVC(packageName,nestedPackageName); 
       gradle.close(); 
-    } catch (Exception e) { }
+    } catch (Exception e) { e.printStackTrace(); }
 
     // generateIOSApp(out); 
 
@@ -5213,7 +5215,7 @@ public class UCDArea extends JPanel
         { entbeancode = ent.generateJSPBean(appName,useCases,constraints,entities,types,cgs); } 
         beanout.println(entbeancode); 
         beanout.close(); 
-      } catch (Exception e) { } 
+      } catch (Exception e) { e.printStackTrace(); } 
     }
 
     for (int j = 0; j < types.size(); j++) 
@@ -5227,7 +5229,7 @@ public class UCDArea extends JPanel
                                     new FileWriter(typefile)));
           typeout.println(typ.getJava8Definition(appName));
           typeout.close(); 
-        } catch (Exception e) { } 
+        } catch (Exception e) { e.printStackTrace(); } 
       }
     } 
 	
@@ -5261,7 +5263,7 @@ public class UCDArea extends JPanel
         cgs.displayText(entcode,ffout); 
 		 
         ffout.close(); 
-      } catch (Exception e) { } 
+      } catch (Exception e) { e.printStackTrace(); } 
 
     } 
 
@@ -10236,13 +10238,11 @@ public void produceCUI(PrintWriter out)
     out.println("    public static ArrayList addSequence(ArrayList s, boolean x)"); 
     out.println("    { s.add(new Boolean(x));"); 
     out.println("      return s; }\n"); 
-    // Surely these should have ArrayList, not HashSet???
 
-    out.println("    public static ArrayList asSequence(Collection c)"); 
-    out.println("    { ArrayList res = new ArrayList(); res.addAll(c); return res; }\n"); 
-    out.println("    public static HashSet asSet(Collection c)"); 
-    out.println("    { HashSet res = new HashSet(); res.addAll(c); return res; }\n"); 
-    
+    mop = BSystemTypes.generateAsSequenceOpJava6(); 
+    out.println("\n" + mop); 
+    mop = BSystemTypes.generateAsSetOpJava6(); 
+    out.println("\n" + mop); 
     mop = BSystemTypes.generateMaxOpJava6(); 
     out.println("\n" + mop); 
     mop = BSystemTypes.generateMinOpJava6();
@@ -10457,15 +10457,17 @@ public void produceCUI(PrintWriter out)
     out.println("      return s; }\n"); 
     // Surely these should have ArrayList, not HashSet???
 
-    out.println("    public static <T> ArrayList<T> asSequence(Collection<T> c)"); 
-    out.println("    { ArrayList<T> res = new ArrayList<T>(); res.addAll(c); return res; }\n"); 
-    out.println("    public static <T> HashSet<T> asSet(Collection<T> c)"); 
-    out.println("    { HashSet res = new HashSet<T>(); res.addAll(c); return res; }\n"); 
+    mop = BSystemTypes.generateAsSequenceOpJava7(); 
+    out.println("\n" + mop); 
+
+    mop = BSystemTypes.generateAsSetOpJava7(); 
+    out.println("\n" + mop); 
     
     // String mop = BSystemTypes.generateMaxOpJava7(); 
     // out.println("\n" + mop); 
     // mop = BSystemTypes.generateMinOpJava7();
     // out.println("\n" + mop);
+
     mop = BSystemTypes.generateUnionOpJava7(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateSubtractOpJava7(); 
@@ -10678,6 +10680,8 @@ public void produceCUI(PrintWriter out)
     mop = BSystemTypes.generateClosureOpsCSharp(associations); 
     out.println("\n" + mop); 
     mop = BSystemTypes.generateAsSetOpCSharp(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateAsBagOpCSharp(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateReverseOpCSharp(); 
     out.println("\n" + mop);  
@@ -13198,10 +13202,17 @@ public void produceCUI(PrintWriter out)
 
     for (int i = 0; i < entities.size(); i++) 
     { Entity t = (Entity) entities.get(i);
-      t.generateOperationDesigns(types,entities);  
+
+      System.out.println(">>> Processing class: " + t); 
+
+      t.generateOperationDesigns(types,entities);
+
+      System.out.println(">>> After computation of designs: " + t.getKM3()); 
+  
       String newt = t.cg(spec);
       newclasses = newclasses + newt + '\n'; 
-      // System.out.println("Transformed entity " + t + " is " + newt); 
+      
+      System.out.println("Transformed entity is: " + newt); 
     } 
 
     /* Argument _4 of the package rule */ 

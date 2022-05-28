@@ -46,7 +46,8 @@ class BinaryExpression extends Expression
 
   public Object clone()
   { BinaryExpression res = 
-      new BinaryExpression(operator,(Expression) left.clone(),(Expression) right.clone()); 
+      new BinaryExpression(operator,(Expression) left.clone(),(Expression) right.clone());
+ 
     res.iteratorVariable = iteratorVariable; 
     res.accumulator = accumulator; 
     res.keyValue = keyValue;
@@ -57,7 +58,8 @@ class BinaryExpression extends Expression
     res.multiplicity = multiplicity; 
     res.modality = modality; 
     res.needsBracket = needsBracket;
-    res.formalParameter = formalParameter;  
+    res.formalParameter = formalParameter;
+      
     return res; 
   } 
 
@@ -103,6 +105,12 @@ class BinaryExpression extends Expression
   public void setKeyValue(Expression key) { keyValue = key; } 
 
   public void setOperator(String op) { operator = op; } 
+
+  public void setIteratorVariable(String var)
+  { iteratorVariable = var; } 
+
+  public void setAccumulator(Attribute acc)
+  { accumulator = acc; } 
 
   public Expression getLeft() { return left; } 
 
@@ -162,12 +170,14 @@ class BinaryExpression extends Expression
   public Expression determinate()
   { if ("or".equals(operator))
     { return new BasicExpression(false); }
+
     if ("#".equals(operator) || "#LC".equals(operator) || "#1".equals(operator) || "!".equals(operator) ||
         "|".equals(operator) || "|R".equals(operator) || "|C".equals(operator))
     { Expression leftdet = ((BinaryExpression) left).right.determinate(); 
       Expression rightdet = right.determinate(); 
       return (new BinaryExpression("&",leftdet,rightdet)).simplify(); 
     } 
+
     if ("->exists".equals(operator) || "=".equals(operator) ||
         "->existsLC".equals(operator) || 
         "->forAll".equals(operator) || "->exists1".equals(operator) ||
@@ -177,11 +187,14 @@ class BinaryExpression extends Expression
         "->intersectAll".equals(operator) || "->symmetricDifference".equals(operator) ||
         "->selectMaximals".equals(operator) || "->sortedBy".equals(operator) ||
         "->selectMinimals".equals(operator) || "->at".equals(operator) || 
+        "->iterate".equals(operator) || 
         "->apply".equals(operator))
     { Expression leftdet = left.determinate(); 
       Expression rightdet = right.determinate(); 
       return (new BinaryExpression("&",leftdet,rightdet)).simplify(); 
     } 
+
+   
 
     /* if (":".equals(operator) ||
         "/:".equals(operator) || "<:".equals(operator) ||
@@ -224,17 +237,22 @@ class BinaryExpression extends Expression
 
   public void setPre()
   { left.setPre(); 
-    right.setPre(); 
+    right.setPre();
+    if (accumulator != null && 
+        accumulator.getInitialExpression() != null) 
+    { accumulator.getInitialExpression().setPre(); }  
   } 
 
   public Expression removePrestate()
   { Expression dl = left.removePrestate();
     Expression dr = right.removePrestate();
-    Expression res = new BinaryExpression(operator,dl,dr); 
+    BinaryExpression res = new BinaryExpression(operator,dl,dr); 
     res.setType(type); 
     res.setElementType(elementType); 
-	res.needsBracket = needsBracket; 
-	res.formalParameter = formalParameter; 
+    res.needsBracket = needsBracket; 
+    res.formalParameter = formalParameter;
+    res.accumulator = accumulator; 
+    res.iteratorVariable = iteratorVariable; 
     return res; 
   } 
 
@@ -643,6 +661,10 @@ class BinaryExpression extends Expression
     if (operator.equals("->iterate"))
     { op = "->iterate"; 
       out.println(id + ".variable = \"" + iteratorVariable + "\""); 
+      if (accumulator != null) 
+      { String accid = accumulator.saveModelData(out); 
+        out.println(id + ".accumulator = " + accid);
+      }   
     } 
     else if (operator.equals("#"))
     { op = "->exists"; 
@@ -1341,6 +1363,7 @@ class BinaryExpression extends Expression
   { BinaryExpression res = (BinaryExpression) clone(); 
     Expression lr = left.addReference(ref,t); 
     res.left = lr; 
+
     if ("->select".equals(operator) || "->reject".equals(operator) || 
         "->collect".equals(operator) || "->closure".equals(operator) ||
         "->selectMinimals".equals(operator) || "->selectMaximals".equals(operator) ||
@@ -1350,6 +1373,25 @@ class BinaryExpression extends Expression
         "->exists".equals(operator) || "->exists1".equals(operator) || 
         "->forAll".equals(operator))
     { res.right = right; } // assume no objects of type t in the rhs. 
+    else if ("->iterate".equals(operator))
+    { Expression rr = right.addReference(ref,t); 
+      res.right = rr; 
+
+      if (accumulator != null) 
+      { Attribute newacc = 
+          new Attribute(accumulator.getName(),
+                        accumulator.getType(),
+                        ModelElement.INTERNAL); 
+        Expression init = accumulator.getInitialExpression(); 
+        if (init != null) 
+        { Expression ii = 
+            init.addReference(ref,t);
+          newacc.setInitialExpression(ii);  
+        } 
+        res.accumulator = newacc; 
+      } 
+      
+    }
     else 
     { Expression rr = right.addReference(ref,t); 
       res.right = rr;
@@ -1376,6 +1418,25 @@ class BinaryExpression extends Expression
         "->exists".equals(operator) || "->exists1".equals(operator) || 
         "->forAll".equals(operator))
     { res.right = right; } 
+    else if ("->iterate".equals(operator))
+    { Expression rr = right.replaceReference(ref,t); 
+      res.right = rr; 
+
+      if (accumulator != null) 
+      { Attribute newacc = 
+          new Attribute(accumulator.getName(),
+                        accumulator.getType(),
+                        ModelElement.INTERNAL); 
+        Expression init = accumulator.getInitialExpression(); 
+        if (init != null) 
+        { Expression ii = 
+            init.replaceReference(ref,t);
+          newacc.setInitialExpression(ii);  
+        } 
+        res.accumulator = newacc; 
+      } 
+      
+    }
     else 
     { Expression rr = right.replaceReference(ref,t); 
       res.right = rr;
@@ -1392,7 +1453,25 @@ class BinaryExpression extends Expression
   public Expression dereference(BasicExpression ref)
   { BinaryExpression res = (BinaryExpression) clone(); 
     res.left = left.dereference(ref); 
-    res.right = right.dereference(ref); 
+    res.right = right.dereference(ref);
+  
+    if ("->iterate".equals(operator))
+    { 
+      if (accumulator != null) 
+      { Attribute newacc = 
+          new Attribute(accumulator.getName(),
+                        accumulator.getType(),
+                        ModelElement.INTERNAL); 
+        Expression init = accumulator.getInitialExpression(); 
+        if (init != null) 
+        { Expression ii = 
+            init.dereference(ref);
+          newacc.setInitialExpression(ii);  
+        } 
+        res.accumulator = newacc; 
+      } 
+    }
+ 
     if (keyValue != null) 
     { Expression kv = keyValue.dereference(ref); 
       res.keyValue = kv; 
@@ -2261,6 +2340,25 @@ class BinaryExpression extends Expression
       res = VectorUtil.union(res,beleft.left.metavariables());
       return VectorUtil.union(res,right.metavariables());
     } 
+
+    if ("->iterate".equals(operator))
+    { Vector res = left.metavariables(); 
+      if (iteratorVariable != null) 
+      { res.addAll(CGRule.metavariables(iteratorVariable)); } 
+      if (accumulator != null) 
+      { res.addAll(CGRule.metavariables(
+                                accumulator.getName())); 
+        Expression init = accumulator.getInitialExpression(); 
+        if (init != null) 
+        { res.addAll(init.metavariables()); } 
+      } 
+
+      System.out.println(">>> Metavariables for " + this + 
+                         " are " + res); 
+
+      return VectorUtil.union(res,right.metavariables()); 
+    } 
+
     Vector res = left.metavariables(); 
     return VectorUtil.union(res,right.metavariables()); 
   } 
@@ -2302,6 +2400,13 @@ class BinaryExpression extends Expression
       } 
       rpterms.removeAll(removals); 
     } 
+    else if ("->iterate".equals(operator))
+    { if (accumulator != null) 
+      { Expression expr = accumulator.getInitialExpression(); 
+        if (expr != null) 
+        { res.addAll(expr.allPreTerms()); } 
+      } 
+    } // and "let"
     else if ("!".equals(operator) || "#".equals(operator) || "|A".equals(operator) || 
         "#1".equals(operator) || "|".equals(operator) || operator.equals("#LC") ||
         "|R".equals(operator) || "|C".equals(operator) || 
@@ -2366,6 +2471,13 @@ class BinaryExpression extends Expression
       } 
       rpterms.removeAll(removals); 
     } 
+    else if ("->iterate".equals(operator))
+    { if (accumulator != null) 
+      { Expression expr = accumulator.getInitialExpression(); 
+        if (expr != null) 
+        { res.addAll(expr.allPreTerms(var)); } 
+      } 
+    } 
     else if ("!".equals(operator) || "#".equals(operator) || operator.equals("#LC") ||
         "#1".equals(operator) || "|".equals(operator) || "|A".equals(operator) || 
         "|R".equals(operator) || "|C".equals(operator) ||
@@ -2429,6 +2541,18 @@ class BinaryExpression extends Expression
     if (operator.equals("->closure")) 
     { return left.getBaseEntityUses(); } 
 
+    if ("->iterate".equals(operator))
+    { Vector ss1 = left.getBaseEntityUses();  
+
+      if (accumulator != null) 
+      { Expression expr = accumulator.getInitialExpression(); 
+        if (expr != null) 
+        { ss1.addAll(expr.allPreTerms()); } 
+      } 
+
+      return VectorUtil.union(ss1,right.getBaseEntityUses());
+    } 
+
     if (operator.equals("!") || operator.equals("#") || operator.equals("#LC") ||
         operator.equals("#1") || operator.equals("|") || operator.equals("|R") ||
         operator.equals("|A") || operator.equals("|C") ||
@@ -2472,6 +2596,33 @@ class BinaryExpression extends Expression
       return ss; 
     } 
     
+    if ("->iterate".equals(operator))
+    { Vector ss2 = left.getVariableUses();
+      ss2 = VectorUtil.union(ss2,right.getVariableUses());
+      Vector removals = new Vector(); 
+
+      if (accumulator != null) 
+      { Expression expr = accumulator.getInitialExpression(); 
+        if (expr != null) 
+        { ss2.addAll(expr.getVariableUses()); } 
+        String acc = accumulator.getName(); 
+
+        for (int i = 0; i < ss2.size(); i++) 
+        { Expression e1 = (Expression) ss2.get(i); 
+          if ((e1 + "").equals(acc))
+          { removals.add(e1); } 
+        } 
+      } 
+
+      for (int i = 0; i < ss2.size(); i++) 
+      { Expression e1 = (Expression) ss2.get(i); 
+        if ((e1 + "").equals(iteratorVariable))
+        { removals.add(e1); } 
+      } 
+
+      ss2.removeAll(removals);          
+      return ss2; 
+    } 
 
     Vector res = left.getVariableUses();
     res = VectorUtil.union(res,right.getVariableUses());
@@ -2489,31 +2640,31 @@ class BinaryExpression extends Expression
   { Vector res = left.allFeaturesUsedIn();
     return VectorUtil.union(res,
                             right.allFeaturesUsedIn());
-  }
+  } // ->iterate, add accumulator expression
 
   public Vector allAttributesUsedIn()
   { Vector res = left.allAttributesUsedIn();
     return VectorUtil.union(res,
                             right.allAttributesUsedIn());
-  }
+  } // ->iterate, add accumulator expression
 
   public Vector allOperationsUsedIn()
   { Vector res = left.allOperationsUsedIn();
     return VectorUtil.union(res,
                             right.allOperationsUsedIn());
-  }
+  } // ->iterate, add accumulator expression
 
   public Vector equivalentsUsedIn()
   { Vector res = left.equivalentsUsedIn();
     return VectorUtil.union(res,
                             right.equivalentsUsedIn());
-  }
+  } // ->iterate, add accumulator expression
 
   public Vector allValuesUsedIn()
   { Vector res = left.allValuesUsedIn();
     return VectorUtil.union(res,
                             right.allValuesUsedIn());
-  }
+  } // ->iterate, add accumulator expression
 
 public void findClones(java.util.Map clones, String rule, String op)
 { if (this.syntacticComplexity() < 10) { return; }
@@ -3093,7 +3244,12 @@ public void findClones(java.util.Map clones, String rule, String op)
       // assumed non-null
 
       if (init != null) 
-      { init.typeCheck(types,entities,context,env); } 
+      { init.typeCheck(types,entities,context,env); }
+
+      if ((accumulator.getType() == null || 
+           "OclType".equals(accumulator.getType() + ""))
+          && init != null)
+      { accumulator.setType(init.getType()); }  
 
       Attribute itvar = 
         new Attribute(iteratorVariable, left.getElementType(),
@@ -3114,7 +3270,7 @@ public void findClones(java.util.Map clones, String rule, String op)
       } 
       
         
-      System.out.println(">>> Typechecked ->iterate expression: " + lrt + " " + rtc + " " + type); 
+      System.out.println(">>> Typechecked ->iterate expression: " + this + " " + lrt + " " + rtc + " " + type); 
       return true; 
     }
 
@@ -11654,7 +11810,33 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       return iterationLoop(((BinaryExpression) left).left, ((BinaryExpression) left).right, body); 
     }    
 
+    if (operator.equals("->iterate"))
+    { // var acc : accType ; 
+      // acc := acc.initialExpression ; 
+      // for iteratorVariable : left
+      // do body
 
+      SequenceStatement sstat = new SequenceStatement(); 
+      CreationStatement cs = 
+         new CreationStatement(accumulator);
+      BasicExpression acc = 
+         new BasicExpression(accumulator);  
+      AssignStatement asgn = 
+         new AssignStatement(acc,
+                    accumulator.getInitialExpression()); 
+      AssignStatement body =
+         new AssignStatement(acc,right); 
+      BasicExpression iterVar = 
+         new BasicExpression(iteratorVariable);  
+      iterVar.setType(left.getElementType()); 
+      WhileStatement ws = 
+         new WhileStatement(iterVar,left,body); 
+      sstat.addStatement(cs); 
+      sstat.addStatement(asgn); 
+      sstat.addStatement(ws); 
+      return ws; 
+    } 
+      
     // Analyse if-then-else structure      
     if (operator.equals("&"))
     { Statement ufl = left.generateDesign(env,local);
@@ -11679,17 +11861,17 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
 
     if (operator.equals("let") && accumulator != null)
     { // let accumulator = left in right
-	  SequenceStatement sstat = new SequenceStatement();
-	  Type typ1 = accumulator.getType();   
-	  String varname = accumulator.getName(); 
+      SequenceStatement sstat = new SequenceStatement();
+      Type typ1 = accumulator.getType();   
+      String varname = accumulator.getName(); 
       CreationStatement cs1 = new CreationStatement(typ1 + "",varname); 
       cs1.setType(typ1); 
       cs1.setElementType(typ1.getElementType());  
       cs1.setInitialisation(left);
-	  sstat.addStatement(cs1); 
+      sstat.addStatement(cs1); 
       Statement ufr = right.generateDesign(env,local); 
       sstat.addStatement(ufr); 
-	  return sstat; 
+      return sstat; 
     } 
 
     if (operator.equals("=>"))
@@ -14792,23 +14974,32 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
 
     if (oldE == left)
     { Expression newR = right.substitute(oldE,newE);
-      Expression result = new BinaryExpression(operator,newE,newR);
+      BinaryExpression result = 
+        new BinaryExpression(operator,newE,newR);
       result.formalParameter = formalParameter; 
-      result.setBrackets(needsBracket); 
+      result.setBrackets(needsBracket);
+      result.iteratorVariable = iteratorVariable; 
+      result.accumulator = accumulator;  
       return result; 
     }
     else if (oldE == right)
     { Expression newL = left.substitute(oldE,newE);
-      Expression result = new BinaryExpression(operator,newL,newE);
+      BinaryExpression result = 
+         new BinaryExpression(operator,newL,newE);
       result.formalParameter = formalParameter; 
       result.setBrackets(needsBracket); 
+      result.iteratorVariable = iteratorVariable; 
+      result.accumulator = accumulator;  
       return result; 
     }
     else 
     { Expression newLeft = left.substitute(oldE,newE);
       Expression newRight = right.substitute(oldE,newE);
-      Expression result = new BinaryExpression(operator, newLeft, newRight); 
+      BinaryExpression result = 
+         new BinaryExpression(operator, newLeft, newRight); 
       result.formalParameter = formalParameter; 
+      result.iteratorVariable = iteratorVariable; 
+      result.accumulator = accumulator;  
       result.setBrackets(needsBracket); 
       return result; 
     }
@@ -14854,8 +15045,23 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       }
     } */ 
 
-    Expression res = new BinaryExpression(operator,newLeft,newRight);
-    res.formalParameter = formalParameter; 
+    BinaryExpression res = 
+      new BinaryExpression(operator,newLeft,newRight);
+    res.formalParameter = formalParameter;
+
+    res.iteratorVariable = iteratorVariable; // if not renamed 
+    res.accumulator = accumulator;           // if not renamed
+    if (accumulator != null && 
+        accumulator.getInitialExpression() != null) 
+    { Attribute newacc = new Attribute(accumulator.getName(), 
+                                accumulator.getType(), 
+                                ModelElement.INTERNAL); 
+      Expression init = accumulator.getInitialExpression(); 
+      Expression newInit = init.substituteEq(oldVar,newVal);
+      newacc.setInitialExpression(newInit); 
+      res.setAccumulator(newacc); 
+    } 
+
     res.setBrackets(needsBracket);  
     // System.out.println("***** " + this + " after substitution =  " + res); 
     return res; 
@@ -14864,12 +15070,13 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
 
   public boolean hasVariable(final String s)
   { return (left.hasVariable(s) || right.hasVariable(s)); }
+  // Cases of ->iterate, let
 
   public Vector variablesUsedIn(final Vector vars)
   { Vector res1 = left.variablesUsedIn(vars);
     Vector res2 = right.variablesUsedIn(vars);
     return VectorUtil.vector_merge(res1,res2); 
-  }
+  } // Cases of ->iterate, let
 
   public Vector componentsUsedIn(final Vector sms)
   { Vector res1 = left.componentsUsedIn(sms);
@@ -16980,6 +17187,16 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     if (operator.equals("#") || operator.equals("#1") || operator.equals("#LC") || operator.equals("!") ||
         operator.equals("|") || operator.equals("|R") || operator.equals("|C"))
     { return res; }  
+
+    if (operator.equals("->iterate"))
+    { if (accumulator != null) 
+      { Expression init = accumulator.getInitialExpression(); 
+        if (init != null) 
+        { res = res + init.syntacticComplexity(); } 
+      } 
+      res = res + 2; 
+    } 
+
     return res + 1; 
   } 
 
@@ -16988,6 +17205,17 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     { return right.cyclomaticComplexity(); } 
     else if (operator.equals("&") || operator.equals("or") || operator.equals("=>"))
     { return left.cyclomaticComplexity() + right.cyclomaticComplexity(); }  
+
+    if (operator.equals("->iterate"))
+    { int res = left.cyclomaticComplexity() + right.cyclomaticComplexity();
+      if (accumulator != null) 
+      { Expression init = accumulator.getInitialExpression(); 
+        if (init != null) 
+        { res = res + init.cyclomaticComplexity(); } 
+      }
+      return res;  
+    } 
+
     return 1; 
   } 
 
@@ -17156,6 +17384,12 @@ private BExpression seqselectBinvariantForm(String var, BExpression bsimp, BExpr
     Vector args = new Vector();
     Vector eargs = new Vector(); 
 
+    if ("->iterate".equals(operator))
+    { System.out.println(">>> Trying to match rule for ->iterate " + iteratorVariable + " " + accumulator);
+      System.out.println(etext);
+      System.out.println();  
+    }          
+
     if ("|C".equals(operator) || "|R".equals(operator) || 
         "|".equals(operator) || "#".equals(operator) || 
         "#1".equals(operator) || "|sortedBy".equals(operator) ||
@@ -17170,6 +17404,61 @@ private BExpression seqselectBinvariantForm(String var, BExpression bsimp, BExpr
       eargs.add(beleft.getRight()); 
       eargs.add(beleft.getLeft()); 
       eargs.add(right); 
+    } 
+    else if ("->iterate".equals(operator))
+    { args.add(left.cg(cgs));
+      if (iteratorVariable != null)  
+      { args.add(iteratorVariable); } 
+      else 
+      { args.add("self"); } 
+
+      if (accumulator != null) 
+      { args.add(accumulator.getName()); } 
+      else 
+      { args.add("_acc"); }
+      if (accumulator != null) 
+      { Expression initval = 
+          accumulator.getInitialExpression(); 
+        if (initval == null) 
+        { args.add("null"); } 
+        else 
+        { args.add(initval.cg(cgs)); }
+      } 
+      else 
+      { args.add("null"); } 
+  
+      args.add(right.cg(cgs)); 
+
+      System.out.println(">>> Trying to match rule for ->iterate " + args);         
+
+      eargs.add(left); 
+
+      if (iteratorVariable != null)  
+      { BasicExpression iterVar = 
+           new BasicExpression(iteratorVariable); 
+        iterVar.setType(left.getElementType()); 
+        eargs.add(iterVar); 
+      } 
+      else 
+      { BasicExpression iterVar = 
+           new BasicExpression("self"); 
+        iterVar.setType(left.getElementType()); 
+        eargs.add(iterVar);
+      } 
+
+      if (accumulator != null)
+      { eargs.add(new BasicExpression(accumulator));
+        Expression initval = 
+          accumulator.getInitialExpression(); 
+        eargs.add(initval); 
+      } 
+      else 
+      { eargs.add(new BasicExpression("_acc"));
+        eargs.add(new BasicExpression("null")); 
+      } 
+      eargs.add(right);
+
+      System.out.println(">>> Trying to match rule for ->iterate " + args + " " + eargs);         
     } 
     else if ("->collect".equals(operator) || "->reject".equals(operator) || 
              "->select".equals(operator) || "->exists".equals(operator) || 
@@ -17199,6 +17488,7 @@ private BExpression seqselectBinvariantForm(String var, BExpression bsimp, BExpr
     } 
 
     CGRule r = cgs.matchedBinaryExpressionRule(this,etext);
+
     if (r != null)
     { System.out.println(">> Found rule " + r + " for: " + etext); 
       String res = r.applyRule(args,eargs,cgs); 
