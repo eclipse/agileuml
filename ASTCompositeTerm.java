@@ -14418,13 +14418,69 @@ public class ASTCompositeTerm extends ASTTerm
     return false;  
   } 
 
+  public String toKM3annotationConstantDeclarators()
+  { modelElements = new Vector(); 
+    String resx = ""; 
+
+    if ("variableDeclarators".equals(tag))
+    { for (int i = 0; i < terms.size(); i++) 
+      { ASTCompositeTerm vd = (ASTCompositeTerm) terms.get(i);
+        resx = resx + vd.toKM3annotationConstantDeclarators(); 
+        modelElement = vd.modelElement; 
+        if (modelElement != null) 
+        { modelElements.add(modelElement); } 
+      } 
+      return resx; 
+    } 
+
+    if ("variableDeclarator".equals(tag))
+    { ASTTerm vd1 = (ASTTerm) terms.get(0);
+      String vname = vd1.literalForm(); 
+      Attribute att = new Attribute(vname, 
+                                    new Type("OclAny", null), 
+                                    ModelElement.INTERNAL);
+      if (terms.size() > 2) 
+      { ASTTerm expr = (ASTTerm) terms.get(2); 
+        String res = expr.toKM3();
+        expression = expr.expression;
+        if (expression != null) 
+        { att.setType(expression.getType()); 
+          att.setInitialExpression(expression); 
+        } 
+      } 
+      modelElement = att; 
+      return "  attribute " + vname + " : " + att.getType() + ";\n"; 
+    } 
+
+    if ("constantDeclarator".equals(tag) && terms.size() > 1) 
+    { // ID ([])* = value
+      ASTTerm vd1 = (ASTTerm) terms.get(0);
+      String vname = vd1.literalForm(); 
+      Attribute att = new Attribute(vname, 
+                                    new Type("OclAny", null), 
+                                    ModelElement.INTERNAL);
+      
+      ASTTerm expr = (ASTTerm) terms.get(terms.size()-1); 
+      String res = expr.toKM3();
+      expression = expr.expression;
+      if (expression != null) 
+      { att.setType(expression.getType()); } 
+       
+      modelElement = att; 
+      return "  attribute " + vname + " : " + att.getType() + ";\n";  
+    } 
+
+    return resx; 
+  } 
+    
   public String toKM3Var()
   { if ("variableDeclarators".equals(tag))
     { ASTCompositeTerm vd1 = (ASTCompositeTerm) terms.get(0);
       return vd1.toKM3Var();
     } // Process each one 
 
-    if ("variableDeclarator".equals(tag))
+    if ("variableDeclarator".equals(tag) || 
+        "constantDeclarator".equals(tag))
     { ASTTerm var = (ASTTerm) terms.get(0); 
       return var.toKM3(); 
     } 
@@ -14444,6 +14500,15 @@ public class ASTCompositeTerm extends ASTTerm
     { // (variableDeclaratorId x) = (variableInitializer expr)
       
       ASTTerm expr = (ASTTerm) terms.get(2); 
+      String res = expr.toKM3();
+      expression = expr.expression;
+      statement = expr.statement;  
+      return res;  
+    } 
+
+    if ("constantDeclarator".equals(tag) && terms.size() > 1) 
+    { // ID ([])* = value
+      ASTTerm expr = (ASTTerm) terms.get(terms.size()-1); 
       String res = expr.toKM3();
       expression = expr.expression;
       statement = expr.statement;  
@@ -14506,7 +14571,8 @@ public class ASTCompositeTerm extends ASTTerm
   { String res = ""; 
     if (t instanceof ASTCompositeTerm)
     { ASTCompositeTerm tt = (ASTCompositeTerm) t; 
-      if ("formalParameter".equals(tt.tag))
+      if ("formalParameter".equals(tt.tag) || 
+          "lastFormalParameter".equals(tt.tag))
       { int nTerms = tt.terms.size(); 
         ASTTerm varDec = (ASTTerm) tt.terms.get(nTerms - 1); 
         return varDec.toKM3(); 
@@ -14592,6 +14658,27 @@ public class ASTCompositeTerm extends ASTTerm
       // if (km3var != null) 
       // { res = res + " := " + km3init; }  
       return res; 
+    }   
+
+    if (terms.size() == 3 && ".".equals(terms.get(1) + "") &&
+        "this".equals(terms.get(2) + ""))
+    { // C.this |--> self->oclAsType(C)
+      ASTTerm cterm = (ASTTerm) terms.get(0); 
+      String cc = cterm.queryForm();
+      ASTTerm.setType(this,cc); 
+ 
+      if (cterm.expression != null) 
+      { BasicExpression selfbe = 
+          BasicExpression.newVariableBasicExpression(
+                                           "_container"); 
+        expression = new BinaryExpression(
+                           "->oclAsType", selfbe, 
+                           cterm.expression); 
+        return "_container->oclAsType(" + cc + ")"; 
+      }
+      expression = 
+         BasicExpression.newVariableBasicExpression("self"); 
+      return "self"; 
     }   
 
     if ("primary".equals(tag) || "parExpression".equals(tag)) 
@@ -21780,6 +21867,14 @@ public class ASTCompositeTerm extends ASTTerm
 
   public Vector getParameterExpressions()
   { Vector res = new Vector(); 
+    if ("arguments".equals(tag) && 
+        terms.size() >= 3 && 
+        "(".equals(terms.get(0) + "") && 
+        ")".equals(terms.get(2) + ""))
+    { ASTTerm exprs = (ASTTerm) terms.get(1); 
+      return exprs.getParameterExpressions(); 
+    } 
+
     if ("expressionList".equals(tag))
     { 
       for (int i = 0; i < terms.size(); i++) 
@@ -21791,6 +21886,7 @@ public class ASTCompositeTerm extends ASTTerm
         }  
       } 
     }
+
     return res; 
   } 
 
@@ -21802,8 +21898,10 @@ public class ASTCompositeTerm extends ASTTerm
       { ASTTerm telem = (ASTTerm) terms.get(i); 
         if (telem instanceof ASTSymbolTerm) { } 
         else 
-        { if (telem.modelElement != null) 
+        { if (telem.modelElement instanceof Type) 
           { res.add(telem.modelElement); }
+          else if (telem.modelElement instanceof Entity) 
+          { res.add(new Type((Entity) telem.modelElement)); }
         }  
       } 
     }
@@ -21836,10 +21934,13 @@ public class ASTCompositeTerm extends ASTTerm
     { // 2 arguments, the type, and any constructor pars
 
       ASTTerm cls = (ASTTerm) terms.get(0); 
-      String clsname = cls.toKM3(); 
+      String clsname = cls.toKM3type(); 
       ASTTerm.setType(this,clsname); 
 
-      System.out.println(">>> " + this + " has type " + clsname); 
+      String cident = ""; 
+      if (cls.modelElement != null) 
+      { cident = cls.modelElement.getName(); } 
+      System.out.println(">>> " + this + " has type " + cident); 
 
       int carguments = 0; 
       Vector cargs = new Vector(); 
@@ -21903,11 +22004,248 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm.setElementType(this,clsname);  // ??
           expression = arrayInit.expression; 
         } 
+        else if (argsterm.arity() == 6 && 
+            "[".equals(argsterm.terms.get(0) + "") && 
+            "]".equals(argsterm.terms.get(2) + "") && 
+            "[".equals(argsterm.terms.get(3) + "") &&
+            "]".equals(argsterm.terms.get(5) + ""))
+        { ASTTerm sze1 = (ASTTerm) argsterm.terms.get(1);
+          ASTTerm sze2 = (ASTTerm) argsterm.terms.get(4);
+          String defaultValue = getDefaultValue(clsname);  
+          res = "Integer.subrange(1," + sze1.toKM3() + ")->collect(Integer.subrange(1," + sze2.toKM3() + ")->collect(" + defaultValue + "))";
+          ASTTerm.setType(this,"Sequence");
+          ASTTerm.setElementType(this,"Sequence(" + clsname + ")");  // ??
+
+          if (sze1.expression != null &&
+              sze2.expression != null) 
+          { Vector pars2 = new Vector(); 
+            pars2.add(unitExpression); 
+            pars2.add(sze2.expression);
+          
+            BasicExpression rng2 = 
+              BasicExpression.newFunctionBasicExpression(
+                  "subrange", "Integer", pars2);  
+            BasicExpression def = 
+              new BasicExpression(defaultValue); 
+            Expression col = 
+              new BinaryExpression("->collect", rng2, def);  
+            Vector pars1 = new Vector(); 
+            pars1.add(unitExpression); 
+            pars1.add(sze1.expression);
+          
+            BasicExpression rng1 = 
+              BasicExpression.newFunctionBasicExpression(
+                 "subrange", "Integer", pars1);
+            expression = 
+              new BinaryExpression("->collect", rng1, col);
+          } 
+        } 
+        else if (argsterm.arity() == 5 && 
+                   "[".equals(argsterm.terms.get(0) + "") && 
+                   "]".equals(argsterm.terms.get(2) + "") &&
+                   "[".equals(argsterm.terms.get(3) + "") &&
+                   "]".equals(argsterm.terms.get(4) + ""))
+        { // new T[n] [] 
+          ASTTerm arraySze = (ASTTerm) argsterm.terms.get(1); 
+          String sze = arraySze.toKM3(); 
+          ASTTerm.setType(this,"Sequence");
+          ASTTerm.setElementType(this,"Sequence(" + clsname + ")");  // ??
+          res = "Integer.subrange(1," + sze + ")->collect(Sequence{})";
+          Vector pars1 = new Vector(); 
+          pars1.add(unitExpression); 
+          pars1.add(arraySze.expression);
+
+          Expression arrayDom = 
+              BasicExpression.newFunctionBasicExpression(
+                  "subrange", "Integer", pars1);  
+          Expression emptySequence = new SetExpression(true); 
+          expression = 
+            new BinaryExpression("->collect", arrayDom, 
+                                 emptySequence); 
+        } 
+        else if (argsterm.arity() == 5 && 
+                   "[".equals(argsterm.terms.get(0) + "") && 
+                   "]".equals(argsterm.terms.get(1) + "") &&
+                   "[".equals(argsterm.terms.get(2) + "") && 
+                   "]".equals(argsterm.terms.get(3) + ""))
+        { // new T[][] {elems}
+          ASTTerm arrayInit = (ASTTerm) argsterm.terms.get(4); 
+          res = arrayInit.toKM3(); 
+          ASTTerm.setType(this,"Sequence");
+          ASTTerm.setElementType(this,"Sequence(" + clsname + ")");  
+          expression = arrayInit.expression; 
+        } 
+        else if (argsterm.arity() == 9 && 
+            "[".equals(argsterm.terms.get(0) + "") && 
+            "]".equals(argsterm.terms.get(2) + "") && 
+            "[".equals(argsterm.terms.get(3) + "") &&
+            "]".equals(argsterm.terms.get(5) + "") && 
+            "[".equals(argsterm.terms.get(6) + "") &&
+            "]".equals(argsterm.terms.get(8) + ""))
+        { ASTTerm sze1 = (ASTTerm) argsterm.terms.get(1);
+          ASTTerm sze2 = (ASTTerm) argsterm.terms.get(4);
+          ASTTerm sze3 = (ASTTerm) argsterm.terms.get(7);
+          
+          String defaultValue = getDefaultValue(clsname);  
+          res = "Integer.subrange(1," + sze1.toKM3() + ")->collect(Integer.subrange(1," + sze2.toKM3() + ")->collect(Integer.subrange(1," + sze3.toKM3() + ")->collect(" + defaultValue + ")))";
+          ASTTerm.setType(this,"Sequence");
+          ASTTerm.setElementType(this,"Sequence(Sequence(" + clsname + "))");  
+
+          if (sze1.expression != null &&
+              sze2.expression != null && 
+              sze3.expression != null) 
+          { Vector pars3 = new Vector(); 
+            pars3.add(unitExpression); 
+            pars3.add(sze3.expression);
+          
+            BasicExpression rng3 = 
+              BasicExpression.newFunctionBasicExpression(
+                  "subrange", "Integer", pars3);  
+          
+            Vector pars2 = new Vector(); 
+            pars2.add(unitExpression); 
+            pars2.add(sze2.expression);
+          
+            BasicExpression rng2 = 
+              BasicExpression.newFunctionBasicExpression(
+                  "subrange", "Integer", pars2);  
+            BasicExpression def = 
+              new BasicExpression(defaultValue); 
+            Expression col = 
+              new BinaryExpression("->collect", rng3, def);  
+            Expression col1 = 
+              new BinaryExpression("->collect", rng2, col); 
+ 
+            Vector pars1 = new Vector(); 
+            pars1.add(unitExpression); 
+            pars1.add(sze1.expression);
+          
+            BasicExpression rng1 = 
+              BasicExpression.newFunctionBasicExpression(
+                 "subrange", "Integer", pars1);
+            expression = 
+              new BinaryExpression("->collect", rng1, col1);
+          } 
+        } 
+        else if (argsterm.arity() == 8 && 
+            "[".equals(argsterm.terms.get(0) + "") && 
+            "]".equals(argsterm.terms.get(2) + "") && 
+            "[".equals(argsterm.terms.get(3) + "") &&
+            "]".equals(argsterm.terms.get(5) + "") && 
+            "[".equals(argsterm.terms.get(6) + "") &&
+            "]".equals(argsterm.terms.get(7) + ""))
+        { ASTTerm sze1 = (ASTTerm) argsterm.terms.get(1);
+          ASTTerm sze2 = (ASTTerm) argsterm.terms.get(4);
+          
+          String defaultValue = getDefaultValue(clsname);  
+          res = "Integer.subrange(1," + sze1.toKM3() + ")->collect(Integer.subrange(1," + sze2.toKM3() + ")->collect(Sequence{}))";
+          ASTTerm.setType(this,"Sequence");
+          ASTTerm.setElementType(this,"Sequence(Sequence(" + clsname + "))");  
+
+          if (sze1.expression != null &&
+              sze2.expression != null) 
+          { Vector pars2 = new Vector(); 
+            pars2.add(unitExpression); 
+            pars2.add(sze2.expression);
+          
+            BasicExpression rng2 = 
+              BasicExpression.newFunctionBasicExpression(
+                  "subrange", "Integer", pars2);  
+            Expression col = 
+              new SetExpression(true);  
+            Expression col1 = 
+              new BinaryExpression("->collect", rng2, col); 
+ 
+            Vector pars1 = new Vector(); 
+            pars1.add(unitExpression); 
+            pars1.add(sze1.expression);
+          
+            BasicExpression rng1 = 
+              BasicExpression.newFunctionBasicExpression(
+                 "subrange", "Integer", pars1);
+            expression = 
+              new BinaryExpression("->collect", rng1, col1);
+          } 
+        } 
+        else if (argsterm.arity() == 7 && 
+                   "[".equals(argsterm.terms.get(0) + "") && 
+                   "]".equals(argsterm.terms.get(1) + "") &&
+                   "[".equals(argsterm.terms.get(2) + "") && 
+                   "]".equals(argsterm.terms.get(3) + "") &&
+                   "[".equals(argsterm.terms.get(4) + "") && 
+                   "]".equals(argsterm.terms.get(5) + ""))
+        { // new T[][][] {elems}
+          ASTTerm arrayInit = (ASTTerm) argsterm.terms.get(6); 
+          res = arrayInit.toKM3(); 
+          ASTTerm.setType(this,"Sequence");
+          ASTTerm.setElementType(this,"Sequence(Sequence(" + clsname + "))");  
+          expression = arrayInit.expression; 
+        } 
+
         return res;  
       } 
 
+
+      if (args instanceof ASTCompositeTerm && 
+          "classCreatorRest".equals(((ASTCompositeTerm) args).tag))
+      { ASTCompositeTerm argsterm = (ASTCompositeTerm) args;
+        if (argsterm.arity() == 2) // inner class
+        { cident = "";
+          Entity newc = null; 
+ 
+          if (args.modelElement != null && 
+              args.modelElement instanceof Entity) 
+          { newc = (Entity) args.modelElement; 
+            cident = newc.getName(); 
+          } 
+          else 
+          { cident = 
+              Identifier.nextIdentifier("_Class"); 
+            newc = new Entity(cident);
+            args.modelElement = newc; 
+
+            if ("Object".equals(cls.literalForm())) { } 
+            else 
+            { Entity sup = (Entity)
+                ModelElement.lookupByName(clsname, 
+                                   ASTTerm.entities); 
+              if (sup != null) 
+              { newc.setSuperclass(sup); } 
+            } 
+            ASTTerm clsbody = (ASTTerm) argsterm.terms.get(1); 
+            String body = clsbody.toKM3();
+          
+            ASTTerm.entities.add(newc); 
+            newc.addModelElements(clsbody.modelElements); 
+          }
+
+          Vector creatorArguments = new Vector(); 
+          if (args instanceof ASTCompositeTerm)
+          { creatorArguments = 
+              ((ASTCompositeTerm) args).getCreatorArgumentExpressions(); 
+            System.out.println("::>> Creator arguments: " + creatorArguments); 
+          } 
+
+          if (args.expressions != null) 
+          { expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                 "new" + cident, cident, 
+                 args.expressions); 
+          } 
+          else
+          { expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "new" + cident, cident, creatorArguments); 
+          } 
+
+          return cident + ".new" + cident + "()";  
+        } 
+      } 
+
+
       String args1 = args.toKM3();
  
+
       if ("BigInteger".equals(cls.literalForm()))
       { ASTTerm.setType(this,"long");
 
@@ -21987,7 +22325,8 @@ public class ASTCompositeTerm extends ASTTerm
         // assume argument is a file 
         if (arg1.expression != null) 
         { expression = 
-             BasicExpression.newStaticCallBasicExpression("newOclFile_Read", "OclFile", arg1.expression); 
+             BasicExpression.newStaticCallBasicExpression(
+               "newOclFile_Read", "OclFile", arg1.expression); 
         } 
  
         return "OclFile.newOclFile_Read" + args1; 
@@ -22760,23 +23099,23 @@ public class ASTCompositeTerm extends ASTTerm
       } 
 
       if (args.expressions != null) 
-      { expression = BasicExpression.newStaticCallBasicExpression("new" + clsname, clsname, args.expressions); } 
+      { expression = BasicExpression.newStaticCallBasicExpression("new" + cident, clsname, args.expressions); } 
       else
-      { expression = BasicExpression.newStaticCallBasicExpression("new" + clsname, clsname, creatorArguments); } 
+      { expression = BasicExpression.newStaticCallBasicExpression("new" + cident, clsname, creatorArguments); } 
 
-        
-      return clsname + ".new" + clsname + args1; 
+      return clsname + ".new" + cident + args1; 
     } 
 
     if ("createdName".equals(tag))
     { ASTTerm mainclass = (ASTTerm) terms.get(0);
-      String res = mainclass.toKM3();
+      String res = mainclass.toKM3type();
       ASTTerm.setType(this,res);
 
       System.out.println(">>> Type of " + this + " is " + res); 
 
       Type typ; 
-      Entity ent = (Entity) ModelElement.lookupByName(res, ASTTerm.entities); 
+      Entity ent = 
+        (Entity) ModelElement.lookupByName(res, ASTTerm.entities); 
       if (ent != null) 
       { typ = new Type(ent); } 
       else if (ModelElement.lookupByName(res,ASTTerm.enumtypes) != null) 
@@ -22784,19 +23123,57 @@ public class ASTCompositeTerm extends ASTTerm
       else 
       { typ = new Type(res,null); } 
 
-      expression = new BasicExpression(typ);
+      modelElement = typ; 
+      expression = new BasicExpression(res);
   
       if (terms.size() > 1) 
-      { // type arguments 
-        ASTTerm t2 = (ASTTerm) terms.get(1); 
-        String elemT = t2.typeArgumentsToKM3(); 
-        System.out.println(">>> Object creation element type = " + elemT); 
-        Type et = 
-          Type.getTypeFor(elemT,
-             ASTTerm.enumtypes,ASTTerm.entities); 
-        if (et != null) 
-        { // expression.setElementType(et); 
-          res = res + "(" + elemT + ")"; 
+      { // type arguments -- 
+        // it must be a collection, function, 
+        // map or  entity type
+
+        if (typ.isSequenceType() || typ.isSetType())
+        { ASTTerm t2 = (ASTTerm) terms.get(1); 
+          String elemT = t2.typeArgumentsToKM3ElementType(); 
+        
+          System.out.println(">>> Object creation element type = " + elemT); 
+        
+          Type et = 
+            Type.getTypeFor(elemT,
+               ASTTerm.enumtypes,ASTTerm.entities); 
+          if (et != null) 
+          { typ.setElementType(et); 
+            res = res + "(" + elemT + ")"; 
+          } 
+        } 
+        else if (typ.isMapType() || typ.isFunctionType())
+        { ASTTerm t2 = (ASTTerm) terms.get(1); 
+
+          String allpars = t2.toKM3(); 
+
+          System.out.println(">>> Object creation all pars = " + allpars); 
+
+          if (t2.modelElements != null) 
+          { typ.setTypeParameters(t2.modelElements); } 
+
+          res = res + "(" + allpars + ")"; 
+        }
+        else 
+        { 
+          if (ent == null) 
+          { ent = new Entity(res); } 
+
+          modelElement = ent; 
+
+          ASTTerm t2 = (ASTTerm) terms.get(1); 
+        
+          String allpars = t2.toKM3(); 
+
+          System.out.println(">>> Object creation all pars = " + allpars); 
+
+          if (t2.modelElements != null) 
+          { ent.setTypeParameters(t2.modelElements); } 
+
+          res = res + "<" + allpars + ">"; 
         } 
       } 
 
@@ -22805,7 +23182,9 @@ public class ASTCompositeTerm extends ASTTerm
 
     if ("classCreatorRest".equals(tag))
     { // (arguments ( )) or 
-      // (arguments ( (expressionList ...) ))
+      // (arguments ( (expressionList ...) )) or 
+      // (arguments ...) (classBody ...)
+
       if (terms.size() > 0) 
       { ASTTerm t = (ASTTerm) terms.get(0); 
         String ss = t.toKM3(); 
@@ -22818,10 +23197,10 @@ public class ASTCompositeTerm extends ASTTerm
     return ""; 
   }
 
-  public String typeArgumentsToKM3()
+  public String typeArgumentsToKM3ElementType()
   { if (tag.equals("typeArgumentsOrDiamond") && terms.size() == 1)
     { ASTTerm tt = (ASTTerm) terms.get(0); 
-      String res = tt.typeArgumentsToKM3();
+      String res = tt.typeArgumentsToKM3ElementType();
       modelElement = tt.modelElement;
       return res;   
     } 
@@ -22834,6 +23213,7 @@ public class ASTCompositeTerm extends ASTTerm
  
       if (terms.size() > 3)
       { ASTTerm typepar1 = (ASTTerm) terms.get(3); 
+        modelElement = typepar1.modelElement; 
         res = typepar1.toKM3(); 
       } 
       return res; 
@@ -23300,6 +23680,27 @@ public class ASTCompositeTerm extends ASTTerm
         String e2x = e2.toKM3();
         String e1literal = e1.literalForm(); 
  
+        if (".".equals(terms.get(1) + "") &&
+            "this".equals(terms.get(2) + ""))
+        { // C.this |--> self->oclAsType(C)
+          ASTTerm cterm = (ASTTerm) terms.get(0); 
+          String cc = cterm.queryForm();
+          ASTTerm.setType(this,cc); 
+ 
+          if (cterm.expression != null) 
+          { BasicExpression selfbe = 
+              BasicExpression.newVariableBasicExpression(
+                                           "_container"); 
+            expression = new BinaryExpression(
+                           "->oclAsType", selfbe, 
+                           cterm.expression); 
+            return "_container->oclAsType(" + cc + ")"; 
+          }
+          expression = 
+             BasicExpression.newVariableBasicExpression(
+                                                  "self"); 
+          return "self"; 
+        }   
 
         if ("PI".equals(e2 + "") && "Math".equals(e1literal))
         { ASTTerm.setType(this,"double"); 
@@ -25305,10 +25706,22 @@ public class ASTCompositeTerm extends ASTTerm
 
         return "  return "; 
       } 
-      else if (terms.size() > 0 && "continue".equals(terms.get(0) + ""))
+      else if (terms.size() == 2 && 
+               "continue".equals(terms.get(0) + "") && 
+               ";".equals(terms.get(1) + ""))
       { statement = new ContinueStatement(); 
 
         return "  continue "; 
+      } 
+      else if (terms.size() >= 3 && 
+               "continue".equals(terms.get(0) + "") && 
+               ";".equals(terms.get(2) + ""))
+      { String lbl = terms.get(1) + ""; 
+        BasicExpression becall = 
+          BasicExpression.newCallBasicExpression(lbl); 
+        statement = new InvocationStatement(becall); 
+
+        return "  " + lbl + "()"; 
       } 
       else if (terms.size() > 0 && "break".equals(terms.get(0) + ""))
       { statement = new BreakStatement(); 
@@ -25533,6 +25946,8 @@ public class ASTCompositeTerm extends ASTTerm
       String res = ""; 
       ASTTerm typeTerm; 
       ASTCompositeTerm varTerm;
+
+      modelElements = new Vector(); // The Attributes of the vars
       SequenceStatement sstatements = new SequenceStatement(); 
             
       if (terms.size() >= 3) 
@@ -25544,8 +25959,12 @@ public class ASTCompositeTerm extends ASTTerm
         varTerm = (ASTCompositeTerm) terms.get(1); 
       } 
 
-      String km3type = typeTerm.toKM3();
-      Type actualType = (Type) typeTerm.modelElement; 
+      String km3type = typeTerm.toKM3type();
+      Type actualType = null; 
+      if (typeTerm.modelElement instanceof Type)
+      { actualType = (Type) typeTerm.modelElement; } 
+      else if (typeTerm.modelElement instanceof Entity)
+      { actualType = new Type((Entity) typeTerm.modelElement); }
 
       Vector vardeclarators = varTerm.terms; 
       for (int i = 0; i < vardeclarators.size(); i++) 
@@ -25574,9 +25993,14 @@ public class ASTCompositeTerm extends ASTTerm
             CreationStatement.newCreationStatement(
                                    km3var, km3type, 
                        ASTTerm.enumtypes, ASTTerm.entities);
+
+          Attribute att = null; 
           if (actualType != null) 
           { varbe.setType(actualType); 
             cs.setType(actualType); 
+            att = new Attribute(km3var, actualType, 
+                                          ModelElement.INTERNAL);
+            modelElements.add(att);  
           } 
           sstatements.addStatement(cs); 
            
@@ -25588,6 +26012,9 @@ public class ASTCompositeTerm extends ASTTerm
           { AssignStatement initStat = 
               new AssignStatement(varbe,vInit.expression); 
             sstatements.addStatement(initStat);
+
+            if (att != null) 
+            { att.setInitialExpression(vInit.expression); }
           
             if (tv.statement != null) // post side-effect 
             { sstatements.addStatement(tv.statement); } 
@@ -25607,20 +26034,19 @@ public class ASTCompositeTerm extends ASTTerm
     { ASTTerm typeTerm = (ASTTerm) terms.get(0); 
       ASTCompositeTerm varTerm = 
          (ASTCompositeTerm) terms.get(1); 
-      String km3type = typeTerm.toKM3();
-      Type actualType = (Type) typeTerm.modelElement; 
- 
-   /* if (terms.size() >= 3) 
+      if (terms.size() >= 3) 
       { typeTerm = (ASTTerm) terms.get(terms.size()-2); 
         varTerm = (ASTCompositeTerm) terms.get(terms.size()-1); 
       } // ignore modifiers 
-      else 
-      { typeTerm = (ASTTerm) terms.get(0); 
-        varTerm = (ASTCompositeTerm) terms.get(1); 
-      } 
-
-      String km3type = typeTerm.toKM3();
-      Type actualType = (Type) typeTerm.modelElement; */ 
+      
+      String km3type = typeTerm.toKM3type();
+      
+      Type actualType = null;
+      if (typeTerm.modelElement instanceof Type)
+      { actualType = (Type) typeTerm.modelElement; } 
+      else if (typeTerm.modelElement instanceof Entity)
+      { actualType = new Type((Entity) typeTerm.modelElement); } 
+ 
 
       String res = ""; 
 
@@ -25681,13 +26107,95 @@ public class ASTCompositeTerm extends ASTTerm
       return res + " ; \n"; 
     }   
 
+    if ("constDeclaration".equals(tag) && terms.size() > 1)
+    { ASTTerm typeTerm = (ASTTerm) terms.get(0); 
+      String km3type = typeTerm.toKM3type();
+      Type actualType = null; 
+      if (typeTerm.modelElement instanceof Type)
+      { actualType = (Type) typeTerm.modelElement; } 
+      else if (typeTerm.modelElement instanceof Entity)
+      { actualType = new Type((Entity) typeTerm.modelElement); } 
+ 
+      String res = ""; 
+
+      Vector vardeclarators = new Vector(); 
+      vardeclarators.addAll(terms);
+      vardeclarators.remove(0); 
+ 
+      for (int i = 0; i < vardeclarators.size(); i++) 
+      { ASTTerm vTerm = (ASTTerm) vardeclarators.get(i);
+        if (vTerm instanceof ASTCompositeTerm)  
+        { ASTCompositeTerm tv = (ASTCompositeTerm) vTerm; 
+          String km3var = tv.toKM3Var(); 
+          String km3init = tv.toKM3VarInit(); 
+ 
+          if (res.equals("")) { } 
+          else 
+          { res = res + " ;\n"; } 
+ 
+          res = res + "  attribute " + km3var + " : " + km3type; 
+ 
+          if (km3init != null) 
+          { res = res + " := " + km3init; }  
+
+          
+          ASTTerm.setType(km3var,km3type);
+
+          Attribute att = Attribute.newAttribute(
+            km3var, km3type, 
+            ASTTerm.enumtypes, ASTTerm.entities); 
+
+          if (actualType != null) 
+          { att.setType(actualType); 
+            att.setElementType(actualType.getElementType()); 
+          }
+    
+          if (tv.expression != null) 
+          { att.setInitialExpression(tv.expression); }
+ 
+        // if (varTerm.expression != null) 
+        // { att.setInitialExpression(varTerm.expression); }
+
+          att.setFrozen(true); 
+
+          modelElement = att;  
+          if (modelElements == null) 
+          { modelElements = new Vector(); } 
+          modelElements.add(att); 
+
+      // but can be several attributes: 
+      // (variableDeclarators (variableDeclarator ...) , ...) 
+
+          System.out.println(">> Type of " + km3var + " is " + km3type + " = " + km3init); 
+          System.out.println(">> Attribute = " + att + " " + att.getType() + " (" + att.getElementType() + ")"); 
+          System.out.println(">> Initialisation = " + att.getInitialExpression());
+        }  
+      } 
+      System.out.println(); 
+      return res + " ; \n"; 
+    }   
+
     if ("typeType".equals(tag))
-    { if (terms.size() >= 3 && 
+    { if (terms.size() == 2 && 
+          ((ASTTerm) terms.get(0)).hasTag("annotation"))
+      { ASTTerm rest = (ASTTerm) terms.get(1); 
+        String resx = rest.toKM3type();
+        modelElement = rest.modelElement; 
+        expression = rest.expression; 
+        return resx;  
+      } 
+
+      if (terms.size() >= 3 && 
           "[".equals(terms.get(1) + "") &&
           "]".equals(terms.get(2) + ""))
       { ASTTerm typeTerm = (ASTTerm) terms.get(0); 
-        String tt = typeTerm.toKM3();
-        Type elementType = (Type) typeTerm.modelElement; 
+        String tt = typeTerm.toKM3type();
+        Type elementType = null; 
+        if (typeTerm.modelElement instanceof Type)
+        { elementType = (Type) typeTerm.modelElement; } 
+        else if (typeTerm.modelElement instanceof Entity)
+        { elementType = new Type((Entity) typeTerm.modelElement); } 
+      
 
         for (int i = 1; i+1 < terms.size(); i = i + 2) 
         { if ((terms.get(i) + "").equals("[") &&
@@ -25704,11 +26212,11 @@ public class ASTCompositeTerm extends ASTTerm
       } 
       else if (terms.size() == 1) 
       { ASTTerm typeTerm = (ASTTerm) terms.get(0); 
-        String tt = typeTerm.toKM3();
+        String tt = typeTerm.toKM3type();
         modelElement = typeTerm.modelElement;
         expression = typeTerm.expression; 
-        System.out.println(modelElement); 
-        System.out.println(expression); 
+        System.out.println(">>> Model element of " + this + " is: " + modelElement); 
+        System.out.println(">>> Expression of " + this + " is: " + expression); 
         System.out.println(); 
         return tt; 
       } 
@@ -25717,24 +26225,102 @@ public class ASTCompositeTerm extends ASTTerm
     if ("typeTypeOrVoid".equals(tag))
     { if (terms.size() == 1) 
       { ASTTerm typeTerm = (ASTTerm) terms.get(0); 
-        String tt = typeTerm.toKM3();
+        String tt = typeTerm.toKM3type();
         modelElement = typeTerm.modelElement; 
+        expression = typeTerm.expression; 
         return tt; 
       } 
     } 
 
     if ("typeParameters".equals(tag))
-    { if (terms.size() == 3) 
+    { if (terms.size() == 3 && 
+          "<".equals(terms.get(0) + "") && 
+          ">".equals(terms.get(2) + "")) 
       { ASTTerm typeTerm = (ASTTerm) terms.get(1); 
-        String tt = typeTerm.toKM3();
+        String tt = typeTerm.toKM3type();
         modelElement = typeTerm.modelElement; 
-        return tt; 
+        return "<" + tt + ">"; 
       } 
+
+      if (terms.size() >= 3 && 
+          "<".equals(terms.get(0) + ""))
+      { modelElements = new Vector();
+        String resx = "<";   
+        for (int i = 1; i < terms.size()-1; i++) 
+        { ASTTerm trm = (ASTTerm) terms.get(i); 
+          if (trm instanceof ASTSymbolTerm) 
+          { resx = resx + trm; } 
+          else 
+          { String tt = trm.toKM3type();
+            modelElement = trm.modelElement;
+            modelElements.add(modelElement);
+            resx = resx + tt; 
+          } 
+        }  
+        return resx + ">"; 
+      } 
+
+      return ""; 
+    } 
+
+    if ("typeParameter".equals(tag))
+    { if (terms.size() == 1) 
+      { ASTTerm tt = (ASTTerm) terms.get(0);
+        String val = tt.literalForm();  
+        modelElement = 
+           Type.getTypeFor(val, ASTTerm.enumtypes, 
+                           ASTTerm.entities); 
+
+        if (modelElement == null)
+        { modelElement = new Type(val, null); }  
+
+        expression = new BasicExpression((Type) modelElement);
+  
+        return val; 
+      } 
+      else if (terms.size() >= 3 && 
+               "extends".equals(terms.get(1) + ""))
+      { ASTTerm tt = (ASTTerm) terms.get(0); 
+        String val = tt.literalForm();  
+        modelElement = 
+           Type.getTypeFor(val, ASTTerm.enumtypes, 
+                           ASTTerm.entities); 
+
+        if (modelElement == null)
+        { modelElement = new Type(val, null); }  
+
+        expression = new BasicExpression((Type) modelElement);
+  
+        return val; 
+      } // But these should be typeParameter entities
+
+      return "";  
     } 
 
     if ("classBodyDeclaration".equals(tag) ||
         "interfaceBodyDeclaration".equals(tag))
-    { if (terms.size() == 1) 
+    { if (terms.size() == 1 && 
+          "block".equals(((ASTTerm) terms.get(0)).getTag())) 
+      { if (modelElement != null) 
+        { return ""; } 
+        ASTTerm memberTerm = (ASTTerm) terms.get(0); 
+        String blockcode = memberTerm.toKM3();
+        String initId = 
+          Identifier.nextIdentifier("_initialiseInstance");  
+        BehaviouralFeature bf = 
+          new BehaviouralFeature(initId); 
+        bf.setPre(new BasicExpression(true)); 
+        bf.setPost(new BasicExpression(true)); 
+        bf.setParameters(new Vector()); 
+        if (memberTerm.statement != null) 
+        { bf.setActivity(memberTerm.statement); } 
+        modelElement = bf; 
+        modelElements = memberTerm.modelElements; 
+        return "  operation " + initId + "()\n" + 
+               "  pre: true post: true\n" + 
+               "  activity: " + blockcode + ";\n\n";  
+      } 
+      else if (terms.size() == 1) 
       { ASTTerm memberTerm = (ASTTerm) terms.get(0); 
         String tt = memberTerm.toKM3();
         modelElement = memberTerm.modelElement; 
@@ -25745,10 +26331,12 @@ public class ASTCompositeTerm extends ASTTerm
                "static".equals(terms.get(0) + "") && 
                ((ASTTerm) terms.get(1)).hasTag("block"))
       { // static block
+        if (modelElement != null) 
+        { return ""; } 
         ASTTerm stat = (ASTTerm) terms.get(1); 
         String blockcode = stat.toKM3();
         String initId = 
-          Identifier.nextIdentifier("initialiseClass");  
+          Identifier.nextIdentifier("_initialiseClass");  
         BehaviouralFeature bf = 
           new BehaviouralFeature(initId); 
         bf.setPre(new BasicExpression(true)); 
@@ -25814,10 +26402,23 @@ public class ASTCompositeTerm extends ASTTerm
     } 
 
     if ("classOrInterfaceType".equals(tag))
-    { if (terms.size() > 1)  // A parameterised type 
-      { ASTTerm baseType = (ASTTerm) terms.get(0); 
-        ASTTerm typepars = (ASTTerm) terms.get(1);
-        String pars = typepars.toKM3();
+    { if (terms.size() > 2 && ".".equals(terms.get(1) + ""))  
+      { // A relativised type T.S
+        ASTTerm baseType = (ASTTerm) terms.get(2); 
+        String btype = baseType.toKM3type();
+        modelElement = baseType.modelElement; 
+        expression = new BasicExpression((Type) modelElement); 
+        return btype; 
+      }  
+      else if (terms.size() > 1 && 
+               terms.get(1) instanceof ASTCompositeTerm && 
+               "typeArguments".equals(
+                  ((ASTTerm) terms.get(1)).getTag()))  
+      { // parameterised type  T (typeArguments < pars >)
+        ASTTerm baseType = (ASTTerm) terms.get(0); 
+        ASTCompositeTerm typepars = 
+             (ASTCompositeTerm) terms.get(1);
+        String pars = typepars.toKM3type();
         
         Vector targs = 
           ((ASTCompositeTerm) typepars).getTypeParameterTypes(); 
@@ -25827,21 +26428,36 @@ public class ASTCompositeTerm extends ASTTerm
         System.out.println(">> Parameterised type with parameters " + targs); 
         System.out.println(); 
  
-        String btype = baseType.toKM3();
+        String btype = baseType.toKM3type();
         modelElement = baseType.modelElement; 
         expression = baseType.expression; // Not valid
 
         if (modelElement != null)
-        { if (targs.size() > 1) // Maps, Functions
+        { if (targs.size() > 1 && 
+              modelElement instanceof Type && 
+              ((Type) modelElement).isMap()) 
           { Type ktype = (Type) targs.get(0); 
             Type etype = (Type) targs.get(1); 
             ((Type) modelElement).setKeyType(ktype); 
             ((Type) modelElement).setElementType(etype);
           }  
-          else if (targs.size() > 0) 
+          else if (targs.size() > 1 && 
+                   modelElement instanceof Type && 
+                   ((Type) modelElement).isFunction()) 
+          { Type ktype = (Type) targs.get(0); 
+            Type etype = (Type) targs.get(1); 
+            ((Type) modelElement).setKeyType(ktype); 
+            ((Type) modelElement).setElementType(etype);
+          }  
+          else if (targs.size() > 0 && 
+                   modelElement instanceof Type && 
+                   ((Type) modelElement).isCollectionType()) 
           { Type etype = (Type) targs.get(0); 
             ((Type) modelElement).setElementType(etype);
           }  
+          else // general parameterised type 
+          { ((Type) modelElement).setGenericTypeParameters(targs); }
+
           expression = new BasicExpression((Type) modelElement); 
           System.out.println(">> Parameterised type: " + modelElement);
           System.out.println(expression); 
@@ -25858,16 +26474,25 @@ public class ASTCompositeTerm extends ASTTerm
       } 
     } 
  
-    if ("typeArguments".equals(tag) && terms.size() > 1)
+    if ("typeArguments".equals(tag) && terms.size() > 1 && 
+        "<".equals(terms.get(0) + ""))
     { // < arg >   or   < arg1 , arg2 >
-      ASTTerm typepar0 = (ASTTerm) terms.get(1); 
-      String res = typepar0.toKM3();
-      modelElement = typepar0.modelElement; 
- 
-      if (terms.size() > 3)
-      { ASTTerm typepar1 = (ASTTerm) terms.get(3); 
-        res = res + ", " + typepar1.toKM3(); 
+      modelElements = new Vector(); 
+      String res = ""; 
+      for (int i = 1; i < terms.size()-1; i++)
+      { ASTTerm typepar0 = (ASTTerm) terms.get(i); 
+        res = res + typepar0.toKM3type();
+
+        System.out.println(">>> Type parameter: " + typepar0.modelElement); 
+
+        if (typepar0 instanceof ASTSymbolTerm) { } 
+        else 
+        { modelElement = typepar0.modelElement; 
+          if (modelElement != null) 
+          { modelElements.add(modelElement); } 
+        } 
       } 
+
       return res; 
     } 
 
@@ -25905,6 +26530,7 @@ public class ASTCompositeTerm extends ASTTerm
       { ASTTerm tt = (ASTTerm) terms.get(0); 
         String res = tt.toKM3(); 
         statement = tt.statement; 
+        modelElements = tt.modelElements; // for local decs
         return res; 
       } 
     } 
@@ -25978,13 +26604,8 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm typePars = (ASTTerm) terms.get(0); 
       ASTTerm mDec = (ASTTerm) terms.get(1); 
 
-      String gtype = typePars.toKM3(); 
-      System.out.println(">> Generic type= " + gtype); 
-
-      Entity parEnt = new Entity(gtype);
-      parEnt.genericParameter = true;  
-      ASTTerm.entities.add(parEnt); 
-      Type parEntType = new Type(parEnt); 
+      String gtype = typePars.toKM3type(); 
+      System.out.println(">> Generic types = " + gtype); 
 
       String met = mDec.toKM3(); 
       modelElement = mDec.modelElement; 
@@ -25994,12 +26615,23 @@ public class ASTCompositeTerm extends ASTTerm
       if (modelElement != null && 
           modelElement instanceof BehaviouralFeature)
       { BehaviouralFeature bf = (BehaviouralFeature) modelElement;
-        bf.addTypeParameter(parEntType);
+        bf.setTypeParameters(typePars.modelElements);
         String bfname = bf.getName();  
-        res = met.replace(bfname, bfname + "<" + gtype + ">"); 
+        res = met.replace(bfname, bfname + "" + gtype + ""); 
       }  
 
-      ASTTerm.entities.remove(parEnt); 
+      for (int i = 0; i < typePars.modelElements.size(); i++)
+      { ModelElement partype = 
+          (ModelElement) typePars.modelElements.get(i); 
+        Entity parEnt = null; 
+        if (partype instanceof Type)
+        { parEnt = ((Type) partype).getEntity(); } 
+        else if (partype instanceof Entity)
+        { parEnt = (Entity) partype; } 
+ 
+        if (parEnt != null) 
+        { ASTTerm.entities.remove(parEnt); } 
+      } 
 
       return res; 
     } // replace operation name by name<gtype>
@@ -26010,14 +26642,19 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm mname = (ASTTerm) terms.get(1);
       ASTTerm mparams = (ASTTerm) terms.get(2); 
       
-      BehaviouralFeature bf = new BehaviouralFeature(mname.literalForm()); 
+      BehaviouralFeature bf = 
+        new BehaviouralFeature(mname.literalForm()); 
 
-      String restype = mtype.toKM3(); 
+      String restype = mtype.toKM3type(); 
       String res = "  operation " + mname + mparams.toKM3() + " : " + restype  + "\n" + 
               "  pre: true\n" + "  post: true"; 
 
+      System.out.println("+++ return type of " + mname + " is " + mtype.modelElement); 
+
       if (mtype.modelElement instanceof Type)
       { bf.setType((Type) mtype.modelElement); } 
+      else if (mtype.modelElement instanceof Entity)
+      { bf.setType(new Type((Entity) mtype.modelElement)); } 
       else if (restype != null) 
       { Type resT = Type.getTypeFor(restype, ASTTerm.enumtypes, ASTTerm.entities); 
         if (resT != null) 
@@ -26031,6 +26668,9 @@ public class ASTCompositeTerm extends ASTTerm
       bf.setPostcondition(new BasicExpression(true)); 
 
       modelElement = bf; 
+
+      modelElements = new Vector(); 
+      modelElements.add(bf); 
 
       if (terms.size() > 3)
       { ASTTerm mbody = (ASTTerm) terms.get(3);
@@ -26050,8 +26690,18 @@ public class ASTCompositeTerm extends ASTTerm
   
         res = res + "\n  activity:\n"; 
 
+        Vector labelfunctions = new Vector(); 
+
         for (int i = 3; i < terms.size(); i++) 
         { ASTTerm tt = (ASTTerm) terms.get(i);
+
+          if (tt.hasTag("methodBody"))
+          { labelfunctions = 
+               ((ASTCompositeTerm) tt).javaLabelFunctions(bf);
+            System.out.println(">>> Operation " + bf + " has label functions " + labelfunctions);
+            modelElements.addAll(labelfunctions);  
+          } 
+
           if ("throws".equals(tt.literalForm()))
           { i++; } 
           else  
@@ -26065,6 +26715,7 @@ public class ASTCompositeTerm extends ASTTerm
           }
         }
       }  
+
       return res + "  ;\n\n"; 
     }
 
@@ -26107,7 +26758,7 @@ public class ASTCompositeTerm extends ASTTerm
           "    return result );\n\n"; 
    
       BehaviouralFeature constr = 
-        BehaviouralFeature.newConstructor(cname,
+        BehaviouralFeature.newConstructor(cname, cent,
                                  mparams.modelElements); 
       constr.setStatic(true); 
  
@@ -26156,32 +26807,166 @@ public class ASTCompositeTerm extends ASTTerm
       return res + "\n\n"; 
     }
 
+    if ("genericConstructorDeclaration".equals(tag))
+    { ASTTerm gpars = (ASTTerm) terms.get(0); 
+      ASTCompositeTerm consdef = 
+           (ASTCompositeTerm) terms.get(1); 
+
+      ASTTerm mname = (ASTTerm) consdef.terms.get(0);
+      ASTTerm mparams = (ASTTerm) consdef.terms.get(1);
+ 
+      String cname = mname.literalForm(); 
+      Entity cent = (Entity)
+          ModelElement.lookupByName(cname, 
+                                    ASTTerm.entities); 
+    
+      String res = "\n  static operation new" + cname + gpars.toKM3() + mparams.toKM3() + " : " + cname + "\n" + 
+              "  pre: true\n" + "  post: true\n"; 
+      res = res + 
+          "  activity:\n" + 
+          "  ( var result : " + cname + " := create" + cname + "() ;\n" +  
+          "    result.initialise(" +  getParNameList(mparams) + ") ;\n" + 
+          "    return result );\n\n"; 
+   
+      BehaviouralFeature constr = 
+        BehaviouralFeature.newConstructor(cname, cent,
+                                 mparams.modelElements); 
+      constr.setStatic(true); 
+      constr.setTypeParameters(gpars.modelElements);
+        
+      res = res + "  operation initialise" + mparams.toKM3() + " : void\n" + 
+              "  pre: true\n" + "  post: true\n"; 
+
+      SequenceStatement initCode = new SequenceStatement(); 
+      
+      if (terms.size() > 2)
+      { res = res + 
+          "  activity:\n";  
+        for (int i = 2; i < terms.size(); i++) 
+        { ASTTerm tt = (ASTTerm) terms.get(i); 
+          res = res + "   " + tt.toKM3();
+
+          if (tt.statement != null) 
+          { initCode.addStatement(tt.statement); } 
+
+          if (i < terms.size() - 1) 
+          { res = res + "\n"; }
+          else 
+          { res = res + " ;\n"; }  
+        }
+      }  
+
+      if (initCode.isEmpty())
+      { initCode.addStatement(new InvocationStatement("skip")); } 
+
+      BehaviouralFeature bfInit = 
+          new BehaviouralFeature("initialise"); 
+      bfInit.setParameters(mparams.modelElements); 
+      bfInit.setTypeParameters(gpars.modelElements);
+      bfInit.setActivity(initCode); 
+      bfInit.setPrecondition(new BasicExpression(true)); 
+      bfInit.setPostcondition(new BasicExpression(true)); 
+      // modelElement = bfInit; 
+
+      modelElements = new Vector(); 
+      modelElements.add(bfInit); 
+      modelElements.add(constr); 
+
+      if (cent != null && cent.getSuperclass() != null) 
+      { Entity supent = cent.getSuperclass(); 
+        BehaviouralFeature overriddenOp = 
+           supent.getDefinedOperation("initialise", 
+                                      mparams.modelElements); 
+        if (overriddenOp != null) 
+        { bfInit.addStereotype("override"); } 
+      } 
+
+      for (int i = 0; i < gpars.modelElements.size(); i++) 
+      { ModelElement partype = 
+          (ModelElement) gpars.modelElements.get(i); 
+        Entity parEnt = null; 
+        if (partype instanceof Type)
+        { parEnt = ((Type) partype).getEntity(); } 
+        else if (partype instanceof Entity)
+        { parEnt = (Entity) partype; } 
+ 
+        if (parEnt != null) 
+        { ASTTerm.entities.remove(parEnt); } 
+      } 
+
+
+      return res + "\n\n"; 
+    }
+
     if ("formalParameter".equals(tag))
     { int nTerms = terms.size(); 
       ASTTerm mtype = (ASTTerm) terms.get(nTerms - 2); 
       ASTTerm mname = (ASTTerm) terms.get(nTerms - 1);
       
-      String typ = mtype.toKM3(); 
+      String typ = mtype.toKM3type(); 
       String vv = mname.toKM3(); 
       ASTTerm.setType(vv,typ);
 
-      Type tt = Type.getTypeFor(typ, ASTTerm.enumtypes, ASTTerm.entities); 
+      Type tt = 
+        Type.getTypeFor(typ, 
+                   ASTTerm.enumtypes, ASTTerm.entities); 
       Type elemT = null; 
 
       if (tt != null)
       { System.out.println(">>> Type for parameter " + mname + " is " + tt + " ( " + tt.getElementType() + " )"); 
         elemT = tt.getElementType(); 
       } 
+      else if (mtype.modelElement instanceof Type)
+      { tt = (Type) mtype.modelElement; 
+        System.out.println(">>> Type for parameter " + mname + " is " + tt + " ( " + tt.getElementType() + " )"); 
+        elemT = tt.getElementType(); 
+      }
       else 
-      { System.out.println("! Warning: no type for parameter " + mname); }  
+      { System.out.println("! Warning: no type for parameter " + mname); 
+        tt = new Type(typ,null); 
+      } 
+  
       System.out.println(); 
 
-      modelElement = new Attribute(vv, tt, ModelElement.INTERNAL); 
+      modelElement = 
+        new Attribute(vv, tt, ModelElement.INTERNAL); 
       // Attribute.newAttribute(vv, tt, 
       //    ASTTerm.enumtypes, ASTTerm.entities);  
       ((Attribute) modelElement).setElementType(elemT); 
   
       String res = vv + " : " + typ;  
+      return res;
+    }
+
+    if ("lastFormalParameter".equals(tag))
+    { int nTerms = terms.size(); 
+      ASTTerm mtype = (ASTTerm) terms.get(nTerms - 3); 
+      ASTTerm mname = (ASTTerm) terms.get(nTerms - 1);
+      
+      String typ = mtype.toKM3type(); 
+      String vv = mname.toKM3(); 
+      ASTTerm.setType(vv,"Sequence(" + typ + ")");
+
+      Type tt = Type.getTypeFor(typ, ASTTerm.enumtypes, ASTTerm.entities); 
+      Type elemT = null; 
+
+      if (tt != null)
+      { System.out.println(">>> Type for parameter " + mname + " is Sequence(" + tt + ")"); 
+        elemT = tt.getElementType(); 
+      } 
+      else 
+      { System.out.println("! Warning: no type for parameter " + mname); }  
+      System.out.println(); 
+
+      Type seqtype = new Type("Sequence", null); 
+      seqtype.setElementType(tt); 
+      modelElement = new Attribute(vv, seqtype, 
+                                   ModelElement.INTERNAL); 
+      // Attribute.newAttribute(vv, tt, 
+      //    ASTTerm.enumtypes, ASTTerm.entities);  
+      ((Attribute) modelElement).setElementType(tt); 
+  
+      String res = vv + " : Sequence(" + typ + ")";  
       return res;
     }
 
@@ -26222,8 +27007,11 @@ public class ASTCompositeTerm extends ASTTerm
 
 
     if ("enumDeclaration".equals(tag) && 
-        terms.size() > 3)
-    { ASTTerm ename = (ASTTerm) terms.get(1); 
+        terms.size() == 5 && 
+        "{".equals(terms.get(2) + "") && 
+        "}".equals(terms.get(4) + ""))
+    { // enum E { lits } 
+      ASTTerm ename = (ASTTerm) terms.get(1); 
       ASTTerm literals = (ASTTerm) terms.get(3);
       Vector litvals = ((ASTCompositeTerm) literals).literalValues(); 
 
@@ -26233,7 +27021,64 @@ public class ASTCompositeTerm extends ASTTerm
  
       return "enumeration " + ename +
              " {\n" + literals.toKM3() + "}\n\n"; 
-    }  
+    }  // Simple enumeration
+
+    if ("enumDeclaration".equals(tag) && 
+        terms.size() == 6 && 
+        "{".equals(terms.get(2) + "") && 
+        "}".equals(terms.get(5) + ""))
+    { // enum E { lits body } 
+
+      ASTTerm enumname = (ASTTerm) terms.get(1); 
+      ASTTerm literals = (ASTTerm) terms.get(3);
+      // Vector litvals = ((ASTCompositeTerm) literals).literalValues(); 
+      ASTTerm enumBody = (ASTTerm) terms.get(4);
+      
+      // Type etype = new Type(ename.literalForm(), litvals);
+
+      String ename = enumname.literalForm(); 
+      Entity etype = new Entity(ename);  
+      modelElement = etype; 
+      ASTTerm.entities.add(etype); 
+ 
+
+      String bdy = enumBody.toKM3(); 
+      etype.addModelElements(enumBody.modelElements); 
+ 
+      return "class " + ename +
+             " {\n" + 
+             ((ASTCompositeTerm) literals).toKM3asObjects(etype) + "\n " + 
+             bdy + "}\n\n"; 
+    }  // Enumeration as class
+
+    if ("enumDeclaration".equals(tag) && 
+        terms.size() == 7 && 
+        "{".equals(terms.get(2) + "") &&
+        ",".equals(terms.get(4) + "") &&  
+        "}".equals(terms.get(6) + ""))
+    { // enum E { lits , body } 
+
+      ASTTerm enumname = (ASTTerm) terms.get(1); 
+      ASTTerm literals = (ASTTerm) terms.get(3);
+      // Vector litvals = ((ASTCompositeTerm) literals).literalValues(); 
+      ASTTerm enumBody = (ASTTerm) terms.get(5);
+      
+      // Type etype = new Type(ename.literalForm(), litvals);
+
+      String ename = enumname.literalForm(); 
+      Entity etype = new Entity(ename);  
+      modelElement = etype; 
+      ASTTerm.entities.add(etype); 
+
+      String bdy = enumBody.toKM3(); 
+      etype.addModelElements(enumBody.modelElements); 
+ 
+      return "class " + ename +
+             " {\n" + 
+             ((ASTCompositeTerm) literals).toKM3asObjects(etype) + "\n " + 
+             bdy + "}\n\n"; 
+    }  // Enumeration as class
+
 
     if ("modifier".equals(tag))
     { if (terms.size() > 0)
@@ -26272,14 +27117,24 @@ public class ASTCompositeTerm extends ASTTerm
       { ASTTerm t = (ASTTerm) terms.get(i); 
         res = res + t.toKM3(); 
         if (t.modelElement != null) 
-        { modelElements.add(t.modelElement); } 
+        { modelElements.add(t.modelElement);
+          /* if (t.modelElements != null) 
+          { for (int j = 0; j < t.modelElements.size(); j++) 
+            { ModelElement tmod = 
+                (ModelElement) t.modelElements.get(j); 
+              if (tmod instanceof Entity)
+              { modelElements.add(tmod); } 
+            } 
+          } */ 
+        } 
         else if (t.modelElements != null) 
         { modelElements.addAll(t.modelElements); } 
       } 
       return res; 
     } 
 
-    if ("typeDeclaration".equals(tag))
+    if ("typeDeclaration".equals(tag) || 
+        "localTypeDeclaration".equals(tag))
     { String res = ""; 
       modelElements = new Vector(); 
 
@@ -26298,6 +27153,14 @@ public class ASTCompositeTerm extends ASTTerm
         if (t.modelElement != null) 
         { modelElements.add(t.modelElement); 
           modelElement = t.modelElement; 
+          /* if (t.modelElements != null) 
+          { for (int j = 0; j < t.modelElements.size(); j++) 
+            { ModelElement tmod = 
+                (ModelElement) t.modelElements.get(j); 
+              if (tmod instanceof Entity)
+              { modelElements.add(tmod); } 
+            } 
+          } */ 
         } 
         else if (t.modelElements != null) 
         { modelElements.addAll(t.modelElements); } 
@@ -26305,14 +27168,17 @@ public class ASTCompositeTerm extends ASTTerm
       return res; 
     } 
 
-        
-    
+       
     if ("classDeclaration".equals(tag) && 
         terms.size() > 2)
-    { ASTTerm ename = (ASTTerm) terms.get(1); 
+    { // class name typeParameters? classBody
+
+      ASTTerm ename = (ASTTerm) terms.get(1); 
       String entName = ename.literalForm(); 
       
-      Entity newEnt = (Entity) ModelElement.lookupByName(entName, ASTTerm.entities); 
+      Entity newEnt = 
+        (Entity) ModelElement.lookupByName(
+                       entName, ASTTerm.entities); 
       if (newEnt == null) 
       { newEnt = new Entity(entName);
         ASTTerm.entities.add(newEnt); 
@@ -26325,136 +27191,283 @@ public class ASTCompositeTerm extends ASTTerm
       String typePar = ""; 
 
       ASTTerm contents = (ASTTerm) terms.get(2);
-      if (contents.hasTag("typeParameters"))
+      if (contents.hasTag("typeParameters") && 3 < terms.size())
       { // Generic class 
-        typePar = "<" + contents.toKM3() + ">"; 
-        System.out.println(">>> Generic class, parameter: " + typePar);
+        typePar = contents.toKM3type(); 
+        System.out.println(">>> Generic class " + entName + ", parameters: " + typePar);
  
-        if (contents.modelElement != null && 
-            (contents.modelElement instanceof Type))
-        { Entity newT = 
-            new Entity(contents.modelElement.getName());
-          newT.genericParameter = true;  
-          ASTTerm.entities.add(newT); 
-          newEnt.addTypeParameter(new Type(newT));
-          System.out.println(">>> Type parameter " + newT);  
+        if (contents.modelElements != null) 
+        { newEnt.addGenericTypeParameters(
+                              contents.modelElements,
+                              ASTTerm.entities); 
         } 
+        else if (contents.modelElement != null && 
+            (contents.modelElement instanceof Type))
+        { Entity newT = null; 
+          if (((Type) contents.modelElement).isEntity())
+          { newT = ((Type) contents.modelElement).getEntity(); } 
+          else 
+          { newT = new Entity(contents.modelElement.getName()); 
+            ASTTerm.entities.add(newT); 
+          } 
+          newT.genericParameter = true;  
+          newEnt.addTypeParameter(new Type(newT));
+          System.out.println(">>> Type parameter " + newT + " of class " + entName);  
+        } // modelElements
 
         bodyIndex = 3; 
         contents = (ASTTerm) terms.get(3); 
       } 
 
       if ("extends".equals(contents.literalForm()) && 
-          terms.size() > 4)
+          bodyIndex + 2 < terms.size())
       { ASTTerm superclass = (ASTTerm) terms.get(bodyIndex+1);
-        String sclass = superclass.toKM3();  
+        String sclass = superclass.toKM3type();  
 
-        String supclass = sclass; 
-        String interfaceList = ""; 
+        String supclass = sclass;
+        if (superclass.modelElement != null) 
+        { supclass = superclass.modelElement.getName(); } 
+        // The name without type parameters. 
+
+       
+        if ("OclAny".equals(supclass)) { } 
+        else if (superclass.modelElement instanceof Entity) 
+        { newEnt.setSuperclass(
+                   (Entity) superclass.modelElement); 
+        }
+        else if (superclass.modelElement instanceof Type && 
+                 ((Type) superclass.modelElement).isEntity())
+        { Entity supx = 
+            ((Type) superclass.modelElement).getEntity(); 
+          newEnt.setSuperclass(supx); 
+        }  
+        else
+        { Entity sup = 
+            (Entity) ModelElement.lookupByName(
+                          supclass, ASTTerm.entities); 
+          if (sup == null) 
+          { sup = new Entity(supclass); 
+            ASTTerm.entities.add(sup); 
+          } 
+
+          newEnt.setSuperclass(sup);
+        }
 
         contents = (ASTTerm) terms.get(bodyIndex+2); 
+        bodyIndex = bodyIndex + 2; 
+      }  
         
-        String km3Contents = contents.toKM3(); 
-        if ("implements".equals(km3Contents))
-        { ASTTerm typeList = (ASTTerm) terms.get(bodyIndex+3);
-          String iList = typeList.toKM3(); 
-          interfaceList = typeList.literalForm(); 
-
-          sclass = sclass + ", " + iList; 
+      if ("implements".equals(contents.literalForm()) && 
+          bodyIndex + 2 < terms.size())
+      { ASTTerm typeList = (ASTTerm) terms.get(bodyIndex + 1);
+        String iList = typeList.toKM3type(); 
+        String interfaceList = ""; 
+        interfaceList = typeList.literalForm(); 
+        newEnt.addInterfaces(typeList.modelElements,  
+                             ASTTerm.entities);  
+    
+        // sclass = sclass + ", " + iList; 
           
           // add as interfaces of newEnt
-          contents = (ASTTerm) terms.get(bodyIndex+4); 
-          km3Contents = contents.toKM3();
-        } 
-
-        Vector entPars = newEnt.getTypeParameters(); 
-        for (int kk = 0; kk < entPars.size(); kk++) 
-        { Type tp = (Type) entPars.get(kk); 
-          if (tp.isEntity())
-          { ASTTerm.entities.remove(tp.entity); } 
-        } 
-
-        if (contents.modelElements != null) 
-        { newEnt.addModelElements(contents.modelElements);
-          System.out.println(">>> Model elements of " + newEnt + " are: " + contents.modelElements);
-        } 
-
-        Entity sup = 
-          (Entity) ModelElement.lookupByName(
-                          supclass, ASTTerm.entities); 
-        if (sup == null) 
-        { sup = new Entity(supclass); 
-          ASTTerm.entities.add(sup); 
-        } 
-        newEnt.setSuperclass(sup);
-        newEnt.addInterfaces(interfaceList,  ASTTerm.entities);  
-        modelElement = newEnt; 
-        String stereotypeList = newEnt.stereotypesKM3(); 
-
-        if (newEnt.getInterfaces() == null || 
-            newEnt.getInterfaces().size() == 0) 
-        { return "class " + ename + typePar + " extends " + supclass + 
-             " {\n" + stereotypeList + km3Contents + "}\n\n"; 
-        } 
- 
-        return "class " + ename + typePar + 
-             " extends " + sclass +
-             " {\n" + stereotypeList + km3Contents + "}\n\n"; 
-      } 
-      else if ("implements".equals(contents.literalForm()) && 
-          terms.size() > 4)
-      { ASTTerm superclass = (ASTTerm) terms.get(bodyIndex + 1);
-        String sclass = superclass.toKM3();
-        // But may be several or none 
-  
         contents = (ASTTerm) terms.get(bodyIndex+2); 
-        String km3Contents = contents.toKM3(); 
+      } 
 
-        if (contents.modelElements != null) 
-        { System.out.println(">>> Model elements of " + 
-            newEnt + " are: " + contents.modelElements);
-          newEnt.addModelElements(contents.modelElements); 
-        } 
-        
-        // Entity sup = new Entity(sclass); 
-        newEnt.addInterfaces(superclass.literalForm(), ASTTerm.entities); 
-        // newEnt.setSuperclass(sup); 
-        modelElement = newEnt; 
+      String km3Contents = contents.toKM3();
+      if (contents.modelElements != null) 
+      { newEnt.addModelElements(contents.modelElements);
+        System.out.println(">>> Model elements of " + newEnt + " are: " + contents.modelElements);
+      } 
 
-        // ASTTerm.entities.add(newEnt); 
+      Vector entPars = newEnt.getTypeParameters(); 
+      for (int kk = 0; kk < entPars.size(); kk++) 
+      { Type tp = (Type) entPars.get(kk); 
+        if (tp.isEntity())
+        { ASTTerm.entities.remove(tp.entity); } 
+      } 
+  
+      modelElement = newEnt; 
+      // String stereotypeList = newEnt.stereotypesKM3(); 
+      return newEnt.getKM3(); 
+    } 
 
-        String stereotypeList = newEnt.stereotypesKM3(); 
+    if ("annotationTypeDeclaration".equals(tag))
+    { // @ interface name (annotationTypeBody { decls })
  
-        if (newEnt.getInterfaces() == null || 
-            newEnt.getInterfaces().size() == 0) 
-        { return "class " + ename + typePar +
-             " {\n" + stereotypeList + km3Contents + "}\n\n"; 
-        } 
+      ASTTerm ename = (ASTTerm) terms.get(2); 
 
-        return "class " + ename + typePar + " implements " + sclass +
-             " {\n" + stereotypeList + km3Contents + "}\n\n"; 
+      String entName = ename.literalForm(); 
+      Entity newEnt = 
+        (Entity) ModelElement.lookupByName(
+                        entName, ASTTerm.entities); 
+      if (newEnt == null) 
+      { newEnt = new Entity(entName);
+        ASTTerm.entities.add(newEnt); 
+      }  
+
+      ASTTerm.currentClass = newEnt; 
+
+      ASTTerm contents = (ASTTerm) terms.get(3);
+      String km3Contents = contents.toKM3(); 
+      if (contents.modelElements != null) 
+      { newEnt.addModelElements(contents.modelElements); } 
+    
+      newEnt.addStereotype("interface");  
+      modelElement = newEnt; 
+ 
+      return "interface " + ename +
+             " { \n" + km3Contents + "}\n\n"; 
+    } 
+
+    if ("annotationTypeBody".equals(tag))
+    { modelElements = new Vector(); 
+        
+      if (terms.size() == 2) 
+      { return ""; } 
+      
+      String res = ""; 
+ 
+      for (int j = 1; j < terms.size()-1; j++)
+      { ASTTerm annot = (ASTTerm) terms.get(j); 
+        res = res + annot.toKM3(); 
+        if (annot.modelElement != null) 
+        { modelElements.add(annot.modelElement); } 
       } 
-      else 
-      { String km3Contents = contents.toKM3(); 
-
-        if (contents.modelElements != null) 
-        { newEnt.addModelElements(contents.modelElements); 
-          System.out.println(">>> Model elements of " + newEnt + " are: " + contents.modelElements);
-        } 
-        modelElement = newEnt; 
-
-        // ASTTerm.entities.add(newEnt); 
-
-        return "class " + ename + typePar + 
-             " {\n" + km3Contents + "}\n\n"; 
-      } 
-
+       
+      return res; 
     }  
+      
+    if ("annotationTypeElementDeclaration".equals(tag))
+    { if (terms.size() == 1 && ";".equals(terms.get(0) + ""))
+      { return ""; } 
+
+      boolean isStatic = false; 
+      String resx = "  "; 
+
+      for (int i = 0; i < terms.size()-1; i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        if ("static".equals(tt.literalForm()))
+        { isStatic = true; 
+          resx = "  static "; 
+        } 
+      } 
+
+      ASTTerm trm = (ASTTerm) terms.get(terms.size()-1);
+      resx = resx + trm.toKM3();  
+      modelElement = trm.modelElement;
+
+      if (modelElement instanceof Attribute) 
+      { ((Attribute) modelElement).setStatic(isStatic); } 
+      else if (modelElement instanceof BehaviouralFeature) 
+      { ((BehaviouralFeature) modelElement).setStatic(
+                                               isStatic); 
+      } 
+ 
+      return resx; 
+    } 
+
+    if ("annotationTypeElementRest".equals(tag))
+    { if (terms.size() == 3) 
+      { // typeType annotationMethodOrConstantRest ;
+        ASTTerm typterm = (ASTTerm) terms.get(0); 
+        String typ = typterm.toKM3(); 
+        
+        ASTTerm elemterm = (ASTTerm) terms.get(1); 
+        String elem = elemterm.toKM3(); 
+
+        if (elemterm.modelElement != null && 
+            typterm.modelElement != null) 
+        { elemterm.modelElement.setType(
+                      (Type) typterm.modelElement); 
+        } 
+
+        modelElement = elemterm.modelElement; 
+
+        if (modelElement instanceof BehaviouralFeature)
+        { return elem + " : " + typ + ";\n"; } 
+        else 
+        { return elem; }  
+      } 
+
+      if (terms.size() > 0) 
+      { ASTTerm elem = (ASTTerm) terms.get(0); 
+        String resx = elem.toKM3(); 
+        modelElement = elem.modelElement; 
+        return resx; 
+      } 
+
+      return ""; 
+    } 
+
+    if ("annotationMethodOrConstantRest".equals(tag))
+    { ASTTerm elem = (ASTTerm) terms.get(0); 
+      String resx = elem.toKM3(); 
+      modelElement = elem.modelElement; 
+      return resx; 
+    } 
+
+    if ("annotationMethodRest".equals(tag))
+    { ASTTerm elemname = (ASTTerm) terms.get(0); 
+      String opname = elemname.literalForm();
+      BehaviouralFeature bf = new BehaviouralFeature(opname);
+      bf.setPre(new BasicExpression(true)); 
+      bf.setPost(new BasicExpression(true)); 
+  
+      modelElement = bf; 
+   
+      if (terms.size() == 3)
+      { return "  operation " + opname + "() : OclAny\n" + 
+               "  pre: true post: true;\n";
+      } 
+   
+      if (terms.size() == 4)
+      { ASTTerm defaultVal = (ASTTerm) terms.get(3); 
+        String val = defaultVal.toKM3();
+        if (defaultVal.expression != null) 
+        { BasicExpression resbe = 
+            BasicExpression.newVariableBasicExpression(
+                                             "result"); 
+          BinaryExpression setresult = 
+            new BinaryExpression("=", 
+                  resbe, defaultVal.expression);
+          bf.setPost(setresult); 
+        } 
+  
+        return "  operation " + opname + "() : OclAny\n" + 
+               "  pre: true post: result = " + val + ";\n";
+      }
+
+      return ""; 
+    } 
+
+    if ("defaultValue".equals(tag))
+    { ASTTerm trm = (ASTTerm) terms.get(1); 
+      String resy = trm.queryForm();
+      expression = trm.expression; 
+      return resy;  
+    } 
+
+    if ("elementValue".equals(tag))
+    { ASTTerm trm = (ASTTerm) terms.get(0); 
+      String resy = trm.queryForm();
+      expression = trm.expression; 
+      return resy;  
+    } 
+
+    if ("annotationConstantRest".equals(tag))
+    { ASTCompositeTerm elem = (ASTCompositeTerm) terms.get(0); 
+      String resx = elem.toKM3annotationConstantDeclarators(); 
+      modelElement = elem.modelElement; 
+      modelElements = elem.modelElements; 
+      return resx; 
+    } 
+
 
     // Can also be generic: 
     if ("interfaceDeclaration".equals(tag) && 
         terms.size() > 2)
-    { ASTTerm ename = (ASTTerm) terms.get(1); 
+    { // interface name typeParameters? interfaceBody
+
+      ASTTerm ename = (ASTTerm) terms.get(1); 
 
       String entName = ename.literalForm(); 
       Entity newEnt = 
@@ -26469,30 +27482,44 @@ public class ASTCompositeTerm extends ASTTerm
 
       ASTTerm contents = (ASTTerm) terms.get(2);
 
+      int index = 2;  
+
+      String typePars = ""; 
+      if (contents instanceof ASTCompositeTerm && 
+          contents.hasTag("typeParameters"))
+      { typePars = contents.toKM3type(); 
+        newEnt.setTypeParameters(contents.modelElements); 
+        contents = (ASTTerm) terms.get(3); 
+        index = 3; 
+      } 
+
       if ("extends".equals(contents.literalForm()) && 
           terms.size() > 4)
-      { ASTTerm superclass = (ASTTerm) terms.get(3);
+      { ASTTerm superclass = (ASTTerm) terms.get(index+1);
         String sclass = superclass.toKM3();  
-        contents = (ASTTerm) terms.get(4); 
+        contents = (ASTTerm) terms.get(index+2); 
         String km3Contents = contents.toKM3(); 
 
         if (contents.modelElements != null) 
         { newEnt.addModelElements(contents.modelElements); } 
 
-        Entity sup = 
-          (Entity) ModelElement.lookupByName(
+        if ("OclAny".equals(sclass)) { } 
+        else 
+        { Entity sup = 
+            (Entity) ModelElement.lookupByName(
                          sclass, ASTTerm.entities); 
-        if (sup == null) 
-        { sup = new Entity(sclass); 
-          ASTTerm.entities.add(sup); 
+          if (sup == null) 
+          { sup = new Entity(sclass); 
+            ASTTerm.entities.add(sup); 
+          } 
+          newEnt.setSuperclass(sup);
         } 
-        newEnt.setSuperclass(sup);
 
         newEnt.addStereotype("interface");  
         modelElement = newEnt; 
  
-        return "class " + ename + " extends " + sclass +
-             " { stereotype interface;\n" + km3Contents + "}\n\n"; 
+        return "class " + ename + typePars + " extends " + sclass + "\n" + 
+             "{ stereotype interface;\n" + km3Contents + "}\n\n"; 
       } 
       else 
       { String km3Contents = contents.toKM3(); 
@@ -26504,12 +27531,16 @@ public class ASTCompositeTerm extends ASTTerm
 
         ASTTerm.entities.add(newEnt); 
 
-        return "class " + ename +
-             " { stereotype interface;\n" + contents.toKM3() + "}\n\n"; 
+        return "class " + ename + typePars + "\n" + 
+               "{ stereotype interface;\n" + 
+               contents.toKM3() + "}\n\n"; 
       } 
 
     }  
 
+    if ("annotation".equals(tag) || 
+        "altAnnotationQualifiedName".equals(tag))
+    { return ""; } 
 
     if (terms.size() == 1) // Identifier or literal
     { ASTTerm t = (ASTTerm) terms.get(0); 
@@ -26523,6 +27554,94 @@ public class ASTCompositeTerm extends ASTTerm
     } 
     return res; 
   }
+
+  public String toKM3asObjects(Entity ent)
+  { // enumeration literals as objects
+    String res = ""; 
+      
+    if ("enumConstants".equals(tag))
+    { for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm lit = (ASTTerm) terms.get(i); 
+        if (",".equals(lit + "")) { } 
+        else
+        { res = res + "  " + 
+                lit.toKM3asObject(ent) +
+                ";\n";
+        } 
+      } 
+      return res;  
+    }  
+
+    return ""; 
+  } 
+
+  public String toKM3asObject(Entity ent)
+  { String res = ""; 
+    String ename = ent.getName(); 
+      
+    if ("enumConstant".equals(tag))
+    { if (terms.size() == 1) 
+      { String cnst = terms.get(0) + ""; 
+        res = "static attribute " + cnst + " : " + ename + " := " + ename + ".new" + ename + "()"; 
+        Attribute att = 
+          new Attribute(cnst, new Type(ent), 
+                        ModelElement.INTERNAL);
+        att.setStatic(true); 
+        Expression call = 
+          BasicExpression.newStaticCallBasicExpression(
+                            "new" + ename, ename); 
+        att.setInitialExpression(call);  
+        ent.addAttribute(att); 
+      } 
+      else if (terms.size() == 2 && 
+               "arguments".equals(((ASTTerm) terms.get(1)).getTag())) 
+      { String cnst = terms.get(0) + ""; 
+        ASTTerm args = (ASTTerm) terms.get(1); 
+        String pars = args.toKM3(); 
+        res = "static attribute " + cnst + " : " + ename + " := " + ename + ".new" + ename + pars; 
+        Attribute att = 
+          new Attribute(cnst, new Type(ent), 
+                        ModelElement.INTERNAL);
+        att.setStatic(true);
+        Vector exprs = args.getParameterExpressions(); 
+ 
+        Expression call = 
+          BasicExpression.newStaticCallBasicExpression(
+                            "new" + ename, ename, exprs); 
+        att.setInitialExpression(call);  
+        ent.addAttribute(att); 
+      } 
+      else if (terms.size() == 2 && 
+               "classBody".equals(((ASTTerm) terms.get(1)).getTag())) 
+      { String cnst = terms.get(0) + ""; 
+        ASTTerm args = (ASTTerm) terms.get(1);
+        String cname = ename + "_" + cnst + "_Class"; 
+        Entity cclass = 
+          new Entity(ename + "_" + cnst + "_Class"); 
+        cclass.setSuperclass(ent); 
+        ent.addSubclass(cclass); 
+ 
+        String pars = args.toKM3();
+        cclass.addModelElements(args.modelElements); 
+        ASTTerm.entities.add(cclass); 
+ 
+        res = "  class " + cname + " extends " + ename + " { " + pars + "  }\n" + 
+           "    static attribute " + cnst + " : " + cname + " := " + cname + ".new" + cname + "()"; 
+        Attribute att = 
+          new Attribute(cnst, new Type(cclass), 
+                        ModelElement.INTERNAL);
+        att.setStatic(true);
+ 
+        Expression call = 
+          BasicExpression.newStaticCallBasicExpression(
+                            "new" + cname, cname); 
+        att.setInitialExpression(call);  
+        ent.addAttribute(att); 
+      } 
+    } 
+
+    return res; 
+  } 
 
   public boolean updatesObject(ASTTerm t)
   { if ("methodCall".equals(tag))
@@ -27541,6 +28660,561 @@ public class ASTCompositeTerm extends ASTTerm
  
     return false; 
   } 
+
+  public String toKM3type()
+  { System.out.println("+++ toKM3type on term " + this); 
+
+    if ("creator".equals(tag) || "innerCreator".equals(tag))
+    { // 2 arguments, the type, and any constructor pars
+      return creatorQueryForm(); 
+    } 
+
+    if ("createdName".equals(tag))
+    { return creatorQueryForm(); } 
+    // Ignores type parameters in creation. 
+
+    if ("classCreatorRest".equals(tag))
+    { return creatorQueryForm(); } 
+
+    if ("typeType".equals(tag))
+    { if (terms.size() == 2 && 
+          ((ASTTerm) terms.get(0)).hasTag("annotation"))
+      { ASTTerm rest = (ASTTerm) terms.get(1); 
+        String resx = rest.toKM3type();
+        modelElement = rest.modelElement; 
+        expression = rest.expression; 
+        return resx; 
+      } 
+
+      if (terms.size() >= 3 && 
+          "[".equals(terms.get(1) + "") &&
+          "]".equals(terms.get(2) + ""))
+      { ASTTerm typeTerm = (ASTTerm) terms.get(0); 
+        String tt = typeTerm.toKM3type();
+        Type elementType = (Type) typeTerm.modelElement; 
+
+        for (int i = 1; i+1 < terms.size(); i = i + 2) 
+        { if ((terms.get(i) + "").equals("[") &&
+              (terms.get(i+1) + "").equals("]"))
+          { tt = "Sequence(" + tt + ")"; 
+
+            modelElement = new Type("Sequence", null);
+            if (elementType != null) 
+            { ((Type) modelElement).setElementType(elementType); }
+            elementType = (Type) modelElement;   
+          } 
+        } 
+        return tt;  
+      } 
+      else if (terms.size() == 1) 
+      { ASTTerm typeTerm = (ASTTerm) terms.get(0); 
+        String tt = typeTerm.toKM3type();
+        modelElement = typeTerm.modelElement;
+        expression = typeTerm.expression; 
+        // System.out.println("Type: " + modelElement); 
+        // System.out.println(expression); 
+        // System.out.println(); 
+        return tt; 
+      } 
+    } 
+
+    if ("typeTypeOrVoid".equals(tag))
+    { if (terms.size() == 1) 
+      { ASTTerm typeTerm = (ASTTerm) terms.get(0); 
+        String tt = typeTerm.toKM3type();
+        modelElement = typeTerm.modelElement;
+        expression = typeTerm.expression;  
+        return tt; 
+      } 
+    } 
+
+    if ("classOrInterfaceType".equals(tag))
+    { if (terms.size() > 2 && ".".equals(terms.get(1) + ""))  
+      { // A relativised type T.S
+        ASTTerm baseType = (ASTTerm) terms.get(2); 
+        String btype = baseType.toKM3type();
+        modelElement = baseType.modelElement; 
+        expression = new BasicExpression((Type) modelElement); 
+        return btype; 
+      }  
+      else if (terms.size() > 1 && 
+               terms.get(1) instanceof ASTCompositeTerm && 
+               "typeArguments".equals(
+                  ((ASTTerm) terms.get(1)).getTag()))  
+      { // parameterised type  T (typeArguments < pars >)
+        ASTTerm baseType = (ASTTerm) terms.get(0); 
+        ASTCompositeTerm typepars = 
+             (ASTCompositeTerm) terms.get(1);
+        String pars = typepars.toKM3type();
+        
+        Vector targs = 
+          ((ASTCompositeTerm) typepars).getTypeParameterTypes(); 
+
+        System.out.println(); 
+
+        System.out.println("+++ Parameterised type with parameters " + pars + " " + targs); 
+        System.out.println(); 
+ 
+        String btype = baseType.toKM3type();
+        String res = btype; 
+
+        modelElement = baseType.modelElement; 
+        expression = baseType.expression; // Not valid
+
+        if (modelElement == null) 
+        { modelElement = Type.getTypeFor(btype,
+                   ASTTerm.enumtypes,ASTTerm.entities); 
+        } 
+
+        if (modelElement == null) 
+        { modelElement = 
+            ModelElement.lookupByName(btype,ASTTerm.entities); 
+        } 
+
+        // The *same* model element is used for different 
+        // parameter instantiations btype<T1>, btype<T2> etc
+
+        if (modelElement != null)
+        { if (targs.size() > 1 && 
+              modelElement instanceof Type && 
+              ((Type) modelElement).isMap()) 
+          { Type ktype = (Type) targs.get(0); 
+            Type etype = (Type) targs.get(1); 
+            ((Type) modelElement).setKeyType(ktype); 
+            ((Type) modelElement).setElementType(etype);
+            res = btype + "(" + ktype + "," + etype + ")"; 
+            expression = new BasicExpression(
+                                  (Type) modelElement); 
+          }  
+          else if (targs.size() > 1 && 
+                   modelElement instanceof Type && 
+                   ((Type) modelElement).isFunction()) 
+          { Type ktype = (Type) targs.get(0); 
+            Type etype = (Type) targs.get(1); 
+            ((Type) modelElement).setKeyType(ktype); 
+            ((Type) modelElement).setElementType(etype);
+            res = btype + "(" + ktype + "," + etype + ")"; 
+            expression = new BasicExpression(
+                                  (Type) modelElement); 
+          }  
+          else if (targs.size() > 0 && 
+                   modelElement instanceof Type && 
+                   ((Type) modelElement).isCollectionType()) 
+          { Type etype = (Type) targs.get(0); 
+            ((Type) modelElement).setElementType(etype);
+            res = btype + "(" + etype + ")"; 
+            expression = new BasicExpression(
+                                  (Type) modelElement); 
+          }  
+          else if (modelElement instanceof Type) 
+          { Entity ent = 
+              (Entity) ModelElement.lookupByName(
+                                      btype,  
+                                      ASTTerm.entities); 
+            if (ent == null) 
+            { ent = new Entity(btype); 
+              ASTTerm.entities.add(ent); 
+            } 
+  
+            if (ent.hasTypeParameters(targs))
+            { modelElement = new Type(ent); }
+            else        
+            { Entity newent = new Entity(btype); 
+              newent.setTypeParameters(targs);
+              modelElement = new Type(newent); 
+            }  
+            res = btype + "<" + pars + ">"; 
+            expression = new BasicExpression(
+                                  (Type) modelElement); 
+          }
+          else if (modelElement instanceof Entity)
+          { Entity ent = (Entity) modelElement; 
+            if (ent.hasTypeParameters(targs))
+            { modelElement = new Type(ent); }
+            else        
+            { Entity newent = new Entity(btype); 
+              newent.setTypeParameters(targs);
+              modelElement = new Type(newent); 
+            }  
+            res = btype + "<" + pars + ">"; 
+            expression = new BasicExpression(
+                                  (Type) modelElement); 
+          } 
+
+        }  
+
+        System.out.println("+++ Parameterised type: " + modelElement);
+        System.out.println("+++ as expression: " + expression); 
+        System.out.println(); 
+
+        return res; 
+      }
+      else 
+      { ASTTerm t0 = (ASTTerm) terms.get(0);
+        String res = t0.toKM3();
+        modelElement = t0.modelElement;
+        expression = t0.expression;  
+        return res;  
+      } 
+    } 
+ 
+    if ("typeArguments".equals(tag) && terms.size() > 1 && 
+        "<".equals(terms.get(0) + ""))
+    { // < arg >   or   < arg1 , arg2 >
+      modelElements = new Vector(); 
+      String res = ""; 
+      for (int i = 1; i < terms.size()-1; i++)
+      { ASTTerm typepar0 = (ASTTerm) terms.get(i); 
+        res = res + typepar0.toKM3type();
+
+        System.out.println("+++ Type parameter: " + typepar0.modelElement); 
+
+        if (typepar0 instanceof ASTSymbolTerm) { } 
+        else 
+        { modelElement = typepar0.modelElement; 
+          if (modelElement != null) 
+          { modelElements.add(modelElement); } 
+        } 
+      } 
+
+      return res; 
+    } 
+
+    if ("typeArgument".equals(tag) && terms.size() > 0)
+    { // a (typeType _1)
+      ASTTerm typepar0 = (ASTTerm) terms.get(0); 
+      String res = typepar0.toKM3type();
+      modelElement = typepar0.modelElement; 
+ 
+      return res; 
+    } 
+
+    if ("createdName".equals(tag))
+    { ASTTerm mainclass = (ASTTerm) terms.get(0);
+      String res = mainclass.toKM3type();
+      ASTTerm.setType(this,res);
+
+      System.out.println("+++ Type of " + this + " is " + res); 
+
+      Type typ; 
+      Entity ent = 
+        (Entity) ModelElement.lookupByName(
+                        res, ASTTerm.entities); 
+      if (ent != null) 
+      { typ = new Type(ent); } 
+      else if (ModelElement.lookupByName(res,ASTTerm.enumtypes) != null) 
+      { typ = (Type) ModelElement.lookupByName(res,ASTTerm.enumtypes); } 
+      else 
+      { typ = new Type(res,null); } 
+
+      modelElement = typ; 
+      expression = new BasicExpression(res);
+  
+      if (terms.size() > 1) 
+      { // type arguments -- 
+        // it must be a collection, function, 
+        // map or  entity type
+
+        if (typ.isSequenceType() || typ.isSetType())
+        { ASTTerm t2 = (ASTTerm) terms.get(1); 
+          String elemT = t2.typeArgumentsToKM3ElementType(); 
+        
+          System.out.println("++ Collection creation element type = " + elemT); 
+        
+          Type et = 
+            Type.getTypeFor(elemT,
+               ASTTerm.enumtypes,ASTTerm.entities); 
+          if (et != null) 
+          { typ.setElementType(et); 
+            res = res + "(" + elemT + ")"; 
+          } 
+        } 
+        else if (typ.isMapType() || typ.isFunctionType())
+        { ASTTerm t2 = (ASTTerm) terms.get(1); 
+
+          String allpars = t2.toKM3(); 
+
+          System.out.println(">>> Object creation all pars = " + allpars); 
+
+          if (t2.modelElements != null) 
+          { typ.setTypeParameters(t2.modelElements); } 
+
+          res = res + "(" + allpars + ")"; 
+        }
+        else 
+        { 
+          if (ent == null) 
+          { ent = new Entity(res);
+            ASTTerm.entities.add(ent);
+          } 
+
+          modelElement = ent; 
+
+          ASTTerm t2 = (ASTTerm) terms.get(1); 
+        
+          String allpars = t2.toKM3(); 
+
+          System.out.println(">>> Object creation all pars = " + allpars); 
+
+          if (t2.modelElements != null) 
+          { ent.setTypeParameters(t2.modelElements); } 
+
+          res = res + "<" + allpars + ">"; 
+        } 
+      } 
+
+      return res; 
+    } // Ignores type parameters in creation. 
+    
+    if ("typeParameters".equals(tag))
+    { modelElements = new Vector();
+        
+      if (terms.size() == 3 && 
+          "<".equals(terms.get(0) + "") && 
+          ">".equals(terms.get(2) + "")) 
+      { ASTTerm typeTerm = (ASTTerm) terms.get(1); 
+        String tt = typeTerm.toKM3type();
+        modelElement = typeTerm.modelElement; 
+        modelElements.add(modelElement);
+        return "<" + tt + ">"; 
+      } 
+
+      if (terms.size() >= 3 && 
+          "<".equals(terms.get(0) + ""))
+      { String resx = "<";   
+        for (int i = 1; i < terms.size()-1; i++) 
+        { ASTTerm trm = (ASTTerm) terms.get(i); 
+          if (trm instanceof ASTSymbolTerm) 
+          { resx = resx + trm; } 
+          else 
+          { String tt = trm.toKM3type();
+            modelElement = trm.modelElement;
+            modelElements.add(modelElement);
+            resx = resx + tt; 
+          } 
+        }  
+        return resx + ">"; 
+      } 
+
+      return ""; 
+    } 
+
+    if ("typeParameter".equals(tag))
+    { if (terms.size() == 1) 
+      { ASTTerm tt = (ASTTerm) terms.get(0);
+        String val = tt.literalForm();  
+        modelElement = 
+           Type.getTypeFor(val, ASTTerm.enumtypes, 
+                           ASTTerm.entities); 
+
+        if (modelElement == null)
+        { Entity ent = new Entity(val); 
+          ent.setIsGenericParameter(true); 
+          ASTTerm.entities.add(ent);
+          modelElement = new Type(ent);  
+        }  
+
+        expression = new BasicExpression((Type) modelElement);
+  
+        return val; 
+      } 
+      else if (terms.size() >= 3 && 
+               "extends".equals(terms.get(1) + ""))
+      { ASTTerm tt = (ASTTerm) terms.get(0); 
+        String val = tt.literalForm();  
+        modelElement = 
+           Type.getTypeFor(val, ASTTerm.enumtypes, 
+                           ASTTerm.entities); 
+
+        if (modelElement == null)
+        { Entity entpar = new Entity(val); 
+          entpar.setIsGenericParameter(true); 
+          ASTTerm.entities.add(entpar);
+          modelElement = new Type(entpar);  
+        }  
+
+        expression = new BasicExpression((Type) modelElement);
+  
+        return val; 
+      } // These should be typeParameter entities
+
+      return "";  
+    } 
+
+    if ("typeList".equals(tag))
+    { modelElements = new Vector();
+        
+      String resx = "";   
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm trm = (ASTTerm) terms.get(i); 
+        if (trm instanceof ASTSymbolTerm) 
+        { resx = resx + trm; } 
+        else 
+        { String tt = trm.toKM3type();
+          modelElement = trm.modelElement;
+          modelElements.add(modelElement);
+          resx = resx + tt; 
+        }  
+        return resx + ""; 
+      } 
+
+      return ""; 
+    } 
+
+    return ""; 
+  } 
+
+  public Vector javaLabelFunctions(BehaviouralFeature bf)
+  { if (terms.size() == 0)
+    { return new Vector(); } 
+
+    if ("methodBody".equals(tag))
+    { ASTCompositeTerm body = (ASTCompositeTerm) terms.get(0); 
+      // Entity ent = bf.getOwner(); 
+      java.util.Map localvars = new java.util.HashMap(); 
+      Vector pars = bf.getParameters();
+      for (int i = 0; i < pars.size(); i++) 
+      { Attribute att = (Attribute) pars.get(i); 
+        localvars.put(att.getName(), att); 
+      }  
+      return body.javaLabelFunctions(null,bf,localvars); 
+    }
+ 
+    return new Vector(); 
+  } 
+
+  public Vector javaLabelFunctions(Entity ent,
+                                   BehaviouralFeature mbf, 
+                                   java.util.Map vars)
+  { Vector res = new Vector();
+
+    if (terms.size() == 0)
+    { return res; } 
+     
+    if ("block".equals(tag) && terms.size() >= 1)
+    { 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm t = (ASTTerm) terms.get(i); 
+        if (t.isLocalDeclarationStatement())
+        { t.toKM3(); 
+          if (t.modelElements != null) 
+          { for (int j = 0; j < t.modelElements.size(); j++) 
+            { ModelElement me = 
+                 (ModelElement) t.modelElements.get(j);
+              if (me instanceof Attribute)
+              { vars.put(me.getName(), me); } 
+            } 
+          } 
+        }  
+        else if (t.isJavaLabeledStatement())
+        { // start new function from this point for the label
+          String label = t.getJavaLabel(); 
+          
+          if (ModelElement.lookupByName(label,res) != null)
+          { continue; } 
+
+          BehaviouralFeature bf = 
+              new BehaviouralFeature(label); 
+          if (ent != null) 
+          { ent.refineOperation(bf);                        
+            bf.setOwner(ent); 
+          }
+          bf.setParameters(vars); 
+          bf.setPre(new BasicExpression(true)); 
+          bf.setPost(new BasicExpression(true)); 
+          bf.addStereotype("unsafe"); 
+          bf.setStatic(mbf.isStatic()); 
+
+          Vector tailterms = VectorUtil.vectorTail(i,terms); 
+          ASTCompositeTerm act = 
+                 new ASTCompositeTerm(tag, tailterms);
+
+          System.out.println(">> Remaining code: " + act); 
+ 
+          String stats = act.toKM3();
+          Statement caction = act.statement;  
+
+          System.out.println(">> Label code action: " + caction); 
+ 
+          Vector retvals = 
+                 Statement.getReturnValues(caction); 
+
+          System.out.println(">> Return values: " + retvals); 
+
+          bf.setActivity(caction); 
+          if (retvals != null && retvals.size() > 0)
+          { Type retType = Type.determineType(retvals); 
+            bf.setType(retType); 
+          } 
+
+          System.out.println(">>> Label function: " + bf.display()); 
+
+          res.add(bf);
+          // if (tailterms.size() > 1) 
+          // { Vector remainingFunctions = 
+          //           act.javaLabelFunctions(ent,mbf,vars); 
+          //   res.addAll(remainingFunctions); 
+          // } 
+        } 
+        else 
+        // for localVariableDeclarations add to vars
+        { // t.toKM3();
+          Vector tailterms = VectorUtil.vectorTail(i+1,terms);
+          if (tailterms.size() > 1) 
+          { ASTCompositeTerm act = 
+              new ASTCompositeTerm(tag, tailterms); 
+            Vector rems = 
+              act.javaLabelFunctions(ent,mbf,vars);
+            res.addAll(rems);  
+          }
+        }          
+      } 
+    } 
+
+    return res; 
+  }
+
+  public boolean isJavaLabeledStatement()
+  { if ("blockStatement".equals(tag))
+    { ASTCompositeTerm tt = (ASTCompositeTerm) terms.get(0); 
+      return tt.isJavaLabeledStatement(); 
+    } 
+
+    if ("statement".equals(tag) && terms.size() == 3 && 
+        ":".equals(terms.get(1) + ""))
+    { return true; } 
+
+    return false; 
+  } 
+
+  public boolean isLocalDeclarationStatement()
+  { if ("blockStatement".equals(tag))
+    { ASTCompositeTerm tt = (ASTCompositeTerm) terms.get(0); 
+      return tt.isLocalDeclarationStatement(); 
+    } 
+
+    if ("localVariableDeclaration".equals(tag))
+    { return true; } 
+
+    return false; 
+  } 
+
+  public String getJavaLabel()
+  { if ("blockStatement".equals(tag))
+    { ASTCompositeTerm tt = (ASTCompositeTerm) terms.get(0); 
+      return tt.getJavaLabel(); 
+    } 
+
+    if ("statement".equals(tag) && terms.size() == 3 && 
+        ":".equals(terms.get(1) + ""))
+    { return terms.get(0) + ""; } 
+
+    return null; 
+  } 
+
+
+
+
 
   public static void main(String[] args)
   { // Testing of JS to KM3

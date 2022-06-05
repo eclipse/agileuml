@@ -776,6 +776,646 @@ public class ASTBasicTerm extends ASTTerm
   public String queryForm()
   { return toKM3(); } 
 
+  public String getJavaLabel()
+  { return null; } 
+
+  public boolean isJavaLabeledStatement()
+  { return false; } 
+
+  public boolean isLocalDeclarationStatement()
+  { return false; } 
+
+  public String km3typeForJavaType()
+  { if ("String".equals(value))
+    { modelElement = new Type("String", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "String"; 
+    }
+ 
+    if ("char".equals(value))
+    { modelElement = new Type("String", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "String"; 
+    }
+ 
+    if ("Character".equals(value) || 
+        "InetAddress".equals(value))
+    { modelElement = new Type("String", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "String"; 
+    }
+ 
+    if ("CharSequence".equals(value) || 
+        "Segment".equals(value))
+    { modelElement = new Type("String", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "String"; 
+    }
+ 
+    if ("StringBuffer".equals(value))
+    { modelElement = new Type("String", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "String"; 
+    }
+ 
+    if ("StringBuilder".equals(value))
+    { modelElement = new Type("String", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "String"; 
+    } 
+
+    if ("int".equals(value))
+    { modelElement = new Type("int", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "int"; 
+    }
+ 
+    if ("Integer".equals(value))
+    { modelElement = new Type("int", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "int"; 
+    }
+ 
+    if ("Byte".equals(value))
+    { modelElement = new Type("int", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "int"; 
+    }
+ 
+    if ("Short".equals(value))
+    { modelElement = new Type("int", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "int"; 
+    }
+ 
+    if ("byte".equals(value))
+    { modelElement = new Type("int", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "int"; 
+    }
+ 
+    if ("short".equals(value))
+    { modelElement = new Type("int", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "int"; 
+    } 
+
+    if ("double".equals(value))
+    { modelElement = new Type("double", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "double"; 
+    }
+ 
+    if ("Double".equals(value))
+    { modelElement = new Type("double", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "double"; 
+    }
+ 
+    if ("Number".equals(value))
+    { modelElement = new Type("double", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "double"; 
+    }
+ 
+    if ("Float".equals(value))
+    { modelElement = new Type("double", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "double"; 
+    }
+ 
+    if ("float".equals(value))
+    { modelElement = new Type("double", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "double"; 
+    }
+ 
+    if ("BigDecimal".equals(value))
+    { modelElement = new Type("double", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "double"; 
+    } 
+    
+    if ("long".equals(value))
+    { modelElement = new Type("long", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "long"; 
+    }
+ 
+    if ("BigInteger".equals(value))
+    { modelElement = new Type("long", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "long"; 
+    }
+ 
+    if ("Long".equals(value))
+    { modelElement = new Type("long", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "long"; 
+    } 
+
+    if ("Boolean".equals(value) || "boolean".equals(value))
+    { modelElement = new Type("boolean", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "boolean"; 
+    }
+
+    if ("Object".equals(value) || "?".equals(value))
+    { modelElement = new Type("OclAny", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclAny"; 
+    }
+
+    if ("Collection".equals(value) || 
+        "AbstractCollection".equals(value))
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; 
+    }
+
+    if ("Class".equals(value))
+    { modelElement = new Type("OclType", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclType"; 
+    }
+
+    if ("Comparable".equals(value))
+    { modelElement = new Type("OclAny", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclAny"; 
+    }
+
+    if ("Cloneable".equals(value))
+    { modelElement = new Type("OclAny", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclAny"; 
+    }
+
+    if ("Serializable".equals(value))
+    { modelElement = new Type("OclAny", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclAny"; 
+    }
+
+    if ("Runnable".equals(value))
+    { modelElement = new Type("Runnable", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Runnable"; 
+    }
+
+
+
+    if ("Constructor".equals(value))
+    { modelElement = new Type("OclOperation", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclOperation"; 
+    }
+
+    if ("Method".equals(value))
+    { modelElement = new Type("OclOperation", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclOperation"; 
+    }
+
+    if ("Field".equals(value))
+    { modelElement = new Type("OclAttribute", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclAttribute"; }
+
+    if ("Thread".equals(value) || "Runtime".equals(value) || 
+        "Process".equals(value) || "Timer".equals(value) || 
+        "TimerTask".equals(value))
+    { modelElement = new Type("OclProcess", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclProcess"; 
+    } 
+
+    if ("ThreadGroup".equals(value))
+    { modelElement = new Type("OclProcessGroup", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclProcessGroup"; 
+    } 
+
+    if ("Date".equals(value))
+    { modelElement = new Type("OclDate", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclDate"; 
+    }
+
+    if ("Calendar".equals(value) || 
+        "GregorianCalendar".equals(value))
+    { modelElement = new Type("OclDate", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclDate"; 
+    }
+
+    if ("Random".equals(value))
+    { modelElement = new Type("OclRandom", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclRandom"; 
+    }
+
+    if ("Pattern".equals(value) || 
+        "FileFilter".equals(value) ||
+        "FilenameFilter".equals(value) || 
+        "Matcher".equals(value))
+    { modelElement = new Type("OclRegex", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclRegex"; 
+    } 
+
+    if ("ArrayList".equals(value))
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; } 
+    if ("AbstractList".equals(value))
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; } 
+    if ("Vector".equals(value))
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; } 
+    if ("LinkedList".equals(value))
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; } 
+    if ("List".equals(value))
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; } 
+    if ("Stack".equals(value))
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; } 
+    if ("Queue".equals(value))
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; } 
+    if ("BlockingQueue".equals(value))
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; } 
+    if ("ArrayBlockingQueue".equals(value))
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; } 
+    if ("PriorityQueue".equals(value))
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; } 
+    if ("Stream".equals(value))
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; } 
+     
+    if ("BitSet".equals(value))
+    { modelElement = new Type("Sequence", null);
+      ((Type) modelElement).setElementType(new Type("boolean", null));  
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence(boolean)"; } 
+
+    if ("Set".equals(value))
+    { modelElement = new Type("Set", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Set"; } 
+    if ("HashSet".equals(value))
+    { modelElement = new Type("Set", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Set"; } 
+    if ("SortedSet".equals(value))
+    { modelElement = new Type("Set", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Set"; } 
+    if ("TreeSet".equals(value))
+    { modelElement = new Type("Set", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Set"; } 
+
+    if ("Map".equals(value))
+    { modelElement = new Type("Map", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Map"; } 
+    if ("HashMap".equals(value))
+    { modelElement = new Type("Map", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Map"; } 
+    if ("SortedMap".equals(value))
+    { modelElement = new Type("Map", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Map"; } 
+    if ("TreeMap".equals(value))
+    { modelElement = new Type("Map", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Map"; } 
+    if ("Hashtable".equals(value))
+    { modelElement = new Type("Map", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Map"; } 
+    if ("Properties".equals(value))
+    { modelElement = new Type("Map", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Map"; } 
+
+    if ("Enumeration".equals(value))
+    { modelElement = new Type("OclIterator", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclIterator"; } 
+    if ("Iterator".equals(value))
+    { modelElement = new Type("OclIterator", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclIterator"; } 
+    if ("ListIterator".equals(value))
+    { modelElement = new Type("OclIterator", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclIterator"; } 
+    if ("StringTokenizer".equals(value))
+    { modelElement = new Type("OclIterator", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclIterator"; } 
+
+    if ("File".equals(value) || 
+        "FileDescriptor".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("Formatter".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("Scanner".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("ObjectInputStream".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("ObjectOutputStream".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("ObjectInput".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("ObjectOutput".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("DataInput".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("DataOutput".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("DataInputStream".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("DataOutputStream".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("PipedInputStream".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("PipedOutputStream".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; }
+    if ("FilterInputStream".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("FilterOutputStream".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("BufferedInputStream".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("BufferedOutputStream".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("PrintStream".equals(value) || "Socket".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("FileOutputStream".equals(value) ||
+        "FileInputStream".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("Reader".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("FileReader".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("Writer".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("FileWriter".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("RandomAccessFile".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("BufferedReader".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("BufferedWriter".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("InputStreamReader".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("OutputStreamWriter".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; }
+    if ("PrintWriter".equals(value))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+ 
+    if ("Throwable".equals(value))
+    { modelElement = new Type("OclException", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclException"; } 
+
+    if ("Error".equals(value))
+    { modelElement = new Type("SystemException", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "SystemException"; } 
+    if ("AWTError".equals(value))
+    { modelElement = new Type("SystemException", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "SystemException"; } 
+    if ("ThreadDeath".equals(value))
+    { modelElement = new Type("SystemException", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "SystemException"; 
+    }
+
+    if ("VirtualMachineError".equals(value))
+    { modelElement = new Type("SystemException", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "SystemException"; 
+    }
+ 
+    if ("AssertionError".equals(value))
+    { modelElement = new Type("AssertionException", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "AssertionException"; 
+    } 
+    
+ 
+    if ("Exception".equals(value))
+    { modelElement = new Type("ProgramException", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "ProgramException"; 
+    }
+ 
+    if ("RuntimeException".equals(value) || 
+        "InterruptedException".equals(value) ||
+        "IllegalMonitorStateException".equals(value))
+    { modelElement = new Type("ProgramException", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "ProgramException"; 
+    }
+ 
+    if ("IOException".equals(value) ||
+        "SQLException".equals(value) ||  
+        "EOFException".equals(value) ||
+        "SocketException".equals(value))
+    { modelElement = new Type("IOException", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "IOException"; 
+    }
+ 
+    if ("ClassCastException".equals(value))
+    { modelElement = new Type("CastingException", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "CastingException"; 
+    } 
+
+    if ("NullPointerException".equals(value))
+    { modelElement = new Type("NullAccessException", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "NullAccessException"; 
+    } 
+
+    if ("ArithmeticException".equals(value))
+    { modelElement = new Type("ArithmeticException", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "ArithmeticException"; 
+    }
+
+    if (value.endsWith("IndexOutOfBoundsException") || 
+        "ArrayStoreException".equals(value))
+    { modelElement = new Type("IndexingException", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "IndexingException"; 
+    } 
+
+    if ("NoSuchElementException".equals(value) ||
+        "MalformedURLException".equals(value) || 
+        "UnknownHostException".equals(value))
+    { modelElement = new Type("IncorrectElementException", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "IncorrectElementException"; 
+    }
+
+    if ("InputMismatchException".equals(value) ||
+        "UnsupportedOperationException".equals(value) ||
+        "IllegalStateException".equals(value) || 
+        "NumberFormatException".equals(value))
+    { modelElement = new Type("IncorrectElementException", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "IncorrectElementException"; 
+    }
+    // if ("ArrayIndexOutOfBoundsException".equals(value) ||
+    //     "StringIndexOutOfBoundsException".equals(value))
+    // { return "IndexingException"; } 
+    if ("IllegalAccessException".equals(value) ||
+        "LinkageError".equals(value) || 
+        "SecurityException".equals(value) ||  
+        "NoClassDefFoundError".equals(value) ||
+        "BindException".equals(value))
+    { modelElement = new Type("AccessingException", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "AccessingException"; 
+    }
+
+    if (value.endsWith("Exception"))
+    { modelElement = new Type("ProgramException", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "ProgramException"; 
+    } // default
+ 
+    return null; 
+  } 
+
+  public String toKM3type()
+  { if ("classOrInterfaceType".equals(tag))
+    { String resx = km3typeForJavaType(); 
+      if (resx != null) 
+      { return resx; } 
+
+      Entity ent = 
+        (Entity) ModelElement.lookupByName(value,
+                                           ASTTerm.entities); 
+      if (ent != null) 
+      { modelElement = ent; } 
+      else 
+      { modelElement = new Entity(value); 
+        ASTTerm.entities.add(modelElement); 
+      } 
+      return value; 
+    }
+
+    if ("typeArgument".equals(tag))
+    { if ("?".equals(value))
+      { modelElement = new Type("OclAny", null); 
+        return "OclAny"; 
+      }
+ 
+      Entity ent = 
+        (Entity) ModelElement.lookupByName(value,
+                                           ASTTerm.entities); 
+      if (ent != null) 
+      { modelElement = new Type(ent); } 
+      else 
+      { ent = new Entity(value); 
+        ASTTerm.entities.add(ent);
+        modelElement = new Type(ent);  
+      }
+
+      ent.setIsGenericParameter(true);  
+      return value; 
+    } 
+
+    return toKM3(); 
+  } 
+
+  public Vector getParameterExpressions()
+  { return new Vector(); } 
+
   public String toKM3()
   { 
     if ("this".equals(value))
@@ -784,6 +1424,10 @@ public class ASTBasicTerm extends ASTTerm
       return "self";
     } 
 
+    String resx = km3typeForJavaType();
+    if (resx != null) 
+    { return resx; } 
+ 
     if ("String".equals(value))
     { modelElement = new Type("String", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -879,14 +1523,18 @@ public class ASTBasicTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement); 
       return "boolean"; }
 
-    if ("Object".equals(value))
+    if ("Object".equals(value) || "?".equals(value))
     { modelElement = new Type("OclAny", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclAny"; }
-    if ("Collection".equals(value) || "AbstractCollection".equals(value))
-    { modelElement = new Type("OclAny", null); 
+
+    if ("Collection".equals(value) || 
+        "AbstractCollection".equals(value))
+    { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclAny"; }
+      return "Sequence"; 
+    }
+
     if ("Class".equals(value))
     { modelElement = new Type("OclType", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -904,9 +1552,9 @@ public class ASTBasicTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement); 
       return "OclAny"; }
     if ("Runnable".equals(value))
-    { modelElement = new Type("OclAny", null); 
+    { modelElement = new Type("Runnable", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclAny"; }
+      return "Runnable"; }
 
 
 
@@ -1394,8 +2042,23 @@ public class ASTBasicTerm extends ASTTerm
     return value; 
   } 
 
-  public String typeArgumentsToKM3()
-  { return value; } 
+  public String toKM3asObject(Entity ent)
+  { String res = ""; 
+    String ename = ent.getName(); 
+      
+    if ("enumConstant".equals(tag))
+    { res = "static attribute " + value + " : " + ename + " := " + ename + ".new" + ename + "()"; 
+    } 
+
+    return res; 
+  } 
+
+
+  public String typeArgumentsToKM3ElementType()
+  { if ("?".equals(value))
+    { return "OclAny"; }
+    return value; 
+  } 
 
   public boolean isCharacter()
   { if (value.length() > 2 && 

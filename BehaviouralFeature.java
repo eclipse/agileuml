@@ -149,6 +149,9 @@ public class BehaviouralFeature extends ModelElement
     typeParameters = pars;  
   } 
 
+  public void setTypeParameters(Vector pars)
+  { typeParameters = pars; }
+
   public boolean isGeneric()
   { return typeParameters != null && 
            typeParameters.size() > 0; 
@@ -175,7 +178,8 @@ public class BehaviouralFeature extends ModelElement
     return res; 
   } // and copy the use case, readfr, etc? 
 
-  public static BehaviouralFeature newConstructor(String ename, Vector pars)
+  public static BehaviouralFeature newConstructor(String ename, 
+                                       Entity ent, Vector pars)
   { BehaviouralFeature bf = new BehaviouralFeature("new" + ename); 
     bf.setParameters(pars); 
     Entity e = new Entity(ename); 
@@ -184,12 +188,16 @@ public class BehaviouralFeature extends ModelElement
     bf.setPostcondition(new BasicExpression(true)); 
     SequenceStatement code = new SequenceStatement();
 
-    BasicExpression res = BasicExpression.newVariableBasicExpression("result", etype); 
+    BasicExpression res = 
+      BasicExpression.newVariableBasicExpression(
+                          "res", etype); 
  
-    CreationStatement cs = new CreationStatement("result", etype); 
+    CreationStatement cs = 
+        new CreationStatement("res", etype); 
     code.addStatement(cs); 
 
-    BasicExpression createCall = new BasicExpression("create" + ename); 
+    BasicExpression createCall = 
+        new BasicExpression("create" + ename); 
     createCall.setUmlKind(Expression.UPDATEOP); 
     createCall.setParameters(new Vector()); 
     createCall.setIsEvent(); 
@@ -200,7 +208,8 @@ public class BehaviouralFeature extends ModelElement
     AssignStatement assgn = new AssignStatement(res,createCall); 
     code.addStatement(assgn); 
 
-    BasicExpression initialiseCall = new BasicExpression("initialise"); 
+    BasicExpression initialiseCall = 
+       new BasicExpression("initialise"); 
     initialiseCall.setUmlKind(Expression.UPDATEOP);
     initialiseCall.setIsEvent(); 
     Vector parNames = bf.getParameterExpressions(); 
@@ -208,9 +217,30 @@ public class BehaviouralFeature extends ModelElement
  
     initialiseCall.setParameters(parNames); 
     initialiseCall.setObjectRef(res); 
-    InvocationStatement callInit = new InvocationStatement(initialiseCall);
+    InvocationStatement callInit = 
+        new InvocationStatement(initialiseCall);
     callInit.setParameters(parNames);  
     code.addStatement(callInit); 
+
+    // Add each instance _initialiseInstance() operation
+    // res._initialiseInstance()
+    Vector allops = ent.getOperations(); 
+    for (int i = 0; i < allops.size(); i++) 
+    { BehaviouralFeature op = (BehaviouralFeature) allops.get(i); 
+      String opname = op.getName(); 
+      if (opname.startsWith("_initialiseInstance"))
+      { BasicExpression initialiseInstanceCall = 
+                             new BasicExpression(opname); 
+        initialiseInstanceCall.setUmlKind(Expression.UPDATEOP);
+        initialiseInstanceCall.setIsEvent(); 
+        initialiseInstanceCall.setParameters(new Vector()); 
+        initialiseInstanceCall.setObjectRef(res); 
+        InvocationStatement callInstInit = 
+          new InvocationStatement(initialiseInstanceCall);
+        callInstInit.setParameters(new Vector());  
+        code.addStatement(callInstInit); 
+      } 
+    } 
 
     ReturnStatement rs = new ReturnStatement(res); 
     code.addStatement(rs); 
@@ -1821,11 +1851,15 @@ public class BehaviouralFeature extends ModelElement
     Vector keyvect = new Vector(); 
     keyvect.addAll(keys); 
     for (int i = 0; i < keyvect.size(); i++) 
-    { String key = (String) keyvect.get(i); 
-      Type vtype = (Type) vartypes.get(key); 
-      if (key != null && vtype != null) 
-      { Attribute att = new Attribute(key,vtype,ModelElement.INTERNAL); 
-        parameters.add(att); 
+    { String key = (String) keyvect.get(i);
+      if (vartypes.get(key) instanceof Attribute)
+      { parameters.add(vartypes.get(key)); } 
+      else if (vartypes.get(key) instanceof Type) 
+      { Type vtype = (Type) vartypes.get(key); 
+        if (key != null && vtype != null) 
+        { Attribute att = new Attribute(key,vtype,ModelElement.INTERNAL); 
+          parameters.add(att);
+        }  
       } // and avoid duplicates
     } 
   } 
@@ -2226,7 +2260,21 @@ public class BehaviouralFeature extends ModelElement
   }   
 
   public String getSignature()
-  { String res = getName() + "(";
+  { String res = getName(); 
+
+    String genPars = ""; 
+    if (typeParameters != null && typeParameters.size() > 0)
+    { genPars = "<"; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        genPars = genPars + tp.getName(); 
+        if (i < typeParameters.size() - 1) 
+        { genPars = genPars + ", "; } 
+      } 
+      genPars = genPars + ">"; 
+    } 
+ 
+    res = res + genPars + "(";
 
     if (parameters == null) 
     { return res + ")"; } 
@@ -2491,7 +2539,21 @@ public class BehaviouralFeature extends ModelElement
 
   
   public String toString()
-  { String res = getName() + "(";
+  { String res = getName(); 
+
+    String genPars = ""; 
+    if (typeParameters != null && typeParameters.size() > 0)
+    { genPars = "<"; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        genPars = genPars + tp.getName(); 
+        if (i < typeParameters.size() - 1) 
+        { genPars = genPars + ", "; } 
+      } 
+      genPars = genPars + ">"; 
+    } 
+
+    res = res + genPars + "(";
     for (int i = 0; i < parameters.size(); i++)
     { Attribute par = (Attribute) parameters.get(i);
       String dec = par.getName();
@@ -3134,13 +3196,19 @@ public class BehaviouralFeature extends ModelElement
     else 
     { out.print("    operation "); } 
 
-    String tpars = ""; 
-	if (typeParameters != null && typeParameters.size() > 0)
-	{ Type tp = (Type) typeParameters.get(0); 
-	  tpars = "<" + tp + ">"; 
-	}
-	
-    out.print(getName() + tpars + "(");
+    String genPars = ""; 
+    if (typeParameters != null && typeParameters.size() > 0)
+    { genPars = "<"; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        genPars = genPars + tp.getName(); 
+        if (i < typeParameters.size() - 1) 
+        { genPars = genPars + ", "; } 
+      } 
+      genPars = genPars + ">"; 
+    } 
+
+    out.print(getName() + genPars + "(");
 
     for (int i = 0; i < parameters.size(); i++)
     { Attribute par = (Attribute) parameters.get(i);
@@ -3185,13 +3253,19 @@ public class BehaviouralFeature extends ModelElement
     else 
     { res = "   " + res; }
 
-    String tpars = ""; 
+    String genPars = ""; 
     if (typeParameters != null && typeParameters.size() > 0)
-    { Type tp = (Type) typeParameters.get(0); 
-      tpars = "<" + tp + ">"; 
-    }
+    { genPars = "<"; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        genPars = genPars + tp.getName(); 
+        if (i < typeParameters.size() - 1) 
+        { genPars = genPars + ", "; } 
+      } 
+      genPars = genPars + ">"; 
+    } 
 	
-    res = res + getName() + tpars + "(";
+    res = res + getName() + genPars + "(";
 
     for (int i = 0; i < parameters.size(); i++)
     { Attribute par = (Attribute) parameters.get(i);

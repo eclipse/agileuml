@@ -171,7 +171,7 @@ public abstract class ModelElement implements SystemTypes
 
         Vector ents = new Vector(); 
 
-        if (r.satisfiesConditions(eargs,ents))
+        if (r.satisfiesConditions(eargs,ents,cgs))
         { // System.out.println(">>>> Applying " + tag + " rule " + r); 
           return r.applyRule(args,eargs,cgs); 
         }  
@@ -418,7 +418,10 @@ public abstract class ModelElement implements SystemTypes
   }
 
   public static ModelElement lookupByName(String nme, List mes)
-  { for (int i = 0; i < mes.size(); i++) 
+  { if (mes == null || nme == null) 
+    { return null; }
+
+    for (int i = 0; i < mes.size(); i++) 
     { Object obj = mes.get(i); 
       if (obj instanceof ModelElement) 
       { ModelElement me = (ModelElement) obj; 
@@ -430,7 +433,10 @@ public abstract class ModelElement implements SystemTypes
   } 
 
   public static ModelElement lookupByName(String nme, Vector mes)
-  { for (int i = 0; i < mes.size(); i++) 
+  { if (mes == null || nme == null) 
+    { return null; }
+
+    for (int i = 0; i < mes.size(); i++) 
     { Object obj = mes.get(i); 
       if (obj instanceof ModelElement) 
       { ModelElement me = (ModelElement) obj; 
@@ -442,7 +448,10 @@ public abstract class ModelElement implements SystemTypes
   } 
 
   public static ModelElement lookupByNameIgnoreCase(String nme, Vector mes)
-  { for (int i = 0; i < mes.size(); i++) 
+  { if (mes == null || nme == null) 
+    { return null; }
+
+    for (int i = 0; i < mes.size(); i++) 
     { ModelElement me = (ModelElement) mes.get(i); 
       if (me.getName().equalsIgnoreCase(nme))
       { return me; } 
@@ -452,6 +461,9 @@ public abstract class ModelElement implements SystemTypes
 
   public static ModelElement findElementByNameIgnoreCase(String nme, Vector mes)
   { // Either a class or feature by name
+    if (mes == null || nme == null) 
+    { return null; }
+
     for (int i = 0; i < mes.size(); i++) 
     { ModelElement me = (ModelElement) mes.get(i); 
       if (me.getName().equalsIgnoreCase(nme))
@@ -466,7 +478,9 @@ public abstract class ModelElement implements SystemTypes
   } 
 
   public static Entity featureBelongsTo(String nme, Vector mes)
-  { 
+  { if (mes == null) 
+    { return null; } 
+
     for (int i = 0; i < mes.size(); i++) 
     { ModelElement me = (ModelElement) mes.get(i); 
       if (me instanceof Entity)

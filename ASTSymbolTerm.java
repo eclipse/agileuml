@@ -232,6 +232,21 @@ public class ASTSymbolTerm extends ASTTerm
   public String queryForm()
   { return toKM3(); } 
 
+  public String getJavaLabel()
+  { return null; } 
+
+  public boolean isJavaLabeledStatement()
+  { return false; } 
+
+  public boolean isLocalDeclarationStatement()
+  { return false; } 
+
+  public Vector getParameterExpressions()
+  { return new Vector(); } 
+
+  public String toKM3type()
+  { return toKM3(); } 
+
   public String toKM3()
   { if ("<EOF>".equals(symbol))
     { return ""; }
@@ -295,66 +310,285 @@ public class ASTSymbolTerm extends ASTTerm
     { statement = new ContinueStatement(); 
       return "  continue "; 
     } 
+ 
+    if ("Date".equals(symbol))
+    { modelElement = new Type("OclDate", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclDate"; 
+    }
 
-    if ("List".equals(symbol)) 
+    if ("Calendar".equals(symbol) || 
+        "GregorianCalendar".equals(symbol))
+    { modelElement = new Type("OclDate", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclDate"; 
+    }
+
+    if ("Random".equals(symbol))
+    { modelElement = new Type("OclRandom", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclRandom"; 
+    }
+
+    if ("Pattern".equals(symbol) || 
+        "FileFilter".equals(symbol) ||
+        "FilenameFilter".equals(symbol) || 
+        "Matcher".equals(symbol))
+    { modelElement = new Type("OclRegex", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclRegex"; 
+    } 
+
+    if ("Collection".equals(symbol) || 
+        "AbstractCollection".equals(symbol))
     { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; 
     }
- 
-    if ("ArrayList".equals(symbol)) 
-    { modelElement = new Type("Sequence", null); 
-      return "Sequence"; }
- 
-    if ("Vector".equals(symbol)) 
-    { modelElement = new Type("Sequence", null); 
-      return "Sequence"; } 
 
-    if ("LinkedList".equals(symbol)) 
+    if ("List".equals(symbol) || "ArrayList".equals(symbol)) 
     { modelElement = new Type("Sequence", null); 
-      return "Sequence"; } 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence";
+    }
+ 
+    if ("Vector".equals(symbol) || "Stack".equals(symbol)) 
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; 
+    } 
 
-    if ("PriorityQueue".equals(symbol)) 
+    if ("LinkedList".equals(symbol) || 
+        "AbstractList".equals(symbol)) 
     { modelElement = new Type("Sequence", null); 
-      return "Sequence"; }
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; 
+    } 
+
+    if ("Queue".equals(symbol) ||
+        "PriorityQueue".equals(symbol) ||
+        "BlockingQueue".equals(symbol) ||
+        "ArrayBlockingQueue".equals(symbol)) 
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; 
+    }
 
     if ("Stream".equals(symbol)) 
     { modelElement = new Type("Sequence", null); 
-      return "Sequence"; }
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; 
+    }
  
     if ("Set".equals(symbol)) 
     { modelElement = new Type("Set", null); 
-      return "Set"; } 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Set"; 
+    }
+ 
     if ("HashSet".equals(symbol)) 
     { modelElement = new Type("Set", null); 
-      return "Set"; } 
-    if ("TreeSet".equals(symbol)) 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Set"; 
+    }
+ 
+    if ("TreeSet".equals(symbol) || 
+        "SortedSet".equals(symbol)) 
     { modelElement = new Type("Set", null); 
-      return "Set"; } 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Set"; 
+    } 
 
-    if ("HashMap".equals(symbol) || "Map".equals(symbol)) 
+    if ("BitSet".equals(symbol))
+    { modelElement = new Type("Sequence", null);
+      ((Type) modelElement).setElementType(new Type("boolean", null));  
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence(boolean)"; 
+    } 
+
+    if ("HashMap".equals(symbol) || 
+        "Hashtable".equals(symbol) || 
+        "Map".equals(symbol)) 
     { modelElement = new Type("Map", null); 
-      return "Map"; } 
-    if ("TreeMap".equals(symbol)) 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Map"; 
+    }
+ 
+    if ("TreeMap".equals(symbol) || 
+        "SortedMap".equals(symbol)) 
     { modelElement = new Type("Map", null); 
-      return "Map"; } 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Map"; 
+    } 
 
     if ("Thread".equals(symbol) || "Process".equals(symbol)) 
     { modelElement = new Type("OclProcess", null); 
-      return "OclProcess"; } 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclProcess"; 
+    } 
 
     if ("Predicate".equals(symbol)) 
     { modelElement = new Type("Function", null);
+      ((Type) modelElement).keyType = 
+                               new Type("String", null);   
       ((Type) modelElement).elementType = 
-                               new Type("boolean", null);   
+                               new Type("boolean", null);  
+      expression = new BasicExpression((Type) modelElement); 
+ 
       return "Function"; 
     }
 
     if ("Function".equals(symbol)) 
     { modelElement = new Type("Function", null);
+      ((Type) modelElement).keyType = 
+                               new Type("String", null);   
       ((Type) modelElement).elementType = 
                                new Type("OclAny", null);   
+      expression = new BasicExpression((Type) modelElement); 
       return "Function"; 
     }
+
+    if ("Properties".equals(symbol))
+    { modelElement = new Type("Map", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Map"; } 
+
+    if ("Enumeration".equals(symbol))
+    { modelElement = new Type("OclIterator", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclIterator"; } 
+    if ("Iterator".equals(symbol))
+    { modelElement = new Type("OclIterator", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclIterator"; } 
+    if ("ListIterator".equals(symbol))
+    { modelElement = new Type("OclIterator", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclIterator"; } 
+    if ("StringTokenizer".equals(symbol))
+    { modelElement = new Type("OclIterator", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclIterator"; } 
+
+    if ("File".equals(symbol) || 
+        "FileDescriptor".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("Formatter".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("Scanner".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("ObjectInputStream".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("ObjectOutputStream".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("ObjectInput".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("ObjectOutput".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("DataInput".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("DataOutput".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("DataInputStream".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("DataOutputStream".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("PipedInputStream".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("PipedOutputStream".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; }
+    if ("FilterInputStream".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("FilterOutputStream".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("BufferedInputStream".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("BufferedOutputStream".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("PrintStream".equals(symbol) || "Socket".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("FileOutputStream".equals(symbol) ||
+        "FileInputStream".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("Reader".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("FileReader".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("Writer".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("FileWriter".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("RandomAccessFile".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("BufferedReader".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("BufferedWriter".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("InputStreamReader".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+    if ("OutputStreamWriter".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; }
+    if ("PrintWriter".equals(symbol))
+    { modelElement = new Type("OclFile", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclFile"; } 
+
 
     if ("else".equals(symbol))
     { return " else "; } 
@@ -362,7 +596,10 @@ public class ASTSymbolTerm extends ASTTerm
     return symbol; 
   } 
 
-  public String typeArgumentsToKM3()
+  public String toKM3asObject(Entity ent)
+  { return ""; } 
+
+  public String typeArgumentsToKM3ElementType()
   { return symbol; } 
 
   public boolean isIdentifier()

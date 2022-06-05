@@ -52,6 +52,25 @@ public class Entity extends ModelElement implements Comparable
            typeParameters.size() > 0; 
   } 
 
+  public boolean isTypeParameter()
+  { return genericParameter; } 
+
+  public void addGenericTypeParameters(Vector gpars, Vector ents)
+  { for (int i = 0; i < gpars.size(); i++) 
+    { ModelElement mt = (ModelElement) gpars.get(i);
+      Entity newT = null; 
+      if (mt instanceof Type && 
+          ((Type) mt).isEntity())
+      { newT = ((Type) mt).getEntity(); }   
+      else 
+      { newT = new Entity(mt.getName());
+        ents.add(newT); // if not already there
+      } 
+      newT.genericParameter = true; 
+      addTypeParameter(new Type(newT));
+    }
+  }      
+
   public boolean isEmpty()
   { if (attributes.size() == 0 && associations.size() == 0 && operations.size() == 0)
     { return true; }
@@ -67,6 +86,9 @@ public class Entity extends ModelElement implements Comparable
 
   public boolean isGenericParameter()
   { return genericParameter; } 
+
+  public void setIsGenericParameter(boolean b)
+  { genericParameter = b; } 
 
   public boolean allSubclassesAreEmpty()
   { boolean res = true;
@@ -353,7 +375,16 @@ public class Entity extends ModelElement implements Comparable
   } 
 
   public void setTypeParameters(Vector tpars)
-  { typeParameters = tpars; } 
+  { typeParameters = tpars; }
+
+  public boolean hasTypeParameters(Vector tpars) 
+  { boolean res = true; 
+    if (typeParameters != null && 
+        typeParameters.size() == tpars.size() && 
+        (typeParameters + "").equals(tpars + ""))
+    { return res; } 
+    return false; 
+  }  
 
   public Vector typeParameterEntities()
   { Vector v = new Vector(); 
@@ -766,14 +797,82 @@ public class Entity extends ModelElement implements Comparable
   }
 
   public void addModelElements(Vector modElems)
-  { for (int i = 0; i < modElems.size(); i++) 
+  { if (modElems == null) 
+    { return; } 
+
+    for (int i = 0; i < modElems.size(); i++) 
     { ModelElement me = (ModelElement) modElems.get(i); 
       if (me instanceof Attribute) 
       { addAttribute((Attribute) me); } 
       else if (me instanceof BehaviouralFeature)
-      { addOperation((BehaviouralFeature) me); } 
+      { addOperation((BehaviouralFeature) me); }
+      else if (me instanceof Entity) 
+      { addComponentClass((Entity) me); }  
     } 
   } 
+
+  public void addComponentClass(Entity component)
+  { // attribute _container : this; 
+    // added to component's attributes
+    // operation newCName() : CName
+    // activity: var res : CName := CName.newCName(); 
+    //     res._container := self; 
+    // added to operations. 
+
+    String cname = component.getName(); 
+    Type ctype = new Type(component); 
+    Type thistype = new Type(this); 
+
+    Attribute container = 
+      new Attribute("_container", thistype, 
+                    ModelElement.INTERNAL); 
+    component.addAttribute(container); 
+
+    BehaviouralFeature bf = 
+      new BehaviouralFeature("new" + cname);
+    bf.setPre(new BasicExpression(true)); 
+    bf.setPost(new BasicExpression(true)); 
+ 
+    bf.setType(ctype);
+
+    SequenceStatement ss = new SequenceStatement(); 
+    CreationStatement cs = 
+       new CreationStatement(cname, "res");
+    cs.setType(ctype); 
+
+    BasicExpression resbe = 
+       BasicExpression.newVariableBasicExpression("res", 
+                                                  ctype);  
+    BasicExpression contbe = 
+       BasicExpression.newVariableBasicExpression("_container", 
+                                                  thistype);
+    contbe.setObjectRef(resbe); 
+
+    BasicExpression selfbe = 
+       BasicExpression.newVariableBasicExpression("self", 
+                                                  thistype);  
+    BasicExpression constr = 
+       BasicExpression.newStaticCallBasicExpression(
+                 "new" + cname,cname);
+  
+    AssignStatement asgn =
+       new AssignStatement(resbe,constr); 
+    AssignStatement setcontainer = 
+       new AssignStatement(contbe,selfbe); 
+    ReturnStatement returnobj = 
+       new ReturnStatement(resbe); 
+ 
+    ss.addStatement(cs); 
+    ss.addStatement(asgn);
+    ss.addStatement(setcontainer); 
+    ss.addStatement(returnobj); 
+ 
+    bf.setActivity(ss); 
+
+    addOperation(bf); 
+  } 
+
+
 
   public void addTypeParameter(Type t)
   { if (typeParameters.contains(t)) { } 
@@ -1212,6 +1311,37 @@ public class Entity extends ModelElement implements Comparable
     } 
   } 
 
+  public void addInterfaces(Vector iList, Vector entities)
+  { for (int i = 0; i < iList.size(); i++) 
+    { ModelElement intf = (ModelElement) iList.get(i); 
+
+      String iname = intf.getName(); 
+      if ("Runnable".equals(iname)) 
+      { // <<active>> stereotype
+        addStereotype("active"); 
+      }
+      else if ("Serializable".equals(iname))
+      { addStereotype("serializable"); } 
+      else if ("Comparable".equals(iname) || 
+               "List".equals(iname) ||
+               "OclAny".equals(iname) ||  
+               "Collection".equals(iname) ||  
+               "Cloneable".equals(iname))
+      { } 
+      else if (intf instanceof Entity)  
+      { addInterface((Entity) intf); } 
+      else if (intf instanceof Type && 
+               ((Type) intf).isEntity())
+      { addInterface(((Type) intf).getEntity()); } 
+      else 
+      { ModelElement me = 
+          ModelElement.lookupByName(iname.trim(), entities); 
+        if (me != null && me instanceof Entity)
+        { addInterface((Entity) me); }
+      } 
+    } 
+  } 
+
   public void addInterface(Entity intf)
   { // Check that all ops of intf are also in this
 
@@ -1232,7 +1362,7 @@ public class Entity extends ModelElement implements Comparable
       } 
       if (found) { } 
       else 
-      { System.err.println("!Warning!: Operation " + sig + " of interface " + intf.getName() + 
+      { System.err.println("!! Warning !!: Operation " + sig + " of interface " + intf.getName() + 
                            " is not implemented in class " + getName()); 
       }  
     } 
@@ -4164,7 +4294,7 @@ public class Entity extends ModelElement implements Comparable
     Vector pars = new Vector(); 
 
     BehaviouralFeature constr = 
-        BehaviouralFeature.newConstructor(nme,pars); 
+        BehaviouralFeature.newConstructor(nme,this,pars); 
     constr.setStatic(true); 
     addOperation(constr); 
 
@@ -4191,6 +4321,52 @@ public class Entity extends ModelElement implements Comparable
         BehaviouralFeature.newStaticConstructor(nme,pars); 
     constr.setStatic(true); 
     addOperation(constr); 
+  } 
+
+  public Vector globalInitialisers()
+  { // any static operation called "_initialiseClass*"
+
+    Vector res = new Vector(); 
+
+    for (int i = 0; i < operations.size(); i++) 
+    { BehaviouralFeature bf = 
+        (BehaviouralFeature) operations.get(i); 
+      if (bf.isStatic() && 
+          bf.getName().startsWith("_initialiseClass"))
+      { res.add(bf); } 
+    } 
+    return res; 
+  } 
+
+  public Vector globalInitialisationCode()
+  { // C.op() of static operations called "_initialiseClass*"
+
+    Vector res = new Vector(); 
+
+    BasicExpression classExpr = 
+                  new BasicExpression(this); 
+
+    for (int i = 0; i < operations.size(); i++) 
+    { BehaviouralFeature bf = 
+        (BehaviouralFeature) operations.get(i); 
+      if (bf.isStatic() && 
+          bf.getName().startsWith("_initialiseClass"))
+      { BasicExpression initialiseCall = 
+          new BasicExpression(bf.getName()); 
+        initialiseCall.setUmlKind(Expression.UPDATEOP);
+        initialiseCall.setIsEvent();
+        initialiseCall.setStatic(true);  
+        Vector parNames = bf.getParameterExpressions(); 
+    
+        initialiseCall.setParameters(parNames); 
+        initialiseCall.setObjectRef(classExpr); 
+        InvocationStatement callInit = 
+          new InvocationStatement(initialiseCall);
+        callInit.setParameters(parNames);  
+        res.add(callInit); 
+      } 
+    } 
+    return res; 
   } 
 
   public int sizeof(Vector types, Vector entities)
@@ -8575,12 +8751,32 @@ public class Entity extends ModelElement implements Comparable
     return res; 
   } 
 
+  public String getCompleteName()
+  { String nme = getName();
+
+    if (typeParameters.size() > 0)
+    { String tp = ""; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { tp = tp + ((ModelElement) typeParameters.get(i)).getName();
+        if (i < typeParameters.size()-1)
+        { tp = tp + ","; } 
+      } 
+      nme = nme + "<" + tp + ">"; 
+    }
+ 
+    return nme; 
+  } 
 
   public String getKM3()
   { String nme = "class " + getName();
 
     if (typeParameters.size() > 0)
-    { String tp = ((Type) typeParameters.get(0)).getName(); 
+    { String tp = ""; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { tp = tp + ((ModelElement) typeParameters.get(i)).getName();
+        if (i < typeParameters.size()-1)
+        { tp = tp + ","; } 
+      } 
       nme = nme + "<" + tp + ">"; 
     } 
 
@@ -8589,20 +8785,21 @@ public class Entity extends ModelElement implements Comparable
     { nme = "abstract " + nme; } 
 
     if (superclass != null) 
-    { nme = nme + " extends " + superclass; 
+    { nme = nme + " extends " + superclass.getCompleteName(); 
       if (interfaces.size() > 0)
-      { for (int k = 0; k < interfaces.size(); k++) 
+      { nme = nme + " implements "; 
+        for (int k = 0; k < interfaces.size(); k++) 
         { Entity intf = (Entity) interfaces.get(k); 
-          nme = nme + ", " + intf.getName(); 
+          nme = nme + ", " + intf.getCompleteName(); 
         } 
       } 
     } 
     else if (interfaces.size() > 0) 
     { nme = nme + " implements " + 
-                  ((Entity) interfaces.get(0)).getName(); 
+            ((Entity) interfaces.get(0)).getCompleteName(); 
       for (int k = 1; k < interfaces.size(); k++) 
       { Entity intf = (Entity) interfaces.get(k); 
-        nme = nme + ", " + intf.getName(); 
+        nme = nme + ", " + intf.getCompleteName(); 
       } 
     } 
 
@@ -8671,20 +8868,21 @@ public class Entity extends ModelElement implements Comparable
     { nme = "abstract " + nme; }
  
     if (superclass != null) 
-    { nme = nme + " extends " + superclass; 
+    { nme = nme + " extends " + superclass.getCompleteName(); 
       if (interfaces.size() > 0)
-      { for (int k = 0; k < interfaces.size(); k++) 
+      { nme = nme + " implements "; 
+        for (int k = 0; k < interfaces.size(); k++) 
         { Entity intf = (Entity) interfaces.get(k); 
-          nme = nme + ", " + intf.getName(); 
+          nme = nme + ", " + intf.getCompleteName(); 
         } 
       } 
     } 
     else if (interfaces.size() > 0) 
     { nme = nme + " implements " + 
-                  ((Entity) interfaces.get(0)).getName(); 
+            ((Entity) interfaces.get(0)).getCompleteName(); 
       for (int k = 1; k < interfaces.size(); k++) 
       { Entity intf = (Entity) interfaces.get(k); 
-        nme = nme + ", " + intf.getName(); 
+        nme = nme + ", " + intf.getCompleteName(); 
       } 
     } 
 

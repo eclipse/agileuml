@@ -460,15 +460,27 @@ public abstract class ASTTerm
 
   public abstract String queryForm(); 
 
+  public abstract Vector getParameterExpressions(); 
+
+  public abstract String getJavaLabel();
+
+  public abstract boolean isJavaLabeledStatement();
+
+  public abstract boolean isLocalDeclarationStatement();
+
   public abstract String toKM3(); 
 
-  public abstract String typeArgumentsToKM3();
+  public abstract String toKM3type(); 
+
+  public abstract String typeArgumentsToKM3ElementType();
 
   public boolean isAssignment() 
   { return false; } 
 
   public String toKM3Assignment()
   { return toKM3(); } 
+
+  public abstract String toKM3asObject(Entity ent);
 
   public static boolean isInteger(String typ) 
   { return 

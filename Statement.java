@@ -3732,8 +3732,10 @@ class CreationStatement extends Statement
 
   public String toString()
   { String declType = createsInstanceOf; 
-    if (instanceType != null) 
-    { declType = instanceType.toString(); } 
+    if (instanceType != null && instanceType.isEntity()) 
+    { declType = instanceType.getEntity().getCompleteName(); }
+    else if (instanceType != null) 
+    { declType = instanceType + ""; }  
 
     if (initialValue != null) 
     { return "  var " + assignsTo + " : " + declType + " := " + initialValue; } 
@@ -4637,8 +4639,9 @@ class SequenceStatement extends Statement
   } 
 
   public void addStatements(Vector stats)
-  { statements.addAll(stats); }
-  
+  { if (stats != null) 
+    { statements.addAll(stats); }
+  } 
 
   public void addStatement(int pos, Statement s)
   { if (pos >= statements.size())

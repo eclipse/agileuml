@@ -138,6 +138,27 @@ public class Type extends ModelElement
     // elementType = new Type(e); 
   } 
 
+  public void setTypeParameters(Vector pars)
+  { if (isEntity)
+    { entity.setTypeParameters(pars); } 
+    if (pars.size() == 0) 
+    { return; } 
+    Type par1 = (Type) pars.get(0); 
+    if ("Set".equals(name) || "Sequence".equals(name))
+    { elementType = par1; } 
+    else if ("Map".equals(name) || 
+             "Function".equals(name))
+    { keyType = par1; 
+      if (pars.size() > 1)
+      { elementType = (Type) pars.get(1); }
+    }  
+  }
+
+  public void setGenericTypeParameters(Vector pars)
+  { if (isEntity)
+    { entity.setTypeParameters(pars); } 
+  } 
+
   public static boolean isDefinedType(Type t) 
   { if (t == null) 
     { return false; } 
@@ -4341,6 +4362,9 @@ public class Type extends ModelElement
       { et = "OclAny"; } 
       return nme + "(" + kt + "," + et + ")"; 
     } 
+
+    if (entity != null) 
+    { nme = entity.getCompleteName(); } 
 
     return nme; 
   } 

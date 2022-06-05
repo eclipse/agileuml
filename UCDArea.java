@@ -254,6 +254,7 @@ public class UCDArea extends JPanel
 		}
       }
     }
+
     for (int i = 0; i < ucs.size(); i++) 
     { UseCase uc = (UseCase) ucs.get(i);
       addGeneralUseCase(uc); 
@@ -2516,7 +2517,7 @@ public class UCDArea extends JPanel
     if (uc == null) 
     { uc = new UseCase(nme,null); 
       addGeneralUseCase(uc); 
-	  uc.addStereotype("private"); 
+      uc.addStereotype("private"); 
       repaint(); 
       if (result != null) 
 	  { uc.setResultType(result.getType()); 
@@ -14083,7 +14084,7 @@ public void produceCUI(PrintWriter out)
   } 
 
 
-
+  // From Java AST
   public void loadGenericUseCase()
   { Vector auxcstls = new Vector(); 
   
@@ -14114,7 +14115,7 @@ public void produceCUI(PrintWriter out)
     while (!eof)
     { try { s = br.readLine(); }
       catch (IOException _ex)
-      { System.out.println("Reading AST file output/ast.txt failed.");
+      { System.out.println("!! Reading AST file output/ast.txt failed.");
         return; 
       }
       if (s == null) 
@@ -14134,7 +14135,7 @@ public void produceCUI(PrintWriter out)
       c.parseGeneralAST(sourcestring); 
 
     if (xx == null) 
-    { System.err.println(">>> Invalid text for general AST"); 
+    { System.err.println("!! Invalid text for general AST"); 
       System.err.println(c.lexicals); 
       return; 
     } 
@@ -14163,6 +14164,8 @@ public void produceCUI(PrintWriter out)
     long time2 = d2.getTime(); 
 
     System.out.println(">>> Time for abstraction = " + (time2-time1)); 
+
+    System.out.println(">>> System classes are: " + ASTTerm.entities); 
 
     Vector newentities = new Vector(); 
     String pname = ASTTerm.packageName; 
@@ -14214,6 +14217,31 @@ public void produceCUI(PrintWriter out)
       } // and add inheritances. 
     }
 
+    int entcount = newentities.size(); 
+
+    for (int i = 0; i < ASTTerm.entities.size(); i++) 
+    { Entity entx = (Entity) ASTTerm.entities.get(i); 
+      String entxname = entx.getName(); 
+      ModelElement mex = 
+         ModelElement.lookupByName(entxname,entities); 
+      if (mex != null) { continue; } 
+      mex = 
+         ModelElement.lookupByName(entxname,newentities); 
+      if (mex != null) { continue; } 
+      if (entx.isInterface() ||
+          entx.hasConstructor() || 
+          entx.isTypeParameter()) 
+      { } 
+      else 
+      { entx.addDefaultConstructor(); } 
+
+      if (entx.isTypeParameter()) { } 
+      else 
+      { addEntity(entx, 100+((i+entcount)*50), 100 + (150*(entcount+i) % 600));
+        newentities.add(entx);
+      }  
+    } 
+
     repaint(); 
 
     for (int k = 0; k < newentities.size(); k++) 
@@ -14251,6 +14279,22 @@ public void produceCUI(PrintWriter out)
       } 
 
     }    
+
+    Vector globalInitialisers = new Vector(); 
+    SequenceStatement globalInit = new SequenceStatement(); 
+
+    for (int k = 0; k < newentities.size(); k++) 
+    { Entity nent = (Entity) newentities.get(k);
+      globalInitialisers.addAll(nent.globalInitialisers()); 
+      Vector ginitcode = nent.globalInitialisationCode(); 
+      globalInit.addStatements(ginitcode); 
+    } 
+
+    if (globalInitialisers.size() > 0) 
+    { UseCase uc = new UseCase("initialiseApp"); 
+      uc.setActivity(globalInit); 
+      addGeneralUseCase(uc);  
+    } 
 
     repaint(); 
   }
