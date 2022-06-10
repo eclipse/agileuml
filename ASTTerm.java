@@ -27,6 +27,8 @@ public abstract class ASTTerm
   static String packageName = null; 
   static Vector enumtypes; 
   static Vector entities; 
+  static Vector functionsInScope; 
+
   static Entity currentClass = null; // Current context class
 
   static java.util.Map metafeatures = new java.util.HashMap(); 
@@ -465,6 +467,14 @@ public abstract class ASTTerm
   public abstract String getJavaLabel();
 
   public abstract boolean isJavaLabeledStatement();
+
+  public abstract ASTTerm getJavaLabeledStatement();
+
+  public abstract String getJSLabel();
+
+  public abstract boolean isJSLabeledStatement();
+
+  public abstract ASTTerm getJSLabeledStatement();
 
   public abstract boolean isLocalDeclarationStatement();
 

@@ -1555,9 +1555,26 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     return false; 
   } 
       
+  // what about lambda?
   public Expression addReference(BasicExpression ref, Type t)
   { UnaryExpression res = (UnaryExpression) clone(); 
     res.argument = argument.addReference(ref,t); 
+    return res; 
+  } 
+
+  public Expression addContainerReference(
+            BasicExpression ref, String var, Vector excls)
+  { UnaryExpression res = (UnaryExpression) clone();
+
+    Vector newexcls = new Vector();
+    newexcls.addAll(excls); 
+ 
+    if ("lambda".equals(operator) && 
+        accumulator != null) 
+    { newexcls.add(accumulator.getName()); }
+ 
+    res.argument = argument.addContainerReference(
+                                         ref,var,newexcls); 
     return res; 
   } 
 

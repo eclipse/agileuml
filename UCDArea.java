@@ -16373,6 +16373,9 @@ public void produceCUI(PrintWriter out)
 	
     for (int i = 0; i < newentities.size(); i++) 
     { Entity enode = (Entity) newentities.get(i);
+      if (enode.isGenericParameter()) 
+      { continue; } 
+
       int xval = 200 + (ecount/5)*delta + ((ecount % 5)*delta)/5; 
       int yval = 150 + (ecount % 5)*delta; 
  
@@ -16499,6 +16502,9 @@ public void produceCUI(PrintWriter out)
 
     for (int i = 0; i < ents.size(); i++) 
     { Entity enode = (Entity) ents.get(i); 
+      if (enode.isGenericParameter())
+      { continue; } 
+
       int xval = 200 + (ecount/4)*delta + ((ecount % 4)*delta)/4; 
       int yval = 150 + (ecount % 5)*delta; 
 

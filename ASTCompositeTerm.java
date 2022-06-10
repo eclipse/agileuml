@@ -8278,11 +8278,65 @@ public class ASTCompositeTerm extends ASTTerm
     } // expr is an expression sequence
 
     if ("continueStatement".equals(tag) && 
+        terms.size() > 2 &&
+        "continue".equals(terms.get(0) + ""))
+    { Vector res = new Vector(); 
+      String lbl = ((ASTTerm) terms.get(1)).literalForm();
+      ModelElement mm = ModelElement.lookupByName(lbl,
+                               ASTTerm.functionsInScope); 
+
+      if (mm instanceof BehaviouralFeature) 
+      { BehaviouralFeature bf = (BehaviouralFeature) mm; 
+        BasicExpression becall = 
+            new BasicExpression(bf);
+        if (bf.hasReturnValue())
+        { res.add(new ReturnStatement(becall)); } 
+        else  
+        { res.add(new InvocationStatement(becall)); } 
+      } 
+      else 
+      { BasicExpression becall = 
+          BasicExpression.newCallBasicExpression(lbl); 
+        
+        res.add(new InvocationStatement(becall)); 
+      } 
+
+      return res; 
+    } 
+
+    if ("continueStatement".equals(tag) && 
         terms.size() >= 2 &&
         "continue".equals(terms.get(0) + ""))
     { Statement sx = new ContinueStatement(); 
       Vector res = new Vector(); 
       res.add(sx); 
+      return res; 
+    } 
+
+    if ("breakStatement".equals(tag) && 
+        terms.size() > 2 &&
+        "break".equals(terms.get(0) + ""))
+    { Vector res = new Vector(); 
+      String lbl = ((ASTTerm) terms.get(1)).literalForm();
+      ModelElement mm = ModelElement.lookupByName(lbl,
+                               ASTTerm.functionsInScope); 
+
+      if (mm instanceof BehaviouralFeature) 
+      { BehaviouralFeature bf = (BehaviouralFeature) mm; 
+        BasicExpression becall = 
+            new BasicExpression(bf);
+        if (bf.hasReturnValue())
+        { res.add(new ReturnStatement(becall)); } 
+        else  
+        { res.add(new InvocationStatement(becall)); } 
+      } 
+      else 
+      { BasicExpression becall = 
+          BasicExpression.newCallBasicExpression(lbl); 
+        
+        res.add(new InvocationStatement(becall)); 
+      } 
+
       return res; 
     } 
 
@@ -9429,7 +9483,18 @@ public class ASTCompositeTerm extends ASTTerm
       //   BehaviouralFeature.buildFunctionType(fpars); 
       // vartypes.put(fname,functype); 
 
-  
+      java.util.Map vtps = new java.util.HashMap(); 
+      vtps.putAll(vartypes); 
+      java.util.Map vetps = new java.util.HashMap(); 
+      vetps.putAll(varelemtypes); 
+      ASTTerm.functionsInScope = new Vector(); 
+      Vector labelfunctions = 
+        ((ASTCompositeTerm) body).jsLabelFunctions(
+                            vtps,vetps,types,entities);
+      System.out.println(">>> Operation " + fname + 
+              " has label functions " + labelfunctions);
+      // ASTTerm.functionsInScope.addAll(labelfunctions);   
+          
       Vector stats = body.jsstatementToKM3(vartypes,
                              varelemtypes,types,
                              entities);
@@ -9476,6 +9541,19 @@ public class ASTCompositeTerm extends ASTTerm
       String fname = name.literalForm(); 
 
       ASTTerm body = (ASTTerm) terms.get(4);
+
+      java.util.Map vtps = new java.util.HashMap(); 
+      vtps.putAll(vartypes); 
+      java.util.Map vetps = new java.util.HashMap(); 
+      vetps.putAll(varelemtypes); 
+
+      ASTTerm.functionsInScope = new Vector(); 
+      Vector labelfunctions = 
+         ((ASTCompositeTerm) body).jsLabelFunctions(
+                              vtps,vetps,
+                              types,entities);
+      System.out.println(">>> Operation " + fname + " has label functions " + labelfunctions);
+      // ASTTerm.functionsInScope.addAll(labelfunctions);   
   
       Vector stats = body.jsstatementToKM3(vartypes,
                              varelemtypes,types,
@@ -15484,6 +15562,16 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm.setType(this, ASTTerm.getType(arg)); 
           return args + "->reverse()"; 
         }   
+        else if ("clear".equals(called) && (arg.isCollection() ||
+                                            arg.isMap()))
+        { if (arg.expression != null) 
+          { expression = 
+              new BinaryExpression("->intersection", arg.expression, new SetExpression()); 
+          }
+
+          ASTTerm.setType(this, ASTTerm.getType(arg)); 
+          return args + "->intersection(Set{})"; 
+        }   
         else if ("replaceAll".equals(called) && "Collections".equals(args) && cargs.size() == 3)
         { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
           String callp1 = callarg1.toKM3(); 
@@ -17580,7 +17668,8 @@ public class ASTCompositeTerm extends ASTTerm
 
           return args + ".length()"; 
         } 
-        else if ("get".equals(called) || "elementAt".equals(called)) 
+        else if ("get".equals(called) || 
+                 "elementAt".equals(called)) 
         { ASTTerm callarg = (ASTTerm) callterms.get(2);
           String tt = ASTTerm.getType(args); 
           System.out.println(">>> Type of " + args + " is: " + tt);  
@@ -17619,7 +17708,7 @@ public class ASTCompositeTerm extends ASTTerm
             }   
             return args + ".at(" + callp + ")"; 
           } 
-          else 
+          else if (arg.isCollection()) // ONLY for sequences
           { if (arg.expression != null && 
                 callarg.expression != null) 
             { Expression unit = new BasicExpression(1); 
@@ -17630,6 +17719,13 @@ public class ASTCompositeTerm extends ASTTerm
             }   
             return args + "->at(" + callp + "+1)"; 
           }  
+          else 
+          { expression = 
+              BasicExpression.newCallBasicExpression("get",
+                                     arg.expression,
+                                     callarg.expression); 
+            return args + ".get(" + callp + ")"; 
+          } 
         }  
         else if ("size".equals(called)) 
         { ASTTerm.setType(thisliteral,"int"); 
@@ -19462,7 +19558,7 @@ public class ASTCompositeTerm extends ASTTerm
           return args + " := " + args + " - " + callp; 
         }
         else if (("clear".equals(called) && 
-                  arg.isCollection()) || 
+                  (arg.isCollection() || arg.isMap()) ) || 
                  "removeAllElements".equals(called))
         { if (arg.expression != null) 
           { expression = 
@@ -25716,18 +25812,60 @@ public class ASTCompositeTerm extends ASTTerm
       else if (terms.size() >= 3 && 
                "continue".equals(terms.get(0) + "") && 
                ";".equals(terms.get(2) + ""))
-      { String lbl = terms.get(1) + ""; 
-        BasicExpression becall = 
-          BasicExpression.newCallBasicExpression(lbl); 
-        statement = new InvocationStatement(becall); 
+      { String lbl = terms.get(1) + "";
+        ModelElement mm = ModelElement.lookupByName(lbl,
+                               ASTTerm.functionsInScope); 
 
-        return "  " + lbl + "()"; 
+        String parstring = ""; 
+
+        if (mm instanceof BehaviouralFeature) 
+        { BehaviouralFeature bf = (BehaviouralFeature) mm; 
+          BasicExpression becall = 
+            new BasicExpression(bf);
+          if (bf.hasReturnValue())
+          { statement = new ReturnStatement(becall); } 
+          else  
+          { statement = new InvocationStatement(becall); }
+          parstring = bf.parametersString();  
+        } 
+        else 
+        { BasicExpression becall = 
+            BasicExpression.newCallBasicExpression(lbl); 
+          statement = new InvocationStatement(becall); 
+        } 
+
+        return "  " + lbl + "(" + parstring + ")"; 
       } 
-      else if (terms.size() > 0 && "break".equals(terms.get(0) + ""))
+      else if (terms.size() == 2 && 
+               "break".equals(terms.get(0) + ""))
       { statement = new BreakStatement(); 
 
         return "  break "; 
       }
+      else if (terms.size() >= 3 && 
+               "break".equals(terms.get(0) + "") && 
+               ";".equals(terms.get(2) + ""))
+      { String lbl = terms.get(1) + "";
+        ModelElement mm = ModelElement.lookupByName(lbl,
+                               ASTTerm.functionsInScope); 
+
+        if (mm instanceof BehaviouralFeature) 
+        { BehaviouralFeature bf = (BehaviouralFeature) mm; 
+          BasicExpression becall = 
+            new BasicExpression(bf);
+          if (bf.hasReturnValue())
+          { statement = new ReturnStatement(becall); } 
+          else  
+          { statement = new InvocationStatement(becall); } 
+        } 
+        else 
+        { BasicExpression becall = 
+            new BasicExpression(lbl); 
+          statement = new InvocationStatement(becall); 
+        } 
+
+        return "  " + lbl + "()"; 
+      } 
       else if (terms.size() == 2) // expression statement
       { ASTTerm t = (ASTTerm) terms.get(0);
 
@@ -26034,9 +26172,9 @@ public class ASTCompositeTerm extends ASTTerm
     { ASTTerm typeTerm = (ASTTerm) terms.get(0); 
       ASTCompositeTerm varTerm = 
          (ASTCompositeTerm) terms.get(1); 
-      if (terms.size() >= 3) 
-      { typeTerm = (ASTTerm) terms.get(terms.size()-2); 
-        varTerm = (ASTCompositeTerm) terms.get(terms.size()-1); 
+      if (terms.size() > 3) 
+      { typeTerm = (ASTTerm) terms.get(terms.size()-3); 
+        varTerm = (ASTCompositeTerm) terms.get(terms.size()-2); 
       } // ignore modifiers 
       
       String km3type = typeTerm.toKM3type();
@@ -26699,7 +26837,9 @@ public class ASTCompositeTerm extends ASTTerm
           { labelfunctions = 
                ((ASTCompositeTerm) tt).javaLabelFunctions(bf);
             System.out.println(">>> Operation " + bf + " has label functions " + labelfunctions);
-            modelElements.addAll(labelfunctions);  
+            modelElements.addAll(labelfunctions);
+            ASTTerm.functionsInScope = new Vector(); 
+            ASTTerm.functionsInScope.addAll(labelfunctions);   
           } 
 
           if ("throws".equals(tt.literalForm()))
@@ -28771,6 +28911,12 @@ public class ASTCompositeTerm extends ASTTerm
             ModelElement.lookupByName(btype,ASTTerm.entities); 
         } 
 
+        if (modelElement == null) 
+        { modelElement = new Entity(btype); 
+          entities.add(modelElement); 
+          modelElement = new Type((Entity) modelElement); 
+        } 
+
         // The *same* model element is used for different 
         // parameter instantiations btype<T1>, btype<T2> etc
 
@@ -28989,7 +29135,8 @@ public class ASTCompositeTerm extends ASTTerm
           else 
           { String tt = trm.toKM3type();
             modelElement = trm.modelElement;
-            modelElements.add(modelElement);
+            if (modelElement != null) 
+            { modelElements.add(modelElement); } 
             resx = resx + tt; 
           } 
         }  
@@ -29052,7 +29199,8 @@ public class ASTCompositeTerm extends ASTTerm
         else 
         { String tt = trm.toKM3type();
           modelElement = trm.modelElement;
-          modelElements.add(modelElement);
+          if (modelElement != null) 
+          { modelElements.add(modelElement); }
           resx = resx + tt; 
         }  
         return resx + ""; 
@@ -29062,6 +29210,122 @@ public class ASTCompositeTerm extends ASTTerm
     } 
 
     return ""; 
+  } 
+
+  public Vector jsLabelFunctions(java.util.Map vtypes,
+                                 java.util.Map vetypes,
+                                 Vector types, 
+                                 Vector entities)
+  { Vector res = new Vector(); 
+
+    if (terms.size() == 0)
+    { return res; } 
+
+    if ("functionBody".equals(tag) && 
+        "{".equals(terms.get(0) + ""))
+    { ASTCompositeTerm body = (ASTCompositeTerm) terms.get(1); 
+      // Entity ent = bf.getOwner(); 
+      /* java.util.Map localvars = new java.util.HashMap(); 
+      Vector pars = bf.getParameters();
+      for (int i = 0; i < pars.size(); i++) 
+      { Attribute att = (Attribute) pars.get(i); 
+        localvars.put(att.getName(), att); 
+      }  */ 
+
+      return body.jsLabelFunctions(vtypes,vetypes,
+                                   types,entities); 
+    }
+
+    if ("sourceElements".equals(tag) && terms.size() >= 1)
+    { 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm t = (ASTTerm) terms.get(i); 
+        
+        if (t.isJSLabeledStatement())
+        { // start new function from this point for the label
+          String label = t.getJSLabel(); 
+          ASTTerm labstat = t.getJSLabeledStatement(); 
+
+          if (ModelElement.lookupByName(label,res) != null)
+          { continue; } 
+
+          Entity ent = 
+            (Entity) 
+                ModelElement.lookupByName(
+                    "FromJavaScript", entities); 
+
+          BehaviouralFeature bf = 
+              new BehaviouralFeature(label); 
+          bf.setParameters(vtypes); 
+          bf.setPre(new BasicExpression(true)); 
+          bf.setPost(new BasicExpression(true)); 
+          bf.addStereotype("unsafe"); 
+          // bf.setStatic(mbf.isStatic()); 
+          ASTTerm.functionsInScope.add(bf);
+          if (ent != null) 
+          { ent.addOperation(bf); } 
+ 
+          Vector tailterms = VectorUtil.vectorTail(i+1,terms); 
+          ASTCompositeTerm act = 
+                 new ASTCompositeTerm(tag, tailterms);
+
+          System.out.println(">> Remaining code: " + act); 
+ 
+          Vector stat0 = new Vector(); 
+          if (labstat != null) 
+          { stat0 = labstat.jsstatementToKM3(
+                                        vtypes,vetypes,
+                                        types,entities); 
+          }
+ 
+          Vector stats = act.jsstatementToKM3(vtypes,vetypes,
+                                        types,entities);
+          SequenceStatement caction = new SequenceStatement(); 
+          if (labstat != null && stat0 != null) 
+          { caction.addStatements(stat0); } 
+          if (stats != null) 
+          { caction.addStatements(stats); }   
+
+          System.out.println(">> Label code action: " + caction); 
+ 
+          Vector retvals = 
+                 Statement.getReturnValues(caction); 
+
+          System.out.println(">> Return values: " + retvals); 
+
+          bf.setActivity(caction); 
+          if (retvals != null && retvals.size() > 0)
+          { Type retType = Type.determineType(retvals); 
+            bf.setType(retType); 
+          } 
+
+          System.out.println(">>> Label function: " + bf.display()); 
+
+          res.add(bf);
+          // if (tailterms.size() > 1) 
+          // { Vector remainingFunctions = 
+          //           act.javaLabelFunctions(ent,mbf,vars); 
+          //   res.addAll(remainingFunctions); 
+          // } 
+        } 
+        else 
+        // for localVariableDeclarations add to vars
+        { t.jsstatementToKM3(vtypes,vetypes,
+                             types,entities);
+          Vector tailterms = VectorUtil.vectorTail(i+1,terms);
+          if (tailterms.size() > 1) 
+          { ASTCompositeTerm act = 
+              new ASTCompositeTerm(tag, tailterms); 
+            Vector rems = 
+              act.jsLabelFunctions(
+                       vtypes,vetypes,types,entities);
+            res.addAll(rems);  
+          }
+        }          
+      } 
+    } 
+ 
+    return res; 
   } 
 
   public Vector javaLabelFunctions(BehaviouralFeature bf)
@@ -29109,7 +29373,8 @@ public class ASTCompositeTerm extends ASTTerm
         else if (t.isJavaLabeledStatement())
         { // start new function from this point for the label
           String label = t.getJavaLabel(); 
-          
+          ASTTerm labstat = t.getJavaLabeledStatement(); 
+
           if (ModelElement.lookupByName(label,res) != null)
           { continue; } 
 
@@ -29125,14 +29390,20 @@ public class ASTCompositeTerm extends ASTTerm
           bf.addStereotype("unsafe"); 
           bf.setStatic(mbf.isStatic()); 
 
-          Vector tailterms = VectorUtil.vectorTail(i,terms); 
+          Vector tailterms = VectorUtil.vectorTail(i+1,terms); 
           ASTCompositeTerm act = 
                  new ASTCompositeTerm(tag, tailterms);
 
           System.out.println(">> Remaining code: " + act); 
  
+          if (labstat != null) 
+          { String stat0 = labstat.toKM3(); } 
           String stats = act.toKM3();
-          Statement caction = act.statement;  
+          SequenceStatement caction = new SequenceStatement(); 
+          if (labstat != null && labstat.statement != null) 
+          { caction.addStatement(labstat.statement); } 
+          if (act.statement != null) 
+          { caction.addStatement(act.statement); }   
 
           System.out.println(">> Label code action: " + caction); 
  
@@ -29187,6 +29458,19 @@ public class ASTCompositeTerm extends ASTTerm
     return false; 
   } 
 
+  public ASTTerm getJavaLabeledStatement()
+  { if ("blockStatement".equals(tag))
+    { ASTCompositeTerm tt = (ASTCompositeTerm) terms.get(0); 
+      return tt.getJavaLabeledStatement(); 
+    } 
+
+    if ("statement".equals(tag) && terms.size() == 3 && 
+        ":".equals(terms.get(1) + ""))
+    { return (ASTTerm) terms.get(2); } 
+
+    return null; 
+  } 
+
   public boolean isLocalDeclarationStatement()
   { if ("blockStatement".equals(tag))
     { ASTCompositeTerm tt = (ASTCompositeTerm) terms.get(0); 
@@ -29212,6 +29496,51 @@ public class ASTCompositeTerm extends ASTTerm
     return null; 
   } 
 
+  public boolean isJSLabeledStatement()
+  { if ("sourceElement".equals(tag))
+    { ASTCompositeTerm tt = (ASTCompositeTerm) terms.get(0); 
+      return tt.isJSLabeledStatement(); 
+    } 
+
+    if ("statement".equals(tag))
+    { ASTCompositeTerm tt = (ASTCompositeTerm) terms.get(0); 
+      return tt.isJSLabeledStatement(); 
+    } 
+
+    if ("labelledStatement".equals(tag) && terms.size() == 3 && 
+        ":".equals(terms.get(1) + ""))
+    { return true; } 
+
+    return false; 
+  } 
+
+  public ASTTerm getJSLabeledStatement()
+  { if ("sourceElement".equals(tag) || 
+        "statement".equals(tag))
+    { ASTCompositeTerm tt = (ASTCompositeTerm) terms.get(0); 
+      return tt.getJSLabeledStatement(); 
+    } 
+
+    if ("labelledStatement".equals(tag) && 
+        terms.size() == 3 && ":".equals(terms.get(1) + ""))
+    { return (ASTTerm) terms.get(2); } 
+
+    return null; 
+  } 
+
+  public String getJSLabel()
+  { if ("sourceElement".equals(tag) || 
+        "statement".equals(tag))
+    { ASTCompositeTerm tt = (ASTCompositeTerm) terms.get(0); 
+      return tt.getJSLabel(); 
+    } 
+
+    if ("labelledStatement".equals(tag) && 
+        terms.size() == 3 && ":".equals(terms.get(1) + ""))
+    { return ((ASTTerm) terms.get(0)).literalForm(); } 
+
+    return null; 
+  } 
 
 
 

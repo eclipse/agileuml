@@ -732,6 +732,18 @@ public Vector singleMutants()
     return res; 
   } 
 
+  public Expression addContainerReference(BasicExpression ref, Vector excls)
+  { ConditionalExpression res = (ConditionalExpression) clone(); 
+    Expression tr = test.addContainerReference(ref,excls); 
+    Expression lr = ifExp.addContainerReference(ref,excls); 
+    Expression rr = elseExp.addContainerReference(ref,excls); 
+    res.test = tr; 
+    res.ifExp = lr; 
+    res.elseExp = rr; 
+      
+    return res; 
+  } 
+
   public DataDependency rhsDataDependency()
   { // if p.f = val then  val, p --> f
     return null; 

@@ -274,6 +274,11 @@ abstract class Statement implements Cloneable
  
   abstract Statement substituteEq(String oldE, Expression newE); 
 
+  abstract Statement addContainerReference(
+                                  BasicExpression ref,
+                                  String var, 
+                                  Vector excludes); 
+
   abstract Expression wpc(Expression post); 
 
   abstract Vector dataDependents(Vector allvars, Vector vars); 
@@ -716,6 +721,21 @@ class ReturnStatement extends Statement
     return this; 
   } 
 
+  public Statement addContainerReference(
+                                  BasicExpression ref,
+                                  String var,
+                                  Vector excludes)
+  { if (value != null)
+    { Expression newval = value.addContainerReference(
+                                    ref,var,excludes); 
+      ReturnStatement res = new ReturnStatement(newval);
+      res.setEntity(entity); 
+      return res;  
+    } 
+    return this; 
+  }  
+
+
   public String toString()
   { if (value == null)
     { return "return "; } 
@@ -998,6 +1018,12 @@ class BreakStatement extends Statement
     return this; 
   } 
 
+  public Statement addContainerReference(
+                                  BasicExpression ref,
+                                  String var, Vector excludes)
+  { return this; }  
+
+
   public String toStringJava()
   { return "  break;"; }
 
@@ -1152,6 +1178,12 @@ class ContinueStatement extends Statement
   {  
     return this; 
   } 
+
+  public Statement addContainerReference(
+                                  BasicExpression ref,
+                                  String var, Vector excludes)
+  { return this; }  
+
 
   public String toStringJava()
   { return "  continue;"; }
@@ -1429,9 +1461,20 @@ class InvocationStatement extends Statement
     if (assignsTo != null && assignsTo.equals(oldE))
     { ast = newE.toString(); }
 
-
-    InvocationStatement res = new InvocationStatement(act,targ,ast);
+    InvocationStatement res = 
+        new InvocationStatement(act,targ,ast);
     res.entity = entity;
+
+    if (parameters != null) 
+    { Vector newpars = new Vector(); 
+      for (int i = 0; i < parameters.size(); i++) 
+      { Expression oldpar = (Expression) parameters.get(i); 
+        Expression newpar = oldpar.substituteEq(oldE,newE);
+        newpars.add(newpar); 
+      } 
+      res.setParameters(newpars); 
+    } 
+
   
     if (callExp != null)
     { Expression newce = callExp.substituteEq(oldE,newE); 
@@ -1439,7 +1482,50 @@ class InvocationStatement extends Statement
     }
 
     return res; 
-  } // parameters? 
+  }  
+
+  public Statement addContainerReference(
+                                  BasicExpression ref,
+                                  String var, Vector excludes)
+  {  
+    String act = action; 
+    String targ = target; 
+    String ast = assignsTo; 
+    
+    if (target != null && excludes.contains(target))
+    { } 
+    else 
+    { targ = ref + "." + target; } 
+
+    if (assignsTo != null && excludes.contains(assignsTo))
+    { } 
+    else 
+    { ast = ref + "." + assignsTo; }
+
+    InvocationStatement res = 
+        new InvocationStatement(act,targ,ast);
+    res.entity = entity;
+
+    if (parameters != null) 
+    { Vector newpars = new Vector(); 
+      for (int i = 0; i < parameters.size(); i++) 
+      { Expression oldpar = (Expression) parameters.get(i); 
+        Expression newpar = oldpar.addContainerReference(
+                                               ref,var,
+                                               excludes);
+        newpars.add(newpar); 
+      } 
+      res.setParameters(newpars); 
+    } 
+  
+    if (callExp != null)
+    { Expression newce = callExp.addContainerReference(
+                                         ref,var,excludes); 
+      res.setCallExp(newce);
+    }
+
+    return res; 
+  }  
 
   public String toStringB()  /* B display */  
   { String res = ""; 
@@ -1960,6 +2046,15 @@ class ImplicitInvocationStatement extends Statement
     return new ImplicitInvocationStatement(newExp); 
   } 
 
+  public Statement addContainerReference(
+                      BasicExpression ref, String var,
+                      Vector excl)
+  { Expression newExp = 
+        callExp.addContainerReference(ref,var,excl); 
+
+    return new ImplicitInvocationStatement(newExp); 
+  } 
+
   public String toString()  /* B display */  
   { String res = "execute ( " + callExp + " )"; 
     return res; 
@@ -2439,6 +2534,46 @@ class WhileStatement extends Statement
     Expression vv = null; 
     if (variant != null) 
     { vv = (Expression) variant.dereference(var); }  
+    res.setVariant(vv); 
+
+    return res; 
+  } 
+
+  public Statement addContainerReference(BasicExpression ref,
+                                         String var,
+                                         Vector excl)
+  { Vector newexcls = new Vector(); 
+    newexcls.addAll(excl); 
+    Expression lv = null; 
+    if (loopVar != null) 
+    { lv = (Expression) loopVar.clone();
+      newexcls.add(lv + ""); 
+    }  
+    Expression lr = null; 
+    if (loopRange != null) 
+    { lr = loopRange.addContainerReference(
+                               ref,var,newexcls); 
+    }  
+    Expression lt = null; 
+    if (loopTest != null) 
+    { lt = loopTest.addContainerReference(ref,var,newexcls); }
+
+    Statement newbody = 
+         body.addContainerReference(ref,var,newexcls); 
+    WhileStatement res = new WhileStatement(lt,newbody); 
+    res.setEntity(entity); 
+    res.setLoopKind(loopKind); 
+    res.setLoopRange(lv,lr); 
+    res.setBrackets(brackets); 
+    Expression inv = null; 
+    if (invariant != null) 
+    { inv = invariant.addContainerReference(
+                                 ref,var,newexcls); 
+    }  
+    res.setInvariant(inv); 
+    Expression vv = null; 
+    if (variant != null) 
+    { vv = variant.addContainerReference(ref,var,newexcls); }  
     res.setVariant(vv); 
 
     return res; 
@@ -3730,6 +3865,26 @@ class CreationStatement extends Statement
     return res; 
   } 
 
+  public Statement addContainerReference(
+               BasicExpression ref, String var, Vector excl)
+  { String cio = createsInstanceOf; 
+    String ast = assignsTo; 
+
+    CreationStatement res = new CreationStatement(cio,ast);
+    res.setType(instanceType); 
+    res.setElementType(elementType);  
+	
+    if (initialExpression != null) 
+    { Expression newExpr = 
+        initialExpression.addContainerReference(ref,var,excl); 
+      res.setInitialisation(newExpr); 
+    }
+
+    excl.add(assignsTo); // for succeeding statements
+
+    return res; 
+  } 
+
   public String toString()
   { String declType = createsInstanceOf; 
     if (instanceType != null && instanceType.isEntity()) 
@@ -4547,6 +4702,22 @@ class SequenceStatement extends Statement
     return res;  
   } 
 
+  public Statement addContainerReference(BasicExpression ref,
+                                         String var, 
+                                         Vector excl)
+  { Vector newstats = new Vector(); 
+    for (int i = 0; i < statements.size(); i++) 
+    { Statement stat = (Statement) statements.get(i); 
+      Statement newstat =
+             stat.addContainerReference(ref,var,excl); 
+      newstats.add(newstat); 
+    } 
+    SequenceStatement res = new SequenceStatement(newstats);
+    res.setEntity(entity); 
+    res.setBrackets(brackets); 
+    return res;  
+  } 
+
   public Statement checkConversions(Entity e, Type propType, Type propElemType, java.util.Map interp)
   { Vector newstats = new Vector(); 
     for (int i = 0; i < statements.size(); i++) 
@@ -4644,17 +4815,17 @@ class SequenceStatement extends Statement
   } 
 
   public void addStatement(int pos, Statement s)
-  { if (pos >= statements.size())
+  { if (pos >= statements.size() && s != null)
     { statements.add(s); } 
-    else
+    else if (s != null) 
     { statements.add(pos,s); }
   }
 
   public void addBeforeEnd(Statement s)
   { int sz = statements.size(); 
-    if (sz == 0)
+    if (sz == 0 && s != null)
     { statements.add(s); } 
-    else 
+    else if (s != null) 
     { statements.add(sz-1,s); } 
   } 
 
@@ -4667,7 +4838,8 @@ class SequenceStatement extends Statement
   public Statement substituteEq(String oldE, Expression newE)
   { SequenceStatement stats = new SequenceStatement(); 
     for (int i = 0; i < statements.size(); i++) 
-    { Statement stat = ((Statement) statements.get(i)).substituteEq(oldE,newE);
+    { Statement stat = 
+        ((Statement) statements.get(i)).substituteEq(oldE,newE);
       stats.addStatement(stat);
     } 
     stats.entity = entity; 
@@ -5257,6 +5429,22 @@ class CaseStatement extends Statement
     return cs; 
   } 
 
+  public Statement addContainerReference(
+                    BasicExpression ref, String var,
+                    Vector excl)
+  { CaseStatement cs = new CaseStatement(); 
+    Vector ss = cases.elements; 
+    for (int i = 0; i < ss.size(); i++) 
+    { Maplet mm = (Maplet) ss.get(i); 
+      Statement cse = (Statement) mm.dest; 
+      Statement stat = 
+        cse.addContainerReference(ref,var,excl); 
+      Maplet nn = new Maplet(mm.source,stat); 
+      cs.addCase(nn); 
+    } 
+    return cs; 
+  } 
+
   public void addCase(Maplet mm)
   { cases.add_element(mm); }
 
@@ -5653,6 +5841,17 @@ class ErrorStatement extends Statement
     return new ErrorStatement(null); 
   } 
 
+  public Statement addContainerReference(
+                     BasicExpression ref, 
+                     String var, Vector excl)
+  { if (thrownObject != null) 
+    { Expression tobj = 
+         thrownObject.addContainerReference(ref,var,excl); 
+      return new ErrorStatement(tobj); 
+    } 
+    return new ErrorStatement(null); 
+  } 
+
   public String toString()
   { return "  error " + thrownObject; }
 
@@ -5906,6 +6105,22 @@ class AssertStatement extends Statement
     Expression newmessage = message; 
     if (message != null) 
     { newmessage = message.dereference(var); }
+    return new AssertStatement(newcond,newmessage); 
+  }  
+
+  public Statement addContainerReference(BasicExpression ref,
+                                         String var,
+                                         Vector excl) 
+  { Expression newcond = condition; 
+    if (condition != null) 
+    { newcond = 
+         condition.addContainerReference(ref,var,excl);
+    }
+    Expression newmessage = message; 
+    if (message != null) 
+    { newmessage = 
+         message.addContainerReference(ref,var,excl); 
+    }
     return new AssertStatement(newcond,newmessage); 
   }  
 
@@ -6232,6 +6447,24 @@ class CatchStatement extends Statement
 
   public Statement dereference(BasicExpression var) 
   { return new CatchStatement(caughtObject.dereference(var), action.dereference(var)); }
+
+  public Statement addContainerReference(BasicExpression ref,
+                                         String var,
+                                         Vector excls) 
+  { Vector newexcls = new Vector();
+    newexcls.addAll(excls); 
+ 
+    if (caughtObject instanceof BinaryExpression)
+    { BinaryExpression ex = (BinaryExpression) caughtObject; 
+      if (":".equals(ex.getOperator()))
+      { newexcls.add(ex.getLeft() + ""); } 
+    }  
+
+    Statement newact = action.addContainerReference(ref,var,
+                                                 newexcls); 
+
+    return new CatchStatement(caughtObject, newact); 
+  }
 
   public Statement substituteEq(String oldE, Expression newE)
   { Expression cobj = caughtObject.substituteEq(oldE,newE); 
@@ -6626,6 +6859,33 @@ class TryStatement extends Statement
     res.setClauses(catchClones); 
     if (endStatement != null) 
     { res.setEndStatement(endStatement.dereference(var)); } 
+    return res;
+  } 
+
+  public Statement addContainerReference(BasicExpression ref,
+                                         String var,
+                                         Vector excl) 
+  { Statement s1 = null; 
+
+    if (body != null) 
+    { s1 = body.addContainerReference(ref,var,excl); }  
+
+    TryStatement res = new TryStatement(s1);
+    Vector catchClones = new Vector(); 
+
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      Statement ccClone =
+        cc.addContainerReference(ref,var,excl); 
+      catchClones.add(ccClone); 
+    }
+ 
+    res.setClauses(catchClones); 
+
+    if (endStatement != null) 
+    { res.setEndStatement(
+         endStatement.addContainerReference(ref,var,excl)); 
+    } 
     return res;
   } 
 
@@ -7155,6 +7415,24 @@ class IfStatement extends Statement
     for (int i = 0; i < cases.size(); i++) 
     { IfCase cse = (IfCase) cases.get(i); 
       IfCase newcse = (IfCase) cse.dereference(var); 
+      newcases.add(newcse); 
+    } 
+    IfStatement res = new IfStatement(); 
+    res.cases = newcases; 
+    res.setEntity(entity); 
+    return res; 
+  }  // clone the conditions
+
+
+  public Statement addContainerReference(BasicExpression ref,
+                                         String var,
+                                         Vector excl) 
+  { Vector newcases = new Vector(); 
+    for (int i = 0; i < cases.size(); i++) 
+    { IfCase cse = (IfCase) cases.get(i); 
+      IfCase newcse = 
+           (IfCase) cse.addContainerReference(     
+                                  ref,var,excl); 
       newcases.add(newcse); 
     } 
     IfStatement res = new IfStatement(); 
@@ -8054,6 +8332,19 @@ class AssignStatement extends Statement
     return res; 
   } 
 
+  public Statement addContainerReference(BasicExpression ref,
+                                         String var,
+                                         Vector excl)
+  { Expression newlhs = 
+        lhs.addContainerReference(ref,var,excl); 
+    Expression newrhs = 
+        rhs.addContainerReference(ref,var,excl); 
+    AssignStatement res = new AssignStatement(newlhs,newrhs); 
+    res.setType(type); 
+    res.setCopyValue(copyValue); 
+    return res; 
+  } 
+
   public Statement substituteEq(String oldE, Expression newE)
   { Expression lhs2 = (Expression) lhs.clone(); 
         /* lhs.substituteEq(oldE,newE); */ 
@@ -8522,6 +8813,16 @@ class IfCase
   public IfCase dereference(BasicExpression var)
   { Expression newtest = (Expression) test.dereference(var); 
     Statement newif = (Statement) ifPart.dereference(var); 
+    IfCase res = new IfCase(newtest,newif); 
+    res.setEntity(entity); 
+    return res; 
+  }  
+
+  public IfCase addContainerReference(BasicExpression ref,
+                                      String var,
+                                      Vector excl)
+  { Expression newtest = test.addContainerReference(ref,var,excl); 
+    Statement newif = ifPart.addContainerReference(ref,var,excl); 
     IfCase res = new IfCase(newtest,newif); 
     res.setEntity(entity); 
     return res; 
@@ -9044,6 +9345,17 @@ class ConditionalStatement extends Statement
     return new ConditionalStatement(testc, ifc, elsec); 
   }  
 
+  public Statement addContainerReference(BasicExpression ref,
+                                         String var,
+                                         Vector excl)
+  { Expression testc = test.addContainerReference(ref,var,excl); 
+    Statement ifc = ifPart.addContainerReference(ref,var,excl); 
+    Statement elsec = null; 
+    if (elsePart != null) 
+    { elsec = elsePart.addContainerReference(ref,var,excl); }
+    return new ConditionalStatement(testc, ifc, elsec); 
+  }  
+
   public Statement substituteEq(String oldE, Expression newE)
   { Expression testc = test.substituteEq(oldE, newE); 
     Statement ifc = ifPart.substituteEq(oldE, newE); 
@@ -9379,6 +9691,14 @@ class FinalStatement extends Statement
 
   public Statement dereference(BasicExpression v)
   { Statement bodyc = body.dereference(v); 
+    return new FinalStatement(bodyc); 
+  }  
+
+  public Statement addContainerReference(BasicExpression ref,
+                                         String var,
+                                         Vector excl)
+  { Statement bodyc = 
+       body.addContainerReference(ref,var,excl); 
     return new FinalStatement(bodyc); 
   }  
 

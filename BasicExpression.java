@@ -1346,6 +1346,58 @@ class BasicExpression extends Expression
     return false;
   }
 
+  public Expression addContainerReference(BasicExpression ref, 
+                                          String var,
+                                          Vector exclusions)
+  { // var becomes ref.var unless var : exclusions
+    BasicExpression res = (BasicExpression) clone(); 
+
+    if ("self".equals(data) && objectRef == null)
+    { return res; }         // I would have thought? 
+
+    if (arrayIndex != null)
+    { Expression arInd = 
+        arrayIndex.addContainerReference(ref,var,exclusions);
+      res.arrayIndex = arInd; 
+    }   // and to parameters of calls
+
+    if (parameters != null) 
+    { Vector pars = new Vector(); 
+      for (int i = 0; i < parameters.size(); i++) 
+      { Expression par = (Expression) parameters.get(i); 
+        Expression rpar = 
+             par.addContainerReference(ref,var,exclusions); 
+        pars.add(rpar);   
+      } 
+      res.parameters = pars; 
+    } 
+
+    if (data.equals(var)) { } 
+    else if (objectRef == null) 
+    { return res; } 
+    else 
+    { Expression oref1 = 
+           objectRef.addContainerReference(ref,var,exclusions);
+      res.setObjectRef(oref1);
+      return res; 
+    }   
+
+    if (exclusions.contains(data))
+    { return res; }
+ 
+    if (objectRef == null) 
+    { res.setObjectRef(ref);
+      return res; 
+    }   
+    else 
+    { Expression oref1 = 
+           objectRef.addContainerReference(ref,var,exclusions);
+      res.setObjectRef(oref1);
+      return res; 
+    }
+
+  } 
+
   public Expression addReference(BasicExpression ref, Type t)
   { BasicExpression res = (BasicExpression) clone(); 
     // if (umlkind == FUNCTION) 

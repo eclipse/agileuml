@@ -844,8 +844,9 @@ public class Entity extends ModelElement implements Comparable
        BasicExpression.newVariableBasicExpression("res", 
                                                   ctype);  
     BasicExpression contbe = 
-       BasicExpression.newVariableBasicExpression("_container", 
-                                                  thistype);
+       BasicExpression.newVariableBasicExpression(
+                                              "_container", 
+                                              thistype);
     contbe.setObjectRef(resbe); 
 
     BasicExpression selfbe = 
@@ -870,9 +871,81 @@ public class Entity extends ModelElement implements Comparable
     bf.setActivity(ss); 
 
     addOperation(bf); 
+
+    // For each of my attributes att : T, 
+    // substitute _container.att for att in the 
+    // operations of component, excluding 
+    // the attributes of component. Likewise for 
+    // my operations. 
+
+
+
+    BasicExpression ref = 
+       BasicExpression.newVariableBasicExpression(
+                                              "_container", 
+                                              thistype);
+
+    Entity newent = component;     
+    for (int i = 0; i < attributes.size(); i++)
+    { Attribute att = (Attribute) attributes.get(i);
+      String var = att.getName();  
+      newent = newent.addContainerReference(ref,var,
+                                          new Vector());
+    } 
+
+    for (int i = 0; i < operations.size(); i++)
+    { BehaviouralFeature bfx = 
+         (BehaviouralFeature) operations.get(i);
+      String var = bfx.getName();  
+      newent = newent.addContainerReference(ref,var,
+                                            new Vector());
+    } 
+
+    System.out.println("---- New component class: -----");  
+    System.out.println(newent.getKM3()); 
+
+    component.operations = newent.getOperations();   
   } 
 
+  public Entity addContainerReference(BasicExpression ref,
+                                      String var, Vector excl)
+  { for (int i = 0; i < typeParameters.size(); i++) 
+    { Type tp = (Type) typeParameters.get(i); 
+      excl.add(tp.getName()); 
+    } 
 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute tp = (Attribute) attributes.get(i); 
+      excl.add(tp.getName()); 
+    } 
+
+    for (int i = 0; i < operations.size(); i++)
+    { BehaviouralFeature bf = 
+        (BehaviouralFeature) operations.get(i); 
+      excl.add(bf.getName()); 
+    } 
+
+    Vector newops = new Vector(); 
+    for (int i = 0; i < operations.size(); i++)
+    { BehaviouralFeature bf = 
+        (BehaviouralFeature) operations.get(i); 
+      BehaviouralFeature newop = 
+        bf.addContainerReference(ref,var,excl); 
+      newops.add(newop); 
+    } 
+ 
+    Entity newent = new Entity(name); 
+    newent.superclass = superclass;
+    newent.attributes = attributes; 
+    newent.interfaces = interfaces; 
+    newent.subclasses = subclasses;
+    newent.stereotypes = stereotypes; 
+     
+    newent.typeParameters = typeParameters; 
+
+    newent.operations = newops; 
+    return newent; 
+  } 
 
   public void addTypeParameter(Type t)
   { if (typeParameters.contains(t)) { } 
@@ -1315,6 +1388,8 @@ public class Entity extends ModelElement implements Comparable
   { for (int i = 0; i < iList.size(); i++) 
     { ModelElement intf = (ModelElement) iList.get(i); 
 
+      if (intf == null) { continue; }
+
       String iname = intf.getName(); 
       if ("Runnable".equals(iname)) 
       { // <<active>> stereotype
@@ -1344,6 +1419,7 @@ public class Entity extends ModelElement implements Comparable
 
   public void addInterface(Entity intf)
   { // Check that all ops of intf are also in this
+    if (intf == null) { return; }
 
     intf.setInterface(true); 
 
@@ -6287,7 +6363,7 @@ public class Entity extends ModelElement implements Comparable
     out.println(intorclass + " " + getName() + pars);
  
     if (superclass != null) 
-    { out.println("  extends " + superclass.getName()); } 
+    { out.println("  extends " + superclass.getCompleteName()); } 
     
     if (isInterface())
     { out.print("  extends SystemTypes"); } 
@@ -6296,7 +6372,7 @@ public class Entity extends ModelElement implements Comparable
 
     for (int j = 0; j < interfaces.size(); j++)
     { Entity intf = (Entity) interfaces.get(j); 
-      String iname = intf.getName(); 
+      String iname = intf.getCompleteName(); 
       out.print(", " + iname); 
     }
 
@@ -7781,7 +7857,8 @@ public class Entity extends ModelElement implements Comparable
     for (int i = 0; i < operations.size(); i++) 
     { BehaviouralFeature op = (BehaviouralFeature) operations.get(i); 
       System.out.println(op + " " + op.isQuery()); 
-      String optext = op.getOperationCodeJava7(this,entities,types); 
+      String optext = 
+        op.getOperationCodeJava7(this,entities,types); 
       if (optext != null) 
       { out.println("  " + optext + "\n"); }
     } 

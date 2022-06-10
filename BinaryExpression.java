@@ -1405,6 +1405,67 @@ class BinaryExpression extends Expression
     return res; 
   } 
 
+  public Expression addContainerReference(
+              BasicExpression ref, String var, Vector excls)
+  { BinaryExpression res = (BinaryExpression) clone(); 
+    
+    if ("->iterate".equals(operator))
+    { 
+      if (accumulator != null) 
+      { Attribute newacc = 
+          new Attribute(accumulator.getName(),
+                        accumulator.getType(),
+                        ModelElement.INTERNAL); 
+        Vector newexcls = new Vector(); 
+        newexcls.addAll(excls); 
+        newexcls.add(iteratorVariable); 
+        newexcls.add(accumulator.getName()); 
+        Expression init = accumulator.getInitialExpression(); 
+        if (init != null) 
+        { Expression ii = 
+            init.addContainerReference(ref,var,newexcls);
+          newacc.setInitialExpression(ii);  
+        } 
+        res.accumulator = newacc; 
+        res.left = left.addContainerReference(
+                                  ref,var,newexcls); 
+        res.right = 
+          right.addContainerReference(ref,var,newexcls); 
+      } 
+    }
+    else if ("|".equals(operator) || 
+             "|C".equals(operator) || 
+             "|R".equals(operator) || 
+             "#".equals(operator) || 
+             "!".equals(operator) ||
+             "#1".equals(operator))
+    { BinaryExpression dm = (BinaryExpression) left; 
+      Vector newex = new Vector(); 
+      newex.addAll(excls); 
+      newex.add(dm.getLeft() + ""); 
+      res.left = dm.addContainerReference(ref,var,newex); 
+      res.right = right.addContainerReference(ref,var,newex); 
+    } 
+    else  
+    { Expression lr = 
+         left.addContainerReference(ref,var,excls); 
+      res.left = lr; 
+      Expression rr = 
+         right.addContainerReference(ref,var,excls); 
+      res.right = rr;
+    }  
+
+    if (keyValue != null) 
+    { Expression kv = 
+        keyValue.addContainerReference(ref,var,excls); 
+      res.keyValue = kv; 
+    } 
+
+    System.out.println(">>>> Substituted " + ref + " in " + this + " is " + res); 
+
+    return res; 
+  } 
+
   public Expression replaceReference(BasicExpression ref, Type t)
   { BinaryExpression res = (BinaryExpression) clone(); 
     Expression lr = left.replaceReference(ref,t); 

@@ -157,6 +157,24 @@ public class BehaviouralFeature extends ModelElement
            typeParameters.size() > 0; 
   } 
 
+  public String getCompleteName()
+  { String nme = getName();
+
+    if (typeParameters.size() > 0)
+    { String tp = ""; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { tp = tp + 
+           ((ModelElement) typeParameters.get(i)).getName();
+        if (i < typeParameters.size()-1)
+        { tp = tp + ","; } 
+      } 
+      nme = nme + "<" + tp + ">"; 
+    }
+ 
+    return nme; 
+  } 
+
+
   public Object clone()
   { BehaviouralFeature res = new BehaviouralFeature(getName(), parameters, query, resultType); 
     res.setElementType(elementType); 
@@ -174,6 +192,53 @@ public class BehaviouralFeature extends ModelElement
     { res.typeParameters = new Vector(); 
       res.typeParameters.addAll(typeParameters); 
     } 
+
+    return res; 
+  } // and copy the use case, readfr, etc? 
+
+  public BehaviouralFeature addContainerReference(
+                               BasicExpression ref, 
+                               String var, Vector excl)
+  { BehaviouralFeature res = new BehaviouralFeature(getName(), parameters, query, resultType); 
+    res.setElementType(elementType); 
+    res.setStatechart(sm); 
+    res.setEntity(entity); 
+    res.setInstanceScope(instanceScope); 
+    res.setDerived(derived); 
+    res.setOrdered(ordered); 
+    res.setSorted(sorted); 
+    res.setBx(bx); 
+
+    Vector newexcl = new Vector(); 
+    newexcl.addAll(excl); 
+    newexcl.add(getName()); 
+
+    if (parameters != null) 
+    { for (int i = 0; i < parameters.size(); i++) 
+      { Attribute att = (Attribute) parameters.get(i); 
+        newexcl.add(att.getName()); 
+      } 
+    } 
+
+    if (typeParameters != null) 
+    { res.typeParameters = new Vector(); 
+      res.typeParameters.addAll(typeParameters); 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        newexcl.add(tp.getName()); 
+      } 
+    } 
+
+    Expression newpre = 
+       pre.addContainerReference(ref,var,newexcl); 
+    Expression newpost = 
+       post.addContainerReference(ref,var,newexcl); 
+    Statement newact = 
+       activity.addContainerReference(ref,var,newexcl); 
+
+    res.setActivity(newact); 
+    res.setPre(newpre);     
+    res.setPost(newpost);   
 
     return res; 
   } // and copy the use case, readfr, etc? 
@@ -640,6 +705,21 @@ public class BehaviouralFeature extends ModelElement
     return res; 
   } 
 
+  public String parametersString()
+  { String res = "";
+    if (parameters == null) 
+    { return res; } 
+ 
+    for (int i = 0; i < parameters.size(); i++) 
+    { Attribute att = (Attribute) parameters.get(i); 
+      res = res + att.getName() + " : " + att.getType(); 
+      if (i < parameters.size()-1)
+      { res = res + ","; } 
+    } 
+    return res; 
+  } 
+    
+
   public boolean hasParameter(String nme) 
   { Attribute att = (Attribute) ModelElement.lookupByName(nme,parameters); 
     if (att != null) 
@@ -870,6 +950,14 @@ public class BehaviouralFeature extends ModelElement
   { resultType = t; } 
   
   public boolean hasReturnVariable()
+  { if (resultType == null) 
+    { return false; }
+    if ("void".equals(resultType + ""))
+    { return false; }
+    return true; 
+  }
+
+  public boolean hasReturnValue()
   { if (resultType == null) 
     { return false; }
     if ("void".equals(resultType + ""))
@@ -4286,9 +4374,12 @@ public class BehaviouralFeature extends ModelElement
   { String name = getName();
     Vector context = new Vector(); 
     String ename = ""; 
+    String completeename = "";
+
     if (ent != null) 
     { context.add(ent); 
       ename = ent.getName(); 
+      completeename = ent.getCompleteName(); 
     } 
 
     String genPars = ""; 
@@ -4302,6 +4393,7 @@ public class BehaviouralFeature extends ModelElement
       } 
       genPars = genPars + "> "; 
     } 
+
  	
     String ex = ename.toLowerCase() + "x"; 
     java.util.Map env0 = new java.util.HashMap(); 
@@ -4447,13 +4539,13 @@ public class BehaviouralFeature extends ModelElement
         newpost.typeCheck(types,entities,context,localatts);
         if (ent == null || isClassScope() || isStatic()) { } 
         else 
-        { res = res + ename + " " + ex + " = this;\n  "; }   
+        { res = res + "    " + completeename + " " + ex + " = this;\n  "; }   
         return res + newdecs + newpost.updateFormJava7(env0,false) + "\n  }\n";   
       }     // updateForm(, true)? 
       activity.typeCheck(types,entities,context,localatts);
       if (ent == null || isClassScope() || isStatic()) { } 
       else 
-      { res = res + ename + " " + ex + " = this;\n  "; }   
+      { res = res + "    " + completeename + " " + ex + " = this;\n  "; }   
       return res + activity.updateFormJava7(env0,false) + "\n  }\n";   
     } 
 

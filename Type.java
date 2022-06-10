@@ -3583,6 +3583,9 @@ public class Type extends ModelElement
     if (jex != null) 
     { return jex; } 
 
+    if (entity != null) 
+    { return entity.getCompleteName(); } 
+
     if (values == null)
     { return nme; }
 
@@ -3648,6 +3651,9 @@ public class Type extends ModelElement
     if (nme.equals("OclType"))
     { return "Class"; } 
 
+    if (entity != null) 
+    { return entity.getCompleteName(); } 
+
     if (values == null)
     { return nme; }
     // if (nme.equals("long")) { return "long"; } 
@@ -3695,8 +3701,12 @@ public class Type extends ModelElement
     if (nme.equals("OclDate"))
     { return "Date"; } 
 
+    if (typ.entity != null) 
+    { return typ.entity.getCompleteName(); } 
+
     if (typ.values == null)
     { return typ.typeWrapperJava7(); }
+
     return "Integer"; 
   }
 
@@ -3754,6 +3764,9 @@ public class Type extends ModelElement
     String jex = (String) exceptions2java.get(nme); 
     if (jex != null) 
     { return jex; } 
+
+    if (entity != null) 
+    { return entity.getCompleteName(); } 
 
     if (alias != null)    // For datatypes
     { return alias.typeWrapperJava8(); } 

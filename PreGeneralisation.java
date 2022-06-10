@@ -1,7 +1,7 @@
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -12,6 +12,7 @@ import java.util.Vector;
 public class PreGeneralisation
 { String e1name;
   String e2name;
+  Vector parameters = new Vector(); // of e2name 
   int xs, ys, xe, ye;
   Vector waypoints = new Vector(); 
 
@@ -29,5 +30,10 @@ public class PreGeneralisation
     ye = y2;
     waypoints = wps; 
   }
+
+  public void setParameters(Vector pars)
+  { parameters = pars; 
+    System.out.println(">>> Specialisation of " + e2name + pars); 
+  } 
 }
 

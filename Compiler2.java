@@ -1161,7 +1161,7 @@ public class Compiler2
     { // System.out.println("Creating new basic type " + typ);
       return new Type(typ,null);
     }
-    else if ("Map".equals(typ) || "Function".equals(typ))  // for ATL and extensions
+    else if ("Map".equals(typ) || "Function".equals(typ)) 
     { Type tt = null; 
       if (st == en) 
       { System.err.println("!! Warning, map/function types must have type parameters"); 
@@ -1193,7 +1193,7 @@ public class Compiler2
         }
       } 
       if (tt == null) 
-      { System.err.println("ERROR!!: Invalid map/function type, it must have 2 type arguments: " + showLexicals(st,en)); 
+      { System.err.println("!!ERROR!!: Invalid map/function type, it must have 2 type arguments: " + showLexicals(st,en)); 
         return null; 
       }
       else 
@@ -1222,15 +1222,29 @@ public class Compiler2
     } 
     else
     { Object ee = ModelElement.lookupByName(typ,entities);
+      Type resulttype = null; 
       if (ee != null && ee instanceof Entity) 
-      { return new Type((Entity) ee); } 
+      { resulttype = new Type((Entity) ee); 
+        if (st == en)
+        { return resulttype; }
+        if (st < en && "<".equals(lexicals.get(st+1) + "") &&
+            ">".equals(lexicals.get(en) + ""))
+        { Vector args = 
+            parse_type_sequence(st+2,en-1,entities,types); 
+          if (args != null) 
+          { ((Entity) ee).setTypeParameters(args);
+            // Create a new instantiation copy.  
+            return resulttype; 
+          } 
+        } 
+      }  
       else 
       { Object tt = ModelElement.lookupByName(typ,types); 
         if (tt != null && tt instanceof Type)
         { return (Type) tt; }
         if (tt != null)
         { return new Type(tt + "", null); } 
-      }  
+      } // should not have parameters.  
     } 
 
     System.err.println("ERROR: unknown type: " + typ + " in " + showLexicals(st,en)); 
@@ -3412,6 +3426,23 @@ public BehaviouralFeature operationDefinition(int st, int en, Vector entities, V
     parsStart = st0; 
     System.out.println(">> Generic operation " + opname + "<" + pt + ">"); 
   } 
+  else if (st0+2 < en && 
+      "<".equals(lexicals.get(st0) + ""))
+  { for (int j = st0+1; j < en; j++) 
+    { String lex = lexicals.get(j) + ""; 
+      if (">".equals(lex))
+      { Vector pars = 
+          parse_generic_parameters(st0+1,j-1,entities); 
+        if (pars != null) 
+        { bf.setTypeParameters(pars); } 
+        st0 = j+1; 
+        parsStart = st0; 
+        break; 
+      } 
+    } 
+    System.out.println(">> Generic operation " + 
+                       bf.getCompleteName()); 
+  }  
 
   localEntities.addAll(entities); 
 
@@ -3455,7 +3486,7 @@ public BehaviouralFeature operationDefinition(int st, int en, Vector entities, V
           } 
           bf.setActivity(act); 
 
-          // removeTypeParameters(bf.getTypeParameters(), entities); 
+          removeTypeParameters(bf.getTypeParameters(), entities); 
 
           return bf;  
         }    
@@ -3517,7 +3548,7 @@ private void parseOpDecs(int st, int en, Vector entities, Vector types, Behaviou
   } 
   bcnt = 0;  
 
-  System.out.println(np + " Parameters, with entities: " + entities); 
+  System.out.println(">>> Operation " + bf + " has " + np + " Parameters, and contextual entities: " + entities); 
   
 
   Vector res = new Vector();
@@ -5109,17 +5140,23 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         return "includes"; 
       } 
 
+      if ("interface".startsWith(st)) 
+      { mess[0] = "interface declaration:\n  interface P { attributes, operations }"; 
+        return "interface"; 
+      } 
+
+      if ("true".startsWith(st)) 
+      { mess[0] = "true value of boolean type"; 
+        return "true"; 
+      }
+
+      if ("try".startsWith(st)) 
+      { mess[0] = "try statement, eg: try x := y/z catch (e : ArithmeticException) do return null\nExecution with exception handling\nCan only be used in an activity"; 
+        return "try";
+      }
+
     } 
 
-    if ("true".startsWith(st)) 
-    { mess[0] = "true value of boolean type"; 
-      return "true"; 
-    }
-
-    if ("try".startsWith(st)) 
-    { mess[0] = "try statement, eg: try x := y/z catch (e : ArithmeticException) do return null\nExecution with exception handling\nCan only be used in an activity"; 
-      return "try";
-    }
  
     if ("false".startsWith(st)) 
     { mess[0] = "false value of boolean type"; 
@@ -5194,14 +5231,19 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         return "endif"; 
       } 
 
-      if ("OclType".startsWith(st) || "OclAny".startsWith(st) ||
+      if ("OclType".startsWith(st) || 
+          "OclAttribute".startsWith(st) || 
+          "OclOperation".startsWith(st) ||
+          "OclAny".startsWith(st) ||
           "OclProcess".startsWith(st) || 
           "OclRandom".startsWith(st) || 
           "OclFile".startsWith(st) || 
           "OclException".startsWith(st) ||
           "OclIterator".startsWith(st))
       { mess[0] = "OclAny -- universal type.\n" + 
-                  "OclType -- type of types. Requires ocltype.km3 library\n" + 
+                  "OclType -- metatype of types. Requires ocltype.km3 library\n" + 
+                  "OclAttribute -- metatype of fields. Requires ocltype.km3 library\n" + 
+                  "OclOperation -- metatype of methods. Requires ocltype.km3 library\n" + 
                   "OclProcess -- type of processes. Requires oclprocess.km3 library\n" + 
                   "OclRandom -- random number generator. Needs oclrandom.km3\n" + 
                   "OclFile -- type of files. Needs oclfile.km3\n" + 
@@ -6023,9 +6065,12 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
  
     for (int i = st + 2; i <= en;  i++) 
     { String lx = lexicals.get(i) + ""; 
-      if ("class".equals(lx) || "abstract".equals(lx) || "enumeration".equals(lx) ||
-          "interface".equals(lx) || "datatype".equals(lx) || "usecase".equals(lx))
-      { Object e = parseKM3classifier(reached,i-1,entities,types,gens,pasts,errors);
+      if ("class".equals(lx) || "abstract".equals(lx) || 
+          "enumeration".equals(lx) ||
+          "interface".equals(lx) || 
+          "datatype".equals(lx) || "usecase".equals(lx))
+      { Object e = parseKM3classifier(
+              reached,i-1,entities,types,gens,pasts,errors);
         if (e != null) 
         { res.add(e); 
           reached = i; 
@@ -6042,7 +6087,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       }
     } 
 
-    Object e1 = parseKM3classifier(reached,en,entities,types,gens,pasts,errors);
+    Object e1 = parseKM3classifier(
+          reached,en,entities,types,gens,pasts,errors);
     if (e1 != null) 
     { res.add(e1); 
       if (e1 instanceof Type)
@@ -6058,20 +6104,72 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
   { Vector gens = new Vector(); 
     Vector pasts = new Vector(); 
     Vector errors = new Vector(); 
-    return parseKM3classifier(entities,types,gens,pasts,errors); 
+    return parseKM3classifier(
+                 entities,types,gens,pasts,errors); 
   } 
 
   public Object parseKM3Enumeration(Vector entities, Vector types)
   { Vector gens = new Vector(); 
     Vector pasts = new Vector(); 
     Vector errors = new Vector(); 
-    return parseKM3classifier(entities,types,gens,pasts,errors); 
+    return parseKM3classifier(
+                entities,types,gens,pasts,errors); 
   } 
 
 
-  public Object parseKM3classifier(Vector entities, Vector types, 
-                                   Vector gens, Vector pasts, Vector errors)
-  { return parseKM3classifier(0, lexicals.size()-1, entities, types, gens, pasts, errors); } 
+  public Vector parse_generic_parameters(
+                     int st, int en, Vector entities)
+  { Vector res = new Vector(); 
+
+    for (int i = st; i <= en; i++) 
+    { String parType = lexicals.get(i) + "";
+      if (",".equals(parType)) 
+      { continue; }  
+      Entity parEnt = new Entity(parType);
+      parEnt.genericParameter = true; 
+      parEnt.addStereotype("derived"); 
+ 
+      Type parT = new Type(parEnt); 
+      res.add(parT); 
+      entities.add(parEnt); 
+    } 
+    return res; 
+  } 
+
+  public Vector parse_type_sequence(
+                     int st, int en, Vector entities, 
+                     Vector types)
+  { Vector res = new Vector(); 
+
+    int prev = st; 
+    for (int i = st; i <= en; i++) 
+    { String parType = lexicals.get(i) + "";
+      if (",".equals(parType)) 
+      { Type typ = 
+          parseType(prev,i-1,entities,types); 
+        if (typ != null) 
+        { res.add(typ);
+          prev = i+1;
+        } 
+      }  
+    } 
+
+    if (prev <= en)
+    { Type lasttyp = 
+          parseType(prev,en,entities,types); 
+      if (lasttyp != null) 
+      { res.add(lasttyp); }
+    }
+
+    return res; 
+  } 
+
+  public Object parseKM3classifier(
+                     Vector entities, Vector types, 
+                     Vector gens, Vector pasts, Vector errors)
+  { return parseKM3classifier(0, lexicals.size()-1, 
+               entities, types, gens, pasts, errors); 
+  } 
 
 
   public Object parseKM3classifier(int st, int en, Vector entities, Vector types, 
@@ -6150,7 +6248,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
     if ("<".equals(lexicals.get(start) + "") && 
         ">".equals(lexicals.get(start + 2) + ""))
-    { System.out.println(">>> Generic class, parameter " + lexicals.get(start + 1));
+    { System.out.println(">>> Generic class, parameter " + 
+                         lexicals.get(start + 1));
       String parType = lexicals.get(start + 1) + ""; 
       Entity parEnt = new Entity(parType);
       parEnt.genericParameter = true; 
@@ -6160,7 +6259,22 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       res.addTypeParameter(parT); 
       entities.add(parEnt); 
       start = start + 3;  
+    } // But could be several between the <>
+    else if ("<".equals(lexicals.get(start) + ""))
+    { for (int gi = start+1; gi < en; gi++)
+      { String sym = lexicals.get(gi) + ""; 
+        if (">".equals(sym))
+        { Vector gpars = 
+             parse_generic_parameters(start+1,gi-1,entities); 
+          System.out.println(">>> Generic class, parameters " 
+                             + gpars);
+          res.setTypeParameters(gpars); 
+          start = gi+1; 
+          break; 
+        } 
+      } 
     } 
+          
 
     if ("extends".equals(lexicals.get(start) + "") || 
         "implements".equals(lexicals.get(start) + ""))
@@ -6173,15 +6287,31 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
       p++; 
       if ((lexicals.get(p) + "").equals("{"))
-      { start = p+1; } 
+      { start = p+1; }
+      else if ((lexicals.get(p) + "").equals("<"))
+      { start = p+1; 
+        while (!(lexicals.get(p) + "").equals("{"))
+        { supr = lexicals.get(p+1) + ""; 
+          if (">".equals(supr))
+          { Vector args = 
+              parse_type_sequence(start,p,entities,types); 
+            pregen.setParameters(args); 
+          } 
+          p = p+1; 
+        } 
+        start = p + 1;
+      }    
       else 
       { while (!(lexicals.get(p) + "").equals("{"))
-        { supr = lexicals.get(p+1) + ""; // multiple inheritance: extends C1, C2 { 
-          PreGeneralisation pregen2 = new PreGeneralisation(); 
-          pregen2.e1name = rname; 
-          pregen2.e2name = supr; 
-          System.err.println("Warning!: multiple inheritance for " + rname); 
-          gens.add(pregen2);   // to be linked in UCDArea.
+        { supr = lexicals.get(p+1) + ""; 
+          if (",".equals(supr)) { } 
+          else 
+          { PreGeneralisation pregen2 = new PreGeneralisation(); 
+            pregen2.e1name = rname; 
+            pregen2.e2name = supr; 
+            System.err.println(">>> " + rname + " specialises " + supr); 
+            gens.add(pregen2);   // to be linked in UCDArea.
+          } 
           p = p+1; 
         }  
         start = p + 1;
@@ -6204,8 +6334,11 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
     for (int i = start + 3; i < en; i++) 
     { String lx2 = lexicals.get(i) + ""; 
-      if ("attribute".equals(lx2) || "reference".equals(lx2) || "operation".equals(lx2) ||
-          "query".equals(lx2) || "static".equals(lx2) || "invariant".equals(lx2) || 
+      if ("attribute".equals(lx2) || 
+          "reference".equals(lx2) || 
+          "operation".equals(lx2) ||
+          "query".equals(lx2) || 
+          "static".equals(lx2) || "invariant".equals(lx2) || 
           "stereotype".equals(lx2)) 
       { String lxr = lexicals.get(reached) + ""; 
         if ("attribute".equals(lxr) || "reference".equals(lxr) || "query".equals(lxr) || 
@@ -6579,32 +6712,71 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 	}
   } 
 
+  public Entity parseEntityName(int st, int en, 
+                     Vector entities, Vector types)
+  { // identifier, or identifier < seq of types >
+
+    if (en == st)
+    { String ename = lexicals.get(st) + ""; 
+      Entity ent = 
+         (Entity) ModelElement.lookupByName(ename,entities); 
+      if (ent == null) 
+      { ent = new Entity(ename); 
+        return ent; 
+      } 
+    } 
+
+    if (st < en)
+    { String ename = lexicals.get(st) + ""; 
+      Entity ent = 
+         (Entity) ModelElement.lookupByName(ename,entities); 
+      if (ent == null) 
+      { ent = new Entity(ename); }
+
+      if ("<".equals(lexicals.get(st+1) + "") && 
+          ">".equals(lexicals.get(en) + ""))
+      { Vector args = 
+          parse_type_sequence(st+1,en-1,entities,types); 
+        if (args != null) 
+        { ent.setTypeParameters(args); 
+          // No: if args /= ent.typeParameters (non-empty) 
+          // then create a new instantiation of ent. 
+          return ent; 
+        } 
+      } 
+    } 
+
+    return null; 
+  } 
+      
+ 
+
   public UseCase parseKM3UseCase(int st, int en, Vector entities, Vector types, 
                                  Vector gens, Vector pasts)
   { // usecase name : type { parameters postconditions activity }
     String nme = lexicals.get(st+1) + "";
-	String colon = lexicals.get(st+2) + "";
-	Type uctyp = new Type("void",null);  // default 
-	int openingBracket = st + 4; 
-	boolean foundstart = false; 
+    String colon = lexicals.get(st+2) + "";
+    Type uctyp = new Type("void",null);  // default 
+    int openingBracket = st + 4; 
+    boolean foundstart = false; 
 	
-	for (int i = st + 3; i < en && !foundstart; i++)
-	{ String lx = lexicals.get(i) + ""; 
+    for (int i = st + 3; i < en && !foundstart; i++)
+    { String lx = lexicals.get(i) + ""; 
       if ("{".equals(lx))
-	  { openingBracket = i; 
-	    foundstart = true; 
+      { openingBracket = i; 
+        foundstart = true; 
         if (":".equals(colon))
-		{ uctyp = parseType(st+3,i-1,entities,types); } 
-	  } 
-	}  
+        { uctyp = parseType(st+3,i-1,entities,types); } 
+      } 
+    }  
         
     UseCase uc = new UseCase(nme); 
-	uc.setResultType(uctyp); 
-	System.out.println(">>> use case " + nme + " has return type " + uctyp); 
+    uc.setResultType(uctyp); 
+    System.out.println(">>> use case " + nme + " has return type " + uctyp); 
 
     if (foundstart == false) 
-	{ System.err.println("!! ERROR: no { found for use case " + nme);
-	  return uc;
+    { System.err.println("!! ERROR: no { found for use case " + nme);
+      return uc;
     }
 	
     int startpostconditions = st + 4;
@@ -9254,9 +9426,15 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
   { // System.out.println(Double.MAX_VALUE); 
     Compiler2 c = new Compiler2();
 
-    c.nospacelexicalanalysis("sq->iterate(v; acc = 0 | v + acc)"); 
+    // c.nospacelexicalanalysis("sq->iterate(v; acc = 0 | v + acc)"); 
 
-    Expression xx = c.parseExpression(); 
+    // Expression xx = c.parseExpression(); 
+
+    c.nospacelexicalanalysis("E<String,int>"); 
+     
+    Vector exs = new Vector(); 
+    exs.add(new Entity("E")); 
+    Type xx = c.parseType(0,c.lexicals.size()-1,exs, new Vector()); 
 
     System.out.println(xx); 
 

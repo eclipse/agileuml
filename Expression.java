@@ -1133,6 +1133,10 @@ abstract class Expression
 
   public abstract Expression addReference(BasicExpression ref, Type t);
 
+  public abstract Expression 
+     addContainerReference(BasicExpression ref, String var,
+                           Vector exclusions);
+
   public abstract Expression replaceReference(BasicExpression ref, Type t);
 
   public abstract Expression dereference(BasicExpression ref);

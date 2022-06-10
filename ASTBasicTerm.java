@@ -782,6 +782,18 @@ public class ASTBasicTerm extends ASTTerm
   public boolean isJavaLabeledStatement()
   { return false; } 
 
+  public ASTTerm getJavaLabeledStatement()
+  { return null; } 
+
+  public String getJSLabel()
+  { return null; } 
+
+  public boolean isJSLabeledStatement()
+  { return false; } 
+
+  public ASTTerm getJSLabeledStatement()
+  { return null; } 
+
   public boolean isLocalDeclarationStatement()
   { return false; } 
 

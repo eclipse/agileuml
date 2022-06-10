@@ -1126,7 +1126,23 @@ public class SetExpression extends Expression
     } 
     SetExpression res = new SetExpression(newelems);
     res.ordered = ordered;
-	res.type = type;  
+    res.type = type;  
+    return res;  
+  } 
+
+  public Expression addContainerReference(
+           BasicExpression ref, String var, Vector excls)
+  { Vector newelems = new Vector(); 
+    for (int i = 0; i < elements.size(); i++) 
+    { Expression elem = (Expression) elements.get(i); 
+      Expression newelem = 
+            elem.addContainerReference(ref,var,excls); 
+      newelems.add(newelem); 
+    } 
+
+    SetExpression res = new SetExpression(newelems);
+    res.ordered = ordered;
+    res.type = type;  
     return res;  
   } 
 
