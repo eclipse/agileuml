@@ -304,6 +304,47 @@ abstract class Expression
     return 1; 
   } 
 
+  public static String getMatcherOperator(Expression mexpr)
+  { if (mexpr == null) 
+    { return "="; } 
+    if (mexpr instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) mexpr;
+      Vector prs = be.getParameters(); 
+ 
+      if ("is".equals(be.data) && prs != null && 
+          prs.size() > 0)
+      { return getMatcherOperator(
+                  (Expression) prs.get(0)); 
+      } 
+      else if ("not".equals(be.data) && prs != null && 
+          prs.size() > 0)
+      { return "/="; } 
+    } 
+    return "="; 
+  } 
+
+  public static Expression getMatcherArgument(Expression mexpr)
+  { if (mexpr == null) 
+    { return new BasicExpression("null"); }
+ 
+    if (mexpr instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) mexpr; 
+      if ("is".equals(be.data) && be.getParameters() != null && 
+          be.getParameters().size() > 0)
+      { return getMatcherArgument(
+                  (Expression) be.getParameters().get(0)); 
+      } 
+      else if ("not".equals(be.data) && be.getParameters() != null && 
+          be.getParameters().size() > 0)
+      { return (Expression) be.getParameters().get(0); } 
+      else 
+      { return be; }
+    } 
+
+    return mexpr; 
+  } 
+
+
   public void getParameterBounds(Vector pars, Vector bounds, java.util.Map attBounds)
   { } 
 

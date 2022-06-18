@@ -330,6 +330,7 @@ public class ASTSymbolTerm extends ASTTerm
     }
 
     if ("Calendar".equals(symbol) || 
+        "Timestamp".equals(symbol) || 
         "GregorianCalendar".equals(symbol))
     { modelElement = new Type("OclDate", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -358,7 +359,8 @@ public class ASTSymbolTerm extends ASTTerm
       return "Sequence"; 
     }
 
-    if ("List".equals(symbol) || "ArrayList".equals(symbol)) 
+    if ("List".equals(symbol) || "ArrayList".equals(symbol))
+        // "Array".equals(symbol)) 
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence";
@@ -387,6 +389,13 @@ public class ASTSymbolTerm extends ASTTerm
     }
 
     if ("Stream".equals(symbol)) 
+    { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; 
+    }
+
+    if ("JsonArray".equals(symbol) || 
+        "JSONArray".equals(symbol)) 
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; 
@@ -463,7 +472,23 @@ public class ASTSymbolTerm extends ASTTerm
     if ("Properties".equals(symbol))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Map"; } 
+      return "Map"; 
+    } 
+
+    if ("JSONObject".equals(symbol) || 
+        "JsonObject".equals(symbol))
+    { modelElement = new Type("Map", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Map"; 
+    }
+
+    if ("ImmutableMap".equals(symbol) || 
+        "Entry".equals(symbol) || "Pair".equals(symbol))
+    { modelElement = new Type("Map", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Map"; 
+    }
+
 
     if ("Enumeration".equals(symbol))
     { modelElement = new Type("OclIterator", null); 
@@ -476,11 +501,27 @@ public class ASTSymbolTerm extends ASTTerm
     if ("ListIterator".equals(symbol))
     { modelElement = new Type("OclIterator", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclIterator"; } 
+      return "OclIterator"; 
+    } 
+    
     if ("StringTokenizer".equals(symbol))
     { modelElement = new Type("OclIterator", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclIterator"; } 
+      return "OclIterator"; 
+    } 
+
+    if ("ResultSet".equals(symbol) || 
+        "CachedRowSet".equals(symbol) ||
+        "FilteredRowSet".equals(symbol) ||
+        "JdbcRowSet".equals(symbol) ||
+        "JoinRowSet".equals(symbol) ||
+        "RowSet".equals(symbol) ||
+        "WebRowSet".equals(symbol) ||
+      "Cursor".equals(symbol))
+    { modelElement = new Type("OclIterator", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclIterator"; 
+    } 
 
     if ("File".equals(symbol) || 
         "FileDescriptor".equals(symbol))
@@ -546,33 +587,40 @@ public class ASTSymbolTerm extends ASTTerm
     if ("BufferedInputStream".equals(symbol))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
+      return "OclFile"; 
+    } 
+    
     if ("BufferedOutputStream".equals(symbol))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
-    if ("PrintStream".equals(symbol) || "Socket".equals(symbol))
+      return "OclFile"; 
+    } 
+
+    if ("PrintStream".equals(symbol) || 
+        "OutputStream".equals(symbol) ||
+        "InputStream".equals(symbol))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
+      return "OclFile"; 
+    }
+ 
     if ("FileOutputStream".equals(symbol) ||
         "FileInputStream".equals(symbol))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
-    if ("Reader".equals(symbol))
+      return "OclFile"; 
+    }
+ 
+    if ("Reader".equals(symbol) || 
+        "FileReader".equals(symbol))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
-    if ("FileReader".equals(symbol))
-    { modelElement = new Type("OclFile", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
-    if ("Writer".equals(symbol))
-    { modelElement = new Type("OclFile", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
-    if ("FileWriter".equals(symbol))
+      return "OclFile"; 
+    }
+ 
+    if ("Writer".equals(symbol) ||
+        "FileWriter".equals(symbol) || 
+        "StringWriter".equals(symbol))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; } 
@@ -600,6 +648,27 @@ public class ASTSymbolTerm extends ASTTerm
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; } 
+
+    if ("JDBCDatabase".equals(symbol) ||  
+        "Connection".equals(symbol) ||  
+        "HttpURLConnection".equals(symbol) ||  
+        "URLConnection".equals(symbol) ||  
+        "SQLiteDatabase".equals(symbol) ||
+        "URL".equals(symbol) ||  
+        "Socket".equals(symbol) || 
+        "BluetoothSocket".equals(symbol))
+    { modelElement = new Type("OclDatasource", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclDatasource"; 
+    } 
+
+    if ("PreparedStatement".equals(symbol) || 
+        "Statement".equals(symbol) || 
+        "CallableStatement".equals(symbol))
+    { modelElement = new Type("SQLStatement", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "SQLStatement"; 
+    } 
 
 
     if ("else".equals(symbol))

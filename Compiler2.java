@@ -937,7 +937,7 @@ public class Compiler2
     for (int i = 0; i < explen; i++)
     { char c = str.charAt(i); 
 
-      if (c == '\"') 
+      if (c == '\"' && prev != '\\') 
       { if (instring) 
         { instring = false; 
           if (sb != null) 

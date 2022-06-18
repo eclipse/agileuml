@@ -123,6 +123,16 @@ public class BehaviouralFeature extends ModelElement
     { elementType = rt; }  // primitive, String, entity type
   } 
 
+  public Expression makeLambdaExpression(Expression inst) 
+  { // lambda pars : ParTypes in inst.name(pars)
+
+    BasicExpression be = new BasicExpression(this); 
+    be.setObjectRef(inst); 
+
+    return UnaryExpression.newLambdaUnaryExpression(be,this); 
+  } 
+
+
   public void setBx(boolean b)
   { bx = b; } 
 
@@ -229,13 +239,21 @@ public class BehaviouralFeature extends ModelElement
       } 
     } 
 
-    Expression newpre = 
-       pre.addContainerReference(ref,var,newexcl); 
-    Expression newpost = 
-       post.addContainerReference(ref,var,newexcl); 
-    Statement newact = 
-       activity.addContainerReference(ref,var,newexcl); 
-
+    Expression newpre = null;  
+    if (pre != null)
+    { newpre = pre.addContainerReference(ref,var,newexcl); } 
+    else 
+    { newpre = new BasicExpression(true); } 
+    Expression newpost = null;
+    if (post != null)
+    { newpost = post.addContainerReference(ref,var,newexcl); }
+    else 
+    { newpost = new BasicExpression(true); }  
+    Statement newact = null;
+    if (activity != null) {
+      newact = activity.addContainerReference(ref,var,newexcl); 
+    } 
+	
     res.setActivity(newact); 
     res.setPre(newpre);     
     res.setPost(newpost);   

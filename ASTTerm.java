@@ -487,7 +487,13 @@ public abstract class ASTTerm
   public boolean isAssignment() 
   { return false; } 
 
+  public boolean isCreation() 
+  { return false; } 
+
   public String toKM3Assignment()
+  { return toKM3(); } 
+
+  public String toKM3creation()
   { return toKM3(); } 
 
   public abstract String toKM3asObject(Entity ent);
@@ -721,6 +727,25 @@ public abstract class ASTTerm
   public boolean isBitSet()
   { return isBooleanSequence(); } 
   // and original jtype is "BitSet". 
+
+  public boolean isOclIterator()
+  { String typ = ASTTerm.getType(literalForm()); 
+    if (typ == null) 
+    { return false; } 
+    if ("OclIterator".equals(typ))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isOclDatasource()
+  { String typ = ASTTerm.getType(literalForm()); 
+    if (typ == null) 
+    { return false; } 
+    if ("OclDatasource".equals(typ))
+    { return true; } 
+    return false; 
+  } 
+
 
   public String getDefaultValue(String typ) 
   { if (isInteger(typ))

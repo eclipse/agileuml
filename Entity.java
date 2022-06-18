@@ -47,6 +47,22 @@ public class Entity extends ModelElement implements Comparable
     realEntity = this; 
   }
 
+  public static boolean validEntityName(String ename)
+  { if (ename.length() == 0) 
+    { return false; } 
+    if (Character.isJavaIdentifierStart(ename.charAt(0)))
+    { } 
+    else 
+    { return false; } 
+    for (int i = 1; i < ename.length(); i++) 
+    { if (Character.isJavaIdentifierPart(ename.charAt(i)))
+      { } 
+      else 
+      { return false; } 
+    } 
+    return true; 
+  } 
+
   public boolean isGeneric()
   { return typeParameters != null && 
            typeParameters.size() > 0; 
@@ -1239,6 +1255,28 @@ public class Entity extends ModelElement implements Comparable
     if (isInterface())
     { f.addStereotype("abstract"); } 
   }  // If f is abstract, this class must also be
+
+  public void refineOperation(String op, Vector pars)
+  { // Add or refine definition of op
+    BehaviouralFeature bf = getOperation(op);
+    if (bf == null) 
+    { bf = new BehaviouralFeature(op); 
+      for (int i = 0; i < pars.size(); i++) 
+      { Expression pexpr = (Expression) pars.get(i); 
+        Type ptyp = pexpr.getType(); 
+
+        if (ptyp == null) 
+        { ptyp = new Type("OclAny", null); } 
+
+        Attribute par = new Attribute("par_" + i, 
+                                        ptyp, 
+                                        ModelElement.INTERNAL); 
+        bf.addParameter(par); 
+      }
+      addOperation(bf);  
+    } // else, refine it. 
+  } 
+
 
   public void refineOperation(BehaviouralFeature f)
   { String fname = f.getName(); 
@@ -16871,5 +16909,8 @@ public BehaviouralFeature designAbstractKillOp()
   public static void main(String[] args)
   { int rand = (int) (1000*Math.random()); 
     System.out.println(rand); 
+
+    System.out.println(Entity.validEntityName("_Comma")); 
+    System.out.println(Entity.validEntityName("comma__semicolon")); 
   }
 }

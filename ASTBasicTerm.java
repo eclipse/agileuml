@@ -818,7 +818,8 @@ public class ASTBasicTerm extends ASTTerm
     }
  
     if ("CharSequence".equals(value) || 
-        "Segment".equals(value))
+        "Segment".equals(value) || 
+        "JsonString".equals(value))
     { modelElement = new Type("String", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "String"; 
@@ -902,7 +903,8 @@ public class ASTBasicTerm extends ASTTerm
       return "double"; 
     }
  
-    if ("BigDecimal".equals(value))
+    if ("BigDecimal".equals(value) || 
+        "JsonNumber".equals(value))
     { modelElement = new Type("double", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "double"; 
@@ -1015,6 +1017,7 @@ public class ASTBasicTerm extends ASTTerm
     }
 
     if ("Calendar".equals(value) || 
+        "Timestamp".equals(value) || 
         "GregorianCalendar".equals(value))
     { modelElement = new Type("OclDate", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -1036,50 +1039,47 @@ public class ASTBasicTerm extends ASTTerm
       return "OclRegex"; 
     } 
 
-    if ("ArrayList".equals(value))
+    if ("ArrayList".equals(value) || 
+        // "Array".equals(value) || 
+        "AbstractList".equals(value))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
-    if ("AbstractList".equals(value))
+      return "Sequence"; 
+    }
+ 
+    if ("Vector".equals(value) || 
+        "LinkedList".equals(value) ||
+        "List".equals(value))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
-    if ("Vector".equals(value))
+      return "Sequence"; 
+    }
+ 
+    if ("Stack".equals(value) || "Queue".equals(value) ||
+        "BlockingQueue".equals(value))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
-    if ("LinkedList".equals(value))
-    { modelElement = new Type("Sequence", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
-    if ("List".equals(value))
-    { modelElement = new Type("Sequence", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
-    if ("Stack".equals(value))
-    { modelElement = new Type("Sequence", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
-    if ("Queue".equals(value))
-    { modelElement = new Type("Sequence", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
-    if ("BlockingQueue".equals(value))
-    { modelElement = new Type("Sequence", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
+      return "Sequence"; 
+    }
+ 
     if ("ArrayBlockingQueue".equals(value))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
+      return "Sequence"; 
+    }
+ 
     if ("PriorityQueue".equals(value))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
-    if ("Stream".equals(value))
+      return "Sequence"; 
+    }
+ 
+    if ("Stream".equals(value) || "JsonArray".equals(value) ||
+        "JSONArray".equals(value))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
+      return "Sequence"; 
+    } 
      
     if ("BitSet".equals(value))
     { modelElement = new Type("Sequence", null);
@@ -1107,50 +1107,97 @@ public class ASTBasicTerm extends ASTTerm
     if ("Map".equals(value))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Map"; } 
+      return "Map"; 
+    }
+ 
     if ("HashMap".equals(value))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Map"; } 
+      return "Map"; 
+    } 
+    
     if ("SortedMap".equals(value))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Map"; } 
+      return "Map"; 
+    }
+ 
     if ("TreeMap".equals(value))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Map"; } 
+      return "Map"; 
+    }
+ 
     if ("Hashtable".equals(value))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Map"; } 
+      return "Map"; 
+    }
+ 
     if ("Properties".equals(value))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Map"; } 
+      return "Map"; 
+    } 
+
+    if ("ImmutableMap".equals(value) || "Pair".equals(value)
+        || "Entry".equals(value))
+    { modelElement = new Type("Map", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Map"; 
+    } 
+
+    if ("JSONObject".equals(value) || 
+        "JsonObject".equals(value))
+    { modelElement = new Type("Map", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Map"; 
+    }
 
     if ("Enumeration".equals(value))
     { modelElement = new Type("OclIterator", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclIterator"; } 
+      return "OclIterator"; 
+    }
+ 
     if ("Iterator".equals(value))
     { modelElement = new Type("OclIterator", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclIterator"; } 
+      return "OclIterator"; 
+    }
+ 
     if ("ListIterator".equals(value))
     { modelElement = new Type("OclIterator", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclIterator"; } 
+      return "OclIterator"; 
+    }
+ 
     if ("StringTokenizer".equals(value))
     { modelElement = new Type("OclIterator", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclIterator"; } 
+      return "OclIterator"; 
+    }
+ 
+    if ("ResultSet".equals(value) ||
+        "CachedRowSet".equals(value) ||
+        "FilteredRowSet".equals(value) ||
+        "JdbcRowSet".equals(value) ||
+        "JoinRowSet".equals(value) ||
+        "RowSet".equals(value) ||
+        "WebRowSet".equals(value) ||
+        "Cursor".equals(value))
+    { modelElement = new Type("OclIterator", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclIterator"; 
+    } 
 
     if ("File".equals(value) || 
         "FileDescriptor".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
+      return "OclFile"; 
+    }
+ 
     if ("Formatter".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -1215,15 +1262,21 @@ public class ASTBasicTerm extends ASTTerm
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; } 
-    if ("PrintStream".equals(value) || "Socket".equals(value))
+    if ("PrintStream".equals(value) || 
+        "InputStream".equals(value) || 
+        "OutputStream".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
+      return "OclFile"; 
+    }
+ 
     if ("FileOutputStream".equals(value) ||
         "FileInputStream".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
+      return "OclFile"; 
+    }
+ 
     if ("Reader".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -1232,11 +1285,9 @@ public class ASTBasicTerm extends ASTTerm
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; } 
-    if ("Writer".equals(value))
-    { modelElement = new Type("OclFile", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
-    if ("FileWriter".equals(value))
+    if ("Writer".equals(value) ||
+        "StringWriter".equals(value) || 
+        "FileWriter".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; } 
@@ -1251,19 +1302,47 @@ public class ASTBasicTerm extends ASTTerm
     if ("BufferedWriter".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
+      return "OclFile"; 
+    }
+ 
     if ("InputStreamReader".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
+      return "OclFile"; 
+    } 
+
     if ("OutputStreamWriter".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; }
+      return "OclFile"; 
+    }
+
     if ("PrintWriter".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
+      return "OclFile"; 
+    } 
+
+    if ("JDBCDatabase".equals(value) ||
+        "Connection".equals(value) ||  
+        "HttpURLConnection".equals(value) ||  
+        "URLConnection".equals(value) ||  
+        "Socket".equals(value) || 
+        "URL".equals(value) || 
+        "BluetoothSocket".equals(value) || 
+        "SQLiteDatabase".equals(value))
+    { modelElement = new Type("OclDatasource", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclDatasource"; 
+    } 
+
+    if ("PreparedStatement".equals(value) || 
+        "Statement".equals(value) || 
+        "CallableStatement".equals(value))
+    { modelElement = new Type("SQLStatement", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "SQLStatement"; 
+    } 
  
     if ("Throwable".equals(value))
     { modelElement = new Type("OclException", null); 
@@ -1384,7 +1463,10 @@ public class ASTBasicTerm extends ASTTerm
   } 
 
   public String toKM3type()
-  { if ("classOrInterfaceType".equals(tag))
+  { if (ASTTerm.entities == null) 
+    { ASTTerm.entities = new Vector(); } 
+	
+    if ("classOrInterfaceType".equals(tag))
     { String resx = km3typeForJavaType(); 
       if (resx != null) 
       { return resx; } 
@@ -1394,7 +1476,7 @@ public class ASTBasicTerm extends ASTTerm
                                            ASTTerm.entities); 
       if (ent != null) 
       { modelElement = ent; } 
-      else 
+      else if (Entity.validEntityName(value))
       { modelElement = new Entity(value); 
         ASTTerm.entities.add(modelElement); 
       } 
@@ -1412,13 +1494,14 @@ public class ASTBasicTerm extends ASTTerm
                                            ASTTerm.entities); 
       if (ent != null) 
       { modelElement = new Type(ent); } 
-      else 
+      else if (Entity.validEntityName(value))
       { ent = new Entity(value); 
         ASTTerm.entities.add(ent);
         modelElement = new Type(ent);  
       }
 
-      ent.setIsGenericParameter(true);  
+      if (ent != null) 
+      { ent.setIsGenericParameter(true); }   
       return value; 
     } 
 
@@ -1454,7 +1537,8 @@ public class ASTBasicTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement); 
       return "String"; } 
     if ("CharSequence".equals(value) || 
-        "Segment".equals(value))
+        "Segment".equals(value) || 
+        "JsonString".equals(value))
     { modelElement = new Type("String", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "String"; } 
@@ -1511,11 +1595,15 @@ public class ASTBasicTerm extends ASTTerm
     if ("float".equals(value))
     { modelElement = new Type("double", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "double"; } 
-    if ("BigDecimal".equals(value))
+      return "double"; 
+    }
+ 
+    if ("BigDecimal".equals(value) || 
+        "JsonNumber".equals(value))
     { modelElement = new Type("double", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "double"; } 
+      return "double"; 
+    } 
     
     if ("long".equals(value))
     { modelElement = new Type("long", null); 
@@ -1600,17 +1688,22 @@ public class ASTBasicTerm extends ASTTerm
     if ("Date".equals(value))
     { modelElement = new Type("OclDate", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclDate"; }
+      return "OclDate"; 
+    }
+
     if ("Calendar".equals(value) || 
+        "Timestamp".equals(value) || 
         "GregorianCalendar".equals(value))
     { modelElement = new Type("OclDate", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclDate"; }
+      return "OclDate"; 
+    }
 
     if ("Random".equals(value))
     { modelElement = new Type("OclRandom", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclRandom"; }
+      return "OclRandom";
+    }
 
     if ("Pattern".equals(value) || 
         "FileFilter".equals(value) ||
@@ -1620,7 +1713,7 @@ public class ASTBasicTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement); 
       return "OclRegex"; } 
 
-    if ("ArrayList".equals(value))
+    if ("ArrayList".equals(value)) // "Array".equals(value))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; } 
@@ -1659,11 +1752,15 @@ public class ASTBasicTerm extends ASTTerm
     if ("PriorityQueue".equals(value))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
-    if ("Stream".equals(value))
+      return "Sequence"; 
+    } 
+    
+    if ("Stream".equals(value) || "JsonArray".equals(value) ||
+        "JSONArray".equals(value))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
+      return "Sequence"; 
+    } 
      
     if ("BitSet".equals(value))
     { modelElement = new Type("Sequence", null);
@@ -1691,54 +1788,103 @@ public class ASTBasicTerm extends ASTTerm
     if ("Map".equals(value))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Map"; } 
+      return "Map"; 
+    }
+ 
     if ("HashMap".equals(value))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Map"; } 
+      return "Map"; 
+    }
+ 
     if ("SortedMap".equals(value))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Map"; } 
+      return "Map"; 
+    }
+ 
     if ("TreeMap".equals(value))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Map"; } 
+      return "Map"; 
+    }
+ 
     if ("Hashtable".equals(value))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Map"; } 
+      return "Map"; 
+    }
+ 
+    if ("ImmutableMap".equals(value) || "Pair".equals(value)
+        || "Entry".equals(value))
+    { modelElement = new Type("Map", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Map"; 
+    } 
+
     if ("Properties".equals(value))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Map"; } 
+      return "Map"; 
+    } 
+
+    if ("JSONObject".equals(value) || 
+        "JsonObject".equals(value))
+    { modelElement = new Type("Map", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Map"; 
+    }
 
     if ("Enumeration".equals(value))
     { modelElement = new Type("OclIterator", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclIterator"; } 
+      return "OclIterator"; 
+    }
+ 
     if ("Iterator".equals(value))
     { modelElement = new Type("OclIterator", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclIterator"; } 
+      return "OclIterator"; 
+    }
+ 
     if ("ListIterator".equals(value))
     { modelElement = new Type("OclIterator", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclIterator"; } 
+      return "OclIterator"; 
+    }
+ 
+    if ("ResultSet".equals(value) ||
+        "CachedRowSet".equals(value) ||
+        "FilteredRowSet".equals(value) ||
+        "JdbcRowSet".equals(value) ||
+        "JoinRowSet".equals(value) ||
+        "RowSet".equals(value) ||
+        "WebRowSet".equals(value) ||
+        "Cursor".equals(value))
+    { modelElement = new Type("OclIterator", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclIterator"; 
+    } 
+
     if ("StringTokenizer".equals(value))
     { modelElement = new Type("OclIterator", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclIterator"; } 
+      return "OclIterator"; 
+    } 
 
     if ("File".equals(value) || 
         "FileDescriptor".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
+      return "OclFile"; 
+    }
+ 
     if ("Formatter".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
+      return "OclFile"; 
+    }
+ 
     if ("Scanner".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -1799,7 +1945,8 @@ public class ASTBasicTerm extends ASTTerm
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; } 
-    if ("PrintStream".equals(value) || "Socket".equals(value))
+    if ("PrintStream".equals(value) || "InputStream".equals(value) || 
+        "OutputStream".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; } 
@@ -1807,23 +1954,22 @@ public class ASTBasicTerm extends ASTTerm
         "FileInputStream".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
-    if ("Reader".equals(value))
+      return "OclFile"; 
+    }
+ 
+    if ("Reader".equals(value) || "FileReader".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; } 
-    if ("FileReader".equals(value))
+
+    if ("Writer".equals(value) || 
+        "StringWriter".equals(value) ||
+        "FileWriter".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
-    if ("Writer".equals(value))
-    { modelElement = new Type("OclFile", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
-    if ("FileWriter".equals(value))
-    { modelElement = new Type("OclFile", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
+      return "OclFile"; 
+    }
+ 
     if ("RandomAccessFile".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -1835,29 +1981,60 @@ public class ASTBasicTerm extends ASTTerm
     if ("BufferedWriter".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
+      return "OclFile"; 
+    }
+ 
     if ("InputStreamReader".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
+      return "OclFile"; 
+    }
+ 
     if ("OutputStreamWriter".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; }
+      return "OclFile"; 
+    }
+
     if ("PrintWriter".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclFile"; } 
+      return "OclFile"; 
+    } 
  
+    if ("JDBCDatabase".equals(value) || 
+        "Connection".equals(value) || 
+        "HttpURLConnection".equals(value) ||  
+        "URLConnection".equals(value) ||  
+        "Socket".equals(value) || 
+        "URL".equals(value) || 
+        "BluetoothSocket".equals(value) ||  
+        "SQLiteDatabase".equals(value))
+    { modelElement = new Type("OclDatasource", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclDatasource"; 
+    } 
+
+    if ("PreparedStatement".equals(value) || 
+        "Statement".equals(value) || 
+        "CallableStatement".equals(value))
+    { modelElement = new Type("SQLStatement", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "SQLStatement"; 
+    } 
+
     if ("Throwable".equals(value))
     { modelElement = new Type("OclException", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclException"; } 
+      return "OclException"; 
+    } 
 
     if ("Error".equals(value))
     { modelElement = new Type("SystemException", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "SystemException"; } 
+      return "SystemException"; 
+    }
+ 
     if ("AWTError".equals(value))
     { modelElement = new Type("SystemException", null); 
       expression = new BasicExpression((Type) modelElement); 

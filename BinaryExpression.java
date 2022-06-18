@@ -44,6 +44,14 @@ class BinaryExpression extends Expression
     return new BinaryExpression(op,lx,rx); 
   } 
 
+  public static BinaryExpression newBinaryExpression(String op, String lx, String rx)
+  { if (lx == null || rx == null) 
+    { return null; } 
+    BasicExpression ex1 = new BasicExpression(lx); 
+    BasicExpression ex2 = new BasicExpression(rx); 
+    return new BinaryExpression(op,ex1,ex2); 
+  } 
+
   public Object clone()
   { BinaryExpression res = 
       new BinaryExpression(operator,(Expression) left.clone(),(Expression) right.clone());

@@ -14088,12 +14088,12 @@ public void produceCUI(PrintWriter out)
   public void loadGenericUseCase()
   { Vector auxcstls = new Vector(); 
   
-    CGSpec spec = loadCSTL("cgJava2UML.cstl",auxcstls); 
+    // CGSpec spec = loadCSTL("cgJava2UML.cstl",auxcstls); 
 
-    if (spec == null) 
-    { System.err.println("!! Error: No cg/cgJava2UML.cstl file defined!"); 
-      return; 
-    } 
+    // if (spec == null) 
+    // { System.err.println("!! Error: No cg/cgJava2UML.cstl file defined!"); 
+    //   return; 
+    // } 
 
     BufferedReader br = null;
     Vector res = new Vector();
@@ -14145,16 +14145,16 @@ public void produceCUI(PrintWriter out)
     xx.enumtypes = new Vector(); 
     xx.enumtypes.addAll(types); 
 
-    System.out.println(xx.toKM3()); 
-    System.out.println(); 
-    System.out.println(); 
+    // System.out.println(xx.toKM3()); 
+    // System.out.println(); 
+    // System.out.println(); 
 
     Date d1 = new Date(); 
     long time1 = d1.getTime(); 
 
-    String tt = xx.cg(spec); 
-    System.out.println(tt); 
-    System.out.println(); 
+    // String tt = xx.cg(spec); 
+    // System.out.println(tt); 
+    // System.out.println(); 
 
     System.out.println(xx.toKM3()); 
     System.out.println(); 

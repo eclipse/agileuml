@@ -5347,7 +5347,7 @@ public class BSystemTypes extends BComponent
         "  public static bool toBoolean(String sx)\n" + 
         "  { if (\"true\".Equals(sx) || \"True\".Equals(sx))\n" + 
         "    { return true; }\n" + 
-        "   return false;\n" + 
+        "    return false;\n" + 
         "  }\n\n";  
 
     res = res +         
@@ -9589,7 +9589,8 @@ public class BSystemTypes extends BComponent
   public static String generateIsRealOpCPP()
   { String res = " static bool isReal(string str)\n" + 
       "  { try { std::stod(str); return true; }\n" + 
-      "    catch (exception _e) { return false; }\n" + 
+      "    catch (exception _e)\n" + 
+      "    { return false; }\n" + 
       "  }\n\n"; 
 
     res = res + "  static bool toBoolean(string str)\n" +

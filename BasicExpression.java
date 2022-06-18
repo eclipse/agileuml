@@ -697,6 +697,16 @@ class BasicExpression extends Expression
     return new BinaryExpression("->at", base, ind);
   } 
 
+  public static BasicExpression newStaticValueBasicExpression(String v, String cls) 
+  { BasicExpression res = new BasicExpression(v); 
+    res.umlkind = VALUE;
+    res.isStatic = true; 
+    res.objectRef = new BasicExpression(cls); 
+    res.objectRef.umlkind = CLASSID; 
+    return res; 
+  } 
+
+
   public Expression getObjectRef() 
   { return objectRef; } 
 
