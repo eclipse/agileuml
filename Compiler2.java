@@ -938,7 +938,11 @@ public class Compiler2
     { char c = str.charAt(i); 
 
       if (c == '\"' && prev != '\\') 
-      { if (instring) 
+      { if (inchar) // '"' is ok but should be '\"' 
+        { if (sb != null) 
+          { sb.append(c); }
+        }  
+        else if (instring) 
         { instring = false; 
           if (sb != null) 
           { sb.append(c); 
@@ -951,6 +955,7 @@ public class Compiler2
           lexicals.addElement(sb);  
           sb.append(c); 
         } 
+        prev = updatePrev(prev,c); 
       } 
       else if (instring)
       { if (sb != null) // should always be true. 
@@ -960,8 +965,9 @@ public class Compiler2
           lexicals.add(sb); 
           sb.append(c); 
         }
+        prev = updatePrev(prev,c); 
       } 
-      else if (c == '\'') 
+      else if (c == '\'' && prev != '\\') 
       { if (inchar) 
         { inchar = false; 
           if (sb != null) 
@@ -975,6 +981,7 @@ public class Compiler2
           lexicals.addElement(sb);  
           sb.append(c); 
         } 
+        prev = updatePrev(prev,c); 
       } 
       else if (inchar)
       { if (sb != null) // should always be true. 
@@ -984,15 +991,19 @@ public class Compiler2
           lexicals.add(sb); 
           sb.append(c); 
         }
+        prev = updatePrev(prev,c); 
       } 
       else if (isSymbolCharacterText(c)) // && !instring)
       { sb = new StringBuffer();     // start new buffer for the symbol
         lexicals.addElement(sb);  
         sb.append(c); 
         sb = null; 
+        prev = updatePrev(prev,c); 
       }        
       else if (c == ' ' || c == '\n' || c == '\t' || c == '\r') 
-      { sb = null; } // end current buffer - not in a string 
+      { sb = null; 
+        prev = updatePrev(prev,c); 
+      } // end current buffer - not in a string 
       else // if (isBasicExpCharacter(c))
       { if (sb != null) 
         { sb.append(c); } 
@@ -1000,10 +1011,19 @@ public class Compiler2
         { sb = new StringBuffer();     // start new buffer for the text
           lexicals.add(sb); 
           sb.append(c); 
-        }           
+        }
+        prev = updatePrev(prev,c);            
       } 
     }
   }
+
+
+  private char updatePrev(char prev, char current)
+  { if (prev == '\\' && current == '\\') 
+    { return ' '; } /* disregard an escaped backslash */ 
+    else 
+    { return current; } 
+  } 
 
   public void nospacelexicalanalysisSimpleText(String str) 
   { int in = INUNKNOWN; 

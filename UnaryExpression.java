@@ -53,6 +53,28 @@ public class UnaryExpression extends Expression
     } 
     return res; 
   } 
+
+  public static Expression newLambdaUnaryExpression(
+                         Vector pars, 
+                         Expression body)
+  { // lambda par1 : Par1Type in ... in body
+
+    Expression res = body; 
+    if (pars == null) 
+    { return res; } 
+
+    for (int i = pars.size()-1; i >= 0; i--) 
+    { Attribute p = (Attribute) pars.get(i);
+      Type oldtype = res.getType();  
+      res = new UnaryExpression("lambda", res); 
+      ((UnaryExpression) res).setAccumulator(p); 
+      Type ftype = new Type("Function", null);
+      ftype.setKeyType(p.getType()); 
+      ftype.setElementType(oldtype); 
+      res.type = ftype; 
+    } 
+    return res; 
+  } 
     
 
   public static UnaryExpression newUnaryExpression(String op, Expression expr) 
@@ -160,6 +182,129 @@ public class UnaryExpression extends Expression
     } 
 
     return null;  
+  } 
+
+  public static Expression newLambdaUnaryExpression( 
+    Vector pars, Statement stat, Entity cclass, 
+    Vector types, Vector entities) 
+  { System.out.println("*** Creating new lambda expression for: " + pars + " " + stat + " " + cclass); 
+    System.out.println("********************************"); 
+
+    if (stat == null || pars == null) 
+    { return null; }
+
+    Expression res = null; 
+
+    if (Statement.isSingleReturnStatement(stat))
+    { Expression expr = Statement.getReturnExpression(stat); 
+        
+      if (expr != null) 
+      { Vector contexts = new Vector(); 
+        contexts.add(cclass); 
+        Vector env = new Vector();
+        env.addAll(pars);  
+        expr.typeCheck(types,entities,contexts,env); 
+        res = expr; 
+
+        for (int i = pars.size()-1; i >= 0; i--) 
+        { Attribute p = (Attribute) pars.get(i);
+          Type oldtype = res.getType();  
+          res = new UnaryExpression("lambda", res); 
+          ((UnaryExpression) res).setAccumulator(p); 
+          Type ftype = new Type("Function", null);
+          ftype.setKeyType(p.getType()); 
+          ftype.setElementType(oldtype); 
+          res.type = ftype; 
+        } 
+        return res; 
+      } 
+    }
+
+    String opid; 
+    BehaviouralFeature oper = null; 
+    BasicExpression call = null; 
+    BasicExpression selfvar = 
+        BasicExpression.newVariableBasicExpression("self"); 
+
+    if (cclass != null) 
+    { oper = cclass.getIdenticalOperation(stat);
+      selfvar.setType(new Type(cclass)); 
+    } 
+
+    if (oper != null)  
+    { opid = oper.getName(); 
+      call = new BasicExpression(oper); 
+      call.umlkind = QUERY; 
+      call.setIsEvent(); 
+      call.addParameterExpressions(pars); 
+      call.setObjectRef(selfvar);    
+      res = call;
+
+      for (int i = pars.size()-1; i >= 0; i--) 
+      { Attribute p = (Attribute) pars.get(i);
+        Type oldtype = res.getType();  
+        res = new UnaryExpression("lambda", res); 
+        ((UnaryExpression) res).setAccumulator(p); 
+        Type ftype = new Type("Function", null);
+        ftype.setKeyType(p.getType()); 
+        ftype.setElementType(oldtype); 
+        res.type = ftype; 
+      } 
+      return res; 
+    } 
+    else 
+    { opid = Identifier.nextIdentifier("lambdaFunction"); 
+      call = new BasicExpression(opid); 
+      call.umlkind = QUERY; 
+      call.setIsEvent(); 
+      call.addParameterExpressions(pars);
+      call.setObjectRef(selfvar);    
+
+      BehaviouralFeature bf = new BehaviouralFeature(opid);
+      bf.addParameters(pars);  
+      bf.setActivity(stat); 
+      bf.setPost(new BasicExpression(true));
+          // Find the implicit return type of the stat.
+      Vector returnExpressions = 
+            Statement.getReturnValues(stat);  
+      System.out.println(">>> Return values: " + returnExpressions); 
+
+      Expression expr = call; 
+      if (returnExpressions.size() > 0)
+      { expr = 
+            (Expression) returnExpressions.get(0); 
+      } 
+     
+      if (expr != null) 
+      { Vector contexts = new Vector(); 
+        contexts.add(cclass); 
+        Vector env = new Vector();
+        env.addAll(pars);  
+        expr.typeCheck(types,entities,contexts,env); 
+        Type oldtype = expr.getType();  
+        bf.setReturnType(oldtype); 
+          
+        res = call; 
+
+        for (int i = pars.size()-1; i >= 0; i--) 
+        { Attribute p = (Attribute) pars.get(i);
+          res = new UnaryExpression("lambda", res); 
+          ((UnaryExpression) res).setAccumulator(p); 
+          Type ftype = new Type("Function", null);
+          ftype.setKeyType(p.getType()); 
+          ftype.setElementType(oldtype); 
+          res.type = ftype;  
+          oldtype = ftype;
+        }  
+      }
+ 
+      if (cclass != null)
+      { bf.setEntity(cclass); 
+        cclass.addOperation(bf);
+      }  
+     
+      return res;
+    }  
   } 
 
   public static Expression argumentsToLambdaCall(String fname,
@@ -410,8 +555,10 @@ public void findClones(java.util.Map clones, String rule, String op)
         "double".equals(type + "") || "String".equals(type + ""))
     { return this; } 
 
-    if (operator.equals("->last") || operator.equals("->first") ||
-        operator.equals("->front") || operator.equals("->tail") || operator.equals("->flatten") || 
+    if (operator.equals("->last") || 
+        operator.equals("->first") ||
+        operator.equals("->front") || operator.equals("->tail") || 
+        operator.equals("->flatten") || 
         operator.equals("->any") || operator.equals("->max") || operator.equals("->reverse") || 
         operator.equals("->copy") ||
         operator.equals("->iterator") || 

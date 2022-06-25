@@ -256,8 +256,47 @@ public class ASTSymbolTerm extends ASTTerm
   public Vector getParameterExpressions()
   { return new Vector(); } 
 
+  public String lambdaParametersToKM3()
+  { if (",".equals(symbol) || "(".equals(symbol) ||
+        ")".equals(symbol))
+    { return symbol; } 
+    modelElement = 
+      new Attribute(symbol,new Type("OclAny", null),
+                    ModelElement.INTERNAL);
+    modelElements = new Vector(); 
+    modelElements.add(modelElement); 
+    return symbol; 
+  } 
+
   public String toKM3type()
-  { return toKM3(); } 
+  { String res = toKM3();
+
+    System.out.println("+++ toKM3type on symbol " + symbol + " " + res + " " + modelElement); 
+ 
+    if (modelElement == null) 
+    { Entity ee = (Entity) ModelElement.lookupByName(symbol,
+                                   ASTTerm.entities); 
+      if (ee != null) 
+      { modelElement = new Type(ee); 
+        expression = new BasicExpression((Type) modelElement);
+        return res; 
+      } 
+
+      Type tt = (Type) ModelElement.lookupByName(symbol, 
+                                       ASTTerm.enumtypes); 
+      if (tt != null) 
+      { modelElement = tt; 
+        expression = new BasicExpression((Type) modelElement);
+        return res; 
+      } 
+
+      Entity newent = new Entity(symbol); // if valid name 
+      modelElement = new Type(newent); 
+      expression = new BasicExpression((Type) modelElement);
+      return res;  
+    } 
+    return res; 
+  } 
 
   public String toKM3()
   { if ("<EOF>".equals(symbol))
@@ -353,6 +392,7 @@ public class ASTSymbolTerm extends ASTTerm
     } 
 
     if ("Collection".equals(symbol) || 
+        "Iterable".equals(symbol) || 
         "AbstractCollection".equals(symbol))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -401,13 +441,8 @@ public class ASTSymbolTerm extends ASTTerm
       return "Sequence"; 
     }
  
-    if ("Set".equals(symbol)) 
-    { modelElement = new Type("Set", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Set"; 
-    }
- 
-    if ("HashSet".equals(symbol)) 
+    if ("Set".equals(symbol) || "HashSet".equals(symbol) ||
+        "EnumSet".equals(symbol)) 
     { modelElement = new Type("Set", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "Set"; 
@@ -428,6 +463,7 @@ public class ASTSymbolTerm extends ASTTerm
     } 
 
     if ("HashMap".equals(symbol) || 
+        "EnumMap".equals(symbol) || 
         "Hashtable".equals(symbol) || 
         "Map".equals(symbol)) 
     { modelElement = new Type("Map", null); 
@@ -482,7 +518,14 @@ public class ASTSymbolTerm extends ASTTerm
       return "Map"; 
     }
 
-    if ("ImmutableMap".equals(symbol) || 
+    if ("Comparator".equals(symbol))
+    { modelElement = new Type("OclComparator", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclComparator"; 
+    }
+
+    if ("ImmutableMap".equals(symbol) ||
+        "Triple".equals(symbol) || 
         "Entry".equals(symbol) || "Pair".equals(symbol))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -490,14 +533,13 @@ public class ASTSymbolTerm extends ASTTerm
     }
 
 
-    if ("Enumeration".equals(symbol))
+    if ("Enumeration".equals(symbol) ||
+        "Iterator".equals(symbol))
     { modelElement = new Type("OclIterator", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclIterator"; } 
-    if ("Iterator".equals(symbol))
-    { modelElement = new Type("OclIterator", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "OclIterator"; } 
+      return "OclIterator"; 
+    }
+ 
     if ("ListIterator".equals(symbol))
     { modelElement = new Type("OclIterator", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -517,7 +559,7 @@ public class ASTSymbolTerm extends ASTTerm
         "JoinRowSet".equals(symbol) ||
         "RowSet".equals(symbol) ||
         "WebRowSet".equals(symbol) ||
-      "Cursor".equals(symbol))
+        "Cursor".equals(symbol))
     { modelElement = new Type("OclIterator", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclIterator"; 
@@ -669,7 +711,6 @@ public class ASTSymbolTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement); 
       return "SQLStatement"; 
     } 
-
 
     if ("else".equals(symbol))
     { return " else "; } 

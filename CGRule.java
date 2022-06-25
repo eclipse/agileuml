@@ -1442,7 +1442,7 @@ public class CGRule
     // Apply actions, in order
     for (int i = 0; i < actions.size(); i++) 
     { CGCondition act = (CGCondition) actions.get(i); 
-      act.applyAction(variables,eargs,newargs); 
+      act.applyAction(variables,eargs,newargs,cgs,entities); 
     } 
 
     return res;

@@ -114,7 +114,7 @@ public class CGCondition
     return false; 
   } 
 
-  public void applyAction(Vector vars, Vector eargs, Vector reps)
+  public void applyAction(Vector vars, Vector eargs, Vector reps, CGSpec cgs, Vector entities)
   { // vv stereo
     // means ast.setStereotype(stereorep)
     // where ast is the eargs element of vars variable vv
@@ -128,7 +128,31 @@ public class CGCondition
       stereo = stereo.replace(var,arg1);
     }
 
-    int ind = vars.indexOf(variable); 
+    /* System.out.println(">>> Applying action " + variable + " (" + positive + ") " + stereo);  
+    JOptionPane.showMessageDialog(null, 
+          "Applying action " + variable + " (" + positive + ") " + stereo,   "",
+          JOptionPane.INFORMATION_MESSAGE); */ 
+
+    String varx = variable; 
+    String mffeat = null; 
+
+    Vector metafs = CGRule.metafeatures(variable); 
+
+        System.out.println("*** Metafeatures of " + variable + " are: " + metafs); 
+
+    if (metafs.size() > 0)
+    { 
+      // If the variable has a metafeature: _i`mf
+      // evaluate _i`mf in cgs and set stereotype of result 
+
+      String mf = (String) metafs.get(0); 
+      int mfindex = mf.indexOf("`"); 
+      varx = mf.substring(0,mfindex); 
+      mffeat = mf.substring(mfindex+1,mf.length()); 
+    } 
+
+    int ind = vars.indexOf(varx);
+ 
     if (ind >= 0)
     { Object obj = eargs.get(ind); 
       if (obj instanceof ModelElement) 
@@ -139,19 +163,31 @@ public class CGCondition
         { me.removeStereotype(stereo); } 
       } 
       else if (obj instanceof ASTTerm) 
-      { ASTTerm ast = (ASTTerm) obj; 
-        if (positive) 
-        { ast.addStereotype(stereo); } 
-        else 
-        { ast.removeStereotype(stereo); } 
-      } 
-    
+      { ASTTerm ast = (ASTTerm) obj;
+        // if there is a metafeature of variable, apply it: 
 
-      System.out.println(">>> Executed action " + obj + " (" + positive + ") " + stereo);  
-      JOptionPane.showMessageDialog(null, 
-         "Executed action " + obj + " (" + positive + ") " + stereo,   "",
-         JOptionPane.INFORMATION_MESSAGE);
-    }  
+        if (mffeat != null) 
+        { String repl = CGRule.applyMetafeature(
+                             mffeat,ast,cgs,entities); 
+
+          if (positive) 
+          { ASTTerm.setType(repl,stereo); } 
+          else 
+          { ASTTerm.setType(repl,null); } 
+    
+          System.out.println(">>> Executed action " + repl + " (" + positive + ") " + stereo);  
+          JOptionPane.showMessageDialog(null, 
+             "Executed action " + repl + " (" + positive + ") " + stereo,   "",
+             JOptionPane.INFORMATION_MESSAGE);
+        } 
+        else 
+        { if (positive) 
+          { ast.addStereotype(stereo); } 
+          else 
+          { ast.removeStereotype(stereo); }
+        }  
+      }  
+    } 
   } 
 
   public static boolean conditionsSatisfied(

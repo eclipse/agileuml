@@ -484,6 +484,8 @@ public abstract class ASTTerm
 
   public abstract String typeArgumentsToKM3ElementType();
 
+  public abstract String lambdaParametersToKM3();
+
   public boolean isAssignment() 
   { return false; } 
 

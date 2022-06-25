@@ -14721,7 +14721,11 @@ public class ASTCompositeTerm extends ASTTerm
   { Vector res = new Vector(); 
     if (t instanceof ASTCompositeTerm) 
     { ASTCompositeTerm tt = (ASTCompositeTerm) t; 
-      if ("expressionList".equals(tt.tag))
+	  if ("arguments".equals(tt.tag) && tt.terms.size() > 2)
+	  { ASTTerm arg = (ASTTerm) tt.terms.get(1); 
+	    return getCallArguments(arg); 
+      }
+      else if ("expressionList".equals(tt.tag) )
       { for (int i = 0; i < tt.terms.size(); i++) 
         { ASTTerm telem = (ASTTerm) tt.terms.get(i); 
           if (telem instanceof ASTSymbolTerm) { } 
@@ -14737,7 +14741,11 @@ public class ASTCompositeTerm extends ASTTerm
   { String res = ""; 
     if (t instanceof ASTCompositeTerm) 
     { ASTCompositeTerm tt = (ASTCompositeTerm) t; 
-      if ("expressionList".equals(tt.tag))
+      if ("arguments".equals(tt.tag) && tt.terms.size() > 2)
+	  { ASTTerm arg = (ASTTerm) tt.terms.get(1); 
+	    return getCallArgumentsTail(arg); 
+      }
+	  else if ("expressionList".equals(tt.tag))
       { for (int i = 2; i < tt.terms.size(); i++) 
         { ASTTerm telem = (ASTTerm) tt.terms.get(i); 
           res = res + telem.toKM3();  
@@ -14766,10 +14774,16 @@ public class ASTCompositeTerm extends ASTTerm
     if ("classCreatorRest".equals(tag))
     { return creatorQueryForm(); } 
 
-    if ("enhancedForControl".equals(tag))
-    { ASTTerm typeTerm = (ASTTerm) terms.get(0); 
-      ASTTerm varTerm = (ASTTerm) terms.get(1); 
-      ASTTerm rangeTerm = (ASTTerm) terms.get(3); 
+    if ("enhancedForControl".equals(tag) && 
+        terms.size() >= 4)
+    { // mods type id : rng
+
+      int sze = terms.size(); 
+
+      ASTTerm typeTerm = (ASTTerm) terms.get(sze-4); 
+      ASTTerm varTerm = (ASTTerm) terms.get(sze-3); 
+      ASTTerm rangeTerm = (ASTTerm) terms.get(sze-1);
+ 
       // String km3type = typeTerm.toKM3(); 
       String km3var = varTerm.queryForm(); 
       String km3range = rangeTerm.queryForm(); 
@@ -14778,7 +14792,11 @@ public class ASTCompositeTerm extends ASTTerm
           rangeTerm.expression != null) 
       { expression = 
           new BinaryExpression(":", varTerm.expression, 
-                               rangeTerm.expression); 
+                               rangeTerm.expression);
+
+        String retype = ASTTerm.getElementType(rangeTerm);  
+        if (retype != null) 
+        { ASTTerm.setType(varTerm, retype); }  
       } 
 
       // if (km3var != null) 
@@ -14814,7 +14832,8 @@ public class ASTCompositeTerm extends ASTTerm
         String classcallres = "OclType[\"" + args + "\"]"; 
         Expression texpr = 
           BasicExpression.newTypeBasicExpression("OclType"); 
-        expression = BasicExpression.newIndexedBasicExpression(
+        expression = 
+           BasicExpression.newIndexedBasicExpression(
                      texpr,
                      new BasicExpression("\"" + args + "\"")); 
         ASTTerm.setType(this, "OclType"); 
@@ -14886,34 +14905,45 @@ public class ASTCompositeTerm extends ASTTerm
         String res = par.queryForm(); 
         expression = par.expression; 
         return res; 
-      } 
+      } // but could be several
     } 
 
     if ("lambdaExpression".equals(tag) && terms.size() > 2)
     { // (lambdaExpression (lambdaParameters ( pars )) -> 
       //    (lambdaBody (block { stats }))
-      // Assume 1 variable. 
+      //  
 
       ASTTerm pars = (ASTTerm) terms.get(0); 
-      String parString = pars.queryForm(); 
+      String parString = pars.lambdaParametersToKM3(); 
       ASTTerm body = (ASTTerm) terms.get(2); 
-      String bodyString = body.toKM3(); 
+      String bodyString = body.toKM3();
+
+      System.out.println("*****************************");  
+
+      System.out.println("*** Lambda expression with body " + 
+                         body.expression + "/" + 
+                         body.statement + " variables " + 
+                         pars.modelElements); 
+ 
+      System.out.println("*****************************");  
       
       if (body.expression != null) 
       { Type ltype = new Type("OclAny", null);  
-        UnaryExpression letexp = 
-          UnaryExpression.newUnaryExpression("lambda", body.expression); 
-        letexp.accumulator = new Attribute(parString, ltype, ModelElement.INTERNAL); 
+        Expression letexp = 
+          UnaryExpression.newLambdaUnaryExpression(
+                  pars.modelElements, body.expression); 
         expression = letexp; 
         return letexp + ""; 
       } 
 
       if (body.statement != null) 
       { Type ltype = new Type("OclAny", null);
-        Attribute letvar = new Attribute(parString, ltype, ModelElement.INTERNAL);   
-        UnaryExpression letexp = 
-          UnaryExpression.newUnaryExpression("lambda", letvar, body.statement, ASTTerm.currentClass, ASTTerm.enumtypes, ASTTerm.entities); 
-        letexp.accumulator = letvar; 
+        Expression letexp = 
+          UnaryExpression.newLambdaUnaryExpression(
+            pars.modelElements, 
+            body.statement, 
+            ASTTerm.currentClass, 
+            ASTTerm.enumtypes, ASTTerm.entities); 
         expression = letexp; 
         return letexp + ""; 
       } 
@@ -15247,10 +15277,17 @@ public class ASTCompositeTerm extends ASTTerm
         
     if (call instanceof ASTCompositeTerm)
     { ASTCompositeTerm callterm = (ASTCompositeTerm) call; 
-      if (callterm.tag.equals("methodCall"))
+      if (callterm.tag.equals("methodCall") ||
+	      callterm.tag.equals("explicitGenericInvocationSuffix"))
       { Vector callterms = callterm.terms; 
         String called = callterms.get(0) + "";
-        ASTTerm callargs = (ASTTerm) callterms.get(2);
+        ASTTerm callargs; 
+		
+		if (callterm.tag.equals("explicitGenericInvocationSuffix"))
+		{ callargs = (ASTTerm) callterms.get(1); } 
+		else 
+		{ callargs = (ASTTerm) callterms.get(2); }
+		
         Vector cargs = getCallArguments(callargs); 
           
         if ("pop".equals(called) || "take".equals(called) || 
@@ -15670,13 +15707,27 @@ public class ASTCompositeTerm extends ASTTerm
       // assumes already defined
 
     if (call instanceof ASTCompositeTerm)
-    { ASTCompositeTerm callterm = (ASTCompositeTerm) call; 
-      if (callterm.tag.equals("methodCall"))
+    { ASTCompositeTerm callterm = (ASTCompositeTerm) call;
+      if (callterm.tag.equals("explicitGenericInvocation"))
+      { ASTTerm actualCall = (ASTTerm) callterm.terms.get(1);
+        return 
+          featureAccess(arg,actualCall,args,
+                        actualCall.literalForm()); 
+      }  
+ 
+      if (callterm.tag.equals("methodCall") ||
+          callterm.tag.equals("explicitGenericInvocationSuffix"))
       { Vector callterms = callterm.terms; 
         String called = callterms.get(0) + "";
-        System.out.println(">> Method call " + args + "." + calls); 
+        System.out.println(">> Method call " + args + 
+                           "." + calls); 
         
-        ASTTerm callargs = (ASTTerm) callterms.get(2);
+        ASTTerm callargs; 
+		if (callterm.tag.equals("explicitGenericInvocationSuffix"))
+		{ callargs = (ASTTerm) callterms.get(1); } 
+		else 
+		{ callargs = (ASTTerm) callterms.get(2); } 
+		
         Vector cargs = getCallArguments(callargs); 
           
         System.out.println(); 
@@ -16102,7 +16153,9 @@ public class ASTCompositeTerm extends ASTTerm
 
           return "MathLib.random()"; 
         }  
-        else if ("matches".equals(called) && "Pattern".equals(argliteral))
+        else if ("matches".equals(called) && 
+                 "Pattern".equals(argliteral) && 
+                 cargs.size() >= 2)
         { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
           String callp1 = callarg1.toKM3(); 
           ASTTerm callarg2 = (ASTTerm) cargs.get(1); 
@@ -16148,13 +16201,15 @@ public class ASTCompositeTerm extends ASTTerm
           
             if (arg.expression != null) 
             { expression = 
-                 BasicExpression.newCallBasicExpression("hasNext", arg.expression);
+                 BasicExpression.newCallBasicExpression(
+                            "hasNext", arg.expression);
             }
 
             return args + ".hasNext()"; 
           } // treat as an OclIterator
         } 
-        else if ("list".equals(called) && "Collections".equals(args))
+        else if ("list".equals(called) && 
+                 "Collections".equals(args))
         { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
           String callp1 = callarg1.toKM3(); 
 
@@ -16234,6 +16289,7 @@ public class ASTCompositeTerm extends ASTTerm
           String callp1 = callarg1.toKM3(); 
 
           ASTTerm.setType(thisliteral,"Sequence"); 
+          // or a map if arg is a map
           
           if (cargs.size() > 2) 
           { ASTTerm lowind = (ASTTerm) cargs.get(1); 
@@ -16279,6 +16335,23 @@ public class ASTCompositeTerm extends ASTTerm
 
             return callp1 + " := " + callp1 + ".subrange(1," + lowval + ")^(" + callp1 + ".subrange(" + lowval + "+1," + highval + ")->sort())^" + callp1 + ".subrange(" + highval + "+1," + callp1 + ".size)"; 
           }  
+
+          if (cargs.size() == 2) // sort with comparator
+          { ASTTerm callarg2 = (ASTTerm) cargs.get(1); 
+            String callp2 = callarg2.toKM3(); 
+
+            expression = new BinaryExpression(
+                  "->sortedWith", callarg1.expression,
+                                  callarg2.expression); 
+            statement = 
+              new AssignStatement(callarg1.expression,
+                                  expression); 
+            modelElements = callarg2.modelElements; 
+
+            return callp1 + " := " + 
+                  "(" + callp1 + ")->sortedWith(" + 
+                                         callp2 + ")"; 
+          } 
 
           if (callarg1.expression != null) 
           { expression = new UnaryExpression("->sort", callarg1.expression); 
@@ -16569,9 +16642,10 @@ public class ASTCompositeTerm extends ASTTerm
             { Expression emptyString = 
                 BasicExpression.newValueBasicExpression("\"\""); 
               expression = new BinaryExpression("+", callarg1.expression, emptyString); 
+              callarg1.expression.setBrackets(true); 
               expression.setBrackets(true); 
-             } 
-             return "(" + callp1 + " + \"\")"; 
+            } 
+            return "((" + callp1 + ") + \"\")"; 
           } 
           else if (cargs.size() == 3)
           { ASTTerm callarg2 = (ASTTerm) cargs.get(1); 
@@ -16591,6 +16665,7 @@ public class ASTCompositeTerm extends ASTTerm
                 new BinaryExpression("+", callarg2.expression,
                                      callarg3.expression); 
               pars.add(par1); pars.add(par2); 
+              callarg1.expression.setBrackets(true); 
               expression = 
                 BasicExpression.newFunctionBasicExpression(
                   "subrange", callarg1.expression, 
@@ -16607,9 +16682,11 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm.setType(thisliteral,"boolean"); 
  
           if (callarg1.expression != null) 
-          { expression = new UnaryExpression("->toBoolean", callarg1.expression); } 
+          { expression = new UnaryExpression("->toBoolean", callarg1.expression);
+            callarg1.expression.setBrackets(true); 
+          } 
 
-          return "(" + callp1 + " + \"\")->toBoolean()"; 
+          return "((" + callp1 + ") + \"\")->toBoolean()"; 
         } 
         else if ("valueOf".equals(called) && "BigInteger".equals(argliteral))
         { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
@@ -16622,7 +16699,7 @@ public class ASTCompositeTerm extends ASTTerm
             expression = new UnaryExpression("->toLong", callarg1.expression); 
           } 
 
-          return "(" + callp1 + " + \"\")->toLong()"; 
+          return "((" + callp1 + ") + \"\")->toLong()"; 
         } 
         else if (("decode".equals(called) || 
                   "valueOf".equals(called) || 
@@ -16634,9 +16711,14 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm.setType(thisliteral,"int"); 
 
           if (callarg1.expression != null) 
-          { expression = new UnaryExpression("->toInteger", callarg1.expression); } 
+          {
+            callarg1.expression.setBrackets(true); 
 
-          return callp1 + "->toInteger()"; 
+            expression = new UnaryExpression(
+                "->toInteger", callarg1.expression);
+          } 
+
+          return "(" + callp1 + ")->toInteger()"; 
         } 
         else if (("decode".equals(called) || 
                   "valueOf".equals(called) || 
@@ -16648,9 +16730,12 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm.setType(thisliteral,"int"); 
 
           if (callarg1.expression != null) 
-          { expression = new UnaryExpression("->toInteger", callarg1.expression); } 
-
-          return callp1 + "->toInteger()"; 
+          {
+             callarg1.expression.setBrackets(true); 
+             expression = new UnaryExpression(
+                  "->toInteger", callarg1.expression);
+          } 
+          return "(" + callp1 + ")->toInteger()"; 
         } 
         else if (("decode".equals(called) || 
                   "valueOf".equals(called) || 
@@ -16682,7 +16767,7 @@ public class ASTCompositeTerm extends ASTTerm
               new UnaryExpression("->toReal", callarg1.expression); 
           } 
 
-          return "(" + callp1 + " + \"\")->toReal()"; 
+          return "((" + callp1 + ") + \"\")->toReal()"; 
         } 
         else if (("valueOf".equals(called) || 
                   "parseFloat".equals(called)) && 
@@ -16697,7 +16782,7 @@ public class ASTCompositeTerm extends ASTTerm
             expression = new UnaryExpression("->toReal", callarg1.expression); 
           } 
 
-          return "(" + callp1 + " + \"\")->toReal()"; 
+          return "((" + callp1 + ") + \"\")->toReal()"; 
         } 
         else if (("decode".equals(called) || 
                   "valueOf".equals(called) || 
@@ -16780,12 +16865,13 @@ public class ASTCompositeTerm extends ASTTerm
 
           if (callarg1.expression != null) 
           { Expression emptyString = BasicExpression.newValueBasicExpression("\"\""); 
+            callarg1.expression.setBrackets(true); 
             emptyString.setType(new Type("String", null)); 
             expression = new BinaryExpression("+", callarg1.expression, emptyString); 
             expression.setBrackets(true); 
           } 
 
-          return "(" + callp1 + " + \"\")"; 
+          return "((" + callp1 + ") + \"\")"; 
         } 
         else if ("isNaN".equals(called) && 
                  ("Double".equals(argliteral) || 
@@ -16796,9 +16882,13 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm.setType(thisliteral,"boolean"); 
 
           if (callarg1.expression != null) 
-          { expression = new UnaryExpression("->oclIsInvalid", callarg1.expression); } 
+          {
+            callarg1.expression.setBrackets(true); 
+ 
+            expression = new UnaryExpression("->oclIsInvalid", callarg1.expression); 
+          } 
 
-          return "(" + callp1 + "->oclIsInvalid())"; 
+          return "(" + callp1 + ")->oclIsInvalid()"; 
         } 
         else if ("isInfinite".equals(called) && 
                  ("Double".equals(argliteral) || 
@@ -16824,7 +16914,7 @@ public class ASTCompositeTerm extends ASTTerm
             expression.setBrackets(true); 
           } 
 
-          return "((" + args + " = Math_PINFINITY) or (" + args + " = Math_NINFINITY))"; 
+          return "(((" + args + ") = Math_PINFINITY) or ((" + args + ") = Math_NINFINITY))"; 
         } 
         else if ("isNaN".equals(called))
         { 
@@ -16833,7 +16923,7 @@ public class ASTCompositeTerm extends ASTTerm
           if (arg.expression != null) 
           { expression = new UnaryExpression("->oclIsInvalid", arg.expression); } 
 
-          return "(" + args + "->oclIsInvalid())"; 
+          return "(" + args + ")->oclIsInvalid()"; 
         } 
         else if ("isInfinite".equals(called))
         { 
@@ -16869,9 +16959,13 @@ public class ASTCompositeTerm extends ASTTerm
 
           if (callarg1.expression != null && 
               callarg2.expression != null) 
-          { expression = new BinaryExpression("->compareTo", callarg1.expression, callarg2.expression); } 
+          {
+            callarg1.expression.setBrackets(true); 
 
-          return callp1 + "->compareTo(" + callp2 + ")"; 
+            expression = new BinaryExpression("->compareTo", callarg1.expression, callarg2.expression);
+          } 
+
+          return "(" + callp1 + ")->compareTo(" + callp2 + ")"; 
         } 
         else if ("reverse".equals(called) && "Collections".equals(args))
         { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
@@ -17797,7 +17891,8 @@ public class ASTCompositeTerm extends ASTTerm
 
           return args + "->size()"; 
         }  
-        else if ("toArray".equals(called) && arg.isCollection())
+        else if ("toArray".equals(called))
+           // && arg.isCollection())
         { String elemT = ASTTerm.getElementType(arg); 
           if (elemT != null) 
           { ASTTerm.setType(thisliteral,
@@ -17810,7 +17905,7 @@ public class ASTCompositeTerm extends ASTTerm
           { expression = new UnaryExpression("->asSequence", arg.expression); } 
 
           return args + "->asSequence()"; 
-        } 
+        } // But with parameter, take the type from the par.
         else if (("put".equals(called) || 
                   "setProperty".equals(called)) && 
                  callterms.size() >= 3 &&
@@ -19645,6 +19740,8 @@ public class ASTCompositeTerm extends ASTTerm
         }
         else if ("entrySet".equals(called) && arg.isMap())
         { ASTTerm.setType(thisliteral,"Set"); 
+          ASTTerm.setElementType(this,
+                     ASTTerm.getElementType(arg)); 
 
           if (arg.expression != null) 
           { expression = 
@@ -19666,7 +19763,7 @@ public class ASTCompositeTerm extends ASTTerm
           return args + "->keys()->any()"; 
         } // on singleton map. 
         else if ("getValue".equals(called) && arg.isMap())
-        { ASTTerm.setType(thisliteral,"OclAny"); // usually  
+        { ASTTerm.setType(this,ASTTerm.getElementType(arg)); 
 
           if (arg.expression != null) 
           { expression = 
@@ -20585,6 +20682,162 @@ public class ASTCompositeTerm extends ASTTerm
 
           return args + "->values()"; 
         } // actually a Bag
+        else if ("values".equals(called) && 
+                 ModelElement.lookupByName(
+                     args,ASTTerm.enumtypes) != null)
+        { ASTTerm.setType(thisliteral,"Sequence(" + args + ")"); 
+
+          if (arg.expression != null) 
+          { expression = 
+              BasicExpression.newFunctionBasicExpression(
+                               "allInstances", arg.expression); 
+          } 
+
+          return args + ".allInstances()"; 
+        } 
+        else if ("allOf".equals(called) && 
+                 "EnumSet".equals(argliteral))
+        { ASTTerm.setType(thisliteral,"Set"); 
+          ASTTerm callarg = (ASTTerm) cargs.get(0);
+          String callp1 = callarg.toKM3(); 
+
+          if (callarg.expression != null) 
+          { Expression insts = 
+              BasicExpression.newFunctionBasicExpression(
+                               "allInstances", callarg.expression); 
+            expression = 
+              new UnaryExpression("->asSet", insts); 
+          } 
+
+          return callp1 + ".allInstances()->asSet()"; 
+        } 
+        else if ("copyOf".equals(called) && 
+                 "EnumSet".equals(argliteral))
+        { ASTTerm.setType(thisliteral,"Set"); 
+          ASTTerm callarg = (ASTTerm) cargs.get(0);
+          String callp1 = callarg.toKM3(); 
+
+          if (callarg.expression != null) 
+          { Expression insts = 
+              new UnaryExpression("->copy", callarg.expression); 
+            expression = 
+              new UnaryExpression("->asSet", insts); 
+          } 
+
+          return callp1 + "->copy()->asSet()"; 
+        } 
+        else if ("of".equals(called) && 
+                 "EnumSet".equals(argliteral))
+        { ASTTerm.setType(thisliteral,"Set"); 
+          SetExpression resx = new SetExpression(); 
+
+          for (int i = 0; i < cargs.size(); i++) 
+          { ASTTerm callarg = (ASTTerm) cargs.get(i);
+            String callpar = callarg.toKM3(); 
+            if (callarg.expression != null) 
+            { resx.addElement(callarg.expression); }  
+            String elemtype = 
+               ASTTerm.getType(callarg); 
+            if (elemtype != null) 
+            {               
+              ASTTerm.setElementType(this,elemtype);   
+            } 
+          } 
+
+          expression = resx; 
+          return expression + ""; 
+        } 
+        else if ("complementOf".equals(called) && 
+                 "EnumSet".equals(argliteral))
+        { // callarg->any()->oclType().allInstances() - callarg
+ 
+          ASTTerm.setType(thisliteral,"Set");
+ 
+          ASTTerm callarg = (ASTTerm) cargs.get(0);
+          String callp1 = callarg.toKM3(); 
+
+          String callargtype = 
+             ASTTerm.getElementType(callarg); 
+
+          System.out.println(">+>+> Element type of " + callarg + " is " + callargtype); 
+
+          if (callarg.expression != null) 
+          { Expression argtype = 
+              new UnaryExpression("->oclType", 
+                new UnaryExpression("->any",
+                                    callarg.expression));
+ 
+            if (callargtype != null && 
+                ModelElement.lookupByName(
+                     callargtype,ASTTerm.enumtypes) != null)
+            { Type et = (Type) ModelElement.lookupByName(
+                           callargtype,ASTTerm.enumtypes); 
+              argtype = new BasicExpression(et);  
+                                           
+              ASTTerm.setElementType(this,callargtype);   
+            } 
+                 
+            Expression insts = 
+              BasicExpression.newFunctionBasicExpression(
+                       "allInstances", argtype); 
+            expression = 
+              new BinaryExpression("-", insts, 
+                                   callarg.expression); 
+            expression.setBrackets(true); 
+          } 
+
+          return "(" + callp1 + "->any()->oclType().allInstances() - callp1)"; 
+        } 
+        else if ("range".equals(called) && 
+                 "EnumSet".equals(argliteral))
+        { // callarg1->oclType().allInstances()->select(
+          //   _x | _x >= callarg1 && _x <= callarg2 )
+ 
+          ASTTerm.setType(thisliteral,"Set");
+ 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+          String callp1 = callarg1.toKM3(); 
+          ASTTerm callarg2 = (ASTTerm) cargs.get(1);
+          String callp2 = callarg2.toKM3(); 
+
+          String callargtype = ASTTerm.getType(callarg1); 
+
+          if (callarg1.expression != null && 
+              callarg2.expression != null) 
+          { Expression argtype = 
+              new UnaryExpression("->oclType", 
+                                  callarg1.expression);
+ 
+            if (callargtype != null && 
+                ModelElement.lookupByName(
+                     callargtype,ASTTerm.enumtypes) != null)
+            { Type et = (Type) ModelElement.lookupByName(
+                     callargtype,ASTTerm.enumtypes); 
+              argtype = new BasicExpression(et);
+              ASTTerm.setElementType(this,callargtype);   
+            } 
+                 
+            Expression insts = 
+              BasicExpression.newFunctionBasicExpression(
+                       "allInstances", argtype);
+            Expression _xx = 
+              BasicExpression.newVariableBasicExpression("_xx"); 
+            BinaryExpression seldom = 
+              new BinaryExpression(":", _xx, insts);
+            Expression geq = 
+              new BinaryExpression(">=", _xx, callarg1.expression); 
+            Expression leq = 
+              new BinaryExpression("<=", _xx, callarg2.expression); 
+  
+            Expression selrng = 
+              new BinaryExpression("&", geq, leq); 
+            expression = 
+              new BinaryExpression("|", seldom, 
+                                   selrng); 
+          } 
+
+          return callp1 + "->oclType().allInstances()->select( _xx | _xx >= " + callp1 + " & _xx <= " + callp2 + ")"; 
+        } 
         else if ("keySet".equals(called) && arg.isMap())
         { ASTTerm.setType(thisliteral,"Set");
 
@@ -22504,7 +22757,8 @@ public class ASTCompositeTerm extends ASTTerm
 
   public Vector getTypeParameterTypes()
   { Vector res = new Vector(); 
-    if ("typeArguments".equals(tag))
+    if ("typeArguments".equals(tag) || 
+        "nonWildcardTypeArguments".equals(tag))
     { 
       for (int i = 0; i < terms.size(); i++) 
       { ASTTerm telem = (ASTTerm) terms.get(i); 
@@ -22545,7 +22799,10 @@ public class ASTCompositeTerm extends ASTTerm
   { if ("creator".equals(tag) || "innerCreator".equals(tag))
     { // 2 arguments, the type, and any constructor pars
 
-      ASTTerm cls = (ASTTerm) terms.get(0); 
+      ASTTerm cls = (ASTTerm) terms.get(0);
+      String clsliteral = cls.literalForm(); 
+         // Java createdName, can have type parameters
+ 
       String clsname = cls.toKM3type(); 
       ASTTerm.setType(this,clsname); 
 
@@ -22577,7 +22834,7 @@ public class ASTCompositeTerm extends ASTTerm
       } 
 
 
-      System.out.println(">>::: Constructor " + this + " for " + clsname + " " + cls.literalForm() + " has " + cargs.size() + " arguments: " + cargs); 
+      System.out.println(">>::: Constructor " + this + " for " + clsname + " " + clsliteral + " has " + cargs.size() + " arguments: " + cargs); 
 
       // String basicres = clsname + ".new" + clsname + "()"; 
         
@@ -22818,9 +23075,15 @@ public class ASTCompositeTerm extends ASTTerm
             newc = new Entity(cident);
             args.modelElement = newc; 
 
+            System.out.println("+++ Anonymous inner class: " + cident + " from " + cls); 
+
             if ("Object".equals(cls.literalForm())) { }
             else if ("Runnable".equals(cls.literalForm()))
             { newc.addStereotype("active"); }  
+            else if (cls.literalForm().startsWith("Comparator"))
+            { Entity oclcomparator = new Entity("OclComparator"); 
+              newc.setSuperclass(oclcomparator); 
+            }  
             else 
             { Entity sup = (Entity)
                 ModelElement.lookupByName(clsname, 
@@ -22871,7 +23134,7 @@ public class ASTCompositeTerm extends ASTTerm
       String args1 = args.toKM3();
  
 
-      if ("BigInteger".equals(cls.literalForm()))
+      if ("BigInteger".equals(clsliteral))
       { ASTTerm.setType(this,"long");
 
         if (args.expression != null) 
@@ -22880,7 +23143,7 @@ public class ASTCompositeTerm extends ASTTerm
         return args1 + "->toLong()"; 
       } 
 
-      if ("BufferedReader".equals(cls.literalForm()))
+      if ("BufferedReader".equals(clsliteral))
       { ASTTerm.setType(this,"OclFile"); 
         ASTTerm arg1 = (ASTTerm) cargs.get(0); 
         String sarg = arg1.toKM3(); 
@@ -22890,7 +23153,7 @@ public class ASTCompositeTerm extends ASTTerm
         return sarg; 
       }
 
-      if ("BufferedWriter".equals(cls.literalForm()))
+      if ("BufferedWriter".equals(clsliteral))
       { ASTTerm.setType(this,"OclFile"); 
         ASTTerm arg1 = (ASTTerm) cargs.get(0); 
         String sarg = arg1.toKM3();
@@ -22899,7 +23162,7 @@ public class ASTCompositeTerm extends ASTTerm
         return sarg;  
       }
 
-      if ("PrintStream".equals(cls.literalForm()))
+      if ("PrintStream".equals(clsliteral))
       { ASTTerm.setType(this,"OclFile"); 
         ASTTerm arg1 = (ASTTerm) cargs.get(0); 
         String sarg = arg1.toKM3();
@@ -22908,7 +23171,7 @@ public class ASTCompositeTerm extends ASTTerm
         return sarg; 
       }
 
-      if ("Socket".equals(cls.literalForm()) && 
+      if ("Socket".equals(clsliteral) && 
           cargs.size() > 1)
       { ASTTerm.setType(this,"OclDatasource");
         ASTTerm arg1 = (ASTTerm) cargs.get(0); 
@@ -22932,7 +23195,7 @@ public class ASTCompositeTerm extends ASTTerm
 
         
 
-      if ("FileReader".equals(cls.literalForm()))
+      if ("FileReader".equals(clsliteral))
       { ASTTerm.setType(this,"OclFile");
         ASTTerm arg1 = (ASTTerm) cargs.get(0); 
         String sarg = arg1.toKM3();
@@ -22957,7 +23220,7 @@ public class ASTCompositeTerm extends ASTTerm
         return "OclFile.newOclFile_Read" + args1; 
       }
 
-      if ("RandomAccessFile".equals(cls.literalForm()))
+      if ("RandomAccessFile".equals(clsliteral))
       { ASTTerm.setType(this,"OclFile");
         ASTTerm arg1 = (ASTTerm) cargs.get(0); 
         String sarg = arg1.toKM3();
@@ -23286,7 +23549,7 @@ public class ASTCompositeTerm extends ASTTerm
         return "OclDatasource.newURL" + args1; 
       } 
  
-      if ("Boolean".equals(cls.literalForm()))
+      if ("Boolean".equals(clsliteral))
       { ASTTerm.setType(this,"boolean"); 
 
         ASTTerm arg1 = (ASTTerm) cargs.get(0);
@@ -23298,7 +23561,7 @@ public class ASTCompositeTerm extends ASTTerm
         return "(" + args1 + " + \"\")->toBoolean()"; 
       } 
 
-      if ("Integer".equals(cls.literalForm()))
+      if ("Integer".equals(clsliteral))
       { ASTTerm.setType(this,"int"); 
 
         ASTTerm arg1 = (ASTTerm) cargs.get(0);
@@ -23310,7 +23573,7 @@ public class ASTCompositeTerm extends ASTTerm
         return "(" + args1 + " + \"\")->toInteger()"; 
       } 
       
-      if ("Long".equals(cls.literalForm()))
+      if ("Long".equals(clsliteral))
       { ASTTerm.setType(this,"long"); 
 
         ASTTerm arg1 = (ASTTerm) cargs.get(0);
@@ -23322,7 +23585,7 @@ public class ASTCompositeTerm extends ASTTerm
         return "(" + args1 + " + \"\")->toLong()"; 
       }
  
-      if ("Byte".equals(cls.literalForm()))
+      if ("Byte".equals(clsliteral))
       { ASTTerm.setType(this,"int"); 
 
         ASTTerm arg1 = (ASTTerm) cargs.get(0);
@@ -23334,7 +23597,7 @@ public class ASTCompositeTerm extends ASTTerm
         return "(" + args1 + " + \"\")->toInteger()"; 
       } 
       
-      if ("Short".equals(cls.literalForm()))
+      if ("Short".equals(clsliteral))
       { ASTTerm.setType(this,"int"); 
 
         ASTTerm arg1 = (ASTTerm) cargs.get(0);
@@ -23346,7 +23609,7 @@ public class ASTCompositeTerm extends ASTTerm
         return "(" + args1 + " + \"\")->toInteger()"; 
       } 
       
-      if ("Double".equals(cls.literalForm()))
+      if ("Double".equals(clsliteral))
       { ASTTerm.setType(this,"double"); 
 
         ASTTerm arg1 = (ASTTerm) cargs.get(0);
@@ -23358,7 +23621,7 @@ public class ASTCompositeTerm extends ASTTerm
         return "(" + args1 + " + \"\")->toReal()"; 
       } 
       
-      if ("Float".equals(cls.literalForm()))
+      if ("Float".equals(clsliteral))
       { ASTTerm.setType(this,"double"); 
 
         ASTTerm arg1 = (ASTTerm) cargs.get(0);
@@ -23370,7 +23633,7 @@ public class ASTCompositeTerm extends ASTTerm
         return "(" + args1 + " + \"\")->toReal()"; 
       } 
       
-      if ("BigDecimal".equals(cls.literalForm()))
+      if ("BigDecimal".equals(clsliteral))
       { ASTTerm.setType(this,"double"); 
 
         ASTTerm arg1 = (ASTTerm) cargs.get(0);
@@ -23382,7 +23645,7 @@ public class ASTCompositeTerm extends ASTTerm
         return "(" + args1 + " + \"\")->toReal()"; 
       } 
 
-      if ("Number".equals(cls.literalForm()))
+      if ("Number".equals(clsliteral))
       { ASTTerm.setType(this,"double"); 
         expression = new BasicExpression(0.0); 
         return "0.0"; 
@@ -23413,10 +23676,10 @@ public class ASTCompositeTerm extends ASTTerm
         } 
       } 
 
-      if (("String".equals(cls.literalForm()) ||
-           "StringBuilder".equals(cls.literalForm()) ||
-           "StringBuffer".equals(cls.literalForm()) || 
-           "Segment".equals(cls.literalForm())) && 
+      if (("String".equals(clsliteral) ||
+           "StringBuilder".equals(clsliteral) ||
+           "StringBuffer".equals(clsliteral) || 
+           "Segment".equals(clsliteral)) && 
           "()".equals(args.literalForm()))
       { ASTTerm.setType(this,"String");
 
@@ -23425,10 +23688,10 @@ public class ASTCompositeTerm extends ASTTerm
 
         return "\"\""; 
       }
-      else if (("String".equals(cls.literalForm()) ||
-                "StringBuilder".equals(cls.literalForm()) || 
-                "StringBuffer".equals(cls.literalForm()) ||
-                "Segment".equals(cls.literalForm())) &&
+      else if (("String".equals(clsliteral) ||
+                "StringBuilder".equals(clsliteral) || 
+                "StringBuffer".equals(clsliteral) ||
+                "Segment".equals(clsliteral)) &&
                cargs.size() > 0 && cargs.size() < 3) 
       { ASTTerm strarg = (ASTTerm) cargs.get(0);
         String val = strarg.toKM3(); 
@@ -23477,8 +23740,8 @@ public class ASTCompositeTerm extends ASTTerm
           return "\"\""; 
         } // capacity
       }  
-      else if (("String".equals(cls.literalForm()) || 
-                "Segment".equals(cls.literalForm()))
+      else if (("String".equals(clsliteral) || 
+                "Segment".equals(clsliteral))
                && cargs.size() >= 3)
       { ASTTerm strarg = (ASTTerm) cargs.get(0);
         ASTTerm strind = (ASTTerm) cargs.get(1);
@@ -23673,6 +23936,76 @@ public class ASTCompositeTerm extends ASTTerm
         return "Integer.subrange(1," + argocl + ")->collect(false)"; 
       } 
 
+      if (clsliteral.startsWith("Pair") &&
+          ("Map".equals(clsname) || 
+           clsname.startsWith("Map(")) && cargs.size() == 2)
+      { ASTTerm.setType(this,"Map");
+        SetExpression emptyMapx = new SetExpression(); 
+        emptyMapx.setType(new Type("Map", null));
+
+        ASTTerm strarg1 = (ASTTerm) cargs.get(0);
+        ASTTerm strarg2 = (ASTTerm) cargs.get(1);
+
+        Expression expr1 = strarg1.expression; 
+        Expression expr2 = strarg2.expression; 
+
+        Expression pair1 = 
+          new BinaryExpression("|->", 
+                new BasicExpression("\"first\""), 
+                expr1); 
+
+        Expression pair2 = 
+          new BinaryExpression("|->", 
+                new BasicExpression("\"second\""), 
+                expr2); 
+        emptyMapx.addElement(pair1); 
+        emptyMapx.addElement(pair2); 
+        expression = emptyMapx;  
+ 
+        return "Map{ \"first\" |-> " + expr1 + 
+                     ", \"second\" |-> " + expr2 + "}"; 
+      } 
+
+      if (clsliteral.startsWith("Triple") &&
+          ("Map".equals(clsname) || 
+           clsname.startsWith("Map(")) && cargs.size() == 3)
+      { ASTTerm.setType(this,"Map");
+        SetExpression emptyMapx = new SetExpression(); 
+        emptyMapx.setType(new Type("Map", null));
+
+        ASTTerm strarg1 = (ASTTerm) cargs.get(0);
+        ASTTerm strarg2 = (ASTTerm) cargs.get(1);
+        ASTTerm strarg3 = (ASTTerm) cargs.get(2);
+
+        Expression expr1 = strarg1.expression; 
+        Expression expr2 = strarg2.expression; 
+        Expression expr3 = strarg3.expression; 
+
+        Expression pair1 = 
+          new BinaryExpression("|->", 
+                new BasicExpression("\"first\""), 
+                expr1); 
+
+        Expression pair2 = 
+          new BinaryExpression("|->", 
+                new BasicExpression("\"second\""), 
+                expr2); 
+
+        Expression pair3 = 
+          new BinaryExpression("|->", 
+                new BasicExpression("\"third\""), 
+                expr3); 
+
+        emptyMapx.addElement(pair1); 
+        emptyMapx.addElement(pair2); 
+        emptyMapx.addElement(pair3); 
+
+        expression = emptyMapx;  
+ 
+        return "Map{ \"first\" |-> " + expr1 + "," +  
+                     "\"second\" |-> " + expr2 + "," + 
+                     "\"third\" |-> " + expr3 + "}"; 
+      } 
 
 
       if (("Map".equals(clsname) || 
@@ -23710,7 +24043,7 @@ public class ASTCompositeTerm extends ASTTerm
         expression.setType(new Type("OclAny", null)); 
 
         return "\"\""; 
-      }
+      } // or an empty map, for consistency with JavaScript
 
       if (clsname.endsWith("Exception") && cargs.size() > 0)
       { ASTTerm strarg = (ASTTerm) cargs.get(0);
@@ -23781,11 +24114,12 @@ public class ASTCompositeTerm extends ASTTerm
       String res = mainclass.toKM3type();
       ASTTerm.setType(this,res);
 
-      System.out.println(">>> Type of " + this + " is " + res); 
+      System.out.println(">>> Type of " + mainclass + " is " + res); 
 
       Type typ; 
       Entity ent = 
-        (Entity) ModelElement.lookupByName(res, ASTTerm.entities); 
+        (Entity) ModelElement.lookupByName(
+                          res, ASTTerm.entities); 
       if (ent != null) 
       { typ = new Type(ent); } 
       else if (ModelElement.lookupByName(res,ASTTerm.enumtypes) != null) 
@@ -23793,7 +24127,9 @@ public class ASTCompositeTerm extends ASTTerm
           (Type) ModelElement.lookupByName(res,ASTTerm.enumtypes); 
       } 
       else 
-      { typ = new Type(res,null); } 
+      { ent = new Entity(res); 
+        typ = new Type(ent); 
+      } 
 
       modelElement = typ; 
       expression = new BasicExpression(res);
@@ -23820,7 +24156,7 @@ public class ASTCompositeTerm extends ASTTerm
           } 
         } 
         else if (typ.isMapType() || typ.isFunctionType())
-        { ASTTerm t2 = (ASTTerm) terms.get(1); 
+        { ASTTerm t2 = (ASTTerm) terms.get(terms.size()-1); 
 
           String allpars = t2.toKM3(); 
 
@@ -23838,7 +24174,7 @@ public class ASTCompositeTerm extends ASTTerm
 
           modelElement = ent; 
 
-          ASTTerm t2 = (ASTTerm) terms.get(1); 
+          ASTTerm t2 = (ASTTerm) terms.get(terms.size()-1); 
         
           String allpars = t2.toKM3(); 
 
@@ -23871,11 +24207,103 @@ public class ASTCompositeTerm extends ASTTerm
     return ""; 
   }
 
+  public String lambdaParametersToKM3()
+  { modelElements = new Vector(); 
+
+    System.out.println(">>> lambdaParametersToKM3 with tag " + tag + " and terms "); 
+    for (int x = 0; x < terms.size(); x++) 
+    { System.out.println(">>-- " + terms.get(x)); }
+
+
+    if ("lambdaParameters".equals(tag))
+    { if (terms.size() > 0 && "(".equals(terms.get(0) + ""))
+      { String res = "("; 
+        for (int i = 1; i < terms.size()-1; i++) 
+        { ASTTerm trm = (ASTTerm) terms.get(i); 
+          res = res + trm.lambdaParametersToKM3();
+           
+          if (trm.modelElement != null) 
+          { modelElement = trm.modelElement; 
+            modelElements.addAll(trm.modelElements);
+          } 
+        } 
+        return res + ")"; 
+      }
+      else 
+      { String res = ""; 
+        for (int i = 0; i < terms.size(); i++) 
+        { ASTTerm trm = (ASTTerm) terms.get(i); 
+          res = res + trm.lambdaParametersToKM3(); 
+          if (trm.modelElement != null) 
+          { modelElement = trm.modelElement; 
+            modelElements.addAll(trm.modelElements);
+          }
+        } 
+        return res;  
+      }
+    }
+    else if ("formalParameterList".equals(tag))
+    { String res = ""; 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm trm = (ASTTerm) terms.get(i); 
+        res = res + trm.lambdaParametersToKM3(); 
+        if (trm.modelElement != null) 
+        { modelElement = trm.modelElement; 
+          modelElements.add(trm.modelElement);
+        } 
+      }
+      return res; 
+    } 
+    else if ("formalParameter".equals(tag))
+    { ASTTerm var = (ASTTerm) terms.get(terms.size()-1); 
+      ASTTerm typ = (ASTTerm) terms.get(terms.size()-2);
+
+      String vname = var.toKM3(); 
+      String tname = typ.toKM3type(); 
+
+      Type tf = (Type) typ.modelElement; 
+ 
+      modelElement =
+        new Attribute(vname,tf,ModelElement.INTERNAL);
+      modelElements.add(modelElement);  
+      return vname + " : " + tname;       
+    }
+    else // the tag is a spurious term
+    { modelElement =
+        new Attribute(tag,
+                      new Type("OclAny", null),
+                      ModelElement.INTERNAL);
+      modelElements.add(modelElement); 
+      String res = tag; 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm trm = (ASTTerm) terms.get(i); 
+        res = res + trm.lambdaParametersToKM3(); 
+        if (trm.modelElement != null) 
+        { modelElement = trm.modelElement; 
+          modelElements.add(trm.modelElement);
+        } 
+      }
+      return res; 
+    } 
+  }  
+     
   public String typeArgumentsToKM3ElementType()
   { if (tag.equals("typeArgumentsOrDiamond") && terms.size() == 1)
     { ASTTerm tt = (ASTTerm) terms.get(0); 
       String res = tt.typeArgumentsToKM3ElementType();
       modelElement = tt.modelElement;
+      modelElements = new Vector(); 
+      if (tt.modelElements != null) { modelElements.addAll(tt.modelElements); }  
+      return res;   
+    } 
+    else if (tag.equals("typeArgumentsOrDiamond") && 
+             terms.size() == 2 && 
+             "<".equals(terms.get(0) + "") && 
+             ">".equals(terms.get(1) + ""))
+    { String res = "OclAny";
+      modelElement = new Type("OclAny", null);
+      modelElements = new Vector(); 
+      modelElements.add(modelElement); 
       return res;   
     } 
  
@@ -23893,10 +24321,41 @@ public class ASTCompositeTerm extends ASTTerm
       return res; 
     } 
 
+    if ("nonWildcardTypeArguments".equals(tag) && 
+        terms.size() > 2)
+    { // < typelist >
+      ASTTerm typepar0 = (ASTTerm) terms.get(1); 
+      String res = typepar0.toKM3type();
+      modelElement = typepar0.modelElement; 
+      modelElements = typepar0.modelElements; 
+ 
+      return res; 
+    } 
+
     if ("typeArgument".equals(tag) && terms.size() > 0)
-    { // a (typeType _1)
-      ASTTerm typepar0 = (ASTTerm) terms.get(0); 
-      String res = typepar0.toKM3();
+    { // type, or 
+      // annotation* ? ((super|extends) type)? 
+
+      ASTTerm typepar0 = (ASTTerm) terms.get(0);
+
+      if (typepar0.hasTag("annotation"))
+      { Vector tailterms = new Vector(); 
+        tailterms.addAll(terms); 
+        tailterms.remove(0); 
+        ASTCompositeTerm tailast = 
+          new ASTCompositeTerm("typeArgument", tailterms); 
+        String resx = tailast.toKM3type(); 
+        modelElement = tailast.modelElement; 
+        return resx; 
+      } 
+
+      if (terms.size() == 3 && 
+          "?".equals(typepar0.literalForm()) && 
+          ("extends".equals(terms.get(1) + "") || 
+           "super".equals(terms.get(1) + "")))
+      { typepar0 = (ASTTerm) terms.get(2); } 
+ 
+      String res = typepar0.toKM3type();
       modelElement = typepar0.modelElement; 
  
       return res; 
@@ -25007,6 +25466,20 @@ public class ASTCompositeTerm extends ASTTerm
           expression = initbe;  
           statement = new InvocationStatement(initbe); 
         }
+        else if ("this".equals(methodt + ""))
+        { // call of this constructor 
+          methodname = "self.initialise"; 
+          BasicExpression supbe = new BasicExpression("self"); 
+          supbe.setUmlKind(Expression.VARIABLE);
+          BasicExpression initbe =
+            new BasicExpression("initialise"); 
+          initbe.setUmlKind(Expression.UPDATEOP);
+          initbe.setIsEvent();  
+          initbe.setObjectRef(supbe);
+          initbe.setParameters(new Vector());  
+          expression = initbe;  
+          statement = new InvocationStatement(initbe); 
+        }
         else if ("assertEquals".equals(methodname))
         { ASTTerm parsx = (ASTTerm) terms.get(2); 
           String parxstring = parsx.toKM3(); 
@@ -25024,8 +25497,43 @@ public class ASTCompositeTerm extends ASTTerm
             expression = 
               new BinaryExpression("=", expr1, expr2); 
 
-            res = "  assert (" + expr1 + " = " + expr2 + ")";
-            statement = new AssertStatement(expression); 
+            if (parxexprs.size() == 3) 
+            { Expression msg = (Expression) parxexprs.get(0); 
+              res = "  assert (" + expr1 + " = " + expr2 + ") do " + msg;
+              statement = new AssertStatement(expression,msg);
+            } 
+            else 
+            { res = "  assert (" + expr1 + " = " + expr2 + ")";
+              statement = new AssertStatement(expression);
+            }  
+          }  
+          return res; 
+        } 
+        else if ("assertNull".equals(methodname))
+        { ASTTerm parsx = (ASTTerm) terms.get(2); 
+          String parxstring = parsx.toKM3(); 
+          String res = ""; 
+
+          Vector parxexprs = new Vector(); 
+          if (parsx instanceof ASTCompositeTerm) 
+          { parxexprs = 
+              ((ASTCompositeTerm) parsx).getParameterExpressions();
+
+            int sze = parxexprs.size(); 
+
+            Expression expr1 = (Expression) parxexprs.get(sze-1);
+            expression = 
+              new BinaryExpression("=", expr1, nullExpression); 
+
+            if (parxexprs.size() == 2) 
+            { Expression msg = (Expression) parxexprs.get(0); 
+              res = "  assert (" + expr1 + " = null) do " + msg;
+              statement = new AssertStatement(expression,msg);
+            } 
+            else 
+            { res = "  assert (" + expr1 + " = null)";
+              statement = new AssertStatement(expression);
+            }  
           }  
           return res; 
         } 
@@ -25046,8 +25554,15 @@ public class ASTCompositeTerm extends ASTTerm
             expression = 
               new BinaryExpression("/=", expr1, expr2); 
 
-            res = "  assert (" + expr1 + " /= " + expr2 + ")";
-            statement = new AssertStatement(expression); 
+            if (parxexprs.size() == 3) 
+            { Expression msg = (Expression) parxexprs.get(0); 
+              res = "  assert (" + expr1 + " /= " + expr2 + ") do " + msg;
+              statement = new AssertStatement(expression,msg);
+            } 
+            else 
+            { res = "  assert (" + expr1 + " /= " + expr2 + ")";
+              statement = new AssertStatement(expression);
+            }  
           }  
           return res; 
         } 
@@ -25063,8 +25578,16 @@ public class ASTCompositeTerm extends ASTTerm
             
             expression = (Expression) parxexprs.get(0);
             
-            res = "  assert (" + expression + ")";
-            statement = new AssertStatement(expression); 
+            if (parxexprs.size() == 2) 
+            { expression = (Expression) parxexprs.get(1);
+              Expression msg = (Expression) parxexprs.get(0); 
+              res = "  assert (" + expression + ") do " + msg;
+              statement = new AssertStatement(expression,msg);
+            } 
+            else 
+            { res = "  assert (" + expression + ")";
+              statement = new AssertStatement(expression);
+            }  
           }  
           return res; 
         } 
@@ -25081,9 +25604,20 @@ public class ASTCompositeTerm extends ASTTerm
             expression = 
               new UnaryExpression("not", 
                       (Expression) parxexprs.get(0));
-            
-            res = "  assert (" + expression + ")";
-            statement = new AssertStatement(expression); 
+
+            if (parxexprs.size() == 2) 
+            { expression = new UnaryExpression("not", 
+                             (Expression) parxexprs.get(1));
+
+              Expression msg = (Expression) parxexprs.get(0); 
+              res = "  assert (" + expression + ") do " + msg;
+              statement = new AssertStatement(expression,msg);
+            } 
+            else 
+            { 
+              res = "  assert (" + expression + ")";
+              statement = new AssertStatement(expression);
+            }  
           }  
           return res; 
         } 
@@ -25277,25 +25811,35 @@ public class ASTCompositeTerm extends ASTTerm
       // Assume 1 variable. 
 
       ASTTerm pars = (ASTTerm) terms.get(0); 
-      String parString = pars.queryForm(); 
+      String parString = pars.lambdaParametersToKM3(); 
       ASTTerm body = (ASTTerm) terms.get(2); 
       String bodyString = body.toKM3(); 
       
+      System.out.println("*****************************");  
+
+      System.out.println("*** Lambda expression with body " + 
+                         body.expression + "/" + 
+                         body.statement + " variables " + 
+                         pars.modelElements); 
+ 
+      System.out.println("*****************************");  
+
       if (body.expression != null) 
-      { Type ltype = new Type("OclAny", null);  
-        UnaryExpression letexp = 
-          UnaryExpression.newUnaryExpression("lambda", body.expression); 
-        letexp.accumulator = new Attribute(parString, ltype, ModelElement.INTERNAL); 
+      { // Type ltype = new Type("OclAny", null);  
+        Expression letexp = 
+          UnaryExpression.newLambdaUnaryExpression(
+                      pars.modelElements, body.expression); 
         expression = letexp; 
         return letexp + ""; 
       } 
 
       if (body.statement != null) 
-      { Type ltype = new Type("OclAny", null);  
-        Attribute letvar = new Attribute(parString, ltype, ModelElement.INTERNAL);
-        UnaryExpression letexp = 
-          UnaryExpression.newUnaryExpression("lambda", letvar, body.statement, ASTTerm.currentClass, ASTTerm.enumtypes, ASTTerm.entities); 
-        letexp.accumulator = letvar; 
+      { // Type ltype = new Type("OclAny", null);  
+        Expression letexp = 
+          UnaryExpression.newLambdaUnaryExpression(
+            pars.modelElements, body.statement, 
+            ASTTerm.currentClass, ASTTerm.enumtypes, 
+            ASTTerm.entities); 
         expression = letexp; 
         return letexp + ""; 
       } 
@@ -25483,7 +26027,21 @@ public class ASTCompositeTerm extends ASTTerm
                                       "sql" + e2, "SQLTypes"); 
         
           return "SQLTypes.sql" + e2; 
-        }  
+        } 
+
+        if (e2 instanceof ASTSymbolTerm &&  
+            ".".equals(terms.get(1) + "") && 
+            ModelElement.lookupByName(e1literal,
+                               ASTTerm.enumtypes) != null)
+        { // element ET.lit of enumeration type
+          ASTTerm.setType(this,e1literal); 
+          expression = 
+            BasicExpression.newStaticValueBasicExpression(
+                                      e2literal, e1literal);
+          System.out.println(">> Element " + e2literal + " of enumeration " + e1literal); 
+ 
+          return e1literal + "." + e2literal; 
+        } 
 
         if ("first".equals(e2literal) && 
             ".".equals(terms.get(1) + ""))
@@ -25491,13 +26049,12 @@ public class ASTCompositeTerm extends ASTTerm
 
           if (e1.expression != null) 
           { expression = 
-              new UnaryExpression("->any", 
-                new UnaryExpression("->keys",
-                                    e1.expression)); 
+              new BinaryExpression("->at", e1.expression,
+                new BasicExpression("\"first\"")); 
           } 
 
-          return e1x + "->keys()->any()"; 
-        } // on singleton map. 
+          return e1x + "->at(\"first\")"; 
+        }  
         
         if ("second".equals(e2literal) &&
                  ".".equals(terms.get(1) + ""))
@@ -25505,13 +26062,25 @@ public class ASTCompositeTerm extends ASTTerm
 
           if (e1.expression != null) 
           { expression = 
-              new UnaryExpression("->any", 
-                new UnaryExpression("->values",
-                                    e1.expression)); 
+              new BinaryExpression("->at", e1.expression,
+                new BasicExpression("\"second\"")); 
           } 
 
-          return e1x + "->values()->any()"; 
-        } // on a singleton map. 
+          return e1x + "->at(\"second\")"; 
+        } 
+
+        if ("third".equals(e2literal) &&
+                 ".".equals(terms.get(1) + ""))
+        { ASTTerm.setType(this,"OclAny"); // usually  
+
+          if (e1.expression != null) 
+          { expression = 
+              new BinaryExpression("->at", e1.expression,
+                new BasicExpression("\"third\"")); 
+          } 
+
+          return e1x + "->at(\"third\")"; 
+        } 
    
         if ("::".equals(terms.get(1) + ""))
         { // C::m lambda expression 
@@ -25541,6 +26110,7 @@ public class ASTCompositeTerm extends ASTTerm
             }  
             expression = bf.makeLambdaExpression(inst);
           } 
+
           return "lambda _par : OclAny in " + cname + ".new" + cname + "()." + mname + "(_par)";  
         } 
 
@@ -27006,11 +27576,11 @@ public class ASTCompositeTerm extends ASTTerm
       } 
 
 
-      if (terms.size() == 4 && 
+      if (terms.size() >= 4 && 
           "(".equals(terms.get(0) + "") && 
-          ")".equals(terms.get(2) + "")) // cast
-      { ASTTerm typ = (ASTTerm) terms.get(1); 
-        ASTTerm arg = (ASTTerm) terms.get(3);
+          ")".equals(terms.get(terms.size()-2) + "")) // cast
+      { ASTTerm typ = (ASTTerm) terms.get(terms.size()-3); 
+        ASTTerm arg = (ASTTerm) terms.get(terms.size()-1);
 
         String typx = typ.toKM3(); 
         String argx = arg.toKM3();
@@ -27154,6 +27724,8 @@ public class ASTCompositeTerm extends ASTTerm
     if ("statement".equals(tag))
     { System.out.println(">> Statement with " + terms.size() + " terms "); 
 
+      modelElements = new Vector(); // for inner classes. 
+
       for (int h = 0; h < terms.size(); h++) 
       { System.out.println("--- Term " + h + ": " + terms.get(h)); } 
       System.out.println(); 
@@ -27161,9 +27733,13 @@ public class ASTCompositeTerm extends ASTTerm
       if (terms.size() >= 2 && "throw".equals(terms.get(0) + "")) 
       { ASTTerm t = (ASTTerm) terms.get(1);
         String trexp = t.toKM3(); 
+
         if (t.expression != null) 
-        { statement = new ErrorStatement(t.expression); }
- 
+        { statement = new ErrorStatement(t.expression);
+          if (t.modelElements != null) 
+          { modelElements.addAll(t.modelElements); }
+        } 
+
         return "  error " + t.toKM3(); 
       }
       else if (terms.size() > 2 && "if".equals(terms.get(0) + ""))
@@ -27190,6 +27766,10 @@ public class ASTCompositeTerm extends ASTTerm
               new ConditionalStatement(texpr.expression,
                        ifPart.statement, elsePart.statement); 
             elsePart.statement.setBrackets(true); 
+            if (ifPart.modelElements != null) 
+            { modelElements.addAll(ifPart.modelElements); }
+            if (elsePart.modelElements != null) 
+            { modelElements.addAll(elsePart.modelElements); }
           } 
  
           return res; 
@@ -27212,6 +27792,8 @@ public class ASTCompositeTerm extends ASTTerm
             statement = 
               new ConditionalStatement(texpr.expression,
                        ifPart.statement, skip); 
+            if (ifPart.modelElements != null) 
+            { modelElements.addAll(ifPart.modelElements); }
           } 
         } 
 
@@ -27283,7 +27865,7 @@ public class ASTCompositeTerm extends ASTTerm
         Expression test = texpr.expression; 
 
         if (texpr.isBoolean()) { } 
-        else 
+        else if (test != null) 
         { Expression teststring = 
             new BinaryExpression("+", test, emptyString); 
           teststring.setBrackets(true); 
@@ -27305,7 +27887,10 @@ public class ASTCompositeTerm extends ASTTerm
         { ASTTerm tt = (ASTTerm) terms.get(i); 
           String bstat = tt.toKM3(); 
           if (tt.statement != null) 
-          { body.addStatement(tt.statement); } 
+          { body.addStatement(tt.statement); 
+            if (tt.modelElements != null) 
+            { modelElements.addAll(tt.modelElements); }
+          } 
 
           bdy = bdy + "    " + bstat;
         } 
@@ -27407,8 +27992,15 @@ public class ASTCompositeTerm extends ASTTerm
 		
         String loopKind = "while"; 
         if (forControl.isEnhancedForControl())
-        { loopKind = "for"; } 
-
+        { loopKind = "for"; // type of variable from test
+          if (forTst.expression instanceof BinaryExpression &&
+              ":".equals(((BinaryExpression) forTst.expression).getOperator()))
+          { BinaryExpression betest = 
+              (BinaryExpression) forTst.expression;
+            ASTTerm.setType(betest.getLeft()+"", 
+              betest.getRight().getElementType() + ""); 
+          }  
+        } 
         System.out.println("+++ Loop statement of kind " + loopKind); 
 
         statement = new SequenceStatement(); 
@@ -27443,7 +28035,9 @@ public class ASTCompositeTerm extends ASTTerm
         { ASTTerm tt = (ASTTerm) terms.get(i); 
           res = res + "  " + tt.toKM3();
           if (tt.statement != null) 
-          { lBody.addStatement(tt.statement); } 
+          { lBody.addStatement(tt.statement); }
+          if (tt.modelElements != null) 
+          { modelElements.addAll(tt.modelElements); }
         } // but could be empty. Also, any continue
           // must be preceded by incr, if you change
           // for to while.  
@@ -27516,6 +28110,9 @@ public class ASTCompositeTerm extends ASTTerm
         ASTTerm stat = (ASTTerm) terms.get(2); 
         String resx = stat.toKM3();
         statement = stat.statement; 
+        if (stat.modelElements != null) 
+        { modelElements.addAll(stat.modelElements); }
+          
         return resx;  
       } 
       else if (terms.size() == 3 && 
@@ -27568,7 +28165,7 @@ public class ASTCompositeTerm extends ASTTerm
         { modelElements.addAll(texpr.modelElements); } 
 
         System.out.println(); 
-        System.out.println(">>> model elements of " + this + ": " + modelElements); 
+        System.out.println(">>> model elements of " + res + ": " + modelElements); 
 
         return res; 
       } 
@@ -27649,19 +28246,28 @@ public class ASTCompositeTerm extends ASTTerm
         if (t.isAssignment()) 
         { String res = "  " + t.toKM3Assignment();
           statement = t.statement;
+          if (t.modelElements != null) 
+          { modelElements.addAll(t.modelElements); }
+
           return res; 
         } 
         
         if (t.isCreation())
         { t.toKM3creation(); 
           statement = t.statement; 
+          if (t.modelElements != null) 
+          { modelElements.addAll(t.modelElements); }
           return "    " + statement; 
         } 
 
         String rs = t.toKM3(); // update form of expression
         statement = t.statement;
+        if (t.modelElements != null) 
+        { modelElements.addAll(t.modelElements); }
 
         System.out.println(">>> Statement of " + rs + " is " + statement); 
+        System.out.println(">>> Modelelements of " + rs + " are " + modelElements); 
+        
         System.out.println();  
         return "  " + rs; 
       }
@@ -28162,6 +28768,16 @@ public class ASTCompositeTerm extends ASTTerm
       } 
     } 
 
+    if ("typeBound".equals(tag))
+    { if (terms.size() >= 1) 
+      { ASTTerm typeTerm = (ASTTerm) terms.get(0); 
+        String tt = typeTerm.toKM3type();
+        modelElement = typeTerm.modelElement; 
+        expression = typeTerm.expression; 
+        return tt; 
+      } 
+    } 
+
     if ("typeParameters".equals(tag))
     { if (terms.size() == 3 && 
           "<".equals(terms.get(0) + "") && 
@@ -28223,8 +28839,21 @@ public class ASTCompositeTerm extends ASTTerm
   
         return val; 
       } // But these should be typeParameter entities
+      else if (terms.size() >= 2 && 
+               ((ASTTerm) terms.get(0)).hasTag("annotation"))
+      { Vector tailterms = new Vector(); 
+        tailterms.addAll(terms); 
+        tailterms.remove(0); 
+        ASTCompositeTerm tailast = 
+              new ASTCompositeTerm("typeParameter", tailterms);
+        String resx = tailast.toKM3type();
+        expression = tailast.expression; 
+        modelElement = tailast.modelElement; 
+        return resx;  
+      } 
 
-      return "";  
+      modelElement = new Type("OclAny", null);
+      return "OclAny";  
     } 
 
     if ("classBodyDeclaration".equals(tag) ||
@@ -28382,6 +29011,21 @@ public class ASTCompositeTerm extends ASTTerm
         modelElement = baseType.modelElement; 
         expression = baseType.expression; // Not valid
 
+        if ("Class".equals(baseType.literalForm()))
+        { modelElement = new Type("OclType", null); 
+          return "OclType";
+        } 
+
+        if ("Pair".equals(baseType.literalForm()) ||
+            "Triple".equals(baseType.literalForm()))
+        { modelElement = new Type("Map", null);
+          Type ktype = new Type("String", null);  
+          Type etype = (Type) targs.get(1); 
+          ((Type) modelElement).setKeyType(ktype); 
+          ((Type) modelElement).setElementType(etype);
+          return "Map(String," + etype + ")"; 
+        } 
+
         if (modelElement != null)
         { if (targs.size() > 1 && 
               modelElement instanceof Type && 
@@ -28424,6 +29068,26 @@ public class ASTCompositeTerm extends ASTTerm
       } 
     } 
  
+    if (tag.equals("typeArgumentsOrDiamond") && terms.size() == 1)
+    { ASTTerm tt = (ASTTerm) terms.get(0); 
+      String res = tt.typeArgumentsToKM3ElementType();
+      modelElement = tt.modelElement;
+      modelElements = new Vector(); 
+      if (tt.modelElements != null) { modelElements.addAll(tt.modelElements); }  
+      return res;   
+    } 
+    
+    if (tag.equals("typeArgumentsOrDiamond") && 
+             terms.size() == 2 && 
+             "<".equals(terms.get(0) + "") && 
+             ">".equals(terms.get(1) + ""))
+    { String res = "OclAny";
+      modelElement = new Type("OclAny", null);
+      modelElements = new Vector(); 
+      modelElements.add(modelElement); 
+      return res;   
+    } 
+ 
     if ("typeArguments".equals(tag) && terms.size() > 1 && 
         "<".equals(terms.get(0) + ""))
     { // < arg >   or   < arg1 , arg2 >
@@ -28446,10 +29110,39 @@ public class ASTCompositeTerm extends ASTTerm
       return res; 
     } 
 
+    if ("nonWildcardTypeArguments".equals(tag) && 
+        terms.size() > 2)
+    { // < typelist >
+      ASTTerm typepar0 = (ASTTerm) terms.get(1); 
+      String res = typepar0.toKM3type();
+      modelElement = typepar0.modelElement; 
+      modelElements = typepar0.modelElements; 
+ 
+      return res; 
+    } 
+
     if ("typeArgument".equals(tag) && terms.size() > 0)
     { // a (typeType _1)
       ASTTerm typepar0 = (ASTTerm) terms.get(0); 
-      String res = typepar0.toKM3();
+
+      if (typepar0.hasTag("annotation"))
+      { Vector tailterms = new Vector(); 
+        tailterms.addAll(terms); 
+        tailterms.remove(0); 
+        ASTCompositeTerm tailast = 
+          new ASTCompositeTerm("typeArgument", tailterms); 
+        String resx = tailast.toKM3type(); 
+        modelElement = tailast.modelElement; 
+        return resx; 
+      } 
+
+      if (terms.size() == 3 && 
+          "?".equals(typepar0.literalForm()) && 
+          ("extends".equals(terms.get(1) + "") ||
+           "super".equals(terms.get(1) + "") ) )
+      { typepar0 = (ASTTerm) terms.get(2); } 
+
+      String res = typepar0.toKM3type();
       modelElement = typepar0.modelElement; 
  
       return res; 
@@ -28482,7 +29175,7 @@ public class ASTCompositeTerm extends ASTTerm
         statement = tt.statement; 
         modelElements = tt.modelElements; // for local decs
         System.out.println(); 
-        System.out.println(">>> model elements of " + this +
+        System.out.println(">>> model elements of " + res +
                            ": " + modelElements); 
         return res; 
       } 
@@ -28563,9 +29256,11 @@ public class ASTCompositeTerm extends ASTTerm
       } 
     } 
 
-    if ("genericMethodDeclaration".equals(tag))
+    if ("genericMethodDeclaration".equals(tag) || 
+        "genericInterfaceMethodDeclaration".equals(tag))
     { // (typeParameters < (typeParameter T) ... > )
       // (methodDeclaration ...)
+
       ASTTerm typePars = (ASTTerm) terms.get(0); 
       ASTTerm mDec = (ASTTerm) terms.get(1); 
 
@@ -28601,8 +29296,7 @@ public class ASTCompositeTerm extends ASTTerm
       return res; 
     } // replace operation name by name<gtype>
 
-    if ("methodDeclaration".equals(tag) || 
-        "interfaceMethodDeclaration".equals(tag))
+    if ("methodDeclaration".equals(tag))
     { ASTTerm mtype = (ASTTerm) terms.get(0); 
       ASTTerm mname = (ASTTerm) terms.get(1);
       ASTTerm mparams = (ASTTerm) terms.get(2); 
@@ -28667,6 +29361,139 @@ public class ASTCompositeTerm extends ASTTerm
         Vector labelfunctions = new Vector(); 
 
         for (int i = 3; i < terms.size(); i++) 
+        { ASTTerm tt = (ASTTerm) terms.get(i);
+
+          if (tt.hasTag("methodBody") && tt instanceof ASTCompositeTerm)
+          { labelfunctions = 
+               ((ASTCompositeTerm) tt).javaLabelFunctions(bf);
+            System.out.println(">>> Operation " + bf + " has label functions " + labelfunctions);
+            modelElements.addAll(labelfunctions);
+            ASTTerm.functionsInScope = new Vector(); 
+            ASTTerm.functionsInScope.addAll(labelfunctions);   
+          } 
+
+          if ("throws".equals(tt.literalForm()))
+          { i++; } 
+          else if (tt.hasTag("qualifiedNameList"))
+          { i++; } 
+          else if (tt.hasTag("methodBody")) 
+          { res = res + "    " + tt.toKM3() + "\n"; 
+            if (tt.statement != null)
+            { bf.setActivity(tt.statement);
+               
+              System.out.println(">>> Operation " + bf + " has activity " + tt.statement); 
+              System.out.println(); 
+            } 
+    
+            if (tt.modelElements != null) 
+            { for (int p = 0; p < tt.modelElements.size(); p++) 
+              { if (tt.modelElements.get(p) instanceof Entity)
+                { modelElements.add(tt.modelElements.get(p)); } 
+              } 
+            }
+            
+            System.out.println(">>> Operation " + bf + " has model elements " + modelElements); 
+          }  
+        }
+      }  
+
+      return res + "  ;\n\n"; 
+    }
+
+    if ("interfaceMethodDeclaration".equals(tag))
+    { ASTTerm genericpars = null; 
+      boolean isStatic = false; 
+      int defstart = 0; 
+
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm trm = (ASTTerm) terms.get(i); 
+        if (trm.hasTag("interfaceMethodModifier")) 
+        { if ("static".equals(trm + ""))
+          { isStatic = true; } 
+          defstart = i+1; 
+        } 
+        else if (trm.hasTag("typeParameters"))
+        { genericpars = trm; 
+          defstart = i+1; 
+        }
+        else if (trm.hasTag("annotation"))
+        { defstart = i+1; } 
+        else 
+        { break; } 
+      } 
+
+      ASTTerm mtype = (ASTTerm) terms.get(defstart); 
+      ASTTerm mname = (ASTTerm) terms.get(defstart + 1);
+      ASTTerm mparams = (ASTTerm) terms.get(defstart + 2); 
+      
+      BehaviouralFeature bf = 
+        new BehaviouralFeature(mname.literalForm()); 
+
+      String restype = mtype.toKM3type(); 
+      String res = "  operation " + mname + mparams.toKM3() + " : " + restype  + "\n" + 
+              "  pre: true\n" + "  post: true"; 
+
+      System.out.println("+++ return type of " + mname + " is " + mtype.modelElement); 
+
+      if (mtype.modelElement instanceof Type)
+      { bf.setType((Type) mtype.modelElement); } 
+      else if (mtype.modelElement instanceof Entity)
+      { bf.setType(new Type((Entity) mtype.modelElement)); } 
+      else if (restype != null) 
+      { Type resT = Type.getTypeFor(restype, ASTTerm.enumtypes, ASTTerm.entities); 
+        if (resT != null) 
+        { bf.setType(resT); } 
+      } 
+
+      if (mparams.modelElements != null) 
+      { bf.setParameters(mparams.modelElements); } 
+
+      if (genericpars != null) 
+      { genericpars.toKM3type(); 
+        if (genericpars.modelElements != null) 
+        { bf.setTypeParameters(genericpars.modelElements); } 
+      } 
+
+      bf.setPrecondition(new BasicExpression(true)); 
+      bf.setPostcondition(new BasicExpression(true)); 
+
+      bf.setStatic(isStatic); 
+
+      modelElement = bf; 
+
+      modelElements = new Vector(); 
+      modelElements.add(bf); 
+
+      if (terms.size() > defstart + 3)
+      { ASTTerm mbody = (ASTTerm) terms.get(defstart + 3);
+
+        if ("throws".equals(mbody.literalForm()))
+        { mbody = (ASTTerm) terms.get(defstart + 4); } 
+
+        if (mbody.hasTag("qualifiedNameList"))
+        { mbody = (ASTTerm) terms.get(defstart + 5); } 
+
+        if (";".equals(mbody.literalForm()))
+        { if (mtype.modelElement != null && 
+              mtype.modelElement instanceof Type) 
+          { Expression retval = 
+              ((Type) mtype.modelElement).getDefaultValueExpression();
+            if (retval == null) 
+            { return res + ";\n\n"; } 
+
+            Statement interfacestat = 
+              new ReturnStatement(retval); 
+            bf.setActivity(interfacestat);  
+            return res + "\n  activity: return " + retval + ";\n\n"; 
+          } 
+          return res + ";\n\n"; 
+        }
+  
+        res = res + "\n  activity:\n"; 
+
+        Vector labelfunctions = new Vector(); 
+
+        for (int i = defstart + 3; i < terms.size(); i++) 
         { ASTTerm tt = (ASTTerm) terms.get(i);
 
           if (tt.hasTag("methodBody") && tt instanceof ASTCompositeTerm)
@@ -28936,7 +29763,17 @@ public class ASTCompositeTerm extends ASTTerm
 
     if ("lastFormalParameter".equals(tag))
     { int nTerms = terms.size(); 
+
+
       ASTTerm mtype = (ASTTerm) terms.get(nTerms - 3); 
+      
+      for (int i = 0; i < nTerms -1; i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        if (tt.hasTag("typeType"))
+        { mtype = tt; 
+          break; 
+        } 
+      } 
       ASTTerm mname = (ASTTerm) terms.get(nTerms - 1);
       
       String typ = mtype.toKM3type(); 
@@ -29049,6 +29886,38 @@ public class ASTCompositeTerm extends ASTTerm
 
     if ("enumDeclaration".equals(tag) && 
         terms.size() == 7 && 
+        "implements".equals(terms.get(2) + "") &&
+        "{".equals(terms.get(4) + "") &&  
+        "}".equals(terms.get(6) + ""))
+    { // enum E implements typeList { lits } 
+
+      ASTTerm enumname = (ASTTerm) terms.get(1); 
+      ASTTerm intfs = (ASTTerm) terms.get(3);
+      ASTTerm literals = (ASTTerm) terms.get(5);
+      
+      String tlst = intfs.toKM3type(); 
+
+      // Type etype = new Type(ename.literalForm(), litvals);
+
+      String ename = enumname.literalForm(); 
+      Entity etype = new Entity(ename);  
+      modelElement = etype; 
+      ASTTerm.entities.add(etype); 
+
+      // String interfaceList = ""; 
+      // interfaceList = intfs.literalForm(); 
+      etype.addInterfaces(intfs.modelElements,  
+                             ASTTerm.entities);  
+
+      return "class " + ename + " implements " + 
+                        tlst + 
+             " {\n" + 
+             ((ASTCompositeTerm) literals).toKM3asObjects(etype) + "\n " + 
+             "}\n\n"; 
+    }  // Enumeration as class
+
+    if ("enumDeclaration".equals(tag) && 
+        terms.size() == 7 && 
         "{".equals(terms.get(2) + "") &&
         ",".equals(terms.get(4) + "") &&  
         "}".equals(terms.get(6) + ""))
@@ -29075,6 +29944,43 @@ public class ASTCompositeTerm extends ASTTerm
              bdy + "}\n\n"; 
     }  // Enumeration as class
 
+    if ("enumDeclaration".equals(tag) && 
+        terms.size() == 9 && 
+        "implements".equals(terms.get(2) + "") &&
+        "{".equals(terms.get(4) + "") &&  
+        ",".equals(terms.get(6) + "") &&  
+        "}".equals(terms.get(8) + ""))
+    { // enum E implements typeList { lits , body } 
+
+      ASTTerm enumname = (ASTTerm) terms.get(1); 
+      ASTTerm intfs = (ASTTerm) terms.get(3);
+      ASTTerm literals = (ASTTerm) terms.get(5);
+      ASTTerm enumBody = (ASTTerm) terms.get(7);
+      
+      String tlst = intfs.toKM3type(); 
+
+      // Type etype = new Type(ename.literalForm(), litvals);
+
+
+      String ename = enumname.literalForm(); 
+      Entity etype = new Entity(ename);  
+      modelElement = etype; 
+      ASTTerm.entities.add(etype); 
+
+      String bdy = enumBody.toKM3(); 
+      etype.addModelElements(enumBody.modelElements); 
+
+      // String interfaceList = ""; 
+      // interfaceList = intfs.literalForm(); 
+      etype.addInterfaces(intfs.modelElements,  
+                             ASTTerm.entities);  
+
+      return "class " + ename + " implements " + 
+                        tlst + 
+             " {\n" + 
+             ((ASTCompositeTerm) literals).toKM3asObjects(etype) + "\n " + 
+             bdy + "}\n\n"; 
+    }  // Enumeration as class
 
     if ("modifier".equals(tag))
     { if (terms.size() > 0)
@@ -29133,6 +30039,10 @@ public class ASTCompositeTerm extends ASTTerm
         "localTypeDeclaration".equals(tag))
     { String res = ""; 
       modelElements = new Vector(); 
+
+      if (terms.size() == 1 && 
+          ";".equals(terms.get(0) + ""))
+      { return ""; } 
 
       for (int i = 0; i < terms.size(); i++) 
       { ASTTerm t = (ASTTerm) terms.get(i); 
@@ -30733,6 +31643,44 @@ public class ASTCompositeTerm extends ASTTerm
       } 
     } 
 
+    if ("classType".equals(tag))
+    { if (terms.size() > 1)
+      { ASTTerm t0 = (ASTTerm) terms.get(0); 
+        if (t0.hasTag("annotation"))
+        { Vector tailterms = new Vector(); 
+          tailterms.addAll(terms); 
+          tailterms.remove(0); 
+          ASTCompositeTerm rem = new ASTCompositeTerm("classOrInterfaceType", tailterms); 
+          String res = rem.toKM3type(); 
+          modelElement = rem.modelElement; 
+          expression = rem.expression; 
+          return res; 
+        } 
+        else if (terms.size() > 2 && 
+                 ".".equals(terms.get(1) + ""))
+        { Vector tailterms = new Vector(); 
+          tailterms.addAll(terms); 
+          tailterms.remove(0); 
+          tailterms.remove(0); 
+          ASTCompositeTerm rem = 
+            new ASTCompositeTerm("classOrInterfaceType", tailterms); 
+          String res = rem.toKM3type(); 
+          modelElement = rem.modelElement; 
+          expression = rem.expression; 
+          return res; 
+        }
+      }  
+      Vector tailterms = new Vector(); 
+      tailterms.addAll(terms); 
+      ASTCompositeTerm rem = 
+        new ASTCompositeTerm("classOrInterfaceType", tailterms); 
+      String res = rem.toKM3type(); 
+      modelElement = rem.modelElement; 
+      expression = rem.expression; 
+      return res;
+    }   
+
+
     if ("classOrInterfaceType".equals(tag))
     { if (terms.size() == 3 && ".".equals(terms.get(1) + ""))  
       { // A relativised type T.S
@@ -30743,6 +31691,9 @@ public class ASTCompositeTerm extends ASTTerm
         { expression = new BasicExpression((Type) modelElement); } 
         else if (modelElement instanceof Entity)
         { expression = new BasicExpression((Entity) modelElement); } 
+
+        System.out.println("+++ Model element of " + this + " is: " + modelElement); 
+
         return btype; 
       }  
       else if (terms.size() > 3 && ".".equals(terms.get(1) + ""))  
@@ -30761,11 +31712,29 @@ public class ASTCompositeTerm extends ASTTerm
         expression = tailast.expression; 
         return resx; 
       }        
+      else if (terms.size() > 3 && ".".equals(terms.get(2) + ""))  
+      { // A relativised type T<pars>.S
+        Vector tailterms = new Vector(); 
+        tailterms.addAll(terms); 
+        tailterms.remove(0); 
+        tailterms.remove(0); 
+        tailterms.remove(0); 
+
+        ASTTerm tailast = 
+          new ASTCompositeTerm(
+                  "classOrInterfaceType", tailterms);
+ 
+        String resx = tailast.toKM3type();
+        modelElement = tailast.modelElement; 
+        expression = tailast.expression; 
+        return resx; 
+      }        
       else if (terms.size() > 1 && 
                terms.get(1) instanceof ASTCompositeTerm && 
                "typeArguments".equals(
                   ((ASTTerm) terms.get(1)).getTag()))  
       { // parameterised type  T (typeArguments < pars >)
+
         ASTTerm baseType = (ASTTerm) terms.get(0); 
         ASTCompositeTerm typepars = 
              (ASTCompositeTerm) terms.get(1);
@@ -30794,6 +31763,22 @@ public class ASTCompositeTerm extends ASTTerm
         { modelElement = 
             ModelElement.lookupByName(btype,ASTTerm.entities); 
         } 
+
+        if ("Class".equals(baseType.literalForm()))
+        { modelElement = new Type("OclType", null); 
+          return "OclType";
+        } 
+
+        if ("Pair".equals(baseType.literalForm()) ||
+            "Triple".equals(baseType.literalForm()))
+        { modelElement = new Type("Map", null);
+          Type ktype = new Type("String", null);  
+          Type etype = (Type) targs.get(1); 
+          ((Type) modelElement).setKeyType(ktype); 
+          ((Type) modelElement).setElementType(etype);
+          return "Map(String," + etype + ")"; 
+        } 
+
 
         if (modelElement == null && 
             Entity.validEntityName(btype)) 
@@ -30897,22 +31882,51 @@ public class ASTCompositeTerm extends ASTTerm
       { ASTTerm typepar0 = (ASTTerm) terms.get(i); 
         res = res + typepar0.toKM3type();
 
-        System.out.println("+++ Type parameter: " + typepar0.modelElement); 
-
         if (typepar0 instanceof ASTSymbolTerm) { } 
         else 
         { modelElement = typepar0.modelElement; 
           if (modelElement != null) 
           { modelElements.add(modelElement); } 
+          System.out.println("+++ Type parameter: " + typepar0.modelElement); 
         } 
       } 
 
       return res; 
     } 
 
+    if ("nonWildcardTypeArguments".equals(tag) && 
+        terms.size() > 2)
+    { // < typelist >
+      ASTTerm typepar0 = (ASTTerm) terms.get(1); 
+      String res = typepar0.toKM3type();
+      modelElement = typepar0.modelElement; 
+      modelElements = typepar0.modelElements; 
+ 
+      return res; 
+    } 
+
+
     if ("typeArgument".equals(tag) && terms.size() > 0)
     { // a (typeType _1)
       ASTTerm typepar0 = (ASTTerm) terms.get(0); 
+
+      if (typepar0.hasTag("annotation"))
+      { Vector tailterms = new Vector(); 
+        tailterms.addAll(terms); 
+        tailterms.remove(0); 
+        ASTCompositeTerm tailast = 
+          new ASTCompositeTerm("typeArgument", tailterms); 
+        String resx = tailast.toKM3type(); 
+        modelElement = tailast.modelElement; 
+        return resx; 
+      } 
+
+      if (terms.size() == 3 && 
+          "?".equals(typepar0.literalForm()) && 
+          ("extends".equals(terms.get(1) + "") ||
+           "super".equals(terms.get(1) + "") ) )
+      { typepar0 = (ASTTerm) terms.get(2); } 
+
       String res = typepar0.toKM3type();
       modelElement = typepar0.modelElement; 
  
@@ -30966,7 +31980,7 @@ public class ASTCompositeTerm extends ASTTerm
           } 
         } 
         else if (typ.isMapType() || typ.isFunctionType())
-        { ASTTerm t2 = (ASTTerm) terms.get(1); 
+        { ASTTerm t2 = (ASTTerm) terms.get(terms.size()-1); 
 
           String allpars = t2.toKM3(); 
 
@@ -30986,7 +32000,7 @@ public class ASTCompositeTerm extends ASTTerm
 
           modelElement = ent; 
 
-          ASTTerm t2 = (ASTTerm) terms.get(1); 
+          ASTTerm t2 = (ASTTerm) terms.get(terms.size()-1); 
         
           String allpars = t2.toKM3(); 
 
@@ -31044,7 +32058,8 @@ public class ASTCompositeTerm extends ASTTerm
            Type.getTypeFor(val, ASTTerm.enumtypes, 
                            ASTTerm.entities); 
 
-        if (modelElement == null && Entity.validEntityName(val))
+        if (modelElement == null && 
+            Entity.validEntityName(val))
         { Entity ent = new Entity(val); 
           ent.setIsGenericParameter(true); 
           ASTTerm.entities.add(ent);
@@ -31080,8 +32095,31 @@ public class ASTCompositeTerm extends ASTTerm
   
         return val; 
       } // These should be typeParameter entities
+      else if (terms.size() >= 2 && 
+               ((ASTTerm) terms.get(0)).hasTag("annotation"))
+      { Vector tailterms = new Vector(); 
+        tailterms.addAll(terms); 
+        tailterms.remove(0); 
+        ASTCompositeTerm tailast = 
+              new ASTCompositeTerm("typeParameter", tailterms);
+        String resx = tailast.toKM3type();
+        expression = tailast.expression; 
+        modelElement = tailast.modelElement; 
+        return resx;  
+      } 
 
-      return "";  
+      modelElement = new Type("OclAny", null);
+      return "OclAny";  
+    } 
+
+    if ("typeBound".equals(tag))
+    { if (terms.size() >= 1) 
+      { ASTTerm typeTerm = (ASTTerm) terms.get(0); 
+        String tt = typeTerm.toKM3type();
+        modelElement = typeTerm.modelElement; 
+        expression = typeTerm.expression; 
+        return tt; 
+      } 
     } 
 
     if ("typeList".equals(tag))

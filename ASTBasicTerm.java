@@ -941,6 +941,7 @@ public class ASTBasicTerm extends ASTTerm
     }
 
     if ("Collection".equals(value) || 
+        "Iterable".equals(value) || 
         "AbstractCollection".equals(value))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -979,13 +980,9 @@ public class ASTBasicTerm extends ASTTerm
 
 
 
-    if ("Constructor".equals(value))
-    { modelElement = new Type("OclOperation", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "OclOperation"; 
-    }
-
-    if ("Method".equals(value))
+    if ("Constructor".equals(value) || 
+        "Executable".equals(value) || 
+        "Method".equals(value))
     { modelElement = new Type("OclOperation", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclOperation"; 
@@ -1087,22 +1084,18 @@ public class ASTBasicTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence(boolean)"; } 
 
-    if ("Set".equals(value))
+    if ("Set".equals(value) || "HashSet".equals(value) ||
+        "EnumSet".equals(value))
     { modelElement = new Type("Set", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Set"; } 
-    if ("HashSet".equals(value))
+      return "Set"; 
+    }
+ 
+    if ("SortedSet".equals(value) || "TreeSet".equals(value))
     { modelElement = new Type("Set", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Set"; } 
-    if ("SortedSet".equals(value))
-    { modelElement = new Type("Set", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Set"; } 
-    if ("TreeSet".equals(value))
-    { modelElement = new Type("Set", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Set"; } 
+      return "Set";
+    } 
 
     if ("Map".equals(value))
     { modelElement = new Type("Map", null); 
@@ -1110,7 +1103,8 @@ public class ASTBasicTerm extends ASTTerm
       return "Map"; 
     }
  
-    if ("HashMap".equals(value))
+    if ("HashMap".equals(value) || 
+        "EnumMap".equals(value))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "Map"; 
@@ -1140,8 +1134,9 @@ public class ASTBasicTerm extends ASTTerm
       return "Map"; 
     } 
 
-    if ("ImmutableMap".equals(value) || "Pair".equals(value)
-        || "Entry".equals(value))
+    if ("ImmutableMap".equals(value) || 
+        "Pair".equals(value) ||
+        "Triple".equals(value) || "Entry".equals(value))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "Map"; 
@@ -1154,19 +1149,20 @@ public class ASTBasicTerm extends ASTTerm
       return "Map"; 
     }
 
+    if ("Comparator".equals(value))
+    { modelElement = new Type("OclComparator", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "OclComparator"; 
+    }
+
     if ("Enumeration".equals(value))
     { modelElement = new Type("OclIterator", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclIterator"; 
     }
  
-    if ("Iterator".equals(value))
-    { modelElement = new Type("OclIterator", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "OclIterator"; 
-    }
- 
-    if ("ListIterator".equals(value))
+    if ("Iterator".equals(value) ||
+        "ListIterator".equals(value))
     { modelElement = new Type("OclIterator", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclIterator"; 
@@ -1466,7 +1462,16 @@ public class ASTBasicTerm extends ASTTerm
   { if (ASTTerm.entities == null) 
     { ASTTerm.entities = new Vector(); } 
 	
-    if ("classOrInterfaceType".equals(tag))
+    if ("typeTypeOrVoid".equals(tag) && 
+        "void".equals(value))
+    { modelElement = new Type("void", null); 
+      expression = new BasicExpression((Type) modelElement);
+      ASTTerm.setType(this, "void"); 
+      return "void"; 
+    } 
+      
+    if ("classOrInterfaceType".equals(tag) || 
+        "classType".equals(tag))
     { String resx = km3typeForJavaType(); 
       if (resx != null) 
       { return resx; } 
@@ -1475,13 +1480,27 @@ public class ASTBasicTerm extends ASTTerm
         (Entity) ModelElement.lookupByName(value,
                                            ASTTerm.entities); 
       if (ent != null) 
-      { modelElement = ent; } 
+      { modelElement = new Type(ent); } 
       else if (Entity.validEntityName(value))
-      { modelElement = new Entity(value); 
-        ASTTerm.entities.add(modelElement); 
-      } 
+      { ent = new Entity(value); 
+        ASTTerm.entities.add(ent);
+        modelElement = new Type(ent); 
+      }
+ 
+      ASTTerm.setType(this, "OclType"); 
       return value; 
     }
+
+    if ("primary".equals(tag)) // enum
+    { Type typ = (Type) ModelElement.lookupByName(value,
+                                           ASTTerm.enumtypes); 
+      if (typ != null) 
+      { modelElement = typ;
+        ASTTerm.setType(this, "OclType"); 
+        expression = new BasicExpression(typ);
+        return value;
+      }  
+    } 
 
     if ("typeArgument".equals(tag))
     { if ("?".equals(value))
@@ -1511,8 +1530,37 @@ public class ASTBasicTerm extends ASTTerm
   public Vector getParameterExpressions()
   { return new Vector(); } 
 
+  public String lambdaParametersToKM3()
+  { if ("lambdaParameters".equals(tag))
+    {  
+      modelElement = 
+        new Attribute(value,new Type("OclAny", null),
+                      ModelElement.INTERNAL);
+      modelElements = new Vector(); 
+      modelElements.add(modelElement); 
+      return value;  
+    } 
+    else 
+    { modelElement = 
+        new Attribute(tag,new Type("OclAny", null),
+                      ModelElement.INTERNAL);
+      modelElements = new Vector(); 
+      modelElements.add(modelElement);  
+      modelElement = 
+        new Attribute(value,new Type("OclAny", null),
+                      ModelElement.INTERNAL);
+      modelElements.add(modelElement);  
+      return tag + ", " + value; 
+    } 
+  } 
+
   public String toKM3()
-  { 
+  { if ("lambdaParameters".equals(tag))
+    { expression = 
+        BasicExpression.newVariableBasicExpression(value); 
+      return value;
+    } 
+
     if ("this".equals(value))
     { expression = 
         BasicExpression.newVariableBasicExpression("self"); 
@@ -1629,6 +1677,7 @@ public class ASTBasicTerm extends ASTTerm
       return "OclAny"; }
 
     if ("Collection".equals(value) || 
+        "Iterable".equals(value) || 
         "AbstractCollection".equals(value))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -1651,6 +1700,7 @@ public class ASTBasicTerm extends ASTTerm
     { modelElement = new Type("OclAny", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclAny"; }
+
     if ("Runnable".equals(value))
     { modelElement = new Type("Runnable", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -1658,14 +1708,14 @@ public class ASTBasicTerm extends ASTTerm
 
 
 
-    if ("Constructor".equals(value))
+    if ("Constructor".equals(value) || 
+        "Executable".equals(value) || 
+        "Method".equals(value))
     { modelElement = new Type("OclOperation", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclOperation"; }
-    if ("Method".equals(value))
-    { modelElement = new Type("OclOperation", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "OclOperation"; }
+      return "OclOperation";
+    }
+
     if ("Field".equals(value))
     { modelElement = new Type("OclAttribute", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -1768,19 +1818,14 @@ public class ASTBasicTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence(boolean)"; } 
 
-    if ("Set".equals(value))
+    if ("Set".equals(value) ||
+        "HashSet".equals(value) || "EnumSet".equals(value))
     { modelElement = new Type("Set", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Set"; } 
-    if ("HashSet".equals(value))
-    { modelElement = new Type("Set", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Set"; } 
-    if ("SortedSet".equals(value))
-    { modelElement = new Type("Set", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Set"; } 
-    if ("TreeSet".equals(value))
+      return "Set"; 
+    }
+ 
+    if ("SortedSet".equals(value) || "TreeSet".equals(value))
     { modelElement = new Type("Set", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "Set"; } 
@@ -1791,19 +1836,14 @@ public class ASTBasicTerm extends ASTTerm
       return "Map"; 
     }
  
-    if ("HashMap".equals(value))
+    if ("HashMap".equals(value) || 
+        "EnumMap".equals(value))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "Map"; 
     }
  
-    if ("SortedMap".equals(value))
-    { modelElement = new Type("Map", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Map"; 
-    }
- 
-    if ("TreeMap".equals(value))
+    if ("SortedMap".equals(value) || "TreeMap".equals(value))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "Map"; 
@@ -1815,7 +1855,8 @@ public class ASTBasicTerm extends ASTTerm
       return "Map"; 
     }
  
-    if ("ImmutableMap".equals(value) || "Pair".equals(value)
+    if ("ImmutableMap".equals(value) ||
+        "Triple".equals(value) || "Pair".equals(value)
         || "Entry".equals(value))
     { modelElement = new Type("Map", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -1835,19 +1876,15 @@ public class ASTBasicTerm extends ASTTerm
       return "Map"; 
     }
 
-    if ("Enumeration".equals(value))
-    { modelElement = new Type("OclIterator", null); 
+    if ("Comparator".equals(value))
+    { modelElement = new Type("OclComparator", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclIterator"; 
+      return "OclComparator"; 
     }
- 
-    if ("Iterator".equals(value))
-    { modelElement = new Type("OclIterator", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "OclIterator"; 
-    }
- 
-    if ("ListIterator".equals(value))
+
+    if ("Enumeration".equals(value) ||
+        "Iterator".equals(value) ||
+        "ListIterator".equals(value))
     { modelElement = new Type("OclIterator", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclIterator"; 
@@ -2143,6 +2180,13 @@ public class ASTBasicTerm extends ASTTerm
       return value; 
     } 
 
+    if ("classBodyDeclaration".equals(tag) && 
+        ";".equals(value))
+    { return ""; } 
+
+    if ("interfaceBodyDeclaration".equals(tag) && 
+        ";".equals(value))
+    { return ""; } 
 
     String typ = ASTTerm.getType(value);
     expression = 
@@ -2236,7 +2280,17 @@ public class ASTBasicTerm extends ASTTerm
     String ename = ent.getName(); 
       
     if ("enumConstant".equals(tag))
-    { res = "static attribute " + value + " : " + ename + " := " + ename + ".new" + ename + "()"; 
+    { res = "static attribute " + value + " : " + ename + 
+            " := " + ename + ".new" + ename + "()"; 
+      Attribute att = 
+          new Attribute(value, new Type(ent), 
+                        ModelElement.INTERNAL);
+      att.setStatic(true); 
+      Expression call = 
+          BasicExpression.newStaticCallBasicExpression(
+                                  "new" + ename, ename); 
+      att.setInitialExpression(call);  
+      ent.addAttribute(att); 
     } 
 
     return res; 

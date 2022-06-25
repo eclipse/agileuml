@@ -487,6 +487,14 @@ class BasicExpression extends Expression
     return res; 
   } 
 
+  public static BasicExpression newFunctionBasicExpression(String f, Expression obj) 
+  { BasicExpression res = new BasicExpression(f);
+    res.setObjectRef(obj);  
+    res.umlkind = FUNCTION;
+    res.parameters = new Vector(); 
+    return res; 
+  } 
+
   public static BasicExpression newFunctionBasicExpression(String f, Expression obj, Vector pars) 
   { BasicExpression res = new BasicExpression(f);
     res.setObjectRef(obj);  
@@ -494,6 +502,7 @@ class BasicExpression extends Expression
     res.parameters = pars; 
     return res; 
   } 
+
 
   public static BasicExpression newFunctionBasicExpression(String f, Expression obj, Expression par) 
   { BasicExpression res = new BasicExpression(f);
@@ -706,6 +715,13 @@ class BasicExpression extends Expression
     return res; 
   } 
 
+  public void addParameterExpressions(Vector pars)
+  { parameters = new Vector(); 
+    for (int i = 0; i < pars.size(); i++) 
+    { Attribute par = (Attribute) pars.get(i); 
+      parameters.add(new BasicExpression(par)); 
+    } 
+  } 
 
   public Expression getObjectRef() 
   { return objectRef; } 

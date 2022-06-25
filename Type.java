@@ -4359,10 +4359,14 @@ public class Type extends ModelElement
   }
 
   public String toString()
-  { String nme = getName(); 
+  { String nme = name; 
     if ("Set".equals(nme) || "Sequence".equals(nme) || 
         "Ref".equals(nme))
-    { if (elementType != null) 
+    { if (elementType == null)
+	  { return nme; }
+	  else if (elementType == this)
+      { return nme; }
+      else   
       { return nme + "(" + elementType + ")"; } 
     } 
 

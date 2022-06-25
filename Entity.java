@@ -74,6 +74,8 @@ public class Entity extends ModelElement implements Comparable
   public void addGenericTypeParameters(Vector gpars, Vector ents)
   { for (int i = 0; i < gpars.size(); i++) 
     { ModelElement mt = (ModelElement) gpars.get(i);
+	  if (mt == null) { continue; }
+	  
       Entity newT = null; 
       if (mt instanceof Type && 
           ((Type) mt).isEntity())
@@ -8905,7 +8907,9 @@ public class Entity extends ModelElement implements Comparable
       { nme = nme + " implements "; 
         for (int k = 0; k < interfaces.size(); k++) 
         { Entity intf = (Entity) interfaces.get(k); 
-          nme = nme + ", " + intf.getCompleteName(); 
+          nme = nme + " " + intf.getCompleteName(); 
+          if (k < interfaces.size()-1) 
+          { nme = nme + ", "; } 
         } 
       } 
     } 
@@ -8988,7 +8992,9 @@ public class Entity extends ModelElement implements Comparable
       { nme = nme + " implements "; 
         for (int k = 0; k < interfaces.size(); k++) 
         { Entity intf = (Entity) interfaces.get(k); 
-          nme = nme + ", " + intf.getCompleteName(); 
+          nme = nme + " " + intf.getCompleteName(); 
+          if (k < interfaces.size()-1) 
+          { nme = nme + ", "; } 
         } 
       } 
     } 
