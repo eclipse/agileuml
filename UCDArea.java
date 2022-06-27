@@ -9196,6 +9196,10 @@ public void produceCUI(PrintWriter out)
       initialiseTypesCode + 
         "  struct OclType* " + enamelc + "Type = createOclType(\"" + ename + "\");\n"; 
 
+    initialiseTypesCode = 
+      initialiseTypesCode + 
+        "  " + enamelc + "Type.creator = create" + ename + ";\n"; 
+
     Vector atts = ent.getAttributes(); 
     for (int j = 0; j < atts.size(); j++) 
     { Attribute att = (Attribute) atts.get(j);
