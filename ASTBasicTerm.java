@@ -232,6 +232,13 @@ public class ASTBasicTerm extends ASTTerm
     return m; 
   } 
 
+  public String cdeclarationStorageClass()
+  { if ("storageClassSpecifier".equals(tag))
+    { return value; } 
+    return null; 
+  } 
+
+
   public Type cdeclarationToType(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
   { if ("typeSpecifier".equals(tag) || 
@@ -340,6 +347,12 @@ public class ASTBasicTerm extends ASTTerm
     java.util.Map varelemtypes, Vector types, Vector ents)
   { if ("primaryExpression".equals(tag))
     { System.out.println(">> Basic primary expression: " + value); 
+
+      if ("TRUE".equals(value))
+      { return new BasicExpression(true); } 
+      if ("FALSE".equals(value))
+      { return new BasicExpression(false); } 
+
 
       Type t = (Type) vartypes.get(value); 
       if (t != null) 
@@ -693,15 +706,23 @@ public class ASTBasicTerm extends ASTTerm
       if (t != null) 
       { BasicExpression be = new BasicExpression(value); 
         be.setType(t); 
-		Object elemt = varelemtypes.get(value); 
+        Object elemt = varelemtypes.get(value); 
         if (elemt != null && elemt instanceof Type)
         { be.setElementType((Type) elemt); }  
         return be; 
       } 
 
-   /* 
+      if ("PI".equals(value))
+      { Expression res = 
+          new BasicExpression(3.1415926535897); 
+        res.setType(new Type("double", null)); 
+        return res; 
+      }
+
+   /* Is value a feature of some known object? 
+
       Entity mainC = (Entity) ModelElement.lookupByName(
-                                      "FromC", ents);
+                                      "FromJavaScript", ents);
       if (mainC != null) 
       { BehaviouralFeature bf = mainC.getOperation(value); 
 

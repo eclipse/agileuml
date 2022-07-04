@@ -533,6 +533,12 @@ abstract class Expression
   public static Expression convertToApply(Expression expr,
                                           Vector pars)
   { Expression res = expr; 
+
+    if (pars.size() == 0)
+    { res = new BinaryExpression("->apply", res, new BasicExpression("null")); 
+      return res; 
+    } 
+
     for (int i = 0; i < pars.size(); i++) 
     { Type elemType = res.getElementType(); 
       Expression par = (Expression) pars.get(i); 

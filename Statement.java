@@ -279,6 +279,20 @@ abstract class Statement implements Cloneable
                                   String var, 
                                   Vector excludes); 
 
+  public static Vector
+    addContainerReferences(Vector cstats, BasicExpression ref,
+                                  String var, 
+                                  Vector excludes)
+  { Vector rstats = new Vector(); 
+    for (int j = 0; j < cstats.size(); j++) 
+    { Statement jstat = (Statement) cstats.get(j); 
+      Statement rstat = 
+          jstat.addContainerReference(ref,var,excludes); 
+      rstats.add(rstat); 
+    } 
+    return rstats; 
+  } 
+
   abstract Expression wpc(Expression post); 
 
   abstract Vector dataDependents(Vector allvars, Vector vars); 
@@ -679,6 +693,12 @@ class ReturnStatement extends Statement
   public ReturnStatement(Expression e)
   { value = e; } 
 
+  public ReturnStatement(Vector exprs)
+  { if (exprs == null || exprs.size() == 0) 
+    { value = null; } 
+    value = (Expression) exprs.get(0); 
+  } 
+
   public String getOperator() 
   { return "return"; } 
 
@@ -793,7 +813,7 @@ class ReturnStatement extends Statement
         res = res + " " + value.queryForm(env,true);
       }
       else 
-      { res = res + " " + value.toJava(); } 
+      { res = res + " " + value.queryForm(env,true); } 
     } 
     res = res + ";"; 
     return res; 
@@ -3693,6 +3713,8 @@ class CreationStatement extends Statement
     { return "Set"; } 
     if (createsInstanceOf.startsWith("Map"))
     { return "Map"; } 
+    if (createsInstanceOf.startsWith("Ref"))
+    { return "Ref"; } 
     if (createsInstanceOf.startsWith("Function"))
     { return "Function"; } 
     return "Object"; 
@@ -3982,6 +4004,19 @@ class CreationStatement extends Statement
     if (isFrozen) 
     { mode = "final "; } 
 
+    java.util.Map env = new java.util.HashMap(); 
+    
+    if (instanceType != null)
+    { String jType = instanceType.getJava(); 
+
+      System.out.println(">>> Creation instance type: " + instanceType); 
+      System.out.println(">>> Creation Java type: " + jType); 
+      System.out.println(); 
+
+      if (initialExpression != null && assignsTo != null)
+      { return "  " + jType + " " + assignsTo + " = " + initialExpression.queryForm(env,true) + ";\n"; }
+    } 
+
     if (initialValue != null && instanceType != null) 
     { String jType = instanceType.getJava(); 
       return "  " + mode + jType + " " + assignsTo + " = " + initialValue + ";"; 
@@ -3989,16 +4024,18 @@ class CreationStatement extends Statement
     else if (instanceType != null)
     { String jType = instanceType.getJava(); 
       if (initialExpression != null)
-      { return "  " + jType + " " + assignsTo + " = " + initialExpression.toJava() + ";\n"; }
+      { return "  " + jType + " " + assignsTo + " = " + initialExpression.queryForm(env,true) + ";\n"; }
       else if (Type.isRefType(instanceType))
       { String rt = jType; 
         if (instanceType.getElementType() != null) 
         { Type elemT = instanceType.getElementType();
           rt = elemT.getJava(); 
-          if (Type.isBasicType(elemT) ||
-              elemT.isStructEntityType() ||  
-              "Ref".equals(elemT.getName()))
-          { return "  " + rt + "[] " + assignsTo + ";"; }
+          // if (Type.isBasicType(elemT) ||
+          //     elemT.isStructEntityType() ||  
+          //     "Ref".equals(elemT.getName()))
+          // { 
+          return "  " + rt + "[] " + assignsTo + " = new " + rt + "[1];"; 
+          // }
         }
         return "  " + rt + " " + assignsTo + ";";   
       }   
@@ -4033,6 +4070,8 @@ class CreationStatement extends Statement
     { return "  Map " + assignsTo + ";"; } 
     else if (createsInstanceOf.startsWith("Function"))
     { return "  Evaluation<String,Object> " + assignsTo + ";"; } 
+    else if (createsInstanceOf.startsWith("Ref"))
+    { return "  Object[] " + assignsTo + " = new Object[1];"; }
     else if (createsInstanceOf.equals("OclAny"))
     { return "  Object " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclType"))
@@ -4045,10 +4084,26 @@ class CreationStatement extends Statement
   }
 
   public String toStringJava6()
-  { if (instanceType != null)
+  { java.util.Map env = new java.util.HashMap(); 
+    
+    if (instanceType != null)
     { String jType = instanceType.getJava6(); 
       if (initialExpression != null)
-      { return "  " + jType + " " + assignsTo + " = " + initialExpression.toJava6() + ";\n"; }
+      { return "  " + jType + " " + assignsTo + " = " + initialExpression.queryFormJava6(env,true) + ";\n"; }
+      else if (Type.isRefType(instanceType))
+      { String rt = jType; 
+        if (instanceType.getElementType() != null) 
+        { Type elemT = instanceType.getElementType();
+          rt = elemT.getJava6(); 
+          // if (Type.isBasicType(elemT) ||
+          //     elemT.isStructEntityType() ||  
+          //     "Ref".equals(elemT.getName()))
+          // { 
+          return "  " + rt + "[] " + assignsTo + " = new " + rt + "[1];"; 
+          // }
+        }
+        return "  " + rt + " " + assignsTo + ";";   
+      }   
       else if (Type.isBasicType(instanceType)) 
       { return "  " + jType + " " + assignsTo + ";"; } 
       else if (Type.isMapType(instanceType))
@@ -4082,6 +4137,8 @@ class CreationStatement extends Statement
     { return "  Map " + assignsTo + ";"; } 
     else if (createsInstanceOf.startsWith("Function"))
     { return "  Evaluation<String,Object> " + assignsTo + ";"; } 
+    else if (createsInstanceOf.startsWith("Ref"))
+    { return "  Object[] " + assignsTo + " = new Object[1];"; }
     else if (createsInstanceOf.equals("OclAny"))
     { return "  Object " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclType"))
@@ -4097,10 +4154,26 @@ class CreationStatement extends Statement
   { // System.out.println("CREATION STATEMENT: " + instanceType + " " + elementType + " " + assignsTo); 
     // System.out.println("=========================================================================");
  
+    java.util.Map env = new java.util.HashMap(); 
+    
     if (instanceType != null)
     { String jType = instanceType.getJava7(elementType); 
       if (initialExpression != null)
-      { return "  " + jType + " " + assignsTo + " = " + initialExpression.toJava7() + ";\n"; }
+      { return "  " + jType + " " + assignsTo + " = " + initialExpression.queryFormJava7(env,true) + ";\n"; }
+      else if (Type.isRefType(instanceType))
+      { String rt = jType; 
+        if (instanceType.getElementType() != null) 
+        { Type elemT = instanceType.getElementType();
+          rt = elemT.getJava7(); 
+          // if (Type.isBasicType(elemT) ||
+          //     elemT.isStructEntityType() ||  
+          //     "Ref".equals(elemT.getName()))
+          // { 
+          return "  " + rt + "[] " + assignsTo + " = new " + rt + "[1];"; 
+          // }
+        }
+        return "  " + rt + " " + assignsTo + ";";   
+      }   
       else if (Type.isBasicType(instanceType)) 
       { return "  " + jType + " " + assignsTo + ";"; } 
       else if (Type.isMapType(instanceType))
@@ -4133,6 +4206,8 @@ class CreationStatement extends Statement
     { return "  HashMap " + assignsTo + ";"; } 
     else if (createsInstanceOf.startsWith("Function"))
     { return "  Evaluation<String,Object> " + assignsTo + ";"; } 
+    else if (createsInstanceOf.startsWith("Ref"))
+    { return "  Object[] " + assignsTo + " = new Object[1];"; }
     else if (createsInstanceOf.equals("OclAny"))
     { return "  Object " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclType"))
@@ -4149,7 +4224,6 @@ class CreationStatement extends Statement
 
   public String toStringCSharp()
   { String cstype = createsInstanceOf;
-
  
     if (instanceType != null)
     { String jType = instanceType.getCSharp(); 
@@ -4212,7 +4286,9 @@ class CreationStatement extends Statement
     { return "  Hashtable "  + assignsTo + ";"; }
     else if (createsInstanceOf.startsWith("Function"))
     { return "  Func<object,object> " + assignsTo + ";"; }
-    
+    else if (createsInstanceOf.startsWith("Ref"))
+    { return "  object* " + assignsTo + ";"; }
+        
     if (createsInstanceOf.equals("boolean")) 
     { cstype = "bool"; 
       return "  " + cstype + " " + assignsTo + ";";   
@@ -4246,10 +4322,27 @@ class CreationStatement extends Statement
   public String toStringCPP()  // Function types?
   { String cstype = createsInstanceOf; 
     String cet = "void*"; 
+    java.util.Map env = new java.util.HashMap(); 
+
     if (instanceType != null)
     { String jType = instanceType.getCPP(elementType); 
+      if (initialExpression != null && assignsTo != null)
+      { return "  " + jType + " " + assignsTo + " = " + initialExpression.queryFormCPP(env,true) + ";\n"; }
+
       if (Type.isBasicType(instanceType)) 
       { return "  " + jType + " " + assignsTo + ";"; } 
+      else if (Type.isRefType(instanceType))
+      { String rt = "void*"; 
+        if (instanceType.getElementType() != null) 
+        { Type elemT = instanceType.getElementType();
+          rt = elemT.getCPP(); 
+          if (Type.isBasicType(elemT) ||
+              elemT.isStructEntityType() ||  
+              "Ref".equals(elemT.getName()))
+          { return "  " + rt + "* " + assignsTo + ";"; }
+        }
+        return "  " + rt + " " + assignsTo + ";";   
+      }   
       else if (Type.isCollectionType(instanceType) || 
                Type.isMapType(instanceType) || 
                Type.isFunctionType(instanceType))
@@ -4318,9 +4411,11 @@ class CreationStatement extends Statement
     { return "  map<string, " + cet + ">* " + assignsTo + ";"; } 
 
     if (createsInstanceOf.startsWith("Function"))
-    { return "function<" + cet + "(string)> " + assignsTo + ";"; } 
+    { return "  function<" + cet + "(string)> " + assignsTo + ";"; } 
 
-
+    if (createsInstanceOf.startsWith("Ref"))
+    { return "  void* " + assignsTo + ";"; }
+    
     if (createsInstanceOf.equals("boolean")) 
     { cstype = "bool"; 
       return "  " + cstype + " " + assignsTo + ";";   
@@ -8542,6 +8637,7 @@ class AssignStatement extends Statement
       res = res + "  " + lhs + ".putAll(" + rhs.queryForm(env,local) + ");\n"; 
       return res; 
     } // For type.isEntityType() or strings, clone the rhs. 
+
     if (copyValue && type != null && type.isCollectionType())
     { String res = "  " + type.getJava() + " " + lhs + " = new Vector();\n"; 
       res = res + "  " + lhs + ".addAll(" + rhs.queryForm(env,local) + ");\n"; 

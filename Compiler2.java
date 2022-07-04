@@ -940,7 +940,7 @@ public class Compiler2
       if (c == '\"' && prev != '\\') 
       { if (inchar) // '"' is ok but should be '\"' 
         { if (sb != null) 
-          { sb.append(c); }
+          { sb.append("\""); }
         }  
         else if (instring) 
         { instring = false; 
@@ -4797,7 +4797,9 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
   } 
 
   public static String isKeywordOrPart(String st, String[] mess)
-  { if (st.length() < 2) 
+  { 
+
+    if (st.length() < 2) 
     { return null; } 
 
     /* if ("::".equals(st))
@@ -4968,6 +4970,12 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       { mess[0] = "arg->tail() operator on strings, sequences\n" + 
           "Returns  arg.subrange(2,arg->size())"; 
         return "arg->tail()"; 
+      }
+
+      if ("->sort".startsWith(st))
+      { mess[0] = "arg->sort() operator on sets, sequences\n" + 
+          "Returns sorted sequence of arg elements"; 
+        return "arg->sort()"; 
       }
 
       if ("->trim".startsWith(st))

@@ -140,6 +140,9 @@ public class ASTSymbolTerm extends ASTTerm
   public Type pointersToRefType(String tname, Type t)
   { return t; } 
 
+  public String cdeclarationStorageClass()
+  { return null; } 
+
   public Type cdeclarationToType(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
   { return null; } 
@@ -180,7 +183,13 @@ public class ASTSymbolTerm extends ASTTerm
 
   public Expression cexpressionToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
-  { return new BasicExpression(symbol); } 
+  { if ("TRUE".equals(symbol))
+    { return new BasicExpression(true); } 
+    if ("FALSE".equals(symbol))
+    { return new BasicExpression(false); } 
+
+    return new BasicExpression(symbol);
+  } 
 
 
   /* JavaScript abstraction: */ 

@@ -278,6 +278,9 @@ public class Attribute extends ModelElement
   public void setArray(boolean b)
   { isArray = b; } 
 
+  public boolean isFunction()
+  { return type != null && type.isFunction(); } 
+
   public void setInitialisation(Expression expr)
   { initialExpression = expr; } 
 

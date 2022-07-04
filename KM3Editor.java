@@ -400,12 +400,21 @@ public class KM3Editor extends JFrame implements DocumentListener
          } 
          // else if (':' == cc)
          // { messageArea.setText("iden : Type for data declaration or\n  ::\n  P => Q;\n for usecase postcondition\n\r"); } 
+         else if (cc == '!')
+         { messageArea.setText("Dereference expression: !ptr\nfor ptr : Ref(T), !ptr has type T"); 
+         } 
          else if ('[' == cc)
-         { messageArea.setText("col[val]\n access to val-indexed element of sequence or map col for read or update.\nEquivalent to col->at(val) for read access.\n\r"); } 
+         { messageArea.setText("col[val]\n access to val-indexed element of sequence or map col for read or update.\nEquivalent to col->at(val) for read access.\n\r");
+         } 
          else if (":".equals(prevpos) && ':' == cc)
-         { messageArea.setText(":: or EntityName::\n Scope definition for use case postcondition.\n\r"); } 
+         { messageArea.setText(":: or EntityName::\n Scope definition for use case postcondition.\n\r"); 
+         }
+         else if (":".equals(prevpos) && '=' == cc)
+         { messageArea.setText("Assignment operator :=\nUsed in activities, eg: x := 5.\n\r"); 
+         } 
          else if ("=".equals(prevpos) && '>' == cc)
-         { messageArea.setText("Implication =>\n Pre => Post for use case postconditions or operation postconditions.\n\r"); } 
+         { messageArea.setText("Implication =>\n Pre => Post for use case postconditions or operation postconditions.\n\r"); 
+         } 
          
 
 

@@ -7346,6 +7346,182 @@ public class BSystemTypes extends BComponent
     return res;
   } // and map
 
+  public static String refOps() 
+  { String res = ""; 
+    res = "  public static <T> T[] asReference(Vector sq, T[] r)\n" + 
+          "  {\n" + 
+          "    for (int i = 0; i < sq.size() && i < r.length; i++)\n" + 
+          "    { r[i] = (T) sq.get(i); }\n" + 
+          "    return r;\n" + 
+          "  }\n\n";
+
+    res = res + "  public static int[] resizeTo(int[] arr, int n)\n" +
+          "  { int[] tmp = new int[n];\n" +
+          "    for (int i = 0; i < n; i++)\n" +
+          "    { tmp[i] = arr[i]; }\n" +
+          "    return tmp;\n" +
+          "  }\n\n"; 
+
+    res = res + "  public static long[] resizeTo(long[] arr, int n)\n" +
+          "  { long[] tmp = new long[n];\n" +
+          "    for (int i = 0; i < n; i++)\n" +
+          "    { tmp[i] = arr[i]; }\n" +
+          "    return tmp;\n" +
+          "  }\n\n"; 
+
+    res = res + "  public static double[] resizeTo(double[] arr, int n)\n" +
+          "  { double[] tmp = new double[n];\n" +
+          "    for (int i = 0; i < n; i++)\n" +
+          "    { tmp[i] = arr[i]; }\n" +
+          "    return tmp;\n" +
+          "  }\n\n"; 
+
+     res = res + "  public static boolean[] resizeTo(boolean[] arr, int n)\n" +
+          "  { boolean[] tmp = new boolean[n];\n" +
+          "    for (int i = 0; i < n; i++)\n" +
+          "    { tmp[i] = arr[i]; }\n" +
+          "    return tmp;\n" +
+          "  }\n\n"; 
+
+    res = res + "  public static Object[] resizeTo(Object[] arr, int n)\n" +
+          "  { Object[] tmp = new Object[n];\n" +
+          "    for (int i = 0; i < n; i++)\n" +
+          "    { tmp[i] = arr[i]; }\n" +
+          "    return tmp;\n" +
+          "  }\n\n";
+ 
+    res = res + 
+          "  public static Vector sequenceRange(int[] arr, int n)\n" +
+          "  { Vector res = new Vector();\n" +
+          "    for (int i = 0; i < n && i < arr.length; i++)\n" +
+          "    { res.add(new Integer(arr[i])); }\n" +
+          "    return res; \n" +
+          "  }\n\n"; 
+
+    res = res + 
+          "  public static Vector sequenceRange(long[] arr, int n)\n" +
+          "  { Vector res = new Vector();\n" +
+          "    for (int i = 0; i < n && i < arr.length; i++)\n" +
+          "    { res.add(new Long(arr[i])); }\n" +
+          "    return res; \n" +
+          "  }\n\n"; 
+
+    res = res + 
+          "  public static Vector sequenceRange(double[] arr, int n)\n" +
+          "  { Vector res = new Vector();\n" +
+          "    for (int i = 0; i < n && i < arr.length; i++)\n" +
+          "    { res.add(new Double(arr[i])); }\n" +
+          "    return res; \n" +
+          "  }\n\n"; 
+
+    res = res + 
+          "  public static Vector sequenceRange(boolean[] arr, int n)\n" +
+          "  { Vector res = new Vector();\n" +
+          "    for (int i = 0; i < n && i < arr.length; i++)\n" +
+          "    { res.add(new Boolean(arr[i])); }\n" +
+          "    return res; \n" +
+          "  }\n\n"; 
+
+    res = res + 
+          "  public static <T> Vector asSequence(T[] r)\n" +
+          "  { Vector res = new Vector(); \n" +
+          "    for (int i = 0; i < r.length; i++)\n" +
+          "    { res.add(r[i]); }\n" +
+          "    return res;\n" +
+          "  }\n\n";   
+
+    return res; 
+  } 
+
+
+  public static String refOpsJava6() 
+  { String res = ""; 
+    res = "  public static <T> T[] asReference(ArrayList sq, T[] r)\n" + 
+          "  {\n" + 
+          "    for (int i = 0; i < sq.size() && i < r.length; i++)\n" + 
+          "    { r[i] = (T) sq.get(i); }\n" + 
+          "    return r;\n" + 
+          "  }\n\n";
+
+    res = res + "  public static int[] resizeTo(int[] arr, int n)\n" +
+          "  { int[] tmp = new int[n];\n" +
+          "    for (int i = 0; i < n; i++)\n" +
+          "    { tmp[i] = arr[i]; }\n" +
+          "    return tmp;\n" +
+          "  }\n\n"; 
+
+    res = res + "  public static long[] resizeTo(long[] arr, int n)\n" +
+          "  { long[] tmp = new long[n];\n" +
+          "    for (int i = 0; i < n; i++)\n" +
+          "    { tmp[i] = arr[i]; }\n" +
+          "    return tmp;\n" +
+          "  }\n\n"; 
+
+    res = res + "  public static double[] resizeTo(double[] arr, int n)\n" +
+          "  { double[] tmp = new double[n];\n" +
+          "    for (int i = 0; i < n; i++)\n" +
+          "    { tmp[i] = arr[i]; }\n" +
+          "    return tmp;\n" +
+          "  }\n\n"; 
+
+     res = res + "  public static boolean[] resizeTo(boolean[] arr, int n)\n" +
+          "  { boolean[] tmp = new boolean[n];\n" +
+          "    for (int i = 0; i < n; i++)\n" +
+          "    { tmp[i] = arr[i]; }\n" +
+          "    return tmp;\n" +
+          "  }\n\n"; 
+
+    res = res + "  public static Object[] resizeTo(Object[] arr, int n)\n" +
+          "  { Object[] tmp = new Object[n];\n" +
+          "    for (int i = 0; i < n; i++)\n" +
+          "    { tmp[i] = arr[i]; }\n" +
+          "    return tmp;\n" +
+          "  }\n\n";
+ 
+    res = res + 
+          "  public static ArrayList sequenceRange(int[] arr, int n)\n" +
+          "  { ArrayList res = new ArrayList();\n" +
+          "    for (int i = 0; i < n && i < arr.length; i++)\n" +
+          "    { res.add(new Integer(arr[i])); }\n" +
+          "    return res; \n" +
+          "  }\n\n"; 
+
+    res = res + 
+          "  public static ArrayList sequenceRange(long[] arr, int n)\n" +
+          "  { ArrayList res = new ArrayList();\n" +
+          "    for (int i = 0; i < n && i < arr.length; i++)\n" +
+          "    { res.add(new Long(arr[i])); }\n" +
+          "    return res; \n" +
+          "  }\n\n"; 
+
+    res = res + 
+          "  public static ArrayList sequenceRange(double[] arr, int n)\n" +
+          "  { ArrayList res = new ArrayList();\n" +
+          "    for (int i = 0; i < n && i < arr.length; i++)\n" +
+          "    { res.add(new Double(arr[i])); }\n" +
+          "    return res; \n" +
+          "  }\n\n"; 
+
+    res = res + 
+          "  public static ArrayList sequenceRange(boolean[] arr, int n)\n" +
+          "  { ArrayList res = new ArrayList();\n" +
+          "    for (int i = 0; i < n && i < arr.length; i++)\n" +
+          "    { res.add(new Boolean(arr[i])); }\n" +
+          "    return res; \n" +
+          "  }\n\n"; 
+
+    res = res + 
+          "  public static <T> ArrayList asSequence(T[] r)\n" +
+          "  { ArrayList res = new ArrayList(); \n" +
+          "    for (int i = 0; i < r.length; i++)\n" +
+          "    { res.add(r[i]); }\n" +
+          "    return res;\n" +
+          "  }\n\n";   
+
+    return res; 
+  } 
+
+
   public static String generateSortOp()
   { String res = "  public static List sort(final List a)\n" + 
       "  { int i = a.size()-1;\n" + 

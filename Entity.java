@@ -1138,6 +1138,28 @@ public class Entity extends ModelElement implements Comparable
 
   public Vector getOperations()
   { return operations; } 
+
+  public Vector getInstanceOperations()
+  { Vector res = new Vector(); 
+    for (int i = 0; i < operations.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i); 
+      if (bf.isStatic()) { } 
+      else 
+      { res.add(bf); }
+    } 
+    return res; 
+  }
+
+  public Vector getInstanceAttributes()
+  { Vector res = new Vector(); 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      if (att.isStatic()) { } 
+      else 
+      { res.add(att); }
+    } 
+    return res; 
+  }
   
   public Vector allQueryOperations()
   { Vector res = new Vector(); 

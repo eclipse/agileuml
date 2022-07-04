@@ -351,7 +351,7 @@ public class SetExpression extends Expression
   public String queryForm(java.util.Map env, boolean local)
   { if (type != null && "Ref".equals(type.getName()))
     { Type et = getElementType();
-      String cset = "object"; 
+      String cset = "Object"; 
       if (et != null) 
       { cset = et.getJava(); }
       String refsze = "1";  
@@ -386,7 +386,7 @@ public class SetExpression extends Expression
   public String queryFormJava6(java.util.Map env, boolean local)
   { if (type != null && "Ref".equals(type.getName()))
     { Type et = getElementType();
-      String cset = "object"; 
+      String cset = "Object"; 
       if (et != null) 
       { cset = et.getJava6(); }
       String refsze = "1";  
@@ -427,7 +427,7 @@ public class SetExpression extends Expression
   public String queryFormJava7(java.util.Map env, boolean local)
   { if (type != null && "Ref".equals(type.getName()))
     { Type et = getElementType();
-      String cset = "object"; 
+      String cset = "Object"; 
       if (et != null) 
       { cset = et.getJava7(); }
       String refsze = "1";  
@@ -518,6 +518,15 @@ public class SetExpression extends Expression
     String cet = "void*"; 
     if (et != null) 
     { cet = et.getCPP(et.getElementType()); } 
+
+    if (type != null && "Ref".equals(type.getName()))
+    { String refsze = "1";  
+      if (elements.size() > 0) 
+      { Expression refsize = (Expression) elements.get(0); 
+        refsze = refsize.queryFormCPP(env,local); 
+      } 
+      return " new " + cet + "[" + refsze + "]"; 
+    } 
 
     if (isMap())
     { String result = "(new map<string," + cet + ">())"; 
@@ -768,7 +777,10 @@ public class SetExpression extends Expression
     { if (elements.size() == 1)
       { Expression e = (Expression) elements.get(0);
         e.typeCheck(types,entities,contexts,env);
-        System.out.println(">>> Reference type Ref(" + elementType + ") size " + e + " of type " + e.getType()); 
+        System.out.println(">>> Reference type Ref(" + elementType + ") size " + e + " of type " + elementType); 
+      } 
+      else 
+      { System.out.println(">>> Reference type Ref(" + elementType + ") size 1 of type " + elementType); 
       } 
       return res; 
     } 
@@ -934,15 +946,15 @@ public class SetExpression extends Expression
   public String toJava()
   { if (isMap())
     { String result = "(new HashMap())"; 
-	  for (int i = 0; i < elements.size(); i++)
+      for (int i = 0; i < elements.size(); i++)
       { BinaryExpression e = (BinaryExpression) elements.get(i);
-	    Expression key = e.getLeft(); 
-		Expression value = e.getRight(); 
+        Expression key = e.getLeft(); 
+        Expression value = e.getRight(); 
         result = "Set.includingMap(" + result + "," + key.toJava() + "," + 
-		                           value.toJava() + ")";
-      }
-	  return result; 
-	}
+                           value.toJava() + ")";
+       }
+       return result; 
+     }
 	
     String res = "(new SystemTypes.Set())";
     for (int i = 0; i < elements.size(); i++)

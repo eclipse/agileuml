@@ -3731,7 +3731,9 @@ public void findClones(java.util.Map clones, String rule, String op)
       else if (type.getElementType() != null) 
       { elementType = type.getElementType(); } 
       else 
-      { elementType = left.getElementType(); } 
+      { elementType = left.getElementType(); }
+
+      System.out.println(">>> Type of " + this + " is " + type);  
     }  
     else if ("->at".equals(operator))
     { if (left.type != null && "String".equals(left.type.getName()))
@@ -3999,7 +4001,7 @@ public void findClones(java.util.Map clones, String rule, String op)
       else if (tlname.equals("String") || trname.equals("String"))
       { type = new Type("String",null); }
       else
-      { System.err.println("Warning: disallowed types " + tlname + " " + trname + " in +: " + this);
+      { System.err.println("Warning: unexpected types " + tlname + " " + trname + " in +: " + this);
 
         if (left.isRef())
         { left.setArray(true);
@@ -4034,7 +4036,14 @@ public void findClones(java.util.Map clones, String rule, String op)
                        Entity eleft, Entity eright)
   { // System.out.println("FOR " + this + " Left type is " + left.getType() + " Elementtype is: " + left.getElementType()); 
 
-    if (Type.isCollectionType(left.getType()))
+    if (left.isRef() && right.isRef())
+    { type = new Type("long", null); } 
+    else if (left.isRef())
+    { System.err.println("!! Warning: pointer subtraction: " + this); 
+      type = left.getType(); 
+      elementType = left.getElementType(); 
+    } 
+    else if (Type.isCollectionType(left.getType()))
     { type = left.getType(); 
       elementType = left.getElementType(); 
     } 
@@ -4817,6 +4826,10 @@ public boolean conflictsWithIn(String op, Expression el,
 
       if (Type.isPrimitiveType(type))
       { return unwrap(getind); } 
+
+      if (left.isRef())
+      { return getind; } 
+
       return "((" + typ + ") " + getind + ")"; 
     } 
 
@@ -4992,7 +5005,8 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = composeComparitorQueryForms(lqf,rqf,lprim,rprim); } 
       else if (operator.equals("+") || operator.equals("-") || 
                operator.equals("*") || operator.equals("/") || 
-               operator.equals("mod") || operator.equals("div"))
+               operator.equals("mod") || 
+               operator.equals("div"))
       { res = composeMathOpQueryForms(lqf,rqf,lprim,rprim);
         bNeeded = needsBracket;
       } 
@@ -5249,8 +5263,13 @@ public boolean conflictsWithIn(String op, Expression el,
       { return "(" + lqf + ".charAt(" + rqf + " - 1) + \"\")"; }  // and for Java6, 7, etc. 
       else if (left.type != null && left.type.isMapType())
       { return "((" + typ + ") " + ind + ")"; }
-      else if (Type.isPrimitiveType(type))
+      
+      if (left.isRef())
+      { return getind; } 
+
+      if (Type.isPrimitiveType(type))
       { return unwrap(getind); } 
+
       return "((" + typ + ") " + getind + ")"; 
     } 
 
@@ -5611,8 +5630,13 @@ public boolean conflictsWithIn(String op, Expression el,
       { return "(" + lqf + ".charAt(" + rqf + " - 1) + \"\")"; }  // and for Java6, 7, etc. 
       else if (left.type != null && left.type.isMapType())
       { return "((" + typ + ") " + ind + ")"; }
-      else if (Type.isPrimitiveType(type))
+
+      if (left.isRef())
+      { return getind; } 
+
+      if (Type.isPrimitiveType(type))
       { return unwrap(getind); } 
+
       return "((" + typ + ") " + getind + ")"; 
     } 
 
@@ -6440,6 +6464,9 @@ public boolean conflictsWithIn(String op, Expression el,
         }
         return "(" + lqf + ")->at(" + rqf + ")"; 
       } 
+
+      if (left.isRef())
+      { return "(" + lqf + ")[" + rqf + "-1]"; } 
 
       if (lelemtype != null) 
       { String etyp = 
@@ -10375,7 +10402,10 @@ public boolean conflictsWithIn(String op, Expression el,
   { String res; 
     // System.out.println("Comparitor query form: " + this + " " + lprim + " " +
     //                    rprim); 
-    if (lprim && rprim) 
+
+    if (left.isRef() && right.isRef())
+    { res = rqf + ".length " + operator + " " + lqf + ".length"; } 
+    else if (lprim && rprim) 
     { res = lqf + " " + operator + " " + rqf; } 
     else if (lprim)
     { String rr = right.unwrap(rqf); 
@@ -10421,7 +10451,16 @@ public boolean conflictsWithIn(String op, Expression el,
     else if (operator.equals("div"))
     { op = "/"; } 
 
-    if (operator.equals("-") && "String".equals(left.getType() + "") && 
+    if (operator.equals("+") && left.isRef())
+    { // Pointer addition - only valid for read-only accesses
+      res = "Arrays.copyOfRange(" + lqf + ", " + rqf + 
+                                ", " + lqf + ".length)"; 
+    } 
+    else if (operator.equals("-") && left.isRef() && 
+             right.isRef())
+    { res = rqf + ".length - " + lqf + ".length"; } 
+    else if (operator.equals("-") && 
+        "String".equals(left.getType() + "") && 
         "String".equals(right.getType() + ""))
     { res = "Set.subtract(" + lqf + "," + rqf + ")"; } 
     else if (lprim && rprim)
@@ -10461,7 +10500,16 @@ public boolean conflictsWithIn(String op, Expression el,
     else if (operator.equals("div"))
     { op = "/"; } 
 
-    if (operator.equals("-") && "String".equals(left.getType() + "") && 
+    if (operator.equals("+") && left.isRef())
+    { // Pointer addition - only valid for read-only accesses
+      res = "Arrays.copyOfRange(" + lqf + ", " + rqf + 
+                                ", " + lqf + ".length)"; 
+    } 
+    else if (operator.equals("-") && left.isRef() && 
+             right.isRef())
+    { res = rqf + ".length - " + lqf + ".length"; } 
+    else if (operator.equals("-") && 
+        "String".equals(left.getType() + "") && 
         "String".equals(right.getType() + ""))
     { res = "Ocl.subtract(" + lqf + "," + rqf + ")"; } 
     else if (lprim && rprim)
@@ -10504,6 +10552,8 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("+"))
     { if ("null".equals(lqf) || "null".equals(rqf))
       { return lqf + " + " + rqf; } 
+      // if (left.isRef())
+      // { } 
       if (left.isPrimitive() && right.isPrimitive())
       { return lqf + " + " + rqf; } 
       if (left.isString() && right.isString())
@@ -10522,7 +10572,8 @@ public boolean conflictsWithIn(String op, Expression el,
 
 
 
-    if (operator.equals("-") && "String".equals(left.getType().getName()) && 
+    if (operator.equals("-") && 
+        "String".equals(left.getType().getName()) && 
         "String".equals(right.getType().getName()))
     { res = "SystemTypes.subtract(" + lqf + "," + rqf + ")"; } 
     else 
@@ -11995,8 +12046,10 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     // query form of var. 
 
    if ("->at".equals(operator))
-   { // left->at(right) = val; left evaluates to a sequence or map
-     return BasicExpression.updateFormEqIndex(language,left,right,val,var,env,local); 
+   { // left->at(right) = val; 
+     // left evaluates to a sequence or map or ref
+     return BasicExpression.updateFormEqIndex(
+                language,left,right,val,var,env,local); 
    }  
 
    if ("->select".equals(operator))
@@ -12290,10 +12343,10 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       else 
       { return bel.updateFormJava6(env,"/:",val3,right,local); }
     }
-	else
+    else
     { String qf = queryFormJava6(env,local); 
-	  return "if (" + qf + ") { } else { System.err.println(\"Assertion " + this + " fails\"); }\n";  
-	}
+      return "if (" + qf + ") { } else { System.err.println(\"Assertion " + this + " fails\"); }\n";  
+    }
 
     // else
     // { return "{} /* Cannot produce update code for: " + this + " */"; }
@@ -12472,8 +12525,8 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     }
     else
     { String qf = queryFormJava7(env,local); 
-	  return "if (" + qf + ") { } else { System.err.println(\"Assertion " + this + " fails\"); }\n";  
-	}
+      return "if (" + qf + ") { } else { System.err.println(\"Assertion " + this + " fails\"); }\n";  
+    }
 
     // else
     // { return "{} /* Cannot produce update code for: " + this + " */"; }
@@ -12729,17 +12782,19 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
              "  { " + ufr + "}";
     } // accumulate the cases
 
+
     if (operator.equals("=") && left instanceof BasicExpression)
     { val2 = right.queryFormCPP(env,local);
       return ((BasicExpression) left).updateFormEqCPP(env,val2,local);
     }
     else if (operator.equals("=") && left instanceof UnaryExpression)
     { val2 = right.queryFormCPP(env,local);
-      return left.updateForm("CPP",env,((UnaryExpression) left).operator,val2,right,local);
+      return ((UnaryExpression) left).updateFormEq("CPP",env,((UnaryExpression) left).operator,val2,right,local);
     }
     else if (operator.equals("=") && left instanceof BinaryExpression)
     { val2 = right.queryFormCPP(env,local);
-      return left.updateForm("CPP",env,((BinaryExpression) left).operator,val2,right,local);
+      return ((BinaryExpression) left).updateFormEq("CPP", env, ((BinaryExpression) left).operator,val2,right,local);
+      // return left.updateForm("CPP",env,((BinaryExpression) left).operator,val2,right,local);
     }
     else if (operator.equals("->includesAll") && left instanceof BasicExpression)
     { val2 = right.queryFormCPP(env,local);

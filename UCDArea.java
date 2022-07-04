@@ -4363,6 +4363,7 @@ public class UCDArea extends JPanel
     auxcstls.add("cginterface.cstl"); 
     auxcstls.add("jwrap.cstl"); 
     auxcstls.add("catchTest.cstl");
+    auxcstls.add("java8deref.cstl");
 
     CGSpec cgs = loadCSTL("cgJava8.cstl",auxcstls); 
 
@@ -9095,7 +9096,7 @@ private String initialiseOclTypesCPP()
     "  OclType* oclanyType = OclType::createOclType(\"OclAny\");\n" +  
     "  oclanyType->setname(\"void *\");\n" +   
     "  OclType* oclfileType = OclType::createOclType(\"OclFile\");\n" +  
-    "  oclfileType->setname(\"OclFile *\");\n" +   
+    "  oclfileType->setname(\"class OclFile *\");\n" +   
     "\n"; 
 
   for (int i = 0; i < types.size(); i++) 
@@ -9115,7 +9116,7 @@ private String initialiseOclTypesCPP()
       String lcname = ename.toLowerCase(); 
       res = res + 
           "  OclType* " + lcname + "Type = OclType::createOclType(\"" + ename + "\");\n" +  
-          "  " + lcname + "Type->setname(\"" + ename + " *\");\n"; 
+          "  " + lcname + "Type->setname(\"class " + ename + " *\");\n"; 
 
       Vector attrs = ent.getAttributes(); 
       for (int j = 0; j < attrs.size(); j++) 
@@ -9147,22 +9148,28 @@ private String initialiseOclTypesCPP()
         } 
       } 
         
-    } // add its attributes, operations
+    } // add its attributes, operations, inheritances. 
   } 
 
   for (int i = 0; i < entities.size(); i++) 
-  { Entity ent = (Entity) entities.get(i); 
+  { Entity ent = (Entity) entities.get(i);
+    String ename = ent.getName(); 
+    String lcname = ename.toLowerCase(); 
+         
     if (ent.isComponent() || ent.isExternal()) { } 
     else 
     { Entity sup = ent.getSuperclass(); 
       if (sup != null) 
-      { String ename = ent.getName(); 
-        String lcname = ename.toLowerCase(); 
-        String supname = sup.getName(); 
+      { String supname = sup.getName(); 
         String suplcname = supname.toLowerCase(); 
         res = res + 
               "  " + lcname + "Type->addsuperclasses(" + 
                                       suplcname + "Type);\n"; 
+      } 
+
+      if (ent.isInterface())
+      { res = res + 
+              "  " + lcname + "Type->setisinterface(true);\n"; 
       } 
     } 
   }
@@ -10155,6 +10162,11 @@ public void produceCUI(PrintWriter out)
     mop = BSystemTypes.generateIntersectionMapOp(); 
     out.println("\n" + mop);  
 
+    /* Ref ops -- optional */ 
+
+    mop = BSystemTypes.refOps(); 
+    out.println("\n" + mop);  
+
     out.println("  }"); 
 
     out.println("}");
@@ -10368,6 +10380,11 @@ public void produceCUI(PrintWriter out)
     mop = BSystemTypes.generateUnionMapOp(); 
     out.println("\n" + mop);  
     mop = BSystemTypes.generateIntersectionMapOp(); 
+    out.println("\n" + mop);  
+
+    /* Ref ops -- optional */ 
+
+    mop = BSystemTypes.refOpsJava6(); 
     out.println("\n" + mop);  
 
     out.println("  }"); 
@@ -10589,6 +10606,11 @@ public void produceCUI(PrintWriter out)
     mop = BSystemTypes.generateUnionMapOpJava7(); 
     out.println("\n" + mop);  
     mop = BSystemTypes.generateIntersectionMapOpJava7(); 
+    out.println("\n" + mop);  
+
+    /* Ref ops -- optional */ 
+
+    mop = BSystemTypes.refOpsJava6(); 
     out.println("\n" + mop);  
 
     out.println("  }"); 

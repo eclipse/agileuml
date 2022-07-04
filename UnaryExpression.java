@@ -643,6 +643,21 @@ public void findClones(java.util.Map clones, String rule, String op)
   { // update   this = var  to this, val is
     // query form of var. 
 
+    if ("!".equals(operator))
+    { if (argument instanceof BinaryExpression) 
+      { BinaryExpression be = (BinaryExpression) argument; 
+        if (be.left.isRef() && "+".equals(be.operator))
+        { // lqf[rqf] := var
+          String lqf = be.left.queryForm(language,env,local); 
+          String rqf = be.right.queryForm(language,env,local);
+          return "    " + lqf + "[" + rqf + "] = " + val + ";";
+        } 
+      }     
+      String lhs = queryForm(language, env, local); 
+      String rhs = var.queryForm(language, env, local); 
+      return "    " + lhs + " = " + rhs + ";";
+    }
+
    if ("->any".equals(operator))   // argument->any() := var
    { BinaryExpression isin = new BinaryExpression(":", var, argument );
      BinaryExpression se = new BinaryExpression("->includes", argument, var);
@@ -825,11 +840,6 @@ public void findClones(java.util.Map clones, String rule, String op)
     { UnaryExpression mins = new UnaryExpression("-", var);
       BinaryExpression be = new BinaryExpression("=", argument, mins);
       return be.updateForm(language, env, local);
-    }
-    else if ("!".equals(operator))
-    { String lhs = queryForm(language, env, local); 
-      String rhs = var.queryForm(language, env, local); 
-      return "    " + lhs + " = " + rhs + ";";
     }
     else if ("?".equals(operator))
     { String lhs = queryForm(language, env, local); 
@@ -1976,7 +1986,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     }  
     // An OclIterator is a sequence view of a 
     // collection, via which the collection can 
-    // be navigated & modified. 
+    // be navigated & modified. iterators of a map
+    // are iterators of its *values* (not keys)
     
     if (operator.equals("->last") || operator.equals("->first"))
     { type = argument.elementType; 
@@ -2321,8 +2332,12 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       //     argument.isClassEntityType())
       // { } 
       // else
-      if (argument.hasBasicType()) 
-      { res = "Set.newRef" + elemT + "(" + qf + ")"; } 
+
+      if (argument instanceof BasicExpression) 
+      { BasicExpression bexpr = (BasicExpression) argument; 
+        System.out.println(">>> Reference for " + bexpr + " " + bexpr.variable); 
+        res = "Set.newRef" + elemT + "(" + qf + ")"; 
+      } // also bexpr->at(ind) is ok: ?bexpr + ind - 1
 
       if (needsBracket) 
       { res = "(" + res + ")"; }
@@ -2331,14 +2346,35 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("!"))
     { String res = qf; 
-      Type argelemtype = argument.getElementType(); 
+      // Type argelemtype = argument.getElementType(); 
       // if (argelemtype != null && 
       //     (argelemtype.isCollection() || 
       //      argelemtype.isFunctionType() || 
       //      argelemtype.isClassEntityType()))
       // { } 
       // else
-      if (Type.isBasicType(argelemtype)) // or a Ref 
+      // if (Type.isBasicType(argelemtype)) // or a Ref
+
+      if (argument instanceof BinaryExpression) 
+      { BinaryExpression be = (BinaryExpression) argument; 
+        if (be.left.isRef() && "+".equals(be.operator))
+        { // !(ptr + n) is ptr[n]
+
+          String lqf = be.left.queryForm(env,local); 
+          String rqf = be.right.queryForm(env,local);
+          res = lqf + "[" + rqf + "]";
+        } 
+        else 
+        { res = qf + "[0]"; }
+      }
+      else if (argument instanceof UnaryExpression)
+      { UnaryExpression ue = (UnaryExpression) argument; 
+        if ("?".equals(ue.operator)) 
+        { res = ue.argument.queryForm(env,local); } 
+        else 
+        { res = qf + "[0]"; }
+      }
+      else   
       { res = qf + "[0]"; }  
 
       if (needsBracket) 
@@ -2416,7 +2452,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->iterator"))
     { if (argument.isSequenceValued())
       { return "OclIterator.newOclIterator_Sequence(" + qf + ")"; }
-      else 
+      else if (argument.isMap())
+      { return "OclIterator.newOclIterator_Set(" + qf + ".values())"; }
+      else
       { return "OclIterator.newOclIterator_Set(" + qf + ")"; }
     }
 
@@ -2667,6 +2705,44 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("-"))
     { return "-" + qf; } 
 
+    if (operator.equals("!"))
+    { String res = qf; 
+      // Type argelemtype = argument.getElementType(); 
+      // if (argelemtype != null && 
+      //     (argelemtype.isCollection() || 
+      //      argelemtype.isFunctionType() || 
+      //      argelemtype.isClassEntityType()))
+      // { } 
+      // else
+      // if (Type.isBasicType(argelemtype)) // or a Ref 
+
+      if (argument instanceof BinaryExpression) 
+      { BinaryExpression be = (BinaryExpression) argument; 
+        if (be.left.isRef() && "+".equals(be.operator))
+        { // !(ptr + n) is ptr[n]
+
+          String lqf = be.left.queryFormJava6(env,local); 
+          String rqf = be.right.queryFormJava6(env,local);
+          res = lqf + "[" + rqf + "]";
+        } 
+        else 
+        { res = qf + "[0]"; }
+      }
+      else if (argument instanceof UnaryExpression)
+      { UnaryExpression ue = (UnaryExpression) argument; 
+        if ("?".equals(ue.operator)) 
+        { res = ue.argument.queryFormJava6(env,local); } 
+        else 
+        { res = qf + "[0]"; }
+      }
+      else   
+      { res = qf + "[0]"; }  
+
+      if (needsBracket) 
+      { res = "(" + res + ")"; }
+      return res;  
+    } // functions, classes, collections, maps have ?x = x
+
     if (operator.equals("?") || operator.equals("!"))
     { return qf; } 
 
@@ -2752,6 +2828,18 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return "(" + wqf + ").getClass()"; 
     }  
 
+    if (operator.equals("->asSequence")) 
+    { return "Set.asSequence(" + qf + ")"; }  
+    // but maps cannot be converted 
+
+    if (operator.equals("->asSet")) 
+    { return "Set.asSet(" + qf + ")"; }
+
+    if (operator.equals("->asOrderedSet")) 
+    { return "Set.asOrderedSet(" + qf + ")"; }
+
+    if (operator.equals("->asBag")) 
+    { return "Set.sort(" + qf + ")"; }  
 
     if ("->copy".equals(operator))
     { if (type == null) 
@@ -2775,6 +2863,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->iterator"))
     { if (argument.isSequenceValued())
       { return "OclIterator.newOclIterator_Sequence(" + qf + ")"; }
+      else if (argument.isMap())
+      { return "OclIterator.newOclIterator_Set(" + qf + ".values())"; }
       else 
       { return "OclIterator.newOclIterator_Set(" + qf + ")"; }
     }
@@ -2949,6 +3039,44 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("-"))
     { return "-" + qf; } 
 
+    if (operator.equals("!"))
+    { String res = qf; 
+      // Type argelemtype = argument.getElementType(); 
+      // if (argelemtype != null && 
+      //     (argelemtype.isCollection() || 
+      //      argelemtype.isFunctionType() || 
+      //      argelemtype.isClassEntityType()))
+      // { } 
+      // else
+      // if (Type.isBasicType(argelemtype)) // or a Ref 
+
+      if (argument instanceof BinaryExpression) 
+      { BinaryExpression be = (BinaryExpression) argument; 
+        if (be.left.isRef() && "+".equals(be.operator))
+        { // !(ptr + n) is ptr[n]
+
+          String lqf = be.left.queryFormJava7(env,local); 
+          String rqf = be.right.queryFormJava7(env,local);
+          res = lqf + "[" + rqf + "]";
+        } 
+        else 
+        { res = qf + "[0]"; }
+      }
+      else if (argument instanceof UnaryExpression)
+      { UnaryExpression ue = (UnaryExpression) argument; 
+        if ("?".equals(ue.operator)) 
+        { res = ue.argument.queryFormJava7(env,local); } 
+        else 
+        { res = qf + "[0]"; }
+      }
+      else   
+      { res = qf + "[0]"; }  
+
+      if (needsBracket) 
+      { res = "(" + res + ")"; }
+      return res;  
+    } // functions, classes, collections, maps have ?x = x
+
     if (operator.equals("?") || operator.equals("!"))
     { return qf; } 
 
@@ -3034,6 +3162,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return "(" + wqf + ").getClass()"; 
     }  
 
+    if (operator.equals("->asSequence")) 
+    { return "Ocl.asSequence(" + qf + ")"; }
+    // but maps cannot be converted 
+
+    if (operator.equals("->asSet")) 
+    { return "Ocl.asSet(" + qf + ")"; }
+
+    if (operator.equals("->asOrderedSet")) 
+    { return "Ocl.asOrderedSet(" + qf + ")"; }
+
     if (operator.equals("->asBag"))
     { return "Ocl.sort(" + qf + ")"; } 
 
@@ -3059,6 +3197,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->iterator"))
     { if (argument.isSequenceValued())
       { return "OclIterator.newOclIterator_Sequence(" + qf + ")"; }
+      else if (argument.isMap())
+      { return "OclIterator.newOclIterator_Set(" + qf + ".values())"; }
       else 
       { return "OclIterator.newOclIterator_Set(" + qf + ")"; }
     }
@@ -3569,16 +3709,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "-" + qf; } 
 
     if (operator.equals("?"))
-    { if (Type.isBasicType(argument.type))
+    { // if (Type.isBasicType(argument.type))
       { return "&" + qf; } 
-      return qf; 
+      // return qf; 
     } // objects, functions and 
       // collections are already pointers
 
     if (operator.equals("!"))
-    { if (Type.isBasicType(argument.getElementType()))
+    { // if (Type.isBasicType(argument.getElementType()))
       { return "*" + qf; } 
-      return qf; 
+      // return qf; 
     } // objects and collections are already pointers
 
     if (operator.equals("not"))

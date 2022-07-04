@@ -171,9 +171,13 @@ public class CGCondition
                              mffeat,ast,cgs,entities); 
 
           if (positive) 
-          { ASTTerm.setType(repl,stereo); } 
+          { ASTTerm.setType(repl,stereo);
+            ASTTerm.addStereo(repl,stereo); 
+          } 
           else 
-          { ASTTerm.setType(repl,null); } 
+          { ASTTerm.setType(repl,null);
+            ASTTerm.removeStereo(repl,stereo);
+          } 
     
           System.out.println(">>> Executed action " + repl + " (" + positive + ") " + stereo);  
           JOptionPane.showMessageDialog(null, 
@@ -733,6 +737,15 @@ public class CGCondition
     if ("Class".equals(stereotype))
     { if (Type.isOclEntityType(alit,entities) || 
           a.hasStereotype("Class")) 
+      { return positive; } 
+      else 
+      { return !positive; } 
+    }  
+
+    if ("Collection".equals(stereotype))
+    { if (a.hasStereotype("Set") || 
+          a.hasStereotype("Sequence") || 
+          a.hasType("Set") || a.hasType("Sequence")) 
       { return positive; } 
       else 
       { return !positive; } 

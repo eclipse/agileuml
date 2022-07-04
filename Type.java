@@ -2687,8 +2687,8 @@ public class Type extends ModelElement
       { return "new HashMap()"; } 
       if (nme.equals("Ref"))
       { if (elementType != null) 
-        { return "new " + elementType.getJava() + "[]"; } 
-        return "new Object[]"; 
+        { return "new " + elementType.getJava() + "[1]"; } 
+        return "new Object[1]"; 
       } 
       if (alias != null)    // For datatypes
       { return alias.getDefault(); } 
@@ -2745,10 +2745,13 @@ public class Type extends ModelElement
       }
       else if (isEntity() ||  
                "OclDate".equals(nme) || 
+               "OclDatasource".equals(nme) || 
+               "SQLStatement".equals(nme) || 
                "OclFile".equals(nme) || 
                "OclVoid".equals(nme) || 
                "OclProcess".equals(nme) || 
                "OclProcessGroup".equals(nme) ||
+               "OclRegex".equals(nme) || 
                "OclAttribute".equals(nme) || 
                "OclOperation".equals(nme) || 
                "OclRandom".equals(nme) || 
@@ -3171,7 +3174,10 @@ public class Type extends ModelElement
     else if (nme.equals("GraphDisplay"))
     { return "GraphDisplay.defaultInstance()"; } 
 
-    if (isEntity || "OclAny".equals(nme) || "OclType".equals(nme) || 
+    if (isEntity || "OclAny".equals(nme) || 
+        "OclType".equals(nme) || 
+        "OclAttribute".equals(nme) || 
+        "OclOperation".equals(nme) || 
         "OclVoid".equals(nme) || 
         "OclIterator".equals(nme)) 
     { return "nil"; } 
@@ -3451,16 +3457,16 @@ public class Type extends ModelElement
     { String restype = "Object"; 
       if (elementType != null) 
       { restype = elementType.getJava();
-        if (isBasicType(elementType) ||
-            elementType.isStructEntityType() ||  
-            "Ref".equals(elementType.getName()) || 
-            "void".equals(elementType.getName()))
+        // if (isBasicType(elementType) ||
+        //     elementType.isStructEntityType() ||  
+        //     "Ref".equals(elementType.getName()) || 
+        //     "void".equals(elementType.getName()))
         { return restype + "[]"; } 
-        else 
-        { return restype; }
+        // else 
+        // { return restype; }
       }  
       else 
-      { return restype; } 
+      { return restype + "[]"; } 
     } 
 
 
@@ -3504,13 +3510,29 @@ public class Type extends ModelElement
       { return "Evaluation<String, String>"; } 
     } 
 
+    if (nme.equals("Ref"))
+    { String restype = "Object"; 
+      if (elementType != null) 
+      { restype = elementType.getJava6();
+        // if (isBasicType(elementType) ||
+        //     elementType.isStructEntityType() ||  
+        //     "Ref".equals(elementType.getName()) || 
+        //     "void".equals(elementType.getName()))
+        { return restype + "[]"; } 
+        // else 
+        // { return restype; }
+      }  
+      else 
+      { return restype + "[]"; } 
+    } 
+
     if (alias != null)    // For datatypes
     { return alias.getJava6(); } 
 
     if (nme.equals("OclAny"))
     { return "Object"; } 
 
-    if (nme.equals("OclAny"))
+    if (nme.equals("OclType"))
     { return "Class"; } 
 
     if (nme.equals("OclDate"))
@@ -3565,6 +3587,22 @@ public class Type extends ModelElement
       { return "Evaluation<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
       else 
       { return "Evaluation<String,Object>"; } 
+    } 
+
+    if (nme.equals("Ref"))
+    { String restype = "Object"; 
+      if (elementType != null) 
+      { restype = elementType.getJava7();
+        // if (isBasicType(elementType) ||
+        //     elementType.isStructEntityType() ||  
+        //     "Ref".equals(elementType.getName()) || 
+        //     "void".equals(elementType.getName()))
+        { return restype + "[]"; } 
+        // else 
+        // { return restype; }
+      }  
+      else 
+      { return restype + "[]"; } 
     } 
 
     if (alias != null)    // For datatypes
@@ -3639,6 +3677,24 @@ public class Type extends ModelElement
       { return "Evaluation<String,Object>"; } 
     } 
 
+    if (nme.equals("Ref"))
+    { String restype = "Object"; 
+      if (elemType != null)
+      { restype = elemType.getJava7(); } 
+      else if (elementType != null) 
+      { restype = elementType.getJava7();
+        // if (isBasicType(elementType) ||
+        //     elementType.isStructEntityType() ||  
+        //     "Ref".equals(elementType.getName()) || 
+        //     "void".equals(elementType.getName()))
+        // { return restype + "[]"; } 
+        // else 
+        // { return restype; }
+      }  
+      
+      return restype + "[]"; 
+    } 
+
     if (alias != null)    // For datatypes
     { return alias.getJava7(); } 
 
@@ -3689,6 +3745,12 @@ public class Type extends ModelElement
     if (nme.equals("Function"))
     { return "Evaluation<" + kt + ", " + et + ">"; } 
 
+    if (nme.equals("Ref"))
+    { if (elemType != null) 
+      { return elemType.getJava7() + "[]"; } 
+      return et + "[]"; 
+    } 
+        
     if (typ.alias != null)    // For datatypes
     { return typ.alias.typeWrapperJava7(); } 
 
@@ -3752,6 +3814,13 @@ public class Type extends ModelElement
       { return "Evaluation<String,Object>"; } 
     } 
 
+    if (nme.equals("Ref"))
+    { if (elementType != null) 
+      { return elementType.getJava8() + "[]"; } 
+      else 
+      { return "Object[]"; } 
+    } 
+
     if (nme.equals("OclAny"))
     { return "Object"; } 
 
@@ -3779,6 +3848,7 @@ public class Type extends ModelElement
     if (isEntity()) { return nme; } 
     if ("Set".equals(nme) || "Sequence".equals(nme)) { return "List"; } 
     if ("Map".equals(nme)) { return "Map"; } 
+    if ("Ref".equals(nme)) { return "Object[]"; } 
     if ("int".equals(nme)) { return "Integer"; } 
     if ("double".equals(nme)) { return "Double"; } 
     if ("long".equals(nme)) { return "Long"; } 
@@ -3802,6 +3872,7 @@ public class Type extends ModelElement
     if ("Set".equals(nme)) { return "HashSet"; } 
     if ("Sequence".equals(nme)) { return "ArrayList"; } 
     if ("Map".equals(nme)) { return "HashMap"; } 
+    if ("Ref".equals(nme)) { return "Object[]"; } 
     if ("int".equals(nme)) { return "Integer"; } 
     if ("double".equals(nme)) { return "Double"; } 
     if ("long".equals(nme)) { return "Long"; } 
@@ -3865,6 +3936,13 @@ public class Type extends ModelElement
       { return "Evaluation<String, Object>"; }
     } 
 
+    if ("Ref".equals(nme)) 
+    { if (elementType != null) 
+      { return elementType.getJava7() + "[]"; }
+      else 
+      { return "Object[]"; }
+    } 
+
     if ("int".equals(nme)) { return "Integer"; } 
     if ("double".equals(nme)) { return "Double"; } 
     if ("long".equals(nme)) { return "Long"; } 
@@ -3920,6 +3998,13 @@ public class Type extends ModelElement
       { return "Evaluation<String, " + elementType.typeWrapperJava8() + ">"; }
       else 
       { return "Evaluation<String, Object>"; }
+    } 
+
+    if ("Ref".equals(nme)) 
+    { if (elementType != null) 
+      { return elementType.getJava8() + "[]"; }
+      else 
+      { return "Object[]"; }
     } 
 
     if ("int".equals(nme)) { return "Integer"; } 
@@ -4029,8 +4114,9 @@ public class Type extends ModelElement
         "boolean".equals(typ) ||
         "OclAny".equals(typ) || "OclType".equals(typ) ||
         "OclFile".equals(typ) || "OclAttribute".equals(typ) || 
+        "OclDataset".equals(typ) || "SQLStatement".equals(typ) || 
         "OclOperation".equals(typ) || 
-        "OclException".equals(typ) ||
+        "OclException".equals(typ) || "OclRegex".equals(typ) || 
         Type.isOCLExceptionType(typ) ||   
         "OclProcess".equals(typ) || "OclRandom".equals(typ) || 
         "OclIterator".equals(typ) || "OclDate".equals(typ) || 

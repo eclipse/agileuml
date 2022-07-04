@@ -8855,16 +8855,16 @@ public Statement generateDesignSubtract(Expression rhs)
     { return updateFormEqIndexJava7(obj,ind,val2,var,env,local); }
     else if ("CSharp".equals(lang))
     { return updateFormEqIndexCSharp(obj,ind,val2,var,env,local); }
-    else if ("CSharp".equals(lang))
+    else if ("CPP".equals(lang))
     { return updateFormEqIndexCPP(obj,ind,val2,var,env,local); }
     else 
-    { return "/* Unsupported language for arr[x]->at(y) := z */"; }  
+    { return "/* Unsupported language for x->at(y) := z */"; }  
   } 
 
   public static String updateFormEqIndex(Expression obj, Expression ind,  
                              String val2, Expression var, java.util.Map env, boolean local)
   { // obj[ind] = val2 where obj is complex expression, 
-    // either a sequence or map, or 
+    // either a sequence, ref or map, or 
     // itself an indexed expression
  
    if (ind != null) 
@@ -8875,6 +8875,8 @@ public Statement generateDesignSubtract(Expression rhs)
  
       if (ind.type != null && "String".equals(ind.type.getName()))
       { return "((Map) " + lexp + ").put(" + wind + ", " + wval + ");"; }  // map[ind] = val2 
+      else if (obj.isRef())
+      { return lexp + "[" + indopt + " -1] = " + val2 + ";"; }  
       else 
       { return "((Vector) " + lexp + ").set((" + indopt + " -1), " + wval + ");"; }  
     } 
@@ -8895,6 +8897,8 @@ public Statement generateDesignSubtract(Expression rhs)
  
       if (ind.type != null && "String".equals(ind.type.getName()))
       { return "((HashMap) " + lexp + ").put(" + wind + ", " + wval + ");"; }  // map[ind] = val2 
+      else if (obj.isRef())
+      { return lexp + "[" + indopt + " -1] = " + val2 + ";"; }  
       else 
       { return "((ArrayList) " + lexp + ").set((" + indopt + " -1), " + wval + ");"; }  
     } 
@@ -8924,6 +8928,8 @@ public Statement generateDesignSubtract(Expression rhs)
  
       if (objt.isMapType())
       { return "((" + j7type + ") " + lexp + ").put(" + wind + ", " + wval + ");"; }  // map[ind] = val2 
+      else if (obj.isRef())
+      { return lexp + "[" + indopt + " -1] = " + val2 + ";"; }  
       else 
       { return "((" + j7type + ") " + lexp + ").set((" + indopt + " -1), " + wval + ");"; }  
     } 
@@ -8946,7 +8952,7 @@ public Statement generateDesignSubtract(Expression rhs)
           "String".equals(ind.type.getName()))
       { return "((Hashtable) " + lexp + ")[" + wind + "] = " + wval + ";"; }  // map[ind] = val2 
       else if (Type.isReferenceType(obj.type))
-      { return lexp + "[" + indopt + "-1] = " + wval + ";"; } 
+      { return lexp + "[" + indopt + "-1] = " + val2 + ";"; } 
       else 
       { return "((ArrayList) " + lexp + ")[" + indopt + " -1] = " + wval + ";"; }  
     } 
@@ -8968,10 +8974,13 @@ public Statement generateDesignSubtract(Expression rhs)
  
       if (ind.type != null && "String".equals(ind.type.getName()))
       { return "(*" + lexp + ")[" + indopt + "] = " + wval + ";"; }   
+      else if (obj.isRef())
+      { return "(" + lexp + ")[" + indopt + " -1] = " + wval + ";"; }  
       else 
       { return "(*" + lexp + ")[" + indopt + " -1] = " + wval + ";"; }  
     } 
-    return "/* Error: null index */"; 
+
+    return "/* Error: null index in " + obj + "[index] := " + val2 + " */"; 
   } 
 
   public String updateFormEq(java.util.Map env,

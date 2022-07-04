@@ -136,8 +136,35 @@ public abstract class ASTTerm
     { stereotypes.add(str); } 
   } 
 
+  public static void addStereo(String lit, String str)
+  { Vector stereotypes = 
+      (Vector) ASTTerm.metafeatures.get(lit); 
+    if (stereotypes == null) 
+    { stereotypes = new Vector(); 
+      ASTTerm.metafeatures.put(lit,stereotypes); 
+    } 
+
+    if (stereotypes.contains(str)) {} 
+    else 
+    { stereotypes.add(str); } 
+  } 
+
+
   public void removeStereotype(String str) 
   { String lit = literalForm(); 
+    Vector stereotypes = 
+      (Vector) ASTTerm.metafeatures.get(lit); 
+    if (stereotypes == null) 
+    { stereotypes = new Vector(); 
+      ASTTerm.metafeatures.put(lit,stereotypes); 
+    } 
+    Vector removed = new Vector(); 
+    removed.add(str); 
+    stereotypes.removeAll(removed);  
+  } 
+
+  public static void removeStereo(String lit, String str) 
+  { 
     Vector stereotypes = 
       (Vector) ASTTerm.metafeatures.get(lit); 
     if (stereotypes == null) 
@@ -398,6 +425,8 @@ public abstract class ASTTerm
      
   public abstract Type cdeclarationToType(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities);
+
+  public abstract String cdeclarationStorageClass();
 
   public abstract ModelElement cdeclaratorToModelElement(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities);
