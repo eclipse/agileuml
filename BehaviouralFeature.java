@@ -1792,6 +1792,9 @@ public class BehaviouralFeature extends ModelElement
   public boolean isUpdate()
   { return query == false; }
 
+  public boolean isGenerator()
+  { return hasStereotype("generator"); } 
+
   public static boolean isStatic0(ModelElement mm)
   { if (mm instanceof BehaviouralFeature)
     { BehaviouralFeature bf = (BehaviouralFeature) mm; 

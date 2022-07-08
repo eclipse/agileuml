@@ -548,6 +548,56 @@ abstract class Expression
     return res; 
   } 
 
+  public static Expression convertToGenerator(Expression expr,
+                                              Vector pars)
+  { // OclIterator.newOclIterator_Function(
+    //      lambda i : int in expr(pars^[i])) 
+   
+    BasicExpression pos =
+        BasicExpression.newVariableBasicExpression(
+                                         "_position_"); 
+    pos.setType(new Type("int", null));
+    Attribute acc = 
+      new Attribute("_position_", new Type("int", null), 
+                    ModelElement.INTERNAL); 
+ 
+    Vector newpars = new Vector(); 
+    newpars.addAll(pars); 
+    newpars.add(pos); 
+
+    Expression res = expr; 
+
+    if (res instanceof BasicExpression) 
+    { BasicExpression resbe = (BasicExpression) res; 
+      if (resbe.getParameters() == null || 
+          resbe.getParameters().size() == 0) 
+      { resbe.setParameters(newpars); } 
+
+      if (resbe.objectRef == null)
+      { resbe.objectRef = 
+          BasicExpression.newVariableBasicExpression("self"); 
+      } 
+    } 
+    else 
+    { for (int i = 0; i < newpars.size(); i++) 
+      { Expression par = (Expression) newpars.get(i); 
+        res = new BinaryExpression("->apply",res,par);  
+      } 
+    } 
+
+    UnaryExpression lambda = 
+      new UnaryExpression("lambda", res); 
+    lambda.setAccumulator(acc); 
+    Type ftype = new Type("Function", null);
+    ftype.setKeyType(new Type("int", null)); 
+    ftype.setElementType(new Type("OclAny", null)); 
+    lambda.setType(ftype); 
+    
+    return 
+      BasicExpression.newStaticCallBasicExpression(
+        "newOclIterator_Function", "OclIterator", lambda); 
+  } 
+
   public static Expression combineBySum(Vector atts)
   { Expression res = null; 
     for (int i = 0; i < atts.size(); i++)
@@ -1610,6 +1660,11 @@ abstract class Expression
 
   public boolean isRef()
   { return type != null && type.isRef(); }
+
+  public boolean isOclIterator()
+  { return type != null && 
+      "OclIterator".equals(type.getName());
+  }
 
   public String getOclType()
   { 

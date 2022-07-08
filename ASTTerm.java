@@ -481,6 +481,9 @@ public abstract class ASTTerm
   public abstract Vector jspreSideEffect(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector ents);
 
+  public abstract Vector jspostSideEffect(java.util.Map vartypes, 
+    java.util.Map varelemtypes, Vector types, Vector ents);
+
   public abstract Vector jsvariableDeclarationToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities); 
 
