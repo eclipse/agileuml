@@ -12080,6 +12080,19 @@ public class ASTCompositeTerm extends ASTTerm
       } // update form only.
     }  
 
+    if ("next".equals(feature) && 
+        obj.isOclIterator() && pars.size() == 0)
+    { // itr.nextResult() returns OclIteratorResult object
+      Expression res =
+        BasicExpression.newCallBasicExpression("nextResult", obj); 
+      res.setType(new Type("OclIteratorResult", null)); 
+      Vector cmds = new Vector(); 
+      cmds.add(
+           InvocationStatement.newInvocationStatement(res));   
+      return cmds;  
+    } 
+
+
     if ("copyWithin".equals(feature) && 
         obj.isSequence() && 
         pars.size() >= 2)
@@ -13146,10 +13159,40 @@ public class ASTCompositeTerm extends ASTTerm
 
     } 
 
+
+    if ("at".equals(feature) && 
+        obj.isSequence() && 
+        pars.size() == 1)
+    { Expression par1 = (Expression) pars.get(0); 
+      Expression indx = 
+        new BinaryExpression("+", par1, unitExpression);  
+      BinaryExpression indof = 
+        new BinaryExpression("->at", obj, indx); 
+      indof.setType(obj.getElementType()); 
+      Expression endindx = 
+        new BinaryExpression("+", 
+              new UnaryExpression("->size", obj), indof);  
+      BinaryExpression indend = 
+        new BinaryExpression("->at", obj, endindx); 
+      indend.setType(obj.getElementType()); 
+ 
+      BinaryExpression geq = 
+        new BinaryExpression(">=", par1, zeroExpression); 
+      Expression condexpr =
+        new ConditionalExpression(geq, indof, indend);
+      condexpr.setType(obj.getElementType()); 
+      return condexpr;  
+    } // if par1 < 0 then obj->at(obj.size+1+par1) else 
+      //   obj->at(par1+1) 
+
+
     if (("Array".equals(obj + "") || 
          "Int8Array".equals(obj + "") || 
          "Int16Array".equals(obj + "") || 
          "Int32Array".equals(obj + "") || 
+         "Uint8Array".equals(obj + "") || 
+         "Uint16Array".equals(obj + "") || 
+         "Uint32Array".equals(obj + "") || 
          "BigInt64Array".equals(obj + ""))
         && "of".equals(feature) &&
         pars.size() > 0) 
@@ -13165,6 +13208,9 @@ public class ASTCompositeTerm extends ASTTerm
          "Int8Array".equals(obj + "") || 
          "Int16Array".equals(obj + "") || 
          "Int32Array".equals(obj + "") || 
+         "Uint8Array".equals(obj + "") || 
+         "Uint16Array".equals(obj + "") || 
+         "Uint32Array".equals(obj + "") || 
          "BigInt64Array".equals(obj + "")) && 
         "from".equals(feature) &&
         pars.size() == 1) 
@@ -13720,9 +13766,29 @@ public class ASTCompositeTerm extends ASTTerm
     if ("entries".equals(feature) && 
         obj.isSequence() && 
         pars.size() == 0)
-    { Expression res = 
+    { // OclIterator.newOclIterator_Sequence(
+      //    Integer.subrange(1,obj.size)->collect(i | 
+      //                         Sequence{i-1, obj->at(i)}))
+
+      BasicExpression indx = 
+        BasicExpression.newVariableBasicExpression("_indx"); 
+      Vector dmnargs = new Vector(); 
+      dmnargs.add(unitExpression); 
+      dmnargs.add(new UnaryExpression("->size", obj)); 
+      Expression dmnset = 
+        BasicExpression.newFunctionBasicExpression("subrange",
+            "Integer", dmnargs); 
+      Expression dmn = new BinaryExpression(":", indx, dmnset); 
+      SetExpression rng = new SetExpression(true); 
+      rng.addElement(
+           new BinaryExpression("-", indx, unitExpression)); 
+      rng.addElement(new BinaryExpression("->at", obj, indx));  
+            
+      Expression objentries = 
+        new BinaryExpression("|C", dmn, rng); 
+      Expression res = 
         BasicExpression.newStaticCallBasicExpression(
-          "newOclIterator_Sequence", "OclIterator", obj);
+          "newOclIterator_Sequence", "OclIterator", objentries);
       res.setType(new Type("OclIterator", null));  
       return res; 
     } // But actually the sequence of pairs (i,obj[i+1])
@@ -13780,6 +13846,66 @@ public class ASTCompositeTerm extends ASTTerm
       res.setType(obj.getType()); 
       res.setElementType(obj.getElementType());
       return res; 
+    } 
+
+    if ("fill".equals(feature) &&
+        obj.isSequence()) 
+    { Expression par1 = (Expression) pars.get(0);     
+          
+      if (pars.size() == 1)
+      { Expression expr = 
+                new BinaryExpression("->collect", 
+                                     obj,par1); 
+        // Statement stat = 
+                new AssignStatement(obj, expr); 
+        expr.setType(obj.getType()); 
+        expr.setElementType(par1.getType()); 
+        return expr; 
+      } 
+
+      if (pars.size() > 2) 
+      { Expression lowind = (Expression) pars.get(0); 
+        Expression highind = (Expression) pars.get(1);
+        Expression elem = (Expression) pars.get(2);
+            
+        Vector pars1 = new Vector(); 
+        pars1.add(unitExpression); 
+        pars1.add(lowind); 
+
+        Expression subrange1 = 
+          BasicExpression.newFunctionBasicExpression(
+                "subrange", obj, pars1); 
+
+        Vector pars2 = new Vector(); 
+        pars2.add(new BinaryExpression("+",
+                     lowind,unitExpression)); 
+        pars2.add(highind); 
+
+        Expression subrange2 = 
+           BasicExpression.newFunctionBasicExpression(
+                "subrange", obj, pars2); 
+ 
+        subrange2 = 
+           new BinaryExpression("->collect", subrange2, elem); 
+        subrange2.setBrackets(true); 
+
+        Vector pars3 = new Vector(); 
+        pars3.add(new BinaryExpression("+",
+                            highind,unitExpression)); 
+        pars3.add(
+           new UnaryExpression("->size",obj)); 
+
+        Expression subrange3 = 
+           BasicExpression.newFunctionBasicExpression(
+                "subrange", obj, pars3); 
+
+        Expression cat1 = 
+              new BinaryExpression("^", subrange2, subrange3); 
+        Expression expr = 
+              new BinaryExpression("^", subrange1, cat1); 
+        expr.setType(new Type("Sequence", null)); 
+        return expr;
+      }  
     } 
 
     if ("slice".equals(feature) && 
