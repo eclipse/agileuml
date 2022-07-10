@@ -12092,6 +12092,107 @@ public class ASTCompositeTerm extends ASTTerm
       return cmds;  
     } 
 
+    if ("fill".equals(feature) &&
+        obj.isSequence()) 
+    { Expression par1 = (Expression) pars.get(0);     
+          
+      if (pars.size() == 1)
+      { Expression expr = 
+                new BinaryExpression("->collect", 
+                                     obj,par1); 
+        // Statement stat = 
+                new AssignStatement(obj, expr); 
+        expr.setType(obj.getType()); 
+        expr.setElementType(par1.getType()); 
+        Vector cmds = new Vector(); 
+        cmds.add(
+           new AssignStatement(obj,expr));   
+        return cmds; 
+      } 
+
+      if (pars.size() == 2) 
+      { Expression lowind = (Expression) pars.get(1); 
+        Expression highind = 
+          new UnaryExpression("->size",obj);
+        Expression elem = (Expression) pars.get(0);
+            
+        Vector pars1 = new Vector(); 
+        pars1.add(unitExpression); 
+        pars1.add(lowind); 
+
+        Expression subrange1 = 
+          BasicExpression.newFunctionBasicExpression(
+                "subrange", obj, pars1); 
+
+        Vector pars2 = new Vector(); 
+        pars2.add(new BinaryExpression("+",
+                     lowind,unitExpression)); 
+        pars2.add(highind); 
+
+        Expression subrange2 = 
+           BasicExpression.newFunctionBasicExpression(
+                "subrange", obj, pars2); 
+ 
+        subrange2 = 
+           new BinaryExpression("->collect", subrange2, elem); 
+        subrange2.setBrackets(true); 
+
+        Expression expr = 
+              new BinaryExpression("^", subrange1, subrange2); 
+        expr.setType(new Type("Sequence", null)); 
+        Vector cmds = new Vector(); 
+        cmds.add(
+           new AssignStatement(obj,expr));   
+        return cmds; 
+      }  
+
+      if (pars.size() == 3) 
+      { Expression lowind = (Expression) pars.get(1); 
+        Expression highind = (Expression) pars.get(2);
+        Expression elem = (Expression) pars.get(0);
+            
+        Vector pars1 = new Vector(); 
+        pars1.add(unitExpression); 
+        pars1.add(lowind); 
+
+        Expression subrange1 = 
+          BasicExpression.newFunctionBasicExpression(
+                "subrange", obj, pars1); 
+
+        Vector pars2 = new Vector(); 
+        pars2.add(new BinaryExpression("+",
+                     lowind,unitExpression)); 
+        pars2.add(highind); 
+
+        Expression subrange2 = 
+           BasicExpression.newFunctionBasicExpression(
+                "subrange", obj, pars2); 
+ 
+        subrange2 = 
+           new BinaryExpression("->collect", subrange2, elem); 
+        subrange2.setBrackets(true); 
+
+        Vector pars3 = new Vector(); 
+        pars3.add(new BinaryExpression("+",
+                            highind,unitExpression)); 
+        pars3.add(
+           new UnaryExpression("->size",obj)); 
+
+        Expression subrange3 = 
+           BasicExpression.newFunctionBasicExpression(
+                "subrange", obj, pars3); 
+
+        Expression cat1 = 
+              new BinaryExpression("^", subrange2, subrange3); 
+        Expression expr = 
+              new BinaryExpression("^", subrange1, cat1); 
+        expr.setType(new Type("Sequence", null)); 
+        Vector cmds = new Vector(); 
+        cmds.add(
+           new AssignStatement(obj,expr));   
+        return cmds; 
+      }  
+    } 
 
     if ("copyWithin".equals(feature) && 
         obj.isSequence() && 
@@ -12295,6 +12396,21 @@ public class ASTCompositeTerm extends ASTTerm
       return cmds;
     } 
 
+    if ("sort".equals(feature) && 
+        obj.isSequence() && 
+        pars.size() == 1)
+    { Expression par1 = (Expression) pars.get(0); 
+      Expression rhs = 
+        new BinaryExpression("->sortedWith", obj, par1);
+      rhs.setType(obj.getType());  
+      rhs.setElementType(obj.getElementType());
+      AssignStatement stat = 
+        new AssignStatement(obj,rhs); 
+      Vector cmds = new Vector(); 
+      cmds.add(stat); 
+      return cmds;
+    } 
+
     if ("splice".equals(feature) && 
         obj.isSequence() && 
         pars.size() > 1)
@@ -12337,6 +12453,82 @@ public class ASTCompositeTerm extends ASTTerm
       rhs.setElementType(obj.getElementType());
       AssignStatement assgn = 
         new AssignStatement(obj, rhs); 
+      Vector cmds = new Vector(); 
+      cmds.add(assgn); 
+      return cmds; 
+    } 
+
+    if ("set".equals(feature) && 
+        obj.isSequence() && 
+        pars.size() == 1)
+    { // obj := par1 ^ obj.subrange(par1.size+1,obj.size)
+
+      Expression par1 = (Expression) pars.get(0);
+      Expression par1size = 
+         new UnaryExpression("->size", par1);  
+      Expression par1sizex = 
+        new BinaryExpression("+", par1size, unitExpression);  
+      Expression par2x = 
+        new UnaryExpression("->size", obj);  
+      Vector rempars = new Vector(); 
+      rempars.add(par1sizex); 
+      rempars.add(par2x); 
+
+      Expression tailobj = 
+        BasicExpression.newFunctionBasicExpression("subrange", 
+                           obj, rempars); 
+
+      Expression inserted = 
+        new BinaryExpression("^", par1, tailobj); 
+      inserted.setType(obj.getType()); 
+      inserted.setElementType(obj.getElementType());
+
+      AssignStatement assgn = 
+        new AssignStatement(obj, inserted); 
+      Vector cmds = new Vector(); 
+      cmds.add(assgn); 
+      return cmds; 
+    } 
+
+    if ("set".equals(feature) && 
+        obj.isSequence() && 
+        pars.size() == 2)
+    { // obj := obj.subrange(1,par2) ^ par1 ^ 
+      //        obj.subrange(par1.size+par2+1,obj.size)
+
+      Expression par1 = (Expression) pars.get(0);
+      Expression par2 = (Expression) pars.get(1);
+
+      Vector parsx1 = new Vector(); 
+      parsx1.add(unitExpression); 
+      parsx1.add(par2); 
+      Expression frontobj = 
+        BasicExpression.newFunctionBasicExpression("subrange", 
+                           obj, parsx1); 
+
+      Expression par1size = 
+         new UnaryExpression("->size", par1);  
+      Expression par1sizex = 
+        new BinaryExpression("+", par1size, unitExpression);  
+      Expression par2x = 
+        new UnaryExpression("->size", obj);  
+
+      Vector rempars = new Vector(); 
+      rempars.add(new BinaryExpression("+", par1sizex, par2)); 
+      rempars.add(par2x); 
+
+      Expression tailobj = 
+        BasicExpression.newFunctionBasicExpression("subrange", 
+                           obj, rempars); 
+
+      Expression inserted = 
+        new BinaryExpression("^", frontobj, 
+          new BinaryExpression("^", par1, tailobj)); 
+      inserted.setType(obj.getType()); 
+      inserted.setElementType(obj.getElementType());
+
+      AssignStatement assgn = 
+        new AssignStatement(obj, inserted); 
       Vector cmds = new Vector(); 
       cmds.add(assgn); 
       return cmds; 
@@ -12617,36 +12809,6 @@ public class ASTCompositeTerm extends ASTTerm
                             feature + "",obj); 
     return classexpr;
   }
-
-  public boolean isDefinedFunction(Expression opexpr,
-                      java.util.Map vartypes,
-                      java.util.Map varelemtypes,
-                      Vector types, Vector entities)
-  { String opname = opexpr + ""; 
-    Type tt = (Type) vartypes.get(opname);
-
-    System.out.println(">>> Testing if " + opexpr + " : " + tt + " is a function"); 
- 
-    if (tt != null && tt.isFunction())
-    { return true; } 
-    else if (tt != null)
-    { return false; } 
-
-    for (int i = 0; i < entities.size(); i++) 
-    { Entity ee = (Entity) entities.get(i); 
-      if (ee.hasOperation(opname))
-      { return true; } 
-    } 
-
-    for (int i = 0; i < entities.size(); i++) 
-    { Entity ee = (Entity) entities.get(i); 
-      Attribute att = (Attribute) ee.getAttribute(opname); 
-      if (att != null && att.isFunction())
-      { return true; } 
-    } 
-
-    return false; 
-  } 
 
   public boolean isGeneratorFunction(Expression opexpr,
                       java.util.Map vartypes,
@@ -13185,6 +13347,103 @@ public class ASTCompositeTerm extends ASTTerm
     } // if par1 < 0 then obj->at(obj.size+1+par1) else 
       //   obj->at(par1+1) 
 
+    if ("find".equals(feature) && 
+        obj.isSequence() && 
+        pars.size() == 1)
+    { Expression par1 = (Expression) pars.get(0); 
+      String var = 
+        Identifier.nextIdentifier("_var_"); 
+      Expression varexpr = 
+        BasicExpression.newVariableBasicExpression(var); 
+      varexpr.setType(obj.getElementType()); 
+      Expression findApply = 
+         Expression.simplifyApply( 
+                          par1, varexpr);
+      BinaryExpression dmn = 
+        new BinaryExpression(":", varexpr, obj); 
+      Expression indof = 
+        new UnaryExpression("->any", 
+          new BinaryExpression("|", dmn, findApply)); 
+      indof.setType(obj.getElementType()); 
+      return indof;  
+    } // obj->any(v | f->apply(v))
+
+    if ("findLast".equals(feature) && 
+        obj.isSequence() && 
+        pars.size() == 1)
+    { Expression par1 = (Expression) pars.get(0); 
+      String var = 
+        Identifier.nextIdentifier("_var_"); 
+      Expression varexpr = 
+        BasicExpression.newVariableBasicExpression(var); 
+      varexpr.setType(obj.getElementType()); 
+      Expression findApply = 
+         Expression.simplifyApply( 
+                          par1, varexpr);
+      BinaryExpression dmn = 
+        new BinaryExpression(":", varexpr, 
+          new UnaryExpression("->reverse", obj)); 
+      Expression indof = 
+        new UnaryExpression("->any", 
+          new BinaryExpression("|", dmn, findApply)); 
+      indof.setType(obj.getElementType()); 
+      return indof;  
+    } // obj->reverse()->any(v | f->apply(v))
+
+    if ("findIndex".equals(feature) && 
+        obj.isSequence() && 
+        pars.size() == 1)
+    { Expression par1 = (Expression) pars.get(0); 
+      String var = 
+        Identifier.nextIdentifier("_var_"); 
+      Expression varexpr = 
+        BasicExpression.newVariableBasicExpression(var); 
+      varexpr.setType(obj.getElementType()); 
+      Expression findApply = 
+         Expression.simplifyApply( 
+                          par1, varexpr);
+      BinaryExpression dmn = 
+        new BinaryExpression(":", varexpr, obj); 
+      Expression indof = 
+        new UnaryExpression("->any", 
+          new BinaryExpression("|", dmn, findApply)); 
+      indof.setType(obj.getElementType()); 
+      BinaryExpression findx = 
+        new BinaryExpression("->indexOf", obj, indof); 
+      BinaryExpression resx = 
+        new BinaryExpression("-", findx, unitExpression); 
+      resx.setType(new Type("int", null)); 
+      return resx; 
+    } // obj->indexOf(obj->any(v | f->apply(v))) - 1
+
+    if ("findLastIndex".equals(feature) && 
+        obj.isSequence() && 
+        pars.size() == 1)
+    { Expression par1 = (Expression) pars.get(0); 
+      String var = 
+        Identifier.nextIdentifier("_var_"); 
+      Expression varexpr = 
+        BasicExpression.newVariableBasicExpression(var); 
+      varexpr.setType(obj.getElementType()); 
+      Expression findApply = 
+         Expression.simplifyApply( 
+                          par1, varexpr);
+      BinaryExpression dmn = 
+        new BinaryExpression(":", varexpr, 
+          new UnaryExpression("->reverse", obj)); 
+
+      Expression indof = 
+        new UnaryExpression("->any", 
+          new BinaryExpression("|", dmn, findApply)); 
+      indof.setType(obj.getElementType()); 
+      BinaryExpression findx = 
+        new BinaryExpression("->lastIndexOf", obj, indof); 
+      BinaryExpression resx = 
+        new BinaryExpression("-", findx, unitExpression); 
+      resx.setType(new Type("int", null)); 
+      return resx; 
+    } // obj->lastIndexOf(obj->reverse()->any(v | f->apply(v))) - 1
+
 
     if (("Array".equals(obj + "") || 
          "Int8Array".equals(obj + "") || 
@@ -13563,6 +13822,67 @@ public class ASTCompositeTerm extends ASTTerm
       return res; 
     } 
 
+    if ("join".equals(feature) && 
+        obj.isSequence() && 
+        pars.size() == 0)
+    { Vector parsx = new Vector(); 
+      parsx.add(obj); 
+      parsx.add(
+        BasicExpression.newValueBasicExpression("\",\"")); 
+      Expression res = 
+        BasicExpression.newStaticCallBasicExpression(
+                   "separatorSum", "StringLib", parsx);
+      res.setType(new Type("String", null)); 
+      res.setElementType(new Type("String", null));  
+      return res; 
+    } 
+
+    if ("join".equals(feature) && 
+        obj.isSequence() && 
+        pars.size() == 1)
+    { Vector parsx = new Vector(); 
+      parsx.add(obj); 
+      parsx.add((Expression) pars.get(0)); 
+      Expression res = 
+        BasicExpression.newStaticCallBasicExpression(
+                   "separatorSum", "StringLib", parsx);
+      res.setType(new Type("String", null)); 
+      res.setElementType(new Type("String", null));  
+      return res; 
+    } 
+
+    if ("keys".equals(feature) && 
+        obj.isSequence() && 
+        pars.size() == 0)
+    { Vector parsx = new Vector(); 
+      parsx.add(zeroExpression); 
+      parsx.add(new BinaryExpression("-", 
+                  new UnaryExpression("->size", obj), 
+                  unitExpression)); 
+      Expression indexes = 
+        BasicExpression.newFunctionBasicExpression(
+                   "subrange", 
+                   "Integer", parsx);
+      
+      Expression res = 
+        BasicExpression.newStaticCallBasicExpression(
+                   "newOclIterator_Sequence", 
+                   "OclIterator", indexes);
+      res.setType(new Type("OclIterator", null)); 
+      return res; 
+    } 
+
+    if ("values".equals(feature) && 
+        obj.isSequence() && 
+        pars.size() == 0)
+    { Expression res = 
+        BasicExpression.newStaticCallBasicExpression(
+                   "newOclIterator_Sequence", 
+                   "OclIterator", obj);
+      res.setType(new Type("OclIterator", null)); 
+      return res; 
+    } 
+
     if ("concat".equals(feature) && 
         obj.isString() && 
         pars.size() > 0)
@@ -13751,7 +14071,7 @@ public class ASTCompositeTerm extends ASTTerm
       res.setType(obj.getType());  
       res.setElementType(obj.getElementType());
       return res; 
-    } 
+    } // also update form
 
     if ("sort".equals(feature) && 
         obj.isSequence() && 
@@ -13761,6 +14081,17 @@ public class ASTCompositeTerm extends ASTTerm
       res.setType(obj.getType());  
       res.setElementType(obj.getElementType());
       return res; 
+    } // also case of comparable. ->sortedWith
+
+    if ("sort".equals(feature) && 
+        obj.isSequence() && 
+        pars.size() == 1)
+    { Expression par1 = (Expression) pars.get(0); 
+      Expression rhs = 
+        new BinaryExpression("->sortedWith", obj, par1);
+      rhs.setType(obj.getType());  
+      rhs.setElementType(obj.getElementType());
+      return rhs;
     } 
 
     if ("entries".equals(feature) && 
@@ -13863,10 +14194,43 @@ public class ASTCompositeTerm extends ASTTerm
         return expr; 
       } 
 
-      if (pars.size() > 2) 
-      { Expression lowind = (Expression) pars.get(0); 
-        Expression highind = (Expression) pars.get(1);
-        Expression elem = (Expression) pars.get(2);
+      if (pars.size() == 2) 
+      { Expression lowind = (Expression) pars.get(1); 
+        Expression highind = 
+          new UnaryExpression("->size",obj);
+        Expression elem = (Expression) pars.get(0);
+            
+        Vector pars1 = new Vector(); 
+        pars1.add(unitExpression); 
+        pars1.add(lowind); 
+
+        Expression subrange1 = 
+          BasicExpression.newFunctionBasicExpression(
+                "subrange", obj, pars1); 
+
+        Vector pars2 = new Vector(); 
+        pars2.add(new BinaryExpression("+",
+                     lowind,unitExpression)); 
+        pars2.add(highind); 
+
+        Expression subrange2 = 
+           BasicExpression.newFunctionBasicExpression(
+                "subrange", obj, pars2); 
+ 
+        subrange2 = 
+           new BinaryExpression("->collect", subrange2, elem); 
+        subrange2.setBrackets(true); 
+
+        Expression expr = 
+              new BinaryExpression("^", subrange1, subrange2); 
+        expr.setType(new Type("Sequence", null)); 
+        return expr;
+      }  
+
+      if (pars.size() == 3) 
+      { Expression lowind = (Expression) pars.get(1); 
+        Expression highind = (Expression) pars.get(2);
+        Expression elem = (Expression) pars.get(0);
             
         Vector pars1 = new Vector(); 
         pars1.add(unitExpression); 
@@ -14224,6 +14588,30 @@ public class ASTCompositeTerm extends ASTTerm
       return iter; 
     } 
 
+    if ("subarray".equals(feature) && 
+        obj.isSequence() && 
+        pars.size() > 0)
+    { Expression st = (Expression) pars.get(0);
+      Expression en = null; 
+      if (pars.size() > 1) 
+      { en = (Expression) pars.get(1); } 
+      else 
+      { en = new UnaryExpression("->size", obj); } 
+
+      // obj.subrange(st+1,en)
+      BinaryExpression incr = 
+        new BinaryExpression("+", st, unitExpression);
+      Vector parsx = new Vector(); 
+      parsx.add(incr); 
+      parsx.add(en);  
+      Expression res = 
+        BasicExpression.newFunctionBasicExpression(
+            "subrange", obj, parsx); 
+      res.setType(new Type("Sequence", null)); 
+      res.setElementType(obj.getElementType()); 
+      return res; 
+    } 
+      
     if ("filter".equals(feature) && 
         obj.isSequence() && 
         pars.size() > 0)
@@ -14438,6 +14826,35 @@ public class ASTCompositeTerm extends ASTTerm
       return isin; 
     } 
 
+    if ("includes".equals(feature) && 
+        obj.isSequence() && 
+        pars.size() == 1)
+    { Expression par1 = (Expression) pars.get(0); 
+      Expression expr = 
+        new BinaryExpression("->includes",obj,par1); 
+      expr.setType(new Type("boolean",null));
+      return expr; 
+    } 
+
+    if ("includes".equals(feature) && 
+        obj.isSequence() && 
+        pars.size() == 2)
+    { Expression par1 = (Expression) pars.get(0); 
+      Expression par2 = (Expression) pars.get(1);
+      Vector parsx = new Vector(); 
+      parsx.add(
+        new BinaryExpression("+", par2, unitExpression));
+      parsx.add(
+        new UnaryExpression("->size", obj));    
+      Expression subr = 
+        BasicExpression.newFunctionBasicExpression("subrange", 
+                            obj, parsx);  
+      Expression expr = 
+        new BinaryExpression("->includes",subr,par1); 
+      expr.setType(new Type("boolean",null));
+      return expr; 
+    } 
+
     if ("split".equals(feature) && obj.isString() &&
         pars.size() == 1)
     { Expression par1 = (Expression) pars.get(0); 
@@ -14490,6 +14907,40 @@ public class ASTCompositeTerm extends ASTTerm
     return classexpr; 
   } 
 
+
+  // globalThis is of type FromJavaScript -- a unique instance
+  // operation getGlobalThis() : FromJavaScript
+  // pre: true post: true 
+  // activity: if _instance = null 
+  //           then _instance = createFromJavaScript() 
+  //           else skip ; return _instance; 
+
+  public BehaviouralFeature jsglobalThis(Entity fjs, Attribute inst)
+  { BehaviouralFeature bf = 
+        new BehaviouralFeature("getGlobalThis", 
+              new Vector(), false, new Type(fjs));
+    BasicExpression _inst = 
+      BasicExpression.newVariableBasicExpression(inst);
+    _inst.setType(new Type(fjs)); 
+    Expression isUndefined = 
+       new UnaryExpression("->oclIsUndefined", _inst); 
+    Expression cre = 
+      BasicExpression.newCallBasicExpression(
+                                 "createFromJavaScript"); 
+    cre.setType(new Type(fjs)); 
+    AssignStatement asgn = 
+      new AssignStatement(_inst, cre); 
+    ConditionalStatement cs = 
+      new ConditionalStatement(isUndefined, 
+                               asgn, skipStatement); 
+    ReturnStatement ret = 
+      new ReturnStatement(_inst); 
+    SequenceStatement ss = new SequenceStatement(); 
+    ss.addStatement(cs); 
+    ss.addStatement(ret); 
+    bf.setActivity(ss); 
+    return bf;       
+  } 
 
   public Expression jsexpressionToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
@@ -15207,6 +15658,9 @@ public class ASTCompositeTerm extends ASTTerm
           
         if ("Error".equals(cnme) || 
             "InternalError".equals(cnme) || 
+            "SyntaxError".equals(cnme) || 
+            "TypeError".equals(cnme) || 
+            "ReferenceError".equals(cnme) || 
             "EvalError".equals(cnme) || 
             "AggregateError".equals(cnme))
         { BasicExpression errbe = 
@@ -15223,6 +15677,15 @@ public class ASTCompositeTerm extends ASTTerm
               "newIndexingException", "IndexingException"); 
           errbe.setParameters(pars); 
           errbe.setType(new Type("IndexingException", null)); 
+          return errbe; 
+        } 
+
+        if ("URIError".equals(cnme))
+        { BasicExpression errbe = 
+            BasicExpression.newStaticCallBasicExpression(
+              "newIncorrectElementException", "IncorrectElementException"); 
+          errbe.setParameters(pars); 
+          errbe.setType(new Type("IncorrectElementException", null)); 
           return errbe; 
         } 
 
@@ -15621,7 +16084,10 @@ public class ASTCompositeTerm extends ASTTerm
           
         if ("Error".equals(cnme) || 
             "InternalError".equals(cnme) || 
+            "SyntaxError".equals(cnme) || 
+            "TypeError".equals(cnme) || 
             "EvalError".equals(cnme) || 
+            "ReferenceError".equals(cnme) || 
             "AggregateError".equals(cnme))
         { BasicExpression errbe = 
             BasicExpression.newStaticCallBasicExpression(
@@ -15640,20 +16106,30 @@ public class ASTCompositeTerm extends ASTTerm
           return errbe; 
         } 
 
+        if ("URIError".equals(cnme))
+        { BasicExpression errbe = 
+            BasicExpression.newStaticCallBasicExpression(
+              "newIncorrectElementException", "IncorrectElementException"); 
+          errbe.setParameters(pars); 
+          errbe.setType(new Type("IncorrectElementException", null)); 
+          return errbe; 
+        } 
+
         if ("BigInt".equals(cnme))
         { Expression rx = 
             (Expression) pars.get(0); 
           return rx; 
         } 
  
-        if ("Object".equals(cnme) || "Map".equals(cnme))
+        if ("Object".equals(cnme) || "Map".equals(cnme) ||
+            "WeakMap".equals(cnme))
         { SetExpression errbe = 
             SetExpression.newMapSetExpression();
           errbe.setElementType(new Type("OclAny", null));  
           return errbe; 
         } 
 
-        if ("Set".equals(cnme))
+        if ("Set".equals(cnme) || "WeakSet".equals(cnme))
         { SetExpression errbe = 
             new SetExpression(false);
           errbe.setElementType(new Type("OclAny", null));  
@@ -15934,7 +16410,10 @@ public class ASTCompositeTerm extends ASTTerm
           return arrexpr; 
         } // elements are the arguments
  
-        if ("Error".equals(cnme))
+        if ("Error".equals(cnme) ||
+            "SyntaxError".equals(cnme) || 
+            "TypeError".equals(cnme) || 
+            "InternalError".equals(cnme))
         { BasicExpression errbe = 
             BasicExpression.newStaticCallBasicExpression(
               "newOclException", "OclException"); 
@@ -15944,14 +16423,24 @@ public class ASTCompositeTerm extends ASTTerm
         } 
         // could be Object, String, Function, Array. 
 
-        if ("Object".equals(cnme) || "Map".equals(cnme))
+        if ("URIError".equals(cnme))
+        { BasicExpression errbe = 
+            BasicExpression.newStaticCallBasicExpression(
+              "newIncorrectElementException", "IncorrectElementException"); 
+          errbe.setParameters(pars); 
+          errbe.setType(new Type("IncorrectElementException", null)); 
+          return errbe; 
+        } 
+
+        if ("Object".equals(cnme) || "Map".equals(cnme) ||
+            "WeakMap".equals(cnme))
         { SetExpression errbe = 
             SetExpression.newMapSetExpression();
           errbe.setElementType(new Type("OclAny", null));  
           return errbe; 
         } 
 
-        if ("Set".equals(cnme))
+        if ("Set".equals(cnme) || "WeakSet".equals(cnme))
         { SetExpression errbe = 
             new SetExpression(false);
           errbe.setElementType(new Type("OclAny", null));  

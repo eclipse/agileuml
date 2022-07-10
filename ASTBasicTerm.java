@@ -706,15 +706,7 @@ public class ASTBasicTerm extends ASTTerm
     } 
     else if ("identifier".equals(tag) || 
              "keyword".equals(tag))
-    { Type t = (Type) vartypes.get(value); 
-      if (t != null) 
-      { BasicExpression be = new BasicExpression(value); 
-        be.setType(t); 
-        Object elemt = varelemtypes.get(value); 
-        if (elemt != null && elemt instanceof Type)
-        { be.setElementType((Type) elemt); }  
-        return be; 
-      } 
+    { 
 
       if ("PI".equals(value))
       { Expression res = 
@@ -723,7 +715,7 @@ public class ASTBasicTerm extends ASTTerm
         return res; 
       }
 
-   /* Is value a feature of some known object? 
+   /* Is value a feature of some known object? */ 
 
       Entity mainC = (Entity) ModelElement.lookupByName(
                                       "FromJavaScript", ents);
@@ -732,11 +724,13 @@ public class ASTBasicTerm extends ASTTerm
 
         if (bf != null) 
         { System.out.println(">>> Function defined in main program: " + value + " " + bf.display() + " " + bf.isVarArg()); 
-          BasicExpression bfcall = 
-            BasicExpression.newStaticCallBasicExpression(
-                                                 bf,mainC); 
-          Expression lam = 
-            UnaryExpression.newLambdaUnaryExpression(bfcall, bf); 
+          BasicExpression sexpr = 
+            BasicExpression.newVariableBasicExpression(
+                                                "self"); 
+          sexpr.setType(new Type(mainC)); 
+          BasicExpression lam = 
+            BasicExpression.newVariableBasicExpression(
+                                                 value,sexpr); 
           Type ftype = bf.getFunctionType(); 
           lam.setType(ftype); 
           return lam; 
@@ -746,12 +740,21 @@ public class ASTBasicTerm extends ASTTerm
         if (att != null) 
         { System.out.println(">>> Global attribute: " + value + " : " + att.getType()); 
           BasicExpression expr = 
-            BasicExpression.newStaticAttributeBasicExpression(
-                                                    att);
+            new BasicExpression(att);
           expr.variable = att;  
           return expr; 
         }       
-      } */  
+      }
+
+      Type t = (Type) vartypes.get(value); 
+      if (t != null) 
+      { BasicExpression be = new BasicExpression(value); 
+        be.setType(t); 
+        Object elemt = varelemtypes.get(value); 
+        if (elemt != null && elemt instanceof Type)
+        { be.setElementType((Type) elemt); }  
+        return be; 
+      } 
 
       BasicExpression v = new BasicExpression(value); 
       return v; 

@@ -446,6 +446,13 @@ class BasicExpression extends Expression
     return res; 
   } 
 
+  public static BasicExpression newVariableBasicExpression(String f, Expression obj) 
+  { BasicExpression res = new BasicExpression(f);
+    res.setObjectRef(obj);  
+    res.umlkind = VARIABLE;
+    return res; 
+  } 
+
   public static BasicExpression newVariableBasicExpression(String value, String typ) 
   { BasicExpression res = new BasicExpression(value); 
     res.umlkind = VARIABLE;

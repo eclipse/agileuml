@@ -466,6 +466,37 @@ public abstract class ASTTerm
   public abstract Vector jsclassDeclarationToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities);  
 
+  public boolean isDefinedFunction(Expression opexpr,
+                      java.util.Map vartypes,
+                      java.util.Map varelemtypes,
+                      Vector types, Vector entities)
+  { String opname = opexpr + ""; 
+    Type tt = (Type) vartypes.get(opname);
+
+    System.out.println(">>> Testing if " + opexpr + " : " + tt + " is a function"); 
+ 
+    if (tt != null && tt.isFunction())
+    { return true; } 
+    else if (tt != null)
+    { return false; } 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ee = (Entity) entities.get(i); 
+      if (ee.hasOperation(opname))
+      { return true; } 
+    } 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ee = (Entity) entities.get(i); 
+      Attribute att = (Attribute) ee.getAttribute(opname); 
+      if (att != null && att.isFunction())
+      { return true; } 
+    } 
+
+    return false; 
+  } 
+
+
   public abstract Expression jsexpressionToKM3(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector ents); 
 
