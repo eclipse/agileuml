@@ -715,6 +715,22 @@ public class ASTBasicTerm extends ASTTerm
         return res; 
       }
 
+      if ("Infinity".equals(value))
+      { Expression res = 
+          BasicExpression.newValueBasicExpression(
+                                     "Math_PINFINITY");
+        res.setType(new Type("double", null));  
+        return res; 
+      }
+
+      if ("NaN".equals(value))
+      { Expression expr = 
+          BasicExpression.newValueBasicExpression(
+                                           "Math_NaN");
+        expr.setType(new Type("double", null));  
+        return expr; 
+      } 
+
    /* Is value a feature of some known object? */ 
 
       Entity mainC = (Entity) ModelElement.lookupByName(

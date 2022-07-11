@@ -9740,6 +9740,27 @@ public class ASTCompositeTerm extends ASTTerm
       if (expr != null && expr.getType() != null)
       { tt = expr.getType(); }  
 
+      if (vexp instanceof SetExpression && 
+          vexp.isSequence()) // [v1,v2] = expr
+      { Vector resx = new Vector(); 
+        SetExpression sexpr = (SetExpression) vexp; 
+        Vector assignedTo = sexpr.getElements(); 
+        for (int i = 0; i < assignedTo.size(); i++) 
+        { Expression avar = (Expression) assignedTo.get(i); 
+          CreationStatement csi = 
+             new CreationStatement(avar + "",
+                                   tt.getElementType());
+          AssignStatement asgni = 
+            new AssignStatement(avar,
+                  new BinaryExpression("->at", expr, 
+                         new BasicExpression(i+1)));  
+          vartypes.put(avar + "", tt.getElementType()); 
+          resx.add(csi); 
+          resx.add(asgni); 
+        } 
+        return resx; 
+      } 
+
       CreationStatement cs = 
         new CreationStatement(var,tt); 
       // cs.setInitialisation(expr);
@@ -9752,7 +9773,7 @@ public class ASTCompositeTerm extends ASTTerm
       { varelemtypes.put(var, expr.getElementType()); } 
       ASTTerm.setType(lhs, tt.getName()); 
       return res; 
-    } 
+    } // lhs could be (arrayLiteral [ elementList ] )
 
     if ("variableDeclaration".equals(tag) && 
         terms.size() == 1)
@@ -10763,6 +10784,10 @@ public class ASTCompositeTerm extends ASTTerm
        
         System.out.println("**>> Update form of *>> " + opexpr + " " + pars); 
 
+        // if (lastTerm.isJSspreadExpression())
+        // { opexpr = jsspreadExpressionCall(opexpr, lastTerm,
+        //                 vartypes,varelemtypes,types,entities);
+        // } else       
         if (opexpr.isFunctionType())
         { opexpr = Expression.convertToApply(opexpr, pars); }
         else if (opexpr instanceof BasicExpression)
@@ -12079,6 +12104,73 @@ public class ASTCompositeTerm extends ASTTerm
         return cmds;  
       } // update form only.
     }  
+
+    if ("Reflect".equals(obj + ""))
+    { 
+      if ("defineProperty".equals(feature) && 
+          pars.size() == 3) 
+      { Expression par1 = (Expression) pars.get(0);
+        Expression par2 = (Expression) pars.get(1);
+        Expression par3 = (Expression) pars.get(2);
+
+        Vector dpars = new Vector(); 
+        dpars.add(par1); 
+        dpars.add(par2);
+        dpars.add(
+            BasicExpression.newAttributeBasicExpression(
+                    "value",par3));  
+        Expression dx = 
+          BasicExpression.newStaticCallBasicExpression(
+                "setAttributeValue", "OclType", dpars); 
+        Statement sdel = 
+               InvocationStatement.newInvocationStatement(
+                                                dx,dpars);
+        Vector cmds = new Vector(); 
+        cmds.add(sdel); 
+        return cmds;  
+      } // only update form
+
+      if ("deleteProperty".equals(feature) && 
+          pars.size() == 2) 
+      { Expression par1 = (Expression) pars.get(0);
+        Expression par2 = (Expression) pars.get(1);
+        Vector dpars = new Vector(); 
+        dpars.add(par1); 
+        dpars.add(par2); 
+        Expression dx = 
+          BasicExpression.newStaticCallBasicExpression(
+                "removeAttribute", "OclType", dpars); 
+        Statement sdel = 
+                InvocationStatement.newInvocationStatement(
+                                                dx,dpars);
+        Vector cmds = new Vector(); 
+        cmds.add(sdel); 
+        return cmds; 
+      } // only update form
+
+      if ("set".equals(feature) && 
+          pars.size() == 3) 
+      { Expression par1 = (Expression) pars.get(0);
+        Expression par2 = (Expression) pars.get(1);
+        Expression par3 = (Expression) pars.get(2);
+
+        Vector dpars = new Vector(); 
+        dpars.add(par1); 
+        dpars.add(par2);
+        dpars.add(par3);   
+        Expression dx = 
+          BasicExpression.newStaticCallBasicExpression(
+                "setAttributeValue", "OclType", dpars); 
+        Statement sdel = 
+               InvocationStatement.newInvocationStatement(
+                                               dx,dpars);
+        Vector cmds = new Vector(); 
+        cmds.add(sdel); 
+        return cmds; 
+      } // update form
+
+    } 
+
 
     if ("next".equals(feature) && 
         obj.isOclIterator() && pars.size() == 0)
@@ -13450,6 +13542,7 @@ public class ASTCompositeTerm extends ASTTerm
          "Int16Array".equals(obj + "") || 
          "Int32Array".equals(obj + "") || 
          "Uint8Array".equals(obj + "") || 
+         "Uint8ClampedArray".equals(obj + "") || 
          "Uint16Array".equals(obj + "") || 
          "Uint32Array".equals(obj + "") || 
          "BigInt64Array".equals(obj + ""))
@@ -13468,6 +13561,7 @@ public class ASTCompositeTerm extends ASTTerm
          "Int16Array".equals(obj + "") || 
          "Int32Array".equals(obj + "") || 
          "Uint8Array".equals(obj + "") || 
+         "Uint8ClampedArray".equals(obj + "") || 
          "Uint16Array".equals(obj + "") || 
          "Uint32Array".equals(obj + "") || 
          "BigInt64Array".equals(obj + "")) && 
@@ -13665,6 +13759,88 @@ public class ASTCompositeTerm extends ASTTerm
 
     }  
 
+    if ("Reflect".equals(obj + ""))
+    { if ("construct".equals(feature) &&
+          pars.size() >= 2) 
+      { // Reflect.construct(Cls,args) is
+        // OclType["Cls"].newInstance()
+        Expression par1 = (Expression) pars.get(0);
+        Entity cent = 
+          (Entity) ModelElement.lookupByName(par1 + "", 
+                                             entities); 
+        Expression clsent = 
+          BasicExpression.newTypeBasicExpression("OclType"); 
+        if (cent != null) 
+        { clsent = new BasicExpression(cent); }   
+        Expression cls = 
+          BasicExpression.newValueBasicExpression("\"" + 
+                                 par1 + "\""); 
+        Expression clstyp =
+          BasicExpression.newIndexedBasicExpression(
+                            clsent, cls); 
+        Expression res = 
+          BasicExpression.newCallBasicExpression(
+                     "newInstance", clstyp);
+        if (cent != null) 
+        { res.setType(new Type(cent)); }  
+        return res;   
+      } 
+
+      if ("get".equals(feature) && 
+          pars.size() >= 2) 
+      { Expression par1 = (Expression) pars.get(0);
+        Expression par2 = (Expression) pars.get(1);
+        Vector dpars = new Vector(); 
+        dpars.add(par1); 
+        dpars.add(par2); 
+        Expression dx = 
+          BasicExpression.newStaticCallBasicExpression(
+                "getAttributeValue", "OclType", dpars); 
+        // Statement sdel = 
+        //        InvocationStatement.newInvocationStatement(
+        //                                        dx,dpars);
+        return dx; 
+      } 
+
+
+      if ("has".equals(feature) && 
+          pars.size() >= 2) 
+      { Expression par1 = (Expression) pars.get(0);
+        Expression par2 = (Expression) pars.get(1);
+        Vector dpars = new Vector(); 
+        dpars.add(par1); 
+        dpars.add(par2); 
+        Expression dx = 
+          BasicExpression.newStaticCallBasicExpression(
+                "hasAttribute", "OclType", dpars); 
+        // Statement sdel = 
+        //        InvocationStatement.newInvocationStatement(
+        //                                        dx,dpars);
+        dx.setType(new Type("boolean", null)); 
+        return dx; 
+      } 
+
+      if ("ownKeys".equals(feature) && 
+          pars.size() == 1) 
+      { Expression par1 = (Expression) pars.get(0);
+        Expression par1type = 
+          new UnaryExpression("->oclType", par1); 
+        Expression dx = 
+          BasicExpression.newCallBasicExpression(
+                "getFields", par1type); 
+        Expression nmefld = 
+          BasicExpression.newAttributeBasicExpression(
+                                        "name");
+        nmefld.setType(new Type("String", null)); 
+ 
+        Expression fieldnames = 
+          new BinaryExpression("->collect", dx, nmefld); 
+
+        fieldnames.setType(new Type("Sequence", null)); 
+        fieldnames.setElementType(new Type("String", null));  
+        return fieldnames; 
+      } 
+    } 
 
     if ("toString".equals(feature) && 
         pars.size() == 1)
@@ -15111,6 +15287,15 @@ public class ASTCompositeTerm extends ASTTerm
       textexpr.setElementType(new Type("String", null));
       return textexpr; 
     } 
+
+    if ("argument".equals(tag) && 
+        terms.size() == 2 && 
+        "...".equals(terms.get(0) + ""))
+    { ASTTerm arg = (ASTTerm) terms.get(1); 
+      Expression expr = arg.jsexpressionToKM3(vartypes,
+                                varelemtypes,types,entities); 
+      return expr; 
+    } 
   
     if ("singleExpression".equals(tag))
     { if (terms.size() == 3 && "(".equals(firstTerm + "") &&
@@ -15228,6 +15413,7 @@ public class ASTCompositeTerm extends ASTTerm
         minusexpr.setType(new Type("boolean", null));  
         return minusexpr; 
       } 
+
 
       /* if (terms.size() == 2 && 
           "arguments".equals(lastTerm.getTag()) && 
@@ -16132,7 +16318,15 @@ public class ASTCompositeTerm extends ASTTerm
         if ("Set".equals(cnme) || "WeakSet".equals(cnme))
         { SetExpression errbe = 
             new SetExpression(false);
-          errbe.setElementType(new Type("OclAny", null));  
+          errbe.setElementType(new Type("OclAny", null));
+          if (pars.size() == 1)
+          { Expression par0 = (Expression) pars.get(0); 
+            Expression res = 
+              new BinaryExpression("->union", errbe, par0); 
+            res.setType(new Type("Set", null)); 
+            res.setElementType(par0.getElementType());
+            return res; 
+          } 
           return errbe; 
         } 
 
@@ -16443,7 +16637,16 @@ public class ASTCompositeTerm extends ASTTerm
         if ("Set".equals(cnme) || "WeakSet".equals(cnme))
         { SetExpression errbe = 
             new SetExpression(false);
-          errbe.setElementType(new Type("OclAny", null));  
+          errbe.setElementType(new Type("OclAny", null));
+
+          if (pars.size() == 1)
+          { Expression par0 = (Expression) pars.get(0); 
+            Expression res = 
+              new BinaryExpression("->union", errbe, par0); 
+            res.setType(new Type("Set", null)); 
+            res.setElementType(par0.getElementType());
+            return res; 
+          }   
           return errbe; 
         } 
 
