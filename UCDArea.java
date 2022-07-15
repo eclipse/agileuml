@@ -13082,7 +13082,9 @@ public void produceCUI(PrintWriter out)
     System.out.println(); 
 
     try { 
-      PrintWriter pw = new PrintWriter(targetfile); 
+      PrintWriter pw = new PrintWriter(
+                             new BufferedWriter(
+                               new FileWriter(targetfile))); 
       pw.println(arg1); 
       pw.close(); 
     } catch (Exception _fex) 
@@ -13946,6 +13948,12 @@ public void produceCUI(PrintWriter out)
     else 
     { System.err.println("! Warning: no file libraries/oclprocess.km3"); } 
 
+    File ocliterator = new File("libraries/ocliterator.km3"); 
+    if (ocliterator.exists())
+    { loadKM3FromFile(ocliterator); }
+    else 
+    { System.err.println("! Warning: no file libraries/ocliterator.km3"); } 
+
     File mathlib = new File("libraries/mathlib.km3"); 
     if (mathlib.exists())
     { loadKM3FromFile(mathlib); }
@@ -13953,6 +13961,49 @@ public void produceCUI(PrintWriter out)
     { System.err.println("! Warning: no file libraries/mathlib.km3"); } 
  
     loadGenericUseCase();
+    typeCheck(); 
+    typeCheck(); 
+    // Generate Python
+  } 
+
+  public void javascript2python()
+  { File ocltypes = new File("libraries/ocltype.km3"); 
+    if (ocltypes.exists())
+    { loadKM3FromFile(ocltypes); }
+    else 
+    { System.err.println("! Warning: no file libraries/ocltype.km3"); } 
+
+    File oclfile = new File("libraries/oclfile.km3"); 
+    if (oclfile.exists())
+    { loadKM3FromFile(oclfile); }
+    else 
+    { System.err.println("! Warning: no file libraries/oclfile.km3"); } 
+
+    File ocldate = new File("libraries/ocldate.km3"); 
+    if (ocldate.exists())
+    { loadKM3FromFile(ocldate); }
+    else 
+    { System.err.println("! Warning: no file libraries/ocldate.km3"); } 
+
+    File oclprocess = new File("libraries/oclprocess.km3"); 
+    if (oclprocess.exists())
+    { loadKM3FromFile(oclprocess); }
+    else 
+    { System.err.println("! Warning: no file libraries/oclprocess.km3"); } 
+
+    File ocliterator = new File("libraries/ocliterator.km3"); 
+    if (ocliterator.exists())
+    { loadKM3FromFile(ocliterator); }
+    else 
+    { System.err.println("! Warning: no file libraries/ocliterator.km3"); } 
+
+    File mathlib = new File("libraries/mathlib.km3"); 
+    if (mathlib.exists())
+    { loadKM3FromFile(mathlib); }
+    else 
+    { System.err.println("! Warning: no file libraries/mathlib.km3"); } 
+ 
+    loadFromJavaScript();
     typeCheck(); 
     typeCheck(); 
     // Generate Python

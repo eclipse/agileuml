@@ -639,6 +639,13 @@ public void findPlugins()
     editMenu.setToolTipText("Edit Class diagram");
     menuBar.add(editMenu);
 
+
+    JMenuItem editKM3 = new JMenuItem("Edit KM3"); 
+    editKM3.addActionListener(this); 
+    editMenu.add(editKM3); 
+
+    editMenu.addSeparator(); 
+
     JMenuItem moveElement = new JMenuItem("Move");
     JMenuItem deleteElement = new JMenuItem("Delete");
     JMenuItem modifyElement = new JMenuItem("Modify"); 
@@ -670,10 +677,6 @@ public void findPlugins()
     editUseCase.addActionListener(this); 
     editUseCase.setMnemonic(KeyEvent.VK_U);
     editMenu.add(editUseCase); 
-
-    JMenuItem editKM3 = new JMenuItem("Edit KM3"); 
-    editKM3.addActionListener(this); 
-    editMenu.add(editKM3); 
 
     JMenuItem deleteUseCase = new JMenuItem("Delete Use Case"); 
     deleteUseCase.addActionListener(this); 
@@ -3808,6 +3811,22 @@ public void findPlugins()
   { UmlTool window = new UmlTool();  
     if (args.length == 1 && "-java2python".equals(args[0]))
     { window.ucdArea.java2python(); 
+      window.ucdArea.saveModelToFile("output/model.txt"); 
+
+      RunApp rapp1 = new RunApp("uml2py"); 
+
+      try
+      { rapp1.setFile("app.py"); 
+        Thread appthread = new Thread(rapp1); 
+        appthread.start(); 
+      } 
+      catch (Exception ee2) 
+      { System.err.println("Unable to run uml2py"); } 
+      return; 
+    } 
+
+    if (args.length == 1 && "-js2python".equals(args[0]))
+    { window.ucdArea.javascript2python(); 
       window.ucdArea.saveModelToFile("output/model.txt"); 
 
       RunApp rapp1 = new RunApp("uml2py"); 

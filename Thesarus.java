@@ -3,7 +3,7 @@ import java.io.*;
 import java.util.Collections; 
 
 /******************************
-* Copyright (c) 2003-2021 Kevin Lano
+* Copyright (c) 2003-2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -53,7 +53,29 @@ class ThesaurusConcept
 
   public Vector getSemantics()
   { return semantics; } 
-  
+ 
+  public boolean isAttribute()
+  { if (semantics == null) 
+    { return false; } 
+    for (int i = 0; i < semantics.size(); i++) 
+    { ModelElement me = (ModelElement) semantics.get(i); 
+      if (me instanceof Attribute) 
+      { return true; } 
+    } 
+    return false; 
+  } 
+
+  public boolean isEntity()
+  { if (semantics == null) 
+    { return false; } 
+    for (int i = 0; i < semantics.size(); i++) 
+    { ModelElement me = (ModelElement) semantics.get(i); 
+      if (me instanceof Entity) 
+      { return true; } 
+    } 
+    return false; 
+  } 
+
   public void setGeneralisation(String g)
   { generalisation = g; }
   
@@ -121,6 +143,17 @@ class ThesaurusConcept
     return res + " }"; 
   }     
 
+  public void toList(PrintWriter out)
+  { for (int i = 0; i < preferredTerms.size(); i++) 
+    { ThesaurusTerm tt = (ThesaurusTerm) preferredTerms.get(i); 
+      out.println(tt.name); 
+    } 
+    for (int i = 0; i < terms.size(); i++) 
+    { ThesaurusTerm tt = (ThesaurusTerm) terms.get(i); 
+      out.println(tt.name); 
+    } 
+  }     
+
   public void findLinkedConcepts(Vector thesaurus)
   { for (int i = 0; i < thesaurus.size(); i++) 
     { ThesaurusConcept tc = (ThesaurusConcept) thesaurus.get(i); 
@@ -175,8 +208,10 @@ public class Thesarus
 
   public static Vector loadThesaurus(String f)
   { BufferedReader br = null;
-    // BufferedWriter brout = null; 
-    // PrintWriter pwout = null; 
+    BufferedWriter brout = null; 
+    PrintWriter pwout = null; 
+    BufferedWriter ebrout = null; 
+    PrintWriter epwout = null; 
 
     Vector concepts = new Vector(); 
 
@@ -186,13 +221,16 @@ public class Thesarus
 
     try
     { br = new BufferedReader(new FileReader(infile));
-      // brout = new BufferedWriter(new FileWriter(outfile)); 
-      // pwout = new PrintWriter(brout); 
+      brout = new BufferedWriter(new FileWriter("output/attributes.txt")); 
+      pwout = new PrintWriter(brout);
+      ebrout = new BufferedWriter(new FileWriter("output/classes.txt")); 
+      epwout = new PrintWriter(ebrout); 
     }
     catch (Exception e)
     { System.out.println("!! Error loading file: " + f);
       return concepts; 
     }
+
     String xmlstring = ""; 
 
     while (!eof)
@@ -240,12 +278,21 @@ public class Thesarus
             ThesaurusTerm tt = new ThesaurusTerm(ndef.toLowerCase()); 
             c.addPreferredTerm(tt); 
             tt.addConcept(c); 
+            if (c.isAttribute())
+            { pwout.println(tt.name); }   
+            else if (c.isEntity())
+            { epwout.println(tt.name); }   
+
           } 
           else if ("NT".equals(stag) && c != null)
           { String ndef = sb.getContent(); 
             ThesaurusTerm tt = new ThesaurusTerm(ndef.toLowerCase()); 
             c.addTerm(tt); 
-            tt.addConcept(c); 
+            tt.addConcept(c);
+            if (c.isAttribute())
+            { pwout.println(tt.name); }   
+            else if (c.isEntity())
+            { epwout.println(tt.name); }   
           } 
           else if ("NTG".equals(stag) && c != null)
           { String ndef = sb.getContent(); 
@@ -261,7 +308,7 @@ public class Thesarus
             System.out.println(">> semantics = " + ndef);
             if (ndef.equals("attribute"))
             { String xsitype = sb.getAttributeValue("type"); 
-              System.out.println(">> type = " + xsitype);
+              pwout.println(c.name);
               if (xsitype == null) 
               { xsitype = "String"; } 
               Attribute x = new Attribute(c.name,new Type(xsitype,null), ModelElement.INTERNAL); 
@@ -269,6 +316,7 @@ public class Thesarus
             } 
             else if (ndef.equals("class"))
             { Entity ent = new Entity(c.name); 
+              epwout.println(c.name);
               c.addSemantics(ent); 
             } 
             else if (ndef.equals("reference"))
@@ -299,6 +347,12 @@ public class Thesarus
     { ThesaurusConcept tc = (ThesaurusConcept) concepts.get(i); 
       tc.findLinkedConcepts(concepts); 
     } 
+
+    try { 
+      pwout.close(); 
+      epwout.close(); 
+      br.close(); 
+    } catch (Exception e) { } 
 
     return concepts; 
   }       

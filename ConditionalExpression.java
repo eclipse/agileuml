@@ -732,11 +732,11 @@ public Vector singleMutants()
     return res; 
   } 
 
-  public Expression addContainerReference(BasicExpression ref, Vector excls)
+  public Expression addContainerReference(BasicExpression ref, String var, Vector excls)
   { ConditionalExpression res = (ConditionalExpression) clone(); 
-    Expression tr = test.addContainerReference(ref,excls); 
-    Expression lr = ifExp.addContainerReference(ref,excls); 
-    Expression rr = elseExp.addContainerReference(ref,excls); 
+    Expression tr = test.addContainerReference(ref,var,excls); 
+    Expression lr = ifExp.addContainerReference(ref,var,excls); 
+    Expression rr = elseExp.addContainerReference(ref,var,excls); 
     res.test = tr; 
     res.ifExp = lr; 
     res.elseExp = rr; 

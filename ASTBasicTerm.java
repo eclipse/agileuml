@@ -648,11 +648,17 @@ public class ASTBasicTerm extends ASTTerm
       BasicExpression v = new BasicExpression(value); 
       if (Expression.isInteger(value))
       { v.setType(new Type("int",null)); 
-        v.setUmlKind(Expression.VALUE); 
+        v.setUmlKind(Expression.VALUE);
+        v = 
+          new BasicExpression(
+                Expression.convertInteger(value));  
       }
       else if (Expression.isLong(value))
       { v.setType(new Type("long",null)); 
         v.setUmlKind(Expression.VALUE); 
+        v = 
+          new BasicExpression(
+                Expression.convertLong(value));
       }
       else if (Expression.isDouble(value))
       { v.setType(new Type("double",null)); 
@@ -660,6 +666,16 @@ public class ASTBasicTerm extends ASTTerm
       } 
       return v; 
     }
+    else if ("bigintLiteral".equals(tag))
+    { BasicExpression v = new BasicExpression(value); 
+      if (value.endsWith("n"))
+      { value = value.substring(0,value.length()-1);
+        v = new BasicExpression(value);
+      } 
+      v.setType(new Type("long",null)); 
+      v.setUmlKind(Expression.VALUE); 
+      return v; 
+    }   
     else if ("literal".equals(tag) || 
              "propertyName".equals(tag)) 
     { int sze = value.length(); 

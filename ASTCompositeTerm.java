@@ -8991,7 +8991,7 @@ public class ASTCompositeTerm extends ASTTerm
 
         lrng.setType(new Type("Sequence", null)); 
         lrng.setElementType(new Type("OclAttribute", null));   
-      } 
+      } // or OclType.allAttributes(lrng)
 
       ASTTerm body = (ASTTerm) terms.get(6); 
       Vector forStats = body.jsstatementToKM3(
@@ -12864,6 +12864,61 @@ public class ASTCompositeTerm extends ASTTerm
         res.setType(new Type("double", null)); 
         return res; 
       } 
+
+      if ("LN10".equals(feature))
+      { Expression res = 
+          new UnaryExpression("->log", 
+                              new BasicExpression(10)); 
+        res.setType(new Type("double", null)); 
+        return res; 
+      } 
+
+      if ("LN2".equals(feature))
+      { Expression res = 
+          new UnaryExpression("->log", 
+                              new BasicExpression(2)); 
+        res.setType(new Type("double", null)); 
+        return res; 
+      } 
+
+      if ("LOG10E".equals(feature))
+      { Expression res = 
+          new UnaryExpression("->log10", 
+                              new UnaryExpression("->exp",
+                                new BasicExpression(1))); 
+        res.setType(new Type("double", null)); 
+        return res; 
+      } 
+
+      if ("SQRT1_2".equals(feature))
+      { Expression res = 
+          new UnaryExpression("->sqrt", 
+                              new BasicExpression(0.5)); 
+        res.setType(new Type("double", null)); 
+        return res; 
+      } 
+
+      if ("SQRT2".equals(feature))
+      { Expression res = 
+          new UnaryExpression("->sqrt", 
+                              new BasicExpression(2)); 
+        res.setType(new Type("double", null)); 
+        return res; 
+      } 
+
+    } 
+
+    if ("lastIndex".equals(feature) && 
+        obj.getType() != null && 
+        "OclRegex".equals(obj.getType().getName()))
+    { // reg.lastIndex  is  reg.endpos
+      Expression res = 
+        BasicExpression.newAttributeBasicExpression(
+           "endpos", obj);
+      
+      res.setType(new Type("int", null)); 
+      res.setElementType(new Type("int", null));  
+      return res; 
     } 
 
     if (obj.isSequence() && "buffer".equals(feature))
@@ -13177,6 +13232,19 @@ public class ASTCompositeTerm extends ASTTerm
       return expr; 
     }
 
+    if ("lastIndex".equals(feature) && 
+        obj.getType() != null && 
+        "OclRegex".equals(obj.getType().getName()))
+    { // reg.lastIndex  is  reg.endpos
+      Expression res = 
+        BasicExpression.newAttributeBasicExpression(
+           "endpos", obj);
+      
+      res.setType(new Type("int", null)); 
+      res.setElementType(new Type("int", null));  
+      return res; 
+    } 
+
     if ("Number".equals(obj + "") && 
         "isFinite".equals(feature) && 
         pars.size() == 1)
@@ -13411,6 +13479,33 @@ public class ASTCompositeTerm extends ASTTerm
         return resx; 
       }  
 
+      if ("hypot".equals(feature) && pars.size() >= 1)
+      { Expression par1 = (Expression) pars.get(0); 
+        Expression sqr1 =
+          new UnaryExpression("->sqr", par1); 
+        Expression res = sqr1; 
+        for (int i = 1; i < pars.size(); i++) 
+        { Expression pari = (Expression) pars.get(i);
+          Expression sqri =
+            new UnaryExpression("->sqr", pari);
+          res = new BinaryExpression("+", res, sqri); 
+        }  
+        
+        res.setBrackets(true);  
+        res.setType(new Type("double", null)); 
+        Expression resx = 
+          new UnaryExpression("->sqrt", res);
+        resx.setType(new Type("double", null)); 
+        return resx; 
+      }  
+    } 
+
+    if ("deref".equals(feature) && 
+        obj.isRef())
+    { Expression resx = 
+          new UnaryExpression("!", obj);
+      resx.setType(obj.getElementType()); 
+      return resx; 
     } 
 
 
@@ -13823,18 +13918,24 @@ public class ASTCompositeTerm extends ASTTerm
       if ("ownKeys".equals(feature) && 
           pars.size() == 1) 
       { Expression par1 = (Expression) pars.get(0);
-        Expression par1type = 
-          new UnaryExpression("->oclType", par1); 
+        // Expression par1type = 
+        //   new UnaryExpression("->oclType", par1); 
         Expression dx = 
-          BasicExpression.newCallBasicExpression(
-                "getFields", par1type); 
+          BasicExpression.newStaticCallBasicExpression(
+                "allAttributes", "OclType", par1);
+        String idx = Identifier.nextIdentifier("_var"); 
+        BasicExpression vv = 
+          BasicExpression.newVariableBasicExpression(idx);
+        vv.setType(new Type("OclAttribute", null)); 
+        Expression dxdom = 
+          new BinaryExpression(":", vv, dx);   
         Expression nmefld = 
           BasicExpression.newAttributeBasicExpression(
-                                        "name");
+                                        "name", vv);
         nmefld.setType(new Type("String", null)); 
  
         Expression fieldnames = 
-          new BinaryExpression("->collect", dx, nmefld); 
+          new BinaryExpression("|C", dxdom, nmefld); 
 
         fieldnames.setType(new Type("Sequence", null)); 
         fieldnames.setElementType(new Type("String", null));  
@@ -13842,6 +13943,34 @@ public class ASTCompositeTerm extends ASTTerm
       } 
     } 
 
+    if ("exec".equals(feature) && 
+        obj.getType() != null && 
+        "OclRegex".equals(obj.getType().getName()))
+    { // reg.exec(tx)  is  reg.allMatches(tx)
+      Expression par1 = (Expression) pars.get(0); 
+      Expression res = 
+        BasicExpression.newCallBasicExpression(
+           "allMatches", obj, par1);
+      
+      res.setType(new Type("Sequence", null)); 
+      res.setElementType(new Type("String", null));  
+      return res; 
+    } 
+
+    if ("test".equals(feature) && 
+        obj.getType() != null && 
+        "OclRegex".equals(obj.getType().getName()))
+    { // reg.test(tx)  is  reg.findNext(tx)
+      Expression par1 = (Expression) pars.get(0); 
+      Expression res = 
+        BasicExpression.newCallBasicExpression(
+           "findNext", obj, par1);
+      
+      res.setType(new Type("boolean", null)); 
+      res.setElementType(new Type("boolean", null));  
+      return res; 
+    } 
+      
     if ("toString".equals(feature) && 
         pars.size() == 1)
     { Expression par1 = (Expression) pars.get(0); 
@@ -15471,6 +15600,26 @@ public class ASTCompositeTerm extends ASTTerm
                                 varelemtypes,types,entities);  
         } 
 
+        if ("parseFloat".equals(cnme) && 
+            pars.size() == 1)
+        { Expression par1 = (Expression) pars.get(0);
+          par1.setBrackets(true);  
+          Expression expr = 
+            new UnaryExpression("->toReal", par1);  
+          expr.setType(new Type("double", null));  
+          return expr; 
+        }
+
+        if ("parseInt".equals(cnme) && 
+            pars.size() == 1)
+        { Expression par1 = (Expression) pars.get(0);
+          par1.setBrackets(true);  
+          Expression expr = 
+            new UnaryExpression("->toInteger", par1);  
+          expr.setType(new Type("int", null));  
+          return expr; 
+        }
+
         if ("String".equals(cnme))
         { Expression strexpr = 
                BasicExpression.newValueBasicExpression("");
@@ -15478,6 +15627,20 @@ public class ASTCompositeTerm extends ASTTerm
           { strexpr = (Expression) pars.get(0); } 
           strexpr.setType(new Type("String", null));
           return strexpr; 
+        } 
+
+        if ("RegExp".equals(cnme))
+        { Expression strexpr = 
+               BasicExpression.newValueBasicExpression("");
+          if (pars.size() > 0)
+          { strexpr = (Expression) pars.get(0); } 
+          strexpr.setType(new Type("String", null));
+          Expression regexpr = 
+            BasicExpression.newStaticCallBasicExpression(
+              "compile", "OclRegex", strexpr); 
+          regexpr.setType(new Type("OclRegex", null));
+          
+          return regexpr; 
         } 
 
         if ("Array".equals(cnme))
@@ -15685,6 +15848,7 @@ public class ASTCompositeTerm extends ASTTerm
             "Int8Array".equals(cnme) ||
             "Uint32Array".equals(cnme) ||
             "Uint16Array".equals(cnme) || 
+            "Uint8ClampedArray".equals(cnme) || 
             "Uint8Array".equals(cnme))
         { SetExpression arrexpr = 
                        new SetExpression(true); 
@@ -15877,8 +16041,14 @@ public class ASTCompositeTerm extends ASTTerm
 
         if ("BigInt".equals(cnme))
         { Expression rx = 
-            (Expression) pars.get(0); 
-          return rx; 
+            (Expression) pars.get(0);
+          BinaryExpression sumexpr = 
+            new BinaryExpression("+", emptyString, rx); 
+          sumexpr.setBrackets(true); 
+          Expression resx = 
+            new UnaryExpression("->toLong", sumexpr); 
+          resx.setType(new Type("long", null));  
+          return resx; 
         } 
 
         if (isJSMathFunction(cnme))
@@ -15957,6 +16127,31 @@ public class ASTCompositeTerm extends ASTTerm
           } 
           strexpr.setType(new Type("String", null));
           return strexpr; 
+        } 
+
+        if ("RegExp".equals(cnme))
+        { Expression strexpr = 
+               BasicExpression.newValueBasicExpression("");
+          if (pars.size() > 0)
+          { strexpr = (Expression) pars.get(0); } 
+          strexpr.setType(new Type("String", null));
+          Expression regexpr = 
+            BasicExpression.newStaticCallBasicExpression(
+              "compile", "OclRegex", strexpr); 
+          regexpr.setType(new Type("OclRegex", null));
+          
+          return regexpr; 
+        } 
+
+        if ("WeakRef".equals(cnme))
+        { Expression strexpr = (Expression) pars.get(0); 
+          
+          Expression regexpr = 
+            new UnaryExpression("?", strexpr); 
+          regexpr.setType(new Type("Ref", null));
+          regexpr.setElementType(strexpr.getType());
+          
+          return regexpr; 
         } 
 
         if ("Array".equals(cnme))
@@ -16108,6 +16303,7 @@ public class ASTCompositeTerm extends ASTTerm
             "Int8Array".equals(cnme) ||
             "Uint32Array".equals(cnme) ||
             "Uint16Array".equals(cnme) || 
+            "Uint8ClampedArray".equals(cnme) || 
             "Uint8Array".equals(cnme))
         { SetExpression arrexpr = 
                        new SetExpression(true); 
@@ -18950,7 +19146,127 @@ public class ASTCompositeTerm extends ASTTerm
   }  
   
 
+  public String filesQueryFormKM3(String called, Vector cargs)
+  { if ("createDirectory".equals(called) && 
+        cargs.size() >= 1)
+    { // OclFile.newOclFile(cargs1).mkdir()
+    
+      ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+      String callp1 = callarg1.toKM3(); 
+          
+      if (callarg1.expression != null)    
+      { Expression fexpr = 
+          BasicExpression.newStaticCallBasicExpression(
+                                "newOclFile", "OclFile", 
+                                callarg1.expression);
+        expression = 
+          BasicExpression.newCallBasicExpression(
+                                "mkdir", 
+                                fexpr); 
+      } 
 
+      return "OclFile.newOclFile(" + callp1 + ").mkdir()"; 
+    }
+
+    if ("createFile".equals(called) && 
+        cargs.size() >= 1)
+    { // OclFile.newOclFile(carg1)
+    
+      ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+      String callp1 = callarg1.toKM3(); 
+          
+      if (callarg1.expression != null)    
+      { expression = 
+          BasicExpression.newStaticCallBasicExpression(
+                                "newOclFile", "OclFile", 
+                                callarg1.expression);
+      } 
+
+      return "OclFile.newOclFile(" + callp1 + ")"; 
+    }
+
+    if ("createTempDirectory".equals(called) && 
+        cargs.size() >= 1)
+    { // OclFile.createTemporaryFile(carg1,"")
+    
+      ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+      String callp1 = callarg1.toKM3(); 
+          
+      if (callarg1.expression != null)    
+      { Vector fpars = new Vector(); 
+        fpars.add(callarg1.expression); 
+        fpars.add(emptyString); 
+        expression = 
+          BasicExpression.newStaticCallBasicExpression(
+                                "createTemporaryFile", "OclFile", fpars);
+      } 
+
+      return "OclFile.newTemporaryFile(" + callp1 + ", \"\")"; 
+    }
+
+    if ("createTempFile".equals(called) && 
+        cargs.size() >= 3)
+    { // OclFile.createTemporaryFile(carg1,carg3)
+    
+      ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+      String callp1 = callarg1.toKM3(); 
+      ASTTerm callarg3 = (ASTTerm) cargs.get(2);
+      String callp3 = callarg3.toKM3(); 
+          
+      if (callarg1.expression != null &&
+          callarg3.expression != null)    
+      { Vector fpars = new Vector(); 
+        fpars.add(callarg1.expression); 
+        fpars.add(callarg3.expression); 
+        expression = 
+          BasicExpression.newStaticCallBasicExpression(
+                                "createTemporaryFile", "OclFile", fpars);
+      } 
+
+      return "OclFile.newTemporaryFile(" + callp1 + "," + callp3 + ")"; 
+    }
+
+    if (("delete".equals(called) || 
+         "deleteIfExists".equals(called)) && 
+        cargs.size() >= 1)
+    { // OclFile.deleteFile(carg1)
+    
+      ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+      String callp1 = callarg1.toKM3(); 
+          
+      if (callarg1.expression != null)    
+      { expression = 
+          BasicExpression.newStaticCallBasicExpression(
+                                "deleteFile", "OclFile", 
+                                callarg1.expression);
+      } 
+
+      return "OclFile.deleteFile(" + callp1 + ")"; 
+    }
+
+    if ("exists".equals(called) && 
+        cargs.size() >= 1)
+    { // OclFile.newOclFile(cargs1).exists()
+    
+      ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+      String callp1 = callarg1.toKM3(); 
+          
+      if (callarg1.expression != null)    
+      { Expression fexpr = 
+          BasicExpression.newStaticCallBasicExpression(
+                                "newOclFile", "OclFile", 
+                                callarg1.expression);
+        expression = 
+          BasicExpression.newCallBasicExpression(
+                                "exists", 
+                                fexpr); 
+      } 
+
+      return "OclFile.newOclFile(" + callp1 + ").exists()"; 
+    }
+
+    return ""; 
+  }  
 
   public String featureAccess(ASTTerm arg, ASTTerm call, String args, String calls)
   { // arg . call
@@ -19932,6 +20248,8 @@ public class ASTCompositeTerm extends ASTTerm
 
           return "(" + callp1 + ").subrange(1," + callp2 + ")"; 
         }
+        else if ("Files".equals(args))
+        { return filesQueryFormKM3(called,cargs); } 
         else if ("getByName".equals(called) && 
                  "InetAddress".equals(argliteral))
         { ASTTerm.setType(thisliteral,"String"); 

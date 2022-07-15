@@ -1490,6 +1490,19 @@ abstract class Expression
 
     String cleanValue = removeUnderscores(ob + ""); 
 
+    if (cleanValue.startsWith("0b"))
+    { cleanValue = cleanValue.substring(2); 
+      try 
+      { Integer bx = Integer.parseInt(cleanValue,2); 
+        if (bx == null) 
+        { return false; } 
+        int bn = bx.intValue(); 
+        return true; 
+      } 
+      catch (Exception e) 
+      { return false; } 
+    } 
+
     try
     { Integer intx = Integer.decode(cleanValue); 
       if (intx == null) 
@@ -1509,6 +1522,19 @@ abstract class Expression
     { return false; } 
 
     String cleanValue = removeUnderscores(ob + ""); 
+
+    if (cleanValue.startsWith("0b"))
+    { cleanValue = cleanValue.substring(2); 
+      try 
+      { Long bx = Long.parseLong(cleanValue,2); 
+        if (bx == null) 
+        { return false; } 
+        long bn = bx.longValue(); 
+        return true; 
+      } 
+      catch (Exception e) 
+      { return false; } 
+    } 
 
     try
     { Long longx = Long.decode(cleanValue); 
@@ -1534,6 +1560,39 @@ abstract class Expression
     }  
   } 
 
+  public static int convertInteger(Object ob) 
+  { if (ob == null) 
+    { return 0; } 
+
+    if ((ob + "").startsWith("_"))
+    { return 0; } 
+
+    String cleanValue = removeUnderscores(ob + ""); 
+
+    if (cleanValue.startsWith("0b"))
+    { cleanValue = cleanValue.substring(2); 
+      try 
+      { Integer bx = Integer.parseInt(cleanValue,2); 
+        if (bx == null) 
+        { return 0; } 
+        int bn = bx.intValue(); 
+        return bn; 
+      } 
+      catch (Exception e) 
+      { return 0; } 
+    } 
+
+    try
+    { Integer intx = Integer.decode(cleanValue); 
+      if (intx == null) 
+      { return 0; } 
+      int nn = intx.intValue(); 
+      return nn; 
+    } 
+    catch (Exception e) 
+    { return 0; } 
+  } 
+
   public static long convertLong(Object ob) 
   { if (ob == null) 
     { return 0; } 
@@ -1542,6 +1601,19 @@ abstract class Expression
     { return 0; } 
 
     String cleanValue = removeUnderscores(ob + ""); 
+
+    if (cleanValue.startsWith("0b"))
+    { cleanValue = cleanValue.substring(2); 
+      try 
+      { Long bx = Long.parseLong(cleanValue,2); 
+        if (bx == null) 
+        { return 0; } 
+        long bn = bx.longValue(); 
+        return bn; 
+      } 
+      catch (Exception e) 
+      { return 0; } 
+    } 
 
     try
     { Long longx = Long.decode(cleanValue); 
