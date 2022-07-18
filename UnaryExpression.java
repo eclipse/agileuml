@@ -34,6 +34,24 @@ public class UnaryExpression extends Expression
     elementType = be.getElementType();  
   } 
 
+  public String functionOfLambda()
+  { if ("lambda".equals(operator))
+    { Expression arg = argument; 
+      if (arg instanceof UnaryExpression && 
+          "lambda".equals(((UnaryExpression) arg).operator))
+      { return 
+          ((UnaryExpression) arg).functionOfLambda(); 
+      }
+
+      if (arg instanceof BasicExpression)
+      { BasicExpression be = (BasicExpression) arg; 
+        if (be.umlkind == QUERY && 
+            "self".equals(be.objectRef + "")) 
+        { return be.data; }
+      } 
+    }
+    return null;  
+  } 
 
   public static Expression newLambdaUnaryExpression(
                          Expression bcall, 
@@ -229,7 +247,7 @@ public class UnaryExpression extends Expression
     if (cclass != null) 
     { oper = cclass.getIdenticalOperation(stat);
       selfvar.setType(new Type(cclass)); 
-    } 
+    } // could be same stat for different parameters
 
     if (oper != null)  
     { opid = oper.getName(); 

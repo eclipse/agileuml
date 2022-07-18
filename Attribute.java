@@ -91,7 +91,25 @@ public class Attribute extends ModelElement
     } 
     kind = INTERNAL; 
   } 
-    
+
+  public Attribute(BasicExpression v, Expression e, Expression init)
+  { super(v.getData()); 
+    type = init.getType(); 
+    elementType = init.getElementType(); 
+    // entity = e.getEntity(); 
+    int c2 = init.getMultiplicity(); 
+    if (c2 == ModelElement.ONE)
+    { upper = 1; 
+      lower = 1; 
+    } 
+    else 
+    { upper = 0; 
+      lower = 0; 
+    } 
+    kind = INTERNAL;
+    // initialExpression = e; 
+    // initialValue = e + "";   
+  }     
   
   public Attribute(Association ast) 
   { super(ast.getRole2()); 

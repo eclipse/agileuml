@@ -885,7 +885,7 @@ public class ASTBasicTerm extends ASTTerm
       return "String"; 
     }
  
-    if ("StringBuffer".equals(value))
+    if ("StringBuffer".equals(value) || "Path".equals(value))
     { modelElement = new Type("String", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "String"; 
@@ -1113,6 +1113,7 @@ public class ASTBasicTerm extends ASTTerm
     }
  
     if ("Stack".equals(value) || "Queue".equals(value) ||
+        "Deque".equals(value) || 
         "BlockingQueue".equals(value))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -1126,10 +1127,11 @@ public class ASTBasicTerm extends ASTTerm
     }
  
     if ("PriorityQueue".equals(value))
-    { modelElement = new Type("Sequence", null); 
+    { modelElement = new Type("Sequence", null);
+      ((Type) modelElement).setSorted(true);  
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; 
-    }
+    } // and it is sorted
  
     if ("Stream".equals(value) || "JsonArray".equals(value) ||
         "JSONArray".equals(value))
@@ -1142,7 +1144,15 @@ public class ASTBasicTerm extends ASTTerm
     { modelElement = new Type("Sequence", null);
       ((Type) modelElement).setElementType(new Type("boolean", null));  
       expression = new BasicExpression((Type) modelElement); 
-      return "Sequence(boolean)"; } 
+      return "Sequence(boolean)";
+    } 
+
+    if ("ByteBuffer".equals(value))
+    { modelElement = new Type("Sequence", null);
+      ((Type) modelElement).setElementType(new Type("int", null));  
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence(int)";
+    } 
 
     if ("Set".equals(value) || "HashSet".equals(value) ||
         "EnumSet".equals(value))
@@ -1153,6 +1163,7 @@ public class ASTBasicTerm extends ASTTerm
  
     if ("SortedSet".equals(value) || "TreeSet".equals(value))
     { modelElement = new Type("Set", null); 
+      ((Type) modelElement).setSorted(true);  
       expression = new BasicExpression((Type) modelElement); 
       return "Set";
     } 
@@ -1170,14 +1181,9 @@ public class ASTBasicTerm extends ASTTerm
       return "Map"; 
     } 
     
-    if ("SortedMap".equals(value))
+    if ("SortedMap".equals(value) || "TreeMap".equals(value))
     { modelElement = new Type("Map", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Map"; 
-    }
- 
-    if ("TreeMap".equals(value))
-    { modelElement = new Type("Map", null); 
+      ((Type) modelElement).setSorted(true);  
       expression = new BasicExpression((Type) modelElement); 
       return "Map"; 
     }
@@ -1360,6 +1366,16 @@ public class ASTBasicTerm extends ASTTerm
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; 
     }
+
+    if ("FileStore".equals(value) || 
+        "ByteChannel".equals(value) ||
+        "Channel".equals(value) ||
+        "ReadableByteChannel".equals(value) ||
+        "WritableByteChannel".equals(value) ||
+        "SeekableByteChannel".equals(value) ||
+        "FileChannel".equals(value))
+    { return "OclFile"; } 
+
  
     if ("InputStreamReader".equals(value))
     { modelElement = new Type("OclFile", null); 
@@ -1650,7 +1666,7 @@ public class ASTBasicTerm extends ASTTerm
     { modelElement = new Type("String", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "String"; } 
-    if ("StringBuffer".equals(value))
+    if ("StringBuffer".equals(value) || "Path".equals(value))
     { modelElement = new Type("String", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "String"; } 
@@ -1847,7 +1863,7 @@ public class ASTBasicTerm extends ASTTerm
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; } 
-    if ("Queue".equals(value))
+    if ("Queue".equals(value) || "Deque".equals(value))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; } 
@@ -1861,6 +1877,7 @@ public class ASTBasicTerm extends ASTTerm
       return "Sequence"; } 
     if ("PriorityQueue".equals(value))
     { modelElement = new Type("Sequence", null); 
+      ((Type) modelElement).setSorted(true); 
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; 
     } 
@@ -1876,7 +1893,15 @@ public class ASTBasicTerm extends ASTTerm
     { modelElement = new Type("Sequence", null);
       ((Type) modelElement).setElementType(new Type("boolean", null));  
       expression = new BasicExpression((Type) modelElement); 
-      return "Sequence(boolean)"; } 
+      return "Sequence(boolean)"; 
+    } 
+
+    if ("ByteBuffer".equals(value))
+    { modelElement = new Type("Sequence", null);
+      ((Type) modelElement).setElementType(new Type("int", null));  
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence(int)";
+    } 
 
     if ("Set".equals(value) ||
         "HashSet".equals(value) || "EnumSet".equals(value))
@@ -1886,9 +1911,11 @@ public class ASTBasicTerm extends ASTTerm
     }
  
     if ("SortedSet".equals(value) || "TreeSet".equals(value))
-    { modelElement = new Type("Set", null); 
+    { modelElement = new Type("Set", null);
+      ((Type) modelElement).setSorted(true);  
       expression = new BasicExpression((Type) modelElement); 
-      return "Set"; } 
+      return "Set"; 
+    } 
 
     if ("Map".equals(value))
     { modelElement = new Type("Map", null); 
@@ -1905,6 +1932,7 @@ public class ASTBasicTerm extends ASTTerm
  
     if ("SortedMap".equals(value) || "TreeMap".equals(value))
     { modelElement = new Type("Map", null); 
+      ((Type) modelElement).setSorted(true);  
       expression = new BasicExpression((Type) modelElement); 
       return "Map"; 
     }
@@ -2054,6 +2082,15 @@ public class ASTBasicTerm extends ASTTerm
       return "OclFile"; 
     }
  
+    if ("FileStore".equals(value) || 
+        "ByteChannel".equals(value) ||
+        "Channel".equals(value) ||
+        "ReadableByteChannel".equals(value) ||
+        "WritableByteChannel".equals(value) ||
+        "SeekableByteChannel".equals(value) ||
+        "FileChannel".equals(value))
+    { return "OclFile"; } 
+
     if ("Reader".equals(value) || "FileReader".equals(value))
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 

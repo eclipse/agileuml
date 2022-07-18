@@ -132,6 +132,109 @@ public class BehaviouralFeature extends ModelElement
     return UnaryExpression.newLambdaUnaryExpression(be,this); 
   } 
 
+  public void jsClassFromConstructor(Entity ent, Entity cclass, Vector inits) 
+  { // For each statement  self.att := expr  in activity
+    // make att an attribute of ent, with initialisation expr
+    // move operations from cclass to ent if they are used
+    // in activity. 
+
+    Type etype = new Type(ent); 
+    String ename = ent.getName(); 
+    BasicExpression res = 
+      BasicExpression.newVariableBasicExpression(
+                                 "_res_", etype); 
+
+    if (activity != null) 
+    { Vector asgns = 
+        Statement.getAssignments(activity);
+      Vector pars = new Vector(); 
+      Vector exprs = new Vector();  
+      for (int i = 0; i < asgns.size(); i++) 
+      { AssignStatement asgn = 
+          (AssignStatement) asgns.get(i); 
+        Expression lhs = asgn.getLeft(); 
+        Expression rhs = asgn.getRight(); 
+
+        // if parameters[ind] equals lhs.data, 
+        // use inits[ind] for initialisation
+        // else use rhs. 
+
+        if (lhs instanceof BasicExpression) 
+        { BasicExpression be = (BasicExpression) lhs; 
+          if ("self".equals(be.objectRef + ""))
+          { Expression init = rhs;
+            if (parameters != null && 
+                ModelElement.lookupByName(
+                    be.data, parameters) != null)
+            { int indx = 
+                ModelElement.indexByName(be.data, parameters); 
+              init = (Expression) inits.get(indx); 
+              Attribute att = new Attribute(be,rhs,init); 
+              ent.addAttribute(att); 
+              pars.add(att); 
+              exprs.add(new BasicExpression(att));
+              Attribute par = 
+                (Attribute) ModelElement.lookupByName(
+                                  be.data, parameters); 
+              par.setType(att.getType());  
+            }
+            else   
+            { Expression newinit = init; 
+              if (init instanceof UnaryExpression)
+              { String ff = 
+                  ((UnaryExpression) init).functionOfLambda(); 
+                System.out.println("++++ Function call: " + init + " " + ff); 
+                if (ff != null) 
+                { BehaviouralFeature oldop = 
+                      cclass.getOperation(ff); 
+                  if (oldop != null) 
+                  { oldop.setOwner(ent); 
+                    cclass.removeOperation(oldop); 
+                    ent.addOperation(oldop); 
+                  } 
+                }
+              }
+              Attribute attf = new Attribute(be,rhs,newinit); 
+              ent.addAttribute(attf);
+                
+            } // a method in fact. 
+            be.setObjectRef(res);  
+          }
+        } 
+      }
+    
+    /* 
+      if (ent.hasOperation("new" + ename)) { } 
+      else 
+      { BehaviouralFeature bf = 
+           newStaticConstructor(ent,pars,exprs);
+        ent.addOperation(bf); 
+      } */  
+
+      SequenceStatement code = new SequenceStatement(); 
+ 
+      CreationStatement cs = new CreationStatement("_res_", etype); 
+      code.addStatement(cs); 
+
+      BasicExpression createCall = 
+         new BasicExpression("create" + ename); 
+      createCall.setUmlKind(Expression.UPDATEOP); 
+      createCall.setParameters(new Vector()); 
+      createCall.setIsEvent(); 
+      createCall.setType(etype); 
+      createCall.setStatic(true); 
+      // createCall.entity = e; 
+
+      AssignStatement cassgn = 
+        new AssignStatement(res,createCall); 
+      code.addStatement(cassgn);
+      Statement newactivity = 
+         activity.substituteEq("self", res);  
+      code.addStatement(newactivity); 
+      code.addStatement(new ReturnStatement(res));
+      activity = code;  
+    }   
+  } 
 
   public void setBx(boolean b)
   { bx = b; } 
@@ -433,6 +536,69 @@ public class BehaviouralFeature extends ModelElement
        new InvocationStatement(initialiseCall);
     // callInit.setParameters(parNames);  
     code.addStatement(callInit); 
+
+    ReturnStatement rs = new ReturnStatement(res); 
+    code.addStatement(rs); 
+
+    code.setBrackets(true); 
+
+    bf.setActivity(code); 
+    bf.setStatic(true); 
+
+    return bf; 
+  } 
+
+  public static BehaviouralFeature newStaticConstructor(Entity ent, Vector pars, Vector exprs)
+  { String ename = ent.getName(); 
+    BehaviouralFeature bf = new BehaviouralFeature("new" + ename); 
+    bf.setParameters(pars); 
+    Type etype = new Type(ent); 
+    bf.setType(etype); 
+    bf.setPostcondition(new BasicExpression(true)); 
+    SequenceStatement code = new SequenceStatement();
+
+    BasicExpression res = BasicExpression.newVariableBasicExpression("result", etype); 
+ 
+    CreationStatement cs = new CreationStatement("result", etype); 
+    code.addStatement(cs); 
+
+    BasicExpression createCall = new BasicExpression("create" + ename); 
+    createCall.setUmlKind(Expression.UPDATEOP); 
+    createCall.setParameters(new Vector()); 
+    createCall.setIsEvent(); 
+    createCall.setType(etype); 
+    createCall.setStatic(true); 
+    // createCall.entity = e; 
+
+    AssignStatement assgn = new AssignStatement(res,createCall); 
+    code.addStatement(assgn); 
+
+    // Vector pars = ent.getAttributes(); 
+    for (int i = 0; i < pars.size(); i++) 
+    { Attribute attr = (Attribute) pars.get(i); 
+      BasicExpression lhs = new BasicExpression(attr); 
+      lhs.setObjectRef(res); 
+      Expression rhs = (Expression) exprs.get(i);
+      if (rhs != null) 
+      { AssignStatement assgnpar = 
+          new AssignStatement(lhs,rhs); 
+        code.addStatement(assgnpar);
+      }  
+    } 
+
+    // BasicExpression initialiseCall = 
+    //   new BasicExpression("initialise"); 
+    // initialiseCall.setUmlKind(Expression.UPDATEOP);
+    // initialiseCall.setIsEvent(); 
+    // Vector parNames = bf.getParameterExpressions(); 
+    // System.out.println(">>=== " + pars + " " + parNames); 
+ 
+    // initialiseCall.setParameters(new Vector()); 
+    // initialiseCall.setObjectRef(res); 
+    // InvocationStatement callInit = 
+    //    new InvocationStatement(initialiseCall);
+    // callInit.setParameters(parNames);  
+    // code.addStatement(callInit); 
 
     ReturnStatement rs = new ReturnStatement(res); 
     code.addStatement(rs); 

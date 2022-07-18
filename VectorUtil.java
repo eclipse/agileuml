@@ -2,7 +2,7 @@ import java.util.Vector;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -90,7 +90,8 @@ class VectorUtil
   { Vector res = new Vector(); 
     for (int i = 0; i < nameds.size(); i++) 
     { res.add(((Named) nameds.elementAt(i)).label); } 
-    return res; } 
+    return res; 
+  } 
 
   static Vector vectorEqmerge(final Vector a, final Vector b)
   { Vector res = (Vector) a.clone();
@@ -132,7 +133,8 @@ class VectorUtil
     { if ( key.equals(((Named) data.elementAt(i)).label) )
       { return (Named) data.elementAt(i); }
     }
-    return null;  }
+    return null;  
+  }
 
   public static boolean containsEqual(final String s, final Vector vs)
   { boolean res = false;

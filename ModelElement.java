@@ -447,6 +447,21 @@ public abstract class ModelElement implements SystemTypes
     return null; 
   } 
 
+  public static int indexByName(String nme, Vector mes)
+  { if (mes == null || nme == null) 
+    { return -1; }
+
+    for (int i = 0; i < mes.size(); i++) 
+    { Object obj = mes.get(i); 
+      if (obj instanceof ModelElement) 
+      { ModelElement me = (ModelElement) obj; 
+        if (me.getName().equals(nme))
+        { return i; }
+      } 
+    } 
+    return -1; 
+  } 
+
   public static ModelElement lookupByNameIgnoreCase(String nme, Vector mes)
   { if (mes == null || nme == null) 
     { return null; }

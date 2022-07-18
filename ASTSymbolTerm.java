@@ -464,6 +464,7 @@ public class ASTSymbolTerm extends ASTTerm
     if ("TreeSet".equals(symbol) || 
         "SortedSet".equals(symbol)) 
     { modelElement = new Type("Set", null); 
+      ((Type) modelElement).setSorted(true); 
       expression = new BasicExpression((Type) modelElement); 
       return "Set"; 
     } 
@@ -473,6 +474,13 @@ public class ASTSymbolTerm extends ASTTerm
       ((Type) modelElement).setElementType(new Type("boolean", null));  
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence(boolean)"; 
+    } 
+
+    if ("ByteBuffer".equals(symbol))
+    { modelElement = new Type("Sequence", null);
+      ((Type) modelElement).setElementType(new Type("int", null));  
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence(int)";
     } 
 
     if ("HashMap".equals(symbol) || 
@@ -487,6 +495,7 @@ public class ASTSymbolTerm extends ASTTerm
     if ("TreeMap".equals(symbol) || 
         "SortedMap".equals(symbol)) 
     { modelElement = new Type("Map", null); 
+      ((Type) modelElement).setSorted(true); 
       expression = new BasicExpression((Type) modelElement); 
       return "Map"; 
     } 
@@ -703,6 +712,15 @@ public class ASTSymbolTerm extends ASTTerm
     { modelElement = new Type("OclFile", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "OclFile"; } 
+
+    if ("FileStore".equals(symbol) || 
+        "ByteChannel".equals(symbol) ||
+        "Channel".equals(symbol) ||
+        "ReadableByteChannel".equals(symbol) ||
+        "WritableByteChannel".equals(symbol) ||
+        "SeekableByteChannel".equals(symbol) ||
+        "FileChannel".equals(symbol))
+    { return "OclFile"; } 
 
     if ("JDBCDatabase".equals(symbol) ||  
         "Connection".equals(symbol) ||  
