@@ -740,6 +740,11 @@ class BasicExpression extends Expression
   public Type getArrayType() 
   { return arrayType; } 
 
+  public boolean isCallBasicExpression()
+  { return parameters != null && 
+      (umlkind == QUERY || umlkind == UPDATEOP); 
+  } 
+
   public Object clone()
   { BasicExpression res = new BasicExpression(data);
     if (javaForm != null) 

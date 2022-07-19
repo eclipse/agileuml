@@ -168,7 +168,8 @@ public class BehaviouralFeature extends ModelElement
                     be.data, parameters) != null)
             { int indx = 
                 ModelElement.indexByName(be.data, parameters); 
-              init = (Expression) inits.get(indx); 
+              if (0 <= indx && indx < inits.size())
+              { init = (Expression) inits.get(indx); }  
               Attribute att = new Attribute(be,rhs,init); 
               ent.addAttribute(att); 
               pars.add(att); 
@@ -200,6 +201,35 @@ public class BehaviouralFeature extends ModelElement
             } // a method in fact. 
             be.setObjectRef(res);  
           }
+          else if (rhs instanceof BasicExpression)
+          { BasicExpression rhsbe = (BasicExpression) rhs; 
+            if (rhsbe.isCallBasicExpression())
+            { String fnme = rhsbe.getData(); 
+              if (fnme != null) 
+              { BehaviouralFeature oldop = 
+                      cclass.getOperation(fnme); 
+                if (oldop != null) 
+                { oldop.setOwner(ent); 
+                  cclass.removeOperation(oldop); 
+                  ent.addOperation(oldop); 
+                } 
+              }
+            }
+          }
+          else if (rhs instanceof UnaryExpression)
+          { String ff = 
+                  ((UnaryExpression) rhs).functionOfLambda(); 
+            System.out.println("++++ Function call: " + rhs + " " + ff); 
+            if (ff != null) 
+            { BehaviouralFeature oldop = 
+                      cclass.getOperation(ff); 
+              if (oldop != null) 
+              { oldop.setOwner(ent); 
+                cclass.removeOperation(oldop); 
+                ent.addOperation(oldop); 
+              } 
+            }
+          }       
         } 
       }
     
@@ -234,6 +264,25 @@ public class BehaviouralFeature extends ModelElement
       code.addStatement(new ReturnStatement(res));
       activity = code;  
     }   
+  } 
+
+  public void addBeforeActivityEnd(Statement st)
+  { if (activity != null)
+    { Statement.addBeforeEnd(activity,st); } 
+  } 
+
+  public void addBeforeActivityEnd(Entity ent, Attribute att, 
+                                   Expression val)
+  { if (activity != null)
+    { Type etype = new Type(ent); 
+      BasicExpression res = 
+        BasicExpression.newVariableBasicExpression(
+                                 "_res_", etype);
+      BasicExpression lhs = new BasicExpression(att); 
+      lhs.setObjectRef(res);  
+      Statement.addBeforeEnd(activity,
+        new AssignStatement(lhs,val));
+    } 
   } 
 
   public void setBx(boolean b)

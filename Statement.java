@@ -70,6 +70,13 @@ abstract class Statement implements Cloneable
     return false; 
   } 
 
+  public static void addBeforeEnd(Statement blk, Statement st)
+  { if (blk instanceof SequenceStatement && st != null) 
+    { SequenceStatement ss = (SequenceStatement) blk; 
+      ss.addBeforeEnd(st); 
+    } 
+  } 
+
   public static boolean isSingleReturnStatement(Statement st)
   { if (st == null) 
     { return false; } 

@@ -10475,9 +10475,90 @@ public class ASTCompositeTerm extends ASTTerm
     return res; 
   } 
 
+  public boolean jsPrototypeAccess(ASTTerm t)
+  { System.out.println("+++ jsPrototypeAccess for " + t); 
+
+    if (t instanceof ASTCompositeTerm) 
+    { ASTCompositeTerm tt = (ASTCompositeTerm) t; 
+      if (tt.tag.equals("singleExpression") && 
+          tt.terms.size() == 3 && 
+          ".".equals(tt.terms.get(1) + ""))
+      { ASTTerm lhs = (ASTTerm) tt.terms.get(0); 
+        if (jsPrototype(lhs))
+        { return true; } 
+      } 
+    } 
+    return false; 
+  } 
+
+  public boolean jsPrototype(ASTTerm t)
+  { System.out.println("+++ jsPrototype for " + t); 
+
+    if (t instanceof ASTCompositeTerm) 
+    { ASTCompositeTerm tt = (ASTCompositeTerm) t; 
+      if (tt.tag.equals("singleExpression") && 
+          tt.terms.size() == 3 && 
+          ".".equals(tt.terms.get(1) + ""))
+      { ASTTerm rhs = (ASTTerm) tt.terms.get(2); 
+        System.out.println("+++ " + rhs.literalForm()); 
+
+        if (rhs.literalForm().equals("prototype"))
+        { return true; } 
+      } 
+    } 
+    return false; 
+  } 
+
+  public String jsPrototypeAccessClass(ASTTerm t)
+  { 
+    if (t instanceof ASTCompositeTerm) 
+    { ASTCompositeTerm tt = (ASTCompositeTerm) t; 
+      if (tt.tag.equals("singleExpression") && 
+          tt.terms.size() == 3 && 
+          ".".equals(tt.terms.get(1) + ""))
+      { ASTTerm lhs = (ASTTerm) tt.terms.get(0); 
+        if (jsPrototype(lhs))
+        { return jsPrototypeClass(lhs); } 
+      } 
+    } 
+    return null; 
+  } 
+
+  public String jsPrototypeClass(ASTTerm t)
+  { 
+    if (t instanceof ASTCompositeTerm) 
+    { ASTCompositeTerm tt = (ASTCompositeTerm) t; 
+      if (tt.tag.equals("singleExpression") && 
+          tt.terms.size() == 3 && 
+          ".".equals(tt.terms.get(1) + ""))
+      { ASTTerm rhs = (ASTTerm) tt.terms.get(2); 
+    
+        if (rhs.literalForm().equals("prototype"))
+        { ASTTerm lhs = (ASTTerm) tt.terms.get(0);
+          return lhs.literalForm(); 
+        } 
+      } 
+    } 
+    return null; 
+  } 
+
+  public String jsPrototypeAccessFeature(ASTTerm t)
+  { 
+    if (t instanceof ASTCompositeTerm) 
+    { ASTCompositeTerm tt = (ASTCompositeTerm) t; 
+      if (tt.tag.equals("singleExpression") && 
+          tt.terms.size() == 3 && 
+          ".".equals(tt.terms.get(1) + ""))
+      { ASTTerm rhs = (ASTTerm) tt.terms.get(2); 
+        return rhs.literalForm();  
+      } 
+    } 
+    return null; 
+  } 
+
   public Vector jsupdateForm(java.util.Map vartypes, 
     java.util.Map varelemtypes, Vector types, Vector entities)
-  { System.out.println(">> jsupdateFormToKM3 for " + tag + " with " + terms.size() + " terms"); 
+  { System.out.println(">> jsupdateForm for " + tag + " with " + terms.size() + " terms"); 
     System.out.println(); 
 
     if (terms.size() == 2 && 
@@ -10495,6 +10576,64 @@ public class ASTCompositeTerm extends ASTTerm
       Vector res = new Vector(); 
       res.add(st); 
       return res; 
+    } 
+
+    if (terms.size() == 3 && 
+        "=".equals(terms.get(1) + "") && 
+        jsPrototypeAccess((ASTTerm) terms.get(0)))
+    { System.out.println(">++> JS prototype access: " + terms.get(0));
+      // C.prototype.f = value
+      ASTTerm arg = (ASTTerm) terms.get(2); 
+      String feat = 
+        jsPrototypeAccessFeature((ASTTerm) terms.get(0));
+      Expression value = 
+          arg.jsexpressionToKM3(vartypes,
+                                varelemtypes,types,entities);
+      String pclass = 
+        jsPrototypeAccessClass((ASTTerm) terms.get(0)); 
+      // create class for pclass if not already existing; 
+      // add feature f with initialisation value. 
+      if (pclass != null) 
+      { Entity ent = (Entity)
+          ModelElement.lookupByName(pclass, entities);
+        if (ent == null)
+        { ent = new Entity(pclass); 
+          entities.add(ent);
+          Entity fromJS = 
+            (Entity) ModelElement.lookupByName(
+                                        "FromJavaScript",
+                                        entities); 
+          if (fromJS == null) 
+          { fromJS = ASTTerm.currentClass; } 
+
+          if (fromJS != null) 
+          { BehaviouralFeature oldclass = 
+                 fromJS.getOperation(pclass); 
+            if (oldclass != null) 
+            { oldclass.jsClassFromConstructor(
+                                   ent,fromJS,new Vector());
+              fromJS.removeOperation(oldclass); 
+              oldclass.setType(new Type(ent));
+              oldclass.setName("new" + pclass);
+              oldclass.setStatic(true);  
+              oldclass.setOwner(ent); 
+              ent.addOperation(oldclass); 
+            }
+          }  
+        }
+        Type ftype = value.getType(); 
+        Attribute attr = 
+          new Attribute(feat, ftype, 
+                        ModelElement.INTERNAL); 
+        attr.setInitialisation(value); 
+        ent.addAttribute(attr);
+        BehaviouralFeature creatr = 
+          ent.getOperation("new" + pclass); 
+        if (creatr != null) 
+        { creatr.addBeforeActivityEnd(ent,attr,value); }  
+        System.out.println(">> New class from prototype assignment: " + ent.getKM3());  
+      }
+      return new Vector(); 
     } 
 
     if ("yieldStatement".equals(tag) && terms.size() >= 2)
@@ -19494,6 +19633,24 @@ public class ASTCompositeTerm extends ASTTerm
   public String filesQueryFormKM3(String called, Vector cargs)
   { // The return values
 
+    if ("copy".equals(called) && 
+        cargs.size() >= 2)
+    { // OclFile.copyFromTo(cargs1,cargs2)
+      ASTTerm.setType(this, "long"); 
+    
+      ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+      String callp1 = callarg1.toKM3(); 
+          
+      if (callarg1.expression != null)    
+      { expression = 
+          BasicExpression.newCallBasicExpression(
+                                "length", 
+                                callarg1.expression);
+      } 
+
+      return callp1 + ".length()"; 
+    } // actually returns callp1.length() as a query
+
     if ("createDirectory".equals(called) && 
         cargs.size() >= 1)
     { // OclFile.newOclFile(cargs1).mkdir()
@@ -19855,6 +20012,10 @@ public class ASTCompositeTerm extends ASTTerm
           new BinaryExpression("->split", expr1, 
             BasicExpression.newValueBasicExpression(
               "\"\n\r\"")); 
+
+        Type stringSeq = new Type("Sequence", null); 
+        stringSeq.setElementType(new Type("String", null)); 
+        expression.setType(stringSeq); 
       } 
 
       return "OclFile.newOclFile(" + callp1 + ").readAll()->split(\"\r\n\")"; 
@@ -19879,6 +20040,9 @@ public class ASTCompositeTerm extends ASTTerm
           BasicExpression.newCallBasicExpression(
                                 "list", 
                                 fexpr); 
+        Type stringSeq = new Type("Sequence", null); 
+        stringSeq.setElementType(new Type("String", null)); 
+        expression.setType(stringSeq); 
       } 
 
       return "OclFile.newOclFile(" + callp1 + ").list()"; 
@@ -20040,6 +20204,33 @@ public class ASTCompositeTerm extends ASTTerm
 
   public String filesMethodCallFormKM3(String called, Vector cargs)
   { // update forms
+
+    if ("copy".equals(called) && 
+        cargs.size() >= 2)
+    { // OclFile.copyFromTo(cargs1,cargs2)
+      ASTTerm.setType(this, "long"); 
+    
+      ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+      String callp1 = callarg1.toKM3(); 
+      ASTTerm callarg2 = (ASTTerm) cargs.get(1);
+      String callp2 = callarg2.toKM3(); 
+          
+      if (callarg1.expression != null && 
+          callarg2.expression != null)    
+      { Vector parsx = new Vector(); 
+        parsx.add(callarg1.expression); 
+        parsx.add(callarg2.expression); 
+        expression = 
+          BasicExpression.newStaticCallBasicExpression(
+                                "copyFromTo", "OclFile", 
+                                parsx);
+        statement = 
+          InvocationStatement.newInvocationStatement(
+                                 expression,parsx);  
+      } 
+
+      return "OclFile.copyFromTo(" + callp1 + "," + callp2 + ")"; 
+    } // actually returns callp1.length() as a query
 
     if ("createDirectory".equals(called) && 
         cargs.size() >= 1)
@@ -25750,7 +25941,7 @@ public class ASTCompositeTerm extends ASTTerm
           if (arg.expression != null && 
               callarg.expression != null) 
           { expression = 
-              new BinaryExpression("->preend", arg.expression, callarg.expression); 
+              new BinaryExpression("->prepend", arg.expression, callarg.expression); 
             statement = 
               new AssignStatement(arg.expression, expression); 
           } 
@@ -28080,6 +28271,7 @@ public class ASTCompositeTerm extends ASTTerm
             BasicExpression rng = BasicExpression.newFunctionBasicExpression("subrange", "Integer", pars);  
             BasicExpression def = new BasicExpression(defaultValue); 
             expression = new BinaryExpression("->collect", rng, def);  
+            expression.setType(new Type("Sequence",null)); 
           } 
         } 
         else if (argsterm.arity() == 3 && 
@@ -28126,6 +28318,7 @@ public class ASTCompositeTerm extends ASTTerm
                  "subrange", "Integer", pars1);
             expression = 
               new BinaryExpression("->collect", rng1, col);
+            expression.setType(new Type("Sequence",null)); 
           } 
         } 
         else if (argsterm.arity() == 5 && 
@@ -28150,6 +28343,7 @@ public class ASTCompositeTerm extends ASTTerm
           expression = 
             new BinaryExpression("->collect", arrayDom, 
                                  emptySequence); 
+            expression.setType(new Type("Sequence",null)); 
         } 
         else if (argsterm.arity() == 5 && 
                    "[".equals(argsterm.terms.get(0) + "") && 
@@ -28213,6 +28407,7 @@ public class ASTCompositeTerm extends ASTTerm
                  "subrange", "Integer", pars1);
             expression = 
               new BinaryExpression("->collect", rng1, col1);
+            expression.setType(new Type("Sequence",null)); 
           } 
         } 
         else if (argsterm.arity() == 8 && 
@@ -28253,6 +28448,7 @@ public class ASTCompositeTerm extends ASTTerm
                  "subrange", "Integer", pars1);
             expression = 
               new BinaryExpression("->collect", rng1, col1);
+            expression.setType(new Type("Sequence",null)); 
           } 
         } 
         else if (argsterm.arity() == 7 && 
@@ -28333,6 +28529,9 @@ public class ASTCompositeTerm extends ASTTerm
               BasicExpression.newStaticCallBasicExpression(
                  "new" + cident, cident, 
                  args.expressions); 
+
+            ASTTerm.setType(this,cident); 
+            expression.setType(new Type(newc)); 
            
             return "" + expression;  
           } 
@@ -28340,6 +28539,10 @@ public class ASTCompositeTerm extends ASTTerm
           { expression = 
               BasicExpression.newStaticCallBasicExpression(
                 "new" + cident, cident, creatorArguments); 
+
+            ASTTerm.setType(this,cident); 
+            expression.setType(new Type(newc)); 
+
             return cident + ".new" + cident + "()";  
           } 
         }
@@ -28355,7 +28558,9 @@ public class ASTCompositeTerm extends ASTTerm
       { ASTTerm.setType(this,"long");
 
         if (args.expression != null) 
-        { expression = new UnaryExpression("->toLong", args.expression); } 
+        { expression = new UnaryExpression("->toLong", args.expression); 
+          expression.setType(new Type("long", null)); 
+        } 
  
         return args1 + "->toLong()"; 
       } 
@@ -28391,6 +28596,7 @@ public class ASTCompositeTerm extends ASTTerm
       if ("Socket".equals(clsliteral) && 
           cargs.size() > 1)
       { ASTTerm.setType(this,"OclDatasource");
+
         ASTTerm arg1 = (ASTTerm) cargs.get(0); 
         String hostarg = arg1.toKM3();
         ASTTerm arg2 = (ASTTerm) cargs.get(1); 
@@ -28405,6 +28611,7 @@ public class ASTCompositeTerm extends ASTTerm
           expression =   
             BasicExpression.newStaticCallBasicExpression(
               "newSocket", "OclDatasource", pars); 
+          expression.setType(new Type("OclDatasource", null)); 
         } 
         return "OclDatasource.newSocket(" + hostarg + "," + 
                                           portarg + ")"; 
@@ -28420,9 +28627,14 @@ public class ASTCompositeTerm extends ASTTerm
         if (arg1.isString())
         { if (arg1.expression != null) 
           { Vector pars = new Vector(); 
-            BasicExpression par = BasicExpression.newStaticCallBasicExpression("newOclFile", "OclFile", arg1.expression); 
+            BasicExpression par = 
+              BasicExpression.newStaticCallBasicExpression(
+                  "newOclFile", "OclFile", arg1.expression); 
             pars.add(par); 
-            expression = BasicExpression.newStaticCallBasicExpression("newOclFile_Read", "OclFile", pars);  
+            expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                      "newOclFile_Read", "OclFile", pars);  
+            expression.setType(new Type("OclFile", null)); 
           } 
           return "OclFile.newOclFile_Read(OclFile.newOclFile" + sarg + ")"; 
         }  
@@ -28431,7 +28643,8 @@ public class ASTCompositeTerm extends ASTTerm
         if (arg1.expression != null) 
         { expression = 
              BasicExpression.newStaticCallBasicExpression(
-               "newOclFile_Read", "OclFile", arg1.expression); 
+               "newOclFile_Read", "OclFile", arg1.expression);
+          expression.setType(new Type("OclFile", null)); 
         } 
  
         return "OclFile.newOclFile_Read" + args1; 
@@ -28453,13 +28666,16 @@ public class ASTCompositeTerm extends ASTTerm
         if (arg1.isString())
         { if (arg1.expression != null) 
           { Vector pars = new Vector(); 
-            BasicExpression par = BasicExpression.newStaticCallBasicExpression("newOclFile", "OclFile", arg1.expression); 
+            BasicExpression par = 
+               BasicExpression.newStaticCallBasicExpression(
+                  "newOclFile", "OclFile", arg1.expression); 
             pars.add(par); 
 
             if (writer) 
             { expression = 
                 BasicExpression.newStaticCallBasicExpression(
                   "newOclFile_Write", "OclFile", pars);  
+              expression.setType(new Type("OclFile", null));
               return "OclFile.newOclFile_Write(" +                    
                         "OclFile.newOclFile(" + sarg + "))"; 
             } 
@@ -28467,6 +28683,7 @@ public class ASTCompositeTerm extends ASTTerm
             { expression =    
                 BasicExpression.newStaticCallBasicExpression(
                   "newOclFile_Read", "OclFile", pars);
+              expression.setType(new Type("OclFile", null));
               return "OclFile.newOclFile_Read(" +                    
                         "OclFile.newOclFile(" + sarg + "))"; 
             }   
@@ -28480,6 +28697,7 @@ public class ASTCompositeTerm extends ASTTerm
               BasicExpression.newStaticCallBasicExpression(
                 "newOclFile_Write", "OclFile", 
                 arg1.expression); 
+            expression.setType(new Type("OclFile", null));
             return "OclFile.newOclFile_Write" + args1; 
           } 
           else 
@@ -28487,6 +28705,7 @@ public class ASTCompositeTerm extends ASTTerm
               BasicExpression.newStaticCallBasicExpression(
                 "newOclFile_Read", "OclFile", 
                 arg1.expression); 
+            expression.setType(new Type("OclFile", null));
             return "OclFile.newOclFile_Read" + args1; 
           } 
         } 
@@ -28500,14 +28719,19 @@ public class ASTCompositeTerm extends ASTTerm
           { Vector pars = new Vector(); 
             BasicExpression par = BasicExpression.newStaticCallBasicExpression("newOclFile", "OclFile", arg1.expression); 
             pars.add(par); 
-            expression = BasicExpression.newStaticCallBasicExpression("newOclFile_Read", "OclFile", pars);  
+            expression = 
+               BasicExpression.newStaticCallBasicExpression(
+                   "newOclFile_Read", "OclFile", pars);
+            expression.setType(new Type("OclFile", null));  
           } 
           return "OclFile.newOclFile_Read(OclFile.newOclFile(" + arg1.toKM3() + "))"; 
         }
 
         if (arg1.expression != null) 
         { expression = 
-             BasicExpression.newStaticCallBasicExpression("newOclFile_Read", "OclFile", arg1.expression); 
+            BasicExpression.newStaticCallBasicExpression(
+               "newOclFile_Read", "OclFile", arg1.expression);
+          expression.setType(new Type("OclFile", null)); 
         } 
   
         return "OclFile.newOclFile_Read(" + arg1.toKM3() + ")"; 
@@ -28519,16 +28743,21 @@ public class ASTCompositeTerm extends ASTTerm
         if (arg1.isString())
         { if (arg1.expression != null) 
           { Vector pars = new Vector(); 
-            BasicExpression par = BasicExpression.newStaticCallBasicExpression("newOclFile", "OclFile", arg1.expression); 
+            BasicExpression par = 
+              BasicExpression.newStaticCallBasicExpression(
+               "newOclFile", "OclFile", arg1.expression); 
             pars.add(par); 
-            expression = BasicExpression.newStaticCallBasicExpression("newOclFile_Read", "OclFile", pars);  
+            expression = BasicExpression.newStaticCallBasicExpression("newOclFile_Read", "OclFile", pars);
+            expression.setType(new Type("OclFile", null));  
           } 
           return "OclFile.newOclFile_Read(OclFile.newOclFile" + args1 + ")"; 
         }  
 
         if (arg1.expression != null) 
         { expression = 
-             BasicExpression.newStaticCallBasicExpression("newOclFile_Read", "OclFile", arg1.expression); 
+             BasicExpression.newStaticCallBasicExpression(
+               "newOclFile_Read", "OclFile", arg1.expression);
+          expression.setType(new Type("OclFile", null)); 
         } 
 
         return "OclFile.newOclFile_Read" + args1; 
@@ -28540,16 +28769,23 @@ public class ASTCompositeTerm extends ASTTerm
         if (arg1.isString())
         { if (arg1.expression != null) 
           { Vector pars = new Vector(); 
-            BasicExpression par = BasicExpression.newStaticCallBasicExpression("newOclFile", "OclFile", arg1.expression); 
+            BasicExpression par = 
+              BasicExpression.newStaticCallBasicExpression(
+                "newOclFile", "OclFile", arg1.expression); 
             pars.add(par); 
-            expression = BasicExpression.newStaticCallBasicExpression("newOclFile_ReadB", "OclFile", pars);  
+            expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                      "newOclFile_ReadB", "OclFile", pars);
+            expression.setType(new Type("OclFile", null));  
           } 
           return "OclFile.newOclFile_ReadB(OclFile.newOclFile" + args1 + ")"; 
         }
   
         if (arg1.expression != null) 
         { expression = 
-             BasicExpression.newStaticCallBasicExpression("newOclFile_ReadB", "OclFile", arg1.expression); 
+            BasicExpression.newStaticCallBasicExpression(
+              "newOclFile_ReadB", "OclFile", arg1.expression);
+          expression.setType(new Type("OclFile", null)); 
         } 
 
         return "OclFile.newOclFile_ReadB" + args1; 
@@ -28566,16 +28802,23 @@ public class ASTCompositeTerm extends ASTTerm
         if (arg1.isString())
         { if (arg1.expression != null) 
           { Vector pars = new Vector(); 
-            BasicExpression par = BasicExpression.newStaticCallBasicExpression("newOclFile", "OclFile", arg1.expression); 
+            BasicExpression par = 
+              BasicExpression.newStaticCallBasicExpression(
+                "newOclFile", "OclFile", arg1.expression); 
             pars.add(par); 
-            expression = BasicExpression.newStaticCallBasicExpression("newOclFile_Write", "OclFile", pars);  
+            expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "newOclFile_Write", "OclFile", pars);
+            expression.setType(new Type("OclFile", null));  
           }
           return "OclFile.newOclFile_Write(OclFile.newOclFile(" + arg1.toKM3() + "))"; 
         }
   
         if (arg1.expression != null) 
         { expression = 
-             BasicExpression.newStaticCallBasicExpression("newOclFile_Write", "OclFile", arg1.expression); 
+            BasicExpression.newStaticCallBasicExpression(
+              "newOclFile_Write", "OclFile", arg1.expression); 
+          expression.setType(new Type("OclFile", null));
         } 
 
         return "OclFile.newOclFile_Write(" + arg1.toKM3() + ")"; 
@@ -28587,7 +28830,10 @@ public class ASTCompositeTerm extends ASTTerm
         if (arg1.isString())
         { ASTTerm.setType(args,"String");
           if (arg1.expression != null) 
-          { expression = BasicExpression.newStaticCallBasicExpression("newOclFile", "OclFile", arg1.expression);   
+          { expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "newOclFile", "OclFile", arg1.expression);
+            expression.setType(new Type("OclFile", null));   
           }
           return "OclFile.newOclFile(" + arg1.toKM3() + ")"; 
         }
@@ -28606,7 +28852,10 @@ public class ASTCompositeTerm extends ASTTerm
         ASTTerm arg1 = (ASTTerm) cargs.get(0); 
         if (arg1.isString())
         { if (arg1.expression != null) 
-          { expression = BasicExpression.newStaticCallBasicExpression("newOclFile", "OclFile", arg1.expression);   
+          { expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "newOclFile", "OclFile", arg1.expression);
+            expression.setType(new Type("OclFile", null));   
           }
           return "OclFile.newOclFile(" + arg1.toKM3() + ")"; 
         }
@@ -28625,16 +28874,23 @@ public class ASTCompositeTerm extends ASTTerm
         if (arg1.isString())
         { if (arg1.expression != null) 
           { Vector pars = new Vector(); 
-            BasicExpression par = BasicExpression.newStaticCallBasicExpression("newOclFile", "OclFile", arg1.expression); 
+            BasicExpression par = 
+              BasicExpression.newStaticCallBasicExpression(
+                 "newOclFile", "OclFile", arg1.expression); 
             pars.add(par); 
-            expression = BasicExpression.newStaticCallBasicExpression("newOclFile_Write", "OclFile", pars);  
+            expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "newOclFile_Write", "OclFile", pars);
+            expression.setType(new Type("OclFile", null));  
           }
           return "OclFile.newOclFile_Write(OclFile.newOclFile(" + arg1.toKM3() + "))"; 
         }  
 
         if (arg1.expression != null) 
         { expression = 
-             BasicExpression.newStaticCallBasicExpression("newOclFile_Write", "OclFile", arg1.expression); 
+            BasicExpression.newStaticCallBasicExpression(
+              "newOclFile_Write", "OclFile", arg1.expression);
+          expression.setType(new Type("OclFile", null)); 
         } 
 
         return "OclFile.newOclFile_Write(" + arg1.toKM3() + ")"; 
@@ -28653,6 +28909,7 @@ public class ASTCompositeTerm extends ASTTerm
             expression = 
               BasicExpression.newStaticCallBasicExpression(
                 "newOclFile_Write", "OclFile", innerCall);
+            expression.setType(new Type("OclFile", null));
           } 
           return "OclFile.newOclFile_Write(OclFile.newOclFile" + args1 + ")"; 
         }
@@ -28663,6 +28920,7 @@ public class ASTCompositeTerm extends ASTTerm
           expression = 
             BasicExpression.newStaticCallBasicExpression(
                 "newOclFile_Write", "OclFile", pars);
+          expression.setType(new Type("OclFile", null));
         } 
   
         return "OclFile.newOclFile_Write" + args1; 
@@ -28683,6 +28941,7 @@ public class ASTCompositeTerm extends ASTTerm
             expression = 
               BasicExpression.newStaticCallBasicExpression(
                 "newOclFile_WriteB", "OclFile", innerCall);
+            expression.setType(new Type("OclFile", null));
           } 
           return "OclFile.newOclFile_WriteB(OclFile.newOclFile" + args1 + ")"; }  
 
@@ -28694,6 +28953,7 @@ public class ASTCompositeTerm extends ASTTerm
           expression = 
             BasicExpression.newStaticCallBasicExpression(
                 "newOclFile_WriteB", "OclFile", pars);
+          expression.setType(new Type("OclFile", null));
         } 
 
         return "OclFile.newOclFile_WriteB" + args1; 
