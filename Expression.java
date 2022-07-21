@@ -51,6 +51,7 @@ abstract class Expression
   protected boolean needsBracket = false; 
   protected boolean isStatic = false; 
   protected boolean isArray = false; // For Ref vbls
+  protected boolean isSorted = false; 
 
   protected Type sizeofType = null; 
 
@@ -1123,7 +1124,10 @@ abstract class Expression
   { return false; } // default
 
   public boolean isSorted()
-  { return false; } // default
+  { return isSorted; } // default
+
+  public void setSorted(boolean s)
+  { isSorted = s; } 
 
   public boolean isOrderedB()
   { return false; } // default

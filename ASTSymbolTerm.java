@@ -419,24 +419,27 @@ public class ASTSymbolTerm extends ASTTerm
       return "Sequence";
     }
  
-    if ("Vector".equals(symbol) || "Stack".equals(symbol)) 
-    { modelElement = new Type("Sequence", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; 
-    } 
-
-    if ("LinkedList".equals(symbol) || 
-        "AbstractList".equals(symbol)) 
-    { modelElement = new Type("Sequence", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; 
-    } 
-
-    if ("Queue".equals(symbol) ||
+    if ("Vector".equals(symbol) || "Stack".equals(symbol) ||
+        "LinkedList".equals(symbol) || 
+        "AbstractList".equals(symbol) ||
+        "AbstractSequentialList".equals(symbol) ||
+        "Queue".equals(symbol) ||
+        "Deque".equals(symbol) ||
+        "ArrayDeque".equals(symbol) ||
+        "BlockingDeque".equals(symbol) ||
+        "LinkedBlockingDeque".equals(symbol) ||
         "PriorityQueue".equals(symbol) ||
         "BlockingQueue".equals(symbol) ||
         "ArrayBlockingQueue".equals(symbol)) 
     { modelElement = new Type("Sequence", null); 
+      expression = new BasicExpression((Type) modelElement); 
+      return "Sequence"; 
+    }
+
+    if ("PriorityQueue".equals(symbol) ||
+        "PriorityBlockingQueue".equals(symbol)) 
+    { modelElement = new Type("Sequence", null); 
+      ((Type) modelElement).setSorted(true); 
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; 
     }

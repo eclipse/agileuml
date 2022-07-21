@@ -279,7 +279,14 @@ public class BehaviouralFeature extends ModelElement
         BasicExpression.newVariableBasicExpression(
                                  "_res_", etype);
       BasicExpression lhs = new BasicExpression(att); 
-      lhs.setObjectRef(res);  
+
+      if (att.isStatic())
+      { lhs.setObjectRef(new BasicExpression(ent));
+        lhs.setStatic(true); 
+      }
+      else 
+      { lhs.setObjectRef(res); } 
+  
       Statement.addBeforeEnd(activity,
         new AssignStatement(lhs,val));
     } 

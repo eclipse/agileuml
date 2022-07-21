@@ -1106,27 +1106,22 @@ public class ASTBasicTerm extends ASTTerm
  
     if ("Vector".equals(value) || 
         "LinkedList".equals(value) ||
-        "List".equals(value))
-    { modelElement = new Type("Sequence", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; 
-    }
- 
-    if ("Stack".equals(value) || "Queue".equals(value) ||
+        "List".equals(value) ||
+        "Stack".equals(value) || "Queue".equals(value) ||
         "Deque".equals(value) || 
+        "AbstractSequentialList".equals(value) ||
+        "ArrayDeque".equals(value) ||
+        "BlockingDeque".equals(value) ||
+        "LinkedBlockingDeque".equals(value) ||
+        "ArrayBlockingQueue".equals(value) ||
         "BlockingQueue".equals(value))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
       return "Sequence"; 
     }
  
-    if ("ArrayBlockingQueue".equals(value))
-    { modelElement = new Type("Sequence", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; 
-    }
- 
-    if ("PriorityQueue".equals(value))
+    if ("PriorityQueue".equals(value)  ||
+        "PriorityBlockingQueue".equals(value))
     { modelElement = new Type("Sequence", null);
       ((Type) modelElement).setSorted(true);  
       expression = new BasicExpression((Type) modelElement); 
@@ -1850,32 +1845,30 @@ public class ASTBasicTerm extends ASTTerm
     if ("Vector".equals(value))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
-    if ("LinkedList".equals(value))
+      return "Sequence"; 
+    }
+ 
+    if ("LinkedList".equals(value) || "List".equals(value) ||
+        "Stack".equals(value) || 
+        "Queue".equals(value) || "Deque".equals(value))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
-    if ("List".equals(value))
+      return "Sequence";
+    }
+ 
+    if ("BlockingQueue".equals(value) ||
+        "AbstractSequentialList".equals(value) ||
+        "ArrayDeque".equals(value) ||
+        "BlockingDeque".equals(value) ||
+        "LinkedBlockingDeque".equals(value) ||
+        "ArrayBlockingQueue".equals(value))
     { modelElement = new Type("Sequence", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
-    if ("Stack".equals(value))
-    { modelElement = new Type("Sequence", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
-    if ("Queue".equals(value) || "Deque".equals(value))
-    { modelElement = new Type("Sequence", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
-    if ("BlockingQueue".equals(value))
-    { modelElement = new Type("Sequence", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
-    if ("ArrayBlockingQueue".equals(value))
-    { modelElement = new Type("Sequence", null); 
-      expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; } 
-    if ("PriorityQueue".equals(value))
+      return "Sequence"; 
+    }
+ 
+    if ("PriorityQueue".equals(value) ||
+        "PriorityBlockingQueue".equals(value))
     { modelElement = new Type("Sequence", null); 
       ((Type) modelElement).setSorted(true); 
       expression = new BasicExpression((Type) modelElement); 
