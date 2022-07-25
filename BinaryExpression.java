@@ -6708,7 +6708,7 @@ public boolean conflictsWithIn(String op, Expression el,
       else if (operator.equals("->including")) // Only for sets
       { if (left.isOrdered() || left.hasSequenceType())
         { String rssq = right.makeSequenceCPP(rw);
-          res = "UmlRsdsLib<" + lcet + ">::concatenate(" + rssq + "," + lqf + ")"; 
+          res = "UmlRsdsLib<" + lcet + ">::concatenate(" + lqf + "," + rssq + ")"; 
         } 
         else 
         { String rss = right.makeSetCPP(rw);
@@ -10902,6 +10902,8 @@ public boolean conflictsWithIn(String op, Expression el,
       // else 
       // { res = "(" + lqf + " == " + rqf + ")"; }
     }  
+    else if (operator.equals("<>="))
+    { res = "(" + lqf + " == " + rqf + ")"; } 
     else if (operator.equals("/=") || operator.equals("!=") || operator.equals("<>"))
     { // if (Type.isCollectionOrEntity(left.getType()) || Type.isCollectionOrEntity(right.getType()))
       { res = "(*(" + lqf + ") != *(" + rqf + "))"; } 

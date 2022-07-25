@@ -1125,7 +1125,7 @@ public class ASTBasicTerm extends ASTTerm
     { modelElement = new Type("Sequence", null);
       ((Type) modelElement).setSorted(true);  
       expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; 
+      return "SortedSequence"; 
     } // and it is sorted
  
     if ("Stream".equals(value) || "JsonArray".equals(value) ||
@@ -1872,7 +1872,7 @@ public class ASTBasicTerm extends ASTTerm
     { modelElement = new Type("Sequence", null); 
       ((Type) modelElement).setSorted(true); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; 
+      return "SortedSequence"; 
     } 
     
     if ("Stream".equals(value) || "JsonArray".equals(value) ||

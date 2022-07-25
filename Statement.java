@@ -236,6 +236,59 @@ abstract class Statement implements Cloneable
     return res;
   } // Other cases, for all other forms of statement. 
 
+  public static Vector getOperationCalls(Statement st)
+  { Vector res = new Vector(); 
+    if (st == null) 
+    { return res; }
+
+    if (st instanceof InvocationStatement)
+    { res.add(st); 
+      return res; 
+    } 
+ 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      Vector stats = sq.getStatements(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof InvocationStatement)
+        { res.add(stats.get(i)); } 
+        else if (stats.get(i) instanceof SequenceStatement)
+        { Statement stat = (Statement) stats.get(i); 
+          res.addAll(Statement.getOperationCalls(stat));
+        }  
+      } 
+      return res;
+    } 
+    
+    if (st instanceof ConditionalStatement) 
+    { ConditionalStatement cs = (ConditionalStatement) st; 
+      res.addAll(getOperationCalls(cs.ifPart())); 
+      res.addAll(getOperationCalls(cs.elsePart())); 
+      return res; 
+    } 
+
+    if (st instanceof WhileStatement) 
+    { WhileStatement ws = (WhileStatement) st; 
+      res.addAll(getOperationCalls(ws.getLoopBody())); 
+      return res; 
+    } 
+
+    if (st instanceof TryStatement) 
+    { TryStatement ts = (TryStatement) st; 
+      res.addAll(getOperationCalls(ts.getBody())); 
+      Vector stats = ts.getClauses(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          res.addAll(getOperationCalls(stat));
+        }  
+      } 
+      res.addAll(getOperationCalls(ts.getEndStatement())); 
+    } 
+
+    return res;
+  } // Other cases, for all other forms of statement. 
+
   public static boolean hasResultDeclaration(Statement st)
   { if (st == null) { return false; } 
     if (st instanceof SequenceStatement) 

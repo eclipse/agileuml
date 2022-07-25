@@ -1698,6 +1698,7 @@ abstract class Expression
   public boolean isObject()
   { return type != null && type.isEntityType(); }
 
+
   public boolean isSetValued()
   { return type != null && type.isSet(); }
 
@@ -1742,9 +1743,13 @@ abstract class Expression
       "OclIterator".equals(type.getName());
   }
 
+  public boolean isOclDate()
+  { return type != null && 
+      "OclDate".equals(type.getName());
+  }
+
   public String getOclType()
   { 
-
     if (Expression.isBoolean("" + this))
     { return "Boolean"; }
 

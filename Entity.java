@@ -5075,6 +5075,16 @@ public class Entity extends ModelElement implements Comparable
     return false; 
   } 
 
+  public static BehaviouralFeature findOperation(String nme, Vector ents) 
+  { for (int i = 0; i < ents.size(); i++) 
+    { Entity ent = (Entity) ents.get(i); 
+      BehaviouralFeature bf = ent.getOperation(nme); 
+      if (bf != null) 
+      { return bf; }
+    } 
+    return null; 
+  } 
+
   public BehaviouralFeature getOperation(String nme) 
   { return (BehaviouralFeature) ModelElement.lookupByName(nme,operations); } 
 

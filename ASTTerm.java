@@ -272,14 +272,16 @@ public abstract class ASTTerm
   public static String getElementType(ASTTerm t) 
   { String val = ASTTerm.getType(t);
     if (val != null)
-    { Type typ = Type.getTypeFor(val, ASTTerm.enumtypes, ASTTerm.entities); 
+    { Type typ = Type.getTypeFor(val, 
+                        ASTTerm.enumtypes, ASTTerm.entities); 
       if (typ != null && typ.elementType != null) 
       { return typ.elementType + ""; } 
     } 
     val = (String) elementTypes.get(t.literalForm()); 
     if (val != null) 
     { Type etyp = 
-         Type.getTypeFor(val, ASTTerm.enumtypes, ASTTerm.entities); 
+         Type.getTypeFor(val, 
+                      ASTTerm.enumtypes, ASTTerm.entities); 
       if (etyp != null) 
       { return etyp + ""; } 
     } 
@@ -656,6 +658,8 @@ public abstract class ASTTerm
     if (typ == null) 
     { return false; } 
     if ("Sequence".equals(typ) || "Set".equals(typ) ||
+        "SortedSequence".equals(typ) ||
+        typ.startsWith("SortedSequence(") ||
         typ.startsWith("Sequence(") || typ.startsWith("Set("))
     { return true; } 
     return false; 
@@ -688,7 +692,22 @@ public abstract class ASTTerm
     String typ = ASTTerm.getType(litform); 
     if (typ == null) 
     { return false; } 
-    if ("Sequence".equals(typ) || typ.startsWith("Sequence("))
+    if ("Sequence".equals(typ) || 
+        typ.startsWith("Sequence(") ||
+        "SortedSequence".equals(typ) || 
+        typ.startsWith("SortedSequence("))
+    { return true; } 
+    return false; 
+  } 
+
+  public boolean isSortedSequence()
+  { String litform = literalForm(); 
+
+    String typ = ASTTerm.getType(litform); 
+    if (typ == null) 
+    { return false; } 
+    if ("SortedSequence".equals(typ) || 
+        typ.startsWith("SortedSequence("))
     { return true; } 
     return false; 
   } 
@@ -728,6 +747,9 @@ public abstract class ASTTerm
     { return true; } 
     return false; 
   } 
+
+  public boolean isOclDate()
+  { return isDate(); } 
 
   public boolean isFile()
   { String typ = ASTTerm.getType(literalForm()); 

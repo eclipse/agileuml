@@ -220,7 +220,9 @@ public class Type extends ModelElement
   { return "Set".equals(name); } 
 
   public boolean isSequenceType() 
-  { return "Sequence".equals(name); } 
+  { return "Sequence".equals(name) ||
+           "SortedSequence".equals(name); 
+  } 
 
   public boolean isMapType() 
   { return "Map".equals(name); } 
@@ -235,7 +237,9 @@ public class Type extends ModelElement
   { return "Set".equals(name); } 
 
   public boolean isSequence() 
-  { return "Sequence".equals(name); } 
+  { return "Sequence".equals(name) || 
+           "SortedSequence".equals(name);
+  } 
 
   public boolean isMap() 
   { return "Map".equals(name); } 
@@ -577,7 +581,10 @@ public class Type extends ModelElement
   public static boolean isCollectionType(Type t) 
   { if (t == null) { return false; } 
     String nme = t.getName(); 
-    return ("Sequence".equals(nme) || "Set".equals(nme) || "Map".equals(nme)); 
+    return ("Sequence".equals(nme) ||
+            "SortedSequence".equals(nme) ||
+            "Set".equals(nme) || 
+            "Map".equals(nme)); 
   } // But really, should exclude Map from this. 
 
   public static boolean isRefType(Type t) 
@@ -2574,7 +2581,9 @@ public class Type extends ModelElement
 
   public boolean isCollectionType()
   { String nme = getName(); 
-    return ("Sequence".equals(nme) || "Set".equals(nme) || "Map".equals(nme)); 
+    return ("Sequence".equals(nme) || 
+            "SortedSequence".equals(nme) ||
+            "Set".equals(nme) || "Map".equals(nme)); 
   } 
 
 
@@ -2681,7 +2690,8 @@ public class Type extends ModelElement
       { return "0"; }
       if (nme.equals("double"))
       { return "0.0"; } 
-      if (nme.equals("Set") || nme.equals("Sequence"))
+      if (nme.equals("Set") || nme.equals("Sequence") ||
+          nme.equals("SortedSequence"))
       { return "new Vector()"; }
       if (nme.equals("Map")) 
       { return "new HashMap()"; } 
@@ -2720,10 +2730,15 @@ public class Type extends ModelElement
       { return new BasicExpression(0); }
       else if (nme.equals("Set") || 
                nme.equals("Sequence") || 
+               nme.equals("SortedSequence") || 
                nme.equals("Map"))
       { res = new SetExpression();
         if (nme.equals("Sequence"))
         { ((SetExpression) res).setOrdered(true); }
+        else if (nme.equals("SortedSequence"))
+        { ((SetExpression) res).setOrdered(true);
+          ((SetExpression) res).setSorted(true);
+        }
         res.setType(this); 
         res.setElementType(elemt); 
       }
@@ -4127,6 +4142,12 @@ public class Type extends ModelElement
         "Map".equals(typ) || "Function".equals(typ) ||
         "Ref".equals(typ))
     { return new Type(typ,null); } 
+
+    if (typ.equals("SortedSequence"))
+    { Type rr = new Type("Sequence",null); 
+      rr.setSorted(true); 
+      return rr; 
+    } 
   
     Entity ent = (Entity) ModelElement.lookupByName(typ,entities); 
     if (ent != null) 
@@ -4156,6 +4177,15 @@ public class Type extends ModelElement
     { String nt = typ.substring(9,typ.length()-1);
       Type innerT = getTypeFor(nt, types, entities); 
       Type resT = new Type("Sequence",null); 
+      resT.setElementType(innerT); 
+      return resT; 
+    }   
+
+    if (typ.startsWith("SortedSequence(") && typ.endsWith(")"))
+    { String nt = typ.substring(15,typ.length()-1);
+      Type innerT = getTypeFor(nt, types, entities); 
+      Type resT = new Type("Sequence",null); 
+      resT.setSorted(true); 
       resT.setElementType(innerT); 
       return resT; 
     }   

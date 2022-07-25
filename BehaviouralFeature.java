@@ -132,7 +132,7 @@ public class BehaviouralFeature extends ModelElement
     return UnaryExpression.newLambdaUnaryExpression(be,this); 
   } 
 
-  public void jsClassFromConstructor(Entity ent, Entity cclass, Vector inits) 
+  public void jsClassFromConstructor(Entity ent, Entity cclass, Vector inits, Vector entities) 
   { // For each statement  self.att := expr  in activity
     // make att an attribute of ent, with initialisation expr
     // move operations from cclass to ent if they are used
@@ -144,9 +144,22 @@ public class BehaviouralFeature extends ModelElement
       BasicExpression.newVariableBasicExpression(
                                  "_res_", etype); 
 
+    BehaviouralFeature initialiseEnt = 
+      new BehaviouralFeature("initialise" + ename); 
+    initialiseEnt.setActivity((Statement) activity.clone()); 
+    initialiseEnt.setOwner(ent); 
+    initialiseEnt.setParameters(parameters); 
+    ent.addOperation(initialiseEnt); 
+
     if (activity != null) 
     { Vector asgns = 
         Statement.getAssignments(activity);
+      Vector calls = 
+        Statement.getOperationCalls(activity); 
+
+      System.out.println("^^^^^^^ Operation calls: " + calls); 
+      System.out.println(); 
+
       Vector pars = new Vector(); 
       Vector exprs = new Vector();  
       for (int i = 0; i < asgns.size(); i++) 
@@ -184,7 +197,7 @@ public class BehaviouralFeature extends ModelElement
               if (init instanceof UnaryExpression)
               { String ff = 
                   ((UnaryExpression) init).functionOfLambda(); 
-                System.out.println("++++ Function call: " + init + " " + ff); 
+                // System.out.println("++++ Function call: " + init + " " + ff); 
                 if (ff != null) 
                 { BehaviouralFeature oldop = 
                       cclass.getOperation(ff); 
@@ -219,7 +232,7 @@ public class BehaviouralFeature extends ModelElement
           else if (rhs instanceof UnaryExpression)
           { String ff = 
                   ((UnaryExpression) rhs).functionOfLambda(); 
-            System.out.println("++++ Function call: " + rhs + " " + ff); 
+            // System.out.println("++++ Function call: " + rhs + " " + ff); 
             if (ff != null) 
             { BehaviouralFeature oldop = 
                       cclass.getOperation(ff); 
@@ -232,6 +245,9 @@ public class BehaviouralFeature extends ModelElement
           }       
         } 
       }
+
+      // and there may be calls self.SupEnt(pars) 
+      // of the superclass. 
     
     /* 
       if (ent.hasOperation("new" + ename)) { } 
@@ -262,7 +278,29 @@ public class BehaviouralFeature extends ModelElement
          activity.substituteEq("self", res);  
       code.addStatement(newactivity); 
       code.addStatement(new ReturnStatement(res));
-      activity = code;  
+      activity = code; 
+
+      for (int h = 0; h < calls.size(); h++) 
+      { InvocationStatement opcall = 
+          (InvocationStatement) calls.get(h);
+        if (opcall.callExp instanceof BasicExpression)
+        { BasicExpression called = 
+            (BasicExpression) opcall.callExp;
+          String calledname = called.getData(); 
+          if (calledname.startsWith("initialise"))
+          { String superclassName = 
+               calledname.substring(10);
+            System.out.println("^^^^^ Superclass: " + superclassName);  
+            Entity superEnt = 
+              (Entity) ModelElement.lookupByName(
+                           superclassName, entities); 
+            if (superEnt != null) 
+            { ent.setSuperclass(superEnt); 
+              superEnt.addSubclass(ent); 
+            } 
+          }   
+        }  
+      }  
     }   
   } 
 
@@ -343,6 +381,11 @@ public class BehaviouralFeature extends ModelElement
     return nme; 
   } 
 
+  public int getArity()
+  { if (parameters == null) 
+    { return 0; } 
+    return parameters.size(); 
+  } 
 
   public Object clone()
   { BehaviouralFeature res = new BehaviouralFeature(getName(), parameters, query, resultType); 

@@ -428,7 +428,6 @@ public class ASTSymbolTerm extends ASTTerm
         "ArrayDeque".equals(symbol) ||
         "BlockingDeque".equals(symbol) ||
         "LinkedBlockingDeque".equals(symbol) ||
-        "PriorityQueue".equals(symbol) ||
         "BlockingQueue".equals(symbol) ||
         "ArrayBlockingQueue".equals(symbol)) 
     { modelElement = new Type("Sequence", null); 
@@ -441,7 +440,7 @@ public class ASTSymbolTerm extends ASTTerm
     { modelElement = new Type("Sequence", null); 
       ((Type) modelElement).setSorted(true); 
       expression = new BasicExpression((Type) modelElement); 
-      return "Sequence"; 
+      return "SortedSequence"; 
     }
 
     if ("Stream".equals(symbol)) 
