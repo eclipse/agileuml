@@ -441,7 +441,18 @@ public class SetExpression extends Expression
     if (isMap())
     { String mtype = type.getJava7(elementType); 
       String result = "(new " + mtype + "())"; 
-	  for (int i = 0; i < elements.size(); i++)
+      if (elements.size() > 0)
+      { BinaryExpression elem1 = 
+          (BinaryExpression) elements.get(0); 
+        result = 
+          "Collections.singletonMap(" + 
+              elem1.getLeft().queryFormJava7(env,local) +
+              "," + 
+              elem1.getRight().queryFormJava7(env,local) +                  
+              ")"; 
+      } 
+      
+      for (int i = 1; i < elements.size(); i++)
       { BinaryExpression e = (BinaryExpression) elements.get(i);
         Expression key = e.getLeft(); 
         Expression value = e.getRight(); 
@@ -498,7 +509,7 @@ public class SetExpression extends Expression
       { BinaryExpression e = (BinaryExpression) elements.get(i);
         Expression key = e.getLeft(); 
         Expression value = e.getRight(); 
-        result = "System.includingMap(" + result + "," + key.queryFormCSharp(env,local) + "," + 
+        result = "SystemTypes.includingMap(" + result + "," + key.queryFormCSharp(env,local) + "," + 
 		                              value.queryFormCSharp(env,local) + ")";
       }
       return result; 
@@ -529,12 +540,16 @@ public class SetExpression extends Expression
     } 
 
     if (isMap())
-    { String result = "(new map<string," + cet + ">())"; 
+    { Type lkeyt = type.getKeyType();
+      String lkeytype = Type.getCPPtype(lkeyt);  
+        
+      String result = "(new map<" + lkeytype + ", " + cet + ">())"; 
+
       for (int i = 0; i < elements.size(); i++)
       { BinaryExpression e = (BinaryExpression) elements.get(i);
         Expression key = e.getLeft(); 
         Expression value = e.getRight(); 
-        result = "UmlRsdsLib<" + cet + ">::includingMap(" + 
+        result = "UmlRsdsOcl<" + lkeytype + ", " + cet + ", " + cet + ">::includingMap(" + 
           result + "," + key.queryFormCPP(env,local) + "," + 
           value.queryFormCPP(env,local) + ")";
       }
@@ -777,6 +792,10 @@ public class SetExpression extends Expression
     { if (elements.size() == 1)
       { Expression e = (Expression) elements.get(0);
         e.typeCheck(types,entities,contexts,env);
+
+        if (elementType == null) 
+        { elementType = new Type("OclAny", null); } 
+
         System.out.println(">>> Reference type Ref(" + elementType + ") size " + e + " of type " + elementType); 
       } 
       else 
@@ -804,12 +823,16 @@ public class SetExpression extends Expression
     { type = new Type("Set",null); } 
 
     elementType = Type.determineType(elements); 
-    type.setElementType(elementType); 
+    if (isMap())
+    { elementType = Type.determineMapElementType(elements); } 
+    // and the type.keyType
+
     if (elementType == null) 
     { System.out.println("! Warning: cannot determine element type of " + this);
-      // elementType = new Type("OclAny", null); 
+      elementType = new Type("OclAny", null); 
     } 
-
+    type.setElementType(elementType); 
+    
     umlkind = VALUE; // ???
     multiplicity = ModelElement.MANY; 
     return res && (entity != null || elementType != null);

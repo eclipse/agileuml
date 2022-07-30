@@ -666,7 +666,7 @@ public Vector singleMutants()
       return true; 
     } 
     else 
-    { System.err.println("!! WARNING: types in if,else of " + this + " are different"); 
+    { System.err.println("!! WARNING: types in then, else of " + this + " are different: " + ifExp.type + " /= " + elseExp.type); 
       type = ifExp.type; 
       elementType = ifExp.elementType; 
       return false; 

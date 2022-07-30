@@ -3229,7 +3229,7 @@ public class Type extends ModelElement
     if (nme.equals("String")) { return "string"; }  
     if (nme.equals("boolean")) { return "bool"; } 
     if (nme.equals("Function"))
-    { return "function<" + elemType + "(string)>"; } 
+    { return "std::function<" + elemType + "(string)>"; } 
     if (isEntity) 
     { if (entity.genericParameter)
       { return nme; } 
@@ -3563,6 +3563,24 @@ public class Type extends ModelElement
     // if (nme.equals("long")) { return "long"; } 
     return "int"; 
   }
+
+  public static String getJava7type(Type type)
+  { if (type == null) 
+    { return "Object"; } 
+    return type.getJava7(); 
+  } 
+
+  public static String getCSharptype(Type type)
+  { if (type == null) 
+    { return "object"; } 
+    return type.getCSharp(); 
+  } 
+
+  public static String getCPPtype(Type type)
+  { if (type == null) 
+    { return "void*"; } 
+    return type.getCPP(type.getElementType()); 
+  } 
 
   public String getJava7()
   { String nme = getName();
@@ -4247,6 +4265,7 @@ public class Type extends ModelElement
 
   public static Type determineType(Vector exps)
   { Type expectedType = null;
+
     for (int j = 0; j < exps.size(); j++)
     { Expression be = (Expression) exps.get(j);
       Type t = be.getType();
@@ -4260,14 +4279,19 @@ public class Type extends ModelElement
       else
       { String tn1 = expectedType.getName();
         String tn2 = t.getName();
-        if (tn1.equals("double") && (tn2.equals("int") || tn2.equals("long")))
+
+        if (tn1.equals("double") && 
+            (tn2.equals("int") || tn2.equals("long")))
         { }
         else if (tn1.equals("long") && tn2.equals("int"))
         { }
-        else if (tn2.equals("double") && (tn1.equals("int") || tn1.equals("long")))
+        else if (tn2.equals("double") && 
+                 (tn1.equals("int") || tn1.equals("long")))
         { expectedType = t; }
         else if (tn2.equals("long") && tn1.equals("int"))
         { expectedType = t; }
+        else if (tn1.equals(tn2))
+        { } // both maps, both sequences, both sets
         else 
         { Entity e1 = expectedType.getEntity(); 
           Entity e2 = t.getEntity(); 
@@ -4279,7 +4303,9 @@ public class Type extends ModelElement
             } // could be null
           }
           else // one is a class and other isn't or both are invalid
-          { return null; }
+          { System.out.println("!! Warning: cannot determine element type of collection " + exps); 
+            return null; 
+          }
         }
       }
     }
@@ -4309,6 +4335,7 @@ public class Type extends ModelElement
         { expectedType = t; }
         else if (tn2.equals("long") && tn1.equals("int"))
         { expectedType = t; }
+        else if (tn1.equals(tn2)) { } 
         else 
         { Entity e1 = expectedType.getEntity(); 
           Entity e2 = t.getEntity(); 
@@ -4320,7 +4347,57 @@ public class Type extends ModelElement
             } // could be null
           }
           else // one is a class and other isn't or both are invalid
-          { return null; }
+          { System.out.println("!! Warning: cannot determine element type of collection " + exps); 
+            return null; 
+          }
+        }
+      }
+    }
+    return expectedType;
+  }
+
+  public static Type determineMapElementType(Vector exps)
+  { Type expectedType = null;
+    for (int j = 0; j < exps.size(); j++)
+    { Expression be = (Expression) exps.get(j);
+      Type t = be.getElementType();
+
+      if (t == null && be instanceof BinaryExpression &&
+          "|->".equals(((BinaryExpression) be).operator))
+      { t = ((BinaryExpression) be).getRight().getType(); }
+
+      System.out.println(">> Element type of " + be + " = " + t); 
+
+      if (t == null) { }
+      else if (expectedType == null)
+      { expectedType = t; }
+      else if (expectedType.equals(t)) { }
+      else
+      { String tn1 = expectedType.getName();
+        String tn2 = t.getName();
+        if (tn1.equals("double") && (tn2.equals("int") || tn2.equals("long")))
+        { }
+        else if (tn1.equals("long") && tn2.equals("int"))
+        { }
+        else if (tn2.equals("double") && (tn1.equals("int") || tn1.equals("long")))
+        { expectedType = t; }
+        else if (tn2.equals("long") && tn1.equals("int"))
+        { expectedType = t; }
+        else if (tn1.equals(tn2)) { } 
+        else 
+        { Entity e1 = expectedType.getEntity(); 
+          Entity e2 = t.getEntity(); 
+          if (e1 != null && e2 != null)
+          { if (e1 == e2) { } 
+            else 
+            { Entity e = Entity.commonSuperclass(e1,e2); 
+              expectedType = new Type(e); 
+            } // could be null
+          }
+          else // one is a class and other isn't or both are invalid
+          { System.out.println("!! Warning: cannot determine element type of collection " + exps); 
+            return null; 
+          }
         }
       }
     }
@@ -4351,6 +4428,9 @@ public class Type extends ModelElement
     
     if (tn2.equals("long") && tn1.equals("int"))
     { return t; }
+
+    if (tn1.equals(tn2))
+    { return oldType; } 
     
     Entity e1 = oldType.getEntity(); 
     Entity e2 = t.getEntity(); 

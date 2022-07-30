@@ -7366,7 +7366,8 @@ public class Entity extends ModelElement implements Comparable
 
 
         if (isInterface())
-        { par = "";  // att.setAllInterfaceOperation(getName()); }
+        { par = "";  
+          // att.setAllInterfaceOperation(getName()); }
           interfaceinnerclass = interfaceinnerclass + "  " + 
                                 att.setAllOperation(getName()) + "\n\n"; 
         } 

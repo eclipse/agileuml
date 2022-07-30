@@ -4635,6 +4635,14 @@ public class BSystemTypes extends BComponent
       "    { return -1; }\n" +
       "    return res;\n" +
       "  }\n\n"; 
+
+    res = res + 
+      "  public static <S,T> T iterate(Collection<S> _s, T initialValue, Function<S,Function<T,T>> _f)\n" +
+      "  { T acc = initialValue; \n" +
+      "    for (S _x : _s) \n" +
+      "    { acc = _f.apply(_x).apply(acc); }\n" +
+      "    return acc; \n" +
+      "  } \n\n"; 
  
     return res;  
   }
@@ -4771,7 +4779,66 @@ public class BSystemTypes extends BComponent
      "    buff << \"}\";\n" +
      "    return buff.str();\n" +  
      "  }\n\n"; 
+
+  /* 
+    res = res + 
+      "  template<class S>\n" + 
+      "  static T iterate(vector<S>* _s, T initialValue, std::function<std::function<T(T)>(S)> _f)\n" +
+      "  { T acc = initialValue; \n" +
+      "    for (vector<S>::iterator _pos = _s->begin(); _pos != _s->end(); ++_pos) \n" +
+      "    { S _x = *_pos;\n" +  
+      "      acc = (_f(_x))(acc); \n" + 
+      "    }\n" +
+      "    return acc; \n" +
+      "  } \n\n"; */ 
  
+    return res; 
+  }
+
+  public static String generateCPPExtendedLibrary()
+  { String res =
+      "template<class S, class T>\n" + 
+      "class UmlRsdsOcl {\n" + 
+      "  public:\n\n" + 
+
+      "  static T iterate(vector<S>* _s, T initialValue, std::function<T(S,T)> _f)\n" +
+      "  { T acc = initialValue; \n" +
+      "    for (vector<S>::iterator _pos = _s->begin(); _pos != _s->end(); ++_pos) \n" +
+      "    { S _x = *_pos;\n" +  
+      "      acc = _f(_x,acc); \n" + 
+      "    }\n" +
+      "    return acc; \n" +
+      "  } \n\n";
+ 
+    res = res +   
+     "  static map<S,T>* includingMap(map<S,T>* m, S src, T trg)\n" + 
+     "  { map<S,T>* copy = new map<S,T>();\n" + 
+     "    map<S,T>::iterator iter; \n" +
+     "    for (iter = m->begin(); iter != m->end(); ++iter)\n" + 
+     "    { S key = iter->first;\n" + 
+     "      (*copy)[key] = iter->second;\n" + 
+     "    }     \n" +
+     "    (*copy)[src] = trg;\n" + 
+     "    return copy; \n" +
+     "  }\n\n";  
+
+   res = res + 
+     "  static map<S,T>* unionMap(map<S,T>* m1, map<S,T>* m2)\n" +  
+     "  { map<S,T>* res = new map<S,T>();\n" + 
+     "    map<S,T>::iterator iter; \n" +
+     "    for (iter = m1->begin(); iter != m1->end(); ++iter)\n" + 
+     "    { S key = iter->first;\n" + 
+     "      if (m2->count(key) == 0) \n" +
+     "      { (*res)[key] = iter->second; }\n" + 
+     "    }     \n" +
+     "    for (iter = m2->begin(); iter != m2->end(); ++iter)\n" + 
+     "    { S key = iter->first;\n" + 
+     "      (*res)[key] = iter->second;\n" + 
+     "    }     \n" +
+     "    return res;\n" + 
+     "  } \n\n"; 
+
+    res = res + "};\n\n"; 
     return res; 
   }
 
@@ -5011,8 +5078,8 @@ public class BSystemTypes extends BComponent
      "     } \n" +
      "     return res; \n" +
      "   } \n\n";
-	 res = res + 
-	 "   public static Hashtable restrictMap(Hashtable m1, ArrayList ks) \n" +
+     res = res + 
+     "   public static Hashtable restrictMap(Hashtable m1, ArrayList ks) \n" +
      "   { Hashtable res = new Hashtable();  \n" +
      "     foreach (DictionaryEntry pair in m1) \n" +
      "     { object key = pair.Key; \n" +
@@ -5021,8 +5088,9 @@ public class BSystemTypes extends BComponent
      "     } \n" +
      "     return res; \n" +
      "   } \n\n"; 
-	 res = res + 
-	 "   public static Hashtable antirestrictMap(Hashtable m1, ArrayList ks) \n" +
+
+     res = res + 
+     "   public static Hashtable antirestrictMap(Hashtable m1, ArrayList ks) \n" +
      "   { Hashtable res = new Hashtable();  \n" +
      "     foreach (DictionaryEntry pair in m1) \n" +
      "     { object key = pair.Key; \n" +
@@ -5032,16 +5100,49 @@ public class BSystemTypes extends BComponent
      "     } \n" +
      "     return res; \n" +
      "   } \n\n"; 
-	 res = res + 
-	 "   public static ArrayList mapKeys(Hashtable m) \n" +
+     res = res + 
+     "   public static ArrayList mapKeys(Hashtable m) \n" +
      "   { ArrayList res = new ArrayList();  \n" +
      "     res.AddRange(m.Keys);\n" +
      "     return res; \n" +
      "   } \n\n"; 
-	 res = res + 
-	 "   public static ArrayList mapValues(Hashtable m) \n" +
+     res = res + 
+     "   public static ArrayList mapValues(Hashtable m) \n" +
      "   { ArrayList res = new ArrayList();  \n" +
      "     res.AddRange(m.Values);\n" +
+     "     return res; \n" +
+     "   } \n\n"; 
+
+     res = res + 
+     "   public static Hashtable selectMap(Hashtable m1, Func<object, bool> f) \n" +
+     "   { Hashtable res = new Hashtable();  \n" +
+     "     foreach (DictionaryEntry pair in m1) \n" +
+     "     { object val = pair.Value; \n" +
+     "       if (f(val))\n" + 
+     "       { res.Add(pair.Key,val); } \n" +
+     "     } \n" +
+     "     return res; \n" +
+     "   } \n\n"; 
+
+     res = res + 
+     "   public static Hashtable rejectMap(Hashtable m1, Func<object, bool> f) \n" +
+     "   { Hashtable res = new Hashtable();  \n" +
+     "     foreach (DictionaryEntry pair in m1) \n" +
+     "     { object val = pair.Value; \n" +
+     "       if (f(val)) { }\n" +
+     "       else\n" +  
+     "       { res.Add(pair.Key,val); } \n" +
+     "     } \n" +
+     "     return res; \n" +
+     "   } \n\n"; 
+
+     res = res + 
+     "   public static Hashtable collectMap(Hashtable m1, Func<object, object> f) \n" +
+     "   { Hashtable res = new Hashtable();  \n" +
+     "     foreach (DictionaryEntry pair in m1) \n" +
+     "     { object val = pair.Value; \n" +
+     "       res.Add(pair.Key, f(val));  \n" +
+     "     } \n" +
      "     return res; \n" +
      "   } \n\n"; 
  
@@ -10159,9 +10260,10 @@ public class BSystemTypes extends BComponent
       "      { res.put(key,m1.get(key)); }\n" +
       "    }    \n" +
       "    return res;\n" +
-      "  }\n"; 
-	res = res + 
-	  "  public static <D,R> HashMap<D,R> antirestrictMap(Map<D,R> m1, Set<D> ks) \n" +
+      "  }\n\n"; 
+ 
+      res = res + 
+      "  public static <D,R> HashMap<D,R> antirestrictMap(Map<D,R> m1, Set<D> ks) \n" +
       "  { Set<D> keys = new HashSet<D>();\n" +
       "    keys.addAll(m1.keySet());\n" +
       "    HashMap<D,R> res = new HashMap<D,R>();\n" +
@@ -10172,7 +10274,44 @@ public class BSystemTypes extends BComponent
       "      { res.put(key,m1.get(key)); }\n" +
       "    }    \n" +
       "    return res;\n" +
-      "  }\n"; 
+      "  }\n\n"; 
+
+      res = res + 
+      "  public static <D,R> HashMap<D,R> selectMap(Map<D,R> m, Predicate<R> f)\n" +
+      "  { HashMap<D,R> result = new HashMap<D,R>();\n" +
+      "    Set<D> keys = m.keySet();\n" +
+      "    for (D k : keys)\n" +
+      "    { R value = m.get(k);\n" +
+      "      if (f.test(value))\n" +
+      "      { result.put(k,value); }\n" +
+      "    }\n" +
+      "    return result;\n" +
+      "  }\n\n"; 
+
+      res = res + 
+      "  public static <D,R> HashMap<D,R> rejectMap(Map<D,R> m, Predicate<R> f)\n" +
+      "  { HashMap<D,R> result = new HashMap<D,R>();\n" +
+      "    Set<D> keys = m.keySet();\n" +
+      "    for (D k : keys)\n" +
+      "    { R value = m.get(k);\n" +
+      "      if (f.test(value)) {}\n" +
+      "      else\n" +
+      "      { result.put(k,value); }\n" +
+      "    }\n" +
+      "    return result;\n" +
+      "  }\n\n"; 
+
+      res = res +
+      "  public static <D,R,T> HashMap<D,T> collectMap(HashMap<D,R> m, Function<R,T> _f)\n" +
+      "  { HashMap<D,T> result = new HashMap<D,T>();\n" + 
+      "    Set<D> keys = m.keySet();\n" +
+      "    for (D k : keys)\n" +
+      "    { R value = m.get(k);\n" +
+      "      result.put(k, _f.apply(value));\n" + 
+      "    }\n" +
+      "    return result;\n" + 
+      "  }\n\n";  
+
     return res; 
   } 
 

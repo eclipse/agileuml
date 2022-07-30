@@ -117,6 +117,9 @@ class BinaryExpression extends Expression
   public void setIteratorVariable(String var)
   { iteratorVariable = var; } 
 
+  public void setVariable(String var)
+  { iteratorVariable = var; } 
+
   public void setAccumulator(Attribute acc)
   { accumulator = acc; } 
 
@@ -987,7 +990,7 @@ class BinaryExpression extends Expression
       if (left.needsBracket)
       { rangestring = "(" + rangestring + ")"; }
  
-     String res = rangestring + "->iterate(" +
+      String res = rangestring + "->iterate(" +
           iteratorVariable + "; " +
           accumulator.getName() + " = " + 
               accumulator.getInitialExpression() + 
@@ -2479,7 +2482,7 @@ class BinaryExpression extends Expression
     else if ("!".equals(operator) || "#".equals(operator) || "|A".equals(operator) || 
         "#1".equals(operator) || "|".equals(operator) || operator.equals("#LC") ||
         "|R".equals(operator) || "|C".equals(operator) || 
-		"|selectMinimals".equals(operator) || "|selectMaximals".equals(operator) || 
+        "|selectMinimals".equals(operator) || "|selectMaximals".equals(operator) || 
         "|unionAll".equals(operator) || "|intersectAll".equals(operator) ||
         "|concatenateAll".equals(operator))
     { // discard pre-terms of features of the left.left
@@ -2550,7 +2553,7 @@ class BinaryExpression extends Expression
     else if ("!".equals(operator) || "#".equals(operator) || operator.equals("#LC") ||
         "#1".equals(operator) || "|".equals(operator) || "|A".equals(operator) || 
         "|R".equals(operator) || "|C".equals(operator) ||
-		"|selectMinimals".equals(operator) || "|selectMaximals".equals(operator) || 
+        "|selectMinimals".equals(operator) || "|selectMaximals".equals(operator) || 
         "|unionAll".equals(operator) || "|intersectAll".equals(operator) ||
         "|concatenateAll".equals(operator))
     { // discard pre-terms of features of the left.left
@@ -2625,7 +2628,7 @@ class BinaryExpression extends Expression
     if (operator.equals("!") || operator.equals("#") || operator.equals("#LC") ||
         operator.equals("#1") || operator.equals("|") || operator.equals("|R") ||
         operator.equals("|A") || operator.equals("|C") ||
-		"|selectMinimals".equals(operator) || "|selectMaximals".equals(operator) || 
+        "|selectMinimals".equals(operator) || "|selectMaximals".equals(operator) || 
         "|unionAll".equals(operator) || "|intersectAll".equals(operator) ||
         "|concatenateAll".equals(operator))
     { Vector ss = right.getBaseEntityUses(); 
@@ -2701,36 +2704,77 @@ class BinaryExpression extends Expression
   public Vector getUses(String feature)
   { Vector res = new Vector();
     res.addAll(left.getUses(feature));
+    if ("->iterate".equals(operator) && accumulator != null) 
+    { Expression expr = accumulator.getInitialExpression(); 
+      if (expr != null) 
+      { res.addAll(expr.getUses(feature)); }
+    }  
     res.addAll(right.getUses(feature));
     return res;
   }  // VectorUtil.union of the uses? 
 
   public Vector allFeaturesUsedIn()
-  { Vector res = left.allFeaturesUsedIn();
+  { Vector res = new Vector(); 
+    res.addAll(left.allFeaturesUsedIn());
+    if ("->iterate".equals(operator) && accumulator != null) 
+    { Expression expr = accumulator.getInitialExpression(); 
+      if (expr != null) 
+      { res.addAll(expr.allFeaturesUsedIn()); }
+    }  
     return VectorUtil.union(res,
                             right.allFeaturesUsedIn());
   } // ->iterate, add accumulator expression
 
   public Vector allAttributesUsedIn()
-  { Vector res = left.allAttributesUsedIn();
+  { Vector res = new Vector(); 
+    res.addAll(left.allAttributesUsedIn());
+
+    if ("->iterate".equals(operator) && accumulator != null) 
+    { Expression expr = accumulator.getInitialExpression(); 
+      if (expr != null) 
+      { res.addAll(expr.allAttributesUsedIn()); }
+    }  
+
     return VectorUtil.union(res,
                             right.allAttributesUsedIn());
   } // ->iterate, add accumulator expression
 
   public Vector allOperationsUsedIn()
-  { Vector res = left.allOperationsUsedIn();
+  { Vector res = new Vector(); 
+    res.addAll(left.allOperationsUsedIn());
+    if ("->iterate".equals(operator) && accumulator != null) 
+    { Expression expr = accumulator.getInitialExpression(); 
+      if (expr != null) 
+      { res.addAll(expr.allOperationsUsedIn()); }
+    }  
     return VectorUtil.union(res,
                             right.allOperationsUsedIn());
   } // ->iterate, add accumulator expression
 
   public Vector equivalentsUsedIn()
-  { Vector res = left.equivalentsUsedIn();
+  { Vector res = new Vector(); 
+    res.addAll(left.equivalentsUsedIn());
+
+    if ("->iterate".equals(operator) && accumulator != null) 
+    { Expression expr = accumulator.getInitialExpression(); 
+      if (expr != null) 
+      { res.addAll(expr.equivalentsUsedIn()); }
+    }  
+
     return VectorUtil.union(res,
                             right.equivalentsUsedIn());
   } // ->iterate, add accumulator expression
 
   public Vector allValuesUsedIn()
-  { Vector res = left.allValuesUsedIn();
+  { Vector res = new Vector(); 
+    res.addAll(left.allValuesUsedIn());
+
+    if ("->iterate".equals(operator) && accumulator != null) 
+    { Expression expr = accumulator.getInitialExpression(); 
+      if (expr != null) 
+      { res.addAll(expr.allValuesUsedIn()); }
+    }  
+
     return VectorUtil.union(res,
                             right.allValuesUsedIn());
   } // ->iterate, add accumulator expression
@@ -3276,7 +3320,8 @@ public void findClones(java.util.Map clones, String rule, String op)
 
   public boolean typeCheck(final Vector types,
                            final Vector entities,
-                           final Vector contexts, final Vector env)
+                           final Vector contexts, 
+                           final Vector env)
   { Vector context = new Vector(); 
   
     if (operator.equals(","))
@@ -3313,25 +3358,49 @@ public void findClones(java.util.Map clones, String rule, String op)
       // assumed non-null
 
       if (init != null) 
-      { init.typeCheck(types,entities,context,env); }
+      { init.typeCheck(types,entities,context,env); 
+        System.out.println(">>> Type of " + init +
+                         " is " + init.getType()); 
+        accumulator.setType(init.getType());
+        if (init.getElementType() != null) 
+        { accumulator.setElementType(init.getElementType()); } 
+        else if (init.getType() != null && 
+                 init.getType().getElementType() != null) 
+        { accumulator.setElementType(
+                init.getType().getElementType());
+        }
+        else 
+        { accumulator.setElementType(
+                  new Type("OclAny", null));
+        }  
+      }
 
-      if ((accumulator.getType() == null || 
-           "OclType".equals(accumulator.getType() + ""))
-          && init != null)
-      { accumulator.setType(init.getType()); }  
+      // if ((accumulator.getType() == null || 
+      //      "OclType".equals(accumulator.getType() + ""))
+      //     && init != null)
+      // { accumulator.setType(init.getType()); }  
+
+      System.out.println(">>> Type of " + accumulator +
+                         " is " + accumulator.getType()); 
 
       Attribute itvar = 
         new Attribute(iteratorVariable, left.getElementType(),
                       ModelElement.INTERNAL); 
+
+      System.out.println(">>> Type of " + itvar +
+                         " is " + itvar.getType()); 
+
       Vector env1 = new Vector(); 
       env1.addAll(env); 
       env1.add(itvar); 
       env1.add(accumulator); 
-      boolean rtc = right.typeCheck(types,entities,context,env1);
+      boolean rtc = 
+        right.typeCheck(types,entities,context,env1);
 
-      if (init != null) 
-      { type = init.getType();
-        elementType = init.getElementType();
+      if (accumulator.getType() != null && 
+          accumulator.getElementType() != null) 
+      { type = accumulator.getType();
+        elementType = accumulator.getElementType();
       } 
       else
       { type = right.getType(); 
@@ -3339,7 +3408,7 @@ public void findClones(java.util.Map clones, String rule, String op)
       } 
       
         
-      System.out.println(">>> Typechecked ->iterate expression: " + this + " " + lrt + " " + rtc + " " + type); 
+      System.out.println(">>> Typechecked ->iterate expression: " + this + " Type: " + type + " Elementtype: " + elementType); 
       return true; 
     }
 
@@ -3351,6 +3420,8 @@ public void findClones(java.util.Map clones, String rule, String op)
       // lexp.right must be multiple, also 
 
       Type et = lexp.right.elementType; 
+
+      // but if lexp.right.isMap, actually the keyType
 
       if (et == null)
       { System.err.println("!!! TYPE ERROR: null element type in " + lexp.right + " in " + this); 
@@ -3382,6 +3453,9 @@ public void findClones(java.util.Map clones, String rule, String op)
     { 
       boolean lrt = left.typeCheck(types,entities,contexts,env); 
       Type et = left.elementType; 
+
+      // but if left.isMap, actually the keyType
+
       if (et != null && et.isEntity())
       { context.add(et.getEntity()); } 
       context.addAll(contexts); 
@@ -3407,6 +3481,9 @@ public void findClones(java.util.Map clones, String rule, String op)
       // lexp.right must be multiple 
 
       Type et = lexp.right.elementType;
+
+      // but if lexp.right.isMap, actually the keyType
+
       if (et == null) 
       { Type tt = lexp.right.getType(); 
         if (tt != null) 
@@ -3494,13 +3571,17 @@ public void findClones(java.util.Map clones, String rule, String op)
       return true; 
     } // as for exists etc, include |C
     else if (operator.equals("|C") || 
-        "|unionAll".equals(operator) || "|intersectAll".equals(operator) ||
+        "|unionAll".equals(operator) || 
+        "|intersectAll".equals(operator) ||
         "|concatenateAll".equals(operator))
     { BinaryExpression lexp = (BinaryExpression) left;
       // must be a collection
 
       boolean lrt = lexp.right.typeCheck(types,entities,contexts,env);
       Type et = lexp.right.elementType;
+
+      // if (lexp.right.isMap())
+      // { et = lexp.right.getType().getKeyType(); } 
 
       if (et == null) 
       { Type tt = lexp.right.getType(); 
@@ -3534,6 +3615,7 @@ public void findClones(java.util.Map clones, String rule, String op)
       { if (right.elementType.isEntity())
         { seright = right.elementType.getEntity(); }
       }
+
       tcCollect(stleft,stright,seright);
       // System.out.println("TYPE OF " + this + " IS " + type + ", " + elementType); 
       return true;
@@ -3848,9 +3930,12 @@ public void findClones(java.util.Map clones, String rule, String op)
              operator.equals("div") || operator.equals("/"))
     { tcMathOps(tleft,tright,eleft,eright); }
     else if (operator.equals("|->"))
-    { type = tright; } // hack
+    { type = new Type("OclAny", null); 
+      elementType = tright; 
+      type.setElementType(tright); 
+    } // Really a Tuple type. 
     else if (operator.equals("<+"))
-    { type = tleft; } // hack
+    { type = tleft; } // Map override. 
     else if (operator.equals(":") ||
              operator.equals("<:") || operator.equals("->includesAll") ||
              operator.equals("/<:") || operator.equals("->excludesAll") ||
@@ -4241,8 +4326,8 @@ public void findClones(java.util.Map clones, String rule, String op)
     { Type newleftET = Type.refineType(etleft,right.getType()); 
       System.out.println(">> Deduced element type of " + this + " = " + newleftET); 
       elementType = newleftET; 
-	  if (type == null)
-	  { type = new Type("Sequence", null); }
+      if (type == null)
+      { type = new Type("Sequence", null); }
       type.setElementType(newleftET); 
     } 
     else if (operator.equals("->union") || 
@@ -4250,13 +4335,13 @@ public void findClones(java.util.Map clones, String rule, String op)
     { Type newleftET = Type.refineType(etleft,etright); 
       System.out.println(">> Deduced element type of " + this + " = " + newleftET); 
       elementType = newleftET; 
-	  if (type != null)
+      if (type != null)
       { type.setElementType(newleftET); } 
     } 
     else if (etleft != null) // if classes, take closest common super
     { elementType = maxtype;
       if (type != null) 
-	  { type.setElementType(elementType); }  
+      { type.setElementType(elementType); }  
       if (etright == null)
       { right.setElementType(etleft); } 
     } // should be the same
@@ -4276,7 +4361,7 @@ public void findClones(java.util.Map clones, String rule, String op)
   private void tcSelect(Type tleft, Type tright, Entity eleft)
   { // left should be set, sequence or map, right a boolean
     // All cases where result is a subset or rearrangement of the selectleft
-	// ie., operators "selectMaximals", "selectMinimals", "sortedBy", "select", "reject" 
+    // ie., operators "selectMaximals", "selectMinimals", "sortedBy", "select", "reject" 
 	
     Expression selectleft = left; 
 
@@ -4289,7 +4374,16 @@ public void findClones(java.util.Map clones, String rule, String op)
     }
     
     // if (selectleft.isMultiple())
-    if (Type.isSequenceType(tleft))
+
+    if (selectleft.isMap())
+    { Type restype = new Type("Map", null); 
+      restype.keyType = tleft.keyType; 
+      restype.elementType = tleft.elementType; 
+      type = restype; 
+      elementType = tleft.elementType; 
+      return; 
+    } 
+    else if (Type.isSequenceType(tleft))
     { type = new Type("Sequence",null); } 
     else if (operator.equals("->sortedBy") || operator.equals("|sortedBy"))
     { type = new Type("Sequence",null); } 
@@ -4328,7 +4422,15 @@ public void findClones(java.util.Map clones, String rule, String op)
         "|concatenateAll".equals(operator))
     { collectleft = ((BinaryExpression) left).right; }
     
-    if (collectleft.isMultiple())
+    if (collectleft.isMap())
+    { Type restype = new Type("Map", null); 
+      restype.keyType = tleft.keyType; 
+      restype.elementType = tright; 
+      type = restype; 
+      elementType = tright; 
+      return; 
+    } 
+    else if (collectleft.isMultiple())
     { } 
     else 
     { System.err.println("!!! TYPE ERROR: LHS of collect must be a collection! " + this); 
@@ -4349,8 +4451,8 @@ public void findClones(java.util.Map clones, String rule, String op)
     if (operator.equals("->collect") || operator.equals("|C"))
     { elementType = (Type) tright.clone();
       type = new Type("Sequence",null);
-	  if (Type.isMapType(tleft))
-	  { type = new Type("Map", null); }   // map->collect(e) is the composed map. 
+      if (Type.isMapType(tleft))
+      { type = new Type("Map", null); }   // map->collect(e) is the composed map. 
     } 
     else // ->intersectAll, ->unionAll, ->concatenateAll and | versions of these
     { if (right.elementType == null) 
@@ -5572,13 +5674,20 @@ public boolean conflictsWithIn(String op, Expression el,
     if (type != null) 
     { typ = type.getJava7(elementType); } 
     else 
-    { System.err.println("!! Warning: no type for " + this); }
+    { System.err.println("!! Warning: no type for " + this); 
+      typ = "Object"; 
+    }
 	
     res = lqf + " " + javaOp + " " + rqf; // default
     // if & or or: &&, ||
 
     if (operator.equals("|") || operator.equals("->select"))
     { return selectQueryFormJava7(lqf,rqf,env,local); } 
+
+    if (operator.equals("->reject") || operator.equals("|R"))
+    { String sel = rejectQueryFormJava7(lqf,rqf,env,local);
+      return sel; 
+    } 
 
     if (operator.equals("|C") || operator.equals("->collect"))  
     { return collectQueryFormJava7(lqf,rqf,rprim,env,local); } 
@@ -5588,6 +5697,23 @@ public boolean conflictsWithIn(String op, Expression el,
       if (Type.isPrimitiveType(type))
       { return unwrap(getany); } 
       return "((" + typ + ") " + getany + ")"; 
+    } 
+
+    if (operator.equals("->iterate") && accumulator != null && 
+        accumulator.getInitialExpression() != null)
+    { Expression initexpr = 
+          accumulator.getInitialExpression();
+      Type letype = left.getElementType(); 
+      String letypestr = Type.getJava7type(letype); 
+      String acc = accumulator.getName();  
+      String init = initexpr.queryFormJava7(env,local);
+      Type acctype = accumulator.getType(); 
+      String j7acctype = Type.getJava7type(acctype); 
+ 
+      if (left.umlkind == CLASSID)
+      { lqf = ((BasicExpression) left).classExtentQueryFormJava7(env,local); } 
+      return "Ocl.iterate(" + lqf + ", " + init + 
+                ", (" + letypestr + " " + iteratorVariable + ")->((" + j7acctype + " " + acc + ")-> { return " + rqf + "; }))"; 
     } 
 
     if (operator.equals("->selectMaximals"))
@@ -5694,10 +5820,6 @@ public boolean conflictsWithIn(String op, Expression el,
       return "Ocl.closure" + entity.getName() + rel + "(" + lqf + ")"; 
     } // left must be set-valued. 
 
-    if (operator.equals("->reject") || operator.equals("|R"))
-    { String sel = rejectQueryFormJava7(lqf,rqf,env,local);
-      return sel; 
-    } 
 
     if (right.umlkind == CLASSID && 
         ((BasicExpression) right).arrayIndex == null && operator.equals(":"))  
@@ -5947,6 +6069,25 @@ public boolean conflictsWithIn(String op, Expression el,
       if (left.umlkind == CLASSID)
       { lqf = ((BasicExpression) left).classExtentQueryFormCSharp(env,local); }   
       return "SystemTypes.maximalElements(" + lqf + ", " + col + ")"; 
+    } 
+
+    if (operator.equals("->iterate") && accumulator != null && 
+        accumulator.getInitialExpression() != null)
+    { Expression initexpr = 
+          accumulator.getInitialExpression();
+      Type letype = left.getElementType(); 
+      String letypestr = Type.getCSharptype(letype); 
+      String acc = accumulator.getName();  
+      String init = initexpr.queryFormCSharp(env,local);
+      Type acctype = accumulator.getType(); 
+      String csacctype = Type.getCSharptype(acctype); 
+ 
+      if (left.umlkind == CLASSID)
+      { lqf = ((BasicExpression) left).classExtentQueryFormCSharp(env,local); } 
+      String typ = Type.getCSharptype(type); 
+
+      return "(" + typ + ") SystemTypes.iterate(" + lqf + ", " + init + 
+                ", (" + iteratorVariable + "_x) => ( (" + acc + "_x) => { " + csacctype + " " + acc + " = (" + csacctype + ") " + acc + "_x;  " + letypestr + " " + iteratorVariable + " = (" + letypestr + ") " + iteratorVariable + "_x; return " + rqf + "; } ) )"; 
     } 
 
     if (operator.equals("->selectMinimals"))
@@ -6384,6 +6525,25 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("|C") || operator.equals("->collect"))
     { return collectQueryFormCPP(lqf,rqf,rprim,env,local); } 
 
+    if (operator.equals("->iterate") && accumulator != null && 
+        accumulator.getInitialExpression() != null)
+    { Expression initexpr = 
+          accumulator.getInitialExpression();
+      Type letype = left.getElementType(); 
+      String letypestr = Type.getCPPtype(letype); 
+      String acc = accumulator.getName();  
+      String init = initexpr.queryFormCPP(env,local);
+      Type acctype = accumulator.getType(); 
+      String csacctype = Type.getCPPtype(acctype); 
+ 
+      if (left.umlkind == CLASSID)
+      { lqf = ((BasicExpression) left).classExtentQueryFormCPP(env,local); } 
+      String typ = Type.getCPPtype(type); 
+
+      return "(" + typ + ") UmlRsdsOcl<" + letypestr + ", " + csacctype + ", " + csacctype + ">.iterate(" + lqf + ", " + init + 
+                ", [=](" + letypestr + " " + iteratorVariable + ", " + csacctype + " " + acc + ") -> " + csacctype + " { return " + rqf + "; } )"; 
+    } 
+
     if (operator.equals("->selectMaximals"))
     { String col = collectQueryFormCPP(lqf,rqf,rprim,env,local); 
       if (left.umlkind == CLASSID)
@@ -6399,10 +6559,16 @@ public boolean conflictsWithIn(String op, Expression el,
     } 
 
     if (operator.equals("->restrict"))
-    { return "UmlRsdsLib<" + lcet + ">::restrict(" + lqf + "," + rqf + ")"; } 
+    { Type lkeyt = left.getType().getKeyType();
+      String lkeytype = Type.getCPPtype(lkeyt);  
+      return "UmlRsdsOcl<" + lkeytype + ", " + lcet + ", " + lcet + ">::restrict(" + lqf + "," + rqf + ")"; 
+    } 
 
     if (operator.equals("->antirestrict"))
-    { return "UmlRsdsLib<" + lcet + ">::antirestrict(" + lqf + "," + rqf + ")"; } 
+    { Type lkeyt = left.getType().getKeyType();
+      String lkeytype = Type.getCPPtype(lkeyt);  
+      return "UmlRsdsOcl<" + lkeytype + ", " + lcet + ", " + lcet + ">::antirestrict(" + lqf + "," + rqf + ")";
+    } 
 
     if (operator.equals("->sortedBy"))
     { // String col = collectQueryFormCPP(lqf,rqf,rprim,env,local);
@@ -6728,7 +6894,9 @@ public boolean conflictsWithIn(String op, Expression el,
           else 
           { res = "(*(" + lqf + ") == *(" + rs + "))"; }
         }  
-        else if (operator.equals("/=") || operator.equals("!=") || operator.equals("<>"))
+        else if (operator.equals("/=") ||
+                 operator.equals("!=") || 
+                 operator.equals("<>"))
         { if (left.isOrdered() || left.hasSequenceType())
           { res = "(*(" + lqf + ") != *(" + rsq + "))"; } 
           else 
@@ -7565,6 +7733,19 @@ public boolean conflictsWithIn(String op, Expression el,
       }
       else  
       { localentity = beleft.right.elementType.getEntity(); }  
+    
+      if (selectleft.isMap())
+      { // Ocl.selectMap(lqf, (selectvar)-> { return rqf;})
+
+        if ("|".equals(operator))
+        { return "Ocl.selectMap(" + lqf + ", (" + 
+                 selectvar + ") -> { return " + rqf + "; })"; 
+        } 
+        else 
+        { return "Ocl.rejectMap(" + lqf + ", (" + 
+                 selectvar + ") -> { return " + rqf + "; })"; 
+        }
+      } 
     }  
 
 
@@ -7666,6 +7847,22 @@ public boolean conflictsWithIn(String op, Expression el,
       }
       else  
       { localentity = beleft.right.elementType.getEntity(); }  
+
+      if (selectleft.isMap())
+      { // Ocl.selectMap(lqf, (selectvar)-> { return rqf;})
+
+        String elemT = 
+          Type.getCSharptype(selectleft.elementType); 
+
+        if ("|".equals(operator))
+        { return "SystemTypes.selectMap(" + lqf + ", (" + 
+                 selectvar + "_x) => { " + elemT + " " + selectvar + " = (" + elemT + ") " + selectvar + "_x; return " + rqf + "; })"; 
+        } 
+        else 
+        { return "SystemTypes.rejectMap(" + lqf + ", (" + 
+            selectvar + "_x) => { " + elemT + " " + selectvar + " = (" + elemT + ") " + selectvar + "_x; return " + rqf + "; })";  
+        }
+      } 
     }  
 
     // Entity localentity = left.elementType.getEntity();
@@ -7759,7 +7956,7 @@ public boolean conflictsWithIn(String op, Expression el,
                                       "Design error", JOptionPane.ERROR_MESSAGE);
       } 
       else
-      { localentity = left.elementType.getEntity(); }  
+      { localentity = left.elementType.getEntity(); }
     } 
     else if (operator.equals("|")) 
     { BinaryExpression beleft = (BinaryExpression) left; 
@@ -7773,6 +7970,16 @@ public boolean conflictsWithIn(String op, Expression el,
       }
       else  
       { localentity = beleft.right.elementType.getEntity(); }  
+
+      if (selectleft.isMap())
+      { // UmlRsdsOcl<S,T,R>::selectMap
+
+        String stype = Type.getCPPtype(type.getKeyType());
+        String rtype = "bool";  
+        String ttype = 
+          Type.getCPPtype(selectleft.elementType); 
+        return "UmlRsdsOcl<" + stype + "," + ttype + "," + rtype + ">::selectMap(" + lqf + ", [=](" + ttype + " " + selectvar + ") -> " + rtype + " { return " + rqf + "; })"; 
+      }   
     }  
 
 
@@ -8080,6 +8287,19 @@ public boolean conflictsWithIn(String op, Expression el,
       }
       else  
       { localentity = beleft.right.elementType.getEntity(); }  
+
+      if (selectleft.isMap())
+      { // Ocl.selectMap(lqf, (selectvar)-> { return rqf;})
+
+        if ("|".equals(operator))
+        { return "Ocl.selectMap(" + lqf + ", (" + 
+                 selectvar + ") -> { return " + rqf + "; })"; 
+        } 
+        else 
+        { return "Ocl.rejectMap(" + lqf + ", (" + 
+                 selectvar + ") -> { return " + rqf + "; })"; 
+        }
+      } 
     }  
 
     Vector euses = right.getBaseEntityUses(); 
@@ -8182,6 +8402,22 @@ public boolean conflictsWithIn(String op, Expression el,
       }
       else  
       { localentity = beleft.right.elementType.getEntity(); }  
+
+      if (selectleft.isMap())
+      { // Ocl.selectMap(lqf, (selectvar)-> { return rqf;})
+
+        String elemT = 
+          Type.getCSharptype(selectleft.elementType); 
+
+        if ("|".equals(operator))
+        { return "SystemTypes.selectMap(" + lqf + ", (" + 
+                 selectvar + "_x) => { " + elemT + " " + selectvar + " = (" + elemT + ") " + selectvar + "_x; return " + rqf + "; })"; 
+        } 
+        else 
+        { return "SystemTypes.rejectMap(" + lqf + ", (" + 
+            selectvar + "_x) => { " + elemT + " " + selectvar + " = (" + elemT + ") " + selectvar + "_x; return " + rqf + "; })";  
+        }
+      } 
     }  
 
     Vector euses = right.getBaseEntityUses(); 
@@ -8293,6 +8529,16 @@ public boolean conflictsWithIn(String op, Expression el,
       }
       else  
       { localentity = beleft.right.elementType.getEntity(); }  
+          
+      if (selectleft.isMap())
+      { // UmlRsdsOcl<S,T,R>::rejectMap
+
+        String stype = Type.getCPPtype(type.getKeyType());
+        String rtype = "bool";  
+        String ttype = 
+          Type.getCPPtype(selectleft.elementType); 
+        return "UmlRsdsOcl<" + stype + "," + ttype + "," + rtype + ">::rejectMap(" + lqf + ", [=](" + ttype + " " + selectvar + ") -> " + rtype + " { return " + rqf + "; })"; 
+      }   
     }  
 
     Vector euses = right.getBaseEntityUses(); 
@@ -9069,7 +9315,8 @@ public boolean conflictsWithIn(String op, Expression el,
     return "Set." + res.substring(0,res.length()-1) + callpars + ")"; 
   } 
 
-  private String collectQueryFormJava7(String lqf, String rqf, boolean rprim,
+  private String collectQueryFormJava7(String lqf, 
+                        String rqf, boolean rprim,
                                  java.util.Map env, 
                                  boolean local) 
   { // collect_ind(lqf) where ind is a unique index for left and right
@@ -9093,6 +9340,11 @@ public boolean conflictsWithIn(String op, Expression el,
       }
       else  
       { localentity = beleft.right.elementType.getEntity(); } // May be null if primitive, String, etc
+
+      if (collectleft.isMap())
+      { // Ocl.collectMap(lqf, (collectvar)-> { return rqf;})
+        return "Ocl.collectMap(" + lqf + ", (" + collectvar + ") -> { return " + rqf + "; })"; 
+      } 
     }  
     else 
     { if (left.elementType == null) 
@@ -9168,9 +9420,10 @@ public boolean conflictsWithIn(String op, Expression el,
   } 
 
 
-  private String collectQueryFormCSharp(String lqf, String rqf, boolean rprim,
-                                 java.util.Map env, 
-                                 boolean local) 
+  private String collectQueryFormCSharp(String lqf, 
+                                String rqf, boolean rprim,
+                                java.util.Map env, 
+                                boolean local) 
   { // collect_ind(lqf) where ind is a unique index for left and right
     Vector uses = right.getVariableUses(); 
     Vector pars = new Vector(); 
@@ -9181,7 +9434,9 @@ public boolean conflictsWithIn(String op, Expression el,
     String collectvar = null; 
     Expression collectleft = left;
 
-    Entity localentity = left.entity; // left.elementType.getEntity();
+    Entity localentity = left.entity; 
+       // left.elementType.getEntity();
+
     if (operator.equals("|C")) 
     { BinaryExpression beleft = (BinaryExpression) left; 
       lqf = beleft.right.queryFormCSharp(env,local); 
@@ -9194,12 +9449,19 @@ public boolean conflictsWithIn(String op, Expression el,
       }
       else  
       { localentity = beleft.right.elementType.getEntity(); }  
+
+      if (collectleft.isMap())
+      { // Ocl.collectMap(lqf, (collectvar_x) => { return rqf;})
+        String elemT = 
+          Type.getCSharptype(beleft.right.elementType); 
+        return "SystemTypes.collectMap(" + lqf + ", (" + collectvar + "_x) => { " + elemT + " " + collectvar + " = (" + elemT + ") " + collectvar + "_x; return " + rqf + "; })"; 
+      } 
     }  
     else 
     { if (left.elementType == null) 
       { System.err.println("DESIGN ERROR: no element type for: " + left); 
         JOptionPane.showMessageDialog(null, "no element type for " + left + " in " + this, 
-                                      "Design error", JOptionPane.ERROR_MESSAGE);
+           "Design error", JOptionPane.ERROR_MESSAGE);
       } 
       else
       { localentity = left.elementType.getEntity(); }  
@@ -9305,6 +9567,16 @@ public boolean conflictsWithIn(String op, Expression el,
       }
       else  
       { localentity = beleft.right.elementType.getEntity(); }  
+
+      if (collectleft.isMap())
+      { // UmlRsdsOcl<S,T,R>::collectMap
+
+        String stype = Type.getCPPtype(type.getKeyType());
+        String rtype = Type.getCPPtype(elementType);  
+        String ttype = 
+          Type.getCPPtype(beleft.right.elementType); 
+        return "UmlRsdsOcl<" + stype + "," + ttype + "," + rtype + ">::collectMap(" + lqf + ", [=](" + ttype + " " + collectvar + ") -> " + rtype + " { return " + rqf + "; })"; 
+      } 
     }  
     else 
     { if (left.elementType == null) 
@@ -10773,22 +11045,22 @@ public boolean conflictsWithIn(String op, Expression el,
     { res = rqf + ".containsAll(" + lqf + ")"; }
     else if (operator.equals("->includesAll"))
     { if (left.isMap() && right.isMap())
-	  { res = "Ocl.includesAllMap(" + lqf + "," + rqf + ")"; } 
-	  else 
-	  { res = lqf + ".containsAll(" + rqf + ")"; }
-	} 
+      { res = "Ocl.includesAllMap(" + lqf + "," + rqf + ")"; } 
+      else 
+      { res = lqf + ".containsAll(" + rqf + ")"; }
+    } 
     else if (operator.equals("-"))
     { if (left.isMap() && right.isMap())
-	  { res = "Ocl.excludeAllMap(" + lqf + "," + rqf + ")"; } 
-	  else 
-	  { res = "Ocl.subtract(" + lqf + "," + rqf + ")"; }
-	} 
+      { res = "Ocl.excludeAllMap(" + lqf + "," + rqf + ")"; } 
+      else 
+      { res = "Ocl.subtract(" + lqf + "," + rqf + ")"; }
+    } 
     else if (operator.equals("->excluding"))  
     { res = "Ocl.subtract(" + lqf + "," + rqf + ")"; } 
     else if (operator.equals("\\/") || operator.equals("->union")) 
-    { if (left.isMap() && right.isMap())
-	  { res = "Ocl.unionMap(" + lqf + "," + rqf + ")"; }
-	  else if (left.isOrdered() && right.isOrdered())
+    { if (left.isMap() || right.isMap())
+      { res = "Ocl.unionMap(" + lqf + "," + rqf + ")"; }
+      else if (left.isOrdered() && right.isOrdered())
       { res = "Ocl.concatenate(" + lqf + ", " + rqf + ")"; } 
       else 
       { res = "Ocl.union(" + lqf + "," + rqf + ")"; }
@@ -10809,10 +11081,10 @@ public boolean conflictsWithIn(String op, Expression el,
     { res = "!(" + rqf + ".containsAll(" + lqf + "))"; } 
     else if (operator.equals("->excludesAll"))
     { if (left.isMap() && right.isMap())
-	  { res = "Ocl.excludesAllMap(" + lqf + "," + rqf + ")"; } 
-	  else 
-	  { res = "Collections.disjoint(" + lqf + "," + rqf + ")"; }
-	}        
+      { res = "Ocl.excludesAllMap(" + lqf + "," + rqf + ")"; } 
+      else 
+      { res = "Collections.disjoint(" + lqf + "," + rqf + ")"; }
+    }        
     else if (operator.equals("^"))
     { res = "Ocl.concatenate(" + lqf + "," + rqf + ")"; } 
     else if (operator.equals("->symmetricDifference"))
@@ -10914,15 +11186,21 @@ public boolean conflictsWithIn(String op, Expression el,
     { res = "UmlRsdsLib<" + lcet + ">::isSubset(" + lqf + ", " + rqf + ")"; }
     else if (operator.equals("->includesAll"))
     { if (left.isMap() && right.isMap())
-	  { res = "UmlRsdsLib<" + lcet + ">::includesAllMap(" + lqf + "," + rqf + ")"; } 
-	  else 
-	  { res = "UmlRsdsLib<" + lcet + ">::isSubset(" + rqf + ", " + lqf + ")"; }
+      { Type lkeyt = left.getType().getKeyType();
+        String lkeytype = Type.getCPPtype(lkeyt);  
+        res = "UmlRsdsOcl<" + lkeytype + ", " + lcet + ", " + lcet + ">::includesAllMap(" + lqf + "," + rqf + ")"; 
+      } 
+      else 
+      { res = "UmlRsdsLib<" + lcet + ">::isSubset(" + rqf + ", " + lqf + ")"; }
 	} 
     else if (operator.equals("-"))
     { if (left.isMap() && right.isMap())
-	  { res = "UmlRsdsLib<" + lcet + ">::excludeAllMap(" + lqf + "," + rqf + ")"; } 
-	  else 
-	  { res = "UmlRsdsLib<" + lcet + ">::subtract(" + lqf + ", " + rqf + ")"; }
+      { Type lkeyt = left.getType().getKeyType();
+        String lkeytype = Type.getCPPtype(lkeyt);  
+        res = "UmlRsdsOcl<" + lkeytype + ", " + lcet + ", " + lcet + ">::excludeAllMap(" + lqf + "," + rqf + ")";
+      } 
+      else 
+      { res = "UmlRsdsLib<" + lcet + ">::subtract(" + lqf + ", " + rqf + ")"; }
 	} 
     else if (operator.equals("->excluding"))
     { // String rss = makeSetCPP(rqf); 
@@ -10937,25 +11215,34 @@ public boolean conflictsWithIn(String op, Expression el,
     } 
     else if (operator.equals("\\/") || operator.equals("->union"))
     { if (left.isMap() && right.isMap())
-	  { res = "UmlRsdsLib<" + lcet + ">::unionMap(" + lqf + "," + rqf + ")"; }
-	  else if (left.isOrdered())
+      { Type lkeyt = left.getType().getKeyType();
+        String lkeytype = Type.getCPPtype(lkeyt);  
+        res = "UmlRsdsOcl<" + lkeytype + ", " + lcet + ", " + lcet + ">::unionMap(" + lqf + "," + rqf + ")";
+      }
+      else if (left.isOrdered())
       { res = "UmlRsdsLib<" + lcet + ">::concatenate(" + lqf + ", " + rqf + ")"; } 
       else // left is a set
       { res = "UmlRsdsLib<" + lcet + ">::unionSet(" + lqf + ", " + rqf + ")"; }
     } 
     else if (operator.equals("/\\") || operator.equals("->intersection"))
     { if (left.isMap() && right.isMap())
-	  { res = "UmlRsdsLib<" + lcet + ">::intersectionMap(" + lqf + "," + rqf + ")"; } 
-	  else 
-	  { res = "UmlRsdsLib<" + lcet + ">::intersection(" + lqf + ", " + rqf + ")"; }
-	} 
+      { Type lkeyt = left.getType().getKeyType();
+        String lkeytype = Type.getCPPtype(lkeyt);  
+        res = "UmlRsdsOcl<" + lkeytype + ", " + lcet + ", " + lcet + ">::intersectionMap(" + lqf + "," + rqf + ")";
+      } 
+      else 
+      { res = "UmlRsdsLib<" + lcet + ">::intersection(" + lqf + ", " + rqf + ")"; }
+    } 
     else if (operator.equals("/:") || operator.equals("/<:"))
     { res = "!(UmlRsdsLib<" + lcet + ">::isSubset(" + lqf + ", " + rqf + "))"; } 
     else if (operator.equals("->excludesAll"))
     { if (left.isMap() && right.isMap())
-	  { res = "UmlRsdsLib<" + lcet + ">::excludesAllMap(" + lqf + "," + rqf + ")"; } 
-	  else 
-	  { res = "(UmlRsdsLib<" + lcet + ">::intersection(" + rqf + ", " + lqf + ")->size() == 0)"; }
+      { Type lkeyt = left.getType().getKeyType();
+        String lkeytype = Type.getCPPtype(lkeyt);  
+        res = "UmlRsdsOcl<" + lkeytype + ", " + lcet + ", " + lcet + ">::excludesAllMap(" + lqf + "," + rqf + ")";
+      } 
+      else 
+      { res = "(UmlRsdsLib<" + lcet + ">::intersection(" + rqf + ", " + lqf + ")->size() == 0)"; }
 	}        
     else if (operator.equals("^"))
     { res = "UmlRsdsLib<" + lcet + ">::concatenate(" + lqf + ", " + rqf + ")"; } 
@@ -15195,18 +15482,38 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   }  // what if oldVar equals left and right? 
 
   public boolean hasVariable(final String s)
-  { return (left.hasVariable(s) || right.hasVariable(s)); }
+  { boolean res = false; 
+    if ("->iterate".equals(operator) && accumulator != null) 
+    { Expression expr = accumulator.getInitialExpression(); 
+      if (expr != null) 
+      { res = expr.hasVariable(s); }
+    }  
+    return (res || left.hasVariable(s) ||
+            right.hasVariable(s));
+  }
   // Cases of ->iterate, let
 
   public Vector variablesUsedIn(final Vector vars)
   { Vector res1 = left.variablesUsedIn(vars);
     Vector res2 = right.variablesUsedIn(vars);
+    
+    if ("->iterate".equals(operator) && accumulator != null) 
+    { Expression expr = accumulator.getInitialExpression(); 
+      if (expr != null) 
+      { res1.addAll(expr.variablesUsedIn(vars)); }
+    }  
+
     return VectorUtil.vector_merge(res1,res2); 
   } // Cases of ->iterate, let
 
   public Vector componentsUsedIn(final Vector sms)
   { Vector res1 = left.componentsUsedIn(sms);
     Vector res2 = right.componentsUsedIn(sms);
+    if ("->iterate".equals(operator) && accumulator != null) 
+    { Expression expr = accumulator.getInitialExpression(); 
+      if (expr != null) 
+      { res1.addAll(expr.componentsUsedIn(sms)); }
+    }  
     return VectorUtil.union(res1,res2);
   }
 
@@ -17519,9 +17826,9 @@ private BExpression seqselectBinvariantForm(String var, BExpression bsimp, BExpr
     if ("|C".equals(operator) || "|R".equals(operator) || 
         "|".equals(operator) || "#".equals(operator) || 
         "#1".equals(operator) || "|sortedBy".equals(operator) ||
-		"|intersectAll".equals(operator) || "|unionAll".equals(operator) ||
-		"|concatenateAll".equals(operator) || "|isUnique".equals(operator) ||
-		"|selectMaximals".equals(operator) || "|selectMinimals".equals(operator) || 
+        "|intersectAll".equals(operator) || "|unionAll".equals(operator) ||
+        "|concatenateAll".equals(operator) || "|isUnique".equals(operator) ||
+        "|selectMaximals".equals(operator) || "|selectMinimals".equals(operator) || 
         "!".equals(operator) || "|A".equals(operator))
     { BinaryExpression beleft = (BinaryExpression) getLeft();  
       args.add(beleft.getRight().cg(cgs)); 

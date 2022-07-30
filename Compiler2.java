@@ -415,9 +415,13 @@ public class Compiler2
   public boolean validIdentifierOrOperator(int i, String tok, Entity context, 
                                            Vector entities, Vector varsymbs, 
                                            Vector variables, Vector messages)
-  { if (Expression.alloperators.contains(tok) || "[".equals(tok) || "]".equals(tok) ||
-        "{".equals(tok) || "}".equals(tok) || "Set{".equals(tok) || "Sequence{".equals(tok) ||
-        "Set".equals(tok) || "Sequence".equals(tok) || "Integer".equals(tok) ||
+  { if (Expression.alloperators.contains(tok) ||
+        "[".equals(tok) || "]".equals(tok) ||
+        "{".equals(tok) || "}".equals(tok) || 
+        "Set{".equals(tok) || "Sequence{".equals(tok) ||
+        "Set".equals(tok) || "Sequence".equals(tok) || 
+        "Map{".equals(tok) || "Map".equals(tok) ||
+        "Integer".equals(tok) ||
         "|".equals(tok) || ",".equals(tok))
     { return true; }
     ModelElement me = ModelElement.lookupByName(tok,entities); 
@@ -443,7 +447,8 @@ public class Compiler2
     int atind = tok.indexOf("@"); 
     if (atind >= 0)
     { str = tok.substring(0,atind); } 
-    if (variables.contains(str) || "Integer".equals(str) || str.equals("Real"))
+    if (variables.contains(str) || 
+        "Integer".equals(str) || str.equals("Real"))
     { return true; } 
     if (context != null && context.hasFeatureOrOperation(str))
     { return true; }
@@ -4960,6 +4965,12 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
     if (st.length() > 4)
     { 
+      if ("->size".startsWith(st))
+      { mess[0] = "arg->size() operator on strings, maps, sets, sequences\n" + 
+          "Returns number of arg elements"; 
+        return "arg->size()"; 
+      }
+
       if ("->front".startsWith(st))
       { mess[0] = "arg->front() operator on strings, sequences\n" + 
           "Returns  arg.subrange(1,(arg->size())-1)"; 
@@ -5058,18 +5069,23 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       }
     
       if ("->select".startsWith(st))
-      { mess[0] = "Selection (filter) operator on sets, sequences and maps"; 
+      { mess[0] = "Selection (filter) operator on sets, sequences and maps.\n" + 
+          "col->select(x | P)  returns collection/map of same type as col.";  
         return "arg1->select(x | Predicate)"; 
       }
 
       if ("->reject".startsWith(st))
-      { mess[0] = "Rejection (negative filter) operator on sets, sequences and maps"; 
+      { mess[0] = "Rejection (negative filter) operator on sets, sequences and maps.\n" + 
+          "col->reject(x | P)  returns collection/map of same type as col.";  
+ 
         return "arg1->reject(x | Predicate)"; 
       }
 
       if ("->collect".startsWith(st))
-      { mess[0] = "Collection operator on sets and sequences -- this always returns a sequence\n" + 
-          "so that duplicated expression values are preserved"; 
+      { mess[0] = "Collection operator on sets and sequences always returns a sequence\n" + 
+          "so that duplicated expression values are preserved.\n" + 
+          "col->collect(x | e)  returns sequence of all e values for x in col.\n" + 
+          "m->collect(x | e)  for Map m returns map with keys k of m, mapped to e value of x = m[k]\n"; 
         return "arg1->collect(x | Expression)"; 
       }
   
@@ -5114,8 +5130,10 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       }
 
       if ("->iterate".startsWith(st))
-      { mess[0] = "Iterate over col, combining elements: acc = arg(x,acc) at each step\n" + 
-           "This is only supported for Python and Java8"; 
+      { mess[0] = "Iterate over x in col, combining elements: \n" + 
+          "col->iterate(x; acc = init | arg)\n" + 
+          "at each step: acc := arg(x,acc)\n" + 
+          "This is only supported for Python and Java8"; 
         return "col->iterate(x; acc = init | arg)"; 
       }
     } 

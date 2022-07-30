@@ -8890,12 +8890,12 @@ public class UCDArea extends JPanel
     out2.println("#include <sys/stat.h>"); 
     out2.println("#include <direct.h>");  
     out2.println("#include <windows.h>"); 
+    out2.println("#include \"Controller.h\"\n"); 
 
     out2.println(); 
     out2.println("#pragma warning(disable : 4996)"); 
     out2.println(""); 
     out2.println("using namespace std;\n"); 
-    out2.println("#include \"Controller.h\"\n"); 
 
     out2.println("Controller* Controller::inst = new Controller();\n\n"); 
     out2.println("map<string,OclType*>* OclType::ocltypenameindex = new map<string,OclType*>();\n\n"); 
@@ -8960,6 +8960,29 @@ public class UCDArea extends JPanel
 
     generateSystemTypesCPP(out); 
     out.println(); 
+
+    try
+    { File oclHPP = new File("libraries/UmlRsdsOcl.hpp"); 
+      BufferedReader br = null;
+      String sline = null;
+      boolean eof = false; 
+      br = new BufferedReader(new FileReader(oclHPP));
+      out.println(); 
+ 
+      while (!eof)
+      { sline = br.readLine();
+        if (sline == null) 
+        { eof = true; } 
+        else 
+        { out.println(sline); }
+      } 
+      out.println(); 
+
+      br.close();  
+    } 
+    catch (IOException _ex)
+    { System.err.println("!! ERROR: libraries/UmlRsdsOcl.hpp not found"); }
+
 
     try
     { File ocltypeHPP = new File("libraries/OclType.hpp"); 
@@ -10407,6 +10430,10 @@ public void produceCUI(PrintWriter out)
     out.println("import java.util.HashSet;"); 
     out.println("import java.util.Collection;");
     out.println("import java.util.Collections;\n\n");
+
+    out.println("import java.util.function.Predicate;"); 
+    out.println("import java.util.function.Function;\n\n"); 
+
     
     out.println("public interface SystemTypes");
     out.println("{");

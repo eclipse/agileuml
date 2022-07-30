@@ -1236,6 +1236,7 @@ public class ASTBasicTerm extends ASTTerm
     }
  
     if ("ResultSet".equals(value) ||
+        "ResultSetMetaData".equals(value) ||
         "CachedRowSet".equals(value) ||
         "FilteredRowSet".equals(value) ||
         "JdbcRowSet".equals(value) ||
@@ -1391,7 +1392,8 @@ public class ASTBasicTerm extends ASTTerm
     } 
 
     if ("JDBCDatabase".equals(value) ||
-        "Connection".equals(value) ||  
+        "Connection".equals(value) ||
+        "DriverManager".equals(value) ||     
         "HttpURLConnection".equals(value) ||  
         "URLConnection".equals(value) ||  
         "Socket".equals(value) || 
@@ -1972,6 +1974,7 @@ public class ASTBasicTerm extends ASTTerm
     }
  
     if ("ResultSet".equals(value) ||
+        "ResultSetMetaData".equals(value) ||
         "CachedRowSet".equals(value) ||
         "FilteredRowSet".equals(value) ||
         "JdbcRowSet".equals(value) ||
@@ -2130,7 +2133,8 @@ public class ASTBasicTerm extends ASTTerm
     } 
  
     if ("JDBCDatabase".equals(value) || 
-        "Connection".equals(value) || 
+        "Connection".equals(value) ||
+        "DriverManager".equals(value) ||    
         "HttpURLConnection".equals(value) ||  
         "URLConnection".equals(value) ||  
         "Socket".equals(value) || 

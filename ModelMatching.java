@@ -174,7 +174,18 @@ public class ModelMatching implements SystemTypes
     { TypeMatching tm = (TypeMatching) typematches.get(i);
       if (usedFunctions.contains(tm.getName())) 
       { usedFunctions.addAll(tm.usesCSTLfunctions()); } 
-    } // *only* include them if used in some rule. 
+    } 
+
+    for (int i = 0; i < typematches.size(); i++) 
+    { TypeMatching tm = (TypeMatching) typematches.get(i);
+      if (usedFunctions.contains(tm.getName())) 
+      { Vector newuses = tm.usesCSTLfunctions(); 
+        usedFunctions.addAll(newuses); 
+      } 
+    } 
+
+    // *only* include them if used (recursively)
+    // in some rule. 
 
     System.out.println(">>> Used functions are: " + 
                        usedFunctions); 

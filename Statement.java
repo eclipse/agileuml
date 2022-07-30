@@ -9789,7 +9789,7 @@ class FinalStatement extends Statement
   { return this; }  
 
   public String toString()
-  { String res = "    finally " + body;
+  { String res = "    finally ( " + body + " )";
     return res;
   }
 

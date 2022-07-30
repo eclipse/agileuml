@@ -6557,16 +6557,21 @@ public class ModelSpecification
           { String rs = (String) ttTerms.get(z); 
             if (replacements.contains(rs)) { } 
             else if (Collections.frequency(ttTerms, rs) == 
-                   Collections.frequency(ssTerms, ds))
+                     Collections.frequency(ssTerms, ds))
             { // Look for a replacement
-              replacedSymbols.add(ds); 
-              replacements.add(rs);
-              replacementFound = true;  
-              System.out.println(">treesequence2> replaced symbol " + ds + " |--> " + rs); 
+              if (isConsistentReplacement(
+                                ds,rs,strees,ttrees))
+              { 
+                replacedSymbols.add(ds); 
+                replacements.add(rs);
+                replacementFound = true;  
+                System.out.println(">treesequence2> replaced symbol " + ds + " |--> " + rs);
+              }  
             } 
           }
         } 
       } 
+
       deletedSymbols.removeAll(ttTerms); 
       deletedSymbols.removeAll(replacedSymbols); 
       System.out.println(">treesequence2>-- deleted symbols: " + deletedSymbols); 
@@ -6608,6 +6613,37 @@ public class ModelSpecification
     } 
     return amjx; 
   }             
+
+  private boolean isConsistentReplacement(String ds, 
+                    String rs,
+                    ASTTerm[] strees, ASTTerm[] ttrees)
+  { // ds is replaced consistently by rs in each 
+    // strees[i] to form ttrees[i] 
+
+    int n = strees.length; 
+
+    for (int i = 0; i < n; i++) 
+    { ASTTerm st = strees[i]; 
+      ASTTerm tt = ttrees[i];
+
+      if (st == null || tt == null) 
+      { return false; } 
+      
+      Vector ssymbs = st.symbolTerms(); 
+      Vector tsymbs = tt.symbolTerms();
+
+      Vector sstrings = ASTTerm.getLiteralForms(ssymbs); 
+      Vector tstrings = ASTTerm.getLiteralForms(tsymbs); 
+
+      if (Collections.frequency(tstrings, rs) == 
+          Collections.frequency(sstrings, ds))
+      { System.out.println("@@@@ Consistent replacement of " + ds + " by " + rs + " in " + sstrings + " to form " + tstrings); 
+      } 
+      else 
+      { return false; }  
+    } 
+    return true; 
+  } 
 
   private AttributeMatching treeSequenceMapping3(
       Attribute satt, 
@@ -6664,7 +6700,7 @@ public class ModelSpecification
       if (deletedSymbols.contains(slf)) { } 
       else 
       { deletedSymbols.add(slf); } 
-    } // deletedSymbols are all source symbols.  
+    } // deletedSymbols are all distinct source symbols.  
 
     Vector ttTerms = new Vector(); 
     for (int y = 0; y < tSymbolTerms.size(); y++) 
@@ -6687,11 +6723,18 @@ public class ModelSpecification
           if (replacements.contains(rs)) { } 
           else if (Collections.frequency(ttTerms, rs) == 
                    Collections.frequency(ssTerms, ds))
-          { // Look for a replacement
-            replacedSymbols.add(ds); 
-            replacements.add(rs);
-            replacementFound = true;  
-            System.out.println(">treesequence3> Replacement of symbols: " + ds + " |--> " + rs); 
+          { // Treat rs as a replacement of ds. 
+            // The positions of the rs and ds should 
+            // also correspond. 
+
+            boolean isRepl = 
+              isConsistentReplacement(ds,rs,strees,ttrees); 
+            if (isRepl)
+            { replacedSymbols.add(ds); 
+              replacements.add(rs);
+              replacementFound = true;  
+              System.out.println(">treesequence3> Potential replacement of symbols: " + ds + " |--> " + rs);
+            }  
           } 
         }
       } 
@@ -6912,10 +6955,12 @@ public class ModelSpecification
           else if (Collections.frequency(ttTerms, rs) == 
                    Collections.frequency(ssTerms, ds))
           { // Look for a replacement
-            replacedSymbols.add(ds); 
-            replacements.add(rs);
-            replacementFound = true;  
-            System.out.println(">treesequence4> Replacement of symbols: " + ds + " |--> " + rs); 
+            if (isConsistentReplacement(ds,rs,strees,ttrees))
+            { replacedSymbols.add(ds); 
+              replacements.add(rs);
+              replacementFound = true;  
+              System.out.println(">treesequence4> Replacement of symbols: " + ds + " |--> " + rs);
+            }  
           } 
         }
       } 

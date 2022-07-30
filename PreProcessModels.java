@@ -986,12 +986,26 @@ public class PreProcessModels
           { modelString = exampleName + " : StaticAttribute\n" + 
               exampleName + ".ast = " + tt.toAST() + "\n"; 
              
+            String oclAttType = 
+              ((Attribute) tt).getOclType();
+            if (oclAttType != null) 
+            { modelString = modelString +  
+                exampleName + ".type = " + oclAttType + "\n"; 
+            }
+
             oclOperationModel = oclOperationModel + modelString + "\n";
           } 
           else if (tt instanceof Attribute)
           { modelString = exampleName + " : InstanceAttribute\n" + 
               exampleName + ".ast = " + tt.toAST() + "\n"; 
              
+            String oclAttType = 
+              ((Attribute) tt).getOclType();
+            if (oclAttType != null) 
+            { modelString = modelString +  
+                exampleName + ".type = " + oclAttType + "\n"; 
+            }
+
             oclOperationModel = oclOperationModel + modelString + "\n";
           } 
           else 

@@ -120,6 +120,15 @@ public abstract class ASTTerm
 
   public abstract String literalForm();
 
+  public static Vector getLiteralForms(Vector trms) 
+  { Vector res = new Vector(); 
+    for (int i = 0; i < trms.size(); i++) 
+    { ASTTerm trm = (ASTTerm) trms.get(i); 
+      res.add(trm.literalForm()); 
+    } 
+    return res; 
+  } 
+
   public abstract String tagFunction(); 
 
   public void addStereotype(String str) 

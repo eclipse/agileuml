@@ -577,6 +577,7 @@ public class ASTSymbolTerm extends ASTTerm
     } 
 
     if ("ResultSet".equals(symbol) || 
+        "ResultSetMetaData".equals(symbol) ||
         "CachedRowSet".equals(symbol) ||
         "FilteredRowSet".equals(symbol) ||
         "JdbcRowSet".equals(symbol) ||
@@ -729,7 +730,8 @@ public class ASTSymbolTerm extends ASTTerm
         "HttpURLConnection".equals(symbol) ||  
         "URLConnection".equals(symbol) ||  
         "SQLiteDatabase".equals(symbol) ||
-        "URL".equals(symbol) ||  
+        "URL".equals(symbol) ||
+        "DriverManager".equals(symbol) ||   
         "Socket".equals(symbol) || 
         "BluetoothSocket".equals(symbol))
     { modelElement = new Type("OclDatasource", null); 

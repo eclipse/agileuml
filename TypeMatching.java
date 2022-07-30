@@ -215,6 +215,7 @@ public class TypeMatching
 
   public Vector usesCSTLfunctions()
   { // value mappings have substrings `f
+
     Vector res = new Vector();  
     for (int x = 0; x < valueMappings.size(); x++)
     { ValueMatching vm = (ValueMatching) valueMappings.get(x);
@@ -226,6 +227,10 @@ public class TypeMatching
         res.add(mf.substring(qind+1));  
       } 
     } 
+
+    System.out.println(">>> CSTL functions of " + this + " are " + res); 
+    System.out.println(); 
+
     return res; 
   } 
 

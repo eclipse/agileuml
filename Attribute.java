@@ -1099,6 +1099,33 @@ public class Attribute extends ModelElement
     return "int";
   }
 
+  public String getOclType()
+  { String createsInstanceOf = type.getName(); 
+
+    if ("int".equals(createsInstanceOf) || 
+        "long".equals(createsInstanceOf))
+    { return "Integer"; }
+    if ("double".equals(createsInstanceOf))
+    { return "Real"; }
+    if ("boolean".equals(createsInstanceOf))
+    { return "Boolean"; }
+    if ("String".equals(createsInstanceOf))
+    { return "String"; }
+    if (createsInstanceOf.startsWith("Sequence"))
+    { return "Sequence"; } 
+    if (createsInstanceOf.startsWith("Set"))
+    { return "Set"; } 
+    if (createsInstanceOf.startsWith("Map"))
+    { return "Map"; } 
+    if (createsInstanceOf.startsWith("Ref"))
+    { return "Ref"; } 
+    if (createsInstanceOf.startsWith("Function"))
+    { return "Function"; } 
+    return "Object"; 
+      // if (Type.isOclClassifierType(createsInstanceOf))
+  } // also case of enumerations. 
+
+
   public Type getElementType()
   { return elementType; } 
 

@@ -58,6 +58,7 @@ public class ASTCompositeTerm extends ASTTerm
   public static Type stringType = new Type("String", null); 
   public static Type sequenceType = new Type("Sequence", null); 
   public static Type setType = new Type("Set", null); 
+  public static Type mapType = new Type("Map", null); 
 
   public static Expression booleanTypeExpression = 
                          new BasicExpression(booleanType); 
@@ -73,6 +74,8 @@ public class ASTCompositeTerm extends ASTTerm
                          new BasicExpression(sequenceType); 
   public static Expression setTypeExpression = 
                          new BasicExpression(setType); 
+  public static Expression mapTypeExpression = 
+                         new BasicExpression(mapType); 
 
   public static Statement skipStatement = 
                      new InvocationStatement("skip"); 
@@ -12694,38 +12697,122 @@ public class ASTCompositeTerm extends ASTTerm
     if ("Object".equals(obj + "") && 
         "defineProperties".equals(feature) && 
         pars.size() == 2)
-    { Expression par1 = (Expression) pars.get(0);
+    { // par1->union(par2->collect(x | x->at("value")))
+ 
+      Expression par1 = (Expression) pars.get(0);
       Expression par2 = (Expression) pars.get(1);
       
       par1.setBrackets(true);
+      par2.setBrackets(true); 
 
+      Type maptype = new Type("Map", null); 
+      maptype.setKeyType(new Type("String", null));
+      maptype.setElementType(new Type("OclAny", null));
+
+      par2.setElementType(maptype); 
+
+   /* 
       BasicExpression $k = 
         BasicExpression.newVariableBasicExpression("$k"); 
       $k.setType(new Type("String", null)); 
       $k.setElementType(new Type("String", null)); 
 
+      BasicExpression acc = 
+        BasicExpression.newVariableBasicExpression("$acc"); 
+      
+      acc.setType(maptype);
+      acc.setElementType(new Type("OclAny", null)); 
+ 
+      SetExpression emptyMap = new SetExpression(); 
+      emptyMap.setType(maptype); 
+      emptyMap.setElementType(new Type("OclAny", null));
+ 
+      Attribute accatt = 
+        new Attribute("$acc", maptype, ModelElement.INTERNAL); 
+      accatt.setInitialExpression(emptyMap); 
+      accatt.setElementType(new Type("OclAny", null)); 
+
+      Expression getk = 
+        new BinaryExpression("->at", par2, $k);  
+      getk.setType(maptype); 
+      getk.setElementType(new Type("OclAny", null));
+
+      Expression castgetk = 
+        new BinaryExpression("->oclAsType", getk, mapTypeExpression); 
+      castgetk.setType(maptype); 
+      castgetk.setElementType(new Type("OclAny", null));
+
       Expression newfeat =        
-         new BinaryExpression("|->", $k, 
            new BinaryExpression("->at", 
-             new BinaryExpression("->at", par2, $k), 
+               castgetk, 
                BasicExpression.newValueBasicExpression(
-                                      "\"value\""))); 
-      BinaryExpression inkeys = 
-        new BinaryExpression(":", $k, 
-           new UnaryExpression("->keys", par2)); 
+                                      "\"value\""));
+      newfeat.setType(new Type("OclAny", null));
+      newfeat.setElementType(new Type("OclAny", null)); 
+
+      SetExpression newmap = new SetExpression(); 
+      newmap.setType(maptype); 
+      newmap.addMapElement($k, newfeat); 
+      newmap.setElementType(new Type("OclAny", null)); 
+ 
+      UnaryExpression keys = 
+        new UnaryExpression("->keys", par2); 
+      keys.setType(new Type("Set",null)); 
+      keys.setElementType(new Type("String", null)); 
+
       Expression newfeats = 
-        new BinaryExpression("|C", inkeys, newfeat); 
-      Expression expr = 
-          new BinaryExpression("->union", par1, newfeats);  
-      expr.setType(par1.getType());  
-      expr.setElementType(par1.getElementType()); 
+        new BinaryExpression("->union", acc, newmap); 
+      newfeats.setType(maptype); 
+      newfeats.setElementType(new Type("OclAny", null)); 
+
+      BinaryExpression expr = 
+          new BinaryExpression("->iterate", keys, newfeats);
+      expr.setAccumulator(accatt); 
+      expr.setIteratorVariable("$k"); */ 
+
+      BasicExpression varx = 
+        BasicExpression.newVariableBasicExpression("_x"); 
+      varx.setType(new Type("Map", null)); 
+      varx.setElementType(new Type("OclAny", null)); 
+
+      Expression valexpr = 
+               BasicExpression.newValueBasicExpression(
+                                      "\"value\""); 
+      Expression par2dom = 
+        new BinaryExpression(":", varx, par2); 
+      Expression collrng =        
+           new BinaryExpression("->at", 
+                                varx, valexpr);
+      collrng.setType(new Type("OclAny", null)); 
+      collrng.setElementType(new Type("OclAny", null)); 
+
+      Expression testexpr = 
+        new BinaryExpression("->includes", 
+          new UnaryExpression("->keys", varx),valexpr); 
+      testexpr.setType(new Type("boolean", null)); 
+ 
+      Expression condexpr = 
+        new ConditionalExpression(testexpr,
+                                  collrng,nullExpression); 
+      condexpr.setType(new Type("OclAny", null)); 
+
+      BinaryExpression mapcollect = 
+        new BinaryExpression("|C", par2dom, condexpr); 
+      mapcollect.setType(maptype);  
+      mapcollect.setElementType(new Type("OclAny", null)); 
+
+      BinaryExpression expr = 
+        new BinaryExpression("->union", par1, mapcollect); 
+  
+      expr.setType(maptype);  
+      expr.setElementType(new Type("OclAny", null)); 
       AssignStatement asgn = 
           new AssignStatement(par1,expr);
       Vector cmds = new Vector(); 
       cmds.add(asgn); 
       return cmds; 
-    }  // map union; 
-       // par1 := par1->union(par2->keys()->collect($k | $k |-> par2->at($k)->at("value")))
+    }  
+       // par1 := par2->keys()->iterate($k; acc = par1 | acc->union(Map{ $k |-> par2->at($k)->at("value") } ) )
 
     if ("call".equals(feature + "") && 
         obj instanceof BasicExpression)
@@ -13995,27 +14082,50 @@ public class ASTCompositeTerm extends ASTTerm
       Expression par2 = (Expression) pars.get(1);
       
       par1.setBrackets(true);
+      par2.setBrackets(true); 
 
-      BasicExpression $k = 
-        BasicExpression.newVariableBasicExpression("$k"); 
-      $k.setType(new Type("String", null)); 
-      $k.setElementType(new Type("String", null)); 
+      Type maptype = new Type("Map", null); 
+      maptype.setKeyType(new Type("String", null));
+      maptype.setElementType(new Type("OclAny", null));
 
-      Expression newfeat =        
-         new BinaryExpression("|->", $k, 
-           new BinaryExpression("->at", 
-             new BinaryExpression("->at", par2, $k), 
+      par2.setElementType(maptype); 
+
+      BasicExpression varx = 
+        BasicExpression.newVariableBasicExpression("_x"); 
+      varx.setType(new Type("Map", null)); 
+      varx.setElementType(new Type("OclAny", null)); 
+
+      Expression valexpr = 
                BasicExpression.newValueBasicExpression(
-                                      "\"value\""))); 
-      BinaryExpression inkeys = 
-        new BinaryExpression(":", $k, 
-           new UnaryExpression("->keys", par2)); 
-      Expression newfeats = 
-        new BinaryExpression("|C", inkeys, newfeat); 
-      Expression expr = 
-          new BinaryExpression("->union", par1, newfeats);  
-      expr.setType(par1.getType());  
-      expr.setElementType(par1.getElementType()); 
+                                      "\"value\""); 
+      Expression par2dom = 
+        new BinaryExpression(":", varx, par2); 
+      Expression collrng =        
+           new BinaryExpression("->at", 
+                                varx, valexpr);
+      collrng.setType(new Type("OclAny", null)); 
+      collrng.setElementType(new Type("OclAny", null)); 
+
+      Expression testexpr = 
+        new BinaryExpression("->includes", 
+          new UnaryExpression("->keys", varx),valexpr); 
+      testexpr.setType(new Type("boolean", null)); 
+ 
+      Expression condexpr = 
+        new ConditionalExpression(testexpr,
+                                  collrng,nullExpression); 
+      condexpr.setType(new Type("OclAny", null)); 
+
+      BinaryExpression mapcollect = 
+        new BinaryExpression("|C", par2dom, condexpr); 
+      mapcollect.setType(maptype);  
+      mapcollect.setElementType(new Type("OclAny", null)); 
+
+      BinaryExpression expr = 
+        new BinaryExpression("->union", par1, mapcollect); 
+  
+      expr.setType(maptype);  
+      expr.setElementType(new Type("OclAny", null)); 
       return expr; 
     }
 
@@ -14063,18 +14173,48 @@ public class ASTCompositeTerm extends ASTTerm
       { return par1; } 
 
       // if (par1.isSequence())
+      Type maptype = new Type("Map", null); 
+      maptype.setKeyType(new Type("String", null)); 
+      maptype.setElementType(
+                         new Type("OclAny", null));
+ 
       BasicExpression indx = 
-        BasicExpression.newVariableBasicExpression("_k"); 
-      Expression dmn = new BinaryExpression(":", indx, par1); 
-      Expression k = new BinaryExpression("->at", indx, 
+          BasicExpression.newVariableBasicExpression(
+                                                 "_x"); 
+      indx.setType(par1.getElementType()); 
+            
+      BasicExpression acc = 
+        BasicExpression.newVariableBasicExpression(
+                                                   "_acc"); 
+      acc.setType(maptype); 
+      acc.setElementType(
+                         new Type("OclAny", null));
+      Attribute accatt = 
+                new Attribute("_acc", maptype, 
+                              ModelElement.INTERNAL); 
+      accatt.setElementType(
+                            new Type("OclAny", null));
+      Expression k = new BinaryExpression(
+                                          "->at", indx, 
                                           unitExpression);  
-      Expression v = new BinaryExpression("->at", indx, 
+      Expression v = new BinaryExpression(
+                                          "->at", indx, 
                                           twoExpression);  
       Expression rng = 
-         new BinaryExpression("|->", k, v); 
-      Expression objentries = 
-        new BinaryExpression("|C", dmn, rng); 
-      objentries.setType(new Type("Map", null)); 
+                new BinaryExpression("|->", k, v); 
+      SetExpression sexpr = 
+                new SetExpression(); 
+      sexpr.setType(maptype); 
+      sexpr.addElement(rng); 
+      BinaryExpression expr = 
+                new BinaryExpression("->union", acc, sexpr); 
+      expr.setType(maptype); 
+              
+      BinaryExpression objentries = 
+                new BinaryExpression("->iterate", par1, expr); 
+      objentries.setVariable("_x"); 
+      objentries.setAccumulator(accatt);
+      objentries.setType(maptype); 
       objentries.setElementType(
                          new Type("OclAny", null)); 
       return objentries; 
@@ -17689,21 +17829,51 @@ public class ASTCompositeTerm extends ASTTerm
           { Expression par0 = (Expression) pars.get(0); 
             if (par0.isSequence())
             { // map is 
-              // par0->collect( _x | _x[1] |-> _x[2] )
+              // par0->iterate( _x; _acc = Map{} | 
+              //   _acc->union(Map{ _x[1] |-> _x[2] }) )
                     
+              Type maptype = new Type("Map", null); 
+              maptype.setKeyType(new Type("String", null)); 
+              maptype.setElementType(
+                                 new Type("OclAny", null));
+ 
               BasicExpression indx = 
-                BasicExpression.newVariableBasicExpression("_x"); 
-              Expression dmn = 
-                new BinaryExpression(":", indx, par0); 
-              Expression k = new BinaryExpression("->at", indx, 
+                BasicExpression.newVariableBasicExpression(
+                                                 "_x"); 
+              indx.setType(par0.getElementType()); 
+            
+              BasicExpression acc = 
+                BasicExpression.newVariableBasicExpression(
+                                                   "_acc"); 
+              acc.setType(maptype); 
+              acc.setElementType(
+                                 new Type("OclAny", null));
+              Attribute accatt = 
+                new Attribute("_acc", maptype, 
+                              ModelElement.INTERNAL); 
+              accatt.setElementType(
+                                 new Type("OclAny", null));
+              Expression k = new BinaryExpression(
+                                          "->at", indx, 
                                           unitExpression);  
-              Expression v = new BinaryExpression("->at", indx, 
+              Expression v = new BinaryExpression(
+                                          "->at", indx, 
                                           twoExpression);  
               Expression rng = 
                 new BinaryExpression("|->", k, v); 
-              Expression objentries = 
-                new BinaryExpression("|C", dmn, rng); 
-              objentries.setType(new Type("Map", null)); 
+              SetExpression sexpr = 
+                new SetExpression(); 
+              sexpr.setType(maptype); 
+              sexpr.addElement(rng); 
+              BinaryExpression expr = 
+                new BinaryExpression("->union", acc, sexpr); 
+              expr.setType(maptype); 
+              
+              BinaryExpression objentries = 
+                new BinaryExpression("->iterate", par0, expr); 
+              objentries.setVariable("_x"); 
+              objentries.setAccumulator(accatt); 
+              objentries.setType(maptype); 
               objentries.setElementType(
                          new Type("OclAny", null)); 
               return objentries; 
@@ -26192,6 +26362,13 @@ public class ASTCompositeTerm extends ASTTerm
 
           return args + "->at(" + callp1 + "+1)->oclIsUndefined()"; 
         } // for JsonArray
+        else if ("getMetaData".equals(called) && 
+                 arg.isOclIterator())
+        { // metadata is the iterator itself
+
+          expression = arg.expression;
+          return args; 
+        } 
         else if ("getBoolean".equals(called) && 
                  arg.isOclIterator())
         { ASTTerm.setType(thisliteral,"boolean"); 
@@ -26221,6 +26398,15 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm callarg1 = (ASTTerm) cargs.get(0);
           String callp1 = callarg1.toKM3(); 
           
+          if (callarg1.isInteger())
+          { expression = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrentFieldByIndex", arg.expression,
+                callarg1.expression); 
+            return args + ".getCurrentFieldByIndex(" + 
+                                  callp1 + ")"; 
+          } 
+
           if (arg.expression != null && 
               callarg1.expression != null) 
           { Expression curr = 
@@ -26240,6 +26426,15 @@ public class ASTCompositeTerm extends ASTTerm
         { ASTTerm.setType(thisliteral,"OclDate"); 
           ASTTerm callarg1 = (ASTTerm) cargs.get(0);
           String callp1 = callarg1.toKM3(); 
+
+          if (callarg1.isInteger())
+          { expression = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrentFieldByIndex", arg.expression,
+                callarg1.expression); 
+            return args + ".getCurrentFieldByIndex(" + 
+                       callp1 + ")->oclAsType(OclDate)"; 
+          } 
           
           if (arg.expression != null && 
               callarg1.expression != null) 
@@ -26261,6 +26456,19 @@ public class ASTCompositeTerm extends ASTTerm
         { ASTTerm.setType(thisliteral,"int"); 
           ASTTerm callarg1 = (ASTTerm) cargs.get(0);
           String callp1 = callarg1.toKM3(); 
+       
+          if (callarg1.isInteger())
+          { Expression expr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrentFieldByIndex", arg.expression,
+                callarg1.expression); 
+            expression = 
+              new BinaryExpression("->oclAsType", 
+                                   expr,
+                                   intTypeExpression); 
+            return args + ".getCurrentFieldByIndex(" + 
+                       callp1 + ")->oclAsType(int)"; 
+          } 
           
           if (arg.expression != null && 
               callarg1.expression != null) 
@@ -26284,6 +26492,19 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm callarg1 = (ASTTerm) cargs.get(0);
           String callp1 = callarg1.toKM3(); 
           
+          if (callarg1.isInteger())
+          { Expression expr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrentFieldByIndex", arg.expression,
+                callarg1.expression); 
+            expression = 
+              new BinaryExpression("->oclAsType", 
+                                   expr,
+                                   longTypeExpression); 
+            return args + ".getCurrentFieldByIndex(" + 
+                       callp1 + ")->oclAsType(long)"; 
+          } 
+
           if (arg.expression != null && 
               callarg1.expression != null) 
           { Expression curr = 
@@ -26304,6 +26525,19 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm callarg1 = (ASTTerm) cargs.get(0);
           String callp1 = callarg1.toKM3(); 
           
+          if (callarg1.isInteger())
+          { Expression expr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrentFieldByIndex", arg.expression,
+                callarg1.expression); 
+            expression = 
+              new BinaryExpression("->oclAsType", 
+                                   expr,
+                                   doubleTypeExpression); 
+            return args + ".getCurrentFieldByIndex(" + 
+                       callp1 + ")->oclAsType(double)"; 
+          } 
+
           if (arg.expression != null && 
               callarg1.expression != null) 
           { Expression curr = 
@@ -26326,6 +26560,19 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm callarg1 = (ASTTerm) cargs.get(0);
           String callp1 = callarg1.toKM3(); 
           
+          if (callarg1.isInteger())
+          { Expression expr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrentFieldByIndex", arg.expression,
+                callarg1.expression); 
+            expression = 
+              new BinaryExpression("->oclAsType", 
+                                   expr,
+                                   sequenceTypeExpression); 
+            return args + ".getCurrentFieldByIndex(" + 
+                       callp1 + ")->oclAsType(Sequence)"; 
+          } 
+
           if (arg.expression != null && 
               callarg1.expression != null) 
           { Expression curr = 
@@ -26348,6 +26595,19 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm callarg1 = (ASTTerm) cargs.get(0);
           String callp1 = callarg1.toKM3(); 
           
+          if (callarg1.isInteger())
+          { Expression expr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrentFieldByIndex", arg.expression,
+                callarg1.expression); 
+            expression = 
+              new BinaryExpression("->oclAsType", 
+                                   expr,
+                                   sequenceTypeExpression); 
+            return args + ".getCurrentFieldByIndex(" + 
+                       callp1 + ")->oclAsType(Sequence)"; 
+          } 
+
           if (arg.expression != null && 
               callarg1.expression != null) 
           { Expression curr = 
@@ -26372,6 +26632,19 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm callarg1 = (ASTTerm) cargs.get(0);
           String callp1 = callarg1.toKM3(); 
           
+          if (callarg1.isInteger())
+          { Expression expr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrentFieldByIndex", arg.expression,
+                callarg1.expression); 
+            expression = 
+              new BinaryExpression("->oclAsType", 
+                                   expr,
+                                   stringTypeExpression); 
+            return args + ".getCurrentFieldByIndex(" + 
+                       callp1 + ")->oclAsType(String)"; 
+          } 
+
           if (arg.expression != null && 
               callarg1.expression != null) 
           { Expression curr = 

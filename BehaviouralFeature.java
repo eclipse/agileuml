@@ -4774,7 +4774,7 @@ public class BehaviouralFeature extends ModelElement
       Vector preterms = activity.allPreTerms(); 
       if (preterms.size() > 0) 
       { Statement newpost = (Statement) activity.clone(); 
-        System.out.println("Pre terms: " + preterms); 
+        // System.out.println(">>> Pre terms: " + preterms); 
         Vector processed = new Vector(); 
         String newdecs = ""; 
         for (int i = 0; i < preterms.size(); i++)
@@ -7774,7 +7774,10 @@ public class BehaviouralFeature extends ModelElement
 
     String newitem = opname + "(" + ex + parlist + ")"; 
 
-    if (resultType != null && Type.isCollectionType(resultType))
+    if (resultType != null && Type.isMapType(resultType))
+    { header2 = header2 + "      result.add(" + newitem + ");\n"; }
+    else if (resultType != null && 
+             Type.isCollectionType(resultType))
     { header2 = header2 + "      result.addAll(" + newitem + ");\n"; }
     else if (resT == null || resT.equals("void")) 
     { header2 = header2 + "      " + newitem + ";\n"; }
@@ -7917,7 +7920,10 @@ public class BehaviouralFeature extends ModelElement
 
     String newitem = opname + "(" + ex + parlist + ")"; 
 
-    if (resultType != null && Type.isCollectionType(resultType))
+    if (resultType != null && Type.isMapType(resultType))
+    { header2 = header2 + "      result.add(" + newitem + ");\n"; }
+    else if (resultType != null && 
+             Type.isCollectionType(resultType))
     { header2 = header2 + "      result.addAll(" + newitem + ");\n"; }
     else if (resT == null || resT.equals("void")) 
     { header2 = header2 + "      " + newitem + ";\n"; }
@@ -8053,7 +8059,9 @@ public class BehaviouralFeature extends ModelElement
 
     String newitem = opname + "(" + ex + parlist + ")"; 
 
-    if (resultType != null && Type.isCollectionType(resultType))
+    if (resultType != null && Type.isMapType(resultType))
+    { header2 = header2 + "      result.Add(" + newitem + ");\n"; }
+    else if (resultType != null && Type.isCollectionType(resultType))
     { header2 = header2 + "      result.AddRange(" + newitem + ");\n"; }
     else if (resT == null || resT.equals("void")) 
     { header2 = header2 + "      " + newitem + ";\n"; }
@@ -8209,7 +8217,12 @@ public class BehaviouralFeature extends ModelElement
 
     String newitem = opname + "(" + ex + parlist + ")"; 
 
-    if (resultType != null && Type.isCollectionType(resultType))
+    if (resultType != null && Type.isMapType(resultType))
+    { header2 = header2 + "      result->push_back(" + newitem + ");\n"; 
+      header3 = header3 + "      result->push_back(" + newitem + ");\n";
+    }
+    else if (resultType != null && 
+             Type.isCollectionType(resultType))
     { header2 = header2 + "      result->insert(result->end(), " + newitem + "->begin(), " + 
                                                 newitem + "->end());\n"; 
       header3 = header3 + "      result->insert(result->end(), " + newitem + "->begin(), " + 
@@ -8429,7 +8442,11 @@ public class BehaviouralFeature extends ModelElement
 
     String newitem = ex + "." + opname + "(" + parlist + ")"; 
 
-    if (resultType != null && Type.isCollectionType(resultType))
+    if (resultType != null && 
+        Type.isMapType(resultType))
+    { header2 = header2 + "      result.add(" + newitem + ");\n"; }
+    else if (resultType != null && 
+             Type.isCollectionType(resultType))
     { header2 = header2 + "      result.addAll(" + newitem + ");\n"; }
     else 
     { if (t != null && t.isPrimitive())
@@ -8531,7 +8548,11 @@ public class BehaviouralFeature extends ModelElement
 
     String newitem = ex + "." + opname + "(" + parlist + ")"; 
 
-    if (resultType != null && Type.isCollectionType(resultType))
+    if (resultType != null && 
+        Type.isMapType(resultType))
+    { header2 = header2 + "      result.add(" + newitem + ");\n"; }
+    else if (resultType != null && 
+        Type.isCollectionType(resultType))
     { header2 = header2 + "      result.addAll(" + newitem + ");\n"; }
     else 
     { if (t != null && t.isPrimitive())
@@ -8655,7 +8676,10 @@ public class BehaviouralFeature extends ModelElement
 
     String newitem = ex + "." + opname + "(" + parlist + ")"; 
 
-    if ("ArrayList".equals(resT))
+    if (resultType != null && 
+        Type.isMapType(resultType))
+    { header2 = header2 + "      result.Add(" + newitem + ");\n"; }
+    else if ("ArrayList".equals(resT))
     { header2 = header2 + "      result.AddRange(" + newitem + ");\n"; }
     else 
     { // if (t.isPrimitive())
