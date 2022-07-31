@@ -225,6 +225,14 @@ public class ModelSpecification
     if (t == null) 
     { return false; } 
 
+    if ((s instanceof ASTSymbolTerm || 
+         s instanceof ASTBasicTerm) && 
+        (t instanceof ASTSymbolTerm || 
+         t instanceof ASTBasicTerm))
+    { if (s.literalForm().equals(t.literalForm()))
+      { return true; } 
+    } 
+
     for (int i = 0; i < correspondence.elements.size(); i++) 
     { Maplet mm = (Maplet) correspondence.elements.get(i); 
       ObjectSpecification src = (ObjectSpecification) mm.source; 
@@ -305,6 +313,14 @@ public class ModelSpecification
     { return false; } 
     if (t == null) 
     { return false; } 
+
+    if ((s instanceof ASTSymbolTerm || 
+         s instanceof ASTBasicTerm) && 
+        (t instanceof ASTSymbolTerm || 
+         t instanceof ASTBasicTerm))
+    { if (s.literalForm().equals(t.literalForm()))
+      { return true; } 
+    } 
 
     for (int i = 0; i < correspondence.elements.size(); i++) 
     { Maplet mm = (Maplet) correspondence.elements.get(i); 
@@ -6058,6 +6074,9 @@ public class ModelSpecification
                     // Create new function ff with rule amjx; 
                     // if non-trivial. Add to tms. 
 
+                    BasicExpression srcexpr = 
+                      new BasicExpression("_" + (sindex+1)); 
+
                     if (srcJValues.get(0) instanceof ASTSymbolTerm) { } 
                     else 
                     { String fid = 
@@ -6074,6 +6093,9 @@ public class ModelSpecification
                       tms.add(tmnew);
                       System.out.println(">>-->> Found nested mapping for source term _" + (sindex+1) + "`" + fid + " |--> " + "_" + (tindex+1));
                       System.out.println(">> With maps " + locams); 
+                      srcexpr = 
+                        new BasicExpression(fid); 
+                      srcexpr.addParameter(new BasicExpression("_" + (sindex+1))); 
                     }
 
                     sfoundvars.add("_" + (sindex+1)); 
@@ -6083,7 +6105,7 @@ public class ModelSpecification
                     } 
                     else 
                     { Expression newtjexpr = 
-                         amjx.trgvalue.substituteEq("_1", new BasicExpression("_" + (sindex+1))); 
+                         amjx.trgvalue.substituteEq("_1", srcexpr); 
                       ttermpars.add(newtjexpr); 
                       foundstermpars.add("_" + (sindex+1));
                     }  

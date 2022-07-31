@@ -30246,12 +30246,28 @@ public class ASTCompositeTerm extends ASTTerm
           if (argp.expression != null)
           { pars.add(argp.expression); }  
         }
- 
+        
+        if (pars.size() == 3) 
+        { expression = 
+            BasicExpression.newStaticCallBasicExpression(
+                "newURL_PHF", "OclDatasource", pars); 
+         
+          return "OclDatasource.newURL_PHF" + args1;
+        } 
+
+        if (pars.size() == 4) 
+        { expression = 
+            BasicExpression.newStaticCallBasicExpression(
+                "newURL_PHNF", "OclDatasource", pars); 
+         
+          return "OclDatasource.newURL_PHNF" + args1;
+        }
+  
         expression = 
-          BasicExpression.newStaticCallBasicExpression(
+            BasicExpression.newStaticCallBasicExpression(
                 "newURL", "OclDatasource", pars); 
          
-        return "OclDatasource.newURL" + args1; 
+        return "OclDatasource.newURL" + args1;  
       } 
  
       if ("Boolean".equals(clsliteral))
