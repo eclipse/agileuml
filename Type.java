@@ -2478,11 +2478,17 @@ public class Type extends ModelElement
     } 
     
     res = "  enumeration " + name + " {\n";
+
+    for (int i = 0; i < stereotypes.size(); i++) 
+    { String val = (String) stereotypes.get(i); 
+      res = res + "    stereotype " + val + ";\n"; 
+    } 
     
     for (int i = 0; i < values.size(); i++) 
     { String val = (String) values.get(i); 
       res = res + "    literal " + val + ";\n"; 
     } 
+
     res = res + "  }\n";
     return res;  
   } 

@@ -97,6 +97,52 @@ public class AttributeMatching
     auxVariables = auxvars;  
   } 
 
+  public boolean isVacuous()
+  { // Only has _1 |-->_1 or _0 |-->_0
+
+    if (srcvalue != null && trgvalue != null &&
+        srcvalue instanceof BasicExpression && 
+        trgvalue instanceof BasicExpression) 
+    { String rulelhs = ((BasicExpression) srcvalue).toCSTL();
+      BasicExpression rbe = (BasicExpression) trgvalue; 
+      String rulerhs = rbe.toCSTL(); 
+      if (rulelhs.trim().equals("_1") && 
+          rulerhs.trim().equals("_1"))
+      { return true; } 
+    } 
+
+    if (srcname.trim().equals("_1") && trgname.trim().equals("_1"))
+    { return true; } 
+    if (srcname.trim().equals("_0") && trgname.trim().equals("_0"))
+    { return true; } 
+
+    if ((srcvalue + "").equals("_1") && (trgvalue + "").equals("_1"))
+    { return true; } 
+    if ((srcvalue + "").equals("_0") && (trgvalue + "").equals("_0"))
+    { return true; } 
+    
+    return false; 
+  }
+
+  public boolean isBasic()
+  { // Only variable is _1 on rhs 
+
+    if (trgvalue instanceof BasicExpression) 
+    { Vector vars = trgvalue.metavariables(); 
+      if (vars.size() == 1 && vars.contains("_1"))
+      { return true; }  
+    } 
+
+    if (trgvalue != null) 
+    { Vector tvars = CGRule.metavariables(trgvalue + ""); 
+      if (tvars.size() == 1 && tvars.contains("_1"))
+      { return true; }  
+    } 
+    
+    return false; 
+  }
+
+
   public void setElementVariable(Attribute var) 
   { elementVariable = var; } 
 

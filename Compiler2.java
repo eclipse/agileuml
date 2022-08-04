@@ -6264,15 +6264,27 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     else if ("enumeration".equals(lx))
     { int j = st + 2; 
       Vector values = new Vector(); 
+      Vector estereos = new Vector();
+ 
       while (j < en)
-      { if ("literal".equals(lexicals.get(j) + "")) 
+      { String lxr = lexicals.get(j) + ""; 
+    
+        if ("literal".equals(lxr)) 
         { values.add(lexicals.get(j+1) + ""); 
           j = j + 2; 
         }
+        else if ("stereotype".equals(lxr))
+        { String stereo = lexicals.get(j+1) + ""; 
+          estereos.add(stereo); 
+          j = j + 2; 
+        } // Only simple stereotypes. 
         else 
         { j++; } 
       }
+
       Type tt = new Type(lexicals.get(st + 1) + "", values); 
+      tt.addStereotypes(estereos); 
+
       return tt; 
     } 
     else if ("usecase".equals(lx))

@@ -740,6 +740,7 @@ public class ASTSymbolTerm extends ASTTerm
     } 
 
     if ("PreparedStatement".equals(symbol) || 
+        "CachedStatement".equals(symbol) ||
         "Statement".equals(symbol) || 
         "CallableStatement".equals(symbol))
     { modelElement = new Type("SQLStatement", null); 

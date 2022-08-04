@@ -20210,7 +20210,7 @@ public class ASTCompositeTerm extends ASTTerm
         Vector cargs = getCallArguments(callargs); 
         
         if ("Files".equals(args))
-        { return filesQueryFormKM3(called,cargs); } 
+        { return filesQueryFormKM3(called,cargs,arg,call, args,calls); } 
   
         if ("pop".equals(called) || "take".equals(called) || 
             "pollLast".equals(called) ||
@@ -20663,13 +20663,691 @@ public class ASTCompositeTerm extends ASTTerm
         call.expression instanceof BasicExpression) 
     { expression = (BasicExpression) call.expression; 
       ((BasicExpression) expression).setObjectRef(arg.expression); 
-    } 
+    } // and parameters? 
 
     return args + "." + calls;  
   }  
   
+  public String oclIteratorKM3(ASTTerm arg, ASTTerm call, 
+                               String args, 
+                               String called, Vector cargs, 
+                               String calls)
+  { // pre: arg.isOclIterator()
 
-  public String filesQueryFormKM3(String called, Vector cargs)
+    String thisliteral = this.literalForm(); 
+
+    if ("getMetaData".equals(called) && 
+         arg.isOclIterator())
+    { // metadata is the iterator itself
+
+      expression = arg.expression;
+      return args; 
+    } 
+    else if ("getBoolean".equals(called) && 
+                 arg.isOclIterator() && 
+                 cargs.size() > 0)
+    { ASTTerm.setType(thisliteral,"boolean"); 
+      ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+      String callp1 = callarg1.toKM3(); 
+          
+      if (callarg1.isInteger())
+      { Expression expr = 
+          BasicExpression.newCallBasicExpression(
+                "getCurrentFieldByIndex", arg.expression,
+                callarg1.expression); 
+        expression = 
+              new BinaryExpression("->oclAsType", 
+                                   expr,
+                                   booleanTypeExpression); 
+        return args + ".getCurrentFieldByIndex(" + 
+                                  callp1 + ")"; 
+     } 
+
+     if (arg.expression != null && 
+              callarg1.expression != null) 
+     { Expression curr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrent", arg.expression); 
+       Expression atexpression = 
+              new BinaryExpression("->at",   
+                    curr,  
+                    callarg1.expression); 
+            expression = 
+              new BinaryExpression("->oclAsType", 
+                                   atexpression,
+                                   booleanTypeExpression); 
+          } 
+
+          return args + ".getCurrent()->at(" + callp1 + ")->oclAsType(boolean)"; 
+        } // for OclIterator
+        else if ("getObject".equals(called) && 
+                 arg.isOclIterator())
+        { ASTTerm.setType(thisliteral,"OclAny"); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+          String callp1 = callarg1.toKM3(); 
+          
+          if (callarg1.isInteger())
+          { expression = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrentFieldByIndex", arg.expression,
+                callarg1.expression); 
+            return args + ".getCurrentFieldByIndex(" + 
+                                  callp1 + ")"; 
+          } 
+
+          if (arg.expression != null && 
+              callarg1.expression != null) 
+          { Expression curr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrent", arg.expression); 
+            expression = 
+              new BinaryExpression("->at",   
+                    curr,  
+                    callarg1.expression); 
+          } 
+
+          return args + ".getCurrent()->at(" + callp1 + ")"; 
+        } // for OclIterator
+        else if (("getTimestamp".equals(called) ||
+                  "getDate".equals(called)) && 
+                 arg.isOclIterator())
+        { ASTTerm.setType(thisliteral,"OclDate"); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+          String callp1 = callarg1.toKM3(); 
+
+          if (callarg1.isInteger())
+          { expression = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrentFieldByIndex", arg.expression,
+                callarg1.expression); 
+            return args + ".getCurrentFieldByIndex(" + 
+                       callp1 + ")->oclAsType(OclDate)"; 
+          } 
+          
+          if (arg.expression != null && 
+              callarg1.expression != null) 
+          { Expression curr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrent", arg.expression); 
+            expression = 
+              new BinaryExpression("->at",   
+                    curr,  
+                    callarg1.expression); 
+          } 
+
+          return args + ".getCurrent()->at(" + callp1 + ")->oclAsType(OclDate)"; 
+        } // for OclIterator
+        else if (("getInt".equals(called) || 
+                  "getByte".equals(called) || 
+                  "getShort".equals(called)) && 
+                 arg.isOclIterator())
+        { ASTTerm.setType(thisliteral,"int"); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+          String callp1 = callarg1.toKM3(); 
+       
+          if (callarg1.isInteger())
+          { Expression expr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrentFieldByIndex", arg.expression,
+                callarg1.expression); 
+            expression = 
+              new BinaryExpression("->oclAsType", 
+                                   expr,
+                                   intTypeExpression); 
+            return args + ".getCurrentFieldByIndex(" + 
+                       callp1 + ")->oclAsType(int)"; 
+          } 
+          
+          if (arg.expression != null && 
+              callarg1.expression != null) 
+          { Expression curr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrent", arg.expression); 
+            Expression atexpression = 
+              new BinaryExpression("->at", curr, 
+                                   callarg1.expression); 
+            expression = 
+              new BinaryExpression("->oclAsType", 
+                                   atexpression,
+                                   intTypeExpression); 
+          } 
+
+          return args + ".getCurrent()->at(" + callp1 + ")->oclAsType(int)"; 
+        } // for OclIterator
+        else if ("getLong".equals(called) && 
+                 arg.isOclIterator())
+        { ASTTerm.setType(thisliteral,"long"); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+          String callp1 = callarg1.toKM3(); 
+          
+          if (callarg1.isInteger())
+          { Expression expr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrentFieldByIndex", arg.expression,
+                callarg1.expression); 
+            expression = 
+              new BinaryExpression("->oclAsType", 
+                                   expr,
+                                   longTypeExpression); 
+            return args + ".getCurrentFieldByIndex(" + 
+                       callp1 + ")->oclAsType(long)"; 
+          } 
+
+          if (arg.expression != null && 
+              callarg1.expression != null) 
+          { Expression curr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrent", arg.expression); 
+            expression = 
+              new BinaryExpression("->at", curr, 
+                                   callarg1.expression); 
+          } 
+
+          return args + ".getCurrent()->at(" + callp1 + ")->oclAsType(long)"; 
+        } // for OclIterator
+        else if (("getBigDecimal".equals(called) || 
+                  "getDouble".equals(called) || 
+                  "getFloat".equals(called)) && 
+                 arg.isOclIterator())
+        { ASTTerm.setType(thisliteral,"double"); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+          String callp1 = callarg1.toKM3(); 
+          
+          if (callarg1.isInteger())
+          { Expression expr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrentFieldByIndex", arg.expression,
+                callarg1.expression); 
+            expression = 
+              new BinaryExpression("->oclAsType", 
+                                   expr,
+                                   doubleTypeExpression); 
+            return args + ".getCurrentFieldByIndex(" + 
+                       callp1 + ")->oclAsType(double)"; 
+          } 
+
+          if (arg.expression != null && 
+              callarg1.expression != null) 
+          { Expression curr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrent", arg.expression); 
+            Expression atexpression = 
+              new BinaryExpression("->at", curr, 
+                                   callarg1.expression); 
+            expression = 
+              new BinaryExpression("->oclAsType", 
+                                   atexpression,
+                                   doubleTypeExpression); 
+          } 
+
+          return args + ".getCurrent()->at(" + callp1 + ")->oclAsType(double)"; 
+        } // for OclIterator
+        else if ("getArray".equals(called) && 
+                 arg.isOclIterator())
+        { ASTTerm.setType(thisliteral,"Sequence"); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+          String callp1 = callarg1.toKM3(); 
+          
+          if (callarg1.isInteger())
+          { Expression expr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrentFieldByIndex", arg.expression,
+                callarg1.expression); 
+            expression = 
+              new BinaryExpression("->oclAsType", 
+                                   expr,
+                                   sequenceTypeExpression); 
+            return args + ".getCurrentFieldByIndex(" + 
+                       callp1 + ")->oclAsType(Sequence)"; 
+          } 
+
+          if (arg.expression != null && 
+              callarg1.expression != null) 
+          { Expression curr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrent", arg.expression); 
+            Expression atexpression = 
+              new BinaryExpression("->at", curr, 
+                                   callarg1.expression); 
+            expression = 
+              new BinaryExpression("->oclAsType", 
+                                   atexpression,
+                                   sequenceTypeExpression); 
+          } 
+
+          return args + ".getCurrent()->at(" + callp1 + ")->oclAsType(Sequence)"; 
+        } // for OclIterator
+        else if ("getBytes".equals(called) && 
+                 arg.isOclIterator())
+        { ASTTerm.setType(thisliteral,"Sequence(int)"); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+          String callp1 = callarg1.toKM3(); 
+          
+          if (callarg1.isInteger())
+          { Expression expr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrentFieldByIndex", arg.expression,
+                callarg1.expression); 
+            expression = 
+              new BinaryExpression("->oclAsType", 
+                                   expr,
+                                   sequenceTypeExpression); 
+            return args + ".getCurrentFieldByIndex(" + 
+                       callp1 + ")->oclAsType(Sequence)"; 
+          } 
+
+          if (arg.expression != null && 
+              callarg1.expression != null) 
+          { Expression curr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrent", arg.expression); 
+            Expression atexpression = 
+              new BinaryExpression("->at", curr, 
+                                   callarg1.expression); 
+            expression = 
+              new BinaryExpression("->oclAsType", 
+                                   atexpression,
+                                   sequenceTypeExpression); 
+          } 
+
+          return args + ".getCurrent()->at(" + callp1 + ")->oclAsType(Sequence)"; 
+        } // for OclIterator
+        else if (("getString".equals(called) || 
+                  "getNString".equals(called) || 
+                  "getURL".equals(called)) && 
+                 arg.isOclIterator())
+        { ASTTerm.setType(thisliteral,"String"); 
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+          String callp1 = callarg1.toKM3(); 
+          
+          if (callarg1.isInteger())
+          { Expression expr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrentFieldByIndex", arg.expression,
+                callarg1.expression); 
+            expression = 
+              new BinaryExpression("->oclAsType", 
+                                   expr,
+                                   stringTypeExpression); 
+            return args + ".getCurrentFieldByIndex(" + 
+                       callp1 + ")->oclAsType(String)"; 
+          } 
+
+          if (arg.expression != null && 
+              callarg1.expression != null) 
+          { Expression curr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrent", arg.expression); 
+            Expression atexpression = 
+              new BinaryExpression("->at", curr, 
+                                   callarg1.expression);
+            expression = 
+              new BinaryExpression("->oclAsType", 
+                                   atexpression,
+                                   stringTypeExpression);  
+          } 
+
+          return args + ".getCurrent()->at(" + callp1 + ")->oclAsType(String)"; 
+        } // for OclIterator
+        else if ("absolute".equals(called) && 
+                 arg.isOclIterator())
+        { // same as setPosition(callarg1)
+
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+          String callp1 = callarg1.toKM3(); 
+          
+          if (arg.expression != null && 
+              callarg1.expression != null) 
+          { Expression curr = 
+              BasicExpression.newCallBasicExpression(
+                "setPosition", arg.expression, 
+                callarg1.expression);
+            statement = 
+              InvocationStatement.newInvocationStatement(curr,
+                                          callarg1.expression);  
+          } 
+          return args + ".setPosition(" + callp1 + ")"; 
+        } 
+        else if ("relative".equals(called) && 
+                 arg.isOclIterator())
+        { // same as movePosition(callarg1)
+
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+          String callp1 = callarg1.toKM3(); 
+          
+          if (arg.expression != null && 
+              callarg1.expression != null) 
+          { Expression curr = 
+              BasicExpression.newCallBasicExpression(
+                "movePosition", arg.expression, 
+                callarg1.expression);
+            statement = 
+              InvocationStatement.newInvocationStatement(curr,
+                                          callarg1.expression);  
+          } 
+          return args + ".movePosition(" + callp1 + ")"; 
+        } 
+        else if (("updateString".equals(called) || 
+                  "updateInt".equals(called) ||
+                  "updateBigDecimal".equals(called) ||
+                  "updateDouble".equals(called) ||
+                  "updateLong".equals(called) || 
+                  "updateArray".equals(called) || 
+                  "updateBoolean".equals(called) || 
+                  "updateByte".equals(called) || 
+                  "updateBytes".equals(called) || 
+                  "updateDate".equals(called) || 
+                  "updateFloat".equals(called) || 
+                  "updateNString".equals(called) || 
+                  "updateObject".equals(called) || 
+                  "updateTime".equals(called) ||
+                  "updateTimestamp".equals(called) ||  
+                  "updateShort".equals(called) ||
+                  "setString".equals(called) || 
+                  "setInt".equals(called) ||
+                  "setBigDecimal".equals(called) ||
+                  "setDouble".equals(called) ||
+                  "setLong".equals(called) || 
+                  "setArray".equals(called) || 
+                  "setBoolean".equals(called) || 
+                  "setByte".equals(called) || 
+                  "setBytes".equals(called) || 
+                  "setDate".equals(called) || 
+                  "setFloat".equals(called) || 
+                  "setNString".equals(called) || 
+                  "setObject".equals(called) || 
+                  "setTime".equals(called) ||
+                  "setTimestamp".equals(called) ||  
+                  "setShort".equals(called)) && 
+                 arg.isOclIterator() && 
+                 cargs.size() >= 2)
+        { // same as .getCurrent()[arg1] := arg2
+
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+          String callp1 = callarg1.toKM3(); 
+          ASTTerm callarg2 = (ASTTerm) cargs.get(1);
+          String callp2 = callarg2.toKM3(); 
+
+          if (callarg1.isInteger())
+          { Vector setpars = new Vector(); 
+            setpars.add(callarg1.expression); 
+            setpars.add(callarg2.expression); 
+    
+            expression = 
+              BasicExpression.newCallBasicExpression(
+                "setCurrentFieldByIndex", arg.expression,
+                setpars); 
+            statement = 
+              InvocationStatement.newInvocationStatement(
+                      expression,setpars);  
+            return args + ".setCurrentFieldByIndex(" + 
+                                  callp1 + "," + callp2 + ")"; 
+          } 
+          
+          if (arg.expression != null && 
+              callarg1.expression != null && 
+              callarg2.expression != null) 
+          { Expression curr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrent", arg.expression);
+            Expression upd = 
+              BasicExpression.newIndexedBasicExpression(
+                curr, callarg1.expression); 
+            statement = 
+              new AssignStatement(upd,callarg2.expression);  
+          } 
+          return args + ".getCurrent()[" + callp1 + "] := " + callp2 + ";\n"; 
+        } 
+        else if (("updateNull".equals(called) ||
+                  "setNull".equals(called)) && 
+                 arg.isOclIterator())
+        { // same as .getCurrent()[arg1] := null
+
+          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+          String callp1 = callarg1.toKM3();
+ 
+          if (callarg1.isInteger())
+          { Vector setpars = new Vector(); 
+            setpars.add(callarg1.expression); 
+            setpars.add(nullExpression); 
+    
+            expression = 
+              BasicExpression.newCallBasicExpression(
+                "setCurrentFieldByIndex", arg.expression,
+                setpars); 
+            statement = 
+              InvocationStatement.newInvocationStatement(
+                      expression,setpars);  
+            return args + ".setCurrentFieldByIndex(" + 
+                                  callp1 + ",null)"; 
+          } 
+
+          if (arg.expression != null && 
+              callarg1.expression != null) 
+          { Expression curr = 
+              BasicExpression.newCallBasicExpression(
+                "getCurrent", arg.expression);
+            Expression upd = 
+              BasicExpression.newIndexedBasicExpression(
+                curr, callarg1.expression); 
+            statement = 
+              new AssignStatement(upd,nullExpression);  
+          } 
+          return args + ".getCurrent()[" + callp1 + "] := null;\n"; 
+        } 
+        else if ("deleteRow".equals(called) && 
+                 arg.isOclIterator())
+        { // same as arg.delete()
+          if (arg.expression != null)
+          { expression = 
+              BasicExpression.newCallBasicExpression(
+                 "delete", arg.expression); 
+            statement = 
+              InvocationStatement.newInvocationStatement(
+                expression); 
+          } 
+          return args + ".delete()"; 
+        }  
+        else if ("afterLast".equals(called) && 
+                 arg.isOclIterator())
+        { // same as arg.moveToEnd()
+
+          if (arg.expression != null)
+          { expression = 
+              BasicExpression.newCallBasicExpression(
+                 "moveToEnd", arg.expression); 
+            statement = 
+              InvocationStatement.newInvocationStatement(
+                expression); 
+          } 
+          return args + ".moveToEnd()"; 
+        }  
+        else if ("moveToInsertRow".equals(called) && 
+                 arg.isOclIterator())
+        { // same as arg.moveToEnd()
+
+          // But moveToInsertRow also memorises the 
+          // current position & creates an empty map 
+          // at the end position. 
+
+          SequenceStatement statss = new SequenceStatement(); 
+
+          if (arg.expression != null)
+          { Expression expr1 = 
+              BasicExpression.newCallBasicExpression(
+                          "markPosition", arg.expression); 
+            Statement stat1 = 
+              InvocationStatement.newInvocationStatement(
+                                                   expr1);
+            Expression expr2 = 
+              BasicExpression.newCallBasicExpression(
+                          "moveToEnd", arg.expression); 
+            Statement stat2 = 
+              InvocationStatement.newInvocationStatement(
+                                                   expr2); 
+
+            Expression emptyMap = new SetExpression(false); 
+            emptyMap.setType(new Type("Map", null)); 
+
+            Expression expr3 = 
+              BasicExpression.newCallBasicExpression(
+                          "insert", arg.expression, emptyMap); 
+            Statement stat3 = 
+              InvocationStatement.newInvocationStatement(
+                                              expr3,emptyMap); 
+            statss.addStatement(stat1); 
+            statss.addStatement(stat2); 
+            statss.addStatement(stat3); 
+          } 
+          statement = statss; 
+
+          return args + ".markPosition() ; " + args + ".moveToEnd() ; " + args + ".insert(Map{}) "; 
+        }  
+        else if ("moveToCurrentRow".equals(called) && 
+                 arg.isOclIterator())
+        { // same as arg.moveToMarkedPosition()
+
+          if (arg.expression != null)
+          { expression = 
+              BasicExpression.newCallBasicExpression(
+                 "moveToMarkedPosition", arg.expression); 
+            statement = 
+              InvocationStatement.newInvocationStatement(
+                expression); 
+          } 
+          return args + ".moveToMarkedPosition()"; 
+        }  
+        else if ("beforeFirst".equals(called) && 
+                 arg.isOclIterator())
+        { // same as arg.moveToStart()
+          if (arg.expression != null)
+          { expression = 
+              BasicExpression.newCallBasicExpression(
+                 "moveToStart", arg.expression); 
+            statement = 
+              InvocationStatement.newInvocationStatement(
+                expression); 
+          } 
+          return args + ".moveToStart()"; 
+        }  
+        else if ("last".equals(called) && 
+                 arg.isOclIterator())
+        { // same as arg.moveToLast()
+          if (arg.expression != null)
+          { expression = 
+              BasicExpression.newCallBasicExpression(
+                 "moveToLast", arg.expression); 
+            statement = 
+              InvocationStatement.newInvocationStatement(
+                expression); 
+          } 
+          return args + ".moveToLast()"; 
+        }  
+        else if ("first".equals(called) && 
+                 arg.isOclIterator())
+        { // same as arg.moveToFirst()
+          if (arg.expression != null)
+          { expression = 
+              BasicExpression.newCallBasicExpression(
+                 "moveToFirst", arg.expression); 
+            statement = 
+              InvocationStatement.newInvocationStatement(
+                expression); 
+          } 
+          return args + ".moveToFirst()"; 
+        }  
+        else if ("getRow".equals(called) && 
+                 arg.isOclIterator())
+        { // same as arg.getPosition()
+          ASTTerm.setType(this,"int"); 
+
+          if (arg.expression != null)
+          { expression = 
+              BasicExpression.newCallBasicExpression(
+                 "getPosition", arg.expression); 
+          } 
+          return args + ".getPosition()"; 
+        }  
+        else if ("isFirst".equals(called) && 
+                 arg.isOclIterator())
+        { // same as 1 = arg.getPosition()
+          ASTTerm.setType(this,"boolean"); 
+
+          if (arg.expression != null)
+          { Expression posexpr = 
+              BasicExpression.newCallBasicExpression(
+                 "getPosition", arg.expression);
+            expression = 
+              new BinaryExpression("=", unitExpression,
+                                   posexpr); 
+            expression.setBrackets(true);  
+          } 
+          return "(1 = " + args + ".getPosition())"; 
+        }  
+        else if ("isLast".equals(called) && 
+                 arg.isOclIterator())
+        { // same as arg.length() = arg.getPosition()
+          ASTTerm.setType(this,"boolean"); 
+
+          if (arg.expression != null)
+          { Expression posexpr = 
+              BasicExpression.newCallBasicExpression(
+                 "getPosition", arg.expression);
+            Expression lenexpr = 
+              BasicExpression.newCallBasicExpression(
+                 "length", arg.expression);
+            expression = 
+              new BinaryExpression("=", lenexpr,
+                                   posexpr); 
+            expression.setBrackets(true);  
+          } 
+
+          return "(" + args + ".length() = " + args + ".getPosition())"; 
+        }  
+
+    if (arg.expression != null && call.expression != null &&
+        call.expression instanceof BasicExpression) 
+    { expression = (BasicExpression) call.expression; 
+      ((BasicExpression) expression).setObjectRef(arg.expression); 
+
+      // Vector pars = new Vector(); 
+      // for (int i = 0; i < cargs.size(); i++) 
+      
+    } 
+
+        System.out.println(">>> internal method call: " + arg + "." + called + cargs); 
+
+        Vector xpars = new Vector(); 
+        for (int i = 0; i < cargs.size(); i++) 
+        { ASTTerm cargi = (ASTTerm) cargs.get(i); 
+          if (cargi.expression != null) 
+          { xpars.add(cargi.expression); } 
+        } 
+          
+        String cname = ASTTerm.getType(args); 
+        if (cname != null) 
+        { Entity cent = 
+            (Entity) ModelElement.lookupByName(cname,ASTTerm.entities); 
+          if (cent != null) 
+          { cent.refineOperation(called,xpars); } 
+        } 
+
+        if (arg.expression != null) 
+        { expression = BasicExpression.newCallBasicExpression(
+                called, arg.expression, xpars); 
+          ((BasicExpression) expression).setIsEvent();  
+          statement = 
+            InvocationStatement.newInvocationStatement(
+                expression, xpars);  
+              
+          System.out.println(">>> internal method call: " + arg.expression + "." + called + xpars); 
+          return args + "." + calls; 
+        } 
+
+    return args + "." + calls;  
+  }  
+
+  public String filesQueryFormKM3(String called, Vector cargs, ASTTerm arg, ASTTerm call, String args, String calls)
   { // The return values
 
     if ("copy".equals(called) && 
@@ -21258,6 +21936,34 @@ public class ASTCompositeTerm extends ASTTerm
       return "OclFile.newOclFile(" + callp1 + ").length()"; 
     }
 
+        System.out.println(">>> internal method call: " + arg + "." + called + cargs); 
+
+        Vector xpars = new Vector(); 
+        for (int i = 0; i < cargs.size(); i++) 
+        { ASTTerm cargi = (ASTTerm) cargs.get(i); 
+          if (cargi.expression != null) 
+          { xpars.add(cargi.expression); } 
+        } 
+          
+        String cname = ASTTerm.getType(args); 
+        if (cname != null) 
+        { Entity cent = 
+            (Entity) ModelElement.lookupByName(cname,ASTTerm.entities); 
+          if (cent != null) 
+          { cent.refineOperation(called,xpars); } 
+        } 
+
+        if (arg.expression != null) 
+        { expression = BasicExpression.newCallBasicExpression(
+                called, arg.expression, xpars); 
+          ((BasicExpression) expression).setIsEvent();  
+          statement = 
+            InvocationStatement.newInvocationStatement(
+                expression, xpars);  
+              
+          System.out.println(">>> internal method call: " + arg.expression + "." + called + xpars); 
+          return args + "." + calls; 
+        } 
 
     return ""; 
   }  
@@ -26362,571 +27068,11 @@ public class ASTCompositeTerm extends ASTTerm
 
           return args + "->at(" + callp1 + "+1)->oclIsUndefined()"; 
         } // for JsonArray
-        else if ("getMetaData".equals(called) && 
-                 arg.isOclIterator())
-        { // metadata is the iterator itself
-
-          expression = arg.expression;
-          return args; 
+        else if (arg.isOclIterator())
+        { return oclIteratorKM3(arg, call, args, 
+                                called, cargs, 
+                                calls); 
         } 
-        else if ("getBoolean".equals(called) && 
-                 arg.isOclIterator())
-        { ASTTerm.setType(thisliteral,"boolean"); 
-          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
-          String callp1 = callarg1.toKM3(); 
-          
-          if (arg.expression != null && 
-              callarg1.expression != null) 
-          { Expression curr = 
-              BasicExpression.newCallBasicExpression(
-                "getCurrent", arg.expression); 
-            Expression atexpression = 
-              new BinaryExpression("->at",   
-                    curr,  
-                    callarg1.expression); 
-            expression = 
-              new BinaryExpression("->oclAsType", 
-                                   atexpression,
-                                   booleanTypeExpression); 
-          } 
-
-          return args + ".getCurrent()->at(" + callp1 + ")->oclAsType(boolean)"; 
-        } // for OclIterator
-        else if ("getObject".equals(called) && 
-                 arg.isOclIterator())
-        { ASTTerm.setType(thisliteral,"OclAny"); 
-          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
-          String callp1 = callarg1.toKM3(); 
-          
-          if (callarg1.isInteger())
-          { expression = 
-              BasicExpression.newCallBasicExpression(
-                "getCurrentFieldByIndex", arg.expression,
-                callarg1.expression); 
-            return args + ".getCurrentFieldByIndex(" + 
-                                  callp1 + ")"; 
-          } 
-
-          if (arg.expression != null && 
-              callarg1.expression != null) 
-          { Expression curr = 
-              BasicExpression.newCallBasicExpression(
-                "getCurrent", arg.expression); 
-            expression = 
-              new BinaryExpression("->at",   
-                    curr,  
-                    callarg1.expression); 
-          } 
-
-          return args + ".getCurrent()->at(" + callp1 + ")"; 
-        } // for OclIterator
-        else if (("getTimestamp".equals(called) ||
-                  "getDate".equals(called)) && 
-                 arg.isOclIterator())
-        { ASTTerm.setType(thisliteral,"OclDate"); 
-          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
-          String callp1 = callarg1.toKM3(); 
-
-          if (callarg1.isInteger())
-          { expression = 
-              BasicExpression.newCallBasicExpression(
-                "getCurrentFieldByIndex", arg.expression,
-                callarg1.expression); 
-            return args + ".getCurrentFieldByIndex(" + 
-                       callp1 + ")->oclAsType(OclDate)"; 
-          } 
-          
-          if (arg.expression != null && 
-              callarg1.expression != null) 
-          { Expression curr = 
-              BasicExpression.newCallBasicExpression(
-                "getCurrent", arg.expression); 
-            expression = 
-              new BinaryExpression("->at",   
-                    curr,  
-                    callarg1.expression); 
-          } 
-
-          return args + ".getCurrent()->at(" + callp1 + ")->oclAsType(OclDate)"; 
-        } // for OclIterator
-        else if (("getInt".equals(called) || 
-                  "getByte".equals(called) || 
-                  "getShort".equals(called)) && 
-                 arg.isOclIterator())
-        { ASTTerm.setType(thisliteral,"int"); 
-          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
-          String callp1 = callarg1.toKM3(); 
-       
-          if (callarg1.isInteger())
-          { Expression expr = 
-              BasicExpression.newCallBasicExpression(
-                "getCurrentFieldByIndex", arg.expression,
-                callarg1.expression); 
-            expression = 
-              new BinaryExpression("->oclAsType", 
-                                   expr,
-                                   intTypeExpression); 
-            return args + ".getCurrentFieldByIndex(" + 
-                       callp1 + ")->oclAsType(int)"; 
-          } 
-          
-          if (arg.expression != null && 
-              callarg1.expression != null) 
-          { Expression curr = 
-              BasicExpression.newCallBasicExpression(
-                "getCurrent", arg.expression); 
-            Expression atexpression = 
-              new BinaryExpression("->at", curr, 
-                                   callarg1.expression); 
-            expression = 
-              new BinaryExpression("->oclAsType", 
-                                   atexpression,
-                                   intTypeExpression); 
-          } 
-
-          return args + ".getCurrent()->at(" + callp1 + ")->oclAsType(int)"; 
-        } // for OclIterator
-        else if ("getLong".equals(called) && 
-                 arg.isOclIterator())
-        { ASTTerm.setType(thisliteral,"long"); 
-          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
-          String callp1 = callarg1.toKM3(); 
-          
-          if (callarg1.isInteger())
-          { Expression expr = 
-              BasicExpression.newCallBasicExpression(
-                "getCurrentFieldByIndex", arg.expression,
-                callarg1.expression); 
-            expression = 
-              new BinaryExpression("->oclAsType", 
-                                   expr,
-                                   longTypeExpression); 
-            return args + ".getCurrentFieldByIndex(" + 
-                       callp1 + ")->oclAsType(long)"; 
-          } 
-
-          if (arg.expression != null && 
-              callarg1.expression != null) 
-          { Expression curr = 
-              BasicExpression.newCallBasicExpression(
-                "getCurrent", arg.expression); 
-            expression = 
-              new BinaryExpression("->at", curr, 
-                                   callarg1.expression); 
-          } 
-
-          return args + ".getCurrent()->at(" + callp1 + ")->oclAsType(long)"; 
-        } // for OclIterator
-        else if (("getBigDecimal".equals(called) || 
-                  "getDouble".equals(called) || 
-                  "getFloat".equals(called)) && 
-                 arg.isOclIterator())
-        { ASTTerm.setType(thisliteral,"double"); 
-          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
-          String callp1 = callarg1.toKM3(); 
-          
-          if (callarg1.isInteger())
-          { Expression expr = 
-              BasicExpression.newCallBasicExpression(
-                "getCurrentFieldByIndex", arg.expression,
-                callarg1.expression); 
-            expression = 
-              new BinaryExpression("->oclAsType", 
-                                   expr,
-                                   doubleTypeExpression); 
-            return args + ".getCurrentFieldByIndex(" + 
-                       callp1 + ")->oclAsType(double)"; 
-          } 
-
-          if (arg.expression != null && 
-              callarg1.expression != null) 
-          { Expression curr = 
-              BasicExpression.newCallBasicExpression(
-                "getCurrent", arg.expression); 
-            Expression atexpression = 
-              new BinaryExpression("->at", curr, 
-                                   callarg1.expression); 
-            expression = 
-              new BinaryExpression("->oclAsType", 
-                                   atexpression,
-                                   doubleTypeExpression); 
-          } 
-
-          return args + ".getCurrent()->at(" + callp1 + ")->oclAsType(double)"; 
-        } // for OclIterator
-        else if ("getArray".equals(called) && 
-                 arg.isOclIterator())
-        { ASTTerm.setType(thisliteral,"Sequence"); 
-          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
-          String callp1 = callarg1.toKM3(); 
-          
-          if (callarg1.isInteger())
-          { Expression expr = 
-              BasicExpression.newCallBasicExpression(
-                "getCurrentFieldByIndex", arg.expression,
-                callarg1.expression); 
-            expression = 
-              new BinaryExpression("->oclAsType", 
-                                   expr,
-                                   sequenceTypeExpression); 
-            return args + ".getCurrentFieldByIndex(" + 
-                       callp1 + ")->oclAsType(Sequence)"; 
-          } 
-
-          if (arg.expression != null && 
-              callarg1.expression != null) 
-          { Expression curr = 
-              BasicExpression.newCallBasicExpression(
-                "getCurrent", arg.expression); 
-            Expression atexpression = 
-              new BinaryExpression("->at", curr, 
-                                   callarg1.expression); 
-            expression = 
-              new BinaryExpression("->oclAsType", 
-                                   atexpression,
-                                   sequenceTypeExpression); 
-          } 
-
-          return args + ".getCurrent()->at(" + callp1 + ")->oclAsType(Sequence)"; 
-        } // for OclIterator
-        else if ("getBytes".equals(called) && 
-                 arg.isOclIterator())
-        { ASTTerm.setType(thisliteral,"Sequence(int)"); 
-          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
-          String callp1 = callarg1.toKM3(); 
-          
-          if (callarg1.isInteger())
-          { Expression expr = 
-              BasicExpression.newCallBasicExpression(
-                "getCurrentFieldByIndex", arg.expression,
-                callarg1.expression); 
-            expression = 
-              new BinaryExpression("->oclAsType", 
-                                   expr,
-                                   sequenceTypeExpression); 
-            return args + ".getCurrentFieldByIndex(" + 
-                       callp1 + ")->oclAsType(Sequence)"; 
-          } 
-
-          if (arg.expression != null && 
-              callarg1.expression != null) 
-          { Expression curr = 
-              BasicExpression.newCallBasicExpression(
-                "getCurrent", arg.expression); 
-            Expression atexpression = 
-              new BinaryExpression("->at", curr, 
-                                   callarg1.expression); 
-            expression = 
-              new BinaryExpression("->oclAsType", 
-                                   atexpression,
-                                   sequenceTypeExpression); 
-          } 
-
-          return args + ".getCurrent()->at(" + callp1 + ")->oclAsType(Sequence)"; 
-        } // for OclIterator
-        else if (("getString".equals(called) || 
-                  "getNString".equals(called) || 
-                  "getURL".equals(called)) && 
-                 arg.isOclIterator())
-        { ASTTerm.setType(thisliteral,"String"); 
-          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
-          String callp1 = callarg1.toKM3(); 
-          
-          if (callarg1.isInteger())
-          { Expression expr = 
-              BasicExpression.newCallBasicExpression(
-                "getCurrentFieldByIndex", arg.expression,
-                callarg1.expression); 
-            expression = 
-              new BinaryExpression("->oclAsType", 
-                                   expr,
-                                   stringTypeExpression); 
-            return args + ".getCurrentFieldByIndex(" + 
-                       callp1 + ")->oclAsType(String)"; 
-          } 
-
-          if (arg.expression != null && 
-              callarg1.expression != null) 
-          { Expression curr = 
-              BasicExpression.newCallBasicExpression(
-                "getCurrent", arg.expression); 
-            Expression atexpression = 
-              new BinaryExpression("->at", curr, 
-                                   callarg1.expression);
-            expression = 
-              new BinaryExpression("->oclAsType", 
-                                   atexpression,
-                                   stringTypeExpression);  
-          } 
-
-          return args + ".getCurrent()->at(" + callp1 + ")->oclAsType(String)"; 
-        } // for OclIterator
-        else if ("absolute".equals(called) && 
-                 arg.isOclIterator())
-        { // same as setPosition(callarg1)
-
-          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
-          String callp1 = callarg1.toKM3(); 
-          
-          if (arg.expression != null && 
-              callarg1.expression != null) 
-          { Expression curr = 
-              BasicExpression.newCallBasicExpression(
-                "setPosition", arg.expression, 
-                callarg1.expression);
-            statement = 
-              InvocationStatement.newInvocationStatement(curr,
-                                          callarg1.expression);  
-          } 
-          return args + ".setPosition(" + callp1 + ")"; 
-        } 
-        else if ("relative".equals(called) && 
-                 arg.isOclIterator())
-        { // same as movePosition(callarg1)
-
-          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
-          String callp1 = callarg1.toKM3(); 
-          
-          if (arg.expression != null && 
-              callarg1.expression != null) 
-          { Expression curr = 
-              BasicExpression.newCallBasicExpression(
-                "movePosition", arg.expression, 
-                callarg1.expression);
-            statement = 
-              InvocationStatement.newInvocationStatement(curr,
-                                          callarg1.expression);  
-          } 
-          return args + ".movePosition(" + callp1 + ")"; 
-        } 
-        else if (("updateString".equals(called) || 
-                  "updateInt".equals(called) ||
-                  "updateBigDecimal".equals(called) ||
-                  "updateDouble".equals(called) ||
-                  "updateLong".equals(called) || 
-                  "updateArray".equals(called) || 
-                  "updateBoolean".equals(called) || 
-                  "updateByte".equals(called) || 
-                  "updateBytes".equals(called) || 
-                  "updateDate".equals(called) || 
-                  "updateFloat".equals(called) || 
-                  "updateNString".equals(called) || 
-                  "updateObject".equals(called) || 
-                  "updateTime".equals(called) ||
-                  "updateTimestamp".equals(called) ||  
-                  "updateShort".equals(called)) && 
-                 arg.isOclIterator() && 
-                 cargs.size() >= 2)
-        { // same as .getCurrent()[arg1] := arg2
-
-          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
-          String callp1 = callarg1.toKM3(); 
-          ASTTerm callarg2 = (ASTTerm) cargs.get(1);
-          String callp2 = callarg2.toKM3(); 
-          
-          if (arg.expression != null && 
-              callarg1.expression != null && 
-              callarg2.expression != null) 
-          { Expression curr = 
-              BasicExpression.newCallBasicExpression(
-                "getCurrent", arg.expression);
-            Expression upd = 
-              BasicExpression.newIndexedBasicExpression(
-                curr, callarg1.expression); 
-            statement = 
-              new AssignStatement(upd,callarg2.expression);  
-          } 
-          return args + ".getCurrent()[" + callp1 + "] := " + callp2 + ";\n"; 
-        } 
-        else if ("updateNull".equals(called) && 
-                 arg.isOclIterator())
-        { // same as .getCurrent()[arg1] := null
-
-          ASTTerm callarg1 = (ASTTerm) cargs.get(0);
-          String callp1 = callarg1.toKM3();
- 
-          if (arg.expression != null && 
-              callarg1.expression != null) 
-          { Expression curr = 
-              BasicExpression.newCallBasicExpression(
-                "getCurrent", arg.expression);
-            Expression upd = 
-              BasicExpression.newIndexedBasicExpression(
-                curr, callarg1.expression); 
-            statement = 
-              new AssignStatement(upd,nullExpression);  
-          } 
-          return args + ".getCurrent()[" + callp1 + "] := null;\n"; 
-        } 
-        else if ("deleteRow".equals(called) && 
-                 arg.isOclIterator())
-        { // same as arg.delete()
-          if (arg.expression != null)
-          { expression = 
-              BasicExpression.newCallBasicExpression(
-                 "delete", arg.expression); 
-            statement = 
-              InvocationStatement.newInvocationStatement(
-                expression); 
-          } 
-          return args + ".delete()"; 
-        }  
-        else if ("afterLast".equals(called) && 
-                 arg.isOclIterator())
-        { // same as arg.moveToEnd()
-
-          if (arg.expression != null)
-          { expression = 
-              BasicExpression.newCallBasicExpression(
-                 "moveToEnd", arg.expression); 
-            statement = 
-              InvocationStatement.newInvocationStatement(
-                expression); 
-          } 
-          return args + ".moveToEnd()"; 
-        }  
-        else if ("moveToInsertRow".equals(called) && 
-                 arg.isOclIterator())
-        { // same as arg.moveToEnd()
-
-          // But moveToInsertRow also memorises the 
-          // current position & creates an empty map 
-          // at the end position. 
-
-          SequenceStatement statss = new SequenceStatement(); 
-
-          if (arg.expression != null)
-          { Expression expr1 = 
-              BasicExpression.newCallBasicExpression(
-                          "markPosition", arg.expression); 
-            Statement stat1 = 
-              InvocationStatement.newInvocationStatement(
-                                                   expr1);
-            Expression expr2 = 
-              BasicExpression.newCallBasicExpression(
-                          "moveToEnd", arg.expression); 
-            Statement stat2 = 
-              InvocationStatement.newInvocationStatement(
-                                                   expr2); 
-
-            Expression emptyMap = new SetExpression(false); 
-            emptyMap.setType(new Type("Map", null)); 
-
-            Expression expr3 = 
-              BasicExpression.newCallBasicExpression(
-                          "insert", arg.expression, emptyMap); 
-            Statement stat3 = 
-              InvocationStatement.newInvocationStatement(
-                                              expr3,emptyMap); 
-            statss.addStatement(stat1); 
-            statss.addStatement(stat2); 
-            statss.addStatement(stat3); 
-          } 
-          statement = statss; 
-
-          return args + ".markPosition() ; " + args + ".moveToEnd() ; " + args + ".insert(Map{}) "; 
-        }  
-        else if ("moveToCurrentRow".equals(called) && 
-                 arg.isOclIterator())
-        { // same as arg.moveToMarkedPosition()
-
-          if (arg.expression != null)
-          { expression = 
-              BasicExpression.newCallBasicExpression(
-                 "moveToMarkedPosition", arg.expression); 
-            statement = 
-              InvocationStatement.newInvocationStatement(
-                expression); 
-          } 
-          return args + ".moveToMarkedPosition()"; 
-        }  
-        else if ("beforeFirst".equals(called) && 
-                 arg.isOclIterator())
-        { // same as arg.moveToStart()
-          if (arg.expression != null)
-          { expression = 
-              BasicExpression.newCallBasicExpression(
-                 "moveToStart", arg.expression); 
-            statement = 
-              InvocationStatement.newInvocationStatement(
-                expression); 
-          } 
-          return args + ".moveToStart()"; 
-        }  
-        else if ("last".equals(called) && 
-                 arg.isOclIterator())
-        { // same as arg.moveToLast()
-          if (arg.expression != null)
-          { expression = 
-              BasicExpression.newCallBasicExpression(
-                 "moveToLast", arg.expression); 
-            statement = 
-              InvocationStatement.newInvocationStatement(
-                expression); 
-          } 
-          return args + ".moveToLast()"; 
-        }  
-        else if ("first".equals(called) && 
-                 arg.isOclIterator())
-        { // same as arg.moveToFirst()
-          if (arg.expression != null)
-          { expression = 
-              BasicExpression.newCallBasicExpression(
-                 "moveToFirst", arg.expression); 
-            statement = 
-              InvocationStatement.newInvocationStatement(
-                expression); 
-          } 
-          return args + ".moveToFirst()"; 
-        }  
-        else if ("getRow".equals(called) && 
-                 arg.isOclIterator())
-        { // same as arg.getPosition()
-          ASTTerm.setType(this,"int"); 
-
-          if (arg.expression != null)
-          { expression = 
-              BasicExpression.newCallBasicExpression(
-                 "getPosition", arg.expression); 
-          } 
-          return args + ".getPosition()"; 
-        }  
-        else if ("isFirst".equals(called) && 
-                 arg.isOclIterator())
-        { // same as 1 = arg.getPosition()
-          ASTTerm.setType(this,"boolean"); 
-
-          if (arg.expression != null)
-          { Expression posexpr = 
-              BasicExpression.newCallBasicExpression(
-                 "getPosition", arg.expression);
-            expression = 
-              new BinaryExpression("=", unitExpression,
-                                   posexpr); 
-            expression.setBrackets(true);  
-          } 
-          return "(1 = " + args + ".getPosition())"; 
-        }  
-        else if ("isLast".equals(called) && 
-                 arg.isOclIterator())
-        { // same as arg.length() = arg.getPosition()
-          ASTTerm.setType(this,"boolean"); 
-
-          if (arg.expression != null)
-          { Expression posexpr = 
-              BasicExpression.newCallBasicExpression(
-                 "getPosition", arg.expression);
-            Expression lenexpr = 
-              BasicExpression.newCallBasicExpression(
-                 "length", arg.expression);
-            expression = 
-              new BinaryExpression("=", lenexpr,
-                                   posexpr); 
-            expression.setBrackets(true);  
-          } 
-
-          return "(" + args + ".length() = " + args + ".getPosition())"; 
-        }  
         else if ("query".equals(called) && 
                  arg.isOclDatasource()) 
         { ASTTerm.setType(this,"OclIterator"); 

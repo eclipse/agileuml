@@ -6071,6 +6071,8 @@ public class ModelSpecification
                            tms, locams); 
                   if (amjx != null) 
                   { System.out.println(">>-->> Found nested mapping for source term " + (sindex+1) + " to target " + (tindex+1) + ": " + amjx);
+                    System.out.println(">>-->> " + amjx + " is vacuous: " + amjx.isVacuous() + " " + amjx.isBasic());
+
                     // Create new function ff with rule amjx; 
                     // if non-trivial. Add to tms. 
 
@@ -6078,10 +6080,13 @@ public class ModelSpecification
                       new BasicExpression("_" + (sindex+1)); 
 
                     if (srcJValues.get(0) instanceof ASTSymbolTerm) { } 
+                    else if (amjx.isVacuous() || 
+                             amjx.isBasic()) 
+                    { } 
                     else 
                     { String fid = 
                          Identifier.nextIdentifier(
-                                         "subruleset");
+                                         "subxruleset");
                       TypeMatching tmnew = 
                           new TypeMatching(fid);
                       String slhs = 
@@ -6091,11 +6096,17 @@ public class ModelSpecification
                       tmnew.addValueMapping(slhs, rrhs);
                       // Also the other locams 
                       tms.add(tmnew);
+
                       System.out.println(">>-->> Found nested mapping for source term _" + (sindex+1) + "`" + fid + " |--> " + "_" + (tindex+1));
                       System.out.println(">> With maps " + locams); 
-                      srcexpr = 
-                        new BasicExpression(fid); 
-                      srcexpr.addParameter(new BasicExpression("_" + (sindex+1))); 
+
+                      srcexpr =
+                        new BasicExpression(fid);
+                      srcexpr.setUmlKind(Expression.FUNCTION);
+  
+                      //  new BasicExpression(srcexpr + "`" + fid); 
+                      srcexpr.addParameter(
+                         new BasicExpression("_" + (sindex+1))); 
                     }
 
                     sfoundvars.add("_" + (sindex+1)); 
@@ -6105,10 +6116,12 @@ public class ModelSpecification
                     } 
                     else 
                     { Expression newtjexpr = 
-                         amjx.trgvalue.substituteEq("_1", srcexpr); 
-                      ttermpars.add(newtjexpr); 
+                          amjx.trgvalue.substituteEq("_1", srcexpr); 
+                      ttermpars.add(newtjexpr);
+                      // ttermpars.add(srcexpr);  
                       foundstermpars.add("_" + (sindex+1));
                     }  
+
                     foundsource = true; 
                   }
                   /* else 
@@ -6250,7 +6263,7 @@ public class ModelSpecification
 
         AttributeMatching amts = 
           treeSequenceMapping(sent,sattvalues,
-                              targetValues,localams); 
+                              targetValues,localams,tms); 
         
         if (amts != null) 
         { System.out.println(">treesequencemapping> Found direct correspondence of each subterm of source/target trees: " + amts); 
@@ -6413,7 +6426,7 @@ public class ModelSpecification
 
   private AttributeMatching treeSequenceMapping(
       Entity sent, ASTTerm[] strees, ASTTerm[] ttrees,
-      Vector ams)
+      Vector ams, Vector tms)
   { // Each strees[i] has same arity as ttrees[i]
     // and the strees[i].terms match to the ttrees[i].terms
     // Result mapping is  tagsource(_*) |--> tagtarget(_*)
@@ -6444,6 +6457,8 @@ public class ModelSpecification
       }  
     } 
 
+
+    /*
     Vector stermpars = new Vector(); 
     stermpars.add(new BasicExpression("_*")); 
     Vector ttermpars = new Vector(); 
@@ -6461,8 +6476,27 @@ public class ModelSpecification
     texpr.setParameters(ttermpars); 
     AttributeMatching fmx = 
             new AttributeMatching(sexpr,texpr); 
-    return fmx; 
-  } 
+    return fmx; */ 
+
+    String subid = 
+         Identifier.nextIdentifier("seqtreerule");
+    TypeMatching tmsub = 
+                         new TypeMatching(subid);
+    String sublhs = "_*"; 
+    String subrhs = "_*";
+
+    tmsub.addValueMapping(sublhs, subrhs);
+    tms.add(tmsub);
+
+    BasicExpression subexpr = new BasicExpression(subid); 
+    subexpr.setUmlKind(Expression.FUNCTION);
+    subexpr.addParameter(new BasicExpression("_1"));
+                         
+    AttributeMatching amres = 
+        new AttributeMatching(new BasicExpression("_1"), 
+                              subexpr);  
+    return amres; 
+  } // _1 |--> _1`f where f:: _1 |-->_1  _0 |-->_0
 
 
   private AttributeMatching treeSequenceMapping2(
@@ -6870,7 +6904,7 @@ public class ModelSpecification
       // fexpr.addParameter(new BasicExpression("_*"));
 
       String subid = 
-         Identifier.nextIdentifier("subruleset");
+         Identifier.nextIdentifier("seq3subruleset");
       TypeMatching tmsub = 
                           new TypeMatching(subid);
       String sublhs = "_*"; 
@@ -7096,7 +7130,7 @@ public class ModelSpecification
 
 
       String subid = 
-         Identifier.nextIdentifier("subruleset");
+         Identifier.nextIdentifier("seq4subruleset");
       TypeMatching tmsub = 
                           new TypeMatching(subid);
       String sublhs = "_*"; 

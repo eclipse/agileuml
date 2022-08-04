@@ -469,8 +469,10 @@ public class NLPWord extends NLPPhraseElement
   { if (isPlural())
     { if (text.endsWith("ies"))
       { return text.substring(0,text.length()-3) + "y"; }
-      // else if (text.endsWith("es"))
-      // { return text.substring(0,text.length()-2); }  
+      else if (text.endsWith("shes") && text.length() > 4)
+      { return text.substring(0,text.length()-2); }  
+      else if (text.endsWith("ches") && text.length() > 4)
+      { return text.substring(0,text.length()-2); }  
       else if (text.endsWith("s") || text.endsWith("es"))
       { return text.substring(0,text.length()-1); } 
     }
@@ -481,8 +483,10 @@ public class NLPWord extends NLPPhraseElement
   public static String getSingular(String txt)
   { if (txt.endsWith("ies"))
     { return txt.substring(0,txt.length()-3) + "y"; } 
-    // else if (txt.endsWith("es"))
-    // { return txt.substring(0,txt.length()-2); } 
+    else if (txt.endsWith("shes") && txt.length() > 4)
+    { return txt.substring(0,txt.length()-2); } 
+    else if (txt.endsWith("ches") && txt.length() > 4)
+    { return txt.substring(0,txt.length()-2); } 
     else if (txt.endsWith("s") || txt.endsWith("es"))
     { return txt.substring(0,txt.length()-1); } 
     return txt; 

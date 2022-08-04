@@ -90,7 +90,15 @@ public class TypeMatching
       ValueMatching vm = 
         new ValueMatching(rulelhs,rulerhs);
       
-      if (rulelhs.trim().equals(rulerhs.trim()) && 
+      Vector lhsvars = CGRule.metavariables(rulelhs); 
+      Vector rhsvars = CGRule.metavariables(rulerhs); 
+     
+      System.out.println("+++ Variables of " + rulelhs + " are " + lhsvars); 
+      System.out.println("+++ Variables of " + rulerhs + " are " + rhsvars); 
+
+      if (lhsvars.size() > 0 || rhsvars.size() > 0) 
+      { } 
+      else if (rulelhs.trim().equals(rulerhs.trim()) && 
           lhs.arity() == 1 && rhs.arity() == 1)
       { vm = new ValueMatching("_1", "_1"); 
         if (valueMappings.contains(vm)) { } 
@@ -244,10 +252,18 @@ public class TypeMatching
       String rhs = (vm.trg + "").trim();
 
       System.out.println(lhs + " |--> " + rhs + " " + vm.src.arity() + " " + vm.trg.arity()); 
+
+      Vector lhsvars = CGRule.metavariables(lhs); 
+      Vector rhsvars = CGRule.metavariables(rhs); 
+     
+      System.out.println("+++ Variables of " + lhs + " are " + lhsvars); 
+      System.out.println("+++ Variables of " + rhs + " are " + rhsvars); 
  
       CGRule rr = new CGRule("" + vm.src, "" + vm.trg);
 
-      if ("_0".equals(lhs) && "_0".equals(rhs))
+      if (lhsvars.size() > 0 || rhsvars.size() > 0)
+      { } 
+      else if ("_0".equals(lhs) && "_0".equals(rhs))
       { } 
       else if ("_1".equals(lhs) && "_1".equals(rhs))
       { } 
@@ -269,10 +285,17 @@ public class TypeMatching
       String rhs = (vm.trg + "").trim(); 
 
       System.out.println(lhs + " |--> " + rhs + " " + vm.src.arity() + " " + vm.trg.arity()); 
+      Vector lhsvars = CGRule.metavariables(lhs); 
+      Vector rhsvars = CGRule.metavariables(rhs); 
+     
+      System.out.println("+++ Variables of " + lhs + " are " + lhsvars); 
+      System.out.println("+++ Variables of " + rhs + " are " + rhsvars); 
 
       CGRule rr = new CGRule("" + vm.src, "" + vm.trg); 
 
-      if ("_0".equals(lhs) && "_0".equals(rhs))
+      if (lhsvars.size() > 0 || rhsvars.size() > 0)
+      { } 
+      else if ("_0".equals(lhs) && "_0".equals(rhs))
       { } 
       else if ("_1".equals(lhs) && "_1".equals(rhs))
       { } 

@@ -1406,6 +1406,7 @@ public class ASTBasicTerm extends ASTTerm
     } 
 
     if ("PreparedStatement".equals(value) || 
+        "CachedStatement".equals(value) ||
         "Statement".equals(value) || 
         "CallableStatement".equals(value))
     { modelElement = new Type("SQLStatement", null); 
@@ -2147,6 +2148,7 @@ public class ASTBasicTerm extends ASTTerm
     } 
 
     if ("PreparedStatement".equals(value) || 
+        "CachedStatement".equals(value) ||
         "Statement".equals(value) || 
         "CallableStatement".equals(value))
     { modelElement = new Type("SQLStatement", null); 

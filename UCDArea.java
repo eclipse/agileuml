@@ -10008,6 +10008,11 @@ public void produceCUI(PrintWriter out)
     out.println("{");
     for (int i = 0; i < types.size(); i++)
     { Type t = (Type) types.get(i);
+
+      if (t.hasStereotype("external") || 
+          t.hasStereotype("component"))
+      { continue; } 
+
       t.generateDeclaration(out);
     }
    
@@ -10213,6 +10218,9 @@ public void produceCUI(PrintWriter out)
     out.println("{");
     for (int i = 0; i < types.size(); i++)
     { Type t = (Type) types.get(i);
+      if (t.hasStereotype("external") || 
+          t.hasStereotype("component"))
+      { continue; } 
       t.generateDeclaration(out);
     }
    
@@ -10439,6 +10447,9 @@ public void produceCUI(PrintWriter out)
     out.println("{");
     for (int i = 0; i < types.size(); i++)
     { Type t = (Type) types.get(i);
+      if (t.hasStereotype("external") || 
+          t.hasStereotype("component"))
+      { continue; } 
       t.generateDeclaration(out);
     }
    
@@ -10654,6 +10665,9 @@ public void produceCUI(PrintWriter out)
 
     for (int i = 0; i < types.size(); i++)
     { Type t = (Type) types.get(i);
+      if (t.hasStereotype("external") || 
+          t.hasStereotype("component"))
+      { continue; } 
       t.generateDeclarationCSharp(out);
     }
 
@@ -10842,6 +10856,9 @@ public void produceCUI(PrintWriter out)
 
     for (int i = 0; i < types.size(); i++)
     { Type t = (Type) types.get(i);
+      if (t.hasStereotype("external") || 
+          t.hasStereotype("component"))
+      { continue; } 
       t.generateDeclarationCPP(out);
     }
 
