@@ -1,7 +1,9 @@
 # agileuml
 This repository contains the source files for the Eclipse Agile UML project
 These are the core source files of the Agile UML toolset. 
-Plugins, such as the UML to C and UML to Python translators will be made available in due course, as will libraries such as ocl.c and ocl.py
+Plugins, such as the UML to C and UML to Python translators are available as uml2Ca.zip, uml2Cb.zip and uml2py.zip, as are libraries in libraries*.zip and code generators in cg*.zip
+
+Program translation between Java and Python, C and JavaScript is supported by translators.zip
 
 The executable for the toolset is in umlrsds.jar
 
