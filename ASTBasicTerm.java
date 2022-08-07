@@ -1397,6 +1397,7 @@ public class ASTBasicTerm extends ASTTerm
         "HttpURLConnection".equals(value) ||  
         "URLConnection".equals(value) ||  
         "Socket".equals(value) || 
+        "ServerSocket".equals(value) || 
         "URL".equals(value) || 
         "BluetoothSocket".equals(value) || 
         "SQLiteDatabase".equals(value))
@@ -1463,6 +1464,7 @@ public class ASTBasicTerm extends ASTTerm
     if ("IOException".equals(value) ||
         "SQLException".equals(value) ||  
         "EOFException".equals(value) ||
+        // "UnknownHostException".equals(value) || 
         "SocketException".equals(value))
     { modelElement = new Type("IOException", null); 
       expression = new BasicExpression((Type) modelElement); 
@@ -2139,6 +2141,7 @@ public class ASTBasicTerm extends ASTTerm
         "HttpURLConnection".equals(value) ||  
         "URLConnection".equals(value) ||  
         "Socket".equals(value) || 
+        "ServerSocket".equals(value) || 
         "URL".equals(value) || 
         "BluetoothSocket".equals(value) ||  
         "SQLiteDatabase".equals(value))

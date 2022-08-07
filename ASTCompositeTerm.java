@@ -29972,9 +29972,9 @@ public class ASTCompositeTerm extends ASTTerm
       { ASTTerm.setType(this,"OclDatasource");
 
         ASTTerm arg1 = (ASTTerm) cargs.get(0); 
-        String hostarg = arg1.toKM3();
+        String hostarg = arg1.toKM3(); // String
         ASTTerm arg2 = (ASTTerm) cargs.get(1); 
-        String portarg = arg2.toKM3();
+        String portarg = arg2.toKM3(); // int
       
         if (arg1.expression != null && 
             arg2.expression != null) 
@@ -29991,7 +29991,31 @@ public class ASTCompositeTerm extends ASTTerm
                                           portarg + ")"; 
       }  
 
+      if ("ServerSocket".equals(clsliteral) && 
+          cargs.size() > 1)
+      { ASTTerm.setType(this,"OclDatasource");
+
+        ASTTerm arg1 = (ASTTerm) cargs.get(0); 
+        String hostarg = arg1.toKM3(); // String
+        ASTTerm arg2 = (ASTTerm) cargs.get(1); 
+        String portarg = arg2.toKM3(); // int
+      
+        if (arg1.expression != null && 
+            arg2.expression != null) 
+        { Vector pars = new Vector(); 
+          pars.add(arg1.expression); 
+          pars.add(arg2.expression); 
+
+          expression =   
+            BasicExpression.newStaticCallBasicExpression(
+              "newServerSocket", "OclDatasource", pars); 
+          expression.setType(new Type("OclDatasource", null)); 
+        } 
+        return "OclDatasource.newServerSocket(" + hostarg + "," + 
+                                          portarg + ")"; 
+      }  
         
+      // And DatagramSockets
 
       if ("FileReader".equals(clsliteral))
       { ASTTerm.setType(this,"OclFile");

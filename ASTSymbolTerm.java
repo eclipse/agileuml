@@ -733,6 +733,7 @@ public class ASTSymbolTerm extends ASTTerm
         "URL".equals(symbol) ||
         "DriverManager".equals(symbol) ||   
         "Socket".equals(symbol) || 
+        "ServerSocket".equals(symbol) || 
         "BluetoothSocket".equals(symbol))
     { modelElement = new Type("OclDatasource", null); 
       expression = new BasicExpression((Type) modelElement); 
