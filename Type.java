@@ -159,6 +159,25 @@ public class Type extends ModelElement
     { entity.setTypeParameters(pars); } 
   } 
 
+  public static boolean isOclLibraryType(String tname) 
+  { if (tname == null) 
+    { return false; } 
+    if ("OclFile".equals(tname) || 
+        "OclRandom".equals(tname) || 
+        "OclProcess".equals(tname) || 
+        "OclType".equals(tname) || 
+        "OclAttribute".equals(tname) || 
+        "OclOperation".equals(tname) || 
+        "SQLStatement".equals(tname) || 
+        "OclDatasource".equals(tname) || 
+        "OclDate".equals(tname) || 
+        "OclIterator".equals(tname))
+    { return true; } 
+    if (exceptions2java.get(tname) != null) 
+    { return true; } 
+    return false; 
+  } 
+
   public static boolean isDefinedType(Type t) 
   { if (t == null) 
     { return false; } 

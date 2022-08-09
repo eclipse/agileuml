@@ -4119,7 +4119,8 @@ class CreationStatement extends Statement
         } 
       } // The 2nd statement only if is an entity of this system, not external
     } 
-    else if (createsInstanceOf.equals("boolean") || createsInstanceOf.equals("int") ||
+    else if (createsInstanceOf.equals("boolean") || 
+             createsInstanceOf.equals("int") ||
         createsInstanceOf.equals("long") || 
         createsInstanceOf.equals("String") || createsInstanceOf.equals("double"))
     { return "  " + mode + createsInstanceOf + " " + assignsTo + ";"; } 
@@ -4138,6 +4139,8 @@ class CreationStatement extends Statement
     { return "  Class " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclRandom"))
     { return "  OclRandom " + assignsTo + ";"; }
+    else if (Type.isOclLibraryType(createsInstanceOf))
+    { return "  " + createsInstanceOf + " " + assignsTo + ";"; }
 
     return "  " + mode + createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
            "  Controller.inst().add" + createsInstanceOf + "(" + assignsTo + ");"; 
@@ -4205,6 +4208,8 @@ class CreationStatement extends Statement
     { return "  Class " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclRandom"))
     { return "  OclRandom " + assignsTo + ";"; }
+    else if (Type.isOclLibraryType(createsInstanceOf))
+    { return "  " + createsInstanceOf + " " + assignsTo + ";"; }
 
     return "  " + createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
            "  Controller.inst().add" + createsInstanceOf + "(" + assignsTo + ");"; 
@@ -4276,6 +4281,8 @@ class CreationStatement extends Statement
     { return "  OclRandom " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclIterator"))
     { return "  OclIterator " + assignsTo + ";"; }
+    else if (Type.isOclLibraryType(createsInstanceOf))
+    { return "  " + createsInstanceOf + " " + assignsTo + ";"; }
 
     return createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
            "  Controller.inst().add" + createsInstanceOf + "(" + assignsTo + ");"; 
@@ -4374,6 +4381,8 @@ class CreationStatement extends Statement
     { return "  OclIterator " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclFile"))
     { return "  OclFile " + assignsTo + ";"; }
+    else if (Type.isOclLibraryType(createsInstanceOf))
+    { return "  " + createsInstanceOf + " " + assignsTo + ";"; }
 
     return createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
                  "  Controller.inst().add" + createsInstanceOf + "(" + assignsTo + ");";  
@@ -4454,6 +4463,8 @@ class CreationStatement extends Statement
  
         return "  OclIterator* " + assignsTo + ";"; 
       }
+      else if (Type.isOclLibraryType(instanceType.getName()))
+      { return "  " + createsInstanceOf + "* " + assignsTo + ";"; }
     } 
     else if (elementType != null) 
     { cet = elementType.getCPP(); }
@@ -4503,6 +4514,8 @@ class CreationStatement extends Statement
     { return "  OclProcess* " + assignsTo + ";"; }
     else if (Type.isExceptionType(createsInstanceOf))
     { return "  " + createsInstanceOf + "* " + assignsTo + ";"; }  
+    else if (Type.isOclLibraryType(createsInstanceOf))
+    { return "  " + createsInstanceOf + "* " + assignsTo + ";"; }
 
     return createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
                  "  Controller::inst->add" + createsInstanceOf + "(" + assignsTo + ");"; 

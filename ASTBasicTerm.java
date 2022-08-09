@@ -1399,6 +1399,8 @@ public class ASTBasicTerm extends ASTTerm
         "Socket".equals(value) || 
         "ServerSocket".equals(value) || 
         "URL".equals(value) || 
+        "InetAddress".equals(value) || 
+        "Inet4Address".equals(value) || 
         "BluetoothSocket".equals(value) || 
         "SQLiteDatabase".equals(value))
     { modelElement = new Type("OclDatasource", null); 
@@ -2143,6 +2145,8 @@ public class ASTBasicTerm extends ASTTerm
         "Socket".equals(value) || 
         "ServerSocket".equals(value) || 
         "URL".equals(value) || 
+        "InetAddress".equals(value) || 
+        "Inet4Address".equals(value) || 
         "BluetoothSocket".equals(value) ||  
         "SQLiteDatabase".equals(value))
     { modelElement = new Type("OclDatasource", null); 

@@ -3910,7 +3910,10 @@ public void findClones(java.util.Map clones, String rule, String op)
     }      
     else if (operator.equals("<>=") ||
              comparitors.contains(operator))
-    { tcEq(tleft,tright,eleft,eright); }
+    { tcEq(tleft,tright,eleft,eright);
+      type = new Type("boolean", null); 
+      elementType = new Type("boolean", null); 
+    }
     else if (operator.equals("+"))
     { tcPlus(tleft,tright,eleft,eright); }
     else if (operator.equals("-"))
@@ -3998,7 +4001,7 @@ public void findClones(java.util.Map clones, String rule, String op)
              operator.equals("or") || operator.equals("=>"))
     { tcLogical(tleft,tright,eleft,eright); } 
     // else, it is an extension operator, type is given by its definition
-    else 
+    else if (extensionoperators.keySet().contains(operator))
     { type = Expression.getOperatorType(operator); } 
 
     if (type == null)
@@ -4014,7 +4017,10 @@ public void findClones(java.util.Map clones, String rule, String op)
 // rolea = roleb ?? one multiple other not?
   private void tcEq(Type tleft, Type tright,
                     Entity eleft, Entity eright)
-  { if (tleft != null && tright != null)
+  { type = new Type("boolean", null); 
+    elementType = new Type("boolean", null); 
+
+    if (tleft != null && tright != null)
     { String tlname = tleft.getName();
       String trname = tright.getName();
       if (tleft.equals(tright))
@@ -4065,7 +4071,9 @@ public void findClones(java.util.Map clones, String rule, String op)
         type = null; 
       }
     }
-    type = new Type("boolean",null);
+
+    type = new Type("boolean", null); 
+    elementType = new Type("boolean", null); 
   }
 
   private void tcPlus(Type tleft, Type tright, Entity eleft, Entity eright)
@@ -6141,6 +6149,9 @@ public boolean conflictsWithIn(String op, Expression el,
        
         if (left.type != null && left.type.isMapType())
         { return "((" + typ + ") " + lqf + "[" + rqf + "])"; }
+
+        if (right.type != null && right.type.isStringType())
+        { return "((" + typ + ") " + lqf + "[" + rqf + "])"; }
 	  
         return "((" + typ + ") " + lqf + "[" + rqf + " - 1])";
       } 
@@ -6148,6 +6159,9 @@ public boolean conflictsWithIn(String op, Expression el,
       System.err.println("!WARNING!: no element type in " + left); 
 
       if (left.type != null && left.type.isMapType())
+      { return "(" + lqf + ")[" + rqf + "]"; }
+
+      if (right.type != null && right.type.isStringType())
       { return "(" + lqf + ")[" + rqf + "]"; }
 
       return "(" + lqf + ")[" + rqf + " - 1]";

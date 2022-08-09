@@ -8739,7 +8739,13 @@ public class UCDArea extends JPanel
     out.println("using System.Threading.Tasks;");
     out.println("using System.Xml.Serialization;"); 
     out.println("using System.Text.Json;"); 
-    out.println("using System.Text.Json.Serialization;"); 
+    out.println("using System.Text.Json.Serialization;");
+    out.println("using System.Data;"); 
+    out.println("using System.Data.Common;"); 
+    out.println("using System.Data.SqlClient;"); 
+    out.println("using System.Net.Sockets;"); 
+    out.println("using System.Net.Http;"); 
+ 
     out.println("using System.Windows.Forms;\n\n");
 
     out.println(""); 
@@ -8775,6 +8781,16 @@ public class UCDArea extends JPanel
     if (mathlib != null) 
     { BSystemTypes.generateLibraryCSharp("MathLib",out); }
 
+    Entity ocldate = 
+      (Entity) ModelElement.lookupByName("OclDate", entities); 
+    if (ocldate != null) 
+    { BSystemTypes.generateLibraryCSharp("OclDate",out); }
+
+    Entity oclrandom = 
+      (Entity) ModelElement.lookupByName("OclRandom", entities); 
+    if (oclrandom != null) 
+    { BSystemTypes.generateLibraryCSharp("OclRandom",out); }
+
     Entity oclfile = 
       (Entity) ModelElement.lookupByName("OclFile", entities); 
     if (oclfile != null) 
@@ -8784,6 +8800,16 @@ public class UCDArea extends JPanel
       (Entity) ModelElement.lookupByName("OclProcess", entities); 
     if (oclprocess != null) 
     { BSystemTypes.generateLibraryCSharp("OclProcess",out); }
+
+    Entity ocliterator = 
+      (Entity) ModelElement.lookupByName("OclIterator", entities); 
+    if (ocliterator != null) 
+    { BSystemTypes.generateLibraryCSharp("OclIterator",out); }
+
+    Entity ocldatasource = 
+      (Entity) ModelElement.lookupByName("OclDatasource", entities); 
+    if (ocldatasource != null) 
+    { BSystemTypes.generateLibraryCSharp("OclDatasource",out); }
 
     String mainOp = ""; 
 
@@ -9587,7 +9613,12 @@ public void produceCUI(PrintWriter out)
     out.println("using System.Threading.Tasks;"); 
     out.println("using System.Xml.Serialization;"); 
     out.println("using System.Text.Json;"); 
-    out.println("using System.Text.Json.Serialization;"); 
+    out.println("using System.Text.Json.Serialization;");
+    out.println("using System.Data;"); 
+    out.println("using System.Data.Common;"); 
+    out.println("using System.Data.SqlClient;"); 
+    out.println("using System.Net.Sockets;"); 
+     
     out.println("using System.Windows.Forms;");
 
     for (int i = 0; i < importList.size(); i++) 

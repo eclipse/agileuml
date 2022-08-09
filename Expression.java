@@ -64,6 +64,7 @@ abstract class Expression
     comparitors.add(">=");
     comparitors.add("!=");  // now it is /= 
     comparitors.add("/="); 
+    comparitors.add("<>"); 
   } 
 
   protected static Vector oclops = new Vector(); 
@@ -100,6 +101,7 @@ abstract class Expression
     alloperators.add(">=");
     alloperators.add("!=");  // now it is /= or <>
     alloperators.add("/="); 
+    alloperators.add("<>"); 
     alloperators.add("mod"); 
     alloperators.add("div"); 
     alloperators.add("+"); 

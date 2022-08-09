@@ -324,23 +324,23 @@ public class ASTSymbolTerm extends ASTTerm
     if ("=".equals(symbol)) 
     { return " := "; } 
     if ("==".equals(symbol)) 
-    { return " = "; } 
+    { return "="; } 
     if ("!=".equals(symbol)) 
-    { return " /= "; } 
+    { return "/="; } 
 
     if ("&&".equals(symbol) || "&".equals(symbol)) 
-    { return " & "; }
+    { return "&"; }
     if ("||".equals(symbol) || "|".equals(symbol)) 
-    { return " or "; }
+    { return "or"; }
  
     if ("<".equals(symbol)) 
-    { return " < "; } 
+    { return "<"; } 
     if (">".equals(symbol)) 
-    { return " > "; } 
+    { return ">"; } 
     if ("<=".equals(symbol)) 
-    { return " <= "; } 
+    { return "<="; } 
     if (">=".equals(symbol)) 
-    { return " >= "; } 
+    { return ">="; } 
 
     if ("'".equals(symbol)) 
     { return "\""; } 

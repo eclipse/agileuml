@@ -19890,6 +19890,7 @@ public class ASTCompositeTerm extends ASTTerm
 
         String op1 = op.toKM3(); 
         String arg1 = op.toKM3(); 
+        String op1trim = op1.trim(); 
 
         String opx = op.queryForm(); 
         String argx = arg.queryForm(); 
@@ -19937,7 +19938,7 @@ public class ASTCompositeTerm extends ASTTerm
           return "-(" + arg1 + " + 1)"; 
         } 
 
-        if ("++".equals(op1))
+        if ("++".equals(op1trim))
         { expression = arg.expression; 
           ASTTerm.setType(this, ASTTerm.getType(arg));
 
@@ -19953,7 +19954,7 @@ public class ASTCompositeTerm extends ASTTerm
           return argx; 
         }
  
-        if ("--".equals(op1))
+        if ("--".equals(op1trim))
         { expression = arg.expression; 
           ASTTerm.setType(this, ASTTerm.getType(arg));
 
@@ -19998,7 +19999,7 @@ public class ASTCompositeTerm extends ASTTerm
         String km3 = opx + argx;
 
         if (arg.expression != null) 
-        { expression = new UnaryExpression(opx, arg.expression); } 
+        { expression = new UnaryExpression(opx.trim(), arg.expression); } 
 
         if (arg.statement != null) 
         { statement = arg.statement; } 
@@ -20031,7 +20032,9 @@ public class ASTCompositeTerm extends ASTTerm
             "&=".equals(op + "") || "^=".equals(op + "") ||
             "%=".equals(op + "") || "<<=".equals(op + "") ||
             ">>=".equals(op + "") || ">>>=".equals(op + ""))
-        { expression = e1.expression; 
+        { expression = e1.expression;
+          ASTTerm.setType(this, ASTTerm.getType(e1));
+           
           return e1x; 
         } // similarly for other assignements. 
 
@@ -20080,7 +20083,17 @@ public class ASTCompositeTerm extends ASTTerm
         } 
 
         if (e1.expression != null && e2.expression != null) 
-        { expression = new BinaryExpression(opx, e1.expression, e2.expression); }
+        { expression = new BinaryExpression(opx.trim(), 
+                             e1.expression, e2.expression);
+        }
+
+        if ("!=".equals(op + "") || "==".equals(op + "") || 
+            "<=".equals(op + "") || ">=".equals(op + "") ||
+            "&&".equals(op + "") || "||".equals(op + "") ||
+            "<".equals(op + "") || ">".equals(op + ""))
+        { ASTTerm.setType(this, "boolean"); 
+          expression.setType(new Type("boolean", null)); 
+        } 
 
         return e1x + opx + e2x; 
       } 
@@ -32871,7 +32884,8 @@ public class ASTCompositeTerm extends ASTTerm
         } 
 
         String op1 = op.toKM3(); 
-        String arg1 = arg.toKM3(); 
+        String arg1 = arg.toKM3();
+        String op1trim = op1.trim();  
 
         if ("-".equals(op.literalForm()))
         { ASTTerm.setType(this,ASTTerm.getType(arg)); 
@@ -32959,7 +32973,7 @@ public class ASTCompositeTerm extends ASTTerm
         }
  
         if (arg.expression != null) 
-        { expression = UnaryExpression.newUnaryExpression(op1, arg.expression); }   
+        { expression = UnaryExpression.newUnaryExpression(op1trim, arg.expression); }   
 
         System.out.println(">> Query form of " + this + " is: " + expression); 
         System.out.println(">> Update form of " + this + " is: " + statement); 
@@ -32973,6 +32987,7 @@ public class ASTCompositeTerm extends ASTTerm
         ASTTerm e1 = (ASTTerm) terms.get(0);
         ASTTerm e2 = (ASTTerm) terms.get(2);
         String opx = op.toKM3(); 
+        String opxtrim = opx.trim(); 
         String e1x = e1.toKM3(); 
         String e2x = e2.toKM3();
         String e1literal = e1.literalForm(); 
@@ -33517,7 +33532,7 @@ public class ASTCompositeTerm extends ASTTerm
            both as statements and as expressions */ 
 
         if ("=".equals(op + "") && e2.updatesObject(null))
-        { // e1x := result of e2x ; sideeffect of e2x
+        { // e1x := result of e2x ; postsideeffect of e2x
           Statement updateF = e2.statement; 
           String qf = e2.queryForm(); 
 
@@ -34349,7 +34364,7 @@ public class ASTCompositeTerm extends ASTTerm
 
           if (e1.expression != null && e2.expression != null) 
           { expression = 
-              new BinaryExpression(op.literalForm(), e1.expression, 
+              new BinaryExpression(opxtrim, e1.expression, 
                                           e2.expression); 
           }  
 
@@ -35534,14 +35549,18 @@ public class ASTCompositeTerm extends ASTTerm
             if (vInit.statement != null) 
             { sstatements.addStatement(0, vInit.statement); } 
 
+            System.out.println(">+++> Pre side-effect of " + vInit + " : " + vInit.statement);
+
             vInit.statement = null; 
             String postse = vInit.postSideEffect(); 
 
             if (vInit.statement != null) // post side-effect 
             { sstatements.addStatement(tv.statement); } 
+
+            System.out.println(">+++> Post side-effect: " + tv.statement);
           }
 
-          System.out.println(">> Declaration statements: " + statement);
+          System.out.println(">+++> Declaration statements: " + statement);
           System.out.println(); 
            
         } 
@@ -37713,6 +37732,7 @@ public class ASTCompositeTerm extends ASTTerm
       return res;          
     }
 
+
     if ("expression".equals(tag))
     { if (terms.size() == 1) // Identifier or literal
       { 
@@ -37755,6 +37775,15 @@ public class ASTCompositeTerm extends ASTTerm
       { ASTTerm op = (ASTTerm) terms.get(1); 
         ASTTerm arg1 = (ASTTerm) terms.get(0);
         ASTTerm arg2 = (ASTTerm) terms.get(2); 
+
+        if (".".equals(op) && "methodCall".equals(arg2.getTag()))
+        { if (arg2.updatesObject(arg1))
+          { }
+          else 
+          { statement = null; 
+            return ""; 
+          } 
+        }  
 
         SequenceStatement ssres = new SequenceStatement(); 
 
@@ -37896,10 +37925,9 @@ public class ASTCompositeTerm extends ASTTerm
 
         return res; 
       } 
-
-
     } 
-    return null; 
+    statement = null; 
+    return ""; 
   } 
 
   public String postSideEffect()

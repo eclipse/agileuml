@@ -5445,10 +5445,16 @@ public class BSystemTypes extends BComponent
                  "    return 0;\n" + 
                  "  } \n\n"; 
     res = res + 
-        "  public static bool toBoolean(String sx)\n" + 
-        "  { if (\"true\".Equals(sx) || \"True\".Equals(sx))\n" + 
-        "    { return true; }\n" + 
-        "    return false;\n" + 
+        "  public static bool toBoolean(object sx)\n" + 
+        "  { if (sx == null) { return false; }\n" + 
+        "    if (\"\".Equals(sx + \"\") || \"false\".Equals(sx + \"\") || \"False\".Equals(sx + \"\"))\n" + 
+        "    { return false; }\n" +
+        "    try\n" + 
+        "    { double d = double.Parse(sx + \"\");\n" + 
+        "      if (Double.IsNaN(d) || (d <= 0.0 && d >= 0.0))\n" + 
+        "      { return false; }\n" + 
+        "    } catch { }\n" +  
+        "    return true;\n" + 
         "  }\n\n";  
 
     res = res +         
