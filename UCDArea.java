@@ -24939,12 +24939,16 @@ public void produceCUI(PrintWriter out)
 
     for (int i = 0; i < entities.size(); i++) 
     { Entity e = (Entity) entities.get(i); 
-      if (e.isDerived() || e.isComponent() || e.isAbstract() || e.isInterface()) 
+      if (e.isDerived() || e.isComponent() || 
+          e.isAbstract() ||
+          e.isInterface()) 
       { continue; }
 	  
       String testfile = "test" + e.getName() + "_in.txt"; 
 	  
       Vector tests = e.testCases();
+
+      e.generateOperationMutants(); 
  
       try
       { String testsdirName = "output/tests"; 
@@ -24966,7 +24970,6 @@ public void produceCUI(PrintWriter out)
       } 
       catch (Exception _x) { } 
 
-      e.generateOperationMutants(); 
     }   
   
         
@@ -24999,8 +25002,13 @@ public void produceCUI(PrintWriter out)
     { dirName = systemName; } 
 
     for (int i = 0; i < entities.size(); i++) 
-    { Entity e = (Entity) entities.get(i); 
-      if (e.isDerived() || e.isComponent() || e.isAbstract() || e.isInterface()) 
+    { Entity e = (Entity) entities.get(i);
+
+      System.out.println(">*** Creating mutation tests for ***> Entity " + e); 
+ 
+      if (e.isDerived() || e.isComponent() || 
+          e.isAbstract() ||
+          e.isInterface()) 
       { continue; }
 	
       Vector optests = e.operationTestCases(mutationtests);
@@ -25073,7 +25081,8 @@ public void produceCUI(PrintWriter out)
 
     for (int i = 0; i < entities.size(); i++) 
     { Entity e = (Entity) entities.get(i); 
-      if (e.isDerived() || e.isComponent() || e.isAbstract() || e.isInterface()) 
+      if (e.isDerived() || e.isComponent() || 
+          e.isAbstract() || e.isInterface()) 
       { continue; }
 	
       Vector optests = e.operationTestCasesJava6(mutationtests);

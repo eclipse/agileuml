@@ -4038,6 +4038,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { mutantop = "->last"; }
     else if (operator.equals("->last"))
     { mutantop = "->first"; }
+    else if (operator.equals("->reverse"))
+    { mutantop = "->copy"; }
+    else if (operator.equals("->sort"))
+    { mutantop = "->reverse"; }
     else if (operator.equals("->front"))
     { mutantop = "->tail"; }
     else if (operator.equals("->tail"))

@@ -804,6 +804,18 @@ class BinaryExpression extends Expression
     { res.add("<="); }
     else if (">".equals(op))
     { res.add(">="); }
+    else if ("/=".equals(op))
+    { res.add("="); }
+    // else if ("=".equals(op))
+    // { res.add("/="); }
+    else if ("->union".equals(op))
+    { res.add("->intersection"); }
+    else if ("->intersection".equals(op))
+    { res.add("->union"); }
+    else if ("->append".equals(op))
+    { res.add("->prepend"); }
+    else if ("->prepend".equals(op))
+    { res.add("->append"); }
     else if ("->including".equals(op))
     { res.add("->excluding"); }
     else if ("->excluding".equals(op))
@@ -889,7 +901,9 @@ class BinaryExpression extends Expression
   { Vector lms = left.singleMutants(); 
     Vector rms = right.singleMutants(); 
     Vector res = new Vector(); 
-    Vector mutantOps = mutantOperators(operator); 
+    Vector mutantOps = mutantOperators(operator);
+    if ("result".equals(left + "") && "=".equals(operator))
+    { mutantOps = new Vector(); }  
 
     if ("->compareTo".equals(operator))
     { for (int i = 0; i < lms.size(); i++) 

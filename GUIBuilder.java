@@ -1,7 +1,7 @@
 import java.util.*; 
 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -476,17 +476,29 @@ public class GUIBuilder
     String mutationTestsOp = ""; 
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i);
-      if (ent.isDerived() || ent.isComponent()) 
+      if (ent.isDerived() || ent.isComponent() || 
+          ent.isAbstract()) 
       { continue; }  
       String ename = ent.getName();
       String es = ename.toLowerCase() + "s"; 
-      Vector eops = ent.getOperations();  
+      Vector eops = ent.allDefinedOperations();  
       mutationTestsOp = mutationTestsOp +
          "      int " + es + "_instances = Controller.inst()." + es + ".size();\n"; 
       
       for (int j = 0; j < eops.size(); j++) 
       { BehaviouralFeature bf = (BehaviouralFeature) eops.get(j); 
-        if (bf.isMutatable())
+        if (bf.isStatic() && bf.isMutatable())
+        { String bfname = bf.getName();  
+          mutationTestsOp = mutationTestsOp + 
+          "      int[] " + es + "_" + bfname + "_counts = new int[100]; \n" +   
+          "      int[] " + es + "_" + bfname + "_totals = new int[100]; \n" +   
+          "      if (" + es + "_instances > 0)\n" + 
+          "      { " + ename + " _ex = (" + ename + ") Controller.inst()." + es + ".get(0);\n" +  
+          "        MutationTest." + bfname + "_mutation_tests(_ex," + es + "_" + bfname + "_counts, " + es + "_" + bfname + "_totals);\n" + 
+          "      }\n" + 
+          "      System.out.println();\n";  
+        } 
+        else if (bf.isMutatable())
         { String bfname = bf.getName();  
           mutationTestsOp = mutationTestsOp + 
           "      int[] " + es + "_" + bfname + "_counts = new int[100]; \n" +   
@@ -718,9 +730,11 @@ public class GUIBuilder
                   indent + "{ int " + parnme + " = " + indexvar + ";\n";
             } 
             else if (typ.isEntity())
-            { String ename = tname.toLowerCase() + "s";
-              Entity ee = typ.getEntity(); 
-			   
+            { Entity ee = typ.getEntity(); 
+              if (ee.isAbstract())
+              { ee = ee.firstLeafSubclass(); } 
+              String ename = ee.getName().toLowerCase() + "s";
+              
               Vector eeinvariants = new Vector(); 
               if (ee != null) 
               { eeinvariants.addAll(ee.getInvariants()); }
@@ -750,12 +764,76 @@ public class GUIBuilder
               }
 				  		  
             } // Check invariants of parnme. 
+            else if (typ.isMapType()) 
+            { Type elemTyp = typ.getElementType();
+              String collType = "HashMap"; 
+              if (elemTyp == null) { } 
+              else if ("int".equals(elemTyp.getName()))
+              { testscript = testscript + 
+                      indent + "\n" + 
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+				indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+				indent + "  if (" + indexvar + " < 5)\n" + 
+				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(intTestValues[" + indexvar + "])); }\n" + 
+				indent + "  if (" + indexvar + " < 3)\n" + 
+				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(intTestValues[" + indexvar + " + 2])); }\n";  
+              } 
+              else if ("long".equals(elemTyp.getName()) || 
+                       "double".equals(elemTyp.getName()) ||
+                       "boolean".equals(elemTyp.getName()))
+              { String etname = elemTyp.getName(); 
+                String wrapper = Named.capitalise(etname); 
+                testscript = testscript + 
+                      indent + "\n" + 
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+				indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+				indent + "  if (" + indexvar + " < 5)\n" + 
+				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new " + wrapper + "(" + etname + "TestValues[" + indexvar + "])); }\n" + 
+				indent + "  if (" + indexvar + " < 3)\n" + 
+				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new " + wrapper + "(" + etname + "TestValues[" + indexvar + " + 2])); }\n";  
+              } 
+              else if ("String".equals(elemTyp.getName()))
+              { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 4; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+                  indent + "  if (" + indexvar + " < 3)\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", stringTestValues[" + indexvar + "]); }\n" + 
+                  indent + "  if (" + indexvar + " < 2)\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", stringTestValues[" + indexvar + " + 1]); }\n";
+              } 
+              else if (elemTyp != null && elemTyp.isEnumeration())
+              { Vector vals = elemTyp.getValues(); 
+                int nvals = vals.size(); 
+                testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= " + nvals + "; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+                  indent + "  if (" + indexvar + " < " + nvals + ")\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(" + indexvar + ")); }\n"; 
+              }
+              else if (elemTyp.isEntity())
+              { String etname = elemTyp.getName(); 
+			    // Entity ee = elemTyp.getEntity(); 
+				
+                String eename = etname.toLowerCase() + "s"; 
+			    
+                testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "int _" + eename + "_instances = Controller.inst()." + etname + ".size();\n" +  
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= _" + eename + "_instances; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n";  
+                testscript = testscript + 
+                  indent + "  if (" + indexvar + " < Controller.inst()." + etname + ".size())\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", Controller.inst()." + eename + ".get(" + indexvar + ")); }\n";
+              }  
+            } 
             else if (typ.isCollectionType()) // Try with empty list, singleton & random list
             { Type elemTyp = typ.getElementType();
               String collType = "ArrayList"; 
               if (typ.isSequence())
               { } 
-              else 
+              else if (typ.isSet()) 
               { collType = "HashSet"; } 
  
               if (elemTyp == null) { } 
@@ -917,7 +995,8 @@ public class GUIBuilder
     String mutationTestsOp = ""; 
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i);
-      if (ent.isDerived() || ent.isComponent()) 
+      if (ent.isDerived() || ent.isComponent() || 
+          ent.isAbstract()) 
       { continue; }  
       String ename = ent.getName();
       String es = ename.toLowerCase(); 
@@ -925,11 +1004,22 @@ public class GUIBuilder
       mutationTestsOp = mutationTestsOp +
          "      int _" + es + "_instances = Controller.inst()." + es + ".size();\n"; 
 
-      Vector eops = ent.getOperations();  
+      Vector eops = ent.allDefinedOperations();  
       
       for (int j = 0; j < eops.size(); j++) 
       { BehaviouralFeature bf = (BehaviouralFeature) eops.get(j); 
-        if (bf.isMutatable())
+        if (bf.isStatic() && bf.isMutatable())
+        { String bfname = bf.getName();  
+          mutationTestsOp = mutationTestsOp + 
+          "      int[] " + es + "_" + bfname + "_counts = new int[100]; \n" +   
+          "      int[] " + es + "_" + bfname + "_totals = new int[100]; \n" +   
+          "      if (" + es + "_instances > 0)\n" + 
+          "      { " + ename + " _ex = (" + ename + ") " + einstances + ".get(0);\n" +  
+          "        MutationTest." + bfname + "_mutation_tests(_ex," + es + "_" + bfname + "_counts, " + es + "_" + bfname + "_totals);\n" + 
+          "      }\n" + 
+          "      System.out.println();\n";  
+        } 
+        else if (bf.isMutatable())
         { String bfname = bf.getName();  
           mutationTestsOp = mutationTestsOp + 
           "      int[] " + es + "_" + bfname + "_counts = new int[100]; \n" +   
@@ -1160,10 +1250,12 @@ public class GUIBuilder
                   indent + "{ int " + parnme + " = " + indexvar + ";\n";
             } 
             else if (typ.isEntity())
-            { String ename = tname.toLowerCase() + "s";
-              String einstances = tname + "." + tname + "_allInstances";
-              Entity ee = typ.getEntity(); 
-			   
+            { Entity ee = typ.getEntity(); 
+		   if (ee.isAbstract())
+              { ee = ee.firstLeafSubclass(); } 
+              String ename = ee.getName().toLowerCase() + "s";
+              String einstances = ename + "." + ename + "_allInstances";
+                 
               Vector eeinvariants = new Vector(); 
               if (ee != null) 
               { eeinvariants.addAll(ee.getInvariants()); }
@@ -1192,6 +1284,70 @@ public class GUIBuilder
               }
 				  		  
             } // Check invariants of parnme. 
+            else if (typ.isMapType()) 
+            { Type elemTyp = typ.getElementType();
+              String collType = "HashMap"; 
+              if (elemTyp == null) { } 
+              else if ("int".equals(elemTyp.getName()))
+              { testscript = testscript + 
+                      indent + "\n" + 
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+				indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+				indent + "  if (" + indexvar + " < 5)\n" + 
+				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(intTestValues[" + indexvar + "])); }\n" + 
+				indent + "  if (" + indexvar + " < 3)\n" + 
+				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(intTestValues[" + indexvar + " + 2])); }\n";  
+              } 
+              else if ("long".equals(elemTyp.getName()) || 
+                       "double".equals(elemTyp.getName()) ||
+                       "boolean".equals(elemTyp.getName()))
+              { String etname = elemTyp.getName(); 
+                String wrapper = Named.capitalise(etname); 
+                testscript = testscript + 
+                      indent + "\n" + 
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+				indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+				indent + "  if (" + indexvar + " < 5)\n" + 
+				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new " + wrapper + "(" + etname + "TestValues[" + indexvar + "])); }\n" + 
+				indent + "  if (" + indexvar + " < 3)\n" + 
+				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new " + wrapper + "(" + etname + "TestValues[" + indexvar + " + 2])); }\n";  
+              } 
+              else if ("String".equals(elemTyp.getName()))
+              { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 4; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+                  indent + "  if (" + indexvar + " < 3)\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", stringTestValues[" + indexvar + "]); }\n" + 
+                  indent + "  if (" + indexvar + " < 2)\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", stringTestValues[" + indexvar + " + 1]); }\n";
+              } 
+              else if (elemTyp != null && elemTyp.isEnumeration())
+              { Vector vals = elemTyp.getValues(); 
+                int nvals = vals.size(); 
+                testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= " + nvals + "; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+                  indent + "  if (" + indexvar + " < " + nvals + ")\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(" + indexvar + ")); }\n"; 
+              }
+              else if (elemTyp.isEntity())
+              { String etname = elemTyp.getName(); 
+			    // Entity ee = elemTyp.getEntity(); 
+                String eeinstances = etname + "." + etname + "_allInstances"; 				
+                String eename = etname.toLowerCase() + "s"; 
+							    
+                testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "int _" + eename + "_instances = " + eeinstances + ".size();\n" +  
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= _" + eename + "_instances; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n";  
+                testscript = testscript + 
+                  indent + "  if (" + indexvar + " < " + eeinstances + ".size())\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", " + eeinstances + ".get(" + indexvar + ")); }\n";
+              }  
+            } 
             else if (typ.isCollectionType()) // Try with empty list, singleton & random list
             { Type elemTyp = typ.getElementType();
               String collType = "ArrayList"; 
@@ -1344,30 +1500,61 @@ public class GUIBuilder
     String mutationTestsOp = ""; 
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i);
-      if (ent.isDerived() || ent.isComponent()) 
+      if (ent.isDerived() || ent.isComponent() || 
+          ent.isAbstract()) 
       { continue; }  
       String ename = ent.getName();
       String es = ename.toLowerCase() + "s"; 
-      Vector eops = ent.getOperations();  
+      Vector eops = ent.allDefinedOperations();  
+      /* if (ent.isAbstract())
+      { Vector leafs = ent.getActualLeafSubclasses(); 
+        if (leafs.size() > 0)
+        { Entity actualLeaf = (Entity) leafs.get(0); 
+          ename = actualLeaf.getName(); 
+          es = ename.toLowerCase() + "s"; 
+        } 
+        else 
+        { continue; } 
+      } */ 
       mutationTestsOp = mutationTestsOp + 
-        "      int _" + es + "_instances = Controller.inst()." + es + ".size();\n";  
+        "      { int _" + es + "_instances = Controller.inst()." + es + ".size();\n";  
       
+      Vector bfnames = new Vector(); 
       for (int j = 0; j < eops.size(); j++) 
-      { BehaviouralFeature bf = (BehaviouralFeature) eops.get(j); 
-        if (bf.isMutatable())
-        { String bfname = bf.getName();  
-          mutationTestsOp = mutationTestsOp + 
-          "      int[] " + es + "_" + bfname + "_counts = new int[100]; \n" +   
-          "      int[] " + es + "_" + bfname + "_totals = new int[100]; \n" +   
-          "      for (int _i = 0; _i < _" + es + "_instances; _i++)\n" + 
-          "      { " + ename + " _ex = (" + ename + ") Controller.inst()." + es + ".get(_i);\n" +  
-          "        try {\n" + 
+      { BehaviouralFeature bf = (BehaviouralFeature) eops.get(j);
+        String bfname = bf.getName();  
+           
+        if (bf.isAbstract() || bfnames.contains(bfname)) 
+        { continue; } 
+
+        bfnames.add(bfname); 
+
+        if (bf.isStatic() && bf.isMutatable())
+        { mutationTestsOp = mutationTestsOp + 
+          "        int[] " + es + "_" + bfname + "_counts = new int[100]; \n" +   
+          "        int[] " + es + "_" + bfname + "_totals = new int[100]; \n" +   
+          "        if (_" + es + "_instances > 0)\n" + 
+          "        { " + ename + " _ex = (" + ename + ") Controller.inst()." + es + ".get(0);\n" +  
           "          MutationTest." + bfname + "_mutation_tests(_ex," + es + "_" + bfname + "_counts, " + es + "_" + bfname + "_totals);\n" + 
-          "        } catch (Throwable _thrw) { }\n" + 
-          "      }\n" + 
-          "      System.out.println();\n";  
+          "        }\n" + 
+          "        System.out.println();\n";  
+        } 
+        else if (bf.isMutatable())
+        { mutationTestsOp = mutationTestsOp + 
+          "        int[] " + es + "_" + bfname + "_counts = new int[100]; \n" +   
+          "        int[] " + es + "_" + bfname + "_totals = new int[100]; \n" +   
+          "        for (int _i = 0; _i < _" + es + "_instances; _i++)\n" + 
+          "        { " + ename + " _ex = (" + ename + ") Controller.inst()." + es + ".get(_i);\n" +  
+          "          try {\n" + 
+          "            MutationTest." + bfname + "_mutation_tests(_ex," + es + "_" + bfname + "_counts, " + es + "_" + bfname + "_totals);\n" + 
+          "          } catch (Throwable _thrw) { }\n" + 
+          "        }\n" + 
+          "        System.out.println();\n"; 
+           
         } 
       }
+      mutationTestsOp = mutationTestsOp + 
+          "      }\n\n";
     } 
 
     String contname = "Controller"; 
@@ -1624,9 +1811,11 @@ public class GUIBuilder
                   indent + "{ int " + parnme + " = " + indexvar + ";\n";
             } 
             else if (typ.isEntity())
-            { String ename = tname.toLowerCase() + "s";
-              Entity ee = typ.getEntity(); 
-			   
+            { Entity ee = typ.getEntity(); 
+              if (ee.isAbstract())
+              { ee = ee.firstLeafSubclass(); } 
+              String ename = ee.getName().toLowerCase() + "s";
+                 
               Vector eeinvariants = new Vector(); 
               if (ee != null) 
               { eeinvariants.addAll(ee.getInvariants()); }
@@ -1656,6 +1845,70 @@ public class GUIBuilder
               }
 				  		  
             } // Check invariants of parnme. 
+            else if (typ.isMapType()) 
+            { Type elemTyp = typ.getElementType();
+              String collType = "HashMap"; 
+              if (elemTyp == null) { } 
+              else if ("int".equals(elemTyp.getName()))
+              { testscript = testscript + 
+                      indent + "\n" + 
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+				indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+				indent + "  if (" + indexvar + " < 5)\n" + 
+				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(intTestValues[" + indexvar + "])); }\n" + 
+				indent + "  if (" + indexvar + " < 3)\n" + 
+				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(intTestValues[" + indexvar + " + 2])); }\n";  
+              } 
+              else if ("long".equals(elemTyp.getName()) || 
+                       "double".equals(elemTyp.getName()) ||
+                       "boolean".equals(elemTyp.getName()))
+              { String etname = elemTyp.getName(); 
+                String wrapper = Named.capitalise(etname); 
+                testscript = testscript + 
+                      indent + "\n" + 
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+				indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+				indent + "  if (" + indexvar + " < 5)\n" + 
+				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new " + wrapper + "(" + etname + "TestValues[" + indexvar + "])); }\n" + 
+				indent + "  if (" + indexvar + " < 3)\n" + 
+				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new " + wrapper + "(" + etname + "TestValues[" + indexvar + " + 2])); }\n";  
+              } 
+              else if ("String".equals(elemTyp.getName()))
+              { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 4; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+                  indent + "  if (" + indexvar + " < 3)\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", stringTestValues[" + indexvar + "]); }\n" + 
+                  indent + "  if (" + indexvar + " < 2)\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", stringTestValues[" + indexvar + " + 1]); }\n";
+              } 
+              else if (elemTyp != null && elemTyp.isEnumeration())
+              { Vector vals = elemTyp.getValues(); 
+                int nvals = vals.size(); 
+                testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= " + nvals + "; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+                  indent + "  if (" + indexvar + " < " + nvals + ")\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(" + indexvar + ")); }\n"; 
+              }
+              else if (elemTyp.isEntity())
+              { String etname = elemTyp.getName(); 
+			    // Entity ee = elemTyp.getEntity(); 
+				
+                String eename = etname.toLowerCase() + "s"; 
+			    
+                testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "int _" + eename + "_instances = Controller.inst()." + etname + ".size();\n" +  
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= _" + eename + "_instances; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n";  
+                testscript = testscript + 
+                  indent + "  if (" + indexvar + " < Controller.inst()." + etname + ".size())\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", Controller.inst()." + eename + ".get(" + indexvar + ")); }\n";
+              }  
+            } 
             else if (typ.isCollectionType()) // Try with empty list, singleton & random list
             { Type elemTyp = typ.getElementType(); 
               if (elemTyp == null) { } 

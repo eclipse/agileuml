@@ -791,6 +791,15 @@ class BasicExpression extends Expression
     return res; 
   }
 
+  public Vector singleMutants()
+  { Vector res = new Vector(); 
+    if ("true".equals(data))
+    { res.add(new BasicExpression(false)); } 
+    else if ("false".equals(data))
+    { res.add(new BasicExpression(true)); } 
+    return res; 
+  } 
+
   public static boolean isMapAccess(Expression expr) 
   { if (expr instanceof BasicExpression)
     { BasicExpression be = (BasicExpression) expr; 

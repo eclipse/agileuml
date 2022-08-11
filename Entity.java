@@ -563,6 +563,13 @@ public class Entity extends ModelElement implements Comparable
     } 
   }
 
+  public Entity firstLeafSubclass()
+  { Vector subs = getActualLeafSubclasses();
+    if (subs.size() > 0) 
+    { return (Entity) subs.get(0); } 
+    return this; 
+  } 
+
   public void defineExtendedNonLocalFeatures()
   { nonlocalFeatures.clear(); 
     Vector asts = allDefinedAssociations(); 
@@ -4731,6 +4738,21 @@ public class Entity extends ModelElement implements Comparable
     res.addAll(operations); 
     if (superclass != null) 
     { res.addAll(superclass.allOperations()); } 
+    return res; 
+  } 
+
+  public Vector allDefinedOperations()
+  { Vector res = new Vector(); // BehaviouralFeature
+    res.addAll(operations); 
+    if (superclass != null) 
+    { Vector defops = superclass.allOperations(); 
+      for (int i = 0; i < defops.size(); i++) 
+      { BehaviouralFeature bf = (BehaviouralFeature) defops.get(i); 
+        if (bf.isStatic()) { } 
+        else 
+        { res.add(bf); }
+      } 
+    }  
     return res; 
   } 
  
@@ -15860,8 +15882,10 @@ public BehaviouralFeature designAbstractKillOp()
       Expression pre = con.succedent(); 
       pre.getParameterBounds(allattributes,bounds,aBounds);
 	  
-      Expression.identifyUpperBounds(allattributes,aBounds,upperBounds); 
-      Expression.identifyLowerBounds(allattributes,aBounds,lowerBounds); 
+      Expression.identifyUpperBounds(
+                         allattributes,aBounds,upperBounds); 
+      Expression.identifyLowerBounds(
+                         allattributes,aBounds,lowerBounds); 
     } 
 	
     for (int i = 0; i < allattributes.size(); i++) 
@@ -15873,7 +15897,8 @@ public BehaviouralFeature designAbstractKillOp()
 	   
       Vector newres = new Vector(); 
       Vector javatests = new Vector(); 
-      Vector testassignments = att.testCases(x,lowerBounds,upperBounds,javatests);
+      Vector testassignments = att.testCases(x,lowerBounds,
+                                     upperBounds,javatests);
  
       for (int j = 0; j < res.size(); j++) 
       { String tst = (String) res.get(j); 
@@ -15938,17 +15963,26 @@ public BehaviouralFeature designAbstractKillOp()
   public void generateOperationMutants()
   { Vector newoperations = new Vector(); 
 
-    for (int i = 0; i < operations.size(); i++) 
-    { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i);
-      if (bf.isAbstract() || bf.isDerived()) { } 
+    Vector allops = allDefinedOperations(); 
+
+    Vector bfnames = new Vector(); 
+
+    for (int i = 0; i < allops.size(); i++) 
+    {     
+      BehaviouralFeature bf = 
+                 (BehaviouralFeature) allops.get(i);
+      String bfname = bf.getName(); 
+      
+      if (bf.isAbstract() || bf.isDerived() || 
+          bfnames.contains(bfname)) { } 
       else 
-      { 
+      { bfnames.add(bfname);  
         if (bf.isMutatable())
-        { String bfname = bf.getName(); 
-          Expression post = bf.postcondition();
+        { Expression post = bf.postcondition();
  
           Vector mutants = post.singleMutants();
-          Vector mutantoperations = bf.formMutantOperations(mutants); 
+          Vector mutantoperations = 
+                bf.formMutantOperations(mutants); 
           newoperations.addAll(mutantoperations);  
         } 
       } 
@@ -15961,18 +15995,29 @@ public BehaviouralFeature designAbstractKillOp()
     String nme = getName(); 
     // String x = nme.toLowerCase() + "$x"; 
 
-    for (int i = 0; i < operations.size(); i++) 
-    { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i);
-      if (bf.isAbstract() || bf.isDerived()) { } 
+    Vector allops = allDefinedOperations();
+
+    System.out.println(">>> All operations of " + nme + " are " + allops);  
+
+    Vector opnames = new Vector(); 
+
+    for (int i = 0; i < allops.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) allops.get(i);
+      String bfname = bf.getName(); 
+        
+      if (bf.isAbstract() || bf.isDerived() || 
+          opnames.contains(bfname)) { } 
       else 
-      { Vector opTests = new Vector(); 
+      { opnames.add(bfname); 
+        Vector opTests = new Vector(); 
         Vector bfcases = bf.testCases(opTests); 
         res.addAll(bfcases);
-        String bfname = bf.getName(); 
         System.out.println(">>> There are " + opTests.size() + " generated tests for " + bfname);
         System.out.println(">>> A maximum of 100 tests will be included in MutationTest.java");
         System.out.println(); 
   
+        System.out.println(bf + " is mutatable: " + bf.isMutatable()); 
+
         if (bf.isMutatable())
         { 
           Vector mutantoperations = bf.getMutants();  
@@ -16009,8 +16054,10 @@ public BehaviouralFeature designAbstractKillOp()
     String nme = getName(); 
     // String x = nme.toLowerCase() + "$x"; 
 
-    for (int i = 0; i < operations.size(); i++) 
-    { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i);
+    Vector allops = allDefinedOperations();
+
+    for (int i = 0; i < allops.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) allops.get(i);
       if (bf.isAbstract() || bf.isDerived()) { } 
       else 
       { Vector opTests = new Vector(); 
@@ -16054,8 +16101,10 @@ public BehaviouralFeature designAbstractKillOp()
     String nme = getName(); 
     // String x = nme.toLowerCase() + "$x"; 
 
-    for (int i = 0; i < operations.size(); i++) 
-    { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i);
+    Vector allops = allDefinedOperations();
+
+    for (int i = 0; i < allops.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) allops.get(i);
       if (bf.isAbstract() || bf.isDerived()) { } 
       else 
       { Vector opTests = new Vector(); 
@@ -16098,8 +16147,10 @@ public BehaviouralFeature designAbstractKillOp()
     String nme = getName(); 
     // String x = nme.toLowerCase() + "$x"; 
 
-    for (int i = 0; i < operations.size(); i++) 
-    { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i);
+    Vector allops = allDefinedOperations();
+
+    for (int i = 0; i < allops.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) allops.get(i);
       if (bf.isAbstract() || bf.isDerived()) { } 
       else 
       { Vector opTests = new Vector(); 

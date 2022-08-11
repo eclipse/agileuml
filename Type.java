@@ -3482,7 +3482,7 @@ public class Type extends ModelElement
     { return "List"; } 
 
     if (nme.equals("Map"))
-    { return "Map"; } 
+    { return "HashMap"; } 
 
     if (nme.equals("Function"))
     { if (keyType != null && elementType != null)
@@ -3638,6 +3638,9 @@ public class Type extends ModelElement
       { return "HashMap<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
       else 
       { return "HashMap"; } 
+    
+      // if (sorted) 
+      // { tname = "TreeMap"; } 
     } 
 
     if (nme.equals("Function"))
@@ -4878,8 +4881,70 @@ public class Type extends ModelElement
       } 
     }
     else if (isEntity())
-    { String obj = t.toLowerCase() + "x_0"; 
-        // Identifier.nextIdentifier(t.toLowerCase()); 
+    { Entity ee = getEntity(); 
+      if (ee.isAbstract())
+      { ee = ee.firstLeafSubclass(); }
+      String ename = ee.getName(); 
+      String es = ename.toLowerCase() + "s"; 
+        
+      // String obj = "(" + ename + ") Controller.inst()." + es + ".get(0)";
+      String obj = ename.toLowerCase() + "x_0";  
+      res.add(obj); 
+    }
+    return res;   
+  } 
+
+  public Vector operationTestValues()
+  { Vector res = new Vector(); 
+  
+    String t = getName(); 
+    Vector vs = getValues(); 
+
+    if ("int".equals(t))
+    { res.add("0"); 
+      res.add("-1");
+      res.add("1"); 
+      res.add("2147483647");  // Integer.MAX_VALUE);
+      res.add("-2147483648"); // Integer.MIN_VALUE);
+    } 
+    else if ("long".equals(t))
+    { res.add("0"); 
+      res.add("-1");
+      res.add("1"); 
+      res.add("" + Long.MAX_VALUE);
+      res.add("" + Long.MIN_VALUE);
+    } 
+    else if ("double".equals(t))
+    { res.add("0"); 
+      res.add("-1");
+      res.add("1"); 
+      res.add("" + Double.MAX_VALUE);
+      res.add("" + Double.MIN_VALUE);
+    } 
+    else if ("boolean".equals(t))
+    { res.add("true"); 
+      res.add("false");
+    }
+    else if ("String".equals(t))
+    { res.add("\"\""); 
+      res.add("\" abc_XZ \"");
+      res.add("\"#�$* &~@':\"");
+    }
+    else if (vs != null && vs.size() > 0) 
+    { for (int j = 0; j < vs.size(); j++)   
+      { String v0 = (String) vs.get(j); 
+        res.add(v0); 
+      } 
+    }
+    else if (isEntity())
+    { Entity ee = getEntity(); 
+      if (ee.isAbstract())
+      { ee = ee.firstLeafSubclass(); }
+      String ename = ee.getName(); 
+      String es = ename.toLowerCase() + "s"; 
+        
+      String obj = "(" + ename + ") Controller.inst()." + es + ".get(0)";
+      // String obj = ename.toLowerCase() + "x_0";  
       res.add(obj); 
     }
     return res;   

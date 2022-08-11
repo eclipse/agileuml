@@ -765,7 +765,6 @@ public class BehaviouralFeature extends ModelElement
       res.add(bfclone); 
     } 
 
-
     if (res.size() == 0 && activity != null) 
     { Vector statmuts = activity.singleMutants(); 
       for (int i = 0; i < statmuts.size(); i++) 
@@ -1093,7 +1092,16 @@ public class BehaviouralFeature extends ModelElement
         // if a parameter, give it a declaration
         Attribute att = (Attribute) ModelElement.lookupByName(par,parameters); 
         if (att != null) 
-        { res = res + "    " + att.getType().getJava() + " " + par + " " + rem + "\n"; } 
+        { Type atttype = att.getType(); 
+
+          if (atttype.isAbstractEntity())
+          { Entity absent = atttype.getEntity(); 
+            Entity leafent = absent.firstLeafSubclass(); 
+            res = res + "    " + leafent.getName() + " " + par + " " + rem + "\n";
+          } 
+          else 
+          { res = res + "    " + atttype.getJava() + " " + par + " " + rem + "\n"; }  
+        } 
         else // it is a feature of the object
         { res = res + "    _self." + par + " " + rem + "\n"; }
       } 
@@ -1113,7 +1121,16 @@ public class BehaviouralFeature extends ModelElement
         // if a parameter, give it a declaration
         Attribute att = (Attribute) ModelElement.lookupByName(par,parameters); 
         if (att != null) 
-        { res = res + "    " + att.getType().getJava6() + " " + par + " " + rem + "\n"; } 
+        { Type atttype = att.getType(); 
+
+          if (atttype.isAbstractEntity())
+          { Entity absent = atttype.getEntity(); 
+            Entity leafent = absent.firstLeafSubclass(); 
+            res = res + "    " + leafent.getName() + " " + par + " " + rem + "\n";
+          } 
+          else 
+          { res = res + "    " + atttype.getJava6() + " " + par + " " + rem + "\n"; }
+        }   
         else // it is a feature of the object
         { res = res + "    _self." + par + " " + rem + "\n"; }
       } 
@@ -1133,7 +1150,16 @@ public class BehaviouralFeature extends ModelElement
         // if a parameter, give it a declaration
         Attribute att = (Attribute) ModelElement.lookupByName(par,parameters); 
         if (att != null) 
-        { res = res + "    " + att.getType().getJava7() + " " + par + " " + rem + "\n"; } 
+        { Type atttype = att.getType(); 
+
+          if (atttype.isAbstractEntity())
+          { Entity absent = atttype.getEntity(); 
+            Entity leafent = absent.firstLeafSubclass(); 
+            res = res + "    " + leafent.getName() + " " + par + " " + rem + "\n";
+          } 
+          else 
+          { res = res + "    " + atttype.getJava7() + " " + par + " " + rem + "\n"; }  
+        } 
         else // it is a feature of the object
         { res = res + "    _self." + par + " " + rem + "\n"; }
       } 
@@ -1153,7 +1179,16 @@ public class BehaviouralFeature extends ModelElement
         // if a parameter, give it a declaration
         Attribute att = (Attribute) ModelElement.lookupByName(par,parameters); 
         if (att != null) 
-        { res = res + "    " + att.getType().getJava8() + " " + par + " " + rem + "\n"; } 
+        { Type atttype = att.getType(); 
+
+          if (atttype.isAbstractEntity())
+          { Entity absent = atttype.getEntity(); 
+            Entity leafent = absent.firstLeafSubclass(); 
+            res = res + "    " + leafent.getName() + " " + par + " " + rem + "\n";
+          } 
+          else 
+          { res = res + "    " + atttype.getJava8() + " " + par + " " + rem + "\n"; }  
+        } 
         else // it is a feature of the object
         { res = res + "    _self." + par + " " + rem + "\n"; }
       } 

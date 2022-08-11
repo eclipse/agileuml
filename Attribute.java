@@ -6053,29 +6053,58 @@ public String iosDbiExtractOp(String ent, int i)
       } 
     }
     else if (type.isEntity())
-    { String obj = t.toLowerCase() + "x_0"; 
-        // Identifier.nextIdentifier(t.toLowerCase()); 
-      Entity ee = type.getEntity(); 
+    { Entity ee = type.getEntity();
+      if (ee.isAbstract())
+      { ee = ee.firstLeafSubclass(); }  
       String ename = ee.getName(); 
       String es = ename.toLowerCase() + "s"; 
-      String decl = nme + " = " + obj; 
+      String obj = "(" + ename + ") Controller.inst()." + 
+                   es + ".get(0)"; 
+      String decl = nme + " = " + ename.toLowerCase() + "x_0"; 
       res.add(decl);
       opTests.add(attname + " = (" + ename + ") Controller.inst()." + es + ".get(0);");  
     }  
+    else if (type.isMapType() && 
+             "Map".equals(type.getName()) && 
+              elementType != null)
+    { Type elemT = getElementType(); 
+      Vector testVals = elemT.testValues(); 
+      Vector optestVals = elemT.operationTestValues();  
+      res.add(""); 
+      opTests.add(attname + " = new HashMap();"); 
+	   
+	  // Singletons: 
+      for (int p = 0; p < testVals.size() && p < 3; p++) 
+      { String tv = (String) optestVals.get(p); 
+        // res.add(tv + " : " + nme); 
+        opTests.add(attname + " = SystemTypes.Set.includingMap(new HashMap(), \"" + p + "\", " + tv + ");"); 
+      }
+	  
+	  // Triples: 
+      for (int p = 0; p+2 < testVals.size() && p < 3; p++) 
+      { String tv = (String) optestVals.get(p); 
+        String tv1 = (String) optestVals.get(p+1);
+        String tv2 = (String) optestVals.get(p+2);  
+        // res.add(tv + " : " + nme + "\n" + tv1 + " : " + nme + "\n" + tv2 + " : " + nme);
+        opTests.add(attname + " = SystemTypes.Set.includingMap(SystemTypes.Set.includingMap(SystemTypes.Set.includingMap(new HashMap(), \"" + p + "\", " + tv + "), \"" + (p+1) + "\", " + tv1 + "), \"" + (p+2) + "\", " + tv2 + ");"); 
+      }
+    } 
     else if (type.isCollection() && 
              ("Set".equals(type.getName()) || 
               "Sequence".equals(type.getName())) && 
               elementType != null)
     { Type elemT = getElementType(); 
       Vector testVals = elemT.testValues(); 
+      Vector optestVals = elemT.operationTestValues(); 
       res.add(""); 
       opTests.add(attname + " = new Vector();"); 
 	   
 	  // Singletons: 
       for (int p = 0; p < testVals.size() && p < 3; p++) 
-      { String tv = (String) testVals.get(p); 
+      { String tv = (String) testVals.get(p);
+        String opv = (String) optestVals.get(p);  
         res.add(tv + " : " + nme); 
-        opTests.add(attname + " = (new SystemTypes.Set()).add(" + tv + ").getElements();"); 
+        opTests.add(attname + " = (new SystemTypes.Set()).add(" + opv + ").getElements();"); 
       }
 	  
 	  // Triples: 
@@ -6083,8 +6112,12 @@ public String iosDbiExtractOp(String ent, int i)
       { String tv = (String) testVals.get(p); 
         String tv1 = (String) testVals.get(p+1);
         String tv2 = (String) testVals.get(p+2);  
+        String opv = (String) optestVals.get(p);  
+        String opv1 = (String) optestVals.get(p+1);  
+        String opv2 = (String) optestVals.get(p+2);
+  
         res.add(tv + " : " + nme + "\n" + tv1 + " : " + nme + "\n" + tv2 + " : " + nme);
-        opTests.add(attname + " = (new SystemTypes.Set()).add(" + tv + ").add(" + tv1 + ").add(" + tv2 + ").getElements();"); 
+        opTests.add(attname + " = (new SystemTypes.Set()).add(" + opv + ").add(" + opv1 + ").add(" + opv2 + ").getElements();"); 
       }
     } 
  
@@ -6268,12 +6301,38 @@ public String iosDbiExtractOp(String ent, int i)
     { String obj = t.toLowerCase() + "x_0"; 
         // Identifier.nextIdentifier(t.toLowerCase()); 
       Entity ee = type.getEntity(); 
+      if (ee.isAbstract())
+      { ee = ee.firstLeafSubclass(); }  
       String ename = ee.getName(); 
       String es = ename.toLowerCase() + "s"; 
       String decl = nme + " = " + obj; 
       res.add(decl);
       opTests.add(attname + " = (" + ename + ") Controller.inst()." + es + ".get(0);");  
     }  
+    else if (type.isMapType() && 
+             "Map".equals(type.getName()) && 
+              elementType != null)
+    { Type elemT = getElementType(); 
+      Vector testVals = elemT.testValues(); 
+      res.add(""); 
+      opTests.add(attname + " = new HashMap();"); 
+	   
+	  // Singletons: 
+      for (int p = 0; p < testVals.size() && p < 3; p++) 
+      { String tv = (String) testVals.get(p); 
+        res.add(tv + " : " + nme); 
+        opTests.add(attname + " = SystemTypes.Set.includingMap(new HashMap(), \"" + p + "\", " + tv + ");"); 
+      }
+	  
+	  // Triples: 
+      for (int p = 0; p+2 < testVals.size() && p < 3; p++) 
+      { String tv = (String) testVals.get(p); 
+        String tv1 = (String) testVals.get(p+1);
+        String tv2 = (String) testVals.get(p+2);  
+        res.add(tv + " : " + nme + "\n" + tv1 + " : " + nme + "\n" + tv2 + " : " + nme);
+        opTests.add(attname + " = SystemTypes.Set.includingMap(SystemTypes.Set.includingMap(SystemTypes.Set.includingMap(new HashMap(), \"" + p + "\", " + tv + "), \"" + (p+1) + "\", " + tv1 + "), \"" + (p+2) + "\", " + tv2 + ");"); 
+      }
+    } 
     else if (type.isCollection() && 
              "Sequence".equals(type.getName()) && 
               elementType != null)
@@ -6505,12 +6564,39 @@ public String iosDbiExtractOp(String ent, int i)
     { String obj = t.toLowerCase() + "x_0"; 
         // Identifier.nextIdentifier(t.toLowerCase()); 
       Entity ee = type.getEntity(); 
+      if (ee.isAbstract())
+      { ee = ee.firstLeafSubclass(); }  
       String ename = ee.getName(); 
       String es = ename.toLowerCase() + "s"; 
       String decl = nme + " = " + obj; 
       res.add(decl);
       opTests.add(attname + " = (" + ename + ") Controller.inst()." + es + ".get(0);");  
     }  
+    else if (type.isMapType() && 
+             "Map".equals(type.getName()) && 
+              elementType != null)
+    { Type elemT = getElementType(); 
+      Vector testVals = elemT.testValues(); 
+      res.add(""); 
+      String j7type = elemT.typeWrapperJava7(); 
+      opTests.add(attname + " = new HashMap<String," + j7type + ">();"); 
+	   
+	  // Singletons: 
+      for (int p = 0; p < testVals.size() && p < 3; p++) 
+      { String tv = (String) testVals.get(p); 
+        res.add(tv + " : " + nme); 
+        opTests.add(attname + " = SystemTypes.Ocl.includingMap(new HashMap<String," + j7type + ">(), \"" + p + "\", " + tv + ");"); 
+      }
+	  
+	  // Triples: 
+      for (int p = 0; p+2 < testVals.size() && p < 3; p++) 
+      { String tv = (String) testVals.get(p); 
+        String tv1 = (String) testVals.get(p+1);
+        String tv2 = (String) testVals.get(p+2);  
+        res.add(tv + " : " + nme + "\n" + tv1 + " : " + nme + "\n" + tv2 + " : " + nme);
+        opTests.add(attname + " = SystemTypes.Ocl.includingMap(SystemTypes.Ocl.includingMap(SystemTypes.Ocl.includingMap(new HashMap<String," + j7type + ">(), \"" + p + "\", " + tv + "), \"" + (p+1) + "\", " + tv1 + "), \"" + (p+2) + "\", " + tv2 + ");"); 
+      }
+    } 
     else if (type.isCollection() && 
              "Sequence".equals(type.getName()) && 
               elementType != null)
@@ -6743,12 +6829,39 @@ public String iosDbiExtractOp(String ent, int i)
     { String obj = t.toLowerCase() + "x_0"; 
         // Identifier.nextIdentifier(t.toLowerCase()); 
       Entity ee = type.getEntity(); 
+      if (ee.isAbstract())
+      { ee = ee.firstLeafSubclass(); }  
       String ename = ee.getName(); 
       String es = ename.toLowerCase() + "s"; 
       String decl = nme + " = " + obj; 
       res.add(decl);
       opTests.add(attname + " = " + ename + "." + ename + "_allInstances.get(0);");  
     }  
+    else if (type.isMapType() && 
+             "Map".equals(type.getName()) && 
+              elementType != null)
+    { Type elemT = getElementType(); 
+      Vector testVals = elemT.testValues(); 
+      res.add(""); 
+      String j7type = elemT.typeWrapperJava7(); 
+      opTests.add(attname + " = new HashMap<String," + j7type + ">();"); 
+	   
+	  // Singletons: 
+      for (int p = 0; p < testVals.size() && p < 3; p++) 
+      { String tv = (String) testVals.get(p); 
+        res.add(tv + " : " + nme); 
+        opTests.add(attname + " = Ocl.includingMap(new HashMap<String," + j7type + ">(), \"" + p + "\", " + tv + ");"); 
+      }
+	  
+	  // Triples: 
+      for (int p = 0; p+2 < testVals.size() && p < 3; p++) 
+      { String tv = (String) testVals.get(p); 
+        String tv1 = (String) testVals.get(p+1);
+        String tv2 = (String) testVals.get(p+2);  
+        res.add(tv + " : " + nme + "\n" + tv1 + " : " + nme + "\n" + tv2 + " : " + nme);
+        opTests.add(attname + " = Ocl.includingMap(Ocl.includingMap(Ocl.includingMap(new HashMap<String," + j7type + ">(), \"" + p + "\", " + tv + "), \"" + (p+1) + "\", " + tv1 + "), \"" + (p+2) + "\", " + tv2 + ");"); 
+      }
+    } 
     else if (type.isCollection() && 
              "Sequence".equals(type.getName()) && 
               elementType != null)
