@@ -812,6 +812,10 @@ class BinaryExpression extends Expression
     { res.add("->intersection"); }
     else if ("->intersection".equals(op))
     { res.add("->union"); }
+    else if ("->unionAll".equals(op))
+    { res.add("->intersectAll"); }
+    else if ("->intersectAll".equals(op))
+    { res.add("->unionAll"); }
     else if ("->append".equals(op))
     { res.add("->prepend"); }
     else if ("->prepend".equals(op))
@@ -828,6 +832,24 @@ class BinaryExpression extends Expression
     { res.add("->reject"); }
     else if ("->reject".equals(op))
     { res.add("->select"); }
+    else if ("->selectMinimals".equals(op))
+    { res.add("->selectMaximals"); }
+    else if ("->selectMaximals".equals(op))
+    { res.add("->selectMinimals"); }
+    else if ("|".equals(op))
+    { res.add("|R"); }
+    else if ("|R".equals(op))
+    { res.add("|"); }
+    else if ("|unionAll".equals(op))
+    { res.add("|intersectAll"); }
+    else if ("|intersectAll".equals(op))
+    { res.add("|unionAll"); }
+    else if ("->exists".equals(op))
+    { res.add("->forAll"); }
+    else if ("->forAll".equals(op) || "->exists1".equals(op))
+    { res.add("->exists"); }
+    else if ("!".equals(op) || "#1".equals(op))
+    { res.add("#"); }
     else if ("->before".equals(op))
     { res.add("->after"); }
     else if ("->after".equals(op))
@@ -839,7 +861,13 @@ class BinaryExpression extends Expression
     else if ("->restrict".equals(op))
     { res.add("->antirestrict"); } 
     else if ("->antirestrict".equals(op))
-    { res.add("->restrict"); } 
+    { res.add("->restrict"); }
+    else if ("/".equals(op))
+    { res.add("*"); }  
+    else if ("mod".equals(op))
+    { res.add("div"); }
+    else if ("div".equals(op))
+    { res.add("mod"); }  
     else if (left.isNumeric() && right.isNumeric() && op.equals("+"))
     { res.add("-"); 
       res.add("*"); 
@@ -898,12 +926,73 @@ class BinaryExpression extends Expression
   }
 
   public Vector singleMutants()
-  { Vector lms = left.singleMutants(); 
-    Vector rms = right.singleMutants(); 
-    Vector res = new Vector(); 
+  { Vector rms = right.singleMutants(); 
     Vector mutantOps = mutantOperators(operator);
     if ("result".equals(left + "") && "=".equals(operator))
     { mutantOps = new Vector(); }  
+    Vector res = new Vector(); 
+    
+    if ("#".equals(operator) || "!".equals(operator) || 
+        "#1".equals(operator) || "|C".equals(operator) || 
+        "|".equals(operator) || "|R".equals(operator) || 
+        "|A".equals(operator) || "#LC".equals(operator) || 
+        "|intersectAll".equals(operator) ||
+        "|unionAll".equals(operator) ||
+        "|selectMinimals".equals(operator) ||
+        "|selectMaximals".equals(operator) ||
+        "|concatenateAll".equals(operator) ||
+        "|sortedBy".equals(operator))
+    { BinaryExpression dom = (BinaryExpression) left; 
+      Expression var = dom.left; 
+      Expression lhs = dom.right;
+ 
+      Vector leftmuts = lhs.singleMutants();
+
+      for (int i = 0; i < leftmuts.size(); i++) 
+      { Expression lm = (Expression) leftmuts.get(i); 
+        BinaryExpression mutant = 
+                   (BinaryExpression) this.clone(); 
+        mutant.operator = operator; 
+        mutant.left = new BinaryExpression(":", var, lm); 
+        mutant.right = right;  
+        if (VectorUtil.containsEqualString(mutant + "",res)) { } 
+        else 
+        { res.add(mutant); }  
+      }
+
+      for (int i = 0; i < rms.size(); i++) 
+      { Expression rm = (Expression) rms.get(i); 
+        BinaryExpression mutant = 
+                   (BinaryExpression) this.clone(); 
+        mutant.operator = operator; 
+        mutant.left = left; 
+        mutant.right = rm;  
+        if (VectorUtil.containsEqualString(mutant + "",res)) { } 
+        else 
+        { res.add(mutant); }  
+      }
+ 
+      if (mutantOps.size() > 0) 
+      { String mutop = (String) mutantOps.get(0); 
+        BinaryExpression mut = (BinaryExpression) this.clone();
+        mut.left = left; 
+        mut.right = right;
+        mut.operator = mutop;  
+        if (VectorUtil.containsEqualString(mut + "",res)) { } 
+        else 
+        { res.add(mut); }  
+      } 
+
+      Vector selfs = new Vector(); 
+      selfs.add(this); 
+      res.removeAll(selfs); 
+    
+      return res; 
+    } 
+ 
+
+    Vector lms = left.singleMutants(); 
+    
 
     if ("->compareTo".equals(operator))
     { for (int i = 0; i < lms.size(); i++) 
@@ -1012,7 +1101,7 @@ class BinaryExpression extends Expression
       return res; 
     }  
 
-    if (operator.equals("#"))
+    if (operator.equals("#") && left instanceof BinaryExpression)
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = "" + range; 
       if (range.needsBracket)
@@ -1021,7 +1110,7 @@ class BinaryExpression extends Expression
       basicString = rangestring + "->exists( " + 
              ((BinaryExpression) left).left + " | " + right + " )";
     }
-    else if ("#LC".equals(operator))
+    else if ("#LC".equals(operator) && left instanceof BinaryExpression)
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = "" + range; 
       if (range.needsBracket)
@@ -1030,7 +1119,7 @@ class BinaryExpression extends Expression
       basicString = rangestring + "->existsLC( " + 
              ((BinaryExpression) left).left + " | " + right + " )";
     }
-    else if (operator.equals("#1"))
+    else if (operator.equals("#1") && left instanceof BinaryExpression)
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = "" + range; 
       if (range.needsBracket)
@@ -1038,7 +1127,7 @@ class BinaryExpression extends Expression
       basicString = rangestring + "->exists1( " + 
              ((BinaryExpression) left).left + " | " + right + " )";
     } 
-    else if (operator.equals("!"))
+    else if (operator.equals("!") && left instanceof BinaryExpression)
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = "" + range; 
       if (range.needsBracket)
@@ -1046,7 +1135,7 @@ class BinaryExpression extends Expression
       basicString = rangestring + "->forAll( " + 
              ((BinaryExpression) left).left + " | " + right + " )";
     } 
-    else if (operator.equals("|"))
+    else if (operator.equals("|") && left instanceof BinaryExpression)
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = "" + range; 
       if (range.needsBracket)
@@ -1055,7 +1144,7 @@ class BinaryExpression extends Expression
       basicString = rangestring + "->select( " + 
              ((BinaryExpression) left).left + " | " + right + " )";
     }
-    else if (operator.equals("|C"))
+    else if (operator.equals("|C") && left instanceof BinaryExpression)
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = "" + range; 
       if (range.needsBracket)
@@ -1064,7 +1153,7 @@ class BinaryExpression extends Expression
       basicString = rangestring + "->collect( " + 
              ((BinaryExpression) left).left + " | " + right + " )";
     }
-    else if (operator.equals("|A"))
+    else if (operator.equals("|A") && left instanceof BinaryExpression)
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = "" + range; 
       if (range.needsBracket)
@@ -1073,7 +1162,7 @@ class BinaryExpression extends Expression
       basicString = rangestring + "->any( " + 
              ((BinaryExpression) left).left + " | " + right + " )";
     }
-    else if (operator.equals("|R"))
+    else if (operator.equals("|R") && left instanceof BinaryExpression)
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = "" + range; 
       if (range.needsBracket)
@@ -1082,7 +1171,7 @@ class BinaryExpression extends Expression
       basicString = rangestring + "->reject( " + 
              ((BinaryExpression) left).left + " | " + right + " )";
     }
-    else if (operator.equals("|selectMinimals"))
+    else if (operator.equals("|selectMinimals") && left instanceof BinaryExpression)
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = "" + range; 
       if (range.needsBracket)
@@ -1091,7 +1180,7 @@ class BinaryExpression extends Expression
       basicString = rangestring + "->selectMinimals( " + 
              ((BinaryExpression) left).left + " | " + right + " )";
     }
-    else if (operator.equals("|selectMaximals"))
+    else if (operator.equals("|selectMaximals") && left instanceof BinaryExpression)
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = "" + range; 
       if (range.needsBracket)
@@ -1100,7 +1189,7 @@ class BinaryExpression extends Expression
       basicString = rangestring + "->selectMaximals( " + 
              ((BinaryExpression) left).left + " | " + right + " )";
     }
-    else if (operator.equals("|unionAll"))
+    else if (operator.equals("|unionAll") && left instanceof BinaryExpression)
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = "" + range; 
       if (range.needsBracket)
@@ -1109,7 +1198,7 @@ class BinaryExpression extends Expression
       basicString = rangestring + "->unionAll( " + 
              ((BinaryExpression) left).left + " | " + right + " )";
     }
-    else if (operator.equals("|intersectAll"))
+    else if (operator.equals("|intersectAll") && left instanceof BinaryExpression)
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = "" + range; 
       if (range.needsBracket)
@@ -1118,7 +1207,7 @@ class BinaryExpression extends Expression
       basicString = rangestring + "->intersectAll( " + 
              ((BinaryExpression) left).left + " | " + right + " )";
     }
-    else if (operator.equals("|concatenateAll"))
+    else if (operator.equals("|concatenateAll") && left instanceof BinaryExpression)
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = "" + range; 
       if (range.needsBracket)
@@ -1127,7 +1216,7 @@ class BinaryExpression extends Expression
       basicString = rangestring + "->concatenateAll( " + 
              ((BinaryExpression) left).left + " | " + right + " )";
     }
-    else if (operator.equals("|sortedBy"))
+    else if (operator.equals("|sortedBy") && left instanceof BinaryExpression)
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = "" + range; 
       if (range.needsBracket)
@@ -1136,7 +1225,7 @@ class BinaryExpression extends Expression
       basicString = rangestring + "->sortedBy( " + 
              ((BinaryExpression) left).left + " | " + right + " )";
     }
-    else if (operator.equals("|isUnique"))
+    else if (operator.equals("|isUnique") && left instanceof BinaryExpression)
     { Expression range = ((BinaryExpression) left).right; 
       String rangestring = "" + range; 
       if (range.needsBracket)
@@ -2663,7 +2752,7 @@ class BinaryExpression extends Expression
   { if (operator.equals("#") || operator.equals("|") || operator.equals("|A") ||
         operator.equals("|C") || operator.equals("#LC") ||
         operator.equals("|R") || operator.equals("#1") || operator.equals("!") ||
-		"|selectMinimals".equals(operator) || "|selectMaximals".equals(operator) || 
+        "|selectMinimals".equals(operator) || "|selectMaximals".equals(operator) || 
         "|unionAll".equals(operator) || "|intersectAll".equals(operator) ||
         "|concatenateAll".equals(operator))
     { Vector ss = right.getVariableUses(); 
@@ -11526,7 +11615,7 @@ public boolean conflictsWithIn(String op, Expression el,
     }
     else
     { String qf = queryForm(env,local); 
-	  return "if (" + qf + ") { } else { System.err.println(\"Assertion " + this + " fails\"); }\n";  
+      return "if (" + qf + ") { } else { System.err.println(\"Assertion fails:\"); System.err.println(this); }\n";  
 	}
   }
 
@@ -11600,7 +11689,7 @@ public String updateFormIn(String language, java.util.Map env, Expression var, b
   }
   else
   { String qf = queryForm(env,local); 
-    return "if (" + qf + ") { } else { System.err.println(\"Assertion " + this + " fails\"); }\n";  
+    return "if (" + qf + ") { } else { System.err.println(\"Assertion fails:\"); System.err.println(this); }\n";  
   }
 }
 
@@ -12662,7 +12751,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     }
     else
     { String qf = queryFormJava6(env,local); 
-      return "if (" + qf + ") { } else { System.err.println(\"Assertion " + this + " fails\"); }\n";  
+      return "if (" + qf + ") { } else { System.err.println(\"Assertion fails:\");  System.err.println(this); }\n";  
     }
 
     // else
@@ -12842,7 +12931,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     }
     else
     { String qf = queryFormJava7(env,local); 
-      return "if (" + qf + ") { } else { System.err.println(\"Assertion " + this + " fails\"); }\n";  
+      return "if (" + qf + ") { } else { System.err.println(\"Assertion fails: \"); System.err.println(this); }\n";  
     }
 
     // else

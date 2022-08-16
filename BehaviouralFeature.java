@@ -752,8 +752,23 @@ public class BehaviouralFeature extends ModelElement
   public Vector getMutants()
   { return myMutants; } 
 
+  public Vector getMutants(Vector allops)
+  { Vector res = new Vector(); 
+    for (int i = 0; i < myMutants.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) myMutants.get(i); 
+      String nme = bf.getName(); 
+      if (ModelElement.lookupByName(nme,allops) != null)
+      { res.add(bf); }
+    } 
+    return res; 
+  } // only mutants that actually are in the class
+ 
+
   public Vector formMutantOperations(Vector posts) 
-  { Vector res = new Vector();
+  { if (myMutants.size() > 0) 
+    { return myMutants; } // cached result. 
+
+    Vector res = new Vector();
     String nme = getName(); 
  
     for (int i = 0; i < posts.size(); i++) 
@@ -775,7 +790,6 @@ public class BehaviouralFeature extends ModelElement
         bfclone.setDerived(true); 
         res.add(bfclone); 
       }
-
     }  
 
     JOptionPane.showMessageDialog(null, "Mutant versions of " + getName() + " are: " + res, 
@@ -3649,7 +3663,7 @@ public class BehaviouralFeature extends ModelElement
   } 
 
   public String getKM3()
-  { if (derived) { return ""; } 
+  { // if (derived) { return ""; } 
     String res = ""; 
 
     if (isQuery())

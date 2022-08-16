@@ -1177,6 +1177,8 @@ public class Compiler2
          "OclType".equals(typ) || "OclDate".equals(typ) ||
          "OclAttribute".equals(typ) || 
          "OclOperation".equals(typ) ||
+         "OclDatasource".equals(typ) ||
+         "SQLStatement".equals(typ) ||
          "OclIterator".equals(typ) || 
          "OclFile".equals(typ) || "OclRandom".equals(typ) ||
          "OclProcess".equals(typ) || 
@@ -4853,7 +4855,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
                 "pre: expression\npost: expression\nactivity: statement;\n\n" + 
                 "Or with a generic type parameter name T:\n" + 
                 "operation name<T>(parameters) : Type\n" + 
-                "pre: expression\npost: expression\nactivity: statement;\n"; 
+                "pre: expression\npost: expression\nactivity: statement;\n\n" + 
+        "Operation overloading should be avoided.\n"; 
       return "operation"; 
     } 
     
@@ -5146,7 +5149,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
  
       if ("static".startsWith(st)) 
       { mess[0] = "static attribute or operation, ie., of class scope. Eg:\n" + "static attribute nobjs : int;\n" + 
-              "static query pi() : double\npre: true post: result = 3.14159265\n"; 
+              "static query pi() : double\npre: true post: result = 3.14159265\n\n" + 
+              "Static operations are not inherited. Define in concrete classes where possible.\n"; 
         return "static"; 
       } 
 

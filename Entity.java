@@ -15871,7 +15871,11 @@ public BehaviouralFeature designAbstractKillOp()
 	
     defineLocalFeatures(); 
 
-    Vector allattributes = localFeatures; 
+    Vector allattributes = localFeatures;
+
+    System.out.println(">>> Local features of " + nme + " are: " + allattributes); 
+    System.out.println(); 
+ 
     java.util.Map upperBounds = new java.util.HashMap(); 
     java.util.Map lowerBounds = new java.util.HashMap(); 
     Vector bounds = new Vector(); 
@@ -15929,7 +15933,7 @@ public BehaviouralFeature designAbstractKillOp()
 	res.addAll(newres); 
 	
 	int nmodels = newres.size(); 
-	System.out.println(">>> Number of models for " + nme + " =  " + nmodels);
+	System.out.println(">>> Number of models for Class " + nme + " =  " + nmodels);
       
 	// But identity attributes should get different values in the different models
 	
@@ -15937,25 +15941,35 @@ public BehaviouralFeature designAbstractKillOp()
     { Attribute att = (Attribute) allattributes.get(i);
       if (att.isIdentity() && allattributes.size() > 1) 
       { res.clear(); 
-        String attnme = att.getName(); // assumed to be a string or int
+        String attnme = att.getName(); // assumed to be a string or entity or int
         for (int j = 0; j < newres.size(); j++) 
         { String model = (String) newres.get(j); 
           String yj = y + j; 
           String mod1 = model.replace(x,yj); // replaceAll(x,yj);  
-         // System.out.println(">>>>>>>> Replaced model= " + mod1);
+          // System.out.println(">>>>>>>> Replaced model= " + mod1);
            
           int rand = j; // (int) (nmodels*Math.random());
           String attassign = yj + "." + attnme + " = " + rand;
           if (att.isNumeric()) { }
-          else 
+          else if (att.hasEntityType())
+          { Entity et = att.getEntityType(); 
+            if (et == null) 
+            { continue; } 
+            if (et.isAbstract())
+            { et = et.firstLeafSubclass(); } 
+            String etname = et.getName().toLowerCase() + "x_" + j;
+            attassign = yj + "." + attnme + " = " + etname;
+          }  
+          else if (att.isString())  
           { attassign = yj + "." + attnme + " = \"" + j + "\""; }
-            String model1 = mod1 + "\n" + attassign;
-            res.add(model1);  
-          }
-          newres.clear(); 
-          res.addAll(newres); 
+          String model1 = mod1 + "\n" + attassign;
+          res.add(model1);  
         }
-	}
+        newres.clear(); 
+          // res.addAll(newres);
+        newres.addAll(res);  
+      }
+    }
     
     return res; 
   }
@@ -15976,9 +15990,9 @@ public BehaviouralFeature designAbstractKillOp()
       if (bf.isAbstract() || bf.isDerived() || 
           bfnames.contains(bfname)) { } 
       else 
-      { bfnames.add(bfname);  
-        if (bf.isMutatable())
-        { Expression post = bf.postcondition();
+      { if (bf.isMutatable())
+        { bfnames.add(bfname);  
+          Expression post = bf.postcondition();
  
           Vector mutants = post.singleMutants();
           Vector mutantoperations = 
@@ -16020,7 +16034,7 @@ public BehaviouralFeature designAbstractKillOp()
 
         if (bf.isMutatable())
         { 
-          Vector mutantoperations = bf.getMutants();  
+          Vector mutantoperations = bf.getMutants(allops);  
           Vector testcalls = new Vector(); 
 
           Vector mutationTests = bf.formMutantCalls(nme,mutantoperations,bfcases,opTests,testcalls); 

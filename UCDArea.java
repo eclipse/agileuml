@@ -24960,7 +24960,7 @@ public void produceCUI(PrintWriter out)
                               new BufferedWriter(
                                 new FileWriter(testsdirName + "/" + testfile)));
 
-        System.out.println("*** Test cases for entity " + e.getName() + " written to: " + testsdirName);
+        System.out.println("*** " + tests.size() + " Test cases for entity " + e.getName() + " written to: " + testsdirName);
  
         for (int j = 0; j < tests.size(); j++) 
         { String tst = (String) tests.get(j); 

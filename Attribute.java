@@ -1058,6 +1058,19 @@ public class Attribute extends ModelElement
     return type.isEntity(); 
   } 
 
+
+  public boolean hasEntityType()
+  { if (type == null) 
+    { return false; } 
+    return type.isEntity(); 
+  } 
+
+  public Entity getEntityType()
+  { if (type == null) 
+    { return null; } 
+    return type.getEntity(); 
+  } 
+
   public boolean isEntityType()
   { if (type == null) 
     { return false; } 
