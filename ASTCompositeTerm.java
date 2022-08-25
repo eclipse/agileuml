@@ -7678,6 +7678,8 @@ public class ASTCompositeTerm extends ASTTerm
       Expression cmp = (Expression) args.get(3); 
 
       // col->sequenceRange(n)->sort()->asReference()
+      // OclComparator.sortWithFunction(col->sequenceRange(n),
+      //                                cmp)->asReference()
 
       Expression colseq = 
         new BinaryExpression("->sequenceRange", col, n); 
@@ -13210,8 +13212,14 @@ public class ASTCompositeTerm extends ASTTerm
         obj.isSequence() && 
         pars.size() == 1)
     { Expression par1 = (Expression) pars.get(0); 
+      // Expression rhs = 
+      //  new BinaryExpression("->sortedWith", obj, par1);
+      Vector spars = new Vector(); 
+      spars.add(obj); 
+      spars.add(par1); 
       Expression rhs = 
-        new BinaryExpression("->sortedWith", obj, par1);
+        BasicExpression.newStaticCallBasicExpression("sortWith", 
+          "OclComparable", spars); 
       rhs.setType(obj.getType());  
       rhs.setElementType(obj.getElementType());
       AssignStatement stat = 
@@ -15492,8 +15500,15 @@ public class ASTCompositeTerm extends ASTTerm
         obj.isSequence() && 
         pars.size() == 1)
     { Expression par1 = (Expression) pars.get(0); 
+      // Expression rhs = 
+      //   new BinaryExpression("->sortedWith", obj, par1);
+      Vector spars = new Vector(); 
+      spars.add(obj); 
+      spars.add(par1); 
       Expression rhs = 
-        new BinaryExpression("->sortedWith", obj, par1);
+        BasicExpression.newStaticCallBasicExpression("sortWith", 
+          "OclComparable", spars); 
+      
       rhs.setType(obj.getType());  
       rhs.setElementType(obj.getElementType());
       return rhs;
@@ -23263,24 +23278,52 @@ public class ASTCompositeTerm extends ASTTerm
 
           return "OclIterator.newOclIterator_Sequence(" + args + "->values())"; 
         }  
-        else if ("min".equals(called) && "Collections".equals(args))
+        else if ("min".equals(called) && 
+                 "Collections".equals(args))
         { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
           String callp1 = callarg1.toKM3(); 
           
           String elemT = ASTTerm.getElementType(callarg1); 
           ASTTerm.setType(thisliteral,elemT); 
+
+          if (cargs.size() == 2) 
+          { ASTTerm cmptrm = (ASTTerm) cargs.get(1); 
+            String cmp = cmptrm.toKM3(); 
+            Vector spars = new Vector(); 
+            spars.add(callarg1.expression); 
+            spars.add(cmptrm.expression); 
+            expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "minimumWith", "OclComparator", spars); 
+            return "OclComparator.minimumWith(" + 
+                      callp1 + ", " + cmp + ")"; 
+          } 
           
           if (callarg1.expression != null) 
           { expression = new UnaryExpression("->min", callarg1.expression); } 
 
           return "(" + callp1 + ")->min()"; 
         }  
-        else if ("max".equals(called) && "Collections".equals(args))
+        else if ("max".equals(called) && 
+                 "Collections".equals(args))
         { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
           String callp1 = callarg1.toKM3(); 
 
           String elemT = ASTTerm.getElementType(callarg1); 
           ASTTerm.setType(thisliteral,elemT); 
+
+          if (cargs.size() == 2) 
+          { ASTTerm cmptrm = (ASTTerm) cargs.get(1); 
+            String cmp = cmptrm.toKM3(); 
+            Vector spars = new Vector(); 
+            spars.add(callarg1.expression); 
+            spars.add(cmptrm.expression); 
+            expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "maximumWith", "OclComparator", spars); 
+            return "OclComparator.maximumWith(" + 
+                      callp1 + ", " + cmp + ")"; 
+          } 
 
           if (callarg1.expression != null) 
           { expression = new UnaryExpression("->max", callarg1.expression); } 
@@ -23319,8 +23362,28 @@ public class ASTCompositeTerm extends ASTTerm
               BasicExpression.newFunctionBasicExpression(
                 "subrange", callarg1.expression, pars2); 
  
-            subrange2 = new UnaryExpression("->sort", subrange2); 
-            subrange2.setBrackets(true); 
+            String midres = 
+              callp1 + ".subrange(" + lowval + "+1," + highval + ")->sort()"; 
+
+            if (cargs.size() == 4) 
+            { ASTTerm cmptrm = (ASTTerm) cargs.get(4);
+              String cmp = cmptrm.toKM3();
+              Vector spars = new Vector(); 
+              spars.add(subrange2); 
+              spars.add(cmptrm.expression);  
+              subrange2 = 
+                BasicExpression.newStaticCallBasicExpression(
+                  "sortWith", "OclComparator", spars); 
+              midres = 
+                "OclComparable.sortWith(" + 
+                   callp1 + ".subrange(" + lowval + "+1, " +
+                                        highval + "), " + 
+                                        cmp + ")";        
+            } 
+            else   
+            { subrange2 = new UnaryExpression("->sort", subrange2); 
+              subrange2.setBrackets(true); 
+            } 
 
             Vector pars3 = new Vector(); 
             pars3.add(new BinaryExpression("+",
@@ -23338,24 +23401,29 @@ public class ASTCompositeTerm extends ASTTerm
             expression = 
               new BinaryExpression("^", subrange1, cat1); 
 
-            return callp1 + " := " + callp1 + ".subrange(1," + lowval + ")^(" + callp1 + ".subrange(" + lowval + "+1," + highval + ")->sort())^" + callp1 + ".subrange(" + highval + "+1," + callp1 + ".size)"; 
+            return callp1 + " := " + callp1 + ".subrange(1," + lowval + ")^(" + midres + ")^" + callp1 + ".subrange(" + highval + "+1," + callp1 + ".size)"; 
           }  
 
           if (cargs.size() == 2) // sort with comparator
           { ASTTerm callarg2 = (ASTTerm) cargs.get(1); 
             String callp2 = callarg2.toKM3(); 
-
-            expression = new BinaryExpression(
-                  "->sortedWith", callarg1.expression,
-                                  callarg2.expression); 
+            Vector spars = new Vector(); 
+            spars.add(callarg1.expression); 
+            spars.add(callarg2.expression); 
+            expression =
+              BasicExpression.newStaticCallBasicExpression(
+                "sortWith", "OclComparator", spars);  
+             // new BinaryExpression(
+             //      "->sortedWith", callarg1.expression,
+             //                      callarg2.expression); 
             statement = 
               new AssignStatement(callarg1.expression,
                                   expression); 
             modelElements = callarg2.modelElements; 
 
             return callp1 + " := " + 
-                  "(" + callp1 + ")->sortedWith(" + 
-                                         callp2 + ")"; 
+                  "OclComparable.sortWith(" + callp1 + ", " +
+                                          callp2 + ")"; 
           } 
 
           if (callarg1.expression != null) 
@@ -23613,6 +23681,24 @@ public class ASTCompositeTerm extends ASTTerm
           String callp1 = callarg1.toKM3(); 
           ASTTerm callarg2 = (ASTTerm) cargs.get(1);
           String callp2 = callarg2.toKM3(); 
+
+          if (cargs.size() == 3) 
+          { ASTTerm callarg3 = (ASTTerm) cargs.get(2);
+            String callp3 = callarg3.toKM3(); 
+
+            Vector spars = new Vector(); 
+            spars.add(callarg1.expression); 
+            spars.add(callarg2.expression); 
+            spars.add(callarg3.expression); 
+            expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "binarySearch", "OclComparator", spars); 
+            // OclComparator.binarySearch(callp1,callp2,callp3)
+
+            return "OclComparator.binarySearch(" + 
+                    callp1 + ", " + callp2 + ", " + callp3 + ")"; 
+          } 
+
           
           if (callarg1.expression != null && 
               callarg2.expression != null) 
@@ -23816,6 +23902,38 @@ public class ASTCompositeTerm extends ASTTerm
 
           return "(" + callp1 + ")->toLong()"; 
         } 
+        else if ("longBitsToDouble".equals(called) && 
+                 "Double".equals(argliteral))
+        { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          ASTTerm.setType(thisliteral,"double"); 
+
+          if (callarg1.expression != null) 
+          { expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "longBitsToDouble", "MathLib",
+                callarg1.expression);  
+          } 
+
+          return "MathLib.longBitsToDouble(" + callp1 + ")"; 
+        } 
+        else if ("doubleToLongBits".equals(called) && 
+                 "Double".equals(argliteral))
+        { ASTTerm callarg1 = (ASTTerm) cargs.get(0); 
+          String callp1 = callarg1.toKM3(); 
+          
+          ASTTerm.setType(thisliteral,"long"); 
+
+          if (callarg1.expression != null) 
+          { expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "doubleToLongBits", "MathLib",
+                callarg1.expression);  
+          } 
+
+          return "MathLib.doubleToLongBits(" + callp1 + ")"; 
+        } 
         else if (("valueOf".equals(called) || 
                   "parseDouble".equals(called)) && 
                  "Double".equals(argliteral))
@@ -23875,7 +23993,9 @@ public class ASTCompositeTerm extends ASTTerm
           { Vector parms = new Vector(); 
             parms.add(callarg1.expression); 
              
-            expression = BasicExpression.newStaticCallBasicExpression("decimal2binary", "MathLib", parms); 
+            expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                       "decimal2binary", "MathLib", parms); 
           } 
 
           return "MathLib.decimal2binary(" + callp1 + ")"; 
@@ -24178,6 +24298,23 @@ public class ASTCompositeTerm extends ASTTerm
           String callp2 = callarg2.toKM3(); 
 
           ASTTerm.setType(thisliteral,"int"); 
+
+          if (cargs.size() == 3) 
+          { ASTTerm callarg3 = (ASTTerm) cargs.get(2);
+            String callp3 = callarg3.toKM3(); 
+
+            Vector spars = new Vector(); 
+            spars.add(callarg1.expression); 
+            spars.add(callarg2.expression); 
+            spars.add(callarg3.expression); 
+            expression = 
+              BasicExpression.newStaticCallBasicExpression(
+                "binarySearch", "OclComparator", spars); 
+            // OclComparator.binarySearch(callp1,callp2,callp3)
+
+            return "OclComparator.binarySearch(" + 
+                    callp1 + ", " + callp2 + ", " + callp3 + ")"; 
+          } 
 
           if (callarg1.expression != null && 
               callarg2.expression != null) 

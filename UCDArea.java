@@ -8916,10 +8916,13 @@ public class UCDArea extends JPanel
     out2.println("#include <sys/stat.h>"); 
     out2.println("#include <direct.h>");  
     out2.println("#include <windows.h>"); 
-    out2.println("#include \"Controller.h\"\n"); 
+    
 
     out2.println(); 
     out2.println("#pragma warning(disable : 4996)"); 
+    out2.println(""); 
+    out2.println("#include \"Controller.h\"\n"); 
+
     out2.println(""); 
     out2.println("using namespace std;\n"); 
 

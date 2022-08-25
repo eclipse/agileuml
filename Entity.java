@@ -6611,10 +6611,10 @@ public class Entity extends ModelElement implements Comparable
     else if (isInterface())
     { intorclass = "interface"; } 
     else if (isAbstract())
-    { out.print("abstract "); }
+    { out.print("public abstract "); }
     else if (isLeaf())
-    { out.print("sealed "); }
-    else if (isSerializable())
+    { out.print("public sealed "); }
+    else // if (isSerializable())
     { out.print("public "); } 
 
     String pars = typeParameterTextCSharp(); 

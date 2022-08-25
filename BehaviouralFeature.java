@@ -780,8 +780,9 @@ public class BehaviouralFeature extends ModelElement
       res.add(bfclone); 
     } 
 
-    if (res.size() == 0 && activity != null) 
-    { Vector statmuts = activity.singleMutants(); 
+    if ("true".equals(post + "") && activity != null) 
+    { Vector statmuts = activity.singleMutants();
+      res = new Vector();  
       for (int i = 0; i < statmuts.size(); i++) 
       { Statement statmut = (Statement) statmuts.get(i); 
         BehaviouralFeature bfclone = (BehaviouralFeature) this.clone(); 
@@ -830,7 +831,7 @@ public class BehaviouralFeature extends ModelElement
           "  public static void " + nme + "_mutation_tests_" + j + "(" + ename + " _self, int[] _counts, int[] _totals)\n" + 
           "  {\n" + 
           "    " + code + "\n" + 
-          "    " + call + "\n";  
+          "    try {\n  " + call + "\n";  
      
         for (int i = 0; i < muts; i++) 
         { BehaviouralFeature m = (BehaviouralFeature) mutants.get(i); 
@@ -846,7 +847,7 @@ public class BehaviouralFeature extends ModelElement
             "      }\n" + 
             "    } catch (Throwable _e) { }\n"; 
         } 
-        testcode = testcode + "  }\n\n"; 
+        testcode = testcode + "    } catch (Throwable _e) { }\n }\n\n"; 
 
  /* Should be: 
              "  } catch (Throwable _e) { _e.printStackTrace(); }\n"; */ 

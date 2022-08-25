@@ -5879,8 +5879,8 @@ public String iosDbiExtractOp(String ent, int i)
         }
       }  
       else 
-      { res.add(nme + " = 2147483647");
-        opTests.add(attname + " = 2147483647;");
+      { res.add(nme + " = " + TestParameters.maxInteger);
+        opTests.add(attname + " = " + TestParameters.maxInteger + ";");
       } // Integer.MAX_VALUE);
 
       if (lbnd != null) 
@@ -5892,8 +5892,8 @@ public String iosDbiExtractOp(String ent, int i)
         }
       }  
       else 
-      { res.add(nme + " = -2147483648");
-        opTests.add(attname + " = -2147483648;");
+      { res.add(nme + " = " + TestParameters.minInteger);
+        opTests.add(attname + " = " + TestParameters.minInteger + ";");
       } // Integer.MIN_VALUE);
     } 
     else if ("long".equals(t))
@@ -5926,8 +5926,8 @@ public String iosDbiExtractOp(String ent, int i)
         }
       }  
       else 
-      { res.add(nme + " = " + Long.MAX_VALUE); 
-        opTests.add(attname + " = " + Long.MAX_VALUE + ";"); 
+      { res.add(nme + " = " + TestParameters.maxInteger); 
+        opTests.add(attname + " = " + TestParameters.maxInteger + ";"); 
       } 
 
       if (lbnd != null) 
@@ -5939,9 +5939,9 @@ public String iosDbiExtractOp(String ent, int i)
         }
       }  
       else 
-      { res.add(nme + " = " + Long.MIN_VALUE);
-        opTests.add(attname + " = " + Long.MIN_VALUE + ";");
-      } 
+      { res.add(nme + " = " + TestParameters.minInteger);
+        opTests.add(attname + " = " + TestParameters.minInteger + ";");
+      } // Long.MIN_VALUE
     } 
     else if ("double".equals(t))
     {  
@@ -5978,22 +5978,22 @@ public String iosDbiExtractOp(String ent, int i)
           opTests.add(attname + " = " + ud + ";");
           
           if (ud < -1) 
-          { res.add(nme + " = " + -Double.MAX_VALUE); 
-            opTests.add(attname + " = " + -Double.MAX_VALUE + ";"); 
+          { res.add(nme + " = " + TestParameters.minFloat); 
+            opTests.add(attname + " = " + TestParameters.minFloat + ";"); 
           } 
           else if (ud < 0 && ud != -1.0) 
           { res.add(nme + " = -1.0");
             opTests.add(attname + " = -1.0;");
-            res.add(nme + " = " + -Double.MAX_VALUE); 
-            opTests.add(attname + " = " + -Double.MAX_VALUE + ";"); 
+            res.add(nme + " = " + TestParameters.minFloat); 
+            opTests.add(attname + " = " + TestParameters.minFloat + ";"); 
           } 
           else if (ud < 1 && ud != 0.0)          
           { res.add(nme + " = 0.0"); 
             res.add(nme + " = -1.0");
             opTests.add(attname + " = 0.0;"); 
             opTests.add(attname + " = -1.0;");
-            res.add(nme + " = " + -Double.MAX_VALUE); 
-            opTests.add(attname + " = " + -Double.MAX_VALUE + ";"); 
+            res.add(nme + " = " + TestParameters.minFloat); 
+            opTests.add(attname + " = " + TestParameters.minFloat + ";"); 
           } 
           else  
           { // res.add(nme + " = 0.0"); 
@@ -6002,8 +6002,8 @@ public String iosDbiExtractOp(String ent, int i)
             // opTests.add(attname + " = 0.0;"); 
             // opTests.add(attname + " = -1.0;");
             // opTests.add(attname + " = 1.0;");
-            res.add(nme + " = " + -Double.MAX_VALUE); 
-            opTests.add(attname + " = " + -Double.MAX_VALUE + ";"); 
+            res.add(nme + " = " + TestParameters.minFloat); 
+            opTests.add(attname + " = " + TestParameters.minFloat + ";"); 
           }
         } catch (Exception _ex) { } 
       }
@@ -6015,21 +6015,21 @@ public String iosDbiExtractOp(String ent, int i)
           opTests.add(attname + " = " + lowerval + ";");
            
           if (ld > 1.0) 
-          { res.add(nme + " = " + Double.MAX_VALUE); 
-            opTests.add(attname + " = " + Double.MAX_VALUE + ";");     } 
+          { res.add(nme + " = " + TestParameters.maxFloat); 
+            opTests.add(attname + " = " + TestParameters.maxFloat + ";");     } 
           else if (ld > 0.0 && ld != 1.0)
           { res.add(nme + " = 1.0"); 
             opTests.add(attname + " = 1.0;");
-            res.add(nme + " = " + Double.MAX_VALUE); 
-            opTests.add(attname + " = " + Double.MAX_VALUE + ";");     } 
+            res.add(nme + " = " + TestParameters.maxFloat); 
+            opTests.add(attname + " = " + TestParameters.maxFloat + ";");     } 
           else if (ld > -1.0 && ld != 0.0)
           { res.add(nme + " = 0.0"); 
             opTests.add(attname + " = 0.0;");
-            res.add(nme + " = " + Double.MAX_VALUE); 
-            opTests.add(attname + " = " + Double.MAX_VALUE + ";");     } 
+            res.add(nme + " = " + TestParameters.maxFloat); 
+            opTests.add(attname + " = " + TestParameters.maxFloat + ";");     } 
           else 
-          { res.add(nme + " = " + Double.MAX_VALUE); 
-            opTests.add(attname + " = " + Double.MAX_VALUE + ";");     } 
+          { res.add(nme + " = " + TestParameters.maxFloat); 
+            opTests.add(attname + " = " + TestParameters.maxFloat + ";");     } 
         } catch (Exception _ef) { } 
       }  
       else // no bounding values.  
@@ -6039,10 +6039,10 @@ public String iosDbiExtractOp(String ent, int i)
         opTests.add(attname + " = 0.0;"); 
         opTests.add(attname + " = -1.0;");
         opTests.add(attname + " = 1.0;");
-        res.add(nme + " = " + -Double.MAX_VALUE); 
-        opTests.add(attname + " = " + -Double.MAX_VALUE + ";"); 
-        res.add(nme + " = " + Double.MAX_VALUE); 
-        opTests.add(attname + " = " + Double.MAX_VALUE + ";"); }
+        res.add(nme + " = " + TestParameters.minFloat); 
+        opTests.add(attname + " = " + TestParameters.minFloat + ";"); 
+        res.add(nme + " = " + TestParameters.maxFloat); 
+        opTests.add(attname + " = " + TestParameters.maxFloat + ";"); }
     } 
     else if ("boolean".equals(t))
     { res.add(nme + " = true"); 
@@ -6272,8 +6272,8 @@ public String iosDbiExtractOp(String ent, int i)
         }
       }  
       else 
-      { res.add(nme + " = " + Double.MAX_VALUE); 
-        opTests.add(attname + " = " + Double.MAX_VALUE + ";"); 
+      { res.add(nme + " = " + TestParameters.maxFloat); 
+        opTests.add(attname + " = " + TestParameters.maxFloat + ";"); 
       } 
 	  
       if (lbnd != null) 
@@ -6535,8 +6535,8 @@ public String iosDbiExtractOp(String ent, int i)
         }
       }  
       else 
-      { res.add(nme + " = " + Double.MAX_VALUE); 
-        opTests.add(attname + " = " + Double.MAX_VALUE + ";"); 
+      { res.add(nme + " = " + TestParameters.maxFloat); 
+        opTests.add(attname + " = " + TestParameters.maxFloat + ";"); 
       } 
 	  
       if (lbnd != null) 
@@ -6800,8 +6800,8 @@ public String iosDbiExtractOp(String ent, int i)
         }
       }  
       else 
-      { res.add(nme + " = " + Double.MAX_VALUE); 
-        opTests.add(attname + " = " + Double.MAX_VALUE + ";"); 
+      { res.add(nme + " = " + TestParameters.maxFloat); 
+        opTests.add(attname + " = " + TestParameters.maxFloat + ";"); 
       } 
 	  
       if (lbnd != null) 
@@ -6965,7 +6965,7 @@ public String iosDbiExtractOp(String ent, int i)
         { res.add(upperval); }
       }  
       else 
-      { res.add("2147483647"); } // Integer.MAX_VALUE);
+      { res.add("" + TestParameters.maxInteger); } // Integer.MAX_VALUE);
 
       if (lbnd != null) 
       { String lowerval = lbnd + ""; 
@@ -6974,7 +6974,7 @@ public String iosDbiExtractOp(String ent, int i)
         { res.add(lowerval); }
       }  
       else 
-      { res.add("-2147483648"); } // Integer.MIN_VALUE);
+      { res.add("" + TestParameters.minInteger); } // Integer.MIN_VALUE);
     } 
     else if ("long".equals(t))
     { res.add("0"); 
@@ -7029,7 +7029,7 @@ public String iosDbiExtractOp(String ent, int i)
         { res.add(upperval); }
       }  
       else 
-      { res.add("" + Double.MAX_VALUE); } 
+      { res.add("" + TestParameters.maxFloat); } 
 	  
       if (lbnd != null) 
       { String lowerval = lbnd + ""; 

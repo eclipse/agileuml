@@ -106,7 +106,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else 
     { ename = e.getName(); }
@@ -240,7 +240,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else 
     { ename = e.getName(); }
@@ -356,7 +356,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else 
     { ename = e.getName(); }
@@ -499,7 +499,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "object"; } 
     else 
     { ename = e.getName(); }
@@ -581,7 +581,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "void"; } 
     else
     { ename = e.getName(); }
@@ -678,7 +678,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else 
     { ename = e.getName(); }
@@ -788,7 +788,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else 
     { ename = e.getName(); }
@@ -888,7 +888,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else 
     { ename = e.getName(); }
@@ -991,7 +991,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "object"; } 
     else 
     { ename = e.getName(); }
@@ -1074,7 +1074,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "void"; } 
     else 
     { ename = e.getName(); }
@@ -1177,7 +1177,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "void"; } 
     else 
     { ename = e.getName(); }
@@ -1316,7 +1316,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else 
     { ename = e.getName(); }
@@ -1441,7 +1441,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else 
     { ename = e.getName(); }
@@ -1561,7 +1561,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else 
     { ename = e.getName(); }
@@ -1711,7 +1711,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "object"; } 
     else 
     { ename = e.getName(); }
@@ -1798,7 +1798,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "void"; } 
     else 
     { ename = e.getName(); }
@@ -1906,7 +1906,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); // left is null. 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else if ("Set".equals(e.getName()) || "Sequence".equals(e.getName()))
     { ename = "List"; } 
@@ -2040,7 +2040,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); // left is null. 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else if ("Set".equals(e.getName()))
     { ename = "HashSet"; } 
@@ -2176,7 +2176,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); // left is null. 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else if ("Set".equals(e.getName()))
 	{ ename = "HashSet"; } 
@@ -2312,7 +2312,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "object"; } 
     else if ("Set".equals(e.getName()))
     { ename = "ArrayList"; } 
@@ -2453,7 +2453,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); // left is null. 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else if ("Set".equals(e.getName()) || "Sequence".equals(e.getName()))
     { ename = "List"; } 
@@ -2585,7 +2585,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else 
     { ename = e.getName(); }
@@ -2704,7 +2704,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else 
     { ename = e.getName(); }
@@ -2825,7 +2825,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "object"; } 
     else 
     { ename = e.getName(); }
@@ -2938,7 +2938,7 @@ public class BSystemTypes extends BComponent
       String ename; 
       String argtype; 
       Type e = left.getElementType(); 
-      if (e == null) 
+      if (e == null || "OclAny".equals(e.getName())) 
       { ename = "void"; 
         argtype = ename + "*"; 
       } 
@@ -3083,7 +3083,7 @@ public class BSystemTypes extends BComponent
     { // add new definitions 
       String ename; 
       Type e = left.getElementType(); 
-      if (e == null) 
+      if (e == null || "OclAny".equals(e.getName())) 
       { ename = "Object"; } 
       else if ("Set".equals(e.getName()) || "Sequence".equals(e.getName()))
       { ename = "List"; } 
@@ -3211,7 +3211,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else 
     { ename = e.getName(); }
@@ -3344,7 +3344,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else 
     { ename = e.getName(); }
@@ -3477,7 +3477,7 @@ public class BSystemTypes extends BComponent
     { // add new definitions 
       String ename; 
       Type e = left.getElementType(); 
-      if (e == null) 
+      if (e == null || "OclAny".equals(e.getName())) 
       { ename = "object"; } 
       else if ("Set".equals(e.getName()) || "Sequence".equals(e.getName()))
       { ename = "ArrayList"; } 
@@ -3591,7 +3591,7 @@ public class BSystemTypes extends BComponent
       String ename; 
       String argtype; 
       Type e = left.getElementType(); 
-      if (e == null) 
+      if (e == null || "OclAny".equals(e.getName())) 
       { ename = "void"; 
         argtype = ename + "*"; 
       } 
@@ -3733,7 +3733,7 @@ public class BSystemTypes extends BComponent
     { // add new definitions 
       String ename; 
       Type e = left.getElementType(); 
-      if (e == null) 
+      if (e == null || "OclAny".equals(e.getName())) 
       { ename = "Object"; } 
       else if ("Set".equals(e.getName()) || "Sequence".equals(e.getName()))
       { ename = "List"; } 
@@ -3854,7 +3854,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else 
     { ename = e.getName(); }
@@ -3974,7 +3974,7 @@ public class BSystemTypes extends BComponent
 
     String ename; 
     Type e = left.getElementType(); 
-    if (e == null) 
+    if (e == null || "OclAny".equals(e.getName())) 
     { ename = "Object"; } 
     else 
     { ename = e.getName(); }
@@ -4096,7 +4096,7 @@ public class BSystemTypes extends BComponent
     { // add new definitions 
       String ename; 
       Type e = left.getElementType(); 
-      if (e == null) 
+      if (e == null || "OclAny".equals(e.getName())) 
       { ename = "object"; } 
       else if ("Set".equals(e.getName()) || "Sequence".equals(e.getName()))
       { ename = "ArrayList"; } 
@@ -4199,7 +4199,7 @@ public class BSystemTypes extends BComponent
       String ename; 
       String argtype; 
       Type e = left.getElementType(); 
-      if (e == null) 
+      if (e == null || "OclAny".equals(e.getName())) 
       { ename = "void"; 
         argtype = ename + "*"; 
       } 

@@ -2745,6 +2745,22 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
           // System.out.println("Parsed: " + be); 
           return be; 
         } 
+        else if ("sortedBy".equals(ss2) && 
+                 i+5 < pend && "|".equals(lexicals.get(i+4) + "") &&
+                               // "(".equals(lexicals.get(i+2) + "") &&
+                               ")".equals(lexicals.get(pend) + ""))
+        { // It is ->sortedBy(v|...)
+          Expression ee1 = parse_expression(bc+1,i+5,pend-1,entities,types);
+          if (ee1 == null) { continue; } 
+          Expression ee2 = parse_factor_expression(bc,pstart,i-1,entities,types); 
+          if (ee2 == null) { continue; } 
+          BasicExpression bevar = 
+            new BasicExpression(lexicals.get(i+3) + "",0);
+          BinaryExpression be = 
+            new BinaryExpression("|sortedBy",new BinaryExpression(":",bevar,ee2),ee1); 
+          System.out.println("Parsed ->sortedBy expression with variable: " + be); 
+          return be; 
+        } 
         else if ("any".equals(ss2) && 
                  i+5 < pend && "|".equals(lexicals.get(i+4) + "") &&
                                // "(".equals(lexicals.get(i+2) + "") &&
@@ -4361,7 +4377,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
                  i+5 < pend && "|".equals(lexicals.get(i+4) + "") &&
                                // "(".equals(lexicals.get(i+2) + "") &&
                                ")".equals(lexicals.get(pend) + ""))
-        { // It is ->collect(v|...)
+        { // It is ->sortedBy(v|...)
+
           Expression ee1 = parse_ATLexpression(bc+1,i+5,pend-1,entities,types);
           if (ee1 == null) { continue; } 
           Expression ee2 = parse_ATLfactor_expression(bc,pstart,i-1,entities,types); 
