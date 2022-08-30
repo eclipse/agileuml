@@ -123,6 +123,9 @@ class BinaryExpression extends Expression
   public void setAccumulator(Attribute acc)
   { accumulator = acc; } 
 
+  public Attribute getAccumulator()
+  { return accumulator; } 
+
   public Expression getLeft() { return left; } 
 
   public Expression getRight() { return right; } 
@@ -744,6 +747,16 @@ class BinaryExpression extends Expression
       lft = ((BinaryExpression) left).right;  
       out.println(id + ".variable = \"" + ((BinaryExpression) left).left + "\""); 
     } 
+    else if (operator.equals("let"))
+    { op = "let";
+      String var = accumulator.getName();  
+      out.println(id + ".variable = \"" + var + "\"");
+      Type vtype = accumulator.getType(); 
+      if (vtype != null) 
+      { String vtypeid = vtype.getUMLModelName(out); 
+        out.println(id + ".variableType = " + vtypeid);
+      } 
+    } 
     else if (operator.equals("->exists") || 
              operator.equals("->exists1") || 
              "->existsLC".equals(operator) || 
@@ -1086,7 +1099,11 @@ class BinaryExpression extends Expression
      
     if ("let".equals(operator) && 
         accumulator != null)
-    { String res = "let " + accumulator.getName() + " : " + accumulator.getType() + " = " + left + " in (" + right + ")"; 
+    { String rstring = "" + right; 
+      if (right.needsBracket) { } 
+      else 
+      { rstring = "(" + rstring + ")"; } 
+      String res = "let " + accumulator.getName() + " : " + accumulator.getType() + " = " + left + " in " + rstring; 
       if (needsBracket)
       { return "(" + res + ")"; }
       return res; 
@@ -2519,6 +2536,16 @@ class BinaryExpression extends Expression
       Vector res = beleft.right.metavariables(); 
       res = VectorUtil.union(res,beleft.left.metavariables());
       return VectorUtil.union(res,right.metavariables());
+    } 
+
+    if ("let".equals(operator))
+    { String accname = accumulator.getName(); 
+      Vector res = CGRule.metavariables(accname);
+      Type typ = accumulator.getType(); 
+      res = VectorUtil.union(res, typ.metavariables());  
+      res = VectorUtil.union(res, left.metavariables()); 
+      res = VectorUtil.union(res, right.metavariables()); 
+      return res; 
     } 
 
     if ("->iterate".equals(operator))
@@ -4921,11 +4948,13 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->forAll") || operator.equals("!"))
     { return forAllQueryForm(env,local); } 
 	
+  /* 
     if (operator.equals("let"))
     { String acc = accumulator.getName(); 
       Expression sbst = right.substituteEq(acc,left); 
       return sbst.queryForm(env,local); 
     } // Or, extend env by acc |-> left
+   */ 
 
     boolean lmult = left.isMultiple();
     boolean rmult = right.isMultiple();
@@ -5030,6 +5059,16 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->apply"))
     { return "(" + lqf + ").apply(" + rqf + ")"; } 
+
+    if (operator.equals("let"))
+    { // (new Object() { public typ call(acct acc) { return rqf; } })(lqf)
+
+      String acc = accumulator.getName(); 
+      Type acct = accumulator.getType(); 
+      String lett = acct.getJava();
+      return "(new Object() { public " + typ + " call(" + 
+                 lett + " " + acc + ") { return " + rqf + "; } }).call(" + lqf + ")";  
+    } 
 
     if (operator.equals("->at"))
     { if (left.type != null && "String".equals(left.type.getName()))
@@ -5446,10 +5485,10 @@ public boolean conflictsWithIn(String op, Expression el,
     String javaOp = javaOpOf(operator);
 
     String typ = ""; 
-	if (type != null) 
-	{ typ = type.getJava6(); } 
-	else 
-	{ System.err.println("!! Warning: no type for " + this); }
+    if (type != null) 
+    { typ = type.getJava6(); } 
+    else 
+    { System.err.println("!! Warning: no type for " + this); }
  
     res = lqf + " " + javaOp + " " + rqf; // default
     // if & or or: &&, ||
@@ -5554,6 +5593,29 @@ public boolean conflictsWithIn(String op, Expression el,
 
       return "((" + typ + ") " + getind + ")"; 
     } 
+
+    /* 
+    if (operator.equals("let"))
+    { // right[left/acc]
+      String acc = accumulator.getName(); 
+      // Type acct = accumulator.getType(); 
+      // String lett = acct.getJava();
+      Expression subst = 
+        right.substituteEq(acc,left);  
+      String stats = subst.queryFormJava6(env,local); 
+      return stats; 
+    } */ 
+
+    if (operator.equals("let"))
+    { // (new Object() { public typ call(acct acc) { return rqf; } })(lqf)
+
+      String acc = accumulator.getName(); 
+      Type acct = accumulator.getType(); 
+      String lett = acct.getJava6();
+      return "(new Object() { public " + typ + " call(" + 
+                 lett + " " + acc + ") { return " + rqf + "; } }).call(" + lqf + ")";  
+    } 
+
 
     if (operator.equals("->apply"))
     { return "(" + lqf + ").apply(" + rqf + ")"; } 
@@ -5980,6 +6042,29 @@ public boolean conflictsWithIn(String op, Expression el,
       return "((" + typ + ") " + getind + ")"; 
     } 
 
+    if (operator.equals("let"))
+    { // (new Object() { public typ call(acct acc) { return rqf; } })(lqf)
+
+      String acc = accumulator.getName(); 
+      Type acct = accumulator.getType(); 
+      String lett = acct.getJava7();
+      return "(new Object() { public " + typ + " call(" + 
+                 lett + " " + acc + ") { return " + rqf + "; } }).call(" + lqf + ")";  
+    } 
+
+/*    if (operator.equals("let"))
+    { // ((acc) -> { return right; }).apply(left)
+
+      String acc = accumulator.getName(); 
+      // Type acct = accumulator.getType(); 
+      // String lett = acct.getJava();
+      // Expression subst = 
+      //   right.substituteEq(acc,left);  
+      String stats = 
+        "(" + acc + ") -> { return " + rqf + "; }"; 
+      return "(" + stats + ").apply(" + lqf + ")"; 
+    } */ 
+
     if (operator.equals("->apply"))
     { return "(" + lqf + ").apply(" + rqf + ")"; } 
 
@@ -6404,6 +6489,21 @@ public boolean conflictsWithIn(String op, Expression el,
 
       return "(" + lqf + ")[" + rqf + " - 1]";
     } 
+
+    if (operator.equals("let"))
+    { // (new Func<acct,typ>((acc) -> { return right; })).Invoke(left)
+
+      String acc = accumulator.getName(); 
+      Type acct = accumulator.getType(); 
+      String lett = acct.getCSharp();
+      String typ = "object"; 
+      if (type != null) 
+      { typ = type.getCSharp(); } 
+ 
+      String stats = 
+        acc + " => (" + rqf + ")"; 
+      return "(new Func<" + lett + "," + typ + ">(" + stats + ")).Invoke(" + lqf + ")"; 
+    }
 
     if (operator.equals("->apply"))
     { return lqf + ".Invoke(" + rqf + ")"; } 
@@ -6849,6 +6949,10 @@ public boolean conflictsWithIn(String op, Expression el,
     { // String col = collectQueryFormCPP(lqf,rqf,rprim,env,local);
       java.util.Map enva = (java.util.Map) ((java.util.HashMap) env).clone(); 
       java.util.Map envb = (java.util.Map) ((java.util.HashMap) env).clone();
+
+      if ("".equals(ename))
+      { ename = "void"; } 
+
       String var1 = ename.toLowerCase() + "_1"; 
       String var2 = ename.toLowerCase() + "_2"; 
       enva.put(ename,var1); 
@@ -6856,19 +6960,76 @@ public boolean conflictsWithIn(String op, Expression el,
       String rqf1 = right.queryFormCPP(enva,false); 
       String rqf2 = right.queryFormCPP(envb,false); 
       String fname = Identifier.nextIdentifier(ename); 
-      String compareFunc = "  friend bool compareTo" + fname + "(" + ename + "* " + var1 + 
-                                                                ", " + ename + "* " + var2 + ")\n" + 
-                           "  { return " + rqf1 + " < " + rqf2 + "; }\n";
+      String compareFunction = 
+        "[=](" + ename + "* " + var1 + 
+             ", " + ename + "* " + var2 + ") -> bool " + 
+             "  { return " + rqf1 + " < " + rqf2 + "; }";
       // System.out.println(compareFunc);    
 
+      /* 
       if (ent != null) 
       { ent.addAux(compareFunc); } 
       else if (entity != null) 
-      { entity.addAux(compareFunc); } 
+      { entity.addAux(compareFunc); } */ 
  
       if (left.umlkind == CLASSID)
       { lqf = ((BasicExpression) left).classExtentQueryFormCPP(env,local); } 
-      return "std::sort(" + lqf + "->begin(), " + lqf + "->end(), compareTo" + fname + ")"; 
+      return "UmlRsdsLib<" + lcet + ">::sort(" + lqf + ", " + compareFunction + ")"; 
+    } 
+
+    if (operator.equals("|sortedBy") && 
+        left instanceof BinaryExpression)
+    { java.util.Map enva = (java.util.Map) ((java.util.HashMap) env).clone(); 
+      java.util.Map envb = (java.util.Map) ((java.util.HashMap) env).clone();
+      if ("".equals(ename))
+      { ename = "void"; } 
+      String var1 = ename.toLowerCase() + "_1"; 
+      String var2 = ename.toLowerCase() + "_2"; 
+      enva.put(ename,var1); 
+      envb.put(ename,var2); 
+      BinaryExpression lbe = (BinaryExpression) left; 
+      BasicExpression leftvar = (BasicExpression) lbe.getLeft();
+      Expression col = lbe.getRight();
+      lelemt = col.getElementType();  
+      if (lelemt != null) 
+      { lcet = lelemt.getCPP(); } 
+      
+      BasicExpression var1e = 
+        BasicExpression.newVariableBasicExpression(var1); 
+      BasicExpression var2e = 
+        BasicExpression.newVariableBasicExpression(var2); 
+      var1e.setType(leftvar.getType()); 
+      var2e.setType(leftvar.getType()); 
+      var1e.setElementType(leftvar.getElementType()); 
+      var2e.setElementType(leftvar.getElementType()); 
+
+      Expression right1 = right.substituteEq(leftvar + "",var1e); 
+      Expression right2 = right.substituteEq(leftvar + "",var2e); 
+ 
+      String rqf1 = right1.queryFormCPP(enva,false); 
+      String rqf2 = right2.queryFormCPP(envb,false); 
+      String fname = Identifier.nextIdentifier(ename); 
+      String compareFunction = 
+        " [=](" + ename + "* " + var1 + 
+           ", " + ename + "* " + var2 + ") -> bool " + 
+              "{ return " + rqf1 + " < " + rqf2 + "; }";
+      // System.out.println(compareFunc);    
+
+      /* if (ent != null) 
+      { ent.addAux(compareFunc); } 
+      else if (entity != null) 
+      { entity.addAux(compareFunc); }
+      else if (col.getElementType() != null && 
+               col.getElementType().isEntity())
+      { Entity colent = col.getElementType().getEntity(); 
+        colent.addAux(compareFunc); 
+      }  */ 
+
+      String colqf = col.queryFormCPP(env,local); 
+ 
+      if (col.umlkind == CLASSID)
+      { colqf = ((BasicExpression) col).classExtentQueryFormCPP(env,local); } 
+      return "UmlRsdsLib<" + lcet + ">::sort(" + colqf + ", " + compareFunction + ")"; 
     } 
 
     if (operator.equals("->count"))
@@ -6916,6 +7077,19 @@ public boolean conflictsWithIn(String op, Expression el,
       }
       return "(" + lqf + ")->at(" + rqf + " - 1)"; 
     } 
+
+    if (operator.equals("let"))
+    { 
+      String acc = accumulator.getName(); 
+      Type acct = accumulator.getType(); 
+      String lett = acct.getCPP();
+      String typ = "void*"; 
+      if (type != null) 
+      { typ = type.getCPP(); } 
+ 
+      return "([=](" + lett + " " + acc + ") -> " + 
+        typ + " { return " + rqf + "; })(" + lqf + ")"; 
+    }
 
     if (operator.equals("->apply"))
     { return "(" + lqf + ")(" + rqf + ")"; } 
@@ -12579,16 +12753,30 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
 
     if (operator.equals("let") && accumulator != null)
     { // let accumulator = left in right
+
       SequenceStatement sstat = new SequenceStatement();
       Type typ1 = accumulator.getType();   
       String varname = accumulator.getName(); 
       CreationStatement cs1 = new CreationStatement(typ1 + "",varname); 
       cs1.setType(typ1); 
-      cs1.setElementType(typ1.getElementType());  
-      cs1.setInitialisation(left);
-      sstat.addStatement(cs1); 
+      if (left.getElementType() != null)
+      { cs1.setElementType(left.getElementType()); } 
+      else if (accumulator.getElementType() != null) 
+      { cs1.setElementType(accumulator.getElementType()); }
+      System.out.println(">>> Let element type is: " + cs1.getElementType()); 
+ 
+      // cs1.setInitialisation(left);
+      sstat.addStatement(cs1);
+      BasicExpression var = new BasicExpression(accumulator); 
+      AssignStatement asgn = 
+        new AssignStatement(var,left); 
+      sstat.addStatement(asgn);  
       Statement ufr = right.generateDesign(env,local); 
       sstat.addStatement(ufr); 
+
+      System.out.println(">>> Design for let is: " + sstat); 
+      System.out.println(); 
+
       return sstat; 
     } 
 
@@ -12887,6 +13075,18 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
              "  { " + ufr + "}";
     } // accumulate the cases
 
+    if (operator.equals("let"))
+    { // { var acc : T := e; ... E ... }
+      String acc = accumulator.getName(); 
+      Type acct = accumulator.getType(); 
+      String lett = acct.getJava6(); 
+      String val = left.queryFormJava6(env,local); 
+      java.util.Map env1 = new java.util.HashMap(); 
+      env1.putAll(env); 
+      String stats = right.updateFormJava6(env1,local); 
+      return "\n    { final " + lett + " " + acc + " = " + val + ";\n" + stats + "\n    }"; 
+    } 
+
     if (extensionoperators.containsKey(operator))
     { String op = operator;
       String opjava = Expression.getOperatorJava(op); 
@@ -13066,6 +13266,18 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
              "  { " + ufr + "}";
     } // accumulate the cases
 
+    if (operator.equals("let"))
+    { // { var acc : T := e; ... E ... }
+      String acc = accumulator.getName(); 
+      Type acct = accumulator.getType(); 
+      String lett = acct.getJava7(); 
+      String val = left.queryFormJava7(env,local); 
+      java.util.Map env1 = new java.util.HashMap(); 
+      env1.putAll(env); 
+      String stats = right.updateFormJava7(env1,local); 
+      return "\n    { final " + lett + " " + acc + " = " + val + ";\n" + stats + "\n    }"; 
+    } 
+
     if (extensionoperators.containsKey(operator))
     { String op = operator;
       String opjava = Expression.getOperatorJava(op); 
@@ -13237,6 +13449,18 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
              "  { " + ufr + "}";
     } // accumulate the cases
 
+    if (operator.equals("let"))
+    { // { var acc : T := e; ... E ... }
+      String acc = accumulator.getName(); 
+      Type acct = accumulator.getType(); 
+      String lett = acct.getCSharp(); 
+      String val = left.queryFormCSharp(env,local); 
+      java.util.Map env1 = new java.util.HashMap(); 
+      env1.putAll(env); 
+      String stats = right.updateFormCSharp(env1,local); 
+      return "\n    { const " + lett + " " + acc + " = " + val + ";\n" + stats + "\n    }"; 
+    } 
+
     if (operator.equals("=") && left instanceof BasicExpression)
     { val2 = right.queryFormCSharp(env,local);
       return ((BasicExpression) left).updateFormEqCSharp(env,val2,right,local);
@@ -13381,6 +13605,17 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
              "  { " + ufr + "}";
     } // accumulate the cases
 
+    if (operator.equals("let"))
+    { // { var acc : T := e; ... E ... }
+      String acc = accumulator.getName(); 
+      Type acct = accumulator.getType(); 
+      String lett = acct.getCPP(); 
+      String val = left.queryFormCPP(env,local); 
+      java.util.Map env1 = new java.util.HashMap(); 
+      env1.putAll(env); 
+      String stats = right.updateFormCPP(env1,local); 
+      return "\n    { const " + lett + " " + acc + " = " + val + ";\n" + stats + "\n    }"; 
+    } 
 
     if (operator.equals("=") && left instanceof BasicExpression)
     { val2 = right.queryFormCPP(env,local);
@@ -18151,6 +18386,20 @@ private BExpression seqselectBinvariantForm(String var, BExpression bsimp, BExpr
       args.add(right.cg(cgs)); 
       eargs.add(beleft.getRight()); 
       eargs.add(beleft.getLeft()); 
+      eargs.add(right); 
+    } 
+    else if ("let".equals(operator))
+    { BasicExpression varbe = 
+        new BasicExpression(accumulator);
+      Type vartype = 
+        accumulator.getType();    
+      args.add(varbe.cg(cgs)); 
+      args.add(vartype.cg(cgs)); 
+      args.add(left.cg(cgs)); 
+      args.add(right.cg(cgs)); 
+      eargs.add(varbe); 
+      eargs.add(vartype); 
+      eargs.add(left); 
       eargs.add(right); 
     } 
     else if ("->iterate".equals(operator))

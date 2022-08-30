@@ -8863,6 +8863,8 @@ public class UCDArea extends JPanel
     if (systemName != null && systemName.length() > 0)
     { out.println("} \n\n"); } 
 
+    generateMutationTesterCSharp(); 
+
     try
     { out.close();
       out2.close(); 
@@ -8915,17 +8917,29 @@ public class UCDArea extends JPanel
     out2.println("#include <condition_variable>");
     out2.println("#include <sys/stat.h>"); 
     out2.println("#include <direct.h>");  
-    out2.println("#include <windows.h>"); 
+    out2.println("#include <winsock2.h>"); 
+    out2.println("#include <ws2tcpip.h>"); 
+    out2.println("#include <winhttp.h>"); 
+    out2.println("// #include <windows.h>"); 
     
 
     out2.println(); 
     out2.println("#pragma warning(disable : 4996)"); 
-    out2.println(""); 
-    out2.println("#include \"Controller.h\"\n"); 
-
+    out2.println("#pragma comment(lib, \"Ws2_32.lib\")"); 
+    out2.println("#pragma comment(lib, \"winhttp.lib\");"); 
+     out2.println(""); 
+    
     out2.println(""); 
     out2.println("using namespace std;\n"); 
-
+    out2.println(""); 
+    
+    Entity ocldatasource = 
+      (Entity) ModelElement.lookupByName("OclDatasource", entities); 
+    if (ocldatasource != null)
+    { out2.println("#include \"sqlite3.h\"\n"); }
+    out2.println(""); 
+    out2.println("#include \"Controller.h\"\n"); 
+    
     out2.println("Controller* Controller::inst = new Controller();\n\n"); 
     out2.println("map<string,OclType*>* OclType::ocltypenameindex = new map<string,OclType*>();\n\n"); 
 
@@ -8950,6 +8964,8 @@ public class UCDArea extends JPanel
     if (oclfile != null) 
     { BSystemTypes.generateLibraryCPP("OclFile",out2); }
 
+    if (ocldatasource != null) 
+    { BSystemTypes.generateLibraryCPP("OclDatasource",out2); }
 
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i); 
@@ -9060,6 +9076,9 @@ public class UCDArea extends JPanel
 
     if (oclfile != null) 
     { BSystemTypes.generateLibraryHPP("OclFile",out); }
+
+    if (ocldatasource != null) 
+    { BSystemTypes.generateLibraryHPP("OclDatasource",out); }
 
     out.println(); 
 
@@ -9952,7 +9971,8 @@ public void produceCUI(PrintWriter out)
     }
     catch (Exception ex) { }
 
-    String testcode = GUIBuilder.buildTestsGUI(useCases,"",incr,types,entities); 
+    String testcode = GUIBuilder.buildTestsGUI(
+                        useCases,"",incr,types,entities); 
     File testsguifile = new File(dirName + "/TestsGUI.java");
     try
     { PrintWriter testsout = new PrintWriter(
@@ -24996,6 +25016,19 @@ public void produceCUI(PrintWriter out)
     }
   } 
 
+  public void mutationTestCases()
+  { 
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity e = (Entity) entities.get(i); 
+      if (e.isDerived() || e.isComponent() || 
+          e.isAbstract() ||
+          e.isInterface()) 
+      { continue; }
+	  
+      e.generateOperationMutants(); 
+    } 
+  } 
+
   public void generateMutationTester()
   { Vector mutationtests = new Vector();   
 
@@ -25072,6 +25105,102 @@ public void produceCUI(PrintWriter out)
     catch (Exception _x) { } 
    
     System.out.println("*** Mutation tester operations written to " + dirName + "/MutationTest.java"); 
+  } 
+
+  public void generateMutationTesterCSharp()
+  { Vector mutationtests = new Vector();   
+
+    String dirName = "output"; 
+
+    // if (systemName != null && systemName.length() > 0)
+    // { dirName = systemName; } 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity e = (Entity) entities.get(i);
+
+      System.out.println(">*** Creating mutation tests for ***> Entity " + e); 
+ 
+      if (e.isDerived() || e.isComponent() || 
+          e.isAbstract() ||
+          e.isInterface()) 
+      { continue; }
+	
+      Vector optests = e.operationTestCasesCSharp(mutationtests);
+ 
+   /*   
+      System.out.println("*** Test cases for entity " + e.getName() + " operations written to output/tests"); 
+    
+      for (int j = 0; j < optests.size(); j++) 
+      { if (optests.get(j) instanceof Vector)
+        { Vector otest = (Vector) optests.get(j); 
+          String oname = otest.get(0) + "";
+          String otxt = otest.get(1) + "";  
+          try
+          { PrintWriter rout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter("output/tests/" + oname + "test" + e.getName() + "_" + j + ".txt")));
+            rout.println(otxt); 
+            rout.close(); 
+          } 
+          catch (Exception _x) { } 
+        }
+      } */ 
+ 
+    }    
+  
+    try
+    { File dir = new File(dirName); 
+      if (dir.exists()) { } 
+      else 
+      { dir.mkdir(); }
+      PrintWriter mtout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(dirName + "/MutationTest.cs")));
+      // if ("output".equals(dirName)) { } 
+      // else 
+      // { mtout.println("package " + dirName + ";"); 
+      //   mtout.println(); 
+      // } 
+
+      if (systemName != null && systemName.length() > 0)
+      { mtout.println("namespace " + systemName + " {\n\n"); } 
+
+      mtout.println("using System;");
+      mtout.println("using System.Collections;");
+      mtout.println("using System.IO;");
+      mtout.println("using System.Text;");
+      mtout.println("using System.Text.RegularExpressions;");
+      mtout.println("using System.Linq;");
+      mtout.println("using System.Reflection;");
+      mtout.println("using System.Diagnostics;");
+      mtout.println("using System.Threading;");
+      mtout.println("using System.Threading.Tasks;");
+      mtout.println("using System.Xml.Serialization;");
+      mtout.println("using System.Text.Json;");
+      mtout.println("using System.Text.Json.Serialization;");
+      mtout.println("using System.Data;");
+      mtout.println("using System.Data.Common;");
+      mtout.println("using System.Data.SqlClient;");
+      mtout.println("using System.Net.Sockets;"); 
+       
+      mtout.println(); 
+      mtout.println("public class MutationTest"); 
+      mtout.println("{"); 
+      for (int k = 0; k < mutationtests.size(); k++) 
+      { String mtest = (String) mutationtests.get(k); 
+        mtout.println(mtest);
+        mtout.println();  
+      }
+      mtout.println("}");  
+
+      if (systemName != null && systemName.length() > 0)
+      { mtout.println("} \n\n"); } 
+
+      mtout.close(); 
+    } 
+    catch (Exception _x) { } 
+   
+    System.out.println("*** Mutation tester operations written to " + dirName + "/MutationTest.cs"); 
   } 
 
   public void generateMutationTesterJava6()

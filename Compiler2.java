@@ -2295,30 +2295,46 @@ public Expression parse_let_expression(int bc, int st, int en, Vector entities, 
     { if (letcount > 1)  // an inner let
       { letcount--; } 
       else if (letcount < 1)
-      { System.err.println("Too many in clauses"); return null; }
+      { System.err.println("!! Too many let in clauses"); 
+        return null;
+      }
       else 
       { Expression var = parse_ATLexpression(bc, st+1, st+1,entities,types);
         if (var == null)
-        { System.err.println("Error in let variable"); return null;  }
+        { System.err.println("!! Error in let variable"); return null;  }
 
         for (int k = st+2; k < j; k++)
         { String lxk = lexicals.get(k) + "";
           if ("=".equals(lxk))
           { Type ltype = parseType(st+3,k-1,entities,types);
             if (ltype == null)
-            { System.err.println("Error in let type"); return null;  }
+            { System.err.println("!! Error in let type"); 
+              return null;
+            }
 
             Expression lexp = parse_ATLexpression(bc,k+1,j-1,entities,types);
             if (lexp == null)
-            { System.err.println("Error in let definition expression"); return null;  }
+            { lexp = parse_expression(bc,k+1,j-1,entities,types); } 
+            if (lexp == null)  
+            { System.err.println("!! Error in let definition expression"); 
+              return null;
+            }
 
             Expression lbody = parse_ATLexpression(bc,j+1,en,entities,types); 
             if (lbody == null)
-            { System.err.println("Error in let body"); }
+            { lbody = parse_expression(bc,j+1,en,entities,types); }
+            if (lbody == null)
+            { System.err.println("!! Error in let body"); }
 
             if (ltype != null && lexp != null && lbody != null) 
             { BinaryExpression letexp = new BinaryExpression("let", lexp, lbody); 
               letexp.accumulator = new Attribute(var + "", ltype, ModelElement.INTERNAL); 
+              letexp.accumulator.setInitialExpression(lexp);
+              letexp.accumulator.setElementType(
+                                    ltype.getElementType());  
+
+              System.out.println(">>> Parsed let expression " + letexp + " " + letexp.accumulator.getElementType()); 
+
               return letexp; 
               // return new LetExpression(var,ltype,lexp,lbody); 
             } 
@@ -2349,26 +2365,26 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     { if (letcount > 1)  // an inner let
       { letcount--; } 
       else if (letcount < 1)
-      { System.err.println("Error: Too many 'in' clauses in lambda expression"); 
+      { System.err.println("!! Error: Too many 'in' clauses in lambda expression"); 
         return null; 
       }
       else 
       { Expression var = parse_expression(bc, st+1, st+1,entities,types);
         if (var == null)
-        { System.err.println("Invalid syntax of lambda variable: " + lexicals.get(st+1)); 
+        { System.err.println("!! Invalid syntax of lambda variable: " + lexicals.get(st+1)); 
           return null;  
         }
         // lambda var : T in expr
 		
         Type ltype = parseType(st+3,j-1,entities,types);
         if (ltype == null)
-        { System.err.println("Error in lambda type: " + showLexicals(st+3,j-1)); 
+        { System.err.println("!! Error in lambda type: " + showLexicals(st+3,j-1)); 
           return null; 
         }
 
         Expression lbody = parse_expression(bc,j+1,en,entities,types); 
         if (lbody == null)
-        { System.err.println("Error in lambda body expression"); 
+        { System.err.println("!! Error in lambda body expression"); 
           continue; 
         }
 
@@ -2873,6 +2889,12 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
 
     if (pstart < pend && "lambda".equals(lexicals.get(pstart) + ""))
     { Expression ee = parse_lambda_expression(bc,pstart,pend,entities,types); 
+      if (ee != null) 
+      { return ee; } 
+    } 
+
+    if (pstart < pend && "let".equals(lexicals.get(pstart) + ""))
+    { Expression ee = parse_let_expression(bc,pstart,pend,entities,types); 
       if (ee != null) 
       { return ee; } 
     } 
@@ -4897,6 +4919,11 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
                 "or post: result = expression"; 
       return "post:"; 
     }
+
+    if ("let".startsWith(st))
+    { mess[0] = "let expression to define local variable:\n let x : Type = init in (expr)"; 
+      return "let"; 
+    } 
  
     if ("activity".startsWith(st)) 
     { mess[0] = "Operation or usecase code, activity: statement;"; 
@@ -4980,6 +5007,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       { mess[0] = "lambda expression to define function:\n lambda x : SourceType in expr"; 
         return "lambda"; 
       } 
+
 
     } 
 

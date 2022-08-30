@@ -906,6 +906,16 @@ public class CGSpec
       args.add(beleft.getLeft()); 
       args.add(e.getRight()); 
     } 
+    else if ("let".equals(op))
+    { Attribute acc = e.getAccumulator(); 
+      BasicExpression varbe = 
+        new BasicExpression(acc);
+      Type vartyp = acc.getType();   
+      args.add(varbe); 
+      args.add(vartyp); 
+      args.add(e.getLeft()); 
+      args.add(e.getRight()); 
+    } 
     else if ("->collect".equals(op) || 
              "->reject".equals(op) || "->any".equals(op) || 
              "->select".equals(op) || "->exists".equals(op) || 

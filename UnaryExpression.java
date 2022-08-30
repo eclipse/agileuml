@@ -864,6 +864,8 @@ public void findClones(java.util.Map clones, String rule, String op)
       String rhs = var.queryForm(language, env, local); 
       return "    " + lhs + " = " + rhs + ";";
     }
+    // else if ("let".equals(operator))
+
     return " /* No update form for " + this + " := " + var + " */ "; 
   }
 
@@ -1241,6 +1243,19 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       if (operator.startsWith("->"))
       { op = operator.substring(2,operator.length()); } 
       return pre + "." + op + "()";
+    } 
+
+    if ("let".equals(operator) && accumulator != null)
+    { // let acc : T = init in argument is { acc; argumentUF }
+      String accname = accumulator.getName(); 
+      Expression init = accumulator.getInitialExpression(); 
+      Type acctype = accumulator.getType(); 
+      if (init == null && acctype != null)
+      { init = acctype.getDefaultValueExpression(); }  
+      String res = "  { " + acctype.getJava() + " " + 
+        accname + " = " + init.queryForm(env,local) + ";\n" +
+        argument.updateForm(env,local) + " }\n"; 
+      return res; 
     } 
 
     if ("->isDeleted".equals(operator))
@@ -2717,7 +2732,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("lambda") && accumulator != null)
     { String acc = accumulator.getName(); 
-      return "(" + acc + ") -> { return " + qf + "; }"; // for Java8+ 
+      return "((" + acc + ") -> { return " + qf + "; })"; // for Java8+ 
     }
 
     if (operator.equals("-"))
@@ -4656,13 +4671,13 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
     out.println(id + ".needsBracket = " + needsBracket); 
     out.println(id + ".umlKind = " + umlkind); 
     if (accumulator != null) 
-	{ out.println(id + ".variable = \"" + accumulator.getName() + "\""); 
-	  Type vtype = accumulator.getType(); 
-	  if (vtype != null) 
-	  { String vtypeid = vtype.getUMLModelName(out); 
+    { out.println(id + ".variable = \"" + accumulator.getName() + "\""); 
+      Type vtype = accumulator.getType(); 
+      if (vtype != null) 
+      { String vtypeid = vtype.getUMLModelName(out); 
         out.println(id + ".variableType = " + vtypeid);
-	  }  
-	} 
+      }  
+    } 
 	 // out.println(res + ".prestate = " + prestate); 
     return id; 
   }         

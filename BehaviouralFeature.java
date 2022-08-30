@@ -861,6 +861,64 @@ public class BehaviouralFeature extends ModelElement
     return res; 
   } 
 
+  public Vector formMutantCallsCSharp(String ename, Vector mutants, Vector tests, Vector alltests, Vector testcalls) 
+  { // for each m : mutants, t : tests, set up a call to 
+    // m(t.values)
+ 
+    String nme = getName();         
+    Vector res = new Vector();
+
+    if (resultType != null && !("void".equals(resultType + "")))
+    { int tsts = alltests.size(); 
+      int muts = mutants.size(); 
+
+      for (int j = 0; j < tsts; j++) 
+      { Vector tst = (Vector) alltests.get(j);
+        // String tvals = (String) tst.get(1); 
+        String code = parInitCodeCSharp(tst);  
+           // parameterInitialisationCode(tvals); 
+
+        String javaType = resultType.getCSharp(); 
+
+        String call = javaType + " " + nme + "_result = _self." + this.toString() + ";\n";  
+        if (this.isStatic()) 
+        { call = javaType + " " + nme + "_result = " + ename + "." + this.toString() + ";\n"; } 
+        call = call + 
+            "    Console.WriteLine(\"Test " + j + " of " + nme + " on \" + _self + \" result = \" + " + nme + "_result);\n";
+ 
+        // Should use "  try {\n"
+
+        String testcode = 
+          "  public static void " + nme + "_mutation_tests_" + j + "(" + ename + " _self, int[] _counts, int[] _totals)\n" + 
+          "  {\n" + 
+          "    " + code + "\n" + 
+          "    try {\n  " + call + "\n";  
+     
+        for (int i = 0; i < muts; i++) 
+        { BehaviouralFeature m = (BehaviouralFeature) mutants.get(i); 
+          String mname = m.getName(); 
+          String mutantcall = "_self." + m.toString(); 
+          testcode = testcode +  
+            "    try {\n" + 
+            "      " + javaType + " " + mname + "_result = " + mutantcall + ";\n" +    
+            "      if ((\"\" + " + nme + "_result).Equals(\"\" + " + mname + "_result)) { _totals[" + j + "]++; } else\n" + 
+            "      { Console.WriteLine(\"Test " + j + " of " + tsts + " detects " + nme + " mutant " + i + " of " + muts + "\");\n" +
+            "        _counts[" + j + "]++; \n" +   
+            "        _totals[" + j + "]++;\n" + 
+            "      }\n" + 
+            "    } catch { }\n"; 
+        } 
+        testcode = testcode + "    } catch { }\n }\n\n"; 
+ 
+        res.add(testcode); 
+
+        String testcall = "    MutationTest." + nme + "_mutation_tests_" + j + "(_self,_counts,_totals);\n"; 
+        testcalls.add(testcall); 
+      }  
+    }  
+    return res; 
+  } 
+
   public Vector formMutantCallsJava6(Vector mutants, Vector tests, Vector alltests) 
   { // for each m : mutants, t : tests, set up a call to 
     // m(t.values)
@@ -1116,6 +1174,35 @@ public class BehaviouralFeature extends ModelElement
           } 
           else 
           { res = res + "    " + atttype.getJava() + " " + par + " " + rem + "\n"; }  
+        } 
+        else // it is a feature of the object
+        { res = res + "    _self." + par + " " + rem + "\n"; }
+      } 
+    } 
+    return res; 
+  } 
+
+  public String parInitCodeCSharp(Vector v) 
+  { String res = ""; 
+    for (int i = 0; i < v.size(); i++) 
+    { String assign = (String) v.get(i); 
+      int eqindex = assign.indexOf("="); 
+      if (eqindex >= 0) 
+      { String par = assign.substring(0,eqindex).trim(); 
+        String rem = assign.substring(eqindex,assign.length()); 
+
+        // if a parameter, give it a declaration
+        Attribute att = (Attribute) ModelElement.lookupByName(par,parameters); 
+        if (att != null) 
+        { Type atttype = att.getType(); 
+
+          if (atttype.isAbstractEntity())
+          { Entity absent = atttype.getEntity(); 
+            Entity leafent = absent.firstLeafSubclass(); 
+            res = res + "    " + leafent.getName() + " " + par + " " + rem + "\n";
+          } 
+          else 
+          { res = res + "    " + atttype.getCSharp() + " " + par + " " + rem + "\n"; }  
         } 
         else // it is a feature of the object
         { res = res + "    _self." + par + " " + rem + "\n"; }
@@ -1532,6 +1619,81 @@ public class BehaviouralFeature extends ModelElement
       Vector attoptests = new Vector(); 
       Attribute att = (Attribute) allattributes.get(i); 
       Vector testassignments = att.testCases("parameters", lowerBounds, upperBounds, attoptests); 
+      allOpTests.add(attoptests); 
+	  
+      for (int j = 0; j < res.size(); j++) 
+      { Vector oldtest = (Vector) res.get(j); 
+        String tst = (String) oldtest.get(1); 
+        for (int k = 0; k < testassignments.size(); k++) 
+        { String kstr = (String) testassignments.get(k); 
+          if (kstr.length() > 0) 
+          { String newtst = tst + "\n" + kstr; 
+            Vector optest = new Vector(); 
+            optest.add(nme); 
+            optest.add(newtst); 
+            newres.add(optest); 
+          } 
+        } 
+      } 
+      res.clear(); 
+      res.addAll(newres); 
+    } 
+
+    opTests.addAll(flattenTests(allOpTests));
+    // System.out.println(">>> Flattened tests = " + opTests);  
+        
+    return res; 
+  }
+
+  public Vector testCasesCSharp(Vector opTests)
+  { Vector allattributes = getParameters();
+    Vector preattributes = new Vector(); 
+    preattributes.addAll(allattributes); 
+
+    if (entity != null) 
+    { preattributes.addAll(entity.getLocalFeatures()); }  
+
+    // We are only interested in those that are *read* 
+    // by the operation - its readFrame. 
+	
+    String nme = getName();  
+    Vector res = new Vector(); 
+    Vector allOpTests = new Vector(); 
+
+    if (preattributes == null || preattributes.size() == 0) 
+    { res.add("-- no test for operation " + nme + "\n"); 
+      return res; 
+    }
+
+    java.util.Map upperBounds = new java.util.HashMap(); 
+    java.util.Map lowerBounds = new java.util.HashMap(); 
+	
+    Vector test0 = new Vector(); 
+    test0.add(nme); 
+    test0.add("-- tests for operation " + nme + "\n");
+    res.add(test0);  
+	
+    Expression pre = precondition(); 
+    if (pre != null) 
+    { Vector bounds = new Vector(); 
+      java.util.Map aBounds = new java.util.HashMap(); 
+      pre.getParameterBounds(preattributes,bounds,aBounds);
+	
+    
+      identifyUpperBounds(allattributes,aBounds,upperBounds); 
+      identifyLowerBounds(allattributes,aBounds,lowerBounds); 
+      System.out.println(".>> Parameter bounds for operation " + nme + " : " + aBounds);  
+      System.out.println(".>> Upper bounds map for operation " + nme + " : " + upperBounds);  
+      System.out.println(".>> Lower bounds map for operation " + nme + " : " + lowerBounds);  
+    }
+	
+    for (int i = 0; i < allattributes.size(); i++) 
+    { Vector newres = new Vector(); 
+      Vector attoptests = new Vector(); 
+      Attribute att = (Attribute) allattributes.get(i); 
+      Vector testassignments = 
+        att.testCasesCSharp(
+          "parameters", lowerBounds, upperBounds, attoptests); 
       allOpTests.add(attoptests); 
 	  
       for (int j = 0; j < res.size(); j++) 
