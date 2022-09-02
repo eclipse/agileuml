@@ -16086,7 +16086,7 @@ public BehaviouralFeature designAbstractKillOp()
         Vector bfcases = bf.testCasesCSharp(opTests); 
         res.addAll(bfcases);
         System.out.println(">>> There are " + opTests.size() + " generated tests for " + bfname);
-        System.out.println(">>> A maximum of 100 tests will be included in MutationTest.java");
+        System.out.println(">>> A maximum of 100 tests will be included in MutationTest.cs");
         System.out.println(); 
   
         System.out.println(bf + " is mutatable: " + bf.isMutatable()); 
@@ -16112,6 +16112,66 @@ public BehaviouralFeature designAbstractKillOp()
             "    for (int i = 0; i < _counts.Length; i++)\n" + 
             "    { if (_totals[i] > 0)\n" + 
             "      { Console.WriteLine(\"Test \" + i + \" detects \" + (100.0*_counts[i])/_totals[i] + \"% " + bfname + " mutants\"); }\n" +
+            "    }\n" +  
+            "  }\n\n"; 
+          // System.out.println(bfmutanttest);
+          mtests.add(bfmutanttest);  
+        }   
+      }
+    } 
+
+    return res;  
+  }  
+
+  public Vector operationTestCasesCPP(Vector mtests)
+  { Vector res = new Vector(); 
+    String nme = getName(); 
+    // String x = nme.toLowerCase() + "$x"; 
+
+    Vector allops = allDefinedOperations();
+
+    System.out.println(">>> All operations of " + nme + " are " + allops);  
+
+    Vector opnames = new Vector(); 
+
+    for (int i = 0; i < allops.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) allops.get(i);
+      String bfname = bf.getName(); 
+        
+      if (bf.isAbstract() || bf.isDerived() || 
+          opnames.contains(bfname)) { } 
+      else 
+      { opnames.add(bfname); 
+        Vector opTests = new Vector(); 
+        Vector bfcases = bf.testCasesCPP(opTests); 
+        res.addAll(bfcases);
+        System.out.println(">>> There are " + opTests.size() + " generated tests for " + bfname);
+        System.out.println(">>> A maximum of 100 tests will be included in MutationTest.hpp");
+        System.out.println(); 
+  
+        System.out.println(bf + " is mutatable: " + bf.isMutatable()); 
+
+        if (bf.isMutatable())
+        { 
+          Vector mutantoperations = bf.getMutants(allops);  
+          Vector testcalls = new Vector(); 
+
+          Vector mutationTests = bf.formMutantCallsCPP(
+            nme,mutantoperations,bfcases,opTests,testcalls); 
+
+          String bfmutanttest = "  static void " + bfname + "_mutation_tests(" + nme + "* _self, int[] _counts, int[] _totals)\n" + 
+          "  { "; 
+
+          for (int j = 0; j < mutationTests.size() && j < testcalls.size() && j < 100; j++) 
+          { String tst = (String) testcalls.get(j); 
+            bfmutanttest = bfmutanttest + tst + "\n";
+            mtests.add(mutationTests.get(j));  
+          } 
+
+          bfmutanttest = bfmutanttest + "\n" + 
+            "    for (int i = 0; i < 100; i++)\n" + 
+            "    { if (_totals[i] > 0)\n" + 
+            "      { cout << \"Test \" + i + \" detects \" + (100.0*_counts[i])/_totals[i] + \"% " + bfname + " mutants\" << endl; }\n" +
             "    }\n" +  
             "  }\n\n"; 
           // System.out.println(bfmutanttest);

@@ -6442,6 +6442,322 @@ public String iosDbiExtractOp(String ent, int i)
     return res;  
   } 
 
+  public Vector testCasesCPP(String x, java.util.Map lowerBnds, java.util.Map upperBnds, Vector opTests)
+  { Vector res = new Vector(); 
+    if (type == null) 
+    { return res; } 
+
+    String attname = getName(); 
+    String nme = x + "." + attname; 
+    String t = type.getName(); 
+    Vector vs = type.getValues(); 
+
+    String nmx = getName(); 
+    Expression lbnd = (Expression) lowerBnds.get(nmx); 
+    Expression ubnd = (Expression) upperBnds.get(nmx); 
+
+    if ("int".equals(t))
+    { res.add(nme + " = 0"); 
+      res.add(nme + " = -1");
+      res.add(nme + " = 1"); 
+      opTests.add(attname + " = 0;"); 
+      opTests.add(attname + " = -1;");
+      opTests.add(attname + " = 1;"); 
+
+      if (ubnd != null && lbnd != null)
+      { try
+        { double ud = Double.parseDouble(ubnd + ""); 
+          double ld = Double.parseDouble(lbnd + ""); 
+          int midd = (int) Math.floor((ud + ld)/2); 
+          res.add(nme + " = " + midd);
+          opTests.add(attname + " = " + midd + ";");
+        } catch (Exception _e) { } 
+      }
+
+      if (ubnd != null) 
+      { String upperval = ubnd + ""; 
+        if ("0".equals(upperval) || 
+            "1".equals(upperval) || 
+            "-1".equals(upperval)) 
+        { } 
+        else 
+        { opTests.add(attname + " = " + upperval + ";");
+          res.add(nme + " = " + upperval);
+        }
+      }  
+      else 
+      { res.add(nme + " = " + TestParameters.maxInteger);
+        opTests.add(attname + " = " + TestParameters.maxInteger + ";");
+      } // Integer.MAX_VALUE);
+
+      if (lbnd != null) 
+      { String lowerval = lbnd + ""; 
+        if ("0".equals(lowerval) || "1".equals(lowerval) || "-1".equals(lowerval)) { } 
+        else 
+        { res.add(nme + " = " + lowerval);
+          opTests.add(attname + " = " + lowerval + ";");
+        }
+      }  
+      else 
+      { res.add(nme + " = " + TestParameters.minInteger);
+        opTests.add(attname + " = " + TestParameters.minInteger + ";");
+      } // Integer.MIN_VALUE);
+    } 
+    else if ("long".equals(t))
+    { res.add(nme + " = 0"); 
+      res.add(nme + " = -1");
+      res.add(nme + " = 1"); 
+      opTests.add(attname + " = 0;"); 
+      opTests.add(attname + " = -1;");
+      opTests.add(attname + " = 1;"); 
+	   
+      if (ubnd != null && lbnd != null)
+      { try
+        { double ud = Double.parseDouble(ubnd + ""); 
+          double ld = Double.parseDouble(lbnd + ""); 
+          long midd = (long) Math.floor((ud + ld)/2); 
+          res.add(nme + " = " + midd);
+          opTests.add(attname + " = " + midd + ";");
+        } catch (Exception _e) { } 
+      }
+
+      if (ubnd != null) 
+      { String upperval = ubnd + ""; 
+        if ("0".equals(upperval) || 
+            "1".equals(upperval) || 
+            "-1".equals(upperval)) 
+        { } 
+        else 
+        { res.add(nme + " = " + upperval);
+          opTests.add(attname + " = " + upperval + ";");
+        }
+      }  
+      else 
+      { res.add(nme + " = " + TestParameters.maxLong); 
+        opTests.add(attname + " = " + TestParameters.maxLong + ";"); 
+      } 
+
+      if (lbnd != null) 
+      { String lowerval = lbnd + ""; 
+        if ("0".equals(lowerval) || "1".equals(lowerval) || "-1".equals(lowerval)) { } 
+        else 
+        { res.add(nme + " = " + lowerval); 
+          opTests.add(attname + " = " + lowerval + ";"); 
+        }
+      }  
+      else 
+      { res.add(nme + " = " + TestParameters.minLong);
+        opTests.add(attname + " = " + TestParameters.minLong + ";");
+      } // Long.MIN_VALUE
+    } 
+    else if ("double".equals(t))
+    {  
+      if (ubnd != null && lbnd != null)
+      { try
+        { double ud = Double.parseDouble(ubnd + ""); 
+          double ld = Double.parseDouble(lbnd + ""); 
+          double midd = (ud + ld)/2; 	
+          res.add(nme + " = " + midd);
+          opTests.add(attname + " = " + midd + ";");
+          if (ld != midd) 
+          { res.add(nme + " = " + ld); 
+            opTests.add(attname + " = " + ld + ";");
+          }
+          if (ud != midd) 
+          { res.add(nme + " = " + ud); 
+            opTests.add(attname + " = " + ud + ";");
+          } 
+          if (ld < 0.0 && 0.0 < ud && 0.0 != midd)
+          { res.add(nme + " = 0.0"); 
+            opTests.add(attname + " = 0.0;"); 
+          } 
+        } catch (Exception _e) { } 
+      }
+      else if (ubnd != null) // No lower bound
+      { String upperval = ubnd + ""; 
+        res.add(nme + " = " + upperval);
+        opTests.add(attname + " = " + upperval + ";");
+        
+        try
+        { double ud = Double.parseDouble(ubnd + "");
+ 
+          res.add(nme + " = " + ud); 
+          opTests.add(attname + " = " + ud + ";");
+          
+          if (ud < -1) 
+          { res.add(nme + " = " + TestParameters.minFloat); 
+            opTests.add(attname + " = " + TestParameters.minFloat + ";"); 
+          } 
+          else if (ud < 0 && ud != -1.0) 
+          { res.add(nme + " = -1.0");
+            opTests.add(attname + " = -1.0;");
+            res.add(nme + " = " + TestParameters.minFloat); 
+            opTests.add(attname + " = " + TestParameters.minFloat + ";"); 
+          } 
+          else if (ud < 1 && ud != 0.0)          
+          { res.add(nme + " = 0.0"); 
+            res.add(nme + " = -1.0");
+            opTests.add(attname + " = 0.0;"); 
+            opTests.add(attname + " = -1.0;");
+            res.add(nme + " = " + TestParameters.minFloat); 
+            opTests.add(attname + " = " + TestParameters.minFloat + ";"); 
+          } 
+          else  
+          { // res.add(nme + " = 0.0"); 
+            // res.add(nme + " = -1.0");
+            // res.add(nme + " = 1.0"); 
+            // opTests.add(attname + " = 0.0;"); 
+            // opTests.add(attname + " = -1.0;");
+            // opTests.add(attname + " = 1.0;");
+            res.add(nme + " = " + TestParameters.minFloat); 
+            opTests.add(attname + " = " + TestParameters.minFloat + ";"); 
+          }
+        } catch (Exception _ex) { } 
+      }
+      else if (lbnd != null) // No upper bound. 
+      { String lowerval = lbnd + "";
+        try 
+        { double ld = Double.parseDouble(lbnd + ""); 
+          res.add(nme + " = " + lowerval);
+          opTests.add(attname + " = " + lowerval + ";");
+           
+          if (ld > 1.0) 
+          { res.add(nme + " = " + TestParameters.maxFloat); 
+            opTests.add(attname + " = " + TestParameters.maxFloat + ";");     } 
+          else if (ld > 0.0 && ld != 1.0)
+          { res.add(nme + " = 1.0"); 
+            opTests.add(attname + " = 1.0;");
+            res.add(nme + " = " + TestParameters.maxFloat); 
+            opTests.add(attname + " = " + TestParameters.maxFloat + ";");     } 
+          else if (ld > -1.0 && ld != 0.0)
+          { res.add(nme + " = 0.0"); 
+            opTests.add(attname + " = 0.0;");
+            res.add(nme + " = " + TestParameters.maxFloat); 
+            opTests.add(attname + " = " + TestParameters.maxFloat + ";");     } 
+          else 
+          { res.add(nme + " = " + TestParameters.maxFloat); 
+            opTests.add(attname + " = " + TestParameters.maxFloat + ";");     } 
+        } catch (Exception _ef) { } 
+      }  
+      else // no bounding values.  
+      { res.add(nme + " = 0.0"); 
+        res.add(nme + " = -1.0");
+        res.add(nme + " = 1.0"); 
+        opTests.add(attname + " = 0.0;"); 
+        opTests.add(attname + " = -1.0;");
+        opTests.add(attname + " = 1.0;");
+        res.add(nme + " = " + TestParameters.minFloat); 
+        opTests.add(attname + " = " + TestParameters.minFloat + ";"); 
+        res.add(nme + " = " + TestParameters.maxFloat); 
+        opTests.add(attname + " = " + TestParameters.maxFloat + ";"); }
+    } 
+    else if ("boolean".equals(t))
+    { res.add(nme + " = true"); 
+      res.add(nme + " = false");
+      opTests.add(attname + " = true;"); 
+      opTests.add(attname + " = false;");
+    }
+    else if ("String".equals(t))
+    { res.add(nme + " = \"\""); 
+      res.add(nme + " = \" abc_XZ \"");
+      res.add(nme + " = \"#�$* &~@':\"");
+      opTests.add(attname + " = \"\";"); 
+      opTests.add(attname + " = \" abc_XZ \";");
+      opTests.add(attname + " = \"#�$* &~@':\";");
+    }
+    else if (vs != null && vs.size() > 0) 
+    { for (int j = 0; j < vs.size(); j++)   
+      { String v0 = (String) vs.get(j); 
+        res.add(nme + " = " + v0);
+        opTests.add(attname + " = " + v0 + ";"); 
+      } 
+    }
+    else if (type.isEntity())
+    { Entity ee = type.getEntity();
+      if (ee.isAbstract())
+      { ee = ee.firstLeafSubclass(); }  
+      String ename = ee.getName(); 
+      String es = ename.toLowerCase() + "_s"; 
+      String obj = "Controller::inst->get" + 
+                   es + "()->at(0)"; 
+      String decl = nme + " = " + ename.toLowerCase() + "x_0"; 
+      res.add(decl);
+      opTests.add(attname + " = " + obj + ";");  
+    }  
+    else if (type.isMapType() && 
+             "Map".equals(type.getName()) && 
+              elementType != null)
+    { Type elemT = getElementType(); 
+      String et = elemT.getCPP(); 
+      Vector testVals = elemT.testValues(); 
+      Vector optestVals = elemT.operationTestValues();  
+      res.add(""); 
+      opTests.add(attname + " = new map<string," + et + ">();"); 
+	   
+      // Singletons: 
+      for (int p = 0; p < testVals.size() && p < 3; p++) 
+      { String tv = (String) optestVals.get(p); 
+        // res.add(tv + " : " + nme); 
+        opTests.add(attname + " = UmlRsdsLib<" + et + ">::includingMap(new map<string," + et + ">(), \"" + p + "\", " + tv + ");"); 
+      }
+	  
+	  // Triples: 
+      for (int p = 0; p+2 < testVals.size() && p < 3; p++) 
+      { String tv = (String) optestVals.get(p); 
+        String tv1 = (String) optestVals.get(p+1);
+        String tv2 = (String) optestVals.get(p+2);  
+        // res.add(tv + " : " + nme + "\n" + tv1 + " : " + nme + "\n" + tv2 + " : " + nme);
+        opTests.add(attname + " = UmlRsdsLib<" + 
+          et + ">::includingMap(" + 
+          "UmlRsdsLib<" + et + ">::includingMap(" +   
+          "UmlRsdsLib<" + et + ">::includingMap(" + 
+          "new map<string," + et + ">(), \"" + p + "\", " + tv + "), \"" + (p+1) + "\", " + tv1 + "), \"" + (p+2) + "\", " + tv2 + ");"); 
+      }
+    } 
+    else if (type.isCollection() && 
+             ("Set".equals(type.getName()) || 
+              "Sequence".equals(type.getName())) && 
+              elementType != null)
+    { Type elemT = getElementType(); 
+      String tname = type.getName(); 
+      String et = elemT.getCPP(); 
+      Vector testVals = elemT.testValues(); 
+      Vector optestVals = elemT.operationTestValues(); 
+      res.add(""); 
+      if ("Sequence".equals(tname))
+      { opTests.add(attname + " = new vector<" + et + ">();"); } 
+      else 
+      { opTests.add(attname + " = new std::set<" + et + ">();"); } 
+
+      // Singletons: 
+      for (int p = 0; p < testVals.size() && p < 3; p++) 
+      { String tv = (String) testVals.get(p);
+        String opv = (String) optestVals.get(p);  
+        res.add(tv + " : " + nme); 
+        opTests.add(attname + " = UmlRsdsLib<" + et + ">::make" + tname + "(" + opv + ");"); 
+      }
+	  
+	  // Triples: 
+      for (int p = 0; p+2 < testVals.size() && p < 3; p++) 
+      { String tv = (String) testVals.get(p); 
+        String tv1 = (String) testVals.get(p+1);
+        String tv2 = (String) testVals.get(p+2);  
+        String opv = (String) optestVals.get(p);  
+        String opv1 = (String) optestVals.get(p+1);  
+        String opv2 = (String) optestVals.get(p+2);
+  
+        res.add(tv + " : " + nme + "\n" + tv1 + " : " + nme + "\n" + tv2 + " : " + nme);
+        opTests.add(attname + " = UmlRsdsLib<" + et + 
+          ">::add" + tname + "(UmlRsdsLib<" + et + 
+          ">::add" + tname + "(UmlRsdsLib<" + et + 
+          ">::make" + tname + "(" + opv + "), " + 
+          opv1 + ")," + opv2 + ");"); 
+      }
+    } 
+ 
+    return res;  
+  } 
+
   public Vector testCasesJava6(String x, java.util.Map lowerBnds, java.util.Map upperBnds, Vector opTests)
   { Vector res = new Vector(); 
     if (type == null) 

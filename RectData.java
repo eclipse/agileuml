@@ -137,6 +137,18 @@ class RectData extends RectForm
       if (fm.stringWidth("<<requirement>>") + (namex - sourcex) >= width) 
       { width = fm.stringWidth("<<requirement>>") + (namex - sourcex) + 5; }
     } 
+    else if (modelElement != null && modelElement instanceof ArchComponent)
+    { ArchComponent req = (ArchComponent) modelElement; 
+      Font ff = g.getFont(); 
+      // Font newff = new Font(ff.getName(),Font.ITALIC,ff.getSize());
+      // g.setFont(newff);  
+      g.drawString(label,namex,namey+5); 
+      g.setFont(ff); 
+      g.drawString("<<component>>",namex,namey-5);
+      FontMetrics fm = g.getFontMetrics(); 
+      if (fm.stringWidth("<<component>>") + (namex - sourcex) >= width) 
+      { width = fm.stringWidth("<<component>>") + (namex - sourcex) + 5; }
+    } 
     else if (modelElement != null && modelElement instanceof Type)
     { Type typ = (Type) modelElement; 
       Font ff = g.getFont(); 

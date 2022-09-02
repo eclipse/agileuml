@@ -1,7 +1,7 @@
 import java.io.*; 
 import java.util.Vector; 
 
-/* Package: Requirements */ 
+/* Package: Architecture */ 
 /******************************
 * Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
@@ -11,22 +11,27 @@ import java.util.Vector;
 * SPDX-License-Identifier: EPL-2.0
 * *****************************/
 
-public class Requirement extends ModelElement
+public class ArchComponent extends ModelElement
 { public String id = "F1"; 
-  public String text; 
+  public String text = ""; 
   public String requirementKind = "functional"; 
   private boolean product = true; 
   private boolean local = false; 
-  private Vector scenarios = new Vector(); // of Scenario
+  private Vector providedInterfaces = new Vector(); // of Entity
+  private Vector requiredInterfaces = new Vector(); // of Entity
+  private Vector scenarios = new Vector();
+  private Type type = null;  
 
-  private Type type = null; 
 
-  public Requirement(String nme, String i, String txt, String knd)
+  public ArchComponent(String nme, String i, String txt, String knd)
   { super(nme); 
     id = i ; 
     text = txt; 
     requirementKind = knd; 
   }
+
+  public ArchComponent(String nme)
+  { super(nme); } 
 
   public String getText() 
   { return text; } 
@@ -45,16 +50,6 @@ public class Requirement extends ModelElement
     { return false; }
     return true; 
   }  
-
-  public Vector getParameters()
-  { return new Vector(); } 
-
-  public void addParameter(Attribute att) 
-  { } 
-
-  public Type getType() { return type; }
-
-  public void setType(Type t) { type = t; } 
 
   public boolean hasScenarios()
   { return scenarios.size() > 0; } 
@@ -78,14 +73,25 @@ public class Requirement extends ModelElement
   public void addScenario(Scenario sc)
   { scenarios.add(sc); } 
 
+  public void addProvidedInterface(Entity pintf)
+  { providedInterfaces.add(pintf); } 
+
+  public void addRequiredInterface(Entity pintf)
+  { requiredInterfaces.add(pintf); } 
+
 
   public String toString()
-  { return "Requirement: " + name + " " + id + "\n" + 
-           text + "\n" + 
-           requirementKind + "\n" + 
-           local + "\n" + 
-           scenarios; 
-  } 
+  { return "Component: " + name + "\n"; } 
+
+  public Vector getParameters()
+  { return new Vector(); } 
+
+  public void addParameter(Attribute att) 
+  { } 
+
+  public Type getType() { return type; }
+
+  public void setType(Type t) { type = t; }  
 
   public void generateJava(PrintWriter out) { } 
 

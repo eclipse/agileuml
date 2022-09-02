@@ -4848,22 +4848,29 @@ public class Type extends ModelElement
     { res.add("0"); 
       res.add("-1");
       res.add("1"); 
-      res.add("2147483647");  // Integer.MAX_VALUE);
-      res.add("-2147483648"); // Integer.MIN_VALUE);
+      res.add("" + TestParameters.maxInteger); 
+      res.add("" + TestParameters.minInteger); 
+      // res.add("2147483647");  
+      // res.add("-2147483648"); 
     } 
     else if ("long".equals(t))
     { res.add("0"); 
       res.add("-1");
       res.add("1"); 
-      res.add("" + Long.MAX_VALUE);
-      res.add("" + Long.MIN_VALUE);
+      res.add("" + TestParameters.maxLong); 
+      res.add("" + TestParameters.minLong); 
+      // res.add("" + Long.MAX_VALUE);
+      // res.add("" + Long.MIN_VALUE);
     } 
     else if ("double".equals(t))
     { res.add("0"); 
       res.add("-1");
-      res.add("1"); 
-      res.add("" + Double.MAX_VALUE);
-      res.add("" + Double.MIN_VALUE);
+      res.add("1");
+      res.add("" + TestParameters.maxFloat); 
+      res.add("" + TestParameters.minFloat); 
+ 
+      // res.add("" + Double.MAX_VALUE);
+      // res.add("" + Double.MIN_VALUE);
     } 
     else if ("boolean".equals(t))
     { res.add("true"); 
@@ -4904,22 +4911,28 @@ public class Type extends ModelElement
     { res.add("0"); 
       res.add("-1");
       res.add("1"); 
-      res.add("2147483647");  // Integer.MAX_VALUE);
-      res.add("-2147483648"); // Integer.MIN_VALUE);
+      res.add("" + TestParameters.maxInteger); 
+      res.add("" + TestParameters.minInteger); 
+      // res.add("2147483647");  
+      // res.add("-2147483648"); 
     } 
     else if ("long".equals(t))
     { res.add("0"); 
       res.add("-1");
       res.add("1"); 
-      res.add("" + Long.MAX_VALUE);
-      res.add("" + Long.MIN_VALUE);
+      res.add("" + TestParameters.maxLong); 
+      res.add("" + TestParameters.minLong); 
+      // res.add("" + Long.MAX_VALUE);
+      // res.add("" + Long.MIN_VALUE);
     } 
     else if ("double".equals(t))
     { res.add("0"); 
       res.add("-1");
       res.add("1"); 
-      res.add("" + Double.MAX_VALUE);
-      res.add("" + Double.MIN_VALUE);
+      res.add("" + TestParameters.maxFloat); 
+      res.add("" + TestParameters.minFloat); 
+      // res.add("" + Double.MAX_VALUE);
+      // res.add("" + Double.MIN_VALUE);
     } 
     else if ("boolean".equals(t))
     { res.add("true"); 
@@ -4953,10 +4966,10 @@ public class Type extends ModelElement
   public static boolean typeCompatible(Type t1, Type elemt1, Type t2, Type elemt2)
   { // Something of type t1(elemt1) can be converted to something of type t2(elemt2)
     String t1name = t1.getName(); 
-	String t2name = t2.getName(); 
+    String t2name = t2.getName(); 
 	
     if (t1.isCollection() && t2.isCollection() && t1name.equals(t2name))
-	{ return typeCompatible(elemt1, elemt1, elemt2, elemt2); }   // sets and sequences of compatible types
+    { return typeCompatible(elemt1, elemt1, elemt2, elemt2); }   // sets and sequences of compatible types
 	
 	if (t1.isCollection() && !t2.isCollection())
 	{ return typeCompatible(elemt1,elemt1,t2,elemt2); }  // reduce set(String) to String, etc
@@ -4975,10 +4988,10 @@ public class Type extends ModelElement
 	if ((t1name + "").equals("int") && (t2name + "").equals("long")) 
     { return true; } // and other cases where t1 is a subtype of t2
     
-	if ((t1name + "").equals(t2name + "")) 
+    if ((t1name + "").equals(t2name + "")) 
     { return true; }  
     
-	return false; 
+    return false; 
   } 
 
 

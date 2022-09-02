@@ -22,7 +22,7 @@ public class GUIBuilder
       comp.lexicalanalysis(con);
       Expression e = comp.parse();
       if (e == null)
-      { System.out.println("error in expression: " + con); }
+      { System.out.println("!! Error in expression: " + con); }
       else
       { res.add(e); }
     }
@@ -53,10 +53,10 @@ public class GUIBuilder
             else if (lob != null && lob instanceof ObjectSpecification &&
 	             rob instanceof ObjectSpecification)
             { ObjectSpecification ros = (ObjectSpecification) rob;
-	      ros.addelement((ObjectSpecification) lob); 
-	    }
-          }
-          else if (op.equals("=") && bel.objectRef instanceof BasicExpression)
+	        ros.addelement((ObjectSpecification) lob); 
+           }
+         }
+         else if (op.equals("=") && bel.objectRef instanceof BasicExpression)
           { BasicExpression objnme = (BasicExpression) bel.objectRef;
             ModelElement obj = ModelElement.lookupByName(objnme + "",res);
             if (obj != null && obj instanceof ObjectSpecification)
@@ -572,9 +572,17 @@ public class GUIBuilder
          "    } \n";
 
     aper = aper + 
-         "    int[] intTestValues = {0, -1, 1, 2147483647, -2147483648};\n" + 
-         "    long[] longTestValues = {0, -1, 1, " + Long.MAX_VALUE + "L, " + Long.MIN_VALUE + "L};\n" + 
-         "    double[] doubleTestValues = {0, -1, 1, " + Double.MAX_VALUE + ", " + Double.MIN_VALUE + "};\n" +
+         "    int[] intTestValues = {0, -1, 1, " + 
+            TestParameters.minInteger + ", " + 
+            TestParameters.maxInteger + "};\n" +    
+    // 2147483647, -2147483648};\n" + 
+         "    long[] longTestValues = {0, -1, 1, " +
+            TestParameters.minLong + ", " + 
+            TestParameters.maxLong + "};\n" + 
+    // Long.MAX_VALUE + "L, " + Long.MIN_VALUE + "L};\n" + 
+         "    double[] doubleTestValues = {0, -1, 1, " + 
+            TestParameters.maxFloat + ", " + 
+            Double.MIN_VALUE + "};\n" +
          "    boolean[] booleanTestValues = {false, true};\n" + 
          "    String[] stringTestValues = {\"\", \" abc_XZ \", \"#�$* &~@'\"};\n";
 
@@ -597,8 +605,10 @@ public class GUIBuilder
             Expression pre = con.succedent();  
             pre.getParameterBounds(pars,bounds,aBounds);
    
-            Expression.identifyUpperBounds(pars,aBounds,upperBounds); 
-            Expression.identifyLowerBounds(pars,aBounds,lowerBounds); 
+            Expression.identifyUpperBounds(
+                          pars,aBounds,upperBounds); 
+            Expression.identifyLowerBounds(
+                          pars,aBounds,lowerBounds); 
           } 
 		  
           for (int j = 0; j < pars.size(); j++) 
@@ -606,7 +616,8 @@ public class GUIBuilder
             String parnme = par.getName();
             Type typ = par.getType(); 
             String tname = typ + ""; 
-            Vector testassignments = par.testValues("parameters", lowerBounds, upperBounds);
+            Vector testassignments = par.testValues(
+                "parameters", lowerBounds, upperBounds);
 			
             if ("int".equals(tname))
             { aper = aper + 
@@ -1092,9 +1103,15 @@ public class GUIBuilder
          "    } \n";
 
     aper = aper + 
-         "    int[] intTestValues = {0, -1, 1, 2147483647, -2147483648};\n" + 
-         "    long[] longTestValues = {0, -1, 1, " + Long.MAX_VALUE + "L, " + Long.MIN_VALUE + "L};\n" + 
-         "    double[] doubleTestValues = {0, -1, 1, " + Double.MAX_VALUE + ", " + Double.MIN_VALUE + "};\n" +
+         "    int[] intTestValues = {0, -1, 1, " + 
+            TestParameters.minInteger + ", " + 
+            TestParameters.maxInteger + "};\n" +    
+         "    long[] longTestValues = {0, -1, 1, " +
+            TestParameters.minLong + ", " + 
+            TestParameters.maxLong + "};\n" + 
+         "    double[] doubleTestValues = {0, -1, 1, " + 
+            TestParameters.maxFloat + ", " + 
+            Double.MIN_VALUE + " };\n" +
          "    boolean[] booleanTestValues = {false, true};\n" + 
          "    String[] stringTestValues = {\"\", \" abc_XZ \", \"#�$* &~@'\"};\n";
 
@@ -1651,10 +1668,16 @@ public class GUIBuilder
     //      "    { cont.saveCSVModel();  \n" + 
     //      "      return; } \n";
 
-	aper = aper + 
-         "    int[] intTestValues = {0, -1, 1, 2147483647, -2147483648};\n" + 
-         "    long[] longTestValues = {0, -1, 1, " + Long.MAX_VALUE + "L, " + Long.MIN_VALUE + "L};\n" + 
-         "    double[] doubleTestValues = {0, -1, 1, " + Double.MAX_VALUE + ", " + Double.MIN_VALUE + "};\n" +
+    aper = aper + 
+         "    int[] intTestValues = {0, -1, 1, " + 
+            TestParameters.minInteger + ", " + 
+            TestParameters.maxInteger + "};\n" +    
+         "    long[] longTestValues = {0, -1, 1, " +
+            TestParameters.minLong + ", " + 
+            TestParameters.maxLong + "};\n" + 
+         "    double[] doubleTestValues = {0, -1, 1, " + 
+            TestParameters.maxFloat + ", " + 
+            Double.MIN_VALUE + " };\n" +
          "    boolean[] booleanTestValues = {false, true};\n" + 
          "    String[] stringTestValues = {\"\", \" abc_XZ \", \"#�$* &~@'\"};\n";
 
@@ -1691,26 +1714,26 @@ public class GUIBuilder
             if ("int".equals(tname))
             { aper = aper + 
 			     "    int[] " + nme + par + "TestValues = {";
-			  for (int y = 0; y < testassignments.size(); y++) 
-			  { String tval = (String) testassignments.get(y); 
-			    aper = aper + tval; 
-				if (y < testassignments.size() - 1) 
-				{ aper = aper + ", "; }
-			  }
-			  aper = aper + "};\n";  
-		    } 
+              for (int y = 0; y < testassignments.size(); y++) 
+              { String tval = (String) testassignments.get(y); 
+                aper = aper + tval; 
+                if (y < testassignments.size() - 1) 
+                { aper = aper + ", "; }
+              }
+              aper = aper + "};\n";  
+            } 
             else if ("long".equals(tname))
             { aper = aper + 
 			     "    long[] " + nme + par + "TestValues = {";
-			  for (int y = 0; y < testassignments.size(); y++) 
-			  { String tval = (String) testassignments.get(y); 
-			    aper = aper + tval; 
-				if (y < testassignments.size() - 1) 
-				{ aper = aper + ", "; }
-			  }
-			  aper = aper + "};\n";  
-		    } 
-	        else if ("double".equals(tname))
+              for (int y = 0; y < testassignments.size(); y++) 
+              { String tval = (String) testassignments.get(y); 
+                aper = aper + tval; 
+                if (y < testassignments.size() - 1) 
+                { aper = aper + ", "; }
+              }
+              aper = aper + "};\n";  
+            } 
+            else if ("double".equals(tname))
             { aper = aper + 
 			     "    double[] " + nme + par + "TestValues = {";
 			  for (int y = 0; y < testassignments.size(); y++) 
@@ -2041,6 +2064,474 @@ public class GUIBuilder
       "    gui.setSize(550,400);\n" +
       "    gui.setVisible(true);\n" +
       "  }\n }";
+    return res;
+  }
+
+  public static String buildTestsGUICSharp(Vector ucs, String sysName, boolean incr, Vector types, Vector entities)
+  { String res = "using System;\n" +  
+          "using System.Collections;\n" + 
+          "using System.IO;\n" + 
+          "using System.Text;\n" + 
+          "using System.Text.RegularExpressions;\n" + 
+          "using System.Linq;\n" +
+          "using System.Diagnostics;\n" + 
+          "using System.Reflection;\n" +
+          "using System.Threading;\n" +
+          "using System.Threading.Tasks;\n" +
+          "using System.Xml.Serialization;\n" + 
+          "using System.Text.Json;\n" + 
+          "using System.Text.Json.Serialization;\n" +
+          "using System.Data;\n" + 
+          "using System.Data.Common;\n" + 
+          "using System.Data.SqlClient;\n" + 
+          "using System.Net.Sockets;\n" + 
+          "using System.Net.Http;\n\n";  
+
+    String mutationTestsOp = "  public void runTests() {\n";  
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ent = (Entity) entities.get(i);
+      if (ent.isDerived() || ent.isComponent() || 
+          ent.isAbstract()) 
+      { continue; }  
+      String ename = ent.getName();
+      String es = ename.toLowerCase() + "_s"; 
+      Vector eops = ent.allDefinedOperations();  
+      mutationTestsOp = mutationTestsOp + 
+        "      { int _" + es + "_instances = Controller.inst().get" + es + "().Count;\n";  
+      
+      Vector bfnames = new Vector(); 
+      for (int j = 0; j < eops.size(); j++) 
+      { BehaviouralFeature bf = (BehaviouralFeature) eops.get(j);
+        String bfname = bf.getName();  
+           
+        if (bf.isAbstract() || bfnames.contains(bfname)) 
+        { continue; } 
+
+        bfnames.add(bfname); 
+
+        if (bf.isStatic() && bf.isMutatable())
+        { mutationTestsOp = mutationTestsOp + 
+          "        int[] " + es + "_" + bfname + "_counts = new int[100]; \n" +   
+          "        int[] " + es + "_" + bfname + "_totals = new int[100]; \n" +   
+          "        if (_" + es + "_instances > 0)\n" + 
+          "        { " + ename + " _ex = (" + ename + ") Controller.inst().get" + es + "()[0];\n" +  
+          "          MutationTest." + bfname + "_mutation_tests(_ex," + es + "_" + bfname + "_counts, " + es + "_" + bfname + "_totals);\n" + 
+          "        }\n" + 
+          "        Console.WriteLine();\n";  
+        } 
+        else if (bf.isMutatable())
+        { mutationTestsOp = mutationTestsOp + 
+          "        int[] " + es + "_" + bfname + "_counts = new int[100]; \n" +   
+          "        int[] " + es + "_" + bfname + "_totals = new int[100]; \n" +   
+          "        for (int _i = 0; _i < _" + es + "_instances; _i++)\n" + 
+          "        { " + ename + " _ex = (" + ename + ") Controller.inst().get" + es + "()[_i];\n" +  
+          "          try {\n" + 
+          "            MutationTest." + bfname + "_mutation_tests(_ex," + es + "_" + bfname + "_counts, " + es + "_" + bfname + "_totals);\n" + 
+          "          } catch { }\n" + 
+          "        }\n" + 
+          "        Console.WriteLine();\n"; 
+           
+        } 
+      }
+      mutationTestsOp = mutationTestsOp + 
+          "      }\n\n";
+    } 
+    mutationTestsOp = mutationTestsOp + "\n" + 
+          "  }\n\n"; 
+
+    String contname = "Controller"; 
+
+    if (sysName == null || sysName.length() == 0) { } 
+    else 
+    { contname = sysName + "." + contname; } 
+
+    res = res +
+      "public class TestsGUI\n" +
+      "{ " + contname + " cont = " + contname + ".inst();\n";
+
+    String cons = "  public TestsGUI()\n" +
+      "  { cont.loadModel(); }\n\n" + mutationTestsOp;
+
+    String aper = "  public void testUseCases() {\n"; 
+    aper = aper + 
+         "    int[] intTestValues = {0, -1, 1, " + 
+            TestParameters.minInteger + ", " + 
+            TestParameters.maxInteger + "};\n" +    
+         "    long[] longTestValues = {0, -1, 1, " +
+            TestParameters.minLong + ", " + 
+            TestParameters.maxLong + "};\n" + 
+         "    double[] doubleTestValues = {0, -1, 1, " + 
+            TestParameters.maxFloat + ", " + 
+            Double.MIN_VALUE + " };\n" +
+         "    bool[] booleanTestValues = {false, true};\n" + 
+         "    string[] stringTestValues = {\"\", \" abc_XZ \", \"#�$* &~@'\"};\n";
+
+    for (int i = 0; i < ucs.size(); i++)
+    { ModelElement me = (ModelElement) ucs.get(i); 
+      if (me instanceof UseCase) 
+      { UseCase uc = (UseCase) me;
+        if (uc.isDerived()) { continue; } 
+        String nme = uc.getName();
+        Vector pars = uc.getParameters(); 
+        if (pars.size() > 0)
+        { java.util.Map upperBounds = new java.util.HashMap(); 
+          java.util.Map lowerBounds = new java.util.HashMap(); 
+	
+          Vector bounds = new Vector(); 
+          java.util.Map aBounds = new java.util.HashMap(); 
+      
+          for (int k = 0; k < uc.preconditions.size(); k++) 
+          { Constraint con = (Constraint) uc.preconditions.get(k);
+            Expression pre = con.succedent();  
+            pre.getParameterBounds(pars,bounds,aBounds);
+   
+            Expression.identifyUpperBounds(pars,aBounds,upperBounds); 
+            Expression.identifyLowerBounds(pars,aBounds,lowerBounds); 
+		  } 
+		  
+          for (int j = 0; j < pars.size(); j++) 
+          { Attribute par = (Attribute) pars.get(j); 
+            String parnme = par.getName();
+            Type typ = par.getType(); 
+            String tname = typ + ""; 
+            Vector testassignments = par.testValues("parameters", lowerBounds, upperBounds);
+			
+            if ("int".equals(tname))
+            { aper = aper + 
+			     "    int[] " + nme + par + "TestValues = {";
+              for (int y = 0; y < testassignments.size(); y++) 
+			  { String tval = (String) testassignments.get(y); 
+			    aper = aper + tval; 
+				if (y < testassignments.size() - 1) 
+				{ aper = aper + ", "; }
+			  }
+			  aper = aper + "};\n";  
+		    } 
+            else if ("long".equals(tname))
+            { aper = aper + 
+			     "    long[] " + nme + par + "TestValues = {";
+              for (int y = 0; y < testassignments.size(); y++) 
+              { String tval = (String) testassignments.get(y); 
+                aper = aper + tval; 
+                if (y < testassignments.size() - 1) 
+                { aper = aper + ", "; }
+              }
+              aper = aper + "};\n";  
+            } 
+            else if ("double".equals(tname))
+            { aper = aper + 
+			     "    double[] " + nme + par + "TestValues = {";
+              for (int y = 0; y < testassignments.size(); y++) 
+              { String tval = (String) testassignments.get(y); 
+                aper = aper + tval; 
+                if (y < testassignments.size() - 1) 
+                { aper = aper + ", "; }
+              }
+              aper = aper + "};\n";  
+            } 
+          }
+        }
+      }
+    }
+	 
+    for (int i = 0; i < ucs.size(); i++)
+    { ModelElement me = (ModelElement) ucs.get(i); 
+      if (me instanceof UseCase) 
+      { UseCase uc = (UseCase) me;
+        if (uc.isDerived()) { continue; } 
+		String indent = "    "; 
+        
+		// String checkCode = uc.getQueryCode("Java4", types, entities); 
+        String checkCode = ""; 
+		
+        
+        String nme = uc.getName();
+        Vector pars = uc.getParameters(); 
+        Type resultType = uc.getResultType(); 
+        String testscript = "";
+        String teststring = ""; 
+        String posttests = ""; 
+
+        String parstring = ""; 
+        String parnames = uc.getParameterNames(); 
+				
+        if (pars.size() > 0)
+        { for (int j = 0; j < pars.size(); j++) 
+          { Attribute par = (Attribute) pars.get(j); 
+            String parnme = par.getName();
+            String indexvar = "_index_" + j; 
+            indent = indent + "  "; 
+			 
+            parstring = parstring + parnme; 
+            teststring = teststring + "\"" + parnme + " = \" + " + parnme; 
+            if (j < pars.size() - 1)
+            { parstring = parstring + ","; 
+              teststring = teststring + " + \"; \" + "; 
+            } 
+
+            Type typ = par.getType(); 
+            String tname = typ + ""; 
+			
+            if ("int".equals(tname))
+            { testscript = testscript + 
+                indent + "\n" + 
+                indent + "for (int " + indexvar + " = 0; " + indexvar + " < " + nme + par + "TestValues.Length; " + indexvar + "++)\n" + 
+                indent + "{ int " + parnme + " = " + nme + par + "TestValues[" + indexvar + "];\n";  
+            } 
+            else if ("long".equals(tname))
+            { testscript = testscript + 
+                indent + "\n" + 
+                indent + "for (int " + indexvar + " = 0; " + indexvar + " < " + nme + par + "TestValues.Length; " + indexvar + "++)\n" + 
+                indent + "{ long " + parnme + " = " + nme + par + "TestValues[" + indexvar + "];\n";  
+            } 
+            else if ("double".equals(tname))
+            { testscript = testscript + 
+                indent + "\n" + 
+                indent + "for (int " + indexvar + " = 0; " + indexvar + " < " + nme + par + "TestValues.Length; " + indexvar + "++)\n" + 
+                indent + "{ double " + parnme + " = " + nme + par + "TestValues[" + indexvar + "];\n";  
+            } 
+            else if ("boolean".equals(typ + ""))
+            { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 2; " + indexvar + "++)\n" + 
+                  indent + "{ bool " + parnme + " = booleanTestValues[" + indexvar + "];\n";  
+            } 
+            else if ("String".equals(typ + ""))
+            { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 3; " + indexvar + "++)\n" + 
+                  indent + "{ string " + parnme + " = stringTestValues[" + indexvar + "];\n";  
+            } 
+            else if (typ != null && typ.isEnumeration())
+            { Vector vals = typ.getValues();  
+              int nvals = vals.size(); 
+              testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < " + nvals + "; " + indexvar + "++)\n" + 
+                  indent + "{ int " + parnme + " = " + indexvar + ";\n";
+            } 
+            else if (typ.isEntity())
+            { Entity ee = typ.getEntity(); 
+              if (ee.isAbstract())
+              { ee = ee.firstLeafSubclass(); } 
+              String ename = ee.getName().toLowerCase() + "_s";
+                 
+              Vector eeinvariants = new Vector(); 
+              if (ee != null) 
+              { eeinvariants.addAll(ee.getInvariants()); }
+
+              testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "int _" + ename + "_instances = Controller.inst().get" + ename + "().Count;\n" +  
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < _" + ename + "_instances; " + indexvar + "++)\n" + 
+                  indent + "{ " + tname + " " + parnme + " = (" + tname + ") Controller.inst().get" + ename + "()[" + indexvar + "];\n";
+              for (int p = 0; p < eeinvariants.size(); p++)
+              { java.util.Map env = new java.util.HashMap(); 
+                env.put(tname, parnme); 
+                Constraint conp = (Constraint) eeinvariants.get(p); 
+                Constraint conpr = conp.addReference(parnme,typ); 
+                String constring = conpr.queryFormCSharp(env,true); 
+				
+                testscript = testscript + 
+                  indent + "  if (" + constring + ")\n" + 
+                  indent + "  { Console.WriteLine(\"" + parnme + " : " + tname + " invariant " + p + " is valid at start; \"); }\n" + 
+                  indent + "  else \n" + 
+                  indent + "  { Console.WriteLine(\"" + parnme + " : " + tname + " invariant " + p + " fails at start; \"); }\n"; 
+                posttests = posttests + 
+                  indent + "  if (" + constring + ")\n" + 
+                  indent + "  { Console.WriteLine(\"" + parnme + " : " + tname + " invariant " + p + " is valid at end; \"); }\n" + 
+                  indent + "  else \n" + 
+                  indent + "  { Console.WriteLine(\"" + parnme + " : " + tname + " invariant " + p + " fails at end; \"); }\n"; 
+              }
+				  		  
+            } // Check invariants of parnme. 
+            else if (typ.isMapType()) 
+            { Type elemTyp = typ.getElementType();
+              String collType = "Hashtable"; 
+              if (elemTyp == null) { } 
+              else if ("int".equals(elemTyp.getName()))
+              { testscript = testscript + 
+                      indent + "\n" + 
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+				indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+				indent + "  if (" + indexvar + " < 5)\n" + 
+				indent + "  { " + parnme + "[\"" + indexvar + "\"] = intTestValues[" + indexvar + "]; }\n" + 
+				indent + "  if (" + indexvar + " < 3)\n" + 
+				indent + "  { " + parnme + "[\"" + indexvar + "\"] = intTestValues[" + indexvar + " + 2]; }\n";  
+              } 
+              else if ("long".equals(elemTyp.getName()) || 
+                       "double".equals(elemTyp.getName()) ||
+                       "boolean".equals(elemTyp.getName()))
+              { String etname = elemTyp.getName(); 
+                // String wrapper = Named.capitalise(etname); 
+                testscript = testscript + 
+                      indent + "\n" + 
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+				indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+				indent + "  if (" + indexvar + " < 5)\n" + 
+				indent + "  { " + parnme + "[\"" + indexvar + "\"] = " + etname + "TestValues[" + indexvar + "]; }\n" + 
+				indent + "  if (" + indexvar + " < 3)\n" + 
+				indent + "  { " + parnme + "[\"" + indexvar + "\"] = " + etname + "TestValues[" + indexvar + " + 2]; }\n";  
+              } 
+              else if ("String".equals(elemTyp.getName()))
+              { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 4; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+                  indent + "  if (" + indexvar + " < 3)\n" + 
+                  indent + "  { " + parnme + "[\"" + indexvar + "\"] = stringTestValues[" + indexvar + "]; }\n" + 
+                  indent + "  if (" + indexvar + " < 2)\n" + 
+                  indent + "  { " + parnme + "[\"" + indexvar + "\"] = stringTestValues[" + indexvar + " + 1]; }\n";
+              } 
+              else if (elemTyp != null && elemTyp.isEnumeration())
+              { Vector vals = elemTyp.getValues(); 
+                int nvals = vals.size(); 
+                testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= " + nvals + "; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+                  indent + "  if (" + indexvar + " < " + nvals + ")\n" + 
+                  indent + "  { " + parnme + "[\"" + indexvar + "\"] = " + indexvar + "; }\n"; 
+              }
+              else if (elemTyp.isEntity())
+              { String etname = elemTyp.getName(); 
+			    // Entity ee = elemTyp.getEntity(); 
+				
+                String eename = etname.toLowerCase() + "_s"; 
+			    
+                testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "int _" + eename + "_instances = Controller.inst().get" + eename + "().Count;\n" +  
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= _" + eename + "_instances; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n";  
+                testscript = testscript + 
+                  indent + "  if (" + indexvar + " < _" + eename + "_instances)\n" + 
+                  indent + "  { " + parnme + "[\"" + indexvar + "\"] = Controller.inst().get" + eename + "()[" + indexvar + "]; }\n";
+              }  
+            } 
+            else if (typ.isCollectionType()) // Try with empty list, singleton & random list
+            { Type elemTyp = typ.getElementType(); 
+              if (elemTyp == null) { } 
+              else if ("int".equals(elemTyp.getName()))
+              { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+                  indent + "{ ArrayList " + parnme + " = new ArrayList();\n" + 
+                  indent + "  if (" + indexvar + " < 5)\n" + 
+                  indent + "  { " + parnme + ".Add(intTestValues[" + indexvar + "]); }\n" +   
+                  indent + "  if (" + indexvar + " < 3)\n" + 
+                  indent + "  { " + parnme + ".Add(intTestValues[" + indexvar + " + 2]); }\n";  
+              } 
+              else if ("long".equals(elemTyp.getName()))
+              { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+                  indent + "{ ArrayList " + parnme + " = new ArrayList();\n" + 
+                  indent + "  if (" + indexvar + " < 5)\n" + 
+                  indent + "  { " + parnme + ".Add(longTestValues[" + indexvar + "]); }\n" +  
+                  indent + "  if (" + indexvar + " < 3)\n" + 
+				  indent + "  { " + parnme + ".Add(longTestValues[" + indexvar + " + 2]); }\n"; 
+                }  
+                else if ("double".equals(elemTyp.getName()))
+                { testscript = testscript + 
+                    indent + "\n" + 
+                    indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+                    indent + "{ ArrayList " + parnme + " = new ArrayList();\n" + 
+                    indent + "  if (" + indexvar + " < 5)\n" + 
+                    indent + "  { " + parnme + ".Add(doubleTestValues[" + indexvar + "]); }\n" + 
+				    indent + "  if (" + indexvar + " < 3)\n" + 
+                    indent + "  { " + parnme + ".Add(doubleTestValues[" + indexvar + " + 2]); }\n";
+                  }
+                  else if ("boolean".equals(elemTyp.getName()))
+                 { testscript = testscript + 
+                     indent + "\n" + 
+                     indent + "for (int " + indexvar + " = 0; " + indexvar + " < 3; " + indexvar + "++)\n" + 
+                     indent + "{ ArrayList " + parnme + " = new ArrayList();\n" + 
+                     indent + "  if (" + indexvar + " < 2)\n" + 
+                     indent + "  { " + parnme + ".Add(booleanTestValues[" + indexvar + "]); }\n";
+                 } 
+                 else if ("String".equals(elemTyp.getName()))
+                 { testscript = testscript + 
+                     indent + "\n" + 
+                     indent + "for (int " + indexvar + " = 0; " + indexvar + " < 4; " + indexvar + "++)\n" + 
+                     indent + "{ ArrayList " + parnme + " = new ArrayList();\n" + 
+                     indent + "  if (" + indexvar + " < 3)\n" + 
+                     indent + "  { " + parnme + ".Add(stringTestValues[" + indexvar + "]); }\n" + 
+                     indent + "  if (" + indexvar + " < 2)\n" + 
+                     indent + "  { " + parnme + ".Add(stringTestValues[" + indexvar + " + 1]); }\n";
+                 } 
+                 else if (elemTyp != null && elemTyp.isEnumeration())
+                 { Vector vals = elemTyp.getValues();   
+                   int nvals = vals.size(); 
+                   testscript = testscript + 
+                      indent + "\n" + 
+                      indent + "for (int " + indexvar + " = 0; " + indexvar + " <= " + nvals + "; " + indexvar + "++)\n" + 
+                      indent + "{ ArrayList " + parnme + " = new ArrayList();\n" + 
+                      indent + "  if (" + indexvar + " < " + nvals + ")\n" + 
+                      indent + "  { " + parnme + ".Add(" + indexvar + "); }\n"; 
+                  }
+                  else if (elemTyp.isEntity())
+			  { String etname = elemTyp.getName(); 
+			    // Entity ee = elemTyp.getEntity(); 
+				
+			    String eename = etname.toLowerCase() + "_s"; 
+			    
+				testscript = testscript + 
+                  indent + "\n" + 
+				  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= Controller.inst().get" + eename + "().Count; " + indexvar + "++)\n" + 
+				  indent + "{ ArrayList " + parnme + " = new ArrayList();\n";  
+                testscript = testscript + 
+                  indent + "  if (" + indexvar + " < Controller.inst().get" + eename + "().Count)\n" + 
+                  indent + "  { " + parnme + ".Add(Controller.inst().get" + eename + "()[" + indexvar + "]); }\n";
+              }  
+            }  
+          }  
+        }
+      
+        for (int j = 0; j < uc.preconditions.size(); j++)
+        { java.util.Map env = new java.util.HashMap(); 
+          Constraint con = (Constraint) uc.preconditions.get(j); 
+          checkCode = checkCode + 
+             indent + "  if (" + con.queryForm(env,true) + ")\n" + 
+             indent + "  { Console.WriteLine(\" Precondition " + j + " is valid; \"); }\n" + 
+             indent + "  else \n" + 
+             indent + "  { Console.WriteLine(\" Precondition " + j + " fails; \"); }\n"; 
+        }
+
+      
+        String call = " cont." + nme + "(" + parstring + ")"; 
+        if (resultType != null) 
+        { call = " Console.WriteLine(\" ==> Result: \" + " + call + " )"; } 
+		
+		call = indent + "  try { " + call + ";\n" + 
+		       indent + "  }\n" + 
+			   indent + "  catch { Console.WriteLine(\" !! Exception occurred: test failed !! \"); }\n"; 
+			   
+           if (teststring.equals(""))
+           { teststring = "\"\""; } 
+
+		testscript = testscript + 
+          indent + "  Console.WriteLine();\n" + 
+          indent + "  Console.WriteLine(\">>> Test: \" + " + teststring + ");\n" + 
+          checkCode + 
+          call + posttests + "\n" + 
+          indent + "  Console.WriteLine();\n" + 
+          indent + "  Console.WriteLine();\n"; 
+        // indent = indent.substring(0,indent.length()-2);  
+		
+		for (int p = 0; p < pars.size(); p++) 
+		{ testscript = testscript + 
+		               indent + "}\n";
+		  indent = indent.substring(0,indent.length()-2);  
+		}
+        aper = aper + testscript + "\n";    
+      }
+    } 
+	
+    cons = cons + "  \n\n";
+    aper = aper + "  }\n\n";
+    res = res + "\n" + cons + aper +
+      "  \n }";
     return res;
   }
 

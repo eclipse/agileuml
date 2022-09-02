@@ -5,7 +5,7 @@ import java.io.*;
 import javax.swing.*; 
 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -1090,6 +1090,37 @@ public class Constraint extends ConstraintOrGroup
     } 
 
     String rhs = succ.queryFormJava7(env,local); 
+    if (previous) 
+    { res = res + " || (" + rhs + ")"; } 
+    else 
+    { res = rhs; } 
+    return res;  
+  } 
+
+  public String queryFormCSharp(java.util.Map env, boolean local)
+  { String res = ""; 
+    boolean previous = false; 
+    if (cond0 != null) 
+    { String cond0eval = cond0.queryFormCSharp(env,local); 
+      if (cond0eval.equals("true")) {} 
+      else 
+      { res = "!(" + cond0eval + ")"; 
+        previous = true; 
+      }
+    } 
+    if (cond != null)
+    { String condeval = cond.queryFormCSharp(env,local); 
+      if (condeval.equals("true")) {} 
+      else 
+      { if (previous)
+        { res = res + " || !(" + condeval + ")"; } 
+        else 
+        { res = "!(" + condeval + ")"; 
+          previous = true;
+        } 
+      }
+    } 
+    String rhs = succ.queryFormCSharp(env,local); 
     if (previous) 
     { res = res + " || (" + rhs + ")"; } 
     else 

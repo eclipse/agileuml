@@ -8865,6 +8865,20 @@ public class UCDArea extends JPanel
 
     generateMutationTesterCSharp(); 
 
+    String testcode = GUIBuilder.buildTestsGUICSharp(
+                        useCases,"",false,types,entities); 
+    File testsguifile = new File("output/TestsGUI.cs");
+    try
+    { PrintWriter testsout = 
+        new PrintWriter(new BufferedWriter(
+          new FileWriter(testsguifile)));
+      // if (systemName != null && systemName.length() > 0)
+      // { testsout.println("package " + systemName + ";\n\n"); }  
+      testsout.println(testcode); 
+      testsout.close();
+    }
+    catch (Exception ex) { }
+
     try
     { out.close();
       out2.close(); 
@@ -8927,7 +8941,7 @@ public class UCDArea extends JPanel
     out2.println("#pragma warning(disable : 4996)"); 
     out2.println("#pragma comment(lib, \"Ws2_32.lib\")"); 
     out2.println("#pragma comment(lib, \"winhttp.lib\");"); 
-     out2.println(""); 
+    out2.println(""); 
     
     out2.println(""); 
     out2.println("using namespace std;\n"); 
@@ -8936,7 +8950,9 @@ public class UCDArea extends JPanel
     Entity ocldatasource = 
       (Entity) ModelElement.lookupByName("OclDatasource", entities); 
     if (ocldatasource != null)
-    { out2.println("#include \"sqlite3.h\"\n"); }
+    { out2.println("#include \"sqlite3.h\"\n");        
+      out2.println("#pragma comment(lib, \"sqlite3.lib\");"); 
+    }
     out2.println(""); 
     out2.println("#include \"Controller.h\"\n"); 
     
@@ -9127,6 +9143,8 @@ public class UCDArea extends JPanel
 
     // if (systemName != null && systemName.length() > 0)
     // { out.println("} \n\n"); } 
+
+    generateMutationTesterCPP(); 
 
     try
     { out.close();
@@ -25201,6 +25219,103 @@ public void produceCUI(PrintWriter out)
     catch (Exception _x) { } 
    
     System.out.println("*** Mutation tester operations written to " + dirName + "/MutationTest.cs"); 
+  } 
+
+  public void generateMutationTesterCPP()
+  { Vector mutationtests = new Vector();   
+
+    String dirName = "output"; 
+
+    // if (systemName != null && systemName.length() > 0)
+    // { dirName = systemName; } 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity e = (Entity) entities.get(i);
+
+      System.out.println(">*** Creating mutation tests for ***> Entity " + e); 
+ 
+      if (e.isDerived() || e.isComponent() || 
+          e.isAbstract() ||
+          e.isInterface()) 
+      { continue; }
+	
+      Vector optests = e.operationTestCasesCPP(mutationtests);
+ 
+   /*   
+      System.out.println("*** Test cases for entity " + e.getName() + " operations written to output/tests"); 
+    
+      for (int j = 0; j < optests.size(); j++) 
+      { if (optests.get(j) instanceof Vector)
+        { Vector otest = (Vector) optests.get(j); 
+          String oname = otest.get(0) + "";
+          String otxt = otest.get(1) + "";  
+          try
+          { PrintWriter rout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter("output/tests/" + oname + "test" + e.getName() + "_" + j + ".txt")));
+            rout.println(otxt); 
+            rout.close(); 
+          } 
+          catch (Exception _x) { } 
+        }
+      } */ 
+ 
+    }    
+  
+    try
+    { File dir = new File(dirName); 
+      if (dir.exists()) { } 
+      else 
+      { dir.mkdir(); }
+      PrintWriter mtout = new PrintWriter(
+                                new BufferedWriter(
+                                  new FileWriter(dirName + "/MutationTest.hpp")));
+      // if ("output".equals(dirName)) { } 
+      // else 
+      // { mtout.println("package " + dirName + ";"); 
+      //   mtout.println(); 
+      // } 
+
+      // if (systemName != null && systemName.length() > 0)
+      // { mtout.println("namespace " + systemName + " {\n\n"); } 
+
+  /*
+      mtout.println("using System;");
+      mtout.println("using System.Collections;");
+      mtout.println("using System.IO;");
+      mtout.println("using System.Text;");
+      mtout.println("using System.Text.RegularExpressions;");
+      mtout.println("using System.Linq;");
+      mtout.println("using System.Reflection;");
+      mtout.println("using System.Diagnostics;");
+      mtout.println("using System.Threading;");
+      mtout.println("using System.Threading.Tasks;");
+      mtout.println("using System.Xml.Serialization;");
+      mtout.println("using System.Text.Json;");
+      mtout.println("using System.Text.Json.Serialization;");
+      mtout.println("using System.Data;");
+      mtout.println("using System.Data.Common;");
+      mtout.println("using System.Data.SqlClient;");
+      mtout.println("using System.Net.Sockets;"); */ 
+       
+      mtout.println(); 
+      mtout.println("class MutationTest"); 
+      mtout.println("{ public:"); 
+      for (int k = 0; k < mutationtests.size(); k++) 
+      { String mtest = (String) mutationtests.get(k); 
+        mtout.println(mtest);
+        mtout.println();  
+      }
+      mtout.println("};");  
+
+      // if (systemName != null && systemName.length() > 0)
+      // { mtout.println("} \n\n"); } 
+
+      mtout.close(); 
+    } 
+    catch (Exception _x) { } 
+   
+    System.out.println("*** Mutation tester operations written to " + dirName + "/MutationTest.hpp"); 
   } 
 
   public void generateMutationTesterJava6()

@@ -19,6 +19,9 @@ public class TestParameters
   public static long maxlong = 9223372036854775807L; 
   public static long minlong = -9223372036854775808L; 
 
+  public static int maxLong = 100000;
+  public static int minLong = -999999;
+  
   public static double maxFloat = 3125.0891; 
     // Double.MAX_VALUE
 
