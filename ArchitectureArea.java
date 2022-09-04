@@ -79,7 +79,6 @@ class ArchitectureArea extends JPanel
 
   //Dialog definitions
   private EvtNameDialog nameDialog;
-  private RequirementEditDialog reqDialog; 
   private MessageEditDialog transDialog;   
   private StateEdtDialog sDialog; 
   private ExecutionEditDialog eDialog; 
@@ -111,7 +110,7 @@ class ArchitectureArea extends JPanel
   private TimeAnnotation selectedTimeAnnotation = null; 
   private ExecutionInstance selectedExecution = null;  
 
-  private Requirement selectedRequirement = null; 
+  private ModelElement selectedInterface = null; 
   private ArchComponent selectedComponent = null; 
 
   private Vector glueset = new Vector(); // of GlueSet
@@ -403,18 +402,19 @@ class ArchitectureArea extends JPanel
         }
         else */ 
         if (vd instanceof RectData)
-        { selectedComponent = (ArchComponent) ((RectData) vd).modelElement;
+        { selectedComponent = 
+            (ArchComponent) ((RectData) vd).modelElement;
          
           System.out.println("Selected component: " + selectedComponent); 
         }
-       /* else if (vd instanceof LineData) 
-        { selectedMessage = 
-                    ((LineData) vd).message;
+        else if (vd instanceof LineData) 
+        { selectedInterface = 
+                    ((LineData) vd).modelElement;
           
-          System.out.println("Selected message: " + 
-                                  selectedMessage); 
+          System.out.println("Selected interface: " + 
+                                  selectedInterface); 
         }
-        else if (vd instanceof TimeAnnotationData)
+      /*  else if (vd instanceof TimeAnnotationData)
         { selectedTimeAnnotation = ((TimeAnnotationData) vd).ta; 
           System.out.println("Selected time annotation: " + 
                                   selectedTimeAnnotation); 
@@ -442,8 +442,8 @@ class ArchitectureArea extends JPanel
     // { editObject(selectedObject); } 
     if (selectedComponent != null) 
     { editComponent(selectedComponent); } 
-    // else if (selectedTimeAnnotation != null) 
-    // { editTimeAnnotation(selectedTimeAnnotation); } 
+    else if (selectedInterface != null) 
+    { editInterface(selectedInterface); } 
     else 
     { System.out.println("!! No selection"); } 
     mode = INERT; 
@@ -516,7 +516,7 @@ class ArchitectureArea extends JPanel
   } 
 
   public void saveDataToFile(String f) 
-  { File file = new File("output/requirements.txt");
+  { File file = new File("output/architecture.txt");
     Vector saved = new Vector(); 
     try
     { PrintWriter out =
@@ -534,11 +534,21 @@ class ArchitectureArea extends JPanel
           out.println(); 
           out.println(); 
         } 
-        else if (vd instanceof ReqLineData)
-        { ReqLineData rld = (ReqLineData) vd; 
-          out.println("SubgoalRelation:"); 
+        else if (vd instanceof ProvidedInterfaceLineData)
+        { ProvidedInterfaceLineData rld = (ProvidedInterfaceLineData) vd; 
+          out.println("ProvidedInterface:"); 
           out.println(rld.xstart + " " + rld.ystart + " " + rld.xend + " " + rld.yend); 
+          ModelElement elem = rld.getModelElement(); 
+          out.println(elem.getName()); 
           out.println(); 
+          out.println(); 
+        } 
+        else if (vd instanceof RequiredInterfaceLineData)
+        { RequiredInterfaceLineData rld = (RequiredInterfaceLineData) vd; 
+          out.println("RequiredInterface:"); 
+          out.println(rld.xstart + " " + rld.ystart + " " + rld.xend + " " + rld.yend); 
+          ModelElement elem = rld.getModelElement(); 
+          out.println(elem.getName()); 
           out.println(); 
           out.println(); 
         } 
@@ -859,48 +869,21 @@ class ArchitectureArea extends JPanel
     } 
   }
 
-  public boolean editRequirement(Requirement r)
-  { if (reqDialog == null)
-    { reqDialog = new RequirementEditDialog(controller); 
-      reqDialog.pack();
-      reqDialog.setLocationRelativeTo(this);
-    } 
-    reqDialog.setOldFields(r.getName(), r.getText(), r.getKind(), r.getScope()); 
-    reqDialog.setVisible(true); 
 
-    String nme = reqDialog.getName(); 
-         // JOptionPane.showInputDialog("Enter requirement name:");
-    String txt = reqDialog.getText(); 
-         // JOptionPane.showInputDialog("Enter requirement text:");
-    String kind = reqDialog.getKind(); 
-    String scope = reqDialog.getScope(); 
+  public boolean editComponent(ArchComponent r)
+  { 
+    String nme = 
+      JOptionPane.showInputDialog("Enter component name:");
     r.setName(nme); 
-    r.setText(txt); 
-    r.setKind(kind);
-    r.setScope(scope);  
     repaint(); 
     return true; 
   } 
 
-  public boolean editComponent(ArchComponent r)
-  { if (reqDialog == null)
-    { reqDialog = new RequirementEditDialog(controller); 
-      reqDialog.pack();
-      reqDialog.setLocationRelativeTo(this);
-    } 
-    reqDialog.setOldFields(r.getName(), r.getName(), r.getKind(), r.getScope()); 
-    reqDialog.setVisible(true); 
-
-    String nme = reqDialog.getName(); 
-         // JOptionPane.showInputDialog("Enter requirement name:");
-    // String txt = reqDialog.getText(); 
-         // JOptionPane.showInputDialog("Enter requirement text:");
-    // String kind = reqDialog.getKind(); 
-    // String scope = reqDialog.getScope(); 
+  public boolean editInterface(ModelElement r)
+  { 
+    String nme = 
+      JOptionPane.showInputDialog("Enter interface name:");
     r.setName(nme); 
-    r.setText(nme); 
-    // r.setKind(kind);
-    // r.setScope(scope);  
     repaint(); 
     return true; 
   } 
@@ -1371,21 +1354,10 @@ class ArchitectureArea extends JPanel
                             0,
                             rectcount);
       rectcount++;
-      if (reqDialog == null)
-      { reqDialog = new RequirementEditDialog(controller); 
-        reqDialog.pack();
-        reqDialog.setLocationRelativeTo(this);
-      } 
-      reqDialog.setVisible(true); 
 
-      String nme = reqDialog.getName(); 
-         // JOptionPane.showInputDialog("Enter requirement name:");
-      // String txt = reqDialog.getText(); 
-         // JOptionPane.showInputDialog("Enter requirement text:");
-      // String kind = reqDialog.getKind(); 
-      // String scope = reqDialog.getScope(); 
+      String nme = 
+        JOptionPane.showInputDialog("Enter component name:");
       ArchComponent req = new ArchComponent(nme);
-      // req.setScope(scope); 
       components.add(req); 
       visuals.addElement(rd); 
       rd.setModelElement(req);  // why not? 
@@ -1473,17 +1445,34 @@ class ArchitectureArea extends JPanel
     int x = e.getX();
     int y = e.getY();
     System.out.println("Mouse released at " + x + " " + y); 
+    
     switch (mode) {
     case SLINES:  
-      LineData dline = 
-        new ReqLineData(x1,y1,x,y,linecount,SOLID);  // dashed for realizations
+      LineData sline = 
+        new ProvidedInterfaceLineData(
+                        x1,y1,x,y,linecount,SOLID); 
       // Flow flw2 = new Flow("f" + linecount); 
       // find_src_targ(dline,flw2); 
       // Generalisation gen = defineGeneralisation(flw2); 
       // if (gen != null) 
       // { linecount++;
       //   dline.setFlow(flw2); 
-      visuals.addElement(dline);
+      visuals.addElement(sline);
+      String jname = 
+        JOptionPane.showInputDialog("Enter provided interface name:");
+      Entity pint = 
+        (Entity) ModelElement.lookupByName(jname,entities); 
+      if (pint == null) 
+      { System.err.println("! Interface " + jname + " does not exist, it will be added to the class diagram."); 
+        pint = new Entity(jname); 
+        pint.setInterface(true); 
+        entities.add(pint); 
+      } 
+      else if (pint.isInterface()) { } 
+      else 
+      { System.err.println("!! This is not an interface and cannot be used as one."); } 
+
+      sline.setModelElement(pint); 
       //   generalisations.add(gen); 
       //   dline.setModelElement(gen); 
       //   dline.setWaypoints((Vector) ((Vector) waypoints).clone()); 
@@ -1492,6 +1481,36 @@ class ArchitectureArea extends JPanel
       mode = INERT; 
       break;
     case DLINES:  
+      LineData dline = 
+        new RequiredInterfaceLineData(
+                        x1,y1,x,y,linecount,SOLID); 
+      // Flow flw2 = new Flow("f" + linecount); 
+      // find_src_targ(dline,flw2); 
+      // Generalisation gen = defineGeneralisation(flw2); 
+      // if (gen != null) 
+      // { linecount++;
+      //   dline.setFlow(flw2); 
+      visuals.addElement(dline);
+      String iname = 
+        JOptionPane.showInputDialog("Enter required interface name:");
+      Entity rint = 
+        (Entity) ModelElement.lookupByName(iname,entities); 
+      if (rint == null) 
+      { System.err.println("! Interface " + iname + " does not exist, it will be added to the class diagram."); 
+        rint = new Entity(iname); 
+        rint.setInterface(true); 
+        entities.add(rint); 
+      } 
+      else if (rint.isInterface()) { } 
+      else 
+      { System.err.println("!! This is not an interface and cannot be used as one."); } 
+
+      dline.setModelElement(rint); 
+      //   generalisations.add(gen); 
+      //   dline.setModelElement(gen); 
+      //   dline.setWaypoints((Vector) ((Vector) waypoints).clone()); 
+      // } 
+      firstpress = false;
       mode = INERT; 
       repaint(); 
       break; 

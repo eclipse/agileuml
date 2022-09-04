@@ -945,12 +945,12 @@ public class BehaviouralFeature extends ModelElement
         if (this.isStatic()) 
         { call = javaType + " " + nme + "_result = " + ename + "::" + this.toString() + ";\n"; } 
         call = call + 
-            "    cout << \"Test " + j + " of " + nme + " on \" + _self + \" result = \" + " + nme + "_result << endl;\n";
+            "    cout << \"Test \" << " + j + " << \" of " + nme + " on \" << _self << \" result = \" << " + nme + "_result << endl;\n";
  
         // Should use "  try {\n"
 
         String testcode = 
-          "  static void " + nme + "_mutation_tests_" + j + "(" + ename + "* _self, int[] _counts, int[] _totals)\n" + 
+          "  static void " + nme + "_mutation_tests_" + j + "(" + ename + "* _self, int _counts[], int _totals[])\n" + 
           "  {\n" + 
           "    " + code + "\n" + 
           "    try {\n  " + call + "\n";  
@@ -965,8 +965,8 @@ public class BehaviouralFeature extends ModelElement
           testcode = testcode +  
             "    try {\n" + 
             "      " + javaType + " " + mname + "_result = " + mutantcall + ";\n" +    
-            "      if ((\"\" + " + nme + "_result) == (\"\" + " + mname + "_result)) { _totals[" + j + "]++; } else\n" + 
-            "      { cout << \"Test " + j + " of " + tsts + " detects " + nme + " mutant " + i + " of " + muts + "\" << endl;\n" +
+            "      if (" + nme + "_result == " + mname + "_result) { _totals[" + j + "]++; } else\n" + 
+            "      { cout << \"Test \" << " + j + " << \" of \" << " + tsts + " << \" detects " + nme + " mutant \" << " + i + " << \" of \" << " + muts + " << endl;\n" +
             "        _counts[" + j + "]++; \n" +   
             "        _totals[" + j + "]++;\n" + 
             "      }\n" + 

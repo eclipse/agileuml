@@ -141,7 +141,8 @@ class RectData extends RectForm
     { ArchComponent req = (ArchComponent) modelElement; 
       Font ff = g.getFont(); 
       // Font newff = new Font(ff.getName(),Font.ITALIC,ff.getSize());
-      // g.setFont(newff);  
+      // g.setFont(newff);
+      label = req.getName();   
       g.drawString(label,namex,namey+5); 
       g.setFont(ff); 
       g.drawString("<<component>>",namex,namey-5);

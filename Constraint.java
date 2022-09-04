@@ -1128,6 +1128,37 @@ public class Constraint extends ConstraintOrGroup
     return res;  
   } 
 
+  public String queryFormCPP(java.util.Map env, boolean local)
+  { String res = ""; 
+    boolean previous = false; 
+    if (cond0 != null) 
+    { String cond0eval = cond0.queryFormCPP(env,local); 
+      if (cond0eval.equals("true")) {} 
+      else 
+      { res = "!(" + cond0eval + ")"; 
+        previous = true; 
+      }
+    } 
+    if (cond != null)
+    { String condeval = cond.queryFormCPP(env,local); 
+      if (condeval.equals("true")) {} 
+      else 
+      { if (previous)
+        { res = res + " || !(" + condeval + ")"; } 
+        else 
+        { res = "!(" + condeval + ")"; 
+          previous = true;
+        } 
+      }
+    } 
+    String rhs = succ.queryFormCPP(env,local); 
+    if (previous) 
+    { res = res + " || (" + rhs + ")"; } 
+    else 
+    { res = rhs; } 
+    return res;  
+  } 
+
   public String updateForm(java.util.Map env, boolean local)
   { String res = ""; 
     if (behavioural == false) 

@@ -1,14 +1,14 @@
 /*
-      * Classname : ReqLineData
+      * Classname : ProvidedInterfaceLineData
       * 
       * Version information : 1
       *
       * Date
       * 
       * Description : Contains methods for drawing 
-      * lines for subgoals 
+      * lines for provided interfaces
 
-  package: Requirements
+  package: Architecture
       */
 /******************************
 * Copyright (c) 2003--2022 Kevin Lano
@@ -24,10 +24,10 @@ import javax.swing.*;
 import java.awt.geom.*;
 import java.util.Vector;
 
-public class ReqLineData extends LineData
+public class ProvidedInterfaceLineData extends LineData
 {  // coordinates of start and end points of the line
 
-  public ReqLineData(int xs, int ys, int xe, 
+  public ProvidedInterfaceLineData(int xs, int ys, int xe, 
                          int ye, int linecount, int type) 
   { super(xs,ys,xe,ye,linecount,type); } 
 
@@ -38,8 +38,8 @@ public class ReqLineData extends LineData
     catch (Exception e) 
     { count = 0; } 
 
-    ReqLineData ld = 
-      new ReqLineData(xstart, ystart, xend, 
+    ProvidedInterfaceLineData ld = 
+      new ProvidedInterfaceLineData(xstart, ystart, xend, 
                    yend, count, linetype); 
     ld.setModelElement(modelElement); 
     ld.setWaypoints(waypoints); 
@@ -72,24 +72,27 @@ public class ReqLineData extends LineData
       //        (double) xend,(double) yend));
       // g.draw(new Line2D.Double(arrow2x,arrow2y,
       //        (double) xend,(double) yend)); 
-      drawInheritArrow(g);   
+      drawInterfaceEnd(g);   
     }
   }
 
-  private void drawInheritArrow(Graphics2D g)
-  { // GeneralPath p = new GeneralPath();
-    // p.moveTo((float) arrow1x,(float) arrow1y);
-    // p.lineTo(xend,yend);
-    // p.lineTo((float) arrow2x,(float) arrow2y);
-    // p.lineTo((float) arrow1x,(float) arrow1y);
-    // p.closePath();
-    // g.setColor(Color.white);
-    // g.fill(p);
-    g.setColor(Color.black);
-    g.draw(new Line2D.Double(arrow1x,arrow1y,arrow2x,arrow2y));
+  private void drawInterfaceEnd(Graphics2D g)
+  { g.setColor(Color.black);
+    // g.draw(new Line2D.Double(arrow1x,arrow1y,arrow2x,arrow2y));
     int xx = (int) (xend - (arrow2x - arrow1x)/2); 
     int yy = (int) ((arrow2y + arrow1y)/2);
-    g.drawOval((int) arrow2x, yend, 10, 10);
+    if (yend <= ystart)
+    { yy = yend - 5; } 
+    if (xend <= xstart)
+    { xx = xend - 10; }
+    if (xend > xstart + 5 && yend > ystart + 5) 
+    { xx = xx + 5; 
+      yy = yy + 5; 
+    }  
+    g.drawOval(xx, yy, 10, 10);
+    if (modelElement != null && 
+        modelElement instanceof Entity)
+    { g.drawString(modelElement.getName(), xx, yy-10); }  
     // g.draw(p);
   }
 

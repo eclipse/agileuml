@@ -106,26 +106,25 @@ public class ArchComponent extends ModelElement
   } 
 
   public String saveData()
-  { String res = name + " " + id + " \n" + text + "\n" + requirementKind + "\n" + 
-           local + "\n\n";
-    for (int i = 0; i < scenarios.size(); i++) 
-    { Scenario sc = (Scenario) scenarios.get(i); 
-      res = res + sc.saveData(name) + "\n"; 
-    } 
+  { String res = name + "\n\n\n";
+    // for (int i = 0; i < scenarios.size(); i++) 
+    // { Scenario sc = (Scenario) scenarios.get(i); 
+    //   res = res + sc.saveData(name) + "\n"; 
+    // } 
     return res; 
   } 
 
   public void saveModelData(PrintWriter out)
-  { out.println(name + " : Requirement"); 
-    out.println(name + ".id = \"" + id + "\""); 
-    out.println(name + ".text = \"" + text + "\""); 
-    out.println(name + ".requirementKind = \"" + requirementKind + "\""); 
-    out.println(name + ".localScope = " + local);
+  { out.println(name + " : ArchComponent"); 
+    // out.println(name + ".id = \"" + id + "\""); 
+    // out.println(name + ".text = \"" + text + "\""); 
+    // out.println(name + ".requirementKind = \"" + requirementKind + "\""); 
+    // out.println(name + ".localScope = " + local);
  
-    for (int i = 0; i < scenarios.size(); i++) 
+    /* for (int i = 0; i < scenarios.size(); i++) 
     { Scenario sc = (Scenario) scenarios.get(i); 
       sc.saveModelData(out,name); 
-    } 
+    } */ 
     
   } 
 

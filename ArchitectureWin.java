@@ -154,11 +154,11 @@ public class ArchitectureWin extends JFrame implements ActionListener
     stateMenu.addActionListener(this);
     createMenu.add(stateMenu);
 
-    transMenu = new JMenuItem("Connection");
+    transMenu = new JMenuItem("Provided interface");
     createMenu.add(transMenu);
     transMenu.addActionListener(this);
 
-    JMenuItem scenarioMenu = new JMenuItem("Interface specification");
+    JMenuItem scenarioMenu = new JMenuItem("Required interface");
     createMenu.add(scenarioMenu);
     scenarioMenu.addActionListener(this);
 
@@ -274,32 +274,37 @@ public class ArchitectureWin extends JFrame implements ActionListener
          drawArea.setDrawMode(RequirementsArea.POINTS);
          messageLabel.setText("Click on location"); 
        }
-       else if (label.equals("Interface specification"))
-       { System.out.println("Creating a provided interface");
-         drawArea.setDrawMode(InteractionArea.TANN);
-         messageLabel.setText("Click on a component to create a provided interface"); 
+       else if (label.equals("Required interface"))
+       { System.out.println("Creating a required interface of a component");
+         drawArea.setDrawMode(InteractionArea.DLINES);
+         messageLabel.setText("Click and drag from a component to create a required interface"); 
        }
-       else if (label.equals("Connection"))
-       { System.out.println("Creating a connection between components");
+       else if (label.equals("Provided interface"))
+       { System.out.println("Creating a provided interface of a component");
          drawArea.setDrawMode(RequirementsArea.SLINES);
-         messageLabel.setText("To create a relation, click and drag"); 
+         messageLabel.setText("Click and drag from component to interface location"); 
        }	
        else if (label.equals("Edit component"))
        { System.out.println("Select component to edit"); 
          drawArea.setDrawMode(InteractionArea.EDIT); 
          drawArea.setEditMode(InteractionArea.EDITING); 
+         messageLabel.setText("Click within the component");
        } 
        else if (label.equals("Edit interface"))
        { System.out.println("Select interface to edit"); 
-         editScenario(); 
+         drawArea.setDrawMode(InteractionArea.EDIT); 
+         drawArea.setEditMode(InteractionArea.EDITING);
+         messageLabel.setText("Click near centre of line");
+         // editScenario(); 
        } 
        else if (label.equals("Move"))
-       { System.out.println("Select component or connection to move");
+       { System.out.println("Select component or interface to move");
          drawArea.setDrawMode(InteractionArea.EDIT);
          drawArea.setEditMode(InteractionArea.MOVING); 
+         messageLabel.setText("Click on component or interface");
        } 
        else if (label.equals("Delete"))
-       { System.out.println("Select component or connection to delete");
+       { System.out.println("Select component/interface or connection to delete");
          drawArea.setDrawMode(InteractionArea.EDIT);
          drawArea.setEditMode(InteractionArea.DELETING); 
        }

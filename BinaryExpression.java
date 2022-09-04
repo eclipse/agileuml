@@ -13608,8 +13608,13 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     if (operator.equals("let"))
     { // { var acc : T := e; ... E ... }
       String acc = accumulator.getName(); 
-      Type acct = accumulator.getType(); 
-      String lett = acct.getCPP(); 
+      Type acct = accumulator.getType();
+      if (acct == null) 
+      { acct = left.getType(); } 
+      Type lcet = accumulator.getElementType(); 
+      if (lcet == null)
+      { lcet = left.getElementType(); }  
+      String lett = acct.getCPP(lcet); 
       String val = left.queryFormCPP(env,local); 
       java.util.Map env1 = new java.util.HashMap(); 
       env1.putAll(env); 

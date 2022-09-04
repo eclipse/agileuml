@@ -16159,7 +16159,7 @@ public BehaviouralFeature designAbstractKillOp()
           Vector mutationTests = bf.formMutantCallsCPP(
             nme,mutantoperations,bfcases,opTests,testcalls); 
 
-          String bfmutanttest = "  static void " + bfname + "_mutation_tests(" + nme + "* _self, int[] _counts, int[] _totals)\n" + 
+          String bfmutanttest = "  static void " + bfname + "_mutation_tests(" + nme + "* _self, int _counts[], int _totals[])\n" + 
           "  { "; 
 
           for (int j = 0; j < mutationTests.size() && j < testcalls.size() && j < 100; j++) 
@@ -16171,7 +16171,7 @@ public BehaviouralFeature designAbstractKillOp()
           bfmutanttest = bfmutanttest + "\n" + 
             "    for (int i = 0; i < 100; i++)\n" + 
             "    { if (_totals[i] > 0)\n" + 
-            "      { cout << \"Test \" + i + \" detects \" + (100.0*_counts[i])/_totals[i] + \"% " + bfname + " mutants\" << endl; }\n" +
+            "      { cout << \"Test \" << i << \" detects \" << (100.0*_counts[i])/_totals[i] << \"% " + bfname + " mutants\" << endl; }\n" +
             "    }\n" +  
             "  }\n\n"; 
           // System.out.println(bfmutanttest);

@@ -8940,7 +8940,7 @@ public class UCDArea extends JPanel
     out2.println(); 
     out2.println("#pragma warning(disable : 4996)"); 
     out2.println("#pragma comment(lib, \"Ws2_32.lib\")"); 
-    out2.println("#pragma comment(lib, \"winhttp.lib\");"); 
+    out2.println("#pragma comment(lib, \"winhttp.lib\")"); 
     out2.println(""); 
     
     out2.println(""); 
@@ -8951,7 +8951,7 @@ public class UCDArea extends JPanel
       (Entity) ModelElement.lookupByName("OclDatasource", entities); 
     if (ocldatasource != null)
     { out2.println("#include \"sqlite3.h\"\n");        
-      out2.println("#pragma comment(lib, \"sqlite3.lib\");"); 
+      out2.println("#pragma comment(lib, \"sqlite3.lib\")"); 
     }
     out2.println(""); 
     out2.println("#include \"Controller.h\"\n"); 
@@ -9145,6 +9145,18 @@ public class UCDArea extends JPanel
     // { out.println("} \n\n"); } 
 
     generateMutationTesterCPP(); 
+
+    String testcode = GUIBuilder.buildTestsGUICPP(
+                  useCases,"",false,types,entities); 
+    File testsguifile = new File("output/TestsGUI.hpp");
+    try
+    { PrintWriter testsout = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(testsguifile)));
+      testsout.println(testcode); 
+      testsout.close();
+    }
+    catch (Exception ex) { ex.printStackTrace(); }
 
     try
     { out.close();
