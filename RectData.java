@@ -97,25 +97,25 @@ class RectData extends RectForm
         g.drawString(label,namex,namey); 
         g.setFont(ff); 
         if (e.isInterface())
-        { g.drawString("<<interface>>",namex,namey-5);
+        { g.drawString("      <<interface>>",namex,namey-5);
           FontMetrics fm = g.getFontMetrics(); 
-          if (fm.stringWidth("<<interface>>") + (namex - sourcex) >= width) 
-          { width = fm.stringWidth("<<interface>>") + (namex - sourcex) + 5; }
+          if (fm.stringWidth("      <<interface>>") + (namex - sourcex) >= width) 
+          { width = fm.stringWidth("      <<interface>>") + (namex - sourcex) + 5; }
         }
       } 
       else if (e.isActive())
       { g.drawString(label,namex,namey);
-        g.drawString("<<active>>",namex,namey-5);
+        g.drawString("      <<active>>",namex,namey-5);
         FontMetrics fm = g.getFontMetrics(); 
-        if (fm.stringWidth("<<active>>") + (namex - sourcex) >= width) 
-        { width = fm.stringWidth("<<active>>") + (namex - sourcex) + 5; }
+        if (fm.stringWidth("      <<active>>") + (namex - sourcex) >= width) 
+        { width = fm.stringWidth("      <<active>>") + (namex - sourcex) + 5; }
       }
       else if (e.isExternal() || e.isExternalApp())
       { g.drawString(label,namex,namey);
-        g.drawString("<<component>>",namex,namey-6);
+        g.drawString("                <<component>>",namex,namey-6);
         FontMetrics fm = g.getFontMetrics(); 
-        if (fm.stringWidth("<<component>>") + (namex - sourcex) >= width) 
-        { width = fm.stringWidth("<<component>>") + (namex - sourcex) + 5; }
+        if (fm.stringWidth("                <<component>>") + (namex - sourcex) >= width) 
+        { width = fm.stringWidth("                <<component>>") + (namex - sourcex) + 5; }
       }
       else 
       { g.drawString(label,namex,namey); }

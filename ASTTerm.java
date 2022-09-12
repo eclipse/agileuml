@@ -24,6 +24,8 @@ public abstract class ASTTerm
   Vector modelElements = null;   
   Vector expressions = null; // for parameter/argument lists
 
+  static Vector requiredLibraries = new Vector(); 
+
   static String packageName = null; 
   static Vector enumtypes; 
   static Vector entities; 
@@ -195,6 +197,15 @@ public abstract class ASTTerm
     } 
     return stereotypes.contains(str); 
   } 
+
+  public static void addRequiredLibrary(String lib) 
+  { if (requiredLibraries.contains(lib)) {}
+    else 
+    { requiredLibraries.add(lib); } 
+  } 
+
+  public static Vector getRequiredLibraries()
+  { return requiredLibraries; } 
 
   public abstract ASTTerm removeOuterTag(); 
 

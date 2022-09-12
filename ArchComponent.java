@@ -51,12 +51,6 @@ public class ArchComponent extends ModelElement
     return true; 
   }  
 
-  public boolean hasScenarios()
-  { return scenarios.size() > 0; } 
-
-  public Vector getScenarios()
-  { return scenarios; } 
-
   public void setText(String txt)
   { text = txt; } 
 
@@ -69,19 +63,36 @@ public class ArchComponent extends ModelElement
     else 
     { local = false; }
   } 
- 
-  public void addScenario(Scenario sc)
-  { scenarios.add(sc); } 
 
+  public void clearInterfaces()
+  { providedInterfaces = new Vector(); 
+    requiredInterfaces = new Vector(); 
+  } 
+ 
   public void addProvidedInterface(Entity pintf)
-  { providedInterfaces.add(pintf); } 
+  { if (providedInterfaces.contains(pintf)) { } 
+    else 
+    { providedInterfaces.add(pintf); } 
+  } 
 
   public void addRequiredInterface(Entity pintf)
-  { requiredInterfaces.add(pintf); } 
+  { if (requiredInterfaces.contains(pintf)) { }
+    else 
+    { requiredInterfaces.add(pintf); } 
+  } 
 
+  public Vector getProvidedInterfaces()
+  { return providedInterfaces; } 
+
+  public Vector getRequiredInterfaces()
+  { return requiredInterfaces; } 
+ 
 
   public String toString()
-  { return "Component: " + name + "\n"; } 
+  { return "Component: " + name + "\n" + 
+      "Provided interfaces: " + providedInterfaces + "\n" + 
+      "Required interfaces: " + requiredInterfaces + "\n";
+  } 
 
   public Vector getParameters()
   { return new Vector(); } 
@@ -94,16 +105,6 @@ public class ArchComponent extends ModelElement
   public void setType(Type t) { type = t; }  
 
   public void generateJava(PrintWriter out) { } 
-
-  public UseCase generateUseCase(Vector types, Vector entities) 
-  { UseCase uc = new UseCase(name); 
-    for (int i = 0; i < scenarios.size(); i++) 
-    { Scenario sc = (Scenario) scenarios.get(i); 
-      Constraint p = sc.getConstraint(types, entities); 
-      uc.addPostcondition(p); 
-    } 
-    return uc; 
-  } 
 
   public String saveData()
   { String res = name + "\n\n\n";

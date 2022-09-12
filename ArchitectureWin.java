@@ -123,22 +123,6 @@ public class ArchitectureWin extends JFrame implements ActionListener
     transList.addActionListener(this);
     viewMenu.add(transList);
 
-    // JMenuItem eventList = new JMenuItem("States");
-    // eventList.addActionListener(this);
-    // viewMenu.add(eventList);
-
-    // JMenuItem attList = new JMenuItem("Executions");
-    // attList.addActionListener(this);
-    // viewMenu.add(attList);
-
-    // JMenuItem taList = new JMenuItem("Time annotations");
-    // taList.addActionListener(this);
-    // viewMenu.add(taList);
-
-    // JMenuItem daList = new JMenuItem("Duration annotations");
-    // daList.addActionListener(this);
-    // viewMenu.add(daList);
-
     //CREATE menu heading
     //--------------------
     createMenu = new JMenu("Create");
@@ -259,30 +243,37 @@ public class ArchitectureWin extends JFrame implements ActionListener
         messageLabel.setText("Saved data to archmodel.txt"); 
       } 
       else if (label.equals("Components"))
-      { System.out.println("List of components");
-        System.out.println("---------------");
+      { System.out.println(">>> List of components");
+        System.out.println(">>> ------------------");
+        drawArea.updateModel(); 
         drawArea.disp_States();
-       }
-       else if (label.equals("Print"))
-       { printData(); } 
-       else if (label.equals("Derive Java"))
-       {
-        drawArea.synthesiseUseCases();
-       }
-       else if (label.equals("Component"))
-       { System.out.println("Creating a component");
-         drawArea.setDrawMode(RequirementsArea.POINTS);
-         messageLabel.setText("Click on location"); 
-       }
-       else if (label.equals("Required interface"))
-       { System.out.println("Creating a required interface of a component");
-         drawArea.setDrawMode(InteractionArea.DLINES);
-         messageLabel.setText("Click and drag from a component to create a required interface"); 
-       }
-       else if (label.equals("Provided interface"))
-       { System.out.println("Creating a provided interface of a component");
-         drawArea.setDrawMode(RequirementsArea.SLINES);
-         messageLabel.setText("Click and drag from component to interface location"); 
+      }
+      else if (label.equals("Interfaces"))
+      { System.out.println(">>> List of interfaces");
+        System.out.println(">>> ------------------");
+        drawArea.disp_Trans();
+      }
+      else if (label.equals("Print"))
+      { printData(); } 
+      else if (label.equals("Derive Java"))
+      {
+        drawArea.synthesiseJava();
+      }
+      else if (label.equals("Component"))
+      { System.out.println("Creating a component: click on location");
+        drawArea.setDrawMode(RequirementsArea.POINTS);
+        messageLabel.setText("Click on location"); 
+      }
+      else if (label.equals("Required interface"))
+      { System.out.println("Click and drag from a component to create a required interface");
+        drawArea.setDrawMode(InteractionArea.DLINES);
+        messageLabel.setText("Click and drag from a component to create a required interface"); 
+      }
+      else if (label.equals("Provided interface"))
+      { System.out.println("Creating a provided interface of a component:\n" + 
+          "Click and drag from component to interface location");
+        drawArea.setDrawMode(RequirementsArea.SLINES);
+        messageLabel.setText("Click and drag from component to interface location"); 
        }	
        else if (label.equals("Edit component"))
        { System.out.println("Select component to edit"); 
@@ -371,32 +362,6 @@ public class ArchitectureWin extends JFrame implements ActionListener
       System.out.println("Invariant not created");
       return null;
     }
-  }
-
-  private void editScenario()
-  { if (listShowDialog == null)
-    { listShowDialog = new ListShowDialog(this);
-      listShowDialog.pack();
-      listShowDialog.setLocationRelativeTo(this); 
-    }
-    listShowDialog.setOldFields(drawArea.getScenarios()); 
-    messageLabel.setText("Select interface to edit"); 
-    System.out.println("Select interface to edit");
-
-    listShowDialog.setVisible(true); 
-
-    Object[] vals = listShowDialog.getSelectedValues();
-    if (vals != null && vals.length > 0)
-    { for (int i = 0; i < vals.length; i++) 
-      { // System.out.println(vals[i]);
-        if (vals[i] instanceof Scenario)
-        { Scenario sc = (Scenario) vals[i]; 
-          drawArea.editScenario(sc); 
-        } 
-        else 
-        { System.out.println(vals[i] + " is not an interface"); }
-      } 
-    } 
   }
 
   public static void main(String[] args)

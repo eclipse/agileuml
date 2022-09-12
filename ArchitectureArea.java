@@ -229,100 +229,24 @@ class ArchitectureArea extends JPanel
   public void setVisuals(Vector vis) 
   { visuals = vis; } 
 
-  public Vector getScenarios()
-  { Vector res = new Vector(); 
-    for (int i = 0; i < requirements.size(); i++) 
-    { Requirement req = (Requirement) requirements.get(i); 
-      res.addAll(req.getScenarios()); 
-    }
-    return res; 
-  }
-
   public void disp_States()
-  { // for (int i = 0; i < requirements.size(); i++) 
-    // { System.out.println(requirements.get(i)); }
-    for (int i = 0; i < components.size(); i++) 
+  { for (int i = 0; i < components.size(); i++) 
     { System.out.println(components.get(i)); }
   }
 
   public void disp_Trans()
-  { for (int i = 0; i < messages.size(); i++) 
-    { Message mm = (Message) messages.get(i); 
-      System.out.println(mm.displayMessage());
+  { for (int i = 0; i < visuals.size(); i++) 
+    { VisualData vd = (VisualData) visuals.get(i); 
+      if (vd instanceof ProvidedInterfaceLineData)
+      { System.out.println(">> Provided interface: " + vd.getModelElement()); } 
+      else if (vd instanceof RequiredInterfaceLineData)
+      { System.out.println(">> Required interface: " + vd.getModelElement()); } 
     }
   }
 
-  public void dispLStates()
-  { for (int i = 0; i < lifelineStates.size(); i++) 
-    { LifelineState ei = (LifelineState) lifelineStates.get(i); 
-      System.out.println(ei.display_ls()); 
-    }
-  } 
-
-  public void dispExecutions()
-  { for (int i = 0; i < executionInstances.size(); i++) 
-    { ExecutionInstance ei = (ExecutionInstance) executionInstances.get(i); 
-      System.out.println(ei.display_ei()); 
-    }
-  } 
-
-  public void dispTimeAnnotations()
-  { for (int i = 0; i < timeAnnotations.size(); i++) 
-    { TimeAnnotation ta = (TimeAnnotation) timeAnnotations.get(i); 
-      System.out.println(ta.display_ta()); 
-    }
-  } 
-
-  public void dispDurationAnnotations()
-  { for (int i = 0; i < durationAnnotations.size(); i++) 
-    { DurationAnnotation da = (DurationAnnotation) durationAnnotations.get(i); 
-      System.out.println(da.display_da()); 
-    }
-  } 
 
   // and time and duration annotations
 
-  private LifelineData findLifeline(int x1, int x2, int y1, int y2) 
-  { int xs = x1; 
-    int xe = x2; 
-
-    if (x1 <= x2) {} 
-    else 
-    { xs = x2; 
-      xe = x1; 
-    }
-
-    for (int i=0; i < visuals.size(); i++)
-    { if (visuals.elementAt(i) instanceof LifelineData)
-      {	LifelineData rd = (LifelineData) visuals.elementAt(i);
-	if (rd.isUnder(xs,xe,y1,y2))
-	{ return rd; }
-      } 
-    } 
-    return null; 
-  } 
-
-  private LifelineData findLifelines(int x1, int x2, int y) 
-  { int xs = x1; 
-    int xe = x2; 
-
-    if (x1 <= x2) {} 
-    else 
-    { xs = x2; 
-      xe = x1; 
-    }
-
-    for (int i=0; i < visuals.size(); i++)
-    { if (visuals.elementAt(i) instanceof LifelineData)
-      { LifelineData rd = (LifelineData) visuals.elementAt(i);
-
-        if (rd.xstart >= xs && rd.xstart <= xe && 
-            y >= rd.ystart && y <= rd.yend)
-        { return rd; }
-      } 
-    } 
-    return null; 
-  } 
 
   public void find_src_targ(LineData line, Message strans)
   {
@@ -339,12 +263,107 @@ class ArchitectureArea extends JPanel
 	    }
 	    if (rd.isUnder(line.xend, line.yend))
 	    {
-		strans.setTarget(rd.object);
-		UMLObject ta = strans.target;
-		System.out.println(" target ==> " + ta.label); 
-          }
-	  }
+           strans.setTarget(rd.object);
+           UMLObject ta = strans.target;
+           System.out.println(" target ==> " + ta.label); 
+        }
       }
+    }
+  }
+
+  public void updateModel()
+  { // Scan the visuals, adding/removing component interface
+    // and connections based on the visual layout. 
+
+    for (int i=0; i < visuals.size(); i++)
+    { VisualData vd = (VisualData) visuals.get(i); 
+
+      if (vd instanceof RectData)
+      { // component
+        RectData rd = (RectData) vd;
+        ArchComponent comp = 
+          (ArchComponent) rd.getModelElement();
+        if (comp == null) 
+        { continue; }  
+        comp.clearInterfaces(); 
+        for (int j = 0; j < visuals.size(); j++) 
+        { VisualData ld = (VisualData) visuals.get(j); 
+          if (ld instanceof ProvidedInterfaceLineData) 
+          { ProvidedInterfaceLineData line = 
+              (ProvidedInterfaceLineData) ld; 
+            if (rd.isUnder(line.xstart,line.ystart))
+            { comp.addProvidedInterface((Entity) 
+                                line.getModelElement()); 
+            } 
+          }
+          else if (ld instanceof RequiredInterfaceLineData) 
+          { RequiredInterfaceLineData line = 
+              (RequiredInterfaceLineData) ld; 
+            if (rd.isUnder(line.xstart,line.ystart))
+            { comp.addRequiredInterface((Entity) 
+                                line.getModelElement()); 
+            } 
+          } 
+        } 
+      }
+      else if (vd instanceof LineData) 
+      { LineData ld = (LineData) vd; 
+        if (ld instanceof ProvidedInterfaceLineData) 
+        { findConnection((ProvidedInterfaceLineData) ld, 
+                         ld.xend, ld.yend); 
+        } 
+        else if (ld instanceof RequiredInterfaceLineData) 
+        { findConnection((RequiredInterfaceLineData) ld, 
+                         ld.xend, ld.yend); 
+        }  
+      } 
+    }
+  } 
+
+  public ArchComponent find_src(ProvidedInterfaceLineData line)
+  { ModelElement ent = line.getModelElement();
+    String ename = ent.getName(); 
+ 
+    for (int i=0; i < visuals.size(); i++)
+    {
+      if (visuals.elementAt(i) instanceof RectData)
+      {
+        RectData rd = (RectData) visuals.elementAt(i);
+        if (rd.isUnder(line.xstart,line.ystart) && 
+            rd.modelElement instanceof ArchComponent)
+        {
+	     System.out.println(ename + " is a provided interface of ==> " + rd.label);
+          ArchComponent comp = 
+                (ArchComponent) rd.modelElement;
+          comp.addProvidedInterface((Entity) ent); 
+          return comp;   
+        }
+      }
+    }
+    return null; 
+  }
+
+  public ArchComponent find_src(RequiredInterfaceLineData line)
+  { ModelElement ent = line.getModelElement();
+    String ename = ent.getName(); 
+ 
+    for (int i=0; i < visuals.size(); i++)
+    {
+      if (visuals.elementAt(i) instanceof RectData)
+      {
+        RectData rd = (RectData) visuals.elementAt(i);
+        if (rd.isUnder(line.xstart,line.ystart) && 
+            rd.modelElement instanceof ArchComponent)
+        {
+	     System.out.println(ename + " is a required interface of ==> " + rd.label);
+          ArchComponent comp = 
+                (ArchComponent) rd.modelElement;
+          comp.addRequiredInterface((Entity) ent); 
+          return comp;   
+        }
+      }
+    }
+    return null; 
   }
 
   private void findGlueSet()
@@ -395,12 +414,6 @@ class ArchitectureArea extends JPanel
       if (vd.isUnder(x,y) || vd.isUnderStart(x,y) || vd.isUnderEnd(x,y))
       { selectedVisual = vd;
         found = true; 
-        /* if (vd instanceof LifelineData)
-        { selectedObject = ((LifelineData) vd).object;
-         
-          System.out.println("Selected object: " + selectedObject); 
-        }
-        else */ 
         if (vd instanceof RectData)
         { selectedComponent = 
             (ArchComponent) ((RectData) vd).modelElement;
@@ -414,18 +427,69 @@ class ArchitectureArea extends JPanel
           System.out.println("Selected interface: " + 
                                   selectedInterface); 
         }
-      /*  else if (vd instanceof TimeAnnotationData)
-        { selectedTimeAnnotation = ((TimeAnnotationData) vd).ta; 
-          System.out.println("Selected time annotation: " + 
-                                  selectedTimeAnnotation); 
-        } */  
         return; 
       } 
     } 
     if (!found)
-    { System.out.println("No selection -- click on lifeline " + 
-                         "or on name of message to select"); 
+    { System.out.println("!! No selection -- click on end of a line or in a component area to select"); 
     } 
+  }  // and for others
+
+  public void findConnection(VisualData self, int x, int y)
+  { boolean found = false; 
+
+    ModelElement me = self.getModelElement(); 
+
+    for (int i = 0; i < visuals.size(); i++)
+    { VisualData vd = (VisualData) visuals.elementAt(i);
+      if (vd instanceof LineData && vd.isUnderEnd(x,y) && 
+          vd != self)
+      { // selectedVisual = vd;
+        ModelElement connectedInterface = 
+                    ((LineData) vd).modelElement;
+          
+        if (self instanceof ProvidedInterfaceLineData && 
+            vd instanceof RequiredInterfaceLineData)
+        { System.out.println(
+              ">>> Assembly connection between " + me + 
+              " and: " + 
+                             connectedInterface);
+          if (connectedInterface != null && 
+              me != null && 
+              connectedInterface.getName().equals(
+                me.getName()))
+          { System.out.println(">>> Valid connection"); } 
+          else  
+          { System.out.println(">>> All operations of " + 
+               connectedInterface + " must be present in: " + 
+               me);
+          } 
+          found = true; 
+          return; 
+        }
+        else if (self instanceof RequiredInterfaceLineData && 
+            vd instanceof ProvidedInterfaceLineData)
+        { System.out.println(
+              ">>> Assembly connection between " + me + 
+              " and: " + 
+                             connectedInterface); 
+          if (connectedInterface != null && 
+              me != null && 
+              connectedInterface.getName().equals(
+                me.getName()))
+          { System.out.println(">>> Valid connection"); } 
+          else  
+          { System.out.println(">>> All operations of " + 
+               me + " must be present in: " + 
+               connectedInterface);
+          } 
+          found = true; 
+          return; 
+        }
+      }  
+    } 
+    if (!found)
+    { System.out.println(">> No connection found for " + me); } 
   }  // and for others
 
   private void resetSelected()
@@ -563,10 +627,10 @@ class ArchitectureArea extends JPanel
       if (vd instanceof RectData) 
       { RectData rd = (RectData) vd; 
         if (rd.isUnder(xx,yy))
-		{ return rd; }
-	  } 
-	} 
-	return null;
+        { return rd; }
+      } 
+    } 
+    return null;
   } 
 
   public void loadDataFromFile(String f) 
@@ -574,19 +638,19 @@ class ArchitectureArea extends JPanel
     Vector res = new Vector();
     String s;
     boolean eof = false;
-    File file = new File("output/requirements.txt");  /* default */ 
+    File file = new File("output/architecture.txt");
 
     try
     { br = new BufferedReader(new FileReader(file)); }
     catch (FileNotFoundException e)
-    { System.out.println("File not found: " + file);
+    { System.out.println("!! File not found: " + file);
       return; 
     }
 
     while (!eof)
     { try { s = br.readLine(); }
       catch (IOException e)
-      { System.out.println("Reading failed.");
+      { System.out.println("!! Reading failed.");
         return; 
       }
       if (s == null) 
@@ -595,10 +659,10 @@ class ArchitectureArea extends JPanel
       }
       else if (s.equals("Component:"))
       { parseComponent(br); } 
-      else if (s.equals("SubgoalRelation:"))
-      { parseRelation(br); }
-      else if (s.equals("Scenario:"))
-      { parseScenario(br); }
+      else if (s.equals("ProvidedInterface:"))
+      { parseProvidedInterface(br); }
+      else if (s.equals("RequiredInterface:"))
+      { parseRequiredInterface(br); }
     }  
     try { br.close(); } catch(IOException e) { }
  }
@@ -632,19 +696,6 @@ class ArchitectureArea extends JPanel
     while (st2.hasMoreTokens())
     { line2vals.add(st2.nextToken()); }
 
-  /* 
-    try { line3 = br.readLine(); }
-    catch (IOException e)
-    { System.err.println("Reading component details failed"); }
-
-    try { line4 = br.readLine(); }
-    catch (IOException e)
-    { System.err.println("Reading component details failed"); }
-
-    try { line5 = br.readLine(); }
-    catch (IOException e)
-    { System.err.println("Reading component details failed"); } */ 
-
     if (line1vals.size() < 2) { return; } 
 
     String xs = (String) line1vals.get(0); 
@@ -653,7 +704,7 @@ class ArchitectureArea extends JPanel
     int x = Integer.parseInt(xs); 
     int y = Integer.parseInt(ys); 
 
-    if (line2vals.size() < 2) { return; } 
+    if (line2vals.size() < 1) { return; } 
 
     String nme = (String) line2vals.get(0); 
     // String id = (String) line2vals.get(1); 
@@ -677,19 +728,26 @@ class ArchitectureArea extends JPanel
     repaint();
   } 
 
-  private void parseRelation(BufferedReader br)
+  private void parseProvidedInterface(BufferedReader br)
   { String line1 = "";  // x1 y1 x2 y2 
     Vector line1vals = new Vector();
+    String line2 = "";  // Name 
+    Vector line2vals = new Vector();
 
     try { line1 = br.readLine(); }
     catch (IOException e)
-    { System.err.println("Reading requirement details failed"); }
+    { System.err.println("!! Reading interface details failed"); }
 
     StringTokenizer st1 =
       new StringTokenizer(line1);
 
     while (st1.hasMoreTokens())
     { line1vals.add(st1.nextToken()); }
+
+    if (line1vals.size() < 4) 
+    { System.err.println("!! Incomplete interface details"); 
+      return; 
+    }
 
     String x1s = (String) line1vals.get(0); 
     String y1s = (String) line1vals.get(1); 
@@ -703,22 +761,47 @@ class ArchitectureArea extends JPanel
     int x2 = Integer.parseInt(x2s); 
     int y2 = Integer.parseInt(y2s); 
 
-    LineData dline = 
-        new ReqLineData(x1,y1,x2,y2,linecount,SOLID);  // dashed for realizations
+    ProvidedInterfaceLineData dline = 
+      new ProvidedInterfaceLineData(
+        x1,y1,x2,y2,linecount,SOLID); 
     visuals.addElement(dline);
+
+    try { line2 = br.readLine(); }
+    catch (IOException e)
+    { System.err.println("!! Reading interface details failed"); }
+
+    StringTokenizer st2 =
+      new StringTokenizer(line2);
+
+    while (st2.hasMoreTokens())
+    { line2vals.add(st2.nextToken()); }
+
+    if (line2vals.size() < 1) { return; } 
+
+    String nme = (String) line2vals.get(0); 
+
+    Entity ent = (Entity) ModelElement.lookupByName(nme, entities); 
+    if (ent == null) 
+    { ent = new Entity(nme); 
+      ent.setInterface(true); 
+      entities.add(ent); 
+    } 
+    findConnection(dline,x2,y2); 
+    dline.setModelElement(ent); 
+    find_src(dline); 
+    
     repaint();
   } 
 
-  private void parseScenario(BufferedReader br)
-  { String line1 = "";  // name requirement 
+  private void parseRequiredInterface(BufferedReader br)
+  { String line1 = "";  // x1 y1 x2 y2 
     Vector line1vals = new Vector();
-    String line2 = "";  // informalDescription
-    String line3 = "";  // semiformalDescription
-    String line4 = "";  // constraint 
+    String line2 = "";  // Name 
+    Vector line2vals = new Vector();
 
     try { line1 = br.readLine(); }
     catch (IOException e)
-    { System.err.println("!! Reading scenario details failed"); }
+    { System.err.println("!! Reading interface details failed"); }
 
     StringTokenizer st1 =
       new StringTokenizer(line1);
@@ -726,56 +809,93 @@ class ArchitectureArea extends JPanel
     while (st1.hasMoreTokens())
     { line1vals.add(st1.nextToken()); }
 
-    String nme = (String) line1vals.get(0); 
-    String req = (String) line1vals.get(1); 
+    if (line1vals.size() < 4) 
+    { System.err.println("!! Incomplete interface details"); 
+      return; 
+    }
 
+    String x1s = (String) line1vals.get(0); 
+    String y1s = (String) line1vals.get(1); 
+
+    int x1 = Integer.parseInt(x1s); 
+    int y1 = Integer.parseInt(y1s); 
+
+    String x2s = (String) line1vals.get(2); 
+    String y2s = (String) line1vals.get(3); 
+
+    int x2 = Integer.parseInt(x2s); 
+    int y2 = Integer.parseInt(y2s); 
+
+    RequiredInterfaceLineData dline = 
+      new RequiredInterfaceLineData(
+          x1,y1,x2,y2,linecount,SOLID);
     try { line2 = br.readLine(); }
     catch (IOException e)
-    { System.err.println("Reading scenario details failed"); }
+    { System.err.println("!! Reading interface details failed"); }
 
-    try { line3 = br.readLine(); }
-    catch (IOException e)
-    { System.err.println("Reading scenario details failed"); }
+    StringTokenizer st2 =
+      new StringTokenizer(line2);
 
-    try { line4 = br.readLine(); }
-    catch (IOException e)
-    { System.err.println("Reading scenario details failed"); }
+    while (st2.hasMoreTokens())
+    { line2vals.add(st2.nextToken()); }
 
-    Scenario sc = new Scenario(nme); 
-    sc.setText(line2); 
+    if (line2vals.size() < 1) { return; } 
 
-    Compiler2 c2 = new Compiler2(); 
-    c2.nospacelexicalanalysis(line3); 
-    Sbvrse sbv = c2.parseSbvrse(); 
-    sc.setSbvrse(sbv); 
+    String nme = (String) line2vals.get(0); 
 
-    Compiler2 c3 = new Compiler2(); 
-    c3.nospacelexicalanalysis(line4); 
-    Expression con = c3.parse(); 
-    Constraint fc = Constraint.getConstraint(con); 
-    sc.setConstraint(fc); 
-
-    ArchComponent r = 
-      (ArchComponent) ModelElement.lookupByName(req, components); 
-    if (r != null) 
-    { r.addScenario(sc); } 
+    Entity ent = (Entity) ModelElement.lookupByName(nme, entities); 
+    if (ent == null) 
+    { ent = new Entity(nme); 
+      ent.setInterface(true); 
+      entities.add(ent); 
+    } 
+    dline.setModelElement(ent); 
+    visuals.addElement(dline);
+    find_src(dline); 
+    findConnection(dline,x2,y2); 
+    repaint();
   } 
 
 
-  public void synthesiseUseCases()
-  { types = parent.getTypes(); 
-    entities = parent.getEntities(); 
 
-    for (int i = 0; i < requirements.size(); i++) 
-    { Requirement rq = (Requirement) requirements.get(i); 
-      if (rq.isGlobal())
-      { UseCase uc = rq.generateUseCase(types,entities); 
-        System.out.println("Created use case: " + uc.getName()); 
-        System.out.println(uc.display()); 
-        usecases.add(uc); 
+  public void synthesiseJava()
+  { for (int i = 0; i < components.size(); i++) 
+    { ArchComponent comp = (ArchComponent) components.get(i); 
+      String compName = comp.getName();
+ 
+      String res = "class " + compName; 
+      Vector pinterfaces = comp.getProvidedInterfaces();
+      if (pinterfaces.size() > 0) 
+      { res = res + " implements "; }  
+      for (int j = 0; j < pinterfaces.size(); j++) 
+      { Entity pint = (Entity) pinterfaces.get(j); 
+        res = res + pint.getName(); 
+        if (j < pinterfaces.size() - 1) 
+        { res = res + ", "; } 
       } 
+
+      res = res + "\n{\n"; 
+
+      String constr = "  public " + compName + "("; 
+      String assignments = ""; 
+
+      Vector rinterfaces = comp.getRequiredInterfaces();
+      for (int j = 0; j < rinterfaces.size(); j++) 
+      { Entity rint = (Entity) rinterfaces.get(j); 
+        String rname = rint.getName();
+        String rx = rname.toLowerCase() + "_x"; 
+        res = res + "  " + rname + " " + rx + ";\n";
+        constr = constr + rname + " " + rx; 
+        if (j < rinterfaces.size()-1)
+        { constr = constr + ", "; }  
+        assignments = assignments + "    this." + rx + " = " + rx + ";\n";   
+      } 
+
+      constr = constr + ") {\n" + assignments + "  }\n"; 
+      res = res + "\n" + constr + "}\n"; 
+      System.out.println(res); 
+      System.out.println(); 
     } 
-    parent.addUseCases(usecases); 
   } 
 
   public boolean editMessage(Message t)
@@ -1444,11 +1564,11 @@ class ArchitectureArea extends JPanel
   { 
     int x = e.getX();
     int y = e.getY();
-    System.out.println("Mouse released at " + x + " " + y); 
+    System.out.println(">> Mouse released at " + x + " " + y); 
     
     switch (mode) {
     case SLINES:  
-      LineData sline = 
+      ProvidedInterfaceLineData sline = 
         new ProvidedInterfaceLineData(
                         x1,y1,x,y,linecount,SOLID); 
       // Flow flw2 = new Flow("f" + linecount); 
@@ -1477,11 +1597,14 @@ class ArchitectureArea extends JPanel
       //   dline.setModelElement(gen); 
       //   dline.setWaypoints((Vector) ((Vector) waypoints).clone()); 
       // } 
+      find_src(sline); 
+      findConnection(sline,x,y); 
+
       firstpress = false;
       mode = INERT; 
       break;
     case DLINES:  
-      LineData dline = 
+      RequiredInterfaceLineData dline = 
         new RequiredInterfaceLineData(
                         x1,y1,x,y,linecount,SOLID); 
       // Flow flw2 = new Flow("f" + linecount); 
@@ -1510,6 +1633,9 @@ class ArchitectureArea extends JPanel
       //   dline.setModelElement(gen); 
       //   dline.setWaypoints((Vector) ((Vector) waypoints).clone()); 
       // } 
+      find_src(dline); 
+      findConnection(dline,x,y); 
+    
       firstpress = false;
       mode = INERT; 
       repaint(); 
@@ -1542,7 +1668,8 @@ class ArchitectureArea extends JPanel
 
     case EDIT: 
       // updateModule(); 
-      // resetSelected(); 
+      // resetSelected();
+      updateModel();  
       mode = INERT; 
       setAppropriateCursor(INERT); 
       break; 
@@ -1657,63 +1784,6 @@ class ArchitectureArea extends JPanel
     Graphics2D g2 = (Graphics2D) g;
     drawShapes(g2); 
   } 
-
-
-  public void synthesiseB() 
-  { } 
-
-  private String bPromotes()
-  { return ""; 
-  } 
- 
-  private void test()  // synthB() 
-  {   } 
-
-  private void synthBMult()
-  {   }
-
-
-  public void testImp()
-  { 
-  }
-
-  public void testImp(PrintWriter out)
-  { 
-  }
-
-
-  public void synthMultImp()
-  {   }
-
-  public void synthMultImp(PrintWriter out)
-  {  }
-
-
-  private String javaInherits()
-  { return ""; } 
-
-  public void synthesiseJava()
-  { } 
-
-  public void synthesiseBCode()
-  { } 
-
-  public void synthesiseSmv() 
-  {   } 
-
-  private void outputJavaCode(PrintWriter out)
-  {   }
-
-  private void outputBCode(PrintWriter out)
-  { }
-
-  // Print multiple B code if module.getMultiplicity() > 1
-  private void outputBSingleInstance(PrintWriter out) 
-  {   }
-
-  private void outputBMultipleInstances(PrintWriter out)
-  {   }
-
 
 
   private void setAppropriateCursor(int mode) 

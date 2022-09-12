@@ -5311,7 +5311,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       } 
 
       if ("enumeration".startsWith(st)) 
-      { mess[0] = "Enumeration, eg., enumeration { literal red literal blue literal green }"; 
+      { mess[0] = "Enumeration, eg., enumeration Colour { literal red; literal blue; literal green; }"; 
         return "enumeration"; 
       } 
 

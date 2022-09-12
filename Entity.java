@@ -5478,7 +5478,8 @@ public class Entity extends ModelElement implements Comparable
       { Attribute att1 = (Attribute) allatts.get(j);
         if (att1.isUnique()) { } // an index already exists
         else if (uniqueConstraint(att1.getName())) 
-        { String ind = getName().toLowerCase() + att1.getName() + "index"; 
+        { String ind = getName().toLowerCase() + 
+                       att1.getName() + "index"; 
           ind = "  Hashtable " + ind + " = new Hashtable(); // "; 
           Type t = att1.getType(); 
           ind = ind + t.getName() + " --> " + getName() + "\n"; 
@@ -5487,6 +5488,16 @@ public class Entity extends ModelElement implements Comparable
       }  
     } 
 
+  } 
+
+  public Vector getStaticAttributes()
+  { Vector res = new Vector(); 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      if (att.isStatic())
+      { res.add(att); } 
+    } 
+    return res; 
   } 
 
   public void staticAttributeDefinitions(PrintWriter out)

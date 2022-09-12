@@ -1533,7 +1533,10 @@ public class GUIBuilder
         else 
         { continue; } 
       } */ 
-      mutationTestsOp = mutationTestsOp + 
+
+     Vector epars = ent.getStaticAttributes(); 
+  
+     mutationTestsOp = mutationTestsOp + 
         "      { int _" + es + "_instances = Controller.inst()." + es + ".size();\n";  
       
       Vector bfnames = new Vector(); 
@@ -1551,10 +1554,65 @@ public class GUIBuilder
           "        int[] " + es + "_" + bfname + "_counts = new int[100]; \n" +   
           "        int[] " + es + "_" + bfname + "_totals = new int[100]; \n" +   
           "        if (_" + es + "_instances > 0)\n" + 
-          "        { " + ename + " _ex = (" + ename + ") Controller.inst()." + es + ".get(0);\n" +  
-          "          MutationTest." + bfname + "_mutation_tests(_ex," + es + "_" + bfname + "_counts, " + es + "_" + bfname + "_totals);\n" + 
-          "        }\n" + 
-          "        System.out.println();\n";  
+          "        { " + ename + " _ex = (" + ename + ") Controller.inst()." + es + ".get(0);\n";   
+		  
+          String indent = "        ";
+          String testscript = "";  
+             
+          if (epars.size() > 0)
+          { for (int k = 0; k < epars.size(); k++) 
+            { Attribute par = (Attribute) epars.get(k); 
+              String parnme = par.getName();
+              String indexvar = "_static_" + k; 
+              indent = indent + "  "; 
+			 
+              Type typ = par.getType(); 
+              String tname = typ + ""; 
+			
+              if ("int".equals(tname))
+              { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < intTestValues.length; " + indexvar + "++)\n" + 
+                indent + "{ _ex.set" + parnme + "(intTestValues[" + indexvar + "]);\n";  
+              } 
+              else if ("long".equals(tname))
+              { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < longTestValues.length; " + indexvar + "++)\n" + 
+                  indent + "{ _ex.set" + parnme + "(longTestValues[" + indexvar + "]);\n";  
+              } 
+              else if ("double".equals(tname))
+              { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < doubleTestValues.length; " + indexvar + "++)\n" + 
+                  indent + "{ _ex.set" + parnme + "(doubleTestValues[" + indexvar + "]);\n";  
+              } 
+              else if ("boolean".equals(typ + ""))
+              { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 2; " + indexvar + "++)\n" + 
+                  indent + "{ _ex.set" + parnme + "(booleanTestValues[" + indexvar + "]);\n";  
+              } 
+              else if ("String".equals(typ + ""))
+              { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 3; " + indexvar + "++)\n" + 
+                  indent + "{ _ex.set" + parnme + "(stringTestValues[" + indexvar + "]);\n";  
+              } 
+            }
+          } 
+          mutationTestsOp = mutationTestsOp + testscript + 
+          "          MutationTest." + bfname + "_mutation_tests(_ex," + 
+                     es + "_" + bfname + "_counts, " + es + "_" + bfname + "_totals);\n"; 
+
+          for (int p = 0; p < epars.size(); p++) 
+          { mutationTestsOp = mutationTestsOp + 
+		               indent + "}\n";
+            indent = indent.substring(0,indent.length()-2);  
+          }
+          mutationTestsOp = mutationTestsOp + 
+             "        }\n" + 
+             "        System.out.println();\n";  
         } 
         else if (bf.isMutatable())
         { mutationTestsOp = mutationTestsOp + 
@@ -1601,16 +1659,32 @@ public class GUIBuilder
       "  { if (e == null) { return; }\n" +
       "    String cmd = e.getActionCommand();\n";
 
+    aper = aper + 
+      "    int[] intTestValues = {0, -1, 1, " + 
+            TestParameters.minInteger + ", " + 
+            TestParameters.maxInteger + "};\n" +    
+      "    long[] longTestValues = {0, -1, 1, " +
+            TestParameters.minLong + ", " + 
+            TestParameters.maxLong + "};\n" + 
+      "    double[] doubleTestValues = {0, -1, 1, " + 
+            TestParameters.maxFloat + ", " + 
+            Double.MIN_VALUE + " };\n" +
+      "    boolean[] booleanTestValues = {false, true};\n" + 
+      "    String[] stringTestValues = {\"\", \" abc_XZ \", \"#�$* &~@'\"};\n";
+
     res = res + "    JButton loadModelButton = new JButton(\"loadModel\");\n";
 
     cons = cons + 
         "    tPanel.add(loadModelButton);\n" +
         "    loadModelButton.addActionListener(this);\n";
       
-    String loadmodelop = "    { " + contname + ".loadModel(\"in.txt\");\n";   
+    String loadmodelop = 
+      "    { " + contname + ".loadModel(\"in.txt\");\n";   
          
     if (incr)
-    { loadmodelop = "    { " + contname + ".loadModelDelta(\"in.txt\");\n"; } 
+    { loadmodelop = 
+        "    { " + contname + ".loadModelDelta(\"in.txt\");\n"; 
+    } 
    
     aper = aper +
          "    if (\"loadModel\".equals(cmd))\n" + loadmodelop + 
@@ -1631,7 +1705,8 @@ public class GUIBuilder
          "    if (\"saveModel\".equals(cmd))\n" +
          "    { cont.saveModel(\"out.txt\");  \n" + 
          "      cont.saveXSI(\"xsi.txt\"); \n" + 
-         "      return; } \n";
+         "      return;\n" + 
+         "    } \n";
 
     cons = cons + 
         "    tPanel.add(loadXmiButton);\n" +
@@ -1642,7 +1717,8 @@ public class GUIBuilder
          "    { cont.loadXSI();  \n" + 
          "      cont.checkCompleteness();\n" + 
          "      System.err.println(\"Model loaded\");\n" + 
-         "      return; } \n";
+         "      return;\n" + 
+         "    } \n";
 
     res = res + "    JButton loadCSVButton = new JButton(\"Mutation Tests\");\n";
 
@@ -1668,18 +1744,6 @@ public class GUIBuilder
     //      "    { cont.saveCSVModel();  \n" + 
     //      "      return; } \n";
 
-    aper = aper + 
-         "    int[] intTestValues = {0, -1, 1, " + 
-            TestParameters.minInteger + ", " + 
-            TestParameters.maxInteger + "};\n" +    
-         "    long[] longTestValues = {0, -1, 1, " +
-            TestParameters.minLong + ", " + 
-            TestParameters.maxLong + "};\n" + 
-         "    double[] doubleTestValues = {0, -1, 1, " + 
-            TestParameters.maxFloat + ", " + 
-            Double.MIN_VALUE + " };\n" +
-         "    boolean[] booleanTestValues = {false, true};\n" + 
-         "    String[] stringTestValues = {\"\", \" abc_XZ \", \"#�$* &~@'\"};\n";
 
     for (int i = 0; i < ucs.size(); i++)
     { ModelElement me = (ModelElement) ucs.get(i); 
@@ -1696,24 +1760,28 @@ public class GUIBuilder
           java.util.Map aBounds = new java.util.HashMap(); 
       
           for (int k = 0; k < uc.preconditions.size(); k++) 
-          { Constraint con = (Constraint) uc.preconditions.get(k);
+          { Constraint con = 
+                 (Constraint) uc.preconditions.get(k);
             Expression pre = con.succedent();  
             pre.getParameterBounds(pars,bounds,aBounds);
    
-            Expression.identifyUpperBounds(pars,aBounds,upperBounds); 
-            Expression.identifyLowerBounds(pars,aBounds,lowerBounds); 
-		  } 
+            Expression.identifyUpperBounds(
+                                   pars,aBounds,upperBounds); 
+            Expression.identifyLowerBounds(
+                                   pars,aBounds,lowerBounds); 
+          } 
 		  
           for (int j = 0; j < pars.size(); j++) 
           { Attribute par = (Attribute) pars.get(j); 
             String parnme = par.getName();
             Type typ = par.getType(); 
             String tname = typ + ""; 
-            Vector testassignments = par.testValues("parameters", lowerBounds, upperBounds);
+            Vector testassignments = par.testValues(
+                     "parameters", lowerBounds, upperBounds);
 			
             if ("int".equals(tname))
             { aper = aper + 
-			     "    int[] " + nme + par + "TestValues = {";
+			"    int[] " + nme + par + "TestValues = {";
               for (int y = 0; y < testassignments.size(); y++) 
               { String tval = (String) testassignments.get(y); 
                 aper = aper + tval; 
@@ -1736,17 +1804,16 @@ public class GUIBuilder
             else if ("double".equals(tname))
             { aper = aper + 
 			     "    double[] " + nme + par + "TestValues = {";
-			  for (int y = 0; y < testassignments.size(); y++) 
-			  { String tval = (String) testassignments.get(y); 
-			    aper = aper + tval; 
-				if (y < testassignments.size() - 1) 
-				{ aper = aper + ", "; }
-			  }
-			  aper = aper + "};\n";  
-		    } 
-
-		  }
-		}
+              for (int y = 0; y < testassignments.size(); y++) 
+              { String tval = (String) testassignments.get(y); 
+                aper = aper + tval; 
+                if (y < testassignments.size() - 1) 
+                { aper = aper + ", "; }
+              }
+              aper = aper + "};\n";  
+            } 
+           }
+         }
 	  }
 	}
 	 
@@ -1815,23 +1882,23 @@ public class GUIBuilder
             } 
             else if ("boolean".equals(typ + ""))
             { testscript = testscript + 
-                  indent + "\n" + 
-                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 2; " + indexvar + "++)\n" + 
-                  indent + "{ boolean " + parnme + " = booleanTestValues[" + indexvar + "];\n";  
+                indent + "\n" + 
+                indent + "for (int " + indexvar + " = 0; " + indexvar + " < 2; " + indexvar + "++)\n" + 
+                indent + "{ boolean " + parnme + " = booleanTestValues[" + indexvar + "];\n";  
             } 
             else if ("String".equals(typ + ""))
             { testscript = testscript + 
-                  indent + "\n" + 
-                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 3; " + indexvar + "++)\n" + 
-                  indent + "{ String " + parnme + " = stringTestValues[" + indexvar + "];\n";  
+                indent + "\n" + 
+                indent + "for (int " + indexvar + " = 0; " + indexvar + " < 3; " + indexvar + "++)\n" + 
+                indent + "{ String " + parnme + " = stringTestValues[" + indexvar + "];\n";  
             } 
             else if (typ != null && typ.isEnumeration())
             { Vector vals = typ.getValues();  
               int nvals = vals.size(); 
               testscript = testscript + 
-                  indent + "\n" + 
-                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < " + nvals + "; " + indexvar + "++)\n" + 
-                  indent + "{ int " + parnme + " = " + indexvar + ";\n";
+                indent + "\n" + 
+                indent + "for (int " + indexvar + " = 0; " + indexvar + " < " + nvals + "; " + indexvar + "++)\n" + 
+                indent + "{ int " + parnme + " = " + indexvar + ";\n";
             } 
             else if (typ.isEntity())
             { Entity ee = typ.getEntity(); 
@@ -1844,10 +1911,10 @@ public class GUIBuilder
               { eeinvariants.addAll(ee.getInvariants()); }
 
               testscript = testscript + 
-                  indent + "\n" + 
-                  indent + "int _" + ename + "_instances = Controller.inst()." + ename + ".size();\n" +  
-                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < _" + ename + "_instances; " + indexvar + "++)\n" + 
-                  indent + "{ " + tname + " " + parnme + " = (" + tname + ") Controller.inst()." + ename + ".get(" + indexvar + ");\n";
+                indent + "\n" + 
+                indent + "int _" + ename + "_instances = Controller.inst()." + ename + ".size();\n" +  
+                indent + "for (int " + indexvar + " = 0; " + indexvar + " < _" + ename + "_instances; " + indexvar + "++)\n" + 
+                indent + "{ " + tname + " " + parnme + " = (" + tname + ") Controller.inst()." + ename + ".get(" + indexvar + ");\n";
               for (int p = 0; p < eeinvariants.size(); p++)
               { java.util.Map env = new java.util.HashMap(); 
                 env.put(tname, parnme); 
@@ -1874,13 +1941,13 @@ public class GUIBuilder
               if (elemTyp == null) { } 
               else if ("int".equals(elemTyp.getName()))
               { testscript = testscript + 
-                      indent + "\n" + 
-				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
-				indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
-				indent + "  if (" + indexvar + " < 5)\n" + 
-				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(intTestValues[" + indexvar + "])); }\n" + 
-				indent + "  if (" + indexvar + " < 3)\n" + 
-				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(intTestValues[" + indexvar + " + 2])); }\n";  
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+                  indent + "  if (" + indexvar + " < 5)\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(intTestValues[" + indexvar + "])); }\n" + 
+                  indent + "  if (" + indexvar + " < 3)\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(intTestValues[" + indexvar + " + 2])); }\n";  
               } 
               else if ("long".equals(elemTyp.getName()) || 
                        "double".equals(elemTyp.getName()) ||
@@ -1888,13 +1955,13 @@ public class GUIBuilder
               { String etname = elemTyp.getName(); 
                 String wrapper = Named.capitalise(etname); 
                 testscript = testscript + 
-                      indent + "\n" + 
-				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
-				indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
-				indent + "  if (" + indexvar + " < 5)\n" + 
-				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new " + wrapper + "(" + etname + "TestValues[" + indexvar + "])); }\n" + 
-				indent + "  if (" + indexvar + " < 3)\n" + 
-				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new " + wrapper + "(" + etname + "TestValues[" + indexvar + " + 2])); }\n";  
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+                  indent + "  if (" + indexvar + " < 5)\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", new " + wrapper + "(" + etname + "TestValues[" + indexvar + "])); }\n" + 
+                  indent + "  if (" + indexvar + " < 3)\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", new " + wrapper + "(" + etname + "TestValues[" + indexvar + " + 2])); }\n";  
               } 
               else if ("String".equals(elemTyp.getName()))
               { testscript = testscript + 
@@ -2007,18 +2074,18 @@ public class GUIBuilder
 			      indent + "  if (" + indexvar + " < Controller.inst()." + etname + ".size())\n" + 
 			      indent + "  { " + parnme + ".add(Controller.inst()." + eename + ".get(" + indexvar + ")); }\n";
               }  
-			}  
+            }  
           }  
         }
       
         for (int j = 0; j < uc.preconditions.size(); j++)
         { java.util.Map env = new java.util.HashMap(); 
           Constraint con = (Constraint) uc.preconditions.get(j); 
-          checkCode = checkCode + 
-		              indent + "  if (" + con.queryForm(env,true) + ")\n" + 
-		              indent + "  { System.out.print(\" Precondition " + j + " is valid; \"); }\n" + 
-					  indent + "  else \n" + 
-					  indent + "  { System.out.print(\" Precondition " + j + " fails; \"); }\n"; 
+          checkCode = checkCode +    
+            indent + "  if (" + con.queryForm(env,true) + ")\n" + 
+            indent + "  { System.out.print(\" Precondition " + j + " is valid; \"); }\n" + 
+            indent + "  else \n" + 
+            indent + "  { System.out.print(\" Precondition " + j + " fails; \"); }\n"; 
         }
 
       
@@ -2028,7 +2095,7 @@ public class GUIBuilder
 		
 		call = indent + "  try { " + call + ";\n" + 
 		       indent + "  }\n" + 
-			   indent + "  catch (Throwable _e) { System.out.println(\" !! Exception occurred: test failed !! \"); }\n"; 
+                  indent + "  catch (Throwable _e) { System.err.println(\" !! Exception occurred: test failed !! \"); }\n"; 
 			   
            if (teststring.equals(""))
            { teststring = "\"\""; } 

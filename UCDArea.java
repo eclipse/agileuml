@@ -1796,6 +1796,71 @@ public class UCDArea extends JPanel
       } 
     }  
 
+    File cgtlfile = null; 
+    try 
+    { JFileChooser fc = new JFileChooser();
+      File startingpoint = new File("./cg");
+      fc.setCurrentDirectory(startingpoint);
+      fc.setDialogTitle("Select a *.cgtl file");
+      // fc.addChoosableFileFilter(new TextFileFilter()); 
+
+	  
+      int returnVal = fc.showOpenDialog(null);
+      if (returnVal == JFileChooser.APPROVE_OPTION)
+      { cgtlfile = fc.getSelectedFile(); }
+      else
+      { System.err.println("!! Load aborted");
+        return; 
+      }
+
+      if (cgtlfile == null) { return; }
+    } catch (Exception e) { return; } 
+
+    Vector vs = new Vector(); 
+    CGSpec spec = loadCSTL(cgtlfile,vs); 
+
+    if (spec == null) 
+    { System.err.println("!! ERROR: No file " + cgtlfile.getName()); 
+      return; 
+    } 
+
+    Vector res = new Vector(); 
+
+    for (int i = 0; i < entasts.size(); i++) 
+    { String s = (String) entasts.get(i); 
+      Compiler2 c = new Compiler2();    
+      ASTTerm xx =
+          c.parseGeneralAST(s); 
+      if (xx == null) 
+      { System.err.println("!!ERROR: Invalid text for general AST: " + s); 
+        System.err.println(c.lexicals); 
+          // return; 
+      }
+      else 
+      { res.add(xx); }
+    }
+
+    Vector results = new Vector(); 
+
+    Date d1 = new Date(); 
+    long t1 = d1.getTime(); 
+
+    for (int i = 0; i < res.size(); i++) 
+    { ASTTerm tt = (ASTTerm) res.get(i); 
+      String outtext = tt.cg(spec); 
+      results.add(outtext); 
+    } 
+
+    if (res.size() == 0) 
+    { return; } 
+ 
+    for (int i = 0; i < results.size(); i++) 
+    { String tt = (String) results.get(i); 
+      System.out.println(tt);  
+    } 
+    
+
+
   /*  System.out.println(); 
     System.out.println(">>> Token sequences of classes: "); 
     System.out.println(); 

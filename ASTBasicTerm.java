@@ -1011,6 +1011,7 @@ public class ASTBasicTerm extends ASTTerm
     if ("Class".equals(value))
     { modelElement = new Type("OclType", null); 
       expression = new BasicExpression((Type) modelElement); 
+      addRequiredLibrary("OclType");  
       return "OclType"; 
     }
 
@@ -1044,20 +1045,25 @@ public class ASTBasicTerm extends ASTTerm
         "Executable".equals(value) || 
         "Method".equals(value))
     { modelElement = new Type("OclOperation", null); 
-      expression = new BasicExpression((Type) modelElement); 
+      expression = new BasicExpression((Type) modelElement);
+      addRequiredLibrary("OclType");  
+       
       return "OclOperation"; 
     }
 
     if ("Field".equals(value))
     { modelElement = new Type("OclAttribute", null); 
       expression = new BasicExpression((Type) modelElement); 
-      return "OclAttribute"; }
+      addRequiredLibrary("OclType");  
+      return "OclAttribute"; 
+    }
 
     if ("Thread".equals(value) || "Runtime".equals(value) || 
         "Process".equals(value) || "Timer".equals(value) || 
         "TimerTask".equals(value))
     { modelElement = new Type("OclProcess", null); 
-      expression = new BasicExpression((Type) modelElement); 
+      expression = new BasicExpression((Type) modelElement);
+      addRequiredLibrary("OclProcess");  
       return "OclProcess"; 
     } 
 
@@ -1070,6 +1076,7 @@ public class ASTBasicTerm extends ASTTerm
     if ("Date".equals(value))
     { modelElement = new Type("OclDate", null); 
       expression = new BasicExpression((Type) modelElement); 
+      addRequiredLibrary("OclDate");  
       return "OclDate"; 
     }
 
@@ -2406,6 +2413,99 @@ public class ASTBasicTerm extends ASTTerm
     return value; 
   } 
 
+  /* Visual Basic 6/VBA processing */ 
+
+  public Type vbToKM3type(java.util.Map vartypes, 
+    java.util.Map varelemtypes, java.util.Map functions,
+    Vector types, Vector ents)
+  { if ("baseType".equals(tag))
+    { if ("DATE".equalsIgnoreCase(value))
+      { addRequiredLibrary("OclDate"); 
+        return new Type("OclDate", null);
+      }
+      else if ("INTEGER".equalsIgnoreCase(value))
+      { return new Type("int", null); } 
+      else if ("LONG".equalsIgnoreCase(value))
+      { return new Type("long", null); }
+      else if ("BOOLEAN".equalsIgnoreCase(value))
+      { return new Type("boolean", null); } 
+      else if ("SINGLE".equalsIgnoreCase(value))
+      { return new Type("double", null); } 
+      else if ("DOUBLE".equalsIgnoreCase(value))
+      { return new Type("double", null); } 
+      else if ("STRING".equalsIgnoreCase(value))
+      { return new Type("String", null); } 
+      else if ("VARIANT".equalsIgnoreCase(value))
+      { return new Type("OclAny", null); } 
+    } 
+    return null; 
+  } 
+
+  public Expression vbToKM3expression(java.util.Map vartypes, 
+    java.util.Map varelemtypes, java.util.Map functions, Vector types, Vector ents)
+  { if ("ambiguousIdentifier".equals(tag))
+    { Type t = (Type) vartypes.get(value); 
+      if (t != null) 
+      { Attribute att = 
+          new Attribute(value,t,ModelElement.INTERNAL); 
+        return new BasicExpression(att);
+      } 
+      BehaviouralFeature bf = 
+        (BehaviouralFeature) functions.get(value); 
+      if (bf != null) 
+      { return new BasicExpression(bf); } 
+      return BasicExpression.newVariableBasicExpression(
+                                        value); 
+    } 
+
+    if ("integerLiteral".equals(tag) || 
+        "octalLiteral".equals(tag))
+    { BasicExpression v = new BasicExpression(value); 
+      if (Expression.isInteger(value))
+      { v.setType(new Type("int",null)); 
+        v.setUmlKind(Expression.VALUE);
+        v = 
+          new BasicExpression(
+                Expression.convertInteger(value));  
+      }
+      else if (Expression.isLong(value))
+      { v.setType(new Type("long",null)); 
+        v.setUmlKind(Expression.VALUE); 
+        v = 
+          new BasicExpression(
+                Expression.convertLong(value));
+      }
+    } 
+
+    if ("doubleLiteral".equals(tag))
+    { BasicExpression v = new BasicExpression(value); 
+      if (Expression.isDouble(value))
+      { v.setType(new Type("double",null)); 
+        v.setUmlKind(Expression.VALUE); 
+      } 
+      return v; 
+    }
+   
+
+    if ("True".equalsIgnoreCase(value))
+    { return new BasicExpression(true); } 
+    
+    if ("False".equalsIgnoreCase(value))
+    { return new BasicExpression(false); } 
+
+    if ("Nothing".equalsIgnoreCase(value) ||
+        "Null".equalsIgnoreCase(value))
+    { return BasicExpression.newValueBasicExpression(
+                                             "null"); 
+    } 
+
+    return null; 
+  }    
+
+
+  /* General functions */ 
+
+
   public boolean isCharacter()
   { if (value.length() > 2 && 
         value.charAt(0) == '\'' && 
@@ -2424,7 +2524,8 @@ public class ASTBasicTerm extends ASTTerm
   } 
 
   public boolean isDouble()
-  { if (tag.equals("floatLiteral")) 
+  { if (tag.equals("floatLiteral") ||
+        tag.equals("doubleLiteral")) 
     { return true; } 
     if (Expression.isDouble(value))
     { return true; } 
@@ -2432,10 +2533,11 @@ public class ASTBasicTerm extends ASTTerm
   } 
 
   public boolean isBoolean()
-  { if (value.equals("true") || value.equals("false"))
+  { if (value.equalsIgnoreCase("true") || 
+        value.equalsIgnoreCase("false"))
     { return true; } 
     return false; 
-  } // Ok for Java and OCL.
+  } // Ok for Java, C, VB6 and OCL.
 
   public boolean isString() 
   { return Expression.isString(value); } 
