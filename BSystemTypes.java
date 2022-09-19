@@ -7410,6 +7410,25 @@ public class BSystemTypes extends BComponent
       "    range.addAll(m.values());\n" +  
       "    return asSet(range);\n" + 
       "  }\n\n"; 
+
+    res = res + 
+      "  public static List mapAsSequence(Map m)\n" +
+      "  { List range = new Vector();\n" +
+      "    java.util.Set ss = m.entrySet();\n" + 
+      "    for (Object x : ss)\n" +
+      "    { Map.Entry ee = (Map.Entry) x;\n" + 
+      "      HashMap mx = new HashMap(); \n" +
+      "      mx.put(ee.getKey(), ee.getValue());\n" + 
+      "      range.add(mx); \n" +
+      "    } \n" +
+      "    return range;\n" + 
+      "  }\n\n"; 
+
+    res = res + 
+      "  public static List mapAsSet(Map m)\n" +
+      "  { List range = mapAsSequence(m); \n" +
+      "    return asSet(range); \n" +
+      "  }\n\n"; 
  
     return res;
   }

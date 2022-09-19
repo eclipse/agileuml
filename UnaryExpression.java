@@ -2138,12 +2138,14 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("->asSet"))
     { type = new Type("Set",null); 
-      elementType = argument.elementType; 
-      entity = argument.entity; // the owner of the relation being closured
+      elementType = argument.elementType;
+      if (argument.isMap())
+      { elementType = argument.type; }  
+      entity = argument.entity; 
       type.setElementType(elementType); 
       multiplicity = ModelElement.MANY; 
       return res; 
-    } 
+    } // But map->asSet() has elementType = argument.type
 
     if (operator.equals("->keys"))
     { type = new Type("Set",null); 
@@ -2189,13 +2191,22 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       }
     } 
 
-    if (operator.equals("->asSequence") ||
-        operator.equals("->asOrderedSet") ||  
+    if (operator.equals("->asSequence"))
+    { type = new Type("Sequence",null); 
+      elementType = argument.elementType;
+      if (argument.isMap())
+      { elementType = argument.type; }  
+      type.setElementType(elementType); 
+      multiplicity = ModelElement.MANY; 
+      return res; 
+    }         
+
+    if (operator.equals("->asOrderedSet") ||  
         operator.equals("->sort") ||
         "->asBag".equals(operator) ||  
         operator.equals("->values"))
     { type = new Type("Sequence",null); 
-      elementType = argument.elementType; 
+      elementType = argument.elementType;
       type.setElementType(elementType); 
       multiplicity = ModelElement.MANY; 
       return res; 
@@ -2454,10 +2465,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     } 
 
     if (operator.equals("->asSequence")) 
-    { return qf; }  // but maps cannot be converted 
+    { if (argument.isMap())
+      { return "Set.mapAsSequence(" + qf + ")"; } 
+      return qf; 
+    }  
 
     if (operator.equals("->asSet")) 
-    { return "Set.asSet(" + qf + ")"; }
+    { if (argument.isMap())
+      { return "Set.mapAsSet(" + qf + ")"; } 
+      return "Set.asSet(" + qf + ")"; 
+    }
 
     if (operator.equals("->asOrderedSet")) 
     { return "Set.asOrderedSet(" + qf + ")"; }

@@ -26954,6 +26954,7 @@ public class ASTCompositeTerm extends ASTTerm
           { expression = 
               new UnaryExpression("->asSet", arg.expression); 
           } 
+          // mm->keys()->collect(k| Map{k |-> mm[k]})->asSet()
 
           return args + "->asSet()"; 
         } // a set of singleton maps. 

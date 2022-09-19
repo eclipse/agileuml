@@ -494,6 +494,7 @@ public class CGRule
                                         CGSpec cgs, Vector entities)
   { System.out.println(">***> Applying " + mffeat + " to ASTTerm " + term); 
     System.out.println(); 
+    ASTTerm obj = term; 
      
     if (CSTL.hasTemplate(mffeat + ".cstl")) 
     { CGSpec template = CSTL.getTemplate(mffeat + ".cstl"); 
@@ -521,7 +522,7 @@ public class CGRule
         "1".equals(mffeat))
     { // get first subterm of obj
       
-	  if (term instanceof ASTCompositeTerm)
+      if (term instanceof ASTCompositeTerm)
       { ASTCompositeTerm ct = (ASTCompositeTerm) term; 
       
         if (ct.terms.size() > 0)
@@ -535,20 +536,20 @@ public class CGRule
       return replx;              
     }
    
-      if ("second".equals(mffeat) || 
-          "2nd".equals(mffeat) || 
-          "2".equals(mffeat))
-      { // get second subterm of obj
+    if ("second".equals(mffeat) || 
+        "2nd".equals(mffeat) || 
+        "2".equals(mffeat))
+    { // get second subterm of obj
             
-        if (term instanceof ASTCompositeTerm)
-        { ASTCompositeTerm ct = (ASTCompositeTerm) term; 
-          if (ct.terms.size() > 1)
-          { ASTTerm ct1 = (ASTTerm) ct.terms.get(1); 
-            String repl = ct1.cg(cgs); 
-            return repl;
-          } 
+      if (term instanceof ASTCompositeTerm)
+      { ASTCompositeTerm ct = (ASTCompositeTerm) term; 
+        if (ct.terms.size() > 1)
+        { ASTTerm ct1 = (ASTTerm) ct.terms.get(1); 
+          String repl = ct1.cg(cgs); 
+          return repl;
         } 
-      }   
+      } 
+    }   
           
       if ("third".equals(mffeat) || 
           "3rd".equals(mffeat) || 
@@ -620,77 +621,107 @@ public class CGRule
           }  
           return repl;   
         } 
+        else if (term instanceof ASTSymbolTerm)
+        { ASTSymbolTerm st = (ASTSymbolTerm) term; 
+          String symb = st.getSymbol(); 
+          return symb.substring(1); 
+        } 
       } 
     
-     /* if ("tailtail".equals(mffeat) || 
-                   "tail2".equals(mffeat))
-          { // Vector of terms except the first 2
-            if (obj instanceof ASTCompositeTerm)
-            { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
-              Vector tailterms = new Vector(); 
-              tailterms.addAll(ct.terms);
-              String repl = ""; 
-              for (int q = 2; q < tailterms.size(); q++) 
-              { ASTTerm ct1 = (ASTTerm) tailterms.get(q); 
-                String tcg = ct1.cg(cgs);
-                repl = repl + tcg; 
-              }  
-              
-              res = replaceByMetafeatureValue(res,mf,repl);
-            } 
-          } 
-          else if ("tailtailtail".equals(mffeat) || 
-                   "tail3".equals(mffeat))
-          { // Vector of terms except the first 3
-            if (obj instanceof ASTCompositeTerm)
-            { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
-              Vector tailterms = new Vector(); 
-              tailterms.addAll(ct.terms);
-              String repl = ""; 
-              for (int q = 3; q < tailterms.size(); q++) 
-              { ASTTerm ct1 = (ASTTerm) tailterms.get(q); 
-                String tcg = ct1.cg(cgs);
-                repl = repl + tcg; 
-              }  
-              
-              res = replaceByMetafeatureValue(res,mf,repl); 
-            } 
-          } 
-          else if ("tailtailtailtail".equals(mffeat) || 
+      if ("tailtail".equals(mffeat) || 
+          "tail2".equals(mffeat))
+      { // Vector of terms except the first 2
+        if (obj instanceof ASTCompositeTerm)
+        { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
+          Vector tailterms = new Vector(); 
+          tailterms.addAll(ct.terms);
+          String repl = ""; 
+          for (int q = 2; q < tailterms.size(); q++) 
+          { ASTTerm ct1 = (ASTTerm) tailterms.get(q); 
+            String tcg = ct1.cg(cgs);
+            repl = repl + tcg; 
+          }  
+          return repl;
+        } 
+        else if (obj instanceof ASTSymbolTerm)
+        { ASTSymbolTerm st = (ASTSymbolTerm) term; 
+          String symb = st.getSymbol(); 
+          return symb.substring(2); 
+        } 
+      }
+    
+      if ("tailtailtail".equals(mffeat) || 
+           "tail3".equals(mffeat))
+      { // Vector of terms except the first 3
+        if (obj instanceof ASTCompositeTerm)
+        { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
+          Vector tailterms = new Vector(); 
+          tailterms.addAll(ct.terms);
+          String repl = ""; 
+          for (int q = 3; q < tailterms.size(); q++) 
+          { ASTTerm ct1 = (ASTTerm) tailterms.get(q); 
+            String tcg = ct1.cg(cgs);
+            repl = repl + tcg; 
+          }  
+          return repl;        
+        } 
+        else if (obj instanceof ASTSymbolTerm)
+        { ASTSymbolTerm st = (ASTSymbolTerm) term; 
+          String symb = st.getSymbol(); 
+          return symb.substring(3); 
+        } 
+      } 
+    
+      if ("tailtailtailtail".equals(mffeat) || 
                    "tail4".equals(mffeat))
-          { // Vector of terms except the first 4
-            if (obj instanceof ASTCompositeTerm)
-            { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
-              Vector tailterms = new Vector(); 
-              tailterms.addAll(ct.terms);
-              String repl = ""; 
-              for (int q = 4; q < tailterms.size(); q++) 
-              { ASTTerm ct1 = (ASTTerm) tailterms.get(q); 
-                String tcg = ct1.cg(cgs);
-                repl = repl + tcg; 
-              }  
-              res = 
-                replaceByMetafeatureValue(res,mf,repl); 
-            } 
-          } 
-          else if ("front".equals(mffeat))
-          { // Vector of terms except the last
-            if (obj instanceof ASTCompositeTerm)
-            { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
-              Vector tailterms = new Vector(); 
-              tailterms.addAll(ct.terms);
-              String repl = ""; 
-              for (int q = 0; q < tailterms.size() - 1; q++) 
-              { ASTTerm ct1 = (ASTTerm) tailterms.get(q); 
-                String tcg = ct1.cg(cgs);
-                repl = repl + tcg; 
-              }  
-              
-              res = replaceByMetafeatureValue(res,mf,repl);
-            } 
-          } 
-          */ 
+      { // Vector of terms except the first 4
+        if (obj instanceof ASTCompositeTerm)
+        { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
+          Vector tailterms = new Vector(); 
+          tailterms.addAll(ct.terms);
+          String repl = ""; 
+          for (int q = 4; q < tailterms.size(); q++) 
+          { ASTTerm ct1 = (ASTTerm) tailterms.get(q); 
+            String tcg = ct1.cg(cgs);
+            repl = repl + tcg; 
+          }  
+          return repl;  
+        }
+        else if (obj instanceof ASTSymbolTerm)
+        { ASTSymbolTerm st = (ASTSymbolTerm) obj; 
+          String symb = st.getSymbol(); 
+          return symb.substring(4); 
+        } 
+      }
+       
+     if ("front".equals(mffeat))
+     { // Vector of terms except the last
+       if (obj instanceof ASTCompositeTerm)
+       { ASTCompositeTerm ct = (ASTCompositeTerm) obj; 
+         Vector tailterms = new Vector(); 
+         tailterms.addAll(ct.terms);
+         String repl = ""; 
+         for (int q = 0; q < tailterms.size() - 1; q++) 
+         { ASTTerm ct1 = (ASTTerm) tailterms.get(q); 
+           String tcg = ct1.cg(cgs);
+           repl = repl + tcg; 
+         }  
+         return repl;    
+       } 
+       else if (obj instanceof ASTSymbolTerm)
+       { ASTSymbolTerm st = (ASTSymbolTerm) obj; 
+         String symb = st.getSymbol(); 
+         return symb.substring(0,symb.length()-1); 
+       } 
+     } 
 
+     if ("toInteger".equals(mffeat) && 
+         obj instanceof ASTSymbolTerm)
+     { ASTSymbolTerm st = (ASTSymbolTerm) obj; 
+       String symb = st.getSymbol(); 
+       return Expression.convertInteger(symb) + ""; 
+     }   
+ 
      if (cgs.hasRuleset(mffeat))
      { System.out.println(">***> Valid ruleset " + mffeat);  
        System.out.println(); 
@@ -882,6 +913,12 @@ public class CGRule
           res = replaceByMetafeatureValue(res,mf,repl);
         }
         else if ("name".equals(mffeat) && 
+                 obj instanceof ASTTerm)
+        { ASTTerm tt = (ASTTerm) obj; 
+          String repl = tt.literalForm(); 
+          res = replaceByMetafeatureValue(res,mf,repl);
+        }
+        else if ("rawText".equals(mffeat) && 
                  obj instanceof ASTTerm)
         { ASTTerm tt = (ASTTerm) obj; 
           String repl = tt.literalForm(); 
@@ -1192,7 +1229,12 @@ public class CGRule
               }  
               
               res = replaceByMetafeatureValue(res,mf,repl);
-            } 
+            }
+            else if (obj instanceof ASTSymbolTerm)
+            { ASTSymbolTerm ct = (ASTSymbolTerm) obj;
+              String repl = ct.getSymbol().substring(1); 
+              res = replaceByMetafeatureValue(res,mf,repl);
+            }  
           } 
           else if ("tailtail".equals(mffeat) || 
                    "tail2".equals(mffeat))
@@ -1210,6 +1252,11 @@ public class CGRule
               
               res = replaceByMetafeatureValue(res,mf,repl);
             } 
+            else if (obj instanceof ASTSymbolTerm)
+            { ASTSymbolTerm ct = (ASTSymbolTerm) obj;
+              String repl = ct.getSymbol().substring(2); 
+              res = replaceByMetafeatureValue(res,mf,repl);
+            }  
           } 
           else if ("tailtailtail".equals(mffeat) || 
                    "tail3".equals(mffeat))
@@ -1227,6 +1274,12 @@ public class CGRule
               
               res = replaceByMetafeatureValue(res,mf,repl); 
             } 
+            else if (obj instanceof ASTSymbolTerm)
+            { ASTSymbolTerm ct = (ASTSymbolTerm) obj;
+              String repl = ct.getSymbol().substring(3); 
+              res = replaceByMetafeatureValue(res,mf,repl);
+            }  
+
           } 
           else if ("tailtailtailtail".equals(mffeat) || 
                    "tail4".equals(mffeat))
@@ -1244,6 +1297,12 @@ public class CGRule
               res = 
                 replaceByMetafeatureValue(res,mf,repl); 
             } 
+            else if (obj instanceof ASTSymbolTerm)
+            { ASTSymbolTerm ct = (ASTSymbolTerm) obj;
+              String repl = ct.getSymbol().substring(4); 
+              res = replaceByMetafeatureValue(res,mf,repl);
+            }  
+
           } 
           else if ("front".equals(mffeat))
           { // Vector of terms except the last
@@ -1260,7 +1319,20 @@ public class CGRule
               
               res = replaceByMetafeatureValue(res,mf,repl);
             } 
+            else if (obj instanceof ASTSymbolTerm)
+            { ASTSymbolTerm ct = (ASTSymbolTerm) obj;
+              String symb = ct.getSymbol(); 
+              String repl = symb.substring(0,symb.length()-1); 
+              res = replaceByMetafeatureValue(res,mf,repl);
+            }  
           } 
+          else if ("toInteger".equals(mffeat) && 
+                   obj instanceof ASTSymbolTerm)
+          { ASTSymbolTerm st = (ASTSymbolTerm) obj; 
+            String symb = st.getSymbol(); 
+            String repl = Expression.convertInteger(symb) + ""; 
+            res = replaceByMetafeatureValue(res,mf,repl);
+          }   
           else if (cgs.hasRuleset(mffeat))
           { System.out.println(">***> Valid ruleset " + mffeat);  
             System.out.println(); 
