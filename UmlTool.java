@@ -594,6 +594,10 @@ public void findPlugins()
     reqMI.addActionListener(this);
     createMenu.add(reqMI);
 
+    JMenuItem archMI = new JMenuItem("Architecture");
+    archMI.addActionListener(this);
+    createMenu.add(archMI);
+
     JMenuItem guiMI = new JMenuItem("GUI");
     guiMI.addActionListener(this);
     createMenu.add(guiMI);
@@ -1164,6 +1168,10 @@ public void findPlugins()
     cstlGenerator.addActionListener(this);
     buildMenu.add(cstlGenerator); 
 
+    JMenuItem cgtlGenerator = new JMenuItem("Use CGTL specification"); 
+    cgtlGenerator.addActionListener(this);
+    buildMenu.add(cgtlGenerator); 
+
     JMenuItem cstl4ast = new JMenuItem("Apply CSTL to AST"); 
     cstl4ast.addActionListener(this);
     buildMenu.add(cstl4ast); 
@@ -1383,6 +1391,13 @@ public void findPlugins()
         rwindow.setTitle("Requirements editor"); 
         rwindow.setVisible(true); 
       }   
+      else if (label.equals("Architecture"))
+      { ArchitectureWin awindow = 
+          new ArchitectureWin("Architecture editor",ucdArea.getEntities(),ucdArea);  
+        awindow.setSize(500, 400);
+        awindow.setTitle("Architecture editor"); 
+        awindow.setVisible(true); 
+      }   
       else if (label.equals("GUI"))
       { buildGUI(); } 
       else if (label.equals("Component"))
@@ -1394,9 +1409,17 @@ public void findPlugins()
           JOptionPane.showInputDialog("Enter type name:");
         if (tname == null)
         { return; }
-        if (tname.equals("int") || tname.equals("String") || tname.equals("long") || 
-            tname.equals("double") || tname.equals("boolean"))
-        { System.err.println("ERROR: Cannot redefine inbuilt type!");
+        if (tname.equals("int") || 
+            tname.equals("String") || tname.equals("long") || 
+            tname.equals("double") || 
+            tname.equals("boolean") ||
+            tname.equals("OclAny") ||
+            tname.equals("Set") ||
+            tname.equals("Sequence") || 
+            tname.equals("Map") || 
+            tname.equals("Function") || 
+            tname.equals("OclType") )
+        { System.err.println("ERROR: Cannot redefine inbuilt type!: " + tname);
           return;
         }
         String values =
@@ -1824,6 +1847,8 @@ public void findPlugins()
       }
       else if (label.equals("Use CSTL specification"))
       { ucdArea.applyCSTLSpecification(); } 
+      else if (label.equals("Use CGTL specification"))
+      { ucdArea.applyCGTL(); } 
       else if (label.equals("Apply CSTL to AST"))
       { ucdArea.applyCSTLtoAST(); } 
       else if (label.equals("Generate Python"))
@@ -2394,9 +2419,12 @@ public void findPlugins()
         String optype = oed.getType();  
         String opjava = oed.getPre(); 
         String opcsharp = oed.getPost(); 
-        Type t = ucdArea.lookupType(optype);
-        if (t != null)
-        { Expression.addOperator(opname,t); }
+        // Type t = ucdArea.lookupType(optype);
+        // if (t != null)
+        // { 
+        Expression.addOperator(opname,
+                               ucdArea.getTypes(),optype); 
+        // }
         if (opjava != null && opjava.trim().length() > 0)
         { Expression.addOperatorJava(opname, opjava); }   
         if (opcsharp != null && opcsharp.trim().length() > 0)
@@ -3141,9 +3169,11 @@ public void findPlugins()
         Vector enums = ModelElement.getNames(allsubs); 
         enums.add(ename); 
         ucdArea.addType(ename + "subclass",enums);
-        Type modetype = ucdArea.getType(ename + "subclass"); 
-        Attribute modeatt = new Attribute(ename.toLowerCase() + "_in", modetype,
-                                          ModelElement.INTERNAL); 
+        ModelElement modetype = 
+        ucdArea.getType(ename + "subclass"); 
+        Attribute modeatt = 
+          new Attribute(ename.toLowerCase() + "_in", modetype,
+                        ModelElement.INTERNAL); 
         ent.addAttribute(modeatt);                                       
 
         for (int j = 0; j < allsubs.size(); j++) 
@@ -3371,7 +3401,7 @@ public void findPlugins()
     java.util.Map entityattmaps = new java.util.HashMap(); 
     java.util.Map entityastmaps = new java.util.HashMap(); 
 
-    System.out.println("Possible source-target mappings are: "); 
+    System.out.println(">>> Possible source-target mappings are: "); 
 
     Vector maps = allEntityMaps(sources,targets); 
     if (maps.size() == 0) 
@@ -3393,7 +3423,8 @@ public void findPlugins()
         Entity trg = (Entity) mp.get(src); 
         Vector satts = src.getAttributes(); 
         Vector tatts = trg.getAttributes(); 
-        Vector attmaps = allAttributeMaps(satts,tatts); 
+        Vector attmaps = 
+                 ucdArea.allAttributeMaps(satts,tatts); 
         java.util.Map bestattmap = null; 
         int maxattmapsize = 0; 
 
@@ -3437,7 +3468,8 @@ public void findPlugins()
     } 
     System.out.println("Best entity map is: " + best); 
     // Then choose its attribute and association maps
-    Vector cons = maps2constraints(sources,best,entityattmaps,entityastmaps);
+    Vector cons = ucdArea.maps2constraints(sources,best,
+                           entityattmaps,entityastmaps);
 
 
     UseCase uc = new UseCase("implicitcopy",null); 
@@ -3497,7 +3529,8 @@ public void findPlugins()
     java.util.Map emap = (java.util.Map) maps.get(0); 
     java.util.Map atmap = (java.util.Map) maps.get(1); 
     java.util.Map astmap = (java.util.Map) maps.get(2);
-    Vector cons = maps2constraints(sources,emap,atmap,astmap);
+    Vector cons = 
+      ucdArea.maps2constraints(sources,emap,atmap,astmap);
     // UseCase uc = new UseCase("refiningATL",null);  
     // for (int i = 0; i < cons.size(); i++) 
     // { Constraint con = (Constraint) cons.get(i); 
@@ -3601,10 +3634,15 @@ public void findPlugins()
     return res; 
   } 
 
-  public Vector maps2constraints(Vector entities, java.util.Map entityMap, 
-                                 java.util.Map attmaps, java.util.Map astmaps)
-  { Vector res = new Vector();     // copy the objects and attributes
-    Vector phase2 = new Vector();  // copy the association ends
+/* 
+  public Vector maps2constraints(Vector entities, 
+                  java.util.Map entityMap, 
+                  java.util.Map attmaps, 
+                  java.util.Map astmaps)
+  { Vector res = new Vector();
+        // copy the objects and attributes
+    Vector phase2 = new Vector();
+        // copy the association ends
 
     for (int i = 0; i < entities.size(); i++)
     { Entity ent = (Entity) entities.get(i);
@@ -3721,8 +3759,9 @@ public void findPlugins()
     }
     res.addAll(phase2); 
     return res;
-  }
+  } */ 
 
+ /* 
   public Vector allAttributeMaps(Vector sourceatts, Vector targetatts)
   { Vector res = new Vector();
     if (sourceatts.size() == 0)
@@ -3751,7 +3790,7 @@ public void findPlugins()
       }
     }
     return res;
-  }
+  } */ 
 
   public Vector allAssociationMaps(Vector sourceasts, Vector targetasts, 
                                    java.util.Map chi)

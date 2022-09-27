@@ -217,6 +217,9 @@ class RectData extends RectForm
   public boolean isUnderEnd(int x, int y) 
   { return false; } 
 
+  public boolean isNearEnd(int x, int y) 
+  { return false; } 
+
   public void changePosition(int oldx, int oldy, 
                              int x, int y)
   { sourcex = x; 

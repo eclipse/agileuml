@@ -57,6 +57,9 @@ public class Attribute extends ModelElement
     } 
   }
 
+  public Attribute(String nme, ModelElement t, int k)
+  { this(nme, (Type) t, k); } 
+
   public Attribute(String nme, Type t) 
   { this(nme,t,ModelElement.INTERNAL); } 
 

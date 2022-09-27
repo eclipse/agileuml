@@ -3041,6 +3041,35 @@ public class BehaviouralFeature extends ModelElement
     }
     return res + ")"; 
   }   
+
+  public String getTypeSignature()
+  { String res = getName(); 
+
+    String genPars = ""; 
+    if (typeParameters != null && typeParameters.size() > 0)
+    { genPars = "<"; 
+      for (int i = 0; i < typeParameters.size(); i++) 
+      { Type tp = (Type) typeParameters.get(i); 
+        genPars = genPars + tp.getName(); 
+        if (i < typeParameters.size() - 1) 
+        { genPars = genPars + ", "; } 
+      } 
+      genPars = genPars + ">"; 
+    } 
+ 
+    res = res + genPars + "(";
+
+    if (parameters == null) 
+    { return res + ")"; } 
+
+    for (int i = 0; i < parameters.size(); i++) 
+    { Attribute att = (Attribute) parameters.get(i); 
+      res = res + att.getType(); 
+      if (i < parameters.size() - 1) 
+      { res = res + ","; } 
+    }
+    return res + ")"; 
+  }   
     
   public Vector getParameterNames()
   { Vector res = new Vector();

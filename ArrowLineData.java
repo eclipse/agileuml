@@ -1,5 +1,5 @@
 /*
-      * Classname : LineData
+      * Classname : ArrowLineData
       * 
       * Version information : 1
       *
@@ -10,7 +10,7 @@
       * associatios
       */
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003-2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -150,6 +150,14 @@ public class ArrowLineData extends VisualData
       ((int) Math.sqrt((x - xend)*(x - xend) + 
                        (y - yend)*(y - yend)) < 10); 
     if (res) { selected = ENDSELECTED; } 
+    return res; 
+  } 
+
+  boolean isNearEnd(int x, int y) 
+  { boolean res = 
+      ((int) Math.sqrt((x - xend)*(x - xend) + 
+                       (y - yend)*(y - yend)) < 30); 
+    // if (res) { selected = ENDSELECTED; } 
     return res; 
   } 
 

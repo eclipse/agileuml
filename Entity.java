@@ -1195,6 +1195,36 @@ public class Entity extends ModelElement implements Comparable
   public int operationsCount() 
   { return operations.size(); } 
 
+  public boolean checkIfDefactoImplementation(Entity ent)
+  { // For each operation of ent, there is same-signature 
+    // operation in this. 
+
+    boolean allFound = true; 
+
+    Vector ops = ent.getOperations(); 
+    for (int i = 0; i < ops.size(); i++) 
+    { BehaviouralFeature f = (BehaviouralFeature) ops.get(i); 
+
+      String sig = f.getTypeSignature(); 
+      
+      boolean found = false; 
+      for (int j = 0; j < operations.size(); j++) 
+      { BehaviouralFeature bf = (BehaviouralFeature) operations.get(j); 
+        if (sig.equals(bf.getTypeSignature()))  // replace bf by f
+        { System.out.println(">>> Operation " + sig + " found in " + name);
+          found = true; 
+          break;
+        }
+      }  
+      if (found == false)
+      { System.out.println("!! Warning: operation " + sig + 
+                           " not found in " + name); 
+        allFound = false; 
+      } 
+    }
+    return allFound;  
+  } 
+
   public void addQueryOperation(Attribute fatt, Expression fres)
   { String fname = fatt.getName(); 
     BehaviouralFeature bf = getOperation(fname); 

@@ -1093,6 +1093,8 @@ public class CGRule
             { Expression e = (Expression) obj; 
               repl = e.cg(template);
             } 
+			else if (obj instanceof ASTSymbolTerm)
+			{ repl = obj + ""; }
             else if (obj instanceof ASTTerm)
             { ASTTerm e = (ASTTerm) obj; 
               repl = e.cg(template);
@@ -1101,8 +1103,14 @@ public class CGRule
             { Vector v = (Vector) obj;
               repl = "";  
               for (int p = 0; p < v.size(); p++) 
-              { ModelElement kme = (ModelElement) v.get(p); 
-                repl = repl + kme.cg(template); 
+              { if (v.get(p) instanceof ModelElement)
+			    { ModelElement kme = (ModelElement) v.get(p); 
+                  repl = repl + kme.cg(template);
+                } 
+                else if (v.get(p) instanceof ASTTerm) 
+                { ASTTerm tme = (ASTTerm) v.get(p); 
+                  repl = repl + tme.cg(template);
+                } 
               } 
             } 
 
@@ -1354,6 +1362,8 @@ public class CGRule
                   replaceByMetafeatureValue(res,mf,repl); 
               }
             }
+			else if (term instanceof ASTSymbolTerm)
+			{ res = ((ASTSymbolTerm) term).getSymbol(); }
             else if (CSTL.hasTemplate(mffeat + ".cstl")) 
             { System.out.println(">>> Template exists: " + 
                                  mffeat + ".cstl"); 
@@ -1480,9 +1490,46 @@ public class CGRule
             } 
             res = replaceByMetafeatureValue(res,mf,replv); 
           }
+		  else if (CSTL.hasTemplate(mffeat + ".cstl")) 
+          { System.out.println(">>> Template exists: " + 
+                                 mffeat + ".cstl"); 
+            CGSpec newcgs = CSTL.getTemplate(mffeat + ".cstl"); 
+            System.out.println(); 
+            String replv = ""; 
+            for (int p = 0; p < v.size(); p++)
+            { if (v.get(p) instanceof ASTTerm)
+              { ASTTerm x = (ASTTerm) v.get(p); 
+                replv = replv + x.cg(newcgs);
+              } 
+            } 
+            
+            res = 
+                  replaceByMetafeatureValue(res,mf,replv); 
+          } 
+          else 
+          { System.out.println("!! No template " + mffeat + ".cstl exists"); 
+            System.out.println(">>> Trying to load template ./cg/" + mffeat + ".cstl"); 
+            System.out.println(); 
 
-
-          // Or mffeat.cstl is a separate script. 
+            File sub = new File("./cg/" + mffeat + ".cstl");
+      
+            CGSpec newcgs = new CGSpec(entities,types); 
+            CGSpec xcgs = 
+                CSTL.loadCSTL(newcgs,sub,types,entities); 
+            if (xcgs != null)
+            { CSTL.addTemplate(mffeat + ".cstl", xcgs); 
+              String replv = ""; 
+              for (int p = 0; p < v.size(); p++)
+              { if (v.get(p) instanceof ASTTerm)
+                { ASTTerm x = (ASTTerm) v.get(p); 
+                  replv = replv + x.cg(xcgs); 
+                } 
+              } 
+            
+              res = 
+                  replaceByMetafeatureValue(res,mf,replv); 
+            } 
+          }
 
           System.out.println(">> Applied vector rule: " + res); 
         }   

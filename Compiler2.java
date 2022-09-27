@@ -1692,11 +1692,42 @@ public class Compiler2
                 rhs.charAt(j+4) == 'n' &&
                 rhs.charAt(j+5) == '>') 
             { // Could be actions also 
+
+              for (int kk = j+6; kk < rhs.length(); kk++) 
+              { char e = rhs.charAt(kk); 
+                if (e == '<' && j+7 < rhs.length() &&
+                    rhs.charAt(kk+1) == 'a' &&
+                    rhs.charAt(kk+2) == 'c' &&
+                    rhs.charAt(kk+3) == 't' &&
+                    rhs.charAt(kk+4) == 'i' &&
+                    rhs.charAt(kk+5) == 'o' &&
+                    rhs.charAt(kk+6) == 'n' &&
+                    rhs.charAt(kk+7) == '>') 
+                { String actions = 
+                     rhs.substring(kk+8,rhs.length()); 
+                  Vector acts = parse_rule_actions(actions); 
+                  System.out.println(">> Rule actions are: " + actions + " " + acts); 
+                  String rhstext = rhs.substring(0,j); 
+                  String conditions = rhs.substring(j+6,kk); 
+                  Vector conds = parse_conditions(conditions); 
+                  CGRule res = 
+                    new CGRule(lhs,rhstext,
+                               variables,conds); 
+                  res.setLHSTokens(tokens); 
+                  res.setActions(acts);
+                  System.out.println(">***> Rule with condition: " + conds + " and actions: " + acts); 
+                  System.out.println(">***> Rule variables are: " + res.variables); 
+                  System.out.println(">***> Rule metafeatures are: " + res.metafeatures); 
+ 
+                  return res; 
+                } 
+              }  
               String conditions = rhs.substring(j+6,rhs.length()); 
               Vector conds = parse_conditions(conditions); 
               String rhstext = rhs.substring(0,j); 
               CGRule r = new CGRule(lhs,rhstext,variables,conds); 
               r.setLHSTokens(tokens);
+              System.out.println(">***> Rule with condition: " + conds); 
               System.out.println(">***> Rule variables are: " + r.variables); 
               System.out.println(">***> Rule metafeatures are: " + r.metafeatures); 
  

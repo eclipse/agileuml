@@ -121,7 +121,8 @@ class ArchitectureArea extends JPanel
   private int linecount = 0;
 
 
- public ArchitectureArea(ArchitectureWin controller, UCDArea par, String s, Vector es)
+ public ArchitectureArea(ArchitectureWin controller, 
+                         UCDArea par, String s, Vector es)
  { this.controller = controller;
    parent = par; 
    entities = new Vector(); 
@@ -418,7 +419,7 @@ class ArchitectureArea extends JPanel
         { selectedComponent = 
             (ArchComponent) ((RectData) vd).modelElement;
          
-          System.out.println("Selected component: " + selectedComponent); 
+          System.out.println(">>> Selected component: " + selectedComponent); 
         }
         else if (vd instanceof LineData) 
         { selectedInterface = 
@@ -442,7 +443,7 @@ class ArchitectureArea extends JPanel
 
     for (int i = 0; i < visuals.size(); i++)
     { VisualData vd = (VisualData) visuals.elementAt(i);
-      if (vd instanceof LineData && vd.isUnderEnd(x,y) && 
+      if (vd instanceof LineData && vd.isNearEnd(x,y) && 
           vd != self)
       { // selectedVisual = vd;
         ModelElement connectedInterface = 
@@ -463,6 +464,13 @@ class ArchitectureArea extends JPanel
           { System.out.println(">>> All operations of " + 
                connectedInterface + " must be present in: " + 
                me);
+            boolean isImp = 
+              ((Entity) me).checkIfDefactoImplementation(
+                                (Entity) connectedInterface); 
+            if (isImp) 
+            { System.out.println(">>> This is a valid assembly connection."); } 
+            else 
+            { System.out.println("!! This is not a valid assembly connection!"); } 
           } 
           found = true; 
           return; 
@@ -482,6 +490,13 @@ class ArchitectureArea extends JPanel
           { System.out.println(">>> All operations of " + 
                me + " must be present in: " + 
                connectedInterface);
+            boolean isImp = 
+     ((Entity) connectedInterface).checkIfDefactoImplementation(
+                                                 (Entity) me);
+            if (isImp) 
+            { System.out.println(">>> This is a valid assembly connection."); } 
+            else 
+            { System.out.println("!! This is not a valid assembly connection!"); }
           } 
           found = true; 
           return; 

@@ -718,7 +718,15 @@ abstract class Expression
     return false; 
   } 
 
-  public static void addOperator(String op, Type typ) 
+  public static void addOperator(String op, Vector types,
+                                 String typ) 
+  { Type t = (Type) ModelElement.lookupByName(typ,types); 
+    if (t != null) 
+    { extensionoperators.put(op,t); } 
+  } 
+
+  public static void addOperator(String op, 
+                                 Type typ) 
   { extensionoperators.put(op,typ); } 
 
   public static void addOperatorJava(String op, String jcode)

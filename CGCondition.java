@@ -128,7 +128,8 @@ public class CGCondition
       stereo = stereo.replace(var,arg1);
     }
 
-    /* System.out.println(">>> Applying action " + variable + " (" + positive + ") " + stereo);  
+  /* 
+    System.out.println(">>> Applying action " + variable + " (" + positive + ") " + stereo);  
     JOptionPane.showMessageDialog(null, 
           "Applying action " + variable + " (" + positive + ") " + stereo,   "",
           JOptionPane.INFORMATION_MESSAGE); */ 
@@ -138,7 +139,7 @@ public class CGCondition
 
     Vector metafs = CGRule.metafeatures(variable); 
 
-        System.out.println("*** Metafeatures of " + variable + " are: " + metafs); 
+    System.out.println("*** Metafeatures of " + variable + " are: " + metafs); 
 
     if (metafs.size() > 0)
     { 
@@ -189,6 +190,9 @@ public class CGCondition
           { ast.addStereotype(stereo); } 
           else 
           { ast.removeStereotype(stereo); }
+          JOptionPane.showMessageDialog(null, 
+             "Executed action " + ast + " (" + positive + ") " + stereo,   "",
+             JOptionPane.INFORMATION_MESSAGE);
         }  
       }  
     } 

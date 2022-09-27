@@ -1909,6 +1909,97 @@ public class UCDArea extends JPanel
      */ 
   }
 
+  public void applyCGTL()
+  { // cgbePreProcess(); 
+
+    // cgbe(); 
+
+
+    System.out.println(">>> ASTs of classes and use cases: "); 
+    System.out.println(); 
+
+    Vector entasts = new Vector(); 
+
+    for (int i = 0; i < entities.size(); i++)
+    { Entity ent = (Entity) entities.get(i); 
+      String entast = ent.toAST(); 
+      entasts.add(entast); 
+      System.out.println(entast); 
+    } 
+
+    Vector saved = new Vector(); 
+
+    for (int i = 0; i < useCases.size(); i++) 
+    { if (useCases.get(i) instanceof UseCase)
+      { UseCase uc = (UseCase) useCases.get(i);
+        System.out.println(uc.toAST(saved)); 
+      } 
+    }  
+
+    File cgtlfile = null; 
+    try 
+    { JFileChooser fc = new JFileChooser();
+      File startingpoint = new File("./cg");
+      fc.setCurrentDirectory(startingpoint);
+      fc.setDialogTitle("Select a *.cgtl file");
+      // fc.addChoosableFileFilter(new TextFileFilter()); 
+
+	  
+      int returnVal = fc.showOpenDialog(null);
+      if (returnVal == JFileChooser.APPROVE_OPTION)
+      { cgtlfile = fc.getSelectedFile(); }
+      else
+      { System.err.println("!! Load aborted");
+        return; 
+      }
+
+      if (cgtlfile == null) { return; }
+    } catch (Exception e) { return; } 
+
+    Vector vs = new Vector(); 
+    CGSpec spec = loadCSTL(cgtlfile,vs); 
+
+    if (spec == null) 
+    { System.err.println("!! ERROR: No file " + cgtlfile.getName()); 
+      return; 
+    } 
+
+    Vector res = new Vector(); 
+
+    for (int i = 0; i < entasts.size(); i++) 
+    { String s = (String) entasts.get(i); 
+      Compiler2 c = new Compiler2();    
+      ASTTerm xx =
+          c.parseGeneralAST(s); 
+      if (xx == null) 
+      { System.err.println("!!ERROR: Invalid text for general AST: " + s); 
+        System.err.println(c.lexicals); 
+          // return; 
+      }
+      else 
+      { res.add(xx); }
+    }
+
+    Vector results = new Vector(); 
+
+    Date d1 = new Date(); 
+    long t1 = d1.getTime(); 
+
+    for (int i = 0; i < res.size(); i++) 
+    { ASTTerm tt = (ASTTerm) res.get(i); 
+      String outtext = tt.cg(spec); 
+      results.add(outtext); 
+    } 
+
+    if (res.size() == 0) 
+    { return; } 
+ 
+    for (int i = 0; i < results.size(); i++) 
+    { String tt = (String) results.get(i); 
+      System.out.println(tt);  
+    } 
+  }     
+
   public void validateCGBE()
   { testCSTLwithASTS(); } 
 
@@ -25789,6 +25880,162 @@ public void produceCUI(PrintWriter out)
     }    
 
     repaint(); 
+  }
+
+  public Vector maps2constraints(Vector entities, 
+                  java.util.Map entityMap, 
+                  java.util.Map attmaps, 
+                  java.util.Map astmaps)
+  { Vector res = new Vector();
+        // copy the objects and attributes
+    Vector phase2 = new Vector();
+        // copy the association ends
+
+    for (int i = 0; i < entities.size(); i++)
+    { Entity ent = (Entity) entities.get(i);
+      Entity tent = (Entity) entityMap.get(ent);
+      if (tent == null) { continue; }
+      String tname = tent.getName();
+      Type ttype = new Type(tent); 
+
+      BasicExpression texp = new BasicExpression(tname);
+      texp.setUmlKind(Expression.CLASSID); 
+      texp.setEntity(tent); 
+      texp.setType(new Type("Set",null)); 
+      texp.setElementType(ttype); 
+
+      BasicExpression texp2 = new BasicExpression(tname);
+      texp2.setUmlKind(Expression.CLASSID); 
+      texp2.setEntity(tent); 
+      texp2.setType(ttype); 
+      texp2.setElementType(ttype); 
+      BasicExpression idexp2 = new BasicExpression("$id"); 
+      idexp2.setUmlKind(Expression.ATTRIBUTE); 
+      idexp2.setType(new Type("String",null)); 
+      idexp2.setEntity(ent); 
+      texp2.setArrayIndex(idexp2); 
+
+      String tx = tname.toLowerCase() + "x";
+      BasicExpression txexp = new BasicExpression(tx);
+      txexp.setUmlKind(Expression.VARIABLE); 
+      txexp.setType(ttype); 
+      txexp.setElementType(ttype); 
+
+      BasicExpression txexp2 = new BasicExpression(tx);
+      txexp2.setUmlKind(Expression.VARIABLE); 
+      txexp2.setType(ttype); 
+      txexp2.setEntity(tent); 
+      txexp2.setElementType(ttype); 
+
+      Vector atts = ent.getAttributes();
+      java.util.Map attmap = (java.util.Map) attmaps.get(ent);
+      Expression tcond = new BasicExpression("true");
+      tcond.setUmlKind(Expression.VALUE); 
+      tcond.setType(new Type("boolean",null)); 
+
+      for (int j = 0; j < atts.size(); j++)
+      { Attribute att = (Attribute) atts.get(j);
+        Attribute tatt = (Attribute) attmap.get(att);
+        if (tatt != null)
+        { String attname = att.getName(); 
+          BasicExpression attexp = new BasicExpression(attname);
+          attexp.setUmlKind(Expression.ATTRIBUTE); 
+          attexp.setEntity(ent); 
+          attexp.setType(att.getType()); 
+          
+          String tattname = tatt.getName();
+          BasicExpression tr = new BasicExpression(tattname);
+          tr.setUmlKind(Expression.ATTRIBUTE); 
+          tr.setEntity(tent); 
+          tr.setType(tatt.getType()); 
+          tr.setObjectRef(txexp);
+          BinaryExpression eqatt = new BinaryExpression("=", tr, attexp);
+          tcond = Expression.simplifyAnd(tcond, eqatt);
+        }
+      }
+      BinaryExpression rang = new BinaryExpression(":", txexp, texp);
+      Expression post = new BinaryExpression("#", rang, tcond);
+      Constraint con = new Constraint(new BasicExpression("true"), post);
+      con.setOwner(ent);
+      res.add(con);
+
+      Expression tcond2 = new BasicExpression("true");
+      tcond2.setUmlKind(Expression.VALUE); 
+      tcond2.setType(new Type("boolean",null)); 
+
+      Vector asts = ent.getAssociations();
+      java.util.Map astmap = (java.util.Map) astmaps.get(ent);
+      for (int j = 0; j < asts.size(); j++)
+      { Association ast = (Association) asts.get(j);
+        Association tast = (Association) astmap.get(ast);
+        if (tast != null)
+        { String tastname = tast.getRole2();
+          Entity e2 = tast.getEntity2(); 
+          String e2name = e2.getName(); 
+
+          BasicExpression idexp = new BasicExpression("$id"); 
+          idexp.setUmlKind(Expression.ATTRIBUTE); 
+          idexp.setType(new Type("String",null)); 
+          idexp.setEntity(ast.getEntity2()); 
+          BasicExpression e2exp = new BasicExpression(e2name);
+          e2exp.setUmlKind(Expression.CLASSID); 
+          BasicExpression r2exp = new BasicExpression(ast.getRole2()); 
+          r2exp.setUmlKind(Expression.ROLE); 
+          r2exp.setEntity(ent); 
+          idexp.setObjectRef(r2exp);  
+          e2exp.setArrayIndex(idexp);
+ 
+          BasicExpression tra = new BasicExpression(tastname);
+          tra.setObjectRef(txexp2);
+          tra.setUmlKind(Expression.ROLE); 
+          tra.setEntity(tast.getEntity1()); 
+          
+          BinaryExpression eqast = 
+            new BinaryExpression("=", tra, e2exp);
+          tcond2 = Expression.simplifyAnd(tcond2, eqast);
+        }  // No, needs to be tra = tast.getEntity2()[ast.getRole2().$id]
+      }
+      BinaryExpression preeq = new BinaryExpression("=", txexp2, texp2);
+      Constraint con2 = new Constraint(preeq, tcond2);
+      con2.setOwner(ent);
+      Attribute txatt = new Attribute(tx, ttype, ModelElement.INTERNAL); 
+      txatt.setEntity(tent); 
+      txatt.setElementType(ttype); 
+      con2.addLetVar(txatt,tx,texp2); 
+      phase2.add(con2);
+    }
+    res.addAll(phase2); 
+    return res;
+  }
+
+  public Vector allAttributeMaps(Vector sourceatts, Vector targetatts)
+  { Vector res = new Vector();
+    if (sourceatts.size() == 0)
+    { res.add(new java.util.HashMap()); 
+      return res;
+    }
+    Vector subsources = new Vector();
+    subsources.addAll(sourceatts);
+    Attribute src = (Attribute) sourceatts.get(0);
+    subsources.remove(0);
+    Vector submaps = allAttributeMaps(subsources, targetatts);
+    for (int i = 0; i < submaps.size(); i++)
+    { java.util.Map f = (java.util.Map) submaps.get(i);
+      Vector rng = new Vector();
+      rng.addAll(f.values());
+      // if (rng.containsAll(targets)) 
+      // { res.add(f); } else
+      for (int j = 0; j < targetatts.size(); j++)
+      { Attribute trg = (Attribute) targetatts.get(j);
+        if (rng.contains(trg)) { }
+        else if (Type.isSubType(src.getType(), trg.getType())) 
+        { java.util.Map g = new java.util.HashMap();
+          g.putAll(f); g.put(src,trg);
+          res.add(g);
+        }
+      }
+    }
+    return res;
   }
 
 } 
