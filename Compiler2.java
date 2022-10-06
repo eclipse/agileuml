@@ -2609,6 +2609,31 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
   } // reads left to right, not putting priorities on * above +
   // div is only for ATL. 
 
+  public Expression parseAtExpression(int bc , int pstart, int pend, Vector entities, Vector types)
+  { for (int i = pend-1; pstart < i; i--) 
+    { String ss = lexicals.get(i).toString(); 
+      if (ss.equals("->") && i+2 < lexicals.size() && "(".equals(lexicals.get(i+2) + "") && 
+          ")".equals(lexicals.get(pend) + ""))
+      { String ss2 = lexicals.get(i+1).toString(); // must exist
+        if (i + 3 <= pend && "at".equals(ss2)) 
+        { // ee2->at(ee1) 
+          Expression ee1 = parse_expression(bc+1,i+3,pend-1,entities,types); 
+          if (ee1 == null) { continue; } 
+          Expression ee2 = parse_factor_expression(bc,pstart,i-1,entities,types); 
+          if (ee2 == null) { continue; } 
+          if (ee2 instanceof BasicExpression)
+          { BasicExpression be = (BasicExpression) ee2;
+            
+            be.setArrayIndex(ee1);  
+            System.out.println(">>> Parsed basic expression: " + be); 
+            return be;
+          }  
+        } 
+      }
+	}
+    return null; 
+  }
+  
   public Expression parse_factor2_expression(int bc, 
       int pstart, int pend, Vector entities, Vector types)
   { // System.out.println("Trying to parse factor2 expression from " + pstart + " to " + pend); 
@@ -2994,19 +3019,20 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     if (pstart + 1 < pend && ")".equals(lexicals.get(pend) + "") && 
         "(".equals(lexicals.get(pstart+1) + ""))
     { Expression op = parse_basic_expression(bc,pstart,pstart,entities,types); 
-      
-      Vector ve = parse_fe_sequence(bc,pstart+2,pend-1,entities,types); 
-      if (ve != null && op != null && op instanceof BasicExpression) // must be
-      { BasicExpression beop = (BasicExpression) op; 
+      if (op != null && op instanceof BasicExpression)
+      { Vector ve = parse_fe_sequence(bc,pstart+2,pend-1,entities,types); 
+        if (ve != null) 
+        { BasicExpression beop = (BasicExpression) op; 
 
-        if (Expression.isFunction(beop.data))
-        { beop.umlkind = Expression.FUNCTION; } 
-        else 
-        { beop.setIsEvent(); } 
+          if (Expression.isFunction(beop.data))
+          { beop.umlkind = Expression.FUNCTION; } 
+          else 
+          { beop.setIsEvent(); } 
  
-        beop.setParameters(ve); 
+          beop.setParameters(ve); 
         // System.out.println("Parsed call expression: " + beop);
-        return beop;  
+          return beop;  
+        }
       } 
       // return null; 
     }       
@@ -3086,20 +3112,56 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
       // return null; 
     }       
 
+    /* Also ( ... ) .f */ 
+
+    if (pstart+1 < pend &&
+        !(")".equals(lexicals.get(pend) + "")) && 
+        ")".equals(lexicals.get(pend-1) + "") &&
+        "(".equals(lexicals.get(pstart) + ""))  
+    { String tail = lexicals.get(pend) + ""; 
+      if (tail.charAt(0) == '.')
+      { tail = tail.substring(1,tail.length()); 
+      
+        System.out.println(">>> Parsing: (...) . " + tail); 
+            
+        Expression op = 
+          parse_basic_expression(bc+1,
+                               pstart+1,pend-2,entities,types); 
+        if (op != null && op instanceof BasicExpression) // must be
+        { BasicExpression beop = (BasicExpression) op;  
+          BasicExpression te = 
+            // new BasicExpression(ss,0);   // (ss) surely?
+            new BasicExpression(tail,0); 
+          Expression ef = te.checkIfSetExpression(); 
+          if (ef != null && (ef instanceof BasicExpression)) 
+          { ((BasicExpression) ef).setInnerObjectRef(beop); }  
+          return ef;  
+        }
+      } 
+      // return null; 
+    }       
+
   if (pstart + 1 < pend && ")".equals(lexicals.get(pend) + "") && 
-    !("(".equals(lexicals.get(pstart) + "")))
+      "(".equals(lexicals.get(pstart) + ""))
   { for (int i = pstart + 1; i < pend; i++)
-    { String strs = lexicals.get(i) + "";
-      if ("(".equals(strs))
-      { Expression op = parse_basic_expression(bc, pstart, i-1,entities,types);
+    { String brack = lexicals.get(i-1) + ""; 
+	  String strs = lexicals.get(i) + "";
+      String brack2 = lexicals.get(i+1) + ""; 
+	  if (brack.equals(")") && brack2.equals("(") && 
+	      strs.length() > 1 && '.' == strs.charAt(0))
+      { Expression op = parse_basic_expression(bc, pstart+1, i-2, entities,types);
+        System.out.println("*** Parsing extended basic expression " + op + strs + "(...)");
         if (op != null && op instanceof BasicExpression)
-        { Vector ve = parse_fe_sequence(bc,i+1,pend-1,entities,types);
+        { Vector ve = parse_fe_sequence(bc,i+2,pend-1,entities,types);
           if (ve != null)
           { BasicExpression beop = (BasicExpression) op;
-            beop.setIsEvent();
-            beop.setParameters(ve);
-            // System.out.println("Parsed extended call expression " + beop);
-            return beop;
+            String tail = strs.substring(1,strs.length()); 
+			BasicExpression rees = new BasicExpression(tail, 0); 
+			rees.setObjectRef(beop);  
+            rees.setIsEvent();
+            rees.setParameters(ve);
+            System.out.println("*** Parsed extended call expression " + rees);
+            return rees;
           }
         }
       }
@@ -3154,6 +3216,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
 
     return parse_bracketed_expression(bc,pstart,pend,entities,types); 
   }
+  
 
   public Expression parse_set_expression(int bc,int pstart,int pend, Vector entities, Vector types)
   { Vector ve = parse_fe_sequence(bc,pstart+1,pend-1,entities,types); 
@@ -3553,7 +3616,7 @@ public BehaviouralFeature operationDefinition(int st, int en, Vector entities, V
     else if (lx.equals("post") && lx1.equals(":"))
     { Expression pre = parse_expression(0,st0,i-1,localEntities,types);
       if (pre == null)
-      { System.err.println("ERROR: Invalid precondition: " + showLexicals(st0,i-1)); 
+      { System.err.println("!! ERROR: Invalid precondition: " + showLexicals(st0,i-1)); 
         checkBrackets(st0,i-1); 
         pre = new BasicExpression(true); 
       }
@@ -3569,7 +3632,7 @@ public BehaviouralFeature operationDefinition(int st, int en, Vector entities, V
         { st0 = j+2; 
           Expression pots = parse_expression(0,i+2,j-1,localEntities,types); 
           if (pots == null) 
-          { System.err.println("ERROR: Invalid postcondition syntax: " + showLexicals(i+2,j-1));
+          { System.err.println("!! ERROR: Invalid postcondition syntax: " + showLexicals(i+2,j-1));
             checkBrackets(i+2,j-1); 
             bf.setPost(new BasicExpression(true)); 
           } 
@@ -3577,7 +3640,7 @@ public BehaviouralFeature operationDefinition(int st, int en, Vector entities, V
           { bf.setPost(pots); } 
           Statement act = parseStatement(j+2,en,localEntities,types); 
           if (act == null) 
-          { System.err.println("ERROR: Invalid activity syntax: " + showLexicals(j+2,en)); 
+          { System.err.println("!! ERROR: Invalid activity syntax: " + showLexicals(j+2,en)); 
             checkBrackets(j+2,en); 
           } 
           bf.setActivity(act); 
@@ -3602,13 +3665,13 @@ public BehaviouralFeature operationDefinition(int st, int en, Vector entities, V
   } */ 
 
   if (foundpost == false)
-  { System.err.println("**** Invalid operation definition, no postcondition: " + showLexicals(st,en)); 
+  { System.err.println("!! Invalid operation definition, no postcondition: " + showLexicals(st,en)); 
     parseOpDecs(parsStart,en,localEntities,types,bf); 
   }
   else 
   { Expression pst = parse_expression(0,st0,en,localEntities,types);
     if (pst == null)
-    { System.err.println("ERROR: Invalid postcondition: " + showLexicals(st0,en));
+    { System.err.println("!! ERROR: Invalid postcondition: " + showLexicals(st0,en));
       bf.setPost(new BasicExpression(true)); 
     }
     else 
@@ -3654,7 +3717,7 @@ private void parseOpDecs(int st, int en, Vector entities, Vector types, Behaviou
     else if (")".equals(lx)) 
     { bcnt--; 
       if (bcnt < 0)
-      { System.err.println("*** Extra closing bracket in declaration: " + showLexicals(st,j)); 
+      { System.err.println("!! Extra closing bracket in declaration: " + showLexicals(st,j)); 
         return;
       }
     } 
@@ -3690,7 +3753,7 @@ private void parseOpDecs(int st, int en, Vector entities, Vector types, Behaviou
     else if (":".equals(lx) && bcnt == 0)
     { Type rt = parseType(j+1,en,entities,types);
       if (rt == null)
-      { System.err.println("*** ERROR: Invalid return type: " + showLexicals(j+1, en)); 
+      { System.err.println("!! ERROR: Invalid return type: " + showLexicals(j+1, en)); 
         bf.setQuery(false); 
         rt = new Type("void", null); 
       }
@@ -3704,7 +3767,7 @@ private void parseOpDecs(int st, int en, Vector entities, Vector types, Behaviou
   }
 
   if (bcnt > 0)
-  { System.err.println("*** Unclosed bracket in declaration: " + showLexicals(st,en)); }
+  { System.err.println("!! Unclosed bracket in declaration: " + showLexicals(st,en)); }
 }
 
 public Attribute parseAttribute(Vector entities, Vector types)
@@ -3734,7 +3797,7 @@ private Attribute parseParameterDec(int st, int en, Vector entities, Vector type
   String attname = lexicals.get(st) + "";
   Type typ = parseType(st+2,en,entities,types);
   if (typ == null)
-  { System.err.println("**** ERROR: Invalid/unknown type: " + showLexicals(st+2, en)); 
+  { System.err.println("!! ERROR: Invalid/unknown type: " + showLexicals(st+2, en)); 
     return null; 
   }
   Attribute att = new Attribute(attname, typ, ModelElement.INTERNAL);
@@ -3753,7 +3816,7 @@ private Attribute parseParameterDecInit(int st, int en, Vector entities, Vector 
     { Expression val = parse_expression(0,i+1,en,entities,types); 
       Type typ = parseType(st+2,i-1,entities,types); 
       if (typ == null)
-      { System.err.println("**** ERROR: Invalid/unknown type: " + showLexicals(st+2, i-1)); 
+      { System.err.println("!! ERROR: Invalid/unknown type: " + showLexicals(st+2, i-1)); 
         return null; 
       }
       Attribute att = new Attribute(attname,typ,ModelElement.INTERNAL); 
@@ -3763,7 +3826,7 @@ private Attribute parseParameterDecInit(int st, int en, Vector entities, Vector 
   }
   Type tt = parseType(st+2,en,entities,types); 
   if (tt == null)
-  { System.err.println("**** ERROR: Invalid/unknown type: " + showLexicals(st+2, en)); 
+  { System.err.println("!! ERROR: Invalid/unknown type: " + showLexicals(st+2, en)); 
     return null; 
   }
   
@@ -3864,7 +3927,10 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         
 
   public Expression parse_bracketed_expression(int bcount, int pstart, int pend, Vector entities, Vector types)
-  { if (lexicals.size() > 2 &&
+  { if (pstart >= pend) 
+    { return null; } 
+
+    if (lexicals.size() > 2 &&
         lexicals.get(pstart).toString().equals("(") &&
         lexicals.get(pend).toString().equals(")"))
     { Expression eg = parse_expression(bcount+1, pstart+1, pend-1,entities,types);
@@ -4788,7 +4854,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
        res.add(exp);
      }
      else
-     { System.err.println("ERROR: Not ATL factor expression sequence: " + showLexicals(st,en)); 
+     { System.err.println("!! ERROR: Not ATL factor expression sequence: " + showLexicals(st,en)); 
        return null;
      }
      return res; 
@@ -5694,8 +5760,11 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     for (int i = s; i < e; i++)
     { String ss = lexicals.get(i) + "";
       if (ss.equals(";"))
-      { s1 = parseStatement(s,i-1, entities,types);
-        s2 = parseStatement(i+1,e, entities,types);
+      { int j = i+1; 
+        for ( ; j < e && ";".equals(lexicals.get(j) + ""); j++) 
+        { } 
+        s1 = parseStatement(s,i-1, entities,types);
+        s2 = parseStatement(j,e, entities,types);
         if (s1 == null || s2 == null) { continue; } // try another ;  
         // { return null; }
         else
@@ -5870,6 +5939,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       { return new BreakStatement(); }
       else if ("continue".equals(lexicals.get(e) + ""))
       { return new ContinueStatement(); }
+      // else if (";".equals(lexicals.get(e) + ""))
+      // { return new InvocationStatement("skip",null,null); } 
       else 
       { Expression ee = parse_basic_expression(0,s,e,entities,types);
         if (ee == null) 
@@ -5953,7 +6024,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         { Type typ1 = parseType(s+3,j-1,entities,types); 
           Expression expr = parse_expression(0,j+1,e,entities,types); 
           if (typ1 != null && expr != null) 
-          { System.out.println("Creation statement var " + varname + " : " + typ1 + " with initialisation " + expr);
+          { System.out.println(">>> Creation statement var " + varname + " : " + typ1 + " with initialisation " + expr);
             CreationStatement cs1 = new CreationStatement(typ1 + "",varname); 
             cs1.setType(typ1); 
             cs1.setKeyType(typ1.getKeyType()); 
@@ -6006,6 +6077,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
             return ast; 
           } 
           Expression e1 = parse_basic_expression(0,s,i-1,entities,types); 
+          if (e1 == null) { e1 = parseAtExpression(0,s,i-1,entities,types); }
           Expression e2 = parse_expression(0,i+1,e,entities,types); 
           if (e1 == null || e2 == null)
           { // System.err.println("ERROR: Unable to parse assignment command LHS or RHS are invalid: " + showLexicals(s,e)); 
@@ -6555,7 +6627,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
             if (bf != null) 
             { res.addOperation(bf); } 
             else 
-            { System.err.println("ERROR: Invalid operation definition: " + 
+            { System.err.println("!! ERROR: Invalid operation definition: " + 
                                showLexicals(reached+1,i-2));
               Vector error3 = new Vector(); 
               error3.add("Invalid operation declaration"); 
@@ -6913,7 +6985,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     System.out.println(">>> use case " + nme + " has return type " + uctyp); 
 
     if (foundstart == false) 
-    { System.err.println("!! ERROR: no { found for use case " + nme);
+    { System.err.println("!! ERROR: use case syntax is: usecase " + nme + " : type { ... }");
       return uc;
     }
 	
@@ -9568,12 +9640,20 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 
     // Expression xx = c.parseExpression(); 
 
-    c.nospacelexicalanalysis("E<String,int>"); 
+    // c.nospacelexicalanalysis("E<String,int>"); 
      
-    Vector exs = new Vector(); 
-    exs.add(new Entity("E")); 
-    Type xx = c.parseType(0,c.lexicals.size()-1,exs, new Vector()); 
+    // Vector exs = new Vector(); 
+    // exs.add(new Entity("E")); 
+    // Type xx = c.parseType(0,c.lexicals.size()-1,exs, new Vector()); 
 
+    // c.nospacelexicalanalysis("arr[x][y]"); 
+    // c.nospacelexicalanalysis("(OclFile.newOclFile(\"text\")).setReadOnly()");
+    // c.nospacelexicalanalysis("(OclFile.newOclFile_Read(OclFile.newOclFile(s))).readObject()"); 
+
+    c.nospacelexicalanalysis("(MyString).subrange((MyString)->indexOf((MyString)->trim()))"); 
+	
+    System.out.println(c.lexicals); 
+    Expression xx = c.parseExpression(); 
     System.out.println(xx); 
 
     // ASTTerm tt = c.parseSimpleAST("(lineStringLiteral \" (lineStringContent text) \")"); 

@@ -125,6 +125,31 @@ public class CGCondition
     for (int x = 0; x < reps.size() && x < vars.size(); x++)
     { String var = (String) vars.get(x);
       String arg1 = (String) reps.get(x); 
+
+      String svarx = var; 
+      String smffeat = null; 
+      Vector stereomfs = CGRule.metafeatures(stereo); 
+      if (stereomfs.size() > 0)
+      { 
+        // If stereo has a metafeature: _i`mf
+        // evaluate _i`mf in cgs and set stereo to result 
+
+        String smf = (String) stereomfs.get(0); 
+        int smfindex = smf.indexOf("`"); 
+        svarx = smf.substring(0,smfindex); 
+        smffeat = smf.substring(smfindex+1,smf.length()); 
+        if (smffeat != null && var.equals(svarx)) 
+        { int indv = vars.indexOf(svarx);
+ 
+          if (indv >= 0 && eargs.get(indv) instanceof ASTTerm)
+          {  
+            ASTTerm earg = (ASTTerm) eargs.get(indv); 
+            stereo = CGRule.applyMetafeature(
+                             smffeat,earg,cgs,entities); 
+          }
+        } 
+      } 
+
       stereo = stereo.replace(var,arg1);
     }
 
@@ -677,6 +702,8 @@ public class CGCondition
       String repl = CGRule.applyMetafeature(
                              mffeat,a,cgs,entities); 
 
+      System.out.println(">>> Test LHS = " + repl + " RHS = " + stereotype); 
+
       if (repl != null && repl.equals(stereotype))
       { return positive; } 
       else 
@@ -684,6 +711,11 @@ public class CGCondition
     } 
       
     // Also the stereotype could have one. 
+
+    // if ("integer".equalsIgnoreCase(stereotype))
+    // { if (a.isInteger()) 
+    //   { return positive; } 
+    // } 
 
     if (a instanceof ASTCompositeTerm)
     { ASTCompositeTerm ac = (ASTCompositeTerm) a; 

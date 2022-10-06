@@ -4475,7 +4475,8 @@ public void findClones(java.util.Map clones, String rule, String op)
     else if (operator.equals("->including") || 
              operator.equals("->prepend") || 
              operator.equals("->append"))
-    { Type newleftET = Type.refineType(etleft,right.getType()); 
+    { Type newleftET = 
+                Type.refineType(etleft,right.getType()); 
       System.out.println(">> Deduced element type of " + this + " = " + newleftET); 
       elementType = newleftET; 
       if (type == null)
@@ -4651,7 +4652,7 @@ public void findClones(java.util.Map clones, String rule, String op)
       else 
       { type = Expression.deduceType(operator,left,right); 
 
-        System.err.println("Warning!: arguments must be numeric in: " + this + ". Deduced type: " + type); 
+        System.err.println("!Warning!: arguments must be numeric in: " + this + " Deduced type: " + type); 
         if (type == null) 
         { JOptionPane.showMessageDialog(null, "Arguments not numeric in: " + this, 
                                             "Type error", JOptionPane.ERROR_MESSAGE);
@@ -4665,14 +4666,14 @@ public void findClones(java.util.Map clones, String rule, String op)
       else if (trname.equals("int") && trname.equals("int"))
       { type = new Type("int",null); }
       else 
-      { System.err.println("TYPE ERROR: invalid types " + tlname + " " + trname + " in: " + this);
+      { System.err.println("!! TYPE ERROR: invalid types " + tlname + " " + trname + " in: " + this);
         type = new Type("int", null);
       }
     } 
     else 
     { type = Expression.deduceType(operator,left,right); 
 
-      System.err.println("TYPE ERROR: invalid types " + tleft + " " + tright + " in: " + this + ". Deduced type " + type);
+      System.err.println("!! TYPE ERROR: invalid types " + tleft + " " + tright + " in: " + this + ". Deduced type " + type);
       JOptionPane.showMessageDialog(null, "Missing types in: " + this, 
                                           "Type error", JOptionPane.ERROR_MESSAGE);
       if (tleft != null)
@@ -4699,14 +4700,19 @@ public void findClones(java.util.Map clones, String rule, String op)
       if (tlname.equals("boolean") && trname.equals("boolean"))
       {  }
       else
-      { System.err.println("Warning: invalid types in: " + this);
+      { System.err.println("! Warning: invalid types " + tlname + " " + trname + " in: " + this);
         JOptionPane.showMessageDialog(null, "Arguments must be booleans: " + this, 
                                             "Type error", JOptionPane.ERROR_MESSAGE); 
+        if ("int".equals(tlname) && "int".equals(trname))
+        { // bitwise operator
+          System.err.println("!! Bitwise operator expected here !!"); 
+          type = new Type("int", null); 
+        } 
       }
       type = new Type("boolean",null);
     } 
     else 
-    { System.err.println("TYPE ERROR: invalid types in: " + this);
+    { System.err.println("!! TYPE ERROR: invalid types in: " + this);
       JOptionPane.showMessageDialog(null, "Missing types in: " + this, 
                                           "Type error", JOptionPane.ERROR_MESSAGE);
     }
@@ -18172,8 +18178,16 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   public int syntacticComplexity() 
   { int res = left.syntacticComplexity();
     res = res + right.syntacticComplexity(); 
-    if (operator.equals("#") || operator.equals("#1") || operator.equals("#LC") || operator.equals("!") ||
-        operator.equals("|") || operator.equals("|R") || operator.equals("|C"))
+    if (operator.equals("#") || operator.equals("#1") || 
+        operator.equals("#LC") || operator.equals("!") ||
+        operator.equals("|") || operator.equals("|R") || 
+        operator.equals("|C") ||
+        operator.equals("|A") ||
+        operator.equals("|intersectAll") || 
+        operator.equals("|unionAll") ||
+        operator.equals("|selectMinimals") || 
+        operator.equals("|selectMaximals")
+       )
     { return res; }  
 
     if (operator.equals("->iterate"))
@@ -18189,9 +18203,11 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   } 
 
   public int cyclomaticComplexity() 
-  { if (operator.equals("#") || operator.equals("#1") || operator.equals("#LC") || operator.equals("!"))
+  { if (operator.equals("#") || operator.equals("#1") || 
+        operator.equals("#LC") || operator.equals("!"))
     { return right.cyclomaticComplexity(); } 
-    else if (operator.equals("&") || operator.equals("or") || operator.equals("=>"))
+    else if (operator.equals("&") || 
+             operator.equals("or") || operator.equals("=>"))
     { return left.cyclomaticComplexity() + right.cyclomaticComplexity(); }  
 
     if (operator.equals("->iterate"))

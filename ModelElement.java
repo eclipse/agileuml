@@ -1035,24 +1035,4 @@ public static Vector splitIntoWords(String str)
 }
 
 
-class UMLPackage extends ModelElement
-{ public UMLPackage(String nme)
-  { super(nme); }  
-
-  public String generateJava()
-  { return "package " + name + "{ }"; } 
-
-  public void generateJava(PrintWriter out)
-  { out.println("package " + name + "{ }"); } 
-
-  public void setType(Type t) { } 
-
-  public Type getType() { return null; } 
-
-  public void addParameter(Attribute att) 
-  { } 
-
-  public Vector getParameters()
-  { return new Vector(); } 
-} 
 

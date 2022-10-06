@@ -63,6 +63,12 @@ public class Entity extends ModelElement implements Comparable
     return true; 
   } 
 
+  public String getLocalName()
+  { // part after last '$'
+    int dind = name.lastIndexOf("$"); 
+    return name.substring(dind+1); 
+  } 
+
   public boolean isGeneric()
   { return typeParameters != null && 
            typeParameters.size() > 0; 
@@ -1200,17 +1206,23 @@ public class Entity extends ModelElement implements Comparable
     // operation in this. 
 
     boolean allFound = true; 
+    Vector ops = allSpecifiedOperations(); 
 
-    Vector ops = ent.getOperations(); 
-    for (int i = 0; i < ops.size(); i++) 
-    { BehaviouralFeature f = (BehaviouralFeature) ops.get(i); 
+    System.out.println(">>> Operations of " + name + " are: " + ops); 
+
+    Vector subops = ent.allSpecifiedOperations(); 
+
+    System.out.println(">>> Operations of " + ent.getName() + " are: " + subops); 
+
+    for (int i = 0; i < subops.size(); i++) 
+    { BehaviouralFeature f = (BehaviouralFeature) subops.get(i); 
 
       String sig = f.getTypeSignature(); 
       
       boolean found = false; 
-      for (int j = 0; j < operations.size(); j++) 
-      { BehaviouralFeature bf = (BehaviouralFeature) operations.get(j); 
-        if (sig.equals(bf.getTypeSignature()))  // replace bf by f
+      for (int j = 0; j < ops.size(); j++) 
+      { BehaviouralFeature bf = (BehaviouralFeature) ops.get(j); 
+        if (sig.equals(bf.getTypeSignature()))  
         { System.out.println(">>> Operation " + sig + " found in " + name);
           found = true; 
           break;
@@ -4358,7 +4370,9 @@ public class Entity extends ModelElement implements Comparable
 
 
   public int displayMeasures(PrintWriter out, java.util.Map clones)
-  { out.println("*** Class " + getName()); 
+  { String nme = getName(); 
+
+    out.println("*** Class " + nme); 
 
     int highcount = 0; 
     int lowcount = 0; 
@@ -4367,9 +4381,9 @@ public class Entity extends ModelElement implements Comparable
     int assocs = associations.size(); 
     int ops = operations.size(); 
 
-    out.println("*** Number of attributes = " + atts); 
-    out.println("*** Number of roles = " + assocs); 
-    out.println("*** Number of operations = " + ops); 
+    out.println("*** Number of " + nme + " attributes = " + atts); 
+    out.println("*** Number of " + nme + " roles = " + assocs); 
+    out.println("*** Number of " + nme + " operations = " + ops); 
 
     int totalComplexity = 0; 
 
@@ -4389,7 +4403,6 @@ public class Entity extends ModelElement implements Comparable
       { out.println("*** Operations used in " + op.getName() + " are: " + opuses); } 
       op.findClones(clones); 
       out.println(); 
-      
     } 
 
     out.println("*** " + highcount + " operations of " + getName() + " are > 100 complexity"); 
@@ -4397,7 +4410,7 @@ public class Entity extends ModelElement implements Comparable
 
     out.println("*** Total complexity of " + getName() + " is: " + totalComplexity); 
     if (totalComplexity > 1000)
-    { System.err.println("!! Excessively large class: " + getName() + " has c = " + totalComplexity); } 
+    { System.err.println("!! Bad Smell: Excessively large class: " + getName() + " has c = " + totalComplexity); } 
 
     return totalComplexity; 
   } 
@@ -4768,6 +4781,19 @@ public class Entity extends ModelElement implements Comparable
     res.addAll(operations); 
     if (superclass != null) 
     { res.addAll(superclass.allOperations()); } 
+    return res; 
+  } 
+
+  public Vector allSpecifiedOperations()
+  { Vector res = new Vector(); // BehaviouralFeature
+    res.addAll(operations); 
+    if (superclass != null) 
+    { res.addAll(superclass.allOperations()); } 
+    for (int i = 0; i < interfaces.size(); i++) 
+    { Entity intf = (Entity) interfaces.get(i); 
+      Vector iops = intf.allSpecifiedOperations(); 
+      res = VectorUtil.union(res,iops); 
+    } 
     return res; 
   } 
 
@@ -11899,6 +11925,21 @@ public class Entity extends ModelElement implements Comparable
     }
     return new Vector(); 
   }
+
+  public Entity extractInterface()
+  { String nme = getName(); 
+    String iname = nme + "_Interface"; 
+    Entity intf = new Entity(iname);
+    intf.setInterface(true); 
+    Vector allops = allSpecifiedOperations(); 
+    for (int i = 0; i < allops.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) allops.get(i); 
+      BehaviouralFeature ibf = bf.interfaceOperation(); 
+      intf.addOperation(ibf); 
+    } 
+    addInterface(intf); 
+    return intf; 
+  } 
 
   public static void introduceSuperclass(Entity[] ents,UCDArea ucdArea)
   { // look for common features in the ents

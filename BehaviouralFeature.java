@@ -408,6 +408,13 @@ public class BehaviouralFeature extends ModelElement
     return res; 
   } // and copy the use case, readfr, etc? 
 
+  public BehaviouralFeature interfaceOperation()
+  { BehaviouralFeature res = (BehaviouralFeature) clone(); 
+    res.activity = null; 
+    res.setAbstract(true); 
+    return res; 
+  } 
+
   public BehaviouralFeature addContainerReference(
                                BasicExpression ref, 
                                String var, Vector excl)
@@ -2522,6 +2529,13 @@ public class BehaviouralFeature extends ModelElement
     return false; 
   } 
 
+  public void setAbstract(boolean ab)
+  { if (ab) 
+    { addStereotype("abstract"); } 
+    else 
+    { removeStereotype("abstract"); } 
+  } 
+
   public boolean isAbstract()
   { return hasStereotype("abstract"); } 
 
@@ -3428,7 +3442,7 @@ public class BehaviouralFeature extends ModelElement
 
     out.println("*** Number of parameters of operation " + nme + " = " + pars); 
     if (pars > 10) 
-    { System.err.println("*** Bad smell (EPL): too many parameters (" + pars + ") for " + nme); 
+    { System.err.println("!!! Bad smell (EPL): too many parameters (" + pars + ") for " + nme); 
       System.err.println(">>> Recommend refactoring by introducing value object for parameters or splitting operation into parts"); 
     }  
 
@@ -3446,18 +3460,27 @@ public class BehaviouralFeature extends ModelElement
     
     if (activity != null)
     { cyc = activity.cyclomaticComplexity(); 
-      complexity = complexity + cyc; 
       out.println("*** Activity cyclomatic complexity = " + cyc); 
+      int acomp = activity.syntacticComplexity(); 
+      out.println("*** Activity syntactic complexity = " + acomp); 
+      if (acomp > 100) 
+      { System.err.println("!!! Bad smell (EOS): too high activity complexity (" + acomp + ") for " + nme); 
+        System.err.println(">>> Recommend refactoring by functional decomposition"); 
+      }  
+      else if (acomp > 50) 
+      { System.err.println("*** Warning: high activity complexity (" + acomp + ") for " + nme); }  
+      complexity = complexity + acomp; 
     }
     
     out.println("*** Total complexity of operation " + nme + " = " + complexity); 
     out.println(); 
     if (cyc > 10) 
-    { System.err.println("*** Bad smell (CC): high cyclomatic complexity (" + cyc + ") for " + nme);
+    { System.err.println("!!! Bad smell (CC): high cyclomatic complexity (" + cyc + ") for " + nme);
       System.err.println(">>> Recommend refactoring by functional decomposition"); 
     }  
+
     if (complexity > 100) 
-    { System.err.println("*** Bad smell (EHS): too high complexity (" + complexity + ") for " + nme); 
+    { System.err.println("!!! Bad smell (EHS): too high complexity (" + complexity + ") for " + nme); 
       System.err.println(">>> Recommend refactoring by functional decomposition"); 
     }  
     else if (complexity > 50) 
@@ -3496,7 +3519,7 @@ public class BehaviouralFeature extends ModelElement
 
     System.out.println("*** Number of parameters of operation " + nme + " = " + pars); 
     if (pars > 10) 
-    { System.err.println("*** Bad smell (EPL): too many parameters (" + pars + ") for " + nme); }  
+    { System.err.println("!!! Bad smell (EPL): too many parameters (" + pars + ") for " + nme); }  
 
     int complexity = 0; 
     int cyc = 0; 
@@ -3519,9 +3542,9 @@ public class BehaviouralFeature extends ModelElement
     System.out.println("*** Total complexity of operation " + nme + " = " + complexity); 
     System.out.println(); 
     if (cyc > 10) 
-    { System.err.println("*** Bad smell (CC): high cyclomatic complexity (" + cyc + ") for " + nme); }  
+    { System.err.println("!!! Bad smell (CC): high cyclomatic complexity (" + cyc + ") for " + nme); }  
     if (complexity > 100) 
-    { System.err.println("*** Bad smell (EHS): too high complexity (" + complexity + ") for " + nme); }  
+    { System.err.println("!!! Bad smell (EHS): too high complexity (" + complexity + ") for " + nme); }  
 
     return cyc; 
   } 
@@ -3552,7 +3575,9 @@ public class BehaviouralFeature extends ModelElement
     { pre.findClones(clones,null, nme); } 
     if (post != null) 
     { post.findClones(clones,null, nme); } 
-  } // and activity
+    if (activity != null) 
+    { activity.findClones(clones, null, nme); } 
+  } 
 
   public void generateJava(PrintWriter out)
   { out.print(toString()); } 

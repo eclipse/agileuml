@@ -845,7 +845,19 @@ class BasicExpression extends Expression
   { if (lhs instanceof BasicExpression)
     { BasicExpression be = (BasicExpression) lhs; 
       if (be.variable != null)
-      { Type elemType = rhs.getElementType();
+      { Type vType = rhs.getType();
+
+        System.out.println(">>> RHS type: " + vType); 
+ 
+        Type oldVType = be.variable.getType(); 
+
+        System.out.println(">>> old type: " + oldVType); 
+
+        be.variable.setType( 
+          Type.refineType(oldVType, vType));
+        System.out.println(">> From " + lhs + " := " + rhs + " deduced type " + be.variable.getType() + " for " + be.data);
+
+        Type elemType = rhs.getElementType();
 
         System.out.println(">>> RHS element type: " + elemType); 
  

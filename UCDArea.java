@@ -1217,6 +1217,33 @@ public class UCDArea extends JPanel
     } 
   }
 
+  public void extractInterface()
+  { ListShowDialog listShowDialog = new ListShowDialog(parent);
+    listShowDialog.pack();
+    listShowDialog.setLocationRelativeTo(parent); 
+    listShowDialog.setOldFields(entities);
+    System.out.println(">>> Select class to extract interface");
+    listShowDialog.setVisible(true); 
+
+    Object[] vals = listShowDialog.getSelectedValues();
+    
+    if (vals == null) { return; } 
+    Entity ent1 = null; 
+    
+    if (vals != null && vals.length > 0)
+    { ent1 = (Entity) vals[0];
+        
+      if (ent1 == null) { return; } 
+    } 
+    
+    Entity intf = ent1.extractInterface(); 
+    VisualData vd = getVisualOf(ent1); 
+    if (vd == null) { return; } 
+    addEntity(intf, vd.getx(), vd.gety() - 200); 
+    Generalisation g = new Generalisation(intf,ent1);
+    addInheritance(g,intf,ent1);
+  } 
+  
   private void editUseCaseOperation(UseCase uc)
   { ListShowDialog listShowDialog = new ListShowDialog(parent);
     listShowDialog.pack();
@@ -1224,7 +1251,7 @@ public class UCDArea extends JPanel
     
     Vector allops = uc.getOperations(); 
     listShowDialog.setOldFields(allops);
-    System.out.println("Select operation to edit");
+    System.out.println(">>> Select operation to edit");
     Vector stereos = new Vector(); 
     listShowDialog.setVisible(true); 
 
@@ -1313,7 +1340,7 @@ public class UCDArea extends JPanel
     { System.err.println("!! Warning: Unable to type-check precondition " + cond); }
 
     if (post == null)
-    { System.err.println("ERROR: Invalid postcondition"); 
+    { System.err.println("!! ERROR: Invalid postcondition"); 
       post = "true"; 
     }
 
@@ -1322,7 +1349,7 @@ public class UCDArea extends JPanel
     Expression effect = comp1.parse(); 
 
     while (effect == null)
-    { System.err.println("ERROR: Invalid postcondition syntax " + post); 
+    { System.err.println("!! ERROR: Invalid postcondition syntax " + post); 
       JOptionPane.showMessageDialog(null, "Error: invalid postcondition " + post, 
                                       "",JOptionPane.ERROR_MESSAGE);  
       opDialog.setOldFields(nme,typ,params,pre,post,query);
@@ -1338,14 +1365,14 @@ public class UCDArea extends JPanel
 
     if (query) 
     { if (tt == null) 
-      { System.err.println("Error: query operation must have a return type!"); 
-        JOptionPane.showMessageDialog(null, "Error: no return type!", 
+      { System.err.println("!! Error: query operation must have a return type!"); 
+        JOptionPane.showMessageDialog(null, "!! Error: no return type!", 
                                       "",JOptionPane.ERROR_MESSAGE);  
       } 
     } 
     else 
     { if (tt != null)
-      { System.err.println("Warning: update operations with results cannot be mapped to B"); 
+      { System.err.println("! Warning: update operations with results cannot be mapped to B"); 
       } 
     } 
 
@@ -1362,13 +1389,13 @@ public class UCDArea extends JPanel
 
     boolean tc2 = effect.typeCheck(types,entities,contexts,vars); 
     if (!tc2) 
-    { System.err.println("Warning: Unable to type-check postcondition " + effect); 
+    { System.err.println("! Warning: Unable to type-check postcondition " + effect); 
       JOptionPane.showMessageDialog(null, "Cannot type-check postcondition " + effect, "", 
                                     JOptionPane.ERROR_MESSAGE);  
     }
     else 
-    { System.out.println("Definedness condition: " + effect.definedness()); 
-      System.out.println("Determinacy condition: " + effect.determinate()); 
+    { System.out.println(">>> Definedness condition: " + effect.definedness()); 
+      System.out.println(">>> Determinacy condition: " + effect.determinate()); 
     } 
 
     op.setPre(spre); 
@@ -1393,14 +1420,14 @@ public class UCDArea extends JPanel
 
     listShowDialog.setOldFields(allops);
     // ((UmlTool) parent).thisLabel.setText("Select operations to delete"); 
-    System.out.println("Select operations to delete");
+    System.out.println(">>> Select operations to delete");
 
     listShowDialog.setVisible(true); 
 
     Object[] vals = listShowDialog.getSelectedValues();
     if (vals != null && vals.length > 0)
     { for (int i = 0; i < vals.length; i++) 
-      { System.out.println("Deleting " + vals[i]);
+      { System.out.println(">> Deleting " + vals[i]);
         BehaviouralFeature op = (BehaviouralFeature) vals[i];
         uc.removeOperation(op);
       }  
@@ -1795,71 +1822,6 @@ public class UCDArea extends JPanel
         System.out.println(uc.toAST(saved)); 
       } 
     }  
-
-    File cgtlfile = null; 
-    try 
-    { JFileChooser fc = new JFileChooser();
-      File startingpoint = new File("./cg");
-      fc.setCurrentDirectory(startingpoint);
-      fc.setDialogTitle("Select a *.cgtl file");
-      // fc.addChoosableFileFilter(new TextFileFilter()); 
-
-	  
-      int returnVal = fc.showOpenDialog(null);
-      if (returnVal == JFileChooser.APPROVE_OPTION)
-      { cgtlfile = fc.getSelectedFile(); }
-      else
-      { System.err.println("!! Load aborted");
-        return; 
-      }
-
-      if (cgtlfile == null) { return; }
-    } catch (Exception e) { return; } 
-
-    Vector vs = new Vector(); 
-    CGSpec spec = loadCSTL(cgtlfile,vs); 
-
-    if (spec == null) 
-    { System.err.println("!! ERROR: No file " + cgtlfile.getName()); 
-      return; 
-    } 
-
-    Vector res = new Vector(); 
-
-    for (int i = 0; i < entasts.size(); i++) 
-    { String s = (String) entasts.get(i); 
-      Compiler2 c = new Compiler2();    
-      ASTTerm xx =
-          c.parseGeneralAST(s); 
-      if (xx == null) 
-      { System.err.println("!!ERROR: Invalid text for general AST: " + s); 
-        System.err.println(c.lexicals); 
-          // return; 
-      }
-      else 
-      { res.add(xx); }
-    }
-
-    Vector results = new Vector(); 
-
-    Date d1 = new Date(); 
-    long t1 = d1.getTime(); 
-
-    for (int i = 0; i < res.size(); i++) 
-    { ASTTerm tt = (ASTTerm) res.get(i); 
-      String outtext = tt.cg(spec); 
-      results.add(outtext); 
-    } 
-
-    if (res.size() == 0) 
-    { return; } 
- 
-    for (int i = 0; i < results.size(); i++) 
-    { String tt = (String) results.get(i); 
-      System.out.println(tt);  
-    } 
-    
-
 
   /*  System.out.println(); 
     System.out.println(">>> Token sequences of classes: "); 
@@ -2612,9 +2574,9 @@ public class UCDArea extends JPanel
   }
 
   private void editEntityName(Entity ent, RectData rd)
-  { System.out.println("Enter new name. Existing expressions may become invalid"); 
+  { System.out.println(">> Enter new class name. Existing expressions may become invalid"); 
     String newname = 
-          JOptionPane.showInputDialog("Enter new name:");
+          JOptionPane.showInputDialog("Enter new class name:");
     String oldName = ent.getName(); 
     if (newname != null && newname.trim().length() > 0)
     { ent.setName(newname.trim());
@@ -2931,25 +2893,25 @@ public class UCDArea extends JPanel
 
     int topscount = 0; 
 	
-	int totalClassSize = 0; 
+    int totalClassSize = 0; 
 	
-	int sourceClasses = 0; 
-	int targetClasses = 0; 
-	int derivedClasses = 0; 
-	int allClasses = entities.size(); 
+    int sourceClasses = 0; 
+    int targetClasses = 0; 
+    int derivedClasses = 0; 
+    int allClasses = entities.size(); 
 	
     for (int j = 0; j < allClasses; j++) 
     { Entity ent = (Entity) entities.get(j);
-	  if (ent.isSource()) 
-	  { sourceClasses++; }
-	  else if (ent.isTarget())
-	  { targetClasses++; }
+      if (ent.isSource()) 
+      { sourceClasses++; }
+      else if (ent.isTarget())
+      { targetClasses++; }
 	  
-	  if (ent.isDerived())
-	  { derivedClasses++; }
+      if (ent.isDerived())
+      { derivedClasses++; }
 	 
       int entsize = ent.displayMeasures(out,clones);
-	  totalClassSize = totalClassSize + entsize; 
+      totalClassSize = totalClassSize + entsize; 
 	   
       out.println(); 
       int eopscount = ent.operationsCount(); 
@@ -2979,14 +2941,14 @@ public class UCDArea extends JPanel
       }  
     } 
 	
-	System.out.println(">>> There are " + sourceClasses + " source classes"); 
-	System.out.println(">>> There are " + targetClasses + " target classes"); 
-	System.out.println(">>> There are " + derivedClasses + " derived classes"); 
-	System.out.println(">>> There are " + (allClasses - derivedClasses) + " non-derived classes"); 
-	System.out.println(">>> There are " + allClasses + " total classes"); 
-	System.out.println(); 
-	int uccount = useCases.size(); 
-	System.out.println(">>> There are " + uccount + " total use cases"); 
+    System.out.println(">>> There are " + sourceClasses + " source classes"); 
+    System.out.println(">>> There are " + targetClasses + " target classes"); 
+    System.out.println(">>> There are " + derivedClasses + " derived classes"); 
+    System.out.println(">>> There are " + (allClasses - derivedClasses) + " non-derived classes"); 
+    System.out.println(">>> There are " + allClasses + " total classes"); 
+    System.out.println(); 
+    int uccount = useCases.size(); 
+    System.out.println(">>> There are " + uccount + " total use cases"); 
 	
 
     int tcount = 0; 
@@ -3016,7 +2978,7 @@ public class UCDArea extends JPanel
       }  
     } 
 
-	System.out.println(">>> There are " + tcount + " general use cases"); 
+    System.out.println(">>> There are " + tcount + " general use cases"); 
 
     Map cg = displayCallGraph(out,clones);
 
@@ -3027,8 +2989,8 @@ public class UCDArea extends JPanel
       Vector clonedIn = (Vector) clones.get(k); 
       if (clonedIn.size() > 1)
       { out.println("*** " + k + " is cloned in: " + clonedIn); 
-        System.err.println("*** Bad smell (DC): Cloned expression " + k + " in " + clonedIn); 
-        System.err.println(">>> Recommend refactoring by extracting the " + clonedIn.size() + " expression copies as new helper"); 
+        System.err.println("!!! Bad smell (DC): Cloned expression " + k + " in " + clonedIn); 
+        System.err.println(">>> Recommend refactoring by extracting the " + clonedIn.size() + " expression copies as new helper operation"); 
         clonecount++; 
       } 
     }  
@@ -3073,7 +3035,7 @@ public class UCDArea extends JPanel
     int selfcallsn = selfcalls.size();  
  
     if (selfcallsn > 0) 
-    { System.err.println("*** Bad smell (CBR2): complex call graph with " + selfcallsn + " recursive dependencies"); 
+    { System.err.println("!!! Bad smell (CBR2): complex call graph with " + selfcallsn + " recursive dependencies"); 
       System.err.println(">>> Suggest refactoring using Map Objects Before Links"); 
     } 
 
@@ -3102,7 +3064,7 @@ public class UCDArea extends JPanel
           { out.println("*** " + me + " has no dependencies"); }
           
           if (rang.size() > 10) 
-          { System.err.println("*** Bad smell (EFO): " + me + " uses too many operations: " + rang.size());
+          { System.err.println("!!! Bad smell (EFO): " + me + " uses too many operations: " + rang.size());
             System.err.println(">>> Suggest refactoring by sequential decomposition"); 
           } 
           
@@ -3110,14 +3072,14 @@ public class UCDArea extends JPanel
           int totalcgsize = domrestr.size() + ucg.size(); 
           out.println("*** Total call graph size of " + me + " is " + totalcgsize); 
           if (totalcgsize > uc.ruleCount() + uc.operationsCount() + rang.size()) 
-          { System.err.println("*** Bad smell (CBR1): " + me + " call graph too large: " + totalcgsize); } 
+          { System.err.println("!!! Bad smell (CBR1): " + me + " call graph too large: " + totalcgsize); } 
 
           Vector selfcallsuc = VectorUtil.intersection(selfcalls,rang); 
           int selfcallsucn = selfcallsuc.size(); 
 
           if (selfcallsucn > 0) 
           { out.println("*** " + selfcallsucn + " calls in recursive loops in " + me + " : " + selfcallsuc);  
-            System.err.println("*** Bad smell (CBR2): " + selfcallsucn + " calls in recursive loops in " + me + " : " + selfcallsuc); 
+            System.err.println("!!! Bad smell (CBR2): " + selfcallsucn + " calls in recursive loops in " + me + " : " + selfcallsuc); 
             System.err.println(">>> Suggest refactoring using Map Objects Before Links"); 
           } 
 
@@ -3145,14 +3107,14 @@ public class UCDArea extends JPanel
           { String clonelocation = (String) clonedIn.get(0); 
             if (clonelocation.startsWith(ucname + "_"))
             { out.println(k + " is cloned in: " + ucname); 
-              System.err.println("*** Bad smell (DC): Cloned expression in " + ucname); 
+              System.err.println("!!! Bad smell (DC): Cloned expression in " + ucname); 
               System.err.println(">>> Suggest refactoring using Extract Function"); 
 
               ucclonecount++;
             } 
             else if (rang.contains(clonelocation))
             { out.println("*** " + k + " is cloned in: " + ucname); 
-              System.err.println("*** Bad smell (DC): Cloned expression in " + ucname); 
+              System.err.println("!!! Bad smell (DC): Cloned expression in " + ucname); 
               System.err.println(">>> Suggest refactoring using Extract Function"); 
               ucclonecount++;
             } 
@@ -3161,7 +3123,7 @@ public class UCDArea extends JPanel
 
         if (ucclonecount > 0) 
         { out.println("*** " + ucclonecount + " clones in " + me);  
-          System.err.println("*** Bad smell (DC): " + ucclonecount + " clones in " + me); 
+          System.err.println("!!! Bad smell (DC): " + ucclonecount + " clones in " + me); 
           System.err.println(">>> Suggest refactoring using Extract Function"); 
 
           System.err.println(); 
@@ -6865,7 +6827,7 @@ public class UCDArea extends JPanel
     Entity e2 =
       (Entity) ModelElement.lookupByName(ename2,entities);
     if (e1 == null || e2 == null)
-    { System.out.println("Error in data, no entities " +
+    { System.out.println("!! Error in data, no entities " +
                          e1 + " " + e2);
       return;
     }
@@ -6873,7 +6835,7 @@ public class UCDArea extends JPanel
     { role1 = null; }
 
     if (e1.hasRole(role2)) 
-    { System.err.println("Entity " + e1 + " already has a role " + role2); 
+    { System.err.println("!! Entity " + e1 + " already has a role " + role2); 
       return; 
     } 
  
@@ -6929,7 +6891,7 @@ public class UCDArea extends JPanel
           } 
         } 
       } 
-      System.out.println("Reconstructed association class: " + acent + " " + sline); 
+      System.out.println(">> Reconstructed association class: " + acent + " " + sline); 
     }             
 
     associations.add(ast);
@@ -6958,9 +6920,9 @@ public class UCDArea extends JPanel
     UseCase uc = (UseCase) ModelElement.lookupByName(pb.behaviouredClassifier,useCases); 
 
     if (ent == null)
-    { System.err.println("No entity " + pb.behaviouredClassifier);
+    { System.err.println("!! No entity " + pb.behaviouredClassifier);
       if (uc == null) 
-      { System.out.println("No use case, either -- invalid activity"); 
+      { System.out.println("!! No use case, either -- invalid activity"); 
         return;
       } 
     }
@@ -6988,22 +6950,22 @@ public class UCDArea extends JPanel
     effect.typeCheck(types,entities,contexts,vars); 
     if (op != null)
     { op.setActivity(effect); 
-      System.out.println("Set activity for operation " + pb.specification + 
+      System.out.println(">> Set activity for operation " + pb.specification + 
                          " of entity " + ent); 
     }
     else if (ent != null) 
     { ent.setActivity(effect); 
-      System.out.println("Set activity for entity " + ent); 
+      System.out.println(">> Set activity for entity " + ent); 
     }
     else if (uc != null) 
     { uc.setActivity(effect); 
-      System.out.println("Set activity for use case " + uc.getName()); 
+      System.out.println(">> Set activity for use case " + uc.getName()); 
     } 
 
 
     Behaviour bb = new Behaviour(ent,op,effect); 
-	if (uc != null) 
-	{ bb.setUseCase(uc); }
+    if (uc != null) 
+    { bb.setUseCase(uc); }
 	
     activities.add(bb); 
   } 
@@ -7039,17 +7001,17 @@ public class UCDArea extends JPanel
 
    // System.out.println(e1.isInterface() + " " + e2.isInterface()); 
 
-      if (e1.isInterface() || e2.getSuperclass() != null)
-      { e2.addInterface(e1); 
-        if (e1.selfImplementing())
-        { System.err.println("Cycle of realizations: not allowed!"); 
-          e2.removeInterface(e1); 
-          return; 
-        } 
-        e1.addSubclass(e2);   // ?
-        g.setRealization(true);
-        generalisations.add(g);
-      }
+   if (e1.isInterface() || e2.getSuperclass() != null)
+   { e2.addInterface(e1); 
+     if (e1.selfImplementing())
+     { System.err.println("!! Cycle of realizations: not allowed!"); 
+       e2.removeInterface(e1); 
+       return; 
+     } 
+     e1.addSubclass(e2);   // ?
+     g.setRealization(true);
+     generalisations.add(g);
+   }
    /* if (e1.isInterface())
    { e2.addInterface(e1); 
      if (e1.selfImplementing())
@@ -7122,7 +7084,7 @@ public class UCDArea extends JPanel
   { RectData rde = (RectData) getVisualOf(e); 
     RectData rdent = (RectData) getVisualOf(ent); 
     if (rde == null || rdent == null) 
-    { System.err.println("! Error: Missing visuals for " + e + " " + ent); 
+    { System.err.println("!! Error: Missing visuals for " + e + " " + ent); 
       return; 
     }
 
@@ -13302,7 +13264,7 @@ public void produceCUI(PrintWriter out)
     try
     { br = new BufferedReader(new FileReader(sourcefile)); }
     catch (FileNotFoundException _e)
-    { System.err.println("!!ERROR: File not found: " + sourcefile);
+    { System.err.println("!! ERROR: File not found: " + sourcefile);
       
       return; 
     }
@@ -13333,7 +13295,7 @@ public void produceCUI(PrintWriter out)
       c.parseGeneralAST(sourcestring); 
 
     if (xx == null) 
-    { System.err.println("!!ERROR: Invalid text for general AST:"); 
+    { System.err.println("!! ERROR: Invalid text for general AST:"); 
       System.err.println(c.lexicals); 
       return; 
     } 
@@ -14671,7 +14633,7 @@ public void produceCUI(PrintWriter out)
     try
     { br = new BufferedReader(new FileReader(sourcefile)); }
     catch (FileNotFoundException _e)
-    { System.out.println("File not found: " + sourcefile);
+    { System.err.println("!! File not found: " + sourcefile);
       return; 
     }
 
@@ -14681,7 +14643,7 @@ public void produceCUI(PrintWriter out)
     while (!eof)
     { try { s = br.readLine(); }
       catch (IOException _ex)
-      { System.out.println("Reading AST file output/ast.txt failed.");
+      { System.err.println("!! Reading AST file output/ast.txt failed.");
         return; 
       }
       if (s == null) 
@@ -14701,7 +14663,7 @@ public void produceCUI(PrintWriter out)
       c.parseGeneralAST(sourcestring); 
 
     if (xx == null) 
-    { System.err.println(">>> Invalid text for general AST"); 
+    { System.err.println("!! Invalid text for general AST"); 
       System.err.println(c.lexicals); 
       return; 
     } 
@@ -16642,6 +16604,89 @@ public void produceCUI(PrintWriter out)
     } 
   }
 
+  public void compareModels(String m1, String m2)
+  { loadKM3FromFile(m1 + ".km3"); 
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity e = (Entity) entities.get(i);
+      e.addStereotype("source");  
+      String oldname = e.getName(); 
+      String newname = m1 + "$" + oldname; 
+      renameEntity(e, oldname, newname); 
+    } 
+    Vector oldentities = new Vector(); 
+    oldentities.addAll(entities); 
+    
+    Vector newentities = new Vector(); 
+
+    loadKM3FromFile(m2 + ".km3"); 
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity e = (Entity) entities.get(i);
+      if (oldentities.contains(e)) { continue; } 
+
+      e.addStereotype("target");  
+      String oldname = e.getName(); 
+      String newname = m2 + "$" + oldname; 
+      renameEntity(e, oldname, newname); 
+      newentities.add(e); 
+    } 
+    
+    int m1size = oldentities.size(); 
+    int m2size = newentities.size(); 
+
+    System.out.println(); 
+
+    int m1Inm2 = 0; 
+    for (int i = 0; i < m1size; i++) 
+    { Entity e1 = (Entity) oldentities.get(i); 
+      String e1name = e1.getLocalName();
+      ModelElement me2 = ModelElement.lookupByName(m2 + "$" + e1name, newentities); 
+      if (me2 instanceof Entity)
+      { m1Inm2++; } 
+    } 
+
+    double m1_2 = 0.0; 
+    if (m1size == 0)
+    { System.out.println(">>> " + m1 + " <: " + m2 + " = 1"); 
+      m1_2 = 1; 
+    }   
+    else 
+    { m1_2 = m1Inm2/(1.0*m1size); 
+      System.out.println(">>> " + m1 + " <: " + m2 + " = " + 
+                         m1_2);  
+    } 
+
+    int m2Inm1 = 0; 
+    for (int i = 0; i < m2size; i++) 
+    { Entity e2 = (Entity) newentities.get(i); 
+      String e2name = e2.getLocalName();
+      ModelElement me1 = ModelElement.lookupByName(m1 + "$" + e2name, oldentities); 
+      if (me1 instanceof Entity)
+      { m2Inm1++; } 
+    } 
+
+    double m2_1 = 0.0; 
+    if (m2size == 0)
+    { System.out.println(">>> " + m2 + " <: " + m1 + " = 1"); 
+      m2_1 = 1; 
+    }   
+    else 
+    { m2_1 = m2Inm1/(1.0*m2size); 
+      System.out.println(">>> " + m2 + " <: " + m1 + " = " + 
+                         m2_1);  
+    } 
+
+    System.out.println(">>> Similarity of " + m1 + " classes and " + m2 + " classes is: " + m1_2*m2_1); 
+  } 
+
+  private void renameEntity(Entity ent, 
+                   String oldname, String newname)
+  { ent.setName(newname);
+    VisualData vd = getVisualOf(ent); 
+    if (vd != null && vd instanceof RectData) 
+    { ((RectData) vd).setName(newname); } 
+    changedEntityName(oldname, newname); 
+  } 
+
   public void loadKM3FromFile()
   { loadKM3FromFile("mm.km3"); } 
   
@@ -16651,12 +16696,7 @@ public void produceCUI(PrintWriter out)
   }
 	
   public void loadKM3FromFile(File file)
-  { Vector oldentities = new Vector(); 
-    oldentities.addAll(entities); 
-	
-    Vector oldtypes = new Vector(); 
-    oldtypes.addAll(types); 
-	
+  { 
     BufferedReader br = null;
     Vector res = new Vector();
     String s;
@@ -16666,7 +16706,7 @@ public void produceCUI(PrintWriter out)
     try
     { br = new BufferedReader(new FileReader(file)); }
     catch (FileNotFoundException e)
-    { System.out.println("File not found: " + file.getName());
+    { System.out.println("!! File not found: " + file.getName());
       return; 
     }
 
@@ -16697,6 +16737,18 @@ public void produceCUI(PrintWriter out)
       linecount++; 
     }
 
+    System.out.println(">>> " + linecount + " lines in KM3 file"); 
+    loadKM3FromText(xmlstring); 
+  }
+
+  private void loadKM3FromText(String xmlstring)
+  { 
+    Vector oldentities = new Vector(); 
+    oldentities.addAll(entities); 
+	
+    Vector oldtypes = new Vector(); 
+    oldtypes.addAll(types); 
+	
     Vector pregens = new Vector(); 
     Vector preassocs = new Vector(); 
     Vector pnames = new Vector(); 
@@ -16704,8 +16756,7 @@ public void produceCUI(PrintWriter out)
     Compiler2 comp = new Compiler2();  
     comp.nospacelexicalanalysis(xmlstring); 
     Vector items = comp.parseKM3(entities,types,pregens,preassocs,pnames); 
-    System.out.println(linecount + " lines in file mm.km3"); 
-    System.out.println("Packages " + pnames + " in file mm.km3"); 
+    System.out.println("Packages " + pnames + " in KM3 file"); 
     if (pnames.size() > 0) 
     { setSystemName((String) pnames.get(0)); }
 	
@@ -16726,7 +16777,7 @@ public void produceCUI(PrintWriter out)
     } 
 
     int delta = 180; // visual displacement 
-    int ecount = 0; 
+    int ecount = oldentities.size() + 1; 
 
     Vector newentities = new Vector(); 
     newentities.addAll(entities); 
@@ -18554,7 +18605,7 @@ public void produceCUI(PrintWriter out)
     { Entity e = (Entity) entities.get(i); 
       res = res && e.checkAttributeRedefinitions(); 
       if (e.selfImplementing())
-      { System.err.println("Error: cycle of interfaces: " + e);
+      { System.err.println("!! Error: cycle of interfaces: " + e);
         res = false; 
       } 
     } 
@@ -18576,7 +18627,7 @@ public void produceCUI(PrintWriter out)
       allactint.addAll(aif);
       conslhs.addAll(ent.allLhsFeatures()); 
       consrhs.addAll(ent.allRhsFeatures());  // from local invs
-      System.out.println("Data flows for local invariants of entity " + ent + ": " + conslhs + " to: " + consrhs); 
+      System.out.println(">>> Data flows for local invariants of entity " + ent + ": " + conslhs + " to: " + consrhs); 
     }
 
     for (int j = 0; j < constraints.size(); j++)
@@ -18694,12 +18745,12 @@ public void produceCUI(PrintWriter out)
       if (entities.contains(e1)) { } 
       else 
       { ok = false; 
-        System.err.println("Entity " + e1 + " not present: invalid diagram"); 
+        System.err.println("!! Entity " + e1 + " not present: invalid diagram"); 
       } 
       if (entities.contains(e2)) { } 
       else 
       { ok = false; 
-        System.err.println("Entity " + e2 + " not present: invalid diagram"); 
+        System.err.println("!! Entity " + e2 + " not present: invalid diagram"); 
       } 
     }
     return ok; 
@@ -25707,8 +25758,7 @@ public void produceCUI(PrintWriter out)
   } 
   
   public void qualityCheck()
-  { // testCSTLwithASTS(); 
-
+  { 
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i); 
       if (ent.allSubclassesAreEmpty())
@@ -25724,9 +25774,7 @@ public void produceCUI(PrintWriter out)
         uc.checkIncludesValidity(useCases); 
       } 
     } 
-
-    // Convert javascript to KM3: 
-    loadFromJavaScript(); 
+ 
   }  
 
   public void loadFromJavaScript()
@@ -25740,7 +25788,7 @@ public void produceCUI(PrintWriter out)
     try
     { br = new BufferedReader(new FileReader(sourcefile)); }
     catch (FileNotFoundException _e)
-    { System.out.println("File not found: " + sourcefile);
+    { System.err.println("!! File not found: " + sourcefile);
       return; 
     }
 
@@ -25750,7 +25798,7 @@ public void produceCUI(PrintWriter out)
     while (!eof)
     { try { s = br.readLine(); }
       catch (IOException _ex)
-      { System.out.println("Reading AST file output/ast.txt failed.");
+      { System.err.println("!! Reading AST file output/ast.txt failed.");
         return; 
       }
       if (s == null) 
@@ -25770,14 +25818,14 @@ public void produceCUI(PrintWriter out)
       c.parseGeneralAST(sourcestring); 
 
     if (xx == null) 
-    { System.err.println(">>> Invalid text for general AST"); 
+    { System.err.println("!! Invalid text for general AST"); 
       System.err.println(c.lexicals); 
       return; 
     } 
    
     if (xx instanceof ASTCompositeTerm)  { } 
     else 
-    { System.err.println(">>> Not a valid JavaScript AST:"); 
+    { System.err.println("!! Not a valid JavaScript AST:"); 
       System.err.println(c.lexicals); 
       return; 
     } 
@@ -25878,6 +25926,158 @@ public void produceCUI(PrintWriter out)
       } 
 
     }    
+
+    repaint(); 
+  }
+
+  public void loadFromVB()
+  { BufferedReader br = null;
+    Vector res = new Vector();
+    String s;
+    boolean eof = false;
+    File sourcefile = new File("output/ast.txt");  
+      /* default */ 
+
+    try
+    { br = new BufferedReader(new FileReader(sourcefile)); }
+    catch (FileNotFoundException _e)
+    { System.out.println("File not found: " + sourcefile);
+      return; 
+    }
+
+    String sourcestring = ""; 
+    int noflines = 0; 
+
+    while (!eof)
+    { try { s = br.readLine(); }
+      catch (IOException _ex)
+      { System.err.println("!! Reading AST file output/ast.txt failed.");
+        return; 
+      }
+      if (s == null) 
+      { eof = true; 
+        break; 
+      }
+      else 
+      { sourcestring = sourcestring + s + " "; } 
+      noflines++; 
+    }
+
+    System.out.println(">>> Read " + noflines + " lines"); 
+
+    Compiler2 c = new Compiler2();    
+
+    ASTTerm xx =
+      c.parseGeneralAST(sourcestring); 
+
+    if (xx == null) 
+    { System.err.println("!! Invalid text for general AST"); 
+      System.err.println(c.lexicals); 
+      return; 
+    } 
+   
+    if (xx instanceof ASTCompositeTerm)  { } 
+    else 
+    { System.err.println("!! Not a valid VisualBasic6 AST:"); 
+      System.err.println(c.lexicals); 
+      return; 
+    } 
+
+    File vb2uml = new File("cg/VB2UML.cstl"); 
+    Vector vbs = new Vector(); 
+    CGSpec spec = loadCSTL(vb2uml,vbs); 
+
+    if (spec == null) 
+    { System.err.println("!! ERROR: No file " + vb2uml.getName()); 
+      return; 
+    } 
+
+    String reskm3 = xx.cg(spec); 
+    String arg1 = CGRule.correctNewlines(reskm3); 
+    System.out.println(arg1); 
+
+    loadKM3FromText("package app {\n " + arg1 + "\n}\n\n"); 
+ 
+  /*  
+    java.util.Map m1 = new java.util.HashMap();
+    java.util.Map m2 = new java.util.HashMap();
+    Vector v1 = new Vector();
+    Vector v2 = new Vector(); 
+
+    Vector expr = 
+     ((ASTCompositeTerm) xx).vbprogramToKM3(
+                                       m1,m2,v1,v2); 
+
+    for (int i = 0; i < expr.size(); i++) 
+    { Object elem = expr.get(i); 
+
+      if (elem instanceof Entity)
+      { Entity ent = 
+          (Entity) elem;
+        // entities.add(ent);  
+        System.out.println(ent.getKM3());
+      } 
+    }  
+
+    for (int i = 0; i < expr.size(); i++) 
+    { Object elem = expr.get(i); 
+
+      if (elem instanceof BehaviouralFeature)
+      { BehaviouralFeature bf = 
+          (BehaviouralFeature) elem;
+     
+        System.out.println(bf.getKM3());
+      } 
+      else if (elem instanceof Entity)
+      { } 
+      else
+      { System.out.println(elem); } 
+    }  
+
+    System.out.println(); 
+
+    Vector newentities = new Vector(); 
+
+    for (int i = 0; i < v2.size(); i++) 
+    { Entity newent = (Entity) v2.get(i); 
+    
+      addEntity(newent, 100+(i*50), 100 + (150*i % 600));
+      newentities.add(newent); 
+    } 
+
+    for (int i = 0; i < v1.size(); i++) 
+    { Type tt = (Type) v1.get(i); 
+      addType(tt, 100+(i*50), 100 + (i*150 % 600)); 
+    }
+
+    repaint(); 
+
+    for (int k = 0; k < newentities.size(); k++) 
+    { Entity nent = (Entity) newentities.get(k);
+ 
+      if (nent.getSuperclass() != null) 
+      { Entity supc = nent.getSuperclass();
+        Entity actualSup = 
+          (Entity) ModelElement.lookupByName(supc.getName(), 
+                                             entities); 
+        if (actualSup != null)  
+        { Generalisation g = new Generalisation(actualSup,nent);
+          addInheritance(g,actualSup,nent);
+          nent.setSuperclass(actualSup); 
+        }  
+      } 
+
+      Vector itfs = nent.getInterfaces(); 
+      System.out.println(">>> Interfaces of " + nent + " are: " + itfs); 
+
+      for (int q = 0; q < itfs.size(); q++) 
+      { Entity supi = (Entity) itfs.get(q);
+        Generalisation gi = new Generalisation(supi,nent);
+        gi.setRealization(true); 
+        addInheritance(gi,supi,nent);
+      } 
+
+    }    */ 
 
     repaint(); 
   }

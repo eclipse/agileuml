@@ -336,6 +336,13 @@ public void findPlugins()
     // loadDataMI.setMnemonic(KeyEvent.VK_L);
     fileMenu.add(fromJSMI);
 
+    JMenuItem fromVBMI = 
+      new JMenuItem("From VB AST",openIcon);
+    fromVBMI.addActionListener(this);
+    fromVBMI.setToolTipText(
+      "Creates UML/OCL from AST produced by Antlr VisualBasic6 parser, in output/ast.txt");
+    fileMenu.add(fromVBMI);
+
     fileMenu.addSeparator(); 
 
     JMenu loadComponentMenu = 
@@ -752,6 +759,8 @@ public void findPlugins()
     oclMI.addActionListener(this);
     viewMenu.add(oclMI);
 
+    viewMenu.addSeparator(); 
+
     JMenuItem ucdepsMI = new JMenuItem("Use Case Dependencies"); 
     ucdepsMI.addActionListener(this);
     viewMenu.add(ucdepsMI);
@@ -759,6 +768,10 @@ public void findPlugins()
     JMenuItem measuresItem = new JMenuItem("Measures"); 
     measuresItem.addActionListener(this);
     viewMenu.add(measuresItem);
+
+    JMenuItem compareItem = new JMenuItem("Compare models"); 
+    compareItem.addActionListener(this);
+    viewMenu.add(compareItem);
 
 
     viewMenu.addSeparator();
@@ -800,6 +813,11 @@ public void findPlugins()
     JMenuItem qualityMenu = new JMenu("Refactoring"); 
     transMenu.add(qualityMenu); 
 
+
+    JMenuItem extractIntf = 
+      new JMenuItem("Extract Interface"); 
+    extractIntf.addActionListener(this);
+    qualityMenu.add(extractIntf);
 
     JMenuItem remredin = 
       new JMenuItem("Remove Redundant Inheritance"); 
@@ -1613,6 +1631,10 @@ public void findPlugins()
       { ucdArea.loadFromJavaScript();
         saved = true; 
       }
+      else if (label.equals("From VB AST")) 
+      { ucdArea.loadFromVB();
+        saved = true; 
+      }
       else if (label.equals("Print"))
       { printData(); } 
       else if (label.equals("B for entities"))
@@ -2104,6 +2126,9 @@ public void findPlugins()
 
         new TextDisplay("Measures","output/tmp.txt");
       }  
+      else if (label.equals("Compare models"))
+      { ucdArea.compareModels("m1", "m2");
+      }  
       else if (label.equals("Controller B Code"))
       {  } 
       else if (label.equals("Controller Java Code"))
@@ -2350,6 +2375,10 @@ public void findPlugins()
       }
       else if (label.equals("Quality check"))
       { ucdArea.qualityCheck(); }
+      else if (label.equals("Extract Interface"))
+      { ucdArea.extractInterface(); 
+        repaint(); 
+      }
       else if (label.equals("Introduce Superclass"))
       { introduceSuperclass(); 
         repaint(); 

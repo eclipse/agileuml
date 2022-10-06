@@ -531,6 +531,11 @@ public class CGRule
           return repl;
         } 
       }
+
+      if (term instanceof ASTSymbolTerm)
+      { ASTSymbolTerm st = (ASTSymbolTerm) term;
+        return "" + st.symbol.charAt(0);  
+      } 
          
       String replx = term.cg(cgs); 
       return replx;              
@@ -549,6 +554,10 @@ public class CGRule
           return repl;
         } 
       } 
+      if (term instanceof ASTSymbolTerm)
+      { ASTSymbolTerm st = (ASTSymbolTerm) term;
+        return "" + st.symbol.charAt(1);  
+      } 
     }   
           
       if ("third".equals(mffeat) || 
@@ -564,6 +573,11 @@ public class CGRule
             return repl;
           } 
         }    
+        if (term instanceof ASTSymbolTerm)
+        { ASTSymbolTerm st = (ASTSymbolTerm) term;
+          return "" + st.symbol.charAt(2);  
+        } 
+
       }   
   
       if ("fourth".equals(mffeat) || 
@@ -579,6 +593,11 @@ public class CGRule
             return repl;
           } 
         } 
+        if (term instanceof ASTSymbolTerm)
+        { ASTSymbolTerm st = (ASTSymbolTerm) term;
+          return "" + st.symbol.charAt(3);  
+        } 
+
       }   
     
       if ("fifth".equals(mffeat) || 
@@ -594,10 +613,15 @@ public class CGRule
             return repl; 
           } 
         } 
+        if (term instanceof ASTSymbolTerm)
+        { ASTSymbolTerm st = (ASTSymbolTerm) term;
+          return "" + st.symbol.charAt(4);  
+        } 
+
       }   
   
       if ("last".equals(mffeat))
-      { // get first subterm of obj
+      { // get last subterm of obj
         if (term instanceof ASTCompositeTerm)
         { ASTCompositeTerm ct = (ASTCompositeTerm) term; 
           int tsize = ct.terms.size(); 
@@ -605,6 +629,12 @@ public class CGRule
           String repl = ct1.cg(cgs); 
           return repl; 
         } 
+        if (term instanceof ASTSymbolTerm)
+        { ASTSymbolTerm st = (ASTSymbolTerm) term;
+          int ssize = st.symbol.length();
+          return "" + st.symbol.charAt(ssize-1);  
+        } 
+
       }   
       
       if ("tail".equals(mffeat))

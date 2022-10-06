@@ -289,6 +289,9 @@ abstract class Statement implements Cloneable
     return res;
   } // Other cases, for all other forms of statement. 
 
+  public void findClones(java.util.Map clones, String rule, String op)
+  { return; } 
+
   public static boolean hasResultDeclaration(Statement st)
   { if (st == null) { return false; } 
     if (st instanceof SequenceStatement) 
@@ -767,6 +770,21 @@ class ReturnStatement extends Statement
 
   public Object clone()
   { return new ReturnStatement(value); } 
+
+  public void findClones(java.util.Map clones, String rule, String op)
+  { if (value == null || 
+        value.syntacticComplexity() < 10) 
+    { return; }
+    String val = value + ""; 
+    Vector used = (Vector) clones.get(val);
+    if (used == null)  
+    { used = new Vector(); }
+    if (rule != null)
+    { used.add(rule); }
+    else if (op != null)
+    { used.add(op); }
+    clones.put(val,used);
+  }
 
   public boolean hasValue()
   { return value != null; } 
@@ -1520,6 +1538,19 @@ class InvocationStatement extends Statement
     res.entity = entity; 
     return res; 
   } // parameters? 
+
+  public void findClones(java.util.Map clones, String rule, String op)
+  { if (this.syntacticComplexity() < 10) { return; }
+    String val = callExp + ""; 
+    Vector used = (Vector) clones.get(val);
+    if (used == null)  
+    { used = new Vector(); }
+    if (rule != null)
+    { used.add(rule); }
+    else if (op != null)
+    { used.add(op); }
+    clones.put(val,used);
+  }
 
   public Statement dereference(BasicExpression var)
   { InvocationStatement res = new InvocationStatement(action,target,assignsTo); 
@@ -4856,6 +4887,13 @@ class SequenceStatement extends Statement
     }
     return args;
   }
+
+  public void findClones(java.util.Map clones, String rule, String op)
+  { for (int i = 0; i < statements.size(); i++) 
+    { Statement stat = (Statement) statements.get(i); 
+      stat.findClones(clones,rule,op); 
+    }
+  } 
 
   public Statement dereference(BasicExpression var)
   { Vector newstats = new Vector(); 
@@ -8491,6 +8529,19 @@ class AssignStatement extends Statement
     return res; 
   } 
 
+  public void findClones(java.util.Map clones, String rule, String op)
+  { if (this.syntacticComplexity() < 10) { return; }
+    String val = rhs + ""; 
+    Vector used = (Vector) clones.get(val);
+    if (used == null)  
+    { used = new Vector(); }
+    if (rule != null)
+    { used.add(rule); }
+    else if (op != null)
+    { used.add(op); }
+    clones.put(val,used);
+  }
+
   public Statement dereference(BasicExpression var)
   { Expression newlhs = (Expression) lhs.dereference(var); 
     Expression newrhs = (Expression) rhs.dereference(var); 
@@ -8643,7 +8694,8 @@ class AssignStatement extends Statement
 
     if (type != null)  // declare it
     { Attribute att = new Attribute(lhs + "", rhs.type, ModelElement.INTERNAL); 
-      att.setElementType(lhs.elementType); 
+      att.setElementType(lhs.elementType);
+      System.out.println(">>> " + lhs + " has type " + att.getType());  
       env.add(att); 
     } 
 
@@ -9374,6 +9426,22 @@ class ConditionalStatement extends Statement
     { elsec = (Statement) elsePart.clone(); }
     return new ConditionalStatement(testc, ifc, elsec); 
   }  
+
+  public void findClones(java.util.Map clones, String rule, String op)
+  { if (this.syntacticComplexity() < 10) { return; }
+    String val = test + ""; 
+    Vector used = (Vector) clones.get(val);
+    if (used == null)  
+    { used = new Vector(); }
+    if (rule != null)
+    { used.add(rule); }
+    else if (op != null)
+    { used.add(op); }
+    clones.put(val,used);
+    ifPart.findClones(clones,rule,op); 
+    if (elsePart != null) 
+    { elsePart.findClones(clones,rule,op); } 
+  }
 
   public Statement generateDesign(java.util.Map env, boolean local)
   { Statement ifc = ifPart.generateDesign(env,local);
