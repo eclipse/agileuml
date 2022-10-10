@@ -289,9 +289,27 @@ abstract class Statement implements Cloneable
     return res;
   } // Other cases, for all other forms of statement. 
 
+  /* All cloned expressions in this statement */ 
   public void findClones(java.util.Map clones, String rule, String op)
   { return; } 
 
+  /* All expression uses of var in this statement */ 
+  public Vector getUses(String var) 
+  { return new Vector(); } 
+
+  /* Occurrences of any variable of vars in this statement */ 
+  public Vector variablesUsedIn(Vector vars) 
+  { return new Vector(); } 
+
+  /* Occurrences of any attribute/role in this statement */ 
+  public Vector allFeaturesUsedIn() 
+  { return new Vector(); } 
+
+  /* Expression occurrences of any variable in this statement */ 
+  public Vector getVariableUses()
+  { return new Vector(); } 
+
+  
   public static boolean hasResultDeclaration(Statement st)
   { if (st == null) { return false; } 
     if (st instanceof SequenceStatement) 
@@ -773,7 +791,7 @@ class ReturnStatement extends Statement
 
   public void findClones(java.util.Map clones, String rule, String op)
   { if (value == null || 
-        value.syntacticComplexity() < 10) 
+        value.syntacticComplexity() < UCDArea.CLONE_LIMIT) 
     { return; }
     String val = value + ""; 
     Vector used = (Vector) clones.get(val);
@@ -1034,6 +1052,27 @@ class ReturnStatement extends Statement
     if (value == null) 
     { return res; } 
     return value.allOperationsUsedIn(); 
+  } 
+
+  public Vector getUses(String var)
+  { Vector res = new Vector(); 
+    if (value == null) 
+    { return res; } 
+    return value.getUses(var); 
+  } 
+
+  public Vector getVariableUses()
+  { Vector res = new Vector(); 
+    if (value == null) 
+    { return res; } 
+    return value.getVariableUses(); 
+  } 
+
+  public Vector allFeaturesUsedIn()
+  { Vector res = new Vector(); 
+    if (value == null) 
+    { return res; } 
+    return value.allFeaturesUsedIn(); 
   } 
 
   public Vector equivalentsUsedIn()
@@ -1540,7 +1579,8 @@ class InvocationStatement extends Statement
   } // parameters? 
 
   public void findClones(java.util.Map clones, String rule, String op)
-  { if (this.syntacticComplexity() < 10) { return; }
+  { if (this.syntacticComplexity() < UCDArea.CLONE_LIMIT) 
+    { return; }
     String val = callExp + ""; 
     Vector used = (Vector) clones.get(val);
     if (used == null)  
@@ -2038,6 +2078,19 @@ class InvocationStatement extends Statement
     return callExp.allOperationsUsedIn(); 
   } 
 
+  public Vector getUses(String var) 
+  { if (callExp != null) 
+    { return callExp.getUses(var); } 
+    return new Vector(); 
+  } 
+
+  public Vector getVariableUses() 
+  { if (callExp != null) 
+    { return callExp.getVariableUses(); } 
+    return new Vector(); 
+  } 
+
+
   public Vector equivalentsUsedIn()
   { Vector res = new Vector(); 
     if (callExp == null) 
@@ -2143,6 +2196,21 @@ class ImplicitInvocationStatement extends Statement
     res.entity = entity; 
     return res; 
   } 
+
+  public void findClones(java.util.Map clones, String rule, String op)
+  { if (callExp == null || 
+        callExp.syntacticComplexity() < UCDArea.CLONE_LIMIT) 
+    { return; }
+    String val = callExp + ""; 
+    Vector used = (Vector) clones.get(val);
+    if (used == null)  
+    { used = new Vector(); }
+    if (rule != null)
+    { used.add(rule); }
+    else if (op != null)
+    { used.add(op); }
+    clones.put(val,used);
+  }
 
   public Statement dereference(BasicExpression var)
   { ImplicitInvocationStatement res = 
@@ -2386,6 +2454,19 @@ class ImplicitInvocationStatement extends Statement
     { return res; } 
     return callExp.allOperationsUsedIn(); 
   } 
+
+  public Vector getUses(String var) 
+  { if (callExp != null) 
+    { return callExp.getUses(var); } 
+    return new Vector();
+  } 
+
+  public Vector getVariableUses() 
+  { if (callExp != null) 
+    { return callExp.getVariableUses(); } 
+    return new Vector();
+  } 
+
 
   public Vector equivalentsUsedIn()
   { Vector res = new Vector(); 
@@ -2649,6 +2730,34 @@ class WhileStatement extends Statement
 
     return res; 
   } 
+
+  public void findClones(java.util.Map clones, String rule, String op)
+  { if (loopRange != null && 
+        loopRange.syntacticComplexity() >= UCDArea.CLONE_LIMIT) 
+    { String val = loopRange + ""; 
+      Vector used = (Vector) clones.get(val);
+      if (used == null)  
+      { used = new Vector(); }
+      if (rule != null)
+      { used.add(rule); }
+      else if (op != null)
+      { used.add(op); }
+      clones.put(val,used);
+    }  
+    else if (loopTest != null && 
+        loopTest.syntacticComplexity() >= UCDArea.CLONE_LIMIT) 
+    { String val = loopTest + ""; 
+      Vector used = (Vector) clones.get(val);
+      if (used == null)  
+      { used = new Vector(); }
+      if (rule != null)
+      { used.add(rule); }
+      else if (op != null)
+      { used.add(op); }
+      clones.put(val,used);
+    } 
+    body.findClones(clones,rule,op); 
+  }
 
   public Statement addContainerReference(BasicExpression ref,
                                          String var,
@@ -3685,6 +3794,58 @@ class WhileStatement extends Statement
     return res;  
   }  
 
+  public Vector getUses(String var)
+  { Vector res = body.getUses(var);
+
+    if (loopRange != null) 
+    { res.addAll(loopRange.getUses(var)); } 
+     
+    if (loopTest == null) 
+    { return res; } 
+    Vector res2 = loopTest.getUses(var);
+    res.addAll(res2);  
+
+    // System.out.println("LOOP READ FRAME = " + res); 
+
+    return res;  
+  }  
+
+  public Vector getVariableUses()
+  { Vector res = body.getVariableUses();
+
+    String lv = ""; 
+
+    if (loopVar != null) 
+    { lv = loopVar + ""; 
+      Expression expr = 
+        ModelElement.lookupExpressionByName(lv, res); 
+      if (expr == null) 
+      { System.err.println("! Warning: no use of loop variable " +
+                 loopVar + " in loop body: " + body); 
+      } 
+      res = ModelElement.removeExpressionByName(lv,res); 
+    } 
+
+    if (loopRange != null) 
+    { Vector lrvars = loopRange.getVariableUses(); 
+      res.addAll(lrvars); 
+      Expression rexpr = 
+        ModelElement.lookupExpressionByName(lv, lrvars); 
+      if (loopVar != null && rexpr != null) 
+      { System.err.println("!! Error: loop variable " +
+               loopVar + " used in loop range: " + loopRange); 
+      } 
+    } 
+     
+    if (loopTest == null) 
+    { return res; } 
+
+    Vector res2 = loopTest.getVariableUses();
+    res.addAll(res2);  
+
+    return res;  
+  }  
+
   public Vector equivalentsUsedIn()
   { Vector res = body.equivalentsUsedIn();
 
@@ -3886,6 +4047,9 @@ class CreationStatement extends Statement
     cs.setElementType(t.getElementType()); 
     return cs; 
   } 
+
+  public String getDefinedVariable()
+  { return assignsTo; } 
 
   public void setInitialValue(String init)
   { initialValue = init; } 
@@ -4153,7 +4317,8 @@ class CreationStatement extends Statement
     else if (createsInstanceOf.equals("boolean") || 
              createsInstanceOf.equals("int") ||
         createsInstanceOf.equals("long") || 
-        createsInstanceOf.equals("String") || createsInstanceOf.equals("double"))
+        createsInstanceOf.equals("String") || 
+        createsInstanceOf.equals("double"))
     { return "  " + mode + createsInstanceOf + " " + assignsTo + ";"; } 
 
     if (createsInstanceOf.startsWith("Set") || createsInstanceOf.startsWith("Sequence"))
@@ -4657,14 +4822,28 @@ class CreationStatement extends Statement
   public Vector allOperationsUsedIn()
   { Vector res = new Vector(); 
     if (initialExpression != null) 
-	{ res.addAll(initialExpression.allOperationsUsedIn()); }  
+    { res.addAll(initialExpression.allOperationsUsedIn()); }  
+    return res; 
+  } 
+
+  public Vector getUses(String var)
+  { Vector res = new Vector(); 
+    if (initialExpression != null) 
+    { res.addAll(initialExpression.getUses(var)); }  
+    return res; 
+  } 
+
+  public Vector getVariableUses()
+  { Vector res = new Vector(); 
+    if (initialExpression != null) 
+    { res.addAll(initialExpression.getVariableUses()); }  
     return res; 
   } 
 
   public Vector equivalentsUsedIn()
   { Vector res = new Vector(); 
     if (initialExpression != null) 
-	{ res.addAll(initialExpression.equivalentsUsedIn()); }  
+    { res.addAll(initialExpression.equivalentsUsedIn()); }  
     return res; 
   } 
 
@@ -5590,6 +5769,49 @@ class SequenceStatement extends Statement
     return res; 
   } 
 
+  public Vector getUses(String var)
+  { Vector res = new Vector(); 
+    for (int i = 0; i < statements.size(); i++) 
+    { Statement stat = (Statement) statements.get(i); 
+      res.addAll(stat.getUses(var)); 
+    } 
+    return res; 
+  } 
+
+  public Vector getVariableUses()
+  { Vector res = new Vector(); 
+
+    if (statements.size() == 0)
+    { return res; } 
+
+    Statement s1 = (Statement) statements.get(0); 
+
+    if (statements.size() == 1) 
+    { return s1.getVariableUses(); } 
+
+    Vector tailseq = new Vector(); 
+    tailseq.addAll(statements); 
+    tailseq.remove(0); 
+    SequenceStatement sstail = 
+        new SequenceStatement(tailseq); 
+    res = sstail.getVariableUses(); 
+
+    if (s1 instanceof CreationStatement)
+    { CreationStatement cs = (CreationStatement) s1; 
+      String var = cs.getDefinedVariable(); 
+      Expression use = 
+        ModelElement.lookupExpressionByName(var,res); 
+      if (use == null) 
+      { System.err.println("! Warning: no use of local variable " + var + " in statements " + sstail); } 
+      res = ModelElement.removeExpressionByName(var,res); 
+      return res; 
+    } 
+
+    res.addAll(s1.getVariableUses()); 
+
+    return res; 
+  } 
+
   public Vector equivalentsUsedIn()
   { Vector res = new Vector(); 
     for (int i = 0; i < statements.size(); i++) 
@@ -6230,6 +6452,20 @@ class ErrorStatement extends Statement
     return res; 
   } 
 
+  public Vector getUses(String var)
+  { Vector res = new Vector(); 
+    if (thrownObject != null) 
+    { res = thrownObject.getUses(var); } 
+    return res; 
+  } 
+
+  public Vector getVariableUses()
+  { Vector res = new Vector(); 
+    if (thrownObject != null) 
+    { res = thrownObject.getVariableUses(); } 
+    return res; 
+  } 
+
   public Vector equivalentsUsedIn()
   { Vector res = new Vector(); 
     if (thrownObject != null) 
@@ -6540,6 +6776,24 @@ class AssertStatement extends Statement
     return res; 
   } 
 
+  public Vector getUses(String var)
+  { Vector res = new Vector(); 
+    res = condition.getUses(var); 
+    
+    if (message != null) 
+    { res = VectorUtil.union(res, message.getUses(var)); } 
+    return res; 
+  } 
+
+  public Vector getVariableUses()
+  { Vector res = new Vector(); 
+    res = condition.getVariableUses(); 
+    
+    if (message != null) 
+    { res = VectorUtil.union(res, message.getVariableUses()); } 
+    return res; 
+  } 
+
   public Vector equivalentsUsedIn()
   { Vector res = new Vector(); 
     res = condition.equivalentsUsedIn(); 
@@ -6653,6 +6907,11 @@ class CatchStatement extends Statement
 
   public Statement dereference(BasicExpression var) 
   { return new CatchStatement(caughtObject.dereference(var), action.dereference(var)); }
+
+  public void findClones(java.util.Map clones, String rule, String op)
+  { if (action != null)
+    { action.findClones(clones,rule,op); }
+  } 
 
   public Statement addContainerReference(BasicExpression ref,
                                          String var,
@@ -6818,6 +7077,18 @@ class CatchStatement extends Statement
   public Vector allOperationsUsedIn()
   { Vector res = new Vector(); 
     res = action.allOperationsUsedIn();  
+    return res; 
+  } 
+
+  public Vector getUses(String var)
+  { Vector res = new Vector(); 
+    res = action.getUses(var);  
+    return res; 
+  } 
+
+  public Vector getVariableUses()
+  { Vector res = new Vector(); 
+    res = action.getVariableUses();  
     return res; 
   } 
 
@@ -7007,6 +7278,17 @@ class TryStatement extends Statement
 
     return res; 
   }
+
+  public void findClones(java.util.Map clones, String rule, String op)
+  { if (body != null) 
+    { body.findClones(clones,rule,op); } 
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement stat = (Statement) catchClauses.get(i); 
+      stat.findClones(clones,rule,op); 
+    }
+    if (endStatement != null) 
+    { endStatement.findClones(clones,rule,op); } 
+  } 
 
   public Vector singleMutants()
   { if (body == null) 
@@ -7442,6 +7724,42 @@ class TryStatement extends Statement
     return res; 
   } 
 
+  public Vector getUses(String var)
+  { Vector res = new Vector(); 
+    if (body != null) 
+    { res = VectorUtil.union(res,body.getUses(var)); }   
+
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      Vector vv = cc.getUses(var); 
+      res = VectorUtil.union(res,vv); 
+    } 
+
+    if (endStatement != null) 
+    { Vector endrd = endStatement.getUses(var); 
+      res = VectorUtil.union(res,endrd); 
+    }  
+    return res; 
+  } 
+
+  public Vector getVariableUses()
+  { Vector res = new Vector(); 
+    if (body != null) 
+    { res = VectorUtil.union(res,body.getVariableUses()); }   
+
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      Vector vv = cc.getVariableUses(); 
+      res = VectorUtil.union(res,vv); 
+    } 
+
+    if (endStatement != null) 
+    { Vector endrd = endStatement.getVariableUses(); 
+      res = VectorUtil.union(res,endrd); 
+    }  
+    return res; 
+  } 
+
   public Vector equivalentsUsedIn()
   { Vector res = new Vector(); 
     if (body != null) 
@@ -7615,6 +7933,12 @@ class IfStatement extends Statement
     } 
   } 
   
+  public void findClones(java.util.Map clones, String rule, String op)
+  { for (int i = 0; i < cases.size(); i++) 
+    { IfCase cse = (IfCase) cases.get(i); 
+      cse.findClones(clones,rule,op); 
+    } 
+  }
 
   public Statement dereference(BasicExpression var) 
   { Vector newcases = new Vector(); 
@@ -8284,6 +8608,24 @@ class IfStatement extends Statement
     return res;  
   }  
 
+  public Vector getUses(String var)
+  { Vector res = new Vector();
+    for (int i = 0; i < cases.size(); i++) 
+    { IfCase ic = (IfCase) cases.get(i); 
+      res.addAll(ic.getUses(var));
+    } 
+    return res;  
+  }  
+
+  public Vector getVariableUses()
+  { Vector res = new Vector();
+    for (int i = 0; i < cases.size(); i++) 
+    { IfCase ic = (IfCase) cases.get(i); 
+      res.addAll(ic.getVariableUses());
+    } 
+    return res;  
+  }  
+
   public Vector equivalentsUsedIn()
   { Vector res = new Vector();
     for (int i = 0; i < cases.size(); i++) 
@@ -8530,7 +8872,8 @@ class AssignStatement extends Statement
   } 
 
   public void findClones(java.util.Map clones, String rule, String op)
-  { if (this.syntacticComplexity() < 10) { return; }
+  { if (rhs.syntacticComplexity() < UCDArea.CLONE_LIMIT) 
+    { return; }
     String val = rhs + ""; 
     Vector used = (Vector) clones.get(val);
     if (used == null)  
@@ -8732,7 +9075,7 @@ class AssignStatement extends Statement
     if (vars.contains(lhs.toString()))  // lhs.data
     { res.add(this); } 
     else 
-    { System.out.println("Deleting statement: " + this); } 
+    { System.out.println(">> Deleting statement from slice: " + this); } 
     return res; 
   }  
 
@@ -8999,6 +9342,20 @@ class AssignStatement extends Statement
     return res;  
   }  
 
+  public Vector getUses(String var)
+  { Vector res = new Vector();
+    res.addAll(lhs.getUses(var));  
+    res.addAll(rhs.getUses(var));  
+    return res;  
+  }  
+
+  public Vector getVariableUses()
+  { Vector res = new Vector();
+    res.addAll(lhs.getVariableUses());  
+    res.addAll(rhs.getVariableUses());  
+    return res;  
+  }  
+
   public Vector equivalentsUsedIn()
   { Vector res = new Vector();
     res.addAll(rhs.equivalentsUsedIn());  
@@ -9037,7 +9394,23 @@ class IfCase
     IfCase res = new IfCase(newtest,newif); 
     res.setEntity(entity); 
     return res; 
-  }  
+  } 
+
+  public void findClones(java.util.Map clones, String rule, String op)
+  { if (test.syntacticComplexity() >= UCDArea.CLONE_LIMIT) 
+    { String val = test + ""; 
+      Vector used = (Vector) clones.get(val);
+      if (used == null)
+      { used = new Vector(); }
+      if (rule != null)
+      { used.add(rule); }
+      else if (op != null)
+      { used.add(op); }
+      clones.put(val,used);
+    }
+    ifPart.findClones(clones,rule,op);
+  }
+ 
 
   public IfCase addContainerReference(BasicExpression ref,
                                       String var,
@@ -9277,6 +9650,20 @@ class IfCase
     return res;  
   }  
 
+  public Vector getUses(String var)
+  { Vector res = new Vector();
+    res.addAll(test.getUses(var)); 
+    res.addAll(ifPart.getUses(var)); 
+    return res;  
+  }  
+
+  public Vector getVariableUses()
+  { Vector res = new Vector();
+    res.addAll(test.getVariableUses()); 
+    res.addAll(ifPart.getVariableUses()); 
+    return res;  
+  }  
+
   public Vector equivalentsUsedIn()
   { Vector res = new Vector();
     res.addAll(test.equivalentsUsedIn()); 
@@ -9428,16 +9815,17 @@ class ConditionalStatement extends Statement
   }  
 
   public void findClones(java.util.Map clones, String rule, String op)
-  { if (this.syntacticComplexity() < 10) { return; }
-    String val = test + ""; 
-    Vector used = (Vector) clones.get(val);
-    if (used == null)  
-    { used = new Vector(); }
-    if (rule != null)
-    { used.add(rule); }
-    else if (op != null)
-    { used.add(op); }
-    clones.put(val,used);
+  { if (test.syntacticComplexity() >= UCDArea.CLONE_LIMIT)
+    { String val = test + ""; 
+      Vector used = (Vector) clones.get(val);
+      if (used == null)  
+      { used = new Vector(); }
+      if (rule != null)
+      { used.add(rule); }
+      else if (op != null)
+      { used.add(op); }
+      clones.put(val,used);
+    } 
     ifPart.findClones(clones,rule,op); 
     if (elsePart != null) 
     { elsePart.findClones(clones,rule,op); } 
@@ -9796,6 +10184,24 @@ class ConditionalStatement extends Statement
     return res;  
   }  
 
+  public Vector getUses(String var)
+  { Vector res = new Vector();
+    res.addAll(test.getUses(var)); 
+    res.addAll(ifPart.getUses(var)); 
+    if (elsePart != null) 
+    { res.addAll(elsePart.getUses(var)); } 
+    return res;  
+  }  
+
+  public Vector getVariableUses()
+  { Vector res = new Vector();
+    res.addAll(test.getVariableUses()); 
+    res.addAll(ifPart.getVariableUses()); 
+    if (elsePart != null) 
+    { res.addAll(elsePart.getVariableUses()); } 
+    return res;  
+  }  
+
   public Vector equivalentsUsedIn()
   { Vector res = new Vector();
     res.addAll(test.equivalentsUsedIn()); 
@@ -9865,6 +10271,10 @@ class FinalStatement extends Statement
   { Statement ifc = (Statement) body.clone(); 
     return new FinalStatement(ifc); 
   }  
+
+  public void findClones(java.util.Map clones, String rule, String op)
+  { body.findClones(clones,rule,op); } 
+
 
   public Statement generateDesign(java.util.Map env, boolean local)
   { return this; }  
@@ -10037,6 +10447,18 @@ class FinalStatement extends Statement
   public Vector allOperationsUsedIn()
   { Vector res = new Vector();
     res.addAll(body.allOperationsUsedIn()); 
+    return res;  
+  }  
+
+  public Vector getUses(String var)
+  { Vector res = new Vector();
+    res.addAll(body.getUses(var)); 
+    return res;  
+  }  
+
+  public Vector getVariableUses()
+  { Vector res = new Vector();
+    res.addAll(body.getVariableUses()); 
     return res;  
   }  
 

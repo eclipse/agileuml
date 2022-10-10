@@ -63,10 +63,22 @@ public class Entity extends ModelElement implements Comparable
     return true; 
   } 
 
-  public String getLocalName()
-  { // part after last '$'
-    int dind = name.lastIndexOf("$"); 
-    return name.substring(dind+1); 
+  public static boolean strictEntityName(String ename)
+  { if (ename.length() == 0) 
+    { return false; } 
+    if (Character.isLetter(ename.charAt(0)) || 
+        '_' == ename.charAt(0))
+    { } 
+    else 
+    { return false; } 
+    for (int i = 1; i < ename.length(); i++) 
+    { if (Character.isLetterOrDigit(ename.charAt(i)) || 
+          '_' == ename.charAt(i))
+      { } 
+      else 
+      { return false; } 
+    } 
+    return true; 
   } 
 
   public boolean isGeneric()
@@ -1753,6 +1765,114 @@ public class Entity extends ModelElement implements Comparable
     res.addAll(allInheritedAttributes()); 
     return res; 
   } // Also include the interfaces. 
+
+  public Vector duplicatedAttributes()
+  { Vector dups = new Vector(); 
+    Vector anames = new Vector(); 
+
+    Vector allatts = allAttributes(); 
+    for (int i = 0; i < allatts.size(); i++) 
+    { Attribute att = (Attribute) allatts.get(i); 
+      String aname = att.getName();
+
+      if (Character.isLowerCase(aname.charAt(0))) { } 
+      else 
+      { System.err.println("! Warning: attribute names should start with a lower case letter: " + aname); } 
+
+      if (Entity.strictEntityName(aname)) { } 
+      else 
+      { System.err.println("! Warning: attribute names should be alphanumeric: " + aname); } 
+ 
+      if (anames.contains(aname))
+      { dups.add(att); } 
+      else 
+      { anames.add(aname); } 
+    } 
+    return dups; 
+  } 
+
+  public Vector checkOperationNames()
+  { Vector dups = new Vector(); 
+    Vector opnames = new Vector(); 
+
+    Vector allops = getOperations(); 
+    for (int i = 0; i < allops.size(); i++) 
+    { BehaviouralFeature op = (BehaviouralFeature) allops.get(i); 
+      String opname = op.getName();
+
+      if (Character.isLowerCase(opname.charAt(0))) { } 
+      else 
+      { System.err.println("! Warning: operation names should start with a lower case letter: " + opname); } 
+
+      if (Entity.strictEntityName(opname)) { } 
+      else 
+      { System.err.println("! Warning: operation names should be alphanumeric: " + opname); } 
+ 
+      op.checkParameterNames(); 
+
+      if (opnames.contains(opname))
+      { dups.add(op); } 
+      else 
+      { opnames.add(opname); } 
+    } 
+    return dups; 
+  } 
+
+  public void checkOperationVariableUse()
+  { 
+    Vector allops = getOperations(); 
+    for (int i = 0; i < allops.size(); i++) 
+    { BehaviouralFeature op = (BehaviouralFeature) allops.get(i); 
+      op.checkVariableUse();
+    } 
+  } 
+
+  public double attributesSimilarity(Entity other)
+  { // Combined similarity of my attributes to any of other
+
+    Vector allatts = getAttributes(); 
+    Vector xatts = other.allAttributes(); 
+    double asim = 0.0; 
+    for (int i = 0; i < allatts.size(); i++) 
+    { Attribute att = (Attribute) allatts.get(i); 
+      double xsim = Entity.attributeSimilarity(att,xatts);
+      // System.out.println(">>> Similarity of " + att + " in " + xatts + " = " + xsim);  
+      asim = asim + xsim;
+      if (asim > 1.0)
+      { asim = 1.0; }   
+    } 
+    return asim; 
+  } 
+
+
+  public static double attributeSimilarity(Attribute att, Vector allatts) 
+  { double sim = 0.0; 
+    for (int i = 0; i < allatts.size(); i++) 
+    { Attribute xatt = (Attribute) allatts.get(i); 
+      double attsim = att.attributeSimilarity(xatt); 
+      if (attsim > sim) 
+      { sim = attsim; } 
+    } 
+    return sim; 
+  } 
+
+  public double allAttributesSimilarity(Vector atts)
+  { // max similarity of any att : atts to any of my attrs
+    double maxsim = 0.0; 
+    Vector allatts = allAttributes(); 
+    String lname = getLocalName(); 
+
+    for (int i = 0; i < atts.size(); i++) 
+    { Attribute xatt = (Attribute) atts.get(i); 
+      if (xatt.getEntity() != null && 
+          xatt.getEntity().getLocalName().equals(lname))
+      { double sim = Entity.attributeSimilarity(xatt,allatts); 
+        if (sim > maxsim)
+        { maxsim = sim; }
+      }  
+    } 
+    return maxsim; 
+  }   
 
   public Vector allProperties()
   { Vector res = new Vector();
@@ -11867,18 +11987,20 @@ public class Entity extends ModelElement implements Comparable
   { if (superclass == null && 
         interfaces.size() == 0) 
     { return true; } // ok
+
     for (int i = 0; i < attributes.size(); i++)
     { Attribute att = (Attribute) attributes.get(i);
       if (superclass.hasInheritedAttribute(att.getName()))
-      { System.err.println("Error: attribute " + att +
+      { System.err.println("!! Error: attribute " + att +
           " defined in " + this + " and an " +
           " ancestor class");
         return false;   
       }
+
       for (int j = 0; j < interfaces.size(); j++) 
       { Entity intf = (Entity) interfaces.get(j); 
         if (intf.hasInheritedAttribute(att.getName()))
-        { System.err.println("Error: attribute " + att +
+        { System.err.println("!! Error: attribute " + att +
             " defined in " + this + " and an " +
             " ancestor interface");
           return false;

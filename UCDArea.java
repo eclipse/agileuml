@@ -1,3 +1,4 @@
+
 /******************************
 * Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
@@ -12,7 +13,7 @@
  * 
  * Version information : 2.1
  *
- * Date :  October 2021
+ * Date :  October 2022
  * 
  * Description: This class describes the area that all the painting for 
  * the CD diagram will be performed and deals with painting them
@@ -163,6 +164,8 @@ public class UCDArea extends JPanel
   EntityCreateDialog entDialog; 
   ModifyUseCaseDialog editucDialog; 
   WinHandling state_win = new WinHandling(); 
+
+  public static int CLONE_LIMIT = 10; /* expression size */ 
 
 
   public UCDArea(UmlTool par)
@@ -2590,7 +2593,7 @@ public class UCDArea extends JPanel
   } 
 
   private void editEntityStereotypes(Entity ent)
-  { System.out.println("Edit stereotypes: " + ent.getStereotypesString()); 
+  { System.out.println(">> Edit stereotypes: " + ent.getStereotypesString()); 
     String newstereotypes = 
           JOptionPane.showInputDialog("Enter new stereotypes:", ent.getStereotypesString());
     if (newstereotypes != null) 
@@ -2610,7 +2613,7 @@ public class UCDArea extends JPanel
     String ent = eisucDialog.getEntity(); 
     Entity e = (Entity) ModelElement.lookupByName(ent,entities); 
     if (e == null) 
-    { System.err.println("Invalid entity name: " + ent); 
+    { System.err.println("!! Invalid entity name: " + ent); 
       return; 
     } 
 
@@ -2623,7 +2626,7 @@ public class UCDArea extends JPanel
       { name = name + role; } 
       OperationDescription od = new OperationDescription(name,e,nme,role); 
       useCases.add(od); 
-      System.out.println("New EIS Use Case: " + od); 
+      System.out.println(">> New EIS Use Case: " + od); 
     }  
   }
   
@@ -2698,11 +2701,11 @@ public class UCDArea extends JPanel
 
     UseCase uc = (UseCase) ModelElement.lookupByName(nme,useCases); 
     if (uc != null) 
-    { System.err.println("ERROR: Existing use case with name " + nme); 
+    { System.err.println("!! ERROR: Existing use case with name " + nme); 
       return; 
     } 
     else 
-    { System.out.println("New Use Case: " + nme);  
+    { System.out.println(">> New Use Case: " + nme);  
       uc = new UseCase(nme,null); 
       addGeneralUseCase(uc); 
       // useCases.add(uc); 
@@ -2758,7 +2761,7 @@ public class UCDArea extends JPanel
           } 
         } 
         else 
-        { System.err.println("ERROR: missing type for parameter: " + pp); }
+        { System.err.println("!! ERROR: missing type for parameter: " + pp); }
       } 
       uc.setParameters(patts); 
     } 
@@ -2850,7 +2853,7 @@ public class UCDArea extends JPanel
   public void reconstructUseCase(String nme, String ent, String role)
   { Entity e = (Entity) ModelElement.lookupByName(ent,entities); 
     if (e == null) 
-    { System.err.println("ERROR: Invalid entity name: " + ent); 
+    { System.err.println("!! ERROR: Invalid entity name: " + ent); 
       return; 
     } 
     if (nme.equals("add") || nme.equals("remove") || nme.equals("create") ||
@@ -2861,7 +2864,7 @@ public class UCDArea extends JPanel
       { name = name + role; } 
       OperationDescription od = new OperationDescription(name,e,nme,role); 
       useCases.add(od); 
-      System.out.println("New Use Case: " + od); 
+      System.out.println(">>> New Use Case: " + od); 
     }  
   }
 
@@ -2882,7 +2885,14 @@ public class UCDArea extends JPanel
   }
 
   public void displayMeasures(PrintWriter out)
-  { out.println(); 
+  { String cloneLimit = 
+          JOptionPane.showInputDialog("Enter clone size limit (default 10): ");
+    if (cloneLimit != null) 
+    { try { CLONE_LIMIT = Integer.parseInt(cloneLimit); } 
+      catch (Exception _ex) 
+      { CLONE_LIMIT = 10; } 
+    } 
+    out.println(); 
     out.println(); 
     System.err.println(); 
     System.err.println(); 
@@ -6638,14 +6648,14 @@ public class UCDArea extends JPanel
   public void addType(String tname, Vector values)
   { Type x = (Type) ModelElement.lookupByName(tname,types); 
     if (x != null) 
-    { System.err.println("ERROR: Redefining existing type -- not allowed!"); 
+    { System.err.println("!! ERROR: Redefining existing type -- not allowed!"); 
       return; 
     } 
 
     for (int i = 0; i < types.size(); i++) 
     { Type tt = (Type) types.get(i); 
       if (tt.valueClash(values))
-      { System.err.println("ERROR: Duplicate value in different types: " + tt); 
+      { System.err.println("!! ERROR: Duplicate value in different types: " + tt); 
         return; 
       } 
     } 
@@ -6669,7 +6679,7 @@ public class UCDArea extends JPanel
   { for (int i = 0; i < types.size(); i++) 
     { Type tt = (Type) types.get(i); 
       if (tt.valueClash(t.getValues()))
-      { System.err.println("Warning: Duplicate value in different types: " + tt + " and " + t); } 
+      { System.err.println("! Warning: Duplicate value in different types: " + tt + " and " + t); } 
     } 
 
     types.add(t); 
@@ -16573,10 +16583,10 @@ public void produceCUI(PrintWriter out)
     if (componentName != null && predefined)
     { // generate the appropriate component, such as DateComponent
 	
-	  Entity cent = (Entity) ModelElement.lookupByName(componentName,entities); 
+      Entity cent = (Entity) ModelElement.lookupByName(componentName,entities); 
 	  
-	  if (cent != null) 
-	  { System.out.println(">>> Component " + componentName + " is already in the system"); }
+      if (cent != null) 
+      { System.out.println(">>> Component " + componentName + " is already in the system"); }
       else if ("DateComponent".equals(componentName))
       { createDateComponent(); }
       else if ("FileAccessor".equals(componentName))
@@ -16605,22 +16615,47 @@ public void produceCUI(PrintWriter out)
   }
 
   public void compareModels(String m1, String m2)
-  { loadKM3FromFile(m1 + ".km3"); 
+  { loadKM3FromFile(new File(m1 + ".km3")); 
+
+    Vector oldattributes = new Vector(); 
+
     for (int i = 0; i < entities.size(); i++) 
     { Entity e = (Entity) entities.get(i);
+      if (e.isDerived()) { continue; } 
       e.addStereotype("source");  
       String oldname = e.getName(); 
       String newname = m1 + "$" + oldname; 
       renameEntity(e, oldname, newname); 
+      oldattributes.addAll(e.getAttributes()); 
     } 
+
+    // System.out.println(">>> All source attributes: " + oldattributes); 
+
+    for (int i = 0; i < useCases.size(); i++) 
+    { UseCase uc = (UseCase) useCases.get(i);
+      uc.addStereotype("source");  
+      String oldname = uc.getName(); 
+      String newname = m1 + "$" + oldname; 
+      renameUseCase(uc, oldname, newname); 
+    } 
+
     Vector oldentities = new Vector(); 
     oldentities.addAll(entities); 
     
     Vector newentities = new Vector(); 
 
-    loadKM3FromFile(m2 + ".km3"); 
+    Vector oldusecases = new Vector(); 
+    oldusecases.addAll(useCases); 
+    
+    Vector newusecases = new Vector(); 
+
+    Vector newattributes = new Vector(); 
+
+    loadKM3FromFile(new File(m2 + ".km3"));
+ 
     for (int i = 0; i < entities.size(); i++) 
     { Entity e = (Entity) entities.get(i);
+      if (e.isDerived()) { continue; } 
       if (oldentities.contains(e)) { continue; } 
 
       e.addStereotype("target");  
@@ -16628,54 +16663,153 @@ public void produceCUI(PrintWriter out)
       String newname = m2 + "$" + oldname; 
       renameEntity(e, oldname, newname); 
       newentities.add(e); 
+      newattributes.addAll(e.getAttributes()); 
+    } 
+
+    // System.out.println(">>> All target attributes: " + newattributes); 
+
+    for (int i = 0; i < useCases.size(); i++) 
+    { UseCase uc = (UseCase) useCases.get(i);
+      if (oldusecases.contains(uc)) { continue; } 
+
+      uc.addStereotype("target");  
+      String oldname = uc.getName(); 
+      String newname = m2 + "$" + oldname; 
+      renameUseCase(uc, oldname, newname); 
+      newusecases.add(uc); 
     } 
     
     int m1size = oldentities.size(); 
     int m2size = newentities.size(); 
 
+    int m1ucsize = oldusecases.size(); 
+    int m2ucsize = newusecases.size(); 
+
     System.out.println(); 
 
-    int m1Inm2 = 0; 
+    int m1Inm2 = 0;
+    double m1m2attsim = 0.0; 
+ 
     for (int i = 0; i < m1size; i++) 
     { Entity e1 = (Entity) oldentities.get(i); 
       String e1name = e1.getLocalName();
-      ModelElement me2 = ModelElement.lookupByName(m2 + "$" + e1name, newentities); 
+      ModelElement me2 = ModelElement.lookupByNameIgnoreCase(
+                            m2 + "$" + e1name, newentities); 
       if (me2 instanceof Entity)
-      { m1Inm2++; } 
+      { m1Inm2++;
+        double asim = e1.attributesSimilarity((Entity) me2);
+        m1m2attsim = m1m2attsim + asim;  
+      } 
     } 
 
-    double m1_2 = 0.0; 
+    
+    double m1_2 = 0.0;
+    double m1_2_attmeasure = 1.0; 
+    if (oldattributes.size() > 0) 
+    { m1_2_attmeasure = m1m2attsim/oldattributes.size(); } 
+ 
     if (m1size == 0)
-    { System.out.println(">>> " + m1 + " <: " + m2 + " = 1"); 
+    { System.out.println(">>> classes comparison: " + m1 + " <: " + m2 + " = 1"); 
       m1_2 = 1; 
     }   
     else 
     { m1_2 = m1Inm2/(1.0*m1size); 
-      System.out.println(">>> " + m1 + " <: " + m2 + " = " + 
-                         m1_2);  
+      System.out.println(">>> classes comparison: " + 
+                m1 + " <: " + m2 + " = " + 
+                m1_2 + " attributes: " + m1_2_attmeasure);  
     } 
 
     int m2Inm1 = 0; 
+    double m2m1attsim = 0.0; 
+
     for (int i = 0; i < m2size; i++) 
     { Entity e2 = (Entity) newentities.get(i); 
       String e2name = e2.getLocalName();
-      ModelElement me1 = ModelElement.lookupByName(m1 + "$" + e2name, oldentities); 
+      ModelElement me1 = ModelElement.lookupByNameIgnoreCase(
+                            m1 + "$" + e2name, oldentities); 
       if (me1 instanceof Entity)
-      { m2Inm1++; } 
+      { m2Inm1++;
+        double asim = e2.attributesSimilarity((Entity) me1);
+        m2m1attsim = m2m1attsim + asim; 
+      } 
     } 
 
     double m2_1 = 0.0; 
+    double m2_1_attmeasure = 1.0; 
+    if (newattributes.size() > 0) 
+    { m2_1_attmeasure = m2m1attsim/newattributes.size(); } 
+
     if (m2size == 0)
-    { System.out.println(">>> " + m2 + " <: " + m1 + " = 1"); 
+    { System.out.println(">>> classes comparison: " + m2 + " <: " + m1 + " = 1"); 
       m2_1 = 1; 
     }   
     else 
     { m2_1 = m2Inm1/(1.0*m2size); 
-      System.out.println(">>> " + m2 + " <: " + m1 + " = " + 
-                         m2_1);  
+      System.out.println(">>> classes comparison: " + m2 + " <: " + m1 + " = " + 
+                         m2_1 + " attributes " + 
+                         m2_1_attmeasure);  
     } 
 
     System.out.println(">>> Similarity of " + m1 + " classes and " + m2 + " classes is: " + m1_2*m2_1); 
+
+    System.out.println(">>> Similarity of " + m1 + " attributes and " + m2 + " attributes is: " + m1_2_attmeasure*m2_1_attmeasure); 
+
+    System.out.println(); 
+
+    int m1Inm2UC = 0; 
+    double m1_2UC = 0.0; 
+
+    for (int i = 0; i < m1ucsize; i++) 
+    { UseCase uc1 = (UseCase) oldusecases.get(i); 
+      String uc1name = uc1.getLocalName();
+    /*  ModelElement me2 = 
+        ModelElement.lookupByNameIgnoreCase(
+                    m2 + "$" + uc1name, newusecases); 
+      if (me2 instanceof UseCase)
+      { m1Inm2UC++; } */ 
+      m1_2UC = m1_2UC + ModelElement.nameSimilarities(
+                                 m2 + "$" + uc1name, 
+                                 newusecases);        
+    } 
+
+    if (m1ucsize == 0)
+    { System.out.println(">>> use cases comparison: " + m1 + " <: " + m2 + " = 1"); 
+      m1_2UC = 1; 
+    }   
+    else 
+    { m1_2UC = m1_2UC/(1.0*m1ucsize); 
+      System.out.println(">>> use cases comparison: " + m1 + " <: " + m2 + " = " + 
+                         m1_2UC);  
+    } 
+
+    int m2Inm1UC = 0; 
+    double m2_1UC = 0.0; 
+
+    for (int i = 0; i < m2ucsize; i++) 
+    { UseCase uc2 = (UseCase) newusecases.get(i); 
+      String uc2name = uc2.getLocalName();
+      /* ModelElement me1 = 
+        ModelElement.lookupByNameIgnoreCase(
+                   m1 + "$" + uc2name, oldusecases); 
+      if (me1 instanceof UseCase)
+      { m2Inm1UC++; } */ 
+
+      m2_1UC = m2_1UC + ModelElement.nameSimilarities(
+                                 m1 + "$" + uc2name, 
+                                 oldusecases);         
+    } 
+
+    if (m2ucsize == 0)
+    { System.out.println(">>> use cases comparison: " + m2 + " <: " + m1 + " = 1"); 
+      m2_1UC = 1; 
+    }   
+    else 
+    { m2_1UC = m2_1UC/(1.0*m2ucsize); 
+      System.out.println(">>> use cases comparison: " + m2 + " <: " + m1 + " = " + 
+                         m2_1UC);  
+    } 
+
+    System.out.println(">>> Similarity of " + m1 + " use cases and " + m2 + " use cases is: " + m1_2UC*m2_1UC);
   } 
 
   private void renameEntity(Entity ent, 
@@ -16685,6 +16819,15 @@ public void produceCUI(PrintWriter out)
     if (vd != null && vd instanceof RectData) 
     { ((RectData) vd).setName(newname); } 
     changedEntityName(oldname, newname); 
+  } 
+
+  private void renameUseCase(UseCase uc, 
+                   String oldname, String newname)
+  { uc.setName(newname);
+    VisualData vd = getVisualOf(uc); 
+    if (vd != null) 
+    { vd.setName(newname); } 
+    // changedUseCaseName(oldname, newname); 
   } 
 
   public void loadKM3FromFile()
@@ -18209,7 +18352,7 @@ public void produceCUI(PrintWriter out)
 
     ModelElement me = ModelElement.lookupByName(nme, useCases); 
     if (me != null) 
-    { System.err.println("ERROR: Duplicated declaration of " + nme); 
+    { System.err.println("!! ERROR: Duplicated declaration of " + nme); 
       return null; 
     } 
 
@@ -25758,20 +25901,80 @@ public void produceCUI(PrintWriter out)
   } 
   
   public void qualityCheck()
-  { 
+  { Vector enames = new Vector(); 
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i); 
+
+      if (ent.isDerived()) { continue; } 
+
+      String ename = ent.getName(); 
+
+      System.out.println("/**** Checking class " + ename + " ****/"); 
+
+      if (enames.contains(ename)) 
+      { System.err.println("!! Error: duplicated class name " + ename); 
+      } 
+      else 
+      { enames.add(ename); } 
+
+      if (ename.endsWith("s"))
+      { System.err.println("! Warning: class names should not be plural: " + ename); } 
+
+      if (Character.isLowerCase(ename.charAt(0))) 
+      { System.err.println("! Warning: class names should not have initial lower case letter: " + ename); } 
+
+      if (Entity.strictEntityName(ename)) { } 
+      else 
+      { System.err.println("! Warning: class names should begin with a capital letter and consist only of alphanumeric characters: " + ename); } 
+
       if (ent.allSubclassesAreEmpty())
-      { System.err.println("! Warning: class " + ent + " has empty immediate subclasses -- these may be redundant."); } 
+      { System.err.println("! Warning: all immediate subclasses of class " + ent + " are empty -- these may be redundant."); } 
+
+      Vector duplicates = ent.duplicatedAttributes(); 
+      if (duplicates.size() > 0)
+      { System.err.println("!! Error: attributes " + duplicates + " of class " + ent + " are duplicated."); } 
+
+      Vector odups = ent.checkOperationNames(); 
+      if (odups.size() > 0)
+      { System.err.println("! Warning: duplicate operation names of class " + ent + ": " + odups);
+        System.err.println("! Some languages do not support operation overloading (C, Python, Go).");
+      } 
+
+      ent.checkOperationVariableUse(); 
+
+      System.err.println();       
+      System.out.println(); 
     } 
 
     consistencyCheck(); 
     diagramCheck(); 
 
+    Vector ucnames = new Vector(); 
+
     for (int i = 0; i < useCases.size(); i++) 
     { if (useCases.get(i) instanceof UseCase)
-      { UseCase uc = (UseCase) useCases.get(i); 
+      { UseCase uc = (UseCase) useCases.get(i);
+
+        String ucname = uc.getName(); 
+
+        System.out.println("/**** Checking use case " + ucname + " ****/"); 
+
+        if (ucnames.contains(ucname)) 
+        { System.err.println("!! Error: duplicated usecase name " + ucname); 
+        } 
+        else 
+        { ucnames.add(ucname); } 
+
+        if (Character.isUpperCase(ucname.charAt(0))) 
+        { System.err.println("! Warning: use case names should not have initial upper case letter: " + ucname); } 
+
+        if (Entity.strictEntityName(ucname)) { } 
+        else 
+        { System.err.println("! Warning: use case names should begin with a letter and consist only of alphanumeric characters: " + ucname); } 
+
         uc.checkIncludesValidity(useCases); 
+        System.err.println(); 
+        System.out.println(); 
       } 
     } 
  

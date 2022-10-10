@@ -176,7 +176,7 @@ public class Type extends ModelElement
     if (exceptions2java.get(tname) != null) 
     { return true; } 
     return false; 
-  } 
+  } // MathLib, StringLib and OclComparator are static
 
   public static boolean isDefinedType(Type t) 
   { if (t == null) 

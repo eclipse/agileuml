@@ -2817,6 +2817,53 @@ public class BehaviouralFeature extends ModelElement
     return res; 
   } 
 
+  public void checkParameterNames()
+  { if (parameters == null) 
+    { return; }
+ 
+    Vector pnames = new Vector(); 
+
+    for (int i = 0; i < parameters.size(); i++) 
+    { Attribute par = (Attribute) parameters.get(i); 
+      String pname = par.getName(); 
+
+      if (pnames.contains(pname))
+      { System.err.println("!! ERROR: duplicated parameter name: " + pname + " in operation " + getName()); } 
+      else 
+      { pnames.add(pname); } 
+
+      if (Character.isLowerCase(pname.charAt(0))) { } 
+      else 
+      { System.err.println("! Warning: parameter names should start with a lower case letter: " + pname); } 
+
+      if (Entity.strictEntityName(pname)) { } 
+      else 
+      { System.err.println("! Warning: parameter names should be alphanumeric: " + pname); } 
+
+      if (post != null)
+      { Vector puses = post.getUses(pname); 
+        if (puses.size() == 0) 
+        { System.err.println("! Warning: parameter " + pname + " is unused in operation " + getName() + " postcondition."); } 
+      } 
+
+      if (activity != null)
+      { Vector actuses = activity.getUses(pname); 
+        if (actuses.size() == 0) 
+        { System.err.println("! Warning: parameter " + pname + " is unused in operation " + getName() + " activity."); } 
+      } 
+    } 
+  }
+
+  public void checkVariableUse()
+  { 
+    if (activity != null)
+    { Vector actuses = activity.getVariableUses(); 
+      System.out.println(">>> Parameters or non-local variables " + actuses + " are used in " + getName() + " activity."); 
+    } // Should be subset of parameters + visible data features 
+  }
+
+
+
   private void typeCheckParameters(Vector pars, Vector types, Vector entities)
   { for (int i = 0; i < pars.size(); i++) 
     { Attribute par = (Attribute) pars.get(i); 

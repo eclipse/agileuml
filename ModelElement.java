@@ -59,6 +59,12 @@ public abstract class ModelElement implements SystemTypes
   public void setName(String newname)
   { name = newname; }
 
+  public String getLocalName()
+  { // part after last '$'
+    int dind = name.lastIndexOf("$"); 
+    return name.substring(dind+1); 
+  } 
+
   public abstract void setType(Type t); 
   // Only makes sense for Attribute, 
   // BehaviouralFeature, UseCase
@@ -577,6 +583,17 @@ public abstract class ModelElement implements SystemTypes
     return null; 
   } 
 
+  public static Vector removeExpressionByName(String nme, Vector mes)
+  { Vector res = new Vector(); 
+    for (int i = 0; i < mes.size(); i++) 
+    { Expression me = (Expression) mes.get(i); 
+      if ((me + "").equals(nme)) { }
+      else 
+      { res.add(me); }  
+    } 
+    return res; 
+  } 
+
   public static Expression lookupExpressionByData(String nme, Vector mes)
   { for (int i = 0; i < mes.size(); i++) 
     { BasicExpression me = (BasicExpression) mes.get(i); 
@@ -733,6 +750,21 @@ public abstract class ModelElement implements SystemTypes
     return editDistanceMatrix(d,s,t,m,n);
 
   }
+
+  public static double nameSimilarities(String s, 
+                                        Vector mes)
+  { double res = 0.0; 
+    for (int i = 0; i < mes.size(); i++) 
+    { ModelElement mex = (ModelElement) mes.get(i); 
+      double sim = ModelElement.similarity(s, mex.getName()); 
+      if (sim > res) 
+      { res = sim; } 
+    } 
+
+    if (res > 1.0) 
+    { return 1.0; } 
+    return res; 
+  } 
 
   public static double similarity(String s,String t)
   

@@ -5840,7 +5840,24 @@ public String iosDbiExtractOp(String ent, int i)
     return Type.typeSimilarity(type,typetatt,mm,entities); 
   } // int does not match to enum, but boolean can match to an enum of size 2
 
+  public double attributeSimilarity(Attribute other) 
+  { String attname = getName(); 
+    String othername = other.getName(); 
 
+    double sim = ModelElement.similarity(attname,othername); 
+
+    Type t1 = getType(); 
+    Type t2 = other.getType(); 
+
+    if (t1 != null && t2 != null) 
+    { sim = sim * 
+            ModelElement.similarity(t1.getName(), 
+                                    t2.getName()); 
+    } 
+
+    return sim; 
+  } 
+      
   public Vector testCases(String x, java.util.Map lowerBnds, java.util.Map upperBnds, Vector opTests)
   { Vector res = new Vector(); 
     if (type == null) 

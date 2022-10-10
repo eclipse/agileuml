@@ -2685,11 +2685,15 @@ class BinaryExpression extends Expression
         { res.addAll(expr.allPreTerms(var)); } 
       } 
     } 
-    else if ("!".equals(operator) || "#".equals(operator) || operator.equals("#LC") ||
-        "#1".equals(operator) || "|".equals(operator) || "|A".equals(operator) || 
+    else if ("!".equals(operator) || "#".equals(operator) || 
+        operator.equals("#LC") ||
+        "#1".equals(operator) || "|".equals(operator) || 
+        "|A".equals(operator) || 
         "|R".equals(operator) || "|C".equals(operator) ||
-        "|selectMinimals".equals(operator) || "|selectMaximals".equals(operator) || 
-        "|unionAll".equals(operator) || "|intersectAll".equals(operator) ||
+        "|selectMinimals".equals(operator) || 
+        "|selectMaximals".equals(operator) || 
+        "|unionAll".equals(operator) || 
+        "|intersectAll".equals(operator) ||
         "|concatenateAll".equals(operator))
     { // discard pre-terms of features of the left.left
       // because these are invalid
@@ -2781,11 +2785,15 @@ class BinaryExpression extends Expression
   } // This is what you need in uml2Cbmm to obtain the parameters of lambda expressions. 
     
   public Vector getVariableUses()
-  { if (operator.equals("#") || operator.equals("|") || operator.equals("|A") ||
+  { if (operator.equals("#") || operator.equals("|") || 
+        operator.equals("|A") ||
         operator.equals("|C") || operator.equals("#LC") ||
-        operator.equals("|R") || operator.equals("#1") || operator.equals("!") ||
-        "|selectMinimals".equals(operator) || "|selectMaximals".equals(operator) || 
-        "|unionAll".equals(operator) || "|intersectAll".equals(operator) ||
+        operator.equals("|R") || operator.equals("#1") || 
+        operator.equals("!") ||
+        "|selectMinimals".equals(operator) || 
+        "|selectMaximals".equals(operator) || 
+        "|unionAll".equals(operator) || 
+        "|intersectAll".equals(operator) ||
         "|concatenateAll".equals(operator))
     { Vector ss = right.getVariableUses(); 
       Vector removals = new Vector(); 
@@ -2915,7 +2923,8 @@ class BinaryExpression extends Expression
   } // ->iterate, add accumulator expression
 
 public void findClones(java.util.Map clones, String rule, String op)
-{ if (this.syntacticComplexity() < 10) { return; }
+{ if (this.syntacticComplexity() < UCDArea.CLONE_LIMIT) 
+  { return; }
   String val = this + ""; 
   Vector used = (Vector) clones.get(val);
   if (used == null)

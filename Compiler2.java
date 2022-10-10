@@ -491,10 +491,14 @@ public class Compiler2
   } 
 
   public boolean invalidBasicExp(String str) 
-  { if ("(".equals(str) || ")".equals(str) || "[".equals(str) || "]".equals(str) ||
-        "{".equals(str) || "}".equals(str) || Expression.alloperators.contains(str) || 
+  { if ("(".equals(str) || ")".equals(str) || 
+        "[".equals(str) || "]".equals(str) ||
+        "{".equals(str) || "}".equals(str) || 
+        Expression.alloperators.contains(str) || 
         ",".equals(str) || // "!".equals(str) || 
-        "%".equals(str) || "_".equals(str) || "?".equals(str) || "~".equals(str) ) 
+        "%".equals(str) || 
+        "_".equals(str) || 
+        "?".equals(str) || "~".equals(str) ) 
     { return true; } 
     return false; 
   } 
@@ -2277,14 +2281,14 @@ public Expression parse_ATLconditional_expression(int bc, int st, int en, Vector
     else if ("endif".equals(lxj))
     { ifcount--; 
       if (ifcount < 1)
-      { System.err.println("Too many endifs"); 
+      { System.err.println("!! Error: Too many endifs"); 
         return null;
       }
     }
     else if ("then".equals(lxj) && ifcount == 1)
     { Expression test = parse_ATLexpression(bc, st+1, j-1,entities,types);
       if (test == null)
-      { System.err.println("Error in if test expression"); return null;  }
+      { System.err.println("!! Error in if test expression"); return null;  }
        int ifcountk = 1;
        for (int k = j+1; k < en; k++)
        { String lxk = lexicals.get(k) + "";
@@ -2293,7 +2297,7 @@ public Expression parse_ATLconditional_expression(int bc, int st, int en, Vector
          else if ("endif".equals(lxk))
          { ifcountk--;  
            if (ifcountk < 1)
-           { System.err.println("Too many endifs"); return null; }
+           { System.err.println("!! Error: Too many endifs"); return null; }
          }
          else if ("else".equals(lxk) && ifcountk == 1)
          { Expression ifpart = parse_ATLexpression(bc, j+1, k-1,entities,types);
@@ -2912,7 +2916,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
   // add the case for ->iterate
 
   public Expression parse_basic_expression(int bc, int pstart, int pend, Vector entities, Vector types)
-  { // System.out.println("Trying tp parse basic expression from " + pstart + " to " + pend); 
+  { 
 
     // if ("_".equals(lexicals.get(pstart) + "") && pend == pstart+1)
     // { Expression ee = parse_expression(bc,pstart+1,pend); 
@@ -2939,9 +2943,16 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
       // if (ef instanceof BasicExpression) 
       // { ((BasicExpression) ef).setPrestate(ee.getPrestate()); } 
 
-      // System.out.println("Parsed basic expression: " + ss + " " + ee + " " + ef); 
+      // System.out.println("+++ Parsed basic expression: " + ss + " " + ee + " " + ef); 
       return ef;
     }
+
+    boolean bracketsOk = balancedBrackets(pstart,pend); 
+    if (bracketsOk) { } 
+    else 
+    { return null; } 
+
+    // System.out.println(">> Trying to parse basic expression from: " + showLexicals(pstart,pend)); 
 
     if (pstart < pend && "lambda".equals(lexicals.get(pstart) + ""))
     { Expression ee = parse_lambda_expression(bc,pstart,pend,entities,types); 
@@ -3015,6 +3026,14 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
       } 
       return new UnaryExpression("!",arg); 
     } // likewise for "not" and "~"
+
+
+    if (pstart + 1 < pend && ")".equals(lexicals.get(pend) + "") && 
+      "(".equals(lexicals.get(pstart) + ""))
+    { Expression res = parse_bracketed_expression(bc,pstart,pend,entities,types); 
+      if (res != null) 
+      { return res; } 
+    } 
 
     if (pstart + 1 < pend && ")".equals(lexicals.get(pend) + "") && 
         "(".equals(lexicals.get(pstart+1) + ""))
@@ -3141,13 +3160,14 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
       // return null; 
     }       
 
+
   if (pstart + 1 < pend && ")".equals(lexicals.get(pend) + "") && 
       "(".equals(lexicals.get(pstart) + ""))
   { for (int i = pstart + 1; i < pend; i++)
     { String brack = lexicals.get(i-1) + ""; 
-	  String strs = lexicals.get(i) + "";
+      String strs = lexicals.get(i) + "";
       String brack2 = lexicals.get(i+1) + ""; 
-	  if (brack.equals(")") && brack2.equals("(") && 
+      if (brack.equals(")") && brack2.equals("(") && 
 	      strs.length() > 1 && '.' == strs.charAt(0))
       { Expression op = parse_basic_expression(bc, pstart+1, i-2, entities,types);
         System.out.println("*** Parsing extended basic expression " + op + strs + "(...)");
@@ -3214,7 +3234,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
       }
     } 
 
-    return parse_bracketed_expression(bc,pstart,pend,entities,types); 
+    return null; 
   }
   
 
@@ -3934,7 +3954,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         lexicals.get(pstart).toString().equals("(") &&
         lexicals.get(pend).toString().equals(")"))
     { Expression eg = parse_expression(bcount+1, pstart+1, pend-1,entities,types);
-      // System.out.println("parsed bracketed expression: " + eg);  
+      System.out.println("+++ parsed bracketed expression: " + eg);  
       if (eg != null)
       { eg.setBrackets(true); }
       return eg; 
@@ -4937,6 +4957,63 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 	{ System.err.println("!! Too many } brackets (opening: " + ocb + ", closing: " + ccb + ") in   " + showLexicals(st,en)); }
 
 	return false; 
+  } 
+
+  public boolean balancedBrackets()
+  { int en = lexicals.size(); 
+    return balancedBrackets(0,en-1); 
+  } 
+
+  public boolean balancedBrackets(int st, int en)
+  { int ob = 0;
+    int cb = 0; 
+    int osqb = 0;
+    int csqb = 0;
+    int ocb = 0;
+    int ccb = 0;
+    String mostrecentopen = null; 
+    boolean instring = false;  
+	 
+    for (int i = st; i <= en; i++)
+    { String lex = lexicals.get(i) + ""; 
+      if ("\"".equals(lex)) 
+      { if (instring) { instring = false; } 
+        else 
+        { instring = true; } 
+      } 
+      else if ("(".equals(lex) && !instring)
+      { ob++; 
+        mostrecentopen = "("; 
+      }
+      else if (")".equals(lex) && !instring)
+      { cb++; 
+        if (cb > ob)
+        { return false; } 
+      }
+      else if ("[".equals(lex) && !instring)
+      { osqb++; 
+        mostrecentopen = "["; 
+      }
+      else if ("]".equals(lex) && !instring)
+      { csqb++; 
+        if (csqb > osqb)
+        { return false; } 
+      }
+      else if ("{".equals(lex) && !instring)
+      { ocb++; 
+        mostrecentopen = "{"; 
+      }
+      else if ("}".equals(lex) && !instring)
+      { ccb++; 
+        if (ccb > ocb)
+        { return false; }
+	}
+    }
+
+    if (ob == cb && osqb == csqb && ocb == ccb && !instring) 
+    { return true; }
+
+    return false; 
   } 
 
   public static String isKeywordOrPart(String st, String[] mess)
@@ -9647,12 +9724,13 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
     // Type xx = c.parseType(0,c.lexicals.size()-1,exs, new Vector()); 
 
     // c.nospacelexicalanalysis("arr[x][y]"); 
-    // c.nospacelexicalanalysis("(OclFile.newOclFile(\"text\")).setReadOnly()");
+    c.nospacelexicalanalysis("(OclFile.newOclFile(\"(text)\")).setReadOnly()");
     // c.nospacelexicalanalysis("(OclFile.newOclFile_Read(OclFile.newOclFile(s))).readObject()"); 
 
-    c.nospacelexicalanalysis("(MyString).subrange((MyString)->indexOf((MyString)->trim()))"); 
+    // c.nospacelexicalanalysis("(MyString).subrange((MyString)->indexOf((MyString)->trim()))"); 
 	
     System.out.println(c.lexicals); 
+    System.out.println(c.balancedBrackets()); 
     Expression xx = c.parseExpression(); 
     System.out.println(xx); 
 

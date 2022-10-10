@@ -205,19 +205,19 @@ public class CGCondition
             ASTTerm.removeStereo(repl,stereo);
           } 
     
-          System.out.println(">>> Executed action " + repl + " (" + positive + ") " + stereo);  
+          /* System.out.println(">>> Executed action " + repl + " (" + positive + ") " + stereo);  
           JOptionPane.showMessageDialog(null, 
              "Executed action " + repl + " (" + positive + ") " + stereo,   "",
-             JOptionPane.INFORMATION_MESSAGE);
+             JOptionPane.INFORMATION_MESSAGE); */ 
         } 
         else 
         { if (positive) 
           { ast.addStereotype(stereo); } 
           else 
           { ast.removeStereotype(stereo); }
-          JOptionPane.showMessageDialog(null, 
+          /* JOptionPane.showMessageDialog(null, 
              "Executed action " + ast + " (" + positive + ") " + stereo,   "",
-             JOptionPane.INFORMATION_MESSAGE);
+             JOptionPane.INFORMATION_MESSAGE); */ 
         }  
       }  
     } 

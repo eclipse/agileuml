@@ -761,11 +761,16 @@ public void findPlugins()
 
     viewMenu.addSeparator(); 
 
+    JMenuItem qualCheck = 
+      new JMenuItem("Quality check"); 
+    qualCheck.addActionListener(this);
+    viewMenu.add(qualCheck);
+
     JMenuItem ucdepsMI = new JMenuItem("Use Case Dependencies"); 
     ucdepsMI.addActionListener(this);
     viewMenu.add(ucdepsMI);
 
-    JMenuItem measuresItem = new JMenuItem("Measures"); 
+    JMenuItem measuresItem = new JMenuItem("Quality measures"); 
     measuresItem.addActionListener(this);
     viewMenu.add(measuresItem);
 
@@ -805,14 +810,8 @@ public void findPlugins()
     transMenu.setToolTipText("Transform UML Models"); 
     menuBar.add(transMenu); 
 
-    JMenuItem qualCheck = 
-      new JMenuItem("Quality check"); 
-    qualCheck.addActionListener(this);
-    transMenu.add(qualCheck);
-
     JMenuItem qualityMenu = new JMenu("Refactoring"); 
     transMenu.add(qualityMenu); 
-
 
     JMenuItem extractIntf = 
       new JMenuItem("Extract Interface"); 
@@ -2108,11 +2107,11 @@ public void findPlugins()
           out.close();
         }
         catch (IOException ex)
-        { System.out.println("Error generating use cases"); }
+        { System.out.println("!! Error generating use cases"); }
 
         new TextDisplay("Use cases","output/tmp");
       }  
-      else if (label.equals("Measures"))
+      else if (label.equals("Quality measures"))
       { File file = new File("output/tmp.txt");
         try
         { PrintWriter out = new PrintWriter(
@@ -2122,12 +2121,17 @@ public void findPlugins()
           out.close();
         }
         catch (IOException ex)
-        { System.out.println("Error generating measures"); }
+        { System.out.println("!! Error generating measures"); }
 
         new TextDisplay("Measures","output/tmp.txt");
       }  
       else if (label.equals("Compare models"))
-      { ucdArea.compareModels("m1", "m2");
+      { String nme1 =
+          JOptionPane.showInputDialog("Enter first model name (.km3 extension omitted): ");
+        String nme2 =
+          JOptionPane.showInputDialog("Enter second model name (.km3 extension omitted): ");
+        if (nme1 != null && nme2 != null) 
+        { ucdArea.compareModels(nme1, nme2); } 
       }  
       else if (label.equals("Controller B Code"))
       {  } 
@@ -2266,7 +2270,7 @@ public void findPlugins()
         saved = false; 
       }
       else if (label.equals("Modify"))
-      { System.out.println("Select a class or association");
+      { System.out.println(">> Select a class or association");
         thisLabel.setText("Select a class or association");
         ucdArea.setDrawMode(UCDArea.EDIT);
         ucdArea.setEditMode(UCDArea.MODIFY);
@@ -2293,7 +2297,7 @@ public void findPlugins()
         repaint();  
       }
       else if (label.equals("Edit Use Case"))
-      { System.out.println("Select a use case");
+      { System.out.println(">> Select a use case");
         thisLabel.setText("Select a use case");
         // String nme =
         //  JOptionPane.showInputDialog("Enter use case name:");
@@ -2308,7 +2312,7 @@ public void findPlugins()
         saved = false;  
       }
       else if (label.equals("Delete Use Case"))
-      { System.out.println("Select a use case");
+      { System.out.println(">> Select a use case");
         thisLabel.setText("Select a use case");
         Vector res = ucdArea.selectUseCase(); 
         if (res.size() > 0)
@@ -3928,6 +3932,11 @@ public void findPlugins()
     { window.ucdArea.applyCSTLtoAST(args[1],args[2]); 
       return; 
     } 
+
+    if (args.length == 3 && "-compareModels".equals(args[0]))
+    { window.ucdArea.compareModels(args[1], args[2]);
+      return;
+    }
 
     window.setTitle("Agile UML Toolset, Eclipse Incubation Project Version 2.1");
     window.setControllerName("Controller"); 

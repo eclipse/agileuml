@@ -149,7 +149,8 @@ public class ConditionalExpression extends Expression
   } 
 
 public void findClones(java.util.Map clones, String rule, String op)
-{ if (this.syntacticComplexity() < 10) { return; }
+{ if (this.syntacticComplexity() < UCDArea.CLONE_LIMIT) 
+  { return; }
   String val = this + ""; 
   Vector used = (Vector) clones.get(val);
   if (used == null)

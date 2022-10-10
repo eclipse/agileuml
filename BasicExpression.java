@@ -13607,6 +13607,7 @@ public Statement generateDesignSubtract(Expression rhs)
   public boolean hasVariable(final String s)
   { return toString().equals(s); }
 
+  /* allVariablesUsedIn */ 
   public Vector getVariableUses()
   { Vector res = new Vector();
 
@@ -13629,7 +13630,6 @@ public Statement generateDesignSubtract(Expression rhs)
       res.addAll(ss);
       return res; 
     }  
-
 
     if (umlkind == VARIABLE && parameters == null)  // it is a true variable
     { if (variable != null) 
@@ -13763,7 +13763,7 @@ public Statement generateDesignSubtract(Expression rhs)
       } 
     } 
     return res;
-  } // and from arrayIndex
+  } 
 
   public Vector equivalentsUsedIn()
   { Vector res = new Vector();
