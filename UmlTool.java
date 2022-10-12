@@ -1962,7 +1962,7 @@ public void findPlugins()
           out.close();
         }
         catch (IOException ex)
-        { System.out.println("Error generating Web System"); }
+        { System.out.println("!! Error generating Web System"); }
 
         new TextDisplay("Web System code","output/j2ees.txt");
       } 
@@ -1974,7 +1974,7 @@ public void findPlugins()
       { Runtime proc = Runtime.getRuntime(); 
         String dir = ucdArea.getSystemName(); 
         if (dir == null || dir.trim().length() == 0)
-        { System.err.println("Can only be used if a system name is defined"); 
+        { System.err.println("!! Run can only be used if a system name is defined"); 
           return; 
         } 
 
@@ -3937,6 +3937,19 @@ public void findPlugins()
     { window.ucdArea.compareModels(args[1], args[2]);
       return;
     }
+
+    if (args.length == 3 && "-cgbeValidate".equals(args[0]))
+    { String fname = args[1]; 
+      String astfile = args[2]; 
+      try 
+      { File cstlfile = new File(fname); 
+        window.ucdArea.testCSTLwithASTS(cstlfile,astfile);
+      } catch (Exception ex) { 
+        System.err.println("!!ERROR: No file: " + fname); 
+      }  
+      return; 
+    } 
+
 
     window.setTitle("Agile UML Toolset, Eclipse Incubation Project Version 2.1");
     window.setControllerName("Controller"); 

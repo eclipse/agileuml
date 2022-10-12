@@ -31,26 +31,97 @@ public class PreProcessModels
   static CGBEDialog opDialog = null; 
 
   public static void preprocess()
-  { if (opDialog == null)
+  { // Look for file configuation.txt
+    // If found, use its information. 
+    // Otherwise, open dialog.
+
+    String tlang = "Java"; 
+    String typesr = "typeTypeOrVoid"; 
+    String exprsr = "expression"; 
+    String statsr = "statement"; 
+    String declnsr = "classBodyDeclaration"; 
+    String classesr = "classDeclaration"; 
+    String localdecsr = "localVariableDeclaration"; 
+    String enumsr = "enumDeclaration"; 
+
+    boolean hasConfiguration = false; 
+    boolean configeof = true; 
+
+    String configLine = null; 
+
+    File configFile = new File("configuration.txt"); 
+    BufferedReader configbr = null; 
+    try { 
+      configbr = new BufferedReader(new FileReader(configFile));
+      configeof = false;  
+    }
+    catch (FileNotFoundException e)
+    { System.out.println("File not found: " + configFile); 
+      configeof = true; 
+    }
+
+    while (!configeof)
+    { try { configLine = configbr.readLine(); }
+      catch (IOException e)
+      { System.out.println("!! Reading failed.");
+        configeof = true; 
+      }
+
+      if (configLine == null) 
+      { configeof = true; 
+        break; 
+      }
+      else if (configLine.length() > 0)
+      { String[] words = configLine.split("="); 
+        if (words.length >= 2)
+        { hasConfiguration = true; 
+
+          String configPar = words[0].trim(); 
+          String configParValue = words[1].trim(); 
+
+          if ("parser".equals(configPar))
+          { tlang = configParValue; } 
+          else if ("typeRule".equals(configPar))
+          { typesr = configParValue; } 
+          else if ("expressionRule".equals(configPar))
+          { exprsr = configParValue; }
+          else if ("statementRule".equals(configPar))
+          { statsr = configParValue; } 
+          else if ("featureRule".equals(configPar))
+          { declnsr = configParValue; } 
+          else if ("classRule".equals(configPar))
+          { classesr = configParValue; } 
+          else if ("localVariableRule".equals(configPar))
+          { localdecsr = configParValue; } 
+          else if ("enumerationRule".equals(configPar))
+          { enumsr = configParValue; } 
+        } 
+      } 
+    } 
+    try { configbr.close(); } catch(IOException e) { }
+
+
+    
+    if (opDialog == null)
     { opDialog = new CGBEDialog(null);
       opDialog.pack();
       // opDialog.setLocationRelativeTo(this);
     }
-    opDialog.setOldFields("Java", "typeTypeOrVoid",
-            "expression", "statement",
-            "classBodyDeclaration", "classDeclaration",
-            "localVariableDeclaration", 
-            "enumDeclaration");
+    opDialog.setOldFields(tlang, typesr,
+            exprsr, statsr,
+            declnsr, classesr,
+            localdecsr, 
+            enumsr);
     opDialog.setVisible(true);
    
-    String tlang = opDialog.getName(); 
-    String typesr = opDialog.getTypesRule(); 
-    String exprsr = opDialog.getExpressionsRule(); 
-    String statsr = opDialog.getStatementsRule(); 
-    String declnsr = opDialog.getDeclarationsRule(); 
-    String classesr = opDialog.getClassesRule(); 
-    String localdecsr = opDialog.getLocalDecsRule(); 
-    String enumsr = opDialog.getEnumsRule(); 
+    tlang = opDialog.getName(); 
+    typesr = opDialog.getTypesRule(); 
+    exprsr = opDialog.getExpressionsRule(); 
+    statsr = opDialog.getStatementsRule(); 
+    declnsr = opDialog.getDeclarationsRule(); 
+    classesr = opDialog.getClassesRule(); 
+    localdecsr = opDialog.getLocalDecsRule(); 
+    enumsr = opDialog.getEnumsRule(); 
 
     // System.out.println(">>> " + nme + " " + typr + " " + 
     //                    expr); 

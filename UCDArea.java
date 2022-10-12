@@ -1966,7 +1966,28 @@ public class UCDArea extends JPanel
   }     
 
   public void validateCGBE()
-  { testCSTLwithASTS(); } 
+  { File file = null; 
+    try 
+    { JFileChooser fc = new JFileChooser();
+      File startingpoint = new File("./cg");
+      fc.setCurrentDirectory(startingpoint);
+      fc.setDialogTitle("Select a *.cstl file");
+      // fc.addChoosableFileFilter(new TextFileFilter()); 
+
+	  
+      int returnVal = fc.showOpenDialog(null);
+      if (returnVal == JFileChooser.APPROVE_OPTION)
+      { file = fc.getSelectedFile(); }
+      else
+      { System.err.println("Load aborted");
+        return; 
+      }
+
+      if (file == null) { return; }
+    } catch (Exception e) { return; } 
+
+    testCSTLwithASTS(file, "output/asts.txt"); 
+  } 
 
   public void listEntities()
   { System.out.println(entities); } 
@@ -13051,33 +13072,14 @@ public void produceCUI(PrintWriter out)
     tlspecification = res; 
   }
 
-  public void testCSTLwithASTS()
-  { // Tests a selected CSTL script with ASTs in output/asts.txt
-    File file = null; 
-    try 
-    { JFileChooser fc = new JFileChooser();
-      File startingpoint = new File("./cg");
-      fc.setCurrentDirectory(startingpoint);
-      fc.setDialogTitle("Select a *.cstl file");
-      // fc.addChoosableFileFilter(new TextFileFilter()); 
-
-	  
-      int returnVal = fc.showOpenDialog(null);
-      if (returnVal == JFileChooser.APPROVE_OPTION)
-      { file = fc.getSelectedFile(); }
-      else
-      { System.err.println("Load aborted");
-        return; 
-      }
-
-      if (file == null) { return; }
-    } catch (Exception e) { return; } 
+  public void testCSTLwithASTS(File file, String tests)
+  { // Tests a selected CSTL script with ASTs in tests
 
     Vector vs = new Vector(); 
     CGSpec spec = loadCSTL(file,vs); 
 
     if (spec == null) 
-    { System.err.println("!! ERROR: No file " + file.getName()); 
+    { System.err.println("!! ERROR: Not a valid CSTL file " + file.getName()); 
       return; 
     } 
 
@@ -13085,13 +13087,12 @@ public void produceCUI(PrintWriter out)
     Vector res = new Vector();
     String s;
     boolean eof = false;
-    File sourcefile = new File("output/asts.txt");  
-      /* default */ 
+    File sourcefile = new File(tests);  
 
     try
     { br = new BufferedReader(new FileReader(sourcefile)); }
     catch (FileNotFoundException _e)
-    { System.err.println("!!ERROR: File not found: " + sourcefile);
+    { System.err.println("!! ERROR: File not found: " + tests);
       
       return; 
     }
