@@ -30,7 +30,7 @@ public class PreProcessModels
 
   static CGBEDialog opDialog = null; 
 
-  public static void preprocess()
+  public static void preprocess(String configFileName)
   { // Look for file configuation.txt
     // If found, use its information. 
     // Otherwise, open dialog.
@@ -49,7 +49,7 @@ public class PreProcessModels
 
     String configLine = null; 
 
-    File configFile = new File("configuration.txt"); 
+    File configFile = new File(configFileName); 
     BufferedReader configbr = null; 
     try { 
       configbr = new BufferedReader(new FileReader(configFile));
@@ -101,7 +101,7 @@ public class PreProcessModels
     try { configbr.close(); } catch(IOException e) { }
 
 
-    
+  /*     
     if (opDialog == null)
     { opDialog = new CGBEDialog(null);
       opDialog.pack();
@@ -122,6 +122,7 @@ public class PreProcessModels
     classesr = opDialog.getClassesRule(); 
     localdecsr = opDialog.getLocalDecsRule(); 
     enumsr = opDialog.getEnumsRule(); 
+     */ 
 
     // System.out.println(">>> " + nme + " " + typr + " " + 
     //                    expr); 
@@ -1419,6 +1420,6 @@ public class PreProcessModels
   } 
 
   public static void main(String[] args)
-  { PreProcessModels.preprocess(); } 
+  { PreProcessModels.preprocess("configuration.txt"); } 
 
 } 

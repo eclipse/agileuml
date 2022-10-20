@@ -97,7 +97,10 @@ public class TypeMatching
       System.out.println("+++ Variables of " + rulerhs + " are " + rhsvars); 
 
       if (lhsvars.size() > 0 || rhsvars.size() > 0) 
-      { } 
+      { if (valueMappings.contains(vm)) { } 
+        else 
+        { valueMappings.add(0,vm); }
+      } 
       else if (rulelhs.trim().equals(rulerhs.trim()) && 
           lhs.arity() == 1 && rhs.arity() == 1)
       { vm = new ValueMatching("_1", "_1"); 
@@ -214,12 +217,41 @@ public class TypeMatching
 
     for (int x = 0; x < valueMappings.size(); x++)
     { ValueMatching vm = (ValueMatching) valueMappings.get(x);
-      if (vm.isIdentity()) { } 
+      if (vm.isIdentityMapping()) { } 
       else 
       { return false; } 
     }
     return true; 
   }
+
+  public boolean isStringFunction()
+  { // the vm : valueMappings have vm.trg = f(vm.src) 
+    // for a string-string function f. 
+
+    int n = valueMappings.size(); 
+    String[] tvals = new String[n]; 
+    Vector[] svals = new Vector[n]; 
+
+    for (int i = 0; i < n; i++) 
+    { ValueMatching vm = (ValueMatching) valueMappings.get(i); 
+      Expression s = vm.src; 
+      Expression t = vm.trg; 
+      String ss = "" + s; 
+      String tt = "" + t; 
+      tvals[i] = tt; 
+      String[] ssplit = ss.split(" ");
+      Vector sx = new Vector(); 
+      for (int j = 0; j < ssplit.length; j++) 
+      { sx.add(ssplit[j]); } 
+      svals[i] = sx;  
+    } 
+
+    if (AuxMath.isStringSum(svals, tvals))
+    { System.out.println(">>> String sum mapping _1 |-->_1->sum()"); 
+      return true; 
+    }
+    return false;  
+  } 
 
   public Vector usesCSTLfunctions()
   { // value mappings have substrings `f

@@ -467,6 +467,35 @@ public class AuxMath
     return true; 
   } 
 
+  public static boolean isIdentityMapping(String[] xs, String[] ys) 
+  { // Each xs[i] = ys[i]
+
+    if (xs.length != ys.length) 
+    { return false; } 
+
+    for (int i = 0; i < xs.length; i++) 
+    {  
+      if (xs[i] == null) 
+      { return false; } 
+      if (ys[i] == null)
+      { return false; }
+
+      if (xs[i].equals(ys[i])) { } 
+      else {
+        String ss = xs[i]; 
+        String tt = ys[i]; 
+        if (ss.startsWith("\"") && ss.endsWith("\"") && 
+            tt.startsWith("\"") && tt.endsWith("\"") && 
+            ss.substring(1,ss.length()-1).trim().equals(
+               tt.substring(1,tt.length()-1).trim()))
+        { } 
+        else 
+        { return false; } 
+      } 
+    } 
+    return true; 
+  } 
+
     public static boolean isConstant(double[] ys)
     { if (ys.length > 1)
 	 { double y0 = ys[0]; 
@@ -846,7 +875,9 @@ public class AuxMath
     }
 
     public static boolean isStringSum(Vector[] xs, String[] ys)
-    { if (ys.length > 1 && xs.length == ys.length)
+    { // Each xs[i]->sum() = ys[i]
+
+      if (ys.length > 1 && xs.length == ys.length)
       { for (int i = 0; i < xs.length; i++)
         { Vector xvect = xs[i]; 
           String dd = ys[i]; 
@@ -909,8 +940,10 @@ public class AuxMath
           else
           { String fst = "" + dequote((String) xvect.get(0));
             if (dd.startsWith(fst)) 
-            { String rem = dd.substring(fst.length(),dd.length()); 
-              String scnd = "" + dequote((String) xvect.get(1)); 
+            { String rem = 
+                       dd.substring(fst.length(),dd.length()); 
+              String scnd = 
+                       "" + dequote((String) xvect.get(1)); 
               int kend = rem.indexOf(scnd); 
               if (kend < 0)
               { return null; } 

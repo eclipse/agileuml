@@ -66,6 +66,22 @@ public class ASTBasicTerm extends ASTTerm
     return res; 
   }  
 
+  public Vector allNestedTagsArities()
+  { Vector res = new Vector(); 
+    Vector pair = new Vector(); 
+    pair.add(tag); pair.add(1); 
+    res.add(pair); 
+    return res; 
+  } 
+
+  public Vector allTagsArities()
+  { Vector res = new Vector(); 
+    Vector pair = new Vector(); 
+    pair.add(tag); pair.add(1); 
+    res.add(pair); 
+    return res; 
+  } 
+
   public void setValue(String v)
   { value = v; } 
 
@@ -2589,6 +2605,30 @@ public class ASTBasicTerm extends ASTTerm
   public String postSideEffect()
   { return null; } 
 
+  public String antlr2cstl()
+  { return value; } 
+
+  public String antlrElement2cstl(int i)
+  { if ("terminal".equals(tag))
+    { if ("'".equals(value.charAt(0) + ""))
+      { value = value.substring(1); } 
+      if ("'".equals(value.charAt(value.length()-1) + ""))
+      { value = value.substring(0,value.length()-1); } 
+      return value + " "; 
+    } 
+    if ("ruleref".equals(tag))
+    { return "_" + (i+1) + " "; }
+    return ""; 
+  } 
+
+  public Vector normaliseAntlr()
+  { Vector alts = new Vector(); 
+    Vector thisalt = new Vector(); 
+    thisalt.add(this); 
+    alts.add(thisalt); 
+    return alts; 
+  } 
+ 
   public static void main(String[] args)
   { ASTBasicTerm tt = new ASTBasicTerm("primaryExpression", "'a'"); 
     System.out.println(tt.isCharacter()); 

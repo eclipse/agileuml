@@ -1190,6 +1190,22 @@ public class EntityMatching implements SystemTypes
     return res + "\n"; 
   } // All rules of subclasses of rootClass go in its ruleset
 
+
+  public Vector allTagsArities()
+  { Vector res = new Vector(); 
+    Entity baseclass = realsrc.getRootSuperclass(); 
+    if (baseclass != null) 
+    { String rootClass = baseclass.getName(); 
+         
+      for (int i = 0; i < attributeMappings.size(); i++) 
+      { AttributeMatching am = 
+          (AttributeMatching) attributeMappings.get(i); 
+        res.addAll(am.allTagsArities(rootClass)); 
+      }
+    }  
+    return res; 
+  } 
+
   public Vector bidirectionalassociationMatchings()
   { // AttributeMatching am where am.src and am.trg are both bidirectional
 

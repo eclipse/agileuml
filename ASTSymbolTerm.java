@@ -94,6 +94,12 @@ public class ASTSymbolTerm extends ASTTerm
   public Vector getTerms()
   { return new Vector(); } 
 
+  public Vector allNestedTagsArities()
+  { return new Vector(); } 
+
+  public Vector allTagsArities()
+  { return new Vector(); } 
+
   public ASTTerm removeOuterTag()
   { return null; }  
 
@@ -810,4 +816,12 @@ public class ASTSymbolTerm extends ASTTerm
   public String postSideEffect()
   { return null; } 
 
+  public String antlr2cstl()
+  { return symbol; } 
+
+  public Vector normaliseAntlr()
+  { return new Vector(); } 
+
+  public String antlrElement2cstl(int i)
+  { return symbol; } 
 } 

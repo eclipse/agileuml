@@ -153,7 +153,15 @@ public class ModelMatching implements SystemTypes
     return res; 
   }  
 
-
+  
+  public Vector allTagsArities()
+  { Vector res = new Vector(); 
+    for (int i = 0; i < entitymatches.size(); i++) 
+    { EntityMatching em = (EntityMatching) entitymatches.get(i); 
+      res.addAll(em.allTagsArities()); 
+    } 
+    return res; 
+  } 
 
   public String toCSTL(CGSpec cg)
   { String res = "\n"; 

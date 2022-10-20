@@ -303,6 +303,8 @@ public void findPlugins()
     JMenuItem loadbehaviourRequirements = 
       new JMenuItem("Formalise behaviour requirements"); 
     loadbehaviourRequirements.addActionListener(this);
+    loadbehaviourRequirements.setToolTipText(
+      "Creates UML/OCL in output/mm.km3 from POS-tagged text in output/tagged.txt.");
     fileMenu.add(loadbehaviourRequirements);
 
     JMenuItem loadopRequirements = 
@@ -2194,7 +2196,7 @@ public void findPlugins()
         ucdArea.checkTLmodel(); 
       } 
       else if (label.equals("CGBE"))
-      { ucdArea.cgbeOCL2Program(); } 
+      { ucdArea.cgbeOCL2Program("configuration.txt"); } 
       else if (label.equals("LTBE from text"))
       { ucdArea.ltbeFromText(); }
       else if (label.equals("LTBE from ASTs"))
@@ -2338,11 +2340,19 @@ public void findPlugins()
                   "   An 'output' subdirectory must exist\n" + 
                   "   in the directory in which the tool is executed.\n" + 
                   "   All models, code, etc are stored there.\n\n" + 
-                  "2. Unable to parse conditions? \n" + 
+
+                  "2a. Unable to parse conditions? \n" + 
                   "   Check that formulae  s->forAll(x | P)  etc\n" + 
                   "   are written *without* spaces between -> and \n" + 
                   "   forAll. Sometimes more brackets are needed, eg:\n" + 
                   "   ( 1 - ( ( 1 - sectors[k].q )->pow(i) ) )->pow(m - i)\n\n" + 
+                  "2b. Unable to parse statements? \n" + 
+                  "   Activities should not be bracketed:\n" + 
+                  "   activity: (x := x+1; y := x*y);\n" + 
+                  "   should be:\n" + 
+                  "   activity: x := x+1; y := x*y;\n" + 
+                  "\n\n" + 
+
                   "3. Code runs forever? \n" + 
                   "   Choose option 'n' when asked to optimise type\n" + 
                   "   2 or 3 constraints.\n\n" + 
@@ -3944,6 +3954,16 @@ public void findPlugins()
       try 
       { File cstlfile = new File(fname); 
         window.ucdArea.testCSTLwithASTS(cstlfile,astfile);
+      } catch (Exception ex) { 
+        System.err.println("!!ERROR: No file: " + fname); 
+      }  
+      return; 
+    } 
+
+    if (args.length == 2 && "-cgbeTrain".equals(args[0]))
+    { String fname = args[1]; 
+      try 
+      { window.ucdArea.cgbeOCL2Program(fname);
       } catch (Exception ex) { 
         System.err.println("!!ERROR: No file: " + fname); 
       }  

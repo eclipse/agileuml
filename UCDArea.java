@@ -21505,8 +21505,11 @@ public void produceCUI(PrintWriter out)
     else 
     { System.err.println("!! No TL specification loaded"); } 
   } 
-  
+
   public void mapTL2CSTL()
+  { mapTL2CSTL(new Vector()); } 
+  
+  public void mapTL2CSTL(Vector extraRules)
   { if (tlspecification != null) 
     { System.out.println(); 
 	
@@ -21514,6 +21517,11 @@ public void produceCUI(PrintWriter out)
       { PrintWriter cout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter("output/tl.cstl")));
+
+        for (int i = 0; i < extraRules.size(); i++) 
+        { String xrule = (String) extraRules.get(i);
+          cout.println(xrule); 
+        }  
 
         CGSpec cg = new CGSpec(entities,types); 
         tlspecification.toCSTL(cg);
@@ -21543,8 +21551,8 @@ public void produceCUI(PrintWriter out)
     }
   }
 
-  public void cgbeOCL2Program()
-  { PreProcessModels.preprocess(); 
+  public void cgbeOCL2Program(String config)
+  { PreProcessModels.preprocess(config); 
     // Writes output/out.txt
 
     loadFromFile("mmCGBE.txt");
@@ -21758,7 +21766,7 @@ public void produceCUI(PrintWriter out)
     try
     { brsource = new BufferedReader(new FileReader(sfile)); }
     catch (FileNotFoundException e)
-    { System.out.println("File not found: " + sfile);
+    { System.out.println("!! ERROR: File not found: " + sfile);
       return; 
     }
 
@@ -21880,6 +21888,10 @@ public void produceCUI(PrintWriter out)
 
     System.out.println("***>> examples model specification: " + mod); 
 
+    Vector allsubterms = 
+       ASTTerm.allTagsArities(sourceasts); 
+
+
     File mfile = new File("output/out.txt");
     try
     { PrintWriter mout =
@@ -21899,6 +21911,9 @@ public void produceCUI(PrintWriter out)
     long endTime = d2.getTime(); 
     System.out.println(">>> MTBE took " + (endTime - startTime) + "ms");
   
+    /* For source tags which do not appear in the mapping, 
+       define a default rule  tag:: _1 |-->_1 */ 
+
     System.out.println(">>> Enhanced TL specification: "); 
     System.out.println(tlspecification + "");
       
@@ -21914,7 +21929,21 @@ public void produceCUI(PrintWriter out)
 
     // Then convert to CSTL. 
 
-    mapTL2CSTL(); 
+
+    System.out.println("***>> All tags: " + allsubterms); 
+
+    Vector cgsubterms = 
+       tlspecification.allTagsArities();
+
+    System.out.println("***>> All used tags: " + cgsubterms); 
+
+    allsubterms.removeAll(cgsubterms); 
+
+    System.out.println("***>> All unused tags: " + allsubterms); 
+
+    Vector extraRules = ASTTerm.rulesFromTagsArities(allsubterms); 
+
+    mapTL2CSTL(extraRules); 
   } 
   
   public void mapTL2UMLRSDS(Vector thesaurus)
@@ -21943,7 +21972,7 @@ public void produceCUI(PrintWriter out)
       while (!eof)
       { try { s = br.readLine(); }
         catch (IOException e)
-        { System.out.println("Reading failed.");
+        { System.out.println("!!ERROR: Reading failed.");
           return; 
         }
         if (s == null) 

@@ -26,17 +26,22 @@ public class ValueMatching
   public String toString()
   { return src + " |--> " + trg; }
 
-  public boolean isIdentity() 
+  public boolean isIdentityMapping() 
   { String ss = (src + "").trim(); 
     String tt = (trg + "").trim(); 
     if ("_1".equals(ss) && "_1".equals(tt))
     { return true; } 
     if ("_0".equals(ss) && "_0".equals(tt))
     { return true; } 
+    if (ss.startsWith("\"") && ss.endsWith("\"") && 
+        tt.startsWith("\"") && tt.endsWith("\"") && 
+        ss.substring(1,ss.length()-1).trim().equals(
+             tt.substring(1,tt.length()-1).trim()))
+    { System.out.println(">>> Identity mapping: " + ss + " |--> " + tt); 
+      return true;
+    } 
     return false; 
   } 
-
-    
 
   public ValueMatching invert()
   { return new ValueMatching(trg,src); }

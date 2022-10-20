@@ -9139,7 +9139,10 @@ public class Entity extends ModelElement implements Comparable
       nme = nme + "<" + tp + ">"; 
     } 
 
-    if (isInterface()) { } 
+    String implementsWord = "implements"; 
+
+    if (isInterface()) 
+    { implementsWord = "extends"; } 
     else if (isAbstract())
     { nme = "abstract " + nme; } 
 

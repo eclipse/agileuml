@@ -178,6 +178,30 @@ public class ASTCompositeTerm extends ASTTerm
     return null; 
   }
 
+  public Vector allNestedTagsArities()
+  { Vector res = new Vector(); 
+    Vector pair = new Vector(); 
+    pair.add(tag); pair.add(terms.size()); 
+    res.add(pair); 
+    for (int i = 0; i < terms.size(); i++) 
+    { ASTTerm tt = (ASTTerm) terms.get(i); 
+      res.addAll(tt.allNestedTagsArities()); 
+    } 
+    return res; 
+  } 
+
+  public Vector allTagsArities()
+  { Vector res = new Vector(); 
+    Vector pair = new Vector(); 
+    pair.add(tag); pair.add(terms.size()); 
+    res.add(pair); 
+    for (int i = 0; i < terms.size(); i++) 
+    { ASTTerm tt = (ASTTerm) terms.get(i); 
+      res.addAll(tt.allTagsArities()); 
+    } 
+    return res; 
+  } 
+
   public Vector getTerms()
   { return terms; }  
 
@@ -39642,7 +39666,206 @@ public class ASTCompositeTerm extends ASTTerm
   } 
 
 
+  public String antlr2cstl()
+  { System.out.println(">>> Tag: " + tag + " terms: " + 
+                       terms.size()); 
+    if (tag.equals("rules"))
+    { String res = ""; 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTCompositeTerm tt = (ASTCompositeTerm) terms.get(i); 
+        res = res + tt.antlr2cstl() + "\n\n"; 
+      } 
+      return res; 
+    } 
 
+    if (tag.equals("ruleSpec") || 
+        tag.equals("ruleBlock") || 
+        tag.equals("labeledAlt"))
+    { ASTCompositeTerm t1 = (ASTCompositeTerm) terms.get(0); 
+      return t1.antlr2cstl(); 
+    } 
+
+    if (tag.equals("parserRuleSpec"))
+    { String rname = ""; 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        if (tt instanceof ASTSymbolTerm) 
+        { String symb = tt + ""; 
+          if (":".equals(symb)) 
+          { if (i < terms.size() - 1) 
+            { ASTCompositeTerm rblock = 
+                (ASTCompositeTerm) terms.get(i+1); 
+              String blockcode = rblock.antlr2cstl(); 
+              return rname + "::\n" + blockcode; 
+            }
+            return rname + "::\n_* |-->";
+          }   
+          else 
+          { rname = symb; } 
+        }
+      } 
+    }
+
+    if ("ruleAltList".equals(tag) || "altList".equals(tag))
+    { String res = ""; 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        String symb = tt + ""; 
+        if ("|".equals(symb))
+        { res = res + "\n"; } 
+        if (tt instanceof ASTCompositeTerm) 
+        { ASTCompositeTerm ct = (ASTCompositeTerm) tt; 
+          Vector normalisedct = 
+                       ct.normaliseAntlr(); 
+          System.out.println(">>> " + this + " >> Normalised= " + normalisedct); 
+          for (int j = 0; j < normalisedct.size(); j++) 
+          { Vector pathj = (Vector) normalisedct.get(j); 
+            ASTCompositeTerm newct = new ASTCompositeTerm("alternative", pathj); 
+            res = res + newct.antlr2cstl() + "\n";
+          }  
+        } 
+      } 
+      return res;
+    } 
+
+    if ("alternative".equals(tag))
+    { String res = ""; 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        String tg = tt.getTag(); 
+        if ("element".equals(tg) || "atom".equals(tg))
+        { String elem = tt.antlrElement2cstl(i); 
+          res = res + elem; 
+        } 
+      } 
+      return res + " |-->"; 
+    } 
+
+    return "";  
+  }
+
+  public String antlrElement2cstl(int i) 
+  { if ("atom".equals(tag))
+    { ASTTerm t1 = (ASTTerm) terms.get(0); 
+      return t1.antlrElement2cstl(i); 
+    }
+
+    if ("terminal".equals(tag))
+    { ASTTerm t1 = (ASTTerm) terms.get(0); 
+      return t1 + " "; 
+    } 
+
+    if ("ruleref".equals(tag))
+    { return "_" + (i+1) + " "; }
+
+    if ("element".equals(tag) && terms.size() == 2)
+    { ASTTerm trm = (ASTTerm) terms.get(0); 
+      ASTTerm suffix = (ASTTerm) terms.get(1);
+      return "_" + (i+1) + suffix.antlr2cstl() + " "; 
+    } 
+
+    if ("element".equals(tag))
+    { ASTTerm t1 = (ASTTerm) terms.get(0); 
+      return t1.antlrElement2cstl(i); 
+    }
+    
+    return ""; 
+  } 
+
+  public Vector normaliseAntlr()
+  { Vector alternatives = new Vector(); 
+    Vector emptyAlt = new Vector(); 
+    alternatives.add(emptyAlt); 
+
+    // result for an alternative is all combinations of 
+    // possibilities for each of its elements
+
+    if (tag.equals("labeledAlt"))
+    { ASTCompositeTerm t1 = (ASTCompositeTerm) terms.get(0); 
+      return t1.normaliseAntlr(); 
+    } 
+
+    if ("alternative".equals(tag))
+    { for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        String tg = tt.getTag(); 
+        if ("element".equals(tg))
+        { Vector elemchoices = tt.normaliseAntlr(); 
+          Vector newalts = new Vector(); 
+          for (int j = 0; j < alternatives.size(); j++) 
+          { Vector altern = (Vector) alternatives.get(j); 
+            for (int k = 0; k < elemchoices.size(); k++) 
+            { Vector choice = (Vector) elemchoices.get(k); 
+              Vector newbranch = new Vector(); 
+              newbranch.addAll(altern); 
+              newbranch.addAll(choice); 
+              newalts.add(newbranch); 
+            } 
+          }
+          alternatives = newalts;  
+        } 
+      } 
+      return alternatives; 
+    } 
+
+    if ("atom".equals(tag))
+    { ASTTerm t1 = (ASTTerm) terms.get(0); 
+      emptyAlt.add(t1); 
+      return alternatives;  
+    } // Sequence{ Sequence{t1} }
+
+    if ("terminal".equals(tag))
+    { ASTTerm t1 = (ASTTerm) terms.get(0); 
+      emptyAlt.add(t1); 
+      return alternatives;
+    } 
+
+    if ("ruleref".equals(tag))
+    { emptyAlt.add(this); 
+      return alternatives;
+    }
+
+    if ("element".equals(tag) && terms.size() == 2)
+    { ASTTerm trm = (ASTTerm) terms.get(0); 
+      ASTTerm suffix = (ASTTerm) terms.get(1);
+      String suf = suffix.literalForm(); 
+      if ("?".equals(suf))
+      { emptyAlt.add(trm); 
+        Vector newEmpty = new Vector(); 
+        alternatives.add(newEmpty);
+      } 
+      else if ("+".equals(suf))
+      { emptyAlt.add(trm);
+        ASTBasicTerm ts1 = new ASTBasicTerm("terminal", "'_*'"); 
+        ASTCompositeTerm terminalStar = 
+          new ASTCompositeTerm("atom", ts1); 
+        emptyAlt.add(terminalStar);
+      } 
+      else if ("*".equals(suf))
+      { Vector newalts = new Vector(); 
+        Vector newEmpty = new Vector(); 
+        newalts.add(newEmpty);
+        newalts.addAll(alternatives); 
+        // emptyAlt.add(trm);
+        ASTBasicTerm ts1 = new ASTBasicTerm("terminal", "'_*'"); 
+        ASTCompositeTerm terminalStar = 
+          new ASTCompositeTerm("atom", ts1); 
+        emptyAlt.add(terminalStar);
+        alternatives = newalts; 
+      } 
+ 
+      return alternatives;
+    } 
+
+    if ("element".equals(tag))
+    { ASTTerm t1 = (ASTTerm) terms.get(0); 
+      emptyAlt.add(t1); 
+      return alternatives; 
+    }
+    
+    return alternatives; 
+  } 
+          
 
   public static void main(String[] args)
   { // Testing of JS to KM3
@@ -39697,8 +39920,11 @@ public class ASTCompositeTerm extends ASTTerm
     Vector v1 = new Vector();
     Vector v2 = new Vector(); 
 
+    String rr = xx.antlr2cstl(); 
+    System.out.println(rr); 
+
     // Statement expr = xx.jsstatementToKM3(m1,m2,v1,v2);
-    Vector expr = 
+/*    Vector expr = 
      ((ASTCompositeTerm) xx).jsprogramToKM3(
                                        m1,m2,v1,v2); 
 
@@ -39739,7 +39965,7 @@ public class ASTCompositeTerm extends ASTTerm
       } 
       else
       { System.out.println(elem); } 
-    }  
+    }  */ 
 
     // Object sobj = "string object"; 
     // Object robj = new Object(); 

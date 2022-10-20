@@ -125,20 +125,37 @@ public class AttributeMatching
   }
 
   public boolean isBasic()
-  { // Only variable is _1 on rhs 
+  { // Only variable is _1 on rhs; with no `mf
 
     if (trgvalue instanceof BasicExpression) 
-    { Vector vars = trgvalue.metavariables(); 
-      if (vars.size() == 1 && vars.contains("_1"))
+    { BasicExpression be = (BasicExpression) trgvalue; 
+      Vector vars = trgvalue.metavariables();
+      Vector mfs = CGRule.metafeatures(be.toLiteralCSTL() + "");  
+      if (vars.size() == 1 && vars.contains("_1") && 
+          mfs.size() == 0)
       { return true; }  
+      return false; 
     } 
 
     if (trgvalue != null) 
     { Vector tvars = CGRule.metavariables(trgvalue + ""); 
-      if (tvars.size() == 1 && tvars.contains("_1"))
+      Vector mfs = CGRule.metafeatures(trgvalue + "");  
+      if (tvars.size() == 1 && tvars.contains("_1") && 
+          mfs.size() == 0)
       { return true; }  
     } 
     
+    return false; 
+  }
+
+  public boolean isIterative()
+  { // LHS has _*
+   
+    String lhs = srcvalue + ""; 
+   
+    if (lhs.indexOf("_*") >= 0)
+    { return true; } 
+      
     return false; 
   }
 
@@ -190,6 +207,34 @@ public class AttributeMatching
     } 
     return res; 
   } 
+
+  public Vector allTagsArities(String category)
+  { Vector res = new Vector(); 
+    
+    if (srcvalue != null) 
+    { String rulelhs = "" + srcvalue; 
+      Vector vars = CGRule.metavariables(rulelhs); 
+      if (vars != null) 
+      { Vector pair = new Vector(); 
+        pair.add(category); 
+        pair.add(vars.size()); 
+        res.add(pair); 
+      } 
+
+      if (srcvalue instanceof BasicExpression)
+      { BasicExpression be = (BasicExpression) srcvalue; 
+        Vector pars = be.getParameters(); 
+        if (pars != null) 
+        { Vector pair = new Vector(); 
+          pair.add(category); 
+          pair.add(pars.size()); 
+          res.add(pair); 
+        }
+      }  
+    }
+    return res; 
+  }  
+
 
   public String toCSTL(String category, Expression cond, 
                        CGSpec cg, Vector typematches)

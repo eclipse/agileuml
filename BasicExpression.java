@@ -2321,9 +2321,13 @@ class BasicExpression extends Expression
   { String res = data;
  
     if (umlkind == FUNCTION)
-    { if (parameters != null && parameters.size() == 1)
-      { String par = ((BasicExpression) parameters.get(0)).toLiteralCSTL(); 
-        res = par + "`" + data; 
+    { if (parameters != null && parameters.size() == 1 && 
+          parameters.get(0) instanceof BasicExpression)
+      { BasicExpression par = (BasicExpression) parameters.get(0); 
+        if (par.umlkind == FUNCTION) 
+        { res = par.toLiteralCSTL(); } 
+        else  
+        { res = par + "`" + data; }  
       }
       return res;  
     } 
@@ -2349,23 +2353,64 @@ class BasicExpression extends Expression
     return res; 
   }  
 
+  public String toInnerCSTL()
+  { String res = data;
+ 
+    if (umlkind == FUNCTION)
+    { if (parameters != null && parameters.size() == 1)
+      { String par = ((BasicExpression) parameters.get(0)).toInnerCSTL(); 
+        res = par; 
+      }
+      return res;  
+    } 
+
+    if (parameters != null && parameters.size() > 0)
+    { res = ""; 
+      for (int i = 0; i < parameters.size(); i++)
+      { String par = ((BasicExpression) parameters.get(i)).toLiteralCSTL(); 
+        // if (res.length() > 0 && 
+        //     par.startsWith("_") && 
+        //     ( Character.isDigit(res.charAt(res.length()-1)) ||
+        //       Character.isLetter(res.charAt(res.length()-1)) )
+        //    )
+        // { res = res + " " + par; } 
+        // else
+ 
+        if (par.endsWith(" "))
+        { res = res + par; } 
+        else 
+        { res = res + par + " "; } 
+      } 
+    } 
+    return res; 
+  }  // No nesting of metafeatures. 
+
   public Vector usesCSTLfunctions()
   { Vector res = new Vector();
  
     if (umlkind == FUNCTION)
     { if (parameters != null && parameters.size() == 1)
-      { res.add(data); }
+      { res.add(data);
+        Expression par = (Expression) parameters.get(0); 
+        if (par instanceof BasicExpression)
+        { res.addAll(((BasicExpression) par).usesCSTLfunctions()); }
+      } 
+
+      // System.out.println(">>>--- CSTL functions used in " + this + " are: " + res); 
       return res;  
     } 
 
     if (parameters != null && parameters.size() > 0)
     { for (int i = 0; i < parameters.size(); i++)
       { if (parameters.get(i) instanceof BasicExpression)
-	    { BasicExpression par = (BasicExpression) parameters.get(i); 
+       { BasicExpression par = (BasicExpression) parameters.get(i); 
           res.addAll(par.usesCSTLfunctions());
-		}    
+        }    
       } 
     } 
+
+    // System.out.println(">>>--- CSTL functions used in " + this + " are: " + res); 
+
     return res; 
   }  
 

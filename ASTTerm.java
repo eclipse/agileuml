@@ -133,6 +133,76 @@ public abstract class ASTTerm
 
   public abstract String tagFunction(); 
 
+  public static Vector allNestedTagsArities(Vector sasts)
+  { // [tag,arity] for each inner term of sasts. 
+
+    Vector res = new Vector(); 
+    for (int i = 0; i < sasts.size(); i++) 
+    { ASTTerm trm = (ASTTerm) sasts.get(i); 
+      Vector trms = trm.getTerms(); 
+      for (int j = 0; j < trms.size(); j++) 
+      { ASTTerm tj = (ASTTerm) trms.get(j); 
+        Vector alltags = tj.allNestedTagsArities(); 
+        res.addAll(alltags); 
+      } 
+    } 
+    return res; 
+  } 
+
+  public static Vector allTagsArities(Vector sasts)
+  { // [tag,arity] for each term of sasts and subterm, 
+    // recursively. 
+
+    Vector res = new Vector(); 
+    for (int i = 0; i < sasts.size(); i++) 
+    { ASTTerm trm = (ASTTerm) sasts.get(i); 
+      Vector alltags = trm.allTagsArities(); 
+      res.addAll(alltags); 
+    } 
+    return res; 
+  } 
+    
+  public abstract Vector allNestedTagsArities(); 
+
+  public abstract Vector allTagsArities(); 
+
+  public static Vector rulesFromTagsArities(Vector tagsarities)
+  { // For each (tag,n) : tagsarities
+    // define CGRule  tag:: _1 |-->_1 or _* |-->_*
+    java.util.Map cgrules = new java.util.HashMap();
+
+    for (int k = 0; k < tagsarities.size(); k++) 
+    { Vector tgar = (Vector) tagsarities.get(k); 
+      String tg = (String) tgar.get(0); 
+      int ar = (int) tgar.get(1);
+      Vector rls = (Vector) cgrules.get(tg); 
+      if (rls == null) 
+      { rls = new Vector(); }  
+      if (ar == 1) 
+      { if (rls.contains("_1 |-->_1")) { } 
+        else 
+        { rls.add("_1 |-->_1"); }
+      } 
+      else 
+      { if (rls.contains("_* |-->_*")) { } 
+        else 
+        { rls.add("_* |-->_*"); }  
+      }
+      cgrules.put(tg,rls);   
+    } 
+
+    Vector res = new Vector();
+    for (Object obj : cgrules.keySet())
+    { String key = (String) obj;   
+      Vector rls = (Vector) cgrules.get(key); 
+      String rle = key + "::\n"; 
+      for (int p = 0; p < rls.size(); p++) 
+      { rle = rle + rls.get(p) + "\n"; } 
+      res.add(rle); 
+    } 
+    return res; 
+  } 
+
   public void addStereotype(String str) 
   { String lit = literalForm(); 
     Vector stereotypes = 
@@ -1067,7 +1137,7 @@ public abstract class ASTTerm
     for (int i = 0; i < ttrees.length; i++) 
     { tattvalues[i] = ttrees[i].literalForm(); } 
 
-    if (AuxMath.isIdentity(sattvalues,tattvalues))
+    if (AuxMath.isIdentityMapping(sattvalues,tattvalues))
     { tm.addDefaultMapping("_1", "_1"); 
       return tm; 
     }
@@ -3433,8 +3503,13 @@ public abstract class ASTTerm
     } 
     return res; 
   }    
-    
  
+  public abstract String antlr2cstl();
+    
+  public abstract String antlrElement2cstl(int i);
+ 
+  public abstract Vector normaliseAntlr();
+
   public static void main(String[] args) 
   { // ASTBasicTerm t = new ASTBasicTerm("OclBasicExpression", "true"); 
     // System.out.println(t.isInteger()); 

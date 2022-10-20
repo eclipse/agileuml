@@ -6015,7 +6015,7 @@ public class ModelSpecification
                   ASTTerm.compositeSource2TargetTrees(sent, 
                        sourceJValues,targetJValues,this); 
                 if (amsub != null) 
-                { System.out.println(">> Discovered mapping from subterm of source " + amsub);
+                { System.out.println(">>-- Discovered mapping from subterm of source " + amsub);
                   String fid = 
                     Identifier.nextIdentifier("subruleset");
                   TypeMatching tmnew = new TypeMatching(fid);
@@ -6071,7 +6071,8 @@ public class ModelSpecification
                            tms, locams); 
                   if (amjx != null) 
                   { System.out.println(">>-->> Found nested mapping for source term " + (sindex+1) + " to target " + (tindex+1) + ": " + amjx);
-                    System.out.println(">>-->> " + amjx + " is vacuous: " + amjx.isVacuous() + " " + amjx.isBasic());
+                    System.out.println(">>-->> " + amjx + " is vacuous: " + amjx.isVacuous() + " Is basic: " + amjx.isBasic());
+                    System.out.println(">>-->> Auxiliary maps: " + tms); 
 
                     // Create new function ff with rule amjx; 
                     // if non-trivial. Add to tms. 
@@ -6079,10 +6080,22 @@ public class ModelSpecification
                     BasicExpression srcexpr = 
                       new BasicExpression("_" + (sindex+1)); 
 
-                    if (srcJValues.get(0) instanceof ASTSymbolTerm) { } 
-                    else if (amjx.isVacuous() || 
-                             amjx.isBasic()) 
-                    { } 
+                    if (srcJValues.get(0) instanceof ASTSymbolTerm ||
+                        amjx.isVacuous() || 
+                        amjx.isBasic() || 
+                        amjx.isIterative()) 
+                    { if ((amjx.trgvalue + "").indexOf("_*") >= 0)
+                      { foundstermpars.add("_*"); 
+                        ttermpars.add(amjx.trgvalue); 
+                      } 
+                      else 
+                      { Expression newtjexpr = 
+                            amjx.trgvalue.substituteEq("_1", srcexpr); 
+                        ttermpars.add(newtjexpr);
+                      // ttermpars.add(srcexpr);  
+                        foundstermpars.add("_" + (sindex+1));
+                      }  
+                    } 
                     else 
                     { String fid = 
                          Identifier.nextIdentifier(
@@ -6099,6 +6112,7 @@ public class ModelSpecification
 
                       System.out.println(">>-->> Found nested mapping for source term _" + (sindex+1) + "`" + fid + " |--> " + "_" + (tindex+1));
                       System.out.println(">> With maps " + locams); 
+                      System.out.println(); 
 
                       srcexpr =
                         new BasicExpression(fid);
@@ -6107,20 +6121,13 @@ public class ModelSpecification
                       //  new BasicExpression(srcexpr + "`" + fid); 
                       srcexpr.addParameter(
                          new BasicExpression("_" + (sindex+1))); 
+                      System.out.println(">>> Source expression: " + srcexpr); 
+                      ttermpars.add(srcexpr);  
+                      foundstermpars.add("_" + (sindex+1));
                     }
 
                     sfoundvars.add("_" + (sindex+1)); 
-                    if ((amjx.trgvalue + "").indexOf("_*") >= 0)
-                    { foundstermpars.add("_*"); 
-                      ttermpars.add(amjx.trgvalue); 
-                    } 
-                    else 
-                    { Expression newtjexpr = 
-                          amjx.trgvalue.substituteEq("_1", srcexpr); 
-                      ttermpars.add(newtjexpr);
-                      // ttermpars.add(srcexpr);  
-                      foundstermpars.add("_" + (sindex+1));
-                    }  
+                    
 
                     foundsource = true; 
                   }
@@ -6668,7 +6675,8 @@ public class ModelSpecification
       return amres; 
     } 
     return amjx; 
-  }             
+  } // No. Same style as seq3: amres is _1 |-->_1`fid
+    // fid:: _* |-->_*`gid and gid is tmnew            
 
   private boolean isConsistentReplacement(String ds, 
                     String rs,

@@ -877,9 +877,30 @@ class ArchitectureArea extends JPanel
   { for (int i = 0; i < components.size(); i++) 
     { ArchComponent comp = (ArchComponent) components.get(i); 
       String compName = comp.getName();
- 
-      String res = "class " + compName; 
+      String lcname = compName.toLowerCase(); 
+      String interfacesDefinitions = ""; 
       Vector pinterfaces = comp.getProvidedInterfaces();
+      for (int j = 0; j < pinterfaces.size(); j++) 
+      { Entity pint = (Entity) pinterfaces.get(j); 
+        interfacesDefinitions = 
+          interfacesDefinitions + 
+          "/* Interface specification: */\n" + 
+          pint.getKM3() + "\n\n"; 
+      } 
+
+      Vector rinterfaces = comp.getRequiredInterfaces();
+      for (int j = 0; j < rinterfaces.size(); j++) 
+      { Entity rint = (Entity) rinterfaces.get(j); 
+        interfacesDefinitions = 
+          interfacesDefinitions + 
+          "/* Interface specification: */\n" + 
+          rint.getKM3() + "\n\n"; 
+      } 
+
+      String res = "package " + lcname + ";\n\n" + 
+                   interfacesDefinitions + 
+                   "class " + compName; 
+
       if (pinterfaces.size() > 0) 
       { res = res + " implements "; }  
       for (int j = 0; j < pinterfaces.size(); j++) 
@@ -894,7 +915,6 @@ class ArchitectureArea extends JPanel
       String constr = "  public " + compName + "("; 
       String assignments = ""; 
 
-      Vector rinterfaces = comp.getRequiredInterfaces();
       for (int j = 0; j < rinterfaces.size(); j++) 
       { Entity rint = (Entity) rinterfaces.get(j); 
         String rname = rint.getName();
@@ -1601,6 +1621,10 @@ class ArchitectureArea extends JPanel
       { System.err.println("! Interface " + jname + " does not exist, it will be added to the class diagram."); 
         pint = new Entity(jname); 
         pint.setInterface(true); 
+        int xx = (entities.size() + 1)*100; 
+        int yy = 200; 
+        if (parent != null) 
+        { parent.addEntity(pint,xx,yy); } 
         entities.add(pint); 
       } 
       else if (pint.isInterface()) { } 
@@ -1637,6 +1661,10 @@ class ArchitectureArea extends JPanel
       { System.err.println("! Interface " + iname + " does not exist, it will be added to the class diagram."); 
         rint = new Entity(iname); 
         rint.setInterface(true); 
+        int xx = (entities.size() + 1)*100; 
+        int yy = 200; 
+        if (parent != null) 
+        { parent.addEntity(rint,xx,yy); } 
         entities.add(rint); 
       } 
       else if (rint.isInterface()) { } 
