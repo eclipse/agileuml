@@ -822,6 +822,6 @@ public class ASTSymbolTerm extends ASTTerm
   public Vector normaliseAntlr()
   { return new Vector(); } 
 
-  public String antlrElement2cstl(int i)
+  public String antlrElement2cstl(int i, Vector conds)
   { return symbol; } 
 } 

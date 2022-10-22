@@ -3970,6 +3970,10 @@ public void findPlugins()
       return; 
     } 
 
+    if (args.length == 1 && "-antlr2cstl".equals(args[0]))
+    { ASTCompositeTerm.convertAntlr2CSTL(); 
+      return; 
+    } 
 
     window.setTitle("Agile UML Toolset, Eclipse Incubation Project Version 2.1");
     window.setControllerName("Controller"); 

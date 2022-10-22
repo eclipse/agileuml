@@ -3506,7 +3506,7 @@ public abstract class ASTTerm
  
   public abstract String antlr2cstl();
     
-  public abstract String antlrElement2cstl(int i);
+  public abstract String antlrElement2cstl(int i, Vector conds);
  
   public abstract Vector normaliseAntlr();
 

@@ -2608,7 +2608,7 @@ public class ASTBasicTerm extends ASTTerm
   public String antlr2cstl()
   { return value; } 
 
-  public String antlrElement2cstl(int i)
+  public String antlrElement2cstl(int i, Vector conds)
   { if ("terminal".equals(tag))
     { if ("'".equals(value.charAt(0) + ""))
       { value = value.substring(1); } 
@@ -2616,8 +2616,13 @@ public class ASTBasicTerm extends ASTTerm
       { value = value.substring(0,value.length()-1); } 
       return value + " "; 
     } 
+
     if ("ruleref".equals(tag))
-    { return "_" + (i+1) + " "; }
+    { conds.add("_" + (i+1) + " " + value); 
+
+      return "_" + (i+1) + " "; 
+    }
+
     return ""; 
   } 
 
