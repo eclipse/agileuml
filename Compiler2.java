@@ -1223,6 +1223,7 @@ public class Compiler2
           } 
         }
       } 
+
       if (tt == null) 
       { System.err.println("!!ERROR!!: Invalid map/function type, it must have 2 type arguments: " + showLexicals(st,en)); 
         return null; 
@@ -3084,14 +3085,15 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
 
     if (pstart < pend && "]".equals(lexicals.get(pend) + "") && 
         "[".equals(lexicals.get(pstart+1) + ""))
-    { String ss = lexicals.elementAt(pstart).toString(); 
+    { // iden[indexes]
+
+      String ss = lexicals.elementAt(pstart).toString(); 
       BasicExpression ee = new BasicExpression(ss,0); 
       Expression op = ee.checkIfSetExpression(); 
       // Expression op = parse_basic_expression(bc,pstart,pstart); 
       Expression arg = parse_additive_expression(bc,pstart+2,pend-1,entities,types); 
       if (arg == null) 
-      { // System.err.println("ERROR: Invalid array argument: " + showLexicals(pstart+2,pend-1));
-        Vector args = parse_array_index_sequence(bc,pstart+2,pend-1,entities,types);  
+      { Vector args = parse_array_index_sequence(bc,pstart+2,pend-1,entities,types);  
         if (args != null) 
         { Expression opx = defineArrayIndex(op,args,entities,types); 
           System.out.println(">>> Array index sequence: " + args + " for " + opx); 
@@ -3108,19 +3110,30 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     }       
 
     if (pstart < pend && "]".equals(lexicals.get(pend-1) + "") && 
-        "[".equals(lexicals.get(pstart+1) + ""))  // be[arrind].be2
-    { String tail = lexicals.get(pend) + ""; 
+        "[".equals(lexicals.get(pstart+1) + "") &&
+        (lexicals.get(pend) + "").charAt(0) == '.')  
+    { // be[inds].f
+
+      String tail = lexicals.get(pend) + ""; 
       if (tail.charAt(0) == '.')
       { tail = tail.substring(1,tail.length()); } 
+
       Expression op = parse_basic_expression(bc,pstart,pstart,entities,types); 
       Expression arg = parse_additive_expression(bc,pstart+2,pend-2,entities,types); 
       if (arg == null) 
       { // System.err.println("ERROR: Invalid array argument: " + showLexicals(pstart+2,pend-2)); 
+        /* Vector args = parse_array_index_sequence(bc,pstart+2,pend-2,entities,types);  
+        if (args != null) 
+        { Expression opx = defineArrayIndex(op,args,entities,types); 
+          System.out.println(">>> Array index sequence: " + args + " for " + opx); 
+          return opx; 
+        } */ 
       } 
       else if (op != null && op instanceof BasicExpression) // must be
       { BasicExpression beop = (BasicExpression) op;  
         beop.setArrayIndex(arg); 
-        BasicExpression te = // new BasicExpression(ss,0);   // (ss) surely?
+        BasicExpression te = 
+          // new BasicExpression(ss,0);   // (ss) surely?
                        new BasicExpression(tail,0); 
         Expression ef = te.checkIfSetExpression(); 
         if (ef != null && (ef instanceof BasicExpression)) 
@@ -3176,8 +3189,8 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
           if (ve != null)
           { BasicExpression beop = (BasicExpression) op;
             String tail = strs.substring(1,strs.length()); 
-			BasicExpression rees = new BasicExpression(tail, 0); 
-			rees.setObjectRef(beop);  
+            BasicExpression rees = new BasicExpression(tail, 0); 
+            rees.setObjectRef(beop);  
             rees.setIsEvent();
             rees.setParameters(ve);
             System.out.println("*** Parsed extended call expression " + rees);
@@ -3188,37 +3201,52 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     }
   }
 
-  /*  if (pstart < pend &&  
-        "[".equals(lexicals.get(pstart+1) + ""))  // be[arrind].something
-    { for (int k = pstart + 2; k < pend; k++) 
-      { String kstring = lexicals.get(k) + ""; 
-        if ("]".equals(kstring))
-        { Expression op = parse_basic_expression(bc,pstart,pstart); 
-          Expression arg = parse_factor_expression(bc,pstart+2,k-1); 
+  if (pstart < pend &&  
+      "[".equals(lexicals.get(pstart+1) + "") && 
+      "]".equals(lexicals.get(pend-1) + "") && 
+      (lexicals.get(pend) + "").charAt(0) == '.') 
+    { // iden[ ... ].f  valid basic expression before .f
+
+      Expression op = parse_basic_expression(
+                      bc,pstart,pend-1,entities,types); 
+      String tail = lexicals.get(pend) + ""; 
+      if (tail.charAt(0) == '.')
+      { tail = tail.substring(1,tail.length()); } 
+    
+      if (op instanceof BasicExpression) // must be
+      { BasicExpression beop = (BasicExpression) op;  
+        BasicExpression rees = new BasicExpression(tail, 0); 
+        rees.setObjectRef(beop);  
+        System.out.println(">>> Parsed array 2 expression: " + rees);
+        return rees;  
+      }
+      // return null; 
+    }       
+
+  if (pstart + 1 < pend &&  
+      "]".equals(lexicals.get(pend) + "")) 
+    { // be [ ind ]  valid basic expression be
+
+      for (int k = pend-1; k >= pstart; k--)
+      { String lex = lexicals.get(k) + ""; 
+        if ("[".equals(lex))
+        { Expression op = parse_basic_expression(
+                       bc,pstart,k-1,entities,types); 
       
-          String tail = lexicals.get(k+1) + ""; 
-          if (tail.charAt(0) == '.')
-          { tail = tail.substring(1,tail.length()); } 
           if (op instanceof BasicExpression) // must be
           { BasicExpression beop = (BasicExpression) op;  
-            beop.setArrayIndex(arg); 
-            Expression te = parse_basic_expression(bc,k+1,pend); 
-            if (te != null)
-            { if (te instanceof BasicExpression)
-              { BasicExpression bte = (BasicExpression) te; 
-                bte.setData(tail);  
-                bte.setObjectRef(beop); 
-                System.out.println("Parsed array 2 expression: " + bte);
-                return bte;  
-              }
-              else 
-              { return null; } 
-            }        
-          } 
-        }
-      } 
-      return null; 
-    }   */     
+            Expression arg = parse_additive_expression(
+                         bc,k+1,pend-1,entities,types); 
+            if (arg != null && beop.arrayIndex == null)
+            { beop.setArrayIndex(arg); 
+              System.out.println(">>> Parsed array 3 expression: " + beop);
+              return beop;
+            } 
+          }
+        }  
+      }
+      // return null; 
+    }       
 
     if (pstart + 2 < pend)
     { for (int i = pstart + 1; i < pend; i++)
@@ -5043,10 +5071,6 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       return "then"; 
     }
 
-    if ("else".startsWith(st)) 
-    { mess[0] = "else part of if-expression or if-statement"; 
-      return "else"; 
-    }
  
     if ("while".startsWith(st)) 
     { mess[0] = "Unbounded loop statement: while expr do statement\nCan only be used in an activity"; 
@@ -5135,6 +5159,13 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     { mess[0] = "assert statement, eg: assert condition do message;"; 
       return "assert"; 
     }
+
+    if (st.length() > 2)
+    { if ("else".startsWith(st)) 
+      { mess[0] = "else part of if-expression or if-statement"; 
+        return "else"; 
+      }
+    } 
 
     if (st.length() > 3) 
     { if ("reference".startsWith(st)) 
@@ -5233,6 +5264,18 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       { mess[0] = "arg->reverse() operator on strings, sequences\n" + 
           "Returns arg in reverse order"; 
         return "arg->reverse()"; 
+      }
+
+      if ("->restrict".startsWith(st))
+      { mess[0] = "arg->restrict(keys) operator on maps.\n" + 
+          "Returns submap of arg: elements with key in keys"; 
+        return "arg->restrict(keys)"; 
+      }
+
+      if ("->antirestrict".startsWith(st))
+      { mess[0] = "arg->antirestrict(keys) operator on maps.\n" + 
+          "Returns submap of arg: elements with key not in keys"; 
+        return "arg->antirestrict(keys)"; 
       }
 
       if ("->first".startsWith(st))
@@ -9724,7 +9767,7 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
     // Type xx = c.parseType(0,c.lexicals.size()-1,exs, new Vector()); 
 
     // c.nospacelexicalanalysis("arr[x][y]"); 
-    c.nospacelexicalanalysis("(OclFile.newOclFile(\"(text)\")).setReadOnly()");
+    c.nospacelexicalanalysis("Worksheets[Y].Range[X].Value");
     // c.nospacelexicalanalysis("(OclFile.newOclFile_Read(OclFile.newOclFile(s))).readObject()"); 
 
     // c.nospacelexicalanalysis("(MyString).subrange((MyString)->indexOf((MyString)->trim()))"); 

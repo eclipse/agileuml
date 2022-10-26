@@ -317,8 +317,9 @@ public class Attribute extends ModelElement
       initialExpression.typeCheck(types,entities,cntx,env); 
       if (type == null) 
       { type = initialExpression.type; 
-        elementType = initialExpression.elementType; 
+        elementType = initialExpression.elementType;  
       } 
+      System.out.println(">> Type of " + initialExpression + " is " + type + "(" + elementType + ")");
     } 
 
     if (type == null) 
@@ -329,10 +330,14 @@ public class Attribute extends ModelElement
     String tname = type + ""; 
     Type t = Type.getTypeFor(tname, types, entities); 
     if (t == null) 
-    { type = new Type("OclAny", null); 
+    { System.err.println("!! Warning: null type for attribute " + name); 
+      type = new Type("OclAny", null); 
       return true; 
     } 
     type = t; 
+    if (initialExpression != null && 
+        initialExpression.type == null) 
+    { initialExpression.type = type; } 
     return true; 
   } 
 
@@ -2021,8 +2026,22 @@ public class Attribute extends ModelElement
     { return "this." + nme + " = " + nme + "x;"; }
     if (isFinal()) { return ""; }
 
+    
+    
+
     if (initialExpression != null) 
-    { java.util.Map env = new java.util.HashMap();
+    { System.out.println(">> Initialiser of " + this + " is " + 
+          initialExpression + " " + initialExpression.type); 
+      if ("Set{}".equals(initialExpression + ""))
+      { initialExpression.setElementType(elementType); } 
+      else if ("Sequence{}".equals(initialExpression + ""))
+      { initialExpression.setElementType(elementType); } 
+      else if ("Map{}".equals(initialExpression + ""))
+      { initialExpression.setType(type); 
+        initialExpression.setElementType(type.elementType); 
+      } 
+    
+      java.util.Map env = new java.util.HashMap();
       if (entity != null) 
       { env.put(entity.getName(), "this"); } 
       return "this." + nme + " = " + initialExpression.queryFormJava7(env,true) + ";"; 
@@ -2030,8 +2049,13 @@ public class Attribute extends ModelElement
 
 
     // if (initialValue != null && !initialValue.equals(""))
-    // { return "this." + nme + " = " + initialValue + ";"; } 
+    // { return "this." + nme + " = " + initialValue + ";"; }
+ 
     String def = type.getDefaultJava7();
+
+    System.out.println(">> Initialiser of " + this + " is " + 
+                       def); 
+
     if (def == null) { return ""; }
     return "this." + nme + " = " + def + ";";
   } 

@@ -1455,16 +1455,23 @@ public class Entity extends ModelElement implements Comparable
   } 
 
   public void typeCheckAttributes(Vector types, Vector entities)
-  { for (int i = 0; i < attributes.size(); i++) 
+  { Vector localtypes = new Vector(); 
+    localtypes.addAll(types); 
+    localtypes.addAll(typeParameters); 
+    for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
-      att.typeCheck(types,entities); 
+      // System.out.println(">> Type-checking " + att + " with " + localtypes + " " + entities); 
+      att.typeCheck(localtypes,entities); 
     } 
   } 
 
   public void typeCheckOps(Vector types, Vector entities)
-  { for (int i = 0; i < operations.size(); i++) 
+  { Vector localtypes = new Vector(); 
+    localtypes.addAll(types); 
+    localtypes.addAll(typeParameters); 
+    for (int i = 0; i < operations.size(); i++) 
     { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i); 
-      bf.typeCheck(types,entities); 
+      bf.typeCheck(localtypes,entities); 
     } 
   } 
 
@@ -1472,10 +1479,13 @@ public class Entity extends ModelElement implements Comparable
   { Vector contexts = new Vector(); 
     contexts.add(this); 
     Vector vars = new Vector(); 
+    Vector localtypes = new Vector(); 
+    localtypes.addAll(types); 
+    localtypes.addAll(typeParameters); 
     
     for (int i = 0; i < invariants.size(); i++) 
     { Constraint inv = (Constraint) invariants.get(i); 
-      inv.typeCheck(types,entities,contexts,vars);
+      inv.typeCheck(localtypes,entities,contexts,vars);
     } 
   } 
 

@@ -2878,7 +2878,12 @@ public class Type extends ModelElement
         { return "new ArrayList()"; } 
       } 
       if (nme.equals("Map"))
-      { if (elementType != null) 
+      { if (keyType != null && elementType != null) 
+        { String kt = keyType.typeWrapperJava7(); 
+          String et = elementType.typeWrapperJava7(); 
+          return "new HashMap<" + kt + "," + et + ">()"; 
+        } 
+        else if (elementType != null) 
         { return "new HashMap<String," + elementType.typeWrapperJava7() + ">()"; } 
         else 
         { return "new HashMap()"; }
@@ -3636,6 +3641,8 @@ public class Type extends ModelElement
     if (nme.equals("Map"))
     { if (keyType != null && elementType != null) 
       { return "HashMap<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
+      else if (elementType != null) 
+      { return "HashMap<String, " + elementType.typeWrapperJava7() + ">"; } 
       else 
       { return "HashMap"; } 
     
@@ -3646,6 +3653,8 @@ public class Type extends ModelElement
     if (nme.equals("Function"))
     { if (keyType != null && elementType != null) 
       { return "Evaluation<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
+      else if (elementType != null) 
+      { return "Evaluation<String, " + elementType.typeWrapperJava7() + ">"; } 
       else 
       { return "Evaluation<String,Object>"; } 
     } 
