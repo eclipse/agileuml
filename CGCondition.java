@@ -15,6 +15,7 @@ public class CGCondition
 { String stereotype = "";
   String variable = "";
   boolean positive = true;
+  String quantifier = ""; 
 
   public CGCondition()
   { } 
@@ -97,8 +98,20 @@ public class CGCondition
   public void setNegative()
   { positive = false; }
 
+  public void setExistential()
+  { quantifier = "any"; }
+
+  public void setUniversal()
+  { quantifier = "all"; }
+
   public String toString()
-  { String res = variable; 
+  { String res = variable;
+
+    if ("all".equals(quantifier))
+    { res = res + " all"; } 
+    else if ("any".equals(quantifier))
+    { res = res + " any"; } 
+ 
     if (positive) { } 
     else  
     { res = res + " not"; } 
@@ -237,8 +250,17 @@ public class CGCondition
         { int mfindex = cond.variable.indexOf("`"); 
           String cvar = cond.variable; 
           if (mfindex > 0) 
-          { cvar = cvar.substring(0,mfindex); } 
-          if (var.equals(cvar))
+          { cvar = cvar.substring(0,mfindex); }
+
+          if ("_*".equals(cvar) && 
+              m instanceof Vector)
+          { if (cond.conditionSatisfied((Vector) m,entities,cgs))
+            { } 
+            else 
+            { return false; } 
+            System.out.println("||| Condition " + cond + " is satisfied by " + m); 
+          } 
+          else if (var.equals(cvar))
           { if (m instanceof Type && 
               cond.conditionSatisfied((Type) m, entities,cgs)) 
             { }
@@ -285,6 +307,28 @@ public class CGCondition
 
     return false; 
   } 
+
+
+
+  public boolean conditionSatisfied(Object t, Vector entities, CGSpec cgs)
+  { if (t instanceof Type) 
+    { return conditionSatisfied((Type) t, entities,cgs); } 
+    if (t instanceof Attribute) 
+    { return conditionSatisfied((Attribute) t, entities,cgs); } 
+    if (t instanceof Expression) 
+    { return conditionSatisfied((Expression) t, entities,cgs); } 
+    if (t instanceof Statement) 
+    { return conditionSatisfied((Statement) t, entities,cgs); } 
+    if (t instanceof ASTTerm) 
+    { return conditionSatisfied((ASTTerm) t, entities,cgs); } 
+    if (t instanceof Vector) 
+    { return conditionSatisfied((Vector) t, entities,cgs); }
+    if (t instanceof String) 
+    { return conditionSatisfied((String) t, entities,cgs); } 
+ 
+    return false; 
+  } 
+
 
   public boolean conditionSatisfied(Type t, Vector entities, CGSpec cgs)
   { System.out.println("||| Checking type condition " + t + " " + stereotype); 
@@ -404,7 +448,38 @@ public class CGCondition
   }
 
   public boolean conditionSatisfied(Vector v, Vector entities, CGSpec cgs)
-  { if ("empty".equals(stereotype.toLowerCase()) && 
+  { System.out.println(".>>>. Checking vector condition " + quantifier + " " + stereotype); 
+    
+    if ("all".equals(quantifier))
+    { if (v.size() == 0) 
+      { return true; } 
+
+      CGCondition gcond = new CGCondition(stereotype, "_1"); 
+      gcond.setPositive(positive);  
+      for (int i = 0; i < v.size(); i++) 
+      { Object x = v.get(i); 
+        if (gcond.conditionSatisfied(x,entities,cgs)) { } 
+        else 
+        { return false; } 
+      } 
+      return true; 
+    }   
+
+    if ("any".equals(quantifier))
+    { if (v.size() == 0) 
+      { return false; } 
+
+      CGCondition gcond = new CGCondition(stereotype,"_1");
+      gcond.setPositive(positive);  
+      for (int i = 0; i < v.size(); i++) 
+      { Object x = v.get(i); 
+        if (gcond.conditionSatisfied(x,entities,cgs)) 
+        { return true; } 
+      } 
+      return false; 
+    }
+
+    if ("empty".equals(stereotype.toLowerCase()) && 
         (v == null || v.size() == 0))
     { return positive; }
 
@@ -722,6 +797,8 @@ public class CGCondition
       
       if (ac.tag.equalsIgnoreCase(stereotype))
       { return positive; }
+      else if (cgs.hasRuleset(stereotype))
+      { return !positive; } 
 
       if ("multiple".equals(stereotype) || 
           "singleton".equals(stereotype) ||
@@ -737,6 +814,8 @@ public class CGCondition
       
       if (ac.tag.equalsIgnoreCase(stereotype))
       { return positive; }
+      else if (cgs.hasRuleset(stereotype))
+      { return !positive; } 
 
       if ("multiple".equals(stereotype) ||
           "2ary".equals(stereotype) ||

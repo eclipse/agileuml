@@ -1009,7 +1009,8 @@ public class Compiler2
         sb = null; 
         prev = updatePrev(prev,c); 
       }        
-      else if (c == ' ' || c == '\n' || c == '\t' || c == '\r') 
+      else if (c == ' ' || c == '\n' || 
+               c == '\t' || c == '\r') 
       { sb = null; 
         prev = updatePrev(prev,c); 
       } // end current buffer - not in a string 
@@ -1688,6 +1689,8 @@ public class Compiler2
 
         if (lhs != null) 
         { String rhs = rule.substring(i+4,rule.length());
+          System.out.println(">> Text rule " + rule + " RHS = " + rhs);
+ 
           for (int j = 0; j < rhs.length(); j++) 
           { char d = rhs.charAt(j); 
             if (d == '<' && j+5 < rhs.length() &&
@@ -1876,6 +1879,8 @@ public class Compiler2
     // _v ` f id
     // _v not id
     // _v id ` g
+    // _* any id
+    // _* all id
     // etc
 
     CGCondition cg = new CGCondition(); 
@@ -1885,6 +1890,11 @@ public class Compiler2
       if (",".equals(se))
       { conds.add(cg); 
         cg = new CGCondition(); 
+      } 
+      else if (se.equals("_") && i + 1 < lexs.size() && 
+               "*".equals(lexs.get(i+1) + ""))
+      { cg.setVariable("_*"); 
+        i++; 
       } 
       else if (se.startsWith("_"))
       { cg.setVariable(se); } 
@@ -1902,6 +1912,10 @@ public class Compiler2
       } 
       else if (se.equals("not"))
       { cg.setNegative(); } 
+      else if (se.equals("any"))
+      { cg.setExistential(); } 
+      else if (se.equals("all"))
+      { cg.setUniversal(); } 
       else 
       { cg.setStereotype(se); } 
     }
@@ -4125,7 +4139,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
   { ASTTerm res = null; 
   
     if (lexicals == null || lexicals.size() == 0) 
-	{ return res; }
+    { return res; }
 	
     String lex = lexicals.get(st) + ""; 
 
@@ -4134,7 +4148,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       return sym;  
     }
 	
-    if ("(".equals(lex) && ")".equals(lexicals.get(en) + "")) {}
+    if ("(".equals(lex) && 
+        ")".equals(lexicals.get(en) + "")) {}
     else 
     { return null; }
 	
@@ -4206,22 +4221,22 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 	}
 	else if ("(".equals(lex) && st < en)
 	{ // the ( is a symbol  
-	  ASTSymbolTerm sym = new ASTSymbolTerm("("); 
-	  Vector rem = parseGeneralASTSequence(st+1,en); 
-      if (rem != null)
-      { res.add(sym); 
-        res.addAll(rem); 
-        return res; 
-      }
+       ASTSymbolTerm sym = new ASTSymbolTerm("("); 
+       Vector rem = parseGeneralASTSequence(st+1,en); 
+       if (rem != null)
+       { res.add(sym); 
+         res.addAll(rem); 
+         return res; 
+       }
 	}
 	else if (st < en)
-	{ ASTSymbolTerm sym = new ASTSymbolTerm(lex); 
-	  Vector rem = parseGeneralASTSequence(st+1,en); 
-      if (rem != null)
-      { res.add(sym); 
-        res.addAll(rem); 
-        return res; 
-      }
+     { ASTSymbolTerm sym = new ASTSymbolTerm(lex); 
+       Vector rem = parseGeneralASTSequence(st+1,en); 
+       if (rem != null)
+       { res.add(sym); 
+         res.addAll(rem); 
+         return res; 
+       }
 	}
 	return null; 
   }
@@ -6101,7 +6116,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         if (")".equals(lxc) && 
             "do".equals(lexicals.get(p+1) + ""))
         { Expression catchcond = parse_expression(0,s+2,p-1,entities,types); 
-          Statement catchaction = parseStatement(p+2,e,entities,types); 
+          Statement catchaction = parseBasicStatement(p+2,e,entities,types); 
           if (catchcond != null && catchaction != null) 
           { return new CatchStatement(catchcond,catchaction); }
         } 
@@ -6124,7 +6139,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       // System.err.println("!! Invalid assert statement: " + showLexicals(s,e));     
     } 
     else if ("finally".equals(lexicals.get(s) + ""))
-    { Statement finalaction = parseStatement(s+1,e,entities,types); 
+    { Statement finalaction = parseBasicStatement(s+1,e,entities,types); 
       if (finalaction != null) 
       { return new FinalStatement(finalaction); }
     } 
@@ -7248,13 +7263,33 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
   } 
 
   public Attribute parseAttributeClause(int st, int en, Vector entities, Vector types)
-  { // attribute name [stereotypes] : type ; 
+  { // attribute name [stereotypes] : type ;
+    // attribute name : type := init ;  
 
     String nme = lexicals.get(st+1) + ""; 
 
     for (int i = st+2; i < en; i++) 
     { if (":".equals(lexicals.get(i) + ""))
-      { Type typ = parseType(i+1,en-1,entities,types); 
+      { for (int j = i+1; j < en; j++) 
+        { if (":=".equals(lexicals.get(j) + ""))
+          { Expression init = 
+              parse_expression(0,j+1,en-1,entities,types); 
+            Type typ = 
+              parseType(i+1,j-1,entities,types); 
+            if (typ != null) 
+            { Attribute att = new Attribute(nme,typ,ModelElement.INTERNAL);
+              att.setElementType(typ.getElementType());  
+              System.out.println(">>> Attribute " + nme + ". Type = " + typ + ", elementType = " + att.getElementType()); 
+              if (init != null) 
+              { att.setInitialExpression(init); 
+                System.out.println(">>> Attribute " + nme + ". Initial expression = " + init); 
+              }
+              return att;  
+            } 
+          } 
+        } 
+
+        Type typ = parseType(i+1,en-1,entities,types); 
         if (typ != null) 
         { Attribute att = new Attribute(nme,typ,ModelElement.INTERNAL);
           att.setElementType(typ.getElementType());  
@@ -7278,7 +7313,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
           return att;
         }
         else 
-        { System.err.println("Error: Unrecognised type at " + showLexicals(i+1,en-1)); }  
+        { System.err.println("!! Error: Unrecognised type at " + showLexicals(i+1,en-1)); }  
       }  
     } 
     return null; 

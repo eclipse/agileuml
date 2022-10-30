@@ -618,6 +618,17 @@ public class Type extends ModelElement
     return false; 
   } 
 
+  public static boolean isNonIntegerType(Type t)
+  { if (t == null) 
+    { return true; } 
+    String tname = t.getName(); 
+    if ("int".equals(tname) || 
+        "long".equals(tname))
+    { return false; } 
+    return true; 
+  } 
+
+
   public static boolean isNumericType(Type t)
   { if (t == null) { return false; } 
     String tname = t.getName(); 
@@ -2916,6 +2927,9 @@ public class Type extends ModelElement
       { return "new Hashtable()"; }
       if (alias != null)    // For datatypes
       { return alias.getDefaultCSharp(); } 
+
+      if (entity != null && entity.isTypeParameter())
+      { return "default(" + nme + ")"; } 
 
       return "null";    // for classes, functions, Ref, OclAny
     }

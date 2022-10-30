@@ -21,7 +21,7 @@ import java.io.*;
 public class CGRule
 { String lhs;
   String rhs;
-  Vector variables; // The _i or _* in the lhs -- 
+  Vector variables; // The _i or _*, _+ in the lhs -- 
                     // no additional variable should be in rhs
   Vector metafeatures; // The _i`f in rhs
   String lhsop = "";
@@ -218,6 +218,9 @@ public class CGRule
     if (str.indexOf("_*") > -1)
     { res.add("_*"); } 
 
+    if (str.indexOf("_+") > -1)
+    { res.add("_+"); } 
+
     return res; 
   } 
 
@@ -225,11 +228,14 @@ public class CGRule
   { Vector res = new Vector();
     String substr = "" + str; 
  
-    for (int i = 0; i < 100; i++) 
+    for (int i = 0; i <= 100; i++) 
     { String var = "_" + i + "`";
 
       if (i == 0) 
       { var = "_*`"; } 
+      else if (i == 100) 
+      { var = "_+`"; } 
+
 
       substr = "" + str; 
       while (substr.indexOf(var) > -1) 
@@ -298,10 +304,12 @@ public class CGRule
   { String rlhs = (r.lhs + "").trim(); 
     String selflhs = (lhs + "").trim(); 
 
-    if ("_*".equals(selflhs))
+    if ("_*".equals(selflhs) || 
+        "_+".equals(selflhs))
     { return 1; } // always more general than others
 
-    if ("_*".equals(rlhs))
+    if ("_*".equals(rlhs) || 
+        "_+".equals(rlhs))
     { return -1; } 
 
     if (rlhs.equals(selflhs))
@@ -443,15 +451,16 @@ public class CGRule
 
   public int variablePosition(String var)
   { // The index of var in the arguments in the LHS
+    // Eg., index of _3 in _* ADD _3 is 2.  
 
-    System.out.println(">>> Trying to find variable position of " + var + " in " + lhsTokens); 
-    System.out.println(); 
+    // System.out.println(">>> Trying to find variable position of " + var + " in " + lhsTokens); 
+    // System.out.println(); 
 
     if (lhsTokens.size() == 0) 
     { String kstring = var.substring(1); 
       int k = Integer.parseInt(kstring); 
       return k; 
-    } 
+    } // Should never occur. 
 
     int varCount = 0; 
     for (int i = 0; i < lhsTokens.size(); i++) 
@@ -462,9 +471,11 @@ public class CGRule
       
       if (tok.startsWith("_") && 
           tok.length() >= 2 && 
-          (tok.charAt(1) == '*' || 
+          tok.length() <= 3 && 
+          (tok.charAt(1) == '*' ||
+           tok.charAt(1) == '+' || 
            Character.isDigit(tok.charAt(1))))
-      { varCount++; } 
+      { varCount++; } // also 2-digit ones _ij
     } 
     return -1; 
   } 
@@ -829,7 +840,9 @@ public class CGRule
 
       int k = 0; 
       if ("*".equals(mfvar.charAt(1) + ""))
-      { k = variablePosition("_*"); } // the position of * in the vbls
+      { k = variablePosition("_*"); } // position of _* : vbls
+      else if ("+".equals(mfvar.charAt(1) + ""))
+      { k = variablePosition("_+"); } // position of _+ : vbls
       else 
       { // k = Integer.parseInt(mfvar.charAt(1) + ""); 
         k = variablePosition(mfvar); 
@@ -1123,8 +1136,8 @@ public class CGRule
             { Expression e = (Expression) obj; 
               repl = e.cg(template);
             } 
-			else if (obj instanceof ASTSymbolTerm)
-			{ repl = obj + ""; }
+            else if (obj instanceof ASTSymbolTerm)
+            { repl = obj + ""; }
             else if (obj instanceof ASTTerm)
             { ASTTerm e = (ASTTerm) obj; 
               repl = e.cg(template);
@@ -1134,7 +1147,7 @@ public class CGRule
               repl = "";  
               for (int p = 0; p < v.size(); p++) 
               { if (v.get(p) instanceof ModelElement)
-			    { ModelElement kme = (ModelElement) v.get(p); 
+                { ModelElement kme = (ModelElement) v.get(p); 
                   repl = repl + kme.cg(template);
                 } 
                 else if (v.get(p) instanceof ASTTerm) 
@@ -1520,7 +1533,35 @@ public class CGRule
             } 
             res = replaceByMetafeatureValue(res,mf,replv); 
           }
-		  else if (CSTL.hasTemplate(mffeat + ".cstl")) 
+          else if ("sum".equals(mffeat))
+          { String sep = " + "; 
+
+            String replv = ""; 
+            for (int p = 0; p < v.size(); p++)
+            { if (v.get(p) instanceof ASTTerm)
+              { ASTTerm x = (ASTTerm) v.get(p); 
+                replv = replv + x.cg(cgs);
+                if (p < v.size() - 1) 
+                { replv = replv + sep; } 
+              } 
+            } 
+            res = replaceByMetafeatureValue(res,mf,replv); 
+          }          
+          else if ("prd".equals(mffeat))
+          { String sep = " * "; 
+
+            String replv = ""; 
+            for (int p = 0; p < v.size(); p++)
+            { if (v.get(p) instanceof ASTTerm)
+              { ASTTerm x = (ASTTerm) v.get(p); 
+                replv = replv + x.cg(cgs);
+                if (p < v.size() - 1) 
+                { replv = replv + sep; } 
+              } 
+            } 
+            res = replaceByMetafeatureValue(res,mf,replv); 
+          }          
+          else if (CSTL.hasTemplate(mffeat + ".cstl")) 
           { System.out.println(">>> Template exists: " + 
                                  mffeat + ".cstl"); 
             CGSpec newcgs = CSTL.getTemplate(mffeat + ".cstl"); 
@@ -1586,7 +1627,7 @@ public class CGRule
       // res = res.replaceAll(var,arg1);
       newargs.add(arg1); 
       res = res.replace(var,arg1);
-    }
+    } // Assuming the variables occur in same order as args
 
     // Apply actions, in order
     for (int i = 0; i < actions.size(); i++) 

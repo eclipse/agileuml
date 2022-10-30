@@ -131,6 +131,8 @@ public abstract class ASTTerm
     return res; 
   } 
 
+  public abstract ASTTerm removeWhitespaceTerms();
+
   public abstract String tagFunction(); 
 
   public static Vector allNestedTagsArities(Vector sasts)
@@ -3506,7 +3508,7 @@ public abstract class ASTTerm
  
   public abstract String antlr2cstl();
     
-  public abstract String antlrElement2cstl(int i, Vector conds);
+  public abstract String antlrElement2cstl(Vector rulerefs, Vector conds);
  
   public abstract Vector normaliseAntlr();
 

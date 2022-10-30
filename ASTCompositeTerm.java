@@ -172,6 +172,46 @@ public class ASTCompositeTerm extends ASTTerm
     return null; 
   }  
 
+  public ASTTerm removeWhitespaceTerms()
+  { ASTTerm res = null;
+    Vector newterms = new Vector();  
+    for (int i = 0; i < terms.size(); i++)
+    { ASTTerm trm = (ASTTerm) terms.get(i);
+      ASTTerm ntrm = trm.removeWhitespaceTerms(); 
+      if (ntrm == null) 
+      { continue; }  
+      if (trm instanceof ASTSymbolTerm)
+      { String str = ntrm.literalForm();
+        String strim = str.trim(); 
+        // System.out.println(">--- old term: " + str);  
+        if ("\\r\\n".equals(strim) ||
+            "\\n\\r".equals(strim)) { } 
+        else if (strim.endsWith("\\r\\n") ||
+                 strim.endsWith("\\n\\r"))
+        { str = strim.substring(0,strim.length()-4); 
+          ntrm = new ASTSymbolTerm(str); 
+          // System.out.println(">--- new term: " + str);  
+          newterms.add(ntrm); 
+        } 
+        else 
+        { newterms.add(ntrm); } 
+      } 
+      else
+      { newterms.add(ntrm); }
+    } 
+
+    if (newterms.size() > 1)
+    { res = new ASTCompositeTerm(tag,newterms); } 
+    else if (newterms.size() == 1)
+    { ASTTerm tt = (ASTTerm) newterms.get(0); 
+      if (tt instanceof ASTSymbolTerm)
+      { res = new ASTBasicTerm(tag,tt.literalForm()); } 
+      else 
+      { res = new ASTCompositeTerm(tag,newterms); } 
+    } 
+    return res; 
+  }  
+
   public ASTTerm getTerm(int i) 
   { if (terms.size() > i)
     { return (ASTTerm) terms.get(i); } 
@@ -317,6 +357,8 @@ public class ASTCompositeTerm extends ASTTerm
       } 
       else if (vars.contains("_*") && terms.size() >= tokens.size())
       { } // ok 
+      else if (vars.contains("_+") && terms.size() >= tokens.size())
+      { } // ok 
       else if (tokens.size() == terms.size())
       { } // ok
       else 
@@ -329,14 +371,22 @@ public class ASTCompositeTerm extends ASTTerm
       Vector eargs = new Vector(); 
         // the actual terms[k]
 
-      int k = 0; 
+      int k = 0; // terms position. 
       boolean failed = false; 
+
       for (int j = 0; j < tokens.size() && 
                       k < terms.size() && !failed; j++) 
       { String tok = (String) tokens.get(j); 
         ASTTerm tm = (ASTTerm) terms.get(k); 
 
-        if ("_*".equals(tok) && vars.contains(tok))
+        System.out.println("$$$ matching token " + tok + " and term " + tm); 
+
+        if (tok.equals(tm.literalForm()))
+        { System.out.println(">> Matched token " + tok + 
+                              " and term " + tm); 
+          k++; 
+        } 
+        else if ("_*".equals(tok) && vars.contains(tok))
         { // remainder of terms is processed as a list
           // _* should be the last token, or terminated by 
           // nextTok
@@ -345,13 +395,52 @@ public class ASTCompositeTerm extends ASTTerm
           if (tokens.size() > j+1)
           { nextTok = (String) tokens.get(j+1); } 
 
-          // System.out.println(">> End token for _* is: " + nextTok); 
+          System.out.println(">> Terminator token for _* is: " + nextTok); 
           int remainingTokens = tokens.size() - (j+1); 
 
           boolean finished = false; 
 
           Vector rem = new Vector(); 
-          for (int p = j ; p < terms.size() && !finished; p++)
+          for (int p = k ; p < terms.size() && !finished; p++)
+          { ASTTerm pterm = (ASTTerm) terms.get(p);
+            int remainingTerms = terms.size() - (k+1); 
+ 
+            if (nextTok != null && 
+                pterm.literalForm().equals(nextTok))
+            { System.out.println("$$$ Matched terminator token " + 
+                       nextTok + 
+                       " for _* and term " + pterm); 
+              finished = true; 
+              // k++; // next term after terminator
+              // j++; // Next lhs token after _*
+              // j++; // Next lhs token after terminator
+            } 
+            else if (remainingTokens > remainingTerms)
+            { finished = true; } 
+            else 
+            { rem.add(pterm); 
+              k++;
+            }  
+            System.out.println(">>> Terms for _* are: " + rem); 
+          } 
+          eargs.add(rem); // corresponds to _* variable
+        } 
+        else if ("_+".equals(tok) && vars.contains(tok))
+        { // remainder of terms is processed as a list
+          // _+ should be the last token, or terminated by 
+          // nextTok
+
+          String nextTok = null; 
+          if (tokens.size() > j+1)
+          { nextTok = (String) tokens.get(j+1); } 
+
+          System.out.println(">> Terminator token for _+ is: " + nextTok); 
+          int remainingTokens = tokens.size() - (j+1); 
+
+          boolean finished = false; 
+
+          Vector rem = new Vector(); 
+          for (int p = k ; p < terms.size() && !finished; p++)
           { ASTTerm pterm = (ASTTerm) terms.get(p);
             int remainingTerms = terms.size() - (k+1); 
  
@@ -364,9 +453,9 @@ public class ASTCompositeTerm extends ASTTerm
             { rem.add(pterm); 
               k++;
             }  
-            // System.out.println(">>> Terms for _* are: " + rem); 
+            System.out.println(">>> Terms for _+ are: " + rem); 
           } 
-          eargs.add(rem); // corresponds to _* variable
+          eargs.add(rem); // corresponds to _+ variable
         } 
         else if (vars.contains(tok))
         { // allocate terms(j) to tok
@@ -392,11 +481,6 @@ public class ASTCompositeTerm extends ASTTerm
             //                    oldterm + " " + tm); 
             failed = true; 
           } 
-        } 
-        else if (tok.equals(tm.literalForm()))
-        { System.out.println(">> Matched token " + tok + 
-                              " and term " + tm); 
-          k++; 
         } 
         else 
         { // System.out.println("> " + tag + " rule " + r + " does not match " + this); 
@@ -39750,13 +39834,15 @@ public class ASTCompositeTerm extends ASTTerm
     { String res = ""; 
 
       Vector conditions = new Vector(); 
+      Vector rulerefs = new Vector(); 
       for (int i = 0; i < terms.size(); i++) 
       { ASTTerm tt = (ASTTerm) terms.get(i); 
         String tg = tt.getTag(); 
         if ("element".equals(tg) || "atom".equals(tg) ||
             "lexerElement".equals(tg) || 
             "lexerAtom".equals(tg))
-        { String elem = tt.antlrElement2cstl(i,conditions); 
+        { String elem = 
+             tt.antlrElement2cstl(rulerefs,conditions); 
           res = res + elem; 
         } 
       } 
@@ -39778,11 +39864,12 @@ public class ASTCompositeTerm extends ASTTerm
     return "";  
   }
 
-  public String antlrElement2cstl(int i, Vector conditions) 
+  public String antlrElement2cstl(Vector rulerefs, 
+                                  Vector conditions) 
   { if ("atom".equals(tag) || 
         "lexerAtom".equals(tag))
     { ASTTerm t1 = (ASTTerm) terms.get(0); 
-      return t1.antlrElement2cstl(i,conditions); 
+      return t1.antlrElement2cstl(rulerefs,conditions); 
     }
 
     if ("terminal".equals(tag))
@@ -39791,8 +39878,11 @@ public class ASTCompositeTerm extends ASTTerm
     } 
 
     if ("ruleref".equals(tag))
-    { ASTTerm t1 = (ASTTerm) terms.get(0); 
-      conditions.add("_" + (i+1) + " " + t1.literalForm()); 
+    { ASTTerm t1 = (ASTTerm) terms.get(0);
+      int i = rulerefs.size();
+      String t1lit = t1.literalForm();   
+      conditions.add("_" + (i+1) + " " + t1lit);
+      rulerefs.add(t1lit);  
       return "_" + (i+1) + " "; 
     }
 
@@ -39800,14 +39890,17 @@ public class ASTCompositeTerm extends ASTTerm
          "lexerElement".equals(tag)) && terms.size() == 2)
     { ASTTerm trm = (ASTTerm) terms.get(0); 
       ASTTerm suffix = (ASTTerm) terms.get(1);
-      conditions.add("_" + (i+1) + " " + trm.literalForm()); 
+      int i = rulerefs.size();
+      String t1lit = trm.literalForm();   
+      conditions.add("_" + (i+1) + " " + t1lit);
+      rulerefs.add(t1lit);  
       return "_" + (i+1) + suffix.antlr2cstl() + " "; 
     } 
 
     if ("element".equals(tag) || 
         "lexerElement".equals(tag))
     { ASTTerm t1 = (ASTTerm) terms.get(0); 
-      return t1.antlrElement2cstl(i,conditions); 
+      return t1.antlrElement2cstl(rulerefs,conditions); 
     }
     
     return ""; 
@@ -39844,30 +39937,36 @@ public class ASTCompositeTerm extends ASTTerm
         return alternatives;   
       }
       else if ("+".equals(suf))
-      { Vector res = new Vector(); 
+      { Vector res = new Vector();
+     
         for (int k = 0; k < innerpaths.size(); k++) 
         { Vector path = (Vector) innerpaths.get(k); 
-          ASTBasicTerm ts1 = 
+          res.add(path);        /* one occurrence */
+        }  
+        ASTBasicTerm ts1 = 
                  new ASTBasicTerm("terminal", "'_*'"); 
-          ASTCompositeTerm terminalStar = 
+        ASTCompositeTerm terminalStar = 
                 new ASTCompositeTerm("atom", ts1); 
-          path.add(terminalStar);
-          res.add(path); 
-        }   
+        Vector iterations = new Vector(); 
+        iterations.add(terminalStar);
+        res.add(iterations); 
+        
         return res;   
       } 
       else if ("*".equals(suf))
       { Vector res = new Vector(); 
-        for (int k = 0; k < innerpaths.size(); k++) 
-        { Vector path = (Vector) innerpaths.get(k); 
-          ASTBasicTerm ts1 = 
-                 new ASTBasicTerm("terminal", "'_*'"); 
-          ASTCompositeTerm terminalStar = 
-                new ASTCompositeTerm("atom", ts1); 
-          path.add(terminalStar);
-          res.add(path); 
-        }   
         res.add(new Vector()); 
+        for (int k = 0; k < innerpaths.size(); k++) 
+        { Vector path = (Vector) innerpaths.get(k);
+          res.add(path); 
+        }  
+        ASTBasicTerm ts1 = 
+                 new ASTBasicTerm("terminal", "'_*'"); 
+        ASTCompositeTerm terminalStar = 
+                new ASTCompositeTerm("atom", ts1); 
+        Vector iterations = new Vector(); 
+        iterations.add(terminalStar);
+        res.add(iterations); 
         return res;   
       } 
     } 
@@ -39955,18 +40054,22 @@ public class ASTCompositeTerm extends ASTTerm
         ASTBasicTerm ts1 = new ASTBasicTerm("terminal", "'_*'"); 
         ASTCompositeTerm terminalStar = 
           new ASTCompositeTerm("atom", ts1); 
-        emptyAlt.add(terminalStar);
+        Vector newEmpty = new Vector(); 
+        newEmpty.add(terminalStar);
+        alternatives.add(newEmpty); 
       } 
       else if ("*".equals(suf))
       { Vector newalts = new Vector(); 
         Vector newEmpty = new Vector(); 
         newalts.add(newEmpty);
         newalts.addAll(alternatives); 
-        // emptyAlt.add(trm);
+        emptyAlt.add(trm);
         ASTBasicTerm ts1 = new ASTBasicTerm("terminal", "'_*'"); 
         ASTCompositeTerm terminalStar = 
-          new ASTCompositeTerm("atom", ts1); 
-        emptyAlt.add(terminalStar);
+          new ASTCompositeTerm("atom", ts1);
+        Vector iterations = new Vector();  
+        iterations.add(terminalStar);
+        newalts.add(iterations); 
         alternatives = newalts; 
       } 
  

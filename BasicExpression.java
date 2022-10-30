@@ -9399,7 +9399,8 @@ public Statement generateDesignSubtract(Expression rhs)
       { String indopt = arrayIndex.queryFormJava7(env,local); 
         String wind = arrayIndex.wrap(indopt); 
         String wval = var.wrap(val2); 
-        if ("String".equals(arrayIndex.type + ""))
+        if ("String".equals(arrayIndex.type + "") ||
+            BasicExpression.isMapAccess(this))
         { return data + ".put(" + wind + ", " + wval + ");"; }  // map[index] = val2 
         else 
         { return data + ".set((" + indopt + " -1), " + wval + ");"; }  
@@ -9418,7 +9419,9 @@ public Statement generateDesignSubtract(Expression rhs)
           { String ind = arrayIndex.queryFormJava7(env,local); 
             String wind = arrayIndex.wrap(ind); 
             String wval = var.wrap(val2); 
-            if (isQualified() || "String".equals(arrayIndex.type + ""))
+            if (isQualified() || 
+                "String".equals(arrayIndex.type + "") || 
+                BasicExpression.isMapAccess(this))
             { return data + ".put(" + wind + ", " + wval + ");"; } 
             return data + ".set((" + ind + " - 1)," + wval + ");"; 
           }
@@ -9427,7 +9430,10 @@ public Statement generateDesignSubtract(Expression rhs)
 
         if (entity != null && entity.isClassScope(data))
         { if (arrayIndex != null) 
-          { String indopt = arrayIndex.queryFormJava7(env,local); 
+          { String indopt = 
+               arrayIndex.queryFormJava7(env,local); 
+            // if ("String".equals(arrayIndex.type + "") || 
+            //     BasicExpression.isMapAccess(this))
             return nme + ".set" + data + "((" + indopt + " -1), " + val2 + ");"; 
           } 
           return nme + ".set" + data + "(" + val2 + ");"; 
@@ -9437,7 +9443,7 @@ public Statement generateDesignSubtract(Expression rhs)
 
         String target = ""; 
         if (varx.equals("this")) 
-        { System.err.println("WARNING: using self with non-local update " + this);
+        { System.err.println("!! WARNING: using self with non-local update " + this);
           target = varx + ",";
         } 
         else 
@@ -9445,7 +9451,10 @@ public Statement generateDesignSubtract(Expression rhs)
         
         if (arrayIndex != null) 
         { String ind = arrayIndex.queryFormJava7(env,local); 
-          if (isQualified())
+          if (isQualified() || 
+              "String".equals(arrayIndex.type + "") || 
+              BasicExpression.isMapAccess(this)
+              )
           { return cont + ".set" + data + "(" + target + ind + ", " + val2 + ");"; } 
           String indopt = evaluateString("-",ind,"1"); // not for qualified
           return cont + ".set" + data + "(" + target + indopt + "," + val2 + ");";
@@ -9501,7 +9510,10 @@ public Statement generateDesignSubtract(Expression rhs)
       { if (local)
         { if (arrayIndex != null) 
           { String ind = arrayIndex.queryFormJava7(env,local); 
-            if (isQualified())
+            if (isQualified() || 
+                "String".equals(arrayIndex.type + "") || 
+                BasicExpression.isMapAccess(this)
+               )
             { return pre + ".set" + data + "(" + ind + "," + 
                                 val2 + ");";
             } 
@@ -9512,7 +9524,10 @@ public Statement generateDesignSubtract(Expression rhs)
         }
         else if (arrayIndex != null) 
         { String ind = arrayIndex.queryFormJava7(env,local);
-          if (isQualified())
+          if (isQualified() ||
+              "String".equals(arrayIndex.type + "") || 
+              BasicExpression.isMapAccess(this)
+             )
           { return cont + ".set" + data + "(" + pre + "," + ind + "," + val2 + ");"; }    
           String indopt = evaluateString("-",ind,"1"); 
           return cont + ".set" + data + "(" + pre + "," + indopt + "," + 

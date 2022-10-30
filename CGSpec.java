@@ -1313,16 +1313,16 @@ public class CGSpec
       else if (e.isAbstract() && r.lhs.indexOf("abstract") > -1)
       { if (e.getSuperclass() != null && r.lhs.indexOf("extends") > -1)     
         { if (e.hasInterfaces()  && r.lhs.indexOf("implements") > -1) 
-		  { selected = r; }
-          else if (!e.hasInterfaces() && r.lhs.indexOf("implements") < 0) 
-		  { selected = r; } 
-		} 
-	    else if (e.getSuperclass() == null & r.lhs.indexOf("extends") < 0) 
-		{ if (e.hasInterfaces()  && r.lhs.indexOf("implements") > -1)     
           { selected = r; }
-		  else if (!e.hasInterfaces() && r.lhs.indexOf("implements") < 0)
-		  { selected = r; }
-		}
+          else if (!e.hasInterfaces() && r.lhs.indexOf("implements") < 0) 
+          { selected = r; } 
+        } 
+        else if (e.getSuperclass() == null & r.lhs.indexOf("extends") < 0) 
+        { if (e.hasInterfaces()  && r.lhs.indexOf("implements") > -1)     
+          { selected = r; }
+          else if (!e.hasInterfaces() && r.lhs.indexOf("implements") < 0)
+          { selected = r; }
+        }
       }
       else if (!e.isAbstract() && r.lhs.indexOf("abstract") < 0)
 	  { if (e.getSuperclass() != null &&  r.lhs.indexOf("extends") > -1)   
@@ -1337,7 +1337,7 @@ public class CGSpec
           else if (!e.hasInterfaces() && r.lhs.indexOf("implements") < 0)     
           { selected = r; }
         }
-	  } 
+      } 
 	  
       if (selected != null && 
           selected.satisfiesConditions(args,entities,this))
@@ -1510,7 +1510,6 @@ public class CGSpec
   { for (int x = 0; x < parameterRules.size(); x++)
     { CGRule r = (CGRule) parameterRules.get(x);
 
-
       if (ctext.equals(r.lhs))
       { return r; } // exact match
       else if (r.lhs.indexOf(",") > -1 && rem.size() > 0) 
@@ -1628,7 +1627,6 @@ public class CGSpec
     for (int i = 0; i < textRules.size(); i++) 
     { CGRule r = (CGRule) textRules.get(i); 
 	
-
 	 // String lhspattern = r.convertToPattern(r.lhs);
  
 	 // if (lhspattern != null && lhspattern.length() > 0)

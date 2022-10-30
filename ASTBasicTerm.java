@@ -29,6 +29,20 @@ public class ASTBasicTerm extends ASTTerm
   public String tagFunction()
   { return tag; } 
 
+  public ASTTerm removeWhitespaceTerms()
+  { String vtrim = value.trim(); 
+    if (vtrim.equals("\\n\\r") || 
+        vtrim.equals("\\r\\n"))
+    { return null; } 
+    if (vtrim.endsWith("\\n\\r") ||
+        vtrim.endsWith("\\r\\n"))
+    { String str = vtrim.substring(0,vtrim.length()-4); 
+      ASTTerm ntrm = new ASTBasicTerm(tag,str);
+      return ntrm; 
+    } 
+    return this; 
+  }  
+        
   public boolean hasTag(String tagx) 
   { return tagx.equals(tag); } 
 
@@ -154,6 +168,7 @@ public class ASTBasicTerm extends ASTTerm
 
       // Either one variable _i (and token) or 
       // no variable and one token. 
+      // _* and _+ do not match. 
 
       // System.out.println("> Trying to match variables/tokens of rule " + r + " for " + this);  
         
@@ -2608,7 +2623,7 @@ public class ASTBasicTerm extends ASTTerm
   public String antlr2cstl()
   { return value; } 
 
-  public String antlrElement2cstl(int i, Vector conds)
+  public String antlrElement2cstl(Vector rulerefs, Vector conds)
   { if ("terminal".equals(tag))
     { if ("'".equals(value.charAt(0) + ""))
       { value = value.substring(1); } 
@@ -2618,7 +2633,9 @@ public class ASTBasicTerm extends ASTTerm
     } 
 
     if ("ruleref".equals(tag))
-    { conds.add("_" + (i+1) + " " + value); 
+    { int i = rulerefs.size(); 
+      rulerefs.add(value); 
+      conds.add("_" + (i+1) + " " + value); 
 
       return "_" + (i+1) + " "; 
     }

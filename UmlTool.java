@@ -345,6 +345,13 @@ public void findPlugins()
       "Creates UML/OCL from AST produced by Antlr VisualBasic6 parser, in output/ast.txt");
     fileMenu.add(fromVBMI);
 
+    JMenuItem fromCobol = 
+      new JMenuItem("From COBOL AST",openIcon);
+    fromCobol.addActionListener(this);
+    fromCobol.setToolTipText(
+      "Creates UML/OCL from AST produced by Antlr Cobol85 parser, in output/ast.txt");
+    fileMenu.add(fromCobol);
+
     fileMenu.addSeparator(); 
 
     JMenu loadComponentMenu = 
@@ -1634,6 +1641,10 @@ public void findPlugins()
       }
       else if (label.equals("From VB AST")) 
       { ucdArea.loadFromVB();
+        saved = true; 
+      }
+      else if (label.equals("From COBOL AST")) 
+      { ucdArea.loadFromCobol();
         saved = true; 
       }
       else if (label.equals("Print"))

@@ -22,6 +22,20 @@ public class ASTSymbolTerm extends ASTTerm
   public String tagFunction()
   { return "~"; } 
 
+  public ASTTerm removeWhitespaceTerms()
+  { String strim = symbol.trim(); 
+    if (strim.equals("\\n\\r") || 
+        strim.equals("\\r\\n"))
+    { return null; } 
+    if (strim.endsWith("\\n\\r") ||
+        strim.endsWith("\\r\\n"))
+    { String str = strim.substring(0, strim.length()-4); 
+      ASTTerm ntrm = new ASTSymbolTerm(str);
+      return ntrm; 
+    } 
+    return this; 
+  }  
+
   public boolean hasTag(String tagx) 
   { return false; } 
 
@@ -822,6 +836,6 @@ public class ASTSymbolTerm extends ASTTerm
   public Vector normaliseAntlr()
   { return new Vector(); } 
 
-  public String antlrElement2cstl(int i, Vector conds)
+  public String antlrElement2cstl(Vector rulerefs, Vector conds)
   { return symbol; } 
 } 

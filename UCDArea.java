@@ -13540,14 +13540,31 @@ public void produceCUI(PrintWriter out)
 
   public CGSpec loadCSTL()
   { CGSpec res = new CGSpec(entities,types); 
-    
-    File f = new File("./cg/cg.cstl");  /* default */ 
-    if (f != null) 
-    { res = CSTL.loadCSTL(f,types,entities); } 
+    File file = null; 
+    try 
+    { JFileChooser fc = new JFileChooser();
+      File startingpoint = new File("./cg");
+      fc.setCurrentDirectory(startingpoint);
+      fc.setDialogTitle("Select a *.cstl file");
+      // fc.addChoosableFileFilter(new TextFileFilter()); 
+
+	  
+      int returnVal = fc.showOpenDialog(null);
+      if (returnVal == JFileChooser.APPROVE_OPTION)
+      { file = fc.getSelectedFile(); }
+      else
+      { System.err.println("Load aborted");
+        return res; 
+      }
+	  
+      if (file == null) { return res; }
+    } catch (Exception e) { return res; } 
+
+    res = CSTL.loadCSTL(file,types,entities);
 
     // System.out.println(">>> Parsed: " + res);
  
-    CSTL.loadTemplates(types,entities); 
+    // CSTL.loadTemplates(types,entities); 
     return res; 
   }
 
@@ -26313,6 +26330,83 @@ public void produceCUI(PrintWriter out)
     }    */ 
 
     repaint(); 
+  }
+
+  public void loadFromCobol()
+  { BufferedReader br = null;
+    Vector res = new Vector();
+    String s;
+    boolean eof = false;
+    File sourcefile = new File("output/ast.txt");  
+      /* default */ 
+
+    try
+    { br = new BufferedReader(new FileReader(sourcefile)); }
+    catch (FileNotFoundException _e)
+    { System.out.println("File not found: " + sourcefile);
+      return; 
+    }
+
+    String sourcestring = ""; 
+    int noflines = 0; 
+
+    while (!eof)
+    { try { s = br.readLine(); }
+      catch (IOException _ex)
+      { System.err.println("!! Reading AST file output/ast.txt failed.");
+        return; 
+      }
+      if (s == null) 
+      { eof = true; 
+        break; 
+      }
+      else 
+      { sourcestring = sourcestring + s + " "; } 
+      noflines++; 
+    }
+
+    System.out.println(">>> Read " + noflines + " lines"); 
+
+    Compiler2 c = new Compiler2();    
+
+    ASTTerm xx =
+      c.parseGeneralAST(sourcestring); 
+
+
+    if (xx == null) 
+    { System.err.println("!! Invalid text for general AST"); 
+      System.err.println(c.lexicals); 
+      return; 
+    } 
+   
+    if (xx instanceof ASTCompositeTerm)  { } 
+    else 
+    { System.err.println("!! Not a valid Cobol85 AST:"); 
+      System.err.println(c.lexicals); 
+      return; 
+    } 
+
+    // remove all whitespace \n \r characters. 
+    ASTTerm yy = xx.removeWhitespaceTerms(); 
+    
+
+    File cobol2uml = new File("cg/cobol2UML.cstl"); 
+    Vector vbs = new Vector(); 
+    CGSpec spec = loadCSTL(cobol2uml,vbs); 
+
+    if (spec == null) 
+    { System.err.println("!! ERROR: No file " + cobol2uml.getName()); 
+      return; 
+    } 
+
+    String reskm3 = yy.cg(spec); 
+    String arg1 = CGRule.correctNewlines(reskm3); 
+    System.out.println(arg1); 
+
+    loadKM3FromText("package app {\n " + arg1 + "\n}\n\n"); 
+ 
+    repaint(); 
+    // System.out.println(yy); 
   }
 
   public Vector maps2constraints(Vector entities, 

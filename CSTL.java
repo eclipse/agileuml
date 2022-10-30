@@ -18,7 +18,7 @@ public class CSTL
 { // All *.cstl files in output directory are loaded
 
   static boolean isCSTLVariable(String lex)
-  { if ("_*".equals(lex)) 
+  { if ("_*".equals(lex) || "_+".equals(lex)) 
     { return true; } 
     for (int i = 0; i <= 99; i++) 
     { if (("_" + i).equals(lex))
@@ -248,7 +248,7 @@ public class CSTL
         if (r != null) 
         { res.addAttributeRule(r); }
         else 
-		{ alertRule("Attribute/reference", s); }
+        { alertRule("Attribute/reference", s); }
  
       }         
       else if ("operations".equals(mode))
@@ -257,7 +257,7 @@ public class CSTL
         if (r != null) 
         { res.addOperationRule(r); } 
         else 
-		{ alertRule("Operation", s); }
+        { alertRule("Operation", s); }
 
       }  
       else if ("parameters".equals(mode))
