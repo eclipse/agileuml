@@ -350,11 +350,14 @@ public class ASTCompositeTerm extends ASTTerm
       java.util.HashMap matches = new java.util.HashMap(); 
       // vars --> terms
 
+      Vector matchedTerms = new Vector(); 
+      Vector matchedTokens = new Vector(); 
+
       if (tokens.size() > terms.size())
       { // System.out.println("> " + tag + " rule " + r + " does not match " + this);  
         // System.out.println("!! Too many elements on rule LHS (" + tokens.size() + ") to match subterms: (" + terms.size() + ")"); 
         continue; 
-      } 
+      } // _* and _+ must match at least one term. 
       else if (vars.contains("_*") && terms.size() >= tokens.size())
       { } // ok 
       else if (vars.contains("_+") && terms.size() >= tokens.size())
@@ -381,12 +384,7 @@ public class ASTCompositeTerm extends ASTTerm
 
         System.out.println("$$$ matching token " + tok + " and term " + tm); 
 
-        if (tok.equals(tm.literalForm()))
-        { System.out.println(">> Matched token " + tok + 
-                              " and term " + tm); 
-          k++; 
-        } 
-        else if ("_*".equals(tok) && vars.contains(tok))
+        if ("_*".equals(tok) && vars.contains(tok))
         { // remainder of terms is processed as a list
           // _* should be the last token, or terminated by 
           // nextTok
@@ -410,15 +408,19 @@ public class ASTCompositeTerm extends ASTTerm
             { System.out.println("$$$ Matched terminator token " + 
                        nextTok + 
                        " for _* and term " + pterm); 
-              finished = true; 
+              finished = true;
+              matchedTokens.add("_*");  
               // k++; // next term after terminator
               // j++; // Next lhs token after _*
               // j++; // Next lhs token after terminator
             } 
             else if (remainingTokens > remainingTerms)
-            { finished = true; } 
+            { matchedTokens.add("_*");  
+              finished = true; 
+            } 
             else 
             { rem.add(pterm); 
+              matchedTerms.add(pterm); 
               k++;
             }  
             System.out.println(">>> Terms for _* are: " + rem); 
@@ -446,11 +448,16 @@ public class ASTCompositeTerm extends ASTTerm
  
             if (nextTok != null && 
                 pterm.literalForm().equals(nextTok))
-            { finished = true; } 
+            { finished = true;
+              matchedTokens.add("_*");  
+            } 
             else if (remainingTokens > remainingTerms)
-            { finished = true; } 
+            { matchedTokens.add("_*");  
+              finished = true; 
+            } 
             else 
-            { rem.add(pterm); 
+            { rem.add(pterm);
+              matchedTerms.add(pterm);  
               k++;
             }  
             System.out.println(">>> Terms for _+ are: " + rem); 
@@ -462,6 +469,9 @@ public class ASTCompositeTerm extends ASTTerm
 
           System.out.println(">> Matched variable " + tok + 
                               " and term " + tm);
+
+          matchedTokens.add(tok); 
+          matchedTerms.add(tm); 
 
           ASTTerm oldterm = (ASTTerm) matches.get(tok); 
           if (oldterm == null)
@@ -482,6 +492,13 @@ public class ASTCompositeTerm extends ASTTerm
             failed = true; 
           } 
         } 
+        else if (tok.equals(tm.literalForm()))
+        { System.out.println(">> Matched token " + tok + 
+                              " and term " + tm); 
+          matchedTerms.add(tm); 
+          matchedTokens.add(tok); 
+          k++; 
+        } 
         else 
         { // System.out.println("> " + tag + " rule " + r + " does not match " + this); 
           // System.out.println(tok + " /= " + tm.literalForm()); 
@@ -489,6 +506,19 @@ public class ASTCompositeTerm extends ASTTerm
           failed = true; // try next rule 
         } 
       } 
+
+      if (matchedTokens.containsAll(tokens) && 
+          tokens.containsAll(matchedTokens))
+      { System.out.println("&&& All tokens matched: " + tokens); } 
+      // else 
+      // { failed = true; } 
+
+      if (matchedTerms.containsAll(terms) && 
+          terms.containsAll(matchedTerms))
+      { System.out.println("&&& All terms matched: " + terms); } 
+      else 
+      { failed = true; } 
+
 
       if (failed == false) 
       { System.out.println(">> Matched " + tag + " rule " + r + " for " + this);  
@@ -513,10 +543,13 @@ public class ASTCompositeTerm extends ASTTerm
 
         Vector ents = new Vector(); 
 
-        if (r.satisfiesConditions(eargs,ents,cgs))
+        if (r.satisfiesAllConditions(eargs,ents,cgs))
         { System.out.println(">>>> Applying " + tag + " rule " + r); 
           return r.applyRule(args,eargs,cgs); 
         }  
+        else 
+        { System.out.println(">!> Conditions of " + r + " failed."); 
+        } 
       }
     }  
 

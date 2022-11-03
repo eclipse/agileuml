@@ -242,7 +242,7 @@ public class CGCondition
   { boolean res = true; 
     for (int i = 0; i < args.size(); i++) 
     { Object m = args.get(i); 
-      String var = "_" + (i+1);
+      String var = "_" + (i+1); // assumes numbered _1, _2 ...
  
       for (int j = 0; j < conditions.size(); j++) 
       { CGCondition cond = (CGCondition) conditions.get(j); 
@@ -253,6 +253,14 @@ public class CGCondition
           { cvar = cvar.substring(0,mfindex); }
 
           if ("_*".equals(cvar) && 
+              m instanceof Vector)
+          { if (cond.conditionSatisfied((Vector) m,entities,cgs))
+            { } 
+            else 
+            { return false; } 
+            System.out.println("||| Condition " + cond + " is satisfied by " + m); 
+          } 
+          else if ("_+".equals(cvar) && 
               m instanceof Vector)
           { if (cond.conditionSatisfied((Vector) m,entities,cgs))
             { } 
@@ -292,6 +300,77 @@ public class CGCondition
 		  
             System.out.println("||| Condition " + cond + " is satisfied by " + m); 
           } 
+        } 
+      } 
+    } 
+    return res; 
+  } 
+
+  public static boolean allConditionsSatisfied(CGRule r, 
+              Vector conditions, Vector args, 
+              Vector entities, CGSpec cgs) 
+  { boolean res = true; 
+    
+    for (int j = 0; j < conditions.size(); j++) 
+    { CGCondition cond = (CGCondition) conditions.get(j); 
+      if (cond.variable != null) 
+      { String cvar = cond.variable; 
+        int mfindex = cvar.indexOf("`"); 
+        if (mfindex > 0) 
+        { cvar = cvar.substring(0,mfindex); }
+
+        int ind = r.variables.indexOf(cvar); 
+          // variablePosition for CGTL rules
+
+        if (ind >= 0 && ind < args.size())
+        { Object m = args.get(ind); 
+
+          if ("_*".equals(cvar) && 
+              m instanceof Vector)
+          { if (cond.conditionSatisfied((Vector) m,entities,cgs))
+            { } 
+            else 
+            { return false; } 
+            System.out.println("||| Condition " + cond + " is satisfied by " + m); 
+          } 
+          else if ("_+".equals(cvar) && 
+              m instanceof Vector)
+          { if (cond.conditionSatisfied((Vector) m,entities,cgs))
+            { } 
+            else 
+            { return false; } 
+            System.out.println("||| Condition " + cond + " is satisfied by " + m); 
+          } 
+          else if (m instanceof Type && 
+              cond.conditionSatisfied((Type) m, entities,cgs)) 
+          { }
+          else if (m instanceof Expression && 
+                   cond.conditionSatisfied((Expression) m, entities,cgs))
+          { } 
+          else if (m instanceof Statement && 
+                   cond.conditionSatisfied((Statement) m, entities,cgs) )
+          { } 
+          else if (m instanceof Attribute && 
+                   cond.conditionSatisfied((Attribute) m, entities,cgs) )
+          { } 
+          else if (m instanceof ModelElement && 
+                   cond.stereotypeConditionSatisfied((ModelElement) m, entities,cgs))
+          { } 
+          else if (m instanceof Vector && 
+                   cond.conditionSatisfied((Vector) m, entities,cgs)) 
+          { }
+          else if (m instanceof String && 
+                   cond.conditionSatisfied((String) m, entities,cgs)) 
+          { }
+          else if (m instanceof ASTTerm && 
+                   cond.conditionSatisfied((ASTTerm) m, entities,cgs))
+          { System.out.println("||| ASTTerm condition " + cond + " satisfied by term " + m); 
+            System.out.println(); 
+          } 
+          else 
+          { return false; } 
+		  
+          System.out.println("||| Condition " + cond + " is satisfied by " + m); 
         } 
       } 
     } 

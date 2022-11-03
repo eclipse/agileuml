@@ -447,6 +447,12 @@ public class CGRule
                            Vector entities, CGSpec cgs)
   { return CGCondition.conditionsSatisfied(
                     conditions,args,entities,cgs); 
+  } // actually pass the rule in also, or the variables
+
+  public boolean satisfiesAllConditions(Vector args, 
+                           Vector entities, CGSpec cgs)
+  { return CGCondition.allConditionsSatisfied(this,
+                    conditions,args,entities,cgs); 
   } 
 
   public int variablePosition(String var)
@@ -527,6 +533,15 @@ public class CGRule
       } 
       return repl;  
     }   
+
+    if ("trimQuotes".equals(mffeat)) 
+    { String rep = term.cg(cgs); 
+      if (rep.endsWith("\""))
+      { rep = rep.substring(0,rep.length()-1); } 
+      if (rep.startsWith("\""))
+      { rep = rep.substring(1); } 
+      return rep; 
+    }  
       
     if ("first".equals(mffeat) || 
         "1st".equals(mffeat) || 
@@ -1182,6 +1197,14 @@ public class CGRule
             if (repl != null)   
             { res = replaceByMetafeatureValue(res,mf,repl); }  
           }   
+          else if ("trimQuotes".equals(mffeat)) 
+          { String rep = term.cg(cgs); 
+            if (rep.endsWith("\""))
+            { rep = rep.substring(0,rep.length()-1); } 
+            if (rep.startsWith("\""))
+            { rep = rep.substring(1); } 
+            res = replaceByMetafeatureValue(res,mf,rep);   
+          }  
           else if ("first".equals(mffeat) || 
                    "1st".equals(mffeat) || 
                    "1".equals(mffeat))

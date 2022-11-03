@@ -9802,11 +9802,12 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
     // Type xx = c.parseType(0,c.lexicals.size()-1,exs, new Vector()); 
 
     // c.nospacelexicalanalysis("arr[x][y]"); 
-    c.nospacelexicalanalysis("Worksheets[Y].Range[X].Value");
+    // c.nospacelexicalanalysis("Worksheets[Y].Range[X].Value");
     // c.nospacelexicalanalysis("(OclFile.newOclFile_Read(OclFile.newOclFile(s))).readObject()"); 
 
     // c.nospacelexicalanalysis("(MyString).subrange((MyString)->indexOf((MyString)->trim()))"); 
 	
+    c.nospacelexicalanalysis("(createCOBOLADD_Class()).COBOLADD(X1, X2)"); 
     System.out.println(c.lexicals); 
     System.out.println(c.balancedBrackets()); 
     Expression xx = c.parseExpression(); 

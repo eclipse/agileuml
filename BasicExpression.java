@@ -9384,7 +9384,9 @@ public Statement generateDesignSubtract(Expression rhs)
     { return "{} /* can't assign to: " + data + " */"; }
     
     if (umlkind == CLASSID && arrayIndex == null) 
-    { if (val2.equals("{}") || val2.equals("Set{}") || val2.equals("Sequence{}"))  // delete the class extent
+    { if (val2.equals("{}") || 
+          val2.equals("Set{}") || 
+          val2.equals("Sequence{}"))  // delete the class extent
       { String datas = classExtentQueryFormJava7(env,local);  
         return "ArrayList<" + data + "> _" + data + " = new ArrayList<" + data + ">(); \n" + 
                "  _" + data + ".addAll(" + datas + "); \n" + 
@@ -9572,7 +9574,8 @@ public Statement generateDesignSubtract(Expression rhs)
       { String indopt = arrayIndex.queryFormCSharp(env,local); 
         String wind = arrayIndex.wrapCSharp(indopt); 
         String wval = var.wrapCSharp(val2); 
-        if ("String".equals(arrayIndex.type + ""))
+        if ("String".equals(arrayIndex.type + "") ||
+            BasicExpression.isMapAccess(this))
         { return datax + "[" + wind + "] = " + wval + ";"; }  // map[index] = val2 
         else 
         { return datax + "[" + indopt + " -1] = " + wval + ";"; } 
@@ -9605,7 +9608,9 @@ public Statement generateDesignSubtract(Expression rhs)
           { String ind = arrayIndex.queryFormCSharp(env,local); 
             String wind = arrayIndex.wrapCSharp(ind); 
             String wval = var.wrapCSharp(val2); 
-            if (isQualified() || "String".equals(arrayIndex.type + ""))
+            if (isQualified() || 
+                "String".equals(arrayIndex.type + "") ||
+                BasicExpression.isMapAccess(this))
             { return data + "[" + wind + "] = " + wval + ";"; } 
             return data + "[" + ind + " - 1] = " + val2 + ";"; 
           }
@@ -9644,7 +9649,9 @@ public Statement generateDesignSubtract(Expression rhs)
         
         if (arrayIndex != null) 
         { String ind = arrayIndex.queryFormCSharp(env,local); 
-          if (isQualified())
+          if (isQualified() ||
+              "String".equals(arrayIndex.type + "") ||
+              BasicExpression.isMapAccess(this))
           { return cont + ".set" + data + "(" + target + ind + ", " + val2 + ");"; } 
           String indopt = evaluateString("-",ind,"1"); // not for qualified
           return cont + ".set" + data + "(" + target + indopt + "," + val2 + ");";
@@ -9669,7 +9676,8 @@ public Statement generateDesignSubtract(Expression rhs)
 
       if (entity != null && entity.isClassScope(data))
       { if (arrayIndex != null) 
-        { String indopt = arrayIndex.queryFormCSharp(env,local); 
+        { String indopt = 
+             arrayIndex.queryFormCSharp(env,local); 
           return nme + ".set" + data + "((" + indopt + " -1), " + val2 + ");"; 
         }
         return nme + ".set" + data + "(" + val2 + ");"; 
@@ -9702,7 +9710,9 @@ public Statement generateDesignSubtract(Expression rhs)
         { cref = nme + "Ops"; } 
         if (arrayIndex != null) 
         { String ind = arrayIndex.queryFormCSharp(env,local); 
-          if (isQualified())
+          if (isQualified() ||
+              "String".equals(arrayIndex.type + "") ||
+              BasicExpression.isMapAccess(this))
           { return cref + ".setAll" + data + "(" + pre + "," + ind + "," + 
                                 val2 + ");";
           } 
@@ -9716,7 +9726,9 @@ public Statement generateDesignSubtract(Expression rhs)
       { if (local)
         { if (arrayIndex != null) 
           { String ind = arrayIndex.queryFormCSharp(env,local); 
-            if (isQualified())
+            if (isQualified() ||
+                "String".equals(arrayIndex.type + "") ||
+                BasicExpression.isMapAccess(this))
             { return pre + ".set" + data + "(" + ind + "," + 
                                 val2 + ");";
             } 
@@ -9727,7 +9739,9 @@ public Statement generateDesignSubtract(Expression rhs)
         }
         else if (arrayIndex != null) 
         { String ind = arrayIndex.queryFormCSharp(env,local);
-          if (isQualified())
+          if (isQualified() ||
+              "String".equals(arrayIndex.type + "") ||
+              BasicExpression.isMapAccess(this))
           { return cont + ".set" + data + "(" + pre + "," + ind + "," + val2 + ");"; }    
           String indopt = evaluateString("-",ind,"1"); 
           return cont + ".set" + data + "(" + pre + "," + indopt + "," + 
@@ -9779,7 +9793,8 @@ public Statement generateDesignSubtract(Expression rhs)
     if (umlkind == VARIABLE)
     { if (arrayIndex != null) 
       { String indopt = arrayIndex.queryFormCPP(env,local); 
-        if ("String".equals(arrayIndex.type + ""))
+        if ("String".equals(arrayIndex.type + "") ||
+            BasicExpression.isMapAccess(this))
         { return "(*" + data + ")[" + indopt + "] = " + val2 + ";"; }  // map[index] = val2 
         else 
         { return "(*" + data + ")[" + indopt + " -1] = " + val2 + ";"; }  
@@ -9796,7 +9811,9 @@ public Statement generateDesignSubtract(Expression rhs)
       { if (local) 
         { if (arrayIndex != null)
           { String ind = arrayIndex.queryFormCPP(env,local); 
-            if (isQualified() || "String".equals(arrayIndex.type + ""))
+            if (isQualified() || 
+                "String".equals(arrayIndex.type + "") ||
+                BasicExpression.isMapAccess(this))
             { return "(*" + data + ")[" + ind + "] = " + val2 + ";"; } 
             return "(*" + data + ")[" + ind + " - 1] = " + val2 + ";"; 
           }
@@ -9823,7 +9840,9 @@ public Statement generateDesignSubtract(Expression rhs)
         
         if (arrayIndex != null) 
         { String ind = arrayIndex.queryFormCPP(env,local); 
-          if (isQualified())
+          if (isQualified() ||
+              "String".equals(arrayIndex.type + "") ||
+              BasicExpression.isMapAccess(this))
           { return cont + "set" + data + "(" + target + ind + ", " + val2 + ");"; } 
           String indopt = evaluateString("-",ind,"1"); // not for qualified
           return cont + "set" + data + "(" + target + indopt + "," + val2 + ");";
@@ -9858,7 +9877,9 @@ public Statement generateDesignSubtract(Expression rhs)
       if (objectRef.isMultiple()) 
       { if (arrayIndex != null) 
         { String ind = arrayIndex.queryFormCPP(env,local); 
-          if (isQualified())
+          if (isQualified() || 
+              "String".equals(arrayIndex.type + "") ||
+              BasicExpression.isMapAccess(this))
           { return nme + "::setAll" + data + "(" + pre + "," + ind + "," + 
                               val2 + ");";
           } 
@@ -9872,7 +9893,9 @@ public Statement generateDesignSubtract(Expression rhs)
       { if (local)
         { if (arrayIndex != null) 
           { String ind = arrayIndex.queryFormCPP(env,local); 
-            if (isQualified())
+            if (isQualified() ||
+                "String".equals(arrayIndex.type + "") ||
+                BasicExpression.isMapAccess(this))
             { return pre + "->set" + data + "(" + ind + "," + val2 + ");"; } 
             String indopt = evaluateString("-",ind,"1"); 
             return pre + "->set" + data + "(" + indopt + "," + val2 + ");";
@@ -9881,7 +9904,9 @@ public Statement generateDesignSubtract(Expression rhs)
         }
         else if (arrayIndex != null) 
         { String ind = arrayIndex.queryFormCPP(env,local);
-          if (isQualified())
+          if (isQualified() || 
+              "String".equals(arrayIndex.type + "") ||
+              BasicExpression.isMapAccess(this))
           { return cont + "set" + data + "(" + pre + "," + ind + "," + val2 + ");"; }    
           String indopt = evaluateString("-",ind,"1"); 
           return cont + "set" + data + "(" + pre + "," + indopt + "," + 
