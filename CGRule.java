@@ -22,7 +22,10 @@ public class CGRule
 { String lhs;
   String rhs;
   Vector variables; // The _i or _*, _+ in the lhs -- 
-                    // no additional variable should be in rhs
+                    // used to hold matched source elements
+  Vector rhsVariables = new Vector(); 
+                    // The additional _i in the rhs -- 
+                    // these are global variables.
   Vector metafeatures; // The _i`f in rhs
   String lhsop = "";
   Expression lhsexp = null; // For expression rules
@@ -142,10 +145,19 @@ public class CGRule
     rhs = rs;
     variables = vs;
 
-    Vector rvariables = metavariables(rs); 
+    Vector rvariables = metavariables(rs);
+
+    rhsVariables = new Vector(); 
+    rhsVariables.addAll(rvariables); 
+    rhsVariables.addAll(metavariables(whens)); 
+    rhsVariables.removeAll(variables); 
+ 
     if (variables.containsAll(rvariables)) { } 
     else 
-    { System.err.println("!! Error: some extra metavariables on RHS of " + this); }
+    { System.err.println("! Warning: some extra metavariables on RHS of " + this);
+      
+      System.out.println(">> These will be treated as global variables: " + rhsVariables); 
+    }
 
     conditions = whens;
     metafeatures = metafeatures(rhs); 
@@ -157,9 +169,17 @@ public class CGRule
     variables = metavariables(ls); 
 
     Vector rvariables = metavariables(rs); 
+
+    rhsVariables = new Vector(); 
+    rhsVariables.addAll(rvariables); 
+    rhsVariables.removeAll(variables); 
+
     if (variables.containsAll(rvariables)) { } 
     else 
-    { System.err.println("!! Error: some extra metavariables on RHS of " + this); }
+    { System.err.println("! Warning: some extra metavariables on RHS of " + this); 
+      
+      System.out.println(">> These will be treated as global variables: " + rhsVariables); 
+    }
 
     conditions = new Vector();
     metafeatures = metafeatures(rhs);
@@ -172,7 +192,11 @@ public class CGRule
   { rulesetName = rname; } 
 
   public void setActions(Vector acts) 
-  { actions = acts; } 
+  { actions = acts;
+    rhsVariables.addAll(metavariables(acts)); 
+    rhsVariables.removeAll(variables); 
+    System.out.println(">> Global variables: " + rhsVariables); 
+  } 
 
   public static boolean hasDefaultRule(Vector rules)
   { for (int i = 0; i < rules.size(); i++) 
@@ -221,6 +245,16 @@ public class CGRule
     if (str.indexOf("_+") > -1)
     { res.add("_+"); } 
 
+    return res; 
+  } 
+
+  public static Vector metavariables(Vector conds) 
+  { Vector res = new Vector(); 
+    for (int i = 0; i < conds.size(); i++) 
+    { CGCondition cond = (CGCondition) conds.get(i); 
+      Vector vbs = cond.metavariables(); 
+      res.addAll(vbs); 
+    } 
     return res; 
   } 
 
@@ -793,7 +827,23 @@ public class CGRule
          { String replx = term.getMetafeatureValue(mffeat); 
            if (replx != null) 
            { return replx; }
+           else 
+           { System.out.println(">!!!> no metafeature: " + mffeat + " of " + term); 
+           } 
          }
+         else if (ASTTerm.hasTaggedValue(term,mffeat))
+         { String replx = ASTTerm.getTaggedValue(term,mffeat); 
+           if (replx != null) 
+           { return replx; }
+           else 
+           { System.out.println(">!!!> no tagged value: " + mffeat + " of " + term); 
+           } 
+         }       
+         else if (term instanceof ASTSymbolTerm)
+         { String replx = 
+                 ((ASTSymbolTerm) term).getSymbol(); 
+           return replx;  
+         } // specialised symbol functions go here.
          else if (CSTL.hasTemplate(mffeat + ".cstl")) 
          { System.out.println(">>> Template exists: " + 
                                  mffeat + ".cstl"); 
@@ -811,7 +861,7 @@ public class CGRule
 
            File sub = new File("./cg/" + mffeat + ".cstl");
       
-	       Vector types = new Vector(); // CGTL.types; 
+           Vector types = new Vector(); // CGTL.types; 
 		   
            CGSpec newcgs = new CGSpec(entities,types); 
            CGSpec xcgs = 
@@ -830,7 +880,9 @@ public class CGRule
 
  
   public String applyRule(Vector args, Vector eargs, CGSpec cgs)
-  { // substitute each 
+  { // Apply actions, then create the result by 
+    // substituting each variables[i] by eargs[i].cg(cgs)
+    // (ie, args[i]) in the rhs. Substitute each 
     // metafeatures[j] by the cgs transformation 
     // of the value of eargs[j] metafeature
     // in the rule rhs
@@ -841,6 +893,24 @@ public class CGRule
 
     Vector entities = cgs.entities; 
     Vector types = cgs.types; 
+
+
+    Vector newargs = new Vector(); 
+
+    for (int x = 0; x < variables.size() && x < args.size(); 
+         x++)
+    { String arg = (String) args.get(x);
+      String arg1 = correctNewlines(arg); 
+      newargs.add(arg1); 
+    } // Assuming the variables occur in same order as args
+
+    // Apply actions, in order
+    for (int i = 0; i < actions.size(); i++) 
+    { CGCondition act = (CGCondition) actions.get(i); 
+      act.applyAction(variables,eargs,newargs,
+                      cgs,entities,rhsVariables); 
+    } 
+
 
     String res = rhs + "";
 
@@ -1427,9 +1497,26 @@ public class CGRule
               { res = 
                   replaceByMetafeatureValue(res,mf,repl); 
               }
+              else 
+              { System.out.println(">!!!> no metafeature: " + mffeat + " of " + term); 
+              } 
             }
-			else if (term instanceof ASTSymbolTerm)
-			{ res = ((ASTSymbolTerm) term).getSymbol(); }
+            else if (ASTTerm.hasTaggedValue(term,mffeat))
+            { String repl = ASTTerm.getTaggedValue(term,mffeat); 
+              if (repl != null) 
+              { res = 
+                  replaceByMetafeatureValue(res,mf,repl); 
+              }
+              else 
+              { System.out.println(">!!!> no tagged value: " + mffeat + " of " + term); 
+              } 
+            }
+            else if (term instanceof ASTSymbolTerm)
+            { String repl = 
+                 ((ASTSymbolTerm) term).getSymbol(); 
+              res = 
+                  replaceByMetafeatureValue(res,mf,repl); 
+            }
             else if (CSTL.hasTemplate(mffeat + ".cstl")) 
             { System.out.println(">>> Template exists: " + 
                                  mffeat + ".cstl"); 
@@ -1640,23 +1727,31 @@ public class CGRule
     System.out.println(">***> RHS after replacement of metafeatures: " + res); 
     System.out.println(); 
 
-    Vector newargs = new Vector(); 
-
-    for (int x = 0; x < args.size() && x < variables.size(); x++)
+    for (int x = 0; x < variables.size() && x < args.size(); 
+         x++)
     { String var = (String) variables.get(x);
       String arg = (String) args.get(x);
       String arg1 = correctNewlines(arg); 
-      // System.out.println(">--> Replacing " + var + " by " + arg1); 
-      // res = res.replaceAll(var,arg1);
-      newargs.add(arg1); 
+      System.out.println(">--> Replacing " + var + " by " + arg1); 
       res = res.replace(var,arg1);
     } // Assuming the variables occur in same order as args
 
-    // Apply actions, in order
-    for (int i = 0; i < actions.size(); i++) 
-    { CGCondition act = (CGCondition) actions.get(i); 
-      act.applyAction(variables,eargs,newargs,cgs,entities); 
+    for (int y = 0; y < rhsVariables.size(); y++) 
+    { String rvar = (String) rhsVariables.get(y);
+      String varValue = ASTTerm.getStereotypeValue(rvar); 
+      if (varValue != null) 
+      { res = res.replace(rvar,varValue); 
+
+        System.out.println(">--> Replacing global variable " + rvar + " by " + varValue); 
+      }
     } 
+
+    // Apply actions, in order
+    /* for (int i = 0; i < actions.size(); i++) 
+    { CGCondition act = (CGCondition) actions.get(i); 
+      act.applyAction(variables,eargs,newargs,
+                      cgs,entities,rhsVariables); 
+    } */ 
 
     return res;
   }
@@ -1687,14 +1782,14 @@ public class CGRule
 	else */ 
   
      Vector matchings = new Vector(); 
-	 boolean found = checkPatternList(actualText,matchings); 
-	 if (found && matchings.size() >= variableCount() && matchings.size() > 0) 
-	 { System.out.println(">-->> Match of " + actualText + " to " + lhspatternlist);
-	   for (int i = 0; i < variables.size(); i++) 
+     boolean found = checkPatternList(actualText,matchings); 
+     if (found && matchings.size() >= variableCount() && matchings.size() > 0) 
+     { System.out.println(">-->> Match of " + actualText + " to " + lhspatternlist);
+       for (int i = 0; i < variables.size(); i++) 
 	   { String var = variables.get(i) + ""; 
 	     String arg = (String) matchings.get(i); 
 		 System.out.println(">--> Replacing " + var + " by " + arg); 
-         res = res.replaceAll(var,arg);
+         res = res.replace(var,arg);
       } 
 	}  
 	

@@ -212,6 +212,19 @@ public class ASTCompositeTerm extends ASTTerm
     return res; 
   }  
 
+  public ASTTerm replaceCobolIdentifiers()
+  { // Each (cobolName sss) updated to be valid sss
+    Vector newterms = new Vector();  
+    for (int i = 0; i < terms.size(); i++)
+    { ASTTerm trm = (ASTTerm) terms.get(i);
+      ASTTerm ntrm = trm.replaceCobolIdentifiers(); 
+      if (ntrm != null) 
+      { newterms.add(ntrm); } 
+    } 
+    return new ASTCompositeTerm(tag,newterms); 
+  } 
+  
+
   public ASTTerm getTerm(int i) 
   { if (terms.size() > i)
     { return (ASTTerm) terms.get(i); } 
@@ -382,7 +395,7 @@ public class ASTCompositeTerm extends ASTTerm
       { String tok = (String) tokens.get(j); 
         ASTTerm tm = (ASTTerm) terms.get(k); 
 
-        System.out.println("$$$ matching token " + tok + " and term " + tm); 
+        // System.out.println("$$$ matching token " + tok + " and term " + tm); 
 
         if ("_*".equals(tok) && vars.contains(tok))
         { // remainder of terms is processed as a list
@@ -393,7 +406,7 @@ public class ASTCompositeTerm extends ASTTerm
           if (tokens.size() > j+1)
           { nextTok = (String) tokens.get(j+1); } 
 
-          System.out.println(">> Terminator token for _* is: " + nextTok); 
+          // System.out.println(">> Terminator token for _* is: " + nextTok); 
           int remainingTokens = tokens.size() - (j+1); 
 
           boolean finished = false; 
@@ -405,9 +418,9 @@ public class ASTCompositeTerm extends ASTTerm
  
             if (nextTok != null && 
                 pterm.literalForm().equals(nextTok))
-            { System.out.println("$$$ Matched terminator token " + 
-                       nextTok + 
-                       " for _* and term " + pterm); 
+            { // System.out.println("$$$ Matched terminator token " + 
+              //         nextTok + 
+              //         " for _* and term " + pterm); 
               finished = true;
               matchedTokens.add("_*");  
               // k++; // next term after terminator
@@ -436,7 +449,7 @@ public class ASTCompositeTerm extends ASTTerm
           if (tokens.size() > j+1)
           { nextTok = (String) tokens.get(j+1); } 
 
-          System.out.println(">> Terminator token for _+ is: " + nextTok); 
+          // System.out.println(">> Terminator token for _+ is: " + nextTok); 
           int remainingTokens = tokens.size() - (j+1); 
 
           boolean finished = false; 

@@ -298,6 +298,8 @@ public void findPlugins()
     JMenuItem loadDataRequirements = 
       new JMenuItem("Formalise data requirements"); 
     loadDataRequirements.addActionListener(this);
+    loadDataRequirements.setToolTipText(
+      "Creates UML/OCL in output/mm.km3 from POS-tagged/parsed text in output/nlpout.txt. Needs output/background.txt thesaurus.");
     fileMenu.add(loadDataRequirements);
 
     JMenuItem loadbehaviourRequirements = 

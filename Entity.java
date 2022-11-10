@@ -2923,11 +2923,11 @@ public class Entity extends ModelElement implements Comparable
   public Vector getAllInvariants()
   { Vector res = new Vector(); 
     res.addAll(invariants); 
-	if (superclass != null)
-	{ Vector sinvs = superclass.getAllInvariants(); 
-	  res = VectorUtil.union(res,sinvs); 
-	}
-	return res; 
+    if (superclass != null)
+    { Vector sinvs = superclass.getAllInvariants(); 
+      res = VectorUtil.union(res,sinvs); 
+    }
+    return res; 
   }
 
   public boolean hasSuperclass()
@@ -7567,15 +7567,29 @@ public class Entity extends ModelElement implements Comparable
                             "  {\n"; 
     } 
 
+    java.util.Map env = new java.util.HashMap(); 
+    System.out.println(">>> Invariants of class " + name + 
+                       " are: " + invariants); 
+    System.out.println(); 
+    for (int i = 0; i < invariants.size(); i++) 
+    { Constraint cc = (Constraint) invariants.get(i);
+      Statement updf = cc.generateDesign(env,true); 
+      if (updf instanceof ImplicitInvocationStatement) { } 
+      else if (updf != null)  
+      { cc.setBehavioural(true); }  
+    } 
+
     for (int i = 0; i < attributes.size(); i++)
     { Attribute att = (Attribute) attributes.get(i);
       if (att.isFrozen()) { } 
       else 
-      { String par = att.setOperation(this,invariants,entities,types);
+      { String par = att.setOperation(
+                       this,invariants,entities,types);
         if (par != null)
         { out.println("  " + par + "\n"); }
         if (att.isSequence())
-        { String par1 = att.setIndexOperation(this,invariants,entities,types);
+        { String par1 = att.setIndexOperation(
+                          this,invariants,entities,types);
           if (par1 != null) 
           { out.println("  " + par1 + "\n"); }
           par = att.addremOperation(this); 
@@ -8519,7 +8533,8 @@ public class Entity extends ModelElement implements Comparable
     Vector allatts = new Vector(); 
 
     Vector vec = new Vector(); 
-    Attribute atind = getPrincipalUK(this,vec);   // There should not also be a primary key in this
+    Attribute atind = getPrincipalUK(this,vec);   
+      // There should not also be a primary key in this
     if (atind != null && this == (Entity) vec.get(0))  // a key defined as unique in this class
     { if (attributes.contains(atind)) { } 
       else { allatts.add(atind); }

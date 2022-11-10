@@ -1603,41 +1603,41 @@ public class UCDArea extends JPanel
         // Get the innermostEntities of con. 
         // Make sure each is listed by itself, or is source or dest
         // of some association in assocs. 
-        Vector baseEntities = cons.innermostEntities();
-        Vector endPoints = Association.getEndpoints(astv);
-        Vector reachable = Association.reachableFrom(baseEntities,astv); 
+      Vector baseEntities = cons.innermostEntities();
+      Vector endPoints = Association.getEndpoints(astv);
+      Vector reachable = Association.reachableFrom(baseEntities,astv); 
 
-        if (owner != null)
-        { endPoints.add(owner); } 
-        if (VectorUtil.subset(baseEntities,endPoints)) { }
-        else
-        { System.out.println("Warning, base entities: " + baseEntities +
+      if (owner != null)
+      { endPoints.add(owner); } 
+      if (VectorUtil.subset(baseEntities,endPoints)) { }
+      else
+      { System.out.println("! Warning, base entities: " + baseEntities +
                              " not subset of association ends: " + endPoints);
-        }
-        baseEntities.removeAll(reachable); 
-        if (owner != null) 
-        { Vector supers = owner.getAllSuperclasses(); 
-          baseEntities.removeAll(supers);
-        } 
-        cons.setNeeded(baseEntities); 
-        System.out.println("Needed entities for " + cons + 
+      }
+      baseEntities.removeAll(reachable); 
+      if (owner != null) 
+      { Vector supers = owner.getAllSuperclasses(); 
+        baseEntities.removeAll(supers);
+      } 
+      cons.setNeeded(baseEntities); 
+      System.out.println(">>> Needed entities for " + cons + 
                            " are " + baseEntities); 
-        for (int y = 0; y < baseEntities.size(); y++) 
-        { Entity ey = (Entity) baseEntities.get(y); 
-          Association newa = findSubclassAssociation(ey,astv); 
-          if (newa != null) 
-          { if (astv.contains(newa)) { } 
-            else 
-            { astv.add(newa); } 
-            System.out.println("Found subclass assoc: " + newa); 
-          } // remove the ancestor assoc.
+      for (int y = 0; y < baseEntities.size(); y++) 
+      { Entity ey = (Entity) baseEntities.get(y); 
+        Association newa = findSubclassAssociation(ey,astv); 
+        if (newa != null) 
+        { if (astv.contains(newa)) { } 
           else 
-          { newa = findSubclass2Association(ey,astv); 
-            if (newa != null) 
-            { if (astv.contains(newa)) { }
-              else 
-              { astv.add(newa); }
-              System.out.println("Found subclass assoc: " + newa); 
+          { astv.add(newa); } 
+          System.out.println(">>> Found subclass assoc: " + newa); 
+        } // remove the ancestor assoc.
+        else 
+        { newa = findSubclass2Association(ey,astv); 
+          if (newa != null) 
+          { if (astv.contains(newa)) { }
+            else 
+            { astv.add(newa); }
+            System.out.println(">>> Found subclass assoc: " + newa); 
             }
           }
         } 
@@ -10172,9 +10172,13 @@ public void produceCUI(PrintWriter out)
           new PrintWriter(new BufferedWriter(
                 new FileWriter(xmlatt)));
       if (systemName != null && systemName.length() > 0)
-      { XMLComponentsGenerator.generateXMLAttribute(systemName,xmlattout); }  
+      { XMLComponentsGenerator.generateXMLAttribute(
+                              systemName,xmlattout); 
+      }  
       else 
-      { XMLComponentsGenerator.generateXMLAttribute("",xmlattout); }  
+      { XMLComponentsGenerator.generateXMLAttribute(
+                              "",xmlattout); 
+      }  
 
       xmlattout.close();
     }
@@ -10186,7 +10190,9 @@ public void produceCUI(PrintWriter out)
           new PrintWriter(new BufferedWriter(
                 new FileWriter(xmlnode)));
       if (systemName != null && systemName.length() > 0)
-      { XMLComponentsGenerator.generateXMLNode(systemName,xmlnodeout); }  
+      { XMLComponentsGenerator.generateXMLNode(
+                                systemName,xmlnodeout); 
+      }  
       else 
       { XMLComponentsGenerator.generateXMLNode("",xmlnodeout); }  
 
@@ -23225,7 +23231,7 @@ public void produceCUI(PrintWriter out)
      while (!eof)
      { try { s = br.readLine(); }
        catch (IOException e)
-       { System.out.println("Reading failed.");
+       { System.out.println("!!! Reading failed.");
          return; 
        }
 	   
@@ -23246,7 +23252,7 @@ public void produceCUI(PrintWriter out)
       linecount++; 
     } // replace ' and " in s by harmless characters. Remove - within a string or number. 
 	 
-	 Vector nlpsentences = new Vector(); 
+     Vector nlpsentences = new Vector(); 
      Vector mes = new Vector(); // entities and usecases from the model.
      mes.addAll(entities); 
      for (int x = 0; x < useCases.size(); x++)
@@ -26387,11 +26393,12 @@ public void produceCUI(PrintWriter out)
     } 
 
     // remove all whitespace \n \r characters. 
-    ASTTerm yy = xx.removeWhitespaceTerms(); 
-    
+    ASTTerm zz = xx.removeWhitespaceTerms(); 
+    ASTTerm yy = zz.replaceCobolIdentifiers(); 
 
     File cobol2uml = new File("cg/cobol2UML.cstl"); 
     Vector vbs = new Vector(); 
+    vbs.add("cobolFunctions.cstl"); 
     CGSpec spec = loadCSTL(cobol2uml,vbs); 
 
     if (spec == null) 

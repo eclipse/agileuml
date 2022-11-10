@@ -42,6 +42,15 @@ public class ASTBasicTerm extends ASTTerm
     } 
     return this; 
   }  
+
+  public ASTTerm replaceCobolIdentifiers()
+  { if (tag.equals("cobolWord"))
+    { String vtrim = value.trim(); 
+      String vsub = vtrim.replace("-", "_"); 
+      return new ASTBasicTerm(tag,vsub);
+    } 
+    return this; 
+  }  
         
   public boolean hasTag(String tagx) 
   { return tagx.equals(tag); } 
@@ -2654,6 +2663,10 @@ public class ASTBasicTerm extends ASTTerm
   public static void main(String[] args)
   { ASTBasicTerm tt = new ASTBasicTerm("primaryExpression", "'a'"); 
     System.out.println(tt.isCharacter()); 
+
+    ASTBasicTerm ttrr = new ASTBasicTerm("cobolWord", "PAY-CHECKS-MAY"); 
+    ASTTerm ttx = ttrr.replaceCobolIdentifiers(); 
+    System.out.println(ttx); 
   } 
 
 

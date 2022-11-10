@@ -133,6 +133,8 @@ public abstract class ASTTerm
 
   public abstract ASTTerm removeWhitespaceTerms();
 
+  public abstract ASTTerm replaceCobolIdentifiers();
+  
   public abstract String tagFunction(); 
 
   public static Vector allNestedTagsArities(Vector sasts)
@@ -207,67 +209,196 @@ public abstract class ASTTerm
 
   public void addStereotype(String str) 
   { String lit = literalForm(); 
-    Vector stereotypes = 
-      (Vector) ASTTerm.metafeatures.get(lit); 
-    if (stereotypes == null) 
-    { stereotypes = new Vector(); 
-      ASTTerm.metafeatures.put(lit,stereotypes); 
-    } 
+    if (ASTTerm.metafeatures.get(lit) instanceof Vector)
+    { 
+      Vector stereotypes = 
+        (Vector) ASTTerm.metafeatures.get(lit); 
+      if (stereotypes == null) 
+      { stereotypes = new Vector(); 
+        ASTTerm.metafeatures.put(lit,stereotypes); 
+      } 
 
-    if (stereotypes.contains(str)) {} 
-    else 
-    { stereotypes.add(str); } 
+      System.out.println(">> Adding stereotype " + str + " to " + lit); 
+
+      if (stereotypes.contains(str)) {} 
+      else 
+      { stereotypes.add(str); }
+    }  
+  } 
+
+  public static void addStereo(ASTTerm ast, String str)
+  { if (ast == null) { return; } 
+
+    String lit = ast.literalForm(); 
+    addStereo(lit,str); 
   } 
 
   public static void addStereo(String lit, String str)
-  { Vector stereotypes = 
-      (Vector) ASTTerm.metafeatures.get(lit); 
-    if (stereotypes == null) 
-    { stereotypes = new Vector(); 
-      ASTTerm.metafeatures.put(lit,stereotypes); 
+  { Object mfs = ASTTerm.metafeatures.get(lit); 
+    if (mfs == null) 
+    { mfs = new Vector(); 
+      ASTTerm.metafeatures.put(lit, mfs); 
     } 
 
-    if (stereotypes.contains(str)) {} 
-    else 
-    { stereotypes.add(str); } 
+    if (mfs instanceof Vector)
+    { 
+      Vector stereotypes = (Vector) mfs;  
+
+      if (stereotypes.contains(str)) {} 
+      else 
+      { stereotypes.add(str); }
+    } 
+
+    System.out.println("*** Metafeatures of " + lit + " are " + mfs); 
   } 
+
+  public static void setTaggedValue(ASTTerm ast, String mf, String val) 
+  { // updates stereotypes of ast so that mf=val
+
+    String lit = ast.literalForm();
+
+    setTaggedValue(lit, mf, val); 
+  } 
+
+
+  public static void setTaggedValue(String lit, String mf, String val) 
+  { Object mfs = ASTTerm.metafeatures.get(lit); 
+    System.out.println("*** " + lit + " has tagged values: " + 
+                       mfs); 
+
+    if (mfs == null) 
+    { mfs = new Vector(); 
+      ASTTerm.metafeatures.put(lit,mfs); 
+    }
+
+    if (mfs instanceof Vector)
+    { Vector stereos = (Vector) mfs; 
+      Vector newstereos = new Vector(); 
+      for (int x = 0; x < stereos.size(); x++) 
+      { String stereo = (String) stereos.get(x); 
+        if (stereo.startsWith(mf + "="))
+        { }
+        else 
+        { newstereos.add(stereo); } 
+      } 
+      newstereos.add(mf + "=" + val); 
+      ASTTerm.metafeatures.put(lit,newstereos); 
+      System.out.println("*** Set " + lit + " tagged values: " + 
+                         newstereos); 
+    } 
+  }
 
 
   public void removeStereotype(String str) 
   { String lit = literalForm(); 
-    Vector stereotypes = 
-      (Vector) ASTTerm.metafeatures.get(lit); 
-    if (stereotypes == null) 
-    { stereotypes = new Vector(); 
-      ASTTerm.metafeatures.put(lit,stereotypes); 
+    if (ASTTerm.metafeatures.get(lit) instanceof Vector)
+    { 
+      Vector stereotypes = 
+        (Vector) ASTTerm.metafeatures.get(lit); 
+      if (stereotypes == null) 
+      { stereotypes = new Vector(); 
+        ASTTerm.metafeatures.put(lit,stereotypes); 
+      } 
+      Vector removed = new Vector(); 
+      removed.add(str); 
+      stereotypes.removeAll(removed); 
     } 
-    Vector removed = new Vector(); 
-    removed.add(str); 
-    stereotypes.removeAll(removed);  
   } 
 
   public static void removeStereo(String lit, String str) 
-  { 
-    Vector stereotypes = 
-      (Vector) ASTTerm.metafeatures.get(lit); 
-    if (stereotypes == null) 
-    { stereotypes = new Vector(); 
-      ASTTerm.metafeatures.put(lit,stereotypes); 
-    } 
-    Vector removed = new Vector(); 
-    removed.add(str); 
-    stereotypes.removeAll(removed);  
+  { if (ASTTerm.metafeatures.get(lit) instanceof Vector)
+    { 
+      Vector stereotypes = 
+        (Vector) ASTTerm.metafeatures.get(lit); 
+      if (stereotypes == null) 
+      { stereotypes = new Vector(); 
+        ASTTerm.metafeatures.put(lit,stereotypes); 
+      } 
+      Vector removed = new Vector(); 
+      removed.add(str); 
+      stereotypes.removeAll(removed);
+    }   
   } 
 
   public boolean hasStereotype(String str) 
   { String lit = literalForm(); 
-    Vector stereotypes = 
-      (Vector) ASTTerm.metafeatures.get(lit); 
-    if (stereotypes == null) 
-    { stereotypes = new Vector(); 
-      ASTTerm.metafeatures.put(lit,stereotypes); 
+    if (ASTTerm.metafeatures.get(lit) instanceof Vector)
+    { Vector stereotypes = 
+        (Vector) ASTTerm.metafeatures.get(lit); 
+      if (stereotypes == null) 
+      { stereotypes = new Vector(); 
+        ASTTerm.metafeatures.put(lit,stereotypes); 
+      } 
+      return stereotypes.contains(str);
     } 
-    return stereotypes.contains(str); 
+    return false;  
+  } 
+
+  public static String getStereotypeValue(String lit)
+  { Object stereo = 
+      ASTTerm.metafeatures.get(lit); 
+    System.out.println(">>>--- Global variable " +  lit + 
+                       " has value " + stereo);
+    System.out.println();   
+    if (stereo == null) 
+    { return ""; } 
+    else 
+    { return "" + stereo; } 
+  } 
+
+  public static void setStereotypeValue(String lit, String val)
+  { System.out.println(">>>--- Global variable " +  lit + 
+                       " set to " + val);  
+    System.out.println(); 
+    ASTTerm.metafeatures.put(lit,val); 
+  } 
+
+  public static boolean hasTaggedValue(ASTTerm trm, String str) 
+  { String lit = trm.literalForm();
+    System.out.println("*** " + lit + " has tagged values: " + 
+                       ASTTerm.metafeatures.get(lit)); 
+
+    if (ASTTerm.metafeatures.get(lit) instanceof Vector)
+    { 
+      Vector stereotypes = 
+        (Vector) ASTTerm.metafeatures.get(lit); 
+      if (stereotypes == null) 
+      { stereotypes = new Vector(); 
+        ASTTerm.metafeatures.put(lit,stereotypes); 
+      } 
+
+      for (int x = 0; x < stereotypes.size(); x++) 
+      { String stereo = (String) stereotypes.get(x); 
+        if (stereo.startsWith(str + "="))
+        { return true; } 
+      } 
+      return false; 
+    } 
+    return false; 
+  } 
+
+  public static String getTaggedValue(ASTTerm trm, String str) 
+  { String lit = trm.literalForm(); 
+    Object mfs = ASTTerm.metafeatures.get(lit); 
+    if (mfs == null) 
+    { mfs = new Vector(); 
+      ASTTerm.metafeatures.put(lit,mfs); 
+    } 
+
+    System.out.println("*** " + lit + " gets tagged values: " + 
+                       mfs); 
+
+    if (mfs instanceof Vector)
+    { Vector stereotypes = (Vector) mfs; 
+      for (int x = 0; x < stereotypes.size(); x++) 
+      { String stereo = (String) stereotypes.get(x); 
+        if (stereo.startsWith(str + "="))
+        { int indx = stereo.indexOf("="); 
+          return stereo.substring(indx + 1); 
+        } 
+      }
+    }  
+    return null; 
   } 
 
   public static void addRequiredLibrary(String lib) 

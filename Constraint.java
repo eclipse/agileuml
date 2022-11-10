@@ -1159,6 +1159,26 @@ public class Constraint extends ConstraintOrGroup
     return res;  
   } 
 
+  public Statement generateDesign(java.util.Map env, boolean local)
+  { Expression condExpr = null; 
+    if (cond0 != null) 
+    { condExpr = cond0; }
+ 
+    if (cond != null)
+    { condExpr = Expression.simplify("&",condExpr,cond,null); } 
+    
+    Statement rhs = succ.generateDesign(env,local); 
+    if (rhs == null) 
+    { return null; }
+    if (rhs instanceof ImplicitInvocationStatement) 
+    { return rhs; } 
+    
+    if (condExpr == null) 
+    { return rhs; } 
+    else 
+    { return new ConditionalStatement(condExpr, rhs); } 
+  } 
+
   public String updateForm(java.util.Map env, boolean local)
   { String res = ""; 
     if (behavioural == false) 
@@ -2541,7 +2561,9 @@ public Constraint generalType0inverse()
     } 
       
  
-    // iteration: for (ex : owner) do this.updateForm(env,local)
+    // iteration: for (ex : owner) do 
+    //               this.updateForm(env,local)
+ 
     String es = "Controller.inst()." + ename.toLowerCase() + "s";  
     String e_x = ename.toLowerCase() + "_x"; 
     env0.put(ename,e_x); 
@@ -2571,7 +2593,7 @@ public Constraint generalType0inverse()
     // plus those of update expression and reference if not null
     // target entity is needed if reference == null
 
-    BasicExpression tt = new BasicExpression("true"); 
+    BasicExpression tt = new BasicExpression(true); 
     tt.setType(new Type("boolean",null)); 
     tt.kind = ModelElement.INTERNAL;
     tt.umlkind = Expression.VALUE;  
@@ -2580,7 +2602,7 @@ public Constraint generalType0inverse()
     if (event != null) 
     { pars = event.getParameters(); } 
 
-    System.out.println("UPDATE OPERATION: should iterate over " + baseEntities); 
+    System.out.println(">>> UPDATE OPERATION: should iterate over " + baseEntities); 
     Vector needed = new Vector(); 
     needed.addAll(baseEntities); // really the base entities of the new constraint. 
     needed.remove(ent); 
@@ -2605,31 +2627,34 @@ public Constraint generalType0inverse()
     Expression fullcond = Expression.simplify("&",cond0,cond,new Vector()); 
     int index = 2; 
 
-    System.out.println("Variables are: " + variables);     
+    System.out.println(">> Constraint variables are: " + variables);     
 
     String res = ""; 
     for (int i = 0; i < variables.size(); i++)
     { Attribute var = (Attribute) variables.get(i);
-      String einame = var.getType() + "";  // assume it is a class type 
-      String indexe = var.getName() + "_index";
-      String eix = var.getName();   
-      String eis = einame.toLowerCase() + "s";   
-      res = res + ModelElement.tab(index) + 
-                         "for (int " + indexe + " = 0; " + indexe + " < " + 
-                         eis + ".size(); " + indexe + "++)\n" + 
+      Type vtype = var.getType(); 
+      if (vtype != null && vtype.isEntity())
+      { String einame = vtype + "";  // assume it is a class type 
+        String indexe = var.getName() + "_index";
+        String eix = var.getName();   
+        String eis = einame.toLowerCase() + "s";   
+        res = res + ModelElement.tab(index) + 
+                "for (int " + indexe + " = 0; " + indexe + " < " + 
+                 eis + ".size(); " + indexe + "++)\n" + 
             ModelElement.tab(index) + 
-                         "{ " + einame + " " + eix + " = (" + einame + ") " + 
-                                eis + ".get(" + 
-                         indexe + ");\n"; 
+                 "{ " + einame + " " + eix + " = (" + einame + ") " + 
+                 eis + ".get(" + indexe + ");\n"; 
       // env.put(einame,eix);
-      System.out.println("Iterating over " + eix + " : " + einame); 
-      Expression fullcond3 = 
-        Expression.removeTypePredicate(fullcond,eix,einame); 
-      System.out.println(fullcond3); // type check it
-      fullcond = fullcond3.simplify(); 
-      needed.remove(var.getType().getEntity());  
-      index++; 
+        System.out.println(">> Iterating over " + eix + " : " + einame); 
+        Expression fullcond3 = 
+          Expression.removeTypePredicate(fullcond,eix,einame); 
+        System.out.println(fullcond3); // type check it
+        fullcond = fullcond3.simplify(); 
+        needed.remove(var.getType().getEntity());  
+        index++;
+      }  
     } 
+
     for (int i = 0; i < needed.size(); i++)
     { Entity e = (Entity) needed.get(i);
       String einame = e.getName(); 
@@ -2637,12 +2662,11 @@ public Constraint generalType0inverse()
       String eix = einame.toLowerCase() + "x";   
       String eis = einame.toLowerCase() + "s";   
       res = res + ModelElement.tab(index) + 
-                         "for (int " + indexe + " = 0; " + indexe + " < " + 
-                         eis + ".size(); " + indexe + "++)\n" + 
+              "for (int " + indexe + " = 0; " + indexe + " < " + 
+              eis + ".size(); " + indexe + "++)\n" + 
             ModelElement.tab(index) + 
-                         "{ " + einame + " " + eix + " = (" + einame + ") " + 
-                                eis + ".get(" + 
-                         indexe + ");\n"; 
+              "{ " + einame + " " + eix + " = (" + einame + ") " + 
+              eis + ".get(" + indexe + ");\n"; 
       env.put(einame,eix); 
       index++; 
     } 
@@ -2650,11 +2674,14 @@ public Constraint generalType0inverse()
     // Expression fullcond2 = fullcond.simplify(); 
 
     res = res + 
-          Association.genEventCode(rels,env,fullcond,index,succ,local); 
+          Association.genEventCode(rels,env,
+                           fullcond,index,succ,local); 
+
     for (int i = 0; i < needed.size(); i++)
     { res = res + ModelElement.tab(index) + "}\n"; 
       index--; 
     } 
+
     for (int i = 0; i < variables.size(); i++)
     { res = res + ModelElement.tab(index) + "}\n"; 
       index--; 
@@ -2673,7 +2700,7 @@ public Constraint generalType0inverse()
     // plus those of update expression and reference if not null
     // target entity is needed if reference == null
 
-    BasicExpression tt = new BasicExpression("true"); 
+    BasicExpression tt = new BasicExpression(true); 
     tt.setType(new Type("boolean",null)); 
     tt.kind = ModelElement.INTERNAL;
     tt.umlkind = Expression.VALUE;  
@@ -2712,11 +2739,13 @@ public Constraint generalType0inverse()
     String res = ""; 
     for (int i = 0; i < variables.size(); i++)
     { Attribute var = (Attribute) variables.get(i);
-      String einame = var.getType() + "";  // assume it is a class type 
-      String indexe = var.getName() + "_index";
-      String eix = var.getName();   
-      String eis = einame.toLowerCase() + "s";   
-      res = res + ModelElement.tab(index) + 
+      Type vtype = var.getType(); 
+      if (vtype != null && vtype.isEntity())
+      { String einame = vtype + "";  // assume it is a class type 
+        String indexe = var.getName() + "_index";
+        String eix = var.getName();   
+        String eis = einame.toLowerCase() + "s";   
+        res = res + ModelElement.tab(index) + 
                          "for (int " + indexe + " = 0; " + indexe + " < " + 
                          eis + ".size(); " + indexe + "++)\n" + 
             ModelElement.tab(index) + 
@@ -2724,14 +2753,16 @@ public Constraint generalType0inverse()
                                 eis + ".get(" + 
                          indexe + ");\n"; 
       // env.put(einame,eix);
-      System.out.println("Iterating over " + eix + " : " + einame); 
-      Expression fullcond3 = 
-        Expression.removeTypePredicate(fullcond,eix,einame); 
-      System.out.println(fullcond3); // type check it
-      fullcond = fullcond3.simplify(); 
-      needed.remove(var.getType().getEntity());  
-      index++; 
+        System.out.println(">> Iterating over " + eix + " : " + einame); 
+        Expression fullcond3 = 
+          Expression.removeTypePredicate(fullcond,eix,einame); 
+        System.out.println(fullcond3); // type check it
+        fullcond = fullcond3.simplify(); 
+        needed.remove(var.getType().getEntity());  
+        index++;
+      }  
     } 
+
     for (int i = 0; i < needed.size(); i++)
     { Entity e = (Entity) needed.get(i);
       String einame = e.getName(); 
@@ -2775,7 +2806,7 @@ public Constraint generalType0inverse()
     // plus those of update expression and reference if not null
     // target entity is needed if reference == null
 
-    BasicExpression tt = new BasicExpression("true"); 
+    BasicExpression tt = new BasicExpression(true); 
     tt.setType(new Type("boolean",null)); 
     tt.kind = ModelElement.INTERNAL;
     tt.umlkind = Expression.VALUE;  
@@ -2809,31 +2840,35 @@ public Constraint generalType0inverse()
     Expression fullcond = Expression.simplify("&",cond0,cond,new Vector()); 
     int index = 2; 
 
-    System.out.println("Variables are: " + variables);     
+    System.out.println(">> Constraint variables are: " + variables);     
 
     String res = ""; 
     for (int i = 0; i < variables.size(); i++)
     { Attribute var = (Attribute) variables.get(i);
-      String einame = var.getType() + "";  // assume it is a class type 
-      String indexe = var.getName() + "_index";
-      String eix = var.getName();   
-      String eis = einame.toLowerCase() + "s";   
-      res = res + ModelElement.tab(index) + 
-                         "for (int " + indexe + " = 0; " + indexe + " < " + 
-                         eis + ".size(); " + indexe + "++)\n" + 
+      Type vtype = var.getType(); 
+      if (vtype != null && vtype.isEntity())
+      { String einame = vtype + "";  // assume it is a class type 
+        String indexe = var.getName() + "_index";
+        String eix = var.getName();   
+        String eis = einame.toLowerCase() + "s";   
+        res = res + ModelElement.tab(index) + 
+                "for (int " + indexe + " = 0; " + indexe + " < " + 
+                eis + ".size(); " + indexe + "++)\n" + 
             ModelElement.tab(index) + 
-                         "{ " + einame + " " + eix + " = (" + einame + ") " + 
-                                eis + ".get(" + 
-                         indexe + ");\n"; 
+                "{ " + einame + " " + eix + " = (" + einame + ") " + 
+                eis + ".get(" + indexe + ");\n";
+ 
       // env.put(einame,eix);
-      System.out.println("Iterating over " + eix + " : " + einame); 
-      Expression fullcond3 = 
-        Expression.removeTypePredicate(fullcond,eix,einame); 
-      System.out.println(fullcond3); // type check it
-      fullcond = fullcond3.simplify(); 
-      needed.remove(var.getType().getEntity());  
-      index++; 
+        System.out.println(">> Iterating over " + eix + " : " + einame); 
+        Expression fullcond3 = 
+          Expression.removeTypePredicate(fullcond,eix,einame); 
+        System.out.println(fullcond3); // type check it
+        fullcond = fullcond3.simplify(); 
+        needed.remove(var.getType().getEntity());  
+        index++;
+      } 
     } 
+
     for (int i = 0; i < needed.size(); i++)
     { Entity e = (Entity) needed.get(i);
       String einame = e.getName(); 
@@ -2877,7 +2912,7 @@ public Constraint generalType0inverse()
     // plus those of update expression and reference if not null
     // target entity is needed if reference == null
 
-    BasicExpression tt = new BasicExpression("true"); 
+    BasicExpression tt = new BasicExpression(true); 
     tt.setType(new Type("boolean",null)); 
     tt.kind = ModelElement.INTERNAL;
     tt.umlkind = Expression.VALUE;  
@@ -2916,11 +2951,13 @@ public Constraint generalType0inverse()
     String res = ""; 
     for (int i = 0; i < variables.size(); i++)
     { Attribute var = (Attribute) variables.get(i);
-      String einame = var.getType() + "";  // assume it is a class type 
-      String indexe = var.getName() + "_index";
-      String eix = var.getName();   
-      String eis = einame.toLowerCase() + "_s";   
-      res = res + ModelElement.tab(index) + 
+      Type vtype = var.getType(); 
+      if (vtype != null && vtype.isEntity())
+      { String einame = vtype + "";  // assume it is a class type 
+        String indexe = var.getName() + "_index";
+        String eix = var.getName();   
+        String eis = einame.toLowerCase() + "_s";   
+        res = res + ModelElement.tab(index) + 
                          "for (int " + indexe + " = 0; " + indexe + " < " + 
                          eis + ".Count; " + indexe + "++)\n" + 
             ModelElement.tab(index) + 
@@ -2928,12 +2965,13 @@ public Constraint generalType0inverse()
                                 eis + "[" + indexe + "];\n"; 
       // env.put(einame,eix);
       // System.out.println("Iterating over " + eix + " : " + einame); 
-      Expression fullcond3 = 
-        Expression.removeTypePredicate(fullcond,eix,einame); 
-      System.out.println(fullcond3); // type check it
-      fullcond = fullcond3.simplify(); 
-      needed.remove(var.getType().getEntity());  
-      index++; 
+        Expression fullcond3 = 
+          Expression.removeTypePredicate(fullcond,eix,einame); 
+        System.out.println(fullcond3); // type check it
+        fullcond = fullcond3.simplify(); 
+        needed.remove(var.getType().getEntity());  
+        index++;
+      } 
     } 
 
     for (int i = 0; i < needed.size(); i++)
@@ -2978,7 +3016,7 @@ public Constraint generalType0inverse()
     // plus those of update expression and reference if not null
     // target entity is needed if reference == null
 
-    BasicExpression tt = new BasicExpression("true"); 
+    BasicExpression tt = new BasicExpression(true); 
     tt.setType(new Type("boolean",null)); 
     tt.kind = ModelElement.INTERNAL;
     tt.umlkind = Expression.VALUE;  
@@ -3017,13 +3055,15 @@ public Constraint generalType0inverse()
     String res = ""; 
     for (int i = 0; i < variables.size(); i++)
     { Attribute var = (Attribute) variables.get(i);
-      String einame = var.getType() + "";  // assume it is a class type 
-      String indexe = var.getName() + "_index";
-      String eix = var.getName();   
-      String eis = "Controller::inst->get" + einame.toLowerCase() + "_s()";
-      String esx = "_" + einame.toLowerCase() + "s"; 
+      Type vtype = var.getType(); 
+      if (vtype != null && vtype.isEntity())
+      { String einame = vtype + "";  // assume it is a class type 
+        String indexe = var.getName() + "_index";
+        String eix = var.getName();   
+        String eis = "Controller::inst->get" + einame.toLowerCase() + "_s()";
+        String esx = "_" + einame.toLowerCase() + "s"; 
    
-      res = res + ModelElement.tab(index) + 
+        res = res + ModelElement.tab(index) + 
                          "vector<" + einame + "*>* " + esx + " = " + eis + ";\n" + 
                          "for (int " + indexe + " = 0; " + indexe + " < " + 
                          eis + "->size(); " + indexe + "++)\n" + 
@@ -3031,12 +3071,13 @@ public Constraint generalType0inverse()
                          "{ " + einame + "* " + eix + " = (*" + esx + ")[" + indexe + "];\n"; 
       // env.put(einame,eix);
       // System.out.println("Iterating over " + eix + " : " + einame); 
-      Expression fullcond3 = 
-        Expression.removeTypePredicate(fullcond,eix,einame); 
-      System.out.println(fullcond3); // type check it
-      fullcond = fullcond3.simplify(); 
-      needed.remove(var.getType().getEntity());  
-      index++; 
+        Expression fullcond3 = 
+          Expression.removeTypePredicate(fullcond,eix,einame); 
+        System.out.println(fullcond3); // type check it
+        fullcond = fullcond3.simplify(); 
+        needed.remove(var.getType().getEntity());  
+        index++; 
+      } 
     } 
 
     for (int i = 0; i < needed.size(); i++)

@@ -5432,11 +5432,16 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       } 
 
       if ("implements".startsWith(st))
-      { mess[0] = "implements a list of interfaces, eg.,\n" + 
+      { mess[0] = "class implements one or more interfaces, eg.,\n" + 
                   "class A implements IA, IB { ... }"; 
         return "implements"; 
       } 
 
+      if ("invariant".startsWith(st))
+      { mess[0] = "invariant constraint of class, eg.,\n" + 
+                  "invariant att1 = att2;"; 
+        return "invariant"; 
+      } 
 
       if ("String".startsWith(st)) 
       { mess[0] = "String type String. Empty string is \"\"\n" + 

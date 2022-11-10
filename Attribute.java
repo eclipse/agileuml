@@ -2129,7 +2129,7 @@ public class Attribute extends ModelElement
     if (frozen) { return ""; }
     String nme = getName();
     if (type == null || ent == null || entity == null) // error
-    { System.err.println("ERROR: null type or entity in attribute " + nme); 
+    { System.err.println("!! ERROR: null type/entity in attribute " + nme); 
       return ""; 
     } 
 
@@ -2188,7 +2188,7 @@ public class Attribute extends ModelElement
     { Constraint cc = (Constraint) cons.get(j);
       Constraint cnew = cc.matches("set",nme,ent,val,event);
       // must type check new constraint. 
-      System.out.println("Match set of " + cc + " is: " + cnew);
+      System.out.println(">>> Match set of constraint " + cc + " is: " + cnew);
        
       if (cnew != null)
       { Vector contx = new Vector(); 
@@ -2203,7 +2203,7 @@ public class Attribute extends ModelElement
       }
       else if (cc.allFeaturesUsedIn().contains(nme) && cc.getEvent() == null)
       { Constraint cpre = (Constraint) cc.substituteEq(nme,attxbe); 
-        System.out.println("Possible precond for set" + nme + ": " + cpre); 
+        System.out.println(">>> Possible precond for set" + nme + ": " + cpre); 
       }
     }
     return opheader + "  }\n"; 
@@ -2285,7 +2285,7 @@ public class Attribute extends ModelElement
     if (frozen) { return ""; }
     String nme = getName();
     if (type == null || ent == null || entity == null) // error
-    { System.err.println("ERROR: null type or entity in attribute " + nme); 
+    { System.err.println("!! ERROR: null type/entity in attribute " + nme); 
       return ""; 
     } 
 
@@ -2343,7 +2343,7 @@ public class Attribute extends ModelElement
     { Constraint cc = (Constraint) cons.get(j);
       Constraint cnew = cc.matches("set",nme,ent,val,event);
       // must type check new constraint. 
-      System.out.println("Match set of " + cc + " is: " + cnew);
+      System.out.println(">> Match set of " + cc + " is: " + cnew);
        
       if (cnew != null)
       { Vector contx = new Vector(); 
@@ -2358,7 +2358,7 @@ public class Attribute extends ModelElement
       }
       else if (cc.allFeaturesUsedIn().contains(nme) && cc.getEvent() == null)
       { Constraint cpre = (Constraint) cc.substituteEq(nme,attxbe); 
-        System.out.println("Possible precond for set" + nme + ": " + cpre); 
+        System.out.println(">>> Possible precond for set" + nme + ": " + cpre); 
       }
     }
     return opheader + "  }\n"; 
@@ -2506,7 +2506,7 @@ public class Attribute extends ModelElement
     if (frozen) { return ""; }
     String nme = getName();
     if (type == null || ent == null || entity == null) // error
-    { System.err.println("ERROR: null type or entity in attribute " + nme); 
+    { System.err.println("!! ERROR: null type/entity in attribute " + nme); 
       return ""; 
     } 
 
@@ -2564,7 +2564,7 @@ public class Attribute extends ModelElement
     { Constraint cc = (Constraint) cons.get(j);
       Constraint cnew = cc.matches("set",nme,ent,val,event);
       // must type check new constraint. 
-      System.out.println("Match set of " + cc + " is: " + cnew);
+      System.out.println(">> Match set of " + cc + " is: " + cnew);
        
       if (cnew != null)
       { Vector contx = new Vector(); 
@@ -2579,7 +2579,7 @@ public class Attribute extends ModelElement
       }
       else if (cc.allFeaturesUsedIn().contains(nme) && cc.getEvent() == null)
       { Constraint cpre = (Constraint) cc.substituteEq(nme,attxbe); 
-        System.out.println("Possible precond for set" + nme + ": " + cpre); 
+        System.out.println(">> Possible precond for set" + nme + ": " + cpre); 
       }
     }
     return opheader + "  }\n"; 
@@ -2725,7 +2725,7 @@ public class Attribute extends ModelElement
       }
       else if (cc.allFeaturesUsedIn().contains(nme) && cc.getEvent() == null)
       { Constraint cpre = (Constraint) cc.substituteEq(nme,attxbe); 
-        System.out.println("Possible precond for set" + nme + ": " + cpre); 
+        System.out.println(">>> Possible precond for set" + nme + ": " + cpre); 
       }
     }
     return opheader + "  }\n"; 
@@ -2863,7 +2863,7 @@ public class Attribute extends ModelElement
       }
       else if (cc.allFeaturesUsedIn().contains(nme) && cc.getEvent() == null)
       { Constraint cpre = (Constraint) cc.substituteEq(nme,attxbe); 
-        System.out.println("Possible precond for set" + nme + ": " + cpre); 
+        System.out.println(">>> Possible precond for set" + nme + ": " + cpre); 
       }
     }
     return opheader + "  }\n"; 
@@ -3860,7 +3860,7 @@ public class Attribute extends ModelElement
       }
       else if (cc.allFeaturesUsedIn().contains(nme) && cc.getEvent() == null)
       { Constraint cpre = (Constraint) cc.substituteEq(nme,attxbe); 
-        System.out.println("Possible precond for set" + nme + ": " + cpre); 
+        System.out.println(">>> Possible precond for set" + nme + ": " + cpre); 
       }
     } 
     res.add(opheader + "  }\n\n");
@@ -3995,7 +3995,7 @@ public class Attribute extends ModelElement
       }
       else if (cc.allFeaturesUsedIn().contains(nme) && cc.getEvent() == null)
       { Constraint cpre = (Constraint) cc.substituteEq(nme,attxbe); 
-        System.out.println("Possible precond for set" + nme + ": " + cpre); 
+        System.out.println(">>> Possible precond for set" + nme + ": " + cpre); 
       }
     } 
     res.add(opheader + "  }\n\n");
@@ -4126,7 +4126,7 @@ public class Attribute extends ModelElement
       }
       else if (cc.allFeaturesUsedIn().contains(nme) && cc.getEvent() == null)
       { Constraint cpre = (Constraint) cc.substituteEq(nme,attxbe); 
-        System.out.println("Possible precond for set" + nme + ": " + cpre); 
+        System.out.println(">>> Possible precond for set" + nme + ": " + cpre); 
       }
     } 
     res.add(opheader + "  }\n\n");
@@ -4254,7 +4254,7 @@ public class Attribute extends ModelElement
       }
       else if (cc.allFeaturesUsedIn().contains(nme) && cc.getEvent() == null)
       { Constraint cpre = (Constraint) cc.substituteEq(nme,attxbe); 
-        System.out.println("Possible precond for set" + nme + ": " + cpre); 
+        System.out.println(">>> Possible precond for set" + nme + ": " + cpre); 
       }
     } 
     res.add(opheader + "  }\n\n");
@@ -4387,7 +4387,7 @@ public class Attribute extends ModelElement
       }
       else if (cc.allFeaturesUsedIn().contains(nme) && cc.getEvent() == null)
       { Constraint cpre = (Constraint) cc.substituteEq(nme,attxbe); 
-        System.out.println("Possible precond for set" + nme + ": " + cpre); 
+        System.out.println(">>> Possible precond for set" + nme + ": " + cpre); 
       }
     } 
     res.add(opheader + "  }\n\n");

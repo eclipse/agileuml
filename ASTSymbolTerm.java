@@ -36,6 +36,9 @@ public class ASTSymbolTerm extends ASTTerm
     return this; 
   }  
 
+  public ASTTerm replaceCobolIdentifiers()
+  { return this; } 
+
   public boolean hasTag(String tagx) 
   { return false; } 
 
