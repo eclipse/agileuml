@@ -658,9 +658,14 @@ public class Constraint extends ConstraintOrGroup
 
   public Vector readFrame()
   { Vector res = new Vector(); 
-    Expression ante = antecedent(); 
+    Expression ante = antecedent();
+
+    
     if (ante != null) 
-    { res.addAll(ante.allReadFrame()); } 
+    { Vector areads = ante.allReadFrame(); 
+      System.out.println("++ Antecedent: " + ante + " " + areads); 
+      res.addAll(areads); 
+    } 
 
     if (orderedBy != null) 
     { res.addAll(orderedBy.allReadFrame()); } 
@@ -668,7 +673,10 @@ public class Constraint extends ConstraintOrGroup
     Expression sc = succedent(); 
 
     if (sc != null)
-    { return VectorUtil.union(res,sc.readFrame()); } 
+    { Vector sreads = sc.readFrame(); 
+      System.out.println("++ Succedent: " + sc + " " + sreads); 
+      return VectorUtil.union(res,sreads); 
+    } 
     return res; 
   } // and owner, or owner@pre
 
@@ -1491,7 +1499,7 @@ public class Constraint extends ConstraintOrGroup
     res = succ.typeCheck(types,ents,contexts,env);
     vars.addAll(succ.getVariableUses()); 
     variableTypeAssignment(vars,env); 
-    System.out.println("Variables are: " + variables); 
+    System.out.println(">> Constraint Variables are: " + variables); 
     return res;
   } 
   // check that all features of constraint occur in its associations
@@ -2612,7 +2620,7 @@ public Constraint generalType0inverse()
     { Attribute att = (Attribute) pars.get(i); 
       if (att.getType() != null && att.getType().isEntity) 
       { env.put(att.getType().entity + "", att.getName()); 
-        System.out.println("Parameter " + att + " type " + att.getType()); 
+        System.out.println(">>> Parameter " + att + " type " + att.getType()); 
         needed.remove(att.getType().entity); 
       }
     }
@@ -2638,17 +2646,18 @@ public Constraint generalType0inverse()
         String indexe = var.getName() + "_index";
         String eix = var.getName();   
         String eis = einame.toLowerCase() + "s";   
-        res = res + ModelElement.tab(index) + 
-                "for (int " + indexe + " = 0; " + indexe + " < " + 
+        res = res + 
+          ModelElement.tab(index) + 
+          "for (int " + indexe + " = 0; " + indexe + " < " + 
                  eis + ".size(); " + indexe + "++)\n" + 
-            ModelElement.tab(index) + 
-                 "{ " + einame + " " + eix + " = (" + einame + ") " + 
+          ModelElement.tab(index) + 
+          "{ " + einame + " " + eix + " = (" + einame + ") " + 
                  eis + ".get(" + indexe + ");\n"; 
       // env.put(einame,eix);
         System.out.println(">> Iterating over " + eix + " : " + einame); 
         Expression fullcond3 = 
           Expression.removeTypePredicate(fullcond,eix,einame); 
-        System.out.println(fullcond3); // type check it
+        // System.out.println(fullcond3); // type check it
         fullcond = fullcond3.simplify(); 
         needed.remove(var.getType().getEntity());  
         index++;
@@ -2661,11 +2670,12 @@ public Constraint generalType0inverse()
       String indexe = einame.toLowerCase() + "_index";
       String eix = einame.toLowerCase() + "x";   
       String eis = einame.toLowerCase() + "s";   
-      res = res + ModelElement.tab(index) + 
-              "for (int " + indexe + " = 0; " + indexe + " < " + 
+      res = res + 
+        ModelElement.tab(index) + 
+        "for (int " + indexe + " = 0; " + indexe + " < " + 
               eis + ".size(); " + indexe + "++)\n" + 
-            ModelElement.tab(index) + 
-              "{ " + einame + " " + eix + " = (" + einame + ") " + 
+        ModelElement.tab(index) + 
+        "{ " + einame + " " + eix + " = (" + einame + ") " + 
               eis + ".get(" + indexe + ");\n"; 
       env.put(einame,eix); 
       index++; 
@@ -2683,9 +2693,14 @@ public Constraint generalType0inverse()
     } 
 
     for (int i = 0; i < variables.size(); i++)
-    { res = res + ModelElement.tab(index) + "}\n"; 
-      index--; 
+    { Attribute var = (Attribute) variables.get(i);
+      Type vtype = var.getType(); 
+      if (vtype != null && vtype.isEntity())
+      { res = res + ModelElement.tab(index) + "}\n"; 
+        index--;
+      }  
     } 
+
     return res; 
   }
 
@@ -2734,7 +2749,7 @@ public Constraint generalType0inverse()
     Expression fullcond = Expression.simplify("&",cond0,cond,new Vector()); 
     int index = 2; 
 
-    System.out.println("Variables are: " + variables);     
+    System.out.println(">> Constraint variables are: " + variables);     
 
     String res = ""; 
     for (int i = 0; i < variables.size(); i++)
@@ -2745,12 +2760,13 @@ public Constraint generalType0inverse()
         String indexe = var.getName() + "_index";
         String eix = var.getName();   
         String eis = einame.toLowerCase() + "s";   
-        res = res + ModelElement.tab(index) + 
-                         "for (int " + indexe + " = 0; " + indexe + " < " + 
-                         eis + ".size(); " + indexe + "++)\n" + 
-            ModelElement.tab(index) + 
-                         "{ " + einame + " " + eix + " = (" + einame + ") " + 
-                                eis + ".get(" + 
+        res = res + 
+          ModelElement.tab(index) + 
+          "for (int " + indexe + " = 0; " + indexe + " < " + 
+                eis + ".size(); " + indexe + "++)\n" + 
+          ModelElement.tab(index) + 
+          "{ " + einame + " " + eix + " = (" + einame + ") " + 
+                         eis + ".get(" + 
                          indexe + ");\n"; 
       // env.put(einame,eix);
         System.out.println(">> Iterating over " + eix + " : " + einame); 
@@ -2769,11 +2785,12 @@ public Constraint generalType0inverse()
       String indexe = einame.toLowerCase() + "_index";
       String eix = einame.toLowerCase() + "x";   
       String eis = einame.toLowerCase() + "s";   
-      res = res + ModelElement.tab(index) + 
-                         "for (int " + indexe + " = 0; " + indexe + " < " + 
-                         eis + ".size(); " + indexe + "++)\n" + 
-            ModelElement.tab(index) + 
-                         "{ " + einame + " " + eix + " = (" + einame + ") " + 
+      res = res + 
+        ModelElement.tab(index) + 
+        "for (int " + indexe + " = 0; " + indexe + " < " + 
+              eis + ".size(); " + indexe + "++)\n" + 
+        ModelElement.tab(index) + 
+        "{ " + einame + " " + eix + " = (" + einame + ") " + 
                                 eis + ".get(" + 
                          indexe + ");\n"; 
       env.put(einame,eix); 
@@ -2784,14 +2801,21 @@ public Constraint generalType0inverse()
 
     res = res + 
           Association.genEventCodeJava6(rels,env,fullcond,index,succ,local); 
+
     for (int i = 0; i < needed.size(); i++)
     { res = res + ModelElement.tab(index) + "}\n"; 
       index--; 
     } 
+
     for (int i = 0; i < variables.size(); i++)
-    { res = res + ModelElement.tab(index) + "}\n"; 
-      index--; 
+    { Attribute var = (Attribute) variables.get(i);
+      Type vtype = var.getType(); 
+      if (vtype != null && vtype.isEntity())
+      { res = res + ModelElement.tab(index) + "}\n"; 
+        index--;
+      }  
     } 
+
     return res; 
   }
 
@@ -2851,18 +2875,19 @@ public Constraint generalType0inverse()
         String indexe = var.getName() + "_index";
         String eix = var.getName();   
         String eis = einame.toLowerCase() + "s";   
-        res = res + ModelElement.tab(index) + 
-                "for (int " + indexe + " = 0; " + indexe + " < " + 
+        res = res + 
+          ModelElement.tab(index) + 
+          "for (int " + indexe + " = 0; " + indexe + " < " + 
                 eis + ".size(); " + indexe + "++)\n" + 
-            ModelElement.tab(index) + 
-                "{ " + einame + " " + eix + " = (" + einame + ") " + 
+          ModelElement.tab(index) + 
+          "{ " + einame + " " + eix + " = (" + einame + ") " + 
                 eis + ".get(" + indexe + ");\n";
  
       // env.put(einame,eix);
         System.out.println(">> Iterating over " + eix + " : " + einame); 
         Expression fullcond3 = 
           Expression.removeTypePredicate(fullcond,eix,einame); 
-        System.out.println(fullcond3); // type check it
+        // System.out.println(fullcond3); // type check it
         fullcond = fullcond3.simplify(); 
         needed.remove(var.getType().getEntity());  
         index++;
@@ -2875,11 +2900,12 @@ public Constraint generalType0inverse()
       String indexe = einame.toLowerCase() + "_index";
       String eix = einame.toLowerCase() + "x";   
       String eis = einame.toLowerCase() + "s";   
-      res = res + ModelElement.tab(index) + 
-                         "for (int " + indexe + " = 0; " + indexe + " < " + 
-                         eis + ".size(); " + indexe + "++)\n" + 
-            ModelElement.tab(index) + 
-                         "{ " + einame + " " + eix + " = (" + einame + ") " + 
+      res = res + 
+        ModelElement.tab(index) + 
+        "for (int " + indexe + " = 0; " + indexe + " < " + 
+                   eis + ".size(); " + indexe + "++)\n" + 
+        ModelElement.tab(index) + 
+        "{ " + einame + " " + eix + " = (" + einame + ") " + 
                                 eis + ".get(" + 
                          indexe + ");\n"; 
       env.put(einame,eix); 
@@ -2888,16 +2914,24 @@ public Constraint generalType0inverse()
     // System.out.println(fullcond); // type check it
     // Expression fullcond2 = fullcond.simplify(); 
 
-    res = res + 
-          Association.genEventCodeJava7(rels,env,fullcond,index,succ,local); 
+    res = 
+      res + 
+       Association.genEventCodeJava7(rels,env,fullcond,
+                                     index,succ,local); 
     for (int i = 0; i < needed.size(); i++)
     { res = res + ModelElement.tab(index) + "}\n"; 
       index--; 
     } 
+
     for (int i = 0; i < variables.size(); i++)
-    { res = res + ModelElement.tab(index) + "}\n"; 
-      index--; 
+    { Attribute var = (Attribute) variables.get(i); 
+      Type vtype = var.getType(); 
+      if (vtype != null && vtype.isEntity())
+      { res = res + ModelElement.tab(index) + "}\n"; 
+        index--;
+      }  
     } 
+
     return res; 
   }
 
@@ -2946,7 +2980,7 @@ public Constraint generalType0inverse()
     Expression fullcond = Expression.simplify("&",cond0,cond,new Vector()); 
     int index = 2; 
 
-    System.out.println("Variables are: " + variables);     
+    System.out.println(">> Constraint variables are: " + variables);     
 
     String res = ""; 
     for (int i = 0; i < variables.size(); i++)
@@ -2957,17 +2991,18 @@ public Constraint generalType0inverse()
         String indexe = var.getName() + "_index";
         String eix = var.getName();   
         String eis = einame.toLowerCase() + "_s";   
-        res = res + ModelElement.tab(index) + 
-                         "for (int " + indexe + " = 0; " + indexe + " < " + 
+        res = res + 
+          ModelElement.tab(index) + 
+          "for (int " + indexe + " = 0; " + indexe + " < " + 
                          eis + ".Count; " + indexe + "++)\n" + 
-            ModelElement.tab(index) + 
-                         "{ " + einame + " " + eix + " = (" + einame + ") " + 
+          ModelElement.tab(index) + 
+          "{ " + einame + " " + eix + " = (" + einame + ") " + 
                                 eis + "[" + indexe + "];\n"; 
       // env.put(einame,eix);
       // System.out.println("Iterating over " + eix + " : " + einame); 
         Expression fullcond3 = 
           Expression.removeTypePredicate(fullcond,eix,einame); 
-        System.out.println(fullcond3); // type check it
+        // System.out.println(fullcond3); // type check it
         fullcond = fullcond3.simplify(); 
         needed.remove(var.getType().getEntity());  
         index++;
@@ -2981,10 +3016,10 @@ public Constraint generalType0inverse()
       String eix = einame.toLowerCase() + "x";   
       String eis = einame.toLowerCase() + "s";   
       res = res + ModelElement.tab(index) + 
-                         "for (int " + indexe + " = 0; " + indexe + " < " + 
+            "for (int " + indexe + " = 0; " + indexe + " < " + 
                          eis + ".Count; " + indexe + "++)\n" + 
             ModelElement.tab(index) + 
-                         "{ " + einame + " " + eix + " = (" + einame + ") " + 
+            "{ " + einame + " " + eix + " = (" + einame + ") " + 
                                 eis + "[" + indexe + "];\n"; 
       env.put(einame,eix); 
       index++; 
@@ -2993,15 +3028,23 @@ public Constraint generalType0inverse()
     // Expression fullcond2 = fullcond.simplify(); 
 
     res = res + 
-          Association.genEventCodeCSharp(rels,env,fullcond,index,succ,local); 
+          Association.genEventCodeCSharp(rels,env,fullcond,
+                                         index,succ,local); 
+
     for (int i = 0; i < needed.size(); i++)
     { res = res + ModelElement.tab(index) + "}\n"; 
       index--; 
     } 
+
     for (int i = 0; i < variables.size(); i++)
-    { res = res + ModelElement.tab(index) + "}\n"; 
-      index--; 
+    { Attribute var = (Attribute) variables.get(i);
+      Type vtype = var.getType(); 
+      if (vtype != null && vtype.isEntity())
+      { res = res + ModelElement.tab(index) + "}\n"; 
+        index--;
+      }  
     } 
+
     return res; 
   }
 
@@ -3050,7 +3093,7 @@ public Constraint generalType0inverse()
     Expression fullcond = Expression.simplify("&",cond0,cond,new Vector()); 
     int index = 2; 
 
-    System.out.println("Variables are: " + variables);     
+    System.out.println(">> Constraint variables are: " + variables);     
 
     String res = ""; 
     for (int i = 0; i < variables.size(); i++)
@@ -3064,16 +3107,16 @@ public Constraint generalType0inverse()
         String esx = "_" + einame.toLowerCase() + "s"; 
    
         res = res + ModelElement.tab(index) + 
-                         "vector<" + einame + "*>* " + esx + " = " + eis + ";\n" + 
-                         "for (int " + indexe + " = 0; " + indexe + " < " + 
-                         eis + "->size(); " + indexe + "++)\n" + 
-            ModelElement.tab(index) + 
-                         "{ " + einame + "* " + eix + " = (*" + esx + ")[" + indexe + "];\n"; 
+          "vector<" + einame + "*>* " + esx + " = " + eis + ";\n" + 
+          "for (int " + indexe + " = 0; " + indexe + " < " + 
+                  eis + "->size(); " + indexe + "++)\n" + 
+          ModelElement.tab(index) + 
+          "{ " + einame + "* " + eix + " = (*" + esx + ")[" + indexe + "];\n"; 
       // env.put(einame,eix);
       // System.out.println("Iterating over " + eix + " : " + einame); 
         Expression fullcond3 = 
           Expression.removeTypePredicate(fullcond,eix,einame); 
-        System.out.println(fullcond3); // type check it
+        // System.out.println(fullcond3); // type check it
         fullcond = fullcond3.simplify(); 
         needed.remove(var.getType().getEntity());  
         index++; 
@@ -3106,10 +3149,16 @@ public Constraint generalType0inverse()
     { res = res + ModelElement.tab(index) + "}\n"; 
       index--; 
     } 
+
     for (int i = 0; i < variables.size(); i++)
-    { res = res + ModelElement.tab(index) + "}\n"; 
-      index--; 
+    { Attribute var = (Attribute) variables.get(i);
+      Type vtype = var.getType(); 
+      if (vtype != null && vtype.isEntity())
+      { res = res + ModelElement.tab(index) + "}\n"; 
+        index--;
+      }  
     } 
+
     return res; 
   }
 
@@ -3859,6 +3908,7 @@ public Constraint generalType0inverse()
                       BehaviouralFeature ev)
   { // returns null if opfeature(oo,val) does not
     // affect constraint, otherwise returns action cons.
+
     if (!behavioural)
     { return null; }  // generate a precondition instead
     if (succ == null) { return null; }
@@ -3866,7 +3916,7 @@ public Constraint generalType0inverse()
     Expression cond1 = Expression.simplify("&",cond0,cond,new Vector());
         
     if (event != null)
-    { System.out.println("Trying Match: " + op + feature + 
+    { System.out.println(">> Trying Match: " + op + feature + 
                          " with " + this); 
       if (event.getName().equals(op + feature))
       { Constraint cc = new Constraint(ev,cond1,succ,associations,baseEntities);
@@ -3880,7 +3930,7 @@ public Constraint generalType0inverse()
     // set its type
 
     Vector rdf = readFrame(); 
-    System.out.println("READ frame: " + rdf + " " + feature); 
+    System.out.println(">> READ frame of constraint " + this + " = " + rdf + " TESTING wrt feature: " + feature); 
 
     if (rdf.contains(ent + "::" + feature))
     { if (op.equals("add") && (succ instanceof BinaryExpression))
@@ -3910,7 +3960,7 @@ public Constraint generalType0inverse()
         else 
         { return this; } 
       } 
-      else 
+      else // Any other constraint with feature : rdf
       { return this; } 
     } 
 

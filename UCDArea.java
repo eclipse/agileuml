@@ -9697,10 +9697,39 @@ public void produceCUI(PrintWriter out)
       } 
     }
 
+  /* Adapt libraries to the actual target package *****
+
+    Entity mathlib = 
+      (Entity) ModelElement.lookupByName("MathLib", entities); 
+    if (mathlib != null) 
+    { BSystemTypes.generateLibraryJava7("MathLib",out); }
+
+    Entity ocldate = 
+      (Entity) ModelElement.lookupByName("OclDate", entities); 
+    if (ocldate != null) 
+    { BSystemTypes.generateLibraryJava7("OclDate",out); }
+
+    Entity oclrandom = 
+      (Entity) ModelElement.lookupByName("OclRandom", entities); 
+    if (oclrandom != null) 
+    { BSystemTypes.generateLibraryJava7("OclRandom",out); }
+
+    Entity oclfile = 
+      (Entity) ModelElement.lookupByName("OclFile", entities); 
+    if (oclfile != null) 
+    { BSystemTypes.generateLibraryJava7("OclFile",out); }
+
+    Entity oclprocess = 
+      (Entity) ModelElement.lookupByName("OclProcess", entities); 
+    if (oclprocess != null) 
+    { BSystemTypes.generateLibraryJava7("OclProcess",out); } */ 
+
+
     generateControllerJava7(mainOp,out);
 
     generateSystemTypesJava7(out2); 
 
+    /* ****SHOULD BE Java7 here: */ 
     String gui = GUIBuilder.buildUCGUIJava6(useCases,"",false); 
     File guifile = new File(dirName + "/GUI.java");
     try
@@ -9714,7 +9743,8 @@ public void produceCUI(PrintWriter out)
     }
     catch (Exception ex) { }
 
-    String testcode = GUIBuilder.buildTestsGUIJava6(useCases,"",false,types,entities); 
+    String testcode = GUIBuilder.buildTestsGUIJava6(
+                           useCases,"",false,types,entities); 
     File testsguifile = new File(dirName + "/TestsGUI.java");
     try
     { PrintWriter testsout = new PrintWriter(
@@ -12206,14 +12236,20 @@ public void produceCUI(PrintWriter out)
   public String getCheckCompletenessOp()
   { String res = "  public void checkCompleteness()\n";
     res =  res + "  { ";  
+
     for (int i = 0; i < entities.size(); i++)
     { Entity e = (Entity) entities.get(i);
-      res = res + e.checkCompletenessOp();
+      if (e.isComponent() || e.isExternal() || 
+          e.isDerived()) { } 
+      else 
+      { res = res + e.checkCompletenessOp(); }
     }
+
     for (int i = 0; i < associations.size(); i++)
     { Association a = (Association) associations.get(i);
       res = res + a.checkCompletenessOp();
     }
+
     return res + "  }\n\n";
   }
 

@@ -96,13 +96,13 @@ public class KM3Editor extends JFrame implements DocumentListener
         } 
 	   else 
 	   {
-          System.err.println("Error: invalid document");
+          System.err.println("Error!!: invalid document");
         }
         
         JScrollPane scrollPane = new JScrollPane(textPane);
-        scrollPane.setPreferredSize(new Dimension(150, 300));
+        scrollPane.setPreferredSize(new Dimension(150, 250));
 
-        messageArea = new JTextArea(15, 45);
+        messageArea = new JTextArea(20, 50);
         messageArea.setEditable(false);
         JScrollPane scrollPaneForLog = new JScrollPane(messageArea);
 
@@ -110,11 +110,12 @@ public class KM3Editor extends JFrame implements DocumentListener
                        JSplitPane.VERTICAL_SPLIT,
                        scrollPane, scrollPaneForLog);
         splitPane.setOneTouchExpandable(true);
+        splitPane.setDividerLocation(300); 
 
-        JPanel statusPane = new JPanel(new GridLayout(2, 1));
+        // JPanel statusPane = new JPanel(new GridLayout(2, 1));
 
         getContentPane().add(splitPane, BorderLayout.CENTER);
-        getContentPane().add(statusPane, BorderLayout.EAST);
+        // getContentPane().add(statusPane, BorderLayout.EAST);
         thisLabel = 
           new JLabel("Type & click within the framed area.");
         getContentPane().add(thisLabel, java.awt.BorderLayout.SOUTH); 
@@ -555,7 +556,7 @@ public class KM3Editor extends JFrame implements DocumentListener
           textPane.setSelectedTextColor(Color.green);  
         } 
         else 
-        { System.out.println("SYNTAX errors in classifier!"); 
+        { System.out.println("!! SYNTAX errors in classifier!"); 
           textPane.setSelectedTextColor(Color.red);
           for (int i = 0; i < errors.size(); i++) 
           { Vector err = (Vector) errors.get(i); 

@@ -4333,6 +4333,8 @@ class CreationStatement extends Statement
     { return "  Object " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclType"))
     { return "  Class " + assignsTo + ";"; }
+    else if (createsInstanceOf.equals("OclDate"))
+    { return "  Date " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclRandom"))
     { return "  OclRandom " + assignsTo + ";"; }
     else if (Type.isOclLibraryType(createsInstanceOf))
@@ -4383,9 +4385,11 @@ class CreationStatement extends Statement
         }
       }  
     } 
-    else if (createsInstanceOf.equals("boolean") || createsInstanceOf.equals("int") ||
+    else if (createsInstanceOf.equals("boolean") || 
+        createsInstanceOf.equals("int") ||
         createsInstanceOf.equals("long") || 
-        createsInstanceOf.equals("String") || createsInstanceOf.equals("double"))
+        createsInstanceOf.equals("String") || 
+        createsInstanceOf.equals("double"))
     { return "  " + createsInstanceOf + " " + assignsTo + ";"; } 
 
     if (createsInstanceOf.startsWith("Set"))
@@ -4402,6 +4406,8 @@ class CreationStatement extends Statement
     { return "  Object " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclType"))
     { return "  Class " + assignsTo + ";"; }
+    else if (createsInstanceOf.equals("OclDate"))
+    { return "  Date " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclRandom"))
     { return "  OclRandom " + assignsTo + ";"; }
     else if (Type.isOclLibraryType(createsInstanceOf))
@@ -4454,9 +4460,11 @@ class CreationStatement extends Statement
         }
       }  
     } 
-    else if (createsInstanceOf.equals("boolean") || createsInstanceOf.equals("int") ||
+    else if (createsInstanceOf.equals("boolean") || 
+        createsInstanceOf.equals("int") ||
         createsInstanceOf.equals("long") || 
-        createsInstanceOf.equals("String") || createsInstanceOf.equals("double"))
+        createsInstanceOf.equals("String") || 
+        createsInstanceOf.equals("double"))
     { return "  " + createsInstanceOf + " " + assignsTo + ";"; } 
 
     if (createsInstanceOf.startsWith("Set"))
@@ -4473,6 +4481,8 @@ class CreationStatement extends Statement
     { return "  Object " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclType"))
     { return "  Class " + assignsTo + ";"; }
+    else if (createsInstanceOf.equals("OclDate"))
+    { return "  Date " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclRandom"))
     { return "  OclRandom " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclIterator"))

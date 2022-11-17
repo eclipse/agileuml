@@ -186,9 +186,10 @@ public class CGCondition
       if (varValue != null) 
       { stereo = stereo.replace(rvar,varValue); 
 
-        JOptionPane.showMessageDialog(null, 
+        /* JOptionPane.showMessageDialog(null, 
           "Global variable " + rvar + " value is " + stereo,   "",
-          JOptionPane.INFORMATION_MESSAGE);
+          JOptionPane.INFORMATION_MESSAGE); */ 
+
         System.out.println(">--> Replacing global variable " + rvar + " by " + varValue); 
       }
     } 

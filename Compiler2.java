@@ -5622,6 +5622,35 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       return "identity"; 
     } 
 
+    if ("subrange".startsWith(st)) 
+    { mess[0] = "subrange operator on sequences and strings\n"  + 
+           "ss.subrange(i,j) is subrange of ss starting at position i\n" + 
+           "and ending at position j. Positions start at 1\n"; 
+      return "subrange"; 
+    } 
+
+    if ("insert".startsWith(st)) 
+    { mess[0] = "insertAt/insertInto operators on sequences and strings\n"  + 
+           "ss.insertAt(i,x) is ss with x inserted at position i as an element\n" + 
+           "ss.insertInto(i,x) is ss with x inserted starting at position i as a subrange\n" + 
+           "Positions start at 1, end at ss->size().\n"; 
+      return "insertAt or insertInto"; 
+    } 
+
+    if ("replace".startsWith(st)) 
+    { mess[0] = "replace/replaceFirstMatch/replaceAll/replaceAllMatches operators on strings\n"  + 
+           "ss.replace(s1,s2) is ss with each literal substring s1 replaced by s2\n" + 
+           "ss.replaceAllMatches(regexp,s) is ss with any match of regexp replaced by s\n" + 
+           "ss.replaceFirstMatch(regexp,s) is ss with the first match of regexp replaced by s\n"; 
+      return "replace; replaceAllMatches; replaceFirstMatch"; 
+    } 
+
+    if ("setAt".startsWith(st)) 
+    { mess[0] = "setAt operator on sequences and strings\n"  + 
+           "ss.setAt(i,x) is ss with position i set to x\n" + 
+           "Positions start at 1, end at ss->size().\n"; 
+      return "setAt"; 
+    } 
 
     return null; 
   } 

@@ -49,6 +49,11 @@ public class ASTBasicTerm extends ASTTerm
       String vsub = vtrim.replace("-", "_"); 
       return new ASTBasicTerm(tag,vsub);
     } 
+    if (tag.equals("numericLiteral"))
+    { String vtrim = value.trim(); 
+      String vsub = vtrim.replace(",", "."); 
+      return new ASTBasicTerm(tag,vsub);
+    } 
     return this; 
   }  
         
@@ -2664,7 +2669,8 @@ public class ASTBasicTerm extends ASTTerm
   { ASTBasicTerm tt = new ASTBasicTerm("primaryExpression", "'a'"); 
     System.out.println(tt.isCharacter()); 
 
-    ASTBasicTerm ttrr = new ASTBasicTerm("cobolWord", "PAY-CHECKS-MAY"); 
+    ASTBasicTerm ttrr = new ASTBasicTerm("numericLiteral", "0,552"); 
+    // "PAY-CHECKS-MAY"); 
     ASTTerm ttx = ttrr.replaceCobolIdentifiers(); 
     System.out.println(ttx); 
   } 

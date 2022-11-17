@@ -9822,26 +9822,41 @@ public class BSystemTypes extends BComponent
 
   public static String generateIsIntegerOp()
   { String res = " public static boolean isInteger(String str)\n" + 
-      "  { try { Integer.parseInt(str); return true; }\n" + 
+      "  { try { Integer.parseInt(str.trim()); return true; }\n" + 
       "    catch (Exception _e) { return false; }\n" + 
+      "  }\n\n"; 
+    res = res + " public static int toInt(String str)\n" + 
+      "  { try { int x = Integer.parseInt(str.trim());\n" + 
+      "          return x; }\n" + 
+      "    catch (Exception _e) { return 0; }\n" + 
       "  }\n"; 
     return res; 
   } 
 
   public static String generateIsLongOp()
   { String res = " public static boolean isLong(String str)\n" + 
-      "  { try { Long.parseLong(str); return true; }\n" + 
+      "  { try { Long.parseLong(str.trim()); return true; }\n" + 
       "    catch (Exception _e) { return false; }\n" + 
+      "  }\n\n"; 
+    res = res + " public static long toLong(String str)\n" + 
+      "  { try { long x = Long.parseLong(str.trim());\n" + 
+      "          return x; }\n" + 
+      "    catch (Exception _e) { return 0; }\n" + 
       "  }\n"; 
     return res; 
   } 
 
   public static String generateIsRealOp()
   { String res = " public static boolean isReal(String str)\n" + 
-      "  { try { double d = Double.parseDouble(str); \n" + 
+      "  { try { double d = Double.parseDouble(str.trim()); \n" + 
       "          if (Double.isNaN(d)) { return false; }\n" + 
       "          return true; }\n" + 
       "    catch (Exception _e) { return false; }\n" + 
+      "  }\n\n"; 
+    res = res + " public static double toDouble(String str)\n" + 
+      "  { try { double x = Double.parseDouble(str.trim());\n" + 
+      "          return x; }\n" + 
+      "    catch (Exception _e) { return 0; }\n" + 
       "  }\n"; 
     return res; 
   } 
@@ -10423,7 +10438,34 @@ public class BSystemTypes extends BComponent
       br.close();  
     } 
     catch (IOException _ex)
-    { System.err.println("!! ERROR: libraries/" + lib + ".cpp not found"); }
+    { System.err.println("!! ERROR: libraries/" + lib + ".cs not found"); }
+  } 
+
+  public static void generateLibraryJava7(String lib, 
+                                 PrintWriter out)
+  { // retrieve library code from libraries/lib.java & print 
+    // to out. 
+
+    try
+    { File libCPP = new File("libraries/" + lib + ".java"); 
+      BufferedReader br = null;
+      String sline = null;
+      boolean eof = false; 
+      br = new BufferedReader(new FileReader(libCPP));
+      out.println(); 
+ 
+      while (!eof)
+      { sline = br.readLine();
+        if (sline == null) 
+        { eof = true; } 
+        else 
+        { out.println(sline); }
+      } 
+      out.println(); 
+      br.close();  
+    } 
+    catch (IOException _ex)
+    { System.err.println("!! ERROR: libraries/" + lib + ".java not found"); }
   } 
 
   public static void generateLibraryCPP(String lib, 

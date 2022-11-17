@@ -1694,7 +1694,7 @@ public class Attribute extends ModelElement
   { if (type == null) 
     { return; } 
 	
-	out.print("  public ");
+    out.print("  public ");
     
     if (!instanceScope) { out.print("static "); } 
     if (isFinal()) { out.print("const "); } 
@@ -2194,6 +2194,7 @@ public class Attribute extends ModelElement
       { Vector contx = new Vector(); 
         if (cnew.getOwner() != null) 
         { contx.add(cnew.getOwner()); } 
+        contx.addAll(contexts); // Must be done? 
         boolean typed = cnew.typeCheck(types,entities,contx); 
         if (typed)
         { String update = cnew.updateOperation(ent,nme,true);  
@@ -2343,12 +2344,13 @@ public class Attribute extends ModelElement
     { Constraint cc = (Constraint) cons.get(j);
       Constraint cnew = cc.matches("set",nme,ent,val,event);
       // must type check new constraint. 
-      System.out.println(">> Match set of " + cc + " is: " + cnew);
+      System.out.println(">> Constraint actions for set" + nme + " are: " + cnew);
        
       if (cnew != null)
       { Vector contx = new Vector(); 
         if (cnew.getOwner() != null) 
         { contx.add(cnew.getOwner()); } 
+        contx.addAll(contexts); // Must be done? 
         boolean typed = cnew.typeCheck(types,entities,contx); 
         if (typed)
         { String update = cnew.updateOperationJava6(ent,nme,true);  
@@ -2373,7 +2375,7 @@ public class Attribute extends ModelElement
     if (frozen) { return ""; }
     String nme = getName();
     if (type == null || ent == null || entity == null) // error
-    { System.err.println("ERROR: null type or entity in attribute " + nme); 
+    { System.err.println("!! ERROR: null type or entity in attribute " + nme); 
       return ""; 
     } 
     
@@ -2440,7 +2442,7 @@ public class Attribute extends ModelElement
     if (frozen) { return ""; }
     String nme = getName();
     if (type == null || ent == null || entity == null) // error
-    { System.err.println("ERROR: null type or entity in attribute " + nme); 
+    { System.err.println("!! ERROR: null type or entity in attribute " + nme); 
       return ""; 
     } 
     
@@ -2564,15 +2566,17 @@ public class Attribute extends ModelElement
     { Constraint cc = (Constraint) cons.get(j);
       Constraint cnew = cc.matches("set",nme,ent,val,event);
       // must type check new constraint. 
-      System.out.println(">> Match set of " + cc + " is: " + cnew);
+      System.out.println(">> Constraint " + cc + " action for set" + nme + " is: " + cnew);
        
       if (cnew != null)
       { Vector contx = new Vector(); 
         if (cnew.getOwner() != null) 
-        { contx.add(cnew.getOwner()); } 
+        { contx.add(cnew.getOwner()); }
+        contx.addAll(contexts);  
         boolean typed = cnew.typeCheck(types,entities,contx); 
         if (typed)
-        { String update = cnew.updateOperationJava7(ent,nme,true);  
+        { String update = 
+               cnew.updateOperationJava7(ent,nme,true);  
           opheader = opheader + "\n" + 
                      update + "\n";
         } 
@@ -2582,6 +2586,7 @@ public class Attribute extends ModelElement
         System.out.println(">> Possible precond for set" + nme + ": " + cpre); 
       }
     }
+
     return opheader + "  }\n"; 
   }  // actuators -- include a message?  Should not be local?
 
@@ -2716,6 +2721,7 @@ public class Attribute extends ModelElement
       { Vector contx = new Vector(); 
         if (cnew.getOwner() != null) 
         { contx.add(cnew.getOwner()); } 
+        contx.addAll(contexts); // Must be done? 
         boolean typed = cnew.typeCheck(types,entities,contx); 
         if (typed)
         { String update = cnew.updateOperationCSharp(ent,nme,true);  
@@ -2854,6 +2860,7 @@ public class Attribute extends ModelElement
       { Vector contx = new Vector(); 
         if (cnew.getOwner() != null) 
         { contx.add(cnew.getOwner()); } 
+        contx.addAll(contexts); // Must be done? 
         boolean typed = cnew.typeCheck(types,entities,contx); 
         if (typed)
         { String update = cnew.updateOperationCPP(ent,nme,true);    

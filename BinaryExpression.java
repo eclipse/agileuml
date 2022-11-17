@@ -4493,7 +4493,8 @@ public void findClones(java.util.Map clones, String rule, String op)
       type.setElementType(newleftET); 
     } 
     else if (operator.equals("->union") || 
-             operator.equals("^") || "->concatenate".equals(operator))
+             operator.equals("^") || 
+             "->concatenate".equals(operator))
     { Type newleftET = Type.refineType(etleft,etright); 
       System.out.println(">> Deduced element type of " + this + " = " + newleftET); 
       elementType = newleftET; 
@@ -5086,7 +5087,8 @@ public boolean conflictsWithIn(String op, Expression el,
     } 
 
     if (operator.equals("->at"))
-    { if (left.type != null && "String".equals(left.type.getName()))
+    { if (left.type != null && 
+          "String".equals(left.type.getName()))
       { return "(" + lqf + ".charAt(" + rqf + " - 1) + \"\")"; }  // and for Java6, 7, etc. 
 
       if (left.type == null) 
@@ -12473,7 +12475,7 @@ public Statement statLC(java.util.Map env, boolean local)
     }
   }
 
-  return new InvocationStatement("/* No LC update form for : " + this + " */");
+  return new ImplicitInvocationStatement("/* No LC update form for : " + this + " */");
 }
 
 public Statement statLCExists(java.util.Map env, boolean local)
@@ -12805,6 +12807,38 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
 
     if (operator.equals("=") && left instanceof BasicExpression)
     { return new AssignStatement(left, right); }
+    else if (operator.equals("=") && left instanceof BinaryExpression)
+    { BinaryExpression leftbe = (BinaryExpression) left; 
+      if ("+".equals(leftbe.operator) && left.isString() && 
+          leftbe.left.isAssignable() && 
+          leftbe.right.isAssignable())
+      { UnaryExpression varsize = new UnaryExpression("->size",right); 
+        UnaryExpression leftsize = new UnaryExpression("->size",leftbe.left); 
+     
+        Vector spars1 = new Vector(); 
+        spars1.add(new BasicExpression(1)); 
+        spars1.add(leftsize); 
+
+        Vector spars2 = new Vector(); 
+        spars2.add(new BinaryExpression("+", leftsize,
+                           new BasicExpression(1))); 
+        spars2.add(varsize); 
+
+        Expression newright1 = 
+          BasicExpression.newFunctionBasicExpression(
+            "subrange",right,spars1); 
+        Statement assign1 = new AssignStatement(leftbe.left, newright1);
+        Expression newright2 = 
+           BasicExpression.newFunctionBasicExpression(
+             "subrange",right,spars2); 
+        Statement assign2 = new AssignStatement(leftbe.right, newright2);
+        SequenceStatement sstat = new SequenceStatement(); 
+        sstat.addStatement(assign1); 
+        sstat.addStatement(assign2); 
+        System.out.println("$$$ Design for " + this + " is " + sstat); 
+        return sstat;
+      }   
+    }
     else if (operator.equals("->includesAll") && left instanceof BasicExpression)
     { BasicExpression lbe = (BasicExpression) left;
       return lbe.generateDesignSubset(right);
@@ -12955,28 +12989,90 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
      return assign.updateForm(language, env, local);
    }
    else if ("+".equals(operator) && Type.isNumericType(type))
-   { // left = val - right
-     BinaryExpression newright = new BinaryExpression("-", var, right); 
-     BinaryExpression assign = new BinaryExpression("=", left, newright);
-     return assign.updateForm(language, env, local);
+   { // left = val - right if left is assignable
+     if (left.isAssignable())
+     { BinaryExpression newright = new BinaryExpression("-", var, right); 
+       BinaryExpression assign = new BinaryExpression("=", left, newright);
+       return assign.updateForm(language, env, local);
+     } 
+     else if (right.isAssignable())
+     { BinaryExpression newright = new BinaryExpression("-", var, left); 
+       BinaryExpression assign = new BinaryExpression("=", right, newright);
+       return assign.updateForm(language, env, local);
+     } 
+   }
+   else if ("+".equals(operator) && Type.isStringType(type))
+   { // left = val.subrange(1,left.size); 
+     // right = val.subrange(left.size+1);
+
+     UnaryExpression varsize = new UnaryExpression("->size",var); 
+     UnaryExpression leftsize = new UnaryExpression("->size",left); 
+     
+     // Expression test = 
+     //    new BinaryExpression(">",varsize,leftsize); 
+
+     Vector spars1 = new Vector(); 
+     spars1.add(new BasicExpression(1)); 
+     spars1.add(leftsize); 
+
+     Vector spars2 = new Vector(); 
+     spars2.add(new BinaryExpression("+", leftsize,
+                           new BasicExpression(1))); 
+     spars2.add(varsize); 
+
+     if (left.isAssignable() && right.isAssignable())
+     { Expression newright1 = 
+         BasicExpression.newFunctionBasicExpression(
+           "subrange",var,spars1); 
+       BinaryExpression assign1 = new BinaryExpression("=", left, newright1);
+       Expression newright2 = 
+         BasicExpression.newFunctionBasicExpression(
+           "subrange",var,spars2); 
+       BinaryExpression assign2 = new BinaryExpression("=", right, newright2);
+       String astat1 = assign1.updateForm(language, env, local);
+       String astat2 = assign2.updateForm(language, env, local);
+       return astat1 + " " + astat2; 
+     } 
    }
    else if ("-".equals(operator) && Type.isNumericType(type))
-   { // left = val + right
-     BinaryExpression newright = new BinaryExpression("+", var, right); 
-     BinaryExpression assign = new BinaryExpression("=", left, newright);
-     return assign.updateForm(language, env, local);
+   { // left = val + right if left is assignable
+     if (left.isAssignable())
+     { BinaryExpression newright = new BinaryExpression("+", var, right); 
+       BinaryExpression assign = new BinaryExpression("=", left, newright);
+       return assign.updateForm(language, env, local);
+     } 
+     else if (right.isAssignable())
+     { BinaryExpression newright = new BinaryExpression("-", left, var); 
+       BinaryExpression assign = new BinaryExpression("=", right, newright);
+       return assign.updateForm(language, env, local);
+     }
    }
    else if ("*".equals(operator) && Type.isNumericType(type))
    { // left = val / right
-     BinaryExpression newright = new BinaryExpression("/", var, right); 
-     BinaryExpression assign = new BinaryExpression("=", left, newright);
-     return assign.updateForm(language, env, local);
+     if (left.isAssignable())
+     { BinaryExpression newright = new BinaryExpression("/", var, right); 
+       BinaryExpression assign = new BinaryExpression("=", left, newright);
+       return assign.updateForm(language, env, local);
+     } 
+     else if (right.isAssignable())
+     { BinaryExpression newright = new BinaryExpression("/", var, left); 
+       BinaryExpression assign = new BinaryExpression("=", right, newright);
+       return assign.updateForm(language, env, local);
+     } 
    }
    else if ("/".equals(operator) && Type.isNumericType(type))
    { // left = val * right
-     BinaryExpression newright = new BinaryExpression("*", var, right); 
-     BinaryExpression assign = new BinaryExpression("=", left, newright);
-     return assign.updateForm(language, env, local);
+     if (left.isAssignable())
+     { BinaryExpression newright = new BinaryExpression("*", var, right); 
+       BinaryExpression assign = new BinaryExpression("=", left, newright);
+       return assign.updateForm(language, env, local);
+     } 
+     else if (right.isAssignable())
+     { BinaryExpression newright = new BinaryExpression("/", left, var); 
+       BinaryExpression assign = new BinaryExpression("=", right, newright);
+       return assign.updateForm(language, env, local);
+     } 
+
    }
 
    return "/* No update form for: " + this + " = " + var + " */\n"; 
@@ -17583,7 +17679,8 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   public Vector readFrame()
   { Vector res = new Vector(); 
     if (operator.equals("=") || operator.equals("->excludes") ||
-        operator.equals("->includes") || operator.equals("->excludesAll") ||
+        operator.equals("->includes") || 
+        operator.equals("->excludesAll") ||
         operator.equals("->includesAll"))
     { if (left instanceof BasicExpression) 
       { BasicExpression beleft = (BasicExpression) left; 

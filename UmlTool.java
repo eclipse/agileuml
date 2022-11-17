@@ -1838,7 +1838,7 @@ public void findPlugins()
           out2.close(); 
         }
         catch (IOException ex)
-        { System.out.println("Error generating C++"); }
+        { System.out.println("!! Error generating C++"); }
 
         new TextDisplay("C++ code","output/controller.h");
       } 
@@ -1857,7 +1857,7 @@ public void findPlugins()
           appthread.start(); 
         } 
         catch (Exception ee1) 
-        { System.err.println("Unable to run uml2Ca"); }     
+        { System.err.println("!! Unable to run uml2Ca"); }     
       } 
       else if (label.equals("Generate C code"))
       { RunApp rapp1 = new RunApp("uml2Cb"); 
@@ -1868,7 +1868,7 @@ public void findPlugins()
           appthread.start(); 
         } 
         catch (Exception ee2) 
-        { System.err.println("Unable to run uml2Cb"); } 
+        { System.err.println("!! Unable to run uml2Cb"); } 
 
         File file = new File("gui.c");
         try
@@ -1879,7 +1879,7 @@ public void findPlugins()
           out.close();
         }
         catch (IOException ex)
-        { System.out.println("Error generating C UI"); }
+        { System.out.println("!! Error generating C UI"); }
       }
       else if (label.equals("Use CSTL specification"))
       { ucdArea.applyCSTLSpecification(); } 
@@ -1899,7 +1899,7 @@ public void findPlugins()
           appthread.start(); 
         } 
         catch (Exception ee2) 
-        { System.err.println("Unable to run application"); } 
+        { System.err.println("!! Unable to run application"); } 
       }
       else if (label.equals("Generate Go"))
       { ucdArea.generateGo(); } 
@@ -1917,7 +1917,7 @@ public void findPlugins()
           out.close();
         }
         catch (IOException ex)
-        { System.out.println("Error generating SMV"); }
+        { System.out.println("!! Error generating SMV"); }
 
         new TextDisplay("SMV code","output/tmpsmv.txt");
       } 
@@ -2363,7 +2363,12 @@ public void findPlugins()
                   "   Activities should not be bracketed:\n" + 
                   "   activity: (x := x+1; y := x*y);\n" + 
                   "   should be:\n" + 
-                  "   activity: x := x+1; y := x*y;\n" + 
+                  "   activity: x := x+1; y := x*y;\n\n" + 
+                  "2c. Unable to parse expressions? \n" + 
+                  "   Object references should be bracketed:\n" + 
+                  "   arr[i].f\n" + 
+                  "   should be:\n" + 
+                  "   (arr[i]).f" + 
                   "\n\n" + 
 
                   "3. Code runs forever? \n" + 

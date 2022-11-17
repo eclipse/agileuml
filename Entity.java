@@ -7779,6 +7779,18 @@ public class Entity extends ModelElement implements Comparable
                             "  {\n"; 
     } 
 
+    java.util.Map env = new java.util.HashMap(); 
+    System.out.println(">>> Invariants of class " + name + 
+                       " are: " + invariants); 
+    System.out.println(); 
+    for (int i = 0; i < invariants.size(); i++) 
+    { Constraint cc = (Constraint) invariants.get(i);
+      Statement updf = cc.generateDesign(env,true); 
+      if (updf instanceof ImplicitInvocationStatement) { } 
+      else if (updf != null)  
+      { cc.setBehavioural(true); }  
+    } 
+
     for (int i = 0; i < attributes.size(); i++)
     { Attribute att = (Attribute) attributes.get(i);
       if (att.isFrozen()) { } 
@@ -7978,6 +7990,19 @@ public class Entity extends ModelElement implements Comparable
                             "  class " + getName() + "Ops\n" + 
                             "  {\n"; 
     } 
+
+    java.util.Map env = new java.util.HashMap(); 
+    System.out.println(">>> Invariants of class " + name + 
+                       " are: " + invariants); 
+    System.out.println(); 
+    for (int i = 0; i < invariants.size(); i++) 
+    { Constraint cc = (Constraint) invariants.get(i);
+      Statement updf = cc.generateDesign(env,true); 
+      if (updf instanceof ImplicitInvocationStatement) { } 
+      else if (updf != null)  
+      { cc.setBehavioural(true); }  
+    } 
+
 
     for (int i = 0; i < attributes.size(); i++)
     { Attribute att = (Attribute) attributes.get(i);
