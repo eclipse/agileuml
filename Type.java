@@ -2980,6 +2980,9 @@ public class Type extends ModelElement
   public void generateJava7(PrintWriter out, Type elemType)
   { out.print(getJava7(elemType) + " "); }
 
+  public void generateJava7(PrintWriter out)
+  { out.print(getJava7() + " "); }
+
   public void generateCSharp(PrintWriter out)
   { out.print(getCSharp() + " "); }
 

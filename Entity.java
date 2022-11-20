@@ -8021,11 +8021,19 @@ public class Entity extends ModelElement implements Comparable
           if (par != null) 
           { out.println("  " + par + "\n"); }
         } 
+        else if (att.isMap())
+        { String par1 = 
+            att.setMapIndexOperationJava7(this, invariants, entities, types);
+          if (par1 != null) 
+          { out.println("  " + par1 + "\n"); }
+        } 
 
         if (isInterface())
-        { par = "";  // att.setAllInterfaceOperation(getName()); }
-          interfaceinnerclass = interfaceinnerclass + "  " + 
-                                att.setAllOperationJava7(getName()) + "\n\n"; 
+        { par = "";  
+          // att.setAllInterfaceOperation(getName()); }
+          interfaceinnerclass = 
+            interfaceinnerclass + "  " + 
+            att.setAllOperationJava7(getName()) + "\n\n"; 
         } 
         else 
         { par = att.setAllOperationJava7(getName()); } 
@@ -8628,7 +8636,7 @@ public class Entity extends ModelElement implements Comparable
       if (att.isFrozen()) { }  // why externalise this?
       else 
       { res.addAll(att.senOperationsCodeJava7(cons, this, entities, types)); 
-        if (att.isMultiple())
+        if (att.isMultiple()) // sequences, sets, not maps
         { res.addAll(att.addremOperationsCodeJava7(this)); } 
       } 
     }
@@ -14741,6 +14749,7 @@ public void iosDbiOperations(PrintWriter out)
 
     for (int j = 0; j < allAttributes.size(); j++)
     { Attribute att = (Attribute) allAttributes.get(j);
+      if (att.isMap()) { continue; } 
       if (att.isMultiple()) 
       { String attname = att.getName(); 
         String r = ename.toLowerCase() + "_" + attname;
@@ -14800,6 +14809,7 @@ public void iosDbiOperations(PrintWriter out)
     for (int j = 0; j < allAttributes.size(); j++)
     { Attribute att = (Attribute) allAttributes.get(j);
       if (att.isMultiple() || att.isStatic() || 
+          att.isMap() || 
           att.isReferenceType()) 
       { continue; } 
       String attname = att.getName();
@@ -14836,7 +14846,7 @@ public void iosDbiOperations(PrintWriter out)
 
     for (int j = 0; j < allAttributes.size(); j++)
     { Attribute att = (Attribute) allAttributes.get(j);
-      if (att.isMultiple()) 
+      if (att.isMultiple() || att.isMap()) 
       { continue; } 
       String attname = att.getName();
       Type attt = att.getType(); 

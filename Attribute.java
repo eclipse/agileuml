@@ -315,11 +315,14 @@ public class Attribute extends ModelElement
       { cntx.add(entity); } 
       Vector env = new Vector(); 
       initialExpression.typeCheck(types,entities,cntx,env); 
+      System.out.println(">> Type of attribute: " + name + " is " + type + "(" + elementType + ")");
       if (type == null) 
       { type = initialExpression.type; 
-        elementType = initialExpression.elementType;  
+        elementType = initialExpression.elementType;
+        type.elementType = elementType;   
       } 
-      System.out.println(">> Type of " + initialExpression + " is " + type + "(" + elementType + ")");
+      System.out.println(">> Type of initialiser: " + initialExpression + " is " + type + "(" + elementType + ")");
+      return true; 
     } 
 
     if (type == null) 
@@ -331,13 +334,35 @@ public class Attribute extends ModelElement
     Type t = Type.getTypeFor(tname, types, entities); 
     if (t == null) 
     { System.err.println("!! Warning: null type for attribute " + name); 
-      type = new Type("OclAny", null); 
+      // type = new Type("OclAny", null); 
       return true; 
     } 
+
     type = t; 
+
+    Type et = elementType; 
+    if (elementType != null) 
+    { String etname = elementType + ""; 
+      et = Type.getTypeFor(etname, types, entities); 
+      if (et == null) 
+      { System.err.println("!! Warning: null element type for attribute " + name); 
+        et = elementType; 
+        type.elementType = elementType; 
+      } 
+      else 
+      { elementType = et; 
+        type.elementType = et; 
+      }  
+    } 
+
+    System.out.println(">> Updated type of attribute: " + name + " is " + type + "(" + elementType + ")");
+
     if (initialExpression != null && 
         initialExpression.type == null) 
-    { initialExpression.type = type; } 
+    { initialExpression.type = type; 
+      initialExpression.elementType = et; 
+    } 
+
     return true; 
   } 
 
@@ -468,6 +493,9 @@ public class Attribute extends ModelElement
 
   public boolean isSequence()
   { return type != null && type.isSequenceType(); } 
+
+  public boolean isMap()
+  { return type != null && type.isMapType(); } 
 
   public boolean isTree()
   { return type != null && "OclAny".equals(type.getName()); } 
@@ -1565,7 +1593,8 @@ public class Attribute extends ModelElement
 
   public String methodDeclarationJava7()
   { String res = ""; 
-    res = "    " + getType().getJava7(elementType) + " " + getName(); 
+    res = "    " + getType().getJava7() + " " + getName(); 
+                   // getJava7(elementType)
     Expression initval = initialExpression; 
     if (initval != null) 
     { res = res + " = " + initval.queryFormJava7(new java.util.HashMap(), true); } 
@@ -1615,7 +1644,7 @@ public class Attribute extends ModelElement
     
     if (!instanceScope) { out.print("static "); } 
     if (isFinal()) { out.print("final "); } 
-    type.generateJava7(out, elementType);
+    type.generateJava7(out);  // ,elementType
     if (isFinal() && initialValue != null) 
     { out.print(getName() + " = " + initialValue + ";"); } 
     else 
@@ -2219,7 +2248,7 @@ public class Attribute extends ModelElement
     if (frozen) { return ""; }
     String nme = getName();
     if (type == null || ent == null || entity == null) // error
-    { System.err.println("ERROR: null type or entity in attribute " + nme); 
+    { System.err.println("!! ERROR: null type or entity in attribute " + nme); 
       return ""; 
     } 
     
@@ -2447,6 +2476,8 @@ public class Attribute extends ModelElement
     } 
     
     Type eType = elementType; 
+    if (eType == null || "OclAny".equals("" + eType)) 
+    { eType = type.elementType; } 
     if (eType == null) 
     { eType = new Type("OclAny", null); } 
 
@@ -2500,6 +2531,75 @@ public class Attribute extends ModelElement
     return opheader + "  }\n"; 
   }  
 
+  // setattindex operation for the entity:
+  public String setMapIndexOperationJava7(Entity ent, Vector cons,
+                             Vector entities, Vector types) 
+  { // setatt(String index, elementType vx) 
+    // if ent != entity, creates subclass ent extension op for att
+
+    if (frozen) { return ""; }
+    String nme = getName();
+    if (type == null || ent == null || entity == null) // error
+    { System.err.println("!! ERROR: null type or entity in attribute " + nme); 
+      return ""; 
+    } 
+    
+    Type eType = elementType; 
+    if (eType == null || "OclAny".equals("" + eType)) 
+    { eType = type.elementType; } 
+    if (eType == null) 
+    { eType = new Type("OclAny", null); } 
+
+    String val = nme + "_x"; 
+    Attribute par = new Attribute(val,eType,ModelElement.INTERNAL);
+    // par.setElementType(elementType); 
+    Attribute ind = new Attribute("_key", new Type("String", null), ModelElement.INTERNAL); 
+
+    Vector v1 = new Vector();
+    v1.add(ind); 
+    v1.add(par);
+    String t = eType.getJava7(); 
+    // if (v == null) // int or double, String or boolean
+    // { t = type.getName(); }
+    // else 
+    // { t = "int"; } 
+
+    if (ent.isInterface())
+    { return " void set" + nme + "(String _key, " + t + " _x);\n"; } 
+
+
+    BehaviouralFeature event =
+      new BehaviouralFeature("set" + nme,v1,false,null);
+
+    String qual = " "; 
+    String code = ""; 
+    String sync = ""; 
+
+    if (entity.isSequential()) 
+    { sync = " synchronized"; } 
+    
+    if (ent != entity && !entity.isInterface()) 
+    { code = "super.set" + nme + "(_key, " + val + ");"; }
+    else if (!instanceScope)
+    { qual = " static "; 
+      code = nme + ".put(_key, " + val + ");";
+    }
+    else 
+    { code = nme + ".put(_key, " + val + ");"; } 
+ 
+    String opheader; 
+    opheader = "public" + sync + qual + "void set" + nme + "(String _key, " + t +
+             " " + val + ") { " + code; 
+
+    if (!instanceScope)
+    { opheader = opheader + " }\n\n" + 
+        "public" + sync + " void localSet" + nme + "(String _key, " + t +
+             " " + val + ") { "; 
+    }
+       
+    return opheader + "  }\n"; 
+  }  
+
   public String setOperationJava7(Entity ent, Vector cons,
                              Vector entities, Vector types) 
   { // setatt(type attx) 
@@ -2519,7 +2619,7 @@ public class Attribute extends ModelElement
 
     Vector v1 = new Vector();
     v1.add(par);
-    String t = type.getJava7(elementType); 
+    String t = type.getJava7(); // (elementType) 
     // if (v == null) // int or double, String or boolean
     // { t = type.getName(); }
     // else 
@@ -2599,6 +2699,8 @@ public class Attribute extends ModelElement
     String nme = getName();
 
     Type eType = elementType; 
+    if (eType == null) 
+    { eType = type.elementType; } 
     if (eType == null) 
     { eType = new Type("OclAny", null); } 
 
@@ -2881,7 +2983,9 @@ public class Attribute extends ModelElement
   { String res = "";
     if (!isMultiple()) { return res; }
     Type eType = elementType; 
-    if (elementType == null) 
+    if (eType == null) 
+    { eType = type.elementType; } 
+    if (eType == null) 
     { eType = new Type("OclAny", null); } 
 
     String nme = getName();
@@ -2951,15 +3055,23 @@ public class Attribute extends ModelElement
 
   public String addremOperationJava7(Entity ent)
   { String res = "";
+
+    // System.out.println("$$$ type = " + type + " elementType = " + elementType); 
+
     if (!isMultiple()) { return res; }
+
     Type eType = elementType; 
-    if (elementType == null) 
+    if (eType == null || "OclAny".equals("" + eType)) 
+    { eType = type.elementType; } 
+    if (eType == null) 
     { eType = new Type("OclAny", null); } 
 
+    // System.out.println("$$$ eType = " + eType); 
     
     String nme = getName();
     String attx = nme + "_x";
     String et = eType.getJava7();
+    String wrapet = eType.typeWrapperJava7();
     String wattx = Expression.wrap(eType,attx); 
 
     if (ent.isInterface())
@@ -2970,7 +3082,7 @@ public class Attribute extends ModelElement
     { return "  public void add" + nme + "(" + et + " " + attx + ")\n" + 
              "  { " + nme + ".add(" + wattx + "); }\n\n" +
           "  public void remove" + nme + "(" + et + " " + attx + ")\n" + 
-          "  { ArrayList<" + et + "> _removed" + nme + " = new ArrayList<" + et + ">();\n" + 
+          "  { ArrayList<" + wrapet + "> _removed" + nme + " = new ArrayList<" + wrapet + ">();\n" + 
           "    _removed" + nme + ".add(" + wattx + ");\n" + 
           "    " + nme + ".removeAll(_removed" + nme + ");\n" + 
           "  }\n\n";
@@ -2979,7 +3091,7 @@ public class Attribute extends ModelElement
     { return "  public static void add" + nme + "(" + et + " " + attx + ")\n" + 
              "  { " + nme + ".add(" + wattx + "); }\n\n" +
           "  public static void remove" + nme + "(" + et + " " + attx + ")\n" + 
-          "  { ArrayList<" + et + "> _removed" + nme + " = new ArrayList<" + et + ">();\n" + 
+          "  { ArrayList<" + wrapet + "> _removed" + nme + " = new ArrayList<" + wrapet + ">();\n" + 
           "    _removed" + nme + ".add(" + wattx + ");\n" + 
           "    " + nme + ".removeAll(_removed" + nme + ");\n" + 
           "  }\n\n";
@@ -2990,7 +3102,10 @@ public class Attribute extends ModelElement
   { String res = "";
     if (!isMultiple()) { return res; }
     Type eType = elementType; 
-    if (elementType == null) 
+    if (eType == null) 
+    { eType = type.elementType; } 
+
+    if (eType == null) 
     { JOptionPane.showMessageDialog(null, "Warning: null element type in attribute " + this, 
         "", JOptionPane.ERROR_MESSAGE);  
       eType = new Type("OclAny", null); 
@@ -3213,7 +3328,7 @@ public class Attribute extends ModelElement
     String ex = ename.toLowerCase() + "_x";
     String nme = getName();
     String update = "Controller.inst().set" + nme + "(" + ex + ",val);";
-    String typ = type.getJava7(elementType);
+    String typ = type.getJava7(); // (elementType)
 
     String es = ename.toLowerCase() + "_s";
     String res = "  public static void setAll" + nme;
@@ -3361,7 +3476,7 @@ public class Attribute extends ModelElement
 
   public String getOperationJava7(Entity ent)
   { String nme = getName();
-    String tn = type.getJava7(elementType);
+    String tn = type.getJava7(); // (elementType)
     String qual = " ";
     if (!instanceScope)
     { qual = " static "; } 
@@ -3499,7 +3614,7 @@ public class Attribute extends ModelElement
     { elem = ename + "." + nme; } 
     String item = elem;
     String wtype = type.typeWrapperJava7(); 
-    String tname = type.getJava7(elementType);
+    String tname = type.getJava7(); // (elementType)
     if (tname.equals("boolean"))
     { item = "new Boolean(" + elem + ")"; }
     else if (tname.equals("String"))
@@ -3692,7 +3807,7 @@ public class Attribute extends ModelElement
     String item = elem;
     if (isStatic())
     { item = ename + "." + nme; } 
-    String tname = type.getJava7(elementType);
+    String tname = type.getJava7();  // (elementType)
     String wtype = type.typeWrapperJava7(); 
 
     if (tname.equals("boolean"))
@@ -4046,7 +4161,7 @@ public class Attribute extends ModelElement
   public Vector senOperationsCodeJava7(Vector cons,
                                   Entity ent,Vector entities,Vector types)
   { Vector res = new Vector();
-    if (frozen) { return res; }  // ??
+    if (frozen || type == null) { return res; }  // ??
     String opheader = ""; 
     String nme = getName();
     String ename = ent.getName(); 
@@ -4055,6 +4170,9 @@ public class Attribute extends ModelElement
     Vector vals = type.getValues();
     String attx = nme + "_x"; 
     BasicExpression attxbe = new BasicExpression(attx); 
+
+    // System.out.println("$$$ Type of " + nme + " is " + 
+    //                    type + " " + elementType); 
 
     Attribute epar = new Attribute(ex,new Type(ent),ModelElement.INTERNAL); 
     Attribute apar = new Attribute(attx,type,ModelElement.INTERNAL);
@@ -4066,10 +4184,14 @@ public class Attribute extends ModelElement
     v1.add(apar); 
     BehaviouralFeature event =
       new BehaviouralFeature("set" + nme,v1,false,null);
-    String t = type.getJava7(elementType); 
-    String et = "Object"; 
-    if (elementType != null) 
-    { et = elementType.getJava7(); } 
+    String t = type.getJava7(); // (elementType) 
+    
+    Type eType = elementType; 
+    if (eType == null || "OclAny".equals(eType + "")) 
+    { eType = type.elementType; } 
+    if (eType == null) 
+    { eType = new Type("OclAny", null); } 
+    String et = eType.getJava7(); 
 
     // if (vals == null)
     // { t = type.getName(); } 
@@ -4093,6 +4215,11 @@ public class Attribute extends ModelElement
       { opheader = "public void set" + nme + "(" + ename + " " +
              ex + ", int _ind, " + et + " " + attx + ") \n  { " +
            ex + ".set" + nme + "(_ind, " + attx + "); }\n\n  ";
+       } 
+       else if (type.isMap())
+       { opheader = "public void set" + nme + "(" + ename + " " +
+           ex + ", String _key, " + et + " " + attx + ") \n  { " +
+           ex + ".set" + nme + "(_key, " + attx + "); }\n\n  ";
        } 
        opheader = opheader + "public void set" + nme + "(" + ename + " " +
              ex + ", " + t +
@@ -4142,11 +4269,21 @@ public class Attribute extends ModelElement
 
   public Vector addremOperationsCodeJava7(Entity ent)
   { Vector res = new Vector();
-    if (!isMultiple()) { return res; }
-    String et = "Object"; 
-    if (elementType != null) 
-    { et = elementType.getJava7(); } 
+    if (!isMultiple()) 
+    { return res; }
+    if (type == null) 
+    { return res; }
+    if (type.isMap())
+    { return res; } 
 
+    Type eType = elementType; 
+    if (eType == null || "OclAny".equals(eType + "")) 
+    { eType = type.elementType; } 
+    if (eType == null) 
+    { eType = new Type("OclAny", null); } 
+    
+    String et = eType.getJava7();  
+    
     String opheader = "";
     String ename = ent.getName();
     String ex = ename.toLowerCase() + "x";
@@ -4699,6 +4836,10 @@ public class Attribute extends ModelElement
     // else if (initialValue != null &&
     //          !initialValue.equals(""))
     // { ini = initialValue; }
+    else if (initialExpression != null) 
+    { ini = initialExpression.queryFormJava7(
+                new java.util.HashMap(), true); 
+    } 
     else
     { ini = type.getDefaultJava7(); }
     if (ini == null) { return ""; }

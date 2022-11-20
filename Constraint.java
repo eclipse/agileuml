@@ -663,7 +663,7 @@ public class Constraint extends ConstraintOrGroup
     
     if (ante != null) 
     { Vector areads = ante.allReadFrame(); 
-      System.out.println("++ Antecedent: " + ante + " " + areads); 
+      // System.out.println("++ Antecedent: " + ante + " " + areads); 
       res.addAll(areads); 
     } 
 
@@ -674,7 +674,7 @@ public class Constraint extends ConstraintOrGroup
 
     if (sc != null)
     { Vector sreads = sc.readFrame(); 
-      System.out.println("++ Succedent: " + sc + " " + sreads); 
+      // System.out.println("++ Succedent: " + sc + " " + sreads); 
       return VectorUtil.union(res,sreads); 
     } 
     return res; 

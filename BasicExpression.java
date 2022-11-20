@@ -4296,6 +4296,10 @@ class BasicExpression extends Expression
         { isStatic = true; } 
 
         elementType = att.getElementType(); 
+        if (elementType == null || 
+            "OclAny".equals("" + elementType)) 
+        { elementType = type.getElementType(); } 
+
         if (Type.isCollectionType(type))
         { multiplicity = ModelElement.MANY; } 
         entity = ent;  // may not be att.owner, but a subclass of this. 
@@ -4303,6 +4307,8 @@ class BasicExpression extends Expression
         { res = true; }
         else 
         { setObjectRefType(); } 
+
+        System.out.println(">+>+> Attribute: " + this + " type= " + type + " (" + elementType + ")"); 
         
         /* if (arrayIndex != null) 
         { System.out.println("** Unadjusted type of " + this + " is ATTRIBUTE in entity " +
@@ -4313,13 +4319,12 @@ class BasicExpression extends Expression
         arrayType = type;  
         adjustTypeForArrayIndex(att); 
         
-        /* if (arrayIndex != null) 
-        { System.out.println("** Adjusted type of " + this + " is " + type + "(" + elementType + ") Modality = " + modality); } */  
+        System.out.println("**>> Adjusted type of " + this + " is " + type + "(" + elementType + ")");  
  
-        System.out.println(">>> Attribute: " + this + " type= " + type + " (" + elementType + ")"); 
         elementType = Type.correctElementType(type,elementType,types,entities); 
         att.setElementType(elementType); 
         // variable = att; 
+        System.out.println("*>>* Adjusted type of " + this + " is " + type + "(" + elementType + ")");
         System.out.println(); 
       
         return res;
@@ -4753,17 +4758,20 @@ class BasicExpression extends Expression
   private void adjustTypeForArrayIndex()
   { // if there is an arrayIndex, make type = elementType, etc
 
+    System.out.println("+++ Adjusting type " + type + " " + 
+                       elementType + " " + arrayIndex); 
+
     if (arrayIndex != null && type != null && 
         "String".equals(type.getName()))
     { elementType = new Type("String", null); 
       multiplicity = ModelElement.ONE; 
-    } 
+    } // access to a string element
     else if (arrayIndex != null) 
     { if (elementType == null) 
       { type = new Type("OclAny", null);
         elementType = new Type("OclAny", null);
         multiplicity = ModelElement.ONE;  // assume
-      } 
+      } // access to sequence element; no element type
       else  
       { type = elementType; 
         elementType = elementType.getElementType(); 
@@ -4771,7 +4779,7 @@ class BasicExpression extends Expression
         { multiplicity = ModelElement.MANY; } 
         else 
         { multiplicity = ModelElement.ONE; } 
-      } 
+      } // access to element of typed sequence
       // System.out.println("TYPE CHECKED: Type of " + this + " is " + type); 
     } 
   }  
@@ -4804,26 +4812,36 @@ class BasicExpression extends Expression
   private void adjustTypeForArrayIndex(Attribute var)
   { // if there is an arrayIndex, make type = elementType, etc
 
+    System.out.println("+++ Adjusting type " + type + " " + 
+          elementType + " " + arrayIndex + " " + var); 
+
     if (arrayIndex != null && "String".equals(type + ""))
     { elementType = new Type("String", null); 
       multiplicity = ModelElement.ONE; 
     } 
     else if (arrayIndex != null) 
-    { if (var.getElementType() == null) 
+    { Type elemT = var.getElementType(); 
+      if (elemT == null || "OclAny".equals("" + elemT)) 
+      { elemT = type.getElementType(); } 
+
+      if (elemT == null) 
       { type = new Type("OclAny", null);
         elementType = new Type("OclAny", null);
         multiplicity = ModelElement.ONE;  // assume
-      } 
+      } // Sequence access, no type
       else
-      { type = var.getElementType(); 
+      { type = elemT; 
         elementType = type.getElementType(); 
         
         if (Type.isCollectionType(type))
         { multiplicity = ModelElement.MANY; } 
         else 
         { multiplicity = ModelElement.ONE; } 
-      } 
+      } // Sequence access, defined type
     } 
+
+    System.out.println("+++ Adjusted type " + type + " " + 
+          elementType); 
   }  
 
   private boolean eventTypeCheck(Vector types, Vector entities, Vector env)
@@ -6316,7 +6334,7 @@ class BasicExpression extends Expression
 		  // if (Type.isPrimitiveType(type))
           { return unwrap(data + ".get(" + indopt + ")"); }
           else if (arrayIndex.type != null && arrayIndex.type.getName().equals("String"))
-          { return unwrap(data + ".get(" + ind + ")"); }
+          { return unwrap(data + ".get(\"\" + " + ind + ")"); }
           else if (arrayType != null && arrayType.isMap())
           { return unwrap(data + ".get(" + ind + ")"); }
           else if (Type.isPrimitiveType(type))
@@ -6609,7 +6627,10 @@ class BasicExpression extends Expression
             if (isQualified())
             { return "get" + data + "(" + ind + ")"; } 
             String indopt = evaluateString("-",ind,"1"); // not for qualified ones
-            if (arrayType != null && arrayType.isMap())
+
+            if (arrayIndex.isString())
+            { return unwrap(data + ".get(\"\" + " + ind + ")"); }
+            else if (arrayType != null && arrayType.isMap())
             { return unwrap(data + ".get(" + ind + ")"); }
             else if (arrayType != null && arrayType.isSequence())
             { return unwrap(data + ".get(" + indopt + ")"); }
@@ -6634,6 +6655,9 @@ class BasicExpression extends Expression
         { if (arrayIndex != null) 
           { String ind = arrayIndex.queryFormJava7(env,local); 
             String indopt = evaluateString("-",ind,"1"); // not for qualified ones
+            if (arrayIndex.isString())
+            { return unwrap(nme + "." + data + ".get(\"\" + " + ind + ")"); }
+
             if (type.getName().equals("String"))
             { return "(\"\" + " + 
                    nme + "." + data + ".charAt(" + indopt + "))";
@@ -14087,7 +14111,7 @@ public Statement generateDesignSubtract(Expression rhs)
   { Vector res; 
     String ename = ""; 
 
-    System.out.println("||| " + this + " is " + umlkind + " " + entity); 
+    // System.out.println("||| " + this + " is " + umlkind + " " + entity); 
 
     if ("equivalent".equals(data) && objectRef != null)
     { res = objectRef.readFrame(); 

@@ -3996,7 +3996,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         lexicals.get(pstart).toString().equals("(") &&
         lexicals.get(pend).toString().equals(")"))
     { Expression eg = parse_expression(bcount+1, pstart+1, pend-1,entities,types);
-      System.out.println("+++ parsed bracketed expression: " + eg);  
+      // System.out.println("+++ parsed bracketed expression: " + eg);  
       if (eg != null)
       { eg.setBrackets(true); }
       return eg; 
@@ -4008,7 +4008,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
   { nospacelexicalanalysisText(xstring);
     int sz = lexicals.size();  
     ASTTerm res = parseAST(0,sz-1); 
-	return res;
+    return res;
   }
   
   public ASTTerm parseAST(int st, int en)
@@ -7311,7 +7311,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
             Type typ = 
               parseType(i+1,j-1,entities,types); 
             if (typ != null) 
-            { Attribute att = new Attribute(nme,typ,ModelElement.INTERNAL);
+            { Attribute att = 
+                 new Attribute(nme,typ,ModelElement.INTERNAL);
               att.setElementType(typ.getElementType());  
               System.out.println(">>> Attribute " + nme + ". Type = " + typ + ", elementType = " + att.getElementType()); 
               if (init != null) 
@@ -7320,12 +7321,15 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
               }
               return att;  
             } 
+            else 
+            { System.err.println("!! Error: Unrecognised type at " + showLexicals(i+1,j-1)); }  
           } 
         } 
 
         Type typ = parseType(i+1,en-1,entities,types); 
         if (typ != null) 
-        { Attribute att = new Attribute(nme,typ,ModelElement.INTERNAL);
+        { Attribute att = 
+              new Attribute(nme,typ,ModelElement.INTERNAL);
           att.setElementType(typ.getElementType());  
           System.out.println(">>> Attribute " + nme + ". Type = " + typ + ", elementType = " + att.getElementType()); 
 

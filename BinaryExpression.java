@@ -5141,6 +5141,8 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->compareTo")) 
     { if (left.isNumeric() && right.isNumeric())
       { res = "(" + lqf + " < " + rqf + ")?-1:((" + lqf + " > " + rqf + ")?1:0)"; } 
+      else if (left.isString())
+      { res = "((Comparable) " + lqf + ").compareTo(\"\" + " + rqf + ")"; } 
       else if (left.hasSequenceType() && right.hasSequenceType())
       { res = "Set.sequenceCompare(" + lqf + "," + rqf + ")"; } 
       else 
@@ -5643,6 +5645,8 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->compareTo")) 
     { if (left.isNumeric() && right.isNumeric())
       { res = "(" + lqf + " < " + rqf + ")?-1:((" + lqf + " > " + rqf + ")?1:0)"; } 
+      else if (left.isString())
+      { res = "((Comparable) " + lqf + ").compareTo(\"\" + " + rqf + ")"; } 
       else if (left.hasSequenceType() && right.hasSequenceType())
       { res = "Set.sequenceCompare(" + lqf + "," + rqf + ")"; } 
       else 
@@ -6091,6 +6095,8 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->compareTo")) 
     { if (left.isNumeric() && right.isNumeric())
       { res = "(" + lqf + " < " + rqf + ") ? -1 : ((" + lqf + " > " + rqf + ") ? 1 : 0)"; } 
+      else if (left.isString())
+      { res = "((Comparable) " + lqf + ").compareTo(\"\" + " + rqf + ")"; } 
       else if (left.hasSequenceType() && right.hasSequenceType())
       { res = "Ocl.sequenceCompare(" + lqf + "," + rqf + ")"; } 
       else 

@@ -374,6 +374,7 @@ public class BSystemTypes extends BComponent
     String restype1 = "ArrayList<" + tname + ">"; 
     String restype2 = "HashSet<" + tname + ">"; 
     String restype3 = "TreeSet<" + tname + ">"; 
+    String restype4 = "Set<" + tname + ">"; 
 
     String pp = "" + pred + " " + ename + "(" + signature + ")"; 
     String op = (String) selectOps.get(pp); 
@@ -393,6 +394,7 @@ public class BSystemTypes extends BComponent
       String res1 = "  public static " + restype1 + " select_" + oldindex + "(" + restype1 + " _l"; 
       String res2 = "  public static " + restype2 + " select_" + oldindex + "(" + restype2 + " _l"; 
       String res3 = "  public static " + restype3 + " select_" + oldindex + "(" + restype3 + " _l"; 
+      String res4 = "  public static " + restype2 + " select_" + oldindex + "(" + restype4 + " _l"; 
 
       java.util.Map newenv = (java.util.Map) ((java.util.HashMap) env).clone(); 
       if (selectvar == null && e != null && e.isEntity()) 
@@ -408,6 +410,7 @@ public class BSystemTypes extends BComponent
           res1 = res1 + ", " + jType + " " + par.getName(); 
           res2 = res2 + ", " + jType + " " + par.getName();  
           res3 = res3 + ", " + jType + " " + par.getName();
+          res4 = res4 + ", " + jType + " " + par.getName();
         } 
       } 
 
@@ -455,6 +458,21 @@ public class BSystemTypes extends BComponent
       else 
       { res3 = res3 + "    { " + tname + " " + var + " = (" + tname + ") _i;\n"; }  
 
+      res4 = res4 + ")\n"; 
+      res4 = res4 + "  { // implements: " + lqf + "->select( " +  selectvar + " | " + pred + " )\n" + 
+                    "    " + restype2 + " _results_" + oldindex + " = new " + restype2 + "();\n" + 
+                    "    for (" + tname + " _i : _l)\n"; 
+      if (ename.equals("int") || "Integer".equals(tname))
+      { res4 = res4 + "    { int " + var + " = ((Integer) _i).intValue();\n"; } 
+      else if (ename.equals("double"))
+      { res4 = res4 + "    { double " + var + " = ((Double) _i).doubleValue();\n"; } 
+      else if (ename.equals("long"))
+      { res4 = res4 + "    { long " + var + " = ((Long) _i).longValue();\n"; } 
+      else if (ename.equals("boolean"))
+      { res4 = res4 + "    { boolean " + var + " = ((Boolean) _l.get(_i)).booleanValue();\n"; } 
+      else 
+      { res4 = res4 + "    { " + tname + " " + var + " = (" + tname + ") _i;\n"; }  
+
       String test = pred.queryFormJava7(newenv,false); 
 
       res1 = res1 + "      if (" + test + ")\n" + 
@@ -472,8 +490,13 @@ public class BSystemTypes extends BComponent
       res3 = res3 + "    }\n"; 
       res3 = res3 + "    return _results_" + oldindex + ";\n  }"; 
 
+      res4 = res4 + "      if (" + test + ")\n" + 
+                    "      { _results_" + oldindex + ".add(" + var + "); }\n"; 
+      res4 = res4 + "    }\n"; 
+      res4 = res4 + "    return _results_" + oldindex + ";\n  }"; 
+
       selectList.add(pp); 
-      selectOps.put(pp,res1 + "\n\n" + res2 + "\n\n" + res3); 
+      selectOps.put(pp,res1 + "\n\n" + res2 + "\n\n" + res3 + "\n\n" + res4); 
       selectCodes.put(pp,"" + oldindex); 
 
       return "select_" + oldindex + "(" + lqf + ")"; 
@@ -902,7 +925,7 @@ public class BSystemTypes extends BComponent
     Type argtype = exp.getType(); 
     String exptype = "Object"; 
     if (argtype == null) 
-    { System.err.println("ERROR: No type for " + exp + " in collect"); } 
+    { System.err.println("!! ERROR: No type for " + exp + " in collect"); } 
     else 
     { exptype = Type.getJava7Type(argtype, exp.getElementType()); } 
 
@@ -1579,6 +1602,7 @@ public class BSystemTypes extends BComponent
     String restype1 = "ArrayList<" + tname + ">"; 
     String restype2 = "HashSet<" + tname + ">"; 
     String restype3 = "TreeSet<" + tname + ">"; 
+    String restype4 = "Set<" + tname + ">"; 
 
     String pp = "" + pred + " " + ename + "(" + signature + ")"; 
     String op = (String) rejectOps.get(pp); 
@@ -1603,6 +1627,7 @@ public class BSystemTypes extends BComponent
       String res1 = "  public static " + restype1 + " reject_" + oldindex + "(" + restype1 + " _l"; 
       String res2 = "  public static " + restype2 + " reject_" + oldindex + "(" + restype2 + " _l"; 
       String res3 = "  public static " + restype3 + " reject_" + oldindex + "(" + restype3 + " _l"; 
+      String res4 = "  public static " + restype2 + " reject_" + oldindex + "(" + restype4 + " _l"; 
       
       for (int i = 0; i < pars.size(); i++) 
       { Attribute par = (Attribute) pars.get(i); 
@@ -1612,6 +1637,7 @@ public class BSystemTypes extends BComponent
           res1 = res1 + ", " + jType + " " + par.getName(); 
           res2 = res2 + ", " + jType + " " + par.getName(); 
           res3 = res3 + ", " + jType + " " + par.getName(); 
+          res4 = res4 + ", " + jType + " " + par.getName(); 
         } 
       } 
 
@@ -1667,6 +1693,23 @@ public class BSystemTypes extends BComponent
                   "    { " + tname + " " + var + " = (" + tname + ") _ireject;\n";
       }  
 
+      res4 = res4 + ")\n"; 
+      res4 = res4 + "  { " + restype2 + " _results_" + oldindex + 
+                                    " = new " + restype2 + "();\n" + 
+                  "    for (" + tname + " _ireject : _l)\n";  
+      if (ename.equals("int") || "Integer".equals(tname))
+      { res4 = res4 + "    { int " + var + " = ((Integer) _ireject).intValue();\n"; } 
+      else if (ename.equals("double"))
+      { res4 = res4 + "    { double " + var + " = ((Double) _ireject).doubleValue();\n"; } 
+      else if (ename.equals("long"))
+      { res4 = res4 + "    { long " + var + " = ((Long) _ireject).longValue();\n"; } 
+      else if (ename.equals("boolean"))
+      { res4 = res4 + "    { boolean " + var + " = ((Boolean) _ireject).booleanValue();\n"; } 
+      else 
+      { res4 = res4 +  
+                  "    { " + tname + " " + var + " = (" + tname + ") _ireject;\n";
+      }  
+
       String test = pred.queryFormJava7(newenv,false); 
 
       res1 = res1 + "      if (" + test + ") { } \n" + 
@@ -1684,8 +1727,13 @@ public class BSystemTypes extends BComponent
       res3 = res3 + "    }\n"; 
       res3 = res3 + "    return _results_" + oldindex + ";\n  }"; 
 
+      res4 = res4 + "      if (" + test + ") { } \n" + 
+                  "      else { _results_" + oldindex + ".add(" + var + "); }\n"; 
+      res4 = res4 + "    }\n"; 
+      res4 = res4 + "    return _results_" + oldindex + ";\n  }"; 
+
       rejectList.add(pp); 
-      rejectOps.put(pp,res1 + "\n\n" + res2 + "\n\n" + res3); 
+      rejectOps.put(pp,res1 + "\n\n" + res2 + "\n\n" + res3 + "\n\n" + res4); 
       rejectCodes.put(pp,"" + oldindex); 
 
       return "reject_" + oldindex + "(" + lqf + ")"; 
