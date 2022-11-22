@@ -841,4 +841,10 @@ public class ASTSymbolTerm extends ASTTerm
 
   public String antlrElement2cstl(Vector rulerefs, Vector conds)
   { return symbol; } 
+
+  public Vector cobolDataDefinitions(java.util.Map context)
+  { Vector res = new Vector(); 
+    return res; 
+  } 
+
 } 

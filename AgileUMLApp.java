@@ -64,6 +64,9 @@ public class AgileUMLApp extends JApplet implements DocumentListener
     String systemName = "app"; 
     private JLabel thisLabel;
 
+    Vector entities = new Vector(); 
+    Vector types = new Vector(); 
+
     public void init() 
     {
         // types = new Vector(); 
@@ -84,16 +87,16 @@ public class AgileUMLApp extends JApplet implements DocumentListener
       SimpleAttributeSet[] attrs = initAttributes(4);
 
       try {
-            doc.insertString(0, "(expression (primary ident))", attrs[1]);
+            doc.insertString(0, "class Person { String name; int age; }", attrs[1]);
           }
           catch (BadLocationException ble) {
             System.err.println("Couldn't insert code text.");
         } 
 
         JScrollPane scrollPane = new JScrollPane(textPane);
-        scrollPane.setPreferredSize(new Dimension(350, 500));
+        scrollPane.setPreferredSize(new Dimension(250, 350));
 
-        messageArea = new JTextArea(350, 200);
+        messageArea = new JTextArea(30, 80);
         messageArea.setEditable(false);
         JScrollPane scrollPaneForLog = new JScrollPane(messageArea);
 
@@ -161,9 +164,9 @@ public class AgileUMLApp extends JApplet implements DocumentListener
         // checkAction.setMnemonic(KeyEvent.VK_K);
       menu.add(fromCAction); 
 
-      // javax.swing.Action fromJavaAction = new AbstractFromJavaAction(); 
-        // checkAction.setMnemonic(KeyEvent.VK_K);
-      // menu.add(fromJavaAction); 
+      javax.swing.Action fromJavaAction = new AbstractFromJavaAction(); 
+      // checkAction.setMnemonic(KeyEvent.VK_K);
+      menu.add(fromJavaAction); 
 
       return menu; 
    } 
@@ -186,21 +189,21 @@ public class AgileUMLApp extends JApplet implements DocumentListener
     public void changedUpdate(DocumentEvent e)
     { int offset = e.getOffset(); 
 	 int pos = textPane.getCaretPosition();
-      System.out.println(">> Update event at: " + offset + " " + pos); 
+      // System.out.println(">> Update event at: " + offset + " " + pos); 
     }
 
 	public void removeUpdate(DocumentEvent e)
 	{ int offset = e.getOffset(); 
 	  int pos = textPane.getCaretPosition();
-       System.out.println(">> Remove event at: " + offset + " " + pos); 
+       // System.out.println(">> Remove event at: " + offset + " " + pos); 
 	}
 
 	public void insertUpdate(DocumentEvent e)
 	{ int offset = e.getOffset(); 
 	  int pos = textPane.getCaretPosition();
-       try {
-         System.out.println(">> Insert event at: " + offset + " " + pos + " " + textPane.getText(pos,1)); 
-       } catch (Exception _e) { } 
+       // try {
+       //   System.out.println(">> Insert event at: " + offset + " " + pos + " " + textPane.getText(pos,1)); 
+       // } catch (Exception _e) { } 
      } 
 
     private HashMap createActionTable(JTextComponent textComponent) 
@@ -246,13 +249,32 @@ public class AgileUMLApp extends JApplet implements DocumentListener
       if (pos2 > pos) 
       { pos = pos2; } 
       if (pos == 0) { return; }
-      String txt = ""; 
+
+      String txt = "";
+      String asttext = "";
+  
       try 
       { txt = textPane.getText(0, pos+1); } 
       catch(Exception _e) { return; } 
 
+      String[] args = {"C", "translationUnit"}; 
+      try { 
+        org.antlr.v4.gui.AntlrGUI antlr = 
+          new org.antlr.v4.gui.AntlrGUI(args); 
+
+        antlr.setText(txt); 
+
+        antlr.process(); 
+
+        asttext = antlr.getResultText(); 
+        messageArea.setText("" + asttext);
+      } 
+      catch (Exception _expt) 
+      { _expt.printStackTrace(); } 
+
+
       Compiler2 comp = new Compiler2();
-      ASTTerm xx = comp.parseGeneralAST(txt);
+      ASTTerm xx = comp.parseGeneralAST(asttext);
       java.util.Map m1 = new java.util.HashMap();
       java.util.Map m2 = new java.util.HashMap();
       Vector v1 = new Vector();
@@ -271,15 +293,21 @@ public class AgileUMLApp extends JApplet implements DocumentListener
         return;
       } 
 
+      entities = new Vector(); 
+      types = new Vector(); 
 
       ((ASTCompositeTerm) xx).identifyCFunctions(null,m1,m2,v1,v2);
 
       Vector mxs = 
         ((ASTCompositeTerm) xx).cprogramToKM3(null,m1,m2,v1,v2); 
 
+      String restext = ""; 
+
       for (int i = 0; i < v1.size(); i++) 
       { Type tt = (Type) v1.get(i); 
-        System.out.println(tt.getKM3()); 
+        
+        restext = restext + tt.getKM3() + "\n"; 
+        types.add(tt); 
       } 
 
       for (int i = 0; i < v2.size(); i++) 
@@ -291,14 +319,113 @@ public class AgileUMLApp extends JApplet implements DocumentListener
         { newent.addStaticConstructor(); } 
         else 
         { newent.addDefaultConstructor(); }
+        entities.add(newent); 
       }
 
       for (int i = 0; i < v2.size(); i++) 
       { Entity ent = (Entity) v2.get(i); 
-        System.out.println(ent.getKM3()); 
+        restext = restext + ent.getKM3() + "\n"; 
       } 
+        
+      messageArea.setText("" + restext);
     }
   }
+
+
+  class AbstractFromJavaAction extends javax.swing.AbstractAction
+  { public AbstractFromJavaAction()
+    { super("Abstract from Java"); }
+
+    public void actionPerformed(ActionEvent e)
+    { int pos = doc.getLength(); 
+      // System.out.println("Document length = " + pos); 
+      int pos2 = textPane.getCaretPosition();
+      // System.out.println("Caret position = " + pos2); 
+      if (pos2 > pos) 
+      { pos = pos2; } 
+      if (pos == 0) { return; }
+
+      String txt = "";
+      String asttext = "";
+  
+      try 
+      { txt = textPane.getText(0, pos+1); } 
+      catch(Exception _e) { return; } 
+
+      String[] args = {"Java", "compilationUnit"}; 
+      try { 
+        org.antlr.v4.gui.AntlrGUI antlr = 
+          new org.antlr.v4.gui.AntlrGUI(args); 
+
+        antlr.setText(txt); 
+
+        antlr.process(); 
+
+        asttext = antlr.getResultText(); 
+        messageArea.setText("" + asttext);
+      } 
+      catch (Exception _expt) 
+      { _expt.printStackTrace(); } 
+
+      Compiler2 comp = new Compiler2();
+      ASTTerm xx = comp.parseGeneralAST(asttext);
+
+        if (xx == null) 
+        { System.err.println("!! Invalid text for general AST"); 
+          return; 
+        } 
+
+      xx.entities = new Vector(); 
+      xx.enumtypes = new Vector(); 
+
+      String restext = xx.toKM3(); 
+      System.out.println(restext); 
+      messageArea.setText(restext);
+
+      entities = new Vector(); 
+      String pname = ASTTerm.packageName; 
+      if (pname != null) 
+      { System.out.println(">>> System name is: " + pname); 
+        // systemName = pname; 
+      } 
+
+      if (xx.modelElement != null) 
+      { if (xx.modelElement instanceof Entity) 
+        { Entity newent = (Entity) xx.modelElement; 
+          if (newent.isInterface() || newent.hasConstructor()) 
+          { } 
+          else 
+          { newent.addDefaultConstructor(); } 
+
+          entities.add(xx.modelElement); 
+        } 
+        else if (xx.modelElement instanceof BehaviouralFeature)
+        { Entity ex = new Entity("FromJava"); 
+          ex.addOperation((BehaviouralFeature) xx.modelElement);  
+        } 
+      } 
+      else if (xx.modelElements != null) 
+      { for (int i = 0; i < xx.modelElements.size(); i++) 
+        { ModelElement me = (ModelElement) xx.modelElements.get(i); 
+          if (me instanceof Entity) 
+          { Entity newent = (Entity) me; 
+            if (newent.isInterface() ||
+                newent.hasConstructor()) 
+            { } 
+            else 
+            { newent.addDefaultConstructor(); } 
+
+            entities.add(newent); 
+          } 
+          else if (me instanceof BehaviouralFeature)
+          { Entity ex = new Entity("FromJava"); 
+            ex.addOperation((BehaviouralFeature) me);  
+          } 
+        } // and add inheritances. 
+      } 
+    }
+  } 
+
 
   class Translate2JavaAction extends javax.swing.AbstractAction
   { public Translate2JavaAction()
@@ -320,7 +447,7 @@ public class AgileUMLApp extends JApplet implements DocumentListener
       Compiler2 comp = new Compiler2();
       ASTTerm trm = comp.parseGeneralAST(txt);
       System.out.println(trm); 
-      messageArea.append("" + trm); 
+      messageArea.setText("" + trm); 
     } 
   } 
 
@@ -330,22 +457,16 @@ public class AgileUMLApp extends JApplet implements DocumentListener
     { super("Translate to C#"); }
 
     public void actionPerformed(ActionEvent e)
-    { int pos = doc.getLength(); 
-      // System.out.println("Document length = " + pos); 
-      int pos2 = textPane.getCaretPosition();
-      // System.out.println("Caret position = " + pos2); 
-      if (pos2 > pos) 
-      { pos = pos2; } 
-      if (pos == 0) { return; }
-      String txt = ""; 
-      try 
-      { txt = textPane.getText(0, pos+1); } 
-      catch(Exception _e) { return; } 
-
-      Compiler2 comp = new Compiler2();
-      ASTTerm trm = comp.parseGeneralAST(txt);
-      System.out.println(trm); 
-      messageArea.append("" + trm); 
+    { StringWriter sw = new StringWriter(); 
+      PrintWriter out = new PrintWriter(sw);   
+      for (int i = 0; i < entities.size(); i++) 
+      { Entity ent = (Entity) entities.get(i);
+        if (ent.isExternal() || ent.isComponent()) 
+        { continue; }  
+        ent.generateCSharp(entities,types,out);     
+      } 
+      String res = sw.toString(); 
+      messageArea.setText(res);
     } 
   }
 }

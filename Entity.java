@@ -41,7 +41,11 @@ public class Entity extends ModelElement implements Comparable
 
   private Vector typeParameters = new Vector(); // of Type
   boolean genericParameter = false; // This class is itself a par
+
+  int levelNumber = 0; // For nested classes
+  Entity container = null; // Nested classes
   
+
   public Entity(String nme)
   { super(nme); 
     realEntity = this; 
@@ -125,6 +129,19 @@ public class Entity extends ModelElement implements Comparable
 
   public void setIsGenericParameter(boolean b)
   { genericParameter = b; } 
+
+  public Entity findContainer(int level)
+  { // Find the closest containing class which has 
+    // levelNumber < level
+
+    if (levelNumber < level) 
+    { return this; } 
+
+    if (container == null) 
+    { return this; } 
+
+    return container.findContainer(level); 
+  } 
 
   public boolean allSubclassesAreEmpty()
   { boolean res = true;

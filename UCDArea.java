@@ -26432,6 +26432,9 @@ public void produceCUI(PrintWriter out)
     ASTTerm zz = xx.removeWhitespaceTerms(); 
     ASTTerm yy = zz.replaceCobolIdentifiers(); 
 
+    Vector auxents = yy.cobolDataDefinitions(new java.util.HashMap()); 
+
+
     File cobol2uml = new File("cg/cobol2UML.cstl"); 
     Vector vbs = new Vector(); 
     vbs.add("cobolFunctions.cstl"); 
@@ -26447,6 +26450,16 @@ public void produceCUI(PrintWriter out)
     System.out.println(arg1); 
 
     loadKM3FromText("package app {\n " + arg1 + "\n}\n\n"); 
+
+    System.out.println(auxents); 
+
+    for (int i = 0; i < auxents.size(); i++) 
+    { Object aux = auxents.get(i); 
+      if (aux instanceof Entity)
+      { Entity auxent = (Entity) aux; 
+        System.out.println(auxent.getKM3()); 
+      } 
+    } 
  
     repaint(); 
     // System.out.println(yy); 

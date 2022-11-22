@@ -40134,6 +40134,199 @@ public class ASTCompositeTerm extends ASTTerm
     return alternatives; 
   } 
           
+  public Vector cobolDataDefinitions(java.util.Map context)
+  { // Each non-filler item at level > 01 becomes an attribute
+    // of a relevant container. If composite (no picture), 
+    // it also becomes a class & container in turn.
+
+    Vector res = new Vector();
+
+    if ("compilationUnit".equals(tag))
+    { for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        Vector ttres = tt.cobolDataDefinitions(context); 
+        res.addAll(ttres); 
+      } 
+      return res; 
+    } 
+
+    if ("programUnit".equals(tag))
+    { for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        Vector ttres = tt.cobolDataDefinitions(context); 
+        res.addAll(ttres); 
+      } 
+      return res; 
+    } 
+
+    if ("dataDivision".equals(tag))
+    { // DATA DIVISION . dataDivisionSection*
+
+      for (int i = 3; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        Vector ttres = tt.cobolDataDefinitions(context); 
+        res.addAll(ttres); 
+      } 
+      return res; 
+    } 
+
+    if ("dataDivisionSection".equals(tag))
+    { // fileSection | dataBaseSection | 
+      // workingStorageSection | linkageSection | ...
+
+      ASTTerm tt = (ASTTerm) terms.get(0); 
+      Vector ttres = tt.cobolDataDefinitions(context); 
+      return ttres; 
+    } 
+
+    if ("workingStorageSection".equals(tag))
+    { // WORKING-STORAGE SECTION . dataDescriptionEntry*
+
+      for (int i = 3; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        Vector ttres = tt.cobolDataDefinitions(context); 
+        res.addAll(ttres); 
+      } 
+      return res; 
+    } 
+    
+    if ("dataDescriptionEntry".equals(tag))
+    { // dataDescriptionEntryFormat1 |
+      // dataDescriptionEntryFormat2 | 
+      // dataDescriptionEntryFormat3 | 
+      // dataDescriptionEntryExecSql
+
+      ASTTerm tt = (ASTTerm) terms.get(0); 
+      Vector ttres = tt.cobolDataDefinitions(context); 
+      return ttres; 
+    } 
+      
+    if ("dataDescriptionEntryFormat1".equals(tag))
+    { // Level (FILLER | dataName)? dataClause* .
+
+      // If preceding item at lower or same levelnumber,
+      // container != null and this is attribute of 
+      // container or padding (FILLER).
+      // If preceding item at higher levelnumber, or no 
+      // preceding item (container = null), this is 
+      // a new container class. 
+ 
+      ASTTerm tt = (ASTTerm) terms.get(0); 
+      String level = tt.literalForm(); 
+      int levelNumber = 0; 
+      String fieldName = ""; 
+
+      if ("77".equals(level)) 
+      { context.put("container", null); 
+        return res; 
+      } 
+
+      try 
+      { levelNumber = Integer.parseInt(level); } 
+      catch (Exception ex) { return res; } 
+
+      if (terms.size() == 1) 
+      { return res; } 
+
+      ASTTerm t2 = (ASTTerm) terms.get(1); 
+      if ("FILLER".equals(t2 + "") || 
+          t2.getTag().equals("dataName"))
+      { fieldName = t2.literalForm(); }
+      else 
+      { fieldName = "FILLER"; } 
+
+      Entity container = (Entity) context.get("container"); 
+    
+      if (ASTTerm.hasTag(terms,"dataPictureClause"))
+      { // It is a basic item, not an entity
+        if (container == null) // no container, so top-level attribute
+        { if ("FILLER".equals(fieldName)) { } 
+          else 
+          { Attribute att = 
+              new Attribute(fieldName, new Type("String", null), 
+                          ModelElement.INTERNAL); 
+            res.add(att);  
+          
+            context.put("previousLevel", new Integer(levelNumber)); 
+          } 
+        }
+        else // basic attribute of some container 
+        { int contLevel = container.levelNumber; 
+
+          Integer previousLevel = (Integer) context.get("previousLevel");
+
+          int prevLevel = previousLevel.intValue(); 
+ 
+          if (levelNumber >= prevLevel) 
+          { // attribute of container 
+            if ("FILLER".equals(fieldName)) {} 
+            else 
+            { Attribute att = 
+                new Attribute(fieldName, new Type("String", null), 
+                          ModelElement.INTERNAL); 
+              container.addAttribute(att); 
+            } // could itself be composite
+            context.put("previousLevel", 
+                        new Integer(levelNumber)); 
+          }
+          else if (levelNumber < prevLevel) 
+          { // attribute of another container 
+            if ("FILLER".equals(fieldName)) {} 
+            else 
+            { Attribute att = 
+                new Attribute(fieldName, new Type("String", null), 
+                          ModelElement.INTERNAL);
+              Entity actualContainer = 
+                 container.findContainer(levelNumber);  
+              if (actualContainer != null) 
+              { actualContainer.addAttribute(att);
+                context.put("container", actualContainer); 
+              }  
+            } // could itself be composite
+            context.put("previousLevel", 
+                        new Integer(levelNumber)); 
+          }
+        }
+      } 
+      else // No PICTURE => new entity
+      { if ("FILLER".equals(fieldName)) {} 
+        else 
+        { Entity newent = new Entity(fieldName + "_Class");
+          newent.levelNumber = levelNumber; 
+          Attribute att = 
+            new Attribute(fieldName, new Type(newent), 
+                         ModelElement.INTERNAL); 
+
+          Integer previousLevel = (Integer) context.get("previousLevel");
+
+          int prevLevel = -1; 
+		  if (previousLevel != null) 
+		  { prevLevel = previousLevel.intValue(); }     
+      
+          res.add(newent);
+          if (container == null) // top-level
+          { res.add(att); } 
+          else if (levelNumber >= prevLevel)  
+          { newent.container = container; 
+            container.addAttribute(att); 
+          } 
+          else 
+          { Entity actualContainer = 
+              container.findContainer(levelNumber);  
+            if (actualContainer != null) 
+            { newent.container = actualContainer; 
+              actualContainer.addAttribute(att); 
+            }  
+          } 
+         
+          context.put("container", newent); 
+          context.put("previousLevel", new Integer(levelNumber)); 
+        } 
+      }  
+    } 
+  
+    return res; 
+  } 
 
   public static void convertAntlr2CSTL()
   { // Testing of JS to KM3

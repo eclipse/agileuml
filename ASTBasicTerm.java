@@ -49,11 +49,15 @@ public class ASTBasicTerm extends ASTTerm
       String vsub = vtrim.replace("-", "_"); 
       return new ASTBasicTerm(tag,vsub);
     } 
+
     if (tag.equals("numericLiteral"))
     { String vtrim = value.trim(); 
-      String vsub = vtrim.replace(",", "."); 
+      String vsub = vtrim.replace(",", ".");
+      if (vsub.startsWith("."))
+      { vsub = "0" + vsub; }  
       return new ASTBasicTerm(tag,vsub);
     } 
+
     return this; 
   }  
         
@@ -2663,6 +2667,13 @@ public class ASTBasicTerm extends ASTTerm
     thisalt.add(this); 
     alts.add(thisalt); 
     return alts; 
+  } 
+
+  public Vector cobolDataDefinitions(java.util.Map context)
+  { // Each immediately higher level item becomes an attribute
+    // of container. If composite, it also becomes a class
+    Vector res = new Vector(); 
+    return res; 
   } 
  
   public static void main(String[] args)
