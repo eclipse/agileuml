@@ -2669,7 +2669,25 @@ public class ASTBasicTerm extends ASTTerm
     return alts; 
   } 
 
-  public Vector cobolDataDefinitions(java.util.Map context)
+  public int cobolDataWidth()
+  { if ("integerLiteral".equals(tag))
+    { return value.length(); }
+
+    if ("X".equals(value) || "9".equals(value) || 
+        ",".equals(value) || "A".equals(value) ||
+        "B".equals(value) || "0".equals(value) ||
+        "/".equals(value) || "+".equals(value) ||
+        "-".equals(value) || "$".equals(value) ||
+        "£".equals(value) || ".".equals(value) ||
+        "Z".equals(value) || "*".equals(value))
+    { return 1; } 
+
+    // S, P, V do not add to length. 
+ 
+    return 0; 
+  } 
+
+  public Vector cobolDataDefinitions(java.util.Map context, Vector invs)
   { // Each immediately higher level item becomes an attribute
     // of container. If composite, it also becomes a class
     Vector res = new Vector(); 

@@ -1092,6 +1092,16 @@ public abstract class ASTTerm
     return res; 
   } 
 
+  public static ASTTerm getTermByTag(Vector terms, String tag)
+  { ASTTerm res = null; 
+    for (int i = 0; i < terms.size(); i++) 
+    { ASTTerm tt = (ASTTerm) terms.get(i); 
+      if (tt.hasTag(tag))
+      { return tt; } 
+    } 
+    return res; 
+  } 
+
   public abstract boolean hasTag(String tagx); 
 
   public abstract boolean hasSingleTerm(); 
@@ -3653,8 +3663,9 @@ public abstract class ASTTerm
  
   public abstract Vector normaliseAntlr();
 
-  public abstract Vector cobolDataDefinitions(java.util.Map context); 
+  public abstract Vector cobolDataDefinitions(java.util.Map context, Vector invs); 
 
+  public abstract int cobolDataWidth(); 
 
   public static void main(String[] args) 
   { // ASTBasicTerm t = new ASTBasicTerm("OclBasicExpression", "true"); 

@@ -842,7 +842,23 @@ public class ASTSymbolTerm extends ASTTerm
   public String antlrElement2cstl(Vector rulerefs, Vector conds)
   { return symbol; } 
 
-  public Vector cobolDataDefinitions(java.util.Map context)
+  public int cobolDataWidth()
+  { 
+    if ("X".equals(symbol) || "9".equals(symbol) || 
+        ",".equals(symbol) || "A".equals(symbol) ||
+        "B".equals(symbol) || "0".equals(symbol) ||
+        "/".equals(symbol) || "+".equals(symbol) ||
+        "-".equals(symbol) || "$".equals(symbol) ||
+        "£".equals(symbol) || ".".equals(symbol) ||
+        "Z".equals(symbol) || "*".equals(symbol))
+    { return 1; } 
+
+    // S, P, V do not add to length. 
+ 
+    return 0; 
+  } 
+
+  public Vector cobolDataDefinitions(java.util.Map context, Vector invs)
   { Vector res = new Vector(); 
     return res; 
   } 

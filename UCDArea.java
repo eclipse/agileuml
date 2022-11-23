@@ -7766,7 +7766,7 @@ public class UCDArea extends JPanel
 
     if (con.typeCheck(types,entities,contexts)) { } 
     else
-    { System.out.println("Constraint not correctly " +
+    { System.out.println("!! Constraint not correctly " +
                          "typed: " + con);
       // return null; 
     }
@@ -26432,7 +26432,8 @@ public void produceCUI(PrintWriter out)
     ASTTerm zz = xx.removeWhitespaceTerms(); 
     ASTTerm yy = zz.replaceCobolIdentifiers(); 
 
-    Vector auxents = yy.cobolDataDefinitions(new java.util.HashMap()); 
+    Vector cobolinvs = new Vector(); 
+    Vector auxents = yy.cobolDataDefinitions(new java.util.HashMap(), cobolinvs); 
 
 
     File cobol2uml = new File("cg/cobol2UML.cstl"); 
@@ -26447,18 +26448,38 @@ public void produceCUI(PrintWriter out)
 
     String reskm3 = yy.cg(spec); 
     String arg1 = CGRule.correctNewlines(reskm3); 
-    System.out.println(arg1); 
 
-    loadKM3FromText("package app {\n " + arg1 + "\n}\n\n"); 
-
-    System.out.println(auxents); 
-
-    for (int i = 0; i < auxents.size(); i++) 
+    String auxentities = ""; 
+    for (int i = auxents.size() - 1; i >= 0; i--) 
     { Object aux = auxents.get(i); 
       if (aux instanceof Entity)
-      { Entity auxent = (Entity) aux; 
-        System.out.println(auxent.getKM3()); 
+      { Entity auxent = (Entity) aux;
+        Constraint suminv = 
+          auxent.attributeSumInvariant(); 
+        System.out.println(suminv);  
+        auxentities = auxentities + auxent.getKM3() + "\n\n"; 
       } 
+    } 
+
+    System.out.println(auxentities + arg1); 
+
+    loadKM3FromText("package app {\n " + auxentities + "\n" + arg1 + "\n}\n\n"); 
+
+    // System.out.println(auxents); 
+    // System.out.println(cobolinvs); 
+
+    for (int i = 0; i < cobolinvs.size(); i++) 
+    { Object aux = cobolinvs.get(i); 
+      if (aux instanceof Constraint)
+      { Constraint cons = (Constraint) aux; 
+        String pname = cons.ownerName; 
+        Entity ent = (Entity) ModelElement.lookupByName(pname,entities); 
+        if (ent != null) 
+        { cons.setOwner(ent);
+          ent.addInvariant(cons);  
+          System.out.println(cons); 
+        }
+      }  
     } 
  
     repaint(); 
@@ -26512,7 +26533,7 @@ public void produceCUI(PrintWriter out)
 
       Vector atts = ent.getAttributes();
       java.util.Map attmap = (java.util.Map) attmaps.get(ent);
-      Expression tcond = new BasicExpression("true");
+      Expression tcond = new BasicExpression(true);
       tcond.setUmlKind(Expression.VALUE); 
       tcond.setType(new Type("boolean",null)); 
 
@@ -26538,11 +26559,11 @@ public void produceCUI(PrintWriter out)
       }
       BinaryExpression rang = new BinaryExpression(":", txexp, texp);
       Expression post = new BinaryExpression("#", rang, tcond);
-      Constraint con = new Constraint(new BasicExpression("true"), post);
+      Constraint con = new Constraint(new BasicExpression(true), post);
       con.setOwner(ent);
       res.add(con);
 
-      Expression tcond2 = new BasicExpression("true");
+      Expression tcond2 = new BasicExpression(true);
       tcond2.setUmlKind(Expression.VALUE); 
       tcond2.setType(new Type("boolean",null)); 
 

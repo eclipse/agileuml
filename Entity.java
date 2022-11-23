@@ -4849,6 +4849,34 @@ public class Entity extends ModelElement implements Comparable
   public void addInvariants(Vector invs)
   { invariants.addAll(invs); } 
 
+  public Constraint attributeSumInvariant()
+  { // name = "" + att1 + att2 + ...
+
+    String shortName = name.substring(0,name.length()-6); 
+    Expression cls = 
+      BasicExpression.newAttributeBasicExpression(
+                                   shortName, 
+                                   new Type("String", null));
+    Expression sumExpr = 
+      BasicExpression.newValueBasicExpression("\"\""); 
+    sumExpr.setType(new Type("String", null)); 
+            
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      Expression expr = new BasicExpression(att);
+      sumExpr = 
+        new BinaryExpression("+", sumExpr, expr); 
+      sumExpr.setType(new Type("String", null)); 
+    } 
+    Expression pst = 
+      new BinaryExpression("=", cls, sumExpr); 
+    pst.setType(new Type("boolean", null)); 
+
+    Constraint res = 
+      Constraint.getConstraint(pst); 
+    return res; 
+  } 
+
   public void createPrimaryKey()
   { String key = getName().toLowerCase() + "Id"; 
     if (hasAttribute(key))

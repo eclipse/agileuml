@@ -1,6 +1,9 @@
 import java.util.Vector; 
 import java.io.*; 
 
+import javax.swing.*;
+
+
 /******************************
 * Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
@@ -40134,7 +40137,43 @@ public class ASTCompositeTerm extends ASTTerm
     return alternatives; 
   } 
           
-  public Vector cobolDataDefinitions(java.util.Map context)
+  public int cobolDataWidth()
+  { if ("dataPictureClause".equals(tag))
+    { // (PIC | PICTURE) IS? pictureString
+
+      int sze = terms.size(); 
+      ASTTerm ptrm = (ASTTerm) terms.get(sze-1); 
+      return ptrm.cobolDataWidth(); 
+    } 
+
+    if ("pictureString".equals(tag))
+    { int res = 0; 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        int wdth = tt.cobolDataWidth(); 
+        res = res + wdth; 
+      } 
+      return res; 
+    } 
+
+    if ("pictureCardinality".equals(tag))
+    { ASTTerm val = (ASTTerm) terms.get(1); 
+      String lit = val.literalForm(); 
+      try { 
+        int crd = Integer.parseInt(lit); 
+        return crd-1; 
+      } catch (Exception _ex) { return 0; } 
+    } 
+
+    if ("pictureChars".equals(tag))
+    { ASTTerm val = (ASTTerm) terms.get(0); 
+      return val.cobolDataWidth(); 
+    }   
+
+    return 0; 
+  } 
+ 
+  public Vector cobolDataDefinitions(java.util.Map context, Vector invs)
   { // Each non-filler item at level > 01 becomes an attribute
     // of a relevant container. If composite (no picture), 
     // it also becomes a class & container in turn.
@@ -40144,7 +40183,7 @@ public class ASTCompositeTerm extends ASTTerm
     if ("compilationUnit".equals(tag))
     { for (int i = 0; i < terms.size(); i++) 
       { ASTTerm tt = (ASTTerm) terms.get(i); 
-        Vector ttres = tt.cobolDataDefinitions(context); 
+        Vector ttres = tt.cobolDataDefinitions(context, invs); 
         res.addAll(ttres); 
       } 
       return res; 
@@ -40153,9 +40192,28 @@ public class ASTCompositeTerm extends ASTTerm
     if ("programUnit".equals(tag))
     { for (int i = 0; i < terms.size(); i++) 
       { ASTTerm tt = (ASTTerm) terms.get(i); 
-        Vector ttres = tt.cobolDataDefinitions(context); 
+        Vector ttres = tt.cobolDataDefinitions(context, invs); 
         res.addAll(ttres); 
       } 
+      return res; 
+    } 
+
+    if ("identificationDivision".equals(tag))
+    { // (IDENTIFICATION | ID) DIVISION . programIdParagraph identificationDivisionBody*
+
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm trm = (ASTTerm) terms.get(i); 
+        if ("programIdParagraph".equals(trm.getTag()))
+        { trm.cobolDataDefinitions(context,invs); } 
+      } 
+      return res; 
+    } 
+
+    if ("programIdParagraph".equals(tag))
+    { // PROGRAM-ID . programName _* 
+      ASTTerm nme = (ASTTerm) terms.get(2); 
+      String pname = nme.literalForm() + "_Class"; 
+      context.put("programName", pname);
       return res; 
     } 
 
@@ -40164,7 +40222,7 @@ public class ASTCompositeTerm extends ASTTerm
 
       for (int i = 3; i < terms.size(); i++) 
       { ASTTerm tt = (ASTTerm) terms.get(i); 
-        Vector ttres = tt.cobolDataDefinitions(context); 
+        Vector ttres = tt.cobolDataDefinitions(context, invs); 
         res.addAll(ttres); 
       } 
       return res; 
@@ -40175,7 +40233,7 @@ public class ASTCompositeTerm extends ASTTerm
       // workingStorageSection | linkageSection | ...
 
       ASTTerm tt = (ASTTerm) terms.get(0); 
-      Vector ttres = tt.cobolDataDefinitions(context); 
+      Vector ttres = tt.cobolDataDefinitions(context, invs); 
       return ttres; 
     } 
 
@@ -40184,7 +40242,7 @@ public class ASTCompositeTerm extends ASTTerm
 
       for (int i = 3; i < terms.size(); i++) 
       { ASTTerm tt = (ASTTerm) terms.get(i); 
-        Vector ttres = tt.cobolDataDefinitions(context); 
+        Vector ttres = tt.cobolDataDefinitions(context, invs); 
         res.addAll(ttres); 
       } 
       return res; 
@@ -40197,7 +40255,7 @@ public class ASTCompositeTerm extends ASTTerm
       // dataDescriptionEntryExecSql
 
       ASTTerm tt = (ASTTerm) terms.get(0); 
-      Vector ttres = tt.cobolDataDefinitions(context); 
+      Vector ttres = tt.cobolDataDefinitions(context, invs); 
       return ttres; 
     } 
       
@@ -40238,7 +40296,18 @@ public class ASTCompositeTerm extends ASTTerm
       Entity container = (Entity) context.get("container"); 
     
       if (ASTTerm.hasTag(terms,"dataPictureClause"))
-      { // It is a basic item, not an entity
+      { // It is a basic data item, not an entity
+
+        ASTTerm pictureClause = 
+          ASTTerm.getTermByTag(terms,"dataPictureClause"); 
+        int wdth = 0; 
+        if (pictureClause != null) 
+        { wdth = pictureClause.cobolDataWidth(); } 
+        // JOptionPane.showMessageDialog(null, "Width of " + fieldName + " is " + wdth, 
+        //                  "", 
+        //                  JOptionPane.INFORMATION_MESSAGE);  
+ 
+
         if (container == null) // no container, so top-level attribute
         { if ("FILLER".equals(fieldName)) { } 
           else 
@@ -40253,8 +40322,47 @@ public class ASTCompositeTerm extends ASTTerm
         else // basic attribute of some container 
         { int contLevel = container.levelNumber; 
 
-          Integer previousLevel = (Integer) context.get("previousLevel");
+          Integer startPosition = (Integer) context.get("startPosition"); 
+          if (startPosition != null) 
+          { int startPos = startPosition.intValue(); 
+            int endPos = startPos + wdth - 1; 
+            context.put("startPosition", endPos + 1);
+ 
+            String cname = container.getName(); 
+            String ownername = 
+               cname.substring(0,cname.length()-6); 
+            String progname = 
+               (String) context.get("programName"); 
+            JOptionPane.showMessageDialog(null, progname + ":: " + fieldName + 
+               " = " + ownername + 
+               ".subrange(" + startPos + "," + endPos + ")", 
+                          "", 
+                          JOptionPane.INFORMATION_MESSAGE);
+            BasicExpression owner = 
+              BasicExpression.newAttributeBasicExpression(
+                                   ownername, 
+                                   new Type("String", null)); 
+            BasicExpression attr = 
+              BasicExpression.newAttributeBasicExpression(
+                                   fieldName, 
+                                   new Type("String", null));
+            Vector spars = new Vector(); 
+            spars.add(new BasicExpression(startPos)); 
+            spars.add(new BasicExpression(endPos));  
+            BasicExpression substr = 
+              BasicExpression.newFunctionBasicExpression(
+                "subrange", owner, spars); 
+            BinaryExpression inv = 
+              new BinaryExpression("=", attr, substr);
+            Constraint cons = 
+              Constraint.getConstraint(inv); 
+            cons.ownerName = progname;  
+            invs.add(cons);   
+          } 
+          else 
+          { context.put("startPosition", 1 + wdth); } 
 
+          Integer previousLevel = (Integer) context.get("previousLevel");
           int prevLevel = previousLevel.intValue(); 
  
           if (levelNumber >= prevLevel) 
@@ -40300,12 +40408,20 @@ public class ASTCompositeTerm extends ASTTerm
           Integer previousLevel = (Integer) context.get("previousLevel");
 
           int prevLevel = -1; 
-		  if (previousLevel != null) 
-		  { prevLevel = previousLevel.intValue(); }     
+          if (previousLevel != null) 
+          { prevLevel = previousLevel.intValue(); }     
       
           res.add(newent);
           if (container == null) // top-level
-          { res.add(att); } 
+          { String pname = 
+              (String) context.get("programName");
+            if (pname != null)  
+            { Entity prog = new Entity(pname);
+              prog.levelNumber = -1;  
+              newent.container = prog;
+            }  
+            res.add(att); 
+          } 
           else if (levelNumber >= prevLevel)  
           { newent.container = container; 
             container.addAttribute(att); 
@@ -40320,7 +40436,8 @@ public class ASTCompositeTerm extends ASTTerm
           } 
          
           context.put("container", newent); 
-          context.put("previousLevel", new Integer(levelNumber)); 
+          context.put("previousLevel", new Integer(levelNumber));
+          context.put("startPosition", new Integer(1));  
         } 
       }  
     } 

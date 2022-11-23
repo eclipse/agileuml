@@ -56,7 +56,6 @@ public class AgileUMLApp extends JApplet implements DocumentListener
 {
     JTextPane textPane;
     AbstractDocument doc;
-    static final int MAX_CHARACTERS = 1000;
     JTextArea messageArea;
     String newline = "\n";
     HashMap actions;
@@ -81,7 +80,7 @@ public class AgileUMLApp extends JApplet implements DocumentListener
         } 
 	   else 
 	   {
-          System.err.println("Error: invalid document");
+          System.err.println("!! Error: invalid document");
         }
 
       SimpleAttributeSet[] attrs = initAttributes(4);
@@ -90,7 +89,7 @@ public class AgileUMLApp extends JApplet implements DocumentListener
             doc.insertString(0, "class Person { String name; int age; }", attrs[1]);
           }
           catch (BadLocationException ble) {
-            System.err.println("Couldn't insert code text.");
+            System.err.println("!! Couldn't insert code text.");
         } 
 
         JScrollPane scrollPane = new JScrollPane(textPane);
@@ -168,6 +167,10 @@ public class AgileUMLApp extends JApplet implements DocumentListener
       // checkAction.setMnemonic(KeyEvent.VK_K);
       menu.add(fromJavaAction); 
 
+      javax.swing.Action fromJSAction = new AbstractFromJSAction(); 
+      // checkAction.setMnemonic(KeyEvent.VK_K);
+      menu.add(fromJSAction); 
+
       return menu; 
    } 
 
@@ -185,6 +188,21 @@ public class AgileUMLApp extends JApplet implements DocumentListener
       return menu; 
    } 
 
+   public void typeCheck()
+   { for (int i = 0; i < entities.size(); i++) 
+     { Entity e = (Entity) entities.get(i); 
+       e.typeCheckAttributes(types,entities); 
+       e.typeCheckOps(types,entities); 
+       e.typeCheckInvariants(types,entities); 
+     } 
+
+     /* for (int j = 0; j < useCases.size(); j++) 
+     { if (useCases.get(j) instanceof UseCase)
+       { UseCase uc = (UseCase) useCases.get(j); 
+         uc.typeCheck(types,entities); 
+       } 
+     }  */ 
+   }
 
     public void changedUpdate(DocumentEvent e)
     { int offset = e.getOffset(); 
@@ -322,6 +340,8 @@ public class AgileUMLApp extends JApplet implements DocumentListener
         entities.add(newent); 
       }
 
+      typeCheck(); 
+
       for (int i = 0; i < v2.size(); i++) 
       { Entity ent = (Entity) v2.get(i); 
         restext = restext + ent.getKM3() + "\n"; 
@@ -383,6 +403,7 @@ public class AgileUMLApp extends JApplet implements DocumentListener
       messageArea.setText(restext);
 
       entities = new Vector(); 
+      restext = ""; 
       String pname = ASTTerm.packageName; 
       if (pname != null) 
       { System.out.println(">>> System name is: " + pname); 
@@ -402,6 +423,7 @@ public class AgileUMLApp extends JApplet implements DocumentListener
         else if (xx.modelElement instanceof BehaviouralFeature)
         { Entity ex = new Entity("FromJava"); 
           ex.addOperation((BehaviouralFeature) xx.modelElement);  
+          entities.add(ex); 
         } 
       } 
       else if (xx.modelElements != null) 
@@ -423,13 +445,30 @@ public class AgileUMLApp extends JApplet implements DocumentListener
           } 
         } // and add inheritances. 
       } 
+
+
+      types = xx.enumtypes; 
+
+      typeCheck();
+
+      for (int i = 0; i < types.size(); i++) 
+      { Type tt = (Type) types.get(i); 
+        restext = restext + tt.getKM3() + "\n"; 
+      } 
+
+      for (int i = 0; i < entities.size(); i++) 
+      { Entity tt = (Entity) entities.get(i); 
+        restext = restext + tt.getKM3() + "\n"; 
+      } 
+      
+      System.out.println(restext);  
+      messageArea.setText(restext); 
     }
   } 
 
-
-  class Translate2JavaAction extends javax.swing.AbstractAction
-  { public Translate2JavaAction()
-    { super("Translate to Java"); }
+  class AbstractFromJSAction extends javax.swing.AbstractAction
+  { public AbstractFromJSAction()
+    { super("Abstract from JavaScript"); }
 
     public void actionPerformed(ActionEvent e)
     { int pos = doc.getLength(); 
@@ -439,15 +478,115 @@ public class AgileUMLApp extends JApplet implements DocumentListener
       if (pos2 > pos) 
       { pos = pos2; } 
       if (pos == 0) { return; }
-      String txt = ""; 
+
+      String txt = "";
+      String asttext = "";
+  
       try 
       { txt = textPane.getText(0, pos+1); } 
       catch(Exception _e) { return; } 
 
+      String[] args = {"JavaScript", "program"}; 
+      try { 
+        org.antlr.v4.gui.AntlrGUI antlr = 
+          new org.antlr.v4.gui.AntlrGUI(args); 
+
+        antlr.setText(txt); 
+
+        antlr.process(); 
+
+        asttext = antlr.getResultText(); 
+        messageArea.setText("" + asttext);
+      } 
+      catch (Exception _expt) 
+      { _expt.printStackTrace(); } 
+
       Compiler2 comp = new Compiler2();
-      ASTTerm trm = comp.parseGeneralAST(txt);
-      System.out.println(trm); 
-      messageArea.setText("" + trm); 
+      ASTTerm xx = comp.parseGeneralAST(asttext);
+
+        if (xx == null) 
+        { System.err.println("!! Invalid text for general AST"); 
+          return; 
+        } 
+
+      xx.entities = new Vector(); 
+      xx.enumtypes = new Vector(); 
+
+    java.util.Map m1 = new java.util.HashMap();
+    java.util.Map m2 = new java.util.HashMap();
+    Vector v1 = new Vector();
+    Vector v2 = new Vector(); 
+
+    String restext = ""; 
+
+    Vector expr = 
+     ((ASTCompositeTerm) xx).jsprogramToKM3(
+                                       m1,m2,v1,v2); 
+
+    for (int i = 0; i < expr.size(); i++) 
+    { Object elem = expr.get(i); 
+
+      if (elem instanceof Entity)
+      { Entity ent = 
+          (Entity) elem;
+        entities.add(ent);  
+        restext = restext + ent.getKM3() + "\n";
+      } 
+    }  
+
+    for (int i = 0; i < expr.size(); i++) 
+    { Object elem = expr.get(i); 
+
+      if (elem instanceof BehaviouralFeature)
+      { BehaviouralFeature bf = 
+          (BehaviouralFeature) elem;
+     
+        restext = restext + bf.getKM3() + "\n";
+      } 
+      else if (elem instanceof Entity)
+      { } 
+      else
+      { restext = restext + elem + "\n"; } 
+    }  
+
+    for (int i = 0; i < v2.size(); i++) 
+    { Entity newent = (Entity) v2.get(i); 
+      String nme = newent.getName(); 
+      ModelElement ee = ModelElement.lookupByName(nme, entities); 
+      if (ee == null)
+      { entities.add(newent); 
+        restext = restext + newent.getKM3() + "\n";
+      }
+    } 
+
+    for (int i = 0; i < v1.size(); i++) 
+    { Type tt = (Type) v1.get(i); 
+      types.add(tt); 
+    }
+
+      System.out.println(restext); 
+      messageArea.setText(restext);
+      typeCheck(); 
+    }
+  } 
+
+
+
+  class Translate2JavaAction extends javax.swing.AbstractAction
+  { public Translate2JavaAction()
+    { super("Translate to Java"); }
+
+    public void actionPerformed(ActionEvent e)
+    { StringWriter sw = new StringWriter(); 
+      PrintWriter out = new PrintWriter(sw);   
+      for (int i = 0; i < entities.size(); i++) 
+      { Entity ent = (Entity) entities.get(i);
+        if (ent.isExternal() || ent.isComponent()) 
+        { continue; }  
+        ent.generateJava7(entities,types,out);     
+      } 
+      String res = sw.toString(); 
+      messageArea.setText(res);
     } 
   } 
 
