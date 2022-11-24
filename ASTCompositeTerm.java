@@ -40172,7 +40172,61 @@ public class ASTCompositeTerm extends ASTTerm
 
     return 0; 
   } 
- 
+
+  public Type cobolDataType()
+  { if ("dataPictureClause".equals(tag))
+    { // (PIC | PICTURE) IS? pictureString
+
+      int sze = terms.size(); 
+      ASTTerm ptrm = (ASTTerm) terms.get(sze-1); 
+      return ptrm.cobolDataType(); 
+    } 
+
+    if ("pictureString".equals(tag))
+    { Type res = null; 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        Type typ = tt.cobolDataType();
+        if (res == null) 
+        { res = typ; }
+        else if (typ == null) { } // no information 
+        else if (typ == doubleType)
+        { return typ; } 
+        else if (res == intType && typ == intType)
+        { res = intType; } 
+        else // typ or res are String
+        { res = stringType; }  
+      } 
+      return res; 
+    } 
+
+    if ("pictureCardinality".equals(tag))
+    { return null; } 
+
+    if ("pictureChars".equals(tag))
+    { ASTTerm val = (ASTTerm) terms.get(0); 
+      return val.cobolDataType(); 
+    }   
+
+    return stringType; 
+  } 
+
+  public int cobolOccursTimes()
+  { if ("dataOccursClause".equals(tag))
+    { // OCCURS integerLiteral dataOccursTo? TIMES? 
+      // (DEPENDING ON? qualifiedDataName)? 
+      // dataOccursSort* (INDEXED BY? LOCAL? indexName+)?
+      ASTTerm times = (ASTTerm) terms.get(1); 
+      String lit = times.literalForm(); 
+      try 
+      { int x = Integer.parseInt(lit); 
+        return x; 
+      } catch (Exception _ex) { } 
+    } 
+    return 1; 
+  } 
+
+     
   public Vector cobolDataDefinitions(java.util.Map context, Vector invs)
   { // Each non-filler item at level > 01 becomes an attribute
     // of a relevant container. If composite (no picture), 
@@ -40294,25 +40348,43 @@ public class ASTCompositeTerm extends ASTTerm
       { fieldName = "FILLER"; } 
 
       Entity container = (Entity) context.get("container"); 
+
+      int multiplicity = 1;
+      if (ASTTerm.hasTag(terms,"dataOccursClause")) 
+      { ASTTerm occursClause = 
+          ASTTerm.getTermByTag(terms,"dataOccursClause"); 
+        if (occursClause != null) 
+        { multiplicity = 
+            ((ASTCompositeTerm) occursClause).cobolOccursTimes(); 
+        } 
+      } 
     
       if (ASTTerm.hasTag(terms,"dataPictureClause"))
       { // It is a basic data item, not an entity
 
         ASTTerm pictureClause = 
           ASTTerm.getTermByTag(terms,"dataPictureClause"); 
-        int wdth = 0; 
-        if (pictureClause != null) 
-        { wdth = pictureClause.cobolDataWidth(); } 
-        // JOptionPane.showMessageDialog(null, "Width of " + fieldName + " is " + wdth, 
-        //                  "", 
-        //                  JOptionPane.INFORMATION_MESSAGE);  
+        int wdth = 0;
+        Type typ = stringType; 
  
+        if (pictureClause != null) 
+        { wdth = pictureClause.cobolDataWidth() * multiplicity; 
+          typ = pictureClause.cobolDataType();  
+          if (multiplicity > 1) 
+          { Type elemT = typ; 
+            typ = new Type("Sequence", null);
+            typ.setElementType(elemT); 
+          }  
+          JOptionPane.showMessageDialog(null, "Type of " + fieldName + " is " + typ, 
+                          "", 
+                          JOptionPane.INFORMATION_MESSAGE);  
+        } 
 
         if (container == null) // no container, so top-level attribute
         { if ("FILLER".equals(fieldName)) { } 
           else 
           { Attribute att = 
-              new Attribute(fieldName, new Type("String", null), 
+              new Attribute(fieldName, typ, 
                           ModelElement.INTERNAL); 
             res.add(att);  
           
@@ -40321,6 +40393,7 @@ public class ASTCompositeTerm extends ASTTerm
         }
         else // basic attribute of some container 
         { int contLevel = container.levelNumber; 
+          int contMult = container.cardinalityValue; 
 
           Integer startPosition = (Integer) context.get("startPosition"); 
           if (startPosition != null) 
@@ -40333,31 +40406,76 @@ public class ASTCompositeTerm extends ASTTerm
                cname.substring(0,cname.length()-6); 
             String progname = 
                (String) context.get("programName"); 
-            JOptionPane.showMessageDialog(null, progname + ":: " + fieldName + 
-               " = " + ownername + 
-               ".subrange(" + startPos + "," + endPos + ")", 
+
+            if (multiplicity >= 1 && contMult == 1)
+            { // fieldName = owner.subrange(startPos,endPos)
+
+              JOptionPane.showMessageDialog(null, progname + ":: " + fieldName + 
+                 " = " + ownername + 
+                 ".subrange(" + startPos + "," + endPos + ")", 
                           "", 
                           JOptionPane.INFORMATION_MESSAGE);
-            BasicExpression owner = 
-              BasicExpression.newAttributeBasicExpression(
-                                   ownername, 
-                                   new Type("String", null)); 
-            BasicExpression attr = 
-              BasicExpression.newAttributeBasicExpression(
+              BasicExpression owner = 
+                BasicExpression.newAttributeBasicExpression(
+                                   ownername, stringType);  
+              BasicExpression attr = 
+                BasicExpression.newAttributeBasicExpression(
                                    fieldName, 
-                                   new Type("String", null));
-            Vector spars = new Vector(); 
-            spars.add(new BasicExpression(startPos)); 
-            spars.add(new BasicExpression(endPos));  
-            BasicExpression substr = 
-              BasicExpression.newFunctionBasicExpression(
-                "subrange", owner, spars); 
-            BinaryExpression inv = 
-              new BinaryExpression("=", attr, substr);
-            Constraint cons = 
-              Constraint.getConstraint(inv); 
-            cons.ownerName = progname;  
-            invs.add(cons);   
+                                   typ);
+              Vector spars = new Vector(); 
+              spars.add(new BasicExpression(startPos)); 
+              spars.add(new BasicExpression(endPos));  
+              BasicExpression substr = 
+                BasicExpression.newFunctionBasicExpression(
+                  "subrange", owner, spars); 
+              BinaryExpression inv = 
+                new BinaryExpression("=", attr, substr);
+              Constraint cons = 
+                Constraint.getConstraint(inv); 
+              cons.ownerName = progname;  
+              invs.add(cons);
+            } 
+            else if (multiplicity == 1 & contMult > 1)
+            { // fieldName[i] = owner[i].subrange(...)
+
+              JOptionPane.showMessageDialog(null, progname + ":: " + fieldName + 
+                 "[i] = " + ownername + 
+                 "[i].subrange(" + startPos + "," + endPos + ")", 
+                          "", 
+                          JOptionPane.INFORMATION_MESSAGE);
+
+              BasicExpression indx = 
+                BasicExpression.newVariableBasicExpression(
+                                   "indx", 
+                                   intType); 
+                            
+              Type seqType = new Type("Sequence", null); 
+              seqType.setElementType(stringType); 
+              Type typSeq = new Type("Sequence", null); 
+              typSeq.setElementType(typ); 
+              BasicExpression owner = 
+                BasicExpression.newAttributeBasicExpression(
+                                   ownername, 
+                                   seqType); 
+              owner.setArrayIndex(indx); 
+              BasicExpression attr = 
+                BasicExpression.newAttributeBasicExpression(
+                                   fieldName, 
+                                   typSeq);
+              Vector spars = new Vector(); 
+              attr.setArrayIndex(indx); 
+              spars.add(new BasicExpression(startPos)); 
+              spars.add(new BasicExpression(endPos));  
+              BasicExpression substr = 
+                BasicExpression.newFunctionBasicExpression(
+                  "subrange", owner, spars); 
+              BinaryExpression inv = 
+                new BinaryExpression("=", attr, substr);
+              Constraint cons = 
+                Constraint.getConstraint(inv); 
+              cons.ownerName = progname;  
+              invs.add(cons);
+            } 
           } 
           else 
           { context.put("startPosition", 1 + wdth); } 
@@ -40370,7 +40488,7 @@ public class ASTCompositeTerm extends ASTTerm
             if ("FILLER".equals(fieldName)) {} 
             else 
             { Attribute att = 
-                new Attribute(fieldName, new Type("String", null), 
+                new Attribute(fieldName, typ, 
                           ModelElement.INTERNAL); 
               container.addAttribute(att); 
             } // could itself be composite
@@ -40382,7 +40500,7 @@ public class ASTCompositeTerm extends ASTTerm
             if ("FILLER".equals(fieldName)) {} 
             else 
             { Attribute att = 
-                new Attribute(fieldName, new Type("String", null), 
+                new Attribute(fieldName, typ, 
                           ModelElement.INTERNAL);
               Entity actualContainer = 
                  container.findContainer(levelNumber);  
@@ -40401,11 +40519,21 @@ public class ASTCompositeTerm extends ASTTerm
         else 
         { Entity newent = new Entity(fieldName + "_Class");
           newent.levelNumber = levelNumber; 
+          newent.cardinalityValue = multiplicity; 
+
+          Type typ = new Type(newent); 
+          if (multiplicity > 1) 
+          { Type elemT = typ; 
+            typ = new Type("Sequence", null);
+            typ.setElementType(elemT); 
+          }  
+
           Attribute att = 
-            new Attribute(fieldName, new Type(newent), 
+            new Attribute(fieldName, typ, 
                          ModelElement.INTERNAL); 
 
-          Integer previousLevel = (Integer) context.get("previousLevel");
+          Integer previousLevel = 
+            (Integer) context.get("previousLevel");
 
           int prevLevel = -1; 
           if (previousLevel != null) 

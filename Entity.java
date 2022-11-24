@@ -44,7 +44,7 @@ public class Entity extends ModelElement implements Comparable
 
   int levelNumber = 0; // For nested classes
   Entity container = null; // Nested classes
-  
+  int cardinalityValue = 1; // container is a sequence if > 1  
 
   public Entity(String nme)
   { super(nme); 
@@ -141,6 +141,15 @@ public class Entity extends ModelElement implements Comparable
     { return this; } 
 
     return container.findContainer(level); 
+  } 
+
+  public Entity findRootContainer()
+  { // Find the ultimate containing class
+
+    if (container == null) 
+    { return this; } 
+
+    return container.findRootContainer(); 
   } 
 
   public boolean allSubclassesAreEmpty()
@@ -4851,22 +4860,36 @@ public class Entity extends ModelElement implements Comparable
 
   public Constraint attributeSumInvariant()
   { // name = "" + att1 + att2 + ...
+    // If cardinalityValue > 1 then 
+    // name[indx] = "" + att1[indx] + att2[indx] 
 
+    BasicExpression indx = 
+         BasicExpression.newVariableBasicExpression(
+                                   "indx", 
+                                   new Type("int", null)); 
+ 
     String shortName = name.substring(0,name.length()-6); 
-    Expression cls = 
+    BasicExpression cls = 
       BasicExpression.newAttributeBasicExpression(
                                    shortName, 
                                    new Type("String", null));
+    cls.setElementType(new Type("String", null));
+    if (cardinalityValue > 1) 
+    { cls.setArrayIndex(indx); } 
+ 
     Expression sumExpr = 
       BasicExpression.newValueBasicExpression("\"\""); 
     sumExpr.setType(new Type("String", null)); 
             
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
-      Expression expr = new BasicExpression(att);
+      BasicExpression expr = new BasicExpression(att);
+      if (cardinalityValue > 1) 
+      { expr.setArrayIndex(indx); } 
       sumExpr = 
         new BinaryExpression("+", sumExpr, expr); 
-      sumExpr.setType(new Type("String", null)); 
+      sumExpr.setType(new Type("String", null));
+      sumExpr.setElementType(new Type("String", null)); 
     } 
     Expression pst = 
       new BinaryExpression("=", cls, sumExpr); 
@@ -5587,32 +5610,45 @@ public class Entity extends ModelElement implements Comparable
 
   public void addTranscomps(Vector entities, Vector types)
   { Vector res = new Vector(); 
+
     for (int i = 0; i < invariants.size(); i++) 
     { Constraint inv = (Constraint) invariants.get(i); 
-      for (int j = i+1; j < invariants.size(); j++) 
-      { Constraint inv2 = (Constraint) invariants.get(j);
-        if (inv2.getEvent() != null) { continue; } // get next j
-        SafetyInvariant sinv = new SafetyInvariant(inv.antecedent(), 
-                                                   inv.succedent()); 
-        SafetyInvariant sinv2 = new SafetyInvariant(inv2.antecedent(), 
-                                                    inv2.succedent());  
+      for (int j = 0; j < invariants.size(); j++) 
+      { if (i == j) { continue; } 
+        Constraint inv2 = (Constraint) invariants.get(j);
+        if (inv2.getEvent() != null) 
+        { continue; } // get next j
+        SafetyInvariant sinv = 
+          new SafetyInvariant(inv.antecedent(), 
+                              inv.succedent()); 
+        SafetyInvariant sinv2 = 
+          new SafetyInvariant(inv2.antecedent(), 
+                              inv2.succedent());  
         SafetyInvariant newinv = SafetyInvariant.transitiveComp2(sinv,sinv2); 
         if (newinv == null)
-        { newinv = SafetyInvariant.transitiveComp3(sinv,sinv2); } 
-        System.out.println("New local invariant: " + newinv); 
+        { newinv = SafetyInvariant.transitiveComp3(sinv,sinv2); }
+ 
+        System.out.println();  
+        System.out.println(">> New local invariant: " + newinv); 
         if (newinv != null && !newinv.isTrivial())
         { Vector contexts = new Vector(); 
           contexts.add(this); 
           newinv.typeCheck(types,entities,contexts,new Vector());
+
           Vector ass1 = inv.getAssociations(); 
           Vector newass = VectorUtil.union(ass1,inv2.getAssociations());  
+
           Constraint newcon = new Constraint(newinv,newass); 
-          if (invariants.contains(newcon)) { } 
+          newcon.setLocal(true); 
+          newcon.setOwner(this);
+ 
+          if (VectorUtil.containsEqualString("" + newcon,
+                                             invariants) || 
+              VectorUtil.containsEqualString("" + newcon,
+                                             res)) 
+          { } 
           else 
-          { newcon.setLocal(true); 
-            newcon.setOwner(this); 
-            res.add(newcon); 
-          } 
+          { res.add(newcon); } 
         }
       } 
     }

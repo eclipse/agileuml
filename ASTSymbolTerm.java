@@ -858,6 +858,26 @@ public class ASTSymbolTerm extends ASTTerm
     return 0; 
   } 
 
+  public Type cobolDataType()
+  { if ("9".equals(symbol) ||
+        "S".equals(symbol))
+    { return ASTCompositeTerm.intType; }
+
+    if ("X".equals(symbol) || 
+        ",".equals(symbol) || "A".equals(symbol) ||
+        "B".equals(symbol) || "0".equals(symbol) ||
+        "/".equals(symbol) || "+".equals(symbol) ||
+        "-".equals(symbol) || "$".equals(symbol) ||
+        "£".equals(symbol) || ".".equals(symbol) ||
+        "Z".equals(symbol) || "*".equals(symbol))
+    { return ASTCompositeTerm.stringType; } 
+
+    if ("P".equals(symbol) || "V".equals(symbol))
+    { return ASTCompositeTerm.doubleType; } 
+ 
+    return null; 
+  } 
+
   public Vector cobolDataDefinitions(java.util.Map context, Vector invs)
   { Vector res = new Vector(); 
     return res; 

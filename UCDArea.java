@@ -1765,29 +1765,37 @@ public class UCDArea extends JPanel
         SafetyInvariant newinv = SafetyInvariant.transitiveComp(inv,inv2); 
         if (newinv != null)
         { if (newinv.isTrivial())
-          { System.out.println("Trivial invariant: " + newinv); } 
+          { System.out.println(">> Trivial invariant: " + newinv); } 
           else 
-          { System.out.println("Non-trivial invariant: " + newinv); 
+          { System.out.println(">> Non-trivial invariant: " + newinv); 
             Vector contexts = new Vector(); 
             contexts.add(con.getOwner()); 
             newinv.typeCheck(types,entities,contexts,new Vector());
             Vector ass1 = con.getAssociations(); 
             Vector newass = VectorUtil.union(ass1,con2.getAssociations());  
-            System.out.print("New invariant: " + newinv); 
+            System.out.print(">> New invariant: " + newinv); 
             System.out.println(" on associations " + newass); 
             Constraint newcon = new Constraint(newinv,newass); 
-            if (invariants.contains(newcon)) { } 
+            newcon.setLocal(false); 
+            newcon.setOwner(con.getOwner()); 
+            // newcon.typeCheck(types,entities);
+          
+            if (VectorUtil.containsEqualString("" + newcon, 
+                                               invariants) ||
+                VectorUtil.containsEqualString("" + newcon, 
+                                               res)) 
+            { } 
             else 
-            { newcon.setLocal(false); 
-              newcon.setOwner(con.getOwner()); 
-            // newcon.typeCheck(types,entities); 
+            {  
               res.add(newcon); 
             } 
           }
         }
       } 
     }
+
     invariants.addAll(res); 
+
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i); 
       ent.addTranscomps(entities,types); 
@@ -26454,9 +26462,7 @@ public void produceCUI(PrintWriter out)
     { Object aux = auxents.get(i); 
       if (aux instanceof Entity)
       { Entity auxent = (Entity) aux;
-        Constraint suminv = 
-          auxent.attributeSumInvariant(); 
-        System.out.println(suminv);  
+          
         auxentities = auxentities + auxent.getKM3() + "\n\n"; 
       } 
     } 
@@ -26473,13 +26479,37 @@ public void produceCUI(PrintWriter out)
       if (aux instanceof Constraint)
       { Constraint cons = (Constraint) aux; 
         String pname = cons.ownerName; 
-        Entity ent = (Entity) ModelElement.lookupByName(pname,entities); 
+        Entity ent = 
+          (Entity) ModelElement.lookupByName(pname,entities); 
         if (ent != null) 
         { cons.setOwner(ent);
           ent.addInvariant(cons);  
           System.out.println(cons); 
         }
       }  
+    } 
+
+    for (int i = 0; i < auxents.size(); i++) 
+    { Object aux = auxents.get(i); 
+      if (aux instanceof Entity)
+      { Entity auxent = (Entity) aux;
+        Constraint suminv = 
+          auxent.attributeSumInvariant();
+        Entity rootcontainer = 
+          auxent.findRootContainer(); 
+        
+        if (rootcontainer != null) 
+        { Entity actualRoot = 
+            (Entity) ModelElement.lookupByName(
+                       rootcontainer.getName(), 
+                       entities);
+          if (actualRoot != null) 
+          { suminv.setOwner(actualRoot); 
+            actualRoot.addInvariant(suminv);
+          } 
+        }  
+        System.out.println(suminv);
+      } 
     } 
  
     repaint(); 

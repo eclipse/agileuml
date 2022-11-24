@@ -422,6 +422,13 @@ class BasicExpression extends Expression
     return res; 
   } 
 
+  public static BasicExpression newAttributeBasicExpression(String value, Type typ) 
+  { BasicExpression res = new BasicExpression(value); 
+    res.umlkind = ATTRIBUTE;
+    res.type = typ; 
+    return res; 
+  } 
+
   public static BasicExpression newStaticAttributeBasicExpression(Attribute att) 
   { BasicExpression res = new BasicExpression(att.getName()); 
     res.umlkind = ATTRIBUTE;
@@ -4758,8 +4765,8 @@ class BasicExpression extends Expression
   private void adjustTypeForArrayIndex()
   { // if there is an arrayIndex, make type = elementType, etc
 
-    System.out.println("+++ Adjusting type " + type + " " + 
-                       elementType + " " + arrayIndex); 
+    // System.out.println("+++ Adjusting type " + type + " " + 
+    //                    elementType + " " + arrayIndex); 
 
     if (arrayIndex != null && type != null && 
         "String".equals(type.getName()))
@@ -4812,8 +4819,8 @@ class BasicExpression extends Expression
   private void adjustTypeForArrayIndex(Attribute var)
   { // if there is an arrayIndex, make type = elementType, etc
 
-    System.out.println("+++ Adjusting type " + type + " " + 
-          elementType + " " + arrayIndex + " " + var); 
+    // System.out.println("+++ Adjusting type " + type + " " + 
+    //       elementType + " " + arrayIndex + " " + var); 
 
     if (arrayIndex != null && "String".equals(type + ""))
     { elementType = new Type("String", null); 
@@ -4840,8 +4847,8 @@ class BasicExpression extends Expression
       } // Sequence access, defined type
     } 
 
-    System.out.println("+++ Adjusted type " + type + " " + 
-          elementType); 
+    // System.out.println("+++ Adjusted type " + type + " " + 
+    //       elementType); 
   }  
 
   private boolean eventTypeCheck(Vector types, Vector entities, Vector env)

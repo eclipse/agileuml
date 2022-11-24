@@ -1090,15 +1090,20 @@ class SafetyInvariant extends Invariant
     // if i2 has event, return null:
     if (i2.getEventName() != null) { return null; }
 
+    // ante1 => v = e   ante2 => succ2
+    // compose to give: ante1 & ante2[e/v] => succ2[e/v]
+
     if (succ1 instanceof BinaryExpression)
     { BinaryExpression bsucc1 = (BinaryExpression) succ1;
       if (bsucc1.operator.equals("=") &&
           bsucc1.left instanceof BasicExpression)
       { BasicExpression var = (BasicExpression) bsucc1.left;
-        Expression newante = ante2.substituteEq(var.toString(),
-                                                bsucc1.right);
-        Expression newsucc = succ2.substituteEq(var.toString(),
-                                                bsucc1.right); 
+        Expression newante = 
+           ante2.substituteEq(var.toString(),
+                              bsucc1.right);
+        Expression newsucc = 
+           succ2.substituteEq(var.toString(),
+                              bsucc1.right); 
         Expression ante = 
           (new BinaryExpression("&",ante1,newante)).simplify();
         SafetyInvariant res = 
@@ -1123,6 +1128,9 @@ class SafetyInvariant extends Invariant
     Expression succ2 = i2.succedent();
     // if i2 has event, return null:
     if (i2.getEventName() != null) { return null; }
+
+    // ante1 => succ1   ante2 => succ2   succ1 => ante2
+    // give:  ante1 => succ2
 
     if (succ1.implies(ante2))
     { SafetyInvariant res = new SafetyInvariant(ante1,succ2);

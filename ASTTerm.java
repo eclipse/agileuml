@@ -3667,6 +3667,8 @@ public abstract class ASTTerm
 
   public abstract int cobolDataWidth(); 
 
+  public abstract Type cobolDataType(); 
+
   public static void main(String[] args) 
   { // ASTBasicTerm t = new ASTBasicTerm("OclBasicExpression", "true"); 
     // System.out.println(t.isInteger()); 

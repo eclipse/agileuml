@@ -2687,6 +2687,26 @@ public class ASTBasicTerm extends ASTTerm
     return 0; 
   } 
 
+  public Type cobolDataType()
+  { if ("integerLiteral".equals(tag) || "9".equals(value) ||
+        "S".equals(value))
+    { return ASTCompositeTerm.intType; }
+
+    if ("X".equals(value) || 
+        ",".equals(value) || "A".equals(value) ||
+        "B".equals(value) || "0".equals(value) ||
+        "/".equals(value) || "+".equals(value) ||
+        "-".equals(value) || "$".equals(value) ||
+        "£".equals(value) || ".".equals(value) ||
+        "Z".equals(value) || "*".equals(value))
+    { return ASTCompositeTerm.stringType; } 
+
+    if ("P".equals(value) || "V".equals(value))
+    { return ASTCompositeTerm.doubleType; } 
+ 
+    return null; 
+  } 
+
   public Vector cobolDataDefinitions(java.util.Map context, Vector invs)
   { // Each immediately higher level item becomes an attribute
     // of container. If composite, it also becomes a class
