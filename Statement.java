@@ -250,12 +250,15 @@ abstract class Statement implements Cloneable
     { SequenceStatement sq = (SequenceStatement) st; 
       Vector stats = sq.getStatements(); 
       for (int i = 0; i < stats.size(); i++) 
-      { if (stats.get(i) instanceof InvocationStatement)
+      { Statement ss = (Statement) stats.get(i); 
+        res.addAll(Statement.getOperationCalls(ss)); 
+
+        /* if (stats.get(i) instanceof InvocationStatement)
         { res.add(stats.get(i)); } 
         else if (stats.get(i) instanceof SequenceStatement)
         { Statement stat = (Statement) stats.get(i); 
           res.addAll(Statement.getOperationCalls(stat));
-        }  
+        }  */ 
       } 
       return res;
     } 
@@ -264,6 +267,18 @@ abstract class Statement implements Cloneable
     { ConditionalStatement cs = (ConditionalStatement) st; 
       res.addAll(getOperationCalls(cs.ifPart())); 
       res.addAll(getOperationCalls(cs.elsePart())); 
+      return res; 
+    } 
+
+    if (st instanceof IfStatement) 
+    { IfStatement cs = (IfStatement) st; 
+      System.err.println("! Warning: do not use IfStatement"); 
+      Statement ifpart = cs.getIfPart(); 
+      if (ifpart != null) 
+      { res.addAll(getOperationCalls(ifpart)); } 
+      Statement elsepart = cs.getElsePart(); 
+      if (elsepart != null) 
+      { res.addAll(getOperationCalls(elsepart)); }  
       return res; 
     } 
 
@@ -288,6 +303,152 @@ abstract class Statement implements Cloneable
 
     return res;
   } // Other cases, for all other forms of statement. 
+
+  public static Vector getOperationCallsContexts(
+      String nme, Statement st, 
+      Vector contexts, Vector remainders)
+  { // Each context is preceding/enclosing code of each call
+    // Each remainder is the code after call. 
+
+    Vector res = new Vector(); 
+    if (st == null) 
+    { return res; }
+
+    if (st instanceof InvocationStatement)
+    { InvocationStatement invok = 
+        (InvocationStatement) st; 
+      Expression expr = invok.getCallExp(); 
+      if (("self." + nme + "()").equals(expr + ""))
+      { res.add(st);
+        Vector thiscall = new Vector(); 
+        thiscall.add(st); 
+        contexts.add(thiscall);  
+        remainders.add(new Vector()); 
+      }
+      return res; 
+    } 
+ 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      Vector stats = sq.getStatements();
+ 
+      Vector precedingStats = new Vector(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { Statement ss = (Statement) stats.get(i); 
+        
+        Vector newcontexts = new Vector(); 
+        Vector newrems = new Vector(); 
+        Vector calls = Statement.getOperationCallsContexts(
+                             nme,ss,newcontexts,newrems);
+        for (int j = 0; j < calls.size(); j++) 
+        { Vector context = (Vector) newcontexts.get(j); 
+          Vector newcontext = new Vector(); 
+          newcontext.addAll(precedingStats); 
+          newcontext.addAll(context); 
+          newcontexts.set(j,newcontext); 
+
+          Vector rem = (Vector) newrems.get(j);           
+          Vector remainder = new Vector(); 
+          remainder.addAll(rem); 
+          for (int k = i+1; k < stats.size(); k++) 
+          { remainder.add(stats.get(k)); } 
+          newrems.set(j,remainder); 
+        }  
+        res.addAll(calls);
+        contexts.addAll(newcontexts); 
+        remainders.addAll(newrems); 
+         
+
+        /* if (stats.get(i) instanceof InvocationStatement)
+        { res.add(stats.get(i)); } 
+        else if (stats.get(i) instanceof SequenceStatement)
+        { Statement stat = (Statement) stats.get(i); 
+          res.addAll(Statement.getOperationCalls(stat));
+        }  */ 
+
+        precedingStats.add(ss); 
+      } 
+      return res;
+    } 
+    
+    if (st instanceof ConditionalStatement) 
+    { ConditionalStatement cs = (ConditionalStatement) st;
+      Expression tst = cs.getTest(); 
+
+      Vector ctxs1 = new Vector();  
+      Vector rems1 = new Vector();  
+      Vector calls1 = 
+         getOperationCallsContexts(
+                            nme,cs.ifPart(),ctxs1,rems1);
+ 
+      if (calls1.size() > 0) // Only expect 1 at most
+      { res.add(calls1.get(0));
+
+        Vector ifcall = new Vector(); 
+        ifcall.add("if");
+        ifcall.add(tst); 
+        ifcall.add(ctxs1); 
+        ifcall.add(cs.elsePart()); 
+
+        Vector sts1 = new Vector(); 
+        sts1.add(ifcall); 
+        contexts.add(sts1); 
+        remainders.add(rems1.get(0)); 
+      } 
+
+      Vector ctxs2 = new Vector();  
+      Vector rems2 = new Vector();  
+      Vector calls2 = 
+         getOperationCallsContexts(
+                         nme,cs.elsePart(),ctxs2,rems2); 
+      if (calls2.size() > 0) 
+      { res.add(calls2.get(0)); 
+
+        Vector elsecall = new Vector(); 
+        elsecall.add("else");
+        elsecall.add(tst); 
+        elsecall.add(cs.ifPart()); 
+        elsecall.add(ctxs2); 
+
+        Vector sts2 = new Vector(); 
+        sts2.add(elsecall); 
+        contexts.add(sts2); 
+        remainders.add(rems2.get(0)); 
+      } 
+
+      return res; 
+    } 
+
+    
+
+    return res;
+  } // Other cases, for all other forms of statement. 
+
+  public static Statement replaceSelfCallByContinue(String nme, Vector branch)
+  { // sequence statement of branch elements except 
+    // self.nme() replaced by continue
+
+    System.out.println("+++ REPLACING: " + branch);
+
+    Vector vect = new Vector(); 
+    if (branch.get(0) instanceof Vector)
+    { vect = (Vector) branch.get(0); }  
+    else 
+    { vect.addAll(branch); } 
+
+    SequenceStatement res = new SequenceStatement(); 
+    int blen = vect.size(); 
+
+    for (int i = 0; i < blen-1; i++) 
+    { Statement st = (Statement) vect.get(i); 
+      res.addStatement(st); 
+    } 
+
+    res.addStatement(new ContinueStatement()); 
+
+    return res;
+  } // Other cases, for all other forms of statement. 
+
 
   /* All cloned expressions in this statement */ 
   public void findClones(java.util.Map clones, String rule, String op)
@@ -1552,6 +1713,9 @@ class InvocationStatement extends Statement
     { return true; } 
     return false; 
   } 
+
+  public Expression getCallExp()
+  { return callExp; } 
 
   public void setCallExp(Expression e)
   { callExp = e; } 
@@ -7854,7 +8018,7 @@ class TryStatement extends Statement
 
 }
 
-
+/* Deprecated class, please use ConditionalStatement */ 
 class IfStatement extends Statement
 { Vector cases = new Vector();    /* of IfCase */
 
@@ -7868,7 +8032,7 @@ class IfStatement extends Statement
     cases.add(ic1); 
     if ("skip".equals(elsepart + "")) { } 
     else 
-    { IfCase ic2 = new IfCase(new BasicExpression("true"),elsepart); 
+    { IfCase ic2 = new IfCase(new BasicExpression(true),elsepart); 
       cases.add(ic2);
     }  
   } 

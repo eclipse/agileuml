@@ -4883,16 +4883,33 @@ public class Entity extends ModelElement implements Comparable
             
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
-      BasicExpression expr = new BasicExpression(att);
+      Expression expr = new BasicExpression(att);
       if (cardinalityValue > 1) 
-      { expr.setArrayIndex(indx); } 
+      { ((BasicExpression) expr).setArrayIndex(indx); } 
+      else if (att.isSequence())
+      { expr = new UnaryExpression("->sum", expr); } 
       sumExpr = 
         new BinaryExpression("+", sumExpr, expr); 
       sumExpr.setType(new Type("String", null));
       sumExpr.setElementType(new Type("String", null)); 
     } 
     Expression pst = 
-      new BinaryExpression("=", cls, sumExpr); 
+      new BinaryExpression("=", cls, sumExpr);
+    if (cardinalityValue > 1) 
+    { // Integer.subrange(1,cardinalityValue)->forAll(pst)
+      Vector ipars = new Vector(); 
+      ipars.add(new BasicExpression(1)); 
+      ipars.add(
+        new BasicExpression(cardinalityValue)); 
+
+      BasicExpression dmn = 
+            BasicExpression.newFunctionBasicExpression(
+                   "subrange", "Integer", ipars);
+      BinaryExpression indmn = 
+        new BinaryExpression(":", indx, dmn);       
+      pst = 
+        new BinaryExpression("!", indmn, pst);
+    } 
     pst.setType(new Type("boolean", null)); 
 
     Constraint res = 
@@ -4900,10 +4917,51 @@ public class Entity extends ModelElement implements Comparable
     return res; 
   } 
 
+  public void adjustAttributeMultiplicities(Entity ent)
+  { // For each sequence-valued att of ent, if att is an 
+    // attribute of this, change it to be a sequence if not
+
+    for (int i = 0; i < ent.attributes.size(); i++) 
+    { Attribute att = (Attribute) ent.attributes.get(i); 
+      if (ent.cardinalityValue > 1 && !(att.isSequence()))
+      { String aname = att.getName(); 
+        Attribute localatt = 
+          (Attribute) ModelElement.lookupByName(
+                                      aname,attributes);
+        if (localatt != null && !localatt.isSequence())
+        { Type tatt = localatt.getType(); 
+          Type seqType = new Type("Sequence", null); 
+          seqType.setElementType(tatt); 
+          localatt.setType(seqType); 
+          localatt.setElementType(tatt); 
+          Expression initElem = 
+            localatt.getInitialExpression(); 
+          Vector ipars = new Vector(); 
+          ipars.add(new BasicExpression(1)); 
+          ipars.add(
+                  new BasicExpression(ent.cardinalityValue)); 
+
+          BasicExpression dmn = 
+            BasicExpression.newFunctionBasicExpression(
+                   "subrange", "Integer", ipars);
+            
+          Expression seqInit = 
+            new BinaryExpression("->collect", dmn, initElem);
+          seqInit.setType(seqType); 
+          seqInit.setElementType(tatt);  
+          localatt.setInitialExpression(seqInit); 
+          System.out.println(aname + " : " + seqType + 
+                             " := " + 
+                             seqInit); 
+        } 
+      } 
+    }  
+  } 
+
   public void createPrimaryKey()
   { String key = getName().toLowerCase() + "Id"; 
     if (hasAttribute(key))
-    { System.err.println("Cannot create attribute with name: " + key); } 
+    { System.err.println("!! Cannot create attribute with name: " + key); } 
     else 
     { Type tint = new Type("String",null);   // not int 
       Attribute att = new Attribute(key,tint,ModelElement.INTERNAL); 

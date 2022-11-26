@@ -40328,7 +40328,7 @@ public class ASTCompositeTerm extends ASTTerm
       int levelNumber = 0; 
       String fieldName = ""; 
 
-      if ("77".equals(level)) 
+      if ("77".equals(level) || "66".equals(level)) 
       { context.put("container", null); 
         return res; 
       } 
@@ -40407,7 +40407,7 @@ public class ASTCompositeTerm extends ASTTerm
             String progname = 
                (String) context.get("programName"); 
 
-            if (multiplicity >= 1 && contMult == 1)
+            if (multiplicity == 1 && contMult == 1)
             { // fieldName = owner.subrange(startPos,endPos)
 
               JOptionPane.showMessageDialog(null, progname + ":: " + fieldName + 
@@ -40428,8 +40428,42 @@ public class ASTCompositeTerm extends ASTTerm
               BasicExpression substr = 
                 BasicExpression.newFunctionBasicExpression(
                   "subrange", owner, spars); 
+              Expression convertedExpr = 
+                Type.typeConversionFromString(
+                                          substr,typ); 
               BinaryExpression inv = 
-                new BinaryExpression("=", attr, substr);
+                new BinaryExpression("=", attr, 
+                                     convertedExpr);
+              Constraint cons = 
+                Constraint.getConstraint(inv); 
+              cons.ownerName = progname;  
+              invs.add(cons);
+            } 
+            else if (multiplicity > 1 && contMult == 1)
+            { // fieldName = owner.subrange(startPos,endPos)
+              int fwdth = wdth/multiplicity; 
+              JOptionPane.showMessageDialog(null, progname + ":: " + fieldName + 
+                 "[i] = " + ownername + 
+                 ".subrange(" + startPos + " + (i-1)*" + fwdth + ",  i*" + fwdth + ")", 
+                          "", 
+                          JOptionPane.INFORMATION_MESSAGE);
+              BasicExpression owner = 
+                BasicExpression.newAttributeBasicExpression(
+                                   ownername, stringType);  
+              BasicExpression attr = 
+                BasicExpression.newAttributeBasicExpression(
+                                   fieldName, 
+                                   typ);
+              Vector spars = new Vector(); 
+              spars.add(new BasicExpression(startPos)); 
+              spars.add(new BasicExpression(endPos));  
+              BasicExpression substr = 
+                BasicExpression.newFunctionBasicExpression(
+                  "subrange", owner, spars); 
+              BinaryExpression inv = 
+                new BinaryExpression("=", 
+                   new UnaryExpression("->sum", attr), 
+                                       substr);
               Constraint cons = 
                 Constraint.getConstraint(inv); 
               cons.ownerName = progname;  
@@ -40469,8 +40503,26 @@ public class ASTCompositeTerm extends ASTTerm
               BasicExpression substr = 
                 BasicExpression.newFunctionBasicExpression(
                   "subrange", owner, spars); 
+              Expression convertedExpr = 
+                Type.typeConversionFromString(
+                                          substr,typ); 
               BinaryExpression inv = 
-                new BinaryExpression("=", attr, substr);
+                new BinaryExpression("=", attr, 
+                                     convertedExpr);
+              Vector ipars = new Vector(); 
+              ipars.add(new BasicExpression(1)); 
+              ipars.add(
+                new BasicExpression(contMult)); 
+
+              BasicExpression dmn = 
+                 BasicExpression.newFunctionBasicExpression(
+                     "subrange", "Integer", ipars);
+              BinaryExpression indmn = 
+                  new BinaryExpression(":", indx, dmn);       
+      
+              inv = 
+                new BinaryExpression("!", indmn, inv);
+
               Constraint cons = 
                 Constraint.getConstraint(inv); 
               cons.ownerName = progname;  

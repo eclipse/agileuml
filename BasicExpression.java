@@ -4326,7 +4326,7 @@ class BasicExpression extends Expression
         arrayType = type;  
         adjustTypeForArrayIndex(att); 
         
-        System.out.println("**>> Adjusted type of " + this + " is " + type + "(" + elementType + ")");  
+        // System.out.println("**>> Adjusted type of " + this + " is " + type + "(" + elementType + ")");  
  
         elementType = Type.correctElementType(type,elementType,types,entities); 
         att.setElementType(elementType); 

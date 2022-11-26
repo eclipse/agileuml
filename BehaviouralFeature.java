@@ -10008,6 +10008,153 @@ public class BehaviouralFeature extends ModelElement
   }
 
   // Check completeness: if post updates v but not w when w data depends on v
+
+  public Statement selfCalls2Loops(Statement act)
+  { // if there are simple calls to itself, replace by 
+    // continue/break in a loop. 
+
+    // ... ; self.nme() ; *** 
+    // is  while true do (...)
+
+    // ... ; if E then self.nme() else skip ; ***
+    // is   while true do (... ; if E then continue else 
+    //                     skip) ; ***
+
+    Statement oldact = act; 
+    if (oldact == null) 
+    { oldact = activity; } 
+    if (oldact == null) 
+    { return act; } 
+
+    String nme = getName(); 
+
+    Vector contexts = new Vector(); 
+    Vector remainders = new Vector(); 
+
+    Vector opcalls = Statement.getOperationCallsContexts(
+                              nme,oldact,contexts,remainders); 
+
+    System.out.println(opcalls); 
+    System.out.println(contexts); 
+    System.out.println(remainders); 
+
+    int selfcalls = 0; 
+    Vector branches = new Vector(); 
+    Vector rems = new Vector(); 
+
+    for (int i = 0; i < opcalls.size(); i++) 
+    { InvocationStatement opcall = (InvocationStatement) opcalls.get(i); 
+      Vector cntx = (Vector) contexts.get(i); 
+      Vector rem = (Vector) remainders.get(i); 
+      Expression expr = opcall.getCallExp();  
+
+      if (("self." + nme + "()").equals(expr + ""))
+      { selfcalls++; 
+        branches.add(cntx); 
+        rems.add(rem); 
+        // System.out.println(cntx);
+      } 
+    } 
+
+    System.out.println(">>> There are " + selfcalls + " calls of self." + nme + "() in " + oldact); 
+    System.out.println(">>> Branches to calls: " + branches); 
+    System.out.println(">>> Remainders: " + rems); 
+
+    if (selfcalls <= 0) 
+    { return act; } 
+
+    if (selfcalls == 1) 
+    { // simple case. The call is the last item in 
+      // branches[0]. Either a direct call or conditional.
+
+      SequenceStatement loopBody = new SequenceStatement(); 
+
+      Vector branch = (Vector) branches.get(0); 
+      int blen = branch.size(); 
+      for (int i = 0; i < blen - 1; i++) 
+      { Statement sx = (Statement) branch.get(i); 
+        loopBody.addStatement(sx); 
+      } 
+
+      Vector remainder = (Vector) rems.get(0); 
+      Object selfcall = branch.get(blen-1); 
+
+      if (selfcall instanceof Statement)      
+      { 
+        WhileStatement ws = new WhileStatement(
+                                 new BasicExpression(true),
+                                 loopBody); 
+
+        System.out.println(">>> Restructured code: " + ws); 
+        System.out.println(); 
+
+        return ws;
+      } 
+      else if (selfcall instanceof Vector)
+      { // conditional cases
+        Vector selfcallv = (Vector) selfcall; 
+        if (selfcallv.size() == 4 && 
+            "if".equals(selfcallv.get(0) + ""))      
+        { Expression tst = (Expression) selfcallv.get(1);
+          Vector sts = (Vector) selfcallv.get(2); 
+          Statement cde = 
+            Statement.replaceSelfCallByContinue(nme,sts);
+          Statement elsePart = (Statement) selfcallv.get(3); 
+  
+          Statement newelse = 
+            SequenceStatement.combineSequenceStatements(
+                            elsePart,new BreakStatement()); 
+          ConditionalStatement cs = 
+            new ConditionalStatement(tst,
+                cde, 
+                newelse); 
+          loopBody.addStatement(cs); 
+
+          WhileStatement ws = new WhileStatement(
+                                 new BasicExpression(true),
+                                 loopBody); 
+          SequenceStatement res = new SequenceStatement(); 
+          res.addStatement(ws); 
+          res.addStatements(remainder); 
+
+          System.out.println(">>> Restructured code: " + res); 
+          System.out.println(); 
+
+          return res;
+        } 
+        else if (selfcallv.size() == 4 && 
+                 "else".equals(selfcallv.get(0) + ""))      
+        { Expression tst = (Expression) selfcallv.get(1);
+          Statement ifpart = (Statement) selfcallv.get(2); 
+
+          Vector sts = (Vector) selfcallv.get(3); 
+          Statement cde = 
+            Statement.replaceSelfCallByContinue(nme,sts);  
+          Statement newif = 
+            SequenceStatement.combineSequenceStatements(
+                            ifpart,new BreakStatement()); 
+          ConditionalStatement cs = 
+            new ConditionalStatement(tst, 
+                newif, cde); 
+          loopBody.addStatement(cs);
+ 
+          WhileStatement ws = new WhileStatement(
+                                 new BasicExpression(true),
+                                 loopBody); 
+          SequenceStatement res = new SequenceStatement(); 
+          res.addStatement(ws); 
+          res.addStatements(remainder); 
+
+          System.out.println(">>> Restructured code: " + res); 
+          System.out.println(); 
+
+          return res;
+        } 
+      } 
+    } 
+
+    return act;  
+  } 
 }
 
 

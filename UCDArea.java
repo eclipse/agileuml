@@ -6317,7 +6317,7 @@ public class UCDArea extends JPanel
           JOptionPane.showInputDialog("Enter operation name:");
     BehaviouralFeature bf = ent.getOperation(nme); 
     if (bf == null) 
-    { System.err.println("ERROR: No such operation: " + nme); 
+    { System.err.println("!! ERROR: No such operation: " + nme); 
       return; 
     } 
     Statement stat = bf.getActivity(); 
@@ -6333,14 +6333,14 @@ public class UCDArea extends JPanel
     String post = actDialog.getPost(); 
     Compiler2 comp = new Compiler2(); 
     if (post == null)
-    { System.out.println(">>>>> ERROR: Invalid activity: " + post); 
+    { System.out.println("!! ERROR: Invalid activity: " + post); 
       return; 
     }
     comp.nospacelexicalanalysis(post); 
     Statement effect = comp.parseStatement(entities,types); 
 
     while (effect == null)
-    { System.err.println(">>>>> ERROR: Syntax error in activity: " + post); 
+    { System.err.println("!! ERROR: Syntax error in activity: " + post); 
 	  comp.checkBrackets(); 
 	  
       actDialog.setOldFields(nme,"","","",post,true);
@@ -6348,7 +6348,7 @@ public class UCDArea extends JPanel
       post = actDialog.getPost(); 
       Compiler2 comp2 = new Compiler2(); 
       if (post == null)
-      { System.out.println(">>>>> ERROR: Invalid activity: " + post); 
+      { System.out.println("!! ERROR: Invalid activity: " + post); 
         return; 
       }
       comp2.nospacelexicalanalysis(post); 
@@ -6368,7 +6368,43 @@ public class UCDArea extends JPanel
 
     bf.setActivity(effect); 
     updateActivities(ent, bf, effect); 
-    System.out.println("Set activity for operation " + nme + " of entity " + ent); 
+    System.out.println(">> Set activity for operation " + nme + " of entity " + ent); 
+  }
+
+  public void transformOperationActivity(Entity ent)
+  { String nme = 
+          JOptionPane.showInputDialog("Enter operation name:");
+    BehaviouralFeature bf = ent.getOperation(nme); 
+    if (bf == null) 
+    { System.err.println("!! ERROR: No such operation: " + nme); 
+      return; 
+    } 
+    Statement stat = bf.getActivity(); 
+
+    Statement effect = bf.selfCalls2Loops(stat); 
+
+    if (effect == null)
+    { System.err.println("!!! ERROR: Syntax error in activity"); 
+      return; 
+    } 
+    else if (effect == stat) 
+    { System.out.println(">>> No change to activity"); 
+      return; 
+    } 
+    
+    
+    Vector contexts = new Vector(); 
+    contexts.add(ent); 
+    Vector pars = new Vector(); 
+
+    effect.setEntity(ent); 
+    pars.addAll(bf.getParameters()); 
+
+    effect.typeCheck(types,entities,contexts,pars); 
+    
+    bf.setActivity(effect); 
+    updateActivities(ent, bf, effect); 
+    System.out.println(">> Set activity for operation " + nme + " of entity " + ent); 
   }
 
   public void createUseCaseActivity(String ucname)
@@ -26506,6 +26542,8 @@ public void produceCUI(PrintWriter out)
           if (actualRoot != null) 
           { suminv.setOwner(actualRoot); 
             actualRoot.addInvariant(suminv);
+
+            actualRoot.adjustAttributeMultiplicities(auxent); 
           } 
         }  
         System.out.println(suminv);
@@ -26515,6 +26553,9 @@ public void produceCUI(PrintWriter out)
     repaint(); 
     // System.out.println(yy); 
   }
+
+
+  
 
   public Vector maps2constraints(Vector entities, 
                   java.util.Map entityMap, 

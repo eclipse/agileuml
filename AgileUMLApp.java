@@ -86,7 +86,7 @@ public class AgileUMLApp extends JApplet implements DocumentListener
       SimpleAttributeSet[] attrs = initAttributes(4);
 
       try {
-            doc.insertString(0, "class Person { String name; int age; }", attrs[1]);
+            doc.insertString(0, "struct Person { char* name; int age; };\n\n struct Person* pp = malloc(sizeof(struct Person));\n", attrs[1]);
           }
           catch (BadLocationException ble) {
             System.err.println("!! Couldn't insert code text.");
@@ -184,6 +184,10 @@ public class AgileUMLApp extends JApplet implements DocumentListener
       javax.swing.Action toCSAction = new Translate2CSAction(); 
         // checkAction.setMnemonic(KeyEvent.VK_K);
       menu.add(toCSAction); 
+
+      javax.swing.Action toCPPAction = new Translate2CPPAction(); 
+        // checkAction.setMnemonic(KeyEvent.VK_K);
+      menu.add(toCPPAction); 
 
       return menu; 
    } 
@@ -606,6 +610,29 @@ public class AgileUMLApp extends JApplet implements DocumentListener
       } 
       String res = sw.toString(); 
       messageArea.setText(res);
+    } 
+  }
+
+  class Translate2CPPAction extends javax.swing.AbstractAction
+  { public Translate2CPPAction()
+    { super("Translate to C++"); }
+
+    public void actionPerformed(ActionEvent e)
+    { StringWriter sw = new StringWriter(); 
+      PrintWriter out = new PrintWriter(sw);   
+      
+      StringWriter sw1 = new StringWriter(); 
+      PrintWriter out1 = new PrintWriter(sw1);   
+      
+      for (int i = 0; i < entities.size(); i++) 
+      { Entity ent = (Entity) entities.get(i);
+        if (ent.isExternal() || ent.isComponent()) 
+        { continue; }  
+        ent.generateCPP(entities,types,out,out1);     
+      } 
+      String res = sw.toString(); 
+      String res1 = sw1.toString(); 
+      messageArea.setText(res + "\n\n" + res1);
     } 
   }
 }

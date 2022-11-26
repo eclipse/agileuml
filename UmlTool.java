@@ -856,6 +856,11 @@ public void findPlugins()
     moveop.addActionListener(this);
     qualityMenu.add(moveop);
 
+    JMenuItem removeRecursionop = 
+      new JMenuItem("Replace recursion by loops"); 
+    removeRecursionop.addActionListener(this);
+    qualityMenu.add(removeRecursionop);
+
     JMenuItem refineMenu = new JMenu("Refinement"); 
     transMenu.add(refineMenu); 
 
@@ -2457,6 +2462,8 @@ public void findPlugins()
       { ucdArea.moveAttribute(); 
         repaint(); 
       } 
+      else if (label.equals("Replace recursion by loops"))
+      { this.transformOperationActivity(); } 
       else if (label.equals("Singleton"))
       { makeSingletons(); }
       else if (label.equals("Facade"))
@@ -3106,7 +3113,7 @@ public void findPlugins()
     }
     listShowDialog.setOldFields(ucdArea.getEntities()); // getClasses?
     thisLabel.setText("Select entity to create activity for"); 
-    System.out.println("Select entity to create activity for");
+    System.out.println(">> Select entity to create activity for");
 
     listShowDialog.setVisible(true); 
 
@@ -3126,7 +3133,7 @@ public void findPlugins()
     }
     listShowDialog.setOldFields(ucdArea.getEntities()); // getClasses?
     thisLabel.setText("Select entity to edit activity of"); 
-    System.out.println("Select entity to edit activity of");
+    System.out.println(">> Select entity to edit activity of");
 
     listShowDialog.setVisible(true); 
 
@@ -3146,7 +3153,7 @@ public void findPlugins()
     }
     listShowDialog.setOldFields(ucdArea.getEntities()); // getClasses?
     thisLabel.setText("Select entity to create operation activity for"); 
-    System.out.println("Select entity to create operation activity for");
+    System.out.println(">> Select entity to create operation activity for");
 
     listShowDialog.setVisible(true); 
 
@@ -3166,7 +3173,7 @@ public void findPlugins()
     }
     listShowDialog.setOldFields(ucdArea.getEntities()); // getClasses?
     thisLabel.setText("Select entity to edit operation activity for"); 
-    System.out.println("Select entity to edit operation activity for");
+    System.out.println(">> Select entity to edit operation activity for");
 
     listShowDialog.setVisible(true); 
 
@@ -3178,9 +3185,29 @@ public void findPlugins()
     } 
   }
 
+  private void transformOperationActivity()
+  { if (listShowDialog == null)
+    { listShowDialog = new ListShowDialog(this);
+      listShowDialog.pack();
+      listShowDialog.setLocationRelativeTo(this); 
+    }
+    listShowDialog.setOldFields(ucdArea.getEntities()); // getClasses?
+    thisLabel.setText("Select entity to transform operation activity for"); 
+    System.out.println(">> Select entity to transform operation activity for");
+
+    listShowDialog.setVisible(true); 
+
+    Object[] vals = listShowDialog.getSelectedValues();
+    if (vals != null && vals.length > 0 &&
+        vals[0] instanceof Entity)
+    { Entity ent = (Entity) vals[0];
+      ucdArea.transformOperationActivity(ent);
+    } 
+  }
+
   private void createUseCaseActivity()
   { thisLabel.setText("Select use case to create activity for"); 
-    System.out.println("Select use case to create activity for");
+    System.out.println(">> Select use case to create activity for");
     String ucname = 
       JOptionPane.showInputDialog("Enter use case name:");
 
@@ -3213,7 +3240,7 @@ public void findPlugins()
 
     listShowDialog.setOldFields(allents);
     thisLabel.setText("Select class to aggregate all subclasses of"); 
-    System.out.println("Select class to aggregate all subclasses of");
+    System.out.println(">> Select class to aggregate all subclasses of");
 
     listShowDialog.setVisible(true); 
 

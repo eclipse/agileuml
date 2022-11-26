@@ -2838,6 +2838,21 @@ public class Type extends ModelElement
     return res; 
   }
 
+  public static Expression typeConversionFromString(Expression expr, Type typ)
+  { String nme = typ.getName();
+    if (nme.equals("String"))
+    { return expr; }
+    if (nme.equals("boolean"))
+    { return new UnaryExpression("->toBoolean", expr); }
+    if (nme.equals("int"))
+    { return new UnaryExpression("->toInteger", expr); }
+    if (nme.equals("long"))
+    { return new UnaryExpression("->toLong", expr); }
+    if (nme.equals("double"))
+    { return new UnaryExpression("->toReal", expr); }
+    return expr; 
+  }
+
   public String getDefaultJava6()
   { if (values == null) // so not enumerated
     { String nme = getName();

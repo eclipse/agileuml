@@ -5595,6 +5595,11 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       { mess[0] = "Use case extension, eg., extendedBy errorCase;"; 
         return "extendedBy"; 
       }
+
+      if ("execute".startsWith(st))
+      { mess[0] = "Execute expression as statement. Eg., execute (x->display())"; 
+        return "execute"; 
+      }
     } 
 
 
