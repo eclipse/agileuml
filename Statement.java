@@ -454,6 +454,10 @@ abstract class Statement implements Cloneable
   public void findClones(java.util.Map clones, String rule, String op)
   { return; } 
 
+  /* All magic number expressions in this statement */ 
+  public void findMagicNumbers(java.util.Map mgns, String rule, String op)
+  { return; } 
+
   /* All expression uses of var in this statement */ 
   public Vector getUses(String var) 
   { return new Vector(); } 
@@ -515,6 +519,9 @@ abstract class Statement implements Cloneable
   abstract void displayJava(String t, PrintWriter out); 
  
   abstract Statement substituteEq(String oldE, Expression newE); 
+
+  abstract Statement removeSlicedParameters(
+             BehaviouralFeature op, Vector fpars); 
 
   abstract Statement addContainerReference(
                                   BasicExpression ref,
@@ -965,6 +972,13 @@ class ReturnStatement extends Statement
     clones.put(val,used);
   }
 
+  public void findMagicNumbers(java.util.Map mgns, String rule, String op)
+  { if (value == null) 
+    { return; }
+    String val = this + ""; 
+    value.findMagicNumbers(mgns,val,op); 
+  }
+
   public boolean hasValue()
   { return value != null; } 
 
@@ -997,6 +1011,19 @@ class ReturnStatement extends Statement
     } 
     return this; 
   } 
+
+  public Statement removeSlicedParameters(
+             BehaviouralFeature op, Vector fpars)
+  { if (value != null)
+    { Expression newval = 
+                 value.removeSlicedParameters(op,fpars); 
+      ReturnStatement res = new ReturnStatement(newval);
+      res.setEntity(entity); 
+      return res;  
+    } 
+    return this; 
+  } 
+  
 
   public Statement addContainerReference(
                                   BasicExpression ref,
@@ -1316,6 +1343,11 @@ class BreakStatement extends Statement
     return this; 
   } 
 
+  public Statement removeSlicedParameters(
+             BehaviouralFeature op, Vector fpars)
+  { return this; } 
+
+
   public Statement addContainerReference(
                                   BasicExpression ref,
                                   String var, Vector excludes)
@@ -1476,6 +1508,11 @@ class ContinueStatement extends Statement
   {  
     return this; 
   } 
+
+  public Statement removeSlicedParameters(
+             BehaviouralFeature op, Vector fpars)
+  { return this; }
+
 
   public Statement addContainerReference(
                                   BasicExpression ref,
@@ -1705,6 +1742,58 @@ class InvocationStatement extends Statement
     return res;  
   } 
 
+  public Statement removeSlicedParameters(
+             BehaviouralFeature op, Vector fpars)
+  { // action(parameters) becomes action(pars) where
+    // pars are the parameters *not* in the range of 
+    // the removed formal parameters fpars of op
+    // op.name = action. op is original version of 
+    // operation before slicing. 
+
+    System.out.println("++ Invocation statement " + 
+                       action + " " + callExp + " " + 
+                       parameters); 
+					   
+    if (callExp == null) { return this; }
+
+    Vector oldpars = new Vector(); 
+    // Substitute in the callExp, in fact. 
+    if (parameters == null || parameters.size() == 0) 
+    { Vector callpars = callExp.getParameters(); 
+      if (callpars != null)
+      { oldpars.addAll(callpars); }
+    }  
+    else 
+    { oldpars.addAll(parameters); } 
+
+    System.out.println("++ " + 
+                       op + " " + fpars + " " + 
+                       oldpars); 
+
+    if (action.equals(op.getName()) || 
+        action.startsWith(op.getName() + "(") || 
+        action.startsWith("self." + op.getName() + "("))
+    { Vector newpars = new Vector(); 
+      Vector oppars = op.getParameters(); 
+      for (int i = 0; i < oppars.size(); i++) 
+      { Attribute att = (Attribute) oppars.get(i); 
+        if (fpars.contains(att.getName()))
+        { System.out.println("++ Removing parameter " + att); } 
+        else 
+        { newpars.add(oldpars.get(i)); } 
+      } 
+
+      InvocationStatement res =
+        new InvocationStatement(action); 
+      // res.parameters = newpars; 
+      res.callExp = 
+        BasicExpression.newCallBasicExpression(
+                    "self." + op.getName(),newpars); 
+      return res;
+    } 
+    else 
+    { return this; }  
+  } 
 
   public boolean isSkip()
   { if ("skip".equals(action)) 
@@ -1754,6 +1843,11 @@ class InvocationStatement extends Statement
     else if (op != null)
     { used.add(op); }
     clones.put(val,used);
+  }
+
+  public void findMagicNumbers(java.util.Map mgns, String rule, String op)
+  { String val = callExp + ""; 
+    callExp.findMagicNumbers(mgns, val, op); 
   }
 
   public Statement dereference(BasicExpression var)
@@ -2389,6 +2483,10 @@ class ImplicitInvocationStatement extends Statement
     return new ImplicitInvocationStatement(newExp); 
   } 
 
+  public Statement removeSlicedParameters(
+             BehaviouralFeature op, Vector fpars)
+  { return this; } // substitute in the callExp
+
   public Statement addContainerReference(
                       BasicExpression ref, String var,
                       Vector excl)
@@ -2923,6 +3021,16 @@ class WhileStatement extends Statement
     body.findClones(clones,rule,op); 
   }
 
+  public void findMagicNumbers(java.util.Map mgns, String rule, String op)
+  { if (loopRange != null) 
+    { String val = loopRange + ""; 
+      loopRange.findMagicNumbers(mgns,val,op); 
+    }  
+    else if (loopTest != null) 
+    { loopTest.findMagicNumbers(mgns,"" + loopTest,op); } 
+    body.findMagicNumbers(mgns,rule,op); 
+  }
+
   public Statement addContainerReference(BasicExpression ref,
                                          String var,
                                          Vector excl)
@@ -3232,6 +3340,37 @@ class WhileStatement extends Statement
     if (variant != null) 
     { var = (Expression) variant.substituteEq(oldE,newE); }  
     res.setVariant(var); 
+
+    return res; 
+  }  
+
+  public Statement removeSlicedParameters(
+             BehaviouralFeature op, Vector fpars)
+  { Statement newbody = body.removeSlicedParameters(op,fpars); 
+    // Expression lv = null; 
+    // if (loopVar != null) 
+    // { lv = loopVar.substituteEq(oldE,newE); }  
+    // Expression lr = null; 
+    // if (loopRange != null) 
+    // { lr = loopRange.substituteEq(oldE,newE); }  
+    // Expression lt = null; 
+    // if (loopTest != null) 
+    // { lt = loopTest.substituteEq(oldE,newE); }  
+    WhileStatement res = new WhileStatement(loopTest,newbody); 
+    res.setEntity(entity); 
+    res.setLoopKind(loopKind); 
+    res.setLoopRange(loopVar,loopRange); 
+    res.setBrackets(brackets);
+ 
+    // Expression inv = null; 
+    // if (invariant != null) 
+    // { inv = (Expression) invariant.substituteEq(oldE,newE); }  
+    res.setInvariant(invariant); 
+
+    // Expression var = null; 
+    // if (variant != null) 
+    // { var = (Expression) variant.substituteEq(oldE,newE); }  
+    res.setVariant(variant); 
 
     return res; 
   }  
@@ -4306,6 +4445,10 @@ class CreationStatement extends Statement
     return res; 
   } 
 
+  public Statement removeSlicedParameters(
+                     BehaviouralFeature bf, Vector fpars)
+  { return this; } // substitute in the initialExpression
+
   public Statement addContainerReference(
                BasicExpression ref, String var, Vector excl)
   { String cio = createsInstanceOf; 
@@ -5248,6 +5391,13 @@ class SequenceStatement extends Statement
     }
   } 
 
+  public void findMagicNumbers(java.util.Map mgns, String rule, String op)
+  { for (int i = 0; i < statements.size(); i++) 
+    { Statement stat = (Statement) statements.get(i); 
+      stat.findMagicNumbers(mgns,rule,op); 
+    }
+  } 
+
   public Statement dereference(BasicExpression var)
   { Vector newstats = new Vector(); 
     for (int i = 0; i < statements.size(); i++) 
@@ -5405,6 +5555,21 @@ class SequenceStatement extends Statement
     stats.setBrackets(brackets); 
     return stats;
   } 
+
+  public Statement removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
+  { SequenceStatement stats = new SequenceStatement(); 
+    for (int i = 0; i < statements.size(); i++) 
+    { Statement stat = 
+        (Statement) statements.get(i); 
+      Statement stat1 = 
+         stat.removeSlicedParameters(bf,fpars); 
+      stats.addStatement(stat1);
+    } 
+    stats.entity = entity; 
+    stats.setBrackets(brackets); 
+    return stats;
+  } 
+  
 
   public void display()
   { for (int i = 0; i < statements.size(); i++)
@@ -6031,6 +6196,9 @@ class CaseStatement extends Statement
     return cs; 
   } 
 
+  public Statement removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
+  { return this; } 
+
   public Statement addContainerReference(
                     BasicExpression ref, String var,
                     Vector excl)
@@ -6443,6 +6611,9 @@ class ErrorStatement extends Statement
     return new ErrorStatement(null); 
   } 
 
+  public Statement removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
+  { return this; } 
+
   public Statement addContainerReference(
                      BasicExpression ref, 
                      String var, Vector excl)
@@ -6749,6 +6920,9 @@ class AssertStatement extends Statement
     { newmessage = message.substituteEq(oldE,newE); }
     return new AssertStatement(newcond,newmessage); 
   } 
+
+  public Statement removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
+  { return this; } 
 
   public String toString()
   { if (message == null) 
@@ -7111,6 +7285,9 @@ class CatchStatement extends Statement
     return new CatchStatement(cobj,astat); 
   } 
   
+  public Statement removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
+  { return this; } 
+
   public void display(PrintWriter out)
   { out.println("  catch (" + caughtObject + ") do " + action); }
 
@@ -7567,6 +7744,9 @@ class TryStatement extends Statement
     { res.setEndStatement(endStatement.substituteEq(oldE,newE)); } 
     return res; 
   } 
+
+  public Statement removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
+  { return this; } 
 
   public void display(PrintWriter out)
   { if (body == null) 
@@ -8175,6 +8355,9 @@ class IfStatement extends Statement
       is.addCase(ic2); } 
     return is; 
   } 
+
+  public Statement removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
+  { return this; } 
 
   public void display()
   { int n = cases.size();
@@ -9059,6 +9242,11 @@ class AssignStatement extends Statement
     clones.put(val,used);
   }
 
+  public void findMagicNumbers(java.util.Map mgns, String rule, String op)
+  { lhs.findMagicNumbers(mgns, "" + this, op);
+    rhs.findMagicNumbers(mgns, "" + this, op); 
+  } 
+
   public Statement dereference(BasicExpression var)
   { Expression newlhs = (Expression) lhs.dereference(var); 
     Expression newrhs = (Expression) rhs.dereference(var); 
@@ -9085,6 +9273,16 @@ class AssignStatement extends Statement
   { Expression lhs2 = (Expression) lhs.clone(); 
         /* lhs.substituteEq(oldE,newE); */ 
     Expression rhs2 = rhs.substituteEq(oldE,newE); 
+    AssignStatement res = new AssignStatement(lhs2,rhs2); 
+    res.setType(type); 
+    res.setCopyValue(copyValue); 
+    return res; 
+  } 
+
+  public Statement removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
+  { Expression lhs2 = (Expression) lhs.clone(); 
+        /* lhs.substituteEq(oldE,newE); */ 
+    Expression rhs2 = rhs.removeSlicedParameters(bf,fpars); 
     AssignStatement res = new AssignStatement(lhs2,rhs2); 
     res.setType(type); 
     res.setCopyValue(copyValue); 
@@ -9628,6 +9826,10 @@ class IfCase
     return res; 
   } 
 
+  public IfCase removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
+  { return this; } 
+
+
   public void display()
   { System.out.print("IF " + test + " THEN "); 
     ifPart.display();
@@ -10005,6 +10207,13 @@ class ConditionalStatement extends Statement
     { elsePart.findClones(clones,rule,op); } 
   }
 
+  public void findMagicNumbers(java.util.Map mgns, String rule, String op)
+  { test.findMagicNumbers(mgns,"" + this,op); 
+    ifPart.findMagicNumbers(mgns,rule,op); 
+    if (elsePart != null) 
+    { elsePart.findMagicNumbers(mgns,rule,op); } 
+  }
+
   public Statement generateDesign(java.util.Map env, boolean local)
   { Statement ifc = ifPart.generateDesign(env,local);
     if ("true".equals(test + ""))
@@ -10163,6 +10372,16 @@ class ConditionalStatement extends Statement
     { elsec = elsePart.substituteEq(oldE, newE); }
     return new ConditionalStatement(testc, ifc, elsec); 
   }  
+
+  public Statement removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
+  { Statement ifc = ifPart.removeSlicedParameters(bf,fpars); 
+    Statement elsec = null; 
+    if (elsePart != null) 
+    { elsec = elsePart.removeSlicedParameters(bf,fpars); }
+    return new ConditionalStatement(test, ifc, elsec); 
+  }  
+ 
+
 
   public boolean typeCheck(Vector types, Vector entities, Vector cs, Vector env)
   { boolean res = test.typeCheck(types,entities,cs,env); 
@@ -10527,6 +10746,9 @@ class FinalStatement extends Statement
   { Statement ifc = body.substituteEq(oldE, newE); 
     return new FinalStatement(ifc); 
   }  
+
+  public Statement removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
+  { return this; } 
 
   public boolean typeCheck(Vector types, Vector entities, Vector cs, Vector env)
   { boolean res = body.typeCheck(types,entities,cs,env);

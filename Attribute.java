@@ -36,6 +36,7 @@ public class Attribute extends ModelElement
   private Vector parameters = new Vector(); 
   private boolean isArray = false; 
 
+  private int width = 1; // for COBOL
  
   public Attribute(String nme, Type t, int k)
   { super(nme);
@@ -298,6 +299,12 @@ public class Attribute extends ModelElement
 
   public void setArray(boolean b)
   { isArray = b; } 
+
+  public void setWidth(int w)
+  { width = w; } 
+
+  public int getWidth()
+  { return width; } 
 
   public boolean isFunction()
   { return type != null && type.isFunction(); } 
@@ -1051,6 +1058,24 @@ public class Attribute extends ModelElement
       { return true; } 
     } 
     return false; 
+  } 
+
+  public static boolean equivalentAttributeGroups(
+                           Vector atts1, Vector atts2)
+  { // size is same & elements correspond item by item
+
+    if (atts1.size() == atts2.size()) { }
+    else 
+    { return false; } 
+
+    for (int i = 0; i < atts1.size(); i++) 
+    { Attribute att1 = (Attribute) atts1.get(i); 
+      Attribute att2 = (Attribute) atts2.get(i); 
+      if (att1.equals(att2)) { } 
+      else 
+      { return false; } 
+    } 
+    return true; 
   } 
 
   public boolean isManyValued()

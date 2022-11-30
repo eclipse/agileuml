@@ -70,6 +70,9 @@ public class SetExpression extends Expression
     return res; 
   } 
 
+  public Vector getParameters() 
+  { return new Vector(); } 
+
   public Expression getExpression(int i) 
   { if (i < elements.size())
     { return (Expression) elements.get(i); } 
@@ -149,6 +152,13 @@ public class SetExpression extends Expression
 
   public void findClones(java.util.Map clones, String rule, String op)
   { return; } 
+
+  public void findMagicNumbers(java.util.Map mgns, String rule, String op)
+  { for (int i = 0; i < elements.size(); i++) 
+    { Expression elem = (Expression) elements.get(i); 
+      elem.findMagicNumbers(mgns,rule,op);      
+    } 
+  } 
 
   public boolean isEmpty()
   { return elements.size() == 0; }
@@ -942,10 +952,10 @@ public class SetExpression extends Expression
       elems.add(be);
     }
     SetExpression result = new SetExpression(elems,ordered);
-	if (isMap())
-	{ result.setType(type); }
-	return result; 
-  }
+    if (isMap())
+    { result.setType(type); }
+    return result; 
+  } // And for Ref. 
 
   public Expression substituteEq(String old,
                                  Expression n)
@@ -956,10 +966,28 @@ public class SetExpression extends Expression
       elems.add(be);
     }
     SetExpression result = new SetExpression(elems,ordered);
-	if (isMap())
-	{ result.setType(type); }
-	return result; 
-  }
+    if (isMap())
+    { result.setType(type); }
+    return result; 
+  } // And for Ref. 
+
+  public Expression removeSlicedParameters(BehaviouralFeature op, Vector fpars)
+  { Vector elems = new Vector();
+    for (int i = 0; i < elements.size(); i++)
+    { Expression e = (Expression) elements.get(i);
+      Expression be = e.removeSlicedParameters(op,fpars);
+      elems.add(be);
+    }
+    SetExpression result = new SetExpression(elems,ordered);
+
+    // if (isMap())
+
+    result.setType(type); 
+    result.setElementType(elementType); 
+
+    return result; 
+  } // And for Ref. 
+
 
   public boolean isOrExpression() { return false; }
 
@@ -986,7 +1014,7 @@ public class SetExpression extends Expression
       res = res + ".add(" + wrap(elementType, val) + ")";
     }
     return res + ".getElements()";
-  }  // ordered? Maps? 
+  }  // ordered? Maps? Ref? 
 
   public String toB() { return ""; }
 

@@ -307,6 +307,8 @@ abstract class Expression
     return 1; 
   } 
 
+  public abstract Vector getParameters(); 
+
   public static String getMatcherOperator(Expression mexpr)
   { if (mexpr == null) 
     { return "="; } 
@@ -1079,6 +1081,8 @@ abstract class Expression
   { return ""; }  
 
   public abstract void findClones(java.util.Map clones, String rule, String op); 
+
+  public abstract void findMagicNumbers(java.util.Map mgns, String rule, String op); 
 
   public abstract String updateForm(java.util.Map env, boolean local); 
 
@@ -2360,6 +2364,8 @@ abstract class Expression
   abstract public Expression substituteEq(final String var,
                                           final Expression val); 
 
+  abstract Expression removeSlicedParameters(
+             BehaviouralFeature op, Vector fpars); 
   
   abstract public boolean hasVariable(final String s); 
 

@@ -1590,6 +1590,33 @@ class BasicExpression extends Expression
   public void findClones(java.util.Map clones, String rule, String op)
   { return; } 
 
+  public void findMagicNumbers(java.util.Map mgns, String rule, String op)
+  { if (umlkind == VALUE)
+    { if ("0".equals(data) || "1".equals(data) || 
+          "\"\"".equals(data) || "true".equals(data) ||
+          "false".equals(data) || 
+          "null".equals(data) ||
+          "1.0".equals(data) ||
+          "0.0".equals(data))
+      { return; }
+
+      // Or if type is enumerated, also ok. 
+      if (type != null && type.isEnumerated())
+      { return; } 
+
+      System.err.println("!! Magic number: " + this + " in " + op); 
+      Vector occs = (Vector) mgns.get(data); 
+      if (occs == null) 
+      { occs = new Vector(); } 
+      occs.add(this); 
+      mgns.put(data, occs); 
+    } 
+  
+    return; 
+  } 
+
+     
+
   public boolean isOrdered()   // assume isMultiple()
   { if (umlkind == VARIABLE) 
     { if (type != null)
@@ -6766,6 +6793,116 @@ class BasicExpression extends Expression
     return data;
   }
 
+  public String leftQueryFormJava7(java.util.Map env, boolean local)
+  { // already type-checked. Ignores prestate
+    String ename = ""; 
+    String cont = "Controller.inst()"; 
+
+    if (umlkind == VARIABLE)
+    { if (arrayIndex != null)
+      { String ind = arrayIndex.queryFormJava7(env,local); 
+        String indopt = evaluateString("-",ind,"1"); 
+        if (type != null)
+        { if (arrayIndex.type != null && arrayIndex.type.getName().equals("int"))
+          { return data + "[" + indopt + "]"; }
+          return data + "[" + indopt + "]"; 
+        }         
+        return data + "[" + indopt + "]";
+      } // unwrap it, also for primitive types
+      else 
+      { return data; }  
+    } 
+
+    if (objectRef == null)
+    { if (umlkind == ATTRIBUTE || umlkind == ROLE)
+      { if (local) 
+        { if (arrayIndex != null) 
+          { String ind = arrayIndex.queryFormJava7(env,local); 
+            if (isQualified())
+            { return data + "[" + ind + "]"; } 
+            String indopt = evaluateString("-",ind,"1"); // not for qualified ones
+
+            if (arrayIndex.isString())
+            { return data + "[" + ind + "]"; }
+            else if (arrayType != null && arrayType.isMap())
+            { return data + "[" + ind + "]"; }
+            else if (arrayType != null && arrayType.isSequence())
+            { return data + "[" + indopt + "]"; }
+          } 
+          return data; 
+        } 
+
+        if (entity == null) 
+        { return data; } 
+
+        String nme = entity.getName();
+
+        if (entity.isClassScope(data))   // entity cannot be an interface
+        { if (arrayIndex != null) 
+          { String ind = arrayIndex.queryFormJava7(env,local); 
+            String indopt = evaluateString("-",ind,"1"); // not for qualified ones
+            if (arrayIndex.isString())
+            { return nme + "." + data + "[" + ind + "]"; }
+
+            return nme + "." + data + "[" + indopt + "]"; 
+          } 
+          return nme + "." + data; 
+        }  
+        
+        String var = findEntityVariable(env); // could be null, or ""
+
+        String res = var + "." + data;
+        if (var == null || var.length() == 0) 
+        { res = data; }
+		
+        if (arrayIndex != null) 
+        { String etype = elementType + ""; 
+          String ind = arrayIndex.queryFormJava7(env,local); 
+          if (isQualified())
+          { return var + "." + data + "[" + ind + "]"; } 
+
+          String indopt = evaluateString("-",ind,"1"); // not for qualified   
+          if (arrayType != null && arrayType.isMap())
+          { return var + "." + data + "[" + ind + "]"; }
+          else if (arrayType != null && arrayType.isSequence())
+          { return var + "." + data + "[" + indopt + "]"; }
+
+          return var + "." + data + "[" + indopt + "]"; 
+        } // not for strings; unwrap primitives 
+        return res; 
+      } // valid but unecesary for static attributes
+    }
+    else if (entity != null) // objectRef != null
+    { ename = entity.getName();
+      String eref = ename; 
+
+      String res = "";
+      String pre = objectRef.queryFormJava7(env,local);
+      if (objectRef.umlkind == CLASSID)
+      { Expression refindex = ((BasicExpression) objectRef).arrayIndex;
+        if (refindex != null)
+        { res = pre + "." + data; }  // E[ind].data
+        else if (entity.isClassScope(data))
+        { res = pre + "." + data; }   // E.data 
+      } 
+      else
+      { if (downcast)
+        { pre = "((" + ename + ") " + pre + ")"; } 
+        res = pre + "." + data + "";
+      }
+
+      if (arrayIndex != null) 
+      { String ind = arrayIndex.queryFormJava7(env,local); 
+        if (isQualified())
+        { return "(" + res + ")[" + ind + "]"; } 
+        String indopt = evaluateString("-",ind,"1"); // not for qualified ones
+        return res + "[" + indopt + "]"; 
+      } 
+      return res; 
+    } // version with array? obj.r[i] for each obj: objs? 
+    return data;
+  }
+
 
   // public String classqueryFormCSharp(java.util.Map env, boolean local)
   // { if (umlkind == CLASSID)
@@ -9012,7 +9149,7 @@ public Statement generateDesignSubtract(Expression rhs)
     // either a sequence, ref or map, or 
     // itself an indexed expression
  
-   if (ind != null) 
+    if (ind != null) 
     { String indopt = ind.queryForm(env,local);
       String lexp = obj.queryForm(env,local); 
       String wind = ind.wrap(indopt); 
@@ -9034,7 +9171,7 @@ public Statement generateDesignSubtract(Expression rhs)
     // either a sequence or map, or 
     // itself an indexed expression
  
-   if (ind != null) 
+    if (ind != null) 
     { String indopt = ind.queryFormJava6(env,local);
       String lexp = obj.queryFormJava6(env,local); 
       String wind = ind.wrap(indopt); 
@@ -9087,7 +9224,7 @@ public Statement generateDesignSubtract(Expression rhs)
     // either a sequence, reference or map, or 
     // itself an indexed expression
  
-   if (ind != null) 
+    if (ind != null) 
     { String indopt = ind.queryFormCSharp(env,local);
       String lexp = obj.queryFormCSharp(env,local); 
       String wind = ind.wrapCSharp(indopt); 
@@ -9111,7 +9248,7 @@ public Statement generateDesignSubtract(Expression rhs)
     // itself an indexed expression
     
  
-   if (ind != null) 
+    if (ind != null) 
     { String indopt = ind.queryFormCPP(env,local);
       String lexp = obj.queryFormCPP(env,local); 
       String wind = indopt; 
@@ -9467,6 +9604,26 @@ public Statement generateDesignSubtract(Expression rhs)
     String datax = data;
     if (objectRef != null) 
     { datax = objectRef.queryFormJava7(env,local) + "." + data; } 
+
+    if ("subrange".equals(data) && parameters != null && 
+        objectRef != null && 
+        objectRef instanceof BasicExpression)
+    { Expression par1 = (Expression) parameters.get(0); 
+      Expression par2 = (Expression) parameters.get(1); 
+      String objx = objectRef.queryFormJava7(env,local);
+      String lqf = ((BasicExpression) objectRef).leftQueryFormJava7(env,local);  
+      String par1x = par1.queryFormJava7(env,local); 
+      String par2x = par2.queryFormJava7(env,local); 
+
+      if (type != null && "String".equals(type.getName()))
+      { // objx := objx.substring(0,par1x-2) + val2 +
+        //         objx.substring(par2x)
+
+        String res = lqf + " = (" + objx + ").substring(0," + par1x + "-1) + " + val2 + " + (" + objx + ").substring(" + par2x + ");\n";
+        return res; 
+      } 
+    } 
+                
 
     // System.out.println("#### " + this + " := " + val2); 
  
@@ -13741,6 +13898,55 @@ public Statement generateDesignSubtract(Expression rhs)
     } 
     return res;
   }  // again, not if prestate
+
+  public Expression removeSlicedParameters(
+             BehaviouralFeature op, Vector fpars)
+  { // op(parameters) becomes op(pars) where
+    // pars are the parameters *not* in the range of 
+    // the removed formal parameters fpars of op
+    // op is original version of 
+    // operation before slicing. 
+
+    BasicExpression res = (BasicExpression) clone();
+
+    Expression newind = null; 
+    if (arrayIndex != null)
+    { newind = arrayIndex.removeSlicedParameters(op,fpars); 
+      res.arrayIndex = newind; 
+    }
+
+    Vector oldpars = new Vector();   
+    if (parameters != null) 
+    { for (int i = 0; i < parameters.size(); i++) 
+      { Expression par = (Expression) parameters.get(i); 
+        oldpars.add(par.removeSlicedParameters(op,fpars)); 
+      } 
+      res.parameters = oldpars; 
+    }  
+
+    if (objectRef == null)
+    { }
+    else 
+    { res.objectRef =
+        objectRef.removeSlicedParameters(op,fpars);
+    }
+
+    if (data.equals(op.getName()) && 
+        (umlkind == QUERY || umlkind == UPDATEOP))
+    { Vector newpars = new Vector(); 
+      Vector oppars = op.getParameters(); 
+      for (int i = 0; i < oppars.size(); i++) 
+      { Attribute att = (Attribute) oppars.get(i); 
+        if (fpars.contains(att.getName()))
+        { System.out.println("++ Removing parameter " + att); } 
+        else 
+        { newpars.add(oldpars.get(i)); } 
+      } 
+      res.parameters = newpars; 
+    } 
+
+    return res;
+  }  
 
   public Expression removePrestate()
   { 

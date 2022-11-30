@@ -4528,7 +4528,13 @@ public class Entity extends ModelElement implements Comparable
   public int displayMeasures(PrintWriter out, java.util.Map clones)
   { String nme = getName(); 
 
-    out.println("*** Class " + nme); 
+    if (isDerived() || isComponent() || 
+        isExternal()) 
+    { return 0; } 
+
+    out.println("*** Class " + nme);
+
+    java.util.Map mgns = new java.util.HashMap();  
 
     int highcount = 0; 
     int lowcount = 0; 
@@ -4558,6 +4564,7 @@ public class Entity extends ModelElement implements Comparable
       if (opuses.size() > 0)
       { out.println("*** Operations used in " + op.getName() + " are: " + opuses); } 
       op.findClones(clones); 
+      op.findMagicNumbers(mgns); 
       out.println(); 
     } 
 
@@ -4567,6 +4574,8 @@ public class Entity extends ModelElement implements Comparable
     out.println("*** Total complexity of " + getName() + " is: " + totalComplexity); 
     if (totalComplexity > 1000)
     { System.err.println("!! Bad Smell: Excessively large class: " + getName() + " has c = " + totalComplexity); } 
+
+    out.println("*** Magic numbers: " + mgns); 
 
     return totalComplexity; 
   } 
@@ -4923,9 +4932,10 @@ public class Entity extends ModelElement implements Comparable
 
     for (int i = 0; i < ent.attributes.size(); i++) 
     { Attribute att = (Attribute) ent.attributes.get(i); 
+      String aname = att.getName(); 
+        
       if (ent.cardinalityValue > 1 && !(att.isSequence()))
-      { String aname = att.getName(); 
-        Attribute localatt = 
+      { Attribute localatt = 
           (Attribute) ModelElement.lookupByName(
                                       aname,attributes);
         if (localatt != null && !localatt.isSequence())
@@ -4956,6 +4966,30 @@ public class Entity extends ModelElement implements Comparable
         } 
       } 
     }  
+  } 
+
+  public void addFillerAttributes(Entity root)
+  { // For each FILLER, add to the CSTL-generated main class
+
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String aname = att.getName(); 
+        
+      if (aname.startsWith("FILLER_"))
+      { int wdth = att.getWidth(); 
+        String spacesString = ""; 
+        for (int j = 0; j < wdth; j++) 
+        { spacesString = spacesString + " "; } 
+        Expression fillerInit = 
+          BasicExpression.newValueBasicExpression(
+                           "\"" + spacesString + "\"");
+        fillerInit.setType(new Type("String", null));  
+        fillerInit.setElementType(new Type("String", null));  
+
+        att.setInitialExpression(fillerInit); 
+        root.addAttribute(att);  
+      }
+    }   
   } 
 
   public void createPrimaryKey()
@@ -17533,6 +17567,126 @@ public BehaviouralFeature designAbstractKillOp()
       } 
     }
     System.out.println(">> All abstract unreferenced root classes are: " + res); 
+    return res; 
+  } 
+
+  public Vector makeValueObjects()
+  { Vector res = new Vector(); 
+    java.util.Map parGroups = new java.util.HashMap(); 
+    Vector validatedGroups = new Vector();
+    java.util.Map groupOperations = new java.util.HashMap(); 
+
+    for (int i = 0; i < operations.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) operations.get(i); 
+      Vector pars = bf.getParameters(); 
+      Vector parsubs = VectorUtil.allSubvectors(pars); 
+      System.out.println(">>> " + parsubs); 
+
+      for (int j = 0; j < parsubs.size(); j++) 
+      { Vector parsq = (Vector) parsubs.get(j); 
+        if (parsq.size() >= 2)
+        { String groupName = parsq + ""; 
+          Vector grp = (Vector) parGroups.get(groupName); 
+          if (grp == null)
+          { parGroups.put(groupName, parsq); 
+            Vector oprs = new Vector();
+            oprs.add(bf);  
+            groupOperations.put(groupName, oprs); 
+          } 
+          else if (Attribute.equivalentAttributeGroups(
+                                        parsq,grp))
+          { validatedGroups.add(groupName); 
+            Vector ops = (Vector) groupOperations.get(groupName); 
+            ops.add(bf); 
+          }
+        } 
+      }  
+    } 
+
+    System.out.println(">> Validated groups: " + validatedGroups); 
+
+    // Take maximal elements of these. Pareto
+    // front of maximal group size; maximal ops size
+
+    Vector maximalValidatedGroups = new Vector(); 
+    int maxSize = 0; 
+
+    for (int i = 0; i < validatedGroups.size(); i++) 
+    { String gname = (String) validatedGroups.get(i); 
+      Vector avect = (Vector) parGroups.get(gname);
+      int sze = avect.size(); 
+      if (sze > maxSize)
+      { maxSize = sze; 
+        maximalValidatedGroups.clear(); 
+        maximalValidatedGroups.add(gname); 
+      } 
+    } 
+    
+    System.out.println(">> Maximal validated groups: " + maximalValidatedGroups); 
+
+    for (int i = 0; i < maximalValidatedGroups.size(); i++) 
+    { String gname = (String) maximalValidatedGroups.get(i); 
+      Vector avect = (Vector) parGroups.get(gname);
+      Vector opers = (Vector) groupOperations.get(gname);
+  
+      System.out.println(">> Group " + gname + 
+                         " operations are " + opers); 
+
+      String ename = "ValueObject_" + getName() + "_" + i;  
+      Entity newent = Entity.fromAttributeGroup(ename,avect,opers); 
+      res.add(newent); 
+    } 
+    return res; 
+  } 
+
+  public static Entity fromAttributeGroup(String nme,
+                                          Vector atts,
+                                          Vector opers) 
+  { Entity res = new Entity(nme); 
+    Vector attnames = new Vector(); 
+	
+    for (int i = 0; i < atts.size(); i++) 
+    { Attribute att = (Attribute) atts.get(i); 
+      Attribute catt = (Attribute) att.clone(); 
+      catt.setEntity(res); 
+      res.addAttribute(catt);
+      attnames.add(att.getName());  
+    } 
+
+    for (int i = 0; i < opers.size(); i++) 
+    { BehaviouralFeature bf = 
+         (BehaviouralFeature) opers.get(i); 
+      BehaviouralFeature op = 
+         (BehaviouralFeature) bf.clone();      
+      op.setEntity(res); 
+      op.removeParameters(atts); 
+      res.addOperation(op); 
+    } 
+
+    // For each operation op : res.operations, 
+    // replace each call 
+    // op' in op.activity by op' with the arguments
+    // corresponding to the atts parameters of op'
+    // removed, for each op' : res.operations. 
+
+    for (int i = 0; i < opers.size(); i++) 
+    { BehaviouralFeature bf = 
+         (BehaviouralFeature) opers.get(i); 
+      BehaviouralFeature op = 
+         res.getOperation(bf.getName()); 
+      Statement act = op.getActivity();
+	  if (act != null) 
+      { for (int j = 0; j < opers.size(); j++) 
+        { BehaviouralFeature bf1 = 
+              (BehaviouralFeature) opers.get(j); 
+          Statement act1 = act.removeSlicedParameters(
+                                            bf1,attnames); 
+          act = act1; 
+        }
+        op.setActivity(act);  
+      }
+    } 
+    
     return res; 
   } 
  

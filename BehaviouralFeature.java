@@ -388,7 +388,17 @@ public class BehaviouralFeature extends ModelElement
   } 
 
   public Object clone()
-  { BehaviouralFeature res = new BehaviouralFeature(getName(), parameters, query, resultType); 
+  { Vector newpars = new Vector(); 
+    if (parameters == null) { } 
+    else 
+    { for (int i = 0; i < parameters.size(); i++) 
+      { Attribute par = (Attribute) parameters.get(i); 
+        Attribute newpar = (Attribute) par.clone(); 
+        newpars.add(newpar); 
+      } 
+    } 
+    BehaviouralFeature res = new BehaviouralFeature(getName(),
+                                  newpars, query, resultType); 
     res.setElementType(elementType); 
     res.setStatechart(sm); 
     res.setActivity(activity); 
@@ -403,7 +413,7 @@ public class BehaviouralFeature extends ModelElement
     if (typeParameters != null) 
     { res.typeParameters = new Vector(); 
       res.typeParameters.addAll(typeParameters); 
-    } 
+    } // clone them. 
 
     return res; 
   } // and copy the use case, readfr, etc? 
@@ -1437,6 +1447,10 @@ public class BehaviouralFeature extends ModelElement
     else
     { typeParameters.add(t); } 
   } 
+
+  public void removeParameters(Vector atts)
+  { parameters.removeAll(atts); } 
+ 
 
   public Vector getTypeParameters()
   { return typeParameters; } 
@@ -3624,6 +3638,21 @@ public class BehaviouralFeature extends ModelElement
     { post.findClones(clones,null, nme); } 
     if (activity != null) 
     { activity.findClones(clones, null, nme); } 
+  } 
+
+  public void findMagicNumbers(java.util.Map mgns)
+  { String nme = getName(); 
+    if (entity != null) 
+    { nme = entity.getName() + "::" + nme; } 
+    else if (useCase != null) 
+    { nme = useCase.getName() + "::" + nme; } 
+
+    if (pre != null) 
+    { pre.findMagicNumbers(mgns, nme, nme); } 
+    if (post != null) 
+    { post.findMagicNumbers(mgns, nme, nme); } 
+    if (activity != null) 
+    { activity.findMagicNumbers(mgns, null, nme); } 
   } 
 
   public void generateJava(PrintWriter out)

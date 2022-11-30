@@ -356,6 +356,9 @@ public class UnaryExpression extends Expression
   public Expression getArgument()
   { return argument; } 
 
+  public Vector getParameters() 
+  { return new Vector(); } 
+
   public void setOperator(String op) 
   { operator = op; } 
 
@@ -562,6 +565,9 @@ public void findClones(java.util.Map clones, String rule, String op)
   clones.put(val,used);
   argument.findClones(clones,rule,op);
 }
+
+  public void findMagicNumbers(java.util.Map mgns, String rule, String op)
+  { argument.findMagicNumbers(mgns,rule,op); } 
 
   public Expression checkConversions(Type propType, Type propElemType, java.util.Map interp) 
   { Expression argres = null; 
@@ -4782,6 +4788,21 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
     // res.elementType = elementType;  // type of elements if a set
     // res.entity = entity; 
     // res.multiplicity = multiplicity;
+    return res; 
+  } 
+
+  public Expression removeSlicedParameters(
+             BehaviouralFeature op, Vector fpars)
+  {  
+    Expression newarg = argument.removeSlicedParameters(op,fpars);
+    UnaryExpression res = new UnaryExpression(operator,newarg);
+    res.needsBracket = needsBracket; 
+    res.umlkind = umlkind; 
+    res.accumulator = accumulator; 
+    res.type = type; 
+    res.elementType = elementType;  // type of elements if a set
+    res.entity = entity; 
+    res.multiplicity = multiplicity;
     return res; 
   } 
 

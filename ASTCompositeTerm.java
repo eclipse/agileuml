@@ -40301,7 +40301,34 @@ public class ASTCompositeTerm extends ASTTerm
       } 
       return res; 
     } 
+
+    if ("fileSection".equals(tag))
+    { // FILE SECTION . fileDescriptionEntry*
+
+      for (int i = 3; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        Vector ttres = tt.cobolDataDefinitions(context, invs); 
+        res.addAll(ttres); 
+      } 
+      return res; 
+    } 
     
+    if ("fileDescriptionEntry".equals(tag))
+    { // (FD | SD) fileName (.? fileDescriptionEntryClause)* . dataDescriptionEntry*
+
+      context.put("container", null); 
+      context.put("previousLevel", new Integer(-1));
+      context.put("startPosition", new Integer(1));  
+      
+      for (int i = 2; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        if ("dataDescriptionEntry".equals(tt.getTag()))
+        { Vector ttres = tt.cobolDataDefinitions(context, invs);    res.addAll(ttres); 
+        }
+      } 
+      return res;
+    } 
+
     if ("dataDescriptionEntry".equals(tag))
     { // dataDescriptionEntryFormat1 |
       // dataDescriptionEntryFormat2 | 
@@ -40381,7 +40408,8 @@ public class ASTCompositeTerm extends ASTTerm
         } 
 
         if (container == null) // no container, so top-level attribute
-        { if ("FILLER".equals(fieldName)) { } 
+        { if ("FILLER".equals(fieldName)) 
+          { /* Should not occur */ } 
           else 
           { Attribute att = 
               new Attribute(fieldName, typ, 
@@ -40395,11 +40423,19 @@ public class ASTCompositeTerm extends ASTTerm
         { int contLevel = container.levelNumber; 
           int contMult = container.cardinalityValue; 
 
-          Integer startPosition = (Integer) context.get("startPosition"); 
+          Integer startPosition = 
+              (Integer) context.get("startPosition"); 
+
+          int startPos = 1; 
+          int endPos = wdth; 
+            
           if (startPosition != null) 
-          { int startPos = startPosition.intValue(); 
-            int endPos = startPos + wdth - 1; 
+          { startPos = startPosition.intValue(); 
+            endPos = startPos + wdth - 1; 
             context.put("startPosition", endPos + 1);
+
+            if ("FILLER".equals(fieldName)) 
+            { fieldName = "FILLER_" + startPos + "_" + endPos; }
  
             String cname = container.getName(); 
             String ownername = 
@@ -40532,28 +40568,40 @@ public class ASTCompositeTerm extends ASTTerm
           else 
           { context.put("startPosition", 1 + wdth); } 
 
-          Integer previousLevel = (Integer) context.get("previousLevel");
+          Integer previousLevel = 
+                (Integer) context.get("previousLevel");
           int prevLevel = previousLevel.intValue(); 
  
           if (levelNumber >= prevLevel) 
           { // attribute of container 
-            if ("FILLER".equals(fieldName)) {} 
+            if ("FILLER".equals(fieldName)) 
+            { fieldName = "FILLER_" + startPos + "_" + endPos; }
             else 
-            { Attribute att = 
+            { ASTTerm.setTaggedValue(fieldName, "startPosition", 
+                                     "" + startPos); 
+              ASTTerm.setTaggedValue(fieldName, "endPosition", 
+                                     "" + endPos); 
+            } // For the CSTL.
+            
+            Attribute att = 
                 new Attribute(fieldName, typ, 
                           ModelElement.INTERNAL); 
-              container.addAttribute(att); 
-            } // could itself be composite
+            att.setWidth(wdth); 
+            container.addAttribute(att); 
+            // could itself be composite
+
             context.put("previousLevel", 
                         new Integer(levelNumber)); 
           }
           else if (levelNumber < prevLevel) 
           { // attribute of another container 
-            if ("FILLER".equals(fieldName)) {} 
+            if ("FILLER".equals(fieldName)) 
+            { fieldName = "FILLER_" + startPos + "_" + endPos; }
             else 
             { Attribute att = 
                 new Attribute(fieldName, typ, 
                           ModelElement.INTERNAL);
+              att.setWidth(wdth); 
               Entity actualContainer = 
                  container.findContainer(levelNumber);  
               if (actualContainer != null) 

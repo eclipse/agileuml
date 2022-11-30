@@ -51,6 +51,9 @@ public class ConditionalExpression extends Expression
   public Expression getElse()
   { return elseExp; } 
 
+  public Vector getParameters() 
+  { return new Vector(); } 
+
   public String queryForm(java.util.Map env, boolean local)
   { String tqf = test.queryForm(env, local);
     String lqf = ifExp.queryForm(env, local);
@@ -164,6 +167,12 @@ public void findClones(java.util.Map clones, String rule, String op)
   ifExp.findClones(clones,rule,op);
   elseExp.findClones(clones,rule,op);
 }
+
+  public void findMagicNumbers(java.util.Map mgns, String rule, String op)
+  { test.findMagicNumbers(mgns,rule,op);
+    ifExp.findMagicNumbers(mgns,rule,op);
+    elseExp.findMagicNumbers(mgns,rule,op);
+  } 
 
 public Vector mutants()
 { Vector res = new Vector(); 
@@ -498,6 +507,22 @@ public Vector singleMutants()
     { newRight = elseExp.substituteEq(oldVar,newVal); }
     Expression newTest = test.substituteEq(oldVar,newVal); 
     Expression result = new ConditionalExpression(newTest,newLeft,newRight);
+    if (needsBracket) 
+    { result.setBrackets(true); } 
+    return result; 
+  } 
+
+  public Expression removeSlicedParameters(
+             BehaviouralFeature op, Vector fpars)
+  { Expression newLeft = null;
+    if (ifExp != null)
+    { newLeft = ifExp.removeSlicedParameters(op,fpars); }
+    Expression newRight = null;
+    if (elseExp != null)
+    { newRight = elseExp.removeSlicedParameters(op,fpars); }
+    Expression newTest = test.removeSlicedParameters(op,fpars); 
+    Expression result = 
+       new ConditionalExpression(newTest,newLeft,newRight);
     if (needsBracket) 
     { result.setBrackets(true); } 
     return result; 

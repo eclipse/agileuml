@@ -126,6 +126,9 @@ class BinaryExpression extends Expression
   public Attribute getAccumulator()
   { return accumulator; } 
 
+  public Vector getParameters() 
+  { return new Vector(); } 
+
   public Expression getLeft() { return left; } 
 
   public Expression getRight() { return right; } 
@@ -2937,6 +2940,12 @@ public void findClones(java.util.Map clones, String rule, String op)
   left.findClones(clones,rule,op);
   right.findClones(clones,rule,op);
 }
+
+  public void findMagicNumbers(java.util.Map mgns, String rule, String op)
+  { left.findMagicNumbers(mgns,rule,op);
+    right.findMagicNumbers(mgns,rule,op);
+  } 
+
 
   public Vector variableRanges(java.util.Map ranges, Vector pars)
   { Vector res = new Vector(); 
@@ -16152,6 +16161,39 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     return res; 
     // }
   }  // what if oldVar equals left and right? 
+
+  public Expression removeSlicedParameters(
+             BehaviouralFeature op, Vector fpars)
+  { Expression newLeft = null;
+    if (left != null)
+    { newLeft = left.removeSlicedParameters(op,fpars); }
+    Expression newRight = null;
+    if (right != null)
+    { newRight = right.removeSlicedParameters(op,fpars); }
+
+    BinaryExpression res = 
+      new BinaryExpression(operator,newLeft,newRight);
+    res.formalParameter = formalParameter; 
+       // Do this for Unary, Conditional, Set, etc
+
+    res.iteratorVariable = iteratorVariable; // if not renamed 
+    res.accumulator = accumulator;           // if not renamed
+    if (accumulator != null && 
+        accumulator.getInitialExpression() != null) 
+    { Attribute newacc = new Attribute(accumulator.getName(), 
+                                accumulator.getType(), 
+                                ModelElement.INTERNAL); 
+      Expression init = accumulator.getInitialExpression(); 
+      Expression newInit = 
+          init.removeSlicedParameters(op,fpars);
+      newacc.setInitialExpression(newInit); 
+      res.setAccumulator(newacc); 
+    } 
+
+    res.setBrackets(needsBracket);  
+    return res; 
+  } 
+  
 
   public boolean hasVariable(final String s)
   { boolean res = false; 

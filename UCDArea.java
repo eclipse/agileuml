@@ -2948,6 +2948,9 @@ public class UCDArea extends JPanel
 	  
       if (ent.isDerived())
       { derivedClasses++; }
+
+      if (ent.isComponent() || ent.isExternal())
+      { continue; } 
 	 
       int entsize = ent.displayMeasures(out,clones);
       totalClassSize = totalClassSize + entsize; 
@@ -21089,6 +21092,29 @@ public void produceCUI(PrintWriter out)
     addGeneralisations(gens); 
   } 
 
+  public void makeValueObjects()
+  { // For each class, check the operation parameters. 
+    // Select maximal groups of parameters which appear in 
+    // 2 or more operations. 
+
+    Vector vobjs = new Vector(); 
+
+    for (int i = 0; i < entities.size(); i++)
+    { Entity ent = (Entity) entities.get(i); 
+      if (ent.isDerived() || ent.isComponent() || 
+          ent.isExternal())
+      { continue; } 
+      Vector newents = ent.makeValueObjects();
+      vobjs.addAll(newents); 
+      System.out.println(">> Value objects: " + newents);  
+    } 
+
+    for (int i = 0; i < vobjs.size(); i++) 
+    { Entity newent = (Entity) vobjs.get(i);  
+      addEntity(newent, 100 + i*80, 200); 
+    }  
+  } 
+
   private void changedEntityName(String oldN, String newN)
   { if (oldN.equals(newN)) { return; } 
     for (int i = 0; i < useCases.size(); i++) 
@@ -26543,7 +26569,8 @@ public void produceCUI(PrintWriter out)
           { suminv.setOwner(actualRoot); 
             actualRoot.addInvariant(suminv);
 
-            actualRoot.adjustAttributeMultiplicities(auxent); 
+            actualRoot.adjustAttributeMultiplicities(auxent);
+            auxent.addFillerAttributes(actualRoot);  
           } 
         }  
         System.out.println(suminv);

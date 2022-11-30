@@ -908,6 +908,10 @@ public void findPlugins()
     JMenuItem patternsMenu = new JMenu("Design Patterns"); 
     transMenu.add(patternsMenu); 
 
+    JMenuItem valueObjectMI = new JMenuItem("Value Object"); 
+    valueObjectMI.addActionListener(this);
+    patternsMenu.add(valueObjectMI);
+
     JMenuItem singletonMI = new JMenuItem("Singleton"); 
     singletonMI.addActionListener(this);
     patternsMenu.add(singletonMI);
@@ -2464,6 +2468,8 @@ public void findPlugins()
       } 
       else if (label.equals("Replace recursion by loops"))
       { this.transformOperationActivity(); } 
+      else if (label.equals("Value Object"))
+      { ucdArea.makeValueObjects(); }
       else if (label.equals("Singleton"))
       { makeSingletons(); }
       else if (label.equals("Facade"))
@@ -3388,7 +3394,7 @@ public void findPlugins()
         inter.addAll((Vector) suppliers.get(e)); 
         inter.retainAll((Vector) suppliers.get(e2)); 
         if (inter.size() > 1) 
-        { System.out.println("Possible facade: " + inter + " for " + e + " & " +
+        { System.out.println(">>> Possible facade: " + inter + " for " + e + " & " +
                              e2); 
         } 
       } 
