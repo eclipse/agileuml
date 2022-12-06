@@ -9,6 +9,7 @@
 
 import java.util.Vector; 
 import java.io.*; 
+import javax.swing.*;
 
 public abstract class ASTTerm
 { String id = ""; 
@@ -209,21 +210,24 @@ public abstract class ASTTerm
 
   public void addStereotype(String str) 
   { String lit = literalForm(); 
-    if (ASTTerm.metafeatures.get(lit) instanceof Vector)
-    { 
-      Vector stereotypes = 
-        (Vector) ASTTerm.metafeatures.get(lit); 
-      if (stereotypes == null) 
-      { stereotypes = new Vector(); 
-        ASTTerm.metafeatures.put(lit,stereotypes); 
-      } 
+    Object stereo = ASTTerm.metafeatures.get(lit); 
+    Vector stereotypes = new Vector(); 
+    if (stereo == null)  
+    { ASTTerm.metafeatures.put(lit,stereotypes); } 
+    else if (!(stereo instanceof Vector)) 
+    { return; } // single-valued metafeature.  
 
-      System.out.println(">> Adding stereotype " + str + " to " + lit); 
+    System.out.println(">++++> Adding stereotype " + str + " to " + lit); 
 
-      if (stereotypes.contains(str)) {} 
-      else 
-      { stereotypes.add(str); }
-    }  
+    if (stereotypes.contains(str)) {} 
+    else 
+    { stereotypes.add(str); 
+      ASTTerm.metafeatures.put(lit,stereotypes);
+    }
+
+    // JOptionPane.showMessageDialog(null, 
+    //    "*** addStereotype " + str + " to " + lit + " Metafeatures of " + lit + " are " + stereotypes,   "",
+    //          JOptionPane.INFORMATION_MESSAGE); 
   } 
 
   public static void addStereo(ASTTerm ast, String str)
@@ -246,10 +250,14 @@ public abstract class ASTTerm
 
       if (stereotypes.contains(str)) {} 
       else 
-      { stereotypes.add(str); }
+      { stereotypes.add(str); 
+        ASTTerm.metafeatures.put(lit, stereotypes); 
+      }
     } 
 
-    System.out.println("*** Metafeatures of " + lit + " are " + mfs); 
+    // JOptionPane.showMessageDialog(null, 
+    //    "*** addStereo " + str + " to " + lit + " Metafeatures of " + lit + " are " + mfs,   "",
+    //          JOptionPane.INFORMATION_MESSAGE); 
   } 
 
   public static void setTaggedValue(ASTTerm ast, String mf, String val) 
@@ -291,17 +299,20 @@ public abstract class ASTTerm
 
   public void removeStereotype(String str) 
   { String lit = literalForm(); 
-    if (ASTTerm.metafeatures.get(lit) instanceof Vector)
+    
+    Object mfs = ASTTerm.metafeatures.get(lit); 
+    if (mfs == null) 
+    { mfs = new Vector(); 
+      ASTTerm.metafeatures.put(lit,mfs); 
+    }
+   
+    if (mfs instanceof Vector)
     { 
-      Vector stereotypes = 
-        (Vector) ASTTerm.metafeatures.get(lit); 
-      if (stereotypes == null) 
-      { stereotypes = new Vector(); 
-        ASTTerm.metafeatures.put(lit,stereotypes); 
-      } 
+      Vector stereotypes = (Vector) mfs; 
       Vector removed = new Vector(); 
       removed.add(str); 
-      stereotypes.removeAll(removed); 
+      stereotypes.removeAll(removed);
+      ASTTerm.metafeatures.put(lit,stereotypes);  
     } 
   } 
 
@@ -322,15 +333,15 @@ public abstract class ASTTerm
 
   public boolean hasStereotype(String str) 
   { String lit = literalForm(); 
-    if (ASTTerm.metafeatures.get(lit) instanceof Vector)
-    { Vector stereotypes = 
-        (Vector) ASTTerm.metafeatures.get(lit); 
-      if (stereotypes == null) 
-      { stereotypes = new Vector(); 
-        ASTTerm.metafeatures.put(lit,stereotypes); 
-      } 
+    Object mfs = ASTTerm.metafeatures.get(lit); 
+    if (mfs == null) 
+    { return false; } 
+ 
+    if (mfs instanceof Vector)
+    { Vector stereotypes = (Vector) mfs; 
       return stereotypes.contains(str);
     } 
+
     return false;  
   } 
 
@@ -352,6 +363,18 @@ public abstract class ASTTerm
     System.out.println(); 
     ASTTerm.metafeatures.put(lit,val); 
   } 
+
+  public static Vector getStereotypes(String lit) 
+  { Object mfs = ASTTerm.metafeatures.get(lit); 
+    if (mfs == null)
+    { return new Vector(); }
+    if (mfs instanceof Vector)
+    { return (Vector) mfs; } 
+    return null; 
+  }  
+
+  public static Vector getStereotypes(ASTTerm t) 
+  { return getStereotypes(t.literalForm()); } 
 
   public static boolean hasTaggedValue(ASTTerm trm, String str) 
   { String lit = trm.literalForm();

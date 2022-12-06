@@ -331,6 +331,51 @@ class VectorUtil
     return res;
   }
 
+  public static Vector allSubvectors(Vector v, int n)
+  { Vector scs = VectorUtil.allSubvectors(v); 
+
+    Vector res = new Vector(); 
+    for (int i = 0; i < scs.size(); i++)
+    { Vector sc = (Vector) scs.get(i);
+      if (sc.size() >= n) 
+      { res.add(sc); } 
+    }
+    return res;
+  }
+
+  public static Vector allSubsequences(Vector v, int n)
+  { Vector scs = VectorUtil.allSubvectors(v); 
+
+    Vector res = new Vector(); 
+    for (int i = 0; i < scs.size(); i++)
+    { Vector sc = (Vector) scs.get(i);
+      if (sc.size() >= n && VectorUtil.continuous(sc,v)) 
+      { res.add(sc); } 
+    }
+    return res;
+  }
+
+  public static boolean continuous(Vector sc, Vector v)
+  { // sc consists of sequential elements from v
+
+    if (sc.size() <= 1) 
+    { return true; } 
+
+    for (int i = 0; i + 1 < sc.size(); i++) 
+    { Object elem1 = sc.get(i); 
+      Object elem2 = sc.get(i+1); 
+  
+      int j = v.indexOf(elem1); 
+      int k = v.indexOf(elem2); 
+
+      if (k == j+1) { } 
+      else 
+      { return false; } 
+    }
+    
+    return true; 
+  } 
+
   public static Object mapletValue(String src, 
                      Vector maplets)
   { for (int i = 0; i < maplets.size(); i++)
@@ -503,7 +548,7 @@ class VectorUtil
   public static void main(String[] args) 
   { Vector coll = new Vector(); 
     Vector coll1 = new Vector(); 
-    Attribute a1 = new Attribute("a1", new Type("int",null), ModelElement.INTERNAL); 
+   /* Attribute a1 = new Attribute("a1", new Type("int",null), ModelElement.INTERNAL); 
     Attribute a2 = new Attribute("a2", new Type("int",null), ModelElement.INTERNAL); 
     Attribute a3 = new Attribute("a3", new Type("int",null), ModelElement.INTERNAL); 
     coll.add(a1); coll.add(a2); 
@@ -512,7 +557,11 @@ class VectorUtil
     coll2.add(a1); coll2.add(a2); coll2.add(a3);  
     Vector sqs = new Vector(); 
     sqs.add(coll1); sqs.add(coll); 
-    System.out.println(VectorUtil.largestInitialSegment(coll2,sqs));
+    System.out.println(VectorUtil.largestInitialSegment(coll2,sqs)); */ 
+
+    coll.add("a"); coll.add("b"); coll.add("c"); 
+    Vector vv = VectorUtil.allSubsequences(coll,2); 
+    System.out.println(vv); 
   } 
     
 }

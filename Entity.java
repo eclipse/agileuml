@@ -4577,6 +4577,44 @@ public class Entity extends ModelElement implements Comparable
 
     out.println("*** Magic numbers: " + mgns); 
 
+    if (mgns.size() > 0)
+    { String yn = 
+        JOptionPane.showInputDialog("Replace magic numbers " + mgns + "? (y/n):");
+
+      if (yn != null && "y".equals(yn))         
+      { Vector magicnumbs = new Vector(); 
+        magicnumbs.addAll(mgns.keySet()); 
+
+        for (int i = 0; i < magicnumbs.size(); i++) 
+        { String mg = "" + magicnumbs.get(i); 
+          // replace spaces by _
+          Vector mgoccs = (Vector) mgns.get(mg); 
+          if (mgoccs == null || mgoccs.size() == 0)
+          { continue; } 
+          String mgname = "CONSTANT_" + i;
+          Expression mgexpr = (Expression) mgoccs.get(0); 
+     
+          Attribute mgconst = 
+            new Attribute(mgname, mgexpr.getType(), 
+                          ModelElement.INTERNAL); 
+          mgconst.setElementType(mgexpr.getElementType()); 
+          mgconst.addStereotype("frozen");
+          mgconst.setInitialExpression(mgexpr);  
+          this.addAttribute(mgconst); 
+          mgconst.setEntity(this); 
+
+          Expression mgconstexpr = 
+                      new BasicExpression(mgconst); 
+    
+          for (int j = 0; j < ops; j++)
+          { BehaviouralFeature op = 
+              (BehaviouralFeature) operations.get(j);
+            op.substituteEq(mg, mgconstexpr); 
+          } 
+        } 
+      } 
+    }   
+
     return totalComplexity; 
   } 
 

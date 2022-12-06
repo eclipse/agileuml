@@ -4746,9 +4746,9 @@ public class BSystemTypes extends BComponent
       "  { int res = 0;\n" +
       "    for (int i = 0; i < sq1.Count && i < sq2.Count; i++)\n" +
       "    { object elem1 = sq1[i];\n" +
-      "      if (((IComparable)elem1).CompareTo(sq2[i]) < 0)\n" +
+      "      if (((IComparable) elem1).CompareTo(sq2[i]) < 0)\n" +
       "      { return -1; }\n" +
-      "      else if (((IComparable)elem1).CompareTo(sq2[i]) > 0)\n" +
+      "      else if (((IComparable) elem1).CompareTo(sq2[i]) > 0)\n" +
       "      { return 1; }\n" +
       "    }\n" +
       "\n" +
@@ -4829,6 +4829,24 @@ public class BSystemTypes extends BComponent
      "  }\n\n"; 
 
   /* 
+   res = res +  
+      "  static int sequenceCompare(vector<T>* sq1, vector<T>* sq2)\n" +
+      "  { int res = 0;\n" +
+      "    for (int i = 0; i < sq1->size() && i < sq2->size(); i++)\n" +
+      "    { T elem1 = sq1->at(i);\n" +
+      "      if (elem1 < sq2->at(i))\n" +
+      "      { return -1; }\n" +
+      "      else if (elem1 > sq2->at(i))\n" +
+      "      { return 1; }\n" +
+      "    }\n" +
+      "\n" +
+      "    if (sq1->size() > sq2->size())\n" +
+      "    { return 1; }\n" +
+      "    if (sq2->size() > sq1->size())\n" +
+      "    { return -1; }\n" +
+      "    return res;\n" +
+      "  }\n\n"; 
+
     res = res + 
       "  template<class S>\n" + 
       "  static T iterate(vector<S>* _s, T initialValue, std::function<std::function<T(T)>(S)> _f)\n" +
@@ -4896,9 +4914,15 @@ public class BSystemTypes extends BComponent
                  "    for (int k = i; k <= j; k++)\n" + 
                  "    { tmp.add(new Integer(k)); } \n" + 
                  "    return tmp;\n" + 
-                 "  }\n\n" + 
-                 "  public static String subrange(String s, int i, int j)\n";
-     res = res + "  { return s.substring(i-1,j); }\n\n";
+                 "  }\n\n";  
+
+     res = res + "  public static String subrange(String s, int i, int j)\n" + 
+                 "  { int len = s.length();\n" + 
+                 "    if (len == 0) { return s; }\n" +   
+                 "    if (j > len) { j = len; }\n" +  
+                 "    return s.substring(i-1,j);\n" +
+                 "  }\n\n";
+
      res = res + "  public static List subrange(List l, int i, int j)\n";
      res = res + "  { List tmp = new Vector(); \n" + 
                  "    for (int k = i-1; k < j; k++)\n" + 
@@ -4914,9 +4938,15 @@ public class BSystemTypes extends BComponent
                  "    for (int k = i; k <= j; k++)\n" + 
                  "    { tmp.add(new Integer(k)); } \n" + 
                  "    return tmp;\n" + 
-                 "  }\n\n" + 
-                 "  public static String subrange(String s, int i, int j)\n";
-     res = res + "  { return s.substring(i-1,j); }\n\n";
+                 "  }\n\n";  
+
+     res = res + "  public static String subrange(String s, int i, int j)\n" + 
+                 "  { int len = s.length();\n" + 
+                 "    if (len == 0) { return s; }\n" +   
+                 "    if (j > len) { j = len; }\n" +  
+                 "    return s.substring(i-1,j);\n" +
+                 "  }\n\n";
+
      res = res + "  public static ArrayList subrange(ArrayList l, int i, int j)\n";
      res = res + "  { ArrayList tmp = new ArrayList(); \n" + 
                  "    for (int k = i-1; k < j; k++)\n" + 
@@ -4932,9 +4962,15 @@ public class BSystemTypes extends BComponent
                  "    for (int k = i; k <= j; k++)\n" + 
                  "    { tmp.add(new Integer(k)); } \n" + 
                  "    return tmp;\n" + 
-                 "  }\n\n" + 
-                 "  public static String subrange(String s, int i, int j)\n";
-    res = res + "  { return s.substring(i-1,j); }\n\n";
+                 "  }\n\n";  
+
+     res = res + "  public static String subrange(String s, int i, int j)\n" + 
+                 "  { int len = s.length();\n" + 
+                 "    if (len == 0) { return s; }\n" +   
+                 "    if (j > len) { j = len; }\n" +  
+                 "    return s.substring(i-1,j);\n" +
+                 "  }\n\n";
+
     res = res + "  public static <T> ArrayList<T> subrange(ArrayList<T> l, int i, int j)\n";
     res = res + "  { ArrayList<T> tmp = new ArrayList<T>(); \n" + 
                 "    for (int k = i-1; k < j; k++)\n" + 

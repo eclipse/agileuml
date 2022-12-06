@@ -3941,7 +3941,8 @@ public void findPlugins()
 
 
   public static void main(String[] args) 
-  { UmlTool window = new UmlTool();  
+  { UmlTool window = new UmlTool();
+  
     if (args.length == 1 && "-java2python".equals(args[0]))
     { window.ucdArea.java2python(); 
       window.ucdArea.saveModelToFile("output/model.txt"); 
@@ -3954,7 +3955,7 @@ public void findPlugins()
         appthread.start(); 
       } 
       catch (Exception ee2) 
-      { System.err.println("Unable to run uml2py"); } 
+      { System.err.println("!! Unable to run uml2py"); } 
       return; 
     } 
 
@@ -3970,7 +3971,7 @@ public void findPlugins()
         appthread.start(); 
       } 
       catch (Exception ee2) 
-      { System.err.println("Unable to run uml2py"); } 
+      { System.err.println("!! Unable to run uml2py"); } 
       return; 
     } 
 
@@ -3986,6 +3987,28 @@ public void findPlugins()
 
     if (args.length == 1 && "-java2swift".equals(args[0]))
     { window.ucdArea.java2swift(); 
+      return; 
+    } 
+
+    if (args.length == 1 && "-vb2py".equals(args[0]))
+    { window.ucdArea.vb2py(); 
+      window.ucdArea.saveModelToFile("output/model.txt"); 
+
+      RunApp rapp1 = new RunApp("uml2py"); 
+
+      try
+      { rapp1.setFile("app.py"); 
+        Thread appthread = new Thread(rapp1); 
+        appthread.start(); 
+      } 
+      catch (Exception ee2) 
+      { System.err.println("!! Unable to run uml2py"); } 
+
+      return; 
+    } 
+
+    if (args.length == 1 && "-cobol2java".equals(args[0]))
+    { window.ucdArea.cobol2java(); 
       return; 
     } 
 
@@ -4044,7 +4067,7 @@ public void findPlugins()
           out.close();
         }
         catch (IOException ex)
-        { System.out.println("Error generating Web System"); }
+        { System.out.println("!! Error generating Web System"); }
 
         new TextDisplay("Web System code","output/tmp");
         return; 
@@ -4071,7 +4094,7 @@ public void findPlugins()
           out3.close(); 
         }
         catch (IOException ex)
-        { System.out.println("Error generating Java"); }
+        { System.out.println("!! Error generating Java"); }
 
         TextDisplay td = new TextDisplay("Java code","output/Controller.java");
         td.setFont(new java.awt.Font("Serif",java.awt.Font.BOLD,18)); 
@@ -4091,7 +4114,7 @@ public void findPlugins()
           out2.close(); 
         }
         catch (IOException ex)
-        { System.out.println("Error generating Java"); }
+        { System.out.println("!! Error generating Java"); }
 
         new TextDisplay("Java code","output/Controller.java");
       } 
@@ -4110,7 +4133,7 @@ public void findPlugins()
           out2.close(); 
         }
         catch (IOException ex)
-        { System.out.println("Error generating C#"); }
+        { System.out.println("!! Error generating C#"); }
 
         new TextDisplay("C# code","output/Controller.cs");
       } 
@@ -4129,7 +4152,7 @@ public void findPlugins()
           out2.close(); 
         }
         catch (IOException ex)
-        { System.out.println("Error generating C++"); }
+        { System.out.println("!! Error generating C++"); }
 
         new TextDisplay("C++ code","output/Controller.h");
       } 

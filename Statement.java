@@ -471,7 +471,14 @@ abstract class Statement implements Cloneable
   { return new Vector(); } 
 
   /* Expression occurrences of any variable in this statement */ 
+
   public Vector getVariableUses()
+  { return new Vector(); } 
+
+  public Vector getVariableUses(Vector unused)
+  { return getVariableUses(); } 
+
+  public Vector allAttributesUsedIn()
   { return new Vector(); } 
 
   
@@ -1256,6 +1263,20 @@ class ReturnStatement extends Statement
     return value.getVariableUses(); 
   } 
 
+  public Vector getVariableUses(Vector unused)
+  { Vector res = new Vector(); 
+    if (value == null) 
+    { return res; } 
+    return value.getVariableUses(); 
+  } 
+
+  public Vector allAttributesUsedIn()
+  { Vector res = new Vector(); 
+    if (value == null) 
+    { return res; } 
+    return value.allAttributesUsedIn(); 
+  } 
+
   public Vector allFeaturesUsedIn()
   { Vector res = new Vector(); 
     if (value == null) 
@@ -1750,9 +1771,9 @@ class InvocationStatement extends Statement
     // op.name = action. op is original version of 
     // operation before slicing. 
 
-    System.out.println("++ Invocation statement " + 
-                       action + " " + callExp + " " + 
-                       parameters); 
+    // System.out.println("++ Invocation statement " + 
+    //                    action + " " + callExp + " " + 
+    //                    parameters); 
 					   
     if (callExp == null) { return this; }
 
@@ -1766,9 +1787,9 @@ class InvocationStatement extends Statement
     else 
     { oldpars.addAll(parameters); } 
 
-    System.out.println("++ " + 
-                       op + " " + fpars + " " + 
-                       oldpars); 
+    // System.out.println("++ " + 
+    //                    op + " " + fpars + " " + 
+    //                    oldpars); 
 
     if (action.equals(op.getName()) || 
         action.startsWith(op.getName() + "(") || 
@@ -1793,7 +1814,7 @@ class InvocationStatement extends Statement
     } 
     else 
     { return this; }  
-  } 
+  } // just callExp.removeSlicedParameters(op,fpars)
 
   public boolean isSkip()
   { if ("skip".equals(action)) 
@@ -2348,6 +2369,17 @@ class InvocationStatement extends Statement
     return new Vector(); 
   } 
 
+  public Vector getVariableUses(Vector unused) 
+  { if (callExp != null) 
+    { return callExp.getVariableUses(); } 
+    return new Vector(); 
+  } 
+
+  public Vector allAttributesUsedIn() 
+  { if (callExp != null) 
+    { return callExp.allAttributesUsedIn(); } 
+    return new Vector(); 
+  } 
 
   public Vector equivalentsUsedIn()
   { Vector res = new Vector(); 
@@ -2470,6 +2502,9 @@ class ImplicitInvocationStatement extends Statement
     clones.put(val,used);
   }
 
+  public void findMagicNumbers(java.util.Map mgns, String rule, String op)
+  { callExp.findMagicNumbers(mgns, this + "", op); } 
+
   public Statement dereference(BasicExpression var)
   { ImplicitInvocationStatement res = 
       new ImplicitInvocationStatement(callExp.dereference(var));
@@ -2485,7 +2520,10 @@ class ImplicitInvocationStatement extends Statement
 
   public Statement removeSlicedParameters(
              BehaviouralFeature op, Vector fpars)
-  { return this; } // substitute in the callExp
+  { Expression newExp = 
+      callExp.removeSlicedParameters(op,fpars); 
+    return new ImplicitInvocationStatement(newExp); 
+  } 
 
   public Statement addContainerReference(
                       BasicExpression ref, String var,
@@ -2729,6 +2767,17 @@ class ImplicitInvocationStatement extends Statement
     return new Vector();
   } 
 
+  public Vector getVariableUses(Vector unused) 
+  { if (callExp != null) 
+    { return callExp.getVariableUses(); } 
+    return new Vector();
+  } 
+
+  public Vector allAttributesUsedIn() 
+  { if (callExp != null) 
+    { return callExp.allAttributesUsedIn(); } 
+    return new Vector(); 
+  } 
 
   public Vector equivalentsUsedIn()
   { Vector res = new Vector(); 
@@ -3350,16 +3399,17 @@ class WhileStatement extends Statement
     // Expression lv = null; 
     // if (loopVar != null) 
     // { lv = loopVar.substituteEq(oldE,newE); }  
-    // Expression lr = null; 
-    // if (loopRange != null) 
-    // { lr = loopRange.substituteEq(oldE,newE); }  
-    // Expression lt = null; 
-    // if (loopTest != null) 
-    // { lt = loopTest.substituteEq(oldE,newE); }  
-    WhileStatement res = new WhileStatement(loopTest,newbody); 
+
+    Expression lr = null; 
+    if (loopRange != null) 
+    { lr = loopRange.removeSlicedParameters(op,fpars); }  
+    Expression lt = null; 
+    if (loopTest != null) 
+    { lt = loopTest.removeSlicedParameters(op,fpars); }  
+    WhileStatement res = new WhileStatement(lt,newbody); 
     res.setEntity(entity); 
     res.setLoopKind(loopKind); 
-    res.setLoopRange(loopVar,loopRange); 
+    res.setLoopRange(loopVar,lr); 
     res.setBrackets(brackets);
  
     // Expression inv = null; 
@@ -4097,6 +4147,20 @@ class WhileStatement extends Statement
     return res;  
   }  
 
+  public Vector allAttributesUsedIn()
+  { Vector res = body.allAttributesUsedIn();
+
+    if (loopRange != null) 
+    { res.addAll(loopRange.allAttributesUsedIn()); } 
+     
+    if (loopTest == null) 
+    { return res; } 
+    Vector res2 = loopTest.allAttributesUsedIn();
+    res.addAll(res2);  
+
+    return res;  
+  }  
+
   public Vector getUses(String var)
   { Vector res = body.getUses(var);
 
@@ -4136,6 +4200,42 @@ class WhileStatement extends Statement
         ModelElement.lookupExpressionByName(lv, lrvars); 
       if (loopVar != null && rexpr != null) 
       { System.err.println("!! Error: loop variable " +
+               loopVar + " used in loop range: " + loopRange); 
+      } 
+    } 
+     
+    if (loopTest == null) 
+    { return res; } 
+
+    Vector res2 = loopTest.getVariableUses();
+    res.addAll(res2);  
+
+    return res;  
+  }  
+
+  public Vector getVariableUses(Vector unused)
+  { Vector res = body.getVariableUses(unused);
+
+    String lv = ""; 
+
+    if (loopVar != null) 
+    { lv = loopVar + ""; 
+      Expression expr = 
+        ModelElement.lookupExpressionByName(lv, res); 
+      if (expr == null) 
+      { System.err.println("! Warning: no use of loop variable " +
+                 loopVar + " in loop body: " + body); 
+      } 
+      res = ModelElement.removeExpressionByName(lv,res); 
+    } 
+
+    if (loopRange != null) 
+    { Vector lrvars = loopRange.getVariableUses(); 
+      res.addAll(lrvars); 
+      Expression rexpr = 
+        ModelElement.lookupExpressionByName(lv, lrvars); 
+      if (loopVar != null && rexpr != null) 
+      { System.err.println("!! Semantic error: loop variable " +
                loopVar + " used in loop range: " + loopRange); 
       } 
     } 
@@ -4447,7 +4547,20 @@ class CreationStatement extends Statement
 
   public Statement removeSlicedParameters(
                      BehaviouralFeature bf, Vector fpars)
-  { return this; } // substitute in the initialExpression
+  { String cio = createsInstanceOf; 
+    String ast = assignsTo; 
+
+    CreationStatement res = new CreationStatement(cio,ast);
+    res.setType(instanceType); 
+    res.setElementType(elementType);  
+	
+    if (initialExpression != null) 
+    { Expression newExpr = 
+        initialExpression.removeSlicedParameters(bf,fpars); 
+      res.setInitialisation(newExpr); 
+    }
+    return res; 
+ } // substitute in the initialExpression
 
   public Statement addContainerReference(
                BasicExpression ref, String var, Vector excl)
@@ -5143,6 +5256,13 @@ class CreationStatement extends Statement
     return res; 
   } 
 
+  public Vector allAttributesUsedIn()
+  { Vector res = new Vector(); 
+    if (initialExpression != null) 
+    { res.addAll(initialExpression.allAttributesUsedIn()); }  
+    return res; 
+  } 
+
   public Vector getUses(String var)
   { Vector res = new Vector(); 
     if (initialExpression != null) 
@@ -5151,6 +5271,13 @@ class CreationStatement extends Statement
   } 
 
   public Vector getVariableUses()
+  { Vector res = new Vector(); 
+    if (initialExpression != null) 
+    { res.addAll(initialExpression.getVariableUses()); }  
+    return res; 
+  } 
+
+  public Vector getVariableUses(Vector unused)
   { Vector res = new Vector(); 
     if (initialExpression != null) 
     { res.addAll(initialExpression.getVariableUses()); }  
@@ -5176,7 +5303,7 @@ class CreationStatement extends Statement
           Character.isDigit(assignsTo.charAt(1)) && 
           Character.isDigit(assignsTo.charAt(2)))
       { res.add(assignsTo); } 
-    } // can't be _*
+    } // can't be _* or _+
     
     if (instanceType != null) 
     { res.addAll(instanceType.metavariables()); }  
@@ -5389,6 +5516,28 @@ class SequenceStatement extends Statement
     { Statement stat = (Statement) statements.get(i); 
       stat.findClones(clones,rule,op); 
     }
+
+    // Clones of statements, at least 2: 
+
+    Vector fstats = flattenSequenceStatement(); 
+
+    Vector substats = VectorUtil.allSubsequences(fstats,2); 
+    for (int i = 0; i < substats.size(); i++) 
+    { Vector subs = (Vector) substats.get(i); 
+      Statement sq = new SequenceStatement(subs); 
+      String val = sq + ""; 
+      Vector used = (Vector) clones.get(val); 
+      if (used == null)
+      { used = new Vector(); }
+      if (rule != null && !used.contains(rule))
+      { used.add(rule); }
+      else if (op != null && !used.contains(op))
+      { used.add(op); }
+      clones.put(val,used);
+    } 
+
+    // System.out.println(">>> Clones: " + clones); 
+
   } 
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
@@ -6108,6 +6257,15 @@ class SequenceStatement extends Statement
     return res; 
   } 
 
+  public Vector allAttributesUsedIn()
+  { Vector res = new Vector(); 
+    for (int i = 0; i < statements.size(); i++) 
+    { Statement stat = (Statement) statements.get(i); 
+      res.addAll(stat.allAttributesUsedIn()); 
+    } 
+    return res; 
+  } 
+
   public Vector getUses(String var)
   { Vector res = new Vector(); 
     for (int i = 0; i < statements.size(); i++) 
@@ -6141,7 +6299,48 @@ class SequenceStatement extends Statement
       Expression use = 
         ModelElement.lookupExpressionByName(var,res); 
       if (use == null) 
-      { System.err.println("! Warning: no use of local variable " + var + " in statements " + sstail); } 
+      { System.err.println("!! Bad smell (UVA): no use of local variable " + var + " in statements " + sstail); 
+        System.err.println(); 
+      } 
+      res = ModelElement.removeExpressionByName(var,res); 
+      return res; 
+    } 
+
+    res.addAll(s1.getVariableUses()); 
+
+    return res; 
+  } 
+
+  public Vector getVariableUses(Vector unused)
+  { Vector res = new Vector(); 
+
+    if (statements.size() == 0)
+    { return res; } 
+
+    Statement s1 = (Statement) statements.get(0); 
+
+    if (statements.size() == 1) 
+    { res = s1.getVariableUses(unused); 
+      return res; 
+    } 
+
+    Vector tailseq = new Vector(); 
+    tailseq.addAll(statements); 
+    tailseq.remove(0); 
+    SequenceStatement sstail = 
+        new SequenceStatement(tailseq); 
+    res = sstail.getVariableUses(unused); 
+
+    if (s1 instanceof CreationStatement)
+    { CreationStatement cs = (CreationStatement) s1; 
+      String var = cs.getDefinedVariable(); 
+      Expression use = 
+        ModelElement.lookupExpressionByName(var,res); 
+      if (use == null) 
+      { System.err.println("!! Bad smell (UVA): no use of local variable " + var + " in statements " + sstail); 
+        System.err.println(); 
+        unused.add(var); 
+      } 
       res = ModelElement.removeExpressionByName(var,res); 
       return res; 
     } 
@@ -6197,7 +6396,17 @@ class CaseStatement extends Statement
   } 
 
   public Statement removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
-  { return this; } 
+  { CaseStatement cs = new CaseStatement(); 
+    Vector ss = cases.elements; 
+    for (int i = 0; i < ss.size(); i++) 
+    { Maplet mm = (Maplet) ss.get(i); 
+      Statement stat = 
+        ((Statement) mm.dest).removeSlicedParameters(bf,fpars); 
+      Maplet nn = new Maplet(mm.source,stat); 
+      cs.addCase(nn); 
+    } 
+    return cs; 
+  } 
 
   public Statement addContainerReference(
                     BasicExpression ref, String var,
@@ -6549,6 +6758,15 @@ class CaseStatement extends Statement
     return res; 
   } 
 
+  public Vector allAttributesUsedIn()
+  { Vector res = new Vector(); 
+    for (int i = 0; i < cases.elements.size(); i++) 
+    { Maplet mm = (Maplet) cases.elements.get(i); 
+      res.addAll(((Statement) mm.dest).allAttributesUsedIn()); 
+    } 
+    return res; 
+  } 
+
   public Vector equivalentsUsedIn()
   { Vector res = new Vector(); 
     for (int i = 0; i < cases.elements.size(); i++) 
@@ -6612,7 +6830,13 @@ class ErrorStatement extends Statement
   } 
 
   public Statement removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
-  { return this; } 
+  { if (thrownObject != null) 
+    { Expression tobj = 
+          thrownObject.removeSlicedParameters(bf,fpars); 
+      return new ErrorStatement(tobj); 
+    } 
+    return new ErrorStatement(null); 
+  } 
 
   public Statement addContainerReference(
                      BasicExpression ref, 
@@ -6797,6 +7021,13 @@ class ErrorStatement extends Statement
     return res; 
   } 
 
+  public Vector allAttributesUsedIn()
+  { Vector res = new Vector(); 
+    if (thrownObject != null) 
+    { res = thrownObject.allAttributesUsedIn(); } 
+    return res; 
+  } 
+
   public Vector getUses(String var)
   { Vector res = new Vector(); 
     if (thrownObject != null) 
@@ -6922,7 +7153,14 @@ class AssertStatement extends Statement
   } 
 
   public Statement removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
-  { return this; } 
+  { Expression newcond = condition; 
+    if (condition != null) 
+    { newcond = condition.removeSlicedParameters(bf,fpars); }
+    Expression newmessage = message; 
+    if (message != null) 
+    { newmessage = message.removeSlicedParameters(bf,fpars); }
+    return new AssertStatement(newcond,newmessage); 
+  } 
 
   public String toString()
   { if (message == null) 
@@ -7124,6 +7362,15 @@ class AssertStatement extends Statement
     return res; 
   } 
 
+  public Vector allAttributesUsedIn()
+  { Vector res = new Vector(); 
+    res = condition.allAttributesUsedIn(); 
+    
+    if (message != null) 
+    { res = VectorUtil.union(res, message.allAttributesUsedIn()); } 
+    return res; 
+  } 
+
   public Vector getUses(String var)
   { Vector res = new Vector(); 
     res = condition.getUses(var); 
@@ -7261,6 +7508,11 @@ class CatchStatement extends Statement
     { action.findClones(clones,rule,op); }
   } 
 
+  public void findMagicNumbers(java.util.Map mgns, String rule, String op)
+  { if (action != null)
+    { action.findMagicNumbers(mgns, this + "", op); }
+  } 
+
   public Statement addContainerReference(BasicExpression ref,
                                          String var,
                                          Vector excls) 
@@ -7286,7 +7538,11 @@ class CatchStatement extends Statement
   } 
   
   public Statement removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
-  { return this; } 
+  { Expression cobj = 
+       caughtObject.removeSlicedParameters(bf,fpars); 
+    Statement astat = action.removeSlicedParameters(bf,fpars); 
+    return new CatchStatement(cobj,astat); 
+  } 
 
   public void display(PrintWriter out)
   { out.println("  catch (" + caughtObject + ") do " + action); }
@@ -7428,6 +7684,12 @@ class CatchStatement extends Statement
   public Vector allOperationsUsedIn()
   { Vector res = new Vector(); 
     res = action.allOperationsUsedIn();  
+    return res; 
+  } 
+
+  public Vector allAttributesUsedIn()
+  { Vector res = new Vector(); 
+    res = action.allAttributesUsedIn();  
     return res; 
   } 
 
@@ -7641,6 +7903,19 @@ class TryStatement extends Statement
     { endStatement.findClones(clones,rule,op); } 
   } 
 
+  public void findMagicNumbers(java.util.Map mgns, String rule, String op)
+  { if (body != null) 
+    { body.findMagicNumbers(mgns,rule,op); } 
+
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement stat = (Statement) catchClauses.get(i); 
+      stat.findMagicNumbers(mgns,rule,op); 
+    }
+
+    if (endStatement != null) 
+    { endStatement.findMagicNumbers(mgns,rule,op); } 
+  } 
+
   public Vector singleMutants()
   { if (body == null) 
     { return new Vector(); } 
@@ -7741,12 +8016,30 @@ class TryStatement extends Statement
     } 
     res.setClauses(catchClones); 
     if (endStatement != null) 
-    { res.setEndStatement(endStatement.substituteEq(oldE,newE)); } 
+    { res.setEndStatement(
+             endStatement.substituteEq(oldE,newE)); 
+    } 
     return res; 
   } 
 
   public Statement removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
-  { return this; } 
+  { Statement s1 = null; 
+    if (body != null) 
+    { s1 = body.removeSlicedParameters(bf,fpars); }  
+    TryStatement res = new TryStatement(s1);
+    Vector catchClones = new Vector(); 
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      Statement ccClone = cc.removeSlicedParameters(bf,fpars); 
+      catchClones.add(ccClone); 
+    } 
+    res.setClauses(catchClones); 
+    if (endStatement != null) 
+    { res.setEndStatement(
+        endStatement.removeSlicedParameters(bf,fpars)); 
+    } 
+    return res; 
+  } 
 
   public void display(PrintWriter out)
   { if (body == null) 
@@ -8078,6 +8371,24 @@ class TryStatement extends Statement
     return res; 
   } 
 
+  public Vector allAttributesUsedIn()
+  { Vector res = new Vector(); 
+    if (body != null) 
+    { res = VectorUtil.union(res,body.allAttributesUsedIn()); }   
+
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      Vector vv = cc.allAttributesUsedIn(); 
+      res = VectorUtil.union(res,vv); 
+    } 
+
+    if (endStatement != null) 
+    { Vector endrd = endStatement.allAttributesUsedIn(); 
+      res = VectorUtil.union(res,endrd); 
+    }  
+    return res; 
+  } 
+
   public Vector getUses(String var)
   { Vector res = new Vector(); 
     if (body != null) 
@@ -8100,6 +8411,26 @@ class TryStatement extends Statement
   { Vector res = new Vector(); 
     if (body != null) 
     { res = VectorUtil.union(res,body.getVariableUses()); }   
+
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      Vector vv = cc.getVariableUses(); 
+      res = VectorUtil.union(res,vv); 
+    } 
+
+    if (endStatement != null) 
+    { Vector endrd = endStatement.getVariableUses(); 
+      res = VectorUtil.union(res,endrd); 
+    }  
+    return res; 
+  } 
+
+  public Vector getVariableUses(Vector unused)
+  { Vector res = new Vector(); 
+    if (body != null) 
+    { Vector bodyuses = body.getVariableUses(unused); 
+      res = VectorUtil.union(res,bodyuses); 
+    }   
 
     for (int i = 0; i < catchClauses.size(); i++) 
     { Statement cc = (Statement) catchClauses.get(i); 
@@ -8294,6 +8625,14 @@ class IfStatement extends Statement
     } 
   }
 
+  public void findMagicNumbers(java.util.Map mgns, String rule, String op)
+  { for (int i = 0; i < cases.size(); i++) 
+    { IfCase cse = (IfCase) cases.get(i); 
+      cse.findMagicNumbers(mgns,rule,op); 
+    } 
+  }
+
+
   public Statement dereference(BasicExpression var) 
   { Vector newcases = new Vector(); 
     for (int i = 0; i < cases.size(); i++) 
@@ -8348,16 +8687,24 @@ class IfStatement extends Statement
   { cases.addAll(stat.cases); } 
 
   public Statement substituteEq(String oldE, Expression newE)
-  { IfStatement is = new IfStatement(); 
+  { IfStatement istat = new IfStatement(); 
     for (int i = 0; i < cases.size(); i++) 
     { IfCase ic = (IfCase) cases.get(i); 
       IfCase ic2 = ic.substituteEq(oldE,newE); 
-      is.addCase(ic2); } 
-    return is; 
+      istat.addCase(ic2); 
+    } 
+    return istat; 
   } 
 
   public Statement removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
-  { return this; } 
+  { IfStatement istat = new IfStatement(); 
+    for (int i = 0; i < cases.size(); i++) 
+    { IfCase ic = (IfCase) cases.get(i); 
+      IfCase ic2 = ic.removeSlicedParameters(bf,fpars); 
+      istat.addCase(ic2); 
+    } 
+    return istat;
+  } 
 
   public void display()
   { int n = cases.size();
@@ -8965,6 +9312,15 @@ class IfStatement extends Statement
     return res;  
   }  
 
+  public Vector allAttributesUsedIn()
+  { Vector res = new Vector();
+    for (int i = 0; i < cases.size(); i++) 
+    { IfCase ic = (IfCase) cases.get(i); 
+      res.addAll(ic.allAttributesUsedIn());
+    } 
+    return res;  
+  }  
+
   public Vector getUses(String var)
   { Vector res = new Vector();
     for (int i = 0; i < cases.size(); i++) 
@@ -8979,6 +9335,16 @@ class IfStatement extends Statement
     for (int i = 0; i < cases.size(); i++) 
     { IfCase ic = (IfCase) cases.get(i); 
       res.addAll(ic.getVariableUses());
+    } 
+    return res;  
+  }  
+
+  public Vector getVariableUses(Vector unused)
+  { Vector res = new Vector();
+    for (int i = 0; i < cases.size(); i++) 
+    { IfCase ic = (IfCase) cases.get(i); 
+      Vector icuses = ic.getVariableUses(unused); 
+      res.addAll(icuses);
     } 
     return res;  
   }  
@@ -9714,6 +10080,13 @@ class AssignStatement extends Statement
     return res;  
   }  
 
+  public Vector allAttributesUsedIn()
+  { Vector res = new Vector();
+    res.addAll(lhs.allAttributesUsedIn());  
+    res.addAll(rhs.allAttributesUsedIn());  
+    return res;  
+  }  
+
   public Vector getUses(String var)
   { Vector res = new Vector();
     res.addAll(lhs.getUses(var));  
@@ -9782,6 +10155,11 @@ class IfCase
     }
     ifPart.findClones(clones,rule,op);
   }
+
+  public void findMagicNumbers(java.util.Map mgns, String rule, String op)
+  { test.findMagicNumbers(mgns,this + "",op); 
+    ifPart.findMagicNumbers(mgns,rule,op);
+  }
  
 
   public IfCase addContainerReference(BasicExpression ref,
@@ -9827,7 +10205,12 @@ class IfCase
   } 
 
   public IfCase removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
-  { return this; } 
+  { Expression e = test.removeSlicedParameters(bf,fpars); 
+    Statement stat = ifPart.removeSlicedParameters(bf,fpars);
+    IfCase res = new IfCase(e,stat);
+    res.setEntity(entity); 
+    return res;
+  } 
 
 
   public void display()
@@ -10026,6 +10409,13 @@ class IfCase
     return res;  
   }  
 
+  public Vector allAttributesUsedIn()
+  { Vector res = new Vector();
+    res.addAll(test.allAttributesUsedIn()); 
+    res.addAll(ifPart.allAttributesUsedIn()); 
+    return res;  
+  }  
+
   public Vector getUses(String var)
   { Vector res = new Vector();
     res.addAll(test.getUses(var)); 
@@ -10037,6 +10427,14 @@ class IfCase
   { Vector res = new Vector();
     res.addAll(test.getVariableUses()); 
     res.addAll(ifPart.getVariableUses()); 
+    return res;  
+  }  
+
+  public Vector getVariableUses(Vector unused)
+  { Vector res = new Vector();
+    res.addAll(test.getVariableUses()); 
+    Vector ifuses = ifPart.getVariableUses(unused); 
+    res.addAll(ifuses); 
     return res;  
   }  
 
@@ -10374,11 +10772,12 @@ class ConditionalStatement extends Statement
   }  
 
   public Statement removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
-  { Statement ifc = ifPart.removeSlicedParameters(bf,fpars); 
+  { Expression testc = test.removeSlicedParameters(bf,fpars); 
+    Statement ifc = ifPart.removeSlicedParameters(bf,fpars); 
     Statement elsec = null; 
     if (elsePart != null) 
     { elsec = elsePart.removeSlicedParameters(bf,fpars); }
-    return new ConditionalStatement(test, ifc, elsec); 
+    return new ConditionalStatement(testc, ifc, elsec); 
   }  
  
 
@@ -10577,6 +10976,15 @@ class ConditionalStatement extends Statement
     return res;  
   }  
 
+  public Vector allAttributesUsedIn()
+  { Vector res = new Vector();
+    res.addAll(test.allAttributesUsedIn()); 
+    res.addAll(ifPart.allAttributesUsedIn()); 
+    if (elsePart != null) 
+    { res.addAll(elsePart.allAttributesUsedIn()); } 
+    return res;  
+  }  
+
   public Vector getUses(String var)
   { Vector res = new Vector();
     res.addAll(test.getUses(var)); 
@@ -10592,6 +11000,18 @@ class ConditionalStatement extends Statement
     res.addAll(ifPart.getVariableUses()); 
     if (elsePart != null) 
     { res.addAll(elsePart.getVariableUses()); } 
+    return res;  
+  }  
+
+  public Vector getVariableUses(Vector unused)
+  { Vector res = new Vector();
+    res.addAll(test.getVariableUses()); 
+    Vector ifuses = ifPart.getVariableUses(unused); 
+    res.addAll(ifuses); 
+    if (elsePart != null) 
+    { Vector elseuses = elsePart.getVariableUses(unused); 
+      res.addAll(elseuses); 
+    } 
     return res;  
   }  
 
@@ -10667,6 +11087,9 @@ class FinalStatement extends Statement
 
   public void findClones(java.util.Map clones, String rule, String op)
   { body.findClones(clones,rule,op); } 
+
+  public void findMagicNumbers(java.util.Map mgns, String rule, String op)
+  { body.findMagicNumbers(mgns,this + "",op); } 
 
 
   public Statement generateDesign(java.util.Map env, boolean local)
@@ -10748,7 +11171,9 @@ class FinalStatement extends Statement
   }  
 
   public Statement removeSlicedParameters(BehaviouralFeature bf, Vector fpars)
-  { return this; } 
+  { Statement ifc = body.removeSlicedParameters(bf,fpars); 
+    return new FinalStatement(ifc);
+  } 
 
   public boolean typeCheck(Vector types, Vector entities, Vector cs, Vector env)
   { boolean res = body.typeCheck(types,entities,cs,env);
@@ -10846,6 +11271,12 @@ class FinalStatement extends Statement
     return res;  
   }  
 
+  public Vector allAttributesUsedIn()
+  { Vector res = new Vector();
+    res.addAll(body.allAttributesUsedIn()); 
+    return res;  
+  }  
+
   public Vector getUses(String var)
   { Vector res = new Vector();
     res.addAll(body.getUses(var)); 
@@ -10855,6 +11286,13 @@ class FinalStatement extends Statement
   public Vector getVariableUses()
   { Vector res = new Vector();
     res.addAll(body.getVariableUses()); 
+    return res;  
+  }  
+
+  public Vector getVariableUses(Vector unused)
+  { Vector res = new Vector();
+    Vector bodyuses = body.getVariableUses(unused); 
+    res.addAll(bodyuses); 
     return res;  
   }  
 

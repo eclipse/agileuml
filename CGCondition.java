@@ -134,7 +134,8 @@ public class CGCondition
     return false; 
   } 
 
-  public void applyAction(Vector vars, Vector eargs, Vector reps, CGSpec cgs, 
+  public void applyAction(Vector vars, Vector eargs, 
+                  Vector reps, CGSpec cgs, 
                   Vector entities, Vector globalVariables)
   { // vv stereo
     // means ast.setStereotype(stereorep)
@@ -188,17 +189,17 @@ public class CGCondition
 
         /* JOptionPane.showMessageDialog(null, 
           "Global variable " + rvar + " value is " + stereo,   "",
-          JOptionPane.INFORMATION_MESSAGE); */ 
+          JOptionPane.INFORMATION_MESSAGE);
 
-        System.out.println(">--> Replacing global variable " + rvar + " by " + varValue); 
+        System.out.println(">--> Replacing global variable " + rvar + " by " + varValue); */ 
       }
     } 
 
-  /* 
-    System.out.println(">>> Applying action " + variable + " (" + positive + ") " + stereo);  
-    JOptionPane.showMessageDialog(null, 
-          "Applying action " + variable + " (" + positive + ") " + stereo,   "",
-          JOptionPane.INFORMATION_MESSAGE); */ 
+  
+    // System.out.println(">>> Applying action " + variable + " (" + positive + ") " + stereo);  
+    // JOptionPane.showMessageDialog(null, 
+    //       "Applying action " + variable + " (" + positive + ") " + stereo,   "",
+    //       JOptionPane.INFORMATION_MESSAGE); 
 
     String varx = variable; 
     String mffeat = null; 
@@ -247,14 +248,14 @@ public class CGCondition
           } 
           else // repl == null; stereotype is mffeat=stereo
           { ASTTerm.setTaggedValue(ast, mffeat, stereo); 
-            System.out.println(">>> Executed action " + ast + "`" + mffeat + " = " + stereo);  
+            // System.out.println(">>> Executed action " + ast + "`" + mffeat + " = " + stereo);  
             repl = varx + "`" + mffeat; 
           }  
     
-          System.out.println(">>> Executed action " + repl + " (" + positive + ") " + stereo);  
+          /* System.out.println(">>> Executed action " + repl + " (" + positive + ") " + stereo);  
           JOptionPane.showMessageDialog(null, 
              "Executed action " + repl + " (" + positive + ") " + stereo,   "",
-             JOptionPane.INFORMATION_MESSAGE); 
+             JOptionPane.INFORMATION_MESSAGE); */ 
         } 
         else 
         { if (positive) 
@@ -262,13 +263,17 @@ public class CGCondition
           else 
           { ast.removeStereotype(stereo); }
           /* JOptionPane.showMessageDialog(null, 
-             "Executed action " + ast + " (" + positive + ") " + stereo,   "",
-             JOptionPane.INFORMATION_MESSAGE); */ 
+             "Executed action " + ast + " (" + positive + ") " + stereo + " " + ASTTerm.getStereotypes(ast),   "",
+             JOptionPane.INFORMATION_MESSAGE); */  
         }  
       }  
     }
     else // global variable
-    { if (mffeat == null || mffeat.length() == 0) 
+    { /* JOptionPane.showMessageDialog(null, 
+             "Set global variable " + varx + " " + mffeat + " " + stereo,   "",
+             JOptionPane.INFORMATION_MESSAGE); */ 
+
+      if (mffeat == null || mffeat.length() == 0) 
       { ASTTerm.setStereotypeValue(varx,stereo); }
       else // varx`mffeat = stereo
       { String varValue = ASTTerm.getStereotypeValue(varx);
@@ -1000,6 +1005,10 @@ public class CGCondition
       else 
       { return !positive; } 
     } 
+
+    /* JOptionPane.showMessageDialog(null, 
+          "" + a + " stereotypes " + ASTTerm.getStereotypes(a),   "",
+          JOptionPane.INFORMATION_MESSAGE); */ 
 
     if (a.hasStereotype(stereotype))
     { return positive; }

@@ -7078,7 +7078,12 @@ public boolean conflictsWithIn(String op, Expression el,
     } 
 
     if (operator.equals("->compareTo")) 
-    { res = "(" + lqf + " < " + rqf + ")?-1:((" + rqf + " < " + lqf + ")?1:0)";
+    { /* if (left.hasSequenceType() && right.hasSequenceType())
+      { res = "UmlRsdsLib<" + lcet + ">::sequenceCompare(" + lqf + "," + rqf + ")"; 
+        return res; 
+      } */ 
+
+      res = "(" + lqf + " < " + rqf + ")?-1:((" + rqf + " < " + lqf + ")?1:0)";
       return res; 
     } 
     // User must define operator< in their classes

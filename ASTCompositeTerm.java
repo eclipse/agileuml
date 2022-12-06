@@ -188,10 +188,22 @@ public class ASTCompositeTerm extends ASTTerm
         String strim = str.trim(); 
         // System.out.println(">--- old term: " + str);  
         if ("\\r\\n".equals(strim) ||
-            "\\n\\r".equals(strim)) { } 
+            "\\r\\n\\r\\n".equals(strim) ||
+            "\\r\\n\\r\\n\\r\\n".equals(strim) ||
+            "\\n\\r".equals(strim)) 
+        { // System.out.println(">--- removing whitesace: " + strim); 
+        } 
+        else if (strim.endsWith("\\r\\n\\r\\n"))
+        { // System.out.println(">--- old term: " + strim);
+          str = strim.substring(0,strim.length()-8); 
+          ntrm = new ASTSymbolTerm(str); 
+          // System.out.println(">--- new term: " + str);  
+          newterms.add(ntrm); 
+        } 
         else if (strim.endsWith("\\r\\n") ||
                  strim.endsWith("\\n\\r"))
-        { str = strim.substring(0,strim.length()-4); 
+        { // System.out.println(">--- old term: " + strim);  
+          str = strim.substring(0,strim.length()-4); 
           ntrm = new ASTSymbolTerm(str); 
           // System.out.println(">--- new term: " + str);  
           newterms.add(ntrm); 
@@ -439,7 +451,7 @@ public class ASTCompositeTerm extends ASTTerm
               matchedTerms.add(pterm); 
               k++;
             }  
-            System.out.println(">>> Terms for _* are: " + rem); 
+            // System.out.println(">>> Terms for _* are: " + rem); 
           } 
           eargs.add(rem); // corresponds to _* variable
         } 
@@ -476,15 +488,15 @@ public class ASTCompositeTerm extends ASTTerm
               matchedTerms.add(pterm);  
               k++;
             }  
-            System.out.println(">>> Terms for _+ are: " + rem); 
+            // System.out.println(">>> Terms for _+ are: " + rem); 
           } 
           eargs.add(rem); // corresponds to _+ variable
         } 
         else if (vars.contains(tok))
         { // allocate terms(j) to tok
 
-          System.out.println(">> Matched variable " + tok + 
-                              " and term " + tm);
+          // System.out.println(">> Matched variable " + tok + 
+          //                     " and term " + tm);
 
           matchedTokens.add(tok); 
           matchedTerms.add(tm); 
@@ -509,8 +521,8 @@ public class ASTCompositeTerm extends ASTTerm
           } 
         } 
         else if (tok.equals(tm.literalForm()))
-        { System.out.println(">> Matched token " + tok + 
-                              " and term " + tm); 
+        { // System.out.println(">> Matched token " + tok + 
+          //                     " and term " + tm); 
           matchedTerms.add(tm); 
           matchedTokens.add(tok); 
           k++; 
@@ -525,13 +537,15 @@ public class ASTCompositeTerm extends ASTTerm
 
       if (matchedTokens.containsAll(tokens) && 
           tokens.containsAll(matchedTokens))
-      { System.out.println("&&& All tokens matched: " + tokens); } 
+      { // System.out.println("&&& All tokens matched: " + tokens); 
+      } 
       // else 
       // { failed = true; } 
 
       if (matchedTerms.containsAll(terms) && 
           terms.containsAll(matchedTerms))
-      { System.out.println("&&& All terms matched: " + terms); } 
+      { // System.out.println("&&& All terms matched: " + terms); 
+      } 
       else 
       { failed = true; } 
 

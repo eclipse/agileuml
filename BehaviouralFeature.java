@@ -2831,11 +2831,34 @@ public class BehaviouralFeature extends ModelElement
     return res; 
   } 
 
+  public void substituteEq(String oldName, Expression newExpr)
+  { if (pre != null) 
+    { Expression newpre = pre.substituteEq(oldName, newExpr); 
+      this.setPre(newpre); 
+    }
+
+    if (post != null) 
+    { Expression newpost = 
+           post.substituteEq(oldName, newExpr); 
+      this.setPost(newpost); 
+    } 
+
+    if (activity != null) 
+    { Statement newact = 
+           activity.substituteEq(oldName, newExpr); 
+      this.setActivity(newact); 
+    }
+  } 
+
+
   public void checkParameterNames()
   { if (parameters == null) 
     { return; }
  
     Vector pnames = new Vector(); 
+
+    int UVA = 0; 
+    Vector unusedVars = new Vector(); 
 
     for (int i = 0; i < parameters.size(); i++) 
     { Attribute par = (Attribute) parameters.get(i); 
@@ -2854,26 +2877,56 @@ public class BehaviouralFeature extends ModelElement
       else 
       { System.err.println("! Warning: parameter names should be alphanumeric: " + pname); } 
 
-      if (post != null)
+      if (activity == null && post != null)
       { Vector puses = post.getUses(pname); 
         if (puses.size() == 0) 
-        { System.err.println("! Warning: parameter " + pname + " is unused in operation " + getName() + " postcondition."); } 
+        { System.err.println("!! Bad smell (UVA): parameter " + pname + " is unused in operation " + getName() + " postcondition.");
+          UVA++; 
+          unusedVars.add(pname); 
+        } 
       } 
 
       if (activity != null)
       { Vector actuses = activity.getUses(pname); 
         if (actuses.size() == 0) 
-        { System.err.println("! Warning: parameter " + pname + " is unused in operation " + getName() + " activity."); } 
+        { System.err.println("!! Bad smell (UVA): parameter " + pname + " is unused in operation " + getName() + " activity.");
+          UVA++; 
+          unusedVars.add(pname); 
+        } 
       } 
+    } 
+
+    if (UVA > 0) 
+    { System.out.println("!!! UVA (parameters) = " + UVA + " for operation " + name); 
+      System.out.println("!! Unused parameters: " + unusedVars); 
+      System.out.println(); 
     } 
   }
 
   public void checkVariableUse()
-  { 
+  { Vector unused = new Vector(); 
+
     if (activity != null)
-    { Vector actuses = activity.getVariableUses(); 
+    { Vector actuses = activity.getVariableUses(unused);
+      actuses = ModelElement.removeExpressionByName("skip", actuses); 
+ 
       System.out.println(">>> Parameters or non-local variables " + actuses + " are used in " + getName() + " activity."); 
-    } // Should be subset of parameters + visible data features 
+
+      Vector attrs = activity.allAttributesUsedIn(); 
+
+      System.out.println(">>> Attributes " + attrs + " are used in " + getName() + " activity."); 
+      System.out.println(); 
+ 
+      if (unused.size() > 0) 
+      { System.out.println("!! Parameters or non-local variables " + unused + " are declared but not used in " + getName() + " activity."); 
+        System.out.println("!!! UVA (local variables) = " + unused.size() + " for operation " + name); 
+      } 
+      System.out.println(); 
+    } 
+
+    // Should be subset of parameters + visible data features 
+    // getDeclaredVariables() -- any extra in here are UVA. 
+
   }
 
 

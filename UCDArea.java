@@ -3031,8 +3031,8 @@ public class UCDArea extends JPanel
       Vector clonedIn = (Vector) clones.get(k); 
       if (clonedIn.size() > 1)
       { out.println("*** " + k + " is cloned in: " + clonedIn); 
-        System.err.println("!!! Bad smell (DC): Cloned expression " + k + " in " + clonedIn); 
-        System.err.println(">>> Recommend refactoring by extracting the " + clonedIn.size() + " expression copies as new helper operation"); 
+        System.err.println("!!! Bad smell (DC): Clone " + k + " in " + clonedIn); 
+        System.err.println(">>> Recommend refactoring by extracting the " + clonedIn.size() + " copies as new helper operation"); 
         clonecount++; 
       } 
     }  
@@ -3040,12 +3040,12 @@ public class UCDArea extends JPanel
     highcost = highcost + 20*clonecount; 
 
     out.println("*** Total size of classes in the system is: " + totalClassSize);  
-    out.println("*** Total number of transformations (general use cases) in the system is: " + tcount);  
+    out.println("*** Total number of transformations/general use cases in system is: " + tcount);  
     out.println("*** Total number of transformation rules in the system is: " + trcount);  
     out.println("*** Total number of operations in the system is: " + topscount);  
     out.println("*** Total size of transformations in the system is: " + totalsize);  
-    out.println("*** Total call graph size of transformation system is: " + cg.size());  
-    out.println("*** Total number of clones in transformation system is: " + clonecount);  
+    out.println("*** Total call graph size of system is: " + cg.size());  
+    out.println("*** Total number of clones in system is: " + clonecount);  
 
     out.println(); 
 
@@ -3149,14 +3149,14 @@ public class UCDArea extends JPanel
           { String clonelocation = (String) clonedIn.get(0); 
             if (clonelocation.startsWith(ucname + "_"))
             { out.println(k + " is cloned in: " + ucname); 
-              System.err.println("!!! Bad smell (DC): Cloned expression in " + ucname); 
+              System.err.println("!!! Bad smell (DC): Clone " + k + " in " + ucname); 
               System.err.println(">>> Suggest refactoring using Extract Function"); 
 
               ucclonecount++;
             } 
             else if (rang.contains(clonelocation))
             { out.println("*** " + k + " is cloned in: " + ucname); 
-              System.err.println("!!! Bad smell (DC): Cloned expression in " + ucname); 
+              System.err.println("!!! Bad smell (DC): Clone " + k + " in " + ucname); 
               System.err.println(">>> Suggest refactoring using Extract Function"); 
               ucclonecount++;
             } 
@@ -3174,7 +3174,7 @@ public class UCDArea extends JPanel
       }  
     } 
 
-    out.println("*** The transformation system uses " + allused.size() + " entity operations"); 
+    out.println("*** The system uses " + allused.size() + " entity operations"); 
     int allusedsize = 0; 
     for (int j = 0; j < allused.size(); j++) 
     { String eop = (String) allused.get(j); 
@@ -14372,6 +14372,32 @@ public void produceCUI(PrintWriter out)
     // Generate Python
   } 
 
+  public void vb2py()
+  { 
+    File oclfile = new File("libraries/oclfile.km3"); 
+    if (oclfile.exists())
+    { loadKM3FromFile(oclfile); }
+    else 
+    { System.err.println("! Warning: no file libraries/oclfile.km3"); } 
+
+    File ocldate = new File("libraries/ocldate.km3"); 
+    if (ocldate.exists())
+    { loadKM3FromFile(ocldate); }
+    else 
+    { System.err.println("! Warning: no file libraries/ocldate.km3"); } 
+
+    File mathlib = new File("libraries/mathlib.km3"); 
+    if (mathlib.exists())
+    { loadKM3FromFile(mathlib); }
+    else 
+    { System.err.println("! Warning: no file libraries/mathlib.km3"); } 
+ 
+    loadFromVB();
+    typeCheck(); 
+    typeCheck(); 
+    // Generate Python
+  } 
+
   public void java2swift()
   { File ocltypes = new File("libraries/ocltype.km3"); 
     if (ocltypes.exists())
@@ -14464,7 +14490,52 @@ public void produceCUI(PrintWriter out)
       out2.close(); 
     }
     catch (Throwable tt)
-    { System.err.println("Error generating C#"); } 
+    { System.err.println("!! Error generating C#"); } 
+  } 
+
+  public void cobol2java()
+  { 
+    File oclfile = new File("libraries/oclfile.km3"); 
+    if (oclfile.exists())
+    { loadKM3FromFile(oclfile); }
+    else 
+    { System.err.println("! Warning: no file libraries/oclfile.km3"); } 
+
+    File ocldate = new File("libraries/ocldate.km3"); 
+    if (ocldate.exists())
+    { loadKM3FromFile(ocldate); }
+    else 
+    { System.err.println("! Warning: no file libraries/ocldate.km3"); } 
+
+    File mathlib = new File("libraries/mathlib.km3"); 
+    if (mathlib.exists())
+    { loadKM3FromFile(mathlib); }
+    else 
+    { System.err.println("! Warning: no file libraries/mathlib.km3"); } 
+ 
+    loadFromCobol();
+    typeCheck(); 
+    typeCheck(); 
+    // Generate Java7: 
+
+    File file = new File("output/Controller.java");  
+    File file2 = new File("output/SystemTypes.java");
+
+    try
+    { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(file)));
+      PrintWriter out2 = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(file2)));
+         
+      generateJava7(out, out2);
+      out.close();
+      out2.close(); 
+    }
+    catch (Throwable tt)
+    { System.err.println("!! Error generating Java7"); } 
+
   } 
 
   public void java2cpp()
@@ -26455,7 +26526,7 @@ public void produceCUI(PrintWriter out)
     try
     { br = new BufferedReader(new FileReader(sourcefile)); }
     catch (FileNotFoundException _e)
-    { System.out.println("File not found: " + sourcefile);
+    { System.out.println("!! File not found: " + sourcefile);
       return; 
     }
 

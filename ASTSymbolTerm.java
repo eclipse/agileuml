@@ -24,15 +24,41 @@ public class ASTSymbolTerm extends ASTTerm
 
   public ASTTerm removeWhitespaceTerms()
   { String strim = symbol.trim(); 
+
+    // System.out.println(">>> Trimming: " + strim); 
+
     if (strim.equals("\\n\\r") || 
-        strim.equals("\\r\\n"))
-    { return null; } 
-    if (strim.endsWith("\\n\\r") ||
-        strim.endsWith("\\r\\n"))
-    { String str = strim.substring(0, strim.length()-4); 
+        strim.equals("\\r\\n") || 
+        strim.equals("\\r\\n\\r\\n") ||
+        strim.equals("\\r\\n\\r\\n\\r\\n"))
+    { // System.out.println(">>> Trimmed: null");
+      return null; 
+    } 
+
+    if (strim.endsWith("\\r\\n\\r\\n\\r\\n"))
+    { String str = strim.substring(0, strim.length()-12); 
+      ASTTerm ntrm = new ASTSymbolTerm(str);
+      // System.out.println(">>> Trimmed: " + str);
+      return ntrm; 
+    } 
+
+    if (strim.endsWith("\\r\\n\\r\\n"))
+    { String str = strim.substring(0, strim.length()-8); 
+      // System.out.println(">>> Trimmed: " + str);
       ASTTerm ntrm = new ASTSymbolTerm(str);
       return ntrm; 
     } 
+
+    if (strim.endsWith("\\n\\r") ||
+        strim.endsWith("\\r\\n"))
+    { String str = strim.substring(0, strim.length()-4); 
+      // System.out.println(">>> Trimmed: " + str);
+      ASTTerm ntrm = new ASTSymbolTerm(str);
+      return ntrm; 
+    } 
+
+    // System.out.println(">>> Trimmed: " + strim); 
+
     return this; 
   }  
 
@@ -883,4 +909,8 @@ public class ASTSymbolTerm extends ASTTerm
     return res; 
   } 
 
+  public static void main(String[] args) 
+  { String ss = "\\r\\n\\r\\n\\r\\n"; 
+    System.out.println(ss.matches("(\r\n)+")); 
+  } 
 } 

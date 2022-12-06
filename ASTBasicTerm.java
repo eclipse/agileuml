@@ -31,15 +31,31 @@ public class ASTBasicTerm extends ASTTerm
 
   public ASTTerm removeWhitespaceTerms()
   { String vtrim = value.trim(); 
-    if (vtrim.equals("\\n\\r") || 
-        vtrim.equals("\\r\\n"))
+    if (vtrim.equals("\\r\\n") || 
+        vtrim.equals("\\r\\n\\r\\n") || 
+        vtrim.equals("\\r\\n\\r\\n\\r\\n") || 
+        vtrim.equals("\\r\\n\\r\\n\\r\\n\\r\\n"))
     { return null; } 
+
+    if (vtrim.endsWith("\\r\\n\\r\\n\\r\\n"))
+    { String str = vtrim.substring(0,vtrim.length()-12); 
+      ASTTerm ntrm = new ASTBasicTerm(tag,str);
+      return ntrm; 
+    } 
+
+    if (vtrim.endsWith("\\r\\n\\r\\n"))
+    { String str = vtrim.substring(0,vtrim.length()-8); 
+      ASTTerm ntrm = new ASTBasicTerm(tag,str);
+      return ntrm; 
+    } 
+
     if (vtrim.endsWith("\\n\\r") ||
         vtrim.endsWith("\\r\\n"))
     { String str = vtrim.substring(0,vtrim.length()-4); 
       ASTTerm ntrm = new ASTBasicTerm(tag,str);
       return ntrm; 
     } 
+
     return this; 
   }  
 
@@ -2679,6 +2695,7 @@ public class ASTBasicTerm extends ASTTerm
         "/".equals(value) || "+".equals(value) ||
         "-".equals(value) || "$".equals(value) ||
         "£".equals(value) || ".".equals(value) ||
+        "V".equals(value) || "P".equals(value) || 
         "Z".equals(value) || "*".equals(value))
     { return 1; } 
 

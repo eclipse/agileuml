@@ -83,6 +83,39 @@ public class CSTL
   }  
 
 
+  public static CGSpec loadCGTL(CGSpec res, Vector lines)
+  { int noflines = 0; 
+    String mode = "none"; 
+    String category = null; 
+
+    for (int i = 0; i < lines.size(); i++)
+    { String s = (String) lines.get(i); 
+      s = s.trim(); 
+
+      if (s.startsWith("/*") && s.endsWith("*/")) 
+      { } 
+      else if (s.length() == 0) 
+      { } 
+      else if (s.endsWith("::"))
+      { mode = "texts";
+        int colonindex = s.indexOf(":");  
+        category = s.substring(0,colonindex); 
+      }         
+      else if ("texts".equals(mode) && category != null)
+      { Compiler2 c = new Compiler2(); 
+        CGRule r = c.parse_TextCodegenerationrule(s.trim()); 
+        if (r != null) 
+        { res.addCategoryRule(category,r); }
+        else 
+        { alertRule("!! Could not parse category " + category + " rule", s); }  
+      }         
+    }
+
+    System.out.println(">>> Parsed: " + res); 
+    
+    return res; 
+  } 
+
   public static CGSpec loadCSTL(CGSpec res, File file, Vector types, Vector entities)
   { 
     BufferedReader br = null;
@@ -200,7 +233,7 @@ public class CSTL
         if (r != null) 
         { res.addSetExpressionRule(r); }
         else 
-		{ alertRule("Set expression", s); }
+        { alertRule("Set expression", s); }
       }  
       else if ("conditionalexpressions".equals(mode))
       { Compiler2 c = new Compiler2(); 
@@ -208,7 +241,7 @@ public class CSTL
         if (r != null) 
         { res.addConditionalExpressionRule(r); } 
         else 
-		{ alertRule("Conditional expression", s); }
+        { alertRule("Conditional expression", s); }
       }  
       else if ("entities".equals(mode))
       { Compiler2 c = new Compiler2(); 
@@ -216,7 +249,7 @@ public class CSTL
         if (r != null) 
         { res.addClassRule(r); } 
         else 
-		{ alertRule("Entity", s); }
+        { alertRule("Entity", s); }
       }         
       else if ("enumerations".equals(mode))
       { Compiler2 c = new Compiler2(); 
@@ -240,7 +273,7 @@ public class CSTL
         if (r != null) 
         { res.addPackageRule(r); } 
         else 
-		{ alertRule("Package", s); }
+        { alertRule("Package", s); }
       }         
       else if ("attributes".equals(mode))
       { Compiler2 c = new Compiler2(); 
@@ -249,7 +282,6 @@ public class CSTL
         { res.addAttributeRule(r); }
         else 
         { alertRule("Attribute/reference", s); }
- 
       }         
       else if ("operations".equals(mode))
       { Compiler2 c = new Compiler2(); 
@@ -258,7 +290,6 @@ public class CSTL
         { res.addOperationRule(r); } 
         else 
         { alertRule("Operation", s); }
-
       }  
       else if ("parameters".equals(mode))
       { Compiler2 c = new Compiler2(); 
@@ -307,7 +338,8 @@ public class CSTL
 
   private static void alertRule(String kind, String r)
   { System.err.println("!!! Unable to parse " + kind + " rule: " + r);
-    JOptionPane.showMessageDialog(null, "Warning: Unable to parse " + kind + " rule: " + r, "", JOptionPane.ERROR_MESSAGE);
+    JOptionPane.showMessageDialog(null, "Warning!: Unable to parse " + kind + " rule: " + r, "", 
+                                  JOptionPane.ERROR_MESSAGE);
   }
 
   public static void addTemplate(String filename, CGSpec cg) 
@@ -322,5 +354,14 @@ public class CSTL
 
   public static CGSpec getTemplate(String name)
   { return (CGSpec) templates.get(name); }
+
+  public static void main(String[] args) 
+  { String[] larray = "expression::\r\n_1 & _2 |-->_1 && _2\n\r_1 or _2 |-->_1 || _2\n".split("[\\n\\r]+"); 
+    Vector lines = new Vector(); 
+    for (int i = 0; i < larray.length; i++) 
+    { lines.add(larray[i]); } 
+    CGSpec res = new CGSpec(new Vector(), new Vector()); 
+    CSTL.loadCGTL(res,lines); 
+  } 
 }
 
