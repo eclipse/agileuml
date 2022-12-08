@@ -2762,13 +2762,15 @@ public class BehaviouralFeature extends ModelElement
   } 
 
   public boolean parametersMatch(Vector pars)
-  { if (pars.size() == parameters.size()) 
+  { if (pars == null || parameters == null) { return false; } 
+    if (pars.size() == parameters.size()) 
     { return true; } 
     return false; 
   } // and check the types
 
   public boolean parameterMatch(Vector pars)
-  { if (pars.size() != parameters.size()) 
+  { if (pars == null || parameters == null) { return false; } 
+    if (pars.size() != parameters.size()) 
     { return false; } 
     for (int i = 0; i < parameters.size(); i++) 
     { Attribute par = (Attribute) parameters.get(i); 
@@ -2782,7 +2784,8 @@ public class BehaviouralFeature extends ModelElement
   } // and check the types
 
   public void setFormalParameters(Vector pars)
-  { for (int i = 0; i < parameters.size() && i < pars.size(); i++) 
+  { if (pars == null || parameters == null) { return; } 
+    for (int i = 0; i < parameters.size() && i < pars.size(); i++) 
     { Attribute par = (Attribute) parameters.get(i); 
       Expression arg = (Expression) pars.get(i); 
       arg.formalParameter = par; 
@@ -2791,8 +2794,9 @@ public class BehaviouralFeature extends ModelElement
 
   public Expression substituteParameters(Expression e, Vector arguments) 
   { if (e == null) 
-    { return new BasicExpression(true); } 
+    { return new BasicExpression(true); }
     Expression res = (Expression) e.clone(); 
+    if (parameters == null) { return res; } 
     for (int i = 0; i < parameters.size(); i++) 
     { if (i < arguments.size()) 
       { Expression arg = (Expression) arguments.get(i); 
@@ -2805,8 +2809,9 @@ public class BehaviouralFeature extends ModelElement
 
   public Expression substituteParametersPre(Vector arguments) 
   { if (pre == null) 
-    { return new BasicExpression(true); } 
+    { return new BasicExpression(true); }
     Expression res = (Expression) pre.clone(); 
+    if (parameters == null) { return res; } 
     for (int i = 0; i < parameters.size(); i++) 
     { if (i < arguments.size()) 
       { Expression arg = (Expression) arguments.get(i); 
@@ -6740,8 +6745,9 @@ public class BehaviouralFeature extends ModelElement
         else // declare it
         { Type t = be.left.getType(); 
           JOptionPane.showMessageDialog(null, 
-            "Declaring new local variable " + be.left + " in:\n" + this,               
+            "Declaring new local variable  " + be.left + " : " + t + "   in:\n" + this,               
             "Implicit variable declaration", JOptionPane.INFORMATION_MESSAGE); 
+          if (t == null) { t = new Type("OclAny", null); }
           CreationStatement cs = new CreationStatement(t.getJava(), be.left + ""); 
           cs.setInstanceType(t); 
           cs.setElementType(t.getElementType()); 
