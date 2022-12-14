@@ -354,6 +354,9 @@ public class Association extends ModelElement
            card1 == ONE && card2 == MANY; 
   }
 
+  public boolean isOneMany()
+  { return card1 == ONE && card2 == MANY; } 
+
   public boolean isZeroOne()
   { return card2 == ZEROONE; } 
 

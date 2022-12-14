@@ -3078,7 +3078,7 @@ public class UCDArea extends JPanel
  
     if (selfcallsn > 0) 
     { System.err.println("!!! Bad smell (CBR2): complex call graph with " + selfcallsn + " recursive dependencies"); 
-      System.err.println(">>> Suggest refactoring using Map Objects Before Links"); 
+      System.err.println(">>> Suggest refactoring using Replace Recursion by Iteration (for tail recursions)"); 
     } 
 
 
@@ -3122,7 +3122,7 @@ public class UCDArea extends JPanel
           if (selfcallsucn > 0) 
           { out.println("*** " + selfcallsucn + " calls in recursive loops in " + me + " : " + selfcallsuc);  
             System.err.println("!!! Bad smell (CBR2): " + selfcallsucn + " calls in recursive loops in " + me + " : " + selfcallsuc); 
-            System.err.println(">>> Suggest refactoring using Map Objects Before Links"); 
+            System.err.println(">>> Suggest refactoring using Map Objects Before Links/Replace Recusion by Iteration"); 
           } 
 
 
@@ -5092,29 +5092,29 @@ public class UCDArea extends JPanel
         File odlayout = new File("output/" + systemName + "/src/main/res/layout/" + layoutname); 
         try
         { PrintWriter odlayoutfile = new PrintWriter(
-                                       new BufferedWriter(
-                                         new FileWriter(odlayout)));
+                         new BufferedWriter(
+                           new FileWriter(odlayout)));
           AndroidAppGenerator.androidScreenTabs(od,odlayoutfile);
           odlayoutfile.close();    
-        } catch (Exception e) { e.printStackTrace(); } 
-
+        } catch (Exception e) 
+          { e.printStackTrace(); } 
 
         String nme = od.getName();
 		
-         if (nme.startsWith("list"))
-         { Entity ent = od.getEntity(); 
-           String ename = ent.getName();
-           File fraglayout = new File("output/" + systemName + "/src/main/res/layout/fragment_" + ename.toLowerCase() + ".xml");
-           try
-           { PrintWriter fragout = new PrintWriter(
+        if (nme.startsWith("list"))
+        { Entity ent = od.getEntity(); 
+          String ename = ent.getName();
+          File fraglayout = new File("output/" + systemName + "/src/main/res/layout/fragment_" + ename.toLowerCase() + ".xml");
+          try
+          { PrintWriter fragout = new PrintWriter(
                                  new BufferedWriter(
                                    new FileWriter(fraglayout)));
             AndroidAppGenerator.listItemLayout(ent,fragout);
-		    fragout.close(); 
-		  } catch (Exception _r) { _r.printStackTrace(); }
+            fragout.close(); 
+          } catch (Exception _r) { _r.printStackTrace(); }
 		  
-		  File recycler = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + ename + "RecyclerViewAdapter.java");
-		  try
+          File recycler = new File("output/" + systemName + "/src/main/java/com/example/" + systemName + "/" + ename + "RecyclerViewAdapter.java");
+          try
           { PrintWriter rout = new PrintWriter(
                                  new BufferedWriter(
                                    new FileWriter(recycler)));
@@ -5238,8 +5238,6 @@ public class UCDArea extends JPanel
     // generateIOSApp(out); 
 
     /* out.println(generateDbiPool());  */ 
-
-
 
     System.out.println(); 
     System.out.println(">>> App code is generated in directory " + dirName); 
@@ -5370,11 +5368,17 @@ public class UCDArea extends JPanel
       { PrintWriter beanout = new PrintWriter(
                               new BufferedWriter(
                                 new FileWriter(entbeanf)));
-        String entbeancode = ""; 
+        String entbeancode = "";
+ 
         if (ent.isPersistent())
-        { entbeancode = ent.generateBean(useCases,constraints,entities,types,appName); } 
+        { entbeancode = ent.generateBean(useCases,constraints,
+                                   entities,types,appName); 
+        } 
         else 
-        { entbeancode = ent.generateJSPBean(appName,useCases,constraints,entities,types,cgs); } 
+        { entbeancode = 
+            ent.generateJSPBean(appName,useCases,constraints,
+                    entities,types,cgs); 
+        } 
         beanout.println(entbeancode); 
         beanout.close(); 
       } catch (Exception e) { e.printStackTrace(); } 
@@ -5583,8 +5587,8 @@ public class UCDArea extends JPanel
     for (int i = 0; i < useCases.size(); i++)
     { Object obj = useCases.get(i); 
       if (obj instanceof OperationDescription)
-	  { OperationDescription od = (OperationDescription) obj;
-	    String odname = od.getODName(); 
+      { OperationDescription od = (OperationDescription) obj;
+        String odname = od.getODName(); 
 	   
         String srvltcode = od.getServletCode(); 
         out.println(srvltcode);
@@ -5600,7 +5604,7 @@ public class UCDArea extends JPanel
 
         String genclass = od.getGenerationClass();  
       // out.println(genclass);  
-	    File genf = new File("output/" + odname + "Page.java"); 
+        File genf = new File("output/" + odname + "Page.java"); 
         try
         { PrintWriter genout = new PrintWriter(
                                 new BufferedWriter(
@@ -5609,9 +5613,9 @@ public class UCDArea extends JPanel
           genout.close(); 
         } catch (Exception e) { } 
       } 
-	  else if (obj instanceof UseCase)
-	  { UseCase uc = (UseCase) obj; 
-	    needsModelFacade = true; 
+      else if (obj instanceof UseCase)
+      { UseCase uc = (UseCase) obj;     
+        needsModelFacade = true; 
 
         String ucnme = uc.getName(); 
         File ucjsp = new File("output/" + ucnme + "Servlet.java"); 
@@ -5639,7 +5643,7 @@ public class UCDArea extends JPanel
                                   new BufferedWriter(
                                     new FileWriter(ucvof)));
           ucvoout.println(uc.getAndroidValueObject(appname));
-		  System.out.println(">>> Written use case value object for " + ucnme + " to output/" + ucvo); 
+          System.out.println(">>> Written use case value object for " + ucnme + " to output/" + ucvo); 
           ucvoout.close(); 
         } catch (Exception e) { } */ 
 
@@ -5738,14 +5742,15 @@ public class UCDArea extends JPanel
       { PrintWriter modelout = new PrintWriter(
                                  new BufferedWriter(
                                    new FileWriter(model)));
-        UseCase.modelFacade(appname,useCases,cgs,entities,types,modelout);
+        UseCase.modelFacade(appname,useCases,cgs,
+                            entities,types,modelout);
         modelout.close(); 
       } catch (Exception e) { } 
     } 
 
     Vector allops = OperationDescription.allCoreOperations(entities); 
 
-	File dbif = new File("output/Dbi.java"); 
+    File dbif = new File("output/Dbi.java"); 
     try
     { PrintWriter dbiout = new PrintWriter(
                               new BufferedWriter(
@@ -19114,7 +19119,7 @@ public void produceCUI(PrintWriter out)
 	  { OperationDescription od = 
            (OperationDescription) operations.get(i);
         SQLStatement odstat = od.getSQL0();
-        System.out.println(odstat);
+        // System.out.println(odstat);
         String odname = od.getODName();  
         if (odstat != null) 
         { res = res + "      " + odname +
@@ -19129,14 +19134,16 @@ public void produceCUI(PrintWriter out)
        
     for (int i = 0; i < operations.size(); i++)
     { if (operations.get(i) instanceof OperationDescription) 
-	  { OperationDescription od = 
+      { OperationDescription od = 
            (OperationDescription) operations.get(i);
         String odname = od.getODName();  
         String pars = od.getDbiParameterDec();
         String code = od.getDbiOpCode();
         String resultType = "void"; 
         String odaction = od.getAction();
-        if (odaction.equals("get") || odaction.equals("list") || odaction.equals("searchBy") || 
+        if (odaction.equals("get") || 
+            odaction.equals("list") || 
+            odaction.equals("searchBy") || 
             odaction.equals("check"))
         { resultType = "ResultSet"; } 
         res = res + 
@@ -19144,17 +19151,20 @@ public void produceCUI(PrintWriter out)
           pars + ")\n  " + code + "\n";
 
 
-        if (odaction.equals("create") || odaction.equals("edit"))
-		{ String pars1 = od.getJSPDbiParameterDec();
-		  String parsettings = od.getJSPDbiParameterTransfer(); 
+        if (odaction.equals("create") || 
+            odaction.equals("edit"))
+        { String pars1 = od.getJSPDbiParameterDec();
+          String parsettings = od.getJSPDbiParameterTransfer(); 
           String code1 = od.getJSPDbiOpCode();
           res = res + 
             "  public synchronized " + resultType + " " + odname + "(" +
             pars1 + ")\n  { " + parsettings + code1 + "\n";
           String mops = od.getMaintainOps(); 
           res = res + mops;
-		}  
+        }  
       } 
+
+      // addEr, removeEr, getEr not supported. 
     }
 	
     return res + "  public synchronized void logoff() \n" + 
@@ -19189,7 +19199,12 @@ public void produceCUI(PrintWriter out)
       { OperationDescription od = 
           (OperationDescription) operations.get(i);
         SQLStatement odstat = od.getSQL0();
-        System.out.println(odstat);
+        // System.out.println(odstat);
+
+        // JOptionPane.showMessageDialog(null, 
+        //    "SQL for " + od + " is " + odstat, 
+        //    "", JOptionPane.INFORMATION_MESSAGE);  
+ 
         String odname = od.getODName();  
         if (odstat != null) 
         { res = res + "      " + odname +
@@ -19205,13 +19220,18 @@ public void produceCUI(PrintWriter out)
     { if (operations.get(i) instanceof OperationDescription)
       { OperationDescription od = 
           (OperationDescription) operations.get(i);
+
         String odname = od.getODName();  
+
         String pars = od.getJSPDbiParameterDec();
-		String parsettings = od.getJSPDbiParameterTransfer(); 
+        String parsettings = od.getJSPDbiParameterTransfer(); 
         String code = od.getJSPDbiOpCode();
+
         String resultType = "void"; 
         String odaction = od.getAction();
-        if (odaction.equals("get") || odaction.equals("list") || odaction.equals("searchBy") || 
+        if (odaction.equals("get") || 
+            odaction.equals("list") || 
+            odaction.equals("searchBy") || 
             odaction.equals("check"))
         { resultType = "ResultSet"; } 
         res = res + 
@@ -19249,12 +19269,12 @@ public void produceCUI(PrintWriter out)
     { if (ops.get(i) instanceof OperationDescription)
       { OperationDescription od = 
           (OperationDescription) ops.get(i);
-		Entity ent = od.getEntity(); 
+        Entity ent = od.getEntity(); 
         if (ent != null) 
-		{ String dbname = ent.getTaggedValue("database"); 
+        { String dbname = ent.getTaggedValue("database"); 
           if (dbname != null && dbname.length() > 0)
           { return dbname; } 
-		} 
+        } 
       }  
     }
     return res;
@@ -19266,12 +19286,12 @@ public void produceCUI(PrintWriter out)
     { if (ops.get(i) instanceof OperationDescription)
       { OperationDescription od = 
           (OperationDescription) ops.get(i);
-		Entity ent = od.getEntity(); 
+        Entity ent = od.getEntity(); 
         if (ent != null) 
-		{ String dbname = ent.getTaggedValue("driver"); 
+        { String dbname = ent.getTaggedValue("driver"); 
           if (dbname != null && dbname.length() > 0)
           { return dbname; } 
-		} 
+        } 
       }  
     }
     return res;

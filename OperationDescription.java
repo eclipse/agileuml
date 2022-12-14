@@ -5,7 +5,7 @@ import java.io.*;
 
 /* Package: EIS */ 
 /******************************
-* Copyright (c) 2003--2021 Kevin Lano
+* Copyright (c) 2003--2022 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -17,6 +17,19 @@ public class OperationDescription extends BehaviouralFeature
 { private Vector maintainOps = new Vector(); // extra ops for Dbi, in case of set
   String opaction = ""; 
   String oprole = ""; 
+
+
+  /* Operation descriptions are EIS use cases: 
+     create E: parameters are E's attributes
+     list E: no parameters
+     delete E: primary keys of E
+     get E: primary keys of E
+     searchBy E f: f (attribute of E)
+     set E f: f + primary keys of E
+     edit E: attributes of E
+     add E r: keys of E and of F, where r : F 
+     remove E r: keys of E and keys of F, where r : F
+   */ 
   	
   	
   public OperationDescription(String nme,
@@ -32,7 +45,7 @@ public class OperationDescription extends BehaviouralFeature
     { stereotypes.add(role); } 
     oprole = role; 
 
-    System.out.println("Action: " + op + " Stereotypes: " + stereotypes); 
+    System.out.println(">>> Action: " + op + " Stereotypes: " + stereotypes); 
       
     if (op.equals("create"))
     { setParameters(e.getAttributes()); }
@@ -78,7 +91,7 @@ public class OperationDescription extends BehaviouralFeature
       else 
       { setParameters(keys); } 
     }
-    else if (op.equals("add"))
+    else if (op.equals("add") || op.equals("remove"))
     { Association ast = entity.getRole(role); 
       if (ast == null) 
       { System.err.println("!! ERROR: not a valid role: " + role); 
@@ -95,54 +108,65 @@ public class OperationDescription extends BehaviouralFeature
         setParameters(pars); 
       }
     }
-    else if (op.equals("remove"))
-    { Association ast = entity.getRole(role); 
-      if (ast == null) 
-      { System.err.println("!! ERROR: not a valid role: " + role); 
-        return; 
-      }
-      else 
-      { Entity entity2 = ast.getEntity2(); 
-        Vector bkeys = entity2.getUniqueAttributes(); 
-        if (bkeys.size() == 0) 
-        { System.err.println("!! ERROR: no primary keys for: " + entity2); }  
-        Vector pars = new Vector(); 
-        pars.addAll(bkeys); 
-        setParameters(pars); 
-      }
-    }
-  } // add: e's key and entity2 key. remove: entity2 key. check e key + some atts
+  } // add, remove: e's key and entity2 key. 
+    // check: e key + some atts
   
   public static Vector allCoreOperations(Vector entities)
   { // createE, editE, deleteE, listE, searchByattE
     Vector res = new Vector(); 
 	
     for (int i = 0; i < entities.size(); i++) 
-	{ Entity ent = (Entity) entities.get(i); 
-	  if (ent.isDerived() || ent.isComponent()) 
-	  { }
-	  else if (ent.isPersistent())
-	  { String ename = ent.getName(); 
-	    OperationDescription createE = new OperationDescription("create" + ename, ent, "create", null); 
-		res.add(createE); 
-		OperationDescription editE = new OperationDescription("edit" + ename, ent, "edit", null); 
-		res.add(editE);
-		OperationDescription listE = new OperationDescription("list" + ename, ent, "list", null); 
-		res.add(listE);
-		OperationDescription deleteE = new OperationDescription("delete" + ename, ent, "delete", null); 
-		res.add(deleteE);
+    { Entity ent = (Entity) entities.get(i); 
+      if (ent.isDerived() || ent.isComponent()) 
+      { }
+      else if (ent.isPersistent())
+      { String ename = ent.getName(); 
+        OperationDescription createE = new OperationDescription("create" + ename, ent, "create", null); 
+        res.add(createE); 
+        OperationDescription editE = new OperationDescription("edit" + ename, ent, "edit", null); 
+        res.add(editE);
+        OperationDescription listE = new OperationDescription("list" + ename, ent, "list", null); 
+        res.add(listE);
+        OperationDescription deleteE = new OperationDescription("delete" + ename, ent, "delete", null); 
+        res.add(deleteE);
 		
-		Vector attrs = ent.getAttributes(); 
-		for (int j = 0; j < attrs.size(); j++) 
-		{ Attribute att = (Attribute) attrs.get(j);
-		  String attname = att.getName();  
-		  OperationDescription searchByEatt = new OperationDescription("searchBy" + ename + attname, ent, "searchBy", attname); 
-		  res.add(searchByEatt); 
-		}
-	  }
-	}
-	
-	return res; 
+        Vector attrs = ent.getAttributes(); 
+        for (int j = 0; j < attrs.size(); j++) 
+        { Attribute att = (Attribute) attrs.get(j);
+          Type atttyp = att.getType(); 
+          if (atttyp.isCollection() || 
+               atttyp.isMap() || 
+               atttyp.isFunction()) 
+          { continue; } 
+
+          String attname = att.getName();  
+          OperationDescription searchByEatt = new OperationDescription("searchBy" + ename + attname, ent, "searchBy", attname); 
+          res.add(searchByEatt); 
+        }
+
+        Vector assocs = ent.getAssociations(); 
+        for (int j = 0; j < assocs.size(); j++) 
+        { Association ast = (Association) assocs.get(j); 
+          if (ast.isOneMany()) 
+          { String role = ast.getRole2(); 
+            OperationDescription addErole = 
+               new OperationDescription(
+                          "add" + ename + role,
+                          ent, "add", role);
+            res.add(addErole);  
+            OperationDescription removeErole = 
+               new OperationDescription(
+                          "remove" + ename + role,
+                          ent, "remove", role);
+            res.add(removeErole);  
+
+          } 
+        } 
+      }
+    }
+    
+
+    return res; 
   }
 
   public void addDbiMaintainOps(Vector ops)
@@ -211,7 +235,7 @@ public class OperationDescription extends BehaviouralFeature
     Vector pars = getParameters(); 
     
     if (opaction.startsWith("list"))
-	{ return res; }
+    { return res; }
     else if (opaction.startsWith("delete"))
     { Attribute att1 = (Attribute) pars.get(0); 
                   // entity.getPrincipalPrimaryKey(); 
@@ -226,6 +250,18 @@ public class OperationDescription extends BehaviouralFeature
       String tname = typ.getJava8(); 
       res = tname + " _x"; 
     } 
+    else if (opaction.startsWith("add") ||
+             opaction.startsWith("remove"))
+    { Attribute att1 = (Attribute) pars.get(0); 
+                  // entity.getPrincipalPrimaryKey(); 
+      Type typ1 = att1.getType(); 
+      String tname1 = typ1.getJava8(); 
+      Attribute att2 = (Attribute) pars.get(1); 
+                  // entity2.getPrincipalPrimaryKey(); 
+      Type typ2 = att2.getType(); 
+      String tname2 = typ2.getJava8(); 
+      res = tname1 + " _x, " + tname2 + " _y"; 
+    } 
     else  
     { res = ent + "VO _x"; }  
     return res; 
@@ -235,7 +271,8 @@ public class OperationDescription extends BehaviouralFeature
   { String res = ""; 
     String ent = entity.getName(); 
     Vector pars = getParameters(); 
-    if (opaction.startsWith("delete") || opaction.startsWith("searchBy"))
+    if (opaction.startsWith("delete") || 
+        opaction.startsWith("searchBy"))
     { Attribute att1 = (Attribute) pars.get(0); 
                   // entity.getPrincipalPrimaryKey(); 
       String pk = att1.getName(); 
@@ -244,6 +281,27 @@ public class OperationDescription extends BehaviouralFeature
       if (typ.getName().equals("boolean"))
       { tname = "String"; } 
       res = "    " + tname + " " + pk + " = _x;\n"; 
+    } 
+    else if (opaction.startsWith("add") || 
+             opaction.startsWith("remove"))
+    { Attribute att1 = (Attribute) pars.get(0); 
+                  // entity.getPrincipalPrimaryKey(); 
+      String pk1 = att1.getName(); 
+      Type typ1 = att1.getType(); 
+      String tname1 = typ1.getJava8(); 
+      if (typ1.getName().equals("boolean"))
+      { tname1 = "String"; }
+
+      Attribute att2 = (Attribute) pars.get(1); 
+                  // entity2.getPrincipalPrimaryKey(); 
+      String pk2 = att2.getName(); 
+      Type typ2 = att2.getType(); 
+      String tname2 = typ2.getJava8(); 
+      if (typ2.getName().equals("boolean"))
+      { tname2 = "String"; } 
+       
+      res = "    " + tname1 + " " + pk1 + " = _x;\n" + 
+            "    " + tname2 + " " + pk2 + " = _y;\n"; 
     } 
     else  
     { for (int i = 0; i < pars.size(); i++)
@@ -275,6 +333,12 @@ public class OperationDescription extends BehaviouralFeature
     { Attribute att2 = (Attribute) params.get(0); 
       return att2.getName(); 
     }
+    else if (opaction.startsWith("add") || 
+             opaction.startsWith("remove"))
+    { Attribute att1 = (Attribute) params.get(0); 
+      Attribute att2 = (Attribute) params.get(1); 
+      return att1.getName() + ", " + att2.getName(); 
+    } 
 
 
     for (int i = 0; i < pars.size(); i++)
@@ -345,7 +409,8 @@ public class OperationDescription extends BehaviouralFeature
     { return getODName(1); } 
 
     String ename = entity.getName();
-    if (action.equals("get") || action.equals("add") || action.equals("remove") ||
+    if (action.equals("get") || 
+        action.equals("add") || action.equals("remove") ||
         action.equals("searchBy") || action.equals("set"))
     { return action + ename + getStereotype(1); } 
     else 
@@ -602,11 +667,17 @@ public class OperationDescription extends BehaviouralFeature
       { System.err.println("!! ERROR: No role named " + role + " for entity " + entity); 
         return null; 
       } 
-      else 
+      else // Assume ONE-MANY
       { Entity entity2 = ast.getEntity2(); 
-        Vector bkeys = ModelElement.getNames(entity2.getUniqueAttributes());
+        Attribute akeyatt = 
+           (Attribute) getParameters().get(0);  
+        Vector bkeys = 
+          ModelElement.getNames(
+                 entity2.getUniqueAttributes());
+        if (akeyatt == null || bkeys.size() == 0)
+        { return null; } 
         String bkey = (String) bkeys.get(0); 
-        String akey = (String) ((Attribute) getParameters().get(0)).getName(); 
+        String akey = akeyatt.getName(); 
         bkey = entity2.getName() + "." + bkey; 
         akey = entity2.getName() + "." + akey; 
         ArrayList ents2 = new ArrayList(); 
@@ -628,9 +699,13 @@ public class OperationDescription extends BehaviouralFeature
       } 
       else  // assume it is ONE-MANY
       { Entity entity2 = ast.getEntity2(); 
+        Attribute akeyatt = 
+           (Attribute) getParameters().get(0);  
         Vector bkeys = ModelElement.getNames(entity2.getUniqueAttributes());
-        String bkey = (String) bkeys.get(0); 
-        String akey = (String) ((Attribute) getParameters().get(0)).getName(); 
+        if (akeyatt == null || bkeys.size() == 0)
+        { return null; } 
+        String bkey = (String) bkeys.get(0);
+        String akey = akeyatt.getName(); 
         bkey = entity2.getName() + "." + bkey; 
         // akey = entity2.getName() + "." + akey; 
         ArrayList ents2 = new ArrayList(); 
@@ -967,7 +1042,8 @@ public class OperationDescription extends BehaviouralFeature
     String jsp = codebase + op + ".jsp";
     String method = "GET";
     if (action.equals("create") || action.equals("delete") ||
-        action.equals("edit") || action.equals("add") || action.equals("set") ||
+        action.equals("edit") || 
+        action.equals("add") || action.equals("set") ||
         action.equals("remove"))
     { method = "POST"; }
     String res = "<html>\n\r" +
@@ -1074,7 +1150,9 @@ public class OperationDescription extends BehaviouralFeature
                                nme + ");\n    "; 
       }
     }
-    if (action.equals("get") || action.equals("list") || action.equals("check") ||
+
+    if (action.equals("get") || 
+        action.equals("list") || action.equals("check") ||
         action.equals("searchBy"))
     { res = res + "  return " + stat + ".executeQuery();\n" +
             "  } catch (Exception e) { e.printStackTrace(); }\n" +
@@ -1112,7 +1190,9 @@ public class OperationDescription extends BehaviouralFeature
                                nme + ");\n    "; 
       }
     }
-    if (action.equals("get") || action.equals("list") || action.equals("check") ||
+
+    if (action.equals("get") || 
+        action.equals("list") || action.equals("check") ||
         action.equals("searchBy"))
     { res = res + "  return " + stat + ".executeQuery();\n" +
             "  } catch (Exception e) { e.printStackTrace(); }\n" +

@@ -362,8 +362,15 @@ public class ASTCompositeTerm extends ASTTerm
     // the r LHS, then apply first rule to the cg results of 
     // the LHS matchings. 
 
+    // if already cached, return that value: 
+    String cachedValue = ASTTerm.getCg_cache(cgs,this); 
+    if (cachedValue != null) 
+    { return cachedValue; } 
+
     Vector rules = cgs.getRulesForCategory(tag);
-    return cgRules(cgs,rules); 
+    String res = cgRules(cgs,rules); 
+    ASTTerm.putCg_cache(cgs,this,res); 
+    return res; 
   } 
 
   public String cgRules(CGSpec cgs, Vector rules)
@@ -376,7 +383,7 @@ public class ASTCompositeTerm extends ASTTerm
       Vector vars = r.getVariables(); 
 
       java.util.HashMap matches = new java.util.HashMap(); 
-      // vars --> terms
+      // vars --> String
 
       Vector matchedTerms = new Vector(); 
       Vector matchedTokens = new Vector(); 
@@ -409,6 +416,7 @@ public class ASTCompositeTerm extends ASTTerm
                       k < terms.size() && !failed; j++) 
       { String tok = (String) tokens.get(j); 
         ASTTerm tm = (ASTTerm) terms.get(k); 
+        String tmliteral = tm.literalForm(); 
 
         // System.out.println("$$$ matching token " + tok + " and term " + tm); 
 
@@ -501,26 +509,26 @@ public class ASTCompositeTerm extends ASTTerm
           matchedTokens.add(tok); 
           matchedTerms.add(tm); 
 
-          ASTTerm oldterm = (ASTTerm) matches.get(tok); 
+          String oldterm = (String) matches.get(tok); 
           if (oldterm == null)
-          { matches.put(tok,tm); 
+          { matches.put(tok,tmliteral); 
 
             eargs.add(tm); 
             k++; 
           } 
-          else if (oldterm.equals(tm)) 
+          else if (oldterm.equals(tmliteral)) 
           { 
             eargs.add(tm); 
             k++; 
           } 
           else 
-          { // System.err.println("!! Same variable " + tok + 
-            //                    " assigned different terms: " + 
-            //                    oldterm + " " + tm); 
+          { System.err.println("!! Same variable " + tok + 
+                               " assigned different terms: " + 
+                              oldterm + " " + tm); 
             failed = true; 
           } 
         } 
-        else if (tok.equals(tm.literalForm()))
+        else if (tok.equals(tmliteral))
         { // System.out.println(">> Matched token " + tok + 
           //                     " and term " + tm); 
           matchedTerms.add(tm); 
@@ -529,7 +537,7 @@ public class ASTCompositeTerm extends ASTTerm
         } 
         else 
         { // System.out.println("> " + tag + " rule " + r + " does not match " + this); 
-          // System.out.println(tok + " /= " + tm.literalForm()); 
+          // System.out.println(tok + " /= " + tmliteral); 
           k++; 
           failed = true; // try next rule 
         } 
@@ -551,7 +559,9 @@ public class ASTCompositeTerm extends ASTTerm
 
 
       if (failed == false) 
-      { System.out.println(">> Matched " + tag + " rule " + r + " for " + this);  
+      { // System.out.println(">> Matched " + tag + " rule " + r + " for " + this);  
+
+        // Repeated evaluation of term.cg(cgs). Must be cached
 
         for (int p = 0; p < eargs.size(); p++)
         { Object obj = eargs.get(p);
@@ -574,11 +584,11 @@ public class ASTCompositeTerm extends ASTTerm
         Vector ents = new Vector(); 
 
         if (r.satisfiesAllConditions(eargs,ents,cgs))
-        { System.out.println(">>>> Applying " + tag + " rule " + r); 
+        { System.out.println(">>>> Applying " + tag + " rule " + r + " for " + this); 
           return r.applyRule(args,eargs,cgs); 
         }  
         else 
-        { System.out.println(">!> Conditions of " + r + " failed."); 
+        { System.out.println(">!!> Conditions of rule " + r + " failed for " + this); 
         } 
       }
     }  
@@ -591,6 +601,7 @@ public class ASTCompositeTerm extends ASTTerm
       System.out.println(">> Applying default rule _0 |-->_0 to " + this);  
       return this.cgRules(cgs,tagrules); 
     } 
+
     return toString(); 
   }
 

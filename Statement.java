@@ -1845,7 +1845,8 @@ class InvocationStatement extends Statement
   { parameters = pars; } 
 
   public Object clone()
-  { InvocationStatement res = new InvocationStatement(action,target,assignsTo);
+  { InvocationStatement res = 
+       new InvocationStatement(action,target,assignsTo);
     res.setCallExp(callExp); // clone it 
     res.setAssignsTo(assignsType,assignsTo); 
     res.entity = entity; 
@@ -5525,6 +5526,9 @@ class SequenceStatement extends Statement
     for (int i = 0; i < substats.size(); i++) 
     { Vector subs = (Vector) substats.get(i); 
       Statement sq = new SequenceStatement(subs); 
+      if (sq.syntacticComplexity() < UCDArea.CLONE_LIMIT) 
+      { continue; } 
+
       String val = sq + ""; 
       Vector used = (Vector) clones.get(val); 
       if (used == null)

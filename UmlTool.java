@@ -10,9 +10,9 @@
 /* 
  * Classname : UmlTool
  * 
- * Version information : 2.1
+ * Version information : 2.2
  *
- * Date : January 2022
+ * Date : December 2022
  * 
  * Description : This describes the GUI interface of 
  * the UML RSDS tool,
@@ -171,7 +171,7 @@ public void findPlugins()
 
     JMenuItem recentMI = new JMenuItem("Recent"); 
     recentMI.setToolTipText(
-      "Loads RSDS data from output/mm.txt");
+      "Loads UML-RSDS data from output/mm.txt");
     recentMI.addActionListener(this); 
     recentMI.setMnemonic(KeyEvent.VK_R);
     fileMenu.add(recentMI); 
@@ -179,7 +179,7 @@ public void findPlugins()
     JMenuItem saveMI = 
       new JMenuItem("Save",openIcon);
     saveMI.setToolTipText(
-      "Saves current RSDS model in output/mm.txt");
+      "Saves current UML-RSDS model in output/mm.txt");
         saveMI.addActionListener(this);
     saveMI.setMnemonic(KeyEvent.VK_S);
     fileMenu.add(saveMI);
@@ -722,6 +722,30 @@ public void findPlugins()
     deleteInvs.addActionListener(this);
     editMenu.add(deleteInvs);
 
+    /* Analyse Menu */ 
+    JMenu analyseMenu = new JMenu("Analyse"); 
+    analyseMenu.setToolTipText(
+      "Type-check and quality analyse models");
+    analyseMenu.setMnemonic(KeyEvent.VK_A); 
+    menuBar.add(analyseMenu); 
+
+    JMenuItem tcMenuItem = new JMenuItem("Type-check"); 
+    tcMenuItem.addActionListener(this); 
+    tcMenuItem.setToolTipText(
+      "Re-check expressions after a class diagram change");
+    tcMenuItem.setEnabled(true); 
+    // desMenuItem.setMnemonic(KeyEvent.VK_D);
+    analyseMenu.add(tcMenuItem); 
+
+    JMenuItem qualCheck = 
+      new JMenuItem("Quality check"); 
+    qualCheck.addActionListener(this);
+    analyseMenu.add(qualCheck);
+
+    JMenuItem measuresItem = new JMenuItem("Quality measures"); 
+    measuresItem.addActionListener(this);
+    analyseMenu.add(measuresItem);
+
     /* View Menu */ 
     JMenu viewMenu = new JMenu("View"); 
     viewMenu.setToolTipText(
@@ -772,18 +796,10 @@ public void findPlugins()
 
     viewMenu.addSeparator(); 
 
-    JMenuItem qualCheck = 
-      new JMenuItem("Quality check"); 
-    qualCheck.addActionListener(this);
-    viewMenu.add(qualCheck);
 
     JMenuItem ucdepsMI = new JMenuItem("Use Case Dependencies"); 
     ucdepsMI.addActionListener(this);
     viewMenu.add(ucdepsMI);
-
-    JMenuItem measuresItem = new JMenuItem("Quality measures"); 
-    measuresItem.addActionListener(this);
-    viewMenu.add(measuresItem);
 
     JMenuItem compareItem = new JMenuItem("Compare models"); 
     compareItem.addActionListener(this);
@@ -949,18 +965,10 @@ public void findPlugins()
       "Development Process Steps"); 
     menuBar.add(synthMenu); 
 
-    JMenuItem tcMenuItem = new JMenuItem("Type-check"); 
-    tcMenuItem.addActionListener(this); 
-    tcMenuItem.setToolTipText(
-      "Re-check expressions after a class diagram change");
-    tcMenuItem.setEnabled(true); 
-    // desMenuItem.setMnemonic(KeyEvent.VK_D);
-    synthMenu.add(tcMenuItem); 
-
     JMenuItem testsMI = new JMenuItem("Generate tests"); 
     testsMI.addActionListener(this);
     testsMI.setToolTipText(
-      "Generates MutationTest.java & tests for TestsGUI.java");
+      "Generates MutationTest and TestsGUI");
     // testsMI.setEnabled(false); 
     synthMenu.add(testsMI); 
 
@@ -4049,7 +4057,7 @@ public void findPlugins()
       return; 
     } 
 
-    window.setTitle("Agile UML Toolset, Eclipse Incubation Project Version 2.1");
+    window.setTitle("Agile UML Toolset, Eclipse Incubation Project Version 2.2");
     window.setControllerName("Controller"); 
     window.setSize(500, 400);
     window.setVisible(true);   

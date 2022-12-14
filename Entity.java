@@ -13661,16 +13661,35 @@ public void iosDbiOperations(PrintWriter out)
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attnme = att.getName(); 
-      String tname = att.getType().getName(); 
-      res = res + " private String " + attnme + " = \"\";\n";
+      Type atttype = att.getType(); 
+      String tname = atttype.getName();
+ 
+      res = res + "  private String " + attnme + " = \"\";\n";
       if (tname.equals("int"))
-      { res = res + " private int i" + attnme + " = 0;\n"; } 
+      { res = res + "  private int i" + attnme + " = 0;\n"; } 
       else if (tname.equals("double"))
-      { res = res + " private double d" + attnme + " = 0;\n"; } 
+      { res = res + "  private double d" + attnme + " = 0;\n"; } 
+      else if (att.isEnumeration())
+      { Vector vals = atttype.getValues(); 
+        res = res + "  private " + tname + " e" + attnme + " = " + tname + "." + vals.get(0) + ";\n"; 
+      }
       // booleans are treated as strings. 
-    } 
+    }
+
+    for (int j = 0; j < associations.size(); j++) 
+    { Association ast = (Association) associations.get(j); 
+      Entity ent2 = ast.getEntity2(); 
+      Attribute fkey = ent2.getPrincipalPrimaryKey(); 
+      if (fkey != null) // assume it is a string
+      { String keynme = fkey.getName(); 
+        String keytype = fkey.getType().getName(); 
+        res = res + "  private " + keytype + " " + keynme + ";\n"; 
+      } 
+    }   
+
     res = res + "  private Vector errors = new Vector();\n\n" +
           "  public " + ename + "Bean() {}\n\n"; 
+
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attnme = att.getName(); 
@@ -13678,12 +13697,25 @@ public void iosDbiOperations(PrintWriter out)
             attnme + " = " + attnme + "x; }\n\n"; 
     } 
 
+    for (int j = 0; j < associations.size(); j++) 
+    { Association ast = (Association) associations.get(j); 
+      Entity ent2 = ast.getEntity2(); 
+      Attribute fkey = ent2.getPrincipalPrimaryKey(); 
+      if (fkey != null) // assume it is a string
+      { String keynme = fkey.getName(); 
+        String keytype = fkey.getType().getName(); 
+        res = res + "  public void set" + keynme + "(" + keytype + " " + keynme + "x)\n  { " + 
+             keynme + " = " + keynme + "x; }\n\n"; 
+      } 
+    }   
+
     res = res + "  public void resetData()\n  { "; 
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attname = att.getName(); 
       res = res + attname + " = \"\";\n  "; 
     } 
+
     res = res + "}\n\n";     
 
     for (int j = 0; j < useCases.size(); j++)
@@ -13704,7 +13736,8 @@ public void iosDbiOperations(PrintWriter out)
         res = res + check; 
       } 
 	  
-      if (action.equals("create") || action.equals("edit") || action.equals("set"))
+      if (action.equals("create") || 
+          action.equals("edit") || action.equals("set"))
       { Vector tests = getInvariantCheckTests(pars); 
         for (int p = 0; p < tests.size(); p++)
         { String test = (String) tests.get(p); 
@@ -13742,7 +13775,8 @@ public void iosDbiOperations(PrintWriter out)
           allinvs.addAll(invariants); 
           allinvs.addAll(cons); 
 
-          correc = att.sqlSetOperations(this,allinvs,entities,types); 
+          correc = att.sqlSetOperations(
+                          this,allinvs,entities,types); 
           res = res + odname + "(" + att.getBeanForm() + 
                                ", i" + ename.toLowerCase() + "Id);\n  ";
         }
@@ -13783,35 +13817,61 @@ public void iosDbiOperations(PrintWriter out)
   { String ename = getName(); 
     String res = "package " + packageName + ";\n\n" + 
       "import java.util.Vector;\n" + 
-	  "import java.util.List;\n" + 
-	  "import java.util.Iterator;\n\n" + 
+      "import java.util.List;\n" + 
+      "import java.util.Iterator;\n\n" + 
 	  
       "public class " + ename + "Bean\n{ ModelFacade model;\n"; 
+
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attnme = att.getName(); 
-	  Type atttype = att.getType(); 
+      Type atttype = att.getType(); 
       String tname = atttype.getName(); 
       res = res + "  private String " + attnme + " = \"\";\n";
       if (tname.equals("int") || tname.equals("long"))
       { res = res + "  private int i" + attnme + " = 0;\n"; } 
       else if (tname.equals("double"))
       { res = res + "  private double d" + attnme + " = 0;\n"; } 
-	  else if (att.isEnumeration())
-	  { Vector vals = atttype.getValues(); 
-	    res = res + "  private " + tname + " e" + attnme + " = " + tname + "." + vals.get(0) + ";\n"; 
-	  }
+      else if (att.isEnumeration())
+      { Vector vals = atttype.getValues(); 
+        res = res + "  private " + tname + " e" + attnme + " = " + tname + "." + vals.get(0) + ";\n"; 
+      }
       // booleans are treated as strings. 
-    } 
+    }
+
+    for (int j = 0; j < associations.size(); j++) 
+    { Association ast = (Association) associations.get(j); 
+      Entity ent2 = ast.getEntity2(); 
+      Attribute fkey = ent2.getPrincipalPrimaryKey(); 
+      if (fkey != null) 
+      { String keynme = fkey.getName(); 
+        String keytype = fkey.getType().getName(); 
+        res = res + "  private " + keytype + " " + keynme + ";\n"; 
+      } 
+    }   
+ 
     res = res + "  private Vector errors = new Vector();\n\n" +
           "  public " + ename + "Bean()\n" + 
           "  { model = ModelFacade.getInstance(); }\n\n"; 
+
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attnme = att.getName(); 
       res = res + "  public void set" + attnme + "(String " + attnme + "x)\n  { " + 
             attnme + " = " + attnme + "x; }\n\n"; 
     } 
+
+    for (int j = 0; j < associations.size(); j++) 
+    { Association ast = (Association) associations.get(j); 
+      Entity ent2 = ast.getEntity2(); 
+      Attribute fkey = ent2.getPrincipalPrimaryKey(); 
+      if (fkey != null) // assume it is a string
+      { String keynme = fkey.getName(); 
+        String keytype = fkey.getType().getName(); 
+        res = res + "  public void set" + keynme + "(" + keytype + " " + keynme + "x)\n  { " + 
+             keynme + " = " + keynme + "x; }\n\n"; 
+      } 
+    }   
 
     res = res + "  public void resetData()\n  { "; 
     for (int i = 0; i < attributes.size(); i++) 
@@ -13839,7 +13899,8 @@ public void iosDbiOperations(PrintWriter out)
         res = res + check; 
       }
 	   
-      if (action.equals("create") || action.equals("edit") || action.equals("set"))
+      if (action.equals("create") || 
+          action.equals("edit") || action.equals("set"))
       { Vector tests = getInvariantCheckTests(types,entities,pars,cgs); 
         for (int p = 0; p < tests.size(); p++)
         { String test = (String) tests.get(p); 
@@ -13869,14 +13930,16 @@ public void iosDbiOperations(PrintWriter out)
           action.equals("add") || action.equals("remove") ||
           action.equals("edit") || action.equals("set"))
       { res = res + "  public void " + odname + "()\n" +  "  { "; 
-        res = res + dbiop + "\n    ";  
+        res = res + dbiop + "\n    "; 
+ 
         /* if (action.equals("set"))
         { Attribute att = (Attribute) pars.get(0); 
           Vector allinvs = new Vector();
           allinvs.addAll(invariants); 
           allinvs.addAll(cons); 
 
-          correc = att.sqlSetOperations(this,allinvs,entities,types); 
+          correc = att.sqlSetOperations(
+                              this,allinvs,entities,types); 
           res = res + odname + "(" + att.getBeanForm() + 
                                ", i" + ename.toLowerCase() + "Id);\n  ";
         } */ 
@@ -13916,19 +13979,31 @@ public void iosDbiOperations(PrintWriter out)
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attnme = att.getName(); 
-	  Type atttype = att.getType(); 
+      Type atttype = att.getType(); 
       String tname = atttype.getName(); 
       res = res + "  private String " + attnme + " = \"\";\n";
       if (tname.equals("int") || tname.equals("long"))
       { res = res + "  private int i" + attnme + " = 0;\n"; } 
       else if (tname.equals("double"))
       { res = res + "  private double d" + attnme + " = 0;\n"; } 
-	  else if (att.isEnumeration())
-	  { Vector vals = atttype.getValues(); 
-	    res = res + "  private " + tname + " e" + attnme + " = " + tname + "." + vals.get(0) + ";\n"; 
-	  }
+      else if (att.isEnumeration())
+      { Vector vals = atttype.getValues(); 
+        res = res + "  private " + tname + " e" + attnme + " = " + tname + "." + vals.get(0) + ";\n"; 
+      }
       // booleans are treated as strings. 
     } 
+
+    for (int j = 0; j < associations.size(); j++) 
+    { Association ast = (Association) associations.get(j); 
+      Entity ent2 = ast.getEntity2(); 
+      Attribute fkey = ent2.getPrincipalPrimaryKey(); 
+      if (fkey != null) // assumed to be of string type 
+      { String keynme = fkey.getName(); 
+        String keytype = fkey.getType().getName(); 
+        res = res + "  private " + keytype + " " + keynme + ";\n"; 
+      } 
+    }   
+
     res = res + "  private Vector errors = new Vector();\n\n" +
           "  public " + ename + "Bean(Context _c)\n" + 
           "  { model = ModelFacade.getInstance(_c); }\n\n"; 
@@ -13965,7 +14040,8 @@ public void iosDbiOperations(PrintWriter out)
         res = res + check; 
       }
 	   
-      if (action.equals("create") || action.equals("edit") || action.equals("set"))
+      if (action.equals("create") || 
+          action.equals("edit") || action.equals("set"))
       { Vector tests = getInvariantCheckTests(types,entities,pars,cgs); 
         for (int p = 0; p < tests.size(); p++)
         { String test = (String) tests.get(p); 

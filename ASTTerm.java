@@ -48,6 +48,9 @@ public abstract class ASTTerm
      // of identifiers
      // valid at the scope of the current term. 
 
+  static java.util.Map cg_cache = new java.util.HashMap(); 
+     // CGSpec --> (ASTTerm --> String)
+
   static Vector cqueryfunctions = new Vector(); 
   static
   { cqueryfunctions.add("sin"); 
@@ -129,6 +132,22 @@ public abstract class ASTTerm
     { ASTTerm trm = (ASTTerm) trms.get(i); 
       res.add(trm.literalForm()); 
     } 
+    return res; 
+  } 
+
+  public static void putCg_cache(CGSpec cgs, ASTTerm trm, String res)
+  { java.util.Map cgsmap = (java.util.Map) cg_cache.get(cgs); 
+    if (cgsmap == null) 
+    { cgsmap = new java.util.HashMap(); }  
+    cgsmap.put(trm, res); 
+    cg_cache.put(cgs, cgsmap); 
+  } 
+
+  public static String getCg_cache(CGSpec cgs, ASTTerm trm)
+  { java.util.Map cgsmap = (java.util.Map) cg_cache.get(cgs); 
+    if (cgsmap == null) 
+    { return null; }  
+    String res = (String) cgsmap.get(trm); 
     return res; 
   } 
 

@@ -271,7 +271,7 @@ public class KM3Editor extends JFrame implements DocumentListener
 
       }  
       catch (Exception ble) 
-      { System.err.println("Couldn't insert initial text."); }
+      { System.err.println("!! Couldn't insert initial text."); }
    } 
 
     protected SimpleAttributeSet[] initAttributes(int length) 
@@ -293,6 +293,10 @@ public class KM3Editor extends JFrame implements DocumentListener
 
         return attrs;
     }
+
+    // Could have character modifiers such as subscript/
+    // superscript: StyleConstants.setSubscript(attrs[4], true); 
+    // setSuperscript(attrs[5], true), etc. 
 
     private HashMap createActionTable(JTextComponent textComponent) 
     { HashMap actions = new HashMap();
