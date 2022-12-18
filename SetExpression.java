@@ -153,6 +153,11 @@ public class SetExpression extends Expression
   public void findClones(java.util.Map clones, String rule, String op)
   { return; } 
 
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cloneDefs, 
+                         String rule, String op)
+  { return; } 
+
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { for (int i = 0; i < elements.size(); i++) 
     { Expression elem = (Expression) elements.get(i); 

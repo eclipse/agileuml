@@ -168,6 +168,26 @@ public void findClones(java.util.Map clones, String rule, String op)
   elseExp.findClones(clones,rule,op);
 }
 
+public void findClones(java.util.Map clones,
+                       java.util.Map cloneDefs,
+                       String rule, String op)
+{ if (this.syntacticComplexity() < UCDArea.CLONE_LIMIT) 
+  { return; }
+  String val = this + ""; 
+  Vector used = (Vector) clones.get(val);
+  if (used == null)
+  { used = new Vector(); }
+  if (rule != null)
+  { used.add(rule); }
+  else if (op != null)
+  { used.add(op); }
+  clones.put(val,used);
+  cloneDefs.put(val, this); 
+  test.findClones(clones,cloneDefs, rule,op); 
+  ifExp.findClones(clones,cloneDefs, rule,op);
+  elseExp.findClones(clones,cloneDefs, rule,op);
+}
+
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { test.findMagicNumbers(mgns,rule,op);
     ifExp.findMagicNumbers(mgns,rule,op);

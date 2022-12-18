@@ -845,6 +845,11 @@ public void findPlugins()
     extractIntf.addActionListener(this);
     qualityMenu.add(extractIntf);
 
+    JMenuItem extractOper = 
+      new JMenuItem("Extract Operation"); 
+    extractOper.addActionListener(this);
+    qualityMenu.add(extractOper);
+
     JMenuItem remredin = 
       new JMenuItem("Remove Redundant Inheritance"); 
     remredin.addActionListener(this);
@@ -2426,6 +2431,10 @@ public void findPlugins()
       { ucdArea.qualityCheck(); }
       else if (label.equals("Extract Interface"))
       { ucdArea.extractInterface(); 
+        repaint(); 
+      }
+      else if (label.equals("Extract Operation"))
+      { ucdArea.extractOperation(); 
         repaint(); 
       }
       else if (label.equals("Introduce Superclass"))

@@ -15,7 +15,8 @@ import java.io.*;
 public class AndroidAppGenerator extends AppGenerator
 { 
 
-  public void modelFacade(String packageName, Vector usecases, CGSpec cgs, Vector allentities, 
+  public void modelFacade(String packageName, Vector usecases, 
+     CGSpec cgs, Vector allentities, 
      Vector entities, Vector clouds, Vector types, 
      int remoteCalls, boolean needsMap, PrintWriter out)
   { // String ename = e.getName();
@@ -107,16 +108,16 @@ public class AndroidAppGenerator extends AppGenerator
     out.println("  private ModelFacade(Context context)"); 
     if (hasDbi) 
     { out.println("  { dbi = new Dbi(context); "); 
-	  out.println("    myContext = context; "); 
-	  out.println("    fileSystem = new FileAccessor(context); "); 
-	  for (int i = 0; i < entities.size(); i++) 
-	  { Entity ex = (Entity) entities.get(i); 
-	    String ename = ex.getName(); 
+      out.println("    myContext = context; "); 
+      out.println("    fileSystem = new FileAccessor(context); "); 
+      for (int i = 0; i < entities.size(); i++) 
+      { Entity ex = (Entity) entities.get(i); 
+        String ename = ex.getName(); 
         if (ex.isPersistent())
-		{ out.println("    load" + ename + "();"); }
-	  }
-	  out.println("  }"); 
-	}  
+        { out.println("    load" + ename + "();"); }
+      }
+      out.println("  }"); 
+    }  
     else 
     { out.println("  { myContext = context; ");
 	  out.println("    fileSystem = new FileAccessor(context); ");
@@ -182,7 +183,7 @@ public class AndroidAppGenerator extends AppGenerator
 
       // out.println(extractatts);
        String uccode = uc.cgActivity(cgs,entities,types);
-	   cgs.displayText(uccode,out);
+       cgs.displayText(uccode,out);
           
       // out.println(uc.cg(cgs)); 
       // System.out.println("  func " + uc.getName() + "(_ vo : " + evo + ") : " + evo);
@@ -209,30 +210,34 @@ public class AndroidAppGenerator extends AppGenerator
     for (int j = 0; j < entities.size(); j++) 
     { Entity ee = (Entity) entities.get(j); 
       if (ee.isDerived()) { continue; } 
-	  if (ee.isComponent()) { continue; } 
+      if (ee.isComponent()) { continue; } 
 	  
       Vector atts = ee.getAttributes(); 
-	  String item = ee.getName(); 
+      Vector assocs = ee.getAssociations(); 
+      String item = ee.getName();
+ 
       Attribute key = ee.getPrincipalPK();
-	  if (key != null) 
-	  { String entId = key.getName(); 
+
+      if (key != null) 
+      { String entId = key.getName(); 
 	  
-  	    out.println("  public void load" + item + "()");
+        out.println("  public void load" + item + "()");
         out.println("  { ArrayList<" + item + "VO> _res = list" + item + "();");
         out.println("    for (" + item + "VO _x : _res)"); 
-        out.println("    { " + item + " _ex = " + item + ".createByPK" + item + "(_x.get" + entId + "());"); 
+        out.println("    { " + item + " _ex = " + item + ".createByPK" + item + "(_x.get" + entId + "());");
+ 
         for (int k = 0; k < atts.size(); k++) 
         { Attribute att = (Attribute) atts.get(k); 
           String aname = att.getName();  
           out.println("      _ex." + aname + " = _x." + aname + ";"); 
         } 
         out.println("    }"); 
-		out.println("  }"); 
-		out.println(); 
+        out.println("  }"); 
+        out.println(); 
       } 
 	  
 	  
-	  out.println("  public List<" + item + "VO> list" + item + "()"); 
+      out.println("  public List<" + item + "VO> list" + item + "()"); 
       out.println("  { current" + item + "s = dbi.list" + item + "();"); 
       out.println("    return current" + item + "s;"); 
       out.println("  }"); 
@@ -252,6 +257,7 @@ public class AndroidAppGenerator extends AppGenerator
       String pk = "";  
       if (key != null) 
       { pk = key.getName(); 
+
         out.println("  public " + item + " get" + item + "ByPK(String _val)"); 
         out.println("  { ArrayList<" + item + "VO> _res = dbi.searchBy" + item + key + "(_val);"); 
         out.println("    if (_res.size() == 0)"); 
@@ -259,16 +265,18 @@ public class AndroidAppGenerator extends AppGenerator
         out.println("    else"); 
         out.println("    { " + item + "VO _vo = _res.get(0);"); 
         out.println("      " + item + " _itemx = " + item + ".createByPK" + item + "(_val);");
+
         for (int k = 0; k < atts.size(); k++) 
         { Attribute att = (Attribute) atts.get(k); 
           String aname = att.getName();  
           out.println("      _itemx." + aname + " = _vo." + aname + ";"); 
-        } 
+        }
+ 
         out.println("      return _itemx;"); 
         out.println("    }"); 
         out.println("  }"); 
-		out.println(); 
-		out.println("  public " + item + " retrieve" + item + "(String _val)"); 
+        out.println(); 
+        out.println("  public " + item + " retrieve" + item + "(String _val)"); 
         out.println("  { return get" + item + "ByPK(_val); }"); 
         out.println();
         out.println("  public List<String> all" + item + "ids()"); 
@@ -280,7 +288,7 @@ public class AndroidAppGenerator extends AppGenerator
         out.println("    }"); 
         out.println("    return res;"); 
         out.println("  }"); 
-	   out.println(); 
+        out.println(); 
       }  
 
       out.println("  public void setSelected" + item + "(" + item + "VO x)"); 
@@ -299,7 +307,7 @@ public class AndroidAppGenerator extends AppGenerator
 
       out.println("  public void persist" + item + "(" + item + " _x)"); 
       out.println("  { " + item + "VO _vo = new " + item + "VO(_x);"); 
-	  out.println("    dbi.edit" + item + "(_vo); "); 
+      out.println("    dbi.edit" + item + "(_vo); "); 
       out.println("    current" + item + " = _vo;"); 
       out.println("  }"); 
       out.println(); 
@@ -322,13 +330,38 @@ public class AndroidAppGenerator extends AppGenerator
       out.println("  }");
       out.println(); 
 
+      for (int i = 0; i < assocs.size(); i++) 
+      { Association ast = (Association) assocs.get(i); 
+        if (ast.isOneMany() || ast.isZeroOneMany())
+        { String role2 = ast.getRole2(); 
+
+          out.println("  public void add" + item + role2 + "(String _x, String _y)"); 
+          out.println("  { dbi.add" + item + role2 + "(_x,_y);");  
+          out.println("    current" + item + " = get" + item + "ByPK(_x);"); 
+          out.println("  }"); 
+          out.println(); 
+
+          out.println("  public void remove" + item + role2 + "(String _x, String _y)"); 
+          out.println("  { dbi.remove" + item + role2 + "(_x,_y);");  
+          out.println("    current" + item + " = get" + item + "ByPK(_x);"); 
+          out.println("  }"); 
+          out.println(); 
+
+        } 
+      }
+	
       for (int i = 0; i < atts.size(); i++) 
       { Attribute att = (Attribute) atts.get(i); 
         String attnme = att.getName(); 
-        Type atttyp = att.getType(); 
+        Type atttyp = att.getType();
+        if (atttyp.isCollection() || 
+            atttyp.isFunction() || 
+            atttyp.isMap())
+        { continue; } 
+ 
         String typ = atttyp.getJava7(); 
 
-	    out.println("  public List<" + item + "VO> searchBy" + item + attnme + "(String " + attnme + "x)"); 
+        out.println("  public List<" + item + "VO> searchBy" + item + attnme + "(String " + attnme + "x)"); 
         out.println("  { current" + item + "s = dbi.searchBy" + item + attnme + "(" + attnme + "x);"); 
         out.println("    return current" + item + "s;"); 
         out.println("  }"); 
@@ -401,7 +434,7 @@ public class AndroidAppGenerator extends AppGenerator
 
       out.println("  public void persist" + item + "(" + item + " _x)"); 
       out.println("  { " + item + "VO _vo = new " + item + "VO(_x);"); 
-	  out.println("    cdbi.persist" + item + "(_x); "); 
+      out.println("    cdbi.persist" + item + "(_x); "); 
       out.println("    current" + item + " = _vo;"); 
       out.println("  }"); 
       out.println(); 
@@ -411,7 +444,7 @@ public class AndroidAppGenerator extends AppGenerator
 	  out.println("    if (_obj == null)"); 
 	  out.println("    { _obj = " + item + ".createByPK" + item + "(_x." + pk + "); }"); 
       Vector eatts = ee.getAttributes(); 
-	  for (int z = 0; z < eatts.size(); z++) 
+      for (int z = 0; z < eatts.size(); z++) 
       { Attribute att = (Attribute) eatts.get(z); 
         String aname = att.getName();  
         out.println("    _obj." + aname + " = _x." + aname + ";"); 
@@ -595,7 +628,7 @@ public class AndroidAppGenerator extends AppGenerator
     Vector atts = e.getAttributes();
     String elist = ename.toLowerCase() + "List";
     String getlist = "list" + ename;
-	String layoutname = "R.layout." + getlist.toLowerCase() + "_layout"; 
+    String layoutname = "R.layout." + getlist.toLowerCase() + "_layout"; 
 
     out.println("package com.example.app;");
     out.println(); 
@@ -669,6 +702,107 @@ public class AndroidAppGenerator extends AppGenerator
       out.println("  EditText " + tfnme + ";");
       out.println("  String " + dname + " = \"\";");
     }
+    out.println();
+    out.println();
+    out.println("  @Override");
+    out.println("  protected void onCreate(Bundle bundle)");
+    out.println("  { super.onCreate(bundle);");
+    out.println("    setContentView(R.layout." + fullop + "_layout);");
+
+    for (int x = 0; x < pars.size(); x++)
+    { Attribute par = (Attribute) pars.get(x);
+      String pnme = par.getName(); 
+      String tfnme = pnme + "TextField"; 
+      out.println("    " + tfnme + " = (EditText) findViewById(R.id." + fullop + pnme + ");");
+    }
+    out.println("    " + bean + " = new " + beanclass + "(this);");
+    out.println("    model = ModelFacade.getInstance(this);"); 
+    out.println("    " + evo + " _current = model.getSelected" + ename + "();"); 
+    out.println("    if (_current != null)"); 
+    out.println("    { " + pkname + "TextField.setText(_current." + pkname + "); }"); 
+    out.println("  }\n\r");
+    out.println(); 
+  
+    out.println("  public void " + fullop + "OK(View _v) ");
+    out.println("  {");
+    for (int x = 0; x < pars.size(); x++)
+    { Attribute att = (Attribute) pars.get(x);
+      String aname = att.getName();
+      String tfnme = aname + "TextField"; 
+      String dname = aname + "Data";
+      out.println("    " + dname + " = " + tfnme + ".getText() + \"\";");
+      out.println("    " + bean + ".set" + aname + "(" + dname + ");"); 
+    }
+    out.println("    if (" + bean + ".is" + fullop + "error())"); 
+    out.println("    { Log.w(getClass().getName(), " + bean + ".errors()); }"); 
+    out.println("    else"); 
+    out.println("    { " + bean + "." + fullop + "(); }"); 
+
+    out.println("  }\n\r");
+    out.println();
+
+    out.println("  public void " + fullop + "Cancel(View _v) {}");
+    out.println("}"); 
+  }
+
+  public static void androidAddViewActivity(String op, Entity ent, String role, PrintWriter out)
+  { String ename = ent.getName();
+    String fullop = op + ename + role; 
+    String beanclass = ename + "Bean";
+    String bean = beanclass.toLowerCase();
+    String evo = ename + "VO"; 
+
+    out.println("package com.example.app;\n"); 
+    out.println(); 
+    out.println("import android.os.Bundle;");
+    out.println("import android.app.Activity;");
+    out.println("import android.view.View;");
+    out.println("import android.util.Log;"); 
+    out.println("import android.widget.EditText;\n\r");
+    out.println(); 
+
+    out.println("public class View" + fullop + " extends Activity");
+    out.println("{ " + beanclass + " " + bean + ";");
+    out.println("  ModelFacade model = null;"); 
+    out.println(); 
+
+    Vector pars = new Vector();
+    Attribute pk = ent.getPrincipalPrimaryKey(); 
+    if (pk == null) 
+    { out.println("/* ERROR: no primary key for " + ename + " */"); 
+      out.println("}"); 
+      return; 
+    } 
+    String pkname = pk.getName(); 
+    pars.add(pk); 
+
+    Association ast = ent.getRole(role); 
+    if (ast == null) 
+    { out.println("/* ERROR: no association for " + ename + role + " */"); 
+      out.println("}");
+      return; 
+    } 
+
+    Entity ent2 = ast.getEntity2(); 
+    Attribute fk = ent2.getPrincipalPrimaryKey(); 
+    if (fk == null) 
+    { out.println("/* ERROR: no primary key for " + ent2 + " */"); 
+      out.println("}"); 
+      return; 
+    } 
+    String fkname = fk.getName(); 
+    pars.add(fk); 
+    
+
+    for (int x = 0; x < pars.size(); x++)
+    { Attribute par = (Attribute) pars.get(x);
+      String pnme = par.getName(); 
+      String tfnme = pnme + "TextField"; 
+      String dname = pnme + "Data";
+      out.println("  EditText " + tfnme + ";");
+      out.println("  String " + dname + " = \"\";");
+    }
+
     out.println();
     out.println();
     out.println("  @Override");
@@ -959,9 +1093,9 @@ public class AndroidAppGenerator extends AppGenerator
     out.println("  <View"); 
     out.println("     android:layout_height=\"20dip\""); 
     out.println("     android:background=\"#FFFFFF\"/>"); 
-	out.println(); 
+    out.println(); 
     
-	if (image != null && !("null".equals(image))) 
+    if (image != null && !("null".equals(image))) 
     { out.println("  <ImageView"); 
       out.println("   android:id=\"@+id/" + op + "image\""); 
       out.println("   android:src=\"@drawable/" + image + "\" />"); 
@@ -970,9 +1104,9 @@ public class AndroidAppGenerator extends AppGenerator
     out.println("  <View"); 
     out.println("     android:layout_height=\"20dip\""); 
     out.println("     android:background=\"#FFFFFF\"/>"); 
-	out.println(); 
+    out.println(); 
     
-	out.println("</TableLayout>");
+    out.println("</TableLayout>");
     out.println("</ScrollView>");
   }
 
@@ -1095,10 +1229,10 @@ public class AndroidAppGenerator extends AppGenerator
     out.println("  <View"); 
     out.println("     android:layout_height=\"20dip\""); 
     out.println("     android:background=\"#FFFFFF\"/>"); 
-	out.println(); 
+    out.println(); 
     
-	for (int j = 0; j < usecases.size(); j++)
-	{ UseCase extensionuc = (UseCase) usecases.get(j); 
+    for (int j = 0; j < usecases.size(); j++)
+    { UseCase extensionuc = (UseCase) usecases.get(j); 
 	  String ucop = extensionuc.getName(); 
 	  Vector ucatts = extensionuc.getParameters(); 
 	  Attribute ucres = extensionuc.getResultParameter(); 
@@ -1556,7 +1690,7 @@ public static void androidOpViewActivity(String op, String systemName,
  }
 
 public static void androidOpViewFragment(String op, String packageName, 
-                                         String classname, String layout, Vector pars, Attribute res, 
+    String classname, String layout, Vector pars, Attribute res, 
                                          Vector extensions, PrintWriter out)
 { // Entity ent = getEntity();
   // String entname = ent.getName();
@@ -1675,7 +1809,7 @@ public static void androidOpViewFragment(String op, String packageName,
   for (int p = 0; p < extensions.size(); p++) 
   { UseCase extension = (UseCase) extensions.get(p); 
     String extop = extension.getName();
-	out.println("  Button " + extop + "OkButton;"); 
+    out.println("  Button " + extop + "OkButton;"); 
 	    
     Vector extpars = extension.getParameters();
     Attribute extres = extension.getResultParameter(); 
@@ -1935,7 +2069,7 @@ public static void androidOpViewFragment(String op, String packageName,
       { out.println("    { Resources _rsrcs = getResources();"); 
         out.println("      AssetManager _amanager = _rsrcs.getAssets();"); 
         out.println("      try {"); 
-	    out.println("        String _imgName = " + extbean + "." + extop + "().imageName;"); 
+        out.println("        String _imgName = " + extbean + "." + extop + "().imageName;"); 
         out.println("        InputStream _imageStream = _amanager.open(_imgName);"); 
         out.println("        Drawable _drawable = new BitmapDrawable(_rsrcs, _imageStream);"); 
         out.println("        " + extop + "Result.setImageDrawable(_drawable);"); 
@@ -1979,48 +2113,49 @@ public static void androidOpViewFragment(String op, String packageName,
     out.println("");
     out.println("import androidx.fragment.app.FragmentManager;");
     out.println("import android.view.View;");
-	out.println("import android.view.Menu;"); 
+    out.println("import android.view.Menu;"); 
     out.println("import android.view.MenuItem;"); 
 
     out.println("");
     out.println("import " + appPackage + ".ui.main.SectionsPagerAdapter;");
-	out.println("import " + appPackage + ".ui.main.ModelFacade;"); 
+    out.println("import " + appPackage + ".ui.main.ModelFacade;"); 
 
-	String extraimports = ""; 
-	Vector extraops = new Vector(); 
-	Vector extraimplements = new Vector(); 
+    String extraimports = ""; 
+    Vector extraops = new Vector(); 
+    Vector extraimplements = new Vector(); 
 	
-	for (int i = 0; i < usecases.size(); i++)
-	{ Object uc = usecases.get(i); 
-	  if (uc instanceof OperationDescription)
-	  { OperationDescription od = (OperationDescription) uc; 
-	    String odnme = od.getName(); 
-		if (odnme.startsWith("list"))
-		{ Entity ent = od.getEntity();
-		  String ename = ent.getName();  
-		  String fullname = odnme + ename; 
-		  extraimports = extraimports + "import " + appPackage + ".ui.main.list" + ename + "Fragment;\n"; 
-		  extraimports = extraimports + "import " + appPackage + ".ui.main." + ename + "VO;\n\n"; 
-		  extraops.add("   public void onListFragmentInteraction(" + ename + "VO x)\n" + 
-                       "   { model.setSelected" + ename + "(x); }\n"); 
+    for (int i = 0; i < usecases.size(); i++)
+    { Object uc = usecases.get(i); 
+      if (uc instanceof OperationDescription)
+      { OperationDescription od = (OperationDescription) uc; 
+        String odnme = od.getName(); 
+        if (odnme.startsWith("list"))
+        { Entity ent = od.getEntity();
+          String ename = ent.getName();  
+          String fullname = odnme + ename; 
+          extraimports = extraimports + "import " + appPackage + ".ui.main.list" + ename + "Fragment;\n"; 
+          extraimports = extraimports + "import " + appPackage + ".ui.main." + ename + "VO;\n\n"; 
+          extraops.add("   public void onListFragmentInteraction(" + ename + "VO x)\n" + 
+             "   { model.setSelected" + ename + "(x); }\n"); 
           extraimplements.add("list" + ename + "Fragment.OnListFragmentInteractionListener"); 
-		}
-	  } 
-    } 
-	out.println(extraimports); 
+        }
+      } 
+    }
+ 
+    out.println(extraimports); 
     out.println("");
     out.println("public class MainActivity extends AppCompatActivity");
-	if (extraimplements.size() == 0) { } 
-	else 
-	{ out.print("        implements "); 
-	  for (int k = 0; k < extraimplements.size(); k++) 
-	  { String extimp = (String) extraimplements.get(k);
-	    out.print(extimp); 
-		if (k < extraimplements.size() - 1)
-		{ out.print(", "); }
-	  }
-	  out.println();  
-	} 
+    if (extraimplements.size() == 0) { } 
+    else 
+    { out.print("        implements "); 
+      for (int k = 0; k < extraimplements.size(); k++) 
+      { String extimp = (String) extraimplements.get(k);
+        out.print(extimp); 
+        if (k < extraimplements.size() - 1)
+        { out.print(", "); }
+      }
+      out.println();  
+    } 
 	
     out.println("{ ModelFacade model; ");
     out.println(""); 
@@ -2047,13 +2182,13 @@ public static void androidOpViewFragment(String op, String packageName,
   { String tabtitles = "";
     for (int x = 0; x < tabNames.size(); x++)
     { String tt = (String) tabNames.get(x);
-	  String title = Named.capitalise(tt); 
-	  if (tt.startsWith("create"))
-	  { title = "+" + tt.substring(6,tt.length()); }
-	  else if (tt.startsWith("delete"))
-	  { title = "-" + tt.substring(6,tt.length()); }
-	  else if (tt.startsWith("searchBy"))
-	  { title = "?" + tt.substring(8,tt.length()); }
+      String title = Named.capitalise(tt); 
+      if (tt.startsWith("create"))
+      { title = "+" + tt.substring(6,tt.length()); }
+      else if (tt.startsWith("delete"))
+      { title = "-" + tt.substring(6,tt.length()); }
+      else if (tt.startsWith("searchBy"))
+      { title = "?" + tt.substring(8,tt.length()); }
 
       tabtitles = tabtitles + "\"" + title + "\"";
 
@@ -2271,8 +2406,10 @@ public static void androidScreenTabs(OperationDescription od, PrintWriter out)
   { fragmentListScreen(op,od,out); }
   else if (op.startsWith("searchBy"))
   { androidSearchByScreen(op,od,out); }
+  else if (op.startsWith("add") || op.startsWith("remove"))
+  { androidAddScreen(op,od,out); }
   else 
-  { System.err.println("No screen is defined yet for " + op); } 
+  { System.err.println("!! Warning: No screen is defined yet for " + op); } 
 }
 
 public static void androidCreateScreen(String op, OperationDescription od, PrintWriter out)
@@ -2435,6 +2572,97 @@ public static void androidDeleteScreen(String op, OperationDescription od, Print
   out.println("</TableLayout>");
 }
 
+public static void androidAddScreen(String op, 
+                OperationDescription od, PrintWriter out)
+{ Entity ent = od.getEntity(); 
+  String ename = ent.getName(); 
+  String role = od.getStereotype(1); 
+  Association ast = ent.getRole(role); 
+  if (ast == null) 
+  { return; } 
+   
+  Entity ent2 = ast.getEntity2();
+  String fname = ent2.getName(); 
+
+  String fullop = op + ename + role; 
+  
+  String viewname = fullop + "Fragment";
+  String opok = fullop + "OK";
+  String opcancel = fullop + "Cancel";
+
+  out.println("<TableLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"");
+  out.println("  xmlns:tools=\"http://schemas.android.com/tools\"");
+  out.println("  android:layout_width=\"match_parent\"");
+  out.println("  android:layout_height=\"match_parent\"");
+  out.println("  android:stretchColumns=\"1\"");
+  out.println("  tools:context=\".ui.main." + viewname + "\" >");
+  out.println();
+
+  Vector pars = od.getParameters();
+  for (int x = 0; x < pars.size(); x++)
+  { Attribute att = (Attribute) pars.get(x);
+    String attfield = att.androidTableEntryField("",fullop);
+    out.println(attfield);
+  }
+
+  out.println(" <TableRow>"); 
+  
+  out.println("  <TextView"); 
+  out.println("    android:id=\"@+id/" + fullop + "Label\""); 
+  // out.println("    android:hint=\"" + ename + " id\""); 
+  out.println("    android:textStyle=\"bold\""); 
+  out.println("    android:background=\"#EEFFBB\""); 
+  out.println("    android:text=\"" + ename + ":\" />"); 
+
+  out.println("<Spinner"); 
+  out.println("  android:id=\"@+id/" + fullop + "Spinner\""); 
+  out.println("  android:layout_width=\"fill_parent\"");  
+  out.println("  android:layout_height=\"wrap_content\" "); 
+  out.println("  android:layout_span=\"4\" />"); 
+
+  out.println(" </TableRow>"); 
+
+  out.println(" <TableRow>"); 
+  
+  out.println("  <TextView"); 
+  out.println("    android:id=\"@+id/" + fullop + "FkLabel\""); 
+  // out.println("    android:hint=\"" + ename + " id\""); 
+  out.println("    android:textStyle=\"bold\""); 
+  out.println("    android:background=\"#EEFFBB\""); 
+  out.println("    android:text=\"" + fname + ":\" />"); 
+
+  out.println("<Spinner"); 
+  out.println("  android:id=\"@+id/" + fullop + "FkSpinner\""); 
+  out.println("  android:layout_width=\"fill_parent\"");  
+  out.println("  android:layout_height=\"wrap_content\" "); 
+  out.println("  android:layout_span=\"4\" />"); 
+
+  out.println(" </TableRow>"); 
+
+  out.println(" <TableRow>");
+  out.println("  <Button");
+  out.println("    android:id=\"@+id/" + opok + "\"");
+  out.println("    android:layout_width=\"wrap_content\"");
+  out.println("    android:layout_height=\"wrap_content\"");
+  out.println("    android:layout_column=\"1\"");
+  out.println("    android:background=\"#AAAAFF\""); 
+  out.println("    android:text=\"OK\"");
+  out.println("    android:onClick=\"" + opok + "\"");
+  out.println("    />");
+
+  out.println("  <Button");
+  out.println("    android:id=\"@+id/" + opcancel + "\"");
+  out.println("    android:layout_width=\"wrap_content\"");
+  out.println("    android:layout_height=\"wrap_content\"");
+  out.println("    android:layout_column=\"3\"");
+  out.println("    android:background=\"#FFAAAA\""); 
+  out.println("    android:text=\"Cancel\"");
+  out.println("    android:onClick=\"" + opcancel + "\"");
+  out.println("    />");
+  out.println(" </TableRow>");
+  out.println("</TableLayout>");
+}
+
 public static void androidListScreen(String op, OperationDescription od, PrintWriter out)
 { Entity ent = od.getEntity(); 
   String ename = ent.getName(); 
@@ -2527,6 +2755,8 @@ public static void androidViewFragment(String packageName, OperationDescription 
   { androidEditViewFragment(op,od,packageName,out); }
   else if (op.startsWith("list"))
   { listViewFragment(entity,od,packageName,out); }
+  else if (op.startsWith("add") || op.startsWith("remove"))
+  { androidAddViewFragment(op,od,packageName,out); }
   // else if (op.startsWith("searchBy"))
   // { od.androidSearchByViewActivity(op,packageName,out); }
 }
@@ -2922,8 +3152,8 @@ public static void androidEditViewFragment(String op, OperationDescription od, S
   
   out.println("  }");    
     
-   out.println("}"); 
- }
+  out.println("}"); 
+}
 
 public static void androidDeleteViewFragment(String op, OperationDescription od, String packageName, PrintWriter out)
 { Entity ent = od.getEntity();
@@ -3102,6 +3332,228 @@ public static void androidDeleteViewFragment(String op, OperationDescription od,
   out.println("  public void " + fullop + "Cancel(View _v)");
   out.println("  { " + bean + ".resetData();");
   out.println("    " + tfnme + ".setText(\"\");");
+  out.println("  }");    
+    
+   out.println("}"); 
+ }
+
+public static void androidAddViewFragment(String op, OperationDescription od, String packageName, PrintWriter out)
+{ Entity ent = od.getEntity();
+  String ename = ent.getName();
+  String role = od.getStereotype(1); 
+  Association ast = ent.getRole(role); 
+  if (ast == null) { return; }
+
+  Entity ent2 = ast.getEntity2();
+  String fname = ent2.getName(); 
+  String lcfname = fname.toLowerCase(); 
+ 
+  Attribute fk = ent2.getPrincipalPrimaryKey();
+  if (fk == null) { return; } 
+ 
+  String fkname = fk.getName(); 
+
+  String evo = ename + "VO"; 
+  String fullop = op + ename + role; 
+  String beanclass = ename + "Bean";
+  String bean = beanclass.toLowerCase();
+  String lcname = fullop.toLowerCase(); 
+  String layout = lcname + "_layout"; 
+  
+  Vector pars = od.getParameters(); 
+  
+  String classname = fullop + "Fragment"; 
+
+  String extraimports = ""; 
+  String protocols = " implements OnClickListener"; 
+  String extraops = ""; 
+  
+  extraimports = "import android.widget.AdapterView;\n\r" + 
+                 "import android.widget.ArrayAdapter;\n\r" + 
+                 "import android.widget.Spinner;\n\r"; 
+  protocols = protocols + ", AdapterView.OnItemSelectedListener"; 
+  // extraops = UseCase.spinnerListenerOperations(op,pars); 
+  
+  
+  out.println("package " + packageName + ".ui.main;\n"); 
+  out.println(); 
+  out.println("import androidx.appcompat.app.AppCompatActivity;\n\r");
+  out.println("import android.os.Bundle;");
+  out.println(extraimports);
+  out.println("import android.view.LayoutInflater;"); 
+  out.println("import android.view.ViewGroup;"); 
+  out.println("import android.widget.Button;"); 
+  out.println("import android.view.inputmethod.InputMethodManager;") ; 
+
+  out.println("import androidx.annotation.Nullable;"); 
+  out.println("import androidx.annotation.NonNull;"); 
+  out.println("import androidx.fragment.app.Fragment;"); 
+
+  out.println("import " + packageName + ".R;"); // packageName + ".R"
+
+  out.println("import android.content.Context;"); 
+
+  out.println("import androidx.annotation.LayoutRes;"); 
+  out.println("import androidx.fragment.app.FragmentPagerAdapter;"); 
+  out.println("import androidx.viewpager.widget.ViewPager;"); 
+  // import androidx.appcompat.app.AppCompatActivity;
+
+  out.println("import androidx.fragment.app.FragmentManager;"); 
+  out.println("import android.view.View.OnClickListener;"); 
+
+  out.println("import android.view.View;");
+  out.println("import android.util.Log;"); 
+  out.println("import android.widget.Toast;");
+  out.println("import android.widget.RadioGroup;"); 
+  out.println("import android.widget.EditText;");
+  out.println("import android.widget.TextView;\n\r");
+  out.println("import java.util.ArrayList;"); 
+  out.println("import java.util.List;"); 
+  out.println(); 
+
+  out.println("public class " + classname + " extends Fragment" + protocols);
+  out.println("{ View root;"); 
+  out.println("  Context myContext;"); 
+  out.println("  ModelFacade model;"); 
+  out.println("  " + beanclass + " " + bean + ";");
+  out.println("  Spinner " + lcname + "Spinner;");
+  out.println("  Spinner " + lcname + "FkSpinner;");
+  out.println("  List<String> all" + ename + "ids = new ArrayList<String>();"); 
+  out.println("  List<String> all" + fname + "ids = new ArrayList<String>();"); 
+  
+  Attribute par = ent.getPrincipalPrimaryKey();
+  if (par == null) 
+  { out.println("}"); 
+    return; 
+  } 
+
+  String pname = par.getName(); 
+  String tfnme = pname + "TextField"; 
+  String dname = pname + "Data";
+  out.println("  EditText " + tfnme + ";");  
+  out.println("  String " + dname + " = \"\";");
+  out.println(); 
+
+  String ftfnme = fkname + "TextField"; 
+  String fdname = fkname + "Data";
+
+  out.println("  EditText " + ftfnme + ";");  
+  out.println("  String " + fdname + " = \"\";");
+  out.println(); 
+
+  out.println("  Button okButton;"); 
+  out.println("  Button cancelButton;"); 
+
+  
+  out.println();
+  out.println();
+  
+  out.println(" public " + classname + "() {}"); 
+  out.println(); 
+
+  out.println("  public static " + classname + " newInstance(Context c)"); 
+  out.println("  { " + classname + " fragment = new " + classname + "();"); 
+  out.println("    Bundle args = new Bundle();"); 
+  out.println("    fragment.setArguments(args);"); 
+  out.println("    fragment.myContext = c;"); 
+  out.println("    return fragment;"); 
+  out.println("  }"); 
+  
+  out.println(); 
+
+  out.println("  @Override"); 
+  out.println("  public void onCreate(Bundle savedInstanceState)"); 
+  out.println("  { super.onCreate(savedInstanceState); }"); 
+
+  out.println(); 
+
+  out.println("  @Override");
+  out.println("  public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)"); 
+  out.println("  { root = inflater.inflate(R.layout." + layout + ", container, false);"); 
+  out.println("    Bundle data = getArguments();");
+  out.println("    return root;"); 
+  out.println("  }"); 
+  out.println(); 
+  
+  out.println("  @Override");
+  out.println("  public void onResume()"); 
+  out.println("  { super.onResume();"); 
+  out.println("    model = ModelFacade.getInstance(myContext);");  
+  out.println("    " + evo + " selectedItem = model.getSelected" + ename + "();"); 
+
+  out.println("    all" + ename + "ids = model.all" + ename + "ids();"); 
+  out.println("    " + tfnme + " = (EditText) root.findViewById(R.id." + fullop + pname + "Field);");
+  out.println("    " + lcname + "Spinner = (Spinner) root.findViewById(R.id." + fullop + "Spinner);");
+  out.println("    ArrayAdapter<String> " + lcname + "Adapter = new ArrayAdapter<String>(myContext, android.R.layout.simple_spinner_item,all" + ename + "ids);"); 
+  out.println("    " + lcname + "Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);"); 
+  out.println("    " + lcname + "Spinner.setAdapter(" + lcname + "Adapter);"); 
+  out.println("    " + lcname + "Spinner.setOnItemSelectedListener(this);"); 
+
+  out.println("    all" + fname + "ids = model.all" + fname + "ids();"); 
+  out.println("    " + ftfnme + " = (EditText) root.findViewById(R.id." + fullop + fkname + "Field);");
+  
+
+  out.println("    " + lcname + "FkSpinner = (Spinner) root.findViewById(R.id." + fullop + "FkSpinner);");
+  out.println("    ArrayAdapter<String> " + lcname + "FkAdapter = new ArrayAdapter<String>(myContext, android.R.layout.simple_spinner_item,all" + fname + "ids);"); 
+  out.println("    " + lcname + "FkAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);"); 
+  out.println("    " + lcname + "FkSpinner.setAdapter(" + lcname + "FkAdapter);"); 
+  out.println("    " + lcname + "FkSpinner.setOnItemSelectedListener(this);"); 
+
+  out.println("    if (selectedItem != null)");
+  out.println("    { " + tfnme + ".setText(selectedItem." + pname + " + \"\"); }"); 
+  
+  out.println("    " + bean + " = new " + beanclass + "(myContext);");
+
+  out.println("    okButton = root.findViewById(R.id." + fullop + "OK);"); 
+  out.println("    okButton.setOnClickListener(this);"); 
+  out.println("    cancelButton = root.findViewById(R.id." + fullop + "Cancel);");  
+  out.println("    cancelButton.setOnClickListener(this);"); 
+  out.println("  }\n\r");
+  out.println(); // for edit, the principal primary key does not have an EditText
+  out.println(); 
+  
+  out.println("  public void onItemSelected(AdapterView<?> _parent, View _v, int _position, long _id)"); 
+  out.println("  {  if (_parent == " + lcname + "Spinner)"); 
+  out.println("     { " + tfnme + ".setText(all" + ename + "ids.get(_position)); }"); 
+  out.println("     if (_parent == " + lcname + "FkSpinner)"); 
+  out.println("     { " + ftfnme + ".setText(all" + fname + "ids.get(_position)); }"); 
+  out.println("  }"); 
+  out.println(); 
+
+  out.println("  public void onNothingSelected(AdapterView<?> _parent) { }"); 
+  out.println(); 
+
+  out.println("  public void onClick(View _v)"); 
+  out.println("  { InputMethodManager _imm = (InputMethodManager) myContext.getSystemService(android.content.Context.INPUT_METHOD_SERVICE);"); 
+  out.println("    try { _imm.hideSoftInputFromWindow(_v.getWindowToken(), 0); } catch (Exception _e) { }"); 
+  out.println("    if (_v.getId() == R.id." + fullop + "OK)"); 
+  out.println("    { " + fullop + "OK(_v); }"); 
+  out.println("    else if (_v.getId() == R.id." + fullop + "Cancel)"); 
+  out.println("    { " + fullop + "Cancel(_v); }"); 
+  out.println("  }"); 
+  out.println(); 
+	
+  out.println("  public void " + fullop + "OK(View _v) ");
+  out.println("  { "); 
+
+  out.println("    " + dname + " = " + tfnme + ".getText() + \"\";"); 
+  out.println("    " + bean + ".set" + pname + "(" + dname + ");"); 
+  out.println("    " + fdname + " = " + ftfnme + ".getText() + \"\";"); 
+  out.println("    " + bean + ".set" + fkname + "(" + fdname + ");"); 
+  out.println("    if (" + bean + ".is" + fullop + "error())"); 
+  out.println("    { Log.w(getClass().getName(), " + bean + ".errors());");  
+  out.println("      Toast.makeText(myContext, \"Errors: \" + " + bean + ".errors(), Toast.LENGTH_LONG).show();"); 
+  out.println("    }"); 
+  out.println("    else"); 
+  out.println("    { " + bean + "." + fullop + "(); }"); 
+
+  out.println("  }\n\r");
+  out.println();
+
+  out.println("  public void " + fullop + "Cancel(View _v)");
+  out.println("  { " + bean + ".resetData();");
+  out.println("    " + tfnme + ".setText(\"\");");
+  out.println("    " + ftfnme + ".setText(\"\");");
   out.println("  }");    
     
    out.println("}"); 

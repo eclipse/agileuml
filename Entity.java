@@ -4532,7 +4532,7 @@ public class Entity extends ModelElement implements Comparable
         isExternal()) 
     { return 0; } 
 
-    out.println("*** Class " + nme);
+    out.println("***** Quality measures for class " + nme + " *****");
 
     java.util.Map mgns = new java.util.HashMap();  
 
@@ -4573,7 +4573,11 @@ public class Entity extends ModelElement implements Comparable
 
     out.println("*** Total complexity of " + getName() + " is: " + totalComplexity); 
     if (totalComplexity > 1000)
-    { System.err.println("!! Bad Smell: Excessively large class: " + getName() + " has c = " + totalComplexity); } 
+    { System.err.println("!! Code Smell: Excessively large class: " + 
+                getName() + " has c = " + totalComplexity); 
+    } 
+
+    // out.println("*** Clones: " + clones); 
 
     out.println("*** Magic numbers: " + mgns); 
 
@@ -4616,6 +4620,33 @@ public class Entity extends ModelElement implements Comparable
     }   
 
     return totalComplexity; 
+  } 
+
+  public void extractOperations()
+  { // Looks for clones within operations, replaces these 
+    // by calls to new operations. 
+
+    java.util.Map clones = new java.util.HashMap(); 
+    java.util.Map cdefs = new java.util.HashMap(); 
+
+    int ops = operations.size(); 
+
+    for (int i = 0; i < ops; i++)
+    { BehaviouralFeature op = (BehaviouralFeature) operations.get(i);
+      
+      op.findClones(clones,cdefs); 
+    } 
+
+    Vector vkeys = new Vector(); 
+    vkeys.addAll(clones.keySet()); 
+    for (int i = 0; i < vkeys.size(); i++) 
+    { String clne = (String) vkeys.get(i); 
+      Vector copies = (Vector) clones.get(clne); 
+      if (copies != null && copies.size() > 1)
+      { Object obj = cdefs.get(clne); 
+        System.out.println(">>> Extracting operation for clone: " + clne + " " + obj); 
+      } 
+    } 
   } 
 
   public int excessiveOperationsSize()
@@ -4790,7 +4821,7 @@ public class Entity extends ModelElement implements Comparable
       Vector opuses = op.operationsUsedIn(); 
 
       if (opuses.size() > 5) 
-      { System.err.println("*** Bad smell (EFO): > 5 operations used in " + getName() + "::" + opname); 
+      { System.err.println("*** Code smell (EFO): > 5 operations used in " + getName() + "::" + opname); 
         System.err.println(">>> Suggest refactoring by functional decomposition"); 
       } 
 
@@ -13376,9 +13407,52 @@ public void androidDbiOperations(PrintWriter out)
                              entlc + "vo.get" + nmeatt + "());");
   }
   out.println("    String[] _args = new String[]{ " + entlc + "vo.get" + entId + "() };");
-  out.println("    database.update(" + ent + "_TABLE_NAME, _wr, \"" + entId + " =?\", _args);");
+  out.println("    database.update(" + ent + "_TABLE_NAME, _wr, \"" + entId + " = ?\", _args);");
   out.println("  }");
   out.println();
+
+  for (int j = 0; j < associations.size(); j++) 
+  { Association ast = (Association) associations.get(j); 
+    if (ast.isOneMany() || ast.isZeroOneMany())
+    { String role2 = ast.getRole2(); 
+      Entity ent2 = ast.getEntity2(); 
+      String fname = ent2.getName(); 
+      String flc = fname.toLowerCase(); 
+      String fId = flc + "Id";
+ 
+      Attribute fk = ent2.getPrincipalPrimaryKey();
+      if (fk == null)
+      { continue; } 
+      fId = fk.getName();
+
+      // Set ent2's entId field = entId for the fId ent2
+
+      out.println("  public void add" + ent + role2 + "(String " + entId + ", String " + fId + ")");
+      out.println("  { database = getWritableDatabase();");
+      out.println("    ContentValues _wr = new ContentValues(1);");
+
+      String nup = fId.toUpperCase();
+      out.println("    _wr.put(" + fname + "_COLS[" + fname + "_COL_" + nup + "]," + 
+                        entId + ");");
+  
+      out.println("    String[] _args = new String[]{ " + fId + " };");
+      out.println("    database.update(" + fname + "_TABLE_NAME, _wr, \"" + fId + " = ?\", _args);");
+      out.println("  }");
+      out.println();
+
+      out.println("  public void remove" + ent + role2 + "(String " + entId + ", String " + fId + ")");
+      out.println("  { database = getWritableDatabase();");
+      out.println("    ContentValues _wr = new ContentValues(1);");
+
+      out.println("    _wr.put(" + fname + "_COLS[" + fname + "_COL_" + nup + "], null);");
+  
+      out.println("    String[] _args = new String[]{ " + fId + " };");
+      out.println("    database.update(" + fname + "_TABLE_NAME, _wr, \"" + fId + " = ?\", _args);");
+      out.println("  }");
+      out.println();
+    } 
+  } 
+
   out.println("  public void delete" + ent + "(String _val)"); 
   out.println("  { database = getWritableDatabase();"); 
   out.println("    String[] _args = new String[]{ _val };"); 
@@ -13658,11 +13732,16 @@ public void iosDbiOperations(PrintWriter out)
       "import java.util.*;\n" + 
       "import java.sql.*;\n\n" + 
       "public class " + ename + "Bean\n{ Dbi dbi = new Dbi();\n"; 
+
+    Vector attnames = new Vector(); 
+
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attnme = att.getName(); 
       Type atttype = att.getType(); 
       String tname = atttype.getName();
+
+      attnames.add(attnme); 
  
       res = res + "  private String " + attnme + " = \"\";\n";
       if (tname.equals("int"))
@@ -13682,19 +13761,29 @@ public void iosDbiOperations(PrintWriter out)
       Attribute fkey = ent2.getPrincipalPrimaryKey(); 
       if (fkey != null) // assume it is a string
       { String keynme = fkey.getName(); 
-        String keytype = fkey.getType().getName(); 
-        res = res + "  private " + keytype + " " + keynme + ";\n"; 
+        String keytype = fkey.getType().getName();
+        // Attribute fk = 
+        //   (Attribute) ModelElement.lookupByName(keynme,attributes); 
+
+        if (attnames.contains(keynme)) { } 
+        else  
+        { res = res + "  private " + keytype + " " + keynme + ";\n"; 
+          attnames.add(keynme); 
+        } 
       } 
     }   
 
     res = res + "  private Vector errors = new Vector();\n\n" +
           "  public " + ename + "Bean() {}\n\n"; 
 
+    Vector attnames2 = new Vector(); 
+
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attnme = att.getName(); 
       res = res + "  public void set" + attnme + "(String " + attnme + "x)\n  { " + 
-            attnme + " = " + attnme + "x; }\n\n"; 
+            attnme + " = " + attnme + "x; }\n\n";
+      attnames2.add(attnme);  
     } 
 
     for (int j = 0; j < associations.size(); j++) 
@@ -13704,8 +13793,14 @@ public void iosDbiOperations(PrintWriter out)
       if (fkey != null) // assume it is a string
       { String keynme = fkey.getName(); 
         String keytype = fkey.getType().getName(); 
-        res = res + "  public void set" + keynme + "(" + keytype + " " + keynme + "x)\n  { " + 
+        // Attribute fk = 
+        //   (Attribute) ModelElement.lookupByName(keynme,attributes); 
+        if (attnames2.contains(keynme)) { } 
+        else  
+        { res = res + "  public void set" + keynme + "(" + keytype + " " + keynme + "x)\n  { " + 
              keynme + " = " + keynme + "x; }\n\n"; 
+          attnames2.add(keynme);
+        }  
       } 
     }   
 
@@ -13822,16 +13917,21 @@ public void iosDbiOperations(PrintWriter out)
 	  
       "public class " + ename + "Bean\n{ ModelFacade model;\n"; 
 
+    Vector attnames = new Vector(); 
+
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attnme = att.getName(); 
       Type atttype = att.getType(); 
       String tname = atttype.getName(); 
+
+      attnames.add(attnme); 
+
       res = res + "  private String " + attnme + " = \"\";\n";
       if (tname.equals("int") || tname.equals("long"))
       { res = res + "  private int i" + attnme + " = 0;\n"; } 
       else if (tname.equals("double"))
-      { res = res + "  private double d" + attnme + " = 0;\n"; } 
+      { res = res + "  private double d" + attnme + " = 0.0;\n"; } 
       else if (att.isEnumeration())
       { Vector vals = atttype.getValues(); 
         res = res + "  private " + tname + " e" + attnme + " = " + tname + "." + vals.get(0) + ";\n"; 
@@ -13845,8 +13945,17 @@ public void iosDbiOperations(PrintWriter out)
       Attribute fkey = ent2.getPrincipalPrimaryKey(); 
       if (fkey != null) 
       { String keynme = fkey.getName(); 
-        String keytype = fkey.getType().getName(); 
-        res = res + "  private " + keytype + " " + keynme + ";\n"; 
+        String keytype = fkey.getType().getName();
+
+        // Attribute fk = 
+        //   (Attribute) ModelElement.lookupByName(
+        //                              keynme,attributes); 
+
+        if (attnames.contains(keynme)) { }
+        else  
+        { res = res + "  private " + keytype + " " + keynme + ";\n"; 
+          attnames.add(keynme); 
+        }
       } 
     }   
  
@@ -13854,11 +13963,14 @@ public void iosDbiOperations(PrintWriter out)
           "  public " + ename + "Bean()\n" + 
           "  { model = ModelFacade.getInstance(); }\n\n"; 
 
+    Vector attnames2 = new Vector(); 
+
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attnme = att.getName(); 
       res = res + "  public void set" + attnme + "(String " + attnme + "x)\n  { " + 
-            attnme + " = " + attnme + "x; }\n\n"; 
+            attnme + " = " + attnme + "x; }\n\n";
+      attnames2.add(attnme);  
     } 
 
     for (int j = 0; j < associations.size(); j++) 
@@ -13868,8 +13980,16 @@ public void iosDbiOperations(PrintWriter out)
       if (fkey != null) // assume it is a string
       { String keynme = fkey.getName(); 
         String keytype = fkey.getType().getName(); 
-        res = res + "  public void set" + keynme + "(" + keytype + " " + keynme + "x)\n  { " + 
-             keynme + " = " + keynme + "x; }\n\n"; 
+        // Attribute fk = 
+        //   (Attribute) ModelElement.lookupByName(
+        //                              keynme,attributes); 
+        if (attnames2.contains(keynme)) { } 
+        else  
+        { res = res + 
+            "  public void set" + keynme + "(" + keytype + " " + keynme + "x)\n  { " + 
+            keynme + " = " + keynme + "x; }\n\n";
+          attnames2.add(keynme); 
+        }  
       } 
     }   
 
@@ -13976,11 +14096,16 @@ public void iosDbiOperations(PrintWriter out)
       "import java.util.Vector;\n\n" + 
       "import android.content.Context;\n\n" + 
       "public class " + ename + "Bean\n{ ModelFacade model;\n"; 
+
+    Vector attnames = new Vector(); 
+
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attnme = att.getName(); 
       Type atttype = att.getType(); 
       String tname = atttype.getName(); 
+      attnames.add(attnme); 
+
       res = res + "  private String " + attnme + " = \"\";\n";
       if (tname.equals("int") || tname.equals("long"))
       { res = res + "  private int i" + attnme + " = 0;\n"; } 
@@ -14000,19 +14125,52 @@ public void iosDbiOperations(PrintWriter out)
       if (fkey != null) // assumed to be of string type 
       { String keynme = fkey.getName(); 
         String keytype = fkey.getType().getName(); 
-        res = res + "  private " + keytype + " " + keynme + ";\n"; 
+        // Attribute fk = 
+        //   (Attribute) ModelElement.lookupByName(
+        //                              keynme,attributes); 
+
+        if (attnames.contains(keynme)) { } 
+        else 
+        { res = res + "  private " + keytype + " " + keynme + ";\n"; 
+          attnames.add(keynme); 
+        } 
       } 
     }   
 
     res = res + "  private Vector errors = new Vector();\n\n" +
           "  public " + ename + "Bean(Context _c)\n" + 
-          "  { model = ModelFacade.getInstance(_c); }\n\n"; 
+          "  { model = ModelFacade.getInstance(_c); }\n\n";
+
+    Vector attnames2 = new Vector(); 
+ 
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attnme = att.getName(); 
+      attnames2.add(attnme); 
+
       res = res + "  public void set" + attnme + "(String " + attnme + "x)\n  { " + 
             attnme + " = " + attnme + "x; }\n\n"; 
     } 
+
+    for (int j = 0; j < associations.size(); j++) 
+    { Association ast = (Association) associations.get(j); 
+      Entity ent2 = ast.getEntity2(); 
+      Attribute fkey = ent2.getPrincipalPrimaryKey(); 
+      if (fkey != null) // assume it is a string
+      { String keynme = fkey.getName(); 
+        String keytype = fkey.getType().getName(); 
+        // Attribute fk = 
+        //   (Attribute) ModelElement.lookupByName(
+        //                              keynme,attributes);
+ 
+        if (attnames2.contains(keynme)) { } 
+        else 
+        { res = res + "  public void set" + keynme + "(" + keytype + " " + keynme + "x)\n  { " + 
+             keynme + " = " + keynme + "x; }\n\n"; 
+          attnames2.add(keynme); 
+        } 
+      } 
+    }   
 
     res = res + "  public void resetData()\n  { "; 
     for (int i = 0; i < attributes.size(); i++) 
@@ -14309,16 +14467,19 @@ public void iosDbiOperations(PrintWriter out)
     String nme = getName();
     res = res + "public interface " + locrem + nme +
           " extends EJB" + locrem + "Object\n{";
+
     for (int i = 0; i < attributes.size(); i++)
     { Attribute att = (Attribute) attributes.get(i);
       res = res + "  " + att.ejbBeanGet() + "\n" +
             att.ejbBeanSet() + "\n";
     }
+
     for (int i = 0; i < associations.size(); i++)
     { Association ast = (Association) associations.get(i);
       res = res + "  " + ast.ejbBeanGet() + "\n" +
             ast.ejbBeanSet() + "\n";
     }
+
     res = res + "}\n\n";
     return res;
   }

@@ -1082,6 +1082,10 @@ abstract class Expression
 
   public abstract void findClones(java.util.Map clones, String rule, String op); 
 
+  public abstract void findClones(java.util.Map clones, 
+                                  java.util.Map cloneDefs,
+                                  String rule, String op); 
+
   public abstract void findMagicNumbers(java.util.Map mgns, String rule, String op); 
 
   public abstract String updateForm(java.util.Map env, boolean local); 

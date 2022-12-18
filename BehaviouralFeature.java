@@ -3698,6 +3698,24 @@ public class BehaviouralFeature extends ModelElement
     { activity.findClones(clones, null, nme); } 
   } 
 
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cloneDefinitions)
+  { String nme = getName(); 
+    if (entity != null) 
+    { nme = entity.getName() + "::" + nme; } 
+    else if (useCase != null) 
+    { nme = useCase.getName() + "::" + nme; } 
+
+    if (pre != null) 
+    { pre.findClones(clones, cloneDefinitions, null, nme); } 
+    if (post != null) 
+    { post.findClones(clones, cloneDefinitions, null, nme); } 
+    if (activity != null) 
+    { activity.findClones(clones, cloneDefinitions, 
+                          null, nme); 
+    } 
+  } 
+
   public void findMagicNumbers(java.util.Map mgns)
   { String nme = getName(); 
     if (entity != null) 

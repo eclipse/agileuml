@@ -357,6 +357,9 @@ public class Association extends ModelElement
   public boolean isOneMany()
   { return card1 == ONE && card2 == MANY; } 
 
+  public boolean isZeroOneMany()
+  { return card1 == ZEROONE && card2 == MANY; } 
+
   public boolean isZeroOne()
   { return card2 == ZEROONE; } 
 
@@ -9778,7 +9781,7 @@ String qual = "";
     String fl = role2.substring(0,1);
     String rem = role2.substring(1,role2.length());
     res = res + fl.toUpperCase() +
-          rem + "();\n";
+          rem + "();\n\n";
     return res;
   }
 
@@ -9792,7 +9795,15 @@ String qual = "";
     { res = res + "Collection"; }
     else 
     { res = res + entity2.getName(); }
-    res = res + " x);\n";
+    res = res + " x);\n\n";
+
+    if (card2 == MANY)
+    { res = res + "  public abstract void add" + role2 + 
+                  "(" + entity2.getName() + " x);\n\n"; 
+      res = res + "  public abstract void remove" + role2 + 
+                  "(" + entity2.getName() + " x);\n\n"; 
+    } 
+
     return res;
   }
 

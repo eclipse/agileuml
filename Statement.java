@@ -450,9 +450,13 @@ abstract class Statement implements Cloneable
   } // Other cases, for all other forms of statement. 
 
 
-  /* All cloned expressions in this statement */ 
-  public void findClones(java.util.Map clones, String rule, String op)
-  { return; } 
+  /* All cloned expressions/substatements in this statement */ 
+  public abstract void findClones(java.util.Map clones, String rule, String op);
+
+  /* All cloned expressions/substatements in this statement */ 
+  public abstract void findClones(java.util.Map clones, 
+                                  java.util.Map cloneDefs,
+                                  String rule, String op);
 
   /* All magic number expressions in this statement */ 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
@@ -968,7 +972,7 @@ class ReturnStatement extends Statement
   { if (value == null || 
         value.syntacticComplexity() < UCDArea.CLONE_LIMIT) 
     { return; }
-    String val = value + ""; 
+  /*  String val = value + ""; 
     Vector used = (Vector) clones.get(val);
     if (used == null)  
     { used = new Vector(); }
@@ -976,7 +980,28 @@ class ReturnStatement extends Statement
     { used.add(rule); }
     else if (op != null)
     { used.add(op); }
-    clones.put(val,used);
+    clones.put(val,used); */ 
+
+    value.findClones(clones,rule,op); 
+  }
+
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cloneDefs,
+                         String rule, String op)
+  { if (value == null || 
+        value.syntacticComplexity() < UCDArea.CLONE_LIMIT) 
+    { return; }
+  /*  String val = value + ""; 
+    Vector used = (Vector) clones.get(val);
+    if (used == null)  
+    { used = new Vector(); }
+    if (rule != null)
+    { used.add(rule); }
+    else if (op != null)
+    { used.add(op); }
+    clones.put(val,used); */ 
+
+    value.findClones(clones,cloneDefs,rule,op); 
   }
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
@@ -1476,6 +1501,14 @@ class BreakStatement extends Statement
     return args; 
   } 
 
+  public void findClones(java.util.Map clones, String op, String rule)
+  { return; } 
+
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cloneDefs,
+                         String op, String rule)
+  { return; } 
+
 }
 
 class ContinueStatement extends Statement
@@ -1641,6 +1674,14 @@ class ContinueStatement extends Statement
   { Vector args = new Vector();
     return args; 
   } 
+
+  public void findClones(java.util.Map clones, String op, String rule)
+  { return; } 
+
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cloneDefs,
+                         String op, String rule)
+  { return; } 
 }
 
 
@@ -1854,7 +1895,7 @@ class InvocationStatement extends Statement
   } // parameters? 
 
   public void findClones(java.util.Map clones, String rule, String op)
-  { if (this.syntacticComplexity() < UCDArea.CLONE_LIMIT) 
+  { /* if (this.syntacticComplexity() < UCDArea.CLONE_LIMIT) 
     { return; }
     String val = callExp + ""; 
     Vector used = (Vector) clones.get(val);
@@ -1864,8 +1905,13 @@ class InvocationStatement extends Statement
     { used.add(rule); }
     else if (op != null)
     { used.add(op); }
-    clones.put(val,used);
+    clones.put(val,used); */ 
   }
+
+public void findClones(java.util.Map clones, 
+                       java.util.Map cloneDefs,
+                       String rule, String op)
+  { } 
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { String val = callExp + ""; 
@@ -2492,7 +2538,7 @@ class ImplicitInvocationStatement extends Statement
   { if (callExp == null || 
         callExp.syntacticComplexity() < UCDArea.CLONE_LIMIT) 
     { return; }
-    String val = callExp + ""; 
+    /* String val = callExp + ""; 
     Vector used = (Vector) clones.get(val);
     if (used == null)  
     { used = new Vector(); }
@@ -2500,7 +2546,17 @@ class ImplicitInvocationStatement extends Statement
     { used.add(rule); }
     else if (op != null)
     { used.add(op); }
-    clones.put(val,used);
+    clones.put(val,used); */ 
+    callExp.findClones(clones,rule,op); 
+  }
+
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cloneDefs,
+                         String rule, String op)
+  { if (callExp == null || 
+        callExp.syntacticComplexity() < UCDArea.CLONE_LIMIT) 
+    { return; }
+    callExp.findClones(clones,cloneDefs,rule,op); 
   }
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
@@ -3046,7 +3102,7 @@ class WhileStatement extends Statement
   public void findClones(java.util.Map clones, String rule, String op)
   { if (loopRange != null && 
         loopRange.syntacticComplexity() >= UCDArea.CLONE_LIMIT) 
-    { String val = loopRange + ""; 
+    { /* String val = loopRange + ""; 
       Vector used = (Vector) clones.get(val);
       if (used == null)  
       { used = new Vector(); }
@@ -3054,11 +3110,13 @@ class WhileStatement extends Statement
       { used.add(rule); }
       else if (op != null)
       { used.add(op); }
-      clones.put(val,used);
+      clones.put(val,used); */ 
+
+      loopRange.findClones(clones,rule,op); 
     }  
     else if (loopTest != null && 
         loopTest.syntacticComplexity() >= UCDArea.CLONE_LIMIT) 
-    { String val = loopTest + ""; 
+    { /* String val = loopTest + ""; 
       Vector used = (Vector) clones.get(val);
       if (used == null)  
       { used = new Vector(); }
@@ -3066,9 +3124,25 @@ class WhileStatement extends Statement
       { used.add(rule); }
       else if (op != null)
       { used.add(op); }
-      clones.put(val,used);
+      clones.put(val,used); */ 
+     
+      loopTest.findClones(clones,rule,op); 
     } 
     body.findClones(clones,rule,op); 
+  }
+
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cdefs,
+                         String rule, String op)
+  { if (loopRange != null && 
+        loopRange.syntacticComplexity() >= UCDArea.CLONE_LIMIT) 
+    { loopRange.findClones(clones,cdefs,rule,op); }  
+    else if (loopTest != null && 
+        loopTest.syntacticComplexity() >= UCDArea.CLONE_LIMIT) 
+    { 
+      loopTest.findClones(clones,cdefs,rule,op); 
+    } 
+    body.findClones(clones,cdefs,rule,op); 
   }
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
@@ -4612,7 +4686,20 @@ class CreationStatement extends Statement
   public Vector singleMutants()
   { Vector res = new Vector(); 
     return res; 
+  } // mutate the initialExpression
+
+  public void findClones(java.util.Map clones, String op, String rule)
+  { if (initialExpression != null) 
+    { initialExpression.findClones(clones,op,rule); } 
   } 
+
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cdefs,
+                         String op, String rule)
+  { if (initialExpression != null) 
+    { initialExpression.findClones(clones,cdefs,op,rule); } 
+  } 
+
 
   public String saveModelData(PrintWriter out) 
   { String res = Identifier.nextIdentifier("creationstatement_"); 
@@ -5538,6 +5625,41 @@ class SequenceStatement extends Statement
       else if (op != null && !used.contains(op))
       { used.add(op); }
       clones.put(val,used);
+    } 
+
+    // System.out.println(">>> Clones: " + clones); 
+
+  } 
+
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cdefs, 
+                         String rule, String op)
+  { for (int i = 0; i < statements.size(); i++) 
+    { Statement stat = (Statement) statements.get(i); 
+      stat.findClones(clones,cdefs,rule,op); 
+    }
+
+    // Clones of statements, at least 2: 
+
+    Vector fstats = flattenSequenceStatement(); 
+
+    Vector substats = VectorUtil.allSubsequences(fstats,2); 
+    for (int i = 0; i < substats.size(); i++) 
+    { Vector subs = (Vector) substats.get(i); 
+      Statement sq = new SequenceStatement(subs); 
+      if (sq.syntacticComplexity() < UCDArea.CLONE_LIMIT) 
+      { continue; } 
+
+      String val = sq + ""; 
+      Vector used = (Vector) clones.get(val); 
+      if (used == null)
+      { used = new Vector(); }
+      if (rule != null && !used.contains(rule))
+      { used.add(rule); }
+      else if (op != null && !used.contains(op))
+      { used.add(op); }
+      clones.put(val,used);
+      cdefs.put(val, sq); 
     } 
 
     // System.out.println(">>> Clones: " + clones); 
@@ -6798,6 +6920,14 @@ class CaseStatement extends Statement
     return res; 
   } 
 
+  public void findClones(java.util.Map clones, String op, String rule)
+  { return; } 
+
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cdefs, 
+                         String op, String rule)
+  { return; } 
+
 }
 
 
@@ -7090,6 +7220,19 @@ class ErrorStatement extends Statement
 
     return etext;
   }
+
+  public void findClones(java.util.Map clones, String op, String rule)
+  { if (thrownObject != null) 
+    { thrownObject.findClones(clones,op,rule); }
+  }  
+
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cdefs, 
+                         String op, String rule)
+  { if (thrownObject != null) 
+    { thrownObject.findClones(clones,cdefs,op,rule); }
+  }  
+
 
 }
 
@@ -7449,6 +7592,21 @@ class AssertStatement extends Statement
     return etext;
   }
 
+  public void findClones(java.util.Map clones, String op, String rule)
+  { if (condition != null)
+    { condition.findClones(clones,op,rule); } 
+    if (message != null)
+    { message.findClones(clones,op,rule); }
+  } 
+
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cdefs, 
+                         String op, String rule)
+  { if (condition != null)
+    { condition.findClones(clones,cdefs,op,rule); } 
+    if (message != null)
+    { message.findClones(clones,cdefs,op,rule); }
+  } 
 }
 
 class CatchStatement extends Statement
@@ -7510,6 +7668,13 @@ class CatchStatement extends Statement
   public void findClones(java.util.Map clones, String rule, String op)
   { if (action != null)
     { action.findClones(clones,rule,op); }
+  } 
+
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cdefs,
+                         String rule, String op)
+  { if (action != null)
+    { action.findClones(clones,cdefs,rule,op); }
   } 
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
@@ -7905,6 +8070,19 @@ class TryStatement extends Statement
     }
     if (endStatement != null) 
     { endStatement.findClones(clones,rule,op); } 
+  } 
+
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cdefs,
+                         String rule, String op)
+  { if (body != null) 
+    { body.findClones(clones,cdefs,rule,op); } 
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement stat = (Statement) catchClauses.get(i); 
+      stat.findClones(clones,cdefs,rule,op); 
+    }
+    if (endStatement != null) 
+    { endStatement.findClones(clones,cdefs,rule,op); } 
   } 
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
@@ -8626,6 +8804,15 @@ class IfStatement extends Statement
   { for (int i = 0; i < cases.size(); i++) 
     { IfCase cse = (IfCase) cases.get(i); 
       cse.findClones(clones,rule,op); 
+    } 
+  }
+
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cdefs, 
+                         String rule, String op)
+  { for (int i = 0; i < cases.size(); i++) 
+    { IfCase cse = (IfCase) cases.get(i); 
+      cse.findClones(clones,cdefs,rule,op); 
     } 
   }
 
@@ -9601,7 +9788,7 @@ class AssignStatement extends Statement
   public void findClones(java.util.Map clones, String rule, String op)
   { if (rhs.syntacticComplexity() < UCDArea.CLONE_LIMIT) 
     { return; }
-    String val = rhs + ""; 
+    /* String val = rhs + ""; 
     Vector used = (Vector) clones.get(val);
     if (used == null)  
     { used = new Vector(); }
@@ -9609,7 +9796,16 @@ class AssignStatement extends Statement
     { used.add(rule); }
     else if (op != null)
     { used.add(op); }
-    clones.put(val,used);
+    clones.put(val,used); */ 
+    rhs.findClones(clones,rule,op); 
+  }
+
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cdefs,
+                         String rule, String op)
+  { if (rhs.syntacticComplexity() < UCDArea.CLONE_LIMIT) 
+    { return; }
+    rhs.findClones(clones,cdefs,rule,op); 
   }
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
@@ -10147,17 +10343,17 @@ class IfCase
 
   public void findClones(java.util.Map clones, String rule, String op)
   { if (test.syntacticComplexity() >= UCDArea.CLONE_LIMIT) 
-    { String val = test + ""; 
-      Vector used = (Vector) clones.get(val);
-      if (used == null)
-      { used = new Vector(); }
-      if (rule != null)
-      { used.add(rule); }
-      else if (op != null)
-      { used.add(op); }
-      clones.put(val,used);
-    }
+    { test.findClones(clones,rule,op); }
     ifPart.findClones(clones,rule,op);
+  }
+
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cdefs,
+                         String rule, String op)
+  { if (test.syntacticComplexity() >= UCDArea.CLONE_LIMIT) 
+    { test.findClones(clones,cdefs,rule,op); } 
+    
+    ifPart.findClones(clones,cdefs,rule,op);
   }
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
@@ -10594,7 +10790,7 @@ class ConditionalStatement extends Statement
 
   public void findClones(java.util.Map clones, String rule, String op)
   { if (test.syntacticComplexity() >= UCDArea.CLONE_LIMIT)
-    { String val = test + ""; 
+    { /* String val = test + ""; 
       Vector used = (Vector) clones.get(val);
       if (used == null)  
       { used = new Vector(); }
@@ -10602,11 +10798,22 @@ class ConditionalStatement extends Statement
       { used.add(rule); }
       else if (op != null)
       { used.add(op); }
-      clones.put(val,used);
+      clones.put(val,used); */ 
+      test.findClones(clones,rule,op); 
     } 
     ifPart.findClones(clones,rule,op); 
     if (elsePart != null) 
     { elsePart.findClones(clones,rule,op); } 
+  }
+
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cdefs, 
+                         String rule, String op)
+  { if (test.syntacticComplexity() >= UCDArea.CLONE_LIMIT)
+    { test.findClones(clones,cdefs,rule,op); } 
+    ifPart.findClones(clones,cdefs,rule,op); 
+    if (elsePart != null) 
+    { elsePart.findClones(clones,cdefs,rule,op); } 
   }
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
@@ -11091,6 +11298,12 @@ class FinalStatement extends Statement
 
   public void findClones(java.util.Map clones, String rule, String op)
   { body.findClones(clones,rule,op); } 
+
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cdefs,
+                         String rule, String op)
+  { body.findClones(clones,cdefs,rule,op); } 
+
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { body.findMagicNumbers(mgns,this + "",op); } 

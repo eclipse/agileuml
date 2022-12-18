@@ -5389,6 +5389,16 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         return "arg->prd()"; 
       }
 
+      if ("->pow".startsWith(st))
+      { mess[0] = "Power operator on numbers"; 
+        return "arg->pow(exponent)"; 
+      }
+
+      if ("->gcd".startsWith(st))
+      { mess[0] = "GCD operator on integers"; 
+        return "arg->gcd(arg2)"; 
+      }
+
       if ("->display".startsWith(st))
       { mess[0] = "Display operator on strings"; 
         return "arg->display()"; 
@@ -5571,7 +5581,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
           "OclRandom".startsWith(st) || 
           "OclFile".startsWith(st) || 
           "OclException".startsWith(st) ||
-          "OclIterator".startsWith(st))
+          "OclIterator".startsWith(st) ||
+          "OclDatasource".startsWith(st))
       { mess[0] = "OclAny -- universal type.\n" + 
                   "OclType -- metatype of types. Requires ocltype.km3 library\n" + 
                   "OclAttribute -- metatype of fields. Requires ocltype.km3 library\n" + 
@@ -5580,7 +5591,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
                   "OclRandom -- random number generator. Needs oclrandom.km3\n" + 
                   "OclFile -- type of files. Needs oclfile.km3\n" + 
                   "OclIterator -- type of iterators. Needs ocliterator.km3\n" + 
-                  "OclException -- type of exceptions. Needs oclexception.km3\n"; 
+                  "OclException -- type of exceptions. Needs oclexception.km3\n" +  
+                  "OclDatasource -- type of relational databases and remote datasources.\n  Needs ocldatasource.km3, oclfile.km3, ocliterator.km3, ocldate.km3\n"; 
         return "Ocl library type"; 
       } 
     } 

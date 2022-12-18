@@ -14,8 +14,8 @@ import java.util.ArrayList;
 
 public class SQLStatement
 { private String keyword;
-  private List tables = new ArrayList();
-  private List fields = new ArrayList();
+  private List tables = new ArrayList(); // String table names
+  private List fields = new ArrayList(); // String
   private List values = new ArrayList();
   String where = "";
 
@@ -184,13 +184,22 @@ public class SQLStatement
     ents.add("User");
     ArrayList flds = new ArrayList();
     flds.add("userId");
-    flds.add("name");
-    flds.add("email");
+    // flds.add("name");
+    // flds.add("email");
     
     SQLStatement ss = 
       new SQLStatement("INSERT",ents,flds,
                        new ArrayList(),"");
     System.out.println(ss.preparedStatement());
+
+    ArrayList nulls = new ArrayList(); 
+    nulls.add("NULL"); 
+          
+    ss = 
+      new SQLStatement("UPDATE",ents,flds,
+                       nulls,"");
+    System.out.println(ss.preparedStatement());
+
   }
 }
 

@@ -1590,6 +1590,11 @@ class BasicExpression extends Expression
   public void findClones(java.util.Map clones, String rule, String op)
   { return; } 
 
+  public void findClones(java.util.Map clones, 
+                         java.util.Map cloneDefs, 
+                         String rule, String op)
+  { return; } 
+
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { if (umlkind == VALUE)
     { if ("0".equals(data) || "1".equals(data) || 

@@ -147,7 +147,7 @@ public class OperationDescription extends BehaviouralFeature
         Vector assocs = ent.getAssociations(); 
         for (int j = 0; j < assocs.size(); j++) 
         { Association ast = (Association) assocs.get(j); 
-          if (ast.isOneMany()) 
+          if (ast.isOneMany() || ast.isZeroOneMany()) 
           { String role = ast.getRole2(); 
             OperationDescription addErole = 
                new OperationDescription(
@@ -597,9 +597,11 @@ public class OperationDescription extends BehaviouralFeature
     { Vector keys = entity.getUniqueAttributes();
       Vector pars2 = (Vector) pars.clone();
       pars2.removeAll(keys);
-      String wre = SQLStatement.buildWhere0(ModelElement.getNames(keys));
+      String wre = SQLStatement.buildWhere0(
+                      ModelElement.getNames(keys));
       return 
-        new SQLStatement("UPDATE",ents,ModelElement.getNames(pars2),
+        new SQLStatement("UPDATE",ents,
+                         ModelElement.getNames(pars2),
                          new ArrayList(),wre);
     }
     else if (action.equals("get"))
@@ -653,8 +655,10 @@ public class OperationDescription extends BehaviouralFeature
     } 
     else if (action.equals("searchBy"))
     { Vector star = entity.getAttributes(); 
-      SQLStatement stat = new SQLStatement("SELECT",ents,ModelElement.getNames(star),
-                              new ArrayList(),null);
+      SQLStatement stat = 
+        new SQLStatement("SELECT",ents,
+                         ModelElement.getNames(star),
+                         new ArrayList(),null);
       Vector atts = new Vector(); 
       atts.add(getStereotype(1)); 
       stat.buildWhere(atts); 
@@ -667,7 +671,7 @@ public class OperationDescription extends BehaviouralFeature
       { System.err.println("!! ERROR: No role named " + role + " for entity " + entity); 
         return null; 
       } 
-      else // Assume ONE-MANY
+      else // Assume ONE-MANY or ZEROONE-MANY
       { Entity entity2 = ast.getEntity2(); 
         Attribute akeyatt = 
            (Attribute) getParameters().get(0);  
@@ -687,7 +691,8 @@ public class OperationDescription extends BehaviouralFeature
         ArrayList localkeys = new ArrayList(); 
         localkeys.add(bkey); 
         String wre = SQLStatement.buildWhere0(localkeys); 
-        return new SQLStatement("UPDATE",ents2,forkeys,new ArrayList(),wre); 
+        return new SQLStatement("UPDATE",ents2,
+                                forkeys,new ArrayList(),wre); 
       }
     } 
     else if (action.equals("remove"))
@@ -701,20 +706,33 @@ public class OperationDescription extends BehaviouralFeature
       { Entity entity2 = ast.getEntity2(); 
         Attribute akeyatt = 
            (Attribute) getParameters().get(0);  
-        Vector bkeys = ModelElement.getNames(entity2.getUniqueAttributes());
+        Vector bkeys = ModelElement.getNames(
+                         entity2.getUniqueAttributes());
         if (akeyatt == null || bkeys.size() == 0)
         { return null; } 
+
         String bkey = (String) bkeys.get(0);
         String akey = akeyatt.getName(); 
         bkey = entity2.getName() + "." + bkey; 
-        // akey = entity2.getName() + "." + akey; 
+        akey = entity2.getName() + "." + akey; 
         ArrayList ents2 = new ArrayList(); 
         ents2.add(entity2.getName()); 
         ArrayList localkeys = new ArrayList(); 
         // localkeys.add(akey); 
         localkeys.add(bkey); 
-        // String wre = SQLStatement.buildWhere0(localkeys); 
-        return new SQLStatement("DELETE",ents2,localkeys,new ArrayList(),""); 
+        String wre = SQLStatement.buildWhere0(localkeys); 
+        if (ast.isOneMany())
+        { return new SQLStatement("DELETE",ents2,
+                       localkeys,new ArrayList(),""); 
+        }  // same as deleteentity2 by key. 
+        else if (ast.isZeroOneMany())
+        { ArrayList nulls = new ArrayList(); 
+          nulls.add("NULL"); 
+          ArrayList forkeys = new ArrayList(); 
+          forkeys.add(akey); 
+          return new SQLStatement("UPDATE",ents2,
+                                  forkeys,nulls,wre); 
+        }  
       }
     } 
     System.out.println("!! ERROR: Unknown action: " + action); 
@@ -1169,10 +1187,26 @@ public class OperationDescription extends BehaviouralFeature
   public String getJSPDbiOpCode()
   { String action = getStereotype(0);
     String ename = entity.getName();
-    Vector pars = getParameters();
+    Vector pars = new Vector(); 
     String stat = getODName() + "Statement";
     String res = "  try\n" +
       "    { ";
+
+    if ("remove".equals(action)) 
+    { String role = getStereotype(1); 
+      Association ast = entity.getRole(role); 
+      if (ast != null && 
+          ast.isZeroOneMany())
+      { // Only 2nd parameter counts.
+        Vector allpars = getParameters(); 
+        pars.add(allpars.get(1)); 
+      } 
+      else 
+      { pars.addAll(getParameters()); } 
+    } 
+    else
+    { pars.addAll(getParameters()); } 
+ 
     for (int i = 0; i < pars.size(); i++)
     { Attribute att = (Attribute) pars.get(i);
       Type t = att.getType();

@@ -7997,8 +7997,8 @@ public String androidTableEntryField(String ent, String op)
   { res2 = "  <EditText\n\r" +
     "    android:id=\"@+id/" + attfield + "\"\n" +
     "    android:inputType=\"text|textMultiLine\"\n" +
-	"    android:minLines=\"5\"\n" + 
-	"    android:gravity=\"top\"\n" +   
+    "    android:minLines=\"5\"\n" + 
+    "    android:gravity=\"top\"\n" +   
     "    android:layout_span=\"4\" />\n\r"; }
   else  
   { res2 = "  <EditText\n\r" +

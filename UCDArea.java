@@ -1246,6 +1246,36 @@ public class UCDArea extends JPanel
     Generalisation g = new Generalisation(intf,ent1);
     addInheritance(g,intf,ent1);
   } 
+
+  public void extractOperation()
+  { ListShowDialog listShowDialog = new ListShowDialog(parent);
+    listShowDialog.pack();
+    listShowDialog.setLocationRelativeTo(parent); 
+    listShowDialog.setOldFields(entities);
+    System.out.println(">>> Select class to extract operation in");
+    listShowDialog.setVisible(true); 
+
+    Object[] vals = listShowDialog.getSelectedValues();
+    
+    if (vals == null) { return; } 
+    Entity ent1 = null; 
+    
+    if (vals != null && vals.length > 0)
+    { ent1 = (Entity) vals[0];
+        
+      if (ent1 == null) { return; } 
+    } 
+    
+    String cloneLimit = 
+          JOptionPane.showInputDialog("Enter clone size limit (default 10): ");
+    if (cloneLimit != null) 
+    { try { CLONE_LIMIT = Integer.parseInt(cloneLimit); } 
+      catch (Exception _ex) 
+      { CLONE_LIMIT = 10; } 
+    } 
+    
+    ent1.extractOperations(); 
+  } // may lead to a new operation activity. 
   
   private void editUseCaseOperation(UseCase uc)
   { ListShowDialog listShowDialog = new ListShowDialog(parent);
@@ -3031,8 +3061,8 @@ public class UCDArea extends JPanel
       Vector clonedIn = (Vector) clones.get(k); 
       if (clonedIn.size() > 1)
       { out.println("*** " + k + " is cloned in: " + clonedIn); 
-        System.err.println("!!! Bad smell (DC): Clone " + k + " in " + clonedIn); 
-        System.err.println(">>> Recommend refactoring by extracting the " + clonedIn.size() + " copies as new helper operation"); 
+        System.err.println("!!! Code smell (DC): Clone " + k + " in " + clonedIn); 
+        System.err.println(">>> Recommend refactoring by extracting the " + clonedIn.size() + " copies as new operation"); 
         clonecount++; 
       } 
     }  
@@ -3077,7 +3107,7 @@ public class UCDArea extends JPanel
     int selfcallsn = selfcalls.size();  
  
     if (selfcallsn > 0) 
-    { System.err.println("!!! Bad smell (CBR2): complex call graph with " + selfcallsn + " recursive dependencies"); 
+    { System.err.println("!!! Code smell (CBR2): complex call graph with " + selfcallsn + " recursive dependencies"); 
       System.err.println(">>> Suggest refactoring using Replace Recursion by Iteration (for tail recursions)"); 
     } 
 
@@ -3106,7 +3136,7 @@ public class UCDArea extends JPanel
           { out.println("*** " + me + " has no dependencies"); }
           
           if (rang.size() > 10) 
-          { System.err.println("!!! Bad smell (EFO): " + me + " uses too many operations: " + rang.size());
+          { System.err.println("!!! Code smell (EFO): " + me + " uses too many operations: " + rang.size());
             System.err.println(">>> Suggest refactoring by sequential decomposition"); 
           } 
           
@@ -3114,14 +3144,14 @@ public class UCDArea extends JPanel
           int totalcgsize = domrestr.size() + ucg.size(); 
           out.println("*** Total call graph size of " + me + " is " + totalcgsize); 
           if (totalcgsize > uc.ruleCount() + uc.operationsCount() + rang.size()) 
-          { System.err.println("!!! Bad smell (CBR1): " + me + " call graph too large: " + totalcgsize); } 
+          { System.err.println("!!! Code smell (CBR1): " + me + " call graph too large: " + totalcgsize); } 
 
           Vector selfcallsuc = VectorUtil.intersection(selfcalls,rang); 
           int selfcallsucn = selfcallsuc.size(); 
 
           if (selfcallsucn > 0) 
           { out.println("*** " + selfcallsucn + " calls in recursive loops in " + me + " : " + selfcallsuc);  
-            System.err.println("!!! Bad smell (CBR2): " + selfcallsucn + " calls in recursive loops in " + me + " : " + selfcallsuc); 
+            System.err.println("!!! Code smell (CBR2): " + selfcallsucn + " calls in recursive loops in " + me + " : " + selfcallsuc); 
             System.err.println(">>> Suggest refactoring using Map Objects Before Links/Replace Recusion by Iteration"); 
           } 
 
@@ -3149,14 +3179,14 @@ public class UCDArea extends JPanel
           { String clonelocation = (String) clonedIn.get(0); 
             if (clonelocation.startsWith(ucname + "_"))
             { out.println(k + " is cloned in: " + ucname); 
-              System.err.println("!!! Bad smell (DC): Clone " + k + " in " + ucname); 
+              System.err.println("!!! Code smell (DC): Clone " + k + " in " + ucname); 
               System.err.println(">>> Suggest refactoring using Extract Function"); 
 
               ucclonecount++;
             } 
             else if (rang.contains(clonelocation))
             { out.println("*** " + k + " is cloned in: " + ucname); 
-              System.err.println("!!! Bad smell (DC): Clone " + k + " in " + ucname); 
+              System.err.println("!!! Code smell (DC): Clone " + k + " in " + ucname); 
               System.err.println(">>> Suggest refactoring using Extract Function"); 
               ucclonecount++;
             } 
@@ -3165,7 +3195,7 @@ public class UCDArea extends JPanel
 
         if (ucclonecount > 0) 
         { out.println("*** " + ucclonecount + " clones in " + me);  
-          System.err.println("!!! Bad smell (DC): " + ucclonecount + " clones in " + me); 
+          System.err.println("!!! Code smell (DC): " + ucclonecount + " clones in " + me); 
           System.err.println(">>> Suggest refactoring using Extract Function"); 
 
           System.err.println(); 
@@ -4596,18 +4626,25 @@ public class UCDArea extends JPanel
 
     int screencount = 0; 
 
-    Entity fileaccessor = (Entity) ModelElement.lookupByName("FileAccessor", entities); 
+    Entity fileaccessor = 
+      (Entity) ModelElement.lookupByName("FileAccessor", entities); 
     if (fileaccessor != null) 
     { predefinedComponents.add(fileaccessor); }
 	
-    Entity cloudAuthenticator = (Entity) ModelElement.lookupByName("FirebaseAuthenticator",entities);
-    if (cloudAuthenticator != null && !(predefinedComponents.contains(cloudAuthenticator)))
+    Entity cloudAuthenticator = 
+      (Entity) ModelElement.lookupByName(
+                    "FirebaseAuthenticator",entities);
+    if (cloudAuthenticator != null && 
+        !(predefinedComponents.contains(cloudAuthenticator)))
     { predefinedComponents.add(cloudAuthenticator); 
       cloudauthenticator = cloudAuthenticator; 
     }
 
-	Entity smsComponent = (Entity) ModelElement.lookupByName("SMSComponent",entities);
-    if (smsComponent != null && !(predefinedComponents.contains(smsComponent)))
+	Entity smsComponent = 
+       (Entity) ModelElement.lookupByName(
+                               "SMSComponent",entities);
+    if (smsComponent != null && 
+        !(predefinedComponents.contains(smsComponent)))
     { predefinedComponents.add(smsComponent); }
 	
 	Entity phoneComponent = (Entity) ModelElement.lookupByName("PhoneComponent",entities);
@@ -4652,7 +4689,8 @@ public class UCDArea extends JPanel
 
     String image = null; 
 	
-    UseCase primaryUC = AndroidAppGenerator.isSinglePageApp(useCases); 
+    UseCase primaryUC = 
+      AndroidAppGenerator.isSinglePageApp(useCases); 
     if (primaryUC != null) 
     { screencount = 1; 
       image = primaryUC.getTaggedValue("image"); 
@@ -4739,10 +4777,12 @@ public class UCDArea extends JPanel
     else 
     { dir8.mkdir(); }
 	
-    agen.generateFileAccessor(screencount,systemName,nestedPackageName);
-	// Always included 
+    agen.generateFileAccessor(
+           screencount,systemName,nestedPackageName);
+    // Always included 
 
-    agen.generateManifest(systemName,needsInternetPermission,needsMaps,out);
+    agen.generateManifest(systemName,
+             needsInternetPermission,needsMaps,out);
 	// Include Internet permission if an InternetAccessor is present, or a cloud entity, or WebComponent.  
 	
     boolean needsGraph = false; 
@@ -4850,7 +4890,8 @@ public class UCDArea extends JPanel
  
     for (int j = 0; j < persistentEntities.size(); j++) 
     { Entity ent = (Entity) persistentEntities.get(j);
-      if (ent.isDerived() || ent.isComponent() || predefinedComponents.contains(ent)) 
+      if (ent.isDerived() || ent.isComponent() || 
+          predefinedComponents.contains(ent)) 
       { continue; } 
 	   
       String entvo = ent.getName() + "VO.java"; 
@@ -13773,13 +13814,13 @@ public void produceCUI(PrintWriter out)
     int nrs = mr.nrules(); 
 
     if (cgsize > nos + nrs) 
-    { System.out.println("*** Call graph too complex: only " + (nos + nrs) + " rules/operations"); } 
+    { System.out.println("*** Call graph too complex: size = " + cgsize + " and only " + (nos + nrs) + " rules/operations"); } 
 
     Vector selfcalls = tc.getSelfMaps(); 
     int selfcallsn = selfcalls.size();  
  
     if (selfcallsn > 0) 
-    { System.err.println("*** Bad smell (CBR2): complex call graph with " + selfcallsn + " recursive dependencies"); } 
+    { System.err.println("!!! Code smell (CBR2): complex call graph with " + selfcallsn + " recursive dependencies"); } 
 
 
     System.out.println(); 
@@ -13950,7 +13991,7 @@ public void produceCUI(PrintWriter out)
     int selfcallsn = selfcalls.size();  
  
     if (selfcallsn > 0) 
-    { System.err.println("Bad smell (CBR2): complex call graph with " + selfcallsn + " recursive dependencies"); } 
+    { System.err.println("!!! Code smell (CBR2): complex call graph with " + selfcallsn + " recursive dependencies"); } 
 
 
     System.out.println(); 
@@ -14244,7 +14285,7 @@ public void produceCUI(PrintWriter out)
     int selfcallsn = selfcalls.size();  
  
     if (selfcallsn > 0) 
-    { pwout.println("*** Bad smell (CBR2): complex call graph with " + 
+    { pwout.println("!!! Code smell (CBR2): complex call graph with " + 
                     selfcallsn + " cyclic dependencies"); 
       qvtflaws += selfcallsn; // CBR_2 flaws    
     } 
