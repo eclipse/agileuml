@@ -4789,7 +4789,10 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
 
   public Expression substituteEq(final String var,
                                  final Expression val)
-  { if (operator.equals("lambda") && 
+  { if (var.equals(this + ""))
+    { return val; } 
+
+    if (operator.equals("lambda") && 
         accumulator != null && 
         var.equals(accumulator.getName()))
     { return this; }

@@ -519,7 +519,10 @@ public Vector singleMutants()
 
   public Expression substituteEq(final String oldVar, 
                                  final Expression newVal)
-  { Expression newLeft = null;
+  { if (oldVar.equals(this + ""))
+    { return newVal; } 
+
+    Expression newLeft = null;
     if (ifExp != null)
     { newLeft = ifExp.substituteEq(oldVar,newVal); }
     Expression newRight = null;

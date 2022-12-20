@@ -2885,7 +2885,7 @@ public class BehaviouralFeature extends ModelElement
       if (activity == null && post != null)
       { Vector puses = post.getUses(pname); 
         if (puses.size() == 0) 
-        { System.err.println("!! Bad smell (UVA): parameter " + pname + " is unused in operation " + getName() + " postcondition.");
+        { System.err.println("!! Code smell (UVA): parameter " + pname + " is unused in operation " + getName() + " postcondition.");
           UVA++; 
           unusedVars.add(pname); 
         } 
@@ -2894,7 +2894,7 @@ public class BehaviouralFeature extends ModelElement
       if (activity != null)
       { Vector actuses = activity.getUses(pname); 
         if (actuses.size() == 0) 
-        { System.err.println("!! Bad smell (UVA): parameter " + pname + " is unused in operation " + getName() + " activity.");
+        { System.err.println("!! Code smell (UVA): parameter " + pname + " is unused in operation " + getName() + " activity.");
           UVA++; 
           unusedVars.add(pname); 
         } 
@@ -3561,7 +3561,7 @@ public class BehaviouralFeature extends ModelElement
 
     out.println("*** Number of parameters of operation " + nme + " = " + pars); 
     if (pars > 10) 
-    { System.err.println("!!! Bad smell (EPL): too many parameters (" + pars + ") for " + nme); 
+    { System.err.println("!!! Code smell (EPL): too many parameters (" + pars + ") for " + nme); 
       System.err.println(">>> Recommend refactoring by introducing value object for parameters or splitting operation into parts"); 
     }  
 
@@ -3583,7 +3583,7 @@ public class BehaviouralFeature extends ModelElement
       int acomp = activity.syntacticComplexity(); 
       out.println("*** Activity syntactic complexity = " + acomp); 
       if (acomp > 100) 
-      { System.err.println("!!! Bad smell (EOS): too high activity complexity (" + acomp + ") for " + nme); 
+      { System.err.println("!!! Code smell (EOS): too high activity complexity (" + acomp + ") for " + nme); 
         System.err.println(">>> Recommend refactoring by functional decomposition"); 
       }  
       else if (acomp > 50) 
@@ -3594,12 +3594,12 @@ public class BehaviouralFeature extends ModelElement
     out.println("*** Total complexity of operation " + nme + " = " + complexity); 
     out.println(); 
     if (cyc > 10) 
-    { System.err.println("!!! Bad smell (CC): high cyclomatic complexity (" + cyc + ") for " + nme);
+    { System.err.println("!!! Code smell (CC): high cyclomatic complexity (" + cyc + ") for " + nme);
       System.err.println(">>> Recommend refactoring by functional decomposition"); 
     }  
 
     if (complexity > 100) 
-    { System.err.println("!!! Bad smell (EHS): too high complexity (" + complexity + ") for " + nme); 
+    { System.err.println("!!! Code smell (EHS): too high complexity (" + complexity + ") for " + nme); 
       System.err.println(">>> Recommend refactoring by functional decomposition"); 
     }  
     else if (complexity > 50) 
@@ -3638,7 +3638,7 @@ public class BehaviouralFeature extends ModelElement
 
     System.out.println("*** Number of parameters of operation " + nme + " = " + pars); 
     if (pars > 10) 
-    { System.err.println("!!! Bad smell (EPL): too many parameters (" + pars + ") for " + nme); }  
+    { System.err.println("!!! Code smell (EPL): too many parameters (" + pars + ") for " + nme); }  
 
     int complexity = 0; 
     int cyc = 0; 
@@ -3661,9 +3661,9 @@ public class BehaviouralFeature extends ModelElement
     System.out.println("*** Total complexity of operation " + nme + " = " + complexity); 
     System.out.println(); 
     if (cyc > 10) 
-    { System.err.println("!!! Bad smell (CC): high cyclomatic complexity (" + cyc + ") for " + nme); }  
+    { System.err.println("!!! Code smell (CC): high cyclomatic complexity (" + cyc + ") for " + nme); }  
     if (complexity > 100) 
-    { System.err.println("!!! Bad smell (EHS): too high complexity (" + complexity + ") for " + nme); }  
+    { System.err.println("!!! Code smell (EHS): too high complexity (" + complexity + ") for " + nme); }  
 
     return cyc; 
   } 

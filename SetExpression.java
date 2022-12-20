@@ -964,7 +964,10 @@ public class SetExpression extends Expression
 
   public Expression substituteEq(String old,
                                  Expression n)
-  { Vector elems = new Vector();
+  { if (old.equals(this + ""))
+    { return n; } 
+
+    Vector elems = new Vector();
     for (int i = 0; i < elements.size(); i++)
     { Expression e = (Expression) elements.get(i);
       Expression be = e.substituteEq(old,n);

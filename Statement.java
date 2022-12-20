@@ -188,6 +188,62 @@ abstract class Statement implements Cloneable
     return res;
   } // Other cases, for all other forms of statement. 
 
+  public static Vector getBreaksContinues(Statement st)
+  { Vector res = new Vector(); 
+    if (st == null) 
+    { return res; }
+ 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      Vector stats = sq.getStatements(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          res.addAll(Statement.getBreaksContinues(stat));
+        }  
+      } 
+      return res;
+    } 
+    
+    if (st instanceof ContinueStatement)
+    { res.add(st); 
+      return res; 
+    } 
+
+    if (st instanceof BreakStatement)
+    { res.add(st); 
+      return res; 
+    } 
+
+    if (st instanceof ConditionalStatement) 
+    { ConditionalStatement cs = (ConditionalStatement) st; 
+      res.addAll(getBreaksContinues(cs.ifPart())); 
+      res.addAll(getBreaksContinues(cs.elsePart())); 
+      return res; 
+    } 
+
+    if (st instanceof WhileStatement) 
+    { WhileStatement ws = (WhileStatement) st; 
+      res.addAll(getBreaksContinues(ws.getLoopBody())); 
+      return res; 
+    } 
+
+    if (st instanceof TryStatement) 
+    { TryStatement ts = (TryStatement) st; 
+      res.addAll(getBreaksContinues(ts.getBody())); 
+      Vector stats = ts.getClauses(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          res.addAll(getBreaksContinues(stat));
+        }  
+      } 
+      res.addAll(getBreaksContinues(ts.getEndStatement())); 
+    } 
+
+    return res;
+  } // Other cases, for all other forms of statement. 
+
   public static Vector getAssignments(Statement st)
   { Vector res = new Vector(); 
     if (st == null) 
@@ -1385,9 +1441,7 @@ class BreakStatement extends Statement
   { display(out); }  
  
   public Statement substituteEq(String oldE, Expression newE)
-  {  
-    return this; 
-  } 
+  { return this; } 
 
   public Statement removeSlicedParameters(
              BehaviouralFeature op, Vector fpars)
@@ -3439,7 +3493,12 @@ class WhileStatement extends Statement
 
  
   public Statement substituteEq(String oldE, Expression newE)
-  { Statement newbody = body.substituteEq(oldE,newE); 
+  { Statement newbody; 
+    if (oldE.equals(body + ""))
+    { newbody = new InvocationStatement(newE); } 
+    else 
+    { newbody = body.substituteEq(oldE,newE); }
+
     Expression lv = null; 
     if (loopVar != null) 
     { lv = loopVar.substituteEq(oldE,newE); }  
@@ -5820,7 +5879,24 @@ class SequenceStatement extends Statement
   { return (Statement) statements.get(i); } 
 
   public Statement substituteEq(String oldE, Expression newE)
-  { SequenceStatement stats = new SequenceStatement(); 
+  { Vector fstats = flattenSequenceStatement(); 
+
+    Vector substats = VectorUtil.allSubsequences(fstats,2); 
+    for (int i = 0; i < substats.size(); i++) 
+    { Vector subs = (Vector) substats.get(i); 
+      Statement sq = new SequenceStatement(subs); 
+      if (oldE.equals(sq + "")) 
+      { InvocationStatement istat = 
+          new InvocationStatement(newE);
+        Vector newv = new Vector(); 
+        newv.add(istat); 
+        Vector newfstats = 
+          VectorUtil.replaceSubsequence(fstats, subs, newv); 
+        return new SequenceStatement(newfstats); 
+      } 
+    }
+
+    SequenceStatement stats = new SequenceStatement(); 
     for (int i = 0; i < statements.size(); i++) 
     { Statement stat = 
         ((Statement) statements.get(i)).substituteEq(oldE,newE);

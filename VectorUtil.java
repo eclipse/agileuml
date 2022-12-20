@@ -355,6 +355,28 @@ class VectorUtil
     return res;
   }
 
+  public static Vector replaceSubsequence(Vector sq, Vector subs, Vector rep)
+  { // replace each subsequence subs of sq by rep
+
+    int sbsize = subs.size(); 
+
+    for (int i = 0; i + sbsize - 1 < sq.size(); i++) 
+    { int j = i + sbsize - 1; 
+      Vector sqsubseq = VectorUtil.subsequence(sq,i,j); 
+
+      if ((subs + "").equals(sqsubseq + ""))
+      { Vector result = new Vector(); 
+        Vector sq1 = VectorUtil.subsequence(sq,0,i-1); 
+        Vector sq2 = VectorUtil.subsequence(sq,j+1); 
+        result.addAll(sq1); 
+        result.addAll(rep); 
+        result.addAll(sq2); 
+        return result; 
+      } 
+    }
+    return sq; 
+  }
+
   public static boolean continuous(Vector sc, Vector v)
   { // sc consists of sequential elements from v
 
@@ -544,6 +566,19 @@ class VectorUtil
     return res; 
   } 
 
+  public static Vector subsequence(Vector sq, int i, int j)
+  { Vector res = new Vector(); 
+    for (int k = i; k <= j && k < sq.size(); k++) 
+    { res.add(sq.get(k)); } 
+    return res; 
+  } 
+
+  public static Vector subsequence(Vector sq, int i)
+  { Vector res = new Vector(); 
+    for (int k = i; k < sq.size(); k++) 
+    { res.add(sq.get(k)); } 
+    return res; 
+  } 
 
   public static void main(String[] args) 
   { Vector coll = new Vector(); 
@@ -560,8 +595,16 @@ class VectorUtil
     System.out.println(VectorUtil.largestInitialSegment(coll2,sqs)); */ 
 
     coll.add("a"); coll.add("b"); coll.add("c"); 
+    coll.add("d"); coll.add("e"); 
     Vector vv = VectorUtil.allSubsequences(coll,2); 
-    System.out.println(vv); 
+    System.out.println(vv);
+
+    Vector v1 = new Vector(); 
+    v1.add("c"); v1.add("d"); 
+    Vector v2 = new Vector(); 
+    v2.add("x");  
+    Vector rr = VectorUtil.replaceSubsequence(coll,v1,v2); 
+    System.out.println(rr);   
   } 
     
 }

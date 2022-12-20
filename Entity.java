@@ -4644,7 +4644,107 @@ public class Entity extends ModelElement implements Comparable
       Vector copies = (Vector) clones.get(clne); 
       if (copies != null && copies.size() > 1)
       { Object obj = cdefs.get(clne); 
-        System.out.println(">>> Extracting operation for clone: " + clne + " " + obj); 
+        System.out.println(">>> Extracting operation for clone: " + clne + " " + obj);
+ 
+        if (obj instanceof Expression)
+        { Expression expr = (Expression) obj; 
+          Type etype = expr.getType(); 
+          Type elemtype = expr.getElementType(); 
+          System.out.println(">> Type: " + etype + " " + elemtype); 
+          Vector vars = expr.getVariableUses(); 
+          Vector pars = new Vector();
+          Vector pnames = new Vector();  
+          for (int j = 0; j < vars.size(); j++) 
+          { Expression ve = (Expression) vars.get(j);
+            if (pnames.contains(ve + "")) { } 
+            else  
+            { Attribute par = 
+                new Attribute(ve + "", ve.getType(), ModelElement.INTERNAL); 
+              par.setElementType(ve.getElementType()); 
+              pars.add(par);
+              pnames.add(ve + ""); 
+            }  
+          } 
+          
+          System.out.println(">> Variables: " + vars);
+          Vector attrs = expr.allAttributesUsedIn();  
+          System.out.println(">> Attributes: " + attrs);
+
+          // new operation with type etype, postcondition
+          // result = expr
+
+          BasicExpression res = 
+            BasicExpression.newVariableBasicExpression(
+                "result", etype); 
+          res.setElementType(elemtype); 
+
+          BinaryExpression eqn = 
+            new BinaryExpression("=", res, expr); 
+
+          String fname = 
+              Identifier.nextIdentifier("factored_op");
+ 
+          BehaviouralFeature bf = 
+              new BehaviouralFeature(fname,pars,true,etype); 
+          bf.setPostcondition(eqn);  
+ 
+          BasicExpression selfvar = 
+              BasicExpression.newVariableBasicExpression(
+                  "self", new Type(this)); 
+
+          BasicExpression bfcall = 
+            BasicExpression.newCallBasicExpression(fname,
+                                           selfvar,pars); 
+          for (int j = 0; j < ops; j++)
+          { BehaviouralFeature op = 
+                 (BehaviouralFeature) operations.get(j);
+      
+            op.substituteEq(clne, bfcall); 
+          } 
+
+          bf.setOwner(this); 
+          this.addOperation(bf); 
+        }
+        else if (obj instanceof Statement) 
+        { Statement stat = (Statement) obj;
+
+          Vector rets = Statement.getReturnValues(stat); 
+          System.out.println(">> Return values: " + rets);
+          Vector jumps = Statement.getBreaksContinues(stat); 
+          System.out.println(">> Jump statements: " + jumps);
+          Vector vars = stat.getVariableUses(); 
+          System.out.println(">> Variables: " + vars);
+
+          if (rets.size() == 0 && jumps.size() == 0 && 
+              vars.size() == 0)
+          { 
+            String fname = 
+              Identifier.nextIdentifier("factored_op"); 
+            BehaviouralFeature bf = 
+              new BehaviouralFeature(
+                      fname,new Vector(),false,null); 
+            bf.setPostcondition(new BasicExpression(true));  
+            bf.setActivity(stat); 
+
+            BasicExpression selfvar = 
+              BasicExpression.newVariableBasicExpression(
+                  "self", new Type(this)); 
+
+            BasicExpression bfcall = 
+              BasicExpression.newCallBasicExpression(fname,
+                                                     selfvar); 
+
+            for (int j = 0; j < ops; j++)
+            { BehaviouralFeature op = 
+                (BehaviouralFeature) operations.get(j);
+      
+              op.substituteEq(clne, bfcall); 
+            } 
+
+            bf.setOwner(this); 
+            this.addOperation(bf); 
+          }
+        }
       } 
     } 
   } 

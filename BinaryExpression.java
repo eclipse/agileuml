@@ -2944,6 +2944,12 @@ public void findClones(java.util.Map clones, String rule, String op)
   clones.put(val,used);
   left.findClones(clones,rule,op);
   right.findClones(clones,rule,op);
+
+  if ("->iterate".equals(operator) && accumulator != null) 
+  { Expression expr = accumulator.getInitialExpression(); 
+    if (expr != null) 
+    { expr.findClones(clones,rule,op); }
+  }  
 }
 
 public void findClones(java.util.Map clones, 
@@ -2968,11 +2974,24 @@ public void findClones(java.util.Map clones,
   cloneDefs.put(val, this); 
   left.findClones(clones,cloneDefs,rule,op);
   right.findClones(clones,cloneDefs,rule,op);
+
+  if ("->iterate".equals(operator) && accumulator != null) 
+  { Expression expr = accumulator.getInitialExpression(); 
+    if (expr != null) 
+    { expr.findClones(clones,cloneDefs,rule,op); }
+  }  
+
 }
 
   public void findMagicNumbers(java.util.Map mgns, String rule, String op)
   { left.findMagicNumbers(mgns,rule,op);
     right.findMagicNumbers(mgns,rule,op);
+
+    if ("->iterate".equals(operator) && accumulator != null) 
+    { Expression expr = accumulator.getInitialExpression(); 
+      if (expr != null) 
+      { expr.findMagicNumbers(mgns,rule,op); }
+    }  
   } 
 
 
@@ -7504,7 +7523,7 @@ public boolean conflictsWithIn(String op, Expression el,
       existsleft = left; 
       // localentity = left.getEntity(); // or entity of the elementType
       if (left.elementType == null) 
-      { System.err.println("Warning: no element type for: " + left); 
+      { System.err.println("!! Warning: no element type for: " + left); 
         // JOptionPane.showMessageDialog(null, "no element type for " + left + " in " + this, 
         // "Design error", JOptionPane.ERROR_MESSAGE);
       } 
@@ -7518,7 +7537,7 @@ public boolean conflictsWithIn(String op, Expression el,
       existsvar = beleft.left + ""; 
       // localentity = beleft.right.getEntity(); // or entity of the elementType
       if (beleft.right == null || beleft.right.elementType == null)
-      { System.err.println("Warning: no element type of: " + beleft); 
+      { System.err.println("!! Warning: no element type of: " + beleft); 
         // JOptionPane.showMessageDialog(null, "no element type for " + beleft + " in " + this, 
         // "Design error", JOptionPane.ERROR_MESSAGE);
       }
@@ -7601,7 +7620,7 @@ public boolean conflictsWithIn(String op, Expression el,
       existsleft = left; 
       // localentity = left.getEntity(); // or entity of the elementType
       if (left.elementType == null) 
-      { System.err.println("DESIGN ERROR: no element type for: " + left); 
+      { System.err.println("!! DESIGN ERROR: no element type for: " + left); 
         JOptionPane.showMessageDialog(null, "no element type for " + left + " in " + this, 
                                       "Design error", JOptionPane.ERROR_MESSAGE);
       } 
@@ -7615,7 +7634,7 @@ public boolean conflictsWithIn(String op, Expression el,
       existsvar = beleft.left + ""; 
       // localentity = beleft.right.getEntity(); // or entity of the elementType
       if (beleft.right == null || beleft.right.elementType == null)
-      { System.out.println("DESIGN ERROR: no element type of: " + beleft); 
+      { System.out.println("!! DESIGN ERROR: no element type of: " + beleft); 
         JOptionPane.showMessageDialog(null, "no element type for " + beleft + " in " + this, 
                                       "Design error", JOptionPane.ERROR_MESSAGE);
       }
@@ -7699,7 +7718,7 @@ public boolean conflictsWithIn(String op, Expression el,
       existsleft = left; 
       // localentity = left.getEntity(); // or entity of the elementType
       if (left.elementType == null) 
-      { System.err.println("DESIGN ERROR: no element type for: " + left); 
+      { System.err.println("!! DESIGN ERROR: no element type for: " + left); 
         JOptionPane.showMessageDialog(null, "no element type for " + left + " in " + this, 
                                       "Design error", JOptionPane.ERROR_MESSAGE);
       } 
@@ -7714,7 +7733,7 @@ public boolean conflictsWithIn(String op, Expression el,
       existsvar = beleft.left + ""; 
       // localentity = beleft.right.getEntity(); // or entity of the elementType
       if (beleft.right == null || beleft.right.elementType == null)
-      { System.out.println("DESIGN ERROR: no element type of: " + beleft); 
+      { System.out.println("!! DESIGN ERROR: no element type of: " + beleft); 
         JOptionPane.showMessageDialog(null, "no element type for " + beleft + " in " + this, 
                                       "Design error", JOptionPane.ERROR_MESSAGE);
       }
@@ -16060,7 +16079,8 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       else 
       { return res2; } 
     }
-    if (operator.equals("=>") || operator.equals("#") || operator.equals("#1") ||
+    if (operator.equals("=>") || 
+        operator.equals("#") || operator.equals("#1") ||
         operator.equals("#LC") || operator.equals("!"))
     { return right.resultScope(); }  // this ? 
     return null;
@@ -16143,6 +16163,9 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     // { System.out.println("left is: " + left);
 
     // System.out.println("SUBSTITUTING " + oldVar + " BY " + newVal + " IN " + this); 
+
+    if (oldVar.equals(this + ""))
+    { return newVal; } 
 
     Expression newLeft = null;
     if (left != null)
@@ -16327,7 +16350,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     else if (operator.equals("="))
     { return expandEqSucc(sms); } 
     else 
-    { System.out.println("Expression in succedent without = or &!"); 
+    { System.out.println("!! Expression in succedent without = or &"); 
       return res; 
     } 
   } 
