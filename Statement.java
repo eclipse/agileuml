@@ -374,7 +374,20 @@ abstract class Statement implements Cloneable
     { InvocationStatement invok = 
         (InvocationStatement) st; 
       Expression expr = invok.getCallExp(); 
-      if (("self." + nme + "()").equals(expr + ""))
+      if ((expr + "").startsWith("self." + nme + "("))
+      { res.add(st);
+        Vector thiscall = new Vector(); 
+        thiscall.add(st); 
+        contexts.add(thiscall);  
+        remainders.add(new Vector()); 
+      }
+      return res; 
+    } 
+
+    if (st instanceof ReturnStatement)
+    { ReturnStatement retstat = (ReturnStatement) st; 
+      Expression expr = retstat.getReturnValue(); 
+      if ((expr + "").startsWith("self." + nme + "("))
       { res.add(st);
         Vector thiscall = new Vector(); 
         thiscall.add(st); 
@@ -437,7 +450,32 @@ abstract class Statement implements Cloneable
          getOperationCallsContexts(
                             nme,cs.ifPart(),ctxs1,rems1);
  
-      if (calls1.size() > 0) // Only expect 1 at most
+      Vector ctxs2 = new Vector();  
+      Vector rems2 = new Vector();  
+      Vector calls2 = 
+         getOperationCallsContexts(
+                         nme,cs.elsePart(),ctxs2,rems2); 
+
+      if (calls1.size() > 0 && 
+          calls2.size() > 0) 
+      { // calls in both branches
+        Vector ifelsecall = new Vector(); 
+        ifelsecall.add("ifelse"); 
+        ifelsecall.add(tst); 
+        ifelsecall.add(ctxs1); 
+        ifelsecall.add(ctxs2); 
+
+        res.add(calls1.get(0));
+        res.add(calls2.get(0)); 
+
+        Vector sts0 = new Vector(); 
+        sts0.add(ifelsecall); 
+        contexts.add(sts0); 
+        contexts.add(sts0); 
+        remainders.add(new Vector()); 
+        remainders.add(new Vector()); 
+      } // no remainders if both branches are covered
+      else if (calls1.size() > 0) // Only expect 1 at most
       { res.add(calls1.get(0));
 
         Vector ifcall = new Vector(); 
@@ -451,13 +489,7 @@ abstract class Statement implements Cloneable
         contexts.add(sts1); 
         remainders.add(rems1.get(0)); 
       } 
-
-      Vector ctxs2 = new Vector();  
-      Vector rems2 = new Vector();  
-      Vector calls2 = 
-         getOperationCallsContexts(
-                         nme,cs.elsePart(),ctxs2,rems2); 
-      if (calls2.size() > 0) 
+      else if (calls2.size() > 0) 
       { res.add(calls2.get(0)); 
 
         Vector elsecall = new Vector(); 
@@ -475,12 +507,46 @@ abstract class Statement implements Cloneable
       return res; 
     } 
 
-    
+    if (st instanceof TryStatement) 
+    { TryStatement ts = (TryStatement) st; 
+      Vector ctxs1 = new Vector();  
+      Vector rems1 = new Vector();  
+      Vector calls1 = 
+         getOperationCallsContexts(
+                            nme,ts.getBody(),ctxs1,rems1);
+      res.addAll(calls1);
+      contexts.addAll(ctxs1); 
+      remainders.addAll(rems1); 
+   
+      Vector stats = ts.getClauses(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          Vector ctxs2 = new Vector();  
+          Vector rems2 = new Vector();  
+          Vector calls2 = 
+            getOperationCallsContexts(
+                            nme,stat,ctxs2,rems2);
+          res.addAll(calls2);
+          contexts.addAll(ctxs2); 
+          remainders.addAll(rems2); 
+        }  
+      }
+      Vector ctxs3 = new Vector();  
+      Vector rems3 = new Vector();  
+      Vector calls3 = 
+         getOperationCallsContexts(
+               nme,
+               ts.getEndStatement(),ctxs3,rems3);
+      res.addAll(calls3);
+      contexts.addAll(ctxs3); 
+      remainders.addAll(rems3); 
+    } 
 
     return res;
   } // Other cases, for all other forms of statement. 
 
-  public static Statement replaceSelfCallByContinue(String nme, Vector branch)
+  public static Statement replaceSelfCallByContinue(String nme, Vector branch, Statement asgns)
   { // sequence statement of branch elements except 
     // self.nme() replaced by continue
 
@@ -500,9 +566,118 @@ abstract class Statement implements Cloneable
       res.addStatement(st); 
     } 
 
+    if (asgns != null && 
+        asgns instanceof SequenceStatement)
+    { res.addStatements((SequenceStatement) asgns); } 
     res.addStatement(new ContinueStatement()); 
 
     return res;
+  } // Other cases, for all other forms of statement. 
+
+  public static Statement replaceSelfCallsByContinue(
+           BehaviouralFeature bf, String nme, Statement st)
+  { // self.nme(exprs) replaced by pars := exprs; continue
+    // Likewise for return self.nme(exprs)
+
+    if (st == null) 
+    { return st; }
+
+    if (st instanceof InvocationStatement)
+    { InvocationStatement invok = 
+        (InvocationStatement) st;
+      Statement res = new ContinueStatement();  
+      
+      Expression expr = invok.getCallExp(); 
+      if ((expr + "").startsWith("self." + nme + "("))
+      { Statement passigns = 
+             bf.parameterAssignments(expr);
+        if (passigns == null) 
+        { return res; } 
+        else if (passigns instanceof SequenceStatement)
+        { ((SequenceStatement) passigns).addStatement(res); 
+          return passigns; 
+        }  
+      }
+      return st; 
+    } 
+
+    if (st instanceof ReturnStatement)
+    { ReturnStatement retstat = (ReturnStatement) st; 
+      Statement res = new ContinueStatement();  
+      
+      Expression expr = retstat.getReturnValue(); 
+      if ((expr + "").startsWith("self." + nme + "("))
+      { Statement passigns = 
+             bf.parameterAssignments(expr);
+        if (passigns == null) 
+        { return res; } 
+        else if (passigns instanceof SequenceStatement)
+        { ((SequenceStatement) passigns).addStatement(res); 
+          return passigns; 
+        } 
+      }
+      return st; 
+    } 
+ 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      Vector stats = sq.getStatements();
+      Vector res = new Vector(); 
+ 
+      for (int i = 0; i < stats.size(); i++) 
+      { Statement ss = (Statement) stats.get(i); 
+        Statement newstat = 
+            Statement.replaceSelfCallsByContinue(bf,nme,ss); 
+        if (newstat != null) 
+        { res.add(newstat); } 
+      } 
+      return new SequenceStatement(res);
+    } 
+    
+    if (st instanceof ConditionalStatement) 
+    { ConditionalStatement cs = (ConditionalStatement) st;
+      Expression tst = cs.getTest(); 
+
+      Statement ifstat = cs.ifPart();
+      Statement elsestat = cs.elsePart(); 
+      
+      Statement newif = 
+        Statement.replaceSelfCallsByContinue(bf,nme,ifstat); 
+      Statement newelse = 
+        Statement.replaceSelfCallsByContinue(bf,nme,elsestat); 
+
+      return new ConditionalStatement(tst,newif,newelse); 
+    } 
+
+    if (st instanceof TryStatement) 
+    { TryStatement ts = (TryStatement) st; 
+      Statement bdy = ts.getBody(); 
+      Statement newbdy = 
+        Statement.replaceSelfCallsByContinue(bf,nme,bdy);
+   
+      Vector stats = ts.getClauses(); 
+      Vector newstats = new Vector();
+ 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          Statement newstat = 
+            Statement.replaceSelfCallsByContinue(
+                                        bf,nme,stat);
+          newstats.add(newstat); 
+        }  
+      }
+
+      Statement endstat = ts.getEndStatement(); 
+      Statement newend =
+        Statement.replaceSelfCallsByContinue(
+               bf, nme, endstat); 
+      Statement newtry = 
+        new TryStatement(newbdy, newstats, newend); 
+      return newtry; 
+    } 
+
+    return st;
   } // Other cases, for all other forms of statement. 
 
 
@@ -1019,6 +1194,9 @@ class ReturnStatement extends Statement
   { return "return"; } 
 
   public Expression getExpression() 
+  { return value; } 
+
+  public Expression getReturnValue() 
   { return value; } 
 
   public Object clone()
@@ -5510,6 +5688,9 @@ class SequenceStatement extends Statement
 
   public SequenceStatement(Vector stats)
   { statements = stats; } 
+
+  public void addStatements(SequenceStatement ss)
+  { statements.addAll(ss.getStatements()); } 
 
   public SequenceStatement(Statement s1, Statement s2)
   { statements = new Vector(); 

@@ -333,6 +333,9 @@ public class BehaviouralFeature extends ModelElement
   public void setBx(boolean b)
   { bx = b; } 
 
+  public boolean isNoRecursion()
+  { return hasStereotype("noRecursion"); } 
+
   public void setTypeParameters(String generics, Vector entities, Vector types)
   { String gens = generics.trim(); 
     if (gens.length() == 0) 
@@ -4822,13 +4825,15 @@ public class BehaviouralFeature extends ModelElement
 	// if ("true".equals(post + ""))
 	// { return res; }
 
-    if (resultType != null && !("void".equals(resultType.getName())))
+    if (resultType != null && 
+        !("void".equals(resultType.getName())))
     { resT = resultType + ""; 
       Attribute r = new Attribute("result", resultType, ModelElement.INTERNAL); 
       r.setElementType(elementType); 
       atts.add(r); 
       BasicExpression rbe = new BasicExpression(r); 
-      CreationStatement cs = new CreationStatement(resT, "result"); 
+      CreationStatement cs = 
+          new CreationStatement(resT, "result"); 
       cs.setType(resultType); 
       cs.setElementType(elementType); 
       // Expression init = resultType.getDefaultValueExpression(elementType); 
@@ -4843,12 +4848,30 @@ public class BehaviouralFeature extends ModelElement
 
     atts.addAll(parameters); 
 
-    if (query)
+    if (query && isNoRecursion())
     { Vector cases = Expression.caselist(post); 
 	
       System.out.println(">>> Caselist = " + cases); 
 	  
-      Statement qstat = designQueryList(cases, resT, env0, types, localEntities, atts);
+      Statement qstat = 
+        designQueryList(cases, resT, env0, 
+                        types, localEntities, atts);
+      
+      System.out.println(">>> qstat for no recursion = " + qstat); 
+	  
+      qstat.setBrackets(true); 
+      WhileStatement ws = 
+         new WhileStatement(new BasicExpression(true), qstat); 
+      return ws; 
+    } 
+    else if (query)
+    { Vector cases = Expression.caselist(post); 
+	
+      System.out.println(">>> Caselist = " + cases); 
+	  
+      Statement qstat = 
+        designQueryList(cases, resT, env0, 
+                        types, localEntities, atts);
       
       System.out.println(">>> qstat = " + qstat); 
 	  
@@ -6632,9 +6655,12 @@ public class BehaviouralFeature extends ModelElement
 
   }
 
-  public Statement designQueryList(Vector postconds, String resT,
+  public Statement designQueryList(Vector postconds, 
+                                   String resT,
                                    java.util.Map env0, 
-                                   Vector types, Vector entities, Vector atts)
+                                   Vector types, 
+                                   Vector entities, 
+                                   Vector atts)
   { if (postconds.size() == 0)
     { return new SequenceStatement(); } 
 
@@ -6649,13 +6675,14 @@ public class BehaviouralFeature extends ModelElement
     ptail.remove(0); 
  
     if ((postcond instanceof BinaryExpression) &&  
-            "=>".equals(((BinaryExpression) postcond).operator))
+        "=>".equals(((BinaryExpression) postcond).operator))
     { Expression next = (Expression) postconds.get(1); 
 
       if ((next instanceof BinaryExpression) &&
-              "=>".equals(((BinaryExpression) next).operator)) 
-      { Statement elsepart = designQueryList(ptail,resT,
-                                             env0,types,entities,atts);
+          "=>".equals(((BinaryExpression) next).operator)) 
+      { Statement elsepart = 
+           designQueryList(ptail,resT,       
+                           env0,types,entities,atts);
         if (fst instanceof ConditionalStatement)  
         { ((ConditionalStatement) fst).setElse(elsepart);
            // Statement.combineIfStatements(fst,elsepart);
@@ -6668,16 +6695,18 @@ public class BehaviouralFeature extends ModelElement
         }   
       } 
       else 
-      { Statement stat = designQueryList(ptail,resT,
-                                           env0,types,entities,atts); 
+      { Statement stat = 
+           designQueryList(ptail,resT,
+                           env0,types,entities,atts); 
         SequenceStatement res = new SequenceStatement(); 
         res.addStatement(fst); res.addStatement(stat); 
         return res; 
       } 
     }      
     else 
-    { Statement stat = designQueryList(ptail,resT,
-                                           env0,types,entities,atts); 
+    { Statement stat = 
+         designQueryList(ptail,resT,
+                         env0,types,entities,atts); 
       SequenceStatement res = new SequenceStatement(); 
       res.addStatement(fst); 
       res.addStatement(stat); 
@@ -6710,8 +6739,9 @@ public class BehaviouralFeature extends ModelElement
     return designBasicCase(postcond, resT, env0, types, entities, atts); 
   } */
 
-  private Statement designBasicCase(Expression pst,String resT, java.util.Map env0,
-                                Vector types, Vector entities, Vector atts)
+  private Statement designBasicCase(Expression pst,
+                  String resT, java.util.Map env0,
+                  Vector types, Vector entities, Vector atts)
   { if (pst instanceof BinaryExpression) 
     { BinaryExpression be = (BinaryExpression) pst; 
       if ("=>".equals(be.operator))
@@ -6733,7 +6763,9 @@ public class BehaviouralFeature extends ModelElement
         BasicExpression betrue = new BasicExpression(true); 
         v0.add(betrue); 
         v0.add(betrue.clone()); 
-        Vector splitante = test.splitToCond0Cond1Pred(v0,pars1,qvars1,lvars1,allvars,allpreds); 
+        Vector splitante = 
+           test.splitToCond0Cond1Pred(v0,pars1,qvars1,
+                                 lvars1,allvars,allpreds); 
         // System.out.println(">>> Quantified local = " + qvars1 + " Let local = " + lvars1 + " All: " + allvars); 
        
         Expression ante1 = (Expression) splitante.get(0); 
@@ -6742,12 +6774,19 @@ public class BehaviouralFeature extends ModelElement
         // System.out.println(">>> Variable quantifiers: " + ante1); 
         // System.out.println(">>> Assumptions: " + ante2);
 
-        Statement ifpart = // new ImplicitInvocationStatement(be.right); 
-                           designBasicCase(be.right, resT, env0, types, entities, atts); 
-        if (qvars1.size() > 0 || lvars1.size() > 0)   // allvars.size() > 0) 
-        { Statement forloop = virtualCon.q2LoopsPred(allvars,qvars1,lvars1,ifpart); 
+        Statement ifpart = 
+           // new ImplicitInvocationStatement(be.right); 
+           designBasicCase(be.right, resT, env0, 
+                           types, entities, atts); 
+
+        if (qvars1.size() > 0 || lvars1.size() > 0)   
+                                 // allvars.size() > 0) 
+        { Statement forloop = 
+              virtualCon.q2LoopsPred(
+                        allvars,qvars1,lvars1,ifpart); 
           return forloop; 
         } 
+
         Statement cs = new ConditionalStatement(test, ifpart);
         System.out.println(">-->> code for branch " + be); 
         System.out.println(">-->> is: " + cs);
@@ -6755,18 +6794,50 @@ public class BehaviouralFeature extends ModelElement
       } // But may be let definitions and local variables in test. 
       else if ("=".equals(be.operator))
       { Expression beleft = be.left; 
-        if (env0.containsValue(be.left + "") || "result".equals(be.left + "") ||
+        if (isNoRecursion() &&  
+            "result".equals(be.left + ""))
+        { 
+          if ((be.right + "").startsWith(
+                              "self." + getName() + "("))
+          { // recursive call to operation, replace by 
+            // parameter assignements and continue
+            ContinueStatement ctn = new ContinueStatement(); 
+            Statement assgns = 
+                         parameterAssignments(be.right); 
+            if (assgns == null) 
+            { return ctn; } 
+            else 
+            { SequenceStatement ss = new SequenceStatement(); 
+              ss.addStatements((SequenceStatement) assgns); 
+              ss.addStatement(ctn);
+              ss.setBrackets(true);  
+              return ss; 
+            } 
+          } 
+          else 
+          { Statement retr = 
+                new ReturnStatement(be.right); 
+            return retr;  
+          } 
+        } 
+        else if (env0.containsValue(be.left + "") || 
+            "result".equals(be.left + "") ||
             ModelElement.getNames(parameters).contains(be.left + ""))
-        { return new AssignStatement(be.left, be.right); } // or attribute of ent
-        else if (entity != null && entity.hasFeature(be.left + "")) 
+        { return new AssignStatement(be.left, be.right); } 
+          // or attribute of ent
+        else if (entity != null && 
+                 entity.hasFeature(be.left + "")) 
         { return new AssignStatement(be.left, be.right); }
         else // declare it
         { Type t = be.left.getType(); 
-          JOptionPane.showMessageDialog(null, 
+          /* JOptionPane.showMessageDialog(null, 
             "Declaring new local variable  " + be.left + " : " + t + "   in:\n" + this,               
-            "Implicit variable declaration", JOptionPane.INFORMATION_MESSAGE); 
-          if (t == null) { t = new Type("OclAny", null); }
-          CreationStatement cs = new CreationStatement(t.getJava(), be.left + ""); 
+            "Implicit variable declaration", 
+            JOptionPane.INFORMATION_MESSAGE); */  
+          if (t == null) 
+          { t = new Type("OclAny", null); }
+          CreationStatement cs = 
+            new CreationStatement(t.getJava(), be.left + ""); 
           cs.setInstanceType(t); 
           cs.setElementType(t.getElementType()); 
           cs.setFrozen(true); // it must be a constant
@@ -10113,6 +10184,40 @@ public class BehaviouralFeature extends ModelElement
     return null;
   }
 
+  public Statement parameterAssignments(Expression call)
+  { // var := expr for corresponding parameters of call
+
+    if (parameters == null || parameters.size() == 0) 
+    { return null; } 
+
+    Vector exprs = call.getParameters(); 
+    if (exprs == null) 
+    { return null; } 
+
+    Vector stats = new Vector(); 
+
+    for (int i = 0; i < parameters.size(); i++) 
+    { Attribute par = (Attribute) parameters.get(i); 
+      if (i < exprs.size()) 
+      { BasicExpression parexpr = 
+            new BasicExpression(par); 
+        Expression expr = (Expression) exprs.get(i); 
+        if (("" + parexpr).equals(expr + "")) { } 
+        else 
+        { AssignStatement asgn = 
+            new AssignStatement(parexpr,expr);       
+          stats.add(asgn);
+        }  
+      } 
+    } 
+
+    if (stats.size() == 0) 
+    { return null; } 
+
+    return new SequenceStatement(stats); 
+  } 
+
+
   // Check completeness: if post updates v but not w when w data depends on v
 
   public Statement selfCalls2Loops(Statement act)
@@ -10122,9 +10227,18 @@ public class BehaviouralFeature extends ModelElement
     // ... ; self.nme() ; *** 
     // is  while true do (...)
 
+    // ... ; self.nme(exprs) ; ***
+    // is  while true do (... ; pars := exprs)
+
     // ... ; if E then self.nme() else skip ; ***
     // is   while true do (... ; if E then continue else 
     //                     skip) ; ***
+
+    // ... ; if E then self.nme(exprs) else skip ; ***
+    // is   while true do (... ; 
+    //         if E then (pars := exprs ; continue) else 
+    //                     skip) ; ***
+    // 
 
     Statement oldact = act; 
     if (oldact == null) 
@@ -10140,53 +10254,74 @@ public class BehaviouralFeature extends ModelElement
     Vector opcalls = Statement.getOperationCallsContexts(
                               nme,oldact,contexts,remainders); 
 
-    System.out.println(opcalls); 
-    System.out.println(contexts); 
-    System.out.println(remainders); 
+    // System.out.println(opcalls); 
+    // System.out.println(contexts); 
+    // System.out.println(remainders); 
 
     int selfcalls = 0; 
     Vector branches = new Vector(); 
     Vector rems = new Vector(); 
+    Vector assigns = new Vector(); 
 
     for (int i = 0; i < opcalls.size(); i++) 
-    { InvocationStatement opcall = (InvocationStatement) opcalls.get(i); 
+    { Statement opcall = 
+          (Statement) opcalls.get(i); 
       Vector cntx = (Vector) contexts.get(i); 
       Vector rem = (Vector) remainders.get(i); 
-      Expression expr = opcall.getCallExp();  
+      Expression expr = null; 
+      if (opcall instanceof InvocationStatement)
+      { expr = ((InvocationStatement) opcall).getCallExp(); } 
+      else if (opcall instanceof ReturnStatement)
+      { expr = ((ReturnStatement) opcall).getReturnValue(); }  
 
-      if (("self." + nme + "()").equals(expr + ""))
+      if ((expr + "").startsWith("self." + nme + "("))
       { selfcalls++; 
         branches.add(cntx); 
         rems.add(rem); 
         // System.out.println(cntx);
+        Statement parAssigns = parameterAssignments(expr);
+        assigns.add(parAssigns);  
       } 
     } 
 
-    System.out.println(">>> There are " + selfcalls + " calls of self." + nme + "() in " + oldact); 
+    System.out.println(">>> There are " + selfcalls + 
+                       " calls of self." + nme + "() in " + 
+                       oldact); 
     System.out.println(">>> Branches to calls: " + branches); 
     System.out.println(">>> Remainders: " + rems); 
+    System.out.println(">>> Assignments: " + assigns); 
 
     if (selfcalls <= 0) 
     { return act; } 
 
     if (selfcalls == 1) 
-    { // simple case. The call is the last item in 
-      // branches[0]. Either a direct call or conditional.
+    { int br = 0; 
+
+      // simple case. The call is the last item in 
+      // branches[br]. Either a direct call or conditional.
 
       SequenceStatement loopBody = new SequenceStatement(); 
 
-      Vector branch = (Vector) branches.get(0); 
+      Vector branch = (Vector) branches.get(br); 
       int blen = branch.size(); 
       for (int i = 0; i < blen - 1; i++) 
       { Statement sx = (Statement) branch.get(i); 
         loopBody.addStatement(sx); 
       } 
+      
+      Statement callAssigns = (Statement) assigns.get(br); 
+       
 
-      Vector remainder = (Vector) rems.get(0); 
+      Vector remainder = (Vector) rems.get(br); 
       Object selfcall = branch.get(blen-1); 
 
       if (selfcall instanceof Statement)      
-      { 
+      { if (callAssigns != null && 
+            callAssigns instanceof SequenceStatement) 
+        { loopBody.addStatements(
+                     (SequenceStatement) callAssigns); 
+        }
+
         WhileStatement ws = new WhileStatement(
                                  new BasicExpression(true),
                                  loopBody); 
@@ -10204,7 +10339,8 @@ public class BehaviouralFeature extends ModelElement
         { Expression tst = (Expression) selfcallv.get(1);
           Vector sts = (Vector) selfcallv.get(2); 
           Statement cde = 
-            Statement.replaceSelfCallByContinue(nme,sts);
+            Statement.replaceSelfCallByContinue(
+                                      nme,sts,callAssigns);
           Statement elsePart = (Statement) selfcallv.get(3); 
   
           Statement newelse = 
@@ -10235,7 +10371,8 @@ public class BehaviouralFeature extends ModelElement
 
           Vector sts = (Vector) selfcallv.get(3); 
           Statement cde = 
-            Statement.replaceSelfCallByContinue(nme,sts);  
+            Statement.replaceSelfCallByContinue(
+                                  nme,sts,callAssigns);  
           Statement newif = 
             SequenceStatement.combineSequenceStatements(
                             ifpart,new BreakStatement()); 
@@ -10256,6 +10393,81 @@ public class BehaviouralFeature extends ModelElement
 
           return res;
         } 
+      } 
+    }
+    else if (selfcalls == 2) 
+    { int br = 0; 
+
+      // if-else case. The calls are last item in 
+      // branches[0] == branches[1]. 
+      // A conditional that is last item of the branch.
+
+      SequenceStatement loopBody = new SequenceStatement(); 
+
+      Vector branch = (Vector) branches.get(br); 
+      int blen = branch.size(); 
+      for (int i = 0; i < blen - 1; i++) 
+      { Statement sx = (Statement) branch.get(i); 
+        loopBody.addStatement(sx); 
+      } 
+      
+      Statement callAssigns1 = (Statement) assigns.get(0); 
+      Statement callAssigns2 = (Statement) assigns.get(1); 
+       
+      Vector remainder = (Vector) rems.get(br); 
+      Object selfcall = branch.get(blen-1); 
+                        // vector representing conditional
+
+      if (selfcall instanceof Vector && 
+          (((Vector) selfcall).get(0) + "").equals("ifelse"))
+      { // conditional cases
+        Vector selfcallv = (Vector) selfcall; 
+        if (selfcallv.size() == 4 && 
+            "ifelse".equals(selfcallv.get(0) + ""))      
+        { Expression tst = (Expression) selfcallv.get(1);
+          Vector sts1 = (Vector) selfcallv.get(2); 
+          Vector sts2 = (Vector) selfcallv.get(3); 
+          Statement cde1 = 
+            Statement.replaceSelfCallByContinue(
+                                      nme,sts1,callAssigns1);
+          Statement cde2 = 
+            Statement.replaceSelfCallByContinue(
+                                      nme,sts2,callAssigns2);
+          
+          ConditionalStatement cs = 
+            new ConditionalStatement(tst,
+                cde1, 
+                cde2); 
+          loopBody.addStatement(cs); 
+
+          WhileStatement ws = new WhileStatement(
+                                 new BasicExpression(true),
+                                 loopBody); 
+          SequenceStatement res = new SequenceStatement(); 
+          res.addStatement(ws); 
+          res.addStatements(remainder); 
+
+          System.out.println(">>> Restructured code: " + res); 
+          System.out.println(); 
+
+          return res;
+        } 
+      }
+      else // unrelated branches
+      { // replace self.nme(exprs) by pars := exprs; continue 
+
+        Statement loopBdy =             
+          Statement.replaceSelfCallsByContinue(
+                                        this,nme,oldact);
+
+        WhileStatement ws = new WhileStatement(
+                                 new BasicExpression(true),
+                                 loopBdy); 
+
+        System.out.println(">>> Restructured code: " + ws); 
+        System.out.println(); 
+
+        return ws;
       } 
     } 
 

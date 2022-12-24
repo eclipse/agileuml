@@ -881,10 +881,10 @@ public class UCDArea extends JPanel
         cc.typeCheck(types,entities,contexts,newparams); // to identify variables
         System.out.println("Constraint modified: " + cc);       
         resetDesigns(); 
-        System.out.println("Warning: the design is no longer valid and needs to be recreated"); 
+        System.out.println("! Warning: the design is no longer valid and needs to be recreated"); 
       }
       else
-      { System.out.println("Invalid syntax -- not added"); }
+      { System.out.println("!! Invalid syntax -- not added"); }
 
       // re-analyse the use case
     } 
@@ -6428,9 +6428,19 @@ public class UCDArea extends JPanel
     { System.err.println("!! ERROR: No such operation: " + nme); 
       return; 
     } 
-    Statement stat = bf.getActivity(); 
 
-    Statement effect = bf.selfCalls2Loops(stat); 
+    Statement stat = bf.getActivity();
+    Statement effect = null; 
+ 
+    if (stat == null) 
+    { bf.addStereotype("noRecursion"); 
+      effect = 
+          bf.generateDesign(ent,entities,types); 
+    } 
+    else 
+    { 
+      effect = bf.selfCalls2Loops(stat); 
+    } 
 
     if (effect == null)
     { System.err.println("!!! ERROR: Syntax error in activity"); 
@@ -6440,7 +6450,6 @@ public class UCDArea extends JPanel
     { System.out.println(">>> No change to activity"); 
       return; 
     } 
-    
     
     Vector contexts = new Vector(); 
     contexts.add(ent); 
