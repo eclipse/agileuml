@@ -188,24 +188,26 @@ public class IOSAppGenerator extends AppGenerator
       if (ee.isDerived()) { continue; } 
       if (ee.isComponent()) { continue; } 
 	  
-      Vector atts = ee.getAttributes(); 
+      Vector atts = ee.getAttributes();
+      Vector assocs = ee.getAssociations(); 
+ 
       String item = ee.getName(); 
       String itemvo = item.toLowerCase() + "vo"; 
     
-	  if (ee.isPersistent())
-	  { ee.iosDbiLoadOperation(out); }
+      if (ee.isPersistent())
+      { ee.iosDbiLoadOperation(out); }
 	  
-	  out.println(); 
+      out.println(); 
 	  
       out.println("  func list" + item + "() -> [" + item + "VO]"); 
       if (ee.isPersistent())
-	  { out.println("  { if dbi != nil"); 
+      { out.println("  { if dbi != nil"); 
         out.println("    { current" + item + "s = (dbi?.list" + item + "())!"); 
         out.println("      return current" + item + "s"); 
         out.println("    }");
-	  } 
-	  else 
-	  { out.println("  {"); } 
+      } 
+      else 
+      { out.println("  {"); } 
       out.println("    current" + item + "s = [" + item + "VO]()"); 
       out.println("    let _list : [" + item + "] = " + item + "_allInstances"); 
       out.println("    for (_,x) in _list.enumerated()"); 
@@ -307,6 +309,46 @@ public class IOSAppGenerator extends AppGenerator
       out.println("  { return current" + item + " }"); 
       out.println(); 
 
+      for (int i = 0; i < assocs.size(); i++) 
+      { Association ast = (Association) assocs.get(i); 
+
+        if (ast.isPersistent()) { } 
+        else 
+        { continue; } 
+
+        if (ast.isOneMany() || ast.isZeroOneMany())
+        { String role2 = ast.getRole2(); 
+          Entity ent2 = ast.getEntity2(); 
+          String fname = ent2.getName();
+          String fId = fname.toLowerCase() + "Id";
+          Attribute fkey = ent2.getPrincipalPrimaryKey(); 
+          if (fkey != null) 
+          { fId = fkey.getName(); }  
+          String eId = item.toLowerCase() + "Id"; 
+          if (key != null) 
+          { eId = key.getName(); }
+
+          out.println("  func add" + item + role2 + "(_x : String, _y : String)"); 
+          out.println("  { if dbi != nil"); 
+          out.println("    { dbi!.add" + item + role2 + "(" + eId + " : _x, " + fId + " : _y) }");  
+          out.println("    var " + item + "_obj : " + item + "? = " + item + ".getByPK" + item + "(index : _x)"); 
+    
+          out.println("    if " + item + "_obj != nil"); 
+          out.println("    { current" + item + " = " + item + "VO(_x : " + item + "_obj!) }");   
+          out.println("  }"); 
+          out.println(); 
+
+          out.println("  func remove" + item + role2 + "(_x : String, _y : String)"); 
+          out.println("  { if dbi != nil"); 
+          out.println("    { dbi!.remove" + item + role2 + "(" + eId + " : _x, " + fId + " : _y) }");  
+          out.println("    var " + item + "_obj : " + item + "? = " + item + ".getByPK" + item + "(index : _x)");
+          out.println("    if " + item + "_obj != nil"); 
+          out.println("    { current" + item + " = " + item + "VO(_x : " + item + "_obj!) }");   
+          out.println("  }"); 
+          out.println(); 
+        } 
+      } 
+
       if (key != null) 
       { String pk = key.getName(); 
         out.println("  func edit" + item + "(_x : " + item + "VO)"); 
@@ -324,7 +366,7 @@ public class IOSAppGenerator extends AppGenerator
         out.println("    }");
         out.println("    current" + item + " = _x"); 
         if (ee.isPersistent())
-	   { out.println("    if dbi != nil"); 
+        { out.println("    if dbi != nil"); 
           out.println("    { dbi!.edit" + item + "(" + itemvo + ": _x) }");
         } 
         out.println("  }"); 
@@ -819,6 +861,8 @@ public class IOSAppGenerator extends AppGenerator
       if (ee.isComponent()) { continue; } 
 	  
       Vector atts = ee.getAttributes(); 
+      Vector assocs = ee.getAssociations(); 
+
       String item = ee.getName(); 
       String itemvo = item.toLowerCase() + "vo"; 
     
@@ -922,6 +966,45 @@ public class IOSAppGenerator extends AppGenerator
       out.println("  func getSelected" + item + "() -> " + item + "VO?"); 
       out.println("  { return current" + item + " }"); 
       out.println(); 
+
+      for (int i = 0; i < assocs.size(); i++) 
+      { Association ast = (Association) assocs.get(i); 
+
+        if (ast.isPersistent()) { } 
+        else 
+        { continue; } 
+
+        if (ast.isOneMany() || ast.isZeroOneMany())
+        { String role2 = ast.getRole2(); 
+          Entity ent2 = ast.getEntity2(); 
+          String fname = ent2.getName();
+          String fId = fname.toLowerCase() + "Id";
+          Attribute fkey = ent2.getPrincipalPrimaryKey(); 
+          if (fkey != null) 
+          { fId = fkey.getName(); }  
+          String eId = item.toLowerCase() + "Id"; 
+          if (key != null) 
+          { eId = key.getName(); }
+
+          out.println("  func add" + item + role2 + "(_x : String, _y : String)"); 
+          out.println("  { if dbi != nil"); 
+          out.println("    { dbi!.add" + item + role2 + "(" + eId + " : _x, " + fId + " : _y) }");  
+          out.println("    var " + item + "_obj : " + item + "? = " + item + ".getByPK" + item + "(index : _x)");
+          out.println("    if " + item + "_obj != nil"); 
+          out.println("    { current" + item + " = " + item + "VO(_x : " + item + "_obj!) }");   
+          out.println("  }"); 
+          out.println(); 
+
+          out.println("  func remove" + item + role2 + "(_x : String, _y : String)"); 
+          out.println("  { if dbi != nil"); 
+          out.println("    { dbi!.remove" + item + role2 + "(" + eId + " : _x, " + fId + " : _y) }");  
+          out.println("    var " + item + "_obj : " + item + "? = " + item + ".getByPK" + item + "(index : _x)");
+          out.println("    if " + item + "_obj != nil"); 
+          out.println("    { current" + item + " = " + item + "VO(_x : " + item + "_obj!) }");   
+          out.println("  }"); 
+          out.println(); 
+        } 
+      } 
 
       out.println("  func canceledit" + item + "() { }"); 
       out.println(); 
@@ -1335,15 +1418,15 @@ public class IOSAppGenerator extends AppGenerator
       { updateScreen = updateScreen + "    resultOutput.image = UIImage(named: result.imageName)\n"; }  
       else if ("GraphDisplay".equals(att.getType().getName()))
       { updateScreen = updateScreen + "    graph = result\n" + 
-	                                  "    let xpts = result.xpoints\n" + 
-                                      "    let ypts = result.ypoints\n" + 
-									  "    let zpts = result.zpoints\n" + 
-                                      "    let xlbs = result.xlabels\n" + 
-                                      "    if xlbs.count > 0\n" + 
-          "    { drawNominalChart(dataPoints: xlbs, yvalues: ypts.map{ Double($0) }, zvalues: zpts.map{ Double($0) }, xname: result.xname, yname: result.yname) }\n" + 
-          "    else if xpts.count > 0\n" + 
-          "    { drawScalarChart(dataPoints: xpts, yvalues: ypts.map{ Double($0) }, zvalues: zpts.map{ Double($0) }, xname: result.xname, yname: result.yname) }\n"; 
-	  } 
+           "    let xpts = result.xpoints\n" + 
+           "    let ypts = result.ypoints\n" + 
+           "    let zpts = result.zpoints\n" + 
+           "    let xlbs = result.xlabels\n" + 
+           "    if xlbs.count > 0\n" + 
+           "    { drawNominalChart(dataPoints: xlbs, yvalues: ypts.map{ Double($0) }, zvalues: zpts.map{ Double($0) }, xname: result.xname, yname: result.yname) }\n" + 
+           "    else if xpts.count > 0\n" + 
+           "    { drawScalarChart(dataPoints: xpts, yvalues: ypts.map{ Double($0) }, zvalues: zpts.map{ Double($0) }, xname: result.xname, yname: result.yname) }\n"; 
+      } 
       else 
       { updateScreen = updateScreen + "    resultOutput.text = String(result)"; }
     }
@@ -1949,6 +2032,9 @@ public void iOSViewController(String systemName, String op, String feature, Enti
   { Attribute byatt = entity.getAttribute(feature); 
     searchByViewController(systemName,entity,byatt,out); 
   }
+  else if (op.startsWith("add") || op.startsWith("remove"))
+  { addRemoveViewController(op,systemName,entity,out); }
+  
 }
 
   public void createViewController(String systemName, Entity entity, 
@@ -2124,6 +2210,230 @@ public void iOSViewController(String systemName, String op, String feature, Enti
     if (atts.size() > 0) 
     { out.println(attdecoder); } 
     out.println("    " + bean + "." + opname + "(_id: " + parlist + ")");  
+    out.println("  }");
+    
+    out.println("");
+ 
+    out.println("  override func didReceiveMemoryWarning()");
+    out.println("  { super.didReceiveMemoryWarning() }");
+    out.println("");
+    out.println("}");
+  }
+
+  public void addRemoveViewController(String op, 
+                    String systemName, Entity entity, 
+                    PrintWriter out)
+  { String ename = entity.getName(); 
+    int indx = op.indexOf(ename);
+    String role = op.substring(indx + ename.length()); 
+    if (op.startsWith("add"))
+    { addViewController(systemName,entity,role,out); }
+    else if (op.startsWith("remove"))
+    { removeViewController(systemName,entity,role,out); } 
+  }  
+
+  public void addViewController(
+                    String systemName, Entity entity, 
+                    String role, PrintWriter out)
+  { String ename = entity.getName(); 
+    String ucname = "Add" + ename + role; 
+    String opname = "add" + ename + role; 
+    String evc = opname + "ViewController";
+    String evo = ename + "VO";
+    String vo = evo.toLowerCase();
+    String resvo = "result";
+    String restype = ""; 
+    String ebean =  "ModelFacade";
+    String bean = ebean.toLowerCase();
+    Vector atts = new Vector();
+    Attribute res = null; 
+	
+    // String evocreate = createVOStatement(e,atts);
+
+    out.println("import Foundation");
+    out.println("import UIKit");
+    out.println();
+    out.println("class " + evc + " : UIViewController");
+    out.println("{");
+    out.println("  var " + bean + " : " + ebean + " = " + ebean + ".getInstance()");
+    out.println(""); 
+
+    Attribute key = entity.getPrincipalPK(); 
+    if (key == null) 
+    { System.err.println("!! ERROR: primary key needed for add/remove operation on " + ename); 
+      out.println("}");
+      return; 
+    }
+    String pk = key.getName(); 
+
+    Association ast = entity.getAssociation(role); 
+    if (ast == null) 
+    { out.println("}");
+      return; 
+    } 
+    Entity ent2 = ast.getEntity2(); 
+
+    Attribute fkey = ent2.getPrincipalPK(); 
+    if (fkey == null) 
+    { System.err.println("!! ERROR: foreign key needed for add/remove operation on " + ename); 
+      out.println("}");
+      return; 
+    }
+    String fk = fkey.getName(); 
+
+    atts.add(key); 
+    atts.add(fkey); 
+
+    String parlist = pk; 
+    out.println("  @IBOutlet weak var " + pk + "Input: UITextField!");
+    out.println("  @IBOutlet weak var " + fk + "Input: UITextField!");
+      
+    	
+    out.println(""); 
+    out.println("  var " + pk + " : String = " + "\"0\"");
+    out.println("  var " + fk + " : String = " + "\"0\"");
+    out.println("");
+    out.println("  override func viewDidLoad()");
+    out.println("  { super.viewDidLoad()");
+    out.println("    let " + vo + " : " + evo + "? = " + bean + ".current" + ename); 
+    out.println("    if " + vo + " != nil"); 
+    out.println("    { " + pk + "Input.text = " + vo + "!." + pk + " }");
+    out.println("  }");
+    out.println("");
+ 
+    String attdecoder = "    guard ";
+    boolean previous = false;
+    String localVars = "";
+
+    for (int x = 0; x < atts.size(); x++)
+    { Attribute att = (Attribute) atts.get(x);
+      // if (att.isInputAttribute())
+      { if (previous)
+        { attdecoder = attdecoder + ", "; }
+        attdecoder = attdecoder + " let " + att + " = " + 
+                     Expression.unwrapSwiftOptional(att + "Input.text",att.getType());
+        previous = true;
+      }
+      // else 
+      // { Type atype = att.getType(); 
+	 //  if (atype != null) 
+      //  { localVars = localVars + "    var " + att + " : " + atype.getSwift() + "\n"; }
+      // }  
+    }
+    attdecoder = attdecoder + " else { return }\n";
+
+    String updateScreen = "";
+   
+    out.println("  @IBAction func " + opname + "(_ sender: Any) {");
+    if (atts.size() > 0) 
+    { out.println(attdecoder); } 
+    out.println("    " + bean + "." + opname + "(_x: " + pk + ", _y : " + fk + ")");  
+    out.println("  }");
+    
+    out.println("");
+ 
+    out.println("  override func didReceiveMemoryWarning()");
+    out.println("  { super.didReceiveMemoryWarning() }");
+    out.println("");
+    out.println("}");
+  }
+
+  public void removeViewController(
+                    String systemName, Entity entity, 
+                    String role, PrintWriter out)
+  { String ename = entity.getName(); 
+    String ucname = "Remove" + ename + role; 
+    String opname = "remove" + ename + role; 
+    String evc = opname + "ViewController";
+    String evo = ename + "VO";
+    String vo = evo.toLowerCase();
+    String resvo = "result";
+    String restype = ""; 
+    String ebean =  "ModelFacade";
+    String bean = ebean.toLowerCase();
+    Vector atts = new Vector();
+    Attribute res = null; 
+	
+    // String evocreate = createVOStatement(e,atts);
+
+    out.println("import Foundation");
+    out.println("import UIKit");
+    out.println();
+    out.println("class " + evc + " : UIViewController");
+    out.println("{");
+    out.println("  var " + bean + " : " + ebean + " = " + ebean + ".getInstance()");
+    out.println(""); 
+
+    Attribute key = entity.getPrincipalPK(); 
+    if (key == null) 
+    { System.err.println("!! ERROR: primary key needed for add/remove operation on " + ename); 
+      out.println("}");
+      return; 
+    }
+    String pk = key.getName(); 
+
+    Association ast = entity.getAssociation(role); 
+    if (ast == null) 
+    { out.println("}");
+      return; 
+    } 
+    Entity ent2 = ast.getEntity2(); 
+
+    Attribute fkey = ent2.getPrincipalPK(); 
+    if (fkey == null) 
+    { System.err.println("!! ERROR: foreign key needed for add/remove operation on " + ename); 
+      out.println("}");
+      return; 
+    }
+    String fk = fkey.getName(); 
+
+    atts.add(key); 
+    atts.add(fkey); 
+
+    String parlist = pk; 
+    out.println("  @IBOutlet weak var " + pk + "Input: UITextField!");
+    out.println("  @IBOutlet weak var " + fk + "Input: UITextField!");
+      
+    	
+    out.println(""); 
+    out.println("  var " + pk + " : String = " + "\"0\"");
+    out.println("  var " + fk + " : String = " + "\"0\"");
+    out.println("");
+    out.println("  override func viewDidLoad()");
+    out.println("  { super.viewDidLoad()");
+    out.println("    let " + vo + " : " + evo + "? = " + bean + ".current" + ename); 
+    out.println("    if " + vo + " != nil"); 
+    out.println("    { " + pk + "Input.text = " + vo + "!." + pk + " }");
+    out.println("  }");
+    out.println("");
+ 
+    String attdecoder = "    guard ";
+    boolean previous = false;
+    String localVars = "";
+
+    for (int x = 0; x < atts.size(); x++)
+    { Attribute att = (Attribute) atts.get(x);
+      // if (att.isInputAttribute())
+      { if (previous)
+        { attdecoder = attdecoder + ", "; }
+        attdecoder = attdecoder + " let " + att + " = " + 
+                     Expression.unwrapSwiftOptional(att + "Input.text",att.getType());
+        previous = true;
+      }
+      // else 
+      // { Type atype = att.getType(); 
+	 //  if (atype != null) 
+      //  { localVars = localVars + "    var " + att + " : " + atype.getSwift() + "\n"; }
+      // }  
+    }
+    attdecoder = attdecoder + " else { return }\n";
+
+    String updateScreen = "";
+   
+    out.println("  @IBAction func " + opname + "(_ sender: Any) {");
+    if (atts.size() > 0) 
+    { out.println(attdecoder); } 
+    out.println("    " + bean + "." + opname + "(_x: " + pk + ", _y : " + fk + ")");  
     out.println("  }");
     
     out.println("");
@@ -2640,10 +2950,15 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
       pwout.close(); 
     }
     catch (Exception e)
-    { System.out.println("Errors with file: " + outfile);
+    { System.out.println("!! Errors with file: " + outfile);
       return; 
     }  
   }
+  else if (op.startsWith("add") || op.startsWith("remove"))
+  { int indx = op.indexOf(ename) + ename.length(); 
+    String role = op.substring(indx); 
+    swiftuiAddRemoveScreen(op,entity,role,out); 
+  } 
   // else if (op.startsWith("searchBy"))
   // { Attribute byatt = entity.getAttribute(feature); 
   //   searchByViewController(systemName,entity,byatt,out); 
@@ -2753,7 +3068,64 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("        Button(action: { self.model." + op + "(_id: objectId) } ) { Text(\"" + label + "\") }"); 
     out.println("      }.buttonStyle(DefaultButtonStyle())"); 
     out.println("    }.padding(.top).onAppear(perform: "); 
-    out.println("                    { objectId = model.current" + ename + "." + pk + " })");
+    out.println("                { model.list" + ename + "()"); 
+    out.println("                  objectId = model.current" + ename + "." + pk + " })");
+    out.println("  }"); 
+    out.println("}");
+  }
+
+  public static void swiftuiAddRemoveScreen(String op, Entity ent, String role, PrintWriter out)
+  { // op is "add" + ent.getName() + role
+    // or "remove" + ent.getName() + role
+
+    String label = Named.capitalise(op);
+    String ename = ent.getName();
+
+    Association ast = ent.getAssociation(role); 
+    if (ast == null) 
+    { return; } 
+
+    Entity ent2 = ast.getEntity2();
+    String fname = ent2.getName(); 
+ 
+    Attribute e2key = ent2.getPrincipalPrimaryKey();  
+    if (e2key == null) 
+    { return; }
+
+    String fk = e2key.getName(); 
+	
+    Attribute id = ent.getPrincipalPrimaryKey(); 
+    if (id == null) 
+    { return; }
+	
+    String pk = id.getName(); 
+    
+    out.println("import SwiftUI");
+    out.println("");
+    out.println("struct " + op + "Screen : View");
+    out.println("{ @State var _x : String = \"\"");
+    out.println("  @State var _y : String = \"\"");
+    out.println("  @ObservedObject var model : ModelFacade"); 
+    out.println("");  
+    out.println("  var body: some View {");
+    out.println("    VStack(alignment: HorizontalAlignment.leading, spacing: 20) {");
+
+    out.println("      Picker(\"" + ename + "\", selection: $_x)"); 
+    out.println("      { ForEach(model.current" + ename + "s) { Text($0." + pk + ").tag($0." + pk + ") } }");
+    out.println(""); 
+
+    out.println("      Picker(\"" + fname + "\", selection: $_y)"); 
+    out.println("      { ForEach(model.current" + fname + "s) { Text($0." + fk + ").tag($0." + fk + ") } }");
+    out.println(""); 
+    out.println("      HStack(spacing: 20) {");
+    out.println("        Button(action: { } ) { Text(\"Cancel\") }"); 
+    out.println("        Button(action: { self.model." + op + "(_x: _x, _y: _y) } ) { Text(\"" + label + "\") }"); 
+    out.println("      }.buttonStyle(DefaultButtonStyle())"); 
+    out.println("    }.padding(.top).onAppear(perform: "); 
+    out.println("                { model.list" + ename + "()"); 
+    out.println("                  model.list" + fname + "()"); 
+    out.println("                  _x = model.current" + ename + "." + pk); 
+    out.println("                  _y = model.current" + fname + "." + fk + " })");
     out.println("  }"); 
     out.println("}");
   }
@@ -3083,7 +3455,7 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
     out.println("        if let u = user");
     out.println("        { self.userId = u.uid }");
     out.println("        else");
-	out.println("        { self.userId = \"\" }");
+    out.println("        { self.userId = \"\" }");
     out.println("    }");
     out.println("  }");
     out.println("");
@@ -3688,12 +4060,12 @@ public static void swiftuiScreen(String op, Entity entity, PrintWriter out)
 
     out.println("  if typeName == \"String\""); 
     out.println("  { let x = try! decoder.decode(String.self, from: jdata)"); 
-    out.println("    return x"); 
+    out.println("    return x as AnyObject"); 
     out.println("  }");  
 
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i);
-      if (ent.isComponent()) 
+      if (ent.isComponent() || ent.isDerived()) 
       { continue; } 
 
       String ename = ent.getName(); 

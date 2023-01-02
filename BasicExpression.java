@@ -9292,6 +9292,10 @@ public Statement generateDesignSubtract(Expression rhs)
     // System.out.println("^^^^^^^^^ Assignment " + this + " " + val2); 
     // System.out.println("^^^^^^^^^ Assignment " + umlkind + " " + objectRef); 
 
+    String datax = data;
+    if (objectRef != null) 
+    { datax = objectRef.queryFormCPP(env,local) + "." + data; } 
+
     if ("subrange".equals(data) && parameters != null && 
         objectRef != null && 
         objectRef instanceof BasicExpression)
@@ -9380,12 +9384,12 @@ public Statement generateDesignSubtract(Expression rhs)
         if ((arrayIndex.type != null && 
              "String".equals(arrayIndex.type.getName())) ||
             BasicExpression.isMapAccess(this))
-        { return data + ".put(" + wind + ", " + wval + ");"; }  
+        { return datax + ".put(" + wind + ", " + wval + ");"; }  
         // map[index] = val2 
         else 
-        { return data + ".set((" + indopt + " -1), " + wval + ");"; }  
+        { return datax + ".set((" + indopt + " -1), " + wval + ");"; }  
       } 
-      return data + " = " + val2 + ";"; 
+      return datax + " = " + val2 + ";"; 
     }
 
     String nme = ""; 
@@ -10074,7 +10078,7 @@ public Statement generateDesignSubtract(Expression rhs)
                              String val2, Expression var, boolean local)
   { String cont = "Controller.inst()"; 
 
-    System.out.println(">>> Assignment " + this + " = " + val2); 
+    // System.out.println(">>> Assignment " + this + " = " + val2); 
 
     String datax = data;
     if (objectRef != null) 
@@ -10097,7 +10101,7 @@ public Statement generateDesignSubtract(Expression rhs)
     } 
 
     if (umlkind == VARIABLE)
-    { System.out.println(">>> Variable " + this); 
+    { // System.out.println(">>> Variable " + this); 
 
       if (arrayIndex != null) 
       { String indopt = arrayIndex.queryFormCSharp(env,local); 
@@ -10302,6 +10306,13 @@ public Statement generateDesignSubtract(Expression rhs)
         umlkind == QUERY || umlkind == UPDATEOP || prestate)
     { return "{} /* can't assign to: " + data + " */"; }
 
+    System.out.println("### Assignment: " + this + " := " + val2); 
+    System.out.println("### " + this.umlkind + ", " + this.type); 
+
+    String datax = data;
+    if (objectRef != null) 
+    { datax = objectRef.queryFormCPP(env,local) + "." + data; } 
+
     String cetype = "void*";     
     Type et = getElementType(); 
     if (et != null)
@@ -10324,11 +10335,23 @@ public Statement generateDesignSubtract(Expression rhs)
       { String indopt = arrayIndex.queryFormCPP(env,local); 
         if ("String".equals(arrayIndex.type + "") ||
             BasicExpression.isMapAccess(this))
-        { return "(*" + data + ")[" + indopt + "] = " + val2 + ";"; }  // map[index] = val2 
+        { return "(*" + datax + ")[" + indopt + "] = " + val2 + ";"; }  // map[index] = val2 
         else 
-        { return "(*" + data + ")[" + indopt + " -1] = " + val2 + ";"; }  
+        { return "(*" + datax + ")[" + indopt + " -1] = " + val2 + ";"; }  
       }
-      return data + " = " + val2 + ";"; 
+
+      /* if (type != null && var.type == null)
+      { String cstype = type.getCPP(); 
+        return datax + " = (" + cstype + ") (" + val2 + ");"; 
+      } 
+      else if (type != null && var.type != null)
+      { if (Type.isSpecialisedOrEqualType(var.type, type))
+        { return "  " + datax + " = " + val2 + ";"; } 
+        String cstype = type.getCPP(); 
+        return "  " + datax + " = (" + cstype + ") (" + val2 + ");"; 
+      } */ 
+
+      return datax + " = " + val2 + ";"; 
     }
 
     String nme = entity.getName();
@@ -14427,6 +14450,20 @@ public Statement generateDesignSubtract(Expression rhs)
     } 
     return res;
   } 
+
+  public boolean isSelfCall(BehaviouralFeature bf)
+  { String nme = bf.getName(); 
+    return isSelfCall(nme); 
+  } 
+
+  public boolean isSelfCall(String nme)
+  { if (data.equals(nme) && 
+        "self".equals(objectRef + "") && 
+        (umlkind == UPDATEOP || umlkind == QUERY ||
+         isEvent)) 
+    { return true; } 
+    return false;  
+  }
 
   public Vector equivalentsUsedIn()
   { Vector res = new Vector();

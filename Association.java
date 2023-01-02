@@ -150,6 +150,12 @@ public class Association extends ModelElement
     { inv.setSource(true); }
     else if (isTarget())
     { inv.setTarget(true); } 
+
+    if (isPersistent())
+    { inv.setPersistent(true); } 
+    else 
+    { inv.setPersistent(false); } 
+
     return inv; 
   } // and other stereotypes?  
 
@@ -374,6 +380,13 @@ public class Association extends ModelElement
 
   public boolean isPersistent()
   { return hasStereotype("persistent"); } 
+
+  public void setPersistent(boolean b)
+  { if (b)
+    { addStereotype("persistent"); } 
+    else
+    { removeStereotype("persistent"); } 
+  } 
 
   public boolean isExplicit()
   { return hasStereotype("explicit"); }   // default

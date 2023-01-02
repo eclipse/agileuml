@@ -1186,6 +1186,12 @@ abstract class Expression
   
   public abstract Vector allOperationsUsedIn(); 
 
+  public boolean isSelfCall(BehaviouralFeature bf) 
+  { return false; } 
+
+  public boolean isSelfCall(String nme) 
+  { return false; } 
+
   public abstract Vector equivalentsUsedIn(); 
 
   public abstract Vector allValuesUsedIn(); 

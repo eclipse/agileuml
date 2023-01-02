@@ -5226,6 +5226,7 @@ public class Attribute extends ModelElement
   { String res = "";
     String attname = getName();
     String tname = type.getName();
+
     if (tname.equals("int"))
     { res = "(int) ((Long) " + m + ".get(\"" + attname + "\")).longValue();"; }
     else if (tname.equals("long"))
@@ -5236,15 +5237,23 @@ public class Attribute extends ModelElement
     { res = "((Boolean) " + m + ".get(\"" + attname + "\")).booleanValue();"; } 
     else if (type.isString())
     { res = "(String) " + m + ".get(\"" + attname + "\");"; } 
+    else if (type.isEntity())
+    { res = tname + "_DAO.parseJSON((JSONObject) " + m + ".get(\"" + attname + "\"));"; 
+    }
+    else if (type.isSequence() && elementType != null && 
+             elementType.isEntity())
+    { String ename = elementType.getName(); 
+      res = ename + "_DAO.parseJSONArray((JSONArray) " + m + ".get(\"" + attname + "\"));"; 
+    } 
     else 
     { res = m + ".get(\"" + attname + "\");"; } 
 
     return res; 
-  } // TODO: case of lists and maps? 
+  } // TODO: cases of sets and maps? 
 
 public String dbType()
 { String tname = type.getName();
-  if ("int".equals(tname))
+  if ("int".equals(tname) || "long".equals(tname))
   { return "integer"; }
   else if ("String".equals(tname))
   { return "VARCHAR(50)"; }

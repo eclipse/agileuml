@@ -93,11 +93,22 @@ public class OperationDescription extends BehaviouralFeature
     }
     else if (op.equals("add") || op.equals("remove"))
     { Association ast = entity.getRole(role); 
+
+      System.out.println(">>> " + role + " should be Many,\n>>> and the association 1-* or 0..1-* and persistent.\n>>> A foreign key should exist in the target class"); 
+      System.out.println(); 
+
       if (ast == null) 
       { System.err.println("!! ERROR: not a valid role: " + role); 
         return; 
       }
+
+      if (ast.isPersistent()) { } 
       else 
+      { System.err.println("!! ERROR: not a persistent association");
+        return; 
+      } 
+
+      if (ast.isOneMany() || ast.isZeroOneMany())
       { Entity entity2 = ast.getEntity2(); 
         Vector bkeys = entity2.getUniqueAttributes(); 
         if (bkeys.size() == 0) 
@@ -107,6 +118,8 @@ public class OperationDescription extends BehaviouralFeature
         pars.addAll(bkeys); 
         setParameters(pars); 
       }
+      else 
+      { System.err.println("!! ERROR: not a valid 1-* or 0..1-* association"); }  
     }
   } // add, remove: e's key and entity2 key. 
     // check: e key + some atts
@@ -145,8 +158,14 @@ public class OperationDescription extends BehaviouralFeature
         }
 
         Vector assocs = ent.getAssociations(); 
+
         for (int j = 0; j < assocs.size(); j++) 
         { Association ast = (Association) assocs.get(j); 
+
+          if (ast.isPersistent()) { } 
+          else 
+          { continue; }
+ 
           if (ast.isOneMany() || ast.isZeroOneMany()) 
           { String role = ast.getRole2(); 
             OperationDescription addErole = 
@@ -159,8 +178,7 @@ public class OperationDescription extends BehaviouralFeature
                           "remove" + ename + role,
                           ent, "remove", role);
             res.add(removeErole);  
-
-          } 
+          } // ast should be persistent
         } 
       }
     }
@@ -1566,6 +1584,10 @@ public void iOSViewController(String systemName, PrintWriter out)
   { Attribute byatt = entity.getAttribute(oprole); 
     gen.searchByViewController(systemName,entity,byatt,out); 
   } 
+  else if (op.startsWith("add"))
+  { gen.addViewController(systemName,entity,oprole,out); } 
+  else if (op.startsWith("remove"))
+  { gen.removeViewController(systemName,entity,oprole,out); } 
   else 
   { System.err.println("!! No iOS screen is defined yet for " + op); } 
 }

@@ -1746,12 +1746,13 @@ public class CGRule
       }
     } 
 
-    // Apply actions, in order
-    /* for (int i = 0; i < actions.size(); i++) 
+    // Apply post-actions, in order, just substitutions. 
+
+    for (int i = 0; i < actions.size(); i++) 
     { CGCondition act = (CGCondition) actions.get(i); 
-      act.applyAction(variables,eargs,newargs,
-                      cgs,entities,rhsVariables); 
-    } */ 
+      res = act.applyPostAction(res,variables,newargs,
+                                rhsVariables); 
+    }
 
     return res;
   }

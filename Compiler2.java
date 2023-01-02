@@ -1925,7 +1925,11 @@ public class Compiler2
 	
   // For CSTL rule actions: 
   public static Vector parse_rule_actions(String str)
-  { Vector conds = new Vector();
+  { // _i v
+    // _i not v
+    // e / x
+
+    Vector conds = new Vector();
     Compiler2 newc = new Compiler2(); 
     newc.nospacelexicalanalysis(str);
     Vector lexs = newc.lexicals;
@@ -1946,6 +1950,8 @@ public class Compiler2
       } 
       else if (se.equals("not"))
       { cg.setNegative(); } 
+      else if (se.equals("/"))
+      { cg.setSubstitute(); } 
       else if (se.equals("`") && 
                i + 2 < lexs.size())
       { String mt = "" + lexs.get(i+1); 

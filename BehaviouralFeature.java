@@ -2911,9 +2911,9 @@ public class BehaviouralFeature extends ModelElement
     } 
   }
 
-  public void checkVariableUse()
+  public boolean checkVariableUse()
   { Vector unused = new Vector(); 
-
+  
     if (activity != null)
     { Vector actuses = activity.getVariableUses(unused);
       actuses = ModelElement.removeExpressionByName("skip", actuses); 
@@ -2928,13 +2928,14 @@ public class BehaviouralFeature extends ModelElement
       if (unused.size() > 0) 
       { System.out.println("!! Parameters or non-local variables " + unused + " are declared but not used in " + getName() + " activity."); 
         System.out.println("!!! UVA (local variables) = " + unused.size() + " for operation " + name); 
+        return true; 
       } 
       System.out.println(); 
     } 
 
     // Should be subset of parameters + visible data features 
     // getDeclaredVariables() -- any extra in here are UVA. 
-
+    return false; 
   }
 
 
@@ -3121,7 +3122,7 @@ public class BehaviouralFeature extends ModelElement
       Type t = Type.getTypeFor(typ,types,localEntities);  
 
       if (t == null) // must be standard type or an entity
-      { System.err.println("ERROR: Invalid type name: " + typ);
+      { System.err.println("!! ERROR: Invalid type name: " + typ);
        JOptionPane.showMessageDialog(null, "ERROR: Invalid type for parameter: " + typ,
                                      "Type error", JOptionPane.ERROR_MESSAGE); 
       }
@@ -3236,7 +3237,7 @@ public class BehaviouralFeature extends ModelElement
       String attnme = att.getName(); 
       Type typ = att.getType(); 
       if (typ == null) 
-      { System.err.println("ERROR: null type for parameter " + att); 
+      { System.err.println("!! ERROR: null type for parameter " + att); 
         JOptionPane.showMessageDialog(null, "ERROR: Invalid type for parameter: " + att,
                                       "Type error", JOptionPane.ERROR_MESSAGE); 
         typ = new Type("void",null); 
@@ -3255,7 +3256,7 @@ public class BehaviouralFeature extends ModelElement
       String attnme = att.getName(); 
       Type typ = att.getType(); 
       if (typ == null) 
-      { System.err.println("ERROR: null type for parameter " + att); 
+      { System.err.println("!! ERROR: null type for parameter " + att); 
         JOptionPane.showMessageDialog(null, "ERROR: Invalid type for parameter: " + att,
                                       "Type error", JOptionPane.ERROR_MESSAGE); 
         typ = new Type("void",null); 
@@ -3274,7 +3275,7 @@ public class BehaviouralFeature extends ModelElement
       String attnme = att.getName(); 
       Type typ = att.getType(); 
       if (typ == null) 
-      { System.err.println("ERROR: null type for parameter " + att); 
+      { System.err.println("!! ERROR: null type for parameter " + att); 
         JOptionPane.showMessageDialog(null, "ERROR: Invalid type for parameter: " + att,
                                       "Type error", JOptionPane.ERROR_MESSAGE); 
         typ = new Type("void",null); 
@@ -3293,7 +3294,7 @@ public class BehaviouralFeature extends ModelElement
       String attnme = att.getName(); 
       Type typ = att.getType(); 
       if (typ == null) 
-      { System.err.println("ERROR: null type for parameter " + att); 
+      { System.err.println("!! ERROR: null type for parameter " + att); 
         JOptionPane.showMessageDialog(null, "ERROR: Invalid type for parameter: " + att,
                                       "Type error", JOptionPane.ERROR_MESSAGE); 
         typ = new Type("void",null); 
@@ -3312,7 +3313,7 @@ public class BehaviouralFeature extends ModelElement
       String attnme = att.getName(); 
       Type typ = att.getType(); 
       if (typ == null) 
-      { System.err.println("ERROR: null type for parameter " + att); 
+      { System.err.println("!! ERROR: null type for parameter " + att); 
         JOptionPane.showMessageDialog(null, "ERROR: Invalid type for parameter: " + att,
                                       "Type error", JOptionPane.ERROR_MESSAGE); 
         typ = new Type("void",null); 
@@ -6788,6 +6789,7 @@ public class BehaviouralFeature extends ModelElement
         } 
 
         Statement cs = new ConditionalStatement(test, ifpart);
+        System.out.println(); 
         System.out.println(">-->> code for branch " + be); 
         System.out.println(">-->> is: " + cs);
         return cs; 
@@ -6797,8 +6799,7 @@ public class BehaviouralFeature extends ModelElement
         if (isNoRecursion() &&  
             "result".equals(be.left + ""))
         { 
-          if ((be.right + "").startsWith(
-                              "self." + getName() + "("))
+          if (be.right.isSelfCall(this))
           { // recursive call to operation, replace by 
             // parameter assignements and continue
             ContinueStatement ctn = new ContinueStatement(); 
@@ -6821,8 +6822,9 @@ public class BehaviouralFeature extends ModelElement
           } 
         } 
         else if (env0.containsValue(be.left + "") || 
-            "result".equals(be.left + "") ||
-            ModelElement.getNames(parameters).contains(be.left + ""))
+                 "result".equals(be.left + "") ||
+                 ModelElement.getNames(
+                       parameters).contains(be.left + ""))
         { return new AssignStatement(be.left, be.right); } 
           // or attribute of ent
         else if (entity != null && 
@@ -7220,7 +7222,7 @@ public class BehaviouralFeature extends ModelElement
          { return "  " + pst.updateForm(env0,true) + "\n"; }
          else // declare it
          { Type t = be.right.getType(); 
-           System.out.println("Declaring new local variable " + be.left + 
+           System.out.println(">>> Declaring new local variable " + be.left + 
                               " in:\n" + this); 
             // JOptionPane.showMessageDialog(null, 
             //   "Declaring new local variable " + be.left + " in:\n" + this,               
@@ -7338,9 +7340,10 @@ public class BehaviouralFeature extends ModelElement
           { return "  " + pst.updateFormJava6(env0,true) + "\n"; }
           else // declare it
           { Type t = be.right.getType(); 
-            JOptionPane.showMessageDialog(null, 
+            /* JOptionPane.showMessageDialog(null, 
               "Declaring new local variable " + be.left + " in:\n" + this,               
-              "Implicit variable declaration", JOptionPane.INFORMATION_MESSAGE); 
+              "Implicit variable declaration", JOptionPane.INFORMATION_MESSAGE); */ 
+
             return "  final " + t.getJava6() + " " + pst.updateFormJava6(env0,true) + " \n  "; 
           } 
         } 
@@ -7361,9 +7364,10 @@ public class BehaviouralFeature extends ModelElement
         { return "  " + pst.updateFormJava7(env0,true) + "\n"; }
         else // declare it
         { Type t = be.right.getType(); 
-          JOptionPane.showMessageDialog(null, 
+          /* JOptionPane.showMessageDialog(null, 
             "Declaring new local variable " + be.left + " : " + t + " in:\n" + this,               
-            "Implicit variable declaration", JOptionPane.INFORMATION_MESSAGE); 
+            "Implicit variable declaration", JOptionPane.INFORMATION_MESSAGE); */ 
+
           return "  final " + t.getJava7(t.getElementType()) + " " + pst.updateFormJava7(env0,true) + " \n  "; 
         } 
       } 
@@ -7384,9 +7388,10 @@ public class BehaviouralFeature extends ModelElement
         { return "  " + pst.updateFormCSharp(env0,true); }
         else // declare it
         { Type t = be.left.getType(); 
-          JOptionPane.showMessageDialog(null, 
+          /* JOptionPane.showMessageDialog(null, 
             "Declaring new local variable " + be.left + " in:\n" + this,               
-            "Implicit variable declaration", JOptionPane.INFORMATION_MESSAGE); 
+            "Implicit variable declaration", JOptionPane.INFORMATION_MESSAGE); */ 
+
           return "  " + t.getCSharp() + " " + pst.updateFormCSharp(env0,true) + " \n  "; 
         } 
       } 
@@ -7407,9 +7412,10 @@ public class BehaviouralFeature extends ModelElement
         { return "  " + pst.updateFormCPP(env0,true); }
         else // declare it
         { Type t = be.left.getType(); 
-          JOptionPane.showMessageDialog(null, 
+          /* JOptionPane.showMessageDialog(null, 
             "Declaring new local variable " + be.left + " in:\n" + this,               
-            "Implicit variable declaration", JOptionPane.INFORMATION_MESSAGE); 
+            "Implicit variable declaration", JOptionPane.INFORMATION_MESSAGE); */ 
+ 
           return "  " + t.getCPP(t.getElementType()) + " " + pst.updateFormCPP(env0,true) + " \n  "; 
         } 
       } 
@@ -10220,6 +10226,14 @@ public class BehaviouralFeature extends ModelElement
 
   // Check completeness: if post updates v but not w when w data depends on v
 
+  public void removeUnusedStatements()
+  { if (activity == null) { return; } 
+
+    Statement newact = 
+       Statement.removeUnusedStatements(activity); 
+    activity = newact; 
+  } 
+
   public Statement selfCalls2Loops(Statement act)
   { // if there are simple calls to itself, replace by 
     // continue/break in a loop. 
@@ -10274,7 +10288,9 @@ public class BehaviouralFeature extends ModelElement
       else if (opcall instanceof ReturnStatement)
       { expr = ((ReturnStatement) opcall).getReturnValue(); }  
 
-      if ((expr + "").startsWith("self." + nme + "("))
+      // if ((expr + "").startsWith("self." + nme + "("))
+
+      if (expr != null && expr.isSelfCall(nme))
       { selfcalls++; 
         branches.add(cntx); 
         rems.add(rem); 

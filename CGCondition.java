@@ -15,7 +15,9 @@ public class CGCondition
 { String stereotype = "";
   String variable = "";
   boolean positive = true;
-  String quantifier = ""; 
+  String quantifier = "";
+  boolean isSubstitute = false; 
+     // e/x means replace x by e 
 
   public CGCondition()
   { } 
@@ -105,6 +107,9 @@ public class CGCondition
   public void setNegative()
   { positive = false; }
 
+  public void setSubstitute()
+  { isSubstitute = true; } 
+
   public void setExistential()
   { quantifier = "any"; }
 
@@ -117,7 +122,9 @@ public class CGCondition
     if ("all".equals(quantifier))
     { res = res + " all"; } 
     else if ("any".equals(quantifier))
-    { res = res + " any"; } 
+    { res = res + " any"; }
+    else if (isSubstitute)
+    { res = res + " /"; }  
  
     if (positive) { } 
     else  
@@ -134,6 +141,34 @@ public class CGCondition
     return false; 
   } 
 
+  public String applyPostAction(String res, 
+            Vector variables, Vector newargs,
+            Vector rhsVariables)
+  { if (isSubstitute)
+    { String rep = variable; 
+      String var = stereotype; 
+
+      if (variables.contains(variable))
+      { int i = variables.indexOf(variable); 
+        rep = (String) newargs.get(i); 
+      }
+      else if (rhsVariables.contains(variable))
+      { rep = ASTTerm.getStereotypeValue(variable); }  
+       
+
+      if (variables.contains(stereotype))
+      { int i = variables.indexOf(stereotype); 
+        var = (String) newargs.get(i); 
+      } 
+      else if (rhsVariables.contains(stereotype))
+      { var = ASTTerm.getStereotypeValue(stereotype); }  
+
+      res = res.replace(var,rep); 
+    } 
+
+    return res; 
+  } 
+
   public void applyAction(Vector vars, Vector eargs, 
                   Vector reps, CGSpec cgs, 
                   Vector entities, Vector globalVariables)
@@ -148,6 +183,9 @@ public class CGCondition
 
     // If vv is ww`mf then evaluate ww`mf, if null then 
     // it is intended as stereotype mf=stereo for ww.
+
+    if (isSubstitute) 
+    { return; } 
 
     String stereo = new String(stereotype); 
     for (int x = 0; x < reps.size() && x < vars.size(); x++)

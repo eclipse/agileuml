@@ -557,7 +557,8 @@ public abstract class ASTTerm
   public boolean hasType(String str)
   { if ("character".equalsIgnoreCase(str))
     { return isCharacter(); } 
-    if ("integer".equalsIgnoreCase(str))
+    if ("integer".equalsIgnoreCase(str) || 
+        "int".equals(str))
     { return isInteger(); } 
     if ("real".equalsIgnoreCase(str))
     { return isReal(); } 
@@ -1319,6 +1320,9 @@ public abstract class ASTTerm
     // A "default" case _* |--> v is included where v is the 
     // most frequent target of different source values. 
 
+    // Should also recognise common string mappings such as
+    // prefixing. 
+
     Type str = new Type("String", null); 
     TypeMatching tm = new TypeMatching(str,str);
     tm.setName(name);  
@@ -1334,6 +1338,13 @@ public abstract class ASTTerm
 
     if (AuxMath.isIdentityMapping(sattvalues,tattvalues))
     { tm.addDefaultMapping("_1", "_1"); 
+      return tm; 
+    }
+
+    if (AuxMath.isPrefixed(sattvalues,tattvalues))
+    { String pref = AuxMath.commonPrefix(
+                                sattvalues, tattvalues); 
+      tm.addDefaultMapping("_1", pref + "_1"); 
       return tm; 
     }
 

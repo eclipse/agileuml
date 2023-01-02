@@ -13,7 +13,8 @@ import java.io.*;
 
 
 public class AndroidAppGenerator extends AppGenerator
-{ 
+{ String GRADLE_CLASSPATH = "'com.android.tools.build:gradle:3.6.4'"; 
+  String GRADLE_GMS = "'com.google.gms:google-services:4.3.14'"; 
 
   public void modelFacade(String packageName, Vector usecases, 
      CGSpec cgs, Vector allentities, 
@@ -128,7 +129,7 @@ public class AndroidAppGenerator extends AppGenerator
 	if (needsMap)
 	{ out.println("  public void setMapDelegate(MapsComponent m)"); 
       out.println("  { mapDelegate = m; }");
-	  out.println();  
+      out.println();  
     } 
 	
     // if e is persistent, include a Dbi
@@ -173,13 +174,13 @@ public class AndroidAppGenerator extends AppGenerator
        out.println("  { ");
        if (res != null) 
        { out.println("    " + res.getType().getJava8()  + " " + res.getName() + " = " + res.getType().getDefaultJava7() + ";"); 
-	     if ("WebDisplay".equals(res.getType().getName()))
-		 { out.println("    " + res.getName() + " = new WebDisplay();"); }
-	     else if ("ImageDisplay".equals(res.getType().getName()))
-		 { out.println("    " + res.getName() + " = new ImageDisplay();"); }
+         if ("WebDisplay".equals(res.getType().getName()))
+         { out.println("    " + res.getName() + " = new WebDisplay();"); }
+         else if ("ImageDisplay".equals(res.getType().getName()))
+         { out.println("    " + res.getName() + " = new ImageDisplay();"); }
          else if ("GraphDisplay".equals(res.getType().getName()))
-		 { out.println("    " + res.getName() + " = new GraphDisplay();"); }
-	   }  
+         { out.println("    " + res.getName() + " = new GraphDisplay();"); }
+       }  
 
       // out.println(extractatts);
        String uccode = uc.cgActivity(cgs,entities,types);
@@ -222,7 +223,7 @@ public class AndroidAppGenerator extends AppGenerator
       { String entId = key.getName(); 
 	  
         out.println("  public void load" + item + "()");
-        out.println("  { ArrayList<" + item + "VO> _res = list" + item + "();");
+        out.println("  { List<" + item + "VO> _res = list" + item + "();");
         out.println("    for (" + item + "VO _x : _res)"); 
         out.println("    { " + item + " _ex = " + item + ".createByPK" + item + "(_x.get" + entId + "());");
  
@@ -332,18 +333,25 @@ public class AndroidAppGenerator extends AppGenerator
 
       for (int i = 0; i < assocs.size(); i++) 
       { Association ast = (Association) assocs.get(i); 
+
+        if (ast.isPersistent()) { } 
+        else 
+        { continue; } 
+
         if (ast.isOneMany() || ast.isZeroOneMany())
         { String role2 = ast.getRole2(); 
 
           out.println("  public void add" + item + role2 + "(String _x, String _y)"); 
           out.println("  { dbi.add" + item + role2 + "(_x,_y);");  
-          out.println("    current" + item + " = get" + item + "ByPK(_x);"); 
+          out.println("    " + item + " " + item + "_obj = get" + item + "ByPK(_x);");
+          out.println("    current" + item + " = new " + item + "VO(" + item + "_obj);");   
           out.println("  }"); 
           out.println(); 
 
           out.println("  public void remove" + item + role2 + "(String _x, String _y)"); 
           out.println("  { dbi.remove" + item + role2 + "(_x,_y);");  
-          out.println("    current" + item + " = get" + item + "ByPK(_x);"); 
+          out.println("    " + item + " " + item + "_obj = get" + item + "ByPK(_x);");
+          out.println("    current" + item + " = new " + item + "VO(" + item + "_obj);");   
           out.println("  }"); 
           out.println(); 
 
@@ -4197,12 +4205,14 @@ public static void generateGraphComponentVC(String systemName, String packageNam
     { out.println("    implementation platform('com.google.firebase:firebase-bom:26.1.1')"); 
       out.println("    implementation 'com.google.firebase:firebase-auth'"); 
       out.println("    implementation 'com.google.firebase:firebase-database'"); 
+       out.println("    implementation 'com.google.firebase:firebase-firestore:24.4.1'"); 
     } 
 
     out.println("    testImplementation 'junit:junit:4.13'");
     out.println("    androidTestImplementation 'androidx.test.ext:junit:1.1.2'");
     out.println("    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'");
     out.println("}");
+    out.println(); 
 
     if (firebase) 
     { out.println("apply plugin: 'com.google.gms.google-services'"); } 

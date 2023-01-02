@@ -3,7 +3,7 @@ import java.io.*;
 import java.util.StringTokenizer; 
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -1594,7 +1594,16 @@ public class Type extends ModelElement
     { return "_x." + attname + " as NSString"; } 
     else if (t.isNumeric())
     { return "NSNumber(value: _x." + attname + ")"; } 
-    else
+    else if (t.isSequence() && t.elementType != null && 
+             t.elementType.isEntity())
+    { String e2name = t.elementType.getName(); 
+      return e2name + "_DAO.writeJSONArray(es: _x." + attname + ")"; 
+    } 
+    else if (t.isSequence())
+    { return "_x." + attname + " as NSArray"; }
+    else if (t.isEntity())
+    { return tname + "_DAO.writeJSON(_x: _x." + attname + ")"; } 
+    else 
     { return "NSString(string: _x." + attname + ")"; } 
   } 
 
@@ -1609,6 +1618,15 @@ public class Type extends ModelElement
     { return "_x." + attname + "! as NSString"; } 
     else if (t.isNumeric())
     { return "NSNumber(value: _x." + attname + "!)"; } 
+    else if (t.isSequence() && t.elementType != null && 
+             t.elementType.isEntity())
+    { String e2name = t.elementType.getName(); 
+      return e2name + "_DAO.writeJSONArray(es: _x." + attname + "!)"; 
+    } 
+    else if (t.isSequence())
+    { return "_x." + attname + "! as NSArray"; } 
+    else if (t.isEntity())
+    { return tname + "_DAO.writeJSON(_x: _x." + attname + "!)"; } 
     else
     { return "NSString(string: _x." + attname + "!)"; } 
   } 

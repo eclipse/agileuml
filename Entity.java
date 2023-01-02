@@ -7,7 +7,7 @@ import java.util.StringTokenizer;
 
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -20,6 +20,7 @@ public class Entity extends ModelElement implements Comparable
 { private Vector attributes = new Vector();   // Attribute
   private Vector associations = new Vector(); // Association
     // The associations in which this is entity1
+
   private Vector operations = new Vector();   // BehaviouralFeature
   private Entity superclass = null; 
   private Vector superclasses = null; // multiple in case of C++ only 
@@ -28,6 +29,7 @@ public class Entity extends ModelElement implements Comparable
   private Vector interfaces = new Vector();  // Interface classes
   private String cardinality = null; // describes number of instances allowed
   private Association linkedAssociation = null; // for association class only
+
   private Statemachine behaviour = null; 
   private Statement activity = null; 
   private String auxiliaryElements = ""; 
@@ -1858,8 +1860,16 @@ public class Entity extends ModelElement implements Comparable
   { 
     Vector allops = getOperations(); 
     for (int i = 0; i < allops.size(); i++) 
-    { BehaviouralFeature op = (BehaviouralFeature) allops.get(i); 
-      op.checkVariableUse();
+    { BehaviouralFeature op = 
+               (BehaviouralFeature) allops.get(i); 
+      boolean uva = op.checkVariableUse();
+      if (uva) 
+      { String yn = 
+          JOptionPane.showInputDialog("Remove unused statements in " + op + "? (y/n):");
+
+        if (yn != null && "y".equals(yn))         
+        { op.removeUnusedStatements(); } 
+      }  
     } 
   } 
 
@@ -5340,6 +5350,21 @@ public class Entity extends ModelElement implements Comparable
     } 
     return false; 
   } 
+
+  public Association getAssociation(String rle)
+  { if (rle == null) 
+    { return null; }
+ 
+    for (int i = 0; i < associations.size(); i++) 
+    { Association ast = (Association) associations.get(i); 
+      String role2 = ast.getRole2(); 
+      if (rle.equals(role2))
+      { return ast; } 
+    } 
+
+    return null; 
+  } 
+
 
   public boolean hasDefinedRole(String rle)
   { if (hasRole(rle))
@@ -13352,6 +13377,47 @@ public class Entity extends ModelElement implements Comparable
     return res + "}\n\n"; 
   } 
 
+  public void generateClassExtension(PrintWriter out)
+  { String ename = getName();  
+    String res = "extension " + ename + " : Hashable, Identifiable\n" + 
+          "{ \n"; 
+			
+    res = res + "  static func ==(lhs: " + ename + ", rhs: " + ename + ") -> Bool\n";
+    res = res + "  { return  ";
+
+    int attcount = attributes.size(); 
+
+    if (attcount == 0)
+    { res = res + "(lhs === rhs)\n"; }
+    else   
+    { boolean previousAtt = false; 
+
+      for (int i = 0; i < attributes.size(); i++) 
+      { Attribute att = (Attribute) attributes.get(i); 
+        if (att.isMultiple())
+        { continue; }  
+        String attnme = att.getName();
+        if (previousAtt) 
+        { res = res + " && "; } 
+        res = res + "lhs." + attnme + " == rhs." + attnme;
+        previousAtt = true; 
+      }
+    } 
+    res = res + "\n  }\n\n"; 
+	
+    res = res + "  func hash(into hasher: inout Hasher) {\n"; 
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      if (att.isMultiple())
+      { continue; }  
+      String attnme = att.getName();
+      res = res + "    hasher.combine(" + attnme + ")\n"; 
+    }
+    res = res + "  }\n"; 
+
+    out.println(res + "}\n\n"); 
+  } 
+
 public void androidDbiDeclarations(PrintWriter out)
 { String ent = getName();
   String entlc = ent.toLowerCase();
@@ -13513,6 +13579,11 @@ public void androidDbiOperations(PrintWriter out)
 
   for (int j = 0; j < associations.size(); j++) 
   { Association ast = (Association) associations.get(j); 
+
+    if (ast.isPersistent()) { }
+    else 
+    { continue; } 
+
     if (ast.isOneMany() || ast.isZeroOneMany())
     { String role2 = ast.getRole2(); 
       Entity ent2 = ast.getEntity2(); 
@@ -13531,7 +13602,7 @@ public void androidDbiOperations(PrintWriter out)
       out.println("  { database = getWritableDatabase();");
       out.println("    ContentValues _wr = new ContentValues(1);");
 
-      String nup = fId.toUpperCase();
+      String nup = entId.toUpperCase();
       out.println("    _wr.put(" + fname + "_COLS[" + fname + "_COL_" + nup + "]," + 
                         entId + ");");
   
@@ -13544,7 +13615,7 @@ public void androidDbiOperations(PrintWriter out)
       out.println("  { database = getWritableDatabase();");
       out.println("    ContentValues _wr = new ContentValues(1);");
 
-      out.println("    _wr.put(" + fname + "_COLS[" + fname + "_COL_" + nup + "], null);");
+      out.println("    _wr.put(" + fname + "_COLS[" + fname + "_COL_" + nup + "], \"NULL\");");
   
       out.println("    String[] _args = new String[]{ " + fId + " };");
       out.println("    database.update(" + fname + "_TABLE_NAME, _wr, \"" + fId + " = ?\", _args);");
@@ -13557,6 +13628,25 @@ public void androidDbiOperations(PrintWriter out)
   out.println("  { database = getWritableDatabase();"); 
   out.println("    String[] _args = new String[]{ _val };"); 
   out.println("    database.delete(" + ent + "_TABLE_NAME, \"" + entId + " = ?\", _args);"); 
+
+  for (int i = 0; i < associations.size(); i++) 
+  { Association ast = (Association) associations.get(i); 
+    if (ast.isPersistent() && 
+        (ast.isOneMany() || ast.isZeroOneMany()))
+    { // unset the foreign key of any ent2 with fk = _val
+      Entity ent2 = ast.getEntity2(); 
+      String fname = ent2.getName(); 
+      String nup = entId.toUpperCase(); 
+      out.println(); 
+      out.println("    ContentValues _wr = new ContentValues(1);");
+
+      out.println("    _wr.put(" + fname + "_COLS[" + fname + "_COL_" + nup + "], \"NULL\");");
+  
+      out.println("    String[] _args1 = new String[]{ _val };");
+      out.println("    database.update(" + fname + "_TABLE_NAME, _wr, \"" + entId + " = ?\", _args1);");
+    } 
+  } 
+
   out.println("  }"); 
   out.println(); 
 }
@@ -13751,22 +13841,22 @@ public void iosDbiOperations(PrintWriter out)
     Type atype = att.getType(); 
     String swifttype = atype.getSwift(); 
     if (att.isNumeric())
-	{ columnsettings = columnsettings + 
+    { columnsettings = columnsettings + 
        "      \" " + nmeatt + " = \" + String(" + 
        entlc + "vo.get" + nmeatt + "()) + \""; 
-	} 
-	else 
-	{ columnsettings = columnsettings + 
+    } 
+    else 
+    { columnsettings = columnsettings + 
        "      \" " + nmeatt + " = '\" + " + 
        entlc + "vo.get" + nmeatt + "() + \"'"; 
-	} 
+    } 
 	
     if (z < natts-1) 
     { columnsettings = columnsettings + " ,\" +\n"; } 
   }
   
   out.println("    let statement : String = \"UPDATE " + ent + " SET \" + "); 
-  out.println(columnsettings + "      \" WHERE " + entId + " = '\" + " + entlc + "vo.get" + entId + "() + \"'\""); 
+  out.println(columnsettings + " WHERE " + entId + " = '\" + " + entlc + "vo.get" + entId + "() + \"'\""); 
   out.println("    if sqlite3_prepare_v2(dbPointer, statement, -1, &updateStatement, nil) == SQLITE_OK"); 
   out.println("    { sqlite3_step(updateStatement) }"); 
   out.println("    sqlite3_finalize(updateStatement)"); 
@@ -13782,7 +13872,7 @@ public void iosDbiOperations(PrintWriter out)
     columnsettings = columnsettings + nmeatt + " = " + 
                              entlc + "vo.get" + nmeatt + "()"; 
     if (z < natts-1) 
-	{ columnsettings = columnsettings + ",\n"; } 
+    { columnsettings = columnsettings + ",\n"; } 
   }
   var statement : String = "UPDATE " + ent + " SET " + columnsettings; 
   if sqlite3_prepare_v2(db, updateStatementString, -1, &updateStatement, nil) == 
@@ -13798,12 +13888,86 @@ public void iosDbiOperations(PrintWriter out)
   sqlite3_finalize(updateStatement)
 } */ 
 
+  for (int j = 0; j < associations.size(); j++) 
+  { Association ast = (Association) associations.get(j); 
+
+    if (ast.isPersistent()) { }
+    else 
+    { continue; } 
+
+    if (ast.isOneMany() || ast.isZeroOneMany())
+    { String role2 = ast.getRole2(); 
+      Entity ent2 = ast.getEntity2(); 
+      String fname = ent2.getName(); 
+      String flc = fname.toLowerCase(); 
+      String fId = flc + "Id";
+ 
+      Attribute fk = ent2.getPrincipalPrimaryKey();
+      if (fk == null)
+      { continue; } 
+      fId = fk.getName();
+
+      // Set ent2's entId field = entId for the fId ent2
+
+      out.println("  func add" + ent + role2 + "(" + entId + " : String, " + fId + " : String)");
+      out.println("  { var updateStatement : OpaquePointer?"); 
+      out.println("    let statement : String = \"UPDATE " + fname + " SET " + entId + " = '\" + " + entId + " + \"' WHERE " + fId + " = '\" + " + fId + " + \"'\"");
+      out.println("    if sqlite3_prepare_v2(dbPointer, statement, -1, &updateStatement, nil) == SQLITE_OK"); 
+      out.println("    { sqlite3_step(updateStatement) }"); 
+      out.println("    sqlite3_finalize(updateStatement)");
+      out.println("  }");
+      out.println();
+
+      out.println("  func remove" + ent + role2 + "(" + entId + " : String, " + fId + " : String)");
+      out.println("  { var updateStatement : OpaquePointer?"); 
+      out.println("    let statement : String = \"UPDATE " + fname + " SET " + entId + " = 'NULL' WHERE " + fId + " = '\" + " + fId + " + \"'\"");
+      out.println("    if sqlite3_prepare_v2(dbPointer, statement, -1, &updateStatement, nil) == SQLITE_OK"); 
+      out.println("    { sqlite3_step(updateStatement) }"); 
+      out.println("    sqlite3_finalize(updateStatement)");
+      out.println("  }");
+      out.println();
+
+      out.println();
+    } 
+  } 
+
   out.println("  func delete" + ent + "(_val : String)"); 
   out.println("  { let deleteStatementString = \"DELETE FROM " + ent + " WHERE " + entId + " = '\" + _val + \"'\""); 
   out.println("    var deleteStatement: OpaquePointer?"); 
   out.println("    if sqlite3_prepare_v2(dbPointer, deleteStatementString, -1, &deleteStatement, nil) == SQLITE_OK"); 
   out.println("    { sqlite3_step(deleteStatement) }");
   out.println("    sqlite3_finalize(deleteStatement)"); 
+
+  for (int j = 0; j < associations.size(); j++) 
+  { Association ast = (Association) associations.get(j); 
+
+    if (ast.isPersistent()) { }
+    else 
+    { continue; } 
+
+    if (ast.isOneMany() || ast.isZeroOneMany())
+    { String role2 = ast.getRole2(); 
+      Entity ent2 = ast.getEntity2(); 
+      String fname = ent2.getName(); 
+      String flc = fname.toLowerCase(); 
+      String fId = flc + "Id";
+ 
+      Attribute fk = ent2.getPrincipalPrimaryKey();
+      if (fk == null)
+      { continue; } 
+      fId = fk.getName();
+
+      // Set ent2's entId field = entId for the fId ent2
+
+      out.println();
+      out.println("    var updateStatement : OpaquePointer?"); 
+      out.println("    let statement : String = \"UPDATE " + fname + " SET " + entId + " = 'NULL' WHERE " + entId + " = '\" + _val + \"'\"");
+      out.println("    if sqlite3_prepare_v2(dbPointer, statement, -1, &updateStatement, nil) == SQLITE_OK"); 
+      out.println("    { sqlite3_step(updateStatement) }"); 
+      out.println("    sqlite3_finalize(updateStatement)");      
+    } 
+  } 
+
   out.println("  }"); 
 
  /*  func delete() {
@@ -17246,13 +17410,13 @@ public BehaviouralFeature designAbstractKillOp()
     //   out.println("          _x." + attname + " = " + _ex + "." + attname + ";");
     // }
     out.println("          }"); 
-	out.println("          // Delete local objects which are not in the cloud:");
-	out.println("          ArrayList<" + ename + "> _locals = new ArrayList<" + ename + ">();"); 
-	out.println("          _locals.addAll(" + ename + "." + ename + "_allInstances);");  
-	out.println("          for (" + ename + " _x : _locals)"); 
-	out.println("          { if (_keys.contains(_x." + key + ")) { }"); 
-	out.println("            else { " + ename + ".kill" + ename + "(_x." + key + "); }"); 
-	out.println("          }"); 
+    out.println("          // Delete local objects which are not in the cloud:");
+    out.println("          ArrayList<" + ename + "> _locals = new ArrayList<" + ename + ">();"); 
+    out.println("          _locals.addAll(" + ename + "." + ename + "_allInstances);");  
+    out.println("          for (" + ename + " _x : _locals)"); 
+    out.println("          { if (_keys.contains(_x." + key + ")) { }"); 
+    out.println("            else { " + ename + ".kill" + ename + "(_x." + key + "); }"); 
+    out.println("          }"); 
     out.println("        }");  
     out.println("      }");
     out.println("  ");
@@ -17282,13 +17446,13 @@ public BehaviouralFeature designAbstractKillOp()
     out.println("  { " + evo + " _evo = new " + evo + "(ex); ");
     out.println("    String _key = _evo." + key + "; ");
     out.println("    if (database == null) { return; }"); 
-	out.println("    database.child(\"" + es + "\").child(_key).setValue(_evo);"); 
+    out.println("    database.child(\"" + es + "\").child(_key).setValue(_evo);"); 
     out.println("  }");
     out.println("  ");
     out.println("  public void delete" + ename + "(" + ename + " ex)");
     out.println("  { String _key = ex." + key + "; ");
     out.println("    if (database == null) { return; }"); 
-	out.println("    database.child(\"" + es + "\").child(_key).removeValue();"); 
+    out.println("    database.child(\"" + es + "\").child(_key).removeValue();"); 
     out.println("  }");
     out.println(); 
   }
@@ -17299,11 +17463,11 @@ public BehaviouralFeature designAbstractKillOp()
     String evo = ename + "VO"; 
     String es = ename.toLowerCase() + "s";  
     Attribute pk = getPrincipalPrimaryKey(); 
-	if (pk == null) 
-	{ System.err.println("!!! ERROR: no primary key for " + ename); 
-	  return; 
-	}
-	String key = pk.getName(); 
+    if (pk == null) 
+    { System.err.println("!!! ERROR: no primary key for " + ename); 
+      return; 
+    }
+    String key = pk.getName(); 
 
     String entfile = "FirebaseDbi.java"; 
     File entff = new File("output/" + appName + "/src/main/java/" + entfile); 
@@ -17386,8 +17550,8 @@ public BehaviouralFeature designAbstractKillOp()
       out.println("    database.child(\"" + es + "\").child(_key).removeValue();"); 
       out.println("  }");
   
-	  out.println("}"); 
-	  out.close(); 
+      out.println("}"); 
+      out.close(); 
     } catch (Exception _ex) { } 
   } 
 
@@ -17409,16 +17573,16 @@ public BehaviouralFeature designAbstractKillOp()
     out.println("      with:");
     out.println("      { (change) in");
     out.println("        var _keys : [String] = [String]()"); 
-	out.println("        if let d = change.value as? [String : AnyObject]");
+    out.println("        if let d = change.value as? [String : AnyObject]");
     out.println("        { for (_,v) in d.enumerated()");
     out.println("          { let _einst = v.1 as! [String : AnyObject]");
     out.println("            let _ex : " + ename + "? = " + ename + "_DAO.parseJSON(obj: _einst)");
-	out.println("            _keys.append(_ex!." + key + ")");   
+    out.println("            _keys.append(_ex!." + key + ")");   
     out.println("          }"); 
     out.println("        }"); 
     out.println("        var _runtime" + es + " : [" + ename + "] = [" + ename + "]()"); 
     out.println("        _runtime" + es + ".append(contentsOf: " + ename + "_allInstances)"); 
-	out.println(); 
+    out.println(); 
     out.println("        for (_,_obj) in _runtime" + es + ".enumerated()"); 
     out.println("        { if _keys.contains(_obj." + key + ")"); 
     out.println("          {}"); 
@@ -17526,25 +17690,56 @@ public BehaviouralFeature designAbstractKillOp()
     String pkname = pk.getName(); 
 	
     String res = "  public static " + ename + " parseJSON(JSONObject obj)\n" + 
-                 "  { if (obj == null) { return null; }\n" + 
-                 "\n" + 
-                 "    try {\n" + 
-                 "      String " + pkname + " = obj.getString(\"" + pkname + "\");\n" + 
-                 "      " + ename + " " + x + " = " + ename + "." + ename + "_index.get(" + pkname + ");\n" +  
-                 "      if (" + x + " == null) { " + x + " = " + ename + ".createByPK" + ename + "(" + pkname + "); }\n" + 
-                 "      \n"; 
+      "  { if (obj == null) { return null; }\n" + 
+      "\n" + 
+      "    try {\n" + 
+      "      String " + pkname + " = obj.getString(\"" + pkname + "\");\n" + 
+      "      " + ename + " " + x + " = " + ename + "." + ename + "_index.get(" + pkname + ");\n" +  
+      "      if (" + x + " == null) { " + x + " = " + ename + ".createByPK" + ename + "(" + pkname + "); }\n" + 
+      "      \n"; 
 				 
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attname = att.getName(); 
       Type t = att.getType(); 
-      String decoder = "get" + Named.capitalise(t.getName()); 
-      res = res + "      " + x + "." + attname + " = obj." + decoder + "(\"" + attname + "\");\n"; 
-	} 
+      if (t == null) { continue; } 
+
+      String tname = t.getName(); 
+      String decoder = "get" + Named.capitalise(tname); 
+      if (t.isEntity())
+      { res = res + "      " + x + "." + attname + " = " + tname + "_DAO.parseJSON(obj.getJSONObject(\"" + attname + "\"));\n";
+      } 
+      else if (t.isSequence() && 
+               t.getElementType() != null && 
+               t.getElementType().isEntity())
+      { Type elemT = t.getElementType(); 
+        String etname = elemT.getName(); 
+        res = res + "      " + x + "." + attname + " = " + etname + "_DAO.parseJSONArray(obj.getJSONArray(\"" + attname + "\"));\n";
+      } 
+      else 
+      { res = res + "      " + x + "." + attname + " = obj." + decoder + "(\"" + attname + "\");\n";
+      }  
+    } 
+
+    for (int i = 0; i < associations.size(); i++) 
+    { Association ast = (Association) associations.get(i); 
+      if (ast.isOneMany() || ast.isZeroOneMany()) { } 
+      else 
+      { continue; } 
+      if (ast.isPersistent()) { } 
+      else 
+      { continue; } 
+
+      String role = ast.getRole2(); 
+      Entity ent2 = ast.getEntity2(); 
+      String tname = ent2.getName();
+ 
+      res = res + "       " + x + "." + role + " = " + tname + "_DAO.parseJSONArray(obj.getJSONArray(\"" + role + "\"));\n";
+    } 
       
-	res = res + "      return " + x + ";\n" + 
-                "    } catch (Exception _e) { return null; }\n" + 
-                "  }\n\n"; 
+    res = res + "      return " + x + ";\n" + 
+        "    } catch (Exception _e) { return null; }\n" + 
+        "  }\n\n"; 
     return res; 
   } 
 
@@ -17554,20 +17749,55 @@ public BehaviouralFeature designAbstractKillOp()
     String res = "  public static JSONObject writeJSON(" + ename + " _x)\n" + 
        "  { JSONObject result = new JSONObject();\n" + 
        "    try {\n"; 
+
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
-      String attname = att.getName(); 
-      res = res + "       result.put(\"" + attname + "\", _x." + attname + ");\n"; 
-     } 
-     res = res + "      } catch (Exception _e) { return null; }\n";  
-     res = res + "    return result;\n"; 
-     res = res + "  }\n\n"; 
-     return res; 
+      String attname = att.getName();
+      Type t = att.getType(); 
+      if (t == null) { continue; } 
+      
+      String tname = t.getName(); 
+
+      if (t.isEntity())
+      { res = res + "       result.put(\"" + attname + "\", " + tname + "_DAO.writeJSON(_x." + attname + "));\n";
+      } 
+      else if (t.isSequence() && 
+               t.getElementType() != null && 
+               t.getElementType().isEntity())
+      { Type elemT = t.getElementType(); 
+        String etname = elemT.getName(); 
+        res = res + "       result.put(\"" + attname + "\", " + etname + "_DAO.writeJSONArray(_x." + attname + "));\n";
+      } 
+      else  
+      { res = res + "       result.put(\"" + attname + "\", _x." + attname + ");\n"; 
+      }  
+    } 
+
+    for (int i = 0; i < associations.size(); i++) 
+    { Association ast = (Association) associations.get(i); 
+      if (ast.isOneMany() || ast.isZeroOneMany()) { } 
+      else 
+      { continue; } 
+      if (ast.isPersistent()) { } 
+      else 
+      { continue; } 
+
+      String role = ast.getRole2(); 
+      Entity ent2 = ast.getEntity2(); 
+      String tname = ent2.getName();
+ 
+      res = res + "       result.put(\"" + role + "\", " + tname + "_DAO.writeJSONArray(_x." + role + "));\n";
+    } 
+
+    res = res + "      } catch (Exception _e) { return null; }\n";  
+    res = res + "    return result;\n"; 
+    res = res + "  }\n\n"; 
+    return res; 
   }
 
   private String writeJSONArrayOperation()
   { String ename = getName(); 
-     String res = "  public static JSONArray writeJSONArray(ArrayList<" + ename + "> es)\n" + 
+    String res = "  public static JSONArray writeJSONArray(ArrayList<" + ename + "> es)\n" + 
                   "  { JSONArray result = new JSONArray();\n" + 
                   "    for (int _i = 0; _i < es.size(); _i++)\n" + 
                   "    { " + ename + " _ex = es.get(_i);\n" + 
@@ -17592,7 +17822,7 @@ public BehaviouralFeature designAbstractKillOp()
 	
     String res = "  public static " + ename + " parseRaw(Object obj)\n" + 
                  "  { if (obj == null) { return null; }\n" +
-				 "\n" + 
+                 "\n" + 
                  "    try {\n" + 
                  "      Map<String,Object> _map = (Map<String,Object>) obj;\n" + 
                  "      String " + pkname + " = (String) _map.get(\"" + pkname + "\");\n" + 
@@ -17606,9 +17836,26 @@ public BehaviouralFeature designAbstractKillOp()
       Type t = att.getType(); 
       String decoder = att.rawDecoder("_map");  
       res = res + "      " + x + "." + attname + " = " + decoder + "\n"; 
-	} 
+    } 
       
-	res = res + "      return " + x + ";\n" + 
+    // and associations 
+    for (int i = 0; i < associations.size(); i++) 
+    { Association ast = (Association) associations.get(i); 
+      if (ast.isOneMany() || ast.isZeroOneMany()) { } 
+      else 
+      { continue; } 
+      if (ast.isPersistent()) { } 
+      else 
+      { continue; } 
+
+      String role = ast.getRole2(); 
+      Entity ent2 = ast.getEntity2(); 
+      String tname = ent2.getName();
+ 
+      res = res + "       " + x + "." + role + " = " + tname + "_DAO.parseJSONArray((JSONArray) _map.get(\"" + role + "\"));\n";
+    } 
+
+    res = res + "      return " + x + ";\n" + 
                 "    } catch (Exception _e) { return null; }\n" + 
                 "  }\n\n"; 
     return res; 
@@ -17656,12 +17903,13 @@ public BehaviouralFeature designAbstractKillOp()
       out.println(); 
       out.println(parseJSONOperationIOS());
       out.println(); 
-      out.println(); 
       out.println(writeJSONOperationIOS());
       out.println(); 
+      out.println(writeJSONArrayOperationIOS()); 
+      out.println(); 
       out.println(parseCSVFileOperationIOS());
-      // out.println();   
-      // out.println(parseJSONSequenceOperationIOS());
+      out.println();   
+      out.println(parseJSONArrayOperationIOS());
       out.println(); 
       out.println("}"); 
       out.close(); 
@@ -17682,15 +17930,40 @@ public BehaviouralFeature designAbstractKillOp()
                  "    { let " + pkname + " : String? = jsonObj[\"" + pkname + "\"] as! String?\n" + 
                  "      var " + x + " : " + ename + "? = " + ename + "." + ename + "_index[" + pkname + "!]\n" +  
                  "      if (" + x + " == nil)\n" + 
-                 "      { " + x + " = " + ename + ".createByPK" + ename + "(key: " + pkname + "!) }\n" + 
+                 "      { " + x + " = createByPK" + ename + "(key: " + pkname + "!) }\n" + 
                  "      \n"; 
 				 
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
       String attname = att.getName(); 
       Type t = att.getType(); 
-      String decoder = " as! " + t.getSwift(); 
-      res = res + "      " + x + "!." + attname + " = jsonObj[\"" + attname + "\"]" + decoder + ";\n"; 
+      if (t.isSequence() && t.elementType != null && 
+          t.elementType.isEntity())
+      { String xname = t.elementType.getName(); 
+        res = res + "      " + 
+              x + "!." + attname + " = " + 
+              xname + "_DAO.parseJSONArray(objs: jsonObj[\"" + attname + "\"] as! NSArray)\n"; } 
+      else 
+      { String decoder = " as! " + t.getSwift(); 
+        res = res + "      " + x + "!." + attname + " = jsonObj[\"" + attname + "\"]" + decoder + "\n"; 
+      } 
+    } 
+
+    // associations? 
+    for (int i = 0; i < associations.size(); i++) 
+    { Association ast = (Association) associations.get(i); 
+      if (ast.isOneMany() || ast.isZeroOneMany()) { } 
+      else 
+      { continue; } 
+      if (ast.isPersistent()) { } 
+      else 
+      { continue; } 
+
+      String role = ast.getRole2(); 
+      Entity ent2 = ast.getEntity2(); 
+      String tname = ent2.getName();
+ 
+      res = res + "      " + x + "!." + role + " = " + tname + "_DAO.parseJSONArray(objs: jsonObj[\"" + role + "\"] as! NSArray)\n";
     } 
       
     res = res +   "      return " + x + "!\n" + 
@@ -17702,20 +17975,71 @@ public BehaviouralFeature designAbstractKillOp()
 
   private String writeJSONOperationIOS()
   { String ename = getName(); 
+    boolean prev = false; 
 
     String res = "  static func writeJSON(_x : " + ename + ") -> NSDictionary\n" + 
                  "  { return [\n"; 
     for (int i = 0; i < attributes.size(); i++) 
     { Attribute att = (Attribute) attributes.get(i); 
-      String attname = att.getName(); 
-      res = res + "       \"" + attname + "\": " + Type.nsValueOf(att);
-      if (i < attributes.size() - 1) 
-      { res = res + ",\n"; } 
+      String attname = att.getName();
+      if (prev)
+      { res = res + ",\n"; }  
+      res = res + 
+            "       \"" + attname + "\": " + 
+            Type.nsValueOf(att);
+      prev = true; 
     } 
-    res = res + "      ]\n";  
+
+    for (int i = 0; i < associations.size(); i++) 
+    { Association ast = (Association) associations.get(i); 
+      if (ast.isOneMany() || ast.isZeroOneMany()) { } 
+      else 
+      { continue; } 
+      if (ast.isPersistent()) { } 
+      else 
+      { continue; } 
+
+      String role = ast.getRole2(); 
+      Entity ent2 = ast.getEntity2(); 
+      String tname = ent2.getName();
+ 
+      if (prev)
+      { res = res + ",\n"; }  
+      res = res + "       \"" + role + "\": " + tname + "_DAO.writeJSONArray(es: _x." + role + ")";
+      prev = true; 
+    } 
+
+    res = res + "\n      ]\n";  
     res = res + "  }\n\n"; 
     return res; 
   }
+
+  private String writeJSONArrayOperationIOS()
+  { String ename = getName(); 
+    String res = "  static func writeJSONArray(es : [" + ename + "]) -> NSArray\n" + 
+                  "  { var result : [NSDictionary] = [NSDictionary]()\n" + 
+                  "    for (_,_ex) in es.enumerated()\n" + 
+                  "    { let _jx : NSDictionary = writeJSON(_x : _ex)\n" +
+                  "      result = result + [_jx]\n" +  
+                  "    }\n" + 
+                  "    return result as NSArray\n" + 
+                  "  }\n\n"; 
+    return res;
+  }
+
+  private String parseJSONArrayOperationIOS()
+  { String ename = getName(); 
+    String res = "  static func parseJSONArray(objs : NSArray) -> [" + ename + "]\n" + 
+                  "  { var res : [" + ename + "] = [" + ename + "]()\n" + 
+                  "    for (_,obj) in objs.enumerated()\n" + 
+                  "    { if let _ex = parseJSON(obj: (obj as? [String: AnyObject]))\n" +
+                  "      { res.append(_ex) }\n" +  
+                  "    }\n" + 
+                  "    return res\n" + 
+                  "  }\n\n"; 
+    return res;
+  }
+
 
   private String parseJSONSequenceOperation()
   { String ename = getName(); 

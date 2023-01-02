@@ -1,6 +1,6 @@
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -3645,9 +3645,9 @@ public class UCDArea extends JPanel
         if (eeDAO != null) 
         { predefinedComponents.add(eeDAO); }
         if (internetAccessor != null && !(predefinedComponents.contains(internetAccessor)))
-	    { predefinedComponents.add(internetAccessor); }
-	  } 
-	  else if (ent.isCloud())
+        { predefinedComponents.add(internetAccessor); }
+      } 
+      else if (ent.isCloud())
       { Entity eeDAO = (Entity) ModelElement.lookupByName(ename + "_DAO",entities); 
         Entity cloudAccessor = (Entity) ModelElement.lookupByName("FirebaseDbi",entities);
         Entity cloudAuthenticator = (Entity) ModelElement.lookupByName("FirebaseAuthenticator",entities);
@@ -3832,6 +3832,8 @@ public class UCDArea extends JPanel
 
           String maincode = ent.cg(cgswiftmain); 
           cgswiftmain.displayText(maincode,entfout); 
+
+          ent.generateClassExtension(entfout); 
 
           entfout.close();
         } catch (Exception _e1) { _e1.printStackTrace(); }

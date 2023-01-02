@@ -17,6 +17,7 @@ abstract class Statement implements Cloneable
   protected Entity entity = null;  // owner of the statement/its method
 
   protected boolean brackets = false; 
+  protected boolean unusedStatement = false; 
 
   public static final int WHILE = 0; 
   public static final int FOR = 1; 
@@ -373,8 +374,10 @@ abstract class Statement implements Cloneable
     if (st instanceof InvocationStatement)
     { InvocationStatement invok = 
         (InvocationStatement) st; 
-      Expression expr = invok.getCallExp(); 
-      if ((expr + "").startsWith("self." + nme + "("))
+      Expression expr = invok.getCallExp();
+ 
+      // if ((expr + "").startsWith("self." + nme + "("))
+      if (expr != null && expr.isSelfCall(nme))
       { res.add(st);
         Vector thiscall = new Vector(); 
         thiscall.add(st); 
@@ -386,8 +389,10 @@ abstract class Statement implements Cloneable
 
     if (st instanceof ReturnStatement)
     { ReturnStatement retstat = (ReturnStatement) st; 
-      Expression expr = retstat.getReturnValue(); 
-      if ((expr + "").startsWith("self." + nme + "("))
+      Expression expr = retstat.getReturnValue();
+ 
+      // if ((expr + "").startsWith("self." + nme + "("))
+      if (expr != null && expr.isSelfCall(nme))
       { res.add(st);
         Vector thiscall = new Vector(); 
         thiscall.add(st); 
@@ -587,8 +592,10 @@ abstract class Statement implements Cloneable
         (InvocationStatement) st;
       Statement res = new ContinueStatement();  
       
-      Expression expr = invok.getCallExp(); 
-      if ((expr + "").startsWith("self." + nme + "("))
+      Expression expr = invok.getCallExp();
+ 
+      // if ((expr + "").startsWith("self." + nme + "("))
+      if (expr != null && expr.isSelfCall(nme))
       { Statement passigns = 
              bf.parameterAssignments(expr);
         if (passigns == null) 
@@ -605,8 +612,10 @@ abstract class Statement implements Cloneable
     { ReturnStatement retstat = (ReturnStatement) st; 
       Statement res = new ContinueStatement();  
       
-      Expression expr = retstat.getReturnValue(); 
-      if ((expr + "").startsWith("self." + nme + "("))
+      Expression expr = retstat.getReturnValue();
+ 
+      // if ((expr + "").startsWith("self." + nme + "("))
+      if (expr != null && expr.isSelfCall(nme))
       { Statement passigns = 
              bf.parameterAssignments(expr);
         if (passigns == null) 
@@ -672,6 +681,71 @@ abstract class Statement implements Cloneable
       Statement newend =
         Statement.replaceSelfCallsByContinue(
                bf, nme, endstat); 
+      Statement newtry = 
+        new TryStatement(newbdy, newstats, newend); 
+      return newtry; 
+    } 
+
+    return st;
+  } // Other cases, for all other forms of statement. 
+
+  public static Statement removeUnusedStatements(Statement st)
+  { 
+    if (st == null) 
+    { return st; }
+
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      Vector stats = sq.getStatements();
+      Vector res = new Vector(); 
+ 
+      for (int i = 0; i < stats.size(); i++) 
+      { Statement ss = (Statement) stats.get(i); 
+        if (ss.unusedStatement) { } 
+        else 
+        { Statement newss = ss.removeUnusedStatements(ss); 
+          res.add(newss); 
+        } 
+      } 
+      return new SequenceStatement(res);
+    } 
+    
+    if (st instanceof ConditionalStatement) 
+    { ConditionalStatement cs = (ConditionalStatement) st;
+      Expression tst = cs.getTest(); 
+
+      Statement ifstat = cs.ifPart();
+      Statement elsestat = cs.elsePart(); 
+      
+      Statement newif = 
+        Statement.removeUnusedStatements(ifstat); 
+      Statement newelse = 
+        Statement.removeUnusedStatements(elsestat); 
+
+      return new ConditionalStatement(tst,newif,newelse); 
+    } 
+
+    if (st instanceof TryStatement) 
+    { TryStatement ts = (TryStatement) st; 
+      Statement bdy = ts.getBody(); 
+      Statement newbdy = 
+        Statement.removeUnusedStatements(bdy);
+   
+      Vector stats = ts.getClauses(); 
+      Vector newstats = new Vector();
+ 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          if (stat.unusedStatement) { } 
+          else 
+          { newstats.add(stat); } 
+        }  
+      }
+
+      Statement endstat = ts.getEndStatement(); 
+      Statement newend =
+        Statement.removeUnusedStatements(endstat); 
       Statement newtry = 
         new TryStatement(newbdy, newstats, newend); 
       return newtry; 
@@ -6682,8 +6756,9 @@ class SequenceStatement extends Statement
       Expression use = 
         ModelElement.lookupExpressionByName(var,res); 
       if (use == null) 
-      { System.err.println("!! Bad smell (UVA): no use of local variable " + var + " in statements " + sstail); 
+      { System.err.println("!! Code smell (UVA): no use of local variable " + var + " in statements " + sstail); 
         System.err.println(); 
+        cs.unusedStatement = true; 
       } 
       res = ModelElement.removeExpressionByName(var,res); 
       return res; 
@@ -6720,9 +6795,10 @@ class SequenceStatement extends Statement
       Expression use = 
         ModelElement.lookupExpressionByName(var,res); 
       if (use == null) 
-      { System.err.println("!! Bad smell (UVA): no use of local variable " + var + " in statements " + sstail); 
+      { System.err.println("!! Code smell (UVA): no use of local variable " + var + " in statements " + sstail); 
         System.err.println(); 
         unused.add(var); 
+        cs.unusedStatement = true; 
       } 
       res = ModelElement.removeExpressionByName(var,res); 
       return res; 

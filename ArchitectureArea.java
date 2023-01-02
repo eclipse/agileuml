@@ -56,7 +56,7 @@ class ArchitectureArea extends JPanel
     //Solid line -- could be made smaller for thinner line
     final static BasicStroke stroke = new BasicStroke(2.0f);
     
-    ArchitectureWin controller;
+    // ArchitectureWin controller;
     UCDArea parent; 
     
     //Get the screen size for the size of the scroll bar view
@@ -121,9 +121,9 @@ class ArchitectureArea extends JPanel
   private int linecount = 0;
 
 
- public ArchitectureArea(ArchitectureWin controller, 
+ public ArchitectureArea(Object controller, 
                          UCDArea par, String s, Vector es)
- { this.controller = controller;
+ { // this.controller = controller;
    parent = par; 
    entities = new Vector(); 
    if (es != null) 
@@ -933,97 +933,6 @@ class ArchitectureArea extends JPanel
     } 
   } 
 
-  public boolean editMessage(Message t)
-  { boolean res = true; 
-    LineData ld = (LineData) selectedVisual; 
- 
-    if (transDialog == null) 
-    { transDialog = new MessageEditDialog(controller); 
-      transDialog.pack();
-
-      transDialog.setLocationRelativeTo(controller); 
-    }
-
-    Vector evs = new Vector(); 
-
-    if (t.target != null)
-    { evs.addAll(t.target.getClassifier().getOperations()); 
-      System.out.println(evs); 
-    } 
-
-    String st = ""; 
-    String rt = ""; 
-    if (t.ta1 != null) 
-    { st = t.ta1 + ""; } 
-    if (t.ta2 != null) 
-    { rt = t.ta2 + ""; } 
-    
-    transDialog.setOldFields(evs,st,rt,t.isForall()); 
-    transDialog.setVisible(true); 
-
-    String t1 = transDialog.getT1(); 
-    String t2 = transDialog.getT2(); 
-
-    if (t1 != null && !t1.trim().equals(""))
-    { TimeAnnotationData tad1 = 
-        new TimeAnnotationData(ld.xstart,t.y1,Color.black,rectcount); 
-      rectcount++;
-      visuals.addElement(tad1);
-      tad1.setx2(ld.xstart - 30); 
-      TimeAnnotation tan1 = new TimeAnnotation(tad1.label);
-      tan1.sety1(t.y1); 
-      tan1.sety2(t.y1); 
-      tan1.onObjects = t.source; 
-      tan1.setTime(new BasicExpression(t1)); 
-      // tan1.setx1(t.x1); 
-      // tan1.setx2(t.x1 - 30); 
-      timeAnnotations.add(tan1); 
-      tad1.setTimeAnnotation(tan1);
-      t.ta1 = tan1; 
-      repaint(); 
-    }
-
-    if (t2 != null && !t2.trim().equals(""))
-    { TimeAnnotationData tad2 = 
-        new TimeAnnotationData(ld.xend,t.y2,Color.black,rectcount); 
-      rectcount++;
-      visuals.addElement(tad2);
-      tad2.setx2(ld.xend + 30); 
-      TimeAnnotation tan2 = new TimeAnnotation(tad2.label);
-      tan2.sety1(t.y2); 
-      tan2.sety2(t.y2); 
-      tan2.onObjects = t.target; 
-      tan2.setTime(new BasicExpression(t2)); 
-      // tan1.setx1(t.x1); 
-      // tan1.setx2(t.x1 - 30); 
-      timeAnnotations.add(tan2); 
-      tad2.setTimeAnnotation(tan2);
-      t.ta2 = tan2; 
-      repaint(); 
-    }
-
-    t.setStereotype(transDialog.getQuantifier()); 
-    
-    // parse the start and end times
-    String txt = transDialog.getName();     
-    if (txt != null && !txt.trim().equals(""))
-    { String ttxt = txt.trim();    
-      System.out.println("The name entered is valid.");
-      BehaviouralFeature e = 
-        (BehaviouralFeature) ModelElement.lookupByName(ttxt,evs); 
-      if (e != null) 
-      { t.setOperation(e); } 
-      else 
-      { System.out.println("No event with name " + ttxt); } 
-      ld.setName(ttxt);   // ??
-      return res; 
-    }
-    else
-    { System.out.println("Null text"); 
-      return false; 
-    } 
-  }
-
 
   public boolean editComponent(ArchComponent r)
   { 
@@ -1044,224 +953,8 @@ class ArchitectureArea extends JPanel
   } 
 
 
-  public boolean editExecution(ExecutionInstance t)
-  { boolean res = true; 
-    EORectData ld = (EORectData) selectedVisual; 
-    int y0 = ld.sourcey; 
-
-    if (eDialog == null) 
-    { eDialog = new ExecutionEditDialog(controller); 
-      eDialog.pack();
-
-      eDialog.setLocationRelativeTo(controller); 
-    }
-
-    Vector evs = new Vector(); 
-    evs.addAll(messages); 
-    for (int i = 0; i < visuals.size(); i++) 
-    { VisualData vd = (VisualData) visuals.get(i); 
-      if (vd instanceof LineData) 
-      { LineData messd = (LineData) vd; 
-        if (messd.message != null && messd.yend > y0)
-        { evs.remove(messd.message); } 
-        if (messd.message != null && messd.message.target != t.executesOn)
-        { evs.remove(messd.message); }    
-      } 
-    } 
-
-    // if (t.executesOn != null)
-    // { evs.addAll(t.executesOn.getClassifier().getOperations()); 
-    //   System.out.println(evs); 
-    // } 
-
-    eDialog.setOldFields(evs,"" + t.startTime,"" + t.endTime,"" + t.trigger); 
-    eDialog.setVisible(true); 
-
-    String txt = eDialog.getName();     
-    if (txt != null && !txt.trim().equals(""))
-    { String ttxt = txt.trim();    
-      System.out.println("The name entered is valid.");
-      Message e = 
-        (Message) VectorUtil.lookup(ttxt,evs); 
-      if (e != null) 
-      { t.setMessage(e); } 
-      else 
-      { System.out.println("No event with name " + ttxt); } 
-      ld.setName(ttxt);   // ??
-      return res; 
-    }
-    else
-    { System.out.println("Null text"); 
-      return false; 
-    } 
-  }
-
-
-  public void editState(State ss) 
-  { if (sDialog == null)
-    { sDialog = new StateEdtDialog(controller); 
-      sDialog.pack();
-
-      sDialog.setLocationRelativeTo(controller); 
-    } 
-
-    sDialog.setOldFields(ss.label,false); 
-    sDialog.setVisible(true);
-
-    // String txt = stateDialog.getName();
-    // boolean ini = stateDialog.getInit(); 
-    String inv = sDialog.getInv(); 
-    // String entry = stateDialog.getEntry(); 
-
-    if (inv != null)
-    { Maplet props = ss.getProperties(); 
-      if (props == null) 
-      { props = new Maplet(null,new Vector()); }
-      Vector invs = (Vector) props.dest; 
-      Compiler comp = new Compiler(); 
-      comp.lexicalanalysis(inv);
-      Expression pinv = comp.parse(); 
-      if (pinv != null) 
-      { invs.add(pinv); } 
-      ss.setProperties(props); 
-    } 
-  } 
-
-  public void editTimeAnnotation(TimeAnnotation ta) 
-  { if (taDialog == null)
-    { taDialog = new TAEditDialog(controller); 
-      taDialog.pack();
-
-      taDialog.setLocationRelativeTo(controller); 
-    } 
-
-    taDialog.setOldFields(ta.label,false); 
-    taDialog.setVisible(true);
-
-    boolean ini = taDialog.getInit();  // stereotype 
-    String inv = taDialog.getInv(); 
-    String nme = taDialog.getName(); 
-
-    if (inv != null)
-    { Compiler comp = new Compiler(); 
-      comp.lexicalanalysis(inv);
-      Expression pinv = comp.parse(); 
-      if (pinv != null) 
-      { ta.setCondition(pinv); } 
-    } 
-
-    if (nme != null)
-    { Compiler comp = new Compiler(); 
-      comp.lexicalanalysis(nme);
-      Expression tanme = comp.parse(); 
-      if (tanme != null) 
-      { ta.setTime(tanme); } 
-    } 
-
-    if (ini)
-    { ta.setStereotype("<<forall>>"); } 
-    else 
-    { ta.setStereotype("<<exists>>"); } 
-
-  } 
   
-  public void editScenario(Scenario sc) 
-  { if (scenarioDialog == null)
-    { scenarioDialog = new ScenarioEditDialog(controller); 
-      scenarioDialog.pack();
-      scenarioDialog.setLocationRelativeTo(this);
-    } 
 
-    scenarioDialog.setOldFields(sc.getName(), sc.informalDescription, 
-                                sc.semiformalDescription + "", 
-                                sc.formalDescription + ""); 
-    scenarioDialog.setVisible(true); 
-
-    String snme = scenarioDialog.getName(); 
-    // String reqnme = JOptionPane.showInputDialog("Enter requirement name:");
-    String text = scenarioDialog.getText(); 
-    String text1 = scenarioDialog.getText1(); 
-    String cons = scenarioDialog.getCons(); 
-      
-    sc.setText(text); 
-    if (text1 != null && text1.trim().length() > 0)
-    { Compiler2 comp2 = new Compiler2(); 
-      comp2.nospacelexicalanalysis(text1); 
-      Sbvrse ss = comp2.parseSbvrse(); 
-      sc.setSbvrse(ss); 
-    } 
-
-    if (cons != null && cons.trim().length() > 0)
-    { Compiler2 c3 = new Compiler2(); 
-      c3.nospacelexicalanalysis(cons); 
-      Expression con = c3.parse(); 
-      Constraint fc = Constraint.getConstraint(con); 
-      sc.setConstraint(fc); 
-    } 
-  } 
-
-  public void editDurationAnnotation(DurationAnnotation da) 
-  { if (durationDialog == null)
-    { durationDialog = new DurationEditDialog(controller); 
-      durationDialog.pack();
-
-      durationDialog.setLocationRelativeTo(controller); 
-    } 
-
-    Vector sources = new Vector(); 
-    Vector targets = new Vector(); 
-
-    for (int i = 0; i < timeAnnotations.size(); i++)
-    { TimeAnnotation ta = (TimeAnnotation) timeAnnotations.get(i); 
-      if (ta.y1 <= da.y1 + 5 && da.y1 <= ta.y1 + 5) 
-      { sources.add(ta); } 
-      else if (ta.y1 <= da.y2 + 5 && da.y2 <= ta.y1 + 5)
-      { targets.add(ta); } 
-    } 
-
-    durationDialog.setOldFields(sources,targets,da.lower + "",da.lower + ""); 
-    durationDialog.setVisible(true);
-
-    String t1 = durationDialog.getT1();   // lower
-    String t2 = durationDialog.getT2();  // upper
-
-    if (t1 != null)
-    { Compiler comp = new Compiler(); 
-      comp.lexicalanalysis(t1);
-      Expression low = comp.parse(); 
-      if (low != null) 
-      { da.setLower(low); } 
-    } 
-
-    if (t2 != null)
-    { Compiler comp = new Compiler(); 
-      comp.lexicalanalysis(t2);
-      Expression upp = comp.parse(); 
-      if (upp != null) 
-      { da.setUpper(upp); } 
-    } 
-
-    String ta1 = durationDialog.getTA1(); 
-    String ta2 = durationDialog.getTA2(); 
-    TimeAnnotation tastart = (TimeAnnotation) VectorUtil.lookup(ta1,sources);
-    TimeAnnotation taend = (TimeAnnotation) VectorUtil.lookup(ta2,targets);
-    if (tastart != null)
-    { da.startTime = tastart; 
-      da.y1 = tastart.y1; 
-    }
-    if (taend != null)
-    { da.endTime = taend; 
-      da.y2 = taend.y1; 
-    }
-    if (selectedVisual instanceof DurationAnnotationData) 
-    { DurationAnnotationData dad = (DurationAnnotationData) selectedVisual; 
-      if (dad != null && dad.da == da) 
-      { dad.ystart = da.y1; 
-        dad.yend = da.y2; 
-      } 
-    } 
-    // and the DurationAnnotationData ystart, yend
-  } 
 
   private void insertSorted(int y, int i, Vector tt, Vector events)
   { if (i >= events.size())
@@ -1393,32 +1086,6 @@ class ArchitectureArea extends JPanel
     case EDIT: 
       this.mode = mode;
       break;
-    case EVENTS:
-      setAppropriateCursor(mode); 
-      if (nameDialog == null)
-	{
-	  //Create the new dialog box
-	  nameDialog = new EvtNameDialog(controller); 
-	  nameDialog.pack();
-
-	  //set the location and make it visible
-	  nameDialog.setLocationRelativeTo(controller);
-	}
-		
-      //Make the dialogue box visible (already been created)
-      nameDialog.setVisible(true); // this shows the dialog box
-	
-      //Get the new text (event name) entered from the textfield 
-      String txt = nameDialog.getValidatedText();
-      String ttxt = txt.trim(); 
-
-      if (ttxt != null) 
-      {	  // The text is valid - it is not null 
-	  // and has passed the other test as well.
-	System.out.println("The event entered is valid.");
-        Event newevent = new Event(ttxt); 
-      }
-      break;
     case INERT: 
       this.mode = mode;
       break; 
@@ -1522,7 +1189,7 @@ class ArchitectureArea extends JPanel
       repaint();
       mode = INERT;
       break;
-    case TANN:
+   /* case TANN:
       System.out.println(">> Creating provided interface");
       if (scenarioDialog == null)
       { scenarioDialog = new ScenarioEditDialog(controller); 
@@ -1557,7 +1224,7 @@ class ArchitectureArea extends JPanel
       repaint();
       mode = INERT;
       repaint();
-      break;
+      break; */ 
     case DANN:
       repaint();
       break;
