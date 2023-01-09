@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -12,7 +12,7 @@
  * 
  * Version information : 2.2
  *
- * Date : December 2022
+ * Date : January 2023
  * 
  * Description : This describes the GUI interface of 
  * the UML RSDS tool,
@@ -739,6 +739,8 @@ public void findPlugins()
 
     JMenuItem qualCheck = 
       new JMenuItem("Quality check"); 
+    qualCheck.setToolTipText(
+      "Checks for code smells and other flaws");
     qualCheck.addActionListener(this);
     analyseMenu.add(qualCheck);
 
@@ -842,13 +844,24 @@ public void findPlugins()
 
     JMenuItem extractIntf = 
       new JMenuItem("Extract Interface"); 
+    extractIntf.setToolTipText(
+      "Defines new interface with operations of the class");
     extractIntf.addActionListener(this);
     qualityMenu.add(extractIntf);
 
     JMenuItem extractOper = 
       new JMenuItem("Extract Operation"); 
+    extractOper.setToolTipText(
+      "Defines new operation for cloned expressions/statements");
     extractOper.addActionListener(this);
     qualityMenu.add(extractOper);
+
+    JMenuItem extractComponent = 
+      new JMenuItem("Extract Component"); 
+    extractComponent.setToolTipText(
+      "Splits class into client/supplier components");
+    extractComponent.addActionListener(this);
+    qualityMenu.add(extractComponent);
 
     JMenuItem remredin = 
       new JMenuItem("Remove Redundant Inheritance"); 
@@ -880,7 +893,16 @@ public void findPlugins()
     JMenuItem removeRecursionop = 
       new JMenuItem("Replace recursion by loops"); 
     removeRecursionop.addActionListener(this);
+    removeRecursionop.setToolTipText(
+      "Replaces self calls of operation by loop code where possible");
     qualityMenu.add(removeRecursionop);
+
+    JMenuItem splitSegmentsop = 
+      new JMenuItem("Split operation"); 
+    splitSegmentsop.addActionListener(this);
+    splitSegmentsop.setToolTipText(
+      "Splits operation code into segments where possible");
+    qualityMenu.add(splitSegmentsop);
 
     JMenuItem refineMenu = new JMenu("Refinement"); 
     transMenu.add(refineMenu); 
@@ -931,10 +953,14 @@ public void findPlugins()
 
     JMenuItem valueObjectMI = new JMenuItem("Value Object"); 
     valueObjectMI.addActionListener(this);
+    valueObjectMI.setToolTipText(
+      "Puts group of operation parameters into a new class");
     patternsMenu.add(valueObjectMI);
 
     JMenuItem singletonMI = new JMenuItem("Singleton"); 
     singletonMI.addActionListener(this);
+    singletonMI.setToolTipText(
+      "Defines a selected class to be a singleton");
     patternsMenu.add(singletonMI);
 
     // JMenuItem observerMI = new JMenuItem("Observer"); 
@@ -942,6 +968,8 @@ public void findPlugins()
     // patternsMenu.add(observerMI);
 
     JMenuItem facadeMI = new JMenuItem("Facade"); 
+    facadeMI.setToolTipText(
+      "Checks if 2+ classes all reference 2+ same other classes");
     facadeMI.addActionListener(this);
     patternsMenu.add(facadeMI);
 
@@ -2423,9 +2451,9 @@ public void findPlugins()
 
         // new TextDisplay("Guidelines","umlrsds.pdf");
         Runtime proc = Runtime.getRuntime(); 
-        try { Process p = proc.exec("C:\\Program Files\\Mozilla Firefox\\firefox.exe http://www.nms.kcl.ac.uk/kevin.lano/umlrsds.pdf"); } 
+        try { Process p = proc.exec("C:\\Program Files\\Mozilla Firefox\\firefox.exe http://www.agilemde.co.uk/umlrsds20.pdf"); } 
         catch (Exception ee) 
-        { System.err.println("Unable to open the UML-RSDS manual: requires Firefox"); } 
+        { System.err.println("!! Unable to open the UML-RSDS manual: requires Firefox"); } 
       }
       else if (label.equals("Quality check"))
       { ucdArea.qualityCheck(); }
@@ -2435,6 +2463,10 @@ public void findPlugins()
       }
       else if (label.equals("Extract Operation"))
       { ucdArea.extractOperation(); 
+        repaint(); 
+      }
+      else if (label.equals("Extract Component"))
+      { ucdArea.extractComponent(); 
         repaint(); 
       }
       else if (label.equals("Introduce Superclass"))
@@ -2485,6 +2517,8 @@ public void findPlugins()
       } 
       else if (label.equals("Replace recursion by loops"))
       { this.transformOperationActivity(); } 
+      else if (label.equals("Split operation"))
+      { this.splitOperationActivity(); } 
       else if (label.equals("Value Object"))
       { ucdArea.makeValueObjects(); }
       else if (label.equals("Singleton"))
@@ -3228,6 +3262,26 @@ public void findPlugins()
     } 
   }
 
+  private void splitOperationActivity()
+  { if (listShowDialog == null)
+    { listShowDialog = new ListShowDialog(this);
+      listShowDialog.pack();
+      listShowDialog.setLocationRelativeTo(this); 
+    }
+    listShowDialog.setOldFields(ucdArea.getEntities()); 
+    thisLabel.setText("Select entity to split operation activity for"); 
+    System.out.println(">> Select entity to split operation activity for");
+
+    listShowDialog.setVisible(true); 
+
+    Object[] vals = listShowDialog.getSelectedValues();
+    if (vals != null && vals.length > 0 &&
+        vals[0] instanceof Entity)
+    { Entity ent = (Entity) vals[0];
+      ucdArea.splitOperationActivity(ent);
+    } 
+  }
+
   private void createUseCaseActivity()
   { thisLabel.setText("Select use case to create activity for"); 
     System.out.println(">> Select use case to create activity for");
@@ -3411,8 +3465,20 @@ public void findPlugins()
         inter.addAll((Vector) suppliers.get(e)); 
         inter.retainAll((Vector) suppliers.get(e2)); 
         if (inter.size() > 1) 
-        { System.out.println(">>> Possible facade: " + inter + " for " + e + " & " +
-                             e2); 
+        { String fname = ModelElement.underscoredNames(inter);
+          String interdecs = ""; 
+          for (int k = 0; k < inter.size(); k++) 
+          { Entity supp = (Entity) inter.get(k); 
+            String sname = supp.getName(); 
+            interdecs = interdecs + 
+                  "reference " + sname.toLowerCase() + " : " +
+                  sname + ";\n  "; 
+          }  
+          System.out.println(">>> Possible facade: \n"); 
+          System.out.println("class Facade_" + fname); 
+          System.out.println("{ " + interdecs + "\n}\n"); 
+          System.out.println("for " + e + " & " + e2);
+          System.out.println();  
         } 
       } 
     } 

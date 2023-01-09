@@ -4570,11 +4570,20 @@ public class Entity extends ModelElement implements Comparable
       { lowcount++; } 
 
       totalComplexity = totalComplexity + opcomplexity;  
+
       Vector opuses = op.operationsUsedIn(); 
-      if (opuses.size() > 0)
-      { out.println("*** Operations used in " + op.getName() + " are: " + opuses); } 
-      op.findClones(clones); 
+      // System.out.println(">>> Operations used in " + op.getName() + ": " + opuses);
+      Vector vuses = new Vector(); 
+      Vector newopuses = VectorUtil.union(vuses,opuses); 
+  
+      if (newopuses.size() > 0)
+      { out.println("*** Operations used in " + op.getName() + " are: " + newopuses); } 
+
+      op.findClones(clones);
+      // System.out.println(">>> Clones in " + op.getName() + ": " + clones);  
+
       op.findMagicNumbers(mgns); 
+      // System.out.println(">>> Magic numbers in " + op.getName() + ": " + mgns);  
       out.println(); 
     } 
 
@@ -4924,24 +4933,29 @@ public class Entity extends ModelElement implements Comparable
   public Map getCallGraph()
   { Map res = new Map(); 
 
-    for (int i = 0; i < operations.size(); i++) 
+    String ename = getName(); 
+    int n = operations.size(); 
+
+    for (int i = 0; i < n; i++) 
     { BehaviouralFeature op = (BehaviouralFeature) operations.get(i); 
       String opname = op.getName(); 
 
       Vector opuses = op.operationsUsedIn(); 
+      Vector vuses = new Vector(); 
+      Vector newopuses = VectorUtil.union(vuses,opuses); 
 
-      if (opuses.size() > 5) 
-      { System.err.println("*** Code smell (EFO): > 5 operations used in " + getName() + "::" + opname); 
-        System.err.println(">>> Suggest refactoring by functional decomposition"); 
+      if (newopuses.size() > 5) 
+      { System.err.println("*** Code smell (EFO): > 5 operations used in " + ename + "::" + opname); 
+        System.err.println(">>> Suggest refactoring by splitting operation"); 
       } 
 
-      String entop = getName() + "::" + opname; 
-      for (int j = 0; j < opuses.size(); j++) 
-      { res.add_pair(entop, opuses.get(j)); } 
+      String entop = ename + "::" + opname; 
+      for (int j = 0; j < newopuses.size(); j++) 
+      { res.add_pair(entop, newopuses.get(j)); } 
 
       if (superclass != null) 
       { Entity sup = superclass; 
-        while (sup != null) 
+        while (sup != null && sup != this) 
         { if (sup.hasOperation(opname)) 
           { res.add_pair(sup.getName() + "::" + opname, entop); 
             break; 
@@ -4952,7 +4966,203 @@ public class Entity extends ModelElement implements Comparable
       } 
     } 
 
+    if (n > 0)
+    { System.out.println(">>> CRA-Index of class " + ename + " = " + res.size()/(1.0*n*(n-1))); }
+
     return res; 
+  } 
+
+  public void computeOperationRankings(Map cg)
+  { String nme = getName(); 
+
+    Vector opnames = new Vector(); 
+    java.util.Map rankings = new java.util.HashMap(); 
+    java.util.Map callers = new java.util.HashMap(); 
+
+    for (int i = 0; i < operations.size(); i++) 
+    { BehaviouralFeature op = (BehaviouralFeature) operations.get(i); 
+      String opname = op.getName();
+      opnames.add(opname); // assume no overloading
+ 
+      int r = cg.rank(nme + "::" + opname); 
+      rankings.put(opname, r); 
+      System.out.println(">>> " + opname + " has rank " + r);
+
+      Vector oplist = new Vector(); 
+      oplist.add(nme + "::" + opname); 
+      Vector coimage = 
+         cg.inverseImage(oplist);  
+      callers.put(opname, coimage); 
+      System.out.println(">>> " + opname + " callers: " + coimage);
+    } 
+
+    // Heuristics for placing operations in same component: 
+    // (i) operations with the same rank & a common caller
+    // (ii) Unallocated 
+    //      operation with a single caller with its caller, 
+    //      if the caller has a caller. 
+    // (iii) All ops in a recursive loop go together
+    // (iv) Unallocated ops called by allocated op go with it
+    //     -- If conflict between components, choose one with
+    //     -- strongest coupling with unallocated op.
+    // (v) Operations with no caller remain in this class
+    // (vi) Merge components with a common operation
+
+    java.util.Map components = new java.util.HashMap(); 
+
+    /* Heuristic (i): */ 
+
+    for (int i = 0; i < opnames.size(); i++) 
+    { String opname = (String) opnames.get(i); 
+      Vector possibleComp = new Vector();
+      possibleComp.add(opname); 
+      components.put(opname, possibleComp); 
+    } 
+
+ /*   int r = (int) rankings.get(opname); 
+      Vector calledBy = (Vector) callers.get(opname); 
+
+      for (int j = 0; j < opnames.size(); j++)
+      { String op1name = (String) opnames.get(j); 
+        if (op1name.equals(opname)) { } 
+        else 
+        { int r1 = (int) rankings.get(op1name); 
+          Vector calledBy1 = (Vector) callers.get(op1name); 
+          if (r1 == r && 
+              VectorUtil.haveCommonElement(
+                                     calledBy,calledBy1))
+          { possibleComp.add(op1name); } 
+        } 
+      }
+      System.out.println(">>> Possible component (i) for " + 
+                         opname + " is " + possibleComp); 
+    } */ 
+    
+    /* Heuristic (ii): */ 
+
+    for (int i = 0; i < opnames.size(); i++) 
+    { String opname = (String) opnames.get(i); 
+      Vector possibleComp = (Vector) components.get(opname);
+      Vector calledBy = (Vector) callers.get(opname); 
+      if (possibleComp.size() == 1 && 
+          calledBy != null && calledBy.size() == 1) 
+      { String opname1 = (String) calledBy.get(0);
+        int indx = opname1.indexOf("::"); 
+        opname1 = opname1.substring(indx+2);  
+        Vector calledBy1 = (Vector) callers.get(opname1); 
+        if (calledBy1.size() > 0)
+        { Vector comp1 = (Vector) components.get(opname1);
+          Vector oldcomp1 = new Vector(); 
+          oldcomp1.addAll(comp1);  
+          comp1.addAll(possibleComp);
+          possibleComp.addAll(oldcomp1);
+        } 
+      } // Merge the 2 components 
+
+      System.out.println(">>> Possible component (ii) for " + 
+                         opname + " is " + possibleComp); 
+    } 
+
+    /* Heuristic (iv): */ 
+
+    for (int i = 0; i < opnames.size(); i++) 
+    { String opname = (String) opnames.get(i); 
+      Vector callingOps = (Vector) callers.get(opname); 
+      Vector possibleComp = (Vector) components.get(opname);
+
+      if (possibleComp.size() == 1 && callingOps.size() > 0) 
+      { // Put it in the component that has most calls to it
+
+        Vector maxcomponent = new Vector(); 
+        int maxcaller = 0; 
+
+        for (int j = 0; j < callingOps.size(); j++) 
+        { String cname = (String) callingOps.get(j); 
+          int indx = cname.indexOf("::"); 
+          String opname1 = cname.substring(indx+2);  
+          Vector comp1 = (Vector) components.get(opname1); 
+          Map comp1Calls = Map.restrictToSourcesTarget(
+                                           cg,comp1,opname);
+          int sz1 = comp1Calls.size(); 
+          if (sz1 > maxcaller) 
+          { maxcaller = sz1; 
+            maxcomponent = comp1; 
+          } 
+        } 
+
+        if (maxcaller > 0)
+        { maxcomponent.add(opname); 
+          Vector newcomponent = new Vector(); 
+          newcomponent.addAll(maxcomponent); 
+          components.put(opname, newcomponent); 
+        
+      
+          System.out.println(">>> Possible component (iv) for " + 
+                         opname + " is " + newcomponent); 
+        }
+      }
+    } 
+
+
+    /* Heuristic (vi): */ 
+    
+    for (int i = 0; i < opnames.size(); i++) 
+    { String opname = (String) opnames.get(i); 
+      Vector possibleComp = (Vector) components.get(opname);
+      for (int j = 0; j < opnames.size(); j++)
+      { String op1name = (String) opnames.get(j); 
+        if (op1name.equals(opname)) { } 
+        else 
+        { Vector comp2 = (Vector) components.get(op1name); 
+          if (VectorUtil.haveCommonElement(
+                                     possibleComp,comp2))
+          { Vector comp3 = 
+                VectorUtil.union(possibleComp,comp2);
+            components.put(opname, comp3); 
+            components.put(op1name, comp3); 
+          } 
+        } 
+      }
+      System.out.println(">>> Possible component (vi) for " + 
+                         opname + " is " + possibleComp); 
+    } 
+
+    Vector finalComponents = new Vector(); 
+    for (int i = 0; i < opnames.size(); i++) 
+    { String opname = (String) opnames.get(i); 
+      Vector possibleComp = (Vector) components.get(opname);
+      if (VectorUtil.containsEqualVector( 
+                         possibleComp,finalComponents)) { } 
+      else 
+      { finalComponents.add(possibleComp); } 
+    } 
+
+    System.out.println(">>> Components: " + finalComponents);
+
+    // CRA-Index is cohesion - coupling 
+    // cohesion = sum over components c of 
+    //    (c cg size)/(c.size*(c.size-1))
+    // coupling = sum over different c, d of 
+    //    #(c->d dependencies)/(c.size*(d.size-1))
+
+    double newCRA = 0.0; 
+
+    for (int i = 0; i < finalComponents.size(); i++) 
+    { Vector comp = (Vector) finalComponents.get(i); 
+      int cz = comp.size(); 
+      Map selfCalls = Map.restrictToSourcesTargets(
+                                       cg,comp,comp);
+      System.out.println(">> Sub-callgraph of component " + comp + " = " + selfCalls);  
+      int sz = selfCalls.size(); 
+      if (cz > 1) 
+      { double cra = sz/(1.0*cz*(cz-1)); 
+        System.out.println(">>> CRA-Index of component " + comp + " = " + cra); 
+        newCRA = newCRA + cra;
+      }  
+    }
+   
+    System.out.println("New CRA-index after refactoring: " + newCRA); 
+ 
   } 
 
 

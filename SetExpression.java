@@ -2,7 +2,7 @@ import java.util.Vector;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -460,7 +460,7 @@ public class SetExpression extends Expression
       { BinaryExpression elem1 = 
           (BinaryExpression) elements.get(0); 
         result = 
-          "Collections.singletonMap(" + 
+          "Ocl.singletonMap(" + 
               elem1.getLeft().queryFormJava7(env,local) +
               "," + 
               elem1.getRight().queryFormJava7(env,local) +                  

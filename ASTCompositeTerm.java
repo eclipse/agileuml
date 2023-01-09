@@ -227,6 +227,46 @@ public class ASTCompositeTerm extends ASTTerm
     return res; 
   }  
 
+  public ASTTerm removeExtraNewlines()
+  { ASTTerm res = null;
+
+    Vector newterms = new Vector();  
+    String prevterm = ""; 
+
+    for (int i = 0; i < terms.size(); i++)
+    { ASTTerm trm = (ASTTerm) terms.get(i);
+      ASTTerm ntrm = trm.removeExtraNewlines(); 
+      if (ntrm == null) 
+      { continue; }  
+      if (trm instanceof ASTSymbolTerm)
+      { String str = ntrm.literalForm();
+        String strim = str.trim(); 
+        // System.out.println(">--- old term: " + str);  
+        if ("\\r\\n".equals(strim) && 
+            "\\r\\n".equals(prevterm))
+        { continue; } 
+        newterms.add(ntrm); 
+        prevterm = strim; 
+      } 
+      else 
+      { newterms.add(ntrm); 
+        prevterm = ""; 
+      } 
+    }
+
+    if (newterms.size() > 1)
+    { res = new ASTCompositeTerm(tag,newterms); } 
+    else if (newterms.size() == 1)
+    { ASTTerm tt = (ASTTerm) newterms.get(0); 
+      if (tt instanceof ASTSymbolTerm)
+      { res = new ASTBasicTerm(tag,tt.literalForm()); } 
+      else 
+      { res = new ASTCompositeTerm(tag,newterms); } 
+    } 
+
+    return res; 
+  }  
+
   public ASTTerm replaceCobolIdentifiers()
   { // Each (cobolName sss) updated to be valid sss
     Vector newterms = new Vector();  

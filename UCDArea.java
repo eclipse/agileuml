@@ -13,7 +13,7 @@
  * 
  * Version information : 2.1
  *
- * Date :  October 2022
+ * Date :  January 2023
  * 
  * Description: This class describes the area that all the painting for 
  * the CD diagram will be performed and deals with painting them
@@ -1277,6 +1277,31 @@ public class UCDArea extends JPanel
     ent1.extractOperations(); 
   } // may lead to a new operation activity. 
   
+  public void extractComponent()
+  { ListShowDialog listShowDialog = new ListShowDialog(parent);
+    listShowDialog.pack();
+    listShowDialog.setLocationRelativeTo(parent); 
+    listShowDialog.setOldFields(entities);
+    System.out.println(">>> Select class to extract components from");
+    listShowDialog.setVisible(true); 
+
+    Object[] vals = listShowDialog.getSelectedValues();
+    
+    if (vals == null) { return; } 
+    Entity ent1 = null; 
+    
+    if (vals != null && vals.length > 0)
+    { ent1 = (Entity) vals[0];
+        
+      if (ent1 == null) { return; } 
+    } 
+    
+    Map cg = ent1.getCallGraph(); 
+    System.out.println(">>> Call graph = " + cg);
+
+    ent1.computeOperationRankings(cg);  
+  }
+    
   private void editUseCaseOperation(UseCase uc)
   { ListShowDialog listShowDialog = new ListShowDialog(parent);
     listShowDialog.pack();
@@ -6467,6 +6492,18 @@ public class UCDArea extends JPanel
     System.out.println(">> Set activity for operation " + nme + " of entity " + ent); 
   }
 
+  public void splitOperationActivity(Entity ent)
+  { String nme = 
+          JOptionPane.showInputDialog("Enter operation name:");
+    BehaviouralFeature bf = ent.getOperation(nme); 
+    if (bf == null) 
+    { System.err.println("!! ERROR: No such operation: " + nme); 
+      return; 
+    } 
+
+    bf.splitIntoSegments(); 
+  }
+
   public void createUseCaseActivity(String ucname)
   { UseCase uc = (UseCase) ModelElement.lookupByName(ucname,useCases); 
 
@@ -10857,6 +10894,13 @@ public void produceCUI(PrintWriter out)
     out.println(aops);
 
     // out.println(BSystemTypes.generateSetEqualsOp()); 
+
+    out.println("  public static <T,R> HashMap<T,R> singletonMap(T x, R y)"); 
+    out.println("  { HashMap<T,R> res = new HashMap<T,R>();");  
+    out.println("    res.put(x,y); "); 
+    out.println("    return res; "); 
+    out.println("  }"); 
+    out.println(); 
     out.println("    public static <T> HashSet<T> addSet(HashSet<T> s, T x)"); 
     out.println("    { if (x != null) { s.add(x); }"); 
     out.println("      return s; }\n"); 
@@ -26488,6 +26532,10 @@ public void produceCUI(PrintWriter out)
       return; 
     } 
 
+    ASTTerm zz = xx.removeExtraNewlines(); 
+
+    // System.out.println(">>> Removed extra newlines: " + zz); 
+
     File vb2uml = new File("cg/VB2UML.cstl"); 
     Vector vbs = new Vector(); 
     CGSpec spec = loadCSTL(vb2uml,vbs); 
@@ -26497,7 +26545,12 @@ public void produceCUI(PrintWriter out)
       return; 
     } 
 
-    String reskm3 = xx.cg(spec); 
+    if (zz == null) 
+    { System.err.println("!! ERROR: Null AST"); 
+      return; 
+    } 
+
+    String reskm3 = zz.cg(spec); 
     String arg1 = CGRule.correctNewlines(reskm3); 
     System.out.println(arg1); 
 

@@ -2,7 +2,7 @@ import java.util.Vector;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -253,14 +253,28 @@ class VectorUtil
   } 
 
   public static boolean subset(final Vector v1, final Vector v2)
-   { boolean res = true;
-     for (int i = 0; i < v1.size(); i++)
-     { Object obj = v1.elementAt(i);
-       if (v2.contains(obj)) {}
-       else 
-       { res = false; 
-         return res; } }
-     return res; }
+  { boolean res = true;
+    for (int i = 0; i < v1.size(); i++)
+    { Object obj = v1.elementAt(i);
+      if (v2.contains(obj)) {}
+      else 
+      { res = false; 
+        return res; 
+      } 
+    }
+    return res; 
+  }
+
+  public static boolean haveCommonElement(final Vector v1, final Vector v2) 
+  { Vector res = new Vector(); 
+    for (int i = 0; i < v1.size(); i++) 
+    { Object obj = v1.elementAt(i); 
+      if (v2.contains(obj))
+      { return true; } 
+    } 
+
+    return false; 
+  } 
 
   public static Vector intersection(final Vector v1, final Vector v2) 
   { Vector res = new Vector(); 
@@ -269,7 +283,8 @@ class VectorUtil
       if (v2.contains(obj))
       { res.add(obj); } 
     } 
-    return res; } 
+    return res; 
+  } 
 
   public static Vector union(Vector a, Vector b)
   { if (a == null) 
@@ -354,6 +369,29 @@ class VectorUtil
     }
     return res;
   }
+
+  public static Vector subrange(Vector v, int st, int en)
+  { // v.subrange(st,en) with 0-based indexes
+
+    Vector res = new Vector(); 
+    for (int i = st; i <= en; i++) 
+    { res.add(v.get(i)); } 
+
+    return res; 
+  } 
+ 
+  public static Vector allSubsegments(Vector v, int n)
+  { Vector res = new Vector(); 
+    
+    int mx = v.size(); 
+
+    for (int i = n; i < mx; i++) 
+    { // get all segments of length i
+      for (int j = 0; j+i < mx; j++) 
+      { res.add(subrange(v,j,j+i)); } 
+    } 
+    return res; 
+  } 
 
   public static Vector replaceSubsequence(Vector sq, Vector subs, Vector rep)
   { // replace each subsequence subs of sq by rep
@@ -598,6 +636,9 @@ class VectorUtil
     coll.add("d"); coll.add("e"); 
     Vector vv = VectorUtil.allSubsequences(coll,2); 
     System.out.println(vv);
+
+    Vector ww = VectorUtil.allSubsegments(coll,2); 
+    System.out.println(ww);
 
     Vector v1 = new Vector(); 
     v1.add("c"); v1.add("d"); 

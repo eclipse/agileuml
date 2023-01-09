@@ -1,5 +1,5 @@
 /*
-      * Classname : ArchitectureWin
+      * Classname : ArchitectureApp
       * 
       * Version information : 1
       *
@@ -11,7 +11,7 @@
   package: Architecture
 */
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -65,7 +65,7 @@ public class ArchitectureApp extends JApplet implements ActionListener
 				     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				     JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
-    state_scroll.setPreferredSize(new Dimension(1000,2000));
+    state_scroll.setPreferredSize(new Dimension(500,400));
     contentPane.add(state_scroll, BorderLayout.CENTER);
 	
     messageLabel = new JLabel("Click within the framed area.");

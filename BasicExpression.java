@@ -4,7 +4,7 @@ import javax.swing.JOptionPane;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -598,6 +598,28 @@ class BasicExpression extends Expression
     
     res.setObjectRef(obj);  
     res.umlkind = QUERY;
+    res.parameters = new Vector(); 
+    for (int i = 0; i < pars.size(); i++) 
+    { // Assumed to be attributes 
+      Attribute par = (Attribute) pars.get(i); 
+      res.parameters.add(new BasicExpression(par)); 
+    } 
+    res.isEvent = true; 
+    return res; 
+  } 
+
+  public static BasicExpression newCallBasicExpression(
+                                  BehaviouralFeature bf,
+                                  Expression obj,  
+                                  Vector pars) 
+  { BasicExpression res = new BasicExpression(bf);
+    
+    res.setObjectRef(obj);  
+    if (bf.isQuery())
+    { res.umlkind = QUERY; } 
+    else 
+    { res.umlkind = UPDATEOP; } 
+
     res.parameters = new Vector(); 
     for (int i = 0; i < pars.size(); i++) 
     { // Assumed to be attributes 

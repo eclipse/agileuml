@@ -7,7 +7,7 @@ import java.util.HashSet;
 
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -59,7 +59,9 @@ public class BehaviouralFeature extends ModelElement
     { parameters = new Vector(); } 
 
     query = readstatus;
-    if (query) { addStereotype("query"); } 
+    if (query) 
+    { addStereotype("query"); }
+ 
     resultType = res;
     if (res != null && Type.isCollectionType(res)) { } 
     else 
@@ -2911,6 +2913,124 @@ public class BehaviouralFeature extends ModelElement
     } 
   }
 
+
+  public void splitIntoSegments()
+  { if (activity == null) 
+    { return; } 
+
+    String nme = getName(); // not considering generics
+
+    if (activity instanceof SequenceStatement)
+    { SequenceStatement code = (SequenceStatement) activity; 
+      Vector segments = code.segments();
+ 
+      System.out.println(">>> Segments: " + segments); 
+
+      // A segment is a viable operation if it writes only 
+      // attributes or its own local variables (not 
+      // parameters). Its parameters are all variables of 
+      // this which are read in the segment.
+
+      // Create new operation bf and set 
+      // residue to self.bf(...)
+      // Otherwise, add segment code to unprocessed and 
+      // try again with the preceding segment + unprocessed 
+
+      Vector residue = new Vector(); 
+      Vector unprocessed = new Vector(); 
+
+      for (int i = segments.size() - 1; i >= 1; i--) 
+      { Vector seg = (Vector) segments.get(i);
+        Vector completeseg = new Vector(); 
+        completeseg.addAll(seg); 
+        completeseg.addAll(unprocessed);  
+
+        SequenceStatement sseg = 
+              new SequenceStatement(completeseg); 
+        Vector wrs = sseg.writeFrame(); 
+        // Vector rds = sseg.readFrame();
+
+        Vector unused = new Vector(); 
+        Vector actuses = sseg.getVariableUses(unused);
+        actuses = ModelElement.removeExpressionByName("skip", actuses); 
+
+        System.out.println(">%%> Variables used in " + completeseg + " are: " + actuses); 
+        System.out.println(">%%> Variables written in " + completeseg + " are: " + wrs); 
+        System.out.println(">%%> Declared and unused variables of " + completeseg + " are " + unused);  
+
+        // if wrs disjoint from actuses it is ok. Parameters
+        // are actuses. 
+
+        Vector rems = 
+          ModelElement.removeExpressionsByName(wrs, actuses);
+ 
+        if (rems.size() == actuses.size())
+        { System.out.println(">%%> Valid segment. Creating new operation for it."); 
+          unprocessed = new Vector(); 
+
+          Vector pars = new Vector(); 
+          Vector pnames = new Vector(); 
+          for (int j = 0; j < actuses.size(); j++)
+          { Expression use = (Expression) actuses.get(j);
+            if (pnames.contains(use + "")) { } 
+            else 
+            { Attribute att = new Attribute(use); 
+              pars.add(att);
+              pnames.add(use + ""); 
+            }  
+          } 
+ 
+          String newopname = Identifier.nextIdentifier(nme + "_segment_"); 
+          BehaviouralFeature bf = 
+            new BehaviouralFeature(
+              newopname, pars, query, resultType); 
+          bf.setEntity(entity); 
+          bf.setPost(new BasicExpression(true));
+          if (residue.size() > 0) 
+          { sseg.addStatements(residue); } 
+          residue = new Vector();  
+          bf.setActivity(sseg); 
+          entity.addOperation(bf); 
+          if (resultType == null || 
+              "void".equals(resultType + ""))
+          { 
+            InvocationStatement callbf = 
+                new InvocationStatement("self", bf); 
+            residue.add(callbf);
+          } 
+          else 
+          { BasicExpression selfbe = 
+              new BasicExpression(entity, "self"); 
+            BasicExpression val = 
+              BasicExpression.newCallBasicExpression(
+                                         bf,selfbe,pars); 
+            ReturnStatement ret = 
+                new ReturnStatement(val); 
+            residue.add(ret); 
+          }  
+        }
+        else 
+        { System.out.println(">%%> Invalid segment. Cannot split operation."); 
+          Vector oldunprocessed = new Vector(); 
+          oldunprocessed.addAll(completeseg); 
+          unprocessed = oldunprocessed; 
+          // residue = new Vector();  
+        }
+      } 
+
+      Vector seg = (Vector) segments.get(0); 
+      if (unprocessed.size() == 0 && residue.size() > 0) 
+      { seg.addAll(residue);
+        setActivity(new SequenceStatement(seg)); 
+      }
+      else if (residue.size() > 0)
+      { seg.addAll(unprocessed); 
+        seg.addAll(residue); 
+        setActivity(new SequenceStatement(seg)); 
+      }
+    } 
+  } 
+
   public boolean checkVariableUse()
   { Vector unused = new Vector(); 
   
@@ -3584,11 +3704,12 @@ public class BehaviouralFeature extends ModelElement
     if (activity != null)
     { cyc = activity.cyclomaticComplexity(); 
       out.println("*** Activity cyclomatic complexity = " + cyc); 
+
       int acomp = activity.syntacticComplexity(); 
       out.println("*** Activity syntactic complexity = " + acomp); 
       if (acomp > 100) 
       { System.err.println("!!! Code smell (EOS): too high activity complexity (" + acomp + ") for " + nme); 
-        System.err.println(">>> Recommend refactoring by functional decomposition"); 
+        System.err.println(">>> Recommend refactoring by splitting operation"); 
       }  
       else if (acomp > 50) 
       { System.err.println("*** Warning: high activity complexity (" + acomp + ") for " + nme); }  
@@ -3599,12 +3720,12 @@ public class BehaviouralFeature extends ModelElement
     out.println(); 
     if (cyc > 10) 
     { System.err.println("!!! Code smell (CC): high cyclomatic complexity (" + cyc + ") for " + nme);
-      System.err.println(">>> Recommend refactoring by functional decomposition"); 
+      System.err.println(">>> Recommend refactoring by splitting operation"); 
     }  
 
     if (complexity > 100) 
     { System.err.println("!!! Code smell (EHS): too high complexity (" + complexity + ") for " + nme); 
-      System.err.println(">>> Recommend refactoring by functional decomposition"); 
+      System.err.println(">>> Recommend refactoring by splitting operation"); 
     }  
     else if (complexity > 50) 
     { System.err.println("*** Warning: high complexity (" + complexity + ") for " + nme); }  

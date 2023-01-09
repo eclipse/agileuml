@@ -2,7 +2,7 @@ import java.util.Vector;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -312,6 +312,26 @@ class Map
     return res; 
   }
 
+  public int rank(Object x)
+  { // rank is 0 if not in domain
+
+    if (in_domain(x)) { } 
+    else 
+    { return 0; } 
+
+    // 1 + max of ranks of its targets under the map
+
+    int maxrank = 0; 
+    for (int i = 0; i < elements.size(); i++)
+    { if (x.equals(((Maplet) elements.elementAt(i)).source))
+      { Object y = ((Maplet) elements.elementAt(i)).dest; 
+        int r = rank(y); 
+        if (r > maxrank)
+        { maxrank = r; }
+      } 
+    }  
+    return maxrank + 1; 
+  } 
 
   public Object apply(Object x)
   { if (x == null) { return null; } 
@@ -400,8 +420,12 @@ class Map
       { Maplet mm2 = (Maplet) map2.elementAt(j);
         if (mm1.dest.equals(mm2.source))
         { Maplet mm3 = new Maplet(mm1.source, mm2.dest);
-          res.add(mm3); } } }
-    return res; }
+          res.add(mm3); 
+        } 
+      } 
+    }
+    return res; 
+  }
 
   public static Map inverse(Map m)
   { Vector elems = new Vector(); 
@@ -460,7 +484,7 @@ class Map
       for (int i = 0; i < mnew.elements.size(); i++) 
       { Maplet mm = (Maplet) mnew.elements.get(i); 
         if (mm.source.equals(mm.dest)) 
-        { System.out.println("Loop on " + mm.source); 
+        { System.out.println("!! Loop on " + mm.source); 
           res++; 
         }
         else 
@@ -504,6 +528,37 @@ class Map
     } 
     return new Map(elems); 
   } 
+
+  public static Map restrictToSourcesTargets(Map m, 
+                      Vector dom, Vector rng)
+  { Vector elems = new Vector(); 
+    for (int i = 0; i < m.elements.size(); i++) 
+    { Maplet mm = (Maplet) m.elements.get(i);
+      int indx = (mm.source + "").indexOf("::"); 
+      String opname = (mm.source + "").substring(indx+2);  
+      int indx1 = (mm.dest + "").indexOf("::"); 
+      String opname1 = (mm.dest + "").substring(indx1+2);  
+      if (dom.contains(opname) && rng.contains(opname1)) 
+      { elems.add(mm); } 
+    } 
+    return new Map(elems); 
+  } 
+
+  public static Map restrictToSourcesTarget(Map m, 
+                      Vector dom, String targ)
+  { Vector elems = new Vector(); 
+    for (int i = 0; i < m.elements.size(); i++) 
+    { Maplet mm = (Maplet) m.elements.get(i);
+      int indx = (mm.source + "").indexOf("::"); 
+      String opname = (mm.source + "").substring(indx+2);  
+      int indx1 = (mm.dest + "").indexOf("::"); 
+      String opname1 = (mm.dest + "").substring(indx1+2);  
+      if (dom.contains(opname) && targ.equals(opname1)) 
+      { elems.add(mm); } 
+    } 
+    return new Map(elems); 
+  } 
+
 
   public Vector descendents(Entity e) 
   { Vector sups = e.getSuperclasses(); 

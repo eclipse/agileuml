@@ -4,7 +4,7 @@ import java.io.*;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -81,6 +81,23 @@ public class Attribute extends ModelElement
 
   public Attribute(BasicExpression e)
   { super(e.getData()); 
+    type = e.getType(); 
+    elementType = e.getElementType(); 
+    entity = e.getEntity(); 
+    int c2 = e.getMultiplicity(); 
+    if (c2 == ModelElement.ONE)
+    { upper = 1; 
+      lower = 1; 
+    } 
+    else 
+    { upper = 0; 
+      lower = 0; 
+    } 
+    kind = INTERNAL; 
+  } 
+
+  public Attribute(Expression e)
+  { super(e + ""); 
     type = e.getType(); 
     elementType = e.getElementType(); 
     entity = e.getEntity(); 

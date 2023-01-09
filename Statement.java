@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.JOptionPane;
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -2043,6 +2043,26 @@ class InvocationStatement extends Statement
     callExp = callee; 
   } 
 
+  InvocationStatement(String obj, BehaviouralFeature bf)
+  { action = bf.getName(); 
+    target = null; 
+    assignsTo = null; 
+    parameters = new Vector(); 
+    parameters.addAll(bf.getParameters()); 
+    BasicExpression calle = 
+         new BasicExpression(obj + "." + bf + "", 0);
+    Expression callee = calle.checkIfSetExpression();
+    if (callee == null) { return; }
+    if (bf.isQuery())
+    { callee.setUmlKind(Expression.QUERY); } 
+    else 
+    { callee.setUmlKind(Expression.UPDATEOP); } 
+    callee.setType(bf.getResultType());
+    callee.setElementType(bf.getElementType());
+    callee.setEntity(bf.getEntity());
+    callExp = callee; 
+  } 
+
   InvocationStatement(BasicExpression be)
   { action = be.getData(); 
     target = null; 
@@ -2615,9 +2635,13 @@ public void findClones(java.util.Map clones,
   { Vector res = new Vector();
     if (callExp == null) 
     { return res; } 
+
     if (callExp instanceof BasicExpression)
     { BasicExpression callbe = (BasicExpression) callExp; 
       String callString = callbe.data;
+
+      if ("skip".equals(callbe + ""))
+      { return res; }  
 
       Vector callpars = callbe.getParameters();
       if (callpars == null) 
@@ -2639,10 +2663,13 @@ public void findClones(java.util.Map clones,
           Vector postrd = post.allReadFrame(); 
           // subtract each params name:
           res.addAll(postrd);  
+
+          Vector parstrings = new Vector(); 
           for (int p = 0; p < params.size(); p++) 
           { String par = "" + params.get(p); 
-            res.remove(par); 
+            parstrings.add(par); 
           } 
+          res.removeAll(parstrings); 
         }
         // System.out.println("Invocation " + callString + " READ FRAME= " + res); 
         return res; 
@@ -2670,10 +2697,13 @@ public void findClones(java.util.Map clones,
           Vector postrd = post.writeFrame(); 
           // subtract each params name:
           res.addAll(postrd);  
+
+          Vector parstrings = new Vector(); 
           for (int p = 0; p < params.size(); p++) 
           { String par = "" + params.get(p); 
-            res.remove(par); 
+            parstrings.add(par); 
           } 
+          res.removeAll(parstrings); 
         }
         // System.out.println("Invocation " + callString + " WRITE FRAME= " + res); 
         return res; 
@@ -4478,13 +4508,24 @@ class WhileStatement extends Statement
     Vector res2 = loopTest.allReadFrame();
     res.addAll(res2);  
 
-    // System.out.println("LOOP READ FRAME = " + res); 
+    // remove the loopVar if it exists
+    if (loopVar != null) 
+    { Vector res1 = new Vector(); 
+      res1.add(loopVar); 
+      res.removeAll(res1); 
+    } 
 
     return res;  
   }  
 
   public Vector writeFrame() 
   { Vector res = body.writeFrame();
+    // remove the loopVar if it exists
+    if (loopVar != null) 
+    { Vector res1 = new Vector(); 
+      res1.add(loopVar); 
+      res.removeAll(res1); 
+    } 
     return res; 
   } 
 
@@ -5237,9 +5278,7 @@ class CreationStatement extends Statement
   }
 
   public String toStringJava7()
-  { // System.out.println("CREATION STATEMENT: " + instanceType + " " + elementType + " " + assignsTo); 
-    // System.out.println("=========================================================================");
- 
+  { 
     java.util.Map env = new java.util.HashMap(); 
     
     if (instanceType != null)
@@ -5543,7 +5582,7 @@ class CreationStatement extends Statement
     { return "  " + createsInstanceOf + "* " + assignsTo + ";"; }
 
     return createsInstanceOf + " " + assignsTo + " = new " + createsInstanceOf + "();\n" + 
-                 "  Controller::inst->add" + createsInstanceOf + "(" + assignsTo + ");"; 
+        "  Controller::inst->add" + createsInstanceOf + "(" + assignsTo + ");"; 
   } // and add to the set of instances? 
 
   public void display()
@@ -5600,7 +5639,8 @@ class CreationStatement extends Statement
   public boolean updates(Vector v) 
   { return false; } 
 
-  public String updateForm(java.util.Map env, boolean local, Vector types, Vector entities,
+  public String updateForm(java.util.Map env, boolean local, 
+                           Vector types, Vector entities,
                            Vector vars)
   { return toStringJava(); }  
 
@@ -5619,17 +5659,24 @@ class CreationStatement extends Statement
   public Vector readFrame()
   { Vector res = new Vector(); 
     // res.add(createsInstanceOf); 
-	if (initialExpression != null) 
-	{ res.addAll(initialExpression.readFrame()); }  
+    String declType = createsInstanceOf; 
+        
+    if (initialExpression != null) 
+    { res.addAll(initialExpression.readFrame()); }  
 
     return res; 
   } 
 
   public Vector writeFrame()
   { Vector res = new Vector(); 
-    res.add(createsInstanceOf); 
+    String declType = createsInstanceOf; 
+    Vector declTypes = new Vector(); 
+    declTypes.add(declType); 
+
     if (assignsTo != null)
     { res.add(assignsTo); } 
+    res.removeAll(declTypes); 
+
     return res; 
   } 
 
@@ -5923,7 +5970,7 @@ class SequenceStatement extends Statement
 
     Vector fstats = flattenSequenceStatement(); 
 
-    Vector substats = VectorUtil.allSubsequences(fstats,2); 
+    Vector substats = VectorUtil.allSubsegments(fstats,2); 
     for (int i = 0; i < substats.size(); i++) 
     { Vector subs = (Vector) substats.get(i); 
       Statement sq = new SequenceStatement(subs); 
@@ -5957,7 +6004,9 @@ class SequenceStatement extends Statement
 
     Vector fstats = flattenSequenceStatement(); 
 
-    Vector substats = VectorUtil.allSubsequences(fstats,2); 
+    // System.out.println(">>> Flatttended seq: " + fstats);
+
+    Vector substats = VectorUtil.allSubsegments(fstats,2); 
     for (int i = 0; i < substats.size(); i++) 
     { Vector subs = (Vector) substats.get(i); 
       Statement sq = new SequenceStatement(subs); 
@@ -6136,7 +6185,7 @@ class SequenceStatement extends Statement
   public Statement substituteEq(String oldE, Expression newE)
   { Vector fstats = flattenSequenceStatement(); 
 
-    Vector substats = VectorUtil.allSubsequences(fstats,2); 
+    Vector substats = VectorUtil.allSubsegments(fstats,2); 
     for (int i = 0; i < substats.size(); i++) 
     { Vector subs = (Vector) substats.get(i); 
       Statement sq = new SequenceStatement(subs); 
@@ -6825,6 +6874,47 @@ class SequenceStatement extends Statement
       { res.addAll(stat.metavariables()); } 
     } 
     
+    return res; 
+  } 
+
+  public Vector segments()
+  { // subsequences of the sequence which consist of 
+    // 1+ creation statements followed by 1+ other statements
+
+    Vector res = new Vector(); 
+
+    if (statements.size() == 0)
+    { return res; }
+
+    Vector allstatements = flattenSequenceStatement(); 
+
+    Vector segment = new Vector();  
+    Statement previous = null; 
+
+    for (int i = 0; i < allstatements.size(); i++) 
+    { Statement ss = (Statement) allstatements.get(i); 
+      if (ss instanceof CreationStatement)
+      { if (previous == null) 
+        { segment.add(ss); 
+          previous = ss; 
+        } 
+        else if (previous instanceof CreationStatement) 
+        { segment.add(ss); 
+          previous = ss; 
+        } 
+        else // new segment
+        { res.add(segment); 
+          segment = new Vector(); 
+          segment.add(ss); 
+          previous = ss; 
+        } 
+      } 
+      else // another kind of statement     
+      { segment.add(ss); 
+        previous = ss; 
+      } 
+    }  
+    res.add(segment); 
     return res; 
   } 
 }
@@ -7800,7 +7890,7 @@ class AssertStatement extends Statement
     res = condition.readFrame(); 
     
     if (message != null) 
-    { res = VectorUtil.union(res,message.readFrame()); }  
+    { res = VectorUtil.union(res, message.readFrame()); }  
     return res; 
   } 
 
@@ -7809,7 +7899,7 @@ class AssertStatement extends Statement
     res = condition.writeFrame(); 
     
     if (message != null) 
-    { res = VectorUtil.union(res,message.writeFrame()); }  
+    { res = VectorUtil.union(res, message.writeFrame()); }  
     return res; 
   } 
 

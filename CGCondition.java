@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -18,6 +18,8 @@ public class CGCondition
   String quantifier = "";
   boolean isSubstitute = false; 
      // e/x means replace x by e 
+  boolean isMatches = false; 
+     // compare variable to stereotype
 
   public CGCondition()
   { } 
@@ -98,6 +100,9 @@ public class CGCondition
   public void setStereotype(String st) 
   { stereotype = st; } 
 
+  public void addToStereotype(String st) 
+  { stereotype = stereotype + st; } 
+
   public void setPositive(boolean pos)
   { positive = pos; }
 
@@ -109,6 +114,9 @@ public class CGCondition
 
   public void setSubstitute()
   { isSubstitute = true; } 
+
+  public void setMatches()
+  { isMatches = true; } 
 
   public void setExistential()
   { quantifier = "any"; }
@@ -125,6 +133,8 @@ public class CGCondition
     { res = res + " any"; }
     else if (isSubstitute)
     { res = res + " /"; }  
+    else if (isMatches)
+    { res = res + " matches"; }  
  
     if (positive) { } 
     else  
@@ -184,7 +194,7 @@ public class CGCondition
     // If vv is ww`mf then evaluate ww`mf, if null then 
     // it is intended as stereotype mf=stereo for ww.
 
-    if (isSubstitute) 
+    if (isSubstitute || isMatches) 
     { return; } 
 
     String stereo = new String(stereotype); 
@@ -718,6 +728,13 @@ public class CGCondition
 
     String edata = e + ""; 
 
+    if (isMatches)
+    { // check that edata matches the stereo
+      if (edata.matches(stereotype))
+      { return true; } 
+      return false; 
+    } 
+
     Entity ent = 
       (Entity) ModelElement.lookupByName(edata,entities); 
 	
@@ -941,12 +958,28 @@ public class CGCondition
       String repl = CGRule.applyMetafeature(
                              mffeat,a,cgs,entities); 
 
-      System.out.println(">>> Test LHS = " + repl + " RHS = " + stereotype); 
+      System.out.println(">|>|> Testing " + repl + " with " + stereotype); 
+
+      if (isMatches)
+      { // check that edata matches the stereo
+        if (repl.matches(stereotype))
+        { return true; } 
+        return false; 
+      } 
 
       if (repl != null && repl.equals(stereotype))
       { return positive; } 
       else 
       { return !positive; } 
+    } 
+
+    System.out.println(">|>|> Testing " + alit + " with " + stereotype); 
+
+    if (isMatches)
+    { // check that variable matches the stereo
+      if (alit.matches(stereotype))
+      { return true; } 
+      return false; 
     } 
       
     // Also the stereotype could have one. 

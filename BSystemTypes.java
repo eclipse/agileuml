@@ -3,7 +3,7 @@ import java.util.List;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -6909,6 +6909,16 @@ public class BSystemTypes extends BComponent
       "    }\n" +
       "    return res;\n" + 
       "  }\n\n";
+
+    res = res + "  public static HashMap unionAllMap(List se)\n" +
+      "  { HashMap res = new HashMap(); \n" +
+      "    for (int i = 0; i < se.size(); i++)\n" +  
+      "    { Map b = (Map) se.get(i); \n" + 
+      "      res.putAll(b);\n" + 
+      "    }\n" +
+      "    return res;\n" + 
+      "  }\n\n";
+    
     return res;
   }  // and eliminate duplicates
 
@@ -6921,6 +6931,14 @@ public class BSystemTypes extends BComponent
       "    }\n" +
       "    return res;\n" + 
       "  }\n\n";
+
+    res = res + "  public static HashMap unionAllMap(Collection se)\n" +
+      "  { HashMap res = new HashMap(); \n" +
+      "    for (Object _o : se)\n" +  
+      "    { res.putAll((Map) _o); }\n" +
+      "    return res;\n" + 
+      "  }\n\n";
+
     return res;
   }  // and eliminate duplicates
 
@@ -6931,6 +6949,14 @@ public class BSystemTypes extends BComponent
       "    { res.addAll((Collection) _o); }\n" +
       "    return res;\n" + 
       "  }\n\n";
+
+    res = res + "  public static HashMap unionAllMap(Collection se)\n" +
+      "  { HashMap res = new HashMap(); \n" +
+      "    for (Object _o : se)\n" +  
+      "    { res.putAll((Map) _o); }\n" +
+      "    return res;\n" + 
+      "  }\n\n";
+
     return res;
   }  // Should be typed. Need to cast result to correct type. 
 

@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.JOptionPane; 
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -2127,10 +2127,21 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
 
     if (operator.equals("->unionAll"))
     { type = new Type("Set", null); 
-      if (argument.isMultiple() && type.elementType != null) 
-      { elementType = type.elementType.getElementType(); }
+      
+      if (argument.isMultiple() && 
+          argument.elementType != null) 
+      { elementType = argument.elementType.getElementType(); 
+        if (argument.elementType.isMap())
+        { type = new Type("Map", null); 
+          type.elementType = elementType; 
+        }
+      } 
       else 
-      { elementType = type.elementType; }  
+      { elementType = argument.elementType; } 
+
+      System.out.println(">>> Type of " + this + " is " + type); 
+      System.out.println(">>> Element type of " + this + " is " + elementType); 
+ 
       return res; 
     } 
 
@@ -2540,10 +2551,15 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->concatenateAll")) 
     { return "Set.concatenateAll(" + qf + ")"; } 
     
-	if (operator.equals("->unionAll"))
+    if (operator.equals("->unionAll") && 
+        argument.elementType != null &&
+        argument.elementType.isMap())
+    { return "Set.unionAllMap(" + qf + ")"; } 
+
+    if (operator.equals("->unionAll")) 
     { return "Set.unionAll(" + qf + ")"; } 
     
-	if (operator.equals("->intersectAll"))
+    if (operator.equals("->intersectAll"))
     { return "Set.intersectAll(" + qf + ")"; } 
     
     if (operator.equals("->flatten")) 
@@ -2950,6 +2966,11 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->concatenateAll")) 
     { return "Set.concatenateAll(" + qf + ")"; } 
     
+    if (operator.equals("->unionAll") && 
+        argument.elementType != null &&
+        argument.elementType.isMap())
+    { return "Set.unionAllMap(" + qf + ")"; } 
+
     if (operator.equals("->unionAll"))
     { return "Set.unionAll(" + qf + ")"; } 
     
@@ -3286,6 +3307,12 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return "((" + jtype + ") Ocl.concatenateAll(" + qf + "))"; 
     } 
     
+    if (operator.equals("->unionAll") && 
+        argument.elementType != null &&
+        argument.elementType.isMap())
+    { String jtype = type.getJava7(elementType); 
+      return "((" + jtype + ") Ocl.unionAllMap(" + qf + "))"; } 
+
     if (operator.equals("->unionAll"))
     { String jtype = type.getJava7(elementType); 
       return "((" + jtype + ") Ocl.unionAll(" + qf + "))"; 
