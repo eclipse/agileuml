@@ -4975,29 +4975,49 @@ public class Entity extends ModelElement implements Comparable
   public void computeOperationRankings(Map cg)
   { String nme = getName(); 
 
+    Map tc = new Map(); 
+    tc.elements = Map.transitiveClosure(cg.elements);
+    System.out.println(">> Transitive closure of operations call graph is: " + tc);  
+
+    Vector selfcalls = tc.getSelfMaps(); 
+    System.out.println(">>> Self calls: " + selfcalls); 
+
     Vector opnames = new Vector(); 
     java.util.Map rankings = new java.util.HashMap(); 
     java.util.Map callers = new java.util.HashMap(); 
+    java.util.Map tcallers = new java.util.HashMap(); 
 
     for (int i = 0; i < operations.size(); i++) 
     { BehaviouralFeature op = (BehaviouralFeature) operations.get(i); 
       String opname = op.getName();
+      String qname = nme + "::" + opname; 
+
       opnames.add(opname); // assume no overloading
  
-      int r = cg.rank(nme + "::" + opname); 
+      int r = Integer.MAX_VALUE; 
+      if (selfcalls.contains(qname)) { } 
+      else 
+      { r = cg.rank(qname,selfcalls); } 
+ 
       rankings.put(opname, r); 
       System.out.println(">>> " + opname + " has rank " + r);
 
       Vector oplist = new Vector(); 
-      oplist.add(nme + "::" + opname); 
+      oplist.add(qname); 
+
       Vector coimage = 
          cg.inverseImage(oplist);  
       callers.put(opname, coimage); 
       System.out.println(">>> " + opname + " callers: " + coimage);
+
+      Vector tcoimage = 
+         tc.inverseImage(oplist);  
+      tcallers.put(opname, tcoimage); 
+      System.out.println(">>> " + opname + " transitive callers: " + tcoimage);
     } 
 
     // Heuristics for placing operations in same component: 
-    // (i) operations with the same rank & a common caller
+    // (i)* operations with the same rank & a common caller
     // (ii) Unallocated 
     //      operation with a single caller with its caller, 
     //      if the caller has a caller. 
@@ -5037,8 +5057,30 @@ public class Entity extends ModelElement implements Comparable
       System.out.println(">>> Possible component (i) for " + 
                          opname + " is " + possibleComp); 
     } */ 
+
+    /* Heuristic (iii): */ 
     
     /* Heuristic (ii): */ 
+
+    for (int i = 0; i < opnames.size(); i++) 
+    { String opname = (String) opnames.get(i); 
+      for (int j = i+1; j < opnames.size(); j++) 
+      { String opname1 = (String) opnames.get(j); 
+        Vector tcalledBy = (Vector) tcallers.get(opname); 
+        Vector tcalledBy1 = (Vector) tcallers.get(opname1);
+   
+        if (tcalledBy.contains(nme + "::" + opname1) && 
+            tcalledBy1.contains(nme + "::" + opname))
+        { // put in same component
+          Vector possibleComp = (Vector) components.get(opname);
+          Vector possibleComp1 = (Vector) components.get(opname1);
+          possibleComp.addAll(possibleComp1); 
+          Vector newcomp1 = new Vector(); 
+          newcomp1.addAll(possibleComp); 
+          components.put(opname1, newcomp1); 
+        } 
+      } 
+    }
 
     for (int i = 0; i < opnames.size(); i++) 
     { String opname = (String) opnames.get(i); 

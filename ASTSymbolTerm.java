@@ -887,6 +887,17 @@ public class ASTSymbolTerm extends ASTTerm
     return 0; 
   } 
 
+
+  public int cobolIntegerWidth()
+  { 
+    if ("9".equals(symbol) || "0".equals(symbol) || 
+        "P".equals(symbol))
+    { return 1; } 
+ 
+    return 0; 
+  } 
+
+
   public Type cobolDataType()
   { if ("9".equals(symbol) ||
         "S".equals(symbol))

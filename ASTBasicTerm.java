@@ -2707,6 +2707,17 @@ public class ASTBasicTerm extends ASTTerm
     return 0; 
   } 
 
+  public int cobolIntegerWidth()
+  { if ("integerLiteral".equals(tag))
+    { return value.length(); }
+
+    if ("9".equals(value) || "0".equals(value) || 
+        "P".equals(value))
+    { return 1; } 
+ 
+    return 0; 
+  } 
+
   public Type cobolDataType()
   { if ("integerLiteral".equals(tag) || "9".equals(value) ||
         "S".equals(value))

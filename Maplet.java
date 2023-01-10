@@ -333,6 +333,33 @@ class Map
     return maxrank + 1; 
   } 
 
+  public int rank(Object x, Vector selfcalls)
+  { // rank is 0 if not in domain
+
+    if (selfcalls.contains(x))
+    { return Integer.MAX_VALUE; } 
+    else if (in_domain(x)) { } 
+    else 
+    { return 0; } 
+
+    // 1 + max of ranks of its targets under the map
+
+    int maxrank = 0; 
+    for (int i = 0; i < elements.size(); i++)
+    { if (x.equals(((Maplet) elements.elementAt(i)).source))
+      { Object y = ((Maplet) elements.elementAt(i)).dest; 
+        int r = rank(y, selfcalls); 
+        if (r > maxrank)
+        { maxrank = r; }
+      } 
+    } 
+
+    if (maxrank == Integer.MAX_VALUE)
+    { return maxrank; } 
+ 
+    return maxrank + 1; 
+  } 
+
   public Object apply(Object x)
   { if (x == null) { return null; } 
 

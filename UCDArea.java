@@ -11,7 +11,7 @@
 /*
  * Classname : UCDArea
  * 
- * Version information : 2.1
+ * Version information : 2.2
  *
  * Date :  January 2023
  * 
@@ -3126,14 +3126,16 @@ public class UCDArea extends JPanel
 
     Map tc = new Map(); 
     tc.elements = Map.transitiveClosure(res.elements);
-    // out.println("Transitive closure of operations call graph is: " + tc);  
+    out.println(">>> Transitive closure of operations call graph is: " + tc);  
 
     Vector selfcalls = tc.getSelfMaps(); 
+    out.println(">>> Self-calls: " + selfcalls);
+  
     int selfcallsn = selfcalls.size();  
  
     if (selfcallsn > 0) 
     { System.err.println("!!! Code smell (CBR2): complex call graph with " + selfcallsn + " recursive dependencies"); 
-      System.err.println(">>> Suggest refactoring using Replace Recursion by Iteration (for tail recursions)"); 
+      System.err.println(">>> Suggest refactoring using Replace recursion by iteration (for tail recursions)"); 
     } 
 
 

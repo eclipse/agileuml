@@ -3722,6 +3722,8 @@ public abstract class ASTTerm
 
   public abstract int cobolDataWidth(); 
 
+  public abstract int cobolIntegerWidth(); 
+
   public abstract Type cobolDataType(); 
 
   public static void main(String[] args) 
