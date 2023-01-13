@@ -3031,6 +3031,29 @@ public class BehaviouralFeature extends ModelElement
     } 
   } 
 
+  public static Vector allAttributesUsedIn(Entity ent, Vector ops)
+  { Vector res = new Vector(); 
+    
+    for (int i = 0; i < ops.size(); i++) 
+    { String op = (String) ops.get(i); 
+      BehaviouralFeature bf = ent.getOperation(op); 
+      if (bf != null) 
+      { Vector attrs = bf.allAttributesUsedIn(); 
+        res = VectorUtil.union(res,attrs); 
+      } 
+    } 
+    return res; 
+  } 
+
+  public Vector allAttributesUsedIn()
+  { Vector res = new Vector(); 
+    if (activity != null) 
+    { res = activity.allAttributesUsedIn(); } 
+    else if (post != null) 
+    { res = post.allAttributesUsedIn(); } 
+    return res; 
+  } 
+
   public boolean checkVariableUse()
   { Vector unused = new Vector(); 
   

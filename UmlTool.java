@@ -857,7 +857,7 @@ public void findPlugins()
     qualityMenu.add(extractOper);
 
     JMenuItem extractComponent = 
-      new JMenuItem("Extract Component"); 
+      new JMenuItem("Split class"); 
     extractComponent.setToolTipText(
       "Splits class into client/supplier components");
     extractComponent.addActionListener(this);
@@ -2465,7 +2465,7 @@ public void findPlugins()
       { ucdArea.extractOperation(); 
         repaint(); 
       }
-      else if (label.equals("Extract Component"))
+      else if (label.equals("Split class"))
       { ucdArea.extractComponent(); 
         repaint(); 
       }

@@ -4967,7 +4967,9 @@ public class Entity extends ModelElement implements Comparable
     } 
 
     if (n > 0)
-    { System.out.println(">>> CRA-Index of class " + ename + " = " + res.size()/(1.0*n*(n-1))); }
+    { System.out.println(">>> Cohesion of class " + ename + " = " + res.size()/(1.0*n*(n-1))); 
+      System.out.println(); 
+    }
 
     return res; 
   } 
@@ -4977,10 +4979,10 @@ public class Entity extends ModelElement implements Comparable
 
     Map tc = new Map(); 
     tc.elements = Map.transitiveClosure(cg.elements);
-    System.out.println(">> Transitive closure of operations call graph is: " + tc);  
+    // System.out.println(">> Transitive closure of operations call graph is: " + tc);  
 
     Vector selfcalls = tc.getSelfMaps(); 
-    System.out.println(">>> Self calls: " + selfcalls); 
+    System.out.println(">>> Self calls within class " + nme + ": " + selfcalls); 
 
     Vector opnames = new Vector(); 
     java.util.Map rankings = new java.util.HashMap(); 
@@ -5025,8 +5027,9 @@ public class Entity extends ModelElement implements Comparable
     // (iv) Unallocated ops called by allocated op go with it
     //     -- If conflict between components, choose one with
     //     -- strongest coupling with unallocated op.
-    // (v) Operations with no caller remain in this class
+    // (v) Operations with no caller remain in parent class
     // (vi) Merge components with a common operation
+    // (vii) Merge mutually-dependent components
 
     java.util.Map components = new java.util.HashMap(); 
 
@@ -5060,8 +5063,6 @@ public class Entity extends ModelElement implements Comparable
 
     /* Heuristic (iii): */ 
     
-    /* Heuristic (ii): */ 
-
     for (int i = 0; i < opnames.size(); i++) 
     { String opname = (String) opnames.get(i); 
       for (int j = i+1; j < opnames.size(); j++) 
@@ -5081,6 +5082,8 @@ public class Entity extends ModelElement implements Comparable
         } 
       } 
     }
+
+    /* Heuristic (ii): */ 
 
     for (int i = 0; i < opnames.size(); i++) 
     { String opname = (String) opnames.get(i); 
@@ -5179,7 +5182,6 @@ public class Entity extends ModelElement implements Comparable
       { finalComponents.add(possibleComp); } 
     } 
 
-    System.out.println(">>> Components: " + finalComponents);
 
     // CRA-Index is cohesion - coupling 
     // cohesion = sum over components c of 
@@ -5198,15 +5200,284 @@ public class Entity extends ModelElement implements Comparable
       int sz = selfCalls.size(); 
       if (cz > 1) 
       { double cra = sz/(1.0*cz*(cz-1)); 
-        System.out.println(">>> CRA-Index of component " + comp + " = " + cra); 
+        System.out.println(">>> Cohesion of component " + comp + " = " + cra); 
         newCRA = newCRA + cra;
       }  
     }
    
-    System.out.println("New CRA-index after refactoring: " + newCRA); 
- 
+    System.out.println(); 
+    System.out.println(">>> Total cohesion of components after refactoring: " + newCRA); 
+    System.out.println(); 
+
+    /* Component-component dependencies: each produces a new
+       required interface for the caller. */ 
+
+    java.util.Map cnameMap = new java.util.HashMap(); 
+    /* for (int i = 0; i < finalComponents.size(); i++) 
+    { Vector comp = (Vector) finalComponents.get(i); 
+      String nme = getName() + "_Component_" + i;
+      cnameMap.put(nme, comp); 
+    }  */ 
+      
+    Map cdeps = component2componentDependencies(cg, finalComponents, cnameMap); 
+
+    System.out.println(">> Component interdependencies: "); 
+    System.out.println(cdeps);  
+
+    int cdepcount = cdeps.size(); 
+    int ccount = finalComponents.size(); 
+    double cCoupling = cdepcount/(1.0*ccount*(ccount-1)); 
+
+    System.out.println(">> Component coupling: " + cCoupling);
+    System.out.println(">> New CRA-index: " + (newCRA - cCoupling)); 
+    System.out.println(); 
+
+    /* If 2 components are mutually dependent, merge them: */ 
+    Vector cnames = new Vector(); 
+    cnames.addAll(cnameMap.keySet()); 
+
+    // System.out.println(cnames); 
+
+    java.util.Map ccallers = new java.util.HashMap(); 
+
+    for (int i = 0; i < cnames.size(); i++) 
+    { String cname = (String) cnames.get(i); 
+      Vector clist = new Vector(); 
+      clist.add(cname); 
+
+      Vector coimage = 
+         cdeps.inverseImage(clist);  
+      ccallers.put(cname, coimage); 
+    } 
+
+    Vector duplicated = new Vector(); 
+
+    for (int i = 0; i < cnames.size(); i++) 
+    { String cname = (String) cnames.get(i); 
+      for (int j = i + 1; j < cnames.size(); j++) 
+      { String cname1 = (String) cnames.get(j); 
+        if (((Vector) ccallers.get(cname)).contains(cname1) && 
+            ((Vector) ccallers.get(cname1)).contains(cname))
+        { System.out.println(">> Merging components " + cname 
+                             + " and " + cname1); 
+          Vector c1 = (Vector) cnameMap.get(cname); 
+          Vector c2 = (Vector) cnameMap.get(cname1); 
+          c1.addAll(c2); 
+          Vector newc2 = new Vector(); 
+          newc2.addAll(c1); 
+          cnameMap.put(cname1, newc2); 
+          duplicated.add(cname); 
+        } 
+      } 
+    }
+
+    cnames.removeAll(duplicated);
+
+    /* Recalculate the total cohesion and CRA */  
+
+    java.util.Map attrsmap = new java.util.HashMap(); 
+
+    for (int i = 0; i < cnames.size(); i++) 
+    { String cname = (String) cnames.get(i); 
+      Vector comp = (Vector) cnameMap.get(cname); 
+      Vector attrs = 
+        BehaviouralFeature.allAttributesUsedIn(this,comp);  
+      System.out.println(">> Component " + comp); 
+      System.out.println(">> uses attributes: " + attrs);
+      attrsmap.put(cname, attrs); 
+    } 
+
+    java.util.Map attusers = new java.util.HashMap(); 
+    Vector attnames = new Vector(); 
+
+    for (int i = 0; i < attributes.size(); i++) 
+    { Attribute att = (Attribute) attributes.get(i); 
+      String aname = att.getName(); 
+      attnames.add(aname); 
+
+      // find out which components refer to att
+      // If only one component, place in that component
+      // Otherwise place in the DataLayer
+
+      for (int j = 0; j < cnames.size(); j++) 
+      { String cname = (String) cnames.get(j); 
+        Vector attrs = (Vector) attrsmap.get(cname); 
+        Attribute aa = 
+          (Attribute) ModelElement.lookupByName(aname,attrs); 
+        if (aa != null) 
+        { Vector users = (Vector) attusers.get(aname); 
+          if (users == null) 
+          { users = new Vector(); } 
+          users.add(cname); 
+          attusers.put(aname,users); 
+        } 
+      } 
+    }
+
+    // System.out.println(attusers);
+    Vector dataLayer = new Vector(); 
+
+    for (int i = 0; i < attnames.size(); i++) 
+    { String aname = (String) attnames.get(i); 
+      Vector attusedin = (Vector) attusers.get(aname); 
+      if (attusedin.size() == 0)
+      { System.out.println(">>> Attribute " + aname + " is not used by any component"); } 
+      else if (attusedin.size() == 1) 
+      { System.out.println(">>> Attribute " + aname + " is owned by " + attusedin.get(0)); }
+      else 
+      { dataLayer.add(aname); 
+        System.out.println(">>> Components " + attusedin + " depend on the data layer"); 
+      } 
+    } 
+
+    System.out.println(); 
+    System.out.println(">>> Components:\n\n" + 
+      displayClassComponents(cnames, cnameMap, attrsmap, 
+                             dataLayer));
+
+    System.out.println(">> Data layer:\n ");
+    System.out.println("class DataLayer {");
+    for (int i = 0; i < dataLayer.size(); i++) 
+    { String att = (String) dataLayer.get(i); 
+      Attribute attr = getAttribute(att); 
+      if (attr != null) 
+      { System.out.println("  attribute " + att + " : " + 
+                           attr.getType() + ";"); 
+      } 
+    } 
+    System.out.println("}"); 
+    System.out.println(); 
+
+    double finalCRA = 0.0; 
+
+    for (int i = 0; i < cnames.size(); i++) 
+    { String cname = (String) cnames.get(i); 
+      Vector comp = (Vector) cnameMap.get(cname); 
+      int cz = comp.size(); 
+      Map selfCalls = Map.restrictToSourcesTargets(
+                                       cg,comp,comp);
+      System.out.println(">> Sub-callgraph of component " + comp + " = " + selfCalls);  
+      int sz = selfCalls.size(); 
+      if (cz > 1) 
+      { double cra = sz/(1.0*cz*(cz-1)); 
+        System.out.println(">>> Cohesion of component " + comp + " = " + cra); 
+        finalCRA = finalCRA + cra;
+      }  
+    }
+   
+    System.out.println(); 
+    System.out.println(">>> Total cohesion of components after refactoring: " + finalCRA); 
+    System.out.println(); 
+
+    Map fmap = componentGraphDependencies(cg, cnames, cnameMap); 
+    System.out.println(">> Final component dependencies = " + fmap); 
+    cdepcount = fmap.size(); 
+    ccount = cnames.size(); 
+    cCoupling = cdepcount/(1.0*ccount*(ccount-1)); 
+
+    System.out.println(">> Final component coupling: " + cCoupling);
+    System.out.println(">> Final CRA-index: " + (finalCRA - cCoupling)); 
+    System.out.println(); 
   } 
 
+
+  public String displayClassComponents(Vector comps,
+                                       java.util.Map cmap,
+                                       java.util.Map attrs, 
+                                       Vector dataLayer)
+  { String res = ""; 
+
+    for (int i = 0; i < comps.size(); i++) 
+    { String cname = (String) comps.get(i); 
+      Vector comp = (Vector) cmap.get(cname); 
+      res = res + "class " + cname; 
+
+      String extendsClause = " implements " + cname + "Interface\n{\n"; 
+      String attributesClause = ""; 
+
+      Vector atts = (Vector) attrs.get(cname); 
+      for (int k = 0; k < atts.size(); k++)
+      { Attribute att = (Attribute) atts.get(k);
+        String aname = att.getName(); 
+ 
+        if (dataLayer.contains(aname)) 
+        { extendsClause = " extends DataLayer implements " + cname + "Interface\n{\n"; 
+        } 
+        else 
+        { attributesClause = 
+                attributesClause + "  attribute " + 
+                aname + " : " +
+                att.getType() + ";\n";
+        }  
+      } 
+
+      res = res + extendsClause + attributesClause + "\n"; 
+
+      for (int j = 0; j < comp.size(); j++) 
+      { String opname = (String) comp.get(j); 
+        BehaviouralFeature bf = getOperation(opname); 
+        if (bf != null) 
+        { res = res + bf.getKM3() + "\n\n"; } 
+      } 
+      res = res + "}\n\n"; 
+    } 
+    return res; 
+  } 
+
+
+  public Map component2componentDependencies(Map cg, Vector comps, java.util.Map cnameMap)
+  { Map res = new Map(); 
+    for (int i = 0; i < comps.size(); i++) 
+    { Vector comp1 = (Vector) comps.get(i); 
+      String nme1 = getName() + "_Component_" + i;
+      cnameMap.put(nme1, comp1); 
+ 
+      for (int j = i + 1; j < comps.size(); j++) 
+      { Vector comp2 = (Vector) comps.get(j);
+        String nme2 = getName() + "_Component_" + j;
+        cnameMap.put(nme2, comp2); 
+
+        Map calls = Map.restrictToSourcesTargets(
+                                       cg,comp1,comp2);
+        if (calls.size() > 0) 
+        { res.add_pair(nme1, nme2); } 
+
+        Map callsr = Map.restrictToSourcesTargets(
+                                       cg,comp2,comp1);
+        if (callsr.size() > 0) 
+        { res.add_pair(nme2, nme1); } 
+      } 
+    } 
+    return res; 
+  } 
+
+  public Map componentGraphDependencies(Map cg, 
+                Vector cnames, java.util.Map comps)
+  { Map res = new Map(); 
+
+    for (int i = 0; i < cnames.size(); i++) 
+    { String cname1 = (String) cnames.get(i); 
+      Vector comp1 = (Vector) comps.get(cname1); 
+      
+      for (int j = i + 1; j < cnames.size(); j++) 
+      { String cname2 = (String) cnames.get(j); 
+        Vector comp2 = (Vector) comps.get(cname2);
+      
+        Map calls = Map.restrictToSourcesTargets(
+                                       cg,comp1,comp2);
+        if (calls.size() > 0) 
+        { res.add_pair(cname1, cname2); } 
+
+        Map callsr = Map.restrictToSourcesTargets(
+                                       cg,comp2,comp1);
+        if (callsr.size() > 0) 
+        { res.add_pair(cname2, cname1); } 
+      } 
+    } 
+
+    return res; 
+  } 
+        
 
   public Vector allLhsFeatures()
   { // all features used in any lhs of a local invariant
