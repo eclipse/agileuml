@@ -1712,7 +1712,7 @@ public void findPlugins()
           thisLabel.setText("B model saved to output/BCode.txt"); 
         }
         catch (IOException ex)
-        { System.out.println("Error generating B"); }
+        { System.out.println("!! Error generating B"); }
 
         new TextDisplay("B code","output/BCode.txt");
       } 
@@ -1727,7 +1727,7 @@ public void findPlugins()
           out.close();
         }
         catch (IOException ex)
-        { System.out.println("Error generating B"); }
+        { System.out.println("!! Error generating B"); }
 
         new TextDisplay("B code","output/BCode.txt");
       } 
@@ -1742,7 +1742,7 @@ public void findPlugins()
           out.close();
         }
         catch (IOException ex)
-        { System.out.println("Error generating Z3"); }
+        { System.out.println("!! Error generating Z3"); }
 
         new TextDisplay("Z3 code","output/Z3Code.txt");
       } 
@@ -1782,7 +1782,7 @@ public void findPlugins()
           out3.close(); 
         }
         catch (IOException ex)
-        { System.out.println("Error generating Java"); }
+        { System.out.println("!! Error generating Java"); }
 
         TextDisplay td = new TextDisplay("Java code", dirName + "/Controller.java");
         td.setFont(new java.awt.Font("Serif",java.awt.Font.BOLD,18)); 
@@ -1816,7 +1816,7 @@ public void findPlugins()
           out2.close(); 
         }
         catch (IOException ex)
-        { System.out.println("Error generating Java"); }
+        { System.out.println("!! Error generating Java"); }
 
         new TextDisplay("Java code", dirName + "/Controller.java");
       } 
@@ -1848,7 +1848,7 @@ public void findPlugins()
           out2.close(); 
         }
         catch (IOException ex)
-        { System.out.println("Error generating Java"); }
+        { System.out.println("!! Error generating Java"); }
 
         new TextDisplay("Java code", dirName + "/Controller.java");
       } 
@@ -1950,6 +1950,26 @@ public void findPlugins()
         } 
         catch (Exception ee2) 
         { System.err.println("!! Unable to run application"); } 
+
+        File pythonTests = new File("tester.py"); 
+        try
+        { PrintWriter out = new PrintWriter(
+                              new BufferedWriter(
+                                new FileWriter(pythonTests)));
+          Vector ucs = ucdArea.getGeneralUseCases(); 
+          Vector typs = ucdArea.getTypes(); 
+          Vector ents = ucdArea.getEntities(); 
+          String testcode = 
+             GUIBuilder.buildTestsGUIPython(
+                                ucs,"",typs,ents);    
+          out.println(testcode);
+          out.close();
+
+          ucdArea.generateMutationTesterPython(); 
+        }
+        catch (IOException ex)
+        { System.out.println("!! Error generating Python tests"); }
+        
       }
       else if (label.equals("Generate Go"))
       { ucdArea.generateGo(); } 

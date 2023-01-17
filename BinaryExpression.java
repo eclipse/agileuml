@@ -1271,15 +1271,26 @@ class BinaryExpression extends Expression
              operator.equals("->excludingAt") ||
              operator.equals("->excludingFirst") ||
              operator.equals("->includes") ||
-             operator.equals("->excludes") || operator.equals("->pow") || 
-             operator.equals("->sortedBy") || operator.equals("->hasSuffix") ||
-             operator.equals("->hasPrefix") || "->isUnique".equals(operator) ||
-             operator.equals("->oclAsType") || "->forAll".equals(operator) ||
-             "->exists".equals(operator) || "->exists1".equals(operator) || 
-             "->existsLC".equals(operator) || "->any".equals(operator) ||
-             operator.equals("->selectMaximals") || operator.equals("->oclIsKindOf") || 
-             operator.equals("->oclIsTypeOf") || operator.equals("->includesKey") || 
-             operator.equals("->excludesKey") || operator.equals("->includesValue") || 
+             operator.equals("->excludes") || 
+             operator.equals("->pow") || 
+             operator.equals("->roundTo") || 
+             operator.equals("->truncateTo") || 
+             operator.equals("->sortedBy") || 
+             operator.equals("->hasSuffix") ||
+             operator.equals("->hasPrefix") || 
+             "->isUnique".equals(operator) ||
+             operator.equals("->oclAsType") || 
+             "->forAll".equals(operator) ||
+             "->exists".equals(operator) || 
+             "->exists1".equals(operator) || 
+             "->existsLC".equals(operator) || 
+             "->any".equals(operator) ||
+             operator.equals("->selectMaximals") || 
+             operator.equals("->oclIsKindOf") || 
+             operator.equals("->oclIsTypeOf") || 
+             operator.equals("->includesKey") || 
+             operator.equals("->excludesKey") || 
+             operator.equals("->includesValue") || 
              operator.equals("->excludesValue") || 
              operator.equals("->restrict") ||
              operator.equals("->antirestrict") ||  
@@ -1459,8 +1470,12 @@ class BinaryExpression extends Expression
              operator.equals("->excludingAt") ||
              operator.equals("->excludingFirst") ||
              operator.equals("->includes") ||
-             operator.equals("->excludes") || operator.equals("->pow") || 
-             operator.equals("->sortedBy") || operator.equals("->hasSuffix") ||
+             operator.equals("->excludes") || 
+             operator.equals("->pow") || 
+             operator.equals("->roundTo") || 
+             operator.equals("->truncateTo") || 
+             operator.equals("->sortedBy") || 
+             operator.equals("->hasSuffix") ||
              operator.equals("->hasPrefix") || "->isUnique".equals(operator) ||
              operator.equals("->oclAsType") || "->forAll".equals(operator) ||
              "->exists".equals(operator) || "->exists1".equals(operator) || 
@@ -2441,7 +2456,10 @@ class BinaryExpression extends Expression
     if (operator.equals("->count") || operator.equals("->indexOf") || operator.equals("->lastIndexOf") || 
         operator.equals("->oclIsKindOf") || operator.equals("->oclIsTypeOf") || 
         operator.equals("->pow") || 
-        operator.equals("->hasPrefix") || operator.equals("->hasSuffix") ||
+        operator.equals("->roundTo") || 
+        operator.equals("->truncateTo") || 
+        operator.equals("->hasPrefix") || 
+        operator.equals("->hasSuffix") ||
         operator.equals("->exists") || "->existsLC".equals(operator) ||
         operator.equals("->exists1") || operator.equals("->isUnique") || operator.equals("|isUnique") || 
         operator.equals("->forAll") || operator.equals("<:") || operator.equals("=") ||
@@ -4065,6 +4083,9 @@ public void findClones(java.util.Map clones,
     }  
     else if ("->pow".equals(operator))
     { type = new Type("double",null); } 
+    else if ("->roundTo".equals(operator) || 
+             "->truncateTo".equals(operator))
+    { type = new Type("double",null); } 
     else if ("->gcd".equals(operator))
     { type = new Type("long",null); } 
     else if (operator.equals("div"))
@@ -5195,6 +5216,12 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->gcd"))
     { return "Set.gcd(" + lqf + "," + rqf + ")"; } 
 
+    if (operator.equals("->truncateTo"))
+    { return "Set.truncateN(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("->roundTo"))
+    { return "Set.roundN(" + lqf + "," + rqf + ")"; } 
+
     if (operator.equals("->compareTo")) 
     { if (left.isNumeric() && right.isNumeric())
       { res = "(" + lqf + " < " + rqf + ")?-1:((" + lqf + " > " + rqf + ")?1:0)"; } 
@@ -5383,6 +5410,14 @@ public boolean conflictsWithIn(String op, Expression el,
       } 
       else if (operator.equals("->pow"))
       { res = "Math.pow(" + lqf + ", " + rqf + ")"; 
+        bNeeded = false; 
+      } 
+      else if (operator.equals("->truncateTo"))
+      { res = "Set.truncateN(" + lqf + "," + rqf + ")"; 
+        bNeeded = false;
+      } 
+      else if (operator.equals("->roundTo"))
+      { res = "Set.roundN(" + lqf + "," + rqf + ")"; 
         bNeeded = false; 
       } 
       else if (operator.equals("->hasPrefix"))
@@ -5698,6 +5733,12 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->pow"))
     { return "Math.pow(" + lqf + ", " + rqf + ")"; } 
+
+    if (operator.equals("->truncateTo"))
+    { return "Set.truncateN(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("->roundTo"))
+    { return "Set.roundN(" + lqf + "," + rqf + ")"; } 
 
     if (operator.equals("->compareTo")) 
     { if (left.isNumeric() && right.isNumeric())
@@ -6148,6 +6189,12 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->pow"))
     { return "Math.pow(" + lqf + ", " + rqf + ")"; } 
+
+    if (operator.equals("->truncateTo"))
+    { return "Ocl.truncateN(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("->roundTo"))
+    { return "Ocl.roundN(" + lqf + "," + rqf + ")"; } 
 
     if (operator.equals("->compareTo")) 
     { if (left.isNumeric() && right.isNumeric())

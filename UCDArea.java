@@ -26247,6 +26247,61 @@ public void produceCUI(PrintWriter out)
    
     System.out.println("*** Mutation tester operations written to " + dirName + "/MutationTest.java"); 
   } 
+
+  public void generateMutationTesterPython()
+  { Vector mutationtests = new Vector();   
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity e = (Entity) entities.get(i);
+
+      System.out.println(">*** Creating mutation tests for ***> Entity " + e); 
+ 
+      if (e.isDerived() || e.isComponent() || 
+          e.isAbstract() ||
+          e.isInterface()) 
+      { continue; }
+	
+      Vector optests = 
+        e.operationTestCasesPython(mutationtests); 
+    }    
+  
+    try
+    { PrintWriter mtout = 
+          new PrintWriter(
+            new BufferedWriter(
+              new FileWriter("MutationTest.py")));
+
+      mtout.println("import ocl"); 
+      mtout.println("import math"); 
+      mtout.println("import re"); 
+      mtout.println("import copy");
+      mtout.println(""); 
+      mtout.println("from mathlib import *"); 
+      mtout.println("from oclfile import *"); 
+      mtout.println("from ocltype import *"); 
+      mtout.println("from ocldate import *");
+      mtout.println("from oclprocess import *"); 
+      mtout.println("from ocliterator import *"); 
+      mtout.println("from ocldatasource import *"); 
+      mtout.println("from enum import Enum"); 
+      mtout.println("");  
+      mtout.println("import app"); 
+      
+      mtout.println(); 
+      mtout.println("class MutationTest :"); 
+      mtout.println(""); 
+      for (int k = 0; k < mutationtests.size(); k++) 
+      { String mtest = (String) mutationtests.get(k); 
+        mtout.println(mtest);
+        mtout.println();  
+      }
+      mtout.println("");  
+      mtout.close(); 
+    } 
+    catch (Exception _x) { } 
+   
+    System.out.println("*** Mutation tester operations written to MutationTest.py"); 
+  } 
   
   public void qualityCheck()
   { Vector enames = new Vector(); 

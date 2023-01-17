@@ -17824,6 +17824,62 @@ public BehaviouralFeature designAbstractKillOp()
     return res;  
   }  
 
+  public Vector operationTestCasesPython(Vector mtests)
+  { Vector res = new Vector(); 
+    String nme = getName(); 
+    // String x = nme.toLowerCase() + "$x"; 
+
+    Vector allops = allDefinedOperations();
+
+    System.out.println(">>> All operations of " + nme + " are " + allops);  
+
+    Vector opnames = new Vector(); 
+
+    for (int i = 0; i < allops.size(); i++) 
+    { BehaviouralFeature bf = (BehaviouralFeature) allops.get(i);
+      String bfname = bf.getName(); 
+        
+      if (bf.isAbstract() || bf.isDerived() || 
+          opnames.contains(bfname)) { } 
+      else 
+      { opnames.add(bfname); 
+        Vector opTests = new Vector(); 
+        Vector bfcases = bf.testCasesPython(opTests); 
+        res.addAll(bfcases);
+        System.out.println(">>> There are " + opTests.size() + " generated tests for " + bfname);
+        System.out.println(">>> A maximum of 100 tests will be included in MutationTest.py");
+        System.out.println(); 
+  
+        System.out.println(bf + " is mutatable: " + bf.isMutatable()); 
+
+        if (bf.isMutatable())
+        { 
+          Vector mutantoperations = bf.getMutants(allops);  
+          Vector testcalls = new Vector(); 
+
+          Vector mutationTests = 
+              bf.formMutantCallsPython(nme,mutantoperations,
+                      bfcases,opTests,testcalls); 
+
+          String bfmutanttest = "  def " + bfname + "_mutation_tests(_self, _counts, _totals) :\n";  
+          
+          for (int j = 0; j < mutationTests.size() && j < testcalls.size() && j < 100; j++) 
+          { String tst = (String) testcalls.get(j); 
+            bfmutanttest = bfmutanttest + tst + "\n";
+            mtests.add(mutationTests.get(j));  
+          } 
+
+          bfmutanttest = bfmutanttest + "\n" + 
+            "    for i in range(0, len(_counts)) :\n" + 
+            "      if _totals[i] > 0 :\n" + 
+            "        print(\"Test \" + i + \" detects \" + (100.0*_counts[i])/_totals[i] + \"% " + bfname + " mutants\")\n" +
+          mtests.add(bfmutanttest);  
+        }   
+      }
+    } 
+
+    return res;  
+  }  
 
   public void generateRemoteDAO(String appName, String packageName)
   { String ename = getName(); 

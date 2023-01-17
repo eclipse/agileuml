@@ -40277,6 +40277,51 @@ public class ASTCompositeTerm extends ASTTerm
     return 0; 
   } 
 
+  public int cobolFractionWidth()
+  { if ("dataPictureClause".equals(tag))
+    { // (PIC | PICTURE) IS? pictureString
+
+      int sze = terms.size(); 
+      ASTTerm ptrm = (ASTTerm) terms.get(sze-1); 
+      return ptrm.cobolFractionWidth(); 
+    } 
+
+    if ("pictureString".equals(tag))
+    { int res = 0; 
+      boolean isRealNumber = false; 
+
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i);
+        String lit = tt.literalForm();
+  
+        if (".".equals(lit) || "V".equals(lit))
+        { isRealNumber = true; }
+        else if (isRealNumber)
+        { int wdth = tt.cobolFractionWidth(); 
+          res = res + wdth; 
+        } 
+      } 
+
+      return res; 
+    } 
+
+    if ("pictureCardinality".equals(tag))
+    { ASTTerm val = (ASTTerm) terms.get(1); 
+      String lit = val.literalForm(); 
+      try { 
+        int crd = Integer.parseInt(lit); 
+        return crd-1; 
+      } catch (Exception _ex) { return 0; } 
+    } 
+
+    if ("pictureChars".equals(tag))
+    { ASTTerm val = (ASTTerm) terms.get(0); 
+      return val.cobolFractionWidth(); 
+    }   
+
+    return 0; 
+  } 
+
   public Type cobolDataType()
   { if ("dataPictureClause".equals(tag))
     { // (PIC | PICTURE) IS? pictureString
@@ -40468,12 +40513,15 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm pictureClause = 
             ASTTerm.getTermByTag(terms,"dataPictureClause"); 
           int intwidth = pictureClause.cobolIntegerWidth();
+          int fractwidth = pictureClause.cobolFractionWidth();
 
           ASTTerm t2 = (ASTTerm) terms.get(1); 
           if (t2.getTag().equals("dataName"))
           { String fname = t2.literalForm(); 
             ASTTerm.setTaggedValue(fname, "integerWidth", 
                                      "" + intwidth); 
+            ASTTerm.setTaggedValue(fname, "fractionWidth", 
+                                     "" + fractwidth); 
           }
         } 
 
@@ -40513,6 +40561,7 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm.getTermByTag(terms,"dataPictureClause"); 
         int wdth = 0;
         int integerWidth = 0; 
+        int fractionalWidth = 0; 
 
         Type typ = stringType; 
  
@@ -40526,8 +40575,12 @@ public class ASTCompositeTerm extends ASTTerm
           }  
 
           integerWidth = pictureClause.cobolIntegerWidth(); 
+          fractionalWidth = pictureClause.cobolFractionWidth(); 
 
-          JOptionPane.showMessageDialog(null, "Type of " + fieldName + " is " + typ + " " + wdth + " " + integerWidth, 
+          JOptionPane.showMessageDialog(null, 
+             "Type of " + fieldName + " is " + typ + 
+             " " + wdth + " " + integerWidth + " " + 
+             fractionalWidth, 
                           "", 
                           JOptionPane.INFORMATION_MESSAGE);  
         } 
@@ -40708,6 +40761,8 @@ public class ASTCompositeTerm extends ASTTerm
                                      "" + endPos); 
               ASTTerm.setTaggedValue(fieldName, "integerWidth", 
                                      "" + integerWidth); 
+              ASTTerm.setTaggedValue(fieldName, "fractionWidth", 
+                                     "" + fractionalWidth); 
             } // For the CSTL.
             
             Attribute att = 

@@ -12,6 +12,8 @@ import javax.swing.JOptionPane;
 * *****************************/
 /* Package: OCL */ 
 
+/* Need: ->intersectAll for collections of maps. */ 
+/* ->unionAll for maps for C++, Swift, Go        */ 
 
 public class UnaryExpression extends Expression
 { String operator; 
@@ -2567,6 +2569,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       { return "Set.concatenateAll(" + qf + ")"; } 
       else if (Type.isSetType(argument.type))
       { return "Set.unionAll(" + qf + ")"; } 
+      else if (Type.isMapType(argument.type))
+      { return "Set.unionAllMap(" + qf + ")"; } 
       return qf; 
     } // but only goes one level down. Not for maps
 
@@ -2689,14 +2693,18 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       if (prdtype == null) 
       { prdtype = type; } 
       if (prdtype == null) 
-      { JOptionPane.showMessageDialog(null, "No element type for: " + argument, "Type error", JOptionPane.ERROR_MESSAGE);
+      { JOptionPane.showMessageDialog(null, 
+          "No element type for: " + argument, 
+          "Type error", JOptionPane.ERROR_MESSAGE);
         return "Set.prddouble(" + pre + ")"; 
       } 
       String tname = prdtype.getName();   // only int, double, long are valid
       if ("int".equals(tname) || "long".equals(tname) || "double".equals(tname))
       { return "Set.prd" + tname + "(" + pre + ")"; } 
       else 
-      { JOptionPane.showMessageDialog(null, "Incorrect type " + tname + " for: " + this, "Type error", JOptionPane.ERROR_MESSAGE);
+      { JOptionPane.showMessageDialog(null, 
+            "Incorrect type " + tname + " for: " + this, 
+            "Type error", JOptionPane.ERROR_MESSAGE);
         return ""; 
       }  
     } 
@@ -2982,6 +2990,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       { return "Set.concatenateAll(" + qf + ")"; } 
       else if (Type.isSetType(argument.type))
       { return "Set.unionAll(" + qf + ")"; } 
+      else if (Type.isMapType(argument.type))
+      { return "Set.unionAllMap(" + qf + ")"; } 
       return qf; 
     } // but only goes one level down. 
 
@@ -3311,7 +3321,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
         argument.elementType != null &&
         argument.elementType.isMap())
     { String jtype = type.getJava7(elementType); 
-      return "((" + jtype + ") Ocl.unionAllMap(" + qf + "))"; } 
+      return "((" + jtype + ") Ocl.unionAllMap(" + qf + "))"; 
+    } 
 
     if (operator.equals("->unionAll"))
     { String jtype = type.getJava7(elementType); 
@@ -3329,6 +3340,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       { return "((" + jtype + ") Ocl.concatenateAll(" + qf + "))"; } 
       else if (Type.isSetType(argument.type))
       { return "((" + jtype + ") Ocl.unionAll(" + qf + "))"; } 
+      else if (Type.isMapType(argument.type))
+      { return "((" + jtype + ") Ocl.unionAllMap(" + qf + "))"; } 
       return qf; 
     } // but only goes one level down. 
 
@@ -3365,8 +3378,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     else if (data.equals("sum"))
     { Type sumtype = argument.getElementType();  // int, double, long, String 
       if (sumtype == null) 
-      { JOptionPane.showMessageDialog(null, "No type for: " + this, 
-                                      "Type error", JOptionPane.ERROR_MESSAGE);
+      { JOptionPane.showMessageDialog(null, 
+             "No type for: " + this, 
+             "Type error", JOptionPane.ERROR_MESSAGE);
         return ""; // "Ocl." + data + "(" + pre + ")"; 
       } 
       String tname = sumtype.getName(); 
@@ -3632,6 +3646,11 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->concatenateAll")) 
     { return "SystemTypes.concatenateAll(" + qf + ")"; } 
     
+    if (operator.equals("->unionAll") && 
+        argument.elementType != null &&
+        argument.elementType.isMap())
+    { return "SystemTypes.unionAllMap(" + qf + ")"; } 
+
     if (operator.equals("->unionAll"))
     { return "SystemTypes.unionAll(" + qf + ")"; } 
     
@@ -3643,6 +3662,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       { return "SystemTypes.concatenateAll(" + qf + ")"; } 
       else if (Type.isSetType(argument.type))
       { return "SystemTypes.unionAll(" + qf + ")"; } 
+      else if (Type.isMapType(argument.type))
+      { return "SystemTypes.unionAllMap(" + qf + ")"; } 
       return qf; 
     } // but only goes one level down. 
 
@@ -3932,17 +3953,56 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->concatenateAll")) 
     { return "UmlRsdsLib<" + celtype + ">::concatenateAll(" + qf + ")"; } 
     
+    if (operator.equals("->unionAll") && 
+        argument.elementType != null &&
+        argument.elementType.isMap())
+    { Type aelemt = argument.elementType; 
+      if (aelemt.elementType != null)
+      { Type aeetype = aelemt.elementType; 
+        celtype = aeetype.getCPP(aeetype.getElementType());
+      }
+      else 
+      { celtype = "void*"; }   
+      return "UmlRsdsLib<" + celtype + ">::unionAllMap(" + qf + ")"; 
+    } 
+
     if (operator.equals("->unionAll"))
-    { return "UmlRsdsLib<" + celtype + ">::unionAll(" + qf + ")"; } 
+    { Type aelemt = argument.elementType; 
+      if (aelemt != null && aelemt.elementType != null)
+      { Type aeetype = aelemt.elementType; 
+        celtype = aeetype.getCPP(aeetype.getElementType());
+      }
+      else 
+      { celtype = "void*"; }   
+      return "UmlRsdsLib<" + celtype + ">::unionAll(" + qf + ")"; 
+    } 
     
     if (operator.equals("->intersectAll"))
-    { return "UmlRsdsLib<" + celtype + ">::intersectAll(" + qf + ")"; } 
+    { Type aelemt = argument.elementType; 
+      if (aelemt != null && aelemt.elementType != null)
+      { Type aeetype = aelemt.elementType; 
+        celtype = aeetype.getCPP(aeetype.getElementType());
+      }
+      else 
+      { celtype = "void*"; }   
+      return "UmlRsdsLib<" + celtype + ">::intersectAll(" + qf + ")"; 
+    } 
 
     if (operator.equals("->flatten")) 
-    { if (Type.isSequenceType(argument.type))
+    { Type aelemt = argument.elementType; 
+      if (aelemt != null && aelemt.elementType != null)
+      { Type aeetype = aelemt.elementType; 
+        celtype = aeetype.getCPP(aeetype.getElementType());
+      }
+      else 
+      { celtype = "void*"; }   
+      
+      if (Type.isSequenceType(argument.type))
       { return "UmlRsdsLib<" + celtype + ">::concatenateAll(" + qf + ")"; } 
       else if (Type.isSetType(argument.type))
       { return "UmlRsdsLib<" + celtype + ">::unionAll(" + qf + ")"; } 
+      else if (Type.isMapType(argument.type))
+      { return "UmlRsdsLib<" + celtype + ">::unionAllMap(" + qf + ")"; }
       return qf; 
     } // but only goes one level down. 
 
@@ -4134,11 +4194,33 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { mutantop = "->notEmpty"; }
     else if (operator.equals("->notEmpty"))
     { mutantop = "->isEmpty"; }
+    else if (operator.equals("->unionAll"))
+    { mutantop = "->intersectAll"; }
+    else if (operator.equals("->intersectAll"))
+    { mutantop = "->unionAll"; }
     else if (operator.equals("->sum") && argument.isNumericCollection())
     { mutantop = "->prd"; }
     else if (operator.equals("->prd"))
     { mutantop = "->sum"; }
-    
+    else if (operator.equals("->log10"))
+    { mutantop = "->log"; }
+    else if (operator.equals("->log"))
+    { mutantop = "->exp"; }
+    else if (operator.equals("->exp"))
+    { mutantop = "->log"; }
+    else if (operator.equals("->sin"))
+    { mutantop = "->cos"; }
+    else if (operator.equals("->cos"))
+    { mutantop = "->sin"; }
+    else if (operator.equals("->sinh"))
+    { mutantop = "->cosh"; }
+    else if (operator.equals("->cosh"))
+    { mutantop = "->sinh"; }
+    else if (operator.equals("->tan"))
+    { mutantop = "->sin"; }
+    else if (operator.equals("->tanh"))
+    { mutantop = "->tan"; }
+
     for (int i = 0; i < argmutants.size(); i++) 
     { Expression mutant = (Expression) argmutants.get(i); 
       UnaryExpression thisclone = (UnaryExpression) this.clone();

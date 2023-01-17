@@ -1,7 +1,7 @@
 import java.util.*; 
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -978,6 +978,490 @@ public class GUIBuilder
       "    gui.setSize(550,400);\n" +
       "    gui.setVisible(true);\n" +
       "  }\n }";
+    return res;
+  }
+
+  public static String buildTestsGUIPython(Vector ucs, String sysName, Vector types, Vector entities)
+  { String res = 
+      "import ocl\n" +
+      "import math\n" +
+      "import re\n" +
+      "import copy\n" + 
+      "\n" + 
+      "from mathlib import *\n" + 
+      "from oclfile import *\n" + 
+      "from ocltype import *\n" + 
+      "from ocldate import *\n" + 
+      "from oclprocess import *\n" + 
+      "from ocliterator import *\n" + 
+      "from ocldatasource import *\n" + 
+      "from enum import Enum\n" + 
+      "\n" + 
+      "import app\n" + 
+      "import MutationTest\n\n";  
+
+    String mutationTestsOp = ""; 
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ent = (Entity) entities.get(i);
+      if (ent.isDerived() || ent.isComponent() || 
+          ent.isAbstract()) 
+      { continue; }  
+      
+      String ename = ent.getName();
+      String enamelc = ename.toLowerCase();
+      String es = 
+        ename + "." + enamelc + "_instances"; 
+      Vector eops = ent.allDefinedOperations();  
+      
+      mutationTestsOp = mutationTestsOp +
+         enamelc + "_count = len(app." + es + ")\n"; 
+      
+      for (int j = 0; j < eops.size(); j++) 
+      { BehaviouralFeature bf = (BehaviouralFeature) eops.get(j); 
+        if (bf.isStatic() && bf.isMutatable())
+        { String bfname = bf.getName();  
+          mutationTestsOp = mutationTestsOp + 
+            enamelc + "_" + bfname + "_counts = [0 for _x in range(0,100)] \n" +   
+            enamelc + "_" + bfname + "_totals = [0 for _y in range(0,100)] \n\n" +   
+            "if " + enamelc + "_count > 0 :\n" + 
+            "  _ex = app." + es + "[0]\n" +  
+            "  MutationTest.MutationTest." + bfname + "_mutation_tests(_ex, " + enamelc + "_" + bfname + "_counts, " + enamelc + "_" + bfname + "_totals)\n" + 
+            "  print(\"\")\n" + 
+            "  print(" + enamelc + "_" + bfname + "_counts)\n" + 
+            "  print(" + enamelc + "_" + bfname + "_totals)\n" + 
+            "  for _idx in range(0,len(" + enamelc + "_" + bfname + "_counts)) :\n" +  
+            "    if " + enamelc + "_" + bfname + "_totals[_idx] > 0 :\n" +  
+            "      print(\"Test \" + str(_idx) + \" effectiveness: \" + str(100.0*" + enamelc + "_" + bfname + "_counts[_idx]/" + enamelc + "_" + bfname + "_totals[_idx]) + \"%\")\n\n";  
+          
+        } 
+        else if (bf.isMutatable())
+        { String bfname = bf.getName();  
+          mutationTestsOp = mutationTestsOp + 
+            enamelc + "_" + bfname + "_counts = [0 for _x in range(0,100)]\n" +   
+            enamelc + "_" + bfname + "_totals = [0 for _y in range(0,100)]\n\n" +   
+            "for _ex in app." + es + " :\n" +  
+            "  MutationTest.MutationTest." + bfname + "_mutation_tests(_ex," + enamelc + "_" + bfname + "_counts, " + enamelc + "_" + bfname + "_totals)\n" + 
+            "  print(\"\")\n" +
+            "\n" +  
+            "for _idx in range(0,len(" + enamelc + "_" + bfname + "_counts)) :\n" +  
+            "  if " + enamelc + "_" + bfname + "_totals[_idx] > 0 :\n" +  
+            "    print(\"Test \" + str(_idx) + \" effectiveness: \" + str(100.0*" + enamelc + "_" + bfname + "_counts[_idx]/" + enamelc + "_" + bfname + "_totals[_idx]) + \"%\")\n\n";    
+        } 
+      }
+    } 
+
+
+    /* String loadmodelop = "    { " + contname + ".loadModel(\"in.txt\");\n";   
+            
+    aper = aper +
+         "    if (\"loadModel\".equals(cmd))\n" + loadmodelop + 
+         "      cont.checkCompleteness();\n" + 
+         "      System.err.println(\"Model loaded\");\n" + 
+         "      return; } \n";  */ 
+
+    String aper = ""; 
+                  
+    aper = aper + 
+         "intTestValues = [0, -1, 1, " + 
+            TestParameters.minInteger + ", " + 
+            TestParameters.maxInteger + "]\n" +    
+         "longTestValues = [0, -1, 1, " +
+            TestParameters.minLong + ", " + 
+            TestParameters.maxLong + "]\n" + 
+         "doubleTestValues = [0, -1, 1, " + 
+            TestParameters.maxFloat + ", 0.0000000000000000000000001]\n" +
+         "booleanTestValues = [False, True]\n" + 
+         "stringTestValues = [\"\", \" abc_XZ \", \"#�$* &~@'\"]\n\n";
+
+    for (int i = 0; i < ucs.size(); i++)
+    { ModelElement me = (ModelElement) ucs.get(i); 
+      if (me instanceof UseCase) 
+      { UseCase uc = (UseCase) me;
+        if (uc.isDerived()) { continue; } 
+        String nme = uc.getName();
+        Vector pars = uc.getParameters(); 
+        if (pars.size() > 0)
+        { java.util.Map upperBounds = new java.util.HashMap(); 
+          java.util.Map lowerBounds = new java.util.HashMap(); 
+	
+          Vector bounds = new Vector(); 
+          java.util.Map aBounds = new java.util.HashMap(); 
+      
+          for (int k = 0; k < uc.preconditions.size(); k++) 
+          { Constraint con = (Constraint) uc.preconditions.get(k);
+            Expression pre = con.succedent();  
+            pre.getParameterBounds(pars,bounds,aBounds);
+   
+            Expression.identifyUpperBounds(
+                          pars,aBounds,upperBounds); 
+            Expression.identifyLowerBounds(
+                          pars,aBounds,lowerBounds); 
+          } 
+		  
+          for (int j = 0; j < pars.size(); j++) 
+          { Attribute par = (Attribute) pars.get(j); 
+            String parnme = par.getName();
+            Type typ = par.getType(); 
+            String tname = typ + ""; 
+            Vector testassignments = par.testValues(
+                                           "parameters", lowerBounds, upperBounds);
+			
+            if ("int".equals(tname))
+            { aper = aper + 
+                     nme + par + "TestValues = [";
+              for (int y = 0; y < testassignments.size(); y++) 
+              { String tval = (String) testassignments.get(y); 
+                aper = aper + tval; 
+                if (y < testassignments.size() - 1) 
+                { aper = aper + ", "; }
+              }
+              aper = aper + "]\n";  
+            } 
+            else if ("long".equals(tname))
+            { aper = aper + 
+                     nme + par + "TestValues = [";
+              for (int y = 0; y < testassignments.size(); y++) 
+              { String tval = (String) testassignments.get(y); 
+                aper = aper + tval; 
+                if (y < testassignments.size() - 1) 
+                { aper = aper + ", "; }
+              }
+              aper = aper + "]\n";    
+            } 
+            else if ("double".equals(tname))
+            { aper = aper + 
+                     nme + par + "TestValues = [";
+              for (int y = 0; y < testassignments.size(); y++) 
+              { String tval = (String) testassignments.get(y); 
+                aper = aper + tval; 
+                if (y < testassignments.size() - 1) 
+                { aper = aper + ", "; }
+              }
+              aper = aper + "]\n";  
+            } 
+          }
+        }
+      }
+    }
+	
+    String cons = ""; 
+	 
+    for (int i = 0; i < ucs.size(); i++)
+    { ModelElement me = (ModelElement) ucs.get(i); 
+      if (me instanceof UseCase) 
+      { UseCase uc = (UseCase) me;
+        if (uc.isDerived()) { continue; } 
+
+        String indent = ""; 
+        
+        String checkCode = ""; 
+		
+        
+        String nme = uc.getName();
+        Vector pars = uc.getParameters(); 
+        Type resultType = uc.getResultType(); 
+        String testscript = "";
+        String teststring = ""; 
+        String posttests = ""; 
+
+        String parstring = ""; 
+        String parnames = uc.getParameterNames(); 
+
+				
+        if (pars.size() > 0)
+        { for (int j = 0; j < pars.size(); j++) 
+          { Attribute par = (Attribute) pars.get(j); 
+            String parnme = par.getName();
+            String indexvar = "_index_" + j; 
+			 
+            parstring = parstring + parnme; 
+            teststring = teststring + "\"" + parnme + " = \" + str(" + parnme + ")"; 
+
+            if (j < pars.size() - 1)
+            { parstring = parstring + ","; 
+              teststring = teststring + " + \"; \" + "; 
+            } 
+
+            Type typ = par.getType(); 
+            String tname = typ + ""; 
+			
+            if ("int".equals(tname))
+            { testscript = testscript + 
+                indent + "\n" + 
+                indent + "for " + indexvar + " in range(0, len(" + nme + par + "TestValues)) : \n" + 
+                indent + "  " + parnme + " = " + nme + par + "TestValues[" + indexvar + "]\n";  
+            } 
+            else if ("long".equals(tname))
+            { testscript = testscript + 
+                indent + "\n" + 
+                indent + "for " + indexvar + " in range(0, len(" + nme + par + "TestValues)) : \n" + 
+                indent + "  " + parnme + " = " + nme + par + "TestValues[" + indexvar + "]\n";  
+            } 
+            else if ("double".equals(tname))
+            { testscript = testscript + 
+                indent + "\n" + 
+                indent + "for " + indexvar + " in range(0, len(" + nme + par + "TestValues)) :\n" + 
+                indent + "  " + parnme + " = " + nme + par + "TestValues[" + indexvar + "]\n";  
+            } 
+            else if ("boolean".equals(typ + ""))
+            { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for " + indexvar + " in range(0,2) : \n" + 
+                  indent + "  " + parnme + " = booleanTestValues[" + indexvar + "]\n";  
+            } 
+            else if ("String".equals(typ + ""))
+            { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for " + indexvar + " in range(0,3) :\n" + 
+                  indent + "  " + parnme + " = stringTestValues[" + indexvar + "]\n";  
+            } 
+            else if (typ != null && typ.isEnumeration())
+            { Vector vals = typ.getValues(); 
+              int nvals = vals.size(); 
+              testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for " + indexvar + " in range(0, " + nvals + ") : \n" + 
+                  indent + "  " + parnme + " = " + indexvar + "\n";
+            } 
+            else if (typ.isEntity())
+            { Entity ee = typ.getEntity();
+              String eename = ee.getName(); 
+ 
+              if (ee.isAbstract())
+              { ee = ee.firstLeafSubclass(); 
+                eename = ee.getName();
+              } 
+              String einsts = 
+                eename + "." + eename.toLowerCase() + "_instances";
+              
+              Vector eeinvariants = new Vector(); 
+              if (ee != null) 
+              { eeinvariants.addAll(ee.getInvariants()); }
+
+              testscript = testscript + 
+                  indent + "\n" +
+                  indent + "_" + eename + "_instances_count = len(" + einsts + ")\n" +   
+                  indent + "for " + indexvar + " in range(0, _" + eename + "_instances_count) : \n" + 
+                  indent + "  " + parnme + " = " + einsts + "[" + indexvar + "]\n";
+        /* 
+              for (int p = 0; p < eeinvariants.size(); p++)
+              { java.util.Map env = new java.util.HashMap(); 
+                env.put(tname, parnme); 
+                Constraint conp = (Constraint) eeinvariants.get(p); 
+                Constraint conpr = conp.addReference(parnme,typ); 
+                String constring = conpr.queryFormPython(env,true); 
+				
+                testscript = testscript + 
+		          indent + "  if (" + constring + ")\n" + 
+		          indent + "  { System.out.print(\"" + parnme + " : " + tname + " invariant " + p + " is valid at start; \"); }\n" + 
+                     indent + "  else \n" + 
+                     indent + "  { System.out.print(\"" + parnme + " : " + tname + " invariant " + p + " fails at start; \"); }\n"; 
+                posttests = posttests + 
+		          indent + "  if (" + constring + ")\n" + 
+		          indent + "  { System.out.print(\"" + parnme + " : " + tname + " invariant " + p + " is valid at end; \"); }\n" + 
+                     indent + "  else \n" + 
+                     indent + "  { System.out.print(\"" + parnme + " : " + tname + " invariant " + p + " fails at end; \"); }\n"; 
+              } */ 
+				  		  
+            } // Check invariants of parnme. 
+            /* else if (typ.isMapType()) 
+            { Type elemTyp = typ.getElementType();
+              String collType = "HashMap"; 
+              if (elemTyp == null) { } 
+              else if ("int".equals(elemTyp.getName()))
+              { testscript = testscript + 
+                      indent + "\n" + 
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+				indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+				indent + "  if (" + indexvar + " < 5)\n" + 
+				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(intTestValues[" + indexvar + "])); }\n" + 
+				indent + "  if (" + indexvar + " < 3)\n" + 
+				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(intTestValues[" + indexvar + " + 2])); }\n";  
+              } 
+              else if ("long".equals(elemTyp.getName()) || 
+                       "double".equals(elemTyp.getName()) ||
+                       "boolean".equals(elemTyp.getName()))
+              { String etname = elemTyp.getName(); 
+                String wrapper = Named.capitalise(etname); 
+                testscript = testscript + 
+                      indent + "\n" + 
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+				indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+				indent + "  if (" + indexvar + " < 5)\n" + 
+				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new " + wrapper + "(" + etname + "TestValues[" + indexvar + "])); }\n" + 
+				indent + "  if (" + indexvar + " < 3)\n" + 
+				indent + "  { " + parnme + ".put(\"" + indexvar + "\", new " + wrapper + "(" + etname + "TestValues[" + indexvar + " + 2])); }\n";  
+              } 
+              else if ("String".equals(elemTyp.getName()))
+              { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 4; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+                  indent + "  if (" + indexvar + " < 3)\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", stringTestValues[" + indexvar + "]); }\n" + 
+                  indent + "  if (" + indexvar + " < 2)\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", stringTestValues[" + indexvar + " + 1]); }\n";
+              } 
+              else if (elemTyp != null && elemTyp.isEnumeration())
+              { Vector vals = elemTyp.getValues(); 
+                int nvals = vals.size(); 
+                testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= " + nvals + "; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+                  indent + "  if (" + indexvar + " < " + nvals + ")\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", new Integer(" + indexvar + ")); }\n"; 
+              }
+              else if (elemTyp.isEntity())
+              { String etname = elemTyp.getName(); 
+			    // Entity ee = elemTyp.getEntity(); 
+				
+                String eename = etname.toLowerCase() + "s"; 
+			    
+                testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "int _" + eename + "_instances = Controller.inst()." + etname + ".size();\n" +  
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= _" + eename + "_instances; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n";  
+                testscript = testscript + 
+                  indent + "  if (" + indexvar + " < Controller.inst()." + etname + ".size())\n" + 
+                  indent + "  { " + parnme + ".put(\"" + indexvar + "\", Controller.inst()." + eename + ".get(" + indexvar + ")); }\n";
+              }  
+            } 
+            else if (typ.isCollectionType()) // Try with empty list, singleton & random list
+            { Type elemTyp = typ.getElementType();
+              String collType = "ArrayList"; 
+              if (typ.isSequence())
+              { } 
+              else if (typ.isSet()) 
+              { collType = "HashSet"; } 
+ 
+              if (elemTyp == null) { } 
+              else if ("int".equals(elemTyp.getName()))
+              { testscript = testscript + 
+                      indent + "\n" + 
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+				indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+				indent + "  if (" + indexvar + " < 5)\n" + 
+				indent + "  { " + parnme + ".add(new Integer(intTestValues[" + indexvar + "])); }\n" + 
+				indent + "  if (" + indexvar + " < 3)\n" + 
+				indent + "  { " + parnme + ".add(new Integer(intTestValues[" + indexvar + " + 2])); }\n";  
+              } 
+              else if ("long".equals(elemTyp.getName()))
+              { testscript = testscript + 
+                      indent + "\n" + 
+				indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+				indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+				indent + "  if (" + indexvar + " < 5)\n" + 
+				indent + "  { " + parnme + ".add(new Long(longTestValues[" + indexvar + "])); }\n" +
+				indent + "  if (" + indexvar + " < 3)\n" + 
+				indent + "  { " + parnme + ".add(new Long(longTestValues[" + indexvar + " + 2])); }\n"; 
+              }  
+              else if ("double".equals(elemTyp.getName()))
+              { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 6; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+                  indent + "  if (" + indexvar + " < 5)\n" + 
+                  indent + "  { " + parnme + ".add(new Double(doubleTestValues[" + indexvar + "])); }\n" + 
+                  indent + "  if (" + indexvar + " < 3)\n" + 
+                  indent + "  { " + parnme + ".add(new Double(doubleTestValues[" + indexvar + " + 2])); }\n";
+              }
+              else if ("boolean".equals(elemTyp.getName()))
+              { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 3; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+                  indent + "  if (" + indexvar + " < 2)\n" + 
+                  indent + "  { " + parnme + ".add(new Boolean(booleanTestValues[" + indexvar + "])); }\n";
+              } 
+              else if ("String".equals(elemTyp.getName()))
+              { testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " < 4; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+                  indent + "  if (" + indexvar + " < 3)\n" + 
+                  indent + "  { " + parnme + ".add(stringTestValues[" + indexvar + "]); }\n" + 
+                  indent + "  if (" + indexvar + " < 2)\n" + 
+                  indent + "  { " + parnme + ".add(stringTestValues[" + indexvar + " + 1]); }\n";
+              } 
+              else if (elemTyp != null && elemTyp.isEnumeration())
+              { Vector vals = elemTyp.getValues(); 
+                int nvals = vals.size(); 
+                testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= " + nvals + "; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n" + 
+                  indent + "  if (" + indexvar + " < " + nvals + ")\n" + 
+                  indent + "  { " + parnme + ".add(new Integer(" + indexvar + ")); }\n"; 
+              }
+              else if (elemTyp.isEntity())
+              { String etname = elemTyp.getName(); 
+			    // Entity ee = elemTyp.getEntity(); 
+				
+                String eename = etname.toLowerCase() + "s"; 
+			    
+                testscript = testscript + 
+                  indent + "\n" + 
+                  indent + "int _" + eename + "_instances = Controller.inst()." + etname + ".size();\n" +  
+                  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= _" + eename + "_instances; " + indexvar + "++)\n" + 
+                  indent + "{ " + collType + " " + parnme + " = new " + collType + "();\n";  
+                testscript = testscript + 
+                  indent + "  if (" + indexvar + " < Controller.inst()." + etname + ".size())\n" + 
+                  indent + "  { " + parnme + ".add(Controller.inst()." + eename + ".get(" + indexvar + ")); }\n";
+              }  
+            } */ 
+            indent = indent + "  "; 
+          } 
+        }
+      
+	    /* 
+        for (int j = 0; j < uc.preconditions.size(); j++)
+        { java.util.Map env = new java.util.HashMap(); 
+          Constraint con = (Constraint) uc.preconditions.get(j); 
+          checkCode = checkCode + 
+		              indent + "  if (" + con.queryFormJava6(env,true) + ")\n" + 
+		              indent + "  { System.out.print(\" Precondition " + j + " is valid; \"); }\n" + 
+                         indent + "  else \n" + 
+                         indent + "  { System.out.print(\" Precondition " + j + " fails; \"); }\n"; 
+        } */ 
+
+      
+        String call = "app." + nme + "(" + parstring + ")"; 
+        if (resultType != null) 
+        { call = "print(\" ==> Result: \" + str(" + call + ") )"; } 
+		
+        call = indent + "try : \n" + 
+               indent + "  " + call + "\n" + 
+               indent + "except: \n" + 
+               indent + "  print(\" !! Exception occurred: test failed !!\")\n"; 
+		
+        if (teststring.equals(""))
+        { teststring = "\"\""; } 
+	   
+        testscript = testscript + "\n" + 
+             indent + "print(\"\")\n" + 
+             indent + "print(\">>> Test: \" + str(" + teststring + "))\n" + 
+             checkCode + "\n" + 
+             call + posttests + "\n" + 
+             indent + "print(\"\")\n" + 
+             indent + "print(\"\")\n"; 
+        // indent = indent.substring(0,indent.length()-2);  
+		
+        for (int p = 0; p < pars.size(); p++) 
+        { // testscript = testscript + 
+          //              indent + "\n";
+          indent = indent.substring(0,indent.length()-2);  
+        }
+
+        aper = aper + testscript + "\n";  
+      }
+    } 
+	
+    cons = cons + "\n\n";
+    aper = aper + "\n\n";
+    res = res + "\n" + cons + aper + mutationTestsOp + "\n"; 
     return res;
   }
 

@@ -5756,7 +5756,24 @@ public class BSystemTypes extends BComponent
   { String res = "    public static long getTime()\n" +
     "    { java.util.Date d = new java.util.Date();\n" +
     "      return d.getTime();\n" +
-    "    }\n";
+    "    }\n\n";
+
+    res = res + 
+    "    public static double roundN(double x, int n)\n" +
+    "    { if (n < 0) \n" +
+    "      { return Math.round(x); }\n" + 
+    "      double y = x*Math.pow(10,n); \n" +
+    "      return Math.round(y)/Math.pow(10,n);\n" +
+    "    }\n\n";   
+
+    res = res + 
+    "    public static double truncateN(double x, int n)\n" +
+    "    { if (n < 0) \n" +
+    "      { return (int) x; }\n" + 
+    "      double y = x*Math.pow(10,n); \n" +
+    "      return ((int) y)/Math.pow(10,n);\n" +
+    "    }\n\n";   
+
     return res;
   }
 
@@ -6970,6 +6987,17 @@ public class BSystemTypes extends BComponent
       "    }\n" +
       "    return res;\n" + 
       "  }\n\n";
+
+    res = res + 
+      "  public static Hashtable unionAllMap(ArrayList se)\n" +
+      "  { Hashtable res = new Hashtable(); \n" +
+      "    for (int i = 0; i < se.Count; i++)\n" +
+      "    { Hashtable b = (Hashtable) se[i]; \n" +
+      "      res = SystemTypes.unionMap(res,b); \n" +
+      "    }\n" +
+      "    return res;\n" +
+      "  }\n\n"; 
+
     return res;
   }  // and eliminate duplicates
 
@@ -6982,6 +7010,7 @@ public class BSystemTypes extends BComponent
       "    { res = UmlRsdsLib<_T>::unionSet(res, *_pos); }\n" +
       "    return res;\n" + 
       "  }\n\n";
+
     res = res + "  static std::set<_T>* unionAll(std::set<vector<_T>*>* se)\n" +
       "  { std::set<_T>* res = new std::set<_T>(); \n" +
       "    if (se->size() == 0) { return res; }\n" + 
@@ -6990,6 +7019,7 @@ public class BSystemTypes extends BComponent
       "    { res = UmlRsdsLib<_T>::unionSet(res, *_pos); }\n" +
       "    return res;\n" + 
       "  }\n\n";
+
     res = res + "  static std::set<_T>* unionAll(vector<set<_T>*>* se)\n" +
       "  { std::set<_T>* res = new std::set<_T>(); \n" +
       "    if (se->size() == 0) { return res; }\n" + 
@@ -6997,6 +7027,16 @@ public class BSystemTypes extends BComponent
       "    { res = UmlRsdsLib<_T>::unionSet(res, (*se)[i]); }\n" +
       "    return res;\n" + 
       "  }\n\n";
+
+    res = res + 
+      "  static std::map<string,_T>* unionAllMap(vector<map<string,_T>*>* se)\n" +
+      "  { std::map<string,_T>* res = new std::map<string,_T>();\n" +
+      "    if (se->size() == 0) { return res; }\n" +
+      "    for (int i = 0; i < se->size(); ++i)\n" +
+      "    { res = UmlRsdsLib<_T>::unionMap(res, (*se)[i]); }\n" +
+      "    return res;\n" +
+      "  }\n\n";
+
     return res;
   }  // vector<vector> is concatenateAll
 
@@ -7005,12 +7045,14 @@ public class BSystemTypes extends BComponent
                  "  { List res = new Vector(); \n" + 
                  "    for (int i = a.size() - 1; i >= 0; i--)\n" + 
                  "    { res.add(a.get(i)); } \n" + 
-                 "    return res; }\n\n" + 
+                 "    return res;\n" + 
+                 "  }\n\n" + 
                  "  public static String reverse(String a)\n" + 
                  "  { String res = \"\"; \n" + 
                  "    for (int i = a.length() - 1; i >= 0; i--)\n" + 
                  "    { res = res + a.charAt(i); } \n" + 
-                 "    return res; }\n\n"; 
+                 "    return res;\n" + 
+                 "  }\n\n"; 
     return res; 
   }  
 
@@ -7019,12 +7061,14 @@ public class BSystemTypes extends BComponent
                  "  { ArrayList res = new ArrayList(); \n" + 
                  "    res.addAll(a); \n" + 
                  "    Collections.reverse(res); \n" + 
-                 "    return res; }\n\n" + 
+                 "    return res;\n" + 
+                 "  }\n\n" + 
                  "  public static String reverse(String a)\n" + 
                  "  { String res = \"\"; \n" + 
                  "    for (int i = a.length() - 1; i >= 0; i--)\n" + 
                  "    { res = res + a.charAt(i); } \n" + 
-                 "    return res; }\n\n"; 
+                 "    return res;\n" + 
+                 "  }\n\n"; 
     return res; 
   }  
 
@@ -7032,12 +7076,14 @@ public class BSystemTypes extends BComponent
   { String res = "  public static ArrayList reverse(Collection a)\n" + 
                  "  { ArrayList res = new ArrayList(); \n" + 
                  "    res.addAll(a); Collections.reverse(res); \n" + 
-                 "    return res; }\n\n" + 
+                 "    return res;\n" + 
+                 "  }\n\n" + 
                  "  public static String reverse(String a)\n" + 
                  "  { String res = \"\"; \n" + 
                  "    for (int i = a.length() - 1; i >= 0; i--)\n" + 
                  "    { res = res + a.charAt(i); } \n" + 
-                 "    return res; }\n\n"; 
+                 "    return res;\n" + 
+                 "  }\n\n"; 
     return res; 
   }  // cast to correct type. 
 
@@ -7046,12 +7092,14 @@ public class BSystemTypes extends BComponent
                  "  { ArrayList res = new ArrayList(); \n" + 
                  "    res.AddRange(a); \n" + 
                  "    res.Reverse(); \n" + 
-                 "    return res; }\n\n" + 
+                 "    return res;\n" + 
+                 "  }\n\n" + 
                  "  public static string reverse(string a)\n" + 
                  "  { string res = \"\"; \n" + 
                  "    for (int i = a.Length - 1; i >= 0; i--)\n" + 
                  "    { res = res + a[i]; } \n" + 
-                 "    return res; }\n\n"; 
+                 "    return res;\n" + 
+                 "  }\n\n"; 
     return res; 
   }  
 
@@ -7060,12 +7108,14 @@ public class BSystemTypes extends BComponent
                  "  { vector<_T>* res = new vector<_T>(); \n" + 
                  "    res->insert(res->end(), a->begin(), a->end()); \n" + 
                  "    std::reverse(res->begin(), res->end()); \n" + 
-                 "    return res; }\n\n" + 
+                 "    return res;\n" + 
+                 "  }\n\n" + 
                  "  static string reverse(string a)\n" + 
                  "  { string res(\"\"); \n" + 
                  "    for (int i = a.length() - 1; i >= 0; i--)\n" + 
                  "    { res = res + a[i]; } \n" + 
-                 "    return res; }\n\n"; 
+                 "    return res;\n" + 
+                 "  }\n\n"; 
     return res; 
   }  
 
