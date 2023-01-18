@@ -6647,6 +6647,13 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->gcd"))
     { return "SystemTypes.gcd(" + lqf + "," + rqf + ")"; } 
 
+    if (operator.equals("->truncateTo"))
+    { return "SystemTypes.truncateTo(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("->roundTo"))
+    { return "SystemTypes.roundTo(" + lqf + "," + rqf + ")"; } 
+
+
     if (operator.equals("<>=")) 
     { res = lqf + " == " + rqf; 
       if (needsBracket)
@@ -7207,6 +7214,7 @@ public boolean conflictsWithIn(String op, Expression el,
              lelemtype.getCPP(lelemtype.getElementType());
         return "((" + etyp + ") (" + lqf + ")->at(" + rqf + " - 1))"; 
       }
+
       return "(" + lqf + ")->at(" + rqf + " - 1)"; 
     } 
 
@@ -7238,6 +7246,12 @@ public boolean conflictsWithIn(String op, Expression el,
 
     if (operator.equals("->gcd"))
     { return "UmlRsdsLib<long>::gcd(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("->truncateTo"))
+    { return "UmlRsdsLib<double>::truncateTo(" + lqf + "," + rqf + ")"; } 
+
+    if (operator.equals("->roundTo"))
+    { return "UmlRsdsLib<double>::roundTo(" + lqf + "," + rqf + ")"; } 
 
     if (operator.equals("+"))
     { String pres = lqf + " + " + rqf;

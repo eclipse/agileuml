@@ -5748,7 +5748,23 @@ public class BSystemTypes extends BComponent
     "    { DateTimeOffset doff = new DateTimeOffset(d);\n" + 
     "      return doff.ToUnixTimeMilliseconds();\n" + 
     "    }\n\n";
- 
+
+    res = res + 
+    "    public static double roundTo(double x, int n)\n" +
+    "    { if (n < 0) \n" +
+    "      { return Math.Round(x); }\n" + 
+    "      double y = x*Math.Pow(10,n); \n" +
+    "      return Math.Round(y)/Math.Pow(10,n);\n" +
+    "    }\n\n";   
+
+    res = res + 
+    "    public static double truncateTo(double x, int n)\n" +
+    "    { if (n < 0) \n" +
+    "      { return (int) x; }\n" + 
+    "      double y = x*Math.Pow(10,n); \n" +
+    "      return ((int) y)/Math.Pow(10,n);\n" +
+    "    }\n\n";   
+
    return res;
   }
 
@@ -5785,6 +5801,23 @@ public class BSystemTypes extends BComponent
     "      struct tm* res = localtime(&t);\n" + 
     "      return res;\n" + 
     "    }\n";
+
+    res = res + 
+    "    static double roundTo(double x, int n)\n" +
+    "    { if (n < 0) \n" +
+    "      { return round(x); }\n" + 
+    "      double y = x*pow(10,n); \n" +
+    "      return round(y)/pow(10,n);\n" +
+    "    }\n\n";   
+
+    res = res + 
+    "    static double truncateTo(double x, int n)\n" +
+    "    { if (n < 0) \n" +
+    "      { return (int) x; }\n" + 
+    "      double y = x*pow(10,n); \n" +
+    "      return ((int) y)/pow(10,n);\n" +
+    "    }\n\n";   
+
     return res;
   }
 

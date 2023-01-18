@@ -460,7 +460,7 @@ class ArchitectureArea extends JPanel
               connectedInterface.getName().equals(
                 me.getName()))
           { System.out.println(">>> Valid connection"); } 
-          else  
+          else if (me != null) 
           { System.out.println(">>> All operations of " + 
                connectedInterface + " must be present in: " + 
                me);
@@ -472,6 +472,9 @@ class ArchitectureArea extends JPanel
             else 
             { System.out.println("!! This is not a valid assembly connection!"); } 
           } 
+		  else 
+		  { System.out.println("!! No model element found for " + self); }
+		  
           found = true; 
           return; 
         }
@@ -486,7 +489,7 @@ class ArchitectureArea extends JPanel
               connectedInterface.getName().equals(
                 me.getName()))
           { System.out.println(">>> Valid connection"); } 
-          else  
+          else if (me != null)  
           { System.out.println(">>> All operations of " + 
                me + " must be present in: " + 
                connectedInterface);
@@ -498,6 +501,9 @@ class ArchitectureArea extends JPanel
             else 
             { System.out.println("!! This is not a valid assembly connection!"); }
           } 
+		  else 
+		  { System.out.println("!! No model element found for " + self); }
+
           found = true; 
           return; 
         }
