@@ -1362,15 +1362,24 @@ class BasicExpression extends Expression
     // { return false; } 
 
     if (umlkind == FUNCTION) 
-    { if (data.equals("sqr") || data.equals("size") || data.equals("floor") || data.equals("ceil") ||
-          data.equals("round") || data.equals("exp") || data.equals("pow") ||
-          data.equals("sin") || data.equals("cos") || data.equals("tan") ||
-          data.equals("asin") || data.equals("acos") || data.equals("atan") ||
-          data.equals("sinh") || data.equals("cosh") || data.equals("tanh") ||
-          data.equals("log10") || data.equals("cbrt") || data.equals("Prd") || data.equals("prd") || 
-          data.equals("log") || data.equals("count") || data.equals("hasPrefix") ||
-          data.equals("hasSuffix") || data.equals("isEmpty") || data.equals("notEmpty") ||
-          data.equals("isUnique") || data.equals("oclIsKindOf") || 
+    { if (data.equals("sqr") || data.equals("size") || 
+          data.equals("floor") || data.equals("ceil") ||
+          data.equals("round") || 
+          data.equals("exp") || data.equals("pow") ||
+          data.equals("sin") || data.equals("cos") || 
+          data.equals("tan") ||
+          data.equals("asin") || data.equals("acos") || 
+          data.equals("atan") ||
+          data.equals("sinh") || data.equals("cosh") || 
+          data.equals("tanh") ||
+          data.equals("log10") || data.equals("cbrt") || 
+          data.equals("Prd") || data.equals("prd") || 
+          data.equals("log") || data.equals("count") || 
+          data.equals("hasPrefix") ||
+          data.equals("hasSuffix") || 
+          data.equals("isEmpty") || data.equals("notEmpty") ||
+          data.equals("isUnique") || 
+          data.equals("oclIsKindOf") || 
           data.equals("sqrt") || data.equals("abs") ||
           data.equals("indexOf") || data.equals("isDeleted"))
       { return true; }
@@ -4143,12 +4152,14 @@ class BasicExpression extends Expression
       modality = objectRef.modality; 
 
       if (("Sum".equals(data) || "Prd".equals(data)) && 
-          "Integer".equals(objectRef + "") && parameters != null && parameters.size() > 3)
+          "Integer".equals(objectRef + "") && 
+          parameters != null && parameters.size() > 3)
       { Expression par3 = (Expression) parameters.get(2); 
         par3.setType(new Type("int",null)); 
         par3.setElementType(new Type("int",null)); 
         Vector env1 = (Vector) ((Vector) env).clone(); 
-        env1.add(new Attribute(par3 + "", par3.type, ModelElement.INTERNAL)); 
+        env1.add(new Attribute(par3 + "", 
+                       par3.type, ModelElement.INTERNAL)); 
         Expression par4 = (Expression) parameters.get(3); 
         par4.typeCheck(types,entities,contexts,env1); 
         type = par4.getType(); 
