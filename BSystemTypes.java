@@ -5407,7 +5407,18 @@ public class BSystemTypes extends BComponent
       "      } \n" +
       "    }     \n" +
       "    return res; \n" +
-      "  } \n"; 
+      "  } \n\n"; 
+
+    res = res + 
+      "  static std::map<string, _T>* intersectAllMap(vector<map<string, _T>*>* se)\n" +
+      "  { std::map<string, _T>* res = new std::map<string, _T>();\n" +
+      "    if (se->size() == 0) { return res; }\n" +
+      "    res = (*se)[0]; \n" +
+      "    for (int i = 1; i < se->size(); ++i)\n" +
+      "    { res = UmlRsdsLib<_T>::intersectionMap(res, (*se)[i]); }\n" +
+      "    return res;\n" +
+      "  }\n"; 
+
     return res; 
   } 
 
@@ -7027,6 +7038,16 @@ public class BSystemTypes extends BComponent
       "    for (int i = 0; i < se.Count; i++)\n" +
       "    { Hashtable b = (Hashtable) se[i]; \n" +
       "      res = SystemTypes.unionMap(res,b); \n" +
+      "    }\n" +
+      "    return res;\n" +
+      "  }\n\n"; 
+
+    res = res + 
+      "  public static Hashtable intersectionAllMap(ArrayList se)\n" +
+      "  { Hashtable res = (Hashtable) se[0]; \n" +
+      "    for (int i = 1; i < se.Count; i++)\n" +
+      "    { Hashtable b = (Hashtable) se[i]; \n" +
+      "      res = SystemTypes.intersectionMap(res,b); \n" +
       "    }\n" +
       "    return res;\n" +
       "  }\n\n"; 
@@ -10303,6 +10324,23 @@ public class BSystemTypes extends BComponent
       "    }    \n" +
       "    return res;\n" +
       "  }\n\n"; 
+
+    res = res + 
+      "  public static HashMap intersectAllMap(List col)\n" +
+      "  { HashMap res = new HashMap();\n" + 
+      "    if (col.size() == 0) \n" +
+      "    { return res; } \n" +
+      "\n" +
+      "    Map m0 = (Map) col.get(0);\n" +
+      "    res.putAll(m0); \n" +
+      "\n" +
+      "    for (int i = 1; i < col.size(); i++)\n" +
+      "    { Map m = (Map) col.get(i);\n" + 
+      "      res = Set.intersectionMap(res,m);\n" + 
+      "    }\n" + 
+      "    return res; \n" +
+      "  } \n\n";
+
 	res = res + 
       "  public static HashMap restrictMap(Map m1, Vector ks) \n" +
       "  { Vector keys = new Vector();\n" +
@@ -10482,6 +10520,24 @@ public class BSystemTypes extends BComponent
       "    }    \n" +
       "    return res;\n" +
       "  }\n\n";
+
+    res = res + 
+      "  public static HashMap intersectAllMap(Collection col)\n" +
+      "  { HashMap res = new HashMap();\n" + 
+      "    if (col.size() == 0) \n" +
+      "    { return res; } \n" +
+      "\n" +
+      "    Map m0 = (Map) Ocl.any(col);\n" +
+      "    res.putAll(m0); \n" +
+      "\n" +
+      "    for (Object obj : col)\n" +
+      "    { Map m = (Map) obj;\n" + 
+      "      res = Ocl.intersectionMap(res,m);\n" + 
+      "    }\n" + 
+      "    return res; \n" +
+      "  } \n\n";
+
+
 	res = res + 
 	  "  public static <D,R> HashMap<D,R> restrictMap(Map<D,R> m1, Set<D> ks) \n" +
       "  { Set<D> keys = new HashSet<D>();\n" +

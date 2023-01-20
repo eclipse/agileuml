@@ -398,8 +398,10 @@ public class UnaryExpression extends Expression
 
   public Expression definedness()
   { Expression res = argument.definedness();
-    if ("->last".equals(operator) || "->first".equals(operator) ||
-        "->front".equals(operator) || "->tail".equals(operator) ||
+    if ("->last".equals(operator) || 
+        "->first".equals(operator) ||
+        "->front".equals(operator) || 
+        "->tail".equals(operator) ||
         "->max".equals(operator) || "->min".equals(operator) ||
         "->any".equals(operator))
     { Expression zero = new BasicExpression(0);
@@ -1704,8 +1706,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
   // Although  e->asSequence(), e->reverse() can be updated by /: if e can, etc
  
   public boolean isOrdered()
-  { if ("->last".equals(operator) || "->first".equals(operator) ||
-        "->max".equals(operator) || "->min".equals(operator) ||
+  { if ("->last".equals(operator) || 
+        "->first".equals(operator) ||
+        "->max".equals(operator) || 
+        "->min".equals(operator) ||
         "->any".equals(operator))
     { return Type.isSequenceType(argument.getElementType()); } 
 
@@ -2141,36 +2145,45 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       else 
       { elementType = argument.elementType; } 
 
-      System.out.println(">>> Type of " + this + " is " + type); 
-      System.out.println(">>> Element type of " + this + " is " + elementType); 
+      // System.out.println(">>> Type of " + this + " is " + type); 
+      // System.out.println(">>> Element type of " + this + " is " + elementType); 
  
       return res; 
     } 
 
     if (operator.equals("->intersectAll"))
     { type = new Type("Set", null); 
-      if (argument.isMultiple() && type.elementType != null) 
-      { elementType = type.elementType.getElementType(); }
+
+      if (argument.isMultiple() && 
+          argument.elementType != null) 
+      { elementType = argument.elementType.getElementType(); 
+        if (argument.elementType.isMap())
+        { type = new Type("Map", null); 
+          type.elementType = elementType; 
+        }
+      }
       else 
-      { elementType = type.elementType; }  
+      { elementType = argument.elementType; }  
       return res; 
     } 
 
     if (operator.equals("->concatenateAll"))
     { type = new Type("Sequence", null); 
-      if (argument.isMultiple() && type.elementType != null) 
-      { elementType = type.elementType.getElementType(); }
+      if (argument.isMultiple() && 
+          argument.elementType != null) 
+      { elementType = argument.elementType.getElementType(); }
       else 
-      { elementType = type.elementType; }  
+      { elementType = argument.elementType; }  
       return res; 
     } 
 
     if (operator.equals("->flatten"))
     { type = argument.type; 
-      if (argument.isMultiple() && type.elementType != null) 
-      { elementType = type.elementType.getElementType(); }
+      if (argument.isMultiple() && 
+          argument.elementType != null) 
+      { elementType = argument.elementType.getElementType(); }
       else 
-      { elementType = type.elementType; }  
+      { elementType = argument.elementType; }  
       return res; 
     } 
 
@@ -2349,10 +2362,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
   { return argument.minModality(); } 
 
   public boolean isMultiple()
-  { if (operator.equals("->subcollections") || operator.equals("->unionAll") || operator.equals("->intersectAll") ||
+  { if (operator.equals("->subcollections") || 
+        operator.equals("->unionAll") || 
+        operator.equals("->intersectAll") ||
         operator.equals("->concatenateAll") || 
-        operator.equals("->closure") || operator.equals("->asSet") || operator.equals("->values") ||
-        operator.equals("->flatten") || operator.equals("->characters") || operator.equals("->keys") ||
+        operator.equals("->closure") || 
+        operator.equals("->asSet") || 
+        operator.equals("->values") ||
+        operator.equals("->flatten") || 
+        operator.equals("->characters") || 
+        operator.equals("->keys") ||
         operator.equals("->asSequence") ||
         operator.equals("->asOrderedSet") ||
         operator.equals("->asBag") || 
@@ -2360,12 +2379,16 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return true; } 
 
     if (argument.isMultiple() &&
-        (operator.equals("->reverse") || operator.equals("->tail") || operator.equals("lambda") ||
+        (operator.equals("->reverse") || 
+         operator.equals("->tail") || 
+         operator.equals("lambda") ||
          operator.equals("->front")) )  
     { return true; } 
 
-    if ("->last".equals(operator) || "->first".equals(operator) ||
-        "->max".equals(operator) || "->min".equals(operator) ||
+    if ("->last".equals(operator) || 
+        "->first".equals(operator) ||
+        "->max".equals(operator) || 
+        "->min".equals(operator) ||
         "->any".equals(operator))
     { Type argelemtype = argument.getElementType(); 
       return (argelemtype != null && argelemtype.isCollectionType());  
@@ -2561,6 +2584,11 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->unionAll")) 
     { return "Set.unionAll(" + qf + ")"; } 
     
+    if (operator.equals("->intersectAll") && 
+        argument.elementType != null &&
+        argument.elementType.isMap())
+    { return "Set.intersectAllMap(" + qf + ")"; } 
+
     if (operator.equals("->intersectAll"))
     { return "Set.intersectAll(" + qf + ")"; } 
     
@@ -2652,7 +2680,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (argument.umlkind == CLASSID && (argument instanceof BasicExpression))
     { pre = ((BasicExpression) argument).classExtentQueryForm(env,local); } 
 
-    if (operator.equals("->abs") || operator.equals("->sin") ||
+    if (operator.equals("->abs") || 
+        operator.equals("->sin") ||
         operator.equals("->cos") || operator.equals("->tan") ||
         operator.equals("->exp") || operator.equals("->log") ||
         operator.equals("->atan") || 
@@ -2666,7 +2695,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     else if (operator.equals("->log10"))
     { return "Math.log(" + pre + ")/Math.log(10)"; } 
     else if (operator.equals("->round") || 
-             operator.equals("->ceil") || operator.equals("->floor"))
+             operator.equals("->ceil") || 
+             operator.equals("->floor"))
     { return "((int) Math." + data + "(" + pre + "))"; } 
     else if (data.equals("toUpperCase") || data.equals("toLowerCase"))
     { return pre + "." + data + "()"; } 
@@ -2982,6 +3012,11 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->unionAll"))
     { return "Set.unionAll(" + qf + ")"; } 
     
+    if (operator.equals("->intersectAll") && 
+        argument.elementType != null &&
+        argument.elementType.isMap())
+    { return "Set.intersectAllMap(" + qf + ")"; } 
+
     if (operator.equals("->intersectAll"))
     { return "Set.intersectAll(" + qf + ")"; } 
 
@@ -3011,19 +3046,28 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (argument.umlkind == CLASSID && (argument instanceof BasicExpression))
     { pre = ((BasicExpression) argument).classExtentQueryFormJava6(env,local); } 
 
-    if (operator.equals("->abs") || operator.equals("->sin") ||
-        operator.equals("->cos") || operator.equals("->tan") ||
-        operator.equals("->exp") || operator.equals("->log") ||
-        operator.equals("->log10") || operator.equals("->atan") || 
-        operator.equals("->acos") || operator.equals("->asin") ||
-        operator.equals("->cbrt") || operator.equals("->cosh") || data.equals("sinh") ||
-        operator.equals("->tanh") || operator.equals("->sqrt"))  
+    if (operator.equals("->abs") || 
+        operator.equals("->sin") ||
+        operator.equals("->cos") || 
+        operator.equals("->tan") ||
+        operator.equals("->exp") || 
+        operator.equals("->log") ||
+        operator.equals("->log10") || 
+        operator.equals("->atan") || 
+        operator.equals("->acos") || 
+        operator.equals("->asin") ||
+        operator.equals("->cbrt") || 
+        operator.equals("->cosh") || 
+        operator.equals("->sinh") ||
+        operator.equals("->tanh") || 
+        operator.equals("->sqrt"))  
       // But exp, floor can be applied to sets/sequences. ceil not sqr? 
     { return "Math." + data + "(" + pre + ")"; }
     else if (operator.equals("->round") || 
              operator.equals("->ceil") || operator.equals("->floor"))
     { return "((int) Math." + data + "(" + pre + "))"; } 
-    else if (data.equals("toUpperCase") || data.equals("toLowerCase"))
+    else if (data.equals("toUpperCase") || 
+             data.equals("toLowerCase"))
     { return pre + "." + data + "()"; } 
     else if (data.equals("sum"))
     { Type sumtype = argument.getElementType();  // int, double, long, String 
@@ -3329,6 +3373,13 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return "((" + jtype + ") Ocl.unionAll(" + qf + "))"; 
     } 
     
+   if (operator.equals("->intersectAll") && 
+        argument.elementType != null &&
+        argument.elementType.isMap())
+    { String jtype = type.getJava7(elementType); 
+      return "((" + jtype + ") Ocl.intersectAllMap(" + qf + "))"; 
+    } 
+
     if (operator.equals("->intersectAll"))
     { String jtype = type.getJava7(elementType); 
       return "((" + jtype + ") Ocl.intersectAll(" + qf + "))"; 
@@ -3534,7 +3585,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "!(" + qf + ")"; } 
 
     if (operator.equals("->size"))
-    { if (argument.umlkind == CLASSID && (argument instanceof BasicExpression) && 
+    { if (argument.umlkind == CLASSID && 
+          (argument instanceof BasicExpression) && 
           ((BasicExpression) argument).arrayIndex == null)
       { qf = ((BasicExpression) argument).classExtentQueryFormCSharp(env,local); } 
       if (argument.type != null && argument.type.getName().equals("String"))
@@ -3654,6 +3706,11 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->unionAll"))
     { return "SystemTypes.unionAll(" + qf + ")"; } 
     
+    if (operator.equals("->intersectAll") && 
+        argument.elementType != null &&
+        argument.elementType.isMap())
+    { return "SystemTypes.intersectAllMap(" + qf + ")"; } 
+
     if (operator.equals("->intersectAll"))
     { return "SystemTypes.intersectAll(" + qf + ")"; } 
 
@@ -3686,7 +3743,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (argument.umlkind == CLASSID && (argument instanceof BasicExpression))
     { pre = ((BasicExpression) argument).classExtentQueryFormCSharp(env,local); } 
 
-    if (operator.equals("->abs") || operator.equals("->tan") || operator.equals("->sqrt") || 
+    if (operator.equals("->abs") || operator.equals("->tan") || 
+        operator.equals("->sqrt") || 
         operator.equals("->sin") || operator.equals("->cos") ||  
         operator.equals("->tanh") || operator.equals("->sinh") ||  
         operator.equals("->cosh") || operator.equals("->asin") ||  
@@ -3713,8 +3771,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     else if (data.equals("sum"))
     { Type sumtype = argument.getElementType();  // int, double, long, String 
       if (sumtype == null) 
-      { JOptionPane.showMessageDialog(null, "No type for: " + this, 
-                                      "Type error", JOptionPane.ERROR_MESSAGE);
+      { JOptionPane.showMessageDialog(null, 
+              "No type for: " + this, 
+              "Type error", JOptionPane.ERROR_MESSAGE);
         return ""; 
       }
       String tname = sumtype.getName(); 
@@ -3723,8 +3782,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     else if (data.equals("prd"))
     { Type sumtype = argument.getElementType();  // int, double, long 
       if (sumtype == null) 
-      { JOptionPane.showMessageDialog(null, "No type for: " + this, 
-                                      "Type error", JOptionPane.ERROR_MESSAGE);
+      { JOptionPane.showMessageDialog(null, 
+                     "No type for: " + this, 
+                     "Type error", JOptionPane.ERROR_MESSAGE);
         return ""; 
       }
       String tname = sumtype.getName(); 
@@ -3977,6 +4037,19 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return "UmlRsdsLib<" + celtype + ">::unionAll(" + qf + ")"; 
     } 
     
+    if (operator.equals("->intersectAll") && 
+        argument.elementType != null &&
+        argument.elementType.isMap())
+    { Type aelemt = argument.elementType; 
+      if (aelemt.elementType != null)
+      { Type aeetype = aelemt.elementType; 
+        celtype = aeetype.getCPP(aeetype.getElementType());
+      }
+      else 
+      { celtype = "void*"; }   
+      return "UmlRsdsLib<" + celtype + ">::intersectAllMap(" + qf + ")"; 
+    } 
+
     if (operator.equals("->intersectAll"))
     { Type aelemt = argument.elementType; 
       if (aelemt != null && aelemt.elementType != null)
@@ -4522,7 +4595,7 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
     else // last, first, front, tail, sort, reverse
     { return new BUnaryExpression(data,barg); } 
     // else 
-    // { return new BBasicExpression("true"); }  
+    // { return new BBasicExpression(true); }  
   }   // no equivalent for ->any 
 
   public BStatement bupdateForm(java.util.Map env, boolean local)

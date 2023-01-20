@@ -720,7 +720,8 @@ public class CGCondition
     return false; 
   } 
 
-  public boolean conditionSatisfied(Expression e, Vector entities, CGSpec cgs)
+  public boolean conditionSatisfied(Expression e, 
+                         Vector entities, CGSpec cgs)
   { Type t = e.getType();
     Type et = e.getElementType(); 
 
@@ -788,9 +789,11 @@ public class CGCondition
     }
     else if ("collection".equals(stereotype.toLowerCase()))
     { if (positive)
-      { return ("Set".equals(tname) || "Sequence".equals(tname)); }
+      { return ("Set".equals(tname) || 
+                "Sequence".equals(tname)); }
       else
-      { return !("Set".equals(tname)) && !("Sequence".equals(tname)); }
+      { return !("Set".equals(tname)) 
+               && !("Sequence".equals(tname)); }
     }
     else if ("String".equals(stereotype))
     { if (positive)
@@ -835,6 +838,18 @@ public class CGCondition
       { return ent != null; }
       else
       { return ent == null; }
+    }
+    else if ("mapcollection".equals(stereotype.toLowerCase()))
+    { if (positive)
+      { return ("Set".equals(tname) || 
+                "Sequence".equals(tname)) && 
+               "Map".equals(etname); 
+      }
+      else
+      { return !("Map".equals(etname)) || 
+            (!("Set".equals(tname)) && 
+             !("Sequence".equals(tname))); 
+      }
     }
     else if ("enumerated".equals(stereotype))
     { if (positive)
