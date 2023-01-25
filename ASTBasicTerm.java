@@ -2755,6 +2755,11 @@ public class ASTBasicTerm extends ASTTerm
     Vector res = new Vector(); 
     return res; 
   } 
+
+  public Vector cobolPerformThruDefinitions(java.util.Map context, Vector invs)
+  { Vector res = new Vector(); 
+    return res; 
+  } 
  
   public static void main(String[] args)
   { ASTBasicTerm tt = new ASTBasicTerm("primaryExpression", "'a'"); 

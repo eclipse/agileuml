@@ -26694,6 +26694,15 @@ public void produceCUI(PrintWriter out)
 
     }    */ 
 
+    if (zz instanceof ASTCompositeTerm)
+    { Vector labels = ((ASTCompositeTerm) zz).vbLabelFunctions(); 
+      System.out.println(">> Labels: " + labels); 
+      Entity ent = (Entity)
+        ModelElement.lookupByName("FromVB", entities); 
+      if (ent != null && labels.size() > 0)
+      { ent.unfoldOperationCalls(labels); } 
+    } 
+
     repaint(); 
   }
 
@@ -26755,9 +26764,14 @@ public void produceCUI(PrintWriter out)
     ASTTerm zz = xx.removeWhitespaceTerms(); 
     ASTTerm yy = zz.replaceCobolIdentifiers(); 
 
-    Vector cobolinvs = new Vector(); 
-    Vector auxents = yy.cobolDataDefinitions(new java.util.HashMap(), cobolinvs); 
+    Vector cobolinvs = new Vector();
+    java.util.Map cobolContext = new java.util.HashMap();  
+    Vector auxents = 
+       yy.cobolDataDefinitions(cobolContext, 
+                               cobolinvs); 
 
+    String progName = 
+        (String) cobolContext.get("programName"); 
 
     File cobol2uml = new File("cg/cobol2UML.cstl"); 
     Vector vbs = new Vector(); 
@@ -26832,10 +26846,27 @@ public void produceCUI(PrintWriter out)
  
     repaint(); 
     // System.out.println(yy); 
+
+    java.util.Map cobolperforms = new java.util.HashMap(); 
+    Vector paragraphlist = 
+      yy.cobolPerformThruDefinitions(cobolperforms, 
+                                     new Vector());
+
+    System.out.println(cobolperforms);  
+    System.out.println(paragraphlist); 
+
+    Entity mainent = 
+       (Entity) ModelElement.lookupByName(progName,entities);
+ 
+    if (mainent != null) 
+    { mainent.addPerformThruOperations(
+                           paragraphlist,cobolperforms); 
+    } 
+
+    repaint(); 
+ 
   }
 
-
-  
 
   public Vector maps2constraints(Vector entities, 
                   java.util.Map entityMap, 

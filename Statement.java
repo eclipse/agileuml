@@ -31,6 +31,9 @@ abstract class Statement implements Cloneable
   public void setBrackets(boolean b)
   { brackets = b; } 
 
+  public boolean hasBrackets()
+  { return brackets; } 
+
   abstract protected Object clone(); 
 
   abstract void display(); 
@@ -188,6 +191,83 @@ abstract class Statement implements Cloneable
 
     return res;
   } // Other cases, for all other forms of statement. 
+
+  public static Statement replaceReturnBySkip(Statement st)
+  { if (st == null) 
+    { return st; }
+ 
+    if (st instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) st; 
+      Vector newstats = new Vector(); 
+      Vector stats = sq.getStatements(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          Statement newstat = 
+            Statement.replaceReturnBySkip(stat);
+          newstats.add(newstat); 
+        }  
+      } 
+
+      SequenceStatement newsq = 
+            new SequenceStatement(newstats);
+      newsq.setBrackets(sq.hasBrackets());  
+      return newsq; 
+    } 
+    
+    if (st instanceof ReturnStatement)
+    { return new InvocationStatement("skip"); } 
+
+    if (st instanceof ConditionalStatement) 
+    { ConditionalStatement cs = (ConditionalStatement) st; 
+      Statement newif = 
+         Statement.replaceReturnBySkip(cs.ifPart()); 
+      Statement newelse = 
+         Statement.replaceReturnBySkip(cs.elsePart());
+      ConditionalStatement res = 
+         new ConditionalStatement(cs.getTest(), 
+                                  newif, newelse);  
+      return res; 
+    } 
+
+    if (st instanceof WhileStatement) 
+    { WhileStatement ws = (WhileStatement) st; 
+      Statement newbody = 
+         Statement.replaceReturnBySkip(ws.getLoopBody());
+      WhileStatement wsnew = 
+        new WhileStatement(ws.getTest(), newbody); 
+      wsnew.loopKind = ws.loopKind;  
+      wsnew.loopVar = ws.loopVar;
+      wsnew.loopRange = ws.loopRange;
+  
+      return wsnew; 
+    } 
+
+    if (st instanceof TryStatement) 
+    { TryStatement ts = (TryStatement) st; 
+      Statement newbody = 
+         Statement.replaceReturnBySkip(ts.getBody());
+      Vector newclauses = new Vector();  
+      Vector stats = ts.getClauses(); 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          Statement newstat = 
+             Statement.replaceReturnBySkip(stat);
+          newclauses.add(newstat); 
+        }  
+      } 
+      
+      Statement newend = 
+         Statement.replaceReturnBySkip(ts.getEndStatement()); 
+      TryStatement newtry = 
+         new TryStatement(newbody, newclauses, newend); 
+      return newtry; 
+    } 
+
+    return st;
+  } // Other cases, for all other forms of statement. 
+
 
   public static Vector getBreaksContinues(Statement st)
   { Vector res = new Vector(); 
@@ -687,6 +767,126 @@ abstract class Statement implements Cloneable
     } 
 
     return st;
+  } // Other cases, for all other forms of statement. 
+
+  public static Statement unfoldCall(
+           Statement stat, String nme, Statement defn)
+  { // self.nme() replaced by defn in stat.
+    // where return is replaced by skip in defn.
+
+    // System.out.println(">> Unfolding " + nme + " in " + stat); 
+
+    if (defn == null || stat == null) 
+    { return stat; }
+
+    if (stat instanceof InvocationStatement)
+    { InvocationStatement invok = 
+        (InvocationStatement) stat;
+      
+      Expression expr = invok.getCallExp();
+ 
+      if ((expr + "").startsWith("self." + nme + "("))
+      // if (expr != null && expr.isSelfCall(nme))
+      { return defn; }
+      return stat; 
+    } 
+
+    /* if (st instanceof ReturnStatement)
+    { ReturnStatement retstat = (ReturnStatement) st; 
+      Statement res = new ContinueStatement();  
+      
+      Expression expr = retstat.getReturnValue();
+ 
+      // if ((expr + "").startsWith("self." + nme + "("))
+      if (expr != null && expr.isSelfCall(nme))
+      { Statement passigns = 
+             bf.parameterAssignments(expr);
+        if (passigns == null) 
+        { return res; } 
+        else if (passigns instanceof SequenceStatement)
+        { ((SequenceStatement) passigns).addStatement(res); 
+          return passigns; 
+        } 
+      }
+      return st; 
+    } */ 
+ 
+    if (stat instanceof SequenceStatement) 
+    { SequenceStatement sq = (SequenceStatement) stat; 
+      Vector stats = sq.getStatements();
+      Vector res = new Vector(); 
+ 
+      for (int i = 0; i < stats.size(); i++) 
+      { Statement ss = (Statement) stats.get(i); 
+        Statement newstat = 
+            Statement.unfoldCall(ss,nme,defn); 
+        if (newstat != null) 
+        { res.add(newstat); } 
+      } 
+      return new SequenceStatement(res);
+    } 
+    
+    if (stat instanceof ConditionalStatement) 
+    { ConditionalStatement cs = (ConditionalStatement) stat;
+      Expression tst = cs.getTest(); 
+
+      Statement ifstat = cs.ifPart();
+      Statement elsestat = cs.elsePart(); 
+      
+      Statement newif = 
+        Statement.unfoldCall(ifstat,nme,defn); 
+      Statement newelse = 
+        Statement.unfoldCall(elsestat,nme,defn); 
+
+      newif.setBrackets(true); 
+      newelse.setBrackets(true); 
+      return new ConditionalStatement(tst,newif,newelse); 
+    } 
+
+    if (stat instanceof WhileStatement) 
+    { WhileStatement ws = (WhileStatement) stat; 
+      Statement code = ws.getLoopBody();
+      Statement newcode = Statement.unfoldCall(code,nme,defn); 
+      WhileStatement wsnew = 
+          new WhileStatement(ws.getLoopTest(), newcode); 
+      // wsnew.loopTest = ws.loopTest;
+      wsnew.loopKind = ws.loopKind;  
+      wsnew.loopVar = ws.loopVar;
+      wsnew.loopRange = ws.loopRange;
+ 
+      return wsnew; 
+    } 
+
+   /* 
+    if (st instanceof TryStatement) 
+    { TryStatement ts = (TryStatement) st; 
+      Statement bdy = ts.getBody(); 
+      Statement newbdy = 
+        Statement.replaceSelfCallsByContinue(bf,nme,bdy);
+   
+      Vector stats = ts.getClauses(); 
+      Vector newstats = new Vector();
+ 
+      for (int i = 0; i < stats.size(); i++) 
+      { if (stats.get(i) instanceof Statement)
+        { Statement stat = (Statement) stats.get(i); 
+          Statement newstat = 
+            Statement.replaceSelfCallsByContinue(
+                                        bf,nme,stat);
+          newstats.add(newstat); 
+        }  
+      }
+
+      Statement endstat = ts.getEndStatement(); 
+      Statement newend =
+        Statement.replaceSelfCallsByContinue(
+               bf, nme, endstat); 
+      Statement newtry = 
+        new TryStatement(newbdy, newstats, newend); 
+      return newtry; 
+    } */ 
+
+    return stat;
   } // Other cases, for all other forms of statement. 
 
   public static Statement removeUnusedStatements(Statement st)
@@ -2063,6 +2263,22 @@ class InvocationStatement extends Statement
     callExp = callee; 
   } 
 
+  InvocationStatement(String obj, String bfname)
+  { action = bfname; 
+    target = null; 
+    assignsTo = null; 
+    parameters = new Vector(); 
+    BasicExpression calle = 
+         new BasicExpression(obj + "." + bfname + "()", 0);
+    Expression callee = calle.checkIfSetExpression();
+    if (callee == null) { return; }
+    callee.setUmlKind(Expression.UPDATEOP); 
+    // callee.setType(bf.getResultType());
+    // callee.setElementType(bf.getElementType());
+    // callee.setEntity(bf.getEntity());
+    callExp = callee; 
+  } 
+
   InvocationStatement(BasicExpression be)
   { action = be.getData(); 
     target = null; 
@@ -3221,10 +3437,10 @@ class WhileStatement extends Statement
   // also need invariant and variant for B
   private Expression invariant; 
   private Expression variant; 
-  private int loopKind = WHILE; 
+  int loopKind = WHILE; 
   
-  private Expression loopVar; // for (loopVar : loopRange) do ...
-  private Expression loopRange; 
+  Expression loopVar; // for (loopVar : loopRange) do ...
+  Expression loopRange; 
 
   public WhileStatement()
   { loopTest = new BasicExpression(true); 
@@ -3258,7 +3474,6 @@ class WhileStatement extends Statement
   public WhileStatement(Expression lv, Expression lr, 
                         Vector b)
   { 
-
     if (lv instanceof SetExpression &&
         lr.isMap()) // [k,v] : map
     { SetExpression sv = (SetExpression) lv; 
@@ -3323,6 +3538,9 @@ class WhileStatement extends Statement
     { return "while"; }
     return "for"; 
   } 
+
+  public Expression getLoopTest()
+  { return loopTest; } 
 
   public void setTest(Expression tst)
   { loopTest = tst; } 

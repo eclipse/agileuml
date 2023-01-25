@@ -10553,6 +10553,14 @@ public class BehaviouralFeature extends ModelElement
     activity = newact; 
   } 
 
+  public void unfoldOperationCall(String nme, Statement defn)
+  { if (activity == null) { return; } 
+
+    Statement newact = 
+       Statement.unfoldCall(activity, nme, defn); 
+    activity = newact; 
+  } 
+
   public Statement selfCalls2Loops(Statement act)
   { // if there are simple calls to itself, replace by 
     // continue/break in a loop. 

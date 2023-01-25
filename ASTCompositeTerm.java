@@ -40855,6 +40855,252 @@ public class ASTCompositeTerm extends ASTTerm
     return res; 
   } 
 
+  public Vector cobolPerformThruDefinitions(java.util.Map context, Vector invs)
+  { // Each PERFORM X THRU/THROUGH Y yields Z_thru_Y operation
+    // for Z from X upto Y. 
+ 
+    Vector res = new Vector();
+
+    if ("compilationUnit".equals(tag))
+    { for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        Vector ttres = tt.cobolPerformThruDefinitions(context, invs); 
+        res.addAll(ttres); 
+      } 
+      return res; 
+    } 
+
+    if ("programUnit".equals(tag))
+    { for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        Vector ttres = tt.cobolPerformThruDefinitions(context, invs); 
+        res.addAll(ttres); 
+      } 
+      return res; 
+    } 
+
+    if ("identificationDivision".equals(tag))
+    { 
+      return res; 
+    } 
+
+    if ("programIdParagraph".equals(tag))
+    { return res; } 
+
+    if ("dataDivision".equals(tag))
+    { return res; } 
+
+    if ("procedureDivision".equals(tag))
+    { // sequence of paragraphs/sections
+ 
+      int n = terms.size(); 
+      ASTTerm tt = (ASTTerm) terms.get(n-1); 
+      Vector ttres = 
+         tt.cobolPerformThruDefinitions(context, invs); 
+      return ttres; 
+    } 
+
+    if ("procedureDivisionBody".equals(tag))
+    { // paragraphs procedureSection*
+
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        Vector ttres = 
+           tt.cobolPerformThruDefinitions(context, invs); 
+        res.addAll(ttres); 
+      } 
+      return res; 
+    } 
+
+    if ("paragraphs".equals(tag))
+    { // sentence* paragraph*
+
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm tt = (ASTTerm) terms.get(i); 
+        Vector ttres = 
+           tt.cobolPerformThruDefinitions(context, invs); 
+        res.addAll(ttres); 
+      } 
+      return res; 
+    } 
+    
+    if ("procedureSection".equals(tag))
+    { // procedureSectionHeader . paragraphs
+
+      if (terms.size() <= 2) 
+      { return res; } 
+
+      ASTTerm paras = (ASTTerm) terms.get(2);       
+      Vector ttres = 
+         paras.cobolPerformThruDefinitions(context, invs);        
+      res.addAll(ttres);
+      return res;
+    } 
+
+    if ("paragraph".equals(tag))
+    { // paragraphName . (alteredGoTo | sentence*)
+
+      ASTTerm tt = (ASTTerm) terms.get(0);
+      String lit = tt.literalForm(); 
+      res.add(lit);  
+      for (int i = 2; i < terms.size(); i++) 
+      { ASTTerm ttx = (ASTTerm) terms.get(i); 
+        ttx.cobolPerformThruDefinitions(context, invs);
+      }  
+      return res; 
+    } 
+      
+    if ("sentence".equals(tag))
+    { // statement* .
+
+      for (int i = 0; i < terms.size() - 1; i++) 
+      { ASTTerm ttx = (ASTTerm) terms.get(i); 
+        ttx.cobolPerformThruDefinitions(context, invs);
+      }  
+
+      return res; 
+    } 
+
+    if ("statement".equals(tag))
+    { // one of any kind of statement
+
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm ttx = (ASTTerm) terms.get(i); 
+        ttx.cobolPerformThruDefinitions(context, invs);
+      }  
+
+      return res; 
+    } 
+
+    if ("performStatement".equals(tag))
+    { // PERFORM (performInlineStatement | 
+      //    performProcedureStatement)
+
+      if (terms.size() <= 1) 
+      { return res; } 
+
+      ASTTerm tt = (ASTTerm) terms.get(1);
+      Vector ttres = 
+           tt.cobolPerformThruDefinitions(context, invs); 
+      res.addAll(ttres); 
+      return res; 
+    } 
+
+    if ("performProcedureStatement".equals(tag))
+    { // procedureName 
+      // ((THROUGH | THRU) procedureName)? performType?
+
+      if (terms.size() <= 1) 
+      { return res; } 
+
+      ASTTerm tt = (ASTTerm) terms.get(1);
+      String lit = tt.literalForm(); 
+
+      if ("THRU".equals(lit) || "THROUGH".equals(lit))
+      { ASTTerm tt0 = (ASTTerm) terms.get(0);
+        String frompara = tt0.literalForm();
+        ASTTerm tt1 = (ASTTerm) terms.get(2);
+        String topara = tt1.literalForm(); 
+        context.put(frompara,topara); 
+      } 
+
+      return res; 
+    } 
+  
+    return res; 
+  } 
+
+  public Vector vbLabelFunctions()
+  { // System.out.println(tag); 
+    
+    if ("module".equals(tag))
+    { Vector res = new Vector(); 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm trm = (ASTTerm) terms.get(i); 
+        if (trm instanceof ASTCompositeTerm)
+        { ASTCompositeTerm tt = (ASTCompositeTerm) trm; 
+          if ("moduleBody".equals(tt.getTag()))
+          { return tt.vbLabelFunctions(); } 
+        } 
+      } 
+      return res; 
+    }
+
+    if ("moduleBody".equals(tag))
+    { Vector res = new Vector(); 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm trm = (ASTTerm) terms.get(i); 
+        if (trm instanceof ASTCompositeTerm)
+        { ASTCompositeTerm tt = (ASTCompositeTerm) trm; 
+          if ("moduleBodyElement".equals(tt.getTag()))
+          { Vector fns = tt.vbLabelFunctions(); 
+            res.addAll(fns); 
+          } 
+        } 
+      } 
+      return res; 
+    }
+
+    if ("subStmt".equals(tag) || 
+        "functionStmt".equals(tag))
+    { Vector res = new Vector(); 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm trm = (ASTTerm) terms.get(i); 
+        if (trm instanceof ASTCompositeTerm)
+        { ASTCompositeTerm tt = (ASTCompositeTerm) trm; 
+          if ("block".equals(tt.getTag()))
+          { Vector fns = tt.vbLabelFunctions(); 
+            res.addAll(fns); 
+          } 
+        } 
+      } 
+      return res; 
+    }
+
+    if ("moduleBodyElement".equals(tag) && 
+        terms.get(0) instanceof ASTCompositeTerm)
+    { ASTCompositeTerm trm = (ASTCompositeTerm) terms.get(0); 
+      return trm.vbLabelFunctions(); 
+    } 
+
+    if ("moduleBlock".equals(tag) && 
+        terms.get(0) instanceof ASTCompositeTerm)
+    { ASTCompositeTerm trm = (ASTCompositeTerm) terms.get(0); 
+      return trm.vbLabelFunctions(); 
+    } 
+
+    if ("block".equals(tag))
+    { Vector res = new Vector(); 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm trm = (ASTTerm) terms.get(i); 
+        if (trm instanceof ASTCompositeTerm)
+        { ASTCompositeTerm tt = (ASTCompositeTerm) trm; 
+          if ("blockStmt".equals(tt.getTag()))
+          { Vector fns = tt.vbLabelFunctions(); 
+            res.addAll(fns); 
+          } 
+        } 
+      } 
+      return res; 
+    }
+
+    if ("blockStmt".equals(tag) && 
+        terms.get(0) instanceof ASTCompositeTerm)
+    { ASTCompositeTerm trm = (ASTCompositeTerm) terms.get(0); 
+      return trm.vbLabelFunctions(); 
+    } 
+
+    if ("lineLabel".equals(tag) && 
+        terms.size() > 0)
+    { ASTTerm trm = (ASTTerm) terms.get(0); 
+      Vector res = new Vector(); 
+      res.add(trm.literalForm()); 
+      return res;  
+    } 
+ 
+    return new Vector(); 
+  } 
+
   public static void convertAntlr2CSTL()
   { // Testing of JS to KM3
 

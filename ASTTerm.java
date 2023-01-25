@@ -3720,6 +3720,8 @@ public abstract class ASTTerm
 
   public abstract Vector cobolDataDefinitions(java.util.Map context, Vector invs); 
 
+  public abstract Vector cobolPerformThruDefinitions(java.util.Map context, Vector invs); 
+
   public abstract int cobolDataWidth(); 
 
   public abstract int cobolIntegerWidth(); 

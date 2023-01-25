@@ -7064,23 +7064,23 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
          // j = j + 3; 
 		 j++;  
       }  
-	  else if ("parameter".equals(jx))
-	  { String p = lexicals.get(j+1) + ""; 
-	    for (int k = j+2; k <= en; k++)
-	    { // System.out.println(lexicals.get(k) + ""); 
+      else if ("parameter".equals(jx))
+      { String p = lexicals.get(j+1) + ""; 
+        for (int k = j+2; k <= en; k++)
+        { // System.out.println(lexicals.get(k) + ""); 
 		
-	      if (";".equals(lexicals.get(k) + ""))
-	      { Type ptype = parseType(j+3,k-1,entities,types); 
-	        if (ptype != null) 
-	        { uc.addParameter(p,ptype);
-		      j = k; 
-		      k = en; 
-	        }
-		    else 
-		    { System.err.println("!! Invalid parameter type: " + showLexicals(j+3,k-1)); }
-		  } 
-		} 
-		j++;  
+          if (";".equals(lexicals.get(k) + ""))
+          { Type ptype = parseType(j+3,k-1,entities,types); 
+            if (ptype != null) 
+            { uc.addParameter(p,ptype);
+              j = k; 
+              k = en; 
+            }
+            else 
+            { System.err.println("!! Invalid parameter type: " + showLexicals(j+3,k-1)); }
+          } 
+        } 
+        j++;  
       }
 	  else if ("attribute".equals(jx))
 	  { String p = lexicals.get(j+1) + ""; 
@@ -7185,28 +7185,49 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       
  
 
-  public UseCase parseKM3UseCase(int st, int en, Vector entities, Vector types, 
-                                 Vector gens, Vector pasts)
+  public UseCase parseKM3UseCase(int st, int en, 
+                          Vector entities, Vector types, 
+                          Vector gens, Vector pasts)
   { // usecase name : type { parameters postconditions activity }
     String nme = lexicals.get(st+1) + "";
     String colon = lexicals.get(st+2) + "";
     Type uctyp = new Type("void",null);  // default 
     int openingBracket = st + 4; 
     boolean foundstart = false; 
+    Vector ucpars = new Vector(); 
 	
     for (int i = st + 3; i < en && !foundstart; i++)
     { String lx = lexicals.get(i) + ""; 
       if ("{".equals(lx))
       { openingBracket = i; 
         foundstart = true; 
-        if (":".equals(colon))
-        { uctyp = parseType(st+3,i-1,entities,types); } 
+
+        if (":".equals(colon)) // usecase uc : type {
+        { uctyp = parseType(st+3,i-1,entities,types); }
+        else // usecase uc ( pars ) : type {
+        { boolean foundtype = false; 
+          for (int j = i-1; j > st + 1 && !foundtype; j--)
+          { String jx = lexicals.get(j) + ""; 
+            if (":".equals(jx))
+            { uctyp = parseType(j+1,i-1,entities,types); 
+              foundtype = true; 
+              if ("(".equals(lexicals.get(st+2) + "") &&
+                  ")".equals(lexicals.get(j-1) + ""))
+              { ucpars = 
+                  parseAttributeDecs(st+3, j-2,
+                                     entities, types); 
+              } 
+            } 
+          } 
+        } 
       } 
     }  
         
     UseCase uc = new UseCase(nme); 
     uc.setResultType(uctyp); 
     System.out.println(">>> use case " + nme + " has return type " + uctyp); 
+    uc.setParameters(ucpars); 
+    System.out.println(">>> use case " + nme + " has parameters " + ucpars); 
 
     if (foundstart == false) 
     { System.err.println("!! ERROR: use case syntax is: usecase " + nme + " : type { ... }");

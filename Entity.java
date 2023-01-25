@@ -5478,6 +5478,30 @@ public class Entity extends ModelElement implements Comparable
     return res; 
   } 
         
+  public void unfoldOperationCalls(Vector nmes) 
+  { // For each op : nmes, replace call self.op()
+    // by activity of op, in each other operation.
+
+    for (int i = 0; i < nmes.size(); i++) 
+    { String nme = (String) nmes.get(i); 
+      BehaviouralFeature bf = getOperation(nme); 
+      if (bf == null) 
+      { continue; } 
+      Statement activ = bf.getActivity(); 
+      if (activ == null) 
+      { continue; } 
+
+      Statement newactiv = 
+          Statement.replaceReturnBySkip(activ); 
+
+      for (int j = 0; j < operations.size(); j++) 
+      { BehaviouralFeature op = 
+            (BehaviouralFeature) operations.get(j); 
+        if (op != bf) 
+        { op.unfoldOperationCall(nme,newactiv); } 
+      } 
+    } 
+  } 
 
   public Vector allLhsFeatures()
   { // all features used in any lhs of a local invariant
@@ -5693,6 +5717,68 @@ public class Entity extends ModelElement implements Comparable
       }
     }   
   } 
+
+  public void addPerformThruOperations(
+            Vector paras, java.util.Map pthrus)
+  { // for each  St |-> En in pthrus, add 
+    // P_thru_En to operations, each P >= St, P <= En
+    // if not already in the class. 
+
+    Vector fromparas = new Vector(); 
+    fromparas.addAll(pthrus.keySet()); 
+    for (int i = 0; i < fromparas.size(); i++) 
+    { String st = (String) fromparas.get(i); 
+      String en = (String) pthrus.get(st);
+      int j = paras.indexOf(st); 
+      int k = paras.indexOf(en); 
+      for (int p = j; p < k; p++)  
+      { String pst = (String) paras.get(p); 
+        String opname = pst + "_thru_" + en;
+
+        BehaviouralFeature op = getOperation(opname);  
+        if (op == null) 
+        { System.out.println(">>> Adding operation " + opname);
+          op = new BehaviouralFeature(opname, new Vector(),
+                                      false, null);
+          SequenceStatement seqstat =
+                        new SequenceStatement(); 
+          String nxt = (String) paras.get(p+1); 
+
+          // self.pst_Call(); self.nxt_thru_en();  
+
+          BehaviouralFeature pstCallop =
+              getOperation(pst + "_Call"); 
+          if (pstCallop != null) 
+          { InvocationStatement pcall = 
+               new InvocationStatement("self", pstCallop); 
+            seqstat.addStatement(pcall); 
+          }  
+
+          if (p+1 == k)
+          { BehaviouralFeature enCallop =
+                           getOperation(en + "_Call"); 
+            if (enCallop != null) 
+            { InvocationStatement enCall = 
+                 new InvocationStatement("self", enCallop); 
+              seqstat.addStatement(enCall); 
+            }
+          } 
+          else  
+          { InvocationStatement nextCall = 
+                new InvocationStatement("self", 
+                                  nxt + "_thru_" + en); 
+            seqstat.addStatement(nextCall); 
+          } 
+
+          op.setActivity(seqstat);
+          op.setEntity(this); 
+          addOperation(op); 
+        } 
+      } 
+    } 
+  } 
+
+
 
   public void createPrimaryKey()
   { String key = getName().toLowerCase() + "Id"; 
