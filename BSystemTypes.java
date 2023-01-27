@@ -5762,7 +5762,7 @@ public class BSystemTypes extends BComponent
 
     res = res + 
     "    public static double roundTo(double x, int n)\n" +
-    "    { if (n < 0) \n" +
+    "    { if (n == 0) \n" +
     "      { return Math.Round(x); }\n" + 
     "      double y = x*Math.Pow(10,n); \n" +
     "      return Math.Round(y)/Math.Pow(10,n);\n" +
@@ -5787,7 +5787,7 @@ public class BSystemTypes extends BComponent
 
     res = res + 
     "    public static double roundN(double x, int n)\n" +
-    "    { if (n < 0) \n" +
+    "    { if (n == 0) \n" +
     "      { return Math.round(x); }\n" + 
     "      double y = x*Math.pow(10,n); \n" +
     "      return Math.round(y)/Math.pow(10,n);\n" +
@@ -5815,7 +5815,7 @@ public class BSystemTypes extends BComponent
 
     res = res + 
     "    static double roundTo(double x, int n)\n" +
-    "    { if (n < 0) \n" +
+    "    { if (n == 0) \n" +
     "      { return round(x); }\n" + 
     "      double y = x*pow(10,n); \n" +
     "      return round(y)/pow(10,n);\n" +
