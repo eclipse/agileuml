@@ -40581,8 +40581,12 @@ public class ASTCompositeTerm extends ASTTerm
              "Type of " + fieldName + " is " + typ + 
              " " + wdth + " " + integerWidth + " " + 
              fractionalWidth, 
-                          "", 
-                          JOptionPane.INFORMATION_MESSAGE);  
+             "", 
+             JOptionPane.INFORMATION_MESSAGE);  
+          ASTTerm.setTaggedValue(fieldName, "integerWidth", 
+                                     "" + integerWidth); 
+          ASTTerm.setTaggedValue(fieldName, "fractionWidth", 
+                                     "" + fractionalWidth);       
         } 
 
         if (container == null) // no container, so top-level attribute
@@ -40790,6 +40794,10 @@ public class ASTCompositeTerm extends ASTTerm
               { actualContainer.addAttribute(att);
                 context.put("container", actualContainer); 
               }  
+              ASTTerm.setTaggedValue(fieldName, "integerWidth", 
+                                     "" + integerWidth); 
+              ASTTerm.setTaggedValue(fieldName, "fractionWidth", 
+                                     "" + fractionalWidth); 
             } // could itself be composite
             context.put("previousLevel", 
                         new Integer(levelNumber)); 

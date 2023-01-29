@@ -153,6 +153,7 @@ factorExpression
     : factorExpression ('*' | '/' | 'mod' | 'div') 
                                    factorExpression
     | INTEGRAL '_{' expression '}' '^{' expression '}' expression ID 
+    | INTEGRAL expression ID 
     | SIGMA '_{' expression '}' '^{' expression '}' expression  
     | PRODUCT '_{' expression '}' '^{' expression '}' expression  
     | 'C' '_{' expression '}' '^{' expression '}'

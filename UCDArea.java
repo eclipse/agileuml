@@ -2940,15 +2940,19 @@ public class UCDArea extends JPanel
     { System.err.println("!! ERROR: Invalid entity name: " + ent); 
       return; 
     } 
-    if (nme.equals("add") || nme.equals("remove") || nme.equals("create") ||
-        nme.equals("delete") || nme.equals("edit") || nme.equals("get") ||
-        nme.equals("list") || nme.equals("searchBy") || nme.equals("set"))
+
+    if (nme.equals("add") || nme.equals("remove") || 
+        nme.equals("create") ||
+        nme.equals("delete") || nme.equals("edit") || 
+        nme.equals("get") ||
+        nme.equals("list") || nme.equals("searchBy") || 
+        nme.equals("set"))
     { String name = nme + ent;
       if (role != null && !(role.equals("")))
       { name = name + role; } 
       OperationDescription od = new OperationDescription(name,e,nme,role); 
       useCases.add(od); 
-      System.out.println(">>> New Use Case: " + od); 
+      System.out.println(">>> New EIS use case: " + od); 
     }  
   }
 
@@ -2970,7 +2974,7 @@ public class UCDArea extends JPanel
 
   public void displayMeasures(PrintWriter out)
   { String cloneLimit = 
-          JOptionPane.showInputDialog("Enter clone size limit (default 10): ");
+      JOptionPane.showInputDialog("Enter clone size limit (default 10): ");
     if (cloneLimit != null) 
     { try { CLONE_LIMIT = Integer.parseInt(cloneLimit); } 
       catch (Exception _ex) 
@@ -3114,6 +3118,9 @@ public class UCDArea extends JPanel
     for (int j = 0; j < entities.size(); j++) 
     { Entity ent = (Entity) entities.get(j); 
       if (ent.isDerived()) { continue; } 
+
+      if (ent.isComponent() || ent.isExternal())
+      { continue; } 
 
       Map cg = ent.getCallGraph(); 
       if (cg.size() > 0) 
@@ -3280,6 +3287,9 @@ public class UCDArea extends JPanel
       if (ent.hasStereotype("auxilliary")) { continue; } 
 
       if (ent.hasStereotype("external")) { continue; } 
+      
+      if (ent.isComponent() || ent.isExternal())
+      { continue; } 
 
       if (ent.hasStereotype("externalApp")) { continue; } 
 
