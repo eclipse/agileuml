@@ -2961,6 +2961,10 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
         return null; 
       } 
 
+      if (ss.indexOf("_") >= 0)
+      { System.err.println("! Warning: do not use _i for integers i: " + ss); }
+
+
       /* if (isKeyword(ss))
       { System.err.println(">>>: Invalid basic expression: keyword: " + ss); 
         return null;

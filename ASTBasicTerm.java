@@ -65,7 +65,7 @@ public class ASTBasicTerm extends ASTTerm
   public ASTTerm replaceCobolIdentifiers()
   { if (tag.equals("cobolWord"))
     { String vtrim = value.trim(); 
-      String vsub = vtrim.replace("-", "_"); 
+      String vsub = vtrim.replace("-", "$"); 
       return new ASTBasicTerm(tag,vsub);
     } 
 

@@ -2767,6 +2767,21 @@ public class Type extends ModelElement
   }
   // Set and Sequence?
 
+  public String defaultValue()
+  { // for COBOL
+    String res = "\"\"";  
+    String nme = getName();
+    if (nme.equals("String"))
+    { res = "\"\""; }
+    else if (nme.equals("boolean"))
+    { return "false"; }
+    else if (nme.equals("double"))
+    { return "0.0"; }
+    else if (nme.equals("int") || nme.equals("long"))
+    { return "0"; }
+    return res; 
+  } 
+
   public Expression getDefaultValueExpression()
   { return getDefaultValueExpression(elementType); } 
 

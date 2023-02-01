@@ -40415,9 +40415,15 @@ public class ASTCompositeTerm extends ASTTerm
 
     if ("programIdParagraph".equals(tag))
     { // PROGRAM-ID . programName _* 
-      ASTTerm nme = (ASTTerm) terms.get(2); 
-      String pname = nme.literalForm() + "_Class"; 
+      ASTTerm nme = (ASTTerm) terms.get(2);
+      String pxname = nme.literalForm();  
+      String pname = pxname + "_Class"; 
       context.put("programName", pname);
+
+      ASTTerm.cobolClasses.add(pxname); 
+      ASTTerm.setTaggedValue(pxname, "programNumber", 
+                     "" + ASTTerm.cobolClasses.size());  
+      
       return res; 
     } 
 
@@ -40514,7 +40520,8 @@ public class ASTCompositeTerm extends ASTTerm
             ASTTerm.getTermByTag(terms,"dataPictureClause"); 
           int intwidth = pictureClause.cobolIntegerWidth();
           int fractwidth = pictureClause.cobolFractionWidth();
-
+          Type typ = pictureClause.cobolDataType();  
+          
           ASTTerm t2 = (ASTTerm) terms.get(1); 
           if (t2.getTag().equals("dataName"))
           { String fname = t2.literalForm(); 
@@ -40522,6 +40529,19 @@ public class ASTCompositeTerm extends ASTTerm
                                      "" + intwidth); 
             ASTTerm.setTaggedValue(fname, "fractionWidth", 
                                      "" + fractwidth); 
+            ASTTerm.setTaggedValue(fname, "oclType", 
+                                     "" + typ);  
+            JOptionPane.showMessageDialog(null, 
+              "Type of " + fname + " is " + typ + 
+              " " + intwidth + " " + 
+              fractwidth, 
+              "", 
+              JOptionPane.INFORMATION_MESSAGE);
+            if (typ != null) 
+            { String dval = typ.defaultValue(); 
+              ASTTerm.setTaggedValue(fname, "defaultValue", 
+                                     dval);  
+            } 
           }
         } 
 
@@ -40587,6 +40607,13 @@ public class ASTCompositeTerm extends ASTTerm
                                      "" + integerWidth); 
           ASTTerm.setTaggedValue(fieldName, "fractionWidth", 
                                      "" + fractionalWidth);       
+          ASTTerm.setTaggedValue(fieldName, "oclType", 
+                                     "" + typ);    
+          if (typ != null) 
+          { String dval = typ.defaultValue(); 
+            ASTTerm.setTaggedValue(fieldName, "defaultValue", 
+                                   dval);  
+          }   
         } 
 
         if (container == null) // no container, so top-level attribute
@@ -40811,6 +40838,11 @@ public class ASTCompositeTerm extends ASTTerm
           newent.levelNumber = levelNumber; 
           newent.cardinalityValue = multiplicity; 
 
+          ASTTerm.setTaggedValue(fieldName, "oclType", 
+                                            "String");    
+          ASTTerm.setTaggedValue(fieldName, "defaultValue", 
+                                 "\"\"");
+  
           Type typ = new Type(newent); 
           if (multiplicity > 1) 
           { Type elemT = typ; 

@@ -32,6 +32,8 @@ public abstract class ASTTerm
   static Vector entities; 
   static Vector functionsInScope; 
 
+  static Vector cobolClasses = new Vector(); 
+
   static Entity currentClass = null; // Current context class
 
   static java.util.Map metafeatures = new java.util.HashMap(); 
