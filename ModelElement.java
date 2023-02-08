@@ -642,7 +642,7 @@ public abstract class ModelElement implements SystemTypes
     { try
       { n = Integer.parseInt(s); }
       catch (Exception e)
-      { System.err.println("not a valid number");
+      { System.err.println("ERROR!: " + s + " not a valid number");
         return MANY;
       }
       return n;  // ONE is 1

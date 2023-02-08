@@ -100,8 +100,30 @@ abstract public class Named
     return str; 
   } 
 
+  public static String removeInvalidCharacters(String str)
+  { String res = ""; 
+    if (str.length() == 0)
+    { return res; } 
+
+    char c0 = str.charAt(0); 
+    if (Character.isJavaIdentifierStart(c0))
+    { res = res + c0; } 
+
+    for (int i = 1; i < str.length(); i++) 
+    { char c = str.charAt(i); 
+      if (Character.isJavaIdentifierPart(c))
+      { res = res + c; } 
+    } 
+
+    return res; 
+  } 
+
   public static void main(String[] args) 
-  { System.out.println(Named.capitalise("delta")); } 
+  { System.out.println(Named.capitalise("delta")); 
+    String invalid = "a bad'string#0"; 
+    System.out.println(
+           Named.removeInvalidCharacters(invalid)); 
+  } 
 
 
 }

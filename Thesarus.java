@@ -3,7 +3,7 @@ import java.io.*;
 import java.util.Collections; 
 
 /******************************
-* Copyright (c) 2003-2022 Kevin Lano
+* Copyright (c) 2003-2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -315,8 +315,10 @@ public class Thesarus
               c.addSemantics(x); 
             } 
             else if (ndef.equals("class"))
-            { Entity ent = new Entity(c.name); 
-              epwout.println(c.name);
+            { String cleanname = 
+                 Named.removeInvalidCharacters(c.name); 
+              Entity ent = new Entity(cleanname); 
+              epwout.println(cleanname);
               c.addSemantics(ent); 
             } 
             else if (ndef.equals("reference"))

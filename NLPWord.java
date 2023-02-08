@@ -2,7 +2,7 @@ import java.util.Vector;
 
 /* Package: Requirements Engineering */ 
 /******************************
-* Copyright (c) 2003-2022 Kevin Lano
+* Copyright (c) 2003-2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -770,53 +770,55 @@ public class NLPWord extends NLPPhraseElement
     else if (isPlural())
     { String sing = getSingular(); 
 	  // System.out.println(">>> Singular of " + text + " is " + sing); 
-	  
-       tc = Thesarus.lookupWord(background,sing); 
-       if (tc != null)
-       { Vector tcsem = tc.semantics; 
-         if (tcsem.size() > 0 && (tcsem.get(0) instanceof Entity))
-         { Type colltype = new Type("Set", null);
-           String ename = Named.capitalise(sing); 
-           Entity ee = null; 
+      String cleanSing = Named.removeInvalidCharacters(sing); 
+
+      tc = Thesarus.lookupWord(background, cleanSing); 
+      if (tc != null)
+      { Vector tcsem = tc.semantics; 
+        if (tcsem.size() > 0 && (tcsem.get(0) instanceof Entity))
+        { Type colltype = new Type("Set", null);
+          String ename = Named.capitalise(cleanSing); 
+          Entity ee = null; 
 		  
-           Object obj = ModelElement.lookupByNameIgnoreCase(ename,modelElems); 
-           if (obj != null && obj instanceof Entity)
-           { ee = (Entity) obj; }
-           else
-           { ee = new Entity(ename);
-             modelElems.add(ee); 
-             System.out.println(">>> Recognised new entity: " + ename); 
-             String id = sentence.id; 
-             sentence.derivedElements.add(ee); 
-             ee.addStereotype("originator=\"" + id + "\""); 
-           }   
-           colltype.setElementType(new Type(ee)); 
-           Attribute r = new Attribute(text, colltype, ModelElement.INTERNAL); 
-           Vector sem1 = new Vector(); 
-           sem1.add(r); 
-           res.put(text, sem1); 
-         }
-	  }
+          Object obj = ModelElement.lookupByNameIgnoreCase(ename,modelElems); 
+          if (obj != null && obj instanceof Entity)
+          { ee = (Entity) obj; }
+          else
+          { ee = new Entity(ename);
+            modelElems.add(ee); 
+            System.out.println(">>> Recognised new entity: " + ename); 
+            String id = sentence.id; 
+            sentence.derivedElements.add(ee); 
+            ee.addStereotype("originator=\"" + id + "\""); 
+          }   
+          colltype.setElementType(new Type(ee)); 
+          Attribute r = new Attribute(text, colltype, ModelElement.INTERNAL); 
+          Vector sem1 = new Vector(); 
+          sem1.add(r); 
+          res.put(text, sem1); 
+        }
       }
-      else if (isProperNoun())
-      { String ename = getSingular(); 
-        Vector sem = new Vector(); 
-        Entity ee = null; 
+    }
+    else if (isProperNoun())
+    { String ename = 
+         Named.removeInvalidCharacters(getSingular()); 
+      Vector sem = new Vector(); 
+      Entity ee = null; 
 		  
-        Object obj = ModelElement.lookupByNameIgnoreCase(ename,modelElems); 
-        if (obj != null && obj instanceof Entity)
-        { ee = (Entity) obj; }
-        else
-        { ee = new Entity(ename);
-          modelElems.add(ee);
-          System.out.println(">>> Recognised new entity: " + ename); 
-          String id = sentence.id; 
-          sentence.derivedElements.add(ee); 
-          ee.addStereotype("originator=\"" + id + "\""); 
-        }   
-        sem.add(ee); 
-        res.put(text, sem); 
-      }  
+      Object obj = ModelElement.lookupByNameIgnoreCase(ename,modelElems); 
+      if (obj != null && obj instanceof Entity)
+      { ee = (Entity) obj; }
+      else
+      { ee = new Entity(ename);
+        modelElems.add(ee);
+        System.out.println(">>> Recognised new entity: " + ename); 
+        String id = sentence.id; 
+        sentence.derivedElements.add(ee); 
+        ee.addStereotype("originator=\"" + id + "\""); 
+      }   
+      sem.add(ee); 
+      res.put(text, sem); 
+    }  
 	// These need to be added to the model elements if they are not already there. 
 	
     return res; 
@@ -851,10 +853,15 @@ public class NLPWord extends NLPPhraseElement
 
   public void extractRelationshipDefinitions(Entity ent, Vector modelElements)
   { if (isNoun())
-    { String singular = getSingular(); 
-      Entity entnew = (Entity) ModelElement.lookupByNameIgnoreCase(singular, modelElements); 
+    { String singular = getSingular();
+      String cleanName = 
+          Named.removeInvalidCharacters(singular);  
+ 
+      Entity entnew = 
+        (Entity) ModelElement.lookupByNameIgnoreCase(
+                                cleanName, modelElements); 
       if (entnew == null) 
-      { entnew = new Entity(Named.capitalise(singular));
+      { entnew = new Entity(Named.capitalise(cleanName));
         modelElements.add(entnew);
         String id = sentence.id; 
         entnew.addStereotype("originator=\"" + id + "\""); 
@@ -868,7 +875,8 @@ public class NLPWord extends NLPPhraseElement
    
   public void extractClassReferences(Entity ent, String role, java.util.Map fromBackground, Vector modelElements)
   { 
-    String attname = text; // singular form of it.
+    String attname =  
+          Named.removeInvalidCharacters(text);  
 
     if (NLPWord.isKeyword(attname)) 
     { return; } 
@@ -899,7 +907,7 @@ public class NLPWord extends NLPPhraseElement
     { card2 = ModelElement.MANY; }
 	
     if (ent.hasRole(role2))
-    { System.err.println("Possible conflict in requirements: role " + role2 + " of class " + attname + " already exists"); 
+    { System.err.println("!! Possible conflict in requirements: role " + role2 + " of class " + attname + " already exists"); 
       role2 = role2 + "_" + ent.getAssociations().size(); 
     }
     Association newast = new Association(ent,tent,card1,card2,"",role2);   

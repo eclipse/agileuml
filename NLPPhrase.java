@@ -2,7 +2,7 @@ import java.util.Vector;
 
 /* Package: Requirements Engineering */ 
 /******************************
-* Copyright (c) 2003-2022 Kevin Lano
+* Copyright (c) 2003-2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -904,12 +904,17 @@ public class NLPPhrase extends NLPPhraseElement
         { String attname = (String) atts.get(n-1); // singular form of it.
           if (NLPWord.isKeyword(attname)) { continue; } 
           NLPWord attword = (NLPWord) plurals.get(n-1); 
+
+          String cleanName = 
+             Named.removeInvalidCharacters(attname); 
  
-          Entity tent = (Entity) ModelElement.lookupByNameIgnoreCase(attname,modelElements); 
+          Entity tent = (Entity) 
+            ModelElement.lookupByNameIgnoreCase(
+                                cleanName, modelElements); 
           if (tent != null) 
           { System.out.println(">>> Existing class: " + attname); }
           else 
-          { tent = new Entity(Named.capitalise(attname)); 
+          { tent = new Entity(Named.capitalise(cleanName)); 
             System.out.println(">>> Creating new class: " + attname);
             modelElements.add(tent);  
             String id = sentence.id; 
@@ -917,7 +922,7 @@ public class NLPPhrase extends NLPPhraseElement
             sentence.derivedElements.add(tent);
           }
           
-          String role2 = attname.toLowerCase();
+          String role2 = cleanName.toLowerCase();
           if (role != null) 
           { role2 = role; }
 			
@@ -1247,10 +1252,14 @@ public class NLPPhrase extends NLPPhraseElement
        NLPWord nounwd = nphrase.identifyNounForEntity(); 
        System.out.println(">>> Alternative subclass " + nounwd.text + " of " + nphrase); 
        String singular = nounwd.getSingular(); 
-         
-       Entity entnew = (Entity) ModelElement.lookupByNameIgnoreCase(singular, modelElements); 
+       String cleanName = 
+          Named.removeInvalidCharacters(singular);  
+
+       Entity entnew = (Entity) 
+         ModelElement.lookupByNameIgnoreCase(
+                          cleanName, modelElements); 
        if (entnew == null) 
-       { entnew = new Entity(Named.capitalise(singular));
+       { entnew = new Entity(Named.capitalise(cleanName));
          modelElements.add(entnew);
          String id = sentence.id; 
          entnew.addStereotype("originator=\"" + id + "\""); 
@@ -1265,9 +1274,13 @@ public class NLPPhrase extends NLPPhraseElement
        String noun = npword.text; 
        String singular = npword.getSingular(); 
        
-       Entity entnew = (Entity) ModelElement.lookupByNameIgnoreCase(singular, modelElements); 
+       String cleanName = 
+          Named.removeInvalidCharacters(singular);  
+       Entity entnew = (Entity) 
+         ModelElement.lookupByNameIgnoreCase(
+                          cleanName, modelElements); 
        if (entnew == null) 
-       { entnew = new Entity(Named.capitalise(singular));
+       { entnew = new Entity(Named.capitalise(cleanName));
          modelElements.add(entnew);
          String id = sentence.id; 
          entnew.addStereotype("originator=\"" + id + "\""); 

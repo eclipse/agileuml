@@ -20329,7 +20329,8 @@ public class ASTCompositeTerm extends ASTTerm
             "&&".equals(op + "") || "||".equals(op + "") ||
             "<".equals(op + "") || ">".equals(op + ""))
         { ASTTerm.setType(this, "boolean"); 
-          expression.setType(new Type("boolean", null)); 
+          if (expression != null) 
+          { expression.setType(new Type("boolean", null)); } 
         } 
 
         return e1x + opx + e2x; 
@@ -35081,7 +35082,7 @@ public class ASTCompositeTerm extends ASTTerm
     } 
 
     if ("statement".equals(tag))
-    { System.out.println(">> Statement with " + terms.size() + " terms "); 
+    { System.out.println(">> toKM3 Statement with " + terms.size() + " terms "); 
 
       modelElements = new Vector(); // for inner classes. 
 
@@ -36542,14 +36543,14 @@ public class ASTCompositeTerm extends ASTTerm
         statement = tt.statement; 
         modelElements = tt.modelElements; // for local decs
         System.out.println(); 
-        System.out.println(">>> model elements of " + res +
+        System.out.println(">+>+> model elements of blockStatement " + res +
                            ": " + modelElements); 
         return res; 
       } 
     } 
 
     if ("block".equals(tag))
-    { System.out.println(">> Statement block with " + terms.size() + " terms " + terms); 
+    { System.out.println(">> toKM3 Statement block with " + terms.size() + " terms " + terms); 
 
       if (terms.size() <= 2)
       { statement = new InvocationStatement("skip"); 
@@ -36730,13 +36731,18 @@ public class ASTCompositeTerm extends ASTTerm
         for (int i = 3; i < terms.size(); i++) 
         { ASTTerm tt = (ASTTerm) terms.get(i);
 
-          if (tt.hasTag("methodBody") && tt instanceof ASTCompositeTerm)
-          { labelfunctions = 
+          if (tt.hasTag("methodBody") && 
+              tt instanceof ASTCompositeTerm)
+          { boolean haslfs = 
+               ((ASTCompositeTerm) tt).hasJavaLabelFunctions(bf);
+            if (haslfs)
+            { labelfunctions = 
                ((ASTCompositeTerm) tt).javaLabelFunctions(bf);
-            System.out.println(">>> Operation " + bf + " has label functions " + labelfunctions);
-            modelElements.addAll(labelfunctions);
-            ASTTerm.functionsInScope = new Vector(); 
-            ASTTerm.functionsInScope.addAll(labelfunctions);   
+              System.out.println(">>> Operation " + bf + " has label functions " + labelfunctions);
+              modelElements.addAll(labelfunctions);
+              ASTTerm.functionsInScope = new Vector(); 
+              ASTTerm.functionsInScope.addAll(labelfunctions); 
+            }  
           } 
 
           if ("throws".equals(tt.literalForm()))
@@ -36864,12 +36870,16 @@ public class ASTCompositeTerm extends ASTTerm
         { ASTTerm tt = (ASTTerm) terms.get(i);
 
           if (tt.hasTag("methodBody") && tt instanceof ASTCompositeTerm)
-          { labelfunctions = 
-               ((ASTCompositeTerm) tt).javaLabelFunctions(bf);
-            System.out.println(">>> Operation " + bf + " has label functions " + labelfunctions);
-            modelElements.addAll(labelfunctions);
-            ASTTerm.functionsInScope = new Vector(); 
-            ASTTerm.functionsInScope.addAll(labelfunctions);   
+          { boolean lfs = 
+              ((ASTCompositeTerm) tt).hasJavaLabelFunctions(bf);
+            if (lfs) 
+            { labelfunctions = 
+                ((ASTCompositeTerm) tt).javaLabelFunctions(bf);
+              System.out.println(">>> Operation " + bf + " has label functions " + labelfunctions);
+              modelElements.addAll(labelfunctions);
+              ASTTerm.functionsInScope = new Vector(); 
+              ASTTerm.functionsInScope.addAll(labelfunctions);
+            }   
           } 
 
           if ("throws".equals(tt.literalForm()))
@@ -38247,7 +38257,14 @@ public class ASTCompositeTerm extends ASTTerm
         String elsex = elseoption.preSideEffect();
           
         if (condx == null && ifx == null && elsex == null) 
-        { return null; }  
+        { return null; } 
+ 
+        if (cond.statement == null && 
+            ifoption.statement == null && 
+            elseoption.statement == null) 
+        { statement = null; 
+          return null; 
+        }  
         
         String res = ""; 
         SequenceStatement stat = new SequenceStatement(); 
@@ -38278,6 +38295,7 @@ public class ASTCompositeTerm extends ASTTerm
           { stat.addStatement(elseoption.statement); }  
         }  
 
+        
         if (stat.getStatements().size() == 1) 
         { statement = (Statement) stat.getStatement(0); } 
         else 
@@ -38286,6 +38304,7 @@ public class ASTCompositeTerm extends ASTTerm
         return res; 
       } 
     } 
+
     statement = null; 
     return ""; 
   } 
@@ -38347,6 +38366,13 @@ public class ASTCompositeTerm extends ASTTerm
         } 
       } 
     } 
+
+    if ("variableInitializer".equals(tag))
+    { ASTTerm t = (ASTTerm) terms.get(0); 
+      String res = t.postSideEffect(); 
+      statement = t.statement; 
+      return res;          
+    }
 
     if ("expression".equals(tag))
     { if (terms.size() == 1) // Identifier or literal
@@ -38473,6 +38499,13 @@ public class ASTCompositeTerm extends ASTTerm
         if (condx == null && ifx == null && elsex == null) 
         { return null; }  
         
+        if (cond.statement == null && 
+            ifoption.statement == null && 
+            elseoption.statement == null) 
+        { statement = null; 
+          return null; 
+        }  
+
         String res = ""; 
         SequenceStatement stat = new SequenceStatement(); 
 
@@ -39647,6 +39680,36 @@ public class ASTCompositeTerm extends ASTTerm
  
     return res; 
   } 
+
+  public boolean hasLabelFunctions(BehaviouralFeature bf)
+  { if (terms.size() == 0)
+    { return false; } 
+
+    if ("methodBody".equals(tag) && 
+        terms.get(0) instanceof ASTCompositeTerm)
+    { ASTCompositeTerm body = (ASTCompositeTerm) terms.get(0); 
+      return body.hasJavaLabelFunctions(bf); 
+    }   
+    return false; 
+  } 
+
+  public boolean hasJavaLabelFunctions(
+                                   BehaviouralFeature mbf)
+  { 
+    if (terms.size() == 0)
+    { return false; } 
+     
+    if ("block".equals(tag) && terms.size() >= 1)
+    { 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm t = (ASTTerm) terms.get(i); 
+        if (t.isJavaLabeledStatement())
+        { return true; } 
+      } 
+    } 
+
+    return false; 
+  }
 
   public Vector javaLabelFunctions(BehaviouralFeature bf)
   { if (terms.size() == 0)

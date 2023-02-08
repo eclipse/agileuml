@@ -26561,6 +26561,8 @@ public void produceCUI(PrintWriter out)
       return; 
     }
 
+    long t1 = (new java.util.Date()).getTime(); 
+
     String sourcestring = ""; 
     int noflines = 0; 
 
@@ -26712,6 +26714,10 @@ public void produceCUI(PrintWriter out)
       if (ent != null && labels.size() > 0)
       { ent.unfoldOperationCalls(labels); } 
     } 
+
+    long t2 = (new java.util.Date()).getTime(); 
+
+    System.out.println(">> Time taken = " + (t2 - t1)); 
 
     repaint(); 
   }
