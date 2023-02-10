@@ -1556,14 +1556,18 @@ public class Attribute extends ModelElement
   } 
 
   public String getKM3()
-  { if (isStatic())
-    { return "    static attribute " + getName() + " : " + getType() + ";"; } 
+  { String init = ""; 
+    if (initialExpression != null) 
+    { init = " := " + initialExpression; } 
+
+    if (isStatic())
+    { return "    static attribute " + getName() + " : " + getType() + init + ";"; } 
     else if (isIdentity())
-    { return "    attribute " + getName() + " identity : " + getType() + ";"; }
+    { return "    attribute " + getName() + " identity : " + getType() + init + ";"; }
     else if (isDerived())
-    { return "    attribute " + getName() + " derived : " + getType() + ";"; }
+    { return "    attribute " + getName() + " derived : " + getType() + init + ";"; }
     else  
-    { return "    attribute " + getName() + " : " + getType() + ";"; } 
+    { return "    attribute " + getName() + " : " + getType() + init + ";"; } 
   } 
 
   public void saveEcore(PrintWriter out)

@@ -1066,6 +1066,7 @@ abstract class Statement implements Cloneable
 
   abstract String toAST(); 
 
+  /* as text model */
   abstract String saveModelData(PrintWriter out); 
 
   abstract boolean typeCheck(Vector types, Vector entities, 
