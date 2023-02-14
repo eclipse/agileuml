@@ -14631,8 +14631,8 @@ public void produceCUI(PrintWriter out)
     typeCheck(); 
     // Generate Java7: 
 
-    File file = new File("output/Controller.java");  
-    File file2 = new File("output/SystemTypes.java");
+    File file = new File("app/Controller.java");  
+    File file2 = new File("app/SystemTypes.java");
 
     try
     { PrintWriter out = new PrintWriter(

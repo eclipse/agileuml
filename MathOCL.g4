@@ -150,13 +150,13 @@ additiveExpression
     ; 
 
 factorExpression 
-    : factorExpression ('*' | '/' | 'mod' | 'div') 
+    : 'C' '_{' expression '}' '^{' expression '}'
+    | factorExpression ('*' | '/' | 'mod' | 'div') 
                                    factorExpression
     | INTEGRAL '_{' expression '}' '^{' expression '}' expression ID 
     | INTEGRAL expression ID 
     | SIGMA '_{' expression '}' '^{' expression '}' expression  
     | PRODUCT '_{' expression '}' '^{' expression '}' expression  
-    | 'C' '_{' expression '}' '^{' expression '}'
     | '-' factorExpression 
     | '+' factorExpression 
     | SQUAREROOT factorExpression
@@ -258,5 +258,5 @@ CDOT : '•';
 
 NEWLINE : [\r\n]+ -> skip ;
 INT     : [0-9]+ ;
-ID  :   [a-zA-Z_$]+[a-zA-Z0-9_$]* ;      // match identifiers
+ID  :   [a-zA-Z]+[a-zA-Z0-9$]* ;      // match identifiers
 WS  :   [ \t\n\r]+ -> skip ;

@@ -19,7 +19,7 @@ import javax.swing.event.*;
 import java.beans.XMLEncoder;
 import java.beans.XMLDecoder;
 
-/* K. Lano 2010-2022
+/* K. Lano 2010-2023
    
   Adapted from Oracle example of JTextPane
 
@@ -57,19 +57,20 @@ import java.beans.XMLDecoder;
 
 public class MathApp extends JFrame implements DocumentListener, ActionListener
 {  JPanel buttonsPanel; 
-    JTextPane textPane;
-    DefaultStyledDocument doc;
-    JTextArea messageArea;
-    String newline = "\n";
-    HashMap actions;
+   JTextPane textPane;
+   DefaultStyledDocument doc;
+   JTextArea messageArea;
+   String newline = "\n";
+   HashMap actions;
 
-    String systemName = "app"; 
-    private JLabel thisLabel;
+   String systemName = "app"; 
+   private JLabel thisLabel;
 
-    SimpleAttributeSet[] attrs; 
+   SimpleAttributeSet[] attrs; 
 
-    Vector entities = new Vector(); 
-    Vector types = new Vector(); 
+   Vector entities = new Vector(); 
+   Vector types = new Vector();
+   String internalModel = "";  
 
     java.util.Map charMap = new java.util.HashMap(); 
     java.util.Set encodedChars = new java.util.HashSet(); 
@@ -92,7 +93,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
     char emptySet = 'Ø';
 
     public MathApp() 
-    { super("Math Editor"); 
+    { super("MathOCL Editor"); 
 
       addWindowListener(new WindowAdapter() 
       { public void windowClosing(WindowEvent e) 
@@ -173,8 +174,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       JButton btends = new JButton("\u2192"); 
       btends.addActionListener(this);
 
-      charMap.put('\u2219', '•'); 
-      charMap.put('\u2248', '~'); 
+      charMap.put('\u2219', '•'); // such that 
+      charMap.put('\u2248', '~'); // almost equal
       
       buttonsPanel.add(bexists);
       buttonsPanel.add(bforall);
@@ -382,9 +383,17 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
     protected JMenu createAnalysisMenu() 
     { JMenu menu = new JMenu("Analysis");
 
-      javax.swing.Action analyseAction = new AnalyseAction(); 
+      javax.swing.Action checkAction = new CheckAction(); 
         // checkAction.setMnemonic(KeyEvent.VK_K);
+      menu.add(checkAction); 
+
+      javax.swing.Action analyseAction = new AnalyseAction(); 
       menu.add(analyseAction); 
+
+      // Also, translate to OCL, translate to Matlab
+
+      javax.swing.Action matlabAction = new MatlabAction(); 
+      menu.add(matlabAction); 
 
       return menu; 
    } 
@@ -558,9 +567,9 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
     } 
   } 
 
-  class AnalyseAction extends javax.swing.AbstractAction
-  { public AnalyseAction()
-    { super("Analyse"); }
+  class CheckAction extends javax.swing.AbstractAction
+  { public CheckAction()
+    { super("Check"); }
 
     public void actionPerformed(ActionEvent e)
     { int pos = doc.getLength();
@@ -609,6 +618,16 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         } catch (Exception ex) { }  
       }  
       messageArea.setText(result);
+      internalModel = result; 
+    }
+  }
+
+  class AnalyseAction extends javax.swing.AbstractAction
+  { public AnalyseAction()
+    { super("Analyse"); }
+
+    public void actionPerformed(ActionEvent e)
+    { String result = internalModel; 
 
       String[] args = {"MathOCL", "specification"}; 
 
@@ -638,7 +657,52 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
 
           System.out.println(entcode);
           messageArea.append("\n"); 
-          messageArea.append(entcode);  
+          messageArea.append(entcode);
+          internalModel = entcode;   
+        } 
+      } 
+      catch (Exception _expt) 
+      { _expt.printStackTrace(); } 
+    }
+  }
+
+  class MatlabAction extends javax.swing.AbstractAction
+  { public MatlabAction()
+    { super("Generate Matlab"); }
+
+    public void actionPerformed(ActionEvent e)
+    { String result = internalModel; 
+
+      String[] args = {"MathOCL", "specification"}; 
+
+      try { 
+        org.antlr.v4.gui.AntlrGUI antlr = 
+          new org.antlr.v4.gui.AntlrGUI(args); 
+
+        antlr.setText(result); 
+
+        antlr.process(); 
+
+        String asttext = antlr.getResultText(); 
+        // messageArea.setText("" + asttext);
+        System.out.println(asttext); 
+ 
+        Compiler2 cc = new Compiler2(); 
+        ASTTerm trm = cc.parseGeneralAST(asttext); 
+        if (trm != null)  
+        { 
+          Vector ents = new Vector(); 
+          Vector typs = new Vector(); 
+          CGSpec cgs = new CGSpec(entities,types); 
+          File fs = new File("cg/mathocl2matlab.cstl"); 
+          CSTL.loadCSTL(cgs,fs,ents,typs);
+ 
+          String entcode = trm.cg(cgs);
+
+          System.out.println(entcode);
+          messageArea.append("\n"); 
+          messageArea.append(entcode);
+          // internalModel = entcode;   
         } 
       } 
       catch (Exception _expt) 
@@ -648,7 +712,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
 
   public static void main(String[] args) {
      MathApp window = new MathApp();
-     window.setTitle("Math Editor");
+     window.setTitle("MathOCL Editor");
      window.setSize(800, 600);
      window.setVisible(true);   
   } 

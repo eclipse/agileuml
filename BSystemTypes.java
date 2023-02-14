@@ -4920,6 +4920,9 @@ public class BSystemTypes extends BComponent
                  "  { int len = s.length();\n" + 
                  "    if (len == 0) { return s; }\n" +   
                  "    if (j > len) { j = len; }\n" +  
+                 "    if (j < i) { return \"\"; }\n" +  
+                 "    if (i > len) { return \"\"; }\n" +  
+                 "    if (i < 1) { i = 1; }\n" +  
                  "    return s.substring(i-1,j);\n" +
                  "  }\n\n";
 
@@ -4944,6 +4947,9 @@ public class BSystemTypes extends BComponent
                  "  { int len = s.length();\n" + 
                  "    if (len == 0) { return s; }\n" +   
                  "    if (j > len) { j = len; }\n" +  
+                 "    if (j < i) { return \"\"; }\n" +  
+                 "    if (i > len) { return \"\"; }\n" +  
+                 "    if (i < 1) { i = 1; }\n" +  
                  "    return s.substring(i-1,j);\n" +
                  "  }\n\n";
 
@@ -4968,6 +4974,9 @@ public class BSystemTypes extends BComponent
                  "  { int len = s.length();\n" + 
                  "    if (len == 0) { return s; }\n" +   
                  "    if (j > len) { j = len; }\n" +  
+                 "    if (j < i) { return \"\"; }\n" +  
+                 "    if (i > len) { return \"\"; }\n" +  
+                 "    if (i < 1) { i = 1; }\n" +  
                  "    return s.substring(i-1,j);\n" +
                  "  }\n\n";
 
@@ -4990,12 +4999,12 @@ public class BSystemTypes extends BComponent
                  "  public static string subrange(string s, int i, int j)\n";
 
     res = res + "  { if (i < 1)\n" + 
-                     "     { i = 1; }\n" + 
-                     "     if (j > s.Length)\n" + 
-                     "     { j = s.Length; }\n" + 
-                     "     if (i > s.Length || i > j)\n" + 
-                     "     { return \"\";  }\n" + 
-                     "     return s.Substring(i-1, j-i+1);\n" + 
+                "    { i = 1; }\n" + 
+                "    if (j > s.Length)\n" + 
+                "    { j = s.Length; }\n" + 
+                "    if (i > s.Length || i > j)\n" + 
+                "    { return \"\";  }\n" + 
+                "    return s.Substring(i-1, j-i+1);\n" + 
                 "  }\n\n";
 
     res = res + "  public static ArrayList subrange(ArrayList l, int i, int j)\n";
