@@ -15,4 +15,4 @@ Further information, and a manual for the toolset, can be found in the file umlr
 
 Videos on the use of the toolset can be viewed at: https://www.youtube.com/channel/UCmhEP7QYIHH9MhyEjho_tdQ/
 
-Contributors to AgileUML and associated research include Kevin Lano, Kelly Androutsopoulos, Shekoufeh Kolahdouz-Rahimi, Sobhan Yassipour-Tehrani, Hessa Alfraihi, Lyan Alwakeel, Shichao Fang, Kunxiang Jin and Qiaomu Xue.
+Contributors to AgileUML and associated research include Kevin Lano, Pauline Kan, Kelly Androutsopoulos, David Clark, Shekoufeh Kolahdouz-Rahimi, Sobhan Yassipour-Tehrani, Hessa Alfraihi, Lyan Alwakeel, Shichao Fang, Kunxiang Jin and Qiaomu Xue.
