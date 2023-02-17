@@ -231,6 +231,32 @@ public abstract class ASTTerm
     return res; 
   } 
 
+  public static boolean isSubterm(ASTTerm t1, ASTTerm t2)
+  { if (t1 == null || t2 == null) 
+    { return false; } 
+
+    String lit1 = t1.literalForm(); 
+    String lit2 = t2.literalForm(); 
+
+    if (lit1.equals(lit2))
+    { return true; } 
+
+    if (t2 instanceof ASTCompositeTerm) 
+    { ASTCompositeTerm ct = (ASTCompositeTerm) t2; 
+      Vector trms = ct.getTerms(); 
+      for (int i = 0; i < trms.size(); i++) 
+      { ASTTerm subtrm = 
+           (ASTTerm) trms.get(i); 
+        if (ASTTerm.isSubterm(t1, subtrm))
+        { return true; } 
+      } 
+      return false; 
+    } 
+
+    return false; 
+  } 
+
+
   public void addStereotype(String str) 
   { String lit = literalForm(); 
     Object stereo = ASTTerm.metafeatures.get(lit); 
@@ -3732,6 +3758,256 @@ public abstract class ASTTerm
 
   public abstract Type cobolDataType(); 
 
+  public static String coefficientOf(
+                            ASTTerm var, ASTTerm expr)
+  { // expr is coef*var
+
+    boolean isIn = ASTTerm.isSubterm(var,expr); 
+    if (!isIn)
+    { return "0"; } 
+
+    String v = var.literalForm(); 
+
+    if (v.equals(expr.literalForm()))
+    { return "1"; } 
+
+    if (expr instanceof ASTCompositeTerm)
+    { // (factorExpression _1 * _2)
+      
+      ASTCompositeTerm ct = (ASTCompositeTerm) expr;
+      Vector subterms = ct.getTerms(); 
+ 
+      if (subterms.size() == 1) 
+      { return ASTTerm.coefficientOf(var, 
+                                (ASTTerm) subterms.get(0)); 
+      } 
+
+
+      if ("logicalExpression".equals(ct.tag) || 
+          "equalityExpression".equals(ct.tag))
+      { if (subterms.size() == 3)
+        { String opr = subterms.get(1) + ""; 
+          if ("=".equals(opr))
+          { ASTTerm t1 = (ASTTerm) subterms.get(0);  
+            return ASTTerm.coefficientOf(var, t1); 
+          }
+        } 
+
+        return "0"; 
+      }  
+
+      if ("additiveExpression".equals(ct.tag))
+      { if (subterms.size() == 3)
+        { String opr = subterms.get(1) + ""; 
+          if ("+".equals(opr) || "-".equals(opr))
+          { ASTTerm t1 = (ASTTerm) subterms.get(0);  
+            ASTTerm t2 = (ASTTerm) subterms.get(2); 
+            String coef1 = ASTTerm.coefficientOf(var, t1); 
+            String coef2 = ASTTerm.coefficientOf(var, t2); 
+            if ("0".equals(coef2))
+            { return coef1; }
+            if ("0".equals(coef1) && "-".equals(opr))
+            { return "-" + coef2; } 
+            if ("0".equals(coef1) && "+".equals(opr))
+            { return coef2; } 
+
+            return coef1 + " " + opr + " " + coef2; 
+          } 
+        } 
+
+        return "0"; 
+      }  
+
+
+      if ("factorExpression".equals(ct.tag))
+      { if (subterms.size() == 2)
+        { String opr = subterms.get(0) + ""; 
+
+          if ("-".equals(opr))
+          { ASTTerm tt = (ASTTerm) subterms.get(1); 
+
+            if (v.equals(tt.literalForm()))
+            { return "-1"; } 
+  
+            String coef1 = ASTTerm.coefficientOf(var, tt); 
+            if (coef1.equals("0"))
+            { return coef1; } 
+            return "-" + coef1; 
+          } 
+
+
+          if ("+".equals(opr))
+          { ASTTerm tt = (ASTTerm) subterms.get(1); 
+
+            if (v.equals(tt.literalForm()))
+            { return "1"; } 
+
+            String coef1 = ASTTerm.coefficientOf(var, tt); 
+            return coef1; 
+          } 
+        }
+
+        if (subterms.size() == 3)
+        { String opr = subterms.get(1) + ""; 
+
+          if ("*".equals(opr))
+          { ASTTerm t1 = (ASTTerm) subterms.get(0);  
+            ASTTerm t2 = (ASTTerm) subterms.get(2); 
+
+            if (v.equals(t1.literalForm()))
+            { return t2.literalForm(); } 
+
+            if (v.equals(t2.literalForm()))
+            { return t1.literalForm(); }
+
+            String coef1 = ASTTerm.coefficientOf(var, t1); 
+            String coef2 = ASTTerm.coefficientOf(var, t2);
+            if (coef1.equals("0") || coef2.equals("0"))
+            { return "0"; } 
+            return coef1 + "*" + coef2; 
+          } 
+          else if ("/".equals(opr))
+          { ASTTerm t1 = (ASTTerm) subterms.get(0);  
+            ASTTerm t2 = (ASTTerm) subterms.get(2); 
+            String coef1 = ASTTerm.coefficientOf(var, t1); 
+            String coef2 = ASTTerm.coefficientOf(var, t2);
+            if ("0".equals(coef1))
+            { return "0"; }  
+            return "(" + coef1 + " " + opr + " " + coef2 + ")"; 
+          } 
+          else if ("=".equals(opr))
+          { ASTTerm t1 = (ASTTerm) subterms.get(0);  
+            return ASTTerm.coefficientOf(var, t1); 
+          } 
+        } 
+      }
+    } 
+   
+    return "0"; 
+  }  
+
+  public static String constantTerms(
+                         Vector vars, ASTTerm expr)
+  { // The parts of expr which do not involve any vars.
+
+    System.out.println(">>> Constant terms in: " + expr); 
+
+    if (expr instanceof ASTCompositeTerm)
+    { // (factorExpression _1 * _2)
+      
+      ASTCompositeTerm ct = (ASTCompositeTerm) expr;
+      Vector subterms = ct.getTerms(); 
+ 
+      if (subterms.size() == 1) 
+      { return ASTTerm.constantTerms(vars, 
+                                (ASTTerm) subterms.get(0)); 
+      } 
+
+      if ("logicalExpression".equals(ct.tag) || 
+          "equalityExpression".equals(ct.tag))
+      { if (subterms.size() == 3)
+        { String opr = subterms.get(1) + ""; 
+          if ("=".equals(opr))
+          { ASTTerm t1 = (ASTTerm) subterms.get(0);  
+            ASTTerm t2 = (ASTTerm) subterms.get(2);  
+            String val1 = ASTTerm.constantTerms(vars, t1); 
+            String val2 = ASTTerm.constantTerms(vars, t2);
+            // val1 - val2
+
+            if ("0".equals(val2))
+            { return val1; } 
+            if ("0".equals(val1))
+            { return "-" + val2; } 
+
+            return "(" + val1 + " - " + val2 + ")"; 
+          }
+        } 
+
+        return "0"; 
+      }  
+
+      if ("additiveExpression".equals(ct.tag))
+      { if (subterms.size() == 3)
+        { String opr = subterms.get(1) + ""; 
+          if ("+".equals(opr) || "-".equals(opr))
+          { ASTTerm t1 = (ASTTerm) subterms.get(0);  
+            ASTTerm t2 = (ASTTerm) subterms.get(2); 
+            String coef1 = ASTTerm.constantTerms(vars, t1); 
+            String coef2 = ASTTerm.constantTerms(vars, t2); 
+
+            if ("0".equals(coef2))
+            { return coef1; }
+            if ("0".equals(coef1) && "-".equals(opr))
+            { return "-" + coef2; } 
+            if ("0".equals(coef1) && "+".equals(opr))
+            { return coef2; } 
+            return "(" + coef1 + " " + opr + " " + coef2 + ")"; 
+          } 
+        } 
+
+        return "0"; 
+      }  
+
+
+      if ("factorExpression".equals(ct.tag))
+      { if (subterms.size() == 2)
+        { String opr = subterms.get(0) + ""; 
+
+          if ("-".equals(opr))
+          { ASTTerm tt = (ASTTerm) subterms.get(1); 
+
+            String coef1 = ASTTerm.constantTerms(vars, tt); 
+            
+            if ("0".equals(coef1))
+            { return "0"; } 
+            return "-" + coef1; 
+          } 
+
+
+          if ("+".equals(opr))
+          { ASTTerm tt = (ASTTerm) subterms.get(1); 
+
+            String coef1 = ASTTerm.constantTerms(vars, tt); 
+
+            return coef1; 
+          } 
+        }
+
+        if (subterms.size() == 3)
+        { String opr = subterms.get(1) + ""; 
+
+          if ("*".equals(opr) || "/".equals(opr))
+          { ASTTerm t1 = (ASTTerm) subterms.get(0);  
+            ASTTerm t2 = (ASTTerm) subterms.get(2); 
+
+            String coef1 = ASTTerm.constantTerms(vars, t1); 
+            String coef2 = ASTTerm.constantTerms(vars, t2); 
+            if (coef1.equals("0"))
+            { return "0"; } 
+            if ("*".equals(opr) && "0".equals(coef2))
+            { return "0"; } 
+            return coef1 + " " + opr + " " + coef2; 
+          } 
+        } 
+      }
+    } 
+
+    for (int i = 0; i < vars.size(); i++) 
+    { ASTTerm var = (ASTTerm) vars.get(i); 
+
+      if (",".equals(var + "")) 
+      { continue; } 
+
+      boolean isIn = ASTTerm.isSubterm(var,expr); 
+      if (isIn)
+      { return "0"; }
+    } 
+   
+    return expr.literalForm(); 
+  }  
+
+    
+
   public static void main(String[] args) 
   { // ASTBasicTerm t = new ASTBasicTerm("OclBasicExpression", "true"); 
     // System.out.println(t.isInteger()); 
@@ -3750,7 +4026,11 @@ public abstract class ASTTerm
     ASTCompositeTerm ttc = 
        new ASTCompositeTerm("ct", vect); 
 
-    System.out.println(ttc.tagFunction()); 
+    System.out.println(ttc.tagFunction());
+
+    System.out.println(ASTTerm.isSubterm(tt1, tt2)); 
+    System.out.println(ASTTerm.isSubterm(tt1, ttc)); 
+    System.out.println(ASTTerm.isSubterm(tt2, ttc)); 
   }
 } 
 

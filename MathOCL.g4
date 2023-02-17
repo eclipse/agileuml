@@ -13,7 +13,7 @@
 grammar MathOCL;	
 	
 specification
-  : 'specification' ID '{' part* '}' EOF
+  : 'specification' ID part* EOF
   ;
 
 part
@@ -25,6 +25,7 @@ part
     | substituting
     | solve
     | prove
+    | factorBy
     ;
 
 formula
@@ -56,8 +57,14 @@ prove
     ; 
 
 expanding
-    : 'Expanding' expression 'to' INT
+    : 'Expanding' expression 'to' INT 'terms' 
     ; 
+
+factorBy
+    : 'Factor' expression 'by' expression
+    ; 
+
+
 
 idList
      : (ID ',')* ID
@@ -130,8 +137,8 @@ logicalExpression
     | logicalExpression 'xor' logicalExpression  
     | logicalExpression '&' logicalExpression 
     | logicalExpression 'and' logicalExpression
-    | FORALL identifier CDOT expression
-    | EXISTS identifier CDOT expression  
+    | FORALL identifier CDOT logicalExpression
+    | EXISTS identifier CDOT logicalExpression  
     | 'not' logicalExpression  
     | equalityExpression
     ; 
@@ -144,8 +151,9 @@ equalityExpression
     ; 
 
 additiveExpression
-    : factorExpression ('+' | '-' | '..' | '|->') 
-                              additiveExpression 
+    : additiveExpression '+' additiveExpression 
+    | additiveExpression '-' factorExpression
+    | factorExpression ('..' | '|->') factorExpression                         
     | factorExpression
     ; 
 
@@ -160,7 +168,7 @@ factorExpression
     | '-' factorExpression 
     | '+' factorExpression 
     | SQUAREROOT factorExpression
-    | PARTIALDIFF factorExpression
+    | PARTIALDIFF '_{' ID '}' factorExpression
     | factorExpression '!'
     | factorExpression DIFFERENTIAL 
     | factor2Expression

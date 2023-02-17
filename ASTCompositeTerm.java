@@ -41268,6 +41268,206 @@ public class ASTCompositeTerm extends ASTTerm
 
   }
 
+
+
+  public String preprocessMathOCL()
+  { System.out.println(">>> MathOCL term " + this); 
+    
+    String res = ""; 
+
+    if ("specification".equals(tag))
+    { // specification ID _*  
+      for (int i = 2; i < terms.size(); i++) 
+      { ASTTerm trm = (ASTTerm) terms.get(i); 
+        if (trm instanceof ASTCompositeTerm) 
+        { ASTCompositeTerm ct = (ASTCompositeTerm) trm; 
+          res = res + ct.preprocessMathOCL(); 
+        } 
+      } 
+    } 
+
+    if ("part".equals(tag))
+    { // one term
+      ASTTerm trm = (ASTTerm) terms.get(0);
+      if (trm instanceof ASTCompositeTerm) 
+      { ASTCompositeTerm ct = (ASTCompositeTerm) trm; 
+        res = res + ct.preprocessMathOCL(); 
+      } 
+    } 
+
+    if ("solve".equals(tag))
+    { // Solve <expressionList> for <idList>
+      ASTCompositeTerm exprs = (ASTCompositeTerm) terms.get(1);
+      ASTCompositeTerm vars = (ASTCompositeTerm) terms.get(3);
+
+      Vector exprTerms = exprs.getTerms(); 
+      Vector varTerms = vars.getTerms();
+
+      Vector variables = new Vector();  
+      java.util.Map varCoefficients = new java.util.HashMap(); 
+
+
+      // find coefficients of each var in each expr
+
+      for (int i = 0; i < varTerms.size(); i++) 
+      { ASTTerm var = (ASTTerm) varTerms.get(i); 
+
+        if (",".equals(var + "")) 
+        { continue; } 
+
+        variables.add(var + ""); 
+
+        for (int j = 0; j < exprTerms.size(); j++)
+        { ASTTerm expr = (ASTTerm) exprTerms.get(j); 
+
+          if (",".equals(expr + "")) 
+          { continue; } 
+          
+          String coef = ASTTerm.coefficientOf(var,expr); 
+          System.out.println(">>> Coefficient of " + var + " in " + expr + " is " + coef); 
+
+          Vector vcoeffs = 
+               (Vector) varCoefficients.get(var + ""); 
+          if (vcoeffs == null) 
+          { vcoeffs = new Vector(); }
+          vcoeffs.add(coef); 
+          varCoefficients.put(var + "", vcoeffs); 
+
+          System.out.println(">>> Var coefficients: " + 
+                             varCoefficients); 
+          JOptionPane.showMessageDialog(null, 
+              ">>> Var coefficients: " + 
+                             varCoefficients, 
+              "", 
+              JOptionPane.INFORMATION_MESSAGE);
+            
+        } 
+      }
+
+      Vector constantTerms = new Vector(); 
+
+      for (int j = 0; j < exprTerms.size(); j++)
+      { ASTTerm expr = (ASTTerm) exprTerms.get(j); 
+
+        if (",".equals(expr + "")) 
+        { continue; } 
+
+        String cnst = ASTTerm.constantTerms(varTerms,expr);
+        constantTerms.add(cnst); 
+      } 
+
+      JOptionPane.showMessageDialog(null, 
+              ">>> Constant terms: " + 
+                             constantTerms, 
+              "", 
+              JOptionPane.INFORMATION_MESSAGE);   
+
+      // The determinant of the varCoefficients
+      // is the divisor. One row for each equation
+      // One column for each variable.
+
+      Vector divisorMatrix = new Vector(); 
+      for (int j = 0; j < constantTerms.size(); j++)
+      { Vector vvrow = new Vector(); 
+        for (int i = 0; i < variables.size(); i++) 
+        { String var = (String) variables.get(i);
+          Vector vcoefs = (Vector) varCoefficients.get(var); 
+          vvrow.add(vcoefs.get(j)); 
+        } 
+        divisorMatrix.add(vvrow); 
+      }
+
+      int msize = divisorMatrix.size(); 
+
+      String divisorString = "1"; 
+
+      if (AuxMath.isNumericMatrix(divisorMatrix))
+      { double commonDivisor = 
+          Math.pow(-1,msize) *
+          AuxMath.determinant(msize, divisorMatrix); 
+        divisorString = "" + commonDivisor; 
+      } 
+      else 
+      { divisorString = "(" + Math.pow(-1,msize) + ")*" + 
+            AuxMath.symbolicDeterminant(msize, divisorMatrix); 
+      } 
+
+      JOptionPane.showMessageDialog(null, 
+              ">>> Divisor matrix: " + 
+              divisorMatrix + " " + 
+              divisorString, 
+              "", 
+              JOptionPane.INFORMATION_MESSAGE);   
+
+      // The determinant of the varCoefficients
+      // is the numerator for var. One row for each equation
+      // One column for each variable except the var. 1st var
+      // +ve, 2nd -ve, etc.
+
+      int factor = 1; 
+
+      for (int vind = 0; vind < variables.size(); vind++)
+      { String vx = (String) variables.get(vind);
+
+        Vector varMatrix = new Vector(); 
+        for (int j = 0; j < constantTerms.size(); j++)
+        { Vector vv1row = new Vector(); 
+          for (int i = 0; i < variables.size(); i++) 
+          { if (i != vind) 
+            { String var = (String) variables.get(i);
+              Vector vcoefs = 
+                  (Vector) varCoefficients.get(var); 
+              vv1row.add(vcoefs.get(j)); 
+            } 
+          } 
+          vv1row.add(constantTerms.get(j)); 
+          varMatrix.add(vv1row); 
+        }
+
+        String varNumeratorString = "1"; 
+
+        if (AuxMath.isNumericMatrix(varMatrix))
+        { 
+          double varNumerator = 
+            factor*AuxMath.determinant(msize, varMatrix); 
+          varNumeratorString = "" + varNumerator; 
+        } 
+        else 
+        { varNumeratorString = 
+            factor + "*" + 
+            AuxMath.symbolicDeterminant(msize, varMatrix);
+        } 
+
+        JOptionPane.showMessageDialog(null, 
+              "  Simplify " + vx + " = " + 
+              varNumeratorString + "/" + divisorString, 
+              "", 
+              JOptionPane.INFORMATION_MESSAGE);   
+        factor = factor*-1;
+
+        if (!("0".equals(divisorString)) && 
+            AuxMath.isNumeric(varNumeratorString) && 
+            AuxMath.isNumeric(divisorString))
+        { Double numer = 
+             Double.parseDouble(varNumeratorString); 
+          Double denom = Double.parseDouble(divisorString); 
+          res = res + "  Simplify " + vx + " = " +
+                                               numer/denom; 
+        } 
+        else 
+        { res = res + "  Simplify " + vx + " = " + 
+              varNumeratorString + "/" + divisorString + "\n"; 
+        }  
+      } 
+
+    } 
+
+    return res; 
+  }
+   
+ 
+        
+
 /*    Statement stat = xx.cstatementToKM3(m1,m2,v1,v2);
     Entity fromC = new Entity("FromC"); 
     BehaviouralFeature bf = new BehaviouralFeature("op"); 

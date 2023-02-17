@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -2698,8 +2698,291 @@ public class AuxMath
      return false; 
    } 
 
+   public static boolean isNumeric(String val)
+   { try
+     { Double dd = Double.parseDouble(val); } 
+     catch (Exception e) { return false; } 
+     return true; 
+   } 
+
+   public static boolean isNumericMatrix(Vector matrix)
+   { // all values are numbers
+
+     int n = matrix.size(); 
+     
+     for (int i = 0; i < n; i++) 
+     { Vector row = (Vector) matrix.get(i);
+ 
+       for (int j = 0; j < row.size(); j++) 
+       { String val = (String) row.get(j); 
+         try
+         { Double dd = Double.parseDouble(val); } 
+         catch (Exception e) { return false; } 
+       } 
+     } 
+     
+     return true; 
+   } 
+
+
+   public static double determinant(int n, Vector matrix)
+   { if (n == 2) 
+     { return AuxMath.determinant2(matrix); } 
+     
+     if (n == 3) 
+     { return AuxMath.determinant3(matrix); } 
+     
+     if (n > 3)
+     { Vector row1 = (Vector) matrix.get(0); 
+       Vector submats = new Vector(); 
+       for (int i = 0; i < n; i++) 
+       { Vector submat = 
+           AuxMath.matrixExcludingRowColumn(matrix,0,i); 
+         submats.add(submat); 
+       } 
+       double result = 0; 
+
+       // sum of row1(i)*determinant(n-1,submats(i))
+       int factor = 1; 
+       for (int i = 0; i < n; i++) 
+       { String ss = (String) row1.get(i); 
+         double dd = Double.parseDouble(ss); 
+         Vector submat = (Vector) submats.get(i); 
+         double det = 
+            AuxMath.determinant(n-1, submat); 
+         result = result + factor*dd*det; 
+         factor = factor*(-1); 
+       } 
+       return result; 
+     } 
+
+     return 0; 
+   } 
+      
+   public static double determinant2(Vector matrix)
+   { double res = 0; 
+
+     Vector row1 = (Vector) matrix.get(0); 
+     Vector row2 = (Vector) matrix.get(1); 
+       
+     String ss1 = (String) row1.get(0); 
+     String ss2 = (String) row1.get(1); 
+
+     String tt1 = (String) row2.get(0); 
+     String tt2 = (String) row2.get(1); 
+
+     Double dd1 = Double.parseDouble(ss1); 
+     Double dd2 = Double.parseDouble(ss2); 
+
+     Double ff1 = Double.parseDouble(tt1); 
+     Double ff2 = Double.parseDouble(tt2); 
+     
+     return dd1*ff2 - dd2*ff1;  
+   } 
+
+   public static double determinant3(Vector matrix)
+   { 
+     Vector row1 = (Vector) matrix.get(0); 
+     Vector row2 = (Vector) matrix.get(1); 
+     Vector row3 = (Vector) matrix.get(2); 
+       
+     String ss1 = (String) row1.get(0); 
+     String ss2 = (String) row1.get(1); 
+     String ss3 = (String) row1.get(2); 
+
+     Double dd1 = Double.parseDouble(ss1); 
+     Double dd2 = Double.parseDouble(ss2); 
+     Double dd3 = Double.parseDouble(ss3); 
+
+     // submatrix of row2, row3 removing the first column
+
+     Vector submatrix1 = new Vector(); 
+     Vector subrow1 = new Vector(); 
+     subrow1.addAll(row2); 
+     subrow1.remove(0); 
+     Vector subrow2 = new Vector(); 
+     subrow2.addAll(row3); 
+     subrow2.remove(0); 
+     submatrix1.add(subrow1); 
+     submatrix1.add(subrow2); 
+ 
+     double subdd1 = AuxMath.determinant2(submatrix1); 
+
+     // submatrix of row2, row3 removing the 2nd column
+
+     Vector submatrix2 = new Vector(); 
+     Vector subrow3 = new Vector(); 
+     subrow3.addAll(row2); 
+     subrow3.remove(1); 
+     Vector subrow4 = new Vector(); 
+     subrow4.addAll(row3); 
+     subrow4.remove(1); 
+     submatrix2.add(subrow3); 
+     submatrix2.add(subrow4); 
+ 
+     double subdd2 = AuxMath.determinant2(submatrix2); 
+
+     // submatrix of row2, row3 removing the 3rd column
+
+     Vector submatrix3 = new Vector(); 
+     Vector subrow5 = new Vector(); 
+     subrow5.addAll(row2); 
+     subrow5.remove(2); 
+     Vector subrow6 = new Vector(); 
+     subrow6.addAll(row3); 
+     subrow6.remove(2); 
+     submatrix3.add(subrow5); 
+     submatrix3.add(subrow6); 
+ 
+     double subdd3 = AuxMath.determinant2(submatrix3); 
+     
+     return dd1*subdd1 - dd2*subdd2 + dd3*subdd3;  
+   } 
+
+   public static String symbolicDeterminant(int n, Vector matrix)
+   { if (n == 2) 
+     { return AuxMath.symbolicDeterminant2(matrix); } 
+          
+     if (n > 2)
+     { Vector row1 = (Vector) matrix.get(0); 
+       Vector submats = new Vector(); 
+       for (int i = 0; i < n; i++) 
+       { Vector submat = 
+           AuxMath.matrixExcludingRowColumn(matrix,0,i); 
+         submats.add(submat); 
+       } 
+
+       String result = "0"; 
+
+       // sum of row1(i)*determinant(n-1,submats(i))
+       int factor = 1; 
+       for (int i = 0; i < n; i++) 
+       { String ss = (String) row1.get(i); 
+         Vector submat = (Vector) submats.get(i); 
+         String det = 
+            AuxMath.symbolicDeterminant(n-1, submat);
+         if (AuxMath.isNumeric(ss))
+         { double dd = Double.parseDouble(ss); 
+           result = result + " + " + (factor*dd) + "*" + 
+                    "(" + det + ")"; 
+         } 
+         else  
+         { result = result + " + (" + factor + ")*(" + ss + ")*(" + det + ")"; } 
+         factor = factor*(-1); 
+       } 
+       return result; 
+     } 
+
+     return "0"; 
+   } 
+      
+   public static String symbolicDeterminant2(Vector matrix)
+   { 
+     Vector row1 = (Vector) matrix.get(0); 
+     Vector row2 = (Vector) matrix.get(1); 
+       
+     String ss1 = (String) row1.get(0); 
+     String ss2 = (String) row1.get(1); 
+
+     String tt1 = (String) row2.get(0); 
+     String tt2 = (String) row2.get(1); 
+     
+     return "(" + ss1 + "*" + tt2 + " - " + ss2 + "*" + tt1 + ")";  
+   } 
+
+
+   public static Vector matrixExcludingRowColumn(Vector mtrx, 
+                                            int row, int col)
+   { // rows/columns numbered from 0
+     Vector result = new Vector(); 
+
+     int n = mtrx.size(); 
+
+     for (int i = 0; i < n; i++) 
+     { if (i != row) 
+       { Vector retainedRow = (Vector) mtrx.get(i); 
+         Vector newRow = new Vector(); 
+         newRow.addAll(retainedRow); 
+         newRow.remove(col); 
+         result.add(newRow);
+       } 
+     } 
+     return result; 
+   }     
+
+   public static Vector matrixExcludingColumn(Vector mtrx, 
+                                              int col)
+   { // rows/columns numbered from 0
+     Vector result = new Vector(); 
+
+     int n = mtrx.size(); 
+
+     for (int i = 0; i < n; i++) 
+     { Vector retainedRow = (Vector) mtrx.get(i); 
+       Vector newRow = new Vector(); 
+       newRow.addAll(retainedRow); 
+       newRow.remove(col); 
+       result.add(newRow);
+     } 
+     return result; 
+   } 
+    
+
    public static void main(String[] args)
-   { Vector vvx1 = new Vector(); 
+   { Vector mm1 = new Vector(); 
+     mm1.add("3"); mm1.add("5"); 
+
+     Vector mm2 = new Vector(); 
+     mm2.add("1"); mm2.add("2");
+
+     Vector mx = new Vector(); 
+     mx.add(mm1); mx.add(mm2); 
+
+     System.out.println(AuxMath.determinant(2,mx)); 
+
+     Vector mtrx = new Vector(); 
+     Vector row1 = new Vector(); 
+     row1.add("87"); row1.add("42"); row1.add("3"); 
+     Vector row2 = new Vector(); 
+     row2.add("45"); row2.add("18"); row2.add("7"); 
+     Vector row3 = new Vector(); 
+     row3.add("50"); row3.add("17"); row3.add("3"); 
+     mtrx.add(row1); mtrx.add(row2); mtrx.add(row3); 
+
+     System.out.println(AuxMath.determinant(3,mtrx)); 
+     /* 2970 */ 
+
+     Vector mtrx4 = new Vector(); 
+     Vector row11 = new Vector(); 
+     row11.add("4"); row11.add("9"); row11.add("-1");
+     row11.add("3");  
+     Vector row21 = new Vector(); 
+     row21.add("3"); row21.add("-7"); row21.add("2");
+     row21.add("5");  
+     Vector row31 = new Vector(); 
+     row31.add("2"); row31.add("5"); row31.add("-3");
+     row31.add("7");  
+     Vector row41 = new Vector(); 
+     row41.add("1"); row41.add("-3"); row41.add("4");
+     row41.add("9");  
+     mtrx4.add(row11); mtrx4.add(row21); mtrx4.add(row31); 
+     mtrx4.add(row41); 
+     System.out.println(AuxMath.determinant(4,mtrx4)); 
+     /* 1936 */ 
+
+   /*
+     System.out.println(
+              AuxMath.matrixExcludingRowColumn(mtrx,0,0)); 
+     System.out.println(
+              AuxMath.matrixExcludingRowColumn(mtrx,1,0)); 
+     System.out.println(
+              AuxMath.matrixExcludingRowColumn(mtrx,2,0)); 
+     System.out.println(
+              AuxMath.matrixExcludingRowColumn(mtrx,0,1)); 
+     System.out.println(
+              AuxMath.matrixExcludingRowColumn(mtrx,0,2)); 
+
+     Vector vvx1 = new Vector(); 
      Vector vvy1 = new Vector(); 
      Vector vvx2 = new Vector(); 
      Vector vvy2 = new Vector(); 
@@ -2749,7 +3032,7 @@ public class AuxMath
      v2.add("abba"); v2.add("ab"); v2.add("xyz"); 
      System.out.println(AuxMath.stringSum(v2)); 
      System.out.println(AuxMath.stringMax(v2)); 
-     System.out.println(AuxMath.stringMin(v2)); 
+     System.out.println(AuxMath.stringMin(v2)); */ 
 
 
      /* System.out.println(AuxMath.divFunction(xs,ys)); 
@@ -2778,7 +3061,7 @@ public class AuxMath
 	 
      System.out.println(AuxMath.isNumericAverage(xvs,yvs)); */ 
 
-     Vector x1 = new Vector(); 
+   /*  Vector x1 = new Vector(); 
 	 x1.add("ab"); x1.add("cd"); 
 	 Vector x2 = new Vector(); 
 	 x2.add("x"); x2.add("yy"); x2.add("try");
@@ -2789,7 +3072,7 @@ public class AuxMath
      String[] ystrs = {"ab##cd((", "x##yy##try((", "ttt##pppp(("}; 
 	 
      String[] rems = new String[3]; 
-	 System.out.println(AuxMath.initialSeparatorStringSum(xstrs,ystrs,rems)); 
+	 System.out.println(AuxMath.initialSeparatorStringSum(xstrs,ystrs,rems)); */  
 	  
 	 
      /* System.out.println(isFunctional(xs,ys)); 
@@ -2868,7 +3151,7 @@ public class AuxMath
 	 
 	 LComparator comp = new LComparator(f); 
 	 Collections.sort(s1,comp);
-	 System.out.println(s1);   */
+	 System.out.println(s1);  
 
       Vector sbs1 = new Vector(); 
       Vector sbs2 = new Vector(); 
@@ -2900,7 +3183,7 @@ public class AuxMath
       sbs3.add("ee"); sbs3.add("ff"); 
       bb = AuxMath.isSequenceSuffix(sbs2,tbs); 
       System.out.println(bb); 
-      System.out.println(AuxMath.sequencePrefix(sbs3,tbs)); 
+      System.out.println(AuxMath.sequencePrefix(sbs3,tbs)); */  
 
    }
  }

@@ -107,6 +107,16 @@ public interface MathOCLListener extends ParseTreeListener {
 	 */
 	void exitExpanding(MathOCLParser.ExpandingContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link MathOCLParser#factorBy}.
+	 * @param ctx the parse tree
+	 */
+	void enterFactorBy(MathOCLParser.FactorByContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MathOCLParser#factorBy}.
+	 * @param ctx the parse tree
+	 */
+	void exitFactorBy(MathOCLParser.FactorByContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link MathOCLParser#idList}.
 	 * @param ctx the parse tree
 	 */

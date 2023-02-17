@@ -271,7 +271,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       attrs = initAttributes(6);
 
       try {
-            doc.insertString(0, "specification S {\n       \n}\n", attrs[0]); 
+            doc.insertString(0, "specification S \n", attrs[0]); 
           }
           catch (BadLocationException ble) {
             System.err.println("!! Couldn't insert code text.");
@@ -646,7 +646,9 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         Compiler2 cc = new Compiler2(); 
         ASTTerm trm = cc.parseGeneralAST(asttext); 
         if (trm != null)  
-        { 
+        { String extracode = 
+            ((ASTCompositeTerm) trm).preprocessMathOCL(); 
+
           Vector ents = new Vector(); 
           Vector typs = new Vector(); 
           CGSpec cgs = new CGSpec(entities,types); 
@@ -655,10 +657,10 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
  
           String entcode = trm.cg(cgs);
 
-          System.out.println(entcode);
+          System.out.println(entcode + "\n" + extracode);
           messageArea.append("\n"); 
-          messageArea.append(entcode);
-          internalModel = entcode;   
+          messageArea.append(entcode + "\n" + extracode);
+          internalModel = entcode + "\n" + extracode;   
         } 
       } 
       catch (Exception _expt) 

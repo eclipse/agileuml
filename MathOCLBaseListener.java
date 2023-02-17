@@ -135,6 +135,18 @@ public class MathOCLBaseListener implements MathOCLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterFactorBy(MathOCLParser.FactorByContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitFactorBy(MathOCLParser.FactorByContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterIdList(MathOCLParser.IdListContext ctx) { }
 	/**
 	 * {@inheritDoc}
