@@ -618,6 +618,84 @@ class VectorUtil
     return res; 
   } 
 
+  public static Vector vectorSummation(Vector v1, Vector v2)
+  { // x + y for x in v1, y in v2
+
+    Vector res = new Vector(); 
+    for (int i = 0; i < v1.size(); i++) 
+    { Object x = v1.get(i); 
+      try { 
+        Double d = Double.parseDouble("" + x); 
+        for (int j = 0; j < v2.size(); j++) 
+        { Object y = v2.get(j); 
+          try { 
+            Double e = Double.parseDouble("" + y); 
+            res.add(d + e); 
+          } catch (Exception _q) { } 
+        } 
+      } catch (Exception _p) { } 
+    } 
+    return res; 
+  } 
+
+  public static Vector vectorSubtraction(Vector v1, Vector v2)
+  { // x + y for x in v1, y in v2
+
+    Vector res = new Vector(); 
+    for (int i = 0; i < v1.size(); i++) 
+    { Object x = v1.get(i); 
+      try { 
+        Double d = Double.parseDouble("" + x); 
+        for (int j = 0; j < v2.size(); j++) 
+        { Object y = v2.get(j); 
+          try { 
+            Double e = Double.parseDouble("" + y); 
+            res.add(d - e); 
+          } catch (Exception _q) { } 
+        } 
+      } catch (Exception _p) { } 
+    } 
+    return res; 
+  } 
+
+  public static double vectorMinimum(Vector v1)
+  { double res = 0; 
+    if (v1.size() == 0) { return res; } 
+
+    try
+    { res = Double.parseDouble("" + v1.get(0)); } 
+    catch (Exception _ex) { return 0; }  
+
+    for (int i = 0; i < v1.size(); i++) 
+    { Object x = v1.get(i); 
+      try { 
+        Double d = Double.parseDouble("" + x); 
+        if (d < res) 
+        { res = d; } 
+      } catch (Exception _p) { } 
+    } 
+    return res; 
+  } 
+
+  public static double vectorMaximum(Vector v1)
+  { double res = 0; 
+    if (v1.size() == 0) { return res; } 
+
+    try
+    { res = Double.parseDouble("" + v1.get(0)); } 
+    catch (Exception _ex) { return 0; }  
+
+    for (int i = 0; i < v1.size(); i++) 
+    { Object x = v1.get(i); 
+      try { 
+        Double d = Double.parseDouble("" + x); 
+        if (d > res) 
+        { res = d; } 
+      } catch (Exception _p) { } 
+    } 
+    return res; 
+  } 
+
   public static void main(String[] args) 
   { Vector coll = new Vector(); 
     Vector coll1 = new Vector(); 
@@ -645,7 +723,16 @@ class VectorUtil
     Vector v2 = new Vector(); 
     v2.add("x");  
     Vector rr = VectorUtil.replaceSubsequence(coll,v1,v2); 
-    System.out.println(rr);   
+    System.out.println(rr);  
+
+
+    Vector zz = new Vector(); 
+    Vector yy = new Vector(); 
+    zz.add(1); yy.add(0); yy.add(1); 
+    System.out.println(VectorUtil.vectorSummation(zz,yy));  
+    System.out.println(VectorUtil.vectorSubtraction(zz,yy)); 
+    System.out.println(VectorUtil.vectorMinimum(yy));  
+    System.out.println(VectorUtil.vectorMaximum(yy));  
   } 
     
 }

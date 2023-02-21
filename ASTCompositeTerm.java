@@ -41298,7 +41298,7 @@ public class ASTCompositeTerm extends ASTTerm
     if ("solve".equals(tag))
     { // Solve <expressionList> for <idList>
       ASTCompositeTerm exprs = (ASTCompositeTerm) terms.get(1);
-      ASTCompositeTerm vars = (ASTCompositeTerm) terms.get(3);
+      ASTTerm vars = (ASTTerm) terms.get(3);
 
       Vector exprTerms = exprs.getTerms(); 
       Vector varTerms = vars.getTerms();
@@ -41308,6 +41308,47 @@ public class ASTCompositeTerm extends ASTTerm
 
 
       // find coefficients of each var in each expr
+
+      if (varTerms.size() == 1 && exprTerms.size() == 1) 
+      { // test what powers of var are present
+        ASTTerm var0 = (ASTTerm) varTerms.get(0); 
+        ASTTerm expr0 = (ASTTerm) exprTerms.get(0); 
+        String vx0 = var0.literalForm(); 
+          
+        Vector powers = ASTTerm.powersOf(var0,expr0);
+
+        double minp = VectorUtil.vectorMinimum(powers); 
+        double maxp = VectorUtil.vectorMaximum(powers); 
+ 
+        JOptionPane.showMessageDialog(null, 
+              ">>> Var powers: " + 
+                             powers + " " + minp + " " + maxp, 
+              "", 
+              JOptionPane.INFORMATION_MESSAGE);
+
+        if (maxp - minp == 2 && minp == 0) 
+        { String coefsq = ASTTerm.coefficientOfSquare(var0, expr0); 
+          String coefvar = ASTTerm.coefficientOf(var0, expr0); 
+          String cnsts = ASTTerm.constantTerms(varTerms,expr0);
+          JOptionPane.showMessageDialog(null, 
+            ">>> This is a quadratic formula, solving using quadratic solver " + coefsq + "; " + coefvar + "; " + cnsts, 
+            "", 
+            JOptionPane.INFORMATION_MESSAGE);
+
+          String quadformula1 = 
+            AuxMath.quadraticFormula1(coefsq, coefvar, cnsts); 
+          String quadformula2 = 
+            AuxMath.quadraticFormula2(coefsq, coefvar, cnsts); 
+          
+          return "  Simplify (" + vx0 + " = " + quadformula1 + ") or (" + vx0 + " = " + quadformula2 + ")"; 
+        } 
+        else if (maxp == 1 && minp == -1) 
+        { // multiply by var
+          String newformula = 
+            ASTTerm.symbolicMultiplication(vx0, expr0); 
+          return "  Solve " + newformula + " for " + vx0 + "\n"; 
+        } 
+      }  
 
       for (int i = 0; i < varTerms.size(); i++) 
       { ASTTerm var = (ASTTerm) varTerms.get(i); 
@@ -41387,9 +41428,13 @@ public class ASTCompositeTerm extends ASTTerm
           AuxMath.determinant(msize, divisorMatrix); 
         divisorString = "" + commonDivisor; 
       } 
-      else 
-      { divisorString = "(" + Math.pow(-1,msize) + ")*" + 
-            AuxMath.symbolicDeterminant(msize, divisorMatrix); 
+      else if (msize % 2 == 0) 
+      { divisorString = "(" + 
+          AuxMath.symbolicDeterminant(msize, divisorMatrix) + ")"; 
+      } 
+      else  
+      { divisorString = "-1*(" + 
+          AuxMath.symbolicDeterminant(msize, divisorMatrix) + ")"; 
       } 
 
       JOptionPane.showMessageDialog(null, 
@@ -41439,7 +41484,7 @@ public class ASTCompositeTerm extends ASTTerm
         } 
 
         JOptionPane.showMessageDialog(null, 
-              "  Simplify " + vx + " = " + 
+              "  Define " + vx + " = " + 
               varNumeratorString + "/" + divisorString, 
               "", 
               JOptionPane.INFORMATION_MESSAGE);   
@@ -41451,11 +41496,11 @@ public class ASTCompositeTerm extends ASTTerm
         { Double numer = 
              Double.parseDouble(varNumeratorString); 
           Double denom = Double.parseDouble(divisorString); 
-          res = res + "  Simplify " + vx + " = " +
+          res = res + "  Define " + vx + " = " +
                                                numer/denom; 
         } 
         else 
-        { res = res + "  Simplify " + vx + " = " + 
+        { res = res + "  Define " + vx + " = " + 
               varNumeratorString + "/" + divisorString + "\n"; 
         }  
       } 

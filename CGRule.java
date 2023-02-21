@@ -480,13 +480,14 @@ public class CGRule
   public boolean satisfiesConditions(Vector args, 
                            Vector entities, CGSpec cgs)
   { return CGCondition.conditionsSatisfied(
-                    conditions,args,entities,cgs); 
+                    conditions,args,entities,
+                    cgs,rhsVariables); 
   } // actually pass the rule in also, or the variables
 
   public boolean satisfiesAllConditions(Vector args, 
                            Vector entities, CGSpec cgs)
   { return CGCondition.allConditionsSatisfied(this,
-                    conditions,args,entities,cgs); 
+                conditions,args,entities,cgs,rhsVariables); 
   } 
 
   public int variablePosition(String var)

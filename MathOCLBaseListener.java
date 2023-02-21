@@ -147,6 +147,18 @@ public class MathOCLBaseListener implements MathOCLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterCancelIn(MathOCLParser.CancelInContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitCancelIn(MathOCLParser.CancelInContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterIdList(MathOCLParser.IdListContext ctx) { }
 	/**
 	 * {@inheritDoc}

@@ -1902,7 +1902,11 @@ public class Compiler2
         i++; 
       } 
       else if (se.startsWith("_"))
-      { cg.setVariable(se); } 
+      { if (cg.hasVariable())
+        { cg.setStereotype(se); } 
+        else 
+        { cg.setVariable(se); }
+      }  
       else if (se.equals("`") && 
                i + 2 < lexs.size())
       { String mt = "" + lexs.get(i+1); 

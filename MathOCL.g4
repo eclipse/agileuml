@@ -26,10 +26,11 @@ part
     | solve
     | prove
     | factorBy
+    | cancelIn
     ;
 
 formula
-    :	expression
+    :	'Define' ID '=' expression
     ; 
 
 constraint
@@ -64,6 +65,9 @@ factorBy
     : 'Factor' expression 'by' expression
     ; 
 
+cancelIn
+    : 'Cancel' expression 'in' expression
+    ; 
 
 
 idList
@@ -127,7 +131,7 @@ lambdaExpression
 // A let is just an application of a lambda:
 
 letExpression
-    : 'let' identifier ':' type '=' expression 'in' expression
+    : 'let' identifier '=' expression 'in' expression
     ; 
 
 logicalExpression

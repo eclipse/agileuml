@@ -2726,7 +2726,13 @@ public class AuxMath
 
 
    public static double determinant(int n, Vector matrix)
-   { if (n == 2) 
+   { if (n == 1) 
+     { Vector row1 = (Vector) matrix.get(0); 
+       String val1 = (String) row1.get(0); 
+       return Double.parseDouble(val1);
+     } 
+     
+     if (n == 2) 
      { return AuxMath.determinant2(matrix); } 
      
      if (n == 3) 
@@ -2840,7 +2846,13 @@ public class AuxMath
    } 
 
    public static String symbolicDeterminant(int n, Vector matrix)
-   { if (n == 2) 
+   { if (n == 1) 
+     { Vector row1 = (Vector) matrix.get(0); 
+       String val1 = (String) row1.get(0); 
+       return val1;
+     }
+
+     if (n == 2) 
      { return AuxMath.symbolicDeterminant2(matrix); } 
           
      if (n > 2)
@@ -2927,6 +2939,95 @@ public class AuxMath
      return result; 
    } 
     
+   public static String quadraticFormula1(String a, String b, String c)
+   { // (-b + sqrt(b^2 - 4*a*c))/2*a
+
+     if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b) && 
+         AuxMath.isNumeric(c))
+     { Double aval = Double.parseDouble("" + a); 
+       Double bval = Double.parseDouble("" + b); 
+       Double cval = Double.parseDouble("" + c); 
+
+       double discrim = bval*bval - 4*aval*cval; 
+       if (discrim > 0)
+       { return "" + 
+           ((-bval + 
+             Math.sqrt(discrim))/(2*aval));
+       } 
+       if (discrim == 0) 
+       { return "" + 
+           (-bval/(2*aval));
+       } 
+       return 
+         "(" + -bval + " + †(" + discrim + "))/" + (2*aval);
+     } 
+     else if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b))
+     { Double aval = Double.parseDouble("" + a); 
+       Double bval = Double.parseDouble("" + b); 
+       return 
+          "(" + (-bval) + " + †(" + bval*bval + " - " + 4*aval + "*" + c + "))/" + 2*aval; 
+     } 
+     else if (AuxMath.isNumeric(a) && AuxMath.isNumeric(c))
+     { Double aval = Double.parseDouble("" + a); 
+       Double cval = Double.parseDouble("" + c); 
+       return 
+          "(-" + b + " + †(" + b + "*" + b + " - " + 4*aval*cval + "))/" + 2*aval; 
+     } 
+     else if (AuxMath.isNumeric(b) && AuxMath.isNumeric(c))
+     { Double bval = Double.parseDouble("" + b); 
+       Double cval = Double.parseDouble("" + c); 
+       return 
+          "(-" + bval + " + †(" + bval*bval + " - 4*" + a + "*" + cval + "))/(2*" + a + ")"; 
+     } 
+
+       return 
+         "(-" + b + " + †(" + b + "*" + b + " - 4*" + a + "*" + c + "))/(2*" + a + ")"; 
+   } 
+
+   public static String quadraticFormula2(String a, String b, String c)
+   { // (-b - sqrt(b^2 - 4*a*c))/2*a
+
+     if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b) && 
+         AuxMath.isNumeric(c))
+     { Double aval = Double.parseDouble("" + a); 
+       Double bval = Double.parseDouble("" + b); 
+       Double cval = Double.parseDouble("" + c); 
+
+       double discrim = bval*bval - 4*aval*cval; 
+       if (discrim > 0)
+       { return "" + 
+           ((-bval - 
+             Math.sqrt(discrim))/(2*aval));
+       } 
+       if (discrim == 0) 
+       { return "" + 
+           (-bval/(2*aval));
+       } 
+       return 
+         "(" + -bval + " - †(" + discrim + "))/" + (2*aval);
+     } 
+     else if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b))
+     { Double aval = Double.parseDouble("" + a); 
+       Double bval = Double.parseDouble("" + b); 
+       return 
+          "(" + (-bval) + " - †(" + bval*bval + " - " + 4*aval + "*" + c + "))/" + 2*aval; 
+     } 
+     else if (AuxMath.isNumeric(a) && AuxMath.isNumeric(c))
+     { Double aval = Double.parseDouble("" + a); 
+       Double cval = Double.parseDouble("" + c); 
+       return 
+          "(-" + b + " - †(" + b + "*" + b + " - " + 4*aval*cval + "))/" + 2*aval; 
+     } 
+     else if (AuxMath.isNumeric(b) && AuxMath.isNumeric(c))
+     { Double bval = Double.parseDouble("" + b); 
+       Double cval = Double.parseDouble("" + c); 
+       return 
+          "(-" + bval + " - †(" + bval*bval + " - 4*" + a + "*" + cval + "))/(2*" + a + ")"; 
+     } 
+
+       return 
+         "(-" + b + " - †(" + b + "*" + b + " - 4*" + a + "*" + c + "))/(2*" + a + ")"; 
+   } 
 
    public static void main(String[] args)
    { Vector mm1 = new Vector(); 
