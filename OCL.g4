@@ -186,8 +186,6 @@ additiveExpression
 factorExpression 
     : factorExpression ('*' | '/' | 'mod' | 'div') 
                                    factorExpression
-    | '-' factorExpression 
-    | '+' factorExpression  
     | factor2Expression
     ; 
 
@@ -196,7 +194,9 @@ factorExpression
 // ->subrange is used for ->substring and ->subSequence
 
 factor2Expression
-  : factor2Expression '->size()' 
+  : '-' factor2Expression 
+  | '+' factor2Expression  
+  | factor2Expression '->size()' 
   | factor2Expression '->copy()'  
   | factor2Expression ('->isEmpty()' | 
                        '->notEmpty()' | 

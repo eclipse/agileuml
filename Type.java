@@ -606,6 +606,15 @@ public class Type extends ModelElement
             "Map".equals(nme)); 
   } // But really, should exclude Map from this. 
 
+  public static boolean isMapOrCollectionType(Type t) 
+  { if (t == null) { return false; } 
+    String nme = t.getName(); 
+    return ("Sequence".equals(nme) ||
+            "SortedSequence".equals(nme) ||
+            "Set".equals(nme) || 
+            "Map".equals(nme)); 
+  } 
+
   public static boolean isRefType(Type t) 
   { if (t == null) { return false; } 
     String nme = t.getName(); 

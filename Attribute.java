@@ -37,6 +37,7 @@ public class Attribute extends ModelElement
   private boolean isArray = false; 
 
   private int width = 1; // for COBOL
+  private int multiplicity = 1; 
  
   public Attribute(String nme, Type t, int k)
   { super(nme);
@@ -322,6 +323,12 @@ public class Attribute extends ModelElement
 
   public int getWidth()
   { return width; } 
+
+  public void setMultiplicity(int m)
+  { multiplicity = m; } 
+
+  public int getMultiplicity()
+  { return multiplicity; } 
 
   public boolean isFunction()
   { return type != null && type.isFunction(); } 
@@ -2509,10 +2516,12 @@ public class Attribute extends ModelElement
   }  
 
   // setattindex operation for the entity:
-  public String setIndexOperationJava7(Entity ent, Vector cons,
+  public String setIndexOperationJava7(Entity ent, 
+                             Vector cons,
                              Vector entities, Vector types) 
-  { // setatt(int index, type attx) 
-    // if ent != entity, creates subclass ent extension op for att
+  { // setatt(int index, elementType attx) 
+    //   if ent != entity, creates subclass ent 
+    //   extension op for att
 
     if (frozen) { return ""; }
     String nme = getName();
@@ -2521,11 +2530,19 @@ public class Attribute extends ModelElement
       return ""; 
     } 
     
+
+    String ename = ent.getName(); 
     Type eType = elementType; 
     if (eType == null || "OclAny".equals("" + eType)) 
     { eType = type.elementType; } 
     if (eType == null) 
     { eType = new Type("OclAny", null); } 
+
+    JOptionPane.showMessageDialog(null, 
+       "Type of " + this + " is " + type + 
+              " (" + elementType + ") " + eType, 
+              "", 
+              JOptionPane.INFORMATION_MESSAGE);
 
     String val = nme + "_x"; 
     Attribute par = new Attribute(val,eType,ModelElement.INTERNAL);
@@ -2567,6 +2584,27 @@ public class Attribute extends ModelElement
     String opheader; 
     opheader = "public" + sync + qual + "void set" + nme + "(int _ind, " + t +
              " " + val + ") { " + code; 
+
+    // And any constraint that is impacted by a change to att
+
+    java.util.Map env = new java.util.HashMap(); 
+    env.put(ename, "this"); 
+
+    for (int j = 0; j < cons.size(); j++)   // may be constraints of subclass ent
+    { Constraint cc = (Constraint) cons.get(j);
+      // Constraint cnew = cc.matches("set",nme,ent,val,event);
+      // must type check new constraint.
+ 
+      if (cc.isBehavioural() && 
+          cc.dependsUpon(ename,nme))
+      { String cccode = cc.updateFormJava7(env,true);
+
+        System.out.println(">> Constraint " + cc + "\n" + 
+                   ">> action for set" + nme + " is: " + cccode);
+        opheader = opheader + "\n" + 
+                   cccode + "\n";
+      }
+    }
 
     if (!instanceScope)
     { opheader = opheader + " }\n\n" + 
@@ -2658,9 +2696,12 @@ public class Attribute extends ModelElement
       return ""; 
     } 
 
+    String ename = ent.getName(); 
+
     Vector v = type.getValues();
     String val = nme + "_x"; 
-    Attribute par = new Attribute(val,type,ModelElement.INTERNAL);
+    Attribute par = 
+      new Attribute(val,type,ModelElement.INTERNAL);
     par.setElementType(elementType); 
 
     Vector v1 = new Vector();
@@ -2673,7 +2714,6 @@ public class Attribute extends ModelElement
 
     if (ent.isInterface())
     { return " void set" + nme + "(" + t + " _x);\n"; } 
-
 
     BehaviouralFeature event =
       new BehaviouralFeature("set" + nme,v1,false,null);
@@ -2707,14 +2747,24 @@ public class Attribute extends ModelElement
       
     Vector contexts = new Vector(); 
     contexts.add(ent); 
-        
+    java.util.Map env = new java.util.HashMap(); 
+    env.put(ename, "this"); 
+  
     for (int j = 0; j < cons.size(); j++)   // may be constraints of subclass ent
     { Constraint cc = (Constraint) cons.get(j);
-      Constraint cnew = cc.matches("set",nme,ent,val,event);
-      // must type check new constraint. 
-      System.out.println(">> Constraint " + cc + " action for set" + nme + " is: " + cnew);
+      // Constraint cnew = cc.matches("set",nme,ent,val,event);
+      // must type check new constraint.
+ 
+      if (cc.isBehavioural() && 
+          cc.dependsUpon(ename,nme))
+      { String cccode = cc.updateFormJava7(env,true);
+
+        System.out.println(">> Constraint " + cc + "\n" + 
+                   ">> action for set" + nme + " is: " + cccode);
+        opheader = opheader + "\n" + 
+                   cccode + "\n";
        
-      if (cnew != null)
+      /* if (cnew != null)
       { Vector contx = new Vector(); 
         if (cnew.getOwner() != null) 
         { contx.add(cnew.getOwner()); }
@@ -2725,7 +2775,7 @@ public class Attribute extends ModelElement
                cnew.updateOperationJava7(ent,nme,true);  
           opheader = opheader + "\n" + 
                      update + "\n";
-        } 
+        } */  
       }
       else if (cc.allFeaturesUsedIn().contains(nme) && cc.getEvent() == null)
       { Constraint cpre = (Constraint) cc.substituteEq(nme,attxbe); 

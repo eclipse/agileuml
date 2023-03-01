@@ -2313,7 +2313,7 @@ public void findPlugins()
         if (comp)
         { thisLabel.setText("Invariants are syntactically complete"); }
         else 
-        { thisLabel.setText("Invariants are not complete"); } 
+        { thisLabel.setText("! Invariants are not complete"); } 
       }
       else if (label.equals("Consistency Analysis"))
       { boolean res = ucdArea.consistencyCheck();
@@ -2321,7 +2321,7 @@ public void findPlugins()
         if (res)
         { thisLabel.setText("Model passed consistency checks"); }
         else 
-        { thisLabel.setText("Model failed consistency checks"); } 
+        { thisLabel.setText("!! Model failed consistency checks"); } 
       }
       // else if (label.equals("Dependency Analysis")) 
       // { } 
@@ -2341,14 +2341,14 @@ public void findPlugins()
       // else if (label.equals("Scheduling"))
       // { } 
       else if (label.equals("Move"))
-      { System.out.println("Select a class or association");
+      { System.out.println(">> Select a class or association");
         thisLabel.setText("Select a class or association");
         ucdArea.setDrawMode(UCDArea.EDIT);
         ucdArea.setEditMode(UCDArea.MOVING);
         saved = false; 
       }
       else if (label.equals("Delete"))
-      { System.out.println("Select a class or association");
+      { System.out.println(">> Select a class or association");
         thisLabel.setText("Select a class or association");
         ucdArea.setDrawMode(UCDArea.EDIT);
         ucdArea.setEditMode(UCDArea.DELETING);

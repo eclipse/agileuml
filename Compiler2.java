@@ -44,6 +44,9 @@ public class Compiler2
   static final int INSYMBOL = 2; 
   static final int INSTRING = 3; 
 
+  static final java.util.regex.Pattern 
+     cstlVarPatt = java.util.regex.Pattern.compile("_[0-9]"); 
+    
   static Vector extensionOperators = new Vector(); 
 
   Vector lexicals; // of StringBuffer
@@ -2607,9 +2610,28 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
   public Expression parse_additive_expression(int bc, int pstart, int pend, Vector entities, Vector types)
   { for (int i = pstart; i < pend; i++) 
     { String ss = lexicals.get(i).toString(); 
-      if (ss.equals("+") || ss.equals("-") || ss.equals("\\/"))
-      { Expression e1 = parse_factor_expression(bc,pstart,i-1, entities, types);
-        Expression e2 = parse_additive_expression(bc,i+1,pend, entities, types);
+      if (ss.equals("+") || ss.equals("\\/"))
+      { Expression e1 = 
+          parse_additive_expression(
+                         bc,pstart,i-1, entities, types);
+        Expression e2 = 
+          parse_additive_expression(
+                         bc,i+1,pend, entities, types);
+        if (e1 == null || e2 == null)
+        { } // return null; }
+        else
+        { BinaryExpression ee = new BinaryExpression(ss,e1,e2);
+          // System.out.println("Parsed additive expression: " + ee);
+          return ee;
+        } 
+      }
+      else if (ss.equals("-"))
+      { Expression e1 = 
+          parse_additive_expression(
+                         bc,pstart,i-1, entities, types);
+        Expression e2 = 
+          parse_factor_expression(
+                         bc,i+1,pend, entities, types);
         if (e1 == null || e2 == null)
         { } // return null; }
         else
@@ -2619,8 +2641,10 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
         } 
       }     
     } 
+
     return parse_factor_expression(bc,pstart,pend,entities,types); 
-  } // reads left to right, not putting priorities on * above +
+  } // reads left to right, a - b + c parsed as 
+    // (a - b) + c
 
   public Expression parse_factor_expression(int bc, int pstart, int pend, Vector entities, Vector types)
   { // System.out.println("Trying to parse factor expression"); 
@@ -2631,9 +2655,12 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
           ss.equals("*") || ss.equals("/") || 
           ss.equals("div") || 
           ss.equals("mod"))
-      { Expression e1 = parse_basic_expression(bc,pstart,i-1,entities,types);  
-        // or factor2
-        Expression e2 = parse_factor_expression(bc,i+1,pend,entities,types);
+      { Expression e1 = 
+          parse_factor2_expression(
+                        bc,pstart,i-1,entities,types);  
+        // or basic
+        Expression e2 = 
+          parse_factor_expression(bc,i+1,pend,entities,types);
         if (e1 == null || e2 == null)
         { } // return null; }
         else
@@ -2965,7 +2992,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
         return null; 
       } 
 
-      if (ss.indexOf("_") >= 0)
+      if (cstlVarPatt.matcher(ss).find())
       { System.err.println("! Warning: do not use _i for integers i: " + ss); }
 
 
@@ -9913,6 +9940,12 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
   { // System.out.println(Double.MAX_VALUE); 
     Compiler2 c = new Compiler2();
 
+    c.nospacelexicalanalysis("not a & b"); 
+
+    Expression xx = c.parseExpression(); 
+    System.out.println(xx); 
+    System.out.println(xx.toAST()); 
+
     // c.nospacelexicalanalysis("sq->iterate(v; acc = 0 | v + acc)"); 
 
     // Expression xx = c.parseExpression(); 
@@ -9928,17 +9961,17 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
    // c.nospacelexicalanalysis("(OclDatasource.newOclDatasource()).execSQL(\"SELECT * FROM E\")"); 
     // c.nospacelexicalanalysis("Excel.Worksheets[Y].Range[X].Value");
 
-   c.nospacelexicalanalysis("(Excel.Worksheets[\"FBU\"].Range[\"k19\"]).Offset(I, 0)"); 
+   // c.nospacelexicalanalysis("(Excel.Worksheets[\"FBU\"].Range[\"k19\"]).Offset(I, 0)"); 
 
     // c.nospacelexicalanalysis("(OclFile.newOclFile_Read(OclFile.newOclFile(s))).readObject()"); 
 
     // c.nospacelexicalanalysis("(MyString).subrange((MyString)->indexOf((MyString)->trim()))"); 
 	
     // c.nospacelexicalanalysis("(createCOBOLADD_Class()).COBOLADD(X1, X2)"); 
-    System.out.println(c.lexicals); 
-    System.out.println(c.balancedBrackets()); 
-    Expression xx = c.parseExpression(); 
-    System.out.println(xx); 
+    // System.out.println(c.lexicals); 
+    // System.out.println(c.balancedBrackets()); 
+    // Expression xx = c.parseExpression(); 
+    // System.out.println(xx); 
 
     // ASTTerm tt = c.parseSimpleAST("(lineStringLiteral \" (lineStringContent text) \")"); 
 

@@ -158,6 +158,8 @@ public abstract class ASTTerm
   public abstract ASTTerm removeExtraNewlines();
 
   public abstract ASTTerm replaceCobolIdentifiers();
+
+  public abstract ASTTerm substituteEq(String str, ASTTerm newtrm);
   
   public abstract String tagFunction(); 
 
@@ -489,6 +491,8 @@ public abstract class ASTTerm
   public abstract Vector tokenSequence(); 
 
   public abstract int termSize(); 
+
+  public abstract int size(); 
 
   public abstract Vector getTerms(); 
 
@@ -4559,7 +4563,11 @@ public abstract class ASTTerm
 
     System.out.println(ASTTerm.isSubterm(tt1, tt2)); 
     System.out.println(ASTTerm.isSubterm(tt1, ttc)); 
-    System.out.println(ASTTerm.isSubterm(tt2, ttc)); 
+    System.out.println(ASTTerm.isSubterm(tt2, ttc));
+
+    System.out.println(ttc);  
+    ASTTerm subst = ttc.substituteEq("bb", tt1); 
+    System.out.println(subst);  
   }
 } 
 

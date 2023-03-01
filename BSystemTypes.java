@@ -10044,15 +10044,32 @@ public class BSystemTypes extends BComponent
   } 
 
   public static String generateIsIntegerOp()
-  { String res = " public static boolean isInteger(String str)\n" + 
+  { String res = 
+      " public static boolean isInteger(String str)\n" + 
       "  { try { Integer.parseInt(str.trim()); return true; }\n" + 
       "    catch (Exception _e) { return false; }\n" + 
       "  }\n\n"; 
-    res = res + " public static int toInt(String str)\n" + 
+
+    res = res + 
+      " public static int toInt(String str)\n" + 
       "  { try { int x = Integer.parseInt(str.trim());\n" + 
       "          return x; }\n" + 
       "    catch (Exception _e) { return 0; }\n" + 
-      "  }\n"; 
+      "  }\n\n"; 
+
+    res = res + 
+      "  public static int toInteger(String str)\n" +
+      "  { if (str == null || str.length() == 0)\n" + 
+      "    { return 0; }\n" + 
+      "    String trm = str.trim();\n" + 
+      "    while (trm.length() > 0 && trm.charAt(0) == '0')\n" +
+      "    { trm = trm.substring(1); }\n" + 
+      "    try { int x = Integer.decode(trm).intValue();\n" + 
+      "      return x; \n" +
+      "    }\n" +
+      "    catch (Exception _e) { return 0; }\n" +
+      "  }\n\n"; 
+
     return res; 
   } 
 

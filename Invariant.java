@@ -5,7 +5,7 @@ import java.io.*;
 /** Invariant is superclass of all forms of RSDS invariant. */ 
 /* package: OCL */ 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -466,12 +466,37 @@ abstract class Invariant
   public boolean isTrivial()
   { Expression ante = antecedent(); 
     Expression succ = succedent(); 
+
     if (ante.implies(succ))
-    { System.out.println("Trivial:: " + this); 
+    { System.out.println(">> Trivial invariant:: " + this); 
       return true; 
     } 
+
     // also if ante is inconsistent
-    System.out.println("Not trivial:: " + this); 
+
+    System.out.println(">> Non-trivial invariant:: " + this); 
+    return false; 
+  } 
+
+  public boolean selfReferential(Vector attnames)
+  { // Expression ante = antecedent(); 
+    Expression succ = succedent();
+
+    // some variable occurs in both ante and succ, 
+    // or succ is x = expr with x in expr.
+
+    BinaryExpression besucc = null; 
+    if (succ instanceof BinaryExpression)
+    { besucc = (BinaryExpression) succ; } 
+    else 
+    { return false; } 
+ 
+    if (besucc.selfReferential(attnames))
+    { System.out.println(">> Self-referential:: " + this); 
+      return true; 
+    } 
+    
+    System.out.println(">> Not self-referential:: " + this); 
     return false; 
   } 
 
@@ -1062,8 +1087,11 @@ class SafetyInvariant extends Invariant
     Expression succ1 = 
       (Expression) i1.succedent().clone();
     Expression succ2 = i2.succedent();
+
     // if i2 has event, return null:
-    if (i2.getEventName() != null) { return null; }
+    if (i2.getEventName() != null) 
+    { return null; }
+
     Vector comms =
       Expression.commonConjSubformula(succ1,ante2);
     if (comms.get(0) == null) { return null; }

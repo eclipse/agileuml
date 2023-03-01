@@ -47,6 +47,7 @@ public class Entity extends ModelElement implements Comparable
   int levelNumber = 0; // For nested classes
   Entity container = null; // Nested classes
   int cardinalityValue = 1; // container is a sequence if > 1  
+  int totalWidth = 0; // sum of attribute widths
 
   public Entity(String nme)
   { super(nme); 
@@ -5593,7 +5594,7 @@ public class Entity extends ModelElement implements Comparable
   public void addInvariants(Vector invs)
   { invariants.addAll(invs); } 
 
-  public Constraint attributeSumInvariant()
+  public Vector attributeSumInvariants()
   { // name = "" + att1 + att2 + ...
     // If cardinalityValue > 1 then 
     // name[indx] = "" + att1[indx] + att2[indx] 
@@ -5609,52 +5610,137 @@ public class Entity extends ModelElement implements Comparable
                                    shortName, 
                                    new Type("String", null));
     cls.setElementType(new Type("String", null));
-    if (cardinalityValue > 1) 
-    { cls.setArrayIndex(indx); } 
+    // if (cardinalityValue > 1) 
+    // { cls.setArrayIndex(indx); } 
  
     Expression sumExpr = 
-      BasicExpression.newValueBasicExpression("\"\""); 
+        BasicExpression.newValueBasicExpression("\"\""); 
     sumExpr.setType(new Type("String", null)); 
-            
-    for (int i = 0; i < attributes.size(); i++) 
-    { Attribute att = (Attribute) attributes.get(i); 
-      Expression expr = new BasicExpression(att);
-      if (cardinalityValue > 1) 
-      { ((BasicExpression) expr).setArrayIndex(indx); } 
-      else if (att.isSequence())
-      { expr = new UnaryExpression("->sum", expr); } 
-      sumExpr = 
-        new BinaryExpression("+", sumExpr, expr); 
-      sumExpr.setType(new Type("String", null));
-      sumExpr.setElementType(new Type("String", null)); 
+      
+    if (cardinalityValue == 1) 
+    {       
+      for (int i = 0; i < attributes.size(); i++) 
+      { Attribute att = (Attribute) attributes.get(i); 
+        Expression expr = new BasicExpression(att);
+      
+        if (att.isSequence())
+        { Expression xvar = 
+            BasicExpression.newVariableBasicExpression(
+                                        "_ind"); 
+          BinaryExpression dom = 
+            new BinaryExpression(":", xvar, expr); 
+          Expression sumexp = 
+            new BinaryExpression("+", xvar, 
+                               new BasicExpression("\"\"")); 
+          Expression colexpr = 
+            new BinaryExpression("|C", dom, sumexp); 
+          expr = new UnaryExpression("->sum", colexpr); 
+        } 
+        sumExpr = 
+          new BinaryExpression("+", sumExpr, expr); 
+        sumExpr.setType(new Type("String", null));
+        sumExpr.setElementType(new Type("String", null)); 
+      } 
+
+      Expression pst = 
+        new BinaryExpression("=", cls, sumExpr);
+      pst.setType(new Type("boolean", null)); 
+
+      Constraint res = 
+        Constraint.getConstraint(pst);
+      Vector results = new Vector(); 
+      results.add(res);  
+      return results; 
     } 
-    Expression pst = 
-      new BinaryExpression("=", cls, sumExpr);
-    if (cardinalityValue > 1) 
+    else
     { // Integer.subrange(1,cardinalityValue)->forAll(pst)
-      Vector ipars = new Vector(); 
-      ipars.add(new BasicExpression(1)); 
-      ipars.add(
-        new BasicExpression(cardinalityValue)); 
 
-      BasicExpression dmn = 
-            BasicExpression.newFunctionBasicExpression(
-                   "subrange", "Integer", ipars);
-      BinaryExpression indmn = 
-        new BinaryExpression(":", indx, dmn);       
-      pst = 
-        new BinaryExpression("!", indmn, pst);
+      Vector results = new Vector(); 
+
+      for (int h = 1; h <= cardinalityValue; h++) 
+      { BasicExpression indh = new BasicExpression(h); 
+        Expression clsh = 
+          BasicExpression.newIndexedBasicExpression(cls,indh);
+        Expression sumExprh = 
+          BasicExpression.newValueBasicExpression("\"\""); 
+        sumExprh.setType(new Type("String", null)); 
+ 
+
+        for (int i = 0; i < attributes.size(); i++) 
+        { Attribute att = (Attribute) attributes.get(i); 
+          Attribute attclone = (Attribute) att.clone(); 
+
+          BasicExpression attbe = 
+            new BasicExpression(attclone); 
+            
+          Expression exprh; 
+      
+          if (att.isSequence()) // actually seq of seq
+          { Expression xvar = 
+            BasicExpression.newVariableBasicExpression(
+                                                "_ind");
+            xvar.setType(att.getElementType());
+ 
+            Type seqType = new Type("Sequence", null); 
+            seqType.setElementType(att.getElementType());
+            Type seqseqType = new Type("Sequence", null); 
+            seqseqType.setElementType(seqType);  
+
+            // attbe.setType(seqseqType); 
+            // attbe.setElementType(seqType);
+            attbe.setVariableType(seqseqType); 
+            attbe.setVariableElementType(seqType);  
+            exprh = new BinaryExpression("->at",attbe,indh);
+            exprh.setType(seqType); 
+            exprh.setElementType(att.getElementType()); 
+
+            JOptionPane.showMessageDialog(null, 
+              "Type of " + exprh + " is " + seqType + 
+              " " + att.getElementType(), 
+              "", 
+              JOptionPane.INFORMATION_MESSAGE);
+            
+            BinaryExpression domh = 
+              new BinaryExpression(":", xvar, exprh); 
+            Expression sumexph = 
+              new BinaryExpression("+", xvar, 
+                               new BasicExpression("\"\"")); 
+            Expression colexprh = 
+              new BinaryExpression("|C", domh, sumexph); 
+            exprh = new UnaryExpression("->sum", colexprh); 
+          } 
+          else 
+          { attbe.setType(new Type("Sequence", null)); 
+            exprh = 
+              BasicExpression.newIndexedBasicExpression(attbe,
+                                                        indh);
+          }
+
+          sumExprh = 
+            new BinaryExpression("+", sumExprh, exprh); 
+          sumExprh.setType(new Type("String", null));
+          sumExprh.setElementType(new Type("String", null)); 
+        } 
+
+        Expression psth = 
+          new BinaryExpression("=", clsh, sumExprh);
+        psth.setType(new Type("boolean", null)); 
+
+        Constraint resh = 
+          Constraint.getConstraint(psth); 
+        results.add(resh); 
+      } 
+
+      return results; 
     } 
-    pst.setType(new Type("boolean", null)); 
-
-    Constraint res = 
-      Constraint.getConstraint(pst); 
-    return res; 
   } 
 
   public void adjustAttributeMultiplicities(Entity ent)
   { // For each sequence-valued att of ent, if att is an 
     // attribute of this, change it to be a sequence if not
+
+    // if ent is itself multiple, make att a sequence of 
+    // sequences. 
 
     for (int i = 0; i < ent.attributes.size(); i++) 
     { Attribute att = (Attribute) ent.attributes.get(i); 
@@ -5664,7 +5750,14 @@ public class Entity extends ModelElement implements Comparable
       { Attribute localatt = 
           (Attribute) ModelElement.lookupByName(
                                       aname,attributes);
-        if (localatt != null && !localatt.isSequence())
+
+        int amult = localatt.getMultiplicity();
+        System.out.println(">>> " + aname + 
+                           " multiplicity: " + 
+                           amult); 
+
+        if (localatt != null && amult == 1 && 
+            !localatt.isSequence())
         { Type tatt = localatt.getType(); 
           Type seqType = new Type("Sequence", null); 
           seqType.setElementType(tatt); 
@@ -5689,6 +5782,102 @@ public class Entity extends ModelElement implements Comparable
           System.out.println(aname + " : " + seqType + 
                              " := " + 
                              seqInit); 
+        } 
+        else if (localatt != null && amult > 1 && 
+            !localatt.isSequence())
+        { Type tatt = localatt.getType(); 
+          Type seqType = new Type("Sequence", null); 
+          seqType.setElementType(tatt); 
+          Type seqseqType = new Type("Sequence", null); 
+          seqseqType.setElementType(seqType); 
+          localatt.setType(seqseqType); 
+          localatt.setElementType(seqType); 
+          Expression initElem = 
+            localatt.getInitialExpression(); 
+          Vector jpars = new Vector(); 
+          jpars.add(new BasicExpression(1)); 
+          jpars.add(
+                  new BasicExpression(amult)); 
+
+          BasicExpression dmnj = 
+            BasicExpression.newFunctionBasicExpression(
+                   "subrange", "Integer", jpars);
+
+          Expression initSeq = 
+            new BinaryExpression("->collect", dmnj, initElem);
+          initSeq.setType(seqType); 
+          initSeq.setElementType(tatt);  
+          
+          Vector ipars = new Vector(); 
+          ipars.add(new BasicExpression(1)); 
+          ipars.add(
+                  new BasicExpression(ent.cardinalityValue)); 
+
+          BasicExpression dmn = 
+            BasicExpression.newFunctionBasicExpression(
+                   "subrange", "Integer", ipars);
+            
+          Expression seqseqInit = 
+            new BinaryExpression("->collect", dmn, initSeq);
+          seqseqInit.setType(seqseqType); 
+          seqseqInit.setElementType(seqType);  
+          localatt.setInitialExpression(seqseqInit); 
+          System.out.println(aname + " : " + seqseqType + 
+                             " := " + 
+                             seqseqInit); 
+        } 
+      } 
+      else if (ent.cardinalityValue > 1 && att.isSequence())
+      { Attribute localatt = 
+          (Attribute) ModelElement.lookupByName(
+                                      aname,attributes);
+
+        int amult = localatt.getMultiplicity();
+        System.out.println(">>> " + aname + 
+                           " multiplicity: " + 
+                           amult); 
+
+        if (localatt != null)
+        { Type tatt = localatt.getElementType(); 
+          Type seqType = new Type("Sequence", null); 
+          seqType.setElementType(tatt); 
+          Type seqseqType = new Type("Sequence", null); 
+          seqseqType.setElementType(seqType); 
+          localatt.setType(seqseqType); 
+          localatt.setElementType(seqType); 
+          Expression initElem = 
+            localatt.getInitialExpression(); 
+          // Vector jpars = new Vector(); 
+          // jpars.add(new BasicExpression(1)); 
+          // jpars.add(
+          //         new BasicExpression(amult)); 
+
+          // BasicExpression dmnj = 
+          //   BasicExpression.newFunctionBasicExpression(
+          //          "subrange", "Integer", jpars);
+
+          Expression initSeq = initElem;  
+          // new BinaryExpression("->collect", dmnj, initElem);
+          initSeq.setType(seqType); 
+          initSeq.setElementType(tatt);  
+          
+          Vector ipars = new Vector(); 
+          ipars.add(new BasicExpression(1)); 
+          ipars.add(
+                  new BasicExpression(ent.cardinalityValue)); 
+
+          BasicExpression dmn = 
+            BasicExpression.newFunctionBasicExpression(
+                   "subrange", "Integer", ipars);
+            
+          Expression seqseqInit = 
+            new BinaryExpression("->collect", dmn, initSeq);
+          seqseqInit.setType(seqseqType); 
+          seqseqInit.setElementType(seqType);  
+          localatt.setInitialExpression(seqseqInit); 
+          System.out.println(aname + " : " + seqseqType + 
+                             " := " + 
+                             seqseqInit); 
         } 
       } 
     }  
@@ -6506,32 +6695,47 @@ public class Entity extends ModelElement implements Comparable
   public void addTranscomps(Vector entities, Vector types)
   { Vector res = new Vector(); 
 
+    Vector attnames = ModelElement.getNames(attributes); 
+
+    Vector sinvs = new Vector(); 
     for (int i = 0; i < invariants.size(); i++) 
     { Constraint inv = (Constraint) invariants.get(i); 
-      for (int j = 0; j < invariants.size(); j++) 
+      SafetyInvariant sinv = 
+          new SafetyInvariant(inv.antecedent(), 
+                              inv.succedent()); 
+      sinvs.add(sinv); 
+    } 
+
+    for (int i = 0; i < sinvs.size(); i++) 
+    { Constraint inv = (Constraint) invariants.get(i);
+      SafetyInvariant sinv = (SafetyInvariant) sinvs.get(i); 
+      for (int j = 0; j < sinvs.size(); j++) 
       { if (i == j) { continue; } 
         Constraint inv2 = (Constraint) invariants.get(j);
         if (inv2.getEvent() != null) 
         { continue; } // get next j
-        SafetyInvariant sinv = 
-          new SafetyInvariant(inv.antecedent(), 
-                              inv.succedent()); 
         SafetyInvariant sinv2 = 
-          new SafetyInvariant(inv2.antecedent(), 
-                              inv2.succedent());  
-        SafetyInvariant newinv = SafetyInvariant.transitiveComp2(sinv,sinv2); 
+          (SafetyInvariant) sinvs.get(j); 
+
+        System.out.println(">> Combining " + sinv + "\n" + 
+                           "and " + sinv2); 
+  
+        SafetyInvariant newinv = 
+          SafetyInvariant.transitiveComp2(sinv,sinv2); 
         if (newinv == null)
         { newinv = SafetyInvariant.transitiveComp3(sinv,sinv2); }
  
         System.out.println();  
         System.out.println(">> New local invariant: " + newinv); 
-        if (newinv != null && !newinv.isTrivial())
+        if (newinv != null && !newinv.isTrivial() && 
+            !newinv.selfReferential(attnames))
         { Vector contexts = new Vector(); 
           contexts.add(this); 
           newinv.typeCheck(types,entities,contexts,new Vector());
 
           Vector ass1 = inv.getAssociations(); 
-          Vector newass = VectorUtil.union(ass1,inv2.getAssociations());  
+          Vector newass = 
+            VectorUtil.union(ass1,inv2.getAssociations());  
 
           Constraint newcon = new Constraint(newinv,newass); 
           newcon.setLocal(true); 
@@ -6539,6 +6743,8 @@ public class Entity extends ModelElement implements Comparable
  
           if (VectorUtil.containsEqualString("" + newcon,
                                              invariants) || 
+              VectorUtil.containsEqualString("" + newinv,
+                                             sinvs) || 
               VectorUtil.containsEqualString("" + newcon,
                                              res)) 
           { } 
@@ -8227,6 +8433,7 @@ public class Entity extends ModelElement implements Comparable
         }
       }
     }
+
     out.println(res + ")\n  {");
     buildConstructorCodeJava7(out);
     out.println("  }\n");
@@ -8286,6 +8493,7 @@ public class Entity extends ModelElement implements Comparable
     { Constraint cc = (Constraint) invariants.get(i); 
       code = code + cc.updateFormJava7(env,true); 
     } 
+
     out.println(code); 
   } 
 
@@ -8968,9 +9176,10 @@ public class Entity extends ModelElement implements Comparable
     } 
 
     java.util.Map env = new java.util.HashMap(); 
-    System.out.println(">>> Invariants of class " + name + 
-                       " are: " + invariants); 
+    // System.out.println(">>> Invariants of class " + name + 
+    //                    " are: " + invariants); 
     System.out.println(); 
+
     for (int i = 0; i < invariants.size(); i++) 
     { Constraint cc = (Constraint) invariants.get(i);
       Statement updf = cc.generateDesign(env,true); 

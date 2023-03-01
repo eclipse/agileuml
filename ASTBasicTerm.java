@@ -79,6 +79,12 @@ public class ASTBasicTerm extends ASTTerm
 
     return this; 
   }  
+
+  public ASTTerm substituteEq(String str, ASTTerm newtrm)
+  { if (str.equals(value))
+    { return newtrm; }
+    return this; 
+  }  
         
   public boolean hasTag(String tagx) 
   { return tagx.equals(tag); } 
@@ -172,6 +178,10 @@ public class ASTBasicTerm extends ASTTerm
 
   public int termSize() 
   { return 1; } 
+
+  public int size() 
+  { return 1; } 
+
 
 
   public String asTextModel(PrintWriter out)

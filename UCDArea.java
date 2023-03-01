@@ -1809,15 +1809,20 @@ public class UCDArea extends JPanel
     System.out.println("*** GENERATING TRANSITIVE CLOSURES OF INVARIANTS ***");
     System.out.println("*** Apply before B Generation **********************"); 
     Vector res = new Vector(); 
+
     for (int i = 0; i < constraints.size(); i++) 
     { Constraint con = (Constraint) constraints.get(i); 
       for (int j = i+1; j < constraints.size(); j++) 
       { Constraint con2 = (Constraint) constraints.get(j);
-        SafetyInvariant inv = new SafetyInvariant(con.antecedent(), 
-                                                  con.succedent()); 
-        SafetyInvariant inv2 = new SafetyInvariant(con2.antecedent(), 
-                                                   con2.succedent());  
-        SafetyInvariant newinv = SafetyInvariant.transitiveComp(inv,inv2); 
+        SafetyInvariant inv = 
+          new SafetyInvariant(con.antecedent(), 
+                              con.succedent()); 
+        SafetyInvariant inv2 = 
+          new SafetyInvariant(con2.antecedent(), 
+                              con2.succedent());  
+        SafetyInvariant newinv = 
+          SafetyInvariant.transitiveComp(inv,inv2);
+ 
         if (newinv != null)
         { if (newinv.isTrivial())
           { System.out.println(">> Trivial invariant: " + newinv); } 
@@ -26838,8 +26843,8 @@ public void produceCUI(PrintWriter out)
     { Object aux = auxents.get(i); 
       if (aux instanceof Entity)
       { Entity auxent = (Entity) aux;
-        Constraint suminv = 
-          auxent.attributeSumInvariant();
+        Vector suminvs = 
+          auxent.attributeSumInvariants();
         Entity rootcontainer = 
           auxent.findRootContainer(); 
         
@@ -26849,14 +26854,19 @@ public void produceCUI(PrintWriter out)
                        rootcontainer.getName(), 
                        entities);
           if (actualRoot != null) 
-          { suminv.setOwner(actualRoot); 
-            actualRoot.addInvariant(suminv);
+          { for (int h = 0; h < suminvs.size(); h++) 
+            { Constraint suminv = 
+                (Constraint) suminvs.get(h); 
+              suminv.setOwner(actualRoot); 
+              actualRoot.addInvariant(suminv);
+            } 
 
             actualRoot.adjustAttributeMultiplicities(auxent);
             auxent.addFillerAttributes(actualRoot);  
           } 
         }  
-        System.out.println(suminv);
+
+        System.out.println("+++ Derived invariants: " + suminvs);
       } 
     } 
  

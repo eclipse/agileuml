@@ -3,7 +3,7 @@ import java.util.List;
 import java.io.*;
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -1499,6 +1499,21 @@ abstract class Expression
     }  
   } 
 
+  public static double convertNumber(Object ob) 
+  { try
+    { double nn = Double.parseDouble("" + ob); 
+      return nn; 
+    } 
+    catch (Exception e) 
+    { try 
+      { long ll = Long.parseLong("" + ob); 
+        return ll; 
+      } 
+      catch (Exception ee)
+      { return 0; }
+    }  
+  } 
+
   public static String removeUnderscores(String ss)
   { String res = ""; 
     for (int i = 0; i < ss.length(); i++) 
@@ -2460,15 +2475,22 @@ abstract class Expression
                             final Vector vars)
   { if (e1 == null)  { return e2; }
     if (e2 == null)  { return e1; }
+    if (op.equals("+")) { return simplifyPlus(e1,e2); } 
+    if (op.equals("-")) { return simplifyMinus(e1,e2); } 
+    if (op.equals("*")) { return simplifyMult(e1,e2); } 
+    if (op.equals("/")) { return simplifyDivide(e1,e2); } 
     if (op.equals("#&")) { return simplifyExistsAnd(e1,e2); } 
     if (op.equals("&")) { return simplifyAnd(e1,e2); } 
     if (op.equals("or")) { return simplifyOr(e1,e2); }
     if (op.equals("=>")) { return simplifyImp(e1,e2); } 
     if (op.equals("=")) { return simplifyEq(e1,e2,vars); }
     // if (op.equals("->apply")) { return simplifyApply(e1,e2,vars); }
-    if (op.equals("!=") || op.equals("/=")) { return simplifyNeq(e1,e2,vars); } 
-    if (op.equals(":")) { return simplifyIn(e1,e2,vars); }
-    if (comparitors.contains(op)) { return simplifyIneq(op,e1,e2); } 
+    if (op.equals("!=") || op.equals("/=")) 
+    { return simplifyNeq(e1,e2,vars); } 
+    if (op.equals(":")) 
+    { return simplifyIn(e1,e2,vars); }
+    if (comparitors.contains(op)) 
+    { return simplifyIneq(op,e1,e2); } 
     return new BinaryExpression(op,e1,e2);
   }
 
@@ -2492,6 +2514,76 @@ abstract class Expression
     return res; 
   }
 
+
+  public static Expression simplifyPlus(Expression e1, Expression e2) 
+  { if (e1 == null) { return e2; } 
+    if (e2 == null) { return e1; } 
+
+    if (isInteger("" + e1) && isInteger("" + e2))
+    { int v1 = convertInteger("" + e1); 
+      int v2 = convertInteger("" + e2); 
+      return new BasicExpression(v1 + v2); 
+    }
+    else if (isNumber("" + e1) && isNumber("" + e2))
+    { double v1 = convertNumber("" + e1); 
+      double v2 = convertNumber("" + e2); 
+      return new BasicExpression(v1 + v2); 
+    } 
+    return new BinaryExpression("+", e1, e2); 
+  }  
+
+  public static Expression simplifyMinus(Expression e1, Expression e2) 
+  { if (e1 == null) { return e2; } 
+    if (e2 == null) { return e1; } 
+
+    if (isInteger("" + e1) && isInteger("" + e2))
+    { int v1 = convertInteger("" + e1); 
+      int v2 = convertInteger("" + e2); 
+      return new BasicExpression(v1 - v2); 
+    }
+    else if (isNumber("" + e1) && isNumber("" + e2))
+    { double v1 = convertNumber("" + e1); 
+      double v2 = convertNumber("" + e2); 
+      return new BasicExpression(v1 - v2); 
+    } 
+    return new BinaryExpression("-", e1, e2); 
+  }  
+
+  public static Expression simplifyMult(Expression e1, Expression e2) 
+  { if (e1 == null) { return e2; } 
+    if (e2 == null) { return e1; } 
+
+    if (isInteger("" + e1) && isInteger("" + e2))
+    { int v1 = convertInteger("" + e1); 
+      int v2 = convertInteger("" + e2); 
+      return new BasicExpression(v1 * v2); 
+    }
+    else if (isNumber("" + e1) && isNumber("" + e2))
+    { double v1 = convertNumber("" + e1); 
+      double v2 = convertNumber("" + e2); 
+      return new BasicExpression(v1 * v2); 
+    } 
+    return new BinaryExpression("*", e1, e2); 
+  }  
+
+  public static Expression simplifyDivide(Expression e1, Expression e2) 
+  { if (e1 == null) { return e2; } 
+    if (e2 == null) { return e1; } 
+
+    if (isInteger("" + e1) && isInteger("" + e2))
+    { int v1 = convertInteger("" + e1); 
+      int v2 = convertInteger("" + e2);
+      // case of v2 = 0 
+      return new BasicExpression(v1 / v2); 
+    }
+    else if (isNumber("" + e1) && isNumber("" + e2))
+    { double v1 = convertNumber("" + e1); 
+      double v2 = convertNumber("" + e2); 
+      // case of v2 = 0 
+      return new BasicExpression(v1 / v2); 
+    } 
+    return new BinaryExpression("/", e1, e2); 
+  }  
 
   public static List simplifyAnd(final List e1s, final List e2s) 
   { if (e1s == null) { return e2s; } 
@@ -2809,6 +2901,13 @@ abstract class Expression
       if (ue.operator.equals("not"))
       { return ue.argument; } 
     } 
+    else if (e instanceof BasicExpression)
+    { if ("true".equals(e + ""))
+      { return new BasicExpression(false); } 
+      if ("false".equals(e + ""))
+      { return new BasicExpression(true); } 
+    }
+
     return new UnaryExpression("not",e); 
   } // and other cases
 

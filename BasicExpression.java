@@ -32,6 +32,9 @@ class BasicExpression extends Expression
 
   private String atTime = "";  // e@t 
 
+  private boolean alreadyCorrected = false; 
+    // Don't correct type twice for array references. 
+
   BasicExpression(String dd, int i) 
   { data = dd; } 
 
@@ -125,10 +128,15 @@ class BasicExpression extends Expression
     data = att.getName(); 
     umlkind = VARIABLE; 
     variable = att; 
-    elementType = att.getElementType(); 
-    type = att.getType(); 
-    if (type != null) 
+
+    if (att.getElementType() != null)
+    { elementType = (Type) att.getElementType().clone(); }  
+    if (att.getType() != null) 
+    { type = (Type) att.getType().clone(); }
+	 
+    if (type != null && type.getElementType() == null) 
     { type.setElementType(elementType); } 
+	
     entity = att.getEntity(); 
     if (type != null) 
     { multiplicity = type.typeMultiplicity(); } 
@@ -342,7 +350,16 @@ class BasicExpression extends Expression
       } 
       parameters = pars; 
     } 
+  } 
 
+  public void setVariableType(Type t) 
+  { if (variable != null) 
+    { variable.setType(t); } 
+  } 
+
+  public void setVariableElementType(Type et) 
+  { if (variable != null) 
+    { variable.setElementType(et); } 
   } 
 
   public static BasicExpression newASTBasicExpression(ASTTerm t)
@@ -4402,16 +4419,21 @@ class BasicExpression extends Expression
         
         adjustTypeForObjectRef(att);
         arrayType = type;  
+
+        // if (alreadyCorrected) { } 
+        // else 
+        // { 
         adjustTypeForArrayIndex(att); 
-        
-        // System.out.println("**>> Adjusted type of " + this + " is " + type + "(" + elementType + ")");  
- 
-        elementType = Type.correctElementType(type,elementType,types,entities); 
-        att.setElementType(elementType); 
+         
+        elementType = Type.correctElementType(
+                          type,elementType,types,entities); 
+        // att.setElementType(elementType); 
         // variable = att; 
         System.out.println("*>>* Adjusted type of " + this + " is " + type + "(" + elementType + ")");
         System.out.println(); 
-      
+          // alreadyCorrected = true; 
+        // } 
+
         return res;
       } // couldn't it have an array ref if objectRef was a sequence?
       else 
@@ -4421,7 +4443,7 @@ class BasicExpression extends Expression
           multiplicity = ModelElement.ONE;
           Attribute att = subent.getAttribute(data);
           if (att == null)   // something very bad has happened
-          { System.err.println("***TYPE ERROR: attribute: " + data + " is not defined in class " + subent); 
+          { System.err.println("!! TYPE ERROR: attribute: " + data + " is not defined in class " + subent); 
             JOptionPane.showMessageDialog(null, "Undefined attribute: " + data, "Type error",                                           JOptionPane.ERROR_MESSAGE);  
             return false; 
           } 
@@ -4454,6 +4476,7 @@ class BasicExpression extends Expression
 		                                JOptionPane.ERROR_MESSAGE);  
           return false; 
         } 
+
         multiplicity = ast.getCard2();
         elementType = new Type(ast.getEntity2()); 
         modality = ModelElement.INTERNAL; // ???
@@ -4502,7 +4525,7 @@ class BasicExpression extends Expression
         { umlkind = ROLE;
           Association ast = subent.getRole(data);
           if (ast == null)   // something very bad has happened
-          { System.err.println("ERROR: Undefined role: " + data); 
+          { System.err.println("!! ERROR: Undefined role: " + data); 
             return false; 
           } 
           multiplicity = ast.getCard2();
@@ -4543,7 +4566,8 @@ class BasicExpression extends Expression
       return true; 
     }  
 
-    Attribute var = (Attribute) ModelElement.lookupByName(data,env); 
+    Attribute var = 
+      (Attribute) ModelElement.lookupByName(data,env); 
     if (var != null) 
     { type = var.getType();
       elementType = var.getElementType(); 
@@ -4552,7 +4576,9 @@ class BasicExpression extends Expression
       modality = var.getKind(); 
       if (type != null) 
       { String tname = type.getName(); 
-        if (tname.equals("Set") || tname.equals("Sequence") || tname.equals("Map"))
+        if (tname.equals("Set") || 
+            tname.equals("Sequence") || 
+            tname.equals("Map"))
         { multiplicity = ModelElement.MANY; } 
         else 
         { multiplicity = ModelElement.ONE; }   // assume
@@ -4564,7 +4590,8 @@ class BasicExpression extends Expression
       if (arrayIndex != null) 
       { adjustTypeForArrayIndex(var); } 
 	  
-      if (parameters != null && var.getType().isFunctionType()) // application of a Function(S,T)
+      if (parameters != null && 
+          var.getType().isFunctionType()) // application of a Function(S,T)
       { Type ftype = var.getType(); 
         type = ftype.getElementType(); 
         elementType = type.getElementType(); 
@@ -4577,7 +4604,6 @@ class BasicExpression extends Expression
       if (entity == null && type != null) 
       { entity = type.getEntity(); } 
 
-       
       return true; 
     } // entity = var.getEntity() ? 
 
@@ -4651,8 +4677,9 @@ class BasicExpression extends Expression
           entity = e;
           if (bf.parametersMatch(parameters)) { } 
           else 
-          { JOptionPane.showMessageDialog(null, "Parameters do not match operation pars: " + this + " " + bf, 
-                                    "Type warning", JOptionPane.WARNING_MESSAGE);
+          { JOptionPane.showMessageDialog(null, 
+              "Parameters do not match operation pars: " + this + " " + bf, 
+              "Type warning", JOptionPane.WARNING_MESSAGE);
             continue; 
           }  
 
@@ -4859,7 +4886,7 @@ class BasicExpression extends Expression
         elementType = new Type("OclAny", null);
         multiplicity = ModelElement.ONE;  // assume
       } // access to sequence element; no element type
-      else  
+      else if (Type.isMapOrCollectionType(type)) 
       { type = elementType; 
         elementType = elementType.getElementType(); 
         if (Type.isCollectionType(type))
@@ -4899,8 +4926,8 @@ class BasicExpression extends Expression
   private void adjustTypeForArrayIndex(Attribute var)
   { // if there is an arrayIndex, make type = elementType, etc
 
-    // System.out.println("+++ Adjusting type " + type + " " + 
-    //       elementType + " " + arrayIndex + " " + var); 
+    System.out.println("+++ Adjusting type " + type + " " + 
+           elementType + " " + arrayIndex + " " + var); 
 
     if (arrayIndex != null && "String".equals(type + ""))
     { elementType = new Type("String", null); 
@@ -4909,15 +4936,14 @@ class BasicExpression extends Expression
     else if (arrayIndex != null) 
     { Type elemT = var.getElementType(); 
       if (elemT == null || "OclAny".equals("" + elemT)) 
-      { elemT = type.getElementType(); } 
-
-      if (elemT == null) 
+      // { elemT = type.getElementType(); }
+      // if (elemT == null) 
       { type = new Type("OclAny", null);
         elementType = new Type("OclAny", null);
         multiplicity = ModelElement.ONE;  // assume
       } // Sequence access, no type
       else
-      { type = elemT; 
+      { type = (Type) elemT.clone(); 
         elementType = type.getElementType(); 
         
         if (Type.isCollectionType(type))
@@ -4927,8 +4953,8 @@ class BasicExpression extends Expression
       } // Sequence access, defined type
     } 
 
-    // System.out.println("+++ Adjusted type " + type + " " + 
-    //       elementType); 
+    System.out.println("+++ Adjusted type " + type + " " + 
+                       elementType); 
   }  
 
   private boolean eventTypeCheck(Vector types, Vector entities, Vector env)
@@ -9246,13 +9272,14 @@ public Statement generateDesignSubtract(Expression rhs)
     // either a sequence or map, or 
     // itself an indexed expression
 
-   
+   System.out.println(">>> Update to " + obj + "[" + ind + 
+                      "] := " + val2); 
  
    Type objt = obj.getType();
    if (objt == null) 
    { return "/* No type for: " + obj + " */"; } 
  
-   Type objet = obj.getElementType(); 
+   Type objet = objt.getElementType(); 
    String j7type = objt.getJava7(objet); 
 
    if (ind != null) 
@@ -9266,7 +9293,7 @@ public Statement generateDesignSubtract(Expression rhs)
       else if (obj.isRef())
       { return lexp + "[" + indopt + " -1] = " + val2 + ";"; }  
       else 
-      { return "((" + j7type + ") " + lexp + ").set((" + indopt + " -1), " + wval + ");"; }  
+      { return "(" + lexp + ").set((" + indopt + " -1), " + wval + ");"; }  
     } 
     return "/* Error: null index */"; 
   } 
@@ -14247,15 +14274,56 @@ public Statement generateDesignSubtract(Expression rhs)
     { if (objectRef == null)
       { return this; }
       Expression ors = objectRef.simplify(); 
+
       // many cases, eg, 2.sqr as 4, etc
-      if (data.equals("last") && (ors instanceof SetExpression))
+
+      if (data.equals("last") && 
+          (ors instanceof SetExpression))
       { SetExpression se = (SetExpression) ors; 
         return se.getLastElement(); 
       } 
-      else if (data.equals("first") && (ors instanceof SetExpression))
+      else if (data.equals("first") && 
+               (ors instanceof SetExpression))
       { SetExpression se = (SetExpression) ors; 
         return se.getFirstElement(); 
       }
+      else if (data.equals("size") && 
+               (ors instanceof SetExpression))
+      { SetExpression se = (SetExpression) ors; 
+        return new BasicExpression(se.size()); 
+      }
+      else if (data.equals("subrange") && 
+         ors instanceof BasicExpression && 
+         ((BasicExpression) ors).objectRef != null &&
+         ((BasicExpression) ors).data.equals("subrange"))
+      { // e.subrange(a,b).subrange(c,d) is 
+        // e.subrange(a+c-1, a+d-1)
+        
+        BasicExpression objref = (BasicExpression) ors; 
+        Expression a = (Expression) objref.parameters.get(0); 
+        Expression c = (Expression) parameters.get(0);  
+        Expression newA = 
+            Expression.simplifyPlus(a, c);
+        Expression newAsimp = 
+            Expression.simplifyMinus(newA, 
+                                 new BasicExpression(1));
+        Vector pars = new Vector(); 
+        pars.add(newAsimp); 
+        BasicExpression res = 
+          newFunctionBasicExpression("subrange", 
+                                     objref.objectRef,
+                                     pars); 
+        if (parameters.size() > 1)
+        { Expression d = (Expression) parameters.get(1); 
+          Expression newB = 
+            Expression.simplifyPlus(a, d); 
+          Expression newBsimp = 
+            Expression.simplifyMinus(newB, new BasicExpression(1));   
+          pars.add(newBsimp); 
+        } 
+        return res; 
+      }
+
       objectRef = ors; 
       return this;  
     }       
@@ -14436,10 +14504,10 @@ public Statement generateDesignSubtract(Expression rhs)
     { Vector path = getAttributePath(); 
       res.add(new Attribute(path)); 
     }
-    
-   /* 
-    if (objectRef != null)
-    { res.addAll(objectRef.allFeaturesUsedIn()); }
+    else if (objectRef != null)
+    { res.addAll(objectRef.allAttributesUsedIn()); }
+
+   /*
     if (arrayIndex != null) 
     { res.addAll(arrayIndex.allFeaturesUsedIn()); } 
    */ 
@@ -14643,7 +14711,8 @@ public Statement generateDesignSubtract(Expression rhs)
     }  
     else if (umlkind == QUERY || umlkind == UPDATEOP) 
     { if (entity != null) 
-      { BehaviouralFeature op = entity.getDefinedOperation(data,parameters); 
+      { BehaviouralFeature op = 
+            entity.getDefinedOperation(data,parameters); 
         if (op != null) 
         { res.addAll(op.getReadFrame()); }
       }  

@@ -68,6 +68,12 @@ public class ASTSymbolTerm extends ASTTerm
   public ASTTerm replaceCobolIdentifiers()
   { return this; } 
 
+  public ASTTerm substituteEq(String str, ASTTerm newtrm)
+  { if (str.equals(symbol))
+    { return newtrm; }
+    return this; 
+  }  
+
   public boolean hasTag(String tagx) 
   { return false; } 
 
@@ -163,6 +169,9 @@ public class ASTSymbolTerm extends ASTTerm
 
   public int termSize() 
   { return 1; } 
+
+  public int size() 
+  { return 0; } 
 
   public String asTextModel(PrintWriter out)
   { return "\"" + symbol + "\""; } 

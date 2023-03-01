@@ -281,7 +281,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         scrollPane.setPreferredSize(new Dimension(650, 350));
 
         messageArea = new JTextArea(30, 90);
-        messageArea.setEditable(false);
+        messageArea.setEditable(true);
         JScrollPane scrollPaneForLog = new JScrollPane(messageArea);
 
         JSplitPane splitPane = new JSplitPane(
@@ -627,7 +627,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
     { super("Analyse"); }
 
     public void actionPerformed(ActionEvent e)
-    { String result = internalModel; 
+    { String result = messageArea.getText(); 
+          // internalModel; 
 
       String[] args = {"MathOCL", "specification"}; 
 
@@ -658,8 +659,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
           String entcode = trm.cg(cgs);
 
           System.out.println(entcode + "\n" + extracode);
-          messageArea.append("\n"); 
-          messageArea.append(entcode + "\n" + extracode);
+          // messageArea.append("\n"); 
+          messageArea.setText(entcode + "\n" + extracode);
           internalModel = entcode + "\n" + extracode;   
         } 
       } 

@@ -2263,23 +2263,41 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       return res; 
     }         
  
-    if (operator.equals("->toReal") || operator.equals("->sqrt") || 
-        operator.equals("->sqr") || operator.equals("->log") ||
-        operator.equals("->cbrt") || operator.equals("->log10") ||
-        operator.equals("->exp") || operator.equals("->sin") ||
-        operator.equals("->cos") || operator.equals("->tan") ||
-        operator.equals("->sinh") || operator.equals("->cosh") ||
-        operator.equals("->tanh") || operator.equals("->asin") ||
-        operator.equals("->acos") || operator.equals("->atan"))
+    if (operator.equals("->toReal") || 
+        operator.equals("->sqrt") || 
+        operator.equals("->sqr") || 
+        operator.equals("->log") ||
+        operator.equals("->cbrt") || 
+        operator.equals("->log10") ||
+        operator.equals("->exp") || 
+        operator.equals("->sin") ||
+        operator.equals("->cos") || 
+        operator.equals("->tan") ||
+        operator.equals("->sinh") || 
+        operator.equals("->cosh") ||
+        operator.equals("->tanh") || 
+        operator.equals("->asin") ||
+        operator.equals("->acos") || 
+        operator.equals("->atan"))
     { type = new Type("double",null); 
       elementType = type; 
       return res; 
     } 
 
     if (operator.equals("->max") ||
-        operator.equals("->min") || operator.equals("->sum") ||
-        operator.equals("->prd"))
+        operator.equals("->min") || 
+        operator.equals("->sum"))
     { type = argument.getElementType(); 
+      elementType = type; 
+      modality = argument.modality; 
+      multiplicity = ModelElement.ONE; 
+      return res; 
+    } 
+
+    if (operator.equals("->prd"))
+    { type = argument.getElementType();
+      if (type == null) 
+      { type = new Type("double", null); }  
       elementType = type; 
       modality = argument.modality; 
       multiplicity = ModelElement.ONE; 
@@ -2297,7 +2315,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     } 
 
 
-    if (operator.equals("->reverse") || operator.equals("->tail") || operator.equals("->front"))  
+    if (operator.equals("->reverse") || 
+        operator.equals("->tail") || 
+        operator.equals("->front"))  
     { type = argument.getType(); 
       modality = argument.modality; 
       elementType = argument.elementType;
@@ -2350,7 +2370,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       elementType = type.getElementType(); 
     }
   
-    System.out.println("**Type of " + this + " is " + type);
+    System.out.println(">>> *** Type of " + this + " is " + type);
       
     return res; 
   } 
@@ -3266,7 +3286,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "Ocl.isReal(" + qf + ")"; } 
 
     if (operator.equals("->toInteger")) 
-    { return "Integer.decode(" + qf + ").intValue()"; } 
+    { return "Ocl.toInteger(" + qf + ")"; } 
 
     if (operator.equals("->toLong")) 
     { return "Long.decode(" + qf + ").longValue()"; } 

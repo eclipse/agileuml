@@ -5,7 +5,7 @@ import java.io.*;
 import javax.swing.*; 
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -47,6 +47,8 @@ public class Constraint extends ConstraintOrGroup
   private int constraintKind = 0;  // 1, 2 or 3
   private boolean ordered = false; 
   private Expression orderedBy = null; // an expression of owner
+
+  String ownerName = ""; // for COBOL
 
   // Should not be used: 
   public Constraint(String a1, String v1, String a2,
@@ -242,6 +244,9 @@ public class Constraint extends ConstraintOrGroup
     } 
   } 
 
+  public boolean isBehavioural()
+  { return behavioural; } 
+
   public String cg(CGSpec cgs)
   { Expression ante = antecedent(); 
     Expression succ = succedent(); 
@@ -276,11 +281,11 @@ public class Constraint extends ConstraintOrGroup
     Entity excellib = (Entity) ModelElement.lookupByName("ExcelLib", entities);
     Entity app = (Entity) ModelElement.lookupByName("Application", entities);
  
-    Expression antepred = new BasicExpression("true"); 
+    Expression antepred = new BasicExpression(true); 
     String tvarname = target.getName().toLowerCase() + "x"; 
     BasicExpression tvar = new BasicExpression(target, tvarname); 
     Expression tdec = new BinaryExpression(":", tvar, new BasicExpression(target)); 
-    Expression succpred = new BasicExpression("true"); 
+    Expression succpred = new BasicExpression(true); 
     Vector sources = new Vector(); 
     Vector svars = new Vector(); 
 
@@ -660,7 +665,6 @@ public class Constraint extends ConstraintOrGroup
   { Vector res = new Vector(); 
     Expression ante = antecedent();
 
-    
     if (ante != null) 
     { Vector areads = ante.allReadFrame(); 
       // System.out.println("++ Antecedent: " + ante + " " + areads); 
@@ -679,6 +683,48 @@ public class Constraint extends ConstraintOrGroup
     } 
     return res; 
   } // and owner, or owner@pre
+
+  public Vector strictReadFrame()
+  { Vector res = new Vector(); 
+    Expression ante = antecedent();
+
+    if (ante == null || "true".equals(ante + "")) 
+    { Expression sc = succedent(); 
+
+      if (sc instanceof BinaryExpression)
+      { BinaryExpression scbe = (BinaryExpression) sc; 
+        if ("=".equals(scbe.getOperator()))
+        { Vector sreads = scbe.getRight().readFrame();
+          return sreads; 
+        } 
+      }   
+    } 
+    else 
+    { Vector areads = ante.readFrame(); 
+      Expression sc = succedent(); 
+
+      if (sc instanceof BinaryExpression)
+      { BinaryExpression scbe = (BinaryExpression) sc; 
+        if ("=".equals(scbe.getOperator()))
+        { Vector sreads = scbe.getRight().readFrame();
+          areads.addAll(sreads); 
+          return areads; 
+        } 
+      }   
+    } 
+
+    return readFrame();
+  } // and owner, or owner@pre
+
+  public boolean dependsUpon(String ename, String aname) 
+  { Vector ss = strictReadFrame(); 
+
+    System.out.println("+++ strict read frame: " + this + " " + ss + " " + aname); 
+    if (ss.contains(ename + "::" + aname))
+    { return true; } 
+
+    return false; 
+  } 
 
   public Vector internalReadFrame()
   { Vector res = new Vector(); 
@@ -1291,6 +1337,7 @@ public class Constraint extends ConstraintOrGroup
         previous = true; 
       }
     } 
+
     if (cond != null)
     { String condeval = cond.queryFormJava7(env,local); 
       if (condeval == null) { return ""; }
@@ -1311,13 +1358,19 @@ public class Constraint extends ConstraintOrGroup
     { if (previous) 
       { res = res + " )"; }
     } 
+
     String rhs = succ.updateFormJava7(env,local); 
+
+    System.out.println(">>> Update form of " + succ + 
+                       " is " + rhs); 
+
     if (rhs == null) { return ""; }
+
     if (previous) 
     { res = res + " { " + rhs + " }"; } 
     else 
     { res = "    " + rhs; } 
-    return res;  
+    return res + "\n";  
   } 
 
   public String updateFormCSharp(java.util.Map env, boolean local)
@@ -3914,7 +3967,26 @@ public Constraint generalType0inverse()
     if (succ == null) { return null; }
 
     Expression cond1 = Expression.simplify("&",cond0,cond,new Vector());
+      
+    System.out.println(">> Trying Match: " + op + feature + 
+                       " with " + this); 
         
+    if (succ instanceof BinaryExpression) 
+    { BinaryExpression be = (BinaryExpression) succ; 
+      if ("=".equals(be.getOperator()) && "set".equals(op) && 
+          be.getLeft() instanceof BasicExpression)
+      { Expression rhs = be.getRight(); 
+        BasicExpression lhs = (BasicExpression) be.getLeft(); 
+        Vector rattrs = rhs.allAttributesUsedIn();
+        Attribute attr = 
+          (Attribute) ModelElement.lookupByName(
+                                 feature,rattrs); 
+        if (attr != null && 
+            lhs.isAssignable())
+        { return this; } 
+      } 
+    } 
+
     if (event != null)
     { System.out.println(">> Trying Match: " + op + feature + 
                          " with " + this); 
@@ -3929,11 +4001,13 @@ public Constraint generalType0inverse()
     BasicExpression valbe = new BasicExpression(val); 
     // set its type
 
-    Vector rdf = readFrame(); 
+    Vector rdf = strictReadFrame();
+     
     System.out.println(">> READ frame of constraint " + this + " = " + rdf + " TESTING wrt feature: " + feature); 
 
     if (rdf.contains(ent + "::" + feature))
-    { if (op.equals("add") && (succ instanceof BinaryExpression))
+    { if (op.equals("add") && 
+          (succ instanceof BinaryExpression))
       { BinaryExpression besucc = (BinaryExpression) succ; 
         if ("!".equals(besucc.operator) && 
             feature.equals(((BinaryExpression) besucc.left).right + ""))
@@ -3952,7 +4026,8 @@ public Constraint generalType0inverse()
         else 
         { return this; }   
       } 
-      else if (op.equals("remove") && (succ instanceof BinaryExpression))
+      else if (op.equals("remove") && 
+               (succ instanceof BinaryExpression))
       { BinaryExpression besucc = (BinaryExpression) succ; 
         if ("!".equals(besucc.operator) && 
             feature.equals(((BinaryExpression) besucc.left).right + ""))
@@ -3969,7 +4044,7 @@ public Constraint generalType0inverse()
     { return null; } // can't update anything
 
     Vector foccs = succ.getUses(feature); // For wpc: getRelevantUses?
-    System.out.println(feature + " uses are: " + foccs); 
+    System.out.println("#### " + feature + " uses are: " + foccs); 
     boolean allNaked = Expression.nakedUses(feature,foccs); 
     System.out.println(allNaked + "\n"); 
         
@@ -3979,12 +4054,14 @@ public Constraint generalType0inverse()
     { if (cond != null) 
       { // if (foccs.size() > 0)  // but only the relevant ones are wanted
         if (cond.relevantOccurrence(op,ent,val,feature) || isRolenameOf(feature))
-        { System.out.println("Relevant occurrence: " + feature + " " +                              cond);
+        { System.out.println("#### Relevant occurrence: " + feature + " " +                              cond);
           Expression newcond;
           Expression newsucc = targ.newexp; 
           if (op.equals("set") && allNaked)
-          { newcond = cond.substituteEq(feature,valbe); 
-            newsucc = newsucc.substituteEq(feature,valbe); 
+          { newcond = (Expression) cond.clone(); 
+                      // cond.substituteEq(feature,valbe); 
+            newsucc = (Expression) succ.clone(); 
+                      // newsucc.substituteEq(feature,valbe); 
           } // assume succ has only read-only occurrences of feature.
           else 
           { newcond = cond; } 
@@ -3995,20 +4072,21 @@ public Constraint generalType0inverse()
           cc.setOwner(owner); 
           return cc;  
         } // must add information that valbe is of parameter type
-        System.out.println("Not relevant occurrence: " + feature + " " + cond);
+        System.out.println("### Not relevant occurrence: " + feature + " " + cond);
           
       }
       succ = targ.newexp; 
       return matchesRhs(op,feature,ename,val,ev); 
     } 
 
-    System.out.println("Trying to match: " + feature + " " + val + 
+    System.out.println(">>> Trying to match: " + feature + " " + val + 
                        " against " + this); 
     Expression newcond0; 
     Expression newcond = new BasicExpression("true");
     Expression newsucc = targ.newexp; 
   
-    if (cond0.relevantOccurrence(op,ent,val,feature) || isRolenameOf(feature))
+    if (cond0.relevantOccurrence(op,ent,val,feature) || 
+        isRolenameOf(feature))
     {   
       if (op.equals("set") && allNaked)
       { newcond0 = cond0.substituteEq(feature,valbe); 
@@ -4050,7 +4128,7 @@ public Constraint generalType0inverse()
         return cc; 
       } // must add information that valbe is of parameter type
       else 
-      { System.out.println("Not relevant occurrence: " + feature + " " + cond); }
+      { System.out.println(">>> Not relevant occurrence: " + feature + " " + cond); }
     }      
     succ = targ.newexp; 
     return matchesRhs(op,feature,ename,val,event);

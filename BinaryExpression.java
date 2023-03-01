@@ -3579,7 +3579,7 @@ public void findClones(java.util.Map clones,
       if (init != null) 
       { init.typeCheck(types,entities,context,env); 
         System.out.println(">>> Type of " + init +
-                         " is " + init.getType()); 
+                           " is " + init.getType()); 
         accumulator.setType(init.getType());
         if (init.getElementType() != null) 
         { accumulator.setElementType(init.getElementType()); } 
@@ -3667,8 +3667,10 @@ public void findClones(java.util.Map clones,
       return true; 
     } 
 
-    if (operator.equals("->exists") || operator.equals("->exists1") ||
-        "->existsLC".equals(operator) || operator.equals("->isUnique") || 
+    if (operator.equals("->exists") || 
+        operator.equals("->exists1") ||
+        "->existsLC".equals(operator) || 
+        operator.equals("->isUnique") || 
         operator.equals("->forAll"))
     { 
       boolean lrt = left.typeCheck(types,entities,contexts,env); 
@@ -3712,10 +3714,10 @@ public void findClones(java.util.Map clones,
         { et = tt.getElementType(); } 
       }  
 
-      System.out.println(">> Type of " + lexp.right + " = " + lexp.right.type + "(" + et + ")"); 
+      System.out.println(">> *** Type of " + lexp.right + " = " + lexp.right.type + "(" + et + ")"); 
 
       if (et == null)
-      { System.err.println("Warning: no element type for " + lexp.right + " in " + this); 
+      { System.err.println("!! Warning: no element type for " + lexp.right + " in " + this); 
         // JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this, 
         //      "Type error", JOptionPane.ERROR_MESSAGE); 
         et = new Type("OclAny", null); 
@@ -3757,7 +3759,7 @@ public void findClones(java.util.Map clones,
       else if (stleft != null && stleft.isEntity())
       { scontext.add(stleft.getEntity()); }   
       else if (seltype == null) 
-      { System.err.println("!!! TYPE ERROR: no valid element type in " + left + " in " + this); 
+      { System.err.println("! Warning: no valid element type in " + left + " in " + this); 
         // JOptionPane.showMessageDialog(null, "no element type for " + left + " in " + this, 
         //        "Type error", JOptionPane.ERROR_MESSAGE);
       } 
@@ -3769,8 +3771,10 @@ public void findClones(java.util.Map clones,
       tcSelect(stleft,stright,seleft); 
       return true; 
     }  
-    else if (operator.equals("->collect") || operator.equals("->unionAll") ||
-             operator.equals("->intersectAll") || operator.equals("->concatenateAll"))   // and |C
+    else if (operator.equals("->collect") || 
+             operator.equals("->unionAll") ||
+             operator.equals("->intersectAll") || 
+             operator.equals("->concatenateAll"))   // and |C
     { // System.out.println("Type-checking collect " + this); 
       left.typeCheck(types,entities,contexts,env);
       Vector ccontext = new Vector(); 
@@ -3782,7 +3786,7 @@ public void findClones(java.util.Map clones,
       else if (ctleft != null && ctleft.isEntity())
       { ccontext.add(ctleft.getEntity()); }   
       else if (celtype == null) 
-      { System.err.println("Warning: no element type in " + left + " in " + this); 
+      { System.err.println("! Warning: no element type in " + left + " in " + this); 
         // JOptionPane.showMessageDialog(null, "no element type for " + left + " in " + this, 
         //      "Type error", JOptionPane.ERROR_MESSAGE);
         celtype = new Type("OclAny", null); 
@@ -3816,7 +3820,7 @@ public void findClones(java.util.Map clones,
       }  
 
       if (et == null)
-      { System.err.println("Warning: no element type for " + lexp.right + " in " + this);                     
+      { System.err.println("! Warning: no element type for " + lexp.right + " in " + this);                     
         // JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this,
         //  "Type error", JOptionPane.ERROR_MESSAGE);
         et = new Type("OclAny", null); 
@@ -3856,7 +3860,7 @@ public void findClones(java.util.Map clones,
       else if (ctleft != null && ctleft.isEntity())
       { ccontext.add(ctleft.getEntity()); }   
       else if (celtype == null) 
-      { System.err.println("Warning: no element type in " + left + " in " + this); 
+      { System.err.println("! Warning: no element type in " + left + " in " + this); 
         // JOptionPane.showMessageDialog(null, "no element type for " + left + " in " + this, 
         //  "Type error", JOptionPane.ERROR_MESSAGE);
         celtype = new Type("OclAny", null); 
@@ -3878,7 +3882,7 @@ public void findClones(java.util.Map clones,
       boolean lrt = lexp.right.typeCheck(types,entities,contexts,env);
       Type et = lexp.right.elementType;
       if (et == null)
-      { System.err.println("Warning: no element type for " + lexp.right + " in " + this);
+      { System.err.println("! Warning: no element type for " + lexp.right + " in " + this);
                      
         // JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this,
         //   "Type error", JOptionPane.ERROR_MESSAGE);
@@ -3924,8 +3928,9 @@ public void findClones(java.util.Map clones,
 
       if (left.isMultiple()) {} 
       else 
-      { System.err.println("ERROR: LHS of " + this + " must be collection");                             
-        JOptionPane.showMessageDialog(null, "ERROR: LHS of " + this + " must be collection",                                                   "Type error", JOptionPane.ERROR_MESSAGE);
+      { System.err.println("!! ERROR: LHS of " + this + " must be collection");                             
+        // JOptionPane.showMessageDialog(null, "ERROR: LHS of " + this + " must be collection",                                                   
+        // "Type error", JOptionPane.ERROR_MESSAGE);
       }
 
       if (entity != null)       
@@ -3942,7 +3947,7 @@ public void findClones(java.util.Map clones,
           if (ast.isClosurable()) { } 
           else 
           { JOptionPane.showMessageDialog(null, "ERROR: association in " + this + " cannot be closured",
-		                                 "Expression error", JOptionPane.ERROR_MESSAGE);
+		          "Expression error", JOptionPane.ERROR_MESSAGE);
           } 
           // System.out.println(">>> FOUND ASSOCIATION " + ast); 
         } 
@@ -3962,7 +3967,7 @@ public void findClones(java.util.Map clones,
     
     boolean lt = false; 
     if (left == null) 
-    { System.err.println(">>> SYNTAX ERROR: Left expression of " + this + " invalid!"); 
+    { System.err.println("!! SYNTAX ERROR: Left expression of " + this + " invalid!"); 
       JOptionPane.showMessageDialog(null, "Left expression of " + this + " invalid!", 
                                       "Syntax error", JOptionPane.ERROR_MESSAGE);
       return false; 
@@ -3973,7 +3978,7 @@ public void findClones(java.util.Map clones,
     boolean rt = false; 
 
     if (right == null) 
-    { System.err.println(">>> SYNTAX ERROR: Right expression of " + this + " invalid!"); 
+    { System.err.println("!! SYNTAX ERROR: Right expression of " + this + " invalid!"); 
       JOptionPane.showMessageDialog(null, "Right expression of " + this + " invalid!", 
                                       "Syntax error", JOptionPane.ERROR_MESSAGE);
       return false; 
@@ -4075,21 +4080,30 @@ public void findClones(java.util.Map clones,
       { type = ftype.getElementType(); }
 
       if (type == null) 
-      { System.err.println("Warning: no function result type in " + this); 
+      { System.err.println("! Warning: no function result type in " + this); 
         type = new Type("OclAny", null); 
       } 
       else 
       { elementType = type.elementType; } 
     }  
     else if ("->pow".equals(operator))
-    { type = new Type("double",null); } 
+    { type = new Type("double",null); 
+      elementType = type; 
+    } 
     else if ("->roundTo".equals(operator) || 
              "->truncateTo".equals(operator))
-    { type = new Type("double",null); } 
+    { type = new Type("double",null); 
+      elementType = type; 
+    } 
     else if ("->gcd".equals(operator))
-    { type = new Type("long",null); } 
+    { type = new Type("long",null); 
+      elementType = type;
+    } 
     else if (operator.equals("div"))
-    { type = left.getType(); } 
+    { type = left.getType(); 
+      if (type == null) 
+      { type = new Type("int", null); } 
+    } 
     else if ("->hasPrefix".equals(operator) || 
              "->hasSuffix".equals(operator) ||
              "->hasMatch".equals(operator) || 
@@ -4098,7 +4112,9 @@ public void findClones(java.util.Map clones,
              "->oclIsKindOf".equals(operator) || 
              "->oclIsTypeOf".equals(operator))
     { type = new Type("boolean",null); } 
-    else if (operator.equals("->before") || operator.equals("->after") || operator.equals("->firstMatch")) 
+    else if (operator.equals("->before") || 
+             operator.equals("->after") || 
+             operator.equals("->firstMatch")) 
     { type = new Type("String",null); 
       elementType = new Type("String", null); 
     }  
@@ -4110,7 +4126,8 @@ public void findClones(java.util.Map clones,
     { type = left.type;
       elementType = left.elementType; 
     }  
-    else if ("->split".equals(operator) || "->allMatches".equals(operator))
+    else if ("->split".equals(operator) || 
+             "->allMatches".equals(operator))
     { type = new Type("Sequence",null); 
       elementType = new Type("String",null);
       type.elementType = elementType;  
@@ -4146,9 +4163,11 @@ public void findClones(java.util.Map clones,
     { tcPlus(tleft,tright,eleft,eright); }
     else if (operator.equals("-"))
     { tcMinus(tleft,tright,eleft,eright); }
-    else if (operator.equals("\\/") || operator.equals("^")  || "->concatenate".equals(operator)
-       || operator.equals("->append") ||
-             operator.equals("->union") || operator.equals("->including") ||
+    else if (operator.equals("\\/") || operator.equals("^")  || 
+             "->concatenate".equals(operator)
+            || operator.equals("->append") ||
+             operator.equals("->union") || 
+             operator.equals("->including") ||
              operator.equals("->symmetricDifference") || 
              operator.equals("->excluding") ||
              operator.equals("->excludingAt") ||
@@ -4159,7 +4178,7 @@ public void findClones(java.util.Map clones,
              operator.equals("/\\"))
     { tcSetOps(tleft,tright,eleft,eright); }
     else if (operator.equals("*") || operator.equals("mod") ||
-             operator.equals("div") || operator.equals("/"))
+             operator.equals("/"))
     { tcMathOps(tleft,tright,eleft,eright); }
     else if (operator.equals("|->"))
     { type = new Type("OclAny", null); 
@@ -4210,7 +4229,7 @@ public void findClones(java.util.Map clones,
       if (lmult) 
       { }
       else 
-      { System.err.println("TYPE ERROR: LHS of " + this + " must be a collection");
+      { System.err.println("!! TYPE ERROR: LHS of " + this + " must be a collection");
        JOptionPane.showMessageDialog(null, "LHS of " + this + " must be a collection!", 
                                      "Type error", JOptionPane.ERROR_MESSAGE);
       } // deduce type of one side from that of other
@@ -4226,7 +4245,8 @@ public void findClones(java.util.Map clones,
         }
       } // and set one element type to the other when not null
     }
-    else if (operator.equals("&") || operator.equals("<=>") || operator.equals("xor") ||  
+    else if (operator.equals("&") || operator.equals("<=>") || 
+             operator.equals("xor") ||  
              operator.equals("or") || operator.equals("=>"))
     { tcLogical(tleft,tright,eleft,eright); } 
     // else, it is an extension operator, type is given by its definition
@@ -4234,7 +4254,7 @@ public void findClones(java.util.Map clones,
     { type = Expression.getOperatorType(operator); } 
 
     if (type == null)
-    { System.out.println("Warning: No type found for " + this); 
+    { System.out.println("! Warning: No type found for " + this); 
       type = new Type("OclAny", null);  
                                     
       return false; 
@@ -4323,11 +4343,11 @@ public void findClones(java.util.Map clones,
       else if (tlname.equals("String") || trname.equals("String"))
       { type = new Type("String",null); }
       else
-      { System.err.println("Warning: unexpected types " + tlname + " " + trname + " in +: " + this);
+      { System.err.println("! Warning: unexpected types " + tlname + " " + trname + " in +: " + this);
 
         if (left.isRef())
         { left.setArray(true);
-          System.out.println(">>> Pointer arithmetic may not translate correctly!!");
+          System.out.println("! Pointer arithmetic may not translate correctly!!");
         }
  
         // JOptionPane.showMessageDialog(null, "Disallowed types in " + this, 
@@ -4345,7 +4365,7 @@ public void findClones(java.util.Map clones,
         type = tright;
       }
       else 
-      { System.err.println("TYPE ERROR: disallowed types " + tleft + " " + tright + " in +: " + this);
+      { System.err.println("!! TYPE ERROR: disallowed types " + tleft + " " + tright + " in +: " + this);
         // JOptionPane.showMessageDialog(null, "Disallowed types in " + this, 
         //                              "Type error", JOptionPane.ERROR_MESSAGE);
         type = new Type("OclAny", null); 
@@ -4412,7 +4432,7 @@ public void findClones(java.util.Map clones,
       } 
     }
     else
-    { System.err.println("TYPE ERROR: undefined types in -: " + this);
+    { System.err.println("!! TYPE ERROR: undefined types in -: " + this);
       if (tright == null && tleft != null)
       { right.setType(tleft);
         type = tleft;
@@ -4740,7 +4760,7 @@ public void findClones(java.util.Map clones,
       else 
       { type = Expression.deduceType(operator,left,right); 
 
-        System.err.println("!Warning!: arguments must be numeric in: " + this + " Deduced type: " + type); 
+        System.err.println("! Warning!: arguments must be numeric in: " + this + " Deduced type: " + type); 
         if (type == null) 
         { JOptionPane.showMessageDialog(null, "Arguments not numeric in: " + this, 
                                             "Type error", JOptionPane.ERROR_MESSAGE);
@@ -13012,6 +13032,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
    if ("->at".equals(operator))
    { // left->at(right) = val; 
      // left evaluates to a sequence or map or ref
+
      return BasicExpression.updateFormEqIndex(
                 language,left,right,val,var,env,local); 
    }  
@@ -13936,7 +13957,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     Statement ufr = right.generateDesign(env,local);
       // Check completeness: 
     Vector wr = right.writeFrame(); 
-    System.out.println("Object creation for " + lvar + " sets features " + wr); 
+    System.out.println(">>> Object creation for " + lvar + " sets features " + wr); 
     Type t = lvar.getType();
     if (t != null)
     { Entity e = t.getEntity(); 
@@ -14210,7 +14231,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     String ufr = right.updateFormJava6(env,local);
       // Check completeness: 
     Vector wr = right.writeFrame(); 
-    System.out.println("Object creation for " + lvar + " sets features " + wr); 
+    System.out.println(">>> Object creation for " + lvar + " sets features " + wr); 
     Type t = lvar.getType();
     if (t != null)
     { Entity e = t.getEntity(); 
@@ -14315,7 +14336,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     String ufr = right.updateFormJava7(env,local);
       // Check completeness: 
     Vector wr = right.writeFrame(); 
-    System.out.println("Object creation for " + lvar + " sets features " + wr); 
+    System.out.println(">>> Object creation for " + lvar + " sets features " + wr); 
     Type t = lvar.getType();
     if (t != null)
     { Entity e = t.getEntity(); 
@@ -14323,14 +14344,14 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       { Vector feats = e.allDefinedFeatures(); 
         if (feats.containsAll(wr))
         { if (wr.containsAll(feats))
-          { System.out.println("Creation is complete"); } 
+          { System.out.println(">>> Creation is complete"); } 
           else 
-          { System.out.println("Creation may be incomplete: not all of " + feats +
+          { System.out.println("! Creation may be incomplete: not all of " + feats +
                                " are set"); 
           } 
         }
         else 
-        { System.out.println("Some features set are not in entity features " + 
+        { System.out.println("! Some features set are not in entity features " + 
                              feats); 
         }
       }
@@ -14338,7 +14359,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     String res = ""; 
     String searchcode = ""; 
     if (ltype.elementType == null || !ltype.elementType.isEntity())
-    { System.err.println("TYPE ERROR: no element type in exists: " + this); 
+    { System.err.println("!! TYPE ERROR: no element type in exists: " + this); 
       JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this, 
                                       "Type error", JOptionPane.ERROR_MESSAGE);
       return "  {}\n"; 
@@ -14420,7 +14441,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     String ufr = right.updateFormCSharp(env,local);
       // Check completeness: 
     Vector wr = right.writeFrame(); 
-    System.out.println("Object creation for " + lvar + " sets features " + wr); 
+    System.out.println(">> Object creation for " + lvar + " sets features " + wr); 
     Type t = lvar.getType();
     if (t != null)
     { Entity e = t.getEntity(); 
@@ -14428,14 +14449,14 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       { Vector feats = e.allDefinedFeatures(); 
         if (feats.containsAll(wr))
         { if (wr.containsAll(feats))
-          { System.out.println("Creation is complete"); } 
+          { System.out.println(">> Creation is complete"); } 
           else 
-          { System.out.println("Creation may be incomplete: not all of " + feats +
+          { System.out.println("! Creation may be incomplete: not all of " + feats +
                                " are set"); 
           } 
         }
         else 
-        { System.out.println("Some features set are not in entity features " + 
+        { System.out.println("! Some features set are not in entity features " + 
                              feats); 
         }
       }
@@ -14443,7 +14464,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     String res = ""; 
     String searchcode = ""; 
     if (ltype.elementType == null || !ltype.elementType.isEntity())
-    { System.err.println("ERROR: no element type in exists: " + this); 
+    { System.err.println("!! ERROR: no element type in exists: " + this); 
       JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this, 
                                       "Type error", JOptionPane.ERROR_MESSAGE);
       return "  {}\n"; 
@@ -14525,7 +14546,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     String ufr = right.updateFormCPP(env,local);
       // Check completeness: 
     Vector wr = right.writeFrame(); 
-    System.out.println("Object creation for " + lvar + " sets features " + wr); 
+    System.out.println(">> Object creation for " + lvar + " sets features " + wr); 
     Type t = lvar.getType();
     if (t != null)
     { Entity e = t.getEntity(); 
@@ -14533,21 +14554,21 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       { Vector feats = e.allDefinedFeatures(); 
         if (feats.containsAll(wr))
         { if (wr.containsAll(feats))
-          { System.out.println("Creation is complete"); } 
+          { System.out.println(">> Creation is complete"); } 
           else 
-          { System.out.println("Creation may be incomplete: not all of " + feats +
+          { System.out.println("! Creation may be incomplete: not all of " + feats +
                                " are set"); 
           } 
         }
         else 
-        { System.out.println("Some features set are not in entity features " + feats); }
+        { System.out.println("! Some features set are not in entity features " + feats); }
       }
     }  
                  
     String res = ""; 
     String searchcode = ""; 
     if (ltype.elementType == null || !ltype.elementType.isEntity())
-    { System.err.println("ERROR: no element type in exists: " + this); 
+    { System.err.println("!! ERROR: no element type in exists: " + this); 
       JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this, 
                                       "Type error", JOptionPane.ERROR_MESSAGE);
       return "  {}\n"; 
@@ -14630,7 +14651,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       // env1.put(t,lll); 
       BExpression rrr = right.bqueryForm(env); 
       BExpression res = new BQuantifierExpression("exists",x,
-                              new BBinaryExpression("&",les,rrr)); 
+              new BBinaryExpression("&",les,rrr)); 
       return res; 
     } 
 
@@ -16325,6 +16346,30 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   }
   // Cases of ->iterate, let
 
+  public boolean selfReferential(final Vector vars)
+  { Vector res1 = left.variablesUsedIn(vars);
+    Vector res2 = right.variablesUsedIn(vars);
+    
+    for (int i = 0; i < res1.size(); i++) 
+    { Object x = res1.get(i); 
+      if (res2.contains(x))
+      { return true; } 
+    } 
+
+    Vector res3 = left.allAttributesUsedIn(); 
+    Vector res4 = right.allAttributesUsedIn(); 
+
+    // System.out.println(">> " + res3 + " ---- " + res4); 
+
+    for (int i = 0; i < res3.size(); i++) 
+    { Object x = res3.get(i); 
+      if (res4.contains(x))
+      { return true; } 
+    } 
+
+    return false; 
+  } 
+
   public Vector variablesUsedIn(final Vector vars)
   { Vector res1 = left.variablesUsedIn(vars);
     Vector res2 = right.variablesUsedIn(vars);
@@ -17713,11 +17758,13 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       } 
       return res; 
     }   
+
     if (operator.equals("&") || operator.equals("xor"))
     { res = left.writeFrame(); 
       res.addAll(right.writeFrame()); 
       return res; 
     } 
+
     if (operator.equals("#") || operator.equals("#LC") || operator.equals("#1"))
     { res = right.writeFrame();
       if (left instanceof BinaryExpression) 
@@ -17743,28 +17790,40 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       }
       return res; 
     } 
+
     if (operator.equals("=>") || operator.equals("!") ||
         operator.equals("->forAll")) 
        // || operator.equals(":") ||
        // operator.equals("<:"))
     { return right.writeFrame(); } 
-    if (operator.equals("->select") || operator.equals("->reject") ||  // ??
-        operator.equals("->includes") || operator.equals("->excludes") ||
-        operator.equals("->excludesAll") || operator.equals("->includesAll"))
+
+    if (operator.equals("->select") ||  // Only for implicit
+        operator.equals("->reject") ||  // updates
+        operator.equals("->includes") || 
+        operator.equals("->excludes") ||
+        operator.equals("->excludesAll") || 
+        operator.equals("->includesAll"))
     { return left.writeFrame(); } 
+
     return res; 
   } 
 
   public Vector wr(Vector assocs)
   { Vector res = new Vector(); 
-    if (operator.equals("=") || operator.equals("->includes") || operator.equals("->excludes") ||
-        operator.equals("->includesAll") || operator.equals("->excludesAll"))
+    if (operator.equals("=") || 
+        operator.equals("->includes") || 
+        operator.equals("->excludes") ||
+        operator.equals("->includesAll") || 
+        operator.equals("->excludesAll"))
     { return left.wr(assocs); }  // just the left.data
+
     if (operator.equals(":") || operator.equals("<:") || 
         operator.equals("/:") || operator.equals("/<:"))
     { return right.wr(assocs); } 
+
     if (operator.equals("&") || operator.equals("xor"))
     { return VectorUtil.union(left.wr(assocs),right.wr(assocs)); } 
+
     if (operator.equals("#") || operator.equals("#LC") || operator.equals("#1"))
     { // left is not written if it is preform, abstract class or not a class
       res = right.wr(assocs); 
@@ -17782,13 +17841,19 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
         return VectorUtil.union(res,left.wr(assocs));  
       } 
     } 
+
     if (operator.equals("=>") || operator.equals("!") ||
         operator.equals("->forAll"))  // surely? 
     { return right.wr(assocs); } 
-    if (operator.equals("->select") || operator.equals("->reject") || // for isDeleted
-        operator.equals("->includes") || operator.equals("->excludes") || 
-        operator.equals("->excludesAll") || operator.equals("->includesAll"))
-    { return left.wr(assocs); } 
+
+    if (operator.equals("->select") || 
+        operator.equals("->reject") || // for isDeleted
+        operator.equals("->includes") || 
+        operator.equals("->excludes") || 
+        operator.equals("->excludesAll") || 
+        operator.equals("->includesAll"))
+    { return left.wr(assocs); }
+ 
     return res; 
   } 
 
@@ -17885,20 +17950,37 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     } 
 
     if (operator.equals("!")) 
-    { Vector rfscope = ((BinaryExpression) left).right.allReadFrame(); 
+    { Vector rfscope = 
+        ((BinaryExpression) left).right.allReadFrame(); 
       return VectorUtil.union(rfscope,right.readFrame()); 
     } // some cases of #, #1 are also like this
 
     // special treatment of #, #1 needed, eg, t.f = a & t.g = t.f*2 & 
     
+    // Added 27/2/2023: 
+
+    if (operator.equals("|C") || operator.equals("|") || 
+        operator.equals("|R") || operator.equals("|A") || 
+        operator.equals("|sortedBy") ||
+        operator.equals("|unionAll") || 
+        operator.equals("|intersectAll") ||
+        operator.equals("|selectMaximals") ||
+        operator.equals("|selectMinimals"))
+    { Vector rfscope = 
+        ((BinaryExpression) left).right.allReadFrame(); 
+      return VectorUtil.union(rfscope,right.readFrame());
+    } 
+  
     return VectorUtil.union(left.readFrame(),right.readFrame());
   } 
 
   public Vector internalReadFrame()
   { Vector res = new Vector(); 
 
-    if (operator.equals("=") || operator.equals("->excludes") ||
-        operator.equals("->includes") || operator.equals("->excludesAll") ||
+    if (operator.equals("=") || 
+        operator.equals("->excludes") ||
+        operator.equals("->includes") || 
+        operator.equals("->excludesAll") ||
         operator.equals("->includesAll"))
     { if (left instanceof BasicExpression) 
       { BasicExpression beleft = (BasicExpression) left; 
@@ -17954,6 +18036,21 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       Vector rr = VectorUtil.union(lrf, resr); 
       // System.out.println("INTERNAL READ FRAME OF " + this + " IS: " + rr);
       return rr;   
+    } 
+
+    // Added 27/2/2023: 
+
+    if (operator.equals("|C") || operator.equals("|") || 
+        operator.equals("|R") || operator.equals("|A") || 
+        operator.equals("|sortedBy") ||
+        operator.equals("|unionAll") || 
+        operator.equals("|intersectAll") ||
+        operator.equals("|selectMaximals") ||
+        operator.equals("|selectMinimals"))
+    { Vector rfscope = ((BinaryExpression) left).right.allReadFrame(); 
+      // Vector rfscope = left.allReadFrame(); 
+      return VectorUtil.union(rfscope,
+                              right.internalReadFrame());
     } 
     
     return VectorUtil.union(left.internalReadFrame(),right.internalReadFrame());

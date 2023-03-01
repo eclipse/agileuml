@@ -25,12 +25,10 @@ part
     | substituting
     | solve
     | prove
-    | factorBy
-    | cancelIn
     ;
 
 formula
-    :	'Define' ID '=' expression
+    :	'Define' ID '=' (expression | substituting | expandTo | cancelIn | factorBy | simplify ) 
     ; 
 
 constraint
@@ -59,6 +57,10 @@ prove
 
 expanding
     : 'Expanding' expression 'to' INT 'terms' 
+    ; 
+
+expandTo
+    : 'Expand' expression 'to' INT 'terms' 
     ; 
 
 factorBy
