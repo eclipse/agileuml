@@ -28,7 +28,7 @@ part
     ;
 
 formula
-    :	'Define' ID '=' (expression | substituting | expandTo | cancelIn | factorBy | simplify ) 
+    :	'Define' ID '=' (expression | substituteIn | expandTo | cancelIn | factorBy | simplify ) 
     ; 
 
 constraint
@@ -57,6 +57,10 @@ prove
 
 expanding
     : 'Expanding' expression 'to' INT 'terms' 
+    ; 
+
+substituteIn
+    : 'Substitute' ID 'in' (expression | expandTo)
     ; 
 
 expandTo

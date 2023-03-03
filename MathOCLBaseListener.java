@@ -135,6 +135,18 @@ public class MathOCLBaseListener implements MathOCLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterSubstituteIn(MathOCLParser.SubstituteInContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitSubstituteIn(MathOCLParser.SubstituteInContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterExpandTo(MathOCLParser.ExpandToContext ctx) { }
 	/**
 	 * {@inheritDoc}

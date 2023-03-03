@@ -42349,6 +42349,45 @@ public class ASTCompositeTerm extends ASTTerm
       } 
     } 
 
+    if ("formula".equals(tag) && 
+        "Define".equals(terms.get(0) + ""))
+    { // Define ID = expression or other item
+      ASTCompositeTerm expr = (ASTCompositeTerm) terms.get(3);
+      ASTTerm var = (ASTTerm) terms.get(1);
+
+      if (expr.getTag().equals("expression"))
+      { ASTTerm.mathoclvars.put(var + "", expr); 
+        // JOptionPane.showMessageDialog(null, 
+        //       ">> " + var + " = " + expr, 
+        //       "", 
+        //       JOptionPane.INFORMATION_MESSAGE);
+      }
+      else if (expr.getTag().equals("substituteIn"))
+      { ASTTerm def = 
+          (ASTTerm) expr.getTerm(3); 
+        ASTTerm subvar = 
+          (ASTTerm) expr.getTerm(1); 
+        ASTTerm varTerm = 
+          (ASTTerm) ASTTerm.mathoclvars.get(subvar + "");
+        // JOptionPane.showMessageDialog(null, 
+        //       ">> " + subvar + " = " + varTerm, 
+        //       "", 
+        //       JOptionPane.INFORMATION_MESSAGE);
+        if (varTerm != null && def.getTag().equals("expression")) 
+        { ASTTerm subTerm = 
+            def.substituteEq(subvar + "", varTerm); 
+          String vt = subTerm.literalForm(); 
+          // JOptionPane.showMessageDialog(null, 
+          //     ">> Substitution for " + subvar + " = " + varTerm + 
+          //     " is " + subTerm, 
+          //     "", 
+          //     JOptionPane.INFORMATION_MESSAGE);
+          res = res + 
+            "  Define " + var + " = " + vt; 
+        } 
+      }   
+    } 
+
     if ("solve".equals(tag))
     { // Solve <expressionList> for <idList>
       ASTCompositeTerm exprs = (ASTCompositeTerm) terms.get(1);

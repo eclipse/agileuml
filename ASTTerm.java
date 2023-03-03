@@ -53,6 +53,9 @@ public abstract class ASTTerm
   static java.util.Map cg_cache = new java.util.HashMap(); 
      // CGSpec --> (ASTTerm --> String)
 
+  static java.util.Map mathoclvars = new java.util.HashMap(); 
+     // String --> ASTTerm
+
   static Vector cqueryfunctions = new Vector(); 
   static
   { cqueryfunctions.add("sin"); 
