@@ -1,0 +1,64 @@
+Enumeration::
+enumeration _1 { _2 } |-->enum _1 { _2 }\n\n
+ 
+literal _1, _2 |-->case _1\n  _2
+literal _1 |-->case _1
+ 
+
+Type::
+int |-->Int
+long |-->Int64
+boolean |-->Bool
+double |-->Double
+void |-->Void
+OclAny |-->Any
+
+
+
+Sequence |-->[Any]
+Set |-->Set<Any>
+Map |-->Map<String,Any>
+
+Sequence(_1) |-->[_1]
+Set(_1) |-->Set<_1>
+Map(_1,_2) |-->Dictionary<_1,_2>
+Function(_1,_2) |-->(_1)->_2
+
+_1 |-->_1`alias<when> _1 datatype
+
+_1 |-->_1
+
+
+
+Attribute::
+static attribute _1 : _2 := _3; |-->  static var _1 : _2 { get set }\n 
+
+static attribute _1 : _2; |-->  static var _1 : _2 { get set }\n
+
+identity attribute _1 : _2; |-->  var _1 : _2 { get set } /* key */\n\n  subscript(_1 : _2) -> _1`ownername\n\n
+
+attribute _1 : _2 := _3; |-->  var _1 : _2 { get set }\n
+
+attribute _1 : _2; |-->  var _1 : _2 { get set }\n
+
+reference _1 : _2; |-->  var _1 : _2 { get set }\n
+
+
+
+
+Parameter::
+_1 : _2, _3 |-->_1 : _2, _3
+_1 : _2 |-->_1 : _2
+
+
+Operation::
+query _1(_2) : _3 pre: _4 post: _5 activity : _6 |-->\n  func _1(_2) -> _3\n\n
+
+query _1<_2>(_3) : _4 pre: _5 post: _6 activity : _7 |-->\n  func _1<_2>(_3) -> _4\n\n
+
+operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->\n  func _1(_2) -> _3\n\n
+
+operation _1<_2>(_3) : _4 pre: _5 post: _6 activity : _7 |-->\n  func _1<_2>(_3) -> _4\n\n
+
+
+

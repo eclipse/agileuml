@@ -1,0 +1,86 @@
+styleBody::
+_* |-->_*
+
+stringLiteral::
+_1 |-->_1
+
+textInputType::
+_1 |-->_1
+
+styleAssignment::
+_1 |-->_1
+
+spinnerItems::
+_* |-->_*
+_1 |-->_1
+
+spinnerItem::
+_* |-->_*
+
+viewItems::
+_* |-->_*
+_1 |-->_1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+button::
+button _2 { label _5 }  |-->Button ( action : { } ) { Text ( _5 ) } 
+
+image::
+image _2 { src _5 }  |-->Image ( uiImage : _5 ) 
+image _2 { src _5 height _7 width _9 }  |-->Image ( uiImage : _5 ) . frame ( width : _9 , height : _7 ) 
+
+subruleset30::
+_1 _2 _3 _4  |-->_3 
+
+textInput::
+textInput _2 { label _5 }  |-->TextField ( _5 ) 
+textInput _2 { label _5 type _7 }  |-->TextField ( _5 ) . keyboardType _7`subxruleset36 
+
+view::
+view _2  |-->VStack ( alignment : . leading , spacing : 20 ) { _2`seqtreerule40 } 
+
+subxruleset36::
+_1  |-->( . _1`nestedTfunc35 ) 
+
+seq2ruleset39::
+item _2 ;  |-->Text ( _2 ) 
+_0 |-->_0
+_* |-->_*`seq2ruleset39
+
+seqtreerule40::
+_* |-->_*
+
+nestedTfunc35::
+numberDecimal |-->decimalPad
+number |-->numberPad
+time |-->numberPad
+_* |-->numberPad
+
+subxruleset31::
+_1  |-->. _1`subruleset30 
+
+textView::
+textView _2 { label _5 }  |-->Text ( _5 ) 
+textView _2 { label _5 style _7 }  |-->Text ( _5 ) _7`subxruleset31 ( ) 
+
+spinner::
+spinner _2 { label _5 _* }  |-->Picker ( _5 ) { _*`seq2ruleset39 } 
+
+
+

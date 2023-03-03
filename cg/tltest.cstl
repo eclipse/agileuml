@@ -1,0 +1,15 @@
+addStatement::
+ADD _1 _* GIVING _3 END-ADD |-->    _3 := _1_*`g
+ADD _1 _* GIVING _3 _+ END-ADD |-->    _3_+`f := _1_*`g
+
+f::
+_1 |-->, _1
+
+g::
+_1 |--> + _1
+
+id::
+_1 |-->_1
+
+literal::
+_1 |-->_1

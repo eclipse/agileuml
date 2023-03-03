@@ -1,0 +1,41 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OclBasicExpression::
+_1 . _3 ( )  |-->_1._3()
+_1 . _3  |-->_1._3
+null  |-->NULL<when> _1 Object
+_1  |-->_1<when> _1 Integer
+_1  |-->_1<when> _1 Real
+_1  |-->_1<when> _1 Boolean
+_1  |-->_1<when> _1 String
+_1  |-->_1
+
+OclStatement::
+while _2 do _4  |-->while(_2){_4}
+for _2 : _4 do _6  |-->{int _index=0;for(;_index<length(_4);_index++){void*_2=_4[_index];_6}}
+( _2 ; _4 )  |-->{_2 _4}
+( _2 )  |-->{_2}
+if _2 then _4 else _6  |-->if(_2){_4}else{_6}
+_1 := _3  |-->_1=_3;
+call skip   |-->;
+call _2  |-->_2;
+return _2  |-->return _2;
+_1  |-->_1;
+
+
+

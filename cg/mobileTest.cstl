@@ -1,0 +1,52 @@
+model::
+package _1 { _* } _3 |-->_*
+
+
+classifier::
+_1 |-->_1
+
+
+classDefinition::
+class _1 { _2 } |-->_2`cloudMFCode<when>_2`classKind cloud
+class _1 { _2 } |-->_2`databaseMFCode<when>_2`classKind persistent
+
+cloudMFCode::
+_* |-->"Cloud version of class"\n
+
+databaseMFCode::
+_* |-->"Database version of class"\n
+
+
+classKind::
+_* |-->_*`classBodyElementKind
+
+
+classBodyElementKind::
+stereotype _1 ; |-->_1
+_1 |-->_1`classBodyElementKind
+_* |-->
+
+
+usecaseDefinition::
+usecase _1 { } |-->func _1() { }\n\n
+usecase _1 { _2 } |-->func _1()\n{\n_2}\n\n
+usecase _1 : _2 { _3 } |-->func _1() -> _2\n{\n_3}\n\n
+usecase _1 ( _2 ) { } |-->func _1(_2) { }\n\n
+usecase _1 ( _2 ) { _3 } |-->func _1(_2)\n{\n_3}\n\n
+usecase _1 ( _2 ) : _3 { _4 } |-->func _1(_2) -> _3\n{\n_4}\n\n
+
+
+usecaseBody::
+_* |-->_*
+
+
+usecaseBodyElement::
+parameter _1 : _2 ; |-->
+precondition _1 ; |-->
+extends _1 ; |-->
+extendedBy _1 ; |-->
+activity: _1 ; |-->_1
+:: _1 |-->
+_1 |-->
+
+

@@ -1,0 +1,81 @@
+/* Extract the _call semantics of each paragraph */
+
+procedureDivision::
+PROCEDURE DIVISION _1 _2 . _3 _4 |-->_4
+PROCEDURE DIVISION _1 _2 . _3 |-->_3
+PROCEDURE DIVISION _1 . _2 _3 |-->_3
+PROCEDURE DIVISION _1 . _2 |-->_2
+PROCEDURE DIVISION . _1 _2 |-->_2
+PROCEDURE DIVISION . _1 |-->_1
+
+
+procedureSectionHeader::
+_1 SECTION _2 |-->  operation _1_Call()\n  pre: true post: true\n  activity:
+_1 SECTION |-->  operation _1_Call()\n  pre: true post: true\n  activity:
+
+procedureDivisionBody::
+paragraphs _1 |-->_1
+paragraphs _1 _* |-->_1_*
+_1 |-->_1
+_1 _* |-->_1_*
+
+procedureSection::
+_1 . _2 |-->_1_2`paragraphsCalls\n\n_2
+
+
+paragraphs::
+_1 |-->_1<when> _1 paragraph
+_1 |-->
+_1 _* |-->_*`recurse<when> _1 sentence
+_1 _* |-->_1_*
+
+paragraphsCalls::
+_1 |-->_1`paragraphCall<when> _1 paragraph
+_1 |-->
+_1 _* |-->_*`recurse<when> _1 sentence
+_1 _* |-->_1`paragraphCall_*`paragraphCall
+
+
+paragraph::
+_1 . _2 |-->  operation _1_Call()\n  pre: true post: true\n  activity: _2`cobol2UML\n\n
+_1 .  |-->  operation _1_Call()\n  pre: true post: true\n  activity: skip;\n\n
+_1 . _* |-->  operation _1_Call()\n  pre: true post: true\n  activity: _*`cobol2UML\n\n
+
+paragraphCall::
+_1 . _2 |-->  self._1_Call();\n
+_1 .  |-->  self._1_Call();\n
+_1 . _* |-->  self._1_Call();
+
+
+sentence::
+_* . |-->
+
+
+
+paragraphName::
+_1 |-->_1
+
+
+sectionName::
+_1 |-->_1
+
+systemName::
+_1 |-->_1
+
+symbolicCharacter::
+_1 |-->_1
+
+textName::
+_1 |-->_1
+
+
+
+cobolWord::
+_1 |-->_1
+
+integerLiteral::
+_1 |-->_1
+
+literal::
+_1 |-->_1
+

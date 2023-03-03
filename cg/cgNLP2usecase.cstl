@@ -1,0 +1,136 @@
+ROOT::
+_1 |-->_1
+
+
+S::
+_1 _*  |-->usecase _1`action\n{ stereotype actor="";\n  stereotype _1`kind;\n}\n\n<when> _1 VP
+_1 _2 _* |-->usecase _2`action\n{ stereotype actor="_1`actor";\n  stereotype _2`kind;\n}\n\n<when> _2 VP
+_1 _2 _3 _* |-->usecase _3`action\n{ stereotype actor="_1`actor";\n  stereotype _3`kind;\n}\n\n<when> _3 VP
+_1 _2 _3 _4 _* |-->usecase _4`action\n{ stereotype actor="_1`actor";\n  stereotype _4`kind;\n}\n\n<when> _4 VP
+
+
+actor::
+_1 _2 |-->_2<when> _1 DT
+_1 _2 |-->_2<when> _1 IN
+_1 _2 |-->_1_2
+_1 |-->_1
+
+
+DT::
+_1 |-->
+
+
+NN::
+_1 |-->_1
+
+NNP::
+_1 |-->_1
+
+NNS::
+instances |-->
+_1 |-->_1
+
+
+NNPS::
+_1 |-->_1
+
+
+JJ::
+_1 |-->_1
+
+VBG::
+_1 |-->_1
+
+PP::
+_1 _2 |-->_1_2
+
+IN::
+_1 |-->_1
+
+VB::
+_1 |-->_1
+
+
+TO::
+_1 |-->
+
+
+action::
+_1 _2 |-->_2`action<when> _1 MD
+_1 _2 |-->_2`action<when> _1 JJ
+be _1 |-->_1`action
+to _1 |-->_1`action
+want _1 _* |-->_1`action
+want _1 |-->_1`action
+
+_1 _2 _* |-->_1_2_*<when> _1 VB
+_1 _2 |-->_1_2<when> _1 VB
+_1 |-->_1<when> _1 VB
+_1 |-->_1`action
+
+
+NP::
+_1 _2 _3 _4 |-->_2_3_4<when>_1 DT
+_1 _2 _3 _4 |-->_1_2_3_4
+_1 _2 _3 |-->_2_3<when>_1 DT
+_1 _2 _3 |-->_1_2_3
+_1 _2 |-->_2<when>_1 DT
+_1 _2 |-->_1_2
+
+
+VP::
+_1 _2 |-->_1_2
+
+
+SBAR::
+_1 _* |-->
+_1 |-->
+
+
+kind::
+_1 _2 |-->_2`kind<when> _1 MD
+_1 _2 |-->_2`kind<when> _1 JJ
+be _1 |-->_1`kind
+to _1 |-->_1`kind
+want _1 _* |-->_1`kind
+want _1 |-->_1`kind
+
+_1 _2 _* |-->_1`verbkind<when> _1 VB
+_1 _2 |-->_1`verbkind<when> _1 VB
+_1 |-->_1`verbkind<when> _1 VB
+_1 |-->_1`kind
+
+
+verbkind::
+create |-->create
+Add |-->create
+add |-->create
+Define |-->create
+define |-->create
+register |-->create
+introduce |-->create
+recreate |-->create
+
+access |-->read
+read |-->read
+inspect |-->read
+monitor |-->read
+check |-->read
+
+assign |-->edit
+modify |-->edit
+update |-->edit
+change |-->edit
+prioritise |-->edit
+set |-->edit
+reset |-->edit
+undo |-->edit
+
+delete |-->delete
+remove |-->delete
+destroy |-->delete
+erase |-->delete
+
+_1 |-->other
+
+

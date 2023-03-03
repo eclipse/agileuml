@@ -1,0 +1,71 @@
+Class::
+class _1 { _2 } |-->  <when> _1 interface
+
+class _1 { _2 }   |-->_2   
+
+class _1 extends _2 { _3 }   |-->_3
+
+abstract class _1 { _2 }   |-->_2
+
+abstract class _1 extends _2 { _3 }   |-->_3
+
+
+class _1 implements _2 { _3 }   |-->_3   
+
+class _1 extends _2 implements _3 { _4 }   |-->_4
+
+abstract class _1 implements _2 { _3 }   |-->_3
+
+abstract class _1 extends _2 implements _3 { _4 }   |-->_4
+
+
+
+
+Attribute::
+static attribute _1 : _2 := _3; |-->  
+
+static attribute _1 : _2; |-->  
+
+identity attribute _1 : _2 |-->  static Person createByPK_1`ownername(_2 _1x)\n  { _1`ownername result = _1`ownername._1`ownername_index.get(_1x);\n    if (result != null) { return result; }\n    result = new _1`ownername();\n    _1`ownername._1`ownername_index.put(_1x,result);\n    result._1 = _1x;\n    return result; }\n\n  static void kill_1`ownername(_2 _1x) { _1`ownername rem = _1`ownername_index.get(_1x);\n    if (rem == null) { return; }\n    ArrayList<_1`ownername> remd = new ArrayList<_1`ownername>();\n    remd.add(rem);\n    _1`ownername_index.remove(_1x);\n    _1`ownername_allInstances.removeAll(remd);\n  }\n\n
+
+attribute _1 : _2 := _3; |-->  
+
+attribute _1 : _2; |-->  
+
+reference _1 : _2; |-->  
+
+
+
+Operation::
+query _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->
+
+query _1<_2>(_3) : _4 pre: _5 post: _6 activity: _7 |-->
+
+operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->
+
+operation _1<_2>(_3) : _4 pre: _5 post: _6 activity: _7 |-->
+
+static query _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->
+
+static query _1<_2>(_3) : _4 pre: _5 post: _6 activity: _7 |-->
+
+static operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->
+
+static operation _1<_2>(_3) : _4 pre: _5 post: _6 activity: _7 |-->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

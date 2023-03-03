@@ -1,0 +1,603 @@
+Attribute::
+static attribute _1 : _2 := _3 |-->
+
+static attribute _1 : _2; |-->
+
+identity attribute _1 : _2; |-->
+
+attribute _1 : _2 := _3; |-->
+
+attribute _1 : _2; |-->
+
+reference _1 : _2; |-->
+
+
+Type::
+int |-->int
+long |-->int64
+boolean |-->bool
+double |-->float64
+String |-->string
+
+OclAny |-->interface{}
+OclFile |-->*oclfile.OclFile
+OclProcess |-->*oclprocess.OclProcess
+OclRandom |-->*oclrandom.OclRandom
+OclDatasource |-->*ocldatasource.OclDatasource
+SQLStatement |-->*ocldatasource.SQLStatement
+OclDate |-->*ocldate.OclDate
+OclType |-->*ocltype.OclType
+OclIterator |-->*ocliterator.OclIterator
+OclAttribute |-->*ocltype.OclAttribute
+OclOperation |-->*ocltype.OclOperation
+
+OclException |-->*oclexception.OclException
+AssertionException |-->*oclexception.AssertionException
+ArithmeticException |-->*oclexception.ArithmeticException
+IOException |-->*oclexception.IOException
+IndexingException |-->*oclexception.IndexingException
+NullAccessException |-->*oclexception.NullAccessException
+AccessingException |-->*oclexception.AccessingException
+ProgramException |-->*oclexception.ProgramException
+SystemException |-->*oclexception.SystemException
+
+
+
+void |-->
+
+Sequence |-->*list.List
+Set |-->*list.List
+
+Sequence(_1) |-->*list.List
+Set(_1) |-->*list.List
+Ref(void) |-->*interface{}
+Ref(int) |-->*int
+Ref(long) |-->*int64
+Ref(double) |-->*float64
+Ref(String) |-->*string
+Ref(boolean) |-->*bool
+Ref(_1) |-->_1<when> _1 Ref
+Ref(_1) |-->_1<when> _1 Function
+Ref(_1) |-->*_1`name<when> _1 Class
+Ref(_1) |-->*_1
+Ref |-->*interface{}
+
+Map(_1,_2) |-->map[interface{}]interface{}
+Map |-->map[interface{}]interface{}
+Function(_1,_2) |-->func(_1) _2
+
+_1 |-->_1`alias<when> _1 datatype
+
+_1 |-->_1`name<when> _1 interface
+_1 |-->*_1`name<when> _1 Class
+
+_1 |-->_1
+
+
+
+
+BasicExpression::
+null |-->nil
+
+self |-->self
+super |-->self.super
+
+Math_NaN |-->math.NaN()
+Math_PINFINITY |-->math.Inf(1)
+Math_NINFINITY |-->math.Inf(-1)
+
+System_in |-->oclfile.System_in
+System_out |-->oclfile.System_out
+System_err |-->oclfile.System_err
+
+newOclFile |-->oclfile.NewOclFile
+newOclFile_Write |-->oclfile.NewOclFile_Write
+newOclFile_Read |-->oclfile.NewOclFile_Read
+newOclFile_WriteB |-->oclfile.NewOclFile_WriteB
+newOclFile_ReadB |-->oclfile.NewOclFile_ReadB
+
+AccessingException.newAccessingException() |-->oclexception.NewAccessingException("")
+AssertionException.newAssertionException() |-->oclexception.NewAssertionException("")
+OclException.newOclException() |-->oclexception.NewOclException("")
+ArithmeticException.newArithmeticException() |-->oclexception.NewArithmeticException("")
+ProgramException.newProgramException() |-->oclexception.NewProgramException("")
+SystemException.newSystemException() |-->oclexception.NewSystemException("")
+IOException.newIOException() |-->oclexception.NewIOException("")
+IndexingException.newIndexingException() |-->oclexception.NewIndexingException("")
+
+newAssertionException |-->oclexception.NewAssertionException
+newOclException |-->oclexception.NewOclException
+newAccessingException |-->oclexception.NewAccessingException
+newArithmeticException |-->oclexception.NewArithmeticException
+newProgramException |-->oclexception.NewProgramException
+newSystemException |-->oclexception.NewSystemException
+newIOException |-->oclexception.NewIOException
+newIndexingException |-->oclexception.NewIndexingException
+
+bitwiseAnd |-->mathlib.BitwiseAnd
+bitwiseOr |-->mathlib.BitwiseOr
+bitwiseXor |-->mathlib.BitwiseXor
+bitwiseNot |-->mathlib.BitwiseNot
+decimal2hex |-->mathlib.Decimal2hex
+decimal2octal |-->mathlib.Decimal2octal
+decimal2binary |-->mathlib.Decimal2binary
+initialiseMathLib |-->mathlib.InitialiseMathLib
+pi |-->mathlib.Pi
+setSeeds |-->mathlib.SetSeeds
+nrandom |-->mathlib.Nrandom
+random |-->mathlib.Random
+combinatorial |-->mathlib.Combinatorial
+factorial |-->mathlib.Factorial
+asinh |-->mathlib.Asinh
+acosh |-->mathlib.Acosh
+atanh |-->mathlib.Atanh
+bytes2integer |-->mathlib.Bytes2integer
+integer2bytes |-->mathlib.Integer2bytes
+integer2Nbytes |-->mathlib.Integer2Nbytes
+toBitSequence |-->mathlib.ToBitSequence
+modInverse |-->mathlib.ModInverse
+modPow |-->mathlib.ModPow
+
+
+newOclProcess |-->oclprocess.NewOclProcess
+wait |-->oclprocess.Wait
+sleep |-->oclprocess.Sleep
+activeCount |-->oclprocess.ActiveCount
+currentThread |-->oclprocess.CurrentThread
+getRuntime |-->oclprocess.GetRuntime
+getEnvironmentProperty |-->oclprocess.GetEnvironmentProperty
+getEnvironmentProperties |-->oclprocess.GetEnvironmentProperties
+exit |-->oclprocess.Exit
+
+
+
+newOclDate |-->ocldate.NewOclDate
+newOclDate_Time |-->ocldate.NewOclDate_Time
+getSystemTime |-->ocldate.GetSystemTime
+
+
+newOclIterator_Set |-->ocliterator.NewOclIterator_Set
+newOclIterator_Sequence |-->ocliterator.NewOclIterator_Sequence
+newOclIterator_String |-->ocliterator.NewOclIterator_String
+newOclIterator_String_String |-->ocliterator.NewOclIterator_String_String
+
+newOclRandom |-->oclrandom.NewOclRandom
+
+_1.allInstances |-->_1_instances
+
+_1.insertAt(_2,_3) |-->ocl.InsertAtString(_1, _2, _3)<when> _1 String
+_1.insertAt(_2,_3) |-->ocl.InsertAt(_1, _2, _3)
+_1.insertInto(_2,_3) |-->ocl.InsertInto(_1, _2, _3)
+
+_1.setAtString(_2,_3) |-->ocl.SetAtString(_1, _2, _3)<when> _1 String
+_1.setAt(_2,_3) |-->ocl.SetAt(_1, _2, _3)
+
+Integer.subrange(_1,_2) |-->ocl.IntegerSubrange(_1, _2)
+Integer.Sum(_1,_2,_3,_4) |-->ocl.IntegerSum_4`type(_1,_2,func(_3 int) _4`type { return _4 })
+Integer.Prd(_1,_2,_3,_4) |-->ocl.IntegerPrd_4`type(_1,_2,func(_3 int) _4`type { return _4})
+
+_1.subrange(_2,_3) |-->ocl.SubString(_1, _2, _3)<when> _1 String
+_1.subrange(_2,_3) |-->ocl.SubSequence(_1, _2, _3)
+
+_1.replace(_2,_3) |-->strings.ReplaceAll(_1, _2, _3)
+_1.replaceAll(_2,_3) |-->ocl.ReplaceAllMatches(_1, _2, _3)
+_1.replaceAllMatches(_2,_3) |-->ocl.ReplaceAllMatches(_1, _2, _3)
+_1.replaceFirstMatch(_2,_3) |-->ocl.ReplaceFirstMatch(_1, _2, _3)
+
+_1[_2] |-->oclfile.GetByPKOclFile(_2)<when> _1 OclFile
+_1[_2] |-->ocltype.GetByPKOclType(_2)<when> _1 OclType
+_1[_2] |-->ocl.AtString(_1, _2)<when> _1 String
+_1[_2] |-->ocl.At(_1, _2).(_1`elementType)<when> _1 Sequence
+_1[_2] |-->GetByPK_1(_2)<when> _1 classId
+_1[_2] |-->(_1)[_2]
+
+
+displayString(_1) |-->fmt.Println(_1)
+displayint(_1) |-->fmt.Println(ocl.ToStringint(_1))
+displaylong(_1) |-->fmt.Println(ocl.ToStringlong(_1))
+displaydouble(_1) |-->fmt.Println(ocl.ToStringdouble(_1))
+displayboolean(_1) |-->fmt.Println(ocl.ToStringboolean(_1))
+displaySequence(_1) |-->ocl.DisplaySequence(_1)
+displaySet(_1) |-->ocl.DisplaySet(_1)
+displayMap(_1) |-->ocl.DisplayMap(_1)
+
+createByPK_1(_2) |-->CreateByPK_1(_2)
+persist_1(_2) |-->persist_1(_2)
+retrieve_1(_2) |-->retrieve_1(_2)
+
+_1._2(_3) |-->_2(_3)<when> _1 Class
+_1._2(_3) |-->_1._2`cgGolibraryops(_3)<when> _1 OclDate
+_1._2(_3) |-->_1._2`cgGolibraryops(_3)<when> _1 OclIterator
+_1._2(_3) |-->_1._2`cgGolibraryops(_3)<when> _1 OclFile
+_1._2(_3) |-->_1._2`cgGolibraryops(_3)<when> _1 OclProcess
+_1._2(_3) |-->_1._2`cgGolibraryops(_3)<when> _1 OclRandom
+_1._2(_3) |-->_1._2`cgGolibraryops(_3)<when> _1 OclType
+
+
+_1._2(_3) |-->_1._2(_3)
+
+_1._2 |-->_2<when> _1 Class
+_1._2 |-->_1._2`goReferencedFeatures
+
+_1(_2) |-->_1(_2)
+
+_1 |-->_1<when> _1 attribute, _1 static
+_1 |-->self._1<when> _1 attribute, _1 not static
+
+
+
+
+UnaryExpression::
+-_1 |-->-_1
++_1 |-->+_1
+?_1 |-->&_1
+!_1 |-->*_1
+
+_1->log() |-->math.Log(_1)
+_1->log10() |-->math.Log10(_1)
+_1->exp() |-->math.Exp(_1)
+_1->sin() |-->math.Sin(_1)
+_1->cos() |-->math.Cos(_1)
+_1->tan() |-->math.Tan(_1)
+_1->asin() |-->math.Asin(_1)
+_1->acos() |-->math.Acos(_1)
+_1->atan() |-->math.Atan(_1)
+_1->sqr() |-->(_1)*(_1)
+_1->sqrt() |-->math.Sqrt(_1)
+_1->cbrt() |-->math.Cbrt(_1)
+_1->floor() |-->int(math.Floor(_1))
+_1->ceil() |-->int(math.Ceil(_1))
+_1->round() |-->int(math.Round(_1))
+_1->abs() |-->math.Abs(float64(_1))
+
+_1->size() |-->ocl.Length(_1)<when> _1 String
+_1->size() |-->ocl.SizeMap(_1)<when> _1 Map
+_1->size() |-->_1.Len()
+
+_1->toInteger() |-->ocl.ToInteger(_1)
+_1->toLong() |-->ocl.ToLong(_1)
+_1->toReal() |-->ocl.ToReal(_1)
+_1->toBoolean() |-->ocl.ToBoolean(_1)
+
+_1->toUpper() |-->strings.ToUpper(_1)
+_1->toLower() |-->strings.ToLower(_1)
+_1->toUpperCase() |-->strings.ToUpper(_1)
+_1->toLowerCase() |-->strings.ToLower(_1)
+
+_1->trim() |-->strings.TrimSpace(_1)
+_1->characters() |-->ocl.Characters(_1)
+
+_1->byte2char() |-->ocl.Byte2Char(_1)
+_1->char2byte() |-->ocl.Char2Byte(_1)
+
+_1->oclIsUndefined() |-->(_1 == nil)
+_1->oclIsInvalid() |-->!(reflect.ValueOf(_1).IsValid())
+
+_1->oclType() |-->ocltype.GetByPKOclType("_1`typename")
+
+
+_1->allInstances() |-->_1_allInstances
+
+_1->first() |-->ocl.AtString(_1, 1)<when>_1 String
+_1->first() |-->ocl.First(_1).(_1`elementType)
+
+_1->last() |-->ocl.Last(_1).(_1`elementType)
+_1->tail() |-->ocl.Tail(_1)
+_1->front() |-->ocl.Front(_1)
+
+_1->reverse() |-->ocl.ReverseString(_1)<when> _1 String
+_1->reverse() |-->ocl.Reverse(_1)
+
+_1->max() |-->ocl.Max_1`elementType(_1)
+_1->min() |-->ocl.Min_1`elementType(_1)
+_1->sum() |-->ocl.Sum_1`elementType(_1)
+_1->prd() |-->ocl.Prd_1`elementType(_1)
+
+_1->sort() |-->ocl.Sort(_1)
+_1->any() |-->ocl.AnyElement(_1).(_1`elementType)
+
+_1->isEmpty() |-->ocl.IsEmpty(_1)
+_1->notEmpty() |-->ocl.NotEmpty(_1)
+_1->asSet() |-->ocl.AsSet(_1)
+_1->asBag() |-->ocl.Sort(_1)
+_1->asSequence() |-->ocl.AsSequence(_1)
+_1->asOrderedSet() |-->ocl.AsOrderedSet(_1)
+_1->asArray() |-->ocl.AsArray(_1)
+
+_1->flatten() |-->ocl.UnionAll(_1)
+_1->keys() |-->ocl.Keys(_1)
+_1->values() |-->ocl.Values(_1)
+
+
+not(_1) |-->!(_1)
+_1->display() |-->    ocl.Display_1`typename(_1)
+_1->isDeleted() |-->    _1 = nil
+
+lambda _1 : _2 in _3 |-->(func(_1 _2) _3`type { return _3 })
+
+_1->isUnique() |-->ocl.IsUnique(_1)
+
+_1->unionAll() |-->ocl.UnionAll(_1)
+_1->intersectAll() |-->ocl.IntersectAll(_1)
+_1->concatenateAll() |-->ocl.ConcatenateAll(_1)
+
+_1->copy() |-->ocl.CopySequence(_1)<when> _1 Set
+_1->copy() |-->ocl.CopySequence(_1)<when> _1 Sequence
+_1->copy() |-->ocl.CopyMap(_1)<when> _1 Map
+_1->copy() |-->_1
+
+
+BinaryExpression::
+_1 & _2 |-->_1 && _2 
+_1 or _2 |-->_1 || _2 
+_1 xor _2 |-->((_1 || _2) && !(_1 && _2))
+
+_1 = _2 |-->ocl.Equals(_1,_2)<when>_1 Sequence
+_1 = _2 |-->ocl.EqualsSet(_1,_2)<when> _1 Set
+_1 = _2 |-->_1 == _2
+_1 /= _2 |-->_1 != _2
+
+_1 <>= _2 |-->_1 == _2
+
+_1 < _2 |-->_1 < _2
+_1 > _2 |-->_1 > _2
+
+_1 <> _2 |-->_1 != _2
+
+_1 <= _2 |-->_1 <= _2
+_1 >= _2 |-->_1 >= _2
+
+
+_1 + _2 |-->_1 + ocl.ToStringOclAny(_2)<when> _1 String, _2 not String
+_1 + _2 |-->ocl.ToStringOclAny(_1) + _2<when> _1 not String, _2 String
+_1 + _2 |-->_1 + _2
+
+_1 - _2 |-->_1 - _2<when> _1 numeric, _2 numeric
+_1 - _2 |-->ocl.Subtract(_1,_2)<when> _1 Set
+_1 - _2 |-->ocl.Subtract(_1,_2)<when> _1 Sequence
+_1 - _2 |-->ocl.ExcludeAllMap(_1, _2)<when> _1 Map
+
+_1 * _2 |-->float64(_1) * _2<when> _1 integer, _2 double
+_1 * _2 |-->_1 * float64(_2)<when> _1 double, _2 integer
+_1 * _2 |-->_1 * _2
+
+_1 / _2 |-->float64(_1)/_2<when> _1 integer, _2 double
+_1 / _2 |-->_1/float64(_2)<when> _1 double, _2 integer
+_1 / _2 |-->_1 / _2 
+_1 mod _2 |-->_1 % _2
+_1 div _2 |-->_1 / _2
+
+
+_1 |-> _2 |-->_1:_2
+
+
+_1->pow(_2) |-->math.Pow(float64(_1), float64(_2))
+_1->gcd(_2) |-->ocl.Gcd(_1, _2)
+_1^_2 |-->ocl.Concatenate(_1,_2)
+_1->union(_2) |-->ocl.Union(_1,_2)<when> _1 Set
+_1->union(_2) |-->ocl.UnionMap(_1, _2)<when> _1 Map
+_1->union(_2) |-->ocl.Concatenate(_1,_2)<when> _1 Sequence
+
+_1->unionAll(_2|_3) |-->ocl.UnionAll(ocl.Collect(_1, func(_2 interface{}) _3`type { return _3 }))
+
+_1->intersection(_2) |-->ocl.IntersectionMap(_1, _2)<when> _1 Map
+_1->intersection(_2) |-->ocl.Intersection(_1,_2)
+
+_1->intersectAll(_2|_3) |-->ocl.IntersectAll(ocl.Collect(_1, func(_2 interface{}) _3`type { return _3 }))
+
+_1->count(_2) |-->strings.Count(_1, _2)<when> _1 String
+_1->count(_2) |-->ocl.Count(_1, _2)
+
+_1->indexOf(_2) |-->ocl.IndexOf(_1,_2)<when> _1 String
+_1->indexOf(_2) |-->ocl.IndexOfSubSequence(_1, _2)<when> _1 Sequence, _2 Sequence
+_1->indexOf(_2) |-->ocl.IndexOfSequence(_1,_2)<when> _1 Sequence
+
+_1->subrange(_2) |-->ocl.SubStringToEnd(_1, _2)<when> _1 String
+_1->subrange(_2) |-->ocl.SubSequenceToEnd(_1, _2)
+_1->sequenceRange(_2) |-->ocl.SequenceRange(_1, _2)
+
+_1->lastIndexOf(_2) |-->(strings.LastIndex(_1, _2) + 1)<when> _1 String
+_1->lastIndexOf(_2) |-->ocl.LastIndexOfSubSequence(_1, _2)<when> _1 Sequence, _2 Sequence
+_1->lastIndexOf(_2) |-->ocl.LastIndexOfSequence(_1, _2)<when> _1 Sequence
+
+_1->equalsIgnoreCase(_2) |-->strings.EqualFold(_1, _2)
+_1->split(_2) |-->ocl.Split(_1, _2)
+
+_1->apply(_2) |-->(_1)(_2)
+
+let _1 : _2 = _3 in _4 |-->(func(_1 _2) _4`type { return _4 })(_3)
+
+_1->at(_2) |-->ocl.AtString(_1, _2)<when> _1 String
+_1->at(_2) |-->ocl.At(_1,_2).(_1`elementType)<when> _1 Sequence
+_1->at(_2) |-->_1[_2]
+
+_1->select(_2 | _3) |-->ocl.SelectMap(_1, func(_2 interface{}) bool { return _3 })<when> _1 Map
+_1->reject(_2 | _3) |-->ocl.RejectMap(_1, func(_2 interface{}) bool { return _3 })<when> _1 Map
+_1->collect(_2 | _3) |-->ocl.CollectMap(_1, func(_2 interface{}) interface{} { return _3 })<when> _1 Map
+
+
+_1->select(_2 | _3) |-->ocl.Select(_1, func(_xselect interface{}) bool { _2 := _xselect.(_1`elementType); return _3 })
+_1->reject(_2 | _3) |-->ocl.Reject(_1, func(_xreject interface{}) bool { _2 := _xreject.(_1`elementType); return _3 })
+_1->collect(_2 | _3) |-->ocl.Collect(_1, func(_xcollect interface{}) interface{} { _2 := _xcollect.(_1`elementType); return _3 })
+
+_1->sortedBy(_2|_3) |-->ocl.SortedBy_3`type(_1, func(_2 interface{}) _3`type { return _3 })
+
+_1->selectMaximals(_2 | _3) |-->ocl.SelectMaximals(_1, func(_2 interface{}) _3`type { return _3 })
+_1->selectMinimals(_2 | _3) |-->ocl.SelectMinimals(_1, func(_2 interface{}) _3`type { return _3 })
+
+_1->forAll(_2 | _3) |-->ocl.ForAll(_1_allInstances, func(_xforall interface{}) bool { _2 := _xforall.(*_1`name); return _3 })<when> _1 classId
+_1->forAll(_2 | _3) |-->ocl.ForAll(_1, func(_zforall interface{}) bool { _2 := _zforall.(_1`elementType); return _3 })<when> _1 not classId
+
+_1->exists(_2 | _3) |-->ocl.Exists(_1_allInstances, func(_xexists interface{}) bool { _2 := _xexists.(*_1`name); return _3 })<when> _1 classId
+_1->exists(_2 | _3) |-->ocl.Exists(_1, func(_zexists interface{}) bool { _2 := _zexists.(_1`elementType); return _3 })<when> _1 not classId
+
+_1->exists1(_2 | _3) |-->ocl.Exists1(_1_allInstances, func(_xexists1 interface{}) bool { _2 := _xexists1.(*_1`name); return _3 })<when> _1 classId
+_1->exists1(_2 | _3) |-->ocl.Exists1(_1, func(_zexists1 interface{}) bool { _2 := _zexists1.(_1`elementType); return _3 })<when> _1 not classId
+
+/* _1->isUnique(_2 | _3) |-->ocl.IsUnique(ocl.Collect(_1, func(_2 interface{}) interface{} { return _3 })) */
+
+_1->any(_2 | _3) |-->ocl.Any(_1, func(_2 interface{}) bool { return _3 }).(_1`elementType)
+
+_1->compareTo(_2) |-->strings.Compare(_1,_2)<when> _1 String
+_1->compareTo(_2) |-->ocl.Conditional((_1 < _2), -1, ocl.Conditional((_1 > _2), 1, 0).(int)).(int)
+
+_1 : _2 |-->ocl.Includes(_2,_1)
+_1 <: _2 |-->ocl.IncludesAll(_2,_1)
+_1 /: _2 |-->ocl.Excludes(_2,_1)
+_1 /<: _2 |-->!(ocl.IncludesAll(_2,_1))
+
+_1->includes(_2) |-->ocl.Includes(_1,_2)
+_1->includesAll(_2) |-->ocl.IncludesAll(_1,_2)
+_1->excludes(_2) |-->ocl.Excludes(_1,_2)
+_1->excludesAll(_2) |-->ocl.ExcludesAll(_1,_2)
+
+_1->including(_2) |-->ocl.Including(_1,_2)<when> _1 Set
+_1->including(_2) |-->ocl.Append(_1,_2)<when> _1 Sequence
+
+_1->prepend(_2) |-->ocl.Prepend(_1, _2)
+_1->append(_2) |-->ocl.Append(_1, _2)
+
+_1->excluding(_2) |-->ocl.Excluding(_1,_2)<when> _1 Set
+_1->excluding(_2) |-->ocl.Excluding(_1,_2)<when> _1 Sequence
+
+
+_1->excludingAt(_2) |-->ocl.ExcludingStringMap(_1,_2)<when> _1 Map, _2 String
+_1->excludingAt(_2) |-->ocl.ExcludingMap(_1,_2)<when> _1 Map
+_1->excludingAt(_2) |-->ocl.RemoveAtString(_1, _2)<when> _1 String
+_1->excludingAt(_2) |-->ocl.RemoveAt(_1, _2)
+_1->excludingFirst(_2) |-->ocl.RemoveFirst(_1, _2)
+
+_1->hasPrefix(_2) |-->strings.HasPrefix(_1,_2)
+_1->hasSuffix(_2) |-->strings.HasSuffix(_1,_2)
+_1->after(_2) |-->ocl.After(_1, _2)
+_1->before(_2) |-->ocl.Before(_1, _2)
+
+_1->restrict(_2) |-->ocl.RestrictMap(_1, _2)
+_1->antirestrict(_2) |-->ocl.AntirestrictMap(_1, _2)
+
+_1->isMatch(_2) |-->ocl.IsMatch(_1, _2)
+_1->hasMatch(_2) |-->ocl.HasMatch(_1, _2)
+_1->allMatches(_2) |-->ocl.AllMatches(_1, _2)
+_1->firstMatch(_2) |-->ocl.FirstMatch(_1, _2)
+
+_1->oclIsKindOf(_2) |-->(reflect.TypeOf(_1) == ocl.TypeMapping["_2`name"])
+_1->oclIsTypeOf(_2) |-->(ocl.TypeMapping["_2`name"] == reflect.TypeOf(_1))
+
+_1->oclAsType(_2) |-->int(_1)<when> _1 numeric, _2 int
+_1->oclAsType(_2) |-->_1<when> _1 integer, _2 int
+_1->oclAsType(_2) |-->(_1).(int)<when> _2 int
+
+_1->oclAsType(_2) |-->int64(_1)<when> _1 numeric, _2 long
+_1->oclAsType(_2) |-->(_1).(int64)<when> _2 long
+_1->oclAsType(_2) |-->float64(_1)<when> _1 numeric, _2 double
+_1->oclAsType(_2) |-->(_1).(float64)<when> _2 double
+
+_1->oclAsType(_2) |-->(_1).(string)<when> _1 object, _2 String
+_1->oclAsType(_2) |-->string(_1)<when> _2 String
+
+_1->oclAsType(_2) |-->ocl.AsSequence(_1)<when> _2 Sequence
+_1->oclAsType(_2) |-->ocl.AsSet(_1)<when> _2 Set
+_1->oclAsType(_2) |-->_1<when> _2 Map
+_1->oclAsType(_2) |-->_1
+
+
+SetExpression::
+Set{} |-->list.New()
+Set{_1} |-->ocl.InitialiseSequence(_1)
+Sequence{} |-->list.New()
+Sequence{_1} |-->ocl.InitialiseSequence(_1)
+Map{} |-->map[interface{}]interface{}{}
+Map{_1} |-->map[interface{}]interface{}{_1}
+Ref{} |-->nil
+Ref(_1){_2} |-->&(make([]_1,_2)[0])
+
+
+ConditionalExpression::
+if _1 then _2 else _3 endif |-->ocl.Conditional(_1, _2, _3).(_2`type)
+
+
+
+Parameter::
+_1 : _2, _3 |-->_1 _2, _3
+_1 : _2 |--> _1 _2
+
+
+
+ParameterArgument::
+_1, _2 |-->_1, _2
+_1 |-->_1
+
+
+
+
+
+
+Operation::
+static query _1(_2) : _3 pre: _4 post: _5 activity : _6 |-->func _1(_2) _3 {\n_6\n}\n\n
+
+static query _1<_2>(_3) : _4 pre: _5 post: _6 activity: _7 |-->func _1(_3) _4 {\n_7\n}\n\n
+
+query _1(_2) : _3 pre: _4 post: _5 activity : _6 |-->func (self *_1`ownername) _1(_2) _3 {\n_6\n}\n\n
+
+query _1<_2>(_3) : _4 pre: _5 post: _6 activity: _7 |-->func (self *_1`ownername) _1(_3) _4 {\n_7\n}\n\n
+
+static operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->func _1(_2) _3 {\n_6\n}\n\n
+
+static operation _1<_2>(_3) : _4 pre: _5 post: _6 activity: _7 |-->func _1(_3) _4 {\n_7\n}\n\n
+
+
+operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->func (self *_1`ownername) _1(_2) {\n_6\n}\n\n<when> _3 void
+
+operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->func (self *_1`ownername) _1(_2) _3 {\n_6\n}\n\n
+
+operation _1<_2>(_3) : _4 pre: _5 post: _6 activity: _7 |-->func (self *_1`ownername) _1(_3) _4 {\n_7\n}\n\n
+
+
+Statement::
+_1[_2] := _3 |-->  _1 = ocl.SetAtString(_1, _2, _3)\n<when> _1 String
+_1[_2] := _3 |-->  ocl.UpdateAt(_1, _2, _3)\n<when>_1 Sequence
+_1[_2] := _3 |-->  _1[_2] = _3\n
+
+
+_1 := _2 |-->  _1 = int(_2)\n<when> _1 int, _2 not int
+_1 := _2 |-->  _1 = int64(_2)\n<when> _1 long, _2 not long
+_1 := _2 |-->  _1 = float64(_2)\n<when> _1 real, _2 not real
+
+_1 := _2 |-->  _1 = _2\n
+
+
+
+while _1 do _2 |-->  for _1 {\n  _2  }\n
+
+for _1 : _2 do _3 |-->  for _elem := _2.Front() ; _elem != nil ; _elem = _elem.Next() {\n    _1 := _elem.Value.(_2`elementType)\n  _3  }\n
+
+if _1 then _2 else _3 |-->  if _1 {\n  _2  } else {\n  _3  }\n
+_1 ; _2 |-->_1_2
+
+skip |-->  \n
+return _1 |-->  return _1\n
+return |-->  return\n
+break |-->    break\n
+continue |-->    continue\n
+call _1 |-->  _1\n 
+execute _1 |-->  _1\n
+
+assert _1 do _2 |-->  if !(_1) {\n    panic(_2)\n  }\n
+assert _1 |-->  if !(_1) {\n    panic()\n  }\n
+
+error _1 |-->  panic(_1)\n
+
+try _1 _2 _3 |-->  defer func() {\n    defer _3\n  _2\n  }()\n_1\n
+try _1 _2 |-->  defer func() {\n  _2\n  }()\n_1\n
+
+catch _1 do _2 |-->  if caught_error := recover(); caught_error != nil {\n      _err := caught_error.(error)\n_1`cgGocatchClause      _2\n      }\n    }\n
+finally _1 |-->  defer _1\n
+
+ 
+var _1 : _2 := _3 |-->  var _1 _2 = _3\n
+
+var _1 : _2 |-->  var _1 _2 = map[interface{}]interface{}{}\n<when> _2 Map
+var _1 : _2 |-->  var _1 _2 = _2`defaultValue\n
+
+
+

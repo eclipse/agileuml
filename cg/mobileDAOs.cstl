@@ -1,0 +1,123 @@
+model::
+package _1 { _* } _3 |-->import Foundation\nimport Darwin\n\n_*
+
+
+classifier::
+_1 |-->_1
+
+interfaceDefinition:: 
+_* |-->
+
+enumeration::
+_* |-->
+
+
+classDefinition::
+class _1 { _2 } |-->class _1_DAO \n{ static func getURL(command : String?, pars : [String], values : [String]) -> String\n  { var res : String = "base url for the data source"\n    if command != nil\n    { res = res + command! }\n    if pars.count == 0\n    { return res }\n    res = res + "?"\n    for (i,v) in pars.enumerated()\n    { res = res + v + "=" + values[i]\n      if i < pars.count - 1\n      { res = res + "&" }\n    }\n    return res\n  }\n\n  static func isCached(id : String) -> Bool\n  { let _x : _1? = _1._index[id]\n    if _x == nil\n    { return false }\n    return true\n  }\n\n  static func getCachedInstance(id : String) -> _1\n  { return _1._index[id]! }\n\n  static func _1 parseCSV(_line: String) -> _1?\n  { if _line.count == 0\n    { return nil }\n    let _line1vals : [String] = Ocl.tokeniseCSV(line: _line)\n    var _x : _1? = nil\n    _x = _1._index[_line1vals[0]]\n    if _x == nil\n    { _x = _1.createByPK(key: _line1vals[0]) }\n    var _index : Int = 0\n_2`attributeSettings\n    return _x\n  }\n\n  static func parseJSON(obj : [String : AnyObject]?) -> _1?\n  { // if (obj == nil) { return nil }\n\n    if let jsonObj = obj\n    { let id : String? = jsonObj["id"] as! String?\n      var _x : _1? = _1._index[id!]\n      if (_x == nil)\n      { _x = _1.createByPK(key: id!) }\n\n_2`fromJSON\n      return _x!\n    }\n    return nil\n  }\n\n  static func writeJSON(_x : _1) -> NSDictionary\n  { return [\n_2`jsonData      "oclTypeName" : "_1" as NSString ]\n  }\n\n  static func makeFromCSV(lines: String) -> [_1]\n  { var res : [_1] = [_1]()\n\n    if lines.count == 0\n    { return res }\n\n    let rows : [String] = Ocl.parseCSVtable(rows: lines)\n\n    for (_,row) in rows.enumerated()\n    { if row.count == 0\n      { }\n      else\n      { let _x : _1? = parseCSV(_line: row)\n        if (_x != nil)\n        { res.append(_x!) }\n      }\n    }\n    return res\n  }\n}\n\n
+
+
+
+
+
+usecaseDefinition::
+_* |-->
+
+
+classBody::
+_* |-->_*
+
+
+classBodyElement::
+_1 |-->_1
+
+
+attributeDefinition::
+attribute _1 : _2 ; |-->
+attribute _1 identity : _2 ; |-->
+attribute _1 derived : _2 ; |-->  
+ 
+
+operationDefinition::
+_* |-->
+
+invariant::
+_* |-->
+
+stereotype::
+_* |-->
+
+
+attributeSettings::
+_1 |-->_1`attributeSetting
+_1 _* |-->_1`attributeSetting_*`recurse
+
+
+attributeSetting::
+attribute _1 : String ; |-->    _x!._1 = _line1vals[_index]\n    _index = _index + 1\n
+attribute _1 identity : String ; |-->    _x!._1 = _line1vals[_index]\n    _index = _index + 1\n
+attribute _1 derived : String ; |-->    _x!._1 = _line1vals[_index]\n    _index = _index + 1\n
+
+attribute _1 : int ; |-->    _x!._1 = Int(_line1vals[_index]) ?? 0\n    _index = _index + 1\n
+attribute _1 identity : int ; |-->    _x!._1 = Int(_line1vals[_index]) ?? 0\n    _index = _index + 1\n
+attribute _1 derived : int ; |-->    _x!._1 = Int(_line1vals[_index]) ?? 0\n    _index = _index + 1\n
+
+attribute _1 : long ; |-->    _x!._1 = Int64(_line1vals[_index]) ?? 0\n    _index = _index + 1\n
+attribute _1 identity : long ; |-->    _x!._1 = Int64(_line1vals[_index]) ?? 0\n    _index = _index + 1\n
+attribute _1 derived : long ; |-->    _x!._1 = Int64(_line1vals[_index]) ?? 0\n    _index = _index + 1\n
+
+attribute _1 : double ; |-->    _x!._1 = Double(_line1vals[_index]) ?? 0.0\n    _index = _index + 1\n
+attribute _1 identity : double ; |-->    _x!._1 = Double(_line1vals[_index]) ?? 0.0\n    _index = _index + 1\n
+attribute _1 derived : double ; |-->    _x!._1 = Double(_line1vals[_index]) ?? 0.0\n    _index = _index + 1\n
+
+_1 |-->_1`attributeSetting<when> _1 attributeDefinition
+_1 |-->
+
+
+fromJSON::
+_1 |-->_1`attributeFromJSON
+_1 _* |-->_1`attributeFromJSON_*`recurse
+
+
+attributeFromJSON::
+attribute _1 : String ; |-->      _x!._1 = jsonObj["_1"] as! String\n
+attribute _1 identity : String ; |-->      _x!._1 = jsonObj["_1"] as! String\n
+attribute _1 derived : String ; |-->      _x!._1 = jsonObj["_1"] as! String\n
+
+attribute _1 : int ; |-->      _x!._1 = jsonObj["_1"] as! Int\n
+attribute _1 identity : int ; |-->      _x!._1 = jsonObj["_1"] as! Int\n
+attribute _1 derived : int ; |-->      _x!._1 = jsonObj["_1"] as! Int\n
+
+attribute _1 : long ; |-->      _x!._1 = jsonObj["_1"] as! Int64\n
+attribute _1 identity : long ; |-->      _x!._1 = jsonObj["_1"] as! Int64\n
+attribute _1 derived : long ; |-->      _x!._1 = jsonObj["_1"] as! Int64\n
+
+attribute _1 : double ; |-->      _x!._1 = jsonObj["_1"] as! Double\n
+attribute _1 identity : double ; |-->      _x!._1 = jsonObj["_1"] as! Double\n
+attribute _1 derived : double ; |-->      _x!._1 = jsonObj["_1"] as! Double\n
+
+_1 |-->_1`attributeFromJSON<when> _1 attributeDefinition
+_1 |-->
+
+
+
+jsonData::
+_1 |-->_1`jsonAttributeData
+_1 _* |-->_1`jsonAttributeData_*`recurse
+
+
+jsonAttributeData::
+attribute _1 : String ; |-->      "_1" : _x._1 as NSString
+attribute _1 identity : String ; |-->      "_1" : _x._1 as NSString
+attribute _1 derived : String ; |-->      "_1" : _x._1 as NSString
+
+attribute _1 : _2 ; |-->      "_1": NSNumber(value: _x._1)
+attribute _1 identity : _2 ; |-->      "_1": NSNumber(value: _x._1)
+attribute _1 derived : _2 ; |-->      "_1": NSNumber(value: _x._1)
+
+
+_1 |-->_1`jsonAttributeData,\n<when> _1 attributeDefinition
+_1 |-->
+
+
+
+

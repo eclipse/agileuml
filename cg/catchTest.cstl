@@ -1,0 +1,23 @@
+BinaryExpression::
+_1 : _2 |-->_2 _1
+
+_1 |-->_1
+
+
+BasicExpression::
+OclException |-->Throwable
+ProgramException |-->Exception 
+SystemException |-->Error
+IOException |-->IOException 
+CastingException |-->ClassCastException 
+NullAccessException |-->NullPointerException
+IndexingException |-->IndexOutOfBoundsException
+ArithmeticException |-->ArithmeticException
+IncorrectElementException |-->InputMismatchException
+AssertionException |-->AssertionError
+AccessingException |-->IllegalAccessException
+
+_1 |-->_1
+
+
+

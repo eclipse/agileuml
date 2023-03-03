@@ -1,0 +1,10 @@
+iden::
+_1 |-->_1<action> 0 / x
+
+substitute::
+_1 _2 _3 |-->_1<action> _2 / _3
+
+
+
+
+

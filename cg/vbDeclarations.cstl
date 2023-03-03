@@ -1,0 +1,395 @@
+moduleBody::
+\r\n |-->\n
+_1 |-->_1 
+_1 \r\n _* |-->_1 \n_*`moduleBodyElement
+
+
+moduleBodyElement::
+\r\n |-->\n
+_1 |-->_1
+
+moduleHeader::
+_* |-->
+
+moduleReferences::
+_* |-->
+
+controlProperties::
+_* |-->
+
+moduleConfig::
+_* |--> 
+
+moduleOption::
+_* |-->
+
+moduleOptions::
+_* |-->
+
+
+moduleAttributes::
+_* |-->
+
+attributeStmt::
+_* |-->
+
+
+moduleBlock::
+_1 |-->_1
+
+block::
+\r\n |-->\n
+_1 |-->_1
+\r\n _1 |-->\n_1
+\r\n _* |-->\n_*`blockItem
+_1 \r\n |-->_1\n
+_1 \r\n \r\n |-->_1\n\n
+_1 \r\n _* |-->_1\n_*`blockItem
+
+blockItem::
+\r\n |-->\n
+: |-->\n
+_1 |-->_1
+
+blockStmt::
+\r\n |-->\n
+: |-->\n
+_1 |-->_1
+
+functionStmt::
+_* |-->
+
+beepStmt::
+BEEP |-->
+
+chDirStmt::
+_* |-->
+
+chDriveStmt::
+_* |-->
+
+constStmt::
+_* |-->
+
+explicitCallStmt::
+_* |-->
+
+dateStmt::
+_* |-->
+
+
+declareStmt::
+_* |-->
+
+
+deftypeStmt::
+_* |-->
+
+deleteSettingStmt::
+_* |-->
+
+
+enumerationStmt::
+ENUM _1 \r\n _* END ENUM |-->enumeration _1`VB2UML { _* }\n\n
+
+enumerationStmt_Constant::
+_1 \r\n |--> literal _1;\n 
+_1 = _2 \r\n |--> literal _1;\n 
+
+
+eraseStmt::
+_* |-->
+
+errorStmt::
+_* |-->
+
+eventStmt::
+EVENT _1 _2 |-->  usecase _1`VB2UML_2`VB2UML : void {\n    activity: skip;\n  }\n\n
+_1 EVENT _2 _3 |-->  usecase _2`VB2UML_3`VB2UML : void {\n    activity: skip;\n  }\n\n
+
+
+mkdirStmt::
+_* |-->
+
+nameStmt::
+_* |-->
+
+randomizeStmt::
+_* |-->
+
+closeStmt::
+_* |-->
+
+inputStmt::
+_* |-->
+
+lineInputStmt::
+_* |-->
+
+loadStmt:: 
+_* |--> 
+
+lockStmt::
+_* |-->
+
+lsetStmt::
+_* |-->
+
+midStmt::
+_* |-->
+
+openStmt::
+_* |-->
+
+sendkeysStmt::
+_* |-->
+
+
+valueStmt::
+_* |-->
+
+variableStmt::
+_* |-->
+
+variableListStmt::
+_* |-->
+
+
+implicitCallStmt_InBlock::
+_* |-->
+
+letStmt::
+_* |-->
+
+putStmt::
+_* |-->
+
+setStmt::
+_* |-->
+
+propertyLetStmt::
+_* |-->
+
+propertySetStmt::
+_* |-->
+
+propertyGetStmt::
+_* |-->
+
+unloadStmt::
+_* |-->
+
+widthStmt::
+_* |-->
+
+whileWendStmt::
+_* |-->
+
+withStmt::
+_* |-->
+ 
+writeStmt::
+_* |-->
+
+printStmt::
+_* |-->
+
+
+appActivateStmt::
+_* |-->
+
+doLoopStmt::
+_* |-->
+
+getStmt::
+_* |-->
+
+goSubStmt::
+_* |-->
+
+goToStmt::
+_* |-->
+
+implementsStmt::
+_* |--> 
+
+killStmt::
+_* |-->
+
+onErrorStmt::
+_* |-->
+
+onGoSubStmt::
+_* |-->
+
+onGoToStmt::
+_* |-->
+  
+redimStmt::
+_* |-->
+
+subStmt::
+_* |-->
+
+
+stopStmt::
+STOP |-->
+
+timeStmt::
+_* |-->
+
+typeOfStmt::
+_* |-->
+
+ifThenElseStmt::
+_* |-->
+
+ifBlockStmt::
+_* |-->
+
+ifBlockStmt::
+_* |-->
+
+ifElseBlockStmt::
+_* |-->
+
+ifConditionStmt::
+_* |-->
+
+
+endStmt::
+_* |-->
+
+exitStmt::
+_* |-->
+
+filecopyStmt::
+_* |-->
+
+forEachStmt::
+_* |-->
+
+forNextStmt::
+_* |-->
+
+lineLabel::
+_* |-->
+
+returnStmt::
+RETURN |-->
+
+resumeStmt::
+_* |-->
+
+raiseEventStmt::
+RAISEEVENT _* |-->
+
+
+resetStmt::
+RESET |-->
+
+rmdirStmt::
+_* |-->
+
+rsetStmt::
+_* |-->
+
+saveSettingStmt::
+_* |-->
+
+savepictureStmt::
+_* |-->
+
+seekStmt::
+_* |-->
+
+selectCaseStmt::
+_* |-->
+
+setattrStmt::
+_* |-->
+
+typeStmt::
+TYPE _1 \r\n _* END TYPE |-->  class _1`VB2UML {\n_*`VB2UML\n    static operation new_1`VB2UML() : _1`VB2UML\n    pre: true post: true\n    activity: var result : _1`VB2UML ;\n      result := create_1`VB2UML();\n_*`classConstructor      return result;\n  }
+_1 TYPE _2 \r\n _* END TYPE |-->  class _2`VB2UML {\n_*`VB2UML\n    static operation new_2`VB2UML() : _2`VB2UML\n    pre: true post: true\n    activity: var result : _2`VB2UML ;\n      result := create_2`VB2UML();\n_*`classConstructor      return result;\n  }
+
+classConstructor::
+_1 \r\n |-->      result._1`VB2UML := null;\n
+_1 ( ) \r\n |-->      result._1`VB2UML := Sequence{};\n
+_1 ( _2 ) \r\n |-->      result._1`VB2UML := Integer.subrange(1,_2`VB2UML)->collect(null);\n
+_1 ( _2 ) _3 \r\n |-->      result._1`VB2UML := Integer.subrange(1,_2`VB2UML)->collect(_3`defaultValue);\n
+_1 ( ) _2 \r\n |-->      result._1`VB2UML := Sequence{};\n
+_1 _2 \r\n |-->      result._1`VB2UML := _2`defaultValue;\n
+\r\n |-->\n
+_1 |-->_1`classConstructor<when> _1 typeStmt_Element
+
+unlockStmt::
+_* |-->
+
+
+
+
+
+defaultValue::
+AS _1 |-->_1`defaultValue
+AS NEW _1 |-->_1.new_1()
+AS _1 _2 |-->_1`defaultValue
+DATE |-->null
+Date |-->null
+% |-->0
+INTEGER |-->0
+Integer |-->0
+& |-->0
+^ |-->0
+LONG |-->0
+Long |-->0
+LONGLONG |-->0
+LongLong |-->0
+LONGPTR |-->0
+LongPtr |-->0
+BYTE |-->0
+Byte |-->0
+# |-->0.0
+! |-->0.0
+@ |-->0.0
+DOUBLE |-->0.0
+Double |-->0.0
+DECIMAL |-->0.0
+Decimal |-->0.0
+CURRENCY |-->0.0
+Currency |-->0.0
+SINGLE |-->0.0
+Single |-->0.0
+VARIANT |-->null
+Variant |-->null
+OBJECT |-->null
+Object |-->null
+$ |-->""
+STRING |-->""
+String |-->""
+BOOLEAN |-->false
+Boolean |-->false
+COLLECTION |-->Sequence{}
+Collection |-->Sequence{}
+DICTIONARY |-->Map{}
+Dictionary |-->Map{}
+RANGE |-->Sequence{}
+Range |-->Sequence{}
+_1 |-->_1`defaultValue<when> _1 asTypeClause
+_1 |-->null
+
+
+ambiguousIdentifier::
+Nothing |-->null
+True |-->true
+False |-->false
+_1 |-->_1
+_* |-->_*
+
+ambiguousKeyword::
+_1 |-->_1
+
+certainIdentifier::
+_1 |-->_1
+_* |-->_*
+

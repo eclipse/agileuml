@@ -1,0 +1,81 @@
+model::
+package _1 { _* } _3 |-->import UIKit\nimport FirebaseAuth\nimport FirebaseDatabase\n\nclass FirebaseDbi\n{ static var instance : FirebaseDbi? = nil\n  var database : DatabaseReference? = nil\n\n  static func getInstance() -> FirebaseDbi\n  { if instance == nil\n    { instance = FirebaseDbi() }\n    return instance!\n  }\n\n  init() {}\n\n  func connectByURL(_ url: String)\n  { self.database = Database.database(url: url).reference()\n    if self.database == nil\n    { print("Invalid database url")\n      return\n    }\n_*`observeChanges\n  }\n\n_*\n}\n\n
+
+
+
+classifier::
+_1 |-->_1
+
+
+classDefinition::
+class _1 { _2 } |-->  func persist_1(ex : _1)\n  { let _evo = _1_DAO.writeJSON(_x: ex)\n    if let newChild = self.database?.child("_1s").child(ex.id)\n    { newChild.setValue(_evo) }\n  }\n\n  func delete_1(ex : _1)\n  { if let oldChild = self.database?.child("_1s").child(ex.id)\n    { oldChild.removeValue() }\n  }\n\n<when> _2`classBodyStereotype cloud
+
+class _* |-->
+
+
+enumeration::
+_* |-->
+
+interfaceDefinition::
+_* |-->
+
+
+usecaseDefinition::
+_* |-->
+
+
+classBody::
+_* |-->_*
+
+
+classBodyElement::
+_1 |-->
+
+
+attributeDefinition::
+attribute _1 : _2 ; |-->
+attribute _1 identity : _2 ; |-->
+attribute _1 derived : _2 ; |-->
+ 
+
+operationDefinition::
+_* |-->
+
+invariant::
+_* |-->
+
+stereotype::
+_* |-->
+
+
+observeChanges::
+_1 |-->_1`observeClassChanges<when> _1 classDefinition
+_1 |-->
+
+
+observeClassChanges::
+class _1 { _2 } |-->    self.database?.child("_1s").observe(.value,\n      with:\n      { (change) in\n        var _keys : [String] = [String]()\n        if let d = change.value as? [String : AnyObject]\n        { for (_,v) in d.enumerated()\n          { let _einst = v.1 as! [String : AnyObject]\n            let _ex : _1? = _1_DAO.parseJSON(obj: _einst)\n            _keys.append(_ex!.id)\n          }\n        }\n        var _runtime_1s : [_1] = [_1]()\n        _runtime_1s.append(contentsOf: _1_allInstances)\n\n        for (_,_obj) in _runtime_1s.enumerated()\n        { if _keys.contains(_obj.id)\n          {}\n          else\n          { kill_1(key: _obj.id) }\n        }\n      })\n<when> _2`classBodyStereotype cloud
+
+class _* |-->
+
+
+
+
+
+
+classBodyStereotype::
+_* |-->_*`classElementStereotype
+
+
+classElementStereotype::
+_1 |-->_1`classStereotypeValue<when> _1 stereotype
+_* |-->   
+
+
+classStereotypeValue::
+stereotype _1 ; |-->_1
+stereotype entity = _1 ; |-->
+stereotype _1 = _2 ; |-->
+_* |-->
+
+

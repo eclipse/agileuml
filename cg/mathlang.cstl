@@ -1,0 +1,23 @@
+factorExpression::
+‡ _1 _2 _3 |-->Real.integral(_1,_2,_3)
+× _1 _2 _3 |-->Integer.Prd(_1,_2,_3)
+_1 * _2 |-->_2`multiply<action> _90 _1
+
+additiveExpression::
+_1 + _2 |-->_1 + _2
+_1 |-->_1
+
+
+iden::
+_1 |-->_1
+
+multiply::
+_1 + _2 |-->_1*_90 + _2*_90
+_1 |-->_1^{2}<when> _1 _90
+_1 |-->_1*_90
+( _1 ) |-->(_1`multiply)
+
+
+
+
+

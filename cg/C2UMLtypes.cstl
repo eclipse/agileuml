@@ -1,0 +1,261 @@
+declaredType::
+_1 |-->_1
+_* |-->_*`front
+
+
+typeName::
+_1 _2 |-->_1
+_1 |-->_1
+
+
+specifierQualifierList::
+_1 |-->_1
+_* |-->_*
+
+
+declarationSpecifiers::
+_1 |-->_1
+_* |-->_*
+
+
+declarationSpecifier::
+_1 |-->_1
+
+storageClassSpecifier::
+typedef |-->datatype
+_1 |-->
+
+typeQualifier::
+_1 |-->
+
+typeSpecifier::
+void |-->void
+int |-->int
+char |-->int
+short |-->int
+long |-->long
+float |-->double
+double |-->double
+_Bool |-->boolean
+signed |-->
+unsigned |-->
+char *** |-->Ref(Ref(String))
+char ** |-->Ref(String)
+char * |-->String
+FILE *** |-->Ref(Ref(OclFile))
+FILE ** |-->Ref(OclFile)
+FILE * |-->OclFile
+_1 *** |-->Ref(Ref(Ref(_1)))
+_1 ** |-->Ref(Ref(_1))
+_1 * |-->Ref(_1)
+_1 _2 |-->_1
+_1 |-->_1
+
+
+structOrUnionSpecifier::
+struct _1 { _2 } |-->class _1\n{_2\n}\n\n
+union _1 { _2 } |-->class _1\n{_2\n}\n\n
+struct _1 |-->_1
+union _1 |-->_1
+
+structDeclarationList::
+_* |-->_*
+_1 |-->_1
+
+structDeclaration::
+_1 ; |-->  attribute _1`C2UMLdeclaredVariable : _1`declaredType ;\n
+
+
+enumSpecifier::
+enum _1 { _2 } |-->enumeration _1\n{_2\n}\n\n
+
+enumeratorList::
+_1 |-->_1
+_* |-->_*
+
+enumerator::
+_1 = _2 |-->_1
+_1 |-->_1
+
+enumerationConstant::
+_1 |-->  literal _1\n
+
+declarator::
+_1 _2 |-->_2
+_1 |-->_1
+
+directDeclarator::
+( _1 ) |-->_1
+_1 [ _2 ] |-->_1
+_1 [ ] |-->_1
+_1 ( _2 ) |-->_1(_2)
+_1 ( ) |-->_1()
+_1 |-->_1
+
+
+abstractDeclarator::
+_1 _2 |-->_2
+_1 |-->_1
+
+directAbstractDeclarator::
+( _1 ) |-->_1
+_1 [ _2 ] |-->_1
+_1 [ ] |-->_1
+_1 ( _2 ) |-->_1(_2)
+_1 ( ) |-->_1()
+_1 |-->_1
+
+
+typedefName::
+_1 |-->_1
+
+
+initDeclaratorList::
+_* |-->_*
+_1 |-->_1
+
+
+initDeclarator::
+_1 = _2 |-->_2
+_1 |-->_1
+
+
+
+initializer::
+{ _1 } |-->Sequence{ _1 }
+_1 |-->_1
+
+
+initializerList::
+_* |-->_*
+_1 |-->_1
+
+
+
+parameterTypeList::
+_1 , ... |-->_1, _va_arg_sq : Sequence(OclAny)
+_1 |-->_1
+
+
+parameterList::
+_* |-->_*
+_1 |-->_1
+
+
+parameterDeclaration::
+_1 _2 |-->_2`C2UMLdeclaredVariable : _2`C2UMLtypelhs_1 _2`C2UMLtyperhs
+void |-->
+
+
+
+expression::
+_1 , _2 |-->_2
+_1 |-->_1
+
+assignmentExpression::
+_1 = _2 |-->_2
+_1 *= _2 |-->(_1*_2)
+_1 /= _2 |-->(_1/_2)
+_1 %= _2 |-->(_1%_2)
+_1 *= _2 |-->(_1*_2)
+_1 += _2 |-->(_1+_2)
+_1 -= _2 |-->(_1-_2)
+_1 <<= _2 |-->(_1*(2->pow(_2)))
+_1 >>= _2 |-->(_1/(2->pow(_2)))
+_1 &= _2 |-->MathLib.bitwiseAnd(_1,_2)
+_1 ^= _2 |-->MathLib.bitwiseXor(_1,_2)
+_1 |= _2 |-->MathLib.bitwiseOr(_1,_2)
+_1 |-->_1
+
+
+conditionalExpression::
+_1 ? _2 : _3 |-->if _1 then _2 else _3 endif
+_1 |-->_1
+
+logicalOrExpression::
+_1 || _2 |-->_1 or _2
+_1 |-->_1
+
+logicalAndExpression::
+_1 && _2 |-->_1 & _2
+_1 |-->_1
+
+inclusiveOrExpression::
+_1 | _2 |-->MathLib.bitwiseOr(_1, _2)
+_1 |-->_1
+
+exclusiveOrExpression::
+_1 ^ _2 |-->MathLib.bitwiseXor(_1, _2)
+_1 |-->_1
+
+andExpression::
+_1 & _2 |-->MathLib.bitwiseAnd(_1,_2)
+_1 |-->_1
+
+equalityExpression::
+_1 == _2 |-->_1 = _2
+_1 != _2 |-->_1 /= _2
+_1 |-->_1
+
+relationalExpression::
+_1 < _2 |-->_1 < _2
+_1 <= _2 |-->_1 <= _2
+_1 >= _2 |-->_1 >= _2
+_1 > _2 |-->_1 > _2
+_1 |-->_1
+
+shiftExpression::
+_1 << _2 |-->_1*(2->pow(_2))
+_1 >> _2 |-->_1/(2->pow(_2))
+_1 |-->_1
+
+additiveExpression::
+_1 + _2 |-->_1 + _2
+_1 - _2 |-->_1 - _2
+_1 |-->_1
+
+multiplicativeExpression::
+_1 * _2 |-->_1 * _2
+_1 / _2 |-->_1 / _2
+_1 % _2 |-->_1 mod _2
+_1 |-->_1
+
+castExpression::
+( _1 ) _2 |-->_2->oclAsType(_1)
+_1 |-->_1
+
+unaryExpression::
+++ _1 |-->_1
+-- _1 |-->_1
+& _1 |-->?(_1)
+* _1 |-->!(_1)
+- _1 |-->-_1
++ _1 |-->_1
+~ _1 |-->MathLib.bitwiseNot(_1)
+sizeof ( _1 ) |-->typesize(_1)
+sizeof _1 |-->typesize(_1)
+_1 |-->_1
+
+postfixExpression::
+_1 [ _2 ] |-->_1->at(_2+1)
+_1 ( _2 ) |-->_1(_2)
+_1 . _2 |-->_1._2
+_1 -> _2 |-->(!(_1))._2
+_1 ++ |-->_1
+_1 -- |-->_1
+_1 |-->_1
+
+primaryExpression::
+( _1 ) |-->(_1)
+NULL |-->null
+_1 _2 _3 |-->_1 _2 _3
+_1 _2 |-->_1 _2
+_1 |-->_1
+_* |-->_*
+
+
+argumentExpressionList::
+_1 , _2 |-->_1, _2
+_1 |-->_1
+
+

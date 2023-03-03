@@ -1,0 +1,117 @@
+rules::
+_* |-->_*
+
+
+ruleSpec::
+_1 |-->_1
+
+
+parserRuleSpec::
+_1 : _2 ; _3 |-->_1::\n_2\n\n
+
+
+ruleBlock::
+_1 |-->_1
+
+
+ruleAltList::
+_1 |-->_1 |-->\n
+_1 | _* |-->_1 |-->\n_*`recurse
+
+
+labeledAlt::
+_1 |-->_1
+_1 _2 _3 |-->_1
+
+
+alternative::
+_1 _* |-->_1 _*
+_1 |-->_1
+_* |-->
+
+
+element::
+_1 |--> _1
+_1 ? |--> _?
+_1 * |--> _'*'
+_1 + |--> _'*'
+
+
+ebnfSuffix::
+_1 |-->_1
+
+
+optional::
+_1 |-->false
+_1 ? |-->true
+_1 * |-->true
+_1 + |-->false
+
+
+atom::
+_1 |-->_1
+
+terminal::
+_1 |-->_1
+
+ruleref::
+_1 |-->__1
+
+
+ebnf::
+_1 |-->_1
+
+
+block::
+( _1 ) |-->_1
+
+
+altList::
+_1 |-->_1\n
+_1 | _* |-->_1\n_*`recurse
+
+
+
+lexerRuleSpec::
+fragment _1 : _2 ; |-->_1::\n_2\n\n
+_1 : _2 ; |-->_1::\n_2\n\n
+
+
+lexerRuleBlock::
+_1 |-->_1
+
+
+lexerAltList::
+_1 |-->_1\n
+_1 | _* |-->_1\n_*`recurse
+
+
+lexerAlt::
+_1 _2 |-->_1
+_1 |-->_1
+_* |-->
+
+lexerElements::
+_1 |-->_1 |-->
+_1 _* |-->_1 _*`recurse
+
+
+lexerElement::
+_1 |-->_1
+_1 ? |-->_?
+_1 * |-->_'*'
+_1 + |-->_'*'
+
+
+lexerAtom::
+_1 |-->_1
+[ _1 ] |-->[_1]
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,38 @@
+usecaseDefinition::
+usecase _1 : _2 { _3 } |-->import SwiftUI\n\nstruct _1Screen: View\n{ @ObservedObject var model : ModelFacade = ModelFacade.getInstance()\n\n  var body: some View\n  { _3  }\n}\n\n
+usecase _* |-->
+
+
+
+parameterDeclarations::
+_* |-->
+
+
+parameterDeclaration::
+_* |-->
+
+
+usecaseBody::
+_* |-->_*
+
+
+usecaseBodyElement::
+parameter _1 : _2 ; |--> 
+precondition _1 ; |--> 
+extends _1 ; |--> 
+extendedBy _1 ; |--> 
+activity: _1 ; |--> 
+:: _1 |-->
+_1 |-->_1
+   
+
+stereotype::
+stereotype _1 ; |-->
+stereotype entity = _1 ; |-->List(model.current_1s)\n    { instance in _1ListRowView(instance: instance) }.onAppear(perform:\n        { model.list_1() })\n
+stereotype _1 = _2 ; |-->
+
+
+
+
+
+

@@ -1,0 +1,211 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OclUnaryExpression::
+_1 ->log ( ) |-->ln(_1)
+_1 ->sqrt ( ) |-->sqrt(_1)
+_1 _2  |-->_1`nestedTfunc59 _2 
+
+seqtreerule66::
+_* |-->_*
+
+OclOperation::
+operation _2 ( ) : void pre: true  post: true  activity: _12  |-->fun _2 ( ) { _12 } 
+operation _2 ( _4 ) : void pre: true  post: true  activity: _13  |-->fun _2 _4`seq3subruleset70 { _13 } 
+query _2 ( ) : _6 pre: true  post: true  activity: _12  |-->fun _2 ( ) : _6 { _12 } 
+query _2 ( _4 ) : _7 pre: true  post: true  activity: _13  |-->fun _2 _4`seq3subruleset68 : _7 { _13 } 
+
+static operation _2 ( ) : void pre: true  post: true  activity: _12  |-->fun _2 ( ) { _12 } 
+static operation _2 ( _4 ) : void pre: true  post: true  activity: _13  |-->fun _2 _4`seq3subruleset70 { _13 } 
+
+static operation _2 ( ) : _6 pre: true  post: true  activity: _12  |-->fun _2 ( ) : _6 { _12 } 
+static operation _2 ( _4 ) : _7 pre: true  post: true  activity: _13  |-->fun _2 _4`seq3subruleset70 : _7 { _13 } 
+static query _2 ( ) : _6 pre: true  post: true  activity: _12  |-->fun _2 ( ) : _6 { _12 } 
+static query _2 ( _4 ) : _7 pre: true  post: true  activity: _13  |-->fun _2 _4`seq3subruleset68 : _7 { _13 } 
+
+
+nestedTfunc53::
+self |-->this
+_1 |-->_1
+_* |-->null
+
+seq3ruleset62::
+_1 |-->_1 
+_0 |-->_0
+
+OclType::
+void  |-->Unit 
+OclAny  |-->Object 
+int |-->Int
+double |-->Double
+long |-->Long
+boolean |-->Boolean
+String  |-->String 
+Set ( _3 )  |-->Set 
+Sequence ( _3 )  |-->List 
+Function ( _3 , _5 )  |-->Fun 
+Map ( _3 , _5 )  |-->Map 
+_* |-->Int
+
+nestedSfunc60::
+int |-->Int
+double |-->Double
+long |-->Long
+boolean |-->Boolean
+_* |-->Int
+
+OclClass::
+class _2 { }  |-->class _2 ( ) { } 
+class _2 { _4 }  |-->class _2 ( ) _4`seq3subruleset73 
+
+seq3subruleset58::
+_* |-->( _*`seq3ruleset57 )
+
+OclCollectionExpression::
+Set { _3 }  |-->setOf _3`seq3subruleset63 
+Sequence { _3 }  |-->listOf _3`seq3subruleset65 
+_1 { }  |-->_1`nestedTfunc61 ( ) 
+
+seq3ruleset64::
+_1 |-->_1 
+_0 |-->_0
+
+seq3subruleset70::
+_* |-->( _*`seq3ruleset69 )
+
+seq3ruleset67::
+_1 : _3  |-->_1 : _3 
+_0 |-->_0
+
+seq3ruleset69::
+_1 : _3  |-->_1 : _3 
+_0 |-->_0
+
+seq3subruleset73::
+_* |-->{ _*`seq3ruleset72 }
+
+OclBasicExpression::
+" " |-->' '
+"x" |-->'x'
+_1 . _3 ( )  |-->_1 . _3 ( ) 
+_1 [ _3 ]  |-->_1 [ _3 - 1 ] 
+_1 . _3 ( _5 )  |-->_1 . _3 _5`seq3subruleset58 
+_1 . _3  |-->_1 . _3 
+_1 |-->_1 <when> _1 Integer
+_1 |-->_1 <when> _1 Real
+_1 |-->_1 <when> _1 Boolean
+_1  |-->_1`nestedTfunc53 <when> _1 Object
+_1 |-->_1 
+_* |-->'x'
+
+OclBinaryExpression::
+_1 <= _3  |-->_1 <= _3 
+_1 mod _3  |-->_1 % _3 
+_1 or _3  |-->_1 || _3 
+_1 & _3  |-->_1 && _3 
+_1 * _3  |-->_1 * _3 
+_1 + _3  |-->_1 + _3 
+_1 - _3  |-->_1 - _3 
+_1 /= _3  |-->_1 != _3 
+_1 / _3  |-->_1 / _3 
+_1 div _3  |-->_1 / _3 
+_1 <>= _3  |-->_1 === _3 
+_1 < _3  |-->_1 < _3 
+_1 = _3  |-->_1 == _3 
+_1 > _3  |-->_1 > _3 
+_1 >= _3  |-->_1 >= _3 
+
+nestedTfunc61::
+Sequence |-->listOf
+Set |-->setOf
+_* |-->listOf
+
+seq3ruleset72::
+; |--> 
+attribute _2 : _4  |-->var _2 = _4`nestedSfunc71 ; 
+_0 |-->_0
+
+nestedSfunc71::
+int |-->0
+String |-->' '
+long |-->0
+_* |-->0
+
+OclConditionalExpression::
+if _2 then _4 else _6 endif  |-->if ( _2 ) _4 else _6 
+
+nestedSfunc52::
+" " |-->' '
+"x" |-->'x'
+_* |-->'x'
+
+seq3subruleset65::
+_* |-->( _*`seq3ruleset64 )
+
+seq3subruleset68::
+_* |-->( _*`seq3ruleset67 )
+
+seq3ruleset57::
+_1 |-->_1 
+_0 |-->_0
+
+nestedTfunc59::
+not |-->!
+_1 |-->_1
+_* |-->-
+
+OclAttribute::
+attribute _2 : double   |-->var _2 = 0.0 
+attribute _2 : String   |-->var _2 = ' ' 
+attribute _2 : Sequence   |-->var _2 = null 
+attribute _2 : Set   |-->var _2 = null 
+attribute _2 : _4  |-->var _2 = 0 
+
+
+seq3subruleset63::
+_* |-->( _*`seq3ruleset62 )
+
+OclStatement::
+var _2 : Map ( String  , OclAny  )   |-->var _2 : Map 
+var _2 : Function ( String  , OclAny  )   |-->var _2 : Fun 
+var _2 : double   |-->var _2 : Double 
+var _2 : boolean   |-->var _2 : Boolean 
+var _2 : String   |-->var _2 : String 
+var _2 : Sequence   |-->var _2 : List 
+var _2 : Set   |-->var _2 : Set 
+( _2 )  |-->{ _2`seqtreerule66 } 
+return _2  |-->return _2 
+var _2 : _4  |-->var _2 : _4 <when> _4 Integer
+while _2 do _4  |-->while ( _2 ) { _4 } 
+_1 := _3  |-->_1 = _3 
+_1 _2  |-->_2 
+_1 |-->_1 
+if _2 then _4 else _6  |-->if ( _2 ) { _4 } else { _6 } 
+for _2 : _4 do _6  |-->for ( _2 in _4 ) { _6 } 
+
+
+seq3subruleset3::
+_* |-->_*`seq3ruleset2
+
+seq3ruleset2::
+; |--> 
+_1 _2  |--> _2 
+_0 |-->_0
+
+OclEnumeration::
+enumeration _2 { _4 }  |-->class _2 { _4`seq3subruleset3 } 
+

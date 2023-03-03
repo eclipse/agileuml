@@ -1,0 +1,158 @@
+model::
+package _1 { _* } _3 |-->import Foundation\nimport SQLite3\n\nclass Dbi\n{ let dbPointer : OpaquePointer?\n  static let DBNAME = "_1.db"\n  static let DBVERSION = 1\n\n  private init(dbPointer: OpaquePointer?)\n  { self.dbPointer = dbPointer }\n\n  static func obtainDatabase(path: String) -> Dbi?\n  { var dbi : Dbi? = nil\n    if FileAccessor.fileExistsAbsolutePath(filename: path)\n    { print("Database already exists")\n      do\n      { try dbi = Dbi.open(path: path)\n        if dbi != nil\n        { print("Opened database") }\n        else\n        { print("Failed to open existing database") }\n      }\n      catch { print("Error opening existing database")\n              return nil\n            }\n    }\n    else\n    { print("New database will be created")\n      do\n      { try dbi = Dbi.open(path: path)\n        if dbi != nil\n        { print("Opened new database")\n          try dbi!.createDatabase(db: dbi!)\n        }\n        else\n        { print("Failed to open new database") }\n      }\n      catch { print("Error opening new database")\n              return nil }\n    }\n    return dbi\n  }\n\n  fileprivate var errorMessage: String\n  { if let errorPointer = sqlite3_errmsg(dbPointer)\n    { let errorMessage = String(cString: errorPointer)\n      return errorMessage\n    }\n    else\n    { return "Unknown error from sqlite." }\n  }\n\n  func prepareStatement(sql: String) throws -> OpaquePointer?\n  { var statement: OpaquePointer?\n    guard sqlite3_prepare_v2(dbPointer, sql, -1, &statement, nil) == SQLITE_OK\n    else\n    { return nil }\n    return statement\n  }\n\n  func createDatabase(db : Dbi) throws\n  { do\n    {\n_*`createTableStatements\n      print("Created database")\n    }\n    catch { print("Errors: " + errorMessage) }\n  }\n\n  static func open(path: String) throws -> Dbi?\n  { var db: OpaquePointer?\n\n    if sqlite3_open(path, &db) == SQLITE_OK\n    { return Dbi(dbPointer: db) }\n    else\n    { defer\n      { if db != nil\n        { sqlite3_close(db) }\n      }\n\n      if let errorPointer = sqlite3_errmsg(db)\n      { let message = String(cString: errorPointer)\n        print("Error opening database: " + message)\n      }\n      else\n      { print("Unknown error opening database") }\n      return nil\n    }\n  }\n\n  func createTable(table: String) throws\n  { let createTableStatement = try prepareStatement(sql: table)\n    defer\n    { sqlite3_finalize(createTableStatement) }\n    guard sqlite3_step(createTableStatement) == SQLITE_DONE\n    else\n    { print("Error creating table")\n      return\n    }\n    print("table " + table + " created.")\n  }\n\n_*\n  deinit\n  { sqlite3_close(self.dbPointer) }\n}\n\n
+
+
+classifier::
+_1 |-->_1
+
+
+classDefinition::
+class _1 { _2 } |-->  static let _1_TABLE_NAME = "_1"\n  static let _1_CREATE_SCHEMA =\n    "create table _1 (_id integer primary key autoincrement" +\n_2      " )"\n\n  func list_1() -> [_1VO]\n  { var res : [_1VO] = [_1VO]()\n    let statement = "SELECT * FROM _1 "\n    let queryStatement = try? prepareStatement(sql: statement)\n    if queryStatement == nil { return res }\n\n    while (sqlite3_step(queryStatement) == SQLITE_ROW)\n    { let _id = sqlite3_column_int(queryStatement, 0)\n      var vo = _1VO()\n      var _colIndex : Int = 1\n_2`readAttributes      res.append(vo)\n    }\n    sqlite3_finalize(queryStatement)\n    return res\n  }\n\n  func create_1(vo : _1VO) throws\n  { let insertSQL : String = "INSERT INTO _1 (_2`attributeNameList) VALUES (" +\n_2`attributeValueList ")"\n    let insertStatement = try prepareStatement(sql: insertSQL)\n    defer\n    { sqlite3_finalize(insertStatement)\n    }\n    sqlite3_step(insertStatement)\n  }\n\n  func edit_1(vo : _1VO)\n  { var updateStatement: OpaquePointer?\n    let statement : String = "UPDATE _1 SET " +\n_2`attributeSettings    if sqlite3_prepare_v2(dbPointer, statement, -1, &updateStatement, nil) == SQLITE_OK\n    { sqlite3_step(updateStatement) }\n    sqlite3_finalize(updateStatement)\n  }\n\n  func delete_1(_val : String)\n  { let deleteStatementString = "DELETE FROM _1 WHERE id = '" + _val + "'"\n    var deleteStatement: OpaquePointer?\n    if sqlite3_prepare_v2(dbPointer, deleteStatementString, -1, &deleteStatement, nil) == SQLITE_OK\n    { sqlite3_step(deleteStatement) }\n    sqlite3_finalize(deleteStatement)\n  }\n\n<when> _2`classBodyStereotype persistent
+
+class _* |-->
+
+
+
+interfaceDefinition::
+_* |-->
+
+
+usecaseDefinition::
+_* |-->
+
+enumeration::
+_* |-->
+
+
+classBody::
+_* |-->_*
+
+
+classBodyElement::
+_1 |-->_1
+
+
+attributeDefinition::
+attribute _1 : boolean ; |-->      ", _1 VARCHAR(5) not null" +\n
+attribute _1 _2 : boolean ; |-->      ", _1 VARCHAR(5) not null" +\n
+attribute _1 : int ; |-->      ", _1 integer not null" +\n 
+attribute _1 _2 : int ; |-->      ", _1 integer not null" +\n 
+attribute _1 : long ; |-->      ", _1 integer not null" +\n 
+attribute _1 _2 : long ; |-->      ", _1 integer not null" +\n
+attribute _1 : double ; |-->      ", _1 double not null" +\n 
+attribute _1 _2 : double ; |-->      ", _1 double not null" +\n 
+attribute _1 : _2 ; |-->      ", _1 VARCHAR(50) not null" +\n 
+attribute _1 _2 : _3 ; |-->      ", _1 VARCHAR(50) not null" +\n
+
+
+operationDefinition::
+_* |-->
+
+invariant::
+_* |-->
+
+stereotype::
+_* |-->
+
+
+readAttributes::
+_* |-->_*`readElementAttributes
+
+
+readElementAttributes::
+_1 |-->_1`readAttribute<when> _1 attributeDefinition
+_1 |-->
+
+
+readAttribute::
+attribute _1 : String ; |-->      guard let queryResult_COL_1 = sqlite3_column_text(queryStatement, _colIndex)\n      else { return res }\n      let _1 = String(cString: queryResult_COL_1)\n      vo.set_1(_x: _1)\n      _colIndex = _colIndex + 1\n
+attribute _1 _2 : String ; |-->      guard let queryResult_COL_1 = sqlite3_column_text(queryStatement, _colIndex)\n      else { return res }\n      let _1 = String(cString: queryResult_COL_1)\n      vo.set_1(_x: _1)\n      _colIndex = _colIndex + 1\n
+
+attribute _1 : int ; |-->      let queryResult_COL_1 = sqlite3_column_int(queryStatement, _colIndex)\n      let _1 = Int(queryResult_COL_1)\n      vo.set_1(_x: _1)\n      _colIndex = _colIndex + 1\n
+attribute _1 _2 : int ; |-->      let queryResult_COL_1 = sqlite3_column_int(queryStatement, _colIndex)\n      let _1 = Int(queryResult_COL_1)\n      vo.set_1(_x: _1)\n      _colIndex = _colIndex + 1\n
+
+attribute _1 : long ; |-->      let queryResult_COL_1 = sqlite3_column_int64(queryStatement, _colIndex)\n      let _1 = Int64(queryResult_COL_1)\n      vo.set_1(_x: _1)\n      _colIndex = _colIndex + 1\n
+attribute _1 _2 : long ; |-->      let queryResult_COL_1 = sqlite3_column_int64(queryStatement, _colIndex)\n      let _1 = Int64(queryResult_COL_1)\n      vo.set_1(_x: _1)\n      _colIndex = _colIndex + 1\n
+
+attribute _1 : double ; |-->      let queryResult_COL_1 = sqlite3_column_double(queryStatement, _colIndex)\n      let _1 = Double(queryResult_COL_1)\n      vo.set_1(_x: _1)\n      _colIndex = _colIndex + 1\n
+attribute _1 _2 : double ; |-->      let queryResult_COL_1 = sqlite3_column_double(queryStatement, _colIndex)\n      let _1 = Double(queryResult_COL_1)\n      vo.set_1(_x: _1)\n      _colIndex = _colIndex + 1\n
+
+
+
+
+attributeNameList::
+_* |-->_*`attributeNames
+
+
+attributeNames::
+_1 |-->_1`attributeName<when> _1 attributeDefinition
+_1 |-->
+
+
+attributeName::
+attribute _1 : _2 ; |-->_1,
+attribute _1 identity : _2 ; |-->_1
+attribute _1 _2 : _3 ; |-->_1,
+
+
+attributeValueList::
+_* |-->_*`attributeValues
+
+
+attributeValues::
+_1 |-->_1`attributeValue<when> _1 attributeDefinition
+_1 |-->
+
+
+attributeValue::
+attribute _1 : String ; |--> "'" + vo.get_1() + "'," +
+attribute _1 identity : String ; |--> "'" + vo.get_1() + "'" +
+attribute _1 derived : String ; |--> "'" + vo.get_1() + "'," +
+attribute _1 : _2 ; |--> String(vo.get_1()) + "," + 
+attribute _1 _2 : _3 ; |--> String(vo.get_1()) + "," + 
+
+
+
+attributeSettings::
+_* |-->_*`attributeSetStatements
+
+
+attributeSetStatements::
+_1 |-->_1`attributeSetStatement<when> _1 attributeDefinition
+_1 |-->
+
+
+attributeSetStatement::
+attribute _1 : String ; |-->      " _1 = '" + vo.get_1() + "' ," +\n
+attribute _1 identity : String ;  |-->      " WHERE _1 = '" + vo.get_1() + "'"\n
+attribute _1 : _2 ; |-->      " _1 = " + String(vo.get_1()) + " ," +\n
+attribute _1 _2 : _3 ; |-->      " _1 = " + String(vo.get_1()) + " ," +\n
+
+
+createTableStatements::
+_1 |-->_1`createTableStatement<when> _1 classDefinition
+_1 |-->
+
+createTableStatement::
+class _1 { _2 } |-->      try createTable(table: Dbi._1_CREATE_SCHEMA)\n<when> _2`classBodyStereotype persistent
+class _1 extends _2 { _3 } |-->       try createTable(table: Dbi._1_CREATE_SCHEMA)\n<when> _3`classBodyStereotype persistent
+class _* |-->
+
+
+classBodyStereotype::
+_* |-->_*`classElementStereotype
+
+
+classElementStereotype::
+_1 |-->_1`classStereotypeValue<when> _1 stereotype
+_* |-->   
+
+
+classStereotypeValue::
+stereotype _1 ; |-->_1
+stereotype entity = _1 ; |-->
+stereotype _1 = _2 ; |-->
+_* |-->
+
+
+ 

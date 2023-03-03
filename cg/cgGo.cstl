@@ -1,0 +1,143 @@
+/*                                                        */
+/* Main code-generation specification file for Go 1.15+   */
+/* Also uses cgGo*.cstl.       Depends on ocl.go          */
+/*                                                        */
+/* Please note that newlines in output are written        */
+/* as \n                                                  */
+
+
+
+Package::
+package _1 { types: _2 classes: _3 usecases: _4 } |-->package main\n\nimport "math"\nimport "fmt"\nimport "container/list"\nimport "strings"\nimport "./ocl"\n\n_2\n\n_3\n\n_4 
+
+
+Enumeration::
+enumeration _1 { _2 } |-->type _1 int\n\nconst (\n    default_1 _1 = iota\n_2)\n\n
+
+ 
+literal _1, _2 |-->    _1\n_2
+literal _1 |-->    _1\n
+ 
+
+Datatype::
+datatype _1 = _2 |-->type _1 _2
+
+
+Type::
+int |-->int
+long |-->int64
+boolean |-->bool
+double |-->float64
+String |-->string
+
+OclAny |-->interface{}
+
+OclException |-->*oclexception.OclException
+AssertionException |-->*oclexception.AssertionException
+ArithmeticException |-->*oclexception.ArithmeticException
+IOException |-->*oclexception.IOException
+IndexingException |-->*oclexception.IndexingException
+NullAccessException |-->*oclexception.NullAccessException
+AccessingException |-->*oclexception.AccessingException
+
+
+OclFile |-->*oclfile.OclFile
+OclProcess |-->*oclprocess.OclProcess
+OclRandom |-->*oclrandom.OclRandom
+OclDate |-->*ocldate.OclDate
+OclType |-->reflect.Type
+OclIterator |-->*ocliterator.OclIterator
+
+
+void |-->Void
+
+Sequence |-->*list.List
+Set |-->*list.List
+Map |-->map[interface{}]interface{}
+
+Sequence(_1) |-->*list.List
+Set(_1) |-->*list.List
+
+Ref(void) |-->*interface{}
+Ref(int) |-->*int
+Ref(long) |-->*int64
+Ref(double) |-->*float64
+Ref(String) |-->*string
+Ref(boolean) |-->*bool
+Ref(_1) |-->_1<when> _1 Ref
+Ref(_1) |-->_1<when> _1 Function
+Ref(_1) |-->*_1`name<when> _1 Class
+Ref(_1) |-->*_1
+
+Map(_1,_2) |-->map[_1]_2
+Function(_1,_2) |-->func(_1) _2
+
+_1 |-->_1`alias<when> _1 datatype
+
+_1 |-->_1<when> _1 interface
+_1 |-->*_1<when> _1 Class
+
+_1 |-->_1
+
+
+
+Class::
+class _1 { _2 } |-->type _1 interface {\n_2`cgGointerface\n}\n<when> _1 interface 
+ 
+
+class _1 { _2 }   |-->type _1 struct {\n_2`cgGoattributes}\n\nvar _1_instances = list.New()\n\n_2`cgGostatic\nfunc create_1() *_1 {\n  var res *_1\n  res = &_1{}\n  _1_instances.PushBack(res)\n  return res\n}\n\nvar TYPE_1 = reflect.TypeOf(&_1{})\n\n_2`cgGooperations
+ 
+
+class _1 extends _2 { _3 }   |-->type _1 struct {\n  super *_2`name\n_3`cgGoattributes}\n\nvar _1_instances = list.New()\n\n_3`cgGostatic\nfunc create_1() *_1 {\n  var res *_1\n  res = &_1{}\n  res.super = &_2{}\n  _1_instances.PushBack(res)\n  _2`name_instances.PushBack(res.super)\n  return res\n}\n\nvar TYPE_1 = reflect.TypeOf(&_1{})\n\n_3`cgGooperations
+
+abstract class _1 { _2 }   |-->type _1 struct {\n_2`cgGoattributes}\n\nvar _1_instances = list.New()\n\n_2`cgGostatic\nfunc create_1() *_1 {\n  var res *_1\n  res = &_1{}\n  _1_instances.PushBack(res)\n  return res\n}\n\nvar TYPE_1 = reflect.TypeOf(&_1{})\n\n_2`cgGooperations
+
+
+abstract class _1 extends _2 { _3 }   |-->type _1 struct {\n  _2`name\n_3`cgGoattributes}\n\nvar _1_instances = list.New()\n\n_3`cgGostatic\nfunc create_1() *_1 {\n  var res *_1\n  res = &_1{}\n  _1_instances.PushBack(res)\n  res.super = &_2{}\n  _2`name_instances.PushBack(res.super)\n  return res\n}\n\nvar TYPE_1 = reflect.TypeOf(&_1{})\n\n_3`cgGooperations
+
+
+class _1 implements _2 { _3 }   |-->type _1 struct {\n_3`cgGoattributes}\n\nvar _1_instances = list.New()\n\n_3`cgGostatic\nfunc create_1() *_1 {\n  var res *_1\n  res = &_1{}\n  _1_instances.PushBack(res)\n  return res\n}\n\nvar TYPE_1 = reflect.TypeOf(&_1{})\n\n_3`cgGooperations
+
+ 
+
+class _1 extends _2 implements _3 { _4 }   |-->type _1 struct {\n  super *_2`name\n_4`cgGoattributes}\n\nvar _1_instances = list.New()\n\n_4`cgGostatic\nfunc create_1() *_1 {\n  var res *_1\n  res = &_1{}\n  _1_instances.PushBack(res)\n  res.super = &_2{}\n  _2`name_instances.PushBack(res.super)\n  return res\n}\n\nvar TYPE_1 = reflect.TypeOf(&_1{})\n\n_4`cgGooperations
+
+
+abstract class _1 implements _2 { _3 }   |-->type _1 struct {\n_3`cgGoattributes}\n\nvar _1_instances = list.New()\n\n_3`cgGostatic\nfunc create_1() *_1 {\n  var res *_1\n  res = &_1{}\n  _1_instances.PushBack(res)\n  return res\n}\n\nvar TYPE_1 = reflect.TypeOf(&_1{})\n\n_3`cgGooperations
+
+
+abstract class _1 extends _2 implements _3 { _4 }   |-->type _1 struct {\n  super *_2`name\n_4`cgGoattributes}\n\nvar _1_instances = list.New()\n\n_4`cgGostatic\nfunc create_1() *_1 {\n  var res *_1\n  res = &_1{}\n  _1_instances.PushBack(res)\n  res.super = &_2{}\n  _2`name_instances.PushBack(res.super)\n  return res\n}\n\nvar TYPE_1 = reflect.TypeOf(&_1{})\n\n_4`cgGooperations
+
+
+
+Attribute::
+static attribute _1 : _2 := _3; |-->
+
+static attribute _1 : _2; |-->
+
+identity attribute _1 : _2; |-->  var _1 _2\n
+
+attribute _1 : _2 := _3; |-->  var _1 _2 = _3\n
+
+attribute _1 : _2; |-->  var _1 _2\n
+
+reference _1 : _2; |-->  var _1 _2\n
+
+
+
+Parameter::
+_1 : _2, _3 |-->_1 _2, _3
+_1 : _2 |-->_1 _2
+
+
+
+ParameterArgument::
+_1, _2 |-->_1, _2
+_1 |-->_1
+
+
+
+
+UseCase::
+usecase _1(_2) : _3 { _4 } |-->func _1(_2) _3 {\n_4\n}\n\n
+

@@ -1,0 +1,187 @@
+/* Only classes without inheritance are supported */
+
+
+model::
+package _1 { _* } _3 |-->_*
+
+
+classifier::
+_1 |-->_1
+
+interfaceDefinition::
+_* |-->
+
+enumeration::
+_* |-->
+
+
+classDefinition::
+class _1 { _2 } |-->import Foundation\nimport Darwin\n\nclass _1VO : Hashable, Identifiable\n{\n_2`attributeDefns\n\n  static var defaultInstance : _1VO? = nil\n  var errorlist : [String] = [String]()\n\n  init() {}\n\n  static func default_1VO() -> _1VO\n  { if defaultInstance == nil \n    { defaultInstance = _1VO() }\n    return defaultInstance!\n  }\n\n  init(_x : _1) {\n_2`init2Body  }\n\n  func resetData()  { errorlist = [String]() }\n\n  func iscreate_1error() -> Bool\n  { resetData()\n    return errorlist.count > 0\n  }\n\n  func isedit_1error() -> Bool\n  { return iscreate_1error() }\n\n  func islist_1error() -> Bool\n  { return false }\n\n  func isdelete_1error() -> Bool\n  { return false }\n\n  func errors() -> String\n  { var res : String = ""\n    for (_,x) in errorlist.enumerated()\n    { res = res + x + ", " }\n    return res\n  }\n\n_2\n  static func ==(lhs: _1VO, rhs: _1VO) -> Bool\n  { return _2`equalsPredicate\n  }\n\n  func hash(into hasher: inout Hasher) {\n_2`hasherCode  }\n\n  func toString() -> String\n  { return ""_2`toStringCode }\n}\n\n
+
+
+usecaseDefinition::
+usecase _1 ( _2 ) : _3 { _4 } |-->import Foundation\nimport Darwin\n\nclass _1VO\n{\n_2  static var defaultInstance : _1VO? = nil\n  var errorlist : [String] = [String]()\n\n  var result : _3`mobile = _3`defaultValue\n\n  init() {}\n\n  static func default_1VO() -> _1VO\n  { if defaultInstance == nil\n    { defaultInstance = _1VO() }\n    return defaultInstance!\n  }\n\n_2`gettersSetters  func resetData()\n  { errorlist = [String]() }\n\n  func is_1error() -> Bool\n  { resetData()\n    if errorlist.count > 0\n    { return true }\n    return false\n  }\n\n  func errors() -> String\n  { var res : String = ""\n    for (_,x) in errorlist.enumerated()\n    { res = res + x + ", " }\n    return res\n  }\n}\n\n
+_* |-->
+
+
+classBody::
+_* |-->_*
+
+
+classBodyElement::
+_1 |-->_1
+
+
+attributeDefinition::
+attribute _1 : _2 ; |-->  func get_1() -> _2`mobile\n  { return _1 }\n\n  func set_1(_ _x : _2`mobile)\n  { _1 = _x }\n\n
+attribute _1 identity : _2 ; |-->  func get_1() -> _2`mobile\n  { return _1 }\n\n  func set_1(_ _x : _2`mobile)\n  { _1 = _x }\n\n
+attribute _1 derived : _2 ; |-->  func get_1() -> _2`mobile\n  { return _1 }\n\n  func set_1(_ _x : _2`mobile)\n  { _1 = _x }\n\n
+ 
+
+operationDefinition::
+_* |-->
+
+invariant::
+_* |-->
+
+stereotype::
+_* |-->
+
+
+attributeDefns::
+_1 |-->_1`attributeDef
+_1 _* |-->_1`attributeDef_*`recurse
+
+
+attributeDef::
+attribute _1 : _2 ; |-->  var _1 : _2`mobile = _2`defaultValue\n
+attribute _1 identity : _2 ; |-->  var _1 : _2`mobile = _2`defaultValue\n
+attribute _1 derived : _2 ; |-->  var _1 : _2`mobile = _2`defaultValue\n
+_1 |-->_1`attributeDef<when> _1 attributeDefinition
+_1 |-->
+
+
+defaultValue::
+String |-->""
+int |-->0
+long |-->0
+double |-->0.0
+boolean |-->false
+Sequence ( _1 ) |-->[]
+Set ( _1 ) |-->[]
+Map ( _1 , _2 ) |-->[:]
+_1 |-->_1.defaultInstance_1()
+
+
+
+
+equalsPredicate::
+_1 |-->_1`equalsTest
+_1 _* |-->_1`equalsTest && _*`recurse
+
+
+equalsTest::
+attribute _1 : _2 ; |-->lhs._1 == rhs._1
+attribute _1 identity : _2 ; |-->lhs._1 == rhs._1
+attribute _1 derived : _2 ; |-->lhs._1 == rhs._1
+_1 |-->_1`equalsTest<when> _1 attributeDefinition
+_1 |-->true
+
+
+hasherCode::
+_1 |-->_1`hasherCombine
+_1 _* |-->_1`hasherCombine_*`recurse
+
+
+hasherCombine::
+attribute _1 : _2 ; |-->    hasher.combine(_1)\n
+attribute _1 identity : _2 ; |-->    hasher.combine(_1)\n
+attribute _1 derived : _2 ; |-->    hasher.combine(_1)\n
+_1 |-->_1`hasherCombine<when> _1 attributeDefinition
+_1 |-->
+
+
+
+toStringCode::
+_1 |-->_1`toStringText
+_1 _* |-->_1`toStringText_*`recurse
+
+
+toStringText::
+attribute _1 : String ; |--> + "_1= " + _1 + " "
+attribute _1 identity : String ; |--> + "_1= " + _1 + " "
+attribute _1 derived : String ; |--> + "_1= " + _1 + " "
+attribute _1 : _2 ; |--> + "_1= " + String(_1) + " "
+attribute _1 identity : _2 ; |--> + "_1= " + String(_1) + " "
+attribute _1 derived : _2 ; |--> + "_1= " + String(_1) + " "
+_1 |-->_1`toStringText<when> _1 attributeDefinition
+_1 |-->
+
+
+
+init1Body::
+_1 |-->_1`init1BodyCode
+_1 _* |-->_1`init1BodyCode_*`recurse
+
+
+init1BodyCode::
+attribute _1 : _2 ; |-->    _1 = _1x\n
+attribute _1 identity : _2 ; |-->    _1 = _1x\n
+attribute _1 derived : _2 ; |-->    _1 = _1x\n
+_1 |-->_1`init1BodyCode<when> _1 attributeDefinition
+_1 |-->
+
+
+
+init2Body::
+_1 |-->_1`init2BodyCode
+_1 _* |-->_1`init2BodyCode_*`recurse
+
+
+init2BodyCode::
+attribute _1 : _2 ; |-->    _1 = _x._1\n
+attribute _1 identity : _2 ; |-->    _1 = _x._1\n
+attribute _1 derived : _2 ; |-->    _1 = _x._1\n
+_1 |-->_1`init2BodyCode<when> _1 attributeDefinition
+_1 |-->
+
+
+
+parameterDeclarations::
+, |-->
+, _* |-->_*`recurse
+_1 |-->_1
+_1 _* |-->_1_*`recurse
+
+
+parameterDeclaration::
+_1 : _2 |-->  var _1 : _2`mobile = _2`defaultValue\n
+
+
+gettersSetters::
+, |-->
+_1 |-->_1`parameterGetterSetter
+, _* |-->_*`recurse
+_1 _* |-->_1`parameterGetterSetter_*`recurse
+
+
+
+parameterGetterSetter::
+_1 : _2 |-->  func get_1() -> _2`mobile\n  { return _1 }\n\n  func set_1(_ _x : _2`mobile)\n  { _1 = _x }\n\n
+
+
+
+
+usecaseBody::
+_* |-->_*
+
+
+usecaseBodyElement::
+parameter _1 : _2 ; |--> 
+precondition _1 ; |--> 
+extends _1 ; |--> 
+extendedBy _1 ; |--> 
+activity: _1 ; |--> 
+:: _1 |-->
+_1 |-->
+

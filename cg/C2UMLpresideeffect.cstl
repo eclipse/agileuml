@@ -1,0 +1,185 @@
+typeName::
+_1 |-->_1`C2UMLtypes
+
+
+forExpression::
+_1 |-->_1
+
+expression::
+_1 , _2 |-->_1_2
+_1 |-->_1
+
+assignmentExpression::
+_1 = _2 |-->_2`C2UMLpresideeffect    _1`C2UMLstatement := _2`C2UMLstatement ;\n
+_1 *= _2 |-->
+_1 /= _2 |-->
+_1 %= _2 |-->
+_1 *= _2 |-->
+_1 += _2 |-->
+_1 -= _2 |-->
+_1 <<= _2 |-->
+_1 >>= _2 |-->
+_1 &= _2 |-->
+_1 ^= _2 |-->
+_1 |= _2 |-->
+_1 |-->_1
+
+
+conditionalExpression::
+_1 ? _2 : _3 |-->
+_1 |-->_1
+
+logicalOrExpression::
+_1 || _2 |-->
+_1 |-->_1
+
+logicalAndExpression::
+_1 && _2 |-->_1_2
+_1 |-->_1
+
+inclusiveOrExpression::
+_1 | _2 |-->
+_1 |-->_1
+
+exclusiveOrExpression::
+_1 ^ _2 |-->
+_1 |-->_1
+
+andExpression::
+_1 & _2 |-->_1_2
+_1 |-->_1
+
+equalityExpression::
+_1 == _2 |-->_1_2
+_1 != _2 |-->_1_2
+_1 |-->_1
+
+relationalExpression::
+_1 < _2 |-->_1_2
+_1 <= _2 |-->_1_2
+_1 >= _2 |-->_1_2
+_1 > _2 |-->_1_2
+_1 |-->_1
+
+shiftExpression::
+_1 << _2 |-->_1_2
+_1 >> _2 |-->_1_2
+_1 |-->_1
+
+additiveExpression::
+_1 + _2 |-->_1_2
+_1 - _2 |-->_1_2
+_1 |-->_1
+
+multiplicativeExpression::
+_1 * _2 |-->_1_2
+_1 / _2 |-->_1_2
+_1 % _2 |-->_1_2
+_1 |-->_1
+
+castExpression::
+( _1 ) _2 |-->_2
+_1 |-->_1
+
+unaryExpression::
+++ ++ _1 |-->    _1`C2UMLstatement := _1`C2UMLstatement + 2 ;\n
+++ _1 |-->    _1`C2UMLstatement := _1`C2UMLstatement + 1 ;\n
+-- -- _1 |-->    _1`C2UMLstatement := _1`C2UMLstatement - 2 ;\n
+-- _1 |-->  _1`C2UMLstatement := _1`C2UMLstatement - 1 ;\n
+& _1 |-->_1
+* _1 |-->_1
+- _1 |-->_1
++ _1 |-->_1
+~ _1 |-->_1
+sizeof ( _1 ) |-->
+sizeof _1 |-->
+_1 |-->_1
+
+
+postfixExpression::
+_1 [ _2 ] [ _3 ] |-->_1_2_3
+_1 [ _2 ] |-->_1_2
+_1 [ _2 ] . _3 |-->_1_2
+_1 [ _2 ] -> _3 |-->_1_2
+_1 [ _2 ] . _3 ( _4 ) |-->_1_2_4
+_1 [ _2 ] . _3 ( ) |-->_1_2
+
+
+assert ( _1 ) |-->
+raise ( SIGFPE ) |-->
+raise ( SIGSEGV ) |-->
+raise ( _1 ) |-->
+va_start ( _1 ) |-->
+va_end ( _1 ) |-->
+va_arg ( _1 ) |-->  _1`C2UMLstatement := _1`C2UMLstatement + 1 ;\n
+
+fflush ( _1 ) |-->
+fclose ( _1 ) |-->
+remove ( _1 ) |-->
+rename ( _1 ) |-->
+putchar ( _1 ) |-->
+puts ( _1 ) |-->
+fputs ( _1 ) |-->
+fputc ( _1 ) |-->
+putc ( _1 ) |-->
+
+sin ( _1 ) |-->_1
+cos ( _1 ) |-->_1
+tan ( _1 ) |-->_1
+asin ( _1 ) |-->_1
+acos ( _1 ) |-->_1
+atan ( _1 ) |-->_1
+sinh ( _1 ) |-->_1
+cosh ( _1 ) |-->_1
+tanh ( _1 ) |-->_1
+exp ( _1 ) |-->_1
+log ( _1 ) |-->_1
+log10 ( _1 ) |-->_1
+sqrt ( _1 ) |-->_1
+ceil ( _1 ) |-->_1
+floor ( _1 ) |-->_1
+fabs ( _1 ) |-->_1
+abs ( _1 ) |-->_1
+labs ( _1 ) |-->_1
+pow ( _1 ) |-->_1`first_1`last
+
+tolower ( _1 ) |-->_1
+toupper ( _1 ) |-->_1
+
+malloc ( _1 ) |-->
+calloc ( _1 ) |-->
+realloc ( _1 ) |-->
+
+_1 ( _2 ) |-->_1_2
+_1 ( ) |-->_1
+_1 . _2 ( _3 ) |-->_1_3
+_1 . _2 ( ) |-->_1
+
+_1 . _2 . _3 |-->_1
+_1 . _2 |-->_1
+_1 -> _2 -> _3 |-->_1
+_1 -> _2 |-->_1
+_1 ++ ++ |-->_1
+_1 ++ |-->_1
+_1 -- -- |-->_1
+_1 -- |-->_1
+_1 |-->_1
+
+primaryExpression::
+( _1 ) |-->_1
+NULL |-->
+EOF |-->
+_1 _2 _3 |-->
+_1 _2 |-->
+_* |-->
+_1 |-->
+
+argumentExpressionList::
+_1 , _2 |-->_1_2
+_* |-->_*
+_1 |-->_1
+
+
+constantExpression::
+_1 |-->
+

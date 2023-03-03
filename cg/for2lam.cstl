@@ -1,0 +1,35 @@
+
+Expr::
+_1 + _3  |-->_1 + _3
+_1 - _3  |-->_1 - _3
+
+Var::
+_1  |-->_1
+
+Const::
+_1  |-->_1
+
+Cmp::
+_1 < _3  |-->_1 < _3
+_1 == _3  |-->_1 == _3
+_1 > _3  |-->_1 > _3
+
+For::
+for _2 = _4 ; _6 ; _8 do _10 endfor  |-->letrec func _2 =  if _6 then  let _ = _10 in  func  _8 else ( ) in  func  _4
+
+While::
+while _2 do _4 endwhile |-->letrec fwhile var = if _2 then let _ = _4 in fwhile var else () in fwhile var
+
+
+
+Assign::
+_1 = _3  |-->let _1 = _3 in ( )
+
+If::
+if _2 then _4 else _6 endif  |-->if _2 then _4 else _6
+
+Seq::
+_1 ; _3  |-->let _ = _1 in _3
+
+
+

@@ -1,0 +1,185 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+subruleset176::
+_* |-->( _*`seq3ruleset175 )
+
+seq3ruleset155::
+_1 |-->_1 
+_0 |-->_0
+
+OclUnaryExpression::
+_1 _2  |-->_1`nestedTfunc151 _2 
+
+seq3ruleset175::
+_1 |-->_1
+_0 |-->_0
+
+OclOperation::
+operation _2 ( ) : void pre: true  post: true  activity: _12  |-->fun _2 ( ) { _12 } 
+operation _2 ( _4 ) : void pre: true  post: true  activity: _13  |-->fun _2 _4`subruleset181 { _13 } 
+query _2 ( ) : _6 pre: true  post: true  activity: _12  |-->fun _2 ( ) : _6 { _12 } 
+query _2 ( _4 ) : _7 pre: true  post: true  activity: _13  |-->fun _2 _4`subruleset176 : _7 { _13 } 
+
+subruleset159::
+_* |-->( _*`seq3ruleset158 )
+
+subruleset156::
+_* |-->( _*`seq3ruleset155 )
+
+OclType::
+void  |-->Unit 
+OclAny  |-->Object 
+int |-->Int
+double |-->Double
+long |-->Long
+boolean |-->Boolean
+String  |-->String 
+Set ( _3 )  |-->Set 
+Sequence ( _3 )  |-->List 
+Function ( _3 , _5 )  |-->Fun 
+Map ( _3 , _5 )  |-->Map 
+_* |-->Int
+
+nestedTfunc154::
+Sequence |-->listOf
+Set |-->setOf
+_* |-->listOf
+
+nestedTfunc151::
+not |-->!
+_1 |-->_1
+_* |-->-
+
+nestedSfunc153::
+int |-->Int
+double |-->Double
+long |-->Long
+boolean |-->Boolean
+_* |-->Int
+
+OclClass::
+class _2 { }  |-->class _2 ( ) { } 
+class _2 { _4 }  |-->class _2 ( ) _4`subruleset187 
+
+nestedSfunc137::
+" " |-->' '
+"x" |-->'x'
+_* |-->'x'
+
+OclCollectionExpression::
+Set { _3 }  |-->setOf _3`subruleset156 
+Sequence { _3 }  |-->listOf _3`subruleset159 
+_1 { }  |-->_1`nestedTfunc154 ( ) 
+
+nestedTfunc138::
+self |-->this
+_1 |-->_1
+_* |-->null
+
+seq3ruleset146::
+_1 |-->_1 
+_0 |-->_0
+
+OclBasicExpression::
+" " |-->' '
+"x" |-->'x'
+_1 . _3 ( )  |-->_1 . _3 ( ) 
+_1 [ _3 ]  |-->_1 [ _3 - 1 ] 
+_1 . _3 ( _5 )  |-->_1 . _3 _5`subruleset147 
+_1 . _3  |-->_1 . _3 
+_1  |-->_1 <when> _1 Integer
+_1  |-->_1 <when> _1 Real
+_1  |-->_1 <when> _1 Boolean
+_1  |-->_1`nestedTfunc138 <when> _1 Object
+_1  |-->_1 
+_* |-->'x'
+
+subruleset187::
+_* |-->{ _*`seq3ruleset186 }
+
+seq3ruleset186::
+; |--> 
+attribute _2 : _4  |-->var _2 = _4`nestedSfunc184 ; 
+_0 |-->_0
+
+subruleset147::
+_* |-->( _*`seq3ruleset146 )
+
+OclBinaryExpression::
+_1 <= _3  |-->_1 <= _3 
+_1 mod _3  |-->_1 % _3 
+_1 or _3  |-->_1 || _3 
+_1 & _3  |-->_1 && _3 
+_1 * _3  |-->_1 * _3 
+_1 + _3  |-->_1 + _3 
+_1 - _3  |-->_1 - _3 
+_1 /= _3  |-->_1 != _3 
+_1 / _3  |-->_1 / _3 
+_1 div _3  |-->_1 / _3 
+_1 <>= _3  |-->_1 === _3 
+_1 < _3  |-->_1 < _3 
+_1 = _3  |-->_1 == _3 
+_1 > _3  |-->_1 > _3 
+_1 >= _3  |-->_1 >= _3 
+
+seq3ruleset180::
+_1 |-->_1
+_0 |-->_0
+
+OclConditionalExpression::
+if _2 then _4 else _6 endif  |-->if ( _2 ) _4 else _6 
+
+nestedSfunc184::
+int |-->0
+String |-->' '
+long |-->0
+_* |-->0
+
+subruleset181::
+_* |-->( _*`seq3ruleset180 )
+
+seq3ruleset158::
+_1 |-->_1 
+_0 |-->_0
+
+OclAttribute::
+attribute _2 : double   |-->var _2 = 0.0 
+attribute _2 : String   |-->var _2 = ' ' 
+attribute _2 : Sequence   |-->var _2 = null 
+attribute _2 : Set   |-->var _2 = null 
+attribute _2 : _4  |-->var _2 = 0 
+
+OclStatement::
+var _2 : Map ( String  , OclAny  )   |-->var _2 : Map 
+var _2 : Function ( String  , OclAny  )   |-->var _2 : Fun 
+var _2 : double   |-->var _2 : Double 
+var _2 : boolean   |-->var _2 : Boolean 
+var _2 : String   |-->var _2 : String 
+var _2 : Sequence   |-->var _2 : List 
+var _2 : Set   |-->var _2 : Set 
+return _2  |-->return _2 
+var _2 : _4  |-->var _2 : _4 <when> _4 Integer
+while _2 do _4  |-->while ( _2 ) { _4 } 
+_1 := _3  |-->_1 = _3 
+_1 _2  |-->_2 
+_1  |-->_1 
+if _2 then _4 else _6  |-->if ( _2 ) { _4 } else { _6 } 
+for _2 : _4 do _6  |-->for ( _2 in _4 ) { _6 } 
+
+
+

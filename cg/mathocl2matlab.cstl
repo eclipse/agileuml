@@ -1,0 +1,507 @@
+specification::
+specification _1 _* <EOF> |-->_* 
+specification _1 _* |-->_* 
+
+
+part::
+_1 |-->_1\n
+
+
+constraint::
+Constraint on _1 | _2 |-->_2;\n
+
+
+prove::
+Prove _1 if _2 |-->~(_2) | _1;\n
+
+
+simplify::
+Simplify _1 |-->_1;\n
+
+
+expanding::
+Expanding _1 to 1 |-->_1 == _1`maclaurenTerm1;\n
+Expanding _1 to 2 |-->_1 == (_1`maclaurenTerm1 + x.*_1`maclaurenTerm2);\n
+Expanding _1 to 3 |-->_1 == (_1`maclaurenTerm1 + x.*_1`maclaurenTerm2 + x.*x.*_1`maclaurenTerm3./2);\n
+Expanding _1 to 4 |-->_1 == (_1`maclaurenTerm1 + x.*_1`maclaurenTerm2 + x.*x.*_1`maclaurenTerm3./2 + x.*x.*x.*_1`maclaurenTerm4./6);\n
+
+
+maclaurenTerm1::
+_1 |-->_1<action> 0 / x
+
+
+maclaurenTerm2::
+_1 |-->_1`differentiate<action> 0 / x
+
+
+maclaurenTerm3::
+_1 |-->_1`diff2<action> 0 / x
+
+maclaurenTerm4::
+_1 |-->_1`diff3<action> 0 / x
+
+
+
+
+
+substituting::
+Substitute _1 for _2 in _3 |-->_3;\n<action> _1 / _2
+
+solve::
+Solve _* for _+ |-->Solve _* for _+
+
+reexpression::
+Express _1 as _2 |-->Express _1 as _2
+
+formula::
+Define _1 = _2 |-->_1 = _2;\n
+
+factorBy::
+Factor _1 by _2 |-->  _2*(_1/_2)
+
+
+
+idList::
+_1 |-->_1
+_1 , _* |-->_1,_*`recurse
+
+
+expression::
+_1 |-->_1
+
+
+expressionList::
+_1 |-->_1
+_1 , _* |-->_1,_*`recurse
+
+
+logicalExpression::
+_1 & _1 |-->_1
+_1 & false |-->false
+_1 & true |-->_1
+false & _1 |-->false
+true & _1 |-->_1
+_1 & _2 |-->_1 & _2
+
+_1 or _1 |-->_1
+_1 or false |-->_1
+_1 or true |-->true
+false or _1 |-->_1
+true or _1 |-->true
+_1 or _2 |-->_1 | _2
+
+£ _1 • true |-->true
+£ _1 • false |-->false
+£ _1 • _2 |-->any(feval(@(_1) _2, 0:1024))
+
+¡ _1 • _2 |-->all(feval(@(_1) _2, 0:1024))
+
+_1 _2 _3 |-->_1 _2 _3
+
+not true |-->false
+not false |-->true
+not _1 |-->~_1
+
+_1 |-->_1
+
+equalityExpression::
+_1 = _1 |-->true
+_1 = _2 |-->_1 == _2
+_1 /= _1 |-->false
+_1 /= _2 |-->_1 ~= _2
+_1 < _1 |-->false
+_1 < _2 |-->_1 < _2
+_1 > _1 |-->false
+_1 > _2 |-->_1 > _2
+_1 <= _1 |-->true
+_1 <= _2 |-->_1 <= _2
+_1 >= _1 |-->true
+_1 >= _2 |-->_1 >= _2
+
+_1 © Ø |-->false
+_1 ¢ Ø |-->true
+
+_1 © _2 |-->(sum(find(_2 == _1)) ~= 0)
+_1 ¢ _2 |-->(sum(find(_2 == _1)) == 0)
+
+_1 _2 _3 |-->_1 _2 _3
+_1 |-->_1
+
+additiveExpression::
+_1 + 0 |-->_1
+0 + _1 |-->_1
+_1 + _1 |-->2.*(_1)
+_1 + _2 |-->_1 + _2
+_1 - 0 |-->_1
+0 - _1 |-->-(_1)
+_1 - _1 |-->0
+_1 - _2 |-->_1 - _2
+_1 _2 _3 |-->_1 _2 _3
+_1 |-->_1
+
+factorExpression::
+1 * _1 |-->_1
+_1 * 1 |-->_1
+0 * _1 |-->0
+_1 * 0 |-->0
+_1 * _2 |-->_1 .* _2
+
+_1 / 1 |-->_1
+_1 / _1 |-->1
+0 / _1 |-->0
+_1 / _2 |-->_1 ./ _2
+
+0 ! |-->1
+1 ! |-->1
+_1 ! |-->factorial(_1)
+
+- 0 |-->0
+- _1 |-->-_1
+
+
+_1 ´ |-->_1`differentiate
+
+Ð _{ x } _1 |-->_1`differentiate
+Ð _{ _1 } _2 |-->Ð_{_1} _2
+
+† 0 |-->0
+† 1 |-->1
+† _1 |-->sqrt(_1)
+
+‡ _1 _2 |-->_1.*_2`tail<when> _1 integer
+‡ _1 _2 |-->_1.*_2`tail<when> _1 real
+‡ _1 dx |-->_1`integrate
+‡ _1 _2 |-->integral(@(_2`tail) _1, 0, Inf)
+
+‡ _{ _1 } ^{ _2 } _3 _4 |-->_3.*(_2 - _1)<when> _3 integer
+‡ _{ _1 } ^{ _2 } _3 _4 |-->_3.*(_2 - _1)<when> _3 real
+‡ _{ _1 } ^{ _2 } _3 _4 |-->integral(@(_4`tail) _3, _1, _2) 
+
+€ _{ _1 } ^{ _2 } _3 |-->_3.*(_2 - _1`rhs + 1)<when> _3 integer
+€ _{ _1 } ^{ _2 } _3 |-->_3.*(_2 - _1`rhs + 1)<when> _3 real
+
+€ _{ _1 } ^{ _2 } _3 |-->sum(feval(@(_1`lhs) _3, _1`rhs:_2))
+
+× _{ _1 } ^{ _2 } _3 |-->_3 ^{ _2 - _1`rhs + 1 }<when> _3 integer
+× _{ _1 } ^{ _2 } _3 |-->_3 ^{ _2 - _1`rhs + 1 }<when> _3 real
+
+× _{ _1 } ^{ _2 } _3 |-->prod(feval(@(_1`lhs) _3, _1`rhs:_2))
+
+C _{ _1 } ^{ 0 } |-->1
+C _{ _1 } ^{ _1 } |-->1
+C _{ _1 } ^{ 1 } |-->_1
+C _{ _1 } ^{ _2 } |-->nchoosek(_1,_2)
+ 
+_1 |-->_1
+
+
+factor2Expression::
+_1 ^{ 1 } |-->_1
+1 ^{ _1 } |-->1
+_1 ^{ 0 } |-->1
+0 ^{ 2 } |-->0
+0 ^{ 3 } |-->0
+_1 ^{ _2 } |-->(_1).^(_2)
+
+_1 _{ _2 } |-->_1(_2)
+
+_1 _2 |-->_1_2
+
+_1 |-->_1
+
+
+basicExpression::
+Ø |-->[]
+… |-->Inf
+
+g{ p } |-->pi
+g{ _1 } |-->_1
+
+sin ( 0 ) |-->0
+cos ( 0 ) |-->1
+tan ( 0 ) |-->0
+exp ( 0 ) |-->1
+log ( 1 ) |-->0
+log ( e ) |-->1
+cosh ( 0 ) |-->1
+sinh ( 0 ) |-->0
+tanh ( 0 ) |-->0
+sech ( 0 ) |-->1
+
+cosec ( _1 ) |-->csc(_1)
+cosech ( _1 ) |-->csch(_1)
+
+acosec ( _1 ) |-->asin(1.0/_1)
+asec ( _1 ) |-->acos(1.0/_1)
+acot ( _1 ) |-->atan(1.0/_1)
+
+acosech ( _1 ) |-->asinh(1.0/_1)
+asech ( _1 ) |-->acosh(1.0/_1)
+acoth ( _1 ) |-->atanh(1.0/_1)
+
+
+_1 ( _2 ) |-->_1(_2)
+
+( true ) |-->true
+( false ) |-->false
+( _1 ) |-->_1<when> _1 integer
+( _1 ) |-->_1<when> _1 real
+( _1 ) |-->(_1)
+
+_1 [ _2 ] |-->_1[_2]
+
+_1 . _2 |-->_1._2
+
+_1 |-->_1
+
+
+lambdaExpression::
+lambda _1 : _2 in _3 |-->(@(_1) _3)
+
+letExpression::
+let _1 = _2 in _3 |-->(@(_1) _3)(_2)
+
+
+identifier::
+_1 |-->_1
+
+
+rhs::
+_1 = _2 |-->_2
+_1 |-->_1<when> _1 identifier
+_1 |-->_1<when> _1 integer
+_1 |-->_1<when> _1 real
+_1 |-->_1`rhs
+
+lhs::
+_1 = _2 |-->_1
+_1 |-->_1<when> _1 identifier
+_1 |-->_1<when> _1 integer
+_1 |-->_1<when> _1 real
+_1 |-->_1`lhs
+
+
+differentiate::
+sin ( x ) |-->cos(x)
+sin ( _1 ) |-->_1`differentiate .* cos(_1)
+cos ( x ) |-->-1 .* sin(x)
+cos ( _1 ) |-->_1`differentiate .* -1 .* sin(_1)
+tan ( x ) |-->sec(sec(x))
+tan ( _1 ) |-->_1`differentiate .* sec(sec(_1))
+
+cot ( x ) |-->-1 .* csc(csc(x))
+cot ( _1 ) |-->-1 * _1`differentiate .* csc(csc(_1))
+sec ( x ) |-->sec(x) .* tan(x)
+sec ( _1 ) |-->_1`differentiate .* sec(_1) .* tan(_1)
+cosec ( x ) |-->-1 .* csc(x) .* cot(x)
+cosec ( _1 ) |-->-1 .* _1`differentiate .* csc(_1) .* cot(_1)
+
+sinh ( x ) |-->cosh(x)
+sinh ( _1 ) |-->_1`differentiate .* cosh(_1)
+cosh ( x ) |-->sinh(x)
+cosh ( _1 ) |-->_1`differentiate .* sinh(_1)
+tanh ( x ) |-->sech(sech(x))
+tanh ( _1 ) |-->_1`differentiate .* sech(sech(-1))
+
+coth ( x ) |-->-1 .* csch(csch(x)
+coth ( _1 ) |-->-1 .* _1`differentiate .* csch(csch(_1))
+sech ( x ) |-->-1 .* sech(x) .* tanh(x)
+sech ( _1 ) |-->-1 .* _1`differentiate .* sech(_1) .* tanh(_1)
+cosech ( x ) |-->-1 .* csch(x) .* coth(x)
+cosech ( _1 ) |-->-1 .* _1`differentiate .* csch(_1) .* coth(_1)
+
+log ( x ) |-->1./x
+log ( _1 ) |-->_1`differentiate ./ (_1)
+log10 ( x ) |-->1./(x .* log(10))
+log10 ( _1 ) |-->_1`differentiate ./ (_1 .* log(10))
+exp ( x ) |-->exp(x)
+exp ( _1 ) |-->exp(_1) .* _1`differentiate
+
+asin ( x ) |-->1./sqrt(1 - x.*x)
+asin ( _1 ) |-->_1`differentiate ./ sqrt(1 - (_1).*(_1))
+acos ( x ) |-->-1 ./ sqrt(1 - x.*x)
+acos ( _1 ) |-->-1 .* _1`differentiate ./ sqrt(1 - (_1).*(_1))
+atan ( x ) |-->1./(1 + x.*x)
+atan ( _1 ) |-->_1`differentiate ./ (1 + (_1).*(_1))
+
+asinh ( x ) |-->1 ./ sqrt(x.*x + 1)
+asinh ( _1 ) |-->_1`differentiate ./ sqrt((_1).*(_1) + 1)
+acosh ( x ) |-->1 ./ sqrt(x.*x - 1)
+acosh ( _1 ) |-->_1`differentiate ./ sqrt((_1).*(_1) - 1)
+atanh ( x ) |-->1 ./ (1 - x.*x)
+atanh ( _1 ) |-->_1`differentiate ./ (1 - (_1).*(_1))
+
+( _1 ) |-->(_1`differentiate)
+
+_1 * _2 |-->_1 .* _2`differentiate<when> _1 integer
+_1 * _2 |-->_1 .* _2`differentiate<when> _1 real
+_1 * _2 |-->_1 .* _2`differentiate + _1`differentiate .* _2
+
+_1 / _2 |-->((_1`differentiate .* _2) - (_1 .* _2`differentiate)) ./ (_2).^2
+
+_1 ´ |-->_1`diff2
+ 
+_1 + _2 |-->_1`differentiate + _2`differentiate
+_1 - _2 |-->_1`differentiate - _2`differentiate
+
+e ^{ _1 } |-->(e.^(_1)) .* _1`differentiate
+x ^{ 2 } |-->2 .* x 
+_1 ^{ 2 } |-->2 .* _1 .* _1`differentiate
+x ^{ _2 } |-->_2 .* x.^(_2 - 1)
+_1 ^{ _2 } |-->_2 .* (_1.^(_2 - 1)) .* _1`differentiate
+
+_1 |-->0<when> _1 integer
+_1 |-->0<when> _1 real
+_1 |-->_1`differentiate<when> _1 basicExpression
+_1 |-->_1`differentiate<when> _1 factorExpression
+_1 |-->_1`differentiate<when> _1 factor2Expression
+_1 |-->_1`differentiate<when> _1 logicalExpression
+_1 |-->_1`differentiate<when> _1 equalityExpression
+_1 |-->_1`differentiate<when> _1 additiveExpression
+_1 |-->_1`differentiate<when> _1 expression
+_1 |-->_1`differentiate<when> _1 expressionList
+_1 |-->1<when> _1 identifier
+_1 |-->_1
+
+
+
+
+diff2::
+sin ( x ) |-->(-1 .* sin(x))
+sin ( _1 ) |-->(_1`differentiate).^2 .* -1 .* sin(_1) + _1`diff2 .* cos(_1)
+cos ( x ) |-->(-1 .* cos(x))
+cos ( _1 ) |-->(_1`differentiate).^2 .* -1 .* cos(_1) - _1`diff2 .* sin(_1)
+sinh ( _1 ) |-->(_1`differentiate).^2 .* sinh(-1) + _1`diff2 .* cosh(_1)
+cosh ( _1 ) |-->(_1`differentiate).^2 * cosh(_1) + _1`diff2 .* sinh(_1)
+log ( _1 ) |-->(_1`diff2 ./ (_1)) - (_1`differentiate).^2 ./ (_1).^2
+exp ( _1 ) |-->exp(_1) .* ((_1`differentiate).^2 + _1`diff2)
+( _1 ) |-->(_1`diff2)
+
+_1 * _2 |-->_1 .* _2`diff2<when> _1 integer
+_1 * _2 |-->_1 .* _2`diff2<when> _1 real
+_1 * _2 |-->_1 .* _2`diff2 + (2 .* _1`differentiate .* _2`differentiate) + _1`diff2 .* _2
+ 
+_1 + _2 |-->_1`diff2 + _2`diff2
+_1 - _2 |-->_1`diff2 - _2`diff2
+
+e ^{ _1 } |-->exp(_1) .* (_1`diff2 + (_1`differentiate).^2)
+_1 ^{ 2 } |-->2 .* _1`diff2
+_1 ^{ _2 } |-->_2 .* (_2 - 1) .* (_1).^(_2 - 2) .* _1`diff2
+
+_1 |-->0<when> _1 integer
+_1 |-->0<when> _1 real
+_1 |-->_1`diff2<when> _1 basicExpression
+_1 |-->_1`diff2<when> _1 factorExpression
+_1 |-->_1`diff2<when> _1 factor2Expression
+_1 |-->_1`diff2<when> _1 logicalExpression
+_1 |-->_1`diff2<when> _1 equalityExpression
+_1 |-->_1`diff2<when> _1 additiveExpression
+_1 |-->_1`diff2<when> _1 expression
+_1 |-->_1`diff2<when> _1 expressionList
+_1 |-->0<when> _1 identifier
+_1 |-->_1
+
+
+
+
+diff3::
+sin ( x ) |-->-1 .* cos(x)
+sin ( _1 ) |-->cos(_1) .* _1`diff3 - cos(_1) .* (_1`differentiate).^3 - 3 .* _1`differentiate.*(_1`diff2).*sin(_1)
+
+cos ( x ) |-->sin(x)
+cos ( _1 ) |-->sin(_1).*(_1`differentiate).^3 - sin(_1).*_1`diff3 - 3.*_1`differentiate.*(_1`diff2).*cos(_1)
+
+sinh ( x ) |-->cosh(x)
+cosh ( x ) |-->sinh(x)
+
+log ( x ) |-->1/(2 .* x.^3)
+
+exp ( x ) |-->exp(x) 
+exp ( _1 ) |-->exp(_1).*(_1`diff3 + (_1`differentiate).^3 + 3.*(_1`differentiate).*(_1`diff2))
+
+( _1 ) |-->(_1`diff3)
+
+_1 ´ |-->(_1`diff3)´
+
+_1 * _2 |-->_1.*_2`diff3<when> _1 integer
+_1 * _2 |-->_1.*_2`diff3<when> _1 real
+_1 * _2 |-->_1.*_2`diff3 + 3.*_1`differentiate.*_2`diff2 + 3.*_1`diff2.*_2`differentiate + _1`diff3.*_2
+ 
+_1 + _2 |-->_1`diff3 + _2`diff3
+_1 - _2 |-->_1`diff3 - _2`diff3
+
+e ^{ x } |-->exp(x) 
+e ^{ _1 } |-->exp(_1).*(_1`diff3 + (_1`differentiate).^3 + 3.*(_1`differentiate).*(_1`diff2))
+
+x |-->0
+x ^{ 2 } |-->0
+x ^{ 3 } |-->6
+x ^{ _1 } |-->_1.*(_1 - 1).*(_1 - 2).*(x .^(_1 - 3))<when> _1 integer
+x ^{ _1 } |-->_1.*(_1 - 1).*(_1 - 2).*(x .^(_1 - 3))<when> _1 real
+_1 ^{ 2 } |-->2.*(_1.*_1`diff3 + 3.*(_1`differentiate).*(_1`diff2))
+
+_1 |-->0<when> _1 integer
+_1 |-->0<when> _1 real
+_1 |-->_1`diff3<when> _1 basicExpression
+_1 |-->_1`diff3<when> _1 factorExpression
+_1 |-->_1`diff3<when> _1 factor2Expression
+_1 |-->_1`diff3<when> _1 logicalExpression
+_1 |-->_1`diff3<when> _1 equalityExpression
+_1 |-->_1`diff3<when> _1 additiveExpression
+_1 |-->_1`diff3<when> _1 expression
+_1 |-->_1`diff3<when> _1 expressionList
+_1 |-->0<when> _1 identifier
+_1 |-->_1
+
+
+integrate::
+x |-->x.^2/2
+x ^{ 2 } |-->x.^3/3
+x ^{ -1 } |-->log(x)
+x ^{ _1 } |-->(x.^(_1 + 1))./(_1 + 1)<when> _1 real
+x ^{ _1 } |-->(x.^(_1 + 1))./(_1 + 1)<when> _1 integer
+e ^{ x } |-->exp(x)
+
+_1 ^{ _2 } |-->integral(@(x) _1.^(_2), 0, Inf)
+
+( _1 ) |-->(_1`integrate)
+
+exp ( x ) |-->exp(x)
+sin ( x ) |-->-1.*cos(x)
+cos ( x ) |-->sin(x)
+tan ( x ) |-->-1.*log(cos(x))
+cot ( x ) |-->log(sin(x))
+sec ( x ) |-->log(sec(x) + tan(x))
+cosec ( x ) |-->-1.*log(csc(x) + cot(x))
+
+sinh ( x ) |-->cosh(x)
+cosh ( x ) |-->sinh(x)
+tanh ( x ) |-->log(cosh(x))
+coth ( x ) |-->log(sinh(x))
+sech ( x ) |-->2.*atan(exp(x))
+cosech ( x ) |-->-2.*acoth(exp(x))
+
+_1 ( _2 ) |-->integral(@(x) _1(_2), 0, Inf)
+
+_1 ´ |-->_1
+
+_1 + _2 |-->_1`integrate + _2`integrate
+_1 - _2 |-->_1`integrate - _2`integrate
+
+_1 * _2 |-->_1.*_2`integrate<when> _1 real
+_1 * _2 |-->_1.*_2`integrate<when> _1 integer
+
+_1 |-->_1.*x<when> _1 real
+_1 |-->_1.*x<when> _1 integer
+
+_1 |-->_1`integrate<when> _1 basicExpression
+_1 |-->_1`integrate<when> _1 factorExpression
+_1 |-->_1`integrate<when> _1 factor2Expression
+_1 |-->_1`integrate<when> _1 logicalExpression
+_1 |-->_1`integrate<when> _1 equalityExpression
+_1 |-->_1`integrate<when> _1 additiveExpression
+_1 |-->_1`integrate<when> _1 expression
+_1 |-->_1`integrate<when> _1 expressionList
+
+_1 |-->integral(@(x) _1, 0, Inf)
+

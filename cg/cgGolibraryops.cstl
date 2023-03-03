@@ -1,0 +1,97 @@
+BasicExpression::
+closeFile |-->CloseFile
+read |-->Read
+readByte |-->ReadByte
+readN |-->ReadN
+readNbytes |-->ReadNbytes
+write |-->Write
+flush |-->Flush
+print |-->Print
+printf |-->Printf
+writeln |-->Writeln
+writeN |-->WriteN
+writeByte |-->WriteByte
+writeNbytes |-->WriteNbytes
+println |-->Println
+writeObject |-->WriteObject
+readObject |-->ReadObject
+readLine |-->ReadLine
+readAll |-->ReadAll
+getName |-->GetName
+getParent |-->GetParent
+getParentFile |-->GetParentFile
+getAbsolutePath |-->GetAbsolutePath
+exists |-->Exists
+canRead |-->CanRead
+isFile |-->IsFile
+isDirectory |-->IsDirectory
+isHidden |-->IsHidden
+lastModified |-->LastModified
+skipBytes |-->SkipBytes
+mark |-->Mark
+reset |-->Reset
+isAbsolute |-->IsAbsolute
+getEof |-->GetEof
+mkdir |-->Mkdir
+list |-->List
+listFiles |-->ListFiles
+delete |-->Delete
+deleteFile |-->DeleteFile
+renameFile |-->RenameFile
+
+setPosition |-->SetPosition
+getPosition |-->GetPosition
+hasNext |-->HasNext
+next |-->Next
+previous |-->Previous
+getCurrent |-->GetCurrent
+length |-->Length
+
+moveForward |-->MoveForward
+moveBackward |-->MoveBackward
+moveTo |-->MoveTo
+nextIndex |-->NextIndex
+previousIndex |-->PreviousIndex
+set |-->Set
+insert |-->Insert
+remove |-->Remove
+
+dateBefore |-->DateBefore
+dateAfter |-->DateAfter
+getTime |-->GetTime
+setTime |-->SetTime
+getYear |-->GetYear
+getMonth |-->GetMonth
+getDate |-->GetDate
+getDay |-->GetDay
+getHour |-->GetHour
+getMinute |-->GetMinute
+getSecond |-->GetSecond
+toString |-->ToString
+
+start |-->Start
+run |-->Run
+isAlive |-->IsAlive
+isDaemon |-->IsDaemon
+destroy |-->Destroy
+waitFor |-->WaitFor
+
+nextInt |-->NextInt
+nextDouble |-->NextDouble
+nextGaussian |-->NextGaussian
+nextLong |-->NextLong
+nextFloat |-->NextFloat
+nextBoolean |-->NextBoolean
+setSeed |-->SetSeed
+
+printStackTrace |-->PrintStackTrace
+
+getFields |-->GetFields
+getMethods |-->GetMethods
+getConstructors |-->GetConstructors
+getSuperclass |-->GetSuperclass
+getType |-->GetType
+getParameters |-->GetParameters
+getField |-->GetField
+getMethod |-->GetMethod
+

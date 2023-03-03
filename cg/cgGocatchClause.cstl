@@ -1,0 +1,2 @@
+BinaryExpression::
+_1 : _2 |-->      var _exception *oclexception._2\n      if errors.As(_err,&_exception) {\n        _1 := _exception\n

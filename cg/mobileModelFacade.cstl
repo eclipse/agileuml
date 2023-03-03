@@ -1,0 +1,214 @@
+model::
+package _1 { _* } _3 |-->import Foundation\nimport Darwin\nimport Combine\nimport SwiftUI\nimport CoreLocation\n\nclass ModelFacade : ObservableObject\n{ static var instance : ModelFacade? = nil\n  var fileSystem : FileAccessor = FileAccessor()\n\n  static func getInstance() -> ModelFacade\n  { if instance == nil\n    { instance = ModelFacade() }\n    return instance!\n  }\n\n  var cdbi : FirebaseDbi = FirebaseDbi.getInstance()\n\n  var dbi : Dbi?\n  let dbpath : String = "absolute path of _1.db"\n\n  init()\n  { dbi = Dbi.obtainDatabase(path: dbpath)\n_*`listOperationCalls  }\n\n_*\n\n_*`allInstanceOperations\n}\n\n
+
+
+
+classifier::
+_1 |-->_1
+
+
+interfaceDefinition::
+_* |-->
+
+usecaseDefinition::
+usecase _1 { _2 } |-->  func cancel_1() { }\n\n  func _1()\n  {_2`mobile  }\n\n<when> _2`usecaseBodyStereotype application
+
+usecase _1 : _2 { _3 } |-->  func cancel_1() { }\n\n  func _1() -> _2`mobile\n  { var result : _2`mobile = _2`defaultValue\n    if _x.is_1error()\n    { print("Error in data: " + _x.errors())\n      return result\n    }\n_3`mobile    return result\n  }\n\n<when> _3`usecaseBodyStereotype application
+
+usecase _1 ( _2 ) { _3 } |-->  func cancel_1() { }\n\n  func _1(_2`mobile)\n  { if _x.is_1error()\n    { print("Error in data: " + _x.errors())\n      return\n    }\n_2`transferBeanData_3`mobile  }\n\n<when> _3`usecaseBodyStereotype application
+
+usecase _1 ( _2 ) : _3 { _4 } |-->  func cancel_1() { }\n\n  func _1(_x : _1VO) -> _3`mobile\n  { var result : _3`mobile = _3`defaultValue\n    if _x.is_1error()\n    { print("Error in data: " + _x.errors())\n      return result\n    }\n_2`transferBeanData_4`mobile    return result\n  }\n\n<when> _4`usecaseBodyStereotype application
+
+usecase _* |-->
+
+
+enumeration::
+enumeration _1 { _* } |--><action> _1 Enumeration
+
+ 
+enumerationLiteral::
+literal _1 |--><action> _1 enumerationLiteral
+ 
+
+
+
+classDefinition::
+class _1 { _2 } |-->  @Published var current_1 : _1VO = _1VO.default_1VO()\n\n  @Published var current_1s : [_1VO] = [_1VO]()\n\n  func stringList_1() -> [String]\n  { var res : [String] = [String]()\n    for (_,obj) in current_1s.enumerated()\n    { res.append(obj.toString()) }\n    return res\n  }\n\n  func get_1ByPK(_val: String) -> _1?\n  { return _1._index[_val] }\n\n  func retrieve_1(_val: String) -> _1?\n  { return _1._index[_val] }\n\n  func all_1ids() -> [String]\n  { var res : [String] = [String]()\n    for (_,_item) in current_1s.enumerated()\n    { res.append(_item.id + "") }\n    return res\n  }\n\n  func setSelected_1(_x : _1VO)\n  { current_1 = _x }\n\n  func setSelected_1(i : Int)\n  { if i < current_1s.count\n    { current_1 = current_1s[i] }\n  }\n\n  func getSelected_1() -> _1VO\n  { return current_1 }\n\n<action> _1 Class
+
+
+
+listOperationCalls::
+_1 |-->_1`listOperationCall<when> _1 classDefinition
+_1 |-->
+
+
+listOperationCall::
+class _1 { _2 } |-->    list_1()\n
+class _1 extends { _2 } |-->    list_1()\n
+class _1 { } |-->    list_1()\n
+class _1 extends _2 { } |-->    list_1()\n
+
+
+
+allInstanceOperations::
+_1 |-->_1`instanceOperations<when> _1 classDefinition
+_1 |-->
+
+
+instanceOperations::
+class _1 { _2 } |-->  func list_1() -> [_1VO]\n  { if dbi != nil\n    { current_1s = (dbi?.list_1())!\n      return current_1s\n    }\n    current_1s = [_1VO]()\n    let _list : [_1] = _1_allInstances\n    for (_,x) in _list.enumerated()\n    { current_1s.append(_1VO(_x: x)) }\n    return current_1s\n  }\n\n  func canceledit_1() { }\n\n  func edit_1(_x : _1VO)\n  { if _x.isedit_1error()\n    { return }\n    let _val : String = _x.id\n    let _res : _1? = _1.getByPK_1(index: _val)\n    if _res != nil {\n_2`dbiEditCode    }\n    current_1 = _x\n    if dbi != nil\n    { dbi!.edit_1(vo: _x) }\n  }\n\n  func cancelcreate_1() { }\n\n  func create_1(_x : _1VO)\n  { if _x.iscreate_1error()\n    { return }\n    let _res : _1 = createByPK_1(key: _x.id)\n_2`dbiCreateCode    current_1 = _x\n    do { try dbi?.create_1(vo: _x) }\n    catch { print("Error creating _1") }\n  }\n\n  func delete_1(_id : String)\n  { if dbi != nil\n    { dbi!.delete_1(_val: _id) }\n    kill_1(key: _id)\n  }\n\n  func persist_1(_x : _1)\n  { let _vo : _1VO = _1VO(_x: _x)\n    edit_1(_x: _vo)\n  }\n\n<when> _2`classBodyStereotype persistent
+
+class _1 { _2 } |-->  func list_1() -> [_1VO]\n  { var instances_1 : [_1]  = _1_allInstances\n    current_1s.clear()\n    for (_,obj) in instances_1.enumerated()\n    { current_1s.append(_1VO(_x: obj)) }\n    return current_1s\n  }\n\n  func persist_1(_ _x : _1)\n  { let _vo : _1VO = _1VO(_x: _x)\n    cdbi.persist_1(ex: _x)\n    current_1 = _vo\n  }\n\n  func canceledit_1() { }\n\n  func edit_1(_x : _1VO)\n  { if let _obj = get_1ByPK(_val: _x.id) {\n_2`editCode      cdbi.persist_1(ex: _obj)\n    }\n    current_1 = _x\n  }\n\n  func cancelcreate_1() { }\n\n  func create_1(_x : _1VO)\n  { if let _obj = get_1ByPK(_val: _x.id)\n    { cdbi.persist_1(ex: _obj) }\n    else\n    { let _item = _1.createByPK(key: _x.id)\n_2`createCode      cdbi.persist_1(ex: _item)\n    }\n    current_1 = _x\n  }\n\n  func delete_1(_id : String)\n  { if let _obj = get_1ByPK(_val: _id)\n    { cdbi.delete_1(ex: _obj) }\n  }\n\n<when> _2`classBodyStereotype cloud
+
+class _* |-->  func list_1() -> [_1VO]\n  { var instances_1 : [_1]  = _1_allInstances\n    current_1s.clear()\n    for (_,obj) in instances_1.enumerated()\n    { current_1s.append(_1VO(_x: obj)) }\n    return current_1s\n  }\n\n  func persist_1(_ _x : _1)\n  { let _vo : _1VO = _1VO(_x: _x)\n    current_1 = _vo\n  }\n\n  func canceledit_1() { }\n\n  func edit_1(_x : _1VO)\n  { if let _obj = get_1ByPK(_val: _x.id) {\n_2`editCode    }\n    current_1 = _x\n  }\n\n  func cancelcreate_1() { }\n\n  func create_1(_x : _1VO)\n  { if let _obj = get_1ByPK(_val: _x.id)\n    { }\n    else\n    { let _item = _1.createByPK(key: _x.id)\n_2`createCode    }\n    current_1 = _x\n  }\n\n  func delete_1(_id : String)\n  { kill_1(key: _id) }\n\n
+      
+
+
+  
+
+
+editCode::
+_1 |-->_1`attributeEditCode
+_1 _* |-->_1`attributeEditCode_*`recurse
+
+
+attributeEditCode::
+attribute _1 : _2 ; |-->      _obj._1 = _x.get_1()
+attribute _1 identity : _2 ; |-->      _obj._1 = _x.get_1()
+attribute _1 derived : _2 ; |-->      _obj._1 = _x.get_1()
+
+_1 |-->_1`attributeEditCode\n<when> _1 attributeDefinition
+_1 |-->
+
+
+
+dbiEditCode::
+_1 |-->_1`dbiAttributeEditCode
+_1 _* |-->_1`dbiAttributeEditCode_*`recurse
+
+
+dbiAttributeEditCode::
+attribute _1 : _2 ; |-->      _res!._1 = _x.get_1()
+attribute _1 identity : _2 ; |-->      _res!._1 = _x.get_1()
+attribute _1 derived : _2 ; |-->      _res!._1 = _x.get_1()
+
+_1 |-->_1`dbiAttributeEditCode\n<when> _1 attributeDefinition
+_1 |-->
+
+
+
+createCode::
+_1 |-->_1`attributeCreateCode
+_1 _* |-->_1`attributeCreateCode_*`recurse
+
+
+attributeCreateCode::
+attribute _1 : _2 ; |-->      _item._1 = _x.get_1()
+attribute _1 identity : _2 ; |-->      _item._1 = _x.get_1()
+attribute _1 derived : _2 ; |-->      _item._1 = _x.get_1()
+
+_1 |-->_1`attributeCreateCode\n<when> _1 attributeDefinition
+_1 |-->
+
+
+
+dbiCreateCode::
+_1 |-->_1`dbiAttributeCreateCode
+_1 _* |-->_1`dbiAttributeCreateCode_*`recurse
+
+
+dbiAttributeCreateCode::
+attribute _1 : _2 ; |-->      _res._1 = _x.get_1()
+attribute _1 identity : _2 ; |-->      _res._1 = _x.get_1()
+attribute _1 derived : _2 ; |-->      _res._1 = _x.get_1()
+
+_1 |-->_1`dbiAttributeCreateCode\n<when> _1 attributeDefinition
+_1 |-->
+
+
+
+
+usecaseStereotype::
+usecase _1 { _2 } |-->_2`usecaseBodyStereotype
+usecase _1 : _2 { _3 } |-->_3`usecaseBodyStereotype
+usecase _1 ( _2 ) { _3 } |-->_3`usecaseBodyStereotype
+usecase _1 ( _2 ) : _3 { _4 } |-->_4`usecaseBodyStereotype
+usecase _* |-->
+
+
+usecaseBodyStereotype::
+_* |-->_*`usecaseElementStereotype
+
+
+usecaseElementStereotype::
+parameter _1 : _2 ; |--> 
+precondition _1 ; |--> 
+extends _1 ; |--> 
+extendedBy _1 ; |--> 
+activity: _1 ; |--> 
+:: _1 |-->
+_1 |-->_1`usecaseStereotypeValue
+   
+
+usecaseStereotypeValue::
+stereotype _1 ; |-->_1
+stereotype entity = _1 ; |-->
+stereotype _1 = _2 ; |-->
+
+
+
+classStereotype::
+class _1 { _2 } |-->_2`classBodyStereotype
+class _1 extends _2 { _3 } |-->_3`classBodyStereotype
+class _1 { } |-->
+class _1 extends _2 { } |-->
+class _* |-->
+
+
+classBodyStereotype::
+_* |-->_*`classElementStereotype
+
+
+classElementStereotype::
+_1 |-->_1`classStereotypeValue<when> _1 stereotype
+_* |-->   
+
+
+classStereotypeValue::
+stereotype _1 ; |-->_1
+stereotype entity = _1 ; |-->
+stereotype _1 = _2 ; |-->
+_* |-->
+
+
+
+defaultValue::
+String |-->""
+int |-->0
+long |-->0
+double |-->0.0
+boolean |-->false
+Sequence ( _1 ) |-->[]
+Set ( _1 ) |-->[]
+Map ( _1 , _2 ) |-->[:]
+_1 |-->_1.defaultInstance_1()
+
+
+transferBeanData::
+, |-->
+_1 |-->_1`transferData
+, _* |-->_*`recurse
+_1 _* |-->_1`transferData_*`recurse
+
+
+transferData::
+_1 : _2 |-->    let _1 : _2`mobile = _x.get_1()\n
+
+
+
+deleteInstanceOp::
+class _1 { _2 } |-->  func delete_1(_id : String)\n  { if let _obj = get_1ByPK(_val: _id)\n    { cdbi.delete_1(ex: _obj) }\n<when> _1`classStereotype cloud
+class _1 { _2 } |-->  func delete_1(_id : String)\n  { if dbi != nil\n    { dbi!.delete_1(_val: _id) }\n    kill_1(key: _id)\n  }\n<when> _1`classStereotype persistent
+class _1 { _2 } |-->  func delete_1(_id : String)\n  { kill_1(key: _id) }\n
+
+

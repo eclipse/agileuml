@@ -1,0 +1,70 @@
+
+type::
+int |-->Int
+long |-->Int64
+boolean |-->Bool
+double |-->Double
+void |-->Void
+OclAny |-->Any
+
+
+
+Sequence |-->[Any]
+Set |-->Set<Any>
+Map |-->Map<String,Any>
+
+Sequence ( _1 ) |-->[_1]
+Set ( _1 ) |-->Set<_1>
+Map ( _1 , _2 ) |-->Dictionary<_1,_2>
+Function ( _1 , _2 ) |-->(_1)->_2
+
+_1 |-->_1`alias<when> _1 datatype
+
+_1 |-->_1
+
+
+
+stereotype::
+stereotype _1 ; |-->  /* _1 */\n 
+
+
+
+attributeDefinition::
+static attribute _1 : _2 := _3 ; |-->  static var _1 : _2 { get set }\n 
+
+static attribute _1 : _2 ; |-->  static var _1 : _2 { get set }\n
+
+identity attribute _1 : _2 ; |-->  var _1 : _2 { get set } /* key */\n
+
+attribute _1 : _2 := _3 ; |-->  var _1 : _2 { get set }\n
+
+attribute _1 : _2 ; |-->  var _1 : _2 { get set }\n
+
+reference _1 : _2 ; |-->  var _1 : _2 { get set }\n
+
+
+
+parameterDeclarations::
+_* |-->_*
+
+parameterDeclaration::
+_1 : _2 |-->_ _1 : _2
+
+
+operationDefinition::
+query _1 ( _2 ) : _3 pre: _4 post: _5 activity : _6 ; |-->\n  func _1(_2) -> _3\n\n
+
+query _1<_2>(_3) : _4 pre: _5 post: _6 activity : _7 ; |-->\n  func _1<_2>(_3) -> _4\n\n
+
+operation _1 ( )  pre: _2 post: _3 activity: _4 ; |-->\n  func _1()\n\n
+
+operation _1 ( ) : _2 pre: _3 post: _4 activity: _5 ; |-->\n  func _1() -> _2\n\n
+
+operation _1 ( _2 ) pre: _3 post: _4 activity: _5 ; |-->\n  func _1(_2)\n\n
+
+operation _1 ( _2 ) : _3 pre: _4 post: _5 activity: _6 ; |-->\n  func _1(_2) -> _3\n\n
+
+operation _1<_2>(_3) : _4 pre: _5 post: _6 activity : _7 ; |-->\n  func _1<_2>(_3) -> _4\n\n
+
+
+

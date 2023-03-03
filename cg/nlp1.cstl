@@ -1,0 +1,88 @@
+nlpscript::
+_* |-->import nltk\nimport nltk.tokenize\nfrom nltk.tokenize import sent_tokenize, word_tokenize\nimport nltk.data\nfrom nltk.tag import PerceptronTagger\nfrom nltk.tag import pos_tag\nfrom nltk.parse import RecursiveDescentParser\nfrom nltk.parse.corenlp import GenericCoreNLPParser\nfrom nltk.tree import *\nfrom nlpLibrary import *\nimport pickle\nimport re\nimport random\n\n_*`nlpstat\n
+
+
+
+nlpstat::
+; |-->
+_1 |-->_1\n
+
+
+displayStatement::
+display _1 on _2 |-->print(_1)\n
+
+loadStatement::
+load _1 into _2 |-->_2 = nltk.data.load(_1)\n
+
+assignStatement::
+_1 := _2 |-->_1 = _2\n
+
+
+factor2Expression::
+_1 ->at ( _2 ) |-->_1[_2]
+_1 ->size() |-->len(_1)
+_1 ->collect ( _2 | _3 ) |-->[_3 for _2 in _1]
+_1 ->select ( _2 | _3 ) |-->[_2 for _2 in _1 if _3]
+_1 ->includes ( _2 ) |-->_2 in _1
+_1 ->excludes ( _2 ) |-->!(_2 in _1)
+_1 ->isMatch ( _2 ) |-->(re.fullmatch(_2,_1) != None)
+_1 |-->_1
+
+
+storeStatement::
+store _1 in _2 |-->savepointFile = open('_2.pickle', 'wb')\npickle.dump(_1,savepointFile)\nsavepointFile.close()\n
+
+
+
+equalityExpression::
+_1 = _2 |-->_1 == _2
+_1 < _2 |-->_1 < _2
+_1 <= _2 |-->_1 <= _2
+_1 > _2 |-->_1 > _2
+_1 >= _2 |-->_1 >= _2
+_1 <> _2 |-->_1 != _2
+_1 /= _2 |-->_1 != _2
+_1 |-->_1
+
+
+logicalExpression::
+not _1 |-->!(_1)
+_1 & _2 |-->_1 and _2
+_1 and _2 |-->_1 and _2
+_1 or _2 |-->_1 or _2
+_1 |-->_1
+
+
+factorExpression::
+- _1 |-->-_1
+_1 * _2 |-->_1 * _2
+_1 / _2 |-->_1 / _2
+_1 |-->_1
+
+
+additiveExpression::
+_1 + _2 |-->_1 + _2
+_1 - _2 |-->_1 - _2
+_1 |-->_1
+
+
+basicExpression::
+_1 ( ) |-->_1()
+_1 ( _2 ) |-->_1(_2)
+( _1 ) |-->(_1)
+_1 . _2 |-->_1._2
+_1 |-->_1
+
+
+expressionList::
+_1 |-->_1
+_1 , _* |-->_1,_*`recurse
+
+
+expression::
+_1 |-->_1
+
+
+identifier::
+_1 |-->_1
+

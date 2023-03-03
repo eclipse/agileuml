@@ -1,0 +1,100 @@
+
+declarationSpecifiers2::
+_* |-->_*`last
+_1 _2 |-->_2
+_1 |-->_1
+
+declarationSpecifiers::
+_* |-->_*`last
+_1 _2 |-->_2
+_1 |-->_1
+
+declarationSpecifier::
+_1 |-->_1
+
+storageClassSpecifier::
+_1 |-->
+
+typeQualifier::
+_1 |-->
+
+typeSpecifier::
+void |-->void
+int |-->int
+char |-->int
+short |-->int
+long |-->long
+float |-->double
+double |-->double
+_Bool |-->boolean
+signed |-->
+unsigned |-->
+char *** |-->Ref(Ref(String))
+char ** |-->Ref(String)
+char * |-->String
+FILE *** |-->Ref(Ref(OclFile))
+FILE ** |-->Ref(OclFile)
+FILE * |-->OclFile
+_1 *** |-->Ref(Ref(Ref(_1)))
+_1 ** |-->Ref(Ref(_1))
+_1 * |-->Ref(_1)
+_1 _2 |-->_1
+_1 |-->_1
+
+
+structDeclaratorList::
+_1 |-->_1
+_* |-->_*
+
+structDeclarator::
+_1 |-->_1
+
+
+declarator::
+*** _2 |-->_2Ref(Ref(Ref(
+** _2 |-->_2Ref(Ref(
+* _2 |-->_2Ref(
+_1 |-->_1
+
+
+directDeclarator::
+( _1 ) |-->_1
+_1 [ _2 ] |-->_1Sequence(
+_1 [ ] |-->_1Sequence(
+_1 ( _2 ) |-->_1_2,
+_1 ( ) |-->_1Function(void,
+_1 |-->
+
+
+typedefName::
+_1 |-->
+
+
+initDeclaratorList::
+_* |-->_*`first
+_1 |-->_1
+
+
+initDeclarator::
+_1 = _2 |-->_1
+_1 |-->_1
+
+
+initializer::
+_1 |-->
+
+
+parameterTypeList::
+_1 , ... |-->_1,Function(Sequence(OclAny)
+_1 |-->_1
+
+parameterList::
+_1 , _2 , _3 |-->_1,_2,_3
+_1 , _2 |-->_1,_2
+_1 |-->_1
+
+parameterDeclaration::
+_1 _2 |-->Function(_1
+_1 |-->Function(_1
+
+

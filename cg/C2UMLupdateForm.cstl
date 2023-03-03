@@ -1,0 +1,220 @@
+typeName::
+_1 |-->_1`C2UMLtypes
+
+
+forExpression::
+_1 |-->_1
+
+expression::
+_1 , _2 |-->_1 ; _2
+_1 |-->_1
+
+assignmentExpression::
+_1 = _2 |-->_1`C2UMLpresideeffect_2`C2UMLpresideeffect    _1`C2UMLstatement := _2`C2UMLstatement ;\n
+
+_1 *= _2 |-->_1`C2UMLpresideeffect_2`C2UMLpresideeffect    _1`C2UMLstatement := (_1`C2UMLstatement * _2`C2UMLstatement) ;\n
+
+_1 /= _2 |-->_1`C2UMLpresideeffect_2`C2UMLpresideeffect    _1`C2UMLstatement := (_1`C2UMLstatement / _2`C2UMLstatement) ;\n
+
+_1 %= _2 |-->_1`C2UMLpresideeffect_2`C2UMLpresideeffect    _1`C2UMLstatement := (_1`C2UMLstatement % _2`C2UMLstatement) ;\n
+
+_1 *= _2 |-->_1`C2UMLpresideeffect_2`C2UMLpresideeffect    _1`C2UMLstatement := (_1`C2UMLstatement * _2`C2UMLstatement) ;\n
+
+_1 += _2 |-->_1`C2UMLpresideeffect_2`C2UMLpresideeffect    _1`C2UMLstatement := (_1`C2UMLstatement + _2`C2UMLstatement) ;\n
+
+_1 -= _2 |-->_1`C2UMLpresideeffect_2`C2UMLpresideeffect    _1`C2UMLstatement := (_1`C2UMLstatement - _2`C2UMLstatement) ;\n
+
+_1 <<= _2 |-->_1`C2UMLpresideeffect_2`C2UMLpresideeffect    _1`C2UMLstatement := (_1`C2UMLstatement*(2->pow(_2`C2UMLstatement))) ;\n
+
+_1 >>= _2 |-->_1`C2UMLpresideeffect_2`C2UMLpresideeffect    _1`C2UMLstatement := (_1`C2UMLstatement/(2->pow(_2`C2UMLstatement))) ;\n
+
+_1 &= _2 |-->_1`C2UMLpresideeffect_2`C2UMLpresideeffect    _1`C2UMLstatement := MathLib.bitwiseAnd(_1`C2UMLstatement,_2`C2UMLstatement) ;\n
+
+_1 ^= _2 |-->_1`C2UMLpresideeffect_2`C2UMLpresideeffect    _1`C2UMLstatement := MathLib.bitwiseXor(_1`C2UMLstatement,_2`C2UMLstatement) ;\n
+
+_1 |= _2 |-->_1`C2UMLpresideeffect_2`C2UMLpresideeffect    _1`C2UMLstatement := MathLib.bitwiseOr(_1`C2UMLstatement,_2`C2UMLstatement) ;\n
+
+_1 |-->_1
+
+
+conditionalExpression::
+_1 ? _2 : _3 |-->if _1 then _2 else _3 endif
+_1 |-->_1
+
+logicalOrExpression::
+_1 || _2 |-->_1 or _2
+_1 |-->_1
+
+logicalAndExpression::
+_1 && _2 |-->_1 & _2
+_1 |-->_1
+
+inclusiveOrExpression::
+_1 | _2 |-->MathLib.bitwiseOr(_1, _2)
+_1 |-->_1
+
+exclusiveOrExpression::
+_1 ^ _2 |-->MathLib.bitwiseXor(_1, _2)
+_1 |-->_1
+
+andExpression::
+_1 & _2 |-->MathLib.bitwiseAnd(_1,_2)
+_1 |-->_1
+
+equalityExpression::
+_1 == _2 |-->_1 = _2
+_1 != _2 |-->_1 /= _2
+_1 |-->_1
+
+relationalExpression::
+_1 < _2 |-->_1 < _2
+_1 <= _2 |-->_1 <= _2
+_1 >= _2 |-->_1 >= _2
+_1 > _2 |-->_1 > _2
+_1 |-->_1
+
+shiftExpression::
+_1 << _2 |-->_1*(2->pow(_2))
+_1 >> _2 |-->_1/(2->pow(_2))
+_1 |-->_1
+
+additiveExpression::
+_1 + _2 |-->_1 + _2
+_1 - _2 |-->_1 - _2
+_1 |-->_1
+
+multiplicativeExpression::
+_1 * _2 |-->_1 * _2
+_1 / _2 |-->_1 / _2
+_1 % _2 |-->_1 mod _2
+_1 |-->_1
+
+castExpression::
+( _1 ) _2 |-->_2->oclAsType(_1)
+_1 |-->_1
+
+unaryExpression::
+++ ++ _1 |-->  _1 := _1 + 2 ;\n
+++ _1 |-->  _1 := _1 + 1 ;\n
+-- -- _1 |-->  _1 := _1 - 2 ;\n
+-- _1 |-->  _1 := _1 - 1 ;\n
+& _1 |-->?(_1)
+* _1 |-->!(_1)
+- _1 |-->-_1
++ _1 |-->_1
+~ _1 |-->MathLib.bitwiseNot(_1)
+sizeof ( _1 ) |-->typesize(_1)
+sizeof _1 |-->typesize(_1)
+_1 |-->_1
+
+
+postfixExpression::
+_1 [ _2 ] [ _3 ] |-->(_1->at(_2+1))->at(_3+1)
+_1 [ _2 ] |-->_1->at(_2+1)
+_1 [ _2 ] . _3 |-->(_1->at(_2+1))._3
+_1 [ _2 ] -> _3 |-->(!(_1->at(_2+1)))._3
+_1 [ _2 ] . _3 ( _4 ) |-->(_1->at(_2+1))._3(_4)
+_1 [ _2 ] . _3 ( ) |-->(_1->at(_2+1))._3()
+
+
+assert ( _1 ) |-->    assert _1 do "Assertion failed: _1" ;\n
+raise ( SIGFPE ) |-->    error ArithmeticException.newArithmeticException() ; \n
+raise ( SIGSEGV ) |-->    error AccessingException.newAccessingException() ; \n
+raise ( _1 ) |-->    error OclException.newOclException() ; \n
+va_start ( _1 ) |-->  _1`first := 1 ;\n
+va_end ( _1 ) |-->  _1`first := 0 ; \n
+va_arg ( _1 ) |-->  _1 := _1 + 1 ;\n
+
+fread ( _1 ) |-->    _1`first := _1`last.readN(_1`5th) ;\n
+fwrite ( _1 ) |-->    _1`last.writeN(_1`first,_1`5th) ;\n
+fflush ( _1 ) |-->    _1.flush() ;\n
+fclose ( _1 ) |-->    _1.closeFile() ;\n
+remove ( _1 ) |-->    OclFile.deleteFile(_1) ;\n
+rename ( _1 ) |-->    OclFile.renameFile(_1`first,_1`last) ;\n
+putchar ( _1 ) |-->    System_out.write(_1->byte2char()) ;\n
+puts ( _1 ) |-->    System_out.writeln(_1) ;\n
+printf ( _1 ) |-->    System_out.printf(_1`first,Sequence{_1`tail}) ; \n
+fprintf ( _1 ) |-->    _1`first.printf(_1`third,Sequence{_1`tailtailtailtail}) ; \n
+fputs ( _1 ) |-->    (_1`last).writeln(_1`first) ;\n
+fputc ( _1 ) |-->    (_1`last).write(_1`first->byte2char()) ;\n
+putc ( _1 ) |-->    (_1`last).write(_1`first->byte2char()) ;\n
+strcpy ( _1 ) |-->    _1`first := _1`last ;\n
+strncpy ( _1 ) |-->    _1`first := (_1`third).subrange(1,_1`last) ;\n
+strcat ( _1 ) |-->    _1`first := (_1`first + _1`last) ;\n
+strncat ( _1 ) |-->    _1`first := (_1`first + (_1`third).subrange(1,_1`last)) ;\n
+
+sin ( _1 ) |-->_1->sin()
+cos ( _1 ) |-->_1->cos()
+tan ( _1 ) |-->_1->tan()
+asin ( _1 ) |-->_1->asin()
+acos ( _1 ) |-->_1->acos()
+atan ( _1 ) |-->_1->atan()
+sinh ( _1 ) |-->_1->sinh()
+cosh ( _1 ) |-->_1->cosh()
+tanh ( _1 ) |-->_1->tanh()
+exp ( _1 ) |-->_1->exp()
+log ( _1 ) |-->_1->log()
+log10 ( _1 ) |-->_1->log10()
+sqrt ( _1 ) |-->_1->sqrt()
+ceil ( _1 ) |-->_1->ceil()->oclAsType(double)
+floor ( _1 ) |-->_1->floor()->oclAsType(double)
+fabs ( _1 ) |-->_1->abs()
+abs ( _1 ) |-->_1->abs()
+labs ( _1 ) |-->_1->abs()
+pow ( _1 ) |-->_1`first->pow(_1`last)
+
+tolower ( _1 ) |-->(if _1 >= 65 & _1 <= 90 then _1+32 else _1 endif)
+toupper ( _1 ) |-->(if _1 >= 97 & _1 <= 122 then _1-32 else _1 endif)
+
+malloc ( _1 ) |-->Ref(_1`argtype){1}
+calloc ( _1 ) |-->Ref(_1`argstype){_1`argsn}
+realloc ( _1 ) |-->_1`first->resizeTo(_1`last)
+
+_1 ( _2 ) |-->  _1(_2) ;\n
+_1 ( ) |-->  _1() ;\n
+_1 . _2 ( _3 ) |-->  _1._2(_3) ;\n
+_1 . _2 ( ) |-->  _1._2() ;\n
+
+_1 . _2 . _3 |-->_1._2._3
+_1 . _2 |-->_1._2
+_1 -> _2 -> _3 |-->!((!(_1))._2)._3
+_1 -> _2 |-->(!(_1))._2
+_1 ++ ++ |-->  _1 := _1 + 2 ;\n
+_1 ++ |-->  _1 := _1 + 1 ;\n
+_1 -- -- |-->  _1 := _1 - 2 ;\n
+_1 -- |-->  _1 := _1 - 1 ;\n
+_1 |-->_1
+
+primaryExpression::
+( _1 ) |-->(_1)
+NULL |-->null
+EOF |-->-1
+_1 _2 _3 |-->_1 ­_2 _3
+_1 _2 |-->_1 _2
+_* |-->_*
+_1 |-->_1
+
+argumentExpressionList::
+_1 , _2 |-->_1, _2
+_* |-->_*
+_1 |-->_1
+
+
+argstype::
+_1 , _2 |-->_2`argtype
+_1 |-->_1`argtype
+
+
+argtype::
+sizeof ( _1 ) |-->_1
+sizeof _1 |-->_1
+_1 |-->_1`argtype
+
+
+argsn::
+_1 , _2 |-->_1
+
+
+constantExpression::
+_1 |-->_1
+

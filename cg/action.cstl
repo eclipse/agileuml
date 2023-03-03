@@ -1,0 +1,18 @@
+Typ::
+_1 |-->_1
+
+Decln::
+var _1 : Sequence ( _2 ) |-->  _2[] _1;\n<action> _1 Sequence  
+var _1 : _2 |-->  _2 _1;\n<action> _1 _2
+
+Stat::
+print _1 |-->  displaySequence(_1);\n<when> _1 Sequence
+print _1 |-->  displayint(_1);\n<when> _1 int
+print _1 |-->  displaydouble(_1);\n<when> _1 double
+print _1 |-->  display(_1);\n
+
+Prog::
+_* |-->_*
+
+
+

@@ -1,0 +1,3702 @@
+compilationUnit::
+_* |-->_*
+   
+
+programUnit::
+_1 _2 |-->class _1_Class {\n_2`cobolFunctions\n\n  operation _1()\n  pre: true post: true\n  activity:\n_2`procedureDivisionGOTOFunctions\n}\n\n<when> _2 procedureDivision
+_1 _2 _3 |-->class _1_Class {\n_2\n_3`cobolFunctions\n\n  operation _1(_2`dataDivisionParameters)\n  pre: true post: true\n  activity:\n_2`dataDivisionAssignments_3`procedureDivisionGOTOFunctions\n}\n\n<when> _2 dataDivision, _3 procedureDivision
+_1 _2 _3 _4 |-->class _1_Class {\n_3 _2\n_4`cobolFunctions\n\n  operation _1(_3`dataDivisionParameters)\n  pre: true post: true\n  activity:\n_3`dataDivisionAssignments_4`procedureDivisionGOTOFunctions\n}\n\n<when> _2 environmentDivision, _3 dataDivision, _4 procedureDivision
+_1 _2 _3 _4 _* |-->class _1_Class {\n_3 _2\n_4`cobolFunctions\n\n  operation _1(_3`dataDivisionParameters)\n  pre: true post: true\n  activity:\n_3`dataDivisionAssignments_4`procedureDivisionGOTOFunctions\n}\n\n_*<when> _2 environmentDivision, _3 dataDivision, _4 procedureDivision
+_1 _2 _3 _* |-->class _1_Class {\n_2\n_3`cobolFunctions\n\n  operation _1(_2`dataDivisionParameters)\n  pre: true post: true\n  activity:\n_2`dataDivisionAssignments_3`procedureDivisionGOTOFunctions\n}\n\n_*<when> _2 dataDivision, _3 procedureDivision
+_1 _2 _* |-->class _1_Class {\n_2`cobolFunctions\n\n  operation _1()\n  pre: true post: true\n  activity:\n_2`procedureDivisionGOTOFunctions\n}\n\n_*<when> _2 procedureDivision
+
+ 
+
+endProgramStatement::
+END PROGRAM _1 . |-->\n\n
+
+
+
+identificationDivision::
+IDENTIFICATION DIVISION . _1 _* |-->_1
+ID DIVISION . _1 _* |-->_1
+IDENTIFICATION DIVISION . _1 |-->_1
+ID DIVISION . _1 |-->_1
+
+
+identificationDivisionBody::
+_1 |-->
+
+authorParagraph::
+AUTHOR . _1 |-->
+AUTHOR . |-->
+
+installationParagraph::
+INSTALLATION . _1 |-->
+INSTALLATION . |-->
+
+dateWrittenParagraph::
+DATE-WRITTEN . _1 |-->
+DATE-WRITTEN . |-->
+
+
+dateCompiledParagraph::
+DATE-COMPILED . _1 |-->
+DATE-COMPILED . |-->
+
+securityParagraph::
+SECURITY . _1 |-->
+SECURITY . |-->
+
+remarksParagraph::
+REMARKS . _1 |-->
+REMARKS . |-->
+
+programIdParagraph::
+PROGRAM-ID . _1 |-->_1
+PROGRAM-ID . _1 _* |-->_1
+
+
+environmentDivision::
+ENVIRONMENT DIVISION . |-->
+ENVIRONMENT DIVISION . _* |-->_*
+
+
+environmentDivisionBody::
+_1 |-->_1
+
+configurationSection::
+CONFIGURATION SECTION . _* |-->_*
+
+configurationSectionParagraph::
+_1 |-->
+
+
+sourceComputerParagraph::
+_* |-->
+
+objectComputerParagraph::
+_* |-->
+
+objectComputerClause::
+_1 |-->
+
+memorySizeClause::
+_* |-->
+
+diskSizeClause::
+_* |-->
+
+collatingSequenceClause::
+_* |-->
+
+collatingSequenceClauseAlphanumeric::
+_* |-->
+
+collatingSequenceClauseNational::
+_* |-->
+
+segmentLimitClause::
+_* |-->
+
+characterSetClause::
+_* |-->
+
+specialNamesParagraph::
+_* |-->
+
+
+specialNameClause::
+_1 |-->
+
+alphabetClause::
+_1 |-->
+
+alphabetClauseFormat1::
+_* |-->
+
+
+alphabetLiterals::
+_* |-->
+
+alphabetThrough::
+_* |-->
+
+alphabetAlso::
+_* |-->
+
+alphabetClauseFormat2::
+_* |-->
+
+
+channelClause::
+_* |-->
+
+classClause::
+_* |-->
+
+classClauseThrough::
+_* |-->
+
+classClauseFrom::
+_* |-->
+
+classClauseTo::
+_* |-->
+
+currencySignClause::
+_* |-->
+
+decimalPointClause::
+_* |-->
+
+defaultComputationalSignClause::
+_* |-->
+
+defaultDisplaySignClause::
+_* |-->
+
+environmentSwitchNameClause::
+_* |-->
+
+environmentSwitchNameSpecialNamesStatusPhrase::
+_* |-->
+
+odtClause::
+_* |-->
+
+reserveNetworkClause::
+_* |-->
+
+symbolicCharactersClause::
+_* |-->
+
+symbolicCharacters::
+_* |-->
+
+
+inputOutputSection::
+INPUT-OUTPUT SECTION . _* |-->_*
+
+
+inputOutputSectionParagraph::
+_1 |-->_1
+
+
+fileControlParagraph::
+FILE-CONTROL . _* . |-->\n\n  operation initialise() : void\n  pre: true post: true\n  activity: _*\n\n
+FILE-CONTROL _* . |-->\n\n  operation initialise() : void\n  pre: true post: true\n  activity: _*\n\n
+
+
+fileControlEntry::
+_1 _* |-->_1 _*
+
+selectClause::
+SELECT OPTIONAL _1 |-->  _1 := 
+SELECT _1 |-->  _1 := <action> _99 _1
+
+
+fileControlClause::
+_1 |-->_1
+
+assignClause::
+ASSIGN TO _1 |-->(OclFile.newOclFile_Read(OclFile.newOclFile("_1"))).readAllLines() ;\n
+ASSIGN _1 |-->(OclFile.newOclFile_Read(OclFile.newOclFile("_1"))).readAllLines() ;\n
+
+reserveClause::
+_* |-->
+
+organizationClause::
+ORGANIZATION _* SEQUENTIAL |-->
+ORGANIZATION _* RELATIVE |-->
+ORGANIZATION _* INDEXED |-->\n\n  attribute _99_Index : Map(String,int) ;\n\n  operation initialise_99_Index()\n  pre: true post: true\n  activity: for _key : _99 do _99_Index[_key] := _99->indexOf(_key);\n\n
+
+
+paddingCharacterClause::
+_* |-->
+
+recordDelimiterClause::
+_* |-->
+
+accessModeClause::
+_* |-->
+
+recordKeyClause::
+RECORD KEY IS _1 |--><action> _99`fileKey _1
+RECORD KEY  _1 |--><action> _99`fileKey _1
+RECORD IS _1 |--><action> _99`fileKey _1
+RECORD _1 |--><action> _99`fileKey _1
+RECORD KEY IS _1 _* |--><action> _99`fileKey _1
+RECORD KEY  _1 _* |--><action> _99`fileKey _1
+RECORD IS _1 _* |--><action> _99`fileKey _1
+RECORD _1 _* |--><action> _99`fileKey _1
+
+alternateRecordKeyClause::
+_* |-->
+
+passwordClause::
+_* |-->
+
+fileStatusClause::
+_* |-->
+
+relativeKeyClause::
+RELATIVE KEY IS _1 |--><action> _99`fileKey _1
+RELATIVE KEY  _1 |--><action> _99`fileKey _1
+RELATIVE IS _1 |--><action> _99`fileKey _1
+RELATIVE _1 |--><action> _99`fileKey _1
+
+
+ioControlParagraph::
+I-O-CONTROL . _* |-->
+
+ioControlClause::
+_1 |-->
+
+rerunClause::
+RERUN _* |-->
+
+rerunEveryRecords::
+_1 RECORDS |-->
+
+rerunEveryOf::
+_* |-->
+
+rerunEveryClock::
+_* |-->
+
+sameClause::
+_* |-->
+
+multipleFileClause::
+_* |-->
+
+multipleFilePosition::
+_* |-->
+
+commitmentControlClause::
+_* |-->
+
+
+dataDivision::
+DATA DIVISION . |-->
+DATA DIVISION . _* |-->_*
+
+dataDivisionSection::
+_1 |-->_1
+
+
+dataDivisionParameters::
+DATA DIVISION . |-->
+DATA DIVISION . _* |-->_*`dataDivisionParameters
+_1 |-->_1`linkageSectionParameters<when>_1 linkageSection
+_1 |-->
+
+dataDivisionAssignments::
+DATA DIVISION . |-->
+DATA DIVISION . _* |-->_*`dataDivisionAssignments
+_1 |-->_1`linkageSectionAssignments<when>_1 linkageSection
+_1 |-->
+
+
+fileSection::
+FILE SECTION . _* |-->_*
+
+fileDescriptionEntry::
+FD _1 . _* . _+ |-->  attribute _1 : Sequence(String) ;\n  attribute _1_Position : int;\n  attribute _1_Record : String;\n_+`fileDescriptionRecords<action> _55 _1
+
+FD _1 _* . _+ |-->  attribute _1 : Sequence(String) ;\n  attribute _1_Position : int;\n  attribute _1_Record : String;\n_+`fileDescriptionRecords<action> _55 _1
+
+FD _1 . _* |-->  attribute _1 : Sequence(String) ;\n  attribute _1_Position : int;\n  attribute _1_Record : String;\n_*`fileDescriptionRecords<action> _55 _1
+
+SD _1 . _* . _+ |-->  attribute _1 : Sequence(String) ;\n  attribute _1_Position : int;\n  attribute _1_Record : String;\n_+`fileDescriptionRecords<action> _55 _1
+
+SD _1 _* . _+ |-->  attribute _1 : Sequence(String) ;\n  attribute _1_Position : int;\n  attribute _1_Record : String;\n_+`fileDescriptionRecords<action> _55 _1
+
+SD _1 . _* |-->  attribute _1 : Sequence(String) ;\n  attribute _1_Position : int;\n  attribute _1_Record : String;\n_*`fileDescriptionRecords<action> _55 _1
+
+
+fileDescriptionEntryClause::
+_1 |-->_1
+
+externalClause::
+IS EXTERNAL |-->
+EXTERNAL |-->
+
+
+globalClause::
+IS GLOBAL |-->
+GLOBAL |-->
+
+blockContainsClause::
+BLOCK _* |-->
+
+blockContainsTo::
+TO _1 |-->
+
+recordContainsClause::
+_* |-->
+
+recordContainsClauseFormat1::
+_* |-->
+
+recordContainsClauseFormat2::
+_* |-->
+
+recordContainsClauseFormat3::
+_* |-->
+
+recordContainsTo::
+TO _1 |-->
+
+labelRecordsClause::
+_* |-->
+
+valueOfClause::
+_* |-->
+
+valuePair::
+_* |-->
+
+dataRecordsClause::
+_* |-->
+
+linageClause::
+_* |-->
+
+linageAt::
+_1 |-->_1
+
+linageFootingAt::
+_* |-->
+
+linageLinesAtTop::
+_* |-->
+
+linageLinesAtBottom::
+_* |-->
+
+recordingModeClause::
+RECORDING _* |-->
+
+modeStatement::
+_1 |-->
+
+codeSetClause::
+CODE-SET _* |-->
+
+reportClause::
+REPORT _* |-->
+REPORTS _* |-->
+
+dataBaseSection::
+DATA-BASE SECTION . _* |-->
+
+
+dataBaseSectionEntry::
+_1 _2 INVOKE _3 |-->
+
+
+workingStorageSection::
+WORKING-STORAGE SECTION . _* |-->_*
+
+linkageSection::
+LINKAGE SECTION . _* |-->_*
+
+linkageSectionParameters::
+LINKAGE SECTION . _1 _* |-->_*`recurse
+_1 _* |-->_1`dataDescriptionParameter, _*`recurse
+_1 |-->_1`dataDescriptionParameter
+
+linkageSectionAssignments::
+LINKAGE SECTION . _1 _* |-->_*`recurse
+_1 _* |-->_1`dataDescriptionAssignment_*`recurse
+_1 |-->_1`dataDescriptionAssignment
+
+
+communicationSection::
+COMMUNICATION SECTION . _* |-->
+
+communicationDescriptionEntry::
+_1 |-->
+
+communicationDescriptionEntryFormat1::
+_* |-->
+
+communicationDescriptionEntryFormat2::
+_* |-->
+
+communicationDescriptionEntryFormat3::
+_* |-->
+
+destinationCountClause::
+DESTINATION COUNT IS _1 |-->
+DESTINATION COUNT _1 |-->
+
+
+destinationTableClause:: 
+DESTINATION TABLE OCCURS _1 TIMES |-->
+DESTINATION TABLE OCCURS _1 TIMES _* |-->
+
+
+endKeyClause::
+END KEY _* |-->
+
+errorKeyClause::
+ERROR KEY _* |-->
+
+messageCountClause::
+_* |-->
+
+messageDateClause::
+MESSAGE DATE _* |-->
+
+messageTimeClause::
+MESSAGE TIME _* |-->
+
+statusKeyClause::
+STATUS KEY _* |-->
+
+symbolicDestinationClause::
+_* |-->
+
+symbolicQueueClause::
+_* |-->
+
+symbolicSourceClause::
+_* |-->
+
+symbolicTerminalClause::
+_* |-->
+
+symbolicSubQueueClause::
+_* |-->
+
+textLengthClause::
+TEXT LENGTH _* |-->
+
+localStorageSection::
+LOCAL-STORAGE SECTION . LD _1 . _* |-->_*
+LOCAL-STORAGE SECTION . _* |-->_*
+
+screenSection::
+SCREEN SECTION . _* |-->
+
+screenDescriptionEntry::
+_* |-->
+
+screenDescriptionBlankClause::
+BLANK SCREEN |-->
+BLANK LINE |-->
+
+screenDescriptionBellClause::
+BELL |--> 
+BEEP |-->
+
+screenDescriptionBlinkClause:: 
+BLINK |-->
+
+screenDescriptionEraseClause::
+ERASE EOL |-->
+ERASE EOS |-->
+
+screenDescriptionLightClause::
+HIGHLIGHT |-->
+LOWLIGHT |-->
+
+screenDescriptionGridClause::
+GRID |--> 
+LEFTLINE |--> 
+OVERLINE |-->
+
+screenDescriptionReverseVideoClause::
+REVERSE-VIDEO |-->
+
+screenDescriptionUnderlineClause::
+UNDERLINE |-->
+
+screenDescriptionSizeClause::
+_* |-->
+
+screenDescriptionLineClause::
+_* |-->
+
+screenDescriptionColumnClause::
+_* |-->
+
+screenDescriptionForegroundColorClause::
+_* |-->
+
+screenDescriptionBackgroundColorClause::
+_* |-->
+
+screenDescriptionControlClause::
+_* |-->
+
+screenDescriptionValueClause::
+_* |-->
+
+screenDescriptionPictureClause::
+_* |-->
+
+screenDescriptionFromClause::
+_* |-->
+
+screenDescriptionToClause::
+TO _1 |-->
+
+screenDescriptionUsingClause:: 
+USING _1 |-->
+
+screenDescriptionUsageClause:: 
+_* |-->
+
+screenDescriptionBlankWhenZeroClause::
+_* |-->
+
+screenDescriptionJustifiedClause::
+_* |-->
+
+screenDescriptionSignClause::
+_* |-->
+
+screenDescriptionAutoClause::
+AUTO |--> 
+AUTO-SKIP |-->
+
+screenDescriptionSecureClause::
+SECURE |--> 
+NO-ECHO |-->
+ 
+
+screenDescriptionRequiredClause:: 
+REQUIRED |-->
+EMPTY-CHECK |-->
+
+screenDescriptionPromptClause::
+PROMPT _* |-->
+
+screenDescriptionPromptOccursClause::
+OCCURS _1 |-->
+OCCURS _1 TIMES |-->
+
+
+screenDescriptionFullClause::
+FULL |--> 
+LENGTH-CHECK |-->
+
+screenDescriptionZeroFillClause::
+ZERO-FILL |-->
+
+
+reportSection::
+REPORT SECTION . _* |-->
+
+reportDescription::
+_* |-->
+
+reportDescriptionEntry::
+_* |-->
+
+reportDescriptionGlobalClause::
+_* |-->
+
+reportDescriptionPageLimitClause::
+_* |-->
+
+reportDescriptionHeadingClause::
+HEADING _1 |-->
+
+reportDescriptionFirstDetailClause::
+FIRST DETAIL _1 |-->
+
+reportDescriptionLastDetailClause::
+LAST DETAIL _1 |-->
+
+
+reportDescriptionFootingClause::
+FOOTING _1 |-->
+
+reportGroupDescriptionEntry::
+_* |-->
+
+reportGroupDescriptionEntryFormat1::
+_* |-->
+
+reportGroupDescriptionEntryFormat2::
+_* |-->
+
+reportGroupDescriptionEntryFormat3::
+_* |-->
+
+reportGroupBlankWhenZeroClause::
+_* |-->
+
+reportGroupColumnNumberClause::
+_* |-->
+
+reportGroupIndicateClause::
+_* |-->
+
+reportGroupJustifiedClause::
+_* |-->
+
+reportGroupLineNumberClause::
+_* |-->
+
+reportGroupLineNumberNextPage::
+_* |-->
+
+reportGroupLineNumberPlus::
+_* |-->
+
+reportGroupNextGroupClause::
+_* |-->
+
+reportGroupNextGroupPlus::
+_* |-->
+
+reportGroupNextGroupNextPage::
+_* |-->
+
+reportGroupPictureClause::
+_* |-->
+
+reportGroupResetClause::
+_* |-->
+
+reportGroupSignClause::
+_* |-->
+
+reportGroupSourceClause::
+_* |-->
+
+reportGroupSumClause::
+_* |-->
+
+reportGroupTypeClause::
+_* |-->
+
+reportGroupTypeReportHeading::
+_* |-->
+
+reportGroupTypePageHeading::
+_* |-->
+
+reportGroupTypeControlHeading::
+_* |-->
+
+reportGroupTypeDetail::
+_* |-->
+
+reportGroupTypeControlFooting::
+_* |-->
+
+reportGroupUsageClause::
+_* |-->
+
+reportGroupTypePageFooting::
+_* |-->
+
+reportGroupTypeReportFooting::
+_* |-->
+
+reportGroupValueClause::
+_* |-->
+
+
+programLibrarySection::
+PROGRAM-LIBRARY SECTION . _* |-->
+
+libraryDescriptionEntry::
+_1 |-->
+
+libraryDescriptionEntryFormat1::
+LD _1 EXPORT _* |-->
+
+libraryDescriptionEntryFormat2::
+LB _1 IMPORT _* |-->
+
+libraryAttributeClauseFormat1::
+ATTRIBUTE _* |-->
+
+libraryAttributeClauseFormat2::
+ATTRIBUTE _* |-->
+
+libraryAttributeFunction::
+FUNCTIONNAME IS _1 |-->
+
+libraryAttributeParameter::
+LIBPARAMETER IS _1 |-->
+LIBPARAMETER _1 |-->
+
+
+libraryAttributeTitle::
+TITLE IS _1 |-->
+
+libraryEntryProcedureClauseFormat1::
+ENTRY-PROCEDURE _1 _* |-->
+
+libraryEntryProcedureClauseFormat2::
+ENTRY-PROCEDURE _* |-->
+
+libraryEntryProcedureForClause::
+FOR _1 |-->
+
+libraryEntryProcedureGivingClause::
+GIVING _1 |-->
+
+libraryEntryProcedureUsingClause::
+USING _* |-->
+
+libraryEntryProcedureUsingName::
+_1 |-->
+
+libraryEntryProcedureWithClause::
+WITH _* |-->
+
+libraryEntryProcedureWithName::
+_1 |-->
+
+libraryIsCommonClause::
+IS COMMON |-->
+COMMON |-->
+
+libraryIsGlobalClause::
+IS GLOBAL |-->
+GLOBAL |-->
+
+
+dataDescriptionEntry::
+_1 |-->_1
+
+dataDescriptionEntryFormat1::
+77 FILLER . |-->
+_1 FILLER . |-->
+77 FILLER _* . |-->
+_1 FILLER _* . |-->
+
+_1 _2 . |-->  attribute _2 : String;\n
+
+_1 _2 _* . |--> _*`global2static attribute _2_Index : int ;\n  attribute _2 : Sequence(_*`oclDataType)_*`dataOccursInitialisation_*`oclTypeDefault);\n_*`dataOccursIndexes<when> _* any dataOccursClause, _* any dataPictureClause <action> _66 _2
+
+_1 _2 _* . |--> _*`global2static attribute _2 : _*`oclDataType_*`oclDataValue;\n<when> _* any dataValueClause, _* any dataPictureClause
+
+_1 _2 _* . |--> _*`global2static attribute _2 : _*`oclDataType;\n  invariant _2 = _*`oclDataRedefines;\n  invariant _*`oclDataRedefines = _2;\n<when> _* any dataRedefinesClause, _* any dataPictureClause
+
+_1 _2 _* . |--> _*`global2static attribute _2 : _*`oclDataType;\n<when> _* any dataPictureClause
+
+_1 _2 _* . |--> _*`global2static attribute _2_Index : int;\n  attribute _2 : Sequence(String)_*`dataOccursInitialisation"");\n_*`dataOccursIndexes<when> _* any dataOccursClause <action> _66 _2
+
+_1 _2 _* . |--> _*`global2static attribute _2 : String_*`oclDataValue;\n<when> _* any dataValueClause
+
+_1 _2 _* . |--> _*`global2static attribute _2 : String;\n  invariant _2 = _*`oclDataRedefines;  invariant _*`oclDataRedefines = _2;\n<when> _* any dataRedefinesClause
+
+
+
+dataDescriptionParameter::
+_1 |-->_1`dataDescriptionEntryParameter
+
+dataDescriptionEntryParameter::
+77 FILLER . |-->
+_1 FILLER . |-->
+77 FILLER _* . |-->
+_1 FILLER _* . |-->
+_1 _2 . |--> 
+_1 _2 _* . |-->_2 : Sequence(_*`oclDataType)<when> _* any dataOccursClause
+_1 _2 _* . |-->_2 : _*`oclDataType
+
+
+dataDescriptionAssignment::
+_1 |-->_1`dataDescriptionEntryAssignment
+
+dataDescriptionEntryAssignment::
+77 FILLER . |-->
+_1 FILLER . |-->
+77 FILLER _* . |-->
+_1 FILLER _* . |-->
+_1 _2 . |--> 
+_1 _2 _* . |-->    self._2 := _2 ;\n
+
+
+fileDescriptionRecords::
+_1 |-->_1`fileDescriptionRecord
+
+fileDescriptionRecord::
+77 FILLER . |-->
+_1 FILLER . |-->
+77 FILLER _* . |-->
+_1 FILLER _* . |-->
+
+01 _1 . |-->  attribute _1 : String;\n  invariant _1 = _55_Record;\n<action> _1`ownerFile _55
+
+01 _1 _* . |-->  attribute _1 : _*`oclDataType;\n  invariant _1 = _55_Record;\n<action> _1`ownerFile _55
+
+_1 _2 . |-->  attribute _2 : String;\n
+
+_1 _2 _* . |-->  attribute _2 : Sequence(_*`oclDataType);\n<when> _* any dataOccursClause
+
+_1 _2 _* . |-->  attribute _2 : _*`oclDataType;\n
+
+
+dataDescriptionEntryFormat2::
+66 _1 _2 . |-->  attribute _1 : String := "" ;\n  invariant _1 = "" + _2 ;\n  invariant _2 = _1 ;\n
+
+dataDescriptionEntryFormat3::
+88 _1 _2 . |-->  attribute _1 : boolean ; \n
+
+
+dataDescriptionEntryExecSql::
+_* |-->
+
+global2static::
+IS GLOBAL |-->static
+GLOBAL |-->static
+_1 |-->
+_* |-->
+
+
+oclDataType::
+. |-->
+INTEGER |-->int
+STRING |-->String
+PICTURE IS _1 |-->_1`pictureStringDataType
+PIC IS _1 |-->_1`pictureStringDataType
+PICTURE _1 |-->_1`pictureStringDataType
+PIC _1 |-->_1`pictureStringDataType
+_1 |-->_1`dataPictureDataType<when> _1 dataPictureClause
+_1 |-->_1<when> _1 dataIntegerStringClause
+_1 |-->
+
+_1 _* |-->_1`dataPictureDataType<when> _1 dataPictureClause
+_1 _* |-->_1<when> _1 dataIntegerStringClause
+_1 _* |--><when> _1 dataRedefinesClause
+_1 _* |--><when> _1 dataOccursClause
+_1 _* |-->_*`recurse
+
+
+oclTypeDefault::
+. |-->null
+INTEGER |-->0
+STRING |-->""
+PICTURE IS _1 |-->_1`pictureStringDataTypeDefault
+PIC IS _1 |-->_1`pictureStringDataTypeDefault
+PICTURE _1 |-->_1`pictureStringDataTypeDefault
+PIC _1 |-->_1`pictureStringDataTypeDefault
+_1 |-->_1`dataPictureDataTypeDefault<when> _1 dataPictureClause
+_1 |-->_1<when> _1 dataIntegerStringClause
+_1 |-->
+
+_1 _* |-->_1`dataPictureDataTypeDefault<when> _1 dataPictureClause
+_1 _* |-->_1`dataIntegerStringClauseDefault<when> _1 dataIntegerStringClause
+_1 _* |--><when> _1 dataRedefinesClause
+_1 _* |--><when> _1 dataOccursClause
+_1 _* |-->_*`recurse
+
+
+dataAlignedClause::
+ALIGNED |-->
+
+dataBlankWhenZeroClause::
+BLANK _* |-->
+
+dataCommonOwnLocalClause::
+COMMON |-->
+OWN |--> 
+LOCAL |-->
+
+dataExternalClause::
+IS EXTERNAL BY _1 |-->
+EXTERNAL BY _1 |-->
+IS EXTERNAL |-->
+EXTERNAL |-->
+
+
+dataGlobalClause::
+IS GLOBAL |-->
+GLOBAL |-->
+
+dataIntegerStringClause::
+INTEGER |-->int
+STRING |-->String
+
+dataIntegerStringClauseDefault::
+INTEGER |-->0
+STRING |-->""
+
+dataJustifiedClause::
+JUSTIFIED RIGHT |-->
+JUST RIGHT |-->
+JUSTIFIED |-->
+JUST |-->
+
+
+dataOccursClause::
+OCCURS _* |-->
+
+
+dataOccursIndexes::
+OCCURS _1 INDEXED BY _2 |-->  attribute _2 : int;\n  invariant _2 = _66_Index;\n  invariant _66_Index = _2;\n<action> _66`sequenceIndex _2
+OCCURS _1 _* INDEXED BY _2 |-->  attribute _2 : int;\n  invariant _2 = _66_Index;\n  invariant _66_Index = _2;\n<action> _66`sequenceIndex _2
+OCCURS _1 |-->
+OCCURS _1 _* |-->
+_1 |-->_1`oclOccursIndexes<when> _1 dataOccursClause
+_1 _* |-->
+_1 |-->
+
+
+dataOccursInitialisation::
+OCCURS _1 INDEXED BY _2 |--> := Integer.subrange(1,_1)->collect(
+OCCURS _1 _* INDEXED BY _2 |--> := Integer.subrange(1,_1)->collect(
+OCCURS _1 |--> := Integer.subrange(1,_1)->collect(
+OCCURS _1 _* |--> := Integer.subrange(1,_1)->collect(
+_1 |-->_1`oclOccursInitialisation<when> _1 dataOccursClause
+_1 _* |-->
+_1 |-->
+
+
+dataOccursTo::
+TO _1 |-->
+
+dataOccursSort::
+ASCENDING KEY IS _* |-->
+DESCENDING KEY IS _* |-->
+ASCENDING KEY _* |-->
+DESCENDING KEY _* |-->
+ASCENDING IS _* |-->
+DESCENDING IS _* |-->
+ASCENDING _* |-->
+DESCENDING _* |-->
+
+
+dataPictureClause::
+PICTURE IS _1 |-->_1
+PIC IS _1 |-->_1
+PICTURE _1 |-->_1
+PIC _1 |-->_1
+
+dataPictureDataType::
+PICTURE IS _1 |-->_1`pictureStringDataType
+PIC IS _1 |-->_1`pictureStringDataType
+PICTURE _1 |-->_1`pictureStringDataType
+PIC _1 |-->_1`pictureStringDataType
+
+dataPictureDataTypeDefault::
+PICTURE IS _1 |-->_1`pictureStringDataTypeDefault
+PIC IS _1 |-->_1`pictureStringDataTypeDefault
+PICTURE _1 |-->_1`pictureStringDataTypeDefault
+PIC _1 |-->_1`pictureStringDataTypeDefault
+
+pictureString::
+_* |-->_*
+
+pictureStringDataType::
+_1 |-->_1`pictureStringDataType<when> _1 pictureChars
+_1 _* |-->_*`recurse<when> _1 pictureCardinality
+_1 |--><when> _1 cobolWord
+X |-->String
+A |-->String
+S |-->int
+P |-->double
+$ |-->String
+/ |-->String
+, |-->String
+: |-->String
+* |-->String
++ |-->String
+- |-->String
+< |-->String
+> |-->String
+V |-->double
+9 |-->int
+. |-->String
+_1 |-->int<when> _1 integerLiteral
+X _1 |-->String<when> _1 pictureCardinality
+A _1 |-->String<when> _1 pictureCardinality
+S _1 |-->int<when> _1 pictureCardinality
+P _1 |-->double<when> _1 pictureCardinality
+$ _1 |-->String<when> _1 pictureCardinality
+/ _1 |-->String<when> _1 pictureCardinality
+, _1 |-->String<when> _1 pictureCardinality
+: _1 |-->String<when> _1 pictureCardinality
+* _1 |-->String<when> _1 pictureCardinality
++ _1 |-->String<when> _1 pictureCardinality
+- _1 |-->String<when> _1 pictureCardinality
+< _1 |-->String<when> _1 pictureCardinality
+> _1 |-->String<when> _1 pictureCardinality
+V _1 |-->double<when> _1 pictureCardinality
+9 _1 |-->int<when> _1 pictureCardinality
+. _1 |-->String<when> _1 pictureCardinality
+_1 _2 |-->String<when> _2 pictureCardinality
+X _* |-->String
+A _* |-->String
+S _* |-->_*`recurse
+P _* |-->double
+$ _* |-->String
+/ _* |-->String
+, _* |-->String
+: _* |-->String
+* _* |-->String
++ _* |-->String
+- _* |-->String
+< _* |-->String
+> _* |-->String
+V _* |-->double
+9 _* |-->_*`recurse
+. _* |-->String
+_1 _* |-->_*`recurse
+
+
+pictureStringDataTypeDefault::
+_1 |-->_1`pictureStringDataTypeDefault<when> _1 pictureChars
+_1 _* |-->_*`recurse<when> _1 pictureCardinality
+_1 |--><when> _1 cobolWord
+X |-->""
+A |-->""
+S |-->0
+P |-->0.0
+$ |-->""
+/ |-->""
+, |-->""
+: |-->""
+* |-->""
++ |-->""
+- |-->""
+< |-->""
+> |-->""
+V |-->0.0
+9 |-->0
+. |-->""
+_1 |-->0<when> _1 integerLiteral
+X _1 |-->""<when> _1 pictureCardinality
+A _1 |-->""<when> _1 pictureCardinality
+S _1 |-->0<when> _1 pictureCardinality
+P _1 |-->0.0<when> _1 pictureCardinality
+$ _1 |-->""<when> _1 pictureCardinality
+/ _1 |-->""<when> _1 pictureCardinality
+, _1 |-->""<when> _1 pictureCardinality
+: _1 |-->""<when> _1 pictureCardinality
+* _1 |-->""<when> _1 pictureCardinality
++ _1 |-->""<when> _1 pictureCardinality
+- _1 |-->""<when> _1 pictureCardinality
+< _1 |-->""<when> _1 pictureCardinality
+> _1 |-->""<when> _1 pictureCardinality
+V _1 |-->0.0<when> _1 pictureCardinality
+9 _1 |-->0<when> _1 pictureCardinality
+. _1 |-->""<when> _1 pictureCardinality
+_1 _2 |-->""<when> _2 pictureCardinality
+X _* |-->""
+A _* |-->""
+S _* |-->_*`recurse
+P _* |-->0.0
+$ _* |-->""
+/ _* |-->""
+, _* |-->""
+: _* |-->""
+* _* |-->""
++ _* |-->""
+- _* |-->""
+< _* |-->""
+> _* |-->""
+V _* |-->0.0
+9 _* |-->_*`recurse
+. _* |-->""
+_1 _* |-->_*`recurse
+
+
+pictureChars::
+X |-->String
+A |-->String
+S |-->int
+P |-->double
+$ |-->String
+/ |-->String
+, |-->String
+: |-->String
+* |-->String
++ |-->String
+- |-->String
+< |-->String
+> |-->String
+V |-->double
+9 |-->int
+. |-->String
+_1 |-->int<when> _1 integerLiteral
+_1 |-->String
+
+pictureCardinality::
+( _1 ) |-->
+
+dataReceivedByClause::
+RECEIVED BY CONTENT |-->
+RECEIVED BY REFERENCE |-->
+RECEIVED BY REF |-->
+RECEIVED CONTENT |-->
+RECEIVED REFERENCE |-->
+RECEIVED REF |-->
+BY CONTENT |-->
+BY REFERENCE |-->
+BY REF |-->
+CONTENT |-->
+REFERENCE |-->
+REF |-->
+
+dataRecordAreaClause::
+RECORD AREA |-->
+
+dataRedefinesClause::
+REDEFINES _1 |-->
+
+dataRenamesClause::
+RENAMES _1 THROUGH _2 |-->_1
+RENAMES _1 THRU _2 |-->_1
+RENAMES _1 |-->_1
+
+
+dataSignClause::
+SIGN IS LEADING SEPARATE CHARACTER |-->
+SIGN IS TRAILING SEPARATE CHARACTER |-->
+SIGN IS LEADING SEPARATE |-->
+SIGN IS TRAILING SEPARATE |-->
+SIGN IS LEADING |-->
+SIGN IS TRAILING |-->
+SIGN LEADING SEPARATE CHARACTER |-->
+SIGN TRAILING SEPARATE CHARACTER |-->
+SIGN LEADING SEPARATE |-->
+SIGN TRAILING SEPARATE |-->
+SIGN LEADING |-->
+SIGN TRAILING |-->
+LEADING SEPARATE CHARACTER |-->
+TRAILING SEPARATE CHARACTER |-->
+LEADING SEPARATE |-->
+TRAILING SEPARATE |-->
+LEADING |-->
+TRAILING |-->
+
+
+dataSynchronizedClause::
+SYNCHRONIZED LEFT |-->
+SYNC LEFT |-->
+SYNCHRONIZED RIGHT |-->
+SYNC RIGHT |-->
+SYNCHRONIZED |-->
+SYNC |-->
+
+
+dataThreadLocalClause::
+IS THREAD-LOCAL |-->
+THREAD-LOCAL |-->
+
+
+dataTypeClause::
+TYPE IS SHORT-DATE |-->String
+TYPE IS LONG-DATE |-->String
+TYPE IS NUMERIC-DATE |-->int
+TYPE IS NUMERIC-TIME |-->int 
+TYPE IS LONG-TIME |-->long
+TYPE SHORT-DATE |-->String
+TYPE LONG-DATE |-->String
+TYPE NUMERIC-DATE |-->int
+TYPE NUMERIC-TIME |-->int 
+TYPE LONG-TIME |-->long
+
+dataTypeDefClause::
+IS TYPEDEF |-->
+TYPEDEF |-->
+
+dataUsageClause::
+USAGE IS BINARY TRUNCATED |-->
+USAGE IS BINARY EXTENDED |-->
+USAGE IS BINARY |-->
+USAGE IS BIT |-->
+USAGE IS COMP |-->
+USAGE IS COMP-1 |-->
+USAGE IS COMP-2 |--> 
+USAGE IS COMP-3 |-->
+USAGE IS COMP-4 |--> 
+USAGE IS COMP-5 |--> 
+USAGE IS COMPUTATIONAL |--> 
+USAGE IS COMPUTATIONAL-1 |--> 
+USAGE IS COMPUTATIONAL-2 |--> 
+USAGE IS COMPUTATIONAL-3 |--> 
+USAGE IS COMPUTATIONAL-4 |--> 
+USAGE IS COMPUTATIONAL-5 |--> 
+USAGE IS CONTROL-POINT |-->
+USAGE IS DATE |--> 
+USAGE IS DISPLAY |--> 
+USAGE IS DISPLAY-1 |--> 
+USAGE IS DOUBLE |--> 
+USAGE IS EVENT |--> 
+USAGE IS FUNCTION-POINTER |--> 
+USAGE IS INDEX |--> 
+USAGE IS KANJI |--> 
+USAGE IS LOCK |--> 
+USAGE IS NATIONAL |--> 
+USAGE IS PACKED-DECIMAL |--> 
+USAGE IS POINTER |--> 
+USAGE IS PROCEDURE-POINTER |--> 
+USAGE IS REAL |--> 
+USAGE IS TASK |-->
+USAGE BINARY TRUNCATED |-->
+USAGE BINARY EXTENDED |-->
+USAGE BINARY |-->
+USAGE BIT |-->
+USAGE COMP |-->
+USAGE COMP-1 |-->
+USAGE COMP-2 |--> 
+USAGE COMP-3 |-->
+USAGE COMP-4 |--> 
+USAGE COMP-5 |--> 
+USAGE COMPUTATIONAL |--> 
+USAGE COMPUTATIONAL-1 |--> 
+USAGE COMPUTATIONAL-2 |--> 
+USAGE COMPUTATIONAL-3 |--> 
+USAGE COMPUTATIONAL-4 |--> 
+USAGE COMPUTATIONAL-5 |--> 
+USAGE CONTROL-POINT |-->
+USAGE DATE |--> 
+USAGE DISPLAY |--> 
+USAGE DISPLAY-1 |--> 
+USAGE DOUBLE |--> 
+USAGE EVENT |--> 
+USAGE FUNCTION-POINTER |--> 
+USAGE INDEX |--> 
+USAGE KANJI |--> 
+USAGE LOCK |--> 
+USAGE NATIONAL |--> 
+USAGE PACKED-DECIMAL |--> 
+USAGE POINTER |--> 
+USAGE PROCEDURE-POINTER |--> 
+USAGE REAL |--> 
+USAGE TASK |-->
+BINARY TRUNCATED |-->
+BINARY EXTENDED |-->
+BINARY |-->
+BIT |-->
+COMP |-->
+COMP-1 |-->
+COMP-2 |--> 
+COMP-3 |-->
+COMP-4 |--> 
+COMP-5 |--> 
+COMPUTATIONAL |--> 
+COMPUTATIONAL-1 |--> 
+COMPUTATIONAL-2 |--> 
+COMPUTATIONAL-3 |--> 
+COMPUTATIONAL-4 |--> 
+COMPUTATIONAL-5 |--> 
+CONTROL-POINT |-->
+DATE |--> 
+DISPLAY |--> 
+DISPLAY-1 |--> 
+DOUBLE |--> 
+EVENT |--> 
+FUNCTION-POINTER |--> 
+INDEX |--> 
+KANJI |--> 
+LOCK |--> 
+NATIONAL |--> 
+PACKED-DECIMAL |--> 
+POINTER |--> 
+PROCEDURE-POINTER |--> 
+REAL |--> 
+TASK |-->
+
+dataUsingClause::
+USING |-->
+
+dataValueClause::
+VALUE IS _1 _* |--> := _1
+VALUES ARE _1 _* |--> := _1
+VALUE IS _1 |--> := _1
+VALUES ARE _1 |--> := _1
+VALUE _1 _* |--> := _1
+VALUES _1 _* |--> := _1
+VALUE _1 |--> := _1
+VALUES _1 |--> := _1
+_1 _* |-->
+_1 |-->
+
+oclDataValue::
+VALUE IS _1 _* |--> := _1
+VALUES ARE _1 _* |--> := _1
+VALUE IS _1 |--> := _1
+VALUES ARE _1 |--> := _1
+VALUE _1 _* |--> := _1
+VALUES _1 _* |--> := _1
+VALUE _1 |--> := _1
+VALUES _1 |--> := _1
+_1 |-->_1`oclDataValue<when> _1 dataValueClause
+_1 _* |-->
+_1 |-->
+
+oclDataRedefines::
+REDEFINES _1 |-->_1
+_1 |-->_1`oclDataRedefines<when> _1 dataRedefinesClause
+_1 _* |-->
+_1 |-->
+
+
+
+dataValueInterval::
+_1 |-->_1
+_1 _2 |-->_1
+
+dataValueIntervalFrom::
+_1 |-->_1
+
+dataValueIntervalTo::
+THROUGH _1 |-->
+THRU _1 |-->
+
+dataWithLowerBoundsClause::
+WITH LOWER BOUNDS |-->
+LOWER BOUNDS |-->
+
+
+procedureDivision::
+PROCEDURE DIVISION _1 _2 . _3 _4 |-->_4
+PROCEDURE DIVISION _1 _2 . _3 |-->_3
+PROCEDURE DIVISION _1 . _2 _3 |-->_3
+PROCEDURE DIVISION _1 . _2 |-->_2
+PROCEDURE DIVISION . _1 _2 |-->_2
+PROCEDURE DIVISION . _1 |-->_1
+
+procedureDivisionGOTOFunctions::
+PROCEDURE DIVISION _1 _2 . _3 _4 |-->_4`procedureDivisionBodyGOTOFunctions
+PROCEDURE DIVISION _1 _2 . _3 |-->_3`procedureDivisionBodyGOTOFunctions
+PROCEDURE DIVISION _1 . _2 _3 |-->_3`procedureDivisionBodyGOTOFunctions
+PROCEDURE DIVISION _1 . _2 |-->_2`procedureDivisionBodyGOTOFunctions
+PROCEDURE DIVISION . _1 _2 |-->_2`procedureDivisionBodyGOTOFunctions
+PROCEDURE DIVISION . _1 |-->_1`procedureDivisionBodyGOTOFunctions
+
+
+procedureDivisionUsingClause::
+USING _* |-->
+CHAINING _* |-->
+
+procedureDivisionGivingClause::
+GIVING _1 |--> 
+RETURNING _1 |-->
+
+procedureDivisionUsingParameter::
+_1 |-->_1
+
+procedureDivisionByReferencePhrase::
+_* |-->
+
+procedureDivisionByReference::
+OPTIONAL _1 |-->
+ANY |-->
+_1 |-->
+
+
+procedureDivisionByValuePhrase::
+BY VALUE _* |-->
+VALUE _* |-->
+
+procedureDivisionByValue::
+ANY |-->
+_1 |--> 
+
+procedureDeclaratives::
+DECLARATIVES . _* END DECLARATIVES . |-->
+
+procedureDeclarative::
+_1 . _2 . _3 |-->_3
+
+procedureSectionHeader::
+_1 SECTION _2 |-->
+_1 SECTION |-->
+
+sectionNameOnly::
+_1 SECTION _2 |-->_1
+_1 SECTION |-->_1
+_1 . _2  |-->_1`sectionNameOnly
+
+
+procedureDivisionBody::
+paragraphs _1 |-->_1
+paragraphs _1 _* |-->_1_*
+_1  |-->_1
+_1 _*  |-->_1_*
+
+procedureDivisionBodyGOTOFunctions::
+paragraphs _1 |-->_1`procedureSectionGOTOFunction\n\n\n  operation ProgramFunctionality()\n  pre: true post: true\n  activity: _1`procedureSectionParagraphsGOTOFunctions
+paragraphs _* |-->_*`procedureSectionGOTOFunction\n\n\n  operation ProgramFunctionality()\n  pre: true post: true\n  activity: _*`procedureSectionParagraphsGOTOFunctions
+_1  |-->_1`paragraphsGOTOFunction
+_1 _*  |-->_1`paragraphsGOTOFunction_*`procedureSectionGOTOFunction\n\n\n  operation ProgramFunctionality()\n  pre: true post: true\n  activity: _*`procedureSectionParagraphsGOTOFunctions
+
+
+procedureSection::
+_1 . _2  |-->_2
+
+
+procedureSectionGOTOFunction::
+_1 . _2  |-->    self._1`sectionNameOnly();\n\n  operation _1`sectionNameOnly() pre: true post: true\n  activity: _2
+
+
+procedureSectionParagraphsGOTOFunctions::
+_1 . _2  |-->_2`paragraphsGOTOFunction
+
+
+paragraphs::
+_* |-->_*
+
+paragraphsGOTOFunction::
+_1 |-->_1<when>_1 sentence
+_1 |-->_1`paragraphGOTOFunction<when> _1 paragraph
+_1 _2 |-->_1`paragraphGOTOFunction_2`paragraphGOTOFunction<when>_1 paragraph, _2 paragraph
+_1 _* |-->_1_*`recurse<when> _1 sentence
+_1 _2 _* |-->_1`paragraphGOTOFunction_2`paragraphGOTOFunction_*`recurse<when>_1 paragraph, _2 paragraph
+
+
+paragraph::
+_1 . _2 |-->_2
+_1 .  |-->
+_1 . _* |-->_*
+
+paragraphNameOnly::
+_1 . _2 |-->_1
+_1 .  |-->_1
+_1 . _* |-->_1
+
+
+paragraphGOTOFunction::
+_1 . _2  |-->    self._1();\n\n  operation _1() pre: true post: true\n  activity: self._1_Call();\n 
+_1 .  |-->    self._1();\n\n  operation _1() pre: true post: true\n  activity: self._1_Call();\n
+_1 . _*  |-->    self._1();\n\n  operation _1() pre: true post: true\n  activity: self._1_Call();\n
+
+
+sentence::
+.  |-->    skip;
+_* .  |-->_*
+
+
+statement::
+_1 |-->_1
+
+
+acceptStatement::
+ACCEPT _1 _2 _3 END-ACCEPT  |-->    try (_1 := (OclFile["System.in"]).readLine() ; _3      skip) catch (_ex : IOException) do (_2      skip) ;\n<when> _2 onExceptionClause, _3 notOnExceptionClause
+ACCEPT _1 _2 _3  |-->    try (_1 := (OclFile["System.in"]).readLine() ; _3      skip) catch (_ex : IOException) do (_2      skip) ;\n<when> _2 onExceptionClause, _3 notOnExceptionClause
+ACCEPT _1 _2 END-ACCEPT  |-->    try _1 := (OclFile["System.in"]).readLine() catch (_ex : IOException) do (_2      skip) ;\n<when> _2 onExceptionClause
+ACCEPT _1 _2  |-->    try _1 := (OclFile["System.in"]).readLine() catch (_ex : IOException) do (_2      skip) ;\n<when> _2 onExceptionClause
+ACCEPT _1 _2 END-ACCEPT  |-->    try (_1 := (OclFile["System.in"]).readLine() ; _2      skip) catch (_ex : IOException) do skip ;\n<when> _2 notOnExceptionClause
+ACCEPT _1 _2  |-->    try (_1 := (OclFile["System.in"]).readLine() ; _2      skip) catch (_ex : IOException) do skip ;\n<when> _2 notOnExceptionClause
+ACCEPT _1 END-ACCEPT  |-->    _1 := (OclFile["System.in"]).readLine() ;\n
+ACCEPT _1  |-->    _1 := (OclFile["System.in"]).readLine() ;\n
+ACCEPT _1 _2 _3 _4 END-ACCEPT  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement, _3 onExceptionClause, _4 notOnExceptionClause
+ACCEPT _1 _2 _3 _4  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement, _3 onExceptionClause, _4 notOnExceptionClause
+ACCEPT _1 _2 _3 END-ACCEPT  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement, _3 onExceptionClause
+ACCEPT _1 _2 _3  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement, _3 onExceptionClause
+ACCEPT _1 _2 _3 END-ACCEPT  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement, _3 notOnExceptionClause
+ACCEPT _1 _2 _3  |-->(var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement, _3 notOnExceptionClause
+ACCEPT _1 _2 END-ACCEPT  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement
+ACCEPT _1 _2  |-->    (var _dte : OclDate ; _dte := OclDate.newOclDate() ; _1 := _2 ) ;\n<when> _2 acceptFromDateStatement
+
+ACCEPT _1 _2 _3 _4 END-ACCEPT  |-->    _1 := (OclFile["_2"]).readLine() ;\n<when>_3 onExceptionClause, _4 notOnExceptionClause
+ACCEPT _1 _2 _3 _4  |-->    _1 := (OclFile["_2"]).readLine() ;\n<when>_3 onExceptionClause, _4 notOnExceptionClause
+ACCEPT _1 _2 _3 END-ACCEPT  |-->    _1 := (OclFile["_2"]).readLine() ;\n<when>_3 onExceptionClause
+ACCEPT _1 _2 _3  |-->    _1 := (OclFile["_2"]).readLine() ;\n<when>_3 onExceptionClause
+ACCEPT _1 _2 _3 END-ACCEPT  |-->    _1 := (OclFile["_2"]).readLine() ;\n<when>_3 notOnExceptionClause
+ACCEPT _1 _2 _3  |-->    _1 := (OclFile["_2"]).readLine() ;\n<when>_3 notOnExceptionClause
+ACCEPT _1 _2 END-ACCEPT  |-->    _1 := (OclFile["_2"]).readLine() ;\n
+ACCEPT _1 _2  |-->    _1 := (OclFile["_2"]).readLine() ;\n
+
+ACCEPT _2 _3 _4 _5 END-ACCEPT  |--> <when> _3 acceptMessageCountStatement, _4 onExceptionClause, _5 notOnExceptionClause
+ACCEPT _2 _3 _4 _5  |--> <when> _3 acceptMessageCountStatement, _4 onExceptionClause, _5 notOnExceptionClause
+ACCEPT _2 _3 _4 END-ACCEPT  |--> <when> _3 acceptMessageCountStatement, _4 onExceptionClause
+ACCEPT _2 _3 _4  |--> <when> _3 acceptMessageCountStatement, _4 onExceptionClause
+ACCEPT _2 _3 _4 END-ACCEPT  |--> <when> _3 acceptMessageCountStatement, _4 notOnExceptionClause
+ACCEPT _2 _3 _4  |--> <when> _3 acceptMessageCountStatement, _4 notOnExceptionClause
+ACCEPT _2 _3 END-ACCEPT  |--> <when> _3 acceptMessageCountStatement
+ACCEPT _2 _3  |--> <when> _3 acceptMessageCountStatement
+
+
+acceptFromDateStatement::
+FROM DATE YYYYMMDD  |-->_dte.getYear() + "" + _dte.getMonth() + "" + _dte.getDate()
+FROM DATE  |-->(_dte.getYear() mod 100) + "" + _dte.getMonth() + "" + _dte.getDate()
+FROM DAY YYYYDDD  |-->
+FROM DAY  |-->
+FROM DAY OF WEEK  |-->
+FROM TIME  |-->
+FROM TIMER  |-->
+FROM TODAYS DATE MMDDYYYY  |-->_dte.getMonth() + "" + _dte.getDate() + "" + _dte.getYear()
+FROM TODAYS DATE  |-->
+FROM TODAYS NAME  |-->
+FROM YEAR  |-->"" + _dte.getYear()
+FROM YYYYMMDD  |-->_dte.getYear() + "" + _dte.getMonth() + "" + _dte.getDate()
+FROM YYYYDDD  |-->
+
+
+acceptFromMnemonicStatement::
+FROM _1  |-->_1<when> _1 mnemonicName
+
+
+acceptFromEscapeKeyStatement::
+FROM ESCAPE KEY  |-->
+
+
+acceptMessageCountStatement::
+MESSAGE COUNT  |-->
+COUNT  |-->
+
+
+addStatement::
+ADD _1 _2 _3 END-ADD  |-->    try (_1 _3     skip) catch (_ex : OclException) do (_2      skip) ;\n<when> _1 addToStatement, _2 onSizeErrorPhrase, _3 notOnSizeErrorPhrase
+ADD _1 _2 _3  |-->    try (_1 _3      skip) catch (_ex : OclException) do (_2      skip) ;\n<when> _1 addToStatement, _2 onSizeErrorPhrase, _3 notOnSizeErrorPhrase
+ADD _1 _2 END-ADD  |-->    try (_1 skip ) catch (_ex : OclException) do (_2 skip) ;\n<when> _1 addToStatement, _2 onSizeErrorPhrase
+ADD _1 _2  |-->    try (_1 skip) catch (_ex : OclException) do (_2 skip);\n<when> _1 addToStatement, _2 onSizeErrorPhrase
+ADD _1 _2 END-ADD  |-->    try (_1 _2      skip) catch (_ex : OclException) do skip ;\n<when> _1 addToStatement, _2 notOnSizeErrorPhrase
+ADD _1 _2  |-->    try (_1 _2      skip) catch (_ex : OclException) do skip ;\n<when> _1 addToStatement, _2 notOnSizeErrorPhrase
+ADD _1 END-ADD  |-->_1<when> _1 addToStatement
+ADD _1  |-->_1<when> _1 addToStatement
+
+ADD _1 _2 _3 END-ADD  |-->    try (_1 _3      skip) catch (_ex : OclException) do (_2      skip) ;\n<when> _1 addToGivingStatement, _2 onSizeErrorPhrase, _3 notOnSizeErrorPhrase
+ADD _1 _2 _3  |-->    try (_1 _3      skip) catch (_ex : OclException) do (_2      skip) ;\n<when> _1 addToGivingStatement, _2 onSizeErrorPhrase, _3 notOnSizeErrorPhrase
+ADD _1 _2 END-ADD  |-->    try ( _1      skip ) catch (_ex : OclException) do (_2      skip) ;\n<when> _1 addToGivingStatement, _2 onSizeErrorPhrase
+ADD _1 _2  |-->    try (_1      skip) catch (_ex : OclException) do (_2      skip) ;\n<when> _1 addToGivingStatement, _2 onSizeErrorPhrase
+ADD _1 _2 END-ADD  |-->    try (_1 _2      skip) catch (_ex : OclException) do skip ;\n<when> _1 addToGivingStatement, _2 notOnSizeErrorPhrase
+ADD _1 _2  |-->    try (_1 _2      skip) catch (_ex : OclException) do skip ;\n<when> _1 addToGivingStatement, _2 notOnSizeErrorPhrase
+ADD _1 END-ADD  |-->_1<when> _1 addToGivingStatement
+ADD _1  |-->_1<when> _1 addToGivingStatement
+
+ADD _1 _2 _3 END-ADD  |-->_1<when> _1 addCorrespondingStatement, _2 onSizeErrorPhrase, _3 notOnSizeErrorPhrase
+ADD _1 _2 _3  |-->_1<when> _1 addCorrespondingStatement, _2 onSizeErrorPhrase, _3 notOnSizeErrorPhrase
+ADD _1 _2 END-ADD  |-->_1<when> _1 addCorrespondingStatement, _2 onSizeErrorPhrase
+ADD _1 _2  |-->_1<when> _1 addCorrespondingStatement, _2 onSizeErrorPhrase
+ADD _1 _2 END-ADD  |-->_1<when> _1 addCorrespondingStatement, _2 notOnSizeErrorPhrase
+ADD _1 _2  |-->_1<when> _1 addCorrespondingStatement, _2 notOnSizeErrorPhrase
+ADD _1 END-ADD  |-->_1<when> _1 addCorrespondingStatement
+ADD _1  |-->_1<when> _1 addCorrespondingStatement
+
+
+addToStatement::
+_1 TO _2  |-->    _2 := (_2 + _1)_2`roundFunction ;\n<when> _1 addFrom, _2 addTo
+_1 _* TO _3 _+  |-->    (var _addTmp : double ; _addTmp := _1 + _*`sum ;\n      _3 := (_3 + _addTmp)_3`roundFunction ;\n_+`additions      skip); \n
+_1 _* TO _3  |-->    _3 := (_3 + _1 + _*`sum)_3`roundFunction ;\n
+
+
+addToGivingStatement::
+_1 TO _2 GIVING _3  |-->    _2 := _2 + _1 ;\n    _3 := _2_3`roundFunction;\n
+_1 _* TO _3 GIVING _4  |-->    _3 := _3 + (_1 + _*`sum);\n    _4 := _3_4`roundFunction;\n
+_1 _* TO _3 GIVING _4 _+  |-->    (var _addGivingTmp : double ; _addGivingTmp := _3 + (_1 + _*`sum) ;\n      _4 := _addGivingTmp_4`roundFunction;\n_+`addGivingAssigns      skip) ;\n
+_1 _* GIVING _3 _+ |-->    (var _addGivingTmp : double ; _addGivingTmp := _1 + _*`sum ;\n      _3 := _addGivingTmp_3`roundFunction ; \n_+`addGivingAssigns      skip) ;\n
+_1 _* GIVING _3  |-->    _3 := (_1 + _*`sum)_3`roundFunction ;\n
+
+
+addCorrespondingStatement::
+CORRESPONDING _1 TO _2  |-->    _2 := _2 + _1 ;\n
+CORR _1 TO _2  |-->    _2 := _2 + _1 ;\n
+
+
+addFrom::
+_1  |-->_1
+
+addTo::
+_1 ROUNDED  |-->_1
+_1  |-->_1
+
+roundFunction::
+BY _1 _2 |-->_2`roundFunction
+INTO _1 _2  |-->_2`roundFunction
+INTO _1  |-->_1`roundFunction
+GIVING _1  |-->_1`roundFunction
+GIVING _1 _*  |-->_1`roundFunction
+_1 ROUNDED  |-->->roundTo(_1`fractionWidth)
+_1  |-->->truncateTo(_1`fractionWidth)
+
+
+addToGiving::
+_1  |-->_1
+
+
+addGiving::
+_1 ROUNDED  |-->_1<when> _1 identifier
+_1  |-->_1<when> _1 identifier
+
+additions::
+_1 ROUNDED |-->      _1 := (_1 + _addTmp)->roundTo(_1`fractionWidth);\n
+_1 |-->      _1 := (_1 + _addTmp)->truncateTo(_1`fractionWidth);\n
+
+addGivingAssigns::
+_1 ROUNDED  |-->      _1 := _addGivingTmp->roundTo(_1`fractionWidth);\n
+_1 |-->      _1 := _addGivingTmp->truncateTo(_1`fractionWidth);\n
+
+
+alteredGoTo::
+GO TO .  |--> 
+GO .  |--> 
+
+
+alterStatement::
+ALTER _*  |-->_*<when> _1 alterProceedTo
+
+
+alterProceedTo::
+_1 TO _2  |--><action> _1 altered, _1`actualDest _2
+_1 TO PROCEED TO _2  |--><action> _1 altered, _1`actualDest _2
+
+
+callStatement::
+CALL _1 _2 END-CALL  |-->    execute (OclType[_1+"_Class"].newInstance()).(_2) ;\n<when> _1 identifier
+CALL _1 END-CALL  |-->    execute (OclType[_1+"_Class"].newInstance())._1() ;\n<when> _1 identifier
+CALL _1 _2  |-->    execute (OclType[_1+"_Class"].newInstance())._1(_2) ;\n<when> _1 identifier
+CALL _1  |-->    execute (OclType[_1+"_Class"].newInstance())._1() ;\n<when> _1 identifier
+
+CALL _1 _2 END-CALL  |-->    if (_1`trimQuotes_Class.allInstances()->isEmpty()) then execute (create_1`trimQuotes_Class())._1`trimQuotes(_2) else execute (_1`trimQuotes_Class.allInstances.last)._1`trimQuotes(_2) ;\n<when> _1 literal
+CALL _1 END-CALL  |-->    if (_1`trimQuotes_Class.allInstances()->isEmpty()) then execute (create_1`trimQuotes_Class())._1`trimQuotes() else execute (_1`trimQuotes_Class.allInstances.last)._1`trimQuotes() ;\n<when> _1 literal
+
+CALL _1 _2  |-->    if (_1`trimQuotes_Class.allInstances()->isEmpty()) then execute (create_1`trimQuotes_Class())._1`trimQuotes(_2) else execute (_1`trimQuotes_Class.allInstances.last)._1`trimQuotes(_2) ;\n<when> _1 literal
+CALL _1  |-->    if (_1`trimQuotes_Class.allInstances()->isEmpty()) then execute (create_1`trimQuotes_Class())._1`trimQuotes() else execute (_1`trimQuotes_Class.allInstances.last)._1`trimQuotes() ;\n<when> _1 literal
+
+
+callUsingPhrase::
+USING _1  |-->_1
+USING _1 _*  |-->_1, _*`recurse
+_1 _* |-->_1, _*`recurse
+_1 |-->_1 
+
+
+callUsingParameter::
+_1  |-->_1
+
+callByReferencePhrase::
+BY REFERENCE _1  |-->_1
+BY REFERENCE _1 _*  |-->_1, _*`recurse 
+REFERENCE _1  |-->_1
+REFERENCE _1 _*  |-->_1, _*`recurse 
+_1  |-->_1
+_1 _*  |-->_1, _*`recurse 
+
+
+callByReference::
+ADDRESS OF _1  |-->?_1
+INTEGER _1  |-->(_1)->oclAsType(int)
+STRING _1  |-->("" + _1)
+OMITTED  |--> 
+_1  |-->_1
+
+
+callByValuePhrase::
+BY VALUE _1  |-->_1
+BY VALUE _1 _*  |-->_1, _*`recurse 
+VALUE _1  |-->_1
+VALUE _1 _*  |-->_1, _*`recurse
+_1  |-->_1
+_1 _*  |-->_1, _*`recurse 
+ 
+
+
+callByValue::
+ADDRESS OF _1  |-->?_1
+LENGTH OF _1  |-->(_1)->size()
+LENGTH _1  |-->(_1)->size()
+_1  |-->_1
+
+
+callByContentPhrase::
+BY CONTENT _1  |-->_1
+BY CONTENT _1 _*  |-->_1, _*`recurse 
+CONTENT _1  |-->_1
+CONTENT _1 _*  |-->_1, _*`recurse 
+_1  |-->_1
+_1 _*  |-->_1, _*`recurse 
+
+
+callByContent::
+ADDRESS OF _1  |-->?_1
+LENGTH OF _1  |-->(_1)->size()
+LENGTH _1  |-->(_1)->size()
+OMITTED  |--> 
+_1  |-->_1
+
+
+callGivingPhrase::
+GIVING _1  |--> <when> _1 identifier
+RETURNING _1  |--> <when> _1 identifier
+
+
+cancelStatement::
+CANCEL _1  |-->_1
+CANCEL _1 _*  |-->_1_*
+
+cancelCall::
+_1 BYTITLE  |-->    OclType.unloadExecutableObject(_1+"_Class");\n<when> _1 libraryName
+_1 BYFUNCTION  |-->    OclType.unloadExecutableObject(_1+"_Class");\n<when> _1 libraryName
+_1 |-->    OclType.unloadExecutableObject(_1+"_Class");\n<when> _1 identifier
+_1 |-->    execute _1`trimQuotes_Class.allInstances()->last()->isDeleted();\n<when> _1 literal
+
+
+
+displayStatement::
+DISPLAY _1 |-->    execute ("" + _1)->display() ;\n
+DISPLAY _1 _2 _3 _4  |-->    OclFile["_3"].print(_1) ;\n<when> _1 displayOperand, _2 displayAt, _3 displayUpon, _4 displayWith
+DISPLAY _1 _2 _3  |-->    OclFile["_3"].println(_1) ;\n<when> _1 displayOperand, _2 displayAt, _3 displayUpon
+DISPLAY _1 _2 _3  |-->    OclFile["System.out"].print(_1) ;\n<when> _1 displayOperand, _2 displayAt, _3 displayWith
+DISPLAY _1 _2  |-->    execute ("" + _1)->display() ;\n<when> _1 displayOperand, _2 displayAt
+DISPLAY _1 _2 _3  |-->    OclFile["_2"].print(_1) ;\n<when> _1 displayOperand, _2 displayUpon, _3 displayWith
+DISPLAY _1 _2  |-->    OclFile["_2"].println(_1) ;\n<when> _1 displayOperand, _2 displayUpon
+DISPLAY _1 _2  |-->    OclFile["System.out"].print(_1) ;\n<when> _1 displayOperand, _2 displayWith
+DISPLAY _*  |-->    execute ("" + _*`sum)->display() ;\n
+
+
+displayOperand::
+_1 |-->_1
+
+displayAt::
+AT _1  |-->_1
+
+displayUpon::
+UPON _1  |-->_1
+
+displayWith::
+WITH NO ADVANCING  |--> 
+NO ADVANCING  |--> 
+
+
+divideStatement::
+DIVIDE _1 _2 _3 _4 _5 END-DIVIDE  |-->    (var _divideIntoTmp : double; _divideIntoTmp := _1;\n_2`divideIntoAssignments      skip) ;\n_2`sizeError (_4 skip) else skip ;\n_2`noSizeError (_5 skip) ;\n<when>  _2 divideIntoStatement, _3 divideRemainder, _4 onSizeErrorPhrase, _5 notOnSizeErrorPhrase
+DIVIDE _1 _2 _3 _4 _5  |-->    (var _divideIntoTmp : double; _divideIntoTmp := _1;\n_2`divideIntoAssignments      skip) ;\n_2`sizeError (_4 skip) else skip ;\n_2`noSizeError (_5 skip) ;\n<when>  _2 divideIntoStatement, _3 divideRemainder, _4 onSizeErrorPhrase, _5 notOnSizeErrorPhrase
+
+DIVIDE _1 _2 _3 _4 END-DIVIDE  |-->    (var _divideIntoTmp : double; _divideIntoTmp := _1;\n_2`divideIntoAssignments      skip) ;\n_2`sizeError (_4 skip) else skip ;\n<when>  _2 divideIntoStatement, _3 divideRemainder, _4 onSizeErrorPhrase
+DIVIDE _1 _2 _3 _4  |-->    (var _divideIntoTmp : double; _divideIntoTmp := _1;\n_2`divideIntoAssignments      skip) ;\n_2`sizeError (_4 skip) else skip ;\n<when>  _2 divideIntoStatement, _3 divideRemainder, _4 onSizeErrorPhrase
+
+DIVIDE _1 _2 _3 _4 END-DIVIDE  |-->    (var _divideIntoTmp : double ; _divideIntoTmp := _1;\n_2`divideIntoAssignments      skip) ;\n_2`noSizeError (_4 skip) ;\n<when>  _2 divideIntoStatement, _3 divideRemainder, _4 notOnSizeErrorPhrase
+DIVIDE _1 _2 _3 _4  |-->    (var _divideIntoTmp : double ; _divideIntoTmp := _1;\n_2`divideIntoAssignments      skip) ;\n_2`noSizeError (_4 skip) ;\n<when>  _2 divideIntoStatement, _3 divideRemainder, _4 notOnSizeErrorPhrase
+
+DIVIDE _1 _2 _3 END-DIVIDE  |-->    (var _divideIntoTmp : double ; _divideIntoTmp := _1;\n_2`divideIntoAssignments      skip) ;\n<when>  _2 divideIntoStatement, _3 divideRemainder
+DIVIDE _1 _2 _3  |-->    (var _divideIntoTmp : double ; _divideIntoTmp := _1;\n_2`divideIntoAssignments      skip) ;\n<when>  _2 divideIntoStatement, _3 divideRemainder
+
+DIVIDE _1 _2 _3 _4 END-DIVIDE  |-->    (var _divideIntoTmp : double; _divideIntoTmp := _1;\n_2`divideIntoAssignments      skip) ;\n_2`sizeError (_3 skip) else skip ;\n_2`noSizeError (_4 skip) ;\n<when>  _2 divideIntoStatement, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
+DIVIDE _1 _2 _3 _4  |-->    (var _divideIntoTmp : double; _divideIntoTmp := _1;\n_2`divideIntoAssignments      skip) ;\n_2`sizeError (_3 skip) else skip ;\n_2`noSizeError (_4 skip) ;\n<when>  _2 divideIntoStatement, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
+
+DIVIDE _1 _2 _3 END-DIVIDE  |-->    (var _divideIntoTmp : double; _divideIntoTmp := _1;\n_2`divideIntoAssignments      skip) ;\n_2`sizeError (_3 skip) else skip ;\n<when>  _2 divideIntoStatement, _3 onSizeErrorPhrase
+DIVIDE _1 _2 _3  |-->    (var _divideIntoTmp : double; _divideIntoTmp := _1;\n_2`divideIntoAssignments      skip) ;\n_2`sizeError (_3 skip) else skip ;\n<when>  _2 divideIntoStatement, _3 onSizeErrorPhrase
+
+DIVIDE _1 _2 _3 END-DIVIDE  |-->    (var _divideIntoTmp : double ; _divideIntoTmp := _1;\n_2`divideIntoAssignments      skip) ;\n_2`noSizeError (_3 skip) ;\n<when>  _2 divideIntoStatement, _3 notOnSizeErrorPhrase
+DIVIDE _1 _2 _3  |-->    (var _divideIntoTmp : double ; _divideIntoTmp := _1;\n_2`divideIntoAssignments      skip) ;\n_2`noSizeError (_3 skip) ;\n<when>  _2 divideIntoStatement, _3 notOnSizeErrorPhrase
+
+DIVIDE _1 _2 END-DIVIDE  |-->    (var _divideIntoTmp : double ; _divideIntoTmp := _1;\n_2`divideIntoAssignments      skip) ;\n<when>  _2 divideIntoStatement
+DIVIDE _1 _2  |-->    (var _divideIntoTmp : double; _divideIntoTmp := _1;\n_2`divideIntoAssignments      skip) ;\n<when>  _2 divideIntoStatement
+
+DIVIDE _1 _2 _3 _4 _5 END-DIVIDE  |-->    _2`givingVariable := (_2`intoVariable/_1)_2`roundFunction;\n    _3 := _2`intoVariable - _2`givingVariable*_1 ;\n_2`sizeError (_4 skip) else skip ;\n_2`noSizeError (_5 skip) ;\n<when>  _2 divideIntoGivingStatement, _3 divideRemainder, _4 onSizeErrorPhrase, _5 notOnSizeErrorPhrase
+DIVIDE _1 _2 _3 _4 _5  |-->    _2`givingVariable := (_2`intoVariable/_1)_2`roundFunction;\n    _3 := _2`intoVariable - _2`givingVariable*_1 ;\n_2`sizeError (_4 skip) else skip ;\n_2`noSizeError (_5 skip) ;\n<when>  _2 divideIntoGivingStatement, _3 divideRemainder, _4 onSizeErrorPhrase, _5 notOnSizeErrorPhrase
+
+DIVIDE _1 _2 _3 _4 END-DIVIDE  |-->    _2`givingVariable := (_2`intoVariable/_1)_2`roundFunction;\n    _3 := _2`intoVariable - _2`givingVariable*_1 ;\n_2`sizeError (_4 skip) else skip ;\n<when>  _2 divideIntoGivingStatement, _3 divideRemainder, _4 onSizeErrorPhrase
+DIVIDE _1 _2 _3 _4  |-->    _2`givingVariable := (_2`intoVariable/_1)_2`roundFunction;\n    _3 := _2`intoVariable - _2`givingVariable*_1 ;\n_2`sizeError (_4 skip) else skip ;\n<when>  _2 divideIntoGivingStatement, _3 divideRemainder, _4 onSizeErrorPhrase
+
+DIVIDE _1 _2 _3 _4 END-DIVIDE  |-->    _2`givingVariable := (_2`intoVariable/_1)_2`roundFunction;\n    _3 := _2`intoVariable - _2`givingVariable*_1 ;\n_2`noSizeError (_4 skip) ;\n<when>  _2 divideIntoGivingStatement, _3 divideRemainder, _4 notOnSizeErrorPhrase
+DIVIDE _1 _2 _3 _4  |-->    _2`givingVariable := (_2`intoVariable/_1)_2`roundFunction;\n    _3 := _2`intoVariable - _2`givingVariable*_1 ;\n_2`noSizeError (_4 skip) ;\n<when>  _2 divideIntoGivingStatement, _3 divideRemainder, _4 notOnSizeErrorPhrase
+
+DIVIDE _1 _2 _3 END-DIVIDE  |-->    _2`givingVariable := (_2`intoVariable/_1)_2`roundFunction;\n    _3 := _2`intoVariable - _2`givingVariable*_1 ;\n<when>  _2 divideIntoGivingStatement, _3 divideRemainder
+DIVIDE _1 _2 _3  |-->    _2`givingVariable := (_2`intoVariable/_1)_2`roundFunction;\n    _3 := _2`intoVariable - _2`givingVariable*_1 ;\n<when>  _2 divideIntoGivingStatement, _3 divideRemainder
+
+DIVIDE _1 _2 _3 _4 END-DIVIDE  |-->    (var _divideIntoGivingTmp : double; _divideIntoGivingTmp := _1;\n_2      skip) ;\n_2`sizeError (_3 skip) else skip ;\n_2`noSizeError (_4 skip) ;\n<when>  _2 divideIntoGivingStatement, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
+DIVIDE _1 _2 _3 _4  |-->    (var _divideIntoGivingTmp : double; _divideIntoGivingTmp := _1;\n_2      skip) ;\n_2`sizeError (_3 skip) else skip ;\n_2`noSizeError (_4 skip) ;\n<when>  _2 divideIntoGivingStatement, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
+
+DIVIDE _1 _2 _3 END-DIVIDE  |-->    (var _divideIntoGivingTmp : double; _divideIntoGivingTmp := _1;\n_2      skip) ;\n_2`sizeError (_3 skip) else skip ;\n<when>  _2 divideIntoGivingStatement, _3 onSizeErrorPhrase
+DIVIDE _1 _2 _3  |-->    (var _divideIntoGivingTmp : double; _divideIntoGivingTmp := _1;\n_2      skip) ;\n_2`sizeError (_3 skip) else skip ;\n<when>  _2 divideIntoGivingStatement, _3 onSizeErrorPhrase
+
+DIVIDE _1 _2 _3 END-DIVIDE  |-->    (var _divideIntoGivingTmp : double; _divideIntoGivingTmp := _1;\n_2      skip) ;\n_2`noSizeError (_3 skip) ;\n<when>  _2 divideIntoGivingStatement, _3 notOnSizeErrorPhrase
+DIVIDE _1 _2 _3  |-->    (var _divideIntoGivingTmp : double; _divideIntoGivingTmp := _1;\n_2      skip) ;\n_2`noSizeError (_3 skip) ;\n<when>  _2 divideIntoGivingStatement, _3 notOnSizeErrorPhrase
+
+DIVIDE _1 _2 END-DIVIDE  |-->    (var _divideIntoGivingTmp : double; _divideIntoGivingTmp := _1;\n_2      skip) ;\n<when>  _2 divideIntoGivingStatement
+DIVIDE _1 _2  |-->    (var _divideIntoGivingTmp : double; _divideIntoGivingTmp := _1;\n_2      skip) ;\n<when> _2 divideIntoGivingStatement
+
+DIVIDE _1 _2 _3 _4 _5 END-DIVIDE  |-->    _2`givingVariable := (_1/_2`byVariable)_2`roundFunction;\n    _3 := _1 - _2`givingVariable*_2`byVariable ;\n_2`sizeError (_4 skip) else skip ;\n_2`noSizeError (_5 skip) ;\n<when>  _2 divideByGivingStatement, _3 divideRemainder, _4 onSizeErrorPhrase, _5 notOnSizeErrorPhrase
+DIVIDE _1 _2 _3 _4 _5  |-->    _2`givingVariable := (_1/_2`byVariable)_2`roundFunction;\n    _3 := _1 - _2`givingVariable*_2`byVariable ;\n_2`sizeError (_4 skip) else skip ;\n_2`noSizeError (_5 skip) ;\n<when>  _2 divideByGivingStatement, _3 divideRemainder, _4 onSizeErrorPhrase, _5 notOnSizeErrorPhrase
+
+DIVIDE _1 _2 _3 _4 END-DIVIDE  |-->    _2`givingVariable := (_1/_2`byVariable)_2`roundFunction;\n    _3 := _1 - _2`givingVariable*_2`byVariable ;\n_2`sizeError (_4 skip) else skip ;\n<when>  _2 divideByGivingStatement, _3 divideRemainder, _4 onSizeErrorPhrase
+DIVIDE _1 _2 _3 _4  |-->    _2`givingVariable := (_1/_2`byVariable)_2`roundFunction;\n    _3 := _1 - _2`givingVariable*_2`byVariable ;\n_2`sizeError (_4 skip) else skip ;\n<when>  _2 divideByGivingStatement, _3 divideRemainder, _4 onSizeErrorPhrase
+
+DIVIDE _1 _2 _3 _4 END-DIVIDE  |-->    _2`givingVariable := (_1/_2`byVariable)_2`roundFunction;\n    _3 := _1 - _2`givingVariable*_2`byVariable ;\n_2`noSizeError (_4 skip) ;\n<when>  _2 divideByGivingStatement, _3 divideRemainder, _4 notOnSizeErrorPhrase
+DIVIDE _1 _2 _3 _4  |-->    _2`givingVariable := (_1/_2`byVariable)_2`roundFunction;\n    _3 := _1 - _2`givingVariable*_2`byVariable ;\n_2`noSizeError (_4 skip) ;\n<when>  _2 divideByGivingStatement, _3 divideRemainder, _4 notOnSizeErrorPhrase
+
+DIVIDE _1 _2 _3 END-DIVIDE  |-->    _2`givingVariable := (_1/_2`byVariable)_2`roundFunction;\n    _3 := _1 - _2`givingVariable*_2`byVariable ;\n<when>  _2 divideByGivingStatement, _3 divideRemainder
+DIVIDE _1 _2 _3  |-->    _2`givingVariable := (_1/_2`byVariable)_2`roundFunction;\n    _3 := _1 - _2`givingVariable*_2`byVariable ;\n<when>  _2 divideByGivingStatement, _3 divideRemainder
+
+DIVIDE _1 _2 _3 _4 END-DIVIDE  |-->    (var _divideByGivingTmp : double; _divideByGivingTmp := _1;\n_2      skip) ;\n_2`sizeError (_3 skip) else skip ;\n_2`noSizeError (_4 skip) ;\n<when>  _2 divideByGivingStatement, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
+DIVIDE _1 _2 _3 _4  |-->    (var _divideByGivingTmp : double; _divideByGivingTmp := _1;\n_2      skip) ;\n_2`sizeError (_3 skip) else skip ;\n_2`noSizeError (_4 skip) ;\n<when>  _2 divideByGivingStatement, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
+
+DIVIDE _1 _2 _3 END-DIVIDE  |-->    (var _divideByGivingTmp : double; _divideByGivingTmp := _1;\n_2      skip) ;\n_2`sizeError (_3 skip) else skip ;\n<when>  _2 divideByGivingStatement, _3 onSizeErrorPhrase
+DIVIDE _1 _2 _3  |-->    (var _divideByGivingTmp : double; _divideByGivingTmp := _1;\n_2      skip) ;\n_2`sizeError (_3 skip) else skip ;\n<when>  _2 divideByGivingStatement, _3 onSizeErrorPhrase
+
+DIVIDE _1 _2 _3 END-DIVIDE  |-->    (var _divideByGivingTmp : double; _divideByGivingTmp := _1;\n_2      skip) ;\n_2`noSizeError (_3 skip) ;\n<when>  _2 divideByGivingStatement, _3 notOnSizeErrorPhrase
+DIVIDE _1 _2 _3  |-->    (var _divideByGivingTmp : double; _divideByGivingTmp := _1;\n_2      skip) ;\n_2`noSizeError (_3 skip) ;\n<when>  _2 divideByGivingStatement, _3 notOnSizeErrorPhrase
+
+DIVIDE _1 _2 END-DIVIDE  |-->    (var _divideByGivingTmp : double; _divideByGivingTmp := _1;\n_2      skip) ;\n<when>  _2 divideByGivingStatement
+DIVIDE _1 _2  |-->    (var _divideByGivingTmp : double; _divideByGivingTmp := _1;\n_2      skip) ;\n<when>  _2 divideByGivingStatement
+
+
+divideIntoStatement::
+INTO _1  |-->_1<when> _1 divideInto
+INTO _*  |-->_* 
+
+divideIntoAssignments::
+INTO _1  |-->_1`divideIntoAssignment
+INTO _*  |-->_*`divideIntoAssignment 
+
+
+divideIntoGivingStatement::
+INTO _1 _2  |-->      _divideIntoGivingTmp := _1/_divideIntoGivingTmp;\n_2`divideGivingAssignments<when> _2 divideGivingPhrase
+INTO _1  |-->      _1 := _1/_divideIntoGivingTmp;\n
+
+
+divideByGivingStatement::
+BY _1 _2  |-->      _divideByGivingTmp := _divideByGivingTmp/_1;\n_2`divideByGivingAssignments<when> _2 divideGivingPhrase
+BY _1  |-->      _divideByGivingTmp := _divideByGivingTmp/_1;\n
+
+givingVariable::
+BY _1 _2  |-->_2
+BY _1  |-->_1
+INTO _1 _2  |-->_2
+INTO _1  |-->_1
+
+byVariable::
+BY _1 _2  |-->_1
+BY _1  |-->_1
+
+intoVariable::
+INTO _1 _2  |-->_1
+INTO _1  |-->_1
+_1 |-->_1
+
+
+divideGivingPhrase::
+GIVING _1  |-->_1<when> _1 divideGiving
+GIVING _*  |-->_*
+
+divideGivingAssignments::
+GIVING _1  |-->_1`divideGivingAssignment
+GIVING _*  |-->_*`divideGivingAssignment
+
+
+divideByGivingAssignments::
+GIVING _1  |-->_1`divideByGivingAssignment
+GIVING _*  |-->_*`divideByGivingAssignment
+
+
+divideInto::
+_1 ROUNDED  |-->_1
+_1  |-->_1
+
+divideIntoAssignment::
+_1 ROUNDED  |-->      _1 := (_1/_divideIntoTmp)->roundTo(_1`fractionWidth) ;\n
+_1  |-->      _1 := (_1/_divideIntoTmp)->truncateTo(_1`fractionWidth) ;\n
+
+
+divideGiving::
+_1 ROUNDED  |-->_1
+_1  |-->_1
+
+divideGivingAssignment::
+_1 ROUNDED  |-->      _1 := _divideIntoGivingTmp->roundTo(_1`fractionWidth) ;\n
+_1  |-->      _1 := _divideIntoGivingTmp->truncateTo(_1`fractionWidth) ;\n
+
+divideByGivingAssignment::
+_1 ROUNDED  |-->      _1 := _divideByGivingTmp->roundTo(_1`fractionWidth) ;\n
+_1  |-->      _1 := _divideByGivingTmp->truncateTo(_1`fractionWidth) ;\n
+
+
+divideRemainder::
+REMAINDER _1  |-->_1
+
+
+evaluateStatement::
+EVALUATE _1 _* END-EVALUATE |-->    (var _selectVar : _1`evaluateSelectType := _1;\n_*  skip) ;\n
+
+evaluateSelect::
+_1 |-->_1
+
+evaluateSelectType::
+_1 |-->_1`type<when> _1 literal
+_1 |-->_1`oclType<when> _1 identifier
+_1 |-->OclAny
+
+evaluateAlsoSelect::
+ALSO _1 |-->
+
+evaluateWhenPhrase::
+_1 _* |-->     if _1 then (_*   skip) else\n<when> _* all statement
+_1 _2 _* |-->     if _1 or _2 then (_*   skip) else\n<when> _2 evaluateWhen, _* all statement
+_1 _2 _3 _* |-->     if _1 or _2 or _3 then (_*   skip) else\n<when> _2 evaluateWhen, _3 evaluateWhen, _* all statement
+
+
+evaluateWhenOther::
+WHEN OTHER _* |-->  (_*    skip);\n
+
+evaluateWhen::
+WHEN _1 _* |-->_1
+WHEN _1 |-->_1
+
+evaluateCondition::
+ANY |-->true
+TRUE |-->true
+FALSE |-->false
+NOT _1 |-->_selectVar /= _1
+_1 |-->_selectVar = _1
+_1 _2 |-->_selectVar >= _1 & _selectVar <= _2<when> _2 evaluateThrough
+NOT _1 _2 |-->(_selectVar < _1 or _selectVar > _2)<when> _2 evaluateThrough
+
+evaluateValue::
+_1 |-->_1
+
+evaluateThrough::
+THROUGH _1 |-->_1
+THRU _1 |-->_1
+
+
+execSqlStatement::
+*>EXECSQL _1 |-->(OclDatasource.newOclDatasource()).execSQL(_1) ;\n
+
+exitStatement::
+EXIT PROGRAM |-->    return;\n
+EXIT |-->    return;\n
+
+closeStatement::
+CLOSE _* |-->_*
+
+closeFile::
+_1 _2 |-->
+_1 |-->
+
+
+computeStatement::
+COMPUTE _1 = _2 _3 _4 END-COMPUTE  |-->    _1 := (_2)_1`roundFunction ;\n\n_1`sizeError (_3 skip) else skip ;\n_1`noSizeError (_4 skip) ;\n<when> _1 computeStore, _2 arithmeticExpression, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
+COMPUTE _1 = _2 _3 _4  |-->    _1 := (_2)_1`roundFunction ;\n\n_1`sizeError (_3 skip) else skip ;\n_1`noSizeError (_4 skip) ;\n<when> _1 computeStore, _2 arithmeticExpression, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
+
+COMPUTE _1 = _2 _3 END-COMPUTE  |-->    _1 := (_2)_1`roundFunction ;\n_1`sizeError (_3 skip) else skip ;\n<when> _1 computeStore, _2 arithmeticExpression, _3 onSizeErrorPhrase
+COMPUTE _1 = _2 _3  |-->    _1 := (_2)_1`roundFunction ;\n_1`sizeError (_3 skip) else skip ;\n<when> _1 computeStore, _2 arithmeticExpression, _3 onSizeErrorPhrase
+
+COMPUTE _1 = _2 _3 END-COMPUTE  |-->    _1 := (_2)_1`roundFunction ;\n_1`noSizeError (_3 skip) ;\n<when> _1 computeStore, _2 arithmeticExpression, _3 notOnSizeErrorPhrase
+COMPUTE _1 = _2 _3  |-->    _1 := (_2)_1`roundFunction ;\n_1`noSizeError (_3 skip) ;\n<when> _1 computeStore, _2 arithmeticExpression, _3 notOnSizeErrorPhrase
+
+COMPUTE _1 = _2 END-COMPUTE  |-->    _1 := (_2)_1`roundFunction ;\n<when> _1 computeStore, _2 arithmeticExpression
+COMPUTE _1 = _2  |-->    _1 := (_2)_1`roundFunction ;\n<when> _1 computeStore, _2 arithmeticExpression
+
+COMPUTE _1 EQUAL _2 _3 _4 END-COMPUTE  |-->    _1 := (_2)_1`roundFunction ;\n_1`sizeError (_3 skip) else skip ;\n_1`noSizeError (_4 skip) ;\n<when> _1 computeStore, _2 arithmeticExpression, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
+COMPUTE _1 EQUAL _2 _3 _4  |-->    _1 := (_2)_1`roundFunction ;\n_1`sizeError (_3 skip) else skip ;\n_1`noSizeError (_4 skip) ;\n<when> _1 computeStore, _2 arithmeticExpression, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
+
+COMPUTE _1 EQUAL _2 _3 END-COMPUTE  |-->    _1 := _2_1`roundFunction ;\n_1`sizeError (_3 skip) else skip ;\n<when> _1 computeStore, _2 arithmeticExpression, _3 onSizeErrorPhrase
+COMPUTE _1 EQUAL _2 _3  |-->    _1 := _2_1`roundFunction ;\n_1`sizeError (_3 skip) else skip ;\n<when> _1 computeStore, _2 arithmeticExpression, _3 onSizeErrorPhrase
+
+COMPUTE _1 EQUAL _2 _3 END-COMPUTE  |-->    _1 := (_2)_1`roundFunction ;\n_1`noSizeError (_3 skip) ;\n<when> _1 computeStore, _2 arithmeticExpression, _3 notOnSizeErrorPhrase
+COMPUTE _1 EQUAL _2 _3  |-->    _1 := (_2)_1`roundFunction ;\n_1`noSizeError (_3 skip) ;\n<when> _1 computeStore, _2 arithmeticExpression, _3 notOnSizeErrorPhrase
+
+COMPUTE _1 EQUAL _2 END-COMPUTE  |-->    _1 := (_2)_1`roundFunction ;\n<when> _1 computeStore, _2 arithmeticExpression
+COMPUTE _1 EQUAL _2  |-->    _1 := (_2)_1`roundFunction ;\n<when> _1 computeStore, _2 arithmeticExpression
+
+
+computeStore::
+_1 ROUNDED  |-->_1<when> _1 identifier
+_1  |-->_1<when> _1 identifier
+
+
+noSizeError::
+GIVING _1 |-->_1`noSizeError
+GIVING _1 _* |-->_1`noSizeError
+BY _1 _2  |-->_2`noSizeError
+BY _1  |-->_1`noSizeError
+INTO _1 _2  |-->_2`noSizeError
+INTO _1  |-->_1`noSizeError
+_1 FROM _2 GIVING _3 |-->_3`noSizeError
+_1 FROM _2 GIVING _3 _* |-->_3`noSizeError
+_1 GIVING _2 |-->_2`noSizeError
+_1 GIVING _2 _* |-->_2`noSizeError
+_1 FROM _2 |-->_2`noSizeError
+_1 FROM _2 _* |-->_2`noSizeError
+_1 ROUNDED |-->    if MathLib.isIntegerOverflow(_1, _1`integerWidth) then skip else 
+_1 |-->_1`noSizeError<when> _1 multiplyRegularOperand
+_1 |-->    if MathLib.isIntegerOverflow(_1, _1`integerWidth) then skip else
+_1 _* FROM _2 GIVING _3 |-->_3`noSizeError
+_1 _* FROM _2 GIVING _3 _+ |-->_3`noSizeError
+_1 _* FROM _2 |-->_2`noSizeError
+_1 _* FROM _2 _+ |-->_2`noSizeError
+
+sizeError::
+GIVING _1 |-->_1`sizeError
+GIVING _1 _* |-->_1`sizeError
+BY _1 _2  |-->_2`sizeError
+BY _1  |-->_1`sizeError
+INTO _1 _2  |-->_2`sizeError
+INTO _1  |-->_1`sizeError
+_1 FROM _2 GIVING _3 |-->_3`sizeError
+_1 FROM _2 GIVING _3 _* |-->_3`sizeError
+_1 GIVING _2 |-->_2`sizeError
+_1 GIVING _2 _* |-->_2`sizeError
+_1 FROM _2 |-->_2`sizeError
+_1 FROM _2 _* |-->_2`sizeError
+_1 ROUNDED |-->    if MathLib.isIntegerOverflow(_1, _1`integerWidth) then  
+_1 |-->_1`sizeError<when> _1 multiplyRegularOperand
+_1  |-->    if MathLib.isIntegerOverflow(_1, _1`integerWidth) then 
+_1 _* FROM _2 GIVING _3 |-->_3`sizeError
+_1 _* FROM _2 GIVING _3 _+ |-->_3`sizeError
+_1 _* FROM _2 |-->_2`sizeError
+_1 _* FROM _2 _+ |-->_2`sizeError
+
+
+continueStatement::
+CONTINUE  |--> 
+
+
+deallocateStatement::
+DEALLOCATE _1 |-->    _1->isDeleted() ;\n
+
+
+deleteStatement::
+DELETE _1 RECORD END-DELETE |-->    _1 := _1->excludingAt(_1_Position) ;\n
+DELETE _1 END-DELETE |-->    _1 := _1->excludingAt(_1_Position) ;\n
+DELETE _1 |-->    _1 := _1->excludingAt(_1_Position) ;\n
+
+
+
+ifStatement::
+IF _1 _2 _3 END-IF |-->    if _1 _2 _3 ;\n
+IF _1 _2 END-IF |-->    if _1 _2 else skip ;\n
+IF _1 _2 _3 |-->    if _1 _2 _3 ;\n
+IF _1 _2 |-->    if _1 _2 else skip ;\n
+
+
+ifThen::
+THEN NEXT SENTENCE |-->then skip
+THEN _* |-->then (_*        skip)
+NEXT SENTENCE |-->then skip
+_* |-->then (_*        skip)
+
+
+ifElse::
+ELSE NEXT SENTENCE |-->else skip
+ELSE _* |-->else (_*        skip)
+
+
+initializeStatement::
+INITIALIZE _1 |-->    _1 := _1`defaultValue;\n
+
+INITIALIZE _1 _2 |-->   (var _typ : String ; _typ := "_1`oclType"; _1 := _2);\n<when> _2 initializeReplacingPhrase
+
+initializeReplacingPhrase::
+REPLACING _1 |-->_1 "" endif
+REPLACING _* |-->_* "" _*`endifs
+
+initializeReplacingBy::
+ALPHABETIC DATA BY _1 |-->if _typ = "String" then _1 else 
+ALPHANUMERIC DATA BY _1 |-->if _typ = "String" then _1 else
+ALPHANUMERIC-EDITED DATA BY _1 |-->if _typ = "String" then _1 else
+NATIONAL DATA BY _1 |-->if _typ = "String" then _1 else
+NATIONAL-EDITED DATA BY _1 |-->if _typ = "String" then _1 else
+NUMERIC DATA BY _1 |-->if _typ = "int" or _typ = "double" then _1 else
+NUMERIC-EDITED DATA BY _1 |-->if _typ = "String" then _1 else
+DBCS DATA BY _1 |-->if _typ = "String" then _1 else
+EGCS DATA BY _1 |-->if _typ = "String" then _1 else
+
+endifs::
+_1 |--> endif
+
+
+
+inspectStatement::
+INSPECT _1 _2 |-->    _2`tallyVariable := _1_2`tallyFunction ;\n<when> _2 inspectTallyingPhrase
+INSPECT _1 _2 |-->    _1 := _1_2`replaceFunction ;\n<when> _2 inspectReplacingPhrase
+INSPECT _1 _2 |--><when> _2 inspectTallyingReplacingPhrase
+INSPECT _1 _2 |--><when> _2 inspectConvertingPhrase
+
+
+inspectTallyingPhrase::
+TALLYING _* |-->
+
+tallyVariable::
+TALLYING _1 |-->_1`tallyVariable
+TALLYING _1 _* |-->_1`tallyVariable
+_1 FOR _* |-->_1
+
+tallyFunction::
+TALLYING _1 |-->_1`tallyFunction
+TALLYING _1 _* |-->_1`tallyFunction
+_1 FOR _2 |-->_2`tallyFunction
+_1 FOR _2 _* |-->_2`tallyFunction
+CHARACTERS |-->->size()
+CHARACTERS _1 _* |-->_1`tallyFunction
+ALL "*" |-->->allMatches("\\*")->size()
+ALL "*" _* |-->->allMatches("\\*")->size()
+ALL _1 |-->_1`tallyScope->allMatches(_1)->size()
+ALL _1 _* |-->_1`tallyScope->allMatches(_1)->size()
+LEADING _1 |-->
+LEADING _1 _* |-->
+BEFORE INITIAL _1 |-->->before(_1)->size()
+BEFORE _1  |-->->before(_1)->size()
+AFTER INITIAL _1 |-->->after(_1)->size()
+AFTER _1 |-->->after(_1)->size()
+
+
+inspectReplacingPhrase::
+REPLACING _1 |-->
+REPLACING _1 _* |-->
+ 
+
+replaceFunction::
+REPLACING _1 |-->_1`replaceFunction
+REPLACING _1 _* |-->_1`replaceFunction
+CHARACTERS _1 _* |-->->collect(_1)
+ALL "*" |-->.replaceAllMatches("\\*",_1`replaceByNewText)
+ALL "*" _* |-->.replaceAllMatches("\\*",_1`replaceByNewText)
+ALL _1 |-->.replaceAllMatches(_1,_1`replaceByNewText)
+ALL _1 _* |-->.replaceAllMatches(_1,_1`replaceByNewText)
+LEADING "*" |-->.replaceAllMatches("^[\\*]+",_1`replaceByNewText)
+LEADING "*" _* |-->.replaceAllMatches("^[\\*]+",_1`replaceByNewText)
+LEADING _1 |-->.replaceAllMatches("^"+_1+"+",_1`replaceByNewText)
+LEADING _1 _* |-->.replaceAllMatches("^"+_1+"+",_1`replaceByNewText)
+FIRST "*" |-->.replaceFirstMatch("\*",_1`replaceByNewText)
+FIRST "*" _* |-->.replaceFirstMatch("\\*",_1`replaceByNewText)
+FIRST _1 |-->.replaceFirstMatch(_1,_1`replaceByNewText)
+FIRST _1 _* |-->.replaceFirstMatch(_1,_1`replaceByNewText)
+BEFORE INITIAL _1 |-->
+BEFORE _1  |-->
+AFTER INITIAL _1 |-->
+AFTER _1 |-->
+
+
+inspectFor::
+_1 FOR _* |-->
+
+inspectCharacters::
+CHARACTERS |--> 
+CHARACTERS _* |--> 
+
+inspectReplacingCharacters::
+CHARACTERS _1 |-->
+CHARACTERS _1 _* |-->
+
+inspectAllLeadings::
+ALL _* |-->
+LEADING _* |-->
+
+inspectReplacingAllLeadings::
+ALL _1 _* |-->
+LEADING _1 _* |-->
+FIRST _1 _* |-->
+
+inspectAllLeading::
+"*" |-->"\\*"
+"*" _* |-->"\\*" 
+_1 |-->_1
+_1 _* |-->_1 
+ 
+
+tallyScope::
+BEFORE INITIAL _1 |-->->before(_1)
+BEFORE _1 |-->->before(_1)
+AFTER INITIAL _1 |-->->after(_1)
+AFTER _1 |-->->after(_1)
+_1 |-->
+_1 _2 |-->_2`tallyScope
+_1 _2 _* |-->_2`tallyScope
+ 
+
+inspectReplacingAllLeading::
+_1 _2 |-->_1
+_1 _2 _* |-->_1
+
+replaceByNewText::
+_1 _2 |-->_2
+_1 _2 _* |-->_2
+
+
+
+inspectBy::
+BY _1 |-->_1
+
+inspectTo::
+TO _1 |-->
+
+inspectBeforeAfter::
+BEFORE INITIAL _1 |-->
+BEFORE _1 |-->
+AFTER INITIAL _1 |-->
+AFTER _1 |-->
+
+
+
+
+goToStatement::
+GO TO _1 |-->_1
+GO _1 |-->_1
+
+goToStatementSimple::
+_1 |-->    self._1`actualDest() ; OclProcess.exit(0) ;\n<when> _1 altered
+_1 |-->    self._1() ; OclProcess.exit(0) ;\n
+
+goToDependingOnStatement::
+MORE-LABELS |-->
+_1 _* DEPENDING ON _3 |-->    (var _tmpDependingOn : int ; _tmpDependingOn := _3;\n      if _tmpDependingOn = 1 then (self._1(); OclProcess.exit(0)) else skip;\n_*`dependingOnCase      skip) ;\n
+_1 _* DEPENDING _3 |-->    (var _tmpDependingOn : int ; _tmpDependingOn := _3;\n      if _tmpDependingOn = 1 then (self._1(); OclProcess.exit(0)) else skip;\n_*`dependingOnCase      skip) ;\n
+_1 _* |-->
+
+
+dependingOnCase::
+_1 |-->      _tmpDependingOn := _tmpDependingOn - 1;\n      if _tmpDependingOn = 1 then (self._1(); OclProcess.exit(0)) else skip;\n
+
+
+mergeStatement::
+MERGE _1 _2 _3 _4 |-->    _1 := _3->sort();\n    _4 := _1;\n<when> _2 mergeOnKeyClause, _3 mergeUsing, _4 mergeGivingPhrase
+
+
+mergeOnKeyClause::
+ON ASCENDING KEY _* |-->
+ON DESCENDING KEY _* |-->
+ON ASCENDING _* |-->
+ON DESCENDING _* |-->
+ASCENDING KEY _* |-->
+DESCENDING KEY _* |-->
+ASCENDING _* |-->
+DESCENDING _* |-->
+
+mergeCollatingSequencePhrase::
+_* |-->
+
+mergeCollatingAlphanumeric::
+_* |-->
+
+mergeCollatingNational:: 
+_* |-->
+
+mergeUsing::
+USING _1 |-->_1
+USING _1 _2 |-->_1->union(_2)
+USING _1 _2 _* |-->_1->union(_2)
+
+mergeOutputProcedurePhrase::
+OUTPUT PROCEDURE IS _1 _2 |-->
+OUTPUT PROCEDURE IS _1 |-->
+OUTPUT PROCEDURE _1 _2 |-->
+OUTPUT PROCEDURE _1 |-->
+
+
+mergeOutputThrough::
+THROUGH _1 |-->
+THRU _1 |-->
+
+mergeGivingPhrase::
+GIVING _1 |-->_1
+GIVING _1 _* |-->_1
+
+mergeGiving::
+_1 |-->_1
+_1 _* |-->_1
+
+
+moveStatement::
+MOVE ALL _1  |-->_1`moveAll<when> _1 moveToStatement
+MOVE ALL _1  |-->_1`moveAll<when> _1 moveCorrespondingToStatement
+MOVE _1  |-->_1
+
+
+moveToStatement::
+_1 TO _2  |-->    _2 := _1;\n
+_1 TO _2 _*  |-->    (var _moveTmp : OclAny ; _moveTmp := _1;\n _2 := _moveTmp;\n_*`moveAssignments      skip) ; \n
+
+moveAll::
+_1 TO _2  |-->    _2 := Integer.subrange(1,_2->size())->collect(_1)->sum();\n
+_1 TO _2 _*  |-->    (var _moveTmp : OclAny ; _moveTmp := Integer.subrange(1,_2->size())->collect(_1)->sum();\n _2 := _moveTmp;\n_*`moveAssignments      skip) ; \n
+
+
+moveToSendingArea::
+_1  |-->_1
+
+moveCorrespondingToStatement::
+CORRESPONDING _1 TO _2  |-->    _2 := _1;\n<when> _1 moveCorrespondingToSendingArea, _2 identifier
+CORRESPONDING _1 TO _*  |-->    (var _moveTmp : OclAny ; _moveTmp := _1;\n_*`moveAssignments      skip) ;\n<when> _1 moveCorrespondingToSendingArea
+CORR _1 TO _2  |-->    _2 := _1;\n<when> _1 moveCorrespondingToSendingArea, _2 identifier
+CORR _1 TO _*  |-->    (var _moveTmp : OclAny ; _moveTmp := _1;\n_*`moveAssignments      skip) ;\n<when> _1 moveCorrespondingToSendingArea
+
+
+moveCorrespondingToSendingArea::
+_1  |-->_1
+
+moveAssignments::
+_1 |-->      _1 := _moveTmp;\n
+
+
+multiplyStatement::
+MULTIPLY _1 BY _2 _3 _4 END-MULTIPLY  |-->    (var _multTmp : double;\n      _multTmp := _1;\n_2`multiplicationAssignments      skip);\n_2`sizeError (_3 skip) else skip ;\n_2`noSizeError (_4 skip) ;\n<when> _2 multiplyRegular, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
+MULTIPLY _1 BY _2 _3 _4  |-->    (var _multTmp : double;\n      _multTmp := _1;\n_2`multiplicationAssignments      skip);\n_2`sizeError (_3 skip) else skip ;\n_2`noSizeError (_4 skip) ;\n<when> _2 multiplyRegular, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
+
+MULTIPLY _1 BY _2 _3 END-MULTIPLY  |-->    (var _multTmp : double;\n      _multTmp := _1;\n_2`multiplicationAssignments      skip);\n_2`sizeError (_3 skip) else skip ;\n<when> _2 multiplyRegular, _3 onSizeErrorPhrase
+MULTIPLY _1 BY _2 _3  |-->    (var _multTmp : double;\n      _multTmp := _1;\n_2`multiplicationAssignments      skip);\n_2`sizeError (_3 skip) else skip ;\n<when> _2 multiplyRegular, _3 onSizeErrorPhrase
+
+MULTIPLY _1 BY _2 _3 END-MULTIPLY  |-->    (var _multTmp : double;\n      _multTmp := _1;\n_2`multiplicationAssignments      skip);\n_2`noSizeError (_3 skip) ;\n<when> _2 multiplyRegular, _3 notOnSizeErrorPhrase
+MULTIPLY _1 BY _2 _3  |-->    (var _multTmp : double;\n      _multTmp := _1;\n_2`multiplicationAssignments      skip);\n_2`noSizeError (_3 skip) ;\n<when> _2 multiplyRegular, _3 notOnSizeErrorPhrase
+
+MULTIPLY _1 BY _2 END-MULTIPLY  |-->    (var _multTmp : double;\n      _multTmp := _1;\n_2`multiplicationAssignments      skip);\n<when> _2 multiplyRegular
+MULTIPLY _1 BY _2  |-->    (var _multTmp : double;\n      _multTmp := _1;\n_2`multiplicationAssignments      skip);\n<when> _2 multiplyRegular
+
+MULTIPLY _1 BY _2 _3 _4 END-MULTIPLY  |-->    try (var _multiplyTmp : double ; _multiplyTmp := _1*_2 ;\n_2`multiplyGivingAssignments ; _4    skip) catch (_ex : OclException) do (_3     skip) ;\n<when> _2 multiplyGiving, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
+MULTIPLY _1 BY _2 _3 _4  |-->    try (var _multiplyTmp : double ; _multiplyTmp := _1*_2 ;\n_2`multiplyGivingAssignments ; _4    skip) catch (_ex : OclException) do (_3     skip) ;\n<when> _2 multiplyGiving, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
+
+MULTIPLY _1 BY _2 _3 END-MULTIPLY  |-->    try (var _multiplyTmp : double ; _multiplyTmp := _1*_2 ;\n_2`multiplyGivingAssignments) catch (_ex : OclException) do (_3     skip);\n<when> _2 multiplyGiving, _3 onSizeErrorPhrase
+MULTIPLY _1 BY _2 _3  |-->    try (var _multiplyTmp : double ; _multiplyTmp := _1*_2 ;\n_2`multiplyGivingAssignments) catch (_ex : OclException) do (_3     skip);\n<when> _2 multiplyGiving, _3 onSizeErrorPhrase
+
+MULTIPLY _1 BY _2 _3 END-MULTIPLY  |-->        (var _multiplyTmp : double ; _multiplyTmp := _1*_2 ;\n_2`multiplyGivingAssignments) ;\n_2`noSizeError (_3 skip) ;\n<when> _2 multiplyGiving, _3 notOnSizeErrorPhrase
+MULTIPLY _1 BY _2 _3  |-->        (var _multiplyTmp : double ; _multiplyTmp := _1*_2 ;\n_2`multiplyGivingAssignments) ;\n_2`noSizeError (_3 skip) ;\n<when> _2 multiplyGiving, _3 notOnSizeErrorPhrase
+
+MULTIPLY _1 BY _2 END-MULTIPLY  |-->        (var _multiplyTmp : double ; multiplyTmp := _1*_2 ;\n_2`multiplyGivingAssignments) ;\n<when> _2 multiplyGiving
+MULTIPLY _1 BY _2  |-->        (var _multiplyTmp : double ; _multiplyTmp := _1*_2 ;\n_2`multiplyGivingAssignments) ;\n<when> _2 multiplyGiving
+
+multiplyRegular::
+_1  |-->_1
+_1 _*  |-->_1 * _*`prd
+
+multiplicationAssignments::
+_* |-->_*
+
+multiplyRegularOperand::
+_1 ROUNDED |-->      _1 := (_1*_multTmp)->roundTo(_1`fractionWidth) ;\n
+_1  |-->      _1 := (_1*_multTmp)->truncateTo(_1`fractionWidth) ;\n 
+
+
+multiplyGiving::
+_1 GIVING _2  |-->_1<when> _1 multiplyGivingOperand, _2 multiplyGivingResult
+_1 GIVING _2 _*  |-->_1<when> _1 multiplyGivingOperand
+
+multiplyGivingAssignments::
+_1 GIVING _2  |-->    _2 := _multiplyTmp_2`roundFunction
+_1 GIVING _2 _*  |-->    _2 := _multiplyTmp_2`roundFunction ;\n_*`recurse
+_1 |-->    _1 := _multiplyTmp_1`roundFunction 
+_1 _* |-->    _1 := _multiplyTmp_1`roundFunction ;\n_*`recurse
+
+
+multiplyGivingOperand::
+_1  |-->_1
+
+multiplyGivingResult::
+_1 ROUNDED  |-->_1
+_1  |-->_1
+
+
+openStatement::
+OPEN _1  |-->_1
+OPEN _*  |-->_*
+
+
+openInputStatement::
+INPUT _1  |-->_1
+INPUT _*  |-->_*
+
+
+openInput::
+_1  |-->    _1_Position := 0;\n
+_1 REVERSED  |-->    _1 := _1->reverse();\n    _1_Position := 0;\n
+_1 WITH NO REWIND  |-->    _1_Position := 0;\n
+_1 NO REWIND  |-->    _1_Position := 0;\n
+
+
+openOutputStatement::
+OUTPUT _1  |-->_1
+OUTPUT _*  |-->_*
+
+
+openOutput::
+_1  |-->    _1_Position := 0;\n
+_1 WITH NO REWIND  |-->    _1_Position := 0;\n
+_1 NO REWIND  |-->    _1_Position := 0;\n
+
+
+openIOStatement::
+I-O _1  |-->    _1_Position := 0;\n
+I-O _1 _*  |-->    _1_Position := 0;\n_*`recurse
+_1  |-->    _1_Position := 0;\n
+_1 _*  |-->    _1_Position := 0;\n_*`recurse
+
+
+
+openExtendStatement::
+EXTEND _1  |-->    _1_Position := _1->size();\n
+EXTEND _1 _*  |-->    _1_Position := _1->size();\n_*`recurse
+_1  |-->    _1_Position := _1->size();\n
+_1 _*  |-->    _1_Position := _1->size();\n_*`recurse
+ 
+
+
+
+performStatement::
+PERFORM _1  |-->_1
+
+performInlineStatement::
+_1 END-PERFORM  |--><when> _1 performType
+_1 _* END-PERFORM  |-->    _1 (_*      skip) _1`performIncrement ;\n<when> _1 performType
+END-PERFORM  |--> 
+_1 END-PERFORM  |-->    ( _1    skip) ;\n<when> _1 statement
+_1 _* END-PERFORM  |-->    ( _1_*    skip) ; \n 
+
+performProcedureStatement::
+_1 _2  |-->    _2 self._1_Call() _2`performIncrement ;\n
+_1  |-->    self._1_Call() ;\n
+_1 THROUGH _2 _3  |-->    _3 self._1_thru__2() ;\n _3`performIncrement<when> _3 performType
+_1 THROUGH _2  |-->    self._1_thru__2() ;\n
+_1 THRU _2 _3  |-->    _3 self._1_thru__2() ;\n _3`performIncrement<when> _3 performType
+_1 THRU _2  |-->    self._1_thru__2() ;\n
+
+
+performType::
+_1  |-->    for _performTimes : Integer.subrange(1,_1) do <when> _1 performTimes
+_1  |-->    while not(_1) do <when> _1 performUntil
+_1  |-->    _1`performVariable := _1`performInitialValue;\n    while not(_1`performCondition) do (<when> _1 performVarying
+
+performIncrement::
+_1  |--><when> _1 performTimes
+_1  |--><when> _1 performUntil
+_1  |-->; _1`performVaryingIncrement)
+    
+
+performTimes::
+_1 TIMES  |-->_1
+
+
+performUntil::
+_1 UNTIL _2  |-->_2
+UNTIL _1  |-->_1
+
+performVarying::
+_1 _2  |-->_2<when> _1 performTestClause, _2 performVaryingClause
+_1 _2  |-->_1<when> _1 performVaryingClause, _2 performTestClause
+_1  |-->_1<when> _1 performVaryingClause
+
+performVaryingIncrement::
+_1 _2  |-->_2`performVaryingClauseIncrement<when> _1 performTestClause, _2 performVaryingClause
+_1 _2  |-->_1`performVaryingClauseIncrement<when> _1 performVaryingClause, _2 performTestClause
+_1  |-->_1`performVaryingClauseIncrement<when> _1 performVaryingClause
+
+
+performVariable::
+_1 _2  |-->_2`performVaryingVariable<when> _1 performTestClause, _2 performVaryingClause
+_1 _2  |-->_1`performVaryingVariable<when> _1 performVaryingClause, _2 performTestClause
+_1  |-->_1`performVaryingVariable<when> _1 performVaryingClause
+
+performInitialValue::
+_1 _2  |-->_2`performVaryingInitialValue<when> _1 performTestClause, _2 performVaryingClause
+_1 _2  |-->_1`performVaryingInitialValue<when> _1 performVaryingClause, _2 performTestClause
+_1  |-->_1`performVaryingInitialValue<when> _1 performVaryingClause
+
+performCondition::
+_1 _2  |-->_2`performVaryingCondition<when> _1 performTestClause, _2 performVaryingClause
+_1 _2  |-->_1`performVaryingCondition<when> _1 performVaryingClause, _2 performTestClause
+_1  |-->_1`performVaryingCondition<when> _1 performVaryingClause
+
+performVaryingClause::
+VARYING _1  |-->_1<when> _1 performVaryingPhrase
+VARYING _1 _2  |-->_1<when> _1 performVaryingPhrase, _2 performAfter
+VARYING _1 _*  |-->_1<when> _1 performVaryingPhrase
+
+performVaryingVariable::
+VARYING _1  |-->_1`performVaryingVariable<when> _1 performVaryingPhrase
+VARYING _1 _2  |-->_1`performVaryingVariable<when> _1 performVaryingPhrase, _2 performAfter
+VARYING _1 _*  |-->_1`performVaryingVariable<when> _1 performVaryingPhrase
+_1 _2 _3 _4  |-->_1
+
+performVaryingInitialValue::
+VARYING _1  |-->_1`performVaryingInitialValue<when> _1 performVaryingPhrase
+VARYING _1 _2  |-->_1`performVaryingInitialValue<when> _1 performVaryingPhrase, _2 performAfter
+VARYING _1 _*  |-->_1`performVaryingInitialValue<when> _1 performVaryingPhrase
+_1 _2 _3 _4  |-->_2
+
+
+performVaryingCondition::
+VARYING _1  |-->_1`performVaryingCondition<when> _1 performVaryingPhrase
+VARYING _1 _2  |-->_1`performVaryingCondition<when> _1 performVaryingPhrase, _2 performAfter
+VARYING _1 _*  |-->_1`performVaryingCondition<when> _1 performVaryingPhrase
+_1 _2 _3 _4  |-->_4
+
+performVaryingClauseIncrement::
+VARYING _1  |-->_1`performVaryingClauseIncrement<when> _1 performVaryingPhrase
+VARYING _1 _2  |-->_1`performVaryingClauseIncrement<when> _1 performVaryingPhrase, _2 performAfter
+VARYING _1 _*  |-->_1`performVaryingClauseIncrement<when> _1 performVaryingPhrase
+_1 _2 _3 _4  |-->_1 := _1 + _3
+
+performVaryingPhrase::
+_1 _2 _3 _4  |-->     while not(_4) do<when> _2 performFrom, _3 performBy, _4 performUntil
+
+
+performAfter::
+AFTER _1  |--> <when> _1 performVaryingPhrase
+
+performFrom::
+FROM _1  |-->_1
+
+performBy::
+BY _1  |-->_1
+
+performTestClause::
+WITH TEST BEFORE  |--> 
+WITH TEST AFTER  |--> 
+TEST BEFORE  |--> 
+TEST AFTER  |--> 
+
+
+readStatement::
+READ _1 NEXT RECORD _2 _3 END-READ  |-->    if _1_Position > _1->size() then (_3      skip) else ( _1_Record := _1[_1_Position] ; _2 := _1_Record ) ;\n<when>  _2 readInto, _3 atEndPhrase
+READ _1 NEXT RECORD _2 _3  |-->    if _1_Position > _1->size() then (_3      skip) else (_1_Record := _1[_1_Position] ; _2 := _1_Record ) ;\n<when> _2 readInto, _3 atEndPhrase
+
+READ _1 NEXT RECORD _2 _3 END-READ  |-->    _1_Position := _1_Position + 1;\n    if _1_Position <= _1->size() then (_3    _1_Record := _1[_1_Position] ; _2 := _1_Record ) else skip ;\n<when>  _2 readInto, _3 notAtEndPhrase
+READ _1 NEXT RECORD _2 _3  |-->    _1_Position := _1_Position + 1;\n    if _1_Position <= _1->size() then (_3      _1_Record := _1[_1_Position] ; _2 := _1_Record ) else skip ;\n<when>  _2 readInto, _3 notAtEndPhrase
+READ _1 NEXT RECORD _2 END-READ  |-->    _1_Position := _1_Position + 1;\n    _1_Record := _1[_1_Position];\n    _2 := _1_Record;\n<when>  _2 readInto
+READ _1 NEXT RECORD _2  |-->    _1_Position := _1_Position + 1;\n    _1_Record := _1[_1_Position];    _2 := _1_Record;\n<when> _2 readInto
+
+READ _1 RECORD _2 END-READ  |-->    _1_Position := _1_Position + 1;\n    if _1_Position > _1->size() then (_2      skip) else _1_Record := _1[_1_Position] ;\n<when> _2 atEndPhrase
+READ _1 RECORD _2  |-->    _1_Position := _1_Position + 1;\n    if _1_Position > _1->size() then (_2      skip) else _1_Record := _1[_1_Position] ;\n<when> _2 atEndPhrase
+
+READ _1 RECORD END-READ  |-->    _1_Position := _1_Position + 1;\n    _1_Record := _1[_1_Position] ;\n    _
+READ _1 RECORD |-->    _1_Position := _1_Position + 1;\n    _1_Record := _1[_1_Position];\n
+
+READ _1 RECORD _2 _3 END-READ  |-->    _1_Position := _1_Position + 1;\n    if _1_Position > _1->size() then (_2      skip) ) else (_1_Record := _1[_1_Position] ; _3      skip) ;\n<when> _2 atEndPhrase, _3 notAtEndPhrase
+READ _1 RECORD _2 _3 |-->    _1_Position := _1_Position + 1;\n    if _1_Position > _1->size() then (_2      skip) else (_1_Record := _1[_1_Position] ; _3      skip) ;\n<when> _2 atEndPhrase, _3 notAtEndPhrase
+
+READ _1 _2 _3 END-READ  |-->    _1_Position := _1_Position + 1;\n    if _1_Position > _1->size() then (_2      skip) ) else (_1_Record := _1[_1_Position] ; _3      skip) ;\n<when> _2 atEndPhrase, _3 notAtEndPhrase
+READ _1 _2 _3 |-->    _1_Position := _1_Position + 1;\n    if _1_Position > _1->size() then (_2      skip) else (_1_Record := _1[_1_Position] ; _3      skip) ;\n<when> _2 atEndPhrase, _3 notAtEndPhrase
+
+READ _1 _2 END-READ  |-->    _1_Position := _1_Position + 1;\n    if _1_Position > _1->size() then (_2      skip) else _1_Record := _1[_1_Position] ;\n<when> _2 atEndPhrase
+READ _1 _2  |-->    _1_Position := _1_Position + 1;\n    if _1_Position > _1->size() then (_2      skip) else _1_Record := _1[_1_Position] ;\n<when> _2 atEndPhrase
+
+READ _1 END-READ  |-->    _1_Position := _1_Position + 1;\n    _1_Record := _1[_1_Position] ;\n    _
+READ _1  |-->    _1_Position := _1_Position + 1;\n    _1_Record := _1[_1_Position];\n
+
+READ _1 _2 _3 _4 END-READ  |--> <when> _2 invalidKeyPhrase, _3 atEndPhrase, _4 notAtEndPhrase
+READ _1 _2 _3 _4  |--> <when> _2 invalidKeyPhrase, _3 atEndPhrase, _4 notAtEndPhrase
+READ _1 _2 _3 END-READ  |--> <when> _2 invalidKeyPhrase, _3 atEndPhrase
+READ _1 _2 _3  |--> <when> _2 invalidKeyPhrase, _3 atEndPhrase
+READ _1 _2 _3 END-READ  |--> <when>  _2 invalidKeyPhrase, _3 notAtEndPhrase
+READ _1 _2 _3  |--> <when> _2 invalidKeyPhrase, _3 notAtEndPhrase
+
+READ _1 RECORD _2 END-READ  |-->    if _1`fileKey >= 1 & _1`fileKey <= _1->size() then _1_Record := _1[_1`fileKey] else (_2      skip) ;\n<when>  _2 invalidKeyPhrase
+READ _1 _2  |-->    if _1`fileKey >= 1 & _1`fileKey <= _1->size() then _1_Record := _1[_1`fileKey] else (_2      skip) ;\n<when> _2 invalidKeyPhrase
+
+READ _1 RECORD _2 END-READ  |-->    if _1`fileKey >= 1 & _1`fileKey <= _1->size() then _1_Record := _1[_1`fileKey] else (_2      skip) ;\n<when>  _2 invalidKeyPhrase
+READ _1 _2  |-->    if _1`fileKey >= 1 & _1`fileKey <= _1->size() then _1_Record := _1[_1`fileKey] else (_2      skip) ;\n<when> _2 invalidKeyPhrase
+
+
+readInto::
+INTO _1  |-->_1
+
+
+readWith::
+WITH KEPT LOCK  |--> 
+WITH NO LOCK  |--> 
+WITH WAIT  |--> 
+KEPT LOCK  |--> 
+NO LOCK  |--> 
+WAIT  |--> 
+
+
+readKey::
+KEY IS _1  |--> <when> _1 qualifiedDataName
+KEY _1  |--> <when> _1 qualifiedDataName
+
+
+receiveStatement::
+RECEIVE _1 END-RECEIVE |-->_1
+RECEIVE _1 |-->_1
+
+receiveFromStatement::
+_1 FROM _2 |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _2`programNumber, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _1 := (_cl.getInputStream()).readObject() + "") ;\n
+_1 FROM _2 _* |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _2`programNumber, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _1 := (_cl.getInputStream()).readObject() + "") ;\n
+
+
+receiveFrom::
+THREAD _1 |-->_1
+LAST THREAD |-->
+ANY THREAD |-->
+
+receiveIntoStatement::
+_1 MESSAGE INTO _2 |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _1`programNumber, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _2 := (_cl.getInputStream()).readObject() + "") ;\n
+_1 MESSAGE _2 |-->    (var _dx : OclDatasource := OclDatasource.newServerSocket(5000 + _1`programNumber, 10);\n    var _cl : OclDatasource := _dx.accept();\n    _2 := (_cl.getInputStream()).readObject() + "") ;\n
+
+
+
+releaseStatement::
+RELEASE _1 FROM _2 |-->    _1 := _2;\n    _1`ownerFile := _1`ownerFile->including(_1) ;\n 
+RELEASE _1 |-->    _1`ownerFile := _1`ownerFile->including(_1) ;\n
+
+returnStatement::
+RETURN _1 RECORD _2 _3 _4 END-RETURN |--> <when> _2 returnInto, _3 atEndPhrase, _4 notAtEndPhrase
+
+RETURN _1 RECORD _2 |-->    _1_Position := _1_Position + 1;\n    _1_Record := _1[_1_Position];    _2 := _1_Record ;\n<when> _2 returnInto
+RETURN _1 _2 |-->    _1_Position := _1_Position + 1;\n    _1_Record := _1[_1_Position];    _2 := _1_Record ;\n<when> _2 returnInto
+
+RETURN _1 RECORD |-->    _1_Position := _1_Position + 1;\n    _1_Record := _1[_1_Position];\n
+RETURN _1 |-->    _1_Position := _1_Position + 1 ;\n    _1_Record := _1[_1_Position];\n
+
+
+returnInto::
+INTO _1 |-->_1
+
+
+rewriteStatement::
+REWRITE _1 _2 END-REWRITE |-->    _1 := _2 ;\n    _1`ownerFile[_1`ownerFile_Position] := _1 ;\n<when> _2 rewriteFrom
+REWRITE _1 _2 |-->    _1 := _2 ;\n    _1`ownerFile[_1`ownerFile_Position] := _1 ;\n<when> _2 rewriteFrom
+
+REWRITE _1 END-REWRITE |-->    _1`ownerFile[_1`ownerFile_Position] := _1 ;\n
+REWRITE _1 |-->    _1`ownerFile[_1`ownerFile_Position] := _1 ;\n
+
+
+
+rewriteFrom::
+FROM _1 |-->_1
+
+
+searchStatement::
+SEARCH ALL _1 _2 _3 _4 END-SEARCH |-->    while _2 <= _1->size() & not(_4`searchWhenCondition)\n    do _2 := _2 + 1;\n    if _2 > _1->size() then (_3      skip) else _4 ;\n<when> _2 searchVarying, _3 atEndPhrase, _4 searchWhen
+SEARCH ALL _1 _2 _3 _4 |-->    while _2 <= _1->size() & not(_4`searchWhenCondition)\n    do _2 := _2 + 1;\n    if _2 > _1->size() then (_3      skip) else _4 ;\n<when> _2 searchVarying, _3 atEndPhrase, _4 searchWhen
+
+SEARCH ALL _1 _2 _3 END-SEARCH |-->    while _1`sequenceIndex <= _1->size() & not(_3`searchWhenCondition)\n    do _1`sequenceIndex := _1`sequenceIndex + 1;\n    if _1`sequenceIndex > _1->size() then (_2      skip) else _3 ;\n<when> _2 atEndPhrase, _3 searchWhen 
+SEARCH ALL _1 _2 _3 |-->    while _1`sequenceIndex <= _1->size() & not(_3`searchWhenCondition)\n    do _1`sequenceIndex := _1`sequenceIndex + 1;\n    if _1`sequenceIndex > _1->size() then (_2      skip) else _3 ;\n<when> _2 atEndPhrase, _3 searchWhen 
+
+SEARCH _1 _2 _3 _4 END-SEARCH |-->    while _2 <= _1->size() & not(_4`searchWhenCondition)\n    do _2 := _2 + 1;\n    if _2 > _1->size() then (_3      skip) else _4 ;\n<when> _2 searchVarying, _3 atEndPhrase, _4 searchWhen
+
+SEARCH _1 _2 _3 _4 _* END-SEARCH |-->    while _2 <= _1->size() & not(_4`searchWhenCondition_*`searchWhenConditions)\n    do _2 := _2 + 1;\n    if _2 > _1->size() then (_3      skip) else (_4`searchIfWhen_*`searchIfWhen      skip);\n<when> _2 searchVarying, _3 atEndPhrase, _4 searchWhen
+
+SEARCH _1 _2 _3 _4 _* |-->    while _2 <= _1->size() & not(_4`searchWhenCondition_*`searchWhenConditions)\n    do _2 := _2 + 1;\n    if _2 > _1->size() then (_3      skip) else (_4`searchIfWhen_*`searchIfWhen      skip);\n<when> _2 searchVarying, _3 atEndPhrase, _4 searchWhen
+
+SEARCH _1 _2 _3 _4 |-->    while _2 <= _1->size() & not(_4`searchWhenCondition)\n    do _2 := _2 + 1;\n    if _2 > _1->size() then (_3      skip) else _4 ;\n<when> _2 searchVarying, _3 atEndPhrase, _4 searchWhen
+
+
+
+SEARCH _1 _2 _3 _* END-SEARCH |-->    while _1`sequenceIndex <= _1->size() & not(_3`searchWhenCondition_*`searchWhenConditions)\n    do _1`sequenceIndex := _1`sequenceIndex + 1;\n    if _1`sequenceIndex > _1->size() then (_2      skip) else (_3`searchIfWhen_*`searchIfWhen      skip) ;\n<when> _2 atEndPhrase, _3 searchWhen 
+
+SEARCH _1 _2 _3 END-SEARCH |-->    while _1`sequenceIndex <= _1->size() & not(_3`searchWhenCondition)\n    do _1`sequenceIndex := _1`sequenceIndex + 1;\n    if _1`sequenceIndex > _1->size() then (_2      skip) else _3 ;\n<when> _2 atEndPhrase, _3 searchWhen
+ 
+SEARCH _1 _2 _3 _* |-->    while _1`sequenceIndex <= _1->size() & not(_3`searchWhenCondition_*`searchWhenConditions)\n    do _1`sequenceIndex := _1`sequenceIndex + 1;\n    if _1`sequenceIndex > _1->size() then (_2      skip) else (_3`searchIfWhen_*`searchIfWhen      skip) ;\n<when> _2 atEndPhrase, _3 searchWhen 
+
+SEARCH _1 _2 _3 |-->    while _1`sequenceIndex <= _1->size() & not(_3`searchWhenCondition)\n    do _1`sequenceIndex := _1`sequenceIndex + 1;\n    if _1`sequenceIndex > _1->size() then (_2      skip) else _3 ;\n<when> _2 atEndPhrase, _3 searchWhen 
+
+
+
+searchVarying::
+VARYING _1 |-->_1
+
+
+
+searchWhenCondition::
+WHEN _1 NEXT SENTENCE |-->_1
+WHEN _1 _* |-->_1
+
+searchWhenConditions::
+WHEN _1 NEXT SENTENCE |--> or _1
+WHEN _1 _* |--> or _1
+
+searchWhen::
+WHEN _1 NEXT SENTENCE |-->skip
+WHEN _1 _* |-->( _*      skip)
+
+searchIfWhen::
+WHEN _1 NEXT SENTENCE |-->      skip ;\n
+WHEN _1 _* |-->      if _1 then (_*    skip) else skip ;\n
+
+
+sendStatement::
+SEND _1 |-->_1<when> _1 sendStatementSync
+SEND _1 _2 |-->    try ( _1    skip) catch (_ex : OclException) do (_2    skip);\n<when> _2 onExceptionClause
+SEND _1 _2 |-->    try ( _1_2    skip) catch (_ex : OclException) do (skip);\n<when> _2 notOnExceptionClause
+SEND _1 _2 _3 |-->    try ( _1_3    skip) catch (_ex : OclException) do (_2    skip);\n<when> _2 onExceptionClause, _3 notOnExceptionClause
+
+
+sendStatementSync::
+_1 _2 |-->    (var _dd : OclDatasource := OclDatasource.newSocket("127.0.0.1", 5000 + _2`programIndex);\n    execute (_dd.getOutputStream()).writeObject(_1);\n    execute (_dd.getOutputStream()).flush());\n<when> _2 sendFromPhrase
+
+
+sendFromPhrase::
+FROM _1 |-->_1
+
+programIndex::
+FROM _1 |-->_1`programNumber
+
+
+setStatement::
+SET _1 _* |-->_1_*
+SET _1 |-->_1
+
+setToStatement::
+_1 TO _2 |-->    _1 := _2 ;\n
+_1 _* TO _2 |-->    _1 := _2 ;\n
+_1 _* TO _2 _+ |-->    _1 := _2 ;\n
+
+
+setUpDownByStatement::
+_1 UP BY _2 |-->    _1 := _1 + _2 ;\n
+_1 DOWN BY _2 |-->    _1 := _1 - _2 ;\n
+_1 _* UP BY _2 |-->    _1 := _1 + _2 ;\n
+_1 _* DOWN BY _2 |-->    _1 := _1 - _2 ;\n
+
+
+setTo::
+_1 |-->_1
+
+setToValue::
+ON |-->ON
+OFF |-->OFF
+ENTRY _1 |-->_1
+_1 |-->_1
+
+
+setByValue::
+_1 |-->_1
+
+
+sortStatement::
+SORT _1 _2 _3 _4 |-->    _1 := _3 ;\n    _1 := _1->sortedBy( _sortvar | _2) ;\n    _4 := _1 ;\n<when> _2 sortOnKeyClause, _3 sortUsing, _4 sortGivingPhrase 
+
+SORT _1 _2 _3 _4 |-->    self._3_Call() ;\n    _1 := _1->sortedBy( _sortvar | _2) ;\n    _4 := _1 ;\n<when> _2 sortOnKeyClause, _3 sortInputProcedurePhrase, _4 sortGivingPhrase
+ 
+
+sortOnKeyClause::
+ON ASCENDING KEY _1 _* |-->_sortvar.subrange(_1`startPosition, _1`endPosition)
+ON ASCENDING KEY _1 |-->_sortvar.subrange(_1`startPosition, _1`endPosition)
+ASCENDING KEY _1 _* |-->_sortvar.subrange(_1`startPosition, _1`endPosition)
+ASCENDING KEY _1 |-->_sortvar.subrange(_1`startPosition, _1`endPosition)
+ON ASCENDING _1 _* |-->_sortvar.subrange(_1`startPosition, _1`endPosition)
+ON ASCENDING _1 |-->_sortvar.subrange(_1`startPosition, _1`endPosition)
+ASCENDING _1 _* |-->_sortvar.subrange(_1`startPosition, _1`endPosition)
+ASCENDING _1 |-->_sortvar.subrange(_1`startPosition, _1`endPosition)
+ON DESCENDING KEY _1 _* |-->-_sortvar
+ON DESCENDING KEY _1 |-->-_sortvar
+DESCENDING KEY _1 _* |-->-_sortvar
+DESCENDING KEY _1 |-->-_sortvar
+ON DESCENDING _1 _* |-->-_sortvar
+ON DESCENDING _1 |-->-_sortvar
+DESCENDING _1 _* |-->-_sortvar
+DESCENDING _1 |-->-_sortvar
+
+sortCollatingSequencePhrase::
+COLLATING SEQUENCE IS _* |-->
+COLLATING SEQUENCE _* |-->
+SEQUENCE IS _* |-->
+SEQUENCE _* |-->
+
+sortCollatingAlphanumeric::
+FOR ALPHANUMERIC IS _1 |-->
+ALPHANUMERIC IS _1 |-->
+
+
+sortCollatingNational::
+FOR NATIONAL IS _1 |-->
+FOR NATIONAL _1 |-->
+NATIONAL IS _1 |-->
+NATIONAL _1 |-->
+
+sortInputProcedurePhrase::
+INPUT PROCEDURE IS _1 _2 |-->_1
+INPUT PROCEDURE IS _1 |-->_1
+INPUT PROCEDURE _1 _2 |-->_1
+INPUT PROCEDURE _1 |-->_1
+
+sortInputThrough::
+THROUGH _1 |-->
+THRU _1 |-->
+
+sortUsing::
+USING _1 |-->_1
+USING _1 _* |-->_1
+
+sortOutputProcedurePhrase::
+OUTPUT PROCEDURE IS _1 _2 |-->
+OUTPUT PROCEDURE IS _1 |-->
+OUTPUT PROCEDURE _1 _2 |-->
+OUTPUT PROCEDURE _1 |-->
+
+sortOutputThrough::
+THROUGH _1 |-->
+THRU _1 |-->
+
+
+sortGivingPhrase::
+GIVING _1 |-->_1
+GIVING _1 _* |-->_1
+
+sortGiving::
+_1 |-->_1
+_1 _* |-->_1
+
+
+
+sortDuplicatesPhrase::
+WITH DUPLICATES IN ORDER  |-->
+WITH DUPLICATES IN  |-->
+WITH DUPLICATES ORDER |-->
+WITH DUPLICATES |-->
+DUPLICATES IN ORDER |-->
+DUPLICATES IN  |-->
+DUPLICATES ORDER |-->
+DUPLICATES |-->
+
+
+
+startStatement::
+START _1 END-START |-->    _1_Position := _1_Index[_1`fileKey] ;\n
+START _1 |-->    _1_Position := _1_Index[_1`fileKey] ;\n
+
+START _1 _2 END-START |-->    _1`fileKey := _1_Index->keys()->select(_key | _2)->any() ;\n    _1_Position := _1_Index[_1`fileKey] ;\n<when> _2 startKey
+START _1 _2 |-->    _1`recordKey := _1_Index->keys()->select(_key | _2)->any() ;\n    _1_Position := _1_Index[_1`fileKey] ;\n<when> _2 startKey
+
+START _1 _2 _3 END-START |-->    if _1_Index->keys()->exists( _key | _2 ) then (_1`fileKey := _1_Index->keys()->select(_key | _2)->any() ;\n      _1_Position := _1_Index[_1`fileKey]) else (_3      skip) ;\n<when> _2 startKey, _3 invalidKeyPhrase
+START _1 _2 _3 |-->    if _1_Index->keys()->exists( _key | _2 ) then (_1`fileKey := _1_Index->keys()->select(_key | _2)->any() ;\n      _1_Position := _1_Index[_1`fileKey]) else (_3      skip) ;\n<when> _2 startKey, _3 invalidKeyPhrase
+
+
+startKey::
+KEY IS EQUAL TO _1 |-->_key = _1
+KEY EQUAL TO _1 |-->_key = _1
+KEY IS EQUAL _1 |-->_key = _1
+KEY EQUAL _1 |-->_key = _1
+KEY IS = _1 |-->_key = _1
+KEY = _1 |-->_key = _1
+
+KEY IS GREATER THAN _1 |-->_key->compareTo(_1) > 0
+KEY GREATER THAN _1 |-->_key->compareTo(_1) > 0
+KEY IS GREATER _1 |-->_key->compareTo(_1) > 0
+KEY GREATER _1 |-->_key->compareTo(_1) > 0
+KEY IS > _1 |-->_key->compareTo(_1) > 0
+KEY > _1 |-->_key->compareTo(_1) > 0
+
+KEY IS NOT LESS THAN _1 |-->_key->compareTo(_1) >= 0
+KEY NOT LESS THAN _1 |-->_key->compareTo(_1) >= 0
+KEY IS NOT LESS _1 |-->_key->compareTo(_1) >= 0
+KEY NOT LESS _1 |-->_key->compareTo(_1) >= 0
+KEY IS NOT < _1 |-->_key->compareTo(_1) >= 0
+KEY NOT < _1 |-->_key->compareTo(_1) >= 0
+
+KEY IS GREATER THAN OR EQUAL TO _1 |-->_key->compareTo(_1) >= 0
+KEY GREATER THAN OR EQUAL TO _1 |-->_key->compareTo(_1) >= 0
+KEY IS GREATER OR EQUAL TO _1 |-->_key->compareTo(_1) >= 0
+KEY GREATER OR EQUAL TO _1 |-->_key->compareTo(_1) >= 0
+KEY IS GREATER THAN OR EQUAL _1 |-->_key->compareTo(_1) >= 0
+KEY GREATER THAN OR EQUAL _1 |-->_key->compareTo(_1) >= 0
+KEY IS GREATER OR EQUAL _1 |-->_key->compareTo(_1) >= 0
+KEY GREATER OR EQUAL _1 |-->_key->compareTo(_1) >= 0
+KEY IS >= _1 |-->_key->compareTo(_1) >= 0
+KEY >= _1 |-->_key->compareTo(_1) >= 0
+
+
+
+
+
+
+stopStatement::
+STOP RUN |-->    OclProcess.exit(0); 
+STOP _1 |-->    OclProcess.exit(1);
+
+
+stringStatement::
+STRING _* _1 END-STRING |-->  <when> _1 stringIntoPhrase
+STRING _* _1  |-->    _1 := _*`sum ;\n<when> _1 stringIntoPhrase
+ 
+
+stringSendingPhrase::
+_* _2 |--> ("" + _*`sum)_2 <when> _2 stringDelimitedByPhrase
+_* _2 |--> ("" + _*`sum) <when> _2 stringForPhrase
+
+
+stringSending::
+_1 |-->_1
+
+stringDelimitedByPhrase::
+DELIMITED BY SIZE |-->
+DELIMITED SIZE |-->
+DELIMITED BY _1 |-->->before(_1)
+DELIMITED _1 |-->->before(_1)
+
+stringForPhrase::
+FOR _1 |-->_1
+
+stringIntoPhrase::
+INTO _1 |-->_1
+
+
+stringWithPointerPhrase::
+WITH POINTER _1 |-->
+POINTER _1 |-->
+
+
+subtractStatement::
+SUBTRACT _1 _2 _3 END-SUBTRACT  |-->_1_1`sizeError (_2 skip) else skip ;\n_1`noSizeError (_3 skip) ;\n<when> _1 subtractFromStatement, _2 onSizeErrorPhrase, _3 notOnSizeErrorPhrase
+SUBTRACT _1 _2 _3  |-->_1_1`sizeError (_2 skip) else skip ;\n_1`noSizeError (_3 skip) ;\n<when> _1 subtractFromStatement, _2 onSizeErrorPhrase, _3 notOnSizeErrorPhrase
+
+SUBTRACT _1 _2 END-SUBTRACT  |-->_1_1`sizeError (_2 skip) else skip ;\n<when> _1 subtractFromStatement, _2 onSizeErrorPhrase
+SUBTRACT _1 _2  |-->_1_1`sizeError (_2 skip) else skip ;\n<when> _1 subtractFromStatement, _2 onSizeErrorPhrase
+
+SUBTRACT _1 _2 END-SUBTRACT  |-->_1_1`noSizeError (_2 skip) ;\n<when> _1 subtractFromStatement, _2 notOnSizeErrorPhrase
+SUBTRACT _1 _2  |-->_1_1`noSizeError (_2 skip) ;\n<when> _1 subtractFromStatement, _2 notOnSizeErrorPhrase
+
+SUBTRACT _1 END-SUBTRACT |-->_1<when> _1 subtractFromStatement
+SUBTRACT _1  |-->_1<when> _1 subtractFromStatement
+
+SUBTRACT _1 _2 _3 END-SUBTRACT  |-->_1_1`sizeError (_2 skip) else skip ;\n_1`noSizeError (_3 skip) ;\n<when> _1 subtractFromGivingStatement, _2 onSizeErrorPhrase, _3 notOnSizeErrorPhrase
+SUBTRACT _1 _2 _3  |-->_1_1`sizeError (_2 skip) else skip ;\n_1`noSizeError (_3 skip) ;\n<when> _1 subtractFromGivingStatement, _2 onSizeErrorPhrase, _3 notOnSizeErrorPhrase
+
+SUBTRACT _1 _2 END-SUBTRACT  |-->_1_1`sizeError (_2 skip) else skip ;\n<when> _1 subtractFromGivingStatement, _2 onSizeErrorPhrase
+SUBTRACT _1 _2  |-->_1_1`sizeError (_2 skip) else skip ;\n<when> _1 subtractFromGivingStatement, _2 onSizeErrorPhrase
+
+SUBTRACT _1 _2 END-SUBTRACT  |-->_1_1`noSizeError (_2 skip) ;\n<when> _1 subtractFromGivingStatement, _2 notOnSizeErrorPhrase
+SUBTRACT _1 _2  |-->_1_1`noSizeError (_2 skip) ;\n<when> _1 subtractFromGivingStatement, _2 notOnSizeErrorPhrase
+
+SUBTRACT _1 END-SUBTRACT  |-->_1<when> _1 subtractFromGivingStatement
+SUBTRACT _1  |-->_1<when> _1 subtractFromGivingStatement
+
+SUBTRACT _1 _2 _3 END-SUBTRACT  |-->_1<when> _1 subtractCorrespondingStatement, _2 onSizeErrorPhrase, _3 notOnSizeErrorPhrase
+SUBTRACT _1 _2 _3  |-->_1<when> _1 subtractCorrespondingStatement, _2 onSizeErrorPhrase, _3 notOnSizeErrorPhrase
+SUBTRACT _1 _2 END-SUBTRACT  |-->_1<when> _1 subtractCorrespondingStatement, _2 onSizeErrorPhrase
+SUBTRACT _1 _2  |-->_1<when> _1 subtractCorrespondingStatement, _2 onSizeErrorPhrase
+SUBTRACT _1 _2 END-SUBTRACT  |-->_1<when> _1 subtractCorrespondingStatement, _2 notOnSizeErrorPhrase
+SUBTRACT _1 _2  |-->_1<when> _1 subtractCorrespondingStatement, _2 notOnSizeErrorPhrase
+SUBTRACT _1 END-SUBTRACT  |-->_1<when> _1 subtractCorrespondingStatement
+SUBTRACT _1  |-->_1<when> _1 subtractCorrespondingStatement
+
+
+subtractFromStatement::
+_1 FROM _2  |-->    _2 := (_2 - _1)_2`roundFunction ;\n
+_1 FROM _*  |-->    (var _subtractionTmp : double; _subtractionTmp := _1;\n_*`subtractionAssigns      skip) ;\n<when> _1 subtractSubtrahend
+_1 _* FROM _3  |-->    _3 := (_3 - (_1 + _*`sum))_3`roundFunction ;\n
+_* FROM _+  |-->      (var _subtractionTmp : double; _subtractionTmp := _*`sum;\n_+`subtractionAssigns      skip) ; 
+
+
+subtractFromGivingStatement::
+_1 FROM _2 GIVING _3  |-->    _3 := (_2 - _1)_3`roundFunction ;\n
+_1 FROM _2 GIVING _*  |-->    (var _subtractTmp : double; _subtractTmp := _2 - _1 ;\n_*`subtractAssigns      skip) ;\n<when> _1 subtractSubtrahend, _2 subtractMinuendGiving
+_* FROM _2 GIVING _3  |-->    _3 := (_2 - (_*`sum))_3`roundFunction ;\n
+_* FROM _1 GIVING _+  |-->    (var _subtractTmp : double; _subtractTmp := _1 - (_*`sum) ;\n_+`subtractAssigns      skip) ;\n<when> _1 subtractMinuendGiving
+
+
+subtractCorrespondingStatement::
+CORRESPONDING _1 FROM _2  |-->    _2 := _2 - _1 ;\n<when> _1 qualifiedDataName, _2 subtractMinuendCorresponding
+CORR _1 FROM _2 |-->    _2 := _2 - _1 ;\n<when> _1 qualifiedDataName, _2 subtractMinuendCorresponding
+
+
+subtractSubtrahend::
+_1  |-->_1
+
+subtractMinuend::
+_1 ROUNDED |-->_1
+_1  |-->_1
+
+
+subtractMinuendGiving::
+_1  |-->_1
+
+
+subtractGiving::
+_1 ROUNDED |-->_1
+_1 |-->_1
+
+
+subtractMinuendCorresponding::
+_1 ROUNDED |-->_1
+_1  |-->_1
+
+
+subtractAssigns::
+_1 ROUNDED |-->      _1 := _subtractTmp->roundTo(_1`fractionWidth);\n
+_1 |-->      _1 := _subtractTmp->truncateTo(_1`fractionWidth);\n
+
+subtractionAssigns::
+_1 ROUNDED |-->      _1 := (_1 - _subtractionTmp)->roundTo(_1`fractionWidth);\n
+_1 |-->      _1 := (_1 - _subtractionTmp)->truncateTo(_1`fractionWidth);\n
+
+
+unstringStatement::
+UNSTRING _1 _2 _3 _4 END-UNSTRING |-->    (var _unstringTmp : Sequence(String) ; _unstringTmp := _1->split("["_1`unstringDelimiters + "]") ;\n      var _unstringTally : int ; \n      _unstringTally := 1 ;\n_2_3) ;\n<when> _3 unstringWithPointerPhrase, _4 unstringTallyingPhrase 
+UNSTRING _1 _2 _3 _4 END-UNSTRING |-->    (var _unstringTmp : Sequence(String) ; _unstringTmp := _1->split("["_1`unstringDelimiters + "]") ;\n      var _unstringTally : int ; \n      _unstringTally := 1 ;\n_2_3) ;\n<when> _3 unstringWithPointerPhrase, _4 unstringTallyingPhrase 
+
+UNSTRING _1 _2 _3 END-UNSTRING |-->    (var _unstringTmp : Sequence(String) ; _unstringTmp := _1->split("["_1`unstringDelimiters + "]") ;\n      var _unstringTally : int ; \n      _unstringTally := 1 ;\n_2_3) ;\n<when> _3 unstringTallyingPhrase
+UNSTRING _1 _2 _3  |-->    (var _unstringTmp : Sequence(String) ; _unstringTmp := _1->split("["_1`unstringDelimiters + "]") ;\n      var _unstringTally : int ; \n      _unstringTally := 1 ;\n_2_3) ;\n<when> _3 unstringTallyingPhrase
+
+UNSTRING _1 _2 END-UNSTRING |-->    (var _unstringTmp : Sequence(String) ; _unstringTmp := _1->split("["_1`unstringDelimiters + "]") ;\n      var _unstringTally : int ; \n      _unstringTally := 1 ;\n_2      skip) ;\n 
+UNSTRING _1 _2 |-->    (var _unstringTmp : Sequence(String) ; _unstringTmp := _1->split("["_1`unstringDelimiters + "]") ;\n      var _unstringTally : int ; \n      _unstringTally := 1 ;\n_2      skip) ;\n
+
+
+unstringSendingPhrase::
+_1 |-->_1
+_1 _* |-->_1
+
+unstringDelimiters::
+_1 |-->
+_1 _* |-->_*`unstringDelimiter
+
+unstringDelimiter::
+DELIMITED BY ALL "*" |--> + "\\*"
+DELIMITED BY "*" |--> + "\\*"
+DELIMITED ALL "*" |--> + "\\*"
+DELIMITED "*" |--> + "\\*"
+OR ALL "*" |--> + "\\*"
+OR "*" |--> + "\\*"
+"*" |--> + "\\*"
+DELIMITED BY ALL _1 |--> + _1
+DELIMITED BY _1 |--> + _1
+DELIMITED ALL _1 |--> + _1
+DELIMITED _1 |--> + _1
+OR ALL _1 |--> + _1
+OR _1 |--> + _1
+_1 |--> + _1
+
+
+
+unstringDelimitedByPhrase::
+DELIMITED BY ALL _1 |-->_1
+DELIMITED BY _1 |-->_1
+DELIMITED ALL _1 |-->_1
+DELIMITED _1 |-->_1
+
+unstringOrAllPhrase::
+OR ALL _1 |-->_1
+OR _1 |-->_1
+
+
+unstringIntoPhrase::
+INTO _1 |-->_1
+INTO _1 _* |-->_1_* 
+
+
+unstringInto::
+_1 |-->      _1 := _unstringTmp->at(_unstringTally) ; _unstringTally := _unstringTally + 1;\n
+_1 _2 _3 |-->      _1 := _unstringTmp->at(_unstringTally) ; _unstringTally := _unstringTally + 1;\n
+_1 _2 |-->      _1 := _unstringTmp->at(_unstringTally) ; _unstringTally := _unstringTally + 1;\n
+
+
+unstringDelimiterIn::
+DELIMITER IN _1 |-->
+DELIMITER _1 |-->
+
+
+unstringCountIn::
+COUNT IN _1 |-->
+COUNT _1 |-->
+
+
+unstringWithPointerPhrase::
+WITH POINTER _1 |-->
+POINTER _1 |-->
+
+unstringTallyingPhrase::
+TALLYING IN _1 |-->      _1 := _unstringTally
+TALLYING _1 |-->      _1 := _unstringTally
+
+
+writeStatement::
+WRITE _1 _2 END-WRITE  |-->    _1`ownerFile_Position := _1`ownerFile_Position + 1 ;\n    if _1`ownerFile_Position >= _1`ownerFile->size() then _1`ownerFile := _1`ownerFile->including(_1) else _1`ownerFile[_1`ownerFile_Position] := _1 ;\n<when> _2 writeAdvancingPhrase
+WRITE _1 _2  |-->    _1`ownerFile_Position := _1`ownerFile_Position + 1 ;\n    if _1`ownerFile_Position >= _1`ownerFile->size() then _1`ownerFile := _1`ownerFile->including(_1) else _1`ownerFile[_1`ownerFile_Position] := _1 ;\n<when> _2 writeAdvancingPhrase
+
+WRITE _1 END-WRITE  |-->    _1`ownerFile_Position := _1`ownerFile_Position + 1 ;\n    if _1`ownerFile_Position >= _1`ownerFile->size() then _1`ownerFile := _1`ownerFile->including(_1) else _1`ownerFile[_1`ownerFile_Position] := _1 ;\n
+WRITE _1  |-->    _1`ownerFile_Position := _1`ownerFile_Position + 1 ;\n    if _1`ownerFile_Position >= _1`ownerFile->size() then _1`ownerFile := _1`ownerFile->including(_1) else _1`ownerFile[_1`ownerFile_Position] := _1 ;\n
+
+
+writeAdvancingPhrase::
+BEFORE ADVANCING _1  |-->_1
+BEFORE _1  |-->_1
+AFTER ADVANCING _1  |-->_1
+AFTER _1  |-->_1
+
+writeAdvancingPage::
+PAGE  |--> 
+
+
+writeAdvancingLines::
+_1  |--> 
+_1 LINE  |--> 
+_1 LINES  |--> 
+
+writeAdvancingMnemonic::
+_1  |--> <when> _1 mnemonicName
+
+
+writeAtEndOfPagePhrase::
+AT END_OF_PAGE  |--> 
+AT END_OF_PAGE _1  |--> <when> _1 statement
+AT END_OF_PAGE _*  |--> 
+AT EOP  |--> 
+AT EOP _1  |--> <when> _1 statement
+AT EOP _*  |--> 
+END_OF_PAGE  |--> 
+END_OF_PAGE _1  |--> <when> _1 statement
+END_OF_PAGE _*  |--> 
+EOP  |--> 
+EOP _1  |--> <when> _1 statement
+EOP _*  |--> 
+
+
+writeNotAtEndOfPagePhrase::
+NOT AT END_OF_PAGE  |--> 
+NOT AT END_OF_PAGE _1  |--> <when> _1 statement
+NOT AT END_OF_PAGE _*  |--> 
+NOT AT EOP  |--> 
+NOT AT EOP _1  |--> <when> _1 statement
+NOT AT EOP _*  |--> 
+NOT END_OF_PAGE  |--> 
+NOT END_OF_PAGE _1  |--> <when> _1 statement
+NOT END_OF_PAGE _*  |--> 
+NOT EOP  |--> 
+NOT EOP _1  |--> <when> _1 statement
+NOT EOP _*  |--> 
+
+
+
+atEndPhrase::
+AT END _* |-->_*
+END _* |-->_*
+
+notAtEndPhrase::
+NOT AT END _* |-->_*
+NOT END _* |-->_*
+
+invalidKeyPhrase::
+INVALID KEY _* |-->_*
+INVALID _* |-->_*
+
+notInvalidKeyPhrase::
+NOT INVALID KEY _* |-->_*
+NOT INVALID _* |-->_*
+
+onOverflowPhrase::
+ON OVERFLOW _* |-->_*
+OVERFLOW _* |-->_*
+
+notOnOverflowPhrase::
+NOT ON OVERFLOW _* |-->_*
+NOT OVERFLOW _* |-->_*
+
+
+onSizeErrorPhrase::
+ON SIZE ERROR _* |-->_*
+SIZE ERROR _* |-->_*
+
+
+notOnSizeErrorPhrase::
+NOT ON SIZE ERROR _* |-->_*
+NOT SIZE ERROR _* |-->_*
+
+
+onExceptionClause::
+ON EXCEPTION _* |-->_*
+EXCEPTION _* |-->_*
+
+notOnExceptionClause::
+NOT ON EXCEPTION _* |-->_*
+NOT EXCEPTION _* |-->_*
+
+
+arithmeticExpression::
+_1 |-->_1
+_1 _* |-->_1 _*
+
+plusMinus::
+_1 |-->_1
++ _1 |-->+_1
+- _1 |-->-_1
+
+multDivs::
+_1 |-->_1
+_1 _* |-->_1 _*
+
+multDiv::
+* _1 |-->* _1
+/ _1 |-->/ _1
+
+powers::
+_1 |-->_1
++ _1 |-->+_1
+- _1 |-->-_1
+_1 _* |-->_1 _*
++ _1 _* |-->+_1 _*
+- _1 _* |-->-_1 _*
+
+power::
+** _1 |-->->pow(_1)
+
+basis::
+( _1 ) |-->(_1)
+_1 |-->_1
+
+condition::
+_1  |-->_1
+_1 _2  |-->_1 _2
+_1 _*  |-->_1 _*
+
+
+andOrCondition::
+AND _1  |-->& _1
+AND _*  |-->& _* 
+OR _1  |-->or _1
+OR _*  |-->or _*
+
+
+combinableCondition::
+NOT _1  |-->not _1
+_1  |-->_1
+
+
+simpleCondition::
+( _1 ) |-->_1
+_1  |-->_1
+
+classCondition::
+_1 IS NOT NUMERIC  |-->not(_1 = "0" or _1->isMatch("[1-9][0-9]*") or _1->isMatch("[1-9][0-9]*.[0-9]+") or _1->isMatch("0.[0-9]+")) 
+_1 IS NOT ALPHABETIC  |-->not(_1->isMatch("[a-z_A-Z$0-9 ]+")) 
+_1 IS NOT ALPHABETIC-LOWER  |-->not(_1->isMatch("[a-z_$0-9 ]+")) 
+_1 IS NOT ALPHABETIC-UPPER  |-->not(_1->isMatch("[_A-Z$0-9 ]+")) 
+_1 IS NOT DBCS  |--> 
+_1 IS NOT KANJI  |--> 
+_1 IS NOT _2  |--> <when> _2 className
+_1 IS NUMERIC  |-->(_1 = "0" or _1->isMatch("[1-9][0-9]*") or _1->isMatch("[1-9][0-9]*.[0-9]+") or _1->isMatch("0.[0-9]+"))
+_1 IS ALPHABETIC  |-->_1->isMatch("[a-z_A-Z$0-9 ]+")
+_1 IS ALPHABETIC-LOWER  |-->_1->isMatch("[a-z_$0-9 ]+")
+_1 IS ALPHABETIC-UPPER  |-->_1->isMatch("[_A-Z$0-9 ]+")
+_1 IS DBCS  |-->
+_1 IS KANJI  |-->
+_1 IS _2  |--> <when> _2 className
+_1 NOT NUMERIC  |-->not(_1 = "0" or _1->isMatch("[1-9][0-9]*") or _1->isMatch("[1-9][0-9]*.[0-9]+") or _1->isMatch("0.[0-9]+"))
+_1 NOT ALPHABETIC  |-->not(_1->isMatch("[a-z_A-Z$0-9 ]+"))  
+_1 NOT ALPHABETIC-LOWER  |-->not(_1->isMatch("[a-z_$0-9 ]+")) 
+_1 NOT ALPHABETIC-UPPER  |-->not(_1->isMatch("[_A-Z$0-9 ]+")) 
+_1 NOT DBCS  |--> 
+_1 NOT KANJI  |--> 
+_1 NOT _2  |--> <when> _2 className
+_1 NUMERIC  |-->(_1 = "0" or _1->isMatch("[1-9][0-9]*") or _1->isMatch("[1-9][0-9]*.[0-9]+") or _1->isMatch("0.[0-9]+")) 
+_1 ALPHABETIC  |-->_1->isMatch("[a-z_A-Z$0-9 ]+") 
+_1 ALPHABETIC-LOWER  |-->_1->isMatch("[a-z_$0-9 ]+") 
+_1 ALPHABETIC-UPPER  |-->_1->isMatch("[_A-Z$0-9 ]+")
+_1 DBCS  |--> 
+_1 KANJI  |--> 
+_1 _2  |--> <when> _2 className
+
+
+conditionNameReference::
+_1 _2  |-->_1<when> _1 conditionName, _2 inFile
+_1 _2 _3  |-->_1<when> _1 conditionName, _2 inFile, _3 conditionNameSubscriptReference
+_1 _2 _*  |-->_1<when> _1 conditionName, _2 inFile
+_1  |-->_1<when> _1 conditionName
+_1 _2  |-->_1<when> _1 conditionName, _2 conditionNameSubscriptReference
+_1 _*  |-->_1<when> _1 conditionName
+_1 _2 _3  |-->_1<when> _1 conditionName, _2 inData, _3 inFile
+_1 _2 _3 _4  |-->_1<when> _1 conditionName, _2 inData, _3 inFile, _4 conditionNameSubscriptReference
+_1 _2 _3 _*  |-->_1<when> _1 conditionName, _2 inData, _3 inFile
+_1 _2  |-->_1<when> _1 conditionName, _2 inData
+_1 _2 _3  |-->_1<when> _1 conditionName, _2 inData, _3 conditionNameSubscriptReference
+_1 _2 _*  |-->_1<when> _1 conditionName, _2 inData
+_1 _* _2  |-->_1<when> _1 conditionName, _2 inFile
+_1 _* _2 _3  |-->_1<when> _1 conditionName, _2 inFile, _3 conditionNameSubscriptReference
+_1 _* _2 _+  |-->_1<when> _1 conditionName, _2 inFile
+_1 _* _2  |-->_1<when> _1 conditionName, _2 conditionNameSubscriptReference
+_1 _2  |-->_1<when> _1 conditionName, _2 inMnemonic
+
+
+conditionNameSubscriptReference::
+( _1 )  |-->[_1]<when> _1 subscript_
+( _1 , _2 )  |-->[_1]->at(_2)<when> _1 subscript_, _2 subscript_
+( _1 _2 )  |-->[_1]->at(_2)<when> _1 subscript_, _2 subscript_
+( _1 _* )  |-->[_1]<when> _1 subscript_
+
+
+relationCondition::
+_1  |-->_1
+
+relationSignCondition::
+_1 IS NOT POSITIVE  |-->(_1 <= 0)
+_1 IS NOT NEGATIVE  |-->(_1 >= 0)
+_1 IS NOT ZERO  |-->(_1 > 0 or _1 < 0)
+_1 IS POSITIVE  |-->(_1 > 0)
+_1 IS NEGATIVE  |-->(_1 < 0)
+_1 IS ZERO  |-->(_1 = 0)
+_1 NOT POSITIVE  |-->(_1 <= 0)
+_1 NOT NEGATIVE  |-->(_1 >= 0)
+_1 NOT ZERO  |-->(_1 > 0 or _1 < 0)
+_1 POSITIVE  |-->(_1 > 0)
+_1 NEGATIVE  |-->(_1 < 0)
+_1 ZERO  |-->(_1 = 0)
+
+
+relationArithmeticComparison::
+_1 _2 _3  |-->(_1 _2 _3)
+
+
+relationCombinedComparison::
+_1 _2 ( _3 )  |-->_1 _2 ( _3 )<when> _1 arithmeticExpression, _2 relationalOperator, _3 relationCombinedCondition
+
+
+relationCombinedCondition::
+_1 AND _2  |-->_1 & _2
+_1 OR _2  |-->_1 or _2
+_1 _*  |-->_1_*
+
+
+relationalOperator::
+NOT GREATER THAN  |--><=
+NOT GREATER  |--><= 
+NOT >  |--><= 
+NOT LESS THAN  |-->>=
+NOT LESS  |-->>=
+NOT < |-->>= 
+NOT EQUAL TO  |-->/=
+NOT EQUAL  |-->/=
+NOT = |-->/= 
+GREATER THAN  |-->>
+GREATER  |-->>
+LESS THAN  |--><
+LESS  |--><
+EQUAL TO  |-->=
+EQUAL  |-->=
+<> |-->/= 
+GREATER THAN OR EQUAL TO  |-->>=
+GREATER THAN OR EQUAL  |-->>=
+GREATER OR EQUAL TO  |-->>=
+GREATER OR EQUAL  |-->>=
+LESS THAN OR EQUAL TO  |--><= 
+LESS THAN OR EQUAL  |--><=
+LESS OR EQUAL TO  |--><=
+LESS OR EQUAL  |--><=
+IS NOT GREATER THAN  |--><=
+IS NOT GREATER  |--><=
+IS NOT >  |--><=
+IS NOT LESS THAN  |-->>= 
+IS NOT LESS  |-->>=
+IS NOT <  |-->>= 
+IS NOT EQUAL TO  |-->/= 
+IS NOT EQUAL  |-->/=
+IS NOT =  |-->/= 
+IS GREATER THAN  |-->>
+IS GREATER  |-->>
+IS >  |-->>
+IS LESS THAN  |-->< 
+IS LESS  |--><
+IS <  |-->< 
+IS EQUAL TO  |-->= 
+IS EQUAL  |-->=
+IS = |-->= 
+IS <> |--><> 
+IS GREATER THAN OR EQUAL TO |-->>= 
+IS GREATER THAN OR EQUAL  |-->>=
+IS GREATER OR EQUAL TO  |-->>=
+IS GREATER OR EQUAL  |-->>=
+IS >  |-->> 
+IS LESS THAN OR EQUAL TO  |--><= 
+IS LESS THAN OR EQUAL  |--><=
+IS LESS OR EQUAL TO  |--><=
+IS LESS OR EQUAL  |--><=
+IS <=  |--><= 
+ARE NOT GREATER THAN  |--><=
+ARE NOT GREATER  |--><=
+ARE NOT >  |--><=
+ARE NOT LESS THAN  |-->>= 
+ARE NOT LESS  |-->>=
+ARE NOT <  |-->>= 
+ARE NOT EQUAL TO  |-->/= 
+ARE NOT EQUAL  |-->/=
+ARE NOT =  |-->/= 
+ARE GREATER THAN  |-->>
+ARE GREATER  |-->>
+ARE >  |-->>
+ARE LESS THAN  |-->< 
+ARE LESS  |--><
+ARE <  |-->< 
+ARE EQUAL TO  |-->= 
+ARE EQUAL  |-->=
+ARE = |-->= 
+ARE <> |--><> 
+ARE GREATER THAN OR EQUAL TO |-->>= 
+ARE GREATER THAN OR EQUAL  |-->>=
+ARE GREATER OR EQUAL TO  |-->>=
+ARE GREATER OR EQUAL  |-->>=
+ARE >  |-->> 
+ARE LESS THAN OR EQUAL TO  |--><= 
+ARE LESS THAN OR EQUAL  |--><=
+ARE LESS OR EQUAL TO  |--><=
+ARE LESS OR EQUAL  |--><=
+ARE <=  |--><= 
+_1 |-->_1
+
+
+abbreviation::
+NOT _1 _2  |--> <when> _1 relationalOperator, _2 arithmeticExpression
+NOT _1 ( _2 _3 ) |--> <when> _1 relationalOperator, _2 arithmeticExpression, _3 abbreviation
+NOT _1  |-->not _1<when> _1 arithmeticExpression
+NOT ( _1 _2 )  |--> <when> _1 arithmeticExpression, _2 abbreviation
+_1 _2  |--> <when> _1 relationalOperator, _2 arithmeticExpression
+_1 ( _2 _3 ) |--> <when> _1 relationalOperator, _2 arithmeticExpression, _3 abbreviation
+_1  |--> <when> _1 arithmeticExpression
+( _1 _2 )  |--> <when> _1 arithmeticExpression, _2 abbreviation
+
+
+
+identifier::
+_1 |-->_1
+
+
+
+functionCall::
+FUNCTION ABS ( _1 ) |-->(_1)->abs()
+FUNCTION ACOS ( _1 ) |-->(_1)->acos()
+FUNCTION ANNUITY ( _1 _2 ) |-->(if _1 = 0 then 1.0/_2 else _1 / (1 - (1 + _1)->pow(-_2)) endif)
+FUNCTION ASIN ( _1 ) |-->(_1)->asin()
+FUNCTION ATAN ( _1 ) |-->(_1)->atan()
+FUNCTION CHAR ( _1 ) |-->(_1)->byte2char()
+FUNCTION COS ( _1 ) |-->(_1)->cos()
+FUNCTION CURRENT_DATE |-->("" + OclDate.newOclDate()) 
+FUNCTION CURRENT_DATE ( ) |-->("" + OclDate.newOclDate()) 
+FUNCTION DIV ( _1 _2 ) |-->((_1) div (_2))
+FUNCTION EXP ( _1 ) |-->(_1)->exp()
+FUNCTION FACTORIAL ( _1 ) |-->MathLib.factorial(_1)
+FUNCTION INTEGER ( _1 ) |-->(_1)->floor()
+FUNCTION INTEGER_PART ( _1 ) |-->(_1)->oclAsType(int)
+FUNCTION LENGTH ( _1 ) |-->("" + _1)->size()
+FUNCTION LENGTH_AN ( _1 ) |-->("" + _1)->size()
+FUNCTION LOG ( _1 ) |-->(_1)->log()
+FUNCTION LOG10 ( _1 ) |-->(_1)->log10()
+FUNCTION LOWER_CASE ( _1 ) |-->(_1)->toLowerCase()
+FUNCTION MAX ( _1 _* ) |-->Set{_1_*`arguments}->max()
+FUNCTION MEAN ( _1 _* ) |-->MathLib.mean(Sequence{_1_*`arguments})
+FUNCTION MEDIAN ( _1 _* ) |-->MathLib.median(Sequence{_1_*`arguments})
+FUNCTION MIDRANGE ( _1 _* ) |-->(Set{_1_*`arguments}->max() + Set{_1_*`arguments}->min())/2.0 
+FUNCTION MIN ( _1 _* ) |-->Set{_1_*`arguments}->min()
+FUNCTION MOD ( _1 _2 ) |-->((_1) mod (_2))
+FUNCTION NUMVAL ( _1 ) |-->("" + _1)->toReal()
+FUNCTION NUMVAL_C ( _1 ) |-->("" + _1)->toReal()
+FUNCTION NUMVAL_C ( _1 _2 ) |-->("" + _1)->toReal()
+FUNCTION ORD ( _1 ) |-->(_1)->char2byte()
+FUNCTION PRESENT_VALUE ( _1 _2 _* ) |-->MathLib.presentValueDiscrete(_1, Sequence{_2_*`arguments})
+FUNCTION RANDOM |-->MathLib.random()
+FUNCTION RANDOM ( ) |-->MathLib.random()
+FUNCTION RANDOM ( _1 ) |-->MathLib.setSeeds(_1,_1,_1)
+FUNCTION RANGE ( _1 _* ) |-->(Set{_1_*`arguments}->max() - Set{_1_*`arguments}->min()) 
+FUNCTION REM ( _1 _2 ) |-->((_1) mod (_2))
+FUNCTION REVERSE ( _1 ) |-->(_1)->reverse()
+FUNCTION SIGN ( _1 ) |-->(_1)->compareTo(0)
+FUNCTION SQRT ( _1 ) |-->(_1)->sqrt()
+FUNCTION SIN ( _1 ) |-->(_1)->sin()
+FUNCTION STANDARD_DEVIATION ( _1 _* ) |-->MathLib.standardDeviation(Sequence{_1_*`arguments})
+FUNCTION SUM ( _1 _* ) |-->Set{_1_*`arguments}->sum()
+FUNCTION TAN ( _1 ) |-->(_1)->tan()
+FUNCTION UPPER_CASE ( _1 ) |-->(_1)->toUpperCase()
+FUNCTION VARIANCE ( _1 _* ) |-->MathLib.variance(Sequence{_1_*`arguments})
+
+FUNCTION _1 ( _2 , _* ) _3 |-->_1(_2,_*)_3
+FUNCTION _1 ( _2 ) _3 |-->_1(_2)_3
+FUNCTION _1 ( _2 , _* ) |-->_1(_2,_*)
+FUNCTION _1 ( _2 ) |-->_1(_2)
+FUNCTION _1 _2 |-->_1_2
+
+
+referenceModifier::
+( _1 : _2 ) |-->.subrange(_1,_1+_2-1)
+( _1 : ) |-->.subrange(_1)
+
+
+characterPosition::
+_1 |-->_1
+
+length::
+_1 |-->_1
+
+tableCall::
+_1 |-->_1
+_1 ( ALL ) |-->_1
+_1 ( _2 ) |-->_1[_2]
+_1 ( _2 _* ) |-->_1[_2][_*`arrayAccesses]
+_1 _2 |-->_1_2
+_1 ( _2 ) _3 |-->_1[_2]_3
+_1 ( _2 _* ) _4 |-->_1[_2][_*`arrayAccesses]_4
+
+
+arguments::
+_1 |-->, _1
+
+
+arrayAccesses::
+_1 |-->_1
+_1 _* |-->_1][_*`recurse
+
+
+subscript_::
+ALL |-->ALL 
+_1 _2 |-->_1[_2]
+_1 |-->_1
+
+argument::
+_1 _2 |-->_1(_2)
+_1 |-->_1
+
+qualifiedDataName::
+_1 |-->_1
+
+qualifiedDataNameFormat1::
+_1 _2 |-->_2.subrange(_1`startingPosition,_1`endingPosition)
+_1 |-->_1
+
+qualifiedDataNameFormat2::
+_1 _2 |-->_1_2
+
+qualifiedDataNameFormat3::
+_1 _2 |-->_1_2
+
+qualifiedDataNameFormat4::
+LINAGE-COUNTER _1 |-->
+
+qualifiedInData::
+_1 |-->_1
+
+inData::
+IN _1 |-->_1
+OF _1 |-->_1
+
+startingPosition::
+_1 |-->_1`startingPosition<when> _1 dataName
+_1 |-->_1`startPosition
+
+endingPosition::
+_1 |-->_1`endingPosition<when> _1 dataName
+_1 |-->_1`endPosition
+
+
+inFile::
+IN _1 |-->
+OF _1 |-->
+
+inMnemonic::
+IN _1 |-->
+OF _1 |-->
+
+inSection::
+IN _1 |-->
+OF _1 |-->
+
+inLibrary::
+IN _1 |-->
+OF _1 |-->
+
+inTable::
+IN _1 |-->_1.
+OF _1 |-->_1.
+
+alphabetName::
+_1 |-->_1
+
+assignmentName::
+_1 |-->_1
+
+basisName::
+_1 |-->_1
+
+cdName::
+_1 |-->_1
+
+className::
+_1 |-->_1
+
+computerName::
+_1 |-->_1
+
+conditionName::
+_1 |-->_1
+
+dataName::
+_1 |-->_1
+
+dataDescName::
+FILLER |--> 
+CURSOR |--> 
+_1 |-->_1
+
+environmentName::
+_1 |-->_1
+
+fileName::
+_1 |-->_1
+
+functionName::
+INTEGER |-->INTEGER
+LENGTH |-->LENGTH 
+RANDOM |-->RANDOM 
+SUM |-->SUM
+WHEN-COMPILED |-->WHEN_COMPILED 
+_1 |-->_1
+
+figurativeConstant::
+ALL _1 |-->_1 
+HIGH-VALUE |-->(10->pow(18)-1)
+HIGH-VALUES |-->(10->pow(18)-1)
+LOW-VALUE |-->0 
+LOW-VALUES |-->0 
+NULL_ |-->null 
+NULLS |-->null 
+QUOTE |-->"\"" 
+QUOTES |-->"\"" 
+SPACE |-->" " 
+SPACES |-->" " 
+ZERO |-->0 
+ZEROS |-->0 
+ZEROES |-->0
+
+
+indexName::
+_1 |-->_1
+
+languageName::
+_1 |-->_1
+
+libraryName::
+_1 |-->_1
+
+localName::
+_1 |-->_1
+
+mnemonicName::
+_1 |-->_1
+
+paragraphName::
+_1 |-->_1
+
+procedureName::
+_1 _2 |-->_1
+_1 |-->_1
+
+programName::
+_1 |-->_1
+
+recordName::
+_1 |-->_1
+
+reportName::
+_1 |-->_1
+
+routineName::
+_1 |-->_1
+
+screenName::
+_1 |-->_1
+
+sectionName::
+_1 |-->_1
+
+systemName::
+_1 |-->_1
+
+symbolicCharacter::
+_1 |-->_1
+
+textName::
+_1 |-->_1
+
+
+
+cobolWord::
+_1 |-->_1
+
+integerLiteral::
+_1 |-->_1
+
+literal::
+_1 |-->_1
+
+booleanLiteral::
+TRUE |-->true
+FALSE |-->false	
+
+numericLiteral::
+ZERO |-->0
+_1 |-->_1
+
+dataName::
+_1 |-->_1

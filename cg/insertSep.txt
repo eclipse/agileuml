@@ -1,0 +1,15 @@
+insertSymbol::
+_1 |--> _1 _$
+_* |-->_*`insertSymbol
+
+stag::
+_1 |-->_1
+
+
+slist::
+( _2 ) |-->( _2`insertSymbol )
+
+
+/* Example: (slist ( (selems (stag 1) (stag 2) (stag 3) ) ) ) */
+
+

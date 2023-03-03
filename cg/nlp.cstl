@@ -1,0 +1,111 @@
+parse::
+_1 |-->import nltk\nimport nltk.tokenize\nfrom nltk.tokenize import sent_tokenize, word_tokenize\nimport nltk.data\nfrom nltk.tag import PerceptronTagger\nfrom nltk.tag import pos_tag\nfrom nltk.parse import RecursiveDescentParser\nfrom nltk.parse.corenlp import GenericCoreNLPParser\nfrom nltk.tree import *\nimport nlpLibrary\n\n_1\n
+_1 _2 |-->import nltk\nimport nltk.tokenize\nfrom nltk.tokenize import sent_tokenize, word_tokenize\nimport nltk.data\nfrom nltk.tag import PerceptronTagger\nfrom nltk.tag import pos_tag\nfrom nltk.parse import RecursiveDescentParser\nfrom nltk.parse.corenlp import GenericCoreNLPParser\nfrom nltk.tree import *\nfrom nlpLibrary import *\nimport pickle\nimport re\nimport random\n\n_1\n
+
+
+sql_stmt_list::
+; |-->
+_1 |-->_1
+_1 ; _* |-->_1_*`recurse
+_1 _* |-->_1_*`recurse
+
+
+sql_stmt::
+_1 |-->_1\n
+_1 _2 |-->_1\n_2
+
+
+analyze_stmt::
+analyze _1 |-->print(_1)\n
+
+attach_stmt::
+attach _1 as _2 |-->_2 = nltk.data.load(_1)\n
+
+create_table_stmt::
+create temporary table _1 as _2 |-->_1 = _2\n
+
+create_virtual_table_stmt:: 
+create virtual table _1 using _2 ( _3 ) |-->_1 = _2(_3)\n
+
+select_stmt::
+_1 |-->_1
+
+simple_select_stmt::
+_1 |-->_1
+
+select_core::
+select _1 , _2 from _3 |-->[_2 for _1 in _3]
+
+select distinct _1 from _2 where _3 |-->set({_1 for _1 in _2 if _3})
+select _1 from _2 where _3 |-->[_1 for _1 in _2 if _3]
+
+
+savepoint_stmt::
+savepoint _1 |-->savepointFile = open('_1.pickle', 'wb')\npickle.dump(_1,savepointFile)\nsavepointFile.close()\n
+
+
+
+table_or_subquery::
+_1 |-->_1
+
+table_name::
+_1 |-->_1
+
+result_column::
+_1 |-->_1
+
+savepoint_name::
+_1 |-->_1
+
+function_name::
+_1 |-->_1
+
+schema_name::
+_1 |-->_1
+
+column_name::
+_1 |-->_1
+
+module_name::
+_1 |-->_1
+
+module_argument::
+_1 |-->_1
+
+
+any_name::
+_1 |-->_1
+
+
+expr::
+- _1 |-->-_1
+NOT _1 |-->!(_1)
+_1 = _2 |-->_1 == _2
+_1 < _2 |-->_1 < _2
+_1 <= _2 |-->_1 <= _2
+_1 > _2 |-->_1 > _2
+_1 >= _2 |-->_1 >= _2
+_1 <> _2 |-->_1 != _2
+_1 & _2 |-->_1 and _2
+_1 | _2 |-->_1 or _2
+_1 AND _2 |-->_1 and _2
+_1 OR _2 |-->_1 or _2
+_1 IN _2 |-->_1 in _2
+_1 NOT IN _2 |-->!(_1 in _2)
+_1 MATCH _2 |-->(re.fullmatch(_2,_1) != None)
+_1 LIKE _2 |-->(stringSimilarity(_1,_2) >= 0.8)
+_1 * _2 |-->_1 * _2
+_1 / _2 |-->_1 / _2
+_1 + _2 |-->_1 + _2
+_1 - _2 |-->_1 - _2
+size ( _1 ) |-->len(_1)
+_1 ( ) |-->_1()
+_1 ( _* ) |-->_1(_*)
+( _1 ) |-->(_1)
+_1 |-->_1
+
+
+literal_value::
+_1 |-->_1
+
+

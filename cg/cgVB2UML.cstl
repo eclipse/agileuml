@@ -1,0 +1,1466 @@
+module::
+_1 |-->_1`vbDeclarations\n\nclass FromVB {\n_1`vbFunctions\n  operation initialise()\n  pre: true post: true\n  activity: _1\n    skip;\n}\n\n
+_1 \r\n |-->_1`vbDeclarations\n\nclass FromVB {\n_1`vbFunctions\n  operation initialise()\n  pre: true post: true\n  activity: _1\n    skip;\n}\n\n
+_1 _* \r\n |-->_1`vbDeclarations\n\n_*`vbDeclarations\n\nclass FromVB {\n  _1`vbFunctions\n_*`vbFunctions\n  operation initialise()\n  pre: true post: true\n  activity: _1 _*\n    skip;\n}\n\n
+_1 _* |-->_1`vbDeclarations\n\n_*`vbDeclarations\n\nclass FromVB {\n  _1`vbFunctions\n_*`vbFunctions\n  operation initialise()\n  pre: true post: true\n  activity: _1 _*\n    skip;\n}\n\n
+
+
+
+moduleBody::
+\r\n |-->\n
+_1 |-->_1 
+_1 \r\n |-->_1\n
+_1 \r\n _* |-->_1 \n_*`moduleBodyElement
+
+
+moduleBodyElement::
+\r\n |-->\n
+_1 |-->_1
+
+moduleHeader::
+_* |-->
+
+moduleReferences::
+_* |-->
+
+controlProperties::
+_* |-->
+
+moduleConfig::
+_* |--> 
+
+moduleOption::
+_* |-->
+
+moduleOptions::
+_* |-->
+
+
+moduleAttributes::
+_* |-->
+
+
+attributeStmt::
+_* |-->
+
+
+constStmt::
+PUBLIC CONST _1 |-->_1
+PRIVATE CONST _1 |-->_1
+GLOBAL CONST _1 |-->_1`constAssignment
+CONST _1 |-->_1
+PUBLIC CONST _1 , _* |-->_1_*`constSubStmt
+PRIVATE CONST _1 , _* |-->_1_*`constSubStmt
+CONST _1 , _* |-->_1_*`constSubStmt
+GLOBAL CONST _1 , _* |-->_1`constAssignment_*`constAssignTail
+
+constSubStmt::
+_1 _2 = _3 |-->  var _1 _2`typeHintDec ;\n  _1 := _3<when> _2 typeHint
+_1 _2 = _3 |-->  var _1 _2 ;\n  _1 := _3
+_1 = _2 |-->  var _1 : OclAny ;\n  _1 := _2
+, |-->
+
+constAssignment::
+_1 _2 = _3 |-->  _1 := _3<when> _2 typeHint
+_1 _2 = _3 |-->  _1 := _3
+_1 = _2 |-->  _1 := _2
+, |-->
+
+constAssignTail::
+_1 _2 = _3 |--> ;\n  _1 := _3<when> _2 typeHint
+_1 _2 = _3 |--> ;\n  _1 := _3
+_1 = _2 |--> ;\n  _1 := _2
+, |-->
+
+ 
+typeHintDec::
+% |--> : int
+$ |--> : String
+& |--> : int
+^ |--> : long
+# |--> : double
+! |--> : double
+@ |--> : double
+_1 |--> : OclAny
+
+typeHintType::
+% |-->int
+$ |-->String
+& |-->int
+^ |-->long
+# |-->double
+! |-->double
+@ |-->double
+_1 |-->OclAny
+
+
+typeHint::
+% |-->
+$ |-->
+& |-->
+# |-->
+! |-->
+@ |-->
+^ |-->
+_1 |-->
+
+
+dateStmt::
+DATE = _1 |-->  OclDate.setSystemDate(_1)
+
+
+declareStmt::
+DECLARE FUNCTION _* |-->
+_1 DECLARE FUNCTION _* |-->
+DECLARE SUB _* |-->
+_1 DECLARE SUB _* |-->
+
+
+deftypeStmt::
+_* |-->
+
+deleteSettingStmt::
+DELETESETTING _* |-->
+
+
+enumerationStmt::
+_* |-->
+
+enumerationStmt_Constant::
+_* |-->
+
+eventStmt::
+_* |-->
+
+midStmt::
+MID ( _1 ) |-->  _1`first := _1`midExpression
+
+
+midExpression::
+_1 , _2 , _3 |-->(let _mid : String = _1 in _mid.subrange(1,_2-1) + _3 + _mid.subrange(_2+(_3)->size(), _mid->size()))
+_1 , _2 , _3 , _4 |-->(let _mid : String = _1 in _mid.subrange(1,_2-1) + _4.subrange(1,_3) + _1.subrange(_2+_3,_mid->size()))
+_1 |-->_1`midExpression<when> _1 argsCall
+
+
+
+mkdirStmt::
+MKDIR _1 |-->  OclFile.mkdir(_1)
+
+nameStmt::
+NAME _1 AS _2 |-->  OclFile.renameFile(_1,_2)
+
+randomizeStmt::
+RANDOMIZE |-->  MathLib.setSeeds((OclDate.getSystemTime() mod 30269), (OclDate.getSystemTime() mod 30307), (OclDate.getSystemTime() mod 30323))
+RANDOMIZE _1 |-->  MathLib.setSeeds((_1 mod 30269), (_1 mod 30307), (_1 mod 30323))
+
+
+type_::
+_1 |-->_1
+_1 ( ) |-->Sequence(_1)
+
+
+complexType::
+Double |-->double
+Decimal |-->double
+Currency |-->double
+Integer |-->int
+Long |-->int
+LongLong |-->long
+LongPtr |-->long
+Object |-->OclAny
+Variant |-->OclAny
+Byte |-->int
+Single |-->double
+Collection |-->Sequence(Map(String,OclAny))
+Dictionary |-->Map(String,OclAny)
+Range |-->Sequence(Sequence(OclAny))
+Date |-->OclDate
+_1 |-->_1
+_1 . _2 |-->_1._2
+
+
+baseType::
+DATE |-->OclDate
+Date |-->OclDate
+INTEGER |-->int
+Integer |-->int
+BYTE |-->int
+Byte |-->int
+LONG |-->int
+Long |-->int
+LONGLONG |-->long
+LongLong |-->long
+LONGPTR |-->long
+LongPtr |-->long
+DOUBLE |-->double
+Double |-->double
+DECIMAL |-->double
+Decimal |-->double
+CURRENCY |-->double
+Currency |-->double
+SINGLE |-->double
+Single |-->double
+VARIANT |-->OclAny
+Variant |-->OclAny
+OBJECT |-->OclAny
+Object |-->OclAny
+STRING |-->String
+BOOLEAN |-->boolean
+Boolean |-->boolean
+COLLECTION |-->Sequence(Map(String,OclAny))
+Collection |-->Sequence(Map(String,OclAny))
+DICTIONARY |-->Map(String,OclAny)
+Dictionary |-->Map(String,OclAny)
+RANGE |-->Sequence(Sequence(OclAny))
+Range |-->Sequence(Sequence(OclAny))
+
+
+defaultValue::
+AS _1 |-->_1`defaultValue
+AS NEW _1 |-->_1.new_1()
+AS _1 _2 |-->_1`defaultValue
+DATE |-->null
+Date |-->null
+% |-->0
+INTEGER |-->0
+Integer |-->0
+& |-->0
+LONG |-->0
+Long |-->0
+^ |-->0
+LONGLONG |-->0
+LongLong |-->0
+LONGPTR |-->0
+LongPtr |-->0
+BYTE |-->0
+Byte |-->0
+# |-->0.0
+! |-->0.0
+@ |-->0.0
+DOUBLE |-->0.0
+Double |-->0.0
+DECIMAL |-->0.0
+Decimal |-->0.0
+CURRENCY |-->0.0
+Currency |-->0.0
+SINGLE |-->0.0
+Single |-->0.0
+VARIANT |-->null
+Variant |-->null
+OBJECT |-->null
+Object |-->null
+$ |-->""
+STRING |-->""
+String |-->""
+BOOLEAN |-->false
+Boolean |-->false
+COLLECTION |-->Sequence{}
+Collection |-->Sequence{}
+DICTIONARY |-->Map{}
+Dictionary |-->Map{}
+RANGE |-->Sequence{}
+Range |-->Sequence{}
+_1 |-->_1`defaultValue<when> _1 asTypeClause
+_1 |-->null
+
+
+
+closeStmt::
+CLOSE |-->  /* close all files */ 
+CLOSE _1 |-->  _1.closeFile()
+CLOSE _* |-->_*`closeFiles
+
+closeFiles::
+, |--> ;\n
+_1 |-->  _1.closeFile()
+
+
+inputStmt::
+INPUT _1 , _2 |-->  _2 := _1.readLine()
+INPUT _1 , _2 , _3 |-->  _2 := _1.readLine();\n  _3 := _1.readLine()
+INPUT _1 , _2 , _3 , _4 |-->  _2 := _1.readLine();\n  _3 := _1.readLine();\n  _4 := _1.readLine()
+
+
+lineInputStmt::
+LINE INPUT _1 , _2 |-->  _2 := _1.readLine()
+
+loadStmt:: 
+LOAD _1 |-->  _1 := OclType.loadExecutableObject("_1")
+
+lockStmt::
+LOCK _* |-->
+
+lsetStmt::
+LSET _1 = _2 |-->  _1 := (let _lset : String = _2 in _lset.subrange(1,_1->size()) + Integer.subrange(_lset->size()+1, _1->size())->collect(" ")->sum()))<when> _2 String
+LSET _1 = _2 |-->  _1 := _2
+
+openStmt::
+OPEN _1 FOR APPEND AS _2 |-->  var _2 : OclFile ;\n  _2 := OclFile.newOclFile_Write(OclFile.newOclFile(_1))
+OPEN _1 FOR INPUT AS _2 |-->  var _2 : OclFile ;\n  _2 := OclFile.newOclFile_Read(OclFile.newOclFile(_1))
+OPEN _1 FOR OUTPUT AS _2 |-->  var _2 : OclFile ;\n  _2 := OclFile.newOclFile_Write(OclFile.newOclFile(_1))
+OPEN _1 FOR RANDOM AS _2 |-->  var _2 : OclFile ;\n  _2 := OclFile.newOclFile_Write(OclFile.newOclFile(_1))
+OPEN _1 FOR BINARY AS _2 |-->  var _2 : OclFile ;\n  _2 := OclFile.newOclFile_WriteB(OclFile.newOclFile(_1))
+
+OPEN _1 FOR APPEND AS _2 LEN _* |-->  var _2 : OclFile ;\n  _2 := OclFile.newOclFile_Write(OclFile.newOclFile(_1))
+OPEN _1 FOR INPUT AS _2 LEN _* |-->  var _2 : OclFile ;\n  _2 := OclFile.newOclFile_Read(OclFile.newOclFile(_1))
+OPEN _1 FOR OUTPUT AS _2 LEN _* |-->  var _2 : OclFile ;\n  _2 := OclFile.newOclFile_Write(OclFile.newOclFile(_1))
+OPEN _1 FOR RANDOM AS _2 LEN _* |-->  var _2 : OclFile ;\n  _2 := OclFile.newOclFile_Write(OclFile.newOclFile(_1))
+OPEN _1 FOR BINARY AS _2 LEN _* |-->  var _2 : OclFile ;\n  _2 := OclFile.newOclFile_WriteB(OclFile.newOclFile(_1))
+
+
+sendkeysStmt::
+SENDKEYS _* |-->
+
+
+variableStmt::
+DIM _1 |-->_1
+PUBLIC _1 |-->_1
+PRIVATE _1 |-->_1
+GLOBAL _1 |-->_1`variableListInitialisation
+STATIC _1 |--> static_1
+FRIEND _1 |-->_1
+
+
+variableListStmt::
+_1 |-->_1
+_1 , _* |-->_1 ;\n_*`recurse
+
+variableListInitialisation::
+_1 |-->_1`variableInitialisation
+_1 , _* |-->_1`variableInitialisation_*`variableInitTail
+
+
+variableSubStmt::
+_1 |-->  var _1 : OclAny := null
+_1 ( ) |-->  var _1 : Sequence(OclAny) := Sequence{null}<action> _1 Sequence
+_1 _2 |-->  var _1 _2`typeHintDec := _2`defaultValue<when> _2 typeHint
+_1 _2 |-->  var _1 _2 := _2`defaultValue
+_1 ( ) _2 |-->  var _1 _2`sequenceType := Sequence{_2`defaultValue}<action> _1 Sequence
+_1 _2 ( ) |-->  var _1 _2`sequenceType := Sequence{_2`defaultValue}<action> _1 Sequence  
+_1 ( _2 ) _3 |-->  var _1 : _2`subscriptsTypeLhs_3`asTypeType_2`subscriptsInitRhs ;\n  _1 := _2`subscriptsInitLhs _3`defaultValue _2`subscriptsInitRhs<action> _1 Sequence
+_1 _2 ( _3 ) |-->  var _1 : _3`subscriptsTypeLhs _2`typeHintType _3`subscriptsInitRhs ;\n  _1 := _3`subscriptsInitLhs _2`defaultValue _3`subscriptsInitRhs<action> _1 Sequence
+
+variableInitialisation::
+_1 |-->  _1 := null
+_1 ( ) |-->  _1 := Sequence{null}<action> _1 Sequence
+_1 _2 |-->  _1 := _2`defaultValue<when> _2 typeHint
+_1 _2 |-->  _1 := _2`defaultValue
+_1 ( ) _2 |-->  _1 := Sequence{_2`defaultValue}<action> _1 Sequence
+_1 _2 ( ) |-->  _1 := Sequence{_2`defaultValue}<action> _1 Sequence  
+_1 ( _2 ) _3 |-->  _1 := _2`subscriptsInitLhs _3`defaultValue _2`subscriptsInitRhs<action> _1 Sequence
+_1 _2 ( _3 ) |-->  _1 := _3`subscriptsInitLhs _2`defaultValue _3`subscriptsInitRhs<action> _1 Sequence
+
+variableInitTail::
+_1 |--> ;\n  _1 := null
+_1 ( ) |--> ;\n  _1 := Sequence{null}<action> _1 Sequence
+_1 _2 |--> ;\n  _1 := _2`defaultValue<when> _2 typeHint
+_1 _2 |--> ;\n  _1 := _2`defaultValue
+_1 ( ) _2 |--> ;\n  _1 := Sequence{_2`defaultValue}<action> _1 Sequence
+_1 _2 ( ) |--> ;\n  _1 := Sequence{_2`defaultValue}<action> _1 Sequence  
+_1 ( _2 ) _3 |--> ;\n  _1 := _2`subscriptsInitLhs _3`defaultValue _2`subscriptsInitRhs<action> _1 Sequence
+_1 _2 ( _3 ) |--> ;\n  _1 := _3`subscriptsInitLhs _2`defaultValue _3`subscriptsInitRhs<action> _1 Sequence
+
+subscriptsTypeLhs::
+_1 |-->Sequence(
+_1 , _* |-->Sequence(_*`recurse
+
+subscriptsInitLhs::
+_1 |-->_1`subscriptInitLhs
+_1 , _* |-->_1`subscriptInitLhs_*`recurse
+
+subscriptsInitRhs::
+_1 |-->)
+_1 , _* |-->) _*`recurse
+
+subscriptInitLhs::
+_1 |-->Integer.subrange(1,_1)->collect( 
+_1 TO _2 |-->Integer.subrange(_1,_2)->collect(
+
+argsCallArrayAccess::
+_1 |-->->select( _m | _m->keys()->includes(_1) )->any()->at(_1)<when> _1 String
+_1 |-->[_1]
+_1 , _* |-->[_1]_*`recurse
+
+
+argsCallCellAccess::
+_1 |-->[_1]
+_1 , _* |-->[_1]_*`recurse
+
+
+unloadStmt::
+UNLOAD _1 |-->  execute (_1)->isDeleted()
+
+
+widthStmt::
+WIDTH _1 , _2 |-->
+
+
+whileWendStmt::
+WHILE _1 \r\n _* \r\n WEND |-->  while _1\n  do (\n  _*\n    skip)
+
+withStmt::
+WITH _1 \r\n _2 \r\n END WITH |-->  var _withObject : OclAny; \n  _withObject := _1;\n  _2;\n  _withObject := null
+ 
+writeStmt::
+WRITE _1 , |-->  _1.println()
+WRITE _1 , _2 |-->  _1.println(_2)
+
+
+printStmt::
+PRINT _1 , |-->  _1.println("")
+PRINT _1 , _2 |-->  _1.println(_2)
+
+
+outputList::
+_1 |-->_1
+_1 , _* |-->_1 + _*`recurse
+_1 ; _* |-->_1 + _*`recurse
+
+outputList_Expression::
+SPC |-->" "
+Spc |-->" "
+TAB |-->"\t"
+Tab |-->"\t"
+SPC _1 |-->Integer.subrange(1,_1)->collect(" ")->sum()
+TAB _1 |-->Integer.subrange(1,_1)->collect("\t")->sum()
+SPC ( _1 ) |-->Integer.subrange(1,_1)->collect(" ")->sum()
+TAB ( _1 ) |-->Integer.subrange(1,_1)->collect("\t")->sum()
+_1 |-->_1
+
+
+beepStmt::
+BEEP |-->  execute ("\u0007")->display()
+
+chDirStmt::
+CHDIR _1 |-->  /* change current directory to: _1 */
+
+chDriveStmt::
+CHDRIVE _1 |-->  /* change current drive to: _1 */
+
+
+explicitCallStmt::
+_1 |-->_1
+
+eCS_ProcedureCall::
+CALL _1 |-->  self._1()
+CALL _1 ( _2 ) |-->  self._1(_2)
+
+
+eCS_MemberProcedureCall::
+CALL _1 . _2 |-->  _1._2()
+CALL _1 . _2 ( _3 ) |-->  _1._2(_3)
+
+eraseStmt::
+ERASE _1 |-->  _1 := _1->collect( _x | 0 )
+ERASE _* |-->_*`eraseStatements
+
+eraseStatements::
+, |--> ;\n
+_1 |-->  _1 := _1->collect( _x | 0 )
+
+errorStmt::
+ERROR 3 |-->  error ProgramException.newProgramException()
+ERROR 5 |-->  error ProgramException.newProgramException()
+ERROR 6 |-->  error ArithmeticException.newArithmeticException()
+ERROR 7 |-->  error SystemException.newSystemException()
+ERROR 9 |-->  error IndexingException.newIndexingException()
+ERROR 10 |-->  error AccessingException.newAccessingException()
+ERROR 11 |-->  error ArithmeticException.newArithmeticException()
+ERROR 13 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 14 |-->  error SystemException.newSystemException()
+ERROR 16 |-->  error ProgramException.newProgramException()
+ERROR 17 |-->  error AccessingException.newAccessingException()
+ERROR 18 |-->  error IOException.newIOException()
+ERROR 20 |-->  error ProgramException.newProgramException()
+ERROR 28 |-->  error SystemException.newSystemException()
+ERROR 35 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 47 |-->  error SystemException.newSystemException()
+ERROR 48 |-->  error SystemException.newSystemException()
+ERROR 49 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 51 |-->  error SystemException.newSystemException()
+ERROR 52 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 53 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 54 |-->  error IOException.newIOException()
+ERROR 55 |-->  error IOException.newIOException()
+ERROR 57 |-->  error IOException.newIOException()
+ERROR 58 |-->  error IOException.newIOException()
+ERROR 59 |-->  error IOException.newIOException()
+ERROR 61 |-->  error IOException.newIOException()
+ERROR 62 |-->  error IOException.newIOException()
+ERROR 63 |-->  error IOException.newIOException()
+ERROR 67 |-->  error IOException.newIOException()
+ERROR 68 |-->  error IOException.newIOException()
+ERROR 70 |-->  error AccessingException.newAccessingException()
+ERROR 71 |-->  error IOException.newIOException()
+ERROR 74 |-->  error IOException.newIOException()
+ERROR 75 |-->  error IOException.newIOException()
+ERROR 76 |-->  error IOException.newIOException()
+ERROR 91 |-->  error NullAccessException.newNullAccessException()
+ERROR 92 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 93 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 94 |-->  error NullAccessException.newNullAccessException()
+ERROR 97 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 98 |-->  error AccessingException.newAccessingException()
+ERROR 298 |-->  error SystemException.newSystemException()
+ERROR 320 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 321 |-->  error IOException.newIOException()
+ERROR 322 |-->  error IOException.newIOException()
+ERROR 325 |-->  error IOException.newIOException()
+ERROR 327 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 328 |-->  error AccessingException.newAccessingException()
+ERROR 335 |-->  error SystemException.newSystemException()
+ERROR 336 |-->  error SystemException.newSystemException()
+ERROR 337 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 338 |-->  error SystemException.newSystemException()
+ERROR 360 |-->  error SystemException.newSystemException()
+ERROR 361 |-->  error SystemException.newSystemException()
+ERROR 363 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 364 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 365 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 368 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 371 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 380 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 381 |-->  error IndexingException.newIndexingException()
+ERROR 382 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 383 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 385 |-->  error IndexingException.newIndexingException()
+ERROR 387 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 393 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 394 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 400 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 402 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 419 |-->  error AccessingException.newAccessingException()
+ERROR 422 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 423 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 424 |-->  error NullAccessException.newNullAccessException()
+ERROR 425 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 429 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 430 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 432 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 438 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 440 |-->  error SystemException.newSystemException()
+ERROR 442 |-->  error SystemException.newSystemException()
+ERROR 443 |-->  error SystemException.newSystemException()
+ERROR 445 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 446 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 447 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 448 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 449 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 450 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 451 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 452 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 453 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 454 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 455 |-->  error AccessingException.newAccessingException()
+ERROR 457 |-->  error IndexingException.newIndexingException()
+ERROR 458 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 459 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 460 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 461 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 462 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 463 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 480 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 481 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 482 |-->  error IOException.newIOException()
+ERROR 483 |-->  error IOException.newIOException()
+ERROR 484 |-->  error IOException.newIOException()
+ERROR 485 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 486 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 520 |-->  error SystemException.newSystemException()
+ERROR 521 |-->  error SystemException.newSystemException()
+ERROR 735 |-->  error IOException.newIOException()
+ERROR 744 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 746 |-->  error IncorrectElementException.newIncorrectElementException()
+ERROR 31001 |-->  error SystemException.newSystemException()
+ERROR 31004 |-->  error SystemException.newSystemException()
+ERROR 31018 |-->  error SystemException.newSystemException()
+ERROR 31027 |-->  error SystemException.newSystemException()
+ERROR 31032 |-->  error SystemException.newSystemException()
+ERROR 31036 |-->  error IOException.newIOException()
+ERROR 31037 |-->  error IOException.newIOException()
+
+ERROR _1 |-->  error OclException.newOclException()
+
+
+
+eventStmt::
+EVENT _1 _2 |-->  usecase _1 _2 { }\n\n
+_1 EVENT _2 _3 |-->  usecase _2 _3 { }\n\n 
+
+
+ambiguousIdentifier::
+Nothing |-->null
+False |-->false
+True |-->true
+_1 |-->_1
+_* |-->_*
+
+ambiguousKeyword::
+_1 |-->_1
+
+certainIdentifier::
+_1 |-->_1
+_* |-->_*
+
+
+putStmt::
+PUT _1 , _2 , _3 |-->  _1.setPosition(_2) ;\n  _1.write(_3)
+PUT _1 , , _2 |-->  _1.write(_2)
+
+
+propertyGetStmt::
+PROPERTY GET _1 _* |--><action> _1 getter
+_1 PROPERTY GET _2 _* |--><action> _2 getter
+
+propertyLetStmt::
+PROPERTY LET _1 _* |--><action> _1 setter
+_1 PROPERTY LET _2 _* |--><action> _2 setter
+
+propertySetStmt::
+PROPERTY SET _1 _* |--><action> _1 setter
+_1 PROPERTY SET _2 _* |--><action> _2 setter
+
+
+setStmt::
+SET _1 = _2 |-->  _1 := _2
+
+
+valueStmt::
+_1 |-->_1
+( _1 ) |-->(_1)
+ADDRESSOF _1 |-->?_1
+NEW Collection |-->Sequence{}
+NEW Dictionary |-->Map{}
+NEW _1 |-->_1.new_1()
+_1 & _2 |-->(_1 + _2)<when> _1 String
+_1 & _2 |-->MathLib.bitwiseAnd(_1,_2)<when> _1 Integer
+_1 & _2 |-->(_1 + _2)
+_1 ^ _2 |-->_1->pow(_2)
+- _1 |-->-_1
++ _1 |-->_1
+_1 * _2 |-->_1 * _2
+_1 / _2 |-->_1 /(1.0 * _2)
+_1 \ _2 |-->_1 div _2
+_1 MOD _2 |-->_1 mod _2
+_1 + _2 |-->(_1 + _2)
+_1 - _2 |-->_1.dayDifference(_2)<when> _1 Date, _2 Date
+_1 - _2 |-->(_1 - _2)
+_1 < _2 |-->_1 < _2
+_1 <= _2 |-->_1 <= _2
+_1 = _2 |-->_1 = _2
+_1 > _2 |-->_1 > _2
+_1 >= _2 |-->_1 >= _2
+_1 <> _2 |-->_1 /= _2
+_1 LIKE _2 |-->(_1)->isMatch(_2)
+_1 IS _2 |--> _1 <>= _2
+NOT _1 |-->not _1
+_1 AND _2 |-->_1 & _2
+_1 OR _2 |-->_1 or _2
+_1 XOR _2 |-->_1 xor _2
+_1 IMP _2 |-->(not(_1) or _2)
+_1 EQV _2 |-->(_1 = _2)
+_1 := _2 |-->_2
+
+
+
+
+implicitCallStmt_InBlock::
+_1 |-->_1
+
+iCS_B_ProcedureCall::
+_1 |-->  self._1()
+MsgBox _1 |-->  execute (_1)->display()
+_1 _2 |-->  self._1(_2)
+
+iCS_B_MemberProcedureCall::
+Debug . Print _1 |-->  _1`displayItems
+_1 . Add _2 |-->  _1 := (_1)->append(_2`collectionAdd)<action> _1 Sequence
+_1 . Remove _2 |-->  _1 := (_1)->select( _m | _m->keys()->excludes(_2) )<when> _2 String
+_1 . Remove _2 |-->  _1 := (_1)->excludingAt(_2)
+_1 . _2 |-->  _1._2()
+_1 . _2 _3 |-->_1._2(_3)
+
+
+displayItems::
+, |-->;\n
+_1 |-->  execute (_1)->display()
+_1 , _* |-->  execute (_1)->display();\n_*`recurse
+
+
+collectionAdd:: 
+_1 |-->Map{ null |-> _1 }
+_1 , _2 |-->Map{ _1`lhsKey_2`rhsKey |-> _1`lhsItem_2`rhsItem }
+
+lhsKey::
+Item := _1 |-->
+Key := _1 |-->_1
+_1 |-->_1`lhsKey<when>_1 valueStmt
+_1 |-->_1
+
+rhsKey::
+Item := _1 |-->
+Key := _1 |-->_1
+_1 |-->_1`rhsKey<when>_1 valueStmt
+_1 |-->
+
+lhsItem::
+Item := _1 |-->_1
+Key := _1 |-->
+_1 |-->_1`lhsItem<when>_1 valueStmt
+_1 |-->
+
+rhsItem::
+Item := _1 |-->_1
+Key := _1 |-->
+_1 |-->_1`rhsItem<when> _1 valueStmt
+_1 |-->_1
+
+
+
+
+implicitCallStmt_InStmt::
+_1 |-->_1
+
+
+iCS_S_MembersCall::
+_1 |-->_withObject_1
+Err _1 |-->_1`errorAttribute
+Application _1 _2 |-->Excel_2
+Application _1 _2 _3 |-->Excel_3
+_1 _2 |-->_1_2.Value<when> _2`isRange true
+_1 _2 |-->_1_2
+_1 _2 _3 |-->_1_2_3.Value<when> _3`isRange true
+_1 _2 _3 |-->(_1_2)_3<when> _2`isRange true, _3`isOffset true
+_1 _2 _3 |-->_1_2_3
+_1 _2 _3 _4 |-->_1_2_3_4
+
+
+
+iCS_S_MemberCall::
+. Count |-->->size()
+. Items |-->->collect( _m | _m->values()->any() )
+. Keys |-->->collect( m | _m->keys()->any() )
+. RemoveAll |-->->intersection(Set{})
+. Rows |-->
+. _1 |-->_1`memberCall
+
+isRange::
+. _1 |-->_1`isRange
+Range ( _1 ) |-->true
+_* |-->false
+
+isOffset::
+. _1 |-->_1`isOffset
+Offset ( _1 ) |-->true
+_* |-->false
+
+
+memberCall::
+Item ( _1 ) |-->->any( _m | _m->keys()->includes(_1) )->at(_1)<when> _1 String
+Item ( _1 ) |-->->at(_1)->values()->any()
+Exists ( _1 ) |-->->exists( _m | _m->keys()->includes(_1) )
+Range ( _1 ) |-->.Range[_1]<when> _1 matches "[a-zA-Z]+[0-9]+"
+Range ( _1 ) |-->.getRange(_1)
+Cells ( _1 ) |-->.Cells_1`argsCallCellAccess
+
+_1 ( _2 ) |-->._1(_2)
+_1 |-->._1
+
+
+errorAttribute::
+. Number |-->OclException.any.getMessage()
+
+
+iCS_S_VariableOrProcedureCall::
+DoEvents |-->OclProcess.activeCount()
+Error |-->OclException.any.getMessage()
+Err |-->OclException->any()
+Now |-->OclDate.newOclDate()
+Date |-->OclDate.newOclDate()
+Rnd |-->MathLib.random()
+Time |-->OclDate.getSystemTime()
+Timer |-->(let _d : OclDate = OclDate.newOclDate() in _d.getTime() - OclDate.newOclDate_YMD(_d.getYear(),_d.getMonth(),_d.getDate()-1).getTime())/1000)
+
+CurDir |-->(OclFile.newOclFile(".")).getAbsolutePath()
+VBNORMAL |-->0
+VBREADONLY |-->1
+VBHIDDEN |-->2
+VBSYSTEM |-->4
+VBDIRECTORY |-->16
+VBARCHIVE |-->32
+VBALIAS |-->64
+
+_1 _2 |-->_1_2
+_1 |-->_1
+
+
+iCS_S_ProcedureOrArrayCall::
+
+Abs ( _1 ) |-->(_1)->abs()
+Acos ( _1 ) |-->(_1)->acos()
+Asin ( _1 ) |-->(_1)->asin()
+Atan ( _1 ) |-->(_1)->atan()
+Atn ( _1 ) |-->(_1)->atan()
+Ceiling ( _1 ) |-->(_1)->ceil()
+Cos ( _1 ) |-->(_1)->cos()
+Cosec ( _1 ) |-->1/((_1)->sin())
+Cotan ( _1 ) |-->1/((_1)->tan())
+Cosh ( _1 ) |-->(_1)->cosh()
+Fix ( _1 ) |-->(_1)->oclAsType(int)
+Floor ( _1 ) |-->(_1)->floor()
+Exp ( _1 ) |-->(_1)->exp()
+HSin ( _1 ) |-->(_1)->sinh()
+HCos ( _1 ) |-->(_1)->cosh()
+HTan ( _1 ) |-->(_1)->tanh()
+HSec ( _1 ) |-->2/((_1)->exp() + (-_1)->exp())
+HCosec ( _1 ) |-->2/((_1)->exp() - (-_1)->exp())
+Int ( _1 ) |-->(_1)->oclAsType(int)
+Log ( _1 ) |-->(_1)->log()
+Log10 ( _1 ) |-->(_1)->log10()
+Log2 ( _1 ) |-->((_1)->log())/(2->log())
+Max ( _1 ) |-->Set{_1}->max()
+Min ( _1 ) |-->Set{_1}->min()
+Pow ( _1 ) |-->(_1`first)->pow(_1`last)
+Rnd ( _1 ) |-->MathLib.random()
+Round ( _1 ) |-->_1`argsCallRound
+ScaleB ( _1 ) |-->(_1`first)*(2->pow(_1`last))
+Sec ( _1 ) |-->1/((_1)->cos())
+Sign ( _1 ) |-->(_1)->compareTo(0)
+Sgn ( _1 ) |-->(_1)->compareTo(0)
+Sin ( _1 ) |-->(_1)->sin()
+Sinh ( _1 ) |-->(_1)->sinh()
+Sqrt ( _1 ) |-->(_1)->sqrt()
+Sqr ( _1 ) |-->(_1)->sqrt()
+Tan ( _1 ) |-->(_1)->tanh()
+Truncate ( _1 ) |-->(_1)->oclAsType(int)
+DDB ( _1 ) |-->_1`argsCallDDB
+FV ( _1 ) |-->_1`argsCallFV
+IRR ( _1 ) |-->MathLib.irrDiscrete(_1)
+NPV ( _1 ) |-->MathLib.netPresentValueDiscrete(_1)
+
+Worksheets ( _1 ) |-->Excel.Worksheets[_1]
+Sheets ( _1 ) |-->Excel.Worksheets[_1]
+Cells ( _1 ) |-->Cells_1`argsCallCellAccess
+
+Asc ( _1 ) |-->(_1)->first()->char2byte()
+Chr ( _1 ) |-->(_1)->byte2char()
+CVErr ( _1 ) |-->OclException.newOclException(_1 + "")
+Format ( _1 ) |-->_1`first
+InStr ( _1 ) |-->_1`argsCallInStr
+InStrRev ( _1 ) |-->_1`argsCallInStrRev
+Len ( _1 ) |-->(_1)->size()
+Join ( _1 ) |-->_1`argsCallJoin
+LCase ( _1 ) |-->(_1)->toLowerCase()
+Left ( _1 ) |-->(_1`first).subrange(1,_1`last)
+Trim ( _1 ) |-->(_1)->trim()
+LTrim ( _1 ) |-->(let _ltrim : String = _1 in _ltrim.subrange(_ltrim->indexOf(_ltrim->trim())))
+RTrim ( _1 ) |-->(let _rtrim : String = _1 in _rtrim->before(_rtrim->trim()) + _rtrim->trim())
+Mid ( _1 ) |-->_1`argsCallMid
+Replace ( _1 ) |-->_1`argsCallReplace
+Right ( _1 ) |-->(_1`first).subrange((_1`first)->size() - _1`last + 1)
+Space ( _1 ) |-->Integer.subrange(1,_1)->collect( " " )->sum()
+Spc ( _1 ) |-->Integer.subrange(1,_1)->collect( " " )->sum()
+Split ( _1 ) |-->_1`argsCallSplit
+StrComp ( _1 ) |-->(_1`first)->compareTo(_1`third)
+StrConv ( _1 ) |-->if _1`third = 1 then (_1`first)->toUpperCase() else if _1`third = 2 then (_1`first)->toLowerCase() else _1`first endif endif
+String ( _1 ) |-->Integer.subrange(1,_1`first)->collect(_1`last)->sum()
+StrReverse ( _1 ) |-->(_1)->reverse()
+Tab ( _1 ) |-->Integer.subrange(1,_1)->collect("\t")->sum()
+UCase ( _1 ) |-->(_1)->toUpperCase()
+
+Year ( _1 ) |-->(_1).getYear()
+Month ( _1 ) |-->(_1).getMonth()
+Day ( _1 ) |-->(_1).getDate()
+Hour ( _1 ) |-->(_1).getHour()
+Minute ( _1 ) |-->(_1).getMinute()
+Second ( _1 ) |-->(_1).getSecond()
+DateAdd ( _1 ) |-->_1`argsCallDateAdd
+DateDiff ( _1 ) |-->_1`argsCallDateDiff
+DatePart ( _1 ) |-->_1`argsCallDatePart
+DateSerial ( _1 ) |-->OclDate.newOclDate_YMD(_1`first,_1`third,_1`last)
+DateValue ( _1 ) |-->OclDate.newOclDate_String(_1)
+MonthName ( _1 ) |-->Sequence{"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"}->at(_1`first)
+TimeSerial ( _1 ) |-->OclDate.newOclDate_YMDHMS(0,0,0,_1`first,_1`third,_1`last)
+Weekday ( _1 ) |-->(_1`first).getDay()
+WeekdayName ( _1 ) |-->Sequence{ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" }->at(_1`first)
+
+FileAttr ( _1 ) |-->if _1.canWrite() then 2 else 1 endif
+FileDateTime ( _1 ) |-->(OclFile.newOclFile(_1)).lastModified()
+FileLen ( _1 ) |-->(OclFile.newOclFile(_1)).length()
+LOF ( _1 ) |-->(OclFile.newOclFile(_1)).length()
+EOF ( _1 ) |-->(_1.getEof() = true)
+InputBox ( _1 ) |-->(OclFile["System.in"]).readLine() 
+MsgBox ( _1 ) |-->(OclFile["System.in"]).readLine()
+GetAttr ( _1 ) |-->Sequence{ (if (OclFile.newOclFile(_1)).canWrite() then 0 else 1 endif), (if (OclFile.newOclFile(_1)).isHidden() then 2 else 0 endif), (if (OclFile.newOclFile(_1)).isDirectory() then 16 else 0 endif) }->sum() 
+GetObject ( _1 ) |-->(OclFile.newOclFile_Read(OclFile.newOclFile(_1))).readObject()
+Input ( _1 ) |-->_1`last.readN(_1`first)->sum()
+Loc ( _1 ) |-->(_1).getPosition()
+Seek ( _1 ) |-->(_1).getPosition()
+
+Shell ( _1 ) |-->OclProcess.newOclProcess(null, _1`first)
+DoEvents ( ) |-->OclProcess.activeCount()
+Environ ( _1 ) |-->OclProcess.getEnvironmentProperty(_1`first)
+
+IsMissing ( _1 ) |-->(_1)->oclIsUndefined()
+IsNumeric ( _1 ) |-->((_1)->isReal() or (_1)->isLong())
+Hex ( _1 ) |-->MathLib.decimal2hex(_1)
+Oct ( _1 ) |-->MathLib.decimal2octal(_1)
+Str ( _1 ) |-->(_1 + "")
+Val ( _1 ) |-->(_1)->toReal()
+IIf ( _1 ) |-->if _1`first then _1`third else _1`last endif
+IsArray ( _1 ) |-->(_1)->oclIsTypeOf(Sequence)
+IsDate ( _1) |-->(_1)->oclIsTypeOf(OclDate)
+IsEmpty ( _1 ) |-->(_1)->oclIsUndefined()
+IsError ( _1 ) |-->(_1)->oclIsTypeOf(OclException)
+IsNull ( _1 ) |-->(_1 = null)
+IsObject ( _1 ) |-->not((_1)->oclIsUndefined())
+Switch ( _1 ) |-->_1`argsCallSwitch
+TypeName ( _1 ) |-->(_1)->oclType().getName()
+VarType ( _1 ) |-->if (_1)->isInteger() then 2 else if (_1)->isLong() then 3 else if (_1)->isReal() then 5 else 9 endif endif endif
+
+Error ( _1 ) |-->(_1 + "")
+Array ( _1 ) |-->Sequence{_1}
+Choose ( _1 ) |-->_1`argsCallChooseCall
+Item ( _1 ) |-->->any( _m | _m->keys()->includes(_1) )->at(_1)<when> _1 String
+Item ( _1 ) |-->->at(_1)->values()->any()
+LBound ( _1 ) |-->1
+UBound ( _1 ) |-->(_1)->size()
+Filter ( _1 ) |-->(_1`first)->select( _ss | _ss->hasMatch(_1`third) )
+Range ( _1 ) |-->Range[_1]<when> _1 matches "[a-zA-Z]+[0-9]+"
+Range ( _1 ) |-->getRange(_1)
+
+CreateObject ( "Scripting.Dictionary" ) |-->Sequence{}
+CreateObject ( _1 ) |-->OclType[_1].newInstance()
+CurDir ( _1 ) |-->(OclFile.newOclFile(".")).getAbsolutePath()
+Dir ( _1 ) |-->if (OclFile.newOclFile(_1)).exists() then _1 else "" endif
+
+_1 ( _2 ) |-->_1_2`argsCallArrayAccess<when> _1 Sequence
+_1 ( _2 ) |-->_1(_2)
+
+
+argsCallChooseCall::
+_1 , _* |-->Sequence{_*}->at(_1)
+_1 |-->_1`argsCallChooseCall<when> _1 argsCall
+
+argsCallDateAdd::
+_1 , _2 , _3 |-->(if _1 = "yyyy" then _3.addYears(_2) else if _1 = "m" then _3.addMonths(_2) else if _1 = "d" then _3.addDays(_2) else if _1 = "h" then _3.addHours(_2) else if _1 = "n" then _3.addMinutes(_2) else _3.addSeconds(_2) endif endif endif endif endif)
+_1 |-->_1`argsCallDateAdd<when> _1 argsCall
+
+argsCallDateDiff::
+_1 , _2 , _3 |-->(if _1 = "yyyy" then _3.yearDifference(_2) else if _1 = "m" then _3.monthDifference(_2) else if _1 = "d" then _3.dayDifference(_2) else if _1 = "h" then _3.hourDifference(_2) else if _1 = "n" then _3.minuteDifference(_2) else _3.secondDifference(_2) endif endif endif endif endif)
+_1 |-->_1`argsCallDateDiff<when> _1 argsCall
+
+argsCallDatePart::
+_1 , _2 |-->(if _1 = "yyyy" then _2.getYear() else if _1 = "m" then _2.getMonth() else if _1 = "d" then _2.getDate() else if _1 = "h" then _2.getHour() else if _1 = "n" then _2.getMinute() else _2.getSecond() endif endif endif endif endif)
+_1 |-->_1`argsCallDatePart<when> _1 argsCall
+ 
+argsCallDDB::
+_1 , _2 , _3 , _4 , _5 |--> _4*((_1 - _2)*_5)/_3
+_1 , _2 , _3 , _4 |--> _4*((_1 - _2)*2)/_3
+_1 |-->_1`argsCallDDB<when> _1 argsCall
+
+argsCallFV::
+_1 , _2 , _3  |--> _2*(1 + _1)->pow(_2)
+_1 , _2 , _3 , _4 |--> _2*(1 + _1)->pow(_2)
+_1 , _2 , _3 , _4 , _5 |--> _2*(1 + _1)->pow(_2)
+_1 |-->_1`argsCallFV<when> _1 argsCall
+
+argsCallInStr::
+_1 , _2 |-->(_1)->indexOf(_2)<action> _1 String
+_1 , _2 , _3 |-->((_2).subrange(_1,_2->size())->indexOf(_3) + _1 - 1)<action> _2 String
+_1 , _2 , _3 , _4 |-->((_2).subrange(_1,_2->size())->indexOf(_3) + _1 - 1)<action> _2 String
+_1 |-->_1`argsCallInStr<when> _1 argsCall
+
+argsCallInStrRev::
+_1 , _2 |-->(_1)->lastIndexOf(_2)<action> _1 String
+_1 , _2 , _3 |-->(_1)->lastIndexOf(_2)<action> _1 String
+_1 , _2 , _3 , _4 |-->(_1)->lastIndexOf(_2)<action> _1 String
+_1 |-->_1`argsCallInStr<when> _1 argsCall
+
+argsCallJoin::
+_1 |-->_1`argsCallJoin<when> _1 argsCall
+_1 |-->(_1)->sum()
+_1 , _2 |-->((_1)->front()->collect( _s | _s + _2 )->sum() + (_1)->last())
+
+argsCallMid::
+_1 , _2 |-->(let _amid : String = _1 in _amid.subrange(_2, _amid->size()))
+_1 , _2 , _3 |-->(let _amid : String = _1 in _amid.subrange(_2, _2 + _3 - 1))
+_1 |-->_1`argsCallMid<when> _1 argsCall
+
+argsCallReplace::
+_1 , _2 , _3 |-->(_1).replace(_2,_3)
+_1 , _2 , _3 , _4 |-->((_1).subrange(1,_4-1) + (_1).subrange(_4).replace(_2,_3))
+_1 , _2 , _3 , _4 , _5 |-->((_1).subrange(1,_4-1) + (_1).subrange(_4).replace(_2,_3))
+_1 |-->_1`argsCallReplace<when> _1 argsCall
+
+argsCallSplit::
+_1 , _2 |-->(_1)->split(_2)
+_1 , _2 , _3 |-->(_1)->split(_2)
+_1 , _2 , _3 , _4 |-->(_1)->split(_2)
+_1 |-->_1`argsCallSplit<when> _1 argsCall
+_1 |-->(_1)->split(" ")
+
+argsCallRound::
+_1 , _2 |-->(((_1)*(10->pow(_2)))->round())/(10.0->pow(_2))
+_1 |-->_1`argsCallRound<when> _1 argsCall
+_1 |-->(_1)->round()
+
+argsCallSwitch::
+_1 , _2 |-->(if _1 then _2 else _1`lhs endif)
+, _1 , _2 |-->(if _1 then _2 else _1`lhs endif)
+_1 , _2 _* |-->(if _1 then _2 else _*`recurse endif)
+, _1 , _2 _* |-->(if _1 then _2 else _*`recurse endif)
+_1 |-->_1`argsCallSwitch<when> _1 argsCall
+
+lhs::
+_1 = _2 |-->_1
+_1 |-->_1`lhs<when> _1 valueStmt
+
+ 
+iCS_S_DictionaryCall::
+_1 |-->_1
+
+dictionaryCallStmt::
+! _1 |-->->at(_1)
+! _1 _2 |-->->at((_1)->oclAsType(_2`typeHintType))
+
+
+argsCall::
+_1 |-->_1
+_1 , _* |-->_1, _*`recurse
+_1 ; _* |-->_1, _*`recurse
+
+
+argCall::
+BYVAL _1 |-->_1
+BYREF _1 |-->_1
+PARAMARRAY _1 |-->_1
+_1 |-->_1
+
+
+literal::
+True |-->true
+False |-->false
+TRUE |-->true
+FALSE |-->false
+Nothing |-->null
+Null |-->null
+NOTHING |-->null
+NULL |-->null
+#0 |-->$0
+#1 |-->$1
+#2 |-->$2
+#3 |-->$3
+#4 |-->$4
+#5 |-->$5
+#6 |-->$6
+#7 |-->$7
+#8 |-->$8
+#9 |-->$9
+#10 |-->$10
+#11 |-->$11
+#12 |-->$12
+#13 |-->$13
+#14 |-->$14
+#15 |-->$15
+_1 |-->OclDate.newOclDate("_1")<when> _1`first #, _1`last #
+
+_1 |-->_1
+_1 _* |-->_1 _*`recurse
+
+
+integerLiteral::
+- _1 |-->-_1
++ _1 |-->_1
+_1 |-->_1
+
+positive::
+- _1 |-->false
++ _1 |-->true
+_1 |-->_1`positive<when> _1 literal
+_1 |-->_1`positive<when> _1 integerLiteral
+_1 |-->_1`positive<when> _1 doubleLiteral
+_1 |-->_1`positive<when> _1 octalLiteral
+_1 |-->true
+
+octalLiteral::
+- _1 |-->-_1`tailtail
++ _1 |-->_1`tailtail
+_1 |-->_1`tailtail
+
+doubleLiteral::
+- _1 |-->-_1
++ _1 |-->_1
+_1 |-->0_1<when> _1`first .
+_1 |-->_1
+
+argList::
+( ) |-->()
+( _* ) |-->(_*)
+
+argListType::
+( ) |-->OclAny
+( _* ) |-->_*`argType
+
+argListDec::
+( ) |-->_z : OclAny
+( _* ) |-->_*
+
+
+arg::
+OPTIONAL _1 _2 |-->_1 _2
+OPTIONAL _1 |-->_1 : OclAny
+BYVAL _1 _2 |-->_1 _2
+BYREF _1 _2 |-->_1 _2
+_1 ( ) _2 |-->_1 _2`sequenceType<action> _1 Sequence
+_1 _2 |-->_1 _2<action> _1 _2`asTypeKind
+_1 ( ) |-->_1 : Sequence(OclAny)<action> _1 Sequence
+_1 |-->_1 : OclAny
+
+
+/* And other options */
+
+argType::
+OPTIONAL _1 _2 |-->_2`asTypeType
+OPTIONAL _1 |-->OclAny
+BYVAL _1 _2 |-->_2`asTypeType
+BYREF _1 _2 |-->_2`asTypeType
+_1 ( ) _2 |-->_2`asTypeSequenceType<action> _1 Sequence
+_1 _2 |-->_2`asTypeType
+_1 ( ) |-->Sequence(OclAny)<action> _1 Sequence
+_1 |-->OclAny
+
+
+asTypeClause::
+AS _1 |-->: _1
+AS NEW _1 |-->: _1
+AS _1 _2 |-->: _1
+
+asTypeType::
+AS _1 |-->_1
+AS NEW _1 |-->_1
+AS _1 _2 |-->_1
+
+asTypeKind::
+AS Range |-->Sequence
+AS Collection |-->Sequence
+AS _1 |-->_1
+AS NEW Collection |-->Sequence
+AS NEW _1 |-->_1
+AS _1 _2 |-->_1
+
+
+sequenceType::
+% |-->: Sequence(int)
+$ |-->: Sequence(String)
+& |-->: Sequence(int)
+^ |-->: Sequence(long)
+# |-->: Sequence(double)
+! |-->: Sequence(double)
+@ |-->: Sequence(double)
+AS _1 |-->: Sequence(_1)
+AS NEW _1 |-->: Sequence(_1)
+AS _1 _2 |-->: Sequence(_1)
+
+
+asTypeSequenceType::
+% |-->Sequence(int)
+$ |-->Sequence(String)
+& |-->Sequence(int)
+^ |-->Sequence(long)
+# |-->Sequence(double)
+! |-->Sequence(double)
+@ |-->Sequence(double)
+AS _1 |-->Sequence(_1)
+AS NEW _1 |-->Sequence(_1)
+AS _1 _2 |-->Sequence(_1)
+
+
+subscripts::
+_1 |-->_1
+_1 , _* |-->_1 , _*`recurse
+
+subscript_:: 
+_1 TO _2 |-->_2
+_1 |-->_1
+
+
+blocks::
+\r\n |-->\n
+_1 |-->_1
+
+moduleBlock::
+_1 |-->_1
+
+block::
+\r\n |-->\n
+_1 |-->_1
+\r\n _1 |-->\n_1
+\r\n _* |-->\n_*`recurse
+_1 \r\n |-->_1\n
+_1 \r\n \r\n |-->_1\n\n
+_1 \r\n _* |-->_1\n_*`recurse
+
+
+blockStmt::
+\r\n |-->\n
+: |-->;\n
+_1 |-->_1 ;
+
+appActivateStmt::
+APPACTIVATE _1 |-->  execute (OclProcess.newOclProcess(null,_1)).run()<when> _1 String
+APPACTIVATE _1 |-->  _1.run()
+
+
+doLoopStmt::
+DO \r\n _1 \r\n LOOP |-->  while true do (\n_1\n    skip)
+DO WHILE _1 \r\n _2 \r\n LOOP |-->  while _1 do (\n_2\n    skip)
+DO UNTIL _1 \r\n _2 \r\n LOOP |-->  while not(_1) do (\n_2\n    skip)
+DO \r\n _1 \r\n LOOP WHILE _2 |-->  _1 ;\n  while _2 do (\n_1\n    skip)
+DO \r\n _1 \r\n LOOP UNTIL _2 |-->  _1 ;\n  while not(_2) do (\n_1\n    skip)
+
+
+
+getStmt::
+GET _1 , _2 , _3 |-->  _1.setPosition(_2) ;\n  _3 := _1.read()
+GET _1 , , _2 |-->  _2 := _1.read()
+
+
+goSubStmt::
+GOSUB _1 |-->  self._1()
+
+
+goToStmt::
+GOTO _1 |-->  self._1(); OclProcess.exit(0)
+
+implementsStmt::
+IMPLEMENTS _1 |--> 
+
+killStmt::
+KILL _1 |-->  OclFile.deleteFile(_1)
+
+onErrorStmt::
+ON ERROR GOTO _1 |-->  catch ( _x : OclException ) do ( self._1() )
+ON LOCAL ERROR GOTO _1 |-->  catch ( _x : OclException ) do ( self._1() )
+ON ERROR RESUME NEXT |-->  catch ( _x : OclException ) do ( continue ) 
+
+onGoSubStmt::
+ON _1 GOSUB _2 |-->  if _1 then self._2() else skip
+
+onGoToStmt::
+ON _1 GOTO _2 |-->  if _1 then self._2() else skip
+
+  
+redimStmt::
+REDIM PRESERVE _1 |-->_1
+REDIM _1 |-->_1
+REDIM PRESERVE _1 , _* |-->_1_*`redimSubStmt
+REDIM _1 , _* |-->_1_*`redimSubStmt
+
+
+redimSubStmt::
+_1 ( _2 ) |-->  _1 := _2`subscriptsInitLhs _1->any() _2`subscriptsInitRhs
+, |--> ;\n
+
+
+subStmt::
+SUB _* |-->  skip;
+SUB _* |-->  skip;
+_1 SUB _* |-->  skip; 
+_1 SUB _* |-->  skip;
+
+
+stopStmt::
+STOP |-->  OclProcess.exit(0)
+
+timeStmt::
+TIME = _1 |-->  OclDate.setSystemTime(_1)
+
+typeOfStmt::
+TYPEOF _1 |-->(_1)->oclType()
+TYPEOF _1 IS _2 |-->((_1)->oclType() = _2)
+
+
+ifThenElseStmt::
+IF _1 THEN _2 ELSE _3 |-->  if _1 then (_2 skip) else (_3  skip)
+IF _1 THEN _2 |-->  if _1 then (_2 skip) else skip
+_1 _2 END IF |-->_1_2  skip<when> _1 ifBlockStmt, _2 ifElseBlockStmt
+_1 _2 END IF |-->_1_2  else skip<when> _1 ifBlockStmt, _2 ifElseIfBlockStmt
+_1 _* END IF |-->_1_*  else skip<when> _1 ifBlockStmt, _* all ifElseIfBlockStmt
+_1 _* _3 END IF |-->_1_*_3  skip<when> _1 ifBlockStmt, _* all ifElseIfBlockStmt, _3 ifElseBlockStmt
+_1 END IF |-->_1  else skip<when> _1 ifBlockStmt
+_1 END IF |-->_1  skip
+
+ifBlockStmt::
+IF _1 THEN \r\n |-->  if _1 then\n
+IF _1 THEN \r\n _2 \r\n |-->  if _1 then (_2    skip)\n
+
+ifElseIfBlockStmt::
+ELSEIF _1 THEN \r\n |-->  else if _1 then\n
+ELSEIF _1 THEN \r\n _2 \r\n |-->  else if _1 then (_2 skip)\n
+
+ifElseBlockStmt::
+ELSE \r\n |-->  else\n
+ELSE \r\n _1 |-->  else\n  (_1    skip) ;\n<when> _1 block
+ELSE \r\n _1 \r\n |-->  else\n  (_1    skip) ;\n<when> _1 block
+ELSE \r\n _1 \r\n _* |-->  else\n  (_1    skip) ;\n<when> _1 block
+ELSE _* |-->  else\n
+
+
+ifConditionStmt::
+_1 |-->_1
+
+
+letStmt::
+LET _1 = _2 |-->    _1 := self.get_2()<when> _2 getter
+LET _1 = _2 |-->    self.set_1(_2)<when> _1 setter
+LET _1 = _2 |-->    _1 := _2
+_1 = _2 |-->    _1 := self.get_2()<when> _2 getter
+_1 = _2 |-->    self.set_1(_2)<when> _1 setter
+_1 = _2 |-->    _1 := _2
+LET _1 += _2 |-->    _1 := _1 + _2
+_1 += _2 |-->    _1 := _1 + _2
+LET _1 -= _2 |-->    _1 := _1 - _2
+_1 -= _2 |-->    _1 := _1 - _2
+
+
+endStmt::
+END |-->  OclProcess.exit(1)
+
+
+
+exitStmt::
+EXIT DO |-->    break
+EXIT FOR |-->    break
+EXIT FUNCTION |-->    return result
+EXIT PROPERTY |-->    return result
+EXIT SUB |-->  return
+
+filecopyStmt::
+FILECOPY _1 , _2 |-->  OclFile.copyFromTo(_1, _2)
+
+
+functionStmt::
+FUNCTION _* |-->  skip; 
+_1 FUNCTION _* |-->  skip;
+STATIC FUNCTION _* |-->  skip;
+_1 STATIC FUNCTION _* |-->  skip;
+
+ 
+forEachStmt::
+FOR EACH _1 IN _2 \r\n _* NEXT |-->  for _1 : _2 do\n  (_*`blocks    skip\n  )
+FOR EACH _1 IN _2 \r\n _* NEXT _3 |-->  for _1 : _2 do\n  (_*`blocks    skip\n  )
+FOR EACH _1 _2 IN _3 \r\n _* NEXT |-->  for _1 : _3 do\n  (_*`blocks    skip\n  )
+FOR EACH _1 _2 IN _3 \r\n _* NEXT _4 |-->  for _1 : _3 do\n  (_*`blocks    skip\n  )
+
+
+
+forNextStmt::
+FOR _1 = _2 TO _3 \r\n _4 \r\n NEXT |-->  _1 := _2 ;\n  while _1 <= _3 do (_4  _1 := _1 + 1)
+FOR _1 = _2 TO _3 \r\n _4 _* NEXT |-->  _1 := _2 ;\n  while _1 <= _3 do (_4  _1 := _1 + 1)<when> _4 block
+
+FOR _1 = _2 TO _3 \r\n _4 \r\n NEXT _* |-->  _1 := _2 ;\n  while _1 <= _3 do (_4  _1 := _1 + 1)
+FOR _1 = _2 TO _3 \r\n _4 \r\n _* NEXT _+ |-->  _1 := _2 ;\n  while _1 <= _3 do (_4  _1 := _1 + 1)<when> _4 block
+
+FOR _1 = _2 TO _3 STEP _4 \r\n _5 \r\n NEXT |-->  _1 := _2 ;\n  while _1 <= _3 do (_5  _1 := _1 + _4)<when> _4`positive true
+FOR _1 = _2 TO _3 STEP _4 \r\n _5 \r\n NEXT _* |-->  _1 := _2 ;\n  while _1 <= _3 do (_5  _1 := _1 + _4)<when> _4`positive true
+
+FOR _1 = _2 TO _3 STEP _4 \r\n NEXT |-->  _1 := _2 ;\n  while _1 <= _3 do (_1 := _1 + _4)<when> _4`positive true
+FOR _1 = _2 TO _3 STEP _4 \r\n NEXT _* |-->  _1 := _2 ;\n  while _1 <= _3 do (_1 := _1 + _4)<when> _4`positive true
+
+FOR _1 = _2 TO _3 STEP _4 \r\n NEXT |-->  _1 := _2 ;\n  while _1 >= _3 do (_1 := _1 + (_4))<when> _4`positive false
+FOR _1 = _2 TO _3 STEP _4 \r\n NEXT _* |-->  _1 := _2 ;\n  while _1 >= _3 do (_1 := _1 + (_4))<when> _4`positive false
+FOR _1 = _2 TO _3 STEP _4 \r\n _5 \r\n NEXT |-->  _1 := _2 ;\n  while _1 >= _3 do (_5  _1 := _1 + (_4))<when> _4`positive false
+FOR _1 = _2 TO _3 STEP _4 \r\n _5 \r\n NEXT _* |-->  _1 := _2 ;\n  while _1 >= _3 do (_5  _1 := _1 + (_4))<when> _4`positive false
+
+FOR _1 _2 = _3 TO _4 \r\n _5 \r\n NEXT _* |-->  _1 := _3 ;\n  while _1 <= _4 do (_5  _1 := _1 + 1)
+FOR _1 _2 = _3 TO _4 STEP _5 \r\n _6 \r\n NEXT _* |-->  _1 := _3 ;\n  while _1 <= _4 do (_6  _1 := _1 + _5)
+
+
+lineLabel::
+_1 : |-->\n  operation _1()\n  pre: true post: true\n  activity: skip
+
+returnStmt::
+RETURN |-->  return
+
+resumeStmt::
+RESUME NEXT |-->  \n  skip  
+RESUME _1 |-->  \n  self._1()
+RESUME |-->  \n  skip   
+
+raiseEventStmt::
+RAISEEVENT _1 ( _2 ) |-->  _1(_2)
+
+
+resetStmt::
+RESET |-->
+
+
+
+
+rmdirStmt::
+RMDIR _1 |-->  OclFile.deleteFile(_1)
+
+rsetStmt::
+RSET _1 = _2 |-->  _1 := Integer.subrange(1, (_1->size() - (_2)->size()))->collect( _sx | " ")->sum() + _2
+
+saveSettingStmt::
+SAVESETTING _* |-->
+
+savepictureStmt::
+SAVEPICTURE _* |-->
+
+seekStmt::
+SEEK _1 , _2 |-->  _1.setPosition(_2)
+
+
+selectCaseStmt::
+SELECT CASE _1 \r\n _* END SELECT |-->  var _case : OclAny ;  _case := _1;\n  for _x : Sequence{0} do (\n_*  break )
+
+sC_Case::
+CASE _1 : \r\n |-->    break; 
+CASE _1 \r\n |-->    break; 
+CASE _1 : _2 \r\n |-->    if _1 then (_2 break) else skip ; \n
+CASE _1 \r\n _2 \r\n |-->    if _1 then (_2 break) else skip ; \n
+CASE _1 : \r\n _2 \r\n |-->    if _1 then (_2 break) else skip ; \n
+
+sC_Cond::
+ELSE |-->
+_1 |-->_1
+_1 , _* |-->(_1) or _*`recurse
+
+sC_CondExpr::
+IS _1 _2 |-->_case _1 _2
+_1 TO _2 |-->(_1 <= _case) & (_case <= _2)
+_1 |-->_case = _1
+
+comparisonOperator::
+< |--><
+<= |--><=
+> |-->>
+>= |-->>=
+= |-->=
+<> |-->/=
+IS |-->=
+LIKE |-->=
+
+
+setattrStmt::
+SETATTR _1 , _2 |-->  if _2 = 0 then (OclFile.newOclFile(_1)).setExecutable(false) else skip;\n  if (_2 mod 2) = 1 then (OclFile.newOclFile(_1)).setReadOnly() else skip;\n  if (_2/2 mod 2) = 1 then (OclFile.newOclFile(_1)).setHidden(true) else skip
+
+
+typeStmt::
+_* |-->
+
+typeStmt_Element::
+_1 \r\n |-->    attribute _1 : OclAny;\n
+_1 ( ) \r\n |-->    attribute _1 : Sequence(OclAny);\n
+_1 ( _2 ) \r\n |-->    attribute _1 : Sequence(OclAny);\n
+_1 ( _2 ) _3 \r\n |-->    attribute _1 _3`sequenceType;\n
+_1 ( ) _2 \r\n |-->    attribute _1 _2`sequenceType;\n
+_1 _2 \r\n |-->    attribute _1 _2;\n
+\r\n |-->\n
+
+
+unlockStmt::
+UNLOCK _* |-->

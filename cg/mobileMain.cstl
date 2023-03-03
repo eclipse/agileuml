@@ -1,0 +1,88 @@
+model::
+package _1 { _* } _3 |-->import Foundation\nimport Darwin\n\n\n\n\n\n_*\n\n
+
+
+classifier::
+_1 |-->_1
+
+
+interfaceDefinition::
+_* |-->
+
+enumeration::
+_* |-->
+
+usecaseDefinition::
+_* |-->
+
+
+classDefinition::
+
+class _1 { _2 }   |-->var _1_allInstances : [_1] = [_1]()\n\nfunc create_1() -> _1\n{ let result : _1 = _1()\n  _1_allInstances.append(result)\n  return result\n}\n\nfunc add_1(instance : _1)\n{ _1_allInstances.append(instance) }\n\nfunc kill_1(obj: _1)\n{ _1_allInstances = _1_allInstances.filter{ $0 !== obj } }\n\n
+
+class _1 extends _2 { _3 }   |-->var _1_allInstances : [_1] = [_1]()\n\nfunc create_1() -> _1\n{ let result : _1 = _1()\n  _1_allInstances.append(result)\n  add_2(instance: result)\n  return result\n}\n\nfunc add_1(instance : _1)\n{ add_2(instance: instance)\n  _1_allInstances.append(instance) }\n\nfunc kill_1(obj: _1)\n{ kill_2(obj: obj)\n  _1_allInstances = _1_allInstances.filter{ $0 !== obj }\n}\n\n
+
+abstract class _1 { _2 }   |-->var _1_allInstances : [_1] = [_1]()\n\nfunc add_1(instance : _1)\n{ _1_allInstances.append(instance) }\n\nfunc create_1() -> _1\n{ let result : _1 = _1()\n  _1_allInstances.append(result)\n  return result\n}\n\nfunc kill_1(obj: _1)\n{ _1_allInstances = _1_allInstances.filter{ $0 !== obj } }\n\n
+
+
+abstract class _1 extends _2 { _3 }   |-->var _1_allInstances : [_1] = [_1]()\n\nfunc add_1(instance : _1)\n{ _1_allInstances.append(instance)\n  add_2(instance: instance)\n}\n\nfunc create_1() -> _1\n{ let result : _1 = _1()\n  _1_allInstances.append(result)\n  add_2(instance: result)\n  return result\n}\n\nfunc kill_1(obj: _1)\n{ kill_2(obj: obj)\n  _1_allInstances = _1_allInstances.filter{ $0 !== obj }\n}\n\n
+
+
+class _1 implements _2 { _3 }   |-->var _1_allInstances : [_1] = [_1]()\n\nfunc create_1() -> _1\n{ let result : _1 = _1()\n  _1_allInstances.append(result)\n  return result\n}\n\nfunc add_1(instance : _1)\n{ _1_allInstances.append(instance) }\n\nfunc kill_1(obj: _1)\n{ _1_allInstances = _1_allInstances.filter{ $0 !== obj } }\n\n
+
+
+class _1 extends _2 implements _3 { _4 }   |-->var _1_allInstances : [_1] = [_1]()\n\nfunc create_1() -> _1\n{ let result : _1 = _1()\n  _1_allInstances.append(result)\n  add_2(instance: result)\n  return result\n}\n\nfunc add_1(instance : _1)\n{ _1_allInstances.append(instance)\n  add_2(instance: instance)\n}\n\nfunc kill_1(obj: _1)\n{ kill_2(obj: obj)\n  _1_allInstances = _1_allInstances.filter{ $0 !== obj }\n}\n\n
+
+
+abstract class _1 implements _2 { _3 }   |-->var _1_allInstances : [_1] = [_1]()\n\nfunc add_1(instance : _1)\n{ _1_allInstances.append(instance)\n}\n\nfunc create_1() -> _1\n{ let result : _1 = _1()\n  _1_allInstances.append(result)\n  return result\n}\n\nfunc kill_1(obj: _1)\n{ kill_2(obj: obj)\n  _1_allInstances = _1_allInstances.filter{ $0 !== obj }\n}\n\n
+
+
+abstract class _1 extends _2 implements _3 { _4 }   |-->var _1_allInstances : [_1] = [_1]()\n\nfunc add_1(instance : _1)\n{ _1_allInstances.append(instance)\n  add_2(instance: instance)\n}\n\nfunc create_1() -> _1\n{ let result : _1 = _1()\n  _1_allInstances.append(result)\n  add_2(instance: result)\n  return result\n}\n\nfunc kill_1(obj: _1)\n{ kill_2(obj: obj)\n  _1_allInstances = _1_allInstances.filter{ $0 !== obj }\n}\n\n
+
+
+classBody::
+_* |-->
+
+
+attributeDefinition::
+
+static attribute _1 : _2 := _3 ; |-->
+
+static attribute _1 : _2 ; |-->  
+
+attribute _1 identity : _2 ; |-->
+
+attribute _1 derived : _2 ; |-->
+
+attribute _1 : _2 := _3 ; |-->  
+
+attribute _1 : _2 ; |-->  
+
+reference _1 : _2 ; |-->  
+
+
+
+operationDefinition::
+query _1 ( _2 ) : _3 pre: _4 post: _5 activity: _6 ; |-->
+
+query _1 < _2 > ( _3 ) : _4 pre: _5 post: _6 activity : _7 ; |-->
+
+
+operation _1 (  ) pre: _2 post: _3 activity: _4 ; |-->
+
+operation _1 (  ) : _2 pre: _3 post: _4 activity: _5 ; |-->
+
+operation _1 ( _2 ) pre: _3 post: _4 activity: _5 ; |-->
+
+operation _1 ( _2 ) : _3 pre: _4 post: _5 activity: _6 ; |-->
+
+operation _1 < _2 > ( _3 ) : _4 pre: _5 post: _6 activity : _7 ; |-->
+
+static query _1 ( _2 ) : _3 pre: _4 post: _5 activity: _6 ; |-->
+
+static query _1 < _2 > ( _3 ) : _4 pre: _5 post: _6 activity : _7 ; |-->
+
+static operation _1 ( _2 ) : _3 pre: _4 post: _5 activity: _6 ; |-->
+
+static operation _1 < _2 > ( _3 ) : _4 pre: _5 post: _6 activity : _7 ;  |-->
+

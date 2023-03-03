@@ -1,0 +1,26 @@
+fileDec::
+FILE _1 RECORDS _* |-->  var _1 : Sequence(String) ;\n<when> _* all record <action> _44 _1
+
+record::
+_1 : _2 |--> <action> _1`ownerFile _44
+
+processRecords::
+FILE _1 RECORDS _* |-->_*`processRecord
+
+processRecord::
+_1 : _2 |-->  invariant: _1 = _44_Record ;\n<action> _1`ownerFile _44
+
+program::
+_1 |-->_1
+_1 _* |-->_1 _1`processRecords _*`processStatement
+
+processStatement::
+WRITE _1 |-->  write _1`ownerFile;\n
+
+
+iden::
+_1 |-->_1
+
+
+
+

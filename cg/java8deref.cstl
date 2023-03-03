@@ -1,0 +1,31 @@
+BasicExpression::
+_1 |-->_1`name[0]
+
+
+
+UnaryExpression::
+?_1 |-->_1`name
+
+
+
+BinaryExpression::
+_1 + _2 |-->_1`name[_2`name]
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

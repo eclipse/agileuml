@@ -1,0 +1,54 @@
+model::
+package _1 { _* } _3 |-->import SwiftUI\n\nstruct ContentView : View\n{ @ObservedObject var model : ModelFacade\n\n  var body : some View {\n    TabView {\n_*    }.font(.headline)\n  }\n}\n\n
+
+
+
+classifier::
+_1 |-->_1
+
+
+interfaceDefinition::
+_* |-->
+
+
+classDefinition::
+class _* |-->
+
+
+enumeration::
+_* |-->
+
+
+usecaseDefinition::
+usecase _1 { } |-->      _1Screen(model: model).tabItem\n      { Image(systemName: "1.square.fill")\n        Text("_1")\n      }\n
+usecase _1 { _2 } |-->      _1Screen(model: model).tabItem\n      { Image(systemName: "1.square.fill")\n        Text("_1")\n      }\n
+usecase _1(_2) { } |-->      _1Screen(model: model).tabItem\n      { Image(systemName: "1.square.fill")\n        Text("_1")\n      }\n
+usecase _1(_2) { _3 } |-->      _1Screen(model: model).tabItem\n      { Image(systemName: "1.square.fill")\n        Text("_1")\n      }\n
+usecase _1 : _2 { } |-->      _1Screen(model: model).tabItem\n      { Image(systemName: "1.square.fill")\n        Text("_1")\n      }\n
+usecase _1 : _2 { _3 } |-->      _1Screen(model: model).tabItem\n      { Image(systemName: "1.square.fill")\n        Text("_1")\n      }\n
+usecase _1 ( _2 ) : _3 { } |-->      _1Screen(model: model).tabItem\n      { Image(systemName: "1.square.fill")\n        Text("_1")\n      }\n
+usecase _1 ( _2 ) : _3 { _4 } |-->      _1Screen(model: model).tabItem\n      { Image(systemName: "1.square.fill")\n        Text("_1")\n      }\n
+
+
+classBody::
+_* |-->
+
+
+classBodyElement::
+_1 |-->
+
+
+attributeDefinition::
+_* |-->
+ 
+operationDefinition::
+_* |-->
+
+invariant::
+_* |-->
+
+stereotype::
+_* |-->
+
+
+

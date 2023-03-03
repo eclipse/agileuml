@@ -1,0 +1,80 @@
+moduleAttributes::
+\r\n |-->\n
+_1 |-->_1;
+_1 \r\n |-->_1;\n
+_1 \r\n _* |-->_1;\n_*`recurse
+\r\n _* |-->_*`recurse
+
+
+attributeStmt::
+ATTRIBUTE _1 = _2 |-->  var _1 : OclAny ;\n  _1 := _2
+ATTRIBUTE _1 = _2 , _* |-->  var _1 : Sequence(OclAny) ;\n  _1 := Sequence{_2, _*}
+
+constStmt::
+_1 CONST _2 |-->_2
+CONST _1 |-->_1
+_1 CONST _2 , _* |-->_2 ;\n_*`constSubStmt
+CONST _1 , _* |-->_1 ;\n_*`constSubStmt
+
+constSubStmt::
+_1 _2 = _3 |-->  var _1 _2`typeHintDec := _3<when> _2 typeHint
+_1 _2 = _3 |-->  var _1 _2 := _3
+_1 = _2 |-->  var _1 : OclAny := _2
+, |-->; \n
+
+enumerationStmt::
+ENUM _1 \r\n _* END ENUM |-->enumeration _1 { _* }\n\n
+
+enumerationStmt_Constant::
+_1 \r\n |--> literal _1;\n 
+_1 = _2 \r\n |--> literal _1;\n 
+
+eventStmt::
+EVENT _1 _2 |-->  usecase _1_2 { }\n\n
+_1 EVENT _2 _3 |-->  usecase _2_3 { }\n\n
+
+
+functionStmt::
+FUNCTION _1 _2 \r\n _3 \r\n END FUNCTION |-->operation _1_2 : OclAny\n pre: true post: true\n activity: _3; return _1;\n\n
+
+FUNCTION _1 _2 _3 \r\n _4 \r\n END FUNCTION |-->operation _1_2 _3\n pre: true post: true\n activity: _4; return _1;\n\n
+_1 FUNCTION _2 _3 _4 \r\n _5 \r\n END FUNCTION |-->operation _2_3 _4\n pre: true post: true\n activity: _5; return _2;\n\n
+STATIC FUNCTION _1 _2 _3 \r\n _4 \r\n END FUNCTION |-->static operation _1_2 _3\n pre: true post: true\n activity: _4; return _1;\n\n
+_1 STATIC FUNCTION _2 _3 _4 \r\n _5 \r\n END FUNCTION |-->static operation _2_3 _4\n pre: true post: true\n activity: _5; return _2;\n\n
+
+
+propertyGetStmt::
+PROPERTY GET _1 _2 _3 \r\n _4 \r\n END PROPERTY |-->  var _1 : Function(_2`argListType,_3`asTypeType) = lambda _2`argListDec in (_4; return _1)<when> _2 argList
+PROPERTY GET _1 _2 \r\n _3 \r\n END PROPERTY |-->  var _1 : Function(_2`argListType,OclAny) = lambda _2`argListDec in (_3; return _1);<when> _2 argList
+_1 PROPERTY GET _2 _3 _4 \r\n _5 \r\n END PROPERTY |-->  var _2 : Function(_3`argListType,_4`asTypeType) = lambda _3`argListDec in (_5; return _2)<when> _3 argList
+_1 PROPERTY GET _2 _3 \r\n _4 \r\n END PROPERTY |-->  var _2 : Function(_3`argListType,OclAny) = lambda _3`argListDec in (_4; return _2);<when> _3 argList
+
+
+propertyLetStmt::
+PROPERTY LET _1 _2 \r\n _3 \r\n END PROPERTY |-->  var _1 : Function(_2`argListType,OclAny) = lambda _2`argListDec in (_3; return null);<when> _2 argList
+_1 PROPERTY LET _2 _3 \r\n _4 \r\n END PROPERTY |-->  var _2 : Function(_3`argListType,OclAny) = lambda _3`argListDec in (_4; return null);<when> _3 argList
+
+propertySetStmt::
+PROPERTY SET _1 _2 \r\n _3 \r\n END PROPERTY |-->  var _1 : Function(_2`argListType,OclAny) = lambda _2`argListDec in (_3; return null);<when> _2 argList
+_1 PROPERTY SET _2 _3 \r\n _4 \r\n END PROPERTY |-->  var _2 : Function(_3`argListType,OclAny) = lambda _3`argListDec in (_4; return null);<when> _3 argList
+
+subStmt::
+SUB _1 \r\n _2 \r\n END SUB |-->operation _1()\n pre: true post: true\n activity: _2;\n\n
+SUB _1 _2 \r\n _3 \r\n END SUB |-->operation _1_2\n pre: true post: true\n activity: _3;\n\n
+STATIC SUB _1 \r\n _2 \r\n END SUB |-->static operation _1()\n pre: true post: true\n activity: _2;\n\n
+STATIC SUB _1 _2 \r\n _3 \r\n END SUB |-->static operation _1_2\n pre: true post: true\n activity: _3;\n\n
+
+
+typeStmt::
+TYPE _1 \r\n _* END TYPE |-->  class _1 {\n_*\n    static operation new_1() : _1\n    pre: true post: true\n    activity: var result : _1 = create_1();\n_*`classConstructor      return result;\n  }
+_1 TYPE _2 \r\n _* END TYPE |-->  class _2 {\n_*\n    static operation new_2() : _2\n    pre: true post: true\n    activity: var result : _2 = create_2();\n_*`classConstructor      return result;\n  }
+
+classConstructor::
+_1 \r\n |-->      result._1 := null;\n
+_1 ( ) \r\n |-->      result._1 := Sequence{};\n
+_1 ( _2 ) \r\n |-->      result._1 := Integer.subrange(1,_2)->collect(null);\n
+_1 ( _2 ) _3 \r\n |-->      result._1 := Integer.subrange(1,_2)->collect(_3`defaultValue);\n
+_1 ( ) _2 \r\n |-->      result._1 := Sequence{};\n
+_1 _2 \r\n |-->      result._1 := _2`defaultValue;\n
+\r\n |-->\n
+_1 |-->_1`classConstructor<when> _1 typeStmt_Element

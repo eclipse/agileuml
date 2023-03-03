@@ -1,0 +1,107 @@
+
+functionDeclaration::
+_1 _2 _3 |-->_2
+
+
+declarationList::
+_* |-->_*
+_1 |-->_1
+
+
+declaration::
+_1 ; |-->_1
+_1 _2 ; |-->_2
+
+specifierQualifierList::
+_1 |-->_1
+_* |-->_*`last
+
+declarationSpecifiers::
+_1 |-->_1
+typedef _1 _2 |-->
+_* |-->_*`last
+
+
+declarationSpecifier::
+_1 |-->_1
+
+storageClassSpecifier::
+_1 |-->
+
+typeQualifier::
+_1 |-->
+
+typeSpecifier::
+void |-->void
+int |-->int
+char |-->int
+short |-->int
+long |-->long
+float |-->double
+double |-->double
+signed |-->
+unsigned |-->
+char *** |-->Ref(Ref(String))
+char ** |-->Ref(String)
+char * |-->String
+FILE *** |-->Ref(Ref(OclFile))
+FILE ** |-->Ref(OclFile)
+FILE * |-->OclFile
+_1 *** |-->Ref(Ref(Ref(_1)))
+_1 ** |-->Ref(Ref(_1))
+_1 * |-->Ref(_1)
+_1 _2 |-->_1
+_1 |-->_1
+
+
+structOrUnionSpecifier::
+struct _1 { _2 } |-->
+union _1 { _2 } |-->
+struct { _1 } |-->
+union { _1 } |-->
+struct _1 |-->_1
+union _1 |-->_1
+
+
+enumSpecifier::
+enum _1 { _2 } |-->
+
+structDeclaratorList::
+_1 |-->_1
+_* |-->_*
+
+structDeclarator::
+_1 |-->_1
+
+declarator::
+_1 _2 |-->_2
+_1 |-->_1
+
+directDeclarator::
+( _1 ) |-->_1
+_1 [ _2 ] |-->_1
+_1 [ ] |-->_1
+_1 ( _2 ) |-->_1
+_1 ( ) |-->_1
+_1 |-->_1
+
+
+typedefName::
+_1 |-->_1
+
+
+initDeclaratorList::
+_* |-->_*`first
+_1 |-->_1
+
+
+initDeclarator::
+_1 = _2 |-->_1
+_1 |-->_1
+
+
+initializer::
+{ _1 } |-->Sequence{ _1 }
+_1 |-->_1
+
+

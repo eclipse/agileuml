@@ -1,0 +1,12 @@
+BinaryExpression::
+_1 : _2 |-->let _1 as _2
+
+_1 |-->_1
+
+
+BasicExpression::
+OclException |-->Error
+
+_1 |-->_1
+
+

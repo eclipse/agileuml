@@ -1,0 +1,952 @@
+program::
+_1 _2 _3 |-->_2
+_1 _2 |-->_1
+_1 |-->
+
+
+sourceElement::
+_1 |-->_1
+
+statement::
+_1 |-->_1
+
+
+block::
+{ _1 } |-->( _1 )
+{ } |-->skip
+
+statementList::
+_1 |-->_1
+_1 _* |-->_1 ; _*`recurse
+
+
+importStatement::
+import _1 |-->
+
+importFromBlock::
+_* |-->
+
+
+moduleItems::
+_* |-->
+
+importDefault::
+_* |-->
+
+importNamespace::
+_* |-->
+
+importFrom::
+_* |-->
+
+exportStatement::
+_* |-->
+
+exportFromBlock::
+_* |-->
+
+declaration::
+_1 |-->_1
+
+variableStatement::
+_1 _2 |-->_1
+
+variableDeclarationList::
+_1 _* |-->_*\n
+
+variableDeclaration::
+_1 = _2 |-->    var _1 : _2`type ;\n    _1 := _2 ;\n 
+, |-->
+_1 |-->    var _1 : OclAny ;\n    _1 := null ;\n
+
+
+variableName::
+_1 = _2 |-->_1 
+_1 |-->_1
+var _1 |-->_1`variableName
+let _1 |-->_1`variableName
+const _1 |-->_1`variableName
+var _1 _* |-->_1`variableName
+let _1 _* |-->_1`variableName
+const _1 _* |-->_1`variableName
+
+
+emptyStatement_::
+_1 |-->  skip 
+
+expressionStatement::
+_1 _2 |-->  _1`preSideEffect_1`updateForm
+
+ifStatement::
+if ( _1 ) _2 else _3 |-->    if _1 then\n  _2\n    else (\n  _3\n    )
+if ( _1 ) _2 |-->    if _1 then\n  _2\n    else skip
+
+iterationStatement::
+do _1 while ( _2 ) _3 |-->_1 ;\n    while _2 do (\n  _1 )\n                                                                        
+while ( _1 ) _2 |-->    while _1 do (\n  _1`updateForm_2 )\n                                                                       
+for ( _1 ; _2 ; _3 ) _4 |-->_1`updateForm ;\n    while _2 do (\n  _4; _3`updateForm )\n
+for ( _1 ; _2 ; ) _3 |-->_1`updateForm ;\n    while _2 do (\n  _3 )\n
+for ( _1 ; ; _2 ) _3 |-->_1`updateForm ;\n    while true do (\n  _3; _2`updateForm )\n
+for ( _1 ; ; ) _2 |-->_1`updateForm ;\n    while true do (\n  _2 )\n
+for ( ; _1 ; _2 ) _3 |-->    while _1 do (\n  _3; _2`updateForm )\n
+for ( ; _1 ; ) _2 |-->    while _1 do (\n  _2 )\n
+for ( ; ; _1 ) _2 |-->    while true do (\n  _2; _1`updateForm )\n
+for ( ; ; ) _1 |-->    while true do (\n  _1 )\n
+for ( _1 in _2 ) _3 |-->    for _1`variableName : _2`domain do (\n  _3 )\n
+for ( _1 of _2 ) _3 |-->    for _1`variableName : _2 do (\n  _3 )\n 
+   
+domain::
+_1 |-->_1->keys()<when> _1 Map
+_1 |-->Integer.subrange(0,_1->size()-1)
+
+varModifier::
+var |-->
+let |-->
+const |-->
+
+
+continueStatement::
+continue _1 ; |-->    continue
+continue ; |-->    continue
+
+breakStatement::
+break _1 ; |-->    break
+break ; |-->    break   
+
+returnStatement::
+return _1 ; |-->    return _1
+return ; |-->    return
+
+yieldStatement::
+yield _1 ; |-->    if _yieldCount_ < _position_ then _yieldCount_ := _yieldCount + 1 else return _1
+
+withStatement::
+with ( _1 ) _2 |-->_2
+
+switchStatement::
+switch ( _1 ) _2 |-->  for _x_ : Sequence{1} do\n  (var _casevar : _1`type ;\n    _casevar := _1 ;\n_2)\n
+
+caseBlock::
+{ } |-->    skip
+{ _1 _2 } |-->_1_2
+{ _1 } |-->_1
+
+caseClauses::
+_1 |-->    if _casevar = _1`2nd then\n    (_1`4th)\n    else skip ;\n<when> _1 caseClause, _1 4ary
+_1 |-->    \n<when> _1 caseClause, _1 3ary
+_1 _* |-->    if _casevar = _1`2nd then\n    (_1`4th ; _*`remainingCode)\n    else\n    _*`recurse<when> _1 caseClause, _1 4ary
+_1 _* |-->    if _casevar = _1`2nd then\n    (_*`remainingCode)\n    else\n    _*`recurse<when> _1 caseClause, _1 3ary
+
+
+remainingCode::
+_0 |-->_0
+
+
+
+caseClause::
+case _1 : _2 |-->_2 ;
+case _1 : |-->
+
+
+defaultClause::
+default : _1 |-->    _1
+default : |-->
+
+cases::
+case _1 : _2 |-->    if _casevar = _1 then _2 else skip ;\n
+case _1 : |-->    \n
+default : _1 |-->    _1 ;\n
+default : |-->    \n
+
+
+labelledStatement::
+_1 : _2 |-->_2
+
+throwStatement::
+throw _1 ; |-->    error _1
+
+tryStatement::
+try _1 _2 |-->    try _1 _2
+try _1 |-->    try _1
+
+catchProduction::
+catch ( _1 ) _2 |-->    catch (_1 : OclException) do _2
+catch ( ) _2 |-->    catch (_exception : OclAny) do _2
+catch _2  |-->    catch (_exception : OclAny) do _2
+
+
+finallyProduction::
+finally _1 |-->   finally _1 
+
+debuggerStatement::
+_* |-->
+
+functionDeclaration::
+function _1 ( ) _2 |-->  operation _1() : OclAny\n  pre: true post: true\n  activity:\n_2;\n\n
+function _1 ( _2 ) _3  |-->  operation _1(_2) : OclAny\n  pre: true post: true\n  activity:\n_3;\n\n
+function * _1 ( ) _2 |-->  operation _1(_position_ : int) : OclAny\n  pre: true post: true\n  activity:\n  var _yieldCount_ : int := 0;\n_2;\n\n<action> _1 generator
+function * _1 ( _2 ) _3  |-->  operation _1(_2, _position_ : int) : OclAny\n  pre: true post: true\n  activity:\n  var _yieldCount_ : int := 0;\n_3;\n\n<action> _1 generator
+
+
+classDeclaration::
+class _1 _2 |-->class _1 _2
+
+classTail::
+extends _1 { _* } |-->extends _1 {\n_*}\n\n
+{ _* } |-->{\n_*}\n\n
+
+classElement::
+static # _1 = _2 |-->  static attribute _1 : _2`type := _2;\n
+static _1 = _2 |-->  static attribute _1 : _2`type := _2;\n
+# _1 = _2 |-->  attribute _1 : _2`type := _2;\n
+_1 = _2 |-->  attribute _1 : _2`type := _2;\n
+static _1 |-->  static _1\n
+# _1 |-->  _1\n
+; |-->\n
+_1 |-->  _1\n
+
+methodDefinition::
+# _1 ( _2 ) _3 |-->  operation _1(_2)\n  pre: true post: true\n  activity:\n_3;\n
+_1 ( _2 ) _3 |-->  operation _1(_2)\n  pre: true post: true\n  activity:\n_3;\n
+# _1 ( ) _2 |-->  operation _1()\n  pre: true post: true\n  activity:\n_2;\n
+_1 ( ) _2 |-->  operation _1()\n  pre: true post: true\n  activity:\n_2;\n
+
+
+getter::
+get _1 _2 |-->_2
+get _1 |-->_1
+_1 |-->_1
+
+
+setter::
+set _1 _2 |-->_2
+set _1 |-->_1
+_1 |-->_1
+
+
+formalParameterList::
+_* |-->_*
+
+formalParameterArg::
+_1 |-->_1 : OclAny
+_1 = _2 |-->_1 : _2`type
+
+parameterDeclns::
+function _1 ( ) _2 |-->
+function _1 ( _2 ) _3  |-->_2
+
+
+lastFormalParameterArg::   
+... _1 |-->_1 : Sequence(OclAny)
+
+functionBody::
+{ } |-->    skip
+{ _1 } |-->_1
+
+sourceElements::
+_* |-->_*
+
+arrayLiteral::
+[ ] |-->Sequence{}
+[ elementList ] |-->Sequence{}
+[ _1 ] |-->Sequence{_1}
+
+
+elementList::
+, |-->null
+_1 , |-->_1, null
+_1 |-->_1
+, _* |-->null,_*`recurse
+_1 , _* |-->_1, _*`recurse
+
+
+arrayElement::
+_1 |-->_1
+... _1 |-->_1
+
+
+propertyAssignment::
+_1 : _2 |--> _1 |-> _2
+_1 |-->_1`propertyAssignmentAnonymousFunction
+
+
+propertyAssignmentAnonymousFunction::
+function _1 ( ) _2 |--> _1 |-> lambda _anon_ : OclAny in (_2) 
+function _1 ( _2 ) _3 |--> _1 |-> lambda _2 in (_3)
+_1 |-->_1`propertyAssignmentAnonymousFunction<when> _1 singleExpression
+_1 |-->_1`propertyAssignmentAnonymousFunction<when> _1 anonymousFunction
+_1 |-->_1`propertyAssignmentAnonymousFunction<when> _1 functionDeclaration
+_1 |--> _1 |-> _1
+
+
+
+
+
+propertyName::
+_1 |-->_1
+[ _1 ] |-->(_1)
+
+
+arguments::
+( ) |-->( )
+( _* ) |-->( _* )
+
+firstArg::
+( _1 , _2 , _* ) |-->_1
+( _1 , _2 ) |-->_1
+( _1 ) |-->_1
+
+secondArg::
+( _1 , _2 , _* ) |-->_2
+( _1 , _2 ) |-->_2
+
+thirdArg::
+( _1 , _2 , _3 , _4 ) |-->_3
+( _1 , _2 , _3 ) |-->_3
+
+fourthArg::
+( _1 , _2 , _3 , _4 ) |-->_4
+
+
+isSingleIntegerArgument::
+( ) |-->false
+( _1 ) |-->true<when> _1 Integer
+( _1 ) |-->false
+( _1 , _2 ) |-->false
+( _1 , _* ) |-->false
+
+
+arrayFrom::
+( _1 ) |-->_1->characters()<when> _1 String
+( _1 ) |-->_1
+( _1 , _2 ) |-->(_1)->collect( _x | (_2)->apply(_x) )
+
+
+parameters::
+function _1 ( ) _2 |-->
+function _1 ( _2 ) _3  |-->_2
+( ) |-->
+( _* ) |-->_*
+
+argument::
+... _1 |-->_1
+_1 |-->_1
+
+
+expressionSequence::
+_* |-->_*`last
+
+
+singleExpression::
+
+alert |-->OclFile["System.out"].println
+
+PI |-->3.1415926535897
+LN10 |-->10->log()
+LN2 |-->2->log()
+LOG10E |-->1->exp()->log10()
+SQRT1_2 |-->(0.5)->sqrt()
+SQRT2 |-->2->sqrt()
+
+Infinity |-->Math_PINFINITY
+NaN |-->Math_NaN
+
+this |-->self
+
+random |-->MathLib.random
+
+console . log |-->OclFile["System.out"].println
+
+ArrayBuffer _1 |-->Sequence{}
+
+Array.of _1 |-->Sequence{_1}
+Array.from _1 |-->_1`arrayFrom
+Int8Array.of _1 |-->Sequence{_1}
+Int8Array.from _1 |-->_1`arrayFrom
+Int16Array.of _1 |-->Sequence{_1}
+Int16Array.from _1 |-->_1`arrayFrom
+Int32Array.of _1 |-->Sequence{_1}
+Int32Array.from _1 |-->_1`arrayFrom
+
+Number . MIN_VALUE |-->5E-324
+Number . NaN |-->Math_NaN
+Number . EPSILON |-->2.220446049250313E-16
+Number . POSITIVE_INFINITY |-->Math_PINFINITY
+Number . NEGATIVE_INFINITY |-->Math_NINFINITY
+Number . MIN_SAFE_INTEGER |-->-9007199254740991
+Number . MAX_SAFE_INTEGER |-->9007199254740991
+
+Math . PI |-->3.1415926535897
+Math . random |-->MathLib.random
+Math . LN10 |-->10->log()
+Math . LN2 |-->2->log()
+Math . LOG10E |-->1->exp()->log10()
+Math . SQRT1_2 |-->(0.5)->sqrt()
+Math . SQRT2 |-->2->sqrt()
+
+_1 . buffer |-->_1<when> _1 Sequence
+_1 . lastIndex |-->_1.endpos
+
+Object.create _1 |-->_1->copy()
+Object.assign _1 |-->(_1`firstArg)->union(_1`secondArg)
+Object.defineProperty _1 |-->(_1`firstArg)->union(Map{ _1`secondArg |-> (_1`thirdArg)->at("value") })
+Object.defineProperties _1 |-->(_1`firstArg)->union(_1`secondArg->keys()->collect( $k | $k |-> (_1`secondArg)->at($k)->at("value") ) )
+Object.entries _1 |-->_1->keys()->collect( _k | Sequence{_k,_1->at(_k)})
+Object.freeze _1 |-->_1
+Object.fromEntries _1 |-->_1->collect( _p | _1->at(1) |-> _1->at(2) )<when> _1 Sequence
+Object.fromEntries _1 |-->_1
+Object.getOwnPropertyNames _1 |-->_1->keys()
+Object.hasOwn _1 |-->(_1`firstArg)->keys()->includes(_1`secondArg)
+Object.hasOwnProperty _1 |-->(_1`firstArg)->keys()->includes(_1`secondArg)
+Object.is _1 |-->((_1`firstArg) = (_1`secondArg))
+Object.keys _1 |-->_1->keys()
+Object.values _1 |-->_1->values()
+
+
+
+
+Number.parseFloat _1 |-->("" + _1)->toReal()
+Number.parseInt _1 |-->("" + _1)->toInteger()
+
+Math.cos _1 |-->_1->cos()
+Math.sin _1 |-->_1->sin()
+Math.tan _1 |-->_1->tan()
+Math.acos _1 |-->_1->acos()
+Math.asin _1 |-->_1->asin()
+Math.atan _1 |-->_1->atan()
+Math.cosh _1 |-->_1->cosh()
+Math.sinh _1 |-->_1->sinh()
+Math.tanh _1 |-->_1->tanh()
+Math.log _1 |-->_1->log()
+Math.log10 _1 |-->_1->log10()
+Math.exp _1 |-->_1->exp()
+Math.sqrt _1 |-->_1->sqrt()
+Math.cbrt _1 |-->_1->cbrt()
+Math.abs _1 |-->_1->abs()
+Math.floor _1 |-->_1->floor()
+Math.ceil _1 |-->_1->ceil()
+Math.round _1 |-->_1->round()
+Math.fround _1 |-->_1->round()->oclAsType(double)
+Math.trunc _1 |-->_1->oclAsType(int)
+Math.sign _1 |-->_1->compareTo(0)
+Math.log2 _1 |-->(_1->log())/(2->log())
+Math.acosh _1 |-->MathLib.acosh(_1)
+Math.asinh _1 |-->MathLib.asinh(_1)
+Math.atanh _1 |-->MathLib.atanh(_1)
+Math.pow _1 |-->(_1`firstArg)->pow(_1`secondArg)
+Math.min _1 |-->Set{_1}->min()
+Math.max _1 |-->Set{_1}->max()
+Math.hypot _1 |-->Sequence{_1}->collect( _x | _x * _x )->sum()->sqrt()
+
+Atomics.add _1 |-->_1`firstArg->at(_1`secondArg+1)
+Atomics.and _1 |-->_1`firstArg->at(_1`secondArg+1)
+Atomics.or _1 |-->_1`firstArg->at(_1`secondArg+1)
+Atomics.xor _1 |-->_1`firstArg->at(_1`secondArg+1)
+Atomics.sub _1 |-->_1`firstArg->at(_1`secondArg+1)
+Atomics.store _1 |-->_1`thirdArg
+Atomics.load _1 |-->_1`firstArg->at(_1`secondArg+1)
+
+Atomics.compareExchange _1 |-->_1`firstArg->at(_1`secondArg+1)
+Atomics.exchange _1 |-->_1`firstArg->at(_1`secondArg+1)
+
+Reflect.apply _1 |-->OclOperation.invoke(_1)
+Reflect.construct _1 |-->OclType["_1`firstArg"].newInstance()
+Reflect.get _1 |-->OclType.getAttributeValue_1
+Reflect.has _1 |-->OclType.hasAttribute_1
+Reflect.ownKeys _1 |-->OclType.allAttributes(_1)->collect(name)
+
+_1 . next |-->_1.nextResult
+
+_1 . slice |-->_1.subrange
+
+_1 . add |-->_1 := _1->including
+_1 . delete |-->_1 := _1->excluding
+_1 . push |-->_1 := _1->append
+_1 . unshift |-->_1 := _1->prepend
+_1 . pop |-->_1 := _1->front
+_1 . shift |-->_1 := _1->tail
+_1 . reverse |-->_1 := _1->reverse
+_1 . sort |-->_1 := _1->sort
+_1 . set |-->_1 := _1.setAt
+_1 . clear |-->_1 := Map{}
+_1 . entries |-->OclIterator.newOclIterator_Sequence(Integer.subrange(1,_1.size)->collect(_i | Sequence{_i-1, _1->at(_i)}))
+
+_1 . size |-->_1->size()
+_1 . length |-->_1->size()
+
+_1 . keys |-->OclIterator.newOclIterator_Sequence(Integer.subrange(0,_1.size-1))
+_1 . values |-->OclIterator.newOclIterator_Sequence(_1)
+
+_1 . reverse |-->_1->reverse
+_1 . has |-->_1->includes
+_1 . includes |-->_1->includes
+_1 . toString |-->_1 + ""
+_1 . join |-->StringLib.separatorSum(_1,",")
+_1 . hasOwnProperty |-->OclType.hasAttribute(_1,
+_1 . get |-->_1->at
+_1 . at |-->_1->at
+_1 . charAt |-->_1->at
+_1 . concat |-->_1 + 
+_1 . trim |-->_1->trim
+_1 . startsWith |-->_1->hasPrefix
+_1 . endsWith |-->_1->hasSuffix
+_1 . split |-->_1->split
+_1 . toUpperCase |-->_1->toUpperCase
+_1 . toLowerCase |-->_1->toLowerCase
+_1 . valueOf |-->_1
+_1 . match |-->_1->firstMatch
+_1 . matchAll |-->_1->allMatches
+_1 . replaceAll |-->_1->replaceAllMatches
+
+_1 . filter |-->_1->select
+_1 . map |-->_1->collect
+_1 . every |-->_1->forAll
+_1 . some |-->_1->exists
+_1 . forEach |-->  execute _1->forAll
+
+_1 . test |-->_1.findNext
+_1 . exec |-->_1.allMatches
+
+_1 . deref |-->!(_1)
+
+_1 [ "length" ] |-->_1->size() <when> _1 Sequence
+_1 [ _2 ] |-->_1[_2+1]<when> _1 Sequence
+_1 [ _2 ] |-->_1[_2+1]<when> _1 String
+_1 [ _2 ] |-->_1->at(_2)
+_1 . _2 |-->_1._2
+
+new Set _1 |-->Set{}->union(_1)
+new Map _1 |-->Map{}
+new WeakMap _1 |-->Map{}
+
+new Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+new Array _1 |-->Sequence{}
+
+new ArrayBuffer _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+new ArrayBuffer _1 |-->Sequence{}
+
+new SharedArrayBuffer _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+new SharedArrayBuffer _1 |-->Sequence{}
+
+new BigInt64Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+new BigInt64Array _1 |-->Sequence{}->union(_1)
+
+new Int32Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+new Int32Array _1 |-->Sequence{}->union(_1)
+new Int16Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+new Int16Array _1 |-->Sequence{}->union(_1)
+new Int8Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+new Int8Array _1 |-->Sequence{}->union(_1)
+
+new Uint32Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+new Uint32Array _1 |-->Sequence{}->union(_1)
+new Uint16Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+new Uint16Array _1 |-->Sequence{}->union(_1)
+new Uint8Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+new Uint8Array _1 |-->Sequence{}->union(_1)
+new Uint8ClampedArray _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+new Uint8ClampedArray _1 |-->Sequence{}->union(_1)
+
+new Float32Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0.0)<when> _1`isSingleIntegerArgument true
+new Float32Array _1 |-->Sequence{}->union(_1)
+new Float64Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0.0)<when> _1`isSingleIntegerArgument true
+new Float64Array _1 |-->Sequence{}->union(_1)
+
+new Error _1 |-->OclException.newOclException_1
+new EvalError _1 |-->OclException.newOclException_1
+new AggregateError _1 |-->OclException.newOclException_1
+new InternalError _1 |-->OclException.newOclException_1
+new RangeError _1 |-->IndexingException.newIndexingException_1
+new SyntaxError _1 |-->OclException.newOclException_1 
+new TypeError _1 |-->OclException.newOclException_1 
+new ReferenceError _1 |-->OclException.newOclException_1 
+URIError _1 |-->new IncorrectElementException.newIncorrectElementException_1
+
+new String _1 |-->_1
+new BigInt _1 |-->("" + _1)->toLong()
+new RegExp _1 |-->OclRegex.compile(_1`firstArg)
+new WeakRef _1 |-->?_1
+
+new _1 _2 |-->_1.new_1_2    
+
+String _1 |-->("" + _1)
+BigInt _1 |-->("" + _1)->toLong()
+RegExp _1 |-->OclRegex.compile(_1`firstArg)
+
+Set _1 |-->Set{}->union(_1)
+
+Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+Array _1 |-->Sequence{_1}
+ArrayBuffer _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+ArrayBuffer _1 |-->Sequence{}
+
+SharedArrayBuffer _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+SharedArrayBuffer _1 |-->Sequence{}
+BigInt64Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+BigInt64Array _1 |-->Sequence{}->union(_1)
+
+Int32Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+Int32Array _1 |-->Sequence{}->union(_1)
+Int16Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+Int16Array _1 |-->Sequence{}->union(_1)
+Int8Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+Int8Array _1 |-->Sequence{}->union(_1)
+
+Uint32Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+Uint32Array _1 |-->Sequence{}->union(_1)
+Uint16Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+Uint16Array _1 |-->Sequence{}->union(_1)
+Uint8Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0)<when> _1`isSingleIntegerArgument true
+Uint8Array _1 |-->Sequence{}->union(_1)
+
+Float32Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0.0)<when> _1`isSingleIntegerArgument true
+Float32Array _1 |-->Sequence{}->union(_1)
+Float64Array _1 |-->Integer.subrange(1,_1`firstArg)->collect(0.0)<when> _1`isSingleIntegerArgument true
+Float64Array _1 |-->Sequence{}->union(_1)
+
+Error _1 |-->OclException.newOclException_1
+EvalError _1 |-->OclException.newOclException_1
+AggregateError _1 |-->OclException.newOclException_1
+InternalError _1 |-->OclException.newOclException_1
+RangeError _1 |-->IndexingException.newIndexingException_1
+SyntaxError _1 |-->OclException.newOclException_1 
+TypeError _1 |-->OclException.newOclException_1 
+ReferenceError _1 |-->OclException.newOclException_1 
+URIError _1 |-->IncorrectElementException.newIncorrectElementException_1
+            
+
+_1 -- |-->_1
+_1 ++ |-->_1
+
+parseFloat _1 |-->("" + _1)->toReal()
+parseInt _1 |-->("" + _1)->toInteger()
+
+cos _1 |-->_1->cos()
+sin _1 |-->_1->sin()
+tan _1 |-->_1->tan()
+acos _1 |-->_1->acos()
+asin _1 |-->_1->asin()
+atan _1 |-->_1->atan()
+cosh _1 |-->_1->cosh()
+sinh _1 |-->_1->sinh()
+tanh _1 |-->_1->tanh()
+log _1 |-->_1->log()
+log10 _1 |-->_1->log10()
+exp _1 |-->_1->exp()
+sqrt _1 |-->_1->sqrt()
+cbrt _1 |-->_1->cbrt()
+abs _1 |-->_1->abs()
+floor _1 |-->_1->floor()
+ceil _1 |-->_1->ceil()
+round _1 |-->_1->round()
+fround _1 |-->_1->round()->oclAsType(double)
+trunc _1 |-->_1->oclAsType(int)
+sign _1 |-->_1->compareTo(0)
+log2 _1 |-->(_1->log())/(2->log())
+acosh _1 |-->MathLib.acosh(_1)
+asinh _1 |-->MathLib.asinh(_1)
+atanh _1 |-->MathLib.atanh(_1)
+pow _1 |-->(_1`firstArg)->pow(_1`secondArg)
+min _1 |-->Set{_1}->min()
+max _1 |-->Set{_1}->max()
+hypot _1 |-->Sequence{_1}->collect( _x | _x * _x )->sum()->sqrt()
+
+
+delete _1 |-->(_1)->isDeleted()
+void _1 |-->null                                           
+typeof _1 |-->((_1)->oclType() + "")
+++ _1 |-->_1
+-- _1 |-->_1
++ _1 |-->_1 
+- _1 |-->-_1
+~ _1 |-->-(_1+1)
+! _1 |-->not(_1)
+await _1 |-->_1 
+
+_1 ** _2 |-->(_1)->pow(_2) 
+_1 * _2 |-->_1*_2
+_1 / _2 |-->_1 / _2
+_1 % _2 |-->_1 mod _2
+_1 + _2 |-->_1 + _2
+_1 - _2 |-->_1 - _2
+_1 ?? _2 |-->if _1->oclIsUndefined() then _2 else _1 endif
+_1 << _2 |-->_1*(2->pow(_2))
+_1 >> _2 |-->_1/(2->pow(_2))
+_1 >>> _2 |-->_1/(2->pow(_2)) 
+_1 < _2 |-->_1 < _2
+_1 > _2 |-->_1 > _2
+_1 <= _2 |-->_1 <= _2
+_1 >= _2 |-->_1 >= _2
+_1 instanceof _2 |-->(_1)->oclIsTypeOf(_2)
+
+_1 in _2 |-->(1 <= _1) & (_1 <= (_2)->size())<when> _2 Sequence
+_1 in _2 |-->(_2)->keys()->includes(_1)
+_1 == _2 |-->_1 = _2
+_1 != _2 |-->_1 /= _2
+_1 === _2 |-->_1 <>= _2
+_1 !== _2 |-->not(_1 <>= _2)
+_1 & _2 |-->MathLib.bitwiseAnd(_1,_2)
+_1 ^ _2 |-->MathLib.bitwiseXor(_1,_2)
+_1 | _2 |-->MathLib.bitwiseOr(_1,_2)
+_1 && _2 |-->_1 & _2
+_1 || _2 |-->_1 or _2                                
+_1 ? _2 : _3 |-->if _1 then _2 else _3 endif
+_1 = _2 |-->_2
+_1 *= _2 |-->_1*_2
+_1 /= _2 |-->_1/_2
+_1 %= _2 |-->_1 mod _2
+_1 += _2 |-->_1 + _2
+_1 -= _2 |-->_1 - _2
+_1 <<= _2 |-->(_1*(2->pow(_2)))
+_1 >>= _2 |-->(_1/(2->pow(_2)))
+_1 >>>= _2 |-->(_1/(2->pow(_2)))
+_1 &= _2 |-->MathLib.bitwiseAnd(_1,_2)
+_1 ^= _2 |-->MathLib.bitwiseXor(_1,_2)
+_1 |= _2 |-->MathLib.bitwiseOr(_1,_2)
+_1 **= _2 |-->(_1)->pow(_2)
+_1 &&= _2 |-->(_1 & _2)
+_1 ||= _2 |-->(_1 or _2)
+
+import ( _1 ) |-->import(_1)
+( _1 ) |-->(_1)
+
+_1 _2 |-->OclIterator.newOclIterator_Function(lambda _i : int in self._1(_i))<when> _1 generator, _2 arguments
+_1 _2 |-->_1_2
+_1 |-->_1
+
+
+updateForm::
+_1 , _* |-->_1`updateForm_*`updateForm
+_1 . forEach |-->  execute _1->forAll
+yield _1 ; |-->    if _yieldCount_ < _position_ then _1`updateForm  _yieldCount_ := _yieldCount + 1 else return _1 ;\n
+
+Atomics.add _1 |-->    _1`firstArg->at(_1`secondArg+1) := _1`firstArg->at(_1`secondArg+1) + _1`thirdArg ;\n 
+Atomics.and _1 |-->    _1`firstArg->at(_1`secondArg+1) := MathLib.bitwiseAnd(_1`firstArg->at(_1`secondArg+1), _1`thirdArg) ; \n
+Atomics.or _1 |-->    _1`firstArg->at(_1`secondArg+1) := MathLib.bitwiseOr(_1`firstArg->at(_1`secondArg+1), _1`thirdArg) ; \n
+Atomics.xor _1 |-->    _1`firstArg->at(_1`secondArg+1) :=  := MathLib.bitwiseOr(_1`firstArg->at(_1`secondArg+1), _1`thirdArg) ; \n
+Atomics.sub _1 |-->    _1`firstArg->at(_1`secondArg+1) := _1`firstArg->at(_1`secondArg+1) - _1`thirdArg ;\n 
+Atomics.store _1 |-->    _1`firstArg->at(_1`secondArg+1) := _1`thirdArg ; \n
+
+Atomics.compareExchange _1 |-->    if _1`firstArg->at(_1`secondArg+1) = _1`thirdArg then _1`firstArg->at(_1`secondArg+1) := _1`fourthArg else skip ; \n 
+Atomics.exchange _1 |-->    _1`firstArg->at(_1`secondArg+1) := _1`thirdArg ; \n
+
+Reflect.defineProperty _1 |-->OclType.setAttributeValue_1
+Reflect.deleteProperty _1 |-->OclType.removeAttribute_1
+Reflect.set _1 |-->OclType.setAttributeValue_1
+
+Object.assign _1 |-->    (_1`firstArg) := (_1`firstArg)->union(_1`secondArg) ;\n
+Object.defineProperty _1 |-->    (_1`firstArg) := (_1`firstArg)->union(Map{ _1`secondArg |-> (_1`thirdArg)->at("value") }) ;\n
+Object.defineProperties _1 |-->    (_1`firstArg) := (_1`firstArg)->union(_1`secondArg->keys()->collect( $k | $k |-> (_1`secondArg)->at($k)->at("value") ) ) ;\n
+
+
+_1 . next |-->_1.nextResult
+
+_1 . _2 |-->  _1._2 ;\n
+
+new _1 _2 |-->  _1.new_1_2 ;\n    
+
+_1 -- |-->  _1 := _1-1 ;\n
+_1 ++ |-->  _1 := _1+1 ;\n
+delete _1 |-->  execute (_1)->isDeleted() ;\n
+void _1 |-->_1`updateForm                                     
+typeof _1 |-->
+++ _1 |-->
+-- _1 |-->
++ _1 |-->_1`updateForm 
+- _1 |-->_1`updateForm
+~ _1 |-->_1`updateForm
+! _1 |-->_1`updateForm
+await _1 |-->_1`updateForm 
+_1 = _2 |-->    _1 := _2 ;\n
+_1 *= _2 |-->  _1 := _1*_2 ;\n
+_1 /= _2 |-->  _1 := _1/_2 ;\n
+_1 %= _2 |-->  _1 := _1 mod _2 ;\n
+_1 += _2 |-->  _1 := _1 + _2 ;\n
+_1 -= _2 |-->  _1 := _1 - _2 ;\n
+_1 <<= _2 |-->  _1 := (_1*(2->pow(_2))) ;\n
+_1 >>= _2 |-->  _1 := (_1/(2->pow(_2))) ;\n
+_1 >>>= _2 |-->  _1 := (_1/(2->pow(_2))) ;\n
+_1 &= _2 |-->  _1 := MathLib.bitwiseAnd(_1,_2) ;\n
+_1 ^= _2 |-->  _1 := MathLib.bitwiseXor(_1,_2) ;\n
+_1 |= _2 |-->  _1 := MathLib.bitwiseOr(_1,_2) ;\n
+_1 **= _2 |-->  _1 := (_1)->pow(_2) ;\n
+_1 &&= _2 |-->  _1 := (_1 & _2) ;\n
+_1 ||= _2 |-->  _1 := (_1 or _2) ;\n
+import ( _1 ) |-->  import(_1) ;\n
+this |-->
+
+( _1 ) |-->_1`updateForm
+_1 _2 _3 |-->_1`updateForm\n_3`updateForm 
+_1 ? _2 : _3 |-->  _1`updateForm\n_2`updateForm\n_3`updateForm
+_1 _2 |-->    _1_2 ;\n<when> _2 arguments
+_1 |-->_1`updateForm<when> _1 singleExpression
+_1 |-->_1`updateForm<when> _1 yieldStatement
+_1 |-->
+
+
+preSideEffect::
+_1 , _* |-->_1`preSideEffect  _*`preSideEffect
+_1 . forEach |-->_1`preSideEffect
+
+_1 [ _2 ] |-->_1`preSideEffect_2`preSideEffect
+
+Math.cos _1 |-->_1`preSideEffect
+Math.sin _1 |-->_1`preSideEffect
+Math.tan _1 |-->_1`preSideEffect
+Math.acos _1 |-->_1`preSideEffect
+Math.asin _1 |-->_1`preSideEffect
+Math.atan _1 |-->_1`preSideEffect
+Math.cosh _1 |-->_1`preSideEffect
+Math.sinh _1 |-->_1`preSideEffect
+Math.tanh _1 |-->_1`preSideEffect
+Math.log _1 |-->_1`preSideEffect
+Math.log10 _1 |-->_1`preSideEffect
+Math.exp _1 |-->_1`preSideEffect
+Math.sqrt _1 |-->_1`preSideEffect
+Math.cbrt _1 |-->_1`preSideEffect
+Math.abs _1 |-->_1`preSideEffect
+Math.floor _1 |-->_1`preSideEffect
+Math.ceil _1 |-->_1`preSideEffect
+Math.round _1 |-->_1`preSideEffect
+Math.fround _1 |-->_1`preSideEffect
+Math.trunc _1 |-->_1`preSideEffect
+Math.sign _1 |-->_1`preSideEffect
+Math.log2 _1 |-->_1`preSideEffect
+Math.acosh _1 |-->_1`preSideEffect
+Math.asinh _1 |-->_1`preSideEffect
+Math.atanh _1 |-->_1`preSideEffect
+Math.pow _1 |-->_1`preSideEffect
+Math.min _1 |-->_1`preSideEffect
+Math.max _1 |-->_1`preSideEffect
+Math.hypot _1 |-->_1`preSideEffect
+
+
+_1 . _2 |-->
+new _1 _2 |-->    
+_1 -- |-->
+_1 ++ |-->
+delete _1 |-->_1`preSideEffect
+void _1 |-->_1`preSideEffect                                     
+typeof _1 |-->
+++ _1 |-->    _1 := _1 + 1 ;\n
+-- _1 |-->    _1 := _1 - 1 ;\n
++ _1 |-->_1`preSideEffect
+- _1 |-->_1`preSideEffect
+~ _1 |-->_1`preSideEffect
+! _1 |-->_1`preSideEffect
+await _1 |-->_1`preSideEffect 
+_1 = _2 |-->_1`preSideEffect_2`preSideEffect
+_1 *= _2 |-->_1`preSideEffect_2`preSideEffect
+_1 /= _2 |-->_1`preSideEffect_2`preSideEffect
+_1 %= _2 |-->_1`preSideEffect_2`preSideEffect
+_1 += _2 |-->_1`preSideEffect_2`preSideEffect
+_1 -= _2 |-->_1`preSideEffect_2`preSideEffect
+_1 <<= _2 |-->_1`preSideEffect_2`preSideEffect
+_1 >>= _2 |-->_1`preSideEffect_2`preSideEffect
+_1 >>>= _2 |-->_1`preSideEffect_2`preSideEffect
+_1 &= _2 |-->_1`preSideEffect_2`preSideEffect
+_1 ^= _2 |-->_1`preSideEffect_2`preSideEffect
+_1 |= _2 |-->_1`preSideEffect_2`preSideEffect
+_1 **= _2 |-->_1`preSideEffect_2`preSideEffect
+_1 &&= _2 |-->_1`preSideEffect_2`preSideEffect
+_1 ||= _2 |-->_1`preSideEffect_2`preSideEffect
+import ( _1 ) |-->
+this |-->
+
+cos _1 |-->_1`preSideEffect
+sin _1 |-->_1`preSideEffect
+tan _1 |-->_1`preSideEffect
+acos _1 |-->_1`preSideEffect
+asin _1 |-->_1`preSideEffect
+atan _1 |-->_1`preSideEffect
+cosh _1 |-->_1`preSideEffect
+sinh _1 |-->_1`preSideEffect
+tanh _1 |-->_1`preSideEffect
+log _1 |-->_1`preSideEffect
+log10 _1 |-->_1`preSideEffect
+exp _1 |-->_1`preSideEffect
+sqrt _1 |-->_1`preSideEffect
+cbrt _1 |-->_1`preSideEffect
+abs _1 |-->_1`preSideEffect
+floor _1 |-->_1`preSideEffect
+ceil _1 |-->_1`preSideEffect
+round _1 |-->_1`preSideEffect
+fround _1 |-->_1`preSideEffect
+trunc _1 |-->_1`preSideEffect
+sign _1 |-->_1`preSideEffect
+log2 _1 |-->_1`preSideEffect
+acosh _1 |-->_1`preSideEffect
+asinh _1 |-->_1`preSideEffect
+atanh _1 |-->_1`preSideEffect
+pow _1 |-->_1`preSideEffect
+min _1 |-->_1`preSideEffect
+max _1 |-->_1`preSideEffect
+hypot _1 |-->_1`preSideEffect
+
+
+( _1 ) |-->_1`preSideEffect
+_1 _2 _3 |-->_1`preSideEffect_3`preSideEffect 
+_1 ? _2 : _3 |-->_1`preSideEffect_2`preSideEffect_3`preSideEffect
+_1 _2 |-->
+_1 |-->_1`preSideEffect<when> _1 singleExpression
+_1 |-->
+
+
+
+
+
+assignable::
+_1 |-->_1
+
+objectLiteral::
+{ _* } |-->Map{ _* }
+{ } |-->Map{}
+
+anonymousFunction::
+function ( ) _1 |-->lambda _anon_ : OclAny in (_1) 
+function ( _1 ) _2 |-->lambda _1 in (_2) 
+_1 => _2 |-->lambda _1 in (_2)
+_1 |-->lambda _1`parameterDeclns in self._1`name(_1`parameters)
+
+arrowFunctionParameters::
+( ) |-->_anon_ : OclAny
+( _1 ) |-->_1
+_1 |-->_1 : OclAny
+
+arrowFunctionBody::
+_1 |-->_1
+
+
+literal::
+/ _* |-->"_*`recurse
+_1 _* |-->_1_*`recurse
+/ |-->"
+_1 |-->_1
+
+
+templateStringLiteral::
+` _* ` |-->"_*"
+
+templateStringAtom::
+${ _1 } |-->" + _1 + "
+_1 |-->_1
+_* |-->_
+
+numericLiteral::
+_1 |-->_1
+
+bigintLiteral::
+_1 |-->_1
+
+identifierName::
+_1 |-->_1
+
+identifier::
+_1 |-->_1
+
+reservedWord::
+_1 |-->_1
+
+keyword::
+_1 |-->_1
+

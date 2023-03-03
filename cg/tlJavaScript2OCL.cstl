@@ -1,0 +1,43 @@
+identifier::
+_1 |-->_1
+
+numericLiteral::
+_1 |-->_1
+
+literal::
+_1 |-->_1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+singleExpression::
+this |-->self
+_1 ? _3 : _5  |-->if _1 then _3 else _5 endif 
+_1 _2 _3  |-->_1 _2 _3 
+! _2  |-->not _2 
++ _2  |-->+ _2 
+- _2  |-->- _2 
+_1 |-->_1
+_* |-->true
+
+nestedSfunc1::
+this |-->self
+_1 |-->_1
+_* |-->true
+
+
+

@@ -1,0 +1,190 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OclUnaryExpression::
+_1 _2 ( )  |-->_2`nestedTfunc34 ( _1 ) 
+_1 _2  |-->_1`nestedTfunc33 _2 
+
+seq3ruleset82::
+; |--> 
+attribute _2 : _4  |-->_4 _2 ; 
+_0 |-->_0
+
+OclOperation::
+query _2 ( ) : _6 pre: true  post: true  activity: _12  |-->_6 _2 ( void ) { _12 } 
+query _2 ( _4 ) : _7 pre: true  post: true  activity: _13  |-->_7 _2 ( _4`seq2ruleset ) { _13 } 
+operation _2 ( ) : _6 pre: true  post: true  activity: _12  |-->_6 _2 ( void ) { _12 } 
+operation _2 ( _* ) : _7 pre: true  post: true  activity: _13  |-->_7 _2 ( _*`seq2ruleset ) { _13 } 
+
+seq2ruleset120::
+; |-->,
+_1 _2  |-->_2 
+_0 |-->_0
+_* |-->_*`seq2ruleset120
+
+OclType::
+void  |-->void 
+OclAny  |-->void * 
+boolean |-->_Bool
+String  |-->char * 
+Set ( _3 )  |-->_3 * * 
+Sequence ( _3 )  |-->_3 * * 
+_1  |-->struct _1 <when> _1 Class
+_1 |-->_1
+_* |-->int
+
+seq2ruleset::
+_* |-->_*`seq2ruleset48
+
+seq2ruleset48::
+_1 : _3  |-->_3 _1 
+_0 |-->_0
+_* |-->_*`seq2ruleset48
+
+nestedSfunc35::
+boolean |-->_Bool
+_1 |-->_1
+_* |-->int
+
+OclClass::
+class _2 { _4 }  |-->struct _2 { _4`seq3subruleset83 } ; 
+
+OclCollectionExpression::
+Set { _3 }  |-->newSet ( _3`seqtreerule37 ) 
+Sequence { _3 }  |-->newList ( _3`seqtreerule38 ) 
+_1 { }  |-->_1`nestedTfunc36 ( ) 
+
+OclBasicExpression::
+null  |-->NULL 
+this |-->self
+_1 . _3 ( )  |-->_1 . _3 ( ) 
+_1 [ _3 ]  |-->_1 [ _3 - 1 ] 
+_1 . _3 ( _5 )  |-->_1 . _3 ( _5`seqtreerule32 ) 
+_1 . _3  |-->_1 . _3 
+_1 |-->_1 <when> _1 Integer
+_1 |-->_1 <when> _1 Real
+_1 |-->_1 <when> _1 Boolean
+_1 |-->_1 <when> _1 String
+_1 |-->_1
+_* |-->self
+
+seqtreerule37::
+_* |-->_*
+
+seqtreerule38::
+_* |-->_*
+
+OclBinaryExpression::
+_1 ->lastIndexOf ( _4 )  |-->lastIndexOf ( _1 , _4 ) 
+_1 ->including ( _4 )  |-->including ( _1 , _4 ) 
+_1 ->union ( _4 )  |-->union ( _1 , _4 ) 
+_1 ->includesAll ( _4 )  |-->includesAll ( _1 , _4 ) 
+_1 ->append ( _4 )  |-->append ( _1 , _4 ) 
+_1 ->excludesAll ( _4 )  |-->excludesAll ( _1 , _4 ) 
+_1 ->prepend ( _4 )  |-->prepend ( _1 , _4 ) 
+_1 ->intersection ( _4 )  |-->intersection ( _1 , _4 ) 
+_1 ->excludes ( _4 )  |-->excludes ( _1 , _4 ) 
+_1 ->indexOf ( _4 )  |-->indexOf ( _1 , _4 ) 
+_1 ->pow ( _4 )  |-->pow ( _1 , _4 ) 
+_1 <= _3  |-->_1 <= _3 
+_1 mod _3  |-->_1 % _3 
+_1 * _3  |-->_1 * _3 
+_1 + _3  |-->_1 + _3 
+_1 - _3  |-->_1 - _3 
+_1 /= _3  |-->_1 != _3 
+_1 / _3  |-->_1 / _3 
+_1 div _3  |-->( int ) ( _1 / _3 ) 
+_1 <>= _3  |-->_1 == _3 
+_1 < _3  |-->_1 < _3 
+_1 = _3  |-->_1 == _3 
+_1 > _3  |-->_1 > _3 
+_1 >= _3  |-->_1 >= _3 
+_1 & _3 |-->_1 && _3
+
+seqtreerule32::
+_* |-->_*
+
+OclConditionalExpression::
+if _2 then _4 else _6 endif  |-->( _2 ) ? _4 : _6 
+
+nestedSfunc31::
+this |-->self
+_1 |-->_1
+_* |-->self
+
+seq2ruleset52::
+_1 : _3  |-->_3 _1 
+_0 |-->_0
+_* |-->_*`seq2ruleset52
+
+seq3ruleset39::
+; |--> 
+_1 |-->_1 
+_0 |-->_0
+
+nestedTfunc33::
+not |-->!
+_1 |-->_1
+_* |-->-
+
+nestedTfunc34::
+->toLowerCase |-->toLowerCase
+->toUpperCase |-->toUpperCase
+->front |-->front
+->tail |-->tail
+->first |-->first
+->last |-->last
+_* |-->toLowerCase
+
+seq3subruleset83::
+_* |-->_*`seq3ruleset82
+
+OclAttribute::
+attribute _2 : double   |-->double _2 ; 
+attribute _2 : boolean   |-->_Bool _2 ; 
+attribute _2 : String   |-->char * _2 ; 
+attribute _2 : _4  |-->_4 _2 ; 
+
+OclEnumeration::
+enumeration _2 { _* }  |-->enum _2 { _*`seq2ruleset120 } ; 
+
+nestedTfunc36::
+Set |-->newSet
+Sequence |-->newList
+_* |-->newSet
+
+seq3subruleset40::
+_* |-->_*`seq3ruleset39
+
+OclStatement::
+call skip   |-->; 
+var _2 : double   |-->double _2 ; 
+var _2 : boolean   |-->_Bool _2 ; 
+var _2 : String   |-->char * _2 ; 
+var _2 : OclAny   |-->void * _2 ; 
+( _2 )  |-->{ _2`seq3subruleset40 } 
+return _2  |-->return _2 ; 
+call _2  |-->_2 ; 
+var _2 : _4  |-->_4 _2 ; <when> _4 Integer
+while _2 do _4  |-->while ( _2 ) { _4 } 
+_1 := _3  |-->_1 = _3 ; 
+_1 |-->_1 ; 
+if _2 then _4 else _6  |-->if ( _2 ) { _4 } else { _6 } 
+for _2 : _4 do _6  |-->{ int _index = 0 ; for ( ; _index < length ( _4 ) ; _index ++ ) { void * _2 = _4 [ _index ] ; _6 } } 
+
+
+

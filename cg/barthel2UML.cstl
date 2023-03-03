@@ -1,0 +1,24 @@
+biTable::
+_* |-->_*
+
+biItem::
+_1 . _2 _3 _4 |-->  var item_1 : BIItem ;\n  item_1.description := "_2" ;\n  item_1.scoreWithMajorHelp := _3`minRange ;\n  item_1.scoreWithSomeHelp := _3`maxRange ;\n  item_1.scoreIndependent := _4 ;\n\n
+
+
+minRange::
+_1 - _2 |-->_1
+_1 |-->_1
+
+maxRange::
+_1 - _2 |-->_2
+_1 |-->_1
+ 
+text::
+_1 |-->_1
+_1 _* |-->_1 _*`recurse
+
+
+integerLiteral::
+_1 |-->_1
+
+

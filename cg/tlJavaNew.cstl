@@ -1,0 +1,218 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+nestedTfunc91::
+self |-->this
+_1 |-->_1
+_* |-->null
+
+OclUnaryExpression::
+_1 _2 ( )  |-->Ocl . _2`func93 ( _1 ) 
+_1 _2  |-->_1`func92 _2 
+lambda _2 : _4 in _6  |-->_2 -> ( _6 ) 
+
+OclOperation::
+static operation _3 ( ) : _7 pre: true  post: true  activity: _13  |-->static _7 _3 ( ) { _13 } 
+query _2 ( ) : _6 pre: true  post: true  activity: _12  |-->_6 _2 ( ) { _12 } 
+static operation _3 ( _* ) : _8 pre: true  post: true  activity: _14  |-->static _8 _3 ( _*`seq2ruleset194 ) { _14 } 
+query _2 ( _* ) : _7 pre: true  post: true  activity: _13  |-->_7 _2 ( _*`seq2ruleset174 ) { _13 } 
+operation _2 ( ) : _6 pre: true  post: true  activity: _12  |-->_6 _2 ( ) { _12 } 
+operation _2 ( _* ) : _7 pre: true  post: true  activity: _13  |-->_7 _2 ( _*`seq2ruleset176 ) { _13 } 
+
+OclType::
+void  |-->void 
+OclAny  |-->Object 
+String  |-->String 
+Set ( _3 )  |-->HashSet < _3 > 
+Sequence ( _3 )  |-->ArrayList < _3 > 
+_1 |-->_1 <when> _1 Class
+_1 |-->_1 
+Function ( _3 , _5 )  |-->Function < _3 , _5 > 
+Map ( _3 , _5 )  |-->HashMap < _3 , _5 > 
+
+seq3subruleset207::
+_* |-->{ _*`seq3ruleset206 }
+
+func95::
+->including |-->including
+->union |-->union
+->intersection |-->intersection
+->excludesAll |-->excludesAll
+->excludes |-->excludes
+->includesAll |-->includesAll
+->indexOf |-->indexOf
+->lastIndexOf |-->lastIndexOf
+->append |-->append
+->prepend |-->prepend
+->pow |-->pow
+_* |-->including
+
+func96::
+->select |-->select
+->reject |-->reject
+->collect |-->collect
+->forAll |-->forAll
+->exists1 |-->exists1
+->exists |-->exists
+->any |-->any
+_* |-->select
+
+OclClass::
+class _2 { }  |-->class _2 { } 
+class _2 { _4 }  |-->class _2 _4`seq3subruleset207 
+
+OclCollectionExpression::
+Set { _3 }  |-->Ocl . initialiseSet ( _3`seqtreerule100 ) 
+Sequence { _3 }  |-->Ocl . initialiseSequence ( _3`seqtreerule101 ) 
+_1 { }  |-->Ocl . _1`func99 ( ) 
+
+func99::
+Set |-->initialiseSet
+Sequence |-->initialiseSequence
+_* |-->initialiseSet
+
+seq3ruleset206::
+; |--> 
+_1 |-->_1 
+_0 |-->_0
+
+seq3subruleset141::
+_* |-->{ _*`seq3ruleset140 }
+
+OclBasicExpression::
+_1 . _3 ( )  |-->_1 . _3 ( ) 
+_1 [ _3 ]  |-->_1 [ _3 - 1 ] 
+_1 . _3 ( _5 )  |-->_1 . _3 ( _5 ) 
+_1 . _3  |-->_1 . _3 
+_1 |-->_1 <when> _1 Integer
+_1 |-->_1 <when> _1 Real
+_1 |-->_1 <when> _1 Boolean
+_1 |-->_1 <when> _1 String
+_1  |-->_1`nestedTfunc91 <when> _1 Object
+_1 |-->_1 
+
+seq2ruleset194::
+_1 : _3  |-->_3 _1 
+_0 |-->_0
+_* |-->_*`seq2ruleset194
+
+seq2ruleset174::
+_1 : _3  |-->_3 _1 
+_0 |-->_0
+_* |-->_*`seq2ruleset174
+
+seq2ruleset176::
+_1 : _3  |-->_3 _1 
+_0 |-->_0
+_* |-->_*`seq2ruleset176
+
+OclBinaryExpression::
+_1 _2 ( _4 )  |-->Ocl . _2`func95 ( _1 , _4 ) 
+_1 _2 _3  |-->_1 _2`func94 _3 
+_1 _2 ( _4 | _6 )  |-->Ocl . _2`func96 ( _1 , _4 -> ( _6 ) ) 
+
+seq3ruleset140::
+; |--> 
+_1 |-->_1 
+_0 |-->_0
+
+OclConditionalExpression::
+if _2 then _4 else _6 endif  |-->( _2 ) ? _4 : _6 
+
+func93::
+->size |-->size
+->oclType |-->oclType
+->toLowerCase |-->toLowerCase
+->toUpperCase |-->toUpperCase
+->front |-->front
+->tail |-->tail
+->first |-->first
+->last |-->last
+->reverse |-->reverse
+->sum |-->sum
+->floor |-->floor
+->abs |-->abs
+->ceil |-->ceil
+->oclIsUndefined |-->oclIsUndefined
+->oclIsInvalid |-->oclIsInvalid
+_* |-->size
+
+func94::
+mod |-->%
+div |-->/
+& |-->&&
+xor |-->^
+or |-->||
+/= |-->!=
+= |-->==
+_1 |-->_1
+_* |-->/
+
+seqtreerule103::
+_* |-->_*
+
+seqtreerule100::
+_* |-->_*
+
+func92::
+not |-->!
+_1 |-->_1
+_* |-->-
+
+seqtreerule101::
+_* |-->_*
+
+OclAttribute::
+attribute _2 : Sequence ( String  )   |-->ArrayList < String > _2 ; 
+static attribute _3 : int   |-->static int _3 ; 
+static attribute _3 : OclDate   |-->static OclDate _3 ; 
+attribute _2 : double   |-->double _2 ; 
+attribute _2 : String   |-->String _2 ; 
+attribute _2 : _4  |-->_4 _2 ; 
+
+OclEnumeration::
+enumeration _2 { _* }  |-->enum _2 { _*`seq2ruleset208 } 
+
+seq2ruleset208::
+; |-->,
+_1 _2  |-->_2 
+_0 |-->_0
+_* |-->_*`seq2ruleset208
+
+OclStatement::
+call skip   |-->; 
+var _2 : double   |-->double _2 
+var _2 : boolean   |-->boolean _2 
+var _2 : String   |-->String _2 
+var _2 : Sequence   |-->ArrayList _2 
+var _2 : Set   |-->HashSet _2 
+var _2 : OclAny   |-->Object _2 
+( _2 )  |-->_2`seq3subruleset141 
+error _2  |-->throw _2 ; 
+return _2  |-->return _2 ; 
+call _2  |-->_2 ; 
+execute _2  |-->_2 ; 
+assert _2 do _4  |-->assert _2 : _4 ; 
+var _2 : _4  |-->_4 _2 <when> _4 Integer
+while _2 do _4  |-->while ( _2 ) { _4 } 
+_1 := _3  |-->_1 = _3 ; 
+_1 |-->_1 ; 
+if _2 then _4 else _6  |-->if ( _2`seqtreerule103 ) { _4 } else { _6 } 
+for _2 : _4 do _6  |-->for ( Object _2 : _4 ) { _6 } 
+
+
+

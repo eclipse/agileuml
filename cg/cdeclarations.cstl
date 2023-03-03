@@ -1,0 +1,84 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+func10::
+int |-->int
+long |-->long
+boolean |-->_Bool
+double |-->double
+
+OclClass::
+class _2 _*  |-->struct _2{_*`ruleset38};
+
+OclOperation::
+operation _2 ( _* ) : _7 pre: true  post: true  activity: _13  |-->_7 _2(_*`ruleset12){_13}
+operation _2 ( ) : _6 pre: true  post: true  activity: _12  |-->_6 _2(void){_12}
+query _2 ( _* ) : _7 pre: true  post: true  activity: _13  |-->_7 _2(_*`ruleset11){_13}
+query _2 ( ) : _6 pre: true  post: true  activity: _12  |-->_6 _2(void){_12}
+
+ruleset75::
+; |-->,
+literal _2  |-->_2
+_* |-->_*`ruleset75
+
+ruleset12::
+_1 : _3  |-->_3 _1
+_* |-->_*`ruleset12
+
+ruleset11::
+_1 : _3  |-->_3 _1
+_* |-->_*`ruleset11
+
+OclType::
+_1 ( _3 )  |-->_3**
+String  |-->char*
+double |-->double
+boolean |-->_Bool
+long |-->long
+int |-->int
+OclAny  |-->void*
+void  |-->void
+_1  |-->struct _1
+
+ruleset38::
+{ |--> 
+; |--> 
+} |--> 
+attribute _2 : _4  |-->_4 _2;
+_* |-->_*`ruleset38
+_0 |-->_0
+
+
+OclEnumeration::
+enumeration _2 { _* }  |-->enum _2{_*`ruleset75};
+
+OclBasicExpression::
+_1 . _3 ( )  |-->_1._3()
+null  |-->NULL<when> _1 Object
+_1  |-->_1<when> _1 Integer
+_1  |-->_1<when> _1 Real
+_1  |-->_1<when> _1 Boolean
+_1  |-->_1<when> _1 String
+_1  |-->_1
+
+OclStatement::
+_1 := _3  |-->_1=_3;
+call _2  |-->_2;
+return _2  |-->return _2;
+
+
+

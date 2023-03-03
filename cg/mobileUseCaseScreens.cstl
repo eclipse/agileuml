@@ -1,0 +1,150 @@
+model::
+package _1 { _* } _3 |-->_*
+
+
+classifier::
+_1 |-->_1`createUseCaseScreen<when>_1 usecaseDefinition, _1`usecaseStereotype create
+_1 |-->_1`editUseCaseScreen<when>_1 usecaseDefinition, _1`usecaseStereotype edit
+_1 |-->_1`listUseCaseScreen<when>_1 usecaseDefinition, _1`usecaseStereotype list
+_1 |-->_1`deleteUseCaseScreen<when>_1 usecaseDefinition, _1`usecaseStereotype delete
+_1 |-->_1
+
+
+enumeration::
+_* |-->
+
+
+classDefinition::
+class _1 { _2 } |-->import SwiftUI\n\nstruct _1ListRowView: View\n{ var instance : _1VO\n  @ObservedObject var model : ModelFacade = ModelFacade.getInstance()\n\n  var body: some View\n  { HStack {\n_2    }.onTapGesture(\n      { model.setSelected_1(_x: instance) }\n  }\n}\n\n
+
+
+classBody::
+_* |-->_*
+
+
+classBodyElement::
+_1 |-->_1
+
+
+attributeDefinition::
+attribute _1 : _2 ; |-->      Text(String(instance._1))\n
+attribute _1 identity : _2 ; |-->      Text(String(instance._1)).bold()\n
+attribute _1 derived : _2 ; |-->      Text(String(instance._1)).italic()\n
+
+
+operationDefinition::
+_* |-->
+
+
+
+
+usecaseDefinition::
+usecase _1 ( _2 ) : _3 { _4 } |-->import SwiftUI\n\nstruct _1Screen : View\n{ @State var bean : _1VO = _1VO()\n  @State var _1Result : _3`mobile = _3`defaultValue\n  @ObservedObject var model : ModelFacade\n\n  var body: some View {\n    VStack(alignment: .leading, spacing: 20) {\n_2      HStack(spacing: 20) {\n        Button(action: { self.model.cancel_1() } ) { Text("Cancel") }\n        Button(action: { _1Result = self.model._1(_x: bean) } ) { Text("_1") }\n      }.buttonStyle(DefaultButtonStyle())\n      HStack(spacing: 20) {\n        Text("Result:")\n        Text(String(_1Result))\n      }\n    }.padding(.top)\n  }\n}\n\n
+
+usecase _1 : _2 { _3 } |-->import SwiftUI\n\nstruct _1Screen : View\n{ @State var bean : _1VO = _1VO()\n  @State var _1Result : _2`mobile = _2`defaultValue\n  @ObservedObject var model : ModelFacade\n\n  var body: some View {\n    VStack(alignment: .leading, spacing: 20) {\n      HStack(spacing: 20) {\n        Button(action: { self.model.cancel_1() } ) { Text("Cancel") }\n        Button(action: { _1Result = self.model._1(_x: bean) } ) { Text("_1") }\n      }.buttonStyle(DefaultButtonStyle())\n      HStack(spacing: 20) {\n        Text("Result:")\n        Text(String(_1Result))\n      }\n    }.padding(.top)\n  }\n}\n\n
+
+usecase _1 ( _2 ) { _3 } |-->import SwiftUI\n\nstruct _1Screen : View\n{ @State var bean : _1VO = _1VO()\n  @ObservedObject var model : ModelFacade\n\n  var body: some View {\n    VStack(alignment: .leading, spacing: 20) {\n_2      HStack(spacing: 20) {\n        Button(action: { self.model.cancel_1() } ) { Text("Cancel") }\n        Button(action: { self.model._1(_x: bean) } ) { Text("_1") }\n      }.buttonStyle(DefaultButtonStyle())\n      }.padding(.top)\n  }\n}\n\n
+
+usecase _* |-->
+
+
+
+parameterDeclarations::
+, |-->
+_1 |-->_1
+, _* |-->_*`recurse
+_1 _* |-->_1_*`recurse
+
+
+parameterDeclaration::
+_1 : String |-->      HStack {\n        Text("_1:").bold()\n        Divider()\n        TextField("_1", text: $bean._1)\n      }.frame(width: 200, height: 30).border(Color.gray)\n
+_1 : int |-->      HStack {\n        Text("_1:").bold()\n        Divider()\n        TextField("_1", value: $bean._1, formatter: NumberFormatter()).keyboardType(.numberPad)\n      }.frame(height: 30).border(Color.gray)\n
+_1 : long |-->      HStack {\n        Text("_1:").bold()\n        Divider()\n        TextField("_1", value: $bean._1, formatter: NumberFormatter()).keyboardType(.numberPad)\n      }.frame(height: 30).border(Color.gray)\n
+_1 : double |-->      HStack {\n        Text("_1:").bold()\n        Divider()\n        TextField("_1", value: $bean._1, formatter: NumberFormatter()).keyboardType(.decimalPad)\n      }.frame(height: 30).border(Color.gray)\n
+_1 : _2 |-->      HStack {\n        Text("_1:").bold()\n        Divider()\n        TextField("_1", text: $bean._1)\n      }.frame(width: 200, height: 30).border(Color.gray)\n
+
+
+
+usecaseBody::
+_* |-->_*
+
+
+usecaseBodyElement::
+parameter _1 : _2 ; |--> 
+precondition _1 ; |--> 
+extends _1 ; |--> 
+extendedBy _1 ; |--> 
+activity: _1 ; |--> 
+:: _1 |-->
+_1 |-->_1
+   
+
+stereotype::
+stereotype _1 ; |-->
+stereotype entity = _1 ; |-->@State var bean : _1VO = _1VO()\n
+stereotype _1 = _2 ; |-->
+
+
+usecaseStereotype::
+usecase _1 { _2 } |-->_2`usecaseBodyStereotype
+usecase _1 : _2 { _3 } |-->_3`usecaseBodyStereotype
+usecase _1 ( _2 ) { _3 } |-->_3`usecaseBodyStereotype
+usecase _1 ( _2 ) : _3 { _4 } |-->_4`usecaseBodyStereotype
+usecase _* |-->
+
+
+usecaseBodyStereotype::
+_* |-->_*`usecaseElementStereotype
+
+
+usecaseElementStereotype::
+parameter _1 : _2 ; |--> 
+precondition _1 ; |--> 
+extends _1 ; |--> 
+extendedBy _1 ; |--> 
+activity: _1 ; |--> 
+:: _1 |-->
+_1 |-->_1`usecaseStereotypeValue
+   
+
+usecaseStereotypeValue::
+stereotype _1 ; |-->_1
+stereotype entity = _1 ; |-->
+stereotype _1 = _2 ; |-->
+
+
+
+bodyEntityName::
+_* |-->_*`elementEntityName
+
+
+elementEntityName::
+parameter _1 : _2 ; |--> 
+precondition _1 ; |--> 
+extends _1 ; |--> 
+extendedBy _1 ; |--> 
+activity: _1 ; |--> 
+:: _1 |-->
+_1 |-->_1`stereotypeEntityName
+
+
+stereotypeEntityName::
+stereotype _1 ; |-->
+stereotype entity = _1 ; |-->_1
+stereotype _1 = _2 ; |-->
+
+
+defaultValue::
+String |-->""
+int |-->0
+long |-->0
+double |-->0.0
+boolean |-->false
+Sequence ( _1 ) |-->[]
+Set ( _1 ) |-->[]
+Map ( _1 , _2 ) |-->[:]
+_1 |-->_1.defaultInstance_1()
+
+
+
+

@@ -1,0 +1,126 @@
+
+
+OclType::
+void  |-->NOP \n 
+Set ( _3 )  |-->NOP \n 
+Sequence ( _3 )  |-->NOP \n 
+_1  |-->NOP \n <when> _1 Class
+_1  |-->NOP \n 
+Function ( _3 , _5 )  |-->NOP \n 
+Map ( _3 , _5 )  |-->NOP \n 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OclUnaryExpression::
+_1 ->abs ( )  |-->_1 ABS \n 
+_1 ->sort ( )  |-->_1 CALL SORT \n 
+_1 ->tail ( )  |-->_1 ADD 8 \n 
+_1 ->size ( )  |-->_1 CALL SIZE \n 
+not _2  |-->_2 SUB 1 \n ABS \n 
+- _2  |-->_2 CHS \n 
+
+concatrule177::
+_* |-->_*`concatruleset176
+
+concatruleset205::
+; |--> 
+_0 |-->_0
+
+OclOperation::
+query _2 ( ) : _6 pre: _8 post: _10 activity: _12  |-->LABEL _2`name : \n _12 
+operation _2 ( ) : _6 pre: _8 post: _10 activity: _12  |-->LABEL _2`name : \n _12 
+
+OclBinaryExpression::
+_1 ->at ( _2 )  |-->_2 SREG TEMP \n _1 ADD TEMP \n LOAD * ACC \n 
+_1 ->append ( _4 )  |-->_1 SREG ARGA \n LOAD _4`name \n CALL APPEND \n 
+_1 <= _3  |-->_1 SUB _3`name \n DELTA \n SUB 1 \n DELTA \n ABS \n 
+_1 or _2  |-->_2 SREG TEMP \n _1 ADD TEMP \n DELTA \n 
+_1 mod _3  |-->LOAD _1 \n DIVX _3 \n MULT _3 \n SUB _1 \n CHS \n 
+_1 & _2  |-->_2 SREG TEMP \n _1 MULT TEMP \n 
+_1 * _2  |-->_2 SREG TEMP \n _1 MULT TEMP \n 
+_1 + _3  |-->LOAD _1 \n ADD _3 \n 
+_1 - _2  |-->_2 SREG TEMP \n _1 SUB TEMP \n 
+_1 /= _2  |-->_2 SREG TEMP \n _1 SUB TEMP \n DELTA \n ABS \n 
+_1 / _2  |-->_2 SREG TEMP \n _1 DIVF TEMP \n 
+_1 div _2  |-->_2 SREG TEMP \n _1 DIVX TEMP \n 
+_1 < _2  |-->_2 SREG TEMP \n _1 SUB TEMP \n SIGN \n 
+_1 = _2  |-->_2 SREG TEMP \n _1 SUB TEMP \n DELTA \n ABS \n SUB 1 \n ABS \n 
+_1 > _2  |-->_1 SREG TEMP \n _2 SUB TEMP \n SIGN \n 
+_1 >= _3  |-->_1 SUB _3`name \n DELTA \n ADD 1 \n DELTA \n 
+
+nestedTfunc182::
+int |-->4
+long |-->8
+_* |-->4
+
+concatrule206::
+_* |-->_*`concatruleset205
+
+nestedTfunc170::
+null |-->0
+self |-->SELF
+_* |-->0
+
+OclConditionalExpression::
+if _1 then _2 else _3 endif  |-->_1 BZ ElseCond \n _2 B EndCond \n LABEL ElseCond : \n _3 LABEL EndCond : \n 
+
+nestedTfunc169::
+true |-->1
+false |-->0
+_* |-->1
+
+OclClass::
+class _2 { }  |-->NOP \n 
+class _2 { _4 }  |-->_4`concatrule206 
+
+concatruleset176::
+; |--> 
+_0 |-->_0
+
+OclAttribute::
+attribute _2 : double   |-->VARF _2 \n LOAD 0.0 \n STORE _2 \n LOAD MC \n ADD 8 \n STORE MC \n 
+attribute _2 : boolean   |-->VARX _2 \n LOAD 0 \n STORE _2 \n LOAD MC \n ADD 8 \n STORE MC \n 
+attribute _2 : String   |-->VARA _2 \n LOAD MC \n STORE _2 \n LOAD MC \n ADD 408 \n STORE MC \n 
+attribute _2 : Sequence   |-->VARA _2 \n LOAD MC \n STORE _2 \n LOAD MC \n ADD 408 \n STORE MC \n 
+attribute _2 : Set   |-->VARA _2 \n LOAD MC \n STORE _2 \n LOAD MC \n ADD 408 \n STORE MC \n 
+attribute _2 : _4  |-->VARX _2 \n LOAD 0 \n STORE _2 \n LOAD MC \n ADD 8 \n STORE MC \n 
+
+OclBasicExpression::
+_1 . _3 ( )  |-->_1 STORE SELF \n CALL _3`name \n 
+_1 [ _3 ]  |-->_3 SREG TEMP \n LOAD _1`name \n ADD TEMP \n LOAD * ACC \n 
+_1 . _3  |-->_1 LOAD * ( ACC + _3`name ) \n 
+_1  |-->LOAD _1 \n <when> _1 Integer
+_1  |-->LOAD _1 \n <when> _1 Real
+_1  |-->LOAD _1`nestedTfunc169 \n <when> _1 Boolean
+_1  |-->LOAD _1`nestedTfunc170 \n <when> _1 Object
+_1  |-->LOAD _1 \n 
+
+OclStatement::
+call skip   |-->NOP \n 
+var _2 : double   |-->VARF _2 \n LOAD 0.0 \n STORE _2 \n LOAD MC \n ADD 8 \n STORE MC \n 
+var _2 : boolean   |-->VARX _2 \n LOAD 0 \n STORE _2 \n LOAD MC \n ADD 4 \n STORE MC \n 
+var _2 : String   |-->VARA _2 \n LOAD MC \n STORE _2 \n LOAD MC \n ADD 408 \n STORE MC \n 
+var _2 : Sequence   |-->VARA _2 \n LOAD MC \n STORE _2 \n LOAD MC \n ADD 408 \n STORE MC \n 
+var _2 : Set   |-->VARA _2 \n LOAD MC \n STORE _2 \n LOAD MC \n ADD 408 \n STORE MC \n 
+( _2 )  |-->_2`concatrule177 
+return _2  |-->_2 RETURN \n 
+return  |-->RETURN \n 
+var _2 : _4  |-->VARX _2 \n LOAD 0 \n STORE _2 \n LOAD MC \n ADD _4`nestedTfunc182 \n STORE MC \n <when> _4 Integer
+while _1 do _2  |-->LABEL WhileLoop : \n _1 BZ EndWhile \n _2 B WhileLoop \n LABEL EndWhile : \n 
+_1 := _3  |-->_3 STORE _1`name \n 
+if _1 then _2 else _3  |-->_1 BZ ElsePart \n _2 B EndIf \n LABEL ElsePart : \n _3 LABEL EndIf : \n 
+
+
+

@@ -1,0 +1,304 @@
+declarationList::
+_* |-->_*
+_1 |-->_1
+
+
+declaration::
+_1 ; |-->_1
+_1 _2 ; |-->_2
+
+
+declarationSpecifiers::
+_* |-->_*
+_1 |-->_1
+
+declarationSpecifier::
+_1 |-->_1
+
+storageClassSpecifier::
+_1 |-->
+
+typeQualifier::
+_1 |-->
+
+typeSpecifier::
+_1 |-->_1
+
+
+declarator::
+*** _2 |-->null
+** _2 |-->null
+* _2 |-->null
+_1 |-->_1
+
+directDeclarator::
+( _1 ) |-->_1
+_1 [ _2 ] |-->Sequence{}
+_1 [ ] |-->Sequence{}
+_1 ( _2 ) |-->null
+_1 ( ) |-->null
+_1 |-->_1
+
+
+typedefName::
+_1 |-->_1
+
+
+typeName::
+_1 |-->_1`C2UMLtypes
+
+
+initDeclaratorList::
+_* |-->_*`first
+_1 |-->_1
+
+
+initDeclarator::
+_1 = _2 |-->_2
+_1 |-->_1
+
+
+initializer::
+{ _1 } |-->Sequence{ _1 }
+_1 |-->_1
+
+initializerList::
+_* |-->_*
+_1 |-->_1
+
+
+expression::
+_1 , _2 |-->_2
+_1 |-->_1
+
+assignmentExpression::
+_1 = _2 |-->_2
+_1 *= _2 |-->(_1*_2)
+_1 /= _2 |-->(_1/_2)
+_1 %= _2 |-->(_1%_2)
+_1 *= _2 |-->(_1*_2)
+_1 += _2 |-->(_1+_2)
+_1 -= _2 |-->(_1-_2)
+_1 <<= _2 |-->(_1*(2->pow(_2)))
+_1 >>= _2 |-->(_1/(2->pow(_2)))
+_1 &= _2 |-->MathLib.bitwiseAnd(_1,_2)
+_1 ^= _2 |-->MathLib.bitwiseXor(_1,_2)
+_1 |= _2 |-->MathLib.bitwiseOr(_1,_2)
+_1 |-->_1
+
+
+conditionalExpression::
+_1 ? _2 : _3 |-->if _1 then _2 else _3 endif
+_1 |-->_1
+
+logicalOrExpression::
+_1 || _2 |-->_1 or _2
+_1 |-->_1
+
+logicalAndExpression::
+_1 && _2 |-->_1 & _2
+_1 |-->_1
+
+inclusiveOrExpression::
+_1 | _2 |-->MathLib.bitwiseOr(_1, _2)
+_1 |-->_1
+
+exclusiveOrExpression::
+_1 ^ _2 |-->MathLib.bitwiseXor(_1, _2)
+_1 |-->_1
+
+andExpression::
+_1 & _2 |-->MathLib.bitwiseAnd(_1,_2)
+_1 |-->_1
+
+equalityExpression::
+_1 == _2 |-->_1 = _2
+_1 != _2 |-->_1 /= _2
+_1 |-->_1
+
+relationalExpression::
+_1 < _2 |-->_1 < _2
+_1 <= _2 |-->_1 <= _2
+_1 >= _2 |-->_1 >= _2
+_1 > _2 |-->_1 > _2
+_1 |-->_1
+
+shiftExpression::
+_1 << _2 |-->_1*(2->pow(_2))
+_1 >> _2 |-->_1/(2->pow(_2))
+_1 |-->_1
+
+additiveExpression::
+_1 + _2 |-->_1 + _2
+_1 - _2 |-->_1 - _2
+_1 |-->_1
+
+multiplicativeExpression::
+_1 * _2 |-->_1 * _2
+_1 / _2 |-->_1 / _2
+_1 % _2 |-->_1 mod _2
+_1 |-->_1
+
+castExpression::
+( _1 ) _2 |-->_2->oclAsType(_1)
+_1 |-->_1
+
+unaryExpression::
+++ ++ _1 |-->_1 + 2
+++ _1 |-->_1 + 1
+-- -- _1 |-->_1 - 2
+-- _1 |-->_1 - 1
+& _1 |-->?(_1)
+* _1 |-->!(_1)
+- _1 |-->-_1
++ _1 |-->_1
+~ _1 |-->MathLib.bitwiseNot(_1)
+sizeof ( _1 ) |-->typesize(_1)
+sizeof _1 |-->typesize(_1)
+_1 |-->_1
+
+postfixExpression::
+_1 [ _2 ] [ _3 ] |-->(_1->at(_2+1))->at(_3+1)
+_1 [ _2 ] |-->_1->at(_2+1)
+_1 [ _2 ] . _3 |-->(_1->at(_2+1))._3
+_1 [ _2 ] -> _3 |-->(!(_1->at(_2+1)))._3
+_1 [ _2 ] . _3 ( _4 ) |-->(_1->at(_2+1))._3(_4)
+_1 [ _2 ] . _3 ( ) |-->(_1->at(_2+1))._3()
+
+sin ( _1 ) |-->_1->sin()
+cos ( _1 ) |-->_1->cos()
+tan ( _1 ) |-->_1->tan()
+asin ( _1 ) |-->_1->asin()
+acos ( _1 ) |-->_1->acos()
+atan ( _1 ) |-->_1->atan()
+sinh ( _1 ) |-->_1->sinh()
+cosh ( _1 ) |-->_1->cosh()
+tanh ( _1 ) |-->_1->tanh()
+exp ( _1 ) |-->_1->exp()
+log ( _1 ) |-->_1->log()
+log10 ( _1 ) |-->_1->log10()
+sqrt ( _1 ) |-->_1->sqrt()
+ceil ( _1 ) |-->_1->ceil()->oclAsType(double)
+floor ( _1 ) |-->_1->floor()->oclAsType(double)
+fabs ( _1 ) |-->_1->abs()
+abs ( _1 ) |-->_1->abs()
+labs ( _1 ) |-->_1->abs()
+pow ( _1 ) |-->(_1`first)->pow(_1`last)
+
+atof ( _1 ) |-->(_1)->toReal()
+atoi ( _1 ) |-->(_1)->toInteger()
+atol ( _1 ) |-->(_1)->toLong()
+isalnum ( _1 ) |-->(_1)->byte2char()->isMatch("[a-zA-Z0-9]")
+isalpha ( _1 ) |-->(_1)->byte2char()->isMatch("[a-zA-Z]")
+isdigit ( _1 ) |-->(_1)->byte2char()->isMatch("[0-9]")
+islower ( _1 ) |-->(_1)->byte2char()->isMatch("[a-z]")
+isupper ( _1 ) |-->(_1)->byte2char()->isMatch("[A-Z]")
+isspace ( _1 ) |-->(_1 = 32 or (_1 <= 13 & _1 >= 9))
+iscntrl ( _1 ) |-->(_1 >= 0 & _1 <= 31)
+isgraph ( _1 ) |-->(_1 <= 126 & _1 >= 33)
+isprint ( _1 ) |-->(_1 <= 126 & _1 >= 32)
+ispunct ( _1 ) |-->(_1)->byte2char()->isMatch("[!-/:-@\\[-'{|}~]")
+isxdigit ( _1 ) |-->(_1)->byte2char()->isMatch("[0-9A-Fa-f]")
+tolower ( _1 ) |-->(if _1 >= 65 & _1 <= 90 then _1+32 else _1 endif)
+toupper ( _1 ) |-->(if _1 >= 97 & _1 <= 122 then _1-32 else _1 endif)
+
+strlen ( _1 ) |-->(_1)->size()
+strstr ( _1 ) |-->if (_1`first)->indexOf(_1`last) > 0 then _1`first.subrange(_1`first->indexOf(_1`last)) else "" endif
+strchr ( _1 ) |-->if (_1`first)->indexOf(_1`last->byte2char()) > 0 then _1`first.subrange(_1`first->indexOf(_1`last->byte2char())) else "" endif
+strrchr ( _1 ) |-->if (_1`first)->lastIndexOf(_1`last->byte2char()) > 0 then _1`first.subrange(_1`first->lastIndexOf(_1`last->byte2char())) else "" endif
+strcpy ( _1 ) |-->_1`last
+strncpy ( _1 ) |-->(_1`third).subrange(1,_1`last)
+strcat ( _1 ) |-->(_1`first + _1`last)
+strncat ( _1 ) |-->(_1`first + (_1`third).subrange(1,_1`last))
+strcmp ( _1 ) |-->(_1`first)->compareTo(_1`last)
+strncmp ( _1 ) |-->(_1`first)->compareTo((_1`third).subrange(1,_1`last))
+
+fopen ( _1 ) |-->OclFile.newOclFile(_1)
+fgetc ( _1 ) |-->_1.read()->char2byte()
+getc ( _1 ) |-->_1.read()->char2byte()
+fgets ( _1 ) |-->(_1`last).readLine().subrange(1,_1`third)
+gets ( _1 ) |-->System_in.readLine()
+ftell ( _1 ) |-->_1.getPosition()
+feof ( _1 ) |-->_1.getEof()
+getchar ( ) |-->System_in.read()->char2byte()
+tmpfile ( ) |-->OclFile.createTemporaryFile("tmp","txt")
+
+
+malloc ( _1 ) |-->Ref(_1`argtype){1}
+calloc ( _1 ) |-->Ref(_1`argstype){_1`argsn}
+realloc ( _1 ) |-->(_1`first)->resizeTo(_1`last)
+va_arg ( _1 ) |-->_va_arg_sq->at(_1`first)->oclAsType(_1`argstype)
+
+time ( _1 ) |-->OclDate.getSystemTime()/1000
+difftime ( _1 ) |-->(_1`first - _1`last)
+mktime ( _1 ) |-->((!_1).getTime()/1000)
+localtime ( _1 ) |-->?OclDate.newOclDate_Time((!_1)*1000)
+gmtime ( _1 ) |-->?OclDate.newOclDate_Time((!_1)*1000)
+asctime ( _1 ) |-->(_1).toString()
+ctime ( _1 ) |-->OclDate.newOclDate_Time((!_1)*1000).toString()
+
+_1 ( _2 ) |-->_1(_2)
+_1 ( ) |-->_1()
+_1 . _2 ( _3 ) |-->_1._2(_3)
+_1 . _2 ( ) |-->_1._2()
+
+_1 . tm_sec |-->_1.getSecond()
+_1 . tm_min |-->_1.getMinute()
+_1 . tm_hour |-->_1.getHour()
+_1 . tm_mday |-->_1.getDate()
+_1 . tm_mon |-->_1.getMonth()
+_1 . tm_year |-->_1.getYear()
+_1 . tm_wday |-->_1.getDay()
+
+_1 -> tm_sec |-->(!_1).getSecond()
+_1 -> tm_min |-->(!_1).getMinute()
+_1 -> tm_hour |-->(!_1).getHour()
+_1 -> tm_mday |-->(!_1).getDate()
+_1 -> tm_mon |-->(!_1).getMonth()
+_1 -> tm_year |-->(!_1).getYear()
+_1 -> tm_wday |-->(!_1).getDay()
+
+_1 . _2 . _3 |-->_1._2._3
+_1 . _2 |-->_1._2
+_1 -> _2 -> _3 |-->!((!(_1))._2)._3
+_1 -> _2 |-->(!(_1))._2
+_1 ++ |-->_1
+_1 ++ ++ |-->_1
+_1 -- |-->_1
+_1 -- -- |-->_1
+_1 |-->_1
+
+primaryExpression::
+( _1 ) |-->(_1)
+NULL |-->null
+EOF |-->-1
+_1 _2 _3 |-->_1 _2 _3
+_1 _2 |-->_1 _2
+_1 |-->_1->char2byte()<when> _1 character
+_1 |-->_1
+_* |-->_*
+
+
+constantExpression::
+_1 |-->_1->char2byte()<when> _1 character
+_1 |-->_1
+
+
+argumentExpressionList::
+_1 , _2 |-->_1, _2
+_* |-->_*
+_1 |-->_1
+
+argstype::
+_1 , _2 |-->_2`argtype
+_1 |-->_1`argtype
+
+
+argtype::
+sizeof ( _1 ) |-->_1
+sizeof _1 |-->_1
+_1 |-->_1`argtype
+
+
+argsn::
+_1 , _2 |-->_1

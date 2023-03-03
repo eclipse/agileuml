@@ -1,0 +1,30 @@
+Class::
+class _1 { _2 }   |-->type _1 struct {\n_2}\n\nfunc create_1() *_1 {\n  var res *_1\n  res = &_1{}\n  return res\n}\n\n
+
+
+
+Attribute::
+static attribute _1 : _2 := _3; |-->  
+
+static attribute _1 : _2; |-->  
+
+identity attribute _1 : _2 |-->
+
+attribute _1 : _2 := _3; |-->  
+
+attribute _1 : _2; |-->  
+
+reference _1 : _2; |-->  
+
+
+
+Operation::
+query _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->
+
+operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->
+
+static query _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->
+
+static operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->
+
+

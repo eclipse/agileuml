@@ -1,0 +1,54 @@
+formalParameters::
+( _1 ) |-->(_1)
+
+formalParameterList::
+_1 |-->_1
+_1 , _* |-->_1, _*`recurse
+
+formalParameter::
+int _1 |-->_1 : int<action> _1 Integer
+double _1 |-->_1 : double<action> _1 Real
+_1 _2 |-->_2 : _1<when> _1 typeType <action> _2 _1
+
+
+typeTypeOrVoid::
+_1 |-->_1
+
+typeType::
+_1 |-->_1
+
+primitiveType::
+_1 |-->_1
+
+variableDeclaratorId::
+_1 |-->_1
+
+methodDeclaration::
+_1 _2 _3 _4 |-->operation _2_3 : _1\n pre: true post: true\n activity: _4;\n\n
+
+methodBody::
+_1 |-->_1
+
+block::
+{ _* } |-->( _* )
+
+blockStatement::
+_1 |-->_1
+
+statement::
+return _1 ; |-->  return _1
+
+expression::
+_1 + _2 |-->_1 + _2
+_1 |-->_1
+
+primary::
+_1 |-->(long) _1<when> _1 long
+_1 |-->_1
+
+valueStmt::
+_1 |-->_1
+
+literal::
+_1 |-->OclDate.newOclDate("_1")<when> _1`first #, _1`last #
+_1 |-->_1

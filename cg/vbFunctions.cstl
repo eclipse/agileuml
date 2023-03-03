@@ -1,0 +1,538 @@
+moduleBody::
+\r\n |-->\n
+_1 |-->_1 
+_1 \r\n _* |-->_1 \n_*`moduleBodyElement
+
+
+moduleBodyElement::
+\r\n |-->\n
+_1 |-->_1
+
+moduleHeader::
+_* |-->
+
+moduleReferences::
+_* |-->
+
+controlProperties::
+_* |-->
+
+moduleConfig::
+_* |--> 
+
+moduleOption::
+_* |-->
+
+moduleOptions::
+_* |-->
+
+
+moduleAttributes::
+\r\n |-->\n
+_1 |-->_1;
+_1 \r\n |-->_1;\n
+_1 \r\n _* |-->_1;\n_*`recurse
+\r\n _* |-->_*`recurse
+
+
+attributeStmt::
+ATTRIBUTE _1 = _2 |-->  attribute _1`VB2UML : OclAny := _2`VB2UML
+ATTRIBUTE _1 = _2 , _* |-->  attribute _1`VB2UML : Sequence(OclAny) := Sequence{_2`VB2UML, _*`VB2UML}
+
+constStmt::
+GLOBAL CONST _1 |-->_1
+PRIVATE CONST _1 |-->
+PUBLIC CONST _1 |-->
+CONST _1 |-->
+GLOBAL CONST _1 , _* |-->_1_*`constSubStmt
+CONST _1 , _* |-->
+PUBLIC CONST _1 , _* |-->
+PRIVATE CONST _1 , _* |-->
+
+
+constSubStmt::
+_1 _2 = _3 |-->  attribute _1 _2`typeHintDec;\n<when> _2 typeHint
+_1 _2 = _3 |-->  attribute _1 _2`VB2UML;\n
+_1 = _2 |-->  attribute _1 : OclAny;\n
+, |--> \n
+
+
+moduleBlock::
+_1 |-->_1
+
+block::
+\r\n |-->\n
+_1 |-->_1
+\r\n _1 |-->\n_1
+\r\n _* |-->\n_*`blockItem
+_1 \r\n |-->_1\n
+_1 \r\n \r\n |-->_1\n\n
+_1 \r\n _* |-->_1\n_*`blockItem
+
+
+blockItem::
+\r\n |-->\n
+: |-->\n
+_1 |-->_1
+
+
+blockStmt::
+\r\n |-->\n
+: |-->\n
+_1 |-->_1
+
+
+functionStmt::
+FUNCTION _1 _2 \r\n \r\n _3 _* END FUNCTION |-->operation _1`VB2UML_2`VB2UML : OclAny\n pre: true post: true\n activity: var _1 : OclAny;\n_3`VB2UML\n    return _1;\n\n
+
+FUNCTION _1 _2 \r\n _3 _* END FUNCTION |-->operation _1`VB2UML_2`VB2UML : OclAny\n pre: true post: true\n activity: var _1`VB2UML : OclAny;\n_3`VB2UML\n    return _1;\n\n
+
+FUNCTION _1 _2 _3 \r\n \r\n _4 _* END FUNCTION |-->operation _1_2`VB2UML _3`VB2UML\n pre: true post: true\n activity: var _1 _3`VB2UML;\n_4`VB2UML\n    return _1;\n\n
+
+FUNCTION _1 _2 _3 \r\n _4 _* END FUNCTION |-->operation _1_2`VB2UML _3`VB2UML\n pre: true post: true\n activity: var _1 _3`VB2UML;\n_4`VB2UML\n    return _1;\n\n
+
+_1 FUNCTION _2 _3 _4 \r\n \r\n _5 _* END FUNCTION |-->operation _2`VB2UML_3`VB2UML _4`VB2UML\n pre: true post: true\n activity: var _2 _4`VB2UML;\n_5`VB2UML\n    return _2;\n\n
+
+_1 FUNCTION _2 _3 _4 \r\n _5 _* END FUNCTION |-->operation _2`VB2UML_3`VB2UML _4`VB2UML\n pre: true post: true\n activity: var _2 _4`VB2UML;\n_5`VB2UML\n    return _2;\n\n
+
+STATIC FUNCTION _1 _2 _3 \r\n \r\n _4 _* END FUNCTION |-->static operation _1_2`VB2UML _3`VB2UML\n pre: true post: true\n activity: var _1 _3`VB2UML;\n_4`VB2UML\n    return _1;\n\n
+
+STATIC FUNCTION _1 _2 _3 \r\n _4 _* END FUNCTION |-->static operation _1_2`VB2UML _3`VB2UML\n pre: true post: true\n activity: var _1 _3`VB2UML;\n_4`VB2UML\n    return _1;\n\n
+
+_1 STATIC FUNCTION _2 _3 _4 \r\n \r\n _5 _* END FUNCTION |-->static operation _2_3`VB2UML _4`VB2UML\n pre: true post: true\n activity: var _2 _3`VB2UML;\n_5`VB2UML\n    return _2;\n\n
+
+_1 STATIC FUNCTION _2 _3 _4 \r\n _5 _* END FUNCTION |-->static operation _2_3`VB2UML _4`VB2UML\n pre: true post: true\n activity: var _2 _3`VB2UML;\n_5`VB2UML\n    return _2;\n\n
+
+
+beepStmt::
+BEEP |-->
+
+chDirStmt::
+_* |-->
+
+chDriveStmt::
+_* |-->
+
+explicitCallStmt::
+_* |-->
+
+
+dateStmt::
+_* |-->
+
+
+declareStmt::
+_* |-->
+
+
+deftypeStmt::
+_* |-->
+
+deleteSettingStmt::
+_* |-->
+
+
+enumerationStmt::
+ENUM _* |-->
+
+
+eraseStmt::
+_* |-->
+
+errorStmt::
+_* |-->
+
+eventStmt::
+_* |-->
+
+
+mkdirStmt::
+_* |-->
+
+nameStmt::
+_* |-->
+
+randomizeStmt::
+_* |-->
+
+closeStmt::
+_* |-->
+
+inputStmt::
+_* |-->
+
+lineInputStmt::
+_* |-->
+
+loadStmt:: 
+_* |--> 
+
+lockStmt::
+_* |-->
+
+lsetStmt::
+_* |-->
+
+midStmt::
+_* |-->
+
+openStmt::
+_* |-->
+
+sendkeysStmt::
+_* |-->
+
+
+valueStmt::
+_* |-->
+
+variableStmt::
+GLOBAL _1 |-->  _1
+_* |-->
+
+variableListStmt::
+_1 |-->_1
+_1 , _* |-->_1_*`recurse
+
+variableSubStmt::
+_1 |-->  attribute _1 : OclAny;\n
+_1 ( ) |-->  attribute _1 : Sequence(OclAny);\n<action> _1 Sequence
+_1 _2 |-->  attribute _1 _2`typeHintDec;\n<when> _2 typeHint
+_1 _2 |-->  attribute _1 _2`VB2UML;\n
+_1 ( ) _2 |-->  attribute _1 _2`sequenceType;\n<action> _1 Sequence
+_1 _2 ( ) |-->  attribute _1 _2`sequenceType;\n<action> _1 Sequence  
+_1 ( _2 ) _3 |-->  attribute _1 : _2`subscriptsTypeLhs_3`asTypeType_2`subscriptsInitRhs ;\n<action> _1 Sequence
+_1 _2 ( _3 ) |-->  var _1 : _3`subscriptsTypeLhs _2`typeHintType _3`subscriptsInitRhs ;\n<action> _1 Sequence
+
+subscriptsTypeLhs::
+_1 |-->Sequence(
+_1 , _* |-->Sequence(_*`recurse
+
+subscriptsInitLhs::
+_1 |-->_1`subscriptInitLhs
+_1 , _* |-->_1`subscriptInitLhs_*`recurse
+
+subscriptsInitRhs::
+_1 |-->)
+_1 , _* |-->) _*`recurse
+
+subscriptInitLhs::
+_1 |-->Integer.subrange(1,_1)->collect( 
+_1 TO _2 |-->Integer.subrange(_1,_2)->collect(
+
+
+implicitCallStmt_InBlock::
+_* |-->
+
+implicitCallStmt_InStmt::
+_1 |-->
+
+letStmt::
+_* |-->
+
+putStmt::
+_* |-->
+
+setStmt::
+_* |-->
+
+propertyGetStmt::
+PROPERTY GET _1 _2 _3 \r\n _4 \r\n END PROPERTY |-->  operation get_1_2`VB2UML : _3`asTypeType\n  pre: true post: true\n  activity: var _1 : _3`asTypeType; _4`VB2UML  return _1;\n<when> _2 argList
+PROPERTY GET _1 _2 \r\n _3 \r\n END PROPERTY |-->  operation get_1_2`VB2UML : OclAny\n  pre: true post: true\n  activity: var _1 : _3`asTypeType; _3`VB2UML  return _1;\n<when> _2 argList
+_1 PROPERTY GET _2 _3 _4 \r\n _5 \r\n END PROPERTY |-->  operation get_2_3`VB2UML : _4`asTypeType\n  pre: true post: true\n  activity: var _2 : _4`asTypeType; _5`VB2UML  return _2;\n<when> _3 argList
+_1 PROPERTY GET _2 _3 \r\n _4 \r\n END PROPERTY |-->  operation get_2_3`VB2UML : OclAny\n  pre: true post: true\n  activity: var _2 : _4`asTypeType; _4`VB2UML  return _2;\n<when> _3 argList
+
+propertyLetStmt::
+PROPERTY LET _1 _2 \r\n _3 \r\n END PROPERTY |-->  operation set_1_2`VB2UML\n  pre: true post: true\n  activity: _3`VB2UML\n<when> _2 argList
+_1 PROPERTY LET _2 _3 \r\n _4 \r\n END PROPERTY |-->  operation set_2_3`VB2UML\n  pre: true post: true\n  activity: _4`VB2UML\n<when> _3 argList
+
+propertySetStmt::
+PROPERTY SET _1 _2 \r\n _3 \r\n END PROPERTY |-->  operation set_1_2`VB2UML\n  pre: true post: true\n  activity: _3`VB2UML\n<when> _2 argList
+_1 PROPERTY SET _2 _3 \r\n _4 \r\n END PROPERTY |-->  operation set_2_3`VB2UML\n  pre: true post: true\n  activity: _4`VB2UML\n<when> _3 argList
+
+
+unloadStmt::
+_* |-->
+
+widthStmt::
+_* |-->
+
+whileWendStmt::
+_* |-->
+
+withStmt::
+_* |-->
+ 
+writeStmt::
+_* |-->
+
+printStmt::
+_* |-->
+
+
+appActivateStmt::
+_* |-->
+
+doLoopStmt::
+_* |-->
+
+getStmt::
+_* |-->
+
+goSubStmt::
+_* |-->
+
+goToStmt::
+_* |-->
+
+implementsStmt::
+_* |--> 
+
+killStmt::
+_* |-->
+
+onErrorStmt::
+_* |-->
+
+onGoSubStmt::
+_* |-->
+
+onGoToStmt::
+_* |-->
+  
+redimStmt::
+_* |-->
+
+subStmt::
+SUB _1 \r\n \r\n _2 _* END SUB |-->  operation _1()\n pre: true post: true\n activity: _2`VB2UML\n\n
+SUB _1 _2 \r\n \r\n _3 _* END SUB |-->  operation _1_2`VB2UML\n pre: true post: true\n activity: _3`VB2UML\n\n
+
+SUB _1 \r\n _2 _* END SUB |-->  operation _1()\n pre: true post: true\n activity: _2`VB2UML\n\n
+SUB _1 _2 \r\n _3 _* END SUB |-->  operation _1_2`VB2UML\n pre: true post: true\n activity: _3`VB2UML\n\n
+
+SUB _1 \r\n END SUB |-->  operation _1()\n pre: true post: true;\n\n
+SUB _1 _2 \r\n END SUB |-->  operation _1_2`VB2UML\n pre: true post: true;\n\n
+
+STATIC SUB _1 \r\n \r\n _2 _* END SUB |-->static operation _1`VB2UML()\n pre: true post: true\n activity: _2`VB2UML\n\n
+STATIC SUB _1 _2 \r\n \r\n _3 _* END SUB |-->static operation _1`VB2UML_2`VB2UML\n pre: true post: true\n activity: _3`VB2UML\n\n
+
+STATIC SUB _1 \r\n _2 _* END SUB |-->static operation _1`VB2UML()\n pre: true post: true\n activity: _2`VB2UML\n\n
+STATIC SUB _1 _2 \r\n _3 _* END SUB |-->static operation _1`VB2UML_2`VB2UML\n pre: true post: true\n activity: _3`VB2UML\n\n
+
+_1 SUB _2 \r\n \r\n _3 _* END SUB |-->  operation _2()\n pre: true post: true\n activity: _3`VB2UML\n\n
+_1 SUB _2 _3 \r\n \r\n _4 _* END SUB |-->  operation _2_3`VB2UML\n pre: true post: true\n activity: _4`VB2UML\n\n
+
+_1 SUB _2 \r\n _3 _* END SUB |-->  operation _2()\n pre: true post: true\n activity: _3`VB2UML\n\n
+_1 SUB _2 _3 \r\n _4 _* END SUB |-->  operation _2_3`VB2UML\n pre: true post: true\n activity: _4`VB2UML\n\n
+
+
+stopStmt::
+STOP |-->
+
+timeStmt::
+_* |-->
+
+typeOfStmt::
+_* |-->
+
+ifThenElseStmt::
+_* |-->
+
+ifBlockStmt::
+_* |-->
+
+ifBlockStmt::
+_* |-->
+
+ifElseBlockStmt::
+_* |-->
+
+ifConditionStmt::
+_* |-->
+
+
+endStmt::
+_* |-->
+
+exitStmt::
+_* |-->
+
+filecopyStmt::
+_* |-->
+
+forEachStmt::
+_* |-->
+
+forNextStmt::
+_* |-->
+
+lineLabel::
+_* |-->
+
+returnStmt::
+RETURN |-->
+
+resumeStmt::
+_* |-->
+
+raiseEventStmt::
+RAISEEVENT _* |-->
+
+
+resetStmt::
+RESET |-->
+
+rmdirStmt::
+_* |-->
+
+rsetStmt::
+_* |-->
+
+saveSettingStmt::
+_* |-->
+
+savepictureStmt::
+_* |-->
+
+seekStmt::
+_* |-->
+
+selectCaseStmt::
+_* |-->
+
+setattrStmt::
+_* |-->
+
+typeStmt::
+_* |-->
+
+unlockStmt::
+_* |-->
+
+
+
+sequenceType::
+% |-->: Sequence(int)
+$ |-->: Sequence(String)
+& |-->: Sequence(int)
+^ |-->: Sequence(long)
+# |-->: Sequence(double)
+! |-->: Sequence(double)
+@ |-->: Sequence(double)
+AS _1 |-->: Sequence(_1)
+AS NEW _1 |-->: Sequence(_1)
+AS _1 _2 |-->: Sequence(_1)
+
+
+asTypeType::
+AS _1 |-->_1`VB2UML
+AS NEW _1 |-->_1`VB2UML
+AS _1 _2 |-->_1`VB2UML
+
+typeHintDec::
+% |--> : int
+$ |--> : String
+& |--> : int
+^ |--> : long
+# |--> : double
+! |--> : double
+@ |--> : double
+_1 |--> : OclAny
+
+typeHintType::
+% |-->int
+$ |-->String
+& |-->int
+^ |-->long
+# |-->double
+! |-->double
+@ |-->double
+_1 |-->OclAny
+
+
+typeHint::
+% |-->
+$ |-->
+& |-->
+# |-->
+^ |-->
+! |-->
+@ |-->
+_1 |-->
+
+
+ambiguousIdentifier::
+Nothing |-->null
+True |-->true
+False |-->false
+_1 |-->_1
+_* |-->_*
+
+
+ambiguousKeyword::
+_1 |-->_1
+
+certainIdentifier::
+_1 |-->_1
+_* |-->_*
+
+literal::
+True |-->true
+False |-->false
+TRUE |-->true
+FALSE |-->false
+Nothing |-->null
+Null |-->null
+NOTHING |-->null
+NULL |-->null
+#0 |-->$0
+#1 |-->$1
+#2 |-->$2
+#3 |-->$3
+#4 |-->$4
+#5 |-->$5
+#6 |-->$6
+#7 |-->$7
+#8 |-->$8
+#9 |-->$9
+#10 |-->$10
+#11 |-->$11
+#12 |-->$12
+#13 |-->$13
+#14 |-->$14
+#15 |-->$15
+_1 |-->OclDate.newOclDate("_1")<when> _1`first #, _1`last #
+
+_1 |-->_1
+_1 _* |-->_1 _*`recurse
+
+
+
+integerLiteral::
+- _1 |-->-_1
++ _1 |-->_1
+_1 |-->_1
+
+positive::
+- _1 |-->false
++ _1 |-->true
+_1 |-->_1`positive<when> _1 literal
+_1 |-->_1`positive<when> _1 integerLiteral
+_1 |-->_1`positive<when> _1 doubleLiteral
+_1 |-->_1`positive<when> _1 octalLiteral
+_1 |-->true
+
+octalLiteral::
+- _1 |-->-_1`tailtail
++ _1 |-->_1`tailtail
+_1 |-->_1`tailtail
+
+doubleLiteral::
+- _1 |-->-_1
++ _1 |-->_1
+_1 |-->0_1<when> _1`first .
+_1 |-->_1
+
+
+
+

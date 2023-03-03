@@ -1,0 +1,9 @@
+termtest::
+_1 |-->"has arity 3"<when> _1 3ary
+_1 |-->"has arity 2"<when> _1 2ary
+_1 |-->"has arity 4"<when> _1 4ary
+_1 |-->"has arity 1"<when> _1 1ary
+
+term::
+_1 |-->_1
+

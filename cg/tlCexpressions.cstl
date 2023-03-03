@@ -1,0 +1,39 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OclUnaryExpression::
+_1 _2  |-->_1`func0 _2
+
+OclBinaryExpression::
+_1 _2 _3  |-->_1 _2 _3
+
+func0::
+- |-->-
+not |-->!
+
+OclBasicExpression::
+_1 . _3 ( )  |-->_1._3()
+_1 . _3  |-->_1._3
+null  |-->NULL<when> _1 Object
+_1  |-->_1<when> _1 Integer
+_1  |-->_1<when> _1 Real
+_1  |-->_1<when> _1 Boolean
+_1  |-->_1<when> _1 String
+_1  |-->_1
+
+
+

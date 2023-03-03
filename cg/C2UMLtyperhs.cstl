@@ -1,0 +1,98 @@
+declarationSpecifiers2::
+_* |-->_*`last
+_1 _2 |-->_2
+_1 |-->_1
+
+declarationSpecifiers::
+_* |-->_*`last
+_1 _2 |-->_2
+_1 |-->_1
+
+declarationSpecifier::
+_1 |-->_1
+
+storageClassSpecifier::
+_1 |-->
+
+typeQualifier::
+_1 |-->
+
+typeSpecifier::
+void |-->
+int |-->
+char |-->
+short |-->
+long |-->
+float |-->
+double |-->
+_Bool |-->
+signed |-->
+unsigned |-->
+char *** |-->
+char ** |-->
+char * |-->
+FILE *** |-->
+FILE ** |-->
+FILE * |-->
+_1 *** |-->
+_1 ** |-->
+_1 * |-->
+_1 _2 |-->
+_1 |-->
+
+
+structDeclaratorList::
+_1 |-->_1
+_* |-->_*
+
+structDeclarator::
+_1 |-->_1
+
+
+declarator::
+*** _2 |-->)))_2
+** _2 |-->))_2
+* _2 |-->)_2
+_1 |-->_1
+
+
+directDeclarator::
+( _1 ) |-->_1
+_1 [ _2 ] |-->)_1
+_1 [ ] |-->)_1
+_1 ( _2 ) |-->_2_1
+_1 ( ) |-->)_1
+_1 |-->
+
+
+typedefName::
+_1 |-->
+
+
+initDeclaratorList::
+_* |-->_*`first
+_1 |-->_1
+
+
+initDeclarator::
+_1 = _2 |-->_1
+_1 |-->_1
+
+
+initializer::
+_1 |-->
+
+
+parameterTypeList::
+_1 , ... |-->)_1
+_1 |-->_1
+
+parameterList::
+_1 , _2 , _3 |-->_3_2_1
+_1 , _2 |-->_2_1
+_1 |-->_1
+
+parameterDeclaration::
+_1 _2 |-->)_1
+_1 |-->)_1
+

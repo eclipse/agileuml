@@ -1,0 +1,636 @@
+/*                                                        */
+/* Main code-generation file for Mobile apps              */
+/* Also uses mobileMain.cstl,                             */
+/* mobileProtocol.cstl, mobileModelFacade.cstl,           */
+/* mobileCopyOperation.cstl. Depends on Ocl.swift         */
+/*                                                        */
+/* Please note that newlines in output are written        */
+/* as \n                                                  */
+
+
+
+model::
+package _1 { _* } _3 |-->import Foundation\nimport Darwin\n\n\n\n\n\n_*\n\n 
+
+classifier::
+_1 |-->_1
+
+classBody::
+_* |-->_*
+
+classBodyElement::
+_1 |-->_1
+
+
+stereotype::
+stereotype _1 ; |-->  /* _1 */\n 
+
+
+enumeration::
+enumeration _1 { _* } |-->enum _1 : String, CaseIterable {\n_*\n  static func defaultInstance_1() -> _1\n  { return _1.allCases[0] }\n}\n\n<action> _1 Enumeration
+
+ 
+enumerationLiteral::
+literal _1 |-->  case _1 = "_1"\n<action> _1 enumerationLiteral
+ 
+
+datatype::
+datatype _1 = _2 |-->typealias _1 _2
+
+
+swiftType::
+_1 |-->Int<when> _1 Integer
+_1 |-->Double<when> _1 Real
+_1 |-->Bool<when> _1 Boolean
+_1 |-->[Any]<when> _1 Sequence
+_1 |-->Set<Any><when> _1 Set
+_1 |-->Dictionary<String,Any><when> _1 Map
+_1 |-->String<when> _1 String
+_1 |-->Any
+
+
+
+type::
+int |-->Int
+long |-->Int64
+boolean |-->Bool
+double |-->Double
+
+OclAny |-->Any
+
+OclException |-->Error
+
+void |-->Void
+
+Sequence |-->[Any]
+Set |-->Set<Any>
+Map |-->Dictionary<String,Any>
+
+Sequence ( _1 ) |-->[_1]
+Set ( _1 ) |-->Set<_1>
+
+Map ( _1 , _2 ) |-->Dictionary<_1,_2>
+Function ( _1 , _2 ) |-->(_1)->_2
+
+_1 |-->_1`alias<when> _1 datatype
+
+_1 |-->_1
+
+
+expression::
+_1 |-->_1
+
+
+identifier::
+_1 |-->_1
+
+
+basicExpression::
+null |-->nil
+
+self |-->self
+
+Math_NaN |-->Double.nan
+Math_PINFINITY |-->Double.infinity
+Math_NINFINITY |-->-Double.infinity
+
+_1 |-->._1<when> _1 enumerationLiteral
+
+_1 . allInstances |-->_1_allInstances
+
+
+Integer.subrange ( _1 ) |-->((_1`first)...(_1`last))
+Integer.Sum ( _1 ) |-->Ocl.sum(s: ((_1`first)...(_1`third)).map({_1`fifth in _1`last}))
+Integer.Prd ( _1 ) |-->Ocl.prd(s: ((_1`first)...(_1`third)).map({_1`fifth in _1`last}))
+
+
+
+_1 [ _2 ] |-->Ocl.at(str: _1, ind: _2)<when> _1 String
+_1 [ _2 ] |-->(_1)[_2 - 1]<when> _1 Sequence
+_1 [ _2 ] |-->_1.getByPK(index: _2)!<when> _1 Class
+_1 [ _2 ] |-->_1(rawValue: _2)!<when> _1 Enumeration
+_1 [ _2 ] |-->(_1)[_2]
+
+displayString ( _1 ) |-->displayString(s: _1)
+displayint ( _1 ) |-->displayint(s: _1)
+displaylong ( _1 ) |-->displaylong(s: _1)
+displaydouble ( _1 ) |-->displaydouble(s: _1)
+displayboolean ( _1 ) |-->displayboolean(s: _1)
+
+_1 . _2 ( _3 ) |-->_1._2(_3)
+_1 . _2 |-->_1._2
+_1 ( _2 ) |-->_1(_2)
+
+( _1 ) |-->(_1)
+
+_1 |-->_1
+
+
+lambdaExpression::
+lambda _1 : _2 in _3 |-->{ (_1 : _2) -> _3`type in _3 }
+
+
+letExpression::
+let _1 : _2 = _3 in _4 |-->{ (_1 : _2) -> _4`type in _4 }(_3)
+
+
+factorExpression::
+- _1 |-->-_1
++ _1 |-->+_1
+? _1 |-->Ocl.createRef(p: &_1)
+! _1 |-->_1[0]
+
+_1 * _2 |-->Double(_1) * _2<when> _1 Integer, _2 Real
+_1 * _2 |-->_1 * Double(_2)<when> _1 Real, _2 Integer
+_1 * _2 |--> _1 * _2 
+
+_1 / _2 |-->Double(_1)/_2<when> _1 Integer, _2 Real
+_1 / _2 |-->_1/Double(_2)<when> _1 Real, _2 Integer
+_1 / _2 |-->_1 / _2 
+_1 mod _2 |-->_1 % _2
+_1 div _2 |-->Int(_1 / _2)
+_1 |-->_1
+
+
+factor2Expression::
+_1 ->log() |-->log(_: _1)
+_1 ->log10() |-->log10(_: _1)
+_1 ->exp() |-->exp(_: _1)
+_1 ->sin() |-->sin(_: _1)
+_1 ->cos() |-->cos(_: _1)
+_1 ->tan() |-->tan(_: _1)
+_1 ->asin() |-->asin(_: _1)
+_1 ->acos() |-->acos(_: _1)
+_1 ->atan() |-->atan(_: _1)
+_1 ->sqr() |-->(_1)*(_1)
+_1 ->sqrt() |-->sqrt(_: _1)
+_1 ->cbrt() |-->cbrt(_: _1)
+_1 ->floor() |-->Int(floor(_: _1))
+_1 ->ceil() |-->Int(ceil(_: _1))
+_1 ->round() |-->Int(round(_: _1))
+_1 ->abs() |-->abs(_: _1)
+
+_1 ->size() |-->_1.count
+
+_1 ->toInteger() |-->Ocl.toInteger(str: _1)
+_1 ->toLong() |-->Ocl.toLong(str: _1)
+_1 ->toReal() |-->Ocl.toReal(str: _1)
+_1 ->toBoolean() |-->(String(_1).lowercased() == "true")
+
+_1 ->toUpper() |-->_1.uppercased()
+_1 ->toLower() |-->_1.lowercased()
+_1 ->toUpperCase() |-->_1.uppercased()
+_1 ->toLowerCase() |-->_1.lowercased()
+_1 ->trim() |-->Ocl.trim(str: _1)
+_1 ->characters() |-->Ocl.characters(str: _1)
+_1 ->byte2char() |-->Ocl.byte2char(n: _1)
+_1 ->char2byte() |-->Ocl.char2byte(ch: _1)
+
+_1 ->oclIsUndefined() |-->(_1 == nil)
+_1 ->oclIsInvalid() |-->Double(_1).isNaN
+
+_1 ->oclType() |-->OclType.getByPKOclType(index: String(describing: type(of: _1)))!<when> _1 object
+_1 ->oclType() |-->OclType.getByPKOclType(index: "_1`typename")
+
+
+_1 ->allInstances() |-->_1_allInstances
+
+_1 ->first() |-->Ocl.at(str: _1, ind: 1)<when>_1 String
+_1 ->first() |-->_1[0]
+
+_1 ->last() |-->_1[_1.count - 1]
+_1 ->tail() |-->Ocl.tail(s: _1)
+_1 ->front() |-->Ocl.front(s: _1)
+
+_1 ->reverse() |-->Ocl.reverseString(str: _1)<when> _1 String
+_1 ->reverse() |-->Ocl.reverse(s: _1)
+
+_1 ->max() |-->Ocl.max(s: _1)
+_1 ->min() |-->Ocl.min(s: _1)
+_1 ->sum() |-->Ocl.sum(s: _1)
+_1 ->prd() |-->Ocl.prd(s: _1)
+_1 ->sort() |-->_1.sorted()
+_1 ->any() |-->Ocl.any(s: _1)
+_1 ->isEmpty() |-->(_1.count == 0)
+_1 ->notEmpty() |-->(_1.count > 0)
+_1 ->asSet() |-->Ocl.toSet(s: _1)
+_1 ->asSequence() |-->Ocl.toSequence(s: _1)
+_1 ->asOrderedSet() |-->Ocl.toOrderedSet(s: _1)
+
+_1 ->flatten() |-->Ocl.unionAll(s: _1)
+_1 ->keys() |-->Ocl.mapKeys(m: _1)
+_1 ->values() |-->Ocl.mapRange(m: _1)
+
+
+_1 ->display() |-->    print(String(describing: _1) + "\n")
+_1 ->isDeleted() |-->    _1 = nil
+
+
+_1 ->unionAll() |-->Ocl.unionAll(s: _1)
+_1 ->intersectAll() |-->Ocl.intersectAll(s: _1)
+_1 ->concatenateAll() |-->Ocl.concatenateAll(s: _1)
+
+_1 ->copy() |-->_1.copy()<when> _1 object
+_1 ->copy() |-->_1
+
+
+_1 ->subrange ( _2 , _3 ) |-->Ocl.stringSubrange(str: _1, st: _2, en: _3)<when> _1 String
+_1 ->subrange ( _2 , _3 ) |-->Ocl.subrange(s: _1, st: _2, en: _3)
+
+_1 ->replace ( _2 , _3 ) |-->Ocl.replace(str: _1, delim: _2, s2: _3)
+_1 ->replaceAll ( _2 , _3 ) |-->Ocl.replaceAll(str: _1, pattern: _2, rep: _3)
+_1 ->replaceAllMatches ( _2 , _3 ) |-->Ocl.replaceAll(str: _1, pattern: _2, rep: _3)
+_1 ->replaceFirstMatch ( _2 , _3 ) |-->Ocl.replaceFirstMatch(str: _1, pattern: _2, rep: _3)
+
+_1 ->insertAt ( _2 , _3 ) |-->Ocl.insertAtString(s1: _1, s2: _3, ind: _2)<when> _1 String
+_1 ->insertAt ( _2 , _3 ) |-->Ocl.insertAt(s1: _1, s2: _3, ind: _2)
+_1 ->insertInto ( _2 , _3 ) |-->Ocl.insertInto(s1: _1, s2: _3, ind: _2)
+_1 ->setAtString ( _2 , _3 ) |-->Ocl.setAtString(str: _1, ind: _2, value: _3)<when> _1 String
+_1 ->setAt ( _2 , _3 ) |-->Ocl.setAt(sq: _1, ind: _2, value: _3)
+
+_1 ->pow ( _2 ) |-->pow(_: Double(_1), _: Double(_2))
+_1 ->gcd ( _2 ) |-->Ocl.gcd(_: _1, _: _2)
+
+_1 ->union ( _2 ) |-->_1.union(_2)<when> _1 Set
+_1 ->union ( _2 ) |-->Ocl.unionMap(m1: _1, m2: _2)<when> _1 Map
+_1 ->union ( _2 ) |-->_1 + _2<when> _1 Sequence
+
+_1 ->unionAll ( _2 | _3 ) |-->Ocl.unionAll(s: _1, f: { _2 in _3 })
+
+_1 ->intersection ( _2 ) |-->_1.intersection(_2)<when> _1 Set
+_1 ->intersection ( _2 ) |-->Ocl.intersectionSequence(s1: _1, s2: _2)<when> _1 Sequence
+_1 ->intersection ( _2 ) |-->Ocl.intersectionMap(m1: _1, m2: _2)<when> _1 Map
+
+_1 ->intersectAll ( _2 | _3 ) |-->Ocl.intersectAll(s: _1, f: { _2 in _3 })
+
+_1 ->count ( _2 ) |-->Ocl.count(s: _1, x: _2)
+_1 ->indexOf ( _2 ) |-->Ocl.indexOf(str: _1, ch: _2)<when> _1 String
+_1 ->indexOf ( _2 ) |-->Ocl.indexOfSubSequence(sq: _1, sq1: _2)<when> _1 Sequence, _2 Sequence
+_1 ->indexOf ( _2 ) |-->Ocl.indexOfSequence(sq: _1, x: _2)<when> _1 Sequence
+
+_1 ->subrange ( _2 ) |-->Ocl.stringSubrange(str: _1, st: _2, en: _1.count)<when> _1 String
+_1 ->subrange ( _2 ) |-->Ocl.subrange(s: _1, st: _2, en: _1.count)
+
+_1 ->lastIndexOf ( _2 ) |-->Ocl.lastIndexOf(s: _1, d: _2)<when> _1 String
+_1 ->lastIndexOf ( _2 ) |-->Ocl.lastIndexOfSubSequence(sq: _1, sq1: _2)<when> _1 Sequence, _2 Sequence
+_1 ->lastIndexOf ( _2 ) |-->Ocl.lastIndexOfSequence(sq: _1, x: _2)<when> _1 Sequence
+
+_1 ->equalsIgnoreCase ( _2 ) |-->Ocl.equalsIgnoreCase(s1: _1, s2: _2)
+_1 ->split ( _2 ) |-->Ocl.split(str: _1, pattern: _2)
+
+_1 ->apply ( _2 ) |-->(_1)(_2)
+
+_1 ->sequenceRange ( _2 ) |-->Ocl.sequenceRange(arr: _1, n: _2)
+
+_1 ->at ( _2 ) |-->Ocl.at(str: _1, ind: _2)<when> _1 String
+_1 ->at ( _2 ) |-->_1[_2 - 1]<when> _1 Sequence
+_1 ->at ( _2 ) |-->_1[_2]
+
+_1 ->select ( _2 | _3 ) |-->Ocl.selectMap(m: _1, f: { _2 in _3 })<when> _1 Map
+_1 ->reject ( _2 | _3 ) |-->Ocl.rejectMap(m: _1, f: { _2 in _3 })<when> _1 Map
+_1 ->collect ( _2 | _3 ) |-->Ocl.collectMap(m: _1, f: { _2 in _3 })<when> _1 Map
+
+
+_1 ->select ( _2 | _3 ) |-->Ocl.select(s: _1, f: { _2 in _3 })
+_1 ->reject ( _2 | _3 ) |-->Ocl.reject(s: _1, f: { _2 in _3 })
+_1 ->collect ( _2 | _3 ) |-->_1.map({_2 in _3})
+
+_1 ->sortedBy ( _2 | _3 ) |-->Ocl.sortedBy(s: _1, f: { _2 in  _3 })
+
+_1 ->iterate ( _2 ; _3 = _4 | _5 ) |-->Ocl.iterate(s: _1, ini: _4, f: { _2 in { (_3 : _4`swiftType) in (_5) } } )
+
+_1 ->selectMaximals ( _2 | _3 ) |-->Ocl.selectMaximals(s: _1, f: { _2 in _3 })
+_1 ->selectMinimals ( _2 | _3 ) |-->Ocl.selectMinimals(s: _1, f: { _2 in _3 })
+
+_1 ->forAll ( _2 | _3 ) |-->Ocl.forAll(s: _1_allInstances, f: { _2 in _3 })<when> _1 classId
+_1 ->forAll ( _2 | _3 ) |-->Ocl.forAll(s: _1, f: { _2 in _3 })<when> _1 not classId
+
+_1 ->exists ( _2 | _3 ) |-->Ocl.exists(s: _1_allInstances, f: { _2 in _3 })<when> _1 classId
+_1 ->exists ( _2 | _3 ) |-->Ocl.exists(s: _1, f: { _2 in _3 })<when> _1 not classId
+
+_1 ->exists1 ( _2 | _3 ) |-->Ocl.exists1(s: _1_allInstances, f: { _2 in _3 })<when> _1 classId
+_1 ->exists1 ( _2 | _3 ) |-->Ocl.exists1(s: _1, f: { _2 in _3 })<when> _1 not classId
+
+_1 ->isUnique ( _2 | _3 ) |-->Ocl.isUnique(s: _1, f: { _2 in _3 })
+
+_1 ->any ( _2 | _3 ) |-->Ocl.any(s: _1_allInstances, f: { _2 in _3 })<when> _1 classId
+_1 ->any ( _2 | _3 ) |-->Ocl.any(s: _1, f: { _2 in _3 })<when> _1 not classId
+
+_1 ->compareTo ( _2 ) |-->((_1 < _2) ? -1 : ((_1 > _2) ? 1 : 0))
+
+_1 ->includes ( _2 ) |-->_1.contains(_2)<when> _1 Set
+_1 ->includes ( _2 ) |-->Ocl.containsSequence(s: _1, x: _2)<when> _1 Sequence
+
+_1 ->includesAll ( _2 ) |-->_2.isSubset(of: _1)<when> _1 Set
+_1 ->includesAll ( _2 ) |-->Ocl.includesAllSequence(s1: _1, s2: _2)<when> _1 Sequence
+
+_1 ->excludes ( _2 ) |-->!(_1.contains(_2))<when> _1 Set
+_1 ->excludes ( _2 ) |-->!(Ocl.containsSequence(s: _1, x: _2))<when> _1 Sequence
+
+_1 ->excludesAll ( _2 ) |-->_1.isDisjoint(with: _2)<when> _1 Set
+_1 ->excludesAll ( _2 ) |-->(Ocl.intersectionSequence(s1: _1, s2: _2).count == 0)<when> _1 Sequence
+
+_1 ->including ( _2 ) |-->_1.union([_2])<when> _1 Set
+_1 ->including ( _2 ) |-->(_1 + [_2])<when> _1 Sequence
+
+_1 ->prepend ( _2 ) |-->Ocl.prepend(s: _1, x: _2)
+_1 ->append ( _2 ) |-->Ocl.includingSequence(s: _1, x: _2)
+
+_1 ->excluding ( _2 ) |-->_1.subtracting([_2])<when> _1 Set
+_1 ->excluding ( _2 ) |-->Ocl.excludingSequence(s: _1, x: _2)<when> _1 Sequence
+_1 ->excludingAt ( _2 ) |-->Ocl.removeAtString(str: _1, ind: _2)<when> _1 String
+_1 ->excludingAt ( _2 ) |-->Ocl.removeAt(sq: _1, ind: _2)
+_1 ->excludingFirst ( _2 ) |-->Ocl.removeFirst(sq: _1, x: _2)
+
+_1 ->hasPrefix ( _2 ) |-->_1.hasPrefix(_2)
+_1 ->hasSuffix ( _2 ) |-->_1.hasSuffix(_2)
+_1 ->after ( _2 ) |-->Ocl.after(str: _1, sep: _2)
+_1 ->before ( _2 ) |-->Ocl.before(str: _1, sep: _2)
+_1 ->restrict ( _2 ) |-->Ocl.restrict(m: _1, ks: _2)
+_1 ->antirestrict ( _2 ) |-->Ocl.antirestrict(m: _1, ks: _2)
+
+_1 ->isMatch ( _2 ) |-->Ocl.isMatch(str: _1, pattern: _2)
+_1 ->hasMatch ( _2 ) |-->Ocl.hasMatch(str: _1, pattern: _2)
+_1 ->allMatches ( _2 ) |-->Ocl.allMatches(str: _1, pattern: _2)
+_1 ->firstMatch ( _2 ) |-->Ocl.firstMatch(str: _1, pattern: _2)
+
+_1 ->oclIsKindOf ( _2 ) |-->(_1 is _2)
+_1 ->oclIsTypeOf ( _2 ) |-->("_2" == String(describing: type(of: _1 as Any)))
+
+_1 ->oclAsType ( _2 ) |-->Int(_1)<when> _1 numeric, _2 int
+_1 ->oclAsType ( _2 ) |-->_1<when> _1 integer, _2 int
+_1 ->oclAsType ( _2 ) |-->(_1 as! Int)<when> _2 int
+_1 ->oclAsType ( _2 ) |-->Int64(_1)<when> _1 numeric, _2 long
+_1 ->oclAsType ( _2 ) |-->(_1 as! Int64)<when> _2 long
+_1 ->oclAsType ( _2 ) |-->Double(_1)<when> _1 numeric, _2 double
+_1 ->oclAsType ( _2 ) |-->(_1 as! Double)<when> _2 double
+_1 ->oclAsType ( _2 ) |-->Ocl.toSequence(s: _1)<when> _2 Sequence
+_1 ->oclAsType ( _2 ) |-->Ocl.toSet(s: _1)<when> _2 Set
+_1 ->oclAsType ( _2 ) |-->_1<when> _2 Map
+_1 ->oclAsType ( _2 ) |-->(_1 as! _2)
+_1 |-->_1
+
+
+logicalExpression::
+_1 => _2 |-->((_1)?_2:true)
+_1 implies _2 |-->((_1)?_2:true)
+_1 & _2 |-->_1 && _2
+_1 and _2 |-->_1 && _2 
+_1 or _2 |-->_1 || _2 
+_1 xor _2 |-->((_1 || _2) && !(_1 && _2))
+not _1 |-->!(_1)
+_1 |-->_1
+
+
+equalityExpression::
+_1 = _2 |-->_1 === _2<when> _1 object
+_1 = _2 |-->_1 == _2<when> _1 not object
+
+_1 < _2 |-->_1 < _2
+_1 > _2 |-->_1 > _2
+
+_1 <> _2 |-->_1 !== _2<when> _1 object
+_1 <> _2 |-->_1 != _2<when> _1 not object
+
+_1 <= _2 |-->_1 <= _2
+_1 >= _2 |-->_1 >= _2
+
+
+_1 <>= _2 |-->_1 === _2
+
+_1 : _2 |-->_2.contains(_1)<when> _1 Set
+_1 : _2 |-->Ocl.containsSequence(s: _2, x: _1)<when> _2 Sequence
+
+_1 <: _2 |-->_1.isSubset(of: _2)<when> _1 Set
+_1 <: _2 |-->Ocl.includesAllSequence(s1: _2, s2: _1)<when> _1 Sequence
+
+_1 /: _2 |-->!(_2.contains(_1))<when> _2 Set
+_1 /: _2 |-->!(Ocl.containsSequence(s: _2, x: _1))<when> _2 Sequence
+_1 |-->_1
+
+
+additiveExpression::
+_1 + _2 |-->Ocl.tailRef(p: _1, n: _2)<when> _1 Ref
+
+_1 + _2 |-->_1 + String(_2)<when> _1 String, _2 numeric
+_1 + _2 |-->String(_1) + _2<when> _1 numeric, _2 String
+_1 + _2 |-->_1 + String(describing: _2)<when> _1 String, _2 not String
+_1 + _2 |-->String(describing: _1) + _2<when> _1 not String, _2 String
+_1 + _2 |-->_1 + _2
+
+_1 - _2 |-->Double(_1) - _2<when> _1 integer, _2 double
+_1 - _2 |-->_1 - Double(_2)<when> _1 double, _2 integer
+_1 - _2 |-->_1 - _2<when> _1 numeric, _2 numeric
+_1 - _2 |-->Ocl.stringSubtract(s1: _1, s2: _2)<when> _1 String, _2 String
+_1 - _2 |-->_1.subtracting(_2)<when> _1 Set
+_1 - _2 |-->Ocl.sequenceSubtract(s1: _1, s2: _2)<when> _1 Sequence
+_1 - _2 |-->Ocl.excludeAllMap(m1: _1, m2: _2)<when> _1 Map
+_1 - _2 |-->_1 - _2
+
+_1 .. _2 |-->((_1)...(_2))
+
+_1 |-> _2 |-->_1:_2
+
+_1 ^ _2 |-->_1 + _2
+
+_1 |-->_1
+
+
+
+
+
+setExpression::
+Set { } |-->[]
+Set { _1 } |-->[_1] 
+Sequence { } |-->[]
+Sequence { _1 } |-->[_1]
+Map { } |-->[:]
+Map { _1 } |-->[_1]
+Ref ( _1 ) { _2 } |-->Ocl.createArray(n: _2, value: _1.defaultInstance_1())<when> _1 Class
+Ref ( _1 ) { _2 } |-->Ocl.createArray(n: _2, value: _1`defaultValue)
+Ref { } |-->UnsafeMutableBufferPointer<Any>(_empty: ())
+_1 |-->_1
+
+
+conditionalExpression::
+if _1 then _2 else _3 endif |-->((_1) ? _2 : _3)
+
+
+
+interfaceDefinition::
+interface _1 { } |-->protocol _1\n{ }\n 
+
+interface _1 { _2 } |-->protocol _1\n{ _2`mobileProtocols }
+
+interface _1 extends _2 { } |-->protocol _1\n{ }\n 
+
+interface _1 extends _2 { _3 } |-->protocol _1\n{ _3`mobileProtocols }
+ 
+
+classDefinition::
+class _1 { _2 }   |-->class _1 : Runnable\n{ private static var instance : _1? = nil\n\n  init() { }\n\n  init(copyFrom: _1) {\n_2`mobileCopyOperation  }\n\n  func copy() -> _1\n  { let res : _1 = _1(copyFrom: self)\n    add_1(instance: res)\n    return res\n  }\n\n  static func defaultInstance_1() -> _1\n  { if (instance == nil)\n    { instance = create_1() }\n    return instance!\n  }\n\n  deinit\n  { kill_1(obj: self) }\n\n_2}\n\n<when> _1 active
+
+class _1 { _2 }   |-->class _1\n{ private static var instance : _1? = nil\n\n  init() { }\n\n  init(copyFrom: _1) {\n_2`mobileCopyOperation  }\n\n  func copy() -> _1\n  { let res : _1 = _1(copyFrom: self)\n    add_1(instance: res)\n    return res\n  }\n\n  static func defaultInstance_1() -> _1\n  { if (instance == nil)\n    { instance = create_1() }\n    return instance!\n  }\n\n  deinit\n  { kill_1(obj: self) }\n\n  static var _index : Dictionary<String,_1> = [String:_1]()\n\n  static func getByPK(index : String) -> _1?\n  { return _index[index] }\n\n  static func createByPK(key : String) -> _1\n  { var result : _1? = _1.getByPK(index: key)\n    if result != nil { return result! } \n    result = _1()\n    _1_allInstances.append(result!)\n    _1._index[key] = result!\n    result!.id = key\n    return result!\n  }\n\n  static func killByPK_1(key : String)\n  { _1._index[key] = nil\n    _1_allInstances.removeAll(where: { $0.id == key })\n  }\n\n_2\n}\n\n<action> _1 Class
+ 
+
+class _1 extends _2 { _3 }   |-->class _1 : _2\n{ private static var instance : _1? = nil\n\n  override init()\n  { super.init() }\n\n  init(copyFrom: _1) {\n    super.init(copyFrom: copyFrom)\n_3`mobileCopyOperation  }\n\n  override func copy() -> _1\n  { let res : _1 = _1(copyFrom: self)\n    add_1(instance: res)\n    return res\n  }\n\n  static func defaultInstance_1() -> _1\n  { if (instance == nil)\n    { instance = create_1() }\n    return instance!\n  }\n\n  deinit\n  { kill_1(obj: self) }\n\n_3}\n\n<action> _1 Class
+
+
+abstract class _1 { _2 }   |-->class _1\n{ init() { }\n\n  init(copyFrom: _1) {\n_2`mobileCopyOperation  }\n\n  func copy() -> _1\n  { let res : _1 = _1(copyFrom: self)\n    add_1(instance: res)\n    return res\n  }\n\n  deinit\n  { kill_1(obj: self) }\n\n_2}\n\n
+
+abstract class _1 extends _2 { _3 }   |-->class _1 : _2\n{ override init() { super.init() }\n\n  init(copyFrom: _1) {\n    super.init(copyFrom: copyFrom)\n_3`mobileCopyOperation  }\n\n  override func copy() -> _1\n  { let res : _1 = _1(copyFrom: self)\n    add_1(instance: res)\n    return res\n  }\n\n_3}\n\n
+
+
+class _1 implements _2 { _3 }   |-->class _1 : _2 { \n   private static var instance : _1? = nil\n\n  init() { }\n\n  init(copyFrom: _1) {\n_3`mobileCopyOperation  }\n\n  func copy() -> _1\n  { let res : _1 = _1(copyFrom: self)\n    add_1(instance: res)\n    return res\n  }\n\n  static func defaultInstance_1() -> _1\n  { if (instance == nil)\n    { instance = create_1() }\n    return instance!\n  }\n\n_3}\n\n
+ 
+
+class _1 extends _2 implements _3 { _4 }   |-->class _1 : _2, _3\n{ private static var instance : _1? = nil\n\n  override init()\n  { super.init() }\n\n  init(copyFrom: _1) {\n    super.init(copyFrom: copyFrom)\n_4`mobileCopyOperation  }\n\n  override func copy() -> _1\n  { let res : _1 = _1(copyFrom: self)\n    add_1(instance: res)\n    return res\n  }\n\n  static func defaultInstance_1() -> _1\n  { if (instance == nil)\n    { instance = create_1() }\n    return instance!\n  }\n\n_4}\n\n
+
+
+abstract class _1 implements _2 { _3 }   |-->class _1 : _2\n{ init() { }\n\n  init(copyFrom: _1) {\n_3`mobileCopyOperation  }\n\n  func copy() -> _1\n  { let res : _1 = _1(copyFrom: self)\n    add_1(instance: res)\n    return res\n  }\n\n_3}\n\n
+
+abstract class _1 extends _2 implements _3 { _4 }   |-->class _1 : _2, _3\n{ override init() { super.init() }\n\n  init(copyFrom: _1) {\n    super.init(copyFrom: copyFrom)\n_4`mobileCopyOperation  }\n\n  override func copy() -> _1\n  { let res : _1 = _1(copyFrom: self)\n    add_1(instance: res)\n    return res\n  }\n\n_4}\n\n
+
+
+defaultValue::
+String |-->""
+int |-->0
+long |-->0
+double |-->0.0
+boolean |-->false
+Sequence ( _1 ) |-->[]
+Set ( _1 ) |-->[]
+Map ( _1 , _2 ) |-->[:]
+_1 |-->_1.defaultInstance_1()
+
+
+attributeDefinition::
+static attribute _1 : _2 := _3 ; |-->  static var _1 : _2 = _3\n
+
+static attribute _1 : _2 ; |-->  static var _1 : _2 = _2`defaultValue\n
+
+attribute _1 identity : _2 ; |-->  var _1 : _2 = "" /* principal key */\n\n
+
+attribute _1 derived : _2 ; |-->  var _1 : _2 = _2`defaultValue /* derived */\n
+
+attribute _1 : _2 := _3 ; |-->  let _1 : _2 = _3\n<when> _1 readOnly
+attribute _1 : _2 ; |-->  let _1 : _2\n<when> _1 readOnly
+
+attribute _1 : _2 := _3 ; |-->  var _1 : _2 = _3\n
+
+attribute _1 : _2 ; |-->  var _1 : _2 = _2`defaultValue\n
+
+
+
+
+reference _1 : _2 ; |-->  var _1 : _2 = _2.defaultInstance_2()\n<when> _2 Class
+
+
+reference _1 : _2 ; |-->  var _1 : _2 = _2()\n<when> _2 Map
+
+reference _1 : _2 ; |-->  var _1 : _2 = _2`defaultValue\n
+
+
+
+parameterDeclarations::
+_* |-->_*
+
+parameterDeclaration::
+_1 : _2 |-->_ _1 : _2
+
+
+expressionList::
+_* |-->_*
+
+
+
+operationDefinition::
+static query _1(_2) : _3 pre: _4 post: _5 activity : _6 ; |-->\n  static func _1(_2) -> _3\n  {\n_6\n  }\n\n
+
+static query _1<_2>(_3) : _4 pre: _5 post: _6 activity : _7 ; |-->\n  static func _1<_2>(_3) -> _4\n  {\n_7\n  }\n\n
+
+query _1(_2) : _3 pre: _4 post: _5 activity : _6 ; |-->\n  override func _1(_2) -> _3\n  {\n_6\n  }\n\n<when> _1 override
+
+query _1(_2) : _3 pre: _4 post: _5 activity : _6 ; |-->\n  func _1(_2) -> _3\n  {\n_6\n  }\n\n<when> _1 not override
+
+query _1<_2>(_3) : _4 pre: _5 post: _6 activity : _7 ; |-->\n  func _1<_2>(_3) -> _4\n  {\n_7\n  }\n\n
+
+
+static operation _1(_2) : _3 pre: _4 post: _5 activity: _6 ;  |-->\n  static func _1(_2) -> _3\n  {\n_6\n  }\n\n
+
+static operation _1<_2>(_3) : _4 pre: _5 post: _6 activity : _7 ; |-->\n  static func _1<_2>(_3) -> _4\n  {\n_7\n  }\n\n
+
+operation _1 ( _2 ) : _3 pre: _4 post: _5 activity: _6 ; |-->\n  override func _1(_2) -> _3\n  {\n_6\n  }\n\n<when> _1 override
+
+operation _1 ( ) : _2 pre: _3 post: _4 activity: _5 ; |-->\n  func _1() -> _2\n  {\n_5\n  }\n\n
+
+operation _1 ( ) pre: _2 post: _3 activity: _4 ; |-->\n  func _1()\n  {\n_4\n  }\n\n
+
+operation _1 ( _2 ) : _3 pre: _4 post: _5 activity: _6 ; |-->\n  func _1(_2) -> _3\n  {\n_6\n  }\n\n
+
+operation _1 ( _2 ) pre: _3 post: _4 activity: _5 ; |-->\n  func _1(_2)\n  {\n_5\n  }\n\n
+
+operation _1 < _2 > ( _3 ) : _4 pre: _5 post: _6 activity : _7 ; |-->\n  func _1<_2>(_3) -> _4\n  {\n_7\n  }\n\n
+
+
+
+statement::
+_1 [ _2 ] := _3 |-->    _1 = Ocl.setAtString(str: _1, ind: _2, value: _3)\n<when> _1 String
+_1 [ _2 ] := _3 |-->    _1[_2-1] = _3\n<when>_1 Sequence
+_1 [ _2 ] := _3 |-->    _1[_2] = _3\n
+
+
+_1 := _2 |-->    _1 = Int(_2)\n<when> _1 int, _2 not int
+_1 := _2 |-->    _1 = Int64(_2)\n<when> _1 long, _2 not long
+_1 := _2 |-->    _1 = Double(_2)\n<when> _1 real, _2 not real
+
+_1 := _2 |-->    _1 = _2\n
+
+
+
+
+
+while _1 do _2 |-->    while (_1)\n    {\n  _2    }\n
+for _1 : _2 do _3 |-->    for _1 in _2\n    {\n  _3    }\n
+if _1 then _2 else _3 |-->    if _1\n    {\n  _2    }\n    else {\n  _3    }\n
+_1 ; _2 |-->_1_2
+skip |-->    \n
+return _1 |-->    return _1\n
+return |-->    return\n
+break |-->    break\n
+continue |-->    continue\n
+call _1 |-->    _1\n 
+execute _1 |-->    _1\n
+
+assert _1 do _2 |-->    assert(_1,_2)\n
+assert _1 |-->    assert(_1)\n
+error _1 |-->    throw _1\n
+
+try _1 _2 _3 |-->     do {\n    _1\n    } _2 _3\n
+try _1 _2 |-->    do {\n    _1\n    } _2
+
+catch _1 do _2 |-->    catch _1`catchTestSwift { _2 }\n
+finally _1 |-->    catch { _1 }\n
+
+ 
+var _1 : _2 := _3 |-->    var _1 : _2 = _3\n
+
+var _1 : _2 |-->    var _1 : _2 = _2.defaultInstance_2()\n<when> _2 Class
+var _1 : _2 |-->    var _1 : _2 = _2`defaultValue\n
+
+
+
+usecaseDefinition::
+_* |-->
+
+
+
+usecaseBody::
+_* |-->_*
+
+
+usecaseBodyElement::
+precondition _1 ; |-->\n    /* Check: _1 */\n
+activity: _1 ; |-->_1
+_* |-->
+

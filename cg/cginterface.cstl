@@ -1,0 +1,77 @@
+Type::
+OclAny |-->Object
+OclType |-->Class
+
+Sequence(_1) |-->ArrayList<_1>
+Set(_1) |-->HashSet<_1>
+Map(_1,_2) |-->HashMap<_1,_2>
+Ref(_1) |-->_1[]
+
+Sequence |-->ArrayList
+Set |-->HashSet
+Map |-->HashMap
+Ref |-->Object[]
+
+_1 |-->_1
+
+
+
+
+
+
+Attribute::
+static attribute _1 : _2 := _3; |-->  static _2 _1 = _3;\n
+
+static attribute _1 : _2; |-->  static _2 _1;\n
+
+identity attribute _1 : _2; |--> 
+
+attribute _1 : _2 := _3; |-->  
+
+attribute _1 : _2; |-->  
+
+reference _1 : _2; |-->  
+
+
+
+Operation::
+query _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->  public _3 _1(_2);\n
+
+query _1<_2>(_3) : _4 pre: _5 post: _6 activity : _7 |-->\n  public <_2> _4 _1(_3);\n\n
+
+operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->  public _3 _1(_2);\n
+
+operation _1<_2>(_3) : _4 pre: _5 post: _6 activity : _7 |-->\n  public <_2> _4 _1(_3);\n\n
+
+static query _1<_2>(_3) : _4 pre: _5 post: _6 activity : _7 |-->\n  public static <_2> _4 _1(_3);\n\n
+
+static query _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->  public static _3 _1(_2);\n
+
+static operation _1(_2) : _3 pre: _4 post: _5 activity: _6 |-->  public static _3 _1(_2);\n
+
+static operation _1<_2>(_3) : _4 pre: _5 post: _6 activity : _7 |-->\n  public static <_2> _4 _1(_3);\n\n
+
+
+
+Parameter::
+_1 : _2, _3 |-->_2 _1, _3
+_1 : _2 |-->_2 _1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

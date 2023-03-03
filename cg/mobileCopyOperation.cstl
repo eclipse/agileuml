@@ -1,0 +1,72 @@
+classBody::
+_* |-->_*
+
+
+classBodyElement::
+_1 |-->_1
+
+
+stereotype::
+stereotype _1 ; |-->
+
+
+attributeDefinition::
+static attribute _1 : _2 := _3 ; |-->
+
+static attribute _1 : _2 ; |-->
+
+attribute _1 identity : _2 ; |-->    self._1 = "copy_" + copyFrom._1\n
+
+attribute _1 derived : _2 ; |-->    self._1 = copyFrom._1\n
+
+attribute _1 : _2 := _3 ; |-->    self._1 = Ocl.copySet(s: copyFrom._1)\n<when> _2 Set
+
+attribute _1 : _2 := _3 ; |-->    self._1 = Ocl.copySequence(s: copyFrom._1)\n<when> _2 Sequence
+
+attribute _1 : _2 := _3 ; |-->    self._1 = Ocl.copyMap(m: copyFrom._1)\n<when> _2 Map
+
+attribute _1 : _2 := _3 ; |-->    self._1 = copyFrom._1\n
+
+attribute _1 : _2 ; |-->    self._1 = Ocl.copySet(s: copyFrom._1)\n<when> _2 Set
+
+attribute _1 : _2 ; |-->    self._1 = Ocl.copySequence(s: copyFrom._1)\n<when> _2 Sequence
+
+attribute _1 : _2 ; |-->    self._1 = Ocl.copyMap(m: copyFrom._1)\n<when> _2 Map
+
+attribute _1 : _2 ; |-->    self._1 = copyFrom._1\n
+
+
+
+reference _1 : _2; |-->    self._1 = Ocl.copySet(s: copyFrom._1)\n<when> _2 Set
+
+reference _1 : _2; |-->    self._1 = Ocl.copySequence(s: copyFrom._1)\n<when> _2 Sequence
+
+reference _1 : _2; |-->    self._1 = Ocl.copyMap(m: copyFrom._1)\n<when> _2 Map
+
+reference _1 : _2; |-->    self._1 = copyFrom._1
+
+
+operationDefinition::
+query _1 ( _2 ) : _3 pre: _4 post: _5 activity: _6 ; |-->
+
+query _1<_2>(_3) : _4 pre: _5 post: _6 activity : _7 ; |-->
+
+operation _1 ( ) pre: _2 post: _3 activity: _4 ; |-->
+
+operation _1 ( ) : _2 pre: _3 post: _4 activity: _5 ; |-->
+
+operation _1 ( _2 ) pre: _3 post: _4 activity: _5 ; |-->
+
+operation _1 ( _2 ) : _3 pre: _4 post: _5 activity: _6 ; |-->
+
+operation _1<_2>(_3) : _4 pre: _5 post: _6 activity : _7 ; |-->
+
+static query _1 ( _2 ) : _3 pre: _4 post: _5 activity: _6 ; |-->
+
+static query _1<_2>(_3) : _4 pre: _5 post: _6 activity : _7 ; |-->
+
+static operation _1 ( _2 ) : _3 pre: _4 post: _5 activity: _6 ; |-->
+
+static operation _1<_2>(_3) : _4 pre: _5 post: _6 activity : _7 ; |-->
+
+

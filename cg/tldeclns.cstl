@@ -1,0 +1,211 @@
+
+OclUnaryExpression::
+lambda _2 : _4 in _6  |-->_2->_6
+_1 _2 ( )  |-->Ocl._2`func1(_1)
+_1 _2  |-->_1`func0 _2
+
+ruleset21::
+_1 : _3  |-->_3 _1
+_* |-->_*`ruleset21
+
+
+OclOperation::
+operation _2 ( _* ) : _7 pre: true  post: true  activity: _13  |-->_7 _2(_*`ruleset21){_13}
+query _2 ( _* ) : _7 pre: true  post: true  activity: _13  |-->_7 _2(_*`ruleset20){_13}
+operation _2 ( ) : _6 pre: true  post: true  activity: _12  |-->_6 _2(){_12}
+query _2 ( ) : _6 pre: true  post: true  activity: _12  |-->_6 _2(){_12}
+
+ruleset20::
+_1 : _3  |-->_3 _1
+_* |-->_*`ruleset20
+
+
+OclClass::
+class _1 { } |-->class _1 { }
+class _1 { _* } |-->class _1 { _*`ruleset23 }
+
+ruleset23::
+; |-->
+attribute _1 : _2 |-->_2 _1;
+operation _2 ( _* ) : _7 pre: true  post: true  activity: _13  |-->_7 _2(_*`ruleset21){_13}
+operation _2 ( ) : _6 pre: true  post: true  activity: _12  |-->_6 _2(){_12}
+query _2 ( ) : _6 pre: true  post: true  activity: _12  |-->_6 _2(){_12}
+_1 |-->_1
+
+
+OclType::
+Map ( _3 , _5 )  |-->HashMap<_3,_5>
+Function ( _3 , _5 )  |-->Function<_3,_5>
+_1 ( _3 )  |-->_1`func5<_3>
+OclProcess |-->OclProcess
+OclAny |-->Object
+OclType |-->OclType
+OclDate |-->OclDate
+String |-->String
+void  |-->void
+_1  |-->_1
+
+func10::
+p |-->x
+x |-->q
+
+
+func13::
+p |-->=
+x |-->.
+
+OclCollectionExpression::
+Sequence { _* }  |-->Ocl.initialiseSequence(_*)
+Set { _* }  |-->Ocl.initialiseSet(_*)
+_1 { }  |-->Ocl._1`func6()
+
+func14::
+p |-->x
+x |-->q
+
+func11::
+p |-->=
+x |-->.
+
+func12::
+p |-->x
+x |-->q
+
+func17::
+> |-->=
+/= |-->.
+
+func18::
+q |-->x
+0 |-->q
+
+func15::
+p |-->=
+x |-->.
+
+func16::
+> |-->x
+/= |-->q
+
+func19::
+q |-->=
+0 |-->.
+
+OclBasicExpression::
+_1 . _3 ( _5 )  |-->_1._3(_5)
+_1 . _3 ( )  |-->_1._3()
+_1 [ _3 ]  |-->_1[_3-1]
+_1 . _3  |-->_1._3
+null  |-->null<when> _1 Object
+_1  |-->_1<when> _1 Integer
+_1  |-->_1<when> _1 Real
+_1  |-->_1<when> _1 Boolean
+_1  |-->_1<when> _1 String
+_1  |-->_1
+
+func8::
+call |-->sq
+return |-->q
+
+func9::
+call |-->=
+return |-->.
+
+func4::
+String |-->String
+OclDate |-->OclDate
+OclType |-->OclType
+OclAny |-->Object
+OclProcess |-->OclProcess
+
+OclBinaryExpression::
+_1 _2 ( _4 )  |-->Ocl._2`func3(_1,_4)
+_1 _2 _3  |-->_1 _2`func2 _3
+
+func5::
+Sequence |-->ArrayList
+Set |-->HashSet
+
+func6::
+Set |-->initialiseSet
+Sequence |-->initialiseSequence
+
+func7::
+continue |-->continue
+return |-->return
+break |-->break
+
+OclConditionalExpression::
+if _2 then _4 else _6 endif  |-->(_2)?_4:_6
+
+func0::
+- |-->-
+not |-->!
+
+func1::
+->size |-->size
+->oclType |-->oclType
+->toLowerCase |-->toLowerCase
+->toUpperCase |-->toUpperCase
+->front |-->front
+->tail |-->tail
+->first |-->first
+->last |-->last
+->reverse |-->reverse
+->sum |-->sum
+->floor |-->floor
+->abs |-->abs
+->ceil |-->ceil
+->oclIsUndefined |-->oclIsUndefined
+->oclIsInvalid |-->oclIsInvalid
+
+func2::
++ |-->+
+* |-->*
+mod |-->%
+/ |-->/
+div |-->/
+- |-->-
+& |-->&&
+or |-->||
+xor |-->^
+> |-->>
+< |--><
+/= |-->!=
+= |-->==
+>= |-->>=
+<= |--><=
+
+func3::
+->including |-->including
+->union |-->union
+->intersection |-->intersection
+->excludes |-->excludes
+->excludesAll |-->excludesAll
+->includesAll |-->includesAll
+->indexOf |-->indexOf
+->lastIndexOf |-->lastIndexOf
+->append |-->append
+->prepend |-->prepend
+->pow |-->pow
+
+OclAttribute::
+attribute _2 : _4  |-->_4 _2;
+
+OclStatement::
+while _2 do _4  |-->while(_2){_4}
+for _2 : _4 do _6  |-->for(Object _2:_4){_6}
+( _2 ; _4 )  |-->{_2 _4}
+var _2 : _4  |-->_4 _2
+( _2 )  |-->{_2}
+if _2 then _4 else _6  |-->if(_2){_4}else{_6}
+_1 := _3  |-->_1=_3;
+call skip   |-->;
+execute _2  |-->_2;
+call _2  |-->_2;
+return _2  |-->return _2;
+error _2  |-->throw _2;
+_1  |-->_1`func7;
+
+
+

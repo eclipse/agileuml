@@ -1,0 +1,16 @@
+Type::
+int |-->Integer
+double |-->Double
+long |-->Long
+boolean |-->Boolean
+OclAny |-->Object
+void |-->Object
+
+Set(_1) |-->HashSet<_1`jwrap>
+Sequence(_1) |-->ArrayList<_1`jwrap>
+Map(_1,_2) |-->HashMap<_1`jwrap,_2`jwrap>
+Function(_1,_2) |-->Evaluation<_1`jwrap,_2`jwrap>
+
+_1 |-->_1
+
+
