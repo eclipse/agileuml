@@ -546,6 +546,7 @@ public class CGRule
                                         CGSpec cgs, Vector entities)
   { System.out.println(">***> Applying " + mffeat + " to ASTTerm " + term); 
     System.out.println(); 
+
     ASTTerm obj = term; 
      
     if (CSTL.hasTemplate(mffeat + ".cstl")) 
@@ -875,8 +876,11 @@ public class CGRule
          } 
        }
     } 
+
+    // New: 8th March 2023
+    String mf = ASTTerm.getTaggedValue(term,mffeat); 
 	
-    return null; 
+    return mf; 
   } 
 
  

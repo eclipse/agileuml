@@ -281,6 +281,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         scrollPane.setPreferredSize(new Dimension(650, 350));
 
         messageArea = new JTextArea(30, 90);
+        messageArea.setFont(new Font("SansSerif", Font.BOLD, 16)); 
         messageArea.setEditable(true);
         JScrollPane scrollPaneForLog = new JScrollPane(messageArea);
 

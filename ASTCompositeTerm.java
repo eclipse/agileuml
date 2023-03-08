@@ -40674,7 +40674,8 @@ public class ASTCompositeTerm extends ASTTerm
             ASTTerm.getTermByTag(terms,"dataPictureClause"); 
           int intwidth = pictureClause.cobolIntegerWidth();
           int fractwidth = pictureClause.cobolFractionWidth();
-          Type typ = pictureClause.cobolDataType();  
+          Type typ = pictureClause.cobolDataType();
+          int wdth = pictureClause.cobolDataWidth();  
           
           ASTTerm t2 = (ASTTerm) terms.get(1); 
           if (t2.getTag().equals("dataName"))
@@ -40685,6 +40686,8 @@ public class ASTCompositeTerm extends ASTTerm
                                      "" + fractwidth); 
             ASTTerm.setTaggedValue(fname, "oclType", 
                                      "" + typ);  
+            ASTTerm.setTaggedValue(fname, "width", 
+                                     "" + wdth);       
             JOptionPane.showMessageDialog(null, 
               "Type of " + fname + " is " + typ + 
               " " + intwidth + " " + 
@@ -40764,6 +40767,8 @@ public class ASTCompositeTerm extends ASTTerm
                                      "" + fractionalWidth);       
           ASTTerm.setTaggedValue(fieldName, "oclType", 
                                      "" + typ);    
+          ASTTerm.setTaggedValue(fieldName, "width", 
+                                     "" + wdth);       
           if (typ != null) 
           { String dval = typ.defaultValue(); 
             ASTTerm.setTaggedValue(fieldName, "defaultValue", 
@@ -40952,12 +40957,16 @@ public class ASTCompositeTerm extends ASTTerm
                                      "" + integerWidth); 
               ASTTerm.setTaggedValue(fieldName, "fractionWidth", 
                                      "" + fractionalWidth); 
+              ASTTerm.setTaggedValue(fieldName, "width", 
+                                     "" + wdth);       
             } // For the CSTL.
             
             Attribute att = 
                 new Attribute(fieldName, typ, 
                           ModelElement.INTERNAL); 
             att.setWidth(wdth); 
+            att.setMultiplicity(multiplicity); 
+
             container.addAttribute(att); 
             // could itself be composite
 
@@ -40973,16 +40982,21 @@ public class ASTCompositeTerm extends ASTTerm
                 new Attribute(fieldName, typ, 
                           ModelElement.INTERNAL);
               att.setWidth(wdth); 
+              att.setMultiplicity(multiplicity); 
+
               Entity actualContainer = 
                  container.findContainer(levelNumber);  
               if (actualContainer != null) 
               { actualContainer.addAttribute(att);
                 context.put("container", actualContainer); 
               }  
+
               ASTTerm.setTaggedValue(fieldName, "integerWidth", 
                                      "" + integerWidth); 
               ASTTerm.setTaggedValue(fieldName, "fractionWidth", 
                                      "" + fractionalWidth); 
+              ASTTerm.setTaggedValue(fieldName, "width", 
+                                     "" + wdth); 
             } // could itself be composite
             context.put("previousLevel", 
                         new Integer(levelNumber)); 
@@ -41176,8 +41190,8 @@ public class ASTCompositeTerm extends ASTTerm
                                      new BasicExpression(true));
 
             BinaryExpression inv1 = 
-                new BinaryExpression("=>", dataValueConstraint, 
-                                     inv1succ); 
+              new BinaryExpression("=>", dataValueConstraint, 
+                                   inv1succ); 
       
             Constraint cons1 = 
                 Constraint.getConstraint(inv1); 
@@ -41185,8 +41199,8 @@ public class ASTCompositeTerm extends ASTTerm
             invs.add(cons1); 
 
             BinaryExpression inv2succ = 
-                new BinaryExpression("=", cattr, 
-                                     new BasicExpression(false));
+              new BinaryExpression("=", cattr, 
+                    new BasicExpression(false));
             
             for (int k = 0; k < containers.size(); k++) 
             { Expression conbe = 
@@ -41253,6 +41267,7 @@ public class ASTCompositeTerm extends ASTTerm
 
             ASTTerm pictureClause = ASTTerm.getTermByTag(
                             ctrm.terms,"dataPictureClause"); 
+            int wdth = pictureClause.cobolDataWidth(); 
             int intwidth = pictureClause.cobolIntegerWidth();
             int fractwidth = 
                        pictureClause.cobolFractionWidth();
@@ -41267,8 +41282,12 @@ public class ASTCompositeTerm extends ASTTerm
                                      "" + fractwidth); 
               ASTTerm.setTaggedValue(fname, "oclType", 
                                      "" + typ);  
+              ASTTerm.setTaggedValue(fname, "width", 
+                                     "" + wdth);       
+
               JOptionPane.showMessageDialog(null, 
                 "Type of " + fname + " is " + typ + 
+                " Width " + wdth + 
                 " Integer width " + intwidth + 
                 " Fract width " + fractwidth, 
                 "", 
@@ -41334,7 +41353,8 @@ public class ASTCompositeTerm extends ASTTerm
           // But could have 88's within it.
 
           ASTTerm pictureClause = 
-            ASTTerm.getTermByTag(ctrm.terms, "dataPictureClause"); 
+            ASTTerm.getTermByTag(ctrm.terms, 
+                                 "dataPictureClause"); 
           int wdth = 0;
           int integerWidth = 0; 
           int fractionalWidth = 0; 
@@ -41362,8 +41382,8 @@ public class ASTCompositeTerm extends ASTTerm
                "Type of " + fieldName + " is " + typ + 
                " Width: " + wdth + 
                " Integer width: " + integerWidth + 
-               " Fraction width: " + 
-               fractionalWidth, 
+               " Fraction width: " + fractionalWidth + 
+               " Multiplicity: " + multiplicity, 
                "", 
                JOptionPane.INFORMATION_MESSAGE);  
          
@@ -41373,6 +41393,8 @@ public class ASTCompositeTerm extends ASTTerm
                                      "" + fractionalWidth);       
             ASTTerm.setTaggedValue(fieldName, "oclType", 
                                      "" + typ);    
+            ASTTerm.setTaggedValue(fieldName, "width", 
+                                     "" + wdth);       
             if (typ != null) 
             { String dval = typ.defaultValue(); 
               ASTTerm.setTaggedValue(
@@ -41384,8 +41406,9 @@ public class ASTCompositeTerm extends ASTTerm
               new Attribute(fieldName, typ, 
                             ModelElement.INTERNAL);
             att.setElementType(typ.getElementType());  
-            att.setWidth(wdth);
-            att.setMultiplicity(multiplicity);  
+            att.setWidth(wdth); // total width
+            att.setMultiplicity(multiplicity);
+              // width of each element is width/multiplicity  
             cent.addAttribute(att); 
           }
           else // ERROR 
@@ -41495,6 +41518,11 @@ public class ASTCompositeTerm extends ASTTerm
               hpars.add(sphexpr); 
               hpars.add(ephexpr); 
 
+              ASTTerm.setTaggedValue(fieldName + 
+                                     "(" + h + ")", 
+                                     "width", 
+                                     "" + fwdth);       
+
               BasicExpression ownh = 
                 BasicExpression.newFunctionBasicExpression(
                   "subrange", owner, hpars); 
@@ -41549,7 +41577,8 @@ public class ASTCompositeTerm extends ASTTerm
             // ipars.add(
             //     new BasicExpression(contMult)); 
 
-            
+            int hwidth = endPos - startPos + 1; 
+
             for (int h = 1; h <= contMult; h++) 
             { // attr[h] = owner[h].subrange(sph, eph)
 
@@ -41558,6 +41587,10 @@ public class ASTCompositeTerm extends ASTTerm
                                    attr,
                                    new BasicExpression(h)); 
 
+              ASTTerm.setTaggedValue(fieldName + 
+                                     "(" + h + ")", 
+                                     "width", 
+                                     "" + hwidth);       
               Expression ownerh = 
                 BasicExpression.newIndexedBasicExpression(
                                    owner, 
@@ -41637,6 +41670,11 @@ public class ASTCompositeTerm extends ASTTerm
                                    new BasicExpression(h));
               attrh.setType(seqseqType); 
               attrh.setElementType(typSeq); 
+
+              ASTTerm.setTaggedValue(fieldName + 
+                                     "(" + h + ")", 
+                                     "width", 
+                                     "" + fwdth);       
  
               BasicExpression spexpr = 
                    new BasicExpression(startPos);
@@ -41850,6 +41888,9 @@ public class ASTCompositeTerm extends ASTTerm
                  JOptionPane.INFORMATION_MESSAGE);
 
             att.setWidth(totwdth); 
+            ASTTerm.setTaggedValue(fieldName, "width", 
+                                   "" + totwdth);       
+
 
             int endPos = startPos + totwdth - 1;
 
@@ -42030,7 +42071,8 @@ public class ASTCompositeTerm extends ASTTerm
     if ("programUnit".equals(tag))
     { for (int i = 0; i < terms.size(); i++) 
       { ASTTerm tt = (ASTTerm) terms.get(i); 
-        Vector ttres = tt.cobolPerformThruDefinitions(context, invs); 
+        Vector ttres = 
+          tt.cobolPerformThruDefinitions(context, invs); 
         res.addAll(ttres); 
       } 
       return res; 
@@ -42258,6 +42300,182 @@ public class ASTCompositeTerm extends ASTTerm
     return new Vector(); 
   } 
 
+  public Vector vbProcessDeclarations()
+  { // System.out.println(tag); 
+    
+    if ("module".equals(tag))
+    { Vector res = new Vector(); 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm trm = (ASTTerm) terms.get(i); 
+        if (trm instanceof ASTCompositeTerm)
+        { ASTCompositeTerm tt = (ASTCompositeTerm) trm; 
+          if ("moduleBody".equals(tt.getTag()))
+          { return tt.vbProcessDeclarations(); } 
+        } 
+      } 
+      return res; 
+    }
+
+    if ("moduleBody".equals(tag))
+    { Vector res = new Vector(); 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm trm = (ASTTerm) terms.get(i); 
+        if (trm instanceof ASTCompositeTerm)
+        { ASTCompositeTerm tt = (ASTCompositeTerm) trm; 
+          if ("moduleBodyElement".equals(tt.getTag()))
+          { Vector fns = tt.vbProcessDeclarations(); 
+            res.addAll(fns); 
+          } 
+        } 
+      } 
+      return res; 
+    }
+
+    if ("subStmt".equals(tag) || 
+        "functionStmt".equals(tag))
+    { Vector res = new Vector(); 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm trm = (ASTTerm) terms.get(i); 
+        if (trm instanceof ASTCompositeTerm)
+        { ASTCompositeTerm tt = (ASTCompositeTerm) trm; 
+          if ("block".equals(tt.getTag()))
+          { Vector fns = tt.vbProcessDeclarations(); 
+            res.addAll(fns); 
+          } 
+        } 
+      } 
+      return res; 
+    }
+
+    if ("moduleBodyElement".equals(tag) && 
+        terms.get(0) instanceof ASTCompositeTerm)
+    { ASTCompositeTerm trm = (ASTCompositeTerm) terms.get(0); 
+      return trm.vbProcessDeclarations(); 
+    } 
+
+    if ("moduleBlock".equals(tag) && 
+        terms.get(0) instanceof ASTCompositeTerm)
+    { ASTCompositeTerm trm = (ASTCompositeTerm) terms.get(0); 
+      return trm.vbProcessDeclarations(); 
+    } 
+
+    if ("block".equals(tag))
+    { Vector res = new Vector(); 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm trm = (ASTTerm) terms.get(i); 
+        if (trm instanceof ASTCompositeTerm)
+        { ASTCompositeTerm tt = (ASTCompositeTerm) trm; 
+          if ("blockStmt".equals(tt.getTag()))
+          { Vector fns = tt.vbProcessDeclarations(); 
+            res.addAll(fns); 
+          } 
+        } 
+      } 
+      return res; 
+    }
+
+    if ("blockStmt".equals(tag) && 
+        terms.get(0) instanceof ASTCompositeTerm)
+    { ASTCompositeTerm trm = (ASTCompositeTerm) terms.get(0); 
+      return trm.vbProcessDeclarations(); 
+    } 
+
+    if ("variableStmt".equals(tag) && 
+        terms.size() > 1)
+    { ASTCompositeTerm trm = (ASTCompositeTerm) terms.get(1); 
+      Vector res = new Vector(); 
+      res.addAll(trm.vbProcessDeclarations()); 
+      return res;  
+    } 
+
+    if ("variableListStmt".equals(tag) && 
+        terms.size() > 0)
+    { Vector res = new Vector(); 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTCompositeTerm trm = (ASTCompositeTerm) terms.get(i); 
+        res.addAll(trm.vbProcessDeclarations());
+      }  
+      return res;  
+    } 
+
+    if ("variableSubStmt".equals(tag) && 
+        terms.size() > 1)
+    { // ambiguousIdentifier asTypeClause
+      Vector res = new Vector();
+      ASTTerm vname = (ASTTerm) terms.get(0); 
+      String var = vname.literalForm(); 
+      ASTTerm vtype = (ASTTerm) terms.get(1); 
+      if (vtype instanceof ASTCompositeTerm)
+      { ASTCompositeTerm ct = (ASTCompositeTerm) vtype; 
+        String vbtype = ct.vbType(); 
+        String vblength = ct.vbLength();
+        if (vblength.equals("0")) { } 
+        else 
+        { ASTTerm.setTaggedValue(var, "isFixedWidth", 
+                                 "true");
+          ASTTerm.setTaggedValue(var, "width", 
+                                 vblength);
+          /* JOptionPane.showMessageDialog(null, 
+                 var + 
+                 " total width = " + vblength, 
+                 "", 
+                 JOptionPane.INFORMATION_MESSAGE); */ 
+        }   
+        
+        res.add(var + " : " + vbtype + "[" + vblength + "]");
+      }  
+      return res;  
+    } 
+ 
+    return new Vector(); 
+  } 
+
+  public String vbType()
+  { if ("asTypeClause".equals(tag) && terms.size() > 1)
+    { // AS (NEW)? type_ (fieldLength)? 
+
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm t = (ASTTerm) terms.get(i); 
+        if (t instanceof ASTCompositeTerm && 
+            "type_".equals(t.getTag()))
+        { ASTCompositeTerm tt = (ASTCompositeTerm) terms.get(i);
+          return tt.vbType(); 
+        } 
+      } 
+    }
+
+    if ("type_".equals(tag))
+    { // (baseType | complexType) ('(' ')')?
+      ASTTerm t = (ASTTerm) terms.get(0); 
+      return t.literalForm(); 
+    } 
+
+    return "OclAny"; 
+  }  
+      
+  public String vbLength()
+  { if ("asTypeClause".equals(tag) && terms.size() > 1)
+    { // AS (NEW)? type_ (fieldLength)? 
+
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm t = (ASTTerm) terms.get(i); 
+        if (t instanceof ASTCompositeTerm && 
+            "fieldLength".equals(t.getTag()))
+        { ASTCompositeTerm tt = (ASTCompositeTerm) terms.get(i);
+          return tt.vbLength(); 
+        } 
+      } 
+    }
+
+    if ("fieldLength".equals(tag))
+    { // * (integerLiteral | ambiguousIdentifier)
+      ASTTerm t = (ASTTerm) terms.get(terms.size()-1); 
+      return t.literalForm(); 
+    } 
+
+    return "0"; 
+  }  
+
   public static void convertAntlr2CSTL()
   { // Testing of JS to KM3
 
@@ -42374,8 +42592,15 @@ public class ASTCompositeTerm extends ASTTerm
         //       "", 
         //       JOptionPane.INFORMATION_MESSAGE);
         if (varTerm != null && def.getTag().equals("expression")) 
-        { ASTTerm subTerm = 
-            def.substituteEq(subvar + "", varTerm); 
+        { Vector bvterms = new Vector(); 
+          bvterms.add(new ASTSymbolTerm("(")); 
+          bvterms.add(varTerm); 
+          bvterms.add(new ASTSymbolTerm(")")); 
+
+          ASTTerm ct = 
+            new ASTCompositeTerm("basicExpression", bvterms); 
+          ASTTerm subTerm = 
+            def.substituteEq(subvar + "", ct); 
           String vt = subTerm.literalForm(); 
           // JOptionPane.showMessageDialog(null, 
           //     ">> Substitution for " + subvar + " = " + varTerm + 
@@ -42413,11 +42638,11 @@ public class ASTCompositeTerm extends ASTTerm
         double minp = VectorUtil.vectorMinimum(powers); 
         double maxp = VectorUtil.vectorMaximum(powers); 
  
-        JOptionPane.showMessageDialog(null, 
+        /* JOptionPane.showMessageDialog(null, 
               ">>> Var powers: " + 
                              powers + " " + minp + " " + maxp, 
               "", 
-              JOptionPane.INFORMATION_MESSAGE);
+              JOptionPane.INFORMATION_MESSAGE); */ 
 
         if (maxp - minp == 2 && minp == 0) 
         { String coefsq = ASTTerm.coefficientOfSquare(var0, expr0); 
@@ -42469,12 +42694,12 @@ public class ASTCompositeTerm extends ASTTerm
 
           System.out.println(">>> Var coefficients: " + 
                              varCoefficients); 
-          JOptionPane.showMessageDialog(null, 
+          /* JOptionPane.showMessageDialog(null, 
               ">>> Var coefficients: " + 
                              varCoefficients, 
               "", 
               JOptionPane.INFORMATION_MESSAGE);
-            
+            */ 
         } 
       }
 
@@ -42489,12 +42714,12 @@ public class ASTCompositeTerm extends ASTTerm
         String cnst = ASTTerm.constantTerms(varTerms,expr);
         constantTerms.add(cnst); 
       } 
-
+  /*
       JOptionPane.showMessageDialog(null, 
               ">>> Constant terms: " + 
                              constantTerms, 
               "", 
-              JOptionPane.INFORMATION_MESSAGE);   
+              JOptionPane.INFORMATION_MESSAGE);  */ 
 
       // The determinant of the varCoefficients
       // is the divisor. One row for each equation
@@ -42530,12 +42755,13 @@ public class ASTCompositeTerm extends ASTTerm
           AuxMath.symbolicDeterminant(msize, divisorMatrix) + ")"; 
       } 
 
+  /* 
       JOptionPane.showMessageDialog(null, 
               ">>> Divisor matrix: " + 
               divisorMatrix + " " + 
               divisorString, 
               "", 
-              JOptionPane.INFORMATION_MESSAGE);   
+              JOptionPane.INFORMATION_MESSAGE);   */ 
 
       // The determinant of the varCoefficients
       // is the numerator for var. One row for each equation
@@ -42576,11 +42802,13 @@ public class ASTCompositeTerm extends ASTTerm
             AuxMath.symbolicDeterminant(msize, varMatrix);
         } 
 
+      /* 
         JOptionPane.showMessageDialog(null, 
               "  Define " + vx + " = " + 
               varNumeratorString + "/" + divisorString, 
               "", 
-              JOptionPane.INFORMATION_MESSAGE);   
+              JOptionPane.INFORMATION_MESSAGE);  */ 
+  
         factor = factor*-1;
 
         if (!("0".equals(divisorString)) && 

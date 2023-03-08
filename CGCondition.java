@@ -988,6 +988,12 @@ public class CGCondition
     Vector metafs = CGRule.metafeatures(variable); 
 
     System.out.println("*** Metafeatures of " + variable + " are: " + metafs); 
+    /* JOptionPane.showMessageDialog(null, 
+                 " metafeatures of = " + variable + 
+                 " are: " + metafs, 
+                 "", 
+                 JOptionPane.INFORMATION_MESSAGE);
+    */     
 
     if (metafs.size() > 0)
     { 
@@ -1002,7 +1008,13 @@ public class CGCondition
       String repl = CGRule.applyMetafeature(
                              mffeat,a,cgs,entities); 
 
+
       System.out.println(">|>|> Testing " + repl + " with " + stereotype); 
+      /* JOptionPane.showMessageDialog(null, 
+                 " Evaluated " + a + 
+                 "`" + mffeat + " = " + repl, 
+                 "", 
+                 JOptionPane.INFORMATION_MESSAGE); */ 
 
       if (isMatches)
       { // check that edata matches the stereo

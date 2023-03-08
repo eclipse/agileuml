@@ -462,7 +462,8 @@ public abstract class ASTTerm
       ASTTerm.metafeatures.put(lit,mfs); 
     } 
 
-    System.out.println("*** " + lit + " gets tagged values: " + 
+    System.out.println("*** " + lit + 
+                       " gets tagged values: " + 
                        mfs); 
 
     if (mfs instanceof Vector)
@@ -475,6 +476,7 @@ public abstract class ASTTerm
         } 
       }
     }  
+
     return null; 
   } 
 

@@ -26624,6 +26624,11 @@ public void produceCUI(PrintWriter out)
       return; 
     } 
 
+    Vector decs = new Vector(); 
+
+    if (zz instanceof ASTCompositeTerm)
+    { decs = ((ASTCompositeTerm) zz).vbProcessDeclarations(); }
+    
     String reskm3 = zz.cg(spec); 
     String arg1 = CGRule.correctNewlines(reskm3); 
     System.out.println(arg1); 
@@ -26712,8 +26717,11 @@ public void produceCUI(PrintWriter out)
     }    */ 
 
     if (zz instanceof ASTCompositeTerm)
-    { Vector labels = ((ASTCompositeTerm) zz).vbLabelFunctions(); 
+    { System.out.println(">> Declarations: " + decs); 
+      
+      Vector labels = ((ASTCompositeTerm) zz).vbLabelFunctions(); 
       System.out.println(">> Labels: " + labels); 
+      
       Entity ent = (Entity)
         ModelElement.lookupByName("FromVB", entities); 
       if (ent != null && labels.size() > 0)
@@ -26888,6 +26896,14 @@ public void produceCUI(PrintWriter out)
     { mainent.addPerformThruOperations(
                            paragraphlist,cobolperforms); 
     } 
+
+    File slib = new File("libraries/stringlib.km3"); 
+    if (slib.exists())
+    { loadKM3FromFile(slib); }
+    else 
+    { System.err.println("! Warning: no file libraries/stringlib.km3"); } 
+
+    setSystemName("app"); 
 
     repaint(); 
  

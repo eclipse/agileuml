@@ -5618,11 +5618,20 @@ public class Entity extends ModelElement implements Comparable
     sumExpr.setType(new Type("String", null)); 
       
     if (cardinalityValue == 1) 
-    {       
+    { 
       for (int i = 0; i < attributes.size(); i++) 
       { Attribute att = (Attribute) attributes.get(i); 
+        int awidth = att.getWidth(); 
+        int amult = att.getMultiplicity();   
+
         Expression expr = new BasicExpression(att);
       
+            JOptionPane.showMessageDialog(null, 
+              "Attrbute " + att + " Width: " + awidth + 
+              " Multiplicity: " + amult, 
+              "", 
+              JOptionPane.INFORMATION_MESSAGE);
+
         if (att.isSequence())
         { Expression xvar = 
             BasicExpression.newVariableBasicExpression(
@@ -5632,10 +5641,29 @@ public class Entity extends ModelElement implements Comparable
           Expression sumexp = 
             new BinaryExpression("+", xvar, 
                                new BasicExpression("\"\"")); 
+          if (awidth/amult > 0)
+          { Vector exprs = new Vector(); 
+            exprs.add(sumexp); 
+            exprs.add(new BasicExpression(awidth/amult)); 
+            sumexp =
+              BasicExpression.newStaticCallBasicExpression(
+                "leftAlignInto", "StringLib", exprs); 
+          } 
           Expression colexpr = 
             new BinaryExpression("|C", dom, sumexp); 
           expr = new UnaryExpression("->sum", colexpr); 
         } 
+
+        if (awidth > 0)
+        { Vector exprs = new Vector(); 
+          exprs.add(new BinaryExpression("+", 
+                      new BasicExpression("\"\""), expr)); 
+          exprs.add(new BasicExpression(awidth)); 
+          expr =
+            BasicExpression.newStaticCallBasicExpression(
+              "leftAlignInto", "StringLib", exprs); 
+        } 
+ 
         sumExpr = 
           new BinaryExpression("+", sumExpr, expr); 
         sumExpr.setType(new Type("String", null));
@@ -5652,7 +5680,7 @@ public class Entity extends ModelElement implements Comparable
       results.add(res);  
       return results; 
     } 
-    else
+    else // entity is multiple
     { // Integer.subrange(1,cardinalityValue)->forAll(pst)
 
       Vector results = new Vector(); 
@@ -5664,11 +5692,13 @@ public class Entity extends ModelElement implements Comparable
         Expression sumExprh = 
           BasicExpression.newValueBasicExpression("\"\""); 
         sumExprh.setType(new Type("String", null)); 
+        sumExprh.setElementType(new Type("String", null)); 
  
-
         for (int i = 0; i < attributes.size(); i++) 
         { Attribute att = (Attribute) attributes.get(i); 
           Attribute attclone = (Attribute) att.clone(); 
+          int awidth = att.getWidth(); 
+          int amult = att.getMultiplicity(); 
 
           BasicExpression attbe = 
             new BasicExpression(attclone); 
@@ -5694,17 +5724,21 @@ public class Entity extends ModelElement implements Comparable
             exprh.setType(seqType); 
             exprh.setElementType(att.getElementType()); 
 
-            JOptionPane.showMessageDialog(null, 
-              "Type of " + exprh + " is " + seqType + 
-              " " + att.getElementType(), 
-              "", 
-              JOptionPane.INFORMATION_MESSAGE);
             
             BinaryExpression domh = 
               new BinaryExpression(":", xvar, exprh); 
             Expression sumexph = 
               new BinaryExpression("+", xvar, 
                                new BasicExpression("\"\"")); 
+            if (awidth/amult > 0)
+            { Vector exprs = new Vector(); 
+              exprs.add(sumexph); 
+              exprs.add(
+                new BasicExpression(awidth/amult)); 
+              sumexph =
+                BasicExpression.newStaticCallBasicExpression(
+                  "leftAlignInto", "StringLib", exprs); 
+            } 
             Expression colexprh = 
               new BinaryExpression("|C", domh, sumexph); 
             exprh = new UnaryExpression("->sum", colexprh); 
@@ -5715,6 +5749,16 @@ public class Entity extends ModelElement implements Comparable
               BasicExpression.newIndexedBasicExpression(attbe,
                                                         indh);
           }
+
+          if (awidth > 0)
+          { Vector exprs = new Vector(); 
+            exprs.add(new BinaryExpression("+", 
+                      new BasicExpression("\"\""), exprh)); 
+            exprs.add(new BasicExpression(awidth)); 
+            exprh =
+              BasicExpression.newStaticCallBasicExpression(
+                "leftAlignInto", "StringLib", exprs); 
+          } 
 
           sumExprh = 
             new BinaryExpression("+", sumExprh, exprh); 

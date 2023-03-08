@@ -4926,8 +4926,8 @@ class BasicExpression extends Expression
   private void adjustTypeForArrayIndex(Attribute var)
   { // if there is an arrayIndex, make type = elementType, etc
 
-    System.out.println("+++ Adjusting type " + type + " " + 
-           elementType + " " + arrayIndex + " " + var); 
+    // System.out.println("+++ Adjusting type " + type + " " + 
+    //        elementType + " " + arrayIndex + " " + var); 
 
     if (arrayIndex != null && "String".equals(type + ""))
     { elementType = new Type("String", null); 
@@ -4953,8 +4953,8 @@ class BasicExpression extends Expression
       } // Sequence access, defined type
     } 
 
-    System.out.println("+++ Adjusted type " + type + " " + 
-                       elementType); 
+    // System.out.println("+++ Adjusted type " + type + " " + 
+    //                    elementType); 
   }  
 
   private boolean eventTypeCheck(Vector types, Vector entities, Vector env)
@@ -9267,7 +9267,7 @@ public Statement generateDesignSubtract(Expression rhs)
   } 
 
   public static String updateFormEqIndexJava7(Expression obj, Expression ind,  
-                             String val2, Expression var, java.util.Map env, boolean local)
+    String val2, Expression var, java.util.Map env, boolean local)
   { // obj[ind] = val2 where obj is complex expression, 
     // either a sequence or map, or 
     // itself an indexed expression
@@ -9283,20 +9283,35 @@ public Statement generateDesignSubtract(Expression rhs)
    String j7type = objt.getJava7(objet); 
 
    if (ind != null) 
-    { String indopt = ind.queryFormJava7(env,local);
-      String lexp = obj.queryFormJava7(env,local); 
-      String wind = ind.wrap(indopt); 
-      String wval = var.wrap(val2); 
+   { String indopt = ind.queryFormJava7(env,local);
+     String lexp = obj.queryFormJava7(env,local); 
+     String wind = ind.wrap(indopt); 
+     String wval = var.wrap(val2); 
  
-      if (objt.isMapType())
-      { return "((" + j7type + ") " + lexp + ").put(" + wind + ", " + wval + ");"; }  // map[ind] = val2 
-      else if (obj.isRef())
-      { return lexp + "[" + indopt + " -1] = " + val2 + ";"; }  
+     if (objt.isMapType())
+     { return "((" + j7type + ") " + lexp + ").put(" + wind + ", " + wval + ");"; }  // map[ind] = val2 
+     else if (obj.isRef())
+     { return lexp + "[" + indopt + " -1] = " + val2 + ";"; }  
+     else if (obj instanceof BasicExpression) 
+     { Vector pars = new Vector(); 
+       // setatpars.add(obj); 
+       pars.add(ind); 
+       pars.add(var); 
+       Expression setatexpr = 
+         BasicExpression.newFunctionBasicExpression("setAt", 
+                                                    obj,pars);                       
+
+       return ((BasicExpression) obj).updateFormEqJava7(env, 
+         "Ocl.setAt(" + lexp + ", " + indopt + ", " + wval + ")", 
+         setatexpr, local);
+      }   
       else 
-      { return "(" + lexp + ").set((" + indopt + " -1), " + wval + ");"; }  
+      { return "(" + lexp + ").set(" + indopt + " -1, " + val2 + ");"; }
     } 
+
     return "/* Error: null index */"; 
   } 
+  // obj.updateFormEqJava7(env, String val2, Expression var, boolean local)
 
   public static String updateFormEqIndexCSharp(Expression obj, Expression ind,  
                              String val2, Expression var, java.util.Map env, boolean local)

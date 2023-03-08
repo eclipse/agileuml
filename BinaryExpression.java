@@ -4474,13 +4474,16 @@ public void findClones(java.util.Map clones,
     { System.err.println("!! WARNING: no type for: " + right); } 
     
       
-    if (operator.equals("^")  || "->concatenate".equals(operator) || 
-        operator.equals("->prepend") || operator.equals("->append"))
+    if (operator.equals("^")  || 
+        "->concatenate".equals(operator) || 
+        operator.equals("->prepend") || 
+        operator.equals("->append"))
     { if ("Sequence".equals(tlname)) 
       { type = tleft; } 
       else 
       { System.err.println("!! WARNING: ^, ->prepend, ->append must be applied to a sequence: " + this);  
         type = new Type("Sequence",null);
+        type.elementType = right.getType(); 
       }  
     } 
     else if (operator.equals("->excluding") || 
@@ -4583,7 +4586,7 @@ public void findClones(java.util.Map clones,
              operator.equals("->prepend") || 
              operator.equals("->append"))
     { Type newleftET = 
-                Type.refineType(etleft,right.getType()); 
+         Type.refineType(etleft,right.getType()); 
       System.out.println(">> Deduced element type of " + this + " = " + newleftET); 
       elementType = newleftET; 
       if (type == null)
