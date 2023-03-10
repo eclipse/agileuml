@@ -42381,7 +42381,7 @@ public class ASTCompositeTerm extends ASTTerm
     } 
 
     if ("variableStmt".equals(tag) && 
-        terms.size() > 1)
+        terms.size() > 1 && terms.get(1) instanceof ASTCompositeTerm)
     { ASTCompositeTerm trm = (ASTCompositeTerm) terms.get(1); 
       Vector res = new Vector(); 
       res.addAll(trm.vbProcessDeclarations()); 
@@ -42392,8 +42392,10 @@ public class ASTCompositeTerm extends ASTTerm
         terms.size() > 0)
     { Vector res = new Vector(); 
       for (int i = 0; i < terms.size(); i++) 
-      { ASTCompositeTerm trm = (ASTCompositeTerm) terms.get(i); 
-        res.addAll(trm.vbProcessDeclarations());
+      { if (terms.get(i) instanceof ASTCompositeTerm)
+        { ASTCompositeTerm trm = (ASTCompositeTerm) terms.get(i); 
+          res.addAll(trm.vbProcessDeclarations());
+        } 
       }  
       return res;  
     } 
@@ -42410,7 +42412,7 @@ public class ASTCompositeTerm extends ASTTerm
         String vbtype = ct.vbType(); 
         String vblength = ct.vbLength();
         if (vblength.equals("0")) { } 
-        else 
+        else if (vbtype.equals("String"))
         { ASTTerm.setTaggedValue(var, "isFixedWidth", 
                                  "true");
           ASTTerm.setTaggedValue(var, "width", 
