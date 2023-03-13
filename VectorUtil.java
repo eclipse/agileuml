@@ -316,8 +316,10 @@ class VectorUtil
     for (int i = 0; i < v.size(); i++)
     { Named nn = (Named) v.elementAt(i);
       if (names.contains(nn.label))
-      res.add(nn); }
-    return res; }
+      res.add(nn); 
+    }
+    return res; 
+  }
 
   public static Vector allSubvectors(Vector v)
   { Vector res = new Vector();
@@ -679,7 +681,8 @@ class VectorUtil
 
   public static double vectorMaximum(Vector v1)
   { double res = 0; 
-    if (v1.size() == 0) { return res; } 
+    if (v1.size() == 0) 
+    { return res; } 
 
     try
     { res = Double.parseDouble("" + v1.get(0)); } 
@@ -693,6 +696,35 @@ class VectorUtil
         { res = d; } 
       } catch (Exception _p) { } 
     } 
+
+    return res; 
+  } 
+
+  public static Vector removeDuplicates(Vector v1)
+  { Vector res = new Vector(); 
+    if (v1.size() == 0) 
+    { return res; } 
+
+    for (int i = 0; i < v1.size(); i++)
+    { double x = 0; 
+      try
+      { x = Double.parseDouble("" + v1.get(i)); } 
+      catch (Exception _ex) { return res; }  
+
+      boolean found = false; 
+      for (int j = 0; j < res.size(); j++) 
+      { double y = 0;  
+        try { 
+           y = Double.parseDouble("" + res.get(j)); 
+           if (x == y) 
+           { found = true; } 
+        } catch (Exception _p) { } 
+      }
+
+      if (!found) 
+      { res.add(x); } 
+    } 
+
     return res; 
   } 
 
@@ -708,7 +740,7 @@ class VectorUtil
     coll2.add(a1); coll2.add(a2); coll2.add(a3);  
     Vector sqs = new Vector(); 
     sqs.add(coll1); sqs.add(coll); 
-    System.out.println(VectorUtil.largestInitialSegment(coll2,sqs)); */ 
+    System.out.println(VectorUtil.largestInitialSegment(coll2,sqs));  
 
     coll.add("a"); coll.add("b"); coll.add("c"); 
     coll.add("d"); coll.add("e"); 
@@ -724,15 +756,17 @@ class VectorUtil
     v2.add("x");  
     Vector rr = VectorUtil.replaceSubsequence(coll,v1,v2); 
     System.out.println(rr);  
-
-
+                              */ 
+           
     Vector zz = new Vector(); 
     Vector yy = new Vector(); 
-    zz.add(1); yy.add(0); yy.add(1); 
+    zz.add(1); yy.add(0); yy.add(1); yy.add(1.0); 
     System.out.println(VectorUtil.vectorSummation(zz,yy));  
     System.out.println(VectorUtil.vectorSubtraction(zz,yy)); 
     System.out.println(VectorUtil.vectorMinimum(yy));  
     System.out.println(VectorUtil.vectorMaximum(yy));  
+
+    System.out.println(VectorUtil.removeDuplicates(yy)); 
   } 
     
 }

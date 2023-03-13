@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -703,7 +703,8 @@ public class CGSpec
       // System.out.println(); 
 
       if (selected != null &&
-          selected.satisfiesConditions(args,entities,this))
+          selected.satisfiesConditions(args,
+                                       entities,this))
       { return selected; } 
     } 
     return null;
@@ -729,7 +730,8 @@ public class CGSpec
       { selected = r; }
 
       if (selected != null && 
-          selected.satisfiesConditions(args,entities,this))
+          selected.satisfiesConditions(args,
+                                       entities,this))
       { return selected; } 
    }
    return null;
@@ -810,7 +812,8 @@ public class CGSpec
         { return r; }
         else if (r.variables.size() == 2 && 
                  cse.initialExpression == null && 
-                 r.satisfiesConditions(args,entities,this))
+                 r.satisfiesConditions(args,
+                                       entities,this))
         { return r; }
         // else if (r.variables.size() == 1 &&
         //          cse.initialExpression == null && 
@@ -980,7 +983,8 @@ public class CGSpec
       // { selected = r; }
 
       if (selected != null && 
-          selected.satisfiesConditions(args,entities,this))
+          selected.satisfiesConditions(args,
+                                       entities,this))
       { return selected; } 
     }
     return null;
@@ -1225,7 +1229,8 @@ public class CGSpec
       }
 
       if (selected != null && 
-          selected.satisfiesConditions(args,entities,this))
+          selected.satisfiesConditions(args,
+                                       entities,this))
       { return selected; } 
     }
     return null;
@@ -1288,15 +1293,19 @@ public class CGSpec
     }
 
     if (selected != null && 
-        selected.satisfiesConditions(args,entities,this))
+        selected.satisfiesConditions(args,
+                                     entities,this))
     { return selected; } 
 
     return null;
   } // _1 binds to elements if any. Could also be _*
 
   public CGRule matchedEntityRule(Entity e, String ctext)
-  { Vector args = new Vector(); 
-    args.add(e); 
+  { Vector eargs = new Vector(); 
+    eargs.add(e); 
+
+    // Vector args = new Vector(); 
+    // args.add(e.cg(this)); 
 
     CGRule selected = null; 
 	
@@ -1340,7 +1349,8 @@ public class CGSpec
       } 
 	  
       if (selected != null && 
-          selected.satisfiesConditions(args,entities,this))
+          selected.satisfiesConditions(eargs,
+                                       entities,this))
       { return selected; } 
 
     }
@@ -1351,12 +1361,21 @@ public class CGSpec
                                      String ctext)
   { CGRule selected = null;
 
-    Vector args = new Vector(); 
-    args.add(e); 
-    args.add(e.getType());  
+    Vector eargs = new Vector(); 
+    eargs.add(e); 
+    eargs.add(e.getType());  
     if (e.getInitialExpression() != null) 
-    { args.add(e.getInitialExpression()); } 
+    { eargs.add(e.getInitialExpression()); } 
   
+    /* Vector args = new Vector(); 
+    args.add(e.cg(this)); 
+    if (e.getType() != null)
+    { args.add(e.getType().cg(this)); } 
+    else 
+    { args.add("void"); }   
+    if (e.getInitialExpression() != null) 
+    { args.add(e.getInitialExpression().cg(this)); } */ 
+
     for (int x = 0; x < attributeRules.size(); x++)
     { CGRule r = (CGRule) attributeRules.get(x);
 
@@ -1367,7 +1386,7 @@ public class CGSpec
       if (ctext.equals(r.lhs) && r.variableCount() == 0)
       { selected = r; } // exact match
       else if (e.isStatic() && 
-               args.size() == r.variableCount())
+               eargs.size() == r.variableCount())
       { if (r.lhs.indexOf("static") > -1)     
         { selected = r; }
       }
@@ -1380,11 +1399,12 @@ public class CGSpec
       else if (r.lhs.indexOf("identity") < 0 && 
                r.lhs.indexOf("static") < 0 &&
                !e.isStatic() && !e.isUnique() &&
-               args.size() == r.variableCount() )   
+               eargs.size() == r.variableCount() )   
       { selected = r; }
     
       if (selected != null && 
-          selected.satisfiesConditions(args,entities,this))
+          selected.satisfiesConditions(eargs,
+                                       entities,this))
       { return selected; } 
     }
 
@@ -1535,7 +1555,8 @@ public class CGSpec
     return null;
   } 
 
-  public CGRule matchedOperationRule(BehaviouralFeature e, String ctext)
+  public CGRule matchedOperationRule(BehaviouralFeature e, 
+                                     String ctext)
   { Vector args = new Vector(); 
     args.add(e); 
     args.add(e.getParameters()); 
@@ -1543,6 +1564,7 @@ public class CGSpec
     args.add(e.getPre()); 
     args.add(e.getPost()); 
     args.add(e.getActivity());
+
     Vector typepars = e.getTypeParameters();  
     Type typepar = null; 
     if (typepars != null && typepars.size() > 0)
@@ -1598,9 +1620,9 @@ public class CGSpec
         } 
       } 
     
-
       if (selected != null && 
-          selected.satisfiesConditions(args,entities,this))
+          selected.satisfiesConditions(args,
+                                       entities,this))
       { return selected; } 
     }
 

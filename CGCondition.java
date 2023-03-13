@@ -339,11 +339,12 @@ public class CGCondition
   } 
 
   public static boolean conditionsSatisfied(
-              Vector conditions, Vector args, 
+              Vector conditions,  
+              Vector vars, Vector eargs, 
               Vector entities, CGSpec cgs, Vector gvars) 
   { boolean res = true; 
-    for (int i = 0; i < args.size(); i++) 
-    { Object m = args.get(i); 
+    for (int i = 0; i < eargs.size(); i++) 
+    { Object m = eargs.get(i); 
       String var = "_" + (i+1); // assumes numbered _1, _2 ...
  
       for (int j = 0; j < conditions.size(); j++) 
@@ -393,7 +394,8 @@ public class CGCondition
                    cond.conditionSatisfied((String) m, entities,cgs)) 
             { }
             else if (m instanceof ASTTerm && 
-                   cond.conditionSatisfied((ASTTerm) m, entities,cgs,gvars))
+               cond.conditionSatisfied((ASTTerm) m, vars,
+                  eargs, new Vector(), entities, cgs, gvars))
             { System.out.println("||| ASTTerm condition " + cond + " satisfied by term " + m); 
               System.out.println(); 
             } 
@@ -409,7 +411,9 @@ public class CGCondition
   } 
 
   public static boolean allConditionsSatisfied(CGRule r, 
-              Vector conditions, Vector args, 
+              Vector conditions,  
+              Vector vars, Vector eargs, 
+              Vector reps,
               Vector entities, CGSpec cgs, Vector gvars) 
   { boolean res = true; 
     
@@ -424,8 +428,8 @@ public class CGCondition
         int ind = r.variables.indexOf(cvar); 
           // variablePosition for CGTL rules
 
-        if (ind >= 0 && ind < args.size())
-        { Object m = args.get(ind); 
+        if (ind >= 0 && ind < eargs.size())
+        { Object m = eargs.get(ind); 
 
           if ("_*".equals(cvar) && 
               m instanceof Vector)
@@ -465,7 +469,9 @@ public class CGCondition
                    cond.conditionSatisfied((String) m, entities,cgs)) 
           { }
           else if (m instanceof ASTTerm && 
-                   cond.conditionSatisfied((ASTTerm) m, entities,cgs,gvars))
+                   cond.conditionSatisfied((ASTTerm) m,
+                          vars, eargs, reps,  
+                          entities, cgs, gvars))
           { System.out.println("||| ASTTerm condition " + cond + " satisfied by term " + m); 
             System.out.println(); 
           } 
@@ -982,8 +988,70 @@ public class CGCondition
     return false; 
   } // and for other kinds of statement also 
 
-  public boolean conditionSatisfied(ASTTerm a, Vector entities, CGSpec cgs, Vector gvars)
+  public boolean conditionSatisfied(ASTTerm a, 
+                  Vector vars, Vector eargs, 
+                  Vector reps, Vector entities, 
+                  CGSpec cgs, Vector gvars)
   { String alit = a.literalForm(); 
+
+    String stereo = "" + stereotype; 
+
+    /* Replace vars[i] by eargs[i].cg(cgs) or reps[i] */ 
+    /* Replace gvars[j] by its value */
+
+    for (int x = 0; x < reps.size() && x < vars.size(); x++)
+    { String var = (String) vars.get(x);
+      String arg1 = (String) reps.get(x); 
+
+     /* String svarx = var; 
+      String smffeat = null; 
+      Vector stereomfs = CGRule.metafeatures(stereo); 
+      if (stereomfs.size() > 0)
+      { 
+        // If stereo has a metafeature: _i`mf
+        // evaluate _i`mf in cgs and set stereo to result 
+
+        String smf = (String) stereomfs.get(0); 
+        int smfindex = smf.indexOf("`"); 
+        svarx = smf.substring(0,smfindex); 
+        smffeat = smf.substring(smfindex+1,smf.length()); 
+        if (smffeat != null && var.equals(svarx)) 
+        { int indv = vars.indexOf(svarx);
+ 
+          if (indv >= 0 && eargs.get(indv) instanceof ASTTerm)
+          {  
+            ASTTerm earg = (ASTTerm) eargs.get(indv); 
+            stereo = CGRule.applyMetafeature(
+                             smffeat,earg,cgs,entities); 
+          }
+        } 
+      } */  
+
+      stereo = stereo.replace(var,arg1);
+    }
+ 
+    if (gvars.size() > 0)
+    { for (int y = 0; y < gvars.size(); y++) 
+      { String rvar = (String) gvars.get(y);
+        String varValue = ASTTerm.getStereotypeValue(rvar); 
+        if (varValue != null) 
+        { stereo = stereo.replace(rvar,varValue); 
+
+        // JOptionPane.showMessageDialog(null, 
+        //   "Global variable " + rvar + " value is " + stereo,   "",
+        //  JOptionPane.INFORMATION_MESSAGE);
+
+          System.out.println(">--> Replacing global variable " + rvar + " by " + varValue); 
+        }
+      }
+
+      // JOptionPane.showMessageDialog(null, 
+      //     "||| Condition " + alit + " = " + stereo,   "",
+      //     JOptionPane.INFORMATION_MESSAGE);
+
+      if (alit.equals(stereo)) 
+      { return positive; }  
+    }
 
     Vector metafs = CGRule.metafeatures(variable); 
 
@@ -1009,7 +1077,7 @@ public class CGCondition
                              mffeat,a,cgs,entities); 
 
 
-      System.out.println(">|>|> Testing " + repl + " with " + stereotype); 
+      System.out.println(">|>|> Testing " + repl + " with " + stereo); 
       /* JOptionPane.showMessageDialog(null, 
                  " Evaluated " + a + 
                  "`" + mffeat + " = " + repl, 
@@ -1018,22 +1086,22 @@ public class CGCondition
 
       if (isMatches)
       { // check that edata matches the stereo
-        if (repl.matches(stereotype))
+        if (repl.matches(stereo))
         { return true; } 
         return false; 
       } 
 
-      if (repl != null && repl.equals(stereotype))
+      if (repl != null && repl.equals(stereo))
       { return positive; } 
       else 
       { return !positive; } 
     } 
 
-    System.out.println(">|>|> Testing " + alit + " with " + stereotype); 
+    System.out.println(">|>|> Testing " + alit + " with " + stereo); 
 
     if (isMatches)
     { // check that variable matches the stereo
-      if (alit.matches(stereotype))
+      if (alit.matches(stereo))
       { return true; } 
       return false; 
     } 
@@ -1138,30 +1206,6 @@ public class CGCondition
           "" + a + " stereotypes " + ASTTerm.getStereotypes(a),   "",
           JOptionPane.INFORMATION_MESSAGE); */ 
 
-    String stereo = "" + stereotype; 
-
-    if (gvars.size() > 0)
-    { for (int y = 0; y < gvars.size(); y++) 
-      { String rvar = (String) gvars.get(y);
-        String varValue = ASTTerm.getStereotypeValue(rvar); 
-        if (varValue != null) 
-        { stereo = stereo.replace(rvar,varValue); 
-
-        // JOptionPane.showMessageDialog(null, 
-        //   "Global variable " + rvar + " value is " + stereo,   "",
-        //  JOptionPane.INFORMATION_MESSAGE);
-
-        // System.out.println(">--> Replacing global variable " + rvar + " by " + varValue); 
-        }
-      }
-
-      // JOptionPane.showMessageDialog(null, 
-      //     "||| Condition " + alit + " = " + stereo,   "",
-      //     JOptionPane.INFORMATION_MESSAGE);
-
-      if (alit.equals(stereo)) 
-      { return positive; }  
-    }
 
 
     if (a.hasStereotype(stereotype))

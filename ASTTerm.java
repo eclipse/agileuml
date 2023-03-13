@@ -4123,6 +4123,189 @@ public abstract class ASTTerm
     return res; 
   }  
 
+  public static Vector differentialsOf(
+                            ASTTerm var, ASTTerm expr)
+  { // differentials of var which occur in expr
+    // for v being "x" these are (factorExpression ..x.. ´)
+    Vector res = new Vector(); 
+
+    boolean isIn = ASTTerm.isSubterm(var,expr); 
+    if (!isIn)
+    { res.add(0);
+      return res;
+    } 
+
+    String v = var.literalForm(); 
+
+    if (v.equals(expr.literalForm()))
+    { res.add(0); 
+      return res; 
+    } 
+
+    if (expr instanceof ASTCompositeTerm)
+    { // (factorExpression _1 * _2)
+      
+      ASTCompositeTerm ct = (ASTCompositeTerm) expr;
+      Vector subterms = ct.getTerms(); 
+ 
+      if (subterms.size() == 1) 
+      { return ASTTerm.differentialsOf(var, 
+                                (ASTTerm) subterms.get(0)); 
+      } 
+
+      if ("basicExpression".equals(ct.tag))
+      { if (subterms.size() == 3 && 
+            "(".equals(subterms.get(0) + "") && 
+            ")".equals(subterms.get(2) + ""))
+        { ASTTerm tt = (ASTTerm) subterms.get(1); 
+          return ASTTerm.differentialsOf(var, tt); 
+        } 
+      } 
+
+      if ("logicalExpression".equals(ct.tag) || 
+          "equalityExpression".equals(ct.tag))
+      { if (subterms.size() == 3)
+        { String opr = subterms.get(1) + ""; 
+          if ("=".equals(opr))
+          { ASTTerm t1 = (ASTTerm) subterms.get(0);  
+            return ASTTerm.differentialsOf(var, t1); 
+          }
+        } 
+
+        res.add(0); 
+        return res; 
+      }  
+
+      if ("additiveExpression".equals(ct.tag))
+      { if (subterms.size() == 3)
+        { String opr = subterms.get(1) + ""; 
+          if ("+".equals(opr) || "-".equals(opr))
+          { ASTTerm t1 = (ASTTerm) subterms.get(0);  
+            ASTTerm t2 = (ASTTerm) subterms.get(2); 
+            Vector powers1 = ASTTerm.differentialsOf(var, t1); 
+            Vector powers2 = ASTTerm.differentialsOf(var, t2); 
+            res.addAll(powers1); 
+            res.addAll(powers2); 
+            return res; 
+          } 
+        } 
+
+        res.add(0); 
+        return res; 
+      }  
+
+      if ("factor2Expression".equals(ct.tag))
+      { if (subterms.size() == 5 && 
+            "^".equals(subterms.get(1) + "") && 
+            "{".equals(subterms.get(2) + "") && 
+            "}".equals(subterms.get(4) + ""))
+        { ASTTerm arg = (ASTTerm) subterms.get(0); 
+          // ASTTerm pow = (ASTTerm) subterms.get(3); 
+          // if (v.equals(arg.literalForm()))
+          // { res.add(pow.literalForm()); 
+          //   return res; 
+          // }
+          return arg.differentialsOf(var, arg);  
+        } 
+
+        res.add(0); 
+        return res; 
+      }  
+
+
+      if ("factorExpression".equals(ct.tag))
+      { if (subterms.size() == 2)
+        { ASTTerm t1 = (ASTTerm) subterms.get(0); 
+          String opr = t1 + ""; 
+          ASTTerm t2 = (ASTTerm) subterms.get(1); 
+          String t2lit = t2.literalForm(); 
+
+          if ("-".equals(opr))
+          { 
+            if (v.equals(t2lit))
+            { res.add(0);
+              return res;
+            } 
+  
+            return ASTTerm.differentialsOf(var, t2); 
+          } 
+
+
+          if ("+".equals(opr))
+          { 
+            if (v.equals(t2lit))
+            { res.add(0);
+              return res;
+            } 
+
+            return ASTTerm.differentialsOf(var, t2); 
+          } 
+
+          if ("´".equals(t2 + ""))
+          { if (v.equals(t1.literalForm()))
+            { res.add(1); 
+              return res; 
+            } 
+
+            res.add(1);
+            Vector powerst2 = ASTTerm.differentialsOf(var, t1);
+            return VectorUtil.vectorSummation(res,powerst2);
+          } // v must be a subterm of t2
+        }
+
+        if (subterms.size() == 3)
+        { String opr = subterms.get(1) + ""; 
+
+          if ("*".equals(opr) || "/".equals(opr))
+          { ASTTerm t1 = (ASTTerm) subterms.get(0);  
+            ASTTerm t2 = (ASTTerm) subterms.get(2); 
+
+            if (v.equals(t1.literalForm()) && 
+                v.equals(t2.literalForm()))
+            { res.add(0);
+              return res;
+            } 
+            else if (v.equals(t1.literalForm()))
+            { 
+              return ASTTerm.differentialsOf(var, t2);
+            } 
+            else if (v.equals(t2.literalForm()))
+            { return ASTTerm.differentialsOf(var, t1); }
+
+            boolean isIn1 = ASTTerm.isSubterm(var,t1); 
+            boolean isIn2 = ASTTerm.isSubterm(var,t2); 
+
+            Vector powers1 = new Vector(); 
+            Vector powers2 = new Vector(); 
+
+            if (isIn1 && isIn2)
+            { powers1 = ASTTerm.differentialsOf(var, t1); 
+              powers2 = ASTTerm.differentialsOf(var, t2);
+ 
+              // result is max(x,y) for x : powers1, y : powers2
+              Vector allpows = new Vector(); 
+              allpows.addAll(powers1); 
+              allpows.addAll(powers2); 
+              double r = VectorUtil.vectorMaximum(allpows);
+              res.add(r); 
+              return res;  
+            }
+            else if (isIn1)
+            { return ASTTerm.differentialsOf(var, t1); }
+            else 
+            { return ASTTerm.differentialsOf(var, t2); } 
+          } 
+          else if ("=".equals(opr))
+          { ASTTerm t1 = (ASTTerm) subterms.get(0);  
+            return ASTTerm.differentialsOf(var, t1); 
+          } 
+        } 
+      }
+    } 
+   
+    return res; 
+  }  
+
   public static String coefficientOfSquare(
                             ASTTerm var, ASTTerm expr)
   { // expr is coef*var*var

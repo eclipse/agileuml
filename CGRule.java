@@ -477,17 +477,39 @@ public class CGRule
     return false;
   }
 
-  public boolean satisfiesConditions(Vector args, 
+  public boolean satisfiesConditions(Vector eargs,
                            Vector entities, CGSpec cgs)
-  { return CGCondition.conditionsSatisfied(
-                    conditions,args,entities,
+  { /* Vector newargs = new Vector(); 
+
+    for (int x = 0; x < variables.size() && x < args.size(); 
+         x++)
+    { String arg = (String) args.get(x);
+      String arg1 = correctNewlines(arg); 
+      newargs.add(arg1); 
+    } // Assuming the variables occur in same order as args
+    */ 
+	
+    return CGCondition.conditionsSatisfied(
+                    conditions,
+                    variables,eargs,entities,
                     cgs,rhsVariables); 
   } // actually pass the rule in also, or the variables
 
   public boolean satisfiesAllConditions(Vector args, 
+                           Vector eargs,
                            Vector entities, CGSpec cgs)
-  { return CGCondition.allConditionsSatisfied(this,
-                conditions,args,entities,cgs,rhsVariables); 
+  { Vector newargs = new Vector(); 
+
+    for (int x = 0; x < variables.size() && x < args.size(); 
+         x++)
+    { String arg = (String) args.get(x);
+      String arg1 = correctNewlines(arg); 
+      newargs.add(arg1); 
+    } // Assuming the variables occur in same order as args
+
+    return CGCondition.allConditionsSatisfied(this,
+                conditions,variables,
+                eargs,newargs,entities,cgs,rhsVariables); 
   } 
 
   public int variablePosition(String var)

@@ -646,12 +646,13 @@ public class ASTCompositeTerm extends ASTTerm
 
         Vector ents = new Vector(); 
 
-        if (r.satisfiesAllConditions(eargs,ents,cgs))
-        { System.out.println(">>>> Applying " + tag + " rule " + r + " for " + this); 
+        if (r.satisfiesAllConditions(args,eargs,ents,cgs))
+        { System.out.println(">>>> Applying " + tag + 
+                             " rule " + r + " for " + this); 
           return r.applyRule(args,eargs,cgs); 
         }  
         else 
-        { System.out.println(">!!> Conditions of rule " + r + " failed for " + this); 
+        { System.out.println(">!!> Conditions failed of rule " + r + " for " + this); 
         } 
       }
     }  
@@ -42640,16 +42641,17 @@ public class ASTCompositeTerm extends ASTTerm
         double minp = VectorUtil.vectorMinimum(powers); 
         double maxp = VectorUtil.vectorMaximum(powers); 
  
-        /* JOptionPane.showMessageDialog(null, 
-              ">>> Var powers: " + 
+        JOptionPane.showMessageDialog(null, 
+              ">>> Var powers of " + vx0 + " are: " +  
                              powers + " " + minp + " " + maxp, 
               "", 
-              JOptionPane.INFORMATION_MESSAGE); */ 
+              JOptionPane.INFORMATION_MESSAGE); 
 
-        if (maxp - minp == 2 && minp == 0) 
+        if (maxp == 2 && minp >= 0) 
         { String coefsq = ASTTerm.coefficientOfSquare(var0, expr0); 
           String coefvar = ASTTerm.coefficientOf(var0, expr0); 
-          String cnsts = ASTTerm.constantTerms(varTerms,expr0);
+          String cnsts = 
+              ASTTerm.constantTerms(varTerms,expr0);
           JOptionPane.showMessageDialog(null, 
             ">>> This is a quadratic formula, solving using quadratic solver " + coefsq + "; " + coefvar + "; " + cnsts, 
             "", 
@@ -42667,6 +42669,61 @@ public class ASTCompositeTerm extends ASTTerm
           String newformula = 
             ASTTerm.symbolicMultiplication(vx0, expr0); 
           return "  Solve " + newformula + " for " + vx0 + "\n"; 
+        } 
+        else if (maxp == 1 && minp >= 0) // linear
+        { } 
+        else // could be differential equation
+        { Vector diffs = ASTTerm.differentialsOf(var0,expr0);
+          Vector diffsR = VectorUtil.removeDuplicates(diffs); 
+          double maxdp = VectorUtil.vectorMaximum(diffsR); 
+          double mindp = VectorUtil.vectorMinimum(diffsR); 
+          
+          if (maxdp > 0 && diffsR.size() <= 2 && 
+              (mindp == 0 || mindp == maxdp))
+          { ASTTerm vdiff =
+              constructNDifferential((int) maxdp, var0);  
+            Vector dpowers = ASTTerm.powersOf(vdiff,expr0);
+            String dcoef = ASTTerm.coefficientOf(vdiff,expr0); 
+            Vector dvars = new Vector(); 
+            dvars.add(vdiff); 
+            String dcnst = ASTTerm.constantTerms(dvars,expr0);
+
+
+            double mindpp = VectorUtil.vectorMinimum(dpowers); 
+            double maxdpp = VectorUtil.vectorMaximum(dpowers); 
+
+            JOptionPane.showMessageDialog(null, 
+              ">>> This is a differential formula, solving using integration " + diffsR + 
+              " " + dpowers + " " + dcoef + " " + dcnst + 
+              " " + mindpp + " " + maxdpp, 
+              "", 
+              JOptionPane.INFORMATION_MESSAGE);
+
+            if (maxdpp == 1 && mindpp >= 0) // linear in f'
+            { if (maxdp == 1)
+              { return "  Define " + vx0 + 
+                     " = - ‡ " + 
+                     "((" + dcnst + ")/" + dcoef + ") dx\n";
+              } 
+              else 
+              { ASTTerm vdiffpar1 = vdiff.getTerm(0); 
+                return "  Solve " + vdiffpar1.literalForm() + 
+                     " = - ‡ " + 
+                     "((" + dcnst + ")/" + dcoef + 
+                     ") dx for " + vx0 + "\n";
+              } 
+            }  
+            return "  Simplify ‡ (" + 
+                   expr0.literalForm() + ") dx \n"; 
+          } 
+          else 
+          { JOptionPane.showMessageDialog(null, 
+              ">>> Unrecognised formula", 
+              "", 
+              JOptionPane.INFORMATION_MESSAGE);
+          } 
+
+          return "  Solve " + exprs.literalForm() + " for " + vars.literalForm() + "\n"; 
         } 
       }  
 
@@ -42833,7 +42890,17 @@ public class ASTCompositeTerm extends ASTTerm
     return res; 
   }
    
- 
+  private static ASTTerm constructNDifferential(
+                                int n, ASTTerm v)
+  { ASTTerm res = v; 
+    for (int i = 0; i < n; i++) 
+    { Vector dpars = new Vector();
+      dpars.add(res); 
+      dpars.add(new ASTSymbolTerm("´")); 
+      res = new ASTCompositeTerm("factorExpression", dpars);
+    } 
+    return res;  
+  }  
         
 
 /*    Statement stat = xx.cstatementToKM3(m1,m2,v1,v2);
