@@ -996,7 +996,8 @@ public class CGCondition
 
     String stereo = "" + stereotype; 
 
-    /* Replace vars[i] by eargs[i].cg(cgs) or reps[i] */ 
+    /* In stereo and variable: 
+         Replace vars[i] by eargs[i].cg(cgs) or reps[i] */ 
     /* Replace gvars[j] by its value */
 
     for (int x = 0; x < reps.size() && x < vars.size(); x++)

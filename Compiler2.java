@@ -1890,6 +1890,8 @@ public class Compiler2
 	 
     for (int i = 0; i < lexs.size(); i++)
     { String se = lexs.get(i) + ""; 
+      // System.out.println("+++ Lexical:: " + se + " " + cg.isMatches); 
+
       if (",".equals(se))
       { conds.add(cg); 
         cg = new CGCondition(); 
@@ -1906,7 +1908,11 @@ public class Compiler2
       } 
       else if (se.startsWith("_"))
       { if (cg.hasVariable())
-        { cg.setStereotype(se); } 
+        { if (cg.isMatches)
+          { cg.addToStereotype(se); } 
+          else 
+          { cg.setStereotype(se); }
+        }  
         else 
         { cg.setVariable(se); }
       }  
@@ -1915,13 +1921,13 @@ public class Compiler2
       { String mt = "" + lexs.get(i+1); 
         cg.setVariableMetafeature(mt);
         i++;
-      } 
+      } // has variable but not stereo
       else if (se.equals("`") && 
                i + 2 == lexs.size())
       { String mt = "" + lexs.get(i+1); 
         cg.setStereotypeMetafeature(mt);
         i++;
-      } 
+      } // has variable and stereo
       else if (se.equals("not"))
       { cg.setNegative(); } 
       else if (se.equals("any"))
@@ -1973,13 +1979,13 @@ public class Compiler2
       { String mt = "" + lexs.get(i+1); 
         cg.setVariableMetafeature(mt);
         i++;
-      } 
+      } // expectVar false, expectStereo true
       else if (se.equals("`") && 
                i + 2 == lexs.size())
       { String mt = "" + lexs.get(i+1); 
         cg.setStereotypeMetafeature(mt);
         i++;
-      } 
+      } // expectVar false, expectStereo false
       else if (expectVar)
       { cg.setVariable(se); 
         expectVar = false; 
@@ -5178,11 +5184,6 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       return "pre:"; 
     } 
  
-    if ("post".startsWith(st)) 
-    { mess[0] = "Operation postcondition, eg: post: true\n" + 
-                "or post: result = expression"; 
-      return "post:"; 
-    }
 
     if ("let".startsWith(st))
     { mess[0] = "let expression to define local variable:\n let x : Type = init in (expr)"; 
@@ -5209,10 +5210,6 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       return "usecase"; 
     } 
 
-    if ("parameter".startsWith(st)) 
-    { mess[0] = "usecase parameter, eg: parameter name : Type;"; 
-      return "parameter"; 
-    } 
 
 
     if ("attribute".startsWith(st)) 
@@ -5231,11 +5228,24 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       { mess[0] = "else part of if-expression or if-statement"; 
         return "else"; 
       }
+
+      if ("post".startsWith(st)) 
+      { mess[0] = "Operation postcondition, eg: post: true\n" + 
+                "or post: result = expression"; 
+        return "post:"; 
+      }
+
+      if ("parameter".startsWith(st)) 
+      { mess[0] = "usecase parameter, eg: parameter name : Type;"; 
+        return "parameter"; 
+      } 
     } 
 
     if (st.length() > 3) 
     { if ("reference".startsWith(st)) 
-      { mess[0] = "reference declaration, eg: reference name : Type;\nType is a class type or collection (of class element type)"; 
+      { mess[0] = "reference declaration, eg: reference name : Type;\nType is a class type or collection (of class element type)\nGeneral syntax is:\n" + 
+        "reference role2 [cardinality] [stereotypes] : Entity2 [opp];\n" + 
+        "Eg: reference children [*] ordered : Person oppositeOf parent;";  
         return "reference"; 
       }
 
@@ -5548,6 +5558,20 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         return "try";
       }
 
+    
+      if ("boolean".startsWith(st)) 
+      { mess[0] = "Boolean-values type boolean,\n" + 
+                  "values are true and false\n" + 
+                  "Operators include:  b1 & b2  b1 or b2  not(b)  b1 => b2"; 
+        return "boolean"; 
+      } 
+
+      if ("identity".startsWith(st)) 
+      { mess[0] = "Identity attributes - String-valued attributes whose values\n"  + 
+             "uniquely define the objects of its class: attribute id identity : String;"; 
+        return "identity"; 
+      } 
+
     } 
 
  
@@ -5681,19 +5705,6 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       return "long"; 
     } 
     
-    
-    if ("boolean".startsWith(st)) 
-    { mess[0] = "Boolean-values type boolean,\n" + 
-                "values are true and false\n" + 
-                "Operators include:  b1 & b2  b1 or b2  not(b)  b1 => b2"; 
-      return "boolean"; 
-    } 
-
-    if ("identity".startsWith(st)) 
-    { mess[0] = "Identity attributes - String-valued attributes whose values\n"  + 
-           "uniquely define the objects of its class: attribute id identity : String;"; 
-      return "identity"; 
-    } 
 
     if ("subrange".startsWith(st)) 
     { mess[0] = "subrange operator on sequences and strings\n"  + 
@@ -6810,8 +6821,10 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
           "static".equals(lx2) || "invariant".equals(lx2) || 
           "stereotype".equals(lx2)) 
       { String lxr = lexicals.get(reached) + ""; 
-        if ("attribute".equals(lxr) || "reference".equals(lxr) || "query".equals(lxr) || 
-            "operation".equals(lxr) || "static".equals(lxr) || "invariant".equals(lxr) ||
+        if ("attribute".equals(lxr) || 
+            "reference".equals(lxr) || "query".equals(lxr) || 
+            "operation".equals(lxr) || "static".equals(lxr) || 
+            "invariant".equals(lxr) ||
             "stereotype".equals(lxr)) 
         { if ("static".equals(lxr))
           { if ("attribute".equals(lexicals.get(reached+1) + ""))
