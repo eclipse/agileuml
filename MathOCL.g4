@@ -173,8 +173,8 @@ factorExpression
                                    factorExpression
     | INTEGRAL '_{' expression '}' '^{' expression '}' expression ID 
     | INTEGRAL expression ID 
-    | SIGMA '_{' expression '}' '^{' expression '}' expression  
-    | PRODUCT '_{' expression '}' '^{' expression '}' expression  
+    | SIGMA '_{' expression '}' '^{' expression '}' factorExpression  
+    | PRODUCT '_{' expression '}' '^{' expression '}' factorExpression  
     | '-' factorExpression 
     | '+' factorExpression 
     | SQUAREROOT factorExpression

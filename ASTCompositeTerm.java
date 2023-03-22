@@ -42632,6 +42632,8 @@ public class ASTCompositeTerm extends ASTTerm
 
       if (varTerms.size() == 1 && exprTerms.size() == 1) 
       { // test what powers of var are present
+        // It could be a quadratic, or differential eqn
+
         ASTTerm var0 = (ASTTerm) varTerms.get(0); 
         ASTTerm expr0 = (ASTTerm) exprTerms.get(0); 
         String vx0 = var0.literalForm(); 
@@ -42641,13 +42643,19 @@ public class ASTCompositeTerm extends ASTTerm
         double minp = VectorUtil.vectorMinimum(powers); 
         double maxp = VectorUtil.vectorMaximum(powers); 
  
+        Vector diffs = ASTTerm.differentialsOf(var0,expr0);
+        Vector diffsR = VectorUtil.removeDuplicates(diffs); 
+        double maxdp = VectorUtil.vectorMaximum(diffsR); 
+        double mindp = VectorUtil.vectorMinimum(diffsR); 
+          
         JOptionPane.showMessageDialog(null, 
               ">>> Var powers of " + vx0 + " are: " +  
-                             powers + " " + minp + " " + maxp, 
+              powers + " " + minp + " " + maxp + 
+              " Differentials: " + diffsR + " " + maxdp, 
               "", 
               JOptionPane.INFORMATION_MESSAGE); 
 
-        if (maxp == 2 && minp >= 0) 
+        if (maxp == 2 && minp >= 0 && maxdp == 0) 
         { String coefsq = ASTTerm.coefficientOfSquare(var0, expr0); 
           String coefvar = ASTTerm.coefficientOf(var0, expr0); 
           String cnsts = 
@@ -42664,66 +42672,99 @@ public class ASTCompositeTerm extends ASTTerm
           
           return "  Simplify (" + vx0 + " = " + quadformula1 + ") or (" + vx0 + " = " + quadformula2 + ")"; 
         } 
-        else if (maxp == 1 && minp == -1) 
+        else if (maxp == 1 && minp == -1 && maxdp == 0) 
         { // multiply by var
           String newformula = 
             ASTTerm.symbolicMultiplication(vx0, expr0); 
           return "  Solve " + newformula + " for " + vx0 + "\n"; 
         } 
-        else if (maxp == 1 && minp >= 0) // linear
+        else if (maxp == 1 && minp >= 0 && maxdp == 0) 
+        // linear
         { } 
-        else // could be differential equation
-        { Vector diffs = ASTTerm.differentialsOf(var0,expr0);
-          Vector diffsR = VectorUtil.removeDuplicates(diffs); 
-          double maxdp = VectorUtil.vectorMaximum(diffsR); 
-          double mindp = VectorUtil.vectorMinimum(diffsR); 
-          
-          if (maxdp > 0 && diffsR.size() <= 2 && 
-              (mindp == 0 || mindp == maxdp))
-          { ASTTerm vdiff =
-              constructNDifferential((int) maxdp, var0);  
-            Vector dpowers = ASTTerm.powersOf(vdiff,expr0);
-            String dcoef = ASTTerm.coefficientOf(vdiff,expr0); 
-            Vector dvars = new Vector(); 
-            dvars.add(vdiff); 
-            String dcnst = ASTTerm.constantTerms(dvars,expr0);
+        else if (maxdp > 0 && diffsR.size() <= 2 && 
+                 (mindp == 0 || mindp == maxdp) && 
+                 maxp == 0)
+        { // Differential eqn with only one diff term
 
+          ASTTerm vdiff =
+              constructNDifferential((int) maxdp, var0); 
+ 
+          Vector dpowers = ASTTerm.powersOf(vdiff,expr0);
+          String dcoef = ASTTerm.coefficientOf(vdiff,expr0); 
 
-            double mindpp = VectorUtil.vectorMinimum(dpowers); 
-            double maxdpp = VectorUtil.vectorMaximum(dpowers); 
+          Vector dvars = new Vector(); 
+          dvars.add(vdiff); 
+          String dcnst = ASTTerm.constantTerms(dvars,expr0);
 
-            JOptionPane.showMessageDialog(null, 
-              ">>> This is a differential formula, solving using integration " + diffsR + 
+          double mindpp = VectorUtil.vectorMinimum(dpowers); 
+          double maxdpp = VectorUtil.vectorMaximum(dpowers); 
+
+          JOptionPane.showMessageDialog(null, 
+              ">>> This is a differential equation: " + diffsR + 
               " " + dpowers + " " + dcoef + " " + dcnst + 
               " " + mindpp + " " + maxdpp, 
               "", 
               JOptionPane.INFORMATION_MESSAGE);
 
-            if (maxdpp == 1 && mindpp >= 0) // linear in f'
-            { if (maxdp == 1)
-              { return "  Define " + vx0 + 
+          // Homogenous if dcnst does not have x
+
+          if (maxdpp == 1 && mindpp >= 0) // linear
+          { if (maxdp == 1) // f'
+            { return "  Define " + vx0 + 
                      " = - ‡ " + 
                      "((" + dcnst + ")/" + dcoef + ") dx\n";
-              } 
-              else 
-              { ASTTerm vdiffpar1 = vdiff.getTerm(0); 
-                return "  Solve " + vdiffpar1.literalForm() + 
+            } 
+            else // f'' or higher occurs
+            { ASTTerm vdiffpar1 = vdiff.getTerm(0); 
+              return "  Solve " + vdiffpar1.literalForm() + 
                      " = - ‡ " + 
                      "((" + dcnst + ")/" + dcoef + 
-                     ") dx for " + vx0 + "\n";
-              } 
+                     ") dx for " + vx0 + "\n"; 
             }  
-            return "  Simplify ‡ (" + 
-                   expr0.literalForm() + ") dx \n"; 
+          }
+
+          return "  Solve " + exprs.literalForm() + " for " + vars.literalForm() + "\n";
+        }
+        else if (maxdp > 0)
+        { // Differential eqn with several diff terms
+          Vector alldcoefs = new Vector(); 
+          Vector vdiffs =
+              constructNDifferentials((int) maxdp, var0,
+                                      expr0, alldcoefs); 
+          
+          JOptionPane.showMessageDialog(null, 
+              ">>> General differential equation " + 
+              vdiffs + " " + alldcoefs, 
+              "", 
+              JOptionPane.INFORMATION_MESSAGE);
+
+          if (maxdp == 2 && vdiffs.size() == 3) 
+          { // Quadratic homogenous equation 
+
+            String coeff = "" + alldcoefs.get(0); 
+            String coefd1 = "" + alldcoefs.get(1); 
+            String coefd2 = "" + alldcoefs.get(2); 
+
+            String quadf1 = 
+              AuxMath.quadraticFormula1(coefd2, coefd1, 
+                                        coeff); 
+            String quadf2 = 
+              AuxMath.quadraticFormula2(coefd2, coefd1, 
+                                        coeff); 
+          
+            if (quadf1.equals(quadf2))
+            { return "  Define " + vx0 + " = (A + B*x)*e^{" + quadf1 + "*x}"; } 
+            return "  Define " + vx0 + " = A*e^{" + quadf1 + "*x} + B*e^{" + quadf2 + "*x}"; 
           } 
-          else 
-          { JOptionPane.showMessageDialog(null, 
+
+          return "  Solve " + exprs.literalForm() + " for " + vars.literalForm() + "\n";
+        } 
+        else 
+        { JOptionPane.showMessageDialog(null, 
               ">>> Unrecognised formula", 
               "", 
               JOptionPane.INFORMATION_MESSAGE);
-          } 
-
-          return "  Solve " + exprs.literalForm() + " for " + vars.literalForm() + "\n"; 
+          return "  Solve " + exprs.literalForm() + " for " + vars.literalForm() + "\n";
         } 
       }  
 
@@ -42902,6 +42943,31 @@ public class ASTCompositeTerm extends ASTTerm
     return res;  
   }  
         
+  private static Vector constructNDifferentials(
+            int n, ASTTerm v, ASTTerm expr0, 
+            Vector coefs)
+  { // for i = 1 upto n, find if i-th diff of v
+    // occurs in expr0 and what its coefficient is
+    
+    Vector res = new Vector(); 
+
+    String vcoef = ASTTerm.coefficientOf(v,expr0);
+    res.add(v); 
+    coefs.add(vcoef); 
+
+    for (int i = 1; i <= n; i++) 
+    {  
+      ASTTerm vdiff =
+              constructNDifferential(i, v); 
+ 
+      Vector dpowers = ASTTerm.powersOf(vdiff,expr0);
+      String dcoef = ASTTerm.coefficientOf(vdiff,expr0); 
+
+      res.add(vdiff); 
+      coefs.add(dcoef); 
+    } 
+    return res; 
+  } 
 
 /*    Statement stat = xx.cstatementToKM3(m1,m2,v1,v2);
     Entity fromC = new Entity("FromC"); 

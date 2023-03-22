@@ -7457,6 +7457,10 @@ public boolean conflictsWithIn(String op, Expression el,
       { res = "UmlRsdsLib<string>::startsWith(" + lqf + ", " + rqf + ")"; } 
       else if (operator.equals("->hasSuffix"))
       { res = "UmlRsdsLib<string>::endsWith(" + lqf + ", " + rqf + ")"; } 
+      else if (operator.equals("->before"))
+      { res = "UmlRsdsLib<string>::before(" + lqf + "," + rqf + ")"; } 
+      else if (operator.equals("->after"))
+      { res = "UmlRsdsLib<string>::after(" + lqf + "," + rqf + ")"; }
       else if (operator.equals("->isMatch"))
       { res = "UmlRsdsLib<string>::isMatch(" + lqf + ", " + rqf + ")"; } 
       else if (operator.equals("->hasMatch"))

@@ -3025,7 +3025,8 @@ public class Type extends ModelElement
       return "NULL";    // for classes, Ref, OclAny, functions
     }
     return getName() + "(0)"; // (String) values.get(0);
-  }
+  } // for a function [=](keytype x) -> elemtype { return det; }
+    // where det is default element of elemtype
 
 
   public void generateJava(PrintWriter out)
@@ -3332,7 +3333,11 @@ public class Type extends ModelElement
     { return "map<string, " + elemType + ">*"; } 
     if (nme.equals("String")) { return "string"; }  
     if (nme.equals("boolean")) { return "bool"; } 
-    if (nme.equals("Function"))
+    if (nme.equals("Function") && keyType != null)
+    { String kt = keyType.getCPP(keyType.getElementType()); 
+      return "std::function<" + elemType + "(" + kt + ")>"; 
+    } 
+    if (nme.equals("Function") && keyType == null)
     { return "std::function<" + elemType + "(string)>"; } 
     if (isEntity) 
     { if (entity.genericParameter)

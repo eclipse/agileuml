@@ -999,6 +999,12 @@ public class CGCondition
     /* In stereo and variable: 
          Replace vars[i] by eargs[i].cg(cgs) or reps[i] */ 
     /* Replace gvars[j] by its value */
+	
+    if (quantifier.equals("all") || quantifier.equals("any"))
+    { CGCondition gcond = new CGCondition(stereotype, "_1"); 
+      gcond.setPositive(positive);
+	  return gcond.conditionSatisfied(a,vars,eargs,reps,entities,cgs,gvars); 
+	}   
 
     for (int x = 0; x < reps.size() && x < vars.size(); x++)
     { String var = (String) vars.get(x);

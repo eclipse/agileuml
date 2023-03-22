@@ -11499,6 +11499,13 @@ public void produceCUI(PrintWriter out)
     out.println("\n" + mop);  
     mop = BSystemTypes.generateIsLongOpCPP(); 
     out.println("\n" + mop);  
+
+
+    mop = BSystemTypes.generateBeforeOpCPP(); 
+    out.println("\n" + mop);
+    mop = BSystemTypes.generateAfterOpCPP(); 
+    out.println("\n" + mop);
+
     mop = BSystemTypes.generateHasMatchOpCPP(); 
     out.println("\n" + mop);
     mop = BSystemTypes.generateIsMatchOpCPP(); 

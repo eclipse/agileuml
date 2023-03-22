@@ -1646,8 +1646,8 @@ public class AuxMath
       { xsq[i] = xs[i]*xs[i]; } 
       
       if (xs.length < 3)
-      { System.out.println("ERROR: too few points to evaluate quadratic relationship -- need 3 datapoints"); 
-      	return false; 
+      { System.out.println("!! ERROR: too few points to evaluate quadratic relationship -- need 3 datapoints"); 
+        return false; 
       }	
       	
       boolean isOk = true; 
@@ -2954,7 +2954,7 @@ public class AuxMath
            ((-bval + 
              Math.sqrt(discrim))/(2*aval));
        } 
-       if (discrim == 0) 
+       else if (discrim == 0) 
        { return "" + 
            (-bval/(2*aval));
        } 
@@ -2965,19 +2965,19 @@ public class AuxMath
      { Double aval = Double.parseDouble("" + a); 
        Double bval = Double.parseDouble("" + b); 
        return 
-          "(" + (-bval) + " + †(" + bval*bval + " - " + 4*aval + "*" + c + "))/" + 2*aval; 
+          "(" + (-bval) + " + †(" + (bval*bval) + " - " + 4*aval + "*" + c + "))/" + 2*aval; 
      } 
      else if (AuxMath.isNumeric(a) && AuxMath.isNumeric(c))
      { Double aval = Double.parseDouble("" + a); 
        Double cval = Double.parseDouble("" + c); 
        return 
-          "(-" + b + " + †(" + b + "*" + b + " - " + 4*aval*cval + "))/" + 2*aval; 
+          "(-" + b + " + †(" + b + "*" + b + " - " + (4*aval*cval) + "))/" + 2*aval; 
      } 
      else if (AuxMath.isNumeric(b) && AuxMath.isNumeric(c))
      { Double bval = Double.parseDouble("" + b); 
        Double cval = Double.parseDouble("" + c); 
        return 
-          "(-" + bval + " + †(" + bval*bval + " - 4*" + a + "*" + cval + "))/(2*" + a + ")"; 
+          "(-" + bval + " + †(" + (bval*bval) + " - 4*" + a + "*" + cval + "))/(2*" + a + ")"; 
      } 
 
        return 
@@ -3010,19 +3010,19 @@ public class AuxMath
      { Double aval = Double.parseDouble("" + a); 
        Double bval = Double.parseDouble("" + b); 
        return 
-          "(" + (-bval) + " - †(" + bval*bval + " - " + 4*aval + "*" + c + "))/" + 2*aval; 
+          "(" + (-bval) + " - †(" + (bval*bval) + " - " + 4*aval + "*" + c + "))/" + 2*aval; 
      } 
      else if (AuxMath.isNumeric(a) && AuxMath.isNumeric(c))
      { Double aval = Double.parseDouble("" + a); 
        Double cval = Double.parseDouble("" + c); 
        return 
-          "(-" + b + " - †(" + b + "*" + b + " - " + 4*aval*cval + "))/" + 2*aval; 
+          "(-" + b + " - †(" + b + "*" + b + " - " + (4*aval*cval) + "))/" + 2*aval; 
      } 
      else if (AuxMath.isNumeric(b) && AuxMath.isNumeric(c))
      { Double bval = Double.parseDouble("" + b); 
        Double cval = Double.parseDouble("" + c); 
        return 
-          "(-" + bval + " - †(" + bval*bval + " - 4*" + a + "*" + cval + "))/(2*" + a + ")"; 
+          "(-" + bval + " - †(" + (bval*bval) + " - 4*" + a + "*" + cval + "))/(2*" + a + ")"; 
      } 
 
        return 
@@ -3030,7 +3030,7 @@ public class AuxMath
    } 
 
    public static void main(String[] args)
-   { Vector mm1 = new Vector(); 
+   { /* Vector mm1 = new Vector(); 
      mm1.add("3"); mm1.add("5"); 
 
      Vector mm2 = new Vector(); 
@@ -3051,7 +3051,7 @@ public class AuxMath
      mtrx.add(row1); mtrx.add(row2); mtrx.add(row3); 
 
      System.out.println(AuxMath.determinant(3,mtrx)); 
-     /* 2970 */ 
+     // 2970 
 
      Vector mtrx4 = new Vector(); 
      Vector row11 = new Vector(); 
@@ -3069,9 +3069,8 @@ public class AuxMath
      mtrx4.add(row11); mtrx4.add(row21); mtrx4.add(row31); 
      mtrx4.add(row41); 
      System.out.println(AuxMath.determinant(4,mtrx4)); 
-     /* 1936 */ 
+     // 1936 
 
-   /*
      System.out.println(
               AuxMath.matrixExcludingRowColumn(mtrx,0,0)); 
      System.out.println(
@@ -3286,6 +3285,8 @@ public class AuxMath
       System.out.println(bb); 
       System.out.println(AuxMath.sequencePrefix(sbs3,tbs)); */  
 
+      String r = AuxMath.quadraticFormula1("3", "2", "-1.0"); 
+      System.out.println(r); 
    }
  }
    

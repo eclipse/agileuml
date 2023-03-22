@@ -7479,7 +7479,7 @@ public class BSystemTypes extends BComponent
     res = res + "  public static double sumdouble(ArrayList a)\n" +
       "  { double sum = 0.0; \n" +
       "    for (int i = 0; i < a.Count; i++)\n" +
-      "    { double x = (double) a[i]; \n" +
+      "    { double x = double.Parse(\"\" + a[i]); \n" +
       "      sum += x; \n" + 
       "    } \n" + 
       "    return sum; }\n\n";

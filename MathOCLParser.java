@@ -2214,13 +2214,13 @@ public class MathOCLParser extends Parser {
 		public TerminalNode INTEGRAL() { return getToken(MathOCLParser.INTEGRAL, 0); }
 		public TerminalNode ID() { return getToken(MathOCLParser.ID, 0); }
 		public TerminalNode SIGMA() { return getToken(MathOCLParser.SIGMA, 0); }
-		public TerminalNode PRODUCT() { return getToken(MathOCLParser.PRODUCT, 0); }
 		public List<FactorExpressionContext> factorExpression() {
 			return getRuleContexts(FactorExpressionContext.class);
 		}
 		public FactorExpressionContext factorExpression(int i) {
 			return getRuleContext(FactorExpressionContext.class,i);
 		}
+		public TerminalNode PRODUCT() { return getToken(MathOCLParser.PRODUCT, 0); }
 		public TerminalNode SQUAREROOT() { return getToken(MathOCLParser.SQUAREROOT, 0); }
 		public TerminalNode PARTIALDIFF() { return getToken(MathOCLParser.PARTIALDIFF, 0); }
 		public Factor2ExpressionContext factor2Expression() {
@@ -2327,7 +2327,7 @@ public class MathOCLParser extends Parser {
 				setState(368);
 				match(T__37);
 				setState(369);
-				expression();
+				factorExpression(9);
 				}
 				break;
 			case 5:
@@ -2347,7 +2347,7 @@ public class MathOCLParser extends Parser {
 				setState(377);
 				match(T__37);
 				setState(378);
-				expression();
+				factorExpression(8);
 				}
 				break;
 			case 6:
@@ -3140,13 +3140,13 @@ public class MathOCLParser extends Parser {
 		"\2\u0167\u018b\3\2\2\2\u0168\u0169\7r\2\2\u0169\u016a\5$\23\2\u016a\u016b"+
 		"\7\u0082\2\2\u016b\u018b\3\2\2\2\u016c\u016d\7s\2\2\u016d\u016e\7C\2\2"+
 		"\u016e\u016f\5$\23\2\u016f\u0170\7(\2\2\u0170\u0171\7D\2\2\u0171\u0172"+
-		"\5$\23\2\u0172\u0173\7(\2\2\u0173\u0174\5$\23\2\u0174\u018b\3\2\2\2\u0175"+
-		"\u0176\7t\2\2\u0176\u0177\7C\2\2\u0177\u0178\5$\23\2\u0178\u0179\7(\2"+
-		"\2\u0179\u017a\7D\2\2\u017a\u017b\5$\23\2\u017b\u017c\7(\2\2\u017c\u017d"+
-		"\5$\23\2\u017d\u018b\3\2\2\2\u017e\u017f\7?\2\2\u017f\u018b\5\64\33\t"+
-		"\u0180\u0181\7>\2\2\u0181\u018b\5\64\33\b\u0182\u0183\7{\2\2\u0183\u018b"+
-		"\5\64\33\7\u0184\u0185\7w\2\2\u0185\u0186\7C\2\2\u0186\u0187\7\u0082\2"+
-		"\2\u0187\u0188\7(\2\2\u0188\u018b\5\64\33\6\u0189\u018b\5\66\34\2\u018a"+
+		"\5$\23\2\u0172\u0173\7(\2\2\u0173\u0174\5\64\33\13\u0174\u018b\3\2\2\2"+
+		"\u0175\u0176\7t\2\2\u0176\u0177\7C\2\2\u0177\u0178\5$\23\2\u0178\u0179"+
+		"\7(\2\2\u0179\u017a\7D\2\2\u017a\u017b\5$\23\2\u017b\u017c\7(\2\2\u017c"+
+		"\u017d\5\64\33\n\u017d\u018b\3\2\2\2\u017e\u017f\7?\2\2\u017f\u018b\5"+
+		"\64\33\t\u0180\u0181\7>\2\2\u0181\u018b\5\64\33\b\u0182\u0183\7{\2\2\u0183"+
+		"\u018b\5\64\33\7\u0184\u0185\7w\2\2\u0185\u0186\7C\2\2\u0186\u0187\7\u0082"+
+		"\2\2\u0187\u0188\7(\2\2\u0188\u018b\5\64\33\6\u0189\u018b\5\66\34\2\u018a"+
 		"\u0155\3\2\2\2\u018a\u015e\3\2\2\2\u018a\u0168\3\2\2\2\u018a\u016c\3\2"+
 		"\2\2\u018a\u0175\3\2\2\2\u018a\u017e\3\2\2\2\u018a\u0180\3\2\2\2\u018a"+
 		"\u0182\3\2\2\2\u018a\u0184\3\2\2\2\u018a\u0189\3\2\2\2\u018b\u0195\3\2"+

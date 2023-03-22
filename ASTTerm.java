@@ -3835,6 +3835,16 @@ public abstract class ASTTerm
             if ("0".equals(coef1) && "+".equals(opr))
             { return coef2; } 
 
+            if (AuxMath.isNumeric(coef1) &&
+                AuxMath.isNumeric(coef2))
+            { double val1 = Double.parseDouble(coef1); 
+              double val2 = Double.parseDouble(coef2);
+              if ("+".equals(opr))
+              { return "" + (val1 + val2); } 
+              else 
+              { return "" + (val1 - val2); } 
+            } 
+              
             return coef1 + " " + opr + " " + coef2; 
           } 
         } 
@@ -3895,6 +3905,14 @@ public abstract class ASTTerm
             { coef2 = ASTTerm.coefficientOf(var, t2); }
             if (coef1.equals("0") || coef2.equals("0"))
             { return "0"; } 
+
+
+            if (AuxMath.isNumeric(coef1) &&
+                AuxMath.isNumeric(coef2))
+            { double val1 = Double.parseDouble(coef1); 
+              double val2 = Double.parseDouble(coef2);
+              return "" + (val1 * val2);  
+            } 
             return coef1 + "*" + coef2; 
           } 
           else if ("/".equals(opr))
@@ -4381,6 +4399,16 @@ public abstract class ASTTerm
             if ("0".equals(coef1) && "+".equals(opr))
             { return coef2; } 
 
+            if (AuxMath.isNumeric(coef1) &&
+                AuxMath.isNumeric(coef2))
+            { double val1 = Double.parseDouble(coef1); 
+              double val2 = Double.parseDouble(coef2);
+              if ("+".equals(opr))
+              { return "" + (val1 + val2); } 
+              else 
+              { return "" + (val1 - val2); }   
+            } 
+     
             return coef1 + " " + opr + " " + coef2; 
           } 
         } 
@@ -4470,7 +4498,15 @@ public abstract class ASTTerm
             { return "0"; }
        
             if ("1".equals(coef1)) { return coef2; } 
-            if ("1".equals(coef2)) { return coef1; } 
+            if ("1".equals(coef2)) { return coef1; }
+
+            if (AuxMath.isNumeric(coef1) &&
+                AuxMath.isNumeric(coef2))
+            { double val1 = Double.parseDouble(coef1); 
+              double val2 = Double.parseDouble(coef2);
+              return "" + (val1 * val2); 
+            } 
+ 
             return coef1 + "*" + coef2; 
           } 
           else if ("/".equals(opr))
@@ -4540,6 +4576,13 @@ public abstract class ASTTerm
             if ("0".equals(val1))
             { return "-" + val2; } 
 
+            if (AuxMath.isNumeric(val1) &&
+                AuxMath.isNumeric(val2))
+            { double v1 = Double.parseDouble(val1); 
+              double v2 = Double.parseDouble(val2);
+              return "" + (v1 - v2); 
+            } 
+
             return "(" + val1 + " - " + val2 + ")"; 
           }
         } 
@@ -4562,6 +4605,17 @@ public abstract class ASTTerm
             { return "-" + coef2; } 
             if ("0".equals(coef1) && "+".equals(opr))
             { return coef2; } 
+
+            if (AuxMath.isNumeric(coef1) &&
+                AuxMath.isNumeric(coef2))
+            { double val1 = Double.parseDouble(coef1); 
+              double val2 = Double.parseDouble(coef2);
+              if ("+".equals(opr))
+              { return "" + (val1 + val2); } 
+              else 
+              { return "" + (val1 - val2); }   
+            } 
+
             return "(" + coef1 + " " + opr + " " + coef2 + ")"; 
           } 
         } 
@@ -4607,6 +4661,17 @@ public abstract class ASTTerm
             { return "0"; } 
             if ("*".equals(opr) && "0".equals(coef2))
             { return "0"; } 
+
+            if (AuxMath.isNumeric(coef1) &&
+                AuxMath.isNumeric(coef2))
+            { double val1 = Double.parseDouble(coef1); 
+              double val2 = Double.parseDouble(coef2);
+              if ("*".equals(opr))
+              { return "" + (val1 * val2); } 
+              else 
+              { return "" + (val1 / val2); }   
+            } 
+
             return coef1 + " " + opr + " " + coef2; 
           } 
         } 
@@ -4704,7 +4769,13 @@ public abstract class ASTTerm
             ASTTerm t2 = (ASTTerm) subterms.get(2); 
 
             String coef1 = ASTTerm.symbolicMultiplication(var, t1);
-            return coef1 + "*" + t2.literalForm(); 
+            String mult2 = t2.literalForm();
+            if ("0".equals(coef1)) { return "0"; } 
+            if ("1".equals(coef1)) { return mult2; } 
+            if ("0".equals(mult2)) { return "0"; } 
+            if ("1".equals(mult2)) { return coef1; } 
+            
+            return coef1 + "*" + mult2; 
           } 
           else if ("/".equals(opr))
           { ASTTerm t1 = (ASTTerm) subterms.get(0);  
@@ -4716,6 +4787,8 @@ public abstract class ASTTerm
 
             String coef1 = t1.symbolicMultiplication(var,t1); 
 
+            if ("0".equals(coef1)) { return "0"; } 
+            if ("1".equals(coef2)) { return coef1; } 
             return coef1 + " " + opr + " " + coef2; 
           } 
         } 
