@@ -291,7 +291,7 @@ lockStmt::
 LOCK _* |-->
 
 lsetStmt::
-LSET _1 = _2 |-->  _1 := (let _lset : String = _2 in _lset.subrange(1,_1->size()) + Integer.subrange(_lset->size()+1, _1->size())->collect(" ")->sum()))<when> _2 String
+LSET _1 = _2 |-->  _1 := StringLib.leftAlignInto(_2, _1->size())<when> _2 String
 LSET _1 = _2 |-->  _1 := _2
 
 openStmt::
@@ -740,8 +740,8 @@ _1 _2 _3 _4 |-->_1_2_3_4
 
 iCS_S_MemberCall::
 . Count |-->->size()
-. Items |-->->collect( _m | _m->values()->any() )
-. Keys |-->->collect( m | _m->keys()->any() )
+. Items |-->->collect( $m | $m->values()->any() )
+. Keys |-->->collect( $m | $m->keys()->any() )
 . RemoveAll |-->->intersection(Set{})
 . Rows |-->
 . _1 |-->_1`memberCall
@@ -849,7 +849,7 @@ Sin ( _1 ) |-->(_1)->sin()
 Sinh ( _1 ) |-->(_1)->sinh()
 Sqrt ( _1 ) |-->(_1)->sqrt()
 Sqr ( _1 ) |-->(_1)->sqrt()
-Tan ( _1 ) |-->(_1)->tanh()
+Tan ( _1 ) |-->(_1)->tan()
 Truncate ( _1 ) |-->(_1)->oclAsType(int)
 DDB ( _1 ) |-->_1`argsCallDDB
 FV ( _1 ) |-->_1`argsCallFV
@@ -1198,6 +1198,7 @@ subscripts::
 _1 |-->_1
 _1 , _* |-->_1 , _*`recurse
 
+
 subscript_:: 
 _1 TO _2 |-->_2
 _1 |-->_1
@@ -1342,6 +1343,7 @@ LET _1 = _2 |-->    self.set_1(_2)<when> _1 setter
 LET _1 = _2 |-->    _1 := _2
 _1 = _2 |-->    _1 := self.get_2()<when> _2 getter
 _1 = _2 |-->    self.set_1(_2)<when> _1 setter
+_1 = _2 |-->    _1 := StringLib.leftAlignInto(_2, _1`width)<when> _1`isFixedWidth true
 _1 = _2 |-->    _1 := _2
 LET _1 += _2 |-->    _1 := _1 + _2
 _1 += _2 |-->    _1 := _1 + _2
@@ -1427,7 +1429,8 @@ rmdirStmt::
 RMDIR _1 |-->  OclFile.deleteFile(_1)
 
 rsetStmt::
-RSET _1 = _2 |-->  _1 := Integer.subrange(1, (_1->size() - (_2)->size()))->collect( _sx | " ")->sum() + _2
+RSET _1 = _2 |-->  _1 := StringLib.rightAlignInto(_2, _1->size())
+
 
 saveSettingStmt::
 SAVESETTING _* |-->

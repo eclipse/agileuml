@@ -1,0 +1,365 @@
+testlist::
+_1 |-->_1
+_1 , _* |-->_1, _*`recurse
+
+testlist_comp::
+_1 |-->_1
+_1 , _* |-->_1, _*`recurse
+
+sequenceFormation::
+_1 |-->_1<when> _1 star_expr
+_1 |-->Sequence{ _1 }
+_1 , _* |-->_1->union(_*`recurse)<when> _1 star_expr
+_1 , _* |-->Sequence{_1}->union(_*`recurse)
+_1 _2 |-->_2`domainPart->select(_2`variablePart | _2`selectPart)->collect(_2`variablePart | _1)<when> _2 comp_for
+
+comp_for::
+for _1 in _2 |-->
+for _1 in _2 _3 |-->
+
+domainPart::
+for _1 in _2 |-->_2
+for _1 in _2 _3 |-->_2
+
+variablePart::
+for _1 in _2 |-->_1
+for _1 in _2 _3 |-->_1
+
+selectPart::
+for _1 in _2 |-->true
+for _1 in _2 _3 |-->_3`selectPart
+
+
+comp_iter::
+_1 |-->_1
+if _1 |-->
+if _1 _2 |-->
+
+selectPart::
+_1 |-->true
+if _1 |-->_1
+if _1 _2 |-->_1
+
+
+test::
+_1 if _2 else _3 |-->if _2 then _1 else _3 endif
+lambda _1 : _2 |-->lambda _1 in _2
+lambda : _2 |-->lambda $$ in _2
+_1 |-->_1
+
+
+logical_test::
+not _1 |-->not(_1)
+_1 and _2 |-->_1 & _2
+_1 or _2 |-->_1 or _2
+_1 |-->_1
+
+
+comparison::
+_1 < _2 |-->_1 < _2
+_1 > _2 |-->_1 > _2
+_1 == _2 |-->_1 = _2
+_1 >= _2 |-->_1 >= _2
+_1 <= _2 |-->_1 <= _2
+_1 <> _2 |-->_1 /= _2
+_1 != _2 |-->_1 /= _2
+_1 not in _2 |-->(_2)->excludes(_1)
+_1 in _2 |-->(_2)->includes(_1)
+_1 is not _2 |-->not(_1 <>= _2)
+_1 is _2 |-->_1 <>= _2
+_1 |-->_1
+
+
+exprlist::
+_1 |-->_1
+_1 , _* |-->_1, _*`recurse
+
+
+expr::
+len _1 |-->_1->size()
+print _1 |-->_1->display()
+int _1 |-->_1->oclAsType(int)
+float _1 |-->_1->oclAsType(double)
+str _1 |-->(_1 + "")
+chr _1 |-->_1->byte2char()
+unichr _1 |-->_1->byte2char()
+ord _1 |-->_1->char2byte()
+type _1 |-->_1->oclType()
+
+await _1 |-->
+await _1 _* |-->
+_1 ** _2 |-->(_1)->pow(_2)
++ _1 |-->_1
+- _1 |-->-_1
+~ _1 |-->MathLib.bitwiseNot(_1)
+_1 * _2 |-->_1 * _2
+_1 / _2 |-->_1 / _2
+_1 % _2 |-->_1 mod _2
+_1 // _2 |-->_1 div _2
+_1 @ _2 |-->MathLib.matrixMultiplication(_1,_2)
+_1 + _2 |-->_1 + _2
+_1 - _2 |-->_1 - _2
+_1 << _2 |-->_1 * (2->pow(_2))
+_1 >> _2 |-->_1 /(2->pow(_2))
+_1 & _2 |-->MathLib.bitwiseAnd(_1, _2)
+_1 ^ _2 |-->MathLib.bitwiseXor(_1, _2)
+_1 | _2 |-->MathLib.bitwiseOr(_1, _2)
+_1 _* |-->_1_*<when> _1 atom
+_1 |-->_1
+
+
+atom::
+( ) |-->()
+( _1 ) |-->(_1)
+[ _1 ] |-->_1`sequenceFormation
+{ _1 } |-->_1
+` _1 ` |-->"_1"
+- _1 |-->-_1
+None |-->null
+... |-->...
+print |-->print
+exec |-->exec
+_1 |-->_1
+
+
+dictorsetmaker::
+_1 : _2 |-->Map{ _1 |-> _2 }
+_1 : _2 _3 |-->_3`domainPart->select(_3`variablePart | _3`selectPart)->collect(_3`variablePart | Map{_1 |-> _2})->unionAll()<when> _3 comp_for
+** _1 |-->_1
+_1 : _2 , _* |-->Map{ _1 |-> _2 }->union(_*`recurse)
+** _1 , _* |-->_1->union(_*`recurse)
+_1 |-->_1`setFormation
+
+
+star_expr::
+* _1 |-->_1
+
+
+setFormation::
+** _1 |-->_1
+_1 |-->Set{ _1 }
+** _1 , _* |-->_1->union(_*`recurse)
+_1 , _* |-->Set{_1}->union(_*`recurse)
+_1 _2 |-->_2`domainPart->select(_2`variablePart | _2`selectPart)->collect(_2`variablePart | _1)->asSet()<when> _2 comp_for
+
+
+testlist_star_expr::
+_1 |-->_1
+_1 , _* |-->_1,_*`recurse
+
+updateForm::
+_1 |-->_1`updateForm<when> _1 testlist
+_1 |-->_1`updateForm<when> _1 test
+_1 |-->_1`updateForm<when> _1 logical_test
+_1 |-->_1`updateForm<when> _1 comparison
+_1 |-->_1`updateForm<when> _1 expr
+
+print _1 |-->    execute _1->display()
+del _1 |-->    execute _1->isDeleted()
+
+_1 _2 |-->    _1 := _1_2`trailerUpdateForm<when> _1 atom, _2 trailer
+_1 , _* |-->    _1 ;\n_*`recurse
+_1 |-->_1
+
+
+
+dotted_name::
+_1 . _2 |-->_1._2
+_1 |-->_1
+
+name::
+True |-->true
+False |-->false
+_1 |-->_1
+
+
+number::
+_1 |-->_1
+
+integer::
+_1 |-->_1
+
+
+varargslist::
+_1 |-->_1
+_1 , _* |-->_1, _*`recurse
+
+vardef_parameters::
+_1 |-->_1
+_1 , _* |-->_1, _*`recurse
+
+vardef_parameter::
+* |-->_star : Sequence(OclAny)
+_1 |-->_1 : OclAny
+_1 = _2 |-->_1 : int<when> _2 integer
+_1 = _2 |-->_1 : double<when> _2 real
+_1 = _2 |-->_1 : String<when> _2 String
+_1 = _2 |-->_1 : OclAny
+
+varargs::
+* _1 |-->_1 : Sequence(OclAny)
+
+varkwargs::
+** _1 |-->_1 : Map(String, OclAny)
+
+
+trailer::
+. count _1 |-->->count_1
+. index _1 |-->->indexOf_1 + 1
+. sort _1 |-->->sort()
+. reverse _1 |-->->reverse()
+. pop _1 |-->_1`firstArg+1
+. add _1 |-->->including_1
+. copy _1 |-->->copy()
+. intersection _1 |-->->intersection_1
+. difference _1 |--> - _1
+. isdisjoint _1 |-->->intersection_1->isEmpty()
+. issubset _1 |--><: _1
+. issuperset _1 |-->->includesAll_1
+. symmetric_difference _1 |-->->symmetricDifference_1
+. update _1 |-->_1`allUnion
+. remove _1 |-->->excluding_1
+. discard _1 |-->->excluding_1
+. clear _1 |-->->intersection(Set{})
+
+. _1 |-->._1
+. _1 _* |-->._1_*
+_1 |-->_1
+
+
+trailerUpdateForm::
+. append _1 |-->->including_1
+. extend _1 |-->->union_1
+. insert _1 |-->.insertAt(_1`firstArg+1, _1`lastArg)
+. remove _1 |-->->excludingFirst_1
+. sort _1 |-->->sort()
+. reverse _1 |-->->reverse()
+. pop _1 |-->->excludingAt(_1`firstArg+1)
+. add _1 |-->->including_1
+. intersection _1 |-->->intersection_1
+. difference _1 |--> - _1
+. symmetric_difference _1 |-->->symmetricDifference_1
+. update _1 |-->_1`allUnion
+. remove _1 |-->->excluding_1
+. discard _1 |-->->excluding_1
+. clear _1 |-->->intersection(Set{})
+
+
+. _1 |-->._1
+. _1 _* |-->._1_*
+_1 |-->_1
+
+
+arguments::
+( ) |-->()
+( _1 ) |-->(_1)
+[ _1 ] |-->_1
+
+firstArg::
+( ) |-->
+( _1 ) |-->_1`first
+[ _1 ] |-->_1`first
+
+lastArg::
+( ) |-->
+( _1 ) |-->_1`last
+[ _1 ] |-->_1`last
+
+allUnion::
+( ) |-->
+( _1 ) |-->->union(Set{_1}->unionAll())
+[ _1 ] |-->->union(Set{_1}->unionAll())
+
+
+argument::
+_1 |-->_1
+
+arglist::
+_1 |-->_1
+_1 , _* |-->_1, _*`recurse
+
+subscriptlist::
+_1 |-->_1
+_1 , _* |-->_1_*`recurse
+
+subscript::
+... |-->
+_1 : _2 |-->.subrange(_1+1, _2)<when> _2 test
+: _1 |-->.subrange(1,_1)<when> _1 test
+_1 |-->[_1+1]
+
+sliceop::
+: _1 |-->
+
+
+
+yield_expr::
+yield |-->
+yield _1 |-->
+
+yield_arg::
+from _1 |-->
+_1 |-->
+
+stmt::
+_1 |-->_1
+
+compound_stmt::
+if _1 : _2 |-->    if _1 then (\n  _2\n    ) else skip ;\n
+if _1 : _2 _3 |-->    if _1 then  (\n  _2\n    )\n_3 ;\n<when> _3 else_clause
+while _1 : _2 |-->    while _1 do (_2) ;\n
+for _1 in _2 : _3 |-->    for _1 : _2 do (_3) ;\n
+
+suite::
+_1 |-->_1
+_1 _* |-->_1_*`followingStatement
+
+followingStatement::
+_1 |--> ;\n_1
+
+
+elif_clause::
+elif _1 : _2 |-->    else if _1 then _2 
+
+else_clause::
+else : _1 |-->    else (\n  _1\n    )
+
+simple_stmt::
+_1 |-->_1
+_* |-->_*
+
+
+small_stmt::
+_1 _2 |-->    _1 _2<when> _2 assign_part
+print _1 |-->    execute (_1)->display()
+del _1 |-->    execute (_1)->isDeleted()
+pass |-->    skip
+break |-->    break
+continue |-->    continue
+return _1 |-->    return _1
+return |-->    return
+raise _1 |-->    error _1
+import _1 |-->
+from _* |-->
+global _* |-->
+exec _* |-->
+assert _1 |-->    assert _1 do "assertion failed"
+nonlocal _* |-->
+_1 |-->_1`updateForm<when> _1 testlist_star_expr
+
+
+assign_part::
+= _1 |-->:= _1
+
+
+import_as_names:: 
+_1 |-->
+_* |-->
+
+dotted_as_names::
+_1 |-->
+_* |-->
+
+dotted_as_name::
+_1 |-->
+_1 as _2 |-->

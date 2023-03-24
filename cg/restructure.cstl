@@ -1,0 +1,126 @@
+operationDefinition::
+operation _1 ( ) : _2 pre: true post: true activity: _3 ; |-->operation _1() : _2 pre: true post: true activity: while true do (_3`replaceCall) ;<when> _3`recursiveCall matches (_1)+<action> _91 _1
+operation _1 ( ) : _2 pre: true post: true activity: _3 ; |-->operation _1() : _2 pre: true post: true activity: _3;
+
+statement::
+skip |-->skip 
+return |-->return
+continue |-->continue
+break |-->break 
+var _1 : _2 |-->var _1 : _2 
+if _1 then _2 else _3 |-->if _1 then _2 else _3  
+while _1 do _2 |-->while _1 do _2 
+for _1 : _2 do _3 |-->for _1 : _2 do _3 
+return _1 |-->return _1 
+_1 := _2 |-->_1 := _2 
+_1 ; _2 |-->_1 ; _2  
+execute _1 |-->execute _1 
+call _1 |-->call _1 
+( _1 ) |-->(_1)
+
+recursiveCall::
+skip |--> 
+return |-->
+continue |-->
+break |--> 
+var _1 : _2 |--> 
+if _1 then _2 else _3 |-->_2`recursiveCall_3`recursiveCall  
+while _1 do _2 |-->_2`recursiveCall 
+for _1 : _2 do _3 |-->_3`recursiveCall 
+return _1 |-->_1`calledOperation
+_1 := _2 |--> 
+_1 ; _2 |-->_1`recursiveCall_2`recursiveCall  
+execute _1 |-->
+call _1 |-->_1`calledOperation 
+( _1 ) |-->_1`recursiveCall
+
+replaceCall::
+skip |-->skip 
+return |-->return
+continue |-->continue
+break |-->break 
+var _1 : _2 |-->var _1 : _2 
+if _1 then _2 else _3 |-->if _1 then _2`replaceCall else _3`replaceCall  
+while _1 do _2 |-->while _1 do _2`replaceCall 
+for _1 : _2 do _3 |-->for _1 : _2 do _3`replaceCall 
+return _1 |-->continue<when> _1`calledOperation _91
+return _1 |-->return _1 
+_1 := _2 |-->_1 := _2 
+_1 ; _2 |-->_1`replaceCall ; _2`replaceCall  
+execute _1 |-->execute _1 
+call _1 |-->continue<when> _1`calledOperation _91 
+call _1 |-->call _1 
+( _1 ) |-->(_1`replaceCall)
+
+
+calledOperation::
+self . _1 ( ) |-->_1
+_1 ( ) |-->_1`calledOperation
+self . _1 |-->_1
+_1 . _2 |-->
+_1 |-->_1`calledOperation<when> _1 expression
+_1 |-->_1`calledOperation<when> _1 logicalExpression
+_1 |-->_1`calledOperation<when> _1 equalityExpression
+_1 |-->_1`calledOperation<when> _1 additiveExpression
+_1 |-->_1`calledOperation<when> _1 factorExpression
+_1 |-->_1`calledOperation<when> _1 factor2Expression
+_1 |-->_1`calledOperation<when> _1 basicExpression
+_1 |-->
+
+
+
+
+identifier::
+_1 |-->_1
+
+type::
+_1 |-->_1
+
+expression::
+_1 |-->_1
+
+
+logicalExpression::
+_1 _2 _3 |-->_1 _2 _3
+_1 _2 |-->_1 _2
+_1 |-->_1
+
+equalityExpression::
+_1 _2 _3 |-->_1 _2 _3
+_1 _2 |-->_1 _2
+_1 |-->_1
+
+additiveExpression::
+_1 _2 _3 |-->_1 _2 _3
+_1 _2 |-->_1 _2
+_1 |-->_1
+
+factorExpression:: 
+_1 _2 _3 |-->_1 _2 _3
+_1 _2 |-->_1 _2
+_1 |-->_1
+
+factor2Expression::
+_1 _2 _3 _4 _5 _6 _7 |-->_1 _2 _3 _4 _5 _6 _7 
+_1 _2 _3 _4 _5 _6 |-->_1 _2 _3 _4 _5 _6
+_1 _2 _3 _4 _5 |-->_1 _2 _3 _4 _5
+_1 _2 _3 _4 |-->_1 _2 _3 _4
+_1 _2 _3 |-->_1 _2 _3
+_1 _2 |-->_1 _2
+_1 |-->_1
+( _1 ) |-->(_1)
+
+
+basicExpression::
+_1 ( ) |-->_1()
+_1 . _2 |-->_1._2
+_1 _2 _3 _4 |-->_1 _2 _3 _4
+_1 _2 _3 |-->_1 _2 _3
+_1 _2 |-->_1 _2
+_1 |-->_1
+( _1 ) |-->(_1)
+
+
+
+
+

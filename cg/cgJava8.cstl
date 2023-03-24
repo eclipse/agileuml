@@ -97,9 +97,9 @@ _1.replaceFirstMatch(_2,_3) |-->Ocl.replaceFirstMatch(_1,_2,_3)
 
 Integer.subrange(_1,_2) |-->Ocl.integerSubrange(_1,_2)
 
-Integer.Sum(_1,_2,_3,_4) |-->Ocl.sum(Ocl.collectSequence(Ocl.integerSubrange(_1,_2),(_3)->{ return _4; }))
+Integer.Sum(_1,_2,_3,_4) |-->(_4`type) Ocl.sum(Ocl.collectSequence(Ocl.integerSubrange(_1,_2),(_3)->{ return _4; }))
 
-Integer.Prd(_1,_2,_3,_4) |-->Ocl.prd(Ocl.collectSequence(Ocl.integerSubrange(_1,_2),(_3)->{ return _4; }))
+Integer.Prd(_1,_2,_3,_4) |-->(_4`type) Ocl.prd(Ocl.collectSequence(Ocl.integerSubrange(_1,_2),(_3)->{ return _4; }))
 
 _1.subrange(_2,_3) |-->Ocl.subrange(_1,_2,_3)
 
@@ -134,6 +134,7 @@ UnaryExpression::
 !_1 |-->_1`java8deref
 
 _1->log() |-->Math.log(_1)
+_1->log10() |-->Math.log10(_1)
 _1->exp() |-->Math.exp(_1)
 _1->sin() |-->Math.sin(_1)
 _1->cos() |-->Math.cos(_1)
@@ -298,6 +299,7 @@ _1->truncateTo(_2) |-->Ocl.truncateTo(_1,_2)
 _1->roundTo(_2) |-->Ocl.roundTo(_1,_2)
 
 _1^_2 |-->Ocl.concatenate(_1,_2)
+_1->concatenate(_2) |-->Ocl.concatenate(_1,_2)
 
 _1->union(_2) |-->Ocl.unionMap(_1,_2)<when> _1 Map
 _1->union(_2) |-->Ocl.union(_1,_2)

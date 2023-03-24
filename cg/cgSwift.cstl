@@ -115,18 +115,18 @@ UnaryExpression::
 ?_1 |-->Ocl.createRef(p: &_1)
 !_1 |-->_1[0]
 
-_1->log() |-->log(_: _1)
-_1->log10() |-->log10(_: _1)
-_1->exp() |-->exp(_: _1)
-_1->sin() |-->sin(_: _1)
-_1->cos() |-->cos(_: _1)
-_1->tan() |-->tan(_: _1)
-_1->asin() |-->asin(_: _1)
-_1->acos() |-->acos(_: _1)
-_1->atan() |-->atan(_: _1)
+_1->log() |-->log(_: Double(_1))
+_1->log10() |-->log10(_: Double(_1))
+_1->exp() |-->exp(_: Double(_1))
+_1->sin() |-->sin(_: Double(_1))
+_1->cos() |-->cos(_: Double(_1))
+_1->tan() |-->tan(_: Double(_1))
+_1->asin() |-->asin(_: Double(_1))
+_1->acos() |-->acos(_: Double(_1))
+_1->atan() |-->atan(_: Double(_1))
 _1->sqr() |-->(_1)*(_1)
-_1->sqrt() |-->sqrt(_: _1)
-_1->cbrt() |-->cbrt(_: _1)
+_1->sqrt() |-->sqrt(_: Double(_1))
+_1->cbrt() |-->cbrt(_: Double(_1))
 _1->floor() |-->Int(floor(_: _1))
 _1->ceil() |-->Int(ceil(_: _1))
 _1->round() |-->Int(round(_: _1))
@@ -253,7 +253,7 @@ _1 div _2 |-->Int(_1 / _2)
 _1 |-> _2 |-->_1:_2
 
 _1->pow(_2) |-->pow(_: Double(_1), _: Double(_2))
-_1->gcd(_2) |-->Ocl.gcd(_: _1, _: _2)
+_1->gcd(_2) |-->Ocl.gcd(_: Int64(_1), _: Int64(_2))
 _1^_2 |-->_1 + _2
 _1->union(_2) |-->_1.union(_2)<when> _1 Set
 _1->union(_2) |-->Ocl.unionMap(m1: _1, m2: _2)<when> _1 Map
