@@ -19088,7 +19088,7 @@ public void produceCUI(PrintWriter out)
     { String sf = (String) allsens.get(k);
       if (conslhs.contains(sf)) { }
       else
-      { System.out.println("WARNING: No use of sensor: " + sf);
+      { System.out.println("! WARNING: No use of sensor: " + sf);
         System.out.println("in any constraint lhs -- " +
                            "constraints may be incomplete.\n");
         
@@ -19100,7 +19100,7 @@ public void produceCUI(PrintWriter out)
     { String af = (String) allactint.get(k);
       if (consrhs.contains(af)) { }
       else
-      { System.out.println("WARNING: No use of actuator: " + af);
+      { System.out.println("! WARNING: No use of actuator: " + af);
         System.out.println("in any constraint rhs -- " +
                            "constraints may be incomplete.\n");
         complete = false;
@@ -19137,7 +19137,7 @@ public void produceCUI(PrintWriter out)
     { String sf = (String) allsens.get(k);
       if (conslhs.contains(sf)) { }
       else
-      { System.out.println("WARNING: No use of sensor value: " + sf);
+      { System.out.println("! WARNING: No use of sensor value: " + sf);
         System.out.println("in any constraint lhs -- " +
                            "constraints may be incomplete.\n");
         complete = false;
@@ -19148,7 +19148,7 @@ public void produceCUI(PrintWriter out)
     { String af = (String) allactint.get(k);
       if (consrhs.contains(af)) { }
       else
-      { System.out.println("WARNING: No use of actuator value: " + af);
+      { System.out.println("! WARNING: No use of actuator value: " + af);
         System.out.println("in any constraint rhs -- " +
                            "constraints may be incomplete.\n");
         complete = false;

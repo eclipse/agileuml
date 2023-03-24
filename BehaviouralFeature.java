@@ -3928,6 +3928,19 @@ public class BehaviouralFeature extends ModelElement
     else if (complexity > 50) 
     { System.err.println("*** Warning: high complexity (" + complexity + ") for " + nme); }  
 
+    if (activity != null && parameters.size() > 0)
+    { 
+      Vector allvars = new Vector();
+      for (int i = 0; i < parameters.size(); i++) 
+      { Attribute parx = (Attribute) parameters.get(i); 
+        allvars.add(parx.getName()); 
+      }  
+      Vector postvars = new Vector(); 
+      postvars.add("result"); 
+      Vector deps = activity.dataDependents(allvars,postvars); 
+      System.out.println(">***> Data dependencies of result upon parameters: " + deps); 
+    } 
+
     return complexity; 
   } 
 

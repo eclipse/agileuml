@@ -6785,7 +6785,7 @@ class SequenceStatement extends Statement
       { System.out.println(stat + " updates " + vbls); } // include in slice
       else 
       { deleted.add(stat); 
-        System.out.println("Deleting statement: " + stat); 
+        System.out.println(">> Deleting statement: " + stat); 
       } 
       Vector v = stat.dataDependents(allvars, vbls); 
       vbls = new Vector(); 

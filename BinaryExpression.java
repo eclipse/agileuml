@@ -17316,16 +17316,17 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
 
   public DataDependency rhsDataDependency()
   { // if p.f = val then  val, p --> f
+
     if (operator.equals("&"))
-	{ DataDependency dd1 = left.rhsDataDependency(); 
-	  DataDependency dd2 = right.rhsDataDependency(); 
-	  dd1.union(dd2); 
-	  return dd1; 
-	}
+    { DataDependency dd1 = left.rhsDataDependency(); 
+      DataDependency dd2 = right.rhsDataDependency(); 
+      dd1.union(dd2); 
+      return dd1; 
+    }
     else if (operator.equals("#"))
-	{ DataDependency dd2 = right.rhsDataDependency(); 
-	  return dd2; 
-	}
+    { DataDependency dd2 = right.rhsDataDependency(); 
+      return dd2; 
+    }
     else if (operator.equals("="))
     { if (left instanceof BasicExpression)
       { BasicExpression bel = (BasicExpression) left; 
@@ -17335,7 +17336,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
         //   dr.union(pr); 
         // }
         dr.addTarget(new BasicExpression(bel.data));
-        System.out.println(">>> Data dependency: " + this + " is: " + dr); 
+        System.out.println(">>> Data dependency of: " + this + " is: " + dr); 
         return dr; 
       }
       else if (right instanceof BasicExpression)
