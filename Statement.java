@@ -14,7 +14,8 @@ import javax.swing.JOptionPane;
 
 abstract class Statement implements Cloneable
 { private int indent = 0; 
-  protected Entity entity = null;  // owner of the statement/its method
+  protected Entity entity = null;  
+      // owner of the statement/its method
 
   protected boolean brackets = false; 
   protected boolean unusedStatement = false; 
@@ -1060,6 +1061,9 @@ abstract class Statement implements Cloneable
 
   abstract Expression wpc(Expression post); 
 
+  // The variables in allvars whose pre-values can affect 
+  // the vars post-values as a result of this 
+  // statement execution
   abstract Vector dataDependents(Vector allvars, Vector vars); 
 
   abstract String toStringJava(); 
@@ -1090,9 +1094,11 @@ abstract class Statement implements Cloneable
     return res;
   }
 
+  // The statement can update any of the variables in v
   abstract boolean updates(Vector v); 
 
-  Expression toExpression() { return new BasicExpression("skip"); } 
+  Expression toExpression() 
+  { return new BasicExpression("skip"); } 
 
   public Statement generateDesign(java.util.Map env, boolean local)
   { return this; }  
@@ -2682,10 +2688,42 @@ public void findClones(java.util.Map clones,
   { return post; }
 
   public Vector dataDependents(Vector allvars, Vector vars)
-  { return vars; }  
+  { if ("skip".equals(callExp + ""))
+    { return vars; }
+
+    if (callExp instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) callExp; 
+      Vector readVars = be.readData(); 
+      String upd = be.updatedData(); 
+
+      // System.out.println(">>>--- read data: " + readVars); 
+      // System.out.println(">>>--- written data: " + upd); 
+
+      if (upd != null && vars.contains(upd))
+      { Vector vbls = VectorUtil.union(vars,readVars); 
+        return vbls; 
+      } 
+    } 
+    
+    return vars; 
+  }    
+  // if called object : vars, then all variables/attributes of
+  // parameters, plus object.
 
   public boolean updates(Vector v) 
-  { return false; } 
+  { if ("skip".equals(callExp + ""))
+    { return false; }
+
+    if (callExp instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) callExp; 
+      String upd = be.updatedData(); 
+      if (upd != null && v.contains(upd))
+      { return true; } 
+    } 
+
+    return false; 
+  } 
+  // if called object : vars
 
   public String updateForm(java.util.Map env, boolean local, Vector types, Vector entities, 
                            Vector vars)
@@ -3250,7 +3288,7 @@ class ImplicitInvocationStatement extends Statement
   { return post; }
 
   public Vector dataDependents(Vector allvars, Vector vars)
-  { return vars; }  
+  { return vars; }  // assuming no side-effect
 
   public boolean updates(Vector v) 
   { return false; } 
@@ -4213,11 +4251,23 @@ class WhileStatement extends Statement
   { return loopTest; } // actually the invariant
 
   public Vector dataDependents(Vector allvars, Vector vars)
-  { return vars; }  
-  // should not occur as a transition action
+  { Vector bodydeps = body.dataDependents(allvars,vars);
+    Vector result = new Vector(); 
+    result.addAll(bodydeps); 
+ 
+    if (loopTest != null) //  && body.updates(vars)) 
+    { Vector testvars = loopTest.allReadFrame(); 
+      result = VectorUtil.union(result,testvars); 
+    } 
+      
+    return result; 
+  }  
+  // while test do stat
+  // if [stat]vars non-empty, rd(test) also in datadependents
+  // and closure of this under [stat]
 
   public boolean updates(Vector v) 
-  { return false; } 
+  { return body.updates(v); } 
 
   public Statement generateDesign(java.util.Map env, boolean local)
   { Statement bdy = body.generateDesign(env,local); 
@@ -5853,10 +5903,34 @@ class CreationStatement extends Statement
   { return post; }
 
   public Vector dataDependents(Vector allvars, Vector vars)
-  { return vars; }  
+  { // System.out.println(">---- " + assignsTo + " := " + initialExpression); 
+    // System.out.println(">---- " + vars + " " + allvars); 
 
-  public boolean updates(Vector v) 
-  { return false; } 
+    if (initialExpression != null && assignsTo != null)
+    { if (vars.contains("" + assignsTo))
+      { Vector vused = 
+            initialExpression.allAttributesUsedIn(); 
+        // System.out.println(">-Attributes:--- " + vused); 
+        Vector result = new Vector(); 
+        result.addAll(vars); 
+        result = VectorUtil.union(result,vused);
+        Vector vs = initialExpression.getVariableUses(); 
+        // System.out.println(">-Variables:--- " + vs); 
+        result = VectorUtil.union(result,vs);
+       
+        result.remove("" + assignsTo); 
+        return result; 
+      } 
+    }     
+    return vars; 
+  }  
+
+  public boolean updates(Vector vars) 
+  { if (vars.contains("" + assignsTo))
+    { return true; }
+    
+    return false; 
+  } 
 
   public String updateForm(java.util.Map env, boolean local, 
                            Vector types, Vector entities,
@@ -6800,7 +6874,8 @@ class SequenceStatement extends Statement
   public boolean updates(Vector v) 
   { for (int i = 0; i < statements.size(); i++) 
     { Statement st = (Statement) statements.get(i);
-      if (st.updates(v)) { return true; }
+      if (st.updates(v)) 
+      { return true; }
     }
     return false; 
  } 
@@ -8423,7 +8498,10 @@ class CatchStatement extends Statement
   { return post; }
 
   public Vector dataDependents(Vector allvars, Vector vars)
-  { return vars; }  
+  { if (action != null) 
+    { return action.dataDependents(allvars,vars); } 
+    return vars; 
+  }  
 
   public boolean updates(Vector v) 
   { return action.updates(v); } 
@@ -8985,7 +9063,24 @@ class TryStatement extends Statement
   { return post; }
 
   public Vector dataDependents(Vector allvars, Vector vars)
-  { return vars; }  
+  { Vector vbls = new Vector(); 
+    
+
+    if (endStatement != null) 
+    { vbls = endStatement.dataDependents(allvars,vars); }
+    else 
+    { vbls.addAll(vars); } 
+
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      vbls = cc.dataDependents(allvars, vbls);
+    } // but they are optional
+
+    if (body != null) 
+    { return body.dataDependents(allvars, vbls); }
+ 
+    return vbls; 
+  }  
 
   public boolean updates(Vector v) 
   { boolean res = false; 
@@ -10630,22 +10725,35 @@ class AssignStatement extends Statement
   // But more complex than this if the lhs is an array index
 
   public Vector dataDependents(Vector allvars, Vector vars)
-  { if (vars.contains(lhs.toString()))
+  { Vector vbls = new Vector(); 
+    vbls.addAll(vars); 
+
+    String updatedVar = lhs.updatedData(); 
+
+    if (updatedVar != null && vars.contains(updatedVar))
     { // remove this variable and add all vars of rhs to vars
-      vars.remove(lhs.toString()); 
-      Vector es = rhs.variablesUsedIn(allvars); 
+      vbls.remove(updatedVar); 
+      Vector es = rhs.allAttributesUsedIn(); 
+      // System.out.println(">----Attributes:-------- " + es);
+      Vector vs = rhs.getVariableUses(); 
+      // System.out.println(">----Variables:-------- " + vs);
+      es.addAll(vs); 
       for (int i = 0; i < es.size(); i++) 
-      { String var = (String) es.get(i); 
-        if (vars.contains(var)) { } 
+      { String var = "" + es.get(i); 
+        if (vbls.contains(var)) { } 
         else 
-        { vars.add(var); } 
+        { vbls.add(var); } 
       } 
     } 
-    return vars; 
+
+    // Case of updates to arrays/sequence elements
+
+    return vbls; 
   }  
 
   public boolean updates(Vector v) 
-  { if (v.contains(lhs.toString()))
+  { String updatedVar = lhs.updatedData(); 
+    if (updatedVar != null && v.contains(updatedVar))
     { return true; }
     return false; 
   }  // contains(lhs.data) or contains the base identifier of lhs
@@ -11646,16 +11754,38 @@ class ConditionalStatement extends Statement
   public Expression wpc(Expression post)
   { BinaryExpression ifimpl = new BinaryExpression("=>", test, ifPart.wpc(post));
     if (elsePart != null) 
-	{ UnaryExpression ntest = new UnaryExpression("not", test); 
-	  BinaryExpression elseimpl = new BinaryExpression("=>", ntest, elsePart.wpc(post)); 
-	  return new BinaryExpression("&", ifimpl, elseimpl); 
+    { UnaryExpression ntest = new UnaryExpression("not", test); 
+      BinaryExpression elseimpl = new BinaryExpression("=>", ntest, elsePart.wpc(post)); 
+      return new BinaryExpression("&", ifimpl, elseimpl); 
     }
-	return ifimpl; 
+    return ifimpl; 
   }  
   // and else if present
 
   public Vector dataDependents(Vector allvars, Vector vars)
-  { return vars; }  
+  { if (ifPart.updates(vars))
+    { } 
+    else
+    { if (elsePart == null) 
+      { return vars; } 
+      else if (elsePart.updates(vars)) { } 
+      else 
+      { return vars; } 
+    } // Don't include testvars unless if/else update vars
+
+    Vector vars1 = ifPart.dataDependents(allvars, vars); 
+    Vector testvars = new Vector(); 
+    testvars.addAll(test.getVariableUses()); 
+    testvars = VectorUtil.union(testvars,
+                                test.allAttributesUsedIn()); 
+    if (elsePart != null) 
+    { vars1 = VectorUtil.union(vars1, 
+                 elsePart.dataDependents(allvars,vars)); 
+    }
+ 
+    vars1 = VectorUtil.union(vars1, testvars); 
+    return vars1; 
+  }  
 
   public boolean updates(Vector v) 
   { if (ifPart.updates(v))
@@ -11663,7 +11793,7 @@ class ConditionalStatement extends Statement
     else if (elsePart != null && elsePart.updates(v))
     { return true; } 
     return false; 
-  }  // contains(lhs.data) ???
+  }  
 
 
   public String updateForm(java.util.Map env, boolean local, Vector types,

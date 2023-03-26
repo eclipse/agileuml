@@ -14794,6 +14794,71 @@ public Statement generateDesignSubtract(Expression rhs)
     return res; 
   } 
 
+  public String updatedData()
+  { // The affected item in a[i] := v
+    // or a.op(pars)
+
+    String res = null; 
+    String objname = ""; 
+     
+    if (prestate) 
+    { return res; } 
+
+    if ("equivalent".equals(data))
+    { return res; } 
+
+    if (objectRef != null) 
+    { objname = objectRef + ""; }
+
+    if (umlkind == ROLE || umlkind == ATTRIBUTE || 
+        umlkind == VARIABLE)
+    { return objname + data; }
+    else if (umlkind == CLASSID)
+    { return objname + data; } 
+    else if (umlkind == UPDATEOP || umlkind == QUERY) 
+    { // BehaviouralFeature op = entity.getDefinedOperation(data,parameters); 
+      // if (op != null) 
+      // { res.addAll(op.getWriteFrame(assocs)); } 
+      return objname; 
+    }  
+ 
+    return res; 
+  } 
+
+  public Vector readData()
+  { // The index in a[i] := v
+    // or pars data in a.op(pars)
+
+    Vector res = new Vector(); 
+     
+    if (prestate) 
+    { return res; } 
+
+    if ("equivalent".equals(data))
+    { return res; } 
+
+    if (arrayIndex != null) 
+    { res.addAll(arrayIndex.allReadData()); }
+
+    // if (umlkind == ROLE || umlkind == ATTRIBUTE || 
+    //     umlkind == VARIABLE || 
+    //     umlkind == CLASSID)
+    // { return res; }
+    // else if (umlkind == UPDATEOP || umlkind == QUERY) 
+    // { 
+      if (parameters != null) 
+      { for (int i = 0; i < parameters.size(); i++) 
+        { Expression par = (Expression) parameters.get(i);
+          Vector parvars = par.allReadData();  
+          res = VectorUtil.union(res,parvars); 
+        } 
+      }  
+    // }  
+ 
+    return res; 
+  } 
+
+
   public Expression excel2Ocl(Entity target, Vector entities, Vector qvars, Vector antes)
   { if (umlkind == VALUE) 
     { return this; }

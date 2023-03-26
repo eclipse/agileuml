@@ -1310,6 +1310,36 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
           String ind = ((BasicExpression) argument).arrayIndex.queryForm(env,local); 
           return precopy + ".remove(" + ind + " - 1);";   
         }
+        else if (argument instanceof BasicExpression && 
+((BasicExpression) argument).getData().equals("subrange")) 
+        { // s.subrange(i,j)->isDeleted() means 
+          // s := s.subrange(1,i-1)^s.subrange(j+1,s.size)
+          // for sequences, likewise for strings
+
+          BasicExpression argcopy = (BasicExpression) argument.clone(); 
+          Expression updatedVar = argcopy.getObjectRef(); 
+          String precopy = updatedVar.queryForm(env,local);
+          Vector pars = argcopy.getParameters(); 
+          Expression par1 = (Expression) pars.get(0); 
+          String ind1 = par1.queryForm(env,local);
+          String subrange1 = 
+            "Set.subrange(" + precopy + ",1," + 
+                          ind1 + "-1)"; 
+          if (pars.size() > 1) 
+          { Expression par2 = (Expression) pars.get(1); 
+            String ind2 = par2.queryForm(env,local);
+            String subrange2 = 
+              "Set.subrange(" + precopy + ", " + 
+                            ind2 + "+1," + 
+                            precopy + ".size())";
+            if (argument.isSequence())
+            { return precopy + " = Set.concatenate(" + subrange1 + ", " + subrange2 + ");"; } 
+            else 
+            { return precopy + " = " + subrange1 + " + (" + subrange2 + ");"; }  
+          }  
+            
+          return precopy + " = " + subrange1 + ";"; 
+        }
         return "{}";  
       }  
  
@@ -1647,6 +1677,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     // None of the others have an update form
   }
 
+  public String updatedData()
+  { return argument.updatedData(); } 
+  // when this := val is a valid update
 
   public Vector writeFrame()
   { Vector res = new Vector(); 

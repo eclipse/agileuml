@@ -748,6 +748,10 @@ public void findPlugins()
     measuresItem.addActionListener(this);
     analyseMenu.add(measuresItem);
 
+    JMenuItem ddepsItem = new JMenuItem("Data dependencies"); 
+    ddepsItem.addActionListener(this);
+    analyseMenu.add(ddepsItem);
+
     /* View Menu */ 
     JMenu viewMenu = new JMenu("View"); 
     viewMenu.setToolTipText(
@@ -2210,6 +2214,8 @@ public void findPlugins()
 
         new TextDisplay("Measures","output/tmp.txt");
       }  
+      else if (label.equals("Data dependencies"))
+      { ucdArea.displayDataDependencies(); }
       else if (label.equals("Compare models"))
       { String nme1 =
           JOptionPane.showInputDialog("Enter first model name (.km3 extension omitted): ");

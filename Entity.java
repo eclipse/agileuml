@@ -4485,6 +4485,7 @@ public class Entity extends ModelElement implements Comparable
           { res.add(e2 + "::" + r1); } 
         } 
       }  
+
       if (this == e1)
       { if (r1 != null && r1.length() > 0)
         { if (res.contains(e2 + "::" + r1)) { } 
@@ -4500,6 +4501,58 @@ public class Entity extends ModelElement implements Comparable
     return res; 
   } 
 
+  public void allDataDependencies()
+  { Vector res = new Vector();
+    java.util.Map entdeps = new java.util.HashMap(); 
+ 
+    // Amalgamates all dependencies att1 --> att2
+    // from any operation
+
+    Vector anames = new Vector(); 
+    for (int i = 0; i < attributes.size(); i++) 
+    { anames.add(((Attribute) attributes.get(i)).getName()); } 
+
+    for (int i = 0; i < operations.size(); i++) 
+    { BehaviouralFeature bf = 
+        (BehaviouralFeature) operations.get(i); 
+      java.util.Map bfdeps = bf.dataDependencies(); 
+      res.add(bfdeps); 
+    } 
+
+    for (int i = 0; i < res.size(); i++) 
+    { java.util.Map dd = (java.util.Map) res.get(i); 
+      Vector keys = new Vector(); 
+      keys.addAll(dd.keySet()); // attribute names
+
+      for (int j = 0; j < keys.size(); j++) 
+      { String key = "" + keys.get(j); 
+        Vector kdeps = new Vector(); 
+        kdeps.addAll((Vector) dd.get(key));
+        // System.out.println(">--+ " + kdeps + " --> " + key);
+        // kdeps.retainAll(keys); 
+        Vector newkdeps = new Vector(); 
+        for (int k = 0; k < kdeps.size(); k++) 
+        { String kvar = "" + kdeps.get(k); 
+          if (anames.contains(kvar))
+          { newkdeps.add(kvar); } 
+        } 
+        // System.out.println(">--- " + newkdeps + " --> " + key);
+        Vector knowndeps = (Vector) entdeps.get(key);
+        Vector newdeps = VectorUtil.union(newkdeps,knowndeps); 
+        entdeps.put(key, newdeps); 
+      } 
+    }     
+
+    // System.out.println(res); 
+    
+
+    System.out.println(">=== Data dependencies of " + getName()); 
+    for (int i = 0; i < anames.size(); i++) 
+    { String aname = (String) anames.get(i); 
+      System.out.println(entdeps.get(aname) + " ----> " + aname); 
+    } 
+    System.out.println(); 
+  }   
 
   public Vector ancestorAddStatements(BExpression var)
   { Vector res = new Vector(); 

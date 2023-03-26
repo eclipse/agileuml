@@ -2977,6 +2977,20 @@ public class UCDArea extends JPanel
     } 
   }
 
+  public void displayDataDependencies()
+  { int allClasses = entities.size(); 
+	
+    for (int j = 0; j < allClasses; j++) 
+    { Entity ent = (Entity) entities.get(j);
+       
+      if (ent.isDerived() || 
+          ent.isComponent() || ent.isExternal())
+      { continue; } 
+	 
+      ent.allDataDependencies();
+    }
+  } 
+
   public void displayMeasures(PrintWriter out)
   { String cloneLimit = 
       JOptionPane.showInputDialog("Enter clone size limit (default 10): ");

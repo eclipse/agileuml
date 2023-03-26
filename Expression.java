@@ -1130,6 +1130,9 @@ abstract class Expression
   public Scope resultScope()
   { return null; }
 
+  public String updatedData()
+  { return null; } // default
+
   public boolean isUpdateable() { return false; }   // default
  
   public static boolean toBoolean(String s)
@@ -2410,6 +2413,21 @@ abstract class Expression
 
   public Vector internalReadFrame()
   { return readFrame(); } 
+
+  public Vector allReadData()
+  { Vector vs = getVariableUses(); 
+    Vector atts = allAttributesUsedIn();
+    Vector res = new Vector(); 
+    for (int i = 0; i < vs.size(); i++)
+    { String var = "" + vs.get(i); 
+      res.add(var); 
+    }     
+    for (int i = 0; i < atts.size(); i++)
+    { String var = "" + atts.get(i); 
+      res.add(var); 
+    }
+    return res; 
+  } 
 
   public boolean confluenceCheck(Vector iterated, Vector created)
   { return true; } 

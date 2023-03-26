@@ -3928,20 +3928,50 @@ public class BehaviouralFeature extends ModelElement
     else if (complexity > 50) 
     { System.err.println("*** Warning: high complexity (" + complexity + ") for " + nme); }  
 
-    if (activity != null && parameters.size() > 0)
-    { 
+
+    return complexity; 
+  } 
+
+  public java.util.Map dataDependencies()
+  { java.util.Map res = new java.util.HashMap(); 
+
+    if (activity != null && 
+        entity != null)
+    { String nme = getName(); 
       Vector allvars = new Vector();
       for (int i = 0; i < parameters.size(); i++) 
       { Attribute parx = (Attribute) parameters.get(i); 
         allvars.add(parx.getName()); 
       }  
+
+      Vector attrs = entity.getAttributes(); 
+      for (int i = 0; i < attrs.size(); i++) 
+      { Attribute attx = (Attribute) attrs.get(i); 
+        allvars.add(attx.getName()); 
+      }  
+
       Vector postvars = new Vector(); 
       postvars.add("result"); 
-      Vector deps = activity.dataDependents(allvars,postvars); 
-      System.out.println(">***> Data dependencies of result upon parameters: " + deps); 
-    } 
+      Vector deps = activity.dataDependents(allvars,postvars);
+      System.out.println();  
+      System.out.println(">***> Data dependencies of " + nme + ":\n  " + deps + " ---> result");
 
-    return complexity; 
+      // res.put("result", deps); 
+ 
+      for (int i = 0; i < attrs.size(); i++) 
+      { Attribute attx = (Attribute) attrs.get(i); 
+        String aname = attx.getName(); 
+        Vector avs = new Vector(); 
+        avs.add(aname); 
+        Vector adeps = 
+            activity.dataDependents(allvars, avs);
+        System.out.println("  " + adeps + " ---> " + aname);
+        res.put(aname, adeps); 
+      }  
+
+      System.out.println();  
+    } 
+    return res; 
   } 
 
   public int syntacticComplexity()   

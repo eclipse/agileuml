@@ -17756,6 +17756,11 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     return res;
   }
 
+  public String updatedData()
+  { return left.updatedData(); } 
+  // when this := val is a valid update
+
+
   // The set of features in writable mode in the expression
   public Vector writeFrame()
   { Vector res = new Vector(); 
