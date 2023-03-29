@@ -1,0 +1,270 @@
+package oclfile { 
+
+
+class OclFile
+{ stereotype external; 
+  stereotype component; 
+
+  attribute name identity : String; 
+  attribute port : int; 
+  attribute position : long; 
+  attribute markedPosition : long; 
+  attribute eof : boolean; 
+  attribute lastRead : String; 
+
+  static operation newOclFile(nme : String) : OclFile
+  pre: true 
+  post: OclFile->exists( f | f.name = nme & result = f ); 
+
+  static operation newOclFile_Remote(nme : String, portNumber: int) : OclFile
+  pre: true 
+  post: OclFile->exists( f | f.name = nme & f.port = portNumber & result = f ); 
+
+  static operation newOclFile_Read(f : OclFile) : OclFile
+  pre: true post: true; 
+
+  static operation newOclFile_Write(f : OclFile) : OclFile
+  pre: true post: true; 
+
+  static operation newOclFile_RW(f : OclFile) : OclFile
+  pre: true post: true; 
+
+  static operation newOclFile_ReadB(f : OclFile) : OclFile
+  pre: true post: true; 
+
+  static operation newOclFile_WriteB(f : OclFile) : OclFile
+  pre: true post: true; 
+
+  operation getInputStream() : OclFile
+  pre: true 
+  post: result = OclFile.newOclFile_Read(self); 
+
+  operation getOutputStream() : OclFile
+  pre: true 
+  post: result = OclFile.newOclFile_Write(self); 
+
+  operation copyFromTo(source: OclFile, target: OclFile)
+  pre: true post: true; 
+
+  operation setPort(portNumber : int) 
+  pre: true 
+  post: port = portNumber; 
+
+  query compareTo(f : OclFile) : int
+  pre: true post: true; 
+
+  query canRead() : boolean
+  pre: true post: true;
+  
+  query canWrite() : boolean
+  pre: true post: true;
+
+  query isReadOnly() : boolean
+  pre: true post: true; 
+
+  operation setReadOnly()
+  pre: true post: true; 
+
+  query isOpen() : boolean
+  pre: true post: true;
+  
+  operation openRead() : void
+  pre: true post: true;
+
+  operation openWrite() : void
+  pre: true post: true;
+
+  operation openReadB() : void
+  pre: true post: true;
+
+  operation openWriteB() : void
+  pre: true post: true;
+
+  operation closeFile() : void
+  pre: true post: true;
+
+  query exists() : boolean
+  pre: true post: true;
+
+  query isFile() : boolean
+  pre: true post: true;
+
+  query isDirectory() : boolean
+  pre: true post: true;
+
+  operation setHidden(h : boolean)
+  pre: true post: true; 
+
+  operation setExecutable(e : boolean)
+  pre: true post: true; 
+
+  query isHidden() : boolean
+  pre: true 
+  post: result = name->hasPrefix(".");
+
+  query isExecutable() : boolean
+  pre: true 
+  post: result = name->hasSuffix(".exe");
+
+  query isAbsolute() : boolean
+  pre: true post: true;
+
+  query getAbsolutePath() : String
+  pre: true post: true;
+
+  query getPath() : String
+  pre: true post: true;
+
+  query getParent() : String
+  pre: true post: true;
+
+  query getParentFile() : OclFile
+  pre: true post: true;
+
+  query lastModified() : long
+  pre: true post: true;
+
+  query length() : long
+  pre: true 
+  post: result = contents->size();
+
+
+  operation delete() : boolean
+  pre: true post: true; 
+
+  static operation deleteFile(nme: String) : boolean
+  pre: true post: true; 
+
+  static operation createTemporaryFile(nme : String, ext : String) : OclFile
+  pre: true post: true; 
+
+  static operation renameFile(nme : String, newnme : String) : boolean
+  pre: true post: true; 
+
+  query getName() : String
+  pre: true 
+  post: result = name; 
+
+  query getInetAddress() : String
+  pre: true 
+  post: result = name; 
+
+  query getLocalAddress() : String
+  pre: true 
+  post: result = name; 
+
+  query getPort() : int
+  pre: true 
+  post: result = port; 
+
+  query getLocalPort() : int
+  pre: true 
+  post: result = port; 
+
+  query list() : Sequence(String)
+  pre: true post: true; 
+
+  query listFiles() : Sequence(OclFile)
+  pre: true post: true; 
+
+  operation print(s : String) : void
+  pre: true  post: true; 
+
+  operation println(s : String) : void
+  pre: true  post: true; 
+
+  operation printf(f : String, sq : Sequence) : void
+  pre: true  post: true; 
+
+  operation write(s : String) : void
+  pre: true post: true; 
+
+  operation append(s : String) : OclFile
+  pre: true post: true
+  activity: self.write(s); return self; 
+
+  operation writeN(s : Sequence(String), n : int) : void
+  pre: true post: true; 
+
+  operation writeByte(x : int) : void
+  pre: true post: true; 
+
+  operation writeNbytes(s : Sequence(int), n : int) : void
+  pre: true post: true; 
+
+  operation writeObject(s : OclAny) : void
+  pre: true post: true; 
+
+  operation writeMap(s : Map) : void
+  pre: true post: true; 
+
+  operation writeln(s : String) : void
+  pre: true post: true; 
+
+  operation flush() : void
+  pre: true post: true; 
+
+  operation hasNext() : boolean
+  pre: true post: true; 
+
+  operation getCurrent() : String
+  pre: true post: true; 
+
+  operation read() : String
+  pre: true post: true; 
+
+  operation readN(n : int) : Sequence(String)
+  pre: true post: true
+
+  operation readByte() : int
+  pre: true post: true; 
+
+  operation readNbytes(n : int) : Sequence(int)
+  pre: true post: true
+
+  operation readAllBytes() : Sequence(int)
+  pre: true post: true
+
+  operation readObject() : OclAny
+  pre: true post: true; 
+
+  operation readMap() : Map
+  pre: true post: true; 
+
+  operation readLine() : String
+  pre: true post: true; 
+
+  operation readAll() : String
+  pre: true post: true;
+
+  operation readAllLines() : Sequence(String)
+  pre: true post: true;
+
+  operation mark() : void
+  pre: true post: markedPosition = position; 
+
+  operation reset() : void
+  pre: true post: position = markedPosition;  
+
+  operation skipBytes(n : int) : void
+  pre: true post: true;  
+
+  operation setPosition(p : long) : void 
+  pre: true 
+  post: position = p; 
+
+  operation getPosition() : long 
+  pre: true 
+  post: result = position; 
+
+  operation getEof() : boolean 
+  pre: true 
+  post: result = eof; 
+
+  operation mkdir() : boolean
+  pre: true post: true;
+
+}
+
+}
+

@@ -1,0 +1,286 @@
+package app {
+  abstract class OclException {
+  stereotype component;
+  stereotype external;
+
+    attribute message : String;
+    attribute kind : String;
+    attribute stackTrace : Sequence(String);
+
+    reference cause : OclException;
+
+    operation printStackTrace() : void
+    pre: true
+    post: true;
+
+    operation getMessage() : String
+    pre: true
+    post: result = message; 
+
+    operation getCause() : OclException
+    pre: true
+    post: result = cause; 
+
+    static operation newOclException() : OclException
+    pre: true
+    post: OclException->exists( ex | ex.message = "" & ex.cause = null & result = ex );
+
+    static operation newOclException(m : String) : OclException
+    pre: true
+    post: OclException->exists( ex | ex.message = m & ex.cause = null & result = ex );
+
+    static operation newOclException(m : String, c : OclException) : OclException
+    pre: true
+    post: OclException->exists( ex | ex.message = m & ex.cause = c & result = ex );
+
+    static operation newOclException(c : OclException) : OclException
+    pre: true
+    post: OclException->exists( ex | ex.message = "" & ex.cause = c & result = ex );
+
+  }
+
+
+  abstract class SystemException extends OclException {
+  stereotype component;
+  stereotype external;
+
+
+    static operation newSystemException() : SystemException
+    pre: true
+    post: SystemException->exists( ex | ex.message = "" & ex.cause = null & result = ex );
+
+    static operation newSystemException(m : String) : SystemException
+    pre: true
+    post: SystemException->exists( ex | ex.message = m & ex.cause = null & result = ex );
+
+    static operation newSystemException(m : String, c : OclException) : SystemException
+    pre: true
+    post: SystemException->exists( ex | ex.message = m & ex.cause = c & result = ex );
+
+    static operation newSystemException(c : OclException) : SystemException
+    pre: true
+    post: SystemException->exists( ex | ex.message = "" & ex.cause = c & result = ex );
+
+  }
+
+
+  abstract class ProgramException extends OclException {
+  stereotype component;
+  stereotype external;
+
+    static operation newProgramException() : ProgramException
+    pre: true
+    post: ProgramException->exists( ex | ex.message = "" & ex.cause = null & result = ex );
+
+    static operation newProgramException(m : String) : ProgramException
+    pre: true
+    post: ProgramException->exists( ex | ex.message = m & ex.cause = null & result = ex );
+
+    static operation newProgramException(m : String, c : OclException) : ProgramException
+    pre: true
+    post: ProgramException->exists( ex | ex.message = m & ex.cause = c & result = ex );
+
+    static operation newProgramException(c : OclException) : ProgramException
+    pre: true
+    post: ProgramException->exists( ex | ex.message = "" & ex.cause = c & result = ex );
+
+
+  }
+
+
+  class IOException extends ProgramException {
+  stereotype component;
+  stereotype external;
+
+
+    static operation newIOException() : IOException
+    pre: true
+    post: IOException->exists( ex | ex.message = "" & ex.cause = null & result = ex );
+
+    static operation newIOException(m : String) : IOException
+    pre: true
+    post: IOException->exists( ex | ex.message = m & ex.cause = null & result = ex );
+
+    static operation newIOException(m : String, c : OclException) : IOException
+    pre: true
+    post: IOException->exists( ex | ex.message = m & ex.cause = c & result = ex );
+
+    static operation newIOException(c : OclException) : IOException
+    pre: true
+    post: IOException->exists( ex | ex.message = "" & ex.cause = c & result = ex );
+
+  }
+
+
+  class CastingException extends ProgramException {
+  stereotype component;
+  stereotype external;
+
+
+    static operation newCastingException() : CastingException
+    pre: true
+    post: CastingException->exists( ex | ex.message = "" & ex.cause = null & result = ex );
+
+    static operation newCastingException(m : String) : CastingException
+    pre: true
+    post: CastingException->exists( ex | ex.message = m & ex.cause = null & result = ex );
+
+    static operation newCastingException(m : String, c : OclException) : CastingException
+    pre: true
+    post: CastingException->exists( ex | ex.message = m & ex.cause = c & result = ex );
+
+    static operation newCastingException(c : OclException) : CastingException
+    pre: true
+    post: CastingException->exists( ex | ex.message = "" & ex.cause = c & result = ex );
+
+  }
+
+
+  class NullAccessException extends ProgramException {
+  stereotype component;
+  stereotype external;
+
+
+    static operation newNullAccessException() : NullAccessException
+    pre: true
+    post: NullAccessException->exists( ex | ex.message = "" & ex.cause = null & result = ex );
+
+    static operation newNullAccessException(m : String) : NullAccessException
+    pre: true
+    post: NullAccessException->exists( ex | ex.message = m & ex.cause = null & result = ex );
+
+    static operation newNullAccessException(m : String, c : OclException) : NullAccessException
+    pre: true
+    post: NullAccessException->exists( ex | ex.message = m & ex.cause = c & result = ex );
+
+    static operation newNullAccessException(c : OclException) : NullAccessException
+    pre: true
+    post: NullAccessException->exists( ex | ex.message = "" & ex.cause = c & result = ex );
+
+
+  }
+
+
+  class ArithmeticException extends ProgramException {
+  stereotype component;
+  stereotype external;
+
+    static operation newArithmeticException() : ArithmeticException
+    pre: true
+    post: ArithmeticException->exists( ex | ex.message = "" & ex.cause = null & result = ex );
+
+    static operation newArithmeticException(m : String) : ArithmeticException
+    pre: true
+    post: ArithmeticException->exists( ex | ex.message = m & ex.cause = null & result = ex );
+
+    static operation newArithmeticException(m : String, c : OclException) : ArithmeticException
+    pre: true
+    post: ArithmeticException->exists( ex | ex.message = m & ex.cause = c & result = ex );
+
+    static operation newArithmeticException(c : OclException) : ArithmeticException
+    pre: true
+    post: ArithmeticException->exists( ex | ex.message = "" & ex.cause = c & result = ex );
+
+
+  }
+
+
+  class IndexingException extends ProgramException {
+  stereotype component;
+  stereotype external;
+
+
+    static operation newIndexingException() : IndexingException
+    pre: true
+    post: IndexingException->exists( ex | ex.message = "" & ex.cause = null & result = ex );
+
+    static operation newIndexingException(m : String) : IndexingException
+    pre: true
+    post: IndexingException->exists( ex | ex.message = m & ex.cause = null & result = ex );
+
+    static operation newIndexingException(m : String, c : OclException) : IndexingException
+    pre: true
+    post: IndexingException->exists( ex | ex.message = m & ex.cause = c & result = ex );
+
+    static operation newIndexingException(c : OclException) : IndexingException
+    pre: true
+    post: IndexingException->exists( ex | ex.message = "" & ex.cause = c & result = ex );
+
+
+
+  }
+
+
+  class AssertionException extends SystemException {
+  stereotype component;
+  stereotype external;
+
+
+    static operation newAssertionException() : AssertionException
+    pre: true
+    post: AssertionException->exists( ex | ex.message = "" & ex.cause = null & result = ex );
+
+    static operation newAssertionException(m : String) : AssertionException
+    pre: true
+    post: AssertionException->exists( ex | ex.message = m & ex.cause = null & result = ex );
+
+    static operation newAssertionException(m : String, c : OclException) : AssertionException
+    pre: true
+    post: AssertionException->exists( ex | ex.message = m & ex.cause = c & result = ex );
+
+    static operation newAssertionException(c : OclException) : AssertionException
+    pre: true
+    post: AssertionException->exists( ex | ex.message = "" & ex.cause = c & result = ex );
+
+  }
+
+
+  class IncorrectElementException extends ProgramException {
+  stereotype component;
+  stereotype external;
+
+
+    static operation newIncorrectElementException() : IncorrectElementException
+    pre: true
+    post: IncorrectElementException->exists( ex | ex.message = "" & ex.cause = null & result = ex );
+
+    static operation newIncorrectElementException(m : String) : IncorrectElementException
+    pre: true
+    post: IncorrectElementException->exists( ex | ex.message = m & ex.cause = null & result = ex );
+
+    static operation newIncorrectElementException(m : String, c : OclException) : IncorrectElementException
+    pre: true
+    post: IncorrectElementException->exists( ex | ex.message = m & ex.cause = c & result = ex );
+
+    static operation newIncorrectElementException(c : OclException) : IncorrectElementException
+    pre: true
+    post: IncorrectElementException->exists( ex | ex.message = "" & ex.cause = c & result = ex );
+
+  }
+
+
+  class AccessingException extends ProgramException {
+  stereotype component;
+  stereotype external;
+
+    static operation newAccessingException() : AccessingException
+    pre: true
+    post: AccessingException->exists( ex | ex.message = "" & ex.cause = null & result = ex );
+
+    static operation newAccessingException(m : String) : AccessingException
+    pre: true
+    post: AccessingException->exists( ex | ex.message = m & ex.cause = null & result = ex );
+
+    static operation newAccessingException(m : String, c : OclException) : AccessingException
+    pre: true
+    post: AccessingException->exists( ex | ex.message = m & ex.cause = c & result = ex );
+
+    static operation newAccessingException(c : OclException) : AccessingException
+    pre: true
+    post: AccessingException->exists( ex | ex.message = "" & ex.cause = c & result = ex );
+
+
+  }
+
+
+}

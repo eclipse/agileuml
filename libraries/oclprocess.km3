@@ -1,0 +1,157 @@
+package oclprocess { 
+
+class OclProcess
+{ stereotype component; 
+  stereotype external;
+  stereotype active; 
+
+  attribute name : String; 
+  attribute priority : int; 
+  attribute executes : OclAny;
+ 
+  attribute deadline : long; 
+  attribute delay : long; 
+  attribute period : long; 
+
+
+  static operation getRuntime() : OclProcess
+  pre: true 
+  post: result = null; 
+
+  static operation notify(obj : OclAny) : void
+  pre: true
+  post: true; 
+
+  static operation notifyAll(obj : OclAny) : void
+  pre: true
+  post: true; 
+
+  static operation wait(obj : OclAny, t : double) : void
+  pre: true  
+  post: true; 
+
+  operation waitFor() : int
+  pre: true  
+  post: result = 0; 
+
+  static operation newOclProcess(obj : OclAny, s : String) : OclProcess
+  pre: true  
+  post: OclProcess->exists( p | p.name = s & p.priority = 5 & p.period = 0 & p.deadline = 0 & p.period = 0 & p.executes = obj & result = p ); 
+
+  operation setDeadline(d : long) : void
+  pre: true 
+  post: deadline = d; 
+
+  operation setDelay(d : long) : void
+  pre: true 
+  post: delay = d; 
+
+  operation setPeriod(p : long) : void
+  pre: true 
+  post: period = p; 
+
+  static operation activeCount() : int
+  pre: true 
+  post: result = 1;
+
+  static operation currentThread() : OclProcess
+  pre: true
+  post: result = null; 
+
+  static operation allActiveThreads() : Sequence(OclProcess)
+  pre: true
+  post: result = Sequence{ }; 
+
+  static operation sleep(n : long) : void
+  pre: true  post: true; 
+
+  operation getName() : String
+  pre: true 
+  post: result = name; 
+
+  operation getDeadline() : long
+  pre: true 
+  post: result = deadline; 
+
+  operation setName(nme : String) : void
+  pre: true 
+  post: name = nme; 
+
+  operation getPriority() : int
+  pre: true 
+  post: result = priority; 
+
+  operation run() : void
+  pre: true 
+  post: true; 
+
+  operation start() : void
+  pre: true 
+  post: true; 
+
+  operation isAlive() : boolean
+  pre: true 
+  post: result = true; 
+
+  operation isDaemon() : boolean
+  pre: true 
+  post: result = false; 
+
+  operation join(ms : double) : void
+  pre: true 
+  post: true; 
+
+  operation destroy() : void
+  pre: true 
+  post: true; 
+
+  operation cancel() : void
+  pre: true 
+  post: true; 
+
+  operation interrupt() : void
+  pre: true 
+  post: true; 
+
+  static operation getEnvironmentProperty(vbl : String) : String
+  pre: true
+  post: result = ""; 
+
+  static operation clearEnvironmentProperty(vbl : String) : String
+  pre: true
+  post: result = ""; 
+
+  static operation setEnvironmentProperty(vbl : String, value : String) : String
+  pre: true
+  post: result = ""; 
+
+  static operation getEnvironmentProperties() : Map(String,String)
+  pre: true post: result = Map{}; 
+
+  static operation exit(n : int) : void
+  pre: true post: true; 
+}
+
+class OclProcessGroup
+{ stereotype component; 
+  stereotype external;
+  
+  attribute name : String; 
+  attribute processes : Sequence(OclProcess); 
+  attribute groups : Sequence(OclProcessGroup); 
+  attribute maxPriority : int; 
+  attribute parent : OclProcessGroup; 
+
+  operation interrupt() : void
+  pre: true 
+  post: processes->forAll( p | p.interrupt() ); 
+
+  operation activeCount() : int
+  pre: true 
+  post: result = processes->size() + groups->collect( g | g.activeCount() )->sum(); 
+
+} 
+
+}
+
+

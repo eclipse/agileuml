@@ -1,0 +1,236 @@
+package ocldatasource { 
+
+  enumeration SQLTypes
+  { stereotype external; 
+    stereotype component; 
+
+    literal sqlARRAY; literal sqlBIGINT; literal sqlBINARY;
+    literal sqlBIT; literal sqlBLOB; literal sqlBOOLEAN;
+    literal sqlCHAR; literal sqlCLOB; literal sqlDATALINK;
+    literal sqlDATE; literal sqlDECIMAL; literal sqlDISTINCT;
+    literal sqlDOUBLE; literal sqlFLOAT; literal sqlINTEGER;
+    literal sqlJAVA_OBJECT; literal sqlLONGNVARCHAR; literal sqlLONGVARBINARY;
+    literal sqlNCHAR; literal sqlNCLOB; literal sqlNULL;
+    literal sqlNUMERIC; literal sqlNVARCHAR; literal sqlOTHER;
+    literal sqlREAL; literal sqlREF; literal sqlREF_CURSOR;
+    literal sqlROWID; literal sqlSMALLINT; literal sqlSQLXML;
+    literal sqlSTRUCT; literal sqlTIME; literal sqlTIME_WITH_TIMEZONE;
+    literal sqlTIMESTAMP; literal sqlTIMESTAMP_WITH_TIMEZONE; literal sqlTINYINT;
+    literal sqlVARBINARY; literal sqlVARCHAR; 
+ }
+
+
+  class SQLStatement { 
+    stereotype external; 
+    stereotype component; 
+
+    attribute text : String;
+
+    operation close() 
+    pre: true post: true;
+
+    operation closeOnCompletion() 
+    pre: true post: true;
+
+    operation setString(field : int, value : String)
+    pre: true post: true;
+
+    operation setInt(field : int, value : int)
+    pre: true post: true;
+
+    operation setByte(field : int, value : int)
+    pre: true post: true;
+
+    operation setShort(field : int, value : int)
+    pre: true post: true;
+ 
+    operation setBoolean(field : int, value : boolean)
+    pre: true post: true;
+
+    operation setLong(field : int, value : long)
+    pre: true post: true;
+
+    operation setDouble(field : int, value : double)
+    pre: true post: true;
+
+    operation setTimestamp(field : int, value : OclDate)
+    pre: true post: true;
+
+    operation setNull(field : int, value : OclAny)
+    pre: true post: true;
+
+    operation executeUpdate() : void
+    pre: true post: true; 
+
+    operation executeQuery(stat : String) : OclIterator
+    pre: true post: true; 
+
+    operation executeQuery() : OclIterator
+    pre: true post: true; 
+
+    operation execute(stat : String) : void
+    pre: true post: true; 
+ 
+    operation execute() : void
+    pre: true post: true; 
+
+    operation cancel() : void
+    pre: true post: true; 
+
+    operation getConnection() : OclDatasource
+    pre: true post: true; 
+
+    operation getResultSet() : OclIterator
+    pre: true post: true; 
+  } 
+
+  class OclDatasource {
+
+    stereotype external; 
+    stereotype component; 
+
+    attribute url : String; 
+    attribute protocol : String; 
+    attribute host : String; 
+    attribute ipaddr : Sequence(int); 
+    attribute file : String; 
+    attribute port : int; 
+    attribute requestMethod : String; 
+    attribute connectionLimit : int; 
+
+    attribute name : String; 
+    attribute passwd : String; 
+    attribute schema : String; 
+
+    static operation getConnection(url : String, 
+          name : String, passwd : String) : OclDatasource
+    pre: true 
+    post: OclDatasource->exists( db | 
+              db.url = url & db.name = name & 
+              db.passwd = passwd & result = db ); 
+
+    static operation newOclDatasource() : OclDatasource
+    pre: true
+    post: OclDatasource->exists( db | result = db ); 
+
+    static operation newSocket(host : String, port : int) : OclDatasource
+    pre: true
+    post: OclDatasource->exists( db | db.host = host & db.port = port & result = db ); 
+
+    static operation newServerSocket(port : int, limit : int) : OclDatasource
+    pre: true
+    post: OclDatasource->exists( db | db.port = port & db.connectionLimit = limit & result = db ); 
+
+    operation accept() : OclDatasource
+    pre: true
+    post: OclDatasource->exists( db | result = db ); 
+
+    static operation newURL(s : String) : OclDatasource
+    pre: true 
+    post: 
+      OclDatasource->exists( db | db.url = s & result = db ); 
+
+    static operation newURL_PHF(p : String, h : String, f : String) : OclDatasource
+    pre: true 
+    post: 
+      OclDatasource->exists( db | db.protocol = p & db.host = h & db.file = f & result = db ); 
+
+    static operation newURL_PHNF(p : String, h : String, n : int, f : String) : OclDatasource
+    pre: true 
+    post: 
+      OclDatasource->exists( db | db.protocol = p & db.host = h & db.port = n & db.file = f & result = db ); 
+    
+
+    operation createStatement() : SQLStatement
+    pre: true
+    post: SQLStatement->exists( ss | ss.text = "" & result = ss ); 
+
+    operation prepare(stat : String) : SQLStatement
+    pre: true
+    post: SQLStatement->exists( ss | ss.text = stat & result = ss ); 
+
+    operation prepareStatement(stat : String) : SQLStatement
+    pre: true
+    post: SQLStatement->exists( ss | ss.text = stat & result = ss ); 
+
+    operation prepareCall(stat : String) : SQLStatement
+    pre: true
+    post: SQLStatement->exists( ss | ss.text = stat & result = ss ); 
+
+    operation query_String(stat : String) : OclIterator
+    pre: true post: true; 
+
+    operation rawQuery(stat : String, pos: Sequence) : OclIterator
+    pre: true post: true; 
+
+    operation nativeSQL(stat : String) : String
+    pre: true post: true; 
+
+    operation query_String_Sequence(stat : String, 
+                    cols : Sequence(String)) : OclIterator
+    pre: true post: true; 
+
+    operation execSQL(stat : String) : void
+    pre: true post: true; 
+
+    operation abort() : void
+    pre: true post: true; 
+
+    operation close() : void
+    pre: true post: true;
+
+    operation commit() : void
+    pre: true post: true; 
+
+    operation rollback() : void
+    pre: true post: true; 
+
+    operation connect() : void
+    pre: true post: true; 
+
+    operation openConnection() : OclDatasource
+    pre: true post: result = self; 
+
+    operation setRequestMethod(method : String) : void
+    pre: true post: requestMethod = method; 
+ 
+    operation setSchema(s : String) : void
+    pre: true post: schema = s; 
+
+    operation getSchema() : String
+    pre: true post: result = schema; 
+
+    operation getInputStream() : OclFile
+    pre: true post: true; 
+
+    operation getOutputStream() : OclFile
+    pre: true post: true; 
+
+    operation getURL() : String
+    pre: true post: result = url; 
+
+    operation getContent() : OclAny
+    pre: true post: true; 
+
+    operation getFile() : String
+    pre: true post: result = file; 
+
+    operation getHost() : String
+    pre: true post: result = host;
+
+    static operation getLocalHost() : OclDatasource
+    pre: true 
+    post: OclDatasource->exists( d | d.host = "localhost" & d.ipaddr = Sequence{ 127, 0, 0, 1} & result = d );
+
+    operation getAddress() : Sequence(int)
+    pre: true post: result = ipaddr; 
+
+    operation getPort() : int
+    pre: true post: result = port; 
+
+    operation getProtocol() : String
+    pre: true post: result = protocol; 
+  }
+}
+
+

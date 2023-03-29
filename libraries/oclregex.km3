@@ -1,0 +1,62 @@
+package oclregex { 
+
+
+  class OclRegex
+  { stereotype external; 
+    stereotype component; 
+
+    attribute regex : String; 
+    attribute text : String; 
+    attribute startpos : int; 
+    attribute endpos : int; 
+
+    static operation compile(patt : String) : OclRegex
+    pre: true
+    post: OclRegex->exists( x | x.regex = patt & x.text = "" & x.startpos = 0 & x.endpos = 0 & result = x );
+
+    operation matcher(st : String) : OclRegex
+    pre: true
+    post: text = st & startpos = 0 & endpos = 0 & result = self;
+
+    static operation matches(patt : String, st : String) : boolean
+    pre: true
+    post: result = (st->isMatch(patt)); 
+
+    operation isMatch() : boolean
+    pre: true 
+    post: result = (text->isMatch(regex)); 
+
+    operation allMatches(tx : String) : Sequence(String)
+    pre: true 
+    post: result = (tx->allMatches(regex)); 
+
+    operation find() : boolean
+    pre: true post: true
+    activity: 
+      var txt : String ; 
+      txt := text.subrange(endpos+1,text.size) ;
+      if txt->hasMatch(regex)
+      then 
+        var f : String ; f := txt->firstMatch(regex) ; 
+        startpos := endpos + txt->indexOf(f) ; 
+        endpos := startpos + f.size - 1 ; 
+        return true
+      else 
+        return false;  
+
+    operation hasNext() : boolean
+    pre: true post: true
+    activity: 
+       return self.find(); 
+
+    operation hasNext(tx : String) : boolean
+    pre: true post: true
+    activity: 
+       text := tx; 
+       return self.find(); 
+  }
+
+
+}
+
+

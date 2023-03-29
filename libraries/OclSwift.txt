@@ -1,0 +1,325 @@
+class Ocl
+{
+  static func includingSet<T>(s : Set<T>, x : T) -> Set<T>
+{ var result : Set<T> = Set<T>()
+  result.formUnion(s)
+  result.insert(x)
+  return result
+}
+
+  static func includingSequence<T>(s : [T], x : T) -> [T]
+{ var result : [T] = [T]()
+  result = result + s
+  result.append(x)
+  return result
+}
+
+  static func prepend<T>(s : [T], x : T) -> [T]
+{ var result : [T] = [T]()
+  result = result + s
+  result.insert(x, at: 0)
+  return result
+}
+
+  static func excludingSequence<T : Equatable>(s : [T], x : T) -> [T]
+{ var result : [T] = [T]()
+  for y in s
+  { if x == y {}
+    else
+    { result.append(y) }
+  }
+  return result
+} 
+
+  static func containsSequence<T : Equatable>(s : [T], x : T) -> Bool
+{ var result : Bool
+  for y in s
+  { if x == y 
+    { return true }
+  }
+  return false
+} 
+
+  static func tail<T>(s : [T]) -> [T]
+{ var result : [T] = [T]()
+  for (i,x) in s.enumerated()
+  { if i > 0
+    { result.append(x) }
+  }
+  return result
+} 
+
+  static func subrange<T>(s : [T], st : Int, en : Int) -> [T]
+{ var result : [T] = [T]()
+  for (i,x) in s.enumerated()
+  { if i+1 >= st && i < en
+    { result.append(x) }
+    else if i >= en
+    { return result } 
+  }
+  return result
+}
+
+  static func front<T>(s : [T]) -> [T]
+{ var result : [T] = [T]()
+  result = result + s
+  result.removeLast()
+  return result
+} 
+
+  static func reverse<T>(s : [T]) -> [T]
+{ var result : [T] = [T]()
+  for x in 0...(s.count-1)
+  { result.append(s[s.count-x-1]) }
+  }
+  return result
+}
+
+  static func sum<Int>(s : [Int]) -> Int
+{ var result : Int = 0
+  for x in s
+  { result += x }
+  return result
+}
+
+  static func sum<Double>(s : [Double]) -> Double
+{ var result : Double = 0
+  for x in s
+  { result += x }
+  return result
+}
+
+  static func sum<String>(s : [String]) -> String
+{ var result : String = ""
+  for x in s
+  { result += x }
+  return result
+}
+
+  static func sum<Int>(s : Set<Int>) -> Int
+{ var result : Int = 0
+  for x in s
+  { result += x }
+  return result
+}
+
+  static func sum<Double>(s : Set<Double>) -> Double
+{ var result : Double = 0
+  for x in s
+  { result += x }
+  return result
+}
+
+  static func sum<String>(s : Set<String>) -> String
+{ var result : String = ""
+  for x in s
+  { result += x }
+  return result
+}
+
+  static func prd<Int>(s : [Int]) -> Int
+{ var result : Int = 1
+  for x in s
+  { result *= x }
+  return result
+}
+
+  static func prd<Double>(s : [Double]) -> Double
+{ var result : Double = 1.0
+  for x in s
+  { result *= x }
+  return result
+}
+
+  static func prd<Int>(s : Set<Int>) -> Int
+{ var result : Int = 1
+  for x in s
+  { result *= x }
+  return result
+}
+
+  static func prd<Double>(s : Set<Double>) -> Double
+{ var result : Double = 1.0
+  for x in s
+  { result *= x }
+  return result
+}
+
+
+  static func unionAll(s : Set<Set<T>>) -> Set<T>
+{ var result : Set<T> = Set<T>()
+  for x in s
+  { result.formUnion(x) }
+  return result
+}
+
+  static func intersectAll(s : Set<Set<T>>) -> Set<T>
+{ var result : Set<T> = Set<T>()
+  result = s.randomElement()
+  for x in s
+  { result.formIntersection(x) }
+  return result
+}
+
+  static func toSet<T>(s : Set<T>) -> Set<T>
+{ var result : Set<T> = Set<T>()
+  result.formUnion(s)
+  return result
+}
+
+  static func toSet<T>(s : [T]) -> Set<T>
+{ var result : Set<T> = Set<T>()
+  result.formUnion(s)
+  return result
+}
+
+  static func toSet<T>(s : Dictionary<String,T>) -> Set<T>
+{ var result : Set<T> = Set<T>()
+  for (k,x) in s
+  { result.insert(x) } 
+  return result
+}
+
+  static func toSequence<T>(s : Set<T>) -> [T]
+{ var result : [T] = [T]()
+  for x in s
+  { result.append(x) } 
+  return result
+}
+
+  static func toSequence<T>(s : [T]) -> [T]
+{ var result : [T] = [T]()
+  result = result + s
+  return result
+}
+
+  static func toSequence<T>(s : Dictionary<String,T>) -> [T]
+{ var result : [T] = [T]()
+  for (k,x) in s
+  { result.append(x) } 
+  return result
+}
+
+  static func count<T : Equatable>(s : [T], x : T) -> Int
+{ var result : Int = 0
+  for y in s
+  { if x == y 
+    { result = result + 1 }
+  }
+  return result
+} 
+
+  static func count<T : Equatable>(s : Set<T>, x : T) -> Int
+{ var result : Int = 0
+  if s.contains(x)
+  { return 1 }
+  return result
+}
+
+  static func count<T : Equatable>(s : Dictionary<String,T>, x : T) -> Int
+{ var result : Int = 0
+  for (k,v) in s
+  { if v == x
+    { result = result + 1 }
+  }
+  return result
+}
+
+
+  static func includingMap<T>(m1 : Dictionary<String,T>, k : String, val : T) -> Dictionary<String,T>
+{ Dictionary<String,T> res = [String:T]()
+  for (key,value) in m1
+  { res[key] = value } 
+  res[k] = val 
+  return res
+}
+
+  static func unionMap<T>(m1 : Dictionary<String,T>, m2 : Dictionary<String,T>) -> Dictionary<String,T>
+{ Dictionary<String,T> res = [String:T]()
+  for (key,value) in m1
+  { res[key] = value } 
+  for (key,value) in m2
+  { res[key] = value } 
+  return res
+}
+
+  static func intersectionMap<T>(m1 : Dictionary<String,T>, m2 : Dictionary<String,T>) -> Dictionary<String,T>
+{ Dictionary<String,T> res = [String:T]()
+  for (key,value) in m1
+  { if (m2[key] == value)
+    { res[key] = value } 
+  } 
+  return res
+}
+
+  static func excludeAllMap<T>(m1 : Dictionary<String,T>, m2 : Dictionary<String,T>) -> Dictionary<String,T>
+{ Dictionary<String,T> res = [String:T]()
+  for (key,value) in m1
+  { if (m2[key] == nil)
+    { res[key] = value } 
+  } 
+  return res
+}
+
+  static func excludingMapValue<T>(m : Dictionary<String,T>, v : T) -> Dictionary<String,T>
+{ Dictionary<String,T> res = [String:T]()
+  for (key,value) in m
+  { if (value != v)
+    { res[key] = value } 
+  } 
+  return res
+}
+
+  static func excludingMapKey<T>(m : Dictionary<String,T>, k : String) -> Dictionary<String,T>
+{ Dictionary<String,T> res = [String:T]()
+  for (key,value) in m
+  { if (key != k)
+    { res[key] = value } 
+  } 
+  return res
+}
+
+  static func <T> selectMap(m : Dictionary<String,T>, _f : T -> Bool) : Dictionary<String,T>
+{ var result : Dictionary<String,T> = [String:T]()
+  for (k,v) in m
+  { if (_f(v))
+    { result[k] = v }
+  }
+  return result
+}
+
+  static func <T> rejectMap(m : Dictionary<String,T>, _f : T -> Bool) : Dictionary<String,T>
+{ var result : Dictionary<String,T> = [String:T]()
+  for (k,v) in m
+  { if (_f(v)) {}
+    else
+    { result[k] = v }
+  }
+  return result
+}
+
+  static func <T,R> collectMap(m : Dictionary<String,T>, _f : T -> R) : Dictionary<String,R>
+{ var result : Dictionary<String,R> = [String:R]()
+  for (k,v) in m
+  { result[k] = _f(v) }
+  return result
+}
+
+  static func <T> restrict(m : Dictionary<String,T>, ks : Set<String>) : Dictionary<String,T>
+{ var result : Dictionary<String,T> = [String:T]()
+  for (k,v) in m
+  { if ks.contains(k)
+    { result[k] = v }
+  }
+  return result
+}
+
+  static func <T> mapRange(m : Dictionary<String,T>) : [T] 
+  { var result : [T] = [T]()
+    for (k,v) in m
+    { result.append(v) }
+    return result
+  }
+
+}
+

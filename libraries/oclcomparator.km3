@@ -1,0 +1,40 @@
+package oclcomparator { 
+
+
+  class OclComparator {
+
+
+
+
+    query compare(lhs : OclAny , rhs : OclAny ) : int
+    pre: true
+    post: result = ( lhs->compareTo(rhs) );
+
+    static query lowerSegment(col : Sequence(OclAny), x : OclAny, cmp : OclComparator) : Sequence(OclAny)
+    pre: true
+    post: result = col->select( y | cmp.compare(y,x) < 0 );
+
+    static query sortWith(col : Sequence(OclAny) , cmp : OclComparator ) : Sequence(OclAny)
+    pre: true
+    post: result = col->sortedBy( x | OclComparator.lowerSegment(col,x,cmp)->size() );
+
+    static query maximumWith(col : Sequence(OclAny) , cmp : OclComparator ) : OclAny
+    pre: col->size() > 0
+    post: result = col->select( x | col->forAll( y | cmp.compare(y,x) <= 0 ) )->any();
+
+    static query minimumWith(col : Sequence(OclAny) , cmp : OclComparator ) : OclAny
+    pre: col->size() > 0
+    post: result = col->select( x | col->forAll( y | cmp.compare(y,x) >= 0 ) )->any();
+
+    static query binarySearch(col : Sequence(OclAny), x : OclAny, cmp : OclComparator) : int
+    pre: true 
+    post: result = OclComparator.lowerSegment(col,x,cmp)->size();
+  }
+
+
+
+
+
+}
+
+

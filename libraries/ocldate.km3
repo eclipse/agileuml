@@ -1,0 +1,151 @@
+package ocldate { 
+
+class OclDate
+{ stereotype external; 
+  stereotype component; 
+
+  static attribute systemTime : long; 
+  attribute time : long; 
+  attribute year : int; 
+  attribute month : int; 
+  attribute day : int; 
+  attribute weekday : int; 
+  attribute hour : int; 
+  attribute minute : int; 
+  attribute second : int; 
+
+  static operation newOclDate() : OclDate
+  pre: true
+  post: OclDate->exists( d | d.time = OclDate.systemTime & result = d ); 
+
+  static operation newOclDate_String(s : String) : OclDate
+  pre: true post: true 
+  activity: var items : Sequence(String) ; items := s->allMatches("[0-9]+"); var d : OclDate; d := OclDate.newOclDate_Time(0) ; if items->size() >= 3 then d.year := items->at(1)->toInteger() ; d.month := items->at(2)->toInteger() ; d.day := items->at(3)->toInteger() else skip ; if items->size() >= 6 then d.hour := items->at(4)->toInteger() ; d.minute := items->at(5)->toInteger() ; d.second := items->at(6)->toInteger() else skip ; return d;
+
+  static operation newOclDate_Time(t : long) : OclDate
+  pre: true
+  post: OclDate->exists( d | d.time = t & result = d ); 
+
+  static operation newOclDate_YMD(y : int, m : int, d : int) : OclDate
+  pre: true
+  post: OclDate->exists( dte | dte.year = y & dte.month = m & dte.day = d & result = dte ); 
+
+  static operation newOclDate_YMDHMS(y : int, m : int, d : int, h : int, mn : int, s : int) : OclDate
+  pre: true
+  post: OclDate->exists( dte | dte.year = y & dte.month = m & dte.day = d & dte.hour = h & dte.minute = mn & dte.second = s & dte.result = dte ); 
+
+  operation setTime(t : long) : void
+  pre: true  
+  post: time = t; 
+
+  operation getTime() : long
+  pre: true  
+  post: result = time; 
+
+  operation dateBefore(d : OclDate) : boolean
+  pre: true 
+  post: if time < d.time then result = true else result = false endif;
+
+  operation dateAfter(d : OclDate) : boolean
+  pre: true
+  post: 
+     if time > d.time then result = true else result = false endif; 
+
+  operation yearDifference(d : OclDate) : long
+  pre: true 
+  post: result = (time - d.time)/(31536000000); 
+
+  operation monthDifference(d : OclDate) : long
+  pre: true 
+  post: result = (time - d.time)/(2628000000); 
+
+  operation dayDifference(d : OclDate) : long
+  pre: true 
+  post: result = (time - d.time)/(86400000); 
+
+  operation hourDifference(d : OclDate) : long
+  pre: true 
+  post: result = (time - d.time)/(3600000);
+
+  operation minuteDifference(d : OclDate) : long
+  pre: true 
+  post: result = (time - d.time)/(60000);
+ 
+  operation secondDifference(d : OclDate) : long
+  pre: true 
+  post: result = (time - d.time)/(1000);
+
+  static operation getSystemTime() : long
+  pre: true
+  post: result = OclDate.systemTime;
+
+  static operation setSystemTime(t : long)
+  pre: true
+  post: OclDate.systemTime = t;
+
+  operation getYear() : int
+  pre: true 
+  post: result = year; 
+
+  operation getMonth() : int
+  pre: true 
+  post: result = month; 
+
+  operation getDate() : int
+  pre: true post: result = day; 
+
+  operation getDay() : int
+  pre: true post: result = weekday;
+
+  operation getHour() : int
+  pre: true post: result = hour;
+ 
+  operation getHours() : int
+  pre: true post: result = hour;
+
+  operation getMinute() : int
+  pre: true post: result = minute;
+
+  operation getMinutes() : int
+  pre: true post: result = minute;
+
+  operation getSecond() : int
+  pre: true post: result = second;
+
+  operation getSeconds() : int
+  pre: true post: result = second;
+
+  operation addYears(y : int) : OclDate
+  pre: true 
+  post: OclDate->exists( d | d.time = time + y*31536000000 & result = d); 
+
+  operation addMonths(m : int) : OclDate
+  pre: true 
+  post: OclDate->exists( d | d.time = time + m*2628000000 & result = d); 
+
+  operation addDays(d : int) : OclDate
+  pre: true 
+  post: OclDate->exists( dt | dt.time = time + d*86400000 & result = dt); 
+
+  operation addHours(h : int) : OclDate
+  pre: true 
+  post: OclDate->exists( dt | dt.time = time + h*3600000 & result = dt); 
+
+  operation addMinutes(n : int) : OclDate
+  pre: true 
+  post: OclDate->exists( dt | dt.time = time + n*60000 & result = dt); 
+
+  operation addSeconds(s : int) : OclDate
+  pre: true 
+  post: OclDate->exists( dt | dt.time = time + s*1000 & result = dt); 
+
+  operation toString() : String
+  pre: true 
+  post: result = day + "-" + month + "-" + year + " " + hour + ":" + minute + ":" + second; 
+ 
+ }
+
+
+}
+
+

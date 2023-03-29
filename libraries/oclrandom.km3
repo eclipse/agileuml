@@ -1,0 +1,98 @@
+package oclrandom { 
+
+
+  class OclRandom {
+
+    stereotype external; 
+    stereotype component; 
+
+    attribute ix : int;
+    attribute iy : int;
+    attribute iz : int;
+
+    static operation newOclRandom() : OclRandom
+    pre: true
+    post: OclRandom->exists( rd | rd.ix = 1001 & rd.iy = 781 & rd.iz = 913 & result = rd ); 
+
+    static operation newOclRandom(n : long) : OclRandom
+    pre: true
+    post: OclRandom->exists( rd | rd.ix = (n mod 30269)->oclAsType(int) & rd.iy = (n mod 30307)->oclAsType(int) & rd.iz = (n mod 30323)->oclAsType(int) & result = rd ); 
+
+    operation setSeeds(x : int , y : int , z : int ) : void
+    pre: true
+    post: self.ix = x & self.iy = y & self.iz = z;
+
+    operation setSeed(n : long) : void
+    pre: true
+    post: self.ix = (n mod 30269)->oclAsType(int) & self.iy = (n mod 30307)->oclAsType(int) & self.iz = (n mod 30323)->oclAsType(int); 
+
+    operation nrandom() : double
+    pre: true
+    post: true
+    activity: ( self.ix := ( self.ix * 171 ) mod 30269 ; self.iy := ( self.iy * 172 ) mod 30307 ; self.iz := ( self.iz * 170 ) mod 30323 ; return ( self.ix / 30269.0 + self.iy / 30307.0 + self.iz / 30323.0 ) );
+
+    operation nextDouble() : double
+    pre: true
+    post: r = self.nrandom() & result = ( r - r->floor() );
+
+    operation nextFloat() : double
+    pre: true
+    post: r = self.nrandom() & result = ( r - r->floor() );
+
+    operation nextGaussian() : double
+    pre: true 
+    post: d = self.nrandom() & result = (d/3.0 - 0.5); 
+
+    operation nextInt(n : int) : int
+    pre: true 
+    post: d = self.nextDouble() & result = (d*n)->floor(); 
+
+    operation nextInt() : int
+    pre: true 
+    post: result = self.nextInt(2147483647); 
+
+    operation nextLong() : long
+    pre: true 
+    post: d = self.nextDouble() & result = (d*9223372036854775807)->floor(); 
+
+    operation nextBoolean() : boolean
+    pre: true
+    post: d = self.nextDouble() & (d > 0.5 => result = true);
+
+    static operation randomiseSequence(sq : Sequence) : Sequence
+    pre: true post: true
+    activity:
+      var r : OclRandom ; 
+      r := OclRandom.newOclRandom() ; 
+      var res : Sequence ; 
+      res := Sequence{} ;  
+      var old : Sequence ; 
+      old := Sequence{}->union(sq) ;  
+      while old->size() > 0
+      do 
+       ( var x : int ; 
+         x := old->size() ;  
+         if x = 1
+         then 
+           ( res := res->including(old->at(1)) ; return res )
+         else 
+           ( var obj : OclAny ;
+             var n : int ; 
+             n := r.nextInt(x) + 1 ;  
+             obj := old->at(n) ;       
+             res := res->including(obj) ;   
+             old := old->excludingAt(n) 
+           )
+        ) ;
+      return res; 
+  
+    static operation randomString(n : int) : String
+    pre: n > 0
+    post: true; 
+
+    static operation randomElement(sq : Sequence) : OclAny
+    pre: true post: true; 
+  }
+}
+
+

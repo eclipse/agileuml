@@ -1,0 +1,161 @@
+Entity:
+Type 13 254
+null  * abstract 
+typeId String 3 false true false
+
+Entity:
+Classifier 28 408
+Type  * abstract 
+
+
+Entity:
+DataType 15 496
+Classifier  * abstract 
+
+
+Entity:
+PrimitiveType 5 572
+DataType  * 
+
+
+Entity:
+Entity 138 464
+Classifier  * 
+isAbstract boolean 3 false false false isInterface boolean 3 false false false
+
+Entity:
+CollectionType 139 547
+DataType  * 
+
+
+Entity:
+Expression 268 40
+null  * abstract 
+needsBracket boolean 3 false false false umlKind UMLKind 3 false false false expId String 3 false true false
+
+Entity:
+BinaryExpression 56 178
+Expression  * 
+operator String 3 false false false variable String 3 false false false
+
+Entity:
+UnaryExpression 670 120
+Expression  * 
+operator String 3 false false false
+
+Entity:
+CollectionExpression 652 61
+Expression  * 
+isOrdered boolean 3 false false false
+
+Type:
+UMLKind 789 196
+value variable constant role attribute operation classid function 
+
+Entity:
+BasicExpression 285 305
+Expression  * 
+data String 3 false false false prestate boolean 3 false false false
+
+Entity:
+Property 661 277
+null  * 
+
+
+Association:
+CollectionType Type 0 203 548 124 302 1 elementType null 
+
+
+Association:
+Expression Type 0 270 66 27 255 1 type null 
+
+
+Association:
+Expression Type 0 268 90 108 257 -1 elementType null 
+
+
+Association:
+CollectionExpression Expression 0 652 70 524 51 0 elements null 
+ordered 
+
+Association:
+BinaryExpression Expression 0 92 178 262 51 1 left null 125 128 
+
+
+Association:
+BinaryExpression Expression 0 218 185 304 107 1 right null 221 181 
+
+
+Association:
+BasicExpression Expression 0 389 307 471 115 0 parameters null 
+ordered 
+
+Association:
+UnaryExpression Expression -1 657 115 523 81 1 argument null 
+
+
+Association:
+BasicExpression Property 0 491 338 643 288 -1 referredProperty null 
+
+
+Association:
+BasicExpression BasicExpression -1 288 295 344 373 -1 arrayIndex null 227 333 227 396 307 397 
+
+
+Association:
+Property Expression -1 664 278 485 116 1 initialValue null 665 226 514 222 
+
+
+Association:
+BasicExpression BasicExpression -1 490 353 415 374 -1 objectRef null 552 353 551 402 443 403 
+
+
+Association:
+Property Entity 0 728 309 364 509 1 owner ownedAttribute 672 512 
+
+
+Generalisation:
+Type Classifier 56 409 52 293
+
+
+
+Generalisation:
+DataType PrimitiveType 32 574 27 520
+
+
+
+Generalisation:
+Classifier Entity 37 503 36 431
+
+
+
+Generalisation:
+Classifier DataType 139 501 106 428
+
+
+
+Generalisation:
+DataType CollectionType 142 552 98 519
+
+
+
+Generalisation:
+Expression UnaryExpression 665 153 511 110
+
+
+
+Generalisation:
+Expression BasicExpression 357 307 357 113
+
+
+
+Generalisation:
+Expression BinaryExpression 57 218 288 38
+23 219 24 18 288 16 
+
+
+Generalisation:
+Expression CollectionExpression 724 62 475 37
+722 23 474 22 
+
+

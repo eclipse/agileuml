@@ -1,0 +1,99 @@
+Entity:
+Expression 82 155
+null  * abstract source 
+needsBracket boolean 3 false false false umlKind UMLKind 3 false false false
+
+Entity:
+BinaryExpression 35 318
+Expression  * source 
+operator String 3 false false false
+
+Entity:
+BasicExpression 218 382
+Expression  * source 
+data String 3 false false false
+
+Entity:
+UnaryExpression 21 23
+Expression  * source 
+operator String 3 false false false
+
+Type:
+UMLKind 19 374
+value variable constant role attribute operation classid 
+
+Entity:
+CollectionExpression 227 21
+Expression  * source 
+isOrdered boolean 3 false false false
+
+Entity:
+Property 450 442
+null  * source 
+
+
+Association:
+BinaryExpression Expression 0 83 322 129 217 1 left null 
+
+
+Association:
+BinaryExpression Expression 0 38 319 75 198 1 right null 
+
+
+Association:
+UnaryExpression Expression 0 46 74 97 152 1 argument null 
+
+
+Association:
+BasicExpression Expression -1 280 383 222 221 -1 objectRef null 
+
+
+Association:
+CollectionExpression Expression 0 230 56 183 147 0 elements null 
+ordered 
+
+Association:
+BasicExpression Expression -1 348 384 325 219 -1 arrayIndex null 
+
+
+Association:
+BasicExpression Property 0 365 414 452 446 -1 referredProperty null 
+
+
+Generalisation:
+Expression BinaryExpression 157 317 156 213
+
+
+
+Generalisation:
+Expression BasicExpression 249 381 184 217
+
+
+
+Generalisation:
+Expression UnaryExpression 153 75 153 144
+
+
+
+Generalisation:
+Expression CollectionExpression 296 58 295 155
+
+
+
+Entity:
+ConditionalExpression 488 129
+null  * source 
+
+
+Association:
+ConditionalExpression Expression 0 490 131 335 149 1 test null 
+
+
+Association:
+ConditionalExpression Expression 0 489 142 329 179 1 ifExp null 
+
+
+Association:
+ConditionalExpression Expression 0 524 152 347 199 1 elseExp null 
+
+

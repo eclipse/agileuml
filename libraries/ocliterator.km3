@@ -1,0 +1,201 @@
+package ocliterator { 
+
+class OclIteratorResult 
+{ stereotype external; 
+  stereotype component; 
+ 
+  attribute done : boolean; 
+  attribute value : OclAny; 
+
+  static operation newOclIteratorResult(v : OclAny) : OclIteratorResult
+  pre: true 
+  post: OclIteratorResult->exists( res | res.value = v & 
+             res.done = (v->oclIsUndefined()) & result = res); 
+ 
+} 
+
+
+  class OclIterator 
+  { stereotype external; 
+    stereotype component; 
+
+    attribute markedPosition : int; 
+    attribute position : int; 
+    attribute elements : Sequence; 
+    attribute generatorFunction : Function(int, OclAny); 
+    attribute columns : Sequence(OclAttribute); 
+
+
+    query hasNext() : boolean
+    pre: true
+    post: if position >= 0 & position < elements.size then result = true else result = false endif;
+
+    query isAfterLast() : boolean
+    pre: true 
+    post: if position > elements.size() then result = true else result = false endif; 
+
+    query isBeforeFirst() : boolean
+    pre: true 
+    post: if position <= 0 then result = true else result = false endif; 
+
+    query hasPrevious() : boolean
+    pre: true
+    post: if position > 1 & position <= elements.size + 1 then result = true else result = false endif; 
+
+    query nextIndex() : int
+    pre: true
+    post: result = position + 1;
+
+    query previousIndex() : int
+    pre: true
+    post: result = position - 1; 
+
+    query getPosition() : int
+    pre: true 
+    post: result = position; 
+
+    operation markPosition() : void
+    pre: true 
+    post: markedPosition = position; 
+
+    operation moveForward() : void
+    pre: position + 1 <= elements.size
+    post: position = position@pre + 1;
+
+    operation moveBackward() : void
+    pre: position > 1
+    post: position = position@pre - 1;
+
+    operation moveTo(i : int) : void
+    pre: 0 <= i & i <= elements.size + 1
+    post: position = i;
+
+    operation setPosition(i : int) : void
+    pre: 0 <= i & i <= elements.size + 1
+    post: position = i;
+
+    operation movePosition(i : int) : void
+    pre: 0 <= i + position & i + position <= elements.size + 1
+    post: position = i + position;
+
+    operation moveToMarkedPosition() : void
+    pre: true
+    post: position = markedPosition;
+
+    operation moveToFirst() : void
+    pre: true 
+    post: position = 1; 
+
+    operation moveToLast() : void
+    pre: true 
+    post: position = elements.size; 
+
+    operation moveToStart() : void
+    pre: true 
+    post: position = 0; 
+
+    operation moveToEnd() : void
+    pre: true 
+    post: position = elements.size + 1; 
+
+    static operation newOclIterator_Sequence(sq : Sequence) : OclIterator
+    pre: true 
+    post: OclIterator->exists( ot | ot.elements = sq & ot.position = 0 & ot.columns = Sequence{} & result = ot); 
+
+    static operation newOclIterator_Set(st : Set) : OclIterator
+    pre: true 
+    post: OclIterator->exists( ot | ot.elements = Sequence{}->union(st->sort()) & ot.position = 0 & ot.columns = Sequence{} & result = ot ); 
+
+    static operation newOclIterator_String(ss : String) : OclIterator
+    pre: true
+    post: OclIterator->exists( ot | ot.elements = ss->split("[ \n\t\r]+") & ot.position = 0 & ot.columns = Sequence{} & result = ot );
+
+    static operation newOclIterator_String_String(ss : String, seps : String) : OclIterator
+    pre: true
+    post: OclIterator->exists( ot | ot.elements = ss->split("[" + seps + "]+") & ot.position = 0 & ot.columns = Sequence{} & result = ot );
+
+    static operation newOclIterator_Function(f : Function(int,OclAny)) : OclIterator
+    pre: true 
+    post: OclIterator->exists( ot | ot.elements = Sequence{} & ot.position = 0 & ot.columns = Sequence{} & ot.generatorFunction = f & result = ot ); 
+
+    query getCurrent() : OclAny
+    pre: true
+    post: (position >= 1 & position <= elements.size
+             => result = elements->at(position)) & 
+          (true => result = null); 
+
+    operation set(x : OclAny) : void
+    pre: true
+    post: elements[position] = x; 
+
+    operation insert(x : OclAny) : void
+    pre: true
+    post: elements = elements@pre.subrange(1,position-1) ^ Sequence{x} ^ elements@pre.subrange(position); 
+
+    operation remove() : void
+    pre: true
+    post: elements[position] = null & elements[position]->isDeleted();
+ 
+
+    operation next() : OclAny
+    pre: true
+    post: true
+    activity: 
+      ( moveForward() ; return getCurrent() ); 
+
+    operation nextResult() : OclIteratorResult
+    pre: true
+    post: true
+    activity: 
+      ( moveForward() ; var v : OclAny ; v := getCurrent() ; 
+        return OclIteratorResult.newOclIteratorResult(v) ); 
+
+    operation previous() : OclAny
+    pre: true
+    post: true
+    activity: 
+      ( moveBackward() ; return getCurrent() ); 
+
+   operation length() : int
+   pre: true 
+   post: result = elements->size(); 
+
+   operation at(i : int) : OclAny
+   pre: 1 <= i & i <= elements->size()
+   post: result = elements->at(i); 
+
+   operation close() 
+   pre: true 
+   post: position = 0 & 
+         markedPosition = 0 & 
+         elements = Sequence{}; 
+
+   query getCurrentFieldByIndex(i : int) : OclAny
+   pre: columns.size >= i & i >= 1
+   post: result = getCurrent()->oclAsType(Map)->at(columns[i].name); 
+
+   query getColumnName(i : int) : String
+   pre: columns.size >= i & i >= 1 
+   post: result = columns[i].name; 
+
+   query getColumnClassName(i : int) : String
+   pre: columns.size >= i & i >= 1 
+   post: result = columns[i].type.name; 
+
+   query getColumnCount() : int
+   pre: true post: result = columns->size(); 
+
+   operation setCurrentFieldByIndex(i : int, v: OclAny)
+   pre: columns.size >= i & i >= 1
+   post: true
+   activity: var m : Map(String,OclAny) ; m := getCurrent()->oclAsType(Map) ; m[columns[i].name] := v; 
+
+  }
+
+
+
+
+
+}
+
+
