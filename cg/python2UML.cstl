@@ -1,3 +1,10 @@
+file_input::
+_1 |-->class FromPython {\n  operation initialise()\n  pre: true post: true\n  activity: _1;\n}\n
+_1 _* |-->class FromPython {\n  operation initialise()\n  pre: true post: true\n  activity: _1_*`followingStatement;\n}\n
+
+
+
+
 testlist::
 _1 |-->_1
 _1 , _* |-->_1, _*`recurse
@@ -85,9 +92,14 @@ chr _1 |-->_1->byte2char()
 unichr _1 |-->_1->byte2char()
 ord _1 |-->_1->char2byte()
 type _1 |-->_1->oclType()
+range _1 |-->_1`rangeTrailer
+enumerate _1 |-->Integer.subrange(1, _1->size())->collect( $i | Sequence{$i-1, _1->at($i)} )
+zip _1 |-->Integer.subrange(1, _1`firstArg->size())->collect( $i | Sequence{_1`firstArg->at($i), _1`secondArg->at($i)} )
 
 await _1 |-->
 await _1 _* |-->
+math _1 |-->_1`mathTrailer
+
 _1 ** _2 |-->(_1)->pow(_2)
 + _1 |-->_1
 - _1 |-->-_1
@@ -110,6 +122,7 @@ _1 |-->_1
 
 atom::
 ( ) |-->()
+( _1 ) |-->Sequence{_1}<when> _1 multiple
 ( _1 ) |-->(_1)
 [ _1 ] |-->_1`sequenceFormation
 { _1 } |-->_1
@@ -147,6 +160,23 @@ testlist_star_expr::
 _1 |-->_1
 _1 , _* |-->_1,_*`recurse
 
+hasSideEffect::
+_1 |-->_1`hasSideEffect
+
+_1 |-->_1`hasSideEffect<when> _1 testlist
+_1 |-->_1`hasSideEffect<when> _1 test
+_1 |-->_1`hasSideEffect<when> _1 logical_test
+_1 |-->_1`hasSideEffect<when> _1 comparison
+_1 |-->_1`hasSideEffect<when> _1 expr
+
+print _1 |-->_1`hasSideEffect
+del _1 |-->_1`hasSideEffect
+
+_1 _2 |-->_2`trailerSideEffect<when> _1 atom, _2 trailer
+_1 , _* |-->_1`hasSideEffect
+_1 |-->
+
+
 updateForm::
 _1 |-->_1`updateForm<when> _1 testlist
 _1 |-->_1`updateForm<when> _1 test
@@ -159,7 +189,7 @@ del _1 |-->    execute _1->isDeleted()
 
 _1 _2 |-->    _1 := _1_2`trailerUpdateForm<when> _1 atom, _2 trailer
 _1 , _* |-->    _1 ;\n_*`recurse
-_1 |-->_1
+_1 |-->
 
 
 
@@ -170,6 +200,7 @@ _1 |-->_1
 name::
 True |-->true
 False |-->false
+None |-->null
 _1 |-->_1
 
 
@@ -208,7 +239,7 @@ trailer::
 . index _1 |-->->indexOf_1 + 1
 . sort _1 |-->->sort()
 . reverse _1 |-->->reverse()
-. pop _1 |-->_1`firstArg+1
+. pop _1 |-->_1`popArguments
 . add _1 |-->->including_1
 . copy _1 |-->->copy()
 . intersection _1 |-->->intersection_1
@@ -221,10 +252,33 @@ trailer::
 . remove _1 |-->->excluding_1
 . discard _1 |-->->excluding_1
 . clear _1 |-->->intersection(Set{})
+. items _1 |-->->asSequence()
 
 . _1 |-->._1
 . _1 _* |-->._1_*
 _1 |-->_1
+
+mathTrailer::
+. cosin _1 |-->_1->cos()
+. sin _1 |-->_1->sin()
+. tan _1 |-->_1->tan()
+. ceil _1 |-->_1->ceil()
+. floor _1 |-->_1->floor()
+. sqrt _1 |-->_1->sqrt()
+. pow _1 |-->(_1`firstArg)->pow(_1`lastArg)
+
+. _1 |-->
+. _1 _* |-->
+_1 |-->
+
+
+trailerSideEffect::
+. pop ( ) |-->true
+. pop _1 |-->true
+
+. _1 |-->
+. _1 _* |-->
+_1 |-->
 
 
 trailerUpdateForm::
@@ -234,7 +288,7 @@ trailerUpdateForm::
 . remove _1 |-->->excludingFirst_1
 . sort _1 |-->->sort()
 . reverse _1 |-->->reverse()
-. pop _1 |-->->excludingAt(_1`firstArg+1)
+. pop _1 |-->_1`popUpdateArguments
 . add _1 |-->->including_1
 . intersection _1 |-->->intersection_1
 . difference _1 |--> - _1
@@ -244,11 +298,16 @@ trailerUpdateForm::
 . discard _1 |-->->excluding_1
 . clear _1 |-->->intersection(Set{})
 
-
 . _1 |-->._1
 . _1 _* |-->._1_*
 _1 |-->_1
 
+rangeTrailer::
+_1 |-->_1`rangeArguments
+
+rangeArguments::
+( ) |-->
+( _1 ) |-->_1`rangeArguments
 
 arguments::
 ( ) |-->()
@@ -259,16 +318,34 @@ firstArg::
 ( ) |-->
 ( _1 ) |-->_1`first
 [ _1 ] |-->_1`first
+_1 |-->_1`firstArg
+
+secondArg::
+( ) |-->
+( _1 ) |-->_1`third
+[ _1 ] |-->_1`third
+_1 |-->_1`secondArg
 
 lastArg::
 ( ) |-->
 ( _1 ) |-->_1`last
 [ _1 ] |-->_1`last
+_1 |-->_1`lastArg
 
 allUnion::
 ( ) |-->
 ( _1 ) |-->->union(Set{_1}->unionAll())
 [ _1 ] |-->->union(Set{_1}->unionAll())
+
+popArguments::
+( ) |-->->any()
+( _1 ) |-->->at(_1`firstArg+1)
+[ _1 ] |-->->at(_1`firstArg+1)
+
+popUpdateArguments::
+( ) |-->->tail()
+( _1 ) |-->->excludingAt(_1`firstArg+1)
+[ _1 ] |-->->excludingAt(_1`firstArg+1)
 
 
 argument::
@@ -278,6 +355,12 @@ arglist::
 _1 |-->_1
 _1 , _* |-->_1, _*`recurse
 
+rangeArguments::
+_1 |-->Integer.subrange(0, _1-1)
+_1 , _2 |-->Integer.subrange(_1, _2-1)
+_1 , _2 , _3 |-->Integer.subrange(_1, _2-1)->select( $x | ($x - _1) mod _3 = 0 )
+ 
+
 subscriptlist::
 _1 |-->_1
 _1 , _* |-->_1_*`recurse
@@ -286,7 +369,9 @@ subscript::
 ... |-->
 _1 : _2 |-->.subrange(_1+1, _2)<when> _2 test
 : _1 |-->.subrange(1,_1)<when> _1 test
+_1 |-->->at(_1)<when> _1 String
 _1 |-->[_1+1]
+
 
 sliceop::
 : _1 |-->
@@ -305,10 +390,12 @@ stmt::
 _1 |-->_1
 
 compound_stmt::
-if _1 : _2 |-->    if _1 then (\n  _2\n    ) else skip ;\n
-if _1 : _2 _3 |-->    if _1 then  (\n  _2\n    )\n_3 ;\n<when> _3 else_clause
-while _1 : _2 |-->    while _1 do (_2) ;\n
-for _1 in _2 : _3 |-->    for _1 : _2 do (_3) ;\n
+if _1 : _2 |-->    if _1 then (\n  _2\n    ) else skip
+if _1 : _2 _3 |-->    if _1 then  (\n  _2\n    )\n_3<when> _3 else_clause
+if _1 : _2 _* |-->    if _1 then  (\n  _2\n    )\n_*
+
+while _1 : _2 |-->    while _1 do (_2)
+for _1 in _2 : _3 |-->    for _1 : _2 do (_3)
 
 suite::
 _1 |-->_1
@@ -330,7 +417,8 @@ _* |-->_*
 
 
 small_stmt::
-_1 _2 |-->    _1 _2<when> _2 assign_part
+_1 _2 |-->    _1 _2<when> _2 assign_part, _1`defined true
+_1 _2 |-->    var _1 : OclAny _2<when> _2 assign_part <action> _1`defined true
 print _1 |-->    execute (_1)->display()
 del _1 |-->    execute (_1)->isDeleted()
 pass |-->    skip
@@ -349,6 +437,7 @@ _1 |-->_1`updateForm<when> _1 testlist_star_expr
 
 
 assign_part::
+= _1 |-->:= _1 ; _1`updateForm<when> _1`hasSideEffect true
 = _1 |-->:= _1
 
 

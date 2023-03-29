@@ -1,0 +1,187 @@
+parse::
+_* <EOF> |-->_*\n
+
+
+sql_stmt_list::
+_* |-->_*`sqlItem
+
+sqlItem::
+; |-->
+_1 |-->_1
+
+sql_stmt::
+_1 |-->_1\n
+_1 _2 |-->_1\n_2
+
+
+analyze_stmt::
+analyze _1 |-->print(_1)\n
+
+attach_stmt::
+attach _1 as _2 |-->_2 = nltk.data.load(_1)\n
+
+create_table_stmt::
+create table _1 ( _* ) |-->class _1 {\n_*`attributeFromColumn\n  static operation new_1(_*`parameterFromColumn) : _1\n  pre: true\n  post: _1->exists( $x | _*`initFromColumn result = $x)\n}\n\n
+create table _1 . _2 ( _* ) |-->class _1$_2 {\n_*`attributeFromColumn\n  static operation new_1$_2(_*`parameterFromColumn) : _1$_2\n  pre: true\n  post: _1$_2->exists( $x | _*`initFromColumn result = $x)\n}\n\n
+
+create temporary table _1 as _2 |-->class _1 {\n_2`attributesFromSelect}\n\n
+
+create_virtual_table_stmt:: 
+create virtual table _1 using _2 ( _3 ) |-->_1 = _2(_3)\n
+
+attributeFromColumn::
+, |-->
+_1 _2 |-->  attribute _1 : _2;\n<when> _2 type_name
+_1 _2 _* |-->  attribute _1_* : _2;\n<when> _2 type_name
+_1 |-->  attribute _1 : OclAny;\n
+_1 _* |-->  attribute _1_* : OclAny;\n
+
+parameterFromColumn::
+, |-->,
+_1 _2 |-->_1 : _2<when> _2 type_name
+_1 _2 _* |-->_1 : _2<when> _2 type_name
+_1 |-->_1 : OclAny 
+_1 _* |-->_1 : OclAny 
+
+initFromColumn::
+, |-->
+_1 _2 |-->$x._1 = _1 & <when> _2 type_name
+_1 _2 _* |-->$x._1 = _1 & <when> _2 type_name
+_1 |-->$x._1 = _1 & 
+_1 _* |-->$x._1 = _1 & 
+
+column_def::
+_1 _2 |-->  attribute _1 : _2;\n<when> _2 type_name
+_1 _2 _* |-->  attribute _1 : _2;\n<when> _2 type_name
+_1 |-->  attribute _1 : OclAny;\n
+_1 _* |-->  attribute _1 : OclAny;\n
+
+
+type_name::
+integer |-->int
+varchar |-->String
+integer ( _1 ) |-->int
+varchar ( _1 ) |-->String
+integer ( _1 , _2 ) |-->int
+varchar ( _1 , _2  ) |-->String
+
+column_constraint::
+primary key |--> identity
+primary key _* |--> identity
+_* |-->
+
+
+delete_stmt::
+delete from _1 where _2 |-->  execute _1->select(_2)->isDeleted()
+delete from _1 |-->  execute _1->isDeleted()
+
+detach_stmt::
+detach _1 |-->
+detach database _1 |-->
+
+drop_stmt::
+drop table _1 |-->  execute _1->isDeleted()
+drop table if exists _1 |-->  execute _1->isDeleted()
+
+drop table _1 . _2 |-->  execute _1$_2->isDeleted()
+drop table if exists _1 . _2 |-->  execute _1$_2->isDeleted()
+
+
+insert_stmt::
+insert into _1 values ( _* ) |-->  var $x : _1 := _1.new_1(_*)
+insert into _1 ( _* ) values ( _+ ) |-->  var $x : _1 := _1.new_1(_+)
+
+
+select_stmt::
+_1 |-->_1
+
+simple_select_stmt::
+_1 |-->_1
+
+select_core::
+select _1 , _2 from _3 |-->[_2 for _1 in _3]
+
+select distinct _1 from _2 where _3 |-->set({_1 for _1 in _2 if _3})
+select _1 from _2 where _3 |-->[_1 for _1 in _2 if _3]
+
+
+savepoint_stmt::
+savepoint _1 |-->savepointFile = open('_1.pickle', 'wb')\npickle.dump(_1,savepointFile)\nsavepointFile.close()\n
+
+
+update_stmt::
+update _1 set _2 = _3 where _4 |-->execute _1->select(_4)->forAll(_2 = _3)
+
+
+table_or_subquery::
+_1 |-->_1
+
+
+qualified_table_name:: 
+_1 . _2 |-->_1$_2
+_1 |-->_1
+_1 . _2 _* |-->_1$_2
+_1 _* |-->_1
+
+
+table_name::
+_1 |-->_1
+
+result_column::
+_1 |-->_1
+
+savepoint_name::
+_1 |-->_1
+
+function_name::
+_1 |-->_1
+
+schema_name::
+_1 |-->_1
+
+column_name::
+_1 |-->_1
+
+module_name::
+_1 |-->_1
+
+module_argument::
+_1 |-->_1
+
+
+any_name::
+_1 |-->_1
+
+
+expr::
+- _1 |-->-_1
+NOT _1 |-->not(_1)
+_1 = _2 |-->_1 = _2
+_1 < _2 |-->_1 < _2
+_1 <= _2 |-->_1 <= _2
+_1 > _2 |-->_1 > _2
+_1 >= _2 |-->_1 >= _2
+_1 <> _2 |-->_1 /= _2
+_1 & _2 |-->_1 & _2
+_1 | _2 |-->_1 or _2
+_1 AND _2 |-->_1 & _2
+_1 OR _2 |-->_1 or _2
+_1 IN _2 |-->_2->includes(_1)
+_1 NOT IN _2 |-->_2->excludes(_1)
+_1 MATCH _2 |-->(re.fullmatch(_2,_1) != None)
+_1 LIKE _2 |-->(StringLib.stringSimilarity(_1,_2) >= 0.8)
+_1 * _2 |-->_1 * _2
+_1 / _2 |-->_1 / _2
+_1 + _2 |-->_1 + _2
+_1 - _2 |-->_1 - _2
+size ( _1 ) |-->(_1)->size()
+_1 ( ) |-->_1()
+_1 ( _* ) |-->_1(_*)
+( _1 ) |-->(_1)
+_1 |-->_1
+
+
+literal_value::
+_1 |-->_1
+
+
