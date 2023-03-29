@@ -1,0 +1,316 @@
+package mathlib { 
+
+
+  class MathLib {
+
+    stereotype external; 
+    stereotype component; 
+
+
+    static attribute ix : int;
+
+    static attribute iy : int;
+
+    static attribute iz : int;
+
+    static attribute hexdigit : Sequence(String); 
+
+    static operation initialiseMathLib() : void
+    pre: true
+    post: true
+    activity: 
+      (MathLib.hexdigit := Sequence{ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F" } ; MathLib.setSeeds(1001, 781, 913) ); 
+
+    static query pi() : double
+    pre: true
+    post: result = 3.14159265;
+
+    static query piValue() : double
+    pre: true
+    post: result = 3.14159265;
+
+    static query eValue() : double
+    pre: true
+    post: result = 1->exp();
+
+    static operation setSeeds(x : int , y : int , z : int ) : void
+    pre: true
+    post: MathLib.ix = x & MathLib.iy = y & MathLib.iz = z;
+
+    static operation nrandom() : double
+    pre: true
+    post: true
+    activity: ( MathLib.ix := ( MathLib.ix * 171 ) mod 30269 ; MathLib.iy := ( MathLib.iy * 172 ) mod 30307 ; MathLib.iz := ( MathLib.iz * 170 ) mod 30323 ; return ( MathLib.ix / 30269.0 + MathLib.iy / 30307.0 + MathLib.iz / 30323.0 ) );
+
+    static query random() : double
+    pre: true
+    post: r = MathLib.nrandom() & result = ( r - r->floor() );
+
+    static query combinatorial(n : int , m : int ) : long
+    pre: n >= m & m >= 0
+    post: ( n - m < m => result = Integer.Prd(m + 1,n,i,i) / Integer.Prd(1,n - m,j,j) ) & ( n - m >= m => result = Integer.Prd(n - m + 1,n,i,i) / Integer.Prd(1,m,j,j) );
+
+    static query factorial(x : int ) : long
+    pre: true
+    post: ( x < 2 => result = 1 ) & ( x >= 2 => result = Integer.Prd(2,x,i,i) );
+
+    static query asinh(x : double ) : double
+    pre: true
+    post: result = ( x + ( x * x + 1 )->sqrt() )->log();
+
+    static query acosh(x : double ) : double
+    pre: x >= 1
+    post: result = ( x + ( x * x - 1 )->sqrt() )->log();
+
+    static query atanh(x : double ) : double
+    pre: x /= 1
+    post: result = 0.5 * ( ( 1 + x ) / ( 1 - x ) )->log();
+
+    static query decimal2bits(x : long ) : String
+    pre: true
+    post: if x = 0 then result = "" else result = MathLib.decimal2bits(x / 2) + "" + ( x mod 2 ) endif;
+
+    static query decimal2binary(x : long ) : String
+    pre: true
+    post: if x < 0 then result = "-" + MathLib.decimal2bits(-x) else if x = 0 then result = "0" else result = MathLib.decimal2bits(x) endif endif;
+
+    static query decimal2oct(x : long ) : String
+    pre: true
+    post: if x = 0 then result = "" else result = MathLib.decimal2oct(x / 8) + "" + ( x mod 8 ) endif;
+
+    static query decimal2octal(x : long ) : String
+    pre: true
+    post: if x < 0 then result = "-" + MathLib.decimal2oct(-x) else if x = 0 then result = "0" else result = MathLib.decimal2oct(x) endif endif;
+
+   static query decimal2hx( x : long) : String
+   pre: true
+   post: if x = 0 then result = "" else result = MathLib.decimal2hx(x/16) + ("" + MathLib.hexdigit->at((x mod 16)->oclAsType(int) + 1)) endif; 
+
+    static query decimal2hex(x : long ) : String
+    pre: true
+    post: if x < 0 then result = "-" + MathLib.decimal2hx(-x) else if x = 0 then result = "0" else result = MathLib.decimal2hx(x) endif endif;
+
+
+    static query bytes2integer(bs : Sequence(int)) : long
+    pre: true 
+    post: (bs->size() = 0 => result = 0) & (bs->size() = 1 => result = bs->at(1)) & (bs->size() = 2 => result = 256*(bs->at(1)) + bs->at(2)) & (bs->size() > 2 => result = 256*MathLib.bytes2integer(bs->front()) + bs->last()); 
+
+    static query integer2bytes(x : long) : Sequence(int)
+    pre: true
+    post: if (x/256) = 0 then result = Sequence{(x mod 256)} else result = MathLib.integer2bytes(x/256)->append(x mod 256) endif; 
+
+    static query integer2Nbytes(x : long, n : int) : Sequence(int)
+    pre: true 
+    post: bs = MathLib.integer2bytes(x) & ((bs->size() < n => result = (Integer.subrange(1,n-(bs->size()))->collect(0))->concatenate(bs)) & (bs->size() >= n => result = bs)); 
+
+    static query bitwiseAnd(x : int, y : int) : int
+    pre: true post: true 
+    activity: 
+      var x1 : int ; x1 := x; 
+       var y1 : int ; y1 := y; 
+       var k : int ; k := 1;
+       var res : int ; res := 0;   
+       while (x1 > 0 & y1 > 0)
+       do
+        ( if x1 mod 2 = 1 & y1 mod 2 = 1
+          then 
+            res := res + k 
+          else skip ;  
+	     k := k*2; 
+	     x1 := x1/2;
+	     y1 := y1/2
+        ) ; 
+        return res; 
+
+    static query bitwiseOr(x : int, y : int) : int
+    pre: true post: true 
+    activity: 
+      var x1 : int ; x1 := x; 
+       var y1 : int ; y1 := y; 
+       var k : int ; k := 1;
+       var res : int ; res := 0;   
+       while (x1 > 0 or y1 > 0)
+       do
+        ( if x1 mod 2 = 1 or y1 mod 2 = 1
+          then 
+            res := res + k 
+          else skip ;  
+	     k := k*2; 
+	     x1 := x1/2;
+	     y1 := y1/2
+        ) ; 
+        return res; 
+
+  static query bitwiseXor(x : int, y : int) : int
+    pre: true post: true 
+    activity: 
+      var x1 : int ; x1 := x; 
+       var y1 : int ; y1 := y; 
+       var k : int ; k := 1;
+       var res : int ; res := 0;   
+       while (x1 > 0 or y1 > 0)
+       do
+        ( if (x1 mod 2) /= (y1 mod 2)
+          then 
+            res := res + k 
+          else skip ;  
+	     k := k*2; 
+	     x1 := x1/2;
+	     y1 := y1/2
+        ) ; 
+        return res; 
+
+  static query bitwiseNot(x : int) : int
+  pre: true post: result = -(x+1); 
+
+  static query toBitSequence(x : long) : Sequence(boolean)
+  pre: true post: true
+  activity: 
+    var x1 : long ; x1 := x ; 
+    var res : Sequence(boolean) ; res := Sequence{} ; 
+    while x1 > 0
+    do
+    ( if x1 mod 2 = 0
+      then 
+        res := res->prepend(false)
+      else 
+        res := res->prepend(true) ; 
+      x1 := x1/2
+    ) ; 
+    return res;   
+
+  static query modInverse(n : long, p : long) : long
+  pre: true post: true 
+  activity: 
+    var x : long ; x := (n mod p) ; 
+    var i : int; 
+    i := 1; 
+    while i < p
+    do 
+      (if ((i*x) mod p) = 1  
+      then return i
+      else skip; 
+      i := i+1 ) ; 
+    return 0; 
+
+  static query modPow(n : long, m : long, p : long) : long 
+  pre: true post: true
+  activity:
+    var res : long ; res := 1 ; 
+    var x : long ; x := (n mod p) ;  
+    var i : int ; 
+    i := 1 ; 
+    while i <= m 
+    do 
+      ( res := ((res*x) mod p) ; i := i + 1) ; 
+    return res; 
+
+  static query doubleToLongBits(d : double) : long
+  pre: true post: true; 
+
+  static query longBitsToDouble(x : long) : double
+  pre: true post: true; 
+
+  static query discountDiscrete(amount : double, rate: double, time: double) : double
+  pre: rate > -1
+  post: result = amount/((1+rate)->pow(time)); 
+
+  static query presentValueDiscrete(rate: double, values: Sequence(double)) : double
+  pre: rate > -1
+  post: 
+    result = Integer.subrange(1,values->size())->collect( _ind | MathLib.discountDiscrete(values->at(_ind), rate, _ind ) )->sum(); 
+
+  static query netPresentValueDiscrete(rate: double, values: Sequence(double)) : double
+  pre: rate > -1
+  post: 
+    result = Integer.subrange(1,values->size())->collect( _ind | MathLib.discountDiscrete(values->at(_ind), rate, (_ind - 1) ) )->sum(); 
+
+  static query presentValueDiscrete(rate: double, values: Sequence(double)) : double
+  pre: rate > -1
+  post: 
+    result = Integer.subrange(1,values->size())->collect( _ind | MathLib.discountDiscrete(values->at(_ind), rate, _ind) )->sum(); 
+
+  static query irrDiscrete(values: Sequence(double)) : double
+  pre: true post: true; 
+
+ static query roundN(x : double, n : int) : double
+ pre: true
+ post: true 
+ activity: 
+   var y : double ; 
+   y := x*(10->pow(n)) ; 
+   return (y->round())/(10->pow(n)); 
+
+ static query truncateN(x : double, n : int) : double
+ pre: n >= 0 
+ post: true 
+ activity: 
+   var y : double ; 
+   y := x*(10->pow(n)) ; 
+   return (y->oclAsType(int))/(10.0->pow(n)); 
+
+ static query toFixedPoint(x : double, m : int, n : int) : double
+ pre: m >= 0 & n >= 0
+ post: true 
+ activity: 
+  var y : int ; 
+  y := (x*(10->pow(n)))->oclAsType(int) ; 
+  var z : int ; 
+  z := y mod (10->pow(m+n))->oclAsType(int) ; 
+  return z/(10->pow(n)); 
+
+ static query toFixedPointRound(x : double, m : int, n : int) : double
+ pre: m >= 0 & n >= 0
+ post: true 
+ activity: 
+  var y : int ; 
+  y := (x*(10->pow(n)))->round()->oclAsType(int) ; 
+  var z : int ; 
+  z := y mod (10->pow(m+n))->oclAsType(int) ; 
+  return z/(10->pow(n)); 
+
+  static query isIntegerOverflow(x : double, m : int) : boolean
+  pre: true 
+  post: y = x->oclAsType(int) & ( (y > 0 => result = (y->log10()->oclAsType(int) + 1 > m)) & 
+(y < 0 => result = ((-y)->log10()->oclAsType(int) + 1 > m)) & (true => result = (m < 1)) ); 
+
+  static query mean(sq : Sequence(double)) : double
+  pre: sq->size() > 0
+  post: result = (sq->sum())/(sq->size()); 
+
+  static query median(sq : Sequence(double)) : double
+  pre: sq->size() > 0
+  post: s1 = sq->sort() & sze = sq->size() & ( ( sze mod 2 = 1 => result = s1->at((1 + sze)/2) ) & ( sze mod 2 = 0  => result = ( s1->at(sze/2) + s1->at(1 + (sze/2)) )/2.0 ) ); 
+
+  static query variance(sq : Sequence(double)) : double 
+  pre: sq->size() > 0
+  post: m = MathLib.mean(sq) & result = ( sq->collect( x | (x - m)->sqr() )->sum() ) / ( sq->size() ); 
+
+  static query standardDeviation(sq : Sequence(double)) : double 
+  pre: sq->size() > 0
+  post: m = MathLib.variance(sq) & result = m->sqrt();  
+
+  static query lcm(x : int, y : int) : int
+  pre: true 
+  post: 
+    (x = 0 & y = 0 => result = 0) & 
+    (true => result = ((x*y)/(x->gcd(y)))->oclAsType(int) ); 
+
+  static query bisectionAsc(r : double, rl : double, ru : double, f : Function(double,double), tol : double) : double
+  pre: true 
+  post: v = f->apply(r) & 
+    ((v < tol & v > -tol => result = r) &
+     (v > 0 => result = MathLib.bisectionAsc((rl + r) / 2.0, rl, r, f, tol)) & 
+     (v < 0 => result = MathLib.bisectionAsc((r + ru) / 2.0, r, ru, f, tol))); 
+
+  static query rowMult(s : Sequence(double), m : Sequence(Sequence(double))) : Sequence(double)  
+  pre: true 
+  post: result = Integer.subrange(1, s.size)->collect( i | Integer.Sum(1, m.size, k, s[k]*(m[k]->at(i))));
+
+   static query matrixMultiplication(m1: Sequence(Sequence(double)), m2 : Sequence(Sequence(double))) : Sequence(Sequence(double))
+   pre: true
+   post: result = m1->collect( row | MathLib.rowMult(row, m2) );
+
+ }
+
+}

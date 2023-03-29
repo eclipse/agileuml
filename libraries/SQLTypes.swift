@@ -1,0 +1,41 @@
+enum SQLTypes : String {
+   case sqlARRAY
+   case sqlBIGINT
+   case sqlBINARY
+   case sqlBIT
+   case sqlBLOB
+   case sqlBOOLEAN
+   case sqlCHAR
+   case sqlCLOB
+   case sqlDATALINK
+   case sqlDATE
+   case sqlDECIMAL
+   case sqlDISTINCT
+   case sqlDOUBLE
+   case sqlFLOAT
+   case sqlINTEGER
+   case sqlJAVA_OBJECT
+   case sqlLONGNVARCHAR
+   case sqlLONGVARBINARY
+   case sqlNCHAR
+   case sqlNCLOB
+   case sqlNULL
+   case sqlNUMERIC
+   case sqlNVARCHAR
+   case sqlOTHER
+   case sqlREAL
+   case sqlREF
+   case sqlREF_CURSOR
+   case sqlROWID
+   case sqlSMALLINT
+   case sqlSQLXML
+   case sqlSTRUCT
+   case sqlTIME
+   case sqlTIME_WITH_TIMEZONE
+   case sqlTIMESTAMP
+   case sqlTIMESTAMP_WITH_TIMEZONE
+   case sqlTINYINT
+   case sqlVARBINARY
+   case sqlVARCHAR 
+}
+

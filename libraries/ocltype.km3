@@ -1,0 +1,169 @@
+package ocltype { 
+
+class OclAttribute
+{ stereotype external; 
+  stereotype component; 
+
+  attribute name : String; 
+  reference type : OclType;
+
+  query getName() : String
+  pre: true 
+  post: result = name; 
+
+  query getType() : OclType
+  pre: true
+  post: result = type; 
+}
+
+class OclOperation
+{ stereotype external; 
+  stereotype component; 
+
+  attribute name : String; 
+  reference type : OclType;
+  reference parameters : Sequence(OclAttribute); 
+
+  query getName() : String
+  pre: true 
+  post: result = name; 
+
+  query getType() : OclType
+  pre: true
+  post: result = type; 
+
+  query getReturnType() : OclType
+  pre: true
+  post: result = type; 
+
+  query getParameters() : Sequence(OclAttribute)
+  pre: true
+  post: result = parameters; 
+}
+
+class OclType 
+{ stereotype external; 
+  stereotype component; 
+
+  attribute name identity : String; 
+  attribute stereotypes : Sequence(String); 
+
+  reference attributes : Sequence(OclAttribute); 
+  reference operations : Sequence(OclOperation); 
+  reference constructors : Sequence(OclOperation); 
+  reference innerClasses : Sequence(OclType); 
+  reference componentType : Sequence(OclType); 
+  reference superclasses : Sequence(OclType); 
+  
+  query getName() : String
+  pre: true 
+  post: result = name;
+
+  query getClasses() : Sequence(OclType) 
+  pre: true 
+  post: result = innerClasses; 
+  
+  query getDeclaredClasses() : Sequence(OclType) 
+  pre: true 
+  post: 
+    result = innerClasses - superclasses->collect( sc | sc.getClasses())->unionAll(); 
+
+  query getComponentType() : OclType
+  pre: true 
+  post: (componentType.size > 0 => result = componentType->any()) & 
+    (componentType.size = 0 => result = null); 
+	
+  query getFields() : Sequence(OclAttribute)
+  pre: true 
+  post: result = attributes;
+
+  query getDeclaredField(s : String) : OclAttribute
+  pre: true 
+  post: 
+    result = attributes->select( att | att.name = s )->any();
+	
+  query getField(s : String) : OclAttribute
+  pre: true 
+  post: 
+    result = attributes->select( att | att.name = s )->any();
+
+  static query allAttributes(obj : OclAny) : Sequence(OclAttribute)
+  pre: true 
+  post: 
+    (typ = obj->oclType() => result = typ.attributes);
+
+  query getDeclaredFields() : Sequence(OclAttribute)
+  pre: true 
+  post: 
+    result = attributes - superclasses->collect( sc | sc.getFields() )->unionAll(); 
+
+  query getMethods() : Sequence(OclOperation)
+  pre: true 
+  post: result = operations;
+
+  query getDeclaredMethods() : Sequence(OclOperation)
+  pre: true 
+  post: 
+    result = operations - superclasses->collect( sc | sc.getMethods() )->unionAll(); 
+
+  query getConstructors() : Sequence(OclOperation)
+  pre: true 
+  post: result = constructors;
+
+  query getSuperclass() : OclType
+  pre: true 
+  post: result = superclasses->any();
+
+  static query getAttributeValue(obj : OclAny, att : String) : OclAny
+  pre: true
+  post: true; 
+
+  static operation setAttributeValue(obj : OclAny, att : String, val : OclAny) : void
+  pre: true
+  post: true; 
+
+  static query hasAttribute(obj : OclAny, att: String) : boolean
+  pre: true
+  post: true; 
+
+  static operation removeAttribute(obj : OclAny, att: String) : void
+  pre: true post: true; 
+
+  operation newInstance() : OclAny
+  pre: true post: true; 
+
+  query isArray() : boolean
+  pre: true 
+  post: result = ("Sequence" = name); 
+
+  query isPrimitive() : boolean
+  pre: true 
+  post: result = (Set{"int", "long", "double", "boolean"}->includes(name)); 
+
+  query isInterface() : boolean
+  pre: true 
+  post: result = (stereotypes->includes("interface"));
+
+  query isAssignableFrom(c : OclType) : boolean
+  pre: true 
+  post: (c.name = self.name => result = true) & 
+    (c.superclasses->includes(self) => result = true) & 
+    (true => result = c.superclasses->exists( sup | self.isAssignableFrom(sup))); 
+
+  query isInstance(obj: OclAny) : boolean 
+  pre: true
+  post: result = (obj->oclIsKindOf(self)); 
+
+  static operation loadExecutableObject(s : String) : OclType
+  pre: true
+  post: result = OclType[s]; 
+
+  static operation unloadExecutableObject(s : String) 
+  pre: true
+  post: true; 
+}  
+
+
+}
+
+
