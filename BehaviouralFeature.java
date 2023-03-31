@@ -3950,13 +3950,19 @@ public class BehaviouralFeature extends ModelElement
         allvars.add(attx.getName()); 
       }  
 
+      Vector opvars = activity.getVariableUses(); 
+
+      Map localdeps = new Map(); 
+
       Vector postvars = new Vector(); 
       postvars.add("result"); 
-      Vector deps = activity.dataDependents(allvars,postvars);
+      Vector deps = activity.dataDependents(
+                       allvars,postvars);
       System.out.println();  
-      System.out.println(">***> Data dependencies of " + nme + ":\n  " + deps + " ---> result");
+      System.out.println(">***> result is derived from:\n  " + deps);
 
       // res.put("result", deps); 
+
  
       for (int i = 0; i < attrs.size(); i++) 
       { Attribute attx = (Attribute) attrs.get(i); 
@@ -3964,13 +3970,45 @@ public class BehaviouralFeature extends ModelElement
         Vector avs = new Vector(); 
         avs.add(aname); 
         Vector adeps = 
-            activity.dataDependents(allvars, avs);
-        System.out.println("  " + adeps + " ---> " + aname);
+            activity.dataDependents(allvars, avs, localdeps);
+        System.out.println(">***> " + aname + " is derived from " + adeps);
         res.put(aname, adeps); 
+        /* for (int j = 0; j < adeps.size(); j++)
+        { String adepsource = "" + adeps.get(j); 
+          if (aname.equals(adepsource)) { } 
+          else 
+          { localdeps.add_pair(adepsource, aname); } 
+        } */ 
       }  
 
-      System.out.println();  
+      Vector seenvars = new Vector();
+      seenvars.add("skip"); 
+ 
+      for (int i = 0; i < opvars.size(); i++) 
+      { String vname = "" + opvars.get(i);
+        if (seenvars.contains(vname)) 
+        { continue; }  
+        Vector vvs = new Vector(); 
+        vvs.add(vname); 
+        Vector vdeps = 
+            activity.dataDependents(allvars, vvs, localdeps);
+        System.out.println(">***> " + vname + " is derived from " + vdeps);
+        System.out.println();  
+        seenvars.add(vname); 
+        /* for (int j = 0; j < vdeps.size(); j++)
+        { String vdepsource = "" + vdeps.get(j); 
+          if (vname.equals(vdepsource)) { } 
+          else 
+          { localdeps.add_pair(vdepsource, vname); } 
+        } */ 
+      }  
+
+      System.out.println();
+      System.out.println(">***> Data dependencies for " + nme + " are:\n" + localdeps);
+
+      System.out.println();   
     } 
+
     return res; 
   } 
 

@@ -246,6 +246,17 @@ class Map
     return res; 
   } 
 
+  public void unionWith(Map m2)
+  { Vector elems2 = m2.elements; 
+    
+    for (int i = 0; i < elems2.size(); i++) 
+    { Maplet mm = (Maplet) elems2.get(i);
+      if (elements.contains(mm)) { } 
+      else 
+      { add_element(mm); }  
+    }
+  } 
+
   public Map removeDuplicates() 
   { Vector res = new Vector(); 
     for (int i = 0; i < elements.size(); i++) 
@@ -304,10 +315,10 @@ class Map
   { Vector res = new Vector(); 
     for (int i = 0; i < elements.size(); i++)
     { Maplet mm = (Maplet) elements.elementAt(i); 
-      Object src = mm.dest; 
-      if (res.contains(src)) { } 
+      Object d = mm.dest; 
+      if (res.contains(d)) { } 
       else 
-      { res.add(src); }
+      { res.add(d); }
     } 
     return res; 
   }

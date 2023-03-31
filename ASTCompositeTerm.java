@@ -20487,6 +20487,9 @@ public class ASTCompositeTerm extends ASTTerm
         if ("Files".equals(args))
         { return filesQueryFormKM3(called,cargs,arg,call, args,calls); } 
   
+        if ("Paths".equals(args))
+        { return pathsQueryFormKM3(called,cargs,arg,call, args,calls); }
+
         if ("pop".equals(called) || "take".equals(called) || 
             "pollLast".equals(called) ||
             "removeLast".equals(called))
@@ -21622,6 +21625,93 @@ public class ASTCompositeTerm extends ASTTerm
     return args + "." + calls;  
   }  
 
+  public String pathsQueryFormKM3(String called, Vector cargs, ASTTerm arg, ASTTerm call, String args, String calls)
+  { // The return values
+
+    if ("get".equals(called) && 
+        cargs.size() >= 2)
+    { // OclFile.newOclFile(cargs1 + cargs->collect(x | "/" + x)->sum())
+      ASTTerm.setType(this, "OclFile"); 
+    
+      String callargsum = ""; 
+      ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+      String callp1 = callarg1.toKM3();
+      callargsum = callp1;  
+          
+      if (callarg1.expression != null)    
+      { expression = 
+          callarg1.expression;
+      } 
+
+      for (int i = 1; i < cargs.size(); i++) 
+      { ASTTerm ct = (ASTTerm) cargs.get(i); 
+        String callpi = ct.toKM3();
+        callargsum = callargsum + "/" + callpi;
+        if (expression != null && ct.expression != null)    
+        { Expression pathtail = 
+            new BinaryExpression("+", expression, 
+                       new BasicExpression("\"/\"")); 
+          expression = 
+            new BinaryExpression("+", pathtail, 
+                                 ct.expression);
+        } 
+      }
+      
+      expression = 
+         BasicExpression.newStaticCallBasicExpression(
+                            "newOclFile", "OclFile", 
+                            expression);
+        
+      return "OclFile.newOclFile(" + callargsum + ")"; 
+    } 
+
+    if ("get".equals(called) && 
+        cargs.size() == 1)
+    { // OclFile.newOclFile(cargs1)
+      ASTTerm.setType(this, "String"); 
+    
+      ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+      String callp1 = callarg1.toKM3(); 
+          
+      expression = 
+         BasicExpression.newStaticCallBasicExpression(
+                            "newOclFile", "OclFile", 
+                            callarg1.expression);
+      return "OclFile.newOclFile(" + callp1 + ")"; 
+    } 
+
+    System.out.println(">>> internal method call: " + arg + "." + called + cargs); 
+
+    Vector xpars = new Vector(); 
+    for (int i = 0; i < cargs.size(); i++) 
+    { ASTTerm cargi = (ASTTerm) cargs.get(i); 
+      if (cargi.expression != null) 
+          { xpars.add(cargi.expression); } 
+        } 
+          
+        String cname = ASTTerm.getType(args); 
+        if (cname != null) 
+        { Entity cent = 
+            (Entity) ModelElement.lookupByName(cname,ASTTerm.entities); 
+          if (cent != null) 
+          { cent.refineOperation(called,xpars); } 
+        } 
+
+        if (arg.expression != null) 
+        { expression = BasicExpression.newCallBasicExpression(
+                called, arg.expression, xpars); 
+          ((BasicExpression) expression).setIsEvent();  
+          statement = 
+            InvocationStatement.newInvocationStatement(
+                expression, xpars);  
+              
+          System.out.println(">>> internal method call: " + arg.expression + "." + called + xpars); 
+          return args + "." + calls; 
+        } 
+
+    return ""; 
+  } 
+
   public String filesQueryFormKM3(String called, Vector cargs, ASTTerm arg, ASTTerm call, String args, String calls)
   { // The return values
 
@@ -22034,6 +22124,32 @@ public class ASTCompositeTerm extends ASTTerm
       return "OclFile.newOclFile(" + callp1 + ").readAllLines()"; 
     }
 
+    if ("readString".equals(called) && 
+        cargs.size() >= 1)
+    { // OclFile.newOclFile(cargs1).readAll()
+      ASTTerm.setType(this, "String"); 
+    
+      ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+      String callp1 = callarg1.toKM3(); 
+          
+      if (callarg1.expression != null)    
+      { Expression fexpr = 
+          BasicExpression.newStaticCallBasicExpression(
+                                "newOclFile_Read", "OclFile", 
+                                callarg1.expression);
+        expression = 
+          BasicExpression.newCallBasicExpression(
+                                "readAll", 
+                                fexpr); 
+
+        Type stringS = new Type("String", null); 
+        stringS.setElementType(new Type("String", null)); 
+        expression.setType(stringS); 
+      } 
+
+      return "OclFile.newOclFile_Read(" + callp1 + ").readAll()"; 
+    }
+
     if (("list".equals(called) || 
          "newDirectoryStream".equals(called)) && 
         cargs.size() >= 1)
@@ -22211,12 +22327,12 @@ public class ASTCompositeTerm extends ASTTerm
       return "OclFile.newOclFile(" + callp1 + ").length()"; 
     }
 
-        System.out.println(">>> internal method call: " + arg + "." + called + cargs); 
+    System.out.println(">>> internal method call: " + arg + "." + called + cargs); 
 
-        Vector xpars = new Vector(); 
-        for (int i = 0; i < cargs.size(); i++) 
-        { ASTTerm cargi = (ASTTerm) cargs.get(i); 
-          if (cargi.expression != null) 
+    Vector xpars = new Vector(); 
+    for (int i = 0; i < cargs.size(); i++) 
+    { ASTTerm cargi = (ASTTerm) cargs.get(i); 
+      if (cargi.expression != null) 
           { xpars.add(cargi.expression); } 
         } 
           
@@ -22242,6 +22358,66 @@ public class ASTCompositeTerm extends ASTTerm
 
     return ""; 
   }  
+
+  public String pathsMethodCallFormKM3(String called, Vector cargs)
+  { // The return values
+
+    if ("get".equals(called) && 
+        cargs.size() >= 2)
+    { // OclFile.newOclFile(cargs1 + cargs->collect(x | "/" + x)->sum())
+      ASTTerm.setType(this, "OclFile"); 
+    
+      String callargsum = ""; 
+      ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+      String callp1 = callarg1.toKM3();
+      callargsum = callp1;  
+          
+      if (callarg1.expression != null)    
+      { expression = 
+          callarg1.expression;
+      } 
+
+      for (int i = 1; i < cargs.size(); i++) 
+      { ASTTerm ct = (ASTTerm) cargs.get(i); 
+        String callpi = ct.toKM3();
+        callargsum = callargsum + "/" + callpi;
+        if (expression != null && ct.expression != null)    
+        { Expression pathtail = 
+            new BinaryExpression("+", expression, 
+                       new BasicExpression("\"/\"")); 
+          expression = 
+            new BinaryExpression("+", pathtail, 
+                                 ct.expression);
+        } 
+      }
+      
+      expression = 
+         BasicExpression.newStaticCallBasicExpression(
+                            "newOclFile", "OclFile", 
+                            expression);
+        
+      return "OclFile.newOclFile(" + callargsum + ")"; 
+    } 
+
+    if ("get".equals(called) && 
+        cargs.size() == 1)
+    { // OclFile.newOclFile(cargs1)
+      ASTTerm.setType(this, "String"); 
+    
+      ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+      String callp1 = callarg1.toKM3(); 
+          
+      expression = 
+         BasicExpression.newStaticCallBasicExpression(
+                            "newOclFile", "OclFile", 
+                            callarg1.expression);
+      return "OclFile.newOclFile(" + callp1 + ")"; 
+    } 
+
+    System.out.println(">>> internal method call: " + called + cargs); 
+
+    return ""; 
+  } 
 
   public String filesMethodCallFormKM3(String called, Vector cargs)
   { // update forms
@@ -22662,6 +22838,32 @@ public class ASTCompositeTerm extends ASTTerm
       } 
 
       return "OclFile.newOclFile(" + callp1 + ").canWrite()"; 
+    }
+
+    if ("readString".equals(called) && 
+        cargs.size() >= 1)
+    { // OclFile.newOclFile(cargs1).readAll()
+      ASTTerm.setType(this, "String"); 
+    
+      ASTTerm callarg1 = (ASTTerm) cargs.get(0);
+      String callp1 = callarg1.toKM3(); 
+          
+      if (callarg1.expression != null)    
+      { Expression fexpr = 
+          BasicExpression.newStaticCallBasicExpression(
+                                "newOclFile_Read", "OclFile", 
+                                callarg1.expression);
+        expression = 
+          BasicExpression.newCallBasicExpression(
+                                "readAll", 
+                                fexpr); 
+
+        Type stringS = new Type("String", null); 
+        stringS.setElementType(new Type("String", null)); 
+        expression.setType(stringS); 
+      } 
+
+      return "OclFile.newOclFile_Read(" + callp1 + ").readAll()"; 
     }
 
     if (("lines".equals(called) || 
@@ -24013,6 +24215,8 @@ public class ASTCompositeTerm extends ASTTerm
 
           return "(" + callp1 + ").subrange(1," + callp2 + ")"; 
         }
+        else if ("Paths".equals(args))
+        { return pathsMethodCallFormKM3(called,cargs); } 
         else if ("Files".equals(args))
         { return filesMethodCallFormKM3(called,cargs); } 
         else if ("getByName".equals(called) && 
@@ -42701,7 +42905,8 @@ public class ASTCompositeTerm extends ASTTerm
 
           JOptionPane.showMessageDialog(null, 
               ">>> This is a differential equation: " + diffsR + 
-              " " + dpowers + " " + dcoef + " " + dcnst + 
+              " " + dpowers + " " + vdiff + 
+              " " + dcoef + " " + dcnst + 
               " " + mindpp + " " + maxdpp, 
               "", 
               JOptionPane.INFORMATION_MESSAGE);

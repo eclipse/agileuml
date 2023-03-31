@@ -1066,6 +1066,8 @@ abstract class Statement implements Cloneable
   // statement execution
   abstract Vector dataDependents(Vector allvars, Vector vars); 
 
+  abstract Vector dataDependents(Vector allvars, Vector vars, Map mp); 
+
   abstract String toStringJava(); 
 
   abstract String toAST(); 
@@ -1672,6 +1674,9 @@ class ReturnStatement extends Statement
   public Vector dataDependents(Vector allvars, Vector vars)
   { return vars; }  
 
+  public Vector dataDependents(Vector allvars, Vector vars, Map mp)
+  { return vars; }  
+
   public boolean updates(Vector v) 
   { return false; } 
 
@@ -1935,6 +1940,9 @@ class BreakStatement extends Statement
   public Vector dataDependents(Vector allvars, Vector vars)
   { return vars; }  
 
+  public Vector dataDependents(Vector allvars, Vector vars, Map mp)
+  { return vars; }  
+
   public boolean updates(Vector v) 
   { return false; } 
 
@@ -2107,6 +2115,9 @@ class ContinueStatement extends Statement
   { return post; }  
 
   public Vector dataDependents(Vector allvars, Vector vars)
+  { return vars; }  
+
+  public Vector dataDependents(Vector allvars, Vector vars, Map mp)
   { return vars; }  
 
   public boolean updates(Vector v) 
@@ -2696,7 +2707,37 @@ public void findClones(java.util.Map clones,
       Vector readVars = be.readData(); 
       String upd = be.updatedData(); 
 
-      // System.out.println(">>>--- read data: " + readVars); 
+      // System.out.println(upd + " --from--> " + readVars); 
+      // System.out.println(">>>--- written data: " + upd); 
+
+      if (upd != null && vars.contains(upd))
+      { Vector vbls = VectorUtil.union(vars,readVars); 
+        return vbls; 
+      } 
+    } 
+    
+    return vars; 
+  }    
+  // if called object : vars, then all variables/attributes of
+  // parameters, plus object.
+
+  public Vector dataDependents(Vector allvars, Vector vars, Map mp)
+  { if ("skip".equals(callExp + ""))
+    { return vars; }
+
+    if (callExp instanceof BasicExpression)
+    { BasicExpression be = (BasicExpression) callExp; 
+      Vector readVars = be.readData(); 
+      String upd = be.updatedData(); 
+
+      if (upd != null) 
+      { for (int i = 0; i < readVars.size(); i++) 
+        { String rv = "" + readVars.get(i); 
+          mp.add_pair(rv, upd);
+        }
+      }  
+ 
+      // System.out.println(upd + " --from--> " + readVars); 
       // System.out.println(">>>--- written data: " + upd); 
 
       if (upd != null && vars.contains(upd))
@@ -2725,7 +2766,8 @@ public void findClones(java.util.Map clones,
   } 
   // if called object : vars
 
-  public String updateForm(java.util.Map env, boolean local, Vector types, Vector entities, 
+  public String updateForm(java.util.Map env, boolean local, 
+                           Vector types, Vector entities, 
                            Vector vars)
   { if (callExp != null)
     { if (callExp instanceof BasicExpression)
@@ -3290,6 +3332,9 @@ class ImplicitInvocationStatement extends Statement
   public Vector dataDependents(Vector allvars, Vector vars)
   { return vars; }  // assuming no side-effect
 
+  public Vector dataDependents(Vector allvars, Vector vars, Map mp)
+  { return vars; }  // assuming no side-effect
+
   public boolean updates(Vector v) 
   { return false; } 
 
@@ -3477,6 +3522,7 @@ class WhileStatement extends Statement
   private Expression invariant; 
   private Expression variant; 
   int loopKind = WHILE; 
+  // FOR for a for loop
   
   Expression loopVar; // for (loopVar : loopRange) do ...
   Expression loopRange; 
@@ -4255,10 +4301,78 @@ class WhileStatement extends Statement
     Vector result = new Vector(); 
     result.addAll(bodydeps); 
  
-    if (loopTest != null) //  && body.updates(vars)) 
-    { Vector testvars = loopTest.allReadFrame(); 
+    if (loopKind == FOR && loopVar != null && 
+        loopRange != null)
+    { Vector rangevars = loopRange.allReadData(); 
+      // System.out.println(loopVar + " --from--> " + rangevars);
+      String lv = loopVar + ""; 
+
+      if (vars.contains(lv)) 
+      { // Same as assignment  lv := range
+        result = VectorUtil.union(result,rangevars); 
+        result.remove(lv); 
+
+        // System.out.println(vars + " --from--> " + result);
+      } 
+      return result;  
+    } // loopVar depends on range data
+
+    if (loopKind == WHILE && 
+        loopTest != null && body.updates(vars)) 
+    { Vector testvars = loopTest.allReadData(); 
       result = VectorUtil.union(result,testvars); 
+      
+      // System.out.println(vars + " --from--> " + result); 
     } 
+      
+    return result; 
+  }  
+  // while test do stat
+  // if [stat]vars non-empty, rd(test) also in datadependents
+  // and closure of this under [stat]
+
+  public Vector dataDependents(Vector allvars, Vector vars, Map mp)
+  { Map bodymap = new Map(); 
+    Vector bodydeps = body.dataDependents(allvars,vars, bodymap);
+    Vector result = new Vector(); 
+    result.addAll(bodydeps); 
+    Vector updatedvariables = bodymap.range(); 
+    mp.unionWith(bodymap); 
+
+    if (loopKind == FOR && loopVar != null && 
+        loopRange != null)
+    { Vector rangevars = loopRange.allReadData(); 
+      // System.out.println(loopVar + " --from--> " + rangevars);
+      String lv = loopVar + ""; 
+
+      for (int i = 0; i < rangevars.size(); i++) 
+      { String rv = "" + rangevars.get(i); 
+        mp.add_pair(rv, lv); 
+      } 
+
+      if (vars.contains(lv)) 
+      { // Same as assignment  lv := range
+        result = VectorUtil.union(result,rangevars); 
+        result.remove(lv); 
+      } 
+
+      return result;  
+    } // loopVar depends on range data
+
+    if (loopKind == WHILE && 
+        loopTest != null && body.updates(vars)) 
+    { Vector testvars = loopTest.allReadData(); 
+      result = VectorUtil.union(result,testvars); 
+      
+      // System.out.println(vars + " --from--> " + result); 
+      for (int i = 0; i < updatedvariables.size(); i++) 
+      { String vv = "" + updatedvariables.get(i); 
+        for (int j = 0; j < testvars.size(); j++) 
+        { String rv = "" + testvars.get(j); 
+          mp.add_pair(rv, vv); 
+        } 
+      } 
+    } // add rv --> vv for each updated var of body. 
       
     return result; 
   }  
@@ -5912,13 +6026,48 @@ class CreationStatement extends Statement
             initialExpression.allAttributesUsedIn(); 
         // System.out.println(">-Attributes:--- " + vused); 
         Vector result = new Vector(); 
-        result.addAll(vars); 
-        result = VectorUtil.union(result,vused);
+        result.addAll(vused); 
         Vector vs = initialExpression.getVariableUses(); 
-        // System.out.println(">-Variables:--- " + vs); 
         result = VectorUtil.union(result,vs);
        
         result.remove("" + assignsTo); 
+        // System.out.println(assignsTo + " --from--> " + result); 
+        result = VectorUtil.union(result,vars);
+        result.remove("" + assignsTo); 
+      
+        return result; 
+      } 
+    }     
+    return vars; 
+  }  
+
+  public Vector dataDependents(Vector allvars, Vector vars, Map mp)
+  { // System.out.println(">---- " + assignsTo + " := " + initialExpression); 
+    // System.out.println(">---- " + vars + " " + allvars); 
+
+    if (initialExpression != null && assignsTo != null)
+    { String lv = "" + assignsTo; 
+
+      if (vars.contains(lv))
+      { Vector vused = 
+            initialExpression.allAttributesUsedIn(); 
+        // System.out.println(">-Attributes:--- " + vused); 
+        Vector result = new Vector(); 
+        result.addAll(vused); 
+        Vector vs = initialExpression.getVariableUses(); 
+        result = VectorUtil.union(result,vs);
+       
+        result.remove(lv); 
+        // System.out.println(assignsTo + " --from--> " + result); 
+
+        for (int i = 0; i < result.size(); i++) 
+        { String rv = "" + result.get(i); 
+          mp.add_pair(rv, lv); 
+        } 
+
+        result = VectorUtil.union(result,vars);
+        result.remove("" + assignsTo); 
+      
         return result; 
       } 
     }     
@@ -6842,6 +6991,19 @@ class SequenceStatement extends Statement
     return vbls; 
   }  
 
+  public Vector dataDependents(Vector allvars, Vector vars, Map mp)
+  { Vector vbls = new Vector(); 
+    vbls.addAll(vars); 
+
+    for (int i = statements.size() - 1; i >= 0; i--) 
+    { Statement stat = (Statement) statements.get(i); 
+      Vector v = stat.dataDependents(allvars, vbls, mp); 
+      vbls = new Vector(); 
+      vbls.addAll(v); 
+    } 
+    return vbls; 
+  }  
+
   public Vector slice(Vector allvars, Vector vars)
   { Vector vbls = new Vector(); 
     vbls.addAll(vars); 
@@ -7519,6 +7681,9 @@ class CaseStatement extends Statement
   public Vector dataDependents(Vector allvars, Vector vars)
   { return vars; }  
 
+  public Vector dataDependents(Vector allvars, Vector vars, Map mp)
+  { return vars; }  
+
   public boolean updates(Vector v) 
   { return false; } 
 
@@ -7784,6 +7949,9 @@ class ErrorStatement extends Statement
   { return post; }
 
   public Vector dataDependents(Vector allvars, Vector vars)
+  { return vars; }  
+
+  public Vector dataDependents(Vector allvars, Vector vars, Map mp)
   { return vars; }  
 
   public boolean updates(Vector v) 
@@ -8128,6 +8296,9 @@ class AssertStatement extends Statement
   { return post; }
 
   public Vector dataDependents(Vector allvars, Vector vars)
+  { return vars; }  
+
+  public Vector dataDependents(Vector allvars, Vector vars, Map mp)
   { return vars; }  
 
   public boolean updates(Vector v) 
@@ -8500,6 +8671,12 @@ class CatchStatement extends Statement
   public Vector dataDependents(Vector allvars, Vector vars)
   { if (action != null) 
     { return action.dataDependents(allvars,vars); } 
+    return vars; 
+  }  
+
+  public Vector dataDependents(Vector allvars, Vector vars, Map mp)
+  { if (action != null) 
+    { return action.dataDependents(allvars,vars,mp); } 
     return vars; 
   }  
 
@@ -9078,6 +9255,26 @@ class TryStatement extends Statement
 
     if (body != null) 
     { return body.dataDependents(allvars, vbls); }
+ 
+    return vbls; 
+  }  
+
+  public Vector dataDependents(Vector allvars, Vector vars, Map mp)
+  { Vector vbls = new Vector(); 
+    
+
+    if (endStatement != null) 
+    { vbls = endStatement.dataDependents(allvars,vars,mp); }
+    else 
+    { vbls.addAll(vars); } 
+
+    for (int i = 0; i < catchClauses.size(); i++) 
+    { Statement cc = (Statement) catchClauses.get(i); 
+      vbls = cc.dataDependents(allvars, vbls,mp);
+    } // but they are optional
+
+    if (body != null) 
+    { return body.dataDependents(allvars, vbls, mp); }
  
     return vbls; 
   }  
@@ -9923,6 +10120,9 @@ class IfStatement extends Statement
   public Vector dataDependents(Vector allvars, Vector vars)
   { return vars; }  
 
+  public Vector dataDependents(Vector allvars, Vector vars, Map mp)
+  { return vars; }  
+
   public boolean updates(Vector v) 
   { return false; } 
 
@@ -10738,12 +10938,46 @@ class AssignStatement extends Statement
       Vector vs = rhs.getVariableUses(); 
       // System.out.println(">----Variables:-------- " + vs);
       es.addAll(vs); 
+      
       for (int i = 0; i < es.size(); i++) 
       { String var = "" + es.get(i); 
         if (vbls.contains(var)) { } 
         else 
         { vbls.add(var); } 
       } 
+
+      // System.out.println(updatedVar + " --from--> " + es); 
+    } 
+
+    // Case of updates to arrays/sequence elements
+
+    return vbls; 
+  }  
+
+  public Vector dataDependents(Vector allvars, Vector vars, Map mp)
+  { Vector vbls = new Vector(); 
+    vbls.addAll(vars); 
+
+    String updatedVar = lhs.updatedData(); 
+
+    if (updatedVar != null && vars.contains(updatedVar))
+    { // remove this variable and add all vars of rhs to vars
+      vbls.remove(updatedVar); 
+      Vector es = rhs.allAttributesUsedIn(); 
+      // System.out.println(">----Attributes:-------- " + es);
+      Vector vs = rhs.getVariableUses(); 
+      // System.out.println(">----Variables:-------- " + vs);
+      es.addAll(vs); 
+      
+      for (int i = 0; i < es.size(); i++) 
+      { String var = "" + es.get(i); 
+        mp.add_pair(var, updatedVar); 
+        if (vbls.contains(var)) { } 
+        else 
+        { vbls.add(var); } 
+      } 
+
+      // System.out.println(updatedVar + " --from--> " + es); 
     } 
 
     // Case of updates to arrays/sequence elements
@@ -11784,6 +12018,41 @@ class ConditionalStatement extends Statement
     }
  
     vars1 = VectorUtil.union(vars1, testvars); 
+    System.out.println(vars + " --from--> " + vars1); 
+    return vars1; 
+  }  
+
+  public Vector dataDependents(Vector allvars, Vector vars, Map mp)
+  { 
+    Map mp1 = new Map();
+    Vector vars1 = ifPart.dataDependents(allvars, vars, mp1); 
+    Vector testvars = new Vector(); 
+    testvars.addAll(test.getVariableUses()); 
+    testvars = VectorUtil.union(testvars,
+                                test.allAttributesUsedIn());
+    Vector range1 = mp1.range(); 
+    mp.unionWith(mp1); 
+
+    if (elsePart != null) 
+    { Map mp2 = new Map(); 
+      Vector vars2 = elsePart.dataDependents(allvars,vars,mp2); 
+      vars1 = VectorUtil.union(vars1,vars2);  
+      Vector range2 = mp2.range(); 
+      range1.addAll(range2); // updated in either branch
+      mp.unionWith(mp2); 
+    }
+ 
+    vars1 = VectorUtil.union(vars1, testvars); 
+    // System.out.println(vars + " --from--> " + vars1);
+
+    for (int i = 0; i < range1.size(); i++) 
+    { String vv = "" + range1.get(i); 
+      for (int j = 0; j < testvars.size(); j++) 
+      { String rv = "" + testvars.get(j); 
+        mp.add_pair(rv, vv); 
+      } 
+    } // rv --> vv
+ 
     return vars1; 
   }  
 
@@ -12173,6 +12442,9 @@ class FinalStatement extends Statement
   { return body.wpc(post); }  
 
   public Vector dataDependents(Vector allvars, Vector vars)
+  { return vars; }  
+
+  public Vector dataDependents(Vector allvars, Vector vars, Map mp)
   { return vars; }  
 
   public boolean updates(Vector v) 
