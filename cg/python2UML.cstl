@@ -264,8 +264,30 @@ mathTrailer::
 . tan _1 |-->_1->tan()
 . ceil _1 |-->_1->ceil()
 . floor _1 |-->_1->floor()
+. trunc _1 |-->_1->oclAsType(int)
 . sqrt _1 |-->_1->sqrt()
+. cbrt _1 |-->_1->cbrt()
+. exp _1 |-->_1->exp()
+. log _1 |-->_1->log()
+. log10 _1 |-->_1->log10()
+. acos _1 |-->_1->acos()
+. asin _1 |-->_1->asin()
+. atan _1 |-->_1->atan()
+. acosh _1 |-->MathLib.acosh_1
+. asinh _1 |-->MathLib.asinh_1
+. atanh _1 |-->MathLib.atanh_1
+. cosh _1 |-->_1->cosh()
+. sinh _1 |-->_1->sinh()
+. tanh _1 |-->_1->tanh()
+
 . pow _1 |-->(_1`firstArg)->pow(_1`lastArg)
+. comb _1 |-->MathLib.combinatorial(_1`firstArg, _1`lastArg)
+. fabs _1 |-->_1->abs()
+. factorial _1 |-->MathLib.factorial_1
+. fsum _1 |-->_1->sum()
+. prod _1 |-->_1->prd()
+. gcd _1 |-->(_1`firstArg)->gcd(_1`lastArg)
+. lcm _1 |-->MathLib.lcm(_1`firstArg, _1`lastArg)
 
 . _1 |-->
 . _1 _* |-->

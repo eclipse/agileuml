@@ -59,11 +59,18 @@ _1 _* |-->  attribute _1 : OclAny;\n
 
 type_name::
 integer |-->int
+decimal |-->double
 varchar |-->String
 integer ( _1 ) |-->int
+decimal ( _1 ) |-->double
 varchar ( _1 ) |-->String
 integer ( _1 , _2 ) |-->int
+decimal ( _1 , _2 ) |-->double
 varchar ( _1 , _2  ) |-->String
+_1 |-->_1
+_1 ( _2 ) |-->_1
+_1 ( _2 , _3 ) |-->_1
+
 
 column_constraint::
 primary key |--> identity
