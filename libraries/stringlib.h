@@ -3,7 +3,7 @@
 
 /* C header for StringLib library */
 
-char* ncopies_StringLib(int n, char* c)
+char* nCopies_StringLib(int n, char* c)
 { /* n copies of c */ 
 
   int clen = strlen(c);
@@ -61,8 +61,15 @@ char* rightTrim_StringLib(char* s)
 
 char* padLeftWithInto_StringLib(char* s, char* c, int n)
 { char* result = "";
-  char* ncs = ncopies_StringLib(n - strlen(s), c); 
+  char* ncs = nCopies_StringLib(n - strlen(s), c); 
   result = concatenateStrings(ncs, s);
+  return result;
+}
+
+char* padRightWithInto_StringLib(char* s, char* c, int n)
+{ char* result = "";
+  char* ncs = nCopies_StringLib(n - strlen(s), c); 
+  result = concatenateStrings(s, ncs);
   return result;
 }
 
@@ -73,7 +80,7 @@ char* leftAlignInto_StringLib(char* s, int n)
   { result = subStrings(s, 1, n); }
   else 
   { if (n > strlen(s))
-    { char* nspaces = ncopies_StringLib(n - slen, " ");
+    { char* nspaces = nCopies_StringLib(n - slen, " ");
       result = concatenateStrings(s, nspaces);
     }
   }
@@ -87,12 +94,37 @@ char* rightAlignInto_StringLib(char* s, int n)
   { result = subStrings(s, 1, n); }
   else 
   { if (n > slen)
-    { result = concatenateStrings(ncopies_StringLib(n - slen, " "), s); }
+    { result = concatenateStrings(nCopies_StringLib(n - slen, " "), s); }
   }
   return result;
 }
 
+char* toTitleCase_StringLib(char* s)
+{ unsigned char prevIsSpace = TRUE; 
 
+  int slen = strlen(s); 
+  char* res = (char*) calloc(slen+1, sizeof(char)); 
+
+  int ind = 0; 
+  while (ind < slen)
+  { char c = s[ind]; 
+
+    if (prevIsSpace)
+    { res[ind] = toupper(c); }
+    else 
+    { res[ind] = c; } 
+
+    if (isspace(c))
+    { prevIsSpace = TRUE; } 
+    else 
+    { prevIsSpace = FALSE; }
+
+    ind++; 
+  } 
+  res[ind] = '\0'; 
+  return res;
+} 
+  
 char* format_StringLib(char* f, void* sq[])
 { int n = length(sq);
 

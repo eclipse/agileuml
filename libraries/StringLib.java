@@ -6,6 +6,15 @@ import java.util.regex.Pattern;
 public class StringLib
 { 
 
+  public static String nCopies(String s, int n)
+  { String result = "";
+
+    for (int i = 0; i < n; i++) 
+    { result = result + s; } 
+  
+    return result;
+  }
+
   public static String leftTrim(String s)
   { String result = "";
   
@@ -35,6 +44,21 @@ public class StringLib
     }
 
     result = "" + Ocl.sumString(_results_0) + s;
+  
+    return result;
+  }
+
+  public static String padRightWithInto(String s,String c,int n)
+  { String result = "";
+  
+    ArrayList<Integer> rng = Ocl.integerSubrange(1,n - (s).length()); 
+    ArrayList<String> _results_0 = new ArrayList<String>();
+    for (Integer _i : rng)
+    { 
+      _results_0.add(c);
+    }
+
+    result = s + "" + Ocl.sumString(_results_0);
   
     return result;
   }
@@ -75,6 +99,40 @@ public class StringLib
       result = "" + Ocl.sumString(_results_0) + s;
     }     
     return result;
+  }
+
+  public static String toTitleCase(String s)
+  { String prev = " "; 
+    int ind = 1;
+    String res = ""; 
+ 
+    while (ind <= s.length()) 
+    { String chr = "" + s.charAt(ind-1); 
+      if (prev.equals(" "))
+      { res = res + chr.toUpperCase(); }
+      else 
+      { res = res + chr; } 
+      prev = chr; 
+      ind = ind + 1;
+    } 
+
+    return res; 
+  }
+
+  public static String swapCase(String s)
+  { int ind = 1;
+    String res = ""; 
+ 
+    while (ind <= s.length()) 
+    { String chr = "" + s.charAt(ind-1); 
+      if (chr.equals(chr.toUpperCase()))
+      { res = res + chr.toLowerCase(); }
+      else 
+      { res = res + chr.toUpperCase(); } 
+      ind = ind + 1;
+    } 
+
+    return res; 
   }
 
   public static String format(String s, ArrayList sq)
@@ -160,7 +218,9 @@ public class StringLib
   } 
 
   public static void main(String[] args)
-  { ArrayList res = StringLib.scan("100##3.3::20\n", "%d##%f::%d\n"); 
-    System.out.println(res); 
+  { // ArrayList res = StringLib.scan("100##3.3::20\n", "%d##%f::%d\n"); 
+    // System.out.println(res); 
+
+    System.out.println(StringLib.swapCase("A long String")); 
   }  
 } 

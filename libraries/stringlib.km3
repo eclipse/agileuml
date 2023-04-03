@@ -6,6 +6,10 @@ package stringlib {
     stereotype component; 
     stereotype external; 
 
+    static query nCopies(s: String, n : int) : String
+    pre: true
+    post: result = Integer.subrange(1,n)->collect( i | s )->sum(); 
+
     static query leftTrim(s: String) : String
     pre: true
     post: result = s.subrange(s->indexOf(s->trim())); 
@@ -17,6 +21,10 @@ package stringlib {
     static query padLeftWithInto(s : String, c : String, n : int) : String
     pre: true
     post: result = Integer.subrange(1,n - s->size())->collect(c)->sum() + s; 
+
+    static query padRightWithInto(s : String, c : String, n : int) : String
+    pre: true
+    post: result = s + Integer.subrange(1,n - s->size())->collect(c)->sum(); 
 
     static query leftAlignInto(s : String, n : int) : String
     pre: true 
@@ -30,6 +38,48 @@ package stringlib {
       (n <= s->size() => result = s.subrange(1,n)) & 
       (n > s->size() => result = Integer.subrange(1, n - s->size())->collect(" ")->sum() + s); 
 
+    static query capitalise(s : String) : String
+    pre: true
+    post: (s->size() = 0 => result = s) & 
+      (s->size() > 0 => result = s->at(1)->toUpperCase() + s->tail()); 
+
+    static query toTitleCase(s : String) : String
+    pre: true post: true
+    activity: 
+      var prev : String := " "; 
+      var ind : int := 1;
+      var res : String := ""; 
+ 
+      while ind <= s->size() 
+      do 
+        (var chr : String := s->at(ind); 
+         if prev = " "
+         then 
+           res := res + chr->toUpperCase()
+         else 
+           res := res + chr; 
+         prev := chr; 
+         ind := ind + 1); 
+      return res; 
+
+    static query swapCase(s : String) : String
+    pre: true post: true
+    activity: 
+      var ind : int := 1;
+      var res : String := ""; 
+ 
+      while ind <= s->size() 
+      do 
+        (var chr : String := s->at(ind); 
+         if chr = chr->toUpperCase()
+         then 
+           res := res + chr->toLowerCase()
+         else 
+           res := res + chr->toUpperCase(); 
+         ind := ind + 1
+        ); 
+      return res; 
+           
     static query format(fmt: String, sq: Sequence(OclAny)) : String
     pre: true post: true; 
 
