@@ -2429,6 +2429,8 @@ abstract class Expression
     return res; 
   } 
 
+  public abstract Vector allReadBasicExpressionData();  
+
   public boolean confluenceCheck(Vector iterated, Vector created)
   { return true; } 
 

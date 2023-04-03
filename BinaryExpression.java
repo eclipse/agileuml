@@ -17760,6 +17760,15 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   { return left.updatedData(); } 
   // when this := val is a valid update
 
+  public Vector allReadBasicExpressionData()
+  { Vector res = new Vector(); 
+    res = VectorUtil.union(res,
+                        left.allReadBasicExpressionData()); 
+    res = VectorUtil.union(res,
+                        right.allReadBasicExpressionData()); 
+    return res; 
+  } 
+  
 
   // The set of features in writable mode in the expression
   public Vector writeFrame()

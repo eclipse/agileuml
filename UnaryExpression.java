@@ -476,8 +476,10 @@ public class UnaryExpression extends Expression
 
     if ("->asSequence".equals(operator) || 
         "->asOrderedSet".equals(operator))
-    { if ("Set".equals(argument.getType().getName()))
-      { return new BinaryExpression("<=", new UnaryExpression("->size",argument),
+    { if ("Set".equals(argument.getType().getName()) || 
+          "Map".equals(argument.getType().getName()))
+      { return new BinaryExpression("<=", 
+                      new UnaryExpression("->size",argument),
                                     new BasicExpression(1)); 
       } 
       else 
@@ -869,7 +871,8 @@ public void findClones(java.util.Map clones,
       BinaryExpression be = new BinaryExpression("=", argument, sqr);
       return be.updateForm(language, env, local);
     }
-    else if ("->sort".equals(operator) || "->asSequence".equals(operator))
+    else if ("->sort".equals(operator) || 
+             "->asSequence".equals(operator))
     { if (Type.isSequenceType(argument.getType()))
       { BinaryExpression assign = new BinaryExpression("=", argument, var); 
         return assign.updateForm(language, env, local);
@@ -899,9 +902,12 @@ public void findClones(java.util.Map clones,
   }
 
 public String updateFormNotIn(String language, java.util.Map env, Expression var, boolean local)
-{ if ("->asSet".equals(operator) || "->asSequence".equals(operator) || "->sort".equals(operator))
+{ if ("->asSet".equals(operator) || 
+      "->asSequence".equals(operator) || 
+      "->asOrderedSet".equals(operator) || 
+      "->sort".equals(operator))
   { Expression e1 = new BinaryExpression("/:", var, argument);
-   return e1.updateForm(language,env,local);
+    return e1.updateForm(language,env,local);
   }
   else if ("->tail".equals(operator))
   { UnaryExpression e1 = new UnaryExpression("->size", argument);
@@ -939,9 +945,12 @@ public String updateFormNotIn(String language, java.util.Map env, Expression var
 }
 
 public String updateFormIn(String language, java.util.Map env, Expression var, boolean local)
-{ if ("->asSet".equals(operator) || "->asSequence".equals(operator) || "->sort".equals(operator))
+{ if ("->asSet".equals(operator) || 
+      "->asSequence".equals(operator) || 
+      "->asOrderedSet".equals(operator) || 
+      "->sort".equals(operator))
   { Expression e1 = new BinaryExpression(":", var, argument);
-   return e1.updateForm(language,env,local);
+    return e1.updateForm(language,env,local);
   }
   else if ("->tail".equals(operator))
   { UnaryExpression e1 = new UnaryExpression("->size", argument);
@@ -984,7 +993,10 @@ public String updateFormIn(String language, java.util.Map env, Expression var, b
 }
 
 public String updateFormSubtract(String language, java.util.Map env, Expression var, boolean local)
-{ if ("->asSet".equals(operator) || "->asSequence".equals(operator) || "->sort".equals(operator))
+{ if ("->asSet".equals(operator) || 
+      "->asSequence".equals(operator) ||
+      "->asOrderedSet".equals(operator) ||
+      "->sort".equals(operator))
   { Expression e1 = new BinaryExpression("->excludesAll", argument, var);
     return e1.updateForm(language,env,local);
   }
@@ -1020,9 +1032,12 @@ public String updateFormSubtract(String language, java.util.Map env, Expression 
 }
 
 public String updateFormSubset(String language, java.util.Map env, Expression var, boolean local)
-{ if ("->asSet".equals(operator) || "->asSequence".equals(operator) || "->sort".equals(operator))
+{ if ("->asSet".equals(operator) || 
+      "->asSequence".equals(operator) ||
+      "->asOrderedSet".equals(operator) ||
+      "->sort".equals(operator))
   { Expression e1 = new BinaryExpression("<:", var, argument);
-   return e1.updateForm(language,env,local);
+    return e1.updateForm(language,env,local);
   }
   else if ("->tail".equals(operator) && elementType != null)
   { UnaryExpression e1 = new UnaryExpression("->size", argument);
@@ -1288,7 +1303,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     } 
 
     if ("->isDeleted".equals(operator))
-    { if (argument.umlkind == CLASSID && (argument instanceof BasicExpression) && 
+    { if (argument.umlkind == CLASSID && 
+          (argument instanceof BasicExpression) && 
           ((BasicExpression) argument).arrayIndex == null) 
       { String data = argument + ""; 
         String datas = data.toLowerCase() + "s"; 
@@ -1340,6 +1356,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
             
           return precopy + " = " + subrange1 + ";"; 
         }
+
         return "{}";  
       }  
  
@@ -1415,6 +1432,37 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
           String ind = ((BasicExpression) argument).arrayIndex.queryFormJava6(env,local); 
           return precopy + ".remove(" + ind + " - 1);";   
         }
+        else if (argument instanceof BasicExpression && 
+((BasicExpression) argument).getData().equals("subrange")) 
+        { // s.subrange(i,j)->isDeleted() means 
+          // s := s.subrange(1,i-1)^s.subrange(j+1,s.size)
+          // for sequences, likewise for strings
+
+          BasicExpression argcopy = (BasicExpression) argument.clone(); 
+          Expression updatedVar = argcopy.getObjectRef(); 
+          String precopy = updatedVar.queryFormJava6(env,local);
+          Vector pars = argcopy.getParameters(); 
+          Expression par1 = (Expression) pars.get(0); 
+          String ind1 = par1.queryFormJava6(env,local);
+          String subrange1 = 
+            "Set.subrange(" + precopy + ",1," + 
+                          ind1 + "-1)"; 
+          if (pars.size() > 1) 
+          { Expression par2 = (Expression) pars.get(1); 
+            String ind2 = par2.queryFormJava6(env,local);
+            String subrange2 = 
+              "Set.subrange(" + precopy + ", " + 
+                            ind2 + "+1," + 
+                            precopy + ".size())";
+            if (argument.isSequence())
+            { return precopy + " = Set.concatenate(" + subrange1 + ", " + subrange2 + ");"; } 
+            else 
+            { return precopy + " = " + subrange1 + " + (" + subrange2 + ");"; }  
+          }  
+            
+          return precopy + " = " + subrange1 + ";"; 
+        }
+
         return "{}";  
       }  
 
@@ -1489,6 +1537,37 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
           String ind = ((BasicExpression) argument).arrayIndex.queryFormJava7(env,local); 
           return precopy + ".remove(" + ind + " - 1);";   
         }
+        else if (argument instanceof BasicExpression && 
+((BasicExpression) argument).getData().equals("subrange")) 
+        { // s.subrange(i,j)->isDeleted() means 
+          // s := s.subrange(1,i-1)^s.subrange(j+1,s.size)
+          // for sequences, likewise for strings
+
+          BasicExpression argcopy = (BasicExpression) argument.clone(); 
+          Expression updatedVar = argcopy.getObjectRef(); 
+          String precopy = updatedVar.queryFormJava7(env,local);
+          Vector pars = argcopy.getParameters(); 
+          Expression par1 = (Expression) pars.get(0); 
+          String ind1 = par1.queryFormJava7(env,local);
+          String subrange1 = 
+            "Ocl.subrange(" + precopy + ",1," + 
+                          ind1 + "-1)"; 
+          if (pars.size() > 1) 
+          { Expression par2 = (Expression) pars.get(1); 
+            String ind2 = par2.queryFormJava7(env,local);
+            String subrange2 = 
+              "Ocl.subrange(" + precopy + ", " + 
+                            ind2 + "+1," + 
+                            precopy + ".size())";
+            if (argument.isSequence())
+            { return precopy + " = Ocl.concatenate(" + subrange1 + ", " + subrange2 + ");"; } 
+            else 
+            { return precopy + " = " + subrange1 + " + (" + subrange2 + ");"; }  
+          }  
+            
+          return precopy + " = " + subrange1 + ";"; 
+        }
+
         return "{}";  
       }  
     
@@ -1680,6 +1759,13 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
   public String updatedData()
   { return argument.updatedData(); } 
   // when this := val is a valid update
+
+  public Vector allReadBasicExpressionData()
+  { Vector res = new Vector(); 
+    res = VectorUtil.union(res,
+                       argument.allReadBasicExpressionData()); 
+    return res; 
+  } 
 
   public Vector writeFrame()
   { Vector res = new Vector(); 
@@ -2283,7 +2369,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       type.setElementType(elementType); 
       multiplicity = ModelElement.MANY; 
       return res; 
-    }         
+    } // map->asSequence() is sequence of individual maplets        
 
     if (operator.equals("->asOrderedSet") ||  
         operator.equals("->sort") ||

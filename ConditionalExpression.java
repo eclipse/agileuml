@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -310,6 +310,48 @@ public Vector singleMutants()
     Vector r1 = ifExp.allAttributesUsedIn(); 
     res = VectorUtil.union(res,r1); 
     return VectorUtil.union(res,elseExp.allAttributesUsedIn()); 
+  } 
+
+  public Vector allReadBasicExpressionData()
+  { Vector res = new Vector(); 
+    res = VectorUtil.union(res,
+                       test.allReadBasicExpressionData()); 
+    res = VectorUtil.union(res,
+                       ifExp.allReadBasicExpressionData()); 
+    res = VectorUtil.union(res,
+                       elseExp.allReadBasicExpressionData()); 
+    return res; 
+  } 
+
+  public Vector allReadFrame()
+  { Vector res = new Vector(); 
+    res = VectorUtil.union(res,
+                       test.allReadFrame()); 
+    res = VectorUtil.union(res,
+                       ifExp.allReadFrame()); 
+    res = VectorUtil.union(res,
+                       elseExp.allReadFrame()); 
+    return res; 
+  } 
+
+  public Vector readFrame()
+  { Vector res = new Vector(); 
+    res = VectorUtil.union(res,
+                       test.allReadFrame()); 
+    res = VectorUtil.union(res,
+                       ifExp.readFrame()); 
+    res = VectorUtil.union(res,
+                       elseExp.readFrame()); 
+    return res; 
+  } 
+
+  public Vector wr(Vector assocs)
+  { Vector res = new Vector(); 
+    res = VectorUtil.union(res,
+                       ifExp.wr(assocs)); 
+    res = VectorUtil.union(res,
+                       elseExp.wr(assocs)); 
+    return res; 
   } 
 
   public Expression featureSetting(String var, String feat, Vector remainder)

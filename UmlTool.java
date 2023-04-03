@@ -354,6 +354,20 @@ public void findPlugins()
       "Creates UML/OCL from AST produced by Antlr Cobol85 parser, in output/ast.txt");
     fileMenu.add(fromCobol);
 
+    JMenuItem fromPython = 
+      new JMenuItem("From Python AST",openIcon);
+    fromPython.addActionListener(this);
+    fromPython.setToolTipText(
+      "Creates UML/OCL from AST produced by Antlr Python parser, in output/ast.txt");
+    fileMenu.add(fromPython);
+
+    JMenuItem fromSQL = 
+      new JMenuItem("From SQL AST",openIcon);
+    fromSQL.addActionListener(this);
+    fromSQL.setToolTipText(
+      "Creates UML/OCL from AST produced by Antlr SQLite parser, in output/ast.txt");
+    fileMenu.add(fromSQL);
+
     fileMenu.addSeparator(); 
 
     JMenu loadComponentMenu = 
@@ -1701,6 +1715,14 @@ public void findPlugins()
       }
       else if (label.equals("From COBOL AST")) 
       { ucdArea.loadFromCobol();
+        saved = true; 
+      }
+      else if (label.equals("From Python AST")) 
+      { ucdArea.loadFromPython();
+        saved = true; 
+      }
+      else if (label.equals("From SQL AST")) 
+      { ucdArea.loadFromSQL();
         saved = true; 
       }
       else if (label.equals("Print"))

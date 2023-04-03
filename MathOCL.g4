@@ -29,6 +29,7 @@ part
 
 formula
     :	'Define' ID '=' (expression | substituteIn | expandTo | cancelIn | factorBy | simplify ) 
+    | 'Define' ID
     ; 
 
 constraint

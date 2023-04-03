@@ -396,6 +396,9 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       javax.swing.Action matlabAction = new MatlabAction(); 
       menu.add(matlabAction); 
 
+      javax.swing.Action km3Action = new KM3Action(); 
+      menu.add(km3Action); 
+
       return menu; 
    } 
 
@@ -699,6 +702,50 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
           Vector typs = new Vector(); 
           CGSpec cgs = new CGSpec(entities,types); 
           File fs = new File("cg/mathocl2matlab.cstl"); 
+          CSTL.loadCSTL(cgs,fs,ents,typs);
+ 
+          String entcode = trm.cg(cgs);
+
+          System.out.println(entcode);
+          messageArea.append("\n"); 
+          messageArea.append(entcode);
+          // internalModel = entcode;   
+        } 
+      } 
+      catch (Exception _expt) 
+      { _expt.printStackTrace(); } 
+    }
+  }
+
+  class KM3Action extends javax.swing.AbstractAction
+  { public KM3Action()
+    { super("Generate UML/OCL"); }
+
+    public void actionPerformed(ActionEvent e)
+    { String result = internalModel; 
+
+      String[] args = {"MathOCL", "specification"}; 
+
+      try { 
+        org.antlr.v4.gui.AntlrGUI antlr = 
+          new org.antlr.v4.gui.AntlrGUI(args); 
+
+        antlr.setText(result); 
+
+        antlr.process(); 
+
+        String asttext = antlr.getResultText(); 
+        // messageArea.setText("" + asttext);
+        System.out.println(asttext); 
+ 
+        Compiler2 cc = new Compiler2(); 
+        ASTTerm trm = cc.parseGeneralAST(asttext); 
+        if (trm != null)  
+        { 
+          Vector ents = new Vector(); 
+          Vector typs = new Vector(); 
+          CGSpec cgs = new CGSpec(entities,types); 
+          File fs = new File("cg/mathocl2ocl.cstl"); 
           CSTL.loadCSTL(cgs,fs,ents,typs);
  
           String entcode = trm.cg(cgs);

@@ -26756,6 +26756,180 @@ public void produceCUI(PrintWriter out)
     repaint(); 
   }
 
+  public void loadFromPython()
+  { BufferedReader br = null;
+    Vector res = new Vector();
+    String s;
+    boolean eof = false;
+    File sourcefile = new File("output/ast.txt");  
+      /* default */ 
+
+    try
+    { br = new BufferedReader(new FileReader(sourcefile)); }
+    catch (FileNotFoundException _e)
+    { System.out.println("File not found: " + sourcefile);
+      return; 
+    }
+
+    long t1 = (new java.util.Date()).getTime(); 
+
+    String sourcestring = ""; 
+    int noflines = 0; 
+
+    while (!eof)
+    { try { s = br.readLine(); }
+      catch (IOException _ex)
+      { System.err.println("!! Reading AST file output/ast.txt failed.");
+        return; 
+      }
+      if (s == null) 
+      { eof = true; 
+        break; 
+      }
+      else 
+      { sourcestring = sourcestring + s + " "; } 
+      noflines++; 
+    }
+
+    System.out.println(">>> Read " + noflines + " lines"); 
+
+    Compiler2 c = new Compiler2();    
+
+    ASTTerm xx =
+      c.parseGeneralAST(sourcestring); 
+
+    if (xx == null) 
+    { System.err.println("!! Invalid text for general AST"); 
+      System.err.println(c.lexicals); 
+      return; 
+    } 
+   
+    if (xx instanceof ASTCompositeTerm)  { } 
+    else 
+    { System.err.println("!! Not a valid Python AST:"); 
+      System.err.println(c.lexicals); 
+      return; 
+    } 
+
+    File python2uml = new File("cg/python2UML.cstl"); 
+    Vector vbs = new Vector(); 
+    CGSpec spec = loadCSTL(python2uml,vbs); 
+
+    if (spec == null) 
+    { System.err.println("!! ERROR: No file " + python2uml.getName()); 
+      return; 
+    } 
+
+    if (xx == null) 
+    { System.err.println("!! ERROR: Null AST"); 
+      return; 
+    } 
+
+    // Vector decs = new Vector(); 
+
+    // if (zz instanceof ASTCompositeTerm)
+    // { decs = ((ASTCompositeTerm) zz).vbProcessDeclarations(); }
+    
+    String reskm3 = xx.cg(spec); 
+    String arg1 = CGRule.correctNewlines(reskm3); 
+    System.out.println(arg1); 
+
+    loadKM3FromText("package app {\n " + arg1 + "\n}\n\n"); 
+ 
+    long t2 = (new java.util.Date()).getTime(); 
+
+    System.out.println(">> Time taken = " + (t2 - t1)); 
+
+    repaint(); 
+  }
+
+  public void loadFromSQL()
+  { BufferedReader br = null;
+    Vector res = new Vector();
+    String s;
+    boolean eof = false;
+    File sourcefile = new File("output/ast.txt");  
+      /* default */ 
+
+    try
+    { br = new BufferedReader(new FileReader(sourcefile)); }
+    catch (FileNotFoundException _e)
+    { System.out.println("!! File not found: " + sourcefile);
+      return; 
+    }
+
+    long t1 = (new java.util.Date()).getTime(); 
+
+    String sourcestring = ""; 
+    int noflines = 0; 
+
+    while (!eof)
+    { try { s = br.readLine(); }
+      catch (IOException _ex)
+      { System.err.println("!! Reading AST file output/ast.txt failed.");
+        return; 
+      }
+      if (s == null) 
+      { eof = true; 
+        break; 
+      }
+      else 
+      { sourcestring = sourcestring + s + " "; } 
+      noflines++; 
+    }
+
+    System.out.println(">>> Read " + noflines + " lines"); 
+
+    Compiler2 c = new Compiler2();    
+
+    ASTTerm xx =
+      c.parseGeneralAST(sourcestring); 
+
+    if (xx == null) 
+    { System.err.println("!! Invalid text for general AST"); 
+      System.err.println(c.lexicals); 
+      return; 
+    } 
+   
+    if (xx instanceof ASTCompositeTerm)  { } 
+    else 
+    { System.err.println("!! Not a valid SQLite AST:"); 
+      System.err.println(c.lexicals); 
+      return; 
+    } 
+
+    File sql2uml = new File("cg/sqlToUML.cstl"); 
+    Vector vbs = new Vector(); 
+    CGSpec spec = loadCSTL(sql2uml,vbs); 
+
+    if (spec == null) 
+    { System.err.println("!! ERROR: No file " + sql2uml.getName()); 
+      return; 
+    } 
+
+    if (xx == null) 
+    { System.err.println("!! ERROR: Null AST"); 
+      return; 
+    } 
+
+    // Vector decs = new Vector(); 
+
+    // if (zz instanceof ASTCompositeTerm)
+    // { decs = ((ASTCompositeTerm) zz).vbProcessDeclarations(); }
+    
+    String reskm3 = xx.cg(spec); 
+    String arg1 = CGRule.correctNewlines(reskm3); 
+    System.out.println(arg1); 
+
+    loadKM3FromText("package app {\n " + arg1 + "\n}\n\n"); 
+ 
+    long t2 = (new java.util.Date()).getTime(); 
+
+    System.out.println(">> Time taken = " + (t2 - t1)); 
+
+    repaint(); 
+  }
+
   public void loadFromCobol()
   { BufferedReader br = null;
     Vector res = new Vector();

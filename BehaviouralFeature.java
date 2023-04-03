@@ -3952,7 +3952,8 @@ public class BehaviouralFeature extends ModelElement
 
       Vector opvars = activity.getVariableUses(); 
 
-      Map localdeps = new Map(); 
+      Map localdeps = new Map();
+      Map dataLineages = new Map();  
 
       Vector postvars = new Vector(); 
       postvars.add("result"); 
@@ -3970,7 +3971,8 @@ public class BehaviouralFeature extends ModelElement
         Vector avs = new Vector(); 
         avs.add(aname); 
         Vector adeps = 
-            activity.dataDependents(allvars, avs, localdeps);
+            activity.dataDependents(allvars, avs, localdeps, 
+                                    dataLineages);
         System.out.println(">***> " + aname + " is derived from " + adeps);
         res.put(aname, adeps); 
         /* for (int j = 0; j < adeps.size(); j++)
@@ -3991,7 +3993,8 @@ public class BehaviouralFeature extends ModelElement
         Vector vvs = new Vector(); 
         vvs.add(vname); 
         Vector vdeps = 
-            activity.dataDependents(allvars, vvs, localdeps);
+            activity.dataDependents(allvars, vvs, localdeps, 
+                                    dataLineages);
         System.out.println(">***> " + vname + " is derived from " + vdeps);
         System.out.println();  
         seenvars.add(vname); 
@@ -4005,6 +4008,9 @@ public class BehaviouralFeature extends ModelElement
 
       System.out.println();
       System.out.println(">***> Data dependencies for " + nme + " are:\n" + localdeps);
+
+      System.out.println();
+      System.out.println(">***> Data lineages for " + nme + " are:\n" + dataLineages);
 
       System.out.println();   
     } 

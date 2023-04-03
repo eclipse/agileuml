@@ -262,6 +262,22 @@ public abstract class ASTTerm
   } 
 
 
+  public Vector allTagSubterms(String tagx)
+  { Vector res = new Vector(); 
+    if (getTag().equals(tagx))
+    { res.add(this); }
+    Vector trms = getTerms(); 
+    for (int i = 0; i < trms.size(); i++) 
+    { ASTTerm trm = (ASTTerm) trms.get(i); 
+      Vector nres = trm.allTagSubterms(tagx); 
+      res.addAll(nres); 
+    } 
+    return res; 
+  }  
+
+  
+
+
   public void addStereotype(String str) 
   { String lit = literalForm(); 
     Object stereo = ASTTerm.metafeatures.get(lit); 
@@ -965,7 +981,8 @@ public abstract class ASTTerm
     if ("Sequence".equals(typ) || "Set".equals(typ) ||
         "SortedSequence".equals(typ) ||
         typ.startsWith("SortedSequence(") ||
-        typ.startsWith("Sequence(") || typ.startsWith("Set("))
+        typ.startsWith("Sequence(") || 
+        typ.startsWith("Set("))
     { return true; } 
     return false; 
   } 
@@ -4800,7 +4817,48 @@ public abstract class ASTTerm
     { return "0"; } 
     return var + "*" + ee; 
   }  
+
+  public static Vector mathOCLidentifiers(
+                           ASTTerm expr)
+  { // All (identifier x) terms in expr. 
+    Vector res = new Vector(); 
+    if (expr == null || expr instanceof ASTSymbolTerm) 
+    { return res; } 
+    return expr.allTagSubterms("identifier"); 
+  }  
     
+  public static String mathOCLDefinition2Operation(
+                            ASTTerm defn)
+  { // Define v = expr
+    // becomes operation vDefinition(pars) : double
+    //         pre: true post: result = expr; 
+
+    String res = ""; 
+
+    if (defn instanceof ASTCompositeTerm)
+    { ASTCompositeTerm trm = (ASTCompositeTerm) defn; 
+      if ("formula".equals(trm.getTag()) && 
+          "Define".equals(trm.getTerm(1) + "") && 
+          trm.getTerms().size() > 3)
+      { String var = trm.getTerm(2) + ""; 
+        ASTTerm expr = trm.getTerm(4); 
+        Vector invars = ASTTerm.mathOCLidentifiers(expr); 
+
+        res = "  operation " + var + "Definition("; 
+        for (int i = 0; i < invars.size(); i++) 
+        { ASTTerm vused = (ASTTerm) invars.get(i); 
+          String pvar = vused.literalForm();
+          res = res + pvar + " : double"; 
+          if (i < invars.size() - 1)
+          { res = res + ", "; } 
+        }
+        res = res + ") : double\n" + 
+              "  pre: true\n" + 
+              "  post: result = " + expr.literalForm() + ";\n\n";  
+      }
+    } 
+    return res; 
+  } 
 
   public static void main(String[] args) 
   { // ASTBasicTerm t = new ASTBasicTerm("OclBasicExpression", "true"); 

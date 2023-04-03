@@ -14858,6 +14858,73 @@ public Statement generateDesignSubtract(Expression rhs)
     return res; 
   } 
 
+  public Vector readBasicExpressionData()
+  { // All read basic expressions including arguments
+
+    Vector res = new Vector(); 
+     
+    if (prestate) 
+    { return res; } 
+
+    if ("equivalent".equals(data))
+    { return res; } 
+
+    if (arrayIndex != null) 
+    { res.addAll(arrayIndex.allReadBasicExpressionData()); }
+
+    // if (umlkind == ROLE || umlkind == ATTRIBUTE || 
+    //     umlkind == VARIABLE || 
+    //     umlkind == CLASSID)
+    // { return res; }
+    // else if (umlkind == UPDATEOP || umlkind == QUERY) 
+    // { 
+      if (parameters != null) 
+      { for (int i = 0; i < parameters.size(); i++) 
+        { Expression par = (Expression) parameters.get(i);
+          Vector parvars = par.allReadBasicExpressionData();  
+          res = VectorUtil.union(res,parvars); 
+        } 
+      }  
+    // }  
+ 
+    return res; 
+  } 
+
+  public Vector allReadBasicExpressionData()
+  { // All read basic expressions including arguments
+
+    Vector res = new Vector(); 
+    
+    if (prestate) 
+    { return res; } 
+
+    if ("equivalent".equals(data))
+    { return res; } 
+
+    // if (arrayIndex != null) 
+    // { res.addAll(
+    //     arrayIndex.allReadBasicExpressionData()); }
+
+    if (umlkind == ROLE || umlkind == ATTRIBUTE || 
+        umlkind == VARIABLE || 
+        umlkind == CLASSID)
+    { res.add(this); 
+      return res; 
+    }
+    else if (umlkind == UPDATEOP || umlkind == QUERY) 
+    { res.add(this); 
+      if (parameters != null) 
+      { for (int i = 0; i < parameters.size(); i++) 
+        { Expression par = (Expression) parameters.get(i);
+          Vector parvars = par.allReadBasicExpressionData();  
+          res = VectorUtil.union(res,parvars); 
+        } 
+      }  
+    }  
+ 
+    return res; 
+  } 
+
 
   public Expression excel2Ocl(Entity target, Vector entities, Vector qvars, Vector antes)
   { if (umlkind == VALUE) 

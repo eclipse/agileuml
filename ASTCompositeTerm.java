@@ -28390,7 +28390,8 @@ public class ASTCompositeTerm extends ASTTerm
           } 
           return args + " := " + args + ".subrange(1," + callp + ");"; 
         }   
-        else if ("removeElementAt".equals(called) || "deleteCharAt".equals(called))
+        else if ("removeElementAt".equals(called) || 
+                 "deleteCharAt".equals(called))
         { ASTTerm callarg = (ASTTerm) callterms.get(2); 
           String callp = callarg.toKM3();
           if (arg.expression != null && 
@@ -28687,12 +28688,18 @@ public class ASTCompositeTerm extends ASTTerm
 
           return args + "->collect(_var | (" + callp + ")->apply(_var))"; 
         }
-        else if ("mapToDouble".equals(called) && arg.isCollection())
+        else if ("mapToDouble".equals(called) && 
+                 arg.isCollection())
         { ASTTerm callarg = (ASTTerm) callterms.get(2); 
           String callp = callarg.toKM3(); 
           ASTTerm.setType(this, "Sequence(double)"); 
           String elemType = ASTTerm.getElementType(arg);
  
+          // JOptionPane.showMessageDialog(null, this + 
+          //      " " + arg.expression + " " + callp + " " + 
+          //      callarg.expression, 
+          //      " ", JOptionPane.ERROR_MESSAGE);
+
           if (arg.expression != null && 
               callarg.expression != null) 
           { callarg.expression.setBrackets(true);
@@ -28711,6 +28718,19 @@ public class ASTCompositeTerm extends ASTTerm
             Expression rrhs = 
               Expression.simplifyApply( 
                           callarg.expression, varexpr);   
+            expression = 
+              new BinaryExpression("|C", rlhs, rrhs); 
+          } 
+          else if (arg.expression != null) 
+          { BasicExpression varexpr = 
+              BasicExpression.newVariableBasicExpression( 
+                                   "_var");
+            BinaryExpression rlhs = 
+              new BinaryExpression(":", varexpr, 
+                                   arg.expression);
+            Expression rrhs = 
+              new BinaryExpression("->apply", 
+                new BasicExpression(callp), varexpr);   
             expression = 
               new BinaryExpression("|C", rlhs, rrhs); 
           } 
@@ -29066,10 +29086,33 @@ public class ASTCompositeTerm extends ASTTerm
 
           return args + ".subrange(" + callp1 + "+1)"; 
         }
-        else if ("stream".equals(called) && arg.isCollection())
-        { ASTTerm.setType(this, ASTTerm.getType(arg)); 
+        else if ("stream".equals(called))
+        { ASTTerm.setType(this, "Sequence"); 
 
-          expression = arg.expression; 
+          // JOptionPane.showMessageDialog(null, this + 
+          //      " " + args + " " + argliteral + " " + 
+          //      arg.expression, 
+          //      " ", JOptionPane.ERROR_MESSAGE);
+
+          if ("Arrays".equals(argliteral) && cargs.size() > 0)
+          { // Arrays.stream(arr)
+            ASTTerm carg1 = (ASTTerm) cargs.get(0); 
+            String callp1 = carg1.toKM3(); 
+            expression = carg1.expression;
+            return callp1; 
+          } 
+          else if ("StreamSupport".equals(argliteral) && cargs.size() > 0)
+          { // Arrays.stream(arr)
+            ASTTerm carg1 = (ASTTerm) cargs.get(0); 
+            String callp1 = carg1.toKM3(); 
+            expression = carg1.expression;
+            return callp1; 
+          } 
+          else if (arg.expression != null) 
+          { expression = arg.expression; } 
+          else 
+          { expression = new BasicExpression(args); } 
+
           return args; 
         }
         else if ("setCharAt".equals(called) && arg.isString())
@@ -33677,6 +33720,11 @@ public class ASTCompositeTerm extends ASTTerm
             (Entity) ModelElement.lookupByName(
                               cname,ASTTerm.entities); 
 
+          if (cent == null) 
+          { cent = new Entity(cname); 
+            ASTTerm.entities.add(cent); 
+          } 
+
           Expression inst = 
             BasicExpression.newStaticCallBasicExpression(
               "new" + cname, cname); 
@@ -33684,33 +33732,52 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm met = (ASTTerm) terms.get(2); 
           String mname = met.literalForm(); 
 
+          String rtype = "OclAny"; 
+
+          Attribute bfpar = 
+                new Attribute("_par", 
+                  new Type("OclAny", null), 
+                  ModelElement.INTERNAL); 
+          BasicExpression parvar = 
+            new BasicExpression(bfpar); 
+
           if (cent != null) 
           { BehaviouralFeature bf = 
               cent.getOperation(mname); 
             if (bf == null) 
             { bf = new BehaviouralFeature(mname);
               bf.setResultType(new Type("OclAny", null));  
-              Attribute bfpar = 
-                new Attribute("_par", 
-                  new Type("OclAny", null), ModelElement.INTERNAL); 
-              bf.addParameter(bfpar);
+              // bf.addParameter(bfpar);
             }  
-            expression = bf.makeLambdaExpression(inst);
+            bfpar.setType(new Type(cent)); 
+
+            rtype = bf.getResultType() + ""; 
+
+            ASTTerm.setType(this, "Function(" + cname + ", " + rtype + ")"); 
+
+            BasicExpression parmname = 
+              BasicExpression.newCallBasicExpression(mname,
+                                                     parvar,
+                                            new Vector()); 
+
+            expression = // bf.makeLambdaExpression(inst);
+              new UnaryExpression("lambda", parmname); 
+            ((UnaryExpression) expression).setAccumulator(bfpar); 
           } 
 
-          return "lambda _par : OclAny in " + cname + ".new" + cname + "()." + mname + "(_par)";  
+          return "lambda _par : " + cname + " in _par." + mname + "()";  
         } 
 
         if ("PI".equals(e2 + "") && "Math".equals(e1literal))
         { ASTTerm.setType(this,"double"); 
           expression = new BasicExpression(3.141592653589793); 
-          return "3.141592653589793"; 
+          return "MathLib.piValue()"; 
         }
  
         if ("E".equals(e2 + "") && "Math".equals(e1literal))
         { ASTTerm.setType(this,"double"); 
           expression = new BasicExpression(2.718281828459045); 
-          return "2.718281828459045"; 
+          return "MathLib.eValue()"; 
         } 
 
         if ("TRUE".equals(e2 + "") && "Boolean".equals(e1literal))
@@ -34087,7 +34154,8 @@ public class ASTCompositeTerm extends ASTTerm
           return "10.0"; 
         } 
 
-        if ("length".equals(e2 + "") || "elementCount".equals(e2 + ""))
+        if ("length".equals(e2 + "") || 
+            "elementCount".equals(e2 + ""))
         { ASTTerm.setType(this, "int"); 
           if (e1.expression != null) 
           { expression = new UnaryExpression("->size", e1.expression);            
@@ -34424,13 +34492,22 @@ public class ASTCompositeTerm extends ASTTerm
         { if (e1.expression != null && e2.expression != null) 
           { statement = 
               new AssignStatement(e1.expression, e2.expression);
-            System.out.println(">> Assignment: " + statement);
+            System.out.println(">> Valid assignment: " + statement);
+            expression = e1.expression; 
+            System.out.println();  
+          }
+          else if (e1.expression != null) 
+          { statement = 
+              new AssignStatement(e1.expression, new BasicExpression(e2x)); 
+            System.out.println(">> Invalid assignment: " + statement);
             expression = e1.expression; 
             System.out.println();  
           } 
 
           return e1x + " := " + e2x; 
         } 
+
+        
    
         if ("+=".equals(op + "") && e2.hasSideEffect())
         { // pre sideeffect of e2 ; 
@@ -40893,12 +40970,12 @@ public class ASTCompositeTerm extends ASTTerm
                                      "" + typ);  
             ASTTerm.setTaggedValue(fname, "width", 
                                      "" + wdth);       
-            JOptionPane.showMessageDialog(null, 
-              "Type of " + fname + " is " + typ + 
-              " " + intwidth + " " + 
-              fractwidth, 
-              "", 
-              JOptionPane.INFORMATION_MESSAGE);
+            // JOptionPane.showMessageDialog(null, 
+            //   "Type of " + fname + " is " + typ + 
+            //   " " + intwidth + " " + 
+            //   fractwidth, 
+            //   "", 
+            //   JOptionPane.INFORMATION_MESSAGE);
             if (typ != null) 
             { String dval = typ.defaultValue(); 
               ASTTerm.setTaggedValue(fname, "defaultValue", 
@@ -42775,7 +42852,8 @@ public class ASTCompositeTerm extends ASTTerm
     } 
 
     if ("formula".equals(tag) && 
-        "Define".equals(terms.get(0) + ""))
+        "Define".equals(terms.get(0) + "") && 
+        terms.size() > 3)
     { // Define ID = expression or other item
       ASTCompositeTerm expr = (ASTCompositeTerm) terms.get(3);
       ASTTerm var = (ASTTerm) terms.get(1);
@@ -42820,6 +42898,14 @@ public class ASTCompositeTerm extends ASTTerm
       }   
     } 
 
+    /* if ("formula".equals(tag) && 
+        "Define".equals(terms.get(0) + "") && 
+        terms.size() < 3 && terms.size() > 1)
+    { ASTTerm var = (ASTTerm) terms.get(1);
+      res = res + 
+            "  Define " + var;
+    }  */ 
+    
     if ("solve".equals(tag))
     { // Solve <expressionList> for <idList>
       ASTCompositeTerm exprs = (ASTCompositeTerm) terms.get(1);

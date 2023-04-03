@@ -358,6 +358,36 @@ public class SetExpression extends Expression
   public boolean isPrimitive()
   { return false; } 
 
+  public Vector allReadBasicExpressionData()
+  { Vector res = new Vector(); 
+
+    for (int i = 0; i < elements.size(); i++)
+    { res = VectorUtil.union(res, ((Expression) elements.get(i)).allReadBasicExpressionData());
+    }
+
+    return res;
+  }
+
+  public Vector allReadFrame()
+  { Vector res = new Vector(); 
+
+    for (int i = 0; i < elements.size(); i++)
+    { res = VectorUtil.union(res, ((Expression) elements.get(i)).allReadFrame());
+    }
+
+    return res;
+  }
+
+  public Vector readFrame()
+  { Vector res = new Vector(); 
+
+    for (int i = 0; i < elements.size(); i++)
+    { res = VectorUtil.union(res, ((Expression) elements.get(i)).readFrame());
+    }
+
+    return res;
+  }
+
   public Expression skolemize(Expression sourceVar, java.util.Map env)
   { return this; } 
 
