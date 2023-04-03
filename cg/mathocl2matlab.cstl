@@ -54,6 +54,7 @@ reexpression::
 Express _1 as _2 |-->Express _1 as _2
 
 formula::
+Define _1 |-->_1 = 0.0;\n
 Define _1 = _2 |-->_1 = _2;\n
 
 factorBy::

@@ -96,9 +96,14 @@ range _1 |-->_1`rangeTrailer
 enumerate _1 |-->Integer.subrange(1, _1->size())->collect( $i | Sequence{$i-1, _1->at($i)} )
 zip _1 |-->Integer.subrange(1, _1`firstArg->size())->collect( $i | Sequence{_1`firstArg->at($i), _1`secondArg->at($i)} )
 
+open _1 |-->OclFile.newOclFile_Write(OclFile.newOclFile(_1`firstArg))<when> _1`lastArg matches .*[wWaA].*
+open _1 |-->OclFile.newOclFile_Read(OclFile.newOclFile(_1`firstArg))
+
+
 await _1 |-->
 await _1 _* |-->
 math _1 |-->_1`mathTrailer
+
 
 _1 ** _2 |-->(_1)->pow(_2)
 + _1 |-->_1
@@ -116,6 +121,16 @@ _1 >> _2 |-->_1 /(2->pow(_2))
 _1 & _2 |-->MathLib.bitwiseAnd(_1, _2)
 _1 ^ _2 |-->MathLib.bitwiseXor(_1, _2)
 _1 | _2 |-->MathLib.bitwiseOr(_1, _2)
+
+_1 _2 |-->StringLib.capitalise(_1)<when> _1 atom, _2 matches .capitalize\(\)
+_1 _2 |-->StringLib.toTitleCase(_1)<when> _1 atom, _2 matches .title\(\)
+_1 _2 |-->StringLib.swapCase(_1)<when> _1 atom, _2 matches .swapcase\(\)
+_1 _2 |-->StringLib.leftTrim(_1)<when> _1 atom, _2 matches .lstrip\(\)
+_1 _2 |-->StringLib.rightTrim(_1)<when> _1 atom, _2 matches .rstrip\(\)
+_1 _2 |-->(_1 = StringLib.toTitleCase(_1))<when> _1 atom, _2 matches .istitle\(\)
+_1 _2 |-->StringLib.padLeftWithInto(_1,_2`justificationArguments)<when> _1 atom, _2`second rjust
+_1 _2 |-->StringLib.padRightWithInto(_1,_2`justificationArguments)<when> _1 atom, _2`second ljust
+
 _1 _* |-->_1_*<when> _1 atom
 _1 |-->_1
 
@@ -187,6 +202,9 @@ _1 |-->_1`updateForm<when> _1 expr
 print _1 |-->    execute _1->display()
 del _1 |-->    execute _1->isDeleted()
 
+_1 _2 |-->    _1.closeFile()<when> _1 atom, _2`second close
+_1 _2 |-->    _1.write_2`third<when> _1 atom, _2`second write
+
 _1 _2 |-->    _1 := _1_2`trailerUpdateForm<when> _1 atom, _2 trailer
 _1 , _* |-->    _1 ;\n_*`recurse
 _1 |-->
@@ -254,9 +272,32 @@ trailer::
 . clear _1 |-->->intersection(Set{})
 . items _1 |-->->asSequence()
 
+. upper _1 |-->->toUpperCase()
+. lower _1 |-->->toLowerCase()
+. strip _1 |-->->trim()
+. replace _1 |-->.replace_1
+. find _1 |-->->indexOf_1 - 1
+. startswith _1 |-->->hasPrefix_1
+. endswith _1 |-->->hasSuffix_1
+. isalpha _1 |-->->matches("[a-zA-Z]*")
+. isnumeric _1 |-->->matches("[0-9]*")
+. isalnum _1 |-->->matches("[a-zA-Z0-9]*")
+. islower _1 |-->->matches("[a-z ]*")
+. isupper _1 |-->->matches("[A-Z ]*")
+. isspace _1 |-->->matches("[ \t\n\r]*") 
+. isdigit _1 |-->->matches("[0-9]*")
+. isdecimal _1 |-->->matches("[0-9]*")
+
+. readable _1 |-->.canRead()
+. writable _1 |-->.canWrite()
+. close _1 |-->.closeFile()
+. read _1 |-->.readAll()
+. write _1 |-->.write_1
+
 . _1 |-->._1
 . _1 _* |-->._1_*
 _1 |-->_1
+
 
 mathTrailer::
 . cosin _1 |-->_1->cos()
@@ -320,6 +361,9 @@ trailerUpdateForm::
 . discard _1 |-->->excluding_1
 . clear _1 |-->->intersection(Set{})
 
+. close _1 |-->.closeFile()
+. write _1 |-->.write_1
+
 . _1 |-->._1
 . _1 _* |-->._1_*
 _1 |-->_1
@@ -327,9 +371,13 @@ _1 |-->_1
 rangeTrailer::
 _1 |-->_1`rangeArguments
 
-rangeArguments::
-( ) |-->
-( _1 ) |-->_1`rangeArguments
+
+
+justificationArguments::
+. ljust _1 |-->_1`justificationArguments
+. rjust _1 |-->_1`justificationArguments
+( _1 ) |--> _1`third, _1`first
+
 
 arguments::
 ( ) |-->()
@@ -378,6 +426,8 @@ _1 |-->_1
 _1 , _* |-->_1, _*`recurse
 
 rangeArguments::
+( ) |-->
+( _1 ) |-->_1`rangeArguments
 _1 |-->Integer.subrange(0, _1-1)
 _1 , _2 |-->Integer.subrange(_1, _2-1)
 _1 , _2 , _3 |-->Integer.subrange(_1, _2-1)->select( $x | ($x - _1) mod _3 = 0 )
