@@ -1,0 +1,13 @@
+Main-Class: CSTLApp
+Permissions: sandbox
+Codebase: https://agilemde.co.uk
+Application-Name: CSTL
+Application-Library-Allowable-Codebase: https://agilemde.co.uk
+Caller-Allowable-Codebase: https://agilemde.co.uk
+Entry-Point: CSTLApp
+Trusted-Only: true
+Trusted-Library: true
+
+
+
+

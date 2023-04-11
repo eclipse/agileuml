@@ -615,7 +615,8 @@ public abstract class ASTTerm
     if ("integer".equalsIgnoreCase(str) || 
         "int".equals(str))
     { return isInteger(); } 
-    if ("real".equalsIgnoreCase(str))
+    if ("real".equalsIgnoreCase(str) || 
+        "double".equals(str))
     { return isReal(); } 
     if ("boolean".equalsIgnoreCase(str))
     { return isBoolean(); }

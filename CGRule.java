@@ -1285,10 +1285,13 @@ public class CGRule
           if ("type".equals(mffeat))
           { String repl = ASTTerm.getType(term);
             if (repl == null) 
-            { Type tt = term.deduceType();
-              repl = tt + ""; 
+            { repl = ASTTerm.getTaggedValue(term,"type"); 
+              if (repl == null)
+              { Type tt = term.deduceType();
+                repl = tt + "";
+              } 
             } 
-            System.out.println(">>> Type of " + term + " is " + repl); 
+            System.out.println(">-->--> Type of " + term + " is " + repl); 
             System.out.println(); 
  
             if (repl != null)   

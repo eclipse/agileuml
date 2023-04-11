@@ -2980,15 +2980,30 @@ public class UCDArea extends JPanel
   public void displayDataDependencies()
   { int allClasses = entities.size(); 
 	
+    Vector allatts = new Vector(); 
+
     for (int j = 0; j < allClasses; j++) 
     { Entity ent = (Entity) entities.get(j);
        
       if (ent.isDerived() || 
           ent.isComponent() || ent.isExternal())
       { continue; } 
+
+      allatts.addAll(ent.getAttributes()); 
 	 
       ent.allDataDependencies();
     }
+
+    for (int i = 0; i < useCases.size(); i++) 
+    { Object xx = useCases.get(i); 
+      if (xx instanceof UseCase)
+      { UseCase uc = (UseCase) xx; 
+        if (uc.isDerived() || uc.isExternal())
+        { continue; } 
+
+        uc.allDataDependencies(allatts); 
+      } 
+    } 
   } 
 
   public void displayMeasures(PrintWriter out)

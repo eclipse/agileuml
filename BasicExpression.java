@@ -9960,8 +9960,8 @@ public Statement generateDesignSubtract(Expression rhs)
       return data + " = " + val2 + ";"; 
     }
 
-    String nme = entity.getName();
-    if (entity.isBidirectionalRole(data))
+    // String nme = entity.getName();
+    if (entity != null && entity.isBidirectionalRole(data))
     { local = false; } 
     
     if (objectRef == null)
@@ -10001,7 +10001,8 @@ public Statement generateDesignSubtract(Expression rhs)
         } 
 
         if (entity != null && entity.isClassScope(data))
-        { if (arrayIndex != null) 
+        { String nme = entity.getName();
+		  if (arrayIndex != null) 
           { String indopt = 
                arrayIndex.queryFormJava7(env,local); 
             // if ("String".equals(arrayIndex.type + "") || 
@@ -10056,8 +10057,9 @@ public Statement generateDesignSubtract(Expression rhs)
     else // objectRef != null
     { String pre = objectRef.queryFormJava7(env,local);
 
-      if (entity.isClassScope(data))
-      { if (arrayIndex != null) 
+      if (entity != null && entity.isClassScope(data))
+      { String nme = entity.getName();
+	    if (arrayIndex != null) 
         { String indopt = arrayIndex.queryFormJava7(env,local); 
           return nme + ".set" + data + "((" + indopt + " -1), " + val2 + ");"; 
         } 
@@ -10081,10 +10083,12 @@ public Statement generateDesignSubtract(Expression rhs)
         return cref + ".setAll" + data + "(" + cobjs + "," + val2 + ");"; 
       } 
 
-      if (objectRef.isMultiple()) 
-      { String cref = nme; 
+      if (entity != null && objectRef.isMultiple()) 
+      { String nme = entity.getName();
+	    String cref = nme; 
         if (entity.isInterface())
-        { cref = nme + "." + nme + "Ops"; } 
+        { cref = nme + "." + nme + "Ops"; }
+		 
         if (arrayIndex != null) 
         { String ind = arrayIndex.queryFormJava7(env,local); 
           if (isQualified())

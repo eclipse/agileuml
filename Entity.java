@@ -1483,6 +1483,12 @@ public class Entity extends ModelElement implements Comparable
     operations.removeAll(removed); 
   } 
 
+  public void typeCheck(Vector types, Vector entities)
+  { typeCheckAttributes(types,entities); 
+    typeCheckOps(types,entities); 
+    typeCheckInvariants(types,entities); 
+  } 
+
   public void typeCheckAttributes(Vector types, Vector entities)
   { Vector localtypes = new Vector(); 
     localtypes.addAll(types); 

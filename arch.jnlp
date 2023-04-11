@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<jnlp
+  codebase="https://agilemde.co.uk/arch/" 
+  href="arch.jnlp">
+
+<information>
+  <title>Architecture App</title>
+  <vendor>AgileMDE UK Ltd</vendor>
+  <shortcut>
+    <desktop/>
+  </shortcut>
+  <offline-allowed/>
+</information>
+
+<resources>
+  <java version="1.8+"/>
+  <jar href="arch.jar" main="true"/>
+</resources>
+
+<applet-desc
+  name="ArchitectureWin"
+  main-class="ArchitectureWin" 
+  width = "700" 
+  height = "600">
+</applet-desc>
+</jnlp>

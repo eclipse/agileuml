@@ -261,7 +261,7 @@ public class CGCondition
 
     Vector metafs = CGRule.metafeatures(variable); 
 
-    System.out.println("*** Metafeatures of " + variable + " are: " + metafs); 
+    System.out.println("***>> Action metafeatures of " + variable + " are: " + metafs); 
 
     if (metafs.size() > 0)
     { 
@@ -293,6 +293,8 @@ public class CGCondition
         { String repl = CGRule.applyMetafeature(
                              mffeat,ast,cgs,entities); 
 
+          System.out.println("***>> Action " + ast + "`" + mffeat + " = " + repl); 
+
           if (positive && repl != null) 
           { ASTTerm.setType(repl,stereo);
             ASTTerm.addStereo(repl,stereo); 
@@ -303,7 +305,7 @@ public class CGCondition
           } 
           else // repl == null; stereotype is mffeat=stereo
           { ASTTerm.setTaggedValue(ast, mffeat, stereo); 
-            // System.out.println(">>> Executed action " + ast + "`" + mffeat + " = " + stereo);  
+            System.out.println("***>>> Executed action " + ast + "`" + mffeat + " = " + stereo);  
             repl = varx + "`" + mffeat; 
           }  
     

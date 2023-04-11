@@ -3,7 +3,7 @@ import java.io.*;
 import javax.swing.*;
 
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -83,14 +83,17 @@ public class UseCase extends ModelElement
     operation.setPrecondition(new BasicExpression(true)); 
     operation.setPostcondition(new BasicExpression(true)); 
   }
+
+  public boolean isExternal()
+  { return stereotypes.contains("external"); } 
   
   public void checkIncludesValidity(Vector useCases)
   { for (int j = 0; j < include.size(); j++) 
     { Include inc = (Include) include.get(j); 
-	  UseCase ucinc = inc.getInclusion(); 
-	  if (ucinc == null) 
-	  { System.err.println("!! Error: null included use case in " + getName()); 
-	    continue; 
+      UseCase ucinc = inc.getInclusion(); 
+      if (ucinc == null) 
+      { System.err.println("!! Error: null included use case in " + getName()); 
+        continue; 
       }
 	  
       String nme = ucinc.getName(); 
@@ -1004,7 +1007,7 @@ public class UseCase extends ModelElement
         inter1.addAll(rdi); 
         inter1.retainAll(wrj); 
         if (inter1.size() > 0)
-        { System.out.println("Warning: constraint " + j + " writes data read in " +
+        { System.out.println("! Warning: constraint " + j + " writes data read in " +
                              "constraint " + i + ": "); 
           System.out.println(inter1); 
           JOptionPane.showMessageDialog(null, "Warning: constraint " + j + " writes data\n" + 
@@ -1016,8 +1019,8 @@ public class UseCase extends ModelElement
           inter2.addAll(rdj); 
           inter2.retainAll(wri); 
           if (inter2.size() > 0)
-          { System.out.println("The constraints are mutually dependent: " + inter2);
-            System.out.println("They should be in a constraint group."); 
+          { System.out.println("! The constraints are mutually dependent: " + inter2);
+            System.out.println("! They should be in a constraint group."); 
             JOptionPane.showMessageDialog(null, "The constraints are mutually dependent: " + inter2 + 
                              "\n" + 
                              "They should be in a constraint group executed recurrently.",
@@ -1037,14 +1040,14 @@ public class UseCase extends ModelElement
             possibleGroups.add(cg); 
           } 
           else 
-          { System.out.println("Try swapping their order"); 
+          { System.out.println("! Try swapping their order"); 
             /* JOptionPane.showMessageDialog(null, "Try swapping their order", 
                              "Possible incorrect ordering of postconditions",
                              JOptionPane.WARNING_MESSAGE);  */
           } 
         }
         else 
-        { System.out.println("Constraint " + i + " and " + j + " in correct order"); 
+        { System.out.println(">> Constraint " + i + " and " + j + " are in correct order"); 
           // JOptionPane.showMessageDialog(null, "Constraints " + i + " and " + 
           //                           j + " are in correct order",
           //                           "Valid ordering of postconditions",
@@ -1054,10 +1057,10 @@ public class UseCase extends ModelElement
         inter3.addAll(wri); 
         inter3.retainAll(wrj); 
         if (inter3.size() > 0)
-        { System.out.println("Possible error:\n" + 
-                             "constraint " + j + " writes to same data as " + i); 
+        { System.out.println("! Possible error:\n" + 
+                             "! constraint " + j + " writes to same data as " + i); 
           System.out.println(inter3); 
-          System.out.println("The later constraint may invalidate the earlier");
+          System.out.println("! The later constraint may invalidate the earlier");
           JOptionPane.showMessageDialog(null, "Possible error:\n" + 
                                     "Constraint " + j + 
                                     " writes to same data " + inter3 + " as " + i + "\n" + 
@@ -1067,7 +1070,8 @@ public class UseCase extends ModelElement
         } 
       } 
     } 
-    System.out.println("Possible constraint groups: " + possibleGroups); 
+
+    System.out.println(">> Possible constraint groups: " + possibleGroups); 
     System.out.println("\n"); 
 
     return; 
@@ -1219,7 +1223,7 @@ public class UseCase extends ModelElement
       Vector ccrd = cc.readFrame(); 
       Vector ccwr = cc.wr(assocs); 
       DataDependency dd = cc.getDataFlows();
-      System.out.println("Data flows for " + cc + " are: " + dd); 
+      System.out.println(">> Data flows for " + cc + " are: " + dd); 
        // DataDependency dd = cc.rhsDataDependency(); 
 	  System.out.println(">> read in constraint " + i + " = " + ccrd); 
 	  System.out.println(">> written in constraint " + i + " = " + ccwr);
@@ -1231,6 +1235,81 @@ public class UseCase extends ModelElement
      System.out.println(">>> Parameters = " + newparms); 
       // System.out.println("Type-checking " + stat + " with " + newparms); 
   }   
+
+  public void allDataDependencies(Vector attrs)
+  { // for the activity
+
+    if (activity != null) // && 
+        // entity != null)
+    { String nme = getName(); 
+      Vector allvars = new Vector();
+      for (int i = 0; i < parameters.size(); i++) 
+      { Attribute parx = (Attribute) parameters.get(i); 
+        allvars.add(parx.getName()); 
+      }  
+
+      // Vector attrs = entity.getAttributes(); 
+      for (int i = 0; i < attrs.size(); i++) 
+      { Attribute attx = (Attribute) attrs.get(i); 
+        allvars.add(attx.getName()); 
+      }  
+
+      Vector opvars = activity.getVariableUses(); 
+
+      Map localdeps = new Map();
+      Map dataLineages = new Map();  
+
+      Vector postvars = new Vector(); 
+      postvars.add("result"); 
+      Vector deps = activity.dataDependents(
+                       allvars,postvars);
+      System.out.println();  
+      System.out.println(">***> result is derived from:\n  " + deps);
+
+      // res.put("result", deps); 
+
+   
+      for (int i = 0; i < attrs.size(); i++) 
+      { Attribute attx = (Attribute) attrs.get(i); 
+        String aname = attx.getName(); 
+        Vector avs = new Vector(); 
+        avs.add(aname); 
+        Vector adeps = 
+            activity.dataDependents(allvars, avs, localdeps, 
+                                    dataLineages);
+        System.out.println(">***> " + aname + " is derived from " + adeps);
+        // res.put(aname, adeps);  
+      } 
+
+      Vector seenvars = new Vector();
+      seenvars.add("skip"); 
+ 
+      for (int i = 0; i < opvars.size(); i++) 
+      { String vname = "" + opvars.get(i);
+        if (seenvars.contains(vname)) 
+        { continue; }  
+        Vector vvs = new Vector(); 
+        vvs.add(vname); 
+        Vector vdeps = 
+            activity.dataDependents(allvars, vvs, localdeps, 
+                                    dataLineages);
+        System.out.println(">***> " + vname + " is derived from " + vdeps);
+        System.out.println();  
+        seenvars.add(vname); 
+      }  
+
+      System.out.println();
+      System.out.println(">***> Data dependencies for " + nme + " are:\n" + localdeps);
+
+      System.out.println();
+      System.out.println(">***> Data lineages for " + nme + " are:\n" + dataLineages);
+
+      System.out.println();   
+    } 
+
+    // return res; 
+  } 
+
 
   public UseCase instantiate(Vector parvals, Vector types, Vector entities,
                              Vector assocs)

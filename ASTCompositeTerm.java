@@ -10209,8 +10209,8 @@ public class ASTCompositeTerm extends ASTTerm
       vartypes.put(fname,bftype); 
       varelemtypes.put(fname,bf.getReturnType()); 
 
-      System.out.println("Variable types = " + vartypes); 
-      System.out.println("Variable element types = " + varelemtypes); 
+      System.out.println(">> Variable types = " + vartypes); 
+      System.out.println(">> Variable element types = " + varelemtypes); 
 
       res.add(bf); 
       return res;    
@@ -11066,7 +11066,7 @@ public class ASTCompositeTerm extends ASTTerm
                                 vartypes,varelemtypes,types,
                                 entities);
 
-      System.out.println("+++ Yield statement " + this); 
+      System.out.println("+++>> Yield statement " + this); 
 
       Expression ee = new BasicExpression("null"); 
       ee.setType(new Type("OclAny", null)); 

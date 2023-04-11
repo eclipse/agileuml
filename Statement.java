@@ -2730,7 +2730,7 @@ public void findClones(java.util.Map clones,
     { BasicExpression be = (BasicExpression) callExp; 
       Vector readBEs = be.readBasicExpressionData(); 
       Vector readVars = be.readData(); 
-      String upd = be.updatedData(); 
+      String upd = be.getObjectRef() + ""; 
 
       if (upd != null) 
       { for (int i = 0; i < readVars.size(); i++) 
@@ -4341,11 +4341,18 @@ class WhileStatement extends Statement
 
   public Vector dataDependents(Vector allvars, Vector vars, Map mp, Map dlin)
   { Map bodymap = new Map(); 
-    Vector bodydeps = body.dataDependents(allvars,vars, bodymap, dlin);
+    Map bodydlin = new Map(); 
+
+    Vector bodydeps = body.dataDependents(allvars,vars, bodymap, bodydlin);
+
     Vector result = new Vector(); 
     result.addAll(bodydeps); 
+
     Vector updatedvariables = bodymap.range(); 
     mp.unionWith(bodymap); 
+
+    Vector modifiedvariables = bodydlin.range(); 
+    dlin.unionWith(bodydlin); 
 
     if (loopKind == FOR && loopVar != null && 
         loopRange != null)
@@ -4358,11 +4365,19 @@ class WhileStatement extends Statement
       for (int i = 0; i < rangevars.size(); i++) 
       { String rv = "" + rangevars.get(i); 
         mp.add_pair(rv, lv); 
-      } 
+        for (int j = 0; j < updatedvariables.size(); j++) 
+        { String vv = "" + updatedvariables.get(j); 
+          mp.add_pair(rv, vv); 
+        } 
+      }
 
       for (int i = 0; i < rangeBEs.size(); i++) 
       { String rv = "" + rangeBEs.get(i); 
         dlin.add_pair(rv, lv);
+        for (int k = 0; k < modifiedvariables.size(); k++) 
+        { String vv = "" + modifiedvariables.get(k); 
+          dlin.add_pair(rv, vv); 
+        } 
       } 
 
       if (vars.contains(lv)) 
@@ -10983,9 +10998,9 @@ class AssignStatement extends Statement
   { Vector vbls = new Vector(); 
     vbls.addAll(vars); 
 
-    String updatedVar = lhs.updatedData(); 
+    String updatedVar = lhs + ""; 
 
-    if (updatedVar != null && vars.contains(updatedVar))
+    if (updatedVar != null) //  && vars.contains(updatedVar))
     { // remove this variable and add all vars of rhs to vars
       vbls.remove(updatedVar); 
       Vector es = rhs.allAttributesUsedIn(); 
@@ -11004,7 +11019,8 @@ class AssignStatement extends Statement
         { vbls.add(var); } 
       } 
 
-      // System.out.println(updatedVar + " --from--> " + rhsBEs); 
+      // System.out.println(updatedVar + " --from--> " + rhsBEs);
+ 
       for (int i = 0; i < rhsBEs.size(); i++) 
       { String rv = "" + rhsBEs.get(i); 
         dlin.add_pair(rv, updatedVar);

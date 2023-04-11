@@ -1,0 +1,10 @@
+Main-Class: ArchitectureWin
+Permissions: sandbox
+Codebase: https://agilemde.co.uk
+Application-Name: ArchitectureApp
+Application-Library-Allowable-Codebase: https://agilemde.co.uk
+Caller-Allowable-Codebase: https://agilemde.co.uk
+Entry-Point: ArchitectureWin
+
+
+

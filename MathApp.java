@@ -68,7 +68,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
 
    SimpleAttributeSet[] attrs; 
 
-   Vector entities = new Vector(); 
+   Vector entities = new Vector(); // holds the UML spec
    Vector types = new Vector();
    String internalModel = "";  
 
@@ -304,7 +304,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         JMenu fileMenu = createFileMenu(); 
         JMenu editMenu = createEditMenu(); 
         // JMenu absMenu = createAbstractionMenu(); 
-        // JMenu transMenu = createTranslationMenu();
+        JMenu transMenu = createTranslationMenu();
         JMenu styleMenu = createStyleMenu();
         JMenu analysisMenu = createAnalysisMenu();
         
@@ -313,10 +313,10 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         mb.add(fileMenu); 
         mb.add(editMenu); 
         // mb.add(absMenu); 
-        // mb.add(transMenu);
         mb.add(styleMenu);
         mb.add(analysisMenu);
-
+        mb.add(transMenu);
+        
         setJMenuBar(mb);
 
         textPane.setCaretPosition(0);
@@ -402,6 +402,23 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       return menu; 
    } 
 
+    protected JMenu createTranslationMenu() 
+    { JMenu menu = new JMenu("Translate");
+
+      javax.swing.Action toJavaAction = new Translate2JavaAction(); 
+        // checkAction.setMnemonic(KeyEvent.VK_K);
+      menu.add(toJavaAction); 
+
+      javax.swing.Action toCSAction = new Translate2CSAction(); 
+        // checkAction.setMnemonic(KeyEvent.VK_K);
+      menu.add(toCSAction); 
+
+      javax.swing.Action toCPPAction = new Translate2CPPAction(); 
+        // checkAction.setMnemonic(KeyEvent.VK_K);
+      menu.add(toCPPAction); 
+
+      return menu; 
+   } 
 
     public void changedUpdate(DocumentEvent e)
     { int offset = e.getOffset(); 
@@ -707,8 +724,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
           String entcode = trm.cg(cgs);
 
           System.out.println(entcode);
-          messageArea.append("\n"); 
-          messageArea.append(entcode);
+          // messageArea.append("\n"); 
+          // messageArea.append(entcode);
           // internalModel = entcode;   
         } 
       } 
@@ -750,7 +767,19 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
  
           String entcode = trm.cg(cgs);
 
-          System.out.println(entcode);
+          String arg1 = CGRule.correctNewlines(entcode); 
+          System.out.println(arg1); 
+
+          Compiler2 comp = new Compiler2(); 
+          comp.nospacelexicalanalysis("package app {\n " + arg1 + "\n}\n\n"); 
+          entities = comp.parseKM3();
+
+          for (int k = 0; k < entities.size(); k++) 
+          { Entity ent = (Entity) entities.get(k); 
+            ent.typeCheck(types,entities); 
+          } 
+ 
+          // System.out.println(entcode);
           messageArea.append("\n"); 
           messageArea.append(entcode);
           // internalModel = entcode;   
@@ -759,6 +788,66 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       catch (Exception _expt) 
       { _expt.printStackTrace(); } 
     }
+  }
+
+  class Translate2JavaAction extends javax.swing.AbstractAction
+  { public Translate2JavaAction()
+    { super("Translate to Java"); }
+
+    public void actionPerformed(ActionEvent e)
+    { StringWriter sw = new StringWriter(); 
+      PrintWriter out = new PrintWriter(sw);   
+      for (int i = 0; i < entities.size(); i++) 
+      { Entity ent = (Entity) entities.get(i);
+        if (ent.isExternal() || ent.isComponent()) 
+        { continue; }  
+        ent.generateJava7(entities,types,out);     
+      } 
+      String res = sw.toString(); 
+      messageArea.setText(res);
+    } 
+  } 
+
+
+  class Translate2CSAction extends javax.swing.AbstractAction
+  { public Translate2CSAction()
+    { super("Translate to C#"); }
+
+    public void actionPerformed(ActionEvent e)
+    { StringWriter sw = new StringWriter(); 
+      PrintWriter out = new PrintWriter(sw);   
+      for (int i = 0; i < entities.size(); i++) 
+      { Entity ent = (Entity) entities.get(i);
+        if (ent.isExternal() || ent.isComponent()) 
+        { continue; }  
+        ent.generateCSharp(entities,types,out);     
+      } 
+      String res = sw.toString(); 
+      messageArea.setText(res);
+    } 
+  }
+
+  class Translate2CPPAction extends javax.swing.AbstractAction
+  { public Translate2CPPAction()
+    { super("Translate to C++"); }
+
+    public void actionPerformed(ActionEvent e)
+    { StringWriter sw = new StringWriter(); 
+      PrintWriter out = new PrintWriter(sw);   
+      
+      StringWriter sw1 = new StringWriter(); 
+      PrintWriter out1 = new PrintWriter(sw1);   
+      
+      for (int i = 0; i < entities.size(); i++) 
+      { Entity ent = (Entity) entities.get(i);
+        if (ent.isExternal() || ent.isComponent()) 
+        { continue; }  
+        ent.generateCPP(entities,types,out,out1);     
+      } 
+      String res = sw.toString(); 
+      String res1 = sw1.toString(); 
+      messageArea.setText(res + "\n\n" + res1);
+    } 
   }
 
   public static void main(String[] args) {

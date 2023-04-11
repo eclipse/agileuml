@@ -148,8 +148,8 @@ logicalExpression
     | logicalExpression 'xor' logicalExpression  
     | logicalExpression '&' logicalExpression 
     | logicalExpression 'and' logicalExpression
-    | FORALL identifier CDOT logicalExpression
-    | EXISTS identifier CDOT logicalExpression  
+    | FORALL identifier ':' type CDOT logicalExpression
+    | EXISTS identifier ':' type CDOT logicalExpression  
     | 'not' logicalExpression  
     | equalityExpression
     ; 
@@ -218,11 +218,8 @@ factor2Expression
    ; 
 
 setExpression 
-    : 'OrderedSet{' expressionList? '}'  
-    | 'Bag{' expressionList? '}'  
-    | 'Set{' expressionList? '}' 
-    | 'Sequence{' expressionList? '}' 
-    | 'Map{' expressionList? '}'
+    : '{' ID ':' type '|' expression '}'
+    | '{' ID ':' type '|' expression CDOT expression '}'  
     ; 
 
 

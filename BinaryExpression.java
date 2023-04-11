@@ -1495,9 +1495,14 @@ class BinaryExpression extends Expression
              operator.equals("->count") || 
              operator.equals("->indexOf") || 
              operator.equals("->lastIndexOf") || 
-             operator.equals("->equalsIgnoreCase") || operator.equals("->before") || operator.equals("->after") || 
-             operator.equals("->hasMatch") || operator.equals("->isMatch") ||
-             operator.equals("->split") || operator.equals("->allMatches") || operator.equals("->firstMatch") || 
+             operator.equals("->equalsIgnoreCase") || 
+             operator.equals("->before") || 
+             operator.equals("->after") || 
+             operator.equals("->hasMatch") || 
+             operator.equals("->isMatch") ||
+             operator.equals("->split") || 
+             operator.equals("->allMatches") || 
+             operator.equals("->firstMatch") || 
              operator.equals("->at") || 
              operator.equals("->apply") ||
              operator.equals("->closure") || 

@@ -16,7 +16,7 @@ import javax.swing.JApplet;
 import javax.swing.text.*;
 import javax.swing.event.*;
 
-/* K. Lano 2010-2022
+/* K. Lano 2010-2023
    
   Adapted from Oracle example of JTextPane
 

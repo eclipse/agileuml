@@ -6450,7 +6450,15 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     return res; 
  }
 
-
+  public Vector parseKM3()
+  { Vector ents = new Vector();
+    Vector typs = new Vector();
+    Vector gens = new Vector();
+    Vector pasts = new Vector();
+    Vector pnames = new Vector();
+    Vector items = parseKM3(ents,typs,gens,pasts,pnames);
+    return ents; 
+  }
 
   public Vector parseKM3(Vector entities, Vector types, Vector gens, Vector pasts, Vector pnames)
   { Vector res = new Vector(); 
