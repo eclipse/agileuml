@@ -910,29 +910,82 @@ public class UCDArea extends JPanel
   } 
 
   public void showUCDependencies() 
-  { for (int i = 0; i < useCases.size(); i++) 
+  { java.util.Map readers = new java.util.HashMap(); 
+    java.util.Map writers = new java.util.HashMap(); 
+    
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ent = (Entity) entities.get(i); 
+      readers.put(ent, new Vector()); 
+      writers.put(ent, new Vector()); 
+    } 
+
+    for (int i = 0; i < useCases.size(); i++) 
     { Object ob = useCases.get(i); 
       if (ob instanceof UseCase) 
       { UseCase uc = (UseCase) ob; 
         Vector wrents = new Vector(); 
         Vector rdents = new Vector(); 
-        uc.classDependencies(entities,associations,rdents,wrents);
+        uc.classDependencies(entities,associations,
+                             rdents,wrents);
+
         for (int j = 0; j < rdents.size(); j++) 
         { Entity e = (Entity) rdents.get(j); 
           if (wrents.contains(e))
           { drawDependency(uc,e,"<<writes>>"); 
             drawDependency(e,uc,"<<reads>>"); 
+            Vector ewriters = (Vector) writers.get(e); 
+            ewriters.add(uc); 
+            writers.put(e, ewriters); 
+            Vector ereaders = (Vector) readers.get(e); 
+            ereaders.add(uc); 
+            readers.put(e, ereaders); 
           } 
           else 
-          { drawDependency(e,uc,"<<reads>>"); } 
+          { drawDependency(e,uc,"<<reads>>");
+            Vector ereaders = (Vector) readers.get(e); 
+            ereaders.add(uc); 
+            readers.put(e, ereaders); 
+          } 
         } 
+
         wrents.removeAll(rdents); 
         for (int j = 0; j < wrents.size(); j++) 
         { Entity f = (Entity) wrents.get(j); 
           drawDependency(uc,f,"<<writes>>"); 
+          Vector ewriters = (Vector) writers.get(f); 
+          ewriters.add(uc); 
+          writers.put(f, ewriters); 
         } 
       }
     }  
+
+    System.out.println(">> Written: " + writers);  
+    System.out.println(">> Read: " + readers); 
+
+    // check that no entity is read/written by two use cases 
+    // with different actors.  
+
+    for (int i = 0; i < entities.size(); i++) 
+    { Entity ent = (Entity) entities.get(i); 
+      if (ent.isDerived()) { } 
+      else 
+      { Vector allreaders = (Vector) readers.get(ent); 
+        Vector actors = new Vector(); 
+        for (int j = 0; j < allreaders.size(); j++) 
+        { UseCase uc = (UseCase) allreaders.get(j); 
+          String actr = uc.getTaggedValue("actor"); 
+          if (actr != null) 
+          { if (actors.contains(actr)) { } 
+            else 
+            { actors.add(actr); } 
+          } 
+        }
+        System.out.println(">> Actors " + actors + " use " + ent); 
+        if (actors.size() > 1) 
+        { System.out.println("!! Warning: Single Responsibility Principle violated for " + ent); } 
+      }
+    }
+  
   } 
 
   private void useCaseToDesign(UseCase uc)
@@ -958,12 +1011,12 @@ public class UCDArea extends JPanel
     // an includes: 
     for (int i = 0; i < useCases.size(); i++) 
     { if (useCases.get(i) instanceof UseCase)
-	  { UseCase uc1 = (UseCase) useCases.get(i); 
+      { UseCase uc1 = (UseCase) useCases.get(i); 
         if (uc1.hasExtension(ucext))
         { System.err.println("Cannot have " + nme + " as extension of two usecases!"); 
           return; 
         }
-	  }  
+      }  
     } 
 
     for (int i = 0; i < useCases.size(); i++) 
@@ -7262,7 +7315,7 @@ public class UCDArea extends JPanel
   public void addInheritances(Entity e, Entity[] ents)
   { RectData rde = (RectData) getVisualOf(e); 
     if (rde == null) 
-    { System.err.println("No visual for: " + e); 
+    { System.err.println("!! No visual for: " + e); 
       return; 
     } 
 
@@ -8412,7 +8465,7 @@ public class UCDArea extends JPanel
   public void keyPressed(KeyEvent e)
   { requestFocus();
     if (firstpress) 
-    { System.out.println("Adding waypoint at " + x2 + " " + y2); 
+    { System.out.println(">> Adding waypoint at " + x2 + " " + y2); 
       waypoints.add(new LinePoint(x2,y2)); 
     } 
     System.out.println(e);
@@ -8431,7 +8484,7 @@ public class UCDArea extends JPanel
   { int x = me.getX(); 
     int y = me.getY(); 
     boolean is_bigger = false;
-    System.out.println("Mouse pressed at " + 
+    System.out.println(">> Mouse pressed at " + 
                        x + " " + y); 
 
     requestFocus();
@@ -8439,21 +8492,21 @@ public class UCDArea extends JPanel
     switch (mode) 
     { case SLINES:
       case ACLINES: 
-        System.out.println("Drag and release to draw association");
+        System.out.println("*** Drag and release to draw association");
         x1 = x;
         y1 = y;    // Start line  
         firstpress = true;	
         waypoints.clear(); 
         break;
       case DLINES:
-        System.out.println("Drag and release to draw inheritance");
+        System.out.println("*** Drag and release to draw inheritance");
         x1 = x;
         y1 = y;    // Start line  
         firstpress = true;	
         waypoints.clear(); 
         break;
       case POINTS: // for classes
-        System.out.println("Creating a class");
+        System.out.println(">> Creating a class");
         is_bigger = changed(x,y,50,50);
         RectData rd = new RectData(x,y,
                             getForeground(),
@@ -8466,7 +8519,7 @@ public class UCDArea extends JPanel
           // check not already defined: 
           Entity ee = (Entity) ModelElement.lookupByName(componentName,entities); 
           if (ee != null) 
-          { System.err.println("ERROR: Entity with name already exists!"); 
+          { System.err.println("!! ERROR: Entity with name already exists!"); 
             return; 
           } 
           ent = new Entity(componentName);
@@ -8541,13 +8594,13 @@ public class UCDArea extends JPanel
   public void mouseReleased(MouseEvent e)
   { int x = e.getX();
     int y = e.getY();
-    System.out.println("Mouse released at " + x + " " + y); 
+    System.out.println(">> Mouse released at " + x + " " + y); 
     switch (mode) {
     case SLINES:  
       LineData sline = 
         new LineData(x1,y1,x,y,linecount,SOLID);
       if (sline.LineLength() < 5) 
-      { System.err.println("ERROR: line too short!"); 
+      { System.err.println("!! ERROR: line too short!"); 
         firstpress = false; 
         mode = INERT; 
         return; 
@@ -8582,7 +8635,7 @@ public class UCDArea extends JPanel
         // check not already defined: 
         Entity ee = (Entity) ModelElement.lookupByName(componentName,entities); 
         if (ee != null) 
-        { System.err.println("ERROR: Entity with name already exists!"); 
+        { System.err.println("!! ERROR: Entity with name already exists!"); 
           return; 
         } 
         ent = new Entity(componentName);
@@ -8698,12 +8751,13 @@ public class UCDArea extends JPanel
  
     findSelected(e.getX(), e.getY());
     if (oldselected != selectedComponent && 
-        selectedComponent != null && selectedComponent instanceof ModelElement)
+        selectedComponent != null && 
+        selectedComponent instanceof ModelElement)
     { ModelElement me = (ModelElement) selectedComponent; 
       parent.setMessage(me.getName() + " has stereotypes: " + me.getStereotypes());  
       if (me instanceof UseCase)
       { UseCase uc = (UseCase) me; 
-        parent.setMessage(uc.getName() + " parameters are: " + uc.getParameters()); 
+        parent.setMessage(uc.getName() + " parameters are: " + uc.getParameters() + " stereotypes: " + uc.getStereotypes()); 
       } 
     } 
   }

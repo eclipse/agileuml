@@ -666,13 +666,13 @@ public class UseCase extends ModelElement
 	if (hasStereotype("edit") && parameters != null) 
 	{ for (int i = 0; i < parameters.size(); i++)
 	  { Attribute att = (Attribute) parameters.get(i); 
-	    if (att.isEntity())
-		{ Entity ent = att.getType().getEntity(); 
-		  String ename = ent.getName(); 
-		  if (res.contains(ename)) { } 
-		  else 
-		  { res.add(ename); }
-		}
+         if (att.isEntity())
+         { Entity ent = att.getType().getEntity(); 
+           String ename = ent.getName(); 
+           if (res.contains(ename)) { } 
+           else 
+           { res.add(ename); }
+         }
 	  }
 	}
 	
@@ -681,6 +681,11 @@ public class UseCase extends ModelElement
         (ConstraintOrGroup) orderedPostconditions.get(i); 
       res = VectorUtil.union(res,cns.wr(assocs)); 
     } 
+
+    if (activity != null) 
+    { 
+      res = VectorUtil.union(res, activity.writeFrame()); 
+    } 
 	
     return res; 
   } 
@@ -688,24 +693,28 @@ public class UseCase extends ModelElement
   public Vector readFrame()
   { Vector res = new Vector(); 
     
-	if (parameters != null) 
-	{ for (int i = 0; i < parameters.size(); i++)
-	  { Attribute att = (Attribute) parameters.get(i); 
-	    if (att.isEntity())
-		{ Entity ent = att.getType().getEntity(); 
-		  String ename = ent.getName(); 
-		  if (res.contains(ename)) { } 
-		  else 
-		  { res.add(ename); }
-		}
-	  }
-	}
+    if (parameters != null) 
+    { for (int i = 0; i < parameters.size(); i++)
+      { Attribute att = (Attribute) parameters.get(i); 
+        if (att.isEntity())
+        { Entity ent = att.getType().getEntity(); 
+          String ename = ent.getName(); 
+          if (res.contains(ename)) { } 
+          else 
+          { res.add(ename); }
+        }
+      }
+    }
 	
     for (int i = 0; i < orderedPostconditions.size(); i++) 
     { ConstraintOrGroup cns = 
         (ConstraintOrGroup) orderedPostconditions.get(i); 
       res = VectorUtil.union(res,cns.readFrame()); 
     } 
+
+    if (activity != null)
+    { res = VectorUtil.union(res, activity.readFrame()); }
+
     return res; 
   } 
 
@@ -754,9 +763,10 @@ public class UseCase extends ModelElement
         } 
       } 
     } 
+
     System.out.println(""); 
-    System.out.println("Use case " + this + " reads entities: " + readents); 
-    System.out.println("Use case " + this + " writes entities: " + writtenents); 
+    System.out.println(">> Use case " + this + " reads entities: " + readents); 
+    System.out.println(">> Use case " + this + " writes entities: " + writtenents); 
     // System.out.println("Associated entity: " + ent + " should be the only written entity.");
     System.out.println();  
   } 

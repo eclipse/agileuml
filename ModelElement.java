@@ -359,7 +359,11 @@ public abstract class ModelElement implements SystemTypes
     { String s = (String) stereotypes.get(i); 
       if (s.startsWith(tag + "="))
       { String value = s.substring(tag.length() + 1,s.length()); 
-        return value; 
+        return value.trim(); 
+      }
+      else if (s.startsWith(tag + " ="))
+      { String value = s.substring(tag.length() + 2,s.length()); 
+        return value.trim(); 
       } 
     } 
     return null; 

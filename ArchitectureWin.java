@@ -214,10 +214,10 @@ public class ArchitectureWin extends JFrame implements ActionListener
    ralSynthesis.addActionListener(this); 
    synthMenu.add(ralSynthesis); 
 
-   // JMenuItem rtlSynthesis = new JMenuItem("RTL");
-   // rtlSynthesis.addActionListener(this); 
-   // synthMenu.add(rtlSynthesis); 
-  }
+   JMenuItem umlSynthesis = new JMenuItem("Derive UML");
+   umlSynthesis.addActionListener(this); 
+   synthMenu.add(umlSynthesis); 
+ }
 
   public ArchitectureArea getDrawArea() 
   { return drawArea; } 
@@ -258,6 +258,10 @@ public class ArchitectureWin extends JFrame implements ActionListener
       else if (label.equals("Derive Java"))
       {
         drawArea.synthesiseJava();
+      }
+      else if (label.equals("Derive UML"))
+      {
+        drawArea.synthesiseKM3();
       }
       else if (label.equals("Component"))
       { System.out.println("Creating a component: click on location");

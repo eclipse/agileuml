@@ -939,6 +939,133 @@ class ArchitectureArea extends JPanel
     } 
   } 
 
+  private Entity addInterfaceIfNotExisting(String jname)
+  { Entity pint = 
+        (Entity) ModelElement.lookupByName(jname,entities); 
+    if (pint == null) 
+    { pint = new Entity(jname); 
+      pint.setInterface(true); 
+      int xx = (entities.size() + 1)*150; 
+      int yy = 200; 
+      if (parent != null) 
+      { parent.addEntity(pint,xx,yy); } 
+      entities.add(pint); 
+    } 
+    else if (parent != null) 
+    { Vector pents = parent.getEntities(); 
+      pint = (Entity) ModelElement.lookupByName(jname,
+                                                pents);
+      if (pint == null) 
+      { pint = new Entity(jname); 
+        pint.setInterface(true); 
+        int xx = (pents.size() + 1)*150; 
+        int yy = 200; 
+        parent.addEntity(pint,xx,yy); 
+      } 
+    } 
+    return pint; 
+  } 
+
+  private Entity addEntityIfNotExisting(String jname)
+  { Entity pint = 
+        (Entity) ModelElement.lookupByName(jname,entities); 
+    if (pint == null) 
+    { pint = new Entity(jname); 
+      // pint.setInterface(true); 
+      int xx = (entities.size() + 1)*150; 
+      int yy = 500; 
+      if (parent != null) 
+      { parent.addEntity(pint,xx,yy); } 
+      entities.add(pint); 
+    } 
+    else if (parent != null) 
+    { Vector pents = parent.getEntities(); 
+      pint = (Entity) ModelElement.lookupByName(jname,
+                                                pents);
+      if (pint == null) 
+      { pint = new Entity(jname); 
+        int xx = (pents.size() + 1)*150; 
+        int yy = 500; 
+        parent.addEntity(pint,xx,yy); 
+      } 
+    } 
+    return pint; 
+  } 
+
+  public void synthesiseKM3()
+  { for (int i = 0; i < components.size(); i++) 
+    { ArchComponent comp = (ArchComponent) components.get(i); 
+      String compName = comp.getName();
+      Entity compEnt = addEntityIfNotExisting(compName); 
+
+      String lcname = compName.toLowerCase(); 
+      String interfacesDefinitions = ""; 
+      Vector pinterfaces = comp.getProvidedInterfaces();
+      for (int j = 0; j < pinterfaces.size(); j++) 
+      { Entity pint = (Entity) pinterfaces.get(j); 
+        interfacesDefinitions = 
+          interfacesDefinitions + 
+          "\n" + 
+          pint.getKM3() + "\n\n"; 
+        pint = addInterfaceIfNotExisting(pint.getName());
+        if (parent != null)
+        { Generalisation gi = 
+              new Generalisation(pint,compEnt);
+          gi.setRealization(true); 
+          parent.addInheritance(gi,pint,compEnt);
+        } 
+      } 
+
+      Vector rinterfaces = comp.getRequiredInterfaces();
+      for (int j = 0; j < rinterfaces.size(); j++) 
+      { Entity rint = (Entity) rinterfaces.get(j); 
+        interfacesDefinitions = 
+          interfacesDefinitions + 
+          "\n" + 
+          rint.getKM3() + "\n\n"; 
+        addInterfaceIfNotExisting(rint.getName()); 
+      } 
+
+      String res = "package " + lcname + " { \n\n" + 
+                   interfacesDefinitions + 
+                   "class " + compName; 
+
+      if (pinterfaces.size() > 0) 
+      { res = res + " implements "; }  
+      for (int j = 0; j < pinterfaces.size(); j++) 
+      { Entity pint = (Entity) pinterfaces.get(j); 
+        res = res + pint.getName(); 
+        if (j < pinterfaces.size() - 1) 
+        { res = res + ", "; } 
+      } 
+
+      res = res + "\n{\n"; 
+
+      String constr = "  static operation new" + compName + "("; 
+      String assignments = ""; 
+
+      for (int j = 0; j < rinterfaces.size(); j++) 
+      { Entity rint = (Entity) rinterfaces.get(j); 
+        String rname = rint.getName();
+        String rx = rname.toLowerCase() + "_x"; 
+        res = res + "  attribute " + rx + " : " + rname + ";\n";
+        constr = constr + rx + " : " + rname; 
+        if (j < rinterfaces.size()-1)
+        { constr = constr + ", "; }  
+        assignments = assignments + "    result." + rx + " := " + rx + ";\n";   
+      } 
+
+      constr = constr + ") : " + compName + "\n" + "  pre: true post: true\n  activity: var result : " + compName + " := create" + compName + "();\n" + assignments + "    return result;\n"; 
+      res = res + "\n" + constr + "}\n"; 
+
+      // And operation for each provided interface operation.
+
+      System.out.println(res); 
+      System.out.println("}"); 
+      System.out.println(); 
+    } 
+  } 
+
 
   public boolean editComponent(ArchComponent r)
   { 
