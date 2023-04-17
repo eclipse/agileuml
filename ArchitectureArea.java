@@ -32,86 +32,86 @@ import java.awt.print.*;
 class ArchitectureArea extends JPanel 
     implements MouseListener, MouseMotionListener, KeyListener, Printable
 {
-    //these indicate which option the user has chosen from the menu
-    public static final int INERT = -1; 
-    public static final int SLINES = 0;
-    public static final int POINTS = 1;
-    public static final int EVENTS = 2;
-    public static final int DLINES = 3;
-    public static final int EDIT = 4; 
-    public static final int LSTATE = 5; 
-    public static final int EXECOCC = 6; 
-    public static final int TANN = 7; 
-    public static final int DANN = 8; 
+  // these indicate which option the user has chosen from the menu
+  public static final int INERT = -1; 
+  public static final int SLINES = 0;
+  public static final int POINTS = 1;
+  public static final int EVENTS = 2;
+  public static final int DLINES = 3;
+  public static final int EDIT = 4; 
+  public static final int LSTATE = 5; 
+  public static final int EXECOCC = 6; 
+  public static final int TANN = 7; 
+  public static final int DANN = 8; 
 
-    public static final int SOLID = 0; 
-    public static final int DASHED = 1; 
+  public static final int SOLID = 0; 
+  public static final int DASHED = 1; 
 
-    public static final int EDITING = 0; 
-    public static final int DELETING = 1; 
-    public static final int MOVING = 2; 
-    public static final int GLUEMOVE = 3; 
-    public static final int RESIZING = 4; 
+  public static final int EDITING = 0; 
+  public static final int DELETING = 1; 
+  public static final int MOVING = 2; 
+  public static final int GLUEMOVE = 3; 
+  public static final int RESIZING = 4; 
 
-    //Solid line -- could be made smaller for thinner line
-    final static BasicStroke stroke = new BasicStroke(2.0f);
+    // Solid line -- could be made smaller for thinner line
+  final static BasicStroke stroke = new BasicStroke(2.0f);
     
     // ArchitectureWin controller;
-    UCDArea parent; 
+  UCDArea parent; 
     
     //Get the screen size for the size of the scroll bar view
-    private Dimension screenSize = 
+  private Dimension screenSize = 
       Toolkit.getDefaultToolkit().getScreenSize();   
-    private Dimension preferredSize = screenSize; 
+  private Dimension preferredSize = screenSize; 
  
-  //Record mode e.g. Lines, Points etc.
+  // Record mode e.g. Lines, Points etc.
   int mode = INERT;
   int editMode = EDITING; 
 
   private int x1, y1;  // x1,y1 store where the mouse has been pressed
   private int x2, y2;  //end of line coordinates
   private boolean firstpress = false;
-    //True when the user draws a transition or drags mouse
+   // True when the user draws a transition or drags mouse
     
   // True if the user pressed, dragged or released the mouse outside of
   // the rectangle; false otherwise.
   private boolean pressOut = false;   
 
-  //Dialog definitions
-  private EvtNameDialog nameDialog;
-  private MessageEditDialog transDialog;   
-  private StateEdtDialog sDialog; 
-  private ExecutionEditDialog eDialog; 
-  private TAEditDialog taDialog; 
-  private DurationEditDialog durationDialog; 
-  private EntityCreateDialog entDialog; 
-  private ScenarioEditDialog scenarioDialog; 	
+  // Dialog definitions
+    // private EvtNameDialog nameDialog;
+    // private MessageEditDialog transDialog;   
+    // private StateEdtDialog sDialog; 
+    // private ExecutionEditDialog eDialog; 
+    // private TAEditDialog taDialog; 
+    // private DurationEditDialog durationDialog; 
+    // private EntityCreateDialog entDialog; 
+    // private ScenarioEditDialog scenarioDialog; 	
 
-  Vector visuals = new Vector();  //holds all the points of the elements drawn
-  Vector waypoints = new Vector(); 
+    Vector visuals = new Vector();  //holds all the points of the elements drawn
+    Vector waypoints = new Vector(); 
 
-  Vector lifelines = new Vector();   // UMLObject
-  Vector messages = new Vector();   // Message
-  Vector executionInstances = new Vector();  // ExecutionInstance
-  Vector lifelineStates = new Vector();  // LifelineState
-  Vector timeAnnotations = new Vector();  // TimeAnnotation
-  Vector durationAnnotations = new Vector(); // DurationAnnotation
+  // Vector lifelines = new Vector();   // UMLObject
+  // Vector messages = new Vector();   // Message
+  // Vector executionInstances = new Vector();  // ExecutionInstance
+  // Vector lifelineStates = new Vector();  // LifelineState
+  // Vector timeAnnotations = new Vector();  // TimeAnnotation
+  // Vector durationAnnotations = new Vector(); // DurationAnnotation
 
-  private Vector types = new Vector(); 
-  private Vector entities = new Vector();  
+    private Vector types = new Vector(); 
+    private Vector entities = new Vector();  
   private Vector requirements = new Vector();  // Requirement
-  private Vector components = new Vector();  // ArchComponent
+    private Vector components = new Vector();  // ArchComponent
   private Vector usecases = new Vector(); 
 
   private UMLObject selectedObject = null; 
-  private VisualData selectedVisual = null; 
+    private VisualData selectedVisual = null; 
   private Message selectedMessage = null; 
   private LifelineState selectedState = null; 
   private TimeAnnotation selectedTimeAnnotation = null; 
   private ExecutionInstance selectedExecution = null;  
 
-  private ModelElement selectedInterface = null; 
-  private ArchComponent selectedComponent = null; 
+    private ModelElement selectedInterface = null; 
+    private ArchComponent selectedComponent = null; 
 
   private Vector glueset = new Vector(); // of GlueSet
 
@@ -121,17 +121,17 @@ class ArchitectureArea extends JPanel
   private int linecount = 0;
 
 
- public ArchitectureArea(Object controller, 
-                         UCDArea par, String s, Vector es)
- { // this.controller = controller;
-   parent = par; 
-   entities = new Vector(); 
-   if (es != null) 
-   { entities.addAll(es); } 
+  public ArchitectureArea(Object controller, 
+                          UCDArea par, String s, Vector es)
+  { // this.controller = controller;
+    parent = par; 
+    entities = new Vector(); 
+    if (es != null) 
+    { entities.addAll(es); } 
     
-   Border raisedBevel = BorderFactory.createRaisedBevelBorder();
-   Border loweredBevel = BorderFactory.createLoweredBevelBorder();
-   Border compound = 
+    Border raisedBevel = BorderFactory.createRaisedBevelBorder();
+    Border loweredBevel = BorderFactory.createLoweredBevelBorder();
+    Border compound = 
       BorderFactory.createCompoundBorder(raisedBevel, loweredBevel);
     setBorder(compound);
     setBackground(Color.white);
@@ -801,12 +801,7 @@ class ArchitectureArea extends JPanel
 
     String nme = (String) line2vals.get(0); 
 
-    Entity ent = (Entity) ModelElement.lookupByName(nme, entities); 
-    if (ent == null) 
-    { ent = new Entity(nme); 
-      ent.setInterface(true); 
-      entities.add(ent); 
-    } 
+    Entity ent = addInterfaceIfNotExisting(nme); 
     findConnection(dline,x2,y2); 
     dline.setModelElement(ent); 
     find_src(dline); 
@@ -864,12 +859,8 @@ class ArchitectureArea extends JPanel
 
     String nme = (String) line2vals.get(0); 
 
-    Entity ent = (Entity) ModelElement.lookupByName(nme, entities); 
-    if (ent == null) 
-    { ent = new Entity(nme); 
-      ent.setInterface(true); 
-      entities.add(ent); 
-    } 
+    Entity ent = addInterfaceIfNotExisting(nme); 
+
     dline.setModelElement(ent); 
     visuals.addElement(dline);
     find_src(dline); 
@@ -943,20 +934,28 @@ class ArchitectureArea extends JPanel
   { Entity pint = 
         (Entity) ModelElement.lookupByName(jname,entities); 
     if (pint == null) 
-    { pint = new Entity(jname); 
-      pint.setInterface(true); 
-      int xx = (entities.size() + 1)*150; 
-      int yy = 200; 
-      if (parent != null) 
-      { parent.addEntity(pint,xx,yy); } 
+    { if (parent != null) 
+      { Vector pents = parent.getEntities(); 
+        Entity pxint = 
+          (Entity) ModelElement.lookupByName(jname,pents);
+        if (pxint == null)
+        { pint = new Entity(jname); 
+          pint.setInterface(true); 
+          int xx = (entities.size() + 1)*150; 
+          int yy = 200; 
+          parent.addEntity(pint,xx,yy); 
+        }
+        else 
+        { pint = pxint; } 
+      }  
       entities.add(pint); 
     } 
     else if (parent != null) 
     { Vector pents = parent.getEntities(); 
-      pint = (Entity) ModelElement.lookupByName(jname,
+      Entity pxint = (Entity) ModelElement.lookupByName(jname,
                                                 pents);
-      if (pint == null) 
-      { pint = new Entity(jname); 
+      if (pxint == null) 
+      { // pint = new Entity(jname); 
         pint.setInterface(true); 
         int xx = (pents.size() + 1)*150; 
         int yy = 200; 
@@ -980,10 +979,10 @@ class ArchitectureArea extends JPanel
     } 
     else if (parent != null) 
     { Vector pents = parent.getEntities(); 
-      pint = (Entity) ModelElement.lookupByName(jname,
+      Entity pxint = (Entity) ModelElement.lookupByName(jname,
                                                 pents);
-      if (pint == null) 
-      { pint = new Entity(jname); 
+      if (pxint == null) 
+      { // pint = new Entity(jname); 
         int xx = (pents.size() + 1)*150; 
         int yy = 500; 
         parent.addEntity(pint,xx,yy); 
@@ -1016,15 +1015,29 @@ class ArchitectureArea extends JPanel
         } 
       } 
 
+      Vector supplierAssocs = new Vector(); 
       Vector rinterfaces = comp.getRequiredInterfaces();
+
       for (int j = 0; j < rinterfaces.size(); j++) 
       { Entity rint = (Entity) rinterfaces.get(j); 
+        String rintname = rint.getName(); 
+
         interfacesDefinitions = 
           interfacesDefinitions + 
           "\n" + 
           rint.getKM3() + "\n\n"; 
-        addInterfaceIfNotExisting(rint.getName()); 
+
+        rint = addInterfaceIfNotExisting(rintname);
+        Association assoc = 
+          new Association(compEnt, rint, Association.MANY, 
+                          Association.ONE, "", 
+                          rintname.toLowerCase() + "_x"); 
+        supplierAssocs.add(assoc);
+        compEnt.addAssociation(assoc);   
       } 
+
+      if (parent != null) 
+      { parent.addAssociations(supplierAssocs); } 
 
       String res = "package " + lcname + " { \n\n" + 
                    interfacesDefinitions + 
@@ -1043,16 +1056,44 @@ class ArchitectureArea extends JPanel
 
       String constr = "  static operation new" + compName + "("; 
       String assignments = ""; 
+      SequenceStatement stats = new SequenceStatement(); 
+      Vector pars = new Vector(); 
+      Expression resexpr = 
+        BasicExpression.newVariableBasicExpression(
+          "result", new Type(compEnt)); 
+      Expression createE = 
+        BasicExpression.newCallBasicExpression(
+          "create" + compName); 
+      CreationStatement crestat = 
+         CreationStatement.newCreationStatement(
+                                "result", new Type(compEnt), 
+                                createE); 
+      stats.addStatement(crestat); 
 
       for (int j = 0; j < rinterfaces.size(); j++) 
       { Entity rint = (Entity) rinterfaces.get(j); 
         String rname = rint.getName();
         String rx = rname.toLowerCase() + "_x"; 
-        res = res + "  attribute " + rx + " : " + rname + ";\n";
+
+        res = res + "  reference " + rx + " : " + rname + ";\n";
+
         constr = constr + rx + " : " + rname; 
+
+        Attribute par = 
+           new Attribute(rx, new Type(rint), 
+                         ModelElement.INTERNAL); 
+        pars.add(par); 
+
         if (j < rinterfaces.size()-1)
         { constr = constr + ", "; }  
         assignments = assignments + "    result." + rx + " := " + rx + ";\n";   
+
+        BasicExpression resrx = new BasicExpression(par); 
+        resrx.setObjectRef(resexpr); 
+        Expression rxexpr = new BasicExpression(par); 
+        AssignStatement asgn = 
+          new AssignStatement(resrx, rxexpr); 
+        stats.addStatement(asgn); 
       } 
 
       constr = constr + ") : " + compName + "\n" + "  pre: true post: true\n  activity: var result : " + compName + " := create" + compName + "();\n" + assignments + "    return result;\n"; 
@@ -1063,6 +1104,16 @@ class ArchitectureArea extends JPanel
       System.out.println(res); 
       System.out.println("}"); 
       System.out.println(); 
+
+      stats.addStatement(new ReturnStatement(resexpr)); 
+
+      BehaviouralFeature bf = 
+        new BehaviouralFeature("new" + compName, pars, 
+                               true, new Type(compEnt)); 
+      bf.setStatic(true); 
+      bf.setPost(new BasicExpression(true)); 
+      bf.setActivity(stats); 
+      compEnt.addOperation(bf); 
     } 
   } 
 
@@ -1085,10 +1136,6 @@ class ArchitectureArea extends JPanel
     return true; 
   } 
 
-
-  
-
-
   private void insertSorted(int y, int i, Vector tt, Vector events)
   { if (i >= events.size())
     { events.add(tt); } 
@@ -1102,7 +1149,7 @@ class ArchitectureArea extends JPanel
     } 
   } 
     
-
+/* 
   public void generateRAL()
   { for (int i = 0; i < lifelines.size(); i++) 
     { UMLObject ll = (UMLObject) lifelines.get(i);
@@ -1189,7 +1236,7 @@ class ArchitectureArea extends JPanel
     { DurationAnnotation da = (DurationAnnotation) durationAnnotations.get(k); 
       System.out.println(da.generateRAL()); 
     } 
-  }
+  } */ 
 
   public void setDrawMode(int mode) 
   { // oldMode = this.mode; 
@@ -1289,7 +1336,7 @@ class ArchitectureArea extends JPanel
     y2 = y;  // ??
    
     boolean is_bigger = false;
-    System.out.println("Mouse pressed at " + x + " " + y); 
+    System.out.println(">> Mouse pressed at " + x + " " + y); 
 
     switch (mode) {
     case SLINES:
@@ -1298,7 +1345,7 @@ class ArchitectureArea extends JPanel
       firstpress = true;	
       break;
     case DLINES:
-      System.out.println("This is DLINES");
+      System.out.println(">> DLINES");
       firstpress = true;	
       break;
     case POINTS:
@@ -1418,13 +1465,19 @@ class ArchitectureArea extends JPanel
       Entity pint = 
         (Entity) ModelElement.lookupByName(jname,entities); 
       if (pint == null) 
-      { System.err.println("! Interface " + jname + " does not exist, it will be added to the class diagram."); 
-        pint = new Entity(jname); 
-        pint.setInterface(true); 
-        int xx = (entities.size() + 1)*100; 
-        int yy = 200; 
-        if (parent != null) 
-        { parent.addEntity(pint,xx,yy); } 
+      { if (parent != null)
+        { Vector pents = parent.getEntities(); 
+          pint = 
+            (Entity) ModelElement.lookupByName(jname,pents);
+          if (pint == null) 
+          { System.err.println("! Interface " + jname + " does not exist, it will be added to the class diagram."); 
+            pint = new Entity(jname); 
+            pint.setInterface(true); 
+            int xx = (entities.size() + 1)*150; 
+            int yy = 200; 
+            parent.addEntity(pint,xx,yy); 
+          }
+        } 
         entities.add(pint); 
       } 
       else if (pint.isInterface()) { } 
@@ -1458,13 +1511,19 @@ class ArchitectureArea extends JPanel
       Entity rint = 
         (Entity) ModelElement.lookupByName(iname,entities); 
       if (rint == null) 
-      { System.err.println("! Interface " + iname + " does not exist, it will be added to the class diagram."); 
-        rint = new Entity(iname); 
-        rint.setInterface(true); 
-        int xx = (entities.size() + 1)*100; 
-        int yy = 200; 
-        if (parent != null) 
-        { parent.addEntity(rint,xx,yy); } 
+      { if (parent != null)
+        { Vector pents = parent.getEntities(); 
+          rint = 
+            (Entity) ModelElement.lookupByName(iname,pents);
+          if (rint == null) 
+          { System.err.println("! Interface " + iname + " does not exist, it will be added to the class diagram."); 
+            rint = new Entity(iname); 
+            rint.setInterface(true); 
+            int xx = (entities.size() + 1)*150; 
+            int yy = 200; 
+            parent.addEntity(rint,xx,yy); 
+          }
+        } 
         entities.add(rint); 
       } 
       else if (rint.isInterface()) { } 

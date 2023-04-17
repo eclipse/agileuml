@@ -1756,7 +1756,7 @@ public class UCDArea extends JPanel
         { Association aa = (Association) assocs.get(j); 
           if (astv.contains(aa)) { } 
           else 
-          { System.out.println("Association " + aa + " missing from constraint"); 
+          { System.out.println("!! Association " + aa + " missing from constraint"); 
             cons.addAssociation(aa); 
           } 
         } */
@@ -2488,7 +2488,7 @@ public class UCDArea extends JPanel
       String role2 = astDialog.getRole2(); 
         // JOptionPane.showInputDialog("Enter target role:");
       if (role2 == null)
-      { System.out.println("Modify cancelled");
+      { System.out.println("! Modify cancelled");
         return;
       }
       String card1 = astDialog.getCard1();
@@ -2506,12 +2506,12 @@ public class UCDArea extends JPanel
       if (c1 == ModelElement.AGGREGATION1)
       { ast.setCard1(ModelElement.ONE); 
         ast.setAggregation(true); 
-        System.out.println("Defining aggregation"); 
+        System.out.println(">> Defining aggregation"); 
       } 
       else if (c1 == ModelElement.AGGREGATION01)
       { ast.setCard1(ModelElement.ZEROONE); 
         ast.setAggregation(true); 
-        System.out.println("Defining aggregation"); 
+        System.out.println(">> Defining aggregation"); 
       } 
       else if (c1 == ModelElement.QUALIFIER)
       { ast.setCard1(ModelElement.MANY); // assume
@@ -2541,19 +2541,20 @@ public class UCDArea extends JPanel
       { Entity ent2 = ast.getEntity2(); 
         Association invast = ent2.getRole(oldrole1); 
         
-        if (role1 == null) { ent2.removeAssociation(invast); }
+        if (role1 == null) 
+        { ent2.removeAssociation(invast); }
         else
         { invast.setRole1(role2); 
           invast.setRole2(role1); 
           if (c2 == ModelElement.AGGREGATION1)
           { invast.setCard1(ModelElement.ONE); 
             invast.setAggregation(true); 
-            System.out.println("Defining aggregation"); 
+            System.out.println(">> Defining aggregation"); 
           } 
           else if (c2 == ModelElement.AGGREGATION01)
           { invast.setCard1(ModelElement.ZEROONE); 
             invast.setAggregation(true); 
-            System.out.println("Defining aggregation"); 
+            System.out.println(">> Defining aggregation"); 
           } 
           else 
           { invast.setCard1(c2); } 
@@ -3059,14 +3060,74 @@ public class UCDArea extends JPanel
     } 
   } 
 
+  // Check that referred-to entities actually are 
+  // used as suppliers. 
+  // Check if there are cycles of references between 
+  // classes. 
+
+  public void cleanArchitectureCheck()
+  { int allClasses = entities.size(); 
+	
+    for (int i = 0; i < allClasses; i++) 
+    { Entity ent = (Entity) entities.get(i);
+      if (ent.isDerived() || 
+          ent.isComponent() || ent.isExternal())
+      { continue; }
+
+      if (ent.hasCycle())
+      { System.err.println("!! Warning: ADP violated: class " + 
+                           ent + " is self-dependent via a cycle of references!"); 
+      } 
+
+      if (ent.hasStereotype("platformSpecific")) 
+      { continue; } 
+
+      Vector referredClasses = ent.getSupplierClasses(); 
+
+      for (int j = 0; j < referredClasses.size(); j++)
+      { Entity ref = (Entity) referredClasses.get(j); 
+        if (ref.hasStereotype("platformSpecific"))
+        { System.err.println("!! Warning: Dependency rule violated: platform-independent class " + ent); 
+          System.err.println("!! depends on platform-specific class " + ref);
+          
+        } 
+      }
+
+      Vector opuses = ent.allOperationsUsedIn(); 
+      System.out.println(">>> Operations used in " + ent + 
+                         " are: " + opuses); 
+      Vector classuses = new Vector(); 
+      for (int k = 0; k < opuses.size(); k++) 
+      { String opuse = (String) opuses.get(k); 
+        int nind = opuse.indexOf("::"); 
+        String cname = opuse.substring(0,nind); 
+        classuses.add(cname); 
+      } 
+
+      
+      for (int j = 0; j < referredClasses.size(); j++)
+      { Entity ref = (Entity) referredClasses.get(j); 
+        String rname = ref.getName(); 
+        if (classuses.contains(rname)) { } 
+        else 
+        { System.err.println("!! Warning: ISP violated: class " + rname + 
+             " is referenced but no operation of it is used by " + ent); 
+        } 
+      }  
+    }   
+  }        
+
   public void displayMeasures(PrintWriter out)
-  { String cloneLimit = 
+  { /* String cloneLimit = 
       JOptionPane.showInputDialog("Enter clone size limit (default 10): ");
     if (cloneLimit != null) 
     { try { CLONE_LIMIT = Integer.parseInt(cloneLimit); } 
       catch (Exception _ex) 
       { CLONE_LIMIT = 10; } 
-    } 
+    } */ 
+
+    CLONE_LIMIT = TestParameters.cloneSizeLimit; 
+
     out.println(); 
     out.println(); 
     System.err.println(); 
@@ -3232,7 +3293,6 @@ public class UCDArea extends JPanel
       System.err.println(">>> Suggest refactoring using Replace recursion by iteration (for tail recursions)"); 
     } 
 
-
     Vector allused = new Vector(); 
 
     for (int i = 0; i < useCases.size(); i++)
@@ -3241,7 +3301,6 @@ public class UCDArea extends JPanel
       { UseCase uc = (UseCase) me; 
         String ucname = uc.getName(); 
         
-
         Map ucg = uc.getCallGraph(); 
         Vector rang = new Vector(); 
 
@@ -3252,11 +3311,11 @@ public class UCDArea extends JPanel
           Map alldependencies = Map.union(ucg,transdependencies); 
           rang = alldependencies.range(); 
           if (rang.size() > 0) 
-          { out.println("*** Use case " + me + " has dependencies upon: " + rang.size() + " operations"); } // range of this
+          { out.println("*** Use case " + me + " has dependencies upon: " + rang.size() + " operations"); } 
           else 
           { out.println("*** " + me + " has no dependencies"); }
           
-          if (rang.size() > 10) 
+          if (rang.size() > TestParameters.efoLimit) 
           { System.err.println("!!! Code smell (EFO): " + me + " uses too many operations: " + rang.size());
             System.err.println(">>> Suggest refactoring by sequential decomposition"); 
           } 
@@ -3273,7 +3332,7 @@ public class UCDArea extends JPanel
           if (selfcallsucn > 0) 
           { out.println("*** " + selfcallsucn + " calls in recursive loops in " + me + " : " + selfcallsuc);  
             System.err.println("!!! Code smell (CBR2): " + selfcallsucn + " calls in recursive loops in " + me + " : " + selfcallsuc); 
-            System.err.println(">>> Suggest refactoring using Map Objects Before Links/Replace Recusion by Iteration"); 
+            System.err.println(">>> Suggest refactoring using Map Objects Before Links/Replace Recursion by Iteration"); 
           } 
 
 

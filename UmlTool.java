@@ -762,6 +762,10 @@ public void findPlugins()
     measuresItem.addActionListener(this);
     analyseMenu.add(measuresItem);
 
+    JMenuItem carchItem = new JMenuItem("Clean architecture properties"); 
+    carchItem.addActionListener(this);
+    analyseMenu.add(carchItem);
+
     JMenuItem ddepsItem = new JMenuItem("Data dependencies"); 
     ddepsItem.addActionListener(this);
     analyseMenu.add(ddepsItem);
@@ -2236,6 +2240,8 @@ public void findPlugins()
 
         new TextDisplay("Measures","output/tmp.txt");
       }  
+      else if (label.equals("Clean architecture properties"))
+      { ucdArea.cleanArchitectureCheck(); }
       else if (label.equals("Data dependencies"))
       { ucdArea.displayDataDependencies(); }
       else if (label.equals("Compare models"))

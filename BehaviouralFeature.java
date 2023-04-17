@@ -3882,7 +3882,7 @@ public class BehaviouralFeature extends ModelElement
     { pars++; } 
 
     out.println("*** Number of parameters of operation " + nme + " = " + pars); 
-    if (pars > 10) 
+    if (pars > TestParameters.numberOfParametersLimit) 
     { System.err.println("!!! Code smell (EPL): too many parameters (" + pars + ") for " + nme); 
       System.err.println(">>> Recommend refactoring by introducing value object for parameters or splitting operation into parts"); 
     }  
@@ -3905,27 +3905,27 @@ public class BehaviouralFeature extends ModelElement
 
       int acomp = activity.syntacticComplexity(); 
       out.println("*** Activity syntactic complexity = " + acomp); 
-      if (acomp > 100) 
+      if (acomp > TestParameters.operationSizeLimit) 
       { System.err.println("!!! Code smell (EOS): too high activity complexity (" + acomp + ") for " + nme); 
         System.err.println(">>> Recommend refactoring by splitting operation"); 
       }  
-      else if (acomp > 50) 
+      else if (acomp > TestParameters.operationSizeWarning) 
       { System.err.println("*** Warning: high activity complexity (" + acomp + ") for " + nme); }  
       complexity = complexity + acomp; 
     }
     
     out.println("*** Total complexity of operation " + nme + " = " + complexity); 
     out.println(); 
-    if (cyc > 10) 
+    if (cyc > TestParameters.cyclomaticComplexityLimit) 
     { System.err.println("!!! Code smell (CC): high cyclomatic complexity (" + cyc + ") for " + nme);
       System.err.println(">>> Recommend refactoring by splitting operation"); 
     }  
 
-    if (complexity > 100) 
+    if (complexity > TestParameters.operationSizeLimit) 
     { System.err.println("!!! Code smell (EHS): too high complexity (" + complexity + ") for " + nme); 
       System.err.println(">>> Recommend refactoring by splitting operation"); 
     }  
-    else if (complexity > 50) 
+    else if (complexity > TestParameters.operationSizeWarning) 
     { System.err.println("*** Warning: high complexity (" + complexity + ") for " + nme); }  
 
 

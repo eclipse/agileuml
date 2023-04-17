@@ -5274,6 +5274,15 @@ class CreationStatement extends Statement
     variable = vbl.variable;  
   }
 
+  public static CreationStatement newCreationStatement(
+            String vbl, Type typ, Expression einit) 
+  { CreationStatement cs = 
+       new CreationStatement(typ.getName(), vbl); 
+    cs.setType(typ);
+    cs.setInitialisation(einit);   
+    return cs; 
+  } 
+
   public static CreationStatement newCreationStatement(String vbl, String typ) 
   { CreationStatement cs = new CreationStatement(typ, vbl); 
     Type t = Type.getTypeFor(typ);

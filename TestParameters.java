@@ -27,5 +27,22 @@ public class TestParameters
 
   public static double minFloat = -655.276; 
     // -Double.MAX_VALUE
+
+  /* Settings for flaw/technical debt detection */ 
+
+  public static int cloneSizeLimit = 10; 
+  public static int cyclomaticComplexityLimit = 10; 
+  public static int numberOfDataFeaturesLimit = 20; 
+  public static int numberOfOperationsLimit = 15; 
+  public static int numberOfParametersLimit = 10; 
+
+  public static int operationSizeLimit = 100; 
+  public static int operationSizeWarning = 50; 
+
+  public static int classSizeLimit = 1000; 
+
+  public static int efoLimit = 10; 
+  public static int efiLimit = 10; 
+
 }
 

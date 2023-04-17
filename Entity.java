@@ -4615,7 +4615,15 @@ public class Entity extends ModelElement implements Comparable
 
     out.println("*** Number of " + nme + " attributes = " + atts); 
     out.println("*** Number of " + nme + " roles = " + assocs); 
+
+    if (atts + assocs >
+        TestParameters.numberOfDataFeaturesLimit) 
+    { out.println("!! Code smell (EPL): excessive number of data features " + (atts + assocs) + " in " + nme); } 
+
     out.println("*** Number of " + nme + " operations = " + ops); 
+
+    if (ops > TestParameters.numberOfOperationsLimit) 
+    { out.println("!! Code smell (ENO): excessive number of operations " + (ops) + " in " + nme); } 
 
     int totalComplexity = 0; 
 
@@ -4624,9 +4632,10 @@ public class Entity extends ModelElement implements Comparable
       
       int opcomplexity = op.displayMeasures(out);
 
-      if (opcomplexity > 100) 
+      if (opcomplexity > TestParameters.operationSizeLimit) 
       { highcount++; } 
-      else if (opcomplexity > 50)
+      else if (opcomplexity > 
+               TestParameters.operationSizeWarning)
       { lowcount++; } 
 
       totalComplexity = totalComplexity + opcomplexity;  
@@ -4637,7 +4646,9 @@ public class Entity extends ModelElement implements Comparable
       Vector newopuses = VectorUtil.union(vuses,opuses); 
   
       if (newopuses.size() > 0)
-      { out.println("*** Operations used in " + op.getName() + " are: " + newopuses); } 
+      { out.println("*** Operations used in " + op.getName() + " are: " + newopuses);
+        checkPlatformDependence(newopuses); 
+      } 
 
       op.findClones(clones);
       // System.out.println(">>> Clones in " + op.getName() + ": " + clones);  
@@ -4647,11 +4658,11 @@ public class Entity extends ModelElement implements Comparable
       out.println(); 
     } 
 
-    out.println("*** " + highcount + " operations of " + getName() + " are > 100 complexity"); 
-    out.println("*** " + lowcount + " other operations of " + getName() + " are > 50 complexity"); 
+    out.println("*** " + highcount + " operations of " + getName() + " are > " + TestParameters.operationSizeLimit + " complexity"); 
+    out.println("*** " + lowcount + " other operations of " + getName() + " are > " + TestParameters.operationSizeWarning + " complexity"); 
 
     out.println("*** Total complexity of " + getName() + " is: " + totalComplexity); 
-    if (totalComplexity > 1000)
+    if (totalComplexity > TestParameters.classSizeLimit)
     { System.err.println("!! Code Smell: Excessively large class: " + 
                 getName() + " has c = " + totalComplexity); 
     } 
@@ -4699,6 +4710,40 @@ public class Entity extends ModelElement implements Comparable
     }   
 
     return totalComplexity; 
+  } 
+
+  public void checkPlatformDependence(Vector calledops)
+  { String nme = getName(); 
+
+    Vector dependsOn = new Vector(); 
+    for (int i = 0; i < calledops.size(); i++) 
+    { String cop = (String) calledops.get(i); 
+      if (cop.startsWith("OclFile::"))
+      { dependsOn.add("OclFile"); } 
+      else if (cop.startsWith("OclDatasource::"))
+      { dependsOn.add("OclDatasource"); }
+      else if (cop.startsWith("SQLStatement::"))
+      { dependsOn.add("SQLStatement"); }
+    }
+
+    if (dependsOn.size() > 0)
+    { System.out.println("!! Warning: class " + nme + 
+        " depends on platform-specific facilities: " + 
+        dependsOn); 
+      stereotypes.add("platformSpecific"); 
+    }
+  }  
+
+  public Vector allOperationsUsedIn()
+  { Vector res = new Vector(); 
+    for (int i = 0; i < operations.size(); i++)
+    { BehaviouralFeature op = 
+        (BehaviouralFeature) operations.get(i);
+      
+      Vector opuses = op.operationsUsedIn(); 
+      res = VectorUtil.union(res,opuses); 
+    } 
+    return res; 
   } 
 
   public void extractOperations()
@@ -13339,7 +13384,7 @@ public class Entity extends ModelElement implements Comparable
 
     for (int i = 0; i < attributes.size(); i++)
     { Attribute att = (Attribute) attributes.get(i);
-      if (superclass.hasInheritedAttribute(att.getName()))
+      if (superclass != null && superclass.hasInheritedAttribute(att.getName()))
       { System.err.println("!! Error: attribute " + att +
           " defined in " + this + " and an " +
           " ancestor class");
@@ -13387,6 +13432,7 @@ public class Entity extends ModelElement implements Comparable
       if (sinterfaces.size() > 0)
       { return sinterfaces; } 
     }
+	
     for (int i = 0; i < interfaces.size(); i++) 
     { Entity intf = (Entity) interfaces.get(i); 
       Vector iinterfaces = intf.getAllInterfaces(new Vector()); 
@@ -13707,6 +13753,24 @@ public class Entity extends ModelElement implements Comparable
     } 
     return res; 
   } 
+
+  public Vector getSupplierClasses()
+  { Vector allAssociations = new Vector(); 
+    allAssociations.addAll(associations); 
+    allAssociations.addAll(allInheritedAssociations()); 
+
+    Vector res = new Vector(); 
+
+    for (int j = 0; j < allAssociations.size(); j++)
+    { Association ast = (Association) allAssociations.get(j);
+      Entity ent2 = ast.getEntity2(); 
+      if (res.contains(ent2)) { } 
+      else 
+      { res.add(ent2); } 
+    } 
+    return res; 
+  } // also from attributes. 
+
 
   public String getValueObject()
   { return getValueObject("beans"); } 
