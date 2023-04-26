@@ -1780,8 +1780,8 @@ public class CGRule
 
     for (int i = 0; i < actions.size(); i++) 
     { CGCondition act = (CGCondition) actions.get(i); 
-      res = act.applyPostAction(res,variables,newargs,
-                                rhsVariables); 
+      res = act.applyPostAction(res,variables,eargs,newargs,
+                                cgs, entities, rhsVariables); 
     }
 
     return res;

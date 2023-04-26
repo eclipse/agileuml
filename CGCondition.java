@@ -159,18 +159,41 @@ public class CGCondition
   } 
 
   public String applyPostAction(String res, 
-            Vector variables, Vector newargs,
-            Vector rhsVariables)
+            Vector variables, Vector eargs, Vector newargs,
+            CGSpec cgs, Vector entities, Vector rhsVariables)
   { if (isSubstitute)
     { String rep = variable; 
+      String varx = variable; 
       String var = stereotype; 
 
-      if (variables.contains(variable))
-      { int i = variables.indexOf(variable); 
+      Vector metafs = CGRule.metafeatures(variable); 
+
+      // System.out.println("***>> Action metafeatures of " + variable + " are: " + metafs); 
+
+      if (metafs.size() > 0)
+      { 
+        // If the variable has a metafeature: _i`mf
+        // evaluate _i`mf in cgs as the rep 
+
+        String mf = (String) metafs.get(0); 
+        int mfindex = mf.indexOf("`"); 
+        varx = mf.substring(0,mfindex); 
+        String mffeat = mf.substring(mfindex+1,mf.length()); 
+        if (mffeat != null && variables.contains(varx)) 
+        { int i = variables.indexOf(varx); 
+          ASTTerm ast = (ASTTerm) eargs.get(i); 
+          rep = CGRule.applyMetafeature(
+                             mffeat,ast,cgs,entities);
+        } 
+        else 
+        { rep = varx; }  
+      } 
+      else if (variables.contains(varx))
+      { int i = variables.indexOf(varx); 
         rep = (String) newargs.get(i); 
       }
-      else if (rhsVariables.contains(variable))
-      { rep = ASTTerm.getStereotypeValue(variable); }  
+      else if (rhsVariables.contains(varx))
+      { rep = ASTTerm.getStereotypeValue(varx); }  
        
 
       if (variables.contains(stereotype))
@@ -184,7 +207,7 @@ public class CGCondition
     } 
 
     return res; 
-  } 
+  } // Either could have a metafeature. 
 
   public void applyAction(Vector vars, Vector eargs, 
                   Vector reps, CGSpec cgs, 
@@ -994,20 +1017,52 @@ public class CGCondition
                   Vector vars, Vector eargs, 
                   Vector reps, Vector entities, 
                   CGSpec cgs, Vector gvars)
-  { String alit = a.literalForm(); 
+  { // Condition variable keyword stereotype is true
+    // for a, when reps are substituted for vars 
+
+    String alit = a.literalForm(); 
 
     String stereo = "" + stereotype; 
 
     /* In stereo and variable: 
          Replace vars[i] by eargs[i].cg(cgs) or reps[i] */ 
-    /* Replace gvars[j] by its value */
+    /* Replace any gvars[j] by its value */
 	
     if (quantifier.equals("all") || quantifier.equals("any"))
     { CGCondition gcond = new CGCondition(stereotype, "_1"); 
       gcond.setPositive(positive);
-	  return gcond.conditionSatisfied(a,vars,eargs,reps,entities,cgs,gvars); 
-	}   
+      return gcond.conditionSatisfied(a,vars,eargs,reps,
+                                      entities,cgs,gvars); 
+    }   
 
+    Vector stereomfs = CGRule.metafeatures(stereo); 
+    if (stereomfs.size() > 0)
+    { 
+      // If stereo has a metafeature: _i`mf
+      // evaluate _i`mf in cgs and set stereo to result 
+      
+      String smf = (String) stereomfs.get(0); 
+      int smfindex = smf.indexOf("`"); 
+      String svarx = smf.substring(0,smfindex); 
+      String smffeat = smf.substring(smfindex+1,smf.length()); 
+      if (smffeat != null) 
+      { int indsv = vars.indexOf(svarx);
+        if (indsv >= 0 && 
+            eargs.get(indsv) instanceof ASTTerm)
+        {  
+          ASTTerm searg = (ASTTerm) eargs.get(indsv); 
+          stereo = CGRule.applyMetafeature(
+                             smffeat,searg,cgs,entities); 
+        }
+
+        JOptionPane.showMessageDialog(null, 
+         "|>|| Found metafeature " + smf + " for " + stereotype + " resulting value = " + stereo,   "",
+         JOptionPane.INFORMATION_MESSAGE);
+
+      } 
+    }
+
+ 
     for (int x = 0; x < reps.size() && x < vars.size(); x++)
     { String var = (String) vars.get(x);
       String arg1 = (String) reps.get(x); 
@@ -1095,8 +1150,14 @@ public class CGCondition
 
       if (isMatches)
       { // check that edata matches the stereo
-        if (repl.matches(stereo))
-        { return true; } 
+        try { 
+          if (repl.matches(stereo))
+          { return true; } 
+        }
+        catch (Exception _ex) 
+        { System.err.println("!! Invalid regular expression: " + stereo); 
+          return false; 
+        } 
         return false; 
       } 
 
@@ -1110,13 +1171,18 @@ public class CGCondition
 
     if (isMatches)
     { // check that variable matches the stereo
-      if (alit.matches(stereo))
-      { return true; } 
+      try { 
+        if (alit.matches(stereo))
+        { return true; } 
+      }
+      catch (Exception _ex) 
+      { System.err.println("!! Invalid regular expression: " + stereo); 
+        return false; 
+      } 
+
       return false; 
     } 
       
-    // Also the stereotype could have one. 
-
     // if ("integer".equalsIgnoreCase(stereotype))
     // { if (a.isInteger()) 
     //   { return positive; } 

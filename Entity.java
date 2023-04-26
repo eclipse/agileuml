@@ -4724,6 +4724,10 @@ public class Entity extends ModelElement implements Comparable
       { dependsOn.add("OclDatasource"); }
       else if (cop.startsWith("SQLStatement::"))
       { dependsOn.add("SQLStatement"); }
+      else if (cop.startsWith("OclProcess::"))
+      { dependsOn.add("OclProcess"); }
+      else if (cop.startsWith("Excel::"))
+      { dependsOn.add("Excel"); }
     }
 
     if (dependsOn.size() > 0)

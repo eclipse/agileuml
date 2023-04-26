@@ -65,6 +65,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
 
    String systemName = "app"; 
    private JLabel thisLabel;
+   String insertedText = ""; 
+   boolean inserting = false; 
 
    SimpleAttributeSet[] attrs; 
 
@@ -391,6 +393,13 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       javax.swing.Action analyseAction = new AnalyseAction(); 
       menu.add(analyseAction); 
 
+
+      return menu; 
+   } 
+
+    protected JMenu createTranslationMenu() 
+    { JMenu menu = new JMenu("Translate");
+
       // Also, translate to OCL, translate to Matlab
 
       javax.swing.Action matlabAction = new MatlabAction(); 
@@ -399,11 +408,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       javax.swing.Action km3Action = new KM3Action(); 
       menu.add(km3Action); 
 
-      return menu; 
-   } 
-
-    protected JMenu createTranslationMenu() 
-    { JMenu menu = new JMenu("Translate");
+      javax.swing.Action mambaAction = new MambaAction(); 
+      menu.add(mambaAction); 
 
       javax.swing.Action toJavaAction = new Translate2JavaAction(); 
         // checkAction.setMnemonic(KeyEvent.VK_K);
@@ -435,9 +441,43 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
 	public void insertUpdate(DocumentEvent e)
 	{ int offset = e.getOffset(); 
 	  int pos = textPane.getCaretPosition();
-       // try {
-       //   System.out.println(">> Insert event at: " + offset + " " + pos + " " + textPane.getText(pos,1)); 
-       // } catch (Exception _e) { } 
+       try {
+          // System.out.println(">> Insert event " + e + " at: " + offset + " " + pos + " " + textPane.getText(pos,1));
+          String chr = "" + textPane.getText(pos,1); 
+          if ("~".equals(chr))
+          { thisLabel.setText("~ Declares a random variable: Define X ~ Dist sets X as random variable from Dist"); }
+          else if ("[".equals(chr))
+          { thisLabel.setText("E[expr] computes expectation (mean) of expression expr involving random variables"); }
+          else if (chr.length() > 0 && 
+                   '\u222B' == chr.charAt(0))
+          { thisLabel.setText("Integration with/without bounds, eg: \u222B f(x) dx  for indefinite integral."); }  
+          else if (chr.length() > 0 &&
+                   '\u2032' == chr.charAt(0))
+          { thisLabel.setText("Differential wrt x: f\u2032 is df/dx"); } 
+          else if (chr.length() > 0 &&
+                   '\u2202' == chr.charAt(0))
+          { thisLabel.setText("Partial differential wrt subscript: \u2202_y f is \u2202 f/\u2202 y"); } 
+          else if (chr.length() > 0 && 
+                   Character.isLetter(chr.charAt(0)))
+          { inserting = true; 
+            insertedText = insertedText + chr.charAt(0); 
+            if ("Define".equals(insertedText))
+            { thisLabel.setText("Define variable: Define v, Define v = expr, Define v ~ distribution"); }
+            else if ("Solve".equals(insertedText))
+            { thisLabel.setText("Solve single quadratic or differential equations, and multiple linear equations: Solve eqns for vars"); }
+            else if ("Prove".equals(insertedText))
+            { thisLabel.setText("Prove an assertion from an assumption: Prove expr1 if expr2"); }
+            else if ("Constraint".equals(insertedText))
+            { thisLabel.setText("Constraint on a variable: Constraint on var | expr"); }
+            else if ("Simplify".equals(insertedText))
+            { thisLabel.setText("Simplify an expression: Simplify expr"); }
+          } 
+          else  
+          { thisLabel.setText(" "); 
+            inserting = false; 
+            insertedText = ""; 
+          }   
+        } catch (Exception _e) { } 
      } 
 
     private HashMap createActionTable(JTextComponent textComponent) 
@@ -651,6 +691,11 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
     { String result = messageArea.getText(); 
           // internalModel; 
 
+      if (result == null || result.trim().length() == 0)
+      { System.err.println("!! Error: input text cannot be empty. Run 'Check' option first!"); 
+        return; 
+      } 
+
       String[] args = {"MathOCL", "specification"}; 
 
       try { 
@@ -677,10 +722,16 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
           File fs = new File("cg/simplify.cstl"); 
           CSTL.loadCSTL(cgs,fs,ents,typs);
  
+          long t1 = (new java.util.Date()).getTime(); 
+
           String entcode = trm.cg(cgs);
 
           System.out.println(entcode + "\n" + extracode);
           // messageArea.append("\n"); 
+          long t2 = (new java.util.Date()).getTime(); 
+
+          System.out.println(">>> Processing took " + (t2 - t1)); 
+
           messageArea.setText(entcode + "\n" + extracode);
           internalModel = entcode + "\n" + extracode;   
         } 
@@ -780,8 +831,53 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
           } 
  
           // System.out.println(entcode);
-          messageArea.append("\n"); 
-          messageArea.append(entcode);
+          // messageArea.append("\n"); 
+          // messageArea.append(entcode);
+          // internalModel = entcode;   
+        } 
+      } 
+      catch (Exception _expt) 
+      { _expt.printStackTrace(); } 
+    }
+  }
+
+  class MambaAction extends javax.swing.AbstractAction
+  { public MambaAction()
+    { super("Generate Mamba"); }
+
+    public void actionPerformed(ActionEvent e)
+    { String result = internalModel; 
+
+      String[] args = {"MathOCL", "specification"}; 
+
+      try { 
+        org.antlr.v4.gui.AntlrGUI antlr = 
+          new org.antlr.v4.gui.AntlrGUI(args); 
+
+        antlr.setText(result); 
+
+        antlr.process(); 
+
+        String asttext = antlr.getResultText(); 
+        // messageArea.setText("" + asttext);
+        System.out.println(asttext); 
+ 
+        Compiler2 cc = new Compiler2(); 
+        ASTTerm trm = cc.parseGeneralAST(asttext); 
+        if (trm != null)  
+        { 
+          Vector ents = new Vector(); 
+          Vector typs = new Vector(); 
+          CGSpec cgs = new CGSpec(entities,types); 
+          File fs = new File("cg/mathocl2mamba.cstl"); 
+          CSTL.loadCSTL(cgs,fs,ents,typs);
+ 
+          String entcode = trm.cg(cgs);
+
+          String arg1 = CGRule.correctNewlines(entcode); 
+          System.out.println(arg1); 
+
+          // messageArea.setText(arg1);
           // internalModel = entcode;   
         } 
       } 
@@ -795,7 +891,12 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
     { super("Translate to Java"); }
 
     public void actionPerformed(ActionEvent e)
-    { StringWriter sw = new StringWriter(); 
+    { if (entities.size() == 0) 
+      { System.err.println("!! No classes exist: translate to UML/OCL before using this option!"); 
+        return; 
+      }
+
+      StringWriter sw = new StringWriter(); 
       PrintWriter out = new PrintWriter(sw);   
       for (int i = 0; i < entities.size(); i++) 
       { Entity ent = (Entity) entities.get(i);
@@ -804,7 +905,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         ent.generateJava7(entities,types,out);     
       } 
       String res = sw.toString(); 
-      messageArea.setText(res);
+      // messageArea.setText(res);
+      System.out.println(res); 
     } 
   } 
 
@@ -815,15 +917,23 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
 
     public void actionPerformed(ActionEvent e)
     { StringWriter sw = new StringWriter(); 
-      PrintWriter out = new PrintWriter(sw);   
+      PrintWriter out = new PrintWriter(sw);
+
+      if (entities.size() == 0) 
+      { System.err.println("!! No classes exist: translate to UML/OCL before using this option!"); 
+        return; 
+      } 
+   
       for (int i = 0; i < entities.size(); i++) 
       { Entity ent = (Entity) entities.get(i);
         if (ent.isExternal() || ent.isComponent()) 
         { continue; }  
         ent.generateCSharp(entities,types,out);     
       } 
-      String res = sw.toString(); 
-      messageArea.setText(res);
+
+      String res = sw.toString();
+      System.out.println(res);  
+      // messageArea.setText(res);
     } 
   }
 
@@ -832,7 +942,12 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
     { super("Translate to C++"); }
 
     public void actionPerformed(ActionEvent e)
-    { StringWriter sw = new StringWriter(); 
+    { if (entities.size() == 0) 
+      { System.err.println("!! No classes exist: translate to UML/OCL before using this option!"); 
+        return; 
+      } 
+
+      StringWriter sw = new StringWriter(); 
       PrintWriter out = new PrintWriter(sw);   
       
       StringWriter sw1 = new StringWriter(); 
@@ -846,7 +961,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       } 
       String res = sw.toString(); 
       String res1 = sw1.toString(); 
-      messageArea.setText(res + "\n\n" + res1);
+      // messageArea.setText(res + "\n\n" + res1);
+      System.out.println(res + "\n\n" + res1);
     } 
   }
 

@@ -1971,21 +1971,24 @@ public class Compiler2
         expectStereo = false; 
       } 
       else if (se.equals("not"))
-      { cg.setNegative(); } 
+      { cg.setNegative();
+        expectVar = false; 
+        expectStereo = true;
+      } 
       else if (se.equals("/"))
-      { cg.setSubstitute(); } 
+      { cg.setSubstitute();
+        expectVar = false; 
+        expectStereo = true;
+      } 
       else if (se.equals("`") && 
-               i + 2 < lexs.size())
+               i + 1 < lexs.size())
       { String mt = "" + lexs.get(i+1); 
-        cg.setVariableMetafeature(mt);
+        if (expectStereo) // just seen a variable 
+        { cg.setVariableMetafeature(mt); } 
+        else if (expectVar) 
+        { cg.setStereotypeMetafeature(mt); }
         i++;
-      } // expectVar false, expectStereo true
-      else if (se.equals("`") && 
-               i + 2 == lexs.size())
-      { String mt = "" + lexs.get(i+1); 
-        cg.setStereotypeMetafeature(mt);
-        i++;
-      } // expectVar false, expectStereo false
+      } 
       else if (expectVar)
       { cg.setVariable(se); 
         expectVar = false; 
@@ -1996,11 +1999,13 @@ public class Compiler2
         expectVar = true; 
         expectStereo = false; 
       } 
+
+      System.out.println(se + " " + expectVar + " " + expectStereo + " " + cg); 
     }
 
     conds.add(cg); 
     return conds; 
-  } // Could be metafeatures: _i`mf value
+  } // Could be metafeatures on both variable, stereotype
 	
 	
   public Vector parseCGconditions(String str) 

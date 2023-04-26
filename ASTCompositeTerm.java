@@ -42865,7 +42865,7 @@ public class ASTCompositeTerm extends ASTTerm
         //       "", 
         //       JOptionPane.INFORMATION_MESSAGE);
       }
-      else if (expr.getTag().equals("substituteIn"))
+     /* else if (expr.getTag().equals("substituteIn"))
       { ASTTerm def = 
           (ASTTerm) expr.getTerm(3); 
         ASTTerm subvar = 
@@ -42895,7 +42895,7 @@ public class ASTCompositeTerm extends ASTTerm
           res = res + 
             "  Define " + var + " = " + vt; 
         } 
-      }   
+      } */    
     } 
 
     /* if ("formula".equals(tag) && 
@@ -42960,7 +42960,10 @@ public class ASTCompositeTerm extends ASTTerm
           String quadformula2 = 
             AuxMath.quadraticFormula2(coefsq, coefvar, cnsts); 
           
-          return "  Simplify (" + vx0 + " = " + quadformula1 + ") or (" + vx0 + " = " + quadformula2 + ")"; 
+          return "  Define " + vx0 + "$1 = " + quadformula1 + "\n" + 
+                 "  Define " + vx0 + "$2 = " + quadformula2 + "\n" + 
+                 "  Define " + vx0 + "\n" + 
+                 "  Constraint on " + vx0 + " | (" + vx0 + " = " + vx0 + "$1) or (" + vx0 + " = " + vx0 + "$2)"; 
         } 
         else if (maxp == 1 && minp == -1 && maxdp == 0) 
         { // multiply by var
