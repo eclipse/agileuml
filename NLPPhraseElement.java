@@ -10,6 +10,7 @@ import java.util.Vector;
 * *****************************/
 /* package: Requirements Formalisation */ 
 
+/* Superclass of NLPWord and NLPPhrase */ 
 
 public abstract class NLPPhraseElement
 { String tag = ""; 

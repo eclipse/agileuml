@@ -178,6 +178,12 @@ abstract class Expression
   public int arity()
   { return 0; } 
 
+  public boolean isNotLocalVariable() 
+  { if (umlkind == VARIABLE) 
+    { return false; } 
+    return true; 
+  } 
+
   public static boolean isComparator(String opx)
   { return comparitors.contains(opx); } 
 

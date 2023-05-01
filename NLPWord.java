@@ -765,6 +765,7 @@ public class NLPWord extends NLPPhraseElement
     { return res; } 
 	
     ThesaurusConcept tc = Thesarus.lookupWord(background,text); 
+
     if (tc != null && tc.semantics.size() > 0)
     { res.put(text, tc.semantics); }
     else if (isPlural())
@@ -783,14 +784,33 @@ public class NLPWord extends NLPPhraseElement
           Object obj = ModelElement.lookupByNameIgnoreCase(ename,modelElems); 
           if (obj != null && obj instanceof Entity)
           { ee = (Entity) obj; }
-          else
+          
+          if (ee == null)
+          { Entity ment = (Entity) ModelElement.lookupByNameIgnoreCase(ename,tc.semantics); 
+            System.out.println("><><> Recognised background entity: " + ename); 
+
+            if (ment != null) 
+            { ee = (Entity) ment.clone(); 
+              ee.setName(Named.capitalise(ment.getName())); 
+              if (ment.getSuperclass() != null)
+              { Entity msup = ment.getSuperclass(); 
+                Entity nsup = (Entity) msup.clone(); 
+                nsup.setName(Named.capitalise(msup.getName())); 
+                ee.setSuperclass(nsup); 
+                modelElems.add(ee); 
+              } 
+            }
+          } 
+
+          if (ee == null)  
           { ee = new Entity(ename);
             modelElems.add(ee); 
-            System.out.println(">>> Recognised new entity: " + ename); 
+            System.out.println("><><> Recognised new entity: " + ename); 
             String id = sentence.id; 
             sentence.derivedElements.add(ee); 
             ee.addStereotype("originator=\"" + id + "\""); 
           }   
+
           colltype.setElementType(new Type(ee)); 
           Attribute r = new Attribute(text, colltype, ModelElement.INTERNAL); 
           Vector sem1 = new Vector(); 
@@ -841,8 +861,8 @@ public class NLPWord extends NLPPhraseElement
   { String verb = ""; 
     String lex = tag; 
     if (lex.equals("VB") || lex.equals("VBZ") || 
-            lex.equals("VBG") || lex.equals("VBD") ||
-            lex.equals("VBN") || lex.equals("VBP"))
+        lex.equals("VBG") || lex.equals("VBD") ||
+        lex.equals("VBN") || lex.equals("VBP"))
     { verb = text; } 
 	   
     return verb; 
@@ -910,6 +930,7 @@ public class NLPWord extends NLPPhraseElement
     { System.err.println("!! Possible conflict in requirements: role " + role2 + " of class " + attname + " already exists"); 
       role2 = role2 + "_" + ent.getAssociations().size(); 
     }
+
     Association newast = new Association(ent,tent,card1,card2,"",role2);   
     System.out.println(">>> new association " + newast + " for class " + ent.getName()); 
     ent.addAssociation(newast); 

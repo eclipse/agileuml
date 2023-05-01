@@ -76,6 +76,17 @@ class ThesaurusConcept
     return false; 
   } 
 
+  public Entity getEntity()
+  { if (semantics == null) 
+    { return null; } 
+    for (int i = 0; i < semantics.size(); i++) 
+    { ModelElement me = (ModelElement) semantics.get(i); 
+      if (me instanceof Entity) 
+      { return (Entity) me; } 
+    } 
+    return null; 
+  } 
+
   public void setGeneralisation(String g)
   { generalisation = g; }
   
@@ -297,6 +308,20 @@ public class Thesarus
           else if ("NTG".equals(stag) && c != null)
           { String ndef = sb.getContent(); 
             c.setGeneralisation(ndef);  
+            System.out.println(">> " + c + " is specialisation of " + ndef);
+            Entity cent = c.getEntity(); 
+            ThesaurusConcept suptc = 
+                Thesarus.lookupWord(concepts, ndef); 
+            if (suptc != null && cent != null) 
+            { Vector supsem = suptc.getSemantics(); 
+              for (int k = 0; k < supsem.size(); k++) 
+              { Object obj = supsem.get(k); 
+                if (obj instanceof Entity)
+                { Entity sent = (Entity) obj;
+                  cent.setSuperclass(sent); 
+                } 
+              } 
+            }    
           } 
           else if ("POS".equals(stag) && c != null)
           { String ndef = sb.getContent(); 

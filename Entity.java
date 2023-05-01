@@ -54,6 +54,18 @@ public class Entity extends ModelElement implements Comparable
     realEntity = this; 
   }
 
+  public Object clone()
+  { Entity res = new Entity(name); 
+    res.attributes.addAll(attributes); 
+    res.associations.addAll(associations); 
+    res.operations.addAll(operations); 
+    res.superclass = superclass;
+    res.subclasses.addAll(subclasses); 
+    res.invariants.addAll(invariants); 
+    res.interfaces.addAll(interfaces);
+    return res; 
+  } 
+ 
   public static boolean validEntityName(String ename)
   { if (ename.length() == 0) 
     { return false; } 
@@ -17831,12 +17843,14 @@ public BehaviouralFeature designAbstractKillOp()
   // { How many tests will be generated for this class }
 
 
-  public Vector testCases()
+  public Vector testCases(Vector instances)
   { Vector res = new Vector(); 
     String nme = getName(); 
     String x = nme.toLowerCase() + "$x"; 
-    res.add(x + " : " + nme); 
-	
+    // instances.add(x + " : " + nme);
+    // res.add(x + " : " + nme); 
+    res.add(""); 
+   
     defineLocalFeatures(); 
 
     Vector allattributes = localFeatures;
@@ -17872,6 +17886,7 @@ public BehaviouralFeature designAbstractKillOp()
       Vector testassignments = att.testCases(x,lowerBounds,
                                      upperBounds,javatests);
  
+      
       for (int j = 0; j < res.size(); j++) 
       { String tst = (String) res.get(j); 
         for (int k = 0; k < testassignments.size(); k++) 
@@ -17885,6 +17900,10 @@ public BehaviouralFeature designAbstractKillOp()
       res.clear(); 
       res.addAll(newres); 
     } 
+    // All combinations of test values for all attributes
+    // x : E\n x.att1 = v1\n x.att2 = v1
+    // x : E\n x.att1 = v2\n x.att2 = v1, etc
+    // But not identity attributes. 
 
     String y = nme.toLowerCase() + "x_"; 
 
@@ -17892,8 +17911,10 @@ public BehaviouralFeature designAbstractKillOp()
     for (int i = 0; i < res.size(); i++) 
     { String model = (String) res.get(i); 
       String yi = y + i; 
-      String mod1 = model.replace(x,yi);  // replaceAll(x,yi);  
-      // System.out.println(">---->> Replaced model= " + mod1);
+      String mod1 = model.replace(x,yi);  
+      // replaceAll(x,yi);  
+      // The above models specialised to yi
+      instances.add(yi + " : " + nme);
       newres.add(mod1);  
     } 
 	
@@ -18019,7 +18040,7 @@ public BehaviouralFeature designAbstractKillOp()
           bfmutanttest = bfmutanttest + "\n" + 
             "    for (int i = 0; i < _counts.length; i++)\n" + 
             "    { if (_totals[i] > 0)\n" + 
-            "      { System.out.println(\"Test \" + i + \" detects \" + (100.0*_counts[i])/_totals[i] + \"% " + bfname + " mutants\"); }\n" +
+            "      { summaryOut.println(\"Test \" + i + \" detects \" + (100.0*_counts[i])/_totals[i] + \"% " + bfname + " mutants\"); }\n" +
             "    }\n" +  
             "  }\n\n"; 
           // System.out.println(bfmutanttest);

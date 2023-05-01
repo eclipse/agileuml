@@ -867,7 +867,10 @@ public class BehaviouralFeature extends ModelElement
             "        _counts[" + j + "]++; \n" +   
             "        _totals[" + j + "]++;\n" + 
             "      }\n" + 
-            "    } catch (Throwable _e) { }\n"; 
+            "    } catch (Throwable _e) {\n" +
+            "        _counts[" + j + "]++; \n" +   
+            "        _totals[" + j + "]++;\n" + 
+            "      }\n"; 
         } 
         testcode = testcode + "    } catch (Throwable _e) { }\n }\n\n"; 
 

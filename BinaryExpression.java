@@ -827,8 +827,8 @@ class BinaryExpression extends Expression
     { res.add(">="); }
     else if ("/=".equals(op))
     { res.add("="); }
-    // else if ("=".equals(op))
-    // { res.add("/="); }
+    else if ("=".equals(op) && left.isNotLocalVariable())
+    { res.add("/="); }
     else if ("->union".equals(op))
     { res.add("->intersection"); }
     else if ("->intersection".equals(op))

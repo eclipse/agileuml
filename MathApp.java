@@ -69,6 +69,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
    boolean inserting = false; 
 
    SimpleAttributeSet[] attrs; 
+   SimpleAttributeSet currentAttrs; 
 
    Vector entities = new Vector(); // holds the UML spec
    Vector types = new Vector();
@@ -137,8 +138,12 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
  
       JButton bsum = new JButton("" + mSigma); 
       bsum.addActionListener(this); 
+      bsum.setToolTipText(
+        "Sum of expressions: " + mSigma + '\u2092' + '\u207F' + " expr");
       JButton bprd = new JButton("" + mPi); 
       bprd.addActionListener(this); 
+      bprd.setToolTipText(
+        "Product of expressions: " + mPi + '\u2092' + '\u207F' + " expr");
       JButton bsqrt = new JButton("" + mSqrt); 
       bsqrt.addActionListener(this); 
       JButton binfty = new JButton("" + mInfinity); 
@@ -148,29 +153,54 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       
       JButton bdiff = new JButton("" + mDifferential); 
       bdiff.addActionListener(this); 
+      bdiff.setToolTipText(
+        "Differential wrt x: f" + mDifferential + " is df/dx");
+
       JButton bpdiff = new JButton("" + mPartialDiff); 
       bpdiff.addActionListener(this); 
+      bpdiff.setToolTipText(
+        "Partial differential wrt variable: " + mPartialDiff + '\u209C' + " f is " + mPartialDiff + "f/" + mPartialDiff + "t");
       
       JButton bexists = new JButton("" + mExists); 
       bexists.addActionListener(this); 
+      bexists.setToolTipText("Existential quantifier: " + 
+        mExists + " var : type \u2219 expr");
+
       JButton bforall = new JButton("" + mForall); 
       bforall.addActionListener(this); 
+      bforall.setToolTipText("Universal quantifier: " + 
+        mForall + " var : type \u2219 expr");
+      
       JButton bin = new JButton("" + mIn); 
       bin.addActionListener(this); 
       JButton bnotin = new JButton("" + mNotIn); 
       bnotin.addActionListener(this); 
+
       JButton bempty = new JButton("" + emptySet); 
       bempty.addActionListener(this); 
+      bempty.setToolTipText(
+        "Empty set: Set{}");
 
       JButton bnatural = new JButton("" + mNatural); 
       bnatural.addActionListener(this); 
+      bnatural.setToolTipText(
+        "Type of non-negative integers 0, 1, 2, etc");
+
       JButton bintegers = new JButton("" + mIntegers); 
       bintegers.addActionListener(this); 
+      bintegers.setToolTipText(
+        "Type of all integers 0, 1, -1, 2, -2, etc");
+
       JButton breals = new JButton("" + mReals); 
       breals.addActionListener(this); 
+      breals.setToolTipText(
+        "Type of all real numbers");
 
       JButton bspot = new JButton("\u2219"); // • 
       bspot.addActionListener(this); 
+      bspot.setToolTipText(
+        "Used for " + mForall + " and " + mExists);
+
       JButton bsim = new JButton("\u2248"); // ~
       bsim.addActionListener(this); 
       JButton btends = new JButton("\u2192"); 
@@ -271,6 +301,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       buttonsPanel.add(omega);
 
       attrs = initAttributes(6);
+      currentAttrs = attrs[0]; 
 
       try {
             doc.insertString(0, "specification S \n", attrs[0]); 
@@ -298,7 +329,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         getContentPane().add(splitPane, BorderLayout.CENTER);
         getContentPane().add(buttonsPanel, BorderLayout.NORTH);
         thisLabel = 
-          new JLabel("Type & click within the framed area.");
+          new JLabel("Type within the framed area.");
         getContentPane().add(thisLabel, BorderLayout.SOUTH); 
 
         actions = createActionTable(textPane);
@@ -332,7 +363,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
     { String cmd = ee.getActionCommand(); 
       try { StyledDocument doc = textPane.getStyledDocument();
             int pos = textPane.getCaretPosition();
-            doc.insertString(pos, cmd, attrs[0]);
+            doc.insertString(pos, cmd, currentAttrs); 
+                     // , attrs[0]);
           }
           catch (BadLocationException ble) {
             System.err.println("!! Couldn't insert text.");
@@ -349,15 +381,15 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         JMenu menu = new JMenu("Style");
 
         PositionTextAction subscriptAction = 
-           new PositionTextAction("Subscript"); 
+           new PositionTextAction("Subscript", this); 
         subscriptAction.setAttributes(textPane, attrs[4]); 
         menu.add(subscriptAction);
         PositionTextAction superscriptAction = 
-           new PositionTextAction("Superscript"); 
+           new PositionTextAction("Superscript", this); 
         superscriptAction.setAttributes(textPane, attrs[5]); 
         menu.add(superscriptAction);
         PositionTextAction normalAction = 
-           new PositionTextAction("Normal");
+           new PositionTextAction("Normal", this);
         normalAction.setAttributes(textPane, attrs[0]); 
         menu.add(normalAction); 
 
@@ -448,6 +480,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
           { thisLabel.setText("~ Declares a random variable: Define X ~ Dist sets X as random variable from Dist"); }
           else if ("[".equals(chr))
           { thisLabel.setText("E[expr] computes expectation (mean) of expression expr involving random variables"); }
+          else if ("{".equals(chr) || "}".equals(chr))
+          { thisLabel.setText("{ var : type | cond } is subset of type satisfying cond. { var : type | cond " + '\u2219' + " expr } is collection of expr for these elements"); }
           else if (chr.length() > 0 && 
                    '\u222B' == chr.charAt(0))
           { thisLabel.setText("Integration with/without bounds, eg: \u222B f(x) dx  for indefinite integral."); }  
@@ -456,7 +490,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
           { thisLabel.setText("Differential wrt x: f\u2032 is df/dx"); } 
           else if (chr.length() > 0 &&
                    '\u2202' == chr.charAt(0))
-          { thisLabel.setText("Partial differential wrt subscript: \u2202_y f is \u2202 f/\u2202 y"); } 
+          { thisLabel.setText("Partial differential wrt subscript: \u2202\u209C f is partial diff of f wrt t"); } 
           else if (chr.length() > 0 && 
                    Character.isLetter(chr.charAt(0)))
           { inserting = true; 
@@ -466,7 +500,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
             else if ("Solve".equals(insertedText))
             { thisLabel.setText("Solve single quadratic or differential equations, and multiple linear equations: Solve eqns for vars"); }
             else if ("Prove".equals(insertedText))
-            { thisLabel.setText("Prove an assertion from an assumption: Prove expr1 if expr2"); }
+            { thisLabel.setText("Prove/Claim expr1 follows from expr2: Prove expr1 if expr2"); }
             else if ("Constraint".equals(insertedText))
             { thisLabel.setText("Constraint on a variable: Constraint on var | expr"); }
             else if ("Simplify".equals(insertedText))
@@ -978,9 +1012,12 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
 class PositionTextAction extends StyledEditorKit.StyledTextAction
 { JTextPane textEditor; 
   AttributeSet attrs; 
+  MathApp parent; 
 
-  PositionTextAction(String nme) 
-  { super(nme); } 
+  PositionTextAction(String nme, MathApp owner) 
+  { super(nme);
+    parent = owner; 
+  } 
 
   void setAttributes(JTextPane ed, AttributeSet attr)
   { textEditor = ed;
@@ -989,7 +1026,9 @@ class PositionTextAction extends StyledEditorKit.StyledTextAction
   }
 
   public void actionPerformed(ActionEvent e)
-  { textEditor.setCharacterAttributes(attrs, true); } 
+  { textEditor.setCharacterAttributes(attrs, true);
+    parent.currentAttrs = (SimpleAttributeSet) attrs; 
+  } 
 }
 
 

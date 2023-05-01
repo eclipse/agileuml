@@ -496,6 +496,26 @@ public abstract class ASTTerm
     return null; 
   } 
 
+  public static String cgtlOperation(String opname, Vector eargs)
+  { System.out.println(">>> External operation: " + opname + " on " + eargs); 
+
+    if ("symbolicAddition".equals(opname) && 
+        eargs.size() == 2)
+    { ASTTerm e1 = (ASTTerm) eargs.get(0); 
+      ASTTerm e2 = (ASTTerm) eargs.get(1); 
+      return ASTTerm.symbolicAddition(e1,e2); 
+    } 
+
+    if ("symbolicSubtraction".equals(opname) && 
+        eargs.size() == 2)
+    { ASTTerm e1 = (ASTTerm) eargs.get(0); 
+      ASTTerm e2 = (ASTTerm) eargs.get(1); 
+      return ASTTerm.symbolicSubtraction(e1,e2); 
+    } 
+
+    return opname + "(" + eargs + ")"; 
+  } 
+
   public static void addRequiredLibrary(String lib) 
   { if (requiredLibraries.contains(lib)) {}
     else 
@@ -4709,6 +4729,55 @@ public abstract class ASTTerm
    
     return expr.literalForm(); 
   }  
+
+  public static String symbolicAddition(ASTTerm e1, ASTTerm e2)
+  { String a = e1.literalForm(); 
+    String b = e2.literalForm(); 
+
+    if (e1.getTag().equals("additiveExpression") && 
+        "+".equals(e1.getTerm(1) + ""))
+    { a = symbolicAddition(e1.getTerm(0), e1.getTerm(2)); } 
+    else if (e1.getTag().equals("additiveExpression") && 
+        "-".equals(e1.getTerm(1) + ""))
+    { a = symbolicSubtraction(e1.getTerm(0), e1.getTerm(2)); }
+
+    if (e2.getTag().equals("additiveExpression") && 
+        "+".equals(e2.getTerm(1) + ""))
+    { b = symbolicAddition(e2.getTerm(0), e2.getTerm(2)); } 
+
+    if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b))
+    { Double aval = Double.parseDouble("" + a); 
+      Double bval = Double.parseDouble("" + b); 
+      return "" + (aval+bval); 
+    }
+    
+    return a + " + " + b; 
+  }  
+     
+  public static String symbolicSubtraction(ASTTerm e1, ASTTerm e2)
+  { String a = e1.literalForm(); 
+    String b = e2.literalForm(); 
+
+    if (e1.getTag().equals("additiveExpression") && 
+        "+".equals(e1.getTerm(1) + ""))
+    { a = symbolicAddition(e1.getTerm(0), e1.getTerm(2)); } 
+    else if (e1.getTag().equals("additiveExpression") && 
+        "-".equals(e1.getTerm(1) + ""))
+    { a = symbolicSubtraction(e1.getTerm(0), e1.getTerm(2)); }
+
+    if (e2.getTag().equals("additiveExpression") && 
+        "+".equals(e2.getTerm(1) + ""))
+    { b = symbolicAddition(e2.getTerm(0), e2.getTerm(2)); } 
+
+    if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b))
+    { Double aval = Double.parseDouble("" + a); 
+      Double bval = Double.parseDouble("" + b); 
+      return "" + (aval-bval); 
+    }
+    
+    return a + " - " + b; 
+  }  
+     
 
   public static String symbolicMultiplication(
                             String var, ASTTerm expr)

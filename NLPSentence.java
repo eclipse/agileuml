@@ -942,6 +942,11 @@ public class NLPSentence
         Vector quals1 = new Vector(); 	  
         identifyClassesAndFeatures(fromBackground, rem, elems, quals1); 
       }
+      else 
+      { otherRelationElements(fromBackground,elems); 
+        Vector quals1 = new Vector(); 	  
+        identifyClassesAndFeatures(fromBackground, rem, elems, quals1); 
+      }
     }  
       
     String ucs = ""; 
@@ -952,14 +957,12 @@ public class NLPSentence
       }
     }
 	
-	
     for (int i = 0; i < elems.size(); i++) 
     { if (elems.get(i) instanceof Entity) 
       { Entity ent = (Entity) elems.get(i); 
         res = res + ent.getKM3() + "\n\n";
       }
     } 
-	
 	 
     for (int i = 0; i < elems.size(); i++) 
     { if (elems.get(i) instanceof UseCase)
@@ -1387,11 +1390,61 @@ public class NLPSentence
        ModelElement.lookupByNameIgnoreCase(
                          cleanNoun, modelElements); 
     if (mainent == null) 
+    { Vector sem = (Vector) fromBackground.get(cleanNoun); 
+      if (sem != null) 
+      { for (int j = 0; j < sem.size(); j++) 
+        { if (sem.get(j) instanceof Entity)
+          { Entity backent = (Entity) sem.get(j);
+            if (backent.getName().equalsIgnoreCase(cleanNoun))
+            { mainent = (Entity) ((Entity) backent).clone(); 
+              mainent.setName(Named.capitalise(cleanNoun));  
+              modelElements.add(mainent); 
+              derivedElements.add(mainent); 
+            
+              mainent.addStereotype("originator=\"" + id + "\""); 
+              System.out.println(">>> Found class in background: " + mainent.getName());
+
+              if (mainent.getSuperclass() != null) 
+              { Entity msup = mainent.getSuperclass(); 
+                Entity bclone = (Entity) msup.clone(); 
+                bclone.setName(
+                            Named.capitalise(msup.getName()));
+                mainent.setSuperclass(bclone); 
+                ModelElement mmclone = 
+                  ModelElement.lookupByName(bclone.getName(),
+                                            modelElements); 
+                if (mmclone == null) 
+                { modelElements.add(bclone); 
+                  derivedElements.add(bclone);
+                } 
+              }
+            }
+            else
+            { mainent = 
+                new Entity(Named.capitalise(cleanNoun)); 
+              modelElements.add(mainent); 
+              derivedElements.add(mainent); 
+            
+              mainent.addStereotype("originator=\"" + id + "\""); 
+              System.out.println(">*>*> Found class in background: " + mainent.getName());
+              Entity bclone = (Entity) backent.clone(); 
+              bclone.setName(
+                         Named.capitalise(backent.getName())); 
+              modelElements.add(bclone); 
+              derivedElements.add(bclone);
+              mainent.setSuperclass(bclone); 
+            }
+          } 
+        } 
+      } 
+    }
+
+    if (mainent == null) 
     { mainent = new Entity(Named.capitalise(cleanNoun)); 
       modelElements.add(mainent); 
       derivedElements.add(mainent); 
       mainent.addStereotype("originator=\"" + id + "\""); 
-      System.out.println(">>> Added new class " + mainent.getName()); 
+      System.out.println(">->-> Added new class " + mainent.getName()); 
     } 
 	
     mainent.addStereotypes(quals); 

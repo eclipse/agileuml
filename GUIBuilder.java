@@ -584,7 +584,9 @@ public class GUIBuilder
             TestParameters.maxFloat + ", " + 
             Double.MIN_VALUE + "};\n" +
          "    boolean[] booleanTestValues = {false, true};\n" + 
-         "    String[] stringTestValues = {\"\", \" abc_XZ \", \"#�$* &~@'\"};\n";
+         "    String[] stringTestValues = {\"\", \" abc_XZ \", \"#�$* &~@'\"};\n" + 
+         "    int MAXOBJECTS = 500;\n\n"; 
+
 
     for (int i = 0; i < ucs.size(); i++)
     { ModelElement me = (ModelElement) ucs.get(i); 
@@ -632,7 +634,7 @@ public class GUIBuilder
             } 
             else if ("long".equals(tname))
             { aper = aper + 
-                     "    long[] " + nme + par + "TestValues = {";
+                "    long[] " + nme + par + "TestValues = {";
               for (int y = 0; y < testassignments.size(); y++) 
               { String tval = (String) testassignments.get(y); 
                 aper = aper + tval; 
@@ -1072,7 +1074,9 @@ public class GUIBuilder
          "doubleTestValues = [0, -1, 1, " + 
             TestParameters.maxFloat + ", 0.0000000000000000000000001]\n" +
          "booleanTestValues = [False, True]\n" + 
-         "stringTestValues = [\"\", \" abc_XZ \", \"#�$* &~@'\"]\n\n";
+         "stringTestValues = [\"\", \" abc_XZ \", \"#�$* &~@'\"]\n\n" + 
+         "MAXOBJECTS = 500\n\n"; 
+
 
     for (int i = 0; i < ucs.size(); i++)
     { ModelElement me = (ModelElement) ucs.get(i); 
@@ -2021,7 +2025,7 @@ public class GUIBuilder
      Vector epars = ent.getStaticAttributes(); 
   
      mutationTestsOp = mutationTestsOp + 
-        "      { int _" + es + "_instances = Controller.inst()." + es + ".size();\n";  
+        "      { int _" + es + "_instances = Math.min(MAXOBJECTS, Controller.inst()." + es + ".size());\n";  
       
       Vector bfnames = new Vector(); 
       for (int j = 0; j < eops.size(); j++) 
@@ -2154,7 +2158,9 @@ public class GUIBuilder
             TestParameters.maxFloat + ", " + 
             Double.MIN_VALUE + " };\n" +
       "    boolean[] booleanTestValues = {false, true};\n" + 
-      "    String[] stringTestValues = {\"\", \" abc_XZ \", \"#�$* &~@'\"};\n";
+      "    String[] stringTestValues = {\"\", \" abc_XZ \", \"#�$* &~@'\"};\n" + 
+      "    int MAXOBJECTS = 500;\n\n"; 
+
 
     res = res + "    JButton loadModelButton = new JButton(\"loadModel\");\n";
 
@@ -2316,8 +2322,8 @@ public class GUIBuilder
         Vector pars = uc.getParameters(); 
         Type resultType = uc.getResultType(); 
         String testscript = "";
-		String teststring = ""; 
-		String posttests = ""; 
+        String teststring = ""; 
+        String posttests = ""; 
 
         res = res + "    JButton " + nme + "Button = new JButton(\"" + nme + "\");\n";
  
@@ -2396,7 +2402,7 @@ public class GUIBuilder
 
               testscript = testscript + 
                 indent + "\n" + 
-                indent + "int _" + ename + "_instances = Controller.inst()." + ename + ".size();\n" +  
+                indent + "int _" + ename + "_instances = Math.min(MAXOBJECTS, Controller.inst()." + ename + ".size());\n" +  
                 indent + "for (int " + indexvar + " = 0; " + indexvar + " < _" + ename + "_instances; " + indexvar + "++)\n" + 
                 indent + "{ " + tname + " " + parnme + " = (" + tname + ") Controller.inst()." + ename + ".get(" + indexvar + ");\n";
               for (int p = 0; p < eeinvariants.size(); p++)
@@ -2513,7 +2519,7 @@ public class GUIBuilder
                     indent + "{ java.util.List " + parnme + " = new Vector();\n" + 
                     indent + "  if (" + indexvar + " < 5)\n" + 
                     indent + "  { " + parnme + ".add(new Double(doubleTestValues[" + indexvar + "])); }\n" + 
-				    indent + "  if (" + indexvar + " < 3)\n" + 
+                    indent + "  if (" + indexvar + " < 3)\n" + 
                     indent + "  { " + parnme + ".add(new Double(doubleTestValues[" + indexvar + " + 2])); }\n";
                   }
                   else if ("boolean".equals(elemTyp.getName()))
@@ -2550,13 +2556,13 @@ public class GUIBuilder
 				
 			    String eename = etname.toLowerCase() + "s"; 
 			    
-				testscript = testscript + 
-                  indent + "\n" + 
-				  indent + "for (int " + indexvar + " = 0; " + indexvar + " <= Controller.inst()." + etname + ".size(); " + indexvar + "++)\n" + 
-				  indent + "{ java.util.List " + parnme + " = new Vector();\n";  
-                testscript = testscript + 
-			      indent + "  if (" + indexvar + " < Controller.inst()." + etname + ".size())\n" + 
-			      indent + "  { " + parnme + ".add(Controller.inst()." + eename + ".get(" + indexvar + ")); }\n";
+                    testscript = testscript + 
+                    indent + "\n" + 
+                    indent + "for (int " + indexvar + " = 0; " + indexvar + " <= Controller.inst()." + etname + ".size(); " + indexvar + "++)\n" + 
+                    indent + "{ java.util.List " + parnme + " = new Vector();\n";  
+                    testscript = testscript + 
+                    indent + "  if (" + indexvar + " < Controller.inst()." + etname + ".size())\n" + 
+                    indent + "  { " + parnme + ".add(Controller.inst()." + eename + ".get(" + indexvar + ")); }\n";
               }  
             }  
           }  
@@ -2715,7 +2721,8 @@ public class GUIBuilder
             TestParameters.maxFloat + ", " + 
             Double.MIN_VALUE + " };\n" +
          "    bool[] booleanTestValues = {false, true};\n" + 
-         "    string[] stringTestValues = {\"\", \" abc_XZ \", \"#�$* &~@'\"};\n";
+         "    string[] stringTestValues = {\"\", \" abc_XZ \", \"#�$* &~@'\"};\n" + 
+         "    int MAXOBJECTS = 500;\n\n"; 
 
     for (int i = 0; i < ucs.size(); i++)
     { ModelElement me = (ModelElement) ucs.get(i); 
@@ -2749,15 +2756,15 @@ public class GUIBuilder
 			
             if ("int".equals(tname))
             { aper = aper + 
-			     "    int[] " + nme + par + "TestValues = {";
+			"    int[] " + nme + par + "TestValues = {";
               for (int y = 0; y < testassignments.size(); y++) 
-			  { String tval = (String) testassignments.get(y); 
-			    aper = aper + tval; 
-				if (y < testassignments.size() - 1) 
-				{ aper = aper + ", "; }
-			  }
-			  aper = aper + "};\n";  
-		    } 
+              { String tval = (String) testassignments.get(y); 
+                aper = aper + tval; 
+                if (y < testassignments.size() - 1) 
+                { aper = aper + ", "; }
+              }
+              aper = aper + "};\n";  
+            } 
             else if ("long".equals(tname))
             { aper = aper + 
 			     "    long[] " + nme + par + "TestValues = {";

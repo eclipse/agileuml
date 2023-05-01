@@ -23307,7 +23307,7 @@ public void produceCUI(PrintWriter out)
 
   // Formalise Operations
   public void formaliseOperationRequirements()
-  { System.out.println("Input file output/nlpout.txt should be the parse tree output from Stanford NLP."); 
+  { System.out.println("*** Input file output/nlpout.txt should be the parse tree output from Stanford NLP ***"); 
     System.out.println(); 
 
     Vector background = Thesarus.loadThesaurus("output/background.txt");
@@ -23322,12 +23322,12 @@ public void produceCUI(PrintWriter out)
      try
      { br = new BufferedReader(new FileReader(infile)); }
      catch (FileNotFoundException e)
-     { System.out.println("File not found: " + infile.getName());
+     { System.out.println("!! File not found: " + infile.getName());
        return; 
      }
 
-     System.out.println("Input file output/nlpout.txt should be the output from Stanford tagger & parser."); 
-     System.out.println("Background information file output/background.txt should be in thesaurus format."); 
+     System.out.println("*** Input file output/nlpout.txt should be the output from Stanford tagger & parser ***"); 
+     System.out.println("*** Background information file output/background.txt should be in thesaurus XML format ***"); 
      System.out.println(); 
      System.out.println(); 
     
@@ -23339,7 +23339,7 @@ public void produceCUI(PrintWriter out)
      while (!eof)
      { try { s = br.readLine(); }
        catch (IOException e)
-       { System.out.println("Reading failed.");
+       { System.out.println("!! Reading input file failed.");
          return; 
        }
 	   
@@ -23423,8 +23423,8 @@ public void produceCUI(PrintWriter out)
 
   // Formalise User Stories
   public void formaliseBehaviourRequirements()
-  { System.out.println("Input file output/tagged.txt should be the POS-tagged output from Stanford or OpenNLP tagger."); 
-    System.out.println("Each sentence should be on a single line, with an empty line between sentences."); 
+  { System.out.println("*** Input file output/tagged.txt should be the POS-tagged output from Stanford or OpenNLP tagger ***"); 
+    System.out.println("*** Each sentence should be on a single line, with an empty line between sentences ***"); 
     System.out.println(); 
     
     Date d1 = new Date(); 
@@ -23442,7 +23442,7 @@ public void produceCUI(PrintWriter out)
     try
     { br = new BufferedReader(new FileReader(file)); }
     catch (FileNotFoundException e)
-    { System.out.println("Tagged file not found: " + file);
+    { System.out.println("!! Tagged file not found: " + file);
       // Assume raw file input
       File rawfile = new File("output/requirements.txt"); 
       try 
@@ -23654,7 +23654,7 @@ public void produceCUI(PrintWriter out)
   } 
 
   public void formaliseDataRequirements()
-  { System.out.println("Input file output/nlpout.txt should be the output from Stanford tagger & parser."); 
+  { System.out.println("*** Input file output/nlpout.txt should be the output from Stanford tagger & parser ***"); 
     System.out.println(); 
     
     java.util.Date d1 = new java.util.Date(); 
@@ -23673,12 +23673,12 @@ public void produceCUI(PrintWriter out)
      try
      { br = new BufferedReader(new FileReader(infile)); }
      catch (FileNotFoundException e)
-     { System.out.println("File not found: " + infile.getName());
+     { System.out.println("!! File not found: " + infile.getName());
        return; 
      }
 
-    System.out.println("Input file output/nlpout.txt should be the output from Stanford tagger & parser."); 
-    System.out.println("Background information file output/background.txt should be in thesaurus format."); 
+    System.out.println("*** Input file output/nlpout.txt should be the output from Stanford tagger & parser ***"); 
+    System.out.println("*** Background information file output/background.txt should be in XML thesaurus format ***"); 
     System.out.println(); 
     System.out.println(); 
     
@@ -23711,34 +23711,34 @@ public void produceCUI(PrintWriter out)
       linecount++; 
     } // replace ' and " in s by harmless characters. Remove - within a string or number. 
 	 
-     Vector nlpsentences = new Vector(); 
-     Vector mes = new Vector(); // entities and usecases from the model.
-     mes.addAll(entities); 
-     for (int x = 0; x < useCases.size(); x++)
-     { Object ob = useCases.get(x); 
-       if (ob instanceof UseCase)
-       { mes.add(ob); } // but not OperationDescription instances
-     } 
+    Vector nlpsentences = new Vector(); 
+    Vector mes = new Vector(); // entities and usecases from the model.
+    mes.addAll(entities); 
+    for (int x = 0; x < useCases.size(); x++)
+    { Object ob = useCases.get(x); 
+      if (ob instanceof UseCase)
+      { mes.add(ob); } // but not OperationDescription instances
+    } 
 	  
-     String km3model = ""; 
-     for (int i = 0; i < sentences.size(); i++) 
-     { String xstring = (String) sentences.get(i); 
-       Compiler2 c0 = new Compiler2(); 
-       c0.nospacelexicalanalysisText(xstring); 
-       NLPSentence xres = c0.parseNLP();
-       if (xres != null) 
-       { xres.indexing(); 
-	     xres.setId("" + (i+1)); 
-		 xres.linkToPhrases(); 
+    String km3model = ""; 
+    for (int i = 0; i < sentences.size(); i++) 
+    { String xstring = (String) sentences.get(i); 
+      Compiler2 c0 = new Compiler2(); 
+      c0.nospacelexicalanalysisText(xstring); 
+      NLPSentence xres = c0.parseNLP();
+      if (xres != null) 
+      { xres.indexing(); 
+        xres.setId("" + (i+1)); 
+        xres.linkToPhrases(); 
 		 
-	     nlpsentences.add(xres); 
-         System.out.println(">>> Sentence " + (i+1) + ": " + xres); 
-         java.util.Map classifications = xres.classifyWords(background,mes); 
-         System.out.println(">>> Using word classifications >>> " + classifications);
-         km3model = xres.getKM3(mes,classifications); 
-         System.out.println(); 
-       }  
-     } 	 
+        nlpsentences.add(xres); 
+        System.out.println(">>> Sentence " + (i+1) + ": " + xres); 
+        java.util.Map classifications = xres.classifyWords(background,mes); 
+        System.out.println(">>> Using word classifications >>> " + classifications);
+        km3model = xres.getKM3(mes,classifications); 
+        System.out.println(); 
+      }  
+    } 	 
 	     
     String outfile = "mm.km3"; 
     File appout = new File("output/" + outfile); 
@@ -23756,12 +23756,11 @@ public void produceCUI(PrintWriter out)
 	  System.out.println(">>> Sentence " + (i+1)); 
 	  System.out.println(">>> Derived elements: " + ss.derivedElements); 
 	  System.out.println(); 
-	}
+      }
 	
-	System.out.println(">>> Output model written to output/mm.km3."); 
-    System.out.println(); 
-    
-	
+      System.out.println(">>> Output model written to output/mm.km3."); 
+      System.out.println(); 
+   
 	java.util.Date d2 = new java.util.Date(); 
 	long t2 = d2.getTime(); 
 	System.out.println(">>> Time taken = " + (t2-t1)); 
@@ -23769,15 +23768,15 @@ public void produceCUI(PrintWriter out)
 
   // MT requirements to TL
   public void requirements2TL0()
-  { System.out.println("Input file tagged.txt should be the POS-tagged output from the stanford posttagger."); 
-    System.out.println("Remove brackets -LRB-_-LRB- and -RRB-_-RRB-, and put each sentence on a single line."); 
-    System.out.println("Class names are assumed to start with a capital letter, features with small letters.");
-	System.out.println();  
-    System.out.println("Enter metamodel names:"); 
+  { System.out.println("*** Input file tagged.txt should be the POS-tagged output from the stanford posttagger ***"); 
+    System.out.println("*** Remove brackets -LRB-_-LRB- and -RRB-_-RRB-, and put each sentence on a single line ***"); 
+    System.out.println("*** Class names are assumed to start with a capital letter, features with small letters ***");
+    System.out.println();  
+    System.out.println(">>> Enter metamodel names:"); 
     String mmnames = JOptionPane.showInputDialog("Metamodel names?: ");
     String[] mms = mmnames.split(" "); 
-    System.out.println("Enter threshold for name similarity (>= 0.4, <= 1.0):"); 
-    String thres = JOptionPane.showInputDialog("Similarity threshold?: ");
+    System.out.println(">>> Enter threshold for name similarity (>= 0.4, <= 1.0):"); 
+    String thres = JOptionPane.showInputDialog("Name similarity threshold?: ");
     double thr = 0.5; 
 
     try { thr = Double.parseDouble(thres); } 
@@ -25852,41 +25851,53 @@ public void produceCUI(PrintWriter out)
     if (systemName != null && systemName.length() > 0)
     { dirName = systemName; } 
 
-    for (int i = 0; i < entities.size(); i++) 
-    { Entity e = (Entity) entities.get(i); 
-      if (e.isDerived() || e.isComponent() || 
+    String testfile = "in.txt"; 
+
+    try
+    { String testsdirName = "output/tests"; 
+      File testsdir = new File(testsdirName); 
+      if (testsdir.exists()) { } 
+      else 
+      { testsdir.mkdir(); }
+      PrintWriter rout = 
+        new PrintWriter(
+          new BufferedWriter(
+            new FileWriter(testsdirName + "/" + testfile)));
+
+      Vector alltests = new Vector(); 
+
+      for (int i = 0; i < entities.size(); i++) 
+      { Entity e = (Entity) entities.get(i); 
+        if (e.isDerived() || e.isComponent() || 
           e.isAbstract() ||
           e.isInterface()) 
-      { continue; }
+        { continue; }
 	  
-      String testfile = "test" + e.getName() + "_in.txt"; 
+        // String testfile = "test" + e.getName() + "_in.txt"; 
 	  
-      Vector tests = e.testCases();
+        Vector einstances = new Vector(); 
+        Vector tests = e.testCases(einstances);
+        alltests.addAll(tests); 
 
-      e.generateOperationMutants(); 
- 
-      try
-      { String testsdirName = "output/tests"; 
-        File testsdir = new File(testsdirName); 
-        if (testsdir.exists()) { } 
-        else 
-        { testsdir.mkdir(); }
-        PrintWriter rout = new PrintWriter(
-                              new BufferedWriter(
-                                new FileWriter(testsdirName + "/" + testfile)));
+        for (int j = 0; j < einstances.size(); j++)
+        { String einst = (String) einstances.get(j); 
+          rout.println(einst); 
+        } 
 
-        System.out.println("*** " + tests.size() + " Test cases for entity " + e.getName() + " written to: " + testsdirName);
- 
-        for (int j = 0; j < tests.size(); j++) 
-        { String tst = (String) tests.get(j); 
-          rout.println(tst); 
-        }
-        rout.close(); 
+        e.generateOperationMutants(); 
+
+        System.out.println("*** " + tests.size() + " Test cases for entity " + e.getName() + " written to: " + testsdirName + "/" + testfile);
+        // System.out.println("*** Instances for entity: " + einstances);
       } 
-      catch (Exception _x) { } 
 
-    }   
-  
+      for (int j = 0; j < alltests.size(); j++) 
+      { String tst = (String) alltests.get(j); 
+        rout.println(tst); 
+      }
+
+      rout.close(); 
+    } 
+    catch (Exception _x) { } 
         
     for (int i = 0; i < useCases.size(); i++) 
     { if (useCases.get(i) instanceof UseCase) 
@@ -25897,8 +25908,8 @@ public void produceCUI(PrintWriter out)
         { String tst = (String) tests.get(j); 
           try
           { PrintWriter rout = new PrintWriter(
-                              new BufferedWriter(
-                                new FileWriter("output/tests/test" + uc.getName() + "_" + j + ".txt")));
+              new BufferedWriter(
+                new FileWriter("output/tests/test" + uc.getName() + "_" + j + ".txt")));
             rout.println(tst); 
             rout.close(); 
           } 
@@ -25982,10 +25993,28 @@ public void produceCUI(PrintWriter out)
       mtout.println("import java.util.ArrayList;");
       mtout.println("import java.util.Map;"); 
       mtout.println("import java.util.HashMap;"); 
+      mtout.println("import java.io.*;"); 
        
       mtout.println(); 
       mtout.println("public class MutationTest"); 
-      mtout.println("{"); 
+      mtout.println("{ private static File summaryFile = new File(\"summary.txt\");");
+      mtout.println("  private static PrintWriter summaryOut;\n"); 
+      mtout.println(); 
+ 
+      mtout.println("  static"); 
+      mtout.println("  { try {");  
+      mtout.println("      summaryOut = new PrintWriter(new BufferedWriter(new FileWriter(summaryFile)));"); 
+      mtout.println("  } catch (Exception err) { err.printStackTrace(); }");  
+      mtout.println("}\n");  
+
+      mtout.println("    protected void finalize()"); 
+      mtout.println("    { if (summaryOut != null)");  
+      mtout.println("     { try { summaryOut.close(); }");  
+      mtout.println("        catch (Exception _ex) { } "); 
+      mtout.println("      } "); 
+      mtout.println("    } \n"); 
+
+
       for (int k = 0; k < mutationtests.size(); k++) 
       { String mtest = (String) mutationtests.get(k); 
         mtout.println(mtest);

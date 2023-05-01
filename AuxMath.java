@@ -1674,7 +1674,7 @@ public class AuxMath
         double divisor = (x1sq - x2sq)*(x3 - x2) + (x2sq - x3sq)*(x1 - x2);
         // System.out.println("Divisor: " + divisor);
         if (divisor == 0)
-        { System.out.println("This is not quadratic");
+        { System.out.println(">> This is not quadratic");
           return false; 
         }
         
@@ -1682,12 +1682,12 @@ public class AuxMath
         beta = -to3dp(((y1 - y2)*(x3sq - x2sq) + (y2 - y3)*(x1sq - x2sq))/divisor); 
         gamma = y1 - alpha*x1sq - beta*x1; 
         alphas.add(new Double(alpha));
-	   betas.add(new Double(beta));  
+        betas.add(new Double(beta));  
         System.out.println("alpha = " + alpha + " beta = " + beta);  				   
       }
 	  
 	 if (alphas.size() == 1 && betas.size() == 1)	
-      { System.out.println("Consistent with quadratic function.\n" + 
+      { System.out.println(">> Consistent with quadratic function.\n" + 
                              "Mapping is " + alpha + "*" + s + "*" + s + " + " +  
 		                  beta + "*" + s + " + " + gamma + " |--> " + t); 
         System.out.println(); 

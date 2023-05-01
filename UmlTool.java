@@ -312,6 +312,8 @@ public void findPlugins()
     JMenuItem loadopRequirements = 
       new JMenuItem("Formalise operation requirements"); 
     loadopRequirements.addActionListener(this);
+    loadopRequirements.setToolTipText(
+      "Creates UML/OCL in output/mm.km3 from POS-tagged/parsed text in output/nlpout.txt. Needs output/background.txt thesaurus.");
     fileMenu.add(loadopRequirements);
 
     fileMenu.addSeparator(); 

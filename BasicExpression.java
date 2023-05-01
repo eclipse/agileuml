@@ -352,6 +352,12 @@ class BasicExpression extends Expression
     } 
   } 
 
+  public boolean isNotLocalVariable() 
+  { if (umlkind == VARIABLE && objectRef == null) 
+    { return false; } 
+    return true; 
+  } 
+
   public void setVariableType(Type t) 
   { if (variable != null) 
     { variable.setType(t); } 

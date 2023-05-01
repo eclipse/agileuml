@@ -941,6 +941,9 @@ public class CGRule
 
     String res = rhs + "";
 
+    // Apply metafeatures to their variables, for 
+    // variables occuring in the LHS of the rule: 
+
     for (int j = 0; j < metafeatures.size(); j++) 
     { String mf = (String) metafeatures.get(j); 
       String mfvar = mf.substring(0,2); 
@@ -964,6 +967,8 @@ public class CGRule
 
       System.out.println(">***> Trying to apply metafeature " + mffeat + " to " + eargs + "[" + k + "]"); 
       System.out.println(); 
+
+      // The variable is a normal LHS variable: 
 
       if (k >= 1 && k <= eargs.size())
       { Object obj = eargs.get(k-1);
@@ -1768,6 +1773,18 @@ public class CGRule
 
     for (int y = 0; y < rhsVariables.size(); y++) 
     { String rvar = (String) rhsVariables.get(y);
+      if ("_0".equals(rvar)) // Entire term. External call.
+      { // String mf = (String) metafeatures.get(0); 
+        // String mfvar = mf.substring(0,2); 
+        // String mffeat = mf.substring(3,mf.length());
+        if (rhs.startsWith("_0"))
+        { String metaop = rhs.substring(3); 
+          System.out.println(">--> External call " + metaop);
+          res = ASTTerm.cgtlOperation(metaop,eargs); 
+        }  
+        continue; 
+      }
+
       String varValue = ASTTerm.getStereotypeValue(rvar); 
       if (varValue != null) 
       { res = res.replace(rvar,varValue); 
