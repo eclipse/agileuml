@@ -745,7 +745,7 @@ public class SetExpression extends Expression
       Vector epres = e.innermostEntities();
       pres = VectorUtil.union(pres,epres);
     }
-    return pres;
+    return pres; 
   }
 
   public Vector getBaseEntityUses()
@@ -762,19 +762,27 @@ public class SetExpression extends Expression
   public String updateForm(String language, java.util.Map env, String op, String val, Expression var, boolean local)
   { // update   this = var  to this, val is
     // query form of var. 
+    // Assume op is "="
+
+    if ("=".equals(op)) { } 
+    else  
+    { System.err.println("!! Cannot generate code for " + 
+                         this + " " + op + " " + val); 
+    } 
+
     String res = "";
 
-   if (isOrdered())
-   { // if (i < var.size) { elemi := var[i] }
-     for (int i = 0; i < elements.size(); i++)
-     { Expression elem = (Expression) elements.get(i);
-       BasicExpression vari = (BasicExpression) var.clone();
-       vari.setArrayIndex(new BasicExpression(i+1));
-       BinaryExpression seti = new BinaryExpression("=", elem, vari );
-       UnaryExpression varsize = new UnaryExpression("->size", var );
-       BinaryExpression se = new BinaryExpression(">", varsize, new BasicExpression(i));
-       res = res + "  if (" + se.queryForm(language,env,local) + ") { " + seti.updateForm(language,env,local) + " }\n";
-    }
+    if (isOrdered())
+    { // if (i < var.size) { elemi := var[i] }
+      for (int i = 0; i < elements.size(); i++)
+      { Expression elem = (Expression) elements.get(i);
+        BasicExpression vari = (BasicExpression) var.clone();
+        vari.setArrayIndex(new BasicExpression(i+1));
+        BinaryExpression seti = new BinaryExpression("=", elem, vari );
+        UnaryExpression varsize = new UnaryExpression("->size", var );
+        BinaryExpression se = new BinaryExpression(">", varsize, new BasicExpression(i));
+        res = res + "  if (" + se.queryForm(language,env,local) + ") { " + seti.updateForm(language,env,local) + " }\n";
+     }
    }  
    else 
    { // if (i < var.size) { elemi := (var -  Set{elem1, ..., elemi-1})->any() }
@@ -869,7 +877,9 @@ public class SetExpression extends Expression
 
     elementType = Type.determineType(elements); 
     if (isMap())
-    { elementType = Type.determineMapElementType(elements); } 
+    { elementType = Type.determineMapElementType(elements);
+      type.keyType = Type.determineMapKeyType(elements); 
+    } 
     // and the type.keyType
 
     if (elementType == null) 

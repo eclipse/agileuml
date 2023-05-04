@@ -4643,7 +4643,7 @@ class WhileStatement extends Statement
         Type et = loopRange.getElementType(); 
         String etr = "Object"; 
         if (et == null) 
-        { System.err.println("Error: null element type for " + loopRange);
+        { System.err.println("!! Error: null element type for " + loopRange);
           // JOptionPane.showMessageDialog(null, "ERROR: No element type for: " + loopRange,
           // "Type error", JOptionPane.ERROR_MESSAGE); 
           if (loopVar.getType() != null)
@@ -4673,9 +4673,9 @@ class WhileStatement extends Statement
         String wrappedElemType = Type.typeWrapperJava(et); 
 
         return "  ArrayList<" + wrappedElemType + "> " + rang + " = new ArrayList<" + wrappedElemType + ">();\n" +
-               "  " + rang + ".addAll(" + lr + ");\n" + 
-               "  for (int " + ind + " = 0; " + ind + " < " + rang + ".size(); " + ind + "++)\n" + 
-               "  { " + etr + " " + lv + " = " + extract + ";\n" +
+               "    " + rang + ".addAll(" + lr + ");\n" + 
+               "    for (int " + ind + " = 0; " + ind + " < " + rang + ".size(); " + ind + "++)\n" + 
+               "    { " + etr + " " + lv + " = " + extract + ";\n" +
                "    " + newbody + "\n" + 
                "  }"; 
       } 
@@ -4707,9 +4707,9 @@ class WhileStatement extends Statement
         String newbody = processPreTermsJava7(body, preterms, env1, local); 
 
         return "  ArrayList<" + etr + "> " + rang + " = new ArrayList<" + etr + ">();\n" +
-               "  " + rang + ".addAll(" + lr + ");\n" + 
-               "  for (int " + ind + " = 0; " + ind + " < " + rang + ".size(); " + ind + "++)\n" + 
-               "  { " + etr + " " + lv + " = (" + etr + ") " + rang + ".get(" + ind + ");\n" +
+               "    " + rang + ".addAll(" + lr + ");\n" + 
+               "    for (int " + ind + " = 0; " + ind + " < " + rang + ".size(); " + ind + "++)\n" + 
+               "    { " + etr + " " + lv + " = (" + etr + ") " + rang + ".get(" + ind + ");\n" +
                "    " + newbody + "\n" + 
                "  }"; 
       } 

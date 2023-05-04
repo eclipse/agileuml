@@ -284,7 +284,7 @@ public class CGCondition
 
     Vector metafs = CGRule.metafeatures(variable); 
 
-    System.out.println("***>> Action metafeatures of " + variable + " are: " + metafs); 
+    // System.out.println("***>> Action metafeatures of " + variable + " are: " + metafs); 
 
     if (metafs.size() > 0)
     { 
@@ -310,13 +310,15 @@ public class CGCondition
       } 
       else if (obj instanceof ASTTerm) 
       { ASTTerm ast = (ASTTerm) obj;
+        String lit = ast.literalForm(); 
+
         // if there is a metafeature of variable, apply it: 
 
         if (mffeat != null) 
         { String repl = CGRule.applyMetafeature(
                              mffeat,ast,cgs,entities); 
 
-          System.out.println("***>> Action " + ast + "`" + mffeat + " = " + repl); 
+          // System.out.println("***>> Action " + ast + "`" + mffeat + " = " + repl); 
 
           if (positive && repl != null) 
           { ASTTerm.setType(repl,stereo);
@@ -339,9 +341,13 @@ public class CGCondition
         } 
         else 
         { if (positive) 
-          { ast.addStereotype(stereo); } 
+          { // ast.addStereotype(stereo); 
+            ASTTerm.addStereo(lit,stereo); 
+          } 
           else 
-          { ast.removeStereotype(stereo); }
+          { // ast.removeStereotype(stereo); 
+            ASTTerm.removeStereo(lit,stereo); 
+          }
           /* JOptionPane.showMessageDialog(null, 
              "Executed action " + ast + " (" + positive + ") " + stereo + " " + ASTTerm.getStereotypes(ast),   "",
              JOptionPane.INFORMATION_MESSAGE); */  

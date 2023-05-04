@@ -320,7 +320,7 @@ public abstract class ASTTerm
 
       if (stereotypes.contains(str)) {} 
       else 
-      { stereotypes.add(str); 
+      { stereotypes.add(0,str); 
         ASTTerm.metafeatures.put(lit, stereotypes); 
       }
     } 
@@ -328,6 +328,10 @@ public abstract class ASTTerm
     // JOptionPane.showMessageDialog(null, 
     //    "*** addStereo " + str + " to " + lit + " Metafeatures of " + lit + " are " + mfs,   "",
     //          JOptionPane.INFORMATION_MESSAGE); 
+
+    System.out.println("*** " + lit + " metafeatures set to " +
+                       ASTTerm.metafeatures.get(lit));  
+
   } 
 
   public static void setTaggedValue(ASTTerm ast, String mf, String val) 
@@ -341,8 +345,8 @@ public abstract class ASTTerm
 
   public static void setTaggedValue(String lit, String mf, String val) 
   { Object mfs = ASTTerm.metafeatures.get(lit); 
-    System.out.println("*** " + lit + " has tagged values: " + 
-                       mfs); 
+    // System.out.println("*** " + lit + " has tagged values: " + 
+    //                    mfs); 
 
     if (mfs == null) 
     { mfs = new Vector(); 
@@ -354,14 +358,16 @@ public abstract class ASTTerm
       Vector newstereos = new Vector(); 
       for (int x = 0; x < stereos.size(); x++) 
       { String stereo = (String) stereos.get(x); 
-        if (stereo.startsWith(mf + "="))
+        if (stereo.startsWith(mf + "=") ||
+            stereo.startsWith(mf + " ="))
         { }
         else 
         { newstereos.add(stereo); } 
       } 
       newstereos.add(mf + "=" + val); 
       ASTTerm.metafeatures.put(lit,newstereos); 
-      System.out.println("*** Set " + lit + " tagged values: " + 
+      System.out.println("*** Set " + lit + 
+                         " tagged values: " + 
                          newstereos); 
     } 
   }
@@ -384,6 +390,9 @@ public abstract class ASTTerm
       stereotypes.removeAll(removed);
       ASTTerm.metafeatures.put(lit,stereotypes);  
     } 
+
+    System.out.println(">>> " + lit + " metafeatures = " +
+                       ASTTerm.metafeatures.get(lit));  
   } 
 
   public static void removeStereo(String lit, String str) 
@@ -399,6 +408,9 @@ public abstract class ASTTerm
       removed.add(str); 
       stereotypes.removeAll(removed);
     }   
+
+    System.out.println("*** " + lit + " metafeatures= " +
+                       ASTTerm.metafeatures.get(lit));  
   } 
 
   public boolean hasStereotype(String str) 
@@ -478,9 +490,9 @@ public abstract class ASTTerm
       ASTTerm.metafeatures.put(lit,mfs); 
     } 
 
-    System.out.println("*** " + lit + 
-                       " gets tagged values: " + 
-                       mfs); 
+    // System.out.println("*** " + lit + 
+    //                    " gets tagged values: " + 
+    //                    mfs); 
 
     if (mfs instanceof Vector)
     { Vector stereotypes = (Vector) mfs; 
@@ -4935,7 +4947,7 @@ public abstract class ASTTerm
     // System.out.println(t.isInteger()); 
     // System.out.println(t.isBoolean());
 
-    ASTBasicTerm tt1 = new ASTBasicTerm("t1", "aa"); 
+   /* ASTBasicTerm tt1 = new ASTBasicTerm("t1", "aa"); 
     ASTBasicTerm tt2 = new ASTBasicTerm("t2", "bb");
     ASTSymbolTerm tts = new ASTSymbolTerm("&"); 
  
@@ -4956,7 +4968,13 @@ public abstract class ASTTerm
 
     System.out.println(ttc);  
     ASTTerm subst = ttc.substituteEq("bb", tt1); 
-    System.out.println(subst);  
+    System.out.println(subst);  */ 
+
+    ASTTerm.setTaggedValue("x", "defined", "true");
+    ASTTerm.addStereo("x", "int");  
+    ASTTerm.setTaggedValue("x", "defined", "false");
+    ASTTerm.addStereo("x", "String");  
+    System.out.println(ASTTerm.metafeatures.get("x")); 
   }
 } 
 

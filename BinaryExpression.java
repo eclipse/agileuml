@@ -3811,7 +3811,8 @@ public void findClones(java.util.Map clones,
     { BinaryExpression lexp = (BinaryExpression) left;
       // must be a collection
 
-      boolean lrt = lexp.right.typeCheck(types,entities,contexts,env);
+      boolean lrt = 
+        lexp.right.typeCheck(types,entities,contexts,env);
       Type et = lexp.right.elementType;
 
       // if (lexp.right.isMap())
@@ -4060,14 +4061,16 @@ public void findClones(java.util.Map clones,
       else 
       { type = left.elementType;
         if (type != null && "String".equals(type.getName()))
-        { elementType = type; } 
+        { elementType = new Type("String", null); } 
         else if (type != null)  
         { elementType = type.getElementType(); } 
         else 
-        { Attribute leftvar = (Attribute) ModelElement.lookupByName(left + "", env); 
+        { Attribute leftvar = 
+            (Attribute) ModelElement.lookupByName(left + "", env); 
           if (leftvar != null) 
-          { type = leftvar.getType(); 
-            elementType = leftvar.getElementType(); 
+          { type = leftvar.getElementType(); 
+            if (type != null) 
+            { elementType = type.getElementType(); }  
           }
 
           if (elementType == null) 
@@ -4286,8 +4289,8 @@ public void findClones(java.util.Map clones,
       else if (right.elementType != null && tlname.equals("" + right.elementType))
       { type = new Type("boolean",null); } 
       else // or if same element types
-      { System.err.println("WARNING: different " +
-                           "types " + tleft + " " + tright + " in comparison " + this);
+      { System.err.println("! WARNING: different " +
+          "types " + tleft + " " + tright + " in comparison " + this);
         type = new Type("boolean",null);
       }
     }
@@ -5202,11 +5205,14 @@ public boolean conflictsWithIn(String op, Expression el,
             "String".equals(right.type.getName()))
         { lqf = "((Map) " + lqf + ")"; 
           left.type = new Type("Map", null);
+          left.elementType = type; 
+          left.type.keyType = new Type("String", null); 
           left.type.elementType = type;  
         } 
         else 
         { lqf = "((List) " + lqf + ")"; 
           left.type = new Type("Sequence", null);
+          left.elementType = type; 
           left.type.elementType = type;  
         } 
       } 
@@ -5234,6 +5240,8 @@ public boolean conflictsWithIn(String op, Expression el,
 
       if (left.isRef())
       { return getind; } 
+
+      System.out.println(">********> Type of " + this + " is " + typ); 
 
       return "((" + typ + ") " + getind + ")"; 
     } 
@@ -12096,6 +12104,10 @@ public boolean conflictsWithIn(String op, Expression el,
     { val2 = right.queryForm(env,local);
       return ((BinaryExpression) left).updateFormEq("Java4",env,((BinaryExpression) left).operator,val2,right,local);
     }
+    else if (operator.equals("=") && left instanceof SetExpression)
+    { val2 = right.queryForm(env,local);
+      return ((SetExpression) left).updateForm("Java4",env,operator,val2,right,local);
+    }
     else if (operator.equals("->includesAll") && left instanceof BasicExpression)
     { val2 = right.queryForm(env,local);
       return ((BasicExpression) left).updateForm(env,"<:",val2,right,local);
@@ -13386,6 +13398,10 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     { val2 = right.queryFormJava6(env,local);
       return ((BinaryExpression) left).updateFormEq("Java6", env, ((BinaryExpression) left).operator,val2,right,local);
     }
+    else if (operator.equals("=") && left instanceof SetExpression)
+    { val2 = right.queryFormJava6(env,local);
+      return ((SetExpression) left).updateForm("Java6",env,operator,val2,right,local);
+    }
     else if (operator.equals("->includesAll") && left instanceof BasicExpression)
     { val2 = right.queryFormJava6(env,local);
       return ((BasicExpression) left).updateFormJava6(env,"<:",val2,right,local);
@@ -13578,6 +13594,10 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     { val2 = right.queryFormJava7(env,local);
       return ((BinaryExpression) left).updateFormEq("Java7", env, ((BinaryExpression) left).operator,val2,right,local);
     }
+    else if (operator.equals("=") && left instanceof SetExpression)
+    { val2 = right.queryFormJava7(env,local);
+      return ((SetExpression) left).updateForm("Java7",env,operator,val2,right,local);
+    }
     else if (operator.equals("->includesAll") && left instanceof BasicExpression)
     { val2 = right.queryFormJava7(env,local);
       return ((BasicExpression) left).updateFormJava7(env,"<:",val2,right,local);
@@ -13746,6 +13766,10 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     { val2 = right.queryFormCSharp(env,local);
       return ((BinaryExpression) left).updateFormEq("CSharp", env, ((BinaryExpression) left).operator,val2,right,local);
     }
+    else if (operator.equals("=") && left instanceof SetExpression)
+    { val2 = right.queryFormCSharp(env,local);
+      return ((SetExpression) left).updateForm("CSharp",env,operator,val2,right,local);
+    }
     else if (operator.equals("->includesAll") && left instanceof BasicExpression)
     { val2 = right.queryFormCSharp(env,local);
       return ((BasicExpression) left).updateFormCSharp(env,"<:",val2,right,local);
@@ -13907,6 +13931,10 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     { val2 = right.queryFormCPP(env,local);
       return ((BinaryExpression) left).updateFormEq("CPP", env, ((BinaryExpression) left).operator,val2,right,local);
       // return left.updateForm("CPP",env,((BinaryExpression) left).operator,val2,right,local);
+    }
+    else if (operator.equals("=") && left instanceof SetExpression)
+    { val2 = right.queryFormCPP(env,local);
+      return ((SetExpression) left).updateForm("CPP",env,operator,val2,right,local);
     }
     else if (operator.equals("->includesAll") && left instanceof BasicExpression)
     { val2 = right.queryFormCPP(env,local);

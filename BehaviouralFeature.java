@@ -4272,7 +4272,7 @@ public class BehaviouralFeature extends ModelElement
   }
 
   public String genQueryCodeJava7(Entity ent, Vector cons)
-  { String res = " public "; 
+  { String res = "public "; 
     if (isSequential())
     { res = res + "synchronized "; } 
     if (isAbstract())
@@ -5784,7 +5784,7 @@ public class BehaviouralFeature extends ModelElement
       if (isClassScope() || isStatic())
       { header = header + "static "; } 
 
-      res = "  public " + header + ts + " " + name + "(" + pars + ")\n  {  "; 
+      res = "  public " + header + ts + " " + name + "(" + pars + ")\n  { "; 
 
       if (tp != null & !"void".equals(ts))
       { res = res + ts + " result;\n"; }
@@ -7766,7 +7766,8 @@ public class BehaviouralFeature extends ModelElement
     { BinaryExpression be = (BinaryExpression) pst; 
       if ("=".equals(be.operator))
       { Expression beleft = be.left; 
-        if (env0.containsValue(be.left + "") || "result".equals(be.left + "") || 
+        if (env0.containsValue(be.left + "") || 
+            "result".equals(be.left + "") || 
             ModelElement.getNames(parameters).contains(be.left + ""))
         { return "  " + pst.updateFormJava7(env0,true) + "\n"; } // or attribute of ent
         else if (entity != null && entity.hasFeature(be.left + "")) 
@@ -8714,7 +8715,7 @@ public class BehaviouralFeature extends ModelElement
     String newitem = opname + "(" + ex + parlist + ")"; 
 
     if ("List".equals(resT))
-    { header2 = header2 + "      result.addAll(" + newitem + ");\n"; }
+    { header2 = header2 + "      result.add(" + newitem + ");\n"; } // NOT addAll
     else if (resT == null || resT.equals("void")) 
     { header2 = header2 + "      " + newitem + ";\n"; }
     else if (resultType.isPrimitive())
@@ -8851,7 +8852,7 @@ public class BehaviouralFeature extends ModelElement
     { header2 = header2 + "      result.add(" + newitem + ");\n"; }
     else if (resultType != null && 
              Type.isCollectionType(resultType))
-    { header2 = header2 + "      result.addAll(" + newitem + ");\n"; }
+    { header2 = header2 + "      result.add(" + newitem + ");\n"; } // NOT addAll
     else if (resT == null || resT.equals("void")) 
     { header2 = header2 + "      " + newitem + ";\n"; }
     else if (resultType.isPrimitive())
@@ -8997,7 +8998,7 @@ public class BehaviouralFeature extends ModelElement
     { header2 = header2 + "      result.add(" + newitem + ");\n"; }
     else if (resultType != null && 
              Type.isCollectionType(resultType))
-    { header2 = header2 + "      result.addAll(" + newitem + ");\n"; }
+    { header2 = header2 + "      result.add(" + newitem + ");\n"; } // NOT addAll
     else if (resT == null || resT.equals("void")) 
     { header2 = header2 + "      " + newitem + ";\n"; }
     else if (resultType.isPrimitive())
@@ -9424,7 +9425,7 @@ public class BehaviouralFeature extends ModelElement
     String newitem = ex + "." + opname + "(" + parlist + ")"; 
 
     if ("List".equals(resT))
-    { header2 = header2 + "      result.addAll(" + newitem + ");\n"; }
+    { header2 = header2 + "      result.add(" + newitem + ");\n"; } // NOT addAll
     else 
     { if (t != null && t.isPrimitive())
       { newitem = Expression.wrap(resultType,newitem); }
@@ -9520,7 +9521,7 @@ public class BehaviouralFeature extends ModelElement
     { header2 = header2 + "      result.add(" + newitem + ");\n"; }
     else if (resultType != null && 
              Type.isCollectionType(resultType))
-    { header2 = header2 + "      result.addAll(" + newitem + ");\n"; }
+    { header2 = header2 + "      result.add(" + newitem + ");\n"; } // NOT addAll
     else 
     { if (t != null && t.isPrimitive())
       { newitem = Expression.wrap(resultType,newitem); }
@@ -9626,7 +9627,7 @@ public class BehaviouralFeature extends ModelElement
     { header2 = header2 + "      result.add(" + newitem + ");\n"; }
     else if (resultType != null && 
         Type.isCollectionType(resultType))
-    { header2 = header2 + "      result.addAll(" + newitem + ");\n"; }
+    { header2 = header2 + "      result.add(" + newitem + ");\n"; }  // NOT addAll
     else 
     { if (t != null && t.isPrimitive())
       { newitem = Expression.wrap(resultType,newitem); }

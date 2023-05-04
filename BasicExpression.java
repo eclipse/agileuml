@@ -5109,7 +5109,7 @@ class BasicExpression extends Expression
       if ("OclFile".equals(data))
       { return "OclFile.OclFile_index.get(" + ind + ")"; } 
       if (data.equals("OclType"))
-      { return "OclType.getOclTypeByPK(" + ind + ")"; } 
+      { return "OclType.getByPKOclType(" + ind + ")"; } 
       return cont + ".get" + data + "ByPK(" + ind + ")"; 
     } 
     return cont + "." + data.toLowerCase() + "s";  
@@ -5132,7 +5132,7 @@ class BasicExpression extends Expression
       if ("OclFile".equals(data))
       { return "OclFile.OclFile_index.get(" + ind + ")"; } 
       if (data.equals("OclType"))
-      { return "OclType.getOclTypeByPK(" + ind + ")"; } 
+      { return "OclType.getByPKOclType(" + ind + ")"; } 
       return cont + ".get" + data + "ByPK(" + ind + ")"; 
     } 
     return cont + "." + data.toLowerCase() + "s";  
@@ -5155,7 +5155,7 @@ class BasicExpression extends Expression
       if ("OclFile".equals(data))
       { return "OclFile.OclFile_index.get(" + ind + ")"; } 
       if (data.equals("OclType"))
-      { return "OclType.getOclTypeByPK(" + ind + ")"; } 
+      { return "OclType.getByPKOclType(" + ind + ")"; } 
       return cont + ".get" + data + "ByPK(" + ind + ")"; 
     } 
     return cont + "." + data.toLowerCase() + "s";  
@@ -5433,6 +5433,11 @@ class BasicExpression extends Expression
     { 
       if (arrayIndex != null)
       { String ind = arrayIndex.queryForm(env,local);
+        if ("OclFile".equals(data))
+        { return "OclFile.OclFile_index.get(" + ind + ")"; } 
+        if (data.equals("OclType"))
+        { return "OclType.getByPKOclType(" + ind + ")"; } 
+      
         return cont + ".get" + data + "ByPK(" + ind + ")"; 
       } 
       return data;  // But library classes may map to language-specific name
@@ -5978,6 +5983,11 @@ class BasicExpression extends Expression
     if (umlkind == CLASSID)
     { if (arrayIndex != null)
       { String ind = arrayIndex.queryFormJava6(env,local);
+        if ("OclFile".equals(data))
+        { return "OclFile.OclFile_index.get(" + ind + ")"; } 
+        if (data.equals("OclType"))
+        { return "OclType.getByPKOclType(" + ind + ")"; } 
+      
         return cont + ".get" + data + "ByPK(" + ind + ")"; 
       } 
       return data;  // But library classes may map to language-specific name
@@ -6383,7 +6393,7 @@ class BasicExpression extends Expression
       if (data.equals("Sequence{}"))
       { return "new ArrayList<Object>()"; } 
       if (data.equals("Map{}"))
-      { return "new HashMap<String,Object>()"; }
+      { return "new HashMap<Object,Object>()"; }
 	  
       if (data.equals("null")) 
       { return "null"; } 
@@ -6481,6 +6491,11 @@ class BasicExpression extends Expression
     if (umlkind == CLASSID)
     { if (arrayIndex != null)
       { String ind = arrayIndex.queryFormJava7(env,local);
+        if ("OclFile".equals(data))
+        { return "OclFile.OclFile_index.get(" + ind + ")"; } 
+        if (data.equals("OclType"))
+        { return "OclType.getByPKOclType(" + ind + ")"; } 
+      
         return cont + ".get" + data + "ByPK(" + ind + ")"; 
       } 
       return data;  // But library classes may map to language-specific name

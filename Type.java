@@ -1553,7 +1553,15 @@ public class Type extends ModelElement
     // Take account of sortedness
 
     if (isMapType(this))
-    { return "new HashMap<String, " + elementType.typeWrapperJava7() + ">()"; } 
+    { if (keyType != null) 
+      { String kt = keyType.getJava7(); 
+        return "new HashMap<" + kt + ", " + elementType.typeWrapperJava7() + ">()"; 
+      }
+      else 
+      { return "new HashMap<String, " + elementType.typeWrapperJava7() + ">()"; 
+      }
+    }
+ 
     if ("boolean".equals(getName())) { return "false"; }
     if (isEntity) { return "null"; }  
     if ("String".equals(getName())) { return "\"\""; } 
@@ -3721,7 +3729,7 @@ public class Type extends ModelElement
     { if (keyType != null && elementType != null) 
       { return "HashMap<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
       else if (elementType != null) 
-      { return "HashMap<String, " + elementType.typeWrapperJava7() + ">"; } 
+      { return "HashMap<Object, " + elementType.typeWrapperJava7() + ">"; } 
       else 
       { return "HashMap"; } 
     
@@ -3812,7 +3820,7 @@ public class Type extends ModelElement
     { if (keyType != null && elementType != null) 
       { return "HashMap<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
       else if (elemType != null) 
-      { return "HashMap<String, " + elemType.typeWrapperJava7() + ">"; } 
+      { return "HashMap<Object, " + elemType.typeWrapperJava7() + ">"; } 
       else 
       { return "HashMap"; }
     }  
@@ -3866,14 +3874,14 @@ public class Type extends ModelElement
     return "int"; 
   }
 
-  public static String getJava7Type(Type typ, Type elemType)
+  public static String getJava7Type(Type typ, Type kType, Type elemType)
   { String et = "Object"; 
     if (elemType != null) 
     { et = elemType.typeWrapperJava7(); } 
 
-    String kt = "String"; 
-    // if (keyType != null) 
-    // { kt = keyType.typeWrapperJava7(); } 
+    String kt = "Object"; 
+    if (kType != null) 
+    { kt = kType.typeWrapperJava7(); } 
 
     String nme = typ.getName(); 
 
@@ -4517,6 +4525,55 @@ public class Type extends ModelElement
         }
       }
     }
+    return expectedType;
+  }
+
+  public static Type determineMapKeyType(Vector exps)
+  { Type expectedType = null;
+    for (int j = 0; j < exps.size(); j++)
+    { Expression be = (Expression) exps.get(j);
+      Type t = be.getElementType();
+
+      if (t == null && be instanceof BinaryExpression &&
+          "|->".equals(((BinaryExpression) be).operator))
+      { t = ((BinaryExpression) be).getLeft().getType(); }
+
+      System.out.println(">> Key type of " + be + " = " + t); 
+
+      if (t == null) { }
+      else if (expectedType == null)
+      { expectedType = t; }
+      else if (expectedType.equals(t)) { }
+      else
+      { String tn1 = expectedType.getName();
+        String tn2 = t.getName();
+        if (tn1.equals("double") && (tn2.equals("int") || tn2.equals("long")))
+        { }
+        else if (tn1.equals("long") && tn2.equals("int"))
+        { }
+        else if (tn2.equals("double") && (tn1.equals("int") || tn1.equals("long")))
+        { expectedType = t; }
+        else if (tn2.equals("long") && tn1.equals("int"))
+        { expectedType = t; }
+        else if (tn1.equals(tn2)) { } 
+        else 
+        { Entity e1 = expectedType.getEntity(); 
+          Entity e2 = t.getEntity(); 
+          if (e1 != null && e2 != null)
+          { if (e1 == e2) { } 
+            else 
+            { Entity e = Entity.commonSuperclass(e1,e2); 
+              expectedType = new Type(e); 
+            } // could be null
+          }
+          else // one is a class and other isn't or both are invalid
+          { System.out.println("!! Warning: cannot determine key type of map " + exps); 
+            return null; 
+          }
+        }
+      }
+    }
+
     return expectedType;
   }
 

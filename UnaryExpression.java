@@ -2126,8 +2126,10 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     boolean res = argument.typeCheck(typs,ents,contexts,env); 
     multiplicity = ModelElement.ONE; 
 
-    if (operator.equals("->size") || operator.equals("->toInteger") ||
-        operator.equals("->ceil") || operator.equals("->round") ||
+    if (operator.equals("->size") || 
+        operator.equals("->toInteger") ||
+        operator.equals("->ceil") || 
+        operator.equals("->round") ||
         operator.equals("->char2byte") || 
         operator.equals("->floor"))
     { type = new Type("int",null); 
@@ -2257,7 +2259,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
           argument.elementType != null) 
       { elementType = argument.elementType.getElementType(); 
         if (argument.elementType.isMap())
-        { type = new Type("Map", null); 
+        { type = new Type("Map", null);
+          type.keyType = argument.elementType.getKeyType();  
           type.elementType = elementType; 
         }
       } 
@@ -2278,6 +2281,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       { elementType = argument.elementType.getElementType(); 
         if (argument.elementType.isMap())
         { type = new Type("Map", null); 
+          type.keyType = argument.elementType.getKeyType();  
           type.elementType = elementType; 
         }
       }
@@ -2427,8 +2431,13 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { type = new Type("Sequence",null); 
       elementType = new Type("String",null); 
       type.setElementType(elementType); 
-      multiplicity = ModelElement.MANY; 
-      // System.out.println(">>> Type of " + this + " is " + type + "(" + elementType + ")"); 
+      multiplicity = ModelElement.MANY;
+
+      if (argument.type != null && 
+          argument.type.getName().equals("String"))
+      { } 
+      else  
+      { System.err.println("! Warning: type of " + argument + " should be String in " + this); }  
 
       return res; 
     } 
@@ -3464,6 +3473,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     if (operator.equals("->asBag"))
     { return "Ocl.sort(" + qf + ")"; } 
 
+    if (operator.equals("->characters")) 
+    { return "Ocl.characters(" + qf + ")"; } 
+
     if ("->copy".equals(operator))
     { if (type == null) 
       { return qf; } 
@@ -3632,7 +3644,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       }  // not correct really. 
       return "Ocl.closure" + entity.getName() + rel + "(" + arg.queryFormJava7(env,local) + ")";
     } 
-    else if (argument.type != null && "String".equals("" + argument.getType()))
+    else if (argument.type != null && 
+             "String".equals("" + argument.type.getName()))
     { // last,first,front,tail on strings
       if (data.equals("first") || data.equals("any"))
       { return "(" + pre + ".charAt(0) + \"\")"; } 
@@ -3643,7 +3656,9 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       if (data.equals("tail"))
       { return pre + ".substring(1," + pre + ".length())"; } 
     } 
-    else if (data.equals("any") || data.equals("last") || data.equals("first"))
+    else if (data.equals("any") || 
+             data.equals("last") || 
+             data.equals("first"))
     { Type et = argument.elementType; 
       if (et != null) 
       { if ("String".equals("" + et) || et.isEntity())
