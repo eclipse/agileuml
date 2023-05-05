@@ -3741,9 +3741,9 @@ public class Type extends ModelElement
     { if (keyType != null && elementType != null) 
       { return "Evaluation<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
       else if (elementType != null) 
-      { return "Evaluation<String, " + elementType.typeWrapperJava7() + ">"; } 
+      { return "Evaluation<Object, " + elementType.typeWrapperJava7() + ">"; } 
       else 
-      { return "Evaluation<String,Object>"; } 
+      { return "Evaluation<Object,Object>"; } 
     } 
 
     if (nme.equals("Ref"))
@@ -3829,9 +3829,9 @@ public class Type extends ModelElement
     { if (keyType != null && elementType != null) 
       { return "Evaluation<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
       else if (elemType != null) 
-      { return "Evaluation<String, " + elemType.typeWrapperJava7() + ">"; } 
+      { return "Evaluation<Object, " + elemType.typeWrapperJava7() + ">"; } 
       else 
-      { return "Evaluation<String,Object>"; } 
+      { return "Evaluation<Object,Object>"; } 
     } 
 
     if (nme.equals("Ref"))
@@ -4079,18 +4079,18 @@ public class Type extends ModelElement
     { if (keyType != null && elementType != null) 
       { return "HashMap<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
       else if (elementType != null) 
-      { return "HashMap<String, " + elementType.typeWrapperJava7() + ">"; }
+      { return "HashMap<Object, " + elementType.typeWrapperJava7() + ">"; }
       else 
-      { return "HashMap<String, Object>"; }
+      { return "HashMap<Object, Object>"; }
     } 
 
     if ("Function".equals(nme)) 
     { if (keyType != null && elementType != null) 
       { return "Evaluation<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
       else if (elementType != null) 
-      { return "Evaluation<String, " + elementType.typeWrapperJava7() + ">"; }
+      { return "Evaluation<Object, " + elementType.typeWrapperJava7() + ">"; }
       else 
-      { return "Evaluation<String, Object>"; }
+      { return "Evaluation<Object, Object>"; }
     } 
 
     if ("Ref".equals(nme)) 
@@ -4369,8 +4369,8 @@ public class Type extends ModelElement
 
     if (typ.startsWith("Function(") && typ.endsWith(")"))
     { for (int i = 9; i < typ.length(); i++) 
-	  { if (",".equals(typ.charAt(i) + ""))
-	    { String nt = typ.substring(9,i);
+      { if (",".equals(typ.charAt(i) + ""))
+        { String nt = typ.substring(9,i);
           Type innerT = getTypeFor(nt, types, entities);
           String rt = typ.substring(i+1,typ.length()-1);
           Type restT = getTypeFor(rt, types, entities); 
@@ -4394,7 +4394,7 @@ public class Type extends ModelElement
     { Expression be = (Expression) exps.get(j);
       Type t = be.getType();
 
-      System.out.println(">> Type of " + be + " = " + t); 
+      System.out.println(">> Type of expression " + be + " = " + t); 
 
       if (t == null) { }
       else if (expectedType == null)
@@ -4427,7 +4427,7 @@ public class Type extends ModelElement
             } // could be null
           }
           else // one is a class and other isn't or both are invalid
-          { System.out.println("!! Warning: cannot determine element type of collection " + exps); 
+          { System.out.println("!! Warning: unexpected combination of types " + expectedType + " " + t + " in expression list " + exps); 
             return null; 
           }
         }

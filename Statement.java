@@ -4295,9 +4295,12 @@ class WhileStatement extends Statement
         if (lret.isEntity())
         { lv.setEntity(lret.getEntity()); } 
       } 
-      // System.out.println(">>> Entity of loop variable " + lv + " is " + lv.getEntity());   
+
+      System.out.println(">>> Type of loop variable " + lv + " is " + lv.getType() + " entity: " + lv.getEntity());   
+
       env1.add(lv); 
     } 
+
     return body.typeCheck(types,entities,ctxs,env1); 
   }  
 
@@ -6023,9 +6026,11 @@ class CreationStatement extends Statement
 
   public boolean typeCheck(Vector types, Vector entities, Vector ctxs, Vector env)
   { Attribute att = 
-          new Attribute(assignsTo,instanceType,ModelElement.INTERNAL); 
+      new Attribute(assignsTo,instanceType,
+                    ModelElement.INTERNAL); 
 
-    Type typ = Type.getTypeFor(createsInstanceOf, types, entities); 
+    Type typ = Type.getTypeFor(createsInstanceOf, 
+                               types, entities); 
     if (instanceType == null && typ != null) 
     { instanceType = typ; } 
     if (elementType != null) 
@@ -6048,6 +6053,9 @@ class CreationStatement extends Statement
     if (initialExpression != null) 
     { initialExpression.typeCheck(types,entities,ctxs,env); }
 	
+    // if typ == null && instanceType == null use the 
+    // initialExpression type instead. 
+
     return true; 
   }  // createsInstanceOf must be a primitive type, String or entity, if Sequence, Set
      // there is not necessarily an element type. 

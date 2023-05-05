@@ -1200,7 +1200,10 @@ public class Compiler2
     { Type tt = null; 
       if (st == en) 
       { System.err.println("!! Warning, map/function types must have type parameters"); 
-        return new Type(typ, null); 
+        tt = new Type(typ, null);
+        tt.setKeyType(new Type("OclAny", null)); 
+        tt.setElementType(new Type("OclAny", null)); 
+        return tt;  
       } 
 
       if (st+1 <= en-1) 

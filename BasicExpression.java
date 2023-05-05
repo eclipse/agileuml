@@ -4127,8 +4127,16 @@ class BasicExpression extends Expression
         } 
         else 
         { JOptionPane.showMessageDialog(null, data + " is not a function parameter or known function in " + this + ".\n" + 
-                                        "Please re-type-check or correct your specification.", 
-                                        "Type warning", JOptionPane.WARNING_MESSAGE);
+            "Please re-type-check or correct your specification.", 
+            "Type warning", JOptionPane.WARNING_MESSAGE);
+
+          if (parameters != null && parameters.size() == 1)
+          { // assume it is a function
+            type = new Type("Function", null); 
+            Expression par1 = (Expression) parameters.get(0); 
+            type.keyType = par1.getType();
+            type.elementType = new Type("OclAny", null);  
+          } // data->apply(par1)
         }
       } // default
       else if (objectRef != null)
@@ -6473,17 +6481,25 @@ class BasicExpression extends Expression
         }         
         return data + ".get(" + indopt + ")";
       } // unwrap it, also for primitive types
-      else if (parameters != null && variable != null && variable.getType().isFunctionType()) // application of a Function(S,T)
+      else if (parameters != null && variable != null)
       { String pars = ""; 
         for (int h = 0; h < parameters.size(); h++) 
         { Expression par = (Expression) parameters.get(h); 
           pars = pars + par.queryFormJava7(env,local); 
           if (h < parameters.size()-1) 
           { pars = pars + ","; } 
-        } 
-        return data + ".evaluate(" + pars + ")"; 
-      }
+        }
+		
+		if (variable.getType() != null && variable.getType().isFunctionType()) // application of a Function(S,T)
+        {  
+          return data + ".evaluate(" + pars + ")"; 
+        }
+        else 
+        { System.err.println("!! ERROR: function application " + this + " should be expressed as " + data + "->apply(" + pars + ")");
+          return "((Evaluation<Object,Object>) " + data + ").evaluate(" + pars + ")"; 
+        }
 
+      }
       else 
       { return data; }  
     } 
