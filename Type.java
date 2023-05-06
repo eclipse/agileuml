@@ -3827,11 +3827,11 @@ public class Type extends ModelElement
 
     if (nme.equals("Function"))
     { if (keyType != null && elementType != null) 
-      { return "Evaluation<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
+      { return "Function<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
       else if (elemType != null) 
-      { return "Evaluation<Object, " + elemType.typeWrapperJava7() + ">"; } 
+      { return "Function<Object, " + elemType.typeWrapperJava7() + ">"; } 
       else 
-      { return "Evaluation<Object,Object>"; } 
+      { return "Function<Object,Object>"; } 
     } 
 
     if (nme.equals("Ref"))
@@ -3900,7 +3900,7 @@ public class Type extends ModelElement
     { return "HashMap<" + kt + ", " + et + ">"; } 
 
     if (nme.equals("Function"))
-    { return "Evaluation<" + kt + ", " + et + ">"; } 
+    { return "Function<" + kt + ", " + et + ">"; } 
 
     if (nme.equals("Ref"))
     { if (elemType != null) 
@@ -3964,11 +3964,11 @@ public class Type extends ModelElement
 
     if (nme.equals("Function"))
     { if (keyType != null && elementType != null) 
-      { return "Evaluation<" + keyType.typeWrapperJava8() + ", " + elementType.typeWrapperJava8() + ">"; } 
+      { return "Function<" + keyType.typeWrapperJava8() + ", " + elementType.typeWrapperJava8() + ">"; } 
       else if (elementType != null) 
-      { return "Evaluation<String, " + elementType.typeWrapperJava8() + ">"; } 
+      { return "Function<String, " + elementType.typeWrapperJava8() + ">"; } 
       else 
-      { return "Evaluation<String,Object>"; } 
+      { return "Function<String,Object>"; } 
     } 
 
     if (nme.equals("Ref"))
@@ -4086,11 +4086,11 @@ public class Type extends ModelElement
 
     if ("Function".equals(nme)) 
     { if (keyType != null && elementType != null) 
-      { return "Evaluation<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
+      { return "Function<" + keyType.typeWrapperJava7() + ", " + elementType.typeWrapperJava7() + ">"; } 
       else if (elementType != null) 
-      { return "Evaluation<Object, " + elementType.typeWrapperJava7() + ">"; }
+      { return "Function<Object, " + elementType.typeWrapperJava7() + ">"; }
       else 
-      { return "Evaluation<Object, Object>"; }
+      { return "Function<Object, Object>"; }
     } 
 
     if ("Ref".equals(nme)) 
@@ -4143,18 +4143,18 @@ public class Type extends ModelElement
     { if (keyType != null && elementType != null) 
       { return "HashMap<" + keyType.typeWrapperJava8() + ", " + elementType.typeWrapperJava8() + ">"; } 
       else if (elementType != null) 
-      { return "HashMap<String, " + elementType.typeWrapperJava8() + ">"; }
+      { return "HashMap<Object, " + elementType.typeWrapperJava8() + ">"; }
       else 
-      { return "HashMap<String, Object>"; }
+      { return "HashMap<Object, Object>"; }
     } 
 
     if ("Function".equals(nme)) 
     { if (keyType != null && elementType != null) 
-      { return "Evaluation<" + keyType.typeWrapperJava8() + ", " + elementType.typeWrapperJava8() + ">"; } 
+      { return "Function<" + keyType.typeWrapperJava8() + ", " + elementType.typeWrapperJava8() + ">"; } 
       else if (elementType != null) 
-      { return "Evaluation<String, " + elementType.typeWrapperJava8() + ">"; }
+      { return "Function<Object, " + elementType.typeWrapperJava8() + ">"; }
       else 
-      { return "Evaluation<String, Object>"; }
+      { return "Function<Object, Object>"; }
     } 
 
     if ("Ref".equals(nme)) 

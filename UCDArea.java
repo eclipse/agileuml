@@ -9969,7 +9969,11 @@ public void produceCUI(PrintWriter out)
     out.println("import java.util.StringTokenizer;"); 
     out.println("import java.io.*;\n"); 
 
- 
+    /* These are actually Java 8: */ 
+
+    out.println("import java.util.function.Predicate;"); 
+    out.println("import java.util.function.Function;\n"); 
+
     String mainOp = ""; 
 
     // If any entity has an activity, this becomes the main operation: 
