@@ -1,0 +1,405 @@
+specification::
+specification _1 _* <EOF> |-->function void _1() {\n_*`definesToAttributes\n}\n\n
+specification _1 _* |-->function void _1() {\n_*`definesToAttributes\n}\n\n
+
+
+part::
+_1 |-->_1\n
+
+
+constraint::
+Constraint on _1 | _2 |-->\n /* invariant _2 */\n
+
+
+prove::
+Prove _1 if _2 |-->\n /* invariant _2 => _1 */\n
+
+
+simplify::
+Simplify _1 |-->\n /* invariant _1 */\n
+
+
+expanding::
+Expanding _1 to _2 |-->
+
+
+expandTo::
+Expand _1 to _2 terms |-->
+
+
+substituting::
+Substitute _1 for _2 in _3 |-->\n /* invariant _3 */\n<action> _1 / _2
+
+solve::
+Solve _* for _+ |-->
+
+reexpression::
+Express _1 as _2 |-->
+
+
+formula::
+Define _1 |-->
+Define _1 = _2 |-->\n\n  function double _1Definition()\n  { return _2; }
+Define _1 ~ _2 |--> 
+
+
+factorBy::
+Factor _1 by _2 |-->
+
+cancelIn::
+Cancel _1 in _2 |-->
+
+substituteIn::
+Substitute _1 in _2 |-->_2<when> _2 expression
+Substitute _1 in _2 |-->
+
+
+definesToAttributes::
+Define _1 = _2 |-->\n  double _1 = _2;
+Define _1 |-->\n  double _1;
+Define _1 ~ _2 |-->\n  OclRandom _1 = OclRandom.newOclRandom_2`randomParameters; 
+
+_1 |-->_1`definesToAttributes<when> _1 formula
+Constraint on _1 | _2 |-->
+Prove _1 if _2 |-->
+Expanding _1 to _2 |--> 
+Substitute _1 for _2 in _3 |-->
+Solve _* for _+ |-->
+Express _1 as _2 |-->
+_1 |-->
+_1 _* |-->
+
+
+idList::
+_1 |-->_1
+_1 , _* |-->_1,_*`recurse
+
+
+type::
+Sequence ( _1 ) |-->Sequence(_1)  
+Set ( _1 ) |-->Set(_1)  
+OrderedSet ( _1 ) |-->OrderedSet(_1)  
+Bag ( _1 ) |-->Bag(_1)  
+Map ( _1 , _2 ) |-->Map(_1,_2) 
+Function ( _1 , _2 ) |-->Function(_1,_2) 
+Ñ |-->int
+Ž |-->int
+® |-->double
+_1 |-->_1
+
+
+expression::
+_1 |-->_1
+
+
+expressionList::
+_1 |-->_1
+_1 , _* |-->_1,_*`recurse
+
+
+logicalExpression::
+_1 & _2 |-->_1 && _2
+_1 or _2 |-->_1 || _2
+
+_1 => _1 |-->true
+false => _1 |-->true
+_1 => true |-->true
+_1 => false |-->!(_1)
+_1 => _2 |-->(_1 ? _2 : true)
+
+£ _1 : _2 • true |-->true
+£ _1 : _2 • false |-->false
+£ _1 : _2 • _3 |-->_2->exists( _1 | _3 )
+
+¡ _1 : _2 • _3 |-->_2->forAll( _1 | _3 )
+
+_1 _2 _3 |-->_1 _2 _3
+
+not true |-->false
+not false |-->true
+not _1 |-->!(_1)
+
+_1 |-->_1
+
+
+equalityExpression::
+_1 = _2 |-->_1 == _2
+_1 /= _2 |-->_1 != _2
+_1 < _1 |-->false
+_1 < _2 |-->_1 < _2
+_1 > _1 |-->false
+_1 > _2 |-->_1 > _2
+_1 <= _1 |-->true
+_1 <= _2 |-->_1 <= _2
+_1 >= _1 |-->true
+_1 >= _2 |-->_1 >= _2
+
+_1 © Ø |-->false
+_1 ¢ Ø |-->true
+
+_1 © _2 |-->(_2)->includes(_1)
+_1 ¢ _2 |-->(_2)->excludes(_1)
+
+_1 _2 _3 |-->_1 _2 _3
+_1 |-->_1
+
+
+additiveExpression::
+_1 + 0 |-->_1
+0 + _1 |-->_1
+_1 + 0.0 |-->_1
+0.0 + _1 |-->_1
+_1 + _1 |-->2*(_1)
+_1 + _2 |-->_1 + _2
+_1 - 0 |-->_1
+_1 - 0.0 |-->_1
+_1 - _1 |-->0
+_1 - _2 |-->_1 - _2
+
+_1 _2 _3 |-->_1 _2 _3
+_1 |-->_1
+
+
+factorExpression::
+1 * _1 |-->_1
+_1 * 1 |-->_1
+1.0 * _1 |-->_1
+_1 * 1.0 |-->_1
+0 * _1 |-->0
+_1 * 0 |-->0
+0.0 * _1 |-->0
+_1 * 0.0 |-->0
+_1 * _2 |-->_1*_2
+
+_1 / 1 |-->_1
+_1 / 1.0 |-->_1
+_1 / _1 |-->1
+0 / _1 |-->0
+0.0 / _1 |-->0
+_1 / _2 |-->_1/_2
+
+- 0 |-->0
+-0.0 |-->0
+- _1 |-->-_1
+
+0 ! |-->1
+1 ! |-->1
+_1 ! |-->math.factorial(_1)
+
+_1 ´ |-->_1´
+
+
+† 0 |-->0
+† 1 |-->1
+† _1 |-->sqrt(_1)
+
+‡ _1 _2 |-->_1*_2`tail<when> _1 integer
+‡ _1 _2 |-->_1*_2`tail<when> _1 real
+‡ x dx |-->(x^(2)/2)
+‡ _1 dx |-->math.indefiniteIntegral((double x) => _1)
+
+‡ _1 _2 |-->math.indefiniteIntegral((double _2`tail) => _1)
+
+‡ _{ _1 } ^{ _2 } _3 _4 |-->_3*(_2 - _1)<when> _3 integer
+‡ _{ _1 } ^{ _2 } _3 _4 |-->_3*(_2 - _1)<when> _3 real
+
+‡ _{ _1 } ^{ _2 } x dx |-->(_2^(2)/2) - (_1^(2)/2)
+‡ _{ _1 } ^{ _2 } _3 _4 |-->math.definiteIntegral(_1, _2, (double _4`tail) => _3) 
+
+€ _{ _1 } ^{ _2 } _3 |-->_3*(_2 - _1`rhs + 1)<when> _3 integer
+€ _{ _1 } ^{ _2 } _3 |-->_3*(_2 - _1`rhs + 1)<when> _3 real
+€ _{ _1 } ^{ _2 } _3 |-->math.Sum((int _1`lhs) => _3, _1`rhs, _2)
+
+× _{ _1 } ^{ _2 } _3 |-->_3^(_2 - _1`rhs + 1)<when> _3 integer
+× _{ _1 } ^{ _2 } _3 |-->_3^(_2 - _1`rhs + 1)<when> _3 real
+× _{ _1 } ^{ _2 } _3 |-->math.Prd((int _1`lhs) => _3, _1`rhs, _2)
+
+C_ { 0 } ^{ _1 } |-->1
+C_ { _1 } ^{ _1 } |-->1
+C_ { 1 } ^{ _1 } |-->_1
+C_ { _1 } ^{ _2 } |-->math.combinatorial(_2,_1)
+ 
+E[ _1 ] |-->_1.mean()
+
+_1 |-->_1
+
+
+factor2Expression::
+_1 ^{ 1 } |-->_1
+1 ^{ _1 } |-->1
+_1 ^{ 0 } |-->1
+0 ^{ 2 } |-->0
+0 ^{ 3 } |-->0
+
+e ^{ _1 } |-->exp(_1)
+
+_1 ^{ _2 } |-->_1^(_2)
+
+_1 _{ _2 } |-->_1[_2]
+
+_1 _2 |-->_1_2
+
+_1 |-->_1
+
+
+basicExpression::
+e |-->math.e()
+0.0 |-->0
+1.0 |-->1
+
+Ø |-->Set{}
+… |-->math.infinity
+
+g{ p } |-->math.pi()
+g{ _1 } |-->_1
+
+sin ( 0 ) |-->0
+cos ( 0 ) |-->1
+tan ( 0 ) |-->0
+exp ( 0 ) |-->1
+log ( 1 ) |-->0
+log ( e ) |-->1
+cosh ( 0 ) |-->1
+sinh ( 0 ) |-->0
+tanh ( 0 ) |-->0
+sech ( 0 ) |-->1
+
+cosec ( _1 ) |-->(1.0/sin(_1))
+sec ( _1 ) |-->(1.0/cos(_1))
+cot ( _1 ) |-->(1.0/tan(_1))
+
+acosec ( _1 ) |-->asin(1.0/_1)
+asec ( _1 ) |-->acos(1.0/_1)
+acot ( _1 ) |-->atan(1.0/_1)
+
+cosech ( _1 ) |-->(1.0/sinh(_1))
+sech ( _1 ) |-->(1.0/cosh(_1))
+coth ( _1 ) |-->(1.0/tanh(_1))
+
+acosech ( _1 ) |-->math.asinh(1.0/_1)
+asech ( _1 ) |-->math.acosh(1.0/_1)
+acoth ( _1 ) |-->math.atanh(1.0/_1)
+
+sin ( _1 ) |-->sin(_1)
+cos ( _1 ) |-->cos(_1)
+tan ( _1 ) |-->tan(_1)
+
+sinh ( _1 ) |-->sinh(_1)
+cosh ( _1 ) |-->cosh(_1)
+tanh ( _1 ) |-->tanh(_1)
+
+exp ( _1 ) |-->exp(_1)
+log ( _1 ) |-->log(_1)
+log10 ( _1 ) |-->log10(_1)
+
+ceil ( _1 ) |-->ceil(_1)
+floor ( _1 ) |-->floor(_1)
+round ( _1 ) |-->round(_1)
+
+min ( _1 ) |-->math.min(_1)
+max ( _1 ) |-->math.max(_1)
+
+Binomial ( _1 ) |-->excel.Binom_Dist_Range(_1`third,_1`last,_1`first,_1`third)
+
+var ( _1 ) |-->_1.variance()
+
+_1 ( _2 ) |-->_1(_2)
+_1 ( ) |-->_1()
+
+( true ) |-->true
+( false ) |-->false
+( x ) |-->x
+( _1 ) |-->_1<when> _1 integer
+( _1 ) |-->_1<when> _1 real
+( _1 ) |-->_1<when> _1`isIdentifier true
+( _1 ) |-->_1<when> _1`bracketed true
+( _1 ) |-->(_1)
+
+_1 [ _2 ] |-->_1[_2]
+
+_1 . _2 |-->_1._2
+
+_1 |-->_1
+
+
+setExpression::
+{ _1 : _2 | _3 } |-->_2->select( _1 | _3 )
+{ _1 : _2 | _3 • _4 } |-->_2->select( _1 | _3 )->collect( _1 | _4)
+  
+
+identifier::
+_1 |-->_1
+
+
+rhs::
+_1 = _2 |-->_2
+_1 |-->_1<when> _1 identifier
+_1 |-->_1<when> _1 integer
+_1 |-->_1<when> _1 real
+_1 |-->_1`rhs
+
+lhs::
+_1 = _2 |-->_1
+_1 |-->_1<when> _1 identifier
+_1 |-->_1<when> _1 integer
+_1 |-->_1<when> _1 real
+_1 |-->_1`lhs
+
+
+
+
+isIdentifier::
+g{ _1 } |-->true
+
+_1 ( _2 ) |-->false
+_1 ( ) |-->false
+
+( _1 ) |-->_1`isIdentifier
+
+_1 |-->_1`isIdentifier<when> _1 basicExpression
+_1 |-->_1`isIdentifier<when> _1 factorExpression
+_1 |-->_1`isIdentifier<when> _1 factor2Expression
+_1 |-->_1`isIdentifier<when> _1 logicalExpression
+_1 |-->_1`isIdentifier<when> _1 equalityExpression
+_1 |-->_1`isIdentifier<when> _1 additiveExpression
+_1 |-->_1`isIdentifier<when> _1 expression
+
+_1 |-->true<when> _1 identifier
+_1 |-->false
+
+
+bracketed::
+( _1 ) |-->true
+
+_1 |-->_1`bracketed<when> _1 basicExpression
+_1 |-->_1`bracketed<when> _1 factorExpression
+_1 |-->_1`bracketed<when> _1 factor2Expression
+_1 |-->_1`bracketed<when> _1 logicalExpression
+_1 |-->_1`bracketed<when> _1 equalityExpression
+_1 |-->_1`bracketed<when> _1 additiveExpression
+_1 |-->_1`bracketed<when> _1 expression
+
+_1 |-->false
+
+
+randomParameters::
+N ( _1 ) |-->Normal(_1)
+Bernoulli ( _1 ) |-->Bernoulli(_1)
+Binom ( _1 ) |-->Binom(_1)
+U ( ) |-->Uniform(0.0, 1.0)
+U ( _1 ) |-->Uniform(_1)
+Poisson ( _1 ) |-->Poisson(_1)
+
+( _1 ) |-->_1`randomParameters
+
+_1 |-->_1`randomParameters<when> _1 basicExpression
+_1 |-->_1`randomParameters<when> _1 factorExpression
+_1 |-->_1`randomParameters<when> _1 factor2Expression
+_1 |-->_1`randomParameters<when> _1 logicalExpression
+_1 |-->_1`randomParameters<when> _1 equalityExpression
+_1 |-->_1`randomParameters<when> _1 additiveExpression
+_1 |-->_1`randomParameters<when> _1 expression
+
+_1 |-->0
+_* |-->0
+

@@ -1,6 +1,6 @@
 file_input::
-_1 |-->class FromPython {\n  operation initialise()\n  pre: true post: true\n  activity: _1;\n}\n
-_1 _* |-->class FromPython {\n  operation initialise()\n  pre: true post: true\n  activity: _1_*`followingStatement;\n}\n
+_1 |-->class FromPython {\n  operation initialise()\n  pre: true post: true\n  activity: _1;\n\n_1`functionDefinitions\n}\n
+_1 _* |-->class FromPython {\n  operation initialise()\n  pre: true post: true\n  activity: _1_*`followingStatement;\n\n_1`functionDefinitions\n_*`functionDefinitions}\n
 
 
 
@@ -50,8 +50,8 @@ if _1 _2 |-->_1
 
 test::
 _1 if _2 else _3 |-->if _2 then _1 else _3 endif
-lambda _1 : _2 |-->lambda _1 in _2
-lambda : _2 |-->lambda $$ in _2
+lambda _1 : _2 |-->lambda _1 in (_2)
+lambda : _2 |-->lambda $$ : OclAny in (_2)
 _1 |-->_1
 
 
@@ -83,6 +83,15 @@ _1 , _* |-->_1, _*`recurse
 
 
 expr::
+abs _1 |-->_1->abs()
+all _1 |-->_1->forAll( _x | _x = true )
+any _1 |-->_1->exists( _x | _x = true )
+ascii _1 |-->(_1 + "")
+dict _1 |-->_1
+filter _1 |-->(_1`secondArg)->select( _x | (_1`firstArg)->apply(_x) = true )
+frozenset _1 |-->Set{}
+map _1 |-->(_1`secondArg)->collect( _x | (_1`firstArg)->apply(_x) )
+
 len _1 |-->_1->size()
 print _1 |-->_1->display()
 int _1 |-->_1->oclAsType(int)
@@ -99,11 +108,21 @@ zip _1 |-->Integer.subrange(1, _1`firstArg->size())->collect( $i | Sequence{_1`f
 open _1 |-->OclFile.newOclFile_Write(OclFile.newOclFile(_1`firstArg))<when> _1`lastArg matches .*[wWaA].*
 open _1 |-->OclFile.newOclFile_Read(OclFile.newOclFile(_1`firstArg))
 
+setattr _1 |-->OclType.setAttributeValue_1
+getattr _1 |-->OclType.getAttributeValue_1
+hasattr _1 |-->OclType.hasAttribute_1
+delattr _1 |-->OclType.removeAttribute_1
 
-await _1 |-->
-await _1 _* |-->
+eval _1 |-->(lambda $$ : OclAny in _1)->apply(0)
+
+await _1 |-->_1
+await _1 _* |-->_1 _*
+
 math _1 |-->_1`mathTrailer
-
+re _1 |-->_1`reTrailer
+random _1 |-->_1`randomTrailer
+pickle _1 |-->_1`pickleTrailer
+datetime _1 |-->_1`datetimeTrailer
 
 _1 ** _2 |-->(_1)->pow(_2)
 + _1 |-->_1
@@ -131,6 +150,8 @@ _1 _2 |-->(_1 = StringLib.toTitleCase(_1))<when> _1 atom, _2 matches .istitle\(\
 _1 _2 |-->StringLib.padLeftWithInto(_1,_2`justificationArguments)<when> _1 atom, _2`second rjust
 _1 _2 |-->StringLib.padRightWithInto(_1,_2`justificationArguments)<when> _1 atom, _2`second ljust
 
+_1 _* |-->_1->apply_*<when> _1 Function
+
 _1 _* |-->_1_*<when> _1 atom
 _1 |-->_1
 
@@ -143,10 +164,23 @@ atom::
 { _1 } |-->_1
 ` _1 ` |-->"_1"
 - _1 |-->-_1
+
 None |-->null
+True |-->true
+False |-->false
+
 ... |-->...
 print |-->print
 exec |-->exec
+
+int |-->OclType["int"]
+float |-->OclType["double"]
+str |-->OclType["String"]
+bool |-->OclType["boolean"]
+dict |-->OclType["Map"]
+list |-->OclType["Sequence"]
+set |-->OclType["Set"]
+
 _1 |-->_1
 
 
@@ -157,6 +191,14 @@ _1 : _2 _3 |-->_3`domainPart->select(_3`variablePart | _3`selectPart)->collect(_
 _1 : _2 , _* |-->Map{ _1 |-> _2 }->union(_*`recurse)
 ** _1 , _* |-->_1->union(_*`recurse)
 _1 |-->_1`setFormation
+
+isMapAtomExpression::
+_1 : _2 |-->true
+_1 : _2 _3 |-->true<when> _3 comp_for
+** _1 |-->true
+_1 : _2 , _* |-->true
+** _1 , _* |-->true
+_1 |-->false
 
 
 star_expr::
@@ -175,9 +217,8 @@ testlist_star_expr::
 _1 |-->_1
 _1 , _* |-->_1,_*`recurse
 
-hasSideEffect::
-_1 |-->_1`hasSideEffect
 
+hasSideEffect::
 _1 |-->_1`hasSideEffect<when> _1 testlist
 _1 |-->_1`hasSideEffect<when> _1 test
 _1 |-->_1`hasSideEffect<when> _1 logical_test
@@ -192,6 +233,61 @@ _1 , _* |-->_1`hasSideEffect
 _1 |-->
 
 
+isMapExpression::
+_1 |-->_1`isMapExpression<when> _1 testlist
+_1 |-->_1`isMapExpression<when> _1 test
+_1 |-->_1`isMapExpression<when> _1 logical_test
+_1 |-->_1`isMapExpression<when> _1 comparison
+_1 |-->_1`isMapExpression<when> _1 expr
+_1 |-->_1`isMapExpression<when> _1 atom
+
+print _1 |-->false
+del _1 |-->false
+dict _1 |-->true
+
+( ) |-->false
+( _1 ) |-->false<when> _1 multiple
+( _1 ) |-->_1`isMapExpression
+[ _1 ] |-->false
+{ _1 } |-->_1`isMapAtomExpression
+` _1 ` |-->false
+- _1 |-->false
+None |-->false
+... |-->false
+
+_1 _2 |-->false<when> _1 atom, _2 trailer
+_1 , _* |-->false
+_1 |-->false
+
+
+isSequenceExpression::
+_1 |-->_1`isSequenceExpression<when> _1 testlist
+_1 |-->_1`isSequenceExpression<when> _1 test
+_1 |-->_1`isSequenceExpression<when> _1 logical_test
+_1 |-->_1`isSequenceExpression<when> _1 comparison
+_1 |-->_1`isSequenceExpression<when> _1 expr
+_1 |-->_1`isSequenceExpression<when> _1 atom
+
+print _1 |-->false
+del _1 |-->false
+dict _1 |-->false
+range _1 |-->true
+
+( ) |-->false
+( _1 ) |-->false<when> _1 multiple
+( _1 ) |-->_1`isSequenceExpression
+[ _1 ] |-->true
+{ _1 } |-->false
+` _1 ` |-->false
+- _1 |-->false
+None |-->false
+... |-->false
+
+_1 _2 |-->false<when> _1 atom, _2 trailer
+_1 , _* |-->false
+_1 |-->false
+
+
 updateForm::
 _1 |-->_1`updateForm<when> _1 testlist
 _1 |-->_1`updateForm<when> _1 test
@@ -199,14 +295,48 @@ _1 |-->_1`updateForm<when> _1 logical_test
 _1 |-->_1`updateForm<when> _1 comparison
 _1 |-->_1`updateForm<when> _1 expr
 
+exec _* |-->    execute _*
 print _1 |-->    execute _1->display()
 del _1 |-->    execute _1->isDeleted()
 
 _1 _2 |-->    _1.closeFile()<when> _1 atom, _2`second close
 _1 _2 |-->    _1.write_2`third<when> _1 atom, _2`second write
+pickle _1 |-->    _1`thirdSecondArg.writeObject(_1`thirdFirstArg)<when> _1`second dump
 
 _1 _2 |-->    _1 := _1_2`trailerUpdateForm<when> _1 atom, _2 trailer
 _1 , _* |-->    _1 ;\n_*`recurse
+_1 |-->
+
+
+errorToUML::
+_1 |-->_1`errorToUML<when> _1 testlist
+_1 |-->_1`errorToUML<when> _1 test
+_1 |-->_1`errorToUML<when> _1 logical_test
+_1 |-->_1`errorToUML<when> _1 comparison
+_1 |-->_1`errorToUML<when> _1 expr
+_1 |-->_1`errorToUML<when> _1 atom
+
+_1 _2 |-->_1`errorToUML_2<when> _1 atom, _2 trailer
+
+( ) |-->()
+( _1 ) |-->Sequence{_1}<when> _1 multiple
+( _1 ) |-->(_1`errorToUML)
+[ _1 ] |-->_1`sequenceFormation
+{ _1 } |-->_1
+` _1 ` |-->"_1"
+- _1 |-->-_1
+None |-->null
+... |-->...
+print |-->print
+exec |-->exec
+int |-->int
+float |-->double
+str |-->String
+
+_1 , _* |-->_1.new_1<when> _1 name
+_1 |-->_1.new_1<when> _1 name
+
+_1 , _* |-->
 _1 |-->
 
 
@@ -219,6 +349,25 @@ name::
 True |-->true
 False |-->false
 None |-->null
+
+ValueError |-->IncorrectElementException
+BaseException |-->OclException
+Exception |-->ProgramException
+OSError |-->SystemException
+IOError |-->IOException
+TypeError |-->CastingException
+AttributeError |-->NullAccessException
+LookupError |-->IndexingException
+ArithmeticError |-->ArithmeticException
+AssertionError |-->AssertionException
+
+Random |-->OclRandom
+
+int |-->OclType["int"]
+float |-->OclType["double"]
+str |-->OclType["String"]
+bool |-->OclType["boolean"]
+
 _1 |-->_1
 
 
@@ -238,11 +387,13 @@ _1 |-->_1
 _1 , _* |-->_1, _*`recurse
 
 vardef_parameter::
-* |-->_star : Sequence(OclAny)
+* |-->$star : Sequence(OclAny)
 _1 |-->_1 : OclAny
 _1 = _2 |-->_1 : int<when> _2 integer
 _1 = _2 |-->_1 : double<when> _2 real
 _1 = _2 |-->_1 : String<when> _2 String
+_1 = _2 |-->_1 : boolean<when> _2 boolean
+
 _1 = _2 |-->_1 : OclAny
 
 varargs::
@@ -251,10 +402,50 @@ varargs::
 varkwargs::
 ** _1 |-->_1 : Map(String, OclAny)
 
+typedargslist::
+_1 |-->_1
+_1 , |-->_1
+_1 , _* |-->_1, _*`recurse
+
+args::
+* _1 |-->_1 : Sequence(OclAny)<action> _1 Sequence
+
+kwargs::
+** _1 |-->_1 : Map(String, OclAny)<action> _1 Map
+
+def_parameters::
+_1 |-->_1
+_1 , _* |-->_1, _*`recurse
+
+def_parameter::
+_1 = _2 |-->_1`parameterName : String<when> _2 String, _1 1ary <action> _1`parameterName String
+_1 = _2 |-->_1`parameterName : int<when> _2 int, _1 1ary <action> _1`parameterName int
+_1 = _2 |-->_1`parameterName : double<when> _2 real, _1 1ary <action> _1`parameterName real
+_1 = _2 |-->_1
+
+* |-->
+_1 |-->_1
+
+named_parameter::
+_1 |-->_1 : OclAny
+_1 : int |-->_1 : int<action> _1 int
+_1 : bool |-->_1 : boolean<action> _1 boolean
+_1 : float |-->_1 : double<action> _1 real
+_1 : dict |-->_1 : Map(String,OclAny)<action> _1 Map
+_1 : str |-->_1 : String<action> _1 String
+_1 : list |-->_1 : Sequence(OclAny)<action> _1 Sequence
+_1 : set |-->_1 : Set(OclAny)<action> _1 Set
+
+_1 : _2 |-->_1 : _2<action> _1 _2
+
+parameterName::
+_1 |-->_1
+_1 : _2 |-->_1
+
 
 trailer::
 . count _1 |-->->count_1
-. index _1 |-->->indexOf_1 + 1
+. index _1 |-->->indexOf_1 - 1
 . sort _1 |-->->sort()
 . reverse _1 |-->->reverse()
 . pop _1 |-->_1`popArguments
@@ -293,10 +484,63 @@ trailer::
 . close _1 |-->.closeFile()
 . read _1 |-->.readAll()
 . write _1 |-->.write_1
+. seek _1 |-->.setPosition_1
+. tell _1 |-->.getPosition()
+
+. gauss _1 |-->.nextNormal(_1`firstArg, (_1`secondArg)->sqr())
+. normalvariate _1 |-->.nextNormal(_1`firstArg, (_1`secondArg)->sqr())
+. uniform _1 |-->.nextUniform_1
+. randrange _1 |-->.nextInt_1
+. random _1 |-->.nextDouble()
+. randint _1 |-->.nextInt(_1`lastArg - _1`firstArg) + _1`firstArg
+. seed _1 |-->.setSeed_1
+
+. day |-->.getDate()
+. year |-->.getYear()
+. month |-->.getMonth()
+. hour |-->.getHours()
+. minute |-->.getMinutes()
+. second |-->.getSeconds()
 
 . _1 |-->._1
 . _1 _* |-->._1_*
 _1 |-->_1
+
+
+reTrailer::
+. compile _1 |-->OclRegex.compile_1
+. search _1 |-->(_1`secondArg)->firstMatch(_1`firstArg)
+. match _1 |-->(_1`secondArg)->firstMatch("^" + _1`firstArg + ".*")
+. fullmatch _1 |-->(_1`secondArg)->firstMatch("^" + _1`firstArg + "$")
+. split _1 |-->(_1`secondArg)->split(_1`firstArg)
+. findall _1 |-->(_1`secondArg)->allMatches(_1`firstArg)
+. finditer _1 |-->OclIterator.newOclIterator_Sequence((_1`secondArg)->allMatches(_1`firstArg))
+. sub _1 |-->(_1`thirdArg).replaceAllMatches(_1`firstArg, _1`secondArg)
+
+. _1 |-->
+. _1 _* |-->
+_1 |-->
+
+
+randomTrailer::
+. Random _1 |-->OclRandom.newOclRandom()
+
+. choice _1 |-->OclRandom.randomElement_1
+. choices _1 |-->OclRandom.randomElements_1
+. gauss _1 |-->(OclRandom.defaultInstanceOclRandom()).nextNormal(_1`firstArg,(_1`secondArg)->sqr())
+. normalvariate _1 |-->(OclRandom.defaultInstanceOclRandom()).nextNormal(_1`firstArg,(_1`secondArg)->sqr())
+. random _1 |-->(OclRandom.defaultInstanceOclRandom()).nextDouble()
+. randint _1 |-->(_1`firstArg + (OclRandom.defaultInstanceOclRandom()).nextInt(_1`lastArg - _1`firstArg))
+. randrange _1 |-->(OclRandom.defaultInstanceOclRandom()).nextInt_1
+. sample _1 |-->OclRandom.randomUniqueElements_1
+. seed _1 |-->(OclRandom.defaultInstanceOclRandom()).setSeed_1
+. shuffle _1 |-->OclRandom.randomiseSequence_1
+. uniform _1 |-->(OclRandom.defaultInstanceOclRandom()).nextUniform_1
+
+. _1 |-->
+. _1 _* |-->
+_1 |-->
+
 
 
 mathTrailer::
@@ -329,6 +573,31 @@ mathTrailer::
 . prod _1 |-->_1->prd()
 . gcd _1 |-->(_1`firstArg)->gcd(_1`lastArg)
 . lcm _1 |-->MathLib.lcm(_1`firstArg, _1`lastArg)
+
+. _1 |-->
+. _1 _* |-->
+_1 |-->
+
+pickleTrailer::
+. dump _1 |-->_1`secondArg.writeObject(_1`firstArg)
+. load _1 |-->_1.readObject()
+
+. _1 |-->
+. _1 _* |-->
+_1 |-->
+
+datetimeTrailer::
+. MINYEAR |-->1
+. MAXYEAR |-->9999
+
+
+. date |-->OclDate
+. datetime |-->OclDate
+
+. now _1 |-->OclDate.newOclDate()
+. today _1 |-->OclDate.newOclDate()
+. fromtimestamp _1 |-->OclDate.newOclDate_Time((_1`firstArg)->oclAsType(long))
+. fromisoformat _1 |-->OclDate.newOclDate_String((_1`firstArg)->oclAsType(long))
 
 . _1 |-->
 . _1 _* |-->
@@ -396,11 +665,24 @@ secondArg::
 [ _1 ] |-->_1`third
 _1 |-->_1`secondArg
 
+thirdArg::
+( ) |-->
+( _1 ) |-->_1`fifth
+[ _1 ] |-->_1`fifth
+_1 |-->_1`thirdArg
+
 lastArg::
 ( ) |-->
 ( _1 ) |-->_1`last
 [ _1 ] |-->_1`last
 _1 |-->_1`lastArg
+
+
+thirdFirstArg::
+_1 _2 _3 |-->_3`firstArg
+
+thirdSecondArg::
+_1 _2 _3 |-->_3`secondArg
 
 allUnion::
 ( ) |-->
@@ -467,7 +749,16 @@ if _1 : _2 _3 |-->    if _1 then  (\n  _2\n    )\n_3<when> _3 else_clause
 if _1 : _2 _* |-->    if _1 then  (\n  _2\n    )\n_*
 
 while _1 : _2 |-->    while _1 do (_2)
+
+for _1 in _2 : _3 |-->    for _1 : _2->characters() do (_3)<when> _2 String
+for _1 in _2 : _3 |-->    for _1 : _2->keys() do (_3)<when> _2 Map
 for _1 in _2 : _3 |-->    for _1 : _2 do (_3)
+
+try : _1 |-->    try (_1)
+try : _1 _* |-->    try (_1)\n_*
+
+_1 |-->    skip
+
 
 suite::
 _1 |-->_1
@@ -483,14 +774,31 @@ elif _1 : _2 |-->    else if _1 then _2
 else_clause::
 else : _1 |-->    else (\n  _1\n    )
 
+except_clause::
+except : _1 |-->     catch true do (_1)\n
+except _1 as _2 : _3 |-->    catch (_2 : _1) do (_3)\n
+except _1 , _2 : _3 |-->    catch (_2 : _1) do (_3)\n
+
+finally_clause::
+finally : _1 |-->    finally (_1)
+
 simple_stmt::
 _1 |-->_1
 _* |-->_*
 
 
+declareIfNecessary::
+_1 |--><when> _1`defined true
+_1 |-->    var _1 : OclAny := null;\n
+_1 , _* |-->_*`recurse<when> _1`defined true
+_1 , _* |-->    var _1 : OclAny := null;\n_*`recurse
+
+
 small_stmt::
+_1 _2 |-->_1`declareIfNecessary    Sequence{_1} _2<when> _1 multiple
 _1 _2 |-->    _1 _2<when> _2 assign_part, _1`defined true
-_1 _2 |-->    var _1 : OclAny _2<when> _2 assign_part <action> _1`defined true
+_1 _2 |-->    var _1 : _2`ocltype _2<when> _2 assign_part <action> _1`defined true, _1 _2`ocltype
+
 print _1 |-->    execute (_1)->display()
 del _1 |-->    execute (_1)->isDeleted()
 pass |-->    skip
@@ -498,19 +806,219 @@ break |-->    break
 continue |-->    continue
 return _1 |-->    return _1
 return |-->    return
-raise _1 |-->    error _1
-import _1 |-->
-from _* |-->
-global _* |-->
-exec _* |-->
+raise _1 |-->    error _1`errorToUML
+raise _1 from _2 |-->    error _1`errorToUML
+raise _* |-->    _*`errorlist
+
+import _1 |-->    skip
+from _* |-->    skip
+global _* |-->    skip
+exec _* |-->    execute _*
 assert _1 |-->    assert _1 do "assertion failed"
-nonlocal _* |-->
+assert _1 , _2 |-->    assert _1 do _2
+
+nonlocal _* |-->    skip
 _1 |-->_1`updateForm<when> _1 testlist_star_expr
+
+errorlist::
+_1 |-->    error _1`errorToUML
+_1 _* |-->    error _1`errorToUML;\n_*`recurse
 
 
 assign_part::
 = _1 |-->:= _1 ; _1`updateForm<when> _1`hasSideEffect true
 = _1 |-->:= _1
+
+
+ocltype::
+= _1 |-->String<when> _1 String
+= _1 |-->int<when> _1 int
+= _1 |-->double<when> _1 real
+= _1 |-->Sequence<when> _1`isSequenceExpression true
+= _1 |-->Map<when> _1`isMapExpression true
+= _1 |-->_1`ocltype
+
+True |-->boolean
+False |-->boolean
+int |-->int
+float |-->double
+str |-->String
+dict |-->Map
+list |-->Sequence
+set |-->Set
+bool |-->boolean
+
+abs _1 |-->double
+all _1 |-->boolean
+dict _1 |-->Map
+any _1 |-->boolean
+ascii _1 |-->String
+filter _1 |-->Sequence
+frozenset _1 |-->Set
+hash _1 |-->int
+input _1 |-->String
+isinstance _1 |-->boolean
+issubclass _1 |-->boolean
+
+len _1 |-->int
+list _1 |-->Sequence
+map _1 |-->Sequence
+set _1 |-->Set
+sorted _1 |-->Sequence
+tuple _1 |-->Sequence
+
+pow _1 |-->double
+repr _1 |-->String
+reversed _1 |-->Sequence
+round _1 |-->double
+
+print _1 |-->void
+int _1 |-->int
+float _1 |-->double
+str _1 |-->String
+chr _1 |-->String
+unichr _1 |-->String
+ord _1 |-->int
+type _1 |-->OclType
+range _1 |-->Sequence
+enumerate _1 |-->Sequence
+zip _1 |-->Sequence
+
+open _1 |-->OclFile
+
+_1 if _2 else _3 |-->_1`ocltype
+lambda _1 : _2 |-->Function
+lambda : _1 |-->Function
+
+_1 ** _2 |-->double
++ _1 |-->_1`ocltype
+- _1 |-->_1`ocltype
+~ _1 |-->int
+_1 * _2 |-->double
+_1 / _2 |-->double
+_1 % _2 |-->int
+_1 // _2 |-->int
+_1 @ _2 |-->Sequence
+_1 + _2 |-->_1`ocltype
+_1 - _2 |-->double
+_1 << _2 |-->int
+_1 >> _2 |-->int
+_1 & _2 |-->int
+_1 ^ _2 |-->int
+_1 | _2 |-->int
+
+not _1 |-->boolean
+_1 and _2 |-->boolean
+_1 or _2 |-->boolean
+
+_1 < _2 |-->boolean
+_1 > _2 |-->boolean
+_1 == _2 |-->boolean
+_1 >= _2 |-->boolean
+_1 <= _2 |-->boolean
+_1 <> _2 |-->boolean
+_1 != _2 |-->boolean
+_1 not in _2 |-->boolean
+_1 in _2 |-->boolean
+_1 is not _2 |-->boolean
+_1 is _2 |-->boolean
+
+_1 _2 |-->_2`trailerOclType<when> _1 atom, _2 trailer
+
+
+
+_1 |-->_1`ocltype<when> _1 testlist
+_1 |-->_1`ocltype<when> _1 test
+_1 |-->_1`ocltype<when> _1 logical_test
+_1 |-->_1`ocltype<when> _1 comparison
+_1 |-->_1`ocltype<when> _1 expr
+_1 |-->_1`ocltype<when> _1 atom
+
+_1 |-->OclAny
+_* |-->OclAny
+
+
+trailerOclType::
+. cosin _1 |-->double
+. sin _1 |-->double
+. tan _1 |-->double
+. ceil _1 |-->int
+. floor _1 |-->int
+. trunc _1 |-->int
+. sqrt _1 |-->double
+. cbrt _1 |-->double
+. exp _1 |-->double
+. log _1 |-->double
+. log10 _1 |-->double
+. acos _1 |-->double
+. asin _1 |-->double
+. atan _1 |-->double
+. acosh _1 |-->double
+. asinh _1 |-->double
+. atanh _1 |-->double
+. cosh _1 |-->double
+. sinh _1 |-->double
+. tanh _1 |-->double
+
+. pow _1 |-->double
+. comb _1 |-->int
+. fabs _1 |-->double
+. factorial _1 |-->int
+. fsum _1 |-->double
+. prod _1 |-->double
+. gcd _1 |-->int
+. lcm _1 |-->int
+
+. count _1 |-->int
+. index _1 |-->int
+. isdisjoint _1 |-->boolean
+. issubset _1 |-->boolean
+. issuperset _1 |-->boolean
+. clear _1 |-->Set
+. items _1 |-->Sequence
+
+. upper _1 |-->String
+. lower _1 |-->String
+. strip _1 |-->String
+. replace _1 |-->String
+. find _1 |-->int
+. startswith _1 |-->boolean
+. endswith _1 |-->boolean
+. isalpha _1 |-->boolean
+. isnumeric _1 |-->boolean
+. isalnum _1 |-->boolean
+. islower _1 |-->boolean
+. isupper _1 |-->boolean
+. isspace _1 |-->boolean 
+. isdigit _1 |-->boolean
+. isdecimal _1 |-->boolean
+
+. readable _1 |-->boolean
+. writable _1 |-->boolean
+. read _1 |-->String
+. tell _1 |-->int
+
+. Random _1 |-->OclRandom
+. gauss _1 |-->double
+. normalvariate _1 |-->double
+. uniform _1 |-->double
+. randrange _1 |-->int
+. random _1 |-->double
+. randint _1 |-->int
+. choices _1 |-->Sequence
+. sample _1 |-->Sequence
+
+. today _1 |-->OclDate
+. now _1 |-->OclDate
+. fromtimestamp _1 |-->OclDate
+. fromisoformat _1 |-->OclDate
+
+
+. _1 |-->OclAny
+. _1 _2 |-->OclAny
+. _* |-->OclAny
+_1 |-->OclAny
+
 
 
 import_as_names:: 
@@ -524,3 +1032,31 @@ _* |-->
 dotted_as_name::
 _1 |-->
 _1 as _2 |-->
+
+
+functionDefinitions::
+_1 |-->_1<when> _1 funcdef
+_1 |-->_1`functionDefinitions<when> _1 compound_stmt
+_1 |-->
+
+if _1 : _2 |-->
+if _1 : _2 _3 |-->
+if _1 : _2 _* |-->
+while _1 : _2 |-->
+for _1 in _2 : _3 |-->
+_* |-->
+
+
+
+funcdef::
+async def _1 ( _2 ) -> _3 : _4 |-->  operation _1(_2) : _3`ocltype\n  pre: true post: true\n  activity:\n_4;\n\n
+def _1 ( _2 ) -> _3 : _4 |-->  operation _1(_2) : _3`ocltype\n  pre: true post: true\n  activity:\n_4;\n\n
+
+async def _1 ( _2 ) : _3 |-->  operation _1(_2) : OclAny\n  pre: true post: true\n  activity:\n_3;\n\n
+def _1 ( _2 ) : _3 |-->  operation _1(_2) : OclAny\n  pre: true post: true\n  activity:\n_3;\n\n
+
+async def _1 ( ) -> _2 : _3 |-->  operation _1() : _2`ocltype\n  pre: true post: true\n  activity:\n_3;\n\n
+def _1 ( ) -> _2 : _3 |-->  operation _1() : _2`ocltype\n  pre: true post: true\n  activity:\n_3;\n\n
+
+async def _1 ( ) : _2 |-->  operation _1() : OclAny\n  pre: true post: true\n  activity:\n_2;\n\n
+def _1 ( ) : _2 |-->  operation _1() : OclAny\n  pre: true post: true\n  activity:\n_2;\n\n

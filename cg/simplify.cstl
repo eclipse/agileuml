@@ -12,7 +12,7 @@ Constraint on _1 | _2 |-->  Constraint on _1 | _2
 
 
 prove::
-Prove _1 if _2 |-->  Simplify _2 => _1
+Prove _1 if _2 |-->  Simplify (_2) => (_1)
 
 
 simplify::
@@ -57,7 +57,8 @@ Express _1 as _2 |-->  Express _1 as _2
 
 formula::
 Define _1 |-->Define _1
-Define _1 = _2 |-->  Define _1 = _2
+Define _1 = _2 |-->  Define _1 = _2<action> _1`value _2
+Define _1 ~ _2 |-->  Define _1 ~ _2<action> _1`mean _2`distributionMean, _1`variance _2`distributionVariance
 
 
 factorBy::
@@ -67,12 +68,23 @@ cancelIn::
 Cancel _1 in _2 |-->_2`cancel<action> _90 _1
 
 substituteIn::
-Substitute _1 in _2 |-->_2<when> _2 expression
+Substitute _1 in _2 |-->_2<when> _2 expression<action> _1`value / _1
 Substitute _1 in _2 |-->Substitute _1 in _2
 
 idList::
 _1 |-->_1
 _1 , _* |-->_1,_*`recurse
+
+
+
+type::
+Sequence ( _1 ) |-->Sequence(_1)  
+Set ( _1 ) |-->Set(_1)  
+OrderedSet ( _1 ) |-->OrderedSet(_1)  
+Bag ( _1 ) |-->Bag(_1)  
+Map ( _1 , _2 ) |-->Map(_1,_2) 
+Function ( _1 , _2 ) |-->Function(_1,_2) 
+_1 |-->_1
 
 
 expression::
@@ -106,11 +118,11 @@ _1 => false |-->not(_1)
 _1 => _2 |-->_1 => _2
 
 
-£ _1 • true |-->true
-£ _1 • false |-->false
-£ _1 • _2 |-->£ _1 • _2
+£ _1 : _2 • true |-->true
+£ _1 : _2 • false |-->false
+£ _1 : _2 • _3 |-->£ _1 : _2 • _3
 
-¡ _1 • _2 |-->¡ _1 • _2
+¡ _1 : _2 • _3 |-->¡ _1 : _2 • _3
 
 _1 _2 _3 |-->_1 _2 _3
 
@@ -126,14 +138,21 @@ _1 = _1 |-->true
 _1 = _2 |-->_1 = _2
 _1 /= _1 |-->false
 _1 /= _2 |-->_1 /= _2
+
 _1 < _1 |-->false
+_1 < _2 |-->_1`fArgument < _2`fArgument<when> _1`isStrictlyIncreasing true, _1`functor _2`functor
+
 _1 < _2 |-->_1 < _2
+
 _1 > _1 |-->false
+_1 > _2 |-->_1`fArgument > _2`fArgument<when> _1`isStrictlyIncreasing true, _1`functor _2`functor
+
 _1 > _2 |-->_1 > _2
+
 _1 <= _1 |-->true
-_1 <= _2 |-->_1 <= _2
+_1 <= _2 |-->((_1 < _2) or (_1 = _2))
 _1 >= _1 |-->true
-_1 >= _2 |-->_1 >= _2
+_1 >= _2 |-->((_1 > _2) or (_1 = _2))
 
 _1 © Ø |-->false
 _1 ¢ Ø |-->true
@@ -148,12 +167,17 @@ _1 + 0 |-->_1
 _1 + 0.0 |-->_1
 0.0 + _1 |-->_1
 _1 + _1 |-->2*(_1)
+
+_1 + _2 |-->_0`symbolicAddition<when> _1 real, _2 real
 _1 + _2 |-->_1 + _2
+
+
 _1 - 0 |-->_1
 0 - _1 |-->_1`negate
 _1 - 0.0 |-->_1
 0.0 - _1 |-->_1`negate
 _1 - _1 |-->0
+_1 - _2 |-->_0`symbolicSubtraction<when> _1 real, _2 real
 _1 - _2 |-->_1 - _2
 
 _1 _2 _3 |-->_1 _2 _3
@@ -220,10 +244,12 @@ _1 ´ |-->_1`differentiate
 × _{ _1 } ^{ _2 } _3 |-->_3 ^{ _2 - _1 + 1 }<when> _3 real
 × _{ _1 } ^{ _2 } _3 |-->×_{ _1 }^{ _2 } _3
 
-C _{ _1 } ^{ 0 } |-->1
-C _{ _1 } ^{ _1 } |-->1
-C _{ _1 } ^{ 1 } |-->_1
-C _{ _1 } ^{ _2 } |-->C_{_1}^{_2}
+C_ { 0 } ^{ _1 } |-->1
+C_ { _1 } ^{ _1 } |-->1
+C_ { 1 } ^{ _1 } |-->_1
+C_ { _1 } ^{ _2 } |-->C_{_1}^{_2}
+
+E[ _1 ] |-->_1`expectation
  
 _1 |-->_1
 
@@ -249,31 +275,44 @@ basicExpression::
 
 g{ _1 } |-->g{_1}
 
-sin ( 0 ) |-->0
-sin ( _1 ) |-->sin(_1)
+sin ( _1 ) |-->_1`evaluateSine
 
 cos ( 0 ) |-->1
 tan ( 0 ) |-->0
 exp ( 0 ) |-->1
 exp ( _1 ) |-->e^{_1}
 
-log ( 1 ) |-->0
-log ( e ) |-->1
+log ( _1 ) |-->_1`evaluateLog
+
+log10 ( 1 ) |-->0
+log10 ( 10 ) |-->1
+
 cosh ( 0 ) |-->1
 sinh ( 0 ) |-->0
 tanh ( 0 ) |-->0
 sec ( 0 ) |-->1
 sech ( 0 ) |-->1
 
-cot ( _1 ) |-->1.0/tan(_1)
-sec ( _1 ) |-->1.0/cos(_1)
-cosec ( _1 ) |-->1.0/sin(_1)
+cot ( _1 ) |-->(1.0/tan(_1))
+sec ( _1 ) |-->(1.0/cos(_1))
+cosec ( _1 ) |-->(1.0/sin(_1))
 
-coth ( _1 ) |-->1.0/tanh(_1)
-sech ( _1 ) |-->1.0/cosh(_1)
-cosech ( _1 ) |-->1.0/sinh(_1)
+acosec ( _1 ) |-->asin(1.0/_1)
+asec ( _1 ) |-->acos(1.0/_1)
+acot ( _1 ) |-->atan(1.0/_1)
+
+coth ( _1 ) |-->(1.0/tanh(_1))
+sech ( _1 ) |-->(1.0/cosh(_1))
+cosech ( _1 ) |-->(1.0/sinh(_1))
+
+acosech ( _1 ) |-->math.asinh(1.0/_1)
+asech ( _1 ) |-->math.acosh(1.0/_1)
+acoth ( _1 ) |-->math.atanh(1.0/_1)
+
+var ( _1 ) |-->_1`evaluateVariance
 
 _1 ( _2 ) |-->_1(_2)
+_1 ( ) |-->_1()
 
 ( true ) |-->true
 ( false ) |-->false
@@ -286,8 +325,117 @@ _1 ( _2 ) |-->_1(_2)
 _1 |-->_1
 
 
+setExpression::
+{ _1 : _2 | _3 } |-->{ _1 : _2 | _3 }
+{ _1 : _2 | _3 • _4 } |-->{ _1 : _2 | _3 • _4 }
+
+
 identifier::
 _1 |-->_1
+
+
+evaluateSine::
+0 |-->0
+0.0 |-->0
+g{ p } |-->0
+
+asin ( _1 ) |-->_1
+
+_1 |-->1<when> _1 matches g\{p\}/2
+
+_1 |-->_1`evaluateSine<when> _1 basicExpression
+_1 |-->_1`evaluateSine<when> _1 factorExpression
+_1 |-->_1`evaluateSine<when> _1 factor2Expression
+_1 |-->_1`evaluateSine<when> _1 logicalExpression
+_1 |-->_1`evaluateSine<when> _1 equalityExpression
+_1 |-->_1`evaluateSine<when> _1 additiveExpression
+_1 |-->_1`evaluateSine<when> _1 expression
+
+_1 |-->sin(_1)
+_* |-->sin(_*)
+
+
+evaluateLog::
+0 |-->-…
+0.0 |-->-…
+1 |-->0
+1.0 |-->0
+
+exp ( _1 ) |-->_1
+
+e ^{ _1 } |-->_1
+
+_1 ^{ _2 } |-->(_2)*(_1`evaluateLog)
+
+_1 * _2 |-->(_1`evaluateLog) + (_2`evaluateLog)
+
+1 / _1 |-->-(_1`evaluateLog)
+_1 / _2 |-->(_1`evaluateLog) - (_2`evaluateLog)
+
+_1 |-->_1`evaluateLog<when> _1 basicExpression
+_1 |-->_1`evaluateLog<when> _1 factorExpression
+_1 |-->_1`evaluateLog<when> _1 factor2Expression
+_1 |-->_1`evaluateLog<when> _1 logicalExpression
+_1 |-->_1`evaluateLog<when> _1 equalityExpression
+_1 |-->_1`evaluateLog<when> _1 additiveExpression
+_1 |-->_1`evaluateLog<when> _1 expression
+_1 |-->log(_1)
+_* |-->log(_*)
+
+
+expectation::
+_1 * _2 |-->_1*_2`expectation<when> _1 integer
+_1 * _2 |-->_1*_2`expectation<when> _1 real
+
+_1 * _2 |-->_1`expectation*_2<when> _2 integer
+_1 * _2 |-->_1`expectation*_2<when> _2 real
+
+_1 * _1 |-->E[_1*_1]
+_1 * _2 |-->_1`expectation*_2`expectation<when> _1`isIdentifier true, _2`isIdentifier true
+
+_1 + _2 |-->_1`expectation + _2`expectation
+_1 - _2 |-->_1`expectation - _2`expectation
+
+_1 |-->_1<when> _1 integer
+_1 |-->_1<when> _1 real
+_1 |-->_1`mean<when> _1`isIdentifier true
+
+_1 |-->_1`expectation<when> _1 basicExpression
+_1 |-->_1`expectation<when> _1 factorExpression
+_1 |-->_1`expectation<when> _1 factor2Expression
+_1 |-->_1`expectation<when> _1 logicalExpression
+_1 |-->_1`expectation<when> _1 equalityExpression
+_1 |-->_1`expectation<when> _1 additiveExpression
+_1 |-->_1`expectation<when> _1 expression
+
+_1 |-->E[_1]
+_* |-->E[_*]
+
+
+evaluateVariance::
+_1 * _2 |-->_1*_1*_2`evaluateVariance<when> _1 integer
+_1 * _2 |-->_1*_1*_2`evaluateVariance<when> _1 real
+
+_1 * _2 |-->_2*_2*_1`evaluateVariance<when> _2 integer
+_1 * _2 |-->_2*_2*_1`evaluateVariance<when> _2 real
+
+_1 + _2 |-->_1`evaluateVariance<when> _2 integer
+_1 - _2 |-->_1`evaluateVariance<when> _2 real
+
+_1 |-->0<when> _1 integer
+_1 |-->0<when> _1 real
+_1 |-->_1`variance<when> _1`isIdentifier true
+
+_1 |-->_1`evaluateVariance<when> _1 basicExpression
+_1 |-->_1`evaluateVariance<when> _1 factorExpression
+_1 |-->_1`evaluateVariance<when> _1 factor2Expression
+_1 |-->_1`evaluateVariance<when> _1 logicalExpression
+_1 |-->_1`evaluateVariance<when> _1 equalityExpression
+_1 |-->_1`evaluateVariance<when> _1 additiveExpression
+_1 |-->_1`evaluateVariance<when> _1 expression
+
+_1 |-->var(_1)
+_* |-->var(_*)
 
 
 negate::
@@ -333,10 +481,12 @@ _1 ´ |-->-(_1`differentiate)
 × _{ _1 } ^{ _2 } _3 |-->-(_3 ^{ _2 - _1 + 1 })<when> _3 real
 × _{ _1 } ^{ _2 } _3 |-->-(×_{ _1 }^{ _2 } _3)
 
-C _{ _1 } ^{ 0 } |-->-1
-C _{ _1 } ^{ _1 } |-->-1
-C _{ _1 } ^{ 1 } |-->-_1
-C _{ _1 } ^{ _2 } |-->-C_{_1}^{_2}
+C_ { _1 } ^{ 0 } |-->-1
+C_ { _1 } ^{ _1 } |-->-1
+C_ { _1 } ^{ 1 } |-->-_1
+C_ { _1 } ^{ _2 } |-->-C_{_1}^{_2}
+
+E[ _1 ] |-->-E[_1]
 
 ( _1 ) |-->_1`negate
 
@@ -384,7 +534,7 @@ _1 / _2 |-->(_1`divideBy)/_2
 † _1 |-->(†_1)/_90
 
 _1 ^{ _2 } |-->(_1^{_2})/_90
-_1 ( _2 ) |-->_1(_2)/_90
+_1 ( _2 ) |-->(_1(_2)/_90)
 _1 ´ |-->(_1´)/_90
 
 
@@ -408,7 +558,7 @@ _1 * 1 |-->_1`cancel
 _1 * _2 |-->(_1`divideBy)*_2
 _1 / 1 |-->_1`cancel
 1 / _2 |-->1/_2
-_1 / _2 |-->_1`divideBy/_2`divideBy
+_1 / _2 |-->(_1`divideBy)/(_2`divideBy)
 
 ( _1 ) |-->(_1`cancel)
 
@@ -458,6 +608,8 @@ tanh ( x ) |-->log(cosh(x))
 coth ( x ) |-->log(sinh(x))
 sech ( x ) |-->2*atan(e^{x})
 cosech ( x ) |-->-2*acoth(e^{x})
+
+log ( x ) |-->x*log(x) - x
 
 _1 ( _2 ) |-->‡ _1(_2) dx
 
@@ -882,6 +1034,7 @@ isIdentifier::
 g{ _1 } |-->true
 
 _1 ( _2 ) |-->false
+_1 ( ) |-->false
 
 ( _1 ) |-->_1`isIdentifier
 
@@ -895,6 +1048,121 @@ _1 |-->_1`isIdentifier<when> _1 expression
 
 _1 |-->true<when> _1 identifier
 _1 |-->false
+_* |-->false
+
+
+isStrictlyIncreasing::
+g{ _1 } |-->true
+
+† _1 |-->true
+e ^{ _1 } |-->true
+10 ^{ _1 } |-->true
+log ( _1 ) |-->true
+log10 ( _1 ) |-->true
+sinh ( _1 ) |-->true
+tanh ( _1 ) |-->true
+asinh ( _1 ) |-->true
+atanh ( _1 ) |-->true
+_1 ^{ 3 } |-->true 
+
+_1 ( _2 ) |-->false
+_1 ( ) |-->false
+
+( _1 ) |-->_1`isStrictlyIncreasing
+
+_1 + _2 |-->_1`isStrictlyIncreasing<when> _2 integer
+_1 + _2 |-->_1`isStrictlyIncreasing<when> _2 real
+_1 + _2 |-->_1`isStrictlyIncreasing<when> _2`isIdentifier true
+
+_1 - _2 |-->_1`isStrictlyIncreasing<when> _2 integer
+_1 - _2 |-->_1`isStrictlyIncreasing<when> _2 real
+
+
+_1 |-->_1`isStrictlyIncreasing<when> _1 basicExpression
+_1 |-->_1`isStrictlyIncreasing<when> _1 factorExpression
+_1 |-->_1`isStrictlyIncreasing<when> _1 factor2Expression
+_1 |-->_1`isStrictlyIncreasing<when> _1 logicalExpression
+_1 |-->_1`isStrictlyIncreasing<when> _1 equalityExpression
+_1 |-->_1`isStrictlyIncreasing<when> _1 additiveExpression
+_1 |-->_1`isStrictlyIncreasing<when> _1 expression
+
+_1 |-->true<when> _1 identifier
+_1 |-->false
+
+_* |-->false
+
+
+functor::
+g{ _1 } |-->id
+
+† _1 |-->sqrt
+e ^{ _1 } |-->exp
+sinh ( _1 ) |-->sinh
+tanh ( _1 ) |-->tanh
+asinh ( _1 ) |-->asinh
+atanh ( _1 ) |-->atanh
+log ( _1 ) |-->log
+log10 ( _1 ) |-->log10
+_1 ^{ 3 } |-->cube
+
+_1 ( _2 ) |-->_1
+
+( _1 ) |-->_1`functor
+
+_1 + _2 |-->(_1`functor + _2)<when> _2 integer
+_1 + _2 |-->(_1`functor + _2)<when> _2 real
+_1 + _2 |-->(_1`functor + _2)<when> _2`isIdentifier true
+
+_1 - _2 |-->(_1`functor - _2)<when> _2 integer
+_1 - _2 |-->(_1`functor - _2)<when> _2 real
+
+
+_1 |-->_1`functor<when> _1 basicExpression
+_1 |-->_1`functor<when> _1 factorExpression
+_1 |-->_1`functor<when> _1 factor2Expression
+_1 |-->_1`functor<when> _1 logicalExpression
+_1 |-->_1`functor<when> _1 equalityExpression
+_1 |-->_1`functor<when> _1 additiveExpression
+_1 |-->_1`functor<when> _1 expression
+
+_1 |-->id<when> _1 identifier
+_1 |-->null
+_* |-->null
+
+
+fArgument::
+g{ _1 } |-->g{_1}
+
+† _1 |-->_1
+e ^{ _1 } |-->_1
+sinh ( _1 ) |-->_1
+tanh ( _1 ) |-->_1
+asinh ( _1 ) |-->_1
+atanh ( _1 ) |-->_1
+_1 ^{ 3 } |-->_1 
+
+_1 ( _2 ) |-->_2
+
+( _1 ) |-->_1`fArgument
+
+_1 + _2 |-->_1`fArgument<when> _2 integer
+_1 + _2 |-->_1`fArgument<when> _2 real
+_1 + _2 |-->_1`fArgument<when> _2`isIdentifier true
+
+_1 - _2 |-->_1`fArgument<when> _2 integer
+_1 - _2 |-->_1`fArgument<when> _2 real
+
+_1 |-->_1`fArgument<when> _1 basicExpression
+_1 |-->_1`fArgument<when> _1 factorExpression
+_1 |-->_1`fArgument<when> _1 factor2Expression
+_1 |-->_1`fArgument<when> _1 logicalExpression
+_1 |-->_1`fArgument<when> _1 equalityExpression
+_1 |-->_1`fArgument<when> _1 additiveExpression
+_1 |-->_1`fArgument<when> _1 expression
+
+_1 |-->_1<when> _1 identifier
+_1 |-->1
+_* |-->1
 
 
 bracketed::
@@ -909,3 +1177,49 @@ _1 |-->_1`bracketed<when> _1 additiveExpression
 _1 |-->_1`bracketed<when> _1 expression
 
 _1 |-->false
+_* |-->false
+
+
+distributionMean::
+N ( _1 ) |-->_1`first
+Bernoulli ( _1 ) |-->_1
+Binom ( _1 ) |-->(_1`first)*(_1`last)
+U ( ) |-->0.5
+U ( _1 ) |-->(_1`last + _1`first)/2.0
+Poisson ( _1 ) |-->_1
+
+( _1 ) |-->_1`distributionMean
+
+_1 |-->_1`distributionMean<when> _1 basicExpression
+_1 |-->_1`distributionMean<when> _1 factorExpression
+_1 |-->_1`distributionMean<when> _1 factor2Expression
+_1 |-->_1`distributionMean<when> _1 logicalExpression
+_1 |-->_1`distributionMean<when> _1 equalityExpression
+_1 |-->_1`distributionMean<when> _1 additiveExpression
+_1 |-->_1`distributionMean<when> _1 expression
+
+_1 |-->0
+_* |-->0
+
+
+distributionVariance::
+N ( _1 ) |-->_1`last
+Bernoulli ( _1 ) |-->(_1)*(1 - _1)
+Binom ( _1 ) |-->(_1`first)*(_1`last)*(1 - _1`last)
+U ( ) |-->1.0/12
+U ( _1 ) |-->(_1`last - _1`first)^{2}/12.0
+Poisson ( _1 ) |-->_1
+
+( _1 ) |-->_1`distributionVariance
+
+_1 |-->_1`distributionVariance<when> _1 basicExpression
+_1 |-->_1`distributionVariance<when> _1 factorExpression
+_1 |-->_1`distributionVariance<when> _1 factor2Expression
+_1 |-->_1`distributionVariance<when> _1 logicalExpression
+_1 |-->_1`distributionVariance<when> _1 equalityExpression
+_1 |-->_1`distributionVariance<when> _1 additiveExpression
+_1 |-->_1`distributionVariance<when> _1 expression
+
+_1 |-->0
+_* |-->0
+

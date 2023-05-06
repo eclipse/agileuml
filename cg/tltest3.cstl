@@ -1,0 +1,25 @@
+decs::
+_1 |-->_1
+_1 _* |-->_1_*`dec
+
+dec::
+_1 = _2 |-->var _1 : String;\n_1 := _2;\n<when> _2 String <action> _1 String
+_1 = _2 |-->var _1 : int;\n_1 := _2;\n<when> _2 int <action> _1 int
+_1 = _2 |-->var _1 : double;\n_1 := _2;\n<when> _2 real <action> _1 real
+_1 = _2 |-->var _1 : _2`type;\n_1 := _2;\n<action> _1 _2`type
+
+
+identifier::
+_1 |-->_1
+
+
+literal::
+_1 |-->_1
+
+
+
+
+
+
+
+

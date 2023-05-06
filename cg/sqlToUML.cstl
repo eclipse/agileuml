@@ -25,6 +25,8 @@ create table _1 ( _2 , _* ) |-->class _1 {\n_2`attributeFromColumn_*`attributeFr
 
 create table _1 . _2 ( _3 , _* ) |-->class _1$_2 {\n_3`attributeFromColumn_*`attributeFromColumn\n  static operation new_1$_2(_*`parameterFromColumn) : _1$_2\n  pre: true\n  post: _1$_2->exists( $x | _*`initFromColumn result = $x);\n}\n\n
 
+create table _1 as _2 |-->class _1 {\n_2`attributesFromSelect\n  static operation new_1(_2`parametersFromSelect) : _1\n  pre: true\n  post: _1->exists( $x | _2`initsFromSelect result = $x);\n\n  static operation initialise()\n  pre: true post: true\n  activity: for $x : _2 do _1.new_1(_2`argumentsFromSelect);\n}\n\n
+
 create temporary table _1 as _2 |-->class _1 {\n_2`attributesFromSelect}\n\n
 
 create_virtual_table_stmt:: 
@@ -51,8 +53,16 @@ initFromColumn::
 _1 _2 |-->$x._1 = _1 & <when> _2 type_name
 _id _2 _* |-->
 _1 _2 _* |-->$x._1 = _1 & <when> _2 type_name
-_1 |-->$x._1 = _1 & 
-_1 _* |-->$x._1 = _1 & 
+_1 |--> $x._1 = _1 & 
+_1 _* |--> $x._1 = _1 & 
+
+argumentFromColumn::
+, |-->,
+_1 _2 |-->$x._1<when> _2 type_name
+_id _2 _* |-->
+_1 _2 _* |-->$x._1<when> _2 type_name
+_1 |-->$x._1 
+_1 _* |-->$x._1 
 
 column_def::
 _1 _2 |-->  attribute _1 : _2;\n<when> _2 type_name
@@ -89,8 +99,8 @@ _* |-->
 
 
 delete_stmt::
-delete from _1 where _2 |-->usecase delete_1 : void {\n  activity: execute _1->select(_2)->isDeleted();\n}\n\n
-delete from _1 |-->usecase delete_1 : void {\n  activity: execute _1->isDeleted();\n}\n\n
+delete from _1 where _2 |-->usecase delete_1 : void {\n  activity:\n    for $x : _1->select(_2) do execute $x->isDeleted();\n}\n\n
+delete from _1 |-->usecase delete_1 : void {\n  activity:\n     for $x : _1 do execute $x->isDeleted();\n}\n\n
 
 detach_stmt::
 detach _1 |-->
@@ -105,8 +115,12 @@ drop table if exists _1 . _2 |-->usecase drop_1$_2 : void {\n  activity: execute
 
 
 insert_stmt::
+insert into _1 values ( _* ) , ( _+ ) |-->usecase insert_1 : void {\n  activity: _1.new_1(_*);\n    _1.new_1(_+);\n}\n\n
+
 insert into _1 values ( _* ) |-->usecase insert_1 : void {\n  activity: _1.new_1(_*);\n}\n\n
+
 insert into _1 ( _* ) values ( _+ ) |-->usecase insert_1 : void {\n activity:  _1.new_1(_+);\n}\n\n
+
 
 
 select_stmt::
@@ -118,8 +132,46 @@ _1 |-->_1
 select_core::
 select _1 , _2 from _3 |-->_3->select(_1 | _2)
 
-select distinct _1 from _2 where _3 |-->_2->select(_1 | _3)->asSet()
-select _1 from _2 where _3 |-->_2->select(_1 | _3)
+select distinct _1 from _2 where _3 |-->_2->select($_2 | _3)->collect($_2 | _1)->asSet()
+select _1 from _2 where _3 |-->_2->select($_2 | _3)->collect($_2 | _1)
+
+select _1 from _2 , _3 where _4 |-->_2->select($_2 | _3->exists($_3 | _4))->collect($_2 | _1)
+
+attributesFromSelect::
+_1 |-->_1`attributesFromSelect<when> _1 select_core
+select _1 , _2 from _3 |-->_1`attributesFromResultColumn
+select _1 from _2 where _3 |-->_1`attributesFromResultColumn
+
+attributesFromResultColumn::
+( _* ) |-->_*`attributeFromColumn
+_1 |-->_1`attributesFromResultColumn
+
+parametersFromSelect::
+_1 |-->_1`parametersFromSelect<when> _1 select_core
+select _1 , _2 from _3 |-->_1`parametersFromResultColumn
+select _1 from _2 where _3 |-->_1`parametersFromResultColumn
+
+parametersFromResultColumn::
+( _* ) |-->_*`parameterFromColumn
+_1 |-->_1`parametersFromResultColumn
+
+initsFromSelect::
+_1 |-->_1`initsFromSelect<when> _1 select_core
+select _1 , _2 from _3 |-->_1`initsFromResultColumn
+select _1 from _2 where _3 |-->_1`initsFromResultColumn
+
+initsFromResultColumn::
+( _* ) |-->_*`initFromColumn
+_1 |-->_1`initsFromResultColumn
+
+argumentsFromSelect::
+_1 |-->_1`argumentsFromSelect<when> _1 select_core
+select _1 , _2 from _3 |-->_1`argumentsFromResultColumn
+select _1 from _2 where _3 |-->_1`argumentsFromResultColumn
+
+argumentsFromResultColumn::
+( _* ) |-->_*`argumentFromColumn
+_1 |-->_1`argumentsFromResultColumn
 
 
 savepoint_stmt::
@@ -127,7 +179,8 @@ savepoint _1 |-->savepointFile = open('_1.pickle', 'wb')\npickle.dump(_1,savepoi
 
 
 update_stmt::
-update _1 set _2 = _3 where _4 |-->usecase update_1 : void {\n  activity: execute _1->select(_4)->forAll($x | $x._2 = _3);\n}\n\n
+update _1 set _2 = _3 where _4 |-->usecase update_1 : void {\n  activity:\n    for $_1 : _1->select(_4)\n    do $_1._2 := _3;\n}\n\n
+update _1 set _2 = _3 |-->usecase update_1 : void {\n  activity:\n    for $_1 : _1\n    do $_1._2 := _3;\n}\n\n
 
 
 table_or_subquery::
@@ -171,14 +224,24 @@ _1 |-->_1
 
 
 expr::
+_1 . _2 |-->$_1._2
+_1 . _2 . _3 |-->$_1$_2._3
+
 - _1 |-->-_1
 NOT _1 |-->not(_1)
+_1 ISNULL |-->(_1)->oclIsUndefined()
+_1 NOTNULL |-->not((_1)->oclIsUndefined())
+_1 NOT NULL |-->not((_1)->oclIsUndefined())
+
 _1 = _2 |-->_1 = _2
 _1 < _2 |-->_1 < _2
 _1 <= _2 |-->_1 <= _2
 _1 > _2 |-->_1 > _2
 _1 >= _2 |-->_1 >= _2
 _1 <> _2 |-->_1 /= _2
+_1 BETWEEN _2 AND _3 |-->(_1 <= _3 & _2 <= _1)
+_1 NOT BETWEEN _2 AND _3 |-->(_1 > _3 or _2 > _1)
+ 
 _1 & _2 |-->_1 & _2
 _1 | _2 |-->_1 or _2
 _1 AND _2 |-->_1 & _2
@@ -186,15 +249,30 @@ _1 OR _2 |-->_1 or _2
 _1 IN _2 |-->_2->includes(_1)
 _1 NOT IN _2 |-->_2->excludes(_1)
 _1 MATCH _2 |-->_1->isMatch(_2)
+_1 NOT MATCH _2 |-->not(_1->isMatch(_2))
 _1 LIKE _2 |-->(StringLib.stringSimilarity(_1,_2) >= 0.8)
+_1 NOT LIKE _2 |-->(StringLib.stringSimilarity(_1,_2) < 0.8)
+
 _1 * _2 |-->_1 * _2
 _1 / _2 |-->_1 / _2
 _1 + _2 |-->_1 + _2
 _1 - _2 |-->_1 - _2
-size ( _1 ) |-->(_1)->size()
+_1 DIV _2 |-->_1 div _2
+_1 MOD _2 |-->_1 mod _2
+
+SUM ( _1 ) |-->(_1`collectRange)->sum()
+COUNT ( _1 ) |-->(_1`collectRange)->size()
+
 _1 ( ) |-->_1()
+
 _1 ( _* ) |-->_1(_*)
 ( _1 ) |-->(_1)
+( _* ) |-->Sequence{_*}
+_1 |-->_1
+
+
+collectRange::
+_1 IN _2 |-->_2
 _1 |-->_1
 
 

@@ -1,0 +1,6 @@
+prog::
+_* |-->_*
+
+dec::
+_1 : _2 |--><action> _1`defined true, _1 _2
+

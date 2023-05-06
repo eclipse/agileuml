@@ -1,0 +1,34 @@
+decs::
+_1 |-->_1
+_1 _* |-->_1_*`dec
+
+dec::
+_1 = _2 |-->true\n<when> _1`kind _2`kind
+_1 = _2 |-->false
+
+
+expression::
+_1 |-->_1
+
+kind::
+_1 |-->int<when> _1 integerLiteral
+_1 |-->real<when> _1 floatLiteral
+_1 |-->OclAny
+
+identifier::
+_1 |-->_1
+
+integerLiteral::
+_1 |-->_1
+
+floatLiteral::
+_1 |-->_1
+
+
+
+
+
+
+
+
+
