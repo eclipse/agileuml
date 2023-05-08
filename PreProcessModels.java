@@ -1,5 +1,5 @@
 /******************************
-* Copyright (c) 2003--2022 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -1416,6 +1416,26 @@ public class PreProcessModels
     catch (Exception e) 
     { System.out.println(">>> Error in parsing: " + e);
       return ""; 
+    } 
+  } 
+
+  public static String applyCGTL(ASTTerm trm, String scriptName)
+  { // Returns text from scriptName applied to ast
+
+    try { 
+      Vector ents = new Vector(); 
+      Vector typs = new Vector(); 
+      CGSpec cgs = new CGSpec(ents,typs); 
+      File fs = new File(scriptName); 
+      CSTL.loadCSTL(cgs,fs,ents,typs);
+ 
+      String result = trm.cg(cgs);
+
+      return result; 
+    } 
+    catch (Exception e) 
+    { System.out.println("!! Error in executing CGTL: " + e);
+      return "null"; 
     } 
   } 
 

@@ -2055,6 +2055,10 @@ public class CGRule
   public static void main(String[] args) 
   { Vector vars = CGRule.metavariables("_1 ffdd _10 iioo _13"); 
     System.out.println(vars); 
+
+    Vector mfs = CGRule.metafeatures("_1`CC.met"); 
+    System.out.println(mfs); 
+
     // String res = correctNewlines("\"%d %s\n\""); 
     // System.out.println(res); 
   } 

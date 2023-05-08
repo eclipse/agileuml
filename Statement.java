@@ -5759,7 +5759,7 @@ class CreationStatement extends Statement
     else if (createsInstanceOf.startsWith("Map"))
     { return "  HashMap " + assignsTo + ";"; } 
     else if (createsInstanceOf.startsWith("Function"))
-    { return "  Evaluation<String,Object> " + assignsTo + ";"; } 
+    { return "  Function<String,Object> " + assignsTo + ";"; } 
     else if (createsInstanceOf.startsWith("Ref"))
     { return "  Object[] " + assignsTo + " = new Object[1];"; }
     else if (createsInstanceOf.equals("OclAny"))
@@ -5767,7 +5767,7 @@ class CreationStatement extends Statement
     else if (createsInstanceOf.equals("OclType"))
     { return "  Class " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclDate"))
-    { return "  Date " + assignsTo + ";"; }
+    { return "  OclDate " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclRandom"))
     { return "  OclRandom " + assignsTo + ";"; }
     else if (createsInstanceOf.equals("OclIterator"))

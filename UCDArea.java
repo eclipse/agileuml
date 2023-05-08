@@ -11103,10 +11103,10 @@ public void produceCUI(PrintWriter out)
     mop = BSystemTypes.generateAsSetOpJava7(); 
     out.println("\n" + mop); 
     
-    // String mop = BSystemTypes.generateMaxOpJava7(); 
-    // out.println("\n" + mop); 
-    // mop = BSystemTypes.generateMinOpJava7();
-    // out.println("\n" + mop);
+    mop = BSystemTypes.generateMaxOpJava7(); 
+    out.println("\n" + mop); 
+    mop = BSystemTypes.generateMinOpJava7();
+    out.println("\n" + mop);
 
     mop = BSystemTypes.generateUnionOpJava7(); 
     out.println("\n" + mop);

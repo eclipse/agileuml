@@ -525,6 +525,76 @@ public abstract class ASTTerm
       return ASTTerm.symbolicSubtraction(e1,e2); 
     } 
 
+    if ("pythonEval".equals(opname) && 
+        eargs.size() == 1)
+    { // (trailer (arguments ( 
+      //   (arglist (argument ... "text" ...)) ) ))
+
+      ASTTerm e2 = (ASTTerm) eargs.get(0);
+      String arg = e2.literalForm(); 
+      if (arg.startsWith("(") &&
+          arg.endsWith(")"))
+      { arg = arg.substring(1,arg.length()-1); }
+
+      if (arg.startsWith("\"") &&
+          arg.endsWith("\""))
+      { arg = arg.substring(1,arg.length()-1); }
+        
+      String astexpr = 
+            PreProcessModels.applyAntlr("Python",
+                                   "expr",
+                                   arg);
+      if (astexpr == null || 
+          "".equals(astexpr))
+      { return "null"; } 
+
+      Compiler2 c = new Compiler2();    
+
+      ASTTerm xx =
+             c.parseGeneralAST(astexpr); 
+
+      if (xx == null) 
+      { return "null"; } 
+
+      return PreProcessModels.applyCGTL(xx, 
+                                        "cg/python2UML.cstl"); 
+    }       
+
+    if ("pythonExec".equals(opname) && 
+        eargs.size() == 1)
+    { // (trailer (arguments ( 
+      //   (arglist (argument ... "text" ...)) ) ))
+
+      ASTTerm e2 = (ASTTerm) eargs.get(0);
+      String arg = e2.literalForm(); 
+      if (arg.startsWith("(") &&
+          arg.endsWith(")"))
+      { arg = arg.substring(1,arg.length()-1); }
+
+      if (arg.startsWith("\"") &&
+          arg.endsWith("\""))
+      { arg = arg.substring(1,arg.length()-1); }
+        
+      String astexpr = 
+            PreProcessModels.applyAntlr("Python",
+                                   "stmt",
+                                   arg);
+      if (astexpr == null || 
+          "".equals(astexpr))
+      { return "null"; } 
+
+      Compiler2 c = new Compiler2();    
+
+      ASTTerm xx =
+             c.parseGeneralAST(astexpr); 
+
+      if (xx == null) 
+      { return "null"; } 
+
+      return PreProcessModels.applyCGTL(xx, 
+                                        "cg/python2UML.cstl"); 
+    }       
+
     return opname + "(" + eargs + ")"; 
   } 
 

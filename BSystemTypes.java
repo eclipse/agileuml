@@ -5966,10 +5966,25 @@ public class BSystemTypes extends BComponent
   } // map
 
   public static String generateMaxOpJava7()  // for Java7
-  { String res = "  public static <T> T max(Collection<T> l)\n";
+  { /* String res = "  public static <T> T max(Collection<T> l)\n";
     res = res +  "  { return Collections.max(l); }\n";
     return res;
-  } // map
+    } */ 
+
+    String res = "  public static <T extends Comparable> T max(Collection<T> s)\n" +
+    "  { ArrayList<T> slist = new ArrayList<T>();\n" + 
+    "    slist.addAll(s); \n" +
+    "    T result = slist.get(0);\n" + 
+    "    for (int i = 1; i < slist.size(); i++)\n" + 
+    "    { T val = slist.get(i); \n" +
+    "      if (0 < val.compareTo(result))\n" + 
+    "      { result = val; } \n" +
+    "    } \n" +
+    "    return result;\n" + 
+    "  } \n"; 
+    return res; 
+  } 
+
 
   public static String generateMaxOpCSharp()  // for CSharp
   { String res = "  public static object max(ArrayList l)\n";
@@ -6020,10 +6035,22 @@ public class BSystemTypes extends BComponent
   } // map
 
   public static String generateMinOpJava7()  // for Java7 - not needed. 
-  { String res = "  public static <T> T min(Collection<T> l)\n";
-    res = res +  "  { return Collections.min(l); }\n";
-    return res;
-  } // map
+  { // String res = "  public static <T> T min(Collection<T> l)\n";
+    // res = res +  "  { return Collections.min(l); }\n";
+    // return res;
+    String res = "  public static <T extends Comparable> T min(Collection<T> s)\n" +
+    "  { ArrayList<T> slist = new ArrayList<T>();\n" + 
+    "    slist.addAll(s); \n" +
+    "    T result = slist.get(0);\n" + 
+    "    for (int i = 1; i < slist.size(); i++)\n" + 
+    "    { T val = slist.get(i); \n" +
+    "      if (val.compareTo(result) < 0)\n" + 
+    "      { result = val; } \n" +
+    "    } \n" +
+    "    return result;\n" + 
+    "  } \n"; 
+    return res; 
+  } // and for map
 
   public static String generateMinOpCSharp()
   { String res = "  public static object min(ArrayList l)\n";
