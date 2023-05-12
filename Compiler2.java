@@ -5478,6 +5478,16 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         return "f->apply(x)"; 
       } 
 
+      if ("->asSet".startsWith(st))
+      { mess[0] = "Converts collection to a set"; 
+        return "x->asSet()"; 
+      }
+
+      if ("->asSequence".startsWith(st))
+      { mess[0] = "Converts collection to sequence"; 
+        return "x->asSequence()"; 
+      }
+
       if ("->asBag".startsWith(st))
       { mess[0] = "Converts collection to Bag (a sorted sequence)"; 
         return "x->asBag()"; 
@@ -6926,7 +6936,9 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
           else if ("invariant".equals(lxr))
           { Expression expr = parse_expression(0,reached+1,i-2,entities,types); 
             if (expr != null) 
-            { Constraint cons = Constraint.getConstraint(expr); 
+            { Constraint cons = 
+                 Constraint.getConstraint(expr); 
+              cons.setOwner(res); 
               res.addInvariant(cons);
             }
             else 

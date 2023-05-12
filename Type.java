@@ -3485,14 +3485,41 @@ public class Type extends ModelElement
       { return "STRING"; }
       if (nme.equals("double"))
       { return "NUM"; } 
-      return "BOOL";
-    }    // what about sets? 
+      if (nme.equals("boolean"))
+      { return "BOOL"; }
+      if (nme.equals("Set"))
+      { if (elementType != null) 
+        { String et = elementType.generateB(); 
+          return "FIN(" + et + ")"; 
+        } 
+        return "FIN(INT)"; 
+      }
+      if (nme.equals("Sequence"))
+      { if (elementType != null) 
+        { String et = elementType.generateB(); 
+          return "seq(" + et + ")"; 
+        } 
+        return "seq(INT)"; 
+      }
+      if (nme.equals("Map") || nme.equals("Function"))
+      {  
+        String kt = "STRING"; 
+        if (keyType != null) 
+        { kt = keyType.generateB(); } 
+        String etB = "ANY"; 
+        if (elementType != null)
+        { etB = elementType.generateB(); } 
+        return kt + " +-> " + etB;   // Partial function  
+      } 
+      return "INT"; 
+    }    // what about maps, functions? 
     else 
     { return nme; }
   }
 
   public String generateB(Expression var)
   { String nme = getName();
+
     if (nme.equals("Set") || nme.equals("Sequence"))
     { Type et = var.elementType; 
       if (et != null)
@@ -3504,10 +3531,13 @@ public class Type extends ModelElement
 	 
     if (nme.equals("Map") || nme.equals("Function"))
     { Type et = var.elementType; 
+      String kt = "STRING"; 
+      if (keyType != null) 
+      { kt = keyType.generateB(); } 
+      String etB = "ANY"; 
       if (et != null)
-      { String etB = et.generateB(); 
-        return "STRING +-> " + etB;   // Partial function  
-      } 
+      { etB = et.generateB(); } 
+      return kt + " +-> " + etB;   // Partial function  
     } 
 
     if (entity != null)
@@ -4620,7 +4650,7 @@ public class Type extends ModelElement
       return new Type(e);
     }
 
-    System.err.println("! Warning: unexpected combination of types in a collection: " + oldType + " " + t); 
+    System.err.println("! Warning: Code smell (PMV): multiple types for variable: " + oldType + " " + t); 
 
     return oldType;
   }

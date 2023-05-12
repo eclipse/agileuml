@@ -3,7 +3,7 @@ import java.util.List;
 import java.io.*; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003--2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -235,6 +235,18 @@ public class BComponent extends ModelElement
   public Vector getUses()
   { return usesList; } 
 
+  public Vector getParameters()
+  { return new Vector(); } 
+
+  public void addParameter(Attribute att)
+  { }
+
+  public Type getType()
+  { return new Type("void", null); }  
+
+  public void setType(Type t)
+  { }  
+
   public void removeSees(List names)
   { seesList.removeAll(names); } 
 
@@ -266,14 +278,20 @@ public class BComponent extends ModelElement
     variables.add(attnme);
     // add invariant  att: cs --> T
     Type t = att.getType();
+    Type elemT = att.getElementType(); 
+
     String bt = t.generateB();
+    String belemType = "void"; 
+    if (elemT != null) 
+    { belemType = elemT.generateB(); } 
 
     String newSeen = null;
-    if (bt.equals("INT"))
+    if (bt.equals("INT") || belemType.equals("INT") )
     { newSeen = "Int_TYPE"; }
-    else if (bt.equals("BOOL"))
+    else if (bt.equals("BOOL") || belemType.equals("BOOL") )
     { newSeen = "Bool_TYPE"; }
-    else if (bt.equals("STRING"))
+    else if (bt.equals("STRING") || 
+             belemType.equals("STRING") )
     { newSeen = "String_TYPE"; }
     if (newSeen != null & !seesList.contains(newSeen))
     { seesList.add(newSeen); }

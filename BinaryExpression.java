@@ -16809,10 +16809,11 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       else 
       { return false; } 
     }
-    else if (operator.equals("="))
+    else if (operator.equals("=") || operator.equals("<>="))
     { if (e instanceof BinaryExpression)
       { BinaryExpression be = (BinaryExpression) e;
-        if (comparitors.contains(be.operator) || be.operator.equals("<:") ||
+        if (comparitors.contains(be.operator) || 
+            be.operator.equals("<:") ||
             be.operator.equals("->includesAll"))
         { return impliesEq(be.operator,be); } 
         else if (be.operator.equals("&"))
@@ -16838,9 +16839,10 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   } // and cases of  x > y  =>  x >= y  etc
 
   private boolean impliesEq(String op, BinaryExpression be)
-  { if (op.equals("="))
+  { if (op.equals("=") || op.equals("<>="))
     { return (equals(be) || equals(be.reverse())); }
-    else if (op.equals("<=") || op.equals(">=") || op.equals("<:") ||
+    else if (op.equals("<=") || op.equals(">=") || 
+             op.equals("<:") ||
              op.equals("->includesAll"))
     { return (left.equals(be.left) && right.equals(be.right)) || 
              (right.equals(be.left) && left.equals(be.right));  
@@ -16850,27 +16852,39 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
 
   private boolean impliesLG(String op, BinaryExpression be)
   { if (operator.equals("<"))
-    { if (op.equals("/=") || op.equals("!=") || operator.equals("<>"))
-      { return ((left.equals(be.left) && right.equals(be.right)) ||
-                (right.equals(be.left) && left.equals(be.right))); 
+    { if (op.equals("/=") || op.equals("!=") || 
+          operator.equals("<>"))
+      { return ((left.equals(be.left) && 
+                 right.equals(be.right)) ||
+                (right.equals(be.left) && 
+                 left.equals(be.right))); 
       }
+
       if (op.equals("<="))
       { return left.equals(be.left) && right.equals(be.right); }
+
       if (op.equals(">="))
       { return left.equals(be.right) && right.equals(be.left); }
+
       return false;
     }
+
     if (operator.equals(">"))
-    { if (op.equals("/=") || op.equals("!=") || operator.equals("<>"))
+    { if (op.equals("/=") || op.equals("!=") || 
+          operator.equals("<>"))
       { return ((left.equals(be.left) && right.equals(be.right)) ||
                 (right.equals(be.left) && left.equals(be.right))); 
       }
+
       if (op.equals(">="))
       { return left.equals(be.left) && right.equals(be.right); }
+
       if (op.equals("<="))
       { return left.equals(be.right) && right.equals(be.left); }
+
       return false;
     }
+
     return false; 
   } 
 

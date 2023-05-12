@@ -1830,6 +1830,9 @@ class BasicExpression extends Expression
       } // the result type of the op is needed in type. 
     }
 
+    if (type != null)
+    { return "Sequence".equals(type.getName()); } 
+      
     return false;  // but it could be a singleton
   }
 
@@ -2992,12 +2995,12 @@ class BasicExpression extends Expression
               if (var == null)
               { var = entity.searchForSuperclassJava(env); 
                 if (var == null) 
-                { System.err.println("ERROR: No variable in scope of class " + nme); 
+                { System.err.println("!! ERROR: No variable in scope of class " + nme); 
                   // var = nme.toLowerCase() + "x";
                   res = data;  
                 }
                 else 
-                { var = var + ".oclAsType(" + nme + ")"; 
+                { var = "(" + var + "->oclAsType(" + nme + "))"; 
                   res = var + "." + data; 
                 }
               } 
@@ -12844,7 +12847,7 @@ public Statement generateDesignSubtract(Expression rhs)
       if (var == null)
       { var = e.searchForSuperclass(env); 
         if (var == null) 
-        { System.err.println("Error: no variable for " + nme); 
+        { System.err.println("!! Error: no variable for " + nme); 
           var = new BBasicExpression(nme.toLowerCase() + "x"); 
         } 
         else 
@@ -12877,7 +12880,7 @@ public Statement generateDesignSubtract(Expression rhs)
   { String feat = ""; 
     String op = ""; 
 
-    System.out.println("B UPDATE FORM OF " + this + " " + isEvent); 
+    System.out.println(">> B UPDATE FORM OF " + this + " " + isEvent); 
 
     if (isEvent) // an operation of entity -- not allowed if local
     { Vector oppars = new Vector(); 
@@ -12910,7 +12913,7 @@ public Statement generateDesignSubtract(Expression rhs)
         if (var == null)  // because nme is superclass of ent: dom(env)
         { var = entity.searchForSubclass(env); } 
         if (var == null) 
-        { System.err.println("Error: No variable of " + ename); 
+        { System.err.println("!! Error: No variable of " + ename); 
           var = new BBasicExpression(ename.toLowerCase() + "x"); 
           var.setKind(VARIABLE); 
         }        
@@ -12950,7 +12953,8 @@ public Statement generateDesignSubtract(Expression rhs)
         
         BStatement res;
         if (psimp.setValued() && op != null &&
-            op.equals("set") || op.equals("remove") || op.equals("add"))
+            op.equals("set") || op.equals("remove") || 
+            op.equals("add"))
         { res = new BOperationCall(op + "All" + feat,pars); }
         else 
         { res = new BOperationCall(data,pars); } 
@@ -12959,7 +12963,7 @@ public Statement generateDesignSubtract(Expression rhs)
       }
     }
     else
-    { System.out.println("No update form for " + this + " " + isEvent); 
+    { System.out.println("!! No update form for " + this + " " + isEvent); 
       return new BBasicStatement("skip"); 
     } // no sensible update form
   }
@@ -14057,7 +14061,7 @@ public Statement generateDesignSubtract(Expression rhs)
     }
     res = new BBasicExpression(data);
     res.setKind(umlkind); 
-    System.out.println("B INVARIANT FORM OF " + this + " IS " + res); 
+    System.out.println(">> B INVARIANT FORM OF " + this + " IS " + res); 
 
     return res;  // and setKind in all other cases, as well.
   }

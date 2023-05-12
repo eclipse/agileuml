@@ -11,6 +11,9 @@ import java.util.Vector;
 import java.io.*; 
 import javax.swing.*;
 
+import java.lang.reflect.Method;
+
+
 public abstract class ASTTerm
 { String id = ""; 
   // Vector stereotypes = new Vector(); 
@@ -296,7 +299,7 @@ public abstract class ASTTerm
     }
 
     // JOptionPane.showMessageDialog(null, 
-    //    "*** addStereotype " + str + " to " + lit + " Metafeatures of " + lit + " are " + stereotypes,   "",
+    //    "*** addStereotype " + str + " to " + lit + " Metafeature values of " + lit + " are " + stereotypes,   "",
     //          JOptionPane.INFORMATION_MESSAGE); 
   } 
 
@@ -326,10 +329,10 @@ public abstract class ASTTerm
     } 
 
     // JOptionPane.showMessageDialog(null, 
-    //    "*** addStereo " + str + " to " + lit + " Metafeatures of " + lit + " are " + mfs,   "",
+    //    "*** addStereo " + str + " to " + lit + " Metafeature values of " + lit + " are " + mfs,   "",
     //          JOptionPane.INFORMATION_MESSAGE); 
 
-    System.out.println("*** " + lit + " metafeatures set to " +
+    System.out.println("*** " + lit + " metafeature values set to " +
                        ASTTerm.metafeatures.get(lit));  
 
   } 
@@ -391,7 +394,7 @@ public abstract class ASTTerm
       ASTTerm.metafeatures.put(lit,stereotypes);  
     } 
 
-    System.out.println(">>> " + lit + " metafeatures = " +
+    System.out.println(">>> " + lit + " metafeature values = " +
                        ASTTerm.metafeatures.get(lit));  
   } 
 
@@ -409,7 +412,7 @@ public abstract class ASTTerm
       stereotypes.removeAll(removed);
     }   
 
-    System.out.println("*** " + lit + " metafeatures= " +
+    System.out.println("*** " + lit + " metafeature values= " +
                        ASTTerm.metafeatures.get(lit));  
   } 
 
@@ -594,6 +597,34 @@ public abstract class ASTTerm
       return PreProcessModels.applyCGTL(xx, 
                                         "cg/python2UML.cstl"); 
     }       
+
+    int dotind = opname.indexOf("."); 
+    // System.out.println(dotind); 
+    if (dotind > 0)
+    { String cname = opname.substring(0,dotind); 
+      String mname = opname.substring(dotind + 1); 
+
+      try { 
+        Class cl = Class.forName(cname); 
+        Object xinst = cl.newInstance();
+        Method[] mets = cl.getDeclaredMethods(); 
+
+        // System.out.println(">> Found class: " + cl + " methods " + mets.length);
+ 
+        for (int i = 0; i < mets.length; i++)
+        { Method m = mets[i]; 
+
+          // System.out.println(m.getName()); 
+
+          if (m.getName().equals(mname))
+          { Object[] args = eargs.toArray(); 
+            return (String) m.invoke(xinst,args); 
+          } 
+        } 
+      }
+      catch (Throwable _x) 
+      { System.err.println("!! No class/method: " + cname + " " + mname); } 
+    }
 
     return opname + "(" + eargs + ")"; 
   } 

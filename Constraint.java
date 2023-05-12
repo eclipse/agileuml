@@ -3639,9 +3639,9 @@ public Constraint generalType0inverse()
   { // If associations empty, ent is owning entity
     Entity entity = owner;
     Vector needed = allEntitiesUsedIn(); // innermostEntities();
-    System.out.println("Needed entities: " + needed); 
+    System.out.println(">> Needed entities: " + needed); 
     Vector rels0 = AssociationPaths.getNeededAssociations(needed);
-    System.out.println("needed associations: " + rels0);  
+    System.out.println(">> Needed associations: " + rels0);  
     Vector rels = (Vector) associations.clone();
     java.util.Map env = new java.util.HashMap();
     if (associations.size() != 0)  // the first needed entity
@@ -3649,6 +3649,7 @@ public Constraint generalType0inverse()
         (Association) associations.get(0);
       entity = ast.getEntity1();
     }
+
     if (entity == null)
     { return new BBasicExpression("false"); } 
     String ename = entity.getName();
@@ -3659,9 +3660,11 @@ public Constraint generalType0inverse()
     BExpression range =
       new BBinaryExpression(":",evar,bes);
     env.put(ename,evar);
-    Expression fullcond = Expression.simplify("&",cond0,cond,new Vector()); 
+    Expression fullcond = 
+      Expression.simplify("&",cond0,cond,new Vector()); 
     BExpression pred =   // plus intermediate entities in needed
-      Association.genBInvariantCode(rels,needed,env,fullcond,succ);
+      Association.genBInvariantCode(rels,needed,env,
+                                    fullcond,succ);
     BExpression res = 
       new BQuantifierExpression("forall",ex,
         new BBinaryExpression("=>",range,pred));
@@ -3673,9 +3676,9 @@ public Constraint generalType0inverse()
   { // If associations empty, ent is owning entity
     /* Entity entity = owner;
     Vector needed = allEntitiesUsedIn(); // innermostEntities();
-    System.out.println("Needed entities: " + needed); 
+    System.out.println(">> Needed entities: " + needed); 
     Vector rels0 = AssociationPaths.getNeededAssociations(needed);
-    System.out.println("needed associations: " + rels0);  
+    System.out.println(">> Needed associations: " + rels0);  
     Vector rels = (Vector) associations.clone();
     java.util.Map env = new java.util.HashMap();
     if (associations.size() != 0)  // the first needed entity

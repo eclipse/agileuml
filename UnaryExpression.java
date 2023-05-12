@@ -4514,6 +4514,12 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       { return new BUnaryExpression("union", psimp); } 
       return psimp; 
     } // but only goes one level down. 
+    else if (operator.equals("->asSet"))
+    { if (argument.isOrderedB() || 
+          Type.isSequenceType(argument.getType()))
+      { return new BUnaryExpression("ran",psimp); }  
+      return psimp; 
+    } 
     else if (data.equals("sqr"))
     { return new BBinaryExpression("*", psimp, psimp); } 
     else if (data.equals("display"))
@@ -4524,7 +4530,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       if (et != null && et.isEntity())
       { String es = ename.toLowerCase() + "s"; 
         BExpression res = new BBinaryExpression("=", 
-                 new BBinaryExpression("/\\", psimp, new BBasicExpression(es)), 
+          new BBinaryExpression("/\\", psimp, new BBasicExpression(es)), 
                    new BSetExpression());
         res.setBrackets(true); 
         return res;  
@@ -4830,6 +4836,13 @@ private BExpression subcollectionsBinvariantForm(BExpression bsimp)
     if (operator.equals("not"))
     { return new BUnaryExpression("not",psimp); } 
 
+    if (operator.equals("->asSet"))
+    { if (argument.isOrderedB() || 
+          Type.isSequenceType(argument.getType()))
+      { return new BUnaryExpression("ran",psimp); }  
+      return psimp; 
+    } 
+    
     if (data.equals("size")) // also strings
     { op = "card";
       return new BUnaryExpression(op,pre);
