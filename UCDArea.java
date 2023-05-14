@@ -664,9 +664,9 @@ public class UCDArea extends JPanel
 
     boolean tc = inv.typeCheck(types,entities,contexts,pars); 
     if (tc) 
-    { System.out.println("Invariant type-checked correctly"); } 
+    { System.out.println(">> Invariant type-checked correctly"); } 
     else 
-    { System.out.println("Invariant not correctly typed!"); } 
+    { System.out.println("!! Invariant not correctly typed!"); } 
 
     Constraint cons = new Constraint((SafetyInvariant) inv,new Vector()); 
     cons.setOwner(owner); 
@@ -1086,7 +1086,7 @@ public class UCDArea extends JPanel
     UseCase ucinc = (UseCase) ModelElement.lookupByName(nme,useCases); 
 
     if (ucinc == null) 
-    { System.err.println("Invalid use case name: " + nme); 
+    { System.err.println("!! Invalid use case name: " + nme); 
       JOptionPane.showMessageDialog(null, "Error: no use case " + nme, 
                                       "",JOptionPane.ERROR_MESSAGE);  
       return; 
@@ -1103,7 +1103,7 @@ public class UCDArea extends JPanel
     UseCase ucinc = (UseCase) ModelElement.lookupByName(nme,useCases); 
 
     if (ucinc == null) 
-    { System.err.println("Invalid use case name: " + nme); 
+    { System.err.println("!! Invalid use case name: " + nme); 
       JOptionPane.showMessageDialog(null, "Error: no use case " + nme, 
                                       "",JOptionPane.ERROR_MESSAGE);  
       return; 
@@ -1138,14 +1138,14 @@ public class UCDArea extends JPanel
     boolean query = opDialog.getQuery(); 
 
     if (nme == null)
-    { System.err.println("No name specified"); 
+    { System.err.println("!! No name specified"); 
       JOptionPane.showMessageDialog(null, "Error: no name!", 
                                       "",JOptionPane.ERROR_MESSAGE);  
       return; 
     } 
 
     if (typ == null && query) 
-    { System.err.println("Error: query operation without type"); 
+    { System.err.println("!! Error: query operation without type"); 
       JOptionPane.showMessageDialog(null, "Error: no return type!", 
                                       "",JOptionPane.ERROR_MESSAGE);  
       return; 
@@ -1157,8 +1157,10 @@ public class UCDArea extends JPanel
     if (typ != null) 
     { tt = Type.getTypeFor(typ,types,entities); 
       if (tt == null) 
-      { if ("int".equals(typ) || "long".equals(typ) || typ.equals("String") || 
+      { if ("int".equals(typ) || "long".equals(typ) || 
+            typ.equals("String") || 
             typ.equals("Set") || typ.equals("Sequence") ||
+            typ.equals("Map") || typ.equals("Function") ||
             typ.equals("double") || typ.equals("boolean"))
         { tt = new Type(typ,null); }
         else  
@@ -1206,7 +1208,7 @@ public class UCDArea extends JPanel
 
     boolean tc = spre.typeCheck(types,entities,contexts,vars);
     if (!tc) 
-    { System.err.println("Failed to type-check precondition"); }
+    { System.err.println("!! Failed to type-check precondition"); }
 
     if (post == null)
     { System.err.println(">>> Invalid postcondition"); 
@@ -1218,7 +1220,7 @@ public class UCDArea extends JPanel
     Expression effect = comp1.parse(); 
 
     while (effect == null)
-    { System.err.println("ERROR: Invalid postcondition syntax " + post); 
+    { System.err.println("!! ERROR: Invalid postcondition syntax " + post); 
       JOptionPane.showMessageDialog(null, "Error: invalid postcondition syntax: " + post, 
                                       "",JOptionPane.ERROR_MESSAGE);  
       opDialog.setOldFields(nme,typ,params,pre,post,query);
@@ -1234,14 +1236,14 @@ public class UCDArea extends JPanel
 
     if (query) 
     { if (tt == null) 
-      { System.err.println("Error: query operation must have a return type!"); 
+      { System.err.println("!! Error: query operation must have a return type!"); 
         JOptionPane.showMessageDialog(null, "Error: no return type!", 
                                       "",JOptionPane.ERROR_MESSAGE);  
       } 
     } 
     else 
     { if (tt != null)
-      { System.err.println("Warning: update operations with results cannot be mapped to B"); 
+      { System.err.println("! Warning: update operations with results cannot be mapped to B"); 
       } 
     } 
 
@@ -1257,10 +1259,10 @@ public class UCDArea extends JPanel
 
     boolean tc2 = effect.typeCheck(types,entities,contexts,vars); 
     if (!tc2) 
-    { System.err.println("Failed to type-check postcondition"); }
+    { System.err.println("!! Failed to type-check postcondition"); }
     else 
-    { System.out.println("Definedness condition: " + effect.definedness()); 
-      System.out.println("Determinacy condition: " + effect.determinate()); 
+    { System.out.println(">> Definedness condition: " + effect.definedness()); 
+      System.out.println(">> Determinacy condition: " + effect.determinate()); 
     } 
 
     op.setPre(spre); 
@@ -1394,12 +1396,12 @@ public class UCDArea extends JPanel
     boolean query = opDialog.getQuery(); 
 
     if (nme == null)
-    { System.err.println("No name specified"); 
+    { System.err.println("!! No name specified"); 
       return; 
     } 
 
     if (typ == null && query) 
-    { System.err.println("Error: query operation without type"); 
+    { System.err.println("!! Error: query operation without type"); 
       return; 
     } 
 
@@ -1423,13 +1425,13 @@ public class UCDArea extends JPanel
     Expression cond;
     Compiler2 comp = new Compiler2(); 
     if (pre == null || pre.equals(""))
-    { cond = new BasicExpression("true"); } 
+    { cond = new BasicExpression(true); } 
     else
     { comp.nospacelexicalanalysis(pre);
       cond = comp.parse();
       if (cond == null)
-      { System.err.println("ERROR: Syntax error in " + pre); 
-        cond = new BasicExpression("true"); 
+      { System.err.println("!! ERROR: Syntax error in " + pre); 
+        cond = new BasicExpression(true); 
       } 
     }
     Expression spre = cond.simplify(); 
@@ -10787,15 +10789,16 @@ public void produceCUI(PrintWriter out)
     out.println("import java.util.List;");
     out.println("import java.util.Vector;\n");
 
-    out.println("public interface SystemTypes");
-    out.println("{");
     for (int i = 0; i < types.size(); i++)
     { Type t = (Type) types.get(i);
       if (t.hasStereotype("external") || 
           t.hasStereotype("component"))
       { continue; } 
-      t.generateDeclaration(out);
+      t.generateDeclarationCSharp(out);
     }
+
+    out.println("public interface SystemTypes");
+    out.println("{");
    
     // should use real sets
     out.println("  public class Set"); 
@@ -11919,6 +11922,8 @@ public void produceCUI(PrintWriter out)
     out.println(getLoadModelOp()); 
     out.println(getCheckCompletenessOp()); 
     out.println(getSaveModelOpJava6()); 
+    out.println(generateLoadXsiOp());  /* Optional */ 
+    out.println(generateLoadFromXsiOp());  /* Optional */ 
     // out.println(getSaveXSIOp()); 
     // out.println(getSaveXSI2Op()); 
     // load, save CSV
@@ -16152,7 +16157,7 @@ public void produceCUI(PrintWriter out)
       // pwout = new PrintWriter(brout); 
     }
     catch (Exception e)
-    { System.out.println("Errors with file: " + infile);
+    { System.out.println("!! Errors with file: " + infile);
       return concepts; 
     }
     String xmlstring = ""; 
@@ -16160,7 +16165,7 @@ public void produceCUI(PrintWriter out)
     while (!eof)
     { try { s = br.readLine(); }
       catch (IOException e)
-      { System.out.println("Reading failed.");
+      { System.out.println("!! Reading failed.");
         return concepts; 
       }
       if (s == null) 
@@ -16195,7 +16200,7 @@ public void produceCUI(PrintWriter out)
           if ("DESCRIPTOR".equals(stag))
           { String cdef = sb.getContent(); 
             c = new ThesaurusConcept(cdef.toLowerCase());
-            System.out.println("New concept: " + cdef); 
+            System.out.println(">> New concept: " + cdef); 
           } 
           else if ("PT".equals(stag) && c != null)
           { String ndef = sb.getContent(); 
@@ -16216,7 +16221,7 @@ public void produceCUI(PrintWriter out)
           } 
           else if ("SEM".equals(stag) && c != null)
           { String ndef = sb.getContent(); 
-		    System.out.println(">> semantics = " + ndef); 
+            System.out.println(">> semantics = " + ndef); 
             // c.setPOS(ndef); 
           } 
         } 
@@ -16251,7 +16256,7 @@ public void produceCUI(PrintWriter out)
       pwout = new PrintWriter(brout); 
     }
     catch (Exception e)
-    { System.out.println("Errors with files: " + infile + " " + outfile);
+    { System.out.println("!! Errors with files: " + infile + " " + outfile);
       return; 
     }
     String xmlstring = ""; 
@@ -16259,7 +16264,7 @@ public void produceCUI(PrintWriter out)
     while (!eof)
     { try { s = br.readLine(); }
       catch (IOException e)
-      { System.out.println("Reading failed.");
+      { System.out.println("!! Reading failed.");
         return; 
       }
       if (s == null) 
@@ -16369,7 +16374,7 @@ public void produceCUI(PrintWriter out)
       pwout = new PrintWriter(brout); 
     }
     catch (Exception e)
-    { System.out.println("Errors with file: " + outfile);
+    { System.out.println("!! Errors with file: " + outfile);
       return; 
     }
 
@@ -16433,7 +16438,8 @@ public void produceCUI(PrintWriter out)
         Vector atts = enode.getAttributes();
         for (int p = 0; p < atts.size(); p++) 
         { XMLAttribute patt = (XMLAttribute) atts.get(p); 
-          if (patt.getName().equals("xsi:type") || patt.getName().equals("xmi:id")) { } 
+          if (patt.getName().equals("xsi:type") || 
+              patt.getName().equals("xmi:id")) { } 
           else 
           { patt.getDataDeclaration(pwout,ename + k, et, idmap); } 
         } 
@@ -16618,7 +16624,7 @@ public void produceCUI(PrintWriter out)
       pwout = new PrintWriter(brout); 
     }
     catch (Exception e)
-    { System.out.println("Errors with files: " + infile + " " + outfile);
+    { System.out.println("!! Errors with files: " + infile + " " + outfile);
       return; 
     }
 
@@ -16627,7 +16633,7 @@ public void produceCUI(PrintWriter out)
     while (!eof)
     { try { s = br.readLine(); }
       catch (IOException e)
-      { System.out.println("Reading failed.");
+      { System.out.println("!! Reading failed.");
         return; 
       }
       if (s == null) 
@@ -16711,12 +16717,27 @@ public void produceCUI(PrintWriter out)
     Vector res = new Vector();
     String s;
     boolean eof = false;
+
     File file = new File("output/mm.ecore");  /* default */ 
+
+    File startingpoint = new File("output");
+    JFileChooser fc = new JFileChooser();
+    fc.setCurrentDirectory(startingpoint);
+    fc.setDialogTitle("Load .ecore file");
+    fc.addChoosableFileFilter(new EcoreFileFilter()); 
+    int returnVal = fc.showOpenDialog(this);
+    if (returnVal == JFileChooser.APPROVE_OPTION)
+    { file = fc.getSelectedFile(); }
+    else
+    { System.err.println("Load aborted");
+      return; 
+    }
+    String componentName = file.getName();  
 
     try
     { br = new BufferedReader(new FileReader(file)); }
     catch (FileNotFoundException e)
-    { System.out.println("File not found: " + file);
+    { System.err.println("!! File not found: " + file);
       return; 
     }
 
@@ -16735,7 +16756,7 @@ public void produceCUI(PrintWriter out)
     while (!eof)
     { try { s = br.readLine(); }
       catch (IOException e)
-      { System.out.println(">>> Reading mm.ecore failed.");
+      { System.out.println("!! Reading ecore file failed.");
         return; 
       }
       if (s == null) 
@@ -16780,9 +16801,26 @@ public void produceCUI(PrintWriter out)
 		 
         if ("ecore:EClass".equals(xsitype) && ename != null)  
         { Entity ent = 
-            reconstructEntity(ename, 40 + (ecount/3)*delta + ((ecount % 3)*delta)/2, 
-                              100 + (ecount % 7)*delta, "", "*", new Vector());
+            reconstructEntity(ename, 
+              40 + (ecount/3)*delta + ((ecount % 3)*delta)/2, 
+              100 + (ecount % 7)*delta, "", "*", 
+              new Vector());
           ecount++; 
+        } 
+        else if ("ecore:EDataType".equals(xsitype) && 
+                 ename != null) 
+        { Type dt = new Type(ename, null); 
+          dt.setAlias(new Type("String", null)); 
+          types.add(dt); 
+          RectData rdt = 
+            new RectData(100 + 120*types.size(),
+                         20,getForeground(),
+                                 componentMode,
+                                 rectcount);
+          rectcount++;
+          rdt.setLabel(ename);
+          rdt.setModelElement(dt); 
+          visuals.add(rdt);
         } 
         else if ("ecore:EEnum".equals(xsitype) && ename != null)
         { Vector eliterals = new Vector(); 
@@ -16794,7 +16832,8 @@ public void produceCUI(PrintWriter out)
           } 
           Type tt = new Type(ename,eliterals); 
           types.add(tt); 
-          RectData rd = new RectData(100 + 100*types.size(),20,getForeground(),
+          RectData rd = new RectData(
+            100 + 120*types.size(),20,getForeground(),
                                  componentMode,
                                  rectcount);
           rectcount++;
@@ -16813,7 +16852,9 @@ public void produceCUI(PrintWriter out)
         if ("ecore:EClass".equals(xsitype) && ename != null)  
         { Entity ent = (Entity) ModelElement.lookupByName(ename,entities);
           String esupers = enode.getAttributeValue("eSuperTypes"); 
-          if (esupers != null && (esupers.startsWith("#//") || esupers.startsWith("#/1")))
+          if (esupers != null && 
+              (esupers.startsWith("#//") || 
+               esupers.startsWith("#/1")))
           { String[] allsupers = esupers.split(" ");
             for (int p = 0; p < allsupers.length; p++) 
             { String supr = (String) allsupers[p];
@@ -16828,7 +16869,7 @@ public void produceCUI(PrintWriter out)
               { Entity[] subents = new Entity[1]; 
                 subents[0] = ent; 
                 addInheritances(supent,subents); 
-				System.out.println(">>> Added inheritance: " + ename + " --|> " + suprname); 
+                System.out.println(">>> Added inheritance: " + ename + " --|> " + suprname); 
                 supent.setAbstract(true);
               } 
             } 
@@ -16840,25 +16881,51 @@ public void produceCUI(PrintWriter out)
             if ("eStructuralFeatures".equals(ed.getTag()))
             { String dataname = ed.getAttributeValue("name"); 
               if ("ecore:EAttribute".equals(ed.getAttributeValue("xsi:type")))
-              { Type typ = Type.getEcoreType(ed.getAttributeValue("eType"),types); 
-                Attribute att = new Attribute(dataname,typ,ModelElement.INTERNAL); 
+              { Type typ = Type.getEcoreType(
+                       ed.getAttributeValue("eType"),types); 
+                Attribute att = 
+                  new Attribute(dataname,typ,
+                                ModelElement.INTERNAL); 
                 ent.addAttribute(att); 
-                att.setEntity(ent); 
+                att.setEntity(ent);
+                String init = 
+                  ed.getAttributeValue("defaultValueLiteral");
+                if (init != null) 
+                { att.setInitialValue(init);
+                  System.out.println(">-> Initial value for " + dataname + " = " + init); 
+                  if (typ != null && 
+                      "String".equals(typ.getName()))
+                  { Expression expr = 
+                      BasicExpression.newValueBasicExpression(
+                                         "\"" + init + "\"");
+                    expr.setType(typ); 
+                    expr.setElementType(typ);  
+                    att.setInitialExpression(expr); 
+                  }
+                }   
               } 
               else if ("ecore:EReference".equals(ed.getAttributeValue("xsi:type")))
               { String e2name = ed.getAttributeValue("eType"); 
-			    // int xind = e2name.lastIndexOf("/");
                 e2name = e2name.substring(3,e2name.length()); 
-				if (e2name.startsWith("/"))
-				{ e2name = e2name.substring(1,e2name.length()); }
-                // e2name = e2name.substring(xind,e2name.length()); 
+                int xind = e2name.lastIndexOf("#//");
+                if (e2name.startsWith("/"))
+                { e2name = e2name.substring(1,e2name.length()); }
+                else if (xind >= 0 && xind < e2name.length())
+                { e2name = e2name.substring(xind+3,e2name.length()); } 
+ 
                 Entity ent2 = (Entity) ModelElement.lookupByName(e2name,entities);
-                String upper = ed.getAttributeValue("upperBound"); // default is 1
-                String lower = ed.getAttributeValue("lowerBound"); // default is 0 
-                String opposite = ed.getAttributeValue("eOpposite"); 
-                String rolename = ed.getAttributeValue("name"); 
-                String containment = ed.getAttributeValue("containment"); 
-                String ordering = ed.getAttributeValue("ordered"); 
+                String upper = 
+                  ed.getAttributeValue("upperBound"); // default is 1
+                String lower = 
+                  ed.getAttributeValue("lowerBound"); // default is 0 
+                String opposite = 
+                  ed.getAttributeValue("eOpposite"); 
+                String rolename = 
+                  ed.getAttributeValue("name"); 
+                String containment = 
+                  ed.getAttributeValue("containment"); 
+                String ordering = 
+                  ed.getAttributeValue("ordered"); 
 
                 if ("-1".equals(upper)) { } 
                 else 
@@ -16896,8 +16963,8 @@ public void produceCUI(PrintWriter out)
                     // ast.setCard1(ModelElement.ZEROONE); 
                   } 
 				  
-				  if ("true".equals(ordering))
-				  { ast.setOrdered(true); }
+                  if ("true".equals(ordering))
+                  { ast.setOrdered(true); }
 
                   associations.add(ast);  
                   ent.addAssociation(ast); 
@@ -17280,7 +17347,24 @@ public void produceCUI(PrintWriter out)
   } 
 
   public void loadKM3FromFile()
-  { loadKM3FromFile("mm.km3"); } 
+  { File file = new File("output/mm.km3");  /* default */ 
+
+    File startingpoint = new File("output");
+    JFileChooser fc = new JFileChooser();
+    fc.setCurrentDirectory(startingpoint);
+    fc.setDialogTitle("Load .km3 file");
+    fc.addChoosableFileFilter(new KM3FileFilter()); 
+    int returnVal = fc.showOpenDialog(this);
+    if (returnVal == JFileChooser.APPROVE_OPTION)
+    { file = fc.getSelectedFile(); }
+    else
+    { System.err.println("! Load aborted");
+      return; 
+    }
+    // String componentName = file.getName();  
+
+    loadKM3FromFile(file); 
+  } 
   
   public void loadKM3FromFile(String f)
   { File file = new File("output/" + f);  /* default */ 
@@ -17294,14 +17378,12 @@ public void produceCUI(PrintWriter out)
     String s;
     boolean eof = false;
     
-
     try
     { br = new BufferedReader(new FileReader(file)); }
     catch (FileNotFoundException e)
     { System.out.println("!! File not found: " + file.getName());
       return; 
     }
-
 
     String xmlstring = ""; 
     int linecount = 0; 
@@ -20367,9 +20449,8 @@ public void produceCUI(PrintWriter out)
 	pars1.add(line);
 	BehaviouralFeature op1 = 
       new BehaviouralFeature("parseCSV",pars1,true,new Type(ee)); 
-	op1.setStatic(true); 
-    e.addOperation(op1); 
-
+   op1.setStatic(true); 
+   e.addOperation(op1); 
 
    Type seqe = new Type("Sequence",null); 
    seqe.setElementType(new Type(ee)); 
@@ -20381,48 +20462,47 @@ public void produceCUI(PrintWriter out)
    op2.setStatic(true); 
    e.addOperation(op2); 
 
-	Vector parsx = new Vector(); 
-	Attribute linex = new Attribute("obj", new Type("JSONObject",null), ModelElement.INTERNAL); 
-	parsx.add(linex);
-	BehaviouralFeature opx = 
+   Vector parsx = new Vector(); 
+   Attribute linex = new Attribute("obj", new Type("JSONObject",null), ModelElement.INTERNAL); 
+   parsx.add(linex);
+   BehaviouralFeature opx = 
       new BehaviouralFeature("parseJSON",parsx,true,new Type(ee)); 
-	opx.setStatic(true); 
-    e.addOperation(opx); 
+   opx.setStatic(true); 
+   e.addOperation(opx); 
 
-	Vector parswx = new Vector(); 
-	Attribute ex = new Attribute("_x", new Type(ee), ModelElement.INTERNAL); 
-	parswx.add(ex);
-	BehaviouralFeature opwx = 
+   Vector parswx = new Vector(); 
+   Attribute ex = new Attribute("_x", new Type(ee), ModelElement.INTERNAL); 
+   parswx.add(ex);
+   BehaviouralFeature opwx = 
       new BehaviouralFeature("writeJSON",parswx,true, new Type("JSONObject",null)); 
-	opwx.setStatic(true); 
-    e.addOperation(opwx); 
+   opwx.setStatic(true); 
+   e.addOperation(opwx); 
 	
-	Vector parswax = new Vector(); 
-	Attribute es = new Attribute(ename.toLowerCase() + "s", seqe, ModelElement.INTERNAL); 
-	parswx.add(ex);
-	BehaviouralFeature opwax = 
+   Vector parswax = new Vector(); 
+   Attribute es = new Attribute(ename.toLowerCase() + "s", seqe, ModelElement.INTERNAL); 
+   parswx.add(ex);
+   BehaviouralFeature opwax = 
       new BehaviouralFeature("writeJSONArray",parswax,true, new Type("JSONArray",null)); 
-	opwax.setStatic(true); 
-    e.addOperation(opwax); 
+   opwax.setStatic(true); 
+   e.addOperation(opwax); 
 
-	Vector parsxx = new Vector(); 
-	Attribute linexx = new Attribute("obj", new Type("Object",null), ModelElement.INTERNAL); 
-	parsxx.add(linexx);
-	BehaviouralFeature opxx = 
+   Vector parsxx = new Vector(); 
+   Attribute linexx = new Attribute("obj", new Type("Object",null), ModelElement.INTERNAL); 
+   parsxx.add(linexx);
+   BehaviouralFeature opxx = 
       new BehaviouralFeature("parseRaw",parsxx,true,new Type(ee)); 
-	opxx.setStatic(true); 
-    e.addOperation(opxx); 
+   opxx.setStatic(true); 
+   e.addOperation(opxx); 
 
-	entities.add(e);                           
-    RectData rd = new RectData(vd.sourcex,500 + vd.sourcey,getForeground(),
+   entities.add(e);                           
+   RectData rd = new RectData(vd.sourcex,500 + vd.sourcey,getForeground(),
                                componentMode,
                                rectcount);
     rectcount++;
     rd.setLabel(e.getName());
     rd.setModelElement(e); 
     visuals.add(rd);
-    repaint();   
-	
+    repaint();   	
   } 
 
   public void addFirebaseDbi()
@@ -26542,6 +26622,8 @@ public void produceCUI(PrintWriter out)
 
       ent.checkOperationVariableUse(); 
 
+      ent.checkAttributeNames(); 
+
       System.err.println();       
       System.out.println(); 
     } 
@@ -27510,4 +27592,18 @@ class QVTFileFilter extends javax.swing.filechooser.FileFilter
 
   public String getDescription()
   { return "Select an .qvt file"; } 
+}
+
+class EcoreFileFilter extends javax.swing.filechooser.FileFilter
+{ public boolean accept(File f) 
+  { if (f.isDirectory()) { return true; } 
+
+    if (f.getName().endsWith(".ecore")) 
+    { return true; } 
+
+    return false; 
+  } 
+
+  public String getDescription()
+  { return "Select a .ecore file"; } 
 }

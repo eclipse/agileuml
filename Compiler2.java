@@ -536,6 +536,35 @@ public class Compiler2
     return false; 
   } 
 
+  public static boolean isAnyKeyword(String str) 
+  { if (str.equals("class") || str.equals("if") || str.equals("while") ||
+        str.equals("error") || 
+        str.equals("catch") || 
+        str.equals("try") || 
+        str.equals("endtry") || 
+        str.equals("assert") || 
+        str.equals("return") || str.equals("break") || str.equals("continue") || 
+        str.equals("float") || str.equals("char") || str.equals("byte") || 
+        str.equals("boolean") || str.equals("int") || 
+        str.equals("long") || str.equals("double") ||  
+        str.equals("transient") || str.equals("volatile") || str.equals("short") ||
+        str.equals("native") || str.equals("enum") || str.equals("package") ||
+        str.equals("strictfp") || str.equals("wait") || str.equals("goto") || 
+        str.equals("const") || str.equals("notify") || str.equals("notifyAll") || 
+        str.equals("case") || str.equals("switch") || str.equals("this") || 
+        str.equals("null") ||
+        str.equals("new") || 
+        str.equals("try") || str.equals("catch") || str.equals("finally") ||
+        str.equals("synchronized") || str.equals("until") || str.equals("do") || 
+        str.equals("interface") || str.equals("extends") || str.equals("implements") ||
+        str.equals("for") || str.equals("instanceof") || str.equals("private") || 
+        str.equals("public") || str.equals("final") || str.equals("static") ||
+        str.equals("void") || str.equals("abstract") || str.equals("protected") ||
+        str.equals("else") || str.equals("throw") || str.equals("throws"))
+    { return true; }  // Java keywords. "super" is allowed. 
+    return false; 
+  } 
+
   public static boolean isSimpleIdentifier(String s)
   { boolean res = true; 
     if (Character.isLetter(s.charAt(0))) {}

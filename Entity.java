@@ -1848,6 +1848,20 @@ public class Entity extends ModelElement implements Comparable
     return dups; 
   } 
 
+  public void checkAttributeNames()
+  { Vector allatts = allAttributes(); 
+    for (int i = 0; i < allatts.size(); i++) 
+    { Attribute att = (Attribute) allatts.get(i); 
+      String aname = att.getName();
+      
+      if ("_".equals(aname))
+      { System.err.println("! Warning: underscore is not a valid name by itself"); } 
+
+      if (Compiler2.isAnyKeyword(aname))
+      { System.err.println("!! ERROR: keyword " + aname + " is not a valid feature name"); } 
+    } 
+  } 
+
   public Vector checkOperationNames()
   { Vector dups = new Vector(); 
     Vector opnames = new Vector(); 

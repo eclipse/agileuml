@@ -2482,10 +2482,14 @@ public class Type extends ModelElement
 
   public String eType()   // long? 
   { String nme = getName(); 
-    if (nme.equals("int") || nme.equals("long")) { return "EInt"; } 
-    if (nme.equals("double")) { return "EDouble"; } 
-    if (nme.equals("boolean")) { return "EBoolean"; }
-    if (nme.equals("String")) { return "EString"; }  
+    if (nme.equals("int") || nme.equals("long")) 
+    { return "EInt"; } 
+    if (nme.equals("double")) 
+    { return "EDouble"; } 
+    if (nme.equals("boolean")) 
+    { return "EBoolean"; }
+    if (nme.equals("String")) 
+    { return "EString"; }  
     return nme; 
   } 
 
@@ -2516,11 +2520,16 @@ public class Type extends ModelElement
     if (etype.endsWith("Boolean"))
     { return new Type("boolean",null); }
 
+
     String et = "";
+
+    int xind = etype.lastIndexOf("#//");
     if (etype.startsWith("#/"))
     { int x = etype.lastIndexOf("/"); 
       et = etype.substring(x,etype.length()); 
     }
+    else if (xind >= 0 && xind < etype.length())
+    { et = etype.substring(xind+3, etype.length()); } 
 
     Type t =
        (Type) ModelElement.lookupByName(et,types);

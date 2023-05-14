@@ -42855,16 +42855,17 @@ public class ASTCompositeTerm extends ASTTerm
         "Define".equals(terms.get(0) + "") && 
         terms.size() > 3)
     { // Define ID = expression or other item
-      ASTCompositeTerm expr = (ASTCompositeTerm) terms.get(3);
-      ASTTerm var = (ASTTerm) terms.get(1);
+      if (terms.get(3) instanceof ASTCompositeTerm)
+      { ASTCompositeTerm expr = (ASTCompositeTerm) terms.get(3);
+        ASTTerm var = (ASTTerm) terms.get(1);
 
-      if (expr.getTag().equals("expression"))
-      { ASTTerm.mathoclvars.put(var + "", expr); 
+        if (expr.getTag().equals("expression"))
+        { ASTTerm.mathoclvars.put(var + "", expr); 
         // JOptionPane.showMessageDialog(null, 
         //       ">> " + var + " = " + expr, 
         //       "", 
         //       JOptionPane.INFORMATION_MESSAGE);
-      }
+        }
      /* else if (expr.getTag().equals("substituteIn"))
       { ASTTerm def = 
           (ASTTerm) expr.getTerm(3); 
@@ -42895,7 +42896,8 @@ public class ASTCompositeTerm extends ASTTerm
           res = res + 
             "  Define " + var + " = " + vt; 
         } 
-      } */    
+      } */
+      }     
     } 
 
     /* if ("formula".equals(tag) && 

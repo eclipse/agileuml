@@ -1061,9 +1061,9 @@ public class CGCondition
                              smffeat,searg,cgs,entities); 
         }
 
-        JOptionPane.showMessageDialog(null, 
+        /* JOptionPane.showMessageDialog(null, 
          "|>|| Found metafeature " + smf + " for " + stereotype + " resulting value = " + stereo,   "",
-         JOptionPane.INFORMATION_MESSAGE);
+         JOptionPane.INFORMATION_MESSAGE); */ 
 
       } 
     }
