@@ -425,7 +425,7 @@ public class CGCondition
                    cond.conditionSatisfied((String) m, entities,cgs)) 
             { }
             else if (m instanceof ASTTerm && 
-               cond.conditionSatisfied((ASTTerm) m, vars,
+               cond.conditionSatisfiedASTTerm((ASTTerm) m, vars,
                   eargs, new Vector(), entities, cgs, gvars))
             { System.out.println("||| ASTTerm condition " + cond + " satisfied by term " + m); 
               System.out.println(); 
@@ -500,7 +500,7 @@ public class CGCondition
                    cond.conditionSatisfied((String) m, entities,cgs)) 
           { }
           else if (m instanceof ASTTerm && 
-                   cond.conditionSatisfied((ASTTerm) m,
+                   cond.conditionSatisfiedASTTerm((ASTTerm) m,
                           vars, eargs, reps,  
                           entities, cgs, gvars))
           { System.out.println("||| ASTTerm condition " + cond + " satisfied by term " + m); 
@@ -538,7 +538,13 @@ public class CGCondition
     if (t instanceof Statement) 
     { return conditionSatisfied((Statement) t, entities,cgs); } 
     if (t instanceof ASTTerm) 
-    { return conditionSatisfied((ASTTerm) t, entities,cgs, gvars); } 
+    { Vector vars = new Vector(); 
+      Vector eargs = new Vector(); 
+	  Vector reps = new Vector(); 
+      return conditionSatisfiedASTTerm((ASTTerm) t,
+                          vars, eargs, reps,  
+                          entities, cgs, gvars); 
+    } 
     if (t instanceof Vector) 
     { return conditionSatisfied((Vector) t, entities,cgs); }
     if (t instanceof String) 
@@ -1019,7 +1025,7 @@ public class CGCondition
     return false; 
   } // and for other kinds of statement also 
 
-  public boolean conditionSatisfied(ASTTerm a, 
+  public boolean conditionSatisfiedASTTerm(ASTTerm a, 
                   Vector vars, Vector eargs, 
                   Vector reps, Vector entities, 
                   CGSpec cgs, Vector gvars)
@@ -1035,10 +1041,27 @@ public class CGCondition
     /* Replace any gvars[j] by its value */
 	
     if (quantifier.equals("all") || quantifier.equals("any"))
-    { CGCondition gcond = new CGCondition(stereotype, "_1"); 
-      gcond.setPositive(positive);
-      return gcond.conditionSatisfied(a,vars,eargs,reps,
-                                      entities,cgs,gvars); 
+    { // CGCondition gcond = new CGCondition(stereotype, "_1"); 
+      // gcond.setPositive(positive);
+	  Vector subterms = a.getTerms();
+	  boolean hasany = false; 
+	  boolean hasall = true;  
+	  for (int i = 0; i < subterms.size(); i++) 
+	  { ASTTerm sb = (ASTTerm) subterms.get(i); 
+	    if (stereotype.equals(sb.getTag())) 
+		{ hasany = true; } 
+		else 
+		{ hasall = false; }
+	  } 
+	  
+	  if (quantifier.equals("all") && positive)
+	  { return hasall; } 
+	  if (quantifier.equals("all") && !positive)
+	  { return !hasall; } 
+	  if (quantifier.equals("any") && positive)
+	  { return hasany; } 
+	  if (quantifier.equals("any") && !positive)
+	  { return !hasany; } 
     }   
 
     Vector stereomfs = CGRule.metafeatures(stereo); 

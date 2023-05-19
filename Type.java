@@ -2890,8 +2890,12 @@ public class Type extends ModelElement
       else // unknown type
       { res = new BasicExpression("null"); } 
     }
-    else // values != null
-    { res = new BasicExpression((String) values.get(0)); } 
+    else if (values != null && values.size() > 0)
+    { res = new BasicExpression((String) values.get(0)); }
+    else 
+    { System.err.println("! Erroneous type: " + this);
+      res = new BasicExpression("null"); 
+    }  
     res.setType(this); 
     res.setElementType(elemt); 
     return res; 
@@ -3713,11 +3717,10 @@ public class Type extends ModelElement
     if (jex != null) 
     { return jex; } 
 
-    if (values == null)
-    { return nme; }
+    return nme;
 
     // if (nme.equals("long")) { return "long"; } 
-    return "int"; 
+    // return "int"; 
   }
 
   public static String getJava7type(Type type)
@@ -4246,6 +4249,32 @@ public class Type extends ModelElement
     out.println("  }"); 
     out.println(); 
   }
+
+  public void generateDeclarationJava6(PrintWriter out)
+  { String nme = getName(); 
+
+    if (values != null)
+    { out.print("enum " + nme + " { "); 
+      for (int i = 0; i < values.size(); i++)
+      { out.print(values.get(i)); 
+        if (i < values.size() - 1) 
+        { out.print(", "); }
+        else 
+        { out.println(";\n"); }  
+      }
+
+      out.println("  public static " + nme + " parse" + nme + "(String _x) {"); 
+      for (int i = 0; i < values.size(); i++) 
+      { String val = (String) values.get(i); 
+        out.println("    if (\"" + val + "\".equals(_x)) { return " + nme + "." + val + "; }"); 
+      }
+      out.println("    return null;"); 
+      out.println("  }"); 
+      out.println("}\n");
+      out.println(); 
+    }
+  }
+
 
   public void generateDeclarationCSharp(PrintWriter out)
   { if (values != null)

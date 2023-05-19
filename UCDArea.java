@@ -7125,14 +7125,24 @@ public class UCDArea extends JPanel
     String nme = ent.getName(); 
     rd.setLabel(nme);
 
-    if (entities.contains(ent)) { } 
+    Entity oldent = 
+      (Entity) ModelElement.lookupByName(nme,entities);
+ 
+    if (oldent != null) 
+    { System.err.println("!!! Entity already defined: " + oldent); 
+      oldent.mergeEntity(ent); 
+    } 
+    else if (entities.contains(ent)) 
+    { oldent = ent; } 
     else 
-    { entities.add(ent); } 
+    { oldent = ent; 
+      entities.add(ent); 
+    } 
 
     visuals.add(rd);
     componentNames.add(nme);
-    rd.setModelElement(ent);
-    System.out.println(">>> Added entity " + nme); 
+    rd.setModelElement(oldent);
+    System.out.println(">>> Added/merged entity " + nme); 
   } 
 
   public void addEntity(Entity srcent, Entity trgent, int xx) 
@@ -10794,7 +10804,7 @@ public void produceCUI(PrintWriter out)
       if (t.hasStereotype("external") || 
           t.hasStereotype("component"))
       { continue; } 
-      t.generateDeclarationCSharp(out);
+      t.generateDeclarationJava6(out);
     }
 
     out.println("public interface SystemTypes");
@@ -11923,7 +11933,7 @@ public void produceCUI(PrintWriter out)
     out.println(getCheckCompletenessOp()); 
     out.println(getSaveModelOpJava6()); 
     out.println(generateLoadXsiOp());  /* Optional */ 
-    out.println(generateLoadFromXsiOp());  /* Optional */ 
+    out.println(generateLoadFromXsiOpJava6());  /* Optional */ 
     // out.println(getSaveXSIOp()); 
     // out.println(getSaveXSI2Op()); 
     // load, save CSV
@@ -12512,6 +12522,12 @@ public void produceCUI(PrintWriter out)
       res = res + e.generateSaveModel1();
     }
 
+    res = res + "    saveModel2(out);\n" + 
+                "  }\n\n"; 
+
+
+    res = res + "  public void saveModel2(PrintWriter out)\n";
+    res = res + "  {\n";  
     for (int i = 0; i < entities.size(); i++)
     { Entity e = (Entity) entities.get(i);
       res = res + e.generateSaveModel2Java6();
@@ -16472,14 +16488,14 @@ public void produceCUI(PrintWriter out)
       "      __br.close();\n" +  
       "    } \n" + 
       "    catch (Exception _x) { }\n" +  
-      "    Vector res = convertXsiToVector(xmlstring);\n" + 
+      "    List res = convertXsiToVector(xmlstring);\n" + 
       "    File outfile = new File(\"_in.txt\");\n" +  
       "    PrintWriter out; \n" + 
       "    try { out = new PrintWriter(new BufferedWriter(new FileWriter(outfile))); }\n" + 
       "    catch (Exception e) { return; } \n" + 
       "    for (int i = 0; i < res.size(); i++)\n" +  
-      "    { String r = (String) res.get(i); \n" + 
-      "      out.println(r);\n" + 
+      "    { \n" + 
+      "      out.println(res.get(i));\n" + 
       "    } \n" + 
       "    out.close();\n" +  
       "    loadModel(\"_in.txt\");\n" + 
@@ -16604,6 +16620,38 @@ public void produceCUI(PrintWriter out)
     "    } \n" +
     "  }  \n" +
     "  return res; } \n";
+    return res; 
+  }
+
+  public String generateLoadFromXsiOpJava6()
+  { String res = "  public static List convertXsiToVector(String xmlstring)\n" +
+      "  { ArrayList res = new ArrayList();\n" +  
+      "    XMLParser comp = new XMLParser();\n" + 
+      "    comp.nospacelexicalanalysisxml(xmlstring);\n" + 
+      "    XMLNode xml = comp.parseXML();\n" + 
+      "    if (xml == null) { return res; } \n\n"; 
+
+    res = res + 
+      "    String cname = xml.getTag();\n"; 
+ 
+    for (int i = 0; i < entities.size(); i++)
+    { Entity en = (Entity) entities.get(i);
+
+      if (en.isAbstract() || en.isInterface())
+      { continue; }
+
+      String ename = en.getName();
+      res = res + 
+      "    if (cname.equalsIgnoreCase(\"" + ename + "\"))\n"; 
+      res = res + 
+      "    { " + ename + " _x = " + ename + ".parseXML(xml);\n" +
+      "      if (_x != null) \n" +
+      "      { res.add(_x); }\n" +
+      "    }\n"; 
+    }  
+    res = res + 
+      "    return res;\n" + 
+      "  } \n";
     return res; 
   }
 
@@ -17086,9 +17134,9 @@ public void produceCUI(PrintWriter out)
         // JOptionPane.showInputDialog("Name of component:");
       // if (componentName != null) 
       // { loadKM3FromFile(componentName + ".km3"); 
-	  String currentSystemName = systemName; 
-	  loadKM3FromFile(file);  
-	  systemName = currentSystemName; 
+      String currentSystemName = systemName; 
+      loadKM3FromFile(file);  
+      systemName = currentSystemName; 
 	  
       Entity component = (Entity) ModelElement.lookupByName(componentName,entities); 
       if (component != null) 
@@ -17428,9 +17476,18 @@ public void produceCUI(PrintWriter out)
     Vector pnames = new Vector(); 
 
     Compiler2 comp = new Compiler2();  
-    comp.nospacelexicalanalysis(xmlstring); 
-    Vector items = comp.parseKM3(entities,types,pregens,preassocs,pnames); 
-    System.out.println("Packages " + pnames + " in KM3 file"); 
+    comp.nospacelexicalanalysis(xmlstring);
+
+    Vector xentities = new Vector(); 
+    Vector xtypes = new Vector(); 
+    comp.identifyKM3classifiers(xentities,xtypes); 
+
+    System.out.println(">>> Identified classes: " + xentities); 
+    System.out.println(">>> Identified types: " + xtypes); 
+ 
+    Vector items = comp.parseKM3(xentities,xtypes,
+                                 pregens,preassocs,pnames); 
+    System.out.println(">>> Packages " + pnames + " in KM3 file"); 
     if (pnames.size() > 0) 
     { setSystemName((String) pnames.get(0)); }
 	
@@ -17454,8 +17511,10 @@ public void produceCUI(PrintWriter out)
     int ecount = oldentities.size() + 1; 
 
     Vector newentities = new Vector(); 
-    newentities.addAll(entities); 
+    newentities.addAll(xentities); 
     newentities.removeAll(oldentities); 
+
+    System.out.println(">>> New entities: " + newentities); 
 	
     for (int i = 0; i < newentities.size(); i++) 
     { Entity enode = (Entity) newentities.get(i);
@@ -17479,7 +17538,7 @@ public void produceCUI(PrintWriter out)
     } 
 
     Vector newtypes = new Vector(); 
-    newtypes.addAll(types); 
+    newtypes.addAll(xtypes); 
     newtypes.removeAll(oldtypes); 
 
     for (int j = 0; j < newtypes.size(); j++) 
@@ -17499,8 +17558,16 @@ public void produceCUI(PrintWriter out)
     { PreGeneralisation pg = (PreGeneralisation) pregens.get(p); 
       String e1n = pg.e1name;   // subclass
       String e2n = pg.e2name;   // superclass 
-      Entity subc = (Entity) ModelElement.lookupByName(e1n,entities);
-      Entity supc = (Entity) ModelElement.lookupByName(e2n,entities);
+      Entity subc = 
+        (Entity) ModelElement.lookupByName(e1n,entities);
+      Entity supc = 
+        (Entity) ModelElement.lookupByName(e2n,entities);
+
+      if (subc == null) 
+      { System.err.println("!!! ERROR: no subclass entity " + pg.e1name); } 
+      if (supc == null) 
+      { System.err.println("!!! ERROR: no superclass entity " +  pg.e2name); } 
+
       if (subc != null && supc != null) 
       { Generalisation g = new Generalisation(supc,subc);
         addInheritance(g,supc,subc); 
@@ -17514,6 +17581,12 @@ public void produceCUI(PrintWriter out)
         (Entity) ModelElement.lookupByName(pa.e1name,entities);
       Entity e2 =
         (Entity) ModelElement.lookupByName(pa.e2name,entities);
+
+      if (e1 == null) 
+      { System.err.println("!!! ERROR: no entity " + pa.e1name); } 
+      if (e2 == null) 
+      { System.err.println("!!! ERROR: no entity for " + pa.e1name + "." + pa.role2 + " : " + pa.e2name); } 
+
       
       if (e1 != null && e2 != null) 
       { RectData rd1 = (RectData) getVisualOf(e1); 
@@ -17533,8 +17606,9 @@ public void produceCUI(PrintWriter out)
         }
 
         reconstructAssociation(pa.e1name,pa.e2name,xs,ys,
-                             xe,ye,pa.card1,pa.card2,
-                             pa.role2, pa.role1, pa.stereotypes, new Vector());
+                    xe,ye,pa.card1,pa.card2,
+                    pa.role2, pa.role1, pa.stereotypes, 
+                    new Vector());
       } 
     } 
 

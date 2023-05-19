@@ -5893,6 +5893,10 @@ class BasicExpression extends Expression
       { return "new Date()"; }
     } 
 
+    if (type != null && type.isEnumeration() && 
+        type.hasValue(data))
+    { return type.getName() + "." + data; } 
+
     if (umlkind == VALUE || umlkind == CONSTANT)
     { if (data.equals("Set{}")) 
       { return "new HashSet()"; }    // new Set really

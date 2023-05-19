@@ -6576,9 +6576,67 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     return res; 
   } 
 
+  public void identifyKM3classifiers(
+                                     Vector entities, 
+                                     Vector types)
+  { int st = 0; 
+    int en = lexicals.size(); 
+    if ("package".equals(lexicals.get(st) + "") && 
+        "{".equals(lexicals.get(st+2) + ""))
+    { String pname = lexicals.get(st+1) + ""; 
+      System.out.println(">> Parsing package " + pname); 
+    
+      st = st+3; 
+    }
 
-  public Vector parseKM3PackageContents(int st, int en, Vector entities, 
-                                        Vector types, Vector gens, Vector pasts)
+    identifyKM3classifiers(st,en-1,entities,types); 
+  } 
+
+  public void identifyKM3classifiers(int st, int en, 
+                                     Vector entities, 
+                                     Vector types)
+  { /* First pass of input to identify class and type names */ 
+    int reached = st; 
+
+    if (st >= en)
+    { return; }
+ 
+    for (int i = st + 2; i <= en; i++) 
+    { String lx = lexicals.get(i) + ""; 
+      if ("class".equals(lx) || 
+          ("abstract".equals(lx) && 
+           i < en && "class".equals(lexicals.get(i+1) + ""))  
+          || 
+          "enumeration".equals(lx) ||
+          "interface".equals(lx) || 
+          "datatype".equals(lx) || "usecase".equals(lx))
+      { Object e = identifyKM3classifier(
+                       reached,i-1,entities,types);
+        if (e != null) 
+        { if (e instanceof Type)
+          { types.add(e); }
+          else if (e instanceof Entity)
+          { entities.add(e); } 
+        }
+        reached = i;    
+      }
+    } 
+
+    Object e1 = identifyKM3classifier(
+                    reached,en,entities,types);
+    if (e1 != null) 
+    { if (e1 instanceof Type)
+      { types.add(e1); }
+      else if (e1 instanceof Entity)
+      { entities.add(e1); } 
+    } 
+  } 
+
+
+  public Vector parseKM3PackageContents(int st, int en, 
+                                  Vector entities, 
+                                  Vector types, 
+                                  Vector gens, Vector pasts)
   { Vector res = new Vector(); 
     Vector errors = new Vector(); 
     int reached = st; 
@@ -6598,7 +6656,10 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         { res.add(e); 
           reached = i; 
           if (e instanceof Type)
-          { types.add(e); }
+          { if (types.contains(e)) { } 
+            else 
+            { types.add(e); }
+          } 
         }
  
 		// else if (e != null && e instanceof Entity && "interface".equals(lx))
@@ -6611,13 +6672,14 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     } 
 
     Object e1 = parseKM3classifier(
-          reached,en,entities,types,gens,pasts,errors);
+                 reached,en,entities,types,gens,pasts,errors);
     if (e1 != null) 
     { res.add(e1); 
       if (e1 instanceof Type)
-      { types.add(e1); }
-	  // else if (e1 != null && e1 instanceof Entity && "interface".equals(lx))
-	  // { ((Entity) e1).setInterface(true); } 
+      { if (types.contains(e1)) { } 
+        else
+        { types.add(e1); }
+      } 
     } 
       
     return res; 
@@ -6694,36 +6756,23 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
                entities, types, gens, pasts, errors); 
   } 
 
-
-  public Object parseKM3classifier(int st, int en, Vector entities, Vector types, 
-                          Vector gens, Vector pasts, Vector errors)
-  { boolean abstr = false; 
-    boolean interf = false; 
-    String rname = ""; 
+  public Object identifyKM3classifier(int st, int en, 
+                              Vector entities, Vector types)
+  { String rname = ""; 
     int start = st; 
-    Vector atts = new Vector(); 
-    Vector roles = new Vector(); 
-
     String lx = lexicals.get(st) + ""; 
 
     if ("abstract".equals(lx) &&
-        "class".equals(lexicals.get(st + 1) + "") && 
-        "}".equals(lexicals.get(en) + ""))
-    { abstr = true; 
-      start = st + 3; 
+        "class".equals(lexicals.get(st + 1) + ""))
+    { start = st + 4; 
       rname = lexicals.get(st + 2) + ""; 
     } 
-    else if ("interface".equals(lx) && 
-             "}".equals(lexicals.get(en) + ""))
-    { interf = true; 
-      start = st + 2; 
+    else if ("interface".equals(lx))
+    { start = st + 3; 
       rname = lexicals.get(st + 1) + "";
     } 
-    else if ("class".equals(lx) && 
-             "}".equals(lexicals.get(en) + ""))
-    { abstr = false;
-      interf = false;  
-      start = st + 2; 
+    else if ("class".equals(lx))
+    { start = st + 3; 
       rname = lexicals.get(st + 1) + "";
     } 
     else if ("datatype".equals(lx))
@@ -6765,6 +6814,98 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       return tt; 
     } 
     else if ("usecase".equals(lx))
+    { return null; } 
+    else        
+    { System.err.println("!! Invalid classifier keyword: " + lx); 
+      return null; 
+    } 
+
+    Entity res = new Entity(rname); 
+ 
+    return res; 
+  } 
+
+
+  public Object parseKM3classifier(int st, int en, Vector entities, Vector types, 
+                          Vector gens, Vector pasts, Vector errors)
+  { boolean abstr = false; 
+    boolean interf = false; 
+    String rname = ""; 
+    int start = st; 
+    Vector atts = new Vector(); 
+    Vector roles = new Vector(); 
+
+    String lx = lexicals.get(st) + ""; 
+
+    if ("abstract".equals(lx) &&
+        "class".equals(lexicals.get(st + 1) + "") && 
+        "}".equals(lexicals.get(en) + ""))
+    { abstr = true; 
+      start = st + 3; 
+      rname = lexicals.get(st + 2) + ""; 
+    } 
+    else if ("interface".equals(lx) && 
+             "}".equals(lexicals.get(en) + ""))
+    { interf = true; 
+      start = st + 2; 
+      rname = lexicals.get(st + 1) + "";
+    } 
+    else if ("class".equals(lx) && 
+             "}".equals(lexicals.get(en) + ""))
+    { abstr = false;
+      interf = false;  
+      start = st + 2; 
+      rname = lexicals.get(st + 1) + "";
+    } 
+    else if ("datatype".equals(lx))
+    { String tname = lexicals.get(st + 1) + ""; 
+
+      Type dt = (Type) ModelElement.lookupByName(tname,types); 
+      if (dt == null) 
+      { dt = new Type(tname, null); }
+
+      if (st + 3 < lexicals.size() && 
+          "=".equals(lexicals.get(st+2) + ""))
+      { String aname = lexicals.get(st+3) + ""; 
+        start = st+4; 
+        dt.setAlias(new Type(aname,null)); 
+        return dt; 
+      }  
+      dt.setAlias(new Type("String", null)); 
+      return dt; 
+    } 
+    else if ("enumeration".equals(lx))
+    { int j = st + 2; 
+      Vector values = new Vector(); 
+      Vector estereos = new Vector();
+ 
+      while (j < en)
+      { String lxr = lexicals.get(j) + ""; 
+    
+        if ("literal".equals(lxr)) 
+        { values.add(lexicals.get(j+1) + ""); 
+          j = j + 2; 
+        }
+        else if ("stereotype".equals(lxr))
+        { String stereo = lexicals.get(j+1) + ""; 
+          estereos.add(stereo); 
+          j = j + 2; 
+        } // Only simple stereotypes. 
+        else 
+        { j++; } 
+      }
+
+      String tname = lexicals.get(st + 1) + ""; 
+ 
+      Type tt = (Type) ModelElement.lookupByName(tname,types); 
+      if (tt == null) 
+      { tt = new Type(tname, values);
+        tt.addStereotypes(estereos); 
+      } 
+
+      return tt; 
+    } 
+    else if ("usecase".equals(lx))
     { return parseKM3UseCase(st, en, entities, types, gens, pasts); } 
     else        
     { Vector error1 = new Vector(); 
@@ -6776,7 +6917,15 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
     // Parsing a class
 
-    Entity res = new Entity(rname); 
+    Entity res; 
+    ModelElement melem = 
+         ModelElement.lookupByName(rname,entities); 
+    if (melem instanceof Entity) 
+    { res = (Entity) melem; } 
+    else 
+    { res = new Entity(rname); 
+      entities.add(res); 
+    } 
     res.setCardinality("*"); 
 	
     String supr = ""; 
@@ -6861,7 +7010,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     { res.setAbstract(true); } 
     if (interf) 
     { res.setInterface(true); } 
-    entities.add(res); 
+    // entities.add(res); 
 
     System.out.println(">>> Parsing KM3 class " + rname); 
 
@@ -6944,7 +7093,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
             else 
             { ast.e1name = rname; 
               pasts.add(ast);
-              System.out.println(">>> Parsed reference " + ast); 
+              System.out.println(">>> Parsed reference " + ast.e1name + "." + ast.role2 + " : " + ast.e2name); 
             }  
             // res.addAssociation(ast); 
           } 
@@ -7055,7 +7204,9 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         else 
         { ast.e1name = rname; 
           pasts.add(ast);
-		  System.out.println(">>> Parsed reference " + ast); 
+          System.out.println(">>> Parsed reference " + 
+              ast.e1name + "." + ast.role2 + " : " + 
+              ast.e2name); 
         }  
         // res.addAssociation(ast); 
       }  

@@ -3584,7 +3584,9 @@ public class GUIBuilder
       "  { if (e == null) { return; }\n" +
       "    String cmd = e.getActionCommand();\n";
 
-    res = res + "  JButton loadModelButton = new JButton(\"loadModel\");\n";
+    res = res + 
+          "  JButton loadModelButton = new JButton(\"loadModel\");\n" + 
+          "  JButton loadXMLModelButton = new JButton(\"loadXMLModel\");\n";
 
     cons = cons + 
         "    panel.add(loadModelButton);\n" +
@@ -3597,9 +3599,21 @@ public class GUIBuilder
    
     aper = aper +
          "    if (\"loadModel\".equals(cmd))\n" + loadmodelop +
-		 "      cont.checkCompleteness();\n" + 
+         "      cont.checkCompleteness();\n" + 
          "      System.err.println(\"Model loaded\");\n" + 
-         "      return; } \n";
+         "      return;\n" + 
+         "    } \n";
+
+    cons = cons + 
+        "    panel.add(loadXMLModelButton);\n" +
+        "    loadXMLModelButton.addActionListener(this);\n";
+
+    aper = aper +
+         "    if (\"loadXMLModel\".equals(cmd))\n" + 
+         "    { cont.loadXSI();\n" + 
+         "      System.err.println(\"Model loaded\");\n" + 
+         "      return;\n" + 
+         "    } \n";
 
     res = res + "  JButton saveModelButton = new JButton(\"saveModel\");\n";
 

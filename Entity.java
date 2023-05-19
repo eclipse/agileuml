@@ -65,6 +65,31 @@ public class Entity extends ModelElement implements Comparable
     res.interfaces.addAll(interfaces);
     return res; 
   } 
+
+  public Entity mergeEntity(Entity ent)
+  { // They have the same name. Combine features
+    for (int i = 0; i < ent.attributes.size(); i++) 
+    { Attribute attr = (Attribute) ent.attributes.get(i); 
+      if (hasAttribute(attr.getName())) { } 
+      else 
+      { addAttribute(attr); } 
+    } 
+
+    for (int i = 0; i < ent.associations.size(); i++) 
+    { Association attr = 
+        (Association) ent.associations.get(i); 
+      if (hasRole(attr.getRole2())) { } 
+      else 
+      { addAssociation(attr); } 
+    }
+ 
+    // res.operations.addAll(operations); 
+    // res.superclass = superclass;
+    // res.subclasses.addAll(subclasses); 
+    // res.invariants.addAll(invariants); 
+    // res.interfaces.addAll(interfaces);
+    return this; 
+  } 
  
   public static boolean validEntityName(String ename)
   { if (ename.length() == 0) 
@@ -7510,6 +7535,13 @@ public class Entity extends ModelElement implements Comparable
     return null; 
   } 
 
+  public Vector getAllAttributes()
+  { Vector res = new Vector(); 
+    res.addAll(attributes); 
+    res.addAll(allInheritedAttributes()); 
+    return res; 
+  } 
+
   /* public Attribute getSuperPrincipalPK()
   { // first unique att of entity
     for (int i = 0; i < attributes.size(); i++) 
@@ -7575,6 +7607,249 @@ public class Entity extends ModelElement implements Comparable
     return res; 
   } 
 
+  public String parseXMLOp()
+  { if (isAbstract()) { return ""; } 
+    if (isInterface()) { return ""; } 
+
+    String ename = getName(); 
+    String ex = ename.toLowerCase() + "x"; 
+
+    String res = 
+      "  public static " + ename + " parseXML(XMLNode obj)\n" + 
+      "  { if (obj == null) { return null; }\n"; 
+
+    res = res + 
+      "    " + ename + " " + ex + " Controller.inst().create" + ename + "();\n"; 
+
+    Vector allatts = new Vector(); 
+    allatts.addAll(getAllAttributes()); 
+
+    for (int i = 0; i < allatts.size(); i++) 
+    { Attribute att = (Attribute) allatts.get(i); 
+      String attname = att.getName(); 
+      Type t = att.getType();
+      String tname = t.getName(); 
+      String decoder = "get" + Named.capitalise(tname); 
+      if (t.isEntity())
+      { res = res + "    " + ex + "." + attname + " = " + tname + ".parseXML(obj.getSubnodeWithTag(\"" + attname + "\"));\n";
+      } 
+      else if (t.isSequence() && 
+               t.getElementType() != null && 
+               t.getElementType().isEntity())
+      { Type elemT = t.getElementType(); 
+        String etname = elemT.getName(); 
+        res = res + "    " + ex + "." + attname + " = " + etname + ".parseXMLSequence(obj.getSubnodesWithTag(\"" + attname + "\"));\n";
+      } 
+      else 
+      { res = res + "    " + ex + "." + attname + " = obj." + decoder + "(\"" + attname + "\");\n";
+      }  
+    } 
+
+    Vector allasts = getAllAssociations(); 
+    
+    for (int i = 0; i < allasts.size(); i++) 
+    { Association ast = (Association) allasts.get(i); 
+      if (ast.isOneMany() || ast.isZeroOneMany()) { } 
+      else 
+      { continue; } 
+      if (ast.isPersistent()) { } 
+      else 
+      { continue; } 
+
+      String role = ast.getRole2(); 
+      Entity ent2 = ast.getEntity2(); 
+      String tname = ent2.getName();
+ 
+      res = res + "    " + ex + "." + role + " = " + tname + ".parseXMLSequence(obj.getSubnodesWithTag(\"" + role + "\"));\n";
+    } 
+      
+    res = res + "    return " + ex + ";\n" + 
+        "  }\n\n"; 
+    return res; 
+  }
+
+  public String parseXMLOpJava6()
+  { if (isAbstract()) { return ""; } 
+    if (isInterface()) { return ""; } 
+
+    String ename = getName(); 
+    String ex = ename.toLowerCase() + "x"; 
+
+    String res = 
+      "  public static " + ename + " parseXML(XMLNode obj)\n" + 
+      "  { if (obj == null) { return null; }\n"; 
+
+    Attribute pk = getPrincipalPrimaryKey(); 
+    if (pk == null) 
+    { res = res +       
+        "    " + ename + " " + ex + " = new " + ename + "();\n" + 
+        "    Controller.inst().add" + ename + "(" + ex + ");\n"; 
+    }
+    else 
+    { String pkname = pk.getName(); 
+      res = res + 
+        "    String _id = obj.getString(\"" + pkname + "\");\n" + 
+        "    " + ename + " " + ex + " = Controller.inst().create" + ename + "(_id);\n";
+    } 
+ 
+    Vector allatts = getAllAttributes(); 
+
+    for (int i = 0; i < allatts.size(); i++) 
+    { Attribute att = (Attribute) allatts.get(i); 
+      String attname = att.getName(); 
+      Type t = att.getType();
+      String tname = t.getName(); 
+      String decoder = "get" + Named.capitalise(tname); 
+
+      if (t.isEntity() && !(t.getEntity().isAbstract()))
+      { res = res + "    " + ex + "." + attname + " = " + tname + ".parseXML(obj.getSubnodeWithTag(\"" + attname + "\"));\n";
+      } 
+      else if (t.isSequence() && 
+               t.getElementType() != null && 
+               t.getElementType().isEntity() &&
+               !(t.getElementType().getEntity().isAbstract()))
+      { Type elemT = t.getElementType(); 
+        String etname = elemT.getName(); 
+        res = res + "    " + ex + "." + attname + " = " + etname + ".parseXMLSequence(obj.getSubnodesWithTag(\"" + attname + "\"));\n";
+      } 
+      else if (t.isSet() && 
+               t.getElementType() != null && 
+               t.getElementType().isEntity() &&
+               !(t.getElementType().getEntity().isAbstract()))
+      { Type elemT = t.getElementType(); 
+        String etname = elemT.getName(); 
+        res = res + "    " + ex + "." + attname + " = " + etname + ".parseXMLSet(obj.getSubnodesWithTag(\"" + attname + "\"));\n";
+      } 
+      else if (t.isEnumeration())
+      { res = res + "    " + ex + "." + attname + " = " + tname + ".parse" + tname + "(obj.getString(\"" + attname + "\"));\n";
+      }
+      else if (t.isDatatype())
+      { res = res + "    " + ex + "." + attname + 
+                " = obj.getString(\"" + attname + "\");\n";
+      }  
+      else 
+      { res = res + "    " + ex + "." + attname + " = obj." + decoder + "(\"" + attname + "\");\n";
+      }  
+    } 
+
+    Vector allasts = getAllAssociations(); 
+
+    for (int i = 0; i < allasts.size(); i++) 
+    { Association ast = (Association) allasts.get(i); 
+      
+      String role = ast.getRole2(); 
+      Entity ent2 = ast.getEntity2(); 
+      String tname = ent2.getName();
+
+      if (ent2.isAbstract())
+      { } 
+      else if (ast.getCard2() == ModelElement.ONE)
+      { res = res + "    " + ex + "." + role + " = " + tname + ".parseXML(obj.getSubnodeWithTag(\"" + role + "\"));\n";
+      } 
+      else if (ast.isOrdered())
+      { res = res + "    " + ex + "." + role + " = " + tname + ".parseXMLSequence(obj.getSubnodesWithTag(\"" + role + "\"));\n"; 
+      }
+      else 
+      { res = res + "    " + ex + "." + role + " = " + tname + ".parseXMLSet(obj.getSubnodesWithTag(\"" + role + "\"));\n"; 
+      }
+    } 
+      
+    res = res + "    return " + ex + ";\n" + 
+        "  }\n\n"; 
+    return res; 
+  }
+
+  private String parseXMLSequenceOp()
+  { if (isAbstract()) { return ""; } 
+    if (isInterface()) { return ""; } 
+    
+    String ename = getName(); 
+    String x = "_" + ename.toLowerCase() + "x"; 
+    // Attribute pk = getPrincipalPrimaryKey(); 
+    // if (pk == null) { return ""; }
+    // String pkname = pk.getName(); 
+	
+    String res = "  public static List parseXMLSequence(List xarray)\n" + 
+                 "  { if (xarray == null) { return null; }\n" + 
+		      "    Vector res = new Vector();\n" + 
+                 "\n" + 
+                 "    int len = xarray.size();\n" +  
+                 "    for (int i = 0; i < len; i++)\n" + 
+                 "    { try { XMLNode _x = (XMLNode) xarray.get(i);\n" +  
+                 "        if (_x != null)\n" + 
+                 "        { " + ename + " _y = " + ename + ".parseXML(_x); \n" + 
+                 "          if (_y != null) { res.add(_y); }\n" +  
+                 "        }\n" + 
+                 "      }\n" + 
+                 "      catch (Exception _e) { }\n" + 
+                 "    }\n";  
+      
+    res = res +  "    return res;\n" + 
+                 "  }\n\n"; 
+    return res; 
+  } 
+
+  private String parseXMLSequenceOpJava6()
+  { if (isAbstract()) { return ""; } 
+    if (isInterface()) { return ""; } 
+
+    String ename = getName(); 
+    String x = "_" + ename.toLowerCase() + "x"; 
+    // Attribute pk = getPrincipalPrimaryKey(); 
+    // if (pk == null) { return ""; }
+    // String pkname = pk.getName(); 
+	
+    String res = "  public static List parseXMLSequence(List xarray)\n" + 
+                 "  { if (xarray == null) { return null; }\n" + 
+		      "    ArrayList res = new ArrayList();\n" + 
+                 "\n" + 
+                 "    int len = xarray.size();\n" +  
+                 "    for (int i = 0; i < len; i++)\n" + 
+                 "    { try { XMLNode _x = (XMLNode) xarray.get(i);\n" +  
+                 "        if (_x != null)\n" + 
+                 "        { " + ename + " _y = " + ename + ".parseXML(_x); \n" + 
+                 "          if (_y != null) { res.add(_y); }\n" +  
+                 "        }\n" + 
+                 "      }\n" + 
+                 "      catch (Exception _e) { }\n" + 
+                 "    }\n";  
+      
+    res = res +  "    return res;\n" + 
+                 "  }\n\n"; 
+    return res; 
+  } 
+
+  private String parseXMLSetOpJava6()
+  { if (isAbstract()) { return ""; } 
+    if (isInterface()) { return ""; } 
+
+    String ename = getName(); 
+    String x = "_" + ename.toLowerCase() + "x"; 
+    // Attribute pk = getPrincipalPrimaryKey(); 
+    // if (pk == null) { return ""; }
+    // String pkname = pk.getName(); 
+	
+    String res = "  public static HashSet parseXMLSet(List xarray)\n" + 
+                 "  { if (xarray == null) { return null; }\n" + 
+		      "    HashSet res = new HashSet();\n" + 
+                 "\n" + 
+                 "    int len = xarray.size();\n" +  
+                 "    for (int i = 0; i < len; i++)\n" + 
+                 "    { try { XMLNode _x = (XMLNode) xarray.get(i);\n" +  
+                 "        if (_x != null)\n" + 
+                 "        { " + ename + " _y = " + ename + ".parseXML(_x); \n" + 
+                 "          if (_y != null) { res.add(_y); }\n" +  
+                 "        }\n" + 
+                 "      }\n" + 
+                 "      catch (Exception _e) { }\n" + 
+                 "    }\n";  
+      
+    res = res +  "    return res;\n" + 
+                 "  }\n\n"; 
+    return res; 
+  } 
+
+ 
   public String parseCSVOperationJava8()
   { if (isAbstract()) { return ""; } 
     if (isInterface()) { return ""; } 
@@ -7741,11 +8016,11 @@ public class Entity extends ModelElement implements Comparable
     { Vector decEnt = new Vector(); 
       res = getPrincipalUK(this, decEnt); 
     } 
+
     if (res == null) 
-    { JOptionPane.showMessageDialog(null, "ERROR: No key attribute for " + getName(), 
-                             "Error in object lookup expression!",
-                             JOptionPane.ERROR_MESSAGE);  
-    }   // a bad error      
+    { System.err.println("! Warning: No key attribute exists for entity " + getName());  
+    }  
+     
     return res; 
   } 
 
@@ -7787,7 +8062,9 @@ public class Entity extends ModelElement implements Comparable
 
  
   public void generateJava(Vector entities, Vector types, PrintWriter out)
-  { if (hasStereotype("external") || hasStereotype("externalApp")) { return; } 
+  { if (hasStereotype("external") || 
+        hasStereotype("externalApp")) 
+    { return; } 
 
     clearAux(); 
 
@@ -7879,6 +8156,10 @@ public class Entity extends ModelElement implements Comparable
     out.println(parseCSVOperation()); 
 
     out.println(writeCSVOperation()); 
+
+    // out.println(parseXMLOp()); 
+
+    // out.println(parseXMLSequenceOp()); 
 
     buildOperations(entities,types,out);
     // if (activity != null)
@@ -7976,6 +8257,12 @@ public class Entity extends ModelElement implements Comparable
     { String tosop = generateToStringOp(); 
       out.println(tosop + "\n"); 
     }
+
+    out.println(parseXMLOpJava6()); 
+
+    out.println(parseXMLSequenceOpJava6()); 
+
+    out.println(parseXMLSetOpJava6()); 
 
     buildOperationsJava6(entities,types,out);
     // if (activity != null)
@@ -13784,6 +14071,13 @@ public class Entity extends ModelElement implements Comparable
     return res; 
   } 
 
+  public Vector getAllAssociations()
+  { Vector res = new Vector(); 
+    res.addAll(associations); 
+    res.addAll(allInheritedAssociations()); 
+    return res; 
+  } 
+
   public Vector getSupplierClasses()
   { Vector allAssociations = new Vector(); 
     allAssociations.addAll(associations); 
@@ -16458,8 +16752,10 @@ public void iosDbiOperations(PrintWriter out)
 
 
   public String generateSaveModel1()
-  { if (isAbstract() || isInterface() || hasStereotype("external") ||
-        hasStereotype("auxiliary") || hasStereotype("externalApp")) 
+  { if (isAbstract() || isInterface() || 
+        hasStereotype("external") ||
+        hasStereotype("auxiliary") || 
+        hasStereotype("externalApp")) 
     { return ""; } 
 
     String res = "";
@@ -16515,8 +16811,10 @@ public void iosDbiOperations(PrintWriter out)
   } // works for Java 6 and 7 also 
 
   public String generateSaveModel1CSharp()
-  { if (isAbstract() || isInterface() || hasStereotype("external") || 
-        hasStereotype("auxiliary") || hasStereotype("externalApp")) 
+  { if (isAbstract() || isInterface() || 
+        hasStereotype("external") || 
+        hasStereotype("auxiliary") || 
+        hasStereotype("externalApp")) 
     { return ""; } 
 
     String res = "";
@@ -18441,9 +18739,13 @@ public BehaviouralFeature designAbstractKillOp()
       out.println(); 
       out.println(parseJSONOperation());
       out.println(); 
+      out.println(parseXMLOperation());
+      out.println(); 
       out.println(parseCSVFileOperationJava8());
       out.println();   
       out.println(parseJSONSequenceOperation());
+      out.println(); 
+      out.println(parseXMLSequenceOperation());
       out.println(); 
       out.println(writeJSONOperation());
       out.println(); 
@@ -18823,6 +19125,71 @@ public BehaviouralFeature designAbstractKillOp()
     return res; 
   } 
 
+  private String parseXMLOperation()
+  { String ename = getName(); 
+    String x = "_" + ename.toLowerCase() + "x"; 
+    Attribute pk = getPrincipalPrimaryKey(); 
+    if (pk == null) { return ""; }
+    String pkname = pk.getName(); 
+	
+    String res = "  public static " + ename + " parseXML(XMLNode obj)\n" + 
+      "  { if (obj == null) { return null; }\n" + 
+      "\n" + 
+      "    try {\n" + 
+      "      String " + pkname + " = obj.getAttributeValue(\"" + pkname + "\");\n" + 
+      "      " + ename + " " + x + " = " + ename + "." + ename + "_index.get(" + pkname + ");\n" +  
+      "      if (" + x + " == null) { " + x + " = " + ename + ".createByPK" + ename + "(" + pkname + "); }\n" + 
+      "      \n"; 
+				 
+    Vector allatts = getAllAttributes(); 
+
+    for (int i = 0; i < allatts.size(); i++) 
+    { Attribute att = (Attribute) allatts.get(i); 
+      String attname = att.getName(); 
+      Type t = att.getType(); 
+      if (t == null) { continue; } 
+
+      String tname = t.getName(); 
+      String decoder = "get" + Named.capitalise(tname); 
+      if (t.isEntity())
+      { res = res + "      " + x + "." + attname + " = " + tname + "_DAO.parseXML(obj.getSubnodeWithTag(\"" + attname + "\"));\n";
+      } 
+      else if (t.isSequence() && 
+               t.getElementType() != null && 
+               t.getElementType().isEntity())
+      { Type elemT = t.getElementType(); 
+        String etname = elemT.getName(); 
+        res = res + "      " + x + "." + attname + " = " + etname + "_DAO.parseXMLSequence(obj.getSubnodesWithTag(\"" + attname + "\"));\n";
+      } 
+      else 
+      { res = res + "      " + x + "." + attname + " = obj." + decoder + "(\"" + attname + "\");\n";
+      }  
+    } 
+
+    Vector allasts = getAllAssociations(); 
+
+    for (int i = 0; i < allasts.size(); i++) 
+    { Association ast = (Association) allasts.get(i); 
+      if (ast.isOneMany() || ast.isZeroOneMany()) { } 
+      else 
+      { continue; } 
+      if (ast.isPersistent()) { } 
+      else 
+      { continue; } 
+
+      String role = ast.getRole2(); 
+      Entity ent2 = ast.getEntity2(); 
+      String tname = ent2.getName();
+ 
+      res = res + "       " + x + "." + role + " = " + tname + "_DAO.parseXMLSequence(obj.getSubnodesWithTag(\"" + role + "\"));\n";
+    } 
+      
+    res = res + "      return " + x + ";\n" + 
+        "    } catch (Exception _e) { return null; }\n" + 
+        "  }\n\n"; 
+    return res; 
+  } 
+
   private String writeJSONOperation()
   { String ename = getName(); 
 
@@ -19137,6 +19504,33 @@ public BehaviouralFeature designAbstractKillOp()
                  "    { try { JSONObject _x = jarray.getJSONObject(i);\n" +  
                  "        if (_x != null)\n" + 
                  "        { " + ename + " _y = parseJSON(_x); \n" + 
+                 "          if (_y != null) { res.add(_y); }\n" +  
+                 "        }\n" + 
+                 "      }\n" + 
+                 "      catch (Exception _e) { }\n" + 
+                 "    }\n";  
+      
+    res = res +  "    return res;\n" + 
+                 "  }\n\n"; 
+    return res; 
+  } 
+
+  private String parseXMLSequenceOperation()
+  { String ename = getName(); 
+    String x = "_" + ename.toLowerCase() + "x"; 
+    Attribute pk = getPrincipalPrimaryKey(); 
+    if (pk == null) { return ""; }
+    String pkname = pk.getName(); 
+	
+    String res = "  public static ArrayList<" + ename + "> parseXMLSequence(List xarray)\n" + 
+                 "  { if (xarray == null) { return null; }\n" + 
+		      "    ArrayList<" + ename + "> res = new ArrayList<" + ename + ">();\n" + 
+                 "\n" + 
+                 "    int len = xarray.size();\n" +  
+                 "    for (int i = 0; i < len; i++)\n" + 
+                 "    { try { XMLNode _x = (XMLNode) xarray.get(i);\n" +  
+                 "        if (_x != null)\n" + 
+                 "        { " + ename + " _y = parseXML(_x); \n" + 
                  "          if (_y != null) { res.add(_y); }\n" +  
                  "        }\n" + 
                  "      }\n" + 
