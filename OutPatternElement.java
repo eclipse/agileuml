@@ -1,7 +1,7 @@
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003,2020 Kevin Lano
+* Copyright (c) 2003-2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -16,6 +16,7 @@ public class OutPatternElement
   Vector bindings; // Binding
   boolean isDefault = false;  // true for the first output element
   Expression condition = null; 
+  String mappedFrom = null; 
 
   public OutPatternElement(Attribute att)
   { variable = att; 
@@ -31,6 +32,9 @@ public class OutPatternElement
   public void addBinding(Binding ipe) 
   { bindings.add(ipe); } 
 
+  public void setMappedFrom(String mx) 
+  { mappedFrom = mx; } 
+
   public void setCondition(Expression cond)
   { condition = cond; } 
 
@@ -44,7 +48,12 @@ public class OutPatternElement
   { return bindings; } 
 
   public String toString()
-  { String res = variable.getName() + " : MM2!" + variable.getType() + " (\n"; 
+  { String res = variable.getName() + " : MM2!" + variable.getType(); 
+
+    if (mappedFrom != null) 
+    { res = res + " mapsTo " + mappedFrom; } 
+    res = res + " (\n";
+ 
     for (int i = 0; i < bindings.size(); i++) 
     { Binding bn = (Binding) bindings.get(i); 
       res = res + "    " + bn; 
@@ -72,8 +81,9 @@ public class OutPatternElement
     return null; 
   }  
 
-  public Expression toExpression(Vector types, Vector ents, Vector env, java.util.Map interp,
-                                 UseCase uc) 
+  public Expression toExpression(Vector types, Vector ents, 
+                      Vector env, java.util.Map interp,
+                      UseCase uc) 
   { // typ->exists( var | var.$id = $id & bind1exp & ... & bindnexp )
     // thisModule.att replaced by uc.classifier.getName() + "." + att
     // thisModule.rule(pars) replaced by uc.classifier.getName() + "." + op(pars) 
@@ -86,22 +96,39 @@ public class OutPatternElement
     BasicExpression var = new BasicExpression(variable); 
     var.setType(typ); 
     var.setMultiplicity(ModelElement.ONE);  
-    BasicExpression id; 
+    Expression id; 
     
+    BasicExpression actualId = new BasicExpression("$id");
+    actualId.setType(new Type("String",null)); 
+    actualId.setMultiplicity(ModelElement.ONE); 
+
+    if (mappedFrom != null)
+    { actualId.setObjectRef(
+        BasicExpression.newVariableBasicExpression(mappedFrom)); 
+    } 
+
     if (isDefault) 
-    { id = new BasicExpression("$id"); } 
+    { id = actualId; } 
     else 
-    { id = new BasicExpression("\"" + nme + "_\" + $id"); } 
+    { BasicExpression prefix = 
+        BasicExpression.newValueBasicExpression(
+                             "\"" + nme + "_\""); 
+      id = new BinaryExpression("+", 
+             prefix, 
+             actualId); 
+    } 
  
     id.setType(new Type("String",null)); 
+    id.setElementType(new Type("String",null)); 
     id.setMultiplicity(ModelElement.ONE); 
     BasicExpression varid = new BasicExpression("$id"); 
     varid.setType(new Type("String",null)); 
     varid.setMultiplicity(ModelElement.ONE); 
     varid.setObjectRef(var); 
-    Expression res = new BasicExpression(true); 
+    Expression res = new BasicExpression(true);
+ 
     ModelElement met = ModelElement.lookupByName(nme, env);
-    if (met == null) 
+    if (met == null) // new variable 
     { res = new BinaryExpression("=",varid,id); } 
  
     for (int i = 0; i < bindings.size(); i++)

@@ -1,7 +1,7 @@
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003-2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -17,7 +17,7 @@ public class MatchedRule extends Rule
   boolean isCalled = false; 
   Vector parameters = new Vector(); // of Attribute
   Vector using = new Vector(); // of Attribute
-    
+  MatchedRule superRule = null;     
 
   public MatchedRule(boolean isL, boolean isU)
   { isLazy = isL; 
@@ -38,6 +38,9 @@ public class MatchedRule extends Rule
 
   public void setIsCalled(boolean c)
   { isCalled = c; } 
+
+  public void setSuperRule(MatchedRule r)
+  { superRule = r; } 
 
   public void addParameter(Attribute p)
   { parameters.add(p); } 
@@ -71,6 +74,9 @@ public class MatchedRule extends Rule
     { res = "unique " + res; } 
     if (isCalled) 
     { res = res + getSignature(); } 
+
+    if (superRule != null)
+    { res = res + " extends " + superRule.getName(); } 
 
     res = res + " {\n"; 
     if (isCalled) 
@@ -147,6 +153,37 @@ public class MatchedRule extends Rule
     return res; 
   } 
 
+  public Expression getRuleCall(UseCase uc)
+  { // form of an external call 
+    String opname = getName(); 
+    Vector pars = inPattern.allVariablesAsExpressions(); 
+    Entity owner = inPattern.firstEntity(); 
+
+    if (owner == null) 
+    { Vector newpars = new Vector();
+      Attribute $id = 
+        new Attribute("$id", new Type("String", null),
+                      ModelElement.INTERNAL);
+      newpars.add(new BasicExpression($id));  
+      newpars.addAll(pars);  
+      Expression opcall =
+        BasicExpression.newStaticCallBasicExpression(
+          opname + "$", uc.getClassifier().getName(), newpars);
+      return opcall; 
+    }
+    else 
+    { Vector parstail = new Vector(); 
+      parstail.addAll(pars); 
+      parstail.remove(0);
+      Expression selfobj = 
+        BasicExpression.newVariableBasicExpression("self", 
+                                         new Type(owner));  
+      Expression res = 
+        BasicExpression.newCallBasicExpression(opname,
+                                    selfobj, parstail); 
+      return res; 
+    }
+  } 
 
   public void toOperation(Vector types, Vector ents, java.util.Map interp, UseCase uc)
   { // In the case of lazy or called rules
@@ -168,20 +205,24 @@ public class MatchedRule extends Rule
     // { Attribute p1 = (Attribute) parameters.get(0); 
     //   owner = p1.getType().getEntity(); 
     // } 
-    Expression succ = outPattern.toExpression(types,ents,env,interp,uc); 
+    Expression succ = 
+      outPattern.toExpression(types,ents,env,interp,uc); 
     Vector env2 = outPattern.allVariables(); 
 
     Attribute inatt = (Attribute) env.get(0);
     String mainvar = inatt.getName(); 
     BasicExpression inexp = new BasicExpression(mainvar);
 
-    ante = ante.dereference(inexp); 
-    succ = succ.dereference(inexp);  
+    if (owner != null) 
+    { ante = ante.dereference(inexp); 
+      succ = succ.dereference(inexp);  
+    } 
 
     Attribute outatt; 
     if (env2.size() == 0)
-    { Attribute r = new Attribute("result", new Type("boolean", null), 
-                                  ModelElement.INTERNAL); 
+    { Attribute r = 
+        new Attribute("result", new Type("boolean", null),      
+                      ModelElement.INTERNAL); 
       env2.add(r); 
       outatt = r; 
     } 
@@ -216,24 +257,28 @@ public class MatchedRule extends Rule
       op.setEntity(owner); 
       String opcall = "self." + opname + "(";
       Vector parnames = new Vector();  
+
       for (int i = 1; i < env.size(); i++) 
       { String par = ((Attribute) env.get(i)).getName();
         if (parnames.contains(par) || mainvar.equals(par)) { } 
         else 
         { parnames.add(par); } 
       }
+
       for (int j = 0; j < env2.size(); j++) 
       { String par = ((Attribute) env2.get(j)).getName();
         if (parnames.contains(par) || mainvar.equals(par)) { } 
         else 
         { parnames.add(par); } 
       }  
+
       for (int k = 0; k < parnames.size(); k++) 
       { opcall = opcall + parnames.get(k); 
         if (k < parnames.size() - 1)
         { opcall = opcall + ","; } 
       }    
       opcall = opcall + ")"; 
+
       BasicExpression invokeop = 
         new BasicExpression(opcall,0); 
       Expression efo = invokeop.checkIfSetExpression(); 
@@ -276,7 +321,8 @@ public class MatchedRule extends Rule
       op.setStatic(true);    
       uc.addOperation(op); 
       op.setUseCase(uc); 
-      String opcall = (uc.getClassifier().getName()) + "." + opname + "(";
+      String opcall = 
+        (uc.getClassifier().getName()) + "." + opname + "(";
 
 
       for (int k = 0; k < parnames.size(); k++) 
@@ -305,8 +351,16 @@ public class MatchedRule extends Rule
     String opnme = name; 
     Vector pars0 = new Vector(); 
     pars0.addAll(env); 
-    if (isCalled == false) 
+    if (isCalled == false && owner != null) 
     { pars0.remove(0); }  
+    else if (isCalled == false && owner == null)
+    { Attribute idatt = 
+        new Attribute("$id", new Type("String", null),
+                      ModelElement.INTERNAL); 
+      pars0.add(0,idatt);
+      opnme = opnme + "$";  
+    } 
+
     BehaviouralFeature op0 = new BehaviouralFeature(opnme,pars0,false,outatt.getType());  
     // op0.setDerived(true); 
     op0.addStereotype("explicit"); 
@@ -320,9 +374,12 @@ public class MatchedRule extends Rule
     Expression usingexp = usingToExpression(); 
     Expression uex1 = usingexp.replaceModuleReferences(uc); 
 
-    Expression ued = uex1.dereference(inexp); 
-    succ = Expression.simplify("=>", ued, succ, null); 
-                             
+    if (owner != null) 
+    { Expression ued = uex1.dereference(inexp); 
+      succ = Expression.simplify("=>", ued, succ, null); 
+    } 
+    else 
+    { succ = Expression.simplify("=>", uex1, succ, null); } 
 
     for (int i = 0; i < env2.size(); i++) 
     { Attribute att = (Attribute) env2.get(i);
@@ -330,13 +387,38 @@ public class MatchedRule extends Rule
       Type typ = att.getType();  
       ModelElement met = ModelElement.lookupByName(att.getName(), env); 
       if (met == null && typ.isEntity())  // att is created by out pattern
-      { succ = new BinaryExpression("#", new BinaryExpression(":",
-                                      new BasicExpression(nme), new BasicExpression(typ)),
-                                      succ);
+      { succ = new BinaryExpression("#", 
+                 new BinaryExpression(":",
+                   new BasicExpression(nme), 
+                   new BasicExpression(typ)),
+                 succ);
       } // else, postfix each att.f by @pre in succ
       // else 
       // { succ = succ.addPreForms(att.getName()); } 
     }
+ 
+    /* 
+    if (owner == null)
+    { Vector spars = new Vector(); 
+      spars.add(new BasicExpression(12)); 
+      BasicExpression call = 
+        BasicExpression.newStaticCallBasicExpression(
+            "randomString", "OclRandom", spars);
+      BasicExpression $id = 
+        BasicExpression.newVariableBasicExpression("$id"); 
+      $id.setType(new Type("String", null)); 
+      BinaryExpression eq = new BinaryExpression("=", $id,
+                                                 call);   
+      succ = Expression.simplify("=>", eq, succ, null);                          
+    } */ 
+
+    if (superRule != null) 
+    { Expression rulecall = 
+        superRule.getRuleCall(uc); 
+      succ.setBrackets(true); 
+      succ = new BinaryExpression("&", rulecall, succ); 
+    } 
+
     op0.setPost(succ);  // result = par0 
 
     if (isUnique) 
@@ -350,6 +432,44 @@ public class MatchedRule extends Rule
     { uc.addOperation(op0); 
       op0.setStatic(true); 
       op0.setUseCase(uc); 
+
+      // Also the version without the $id parameter: 
+      Vector pars1 = new Vector(); 
+      pars1.addAll(pars0); 
+      pars1.remove(0); 
+      BehaviouralFeature op1 = 
+        new BehaviouralFeature(name,pars1,false,
+                               outatt.getType());  
+    // op0.setDerived(true); 
+      op1.addStereotype("explicit"); 
+      op1.setPre(ante); 
+      Expression rulecall$ = 
+        this.getRuleCall(uc); 
+      Vector spars = new Vector(); 
+      spars.add(new BasicExpression(12)); 
+      BasicExpression call = 
+        BasicExpression.newStaticCallBasicExpression(
+            "randomString", "OclRandom", spars);
+      BasicExpression $id = 
+        BasicExpression.newVariableBasicExpression("$id"); 
+      $id.setType(new Type("String", null));
+
+      CreationStatement cs = 
+         new CreationStatement("$id", 
+                               new Type("String", null));  
+      AssignStatement eq = new AssignStatement($id,
+                                               call);   
+      ReturnStatement inv = 
+                        new ReturnStatement(rulecall$); 
+      SequenceStatement ss = new SequenceStatement(); 
+      ss.addStatement(cs); 
+      ss.addStatement(eq); 
+      ss.addStatement(inv);
+      op1.setActivity(ss); 
+      op1.setPost(new BasicExpression(true)); 
+      uc.addOperation(op1); 
+      op1.setStatic(true); 
+      op1.setUseCase(uc); 
     } 
   } 
 
@@ -364,18 +484,26 @@ public class MatchedRule extends Rule
       varbe.setType(var.getType()); 
       BinaryExpression vareq = new BinaryExpression("=", varbe, var.getInitialExpression()); 
       ante = Expression.simplify("&",ante,vareq,null);  
-    } 
+    } // Using variables become local 'let' variables
 
     Vector env = inPattern.allVariables(); 
     Entity owner = inPattern.firstEntity(); 
-    Expression succ = outPattern.toExpression(types,ents,env,interp,uc); 
+    Expression succ = 
+      outPattern.toExpression(types,ents,env,interp,uc); 
     Vector env2 = outPattern.allVariables(); 
 
+    if (env.size() == 0) 
+    { Constraint con = new Constraint(ante,succ); 
+      con.setOwner(owner);
+      return con; 
+    }
+	 
     Attribute inatt = (Attribute) env.get(0);
     String mainvar = inatt.getName(); 
     BasicExpression inexp = new BasicExpression(mainvar);
     ante = ante.dereference(inexp); 
     succ = succ.dereference(inexp);  
+    // Remove references to the first variable. 
 
     if (actionBlock != null) // If a rule is split, put this in the 2nd rule. 
     { String opname = name + "ActionBlockop"; 
@@ -419,7 +547,8 @@ public class MatchedRule extends Rule
         { Attribute usev = (Attribute) using.get(k); 
           String vname = usev.getName();
            
-          if (parnames.contains(vname) || mainvar.equals(vname)) { } 
+          if (parnames.contains(vname) || 
+              mainvar.equals(vname)) { } 
           else 
           { parnames.add(vname); }
         }  
@@ -447,11 +576,14 @@ public class MatchedRule extends Rule
     { Attribute att = (Attribute) env2.get(i);
       String nme = att.getName(); 
       String typ = att.getType() + "";  
-      ModelElement met = ModelElement.lookupByName(att.getName(), env); 
+      ModelElement met = 
+        ModelElement.lookupByName(att.getName(), env); 
       if (met == null)  // att is created by out pattern
-      { succ = new BinaryExpression("#", new BinaryExpression(":",
-                                        new BasicExpression(nme), new BasicExpression(typ)),
-                                      succ);
+      { succ = 
+          new BinaryExpression("#", new BinaryExpression(":",
+                                 new BasicExpression(nme), 
+                                 new BasicExpression(typ)),
+                               succ);
       } // else, postfix each att.f by @pre in succ
       // else 
       // { succ = succ.addPreForms(att.getName()); } 

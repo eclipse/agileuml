@@ -1,7 +1,7 @@
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003-2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -38,7 +38,8 @@ public class InPattern
 
   public String firstType()  // Will become the owner of the constraint of the rule
   { if (elements.size() > 0) 
-    { InPatternElement ipe = (InPatternElement) elements.get(0); 
+    { InPatternElement ipe = 
+         (InPatternElement) elements.get(0); 
       return ipe.getType(); 
     } 
     return null; 
@@ -46,7 +47,10 @@ public class InPattern
 
   public Entity firstEntity()
   { if (elements.size() > 0) 
-    { InPatternElement ipe = (InPatternElement) elements.get(0); 
+    { InPatternElement ipe = 
+         (InPatternElement) elements.get(0); 
+      if (ipe.variable == null) 
+      { return null; } 
       Type typ = ipe.variable.getType();
       if (typ.isEntity())
       { return typ.getEntity(); }  
@@ -73,8 +77,10 @@ public class InPattern
     InPatternElement ipe0 = (InPatternElement) elements.get(0);
     Expression res = ipe0.condition; 
     for (int i = 1; i < elements.size(); i++)
-    { InPatternElement ipe = (InPatternElement) elements.get(i); 
-      res = Expression.simplify("&",res,ipe.getFullCondition(uc),null);  
+    { InPatternElement ipe = 
+        (InPatternElement) elements.get(i); 
+      res = Expression.simplify("&",res,
+                           ipe.getFullCondition(uc),null);  
     } 
     return res; 
   }  
@@ -82,9 +88,21 @@ public class InPattern
   public Vector allVariables()
   { Vector res = new Vector(); 
     for (int i = 0; i < elements.size(); i++)
-    { InPatternElement ipe = (InPatternElement) elements.get(i); 
+    { InPatternElement ipe = 
+        (InPatternElement) elements.get(i); 
       if (ipe.variable != null) 
       { res.add(ipe.variable); } 
+    } 
+    return res; 
+  }  
+
+  public Vector allVariablesAsExpressions()
+  { Vector res = new Vector(); 
+    for (int i = 0; i < elements.size(); i++)
+    { InPatternElement ipe = 
+        (InPatternElement) elements.get(i); 
+      if (ipe.variable != null) 
+      { res.add(new BasicExpression(ipe.variable)); } 
     } 
     return res; 
   }  

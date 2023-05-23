@@ -53,7 +53,9 @@ public class Compiler2
   Vector lexs = new Vector(); // of String 
   int[] bcount; // bracket count at this point in the lexical list
   Vector ops = new Vector(); // of OpOccurrence
-  Expression finalexpression; 
+  Expression finalexpression;
+
+  static String atlModuleName = "";  
 
   public static void addOperator(String op) 
   { extensionOperators.add(op); } 
@@ -507,60 +509,58 @@ public class Compiler2
   } 
 
 
-  public boolean isKeyword(String str) 
-  { if (str.equals("class") || str.equals("if") || str.equals("while") ||
+  public static boolean isKeyword(String str) 
+  { if (str.equals("class") || 
+        str.equals("if") || str.equals("while") ||
         str.equals("error") || 
-        // str.equals("catch") || 
-        // str.equals("try") || 
-        // str.equals("endtry") || 
-        // str.equals("assert") || 
-        str.equals("return") || str.equals("break") || str.equals("continue") || 
-        str.equals("float") || str.equals("char") || str.equals("byte") || 
-        // str.equals("boolean") || str.equals("int") || 
-        // str.equals("long") || str.equals("double") ||  
-        str.equals("transient") || str.equals("volatile") || str.equals("short") ||
-        str.equals("native") || str.equals("enum") || str.equals("package") ||
-        str.equals("strictfp") || str.equals("wait") || str.equals("goto") || 
-        str.equals("const") || str.equals("notify") || str.equals("notifyAll") || 
-        str.equals("case") || str.equals("switch") || str.equals("this") || 
-        // str.equals("null") ||
+        str.equals("catch") || 
+        str.equals("try") || 
+        str.equals("extends") || 
+        str.equals("assert") || 
+        str.equals("return") || str.equals("break") || 
+        str.equals("continue") || 
+        str.equals("float") || str.equals("char") || 
+        str.equals("byte") || 
+        str.equals("boolean") || str.equals("int") || 
+        str.equals("long") || str.equals("double") ||  
+        str.equals("transient") || str.equals("volatile") || 
+        str.equals("short") ||
+        str.equals("native") || str.equals("enum") || 
+        str.equals("package") ||
+        str.equals("strictfp") || str.equals("wait") || 
+        str.equals("goto") || 
+        str.equals("notify") || 
+        str.equals("notifyAll") || 
+        str.equals("case") || str.equals("switch") || 
+        str.equals("this") || 
+        str.equals("implements") ||
         str.equals("new") || 
-        // str.equals("try") || str.equals("catch") || str.equals("finally") ||
+        str.equals("interface") || str.equals("byte") || 
+        str.equals("finally") ||
         str.equals("synchronized") || str.equals("until") || str.equals("do") || 
         str.equals("interface") || str.equals("extends") || str.equals("implements") ||
         str.equals("for") || str.equals("instanceof") || str.equals("private") || 
         str.equals("public") || str.equals("final") || str.equals("static") ||
-        str.equals("void") || str.equals("abstract") || str.equals("protected") ||
-        str.equals("else") || str.equals("throw") || str.equals("throws"))
+        str.equals("void") || str.equals("abstract") || 
+        str.equals("protected") ||
+        str.equals("const") || str.equals("import") || 
+        str.equals("imports") || 
+        str.equals("else") || str.equals("Vector") ||
+        str.equals("List") || str.equals("Collection") || 
+        str.equals("throw") || str.equals("throws"))
     { return true; }  // Java keywords. "super" is allowed. 
     return false; 
   } 
 
   public static boolean isAnyKeyword(String str) 
-  { if (str.equals("class") || str.equals("if") || str.equals("while") ||
-        str.equals("error") || 
-        str.equals("catch") || 
-        str.equals("try") || 
+  { if (isKeyword(str) || 
         str.equals("endtry") || 
-        str.equals("assert") || 
-        str.equals("return") || str.equals("break") || str.equals("continue") || 
-        str.equals("float") || str.equals("char") || str.equals("byte") || 
-        str.equals("boolean") || str.equals("int") || 
-        str.equals("long") || str.equals("double") ||  
-        str.equals("transient") || str.equals("volatile") || str.equals("short") ||
-        str.equals("native") || str.equals("enum") || str.equals("package") ||
-        str.equals("strictfp") || str.equals("wait") || str.equals("goto") || 
-        str.equals("const") || str.equals("notify") || str.equals("notifyAll") || 
-        str.equals("case") || str.equals("switch") || str.equals("this") || 
-        str.equals("null") ||
-        str.equals("new") || 
-        str.equals("try") || str.equals("catch") || str.equals("finally") ||
-        str.equals("synchronized") || str.equals("until") || str.equals("do") || 
-        str.equals("interface") || str.equals("extends") || str.equals("implements") ||
-        str.equals("for") || str.equals("instanceof") || str.equals("private") || 
-        str.equals("public") || str.equals("final") || str.equals("static") ||
-        str.equals("void") || str.equals("abstract") || str.equals("protected") ||
-        str.equals("else") || str.equals("throw") || str.equals("throws"))
+        str.equals("reference") ||
+        str.equals("attribute") || 
+        str.equals("container") || 
+        str.equals("usecase") || 
+        str.equals("stereotype") || 
+        str.equals("null"))
     { return true; }  // Java keywords. "super" is allowed. 
     return false; 
   } 
@@ -1262,7 +1262,10 @@ public class Compiler2
 
       if (tt == null) 
       { System.err.println("!!ERROR!!: Invalid map/function type, it must have 2 type arguments: " + showLexicals(st,en)); 
-        return null; 
+        tt = new Type(typ, null);
+        tt.setKeyType(new Type("OclAny", null)); 
+        tt.setElementType(new Type("OclAny", null)); 
+        return tt;  
       }
       else 
       { return tt; } 
@@ -3435,6 +3438,16 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
     return res; 
   } 
 
+  public Expression parse_ATLmap_expression(int bc,int pstart,int pend, Vector entities, Vector types)
+  { Vector ve = parse_ATLmap_sequence(bc,pstart+1,pend-1,entities,types); 
+    if (ve == null) 
+    { return null; } 
+    Expression res = new SetExpression(ve,true); 
+    res.setType(new Type("Map",null)); 
+    // System.out.println("Parsed map expression: " + res); 
+    return res; 
+  } 
+
   public Vector parse_fe_sequence(int bc, int st, int ed, Vector entities, Vector types)
   { Vector res = new Vector(); 
     // if (st == ed) // just one basic exp
@@ -3626,7 +3639,7 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
          { // top-level ,
            Expression exp = parse_pair_expression(bc,st0,i-1,entities,types);
            if (exp == null) 
-           { System.out.println("Invalid pair exp: " + showLexicals(st0,i-1));
+           { System.out.println("!! Invalid pair exp: " + showLexicals(st0,i-1));
              return null;
            }
            res.add(exp);
@@ -3639,13 +3652,70 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
      if (bcnt == 0 && sqbcnt == 0 && cbcnt == 0)
      { Expression exp = parse_pair_expression(bc,st0,en,entities,types);
        if (exp == null) 
-       { System.out.println("Invalid pair exp: " + showLexicals(st0,en));
+       { System.out.println("!! Invalid pair exp: " + showLexicals(st0,en));
          return null;
        }
        res.add(exp);
      }
      else
-     { System.err.println("Not map element sequence: " + showLexicals(st,en)); 
+     { System.err.println("!! Not map element sequence: " + showLexicals(st,en)); 
+       return null;
+     }
+     return res; 
+   }
+
+  public Vector parse_ATLmap_sequence(int bc, int st, int ed, Vector entities, Vector types)
+  { Vector res = new Vector(); 
+    if (st > ed)
+    { return res; } 
+    return getATLMapSeq(bc,st,ed,entities,types); 
+  } 
+
+  private Vector getATLMapSeq(int bc, int st, int en, Vector entities, Vector types)
+  { // Scans the lexicals inside the outer brackets of 
+    // a potential fe-sequence
+
+     int bcnt = 0; int sqbcnt = 0; int cbcnt = 0;
+     Vector res = new Vector();
+     int st0 = st;
+     String buff = "";
+     for (int i = st; i <= en; i++)
+     { String lx = lexicals.get(i) + "";
+       buff = buff + lx;
+       if ("(".equals(lx)) { bcnt++; }
+       else if (")".equals(lx)) 
+       { bcnt--;
+         if (bcnt < 0) { return null; }
+       }
+       else if ("[".equals(lx)) { sqbcnt++; }
+       else if ("]".equals(lx)) { sqbcnt--; }
+       else if ("{".equals(lx)) { cbcnt++; }
+       else if ("}".equals(lx)) { cbcnt--; }
+       else if (",".equals(lx))
+       { if (bcnt == 0 && sqbcnt == 0 && cbcnt == 0)
+         { // top-level ,
+           Expression exp = parse_ATLpair_expression(bc,st0,i-1,entities,types);
+           if (exp == null) 
+           { System.out.println("!! Invalid ATL pair exp: " + showLexicals(st0,i-1));
+             return null;
+           }
+           res.add(exp);
+           st0 = i + 1;
+           buff = "";
+         }
+       }
+     }
+       // at the end:
+     if (bcnt == 0 && sqbcnt == 0 && cbcnt == 0)
+     { Expression exp = parse_ATLpair_expression(bc,st0,en,entities,types);
+       if (exp == null) 
+       { System.out.println("!! Invalid ATL pair exp: " + showLexicals(st0,en));
+         return null;
+       }
+       res.add(exp);
+     }
+     else
+     { System.err.println("!! Not map element sequence: " + showLexicals(st,en)); 
        return null;
      }
      return res; 
@@ -3662,20 +3732,50 @@ public Expression parse_lambda_expression(int bc, int st, int en, Vector entitie
         Expression e2 = parse_expression(bc,i+1, en-1,entities,types); 
         if (e1 != null && e2 != null)
         { Expression expr = new BinaryExpression(",", e1, e2); 
-		  expr.setBrackets(true);
-		  return expr;  
+          expr.setBrackets(true);
+          return expr;  
         } 
       } // or the pair is not bracketed
-	  else if ("|".equals(ss) && i+1 < en && "->".equals(lexicals.get(i+1) + ""))
-	  { Expression e1 = parse_expression(bc,st, i-1,entities,types); 
+      else if ("|".equals(ss) && i+1 < en && "->".equals(lexicals.get(i+1) + ""))
+      { Expression e1 = parse_expression(bc,st, i-1,entities,types); 
         Expression e2 = parse_expression(bc,i+2, en,entities,types); 
         if (e1 != null && e2 != null)
         { return new BinaryExpression("|->", e1, e2); } 
       }	// or a single variable 
-	  else if ("_1".equals(ss)) 
-	  { Expression be = new BasicExpression(ss); 
-	    if (be != null) 
-		{ return be; }
+      else if ("_1".equals(ss)) 
+      { Expression be = new BasicExpression(ss); 
+        if (be != null) 
+        { return be; }
+      }   
+    } 
+    return null; 
+  }  
+
+  public Expression parse_ATLpair_expression(int bc, int st, int en, Vector entities, Vector types)
+  { // st is "(" and en is ")" 
+    System.out.println(">>> Map contents: --> " + showLexicals(st,en));
+	
+    for (int i = st; i <= en; i++)
+    { String ss = lexicals.get(i) + ""; 
+      if (",".equals(ss) && i < en) // st is "(" and en is ")" 
+      { Expression e1 = parse_expression(bc,st + 1, i-1,entities,types); 
+        Expression e2 = parse_expression(bc,i+1, en-1,entities,types); 
+        if (e1 != null && e2 != null)
+        { Expression expr = new BinaryExpression("|->", e1, e2); 
+          // expr.setBrackets(true);
+          return expr;  
+        } 
+      } // or the pair is not bracketed
+      else if ("|".equals(ss) && i+1 < en && "->".equals(lexicals.get(i+1) + ""))
+      { Expression e1 = parse_expression(bc,st, i-1,entities,types); 
+        Expression e2 = parse_expression(bc,i+2, en,entities,types); 
+        if (e1 != null && e2 != null)
+        { return new BinaryExpression("|->", e1, e2); } 
+      }	// or a single variable 
+      else if ("_1".equals(ss)) 
+      { Expression be = new BasicExpression(ss); 
+        if (be != null) 
+        { return be; }
       }   
     } 
     return null; 
@@ -4456,7 +4556,9 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
          (ss.equals("/\\") || ss.equals("^") ||
           ss.equals("*") || ss.equals("/") || ss.equals("div") || 
           ss.equals("mod"))
-      { Expression e1 = parse_ATLbasic_expression(bc,pstart,i-1,entities,types);  // factor2
+      { Expression e1 = 
+          parse_ATLbasic_expression(bc,pstart,i-1,
+                                 entities,types);  // factor2
         Expression e2 = parse_ATLfactor_expression(bc,i+1,pend,entities,types);
         if (e1 == null || e2 == null)
         { } // return null; }
@@ -4766,6 +4868,24 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       { System.err.println(">> Invalid ATL basic expression: keyword: " + ss); 
         return null;
       } 
+  
+      if ("OclUndefined".equals(ss))
+      { BasicExpression resx = new BasicExpression("null"); 
+        resx.umlkind = Expression.VALUE;  
+        resx.setType(new Type("OclAny", null)); 
+        return resx; 
+      } 
+
+      // replace "self" by "atlself" ??
+
+      if ("thisModule".equals(ss))
+      { String moduleClass = 
+          Named.capitalise(Compiler2.atlModuleName);
+        BasicExpression resx = 
+          new BasicExpression(moduleClass);
+        resx.umlkind = Expression.CLASSID;  
+        return resx; 
+      } 
 
       BasicExpression ee = // new BasicExpression(ss,0);   // (ss) surely?
                        new BasicExpression(ss,0); 
@@ -4781,7 +4901,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     if (pstart < pend && "}".equals(lexicals.get(pend) + "") && 
         "Map".equals(lexicals.get(pstart) + "") && 
 		"{".equals(lexicals.get(pstart + 1) + ""))
-    { return parse_map_expression(bc,pstart+1,pend,entities,types); } 
+    { return parse_ATLmap_expression(bc,pstart+1,pend,entities,types); } 
 
     if (pstart < pend && "}".equals(lexicals.get(pend) + "") && 
         "Sequence".equals(lexicals.get(pstart) + "") &&
@@ -5618,10 +5738,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
              "uniquely define the objects of its class: attribute id identity : String;"; 
         return "identity"; 
       } 
-
     } 
 
- 
     if ("false".startsWith(st)) 
     { mess[0] = "false value of boolean type"; 
       return "false"; 
@@ -5633,8 +5751,13 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     } 
 
     if ("self".startsWith(st)) 
-    { mess[0] = "self object"; 
+    { mess[0] = "self object - should not be used as a variable"; 
       return "self"; 
+    } 
+
+    if ("super".startsWith(st)) 
+    { mess[0] = "super object - should not be used as a variable"; 
+      return "super"; 
     } 
 
     if (st.length() > 2)
@@ -5653,7 +5776,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       if ("Sequence".startsWith(st)) 
       { mess[0] = "Sequence type, eg., Sequence(String), Sequence(boolean),\n" + 
           "Sequence(double) or Sequence(C) for class C.\n" + 
-          "But Sequence(OclAny) is bad practice & non-portable.\n" + 
+          "But Sequence or Sequence(OclAny) is bad practice & non-portable.\n" + 
           "Operators include:  sq->size()  sq->at(index)  sq1->union(sq2)  sq->append(x)\n" + 
            "sq->select(x|P)  sq->collect(x|P)  sq->forAll(x|P)\n" +  
           "Literal sequences are written as Sequence{ x, y, z }\n"; 
@@ -5663,7 +5786,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       if ("Set".startsWith(st)) 
       { mess[0] = "Set type, eg., Set(String), Set(boolean), \n" + 
           "Set(double) or Set(C) for class C.\n" + 
-          "But Set(OclAny) is bad practice & non-portable.\n" + 
+          "But Set or Set(OclAny) is bad practice & non-portable.\n" + 
           "Operators include:  st->size()  st->includes(elem)  st1->union(st2)\n" + 
            "st->select(x|P)  st->collect(x|P)  st->forAll(x|P)\n" + 
           "Literal sets are written as Set{ x, y, z }\n"; 
@@ -6614,9 +6737,15 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
                        reached,i-1,entities,types);
         if (e != null) 
         { if (e instanceof Type)
-          { types.add(e); }
+          { if (types.contains(e)) { } 
+            else 
+            { types.add(e); }
+          } 
           else if (e instanceof Entity)
-          { entities.add(e); } 
+          { if (entities.contains(e)) { } 
+            else 
+            { entities.add(e); }
+          } 
         }
         reached = i;    
       }
@@ -6626,9 +6755,15 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
                     reached,en,entities,types);
     if (e1 != null) 
     { if (e1 instanceof Type)
-      { types.add(e1); }
+      { if (types.contains(e1)) { } 
+        else 
+        { types.add(e1); }
+      } 
       else if (e1 instanceof Entity)
-      { entities.add(e1); } 
+      { if (entities.contains(e1)) { } 
+        else 
+        { entities.add(e1); }
+      } 
     } 
   } 
 
@@ -6819,6 +6954,10 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     { System.err.println("!! Invalid classifier keyword: " + lx); 
       return null; 
     } 
+
+    ModelElement ent = ModelElement.lookupByName(rname, entities); 
+    if (ent != null) 
+    { return null; } 
 
     Entity res = new Entity(rname); 
  
@@ -7503,7 +7642,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       { foundactivity = true;
         endpostconditions = i;
         startactivity = i+2;  
-	  }
+      }
     }
     
     for (int i = st + 4; i < en && i < endpostconditions; i++) 
@@ -7512,11 +7651,11 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       { String scope = lexicals.get(i-1) + ""; // must be present, can be void
         Entity ent = (Entity) ModelElement.lookupByName(scope, entities); 
 		
-	    if (foundpostconditions == false)
-	    { foundpostconditions = true; 
-	      startpostconditions = i-1; 
-	      parseUseCaseParameters(uc,st+2,i,entities,types); 
-	    }
+        if (foundpostconditions == false)
+        { foundpostconditions = true; 
+          startpostconditions = i-1; 
+          parseUseCaseParameters(uc,st+2,i,entities,types); 
+        }
 
         for (int j = i+2; j < en && j < endpostconditions; j++) 
         { if (":".equals(lexicals.get(j) + "") && ":".equals(lexicals.get(j+1) + ""))
@@ -8011,14 +8150,23 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
 
 
   public ATLModule parseATL(Vector entities, Vector types)
-  { if ("module".equals(lexicals.get(0) + "") && 
+  { String keyword = lexicals.get(0) + ""; 
+
+    if (("module".equals(keyword) || 
+         "library".equals(keyword)) && 
         ";".equals(lexicals.get(2) + ""))
-    { ATLModule mod = new ATLModule(lexicals.get(1) + ""); 
+    { String mname = lexicals.get(1) + ""; 
+      ATLModule mod = new ATLModule(mname);
+      Compiler2.atlModuleName = mname; 
+ 
       for (int i = 0; i < lexicals.size();  i++) 
-      { if ("lazy".equals(lexicals.get(i) + "") || "helper".equals(lexicals.get(i) + "") ||
-            "unique".equals(lexicals.get(i) + "") || "rule".equals(lexicals.get(i) + ""))
-        { Vector v = parse_ATL_module(i,lexicals.size()-1,entities,types,mod); 
-          mod.setElements(v); 
+      { if ("lazy".equals(lexicals.get(i) + "") || 
+            "helper".equals(lexicals.get(i) + "") ||
+            "unique".equals(lexicals.get(i) + "") || 
+            "rule".equals(lexicals.get(i) + ""))
+        { Vector v = parse_ATL_module(i,lexicals.size()-1,
+                                      entities,types,mod); 
+          // mod.setElements(v); 
           return mod; 
         }
       } 
@@ -8031,31 +8179,42 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     if (st >= en)
     { return res; } 
     for (int i = st + 2; i <= en;  i++) 
-    { if ("lazy".equals(lexicals.get(i) + "") || "rule".equals(lexicals.get(i) + "") ||
-          "unique".equals(lexicals.get(i) + "") || "helper".equals(lexicals.get(i) + ""))
+    { if ("lazy".equals(lexicals.get(i) + "") || 
+          "rule".equals(lexicals.get(i) + "") ||
+          "unique".equals(lexicals.get(i) + "") || 
+          "helper".equals(lexicals.get(i) + ""))
       { Rule r = parseATLrule(st,i-1,entities,types,mod);
+        if (r != null) 
+        { mod.addElement(r); } 
         res = parse_ATL_module(i,en,entities,types,mod);  
         if (r != null) { res.add(0,r); }  
         return res; 
       }
     } 
+
     Rule r1 = parseATLrule(st,en,entities,types,mod);
-    if (r1 != null) { res.add(r1); }      
+    if (r1 != null) 
+    { mod.addElement(r1); 
+      res.add(r1); 
+    }      
     return res; 
   } 
 
-  public MatchedRule parseATLrule(int st, int en, Vector entities, Vector types, ATLModule mod)
+  public MatchedRule parseATLrule(int st, int en, 
+                Vector entities, Vector types, ATLModule mod)
   { boolean lazy = false; 
     boolean unique = false; 
     String rname = ""; 
     int start = st; 
+    int rulestart = st; 
 
     if ("lazy".equals(lexicals.get(st) + "") &&
         "rule".equals(lexicals.get(st + 1) + "") &&  
         en - st >= 4 && "}".equals(lexicals.get(en) + ""))
     { lazy = true; 
       start = st + 4; 
-      rname = lexicals.get(st + 2) + ""; 
+      rname = lexicals.get(st + 2) + "";
+      rulestart = st+3;  
     } 
     else if ("unique".equals(lexicals.get(st) + "") &&
         "lazy".equals(lexicals.get(st + 1) + "") &&  
@@ -8063,98 +8222,161 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     { lazy = true; 
       unique = true; 
       start = st + 5; 
-      rname = lexicals.get(st + 3) + ""; 
+      rname = lexicals.get(st + 3) + "";
+      rulestart = st + 4;  
     } 
     else if ("rule".equals(lexicals.get(st) + "") && 
         en - st >= 4 && "}".equals(lexicals.get(en) + ""))
     { lazy = false; 
       start = st + 3; 
       rname = lexicals.get(st + 1) + "";
+      rulestart = st + 2; 
     } 
     else if ("helper".equals(lexicals.get(st) + "") && 
-        en - st >= 9 && "context".equals(lexicals.get(st + 1) + "") && 
+        en - st >= 9 && 
+        "context".equals(lexicals.get(st + 1) + "") && 
         ";".equals(lexicals.get(en) + "")) 
-    { String ent = lexicals.get(st + 2) + ""; 
-      String attname = lexicals.get(st + 5) + ""; 
-      if ("(".equals(lexicals.get(st + 6) + ""))
-      { // helper operation of an entity or built-in type
-        for (int p = st+7; p < en; p++) 
-        { String ps = lexicals.get(p) + ""; 
-          if (ps.equals("="))
-          { for (int q = p-1; q > st+7; q--) 
-            { String qs = lexicals.get(q) + ""; 
-              if (qs.equals(":"))
-              { Vector params = parseAttributeDecs(st+7,q-2,entities,types);
-                Type atType = parseType(q+1,p-1,entities,types); 
-                Expression defn = parse_ATLexpression(0,p+1,en-1,entities,types); 
-                BehaviouralFeature bf = new BehaviouralFeature(attname,params,true,atType); 
- 
-                Expression resexp = new BasicExpression("result"); 
-                resexp.setType(atType); 
-                resexp.setUmlKind(Expression.VARIABLE); 
-                defn.setBrackets(true); 
-                Expression post = new BinaryExpression("=", resexp, defn); 
-                
-                bf.setPost(post); // actually to return the defn value
-                Entity entet = (Entity) ModelElement.lookupByName(ent,entities); 
-                bf.setOwner(entet); 
-                if (entet != null) 
-                { entet.addOperation(bf); } 
-                
-                mod.addOperation(bf);   
-                return null; 
-              } 
-            } 
-          } 
-        } 
-      } 
+    { // helper context Ent def : name ( pars ) : Rtype = expr ;
+      // helper context Ent def : name : Rtype = expr ; 
 
-      // helper 'attribute' - actually a cached operation
-      for (int r = st+7; r < en; r++) 
-      { String rs = lexicals.get(r) + ""; 
-        if (rs.equals("="))
-        { Type restype = parseType(st+7,r-1,entities,types); 
+      for (int t = st + 2; t < en; t++) 
+      { String lext = lexicals.get(t) + ""; 
+        if ("def".equals(lext))
+        { Type contextType = 
+                  parseType(st+2,t-1,entities,types); 
+          
+          String ent = contextType + ""; 
+          String attname = lexicals.get(t + 2) + ""; 
+
+          System.out.println(">>> Helper operation " + attname + " on context " + contextType); 
+
+          if ("(".equals(lexicals.get(t + 3) + ""))
+          { // helper operation of an entity or built-in type
+            for (int p = t+4; p < en; p++) 
+            { String ps = lexicals.get(p) + ""; 
+              if (ps.equals("="))
+              { for (int q = p-1; q > t+4; q--) 
+                { String qs = lexicals.get(q) + ""; 
+                  if (qs.equals(":"))
+                  { Vector params = 
+                      parseAttributeDecs(t+4,q-2,entities,types);
+                    Type atType = 
+                      parseType(q+1,p-1,entities,types); 
+                    Expression defn = 
+                      parse_ATLexpression(0,p+1,en-1,entities,types); 
+                    if (defn == null) 
+                    { System.err.println("!! Invalid ATL expression: " + showLexicals(p+1,en-1)); 
+                      return null; 
+                    }
+                    BehaviouralFeature bf = 
+                      new BehaviouralFeature(
+                            attname,params,true,atType);
+                    // bf.setElementType(atType.getElementType());  
+                    Expression resexp = new BasicExpression("result"); 
+                    resexp.setType(atType); 
+                    resexp.setUmlKind(Expression.VARIABLE); 
+                    defn.setBrackets(true); 
+                    Entity entet = (Entity) ModelElement.lookupByName(ent,entities); 
+                    bf.setOwner(entet); 
+                    Expression newdefn = defn; 
+
+                    if (entet != null) 
+                    { entet.addOperation(bf); } 
+                    else if (contextType != null)
+                    { Attribute newpar = 
+                        new Attribute("atlself", 
+                          contextType, ModelElement.INTERNAL); 
+                      bf.addFirstParameter(newpar);
+                      BasicExpression var = 
+                        new BasicExpression(newpar); 
+                      newdefn = 
+                        defn.substituteEq("self", var);                        
+                    }
+                    Expression post = 
+                      new BinaryExpression("=", resexp, 
+                                           newdefn); 
+                
+                    bf.setPost(post); 
+                    mod.addOperation(bf);   
+                    return null; 
+                  } 
+                }
+              }
+            } 
+          }
+          else  
+          { // helper context Type def : nme : Rtype = expr ; 
+            // helper 'attribute' - actually a cached operation
+            for (int r = t+4; r < en; r++) 
+            { String rs = lexicals.get(r) + ""; 
+              if (rs.equals("="))
+              { Type restype = parseType(t+4,r-1,entities,types);
+
+                System.out.println(">>> Helper attribute " + attname + " on context " + contextType); 
+ 
           // String atttype = lexicals.get(st + 7) + ""; 
-          Expression exp = parse_ATLexpression(0,r+1,en-1,entities,types); 
+                Expression exp = parse_ATLexpression(0,r+1,en-1,entities,types); 
           // Attribute att = new Attribute(attname,new Type(atttype,null),ModelElement.INTERNAL); 
           // att.setInitialExpression(exp); 
           // Entity ente = (Entity) ModelElement.lookupByName(ent,entities); 
           // att.setEntity(ente); 
           // mod.addAttribute(att);
-          BehaviouralFeature bf = new BehaviouralFeature(attname,new Vector(),true,restype); 
-          Expression resexp = new BasicExpression("result"); 
-          resexp.setType(restype); 
-          resexp.setUmlKind(Expression.VARIABLE); 
-          exp.setBrackets(true); 
-          Expression post = new BinaryExpression("=", resexp, exp); 
-          bf.setPost(post); // actually to return the defn value
-          Entity ente = (Entity) ModelElement.lookupByName(ent,entities); 
-          bf.setOwner(ente); 
-          if (ente != null) 
-          { ente.addOperation(bf); } 
-          mod.addOperation(bf);  
-          bf.setCached(true); 
-          return null;
+                BehaviouralFeature bf = new BehaviouralFeature(attname,new Vector(),true,restype); 
+                Expression resexp = new BasicExpression("result"); 
+                resexp.setType(restype); 
+                resexp.setUmlKind(Expression.VARIABLE); 
+                exp.setBrackets(true); 
+                Expression post = new BinaryExpression("=", resexp, exp); 
+                Entity ente = (Entity) ModelElement.lookupByName(ent,entities); 
+                bf.setOwner(ente); 
+                Expression newpost = post; 
+
+                if (ente != null) 
+                { ente.addOperation(bf); }
+                else 
+                { Attribute selfatt = 
+                    new Attribute("atlself",contextType,ModelElement.INTERNAL);  
+                  bf.addFirstParameter(selfatt); 
+                  BasicExpression var = 
+                    new BasicExpression(selfatt); 
+                  newpost = post.substituteEq("self", var); 
+                } 
+
+                bf.setPost(newpost);
+           
+                mod.addOperation(bf);  
+                bf.setCached(true); 
+                return null;
+              }
+            }
+          }
         }  
       } 
       return null; 
     } 
     else if ("helper".equals(lexicals.get(st) + "") && 
-        en - st >= 7 && "def".equals(lexicals.get(st + 1) + "") && 
+        en - st >= 7 && 
+        "def".equals(lexicals.get(st + 1) + "") && 
         ";".equals(lexicals.get(en) + "")) 
-    { String attname = lexicals.get(st + 3) + ""; 
+    { // helper def : name() : rt = expr ; 
+
+      String attname = lexicals.get(st + 3) + ""; 
       if ("(".equals(lexicals.get(st + 4) + ""))
       { // helper operation of the ATL module
+
+        System.out.println(">>> Helper module operation " + attname); 
+
         for (int pp = st+4; pp < en; pp++) 
         { String pps = lexicals.get(pp) + ""; 
           if (pps.equals("="))
-          { for (int qq = pp-1; qq > st+7; qq--) 
+          { for (int qq = pp-1; qq > st+4; qq--) 
             { String qqs = lexicals.get(qq) + ""; 
               if (qqs.equals(":"))
               { Vector params = parseAttributeDecs(st+4,qq-2,entities,types);
                 Type atType = parseType(qq+1,pp-1,entities,types); 
                 Expression defn = parse_ATLexpression(0,pp+1,en-1,entities,types); 
                 BehaviouralFeature bf = new BehaviouralFeature(attname,params,true,atType); 
+                bf.setElementType(atType.getElementType()); 
                 Expression resexp = new BasicExpression("result"); 
                 resexp.setType(atType); 
                 resexp.setUmlKind(Expression.VARIABLE); 
@@ -8169,33 +8391,42 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
           } 
         } 
       } 
+      else 
+      { // static attribute of the module 
+        // helper def : name : rt = expr ;
 
-      // static attribute of the module 
-      for (int rr = st+5; rr < en; rr++) 
-      { String rrs = lexicals.get(rr) + ""; 
-        if (rrs.equals("="))
-        { Type hrestype = parseType(st+5,rr-1,entities,types); 
-          Expression hexp = parse_ATLexpression(0,rr+1,en-1,entities,types); 
-          Attribute att = new Attribute(attname,hrestype,ModelElement.INTERNAL); 
-          att.setInitialExpression(hexp); 
-          mod.addAttribute(att);
+        System.out.println(">>> Helper module attribute " + attname); 
+
+        for (int rr = st+5; rr < en; rr++) 
+        { String rrs = lexicals.get(rr) + ""; 
+          if (rrs.equals("="))
+          { Type hrestype = parseType(st+5,rr-1,entities,types); 
+            Expression hexp = parse_ATLexpression(0,rr+1,en-1,entities,types); 
+            Attribute att = new Attribute(attname,hrestype,ModelElement.INTERNAL); 
+            att.setElementType(hrestype.getElementType()); 
+            att.setInitialExpression(hexp); 
+            mod.addAttribute(att);
           // att.setOwner(mod); 
-          att.setStatic(true); 
-          return null;
+            att.setStatic(true); 
+            return null;
+          }
         }  
       } 
-      return null; 
+      // return null; 
     } 
     else 
     { return null; }  
 
-    System.out.println("Parsing rule " + rname); 
+    System.out.println(">>> Parsing ATL rule " + rname + 
+                       " " + lexicals.get(rulestart)); 
 
-    if ("(".equals(lexicals.get(st+2) + ""))
-    { for (int d = st + 2; d < en; d++)
+    if ("(".equals(lexicals.get(rulestart) + ""))
+    { for (int d = rulestart; d < en; d++)
       { String sd = lexicals.get(d) + "";
         if (sd.equals("{"))
-        { Vector params = parseAttributeDecs(st+3,d-2,entities,types);
+        { Vector params = 
+            parseAttributeDecs(rulestart+1,d-2,
+                               entities,types);
           for (int f = d+1; f < en; f++)
           { String sf = lexicals.get(f) + "";
             if ("using".equals(sf))
@@ -8249,10 +8480,27 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       }
     }
 
+    boolean isExtension = false; 
+    String extendedRule = null; 
 
-    for (int i = start; i < en; i++) 
+    start = rulestart; 
+    for (int i = rulestart; i < en; i++) 
+    { String lex = lexicals.get(i) + ""; 
+
+      if ("extends".equals(lex)) 
+      { isExtension = true;
+        extendedRule = lexicals.get(i+1) + ""; 
+      } 
+
+      if ("{".equals(lex))
+      { start = i; 
+        break; 
+      } 
+    } // skip over extends.
+
+    for (int i = start+1; i < en; i++) 
     { if ("to".equals(lexicals.get(i) + "")) 
-      { InPattern fromClause = parseFromClause(start, i - 1, entities, types); 
+      { InPattern fromClause = parseFromClause(start+1, i - 1, entities, types); 
         for (int j = i; j < en; j++) 
         { if ("do".equals(lexicals.get(j) + "") && "{".equals(lexicals.get(j+1) + "") && 
               "}".equals(lexicals.get(en-1) + "") )
@@ -8261,9 +8509,14 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
             MatchedRule mr = new MatchedRule(lazy, unique); 
             mr.setInPattern(fromClause); 
             mr.setOutPattern(toClause);
-            System.out.println("Action block: " + stat); 
+            System.out.println(">> Rule action block: " + stat); 
             mr.setActionBlock(stat);  
-            mr.setName(rname); 
+            mr.setName(rname);
+            if (isExtension)
+            { MatchedRule suprule = 
+                mod.getRuleByName(extendedRule); 
+              mr.setSuperRule(suprule); 
+            }  
             return mr;
           } 
         }  
@@ -8272,9 +8525,15 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
         mr.setInPattern(fromClause); 
         mr.setOutPattern(toClause); 
         mr.setName(rname); 
+        if (isExtension)
+        { MatchedRule suprule = 
+                mod.getRuleByName(extendedRule); 
+          mr.setSuperRule(suprule); 
+        }  
         return mr; 
       }  
     } 
+
     return null; 
   } 
 
@@ -8291,7 +8550,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       } 
     }
 
-    // System.out.println("Parsing from clause"); 
+    System.out.println(">>> Parsing from clause " + showLexicals(st,en)); 
       
     InPattern res = new InPattern(); 
     InPatternElement ipe = null; 
@@ -8335,7 +8594,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       } 
     }
 
-    System.out.println("Parsing to clause"); 
+    System.out.println(">>> Parsing to clause " + showLexicals(st,en)); 
       
     OutPattern res = new OutPattern(); 
     Vector patts = parse_to_clause(st + 1, dec_end, entities, types); 
@@ -8348,7 +8607,42 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
   { Vector res = new Vector(); 
     if (st >= en) { return res; } 
 
-    if (":".equals(lexicals.get(st + 1) + "") && 
+    if (st + 5 <= en && 
+        ":".equals(lexicals.get(st + 1) + "") && 
+        "mapsTo".equals(lexicals.get(st + 3) + "") && 
+        "(".equals(lexicals.get(st + 5) + "") )
+    { String att = lexicals.get(st) + ""; 
+      String typ = lexicals.get(st + 2) + ""; 
+      Entity ent =
+          (Entity) ModelElement.lookupByName(typ,entities);
+      Type tt; 
+      if (ent != null)
+      { tt = new Type(ent); } 
+      else 
+      { tt = new Type(typ,null); }
+
+      String mappedFromVar = lexicals.get(st + 4) + ""; 
+      
+      for (int i = st + 6; i <= en; i++) 
+      { if (")".equals(lexicals.get(i) + "") && 
+            (i == en ||
+             ",".equals(lexicals.get(i + 1) + "") &&
+             ":".equals(lexicals.get(i + 3) + "") 
+            ) )
+        { Vector outpat = parse_out_pattern(st + 6, i - 1, entities, types);
+          Attribute var = new Attribute(att,tt,ModelElement.INTERNAL);  
+          OutPatternElement ope = new OutPatternElement(var); 
+          ope.setBindings(outpat);
+          ope.setMappedFrom(mappedFromVar); 
+
+          if (i < en) 
+          { res = parse_to_clause(i + 2, en, entities, types); }   
+          res.add(0,ope); 
+          return res; 
+        } 
+      } 
+    } 
+    else if (":".equals(lexicals.get(st + 1) + "") && 
         "(".equals(lexicals.get(st + 3) + "") )
     { String att = lexicals.get(st) + ""; 
       String typ = lexicals.get(st + 2) + ""; 

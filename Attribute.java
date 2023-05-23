@@ -1489,12 +1489,16 @@ public class Attribute extends ModelElement
   public String getDefaultValue()
   { if (initialValue != null && !initialValue.equals(""))
     { return initialValue; } 
-    return type.getDefault();
+    if (type != null) 
+    { return type.getDefault(); } 
+    return "null"; 
   } 
 
   public int syntacticComplexity()
   { // att : T = init
-    int result = 3 + type.complexity(); 
+    int result = 3; 
+	if (type != null)  
+	{ result = result + type.complexity(); }  
     if (initialExpression != null) 
     { result += initialExpression.syntacticComplexity(); } 
     return result; 
@@ -1660,7 +1664,7 @@ public class Attribute extends ModelElement
 
   public void generateJava6(PrintWriter out)
   { if (visibility == PRIVATE)
-    { out.print("  private "); }
+    { out.print("  protected "); }
     else if (visibility == PUBLIC)
     { out.print("  public "); } 
     else if (visibility == PROTECTED)
@@ -3078,6 +3082,10 @@ public class Attribute extends ModelElement
   public String addremOperation(Entity ent)
   { String res = "";
     if (!isMultiple()) { return res; }
+    if (isSet() || isSequence()) { }
+    else 
+    { return res; } 
+
     Type eType = elementType; 
     if (eType == null) 
     { eType = type.elementType; } 
@@ -3116,6 +3124,9 @@ public class Attribute extends ModelElement
   public String addremOperationJava6(Entity ent)
   { String res = "";
     if (!isMultiple()) { return res; }
+    if (isSet() || isSequence()) { }
+    else 
+    { return res; } 
     Type eType = elementType; 
     if (elementType == null) 
     { eType = new Type("OclAny", null); } 
@@ -3155,6 +3166,9 @@ public class Attribute extends ModelElement
     // System.out.println("$$$ type = " + type + " elementType = " + elementType); 
 
     if (!isMultiple()) { return res; }
+    if (isSet() || isSequence()) { }
+    else 
+    { return res; } 
 
     Type eType = elementType; 
     if (eType == null || "OclAny".equals("" + eType)) 
@@ -3197,6 +3211,9 @@ public class Attribute extends ModelElement
   public String addremOperationCSharp(Entity ent)
   { String res = "";
     if (!isMultiple()) { return res; }
+    if (isSet() || isSequence()) { }
+    else 
+    { return res; } 
     Type eType = elementType; 
     if (eType == null) 
     { eType = type.elementType; } 
@@ -3234,6 +3251,9 @@ public class Attribute extends ModelElement
   public String addremOperationCPP(Entity ent)
   { String res = "";
     if (!isMultiple()) { return res; }
+    if (isSet() || isSequence()) { }
+    else 
+    { return res; } 
     Type eType = elementType; 
     if (elementType == null) 
     { eType = new Type("OclAny", null); } 
@@ -4085,9 +4105,13 @@ public class Attribute extends ModelElement
     return res; 
   }
 
+  // for Controller operations
   public Vector addremOperationsCode(Entity ent)
   { Vector res = new Vector();
     if (!isMultiple()) { return res; }
+    if (isSet() || isSequence()) { } 
+    else 
+    { return res; }
 
     String et = "Object"; 
     if (elementType != null) 
@@ -4223,6 +4247,10 @@ public class Attribute extends ModelElement
   public Vector addremOperationsCodeJava6(Entity ent)
   { Vector res = new Vector();
     if (!isMultiple()) { return res; }
+    if (isSet() || isSequence()) { } 
+    else 
+    { return res; }
+
     String et = "Object"; 
     if (elementType != null) 
     { et = elementType.getJava6(); } 
@@ -4504,6 +4532,9 @@ public class Attribute extends ModelElement
   public Vector addremOperationsCodeCSharp(Entity ent)
   { Vector res = new Vector();
     if (!isMultiple()) { return res; }
+    if (isSet() || isSequence()) { } 
+    else 
+    { return res; }
     String et = "object"; 
     if (elementType != null) 
     { et = elementType.getCSharp(); } 
@@ -4637,6 +4668,9 @@ public class Attribute extends ModelElement
   public Vector addremOperationsCodeCPP(Entity ent)
   { Vector res = new Vector();
     if (!isMultiple()) { return res; }
+    if (isSet() || isSequence()) { } 
+    else 
+    { return res; }
     String et = "void*"; 
     if (elementType != null) 
     { et = elementType.getCPP(); } 

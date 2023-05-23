@@ -3107,7 +3107,10 @@ public void generateCUIcode(PrintWriter out)
 
       for (int i = 0; i < ownedAttribute.size(); i++) 
       { Attribute par = (Attribute) ownedAttribute.get(i); 
-        res = res + "    attribute " + par.getName() + " : " + par.getType() + ";\n";  
+        res = res + "    attribute " + par.getName() + " : " + par.getType(); 
+        if (par.getInitialExpression() != null)
+        { res = res + " := " + par.getInitialExpression(); } 
+        res = res + ";\n";  
       }  // and result
 
       /* for (int i = 0; i < ownedAttribute.size(); i++) 

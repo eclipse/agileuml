@@ -919,6 +919,32 @@ abstract class Expression
     return "(" + tname + ") " + se;   // for strings or objects
   }
 
+  public String unwrapJava6(String se)
+  { return Expression.unwrapJava6(se,type); } 
+
+  public static String unwrapJava6(String se, Type typ)
+  { if (typ == null)
+    { return se; }  // should never happen
+    String tname = typ.getName();
+    if (tname.equals("double"))
+    { return "((Double) " + se + ").doubleValue()"; } 
+    if (tname.equals("boolean"))
+    { return "((Boolean) " + se + ").booleanValue()"; } 
+    if (tname.equals("int"))
+    { return "((Integer) " + se + ").intValue()"; }
+    if (tname.equals("long"))
+    { return "((Long) " + se + ").longValue()"; }
+    if (typ.isEnumerated())
+    { return "((" + typ.getName() + ") " + se + ")"; } 
+
+    if (tname.equals("Set") || tname.equals("Sequence"))
+    { return se; }  // "(Vector) " + se
+    if (tname.equals("OclAny"))
+    { return se; } 
+
+    return "(" + tname + ") " + se;   // for strings or objects
+  }
+
   public static String convertCSharp(String se, Type t)
   { if (t == null)
     { return se; }  // should never happen
@@ -1331,6 +1357,37 @@ abstract class Expression
       else if (tname.equals("long"))
       { return "new Long(" + qf + ")"; }
       else // int or enumeration
+      { return "new Integer(" + qf + ")"; }
+    }
+    else // assume already an object
+    { return qf; }
+  }
+
+  public String wrapJava6(String qf)
+  { return Expression.wrapJava6(type, qf); } 
+
+  public static String wrapJava6(Type t, String qf)
+  { if (t != null)
+    { if (t.isEntity()) 
+      { return qf; } 
+      String tname = t.getName();
+      if (tname.equals("Set") || tname.equals("Sequence") ||
+          tname.equals("String") || tname.equals("Map") ||
+          tname.equals("Function") || 
+          tname.equals("OclType") ||
+          tname.equals("OclDate") || 
+          tname.equals("OclIterator") || 
+          tname.equals("OclAny"))
+      { return qf; }
+      if (tname.equals("boolean"))
+      { return "new Boolean(" + qf + ")"; }
+      else if (tname.equals("double"))
+      { return "new Double(" + qf + ")"; }
+      else if (tname.equals("long"))
+      { return "new Long(" + qf + ")"; }
+      else if (t.isEnumeration())
+      { return qf; }
+      else // int 
       { return "new Integer(" + qf + ")"; }
     }
     else // assume already an object

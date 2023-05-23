@@ -3,7 +3,7 @@ import java.util.Set;
 import java.util.HashSet; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003-2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -20,7 +20,9 @@ public class ATLModule
   Vector operations = new Vector(); // of BehaviouralFeature
 
   public ATLModule(String nme)
-  { name = nme; } 
+  { name = nme; 
+    elements = new Vector(); 
+  } 
 
   public String getName()
   { return name; } 
@@ -33,6 +35,16 @@ public class ATLModule
 
   public void addElements(Vector elems) 
   { elements.addAll(elems); }
+
+  public MatchedRule getRuleByName(String nme)
+  { for (int i = 0; i < elements.size(); i++) 
+    { ModuleElement me = (ModuleElement) elements.get(i);
+      if (me instanceof MatchedRule && 
+          me.getName().equals(nme))
+      { return (MatchedRule) me; } 
+    }
+    return null; 
+  } 
 
   public void addAttribute(Attribute att)
   { attributes.add(att); } 
@@ -56,7 +68,7 @@ public class ATLModule
       res = res + "  helper "; 
       if (ent != null) 
       { res = res + "context " + ent; } 
-      res = res + " def : " + attname + " : " + t + " = " + e + ";\n"; 
+      res = res + " def : " + attname + " : " + t + " := " + e + ";\n"; 
     } 
 
     for (int i = 0; i < operations.size(); i++) 
@@ -68,7 +80,7 @@ public class ATLModule
       res = res + "  helper "; 
       if (ent != null) 
       { res = res + "context " + ent; } 
-      res = res + " def : " + bf.getSignature() + " : " + t + " = " + e + ";\n"; 
+      res = res + " def : " + bf.getSignature() + " : " + t + "\n  { " + e + " };\n\n"; 
     } 
 
     for (int i = 0; i < elements.size(); i++) 
@@ -118,6 +130,9 @@ public class ATLModule
   { UseCase res = new UseCase(name,null);
     res.addPostconditions(inits); 
 
+    System.out.println("#Attributes = " + attributes.size()); 
+    System.out.println("#Operations = " + operations.size()); 
+
     java.util.Map interp = getInterpretation(); 
  
     for (int j = 0; j < attributes.size(); j++) 
@@ -137,21 +152,33 @@ public class ATLModule
         bf.setCached(true); // helper attributes act like cached operations in ATL
       }  
       else 
-      { res.addAttribute(att); }  
+      { res.addAttribute(att);
+        System.out.println(">>> Added attribute " + att + " with initial expression " + att.getInitialExpression());
+      }
+    }  
 
-      for (int k = 0; k < operations.size(); k++) 
-      { BehaviouralFeature op = (BehaviouralFeature) operations.get(k); 
-        Entity oent = op.getEntity(); 
-        if (oent == null) 
-        { res.addOperation(op); }  
-        Statement act = op.getActivity(); 
-        if (act != null) 
-        { Statement stat = act.replaceModuleReferences(res); 
-          op.setActivity(stat); 
-        } 
+    for (int k = 0; k < operations.size(); k++) 
+    { BehaviouralFeature op = (BehaviouralFeature) operations.get(k); 
+      Entity oent = op.getEntity(); 
+
+      System.out.println(">>> operation " + op + " has entity " + oent); 
+
+      if (oent == null) 
+      { res.addOperation(op); }  
+      
+      Expression pst = op.getPost(); 
+      if (pst != null) 
+      { Expression newpost = pst.replaceModuleReferences(res); 
+        op.setPost(newpost); 
+      } 
+
+      Statement act = op.getActivity(); 
+      if (act != null) 
+      { Statement stat = act.replaceModuleReferences(res); 
+        op.setActivity(stat); 
       } 
     } 
-
+ 
     for (int i = 0; i < elements.size(); i++) 
     { ModuleElement me = (ModuleElement) elements.get(i);
       if (me instanceof MatchedRule) 
@@ -160,7 +187,8 @@ public class ATLModule
         if (rule.isLazy() || rule.isCalled())
         { rule.toOperation(types,entities,interp,res); } 
         else 
-        { Constraint con = rule.toConstraint(types,entities,interp,res); 
+        { Constraint con = 
+            rule.toConstraint(types,entities,interp,res); 
           res.addPostcondition(con);
         }  
       } 
@@ -212,7 +240,7 @@ public class ATLModule
         if (stat != null) 
         { streads.addAll(stat.readFrame()); } 
 
-        System.out.println("Read frame of rule " + i + " is: " + streads); 
+        System.out.println(">> Read frame of rule " + i + " is: " + streads); 
 
         for (int j = i; j < elements.size(); j++) 
         { MatchedRule mr2 = (MatchedRule) elements.get(j); 

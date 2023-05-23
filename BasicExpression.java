@@ -1610,8 +1610,8 @@ class BasicExpression extends Expression
     { Vector pars = new Vector(); 
       for (int i = 0; i < parameters.size(); i++) 
       { Expression par = (Expression) parameters.get(i); 
-        par.dereference(ref); 
-        pars.add(par); 
+        Expression par1 = par.dereference(ref); 
+        pars.add(par1); 
       } 
       res.parameters = pars; 
     } 
@@ -3545,8 +3545,10 @@ class BasicExpression extends Expression
 
     if (parameters != null) 
     { for (int i = 0; i < parameters.size(); i++) 
-      { Expression ep = (Expression) parameters.get(i); 
-        ep.typeCheck(types,entities,contexts,env); 
+      { if (parameters.get(i) instanceof Expression)
+        { Expression ep = (Expression) parameters.get(i); 
+          ep.typeCheck(types,entities,contexts,env);
+        } 
       } 
     }
 
@@ -5268,7 +5270,8 @@ class BasicExpression extends Expression
     if (parameters != null)
     { for (int i = 0; i < parameters.size(); i++)
       { Expression par = (Expression) parameters.get(i); 
-        parString = parString + par.classqueryFormJava6(env,local); 
+        parString = parString + 
+                    par.classqueryFormJava6(env,local); 
         if (i < parameters.size() - 1)
         { parString = parString + ","; } 
       }
@@ -5927,7 +5930,9 @@ class BasicExpression extends Expression
           String indopt = evaluateString("-",ind,"1"); 
           if (se.elementType != null)
           { if (Type.isPrimitiveType(se.elementType))
-            { return se.unwrap(se.queryFormJava6(env,local) + ".get(" + indopt + ")"); }
+            { return se.unwrapJava6(
+                se.queryFormJava6(env,local) + ".get(" + indopt + ")"); 
+            }
             else 
             { String jtype = se.elementType.getJava6(); 
               return "((" + jtype + ") " + se.queryFormJava6(env,local) + ".get(" + indopt + "))"; 
@@ -5971,11 +5976,11 @@ class BasicExpression extends Expression
           
           if (arrayIndex.type != null && arrayIndex.type.getName().equals("int"))
 		  // if (Type.isPrimitiveType(type))
-          { return unwrap(data + ".get(" + indopt + ")"); }
+          { return unwrapJava6(data + ".get(" + indopt + ")"); }
           else if (arrayIndex.type != null && arrayIndex.type.getName().equals("String"))
-          { return unwrap(data + ".get(" + ind + ")"); }
+          { return unwrapJava6(data + ".get(" + ind + ")"); }
           else if (Type.isPrimitiveType(type))
-          { return unwrap(data + ".get(" + indopt + ")"); } 
+          { return unwrapJava6(data + ".get(" + indopt + ")"); } 
           String jType = type.getJava6(); 
           return "((" + jType + ") " + data + ".get(" + indopt + "))"; 
         }         
@@ -6059,7 +6064,7 @@ class BasicExpression extends Expression
         /* String objstype = objectRef.type.getName();
         if (objectRef.isMultiple())
         { return "Set.intersection(" + pre + 
-                                   ",Controller.inst()." + objstype.toLowerCase() + "s).size() == 0"; 
+                    ",Controller.inst()." + objstype.toLowerCase() + "s).size() == 0"; 
         } 
         else
         { return "!(Controller.inst()." + objstype.toLowerCase() + 
@@ -6206,7 +6211,7 @@ class BasicExpression extends Expression
         { if ("String".equals("" + et) || et.isEntity())
           { return "((" + et + ") Set." + data + "(" + pre + "))"; }
           else 
-          { return unwrap("Set." + data + "(" + pre + ")"); } 
+          { return unwrapJava6("Set." + data + "(" + pre + ")"); } 
         } 
         else 
         { return "Set." + data + "(" + pre + ")"; }
@@ -6271,7 +6276,7 @@ class BasicExpression extends Expression
                    data + ".charAt(" + indopt + "))";
             } 
             else if (Type.isPrimitiveType(type))
-            { return unwrap(data + ".get(" + indopt + ")"); } 
+            { return unwrapJava6(data + ".get(" + indopt + ")"); } 
             String jType = type.getJava6(); 
             return "((" + jType + ") " + data + ".get(" + indopt + "))"; 
           } 
@@ -6291,7 +6296,7 @@ class BasicExpression extends Expression
                    nme + "." + data + ".charAt(" + indopt + "))";
             } 
             else if (Type.isPrimitiveType(type))
-            { return unwrap(nme + "." + data + ".get(" + indopt + ")"); } 
+            { return unwrapJava6(nme + "." + data + ".get(" + indopt + ")"); } 
             else 
             { String jtype = type.getJava6();
               return "((" + jtype + ") " + nme + "." + data + ".get(" + indopt + "))"; 
@@ -6303,8 +6308,8 @@ class BasicExpression extends Expression
         String var = findEntityVariable(env);
 
         String res = var + ".get" + data + "()";
-		if (var == null || var.length() == 0)
-		{ res = data; }
+        if (var == null || var.length() == 0)
+        { res = data; }
 
         if (arrayIndex != null) 
         { String etype = elementType + ""; 
@@ -6318,7 +6323,7 @@ class BasicExpression extends Expression
                    res + ".charAt(" + indopt + "))";
           } 
           else if (Type.isPrimitiveType(type))
-          { return unwrap(var + ".get" + data + "().get(" + indopt + ")"); } 
+          { return unwrapJava6(var + ".get" + data + "().get(" + indopt + ")"); } 
           String jType = type.getJava6(); 
           return "((" + jType + ") " + var + ".get" + data + "().get(" + indopt + "))"; 
         } // not for strings; unwrap primitives 
@@ -6373,7 +6378,7 @@ class BasicExpression extends Expression
                  res + ".charAt(" + indopt + "))";
         } 
         else if (Type.isPrimitiveType(type))
-        { return unwrap(res + ".get(" + indopt + ")"); } 
+        { return unwrapJava6(res + ".get(" + indopt + ")"); } 
         String jType = type.getJava6(); 
         return "((" + jType + ") " + res + ".get(" + indopt + "))"; 
       } 
@@ -8668,8 +8673,8 @@ public Statement generateDesignSubtract(Expression rhs)
     if (isEvent) // an operation of entity
     { 
       if (entity == null) 
-      { System.err.println("WARNING: No defined entity for operation: " + this); 
-        System.err.println("Assuming it is a global operation (use case, library op, etc)");
+      { System.err.println("! WARNING: No defined entity for operation: " + this); 
+        System.err.println("! Assuming it is a global operation (use case, library op, etc)");
          
         if (objectRef == null) 
         { return cont + "." + data + pars + ";"; } 
@@ -8749,7 +8754,7 @@ public Statement generateDesignSubtract(Expression rhs)
     { String pre = objectRef.queryFormJava6(env,local);
       Type otype = objectRef.type; 
       if (otype == null) 
-      { System.err.println("ERROR: no type for " + objectRef); 
+      { System.err.println("!! ERROR: no type for " + objectRef); 
         return ""; 
       } 
       String eename = otype.getName(); 
@@ -9297,8 +9302,8 @@ public Statement generateDesignSubtract(Expression rhs)
     if (ind != null) 
     { String indopt = ind.queryFormJava6(env,local);
       String lexp = obj.queryFormJava6(env,local); 
-      String wind = ind.wrap(indopt); 
-      String wval = var.wrap(val2); 
+      String wind = ind.wrapJava6(indopt); 
+      String wval = var.wrapJava6(val2); 
  
       if (ind.type != null && "String".equals(ind.type.getName()))
       { return "((HashMap) " + lexp + ").put(" + wind + ", " + wval + ");"; }  // map[ind] = val2 
@@ -9646,7 +9651,7 @@ public Statement generateDesignSubtract(Expression rhs)
   }  // arrayIndex != null: setdata(var,arrayIndex,val) ?
 
   public String updateFormEqJava6(java.util.Map env,
-                             String val2, Expression var, boolean local)
+             String val2, Expression var, boolean local)
   { String cont = "Controller.inst()"; 
 
     // System.out.println("#### " + this + " := " + val2); 
@@ -9734,8 +9739,8 @@ public Statement generateDesignSubtract(Expression rhs)
     if (umlkind == VARIABLE)
     { if (arrayIndex != null) 
       { String indopt = arrayIndex.queryFormJava6(env,local); 
-        String wind = arrayIndex.wrap(indopt); 
-        String wval = var.wrap(val2); 
+        String wind = arrayIndex.wrapJava6(indopt); 
+        String wval = var.wrapJava6(val2); 
         if ("String".equals(arrayIndex.type + "") ||
             BasicExpression.isMapAccess(this))
         { return data + ".put(" + wind + ", " + wval + ");"; }  // map[index] = val2 
@@ -9754,8 +9759,8 @@ public Statement generateDesignSubtract(Expression rhs)
       { if (local) 
         { if (arrayIndex != null)
           { String ind = arrayIndex.queryFormJava6(env,local); 
-            String wind = arrayIndex.wrap(ind); 
-            String wval = var.wrap(val2); 
+            String wind = arrayIndex.wrapJava6(ind); 
+            String wval = var.wrapJava6(val2); 
             if (isQualified() || 
                 "String".equals(arrayIndex.type + "") ||
                 BasicExpression.isMapAccess(this))
@@ -12331,7 +12336,7 @@ public Statement generateDesignSubtract(Expression rhs)
   }
 
   private String updateFormSubtractJava6(java.util.Map env,
-                              String val2, Expression exp2, boolean local)
+              String val2, Expression exp2, boolean local)
   { String cont = "Controller.inst()"; 
 
     if (umlkind == VALUE || umlkind == CONSTANT || umlkind == QUERY ||

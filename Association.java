@@ -6654,7 +6654,7 @@ String qual = "";
     if (entity1.isInterface())
     { e1ref = e1name + "." + e1name + "Ops"; } 
 
-    String attx = nme + "xx";
+    String attx = nme + "__x";
     String addtest = ""; 
     if (ordered) 
     { addtest = ""; } // duplicates allowed
@@ -6747,7 +6747,7 @@ String qual = "";
         
       Constraint cnew = cc.matches("add",nme,ent,attx,event);
 
-      System.out.println("Match of " + cc + " with add" + nme + " ==> " + cnew); 
+      System.out.println(">>> Match of " + cc + " with add" + nme + " ==> " + cnew); 
  
       // if (cc.matches(nme,val))
       if (cnew != null)
@@ -6810,14 +6810,14 @@ String qual = "";
     // { ptype = "HashSet"; } 
 
     String unionop = " public void union" + role2 + "(" + ename + " " + ex +
-             ", " + ptype + " " + role2 + "x)\n" +
-             "  { for (Object _o : " + role2 + "x)\n" +
+             ", " + ptype + " " + role2 + "__x)\n" +
+             "  { for (Object _o : " + role2 + "__x)\n" +
              "    { " + e2name + " " + e2x + role2 + " = (" + e2name + ") _o;\n" + 
              "      add" + role2 + "(" + ex + ", " + e2x + role2 + ");\n" + 
              "     } } \n\n";   
     String subtractop = " public void subtract" + role2 + "(" + ename + " " + ex +
-             ", " + ptype + " " + role2 + "x)\n" +
-             "  { for (Object _o : " + role2 + "x)\n" +
+             ", " + ptype + " " + role2 + "__x)\n" +
+             "  { for (Object _o : " + role2 + "__x)\n" +
              "    { " + e2name + " " + e2x + role2 + " = (" + e2name + ") _o;\n" +
              "      remove" + role2 + "(" + ex + ", " + e2x + role2 + ");\n" +
              "     } } \n\n";

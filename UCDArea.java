@@ -13973,13 +13973,16 @@ public void produceCUI(PrintWriter out)
     return res; 
   }
 
-  public void loadATL()
-  { 
-    for (int i = 0; i < entities.size(); i++) 
+  public void introducePrimaryKeyToAllClasses()
+  { for (int i = 0; i < entities.size(); i++) 
     { Entity ee = (Entity) entities.get(i); 
       if (ee.isRoot() && !ee.isInterface())
       { ee.addPrimaryKey("$id"); } 
     } 
+  }
+
+  public void loadATL()
+  { introducePrimaryKeyToAllClasses(); 
 
     Compiler2 c = new Compiler2(); 
     BufferedReader br = null;
@@ -13991,7 +13994,7 @@ public void produceCUI(PrintWriter out)
     try
     { br = new BufferedReader(new FileReader(file)); }
     catch (FileNotFoundException _e)
-    { System.out.println("File not found: " + file);
+    { System.out.println("!! ERROR: File not found: " + file);
       return; 
     }
 
@@ -14001,7 +14004,7 @@ public void produceCUI(PrintWriter out)
     while (!eof)
     { try { s = br.readLine(); }
       catch (IOException _ex)
-      { System.out.println("Reading ATL file failed.");
+      { System.out.println("!! ERROR: Reading ATL file failed.");
         return; 
       }
       if (s == null) 
@@ -14015,14 +14018,14 @@ public void produceCUI(PrintWriter out)
     }
     c.nospacelexicalanalysis(atlstring); 
 
-    System.out.println(); 
+    System.out.println(">>> Using entities: " + entities); 
     
         //  c.displaylexs(); 
-    System.out.println(); 
+    System.out.println(">>> Using types: " + types); 
 
     ATLModule mr = c.parseATL(entities,types); 
     if (mr == null) 
-    { System.err.println("Invalid syntax"); 
+    { System.err.println("!! Invalid syntax in " + atlstring); 
       return; 
     } 
     mr.typeCheck(types,entities); 
@@ -14070,11 +14073,13 @@ public void produceCUI(PrintWriter out)
 
 
     System.out.println(); 
+    System.out.println(mr);  
     System.out.println(); 
 
 
     UseCase uc = mr.toUML(types,entities,res);  
-    System.out.println(mr);  
+    System.out.println(">>> Use case of module " + mr.getName() + " is: "); 
+    System.out.println(uc.getKM3());  
 
     java.util.Map clones = new java.util.HashMap(); 
 
@@ -14082,8 +14087,8 @@ public void produceCUI(PrintWriter out)
 
     try
     { chout = new PrintWriter(
-                              new BufferedWriter(
-                                new FileWriter("output/measures.txt")));
+                new BufferedWriter(
+                  new FileWriter("output/measures.txt")));
     } catch (Exception _u) { return; } 
 
     int topscount = 0; 
@@ -14106,9 +14111,7 @@ public void produceCUI(PrintWriter out)
       { // System.out.println("Call graph of entity " + ent.getName() + " is: " + cg); 
         mres = Map.union(mres,cg); 
       }  
-    } 
-
-        
+    }        
 
     Vector newrules = mr.dataAnalysis();
     if (newrules.size() > 0) 
@@ -14119,7 +14122,7 @@ public void produceCUI(PrintWriter out)
       uc = mr2.toUML(types,entities,res); 
     } 
 
-    System.out.println("UML-RSDS for ATL code is: " + uc.display());  
+    System.out.println(">>> UML-RSDS for ATL code is: " + uc.display());  
     uc.typeCheck(types,entities); 
     // useCases.add(uc);
     addGeneralUseCase(uc);  
@@ -16637,7 +16640,8 @@ public void produceCUI(PrintWriter out)
     for (int i = 0; i < entities.size(); i++)
     { Entity en = (Entity) entities.get(i);
 
-      if (en.isAbstract() || en.isInterface())
+      if (en.isAbstract() || en.isInterface() || 
+          en.isComponent() || en.isExternal())
       { continue; }
 
       String ename = en.getName();
@@ -17549,8 +17553,18 @@ public void produceCUI(PrintWriter out)
                                  rectcount);
         rectcount++;
         rd.setLabel(tt.getName());
-        rd.setModelElement(tt); 
+        Type existingtype = 
+          (Type) ModelElement.lookupByName(
+                                 tt.getName(),types); 
+        if (existingtype != null) 
+        { existingtype.mergeTypes(tt); }
+        else 
+        { existingtype = tt;
+          types.add(tt);
+        } 
+        rd.setModelElement(existingtype); 
         visuals.add(rd); 
+        System.out.println(">>> Added type " + existingtype); 
       } 
     } 
 
@@ -26655,7 +26669,12 @@ public void produceCUI(PrintWriter out)
   } 
   
   public void qualityCheck()
-  { Vector enames = new Vector(); 
+  { for (int i = 0; i < types.size(); i++) 
+    { Type tt = (Type) types.get(i); 
+      tt.checkEnumerationNames(); 
+    } 
+
+    Vector enames = new Vector(); 
     for (int i = 0; i < entities.size(); i++) 
     { Entity ent = (Entity) entities.get(i); 
 
@@ -26696,7 +26715,7 @@ public void produceCUI(PrintWriter out)
 
       ent.checkOperationVariableUse(); 
 
-      ent.checkAttributeNames(); 
+      ent.checkFeatureNames(); 
 
       System.err.println();       
       System.out.println(); 

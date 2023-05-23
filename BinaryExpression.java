@@ -5241,7 +5241,7 @@ public boolean conflictsWithIn(String op, Expression el,
       if (left.isRef())
       { return getind; } 
 
-      System.out.println(">********> Type of " + this + " is " + typ); 
+      // System.out.println(">********> Type of " + this + " is " + typ); 
 
       return "((" + typ + ") " + getind + ")"; 
     } 
@@ -5304,7 +5304,7 @@ public boolean conflictsWithIn(String op, Expression el,
 
       if (left.isMultiple()) {} 
       else 
-      { System.err.println("ERROR: LHS of " + this + " must be collection");                             
+      { System.err.println("!! ERROR: LHS of " + this + " must be collection");                             
         JOptionPane.showMessageDialog(null, "ERROR: LHS of " + this + " must be collection",                               
 		                              "Type error", JOptionPane.ERROR_MESSAGE);
       }
@@ -5649,7 +5649,7 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("|A") || operator.equals("->any"))   
     { String getany = anyQueryFormJava6(lqf,rqf,rprim,env,local); 
       if (Type.isPrimitiveType(type))
-      { return unwrap(getany); } 
+      { return unwrapJava6(getany); } 
        
       return "((" + typ + ") " + getany + ")"; 
     } 
@@ -5726,17 +5726,23 @@ public boolean conflictsWithIn(String op, Expression el,
     if (operator.equals("->at") && type != null)
     { String getind = lqf + ".get(" + rqf + " - 1)"; 
       String ind = lqf + ".get(" + rqf + ")"; 
-      
+     
+      System.out.println(">> ->at expression " + this + 
+                         " " + typ); 
+ 
       if ("String".equals(left.type + ""))
       { return "(" + lqf + ".charAt(" + rqf + " - 1) + \"\")"; }  // and for Java6, 7, etc. 
       else if (left.type != null && left.type.isMapType())
-      { return "((" + typ + ") " + ind + ")"; }
+      { if (left.getElementType() != null) 
+        { typ = left.getElementType().getJava6(); } 
+        return "((" + typ + ") " + ind + ")"; 
+      }
       
       if (left.isRef())
       { return getind; } 
 
       if (Type.isPrimitiveType(type))
-      { return unwrap(getind); } 
+      { return unwrapJava6(getind); } 
 
       return "((" + typ + ") " + getind + ")"; 
     } 
@@ -6005,7 +6011,7 @@ public boolean conflictsWithIn(String op, Expression el,
       { ls = left.makeSequenceJava6(lqf); } 
       String lw = ""; 
       if (lprim) 
-      { lw = left.wrap(lqf); } // only if left primitive
+      { lw = left.wrapJava6(lqf); } // only if left primitive
       else 
       { lw = lqf; } 
 
@@ -13416,7 +13422,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     { String val1 = left.queryFormJava6(env,local);
       BasicExpression ber = (BasicExpression) right;
       if (left.isPrimitive())
-      { val1 = left.wrap(val1); }
+      { val1 = left.wrapJava6(val1); }
       return ber.updateFormJava6(env,operator,val1,left,local);
     }
     else if ((operator.equals("->includes") || 
@@ -13425,7 +13431,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       BasicExpression bel = (BasicExpression) left;
 
       if (right.isPrimitive())
-      { val3 = right.wrap(val3); }
+      { val3 = right.wrapJava6(val3); }
       if (operator.equals("->includes"))
       { return bel.updateFormJava6(env,":",val3,right,local); }
       else 

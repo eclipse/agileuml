@@ -1,7 +1,7 @@
 import java.util.Vector; 
 
 /******************************
-* Copyright (c) 2003,2019 Kevin Lano
+* Copyright (c) 2003-2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -73,8 +73,10 @@ public class OutPattern
                                  java.util.Map interp, UseCase uc) 
   { Expression res = new BasicExpression(true); 
     for (int i = 0; i < elements.size(); i++)
-    { OutPatternElement ipe = (OutPatternElement) elements.get(i); 
-      Expression exp = ipe.toExpression(types,ents,env,interp,uc);
+    { OutPatternElement ipe = 
+        (OutPatternElement) elements.get(i); 
+      Expression exp = 
+        ipe.toExpression(types,ents,env,interp,uc);
       if (exp != null) 
       { res = Expression.simplify("&",res,exp,null); } 
     } 

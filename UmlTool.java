@@ -941,6 +941,11 @@ public void findPlugins()
     introprim.addActionListener(this);
     refineMenu.add(introprim);
 
+    JMenuItem introprimAll = 
+      new JMenuItem("Add all Primary Keys"); 
+    introprimAll.addActionListener(this);
+    refineMenu.add(introprimAll);
+
     JMenuItem remmanymany = 
       new JMenuItem("Remove *--* Associations"); 
     remmanymany.addActionListener(this);
@@ -2532,6 +2537,10 @@ public void findPlugins()
       else if (label.equals("Introduce Foreign Key"))
       { introduceForeignKeys();
         repaint();
+      }
+      else if (label.equals("Add all Primary Keys"))
+      { ucdArea.introducePrimaryKeyToAllClasses(); 
+        repaint(); 
       }
       else if (label.equals("Introduce Primary Key"))
       { introducePrimaryKeys(); 

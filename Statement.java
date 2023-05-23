@@ -1197,7 +1197,7 @@ abstract class Statement implements Cloneable
   public String processPreTermsJava6(Statement post, Vector preterms, java.util.Map env, boolean local)
   { if (preterms.size() > 0) 
     { Statement newpost = (Statement) post.clone(); 
-      System.out.println("PRE terms: " + preterms); 
+      System.out.println(">> PRE terms: " + preterms); 
       Vector processed = new Vector(); 
       Vector localatts = new Vector(); 
 
@@ -4605,7 +4605,7 @@ class WhileStatement extends Statement
         { lr = lt.right.queryFormJava6(env, local); } 
         Type et = lt.right.getElementType();   
         if (et == null) 
-        { System.err.println("Warning!: no element type for loop iteration " + this); 
+        { System.err.println("!! Warning!: no element type for loop iteration " + this); 
           et = new Type("OclAny", null); 
         } 
         String etr = et.typeWrapperJava6();  // ok for String, entities, collections. Not prims
@@ -11088,7 +11088,7 @@ class AssignStatement extends Statement
       return res; 
     } // For type.isEntityType() or strings, clone the rhs. 
     else if (copyValue && lhs.getType() != null && lhs.getType().isMapType())
-    { String res = "  " + lhs + " = new Vector();\n"; 
+    { String res = "  " + lhs + " = new HashMap();\n"; 
       res = res + "  " + lhs + ".putAll(" + rhs.queryForm(env,local) + ");\n"; 
       return res; 
     } // For type.isEntityType() or strings, clone the rhs. 
@@ -11144,6 +11144,17 @@ class AssignStatement extends Statement
   public String updateFormJava6(java.util.Map env, boolean local)
   { // if (entity != null) 
     // { env.put(entity.getName(),"this"); } 
+    if (copyValue && type != null && type.isMapType())
+    { String res = "  " + type.getJava6() + " " + lhs + " = new HashMap();\n"; 
+      res = res + "  " + lhs + ".putAll(" + rhs.queryFormJava6(env,local) + ");\n"; 
+      return res; 
+    } // For type.isEntityType() or strings, clone the rhs. 
+    else if (copyValue && lhs.getType() != null && lhs.getType().isMapType())
+    { String res = "  " + lhs + " = new HashMap();\n"; 
+      res = res + "  " + lhs + ".putAll(" + rhs.queryFormJava6(env,local) + ");\n"; 
+      return res; 
+    } // For type.isEntityType() or strings, clone the rhs. 
+
     if (copyValue && type != null && type.isCollectionType())
     { String res = "  " + type.getJava6() + " " + lhs + " = " + type.initialValueJava6() + ";\n"; 
       res = res + "  " + lhs + ".addAll(" + rhs.queryFormJava6(env,local) + ");\n"; 

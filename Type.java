@@ -1753,19 +1753,51 @@ public class Type extends ModelElement
     return false;  
   } 
 
+  public Type mergeTypes(Type t)
+  { if (values == null && t.values == null)
+    { if (t.getName().equals(getName()))
+      { return this; } // same type
+      return null; 
+    } 
+
+    if (values != null && t.values != null)
+    { if (("" + t.values).equals("" + values))
+      { return this; } 
+      
+      Vector mergedValues = new Vector(); 
+      for (int i = 0; i < values.size(); i++) 
+      { String val = (String) values.get(i); 
+        if (mergedValues.contains(val)) { } 
+        else 
+        { mergedValues.add(val); } 
+      }  
+      for (int i = 0; i < t.values.size(); i++) 
+      { String val = (String) t.values.get(i); 
+        if (mergedValues.contains(val)) { } 
+        else 
+        { mergedValues.add(val); } 
+      }  
+      values = mergedValues; 
+      return this; 
+    } 
+    return null; 
+  }   
+  // could also get closest common ancestor of 2 entities
+
   public Type mergeType(Type t)
   { if (values == null && t.values == null)
     { if (t.getName().equals(getName()))
       { return this; } // same type
       return null; 
     } 
+
     if (values != null && t.values != null)
     { if (("" + t.values).equals("" + values))
       { return this; } 
       return null; 
     } 
     return null; 
-  }         // could also get closest common ancestor of 2 entities
+  }   
 
   public Vector getValues()
   { return values; }
@@ -2917,9 +2949,10 @@ public class Type extends ModelElement
   }
 
   public String getDefaultJava6()
-  { if (values == null) // so not enumerated
-    { String nme = getName();
-      if (nme.equals("String"))
+  { String nme = getName();
+      
+    if (values == null) // so not enumerated
+    { if (nme.equals("String"))
       { return "\"\""; }
       if (nme.equals("boolean"))
       { return "false"; }
@@ -2938,7 +2971,7 @@ public class Type extends ModelElement
       return "null";    // for class types, functions
     }
     else if (values.size() > 0) 
-    { return (String) values.get(0); } 
+    { return nme + "." + ((String) values.get(0)); } 
     return "null"; 
   }
   // Set and Sequence?
@@ -4317,6 +4350,23 @@ public class Type extends ModelElement
     return false; 
   } 
 
+  public void checkEnumerationNames()
+  { if (values == null) 
+    { return; } 
+
+    String nme = getName(); 
+
+    for (int i = 0; i < values.size(); i++) 
+    { String aname = (String) values.get(i);
+      
+      if ("_".equals(aname))
+      { System.err.println("! Warning: underscore is not a valid enumeration literal name by itself, in type " + nme); } 
+
+      if (Compiler2.isAnyKeyword(aname))
+      { System.err.println("!! ERROR: keyword " + aname + " is not a valid name, in type " + nme); } 
+    } 
+  } 
+
   public static Type typeCheck(Type t, Vector types, Vector entities)
   { // instantiate t by any generic types
     if (t == null) 
@@ -4550,15 +4600,56 @@ public class Type extends ModelElement
 
   public static Type determineMapElementType(Vector exps)
   { Type expectedType = null;
-    for (int j = 0; j < exps.size(); j++)
-    { Expression be = (Expression) exps.get(j);
+
+    Vector elems = new Vector();
+    Vector types = new Vector();  
+    boolean allEnumtypes = true; 
+
+    for (int i = 0; i < exps.size(); i++)
+    { Expression be = (Expression) exps.get(i);
       Type t = be.getElementType();
-
-      if (t == null && be instanceof BinaryExpression &&
+      if (be instanceof BinaryExpression &&
           "|->".equals(((BinaryExpression) be).operator))
-      { t = ((BinaryExpression) be).getRight().getType(); }
+      { be = ((BinaryExpression) be).getRight(); 
+        t = be.getType(); 
+      } 
+      elems.add(be); 
+      types.add(t); 
+      if (t != null && t.isEnumeration())
+      { } 
+      else 
+      { allEnumtypes = false; } 
+    } 
 
-      System.out.println(">> Element type of " + be + " = " + t); 
+    if (types.size() > 0 && allEnumtypes) // find 1 they are all in
+    { for (int i = 0; i < types.size(); i++) 
+      { Type actualType = (Type) types.get(i); 
+
+        boolean allIn = true; 
+
+        for (int j = 0; j < elems.size(); j++) 
+        { String ex = elems.get(j) + ""; 
+          if (actualType.hasValue(ex)) { } 
+          else 
+          { allIn = false; } 
+        }
+
+        if (allIn) 
+        { // correct the types
+          for (int j = 0; j < elems.size(); j++) 
+          { Expression expr = (Expression) elems.get(j);
+            expr.type = actualType; 
+          } 
+
+          return actualType; 
+        }  
+      } 
+    }
+
+
+    for (int j = 0; j < elems.size(); j++)
+    { Expression be = (Expression) elems.get(j);
+      Type t = (Type) types.get(j); 
 
       if (t == null) { }
       else if (expectedType == null)
@@ -4575,7 +4666,14 @@ public class Type extends ModelElement
         { expectedType = t; }
         else if (tn2.equals("long") && tn1.equals("int"))
         { expectedType = t; }
-        else if (tn1.equals(tn2)) { } 
+        else if (tn1.equals(tn2)) { }
+        else if (expectedType.isEnumeration() && 
+                 t.isEnumeration())
+        { if (expectedType.hasValue(be + ""))
+          { } 
+          else
+          { expectedType = t; } 
+        }  
         else 
         { Entity e1 = expectedType.getEntity(); 
           Entity e2 = t.getEntity(); 
@@ -4598,14 +4696,56 @@ public class Type extends ModelElement
 
   public static Type determineMapKeyType(Vector exps)
   { Type expectedType = null;
-    for (int j = 0; j < exps.size(); j++)
-    { Expression be = (Expression) exps.get(j);
+
+    Vector elems = new Vector();
+    Vector types = new Vector();  
+    boolean allEnumtypes = true; 
+
+    for (int i = 0; i < exps.size(); i++)
+    { Expression be = (Expression) exps.get(i);
       Type t = be.getElementType();
-
-      if (t == null && be instanceof BinaryExpression &&
+      if (be instanceof BinaryExpression &&
           "|->".equals(((BinaryExpression) be).operator))
-      { t = ((BinaryExpression) be).getLeft().getType(); }
+      { be = ((BinaryExpression) be).getLeft(); 
+        t = be.getType(); 
+      } 
+      elems.add(be); 
+      types.add(t); 
+      if (t != null && t.isEnumeration())
+      { } 
+      else 
+      { allEnumtypes = false; } 
+    } 
 
+    if (types.size() > 0 && allEnumtypes) // find 1 they are all in
+    { for (int i = 0; i < types.size(); i++) 
+      { Type actualType = (Type) types.get(i); 
+
+        boolean allIn = true; 
+
+        for (int j = 0; j < elems.size(); j++) 
+        { String ex = elems.get(j) + ""; 
+          if (actualType.hasValue(ex)) { } 
+          else 
+          { allIn = false; } 
+        }
+
+        if (allIn) 
+        { // correct the types
+          for (int j = 0; j < elems.size(); j++) 
+          { Expression expr = (Expression) elems.get(j);
+            expr.type = actualType; 
+          } 
+
+          return actualType; 
+        }  
+      } 
+    }
+
+    for (int j = 0; j < elems.size(); j++)
+    { Expression be = (Expression) elems.get(j);
+      Type t = (Type) types.get(j); 
+      
       System.out.println(">> Key type of " + be + " = " + t); 
 
       if (t == null) { }
@@ -4624,6 +4764,13 @@ public class Type extends ModelElement
         else if (tn2.equals("long") && tn1.equals("int"))
         { expectedType = t; }
         else if (tn1.equals(tn2)) { } 
+        else if (expectedType.isEnumeration() && 
+                 t.isEnumeration())
+        { if (expectedType.hasValue(be + ""))
+          { } 
+          else
+          { expectedType = t; } 
+        }
         else 
         { Entity e1 = expectedType.getEntity(); 
           Entity e2 = t.getEntity(); 

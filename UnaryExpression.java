@@ -3101,7 +3101,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "(" + qf + " != null)"; } 
 
     if (operator.equals("->oclType"))
-    { String wqf = argument.wrap(qf); 
+    { String wqf = argument.wrapJava6(qf); 
       return "(" + wqf + ").getClass()"; 
     }  
 
@@ -3250,7 +3250,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       { if ("String".equals("" + et) || et.isEntity())
         { return "((" + et + ") " + bqf + ")"; }
         else if (Type.isPrimitiveType(et))
-        { return unwrap(bqf); }
+        { return unwrapJava6(bqf); }
         else 
         { return bqf; }  
       } 
@@ -3296,7 +3296,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       { if ("String".equals("" + et) || et.isEntity())
         { return "((" + et + ") Set." + data + "(" + pre + "))"; }
         else if (Type.isPrimitiveType(et))
-        { return unwrap("Set." + data + "(" + pre + ")"); } 
+        { return unwrapJava6("Set." + data + "(" + pre + ")"); } 
         else 
         { String elemTyp = et.getJava6(); 
           return "((" + elemTyp + ") Set." + data + "(" + pre + "))"; 
@@ -3314,7 +3314,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { if ("String".equals("" + et) || et.isEntity())
       { return "((" + et + ") Set." + data + "(" + pre + "))"; }
       else if (Type.isPrimitiveType(et)) 
-      { return unwrap("Set." + data + "(" + pre + ")"); } 
+      { return unwrapJava6("Set." + data + "(" + pre + ")"); } 
       else 
       { String elemTyp = et.getJava6(); 
         return "((" + elemTyp + ") Set." + data + "(" + pre + "))"; 

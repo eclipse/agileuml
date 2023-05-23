@@ -1873,11 +1873,31 @@ public class Entity extends ModelElement implements Comparable
     return dups; 
   } 
 
+  public void checkFeatureNames()
+  { checkAttributeNames(); 
+    checkAssociationNames(); 
+    // checkOperationNames(); 
+  } 
+
   public void checkAttributeNames()
   { Vector allatts = allAttributes(); 
     for (int i = 0; i < allatts.size(); i++) 
     { Attribute att = (Attribute) allatts.get(i); 
       String aname = att.getName();
+      
+      if ("_".equals(aname))
+      { System.err.println("! Warning: underscore is not a valid name by itself"); } 
+
+      if (Compiler2.isAnyKeyword(aname))
+      { System.err.println("!! ERROR: keyword " + aname + " is not a valid feature name"); } 
+    } 
+  } 
+
+  public void checkAssociationNames()
+  { Vector allatts = allAssociations(); 
+    for (int i = 0; i < allatts.size(); i++) 
+    { Association att = (Association) allatts.get(i); 
+      String aname = att.getRole2();
       
       if ("_".equals(aname))
       { System.err.println("! Warning: underscore is not a valid name by itself"); } 
@@ -7679,18 +7699,18 @@ public class Entity extends ModelElement implements Comparable
       "  public static " + ename + " parseXML(XMLNode obj)\n" + 
       "  { if (obj == null) { return null; }\n"; 
 
-    Attribute pk = getPrincipalPrimaryKey(); 
-    if (pk == null) 
+    // Attribute pk = getPrincipalPrimaryKey(); 
+    // if (pk == null) 
     { res = res +       
         "    " + ename + " " + ex + " = new " + ename + "();\n" + 
         "    Controller.inst().add" + ename + "(" + ex + ");\n"; 
     }
-    else 
-    { String pkname = pk.getName(); 
-      res = res + 
-        "    String _id = obj.getString(\"" + pkname + "\");\n" + 
-        "    " + ename + " " + ex + " = Controller.inst().create" + ename + "(_id);\n";
-    } 
+    // else 
+    // { String pkname = pk.getName(); 
+    //   res = res + 
+    //     "    String _id = obj.getString(\"" + pkname + "\");\n" + 
+    //     "    " + ename + " " + ex + " = Controller.inst().create" + ename + "(_id);\n";
+    // } 
  
     Vector allatts = getAllAttributes(); 
 
@@ -7701,7 +7721,11 @@ public class Entity extends ModelElement implements Comparable
       String tname = t.getName(); 
       String decoder = "get" + Named.capitalise(tname); 
 
-      if (t.isEntity() && !(t.getEntity().isAbstract()))
+      if ("$id".equals(attname))
+      { res = res + "    " + ex + ".$id = " + 
+          "\"\" + ((int) Math.floor(Math.random() * 10000000));\n";
+      }
+      else if (t.isEntity() && !(t.getEntity().isAbstract()))
       { res = res + "    " + ex + "." + attname + " = " + tname + ".parseXML(obj.getSubnodeWithTag(\"" + attname + "\"));\n";
       } 
       else if (t.isSequence() && 

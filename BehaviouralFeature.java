@@ -1550,6 +1550,15 @@ public class BehaviouralFeature extends ModelElement
     { parameters.add(att); } 
   } 
 
+  public void addFirstParameter(Attribute att)
+  { if (att == null) 
+    { return; } 
+
+    if (hasParameter(att.getName())) { } 
+    else 
+    { parameters.add(0,att); } 
+  } 
+
   public void addTypeParameter(Type t)
   { if (typeParameters.contains(t)) { } 
     else
@@ -3662,7 +3671,25 @@ public class BehaviouralFeature extends ModelElement
       { res = res + par1; } 
     }
     return res;
-  } // works for Java, Java6
+  } // works for Java
+
+  private String parcatsJava6()
+  { // Assumes all parameters are primitive/strings
+    String res = "";
+    if (parameters.size() == 1)
+    { Attribute p = (Attribute) parameters.get(0);
+      return Expression.wrapJava6(p.getType(), p.getName());
+    }
+    for (int i = 0; i < parameters.size(); i++)
+    { Attribute par = (Attribute) parameters.get(i);
+      String par1 = par.getName(); 
+      if (i < parameters.size() - 1) 
+      { res = res + par1 + " + \", \" + "; } 
+      else 
+      { res = res + par1; } 
+    }
+    return res;
+  } // works for Java6
 
   private String parcatsCSharp()
   { // Assumes all parameters are primitive/strings
@@ -6602,11 +6629,11 @@ public class BehaviouralFeature extends ModelElement
       
     if (ent != null && isCached() && parameters.size() == 0 && instanceScope) 
     { ent.addAux("  private static java.util.Map " + opname + "_cache = new java.util.HashMap();\n");
-      String wresult = Expression.wrap(resultType, "result"); 
+      String wresult = Expression.wrapJava6(resultType, "result"); 
       return header + 
              "  Object _cached_result = " + opname + "_cache.get(this);\n" + 
              "  if (_cached_result != null)\n" + 
-             "  { result = " + Expression.unwrap("_cached_result", resultType) + "; }\n" + 
+             "  { result = " + Expression.unwrapJava6("_cached_result", resultType) + "; }\n" + 
              "  else \n" + 
              "  { " + querycases + "\n" + 
              "    " + opname + "_cache.put(this, " + wresult + ");\n" + 
@@ -6619,12 +6646,13 @@ public class BehaviouralFeature extends ModelElement
     { ent.addAux("  private " + statc + " java.util.Map " + opname + "_cache = new java.util.HashMap();\n");
       // Attribute par = (Attribute) parameters.get(0);  
       // String par1 = par.getName();
-      String wpar1 = parcats(); // Expression.wrap(par.getType(), par1);  
-      String wresult = Expression.wrap(resultType, "result"); 
+      String wpar1 = parcatsJava6(); 
+         // Expression.wrap(par.getType(), par1);  
+      String wresult = Expression.wrapJava6(resultType, "result"); 
       return header + 
              "  Object _cached_result = " + opname + "_cache.get(" + wpar1 + ");\n" + 
              "  if (_cached_result != null)\n" + 
-             "  { result = " + Expression.unwrap("_cached_result", resultType) + "; }\n" + 
+             "  { result = " + Expression.unwrapJava6("_cached_result", resultType) + "; }\n" + 
              "  else \n" + 
              "  { " + querycases + "\n" + 
              "    " + opname + "_cache.put(" + wpar1 + ", " + wresult + ");\n" + 
