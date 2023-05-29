@@ -1609,7 +1609,14 @@ public class Attribute extends ModelElement
   } 
     
   public void generateJava(PrintWriter out)
-  { if (visibility == PRIVATE)
+  { String nme = getName();
+
+    Entity ent = getOwner(); 
+    String ename = null; 
+    if (ent != null) 
+    { ename = ent.getName(); }  
+
+    if (visibility == PRIVATE)
     { out.print("  private "); }
     else if (visibility == PUBLIC)
     { out.print("  public "); } 
@@ -1623,9 +1630,9 @@ public class Attribute extends ModelElement
     type.generateJava(out);
     // if (isFinal()) 
     if (initialValue != null) 
-    { out.print(getName() + " = " + initialValue + ";"); } 
+    { out.print(nme + " = " + initialValue + ";"); } 
     else 
-    { out.print(getName() + ";"); }
+    { out.print(nme + ";"); }
     if (kind == ModelElement.INTERNAL)
     { out.println(" // internal"); }
     else if (kind == ModelElement.SEN)
@@ -1634,7 +1641,16 @@ public class Attribute extends ModelElement
     { out.println(" // actuator"); }
     else if (kind == ModelElement.DERIVED)
     { out.println(" // derived"); } 
-  }
+ 
+    if (!instanceScope && ename != null &&
+        initialExpression != null) 
+    { java.util.Map env = new java.util.HashMap(); 
+      out.println("  static { "); 
+      out.println("    " + ename + "." + nme + " = " + 
+            initialExpression.queryForm(env,true) + ";"); 
+      out.println("  }\n"); 
+    }  
+ }
 
   public String methodDeclarationJava6()
   { String res = ""; 
@@ -1662,8 +1678,10 @@ public class Attribute extends ModelElement
   } 
 
 
-  public void generateJava6(PrintWriter out)
-  { if (visibility == PRIVATE)
+  public void generateJava6(String ename, PrintWriter out)
+  { String nme = getName(); 
+
+    if (visibility == PRIVATE)
     { out.print("  protected "); }
     else if (visibility == PUBLIC)
     { out.print("  public "); } 
@@ -1676,9 +1694,9 @@ public class Attribute extends ModelElement
     if (isFinal()) { out.print("final "); } 
     type.generateJava6(out);
     if (isFinal() && initialValue != null) 
-    { out.print(getName() + " = " + initialValue + ";"); } 
+    { out.print(nme + " = " + initialValue + ";"); } 
     else 
-    { out.print(getName() + ";"); }
+    { out.print(nme + ";"); }
     if (kind == ModelElement.INTERNAL)
     { out.println(" // internal"); }
     else if (kind == ModelElement.SEN)
@@ -1687,10 +1705,20 @@ public class Attribute extends ModelElement
     { out.println(" // actuator"); }
     else if (kind == ModelElement.DERIVED)
     { out.println(" // derived"); } 
+
+    if (!instanceScope && initialExpression != null) 
+    { java.util.Map env = new java.util.HashMap(); 
+      out.println("  static { "); 
+      out.println("    " + ename + "." + nme + " = " + 
+            initialExpression.queryFormJava6(env,true) + ";"); 
+      out.println("  }\n"); 
+    }  
   }
 
-  public void generateJava7(PrintWriter out)
-  { if (visibility == PRIVATE)
+  public void generateJava7(String ename, PrintWriter out)
+  { String nme = getName(); 
+
+    if (visibility == PRIVATE)
     { out.print("  private "); }
     else if (visibility == PUBLIC)
     { out.print("  public "); } 
@@ -1703,9 +1731,9 @@ public class Attribute extends ModelElement
     if (isFinal()) { out.print("final "); } 
     type.generateJava7(out);  // ,elementType
     if (isFinal() && initialValue != null) 
-    { out.print(getName() + " = " + initialValue + ";"); } 
+    { out.print(nme + " = " + initialValue + ";"); } 
     else 
-    { out.print(getName() + ";"); }
+    { out.print(nme + ";"); }
     if (kind == ModelElement.INTERNAL)
     { out.println(" // internal"); }
     else if (kind == ModelElement.SEN)
@@ -1713,7 +1741,15 @@ public class Attribute extends ModelElement
     else if (kind == ModelElement.ACT)
     { out.println(" // actuator"); }
     else if (kind == ModelElement.DERIVED)
-    { out.println(" // derived"); } 
+    { out.println(" // derived"); }
+
+    if (!instanceScope && initialExpression != null) 
+    { java.util.Map env = new java.util.HashMap(); 
+      out.println("  static { "); 
+      out.println("    " + ename + "." + nme + " = " + 
+            initialExpression.queryFormJava7(env,true) + ";"); 
+      out.println("  }\n"); 
+    }   
   }
 
   public String methodDeclarationCSharp()

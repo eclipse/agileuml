@@ -3963,7 +3963,8 @@ private void parseOpDecs(int st, int en, Vector entities, Vector types, Behaviou
   } 
   bcnt = 0;  
 
-  System.out.println(">>> Operation " + bf + " has " + np + " Parameters, and contextual entities: " + entities); 
+  System.out.println(">>> Operation " + bf + " has " + np + " Parameters"); 
+  // , and contextual entities: " + entities); 
   
 
   Vector res = new Vector();
@@ -10455,15 +10456,21 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
   { // System.out.println(Double.MAX_VALUE); 
     Compiler2 c = new Compiler2();
 
-    c.nospacelexicalanalysis("not a & b"); 
+    /* c.nospacelexicalanalysis("not a & b"); 
 
     Expression xx = c.parseExpression(); 
     System.out.println(xx); 
-    System.out.println(xx.toAST()); 
+    System.out.println(xx.toAST()); */ 
+
+    c.nospacelexicalanalysis("h17 = \"http://terminology.h17.org/CodeSystem/v3-RoleCode\""); 
+
+    System.out.println(c.lexicals); 
 
     // c.nospacelexicalanalysis("sq->iterate(v; acc = 0 | v + acc)"); 
 
-    // Expression xx = c.parseExpression(); 
+    Expression zz = c.parseExpression(); 
+
+    System.out.println(zz); 
 
     // c.nospacelexicalanalysis("E<String,int>"); 
      

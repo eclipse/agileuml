@@ -12519,7 +12519,8 @@ public void produceCUI(PrintWriter out)
 
     for (int i = 0; i < entities.size(); i++)
     { Entity e = (Entity) entities.get(i);
-      res = res + e.generateSaveModel1();
+      if (e.isTarget())
+      { res = res + e.generateSaveModel1(); }
     }
 
     res = res + "    saveModel2(out);\n" + 
@@ -12530,7 +12531,8 @@ public void produceCUI(PrintWriter out)
     res = res + "  {\n";  
     for (int i = 0; i < entities.size(); i++)
     { Entity e = (Entity) entities.get(i);
-      res = res + e.generateSaveModel2Java6();
+      if (e.isTarget())
+      { res = res + e.generateSaveModel2Java6(); }
     }
 
     return res + "    out.close(); \n" + 
@@ -17454,12 +17456,10 @@ public void produceCUI(PrintWriter out)
       }
       else if (s.startsWith("import ")) 
       { System.out.println(">> Import directive: " + s); } 
-      else 
-      { int cindex = s.indexOf("//"); 
-        if (cindex > 0) 
-        { s = s.substring(0, cindex); } 
-        xmlstring = xmlstring + s + " "; 
-      } 
+      else if (s.startsWith("//"))
+      { System.out.println(">> Comment: " + s); }
+      else  
+      { xmlstring = xmlstring + s + " "; } 
       linecount++; 
     }
 
@@ -17488,6 +17488,27 @@ public void produceCUI(PrintWriter out)
 
     System.out.println(">>> Identified classes: " + xentities); 
     System.out.println(">>> Identified types: " + xtypes); 
+
+    // As bases for parsing, also include oldentities and 
+    // oldtypes which are not in xentities, xtypes
+
+    for (int i = 0; i < oldentities.size(); i++) 
+    { Entity oldent = (Entity) oldentities.get(i); 
+      String oldname = oldent.getName(); 
+      Entity ex = 
+        (Entity) ModelElement.lookupByName(oldname,xentities); 
+      if (ex == null)
+      { xentities.add(oldent); } 
+    } 
+
+    for (int i = 0; i < oldtypes.size(); i++) 
+    { Type oldtyp = (Type) oldtypes.get(i); 
+      String oldname = oldtyp.getName(); 
+      Type tx = 
+        (Type) ModelElement.lookupByName(oldname,xtypes); 
+      if (tx == null)
+      { xtypes.add(oldtyp); } 
+    } 
  
     Vector items = comp.parseKM3(xentities,xtypes,
                                  pregens,preassocs,pnames); 
@@ -17537,7 +17558,8 @@ public void produceCUI(PrintWriter out)
       { yval = Integer.parseInt(ey); } 
 
       addEntity(enode, xval, yval);
-      addOperationActivities(enode);   
+      addOperationActivities(enode); 
+         // But not for existing entities  
       ecount++; 
     } 
 

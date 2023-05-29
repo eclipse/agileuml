@@ -3350,7 +3350,7 @@ class BasicExpression extends Expression
       umlkind = VALUE;
       multiplicity = ModelElement.ONE;
       data = "" + Expression.convertLong(data); 
-      System.out.println("**Type of " + data + " is long");
+      // System.out.println("**Type of " + data + " is long");
       return true;
     }
 
@@ -3372,7 +3372,7 @@ class BasicExpression extends Expression
       multiplicity = ModelElement.ONE;
       // System.out.println("**Type of " + data + " is String");
       if (arrayIndex != null) 
-      { // System.out.println("It has array index " + arrayIndex); 
+      { // System.out.println(">>It has array index " + arrayIndex); 
         arrayIndex.typeCheck(types,entities,contexts,env); 
       }
       return true;
@@ -3440,6 +3440,8 @@ class BasicExpression extends Expression
         "OclDate".equals(data) || "OclAny".equals(data) || 
         "OclType".equals(data) || "OclFile".equals(data) || 
         "OclRandom".equals(data) ||
+        "SQLStatement".equals(data) || 
+        "OclDatasource".equals(data) || 
         "OclAttribute".equals(data) || 
         "OclOperation".equals(data) || 
         Type.isOclExceptionType(data) ||  
@@ -3474,12 +3476,12 @@ class BasicExpression extends Expression
 
     if ("self".equals(data))
     { if (contexts.size() == 0)
-      { System.err.println("WARNING!: Invalid occurrence of self, not in instance context"); 
+      { System.err.println("!WARNING!: Invalid occurrence of self, not in instance context"); 
         // JOptionPane.showMessageDialog(null, "ERROR: Invalid occurrence of self, not in instance context", "Semantic error", JOptionPane.ERROR_MESSAGE); 
       }
       else 
       { if (contexts.size() > 1)
-        { System.err.println("WARNING!: Ambiguous occurrence of self, contexts: " + contexts);
+        { System.err.println("!WARNING!: Ambiguous occurrence of self, contexts: " + contexts);
         } 
         entity = (Entity) contexts.get(0); // the most local context
         type = new Type(entity); 
@@ -3495,7 +3497,7 @@ class BasicExpression extends Expression
     if ("super".equals(data))
     { if (contexts.size() == 0)
       { if (objectRef == null) 
-        { System.err.println("ERROR!!: Invalid occurrence of super, not instance context"); 
+        { System.err.println("!!ERROR!!: Invalid occurrence of super, not instance context"); 
           JOptionPane.showMessageDialog(null, "ERROR!!: Invalid occurrence of super, not in instance context", "Semantic error", JOptionPane.ERROR_MESSAGE);
         } 
         else if (objectRef.elementType != null && objectRef.elementType.isEntity()) 
@@ -3503,7 +3505,7 @@ class BasicExpression extends Expression
           type = new Type(entity.getSuperclass()); 
         } 
         else 
-        { System.err.println("ERROR!!: Invalid occurrence of super: " + this + " no defined instance context"); }           
+        { System.err.println("!!ERROR!!: Invalid occurrence of super: " + this + " no defined instance context"); }           
       }
       else 
       { if (contexts.size() > 1)
@@ -3528,7 +3530,7 @@ class BasicExpression extends Expression
 
     if ("equivalent".equals(data))
     { if (contexts.size() == 0)
-      { System.err.println("ERROR!!: no context for ETL equivalent() operator"); 
+      { System.err.println("!!ERROR!!: no context for ETL equivalent() operator"); 
         JOptionPane.showMessageDialog(null, "ERROR!!: Invalid occurrence of equivalent, not in instance context", "Semantic error", JOptionPane.ERROR_MESSAGE); 
       }
       else 
@@ -3627,7 +3629,7 @@ class BasicExpression extends Expression
                 new Attribute("ss", new Type("String", null), ModelElement.INTERNAL); 
             par1.formalParameter = fparss;
           }
-        } // and String_String
+        } // and String_String, _Function
 
         return true;  
       }
@@ -3892,6 +3894,23 @@ class BasicExpression extends Expression
       }  
     } 
 
+    if ("randomString".equals(data)
+        && objectRef != null && 
+        "OclRandom".equals(objectRef + "")) 
+    { type = new Type("String", null);
+      umlkind = QUERY; 
+      multiplicity = ModelElement.ONE; 
+      if (parameters != null && parameters.size() > 0) 
+      { Expression par1 = (Expression) parameters.get(0); 
+        Attribute fpar1 = new Attribute("n", 
+                                new Type("int", null),  
+                                ModelElement.INTERNAL); 
+        par1.formalParameter = fpar1; 
+      }
+    
+      return true;
+    } 
+
 
     if (arrayIndex != null)
     { boolean res1 = arrayIndex.typeCheck(types,entities,contexts,env);
@@ -3927,7 +3946,8 @@ class BasicExpression extends Expression
       else 
       { res = objectRef.typeCheck(types,entities,contexts,env); }
 
-      Entity staticent = (Entity) ModelElement.lookupByName(objectRef + "", entities); 
+      Entity staticent = 
+        (Entity) ModelElement.lookupByName(objectRef + "", entities); 
       // System.out.println("**Type of " + this + " is static operation, of: " + staticent);
 
       if (staticent != null) 
@@ -3939,7 +3959,7 @@ class BasicExpression extends Expression
         if (bf != null) 
         { if (bf.parametersMatch(parameters)) { } 
           else 
-          { JOptionPane.showMessageDialog(null, "Actual parameters do not match formal pars: " + this + " /= " + bf, 
+          { JOptionPane.showMessageDialog(null, "Actual parameters do not match operation formal pars: " + this + " /= " + bf, 
                                     "Type warning", JOptionPane.WARNING_MESSAGE); 
           }  
 
@@ -4160,8 +4180,8 @@ class BasicExpression extends Expression
           }       
         }
         else  
-        { System.err.println("Warning!: Unknown operation " + data + " at call " + this + ".\n");  
-          System.out.println(objectRef + " of type: " + objectRef.type); 
+        { System.err.println("!Warning!: Unknown operation " + data + " at call " + this + ".\n");  
+          System.out.println(">> " + objectRef + " of type: " + objectRef.type); 
           type = new Type("boolean",null);         
           elementType = new Type("boolean",null);
         } 
@@ -4172,7 +4192,7 @@ class BasicExpression extends Expression
     if (isFunction(data))
     { umlkind = FUNCTION;
       if (objectRef == null) // error
-      { System.out.println("*** TYPE ERROR: OCL function " + data +
+      { System.err.println("!! TYPE ERROR: OCL operator " + data +
                            " should have an argument: arg->" + data + "(pars)");
         if (parameters != null && parameters.size() > 0)
         { objectRef = (Expression) parameters.get(0); 
@@ -4358,21 +4378,6 @@ class BasicExpression extends Expression
     }  // toUpper, toLower, sqr, sqrt, exp, abs, floor, could have objectRef 
        // multiple, in which case result is multiple
 
-    for (int i = 0; i < types.size(); i++)
-    { Type t = (Type) types.get(i);
-      if (t != null && t.hasValue(data))
-      { umlkind = VALUE;
-        multiplicity = ModelElement.ONE; 
-        // System.out.println("**Type of " + data + " is VALUE in type " + t); 
-        type = t;
-        elementType = type; 
-     
-        if (objectRef == null) 
-        { return true; }
-        else if (t.getName().equals(objectRef + "")) 
-        { return true; } 
-      }
-    }   // if T1.value and T2.value may both occur, must be distinguished by the type name
 
 
     // Parameters or local variables of the 
@@ -4574,6 +4579,24 @@ class BasicExpression extends Expression
       }  // or it could be a query op of the entity
     }
     // prestate == true only for VARIABLE, ATTRIBUTE, ROLE, CONSTANT
+
+    /* Is data in some enumerated type? */ 
+
+    for (int i = 0; i < types.size(); i++)
+    { Type t = (Type) types.get(i);
+      if (t != null && t.hasValue(data))
+      { umlkind = VALUE;
+        multiplicity = ModelElement.ONE; 
+        System.out.println("*** " + data + " is enumerated literal in type " + t); 
+        type = t;
+        elementType = type; 
+     
+        if (objectRef == null) 
+        { return true; }
+        else if (t.getName().equals(objectRef + "")) 
+        { return true; } 
+      }
+    }   // if T1.value and T2.value may both occur, must be distinguished by the type name
 
     if (data.equals("Integer"))
     { type = new Type("OclType",null); 
@@ -9543,6 +9566,10 @@ public Statement generateDesignSubtract(Expression rhs)
         { if (arrayIndex != null) 
           { String indopt = arrayIndex.queryForm(env,local); 
             String wval = var.wrap(val2); 
+            if ("String".equals(arrayIndex.type + "") ||
+                BasicExpression.isMapAccess(this)
+               )
+            { return data + ".put(" + indopt + ", " + wval + ");"; } // for maps
             return nme + ".set" + data + "((" + indopt + " -1), " + wval + ");"; 
           } 
           return nme + ".set" + data + "(" + val2 + ");"; 
@@ -9772,8 +9799,15 @@ public Statement generateDesignSubtract(Expression rhs)
 
         if (entity != null && entity.isClassScope(data))
         { if (arrayIndex != null) 
-          { String indopt = arrayIndex.queryFormJava6(env,local); 
-            return nme + ".set" + data + "((" + indopt + " -1), " + val2 + ");"; 
+          { String indopt = 
+              arrayIndex.queryFormJava6(env,local); 
+            // String wind = arrayIndex.wrapJava6(ind); 
+            String wval = var.wrapJava6(val2); 
+            if ("String".equals(arrayIndex.type + "") ||
+                BasicExpression.isMapAccess(this)
+               )
+            { return data + ".put(" + indopt + ", " + wval + ");"; } // for maps
+            return nme + ".set" + data + "((" + indopt + " -1), " + wval + ");"; 
           } 
           return nme + ".set" + data + "(" + val2 + ");"; 
         }   // and with array
@@ -9806,6 +9840,11 @@ public Statement generateDesignSubtract(Expression rhs)
       if (entity != null && entity.isClassScope(data))
       { if (arrayIndex != null) 
         { String indopt = arrayIndex.queryFormJava6(env,local); 
+          String wval = var.wrapJava6(val2); 
+          if ("String".equals(arrayIndex.type + "") ||
+              BasicExpression.isMapAccess(this)
+             )
+          { return nme + "." + data + ".put(" + indopt + ", " + wval + ");"; } // for maps
           return nme + ".set" + data + "((" + indopt + " -1), " + val2 + ");"; 
         }
         return nme + ".set" + data + "(" + val2 + ");"; 

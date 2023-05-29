@@ -8195,7 +8195,11 @@ public class Entity extends ModelElement implements Comparable
   }
 
   public void generateJava6(Vector entities, Vector types, PrintWriter out)
-  { if (hasStereotype("external") || hasStereotype("externalApp")) { return; } 
+  { if (hasStereotype("external") || 
+        hasStereotype("externalApp")) 
+    { return; } 
+
+    String nme = getName(); 
 
     clearAux(); 
 
@@ -8219,7 +8223,7 @@ public class Entity extends ModelElement implements Comparable
       pars = pars + ">"; 
     } 
 
-    out.println(intorclass + " " + getName() + pars); 
+    out.println(intorclass + " " + nme + pars); 
 
     if (superclass != null) 
     { out.println("  extends " + superclass.getName()); } 
@@ -8249,7 +8253,7 @@ public class Entity extends ModelElement implements Comparable
       if (isInterface())
       { att.generateInterfaceJava6(out); } 
       else 
-      { att.generateJava6(out); } 
+      { att.generateJava6(nme,out); } 
     }
 
     for (int i = 0; i < associations.size(); i++)
@@ -8298,9 +8302,13 @@ public class Entity extends ModelElement implements Comparable
   }
 
   public void generateJava7(Vector entities, Vector types, PrintWriter out)
-  { if (hasStereotype("external") || hasStereotype("externalApp")) { return; } 
+  { if (hasStereotype("external") || 
+        hasStereotype("externalApp")) 
+    { return; } 
 
     clearAux(); 
+
+    String nme = getName(); 
 
     String intorclass = "class"; 
     if (isInterface())
@@ -8322,7 +8330,7 @@ public class Entity extends ModelElement implements Comparable
       pars = pars + ">"; 
     } 
 
-    out.println(intorclass + " " + getName() + pars);
+    out.println(intorclass + " " + nme + pars);
  
     if (superclass != null) 
     { out.println("  extends " + superclass.getCompleteName()); } 
@@ -8352,7 +8360,7 @@ public class Entity extends ModelElement implements Comparable
       if (isInterface())
       { att.generateInterfaceJava7(out); } 
       else 
-      { att.generateJava7(out); } 
+      { att.generateJava7(nme,out); } 
     }
 
     for (int i = 0; i < associations.size(); i++)
