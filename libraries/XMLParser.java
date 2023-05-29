@@ -104,27 +104,27 @@ public class XMLParser
     char previous = ' '; 
 
     int explen = str.length();
-    lexicals = new Vector(explen);  /* Sequence of lexicals */ 
-    StringBuffer sb = null;    /* Holds current lexical item */ 
+    lexicals = new Vector();  /* Sequence of lexicals */ 
+    StringBuffer sb = null;         /* Current lexical item */ 
 
     for (int i = 0; i < explen; i++)
     { char c = str.charAt(i); 
       if (in == INUNKNOWN) 
       { if (isXMLSymbolCharacter(c))
-        { sb = new StringBuffer();     // start new buffer for the symbol
+        { sb = new StringBuffer();  // New buffer for c
           lexicals.addElement(sb);  
           in = INSYMBOL; 
           sb.append(c); 
           previous = c; 
         }
         else if (isXMLBasicExpCharacter(c))
-        { sb = new StringBuffer();     // start new buffer for the expression
+        { sb = new StringBuffer();  // new buffer for expr
           lexicals.addElement(sb);  
           in = INBASICEXP; 
           sb.append(c); 
         }           
         else if (c == '"')
-        { sb = new StringBuffer();     // start new buffer for the string
+        { sb = new StringBuffer();  // new buffer for string
           lexicals.addElement(sb);  
           in = INSTRING; 
           sb.append(c); 
@@ -139,18 +139,29 @@ public class XMLParser
       } 
       else if (in == INBASICEXP)
       { if (isXMLBasicExpCharacter(c) || c == '"')
-        { sb.append(c); }              // carry on adding to current basic exp
+        { sb.append(c); }        // adding to current expr
         else if (isXMLSymbolCharacter(c))
-        { sb = new StringBuffer();     // start new buffer for the symbol
+        { sb = new StringBuffer();  // new buffer for c
           lexicals.addElement(sb);  
           in = INSYMBOL; 
           sb.append(c); 
           previous = c; 
         }
         else if (c == ' ' || c == '\n' || c == '\t')
-        { in = INUNKNOWN; } 
+        { // System.out.println("Current state: " + lexicals); 
+          // System.out.println("Current buffer: " + sb); 
+          if (lexicals.size() > 1 && 
+              "<".equals("" + 
+                         lexicals.get(lexicals.size()-2)))
+          { // sb = new StringBuffer(); // new lexical
+            // lexicals.addElement(sb);
+            in = INUNKNOWN; 
+          } // <tag  
+          else 
+          { sb.append(c); } // in = UNKNOWN
+        } 
         else
-        { sb = new StringBuffer();     // unrecognised lexical
+        { sb = new StringBuffer(); // unrecognised lexical
           lexicals.addElement(sb);  
           in = INUNKNOWN; 
           sb.append(c); 
@@ -158,20 +169,20 @@ public class XMLParser
       }
       else if (in == INSYMBOL)
       { if (c == '"')
-        { sb = new StringBuffer();     // start new buffer for the string
+        { sb = new StringBuffer(); // new buffer for string
           lexicals.addElement(sb);  
           in = INSTRING; 
           sb.append(c); 
         }
         else if (c == '(' || c == ')')
-        { sb = new StringBuffer();     // start new buffer for the new symbol
+        { sb = new StringBuffer();  // new buffer for new symbol
           lexicals.addElement(sb);  
           in = INSYMBOL; 
           previous = c; 
           sb.append(c); 
         }
         else if (isXMLBasicExpCharacter(c))
-        { sb = new StringBuffer();     // start new buffer for basic exp
+        { sb = new StringBuffer();  // new buffer for basic exp
           lexicals.addElement(sb);  
           in = INBASICEXP; 
           sb.append(c); 
@@ -200,7 +211,7 @@ public class XMLParser
       }    
       previous = c;
     }
-  }
+  } /* < followed by a basic exp is a tag */ 
 
   private boolean validFollowingCharacter(char c1, char c2)
   { if (c1 == '<') 
@@ -400,7 +411,7 @@ public class XMLParser
     try
     { br = new BufferedReader(new FileReader(file)); }
     catch (FileNotFoundException e)
-    { System.out.println("File not found: " + file);
+    { System.out.println("!! File not found: " + file);
       return null;
     }
     String xmlstring = ""; 
@@ -408,7 +419,7 @@ public class XMLParser
     while (!eof)
     { try { s = br.readLine(); }
       catch (IOException e)
-      { System.out.println("Reading file failed.");
+      { System.out.println("!! Reading file failed.");
         return null;
       }
       if (s == null) 
@@ -446,7 +457,7 @@ public class XMLParser
     try
     { br = new BufferedReader(new FileReader(infile)); }
     catch (Exception e)
-    { System.out.println("Errors with files: " + infile);
+    { System.out.println("!! Errors with files: " + infile);
       return;
     }
     String xmlstring = "";
@@ -454,7 +465,7 @@ public class XMLParser
     while (!eof)
     { try { s = br.readLine(); }
       catch (IOException e)
-      { System.out.println("Reading failed.");
+      { System.out.println("!! Reading failed.");
         return;
       }
       if (s == null) 
@@ -472,5 +483,13 @@ public class XMLParser
   { StringBuffer out = new StringBuffer(); 
     return out.toString();
   }
+
+  public static void main(String[] args)
+  { XMLParser comp = new XMLParser(); 
+    comp.nospacelexicalanalysisxml("<cd S=\"FED\" SV=\"1.1\">be</cd>");
+    System.out.println(comp.lexicals); 
+  } 
+ 
+
 
 }

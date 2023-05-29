@@ -110,6 +110,9 @@ public class XMLNode
     } catch (Exception e) { return false; }
   }
 
+  public java.util.HashMap getMap(String aname)
+  { return new java.util.HashMap(); }
+
   public String toString()
   { String res = "<" + tag; 
     for (int i = 0; i < attributes.size(); i++) 
