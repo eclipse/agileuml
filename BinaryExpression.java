@@ -14265,7 +14265,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
   public String updateFormExistsJava6(java.util.Map env, boolean local)
   { String cont = "Controller.inst()"; 
 
-    String ufl = left.updateFormJava6(env,local);
+    String ufl = left.updateFormJava6(env,false);
     BinaryExpression lexp = (BinaryExpression) left; 
     Expression lvar = lexp.left; 
     Expression ltype = lexp.right;
@@ -14285,14 +14285,14 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
       { Vector feats = e.allDefinedFeatures(); 
         if (feats.containsAll(wr))
         { if (wr.containsAll(feats))
-          { System.out.println("Creation is complete"); } 
+          { System.out.println(">> Creation is complete"); } 
           else 
-          { System.out.println("Creation may be incomplete: not all of " + feats +
+          { System.out.println("! Creation may be incomplete: not all of " + feats +
                                " are set"); 
           } 
         }
         else 
-        { System.out.println("Some features set are not in entity features " + 
+        { System.out.println("! Some features set are not in entity features " + 
                              feats); 
         }
       }
@@ -14300,7 +14300,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
     String res = ""; 
     String searchcode = ""; 
     if (ltype.elementType == null || !ltype.elementType.isEntity())
-    { System.err.println("TYPE ERROR: no element type in exists: " + this); 
+    { System.err.println("!! TYPE ERROR: no element type in exists: " + this); 
       JOptionPane.showMessageDialog(null, "no element type for " + lexp.right + " in " + this, 
                                       "Type error", JOptionPane.ERROR_MESSAGE);
       return "  {}\n"; 
@@ -14329,7 +14329,7 @@ public Statement existsLC(Vector preds, Expression eset, Expression etest,
           if (remainder.size() > 0)
           { Expression rem = (Expression) remainder.get(0); 
             // System.out.println("REMAINDER == " + remainder); 
-            res = res + "    " + rem.updateFormJava6(env,local) + "\n"; 
+            res = res + "    " + rem.updateFormJava6(env,false) + "\n"; 
           } 
           res = res + "  }\n";
             

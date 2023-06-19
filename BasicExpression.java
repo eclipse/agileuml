@@ -9899,7 +9899,7 @@ public Statement generateDesignSubtract(Expression rhs)
             String indopt = evaluateString("-",ind,"1"); 
             return pre + ".set" + data + "(" + indopt + "," + val2 + ");";
           }
-          return pre + ".set" + data + "(" + val2 + ");"; 
+          return cont + ".set" + data + "(" + pre + ", " + val2 + ");"; 
         }
         else if (arrayIndex != null) 
         { String ind = arrayIndex.queryFormJava6(env,local);
@@ -9909,8 +9909,9 @@ public Statement generateDesignSubtract(Expression rhs)
           return cont + ".set" + data + "(" + pre + "," + indopt + "," + 
                                 val2 + ");";
         }
-        return cont + ".set" + data + "(" + pre + "," + val2 + ");"; 
+        // return cont + ".set" + data + "(" + pre + "," + val2 + ");"; 
       }
+      return cont + ".set" + data + "(" + pre + "," + val2 + ");"; 
     }
     return "{} /* unrecognised update: " + this + " = " + val2 + " */";
   }  // arrayIndex != null: setdata(var,arrayIndex,val) ?

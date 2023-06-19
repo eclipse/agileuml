@@ -1297,8 +1297,8 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       if (init == null && acctype != null)
       { init = acctype.getDefaultValueExpression(); }  
       String res = "  { " + acctype.getJava() + " " + 
-        accname + " = " + init.queryForm(env,local) + ";\n" +
-        argument.updateForm(env,local) + " }\n"; 
+        accname + " = " + init.queryForm(env,local) + ";\n    " +
+        argument.updateForm(env,local) + "  }\n"; 
       return res; 
     } 
 
@@ -1407,6 +1407,19 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
       if (operator.startsWith("->"))
       { op = operator.substring(2,operator.length()); } 
       return pre + "." + op + "()";
+    } 
+
+    if ("let".equals(operator) && accumulator != null)
+    { // let acc : T = init in argument is { acc; argumentUF }
+      String accname = accumulator.getName(); 
+      Expression init = accumulator.getInitialExpression(); 
+      Type acctype = accumulator.getType(); 
+      if (init == null && acctype != null)
+      { init = acctype.getDefaultValueExpression(); }  
+      String res = "  { " + acctype.getJava6() + " " + 
+        accname + " = " + init.queryFormJava6(env,local) + ";\n    " +
+        argument.updateFormJava6(env,local) + "  }\n"; 
+      return res; 
     } 
 
     if ("->isDeleted".equals(operator))

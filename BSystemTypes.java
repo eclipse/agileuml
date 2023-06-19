@@ -6431,7 +6431,8 @@ public class BSystemTypes extends BComponent
 
   public static String generateReplaceAllOp()
   { String res = "  public static String replaceAll(String str, String regex, String rep)\n" + 
-      "  { java.util.regex.Pattern patt = java.util.regex.Pattern.compile(regex);\n" +  
+      "  { if (str == null) { return null; }\n" + 
+      "    java.util.regex.Pattern patt = java.util.regex.Pattern.compile(regex);\n" +  
       "    java.util.regex.Matcher matcher = patt.matcher(str);\n" +  
       "    return matcher.replaceAll(rep);\n" +  
       "  }\n"; 
@@ -6440,7 +6441,8 @@ public class BSystemTypes extends BComponent
 
   public static String generateReplaceFirstOp()
   { String res = "  public static String replaceFirstMatch(String str, String regex, String rep)\n" + 
-      "  { java.util.regex.Pattern patt = java.util.regex.Pattern.compile(regex);\n" +  
+      "  { if (str == null) { return null; }\n" + 
+      "    java.util.regex.Pattern patt = java.util.regex.Pattern.compile(regex);\n" +  
       "    java.util.regex.Matcher matcher = patt.matcher(str);\n" +  
       "    return matcher.replaceFirst(rep);\n" +  
       "  }\n"; 
@@ -6449,7 +6451,8 @@ public class BSystemTypes extends BComponent
 
   public static String generateReplaceOpCSharp()
   { String res = "  public static string replace(string str, string delim, string rep)\n" + 
-        "  { String result = \"\";\n" +
+        "  { if (str == null) { return null; }\n" + 
+        "    String result = \"\";\n" +
         "    String s = str + \"\";\n" +
         "    int i = (s.IndexOf(delim) + 1);\n" +
         "    if (i == 0)\n" +
@@ -6474,7 +6477,8 @@ public class BSystemTypes extends BComponent
 
   public static String generateReplaceAllOpCSharp()
   { String res = "  public static string replaceAll(string s, string patt, string rep)\n" +
-      "  { Regex r = new Regex(patt);\n" + 
+      "  { if (s == null) { return null; }\n" + 
+      "    Regex r = new Regex(patt);\n" + 
       "    return \"\" + r.Replace(s, rep);\n" + 
       "  }\n"; 
     return res; 
@@ -6482,7 +6486,8 @@ public class BSystemTypes extends BComponent
 
   public static String generateReplaceFirstOpCSharp()
   { String res = "  public static string replaceFirstMatch(string s, string patt, string rep)\n" +
-      "  { Regex r = new Regex(patt);\n" + 
+      "  { if (s == null) { return null; }\n" + 
+      "    Regex r = new Regex(patt);\n" + 
       "    return \"\" + r.Replace(s, rep, 1);\n" + 
       "  }\n"; 
     return res; 

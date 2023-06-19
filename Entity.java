@@ -7823,7 +7823,7 @@ public class Entity extends ModelElement implements Comparable
     // if (pk == null) { return ""; }
     // String pkname = pk.getName(); 
 	
-    String res = "  public static List parseXMLSequence(List xarray)\n" + 
+    String res = "  public static ArrayList parseXMLSequence(List xarray)\n" + 
                  "  { if (xarray == null) { return null; }\n" + 
 		      "    ArrayList res = new ArrayList();\n" + 
                  "\n" + 
