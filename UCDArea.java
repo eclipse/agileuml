@@ -982,7 +982,11 @@ public class UCDArea extends JPanel
         }
         System.out.println(">> Actors " + actors + " use " + ent); 
         if (actors.size() > 1) 
-        { System.out.println("!! Warning: Single Responsibility Principle violated for " + ent); } 
+        { System.out.println("!! Warning: Single Responsibility Principle violated for " + ent); 
+
+          JOptionPane.showMessageDialog(null, "Warning: Single Responsibility Principle violated for " + ent, 
+                 "", JOptionPane.ERROR_MESSAGE);  
+        } 
       }
     }
   
@@ -3079,6 +3083,10 @@ public class UCDArea extends JPanel
       if (ent.hasCycle())
       { System.err.println("!! Warning: ADP violated: class " + 
                            ent + " is self-dependent via a cycle of references!"); 
+        JOptionPane.showMessageDialog(null, 
+          "Warning: ADP violated: class " + 
+          ent + " is self-dependent via a cycle of references!", 
+          "", JOptionPane.ERROR_MESSAGE); 
       } 
 
       if (ent.hasStereotype("platformSpecific")) 
@@ -3090,8 +3098,11 @@ public class UCDArea extends JPanel
       { Entity ref = (Entity) referredClasses.get(j); 
         if (ref.hasStereotype("platformSpecific"))
         { System.err.println("!! Warning: Dependency rule violated: platform-independent class " + ent); 
-          System.err.println("!! depends on platform-specific class " + ref);
-          
+          System.err.println(" depends on platform-specific class " + ref);
+          JOptionPane.showMessageDialog(null, 
+            "Warning: Dependency rule violated: platform-independent class " + ent + 
+            "\ndepends on platform-specific class " + ref, 
+            "", JOptionPane.ERROR_MESSAGE); 
         } 
       }
 
@@ -3114,6 +3125,10 @@ public class UCDArea extends JPanel
         else 
         { System.err.println("!! Warning: ISP violated: class " + rname + 
              " is referenced but no operation of it is used by " + ent); 
+          JOptionPane.showMessageDialog(null, 
+            "Warning: ISP violated: class " + rname + 
+            " is referenced but no operation of it is used by " + ent, 
+            "", JOptionPane.ERROR_MESSAGE); 
         } 
       }  
     }   
