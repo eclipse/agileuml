@@ -892,6 +892,12 @@ public void findPlugins()
     remredin.addActionListener(this);
     qualityMenu.add(remredin);
 
+    JMenuItem remmultinherit = 
+      new JMenuItem("Remove Multiple Inheritance"); 
+    remmultinherit.addActionListener(this);
+    qualityMenu.add(remmultinherit);
+
+
     JMenuItem introsup = 
       new JMenuItem("Introduce Superclass"); 
     introsup.addActionListener(this);
@@ -952,7 +958,7 @@ public void findPlugins()
     refineMenu.add(remmanymany);
 
     JMenuItem reminherit = 
-      new JMenuItem("Remove Inheritance"); 
+      new JMenuItem("Replace Inheritance by Association"); 
     reminherit.addActionListener(this); 
     refineMenu.add(reminherit); 
 
@@ -2554,12 +2560,16 @@ public void findPlugins()
       { removeAssociationClasses(); 
         repaint(); 
       }
-      else if (label.equals("Remove Inheritance"))
+      else if (label.equals("Replace Inheritance by Association"))
       { removeInheritance(); 
         repaint(); 
       } 
       else if (label.equals("Remove Redundant Inheritance"))
       { removeRedundantInheritances(); 
+        repaint(); 
+      }
+      else if (label.equals("Remove Multiple Inheritance"))
+      { removeMultipleInheritance(); 
         repaint(); 
       }
       else if (label.equals("Aggregate Subclasses"))
@@ -3126,7 +3136,7 @@ public void findPlugins()
       } 
     } */ 
 
-    System.out.println("New action invariants are:");
+    System.out.println(">> New action invariants are:");
 
     for (int k = 0; k < res.size(); k++)
     { Invariant ii = (Invariant) res.elementAt(k);
@@ -3152,10 +3162,10 @@ public void findPlugins()
           { if (inv.succedent().equals(inv2.succedent()))
             { if (inv.antecedent().implies(inv2.antecedent()))
               { redundancies.add(inv); 
-                System.out.println("Redundant invariant: " + inv); } 
+                System.out.println("!! Redundant invariant: " + inv); } 
               else if (inv2.antecedent().implies(inv.antecedent()))
               { redundancies.add(inv2);
-                System.out.println("Redundant invariant: " + inv2); } 
+                System.out.println("!! Redundant invariant: " + inv2); } 
             } 
           } 
         } 
@@ -3166,7 +3176,24 @@ public void findPlugins()
     { invariants.remove(redundancies.elementAt(k)); } 
   } 
 
-
+  private void removeMultipleInheritance()
+  { Vector ents = ucdArea.getEntities(); 
+    Vector list = new Vector();
+    for (int i = 0; i < ents.size(); i++) 
+    { Entity ent = (Entity) ents.get(i); 
+      if (ent.hasMultipleInheritance())
+      { System.out.println("!! Error: multiple inheritance in " + ent); 
+        Entity oldsuperclass = ent.getSuperclass(); 
+        Entity removedsup = ent.getSuperclasses(0); 
+        Entity newent = ent.removeMultipleInheritance();
+        ucdArea.removeInheritance(ent,oldsuperclass);
+        ucdArea.removeInheritance(ent,removedsup); 
+        ucdArea.addEntity(oldsuperclass,newent,100);
+        ucdArea.addInheritance(newent,ent);  
+      } // set visuals for newent's superclasses, interfaces
+    } 
+  }  
+    
 
   private void removeRedundantInheritances()
   { Vector ents = ucdArea.getEntities(); 
@@ -3176,7 +3203,7 @@ public void findPlugins()
     { Entity ent = (Entity) ents.get(i); 
       Vector dup = ent.hasDuplicateInheritance(); 
       if (dup.size() > 0)
-      { System.out.println("Entity " + ent + " has duplicate inheritances of: " +
+      { System.out.println("!! Entity " + ent + " has duplicate inheritances of: " +
                            dup); 
         list.add(ent); 
         dups.put(ent,dup); 
@@ -3204,7 +3231,7 @@ public void findPlugins()
     }
     listShowDialog.setOldFields(gens);
     thisLabel.setText("Select generalisations to replace by an association"); 
-    System.out.println("Select generalisations to replace by an association"); 
+    System.out.println(">>> Select generalisations to replace by an association"); 
 
     listShowDialog.setVisible(true); 
 
@@ -3358,7 +3385,7 @@ public void findPlugins()
 
   private void editUseCaseActivity()
   { thisLabel.setText("Select use case to edit activity for"); 
-    System.out.println("Select use case to edit activity for");
+    System.out.println(">> Select use case to edit activity for");
     String ucname = 
       JOptionPane.showInputDialog("Enter use case name:");
 
@@ -3447,8 +3474,8 @@ public void findPlugins()
     }
     Vector allasts = ucdArea.getAssociations(); 
     listShowDialog.setOldFields(Association.getManyManyAssociations(allasts));
-    thisLabel.setText("Select associations to implement with new table"); 
-    System.out.println("Select associations to implement with new table");
+    thisLabel.setText("Select associations to implement with new table class"); 
+    System.out.println(">> Select associations to implement with new table class");
 
     listShowDialog.setVisible(true); 
 
@@ -3471,7 +3498,7 @@ public void findPlugins()
     Vector allasts = ucdArea.getAssociationClasses(); 
     listShowDialog.setOldFields(allasts);
     thisLabel.setText("Select association classes to split"); 
-    System.out.println("Select association classes to split");
+    System.out.println(">> Select association classes to split");
 
     listShowDialog.setVisible(true); 
 
@@ -3493,7 +3520,7 @@ public void findPlugins()
     }
     listShowDialog.setOldFields(ucdArea.getEntities()); // getClasses?
     thisLabel.setText("Select entities to make into singletons"); 
-    System.out.println("Select entities to make into singletons");
+    System.out.println(">> Select entities to make into singletons");
 
     listShowDialog.setVisible(true); 
 
@@ -3562,7 +3589,7 @@ public void findPlugins()
   } 
 
   public void buildGUI()
-  { System.out.println("Specify input file for GUI description:"); 
+  { System.out.println(">> Specify input file for GUI description:"); 
     java.util.List invs = new java.util.ArrayList(); 
 
     BufferedReader br = null;
@@ -3637,8 +3664,8 @@ public void findPlugins()
   { Vector sources = ucdArea.getSourceEntities(); 
     Vector targets = ucdArea.getTargetEntities(); 
 
-    System.out.println("Sources: " + sources); 
-    System.out.println("Targets: " + targets); 
+    System.out.println(">> Sources: " + sources); 
+    System.out.println(">> Targets: " + targets); 
 
     java.util.Map entityattmaps = new java.util.HashMap(); 
     java.util.Map entityastmaps = new java.util.HashMap(); 
@@ -3647,7 +3674,7 @@ public void findPlugins()
 
     Vector maps = allEntityMaps(sources,targets); 
     if (maps.size() == 0) 
-    { System.out.println("No mapping is possible!"); 
+    { System.out.println("!! No mapping is possible!"); 
       return; 
     } 
     
@@ -3708,7 +3735,7 @@ public void findPlugins()
         entityastmaps.putAll(mpentityastmaps); 
       }           
     } 
-    System.out.println("Best entity map is: " + best); 
+    System.out.println(">> Best entity map is: " + best); 
     // Then choose its attribute and association maps
     Vector cons = ucdArea.maps2constraints(sources,best,
                            entityattmaps,entityastmaps);
@@ -3793,7 +3820,7 @@ public void findPlugins()
     try
     { br = new BufferedReader(new FileReader(file)); }
     catch (FileNotFoundException _e)
-    { System.out.println("File not found: " + file);
+    { System.out.println("!! File not found: " + file);
       return; 
     }
 
@@ -3802,7 +3829,7 @@ public void findPlugins()
     while (!eof)
     { try { s = br.readLine(); }
       catch (IOException _ex)
-      { System.out.println("Reading failed.");
+      { System.out.println("!! Reading failed.");
         return; 
       }
       if (s == null) 

@@ -1612,6 +1612,19 @@ abstract class Expression
       { return false; } 
     } 
 
+    if (cleanValue.startsWith("0o"))
+    { cleanValue = cleanValue.substring(2); 
+      try 
+      { Integer bx = Integer.parseInt(cleanValue,8); 
+        if (bx == null) 
+        { return false; } 
+        int bn = bx.intValue(); 
+        return true; 
+      } 
+      catch (Exception e) 
+      { return false; } 
+    } 
+
     try
     { Integer intx = Integer.decode(cleanValue); 
       if (intx == null) 
@@ -1682,6 +1695,19 @@ abstract class Expression
     { cleanValue = cleanValue.substring(2); 
       try 
       { Integer bx = Integer.parseInt(cleanValue,2); 
+        if (bx == null) 
+        { return 0; } 
+        int bn = bx.intValue(); 
+        return bn; 
+      } 
+      catch (Exception e) 
+      { return 0; } 
+    } 
+
+    if (cleanValue.startsWith("0o"))
+    { cleanValue = cleanValue.substring(2); 
+      try 
+      { Integer bx = Integer.parseInt(cleanValue,8); 
         if (bx == null) 
         { return 0; } 
         int bn = bx.intValue(); 

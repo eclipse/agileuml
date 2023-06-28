@@ -2764,7 +2764,8 @@ public class Attribute extends ModelElement
 
     if (entity.isSequential()) { sync = " synchronized"; } 
     
-    if (ent != entity && !entity.isInterface()) 
+    if (instanceScope && 
+        ent != entity && !entity.isInterface()) 
     { code = "super.set" + nme + "(" + val + ");"; }
     else if (!instanceScope)
     { qual = " static "; 
@@ -4387,7 +4388,7 @@ public class Attribute extends ModelElement
            ex + ".set" + nme + "(" + attx + ");\n  "; 
     } 
     else 
-    { opheader = "public void set" + nme + "(" + t +
+    { opheader = "public void set" + ename + nme + "(" + t +
              " " + attx + ") \n  { " +
              ename + ".set" + nme + "(" + attx + ");\n  " + 
              "for (int _i = 0; _i < " + es + ".size(); _i++)\n" + 

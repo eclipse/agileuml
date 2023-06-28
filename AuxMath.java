@@ -1852,6 +1852,60 @@ public class AuxMath
      return res; 
    } 
 
+   public static boolean isPrefixedSuffixed(String[] xs, String[] ys)
+   { // ys[i] = pref + xs[i] + suff
+
+     for (int i = 0; i < xs.length && i < ys.length; i++) 
+     { String xval = xs[i]; 
+       String yval = ys[i]; 
+       int xind = yval.indexOf(xval); 
+       if (xind > 0) { } 
+       else 
+       { return false; } 
+     } 
+     return true; 
+   } 
+
+   public static String commonPrefixSuffix1(String[] xs, String[] ys) 
+   { // All the ys[i] = result + xs[i] + something
+
+     java.util.HashSet prefixes = new java.util.HashSet(); 
+     String prefix = ""; 
+	 
+     for (int i = 0; i < xs.length && i < ys.length; i++) 
+     { String xval = xs[i]; 
+       String yval = ys[i]; 
+       int xind = yval.indexOf(xval); 
+       prefix = yval.substring(0,xind); 
+       prefixes.add(prefix); 
+     } 
+	 
+     if (prefixes.size() == 1)
+     { return prefix; } 
+	return null;  
+   }
+
+   public static String commonPrefixSuffix2(String[] xs, String[] ys) 
+   { // All the ys[i] = something + xs[i] + result
+
+     java.util.HashSet suffixes = new java.util.HashSet(); 
+     String suffix = ""; 
+	 
+     for (int i = 0; i < xs.length && i < ys.length; i++) 
+     { String xval = xs[i]; 
+       String yval = ys[i]; 
+       int xind = yval.indexOf(xval); 
+       int xlen = xval.length(); 
+       suffix = yval.substring(xind + xlen); 
+       suffixes.add(suffix); 
+     } 
+	 
+     if (suffixes.size() == 1)
+     { return suffix; } 
+	return null;  
+   }
+
+
    public static boolean isSuffixed(String[] xs, String[] ys) 
    { // Each ys[i] starts with xs[i]
 

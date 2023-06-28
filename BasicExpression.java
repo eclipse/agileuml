@@ -3338,7 +3338,7 @@ class BasicExpression extends Expression
       entity = null;
       umlkind = VALUE;
       multiplicity = ModelElement.ONE;
-      data = "" + Integer.decode(data).intValue(); 
+      data = "" + Expression.convertInteger(data);  
       // System.out.println("**Type of " + data + " is int");
       return true;
     }

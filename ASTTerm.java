@@ -1534,8 +1534,30 @@ public abstract class ASTTerm
     if (AuxMath.isPrefixed(sattvalues,tattvalues))
     { String pref = AuxMath.commonPrefix(
                                 sattvalues, tattvalues); 
-      tm.addDefaultMapping("_1", pref + "_1"); 
-      return tm; 
+      if (pref != null) 
+      { tm.addDefaultMapping("_1", pref + "_1"); 
+        return tm;
+      }  
+    }
+
+    if (AuxMath.isSuffixed(sattvalues,tattvalues))
+    { String suff = AuxMath.commonSuffix(
+                                sattvalues, tattvalues); 
+      if (suff != null) 
+      { tm.addDefaultMapping("_1", "_1" + suff); 
+        return tm;
+      }  
+    }
+
+    if (AuxMath.isPrefixedSuffixed(sattvalues,tattvalues))
+    { String pref = AuxMath.commonPrefixSuffix1(
+                                sattvalues, tattvalues); 
+      String suff = AuxMath.commonPrefixSuffix2(
+                                sattvalues, tattvalues); 
+      if (pref != null && suff != null) 
+      { tm.addDefaultMapping("_1", pref + "_1" + suff); 
+        return tm;
+      }  
     }
 
     /* Identify default mapping _1 |--> v */ 

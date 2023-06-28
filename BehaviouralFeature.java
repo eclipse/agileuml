@@ -5741,14 +5741,22 @@ public class BehaviouralFeature extends ModelElement
       { return "  public void run();\n"; } 
 
       String res = "  public void run()\n  { "; 
+      res = res + ename + " " + ex + " = this;\n  ";
       if (sm != null) 
       { Statement rc = sm.runCode(); 
         // add run_state : T to ent, and the type. 
         rc.typeCheck(types,entities,context,new Vector()); 
         return res + rc.updateFormJava7(env0,true) + "  }\n\n"; 
       } 
+      else if (activity != null) 
+      { Vector latts = new Vector(); 
+        activity.typeCheck(types,entities,context,latts);
+          
+        return res + 
+          activity.updateFormJava7(env0,false) + "\n  }\n\n";   
+      } 
       res = res + textcode; 
-      return res + " }\n\n"; 
+      return res + "  }\n\n"; 
     }  
 
 

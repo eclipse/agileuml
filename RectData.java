@@ -12,7 +12,7 @@
   package: GUI
       */
 /******************************
-* Copyright (c) 2003-2022 Kevin Lano
+* Copyright (c) 2003-2023 Kevin Lano
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License 2.0 which is available at
 * http://www.eclipse.org/legal/epl-2.0
@@ -97,18 +97,18 @@ class RectData extends RectForm
         g.drawString(label,namex,namey); 
         g.setFont(ff); 
         if (e.isInterface())
-        { g.drawString("      <<interface>>",namex,namey-5);
+        { g.drawString("        <<interface>>",namex,namey-5);
           FontMetrics fm = g.getFontMetrics(); 
-          if (fm.stringWidth("      <<interface>>") + (namex - sourcex) >= width) 
-          { width = fm.stringWidth("      <<interface>>") + (namex - sourcex) + 5; }
+          if (fm.stringWidth("        <<interface>>") + (namex - sourcex) >= width) 
+          { width = fm.stringWidth("        <<interface>>") + (namex - sourcex) + 5; }
         }
       } 
       else if (e.isActive())
       { g.drawString(label,namex,namey);
-        g.drawString("      <<active>>",namex,namey-5);
+        g.drawString("          <<active>>",namex,namey-5);
         FontMetrics fm = g.getFontMetrics(); 
-        if (fm.stringWidth("      <<active>>") + (namex - sourcex) >= width) 
-        { width = fm.stringWidth("      <<active>>") + (namex - sourcex) + 5; }
+        if (fm.stringWidth("          <<active>>") + (namex - sourcex) >= width) 
+        { width = fm.stringWidth("          <<active>>") + (namex - sourcex) + 5; }
       }
       else if (e.isExternal() || e.isExternalApp())
       { g.drawString(label,namex,namey);

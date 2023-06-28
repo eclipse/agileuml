@@ -67,12 +67,15 @@ public class Entity extends ModelElement implements Comparable
   } 
 
   public Entity mergeEntity(Entity ent)
-  { // They have the same name. Combine features
+  { // Combine features of this with priority over ent
+
     for (int i = 0; i < ent.attributes.size(); i++) 
     { Attribute attr = (Attribute) ent.attributes.get(i); 
       if (hasAttribute(attr.getName())) { } 
       else 
-      { addAttribute(attr); } 
+      { Attribute catt = (Attribute) attr.clone(); 
+        addAttribute(catt); 
+      } 
     } 
 
     for (int i = 0; i < ent.associations.size(); i++) 
@@ -80,14 +83,62 @@ public class Entity extends ModelElement implements Comparable
         (Association) ent.associations.get(i); 
       if (hasRole(attr.getRole2())) { } 
       else 
-      { addAssociation(attr); } 
+      { Association ast = (Association) attr.clone(); 
+        addAssociation(ast); 
+      } 
     }
  
-    // res.operations.addAll(operations); 
-    // res.superclass = superclass;
-    // res.subclasses.addAll(subclasses); 
-    // res.invariants.addAll(invariants); 
-    // res.interfaces.addAll(interfaces);
+    for (int i = 0; i < ent.operations.size(); i++) 
+    { BehaviouralFeature oper = 
+        (BehaviouralFeature) ent.operations.get(i);
+      String sig = oper.getSignature(); 
+      BehaviouralFeature bf = getOperationBySignature(sig);  
+      if (bf != null) { } 
+      else 
+      { BehaviouralFeature cbf = 
+          (BehaviouralFeature) oper.clone(); 
+        addOperation(cbf); 
+      } 
+    }
+
+    if (superclasses == null) 
+    { superclasses = new Vector(); } 
+
+    if (superclass != null)
+    { 
+      if (ent.superclass != null) 
+      { if (ent.superclass == superclass) {} 
+        else if (superclasses.contains(ent.superclass)) { } 
+        else  
+        { superclasses.add(ent.superclass); } 
+      } 
+
+      if (ent.superclasses != null) 
+      { for (int i = 0; i < ent.superclasses.size(); i++)
+        { Entity sup = (Entity) ent.superclasses.get(i); 
+          if (sup == superclass) { } 
+          else if (superclasses.contains(sup)) { } 
+          else  
+          { superclasses.add(sup); }
+        } 
+      } 
+    } 
+    else // superclass == null, so superclasses are empty
+    { if (ent.superclass != null) 
+      { superclass = ent.superclass; } 
+      if (ent.superclasses != null) 
+      { superclasses.addAll(ent.superclasses); } 
+    } 
+
+    for (int i = 0; i < ent.interfaces.size(); i++)
+    { Entity sup = (Entity) ent.interfaces.get(i); 
+      if (interfaces.contains(sup)) { } 
+      else  
+      { interfaces.add(sup); }
+    } 
+
+    // res.invariants.addAll(invariants);
+ 
     return this; 
   } 
  
@@ -3067,6 +3118,14 @@ public class Entity extends ModelElement implements Comparable
     return res; 
   } 
 
+  public Entity getSuperclasses(int i)
+  { if (superclasses == null) 
+    { return null; } 
+    if (superclasses.size() > i)
+    { return (Entity) superclasses.get(i); } 
+    return null; 
+  } 
+
   public Vector getAllSuperclasses()
   { Vector res = new Vector(); 
     if (superclass != null)
@@ -5722,6 +5781,43 @@ public class Entity extends ModelElement implements Comparable
     } 
     return res; 
   }  
+
+  public boolean hasMultipleInheritance()
+  { if (superclass != null && 
+        superclasses != null &&
+        superclasses.size() > 0)
+    { return true; } 
+    return false; 
+  } 
+
+  public Entity removeMultipleInheritance()
+  { // replace superclass and superclasses[0] by 
+    // new merged class where superclass operations 
+    // have priority over superclasses[0] 
+
+    Entity newclass = (Entity) superclass.clone(); 
+    Entity firstsup = (Entity) superclasses.get(0); 
+    String nme = 
+      newclass.getName() + "$plus$" + firstsup.getName();
+    newclass.setName(nme); 
+    newclass.mergeEntity(firstsup); 
+
+    for (int i = 0; i < newclass.attributes.size(); i++) 
+    { Attribute attr = (Attribute) newclass.attributes.get(i); 
+      attr.setOwner(newclass); 
+    } 
+
+    for (int i = 0; i < newclass.operations.size(); i++) 
+    { BehaviouralFeature op = 
+        (BehaviouralFeature) newclass.operations.get(i); 
+      op.setOwner(newclass); 
+    } 
+
+    superclasses.remove(0); 
+    superclass = newclass; 
+
+    return newclass; 
+  } // also add interfaces for the 2 removed classes. 
       
   public void setSuperclass(Entity s)
   { superclass = s; } 
@@ -5740,17 +5836,40 @@ public class Entity extends ModelElement implements Comparable
 
     if (superclass != null && 
         !superclass.getName().equals(e.getName())) 
-    { System.err.println("! Warning: multiple inheritance: " + 
+    { System.err.println("!! Warning: multiple inheritance: " + 
         getName() + " inherits from " + 
         superclass.getName() + " and " + e.getName()); 
   
-
       if (superclasses == null) 
       { superclasses = new Vector(); } 
       superclasses.add(e); 
     }
     else 
     { superclass = e; }  
+  } 
+
+  public void removeSuperclass(Entity e) 
+  { if (e == null) 
+    { return; } 
+
+    if (e.isInterface())
+    { removeInterface(e);
+      return; 
+    } 
+
+    if (e.isActive())
+    { removeStereotype("active"); } 
+
+    if (superclass != null && 
+        superclass.getName().equals(e.getName())) 
+    { superclass = null; 
+      if (superclasses != null && superclasses.size() > 0) 
+      { superclass = (Entity) superclasses.get(0); 
+        superclasses.remove(0);
+      }
+    }  
+    else if (superclasses != null)
+    { superclasses.remove(e); }  
   } 
 
   public void addSubclass(Entity s)
@@ -10887,7 +11006,14 @@ public class Entity extends ModelElement implements Comparable
     { nme = "abstract " + nme; } 
 
     if (superclass != null) 
-    { nme = nme + " extends " + superclass.getCompleteName(); 
+    { nme = nme + " extends " + superclass.getCompleteName();
+      if (superclasses != null && superclasses.size() > 0) 
+      { for (int m = 0; m < superclasses.size(); m++)
+        { Entity supc = (Entity) superclasses.get(m); 
+          nme = nme + ", " + supc.getCompleteName();  
+        } 
+      } 
+  
       if (interfaces.size() > 0)
       { nme = nme + " implements "; 
         for (int k = 0; k < interfaces.size(); k++) 
@@ -10973,6 +11099,14 @@ public class Entity extends ModelElement implements Comparable
  
     if (superclass != null) 
     { nme = nme + " extends " + superclass.getCompleteName(); 
+      
+      if (superclasses != null && superclasses.size() > 0) 
+      { for (int m = 0; m < superclasses.size(); m++)
+        { Entity supc = (Entity) superclasses.get(m); 
+          nme = nme + ", " + supc.getCompleteName();  
+        } 
+      }
+
       if (interfaces.size() > 0)
       { nme = nme + " implements "; 
         for (int k = 0; k < interfaces.size(); k++) 
