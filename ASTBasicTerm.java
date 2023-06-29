@@ -245,7 +245,10 @@ public class ASTBasicTerm extends ASTTerm
       if (!failed)
       { 
         for (int p = 0; p < eargs.size(); p++)
-        { String textp = ((ASTTerm) eargs.get(p)).literalForm(); 
+        { // String textp = ((ASTTerm) eargs.get(p)).literalForm();
+          ASTTerm term = (ASTTerm) eargs.get(p);  
+          String textp = term.cg(cgs); 
+             
           args.add(textp); 
         }
 

@@ -87,7 +87,9 @@ public class ASTSymbolTerm extends ASTTerm
   { return symbol; } 
 
   public String cgRules(CGSpec cgs, Vector rules)
-  { if (rules == null) 
+  { System.out.println(">>> cgRules for " + this + " " + rules); 
+
+    if (rules == null) 
     { return symbol; } 
 
     for (int i = 0; i < rules.size(); i++) 
@@ -95,19 +97,28 @@ public class ASTSymbolTerm extends ASTTerm
       Vector tokens = r.lhsTokens; 
       Vector vars = r.getVariables(); 
 
-      if (vars.size() > 0 || tokens.size() > 1)
+      System.out.println("> Rule " + r + " has tokens " + tokens + " variables " + vars);
+
+      if (vars.size() > 1 || tokens.size() > 1)
       { // System.out.println("> Rule " + r + " has too many variables/tokens to match basic term " + this); 
         continue; 
       } 
 
-      if (tokens.size() == 0) 
+      if (tokens.size() == 0 && vars.size() == 0) 
       { return symbol; } 
 
-      String tok = (String) tokens.get(0); 
+      if (tokens.size() == 1 && vars.size() == 0)
+      { String tok = (String) tokens.get(0); 
 
-      if (symbol.equals(tok))
-      { return r.rhs; } 
-    }
+        if (symbol.equals(tok))
+        { return r.rhs; }
+      }  
+      else if (vars.size() == 1) // _i |-->r.rhs
+      { String var = "" + vars.get(0); 
+        return r.rhs.replace(var,symbol); 
+      } 
+    }  // No testing of conditions 
+
     return symbol; 
   } 
 
