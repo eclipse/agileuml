@@ -39,6 +39,11 @@ void OclProcess::sleep(long n)
     std::this_thread::sleep_for(std::chrono::milliseconds(n)); 
 }
 
+void OclProcess::sleepSeconds(double d)
+{   long n = (long) (d*1000); 
+    std::this_thread::sleep_for(std::chrono::milliseconds(n)); 
+}
+
 string OclProcess::getName()
 {
     return name; 
@@ -66,6 +71,11 @@ void OclProcess::start()
     system(name.c_str());
   }
 }
+
+OclProcess* OclProcess::startProcess()
+{ this->start(); 
+  return this; 
+} 
 
 void OclProcess::run()
 {

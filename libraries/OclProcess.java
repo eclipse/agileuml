@@ -123,6 +123,11 @@ class OclProcess
     { Thread.currentThread().interrupt(); } 
   } 
 
+  public static void sleepSeconds(double d)
+  { try { Thread.sleep((long) (d*1000)); }
+    catch (Exception e) 
+    { Thread.currentThread().interrupt(); } 
+  } 
 
   public String getName()
   { return name; }
@@ -152,6 +157,12 @@ class OclProcess
     { actualThread.start(); } 
   } // Should be actualThread.run()
 
+  public OclProcess startProcess()
+  { if (actualThread != null) 
+    { actualThread.start(); } 
+    return this; 
+  } // Should be actualThread.run()
+
 
   public boolean isAlive()
   { if (actualThread != null) 
@@ -168,6 +179,13 @@ class OclProcess
     return false;
   }
 
+
+  public void join()
+  { if (actualThread != null) 
+    { try { actualThread.join(); } 
+      catch (Exception e) { } 
+    } 
+  }
 
   public void join(double ms)
   { if (actualThread != null) 

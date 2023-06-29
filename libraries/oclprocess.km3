@@ -65,6 +65,10 @@ class OclProcess
   static operation sleep(n : long) : void
   pre: true  post: true; 
 
+  static operation sleepSeconds(d : double) : void
+  pre: true  
+  post: OclProcess.sleep((d*1000)->oclAsType(long)); 
+
   operation getName() : String
   pre: true 
   post: result = name; 
@@ -88,6 +92,11 @@ class OclProcess
   operation start() : void
   pre: true 
   post: true; 
+
+  operation startProcess() : OclProcess
+  pre: true 
+  post: true
+  activity: self.start(); return self; 
 
   operation isAlive() : boolean
   pre: true 

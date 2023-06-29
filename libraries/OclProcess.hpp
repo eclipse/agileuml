@@ -17,6 +17,7 @@ class OclProcess : public Runnable
 public:
     static OclProcess* newOclProcess(Runnable* obj, string nme);
     static void sleep(long n); 
+    static void sleepSeconds(double d); 
     static OclProcess* currentThread(); 
     static void exit(int n); 
     static string getEnvironmentProperty(string v); 
@@ -31,6 +32,7 @@ public:
     string getName();
     void setName(string nme); 
     void start(); 
+    OclProcess* startProcess(); 
     virtual void run();
     bool isAlive(); 
     bool isDaemon();

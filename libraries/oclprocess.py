@@ -79,6 +79,9 @@ class OclProcess:
   def sleep(n) :
     time.sleep(n/1000.0)
 
+  def sleepSeconds(d) :
+    time.sleep(d)
+
   def getName(self) : 
     result = self.name
     if self.actualThread != None : 
@@ -131,6 +134,10 @@ class OclProcess:
         self.actualThread.start()
       else : 
         self.actualThread.start()
+
+  def startProcess(self) : 
+    self.start()
+    return self
 
   def isAlive(self) : 
     if self.actualThread != None : 

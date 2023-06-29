@@ -97,6 +97,11 @@
         public static void sleep(long n)
         { Thread.Sleep((int)n); }
 
+        public static void sleepSeconds(double d)
+        { long n = (long) (d*1000); 
+          Thread.Sleep((int) n);
+        }
+
         public string getName()
         { return name; }
 
@@ -163,6 +168,11 @@
             if (osProcess != null)
             { osProcess.Start(); }
         }
+
+        public OclProcess startProcess()
+        { start(); 
+          return this; 
+        } 
 
         public void join(double ms)
         {
