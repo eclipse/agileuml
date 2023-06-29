@@ -56,7 +56,8 @@ reexpression::
 Express _1 as _2 |-->  Express _1 as _2
 
 formula::
-Define _1 |-->Define _1
+Define _1 |-->  Define _1
+Define g { _1 } |-->  Define g{_1}
 Define _1 = _2 |-->  Define _1 = _2<action> _1`value _2
 Define _1 ~ _2 |-->  Define _1 ~ _2<action> _1`mean _2`distributionMean, _1`variance _2`distributionVariance
 
@@ -135,11 +136,14 @@ _1 |-->_1
 
 equalityExpression::
 _1 = _1 |-->true
+_1 = _2 |-->_1`fArgument = _2`fArgument<when> _1`isStrictlyIncreasing true, _1`functor _2`functor
 _1 = _2 |-->_1 = _2
+
 _1 /= _1 |-->false
 _1 /= _2 |-->_1 /= _2
 
 _1 < _1 |-->false
+_1 < _2 |-->_1`lArgument < _2`lArgument<when> _1`isLinear true, _1`lFunctor _2`lFunctor
 _1 < _2 |-->_1`fArgument < _2`fArgument<when> _1`isStrictlyIncreasing true, _1`functor _2`functor
 
 _1 < _2 |-->_1 < _2
@@ -1070,12 +1074,12 @@ _1 ( ) |-->false
 
 ( _1 ) |-->_1`isStrictlyIncreasing
 
-_1 + _2 |-->_1`isStrictlyIncreasing<when> _2 integer
 _1 + _2 |-->_1`isStrictlyIncreasing<when> _2 real
 _1 + _2 |-->_1`isStrictlyIncreasing<when> _2`isIdentifier true
 
-_1 - _2 |-->_1`isStrictlyIncreasing<when> _2 integer
+_1 - _1 |-->false
 _1 - _2 |-->_1`isStrictlyIncreasing<when> _2 real
+_1 - _2 |-->_1`isStrictlyIncreasing<when> _2`isIdentifier true
 
 
 _1 |-->_1`isStrictlyIncreasing<when> _1 basicExpression
@@ -1092,8 +1096,26 @@ _1 |-->false
 _* |-->false
 
 
+isLinear::
+( _1 ) |-->_1`isLinear
+
+_1 + _2 |-->true
+_1 - _2 |-->true
+
+_1 |-->_1`isLinear<when> _1 basicExpression
+_1 |-->_1`isLinear<when> _1 factorExpression
+_1 |-->_1`isLinear<when> _1 factor2Expression
+_1 |-->_1`isLinear<when> _1 logicalExpression
+_1 |-->_1`isLinear<when> _1 equalityExpression
+_1 |-->_1`isLinear<when> _1 additiveExpression
+_1 |-->_1`isLinear<when> _1 expression
+
+_1 |-->false
+_* |-->false
+
+
 functor::
-g{ _1 } |-->id
+g{ _1 } |-->g{_1}
 
 † _1 |-->sqrt
 e ^{ _1 } |-->exp
@@ -1107,15 +1129,15 @@ _1 ^{ 3 } |-->cube
 
 _1 ( _2 ) |-->_1
 
-( _1 ) |-->_1`functor
+( _1 ) |-->(_1`functor)
 
-_1 + _2 |-->(_1`functor + _2)<when> _2 integer
 _1 + _2 |-->(_1`functor + _2)<when> _2 real
 _1 + _2 |-->(_1`functor + _2)<when> _2`isIdentifier true
 
-_1 - _2 |-->(_1`functor - _2)<when> _2 integer
 _1 - _2 |-->(_1`functor - _2)<when> _2 real
+_1 - _2 |-->(_1`functor - _2)<when> _2`isIdentifier true
 
+- _1 |-->-_1`functor
 
 _1 |-->_1`functor<when> _1 basicExpression
 _1 |-->_1`functor<when> _1 factorExpression
@@ -1125,7 +1147,25 @@ _1 |-->_1`functor<when> _1 equalityExpression
 _1 |-->_1`functor<when> _1 additiveExpression
 _1 |-->_1`functor<when> _1 expression
 
-_1 |-->id<when> _1 identifier
+_1 |-->_1<when> _1 identifier
+_1 |-->null
+_* |-->null
+
+
+lFunctor::
+( _1 ) |-->_1`lFunctor
+
+_1 + _2 |-->+_2
+_1 - _2 |-->-_2
+
+_1 |-->_1`lFunctor<when> _1 basicExpression
+_1 |-->_1`lFunctor<when> _1 factorExpression
+_1 |-->_1`lFunctor<when> _1 factor2Expression
+_1 |-->_1`lFunctor<when> _1 logicalExpression
+_1 |-->_1`lFunctor<when> _1 equalityExpression
+_1 |-->_1`lFunctor<when> _1 additiveExpression
+_1 |-->_1`lFunctor<when> _1 expression
+
 _1 |-->null
 _* |-->null
 
@@ -1145,12 +1185,13 @@ _1 ( _2 ) |-->_2
 
 ( _1 ) |-->_1`fArgument
 
-_1 + _2 |-->_1`fArgument<when> _2 integer
 _1 + _2 |-->_1`fArgument<when> _2 real
 _1 + _2 |-->_1`fArgument<when> _2`isIdentifier true
 
-_1 - _2 |-->_1`fArgument<when> _2 integer
 _1 - _2 |-->_1`fArgument<when> _2 real
+_1 - _2 |-->_1`fArgument<when> _2`isIdentifier true
+
+- _1 |-->_1`fArgument
 
 _1 |-->_1`fArgument<when> _1 basicExpression
 _1 |-->_1`fArgument<when> _1 factorExpression
@@ -1161,8 +1202,26 @@ _1 |-->_1`fArgument<when> _1 additiveExpression
 _1 |-->_1`fArgument<when> _1 expression
 
 _1 |-->_1<when> _1 identifier
-_1 |-->1
-_* |-->1
+_1 |-->_1
+_* |-->_*
+
+
+lArgument::
+( _1 ) |-->_1`lArgument
+
+_1 + _2 |-->_1
+_1 - _2 |-->_1
+
+_1 |-->_1`lArgument<when> _1 basicExpression
+_1 |-->_1`lArgument<when> _1 factorExpression
+_1 |-->_1`lArgument<when> _1 factor2Expression
+_1 |-->_1`lArgument<when> _1 logicalExpression
+_1 |-->_1`lArgument<when> _1 equalityExpression
+_1 |-->_1`lArgument<when> _1 additiveExpression
+_1 |-->_1`lArgument<when> _1 expression
+
+_1 |-->null
+_* |-->null
 
 
 bracketed::

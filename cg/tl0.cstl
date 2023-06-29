@@ -1,6 +1,16 @@
-prog::
-_* |-->_*
+addSuffix::
+_1 |-->_1suffix
 
-dec::
-_1 : _2 |--><action> _1`defined true, _1 _2
+expr::
+_1 |-->_1`addSuffix
+
+
+
+
+
+
+
+
+
+
 

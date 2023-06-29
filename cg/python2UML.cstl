@@ -1,8 +1,16 @@
 file_input::
-_1 |-->class FromPython {\n  operation initialise()\n  pre: true post: true\n  activity: _1;\n\n_1`functionDefinitions\n}\n
-_1 _* |-->class FromPython {\n  operation initialise()\n  pre: true post: true\n  activity: _1_*`followingStatement;\n\n_1`functionDefinitions\n_*`functionDefinitions}\n
+_1 |-->_1`classDefinitions\n class FromPython {\n  operation initialise()\n  pre: true post: true\n  activity: _1;\n\n_1`functionDefinitions\n}\n
+_1 _* |-->_1`classDefinitions\n_*`classDefinitions class FromPython {\n  operation initialise()\n  pre: true post: true\n  activity: _1_*`followingStatement;\n\n_1`functionDefinitions\n_*`functionDefinitions}\n
 
 
+single_input::
+_1 |-->_1
+_1 _2 |-->_1
+
+
+eval_input::
+_1 |-->_1
+_1 _* |-->_1
 
 
 testlist::
@@ -87,12 +95,40 @@ abs _1 |-->_1->abs()
 all _1 |-->_1->forAll( _x | _x = true )
 any _1 |-->_1->exists( _x | _x = true )
 ascii _1 |-->(_1 + "")
+await asyncio _1 |-->_1`asyncioTrailer<when> _1 trailer
+await _1 |-->_1.join()
+bool _1 |-->_1->toBoolean()
+
 dict _1 |-->_1
+divmod _1 |-->Sequence{(_1`firstArg div _1`secondArg), (_1`firstArg mod _1`secondArg)}
+ 
 filter _1 |-->(_1`secondArg)->select( _x | (_1`firstArg)->apply(_x) = true )
+format _1 |-->(_1`firstArg + "")
 frozenset _1 |-->Set{}
 map _1 |-->(_1`secondArg)->collect( _x | (_1`firstArg)->apply(_x) )
 
+hex _1 |-->MathLib.decimal2hex_1
+oct _1 |-->MathLib.decimal2octal_1
+
+id _1 |-->?_1
+input _1 |-->(OclFile["System.in"]).readLine()
+isinstance _1 |-->(_1`secondArg).isInstance(_1`firstArg)
+issubclass _1 |-->(_1`firstArg).isAssignableFrom(_1`secondArg)
+iter _1 |-->OclIterator.newOclIterator_Sequence_1
+
 len _1 |-->_1->size()
+list _1 |-->_1
+max _1 |-->_1->max()
+min _1 |-->_1->min()
+round _1 |-->_1->round()<when> _1`numberOfArguments 1
+round _1 |-->MathLib.roundN(_1`firstArg, _1`secondArg)
+slice _1 |-->Integer.subrange(1,_1`firstArg)<when> _1`numberOfArguments 1
+slice _1 |-->Integer.subrange(_1`firstArg+1,_1`secondArg)
+
+sum _1 |-->_1->sum()
+type _1 |-->_1->oclType()<when> _1`numberOfArguments 1
+type _1 |-->OclType.newOclType(_1`firstArg)
+
 print _1 |-->_1->display()
 int _1 |-->_1->oclAsType(int)
 float _1 |-->_1->oclAsType(double)
@@ -100,7 +136,13 @@ str _1 |-->(_1 + "")
 chr _1 |-->_1->byte2char()
 unichr _1 |-->_1->byte2char()
 ord _1 |-->_1->char2byte()
-type _1 |-->_1->oclType()
+
+pow _1 |-->(_1`firstArg)->pow(_1`secondArg)
+repr _1 |-->(_1 + "")
+reversed _1 |-->_1->reverse()
+sorted _1 |-->_1->sort()
+
+tuple _1 |-->_1
 range _1 |-->_1`rangeTrailer
 enumerate _1 |-->Integer.subrange(1, _1->size())->collect( $i | Sequence{$i-1, _1->at($i)} )
 zip _1 |-->Integer.subrange(1, _1`firstArg->size())->collect( $i | Sequence{_1`firstArg->at($i), _1`secondArg->at($i)} )
@@ -113,16 +155,15 @@ getattr _1 |-->OclType.getAttributeValue_1
 hasattr _1 |-->OclType.hasAttribute_1
 delattr _1 |-->OclType.removeAttribute_1
 
-eval _1 |-->(lambda $$ : OclAny in _1)->apply(0)
-
-await _1 |-->_1
-await _1 _* |-->_1 _*
+eval _1 |-->_0`pythonEval
 
 math _1 |-->_1`mathTrailer
 re _1 |-->_1`reTrailer
 random _1 |-->_1`randomTrailer
 pickle _1 |-->_1`pickleTrailer
 datetime _1 |-->_1`datetimeTrailer
+asyncio _1 |-->_1`asyncioTrailer
+
 
 _1 ** _2 |-->(_1)->pow(_2)
 + _1 |-->_1
@@ -130,6 +171,7 @@ _1 ** _2 |-->(_1)->pow(_2)
 ~ _1 |-->MathLib.bitwiseNot(_1)
 _1 * _2 |-->_1 * _2
 _1 / _2 |-->_1 / _2
+_1 % _2 |-->StringLib.format(_1,_2)<when> _1 String
 _1 % _2 |-->_1 mod _2
 _1 // _2 |-->_1 div _2
 _1 @ _2 |-->MathLib.matrixMultiplication(_1,_2)
@@ -141,7 +183,11 @@ _1 & _2 |-->MathLib.bitwiseAnd(_1, _2)
 _1 ^ _2 |-->MathLib.bitwiseXor(_1, _2)
 _1 | _2 |-->MathLib.bitwiseOr(_1, _2)
 
+_1 _2 |-->_1.new_1().initialise_2<when> _1 Class, _2 trailer
+
+
 _1 _2 |-->StringLib.capitalise(_1)<when> _1 atom, _2 matches .capitalize\(\)
+_1 _2 |-->StringLib.sumStringsWithSeparator(_2`third, _1)<when> _1 atom, _2`second join
 _1 _2 |-->StringLib.toTitleCase(_1)<when> _1 atom, _2 matches .title\(\)
 _1 _2 |-->StringLib.swapCase(_1)<when> _1 atom, _2 matches .swapcase\(\)
 _1 _2 |-->StringLib.leftTrim(_1)<when> _1 atom, _2 matches .lstrip\(\)
@@ -160,6 +206,7 @@ atom::
 ( ) |-->()
 ( _1 ) |-->Sequence{_1}<when> _1 multiple
 ( _1 ) |-->(_1)
+[ ] |-->Sequence{}
 [ _1 ] |-->_1`sequenceFormation
 { _1 } |-->_1
 ` _1 ` |-->"_1"
@@ -168,6 +215,9 @@ atom::
 None |-->null
 True |-->true
 False |-->false
+inf |-->Math_PINFINITY
+Infinity |-->Math_PINFINITY
+nan |-->Math_NaN
 
 ... |-->...
 print |-->print
@@ -248,6 +298,7 @@ dict _1 |-->true
 ( ) |-->false
 ( _1 ) |-->false<when> _1 multiple
 ( _1 ) |-->_1`isMapExpression
+[ ] |-->false
 [ _1 ] |-->false
 { _1 } |-->_1`isMapAtomExpression
 ` _1 ` |-->false
@@ -276,6 +327,7 @@ range _1 |-->true
 ( ) |-->false
 ( _1 ) |-->false<when> _1 multiple
 ( _1 ) |-->_1`isSequenceExpression
+[ ] |-->true
 [ _1 ] |-->true
 { _1 } |-->false
 ` _1 ` |-->false
@@ -289,21 +341,28 @@ _1 |-->false
 
 
 updateForm::
+_1 |-->_1`updateForm<when> _1 testlist_star_expression
 _1 |-->_1`updateForm<when> _1 testlist
 _1 |-->_1`updateForm<when> _1 test
 _1 |-->_1`updateForm<when> _1 logical_test
 _1 |-->_1`updateForm<when> _1 comparison
 _1 |-->_1`updateForm<when> _1 expr
 
+exec _1 |-->_0`pythonExec
 exec _* |-->    execute _*
 print _1 |-->    execute _1->display()
 del _1 |-->    execute _1->isDeleted()
+await asyncio _1 |-->    _1`asyncioTrailer<when> _1 trailer
+await _1 |-->    _1.join()
 
 _1 _2 |-->    _1.closeFile()<when> _1 atom, _2`second close
 _1 _2 |-->    _1.write_2`third<when> _1 atom, _2`second write
 pickle _1 |-->    _1`thirdSecondArg.writeObject(_1`thirdFirstArg)<when> _1`second dump
+asyncio _1 |-->    _1`asyncioTrailer
 
-_1 _2 |-->    _1 := _1_2`trailerUpdateForm<when> _1 atom, _2 trailer
+_1 _2 |-->    _1 := _1_2`trailerUpdateForm<when> _1 atom, _2 trailer, _2`isUpdating true
+_1 _2 |-->    _1_2<when> _1 atom, _2 trailer
+
 _1 , _* |-->    _1 ;\n_*`recurse
 _1 |-->
 
@@ -321,6 +380,7 @@ _1 _2 |-->_1`errorToUML_2<when> _1 atom, _2 trailer
 ( ) |-->()
 ( _1 ) |-->Sequence{_1}<when> _1 multiple
 ( _1 ) |-->(_1`errorToUML)
+[ ] |-->Sequence{}
 [ _1 ] |-->_1`sequenceFormation
 { _1 } |-->_1
 ` _1 ` |-->"_1"
@@ -349,6 +409,9 @@ name::
 True |-->true
 False |-->false
 None |-->null
+inf |-->Math_PINFINITY
+Infinity |-->Math_PINFINITY
+nan |-->Math_NaN
 
 ValueError |-->IncorrectElementException
 BaseException |-->OclException
@@ -407,6 +470,24 @@ _1 |-->_1
 _1 , |-->_1
 _1 , _* |-->_1, _*`recurse
 
+typedargslistAttributes::
+_1 |-->_1`asAttributes
+_1 , |-->_1`asAttributes
+_1 , _* |-->_1`asAttributes_*`recurse
+
+typedargslistSettings::
+_1 |-->_1`asSettings
+_1 , |-->_1`asSettings
+_1 , _* |-->_1`asSettings_*`recurse
+
+parametersTail::
+self |-->
+_1 |-->_1`parametersTail<when> _1 def_parameters
+self , |-->
+_1 , |-->_1
+self , _* |-->_*
+_1 , _* |-->_1 , _*
+
 args::
 * _1 |-->_1 : Sequence(OclAny)<action> _1 Sequence
 
@@ -417,6 +498,15 @@ def_parameters::
 _1 |-->_1
 _1 , _* |-->_1, _*`recurse
 
+asAttributes::
+_1 |-->_1`asAttribute
+_1 , _* |-->_1`asAttribute_*`recurse
+
+asSettings::
+_1 |-->_1`asSetting
+_1 , _* |-->_1`asSetting_*`recurse
+
+
 def_parameter::
 _1 = _2 |-->_1`parameterName : String<when> _2 String, _1 1ary <action> _1`parameterName String
 _1 = _2 |-->_1`parameterName : int<when> _2 int, _1 1ary <action> _1`parameterName int
@@ -425,6 +515,46 @@ _1 = _2 |-->_1
 
 * |-->
 _1 |-->_1
+
+asAttribute::
+_1 = _2 |-->  attribute _1`parameterName : String;\n<when> _2 String, _1 1ary <action> _1`parameterName String
+_1 = _2 |-->  attribute _1`parameterName : int;\n<when> _2 int, _1 1ary <action> _1`parameterName int
+_1 = _2 |-->  attribute _1`parameterName : double;\n<when> _2 real, _1 1ary <action> _1`parameterName real
+_1 = _2 |-->_1
+
+* |-->
+_1 |-->_1`asAttribute<when> _1 named_parameter
+
+_1 |-->  attribute _1 : OclAny;\n
+_1 : int |-->  attribute _1 : int;\n<action> _1 int
+_1 : bool |-->  attribute _1 : boolean;\n<action> _1 boolean
+_1 : float |-->  attribute _1 : double;\n<action> _1 real
+_1 : dict |-->  attribute _1 : Map(String,OclAny);\n<action> _1 Map
+_1 : str |-->  attribute _1 : String;\n<action> _1 String
+_1 : list |-->  attribute _1 : Sequence(OclAny);\n<action> _1 Sequence
+_1 : set |-->  attribute _1 : Set(OclAny);\n<action> _1 Set
+
+_1 : _2 |-->  attribute _1 : _2;\n<action> _1 _2
+
+
+asSetting::
+_1 = _2 |-->resx._1`parameterName = _1`parameterName & 
+
+* |-->
+_1 |-->_1`asSetting<when> _1 named_parameter
+
+_1 |-->resx._1 = _1 & 
+_1 : int |-->resx._1 = _1 & <action> _1 int
+_1 : bool |-->resx._1 = _1 & <action> _1 boolean
+_1 : float |-->resx._1 = _1 & <action> _1 real
+_1 : dict |-->resx._1 = _1 & <action> _1 Map
+_1 : str |-->resx._1 = _1 & <action> _1 String
+_1 : list |-->resx._1 = _1 & <action> _1 Sequence
+_1 : set |-->resx._1 = _1 & <action> _1 Set
+
+_1 : _2 |-->resx._1 = _1 & <action> _1 _2
+
+
 
 named_parameter::
 _1 |-->_1 : OclAny
@@ -437,6 +567,7 @@ _1 : list |-->_1 : Sequence(OclAny)<action> _1 Sequence
 _1 : set |-->_1 : Set(OclAny)<action> _1 Set
 
 _1 : _2 |-->_1 : _2<action> _1 _2
+
 
 parameterName::
 _1 |-->_1
@@ -487,6 +618,10 @@ trailer::
 . seek _1 |-->.setPosition_1
 . tell _1 |-->.getPosition()
 
+. sleep _1 |-->OclProcess.sleepSeconds_1
+. create_task _1 |-->(OclProcess.newOclProcess(_1`createTaskArguments, "")).startProcess()
+. run _1 |-->(OclProcess.newOclProcess(_1`createTaskArguments, "")).start()
+
 . gauss _1 |-->.nextNormal(_1`firstArg, (_1`secondArg)->sqr())
 . normalvariate _1 |-->.nextNormal(_1`firstArg, (_1`secondArg)->sqr())
 . uniform _1 |-->.nextUniform_1
@@ -505,6 +640,45 @@ trailer::
 . _1 |-->._1
 . _1 _* |-->._1_*
 _1 |-->_1
+
+
+asyncioTrailer::
+. sleep _1 |-->OclProcess.sleepSeconds_1
+. create_task _1 |-->(OclProcess.newOclProcess(_1`createTaskArguments, "")).startProcess()
+. run _1 |-->(OclProcess.newOclProcess(_1`createTaskArguments, "")).start()
+
+
+numberOfArguments::
+. _1 |-->0
+. _1 _* |-->0
+
+_1 |-->_1`numberOfArguments<when> _1 testlist
+_1 |-->_1`numberOfArguments<when> _1 test
+_1 |-->_1`numberOfArguments<when> _1 logical_test
+_1 |-->_1`numberOfArguments<when> _1 comparison
+_1 |-->_1`numberOfArguments<when> _1 expr
+_1 |-->_1`numberOfArguments<when> _1 trailer
+_1 |-->_1`numberOfArguments<when> _1 arguments
+
+_1 |-->0<when> _1 atom
+
+print _1 |-->0
+del _1 |-->0
+dict _1 |-->0
+
+( ) |-->0
+( _1 ) |-->_1`arity<when> _1 multiple
+( _1 ) |-->1
+[ ] |-->0
+[ _1 ] |-->0
+{ _1 } |-->0
+` _1 ` |-->0
+- _1 |-->0
+None |-->0
+... |-->0
+
+_1 |-->0
+_* |-->0
 
 
 reTrailer::
@@ -630,12 +804,32 @@ trailerUpdateForm::
 . discard _1 |-->->excluding_1
 . clear _1 |-->->intersection(Set{})
 
-. close _1 |-->.closeFile()
-. write _1 |-->.write_1
-
 . _1 |-->._1
 . _1 _* |-->._1_*
 _1 |-->_1
+
+
+isUpdating::
+. append _1 |-->true
+. extend _1 |-->true
+. insert _1 |-->true
+. remove _1 |-->true
+. sort _1 |-->true
+. reverse _1 |-->true
+. pop _1 |-->true
+. add _1 |-->true
+. intersection _1 |-->true
+. difference _1 |-->true
+. symmetric_difference _1 |-->true
+. update _1 |-->true
+. remove _1 |-->true
+. discard _1 |-->true
+. clear _1 |-->true
+
+. _1 |-->false
+. _1 _* |-->false
+_1 |-->false
+
 
 rangeTrailer::
 _1 |-->_1`rangeArguments
@@ -651,29 +845,34 @@ justificationArguments::
 arguments::
 ( ) |-->()
 ( _1 ) |-->(_1)
+[ ] |-->()
 [ _1 ] |-->_1
 
 firstArg::
 ( ) |-->
 ( _1 ) |-->_1`first
+[ ] |-->
 [ _1 ] |-->_1`first
 _1 |-->_1`firstArg
 
 secondArg::
 ( ) |-->
 ( _1 ) |-->_1`third
+[ ] |-->
 [ _1 ] |-->_1`third
 _1 |-->_1`secondArg
 
 thirdArg::
 ( ) |-->
 ( _1 ) |-->_1`fifth
+[ ] |-->
 [ _1 ] |-->_1`fifth
 _1 |-->_1`thirdArg
 
 lastArg::
 ( ) |-->
 ( _1 ) |-->_1`last
+[ ] |-->
 [ _1 ] |-->_1`last
 _1 |-->_1`lastArg
 
@@ -687,17 +886,39 @@ _1 _2 _3 |-->_3`secondArg
 allUnion::
 ( ) |-->
 ( _1 ) |-->->union(Set{_1}->unionAll())
+[ ] |-->Set{}
 [ _1 ] |-->->union(Set{_1}->unionAll())
 
 popArguments::
 ( ) |-->->any()
 ( _1 ) |-->->at(_1`firstArg+1)
+[ ] |-->->any()
 [ _1 ] |-->->at(_1`firstArg+1)
 
 popUpdateArguments::
 ( ) |-->->tail()
 ( _1 ) |-->->excludingAt(_1`firstArg+1)
+[ ] |-->->tail()
 [ _1 ] |-->->excludingAt(_1`firstArg+1)
+
+createTaskArguments::
+( ) |-->
+( _1 ) |-->_1`createTaskArglist
+[ ] |-->
+[ _1 ] |-->_1
+
+createTaskArglist::
+_1 |-->_1`createTaskArgument
+
+createTaskArgument::
+_1 |-->_1`createTaskArgument<when> _1 test
+_1 |-->_1`createTaskArgument<when> _1 logical_test
+_1 |-->_1`createTaskArgument<when> _1 comparison
+_1 |-->_1`createTaskArgument<when> _1 expr
+
+_1 _2 |-->Async$_1.newAsync$_1_2
+
+
 
 
 argument::
@@ -782,6 +1003,7 @@ except _1 , _2 : _3 |-->    catch (_2 : _1) do (_3)\n
 finally_clause::
 finally : _1 |-->    finally (_1)
 
+
 simple_stmt::
 _1 |-->_1
 _* |-->_*
@@ -796,8 +1018,11 @@ _1 , _* |-->    var _1 : OclAny := null;\n_*`recurse
 
 small_stmt::
 _1 _2 |-->_1`declareIfNecessary    Sequence{_1} _2<when> _1 multiple
-_1 _2 |-->    _1 _2<when> _2 assign_part, _1`defined true
-_1 _2 |-->    var _1 : _2`ocltype _2<when> _2 assign_part <action> _1`defined true, _1 _2`ocltype
+_1 _2 |-->    _1 _2<when> _2`equalAssign true, _1`defined true
+_1 _2 |-->    _1 _2<when> _2`equalAssign true, _1 matches .*\..*
+_1 _2 |-->    var _1 : _2`ocltype _2<when> _2`equalAssign true <action> _1`defined true, _1 _2`ocltype
+
+_1 _2 |-->    _1 := _1_2<when> _2 assign_part
 
 print _1 |-->    execute (_1)->display()
 del _1 |-->    execute (_1)->isDeleted()
@@ -813,6 +1038,7 @@ raise _* |-->    _*`errorlist
 import _1 |-->    skip
 from _* |-->    skip
 global _* |-->    skip
+exec _1 |-->_0`pythonExec
 exec _* |-->    execute _*
 assert _1 |-->    assert _1 do "assertion failed"
 assert _1 , _2 |-->    assert _1 do _2
@@ -820,14 +1046,127 @@ assert _1 , _2 |-->    assert _1 do _2
 nonlocal _* |-->    skip
 _1 |-->_1`updateForm<when> _1 testlist_star_expr
 
+
+hasValueReturn::
+print _1 |-->false
+del _1 |-->false
+pass |-->false
+break |-->false
+continue |-->false
+return _1 |-->true
+return |-->false
+raise _1 |-->false
+raise _1 from _2 |-->false
+raise _* |-->false
+
+import _1 |-->false
+from _* |-->false
+global _* |-->false
+exec _1 |-->false
+exec _* |-->false
+assert _1 |-->false
+assert _1 , _2 |-->false
+
+nonlocal _* |-->false
+
+if _1 : _2 |-->_2`hasValueReturn
+if _1 : _2 _3 |-->true<when> _2`hasValueReturn true, _3 else_clause
+if _1 : _2 _3 |-->true<when> _3`hasValueReturn true, _3 else_clause
+if _1 : _2 _3 |-->false<when> _3 else_clause
+
+if _1 : _2 _* |-->true<when> _2`hasValueReturn true
+if _1 : _2 _* |-->_*`recurse
+
+while _1 : _2 |-->_2`hasValueReturn
+
+for _1 in _2 : _3 |-->_3`hasValueReturn
+
+try : _1 |-->_1`hasValueReturn
+try : _1 _* |-->true<when> _1`hasValueReturn true
+try : _1 _* |-->_*`recurse
+
+elif _1 : _2 |-->_2`hasValueReturn
+
+else : _1 |-->_1`hasValueReturn
+
+except : _1 |-->_1`hasValueReturn
+except _1 as _2 : _3 |-->_3`hasValueReturn
+except _1 , _2 : _3 |-->_3`hasValueReturn
+
+finally : _1 |-->_1`hasValueReturn
+
+_1 _2 |-->false<when> _2 assign_part
+
+_1 |-->false<when> _1 testlist_star_expr
+
+_1 |-->_1`hasValueReturn<when> _1 stmt
+_1 |-->_1`hasValueReturn<when> _1 small_stmt
+_1 |-->_1`hasValueReturn<when> _1 simple_stmt
+_1 |-->_1`hasValueReturn<when> _1 compound_stmt
+_1 |-->_1`hasValueReturn<when> _1 elif_clause
+_1 |-->_1`hasValueReturn<when> _1 else_clause
+_1 |-->_1`hasValueReturn<when> _1 finally_clause
+
+_1 _* |-->true<when> _1 stmt, _1`hasValueReturn true
+_1 _* |-->_*`recurse<when> _1 stmt
+
+_1 ; _* |-->true<when> _1 small_stmt, _1`hasValueReturn true
+_1 ; _* |-->_*`recurse<when> _1 small_stmt
+
+_1 |-->false
+_* |-->false
+
+
+
+
 errorlist::
 _1 |-->    error _1`errorToUML
 _1 _* |-->    error _1`errorToUML;\n_*`recurse
 
 
+equalAssign::
+= _1 |-->true
+_1 _2 |-->false
+_* |-->false
+
+
+
 assign_part::
 = _1 |-->:= _1 ; _1`updateForm<when> _1`hasSideEffect true
 = _1 |-->:= _1
+
++= _1 |--> + _1 ; _1`updateForm<when> _1`hasSideEffect true
++= _1 |--> + _1
+
+-= _1 |--> - _1 ; _1`updateForm<when> _1`hasSideEffect true
+-= _1 |--> - _1
+
+*= _1 |--> * _1 ; _1`updateForm<when> _1`hasSideEffect true
+*= _1 |--> * _1
+
+%= _1 |--> mod _1 ; _1`updateForm<when> _1`hasSideEffect true
+%= _1 |--> mod _1
+
+/= _1 |--> / _1 ; _1`updateForm<when> _1`hasSideEffect true
+/= _1 |--> / _1
+
+//= _1 |--> div _1 ; _1`updateForm<when> _1`hasSideEffect true
+//= _1 |--> div _1
+
+|= _1 |--> or _1 ; _1`updateForm<when> _1`hasSideEffect true
+|= _1 |--> or _1
+
+&= _1 |--> & _1 ; _1`updateForm<when> _1`hasSideEffect true
+&= _1 |--> & _1
+
+^= _1 |--> xor _1 ; _1`updateForm<when> _1`hasSideEffect true
+^= _1 |--> xor _1
+
+**= _1 |-->->pow(_1) ; _1`updateForm<when> _1`hasSideEffect true
+**= _1 |-->->pow(_1)
+
+<<= _1 |--> * (2->pow(_1))
+>>= _1 |--> div (2->pow(_1))
 
 
 ocltype::
@@ -840,17 +1179,28 @@ ocltype::
 
 True |-->boolean
 False |-->boolean
+inf |-->double
+Infinity |-->double
+nan |-->double
+
 int |-->int
 float |-->double
 str |-->String
 dict |-->Map
 list |-->Sequence
 set |-->Set
+tuple |-->Sequence
 bool |-->boolean
 
+callable _1 |-->boolean
+bool _1 |-->boolean
 abs _1 |-->double
 all _1 |-->boolean
 dict _1 |-->Map
+globals _1 |-->Map
+hex _1 |-->String
+id _1 |-->int
+
 any _1 |-->boolean
 ascii _1 |-->String
 filter _1 |-->Sequence
@@ -859,6 +1209,7 @@ hash _1 |-->int
 input _1 |-->String
 isinstance _1 |-->boolean
 issubclass _1 |-->boolean
+hasattr _1 |-->boolean
 
 len _1 |-->int
 list _1 |-->Sequence
@@ -876,6 +1227,7 @@ print _1 |-->void
 int _1 |-->int
 float _1 |-->double
 str _1 |-->String
+format _1 |-->String
 chr _1 |-->String
 unichr _1 |-->String
 ord _1 |-->int
@@ -883,8 +1235,10 @@ type _1 |-->OclType
 range _1 |-->Sequence
 enumerate _1 |-->Sequence
 zip _1 |-->Sequence
+slice _1 |-->Sequence
 
 open _1 |-->OclFile
+asyncio _1 |-->OclProcess
 
 _1 if _2 else _3 |-->_1`ocltype
 lambda _1 : _2 |-->Function
@@ -896,6 +1250,7 @@ _1 ** _2 |-->double
 ~ _1 |-->int
 _1 * _2 |-->double
 _1 / _2 |-->double
+_1 % _2 |-->String<when> _1 String
 _1 % _2 |-->int
 _1 // _2 |-->int
 _1 @ _2 |-->Sequence
@@ -923,19 +1278,29 @@ _1 in _2 |-->boolean
 _1 is not _2 |-->boolean
 _1 is _2 |-->boolean
 
+_1 _2 |-->_1<when> _1 Class, _2 trailer
+
 _1 _2 |-->_2`trailerOclType<when> _1 atom, _2 trailer
 
+_1 |-->int<when> _1 integer
 
-
+_1 |-->_1`ocltype<when> _1 testlist_star_expr
 _1 |-->_1`ocltype<when> _1 testlist
 _1 |-->_1`ocltype<when> _1 test
 _1 |-->_1`ocltype<when> _1 logical_test
 _1 |-->_1`ocltype<when> _1 comparison
 _1 |-->_1`ocltype<when> _1 expr
 _1 |-->_1`ocltype<when> _1 atom
+_1 |-->_1`numberType<when> _1 number
 
 _1 |-->OclAny
 _* |-->OclAny
+
+
+numberType::
+_1 |-->int<when> _1 integer
+_1 |-->double
+
 
 
 trailerOclType::
@@ -1060,3 +1425,96 @@ def _1 ( ) -> _2 : _3 |-->  operation _1() : _2`ocltype\n  pre: true post: true\
 
 async def _1 ( ) : _2 |-->  operation _1() : OclAny\n  pre: true post: true\n  activity:\n_2;\n\n
 def _1 ( ) : _2 |-->  operation _1() : OclAny\n  pre: true post: true\n  activity:\n_2;\n\n
+
+
+methodDefinition::
+def __init__ ( _1 ) : _2 |-->_2`attributeDefinitions\n  operation initialise(_1`parametersTail) : OclAny\n  pre: true post: true\n  activity:\n_2;\n    return self;\n\n
+
+def _1 ( _2 ) -> _3 : _4 |-->\n  operation _1(_2`parametersTail) : _3`ocltype\n  pre: true post: true\n  activity:\n_4;\n\n
+
+def _1 ( _2 ) : _3 |-->\n  operation _1(_2`parametersTail) : OclAny\n  pre: true post: true\n  activity:\n_3;\n\n<when> _3`hasValueReturn true
+
+def _1 ( _2 ) : _3 |-->\n  operation _1(_2`parametersTail)\n  pre: true post: true\n  activity:\n_3;\n\n
+
+def _1 ( ) -> _2 : _3 |-->\n  static operation _1() : _2`ocltype\n  pre: true post: true\n  activity:\n_3;\n\n
+
+def _1 ( ) : _2 |-->\n  static operation _1() : OclAny\n  pre: true post: true\n  activity:\n_2;\n\n<when> _2`hasValueReturn true
+
+def _1 ( ) : _2 |-->\n  static operation _1()\n  pre: true post: true\n  activity:\n_2;\n\n
+
+
+
+classDefinitions::
+_1 |-->_1<when> _1 classdef
+_1 |-->_1`classDefinitions<when> _1 compound_stmt
+_1 |-->_1`classDefinitions<when> _1 funcdef
+_1 |-->
+
+async def _1 ( _2 ) -> _3 : _4 |-->class Async$_1 {\n  stereotype active;\n\n_2`typedargslistAttributes\n  static operation newAsync$_1(_2) : Async$_1\n  pre: true\n  post: Async$_1->exists( resx | _2`typedargslistSettings result = resx );\n\n  operation run()\n  pre: true post: true\n  activity:\n_4;\n\n}\n\n
+
+async def _1 ( _2 ) : _3 |-->class Async$_1 {\n  stereotype active;\n\n_2`typedargslistAttributes\n  static operation newAsync$_1(_2) : Async$_1\n  pre: true\n  post: Async$_1->exists( resx | _2`typedargslistSettings result = resx );\n\n  operation run()\n  pre: true post: true\n  activity:\n_3;\n\n}\n\n
+
+async def _1 ( ) -> _2 : _3 |-->class Async$_1 {\n  stereotype active;\n\n  static operation newAsync$_1() : Async$_1\n  pre: true post: Async$_1->exists( resx | result = resx );\n\n  operation run()\n  pre: true post: true\n  activity:\n_3;\n\n}\n\n
+
+async def _1 ( ) : _2 |-->class Async$_1 {\n  stereotype active;\n\n  static operation newAsync$_1() : Async$_1\n  pre: true post: Async$_1->exists( resx | result = resx );\n\n  operation run()\n  pre: true post: true\n  activity:\n_2;\n\n}\n\n
+
+if _1 : _2 |-->
+if _1 : _2 _3 |-->
+if _1 : _2 _* |-->
+while _1 : _2 |-->
+for _1 in _2 : _3 |-->
+_* |-->
+
+
+
+classdef::
+class _1 ( _2 ) : _3 |-->class _1 extends _2 {\n  static operation new_1() : _1\n  pre: true post: true\n  activity: var $x : _1 := create_1(); return $x;\n\n_3`classcontent}\n\n<action> _1 Class
+
+class _1 ( ) : _2 |-->class _1 {\n  static operation new_1() : _1\n  pre: true post: true\n  activity: var $x : _1 := create_1(); return $x;\n\n_2`classcontent}\n\n<action> _1 Class
+
+class _1 : _2 |-->class _1 {\n  static operation new_1() : _1\n  pre: true post: true\n  activity: var $x : _1 := create_1(); return $x;\n\n_2`classcontent}\n\n<action> _1 Class
+
+
+classcontent::
+_1 _* |-->_1`classcontent_*`classcontent<when> _1 stmt
+_1 |-->_1`classcontent<when> _1 stmt
+_1 |-->_1`classcontent<when> _1 simple_stmt
+_1 |-->_1`classcontent<when> _1 small_stmt
+_1 |-->_1`classcontent<when> _1 compound_stmt
+
+_1 |-->_1`methodDefinition<when> _1 funcdef
+
+_1 _2 |-->  static attribute _1 : _2`ocltype _2;\n<when> _2 assign_part
+
+_1 |-->
+_* |-->
+
+
+attributeDefinitions::
+_1 _* |-->_1`attributeDefinitions_*`attributeDefinitions<when> _1 stmt
+_1 |-->_1`attributeDefinitions<when> _1 stmt
+_1 |-->_1`attributeDefinitions<when> _1 simple_stmt
+_1 |-->_1`attributeDefinitions<when> _1 small_stmt
+_1 |-->_1`attributeDefinitions<when> _1 compound_stmt
+
+_1 |--><when> _1 funcdef
+
+_1 _2 |-->  attribute _1`removeSelf : _2`ocltype _2;\n<when> _2 assign_part, _1 matches self.*
+
+_1 |-->
+_* |-->
+
+
+removeSelf::
+self _1 |-->_1`removeSelf<when> _1 trailer
+. _1 |-->_1
+
+_1 |-->_1`removeSelf<when> _1 testlist
+_1 |-->_1`removeSelf<when> _1 test
+_1 |-->_1`removeSelf<when> _1 logical_test
+_1 |-->_1`removeSelf<when> _1 comparison
+_1 |-->_1`removeSelf<when> _1 expr
+_1 |-->
+
+
+
