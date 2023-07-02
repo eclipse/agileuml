@@ -6586,8 +6586,12 @@ public class ModelSpecification
     if (amjx != null) 
     { System.out.println(">treesequence2>--- List function mapping: " + amjx); 
       String fid = 
-          Identifier.nextIdentifier("seq2ruleset");
+          Identifier.nextIdentifier("seq2subruleset");
       TypeMatching tmnew = new TypeMatching(fid);
+
+      String pid = 
+          Identifier.nextIdentifier("seq2ruleset");
+      TypeMatching tmpid = new TypeMatching(pid);
 
       Vector ssTerms = new Vector(); 
       Vector deletedSymbols = new Vector(); 
@@ -6664,14 +6668,25 @@ public class ModelSpecification
       fexpr.addParameter(new BasicExpression("_*"));
       BasicExpression srcstar = new BasicExpression("_*");
 
+      BasicExpression pexpr = new BasicExpression(pid); 
+      pexpr.setUmlKind(Expression.FUNCTION);
+      pexpr.addParameter(new BasicExpression("_*"));
+      
       // if (tmnew.isVacuous())
       // { return new AttributeMatching(srcstar,srcstar); } 
 
-      tmnew.addValueMapping("_*", "_*`" + fid);    
+      tmpid.addValueMapping("_*", "_*`" + fid);    
+      tms.add(tmpid); 
       tms.add(tmnew); 
 
+      // No: Separate rulesets for the items and the list: 
+      // seq2rulesetID::
+      // _* |-->_*`seq2subrulesetID
+      //
+      // seq2subrulesetID:: (tmnew)
+
       AttributeMatching amres = 
-        new AttributeMatching(srcstar, fexpr); 
+        new AttributeMatching(srcstar, pexpr); 
       return amres; 
     } 
     return amjx; 

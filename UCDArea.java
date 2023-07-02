@@ -6669,6 +6669,42 @@ public class UCDArea extends JPanel
     System.out.println(">> Set activity for operation " + nme + " of entity " + ent); 
   }
 
+  public void replaceCallsByDefinitions(Entity ent)
+  { String nme = 
+      JOptionPane.showInputDialog("Name of operation to be replaced by its code:");
+    BehaviouralFeature bf = ent.getOperation(nme); 
+    if (bf == null) 
+    { System.err.println("!! ERROR: No such operation: " + nme); 
+      return; 
+    } 
+
+    String op = 
+      JOptionPane.showInputDialog("Name of operation where replacement is performed:");
+    BehaviouralFeature oper = ent.getOperation(op); 
+    if (oper == null) 
+    { System.err.println("!! ERROR: No such operation: " + op); 
+      return; 
+    }
+
+    Statement effect = ent.replaceCallsByDefinitions(op,nme); 
+
+    if (effect == null) 
+    { return; } 
+    
+    Vector contexts = new Vector(); 
+    contexts.add(ent); 
+    Vector pars = new Vector(); 
+
+    effect.setEntity(ent); 
+    pars.addAll(oper.getParameters()); 
+
+    effect.typeCheck(types,entities,contexts,pars); 
+    
+    oper.setActivity(effect); 
+    updateActivities(ent, oper, effect); 
+    System.out.println(">> Set activity for operation " + op + " of entity " + ent); 
+  }
+
   public void splitOperationActivity(Entity ent)
   { String nme = 
           JOptionPane.showInputDialog("Enter operation name:");

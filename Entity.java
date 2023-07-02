@@ -5007,6 +5007,42 @@ public class Entity extends ModelElement implements Comparable
     } 
   } 
 
+  public Statement replaceCallsByDefinitions(String op, String bf)
+  { // Replaces self.bf() by code of bf, in the code of op
+
+    BehaviouralFeature oper = getOperation(op); 
+    BehaviouralFeature repl = getOperation(bf); 
+
+    if (oper == null) 
+    { System.err.println("!! Invalid operation name: " + op); 
+      return null; 
+    } 
+
+    if (repl == null) 
+    { System.err.println("!! Invalid operation name: " + bf); 
+      return null; 
+    } 
+
+    Statement defn = repl.getActivity(); 
+    if (defn == null) 
+    { System.err.println("!! Undefined code for " + bf); 
+      return null; 
+    } // issue is that return within defn is not an exit 
+      // from the caller. "break" from single-iteration loop
+
+    Statement code = oper.getActivity(); 
+    if (code == null) 
+    { System.err.println("!! Undefined code for " + op); 
+      return null; 
+    } 
+
+    Statement newcode = 
+      Statement.unfoldCall(code, bf, defn); 
+    System.out.println(">>> New code for " + op + ": " + 
+                       newcode); 
+    return newcode; 
+  } 
+
   public int excessiveOperationsSize()
   { // number of operations over limit of 100
     int res = 0; 

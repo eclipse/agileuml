@@ -790,7 +790,7 @@ abstract class Statement implements Cloneable
       // if (expr != null && expr.isSelfCall(nme))
       { return defn; }
       return stat; 
-    } 
+    } // Doesn't handle parameters. 
 
     /* if (st instanceof ReturnStatement)
     { ReturnStatement retstat = (ReturnStatement) st; 

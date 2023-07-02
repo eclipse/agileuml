@@ -920,6 +920,13 @@ public void findPlugins()
     moveop.addActionListener(this);
     qualityMenu.add(moveop);
 
+    JMenuItem removeCallDefinition = 
+      new JMenuItem("Replace call by definition"); 
+    removeCallDefinition.addActionListener(this);
+    removeCallDefinition.setToolTipText(
+      "Replaces calls of operation by operation code");
+    qualityMenu.add(removeCallDefinition);
+
     JMenuItem removeRecursionop = 
       new JMenuItem("Replace recursion by loops"); 
     removeRecursionop.addActionListener(this);
@@ -2590,6 +2597,8 @@ public void findPlugins()
       { ucdArea.moveAttribute(); 
         repaint(); 
       } 
+      else if (label.equals("Replace call by definition"))
+      { this.replaceCallByDefinition(); } 
       else if (label.equals("Replace recursion by loops"))
       { this.transformOperationActivity(); } 
       else if (label.equals("Split operation"))
@@ -3351,6 +3360,26 @@ public void findPlugins()
         vals[0] instanceof Entity)
     { Entity ent = (Entity) vals[0];
       ucdArea.transformOperationActivity(ent);
+    } 
+  }
+
+  private void replaceCallByDefinition()
+  { if (listShowDialog == null)
+    { listShowDialog = new ListShowDialog(this);
+      listShowDialog.pack();
+      listShowDialog.setLocationRelativeTo(this); 
+    }
+    listShowDialog.setOldFields(ucdArea.getEntities()); // getClasses?
+    thisLabel.setText("Select entity to replace calls by definitions"); 
+    System.out.println(">> Select entity to replace calls by definitions");
+
+    listShowDialog.setVisible(true); 
+
+    Object[] vals = listShowDialog.getSelectedValues();
+    if (vals != null && vals.length > 0 &&
+        vals[0] instanceof Entity)
+    { Entity ent = (Entity) vals[0];
+      ucdArea.replaceCallsByDefinitions(ent);
     } 
   }
 
