@@ -1,6 +1,8 @@
+import java.util.List; 
 import java.util.ArrayList; 
 import java.util.Scanner; 
 import java.util.regex.Pattern; 
+import java.text.MessageFormat; 
 
 
 public class StringLib
@@ -36,16 +38,12 @@ public class StringLib
   public static String padLeftWithInto(String s,String c,int n)
   { String result = "";
   
-    ArrayList<Integer> rng = Ocl.integerSubrange(1,n - (s).length()); 
-    ArrayList<String> _results_0 = new ArrayList<String>();
-    for (Integer _i : rng)
+    for (int i = 1; i < n - s.length(); i++)
     { 
-      _results_0.add(c);
+      result = result + c;
     }
 
-    result = "" + Ocl.sumString(_results_0) + s;
-  
-    return result;
+    return result + s;
   }
 
   public static String padRightWithInto(String s,String c,int n)
@@ -101,6 +99,14 @@ public class StringLib
     return result;
   }
 
+  public static String capitalise(String str) 
+  { if (str.length() > 0) 
+    { String s1 = str.charAt(0) + ""; 
+      return s1.toUpperCase() + str.substring(1,str.length()); 
+    } 
+    return str; 
+  } 
+
   public static String toTitleCase(String s)
   { String prev = " "; 
     int ind = 1;
@@ -135,7 +141,7 @@ public class StringLib
     return res; 
   }
 
-  public static String format(String s, ArrayList sq)
+  public static String format(String s, List sq)
   { Object[] args = new Object[sq.size()]; 
     for (int i = 0; i < sq.size(); i++) 
     { args[i] = sq.get(i); }
@@ -217,10 +223,26 @@ public class StringLib
     return result; 
   } 
 
-  public static void main(String[] args)
-  { // ArrayList res = StringLib.scan("100##3.3::20\n", "%d##%f::%d\n"); 
-    // System.out.println(res); 
+  public static String interpolateStrings(String s, List sq)
+  { /* s written with {ind} to denote the ind element of sq */ 
 
-    System.out.println(StringLib.swapCase("A long String")); 
+    Object[] args = new Object[sq.size()]; 
+    for (int i = 0; i < sq.size(); i++) 
+    { args[i] = "" + sq.get(i); }
+    String formattedString = MessageFormat.format(s,args);  
+    return formattedString; 
+  } 
+
+  public static void main(String[] args)
+  { /* ArrayList res = StringLib.scan("100##3.3::20\n", "%d##%f::%d\n"); 
+    System.out.println(res); 
+
+    System.out.println(StringLib.format("%d %f %s\n", res)); 
+
+    System.out.println(StringLib.swapCase("A long String")); */ 
+
+    ArrayList vx = new ArrayList(); 
+    vx.add(100); vx.add(9.9); 
+    System.out.println(StringLib.interpolateStrings("{1} and {0}", vx));  
   }  
 } 

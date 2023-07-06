@@ -16,13 +16,13 @@
             return result;
         }
 
-        private static ArrayList nCopies(int n, string c)
-        { ArrayList _results_0 = new ArrayList();
+        private static string nCopies(string s, int n)
+        { String result = "";
           for (int _icollect = 0; _icollect < n; _icollect++)
           {
-             _results_0.Add(c);
+            result = result + s;
           }
-          return _results_0;
+          return result;
         }
 
         private static String pad(int n, string c)
@@ -43,6 +43,13 @@
             return result;
         }
 
+        public static string padRightWithInto(string s, string c, int n)
+        {
+            string result = "";
+
+            result = s + StringLib.pad(n - (s).Length, c);
+            return result;
+        }
 
         public static string leftAlignInto(string s, int n)
         {
@@ -75,6 +82,55 @@
                 result = (string)(StringLib.pad(n - (s).Length, " ") + s);
             }
             return result;
+        }
+
+
+        public static string capitalise(string str)
+        {
+            if (str.Length > 0)
+            {
+                String s1 = str[0] + "";
+                return s1.ToUpper() + str.Substring(1, str.Length - 1);
+            }
+            return str;
+        }
+
+        public static string toTitleCase(string s)
+        {
+            string prev = " ";
+            int ind = 1;
+            string res = "";
+
+            while (ind <= s.Length)
+            {
+                String chr = "" + s[ind - 1];
+                if (prev.Equals(" "))
+                { res = res + chr.ToUpper(); }
+                else
+                { res = res + chr; }
+                prev = chr;
+                ind = ind + 1;
+            }
+
+            return res;
+        }
+
+        public static string swapCase(string s)
+        {
+            int ind = 1;
+            string res = "";
+
+            while (ind <= s.Length)
+            {
+                string chr = "" + s[ind - 1];
+                if (chr.Equals(chr.ToUpper()))
+                { res = res + chr.ToLower(); }
+                else
+                { res = res + chr.ToUpper(); }
+                ind = ind + 1;
+            }
+
+            return res;
         }
 
         public static string format(string f, ArrayList sq)
@@ -163,5 +219,14 @@
                 { return result; }
             }
             return result;
+        }
+
+        public static string interpolateStrings(string f, ArrayList sq)
+        {
+            object[] args = new object[sq.Count];
+            for (int i = 0; i < sq.Count; i++)
+            { args[i] = sq[i]; }
+            string formattedString = String.Format(f, args);
+            return formattedString; 
         }
     }

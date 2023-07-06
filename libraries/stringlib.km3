@@ -10,6 +10,10 @@ package stringlib {
     pre: true
     post: result = Integer.subrange(1,n)->collect( i | s )->sum(); 
 
+    static sumStringsWithSeparator(col : Sequence(String), sep : String) : String
+    pre: true
+    post: (col->size() = 0 => result = col) & (col->size() > 0 => result = col->at(1) + Integer.subrange(2,col->size())->collect( i | sep + col->at(i) ) ); 
+
     static query leftTrim(s: String) : String
     pre: true
     post: result = s.subrange(s->indexOf(s->trim())); 
@@ -84,6 +88,9 @@ package stringlib {
     pre: true post: true; 
 
     static query scan(s: String, fmt: String) : Sequence(OclAny)
+    pre: true post: true; 
+
+    static query interpolateStrings(fmt: String, sq: Sequence(OclAny)) : String
     pre: true post: true; 
   }
 
