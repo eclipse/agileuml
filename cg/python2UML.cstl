@@ -1,6 +1,7 @@
 file_input::
-_1 |-->_1`classDefinitions\n class FromPython {\n  operation initialise()\n  pre: true post: true\n  activity: _1;\n\n_1`functionDefinitions\n}\n
-_1 _* |-->_1`classDefinitions\n_*`classDefinitions class FromPython {\n  operation initialise()\n  pre: true post: true\n  activity: _1_*`followingStatement;\n\n_1`functionDefinitions\n_*`functionDefinitions}\n
+_1 |-->_1`classDefinitions\n class FromPython {\n_1`nestedAttributeDefinitions\n\n  operation initialise()\n  pre: true post: true\n  activity: _1;\n\n_1`functionDefinitions\n}\n
+
+_1 _* |-->_1`classDefinitions\n_*`classDefinitions class FromPython {\n_1`nestedAttributeDefinitions\n\n_*`nestedAttributeDefinitions\n\n  operation initialise()\n  pre: true post: true\n  activity: _1_*`followingStatement;\n\n_1`functionDefinitions\n_*`functionDefinitions}\n
 
 
 single_input::
@@ -78,6 +79,8 @@ _1 >= _2 |-->_1 >= _2
 _1 <= _2 |-->_1 <= _2
 _1 <> _2 |-->_1 /= _2
 _1 != _2 |-->_1 /= _2
+_1 not in _2 |-->(_2)->characters()->excludes(_1)<when> _2 String
+_1 in _2 |-->(_2)->characters()->includes(_1)<when> _2 String
 _1 not in _2 |-->(_2)->excludes(_1)
 _1 in _2 |-->(_2)->includes(_1)
 _1 is not _2 |-->not(_1 <>= _2)
@@ -169,6 +172,8 @@ _1 ** _2 |-->(_1)->pow(_2)
 + _1 |-->_1
 - _1 |-->-_1
 ~ _1 |-->MathLib.bitwiseNot(_1)
+
+_1 * _2 |-->StringLib.nCopies(_1, _2)<when> _1 String
 _1 * _2 |-->_1 * _2
 _1 / _2 |-->_1 / _2
 _1 % _2 |-->StringLib.format(_1,_2)<when> _1 String
@@ -195,6 +200,7 @@ _1 _2 |-->StringLib.rightTrim(_1)<when> _1 atom, _2 matches .rstrip\(\)
 _1 _2 |-->(_1 = StringLib.toTitleCase(_1))<when> _1 atom, _2 matches .istitle\(\)
 _1 _2 |-->StringLib.padLeftWithInto(_1,_2`justificationArguments)<when> _1 atom, _2`second rjust
 _1 _2 |-->StringLib.padRightWithInto(_1,_2`justificationArguments)<when> _1 atom, _2`second ljust
+_1 _2 |-->StringLib.interpolateStrings(_1, _2`formatArguments)<when> _1 atom, _2`second format
 
 _1 _* |-->_1->apply_*<when> _1 Function
 
@@ -841,6 +847,10 @@ justificationArguments::
 . rjust _1 |-->_1`justificationArguments
 ( _1 ) |--> _1`third, _1`first
 
+formatArguments::
+. format _1 |-->_1`formatArguments
+( _1 ) |-->Sequence{_1}
+
 
 arguments::
 ( ) |-->()
@@ -1018,6 +1028,9 @@ _1 , _* |-->    var _1 : OclAny := null;\n_*`recurse
 
 small_stmt::
 _1 _2 |-->_1`declareIfNecessary    Sequence{_1} _2<when> _1 multiple
+
+_1 _2 |-->    var _1 _2<when> _2`colonAssign true <action> _1`defined true
+
 _1 _2 |-->    _1 _2<when> _2`equalAssign true, _1`defined true
 _1 _2 |-->    _1 _2<when> _2`equalAssign true, _1 matches .*\..*
 _1 _2 |-->    var _1 : _2`ocltype _2<when> _2`equalAssign true <action> _1`defined true, _1 _2`ocltype
@@ -1037,16 +1050,22 @@ raise _* |-->    _*`errorlist
 
 import _1 |-->    skip
 from _* |-->    skip
-global _* |-->    skip
+global _* |-->_*`assertDefined
 exec _1 |-->_0`pythonExec
 exec _* |-->    execute _*
 assert _1 |-->    assert _1 do "assertion failed"
 assert _1 , _2 |-->    assert _1 do _2
 
-nonlocal _* |-->    skip
+nonlocal _* |-->_*`assertDefined
+
 _1 |-->_1`updateForm<when> _1 testlist_star_expr
 
 
+assertDefined::
+, |-->; 
+_1 |-->    skip<action> _1`defined true
+
+ 
 hasValueReturn::
 print _1 |-->false
 del _1 |-->false
@@ -1125,13 +1144,26 @@ _1 _* |-->    error _1`errorToUML;\n_*`recurse
 
 
 equalAssign::
+= _1 = _2 |-->true
 = _1 |-->true
 _1 _2 |-->false
 _* |-->false
 
+colonAssign::
+: _1 = _2 |-->true
+: _1 |-->true
+_1 _2 |-->false
+_* |-->false
 
 
 assign_part::
+: _1 = _2 |-->: _1`ocltype := _2
+: _1 |-->: _1`ocltype
+
+= _1 = _2 |-->:= _2; _1 := _2<when> _1`defined true
+= _1 = _2 |-->:= _2; var _1 : _2`ocltype := _2<action> _1`defined true
+
+
 = _1 |-->:= _1 ; _1`updateForm<when> _1`hasSideEffect true
 = _1 |-->:= _1
 
@@ -1248,6 +1280,7 @@ _1 ** _2 |-->double
 + _1 |-->_1`ocltype
 - _1 |-->_1`ocltype
 ~ _1 |-->int
+_1 * _2 |-->String<when> _1 String
 _1 * _2 |-->double
 _1 / _2 |-->double
 _1 % _2 |-->String<when> _1 String
@@ -1282,7 +1315,8 @@ _1 _2 |-->_1<when> _1 Class, _2 trailer
 
 _1 _2 |-->_2`trailerOclType<when> _1 atom, _2 trailer
 
-_1 |-->int<when> _1 integer
+_1 |-->int<when> _1 int
+_1 |-->double<when> _1 real
 
 _1 |-->_1`ocltype<when> _1 testlist_star_expr
 _1 |-->_1`ocltype<when> _1 testlist
@@ -1417,14 +1451,20 @@ funcdef::
 async def _1 ( _2 ) -> _3 : _4 |-->  operation _1(_2) : _3`ocltype\n  pre: true post: true\n  activity:\n_4;\n\n
 def _1 ( _2 ) -> _3 : _4 |-->  operation _1(_2) : _3`ocltype\n  pre: true post: true\n  activity:\n_4;\n\n
 
-async def _1 ( _2 ) : _3 |-->  operation _1(_2) : OclAny\n  pre: true post: true\n  activity:\n_3;\n\n
-def _1 ( _2 ) : _3 |-->  operation _1(_2) : OclAny\n  pre: true post: true\n  activity:\n_3;\n\n
+async def _1 ( _2 ) : _3 |-->  operation _1(_2) : OclAny\n  pre: true post: true\n  activity:\n_3;\n\n<when> _3`hasValueReturn true
+async def _1 ( _2 ) : _3 |-->  operation _1(_2)\n  pre: true post: true\n  activity:\n_3;\n\n
+
+def _1 ( _2 ) : _3 |-->  operation _1(_2) : OclAny\n  pre: true post: true\n  activity:\n_3;\n\n<when> _3`hasValueReturn true
+def _1 ( _2 ) : _3 |-->  operation _1(_2)\n  pre: true post: true\n  activity:\n_3;\n\n
 
 async def _1 ( ) -> _2 : _3 |-->  operation _1() : _2`ocltype\n  pre: true post: true\n  activity:\n_3;\n\n
 def _1 ( ) -> _2 : _3 |-->  operation _1() : _2`ocltype\n  pre: true post: true\n  activity:\n_3;\n\n
 
-async def _1 ( ) : _2 |-->  operation _1() : OclAny\n  pre: true post: true\n  activity:\n_2;\n\n
-def _1 ( ) : _2 |-->  operation _1() : OclAny\n  pre: true post: true\n  activity:\n_2;\n\n
+async def _1 ( ) : _2 |-->  operation _1() : OclAny\n  pre: true post: true\n  activity:\n_2;\n\n<when> _2`hasValueReturn true
+async def _1 ( ) : _2 |-->  operation _1()\n  pre: true post: true\n  activity:\n_2;\n\n
+
+def _1 ( ) : _2 |-->  operation _1() : OclAny\n  pre: true post: true\n  activity:\n_2;\n\n<when> _2`hasValueReturn true
+def _1 ( ) : _2 |-->  operation _1()\n  pre: true post: true\n  activity:\n_2;\n\n
 
 
 methodDefinition::
@@ -1503,6 +1543,64 @@ _1 _2 |-->  attribute _1`removeSelf : _2`ocltype _2;\n<when> _2 assign_part, _1 
 
 _1 |-->
 _* |-->
+
+
+nestedAttributeDefinitions::
+_1 _* |-->_1`nestedAttributeDefinitions_*`nestedAttributeDefinitions<when> _1 stmt
+_1 |-->_1`nestedAttributeDefinitions<when> _1 stmt
+_1 |-->_1`nestedAttributeDefinitions<when> _1 simple_stmt
+_1 |-->_1`nestedAttributeDefinitions<when> _1 small_stmt
+_1 |-->_1`nestedAttributeDefinitions<when> _1 compound_stmt
+
+_1 |-->_1`nestedAttributeDefinitions<when> _1 funcdef
+
+async def _1 ( _2 ) -> _3 : _4 |-->_4`nestedAttributeDefinitions
+
+def _1 ( _2 ) -> _3 : _4 |-->_4`nestedAttributeDefinitions
+
+async def _1 ( _2 ) : _3 |-->_3`nestedAttributeDefinitions
+
+def _1 ( _2 ) : _3 |-->_3`nestedAttributeDefinitions
+
+async def _1 ( ) -> _2 : _3 |-->_3`nestedAttributeDefinitions
+
+def _1 ( ) -> _2 : _3 |-->_3`nestedAttributeDefinitions
+
+async def _1 ( ) : _2 |-->_2`nestedAttributeDefinitions
+
+def _1 ( ) : _2 |-->_2`nestedAttributeDefinitions
+
+if _1 : _2 |-->_2`nestedAttributeDefinitions
+if _1 : _2 _3 |-->_2`nestedAttributeDefinitions_3`nestedAttributeDefinitions
+if _1 : _2 _* |-->_2`nestedAttributeDefinitions_*`nestedAttributeDefinitions
+
+while _1 : _2 |-->_2`nestedAttributeDefinitions
+
+for _1 in _2 : _3 |-->_3`nestedAttributeDefinitions
+
+try : _1 |-->_1`nestedAttributeDefinitions
+try : _1 _* |-->_1`nestedAttributeDefinitions_*`nestedAttributeDefinitions
+
+elif _1 : _2 |-->_2`nestedAttributeDefinitions
+
+else : _1 |-->_1`nestedAttributeDefinitions
+
+except : _1 |-->_1`nestedAttributeDefinitions
+except _1 as _2 : _3 |-->_3`nestedAttributeDefinitions
+except _1 , _2 : _3 |-->_3`nestedAttributeDefinitions
+
+finally : _1 |-->_1`nestedAttributeDefinitions
+
+global _* |-->_*`attributeDecln
+nonlocal _* |-->_*`attributeDecln
+
+_1 |-->
+_* |-->
+
+
+attributeDecln::
+, |-->
+_1 |-->  attribute _1 : OclAny;\n
 
 
 removeSelf::

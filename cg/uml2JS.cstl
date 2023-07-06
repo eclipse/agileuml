@@ -1,0 +1,205 @@
+
+seq3ruleset132::
+; |--> 
+_1 |-->_1 
+_0 |-->_0
+
+nestedTfunc71::
+Set |-->newSet
+Sequence |-->newList
+_* |-->newSet
+
+OclUnaryExpression::
+_1 _2 ( )  |-->_2`nestedTfunc68 ( _1 ) 
+_1 _2  |-->_1`func67 _2 
+
+OclOperation::
+operation _2 ( ) : void pre: true  post: true  activity: _12  |-->this . _2 = function ( ) { _12 } ; 
+operation _2 ( _4 ) : void pre: true  post: true  activity: _13  |-->this . _2 = function ( _4`seq2ruleset127 ) { _13 } ; 
+query _2 ( ) : _6 pre: true  post: true  activity: _12  |-->this . _2 = function ( ) { _12 } ; 
+query _2 ( _4 ) : _7 pre: true  post: true  activity: _13  |-->this . _2 = function ( _4`seq2ruleset108 ) { _13 } ; 
+
+OclType::
+void  |-->Null 
+OclAny  |-->Object 
+int |-->Number
+double |-->Number
+long |-->Number
+boolean |-->Boolean
+String  |-->String 
+Set ( _3 )  |-->Object 
+Sequence ( _3 )  |-->Object 
+_1  |-->Object <when> _1 Class
+Function ( _3 , _5 )  |-->Function 
+Map ( _3 , _5 )  |-->Map 
+_* |-->Number
+
+nestedSfunc64::
+this |-->self
+_1 |-->_1
+_* |-->self
+
+seq3subruleset75::
+_* |-->( _*`seq3ruleset74 )
+
+addQuotes::
+_1 |-->'_1'
+
+seq3subruleset77::
+_* |-->_*`seq3ruleset76
+
+OclClass::
+class _2 { }  |-->function _2 ( ) { } 
+class _2 { _4 }  |-->function _2 ( ) { _4`seq3subruleset133 } 
+
+OclCollectionExpression::
+Set { _3 }  |-->newSet _3`seq3subruleset73 
+Sequence { _3 }  |-->newList _3`seq3subruleset75 
+_1 { }  |-->_1`nestedTfunc71 ( ) 
+
+seq3ruleset65::
+_1 |-->_1 
+_0 |-->_0
+
+nestedTfunc68::
+->toLowerCase |-->toLowerCase
+->toUpperCase |-->toUpperCase
+->front |-->front
+->tail |-->tail
+->first |-->first
+->last |-->last
+_* |-->toLowerCase
+
+nestedTfunc69::
+->including |-->including
+->union |-->union
+->intersection |-->intersection
+->excludesAll |-->excludesAll
+->excludes |-->excludes
+->includesAll |-->includesAll
+->indexOf |-->indexOf
+->lastIndexOf |-->lastIndexOf
+->append |-->append
+->prepend |-->prepend
+->pow |-->pow
+_* |-->including
+
+seq3subruleset73::
+_* |-->( _*`seq3ruleset72 )
+
+OclBasicExpression::
+null  |-->NULL 
+this |-->self
+_1 . _3 ( )  |-->_1 . _3 ( ) 
+_1 [ _3 ]  |-->_1 [ _3 - 1 ] 
+_1 . _3 ( _5 )  |-->_1 . _3 _5`seq3subruleset66 
+_1 . _3  |-->_1 . _3 
+_1 |-->_1 <when> _1 Integer
+_1 |-->_1 <when> _1 Real
+_1 |-->_1 <when> _1 Boolean
+_1 |-->_1 <when> _1 String
+_1 |-->_1
+_* |-->self
+
+OclBinaryExpression::
+_1 _2 ( _4 )  |-->_2`nestedTfunc69 ( _1 , _4 ) 
+_1 <= _3  |-->_1 <= _3 
+_1 mod _3  |-->_1 % _3 
+_1 or _3  |-->_1 || _3 
+_1 & _3  |-->_1 && _3 
+_1 * _3  |-->_1 * _3 
+_1 + _3  |-->_1 + _3 
+_1 - _3  |-->_1 - _3 
+_1 /= _3  |-->_1 != _3 
+_1 / _3  |-->_1 / _3 
+_1 div _3  |-->( int ) ( _1 / _3 ) 
+_1 <>= _3  |-->_1 == _3 
+_1 < _3  |-->_1 < _3 
+_1 = _3  |-->_1 == _3 
+_1 > _3  |-->_1 > _3 
+_1 >= _3  |-->_1 >= _3 
+
+seq3ruleset72::
+_1 |-->_1 
+_0 |-->_0
+
+seq3ruleset74::
+_1 |-->_1 
+_0 |-->_0
+
+nestedSfunc70::
+int |-->Number
+double |-->Number
+long |-->Number
+boolean |-->Boolean
+_* |-->Number
+
+OclConditionalExpression::
+if _2 then _4 else _6 endif  |-->( _2 ) ? _4 : _6 
+
+seq3subruleset138::
+_* |-->{ _*`seq3ruleset137 }
+
+seq3subruleset66::
+_* |-->( _*`seq3ruleset65 )
+
+func67::
+not |-->!
+_1 |-->_1
+_* |-->-
+
+seq3ruleset76::
+; |--> 
+_1 := _3  |-->_1 = _3 ; 
+_0 |-->_0
+
+seq3subruleset133::
+_* |-->_*`seq3ruleset132
+
+seq2ruleset127::
+_* |-->_*`processParameter
+
+processParameter::
+_1 _2 _3  |-->_1 
+
+
+OclAttribute::
+attribute _2 : double   |-->this . _2 = 0.0 ; 
+attribute _2 : String   |-->this . _2 = "" ; 
+attribute _2 : _4  |-->this . _2 = 0 ; 
+
+OclEnumeration::
+enumeration _2 { _4 }  |-->const _2 = _4`seq3subruleset138 <EOF> 
+
+seq3ruleset137::
+; |-->,
+literal _2  |-->_2 : _2`addQuotes
+_0 |-->_0
+
+seq2ruleset108::
+_1 _2 _3  |-->_1 
+_0 |-->_0
+_* |-->_*`seq2ruleset108
+
+OclStatement::
+var _2 : Map ( OclAny  , OclAny  )   |-->let _2 = { } ; 
+var _2 : double   |-->let _2 = 0.0 ; 
+var _2 : boolean   |-->let _2 = false ; 
+var _2 : String   |-->let _2 = "" ; 
+var _2 : Sequence   |-->let _2 = [ elementList ] ; 
+var _2 : Set   |-->let _2 = [ elementList ] ; 
+var _2 : OclAny   |-->let _2 = { } ; 
+( _2 )  |-->{ _2`seq3subruleset77 } 
+return _2  |-->return _2 ; 
+call _2  |-->_2 ; 
+var _2 : _4  |-->let _2 = 0 ; <when> _4 Integer
+while _2 do _4  |-->while ( _2 ) { _4 } 
+_1 := _3  |-->_1 = _3 ; 
+if _2 then _4 else _6  |-->if ( _2 ) { _4 } else { _6 } 
+for _2 : _4 do _6  |-->for ( var _2 of _4 ) { _6 } 
+break  |-->break ; 
+continue  |-->continue ; 
+return  |-->return ; 
+
+
+

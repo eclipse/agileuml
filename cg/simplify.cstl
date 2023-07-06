@@ -61,6 +61,8 @@ Define g { _1 } |-->  Define g{_1}
 Define _1 = _2 |-->  Define _1 = _2<action> _1`value _2
 Define _1 ~ _2 |-->  Define _1 ~ _2<action> _1`mean _2`distributionMean, _1`variance _2`distributionVariance
 
+instruction::
+_1 |-->_1
 
 factorBy::
 Factor _1 by _2 |-->_2*(_1`divideBy)<action> _90 _2

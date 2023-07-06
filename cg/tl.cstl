@@ -15,25 +15,32 @@
 
 
 
-seq3ruleset132::
-; |--> 
-_1 |-->_1 
-_0 |-->_0
-
 nestedTfunc71::
 Set |-->newSet
 Sequence |-->newList
 _* |-->newSet
 
+seq2ruleset141::
+_* |-->_*`seq2subruleset140
+
 OclUnaryExpression::
 _1 _2 ( )  |-->_2`nestedTfunc68 ( _1 ) 
 _1 _2  |-->_1`func67 _2 
 
+seq2subruleset140::
+_1 _2 _3  |-->_1 
+_0 |-->_0
+
 OclOperation::
 operation _2 ( ) : void pre: true  post: true  activity: _12  |-->this . _2 = function ( ) { _12 } ; 
-operation _2 ( _* ) : void pre: true  post: true  activity: _13  |-->this . _2 = function ( _*`seq2ruleset127 ) { _13 } ; 
+operation _2 ( _* ) : void pre: true  post: true  activity: _13  |-->this . _2 = function ( _*`seq2ruleset141 ) { _13 } ; 
 query _2 ( ) : _6 pre: true  post: true  activity: _12  |-->this . _2 = function ( ) { _12 } ; 
-query _2 ( _* ) : _7 pre: true  post: true  activity: _13  |-->this . _2 = function ( _*`seq2ruleset108 ) { _13 } ; 
+query _2 ( _* ) : _7 pre: true  post: true  activity: _13  |-->this . _2 = function ( _*`seq2ruleset115 ) { _13 } ; 
+
+seq3ruleset151::
+; |-->,
+literal _2  |-->_2 : _2`nestedTfunc150 
+_0 |-->_0
 
 OclType::
 void  |-->Null 
@@ -50,6 +57,9 @@ Function ( _3 , _5 )  |-->Function
 Map ( _3 , _5 )  |-->Map 
 _* |-->Number
 
+nestedTfunc150::
+_1 |-->'_1'
+
 nestedSfunc64::
 this |-->self
 _1 |-->_1
@@ -58,15 +68,15 @@ _* |-->self
 seq3subruleset75::
 _* |-->( _*`seq3ruleset74 )
 
-addQuotes::
-_1 |-->'_1'
-
 seq3subruleset77::
 _* |-->_*`seq3ruleset76
 
 OclClass::
 class _2 { }  |-->function _2 ( ) { } 
-class _2 { _4 }  |-->function _2 ( ) { _4`seq3subruleset133 } 
+class _2 { _4 }  |-->function _2 ( ) { _4`seq3subruleset147 } 
+
+seq3subruleset147::
+_* |-->_*`seq3ruleset146
 
 OclCollectionExpression::
 Set { _3 }  |-->newSet _3`seq3subruleset73 
@@ -86,6 +96,9 @@ nestedTfunc68::
 ->last |-->last
 _* |-->toLowerCase
 
+seq2ruleset115::
+_* |-->_*`seq2subruleset114
+
 nestedTfunc69::
 ->including |-->including
 ->union |-->union
@@ -102,6 +115,11 @@ _* |-->including
 
 seq3subruleset73::
 _* |-->( _*`seq3ruleset72 )
+
+seq3ruleset146::
+; |--> 
+_1 |-->_1 
+_0 |-->_0
 
 OclBasicExpression::
 null  |-->NULL 
@@ -150,11 +168,12 @@ long |-->Number
 boolean |-->Boolean
 _* |-->Number
 
+seq2subruleset114::
+_1 _2 _3  |-->_1 
+_0 |-->_0
+
 OclConditionalExpression::
 if _2 then _4 else _6 endif  |-->( _2 ) ? _4 : _6 
-
-seq3subruleset138::
-_* |-->{ _*`seq3ruleset137 }
 
 seq3subruleset66::
 _* |-->( _*`seq3ruleset65 )
@@ -169,15 +188,8 @@ seq3ruleset76::
 _1 := _3  |-->_1 = _3 ; 
 _0 |-->_0
 
-seq3subruleset133::
-_* |-->_*`seq3ruleset132
-
-seq2ruleset127::
-_* |-->_*`processParameter
-
-processParameter::
-_1 _2 _3  |-->_1 
-
+seq3subruleset152::
+_* |-->{ _*`seq3ruleset151 }
 
 OclAttribute::
 attribute _2 : double   |-->this . _2 = 0.0 ; 
@@ -185,17 +197,7 @@ attribute _2 : String   |-->this . _2 = "" ;
 attribute _2 : _4  |-->this . _2 = 0 ; 
 
 OclEnumeration::
-enumeration _2 { _4 }  |-->const _2 = _4`seq3subruleset138 <EOF> 
-
-seq3ruleset137::
-; |-->,
-literal _2  |-->_2 : _2`addQuotes
-_0 |-->_0
-
-seq2ruleset108::
-_1 _2 _3  |-->_1 
-_0 |-->_0
-_* |-->_*`seq2ruleset108
+enumeration _2 { _4 }  |-->const _2 = _4`seq3subruleset152 <EOF> 
 
 OclStatement::
 var _2 : Map ( OclAny  , OclAny  )   |-->let _2 = { } ; 
