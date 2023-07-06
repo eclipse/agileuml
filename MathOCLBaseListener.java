@@ -51,6 +51,18 @@ public class MathOCLBaseListener implements MathOCLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterInstruction(MathOCLParser.InstructionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitInstruction(MathOCLParser.InstructionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterConstraint(MathOCLParser.ConstraintContext ctx) { }
 	/**
 	 * {@inheritDoc}

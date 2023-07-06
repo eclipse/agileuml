@@ -93,7 +93,7 @@ public class AgileUMLApp extends JApplet implements DocumentListener
         } 
 
         JScrollPane scrollPane = new JScrollPane(textPane);
-        scrollPane.setPreferredSize(new Dimension(250, 350));
+        scrollPane.setPreferredSize(new Dimension(550, 350));
 
         messageArea = new JTextArea(30, 80);
         messageArea.setEditable(false);
@@ -103,7 +103,7 @@ public class AgileUMLApp extends JApplet implements DocumentListener
                        JSplitPane.VERTICAL_SPLIT,
                        scrollPane, scrollPaneForLog);
         splitPane.setOneTouchExpandable(true);
-        splitPane.setDividerLocation(200); 
+        splitPane.setDividerLocation(300); 
 
         // JPanel statusPane = new JPanel(new GridLayout(2, 1));
 

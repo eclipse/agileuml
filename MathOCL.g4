@@ -28,9 +28,17 @@ part
     ;
 
 formula
-    :	'Define' ID '=' (expression | substituteIn | expandTo | cancelIn | factorBy | simplify ) 
+    :	'Define' ID '=' (instruction | expression) 
     | 'Define' ID '~' expression
     | 'Define' ID
+    ; 
+
+instruction
+    : substituteIn 
+    | expandTo 
+    | cancelIn 
+    | factorBy 
+    | simplify
     ; 
 
 constraint

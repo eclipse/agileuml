@@ -63,6 +63,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
    String newline = "\n";
    HashMap actions;
 
+   JEditorPane helpPane = null; 
+
    String systemName = "app"; 
    private JLabel thisLabel;
    String insertedText = ""; 
@@ -340,6 +342,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         JMenu transMenu = createTranslationMenu();
         JMenu styleMenu = createStyleMenu();
         JMenu analysisMenu = createAnalysisMenu();
+        JMenu helpMenu = createHelpMenu(); 
         
         JMenuBar mb = new JMenuBar();
 
@@ -349,6 +352,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         mb.add(styleMenu);
         mb.add(analysisMenu);
         mb.add(transMenu);
+        mb.add(helpMenu); 
         
         setJMenuBar(mb);
 
@@ -458,6 +462,15 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       return menu; 
    } 
 
+    protected JMenu createHelpMenu() 
+    { JMenu menu = new JMenu("Help");
+
+      javax.swing.Action helpAction = new HelpAction(); 
+      menu.add(helpAction); 
+
+      return menu; 
+   } 
+
     public void changedUpdate(DocumentEvent e)
     { int offset = e.getOffset(); 
 	 int pos = textPane.getCaretPosition();
@@ -496,7 +509,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
           { inserting = true; 
             insertedText = insertedText + chr.charAt(0); 
             if ("Define".equals(insertedText))
-            { thisLabel.setText("Define variable: Define v, Define v = expr, Define v ~ distribution"); }
+            { thisLabel.setText("Define variable: Define v, Define v = expr, Define v = instruction, Define v ~ distribution"); }
             else if ("Solve".equals(insertedText))
             { thisLabel.setText("Solve single quadratic or differential equations, and multiple linear equations: Solve eqns for vars"); }
             else if ("Prove".equals(insertedText))
@@ -505,6 +518,12 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
             { thisLabel.setText("Constraint on a variable: Constraint on var | expr"); }
             else if ("Simplify".equals(insertedText))
             { thisLabel.setText("Simplify an expression: Simplify expr"); }
+            else if ("Factor".equals(insertedText))
+            { thisLabel.setText("Instruction to Factor: Factor expr by var"); }
+            else if ("Cancel".equals(insertedText))
+            { thisLabel.setText("Instruction to Cancel: Cancel var in expr"); }
+            else if ("Substitute".equals(insertedText))
+            { thisLabel.setText("Instruction to Substitute: Substitute var in expr"); }
           } 
           else  
           { thisLabel.setText(" "); 
@@ -999,6 +1018,58 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       System.out.println(res + "\n\n" + res1);
     } 
   }
+
+  class HelpAction extends javax.swing.AbstractAction
+  { public HelpAction()
+    { super("Help"); }
+
+    public void actionPerformed(ActionEvent e)
+    { if (helpPane != null) 
+      { helpPane.setVisible(true); 
+        return; 
+      }
+        
+      helpPane = new JEditorPane();  
+      helpPane.setEditable(false); 
+      helpPane.setSize(300,400); 
+      helpPane.setText("Specifications contain these elements: \n\n" + 
+        "1. Define clauses, with syntax one of\n" + 
+        "    Define var = expr\n" + 
+        "    Define var = instruction\n" + 
+        "    Define var ~ distribution\n\n" +
+        "2. Constraint clauses, with syntax\n" + 
+        "    Constraint on var | expr\n\n" + 
+        "3. Solve clauses, with syntax\n" + 
+        "    Solve eqn(s) for var(s)\n\n" + 
+        "4. Simplify clauses: \n" + 
+        "    Simplify expr\n\n" + 
+        "5. Prove clauses:\n" + 
+        "    Prove expr if expr\n\n" + 
+        "Instructions can be one of:\n" + 
+        "    Factor expr by expr\n" + 
+        "    Cancel expr in expr\n" + 
+        "    Substitute var in expr\n" + 
+        "    Expand expr to N terms\n\n" + 
+        "Distributions are:\n" + 
+        "    N(mu,sigma^2), Bernoulli(mu), Binom(n,p),\n" + 
+        "    U(), U(a,b), Poisson(mu)\n"); 
+
+        int w = getWidth(); 
+        int h = getHeight(); 
+ 
+        getContentPane().add(new JScrollPane(helpPane), java.awt.BorderLayout.EAST); 
+        setSize(w + 300, h); 
+        helpPane.setVisible(true); 
+        helpPane.repaint(); 
+        repaint(); 
+        java.awt.LayoutManager ll = getLayout(); 
+        if (ll != null)
+        { ll.layoutContainer(getContentPane()); }  
+        repaint(); 
+ 
+      } 
+  } 
+
 
   public static void main(String[] args) {
      MathApp window = new MathApp();
