@@ -957,6 +957,9 @@ public class ASTSymbolTerm extends ASTTerm
     return res; 
   } 
 
+  public void checkMathOCL()
+  { } 
+
   public static void main(String[] args) 
   { String ss = "\\r\\n\\r\\n\\r\\n"; 
     System.out.println(ss.matches("(\r\n)+")); 

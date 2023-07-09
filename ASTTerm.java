@@ -514,6 +514,9 @@ public abstract class ASTTerm
   public static String cgtlOperation(String opname, Vector eargs)
   { System.out.println(">>> External operation: " + opname + " on " + eargs); 
 
+    System.out.println(">>> metafeatures: " + ASTTerm.metafeatures); 
+    System.out.println(); 
+
     if ("symbolicAddition".equals(opname) && 
         eargs.size() == 2)
     { ASTTerm e1 = (ASTTerm) eargs.get(0); 
@@ -1075,6 +1078,12 @@ public abstract class ASTTerm
              Expression.isLong(litf); 
     }   
     return ASTTerm.isInteger(typ); 
+  } 
+
+  public static boolean isIntegerValued(double dd)
+  { if (dd == ((int) dd)) 
+    { return true; } 
+    return false; 
   } 
 
   public boolean isReal() 
@@ -5065,6 +5074,8 @@ public abstract class ASTTerm
     return res; 
   } 
 
+  public abstract void checkMathOCL(); 
+
   public static void main(String[] args) 
   { // ASTBasicTerm t = new ASTBasicTerm("OclBasicExpression", "true"); 
     // System.out.println(t.isInteger()); 
@@ -5097,7 +5108,14 @@ public abstract class ASTTerm
     ASTTerm.addStereo("x", "int");  
     ASTTerm.setTaggedValue("x", "defined", "false");
     ASTTerm.addStereo("x", "String");  
-    System.out.println(ASTTerm.metafeatures.get("x")); 
+    System.out.println(ASTTerm.metafeatures.get("x"));
+
+    System.out.println(ASTTerm.isIntegerValued(0.5)); 
+    System.out.println(ASTTerm.isIntegerValued(0.0)); 
+    System.out.println(ASTTerm.isIntegerValued(3.0)); 
+    System.out.println(ASTTerm.isIntegerValued(-1.5)); 
+    System.out.println(ASTTerm.isIntegerValued(-5.0)); 
+
   }
 } 
 

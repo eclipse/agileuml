@@ -10,6 +10,8 @@
 import java.util.Vector; 
 import java.io.*; 
 
+import javax.swing.*;
+
 
 public class ASTBasicTerm extends ASTTerm
 { String tag = ""; 
@@ -2784,5 +2786,19 @@ public class ASTBasicTerm extends ASTTerm
     System.out.println(ttx); 
   } 
 
+  public void checkMathOCL()
+  { System.out.println(">>> MathOCL term " + this); 
+
+    if ("identifier".equals(tag))
+    { ASTTerm t1 = getTerm(0); 
+      String vv = t1.literalForm(); 
+      Object val = ASTTerm.mathoclvars.get(vv); 
+      if (val == null) 
+      { JOptionPane.showMessageDialog(null, 
+          "Warning!: variable " + vv + " does not have a definition",   "",
+          JOptionPane.INFORMATION_MESSAGE); 
+      } 
+    }
+  } 
 
 } 

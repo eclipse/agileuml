@@ -42824,7 +42824,229 @@ public class ASTCompositeTerm extends ASTTerm
 
   }
 
+  public void checkMathOCL()
+  { // System.out.println(">>> MathOCL term " + this); 
+    
+    if ("specification".equals(tag))
+    { // specification ID _*  
+      for (int i = 2; i < terms.size(); i++) 
+      { ASTTerm trm = (ASTTerm) terms.get(i); 
+        trm.checkMathOCL(); 
+      } 
+    } 
 
+    if ("part".equals(tag))
+    { // one term
+      ASTTerm trm = (ASTTerm) terms.get(0);
+      trm.checkMathOCL(); 
+    } 
+
+    if ("instruction".equals(tag))
+    { // one term
+      ASTTerm trm = (ASTTerm) terms.get(0);
+      trm.checkMathOCL(); 
+    } 
+
+    if (terms.size() == 1)
+    { // one term
+      ASTTerm ct = (ASTTerm) terms.get(0); 
+      ct.checkMathOCL();  
+    } 
+
+    if (terms.size() == 3 &&
+        ("logicalExpression".equals(tag) ||
+         "additiveExpression".equals(tag) || 
+         "equalityExpression".equals(tag))  
+        )
+    { // binary expression
+      ASTTerm ct1 = (ASTTerm) terms.get(0); 
+      ASTTerm ct2 = (ASTTerm) terms.get(2); 
+      ct1.checkMathOCL();
+      ct2.checkMathOCL();  
+    } 
+
+    if (terms.size() == 3 &&
+        "factorExpression".equals(tag) && 
+        terms.get(1) instanceof ASTSymbolTerm  
+       )
+    { // binary expression
+      ASTTerm ct1 = (ASTTerm) terms.get(0); 
+      ASTTerm ct2 = (ASTTerm) terms.get(2); 
+      ct1.checkMathOCL();
+      ct2.checkMathOCL();  
+    } 
+
+    if (terms.size() == 2 &&
+        "factorExpression".equals(tag) && 
+        terms.get(0) instanceof ASTSymbolTerm  
+       )
+    { // prefix unary expression
+      ASTTerm ct1 = (ASTTerm) terms.get(1); 
+      ct1.checkMathOCL();
+    } 
+
+    if (terms.size() == 3 &&
+        "basicExpression".equals(tag) && 
+        "(".equals(terms.get(0) + "") && 
+        ")".equals(terms.get(2) + "")  
+       )
+    { // bracketed expression
+
+      ASTTerm ct1 = (ASTTerm) terms.get(1); 
+      ct1.checkMathOCL();
+    } 
+
+    if (terms.size() == 4 &&
+        "basicExpression".equals(tag) && 
+        "(".equals(terms.get(1) + "") && 
+        ")".equals(terms.get(3) + "")  
+       )
+    { // op ( exprs )
+
+      ASTTerm ct1 = (ASTTerm) terms.get(2); 
+      ct1.checkMathOCL();
+    } 
+
+    if ("formula".equals(tag) && 
+        "Define".equals(terms.get(0) + "") && 
+        terms.size() > 3)
+    { // Define ID = expression or instruction
+      ASTTerm expr = (ASTTerm) terms.get(3);
+      expr.checkMathOCL(); 
+      ASTTerm var = (ASTTerm) terms.get(1);
+      String vname = var.literalForm(); 
+      ASTTerm.mathoclvars.put(vname, expr + ""); 
+      JOptionPane.showMessageDialog(null, 
+               ">> " + vname + " defined as " + 
+               expr.literalForm(), 
+               "", 
+               JOptionPane.INFORMATION_MESSAGE);
+    }
+    else if ("formula".equals(tag) && 
+        "Define".equals(terms.get(0) + ""))
+    { ASTTerm var = (ASTTerm) terms.get(1);
+      String vname = var.literalForm(); 
+      ASTTerm.mathoclvars.put(vname, ""); 
+      JOptionPane.showMessageDialog(null, 
+        ">> " + vname + " defined as arbitrary real number", 
+        "", 
+        JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    if ("constraint".equals(tag) && 
+        "Constraint".equals(terms.get(0) + "") &&
+        terms.size() > 4)
+    { ASTTerm var = (ASTTerm) terms.get(1); 
+      String vname = var.literalForm(); 
+      ASTTerm.mathoclvars.put(vname, ""); 
+      ASTTerm tcons = (ASTTerm) terms.get(4); 
+      tcons.checkMathOCL();
+      ASTTerm.mathoclvars.remove(vname); 
+    }  
+
+    if ("simplify".equals(tag) && 
+        "Simplify".equals(terms.get(0) + "") &&
+        terms.size() > 1)
+    { ASTTerm t1 = (ASTTerm) terms.get(1); 
+      t1.checkMathOCL(); 
+    }  
+
+    
+    if ("identifier".equals(tag))
+    { ASTTerm t1 = (ASTTerm) terms.get(0);
+      String vv = t1.literalForm(); 
+      ASTTerm val = (ASTTerm) ASTTerm.mathoclvars.get(vv); 
+      if (val == null) 
+      { JOptionPane.showMessageDialog(null, 
+          "Warning!: variable " + vv + " does not have a definition in " + this,   "",
+          JOptionPane.INFORMATION_MESSAGE); 
+      } 
+    } 
+
+    if ("expressionList".equals(tag))
+    { for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm expri = (ASTTerm) terms.get(i); 
+        if (expri instanceof ASTSymbolTerm) { } 
+        else 
+        { expri.checkMathOCL(); } 
+      } 
+    }
+
+    if ("solve".equals(tag))
+    { // Solve <expressionList> for <idList>
+      ASTCompositeTerm exprs = (ASTCompositeTerm) terms.get(1);
+      ASTTerm vars = (ASTTerm) terms.get(3);
+
+      Vector exprTerms = exprs.getTerms(); 
+      Vector varTerms = vars.getTerms();
+
+      for (int i = 0; i < varTerms.size(); i++) 
+      { ASTTerm vi = (ASTTerm) varTerms.get(i); 
+        String vname = vi.literalForm(); 
+        ASTTerm.mathoclvars.put(vname, ""); 
+      } 
+
+      for (int i = 0; i < exprTerms.size(); i++) 
+      { ASTTerm expri = (ASTTerm) exprTerms.get(i); 
+        expri.checkMathOCL(); 
+      } 
+
+      for (int i = 0; i < varTerms.size(); i++) 
+      { ASTTerm vi = (ASTTerm) varTerms.get(i); 
+        String vname = vi.literalForm(); 
+        ASTTerm.mathoclvars.remove(vname); 
+      } 
+    }  
+
+    if ("prove".equals(tag))
+    { // Prove <expression> if <exprList>
+      ASTTerm expr = (ASTTerm) terms.get(1);
+      ASTTerm exprs = (ASTTerm) terms.get(3);
+
+      Vector exprTerms = exprs.getTerms(); 
+
+      for (int i = 0; i < exprTerms.size(); i++) 
+      { ASTTerm expri = (ASTTerm) exprTerms.get(i); 
+        expri.checkMathOCL(); 
+      } 
+
+      expr.checkMathOCL(); 
+    }  
+
+    if ("substituteIn".equals(tag))
+    { // Substitute v in expr|instr
+      ASTTerm var = (ASTTerm) terms.get(1);
+      ASTTerm expr = (ASTTerm) terms.get(3);
+      
+      String vname = var.literalForm(); 
+      Object vx = ASTTerm.mathoclvars.get(vname); 
+      if (vx == null || "".equals(vx + ""))
+      { JOptionPane.showMessageDialog(null, 
+          "Warning!: variable " + vname + " does not have a definition in " + this,   "",
+          JOptionPane.INFORMATION_MESSAGE); 
+      } 
+
+      expr.checkMathOCL(); 
+    } 
+
+    if ("expandTo".equals(tag))
+    { // Expand <expression> to N terms
+      // ASTTerm expr = (ASTTerm) terms.get(1);
+
+      // expr.checkMathOCL(); 
+    }  // No check
+
+    if ("factorBy".equals(tag) || "cancelIn".equals(tag))
+    { // Factor <expression> by <expression>
+      // Cancel <expression> in <expression>
+
+      ASTTerm expr1 = (ASTTerm) terms.get(1);
+      ASTTerm expr2 = (ASTTerm) terms.get(3);
+
+      expr1.checkMathOCL(); 
+      expr2.checkMathOCL(); 
+    }  
+  } 
 
   public String preprocessMathOCL()
   { System.out.println(">>> MathOCL term " + this); 
@@ -42851,10 +43073,19 @@ public class ASTCompositeTerm extends ASTTerm
       } 
     } 
 
+    if ("instruction".equals(tag))
+    { // one term
+      ASTTerm trm = (ASTTerm) terms.get(0);
+      if (trm instanceof ASTCompositeTerm) 
+      { ASTCompositeTerm ct = (ASTCompositeTerm) trm; 
+        res = res + ct.preprocessMathOCL(); 
+      } 
+    } 
+
     if ("formula".equals(tag) && 
         "Define".equals(terms.get(0) + "") && 
         terms.size() > 3)
-    { // Define ID = expression or other item
+    { // Define ID = expression or instruction
       if (terms.get(3) instanceof ASTCompositeTerm)
       { ASTCompositeTerm expr = (ASTCompositeTerm) terms.get(3);
         ASTTerm var = (ASTTerm) terms.get(1);
@@ -42900,6 +43131,17 @@ public class ASTCompositeTerm extends ASTTerm
       }     
     } 
 
+  /*  if ("identifier".equals(tag))
+    { ASTTerm t1 = (ASTTerm) terms.get(0);
+      String vv = t1.literalForm(); 
+      String val = ASTTerm.getTaggedValue(t1, "value"); 
+      if (val == null) 
+      { JOptionPane.showMessageDialog(null, 
+          "Warning!: variable " + vv + " does not have a definition",   "",
+          JOptionPane.INFORMATION_MESSAGE); 
+      } 
+    } */ 
+
     /* if ("formula".equals(tag) && 
         "Define".equals(terms.get(0) + "") && 
         terms.size() < 3 && terms.size() > 1)
@@ -42942,8 +43184,8 @@ public class ASTCompositeTerm extends ASTTerm
           
         JOptionPane.showMessageDialog(null, 
               ">>> Var powers of " + vx0 + " are: " +  
-              powers + " " + minp + " " + maxp + 
-              " Differentials: " + diffsR + " " + maxdp, 
+              powers + " from: " + minp + " to: " + maxp + 
+              " Differentials: " + diffsR + " highest: " + maxdp, 
               "", 
               JOptionPane.INFORMATION_MESSAGE); 
 
@@ -42976,6 +43218,57 @@ public class ASTCompositeTerm extends ASTTerm
         else if (maxp == 1 && minp >= 0 && maxdp == 0) 
         // linear
         { } 
+        else if (maxdp == 0 && 
+                 maxp > 0 && 
+                 minp == 0 && powers.size() == 2)
+        { // direct solution vx0 = (coef0/coefmaxp)^{1/maxp} 
+          ASTTerm vpow; 
+          if (ASTTerm.isIntegerValued(maxp))
+          { vpow = constructNPower(((int) maxp) + "", var0); }
+          else 
+          { vpow = constructNPower(maxp + "", var0); }
+
+          String ncoef = ASTTerm.coefficientOf(vpow,expr0); 
+
+          Vector dvars = new Vector(); 
+          dvars.add(vpow); 
+          String dcnst = ASTTerm.constantTerms(dvars,expr0);
+
+          JOptionPane.showMessageDialog(null, 
+              ">>> This is an explicit n-power equation: " + 
+              vpow + 
+              " " + ncoef + " " + dcnst, 
+              "", 
+              JOptionPane.INFORMATION_MESSAGE);
+           return "  Simplify " + vx0 + " = (-" + dcnst + "/" + 
+                                   ncoef + ")^{1/" + maxp + "}\n"; 
+        } 
+        else if (maxdp == 0 && 
+                 maxp == 0 && 
+                 minp < 0 && powers.size() == 2)
+        { // direct solution vx0 = (coef0/coefminp)^{1/minp} 
+          ASTTerm vpow; 
+
+          if (ASTTerm.isIntegerValued(minp))
+          { vpow = constructNPower(((int) minp) + "", var0); }
+          else 
+          { vpow = constructNPower(minp + "", var0); }
+ 
+          String ncoef = ASTTerm.coefficientOf(vpow,expr0); 
+
+          Vector dvars = new Vector(); 
+          dvars.add(vpow); 
+          String dcnst = ASTTerm.constantTerms(dvars,expr0);
+
+          JOptionPane.showMessageDialog(null, 
+              ">>> This is an explicit n-power equation: " + 
+              vpow + 
+              " " + ncoef + " " + dcnst, 
+              "", 
+              JOptionPane.INFORMATION_MESSAGE);
+           return "  Simplify " + vx0 + " = (-" + dcnst + "/" + 
+                                   ncoef + ")^{1/" + minp + "}\n"; 
+        } 
         else if (maxdp > 0 && diffsR.size() <= 2 && 
                  (mindp == 0 || mindp == maxdp) && 
                  maxp == 0)
@@ -43226,6 +43519,20 @@ public class ASTCompositeTerm extends ASTTerm
 
     return res; 
   }
+
+  private static ASTTerm constructNPower(
+                                String nx, ASTTerm v)
+  { ASTBasicTerm nexpr = 
+      new ASTBasicTerm("basicExpression", nx); 
+    Vector dpars = new Vector();
+    dpars.add(v);
+    dpars.add(new ASTSymbolTerm("^{")); 
+    dpars.add(nexpr);  
+    dpars.add(new ASTSymbolTerm("}")); 
+    ASTTerm res = 
+      new ASTCompositeTerm("factor2Expression", dpars);
+    return res;  
+  }  
    
   private static ASTTerm constructNDifferential(
                                 int n, ASTTerm v)

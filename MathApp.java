@@ -424,6 +424,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
 
       javax.swing.Action checkAction = new CheckAction(); 
         // checkAction.setMnemonic(KeyEvent.VK_K);
+      menu.setToolTipText(
+                      "Check & simplify the specification");
       menu.add(checkAction); 
 
       javax.swing.Action analyseAction = new AnalyseAction(); 
@@ -437,6 +439,9 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
     { JMenu menu = new JMenu("Translate");
 
       // Also, translate to OCL, translate to Matlab
+
+      menu.setToolTipText(
+              "Translate to Matlab, OCL, Mamba, code");
 
       javax.swing.Action matlabAction = new MatlabAction(); 
       menu.add(matlabAction); 
@@ -633,7 +638,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       }
       catch(Exception _e) { _e.printStackTrace();
                             return; } 
-
+      thisLabel.setText("Specification saved in Test.xml, data.ser");
     } 
   } 
 
@@ -678,6 +683,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         _e.printStackTrace();
         return; 
       }
+
+      thisLabel.setText("Specification loaded from Test.xml, data.ser");
     } 
   } 
 
@@ -732,7 +739,9 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         } catch (Exception ex) { }  
       }  
       messageArea.setText(result);
-      internalModel = result; 
+      internalModel = result;
+  
+      thisLabel.setText("Specification translated to text format");
     }
   }
 
@@ -765,9 +774,12 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
  
         Compiler2 cc = new Compiler2(); 
         ASTTerm trm = cc.parseGeneralAST(asttext); 
-        if (trm != null)  
-        { String extracode = 
-            ((ASTCompositeTerm) trm).preprocessMathOCL(); 
+        if (trm != null && trm instanceof ASTCompositeTerm)  
+        { ASTCompositeTerm spec = (ASTCompositeTerm) trm; 
+          spec.checkMathOCL(); 
+
+          String extracode = 
+            spec.preprocessMathOCL(); 
 
           Vector ents = new Vector(); 
           Vector typs = new Vector(); 
@@ -791,6 +803,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       } 
       catch (Exception _expt) 
       { _expt.printStackTrace(); } 
+
+      thisLabel.setText("Specification analysed & simplified");
     }
   }
 
@@ -835,6 +849,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       } 
       catch (Exception _expt) 
       { _expt.printStackTrace(); } 
+      thisLabel.setText("Translated to Matlab");
     }
   }
 
@@ -891,6 +906,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       } 
       catch (Exception _expt) 
       { _expt.printStackTrace(); } 
+      thisLabel.setText("Translated to UML/OCL");
     }
   }
 
@@ -936,6 +952,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       } 
       catch (Exception _expt) 
       { _expt.printStackTrace(); } 
+      thisLabel.setText("Translated to Mamba");
     }
   }
 
@@ -960,6 +977,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       String res = sw.toString(); 
       // messageArea.setText(res);
       System.out.println(res); 
+      thisLabel.setText("Translated to Java");
     } 
   } 
 
@@ -987,6 +1005,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       String res = sw.toString();
       System.out.println(res);  
       // messageArea.setText(res);
+      thisLabel.setText("Translated to C#");
     } 
   }
 
@@ -1016,6 +1035,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       String res1 = sw1.toString(); 
       // messageArea.setText(res + "\n\n" + res1);
       System.out.println(res + "\n\n" + res1);
+      thisLabel.setText("Translated to C++");
     } 
   }
 
