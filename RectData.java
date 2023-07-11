@@ -132,10 +132,10 @@ class RectData extends RectForm
       // g.setFont(newff);  
       g.drawString(label,namex,namey+5); 
       g.setFont(ff); 
-      g.drawString("<<requirement>>",namex,namey-5);
+      g.drawString("    <<requirement>>",namex,namey-5);
       FontMetrics fm = g.getFontMetrics(); 
-      if (fm.stringWidth("<<requirement>>") + (namex - sourcex) >= width) 
-      { width = fm.stringWidth("<<requirement>>") + (namex - sourcex) + 5; }
+      if (fm.stringWidth("    <<requirement>>") + (namex - sourcex) >= width) 
+      { width = fm.stringWidth("    <<requirement>>") + (namex - sourcex) + 5; }
     } 
     else if (modelElement != null && modelElement instanceof ArchComponent)
     { ArchComponent req = (ArchComponent) modelElement; 
@@ -145,10 +145,10 @@ class RectData extends RectForm
       label = req.getName();   
       g.drawString(label,namex,namey+5); 
       g.setFont(ff); 
-      g.drawString("<<component>>",namex,namey-5);
+      g.drawString("    <<component>>",namex,namey-5);
       FontMetrics fm = g.getFontMetrics(); 
-      if (fm.stringWidth("<<component>>") + (namex - sourcex) >= width) 
-      { width = fm.stringWidth("<<component>>") + (namex - sourcex) + 5; }
+      if (fm.stringWidth("    <<component>>") + (namex - sourcex) >= width) 
+      { width = fm.stringWidth("    <<component>>") + (namex - sourcex) + 5; }
     } 
     else if (modelElement != null && modelElement instanceof Type)
     { Type typ = (Type) modelElement; 
@@ -156,10 +156,10 @@ class RectData extends RectForm
       g.drawString(label,namex,namey+6); 
       g.setFont(ff); 
       if (typ.isEnumeration())
-      { g.drawString("<<enumeration>>",namex,namey-7);
+      { g.drawString("      <<enumeration>>",namex,namey-7);
         FontMetrics fm = g.getFontMetrics(); 
-        if (fm.stringWidth("<<enumeration>>") + (namex - sourcex) >= width) 
-        { width = fm.stringWidth("<<enumeration>>") + (namex - sourcex) + 5; }
+        if (fm.stringWidth("      <<enumeration>>") + (namex - sourcex) >= width) 
+        { width = fm.stringWidth("      <<enumeration>>") + (namex - sourcex) + 5; }
       } 
       else 
       { g.drawString("<<datatype>>",namex,namey-7);
@@ -250,7 +250,7 @@ class RectData extends RectForm
   { Vector atts =
       ((Entity) modelElement).getAttributes();
     int xpos = namex;
-    int y = namey + 15;
+    int y = namey + 18;
     for (int i = 0; i < atts.size(); i++)
     { Attribute att = (Attribute) atts.get(i);
       String nme = att.getName();
@@ -323,15 +323,15 @@ class RectData extends RectForm
     if (nops > 0)
     { g.drawLine(sourcex,attendy,sourcex + width - 1,attendy); }
     height = y - namey + 10;
-    g.drawLine(sourcex,namey + 2,
-               sourcex + width-1,namey + 2);
+    g.drawLine(sourcex,namey + 5,
+               sourcex + width-1,namey + 5);
   }
 
   private void drawTypeFeatures(Graphics g,FontMetrics fm,int widest)
   { Vector vals =
       ((Type) modelElement).getValues();
     int xpos = namex;
-    int y = namey+15;
+    int y = namey + 18;
     if (vals != null)
     { for (int i = 0; i < vals.size(); i++) 
       { String val = (String) vals.get(i); 
@@ -344,8 +344,8 @@ class RectData extends RectForm
     } 
     width = widest;
     height = y - namey + 10;
-    g.drawLine(sourcex,namey + 2,
-               sourcex + width-1,namey + 2);
+    g.drawLine(sourcex,namey + 5,
+               sourcex + width-1,namey + 5);
   }
 
   private void drawRequirementFeatures(Graphics g,FontMetrics fm,int widest)

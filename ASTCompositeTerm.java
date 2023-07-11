@@ -42832,6 +42832,7 @@ public class ASTCompositeTerm extends ASTTerm
       for (int i = 2; i < terms.size(); i++) 
       { ASTTerm trm = (ASTTerm) terms.get(i); 
         trm.checkMathOCL(); 
+        System.out.println(ASTTerm.mathoclvars); 
       } 
     } 
 
@@ -42865,6 +42866,18 @@ public class ASTCompositeTerm extends ASTTerm
       ct2.checkMathOCL();  
     } 
 
+    if (terms.size() == 6 &&
+        "logicalExpression".equals(tag)  
+        )
+    { // FORALL id : typ . expr
+      ASTTerm var = (ASTTerm) terms.get(1); 
+      String vname = var.literalForm(); 
+      ASTTerm.mathoclvars.put(vname, ""); 
+      ASTTerm ct2 = (ASTTerm) terms.get(5); 
+      ct2.checkMathOCL();
+      ASTTerm.mathoclvars.remove(vname);   
+    } 
+
     if (terms.size() == 3 &&
         "factorExpression".equals(tag) && 
         terms.get(1) instanceof ASTSymbolTerm  
@@ -42876,12 +42889,138 @@ public class ASTCompositeTerm extends ASTTerm
       ct2.checkMathOCL();  
     } 
 
-    if (terms.size() == 2 &&
+    if (terms.size() == 6 &&
         "factorExpression".equals(tag) && 
+        "C_{".equals(terms.get(1) + "")  
+       )
+    { // C_{ expr } ^{ expr }
+      ASTTerm ct1 = (ASTTerm) terms.get(1); 
+      ASTTerm ct2 = (ASTTerm) terms.get(4); 
+      ct1.checkMathOCL();
+      ct2.checkMathOCL();  
+    } 
+
+    if (terms.size() == 3 &&
+        "factorExpression".equals(tag) && 
+        "E[".equals(terms.get(1) + "")  
+       )
+    { // E_[ expr ]
+      ASTTerm ct1 = (ASTTerm) terms.get(1); 
+      ct1.checkMathOCL();
+    } 
+
+    if (terms.size() == 3 &&
+        "factorExpression".equals(tag) 
+       )
+    { // INTEGRAL expr id
+      ASTTerm var = (ASTTerm) terms.get(2); 
+      String vname = var.literalForm(); // dx 
+      String vv = vname.substring(1); // x 
+      ASTTerm.mathoclvars.put(vv, ""); 
+      ASTTerm ct = (ASTTerm) terms.get(1); 
+      ct.checkMathOCL();
+      ASTTerm.mathoclvars.remove(vv); 
+    } 
+
+    if (terms.size() == 9 &&
+        "factorExpression".equals(tag)  
+       )
+    { // integral with bounds
+      ASTTerm ct1 = (ASTTerm) terms.get(2); 
+      ASTTerm ct2 = (ASTTerm) terms.get(5); 
+      ct1.checkMathOCL();
+      ct2.checkMathOCL();
+      ASTTerm var = (ASTTerm) terms.get(8); 
+      String vname = var.literalForm(); // dx 
+      String vv = vname.substring(1); // x 
+      ASTTerm.mathoclvars.put(vv, ""); 
+      ASTTerm ct = (ASTTerm) terms.get(7); 
+      ct.checkMathOCL();
+      ASTTerm.mathoclvars.remove(vv); 
+    } 
+
+    if (terms.size() == 8 &&
+        "factorExpression".equals(tag)  
+       )
+    { // SUM _{ expr } ^{ expr } expr
+      ASTTerm ct1 = (ASTTerm) terms.get(2); 
+      ASTTerm ct2 = (ASTTerm) terms.get(5); 
+      ASTTerm ct3 = (ASTTerm) terms.get(7); 
+      ct1.checkMathOCL();
+      ct2.checkMathOCL();  
+      ct3.checkMathOCL(); 
+    } 
+
+    if (terms.size() == 5 &&
+        "factorExpression".equals(tag)  
+       )
+    { // PARTIALDIFF _{ id }  expr
+      ASTTerm var = (ASTTerm) terms.get(2); 
+      String vname = var.literalForm(); 
+      Object oldvalue = ASTTerm.mathoclvars.get(vname);  
+      ASTTerm.mathoclvars.put(vname, ""); 
+      ASTTerm ct = (ASTTerm) terms.get(4); 
+      ct.checkMathOCL();
+      ASTTerm.mathoclvars.put(vname,oldvalue); 
+    } 
+
+    if (terms.size() == 7 &&
+        "conditionalExpression".equals(tag)  
+       )
+    { // binary expression
+      ASTTerm ct1 = (ASTTerm) terms.get(1); 
+      ASTTerm ct2 = (ASTTerm) terms.get(3); 
+      ASTTerm ct3 = (ASTTerm) terms.get(5); 
+      ct1.checkMathOCL();
+      ct2.checkMathOCL();  
+      ct3.checkMathOCL(); 
+    } 
+
+    if (terms.size() == 6 &&
+        "lambdaExpression".equals(tag)  
+       )
+    { // lambda id : typ in expr
+      ASTTerm var = (ASTTerm) terms.get(1); 
+      String vname = var.literalForm(); 
+      Object oldvalue = ASTTerm.mathoclvars.get(vname);  
+      ASTTerm.mathoclvars.put(vname, ""); 
+      ASTTerm ct = (ASTTerm) terms.get(5); 
+      ct.checkMathOCL();
+      ASTTerm.mathoclvars.put(vname,oldvalue); 
+    } 
+
+    if (terms.size() == 6 &&
+        "letExpression".equals(tag)  
+       )
+    { // let v = expression in expr
+      ASTTerm ct1 = (ASTTerm) terms.get(3); 
+      ct1.checkMathOCL();
+      ASTTerm var = (ASTTerm) terms.get(1); 
+      String vname = var.literalForm();
+      Object oldvalue = ASTTerm.mathoclvars.get(vname);  
+      ASTTerm.mathoclvars.put(vname, ct1 + ""); 
+      ASTTerm ct = (ASTTerm) terms.get(5); 
+      ct.checkMathOCL();
+      ASTTerm.mathoclvars.put(vname,oldvalue); 
+    } 
+
+    if (terms.size() == 2 &&
+        ("factorExpression".equals(tag) || 
+         "logicalExpression".equals(tag)) && 
         terms.get(0) instanceof ASTSymbolTerm  
        )
     { // prefix unary expression
       ASTTerm ct1 = (ASTTerm) terms.get(1); 
+      ct1.checkMathOCL();
+    } 
+
+    if (terms.size() == 2 &&
+        ("factorExpression".equals(tag) || 
+         "factor2Expression".equals(tag)) && 
+        terms.get(1) instanceof ASTSymbolTerm  
+       )
+    { // postfix unary expression
+      ASTTerm ct1 = (ASTTerm) terms.get(0); 
       ct1.checkMathOCL();
     } 
 
@@ -42896,6 +43035,32 @@ public class ASTCompositeTerm extends ASTTerm
       ct1.checkMathOCL();
     } 
 
+    if (terms.size() == 5 &&
+        "factor2Expression".equals(tag) && 
+        "(".equals(terms.get(2) + "") && 
+        ")".equals(terms.get(4) + "")  
+       )
+    { // bracketed expression
+
+      ASTTerm ct1 = (ASTTerm) terms.get(0); 
+      ASTTerm ct2 = (ASTTerm) terms.get(3); 
+      ct1.checkMathOCL();
+      ct2.checkMathOCL();
+    } 
+
+    if (terms.size() == 4 &&
+        "factor2Expression".equals(tag) && 
+        "^{".equals(terms.get(1) + "") && 
+        "}".equals(terms.get(3) + "")  
+       )
+    { // bracketed expression
+
+      ASTTerm ct1 = (ASTTerm) terms.get(0); 
+      ASTTerm ct2 = (ASTTerm) terms.get(2); 
+      ct1.checkMathOCL();
+      ct2.checkMathOCL();
+    } 
+
     if (terms.size() == 4 &&
         "basicExpression".equals(tag) && 
         "(".equals(terms.get(1) + "") && 
@@ -42906,6 +43071,8 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm ct1 = (ASTTerm) terms.get(2); 
       ct1.checkMathOCL();
     } 
+
+    // Also, setExpression
 
     if ("formula".equals(tag) && 
         "Define".equals(terms.get(0) + "") && 
@@ -42926,7 +43093,7 @@ public class ASTCompositeTerm extends ASTTerm
         "Define".equals(terms.get(0) + ""))
     { ASTTerm var = (ASTTerm) terms.get(1);
       String vname = var.literalForm(); 
-      ASTTerm.mathoclvars.put(vname, ""); 
+      ASTTerm.mathoclvars.put(vname, 0); 
       JOptionPane.showMessageDialog(null, 
         ">> " + vname + " defined as arbitrary real number", 
         "", 
@@ -42936,12 +43103,12 @@ public class ASTCompositeTerm extends ASTTerm
     if ("constraint".equals(tag) && 
         "Constraint".equals(terms.get(0) + "") &&
         terms.size() > 4)
-    { ASTTerm var = (ASTTerm) terms.get(1); 
-      String vname = var.literalForm(); 
-      ASTTerm.mathoclvars.put(vname, ""); 
+    { // ASTTerm var = (ASTTerm) terms.get(1); 
+      // String vname = var.literalForm(); 
+      // ASTTerm.mathoclvars.put(vname, ""); 
       ASTTerm tcons = (ASTTerm) terms.get(4); 
       tcons.checkMathOCL();
-      ASTTerm.mathoclvars.remove(vname); 
+      // ASTTerm.mathoclvars.remove(vname); 
     }  
 
     if ("simplify".equals(tag) && 

@@ -2917,10 +2917,10 @@ public class UCDArea extends JPanel
       uc.setParameters(patts); 
     } 
 	
-	String stereo = ucDialog.getStereotype(); 
-	if (stereo == null || "none".equals(stereo)) { } 
-	else 
-	{ uc.addStereotype(stereo); }
+    String stereo = ucDialog.getStereotype(); 
+    if (stereo == null || "none".equals(stereo)) { } 
+    else 
+    { uc.addStereotype(stereo); }
 	    
     repaint(); 
   }

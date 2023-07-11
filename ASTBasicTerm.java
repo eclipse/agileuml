@@ -2795,7 +2795,7 @@ public class ASTBasicTerm extends ASTTerm
       Object val = ASTTerm.mathoclvars.get(vv); 
       if (val == null) 
       { JOptionPane.showMessageDialog(null, 
-          "Warning!: variable " + vv + " does not have a definition",   "",
+          "Warning!: variable " + vv + " does not have a definition in " + ASTTerm.mathoclvars,   "",
           JOptionPane.INFORMATION_MESSAGE); 
       } 
     }
