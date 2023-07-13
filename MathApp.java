@@ -770,16 +770,17 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
 
         String asttext = antlr.getResultText(); 
         // messageArea.setText("" + asttext);
-        System.out.println(asttext); 
+        // System.out.println(asttext); 
  
         Compiler2 cc = new Compiler2(); 
         ASTTerm trm = cc.parseGeneralAST(asttext); 
         if (trm != null && trm instanceof ASTCompositeTerm)  
-        { ASTCompositeTerm spec = (ASTCompositeTerm) trm; 
+        { ASTCompositeTerm spec = (ASTCompositeTerm) trm;
+          ASTTerm.mathoclvars = new java.util.HashMap();  
           spec.checkMathOCL(); 
 
-          String extracode = 
-            spec.preprocessMathOCL(); 
+          // String extracode = 
+          //   spec.preprocessMathOCL(); 
 
           Vector ents = new Vector(); 
           Vector typs = new Vector(); 
@@ -791,14 +792,15 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
 
           String entcode = trm.cg(cgs);
 
-          System.out.println(entcode + "\n" + extracode);
+          System.out.println(entcode);
+
           // messageArea.append("\n"); 
           long t2 = (new java.util.Date()).getTime(); 
 
           System.out.println(">>> Processing took " + (t2 - t1)); 
 
-          messageArea.setText(entcode + "\n" + extracode);
-          internalModel = entcode + "\n" + extracode;   
+          messageArea.setText(entcode);
+          internalModel = entcode;   
         } 
       } 
       catch (Exception _expt) 

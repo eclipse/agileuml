@@ -42832,26 +42832,30 @@ public class ASTCompositeTerm extends ASTTerm
       for (int i = 2; i < terms.size(); i++) 
       { ASTTerm trm = (ASTTerm) terms.get(i); 
         trm.checkMathOCL(); 
-        System.out.println(ASTTerm.mathoclvars); 
+        // System.out.println(ASTTerm.mathoclvars); 
       } 
+      return; 
     } 
 
     if ("part".equals(tag))
     { // one term
       ASTTerm trm = (ASTTerm) terms.get(0);
       trm.checkMathOCL(); 
+      return; 
     } 
 
     if ("instruction".equals(tag))
     { // one term
       ASTTerm trm = (ASTTerm) terms.get(0);
       trm.checkMathOCL(); 
+      return; 
     } 
 
     if (terms.size() == 1)
     { // one term
       ASTTerm ct = (ASTTerm) terms.get(0); 
       ct.checkMathOCL();  
+      return; 
     } 
 
     if (terms.size() == 3 &&
@@ -42864,6 +42868,7 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm ct2 = (ASTTerm) terms.get(2); 
       ct1.checkMathOCL();
       ct2.checkMathOCL();  
+      return; 
     } 
 
     if (terms.size() == 6 &&
@@ -42872,10 +42877,12 @@ public class ASTCompositeTerm extends ASTTerm
     { // FORALL id : typ . expr
       ASTTerm var = (ASTTerm) terms.get(1); 
       String vname = var.literalForm(); 
+      Object oldval = ASTTerm.mathoclvars.get(vname); 
       ASTTerm.mathoclvars.put(vname, ""); 
       ASTTerm ct2 = (ASTTerm) terms.get(5); 
       ct2.checkMathOCL();
-      ASTTerm.mathoclvars.remove(vname);   
+      ASTTerm.mathoclvars.put(vname, oldval);   
+      return; 
     } 
 
     if (terms.size() == 3 &&
@@ -42887,6 +42894,7 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm ct2 = (ASTTerm) terms.get(2); 
       ct1.checkMathOCL();
       ct2.checkMathOCL();  
+      return; 
     } 
 
     if (terms.size() == 6 &&
@@ -42898,6 +42906,7 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm ct2 = (ASTTerm) terms.get(4); 
       ct1.checkMathOCL();
       ct2.checkMathOCL();  
+      return; 
     } 
 
     if (terms.size() == 3 &&
@@ -42907,6 +42916,7 @@ public class ASTCompositeTerm extends ASTTerm
     { // E_[ expr ]
       ASTTerm ct1 = (ASTTerm) terms.get(1); 
       ct1.checkMathOCL();
+      return; 
     } 
 
     if (terms.size() == 3 &&
@@ -42916,10 +42926,12 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm var = (ASTTerm) terms.get(2); 
       String vname = var.literalForm(); // dx 
       String vv = vname.substring(1); // x 
+      Object oldval = ASTTerm.mathoclvars.get(vv); 
       ASTTerm.mathoclvars.put(vv, ""); 
       ASTTerm ct = (ASTTerm) terms.get(1); 
       ct.checkMathOCL();
-      ASTTerm.mathoclvars.remove(vv); 
+      ASTTerm.mathoclvars.put(vv, oldval); 
+      return; 
     } 
 
     if (terms.size() == 9 &&
@@ -42933,10 +42945,12 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm var = (ASTTerm) terms.get(8); 
       String vname = var.literalForm(); // dx 
       String vv = vname.substring(1); // x 
+      Object oldval = ASTTerm.mathoclvars.get(vv); 
       ASTTerm.mathoclvars.put(vv, ""); 
       ASTTerm ct = (ASTTerm) terms.get(7); 
       ct.checkMathOCL();
-      ASTTerm.mathoclvars.remove(vv); 
+      ASTTerm.mathoclvars.put(vv, oldval); 
+      return; 
     } 
 
     if (terms.size() == 8 &&
@@ -42949,6 +42963,7 @@ public class ASTCompositeTerm extends ASTTerm
       ct1.checkMathOCL();
       ct2.checkMathOCL();  
       ct3.checkMathOCL(); 
+      return; 
     } 
 
     if (terms.size() == 5 &&
@@ -42962,6 +42977,7 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm ct = (ASTTerm) terms.get(4); 
       ct.checkMathOCL();
       ASTTerm.mathoclvars.put(vname,oldvalue); 
+      return; 
     } 
 
     if (terms.size() == 7 &&
@@ -42974,6 +42990,7 @@ public class ASTCompositeTerm extends ASTTerm
       ct1.checkMathOCL();
       ct2.checkMathOCL();  
       ct3.checkMathOCL(); 
+      return; 
     } 
 
     if (terms.size() == 6 &&
@@ -42987,6 +43004,7 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm ct = (ASTTerm) terms.get(5); 
       ct.checkMathOCL();
       ASTTerm.mathoclvars.put(vname,oldvalue); 
+      return; 
     } 
 
     if (terms.size() == 6 &&
@@ -43002,6 +43020,7 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm ct = (ASTTerm) terms.get(5); 
       ct.checkMathOCL();
       ASTTerm.mathoclvars.put(vname,oldvalue); 
+      return; 
     } 
 
     if (terms.size() == 2 &&
@@ -43012,6 +43031,7 @@ public class ASTCompositeTerm extends ASTTerm
     { // prefix unary expression
       ASTTerm ct1 = (ASTTerm) terms.get(1); 
       ct1.checkMathOCL();
+      return; 
     } 
 
     if (terms.size() == 2 &&
@@ -43019,9 +43039,15 @@ public class ASTCompositeTerm extends ASTTerm
          "factor2Expression".equals(tag)) && 
         terms.get(1) instanceof ASTSymbolTerm  
        )
-    { // postfix unary expression
+    { // postfix unary expression, expr'
+
+      Object oldvalue = ASTTerm.mathoclvars.get("x");  
+      ASTTerm.mathoclvars.put("x", ""); 
       ASTTerm ct1 = (ASTTerm) terms.get(0); 
       ct1.checkMathOCL();
+      ASTTerm.mathoclvars.put("x", oldvalue); 
+      
+      return; 
     } 
 
     if (terms.size() == 3 &&
@@ -43033,6 +43059,7 @@ public class ASTCompositeTerm extends ASTTerm
 
       ASTTerm ct1 = (ASTTerm) terms.get(1); 
       ct1.checkMathOCL();
+      return; 
     } 
 
     if (terms.size() == 5 &&
@@ -43046,6 +43073,7 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm ct2 = (ASTTerm) terms.get(3); 
       ct1.checkMathOCL();
       ct2.checkMathOCL();
+      return; 
     } 
 
     if (terms.size() == 4 &&
@@ -43059,6 +43087,7 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm ct2 = (ASTTerm) terms.get(2); 
       ct1.checkMathOCL();
       ct2.checkMathOCL();
+      return; 
     } 
 
     if (terms.size() == 4 &&
@@ -43070,6 +43099,7 @@ public class ASTCompositeTerm extends ASTTerm
 
       ASTTerm ct1 = (ASTTerm) terms.get(2); 
       ct1.checkMathOCL();
+      return; 
     } 
 
     // Also, setExpression
@@ -43088,6 +43118,7 @@ public class ASTCompositeTerm extends ASTTerm
                expr.literalForm(), 
                "", 
                JOptionPane.INFORMATION_MESSAGE);
+      return; 
     }
     else if ("formula".equals(tag) && 
         "Define".equals(terms.get(0) + ""))
@@ -43098,17 +43129,21 @@ public class ASTCompositeTerm extends ASTTerm
         ">> " + vname + " defined as arbitrary real number", 
         "", 
         JOptionPane.INFORMATION_MESSAGE);
+      return; 
     }
 
     if ("constraint".equals(tag) && 
         "Constraint".equals(terms.get(0) + "") &&
         terms.size() > 4)
-    { // ASTTerm var = (ASTTerm) terms.get(1); 
+    { // Constraint on vv | expr 
+      
+      // ASTTerm var = (ASTTerm) terms.get(1); 
       // String vname = var.literalForm(); 
       // ASTTerm.mathoclvars.put(vname, ""); 
       ASTTerm tcons = (ASTTerm) terms.get(4); 
       tcons.checkMathOCL();
       // ASTTerm.mathoclvars.remove(vname); 
+      return; 
     }  
 
     if ("simplify".equals(tag) && 
@@ -43116,18 +43151,20 @@ public class ASTCompositeTerm extends ASTTerm
         terms.size() > 1)
     { ASTTerm t1 = (ASTTerm) terms.get(1); 
       t1.checkMathOCL(); 
+      return; 
     }  
 
     
     if ("identifier".equals(tag))
     { ASTTerm t1 = (ASTTerm) terms.get(0);
       String vv = t1.literalForm(); 
-      ASTTerm val = (ASTTerm) ASTTerm.mathoclvars.get(vv); 
+      Object val = ASTTerm.mathoclvars.get(vv); 
       if (val == null) 
       { JOptionPane.showMessageDialog(null, 
-          "Warning!: variable " + vv + " does not have a definition in " + this,   "",
+          "Warning!: variable " + vv + " does not have a definition",   "",
           JOptionPane.INFORMATION_MESSAGE); 
       } 
+      return; 
     } 
 
     if ("expressionList".equals(tag))
@@ -43137,6 +43174,7 @@ public class ASTCompositeTerm extends ASTTerm
         else 
         { expri.checkMathOCL(); } 
       } 
+      return; 
     }
 
     if ("solve".equals(tag))
@@ -43163,6 +43201,7 @@ public class ASTCompositeTerm extends ASTTerm
         String vname = vi.literalForm(); 
         ASTTerm.mathoclvars.remove(vname); 
       } 
+      return; 
     }  
 
     if ("prove".equals(tag))
@@ -43178,6 +43217,7 @@ public class ASTCompositeTerm extends ASTTerm
       } 
 
       expr.checkMathOCL(); 
+      return; 
     }  
 
     if ("substituteIn".equals(tag))
@@ -43187,13 +43227,14 @@ public class ASTCompositeTerm extends ASTTerm
       
       String vname = var.literalForm(); 
       Object vx = ASTTerm.mathoclvars.get(vname); 
-      if (vx == null || "".equals(vx + ""))
+      if (vx == null)
       { JOptionPane.showMessageDialog(null, 
-          "Warning!: variable " + vname + " does not have a definition in " + this,   "",
+          "Warning!: variable " + vname + " does not have a definition to use for " + this,   "",
           JOptionPane.INFORMATION_MESSAGE); 
       } 
 
       expr.checkMathOCL(); 
+      return; 
     } 
 
     if ("expandTo".equals(tag))
@@ -43201,6 +43242,7 @@ public class ASTCompositeTerm extends ASTTerm
       // ASTTerm expr = (ASTTerm) terms.get(1);
 
       // expr.checkMathOCL(); 
+      return; 
     }  // No check
 
     if ("factorBy".equals(tag) || "cancelIn".equals(tag))
@@ -43212,6 +43254,7 @@ public class ASTCompositeTerm extends ASTTerm
 
       expr1.checkMathOCL(); 
       expr2.checkMathOCL(); 
+      return; 
     }  
   } 
 
@@ -43391,9 +43434,9 @@ public class ASTCompositeTerm extends ASTTerm
         { // direct solution vx0 = (coef0/coefmaxp)^{1/maxp} 
           ASTTerm vpow; 
           if (ASTTerm.isIntegerValued(maxp))
-          { vpow = constructNPower(((int) maxp) + "", var0); }
+          { vpow = ASTTerm.constructNPower(((int) maxp) + "", var0); }
           else 
-          { vpow = constructNPower(maxp + "", var0); }
+          { vpow = ASTTerm.constructNPower(maxp + "", var0); }
 
           String ncoef = ASTTerm.coefficientOf(vpow,expr0); 
 
@@ -43417,9 +43460,9 @@ public class ASTCompositeTerm extends ASTTerm
           ASTTerm vpow; 
 
           if (ASTTerm.isIntegerValued(minp))
-          { vpow = constructNPower(((int) minp) + "", var0); }
+          { vpow = ASTTerm.constructNPower(((int) minp) + "", var0); }
           else 
-          { vpow = constructNPower(minp + "", var0); }
+          { vpow = ASTTerm.constructNPower(minp + "", var0); }
  
           String ncoef = ASTTerm.coefficientOf(vpow,expr0); 
 
@@ -43442,7 +43485,7 @@ public class ASTCompositeTerm extends ASTTerm
         { // Differential eqn with only one diff term
 
           ASTTerm vdiff =
-              constructNDifferential((int) maxdp, var0); 
+            ASTTerm.constructNDifferential((int) maxdp, var0); 
  
           Vector dpowers = ASTTerm.powersOf(vdiff,expr0);
           String dcoef = ASTTerm.coefficientOf(vdiff,expr0); 
@@ -43485,7 +43528,7 @@ public class ASTCompositeTerm extends ASTTerm
         { // Differential eqn with several diff terms
           Vector alldcoefs = new Vector(); 
           Vector vdiffs =
-              constructNDifferentials((int) maxdp, var0,
+              ASTTerm.constructNDifferentials((int) maxdp, var0,
                                       expr0, alldcoefs); 
           
           JOptionPane.showMessageDialog(null, 
@@ -43687,57 +43730,7 @@ public class ASTCompositeTerm extends ASTTerm
     return res; 
   }
 
-  private static ASTTerm constructNPower(
-                                String nx, ASTTerm v)
-  { ASTBasicTerm nexpr = 
-      new ASTBasicTerm("basicExpression", nx); 
-    Vector dpars = new Vector();
-    dpars.add(v);
-    dpars.add(new ASTSymbolTerm("^{")); 
-    dpars.add(nexpr);  
-    dpars.add(new ASTSymbolTerm("}")); 
-    ASTTerm res = 
-      new ASTCompositeTerm("factor2Expression", dpars);
-    return res;  
-  }  
    
-  private static ASTTerm constructNDifferential(
-                                int n, ASTTerm v)
-  { ASTTerm res = v; 
-    for (int i = 0; i < n; i++) 
-    { Vector dpars = new Vector();
-      dpars.add(res); 
-      dpars.add(new ASTSymbolTerm("´")); 
-      res = new ASTCompositeTerm("factorExpression", dpars);
-    } 
-    return res;  
-  }  
-        
-  private static Vector constructNDifferentials(
-            int n, ASTTerm v, ASTTerm expr0, 
-            Vector coefs)
-  { // for i = 1 upto n, find if i-th diff of v
-    // occurs in expr0 and what its coefficient is
-    
-    Vector res = new Vector(); 
-
-    String vcoef = ASTTerm.coefficientOf(v,expr0);
-    res.add(v); 
-    coefs.add(vcoef); 
-
-    for (int i = 1; i <= n; i++) 
-    {  
-      ASTTerm vdiff =
-              constructNDifferential(i, v); 
- 
-      Vector dpowers = ASTTerm.powersOf(vdiff,expr0);
-      String dcoef = ASTTerm.coefficientOf(vdiff,expr0); 
-
-      res.add(vdiff); 
-      coefs.add(dcoef); 
-    } 
-    return res; 
-  } 
 
 /*    Statement stat = xx.cstatementToKM3(m1,m2,v1,v2);
     Entity fromC = new Entity("FromC"); 

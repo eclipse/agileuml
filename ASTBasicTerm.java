@@ -2787,7 +2787,7 @@ public class ASTBasicTerm extends ASTTerm
   } 
 
   public void checkMathOCL()
-  { System.out.println(">>> MathOCL term " + this); 
+  { // System.out.println(">>> MathOCL term " + this); 
 
     if ("identifier".equals(tag))
     { ASTTerm t1 = getTerm(0); 
@@ -2795,7 +2795,7 @@ public class ASTBasicTerm extends ASTTerm
       Object val = ASTTerm.mathoclvars.get(vv); 
       if (val == null) 
       { JOptionPane.showMessageDialog(null, 
-          "Warning!: variable " + vv + " does not have a definition in " + ASTTerm.mathoclvars,   "",
+          "Warning!: variable " + vv + " does not have a definition",   "",
           JOptionPane.INFORMATION_MESSAGE); 
       } 
     }

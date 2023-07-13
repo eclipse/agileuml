@@ -5338,8 +5338,8 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
     }
  
     if ("pre".startsWith(st)) 
-    { mess[0] = "Operation precondition, eg: pre: true"; 
-      return "pre:"; 
+    { mess[0] = "Operation precondition, eg: pre: true\nOr usecase precondition, eg: precondition par > 0;\n"; 
+      return "pre: expr   or    precondition expr;"; 
     } 
  
 
@@ -5855,7 +5855,7 @@ public Vector parseAttributeDecsInit(Vector entities, Vector types)
       }
  
       if ("extendedBy".startsWith(st))
-      { mess[0] = "Use case extension, eg., extendedBy errorCase;"; 
+      { mess[0] = "Use case extension, eg., extendedBy errorCase;\nDeclares errorCase as optional extra functionality of this use case\n"; 
         return "extendedBy"; 
       }
 
