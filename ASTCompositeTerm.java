@@ -42926,8 +42926,10 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm var = (ASTTerm) terms.get(2); 
       String vname = var.literalForm(); // dx 
       String vv = vname.substring(1); // x 
-      Object oldval = ASTTerm.mathoclvars.get(vv); 
-      ASTTerm.mathoclvars.put(vv, ""); 
+      Object oldval = ASTTerm.mathoclvars.get(vv);
+      ASTBasicTerm nullTerm = 
+        new ASTBasicTerm("basicExpression", "null");  
+      ASTTerm.mathoclvars.put(vv, nullTerm); 
       ASTTerm ct = (ASTTerm) terms.get(1); 
       ct.checkMathOCL();
       ASTTerm.mathoclvars.put(vv, oldval); 
@@ -42946,7 +42948,9 @@ public class ASTCompositeTerm extends ASTTerm
       String vname = var.literalForm(); // dx 
       String vv = vname.substring(1); // x 
       Object oldval = ASTTerm.mathoclvars.get(vv); 
-      ASTTerm.mathoclvars.put(vv, ""); 
+      ASTBasicTerm nullTerm = 
+        new ASTBasicTerm("basicExpression", "null");  
+      ASTTerm.mathoclvars.put(vv, nullTerm); 
       ASTTerm ct = (ASTTerm) terms.get(7); 
       ct.checkMathOCL();
       ASTTerm.mathoclvars.put(vv, oldval); 
@@ -42973,7 +42977,9 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm var = (ASTTerm) terms.get(2); 
       String vname = var.literalForm(); 
       Object oldvalue = ASTTerm.mathoclvars.get(vname);  
-      ASTTerm.mathoclvars.put(vname, ""); 
+      ASTBasicTerm nullTerm = 
+        new ASTBasicTerm("basicExpression", "null");  
+      ASTTerm.mathoclvars.put(vname, nullTerm); 
       ASTTerm ct = (ASTTerm) terms.get(4); 
       ct.checkMathOCL();
       ASTTerm.mathoclvars.put(vname,oldvalue); 
@@ -43000,7 +43006,9 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm var = (ASTTerm) terms.get(1); 
       String vname = var.literalForm(); 
       Object oldvalue = ASTTerm.mathoclvars.get(vname);  
-      ASTTerm.mathoclvars.put(vname, ""); 
+      ASTBasicTerm nullTerm = 
+        new ASTBasicTerm("basicExpression", "null");  
+      ASTTerm.mathoclvars.put(vname, nullTerm); 
       ASTTerm ct = (ASTTerm) terms.get(5); 
       ct.checkMathOCL();
       ASTTerm.mathoclvars.put(vname,oldvalue); 
@@ -43016,7 +43024,7 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm var = (ASTTerm) terms.get(1); 
       String vname = var.literalForm();
       Object oldvalue = ASTTerm.mathoclvars.get(vname);  
-      ASTTerm.mathoclvars.put(vname, ct1 + ""); 
+      ASTTerm.mathoclvars.put(vname, ct1); 
       ASTTerm ct = (ASTTerm) terms.get(5); 
       ct.checkMathOCL();
       ASTTerm.mathoclvars.put(vname,oldvalue); 
@@ -43042,7 +43050,9 @@ public class ASTCompositeTerm extends ASTTerm
     { // postfix unary expression, expr'
 
       Object oldvalue = ASTTerm.mathoclvars.get("x");  
-      ASTTerm.mathoclvars.put("x", ""); 
+      ASTBasicTerm nullTerm = 
+        new ASTBasicTerm("basicExpression", "null");  
+      ASTTerm.mathoclvars.put("x", nullTerm); 
       ASTTerm ct1 = (ASTTerm) terms.get(0); 
       ct1.checkMathOCL();
       ASTTerm.mathoclvars.put("x", oldvalue); 
@@ -43111,10 +43121,17 @@ public class ASTCompositeTerm extends ASTTerm
       ASTTerm expr = (ASTTerm) terms.get(3);
       expr.checkMathOCL(); 
       ASTTerm var = (ASTTerm) terms.get(1);
-      String vname = var.literalForm(); 
-      ASTTerm.mathoclvars.put(vname, expr + ""); 
+      String vname = var.literalForm();
+      Object olddef = ASTTerm.mathoclvars.get(vname); 
+      if (olddef != null) 
+      { JOptionPane.showMessageDialog(null, 
+          "!! Warning: " + vname + " is being re-defined: old definition: " + olddef, 
+          "", 
+          JOptionPane.WARNING_MESSAGE);
+      } 
+      ASTTerm.mathoclvars.put(vname, expr); 
       JOptionPane.showMessageDialog(null, 
-               ">> " + vname + " defined as " + 
+               ">> " + vname + " now defined as " + 
                expr.literalForm(), 
                "", 
                JOptionPane.INFORMATION_MESSAGE);
@@ -43124,7 +43141,9 @@ public class ASTCompositeTerm extends ASTTerm
         "Define".equals(terms.get(0) + ""))
     { ASTTerm var = (ASTTerm) terms.get(1);
       String vname = var.literalForm(); 
-      ASTTerm.mathoclvars.put(vname, 0); 
+      ASTBasicTerm nullTerm = 
+        new ASTBasicTerm("basicExpression", "null");  
+      ASTTerm.mathoclvars.put(vname, nullTerm); 
       JOptionPane.showMessageDialog(null, 
         ">> " + vname + " defined as arbitrary real number", 
         "", 
@@ -43162,7 +43181,7 @@ public class ASTCompositeTerm extends ASTTerm
       if (val == null) 
       { JOptionPane.showMessageDialog(null, 
           "Warning!: variable " + vv + " does not have a definition",   "",
-          JOptionPane.INFORMATION_MESSAGE); 
+          JOptionPane.WARNING_MESSAGE); 
       } 
       return; 
     } 
@@ -43184,11 +43203,17 @@ public class ASTCompositeTerm extends ASTTerm
 
       Vector exprTerms = exprs.getTerms(); 
       Vector varTerms = vars.getTerms();
+      ASTBasicTerm nullTerm = 
+        new ASTBasicTerm("basicExpression", "null");  
+
+      java.util.Map oldvalues = 
+           new java.util.HashMap(); 
 
       for (int i = 0; i < varTerms.size(); i++) 
       { ASTTerm vi = (ASTTerm) varTerms.get(i); 
-        String vname = vi.literalForm(); 
-        ASTTerm.mathoclvars.put(vname, ""); 
+        String vname = vi.literalForm();
+        oldvalues.put(vname, ASTTerm.mathoclvars.get(vname));  
+        ASTTerm.mathoclvars.put(vname, nullTerm); 
       } 
 
       for (int i = 0; i < exprTerms.size(); i++) 
@@ -43199,8 +43224,10 @@ public class ASTCompositeTerm extends ASTTerm
       for (int i = 0; i < varTerms.size(); i++) 
       { ASTTerm vi = (ASTTerm) varTerms.get(i); 
         String vname = vi.literalForm(); 
-        ASTTerm.mathoclvars.remove(vname); 
-      } 
+        ASTTerm.mathoclvars.put(vname, 
+                                oldvalues.get(vname)); 
+      } // restore old values
+
       return; 
     }  
 
@@ -43230,8 +43257,8 @@ public class ASTCompositeTerm extends ASTTerm
       if (vx == null)
       { JOptionPane.showMessageDialog(null, 
           "Warning!: variable " + vname + " does not have a definition to use for " + this,   "",
-          JOptionPane.INFORMATION_MESSAGE); 
-      } 
+          JOptionPane.WARNING_MESSAGE); 
+      } // also if it is (basicExpression null)
 
       expr.checkMathOCL(); 
       return; 
@@ -43258,6 +43285,948 @@ public class ASTCompositeTerm extends ASTTerm
     }  
   } 
 
+  public Vector mathOCLVariables()
+  { // System.out.println(">>> MathOCL term " + this); 
+    
+    if ("specification".equals(tag))
+    { // specification ID _*
+
+      Vector res = new Vector();   
+      for (int i = 2; i < terms.size(); i++) 
+      { ASTTerm trm = (ASTTerm) terms.get(i); 
+        Vector vars = trm.mathOCLVariables(); 
+        res = VectorUtil.union(res,vars); 
+      } 
+      return res; 
+    } 
+
+    if ("part".equals(tag))
+    { // one term
+      ASTTerm trm = (ASTTerm) terms.get(0);
+      return trm.mathOCLVariables(); 
+    } 
+
+    if ("instruction".equals(tag))
+    { // one term
+      ASTTerm trm = (ASTTerm) terms.get(0);
+      return trm.mathOCLVariables(); 
+    } 
+
+    if (terms.size() == 1)
+    { // one term
+      ASTTerm ct = (ASTTerm) terms.get(0); 
+      return ct.mathOCLVariables();  
+    } 
+
+    if (terms.size() == 3 &&
+        ("logicalExpression".equals(tag) ||
+         "additiveExpression".equals(tag) || 
+         "equalityExpression".equals(tag))  
+        )
+    { // binary expression
+      ASTTerm ct1 = (ASTTerm) terms.get(0); 
+      ASTTerm ct2 = (ASTTerm) terms.get(2); 
+      Vector res1 = ct1.mathOCLVariables();
+      Vector res2 = ct2.mathOCLVariables();  
+      return VectorUtil.union(res1, res2); 
+    } 
+
+    if (terms.size() == 6 &&
+        "logicalExpression".equals(tag)  
+        )
+    { // FORALL id : typ . expr, EXISTS
+      ASTTerm var = (ASTTerm) terms.get(1); 
+      String vname = var.literalForm(); 
+      ASTTerm ct2 = (ASTTerm) terms.get(5); 
+      Vector res = ct2.mathOCLVariables();
+      res.remove(vname); 
+      return res; 
+    } 
+
+    if (terms.size() == 3 &&
+        "factorExpression".equals(tag) && 
+        terms.get(1) instanceof ASTSymbolTerm  
+       )
+    { // binary expression
+      ASTTerm ct1 = (ASTTerm) terms.get(0); 
+      ASTTerm ct2 = (ASTTerm) terms.get(2); 
+      Vector res1 = ct1.mathOCLVariables();
+      Vector res2 = ct2.mathOCLVariables();  
+      return VectorUtil.union(res1,res2); 
+    } 
+
+    if (terms.size() == 6 &&
+        "factorExpression".equals(tag) && 
+        "C_{".equals(terms.get(1) + "")  
+       )
+    { // C_{ expr } ^{ expr }
+      ASTTerm ct1 = (ASTTerm) terms.get(1); 
+      ASTTerm ct2 = (ASTTerm) terms.get(4); 
+      Vector res1 = ct1.mathOCLVariables();
+      Vector res2 = ct2.mathOCLVariables();  
+      return VectorUtil.union(res1,res2); 
+    } 
+
+    if (terms.size() == 3 &&
+        "factorExpression".equals(tag) && 
+        "E[".equals(terms.get(1) + "")  
+       )
+    { // E_[ expr ]
+      ASTTerm ct1 = (ASTTerm) terms.get(1); 
+      return ct1.mathOCLVariables();
+    } 
+
+    if (terms.size() == 3 &&
+        "factorExpression".equals(tag) 
+       )
+    { // INTEGRAL expr id
+      ASTTerm var = (ASTTerm) terms.get(2); 
+      String vname = var.literalForm(); // dx 
+      String vv = vname.substring(1); // x 
+      ASTTerm ct = (ASTTerm) terms.get(1); 
+      Vector res = ct.mathOCLVariables();
+      res.remove(vname); 
+      return res; 
+    } 
+
+    if (terms.size() == 9 &&
+        "factorExpression".equals(tag)  
+       )
+    { // INTEGRAL _{ lb } ^{ up } expr dv
+
+      ASTTerm ct1 = (ASTTerm) terms.get(2); 
+      ASTTerm ct2 = (ASTTerm) terms.get(5); 
+      Vector res1 = ct1.mathOCLVariables();
+      Vector res2 = ct2.mathOCLVariables();
+      ASTTerm var = (ASTTerm) terms.get(8); 
+      String vname = var.literalForm(); // dx 
+      String vv = vname.substring(1); // x 
+      ASTTerm ct = (ASTTerm) terms.get(7); 
+      Vector res3 = ct.mathOCLVariables();
+      Vector res = VectorUtil.union(res1,res2); 
+      res = VectorUtil.union(res,res3); 
+      res.remove(vv); 
+      return res; 
+    } 
+
+    if (terms.size() == 8 &&
+        "factorExpression".equals(tag)  
+       )
+    { // SUM _{ expr } ^{ expr } expr
+      ASTTerm ct1 = (ASTTerm) terms.get(2); 
+      ASTTerm ct2 = (ASTTerm) terms.get(5); 
+      ASTTerm ct3 = (ASTTerm) terms.get(7); 
+      Vector res1 = ct1.mathOCLVariables();
+      Vector res2 = ct2.mathOCLVariables();  
+      Vector res3 = ct3.mathOCLVariables(); 
+      Vector res = VectorUtil.union(res1,res2); 
+      return VectorUtil.union(res,res3); 
+    } 
+
+    if (terms.size() == 5 &&
+        "factorExpression".equals(tag)  
+       )
+    { // PARTIALDIFF _{ id }  expr
+      ASTTerm var = (ASTTerm) terms.get(2); 
+      String vname = var.literalForm(); 
+      ASTTerm ct = (ASTTerm) terms.get(4); 
+      Vector res = ct.mathOCLVariables();
+      res.remove(vname); 
+      return res; 
+    } 
+
+    if (terms.size() == 7 &&
+        "conditionalExpression".equals(tag)  
+       )
+    { // binary expression
+      ASTTerm ct1 = (ASTTerm) terms.get(1); 
+      ASTTerm ct2 = (ASTTerm) terms.get(3); 
+      ASTTerm ct3 = (ASTTerm) terms.get(5); 
+      Vector res1 = ct1.mathOCLVariables();
+      Vector res2 = ct2.mathOCLVariables();  
+      Vector res3 = ct3.mathOCLVariables();
+      Vector res = VectorUtil.union(res1,res2); 
+ 
+      return VectorUtil.union(res,res3); 
+    } 
+
+    if (terms.size() == 6 &&
+        "lambdaExpression".equals(tag)  
+       )
+    { // lambda id : typ in expr
+      ASTTerm var = (ASTTerm) terms.get(1); 
+      String vname = var.literalForm(); 
+      ASTTerm ct = (ASTTerm) terms.get(5); 
+      Vector res = ct.mathOCLVariables();
+      res.remove(vname); 
+      return res; 
+    } 
+
+    if (terms.size() == 6 &&
+        "letExpression".equals(tag)  
+       )
+    { // let v = expression in expr
+      ASTTerm ct1 = (ASTTerm) terms.get(3); 
+      Vector res1 = ct1.mathOCLVariables();
+      ASTTerm var = (ASTTerm) terms.get(1); 
+      String vname = var.literalForm();
+      ASTTerm ct = (ASTTerm) terms.get(5); 
+      Vector res = ct.mathOCLVariables();
+      res.remove(vname); 
+      return VectorUtil.union(res1,res); 
+    } 
+
+    if (terms.size() == 2 &&
+        ("factorExpression".equals(tag) || 
+         "logicalExpression".equals(tag)) && 
+        terms.get(0) instanceof ASTSymbolTerm  
+       )
+    { // prefix unary expression
+      ASTTerm ct1 = (ASTTerm) terms.get(1); 
+      return ct1.mathOCLVariables();
+    } 
+
+    if (terms.size() == 2 &&
+        ("factorExpression".equals(tag) || 
+         "factor2Expression".equals(tag)) && 
+        terms.get(1) instanceof ASTSymbolTerm  
+       )
+    { // postfix unary expression, expr'
+
+      ASTTerm ct1 = (ASTTerm) terms.get(0); 
+      Vector res = ct1.mathOCLVariables();
+      res.remove("x"); 
+      
+      return res; 
+    } 
+
+    if (terms.size() == 3 &&
+        "basicExpression".equals(tag) && 
+        "(".equals(terms.get(0) + "") && 
+        ")".equals(terms.get(2) + "")  
+       )
+    { // bracketed expression
+
+      ASTTerm ct1 = (ASTTerm) terms.get(1); 
+      return ct1.mathOCLVariables();
+    } 
+
+    if (terms.size() == 5 &&
+        "factor2Expression".equals(tag) && 
+        "(".equals(terms.get(2) + "") && 
+        ")".equals(terms.get(4) + "")  
+       )
+    { // bracketed expression
+
+      ASTTerm ct1 = (ASTTerm) terms.get(0); 
+      ASTTerm ct2 = (ASTTerm) terms.get(3); 
+      Vector res1 = ct1.mathOCLVariables();
+      Vector res2 = ct2.mathOCLVariables();
+      return VectorUtil.union(res1,res2); 
+    } 
+
+    if (terms.size() == 4 &&
+        "factor2Expression".equals(tag) && 
+        "^{".equals(terms.get(1) + "") && 
+        "}".equals(terms.get(3) + "")  
+       )
+    { // expr ^{ expr }
+
+      ASTTerm ct1 = (ASTTerm) terms.get(0); 
+      ASTTerm ct2 = (ASTTerm) terms.get(2); 
+      Vector res1 = ct1.mathOCLVariables();
+      Vector res2 = ct2.mathOCLVariables();
+      return VectorUtil.union(res1,res2); 
+    } 
+
+    if (terms.size() == 4 &&
+        "basicExpression".equals(tag) && 
+        "(".equals(terms.get(1) + "") && 
+        ")".equals(terms.get(3) + "")  
+       )
+    { // op ( exprs )
+
+      ASTTerm ct1 = (ASTTerm) terms.get(2); 
+      return ct1.mathOCLVariables();
+    } 
+
+    // Also, setExpression
+
+    if ("formula".equals(tag) && 
+        "Define".equals(terms.get(0) + "") && 
+        terms.size() > 3)
+    { // Define ID = expression or instruction
+      return new Vector(); 
+    } 
+    else if ("formula".equals(tag) && 
+        "Define".equals(terms.get(0) + ""))
+    { return new Vector(); }
+
+    if ("constraint".equals(tag) && 
+        "Constraint".equals(terms.get(0) + "") &&
+        terms.size() > 4)
+    { // Constraint on vv | expr 
+      
+      ASTTerm tcons = (ASTTerm) terms.get(4); 
+      return tcons.mathOCLVariables();
+    }  
+
+    if ("simplify".equals(tag) && 
+        "Simplify".equals(terms.get(0) + "") &&
+        terms.size() > 1)
+    { ASTTerm t1 = (ASTTerm) terms.get(1); 
+      return t1.mathOCLVariables(); 
+    }  
+
+    
+    if ("identifier".equals(tag))
+    { ASTTerm t1 = (ASTTerm) terms.get(0);
+      String vv = t1.literalForm(); 
+      Vector res = new Vector(); 
+      res.add(vv); 
+      return res; 
+    } 
+
+    if ("expressionList".equals(tag))
+    { Vector res = new Vector(); 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm expri = (ASTTerm) terms.get(i); 
+        if (expri instanceof ASTSymbolTerm) { } 
+        else 
+        { Vector vrs = expri.mathOCLVariables(); 
+          res = VectorUtil.union(res,vrs); 
+        } 
+      } 
+      return res; 
+    }
+
+    if ("solve".equals(tag))
+    { // Solve <expressionList> for <idList>
+      ASTCompositeTerm exprs = (ASTCompositeTerm) terms.get(1);
+      ASTTerm vars = (ASTTerm) terms.get(3);
+
+      Vector exprTerms = exprs.getTerms(); 
+      Vector varTerms = vars.getTerms();
+
+      Vector res = new Vector(); 
+      Vector localVars = new Vector(); 
+
+      for (int i = 0; i < varTerms.size(); i++) 
+      { ASTTerm vi = (ASTTerm) varTerms.get(i); 
+        String vname = vi.literalForm(); 
+        localVars.add(vname); 
+      } 
+
+      for (int i = 0; i < exprTerms.size(); i++) 
+      { ASTTerm expri = (ASTTerm) exprTerms.get(i); 
+        Vector resi = expri.mathOCLVariables();
+        res = VectorUtil.union(res,resi);  
+      } 
+
+      res.removeAll(localVars); 
+      return res; 
+    }  
+
+    if ("prove".equals(tag))
+    { // Prove <expression> if <exprList>
+      ASTTerm expr = (ASTTerm) terms.get(1);
+      ASTTerm exprs = (ASTTerm) terms.get(3);
+
+      Vector exprTerms = exprs.getTerms(); 
+      Vector res = new Vector(); 
+
+      for (int i = 0; i < exprTerms.size(); i++) 
+      { ASTTerm expri = (ASTTerm) exprTerms.get(i); 
+        Vector resi = expri.mathOCLVariables();
+        res = VectorUtil.union(res,resi);  
+      } 
+
+      Vector rese = expr.mathOCLVariables(); 
+      return VectorUtil.union(res,rese); 
+    }  
+
+  /* 
+    if ("substituteIn".equals(tag))
+    { // Substitute v in expr|instr
+      ASTTerm var = (ASTTerm) terms.get(1);
+      ASTTerm expr = (ASTTerm) terms.get(3);
+      
+      String vname = var.literalForm(); 
+      Object vx = ASTTerm.mathoclvars.get(vname); 
+      if (vx == null)
+      { JOptionPane.showMessageDialog(null, 
+          "Warning!: variable " + vname + " does not have a definition to use for " + this,   "",
+          JOptionPane.WARNING_MESSAGE); 
+      } 
+
+      expr.checkMathOCL(); 
+      return; 
+    } */  
+
+    if ("expandTo".equals(tag))
+    { // Expand <expression> to N terms
+      ASTTerm expr = (ASTTerm) terms.get(1);
+
+      return expr.mathOCLVariables(); 
+    } 
+
+    if ("factorBy".equals(tag) || "cancelIn".equals(tag))
+    { // Factor <expression> by <expression>
+      // Cancel <expression> in <expression>
+
+      ASTTerm expr1 = (ASTTerm) terms.get(1);
+      ASTTerm expr2 = (ASTTerm) terms.get(3);
+
+      Vector res1 = expr1.mathOCLVariables(); 
+      Vector res2 = expr2.mathOCLVariables(); 
+      return VectorUtil.union(res1,res2); 
+    } 
+
+    return new Vector();  
+  } 
+
+  public ASTTerm mathOCLSubstitute(String var, ASTTerm repl)
+  { // System.out.println(">>> MathOCL term " + this); 
+    
+    if ("specification".equals(tag))
+    { // specification ID _*
+
+      Vector res = new Vector(); 
+      res.add(terms.get(0)); 
+      res.add(terms.get(1));   
+      for (int i = 2; i < terms.size(); i++) 
+      { ASTTerm trm = (ASTTerm) terms.get(i); 
+        ASTTerm newtrm = trm.mathOCLSubstitute(var, repl); 
+        res.add(newtrm); 
+      } 
+      return new ASTCompositeTerm(tag, res); 
+    } 
+
+    if ("part".equals(tag))
+    { // one term
+      ASTTerm trm = (ASTTerm) terms.get(0);
+      ASTTerm newtrm = trm.mathOCLSubstitute(var,repl); 
+      return new ASTCompositeTerm(tag, newtrm); 
+    } 
+
+    if ("instruction".equals(tag))
+    { // one term
+      ASTTerm trm = (ASTTerm) terms.get(0);
+      ASTTerm newtrm = trm.mathOCLSubstitute(var,repl); 
+      return new ASTCompositeTerm(tag, newtrm); 
+    } 
+
+    if (terms.size() == 1)
+    { // one term
+      ASTTerm ct = (ASTTerm) terms.get(0); 
+      ASTTerm newtrm = ct.mathOCLSubstitute(var,repl); 
+      return new ASTCompositeTerm(tag, newtrm); 
+    } 
+
+    if (terms.size() == 3 &&
+        ("logicalExpression".equals(tag) ||
+         "additiveExpression".equals(tag) || 
+         "equalityExpression".equals(tag))  
+        )
+    { // binary expression
+      ASTTerm ct1 = (ASTTerm) terms.get(0); 
+      ASTTerm ctop = (ASTTerm) terms.get(1); 
+      ASTTerm ct2 = (ASTTerm) terms.get(2); 
+      ASTTerm res1 = ct1.mathOCLSubstitute(var,repl);
+      ASTTerm res2 = ct2.mathOCLSubstitute(var,repl);
+      Vector res = new Vector();  
+      res.add(res1); res.add(ctop); res.add(res2);   
+      return new ASTCompositeTerm(tag, res);
+    } 
+
+    if (terms.size() == 6 &&
+        "logicalExpression".equals(tag)  
+        )
+    { // FORALL id : typ . expr, EXISTS
+      ASTTerm sym1 = (ASTTerm) terms.get(0); 
+      ASTTerm vart = (ASTTerm) terms.get(1); 
+      ASTTerm sym2 = (ASTTerm) terms.get(2);
+      ASTTerm typ = (ASTTerm) terms.get(3); 
+      ASTTerm sym3 = (ASTTerm) terms.get(4); 
+
+      String vname = vart.literalForm(); 
+      if (var.equals(vname)) 
+      { return this; } 
+      ASTTerm ct2 = (ASTTerm) terms.get(5); 
+      ASTTerm res = ct2.mathOCLSubstitute(var,repl);
+      Vector newterms = new Vector(); 
+      newterms.add(sym1); newterms.add(vart); 
+      newterms.add(sym2); newterms.add(typ); 
+      newterms.add(sym3); newterms.add(res); 
+      return new ASTCompositeTerm(tag, newterms); 
+    } 
+
+    if (terms.size() == 3 &&
+        "factorExpression".equals(tag) && 
+        terms.get(1) instanceof ASTSymbolTerm  
+       )
+    { // binary expression
+      ASTTerm ct1 = (ASTTerm) terms.get(0); 
+      ASTTerm sym1 = (ASTTerm) terms.get(1); 
+      ASTTerm ct2 = (ASTTerm) terms.get(2); 
+      ASTTerm res1 = ct1.mathOCLSubstitute(var,repl);
+      ASTTerm res2 = ct2.mathOCLSubstitute(var,repl);
+      Vector res = new Vector(); 
+      res.add(res1); res.add(sym1); res.add(res2);   
+      return new ASTCompositeTerm(tag,res); 
+    } 
+
+    if (terms.size() == 6 &&
+        "factorExpression".equals(tag) && 
+        "C_{".equals(terms.get(1) + "")  
+       )
+    { // C_{ expr } ^{ expr }
+      ASTTerm sym1 = (ASTTerm) terms.get(0); 
+
+      ASTTerm ct1 = (ASTTerm) terms.get(1);
+      ASTTerm sym2 = (ASTTerm) terms.get(2); 
+      ASTTerm sym3 = (ASTTerm) terms.get(3); 
+
+      ASTTerm ct2 = (ASTTerm) terms.get(4);
+      ASTTerm sym4 = (ASTTerm) terms.get(5); 
+ 
+      ASTTerm res1 = ct1.mathOCLSubstitute(var,repl);
+      ASTTerm res2 = ct2.mathOCLSubstitute(var,repl);  
+      Vector res = new Vector(); 
+      res.add(sym1); res.add(res1); res.add(sym2); 
+      res.add(sym3); res.add(res2); res.add(sym4); 
+      return new ASTCompositeTerm(tag, res);  
+    } 
+
+    if (terms.size() == 3 &&
+        "factorExpression".equals(tag) && 
+        "E[".equals(terms.get(1) + "")  
+       )
+    { // E_[ expr ]
+      ASTTerm ct0 = (ASTTerm) terms.get(0); 
+      ASTTerm ct1 = (ASTTerm) terms.get(1);
+      ASTTerm ct2 = (ASTTerm) terms.get(2); 
+ 
+      ASTTerm rt1 = ct1.mathOCLSubstitute(var,repl);
+      Vector res = new Vector(); 
+      res.add(ct0); res.add(rt1); res.add(ct2); 
+      return new ASTCompositeTerm(tag, res);  
+    } 
+
+    if (terms.size() == 3 &&
+        "factorExpression".equals(tag) 
+       )
+    { // INTEGRAL expr id
+      ASTTerm sym1 = (ASTTerm) terms.get(0); 
+
+      ASTTerm vart = (ASTTerm) terms.get(2); 
+      String vname = vart.literalForm(); // dx 
+      String vv = vname.substring(1); // x 
+      if (var.equals(vv)) 
+      { return this; } 
+      ASTTerm ct = (ASTTerm) terms.get(1); 
+      ASTTerm res = ct.mathOCLSubstitute(var, repl);
+      Vector newargs = new Vector(); 
+      newargs.add(sym1); newargs.add(res); newargs.add(vart); 
+      return new ASTCompositeTerm(tag, newargs);  
+    } 
+
+    if (terms.size() == 9 &&
+        "factorExpression".equals(tag)  
+       )
+    { // INTEGRAL _{ lb } ^{ up } expr dv
+
+      ASTTerm sym1 = (ASTTerm) terms.get(0); 
+      ASTTerm sym2 = (ASTTerm) terms.get(1); 
+      ASTTerm ct1 = (ASTTerm) terms.get(2);
+      ASTTerm sym3 = (ASTTerm) terms.get(3); 
+      ASTTerm sym4 = (ASTTerm) terms.get(4); 
+      ASTTerm ct2 = (ASTTerm) terms.get(5); 
+      ASTTerm sym5 = (ASTTerm) terms.get(6); 
+      ASTTerm ct = (ASTTerm) terms.get(7); 
+      
+      ASTTerm res1 = ct1.mathOCLSubstitute(var,repl);
+      ASTTerm res2 = ct2.mathOCLSubstitute(var,repl);
+
+      ASTTerm vbl = (ASTTerm) terms.get(8); 
+      String vname = vbl.literalForm(); // dx 
+      String vv = vname.substring(1); // x 
+      if (var.equals(vv))
+      { Vector res = new Vector(); 
+        res.add(sym1); res.add(sym2); res.add(res1); 
+        res.add(sym3); res.add(sym4); res.add(res2); 
+        res.add(sym5); res.add(ct); res.add(vbl); 
+        return new ASTCompositeTerm(tag, res); 
+      } 
+      ASTTerm res3 = ct.mathOCLSubstitute(var,repl);
+      Vector res = new Vector(); 
+      res.add(sym1); res.add(sym2); res.add(res1); 
+      res.add(sym3); res.add(sym4); res.add(res2); 
+      res.add(sym5); res.add(res3); res.add(vbl); 
+      return new ASTCompositeTerm(tag, res);
+    } 
+
+    if (terms.size() == 8 &&
+        "factorExpression".equals(tag)  
+       )
+    { // SUM _{ expr } ^{ expr } expr
+
+      ASTTerm sym1 = (ASTTerm) terms.get(0); 
+      ASTTerm sym2 = (ASTTerm) terms.get(1); 
+      ASTTerm ct1 = (ASTTerm) terms.get(2); 
+      ASTTerm sym3 = (ASTTerm) terms.get(3); 
+      ASTTerm sym4 = (ASTTerm) terms.get(4); 
+      ASTTerm ct2 = (ASTTerm) terms.get(5); 
+      ASTTerm sym5 = (ASTTerm) terms.get(6); 
+      ASTTerm ct3 = (ASTTerm) terms.get(7);
+ 
+      ASTTerm res1 = ct1.mathOCLSubstitute(var,repl);
+      ASTTerm res2 = ct2.mathOCLSubstitute(var,repl);  
+      ASTTerm res3 = ct3.mathOCLSubstitute(var,repl);
+ 
+      Vector res = new Vector(); 
+      res.add(sym1); res.add(sym2); res.add(res1); 
+      res.add(sym3); res.add(sym4); res.add(res2); 
+      res.add(sym5); res.add(res3); 
+      return new ASTCompositeTerm(tag, res); 
+    } 
+
+    if (terms.size() == 5 &&
+        "factorExpression".equals(tag)  
+       )
+    { // PARTIALDIFF _{ id }  expr
+      ASTTerm sym1 = (ASTTerm) terms.get(0); 
+      ASTTerm sym2 = (ASTTerm) terms.get(1); 
+
+      ASTTerm vbl = (ASTTerm) terms.get(2); 
+      String vname = vbl.literalForm(); 
+      if (var.equals(vname)) { return this; } 
+
+      ASTTerm sym3 = (ASTTerm) terms.get(3); 
+      ASTTerm ct = (ASTTerm) terms.get(4); 
+      ASTTerm res1 = ct.mathOCLSubstitute(var,repl);
+      Vector res = new Vector(); 
+      res.add(sym1); res.add(sym2); res.add(vbl); 
+      res.add(sym3); res.add(res1); 
+      return new ASTCompositeTerm(tag,res); 
+    } 
+
+    if (terms.size() == 7 &&
+        "conditionalExpression".equals(tag)  
+       )
+    { // if test then e1 else e2 endif
+
+      ASTTerm sym1 = (ASTTerm) terms.get(0); 
+      ASTTerm ct1 = (ASTTerm) terms.get(1); 
+      ASTTerm sym2 = (ASTTerm) terms.get(2); 
+      ASTTerm ct2 = (ASTTerm) terms.get(3);
+      ASTTerm sym3 = (ASTTerm) terms.get(4); 
+      ASTTerm ct3 = (ASTTerm) terms.get(5); 
+      ASTTerm sym4 = (ASTTerm) terms.get(6); 
+
+      ASTTerm res1 = ct1.mathOCLSubstitute(var,repl);
+      ASTTerm res2 = ct2.mathOCLSubstitute(var,repl);  
+      ASTTerm res3 = ct3.mathOCLSubstitute(var,repl);
+      Vector res = new Vector(); 
+      res.add(sym1); res.add(res1); res.add(sym2); 
+      res.add(res2); res.add(sym3); res.add(res3); 
+      res.add(sym4); 
+      return new ASTCompositeTerm(tag,res); 
+    } 
+
+    if (terms.size() == 6 &&
+        "lambdaExpression".equals(tag)  
+       )
+    { // lambda id : typ in expr
+      ASTTerm sym1 = (ASTTerm) terms.get(0); 
+      ASTTerm vbl = (ASTTerm) terms.get(1); 
+      String vname = vbl.literalForm();
+      if (var.equals(vname)) { return this; } 
+      ASTTerm sym2 = (ASTTerm) terms.get(2); 
+      ASTTerm typ = (ASTTerm) terms.get(3); 
+      ASTTerm sym3 = (ASTTerm) terms.get(4); 
+
+      ASTTerm ct = (ASTTerm) terms.get(5); 
+      ASTTerm res1 = ct.mathOCLSubstitute(var,repl);
+      Vector res = new Vector(); 
+      res.add(sym1); res.add(vbl); res.add(sym2); 
+      res.add(typ); res.add(sym3); res.add(res1); 
+      return new ASTCompositeTerm(tag,res); 
+    } 
+
+    if (terms.size() == 6 &&
+        "letExpression".equals(tag)  
+       )
+    { // let v = expression in expr
+      ASTTerm sym1 = (ASTTerm) terms.get(0); 
+      ASTTerm vbl = (ASTTerm) terms.get(1); 
+      ASTTerm sym2 = (ASTTerm) terms.get(2); 
+      String vname = vbl.literalForm();
+      ASTTerm ct1 = (ASTTerm) terms.get(3); 
+      ASTTerm res1 = ct1.mathOCLSubstitute(var,repl);
+      ASTTerm sym3 = (ASTTerm) terms.get(4); 
+      ASTTerm ct = (ASTTerm) terms.get(5); 
+      Vector res = new Vector();
+      if (var.equals(vname))
+      { res.add(sym1); res.add(vbl); res.add(sym2); 
+        res.add(res1); res.add(sym3); res.add(ct); 
+        return new ASTCompositeTerm(tag,res); 
+      }
+      ASTTerm res2 = ct.mathOCLSubstitute(var,repl);
+      res.add(sym1); res.add(vbl); res.add(sym2); 
+      res.add(res1); res.add(sym3); res.add(res2); 
+      return new ASTCompositeTerm(tag,res); 
+    } 
+
+    if (terms.size() == 2 &&
+        ("factorExpression".equals(tag) || 
+         "logicalExpression".equals(tag)) && 
+        terms.get(0) instanceof ASTSymbolTerm  
+       )
+    { // prefix unary expression
+      
+      ASTTerm sym1 = (ASTTerm) terms.get(0); 
+      ASTTerm ct1 = (ASTTerm) terms.get(1); 
+      ASTTerm res1 = ct1.mathOCLSubstitute(var,repl);
+      Vector args = new Vector(); 
+      args.add(sym1); args.add(res1); 
+      return new ASTCompositeTerm(tag, args); 
+    } 
+
+    if (terms.size() == 2 &&
+        ("factorExpression".equals(tag) || 
+         "factor2Expression".equals(tag)) && 
+        terms.get(1) instanceof ASTSymbolTerm  
+       )
+    { // postfix unary expression, expr'
+
+      ASTTerm ct1 = (ASTTerm) terms.get(0); 
+      ASTTerm sym1 = (ASTTerm) terms.get(1); 
+      ASTTerm res1 = ct1.mathOCLSubstitute(var,repl);
+      // res.remove("x"); 
+      Vector args = new Vector(); 
+      args.add(res1); args.add(sym1); 
+      return new ASTCompositeTerm(tag, args); 
+    } 
+
+    if (terms.size() == 3 &&
+        "basicExpression".equals(tag) && 
+        "(".equals(terms.get(0) + "") && 
+        ")".equals(terms.get(2) + "")  
+       )
+    { // bracketed expression
+
+      ASTTerm sym1 = (ASTTerm) terms.get(0); 
+      ASTTerm ct1 = (ASTTerm) terms.get(1);
+      ASTTerm sym2 = (ASTTerm) terms.get(2); 
+ 
+      Vector args = new Vector(); 
+      args.add(sym1); 
+      ASTTerm res1 = ct1.mathOCLSubstitute(var,repl);
+      args.add(res1); 
+      args.add(sym2); 
+      return new ASTCompositeTerm(tag,args); 
+    } 
+
+    if (terms.size() == 5 &&
+        "factor2Expression".equals(tag) && 
+        "(".equals(terms.get(2) + "") && 
+        ")".equals(terms.get(4) + "")  
+       )
+    { // bracketed expression
+
+      ASTTerm ct1 = (ASTTerm) terms.get(0); 
+      ASTTerm sym1 = (ASTTerm) terms.get(1); 
+      ASTTerm sym2 = (ASTTerm) terms.get(2); 
+      ASTTerm ct2 = (ASTTerm) terms.get(3);
+      ASTTerm sym3 = (ASTTerm) terms.get(4); 
+ 
+      ASTTerm res1 = ct1.mathOCLSubstitute(var,repl);
+      ASTTerm res2 = ct2.mathOCLSubstitute(var,repl);
+      Vector args = new Vector();
+      args.add(res1); args.add(sym1); args.add(sym2); 
+      args.add(res2); args.add(sym3); 
+      return new ASTCompositeTerm(tag, args);  
+    } 
+
+    if (terms.size() == 4 &&
+        "factor2Expression".equals(tag) && 
+        "^{".equals(terms.get(1) + "") && 
+        "}".equals(terms.get(3) + "")  
+       )
+    { // expr ^{ expr }
+
+      ASTTerm ct1 = (ASTTerm) terms.get(0); 
+      ASTTerm sym1 = (ASTTerm) terms.get(1); 
+      ASTTerm ct2 = (ASTTerm) terms.get(2); 
+      ASTTerm sym2 = (ASTTerm) terms.get(3);
+ 
+      ASTTerm res1 = ct1.mathOCLSubstitute(var,repl);
+      ASTTerm res2 = ct2.mathOCLSubstitute(var,repl);
+      Vector args = new Vector(); 
+      args.add(res1); args.add(sym1); args.add(res2); 
+      args.add(sym2); 
+      return new ASTCompositeTerm(tag, args); 
+    } 
+
+    if (terms.size() == 4 &&
+        "basicExpression".equals(tag) && 
+        "(".equals(terms.get(1) + "") && 
+        ")".equals(terms.get(3) + "")  
+       )
+    { // op ( exprs )
+
+      ASTTerm sym1 = (ASTTerm) terms.get(0); 
+      ASTTerm sym2 = (ASTTerm) terms.get(1); 
+      ASTTerm ct1 = (ASTTerm) terms.get(2);
+      ASTTerm sym3 = (ASTTerm) terms.get(3); 
+ 
+      ASTTerm res1 = ct1.mathOCLSubstitute(var,repl);
+      Vector args = new Vector(); 
+
+      args.add(sym1); args.add(sym2); args.add(res1); 
+      args.add(sym3); 
+      return new ASTCompositeTerm(tag, args);
+    } 
+
+    // Also, setExpression, and 
+    // (basicExpression expr . ID)
+
+   /* 
+    if ("formula".equals(tag) && 
+        "Define".equals(terms.get(0) + "") && 
+        terms.size() > 3)
+    { // Define ID = expression or instruction
+      return new Vector(); 
+    } 
+    else if ("formula".equals(tag) && 
+        "Define".equals(terms.get(0) + ""))
+    { return new Vector(); }
+
+    if ("constraint".equals(tag) && 
+        "Constraint".equals(terms.get(0) + "") &&
+        terms.size() > 4)
+    { // Constraint on vv | expr 
+      
+      ASTTerm tcons = (ASTTerm) terms.get(4); 
+      return tcons.mathOCLVariables();
+    }  
+
+    if ("simplify".equals(tag) && 
+        "Simplify".equals(terms.get(0) + "") &&
+        terms.size() > 1)
+    { ASTTerm t1 = (ASTTerm) terms.get(1); 
+      return t1.mathOCLVariables(); 
+    }  
+
+    
+    if ("identifier".equals(tag))
+    { ASTTerm t1 = (ASTTerm) terms.get(0);
+      String vv = t1.literalForm(); 
+      Vector res = new Vector(); 
+      res.add(vv); 
+      return res; 
+    } 
+
+    if ("expressionList".equals(tag))
+    { Vector res = new Vector(); 
+      for (int i = 0; i < terms.size(); i++) 
+      { ASTTerm expri = (ASTTerm) terms.get(i); 
+        if (expri instanceof ASTSymbolTerm) { } 
+        else 
+        { Vector vrs = expri.mathOCLVariables(); 
+          res = VectorUtil.union(res,vrs); 
+        } 
+      } 
+      return res; 
+    }
+
+    if ("solve".equals(tag))
+    { // Solve <expressionList> for <idList>
+      ASTCompositeTerm exprs = (ASTCompositeTerm) terms.get(1);
+      ASTTerm vars = (ASTTerm) terms.get(3);
+
+      Vector exprTerms = exprs.getTerms(); 
+      Vector varTerms = vars.getTerms();
+
+      Vector res = new Vector(); 
+      Vector localVars = new Vector(); 
+
+      for (int i = 0; i < varTerms.size(); i++) 
+      { ASTTerm vi = (ASTTerm) varTerms.get(i); 
+        String vname = vi.literalForm(); 
+        localVars.add(vname); 
+      } 
+
+      for (int i = 0; i < exprTerms.size(); i++) 
+      { ASTTerm expri = (ASTTerm) exprTerms.get(i); 
+        Vector resi = expri.mathOCLVariables();
+        res = VectorUtil.union(res,resi);  
+      } 
+
+      res.removeAll(localVars); 
+      return res; 
+    }  
+
+    if ("prove".equals(tag))
+    { // Prove <expression> if <exprList>
+      ASTTerm expr = (ASTTerm) terms.get(1);
+      ASTTerm exprs = (ASTTerm) terms.get(3);
+
+      Vector exprTerms = exprs.getTerms(); 
+      Vector res = new Vector(); 
+
+      for (int i = 0; i < exprTerms.size(); i++) 
+      { ASTTerm expri = (ASTTerm) exprTerms.get(i); 
+        Vector resi = expri.mathOCLVariables();
+        res = VectorUtil.union(res,resi);  
+      } 
+
+      Vector rese = expr.mathOCLVariables(); 
+      return VectorUtil.union(res,rese); 
+    }  
+
+  
+    if ("substituteIn".equals(tag))
+    { // Substitute v in expr|instr
+      ASTTerm var = (ASTTerm) terms.get(1);
+      ASTTerm expr = (ASTTerm) terms.get(3);
+      
+      String vname = var.literalForm(); 
+      Object vx = ASTTerm.mathoclvars.get(vname); 
+      if (vx == null)
+      { JOptionPane.showMessageDialog(null, 
+          "Warning!: variable " + vname + " does not have a definition to use for " + this,   "",
+          JOptionPane.WARNING_MESSAGE); 
+      } 
+
+      expr.checkMathOCL(); 
+      return; 
+    } 
+
+    if ("expandTo".equals(tag))
+    { // Expand <expression> to N terms
+      ASTTerm expr = (ASTTerm) terms.get(1);
+
+      return expr.mathOCLVariables(); 
+    } 
+
+    if ("factorBy".equals(tag) || "cancelIn".equals(tag))
+    { // Factor <expression> by <expression>
+      // Cancel <expression> in <expression>
+
+      ASTTerm expr1 = (ASTTerm) terms.get(1);
+      ASTTerm expr2 = (ASTTerm) terms.get(3);
+
+      Vector res1 = expr1.mathOCLVariables(); 
+      Vector res2 = expr2.mathOCLVariables(); 
+      return VectorUtil.union(res1,res2); 
+    } */ 
+
+    return new ASTCompositeTerm(tag, terms);  
+  } 
+
+  /* This has been replaced by ASTTerm::solveEquations */ 
   public String preprocessMathOCL()
   { System.out.println(">>> MathOCL term " + this); 
     

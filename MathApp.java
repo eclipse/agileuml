@@ -443,11 +443,11 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       menu.setToolTipText(
               "Translate to Matlab, OCL, Mamba, code");
 
-      javax.swing.Action matlabAction = new MatlabAction(); 
-      menu.add(matlabAction); 
-
       javax.swing.Action km3Action = new KM3Action(); 
       menu.add(km3Action); 
+
+      javax.swing.Action matlabAction = new MatlabAction(); 
+      menu.add(matlabAction); 
 
       javax.swing.Action mambaAction = new MambaAction(); 
       menu.add(mambaAction); 
@@ -470,8 +470,11 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
     protected JMenu createHelpMenu() 
     { JMenu menu = new JMenu("Help");
 
-      javax.swing.Action helpAction = new HelpAction(); 
-      menu.add(helpAction); 
+      javax.swing.Action helpNotationAction = new HelpNotationAction(); 
+      menu.add(helpNotationAction); 
+
+      javax.swing.Action helpProcessAction = new HelpProcessAction(); 
+      menu.add(helpProcessAction); 
 
       return menu; 
    } 
@@ -1041,19 +1044,34 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
     } 
   }
 
-  class HelpAction extends javax.swing.AbstractAction
-  { public HelpAction()
-    { super("Help"); }
+  class HelpNotationAction extends javax.swing.AbstractAction
+  { public HelpNotationAction()
+    { super("Notation help"); }
 
     public void actionPerformed(ActionEvent e)
     { if (helpPane != null) 
-      { helpPane.setVisible(true); 
-        return; 
-      }
-        
-      helpPane = new JEditorPane();  
-      helpPane.setEditable(false); 
-      helpPane.setSize(300,400); 
+      { helpPane.setVisible(true); }
+      else 
+      {  
+        helpPane = new JEditorPane();  
+        helpPane.setEditable(false); 
+        helpPane.setSize(300,400);
+        int w = getWidth(); 
+        int h = getHeight(); 
+ 
+        getContentPane().add(new JScrollPane(helpPane),  
+                             java.awt.BorderLayout.EAST); 
+        setSize(w + 300, h); 
+        helpPane.setVisible(true); 
+
+        java.awt.LayoutManager ll = getLayout(); 
+        if (ll != null)
+        { ll.layoutContainer(getContentPane()); }  
+
+        helpPane.repaint(); 
+        repaint(); 
+      } 
+ 
       helpPane.setText("Specifications contain these elements: \n\n" + 
         "1. Define clauses, with syntax one of\n" + 
         "    Define var = expr\n" + 
@@ -1076,22 +1094,66 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         "    N(mu,sigma^2), Bernoulli(mu), Binom(n,p),\n" + 
         "    U(), U(a,b), Poisson(mu)\n"); 
 
-        int w = getWidth(); 
-        int h = getHeight(); 
- 
-        getContentPane().add(new JScrollPane(helpPane), java.awt.BorderLayout.EAST); 
-        setSize(w + 300, h); 
-        helpPane.setVisible(true); 
         helpPane.repaint(); 
-        repaint(); 
-        java.awt.LayoutManager ll = getLayout(); 
-        if (ll != null)
-        { ll.layoutContainer(getContentPane()); }  
-        repaint(); 
- 
+        repaint();  
       } 
   } 
 
+  class HelpProcessAction extends javax.swing.AbstractAction
+  { public HelpProcessAction()
+    { super("Process help"); }
+
+    public void actionPerformed(ActionEvent e)
+    { if (helpPane != null) 
+      { helpPane.setVisible(true); }
+      else 
+      {  
+        helpPane = new JEditorPane();  
+        helpPane.setEditable(false); 
+        helpPane.setSize(300,400);
+        int w = getWidth(); 
+        int h = getHeight(); 
+ 
+        getContentPane().add(new JScrollPane(helpPane),  
+                             java.awt.BorderLayout.EAST); 
+        setSize(w + 300, h); 
+        helpPane.setVisible(true); 
+
+        java.awt.LayoutManager ll = getLayout(); 
+        if (ll != null)
+        { ll.layoutContainer(getContentPane()); }  
+
+        helpPane.repaint(); 
+        repaint(); 
+      } 
+ 
+      helpPane.setText("Specifications are processed by: \n\n" + 
+        "1. Check -- translates mathematical notation to\n" + 
+        "    ASCII in the lower pane\n\n" +
+        "2. Analyse -- executes MathOCL parser and\n" + 
+        "    simplify.cstl to simplify expressions, solve\n" + 
+        "    equations and attempt proofs.\n" + 
+        "    Individual quadratic & homogenous differential\n" +
+        "    equations can be solved, eg: \n" + 
+        "      Solve 2*(f" + '\u2032' + ") - f = 0 for f\n" + 
+        "    Also multiple linear equations.\n" + 
+        "    The re-written specification is put in the lower\n" + 
+        "    pane. Analyse can be applied repeatedly and\n" + 
+        "    instructions can be inserted in the text.\n\n" + 
+        "3. Translate -- to UML/OCL and then to a\n" + 
+        "    programming language, or to Mamba or Matlab.\n" +
+        "    Specification should contain only Define,\n" + 
+        "    Simplify and Constraint elements.\n" +  
+        "    Uses mathocl2ocl.cstl, mathocl2mamba.cstl,\n" + 
+        "    mathocl2matlab.cstl, and AgileUML code\n" + 
+        "    generators for Java, C#, C++\n"); 
+
+        helpPane.repaint(); 
+        repaint();  
+      } 
+  } 
+
+  /* Solve 2*(f?) - f = 0 for f */ 
 
   public static void main(String[] args) {
      MathApp window = new MathApp();

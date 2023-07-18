@@ -960,6 +960,12 @@ public class ASTSymbolTerm extends ASTTerm
   public void checkMathOCL()
   { } 
 
+  public Vector mathOCLVariables()
+  { return new Vector(); }
+
+  public ASTTerm mathOCLSubstitute(String var, ASTTerm repl)
+  { return new ASTSymbolTerm(symbol); }  
+
   public static void main(String[] args) 
   { String ss = "\\r\\n\\r\\n\\r\\n"; 
     System.out.println(ss.matches("(\r\n)+")); 

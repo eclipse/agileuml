@@ -541,6 +541,32 @@ public abstract class ASTTerm
       return ASTTerm.solveEquations(exprs,ids); 
     } 
 
+    if ("attemptProof".equals(opname) && 
+        eargs.size() == 2)
+    { // Prove expr if assump
+      ASTTerm exprs = (ASTTerm) eargs.get(0); 
+      ASTTerm ids = (ASTTerm) eargs.get(1); 
+      return ASTTerm.attemptProof(exprs,ids); 
+    } 
+
+    if ("attemptSubstitution".equals(opname) && 
+        eargs.size() == 2)
+    { // Prove expr if assump
+      ASTTerm vbl = (ASTTerm) eargs.get(0); 
+      ASTTerm expr = (ASTTerm) eargs.get(1); 
+      String var = vbl.literalForm(); 
+      ASTTerm def = (ASTTerm) ASTTerm.mathoclvars.get(var); 
+      if (def == null) 
+      { return "  Substitute " + var + " in " + 
+               expr.literalForm(); 
+      } 
+      ASTTerm res = expr.mathOCLSubstitute(var,def);
+      return res.literalForm();  
+    } 
+    /* _2<when> _2 expression<action> _1`value / _1
+       Substitute _1 in _2 |-->Substitute _1 in _2
+    */ 
+
     if ("pythonEval".equals(opname) && 
         eargs.size() == 1)
     { // (trailer (arguments ( 
@@ -5042,6 +5068,28 @@ public abstract class ASTTerm
     return var + "*" + ee; 
   }  
 
+  public static String attemptProof(ASTTerm succ, ASTTerm ante)
+  { // Try to prove  ante => succ
+    String slit = succ.literalForm(); 
+    String alit = ante.literalForm(); 
+
+    // get variables svars from succ, 
+    // avars from ante. 
+    // For v : svars - avars, replace v in succ 
+    // by v's definition
+    // For v : avars - svars, replace v in ante 
+    // by v's definition
+ 
+    Vector avars = ante.mathOCLVariables(); 
+    Vector svars = succ.mathOCLVariables(); 
+
+    System.out.println("###### Antecedent variables: " + avars); 
+    System.out.println("###### Succedent variables: " + svars); 
+
+
+    return "  Simplify " + alit + " => " + slit; 
+  } 
+
   public static String solveEquations(ASTTerm exprs, ASTTerm vars)
   { Vector exprTerms = exprs.getTerms(); 
     Vector varTerms = vars.getTerms();
@@ -5072,11 +5120,11 @@ public abstract class ASTTerm
       double mindp = VectorUtil.vectorMinimum(diffsR); 
           
       JOptionPane.showMessageDialog(null, 
-              ">>> Var powers of " + vx0 + " are: " +  
-              powers + " from: " + minp + " to: " + maxp + 
-              " Differentials: " + diffsR + " highest: " + maxdp, 
-              "", 
-              JOptionPane.INFORMATION_MESSAGE); 
+         ">>> Var powers of " + vx0 + " are: " +  
+         powers + " from: " + minp + " to: " + maxp + 
+         " Differentials: " + diffsR + " highest: " + maxdp, 
+         "", 
+         JOptionPane.INFORMATION_MESSAGE); 
 
       if (maxp == 2 && minp >= 0 && maxdp == 0) 
       { String coefsq = ASTTerm.coefficientOfSquare(var0, expr0); 
@@ -5161,7 +5209,7 @@ public abstract class ASTTerm
       else if (maxdp > 0 && diffsR.size() <= 2 && 
                (mindp == 0 || mindp == maxdp) && 
                maxp == 0)
-      { // Differential eqn with only one diff term
+      { // Linear differential eqn with only one diff term
 
         ASTTerm vdiff =
           ASTTerm.constructNDifferential((int) maxdp, var0); 
@@ -5177,12 +5225,13 @@ public abstract class ASTTerm
         double maxdpp = VectorUtil.vectorMaximum(dpowers); 
 
         JOptionPane.showMessageDialog(null, 
-              ">>> This is a differential equation: " + diffsR + 
-              " " + dpowers + " " + vdiff + 
-              " " + dcoef + " " + dcnst + 
-              " " + mindpp + " " + maxdpp, 
-              "", 
-              JOptionPane.INFORMATION_MESSAGE);
+           ">>> This is differential equation with one differential term: " + 
+           diffsR + 
+           " " + dpowers + " " + vdiff + 
+           " " + dcoef + " " + dcnst + 
+           " " + mindpp + " " + maxdpp, 
+           "", 
+           JOptionPane.INFORMATION_MESSAGE);
 
           // Homogenous if dcnst does not have x
 
@@ -5211,12 +5260,25 @@ public abstract class ASTTerm
                                       expr0, alldcoefs); 
           
         JOptionPane.showMessageDialog(null, 
-              ">>> General differential equation " + 
-              vdiffs + " " + alldcoefs, 
-              "", 
-              JOptionPane.INFORMATION_MESSAGE);
+           ">>> General differential equation " + 
+           vdiffs + " " + alldcoefs, 
+           "", 
+           JOptionPane.INFORMATION_MESSAGE);
 
-        if (maxdp == 2 && vdiffs.size() == 3) 
+        if (maxdp == 1 && vdiffs.size() == 2) 
+        { // Linear homogenous equation 
+
+          String coeff = "" + alldcoefs.get(0); 
+          String coefd1 = "" + alldcoefs.get(1); 
+          
+          // Solution is 
+          String frac = "-(" + coeff + ")/(" + coefd1 + ")"; 
+
+          return 
+            "  Define A\n" + 
+            "  Define " + vx0 + " = A*e^{" + frac + "*x}\n"; 
+        } 
+        else if (maxdp == 2 && vdiffs.size() == 3) 
         { // Quadratic homogenous equation 
 
           String coeff = "" + alldcoefs.get(0); 
@@ -5231,8 +5293,14 @@ public abstract class ASTTerm
                                         coeff); 
           
           if (quadf1.equals(quadf2))
-          { return "  Define " + vx0 + " = (A + B*x)*e^{" + quadf1 + "*x}"; } 
-          return "  Define " + vx0 + " = A*e^{" + quadf1 + "*x} + B*e^{" + quadf2 + "*x}"; 
+          { return 
+              "  Define A\n" + 
+              "  Define B\n" + 
+              "  Define " + vx0 + " = (A + B*x)*e^{" + quadf1 + "*x}";
+          } 
+          return 
+            "  Define A\n" + 
+            "  Define " + vx0 + " = A*e^{" + quadf1 + "*x} + B*e^{" + quadf2 + "*x}"; 
         } 
 
         return "  Solve " + exprs.literalForm() + " for " + vars.literalForm() + "\n";
@@ -5246,40 +5314,42 @@ public abstract class ASTTerm
       } 
     }  
 
-      for (int i = 0; i < varTerms.size(); i++) 
-      { ASTTerm var = (ASTTerm) varTerms.get(i); 
+    /* Simultaneous and quadratic equations */ 
 
-        if (",".equals(var + "")) 
+    for (int i = 0; i < varTerms.size(); i++) 
+    { ASTTerm var = (ASTTerm) varTerms.get(i); 
+
+      if (",".equals(var + "")) 
+      { continue; } 
+
+      variables.add(var + ""); 
+
+      for (int j = 0; j < exprTerms.size(); j++)
+      { ASTTerm expr = (ASTTerm) exprTerms.get(j); 
+
+        if (",".equals(expr + "")) 
         { continue; } 
-
-        variables.add(var + ""); 
-
-        for (int j = 0; j < exprTerms.size(); j++)
-        { ASTTerm expr = (ASTTerm) exprTerms.get(j); 
-
-          if (",".equals(expr + "")) 
-          { continue; } 
           
-          String coef = ASTTerm.coefficientOf(var,expr); 
-          System.out.println(">>> Coefficient of " + var + " in " + expr + " is " + coef); 
+        String coef = ASTTerm.coefficientOf(var,expr); 
+        System.out.println(">>> Coefficient of " + var + " in " + expr + " is " + coef); 
 
-          Vector vcoeffs = 
+        Vector vcoeffs = 
                (Vector) varCoefficients.get(var + ""); 
-          if (vcoeffs == null) 
-          { vcoeffs = new Vector(); }
-          vcoeffs.add(coef); 
-          varCoefficients.put(var + "", vcoeffs); 
+        if (vcoeffs == null) 
+        { vcoeffs = new Vector(); }
+        vcoeffs.add(coef); 
+        varCoefficients.put(var + "", vcoeffs); 
 
-          System.out.println(">>> Var coefficients: " + 
-                             varCoefficients); 
+        System.out.println(">>> Var coefficients: " + 
+                           varCoefficients); 
           /* JOptionPane.showMessageDialog(null, 
               ">>> Var coefficients: " + 
                              varCoefficients, 
               "", 
               JOptionPane.INFORMATION_MESSAGE);
             */ 
-        } 
-      }
+      } 
+    }
 
       Vector constantTerms = new Vector(); 
 
@@ -5501,6 +5571,10 @@ public abstract class ASTTerm
   } 
 
   public abstract void checkMathOCL(); 
+
+  public abstract Vector mathOCLVariables(); 
+
+  public abstract ASTTerm mathOCLSubstitute(String var, ASTTerm repl); 
 
   public static void main(String[] args) 
   { // ASTBasicTerm t = new ASTBasicTerm("OclBasicExpression", "true"); 

@@ -2786,6 +2786,20 @@ public class ASTBasicTerm extends ASTTerm
     System.out.println(ttx); 
   } 
 
+  public ASTTerm mathOCLSubstitute(String var, ASTTerm repl)
+  { // System.out.println(">>> MathOCL term " + this); 
+
+    if ("identifier".equals(tag))
+    { ASTTerm t1 = getTerm(0); 
+      String vv = t1.literalForm(); 
+      if (var.equals(vv)) 
+      { return repl; } 
+    }
+
+    return this; 
+  } 
+ 
+
   public void checkMathOCL()
   { // System.out.println(">>> MathOCL term " + this); 
 
@@ -2796,9 +2810,22 @@ public class ASTBasicTerm extends ASTTerm
       if (val == null) 
       { JOptionPane.showMessageDialog(null, 
           "Warning!: variable " + vv + " does not have a definition",   "",
-          JOptionPane.INFORMATION_MESSAGE); 
+          JOptionPane.WARNING_MESSAGE); 
       } 
     }
+  } 
+
+  public Vector mathOCLVariables()
+  { // System.out.println(">>> MathOCL term " + this); 
+    Vector res = new Vector(); 
+
+    if ("identifier".equals(tag))
+    { ASTTerm t1 = getTerm(0); 
+      String vv = t1.literalForm(); 
+      res.add(vv); 
+    }
+
+    return res; 
   } 
 
 } 
