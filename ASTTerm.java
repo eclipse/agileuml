@@ -266,7 +266,20 @@ public abstract class ASTTerm
     return false; 
   } 
 
+  public static boolean isTermOf(ASTTerm sub, ASTTerm sup)
+  { // sub is literally equal to a subterm of sup
 
+    String sublit = sub.literalForm(); 
+
+    Vector trms = sup.getTerms(); 
+    for (int i = 0; i < trms.size(); i++) 
+    { ASTTerm trm = (ASTTerm) trms.get(i); 
+      if (sublit.equals(trm.literalForm()))
+      { return true; } 
+    } 
+    return false; 
+  } 
+      
   public Vector allTagSubterms(String tagx)
   { Vector res = new Vector(); 
     if (getTag().equals(tagx))
@@ -5068,10 +5081,214 @@ public abstract class ASTTerm
     return var + "*" + ee; 
   }  
 
+  public static boolean isMathOCLConjunction(ASTTerm trm)
+  { String tg = trm.getTag();
+    Vector args = trm.getTerms(); 
+
+    if ("expressionList".equals(tg) && 
+        args.size() > 1) 
+    { return true; } 
+
+    if ("expressionList".equals(tg) && 
+        args.size() == 1) 
+    { ASTTerm arg0 = (ASTTerm) args.get(0); 
+      return ASTTerm.isMathOCLConjunction(arg0); 
+    } 
+ 
+    if ("logicalExpression".equals(tg) &&
+        args.size() == 3 && 
+        "&".equals(args.get(1) + ""))
+    { return true; } 
+
+    if ("expression".equals(tg) && 
+        args.size() == 1) 
+    { ASTTerm arg0 = (ASTTerm) args.get(0); 
+      return ASTTerm.isMathOCLConjunction(arg0); 
+    } 
+
+    return false; 
+  } 
+
+  public static Vector mathOCLConjuncts(ASTTerm trm)
+  { String tg = trm.getTag();
+    Vector args = trm.getTerms(); 
+
+    if ("expressionList".equals(tg)) 
+    { Vector res = new Vector(); 
+      for (int i = 0; i < args.size(); i++) 
+      { ASTTerm trmi = (ASTTerm) args.get(i); 
+        if (trmi instanceof ASTSymbolTerm) { } 
+        else 
+        { Vector conjs = ASTTerm.mathOCLConjuncts(trmi);
+          res.addAll(conjs); 
+        } 
+      }
+      return res; 
+    } 
+ 
+    if ("logicalExpression".equals(tg) &&
+        args.size() == 3 && 
+        "&".equals(args.get(1) + ""))
+    { Vector res = new Vector(); 
+      res.add(args.get(0)); 
+      res.add(args.get(2)); 
+      return res; 
+    } 
+
+    if ("expression".equals(tg) && 
+        args.size() == 1) 
+    { ASTTerm arg0 = (ASTTerm) args.get(0); 
+      return ASTTerm.mathOCLConjuncts(arg0); 
+    } 
+
+    Vector res = new Vector(); 
+    res.add(trm); 
+    return res; 
+  } 
+
+  public static boolean isMathOCLDisjunction(ASTTerm trm)
+  { String tg = trm.getTag();
+    Vector args = trm.getTerms(); 
+
+    if ("equalityExpression".equals(tg) &&
+        args.size() == 3 && 
+        "<=".equals(args.get(1) + ""))
+    { return true; } 
+
+    if ("equalityExpression".equals(tg) &&
+        args.size() == 3 && 
+        ">=".equals(args.get(1) + ""))
+    { return true; } 
+ 
+    if ("logicalExpression".equals(tg) &&
+        args.size() == 3 && 
+        "or".equals(args.get(1) + ""))
+    { return true; } 
+
+    if ("logicalExpression".equals(tg) && 
+        args.size() == 1) 
+    { ASTTerm arg0 = (ASTTerm) args.get(0); 
+      return ASTTerm.isMathOCLDisjunction(arg0); 
+    } 
+
+    if ("expression".equals(tg) && 
+        args.size() == 1) 
+    { ASTTerm arg0 = (ASTTerm) args.get(0); 
+      return ASTTerm.isMathOCLDisjunction(arg0); 
+    } 
+
+    if ("expressionList".equals(tg) && 
+        args.size() == 1) 
+    { ASTTerm arg0 = (ASTTerm) args.get(0); 
+      return ASTTerm.isMathOCLDisjunction(arg0); 
+    } 
+
+    return false; 
+  } 
+
+  public static Vector mathOCLDisjuncts(ASTTerm trm)
+  { String tg = trm.getTag();
+    Vector args = trm.getTerms(); 
+
+    if ("equalityExpression".equals(tg) &&
+        args.size() == 3 && 
+        "<=".equals(args.get(1) + ""))
+    { Vector newargs1 = new Vector();
+      newargs1.add(args.get(0));
+      newargs1.add(new ASTSymbolTerm("<"));
+      newargs1.add(args.get(2));
+       
+      ASTTerm d1 = new ASTCompositeTerm(tg, newargs1); 
+      
+      Vector newargs2 = new Vector();
+      newargs2.add(args.get(0));
+      newargs2.add(new ASTSymbolTerm("="));
+      newargs2.add(args.get(2));
+      
+      ASTTerm d2 = new ASTCompositeTerm(tg, newargs2);
+      Vector res = new Vector(); 
+      res.add(d1); res.add(d2);  
+      return res; 
+    } 
+
+    if ("equalityExpression".equals(tg) &&
+        args.size() == 3 && 
+        ">=".equals(args.get(1) + ""))
+    { Vector newargs1 = new Vector();
+      newargs1.add(args.get(0));
+      newargs1.add(new ASTSymbolTerm(">"));
+      newargs1.add(args.get(2));
+       
+      ASTTerm d1 = new ASTCompositeTerm(tg, newargs1); 
+      
+      Vector newargs2 = new Vector();
+      newargs2.add(args.get(0));
+      newargs2.add(new ASTSymbolTerm("="));
+      newargs2.add(args.get(2));
+      
+      ASTTerm d2 = new ASTCompositeTerm(tg, newargs2);
+      Vector res = new Vector(); 
+      res.add(d1); res.add(d2);  
+      return res; 
+    } 
+ 
+    if ("logicalExpression".equals(tg) &&
+        args.size() == 3 && 
+        "or".equals(args.get(1) + ""))
+    { Vector res = new Vector(); 
+      res.add(args.get(0)); 
+      res.add(args.get(2)); 
+      return res; 
+    } 
+
+    if ("logicalExpression".equals(tg) && 
+        args.size() == 1) 
+    { ASTTerm arg0 = (ASTTerm) args.get(0); 
+      return ASTTerm.mathOCLDisjuncts(arg0); 
+    } 
+
+    if ("expression".equals(tg) && 
+        args.size() == 1) 
+    { ASTTerm arg0 = (ASTTerm) args.get(0); 
+      return ASTTerm.mathOCLDisjuncts(arg0); 
+    } 
+
+    if ("expressionList".equals(tg) && 
+        args.size() == 1) 
+    { ASTTerm arg0 = (ASTTerm) args.get(0); 
+      return ASTTerm.mathOCLDisjuncts(arg0); 
+    } 
+
+    return new Vector(); 
+  } // Also case of x : Set{a,b,c} is 3 disjuncts, etc
+       
   public static String attemptProof(ASTTerm succ, ASTTerm ante)
   { // Try to prove  ante => succ
     String slit = succ.literalForm(); 
-    String alit = ante.literalForm(); 
+    String alist = ante.literalForm(); 
+
+    String alit = ""; 
+    Vector aterms = ante.getTerms(); 
+    for (int i = 0; i < aterms.size(); i++) 
+    { ASTTerm atermi = (ASTTerm) aterms.get(i); 
+      if (",".equals(atermi + ""))
+      { alit = alit + " & "; } 
+      else 
+      { alit = alit + atermi.literalForm(); } 
+    } 
+       
+    Vector assumptions = ASTTerm.mathOCLConjuncts(ante); 
+    Vector assumptionlits = new Vector(); 
+    for (int i = 0; i < assumptions.size(); i++) 
+    { ASTTerm assump = (ASTTerm) assumptions.get(i); 
+      assumptionlits.add(assump.literalForm()); 
+    } 
+
+    /* JOptionPane.showMessageDialog(null, 
+       "### Assumptions of " + ante + " are " + 
+       assumptionlits,   "",
+       JOptionPane.INFORMATION_MESSAGE); */ 
+
 
     // get variables svars from succ, 
     // avars from ante. 
@@ -5079,6 +5296,60 @@ public abstract class ASTTerm
     // by v's definition
     // For v : avars - svars, replace v in ante 
     // by v's definition
+
+    if (slit.equals(alit))
+    { return "  Simplify true\n"; }
+
+    if (assumptionlits.contains(slit))
+    { return "  Simplify true\n"; } 
+
+    if (ASTTerm.isMathOCLConjunction(succ))
+    { Vector conjs = ASTTerm.mathOCLConjuncts(succ);
+      String res = ""; 
+      for (int i = 0; i < conjs.size(); i++) 
+      { ASTTerm conj = (ASTTerm) conjs.get(i); 
+        res = res + 
+          "  Prove " + conj.literalForm() + " if " + alist + "\n"; 
+      } 
+      return res; 
+    }  
+ 
+    if (ASTTerm.isMathOCLDisjunction(ante))
+    { Vector disjs = ASTTerm.mathOCLDisjuncts(ante);
+      String res = ""; 
+      for (int i = 0; i < disjs.size(); i++) 
+      { ASTTerm disj = (ASTTerm) disjs.get(i); 
+        res = res + 
+          "  Prove " + slit + " if " + disj.literalForm() + "\n"; 
+      } 
+      return res; 
+    } // also case of (A or B), C  
+
+    // If succ is a disjunction, it holds if any disjunct is 
+    // also equal to or a conjunct of the ante.
+
+    if (ASTTerm.isMathOCLDisjunction(succ))
+    { Vector disjs = ASTTerm.mathOCLDisjuncts(succ);
+      Vector subdis = new Vector(); 
+
+      for (int i = 0; i < disjs.size(); i++) 
+      { ASTTerm disj = (ASTTerm) disjs.get(i);
+        String dlit = disj.literalForm();  
+        if (dlit.equals(alit) || 
+            assumptionlits.contains(dlit)) 
+        { return "  Simplify true\n"; } 
+        else 
+        { subdis.add(disj.literalForm()); } 
+      } 
+
+      String res = ""; 
+      for (int j = 0; j < subdis.size(); j++) 
+      { res = res + "(" + subdis.get(j) + ") "; 
+        if (j < subdis.size() - 1)
+        { res = res + " or "; } 
+      } 
+      return "  Prove " + res + " if " + alist + "\n"; 
+    }  
  
     Vector avars = ante.mathOCLVariables(); 
     Vector svars = succ.mathOCLVariables(); 

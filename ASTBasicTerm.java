@@ -2790,10 +2790,9 @@ public class ASTBasicTerm extends ASTTerm
   { // System.out.println(">>> MathOCL term " + this); 
 
     if ("identifier".equals(tag))
-    { ASTTerm t1 = getTerm(0); 
-      String vv = t1.literalForm(); 
-      if (var.equals(vv)) 
+    { if (var.equals(value)) 
       { return repl; } 
+      return new ASTBasicTerm(tag, value); 
     }
 
     return this; 

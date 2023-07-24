@@ -1134,6 +1134,8 @@ public void findPlugins()
     JMenuItem cgbe = 
       new JMenuItem("CGBE"); 
     cgbe.addActionListener(this);
+    cgbe.setToolTipText(
+      "Learns CSTL from typeExamples, expressionExamples, statementExamples, declarationExamples, paired text example files");
     synthMenu.add(cgbe);
 
     JMenuItem ltbeFromText = 
@@ -1144,6 +1146,8 @@ public void findPlugins()
     JMenuItem ltbeFromASTs = 
       new JMenuItem("LTBE from ASTs"); 
     ltbeFromASTs.addActionListener(this);
+    ltbeFromASTs.setToolTipText(
+      "Learns CSTL from sourceasts, targetasts AST example files");
     synthMenu.add(ltbeFromASTs);
 
     JMenuItem validateCGBE = 

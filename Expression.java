@@ -2565,12 +2565,12 @@ abstract class Expression
     { return null; }  /* Should never happen */
     else 
     { if (e1.subformulaOf(e2))
-      { System.err.println("Two copies of formula " +
+      { System.err.println("!! Warning: Two copies of formula " +
                     e1.toString() + " being merged"); 
         return e2;  // e2 not e1, surely?  
       }
       else 
-      { System.err.println("Inconsistent formulae " +
+      { System.err.println("!! Inconsistent formulae " +
                     e1.toString() + " and " + 
                     e2.toString() + " being removed"); 
         return new BasicExpression(false); 

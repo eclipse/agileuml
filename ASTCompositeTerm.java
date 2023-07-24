@@ -44110,37 +44110,42 @@ public class ASTCompositeTerm extends ASTTerm
       
       ASTTerm tcons = (ASTTerm) terms.get(4); 
       return tcons.mathOCLVariables();
-    }  
+    }  */ 
 
     if ("simplify".equals(tag) && 
         "Simplify".equals(terms.get(0) + "") &&
         terms.size() > 1)
     { ASTTerm t1 = (ASTTerm) terms.get(1); 
-      return t1.mathOCLVariables(); 
+      ASTTerm sub = t1.mathOCLSubstitute(var,repl);
+      Vector args = new Vector(); 
+      args.add(terms.get(0)); args.add(sub); 
+      return new ASTCompositeTerm(tag, args);  
     }  
 
     
     if ("identifier".equals(tag))
     { ASTTerm t1 = (ASTTerm) terms.get(0);
       String vv = t1.literalForm(); 
-      Vector res = new Vector(); 
-      res.add(vv); 
-      return res; 
+      if (var.equals(vv)) 
+      { return repl; } 
+      return new ASTCompositeTerm(tag, t1); 
     } 
 
     if ("expressionList".equals(tag))
     { Vector res = new Vector(); 
       for (int i = 0; i < terms.size(); i++) 
       { ASTTerm expri = (ASTTerm) terms.get(i); 
-        if (expri instanceof ASTSymbolTerm) { } 
+        if (expri instanceof ASTSymbolTerm)
+        { res.add(expri); } 
         else 
-        { Vector vrs = expri.mathOCLVariables(); 
-          res = VectorUtil.union(res,vrs); 
+        { ASTTerm subi = expri.mathOCLSubstitute(var,repl); 
+          res.add(subi); 
         } 
       } 
-      return res; 
+      return new ASTCompositeTerm(tag, res); 
     }
 
+   /* 
     if ("solve".equals(tag))
     { // Solve <expressionList> for <idList>
       ASTCompositeTerm exprs = (ASTCompositeTerm) terms.get(1);
