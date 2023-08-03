@@ -6502,7 +6502,8 @@ class BasicExpression extends Expression
         { if (variable != null && "String".equals(variable.getType() + ""))
           { return "(" + data + ".charAt(" + indopt + ") + \"\")"; } 
 
-          if (arrayIndex.type != null && arrayIndex.type.getName().equals("int"))
+          if (arrayIndex.type != null && 
+              arrayIndex.type.getName().equals("int"))
 		  // if (Type.isPrimitiveType(type))
           { return unwrap(data + ".get(" + indopt + ")"); }
           else if (arrayIndex.type != null && arrayIndex.type.getName().equals("String"))
@@ -6525,7 +6526,7 @@ class BasicExpression extends Expression
           { pars = pars + ","; } 
         }
 		
-		if (variable.getType() != null && variable.getType().isFunctionType()) // application of a Function(S,T)
+        if (variable.getType() != null && variable.getType().isFunctionType()) // application of a Function(S,T)
         {  
           return data + ".evaluate(" + pars + ")"; 
         }
@@ -7285,6 +7286,9 @@ class BasicExpression extends Expression
       return data;  
     } 
 
+    // if (data.equals("OclFile"))
+    // { return "OclFile.getOclFileByPK(" + ind + ")"; } 
+      
     if (umlkind == CLASSID)
     { if (arrayIndex != null)
       { String ind = arrayIndex.queryFormCSharp(env,local);
@@ -8802,8 +8806,8 @@ public Statement generateDesignSubtract(Expression rhs)
     if (isEvent) // an operation of entity
     { 
       if (entity == null) 
-      { System.err.println("WARNING: No defined entity for operation: " + this); 
-        System.err.println("Assuming it is a global operation (use case, library op, etc)");
+      { System.err.println("!! WARNING: No defined entity for operation: " + this); 
+        System.err.println("!! Assuming it is a global operation (use case, library op, etc)");
          
         if (objectRef == null) 
         { return cont + "." + data + pars + ";"; } 
@@ -8939,8 +8943,8 @@ public Statement generateDesignSubtract(Expression rhs)
     if (isEvent) // an operation of entity
     { 
       if (entity == null) 
-      { System.err.println("WARNING: No defined entity for operation: " + this); 
-        System.err.println("Assuming it is a global operation (use case, library op, etc)");
+      { System.err.println("!! WARNING: No defined entity for operation: " + this); 
+        System.err.println("!! Assuming it is a global operation (use case, library op, etc)");
          
         if (objectRef == null) 
         { return cont + "." + data + pars + ";"; } 
@@ -10288,7 +10292,15 @@ public Statement generateDesignSubtract(Expression rhs)
       } 
       else if (type != null && var.type != null)
       { if (Type.isSpecialisedOrEqualType(var.type, type))
-        { return "  " + datax + " = " + val2 + ";"; } 
+        { return "  " + datax + " = " + val2 + ";"; }
+        else if ("String".equals(type.getName())) 
+        { return "  " + datax + " = \"\" + " + val2 + ";"; }
+        else if ("String".equals(var.type.getName()) &&
+                 type.isNumeric())
+        { String cname = Named.capitalise(type.getName()); 
+          return "  " + datax + " = SystemTypes.to" + cname + "(" + val2 + ");"; 
+        }
+
         String cstype = type.getCSharp(); 
         return "  " + datax + " = (" + cstype + ") (" + val2 + ");"; 
       } 
@@ -10323,6 +10335,13 @@ public Statement generateDesignSubtract(Expression rhs)
           else if (type != null && var.type != null)
           { if (Type.isSpecialisedOrEqualType(var.type, type))
             { return data + " = " + val2 + ";"; } 
+            else if ("String".equals(type.getName())) 
+            { return "  " + datax + " = \"\" + " + val2 + ";"; }
+            else if ("String".equals(var.type.getName()) &&
+                     type.isNumeric())
+            { String cname = Named.capitalise(type.getName()); 
+              return "  " + datax + " = SystemTypes.to" + cname + "(" + val2 + ");"; 
+            }   
             String cstype = type.getCSharp(); 
             return data + " = (" + cstype + ") (" + val2 + ");"; 
           } 
@@ -10342,7 +10361,7 @@ public Statement generateDesignSubtract(Expression rhs)
 
         String target = ""; 
         if (varx.equals("this")) 
-        { System.err.println("WARNING: using self with non-local update " + this);
+        { System.err.println("!! WARNING: using self with non-local update " + this);
           target = varx + ",";
         } 
         else 
@@ -10365,6 +10384,13 @@ public Statement generateDesignSubtract(Expression rhs)
         else if (type != null && var.type != null)
         { if (Type.isSpecialisedOrEqualType(var.type, type))
           { return data + " = " + val2 + ";"; } 
+          else if ("String".equals(type.getName())) 
+          { return "  " + datax + " = \"\" + " + val2 + ";"; }
+          else if ("String".equals(var.type.getName()) &&
+                   type.isNumeric())
+          { String cname = Named.capitalise(type.getName()); 
+            return "  " + datax + " = SystemTypes.to" + cname + "(" + val2 + ");"; 
+          }
           String cstype = type.getCSharp(); 
           return cont + ".set" + data + "(" + target + " (" + cstype + ") (" + val2 + "));"; 
         } 
@@ -10455,7 +10481,14 @@ public Statement generateDesignSubtract(Expression rhs)
         } 
         else if (type != null && var.type != null)
         { if (Type.isSpecialisedOrEqualType(var.type, type))
-          { return datax + " = " + val2 + ";"; } 
+          { return data + " = " + val2 + ";"; } 
+          else if ("String".equals(type.getName())) 
+          { return "  " + data + " = \"\" + " + val2 + ";"; }
+          else if ("String".equals(var.type.getName()) &&
+                   type.isNumeric())
+          { String cname = Named.capitalise(type.getName()); 
+            return "  " + data + " = SystemTypes.to" + cname + "(" + val2 + ");"; 
+          }
           String cstype = type.getCSharp(); 
           return cont + ".set" + data + "(" + pre + ", (" + cstype + ") (" + val2 + "));"; 
         } 

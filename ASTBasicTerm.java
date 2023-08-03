@@ -172,6 +172,11 @@ public class ASTBasicTerm extends ASTTerm
     return res; 
   } 
 
+  public String literalFormSpaces()
+  { String res = value; 
+    return res; 
+  } 
+
   public Vector tokenSequence()
   { Vector res = new Vector(); 
     res.add("\"" + value + "\""); 

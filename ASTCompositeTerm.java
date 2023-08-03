@@ -386,6 +386,17 @@ public class ASTCompositeTerm extends ASTTerm
     return res; 
   } 
 
+  public String literalFormSpaces()
+  { String res = ""; 
+    for (int i = 0; i < terms.size(); i++) 
+    { ASTTerm t = (ASTTerm) terms.get(i); 
+      res = res + t.literalFormSpaces();
+      if (i < terms.size() - 1)
+      { res = res + " "; }  
+    } 
+    return res; 
+  } 
+
   public Vector tokenSequence()
   { Vector res = new Vector();  
     for (int i = 0; i < terms.size(); i++) 
@@ -40716,9 +40727,22 @@ public class ASTCompositeTerm extends ASTTerm
         { return typ; } 
         else if (res == intType && typ == intType)
         { res = intType; } 
+        else if (res == longType && typ == longType)
+        { res = longType; } 
+        else if (res == longType && typ == intType)
+        { res = longType; } 
+        else if (res == intType && typ == longType)
+        { res = longType; } 
         else // typ or res are String
         { res = stringType; }  
       } 
+
+      if (res == intType) 
+      { int wdth = this.cobolIntegerWidth(); 
+        if (wdth > 9)
+        { res = longType; } 
+      } 
+
       return res; 
     } 
 

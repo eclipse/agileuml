@@ -123,6 +123,7 @@ basicExpression
     : 'null' 
     | 'true'
     | 'false'
+    | '?'
     | basicExpression '.' ID 
     | basicExpression '(' expressionList? ')'  
     | identifier
@@ -229,6 +230,8 @@ factor2Expression
 setExpression 
     : '{' ID ':' type '|' expression '}'
     | '{' ID ':' type '|' expression CDOT expression '}'  
+    | 'Set{' expressionList? '}'
+    | 'Sequence{' expressionList? '}'
     ; 
 
 

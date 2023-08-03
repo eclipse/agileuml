@@ -931,8 +931,8 @@ public class UCDArea extends JPanel
         for (int j = 0; j < rdents.size(); j++) 
         { Entity e = (Entity) rdents.get(j); 
           if (wrents.contains(e))
-          { drawDependency(uc,e,"<<writes>>"); 
-            drawDependency(e,uc,"<<reads>>"); 
+          { drawDependency(uc,e,"<<reads,writes>>"); 
+            // drawDependency(uc,e,"<<reads>>"); 
             Vector ewriters = (Vector) writers.get(e); 
             ewriters.add(uc); 
             writers.put(e, ewriters); 
@@ -941,7 +941,7 @@ public class UCDArea extends JPanel
             readers.put(e, ereaders); 
           } 
           else 
-          { drawDependency(e,uc,"<<reads>>");
+          { drawDependency(uc,e,"<<reads>>");
             Vector ereaders = (Vector) readers.get(e); 
             ereaders.add(uc); 
             readers.put(e, ereaders); 
@@ -6951,15 +6951,20 @@ public class UCDArea extends JPanel
   { RectForm rf1 = (RectForm) getVisualOf(uc); 
     RectForm rf2 = (RectForm) getVisualOf(e); 
     if (rf1 == null || rf2 == null) 
-    { System.err.println("ERROR: Undefined visuals for " + uc + " " + e); 
+    { System.err.println("!! ERROR: Undefined visuals for " + uc + " " + e); 
       return; 
     } 
+
     LineData ld = drawLineTo(rf1, rf2, DASHED); 
     if (ld != null) 
     { ld.setLabel(kind); 
       ld.flow.setLabel(kind); 
     } 
-    ld.setColour(Color.RED); 
+
+    if ("<<reads>>".equals(kind))
+    { ld.setColour(Color.GREEN); } 
+    else 
+    { ld.setColour(Color.RED); } 
     repaint();  
   } 
 
@@ -6967,7 +6972,7 @@ public class UCDArea extends JPanel
   { RectForm rf1 = (RectForm) getVisualOf(uc); 
     RectForm rf2 = (RectForm) getVisualOf(e); 
     if (rf1 == null || rf2 == null) 
-    { System.err.println("ERROR: Undefined visuals for " + e + " " + uc); 
+    { System.err.println("!! ERROR: Undefined visuals for " + e + " " + uc); 
       return; 
     } 
     LineData ld = drawLineTo(rf2, rf1, DASHED); 
@@ -6983,7 +6988,7 @@ public class UCDArea extends JPanel
   { RectForm rf1 = (RectForm) getVisualOf(suc); 
     RectForm rf2 = (RectForm) getVisualOf(tuc); 
     if (rf1 == null || rf2 == null) 
-    { System.err.println("ERROR: Undefined visuals for " + suc + " " + tuc); 
+    { System.err.println("!! ERROR: Undefined visuals for " + suc + " " + tuc); 
       return; 
     } 
     LineData ld = drawLineTo(rf1, rf2, DASHED); 
@@ -19138,7 +19143,7 @@ public void produceCUI(PrintWriter out)
       else 
       { Extend ext = new Extend(res,extensionuc); 
         res.addExtension(ext); 
-		extensionuc.addExtensionOf(res); 
+        extensionuc.addExtensionOf(res); 
         drawDependency(extensionuc, res, "<<extend>>"); 
       }
     } 
@@ -19160,7 +19165,7 @@ public void produceCUI(PrintWriter out)
       if (ucinc != null) 
       { Include ee = new Include(res,ucinc); 
         res.addInclude(ee); 
-		ucinc.addIncludedIn(res); 
+        ucinc.addIncludedIn(res); 
         drawDependency(res, ucinc, "<<include>>"); 
       } 
       else 
@@ -27552,6 +27557,12 @@ public void produceCUI(PrintWriter out)
     { loadKM3FromFile(slib); }
     else 
     { System.err.println("! Warning: no file libraries/stringlib.km3"); } 
+
+    File processlib = new File("libraries/oclprocess.km3"); 
+    if (processlib.exists())
+    { loadKM3FromFile(processlib); }
+    else 
+    { System.err.println("! Warning: no file libraries/oclprocess.km3"); } 
 
     setSystemName("app"); 
 

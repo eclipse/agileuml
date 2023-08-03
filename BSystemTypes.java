@@ -5587,13 +5587,14 @@ public class BSystemTypes extends BComponent
 
     res = res +         
        "  public static long toLong(String sx)\n" + 
-       "  { if (sx.StartsWith(\"0x\"))\n" + 
-       "    { return Convert.ToInt64(sx, 16); }\n" + 
-       "    if (sx.StartsWith(\"0b\"))\n" + 
-       "    { return Convert.ToInt64(sx, 2); }\n" + 
-       "    if (sx.StartsWith(\"0\") && sx.Length > 1)\n" + 
-       "    { return Convert.ToInt64(sx, 8); }\n" + 
-       "    return long.Parse(sx);\n" + 
+       "  { string sxx = sx.Trim();\n" +  
+       "    if (sxx.StartsWith(\"0x\"))\n" + 
+       "    { return Convert.ToInt64(sxx, 16); }\n" + 
+       "    if (sxx.StartsWith(\"0b\"))\n" + 
+       "    { return Convert.ToInt64(sxx, 2); }\n" + 
+       "    if (sxx.StartsWith(\"0\") && sxx.Length > 1)\n" + 
+       "    { return Convert.ToInt64(sxx, 8); }\n" + 
+       "    return long.Parse(sxx);\n" + 
        "  } \n\n"; 
 
       res = res + 
@@ -10150,7 +10151,15 @@ public class BSystemTypes extends BComponent
   { String res = " public static bool isInteger(string str)\n" + 
       "  { try { int.Parse(str); return true; }\n" + 
       "    catch (Exception _e) { return false; }\n" + 
-      "  }\n"; 
+      "  }\n\n"; 
+
+    res = res + 
+      " public static int toInt(String str)\n" + 
+      "  { try { int x = int.Parse(str.Trim());\n" + 
+      "          return x; }\n" + 
+      "    catch (Exception _e) { return 0; }\n" + 
+      "  }\n\n"; 
+
     return res; 
   } 
 
@@ -10158,7 +10167,14 @@ public class BSystemTypes extends BComponent
   { String res = " public static bool isLong(string str)\n" + 
       "  { try { long.Parse(str); return true; }\n" + 
       "    catch (Exception _e) { return false; }\n" + 
-      "  }\n"; 
+      "  }\n\n"; 
+
+    /* res = res + " public static long toLong(String str)\n" + 
+      "  { try { long x = long.Parse(str.Trim());\n" + 
+      "          return x; }\n" + 
+      "    catch (Exception _e) { return 0; }\n" + 
+      "  }\n"; */ 
+
     return res; 
   } 
 
@@ -10168,7 +10184,14 @@ public class BSystemTypes extends BComponent
       "          if (Double.IsNaN(d)) { return false; }\n" + 
       "          return true; }\n" + 
       "    catch (Exception __e) { return false; }\n" + 
+      "  }\n\n";
+
+    res = res + " public static double toDouble(String str)\n" + 
+      "  { try { double x = double.Parse(str.Trim());\n" + 
+      "          return x; }\n" + 
+      "    catch (Exception _e) { return 0; }\n" + 
       "  }\n"; 
+ 
     return res; 
   } 
 

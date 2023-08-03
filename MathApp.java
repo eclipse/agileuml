@@ -476,6 +476,9 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       javax.swing.Action helpProcessAction = new HelpProcessAction(); 
       menu.add(helpProcessAction); 
 
+      javax.swing.Action helpOCLAction = new HelpOCLAction(); 
+      menu.add(helpOCLAction); 
+
       return menu; 
    } 
 
@@ -1147,6 +1150,61 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         "    Uses mathocl2ocl.cstl, mathocl2mamba.cstl,\n" + 
         "    mathocl2matlab.cstl, and AgileUML code\n" + 
         "    generators for Java, C#, C++\n"); 
+
+        helpPane.repaint(); 
+        repaint();  
+      } 
+  } 
+
+ class HelpOCLAction extends javax.swing.AbstractAction
+  { public HelpOCLAction()
+    { super("OCL help"); }
+
+    public void actionPerformed(ActionEvent e)
+    { if (helpPane != null) 
+      { helpPane.setVisible(true); }
+      else 
+      {  
+        helpPane = new JEditorPane();  
+        helpPane.setEditable(false); 
+        helpPane.setSize(300,400);
+        int w = getWidth(); 
+        int h = getHeight(); 
+ 
+        getContentPane().add(new JScrollPane(helpPane),  
+                             java.awt.BorderLayout.EAST); 
+        setSize(w + 300, h); 
+        helpPane.setVisible(true); 
+
+        java.awt.LayoutManager ll = getLayout(); 
+        if (ll != null)
+        { ll.layoutContainer(getContentPane()); }  
+
+        helpPane.repaint(); 
+        repaint(); 
+      } 
+ 
+      helpPane.setText("MathOCL contains Integer, Real & Boolean\n" + 
+        "types & expressions from OCL: \n\n" + 
+        "Types:\n" + 
+        "   Integer is " + '\u2124' + "\n" + 
+        "   Real is " + '\u211D' + "\n" + 
+        "Expressions:\n" + 
+        "   Operators +, -, *, /, <, >, <=, >=, =, /=\n" + 
+        "   Numbers in usual formats, together with\n" + 
+        "   " + '\u221E' + " for Math_PINFINITY,\n" + 
+        "   -" + '\u221E' + " for Math_NINFINITY,\n" +
+        "   ? for Math_NaN.\n" + 
+        "   Functions are written as f(x). Eg: sin(x)\n" +
+        "   instead of x->sin().\n" + 
+        "   Powers and exponents are written with superscripts.\n\n" +
+        "   Boolean values are true, false, with operators\n" + 
+        "   &, or, =>, not\n" + 
+        "   " + '\u018E' + " x : s " + '\u2219' + " expr is \n" + 
+        "   s->exists( x | expr )\n" + 
+        "   " + '\u2200' + " x : s " + '\u2219' + " expr is \n" + 
+        "   s->forAll( x | expr )\n\n"
+        ); 
 
         helpPane.repaint(); 
         repaint();  
