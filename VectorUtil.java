@@ -276,6 +276,39 @@ class VectorUtil
     return false; 
   } 
 
+  public static boolean haveCommonElementName(final Vector v1, final Vector v2) 
+  { for (int i = 0; i < v1.size(); i++) 
+    { ModelElement obj = (ModelElement) v1.get(i);
+      String nme = obj.getName();  
+      if (VectorUtil.containsName(nme,v2))
+      { return true; } 
+    } 
+
+    return false; 
+  } 
+
+  public static Vector commonElementNames(final Vector v1, final Vector v2) 
+  { Vector res = new Vector();
+ 
+    for (int i = 0; i < v1.size(); i++) 
+    { ModelElement obj = (ModelElement) v1.get(i);
+      String nme = obj.getName();  
+      if (VectorUtil.containsName(nme,v2))
+      { res.add(nme); } 
+    } 
+
+    return res; 
+  } 
+
+  public static boolean containsName(String nme, Vector v)
+  { for (int i = 0; i < v.size(); i++) 
+    { ModelElement obj = (ModelElement) v.get(i);
+      if (nme.equals(obj.getName())) 
+      { return true; } 
+    } 
+    return false; 
+  }   
+    
   public static Vector intersection(final Vector v1, final Vector v2) 
   { Vector res = new Vector(); 
     for (int i = 0; i < v1.size(); i++) 

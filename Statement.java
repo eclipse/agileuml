@@ -5311,6 +5311,11 @@ class CreationStatement extends Statement
   public void setInitialValue(String init)
   { initialValue = init; } 
 
+  public void setInitialExpression(Expression expr) 
+  { initialExpression = expr; 
+    initialValue = expr + ""; 
+  } 
+
   public void setInitialisation(Expression expr) 
   { initialExpression = expr; 
     initialValue = expr + ""; 

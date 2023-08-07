@@ -65,7 +65,12 @@ public class ASTBasicTerm extends ASTTerm
   { return this; } 
 
   public ASTTerm replaceCobolIdentifiers()
-  { if (tag.equals("cobolWord"))
+  { if ("FILLER".equals(value))
+    { ASTTerm.cobolFillerCount++; 
+      return new ASTBasicTerm(tag, "FILLER$" + ASTTerm.cobolFillerCount); 
+    } 
+    
+    if (tag.equals("cobolWord"))
     { String vtrim = value.trim(); 
       String vsub = vtrim.replace("-", "$"); 
       return new ASTBasicTerm(tag,vsub);

@@ -5929,7 +5929,8 @@ public class Entity extends ModelElement implements Comparable
   { invariants.addAll(invs); } 
 
   public Vector attributeSumInvariants()
-  { // name = "" + att1 + att2 + ...
+  { // For COBOL: 
+    // name = "" + att1 + att2 + ...
     // If cardinalityValue > 1 then 
     // name[indx] = "" + att1[indx] + att2[indx] 
 
@@ -5957,11 +5958,12 @@ public class Entity extends ModelElement implements Comparable
       { Attribute att = (Attribute) attributes.get(i); 
         int awidth = att.getWidth(); 
         int amult = att.getMultiplicity();   
+        String aname = att.getName(); 
 
         Expression expr = new BasicExpression(att);
       
             JOptionPane.showMessageDialog(null, 
-              "Attrbute " + att + " Width: " + awidth + 
+              ">> Attribute " + att + " Width: " + awidth + 
               " Multiplicity: " + amult, 
               "", 
               JOptionPane.INFORMATION_MESSAGE);
@@ -6345,6 +6347,137 @@ public class Entity extends ModelElement implements Comparable
     } 
   } 
 
+  public void addMoveCorrespondingOperations(Vector ents) 
+  { // For each e1, e2 : ents, e1 /= e2 with a common-named 
+    // field, add an operation moveCorresponding$e1$e2
+
+    for (int i = 0; i < ents.size(); i++) 
+    { Entity e1 = (Entity) ents.get(i); 
+      Vector e1atts = e1.getAttributes(); 
+
+      for (int j = 0; j < ents.size(); j++) 
+      { if (i == j) 
+        { continue; } 
+
+        Entity e2 = (Entity) ents.get(j); 
+        Vector e2atts = e2.getAttributes(); 
+        if (VectorUtil.haveCommonElementName(e1atts,e2atts))
+        { String e1name = e1.getName(); 
+          String e2name = e2.getName(); 
+          String e1ParName = 
+             e1name.substring(0,e1name.length()-6); 
+          String e2ParName = 
+             e2name.substring(0,e2name.length()-6); 
+          Attribute e1par = 
+            new Attribute(e1ParName, 
+                          new Type("String", null), 
+                          ModelElement.INTERNAL);
+          Attribute e2par = 
+            new Attribute(e2ParName, 
+                          new Type("String", null), 
+                          ModelElement.INTERNAL);
+          Vector corrpars = new Vector(); 
+          corrpars.add(e1par);
+          corrpars.add(e2par);  
+          BehaviouralFeature bf = 
+            new BehaviouralFeature("moveCorresponding$" + 
+                       e1ParName + "$" + e2ParName,
+                       corrpars,
+                       false, new Type("String", null));
+          SequenceStatement stats = 
+                new SequenceStatement(); 
+          Vector commonAtts = 
+            VectorUtil.commonElementNames(e1atts,e2atts);
+          Vector e1accesses = 
+            e1.moveCorrespondingAccesses(e1ParName, 
+                                         commonAtts); 
+          Vector e2accesses = 
+            e2.moveCorrespondingAccesses(e2ParName + "$x", 
+                                         commonAtts);
+
+          BasicExpression e2att = 
+            BasicExpression.newAttributeBasicExpression(
+                                   e2ParName, 
+                                   new Type("String", null));
+          
+          BasicExpression respar = 
+            BasicExpression.newAttributeBasicExpression(
+                                   e2ParName + "$x", 
+                                   new Type("String", null));
+          CreationStatement cs = new CreationStatement(respar,
+                                   new Type("String", null));
+          cs.setInitialExpression(e2att); 
+
+          stats.addStatement(cs); 
+ 
+          for (int k = 0; k < e1accesses.size() && 
+                          k < e2accesses.size(); k++) 
+          { Expression rhs = (Expression) e1accesses.get(k); 
+            Expression lhs = (Expression) e2accesses.get(k); 
+            Statement asgn = new AssignStatement(lhs,rhs); 
+            stats.addStatement(asgn); 
+          } 
+
+
+          stats.addStatement(new ReturnStatement(respar)); 
+          bf.setActivity(stats); 
+          bf.setPostcondition(new BasicExpression(true));                 
+          bf.setEntity(this); 
+          addOperation(bf); 
+        } 
+      }
+    }
+  } 
+
+  public Vector moveCorrespondingAccesses(String rec, 
+                                          Vector names)
+  { // For COBOL: 
+    // REC.subrange(st,en) for each nme : names
+
+    Vector res = new Vector(); 
+
+    // BasicExpression indx = 
+    //      BasicExpression.newVariableBasicExpression(
+    //                                "indx", 
+    //                                new Type("int", null)); 
+ 
+    // String shortName = name.substring(0,name.length()-6); 
+    BasicExpression cls = 
+      BasicExpression.newAttributeBasicExpression(
+                                   rec, 
+                                   new Type("String", null));
+    // cls.setElementType(new Type("String", null));
+    // if (cardinalityValue > 1) 
+    // { cls.setArrayIndex(indx); } 
+ 
+      
+    if (cardinalityValue == 1) 
+    { 
+      for (int i = 0; i < names.size(); i++) 
+      { String aname = (String) names.get(i); 
+        Attribute att = getAttribute(aname);
+        if (att != null)  
+        { int awidth = att.getWidth(); 
+          int amult = att.getMultiplicity();   
+          int astart = att.getStartPosition(); 
+          int aend = att.getEndPosition(); 
+
+          // Access is: cls.substring(astart,aend)
+
+          // Expression expr = new BasicExpression(att);
+
+          Vector spars = new Vector(); 
+          spars.add(new BasicExpression(astart)); 
+          spars.add(new BasicExpression(aend));  
+          BasicExpression substr = 
+            BasicExpression.newFunctionBasicExpression(
+                    "subrange", cls, spars); 
+          res.add(substr); 
+        } 
+      } 
+    } 
+    return res; 
+  } 
 
 
   public void createPrimaryKey()

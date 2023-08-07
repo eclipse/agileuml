@@ -38,6 +38,8 @@ public class Attribute extends ModelElement
 
   private int width = 1; // for COBOL
   private int multiplicity = 1; 
+  private int startPosition = 1; 
+  private int endPosition = 1; 
  
   public Attribute(String nme, Type t, int k)
   { super(nme);
@@ -329,6 +331,19 @@ public class Attribute extends ModelElement
 
   public int getMultiplicity()
   { return multiplicity; } 
+
+  public void setStartPosition(int sp)
+  { startPosition = sp; } 
+
+  public int getStartPosition()
+  { return startPosition; } 
+
+  public void setEndPosition(int ep)
+  { endPosition = ep; } 
+
+  public int getEndPosition()
+  { return endPosition; } 
+
 
   public boolean isFunction()
   { return type != null && type.isFunction(); } 

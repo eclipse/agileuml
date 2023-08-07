@@ -66,7 +66,12 @@ public class ASTSymbolTerm extends ASTTerm
   { return this; } 
 
   public ASTTerm replaceCobolIdentifiers()
-  { return this; } 
+  { if ("FILLER".equals(symbol))
+    { ASTTerm.cobolFillerCount++; 
+      return new ASTSymbolTerm("FILLER$" + ASTTerm.cobolFillerCount); 
+    } 
+    return this; 
+  } 
 
   public ASTTerm substituteEq(String str, ASTTerm newtrm)
   { if (str.equals(symbol))

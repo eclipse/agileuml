@@ -61,6 +61,10 @@ public abstract class ASTTerm
   { mathoclvars = new java.util.HashMap(); }  
      // String --> ASTTerm
 
+  static int cobolFillerCount; 
+  static 
+  { cobolFillerCount = 0; } 
+
   static Vector cqueryfunctions = new Vector(); 
   static
   { cqueryfunctions.add("sin"); 

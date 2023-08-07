@@ -27445,7 +27445,8 @@ public void produceCUI(PrintWriter out)
     } 
 
     // remove all whitespace \n \r characters. 
-    ASTTerm zz = xx.removeWhitespaceTerms(); 
+    ASTTerm zz = xx.removeWhitespaceTerms();
+    ASTTerm.cobolFillerCount = 0;  
     ASTTerm yy = zz.replaceCobolIdentifiers(); 
 
     Vector cobolinvs = new Vector();
@@ -27541,8 +27542,8 @@ public void produceCUI(PrintWriter out)
       yy.cobolPerformThruDefinitions(cobolperforms, 
                                      new Vector());
 
-    System.out.println(cobolperforms);  
-    System.out.println(paragraphlist); 
+    // System.out.println(cobolperforms);  
+    // System.out.println(paragraphlist); 
 
     Entity mainent = 
        (Entity) ModelElement.lookupByName(progName,entities);
@@ -27550,7 +27551,10 @@ public void produceCUI(PrintWriter out)
     if (mainent != null) 
     { mainent.addPerformThruOperations(
                            paragraphlist,cobolperforms); 
+      mainent.addMoveCorrespondingOperations(auxents); 
     } 
+
+    /* Some essential libraries: */ 
 
     File slib = new File("libraries/stringlib.km3"); 
     if (slib.exists())

@@ -6891,7 +6891,8 @@ class BasicExpression extends Expression
     else if (entity != null) // objectRef != null
     { ename = entity.getName();
       String eref = ename; 
-      if (entity.isInterface()) { eref = ename + "." + ename + "Ops"; } 
+      if (entity.isInterface()) 
+      { eref = ename + "." + ename + "Ops"; } 
 
       String res = "";
       String pre = objectRef.queryFormJava7(env,local);
@@ -10152,7 +10153,7 @@ public Statement generateDesignSubtract(Expression rhs)
 
       if (entity != null && entity.isClassScope(data))
       { String nme = entity.getName();
-	    if (arrayIndex != null) 
+        if (arrayIndex != null) 
         { String indopt = arrayIndex.queryFormJava7(env,local); 
           return nme + ".set" + data + "((" + indopt + " -1), " + val2 + ");"; 
         } 
@@ -10228,13 +10229,13 @@ public Statement generateDesignSubtract(Expression rhs)
         } 
         else if (type != null && var.type != null)
         { if (Type.isSpecialisedOrEqualType(var.type, type))
-          { return cont + ".set" + data + "(" + pre + ", " + val2 + ");"; } 
+          { return "    " + cont + ".set" + data + "(" + pre + ", " + val2 + ");"; } 
           if ("String".equals(type.getName())) 
-          { return cont + ".set" + data + "(" + pre + ", \"\" + " + val2 + ");"; }
+          { return "    " + cont + ".set" + data + "(" + pre + ", \"\" + " + val2 + ");"; }
           else if ("String".equals(var.type.getName()) &&
                      type.isNumeric())
           { String cname = Named.capitalise(type.getName()); 
-            return cont + ".set" + data + "(" + pre + ",  Ocl.to" + cname + "(" + val2 + "));"; 
+            return "    " + cont + ".set" + data + "(" + pre + ",  Ocl.to" + cname + "(" + val2 + "));"; 
           }
           String cstype = type.getJava7(); 
           return cont + ".set" + data + "(" + pre + ", (" + cstype + ") (" + val2 + "));"; 
@@ -10243,6 +10244,7 @@ public Statement generateDesignSubtract(Expression rhs)
         return cont + ".set" + data + "(" + pre + ", " + val2 + ");"; 
       }
     }
+
     return "{} /* unrecognised update: " + this + " = " + val2 + " */";
   }  // arrayIndex != null: setdata(var,arrayIndex,val) ?
 
@@ -10312,7 +10314,7 @@ public Statement generateDesignSubtract(Expression rhs)
     if (entity.isBidirectionalRole(data))
     { local = false; }
 
-    System.out.println(">> " + this + " objectref = " + objectRef);  
+    // System.out.println(">> " + this + " objectref = " + objectRef);  
     
     if (objectRef == null)
     { if (umlkind == ATTRIBUTE || umlkind == ROLE)
@@ -10383,16 +10385,16 @@ public Statement generateDesignSubtract(Expression rhs)
         } 
         else if (type != null && var.type != null)
         { if (Type.isSpecialisedOrEqualType(var.type, type))
-          { return data + " = " + val2 + ";"; } 
+          { return "    " + data + " = " + val2 + ";"; } 
           else if ("String".equals(type.getName())) 
-          { return "  " + datax + " = \"\" + " + val2 + ";"; }
+          { return "    " + datax + " = \"\" + " + val2 + ";"; }
           else if ("String".equals(var.type.getName()) &&
                    type.isNumeric())
           { String cname = Named.capitalise(type.getName()); 
-            return "  " + datax + " = SystemTypes.to" + cname + "(" + val2 + ");"; 
+            return "    " + datax + " = SystemTypes.to" + cname + "(" + val2 + ");"; 
           }
           String cstype = type.getCSharp(); 
-          return cont + ".set" + data + "(" + target + " (" + cstype + ") (" + val2 + "));"; 
+          return "    " + cont + ".set" + data + "(" + target + " (" + cstype + ") (" + val2 + "));"; 
         } 
 
         return cont + ".set" + data + "(" + target + val2 + ");"; 
@@ -10400,6 +10402,8 @@ public Statement generateDesignSubtract(Expression rhs)
     }
     else // objectRef != null
     { String pre = objectRef.queryFormCSharp(env,local);
+
+      // System.out.println("**** Controller.inst().set" + data + "(" + pre + ", " + val2 + ")"); 
 
       if (entity != null && entity.isClassScope(data))
       { if (arrayIndex != null) 
@@ -10481,13 +10485,13 @@ public Statement generateDesignSubtract(Expression rhs)
         } 
         else if (type != null && var.type != null)
         { if (Type.isSpecialisedOrEqualType(var.type, type))
-          { return data + " = " + val2 + ";"; } 
+          { return "    " + cont + ".set" + data + "(" + pre + ", " + val2 + ");"; } 
           else if ("String".equals(type.getName())) 
-          { return "  " + data + " = \"\" + " + val2 + ";"; }
+          { return "    " + cont + ".set" + data + "(" + pre + ", \"\" + " + val2 + ");"; }
           else if ("String".equals(var.type.getName()) &&
                    type.isNumeric())
           { String cname = Named.capitalise(type.getName()); 
-            return "  " + data + " = SystemTypes.to" + cname + "(" + val2 + ");"; 
+            return "    " + cont + ".set" + data + "(" + pre + ", SystemTypes.to" + cname + "(" + val2 + "));"; 
           }
           String cstype = type.getCSharp(); 
           return cont + ".set" + data + "(" + pre + ", (" + cstype + ") (" + val2 + "));"; 
@@ -10495,7 +10499,9 @@ public Statement generateDesignSubtract(Expression rhs)
 
         return cont + ".set" + data + "(" + pre + "," + val2 + ");"; 
       }
+      // return cont + ".set" + data + "(" + pre + "," + val2 + ");"; 
     }
+
     return "  {} /* unrecognised update: " + this + " = " + val2 + " */";
   }  // arrayIndex != null: setdata(var,arrayIndex,val) ?
 

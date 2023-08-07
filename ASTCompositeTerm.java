@@ -269,13 +269,27 @@ public class ASTCompositeTerm extends ASTTerm
 
   public ASTTerm replaceCobolIdentifiers()
   { // Each (cobolName sss) updated to be valid sss
+    // FILLER becomes FILLER$n 
+
     Vector newterms = new Vector();  
     for (int i = 0; i < terms.size(); i++)
     { ASTTerm trm = (ASTTerm) terms.get(i);
-      ASTTerm ntrm = trm.replaceCobolIdentifiers(); 
-      if (ntrm != null) 
-      { newterms.add(ntrm); } 
+      if ("FILLER".equals(trm.literalForm()))
+      { ASTTerm.cobolFillerCount++; 
+        newterms.add(new ASTSymbolTerm("FILLER$" + 
+                           ASTTerm.cobolFillerCount));
+        JOptionPane.showMessageDialog(null, this + 
+              " replaced filler " + ASTTerm.cobolFillerCount, 
+              " ", JOptionPane.INFORMATION_MESSAGE);
+ 
+      } 
+      else 
+      { ASTTerm ntrm = trm.replaceCobolIdentifiers(); 
+        if (ntrm != null) 
+        { newterms.add(ntrm); }
+      }  
     } 
+
     return new ASTCompositeTerm(tag,newterms); 
   } 
 
@@ -40874,6 +40888,25 @@ public class ASTCompositeTerm extends ASTTerm
               wsRecordEntries, prog, 0, 
               1, containers, invs, remainder); 
       // Should be no remainder.
+
+      Vector entries = new Vector(); 
+      entries.addAll(remainder); 
+      while (entries.size() > 0)
+      { Vector remainingEntries = new Vector(); 
+        Vector localInvs = new Vector(); 
+        Vector newRemainder = new Vector(); 
+
+        Vector newRes = 
+              cobolProcessDataEntries(context, 
+                 entries, prog, 0, 
+                 1, containers, localInvs, newRemainder);
+
+        res.addAll(newRes);   
+        invs.addAll(localInvs); 
+
+        entries.clear();
+        entries.addAll(newRemainder);
+      } 
  
       /* for (int i = 3; i < terms.size(); i++) 
       { ASTTerm tt = (ASTTerm) terms.get(i); 
@@ -41006,6 +41039,11 @@ public class ASTCompositeTerm extends ASTTerm
                                      dval);  
             } 
           }
+          else 
+          { // ASTTerm.setTaggedValue(fname, "integerWidth", "0"); 
+            // ASTTerm.setTaggedValue(fname, "fractionWidth", "0"); 
+            // ASTTerm.setTaggedValue(fname, "oclType", "String"); 
+          } 
         } 
 
         return res; 
@@ -41297,6 +41335,10 @@ public class ASTCompositeTerm extends ASTTerm
                 context.put("container", actualContainer); 
               }  
 
+              ASTTerm.setTaggedValue(fieldName, "startPosition", 
+                                     "" + startPos); 
+              ASTTerm.setTaggedValue(fieldName, "endPosition", 
+                                     "" + endPos); 
               ASTTerm.setTaggedValue(fieldName, "integerWidth", 
                                      "" + integerWidth); 
               ASTTerm.setTaggedValue(fieldName, "fractionWidth", 
@@ -41605,6 +41647,11 @@ public class ASTCompositeTerm extends ASTTerm
                                        dval);  
               } 
             }
+            else 
+            { // ASTTerm.setTaggedValue(fname, "integerWidth", "0"); 
+              // ASTTerm.setTaggedValue(fname, "fractionWidth", "0");  
+              // ASTTerm.setTaggedValue(fname, "oclType", "String");  
+            } 
           } 
 
           for (int j = 1; j < entries.size(); j++) 
@@ -41633,12 +41680,15 @@ public class ASTCompositeTerm extends ASTTerm
           return res; 
         } 
 
-        ASTTerm t2 = (ASTTerm) ctrm.terms.get(1); 
-        if ("FILLER".equals(t2 + "") || 
+        ASTTerm t2 = (ASTTerm) ctrm.terms.get(1);
+        String t2lit = t2.literalForm();  
+        if (t2lit.startsWith("FILLER$") || 
             t2.getTag().equals("dataName"))
-        { fieldName = t2.literalForm(); }
-        else 
-        { fieldName = "FILLER"; } 
+        { fieldName = t2lit; }
+        else // anonymous filler
+        { ASTTerm.cobolFillerCount++; 
+          fieldName = "FILLER$" + ASTTerm.cobolFillerCount; 
+        } 
 
         Entity container = cent; 
           // (Entity) context.get("container"); 
@@ -41684,6 +41734,11 @@ public class ASTCompositeTerm extends ASTTerm
             fractionalWidth = 
                 pictureClause.cobolFractionWidth(); 
 
+            int endPosn = startPos + wdth - 1; 
+
+            // if ("FILLER".equals(fieldName)) 
+            // { fieldName = "FILLER$" + startPos + "$" + endPosn; }
+
             JOptionPane.showMessageDialog(null, 
                "Type of " + fieldName + " is " + typ + 
                " Width: " + wdth + 
@@ -41693,6 +41748,11 @@ public class ASTCompositeTerm extends ASTTerm
                "", 
                JOptionPane.INFORMATION_MESSAGE);  
          
+            ASTTerm.setTaggedValue(fieldName, "startPosition", 
+                                     "" + startPos); 
+            ASTTerm.setTaggedValue(fieldName, "endPosition", 
+                                     "" + endPosn); 
+              
             ASTTerm.setTaggedValue(fieldName, "integerWidth", 
                                      "" + integerWidth); 
             ASTTerm.setTaggedValue(fieldName, "fractionWidth", 
@@ -41714,7 +41774,9 @@ public class ASTCompositeTerm extends ASTTerm
             att.setElementType(typ.getElementType());  
             att.setWidth(wdth); // total width
             att.setMultiplicity(multiplicity);
-              // width of each element is width/multiplicity  
+              // width of each element is width/multiplicity
+            att.setStartPosition(startPos); 
+            att.setEndPosition(endPosn);   
             cent.addAttribute(att); 
           }
           else // ERROR 
@@ -41733,8 +41795,6 @@ public class ASTCompositeTerm extends ASTTerm
           totalWidth = totalWidth + wdth; 
           int fwdth = wdth/multiplicity; 
 
-          if ("FILLER".equals(fieldName)) 
-          { fieldName = "FILLER$" + startPos + "$" + endPos; }
 
           if (multiplicity == 1 && contMult == 1)
           { // fieldName = owner.subrange(startPos,endPos)
@@ -41770,9 +41830,14 @@ public class ASTCompositeTerm extends ASTTerm
 
               JOptionPane.showMessageDialog(null, 
                  progname + ":: " + fieldName + 
-                 " = " + simpsubstr, 
+                 " = " + simpsubstr + "\n" + 
+                 "Field width = " + fwdth, 
                  "", 
                  JOptionPane.INFORMATION_MESSAGE);
+
+              ASTTerm.setTaggedValue("" + simpsubstr, 
+                                     "width", 
+                                     "" + fwdth);       
             
               Expression convertedExpr = 
                 Type.typeConversionFromString(
@@ -42199,6 +42264,10 @@ public class ASTCompositeTerm extends ASTTerm
 
 
             int endPos = startPos + totwdth - 1;
+            ASTTerm.setTaggedValue(fieldName, "startPosition", 
+                                   "" + startPos);       
+            ASTTerm.setTaggedValue(fieldName, "endPosition", 
+                                   "" + endPos);       
 
 
             if (ownername.equals(pname)) { } 
