@@ -1,3 +1,5 @@
+/* This translates MathOCL to Mamba */
+
 specification::
 specification _1 _* <EOF> |-->function void _1() {\n_*`definesToAttributes\n}\n\n
 specification _1 _* |-->function void _1() {\n_*`definesToAttributes\n}\n\n

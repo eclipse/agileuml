@@ -12,7 +12,11 @@ Constraint on _1 | _2 |-->  Constraint on _1 | _2
 
 
 prove::
-Prove _1 if _2 |-->  Simplify (_2) => (_1)
+Prove false if _1 |-->  Simplify (not _1`conjoinAll)
+Prove true if _1 |-->  Simplify true
+Prove _1 if _1 |-->  Simplify true
+
+Prove _1 if _2 |-->_0`attemptProof
 
 
 simplify::
@@ -50,7 +54,7 @@ substituting::
 Substitute _1 for _2 in _3 |-->  _3<action> _1 / _2
 
 solve::
-Solve _* for _+ |-->
+Solve _1 for _2 |-->_0`equationSolution
 
 reexpression::
 Express _1 as _2 |-->  Express _1 as _2
@@ -71,8 +75,7 @@ cancelIn::
 Cancel _1 in _2 |-->_2`cancel<action> _90 _1
 
 substituteIn::
-Substitute _1 in _2 |-->_2<when> _2 expression<action> _1`value / _1
-Substitute _1 in _2 |-->Substitute _1 in _2
+Substitute _1 in _2 |-->_0`attemptSubstitution
 
 idList::
 _1 |-->_1
@@ -96,7 +99,11 @@ _1 |-->_1
 
 expressionList::
 _1 |-->_1
-_1 , _* |-->_1,_*`recurse
+_1 , _* |-->_1, _*`recurse
+
+conjoinAll::
+_1 |-->_1
+_1 , _* |-->_1 & _*`recurse
 
 
 logicalExpression::
@@ -120,10 +127,19 @@ _1 => true |-->true
 _1 => false |-->not(_1)
 _1 => _2 |-->_1 => _2
 
+£ _1 : Ñ • true |-->true
+£ _1 : Ž • true |-->true
+£ _1 : ® • true |-->true
+£ _1 : _2 • true |-->_2 /= Ø
 
-£ _1 : _2 • true |-->true
 £ _1 : _2 • false |-->false
 £ _1 : _2 • _3 |-->£ _1 : _2 • _3
+
+¡ _1 : _2 • true |-->true
+¡ _1 : Ñ • false |-->false 
+¡ _1 : Ž • false |-->false 
+¡ _1 : ® • false |-->false 
+¡ _1 : _2 • false |-->_2 = Ø
 
 ¡ _1 : _2 • _3 |-->¡ _1 : _2 • _3
 
@@ -131,7 +147,7 @@ _1 _2 _3 |-->_1 _2 _3
 
 not true |-->false
 not false |-->true
-not _1 |-->not _1
+not _1 |-->_1`logicalNot
 
 _1 |-->_1
 
@@ -142,6 +158,7 @@ _1 = _2 |-->_1`fArgument = _2`fArgument<when> _1`isStrictlyIncreasing true, _1`f
 _1 = _2 |-->_1 = _2
 
 _1 /= _1 |-->false
+_1 /= _2 |-->_1`fArgument /= _2`fArgument<when> _1`isStrictlyIncreasing true, _1`functor _2`functor
 _1 /= _2 |-->_1 /= _2
 
 _1 < _1 |-->false
@@ -151,14 +168,19 @@ _1 < _2 |-->_1`fArgument < _2`fArgument<when> _1`isStrictlyIncreasing true, _1`f
 _1 < _2 |-->_1 < _2
 
 _1 > _1 |-->false
-_1 > _2 |-->_1`fArgument > _2`fArgument<when> _1`isStrictlyIncreasing true, _1`functor _2`functor
+_1 > _2 |-->_2`fArgument < _1`fArgument<when> _1`isStrictlyIncreasing true, _1`functor _2`functor
 
-_1 > _2 |-->_1 > _2
+_1 > _2 |-->_2 < _1
 
 _1 <= _1 |-->true
+_1 <= … |-->true
+-… <= _1 |-->true
 _1 <= _2 |-->((_1 < _2) or (_1 = _2))
+
 _1 >= _1 |-->true
-_1 >= _2 |-->((_1 > _2) or (_1 = _2))
+… >= _1 |-->true
+_1 >= -… |-->true
+_1 >= _2 |-->((_2 < _1) or (_1 = _2))
 
 _1 © Ø |-->false
 _1 ¢ Ø |-->true
@@ -172,6 +194,10 @@ _1 + 0 |-->_1
 0 + _1 |-->_1
 _1 + 0.0 |-->_1
 0.0 + _1 |-->_1
+… + _1 |-->…
+_1 + … |-->…
+-… + _1 |-->-…
+
 _1 + _1 |-->2*(_1)
 
 _1 + _2 |-->_0`symbolicAddition<when> _1 real, _2 real
@@ -183,6 +209,8 @@ _1 - 0 |-->_1
 _1 - 0.0 |-->_1
 0.0 - _1 |-->_1`negate
 _1 - _1 |-->0
+_1 - … |-->-…
+
 _1 - _2 |-->_0`symbolicSubtraction<when> _1 real, _2 real
 _1 - _2 |-->_1 - _2
 
@@ -195,28 +223,53 @@ factorExpression::
 _1 * 1 |-->_1
 1.0 * _1 |-->_1
 _1 * 1.0 |-->_1
+
+0 * … |-->?
+… * 0 |-->?
+0 * -… |-->?
+-… * 0 |-->?
+
 0 * _1 |-->0
 _1 * 0 |-->0
 0.0 * _1 |-->0
 _1 * 0.0 |-->0
+
+… * … |-->…
+… * -… |-->-…
+-… * … |-->-…
+-… * -… |-->…
+
 _1 * -1 |-->_1`negate
 -1 * _1 |-->_1`negate
+_1 * _2 |-->_0`symbolicMultiplication<when> _1 real, _2 real
 _1 * _2 |-->_1*_2
+
+0 / 0 |-->?
+… / … |-->?
+… / -… |-->?
+-… / … |-->?
+-… / -… |-->?
 
 _1 / 1 |-->_1
 _1 / 1.0 |-->_1
 _1 / -1 |-->_1`negate
 _1 / _1 |-->1
+
+-… / 0 |-->-…
+… / 0 |-->…
+_1 / 0 |-->?
+
 0 / _1 |-->0
 0.0 / _1 |-->0
 _1 / _2 |-->_1/_2
 
 - 0 |-->0
--0.0 |-->0
+- 0.0 |-->0
 - _1 |-->_1`negate
 
 0 ! |-->1
 1 ! |-->1
+… ! |-->…
 _1 ! |-->_1!
 
 _1 ´ |-->_1`differentiate
@@ -226,7 +279,8 @@ _1 ´ |-->_1`differentiate
 
 † 0 |-->0
 † 1 |-->1
-† _1 |-->†_1
+† … |-->…
+† _1 |-->_1`squareRoot
 
 ‡ _1 _2 |-->_1*_2`tail<when> _1 integer
 ‡ _1 _2 |-->_1*_2`tail<when> _1 real
@@ -332,8 +386,18 @@ _1 |-->_1
 
 
 setExpression::
+{ _1 : _2 | false } |-->Ø
 { _1 : _2 | _3 } |-->{ _1 : _2 | _3 }
+
+{ _1 : _2 | false • _4 } |-->Ø
 { _1 : _2 | _3 • _4 } |-->{ _1 : _2 | _3 • _4 }
+
+Set{ } |-->Set{}
+Set{ _1 } |-->Set{_1}
+
+Sequence{ } |-->Sequence{}
+Sequence{ _1 } |-->Sequence{_1}
+
 
 
 identifier::
@@ -519,6 +583,43 @@ _1 |-->_1`negate<when> _1 expression
 _1 |-->-_1
 
 
+logicalNot::
+false |-->true
+true |-->false
+
+_1 = _2 |-->_1 /= _2
+_1 /= _2 |-->_1 = _2
+
+_1 < _2 |-->(_2 < _1 or _1 = _2)
+_1 > _2 |-->(_1 < _2 or _1 = _2)
+_1 <= _2 |-->_2 < _1
+_1 >= _2 |-->_1 < _2
+
+_1 © _2 |-->_1 ¢ _2
+_1 ¢ _2 |-->_1 © _2
+
+not _1 |-->_1
+
+_1 or _2 |-->_1`logicalNot & _2`logicalNot
+_1 & _2 |-->(_1`logicalNot or _2`logicalNot)
+_1 => _2 |-->_1 & _2`logicalNot
+
+£ _1 : _2 • _3 |-->¡ _1 : _2 • (_3`logicalNot)
+
+¡ _1 : _2 • _3 |-->£ _1 : _2 • (_3`logicalNot)
+
+( _1 ) |-->( _1`logicalNot)
+ 
+_1 |-->_1`logicalNot<when> _1 basicExpression
+_1 |-->_1`logicalNot<when> _1 factorExpression
+_1 |-->_1`logicalNot<when> _1 factor2Expression
+_1 |-->_1`logicalNot<when> _1 logicalExpression
+_1 |-->_1`logicalNot<when> _1 equalityExpression
+_1 |-->_1`logicalNot<when> _1 additiveExpression
+_1 |-->_1`logicalNot<when> _1 expression
+_1 |-->(not _1)
+
+
 divideBy::
 - _1 |-->-_1`divideBy
 + _1 |-->_1`divideBy
@@ -635,6 +736,10 @@ _1 ´ |-->_1
 _1 + _2 |-->_1`integrate + _2`integrate
 _1 - _2 |-->_1`integrate - _2`integrate
 
+€ _{ _1 } ^{ _2 } _3 |-->€ _{ _1 } ^{ _2 } _3`integrate
+
+× _{ _1 } ^{ _2 } _3 |-->‡ (× _{ _1 } ^{ _2 } _3) dx
+
 _1 = _2 |-->Real.Sum(_1 = _2)
 _1 /= _2 |-->Real.Sum(_1 /= _2)
 
@@ -738,6 +843,10 @@ _1 ´ |-->(_1`partialDiff)´
 
 _1 + _2 |-->_1`partialDiff + _2`partialDiff
 _1 - _2 |-->_1`partialDiff - _2`partialDiff
+
+€ _{ _1 } ^{ _2 } _3 |-->€ _{ _1 } ^{ _2 } _3`partialDiff
+
+× _{ _1 } ^{ _2 } _3 |-->Ð_{_95} (× _{ _1 } ^{ _2 } _3)
 
 e ^{ _1 } |-->e^{_1}<when> _1 _95
 e ^{ _1 } |-->(e^{_1})*_1`partialDiff
@@ -854,6 +963,9 @@ _1 ´ |-->_1`diff2
 _1 + _2 |-->_1`differentiate + _2`differentiate
 _1 - _2 |-->_1`differentiate - _2`differentiate
 
+€ _{ _1 } ^{ _2 } _3 |-->€ _{ _1 } ^{ _2 } _3`differentiate
+× _{ _1 } ^{ _2 } _3 |-->(× _{ _1 } ^{ _2 } _3)´
+
 ‡ _1 dx |-->_1
 ‡ _1 _2 |-->‡ _1`differentiate _2
 
@@ -938,6 +1050,9 @@ _1 ´ |-->_1`diff3
 _1 + _2 |-->_1`diff2 + _2`diff2
 _1 - _2 |-->_1`diff2 - _2`diff2
 
+€ _{ _1 } ^{ _2 } _3 |-->€ _{ _1 } ^{ _2 } _3`diff2
+× _{ _1 } ^{ _2 } _3 |-->(× _{ _1 } ^{ _2 } _3)´´
+
 ‡ _1 dx |-->_1`differentiate
 ‡ _1 _2 |-->‡ _1`diff2 _2
 
@@ -1008,6 +1123,9 @@ _1 * _2 |-->_1*(_2`diff3) + 3*(_1`differentiate)*(_2`diff2) + 3*(_1`diff2)*(_2`d
 _1 + _2 |-->_1`diff3 + _2`diff3
 _1 - _2 |-->_1`diff3 - _2`diff3
 
+€ _{ _1 } ^{ _2 } _3 |-->€ _{ _1 } ^{ _2 } _3`diff3
+× _{ _1 } ^{ _2 } _3 |-->(× _{ _1 } ^{ _2 } _3)´´´
+
 ‡ _1 dx |-->_1`diff2
 ‡ _1 _2 |-->‡ _1`diff3 _2
 
@@ -1034,6 +1152,51 @@ _1 |-->_1`diff3<when> _1 expressionList
 _1 |-->0<when> _1 identifier
 _1 |-->_1
 
+
+squareRoot::
+_1 * _1 |-->_1
+_1 * _2 |-->(_1`squareRoot)*(_2`squareRoot)
+
+_1 / _2 |-->(_1`squareRoot)/(_2`squareRoot)
+
+exp ( _1 ) |-->exp(_1/2)
+ 
+_1 ( _2 ) |-->†(_1(_2))
+
+( _1 ) |-->(_1`squareRoot)
+
+_1 ´ |-->†(_1´)
+Ð _{ _1 } _2 |-->†(Ð_{_1} _2)
+
+- _1 |-->-(_1`squareRoot)
++ _1 |-->_1`squareRoot
+_1 + _2 |-->†(_1 + _2)
+_1 - _2 |-->†(_1 - _2)
+
+‡ _1 _2 |-->†(‡ _1 _2)
+
+e ^{ _1 } |-->e^{(_1)/2}
+
+_1 ^{ 2 } |-->_1
+_1 ^{ _2 } |-->_1^{(_2)/2}
+
+_1 ! |-->†(_1!)
+
+† _1 |-->†(_1`squareRoot)
+
+€ _{ _1 } ^{ _2 } _3 |-->†(€ _{ _1 } ^{ _2 } _3)
+
+× _{ _1 } ^{ _2 } _3 |-->× _{ _1 } ^{ _2 } _3`squareRoot
+ 
+_1 |-->_1`squareRoot<when> _1 basicExpression
+_1 |-->_1`squareRoot<when> _1 factorExpression
+_1 |-->_1`squareRoot<when> _1 factor2Expression
+_1 |-->_1`squareRoot<when> _1 logicalExpression
+_1 |-->_1`squareRoot<when> _1 equalityExpression
+_1 |-->_1`squareRoot<when> _1 additiveExpression
+_1 |-->_1`squareRoot<when> _1 expression
+
+_1 |-->†(_1)
 
 
 isIdentifier::

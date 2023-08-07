@@ -123,6 +123,8 @@ len _1 |-->_1->size()
 list _1 |-->_1
 max _1 |-->_1->max()
 min _1 |-->_1->min()
+next _1 |-->_1.next()
+
 round _1 |-->_1->round()<when> _1`numberOfArguments 1
 round _1 |-->MathLib.roundN(_1`firstArg, _1`secondArg)
 slice _1 |-->Integer.subrange(1,_1`firstArg)<when> _1`numberOfArguments 1
@@ -188,6 +190,8 @@ _1 & _2 |-->MathLib.bitwiseAnd(_1, _2)
 _1 ^ _2 |-->MathLib.bitwiseXor(_1, _2)
 _1 | _2 |-->MathLib.bitwiseOr(_1, _2)
 
+_1 _2 |-->OclIterator.newOclIterator_Function(lambda _i : int in self._1(_i))<when> _1 generator, _2 trailer
+
 _1 _2 |-->_1.new_1().initialise_2<when> _1 Class, _2 trailer
 
 
@@ -236,6 +240,9 @@ bool |-->OclType["boolean"]
 dict |-->OclType["Map"]
 list |-->OclType["Sequence"]
 set |-->OclType["Set"]
+
+R _1 |-->StringLib.rawString(_1)
+r _1 |-->StringLib.rawString(_1)
 
 _1 |-->_1
 
@@ -964,12 +971,13 @@ sliceop::
 
 
 yield_expr::
-yield |-->
-yield _1 |-->
+yield |-->    if _yieldCount_ < _position_ then _yieldCount_ := _yieldCount_ + 1 else return null
+yield _1 |-->    if _yieldCount_ < _position_ then _yieldCount_ := _yieldCount_ + 1 else return _1
+
 
 yield_arg::
-from _1 |-->
-_1 |-->
+from _1 |-->_1
+_1 |-->_1
 
 stmt::
 _1 |-->_1
@@ -1058,6 +1066,8 @@ assert _1 , _2 |-->    assert _1 do _2
 
 nonlocal _* |-->_*`assertDefined
 
+_1 |-->_1<when> _1 yield_expr
+
 _1 |-->_1`updateForm<when> _1 testlist_star_expr
 
 
@@ -1130,6 +1140,78 @@ _1 _* |-->true<when> _1 stmt, _1`hasValueReturn true
 _1 _* |-->_*`recurse<when> _1 stmt
 
 _1 ; _* |-->true<when> _1 small_stmt, _1`hasValueReturn true
+_1 ; _* |-->_*`recurse<when> _1 small_stmt
+
+_1 |-->false
+_* |-->false
+
+
+hasYieldStatement::
+print _1 |-->false
+del _1 |-->false
+pass |-->false
+break |-->false
+continue |-->false
+return _1 |-->false
+return |-->false
+raise _1 |-->false
+raise _1 from _2 |-->false
+raise _* |-->false
+
+import _1 |-->false
+from _* |-->false
+global _* |-->false
+exec _1 |-->false
+exec _* |-->false
+assert _1 |-->false
+assert _1 , _2 |-->false
+
+nonlocal _* |-->false
+
+if _1 : _2 |-->_2`hasYieldStatement
+if _1 : _2 _3 |-->true<when> _2`hasYieldStatement true, _3 else_clause
+if _1 : _2 _3 |-->true<when> _3`hasYieldStatement true, _3 else_clause
+if _1 : _2 _3 |-->false<when> _3 else_clause
+
+if _1 : _2 _* |-->true<when> _2`hasYieldStatement true
+if _1 : _2 _* |-->_*`recurse
+
+while _1 : _2 |-->_2`hasYieldStatement
+
+for _1 in _2 : _3 |-->_3`hasYieldStatement
+
+try : _1 |-->_1`hasYieldStatement
+try : _1 _* |-->true<when> _1`hasYieldStatement true
+try : _1 _* |-->_*`recurse
+
+elif _1 : _2 |-->_2`hasYieldStatement
+
+else : _1 |-->_1`hasYieldStatement
+
+except : _1 |-->_1`hasYieldStatement
+except _1 as _2 : _3 |-->_3`hasYieldStatement
+except _1 , _2 : _3 |-->_3`hasYieldStatement
+
+finally : _1 |-->_1`hasYieldStatement
+
+_1 |-->true<when> _1 yield_expr
+
+_1 _2 |-->false<when> _2 assign_part
+
+_1 |-->false<when> _1 testlist_star_expr
+
+_1 |-->_1`hasYieldStatement<when> _1 stmt
+_1 |-->_1`hasYieldStatement<when> _1 small_stmt
+_1 |-->_1`hasYieldStatement<when> _1 simple_stmt
+_1 |-->_1`hasYieldStatement<when> _1 compound_stmt
+_1 |-->_1`hasYieldStatement<when> _1 elif_clause
+_1 |-->_1`hasYieldStatement<when> _1 else_clause
+_1 |-->_1`hasYieldStatement<when> _1 finally_clause
+
+_1 _* |-->true<when> _1 stmt, _1`hasYieldStatement true
+_1 _* |-->_*`recurse<when> _1 stmt
+
+_1 ; _* |-->true<when> _1 small_stmt, _1`hasYieldStatement true
 _1 ; _* |-->_*`recurse<when> _1 small_stmt
 
 _1 |-->false
@@ -1311,6 +1393,8 @@ _1 in _2 |-->boolean
 _1 is not _2 |-->boolean
 _1 is _2 |-->boolean
 
+_1 _2 |-->OclIterator<when> _1 generator, _2 trailer
+
 _1 _2 |-->_1<when> _1 Class, _2 trailer
 
 _1 _2 |-->_2`trailerOclType<when> _1 atom, _2 trailer
@@ -1462,6 +1546,8 @@ def _1 ( ) -> _2 : _3 |-->  operation _1() : _2`ocltype\n  pre: true post: true\
 
 async def _1 ( ) : _2 |-->  operation _1() : OclAny\n  pre: true post: true\n  activity:\n_2;\n\n<when> _2`hasValueReturn true
 async def _1 ( ) : _2 |-->  operation _1()\n  pre: true post: true\n  activity:\n_2;\n\n
+
+def _1 ( ) : _2 |-->  operation _1(_position_ : int) : OclAny\n  pre: true post: true\n  activity:\n    var _yieldCount_ : int := 0;\n_2;\n\n<when> _2`hasYieldStatement true <action> _1 generator
 
 def _1 ( ) : _2 |-->  operation _1() : OclAny\n  pre: true post: true\n  activity:\n_2;\n\n<when> _2`hasValueReturn true
 def _1 ( ) : _2 |-->  operation _1()\n  pre: true post: true\n  activity:\n_2;\n\n

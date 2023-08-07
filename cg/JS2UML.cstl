@@ -118,7 +118,7 @@ return _1 ; |-->    return _1
 return ; |-->    return
 
 yieldStatement::
-yield _1 ; |-->    if _yieldCount_ < _position_ then _yieldCount_ := _yieldCount + 1 else return _1
+yield _1 ; |-->    if _yieldCount_ < _position_ then _yieldCount_ := _yieldCount_ + 1 else return _1
 
 withStatement::
 with ( _1 ) _2 |-->_2
@@ -718,7 +718,7 @@ _1 |-->_1
 updateForm::
 _1 , _* |-->_1`updateForm_*`updateForm
 _1 . forEach |-->  execute _1->forAll
-yield _1 ; |-->    if _yieldCount_ < _position_ then _1`updateForm  _yieldCount_ := _yieldCount + 1 else return _1 ;\n
+yield _1 ; |-->    if _yieldCount_ < _position_ then _1`updateForm  _yieldCount_ := _yieldCount_ + 1 else return _1 ;\n
 
 Atomics.add _1 |-->    _1`firstArg->at(_1`secondArg+1) := _1`firstArg->at(_1`secondArg+1) + _1`thirdArg ;\n 
 Atomics.and _1 |-->    _1`firstArg->at(_1`secondArg+1) := MathLib.bitwiseAnd(_1`firstArg->at(_1`secondArg+1), _1`thirdArg) ; \n

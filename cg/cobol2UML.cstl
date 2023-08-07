@@ -1025,7 +1025,7 @@ $ _1 |-->String<when> _1 pictureCardinality
 < _1 |-->String<when> _1 pictureCardinality
 > _1 |-->String<when> _1 pictureCardinality
 V _1 |-->double<when> _1 pictureCardinality
-9 _1 |-->int<when> _1 pictureCardinality
+9 _1 |-->_1`picCardDataType<when> _1 pictureCardinality
 . _1 |-->String<when> _1 pictureCardinality
 _1 _2 |-->String<when> _2 pictureCardinality
 X _* |-->String
@@ -1126,6 +1126,19 @@ _1 |-->String
 
 pictureCardinality::
 ( _1 ) |-->
+
+picCardDataType::
+( 1 ) |-->int
+( 2 ) |-->int
+( 3 ) |-->int
+( 4 ) |-->int
+( 5 ) |-->int
+( 6 ) |-->int
+( 7 ) |-->int
+( 8 ) |-->int
+( 9 ) |-->int
+( _1 ) |-->long
+
 
 dataReceivedByClause::
 RECEIVED BY CONTENT |-->
@@ -1556,7 +1569,7 @@ ADD _1  |-->_1<when> _1 addToStatement
 ADD _1 _2 _3 END-ADD  |-->    try (_1 _3      skip) catch (_ex : OclException) do (_2      skip) ;\n<when> _1 addToGivingStatement, _2 onSizeErrorPhrase, _3 notOnSizeErrorPhrase
 ADD _1 _2 _3  |-->    try (_1 _3      skip) catch (_ex : OclException) do (_2      skip) ;\n<when> _1 addToGivingStatement, _2 onSizeErrorPhrase, _3 notOnSizeErrorPhrase
 ADD _1 _2 END-ADD  |-->    try ( _1      skip ) catch (_ex : OclException) do (_2      skip) ;\n<when> _1 addToGivingStatement, _2 onSizeErrorPhrase
-ADD _1 _2  |-->    try (_1      skip) catch (_ex : OclException) do (_2      skip) ;\n<when> _1 addToGivingStatement, _2 onSizeErrorPhrase
+ADD _1 _2  |-->    _1\n    if _1`overflowTest then (_2      skip) else skip;\n<when> _1 addToGivingStatement, _2 onSizeErrorPhrase
 ADD _1 _2 END-ADD  |-->    try (_1 _2      skip) catch (_ex : OclException) do skip ;\n<when> _1 addToGivingStatement, _2 notOnSizeErrorPhrase
 ADD _1 _2  |-->    try (_1 _2      skip) catch (_ex : OclException) do skip ;\n<when> _1 addToGivingStatement, _2 notOnSizeErrorPhrase
 ADD _1 END-ADD  |-->_1<when> _1 addToGivingStatement
@@ -1584,6 +1597,17 @@ _1 _* TO _3 GIVING _4  |-->    _3 := _3 + (_1 + _*`sum);\n    _4 := _3_4`roundFu
 _1 _* TO _3 GIVING _4 _+  |-->    (var _addGivingTmp : double ; _addGivingTmp := _3 + (_1 + _*`sum) ;\n      _4 := _addGivingTmp_4`roundFunction;\n_+`addGivingAssigns      skip) ;\n
 _1 _* GIVING _3 _+ |-->    (var _addGivingTmp : double ; _addGivingTmp := _1 + _*`sum ;\n      _3 := _addGivingTmp_3`roundFunction ; \n_+`addGivingAssigns      skip) ;\n
 _1 _* GIVING _3  |-->    _3 := (_1 + _*`sum)_3`roundFunction ;\n
+
+
+overflowTest::
+_1 TO _2 GIVING _3  |-->MathLib.isIntegerOverflow(_2, _2`integerWidth) or MathLib.isIntegerOverflow(_3, _3`integerWidth)
+_1 _* TO _3 GIVING _4  |-->MathLib.isIntegerOverflow(_3, _3`integerWidth) or MathLib.isIntegerOverflow(_4, _4`integerWidth)
+_1 _* TO _3 GIVING _4 _+  |-->MathLib.isIntegerOverflow(_3, _3`integerWidth) or MathLib.isIntegerOverflow(_4, _4`integerWidth)_+`overflowItemTest
+_1 _* GIVING _3 _+ |-->MathLib.isIntegerOverflow(_3, _3`integerWidth)_+`overflowItemTest
+_1 _* GIVING _3  |-->MathLib.isIntegerOverflow(_3, _3`integerWidth)
+
+overflowItemTest::
+_1 |--> or MathLib.isIntegerOverflow(_1, _1`integerWidth)
 
 
 addCorrespondingStatement::
@@ -2293,7 +2317,7 @@ MOVE _1  |-->_1
 
 
 moveToStatement::
-_1 TO _2  |-->    _2 := StringLib.leftAlignInto("" + _1, _2`width);\n<when> _1 String
+_1 TO _2  |-->    _2 := StringLib.leftAlignInto("" + _1, _2`fieldWidth);\n<when> _1 String
 _1 TO _2  |-->    _2 := _1 ;\n
 _1 TO _2 _*  |-->    (var _moveTmp : OclAny ; _moveTmp := _1;\n _2 := _moveTmp;\n_*`moveAssignments      skip) ; \n
 
@@ -2306,7 +2330,7 @@ moveToSendingArea::
 _1  |-->_1
 
 moveCorrespondingToStatement::
-CORRESPONDING _1 TO _2  |-->    _2 := _1;\n<when> _1 moveCorrespondingToSendingArea, _2 identifier
+CORRESPONDING _1 TO _2  |-->    _2 := moveCorresponding$_1$_2(_1,_2);\n<when> _1 moveCorrespondingToSendingArea, _2 identifier
 CORRESPONDING _1 TO _*  |-->    (var _moveTmp : OclAny ; _moveTmp := _1;\n_*`moveAssignments      skip) ;\n<when> _1 moveCorrespondingToSendingArea
 CORR _1 TO _2  |-->    _2 := _1;\n<when> _1 moveCorrespondingToSendingArea, _2 identifier
 CORR _1 TO _*  |-->    (var _moveTmp : OclAny ; _moveTmp := _1;\n_*`moveAssignments      skip) ;\n<when> _1 moveCorrespondingToSendingArea
@@ -2333,7 +2357,7 @@ MULTIPLY _1 BY _2 END-MULTIPLY  |-->    (var _multTmp : double;\n      _multTmp 
 MULTIPLY _1 BY _2  |-->    (var _multTmp : double;\n      _multTmp := _1;\n_2`multiplicationAssignments      skip);\n<when> _2 multiplyRegular
 
 MULTIPLY _1 BY _2 _3 _4 END-MULTIPLY  |-->    try (var _multiplyTmp : double ; _multiplyTmp := _1*_2 ;\n_2`multiplyGivingAssignments ; _4    skip) catch (_ex : OclException) do (_3     skip) ;\n<when> _2 multiplyGiving, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
-MULTIPLY _1 BY _2 _3 _4  |-->    try (var _multiplyTmp : double ; _multiplyTmp := _1*_2 ;\n_2`multiplyGivingAssignments ; _4    skip) catch (_ex : OclException) do (_3     skip) ;\n<when> _2 multiplyGiving, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
+MULTIPLY _1 BY _2 _3 _4  |-->    (var _multiplyTmp : double ; _multiplyTmp := _1*_2 ;\n_2`multiplyGivingAssignments);\n_2`sizeError (_3 skip) else skip ;\n_2`noSizeError (_4 skip) ;\n<when> _2 multiplyGiving, _3 onSizeErrorPhrase, _4 notOnSizeErrorPhrase
 
 MULTIPLY _1 BY _2 _3 END-MULTIPLY  |-->    try (var _multiplyTmp : double ; _multiplyTmp := _1*_2 ;\n_2`multiplyGivingAssignments) catch (_ex : OclException) do (_3     skip);\n<when> _2 multiplyGiving, _3 onSizeErrorPhrase
 MULTIPLY _1 BY _2 _3  |-->    try (var _multiplyTmp : double ; _multiplyTmp := _1*_2 ;\n_2`multiplyGivingAssignments) catch (_ex : OclException) do (_3     skip);\n<when> _2 multiplyGiving, _3 onSizeErrorPhrase
@@ -3526,6 +3550,13 @@ qualifiedDataNameFormat1::
 _1 _2 |-->_2.subrange(_1`startingPosition,_1`endingPosition)
 _1 |-->_1
 
+fieldWidth::
+_1 _2 |-->(_1`endingPosition - _1`startingPosition + 1)
+_1 |-->_1`fieldWidth<when> _1 qualifiedDataName
+_1 |-->_1`fieldWidth<when> _1 qualifiedDataNameFormat1
+_1 |-->_1`width
+
+
 qualifiedDataNameFormat2::
 _1 _2 |-->_1_2
 
@@ -3616,8 +3647,8 @@ _1 |-->_1
 
 figurativeConstant::
 ALL _1 |-->_1 
-HIGH-VALUE |-->(10->pow(18)-1)
-HIGH-VALUES |-->(10->pow(18)-1)
+HIGH-VALUE |-->(999999999999999999)
+HIGH-VALUES |-->(999999999999999999)
 LOW-VALUE |-->0 
 LOW-VALUES |-->0 
 NULL_ |-->null 
