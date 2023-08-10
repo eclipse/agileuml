@@ -61,9 +61,25 @@ public abstract class ASTTerm
   { mathoclvars = new java.util.HashMap(); }  
      // String --> ASTTerm
 
+  static String cobolHyphenReplacement; 
+  static 
+  { cobolHyphenReplacement = "_"; } // or "$" for Java
+
+  static String cobolCommaReplacement; 
+  static 
+  { cobolCommaReplacement = "."; } 
+
   static int cobolFillerCount; 
   static 
   { cobolFillerCount = 0; } 
+
+  static Vector cobolDataDescriptionDataNames; 
+  static
+  { cobolDataDescriptionDataNames = new Vector(); } 
+
+  static Vector cobolAmbiguousDataNames; 
+  static
+  { cobolAmbiguousDataNames = new Vector(); } 
 
   static Vector cqueryfunctions = new Vector(); 
   static
@@ -172,6 +188,8 @@ public abstract class ASTTerm
   public abstract ASTTerm removeExtraNewlines();
 
   public abstract ASTTerm replaceCobolIdentifiers();
+
+  public abstract ASTTerm replaceAmbiguousCobolNames(Vector rnames);
 
   public abstract ASTTerm substituteEq(String str, ASTTerm newtrm);
   

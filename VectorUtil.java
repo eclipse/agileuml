@@ -287,6 +287,22 @@ class VectorUtil
     return false; 
   } 
 
+  public static boolean haveCommonElementSuffixName(final Vector v1, final Vector v2) 
+  { for (int i = 0; i < v1.size(); i++) 
+    { ModelElement obj = (ModelElement) v1.get(i);
+      String nme = obj.getName();  
+      int dIndex = nme.lastIndexOf("$"); 
+      if (dIndex > 0 && dIndex < nme.length())
+      { String baseName = nme.substring(dIndex+1);
+         
+        if (VectorUtil.containsSuffixName(baseName,v2))
+        { return true; } 
+      } 
+    } 
+
+    return false; 
+  } 
+
   public static Vector commonElementNames(final Vector v1, final Vector v2) 
   { Vector res = new Vector();
  
@@ -300,10 +316,36 @@ class VectorUtil
     return res; 
   } 
 
+  public static Vector commonElementSuffixNames(final Vector v1, final Vector v2) 
+  { Vector res = new Vector();
+ 
+    for (int i = 0; i < v1.size(); i++) 
+    { ModelElement obj = (ModelElement) v1.get(i);
+      String nme = obj.getName();  
+      int dIndex = nme.lastIndexOf("$"); 
+      if (dIndex > 0 && dIndex < nme.length())
+      { String baseName = nme.substring(dIndex+1); 
+        if (VectorUtil.containsSuffixName(baseName,v2))
+        { res.add(nme); }
+      }  
+    } 
+
+    return res; 
+  } 
+
   public static boolean containsName(String nme, Vector v)
   { for (int i = 0; i < v.size(); i++) 
     { ModelElement obj = (ModelElement) v.get(i);
       if (nme.equals(obj.getName())) 
+      { return true; } 
+    } 
+    return false; 
+  }   
+
+  public static boolean containsSuffixName(String nme, Vector v)
+  { for (int i = 0; i < v.size(); i++) 
+    { ModelElement obj = (ModelElement) v.get(i);
+      if (obj.getName().endsWith("$" + nme)) 
       { return true; } 
     } 
     return false; 

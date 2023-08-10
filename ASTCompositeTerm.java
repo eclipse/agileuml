@@ -270,7 +270,53 @@ public class ASTCompositeTerm extends ASTTerm
   public ASTTerm replaceCobolIdentifiers()
   { // Each (cobolName sss) updated to be valid sss
     // FILLER becomes FILLER$n 
+    // Identify ambiguous field names
 
+    if ("dataDescriptionEntryFormat1".equals(tag) && 
+        ((ASTTerm) terms.get(1)).getTag().equals("dataPictureClause"))
+    { // anonymous data field
+      Vector nterms = new Vector(); 
+      nterms.add(terms.get(0)); 
+      ASTTerm.cobolFillerCount++; 
+      nterms.add(new ASTSymbolTerm("FILLER$" + 
+                    ASTTerm.cobolFillerCount));
+      /* JOptionPane.showMessageDialog(null, this + 
+              " added filler " + ASTTerm.cobolFillerCount, 
+              " ", JOptionPane.INFORMATION_MESSAGE); */ 
+      for (int i = 1; i < terms.size(); i++)
+      { ASTTerm trm = (ASTTerm) terms.get(i);
+        nterms.add(trm); 
+      } 
+      return new ASTCompositeTerm(tag,nterms); 
+    } 
+    else if ("dataDescriptionEntryFormat1".equals(tag) && 
+       ((ASTTerm) terms.get(1)).getTag().equals("dataName"))
+    { // non-anonymous field
+      ASTTerm nameTerm = (ASTTerm) terms.get(1); 
+      ASTTerm ntrm = nameTerm.replaceCobolIdentifiers(); 
+        
+      String fld = ntrm.literalForm(); 
+      if (ASTTerm.cobolDataDescriptionDataNames.contains(fld))
+      { JOptionPane.showMessageDialog(null, this + 
+              " Ambiguous field name: " + fld, 
+              " ", JOptionPane.INFORMATION_MESSAGE);
+        ASTTerm.setTaggedValue(fld, "ambiguousName", 
+                               "true");  
+        ASTTerm.cobolAmbiguousDataNames.add(fld);
+      } 
+      else 
+      { ASTTerm.cobolDataDescriptionDataNames.add(fld); }
+      
+      Vector nterms = new Vector(); 
+      nterms.add(terms.get(0)); 
+      nterms.add(ntrm); 
+      for (int i = 2; i < terms.size(); i++)
+      { ASTTerm trm = (ASTTerm) terms.get(i);
+        nterms.add(trm); 
+      } 
+      return new ASTCompositeTerm(tag,nterms); 
+    } 
+ 
     Vector newterms = new Vector();  
     for (int i = 0; i < terms.size(); i++)
     { ASTTerm trm = (ASTTerm) terms.get(i);
@@ -278,11 +324,11 @@ public class ASTCompositeTerm extends ASTTerm
       { ASTTerm.cobolFillerCount++; 
         newterms.add(new ASTSymbolTerm("FILLER$" + 
                            ASTTerm.cobolFillerCount));
-        JOptionPane.showMessageDialog(null, this + 
+    /*    JOptionPane.showMessageDialog(null, this + 
               " replaced filler " + ASTTerm.cobolFillerCount, 
               " ", JOptionPane.INFORMATION_MESSAGE);
- 
-      } 
+     */ 
+      }        
       else 
       { ASTTerm ntrm = trm.replaceCobolIdentifiers(); 
         if (ntrm != null) 
@@ -291,6 +337,78 @@ public class ASTCompositeTerm extends ASTTerm
     } 
 
     return new ASTCompositeTerm(tag,newterms); 
+  } 
+
+  public ASTTerm replaceAmbiguousCobolNames(Vector rnames)
+  { // Each ambiguous field name fld becomes rname$fld
+
+    if ("dataDescriptionEntryFormat1".equals(tag) &&
+        rnames.size() > 0 && 
+        ASTTerm.hasTag(terms,"dataPictureClause"))
+    { // It is a basic data item, not an entity
+
+        
+      Vector nterms = new Vector(); 
+      nterms.add(terms.get(0)); 
+      ASTTerm nameTerm = (ASTTerm) terms.get(1); 
+      String fld = nameTerm.literalForm(); 
+
+      String rname = (String) rnames.get(0); 
+
+      JOptionPane.showMessageDialog(null, this + 
+              " Basic data item: " + fld + " in " + rname, 
+              " ", JOptionPane.INFORMATION_MESSAGE);
+
+      if (ASTTerm.cobolAmbiguousDataNames.contains(fld))
+      { ASTTerm newname = 
+          new ASTBasicTerm("dataName", rname + "$" + fld); 
+        nterms.add(newname); 
+      } 
+      else 
+      { nterms.add(nameTerm); }
+      
+      for (int i = 2; i < terms.size(); i++)
+      { ASTTerm trm = (ASTTerm) terms.get(i);
+        nterms.add(trm); 
+      } 
+      return new ASTCompositeTerm(tag,nterms); 
+    } 
+    else if ("dataDescriptionEntryFormat1".equals(tag) &&
+        ((ASTTerm) terms.get(1)).getTag().equals("dataName") &&
+        !ASTTerm.hasTag(terms,"dataPictureClause"))
+    { // It is an entity
+ 
+      ASTTerm rec = (ASTTerm) terms.get(1); 
+      String ename = rec.literalForm(); 
+
+      JOptionPane.showMessageDialog(null, this + 
+              " Record data: " + ename, 
+              " ", JOptionPane.INFORMATION_MESSAGE);
+
+      Vector newterms = new Vector();
+      newterms.add(terms.get(0)); 
+      newterms.add(rec); 
+  
+      rnames.add(0,ename); 
+
+      for (int i = 2; i < terms.size(); i++)
+      { ASTTerm trm = (ASTTerm) terms.get(i);
+        ASTTerm ntrm = trm.replaceAmbiguousCobolNames(rnames); 
+        if (ntrm != null) 
+        { newterms.add(ntrm); }
+      }  
+      return new ASTCompositeTerm(tag,newterms); 
+    } 
+
+    Vector newtms = new Vector();
+     
+    for (int i = 0; i < terms.size(); i++)
+    { ASTTerm trm = (ASTTerm) terms.get(i);
+      ASTTerm ntrm = trm.replaceAmbiguousCobolNames(rnames); 
+      if (ntrm != null) 
+      { newtms.add(ntrm); }
+    }  
+    return new ASTCompositeTerm(tag,newtms); 
   } 
 
 
@@ -41739,6 +41857,7 @@ public class ASTCompositeTerm extends ASTTerm
             // if ("FILLER".equals(fieldName)) 
             // { fieldName = "FILLER$" + startPos + "$" + endPosn; }
 
+            
             JOptionPane.showMessageDialog(null, 
                "Type of " + fieldName + " is " + typ + 
                " Width: " + wdth + 
@@ -41766,7 +41885,24 @@ public class ASTCompositeTerm extends ASTTerm
               ASTTerm.setTaggedValue(
                                    fieldName, "defaultValue", 
                                    dval);  
+               
             }   
+
+            int dIndex = fieldName.lastIndexOf("$"); 
+            if (dIndex > 0 && dIndex < fieldName.length())
+            { String baseName = fieldName.substring(dIndex+1); 
+              ASTTerm.setTaggedValue(baseName, "width", 
+                                     "" + wdth);       
+              // JOptionPane.showMessageDialog(null,
+              //   "Base name of " + fieldName + " is " + baseName, 
+              //   "", JOptionPane.INFORMATION_MESSAGE); 
+              ASTTerm.setTaggedValue(baseName, 
+                                     "startPosition", 
+                                     "" + startPos); 
+              ASTTerm.setTaggedValue(baseName, 
+                                     "endPosition", 
+                                     "" + endPosn); 
+            } 
 
             Attribute att = 
               new Attribute(fieldName, typ, 

@@ -3233,7 +3233,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     else if (data.equals("sum"))
     { Type sumtype = argument.getElementType();  // int, double, long, String 
       if (sumtype == null) 
-      { JOptionPane.showMessageDialog(null, "No type for: " + this, 
+      { JOptionPane.showMessageDialog(null, "!! No type for: " + this, 
                                       "Type error", JOptionPane.ERROR_MESSAGE);
         return ""; // "Set." + data + "(" + pre + ")"; 
       } 
@@ -3433,7 +3433,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "Long.decode(" + qf + ").longValue()"; } 
 
     if (operator.equals("->toReal")) 
-    { return "Double.parseDouble(" + qf + ")"; } 
+    { return "Ocl.toDouble(" + qf + ")"; } 
 
     if (operator.equals("->toBoolean")) 
     { return "\"true\".equals(" + qf + " + \"\")"; } 
@@ -3811,7 +3811,7 @@ public String updateFormSubset(String language, java.util.Map env, Expression va
     { return "SystemTypes.toLong(" + qf + ")"; } 
 
     if (operator.equals("->toReal")) 
-    { return "double.Parse(" + qf + ")"; } 
+    { return "SystemTypes.toDouble(" + qf + ")"; } 
 
     if (operator.equals("->toBoolean")) 
     { return "SystemTypes.toBoolean(" + qf + ")"; } 

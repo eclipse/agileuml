@@ -65,6 +65,9 @@ public class ASTSymbolTerm extends ASTTerm
   public ASTTerm removeExtraNewlines()
   { return this; } 
 
+  public ASTTerm replaceAmbiguousCobolNames(Vector rnames)
+  { return this; }
+
   public ASTTerm replaceCobolIdentifiers()
   { if ("FILLER".equals(symbol))
     { ASTTerm.cobolFillerCount++; 

@@ -2806,7 +2806,8 @@ public class Attribute extends ModelElement
     java.util.Map env = new java.util.HashMap(); 
     env.put(ename, "this"); 
   
-    for (int j = 0; j < cons.size(); j++)   // may be constraints of subclass ent
+    for (int j = 0; j < cons.size(); j++)   
+         // may be constraints of subclass ent
     { Constraint cc = (Constraint) cons.get(j);
       // Constraint cnew = cc.matches("set",nme,ent,val,event);
       // must type check new constraint.
@@ -2910,11 +2911,18 @@ public class Attribute extends ModelElement
                              Vector entities, Vector types) 
   { // setatt(type attx) 
     // if ent != entity, creates subclass ent extension op for att
-	if (type == null)
-	{ return ""; }
+
+    String nme = getName();
+
+    if (type == null || ent == null || entity == null) // error
+    { System.err.println("!! ERROR: null type/entity in attribute " + nme); 
+      return ""; 
+    } 
+
+    String ename = ent.getName(); 
 
     if (frozen) { return ""; }
-    String nme = getName();
+
     Vector v = type.getValues();
     String val = nme + "_x"; 
     Attribute par = new Attribute(val,type,ModelElement.INTERNAL);
@@ -2961,17 +2969,28 @@ public class Attribute extends ModelElement
     }
        
     BasicExpression attxbe = new BasicExpression(val); 
+    java.util.Map env = new java.util.HashMap(); 
+    env.put(ename, "this"); 
       
     Vector contexts = new Vector(); 
     contexts.add(ent); 
         
     for (int j = 0; j < cons.size(); j++)   // may be constraints of subclass ent
     { Constraint cc = (Constraint) cons.get(j);
-      Constraint cnew = cc.matches("set",nme,ent,val,event);
+      // Constraint cnew = cc.matches("set",nme,ent,val,event);
       // must type check new constraint. 
       // System.out.println("Match set of " + cc + " is: " + cnew);
        
-      if (cnew != null)
+      if (cc.isBehavioural() && 
+          cc.dependsUpon(ename,nme))
+      { String cccode = cc.updateFormCSharp(env,true);
+
+        System.out.println(">> Constraint " + cc + "\n" + 
+                   ">> action for set" + nme + " is: " + cccode);
+        opheader = opheader + "\n" + 
+                   cccode + "\n";
+            
+   /* if (cnew != null)
       { Vector contx = new Vector(); 
         if (cnew.getOwner() != null) 
         { contx.add(cnew.getOwner()); } 
@@ -2981,7 +3000,7 @@ public class Attribute extends ModelElement
         { String update = cnew.updateOperationCSharp(ent,nme,true);  
           opheader = opheader + "\n" + 
                      update + "\n";
-        } 
+        } */ 
       }
       else if (cc.allFeaturesUsedIn().contains(nme) && cc.getEvent() == null)
       { Constraint cpre = (Constraint) cc.substituteEq(nme,attxbe); 

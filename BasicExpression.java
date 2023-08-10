@@ -7587,8 +7587,18 @@ class BasicExpression extends Expression
             if (isQualified())
             { return "((" + etype + ") " + data + "[" + ind + "])"; } 
             String indopt = evaluateString("-",ind,"1"); // not for qualified ones
-            if (type.getName().equals("String"))
-            { return data + ".Substring(" + indopt + ",1)"; } 
+            if (arrayIndex.isString())
+            { return data + "[\"\" + " + ind + "]"; }
+            // if (type.getName().equals("String"))
+            // { return data + ".Substring(" + indopt + ",1)"; } 
+            else if (arrayType != null && arrayType.isMap())
+            { return "((" + etype + ") " + data + "[" + ind + "])"; }
+            else if (arrayType != null && arrayType.isSequence())
+            { return "((" + etype + ") " + data + "[" + indopt + "])"; }
+            else if (type.getName().equals("String"))
+            { return "(\"\" + " + 
+                   data + ".charAt(" + indopt + "))";
+            } 
             else 
             { return "((" + type.getCSharp() + ") " + data + "[" + indopt + "])"; }
           }
@@ -10255,8 +10265,82 @@ public Statement generateDesignSubtract(Expression rhs)
     // System.out.println(">>> Assignment " + this + " = " + val2); 
 
     String datax = data;
+
     if (objectRef != null) 
     { datax = objectRef.queryFormCSharp(env,local) + "." + data; } 
+
+    if ("subrange".equals(data) && parameters != null && 
+        objectRef != null && 
+        objectRef instanceof BasicExpression)
+    { // obj.subrange(a,b) := val2 for strings is same as 
+      // obj := obj.subrange(1,a-1) + val2 + obj.subrange(b+1)
+
+      Expression par1 = (Expression) parameters.get(0); 
+      Expression par2 = (Expression) parameters.get(1); 
+
+      Vector pars1 = new Vector(); 
+      pars1.add(new BasicExpression(1)); 
+      pars1.add(new BinaryExpression("-", par1, 
+                       new BasicExpression(1))); 
+
+      Expression rng1 = 
+         BasicExpression.newFunctionBasicExpression(
+           "subrange", objectRef, pars1); 
+      rng1.setType(objectRef.getType()); 
+      rng1.setElementType(objectRef.getElementType()); 
+
+
+      Expression rng2 = 
+         BasicExpression.newFunctionBasicExpression(
+           "subrange", objectRef, 
+              new BinaryExpression("+", par2, 
+                       new BasicExpression(1))); 
+      rng2.setType(objectRef.getType()); 
+      rng2.setElementType(objectRef.getElementType()); 
+
+    /*  String objx = objectRef.queryFormJava7(env,local);
+      String lqf = ((BasicExpression) objectRef).leftQueryFormJava7(env,local);  
+      String par1x = par1.queryFormJava7(env,local); 
+      String par2x = par2.queryFormJava7(env,local); */ 
+
+      if (type != null && "String".equals(type.getName()))
+      { // objx := objx.subrange(1,par1x-1) + val2 +
+        //         objx.subrange(par2x+1)
+
+        Expression newvar = 
+          new BinaryExpression("+", rng1, 
+            new BinaryExpression("+", var, rng2)); 
+        newvar.setType(objectRef.getType()); 
+        newvar.setElementType(objectRef.getElementType()); 
+
+        String newval2 = newvar.queryFormCSharp(env,local); 
+           
+       /* String res = lqf + " = (" + objx + ").substring(0," + par1x + "-1) + " + val2 + " + (" + objx + ").substring(" + par2x + ");\n";
+        return res; */ 
+       
+        return 
+          ((BasicExpression) objectRef).updateFormEqCSharp(
+                                 env,newval2,newvar,local); 
+      } 
+      else if (type != null && 
+               "Sequence".equals(type.getName()))
+      { // objx := objx.subrange(0,par1x-1) ^ val2 ^
+        //         objx.subrange(par2x + 1)
+
+        Expression newvar = 
+          new BinaryExpression("->union", rng1, 
+            new BinaryExpression("->union", var, rng2)); 
+        newvar.setType(objectRef.getType()); 
+        newvar.setElementType(objectRef.getElementType()); 
+
+        String newval2 = newvar.queryFormCSharp(env,local); 
+                  
+        return 
+          ((BasicExpression) objectRef).updateFormEqCSharp(
+                                 env,newval2,newvar,local); 
+      } 
+    } 
+                
 
 
     if (umlkind == VALUE || umlkind == CONSTANT || umlkind == FUNCTION ||
@@ -10274,7 +10358,7 @@ public Statement generateDesignSubtract(Expression rhs)
       { return "  {} /* can't assign to: " + data + " */"; }
     } 
 
-    if (umlkind == VARIABLE)
+    if (umlkind == VARIABLE) // assume objectRef == null
     { // System.out.println(">>> Variable " + this); 
 
       if (arrayIndex != null) 
@@ -10385,13 +10469,13 @@ public Statement generateDesignSubtract(Expression rhs)
         } 
         else if (type != null && var.type != null)
         { if (Type.isSpecialisedOrEqualType(var.type, type))
-          { return "    " + data + " = " + val2 + ";"; } 
+          { return "    " + cont + ".set" + data + "(" + target + val2 + ");"; } 
           else if ("String".equals(type.getName())) 
-          { return "    " + datax + " = \"\" + " + val2 + ";"; }
+          { return "    " + cont + ".set" + data + "(" + target + "\"\" + " + val2 + ");"; }
           else if ("String".equals(var.type.getName()) &&
                    type.isNumeric())
           { String cname = Named.capitalise(type.getName()); 
-            return "    " + datax + " = SystemTypes.to" + cname + "(" + val2 + ");"; 
+            return "    " + cont + ".set" + data + "(" + target + "SystemTypes.to" + cname + "(" + val2 + "));"; 
           }
           String cstype = type.getCSharp(); 
           return "    " + cont + ".set" + data + "(" + target + " (" + cstype + ") (" + val2 + "));"; 

@@ -1411,6 +1411,10 @@ public class Constraint extends ConstraintOrGroup
     } 
 
     String rhs = succ.updateFormCSharp(env,local); 
+
+    System.out.println(">>> Update form of " + succ + 
+                       " is " + rhs); 
+
     if (rhs == null) { return ""; }
     if (previous) 
     { res = res + " { " + rhs + " }"; } 

@@ -6361,7 +6361,11 @@ public class Entity extends ModelElement implements Comparable
 
         Entity e2 = (Entity) ents.get(j); 
         Vector e2atts = e2.getAttributes(); 
-        if (VectorUtil.haveCommonElementName(e1atts,e2atts))
+
+        // System.out.println(e1atts + " --->>> " + e2atts); 
+
+        if (VectorUtil.haveCommonElementSuffixName(
+                                             e1atts,e2atts))
         { String e1name = e1.getName(); 
           String e2name = e2.getName(); 
           String e1ParName = 
@@ -6386,14 +6390,16 @@ public class Entity extends ModelElement implements Comparable
                        false, new Type("String", null));
           SequenceStatement stats = 
                 new SequenceStatement(); 
-          Vector commonAtts = 
-            VectorUtil.commonElementNames(e1atts,e2atts);
+          Vector commonAtts1 = 
+            VectorUtil.commonElementSuffixNames(e1atts,e2atts);
           Vector e1accesses = 
             e1.moveCorrespondingAccesses(e1ParName, 
-                                         commonAtts); 
+                                         commonAtts1); 
+          Vector commonAtts2 = 
+            VectorUtil.commonElementSuffixNames(e2atts,e1atts);
           Vector e2accesses = 
             e2.moveCorrespondingAccesses(e2ParName + "$x", 
-                                         commonAtts);
+                                         commonAtts2);
 
           BasicExpression e2att = 
             BasicExpression.newAttributeBasicExpression(
@@ -9978,13 +9984,15 @@ public class Entity extends ModelElement implements Comparable
     { Attribute att = (Attribute) attributes.get(i);
       if (att.isFrozen()) { } 
       else 
-      { String par = att.setOperationJava7(this,invariants,entities,types);   
+      { String par = 
+          att.setOperationJava7(this,invariants,entities,types);   
         if (par != null)
         { out.println("  " + par + "\n"); }
 
         if (att.isSequence())
         { String par1 = 
-            att.setIndexOperationJava7(this, invariants, entities, types);
+            att.setIndexOperationJava7(this, 
+                                    invariants, entities, types);
           if (par1 != null) 
           { out.println("  " + par1 + "\n"); }
           par = att.addremOperationJava7(this); 
@@ -10013,12 +10021,15 @@ public class Entity extends ModelElement implements Comparable
       } 
     }
 
-    Vector allinvfeats = Constraint.allFeaturesUsedIn(invariants); 
+    Vector allinvfeats = 
+      Constraint.allFeaturesUsedIn(invariants); 
     Vector oldatts = allInheritedAttributes(); 
     for (int j = 0; j < oldatts.size(); j++) 
     { Attribute oldatt = (Attribute) oldatts.get(j); 
       if (allinvfeats.contains(oldatt.getName()))
-      { String redefinedop = oldatt.setOperationJava7(this,invariants,entities,types);  
+      { String redefinedop = 
+          oldatt.setOperationJava7(this,
+                                   invariants,entities,types);  
         out.println("  " + redefinedop + "\n"); 
       } 
     } // likewise for associations
@@ -10182,6 +10193,18 @@ public class Entity extends ModelElement implements Comparable
                             "  {\n"; 
     } // This class will go after the class for the interface itself. 
 
+    java.util.Map env = new java.util.HashMap(); 
+    // System.out.println(">>> Invariants of class " + name + 
+    //                    " are: " + invariants); 
+    System.out.println(); 
+
+    for (int i = 0; i < invariants.size(); i++) 
+    { Constraint cc = (Constraint) invariants.get(i);
+      Statement updf = cc.generateDesign(env,true); 
+      if (updf instanceof ImplicitInvocationStatement) { } 
+      else if (updf != null)  
+      { cc.setBehavioural(true); }  
+    } 
 
     for (int i = 0; i < attributes.size(); i++)
     { Attribute att = (Attribute) attributes.get(i);

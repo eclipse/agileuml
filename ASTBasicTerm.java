@@ -72,13 +72,15 @@ public class ASTBasicTerm extends ASTTerm
     
     if (tag.equals("cobolWord"))
     { String vtrim = value.trim(); 
-      String vsub = vtrim.replace("-", "$"); 
+      String vsub = 
+        vtrim.replace("-", ASTTerm.cobolHyphenReplacement); 
       return new ASTBasicTerm(tag,vsub);
     } 
 
     if (tag.equals("numericLiteral"))
     { String vtrim = value.trim(); 
-      String vsub = vtrim.replace(",", ".");
+      String vsub = vtrim.replace(",", 
+                      ASTTerm.cobolCommaReplacement);
       if (vsub.startsWith("."))
       { vsub = "0" + vsub; }  
       return new ASTBasicTerm(tag,vsub);
@@ -86,6 +88,9 @@ public class ASTBasicTerm extends ASTTerm
 
     return this; 
   }  
+
+  public ASTTerm replaceAmbiguousCobolNames(Vector rnames)
+  { return this; }
 
   public ASTTerm substituteEq(String str, ASTTerm newtrm)
   { if (str.equals(value))

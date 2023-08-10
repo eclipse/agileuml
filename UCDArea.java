@@ -9366,7 +9366,13 @@ public class UCDArea extends JPanel
     if (ocldatasource != null) 
     { BSystemTypes.generateLibraryCSharp("OclDatasource",out); }
 
+    Entity stringlib = 
+      (Entity) ModelElement.lookupByName("StringLib", entities); 
+    if (stringlib != null) 
+    { BSystemTypes.generateLibraryCSharp("StringLib",out); }
+
     String mainOp = ""; 
+
 
     // If any entity has an activity, this becomes the main operation: 
 
@@ -14904,6 +14910,8 @@ public void produceCUI(PrintWriter out)
     else 
     { System.err.println("! Warning: no file libraries/mathlib.km3"); } 
  
+    ASTTerm.cobolHyphenReplacement = "$"; 
+
     loadFromCobol();
     typeCheck(); 
     typeCheck(); 
@@ -27446,13 +27454,20 @@ public void produceCUI(PrintWriter out)
 
     // remove all whitespace \n \r characters. 
     ASTTerm zz = xx.removeWhitespaceTerms();
-    ASTTerm.cobolFillerCount = 0;  
+
+    ASTTerm.cobolFillerCount = 0;
+    ASTTerm.cobolDataDescriptionDataNames = new Vector(); 
+    ASTTerm.cobolAmbiguousDataNames = new Vector(); 
+  
     ASTTerm yy = zz.replaceCobolIdentifiers(); 
+
+    Vector rnames = new Vector(); 
+    ASTTerm yy1 = yy.replaceAmbiguousCobolNames(rnames); 
 
     Vector cobolinvs = new Vector();
     java.util.Map cobolContext = new java.util.HashMap();  
     Vector auxents = 
-       yy.cobolDataDefinitions(cobolContext, 
+       yy1.cobolDataDefinitions(cobolContext, 
                                cobolinvs); 
 
     String progName = 
@@ -27468,7 +27483,7 @@ public void produceCUI(PrintWriter out)
       return; 
     } 
 
-    String reskm3 = yy.cg(spec); 
+    String reskm3 = yy1.cg(spec); 
     String arg1 = CGRule.correctNewlines(reskm3); 
 
     String auxentities = ""; 
