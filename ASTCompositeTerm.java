@@ -278,7 +278,7 @@ public class ASTCompositeTerm extends ASTTerm
       Vector nterms = new Vector(); 
       nterms.add(terms.get(0)); 
       ASTTerm.cobolFillerCount++; 
-      nterms.add(new ASTSymbolTerm("FILLER$" + 
+      nterms.add(new ASTSymbolTerm("FILLER_" + 
                     ASTTerm.cobolFillerCount));
       /* JOptionPane.showMessageDialog(null, this + 
               " added filler " + ASTTerm.cobolFillerCount, 
@@ -322,7 +322,7 @@ public class ASTCompositeTerm extends ASTTerm
     { ASTTerm trm = (ASTTerm) terms.get(i);
       if ("FILLER".equals(trm.literalForm()))
       { ASTTerm.cobolFillerCount++; 
-        newterms.add(new ASTSymbolTerm("FILLER$" + 
+        newterms.add(new ASTSymbolTerm("FILLER_" + 
                            ASTTerm.cobolFillerCount));
     /*    JOptionPane.showMessageDialog(null, this + 
               " replaced filler " + ASTTerm.cobolFillerCount, 
@@ -513,6 +513,7 @@ public class ASTCompositeTerm extends ASTTerm
   { String res = ""; 
     for (int i = 0; i < terms.size(); i++) 
     { ASTTerm t = (ASTTerm) terms.get(i); 
+      if (t == null) { continue; } 
       res = res + t.literalForm(); 
     } 
     return res; 
@@ -521,7 +522,8 @@ public class ASTCompositeTerm extends ASTTerm
   public String literalFormSpaces()
   { String res = ""; 
     for (int i = 0; i < terms.size(); i++) 
-    { ASTTerm t = (ASTTerm) terms.get(i); 
+    { ASTTerm t = (ASTTerm) terms.get(i);
+      if (t == null) { continue; }  
       res = res + t.literalFormSpaces();
       if (i < terms.size() - 1)
       { res = res + " "; }  
@@ -41800,12 +41802,12 @@ public class ASTCompositeTerm extends ASTTerm
 
         ASTTerm t2 = (ASTTerm) ctrm.terms.get(1);
         String t2lit = t2.literalForm();  
-        if (t2lit.startsWith("FILLER$") || 
+        if (t2lit.startsWith("FILLER_") || 
             t2.getTag().equals("dataName"))
         { fieldName = t2lit; }
         else // anonymous filler
         { ASTTerm.cobolFillerCount++; 
-          fieldName = "FILLER$" + ASTTerm.cobolFillerCount; 
+          fieldName = "FILLER_" + ASTTerm.cobolFillerCount; 
         } 
 
         Entity container = cent; 

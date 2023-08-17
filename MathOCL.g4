@@ -38,7 +38,7 @@ instruction
     | expandTo 
     | cancelIn 
     | factorBy 
-    | simplify
+    | groupBy
     ; 
 
 constraint
@@ -50,7 +50,7 @@ reexpression
     ; 
 
 simplify 
-    : 'Simplify' expression
+    : 'Simplify' (instruction | expression)
     ; 
 
 substituting
@@ -70,7 +70,7 @@ expanding
     ; 
 
 substituteIn
-    : 'Substitute' ID 'in' (expression | expandTo)
+    : 'Substitute' ID 'in' expression
     ; 
 
 expandTo
@@ -85,6 +85,9 @@ cancelIn
     : 'Cancel' expression 'in' expression
     ; 
 
+groupBy
+    : 'Group' expression 'by' expression
+    ; 
 
 idList
      : (ID ',')* ID

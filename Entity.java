@@ -6424,12 +6424,81 @@ public class Entity extends ModelElement implements Comparable
             stats.addStatement(asgn); 
           } 
 
-
           stats.addStatement(new ReturnStatement(respar)); 
           bf.setActivity(stats); 
           bf.setPostcondition(new BasicExpression(true));                 
           bf.setEntity(this); 
           addOperation(bf); 
+ 
+          BehaviouralFeature addbf = 
+            new BehaviouralFeature("addCorresponding$" + 
+                       e1ParName + "$" + e2ParName,
+                       corrpars,
+                       false, new Type("String", null));
+          SequenceStatement addstats = 
+                new SequenceStatement(); 
+
+          addstats.addStatement(cs); 
+ 
+          Vector e1addaccesses = 
+            e1.addCorrespondingAccesses(e1ParName, 
+                                         commonAtts1); 
+          
+          Vector e2addaccesses = 
+            e2.addCorrespondingAccesses(e2ParName + "$x", 
+                                         commonAtts2);
+
+          for (int k = 0; k < e1accesses.size() && 
+                          k < e2accesses.size(); k++) 
+          { Expression rlhs = 
+              (Expression) e1addaccesses.get(k); 
+            Expression rrhs = 
+              (Expression) e2addaccesses.get(k); 
+            Expression lhs = (Expression) e2accesses.get(k); 
+            BinaryExpression addlhsrhs = 
+              new BinaryExpression("+", rlhs, rrhs); 
+            addlhsrhs.setBrackets(true); 
+            Statement asgn = 
+              new AssignStatement(lhs,addlhsrhs); 
+            addstats.addStatement(asgn); 
+          } 
+ 
+          addstats.addStatement(new ReturnStatement(respar)); 
+          addbf.setActivity(addstats); 
+          addbf.setPostcondition(new BasicExpression(true));                 
+          addbf.setEntity(this); 
+          addOperation(addbf); 
+
+          BehaviouralFeature subbf = 
+            new BehaviouralFeature("subtractCorresponding$" + 
+                       e1ParName + "$" + e2ParName,
+                       corrpars,
+                       false, new Type("String", null));
+          SequenceStatement substats = 
+                new SequenceStatement(); 
+
+          substats.addStatement(cs); 
+ 
+          for (int k = 0; k < e1accesses.size() && 
+                          k < e2accesses.size(); k++) 
+          { Expression rlhs = 
+              (Expression) e1addaccesses.get(k); 
+            Expression rrhs = 
+              (Expression) e2addaccesses.get(k); 
+            Expression lhs = (Expression) e2accesses.get(k); 
+            BinaryExpression sublhsrhs = 
+              new BinaryExpression("-", rrhs, rlhs); 
+            sublhsrhs.setBrackets(true); 
+            Statement asgn = 
+              new AssignStatement(lhs,sublhsrhs); 
+            substats.addStatement(asgn); 
+          } 
+ 
+          substats.addStatement(new ReturnStatement(respar)); 
+          subbf.setActivity(substats); 
+          subbf.setPostcondition(new BasicExpression(true));                 
+          subbf.setEntity(this); 
+          addOperation(subbf); 
         } 
       }
     }
@@ -6479,6 +6548,59 @@ public class Entity extends ModelElement implements Comparable
             BasicExpression.newFunctionBasicExpression(
                     "subrange", cls, spars); 
           res.add(substr); 
+        } 
+      } 
+    } 
+    return res; 
+  } 
+
+  public Vector addCorrespondingAccesses(String rec, 
+                                         Vector names)
+  { // For COBOL: 
+    // REC.subrange(st,en) for each nme : names
+    // Converted to a number. 
+
+    Vector res = new Vector(); 
+
+    // BasicExpression indx = 
+    //      BasicExpression.newVariableBasicExpression(
+    //                                "indx", 
+    //                                new Type("int", null)); 
+ 
+    // String shortName = name.substring(0,name.length()-6); 
+    BasicExpression cls = 
+      BasicExpression.newAttributeBasicExpression(
+                                   rec, 
+                                   new Type("String", null));
+    // cls.setElementType(new Type("String", null));
+    // if (cardinalityValue > 1) 
+    // { cls.setArrayIndex(indx); } 
+ 
+      
+    if (cardinalityValue == 1) 
+    { 
+      for (int i = 0; i < names.size(); i++) 
+      { String aname = (String) names.get(i); 
+        Attribute att = getAttribute(aname);
+        if (att != null)  
+        { int awidth = att.getWidth(); 
+          int amult = att.getMultiplicity();   
+          int astart = att.getStartPosition(); 
+          int aend = att.getEndPosition(); 
+
+          // Access is: cls.substring(astart,aend)
+
+          // Expression expr = new BasicExpression(att);
+
+          Vector spars = new Vector(); 
+          spars.add(new BasicExpression(astart)); 
+          spars.add(new BasicExpression(aend));  
+          BasicExpression substr = 
+            BasicExpression.newFunctionBasicExpression(
+                    "subrange", cls, spars); 
+          Expression csubstr = 
+            att.convertStringToNumber(substr);  
+          res.add(csubstr); 
         } 
       } 
     } 

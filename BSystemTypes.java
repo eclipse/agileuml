@@ -5575,18 +5575,19 @@ public class BSystemTypes extends BComponent
         "  }\n\n";  
 
     res = res +         
-       "  public static int toInteger(String sx)\n" + 
-       "  { if (sx.StartsWith(\"0x\"))\n" + 
-       "    { return Convert.ToInt32(sx, 16); }\n" + 
-       "    if (sx.StartsWith(\"0b\"))\n" + 
-       "    { return Convert.ToInt32(sx, 2); }\n" + 
-       "    if (sx.StartsWith(\"0\") && sx.Length > 1)\n" + 
-       "    { return Convert.ToInt32(sx, 8); }\n" + 
-       "    return int.Parse(sx);\n" + 
+       "  public static int toInteger(string sx)\n" + 
+       "  { string tsx = sx.Trim();\n" + 
+       "    if (tsx.StartsWith(\"0x\"))\n" + 
+       "    { return Convert.ToInt32(tsx, 16); }\n" + 
+       "    if (tsx.StartsWith(\"0b\"))\n" + 
+       "    { return Convert.ToInt32(tsx, 2); }\n" + 
+       "    if (tsx.StartsWith(\"0\") && tsx.Length > 1)\n" + 
+       "    { return Convert.ToInt32(tsx, 8); }\n" + 
+       "    return toInt(tsx);\n" + 
        "  } \n\n"; 
 
     res = res +         
-       "  public static long toLong(String sx)\n" + 
+       "  public static long toLong(string sx)\n" + 
        "  { string sxx = sx.Trim();\n" +  
        "    if (sxx.StartsWith(\"0x\"))\n" + 
        "    { return Convert.ToInt64(sxx, 16); }\n" + 

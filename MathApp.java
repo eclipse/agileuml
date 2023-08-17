@@ -535,6 +535,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
             { thisLabel.setText("Instruction to Cancel: Cancel var in expr"); }
             else if ("Substitute".equals(insertedText))
             { thisLabel.setText("Instruction to Substitute: Substitute var in expr"); }
+            else if ("Group".equals(insertedText))
+            { thisLabel.setText("Group expr by var: group together terms with same var power"); }
           } 
           else  
           { thisLabel.setText(" "); 
@@ -1092,6 +1094,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         "    Factor expr by expr\n" + 
         "    Cancel expr in expr\n" + 
         "    Substitute var in expr\n" + 
+        "    Group expr by var\n" + 
         "    Expand expr to N terms\n\n" + 
         "Distributions are:\n" + 
         "    N(mu,sigma^2), Bernoulli(mu), Binom(n,p),\n" + 

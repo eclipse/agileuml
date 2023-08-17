@@ -67,7 +67,7 @@ public class ASTBasicTerm extends ASTTerm
   public ASTTerm replaceCobolIdentifiers()
   { if ("FILLER".equals(value))
     { ASTTerm.cobolFillerCount++; 
-      return new ASTBasicTerm(tag, "FILLER$" + ASTTerm.cobolFillerCount); 
+      return new ASTBasicTerm(tag, "FILLER_" + ASTTerm.cobolFillerCount); 
     } 
     
     if (tag.equals("cobolWord"))

@@ -611,6 +611,14 @@ public abstract class ASTTerm
        Substitute _1 in _2 |-->Substitute _1 in _2
     */ 
 
+    if ("groupTermsByPower".equals(opname) && 
+        eargs.size() == 2)
+    { // Prove expr if assump
+      ASTTerm exprs = (ASTTerm) eargs.get(0); 
+      ASTTerm ids = (ASTTerm) eargs.get(1); 
+      return ASTTerm.groupTermsByPower(exprs,ids); 
+    } 
+
     if ("pythonEval".equals(opname) && 
         eargs.size() == 1)
     { // (trailer (arguments ( 
@@ -4031,7 +4039,7 @@ public abstract class ASTTerm
 
   public static String coefficientOf(
                             ASTTerm var, ASTTerm expr)
-  { // expr is coef*var
+  { // expr is coef*var where coef does not involve var
 
     boolean isIn = ASTTerm.isSubterm(var,expr); 
     if (!isIn)
@@ -4208,7 +4216,9 @@ public abstract class ASTTerm
 
   public static Vector powersOf(
                             ASTTerm var, ASTTerm expr)
-  { // powers of var which occur in expr
+  { // powers of var which occur in expr, assumed to be 
+    // expanded as a sum of products of powers & coefficients. 
+
     Vector res = new Vector(); 
 
     boolean isIn = ASTTerm.isSubterm(var,expr); 
@@ -5151,6 +5161,36 @@ public abstract class ASTTerm
     return var + "*" + ee; 
   }  
 
+  public static String groupTermsByPower(ASTTerm expr, ASTTerm var)
+  { Vector powers = ASTTerm.powersOf(var,expr);
+    Vector vars = new Vector();
+    vars.add(var);  
+
+    //  double minp = VectorUtil.vectorMinimum(powers); 
+    double maxp = VectorUtil.vectorMaximum(powers); 
+
+    if (maxp <= 0.0)
+    { return expr.literalForm(); } 
+
+    Vector coefs = new Vector(); 
+    Vector pows = constructNPowers(
+                     powers, var, expr, 
+                     coefs);
+
+    String res = ""; 
+    String cnsts = 
+              ASTTerm.constantTerms(vars,expr);
+        
+    for (int i = 0; i < pows.size(); i++) 
+    { ASTTerm powi = (ASTTerm) pows.get(i); 
+      res = res + 
+            "(" + coefs.get(i) + ")*" + powi.literalForm() + " + "; 
+    } 
+  
+    return res + cnsts; 
+  } 
+
+
   public static boolean isMathOCLConjunction(ASTTerm trm)
   { String tg = trm.getTag();
     Vector args = trm.getTerms(); 
@@ -5192,6 +5232,20 @@ public abstract class ASTTerm
         args.size() == 3 && 
         ">".equals(args.get(1) + "") && 
         ASTTerm.isMathOCLDivision((ASTTerm) args.get(2)))
+    { return true; } 
+
+    if ("equalityExpression".equals(tg) &&
+        args.size() == 3 && 
+        "<".equals(args.get(1) + "") && 
+        ASTTerm.isMathOCLZero((ASTTerm) args.get(2)) && 
+        ASTTerm.isMathOCLMultiplication((ASTTerm) args.get(0)))
+    { return true; } 
+
+    if ("equalityExpression".equals(tg) &&
+        args.size() == 3 && 
+        "<".equals(args.get(1) + "") && 
+        ASTTerm.isMathOCLZero((ASTTerm) args.get(0)) && 
+        ASTTerm.isMathOCLMultiplication((ASTTerm) args.get(2)))
     { return true; } 
 
     if (args.size() == 1) 
@@ -5496,6 +5550,128 @@ public abstract class ASTTerm
       return res; 
     } 
 
+    if ("equalityExpression".equals(tg) &&
+        args.size() == 3 && 
+        "<".equals(args.get(1) + "") && 
+        ASTTerm.isMathOCLZero((ASTTerm) args.get(2)) && 
+        ASTTerm.isMathOCLMultiplication((ASTTerm) args.get(0)))
+    { // a*b < 0 is (a < 0 => 0 < b) & (b < 0 => 0 < a)
+
+      ASTTerm mult = (ASTTerm) args.get(0); 
+      ASTTerm aa = ASTTerm.mathOCLArgument(mult,0); 
+      ASTTerm bb = ASTTerm.mathOCLArgument(mult,2); 
+
+      ASTTerm zz = new ASTBasicTerm("basicExpression", "0"); 
+
+      Vector newargs1 = new Vector();
+      newargs1.add(aa);
+      newargs1.add(new ASTSymbolTerm("<"));
+      newargs1.add(zz);
+      ASTTerm aalessThanZero = 
+         new ASTCompositeTerm("equalityExpression", newargs1); 
+
+      Vector newargs2 = new Vector();
+      newargs2.add(zz);
+      newargs2.add(new ASTSymbolTerm("<"));
+      newargs2.add(bb);
+      ASTTerm zerolessThanbb = 
+         new ASTCompositeTerm("equalityExpression", newargs2); 
+
+      Vector newargs3 = new Vector();
+      newargs3.add(aalessThanZero);
+      newargs3.add(new ASTSymbolTerm("=>"));
+      newargs3.add(zerolessThanbb);
+      ASTTerm conj1 = 
+         new ASTCompositeTerm("logicalExpression", newargs3); 
+
+      Vector newargs4 = new Vector();
+      newargs4.add(bb);
+      newargs4.add(new ASTSymbolTerm("<"));
+      newargs4.add(zz);
+      ASTTerm bblessThanZero = 
+         new ASTCompositeTerm("equalityExpression", newargs4); 
+
+      Vector newargs5 = new Vector();
+      newargs5.add(zz);
+      newargs5.add(new ASTSymbolTerm("<"));
+      newargs5.add(aa);
+      ASTTerm zerolessThanaa = 
+         new ASTCompositeTerm("equalityExpression", newargs5); 
+
+      Vector newargs6 = new Vector();
+      newargs6.add(bblessThanZero);
+      newargs6.add(new ASTSymbolTerm("=>"));
+      newargs6.add(zerolessThanaa);
+      ASTTerm conj2 = 
+         new ASTCompositeTerm("logicalExpression", newargs6); 
+
+      Vector res = new Vector(); 
+      res.add(conj1);   
+      res.add(conj2); 
+      return res; 
+    } 
+
+    if ("equalityExpression".equals(tg) &&
+        args.size() == 3 && 
+        "<".equals(args.get(1) + "") && 
+        ASTTerm.isMathOCLZero((ASTTerm) args.get(0)) && 
+        ASTTerm.isMathOCLMultiplication((ASTTerm) args.get(2)))
+    { // 0 < a*b is (0 < a => 0 < b) & (b < 0 => a < 0)
+
+      ASTTerm mult = (ASTTerm) args.get(2); 
+      ASTTerm aa = ASTTerm.mathOCLArgument(mult,0); 
+      ASTTerm bb = ASTTerm.mathOCLArgument(mult,2); 
+
+      ASTTerm zz = new ASTBasicTerm("basicExpression", "0"); 
+
+      Vector newargs1 = new Vector();
+      newargs1.add(zz);
+      newargs1.add(new ASTSymbolTerm("<"));
+      newargs1.add(aa);
+      ASTTerm zerolessThanA = 
+         new ASTCompositeTerm("equalityExpression", newargs1); 
+
+      Vector newargs2 = new Vector();
+      newargs2.add(zz);
+      newargs2.add(new ASTSymbolTerm("<"));
+      newargs2.add(bb);
+      ASTTerm zerolessThanB = 
+         new ASTCompositeTerm("equalityExpression", newargs2); 
+
+      Vector newargs3 = new Vector();
+      newargs3.add(zerolessThanA);
+      newargs3.add(new ASTSymbolTerm("=>"));
+      newargs3.add(zerolessThanB);
+      ASTTerm conj1 = 
+         new ASTCompositeTerm("logicalExpression", newargs3); 
+
+      Vector newargs4 = new Vector();
+      newargs4.add(bb);
+      newargs4.add(new ASTSymbolTerm("<"));
+      newargs4.add(zz);
+      ASTTerm bblessThan0 = 
+         new ASTCompositeTerm("equalityExpression", newargs4); 
+
+      Vector newargs5 = new Vector();
+      newargs5.add(aa);
+      newargs5.add(new ASTSymbolTerm("<"));
+      newargs5.add(zz);
+      ASTTerm aalessThan0 = 
+         new ASTCompositeTerm("equalityExpression", newargs5); 
+
+      Vector newargs6 = new Vector();
+      newargs6.add(bblessThan0);
+      newargs6.add(new ASTSymbolTerm("=>"));
+      newargs6.add(aalessThan0);
+      ASTTerm conj2 = 
+         new ASTCompositeTerm("logicalExpression", newargs6); 
+
+      Vector res = new Vector(); 
+      res.add(conj1);   
+      res.add(conj2); 
+      return res; 
+    } 
+
     if (args.size() == 1) 
     { ASTTerm arg0 = (ASTTerm) args.get(0); 
       return ASTTerm.mathOCLConjuncts(arg0); 
@@ -5504,6 +5680,33 @@ public abstract class ASTTerm
     Vector res = new Vector(); 
     res.add(trm); 
     return res; 
+  } 
+
+  public static boolean isMathOCLZero(ASTTerm trm)
+  { String lit = trm.literalForm(); 
+ 
+    if ("0".equals(lit) || 
+        "0.0".equals(lit))
+    { return true; } 
+
+    return false; 
+  } // Also case of (a/b)
+
+  public static boolean isMathOCLMultiplication(ASTTerm trm)
+  { String tg = trm.getTag();
+    Vector args = trm.getTerms(); 
+
+    if ("factorExpression".equals(tg) &&
+        args.size() == 3 && 
+        "*".equals(args.get(1) + ""))
+    { return true; } 
+
+    if (args.size() == 1) 
+    { ASTTerm arg0 = (ASTTerm) args.get(0);
+      return ASTTerm.isMathOCLMultiplication(arg0); 
+    }
+
+    return false; 
   } 
 
   public static boolean isMathOCLDivision(ASTTerm trm)
@@ -5557,6 +5760,22 @@ public abstract class ASTTerm
     return null; 
   } // Also case of (a/b)
 
+  public static ASTTerm mathOCLArgument(ASTTerm trm, int i)
+  { // For i-th argument of binary or higher expressions
+
+    // String tg = trm.getTag();
+    Vector args = trm.getTerms(); 
+
+    if (args.size() >= 3)
+    { return (ASTTerm) args.get(i); } 
+
+    if (args.size() == 1) 
+    { ASTTerm arg0 = (ASTTerm) args.get(0);
+      return ASTTerm.mathOCLArgument(arg0,i); 
+    }
+
+    return null; 
+  } // Nested unary terms until the expected n-ary term.
 
 
   public static boolean isMathOCLDisjunction(ASTTerm trm)
@@ -5595,6 +5814,27 @@ public abstract class ASTTerm
         args.size() == 3 && 
         ">".equals(args.get(1) + "") && 
         ASTTerm.isMathOCLDivision((ASTTerm) args.get(2)))
+    { return true; } 
+
+    if ("equalityExpression".equals(tg) &&
+        args.size() == 3 && 
+        "<".equals(args.get(1) + "") && 
+        ASTTerm.isMathOCLZero((ASTTerm) args.get(2)) && 
+        ASTTerm.isMathOCLMultiplication((ASTTerm) args.get(0)))
+    { return true; } 
+
+    if ("equalityExpression".equals(tg) &&
+        args.size() == 3 && 
+        "<".equals(args.get(1) + "") && 
+        ASTTerm.isMathOCLZero((ASTTerm) args.get(0)) && 
+        ASTTerm.isMathOCLMultiplication((ASTTerm) args.get(2)))
+    { return true; } 
+
+    if ("equalityExpression".equals(tg) &&
+        args.size() == 3 && 
+        "=".equals(args.get(1) + "") && 
+        ASTTerm.isMathOCLZero((ASTTerm) args.get(2)) && 
+        ASTTerm.isMathOCLMultiplication((ASTTerm) args.get(0)))
     { return true; } 
  
     if ("logicalExpression".equals(tg) &&
@@ -5936,7 +6176,162 @@ public abstract class ASTTerm
       res.add(conj2); 
       return res; 
     } 
- 
+
+    if ("equalityExpression".equals(tg) &&
+        args.size() == 3 && 
+        "<".equals(args.get(1) + "") && 
+        ASTTerm.isMathOCLZero((ASTTerm) args.get(2)) && 
+        ASTTerm.isMathOCLMultiplication((ASTTerm) args.get(0)))
+    { // a*b < 0 is (a < 0 & 0 < b) or (b < 0 & 0 < a)
+
+      ASTTerm mult = (ASTTerm) args.get(0); 
+      ASTTerm aa = ASTTerm.mathOCLArgument(mult,0); 
+      ASTTerm bb = ASTTerm.mathOCLArgument(mult,2); 
+
+      ASTTerm zz = new ASTBasicTerm("basicExpression", "0"); 
+
+      Vector newargs1 = new Vector();
+      newargs1.add(aa);
+      newargs1.add(new ASTSymbolTerm("<"));
+      newargs1.add(zz);
+      ASTTerm aalessThanZero = 
+         new ASTCompositeTerm("equalityExpression", newargs1); 
+
+      Vector newargs2 = new Vector();
+      newargs2.add(zz);
+      newargs2.add(new ASTSymbolTerm("<"));
+      newargs2.add(bb);
+      ASTTerm zerolessThanbb = 
+         new ASTCompositeTerm("equalityExpression", newargs2); 
+
+      Vector newargs3 = new Vector();
+      newargs3.add(aalessThanZero);
+      newargs3.add(new ASTSymbolTerm("&"));
+      newargs3.add(zerolessThanbb);
+      ASTTerm conj1 = 
+         new ASTCompositeTerm("logicalExpression", newargs3); 
+
+      Vector newargs4 = new Vector();
+      newargs4.add(bb);
+      newargs4.add(new ASTSymbolTerm("<"));
+      newargs4.add(zz);
+      ASTTerm bblessThanZero = 
+         new ASTCompositeTerm("equalityExpression", newargs4); 
+
+      Vector newargs5 = new Vector();
+      newargs5.add(zz);
+      newargs5.add(new ASTSymbolTerm("<"));
+      newargs5.add(aa);
+      ASTTerm zerolessThanaa = 
+         new ASTCompositeTerm("equalityExpression", newargs5); 
+
+      Vector newargs6 = new Vector();
+      newargs6.add(bblessThanZero);
+      newargs6.add(new ASTSymbolTerm("&"));
+      newargs6.add(zerolessThanaa);
+      ASTTerm conj2 = 
+         new ASTCompositeTerm("logicalExpression", newargs6); 
+
+      Vector res = new Vector(); 
+      res.add(conj1);   
+      res.add(conj2); 
+      return res; 
+    } 
+
+    if ("equalityExpression".equals(tg) &&
+        args.size() == 3 && 
+        "<".equals(args.get(1) + "") && 
+        ASTTerm.isMathOCLZero((ASTTerm) args.get(0)) && 
+        ASTTerm.isMathOCLMultiplication((ASTTerm) args.get(2)))
+    { // 0 < a*b is (0 < a & 0 < b) or (b < 0 & a < 0)
+
+      ASTTerm mult = (ASTTerm) args.get(2); 
+      ASTTerm aa = ASTTerm.mathOCLArgument(mult,0); 
+      ASTTerm bb = ASTTerm.mathOCLArgument(mult,2); 
+
+      ASTTerm zz = new ASTBasicTerm("basicExpression", "0"); 
+
+      Vector newargs1 = new Vector();
+      newargs1.add(zz);
+      newargs1.add(new ASTSymbolTerm("<"));
+      newargs1.add(aa);
+      ASTTerm zerolessThanA = 
+         new ASTCompositeTerm("equalityExpression", newargs1); 
+
+      Vector newargs2 = new Vector();
+      newargs2.add(zz);
+      newargs2.add(new ASTSymbolTerm("<"));
+      newargs2.add(bb);
+      ASTTerm zerolessThanB = 
+         new ASTCompositeTerm("equalityExpression", newargs2); 
+
+      Vector newargs3 = new Vector();
+      newargs3.add(zerolessThanA);
+      newargs3.add(new ASTSymbolTerm("&"));
+      newargs3.add(zerolessThanB);
+      ASTTerm conj1 = 
+         new ASTCompositeTerm("logicalExpression", newargs3); 
+
+      Vector newargs4 = new Vector();
+      newargs4.add(bb);
+      newargs4.add(new ASTSymbolTerm("<"));
+      newargs4.add(zz);
+      ASTTerm bblessThan0 = 
+         new ASTCompositeTerm("equalityExpression", newargs4); 
+
+      Vector newargs5 = new Vector();
+      newargs5.add(aa);
+      newargs5.add(new ASTSymbolTerm("<"));
+      newargs5.add(zz);
+      ASTTerm aalessThan0 = 
+         new ASTCompositeTerm("equalityExpression", newargs5); 
+
+      Vector newargs6 = new Vector();
+      newargs6.add(bblessThan0);
+      newargs6.add(new ASTSymbolTerm("&"));
+      newargs6.add(aalessThan0);
+      ASTTerm conj2 = 
+         new ASTCompositeTerm("logicalExpression", newargs6); 
+
+      Vector res = new Vector(); 
+      res.add(conj1);   
+      res.add(conj2); 
+      return res; 
+    } 
+
+    if ("equalityExpression".equals(tg) &&
+        args.size() == 3 && 
+        "=".equals(args.get(1) + "") && 
+        ASTTerm.isMathOCLZero((ASTTerm) args.get(2)) && 
+        ASTTerm.isMathOCLMultiplication((ASTTerm) args.get(0)))
+    { // a*b = 0 is a = 0 or b = 0
+
+      ASTTerm mult = (ASTTerm) args.get(0); 
+      ASTTerm aa = ASTTerm.mathOCLArgument(mult,0); 
+      ASTTerm bb = ASTTerm.mathOCLArgument(mult,2); 
+
+      ASTTerm zz = new ASTBasicTerm("basicExpression", "0"); 
+
+      Vector newargs1 = new Vector();
+      newargs1.add(aa);
+      newargs1.add(new ASTSymbolTerm("="));
+      newargs1.add(zz);
+      ASTTerm aaEqZero = 
+         new ASTCompositeTerm("equalityExpression", newargs1); 
+
+      Vector newargs2 = new Vector();
+      newargs2.add(bb);
+      newargs2.add(new ASTSymbolTerm("="));
+      newargs2.add(zz);
+      ASTTerm bbEqZero = 
+         new ASTCompositeTerm("equalityExpression", newargs2); 
+
+      Vector res = new Vector(); 
+      res.add(aaEqZero); 
+      res.add(bbEqZero); 
+      return res; 
+    } 
+
     if ("logicalExpression".equals(tg) &&
         args.size() == 3 && 
         "or".equals(args.get(1) + ""))
@@ -6567,6 +6962,101 @@ public abstract class ASTTerm
     return res;  
   }  
 
+  public static ASTTerm constructNPowerProd(
+                                int n, ASTTerm v)
+  { if (n == 1) 
+    { return v; } 
+
+    ASTTerm res = v; 
+    for (int i = 2; i <= n; i++) 
+    { Vector dpars = new Vector();
+      dpars.add(v);
+      dpars.add(new ASTSymbolTerm("*")); 
+      dpars.add(res);  
+      res = 
+        new ASTCompositeTerm("factorExpression", dpars);
+    } 
+    return res;  
+  }  
+
+  public static Vector constructNPowers(
+                   int n, ASTTerm v, ASTTerm expr0, 
+                   Vector coefs)
+  { // for i = 1 upto n, find if i-th power of v
+    // occurs in expr0 and what its coefficient is
+    
+    Vector res = new Vector(); 
+
+    String vcoef = ASTTerm.coefficientOf(v,expr0);
+    res.add(v); 
+    coefs.add(vcoef); 
+
+    for (int i = 2; i <= n; i++) 
+    {  
+      ASTTerm vpow =
+          ASTTerm.constructNPower("" + i, v); 
+ 
+      String dcoef = ASTTerm.coefficientOf(vpow,expr0); 
+
+      ASTTerm vpow2 =
+          ASTTerm.constructNPowerProd(i, v); 
+ 
+      String dcoef2 = ASTTerm.coefficientOf(vpow2,expr0); 
+
+      res.add(vpow); 
+      coefs.add("(" + dcoef + " + " + dcoef2 + ")"); 
+    } 
+    return res; 
+  }  
+
+  public static Vector constructNPowers(
+                   Vector powers, ASTTerm v, ASTTerm expr0, 
+                   Vector coefs)
+  { // for i : powers, find if i-th power of v
+    // occurs in expr0 and what its coefficient is
+    
+    Vector processed = new Vector(); 
+    Vector res = new Vector(); 
+
+    for (int i = 0; i < powers.size(); i++) 
+    { String pow = "" + powers.get(i); 
+      double dd = Double.parseDouble(pow); 
+      int j = (int) dd; 
+
+      if (processed.contains("" + j)) 
+      { continue; } 
+
+      processed.add("" + j); 
+
+      if (j > 2)
+      { ASTTerm vpow =
+          ASTTerm.constructNPower("" + j, v); 
+        String vcoef = ASTTerm.coefficientOf(vpow,expr0);
+        res.add(vpow); 
+      
+        ASTTerm vpow2 =
+          ASTTerm.constructNPowerProd(j, v); 
+ 
+        String vcoef2 = ASTTerm.coefficientOf(vpow2,expr0); 
+
+        coefs.add("(" + vcoef + " + " + vcoef2 + ")");
+      } 
+      else if (j == 1)  
+      { String vcoef = ASTTerm.coefficientOf(v,expr0);
+        res.add(v); 
+        coefs.add(vcoef); 
+      }
+      else if (j == 2)  
+      { String vcoef2 = ASTTerm.coefficientOfSquare(v,expr0);
+        ASTTerm vpower2 =
+          ASTTerm.constructNPower("2", v); 
+        res.add(vpower2); 
+        coefs.add(vcoef2); 
+      }
+    } 
+    return res; 
+  }  
+
   public static ASTTerm constructNDifferential(
                                 int n, ASTTerm v)
   { ASTTerm res = v; 
@@ -6596,7 +7086,7 @@ public abstract class ASTTerm
       ASTTerm vdiff =
           ASTTerm.constructNDifferential(i, v); 
  
-      Vector dpowers = ASTTerm.powersOf(vdiff,expr0);
+      // Vector dpowers = ASTTerm.powersOf(vdiff,expr0);
       String dcoef = ASTTerm.coefficientOf(vdiff,expr0); 
 
       res.add(vdiff); 

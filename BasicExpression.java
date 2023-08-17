@@ -10398,7 +10398,7 @@ public Statement generateDesignSubtract(Expression rhs)
     if (entity.isBidirectionalRole(data))
     { local = false; }
 
-    // System.out.println(">> " + this + " objectref = " + objectRef);  
+    System.out.println(">>%%%%%%%%%%%%>> " + this + " objectref = " + objectRef + " " + data + " " + var + " " + val2);  
     
     if (objectRef == null)
     { if (umlkind == ATTRIBUTE || umlkind == ROLE)

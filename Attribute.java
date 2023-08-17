@@ -1509,6 +1509,16 @@ public class Attribute extends ModelElement
     return "null"; 
   } 
 
+  public Expression convertStringToNumber(Expression expr)
+  { if (isInt())
+    { return new UnaryExpression("->toInteger", expr); } 
+    if (isLong())
+    { return new UnaryExpression("->toLong", expr); } 
+    if (isDouble()) 
+    { return new UnaryExpression("->toReal", expr); } 
+    return expr; 
+  } 
+
   public int syntacticComplexity()
   { // att : T = init
     int result = 3; 
@@ -2777,7 +2787,8 @@ public class Attribute extends ModelElement
     String code = ""; 
     String sync = ""; 
 
-    if (entity.isSequential()) { sync = " synchronized"; } 
+    if (entity.isSequential()) 
+    { sync = " synchronized"; } 
     
     if (instanceScope && 
         ent != entity && !entity.isInterface()) 
