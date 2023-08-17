@@ -77,6 +77,11 @@ substituteIn::
 Substitute _1 in _2 |-->_2<when> _2 expression
 Substitute _1 in _2 |-->
 
+groupBy::
+Group _1 by _2 |-->_1
+
+
+
 
 definesToAttributes::
 Define _1 = _2 |-->\n  attribute _1 : double;

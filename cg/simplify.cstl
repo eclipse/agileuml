@@ -77,6 +77,10 @@ Cancel _1 in _2 |-->_2`cancel<action> _90 _1
 substituteIn::
 Substitute _1 in _2 |-->_0`attemptSubstitution
 
+groupBy::
+Group _1 by _2 |-->_0`groupTermsByPower
+
+
 idList::
 _1 |-->_1
 _1 , _* |-->_1,_*`recurse
@@ -630,9 +634,11 @@ _1 * 1 |-->_1`divideBy
 _1 * _2 |-->_1<when> _2 _90
 _1 * _2 |-->_2<when> _1 _90
 _1 * _2 |-->(_1`divideBy)*_2
+
 _1 / 1 |-->_1`divideBy
 1 / _2 |-->1/(_2*_90)
 _1 / _2 |-->(_1`divideBy)/_2
+
 ( _1 ) |-->(_1`divideBy)
 
 
@@ -640,7 +646,12 @@ _1 / _2 |-->(_1`divideBy)/_2
 
 † _1 |-->(†_1)/_90
 
+_1 ^{ 2 } |-->_1<when> _1 _90
+
+_1 ^{ _2 } |-->_1^{_2 - 1}<when> _1 _90
+
 _1 ^{ _2 } |-->(_1^{_2})/_90
+
 _1 ( _2 ) |-->(_1(_2)/_90)
 _1 ´ |-->(_1´)/_90
 

@@ -1611,8 +1611,8 @@ _1 |--> or MathLib.isIntegerOverflow(_1, _1`integerWidth)
 
 
 addCorrespondingStatement::
-CORRESPONDING _1 TO _2  |-->    _2 := _2 + _1 ;\n
-CORR _1 TO _2  |-->    _2 := _2 + _1 ;\n
+CORRESPONDING _1 TO _2  |-->    _2 := addCorresponding$_1$_2(_1,_2) ;\n
+CORR _1 TO _2  |-->    _2 := addCorresponding$_1$_2(_1,_2) ;\n
 
 
 addFrom::
@@ -1973,7 +1973,7 @@ THRU _1 |-->_1
 
 
 execSqlStatement::
-*>EXECSQL _1 |-->(OclDatasource.newOclDatasource()).execSQL(_1) ;\n
+*>EXECSQL _1 |-->execute (OclDatasource.newOclDatasource()).execSQL(_1) ;\n
 
 exitStatement::
 EXIT PROGRAM |-->    return;\n
@@ -2322,7 +2322,7 @@ _1 TO _2  |-->    _2 := _1 ;\n
 _1 TO _2 _*  |-->    (var _moveTmp : OclAny ; _moveTmp := _1;\n _2 := _moveTmp;\n_*`moveAssignments      skip) ; \n
 
 moveAll::
-_1 TO _2  |-->    _2 := Integer.subrange(1,_2`width)->collect(_1)->sum();\n
+_1 TO _2  |-->    _2 := Integer.subrange(1,_2`fieldWidth)->collect(_1)->sum();\n
 _1 TO _2 _*  |-->    (var _moveTmp : OclAny ; _moveTmp := Integer.subrange(1,_2->size())->collect(_1)->sum();\n _2 := _moveTmp;\n_*`moveAssignments      skip) ; \n
 
 
@@ -2989,8 +2989,8 @@ _* FROM _1 GIVING _+  |-->    (var _subtractTmp : double; _subtractTmp := _1 - (
 
 
 subtractCorrespondingStatement::
-CORRESPONDING _1 FROM _2  |-->    _2 := _2 - _1 ;\n<when> _1 qualifiedDataName, _2 subtractMinuendCorresponding
-CORR _1 FROM _2 |-->    _2 := _2 - _1 ;\n<when> _1 qualifiedDataName, _2 subtractMinuendCorresponding
+CORRESPONDING _1 FROM _2  |-->    _2 := subtractCorresponding$_1$_2(_1,_2) ;\n<when> _1 qualifiedDataName, _2 subtractMinuendCorresponding
+CORR _1 FROM _2 |-->    _2 := subtractCorresponding$_1$_2(_1,_2) ;\n<when> _1 qualifiedDataName, _2 subtractMinuendCorresponding
 
 
 subtractSubtrahend::
@@ -3547,7 +3547,8 @@ qualifiedDataName::
 _1 |-->_1
 
 qualifiedDataNameFormat1::
-_1 _2 |-->_2.subrange(_1`startingPosition,_1`endingPosition)
+_1 _2 |-->_2$_1<when> _1`ambiguousName true
+_1 _2 |-->_1
 _1 |-->_1
 
 fieldWidth::
