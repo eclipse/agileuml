@@ -92,6 +92,9 @@ package stringlib {
 
     static query interpolateStrings(fmt: String, sq: Sequence(OclAny)) : String
     pre: true post: true; 
+
+    static query rawString(s : String) : String
+    pre: true post: true; 
   }
 
 

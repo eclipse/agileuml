@@ -478,6 +478,29 @@
             return result;
         }
 
+       public static double presentValueDiscrete(double rate, ArrayList values)
+        {
+            double result = 0;
+            result = 0.0;
+            if ((rate <= -1))
+            { return result; }
+
+            int upper = values.Count;
+
+            for (int i = 0; i < upper; i++)
+            {
+                Object val = values[i];
+                double dval = 0.0;
+                if (val is double)
+                { dval = (double)val; }
+                else if (val is int)
+                { dval = 1.0 * ((int)val); }
+                result = result + MathLib.discountDiscrete(dval,
+                                                rate, i + 1);
+            }
+            return result;
+        }
+
         public static double bisectionDiscrete(double r, double rl, double ru, ArrayList values)
         {
             double result = 0;
@@ -707,5 +730,36 @@
             return result;
         }
 
+       public static Func<double,double> differential(Func<double,double> f)
+       { Func<double,double> result = null;
+  
+         result = (Func<double,double>) (x => (( 500.0 * ( f.Invoke(x + 0.001) - f.Invoke(x - 0.001) ) ))); 
+         return result;
+       }
+
+        public static double definiteIntegral(double st, double en, Func<double, double> f)
+        {
+            double tol = 0.001;
+            double area = 0.0;
+            double d = tol * (en - st);
+            double cum = st;
+
+            while (cum < en)
+            {
+                double next = cum + d;
+
+                area = area + d * (f.Invoke(cum) + f.Invoke(next)) / 2.0;
+                cum = next;
+            }
+            return area;
+        }
+
+        public static Func<double, double> indefiniteIntegral(Func<double, double> f)
+        {
+            Func<double, double> result = null;
+
+            result = (Func<double, double>)(x => (MathLib.definiteIntegral(0, x, f)));
+            return result;
+        }
 
   }

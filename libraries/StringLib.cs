@@ -138,7 +138,7 @@
             object[] args = new object[sq.Count];
             for (int i = 0; i < sq.Count; i++)
             { args[i] = sq[i]; }
-            string fmt = OclFile.convertConversionFormat(f);
+            string fmt = StringLib.convertConversionFormat(f);
             string formattedString = String.Format(fmt, args);
             return formattedString; 
         }
@@ -229,4 +229,40 @@
             string formattedString = String.Format(f, args);
             return formattedString; 
         }
+
+        public static string convertConversionFormat(string cstyle)
+        {
+            String res = cstyle;
+            int argindex = 0;
+            int pind = res.IndexOf("%");
+            Regex dpatt = new Regex("%d");
+            Regex epatt = new Regex("%e");
+            Regex fpatt = new Regex("%f");
+            Regex spatt = new Regex("%s");
+            Regex xpatt = new Regex("%x");
+            Regex gpatt = new Regex("%g");
+
+
+            while (pind >= 0)
+            {
+                if (pind + 1 < res.Length && "s".Equals(res.Substring(pind + 1, 1)))
+                { res = spatt.Replace(res, "{" + argindex + ":S}", 1); }
+                else if (pind + 1 < res.Length && "d".Equals(res.Substring(pind + 1, 1)))
+                { res = dpatt.Replace(res, "{" + argindex + ":D}", 1); }
+                else if (pind + 1 < res.Length && "f".Equals(res.Substring(pind + 1, 1)))
+                { res = fpatt.Replace(res, "{" + argindex + ":F}", 1); }
+                else if (pind + 1 < res.Length && "e".Equals(res.Substring(pind + 1, 1)))
+                { res = epatt.Replace(res, "{" + argindex + ":E}", 1); }
+                else if (pind + 1 < res.Length && "g".Equals(res.Substring(pind + 1, 1)))
+                { res = gpatt.Replace(res, "{" + argindex + ":G}", 1); }
+                else if (pind + 1 < res.Length && "x".Equals(res.Substring(pind + 1, 1)))
+                { res = xpatt.Replace(res, "{" + argindex + ":X}", 1); }
+
+
+                argindex++;
+                pind = res.IndexOf("%");
+            }
+            return res;
+        }
+
     }

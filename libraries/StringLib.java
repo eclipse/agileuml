@@ -233,6 +233,51 @@ public class StringLib
     return formattedString; 
   } 
 
+  public static String rawString(String s)
+  { String res = ""; 
+    if (s == null) 
+    { return res; } 
+
+    for (int i = 0; i < s.length(); i++) 
+    { char c = s.charAt(i); 
+      if (c == '\b')
+      { res = res + '\\' + 'b'; } 
+      else if (c == '\n')
+      { res = res + '\\' + 'n'; } 
+      else if (c == '\t')
+      { res = res + '\\' + 't'; }
+      else if (c == '\r')
+      { res = res + '\\' + 'r'; } 
+      else if (c == '\f')
+      { res = res + '\\' + 'n'; }
+      else if (c == '\\')
+      { res = res + '\\' + '\\'; }
+      else if (c == '\'')
+      { res = res + '\\' + '\''; } 
+      else if (c == '\"')
+      { res = res + '\\' + '\"'; } 
+      else if (c == '\0')
+      { res = res + '\\' + '0'; } 
+      else if (c == '\1')
+      { res = res + '\\' + '1'; } 
+      else if (c == '\2')
+      { res = res + '\\' + '2'; } 
+      else if (c == '\3')
+      { res = res + '\\' + '3'; } 
+      else if (c == '\4')
+      { res = res + '\\' + '4'; } 
+      else if (c == '\5')
+      { res = res + '\\' + '5'; } 
+      else if (c == '\6')
+      { res = res + '\\' + '6'; } 
+      else if (c == '\7')
+      { res = res + '\\' + '7'; } 
+      else 
+      { res = res + c; } 
+    } 
+    return res; 
+  } 
+
   public static void main(String[] args)
   { /* ArrayList res = StringLib.scan("100##3.3::20\n", "%d##%f::%d\n"); 
     System.out.println(res); 
@@ -243,6 +288,15 @@ public class StringLib
 
     ArrayList vx = new ArrayList(); 
     vx.add(100); vx.add(9.9); 
-    System.out.println(StringLib.interpolateStrings("{1} and {0}", vx));  
+    System.out.println(StringLib.interpolateStrings("{1} and {0}", vx));
+
+    String ss = "\b\f";
+    String ss1 = "\n\r\t";  
+    String ss2 = "\'\"\\\0\1\2\3\4\5\6\7";
+
+    System.out.println(ss2);   
+
+    System.out.println(StringLib.rawString(ss + ss1 + ss2)); 
+  
   }  
 } 
