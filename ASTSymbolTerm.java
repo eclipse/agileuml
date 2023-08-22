@@ -130,6 +130,41 @@ public class ASTSymbolTerm extends ASTTerm
     return symbol; 
   } 
 
+  public java.util.HashMap fullMatch(ASTTerm rterm, 
+                                     java.util.HashMap res) 
+  { // This term matches to a schematic term rterm
+
+    String rlit = rterm.literalForm(); 
+    if (symbol.equals(rlit))
+    { return res; } 
+
+    if (CSTL.isCSTLVariable(rlit))
+    { ASTTerm oldterm = (ASTTerm) res.get(rlit); 
+      if (oldterm == null)
+      { res.put(rlit, this); 
+        return res; 
+      } 
+      else if (symbol.equals(oldterm.literalForm()))
+      { } 
+      else 
+      { return null; } 
+    }
+
+    return null; 
+  }  
+
+  public ASTTerm instantiate(java.util.HashMap res) 
+  { // replace _i by res.get(_i)
+
+    if (CSTL.isCSTLVariable(symbol))
+    { ASTTerm oldterm = (ASTTerm) res.get(symbol); 
+      if (oldterm != null)
+      { return oldterm; } 
+    }
+
+    return this; 
+  }  
+
   public String toString()
   { return symbol; } 
 
@@ -979,7 +1014,13 @@ public class ASTSymbolTerm extends ASTTerm
   { return new ASTSymbolTerm(symbol); }  
 
   public static void main(String[] args) 
-  { String ss = "\\r\\n\\r\\n\\r\\n"; 
-    System.out.println(ss.matches("(\r\n)+")); 
+  { String ss = "\r\n\r\n\r\n"; 
+    System.out.println(ss.matches("(\\r\\n)+"));
+
+    ASTTerm t1 = new ASTBasicTerm("tag1", "100"); 
+    ASTTerm t2 = new ASTBasicTerm("tag2", "_1");
+    java.util.HashMap mm = new java.util.HashMap(); 
+    System.out.println(t1.fullMatch(t2,mm));  
+ 
   } 
 } 

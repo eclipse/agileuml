@@ -290,6 +290,40 @@ public class ASTBasicTerm extends ASTTerm
     return toString(); 
   }
 
+  public java.util.HashMap fullMatch(ASTTerm rterm, 
+                                     java.util.HashMap res) 
+  { // This term matches to a schematic term rterm
+
+    String rlit = rterm.literalForm(); 
+    if (value.equals(rlit))
+    { return res; } 
+
+    if (CSTL.isCSTLVariable(rlit))
+    { ASTTerm oldterm = (ASTTerm) res.get(rlit); 
+      if (oldterm == null)
+      { res.put(rlit, this); 
+        return res; 
+      } 
+      else if (value.equals(oldterm.literalForm()))
+      { } 
+      else 
+      { return null; } 
+    }
+
+    return null; 
+  }  
+
+  public ASTTerm instantiate(java.util.HashMap res) 
+  { // replace _i by res.get(_i)
+
+    if (CSTL.isCSTLVariable(value))
+    { ASTTerm oldterm = (ASTTerm) res.get(value); 
+      if (oldterm != null)
+      { return oldterm; } 
+    }
+
+    return this; 
+  }  
 
   public String getLabel()
   { return null; } 

@@ -57,6 +57,16 @@ public interface MathOCLListener extends ParseTreeListener {
 	 */
 	void exitConstraint(MathOCLParser.ConstraintContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link MathOCLParser#theorem}.
+	 * @param ctx the parse tree
+	 */
+	void enterTheorem(MathOCLParser.TheoremContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MathOCLParser#theorem}.
+	 * @param ctx the parse tree
+	 */
+	void exitTheorem(MathOCLParser.TheoremContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link MathOCLParser#reexpression}.
 	 * @param ctx the parse tree
 	 */

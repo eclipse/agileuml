@@ -61,6 +61,11 @@ public abstract class ASTTerm
   { mathoclvars = new java.util.HashMap(); }  
      // String --> ASTTerm
 
+  static Vector mathocltheorems; 
+  static 
+  { mathocltheorems = new Vector(); }  
+     // pairs [concl,premise]
+
   static String cobolHyphenReplacement; 
   static 
   { cobolHyphenReplacement = "_"; } // or "$" for Java
@@ -577,6 +582,20 @@ public abstract class ASTTerm
       return ASTTerm.symbolicMultiplication(e1,e2); 
     } 
 
+    if ("symbolicLess".equals(opname) && 
+        eargs.size() == 2)
+    { ASTTerm e1 = (ASTTerm) eargs.get(0); 
+      ASTTerm e2 = (ASTTerm) eargs.get(1); 
+      return ASTTerm.symbolicLess(e1,e2); 
+    } 
+
+    if ("symbolicLeq".equals(opname) && 
+        eargs.size() == 2)
+    { ASTTerm e1 = (ASTTerm) eargs.get(0); 
+      ASTTerm e2 = (ASTTerm) eargs.get(1); 
+      return ASTTerm.symbolicLeq(e1,e2); 
+    } 
+
     if ("equationSolution".equals(opname) && 
         eargs.size() == 2)
     { // Solve exprs for ids
@@ -752,6 +771,12 @@ public abstract class ASTTerm
   public abstract String cg(CGSpec cgs); 
 
   public abstract String cgRules(CGSpec cgs, Vector rules); 
+
+  public abstract java.util.HashMap fullMatch(ASTTerm rterm, 
+                             java.util.HashMap res); 
+
+  public abstract ASTTerm instantiate( 
+                             java.util.HashMap res); 
 
   // Only for programming languages. 
   public abstract boolean updatesObject(ASTTerm t); 
@@ -4964,6 +4989,76 @@ public abstract class ASTTerm
     return expr.literalForm(); 
   }  
 
+  public static String symbolicLess(ASTTerm e1, ASTTerm e2)
+  { String a = e1.literalForm(); 
+    String b = e2.literalForm(); 
+
+    if (e1.getTag().equals("additiveExpression") && 
+        "+".equals(e1.getTerm(1) + ""))
+    { a = symbolicAddition(e1.getTerm(0), e1.getTerm(2)); } 
+    else if (e1.getTag().equals("additiveExpression") && 
+        "-".equals(e1.getTerm(1) + ""))
+    { a = symbolicSubtraction(e1.getTerm(0), e1.getTerm(2)); }
+    else if (e1.getTag().equals("factorExpression") && 
+             "*".equals(e1.getTerm(1) + ""))
+    { a = symbolicMultiplication(e1.getTerm(0), e1.getTerm(2)); }
+
+    if (e2.getTag().equals("additiveExpression") && 
+        "+".equals(e2.getTerm(1) + ""))
+    { b = symbolicAddition(e2.getTerm(0), e2.getTerm(2)); } 
+    else if (e2.getTag().equals("additiveExpression") && 
+        "-".equals(e2.getTerm(1) + ""))
+    { b = symbolicSubtraction(e2.getTerm(0), e2.getTerm(2)); }
+    else if (e2.getTag().equals("factorExpression") && 
+        "*".equals(e2.getTerm(1) + ""))
+    { b = symbolicMultiplication(e2.getTerm(0), e2.getTerm(2)); } 
+
+    if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b))
+    { Double aval = Double.parseDouble("" + a); 
+      Double bval = Double.parseDouble("" + b); 
+      if (aval < bval) 
+      { return "true"; } 
+      return "false"; 
+    }
+    
+    return a + " < " + b; 
+  }  
+
+  public static String symbolicLeq(ASTTerm e1, ASTTerm e2)
+  { String a = e1.literalForm(); 
+    String b = e2.literalForm(); 
+
+    if (e1.getTag().equals("additiveExpression") && 
+        "+".equals(e1.getTerm(1) + ""))
+    { a = symbolicAddition(e1.getTerm(0), e1.getTerm(2)); } 
+    else if (e1.getTag().equals("additiveExpression") && 
+        "-".equals(e1.getTerm(1) + ""))
+    { a = symbolicSubtraction(e1.getTerm(0), e1.getTerm(2)); }
+    else if (e1.getTag().equals("factorExpression") && 
+             "*".equals(e1.getTerm(1) + ""))
+    { a = symbolicMultiplication(e1.getTerm(0), e1.getTerm(2)); }
+
+    if (e2.getTag().equals("additiveExpression") && 
+        "+".equals(e2.getTerm(1) + ""))
+    { b = symbolicAddition(e2.getTerm(0), e2.getTerm(2)); } 
+    else if (e2.getTag().equals("additiveExpression") && 
+        "-".equals(e2.getTerm(1) + ""))
+    { b = symbolicSubtraction(e2.getTerm(0), e2.getTerm(2)); }
+    else if (e2.getTag().equals("factorExpression") && 
+        "*".equals(e2.getTerm(1) + ""))
+    { b = symbolicMultiplication(e2.getTerm(0), e2.getTerm(2)); } 
+
+    if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b))
+    { Double aval = Double.parseDouble("" + a); 
+      Double bval = Double.parseDouble("" + b); 
+      if (aval <= bval) 
+      { return "true"; } 
+      return "false"; 
+    }
+    
+    return a + " <= " + b; 
+  }  
+
   public static String symbolicAddition(ASTTerm e1, ASTTerm e2)
   { String a = e1.literalForm(); 
     String b = e2.literalForm(); 
@@ -5030,6 +5125,18 @@ public abstract class ASTTerm
   { String a = e1.literalForm(); 
     String b = e2.literalForm(); 
 
+    // a*c/a is c: 
+
+    if (ASTTerm.isMathOCLDivision(e2))
+    { ASTTerm numer = ASTTerm.mathOCLNumerator(e2);   
+      ASTTerm denom = ASTTerm.mathOCLDenominator(e2);
+ 
+      if (a.equals(denom.literalForm()))
+      { return numer.literalFormSpaces(); }
+
+      b = ASTTerm.symbolicDivision(numer,denom);  
+    } 
+
     if (e1.getTag().equals("additiveExpression") && 
         "+".equals(e1.getTerm(1) + ""))
     { a = symbolicAddition(e1.getTerm(0), e1.getTerm(2)); } 
@@ -5051,6 +5158,35 @@ public abstract class ASTTerm
     
     return a + " * " + b; 
   }  
+
+  public static String symbolicDivision(ASTTerm e1, ASTTerm e2)
+  { String a = e1.literalForm(); 
+    String b = e2.literalForm(); 
+
+    if (e1.getTag().equals("additiveExpression") && 
+        "+".equals(e1.getTerm(1) + ""))
+    { a = symbolicAddition(e1.getTerm(0), e1.getTerm(2)); } 
+    else if (e1.getTag().equals("additiveExpression") && 
+        "-".equals(e1.getTerm(1) + ""))
+    { a = symbolicSubtraction(e1.getTerm(0), e1.getTerm(2)); }
+
+    if (e2.getTag().equals("additiveExpression") && 
+        "+".equals(e2.getTerm(1) + ""))
+    { b = symbolicAddition(e2.getTerm(0), e2.getTerm(2)); } 
+
+    if (AuxMath.isNumeric(a) && AuxMath.isNumeric(b))
+    { Double aval = Double.parseDouble("" + a); 
+      Double bval = Double.parseDouble("" + b); 
+      if (bval != 0)
+      { return "" + (aval/bval); } 
+      return aval + "/0"; 
+    }
+
+    // Group by powers of x? 
+    
+    return a + " / " + b; 
+  }  
+
 
   public static String symbolicMultiplication(
                             String var, ASTTerm expr)
@@ -6460,10 +6596,10 @@ public abstract class ASTTerm
       assumptionlits.add(assump.literalForm()); 
     } 
 
+    Vector thms = ASTTerm.mathocltheorems; 
     /* JOptionPane.showMessageDialog(null, 
-       "### Assumptions of " + ante + " are " + 
-       assumptionlits,   "",
-       JOptionPane.INFORMATION_MESSAGE); */ 
+       "### Theorems: " + thms,   "",
+       JOptionPane.INFORMATION_MESSAGE);  */ 
 
 
     // get variables svars from succ, 
@@ -6473,11 +6609,42 @@ public abstract class ASTTerm
     // For v : avars - svars, replace v in ante 
     // by v's definition
 
+    // Look for a Theorem conc when prem
+    // If conc matches succ, replace by 
+    // instantiated prem
+
     if (slit.equals(alit))
     { return "  Simplify true\n"; }
 
     if (assumptionlits.contains(slit))
     { return "  Simplify true\n"; } 
+
+    for (int i = 0; i < thms.size(); i++) 
+    { Vector thm = (Vector) thms.get(i); // [concl,premise]
+      ASTTerm concl = (ASTTerm) thm.get(0); 
+      ASTTerm premise = (ASTTerm) thm.get(1); 
+
+      java.util.HashMap env = new java.util.HashMap(); 
+      java.util.HashMap binds = 
+         succ.fullMatch(concl,env); 
+
+    /*  JOptionPane.showMessageDialog(null, 
+          "### Binding: " + binds + " for " + 
+          succ + " " + concl,   "",
+          JOptionPane.INFORMATION_MESSAGE); */ 
+
+      if (binds != null) // replace succ by premise[binds]
+      { ASTTerm newsucc = 
+          premise.instantiate(binds); 
+        /* JOptionPane.showMessageDialog(null, 
+          "### Binding: " + binds + " for " + 
+          succ + " " + concl + " " + newsucc,   "",
+          JOptionPane.INFORMATION_MESSAGE); */ 
+
+        return "  Prove " + newsucc.literalFormSpaces() + 
+               " if " + alist + "\n";  
+      } 
+    } 
 
     if (ASTTerm.isMathOCLConjunction(succ))
     { Vector conjs = ASTTerm.mathOCLConjuncts(succ);
@@ -6552,14 +6719,17 @@ public abstract class ASTTerm
       return res; 
     }  
  
+  /* 
     Vector avars = ante.mathOCLVariables(); 
     Vector svars = succ.mathOCLVariables(); 
 
     System.out.println("###### Antecedent variables: " + avars); 
-    System.out.println("###### Succedent variables: " + svars); 
+    System.out.println("###### Succedent variables: " + svars); */ 
 
+    String alitspaces = ante.literalFormSpaces(); 
+    String slitspaces = succ.literalFormSpaces(); 
 
-    return "  Simplify " + alit + " => " + slit; 
+    return "  Simplify " + alitspaces + " => " + slitspaces; 
   } 
 
   public static String solveEquations(ASTTerm exprs, ASTTerm vars)

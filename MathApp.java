@@ -537,6 +537,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
             { thisLabel.setText("Instruction to Substitute: Substitute var in expr"); }
             else if ("Group".equals(insertedText))
             { thisLabel.setText("Group expr by var: group together terms with same var power"); }
+            else if ("Theorem".equals(insertedText))
+            { thisLabel.setText("Theorem expr1 when expr2: assert that expr1 follows from expr2"); }
           } 
           else  
           { thisLabel.setText(" "); 
@@ -748,7 +750,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       }  
       messageArea.setText(result);
       internalModel = result;
-  
+      ASTTerm.mathocltheorems = new Vector();  
+          
       thisLabel.setText("Specification translated to text format");
     }
   }
@@ -1090,6 +1093,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         "    Simplify expr\n\n" + 
         "5. Prove clauses:\n" + 
         "    Prove expr if expr\n\n" + 
+        "6. Theorem clauses:\n" + 
+        "    Theorem expr when expr\n\n" + 
         "Instructions can be one of:\n" + 
         "    Factor expr by expr\n" + 
         "    Cancel expr in expr\n" + 

@@ -19,6 +19,7 @@ specification
 part
     : formula
     | constraint
+    | theorem
     | reexpression
     | expanding
     | simplify
@@ -43,6 +44,10 @@ instruction
 
 constraint
     :	'Constraint' 'on' expression '|' logicalExpression
+    ; 
+
+theorem
+    :	'Theorem' logicalExpression 'when' logicalExpression
     ; 
 
 reexpression
@@ -289,5 +294,6 @@ CDOT : '•';
 
 NEWLINE : [\r\n]+ -> skip ;
 INT     : [0-9]+ ;
-ID  :   [a-zA-Z]+[a-zA-Z0-9$]* ;      // match identifiers
+ID  :   [_a-zA-Z]+[a-zA-Z0-9$]* ;      // match identifiers
 WS  :   [ \t\n\r]+ -> skip ;
+

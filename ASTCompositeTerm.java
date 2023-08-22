@@ -814,6 +814,98 @@ public class ASTCompositeTerm extends ASTTerm
     return toString(); 
   }
 
+  public ASTTerm instantiate( 
+                             java.util.HashMap res)
+
+  { // replace any _i by res.get(_i)
+
+    int n = terms.size(); 
+    Vector newterms = new Vector(); 
+
+    for (int i = 0; i < n; i++) 
+    { ASTTerm trmi = (ASTTerm) terms.get(i); 
+ 
+      String liti = trmi.literalForm(); 
+
+      if (CSTL.isCSTLVariable(liti))
+      { ASTTerm oldterm = (ASTTerm) res.get(liti);    
+        if (oldterm != null)
+        { newterms.add(oldterm); } 
+        else 
+        { newterms.add(trmi); } 
+      } 
+      else 
+      { ASTTerm newterm = trmi.instantiate(res); 
+        newterms.add(newterm); 
+      } 
+    }   
+
+    return new ASTCompositeTerm(tag, newterms); 
+  } 
+
+  public java.util.HashMap fullMatch(ASTTerm rterm, 
+                                     java.util.HashMap res) 
+  { // This term matches to a schematic term rterm
+
+    int n = terms.size(); 
+    int m = rterm.arity(); 
+    Vector rterms = rterm.getTerms(); 
+
+    String rlit = rterm.literalForm(); 
+    
+    if (m == 1 && 
+        CSTL.isCSTLVariable(rlit))
+    { res.put(rlit, this); 
+      return res; 
+    } 
+    else if (m == 1 && n == 1) 
+    { ASTTerm rtermi = (ASTTerm) rterms.get(0);
+      ASTTerm trmi = (ASTTerm) terms.get(0); 
+      return trmi.fullMatch(rtermi,res); 
+    } 
+    else if (m == 1 || m == 0) 
+    { return null; } 
+
+    if (n != m) 
+    { return null; } 
+
+    for (int i = 0; i < m; i++) 
+    { ASTTerm rtermi = (ASTTerm) rterms.get(i);
+      ASTTerm trmi = (ASTTerm) terms.get(i); 
+ 
+      String rilit = rtermi.literalForm(); 
+      String liti = trmi.literalForm(); 
+
+      if (CSTL.isCSTLVariable(rilit))
+      { ASTTerm oldterm = (ASTTerm) res.get(rilit);    
+        if (oldterm == null) 
+        { res.put(rilit, terms.get(i));
+          JOptionPane.showMessageDialog(null, 
+            "### Binding: " + terms.get(i) + " to " + 
+            rilit,   "",
+          JOptionPane.INFORMATION_MESSAGE);
+        } 
+        else if (liti.equals(oldterm.literalForm())) 
+        { } // must be the same as terms.get(i)
+        else 
+        { return null; } // clash of different terms
+      } 
+      else if (rtermi instanceof ASTSymbolTerm)
+      { if (liti.equals(rilit))
+        { } 
+        else 
+        { return null; } 
+      } 
+      else 
+      { java.util.HashMap mp = trmi.fullMatch(rtermi,res); 
+        if (mp == null) 
+        { return null; } 
+      }     
+    } 
+
+    return res; 
+  } 
+
   public Type deduceType()
   { if (terms.size() == 1)
     { ASTTerm t = (ASTTerm) terms.get(0); 
@@ -43392,7 +43484,11 @@ public class ASTCompositeTerm extends ASTTerm
       // ASTTerm.mathoclvars.put(vname, ""); 
       ASTTerm tcons = (ASTTerm) terms.get(4); 
       tcons.checkMathOCL();
-      // ASTTerm.mathoclvars.remove(vname); 
+      // ASTTerm.mathoclvars.remove(vname);
+      Vector thm = new Vector(); 
+      thm.add(tcons); 
+      thm.add(new ASTBasicTerm("basicExpression", "true")); 
+      ASTTerm.mathocltheorems.add(thm);  
       return; 
     }  
 
@@ -43475,6 +43571,20 @@ public class ASTCompositeTerm extends ASTTerm
       } 
 
       expr.checkMathOCL(); 
+      return; 
+    }  
+
+    if ("theorem".equals(tag))
+    { // Theorem <expression> when <exprList>
+      ASTTerm concl = (ASTTerm) terms.get(1);
+      ASTTerm premise = (ASTTerm) terms.get(3);
+
+      Vector thm = new Vector(); 
+      thm.add(concl); 
+      thm.add(premise); 
+
+      ASTTerm.mathocltheorems.add(thm); 
+
       return; 
     }  
 
