@@ -10,6 +10,9 @@ _1 |-->_1\n
 constraint::
 Constraint on _1 | _2 |-->  Constraint on _1 | _2
 
+theorem::
+Theorem _1 when _2 |-->
+
 
 prove::
 Prove false if _1 |-->  Simplify (not _1`conjoinAll)
@@ -169,16 +172,16 @@ _1 < _1 |-->false
 _1 < _2 |-->_1`lArgument < _2`lArgument<when> _1`isLinear true, _1`lFunctor _2`lFunctor
 _1 < _2 |-->_1`fArgument < _2`fArgument<when> _1`isStrictlyIncreasing true, _1`functor _2`functor
 
+_1 < _2 |-->_0`symbolicLess<when> _1 real, _2 real
 _1 < _2 |-->_1 < _2
 
 _1 > _1 |-->false
-_1 > _2 |-->_2`fArgument < _1`fArgument<when> _1`isStrictlyIncreasing true, _1`functor _2`functor
-
 _1 > _2 |-->_2 < _1
 
 _1 <= _1 |-->true
 _1 <= … |-->true
 -… <= _1 |-->true
+_1 <= _2 |-->_0`symbolicLeq<when> _1 real, _2 real
 _1 <= _2 |-->((_1 < _2) or (_1 = _2))
 
 _1 >= _1 |-->true
@@ -245,6 +248,7 @@ _1 * 0.0 |-->0
 
 _1 * -1 |-->_1`negate
 -1 * _1 |-->_1`negate
+_1 * _2 |-->_2`numerator<when> _2`isDivision true, _2`denominator _1
 _1 * _2 |-->_0`symbolicMultiplication<when> _1 real, _2 real
 _1 * _2 |-->_1*_2
 
@@ -265,6 +269,9 @@ _1 / 0 |-->?
 
 0 / _1 |-->0
 0.0 / _1 |-->0
+
+_1 / _2 |-->_1`firstArgument<when> _1`isMultiplication true, _1`secondArgument _2
+_1 / _2 |-->_1`secondArgument<when> _1`isMultiplication true, _1`firstArgument _2
 _1 / _2 |-->_1/_2
 
 - 0 |-->0
@@ -340,9 +347,11 @@ basicExpression::
 g{ _1 } |-->g{_1}
 
 sin ( _1 ) |-->_1`evaluateSine
+cos ( _1 ) |-->_1`evaluateCosine 
 
-cos ( 0 ) |-->1
 tan ( 0 ) |-->0
+tan ( _1 ) |-->(sin(_1)/cos(_1))
+
 exp ( 0 ) |-->1
 exp ( _1 ) |-->e^{_1}
 
@@ -353,11 +362,14 @@ log10 ( 10 ) |-->1
 
 cosh ( 0 ) |-->1
 sinh ( 0 ) |-->0
+
 tanh ( 0 ) |-->0
+tanh ( _1 ) |-->(sinh(_1)/cosh(_1))
+
 sec ( 0 ) |-->1
 sech ( 0 ) |-->1
 
-cot ( _1 ) |-->(1.0/tan(_1))
+cot ( _1 ) |-->(cos(_1)/sin(_1))
 sec ( _1 ) |-->(1.0/cos(_1))
 cosec ( _1 ) |-->(1.0/sin(_1))
 
@@ -365,13 +377,13 @@ acosec ( _1 ) |-->asin(1.0/_1)
 asec ( _1 ) |-->acos(1.0/_1)
 acot ( _1 ) |-->atan(1.0/_1)
 
-coth ( _1 ) |-->(1.0/tanh(_1))
+coth ( _1 ) |-->(cosh(_1)/sinh(_1))
 sech ( _1 ) |-->(1.0/cosh(_1))
 cosech ( _1 ) |-->(1.0/sinh(_1))
 
-acosech ( _1 ) |-->math.asinh(1.0/_1)
-asech ( _1 ) |-->math.acosh(1.0/_1)
-acoth ( _1 ) |-->math.atanh(1.0/_1)
+acosech ( _1 ) |-->asinh(1.0/_1)
+asech ( _1 ) |-->acosh(1.0/_1)
+acoth ( _1 ) |-->atanh(1.0/_1)
 
 var ( _1 ) |-->_1`evaluateVariance
 
@@ -415,6 +427,8 @@ g{ p } |-->0
 
 asin ( _1 ) |-->_1
 
+- _1 |-->-(_1`evaluateSine)
+
 _1 |-->1<when> _1 matches g\{p\}/2
 
 _1 |-->_1`evaluateSine<when> _1 basicExpression
@@ -427,6 +441,29 @@ _1 |-->_1`evaluateSine<when> _1 expression
 
 _1 |-->sin(_1)
 _* |-->sin(_*)
+
+
+evaluateCosine::
+0 |-->1
+0.0 |-->1
+g{ p } |-->-1
+
+acos ( _1 ) |-->_1
+
+- _1 |-->_1`evaluateCosine
+
+_1 |-->0<when> _1 matches g\{p\}/2
+
+_1 |-->_1`evaluateCosine<when> _1 basicExpression
+_1 |-->_1`evaluateCosine<when> _1 factorExpression
+_1 |-->_1`evaluateCosine<when> _1 factor2Expression
+_1 |-->_1`evaluateCosine<when> _1 logicalExpression
+_1 |-->_1`evaluateCosine<when> _1 equalityExpression
+_1 |-->_1`evaluateCosine<when> _1 additiveExpression
+_1 |-->_1`evaluateCosine<when> _1 expression
+
+_1 |-->cos(_1)
+_* |-->cos(_*)
 
 
 evaluateLog::
@@ -444,6 +481,7 @@ _1 ^{ _2 } |-->(_2)*(_1`evaluateLog)
 _1 * _2 |-->(_1`evaluateLog) + (_2`evaluateLog)
 
 1 / _1 |-->-(_1`evaluateLog)
+1.0 / _1 |-->-(_1`evaluateLog)
 _1 / _2 |-->(_1`evaluateLog) - (_2`evaluateLog)
 
 _1 |-->_1`evaluateLog<when> _1 basicExpression
@@ -455,6 +493,70 @@ _1 |-->_1`evaluateLog<when> _1 additiveExpression
 _1 |-->_1`evaluateLog<when> _1 expression
 _1 |-->log(_1)
 _* |-->log(_*)
+
+
+numerator::
+_1 / _2 |-->_1
+
+( _1 ) |-->_1`numerator
+
+_1 |-->_1`numerator<when> _1 basicExpression
+_1 |-->_1`numerator<when> _1 factorExpression
+_1 |-->_1`numerator<when> _1 factor2Expression
+_1 |-->_1`numerator<when> _1 logicalExpression
+_1 |-->_1`numerator<when> _1 equalityExpression
+_1 |-->_1`numerator<when> _1 additiveExpression
+_1 |-->_1`numerator<when> _1 expression
+_1 |-->_1
+_* |-->_*
+
+
+denominator::
+_1 / _2 |-->_2
+
+( _1 ) |-->_1`denominator
+
+_1 |-->_1`denominator<when> _1 basicExpression
+_1 |-->_1`denominator<when> _1 factorExpression
+_1 |-->_1`denominator<when> _1 factor2Expression
+_1 |-->_1`denominator<when> _1 logicalExpression
+_1 |-->_1`denominator<when> _1 equalityExpression
+_1 |-->_1`denominator<when> _1 additiveExpression
+_1 |-->_1`denominator<when> _1 expression
+_1 |-->_1
+_* |-->_*
+
+
+firstArgument::
+_1 * _2 |-->_1
+
+( _1 ) |-->_1`firstArgument
+
+_1 |-->_1`firstArgument<when> _1 basicExpression
+_1 |-->_1`firstArgument<when> _1 factorExpression
+_1 |-->_1`firstArgument<when> _1 factor2Expression
+_1 |-->_1`firstArgument<when> _1 logicalExpression
+_1 |-->_1`firstArgument<when> _1 equalityExpression
+_1 |-->_1`firstArgument<when> _1 additiveExpression
+_1 |-->_1`firstArgument<when> _1 expression
+_1 |-->_1
+_* |-->_*
+
+
+secondArgument::
+_1 * _2 |-->_2
+
+( _1 ) |-->_1`secondArgument
+
+_1 |-->_1`secondArgument<when> _1 basicExpression
+_1 |-->_1`secondArgument<when> _1 factorExpression
+_1 |-->_1`secondArgument<when> _1 factor2Expression
+_1 |-->_1`secondArgument<when> _1 logicalExpression
+_1 |-->_1`secondArgument<when> _1 equalityExpression
+_1 |-->_1`secondArgument<when> _1 additiveExpression
+_1 |-->_1`secondArgument<when> _1 expression
+_1 |-->_1
+_* |-->_*
 
 
 expectation::
@@ -1231,6 +1333,39 @@ _1 |-->false
 _* |-->false
 
 
+isDivision::
+_1 / _2 |-->true
+
+( _1 ) |-->_1`isDivision
+
+_1 |-->_1`isDivision<when> _1 basicExpression
+_1 |-->_1`isDivision<when> _1 factorExpression
+_1 |-->_1`isDivision<when> _1 factor2Expression
+_1 |-->_1`isDivision<when> _1 logicalExpression
+_1 |-->_1`isDivision<when> _1 equalityExpression
+_1 |-->_1`isDivision<when> _1 additiveExpression
+_1 |-->_1`isDivision<when> _1 expression
+
+_1 |-->false
+_* |-->false
+
+
+isMultiplication::
+_1 * _2 |-->true
+
+( _1 ) |-->_1`isMultiplication
+
+_1 |-->_1`isMultiplication<when> _1 basicExpression
+_1 |-->_1`isMultiplication<when> _1 factorExpression
+_1 |-->_1`isMultiplication<when> _1 factor2Expression
+_1 |-->_1`isMultiplication<when> _1 logicalExpression
+_1 |-->_1`isMultiplication<when> _1 equalityExpression
+_1 |-->_1`isMultiplication<when> _1 additiveExpression
+_1 |-->_1`isMultiplication<when> _1 expression
+
+_1 |-->false
+_* |-->false
+
 isStrictlyIncreasing::
 g{ _1 } |-->true
 
@@ -1244,6 +1379,8 @@ tanh ( _1 ) |-->true
 asinh ( _1 ) |-->true
 atanh ( _1 ) |-->true
 _1 ^{ 3 } |-->true 
+_1 ^{ 5 } |-->true 
+_1 ^{ 7 } |-->true 
 
 _1 ( _2 ) |-->false
 _1 ( ) |-->false
