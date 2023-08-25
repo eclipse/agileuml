@@ -824,7 +824,7 @@ public class PreProcessModels
         String progEx = (String) programStatementExamples.get(i); 
         // bw.write(progEx + "\n");
         // bw.close();
-        Thread.sleep(50); 
+        Thread.sleep(20); 
         Process p; 
 
         if (statementExamples.get(i) instanceof CreationStatement)
@@ -973,6 +973,10 @@ public class PreProcessModels
         { tt = (ModelElement) 
                   comp.parseKM3Enumeration(entities,types); 
         } 
+        else if (":".equals(comp.getLexical(1)))
+        { tt = (ModelElement) 
+                  comp.parseParameterDeclaration(entities,types); 
+        } 
         else 
         { System.err.println("!! Unrecognised UML/OCL keyword: " + keyword); } 
         // Warning: no abstract classes. 
@@ -1068,11 +1072,18 @@ public class PreProcessModels
             oclOperationModel = oclOperationModel + modelString + "\n";
           } 
           else if (tt instanceof Attribute)
-          { modelString = exampleName + " : InstanceAttribute\n" + 
-              exampleName + ".ast = " + tt.toAST() + "\n"; 
+          { Attribute attr = (Attribute) tt; 
+            boolean ispar = attr.isParameter(); 
+
+            if (ispar) // parameter
+            { modelString = exampleName + " : OclParameter\n"; } 
+            else 
+            { modelString = exampleName + " : InstanceAttribute\n"; } 
+            modelString = modelString + 
+              exampleName + ".ast = " + attr.toAST() + "\n"; 
              
             String oclAttType = 
-              ((Attribute) tt).getOclType();
+                          attr.getOclType();
             if (oclAttType != null) 
             { modelString = modelString +  
                 exampleName + ".type = " + oclAttType + "\n"; 
@@ -1154,8 +1165,14 @@ public class PreProcessModels
           dec = "ProgramOperation"; 
         } 
         else if (operationExamples.get(i) instanceof Attribute)
-        { p = proc.exec("java org.antlr.v4.gui.TestRig " + targetLanguage + " " + attTargetRule + " -tree"); 
-          dec = "ProgramAttribute"; 
+        { Attribute attr = 
+            (Attribute) operationExamples.get(i); 
+
+          if (attr.isParameter())
+          { dec = "ProgramParameter"; } 
+          else 
+          { dec = "ProgramAttribute"; } 
+          p = proc.exec("java org.antlr.v4.gui.TestRig " + targetLanguage + " " + attTargetRule + " -tree");  
         } 
         else if (operationExamples.get(i) instanceof Type) 
         { p = proc.exec("java org.antlr.v4.gui.TestRig " + targetLanguage + " " + typeDecTargetRule + " -tree"); 

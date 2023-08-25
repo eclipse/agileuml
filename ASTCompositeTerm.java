@@ -827,7 +827,8 @@ public class ASTCompositeTerm extends ASTTerm
  
       String liti = trmi.literalForm(); 
 
-      if (CSTL.isCSTLVariable(liti))
+      // if (CSTL.isCSTLVariable(liti))
+      if (CSTL.isMathMetavariable(liti))
       { ASTTerm oldterm = (ASTTerm) res.get(liti);    
         if (oldterm != null)
         { newterms.add(oldterm); } 
@@ -854,7 +855,8 @@ public class ASTCompositeTerm extends ASTTerm
     String rlit = rterm.literalForm(); 
     
     if (m == 1 && 
-        CSTL.isCSTLVariable(rlit))
+        CSTL.isMathMetavariable(rlit))
+      //  CSTL.isCSTLVariable(rlit))
     { res.put(rlit, this); 
       return res; 
     } 
@@ -876,7 +878,8 @@ public class ASTCompositeTerm extends ASTTerm
       String rilit = rtermi.literalForm(); 
       String liti = trmi.literalForm(); 
 
-      if (CSTL.isCSTLVariable(rilit))
+      // if (CSTL.isCSTLVariable(rilit))
+      if (CSTL.isMathMetavariable(rilit))
       { ASTTerm oldterm = (ASTTerm) res.get(rilit);    
         if (oldterm == null) 
         { res.put(rilit, terms.get(i));
@@ -43458,6 +43461,14 @@ public class ASTCompositeTerm extends ASTTerm
                expr.literalForm(), 
                "", 
                JOptionPane.INFORMATION_MESSAGE);
+
+      if (expr.getTag().equals("expression") && 
+          "=".equals(terms.get(2) + ""))
+      { Vector thm = new Vector(); 
+        thm.add(var); 
+        thm.add(expr); 
+        ASTTerm.mathoclrewrites.add(thm);  
+      } 
       return; 
     }
     else if ("formula".equals(tag) && 

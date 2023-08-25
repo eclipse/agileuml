@@ -27,6 +27,12 @@ public class CSTL
     return false; 
   } 
 
+  static boolean isMathMetavariable(String lex)
+  { if (lex.startsWith("_") && lex.length() > 1) 
+    { return true; } 
+    return false; 
+  } 
+
   static java.util.Map templates = new java.util.HashMap();
 
   public static void loadTemplates(Vector types, Vector entities)

@@ -66,6 +66,11 @@ public abstract class ASTTerm
   { mathocltheorems = new Vector(); }  
      // pairs [concl,premise]
 
+  static Vector mathoclrewrites; 
+  static 
+  { mathoclrewrites = new Vector(); }  
+     // pairs [lhs,rhs]
+
   static String cobolHyphenReplacement; 
   static 
   { cobolHyphenReplacement = "_"; } // or "$" for Java
@@ -278,7 +283,7 @@ public abstract class ASTTerm
     String lit2 = t2.literalForm(); 
 
     if (lit1.equals(lit2))
-    { return true; } 
+    { return true; } // Only for t2 : ASTSymbolTerm, ASTBasicTerm
 
     if (t2 instanceof ASTCompositeTerm) 
     { ASTCompositeTerm ct = (ASTCompositeTerm) t2; 
@@ -330,11 +335,16 @@ public abstract class ASTTerm
     Object stereo = ASTTerm.metafeatures.get(lit); 
     Vector stereotypes = new Vector(); 
     if (stereo == null)  
-    { ASTTerm.metafeatures.put(lit,stereotypes); } 
+    { stereotypes.add(str); 
+      ASTTerm.metafeatures.put(lit,stereotypes); 
+      return; 
+    } 
     else if (!(stereo instanceof Vector)) 
     { return; } // single-valued metafeature.  
 
-    System.out.println(">++++> Adding stereotype " + str + " to " + lit); 
+    // System.out.println(">++++> Adding stereotype " + str + " to " + lit); 
+
+    stereotypes = (Vector) stereo; 
 
     if (stereotypes.contains(str)) {} 
     else 
@@ -521,7 +531,7 @@ public abstract class ASTTerm
 
       for (int x = 0; x < stereotypes.size(); x++) 
       { String stereo = (String) stereotypes.get(x); 
-        if (stereo.startsWith(str + "="))
+        if (stereo.startsWith(str + "=")) // or " ="
         { return true; } 
       } 
       return false; 
@@ -545,7 +555,7 @@ public abstract class ASTTerm
     { Vector stereotypes = (Vector) mfs; 
       for (int x = 0; x < stereotypes.size(); x++) 
       { String stereo = (String) stereotypes.get(x); 
-        if (stereo.startsWith(str + "="))
+        if (stereo.startsWith(str + "=")) // or " ="
         { int indx = stereo.indexOf("="); 
           return stereo.substring(indx + 1); 
         } 
@@ -558,8 +568,8 @@ public abstract class ASTTerm
   public static String cgtlOperation(String opname, Vector eargs)
   { System.out.println(">>> External operation: " + opname + " on " + eargs); 
 
-    System.out.println(">>> metafeatures: " + ASTTerm.metafeatures); 
-    System.out.println(); 
+    /* System.out.println(">>> metafeatures: " + ASTTerm.metafeatures); 
+    System.out.println(); */ 
 
     if ("symbolicAddition".equals(opname) && 
         eargs.size() == 2)
@@ -596,6 +606,8 @@ public abstract class ASTTerm
       return ASTTerm.symbolicLeq(e1,e2); 
     } 
 
+    // Also Eq and Neq
+
     if ("equationSolution".equals(opname) && 
         eargs.size() == 2)
     { // Solve exprs for ids
@@ -621,10 +633,10 @@ public abstract class ASTTerm
       ASTTerm def = (ASTTerm) ASTTerm.mathoclvars.get(var); 
       if (def == null) 
       { return "  Substitute " + var + " in " + 
-               expr.literalForm(); 
+               expr.literalFormSpaces(); 
       } 
       ASTTerm res = expr.mathOCLSubstitute(var,def);
-      return res.literalForm();  
+      return res.literalFormSpaces();  
     } 
     /* _2<when> _2 expression<action> _1`value / _1
        Substitute _1 in _2 |-->Substitute _1 in _2
@@ -793,16 +805,24 @@ public abstract class ASTTerm
   public abstract String postSideEffect(); 
 
   public boolean hasMetafeature(String f) 
-  { String val = (String) metafeatures.get(f); 
-    return val != null; 
+  { Object mf = metafeatures.get(f); 
+    if (mf instanceof String)
+    { String val = (String) mf; 
+      return val != null;
+    }  
+    return false; 
   } 
 
   public void setMetafeature(String f, String val) 
   { metafeatures.put(f,val); } 
 
   public String getMetafeatureValue(String f) 
-  { String val = (String) metafeatures.get(f); 
-    return val;  
+  { Object mf = metafeatures.get(f); 
+    if (mf instanceof String)
+    { String val = (String) mf; 
+      return val;  
+    } 
+    return null; 
   } 
 
 
@@ -6596,7 +6616,9 @@ public abstract class ASTTerm
       assumptionlits.add(assump.literalForm()); 
     } 
 
-    Vector thms = ASTTerm.mathocltheorems; 
+    Vector thms = ASTTerm.mathocltheorems;
+    Vector rewrites = ASTTerm.mathoclrewrites; 
+ 
     /* JOptionPane.showMessageDialog(null, 
        "### Theorems: " + thms,   "",
        JOptionPane.INFORMATION_MESSAGE);  */ 
@@ -6725,6 +6747,22 @@ public abstract class ASTTerm
 
     System.out.println("###### Antecedent variables: " + avars); 
     System.out.println("###### Succedent variables: " + svars); */ 
+
+    for (int y = 0; y < rewrites.size(); y++) 
+    { Vector rewrite = (Vector) rewrites.get(y); 
+      ASTTerm lhs = (ASTTerm) rewrite.get(0); 
+      boolean isIn = ASTTerm.isSubterm(lhs,succ);
+      if (isIn) // replace lhs by its definition
+      { String vv = lhs.literalForm(); 
+        ASTTerm rhs = (ASTTerm) rewrite.get(1); 
+        ASTTerm newsucc = succ.mathOCLSubstitute(vv,rhs); 
+        String alitspace = ante.literalFormSpaces(); 
+        String slitspace = newsucc.literalFormSpaces(); 
+
+        return "  Prove " + slitspace + " if " + alitspace; 
+      } 
+    }  
+
 
     String alitspaces = ante.literalFormSpaces(); 
     String slitspaces = succ.literalFormSpaces(); 

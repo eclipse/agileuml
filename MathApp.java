@@ -751,6 +751,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
       messageArea.setText(result);
       internalModel = result;
       ASTTerm.mathocltheorems = new Vector();  
+      ASTTerm.mathoclrewrites = new Vector();  
           
       thisLabel.setText("Specification translated to text format");
     }
@@ -788,6 +789,7 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
         if (trm != null && trm instanceof ASTCompositeTerm)  
         { ASTCompositeTerm spec = (ASTCompositeTerm) trm;
           ASTTerm.mathoclvars = new java.util.HashMap();  
+          ASTTerm.mathoclrewrites = new Vector();  
           spec.checkMathOCL(); 
 
           // String extracode = 

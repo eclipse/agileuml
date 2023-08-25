@@ -298,7 +298,8 @@ public class ASTBasicTerm extends ASTTerm
     if (value.equals(rlit))
     { return res; } 
 
-    if (CSTL.isCSTLVariable(rlit))
+    // if (CSTL.isCSTLVariable(rlit))
+    if (CSTL.isMathMetavariable(rlit))
     { ASTTerm oldterm = (ASTTerm) res.get(rlit); 
       if (oldterm == null)
       { res.put(rlit, this); 
@@ -316,7 +317,8 @@ public class ASTBasicTerm extends ASTTerm
   public ASTTerm instantiate(java.util.HashMap res) 
   { // replace _i by res.get(_i)
 
-    if (CSTL.isCSTLVariable(value))
+    // if (CSTL.isCSTLVariable(value))
+    if (CSTL.isMathMetavariable(value))
     { ASTTerm oldterm = (ASTTerm) res.get(value); 
       if (oldterm != null)
       { return oldterm; } 

@@ -4047,6 +4047,15 @@ public Attribute parseAttribute(Vector entities, Vector types)
   return null; 
 } 
 
+public Attribute parseParameterDeclaration(Vector entities, 
+                                           Vector types)
+{ int en = lexicals.size() - 1; 
+  Attribute res = parseParameterDec(0,en,entities,types);
+  if (res != null) 
+  { res.setIsParameter(true); } 
+  return res;  
+} 
+
 private Attribute parseParameterDec(int st, int en, Vector entities, Vector types)
 { // should be att : Type
   if (st+2 > en) { return null; } 
@@ -4054,7 +4063,7 @@ private Attribute parseParameterDec(int st, int en, Vector entities, Vector type
   String attname = lexicals.get(st) + "";
   Type typ = parseType(st+2,en,entities,types);
   if (typ == null)
-  { System.err.println("!! ERROR: Invalid/unknown type: " + showLexicals(st+2, en)); 
+  { System.err.println("!! ERROR: Invalid/unknown parameter type: " + showLexicals(st+2, en)); 
     return null; 
   }
   Attribute att = new Attribute(attname, typ, ModelElement.INTERNAL);
@@ -10468,17 +10477,21 @@ private Vector parseUsingClause(int st, int en, Vector entities, Vector types)
 
     Expression xx = c.parseExpression(); 
     System.out.println(xx); 
-    System.out.println(xx.toAST()); */ 
+    System.out.println(xx.toAST()); 
 
     c.nospacelexicalanalysis("h17 = \"http://terminology.h17.org/CodeSystem/v3-RoleCode\""); 
 
-    System.out.println(c.lexicals); 
+    System.out.println(c.lexicals); */ 
 
     // c.nospacelexicalanalysis("sq->iterate(v; acc = 0 | v + acc)"); 
 
-    Expression zz = c.parseExpression(); 
+    // Expression zz = c.parseExpression(); 
 
+    Compiler2 ccx = new Compiler2(); 
+    ccx.nospacelexicalanalysis("x : int"); 
+    ModelElement zz = ccx.parseParameterDeclaration(new Vector(), new Vector()); 
     System.out.println(zz); 
+    System.out.println(zz.getType()); 
 
     // c.nospacelexicalanalysis("E<String,int>"); 
      
