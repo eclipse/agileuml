@@ -10,13 +10,59 @@ package oclrandom {
     attribute iy : int;
     attribute iz : int;
 
+    attribute distribution : String; 
+
+    attribute bernoulliP : double := 0.0; 
+    attribute binomialN : int := 1; 
+    attribute binomialP : double := 0.0; 
+    attribute normalMean : double := 0.0; 
+    attribute normalVariance : double := 1.0; 
+    attribute uniformLower : double := 0.0; 
+    attribute uniformUpper : double := 1.0; 
+    attribute poissonLambda : double := 1.0; 
+
+    static attribute _defaultInstanceOclRandom : OclRandom; 
+
     static operation newOclRandom() : OclRandom
     pre: true
-    post: OclRandom->exists( rd | rd.ix = 1001 & rd.iy = 781 & rd.iz = 913 & result = rd ); 
+    post: OclRandom->exists( rd | rd.ix = 1001 & rd.iy = 781 & rd.iz = 913 & rd.distribution = "uniform" & result = rd ); 
 
-    static operation newOclRandom(n : long) : OclRandom
+    static operation newOclRandom_Seed(n : long) : OclRandom
     pre: true
-    post: OclRandom->exists( rd | rd.ix = (n mod 30269)->oclAsType(int) & rd.iy = (n mod 30307)->oclAsType(int) & rd.iz = (n mod 30323)->oclAsType(int) & result = rd ); 
+    post: OclRandom->exists( rd | rd.ix = (n mod 30269)->oclAsType(int) & rd.iy = (n mod 30307)->oclAsType(int) & rd.iz = (n mod 30323)->oclAsType(int) & rd.distribution = "uniform" & result = rd ); 
+
+    static operation newOclRandomBernoulli(p : double) : OclRandom
+    pre: true
+    post: OclRandom->exists( rd | rd.ix = 1001 & rd.iy = 781 & rd.iz = 913 & rd.distribution = "bernoulli" & rd.bernoulliP = p & result = rd ); 
+
+    static operation newOclRandomBinomial(n : int, p : double) : OclRandom
+    pre: true
+    post: OclRandom->exists( rd | rd.ix = 1001 & rd.iy = 781 & rd.iz = 913 & rd.distribution = "binomial" & rd.binomialN = n & rd.binomialP = p & result = rd ); 
+
+    static operation newOclRandomNormal(mu : double, vari : double) : OclRandom
+    pre: true
+    post: OclRandom->exists( rd | rd.ix = 1001 & rd.iy = 781 & rd.iz = 913 & rd.distribution = "normal" & rd.normalMean = mu & rd.normalVariance = vari & result = rd ); 
+
+    static operation newOclRandomLogNormal(mu : double, vari : double) : OclRandom
+    pre: true
+    post: OclRandom->exists( rd | rd.ix = 1001 & rd.iy = 781 & rd.iz = 913 & rd.distribution = "lognormal" & rd.normalMean = mu & rd.normalVariance = vari & result = rd ); 
+
+    static operation newOclRandomUniform(lwr : double, upr : double) : OclRandom
+    pre: true
+    post: OclRandom->exists( rd | rd.ix = 1001 & rd.iy = 781 & rd.iz = 913 & rd.distribution = "uniform" & rd.uniformLower = lwr & rd.uniformUpper = upr & result = rd ); 
+
+    static operation newOclRandomPoisson(lm : double) : OclRandom
+    pre: true
+    post: OclRandom->exists( rd | rd.ix = 1001 & rd.iy = 781 & rd.iz = 913 & rd.distribution = "poisson" & rd.poissonLambda = lm & result = rd ); 
+
+    static operation defaultInstanceOclRandom() : OclRandom
+    pre: true post: true
+    activity: 
+      if OclRandom._defaultInstanceOclRandom->oclIsUndefined()
+      then 
+        OclRandom._defaultInstanceOclRandom := OclRandom.newOclRandom()
+      else skip ; 
+      return OclRandom._defaultInstanceOclRandom; 
 
     operation setSeeds(x : int , y : int , z : int ) : void
     pre: true
@@ -41,7 +87,7 @@ package oclrandom {
 
     operation nextGaussian() : double
     pre: true 
-    post: d = self.nrandom() & result = (d/3.0 - 0.5); 
+    post: d = self.nrandom() & result = d*2.0 - 3.0; 
 
     operation nextInt(n : int) : int
     pre: true 
@@ -59,6 +105,79 @@ package oclrandom {
     pre: true
     post: d = self.nextDouble() & (d > 0.5 => result = true);
 
+    operation nextBernoulli(p : double) : int
+    pre: true
+    post: d = self.nextDouble() & ((d > p => result = 0) & (d <= p => result = 1));
+
+    operation nextBinomial(n : int, p : double) : int
+    pre: true
+    post: true
+    activity: var res : int := 0 ; 
+      for ind : Integer.subrange(0,n-1) 
+      do  
+        var d : double := self.nextDouble(); 
+        if d <= p 
+        then
+          result := result + 1
+        else skip ; 
+      return res;
+
+    operation nextNormal(mu : double, vari : double) : double
+    pre: true
+    post: true
+    activity: 
+      var d : double := 0.0;  
+      var i : int := 0; 
+      while i < 12 
+      do 
+       (d := d + self.nextDouble() ;
+        i := i + 1) ; 
+      d := d - 6; 
+      return mu + d*(vari->sqrt());
+
+    operation nextLogNormal(mu : double, vari : double) : double
+    pre: true
+    post: true
+    activity: 
+      var d : double := 0.0;
+      d := nextNormal(mu,vari); 
+      return d->exp(); 
+
+    operation nextUniform(lwr : double, upr : double) : double
+    pre: true
+    post: d = self.nextDouble() & result = lwr + (upr - lwr)*d;
+
+    operation nextPoisson(lam : double) : double
+    pre: true
+    post: true
+    activity: 
+      var x : double := 0.0;  
+      var p : double := (-lam)->exp();  
+      var s : double := p; 
+      var u : double := self.nextDouble(); 
+
+      while u > s 
+      do 
+       (x := x + 1;
+        p := p*lam/x;
+        s := s + p) ; 
+      return x;
+
+    operation next() : double
+    pre: true 
+    post: 
+     (distribution = "normal" => result = self.nextNormal(self.normalMean, self.normalVariance)) & (distribution = "lognormal" => result = self.nextLogNormal(self.normalMean, self.normalVariance)) & (distribution = "bernoulli" => result = self.nextBernoulli(self.bernoulliP)) & (distribution = "binomial" => result = self.nextBinomial(self.binomialN, self.binomialP)) & (distribution = "uniform" => result = self.nextUniform(self.uniformLower, self.uniformUpper)) & (distribution = "poisson" => result = self.nextPoisson(self.poissonLambda)) & (true => result = self.nextDouble()); 
+
+    operation mean() : double
+    pre: true 
+    post: 
+     (distribution = "normal" => result = self.normalMean) & (distribution = "lognormal" => result = (self.normalMean + self.normalVariance/2.0)->exp()) & (distribution = "bernoulli" => result = self.bernoulliP) & (distribution = "binomial" => result = self.binomialN*self.binomialP) & (distribution = "uniform" => result = (self.uniformUpper + self.uniformLower)/2.0) & (distribution = "poisson" => result = self.poissonLambda) & (true => result = 0.5); 
+   
+    operation variance() : double
+    pre: true 
+    post: 
+     (distribution = "normal" => result = self.normalVariance) & (distribution = "lognormal" => result = (2*self.normalMean + 2*self.normalVariance)->exp() - (2*self.normalMean + self.normalVariance)->exp()) & (distribution = "bernoulli" => result = self.bernoulliP*(1 - self.bernoulliP)) & (distribution = "binomial" => result = self.binomialN*self.binomialP*(1 - self.binomialP)) & (distribution = "uniform" => result = (self.uniformUpper - self.uniformLower)/12.0) & (distribution = "poisson" => result = self.poissonLambda) & (true => result = 1.0/12.0); 
+   
     static operation randomiseSequence(sq : Sequence) : Sequence
     pre: true post: true
     activity:
@@ -91,6 +210,12 @@ package oclrandom {
     post: true; 
 
     static operation randomElement(sq : Sequence) : OclAny
+    pre: true post: true; 
+
+    static operation randomElements(sq : Sequence, n : int) : Sequence
+    pre: true post: true; 
+
+    static operation randomUniqueElements(sq : Sequence, n : int) : Sequence
     pre: true post: true; 
   }
 }
