@@ -130,6 +130,10 @@ public class ASTSymbolTerm extends ASTTerm
     return symbol; 
   } 
 
+  public java.util.HashMap hasMatch(ASTTerm rterm, 
+                                    java.util.HashMap res) 
+  { return fullMatch(rterm,res); } 
+
   public java.util.HashMap fullMatch(ASTTerm rterm, 
                                      java.util.HashMap res) 
   { // This term matches to a schematic term rterm

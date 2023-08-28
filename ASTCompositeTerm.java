@@ -433,7 +433,7 @@ public class ASTCompositeTerm extends ASTTerm
   
 
   public ASTTerm getTerm(int i) 
-  { if (terms.size() > i)
+  { if (i < terms.size())
     { return (ASTTerm) terms.get(i); } 
     return null; 
   }
@@ -844,20 +844,56 @@ public class ASTCompositeTerm extends ASTTerm
     return new ASTCompositeTerm(tag, newterms); 
   } 
 
+
+  public java.util.HashMap hasMatch(ASTTerm rterm, 
+                                    java.util.HashMap res) 
+  { // This term or a subterm matches to schematic term rterm
+    java.util.HashMap resx = this.fullMatch(rterm,res); 
+    if (resx != null) 
+    { return resx; } 
+
+    for (int i = 0; i < terms.size(); i++) 
+    { ASTTerm trm = (ASTTerm) terms.get(i); 
+      resx = trm.hasMatch(rterm,res);
+
+      JOptionPane.showMessageDialog(null, 
+       "### Bindings: " + resx + 
+       " of " + trm + " and " + rterm,   "",
+       JOptionPane.INFORMATION_MESSAGE);  
+ 
+      // if (resx == null) 
+      // { return null; } 
+    } 
+
+    return res; 
+  } 
+
   public java.util.HashMap fullMatch(ASTTerm rterm, 
                                      java.util.HashMap res) 
   { // This term matches to a schematic term rterm
+    // Same structure, but terms can correspond to 
+    // metavariables _V, _W in rterm. 
 
     int n = terms.size(); 
     int m = rterm.arity(); 
     Vector rterms = rterm.getTerms(); 
 
+    String thislit = literalForm(); 
     String rlit = rterm.literalForm(); 
+
+    System.out.println("#### attempting full match of " + 
+                       thislit + " with " + rlit); 
     
-    if (m == 1 && 
-        CSTL.isMathMetavariable(rlit))
+    if (thislit.equals(rlit))
+    { return res; } // match with no new binding
+
+    if (CSTL.isMathMetavariable(rlit))
       //  CSTL.isCSTLVariable(rlit))
     { res.put(rlit, this); 
+        JOptionPane.showMessageDialog(null, 
+            "### Binding: " + rlit + " bound to " + 
+            this,   "",
+          JOptionPane.INFORMATION_MESSAGE);
       return res; 
     } 
     else if (m == 1 && n == 1) 
@@ -882,10 +918,10 @@ public class ASTCompositeTerm extends ASTTerm
       if (CSTL.isMathMetavariable(rilit))
       { ASTTerm oldterm = (ASTTerm) res.get(rilit);    
         if (oldterm == null) 
-        { res.put(rilit, terms.get(i));
+        { res.put(rilit, trmi);
           JOptionPane.showMessageDialog(null, 
-            "### Binding: " + terms.get(i) + " to " + 
-            rilit,   "",
+            "### Binding: " + rilit + " bound to " + 
+            trmi,   "",
           JOptionPane.INFORMATION_MESSAGE);
         } 
         else if (liti.equals(oldterm.literalForm())) 
@@ -43503,6 +43539,21 @@ public class ASTCompositeTerm extends ASTTerm
       return; 
     }  
 
+    if ("rewrite".equals(tag) && 
+        "Rewrite".equals(terms.get(0) + "") && 
+        terms.size() >= 4)
+    { // Rewrite lhs as rhs
+      ASTTerm lhs = (ASTTerm) terms.get(1); 
+      ASTTerm rhs = (ASTTerm) terms.get(3); 
+      rhs.checkMathOCL();
+      
+      Vector thm = new Vector(); 
+      thm.add(lhs); 
+      thm.add(rhs); 
+      ASTTerm.mathoclrewrites.add(thm);  
+    } 
+
+
     if ("simplify".equals(tag) && 
         "Simplify".equals(terms.get(0) + "") &&
         terms.size() > 1)
@@ -43585,7 +43636,8 @@ public class ASTCompositeTerm extends ASTTerm
       return; 
     }  
 
-    if ("theorem".equals(tag))
+    if ("theorem".equals(tag) && 
+        terms.size() >= 4)
     { // Theorem <expression> when <exprList>
       ASTTerm concl = (ASTTerm) terms.get(1);
       ASTTerm premise = (ASTTerm) terms.get(3);
@@ -43599,7 +43651,7 @@ public class ASTCompositeTerm extends ASTTerm
       return; 
     }  
 
-    if ("substituteIn".equals(tag))
+    if ("substituteIn".equals(tag) && terms.size() >= 4)
     { // Substitute v in expr|instr
       ASTTerm var = (ASTTerm) terms.get(1);
       ASTTerm expr = (ASTTerm) terms.get(3);
@@ -44070,6 +44122,10 @@ public class ASTCompositeTerm extends ASTTerm
 
     if (terms.size() == 1)
     { // one term
+      String lit = literalForm(); 
+      if (lit.equals(var))
+      { return repl; } 
+
       ASTTerm ct = (ASTTerm) terms.get(0); 
       ASTTerm newtrm = ct.mathOCLSubstitute(var,repl); 
       return new ASTCompositeTerm(tag, newtrm); 
@@ -44081,6 +44137,11 @@ public class ASTCompositeTerm extends ASTTerm
          "equalityExpression".equals(tag))  
         )
     { // binary expression
+
+      String lit = literalForm(); 
+      if (lit.equals(var))
+      { return repl; } 
+
       ASTTerm ct1 = (ASTTerm) terms.get(0); 
       ASTTerm ctop = (ASTTerm) terms.get(1); 
       ASTTerm ct2 = (ASTTerm) terms.get(2); 
@@ -44095,6 +44156,11 @@ public class ASTCompositeTerm extends ASTTerm
         "logicalExpression".equals(tag)  
         )
     { // FORALL id : typ . expr, EXISTS
+
+      String lit = literalForm(); 
+      if (lit.equals(var))
+      { return repl; } 
+
       ASTTerm sym1 = (ASTTerm) terms.get(0); 
       ASTTerm vart = (ASTTerm) terms.get(1); 
       ASTTerm sym2 = (ASTTerm) terms.get(2);
@@ -44118,6 +44184,11 @@ public class ASTCompositeTerm extends ASTTerm
         terms.get(1) instanceof ASTSymbolTerm  
        )
     { // binary expression
+
+      String lit = literalForm(); 
+      if (lit.equals(var))
+      { return repl; } 
+
       ASTTerm ct1 = (ASTTerm) terms.get(0); 
       ASTTerm sym1 = (ASTTerm) terms.get(1); 
       ASTTerm ct2 = (ASTTerm) terms.get(2); 
@@ -44133,6 +44204,11 @@ public class ASTCompositeTerm extends ASTTerm
         "C_{".equals(terms.get(1) + "")  
        )
     { // C_{ expr } ^{ expr }
+
+      String lit = literalForm(); 
+      if (lit.equals(var))
+      { return repl; } 
+
       ASTTerm sym1 = (ASTTerm) terms.get(0); 
 
       ASTTerm ct1 = (ASTTerm) terms.get(1);
@@ -44155,6 +44231,10 @@ public class ASTCompositeTerm extends ASTTerm
         "E[".equals(terms.get(1) + "")  
        )
     { // E_[ expr ]
+      String lit = literalForm(); 
+      if (lit.equals(var))
+      { return repl; } 
+
       ASTTerm ct0 = (ASTTerm) terms.get(0); 
       ASTTerm ct1 = (ASTTerm) terms.get(1);
       ASTTerm ct2 = (ASTTerm) terms.get(2); 
@@ -44169,6 +44249,10 @@ public class ASTCompositeTerm extends ASTTerm
         "factorExpression".equals(tag) 
        )
     { // INTEGRAL expr id
+      String lit = literalForm(); 
+      if (lit.equals(var))
+      { return repl; } 
+
       ASTTerm sym1 = (ASTTerm) terms.get(0); 
 
       ASTTerm vart = (ASTTerm) terms.get(2); 
@@ -44187,6 +44271,10 @@ public class ASTCompositeTerm extends ASTTerm
         "factorExpression".equals(tag)  
        )
     { // INTEGRAL _{ lb } ^{ up } expr dv
+
+      String lit = literalForm(); 
+      if (lit.equals(var))
+      { return repl; } 
 
       ASTTerm sym1 = (ASTTerm) terms.get(0); 
       ASTTerm sym2 = (ASTTerm) terms.get(1); 
@@ -44223,6 +44311,10 @@ public class ASTCompositeTerm extends ASTTerm
        )
     { // SUM _{ expr } ^{ expr } expr
 
+      String lit = literalForm(); 
+      if (lit.equals(var))
+      { return repl; } 
+
       ASTTerm sym1 = (ASTTerm) terms.get(0); 
       ASTTerm sym2 = (ASTTerm) terms.get(1); 
       ASTTerm ct1 = (ASTTerm) terms.get(2); 
@@ -44247,6 +44339,10 @@ public class ASTCompositeTerm extends ASTTerm
         "factorExpression".equals(tag)  
        )
     { // PARTIALDIFF _{ id }  expr
+      String lit = literalForm(); 
+      if (lit.equals(var))
+      { return repl; } 
+
       ASTTerm sym1 = (ASTTerm) terms.get(0); 
       ASTTerm sym2 = (ASTTerm) terms.get(1); 
 
@@ -44267,6 +44363,10 @@ public class ASTCompositeTerm extends ASTTerm
         "conditionalExpression".equals(tag)  
        )
     { // if test then e1 else e2 endif
+
+      String lit = literalForm(); 
+      if (lit.equals(var))
+      { return repl; } 
 
       ASTTerm sym1 = (ASTTerm) terms.get(0); 
       ASTTerm ct1 = (ASTTerm) terms.get(1); 
@@ -44290,6 +44390,10 @@ public class ASTCompositeTerm extends ASTTerm
         "lambdaExpression".equals(tag)  
        )
     { // lambda id : typ in expr
+      String lit = literalForm(); 
+      if (lit.equals(var))
+      { return repl; } 
+
       ASTTerm sym1 = (ASTTerm) terms.get(0); 
       ASTTerm vbl = (ASTTerm) terms.get(1); 
       String vname = vbl.literalForm();
@@ -44310,6 +44414,10 @@ public class ASTCompositeTerm extends ASTTerm
         "letExpression".equals(tag)  
        )
     { // let v = expression in expr
+      String lit = literalForm(); 
+      if (lit.equals(var))
+      { return repl; } 
+
       ASTTerm sym1 = (ASTTerm) terms.get(0); 
       ASTTerm vbl = (ASTTerm) terms.get(1); 
       ASTTerm sym2 = (ASTTerm) terms.get(2); 
@@ -44337,6 +44445,10 @@ public class ASTCompositeTerm extends ASTTerm
        )
     { // prefix unary expression
       
+      String lit = literalForm(); 
+      if (lit.equals(var))
+      { return repl; } 
+
       ASTTerm sym1 = (ASTTerm) terms.get(0); 
       ASTTerm ct1 = (ASTTerm) terms.get(1); 
       ASTTerm res1 = ct1.mathOCLSubstitute(var,repl);
@@ -44351,6 +44463,10 @@ public class ASTCompositeTerm extends ASTTerm
         terms.get(1) instanceof ASTSymbolTerm  
        )
     { // postfix unary expression, expr'
+
+      String lit = literalForm(); 
+      if (lit.equals(var))
+      { return repl; } 
 
       ASTTerm ct1 = (ASTTerm) terms.get(0); 
       ASTTerm sym1 = (ASTTerm) terms.get(1); 
@@ -44367,6 +44483,10 @@ public class ASTCompositeTerm extends ASTTerm
         ")".equals(terms.get(2) + "")  
        )
     { // bracketed expression
+
+      String lit = literalForm(); 
+      if (lit.equals(var))
+      { return repl; } 
 
       ASTTerm sym1 = (ASTTerm) terms.get(0); 
       ASTTerm ct1 = (ASTTerm) terms.get(1);
@@ -44386,6 +44506,10 @@ public class ASTCompositeTerm extends ASTTerm
         ")".equals(terms.get(4) + "")  
        )
     { // bracketed expression
+
+      String lit = literalForm(); 
+      if (lit.equals(var))
+      { return repl; } 
 
       ASTTerm ct1 = (ASTTerm) terms.get(0); 
       ASTTerm sym1 = (ASTTerm) terms.get(1); 
@@ -44408,6 +44532,10 @@ public class ASTCompositeTerm extends ASTTerm
        )
     { // expr ^{ expr }
 
+      String lit = literalForm(); 
+      if (lit.equals(var))
+      { return repl; } 
+
       ASTTerm ct1 = (ASTTerm) terms.get(0); 
       ASTTerm sym1 = (ASTTerm) terms.get(1); 
       ASTTerm ct2 = (ASTTerm) terms.get(2); 
@@ -44428,6 +44556,10 @@ public class ASTCompositeTerm extends ASTTerm
        )
     { // op ( exprs )
 
+      String lit = literalForm(); 
+      if (lit.equals(var))
+      { return repl; } 
+
       ASTTerm sym1 = (ASTTerm) terms.get(0); 
       ASTTerm sym2 = (ASTTerm) terms.get(1); 
       ASTTerm ct1 = (ASTTerm) terms.get(2);
@@ -44442,7 +44574,7 @@ public class ASTCompositeTerm extends ASTTerm
     } 
 
     // Also, setExpression, and 
-    // (basicExpression expr . ID)
+    // (basicExpression expr . ID) and lim_{ ... }
 
    /* 
     if ("formula".equals(tag) && 

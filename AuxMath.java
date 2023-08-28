@@ -255,6 +255,8 @@ public class AuxMath
         
   public static boolean isFunctional(double[] xs, double[] ys) 
   { // For each x : xs, only one y : ys
+    // assumes xs.length <= ys.length
+
     java.util.HashMap valueSets = new java.util.HashMap(); 
 
     for (int i = 0; i < xs.length; i++) 
@@ -262,6 +264,9 @@ public class AuxMath
       java.util.HashSet yvals = (java.util.HashSet) valueSets.get(xval); 
       if (yvals == null) 
       { yvals = new java.util.HashSet(); } 
+
+      if (i >= ys.length) { return false; } 
+
       yvals.add(new Double(ys[i])); 
       valueSets.put(xval,yvals); 
       if (yvals.size() > 1) 
@@ -280,6 +285,9 @@ public class AuxMath
       java.util.HashSet yvals = (java.util.HashSet) valueSets.get(xval); 
       if (yvals == null) 
       { yvals = new java.util.HashSet(); } 
+
+      if (i >= ys.length) { return false; } 
+
       yvals.add(ys[i]); 
       valueSets.put(xval,yvals); 
       if (yvals.size() > 1) 
@@ -299,6 +307,8 @@ public class AuxMath
       java.util.HashSet yvals = (java.util.HashSet) valueSets.get(xval); 
       if (yvals == null) 
       { yvals = new java.util.HashSet(); } 
+
+      if (i >= ys.length) { return false; } 
 
       if (ys[i].size() != 1) 
       { return false; } 
@@ -326,6 +336,8 @@ public class AuxMath
       if (yvals == null) 
       { yvals = new java.util.HashSet(); } 
 
+      if (i >= ys.length) { return false; } 
+
       yvals.add(new Boolean(ys[i])); 
       valueSets.put(xval,yvals); 
 
@@ -346,6 +358,9 @@ public class AuxMath
 
       if (yvals == null) 
       { yvals = new java.util.HashSet(); } 
+
+      if (i >= ys.length) { return false; } 
+
       yvals.add(ys[i]); 
 
       valueSets.put(xval,yvals); 
@@ -432,6 +447,10 @@ public class AuxMath
 
   public static boolean isFunctional(String[] xs, String[] ys) 
   { // For each x : xs, only one y : ys
+
+    if (ys.length < xs.length) 
+    { return false; } 
+
     java.util.HashMap valueSets = new java.util.HashMap(); 
 
     for (int i = 0; i < xs.length; i++) 
@@ -444,6 +463,7 @@ public class AuxMath
       { return false; }
       // System.out.println(valueSets);  
     } 
+
     return true; 
   } 
 
@@ -2489,14 +2509,14 @@ public class AuxMath
        if (indi >= 0)
        { startpositions[i] = indi; 
          endpositions[i] = indi + srci.size() - 1;
-         System.out.println(srci + " is a subsequence of " + targets + " from " + indi + " to " + endpositions[i]); 
+         // System.out.println(srci + " is a subsequence of " + targets + " from " + indi + " to " + endpositions[i]); 
          used.add(new Integer(i));  
        } 
        else 
        { unused.add(id); }  
      } 
 
-     System.out.println(">> Used sources: " + used); 
+     // System.out.println(">> Used sources: " + used); 
 
      // The ranges [startpositions[i],endpositions[i]]
      // for i : used must be disjoint. 
@@ -2522,7 +2542,7 @@ public class AuxMath
        { pattern.add(targets.get(j)); } 
      } 
 
-     System.out.println(pattern); 
+     // System.out.println(pattern); 
 
      return pattern; 
    } 

@@ -87,13 +87,13 @@ public class MathOCLBaseListener implements MathOCLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterReexpression(MathOCLParser.ReexpressionContext ctx) { }
+	@Override public void enterRewrite(MathOCLParser.RewriteContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitReexpression(MathOCLParser.ReexpressionContext ctx) { }
+	@Override public void exitRewrite(MathOCLParser.RewriteContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

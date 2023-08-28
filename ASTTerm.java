@@ -760,7 +760,9 @@ public abstract class ASTTerm
   public static Vector getRequiredLibraries()
   { return requiredLibraries; } 
 
-  public abstract ASTTerm removeOuterTag(); 
+  public abstract ASTTerm removeOuterTag();
+  /* For symbol terms return null; basic terms the 
+     symbol of value; composite terms - the first term */  
 
   public abstract ASTTerm getTerm(int i); 
 
@@ -784,6 +786,9 @@ public abstract class ASTTerm
 
   public abstract String cgRules(CGSpec cgs, Vector rules); 
 
+  public abstract java.util.HashMap hasMatch(ASTTerm rterm, 
+                                    java.util.HashMap res); 
+  
   public abstract java.util.HashMap fullMatch(ASTTerm rterm, 
                              java.util.HashMap res); 
 
@@ -923,8 +928,9 @@ public abstract class ASTTerm
     { return false; } 
  
     return typ.equals(str); 
-  }  
+  }  // equalsIgnoreCase?
 
+  /* C abstraction: */ 
 
   public abstract boolean isLabeledStatement();  
 
@@ -943,7 +949,7 @@ public abstract class ASTTerm
       ent.addStereotype("external"); 
       ents.add(ents.size()-1, ent); 
       return ent; 
-    } 
+    } // add the attributes? 
 
     Entity ent = (Entity) ModelElement.lookupByName(nme, ents); 
     if (ent != null) 
@@ -1057,12 +1063,12 @@ public abstract class ASTTerm
   /* JavaScript abstraction: */ 
 
   public abstract Vector jsclassDeclarationToKM3(java.util.Map vartypes, 
-    java.util.Map varelemtypes, Vector types, Vector entities);  
+    java.util.Map varelemtypes, Vector types, Vector ents);  
 
   public boolean isDefinedFunction(Expression opexpr,
                       java.util.Map vartypes,
                       java.util.Map varelemtypes,
-                      Vector types, Vector entities)
+                      Vector types, Vector ents)
   { String opname = opexpr + ""; 
     Type tt = (Type) vartypes.get(opname);
 
@@ -1073,14 +1079,14 @@ public abstract class ASTTerm
     else if (tt != null)
     { return false; } 
 
-    for (int i = 0; i < entities.size(); i++) 
-    { Entity ee = (Entity) entities.get(i); 
+    for (int i = 0; i < ents.size(); i++) 
+    { Entity ee = (Entity) ents.get(i); 
       if (ee.hasOperation(opname))
       { return true; } 
     } 
 
-    for (int i = 0; i < entities.size(); i++) 
-    { Entity ee = (Entity) entities.get(i); 
+    for (int i = 0; i < ents.size(); i++) 
+    { Entity ee = (Entity) ents.get(i); 
       Attribute att = (Attribute) ee.getAttribute(opname); 
       if (att != null && att.isFunction())
       { return true; } 
@@ -1163,14 +1169,14 @@ public abstract class ASTTerm
       "Short".equals(typ) || "Byte".equals(typ) ||
       "BigInteger".equals(typ) || "integer".equals(typ) ||  
       "long".equals(typ) || "Long".equals(typ); 
-  } 
+  } // LongLong for VB
 
   public static boolean isReal(String typ) 
   { return 
       "float".equals(typ) || "double".equals(typ) || 
       "BigDecimal".equals(typ) || "real".equals(typ) || 
       "Float".equals(typ) || "Double".equals(typ); 
-  } 
+  } // Single for VB
 
   public static boolean isString(String typ) 
   { return 
@@ -1189,10 +1195,7 @@ public abstract class ASTTerm
     String typ = ASTTerm.getType(litf); 
     if (typ == null) 
     { return Expression.isString(litf); } 
-    return 
-      "String".equals(typ) || "Character".equals(typ) || 
-      "StringBuffer".equals(typ) || "char".equals(typ) || 
-      "StringBuilder".equals(typ); 
+    return ASTTerm.isString(typ);  
   } 
 
   public boolean isCharacter()
@@ -1496,7 +1499,7 @@ public abstract class ASTTerm
     else if (t instanceof ASTBasicTerm)
     { return new ASTCompositeTerm(t.getTag()); }  
     return t; 
-  } 
+  } // Inconsistent with metamodel for terms. 
 
   public static boolean constantTrees(ASTTerm[] trees)
   { if (trees.length == 0) 
@@ -1504,8 +1507,8 @@ public abstract class ASTTerm
     ASTTerm t0 = trees[0]; 
     for (int i = 1; i < trees.length; i++) 
     { ASTTerm tx = trees[i]; 
-	  if (tx == null) 
-	  { return false; }
+      if (tx == null) 
+      { return false; }
       if (tx.equals(t0)) { } 
       else 
       { return false; } 
@@ -1538,7 +1541,7 @@ public abstract class ASTTerm
 
       if (tx.arity() <= 1 && tx.isNestedSymbolTerm()) 
       { 
-        System.out.println(">>> Nested symbol term: " + tx); 
+        // System.out.println(">>> Nested symbol term: " + tx); 
       } 
       else 
       { return false; }  
@@ -1600,7 +1603,10 @@ public abstract class ASTTerm
   } 
 
   public static boolean functionalASTMapping(Vector strees, Vector values)
-  { // The correspondence is functional. Not only symbols. 
+  { // The correspondence of terms strees to strings values
+    // is functional. Not only symbol terms.
+
+    // Needs strees.size() <= values.size() 
 
     String[] sattvalues = new String[strees.size()]; 
     String[] tattvalues = new String[values.size()]; 
@@ -1702,6 +1708,8 @@ public abstract class ASTTerm
       }  
     }
 
+    // tail and front of strings also? 
+
     /* Identify default mapping _1 |--> v */ 
 
     String defaultValue = null; 
@@ -1800,7 +1808,7 @@ public abstract class ASTTerm
 
     for (int i = 1; i < trees.length; i++) 
     { ASTTerm tx = trees[i]; 
-      if (tx.hasTag(tag0)) { } 
+      if (tx.hasTag(tag0)) { } // not a symbol
       else 
       { return false; } 
     } 
@@ -1808,7 +1816,7 @@ public abstract class ASTTerm
   }   
 
   public static boolean sameTails(ASTTerm[] trees)
-  { if (trees.length == 0) 
+  { if (trees == null || trees.length == 0) 
     { return false; }
     Vector tail0 = new Vector(); 
     ASTTerm t0 = trees[0]; 
@@ -1832,7 +1840,8 @@ public abstract class ASTTerm
         if (trms.size() == 0) 
         { return false; } 
         trms.remove(0); 
-        if (tail0.equals(trms)) { } 
+        if (tail0.equals(trms)) // equal element by element 
+        { } 
         else 
         { return false; } 
       } 
@@ -1936,13 +1945,18 @@ public abstract class ASTTerm
     return true; 
   } 
 
+
+  /* Used by ModelSpecification::conditionalTreeMappings */ 
+
   public static Vector symbolValues(int ind, ASTTerm[] trees)
-  { Vector res = new Vector(); 
+  { /* Symbols at ind position in each trees[i] */ 
+    
+    Vector res = new Vector(); 
 
     if (trees == null || trees.length == 0) 
     { return res; }
     
-    for (int i = 1; i < trees.length; i++) 
+    for (int i = 0; i < trees.length; i++) // not = 0 
     { ASTTerm tx = trees[i]; 
       if (tx == null || ind >= tx.arity()) 
       { continue; } 
@@ -1977,7 +1991,9 @@ public abstract class ASTTerm
     for (int i = 0; i < trees.length; i++) 
     { ASTTerm tx = trees[i];
       if (tx == null) 
-      { remd.add(null); } 
+      { result[i] = null; 
+        remd.add(null); 
+      } 
       else  
       { ASTTerm tnew = tx.removeOuterTag(); 
         result[i] = tnew; 
@@ -1985,10 +2001,13 @@ public abstract class ASTTerm
       } 
     } 
     return result; 
-  }   
+  } // For composite terms with single subterms, return those
+    // subterms.   
 
   public static ASTTerm[] subterms(ASTTerm[] trees, int i, Vector remd)
-  { if (trees == null || trees.length == 0) 
+  { // i'th subterms of trees
+
+    if (trees == null || trees.length == 0) 
     { return trees; }
 
     ASTTerm[] result = new ASTTerm[trees.length]; 
@@ -2001,11 +2020,11 @@ public abstract class ASTTerm
         // return null?  
       }
       else 
-      { ASTTerm tnew = tx.getTerm(i); 
+      { ASTTerm tnew = tx.getTerm(i); // null if no i'th term 
         result[j] = tnew; 
         remd.add(tnew);
       }  
-    } // terms are indexed from 0
+    } // terms are indexed from 0. 
 
     return result; 
   }   
@@ -2018,7 +2037,7 @@ public abstract class ASTTerm
         { ASTTerm xx = xs[i]; 
           ASTTerm yvect = ys[i]; 
 
-          System.out.println(">>>> Comparing " + xx + " to " + yvect); 
+          // System.out.println(">>>> Comparing " + xx + " to " + yvect); 
           if (xx == null) 
           { return false; } 
           else if (xx.equals(yvect)) { } 
@@ -2106,8 +2125,8 @@ public abstract class ASTTerm
         Integer nx = (Integer) doms.get(j); 
         Vector arityns = (Vector) aritymap.get(nx); 
 
-        System.out.println(">>> Arity " + nx + " source terms are: " + arityns); 
-        System.out.println(); 
+        // System.out.println(">>> Arity " + nx + " source terms are: " + arityns); 
+        // System.out.println(); 
 
         if (arityns.size() == 1) 
         { ASTTerm st = (ASTTerm) arityns.get(0); 
@@ -2121,6 +2140,8 @@ public abstract class ASTTerm
         { ASTTerm st0 = (ASTTerm) arityns.get(0); 
           BasicExpression expr = 
                 BasicExpression.newASTBasicExpression(st0); 
+          // schematic expression based on st0.
+
           int n = nx.intValue(); 
           for (int p = 0; p < n; p++) 
           { if (ASTTerm.constantTerms(arityns,p))
@@ -2189,7 +2210,7 @@ public abstract class ASTTerm
         { ASTTerm xx = xs[i]; 
           ASTTerm yvect = ys[i]; 
 
-          System.out.println(">>>> Comparing " + xx + " to " + yvect); 
+         // System.out.println(">>>> Comparing " + xx + " to " + yvect); 
           if (xx == null) 
           { return false; } 
           else if (xx.equals(yvect)) { } 
@@ -2210,7 +2231,8 @@ public abstract class ASTTerm
         { ASTTerm xx = xs[i]; 
           ASTTerm yvect = ys[i]; 
 
-          System.out.println(">>>> Comparing " + xx + " to " + yvect); 
+          // System.out.println(">>>> Comparing " + xx + " to " + yvect); 
+
           if (xx == null) 
           { return false; } 
           else if (xx.equals(yvect)) { } 
@@ -2224,7 +2246,7 @@ public abstract class ASTTerm
     }
 
     public static boolean matchingTrees(Entity sent, ASTTerm xx, ASTTerm yy, ModelSpecification mod)
-    { System.out.println(">>>> Comparing " + xx + " to " + yy); 
+    { // System.out.println(">>>> Comparing " + xx + " to " + yy); 
       if (xx == null) 
       { return false; } 
       else if (xx.equals(yy)) 
@@ -2237,7 +2259,7 @@ public abstract class ASTTerm
  /* 
     
   public static boolean singletonTrees(ASTTerm[] xs, ASTTerm[] ys, ModelSpecification mod)
-    { // Is each ys[i] = (tag xs[i]') for the same tag? 
+    { // Is each ys[i] = (tag xs[i]') (for the same tag)? 
 
       if (ys.length > 1 && xs.length == ys.length)
       { for (int i = 0; i < xs.length; i++)
@@ -2247,7 +2269,7 @@ public abstract class ASTTerm
           if (xx == null || yvect == null)
           { return false; } 
 
-          System.out.println(">>>> Comparing " + xx + " to " + yvect); 
+          // System.out.println(">>>> Comparing " + xx + " to " + yvect); 
 
           if (yvect instanceof ASTBasicTerm && 
               xx instanceof ASTSymbolTerm) 
@@ -2285,7 +2307,7 @@ public abstract class ASTTerm
           if (xx == null || yvect == null)
           { return false; } 
 
-          System.out.println(">>>> Comparing " + xx + " to " + yvect); 
+          // System.out.println(">>>> Comparing " + xx + " to " + yvect); 
 
           if (yvect instanceof ASTBasicTerm && 
               xx instanceof ASTSymbolTerm) 
@@ -2350,10 +2372,10 @@ public abstract class ASTTerm
           { return false; } 
 
           int n = xx.nonSymbolArity();
-          System.out.println(">***> Non-symbol arity of " + xx + " = " + n); 
+          // System.out.println(">***> Non-symbol arity of " + xx + " = " + n); 
  
           int m = yvect.nonSymbolArity(); 
-          System.out.println(">***> Non-symbol arity of " + yvect + " = " + m); 
+          // System.out.println(">***> Non-symbol arity of " + yvect + " = " + m); 
 
           if (n != m) 
           { return false; } 
@@ -2376,10 +2398,10 @@ public abstract class ASTTerm
           { return false; } 
 
           int n = xx.nonSymbolArity();
-          System.out.println(">*>*> Non-symbol arity of " + xx + " = " + n); 
+          // System.out.println(">*>*> Non-symbol arity of " + xx + " = " + n); 
  
           int m = yvect.nonSymbolArity(); 
-          System.out.println(">*>*> Non-symbol arity of " + yvect + " = " + m); 
+          // System.out.println(">*>*> Non-symbol arity of " + yvect + " = " + m); 
 
           if (n < m) 
           { return false; } 
@@ -2410,12 +2432,14 @@ public abstract class ASTTerm
       return concatxxterms; 
     }        
     
+    /* Used with treeSequenceMapping4 in ModelSpecification */ 
+
     public static boolean treeconcatenations(ASTTerm[] xs, 
                         ASTTerm[] ys, ModelSpecification mod)
     { // Each ys[i].terms == concatenation of terms of the ti 
       // corresponding to the xs[i].terms
 
-      System.out.println(">>> Checking concatenation of terms"); 
+      // System.out.println(">>> Checking concatenation of terms"); 
 
       if (ys.length > 1 && xs.length == ys.length)
       { for (int i = 0; i < xs.length; i++)
@@ -2432,7 +2456,7 @@ public abstract class ASTTerm
           { ASTTerm xj = (ASTTerm) xxterms.get(j); 
             ASTTerm tj = mod.getCorrespondingTree(xj);
  
-            System.out.println(">>^^>> Corresponding tree of " + xj + " is " + tj); 
+            // System.out.println(">>^^>> Corresponding tree of " + xj + " is " + tj); 
  
             if (tj != null) 
             { 
@@ -2446,8 +2470,8 @@ public abstract class ASTTerm
             } 
           }  
             
-          System.out.println(">>> Concatenantion of terms = " + concatxxterms); 
-          System.out.println(">>> Target terms = " + yy.getTerms()); 
+          // System.out.println(">>> Concatenantion of terms = " + concatxxterms); 
+          // System.out.println(">>> Target terms = " + yy.getTerms()); 
 
           if (concatxxterms.equals(yy.getTerms())) { } 
           else 
@@ -2458,6 +2482,7 @@ public abstract class ASTTerm
       return false; 
     }
 
+    /* The distinct symbol terms of xx */ 
     public static Vector concatenationSubMapping(
                               ASTTerm xx, 
                               ModelSpecification mod)
@@ -2467,7 +2492,6 @@ public abstract class ASTTerm
       for (int j = 0; j < xxterms.size(); j++) 
       { ASTTerm xj = (ASTTerm) xxterms.get(j); 
         // ASTTerm tj = mod.getCorrespondingTree(xj);
- 
         // System.out.println(">>^^>> Corresponding tree of " + xj + " is " + tj); 
 
         if (xj instanceof ASTSymbolTerm)
@@ -2485,6 +2509,8 @@ public abstract class ASTTerm
       }  
       return symbs; 
     }        
+
+    /* Called by ModelSpecification tree-2-tree mappings */ 
 
     public static AttributeMatching 
       concatenationTreeMapping(ASTTerm[] xs, 
@@ -2560,7 +2586,7 @@ public abstract class ASTTerm
             { if (AuxMath.isConstantSeq(xtermvectors[j]))
               { pars.add(
                   new BasicExpression(xj.literalForm())); 
-              } 
+              } // j-th terms are all same symbol
               else 
               { pars.add(
                   new BasicExpression("_" + (j+1))); 
@@ -2575,7 +2601,7 @@ public abstract class ASTTerm
               // Vector tjterms = tj.getTerms();
               // concatxxterms.addAll(tjterms);
             }
-            else 
+            else // nothing corresponds to xj
             { Vector deletedSymbols = 
                 concatenationSubMapping(xj,mod); 
               String fid = 
@@ -2589,6 +2615,7 @@ public abstract class ASTTerm
 
               tmnew.addValueMapping("_0", "_0"); 
               tms.add(tmnew); 
+              // a mapping that removes all symbols in xj
 
               String subid = 
                 Identifier.nextIdentifier("concatrule");
@@ -2621,12 +2648,13 @@ public abstract class ASTTerm
       return null; 
     }
 
+    /* Called from ModelSpecification */ 
     public static boolean treesuffixes(ASTTerm[] xs, 
                         ASTTerm[] ys, ModelSpecification mod)
     { // Each ys[i].terms == concatenation of xs[i].terms
       // plus a constant suffix of terms. 
 
-      System.out.println(">&>&> Checking suffix relation of trees"); 
+      // System.out.println(">&>&> Checking suffix relation of trees"); 
 
       java.util.HashSet suffixes = new java.util.HashSet(); 
 
@@ -2644,11 +2672,13 @@ public abstract class ASTTerm
           Vector yyterms = yy.getTerms(); 
           Vector tterms = new Vector(); 
  
+          // concatenate all terms of xj' for xj : xxterms
+
           for (int j = 0; j < xxterms.size(); j++) 
           { ASTTerm xj = (ASTTerm) xxterms.get(j); 
             ASTTerm tj = mod.getCorrespondingTree(xj);
  
-            System.out.println(">>^^>> Corresponding tree of " + xj + " is " + tj); 
+            // System.out.println(">>^^>> Corresponding tree of " + xj + " is " + tj); 
  
             if (tj != null) 
             { if (tj.getTag().equals(targetTag))
@@ -2658,8 +2688,8 @@ public abstract class ASTTerm
             }  
           }  
             
-          System.out.println(">>> Mapped terms = " + tterms); 
-          System.out.println(">>> Target terms = " + yyterms); 
+          // System.out.println(">>> Mapped terms = " + tterms); 
+          // System.out.println(">>> Target terms = " + yyterms); 
 
           if (tterms.size() == 0) 
           { return false; } 
@@ -2672,10 +2702,10 @@ public abstract class ASTTerm
           suffixes.add(suff + "");  
         } 
 
-        System.out.println("--> Suffixes are: " + suffixes); 
+        // System.out.println("--> Suffixes are: " + suffixes); 
 
         if (suffixes.size() == 1)
-        { return true; } 
+        { return true; } // constant suffix
 
         return false; 
       } 
@@ -2691,7 +2721,7 @@ public abstract class ASTTerm
       // Assume all source terms have same tag & arity
       // All target terms have same tag
 
-      System.out.println(">&>&> Checking function suffix relation of trees"); 
+      // System.out.println(">&>&> Checking function suffix relation of trees"); 
 
       
       Vector suffixes = new Vector(); 
@@ -2719,7 +2749,7 @@ public abstract class ASTTerm
           { ASTTerm xj = (ASTTerm) xxterms.get(j); 
             ASTTerm tj = mod.getCorrespondingTree(xj);
  
-            System.out.println(">>^^>> Corresponding tree of " + xj + " is " + tj); 
+            // System.out.println(">>^^>> Corresponding tree of " + xj + " is " + tj); 
  
             if (xj instanceof ASTSymbolTerm) 
             { xtermvectors[j].add(xj); } 
@@ -2733,8 +2763,8 @@ public abstract class ASTTerm
             { xtermvectors[j].add(xj); } 
           }  
             
-          System.out.println(">>> Mapped terms = " + tterms); 
-          System.out.println(">>> Target terms = " + yyterms); 
+          // System.out.println(">>> Mapped terms = " + tterms); 
+          // System.out.println(">>> Target terms = " + yyterms); 
 
           if (tterms.size() == 0) 
           { return false; } 
@@ -2747,7 +2777,7 @@ public abstract class ASTTerm
           suffixes.add(suff + "");  
         } 
 
-        System.out.println("--> Suffixes are: " + suffixes); 
+        // System.out.println("--> Suffixes are: " + suffixes); 
 
         if (suffixes.size() == 1)
         { return true; } 
@@ -2757,9 +2787,9 @@ public abstract class ASTTerm
 
         for (int j = 0; j < xtermvectors.length; j++) 
         { Vector sjterms = xtermvectors[j]; 
-          if (sjterms.size() == suffixes.size())
-          { if (functionalASTMapping(sjterms,suffixes))
-            { System.out.println("--> Functional mapping from " + sjterms + " to " + suffixes); 
+          if (sjterms.size() == suffixes.size()) // or <=
+          { if (ASTTerm.functionalASTMapping(sjterms,suffixes))
+            { // System.out.println("--> Functional mapping from " + sjterms + " to " + suffixes); 
               return true; 
             } // But it may not be a valid function. 
           } 
@@ -2779,7 +2809,7 @@ public abstract class ASTTerm
       // Assume all source terms have same tag & arity
       // All target terms have same tag
 
-      System.out.println(">&>&> Checking function prefix relation of trees"); 
+      // System.out.println(">&>&> Checking function prefix relation of trees"); 
 
       
       Vector prefixes = new Vector(); 
@@ -2807,7 +2837,7 @@ public abstract class ASTTerm
           { ASTTerm xj = (ASTTerm) xxterms.get(j); 
             ASTTerm tj = mod.getCorrespondingTree(xj);
  
-            System.out.println(">><<>> Corresponding tree of " + xj + " is " + tj); 
+            // System.out.println(">><<>> Corresponding tree of " + xj + " is " + tj); 
  
             if (xj instanceof ASTSymbolTerm) 
             { xtermvectors[j].add(xj); } 
@@ -2821,8 +2851,8 @@ public abstract class ASTTerm
             { xtermvectors[j].add(xj); } 
           }  
             
-          System.out.println(">>> Mapped terms = " + tterms); 
-          System.out.println(">>> Target terms = " + yyterms); 
+          // System.out.println(">>> Mapped terms = " + tterms); 
+          // System.out.println(">>> Target terms = " + yyterms); 
 
           if (tterms.size() == 0) 
           { return false; } 
@@ -2835,7 +2865,7 @@ public abstract class ASTTerm
           prefixes.add(pref + "");  
         } 
 
-        System.out.println("--> Prefixes are: " + prefixes); 
+        // System.out.println("--> Prefixes are: " + prefixes); 
 
         if (prefixes.size() == 1)
         { return true; } 
@@ -2845,11 +2875,11 @@ public abstract class ASTTerm
 
         for (int j = 0; j < xtermvectors.length; j++) 
         { Vector sjterms = xtermvectors[j]; 
-          System.out.println("<<> Checking Functional mapping from " + sjterms + " to " + prefixes); 
+          // System.out.println("<<> Checking Functional mapping from " + sjterms + " to " + prefixes); 
               
-          if (sjterms.size() == prefixes.size())
-          { if (functionalASTMapping(sjterms,prefixes))
-            { System.out.println("--> Functional mapping from " + sjterms + " to " + prefixes); 
+          if (sjterms.size() == prefixes.size()) // or <=
+          { if (ASTTerm.functionalASTMapping(sjterms,prefixes))
+            { // System.out.println("--> Functional mapping from " + sjterms + " to " + prefixes); 
               return true; 
             } 
           } // May not be valid
@@ -2916,8 +2946,8 @@ public abstract class ASTTerm
             { xtermvectors[j].add(xj); } 
           }  
             
-            System.out.println(">>> Mapped terms = " + tterms); 
-            System.out.println(">>> Target terms = " + yyterms); 
+          //  System.out.println(">>> Mapped terms = " + tterms); 
+          //  System.out.println(">>> Target terms = " + yyterms); 
 
           Vector suff = 
               AuxMath.sequenceSuffix(tterms,yyterms);
@@ -2925,7 +2955,7 @@ public abstract class ASTTerm
           ASTTerm targterm = new ASTCompositeTerm(ttag,suff); 
           suffixtermseqs.add(targterm);
           targetValues[i] = targterm;  
-        }
+        } // suffix terms corresponding to the xs[i]
  
         Vector xx0terms = xx0.getTerms();
         Vector yy0terms = yy0.getTerms();
@@ -2962,9 +2992,13 @@ public abstract class ASTTerm
 
         for (int j = 0; j < xtermvectors.length && !found; j++) 
         { Vector sjterms = xtermvectors[j]; 
-          if (sjterms.size() == suffixes.size())
-          { if (functionalASTMapping(sjterms,suffixes))
-            { System.out.println("--> Functional mapping from " + sjterms + " to " + suffixes); 
+          if (sjterms.size() == suffixes.size()) // or <=
+          { if (ASTTerm.functionalASTMapping(sjterms,suffixes))
+            { // System.out.println("--> Functional mapping from " + sjterms + " to " + suffixes); 
+
+              // Mapping from symbols at one argument place to
+              // the suffixes. 
+
               java.util.Map sattvalueMap = 
                  new java.util.HashMap(); 
 
@@ -2994,7 +3028,7 @@ public abstract class ASTTerm
                 found = true;
               }  
               else 
-              { System.out.println("!! No mapping from " + sjterms + " to " + suffixes); 
+              { // System.out.println("!! No mapping from " + sjterms + " to " + suffixes); 
               } 
             } 
           } 
@@ -3073,8 +3107,8 @@ public abstract class ASTTerm
             { xtermvectors[j].add(xj); } 
           }  
             
-            System.out.println(">>> Mapped terms = " + tterms); 
-            System.out.println(">>> Target terms = " + yyterms); 
+          //  System.out.println(">>> Mapped terms = " + tterms); 
+          //  System.out.println(">>> Target terms = " + yyterms); 
 
           Vector pref = 
               AuxMath.sequencePrefix(tterms,yyterms);
@@ -3118,13 +3152,13 @@ public abstract class ASTTerm
         boolean found = false; 
         for (int j = 0; j < xtermvectors.length && !found; j++) 
         { Vector sjterms = xtermvectors[j]; 
-          System.out.println("<<>> Checking functional mapping from " + sjterms + " to " + prefixes); 
+          // System.out.println("<<>> Checking functional mapping from " + sjterms + " to " + prefixes); 
             
-          if (sjterms.size() == prefixes.size())
-          { System.out.println("<<>> Checking functional mapping from " + sjterms + " to " + prefixes); 
+          if (sjterms.size() == prefixes.size()) // or <=
+          { // System.out.println("<<>> Checking functional mapping from " + sjterms + " to " + prefixes); 
               
-            if (functionalASTMapping(sjterms,prefixes))
-            { System.out.println("<<>> Functional mapping from " + sjterms + " to " + prefixes); 
+            if (ASTTerm.functionalASTMapping(sjterms,prefixes))
+            { // System.out.println("<<>> Functional mapping from " + sjterms + " to " + prefixes); 
               java.util.Map sattvalueMap = 
                  new java.util.HashMap(); 
 
@@ -3248,7 +3282,7 @@ public abstract class ASTTerm
       // xs[i].terms
       // plus constant prefixes/inserts/suffixes of terms. 
 
-      System.out.println(">&*>&*> Checking tree to sequence mapping"); 
+      // System.out.println(">&*>&*> Checking tree to sequence mapping"); 
 
 
       java.util.HashSet patterns = new java.util.HashSet(); 
@@ -3299,8 +3333,8 @@ public abstract class ASTTerm
         } 
       } 
 
-      System.out.println("Unused source terms: " + unuseds); 
-      System.out.println("Mapping patterns: " + patterns); 
+      // System.out.println("Unused source terms: " + unuseds); 
+      // System.out.println("Mapping patterns: " + patterns); 
 
       if (patterns.size() == 1 && unuseds.size() == 1)
       { return true; }
@@ -3316,7 +3350,7 @@ public abstract class ASTTerm
     { // Each ys[i].terms == concatenation of xs[i].terms 
       // plus constant suffix of terms. 
 
-      System.out.println(">&*>&*> Assembling tree to sequence mapping"); 
+      // System.out.println(">&*>&*> Assembling tree to sequence mapping"); 
 
       java.util.HashSet patterns = new java.util.HashSet(); 
       java.util.HashSet unuseds = new java.util.HashSet(); 
@@ -3360,8 +3394,8 @@ public abstract class ASTTerm
           unuseds.add(unused + "");  
         } 
      
-        System.out.println("Unused source terms: " + unuseds); 
-        System.out.println("Mapping patterns: " + patterns); 
+        // System.out.println("Unused source terms: " + unuseds); 
+        // System.out.println("Mapping patterns: " + patterns); 
 
         if (patterns.size() != 1 || unuseds.size() != 1)
         { return null; }
@@ -6619,9 +6653,9 @@ public abstract class ASTTerm
     Vector thms = ASTTerm.mathocltheorems;
     Vector rewrites = ASTTerm.mathoclrewrites; 
  
-    /* JOptionPane.showMessageDialog(null, 
-       "### Theorems: " + thms,   "",
-       JOptionPane.INFORMATION_MESSAGE);  */ 
+    JOptionPane.showMessageDialog(null, 
+       "### Rewrites: " + rewrites,   "",
+       JOptionPane.INFORMATION_MESSAGE);  
 
 
     // get variables svars from succ, 
@@ -6752,6 +6786,9 @@ public abstract class ASTTerm
     { Vector rewrite = (Vector) rewrites.get(y); 
       ASTTerm lhs = (ASTTerm) rewrite.get(0); 
       boolean isIn = ASTTerm.isSubterm(lhs,succ);
+
+      System.out.println("###### is subterm: " + lhs + " of " + succ + " " + isIn); 
+
       if (isIn) // replace lhs by its definition
       { String vv = lhs.literalForm(); 
         ASTTerm rhs = (ASTTerm) rewrite.get(1); 
@@ -6761,6 +6798,41 @@ public abstract class ASTTerm
 
         return "  Prove " + slitspace + " if " + alitspace; 
       } 
+      else // for schematic lhs expr[_V,...]
+      { ASTTerm rhs = (ASTTerm) rewrite.get(1); 
+
+        java.util.HashMap env = new java.util.HashMap(); 
+        java.util.HashMap binds = 
+           succ.hasMatch(lhs,env); 
+        // _V |-> expr1, ...
+
+        JOptionPane.showMessageDialog(null, 
+          "### Binding for rewrite: " + binds + " for " + 
+          lhs + " in " + succ,   "",
+          JOptionPane.INFORMATION_MESSAGE); 
+
+        if (binds != null) // substitute rhs[binds] for 
+        {                  // lhs[binds] in succ
+          ASTTerm actualrhs = 
+            rhs.instantiate(binds); 
+          ASTTerm actuallhs = 
+            lhs.instantiate(binds); 
+          JOptionPane.showMessageDialog(null, 
+            "### Bound versions: " + actuallhs + " |--> " + 
+                 actualrhs,   "",
+            JOptionPane.INFORMATION_MESSAGE);  
+
+          String vv = actuallhs.literalForm(); 
+           
+          ASTTerm newsucc = 
+             succ.mathOCLSubstitute(vv,actualrhs); 
+          String alitspace = ante.literalFormSpaces(); 
+          String slitspace = newsucc.literalFormSpaces(); 
+
+          return "  Prove " + slitspace + " if " + alitspace;   
+        } 
+      } 
+
     }  
 
 
@@ -7391,6 +7463,34 @@ public abstract class ASTTerm
     System.out.println(ASTTerm.isIntegerValued(-1.5)); 
     System.out.println(ASTTerm.isIntegerValued(-5.0)); 
 
+    Vector trms1 = new Vector(); 
+    trms1.add(new ASTSymbolTerm("exp")); 
+    trms1.add(new ASTSymbolTerm("(")); 
+    trms1.add(new ASTBasicTerm("basicExpression", "4")); 
+    trms1.add(new ASTSymbolTerm(")")); 
+
+    ASTCompositeTerm expx = 
+        new ASTCompositeTerm("basicExpression", trms1); 
+
+    Vector terms3 = new Vector(); 
+    terms3.add(new ASTBasicTerm("basicExpression", "0")); 
+    terms3.add(new ASTSymbolTerm("<")); 
+    terms3.add(expx); 
+    ASTCompositeTerm leq = 
+      new ASTCompositeTerm("equalityExpression", terms3); 
+
+    Vector trms2 = new Vector(); 
+    trms2.add(new ASTSymbolTerm("exp")); 
+    trms2.add(new ASTSymbolTerm("(")); 
+    trms2.add(new ASTBasicTerm("identifier", "_V")); 
+    trms2.add(new ASTSymbolTerm(")")); 
+
+    ASTCompositeTerm scheme = 
+        new ASTCompositeTerm("basicExpression", trms2);
+
+    java.util.HashMap mm = new java.util.HashMap(); 
+    leq.hasMatch(scheme, mm); 
+    System.out.println(mm);  
   }
 } 
 

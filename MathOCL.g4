@@ -20,7 +20,7 @@ part
     : formula
     | constraint
     | theorem
-    | reexpression
+    | rewrite
     | expanding
     | simplify
     | substituting
@@ -50,8 +50,8 @@ theorem
     :	'Theorem' logicalExpression 'when' logicalExpression
     ; 
 
-reexpression
-    : 'Express' expression 'as' expression
+rewrite
+    : 'Rewrite' expression 'to' expression
     ; 
 
 simplify 
@@ -188,6 +188,7 @@ additiveExpression
 factorExpression 
     : 'C_{' expression '}' '^{' expression '}'
     | 'E[' expression ']' 
+    | 'lim_{' identifier ARROW expression '}' expression
     | factorExpression ('*' | '/' | 'mod' | 'div') 
                                    factorExpression
     | INTEGRAL '_{' expression '}' '^{' expression '}' expression ID 
@@ -285,6 +286,7 @@ FORALL : '¡';
 EXISTS : '£'; 
 EMPTYSET : 'Ø';
 SQUAREROOT : '†';
+ARROW : '»';
 
 NATURAL : 'Ñ'; 
 INTEGER : 'Ž';
