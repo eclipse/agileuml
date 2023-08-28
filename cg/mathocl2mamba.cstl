@@ -99,6 +99,15 @@ _1 |-->_1
 _1 , _* |-->_1,_*`recurse
 
 
+conditionalExpression::
+if true then _1 else _2 endif |-->_1
+if false then _1 else _2 endif |-->_2
+
+if _1 then _2 else _2 endif |-->_2
+
+if _1 then _2 else _3 endif |-->(_1)?(_2):(_3)
+
+
 logicalExpression::
 _1 & _2 |-->_1 && _2
 _1 or _2 |-->_1 || _2

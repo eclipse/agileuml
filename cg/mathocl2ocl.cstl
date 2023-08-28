@@ -126,6 +126,15 @@ _1 |-->_1
 _1 , _* |-->_1,_*`recurse
 
 
+conditionalExpression::
+if true then _1 else _2 endif |-->_1
+if false then _1 else _2 endif |-->_2
+
+if _1 then _2 else _2 endif |-->_2
+
+if _1 then _2 else _3 endif |-->if _1 then _2 else _3 endif
+
+
 logicalExpression::
 _1 & _1 |-->_1
 _1 & false |-->false
@@ -239,6 +248,10 @@ C_ { _1 } ^{ _1 } |-->1
 C_ { 1 } ^{ _1 } |-->_1
 C_ { _1 } ^{ _2 } |-->MathLib.combinatorial(_2,_1)
  
+lim_ { _1 » _2 } _1 |-->_2
+lim_ { _1 » _2 } _3 |-->_3<when> _3 real
+lim_ { _1 » _2 } _3 |-->Real.limit(_1,_2,_3)
+
 E[ _1 ] |-->_1.mean()
 
 _1 |-->_1
@@ -941,10 +954,11 @@ _1 |-->false
 randomParameters::
 N ( _1 ) |-->Normal(_1)
 Bernoulli ( _1 ) |-->Bernoulli(_1)
-Binom ( _1 ) |-->Binom(_1)
+Binom ( _1 ) |-->Binomial(_1)
 U ( ) |-->Uniform(0.0, 1.0)
 U ( _1 ) |-->Uniform(_1)
 Poisson ( _1 ) |-->Poisson(_1)
+LogNorm ( _1 ) |-->LogNormal(_1)
 
 ( _1 ) |-->_1`randomParameters
 

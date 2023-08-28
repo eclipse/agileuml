@@ -13,6 +13,9 @@ Constraint on _1 | _2 |-->  Constraint on _1 | _2
 theorem::
 Theorem _1 when _2 |-->
 
+rewrite::
+Rewrite _1 to _2 |-->
+
 
 prove::
 Prove false if _1 |-->  Simplify (not _1`conjoinAll)
@@ -59,14 +62,12 @@ Substitute _1 for _2 in _3 |-->  _3<action> _1 / _2
 solve::
 Solve _1 for _2 |-->_0`equationSolution
 
-reexpression::
-Express _1 as _2 |-->  Express _1 as _2
 
 formula::
 Define _1 |-->  Define _1
 Define g { _1 } |-->  Define g{_1}
 Define _1 = _2 |-->  Define _1 = _2<action> _1`value _2
-Define _1 ~ _2 |-->  Define _1 ~ _2<action> _1`mean _2`distributionMean, _1`variance _2`distributionVariance
+Define _1 ~ _2 |-->  Define _1 ~ _2<action> _1`distribution _2`distributionName, _1`mean _2`distributionMean, _1`variance _2`distributionVariance
 
 instruction::
 _1 |-->_1
@@ -113,6 +114,15 @@ _1 |-->_1
 _1 , _* |-->_1 & _*`recurse
 
 
+conditionalExpression::
+if true then _1 else _2 endif |-->_1
+if false then _1 else _2 endif |-->_2
+
+if _1 then _2 else _2 endif |-->_2
+
+if _1 then _2 else _3 endif |-->if _1 then _2 else _3 endif
+
+
 logicalExpression::
 _1 & _1 |-->_1
 _1 & false |-->false
@@ -129,6 +139,7 @@ true or _1 |-->true
 _1 or _2 |-->_1 or _2
 
 _1 => _1 |-->true
+true => _1 |-->_1
 false => _1 |-->true
 _1 => true |-->true
 _1 => false |-->not(_1)
@@ -191,6 +202,10 @@ _1 >= _2 |-->((_2 < _1) or (_1 = _2))
 
 _1 © Ø |-->false
 _1 ¢ Ø |-->true
+
+_1 : Ñ |-->true<when> _1 integer
+_1 : Ž |-->true<when> _1 integer 
+_1 : ® |-->true<when> _1 real 
 
 _1 _2 _3 |-->_1 _2 _3
 _1 |-->_1
@@ -320,6 +335,10 @@ C_ { _1 } ^{ _1 } |-->1
 C_ { 1 } ^{ _1 } |-->_1
 C_ { _1 } ^{ _2 } |-->C_{_1}^{_2}
 
+lim_ { _1 » _2 } _1 |-->_2
+lim_ { _1 » _2 } _3 |-->_3<when> _3 real
+lim_ { _1 » _2 } _3 |-->_3`evaluateLimit<action> _96 _1, _97 _2
+
 E[ _1 ] |-->_1`expectation
  
 _1 |-->_1
@@ -387,6 +406,11 @@ acoth ( _1 ) |-->atanh(1.0/_1)
 
 var ( _1 ) |-->_1`evaluateVariance
 
+floor ( _1 ) |-->_1<when> _1 integer
+ceil ( _1 ) |-->_1<when> _1 integer
+
+pdf ( _1 ) |-->_1`evaluatePdf
+
 _1 ( _2 ) |-->_1(_2)
 _1 ( ) |-->_1()
 
@@ -418,6 +442,37 @@ Sequence{ _1 } |-->Sequence{_1}
 
 identifier::
 _1 |-->_1
+
+
+evaluateLimit::
+_1 * _2 |-->_1*(_2`evaluateLimit)<when> _1 real
+_1 * _2 |-->(_1`evaluateLimit) * (_2`evaluateLimit)
+
+_1 / _2 |-->(_1`evaluateLimit)/_2<when> _2 real
+_1 / _2 |-->if (_2`evaluateLimit) /= 0 then (_1`evaluateLimit)/(_2`evaluateLimit) else ? endif
+
+_1 + _2 |-->_1`evaluateLimit + _2`evaluateLimit
+_1 - _2 |-->_1`evaluateLimit - _2`evaluateLimit
+
+_1 ^{ _2 } |-->(_1`evaluateLimit)^{_2}<when> _2 real
+
+( _1 ) |-->(_1`evaluateLimit)
+
+† _1 |-->†(_1`evaluateLimit)
+- _1 |-->-(_1`evaluateLimit)
+
+_1 |-->_97<when> _1 _96
+_1 |-->_1<when> _1`isIdentifier true
+
+_1 |-->_1`evaluateLimit<when> _1 basicExpression
+_1 |-->_1`evaluateLimit<when> _1 factorExpression
+_1 |-->_1`evaluateLimit<when> _1 factor2Expression
+_1 |-->_1`evaluateLimit<when> _1 logicalExpression
+_1 |-->_1`evaluateLimit<when> _1 equalityExpression
+_1 |-->_1`evaluateLimit<when> _1 additiveExpression
+_1 |-->_1`evaluateLimit<when> _1 expression
+
+_1 |-->lim_{ _96 » _97 } _1
 
 
 evaluateSine::
@@ -471,6 +526,7 @@ evaluateLog::
 0.0 |-->-…
 1 |-->0
 1.0 |-->0
+… |-->…
 
 exp ( _1 ) |-->_1
 
@@ -566,8 +622,8 @@ _1 * _2 |-->_1*_2`expectation<when> _1 real
 _1 * _2 |-->_1`expectation*_2<when> _2 integer
 _1 * _2 |-->_1`expectation*_2<when> _2 real
 
-_1 * _1 |-->E[_1*_1]
-_1 * _2 |-->_1`expectation*_2`expectation<when> _1`isIdentifier true, _2`isIdentifier true
+_1 * _1 |-->(_1`expectation)^{2} + _1`evaluateVariance
+_1 * _2 |-->_1`expectation*_2`expectation + covar(_1,_2)
 
 _1 + _2 |-->_1`expectation + _2`expectation
 _1 - _2 |-->_1`expectation - _2`expectation
@@ -598,6 +654,10 @@ _1 * _2 |-->_2*_2*_1`evaluateVariance<when> _2 real
 _1 + _2 |-->_1`evaluateVariance<when> _2 integer
 _1 - _2 |-->_1`evaluateVariance<when> _2 real
 
+_1 + _2 |-->_1`evaluateVariance + _2`evaluateVariance + 2*covar(_1,_2)
+_1 - _2 |-->_1`evaluateVariance + _2`evaluateVariance - 2*covar(_1,_2)
+
+
 _1 |-->0<when> _1 integer
 _1 |-->0<when> _1 real
 _1 |-->_1`variance<when> _1`isIdentifier true
@@ -612,6 +672,27 @@ _1 |-->_1`evaluateVariance<when> _1 expression
 
 _1 |-->var(_1)
 _* |-->var(_*)
+
+
+evaluatePdf::
+_1 , _2 |-->if _2 <= 1 & 0 <= _2 then 1 else 0 endif<when> _1`distribution StandardUniform
+_1 , _2 |-->(1/†(2*g{p}*_1`evaluateVariance))*e^{-0.5*(_2 - _1`expectation)^{2}/(_1`evaluateVariance)}<when> _1`distribution Normal
+_1 , _2 |-->(_1`evaluateVariance)^{_2}*e^{-_1`evaluateVariance}/(_2)!<when> _1`distribution Poisson
+_1 , _2 |-->if _2 = 0 then 1 - _1`expectation else if _2 = 1 then _1`expectation else 0 endif endif<when> _1`distribution Bernoulli
+
+
+ 
+_1 |-->_1`evaluatePdf<when> _1 basicExpression
+_1 |-->_1`evaluatePdf<when> _1 factorExpression
+_1 |-->_1`evaluatePdf<when> _1 factor2Expression
+_1 |-->_1`evaluatePdf<when> _1 logicalExpression
+_1 |-->_1`evaluatePdf<when> _1 equalityExpression
+_1 |-->_1`evaluatePdf<when> _1 additiveExpression
+_1 |-->_1`evaluatePdf<when> _1 expression
+
+_1 |-->pdf(_1)
+_* |-->pdf(_*)
+
 
 
 negate::
@@ -1559,6 +1640,7 @@ Binom ( _1 ) |-->(_1`first)*(_1`last)
 U ( ) |-->0.5
 U ( _1 ) |-->(_1`last + _1`first)/2.0
 Poisson ( _1 ) |-->_1
+LogNorm ( _1 ) |-->e^{_1`first + (_1`last)/2}
 
 ( _1 ) |-->_1`distributionMean
 
@@ -1581,6 +1663,7 @@ Binom ( _1 ) |-->(_1`first)*(_1`last)*(1 - _1`last)
 U ( ) |-->1.0/12
 U ( _1 ) |-->(_1`last - _1`first)^{2}/12.0
 Poisson ( _1 ) |-->_1
+LogNorm ( _1 ) |-->e^{2*_1`first + 2*_1`last} - e^{2*_1`first + _1`last}
 
 ( _1 ) |-->_1`distributionVariance
 
@@ -1594,4 +1677,27 @@ _1 |-->_1`distributionVariance<when> _1 expression
 
 _1 |-->0
 _* |-->0
+
+
+distributionName::
+N ( _1 ) |-->Normal
+Bernoulli ( _1 ) |-->Bernoulli
+Binom ( _1 ) |-->Binomial
+U ( ) |-->StandardUniform
+U ( _1 ) |-->GeneralUniform
+Poisson ( _1 ) |-->Poisson
+LogNorm ( _1 ) |-->LogNormal
+
+( _1 ) |-->_1`distributionName
+
+_1 |-->_1`distributionName<when> _1 basicExpression
+_1 |-->_1`distributionName<when> _1 factorExpression
+_1 |-->_1`distributionName<when> _1 factor2Expression
+_1 |-->_1`distributionName<when> _1 logicalExpression
+_1 |-->_1`distributionName<when> _1 equalityExpression
+_1 |-->_1`distributionName<when> _1 additiveExpression
+_1 |-->_1`distributionName<when> _1 expression
+
+_1 |-->none
+_* |-->none
 
