@@ -290,6 +290,15 @@ public class ASTBasicTerm extends ASTTerm
     return toString(); 
   }
 
+  public java.util.Set allMathMetavariables() 
+  { java.util.Set res = new java.util.HashSet(); 
+    
+    if (CSTL.isMathMetavariable(value))
+    { res.add(value); } 
+   
+    return res; 
+  } 
+
   public java.util.HashMap hasMatch(ASTTerm rterm, 
                                     java.util.HashMap res) 
   { return fullMatch(rterm,res); } 
@@ -328,7 +337,7 @@ public class ASTBasicTerm extends ASTTerm
       { return oldterm; } 
     }
 
-    return this; 
+    return new ASTBasicTerm(tag,value); 
   }  
 
   public String getLabel()

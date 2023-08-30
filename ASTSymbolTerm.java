@@ -130,6 +130,15 @@ public class ASTSymbolTerm extends ASTTerm
     return symbol; 
   } 
 
+  public java.util.Set allMathMetavariables() 
+  { java.util.Set res = new java.util.HashSet(); 
+    
+    if (CSTL.isMathMetavariable(symbol))
+    { res.add(symbol); } 
+   
+    return res; 
+  } 
+    
   public java.util.HashMap hasMatch(ASTTerm rterm, 
                                     java.util.HashMap res) 
   { return fullMatch(rterm,res); } 
@@ -168,7 +177,7 @@ public class ASTSymbolTerm extends ASTTerm
       { return oldterm; } 
     }
 
-    return this; 
+    return new ASTSymbolTerm(symbol); 
   }  
 
   public String toString()

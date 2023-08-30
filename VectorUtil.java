@@ -775,6 +775,43 @@ class VectorUtil
     return res; 
   } 
 
+  public static Vector vectorMax(Vector v1, Vector v2)
+  { // max(Set{x, y}) for x in v1, y in v2
+
+    Vector res = new Vector(); 
+    for (int i = 0; i < v1.size(); i++) 
+    { Object x = v1.get(i); 
+      try { 
+        Double d = Double.parseDouble("" + x); 
+        for (int j = 0; j < v2.size(); j++) 
+        { Object y = v2.get(j); 
+          try { 
+            Double e = Double.parseDouble("" + y); 
+            if (d > e)
+            { res.add(d); } 
+            else 
+            { res.add(e); }  
+          } catch (Exception _q) { } 
+        } 
+      } catch (Exception _p) { } 
+    } 
+    return res; 
+  } 
+
+  public static Vector vectorMultiplication(Vector v1, double d)
+  { // x * d for x in v1
+
+    Vector res = new Vector(); 
+    for (int i = 0; i < v1.size(); i++) 
+    { Object x = v1.get(i); 
+      try { 
+        Double dx = Double.parseDouble("" + x); 
+        res.add(dx.doubleValue()*d);  
+      } catch (Exception _p) { } 
+    } 
+    return res; 
+  } 
+
   public static Vector removeDuplicates(Vector v1)
   { Vector res = new Vector(); 
     if (v1.size() == 0) 

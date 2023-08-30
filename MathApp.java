@@ -542,6 +542,8 @@ public class MathApp extends JFrame implements DocumentListener, ActionListener
             { thisLabel.setText("Group expr by var: group together terms with same var power"); }
             else if ("Theorem".equals(insertedText))
             { thisLabel.setText("Theorem expr1 when expr2: assert that expr1 follows from expr2"); }
+            else if ("Rewrite".equals(insertedText))
+            { thisLabel.setText("Rewrite expr1 to expr2: assert that expr1 can be replaced by expr2"); }
             else if ("Bernoulli".equals(insertedText))
             { thisLabel.setText("Bernoulli distribution Bernoulli(p) for probability p of success"); }
             else if ("Binom".equals(insertedText))

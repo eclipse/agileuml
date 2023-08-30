@@ -825,31 +825,22 @@ public class ASTCompositeTerm extends ASTTerm
     for (int i = 0; i < n; i++) 
     { ASTTerm trmi = (ASTTerm) terms.get(i); 
  
-      String liti = trmi.literalForm(); 
-
-      // if (CSTL.isCSTLVariable(liti))
-      if (CSTL.isMathMetavariable(liti))
-      { ASTTerm oldterm = (ASTTerm) res.get(liti);    
-        if (oldterm != null)
-        { newterms.add(oldterm); } 
-        else 
-        { newterms.add(trmi); } 
-      } 
-      else 
-      { ASTTerm newterm = trmi.instantiate(res); 
-        newterms.add(newterm); 
-      } 
+      ASTTerm newterm = trmi.instantiate(res); 
+      newterms.add(newterm); 
     }   
 
     return new ASTCompositeTerm(tag, newterms); 
-  } 
+  } // May not conform exactly to same grammar as this. 
 
 
   public java.util.HashMap hasMatch(ASTTerm rterm, 
                                     java.util.HashMap res) 
   { // This term or a subterm matches to schematic term rterm
+
+    java.util.Set vars = rterm.allMathMetavariables(); 
+
     java.util.HashMap resx = this.fullMatch(rterm,res); 
-    if (resx != null) 
+    if (resx != null && vars.equals(resx.keySet())) 
     { return resx; } 
 
     for (int i = 0; i < terms.size(); i++) 
@@ -858,11 +849,11 @@ public class ASTCompositeTerm extends ASTTerm
 
       JOptionPane.showMessageDialog(null, 
        "### Bindings: " + resx + 
-       " of " + trm + " and " + rterm,   "",
+       " Math vars: " + vars,   "",
        JOptionPane.INFORMATION_MESSAGE);  
  
-      // if (resx == null) 
-      // { return null; } 
+      if (resx != null && vars.equals(resx.keySet())) 
+      { return resx; } 
     } 
 
     return res; 
@@ -890,16 +881,24 @@ public class ASTCompositeTerm extends ASTTerm
     if (CSTL.isMathMetavariable(rlit))
       //  CSTL.isCSTLVariable(rlit))
     { res.put(rlit, this); 
-        JOptionPane.showMessageDialog(null, 
+        /* JOptionPane.showMessageDialog(null, 
             "### Binding: " + rlit + " bound to " + 
             this,   "",
-          JOptionPane.INFORMATION_MESSAGE);
+          JOptionPane.INFORMATION_MESSAGE); */ 
       return res; 
     } 
     else if (m == 1 && n == 1) 
     { ASTTerm rtermi = (ASTTerm) rterms.get(0);
       ASTTerm trmi = (ASTTerm) terms.get(0); 
       return trmi.fullMatch(rtermi,res); 
+    } 
+    else if (m == 1 && n > 1)
+    { ASTTerm rtermi = (ASTTerm) rterms.get(0);
+      return this.fullMatch(rtermi,res); 
+    } 
+    else if (n == 1 && m > 1)
+    { ASTTerm trmi = (ASTTerm) terms.get(0); 
+      return trmi.fullMatch(rterm,res); 
     } 
     else if (m == 1 || m == 0) 
     { return null; } 
@@ -919,10 +918,10 @@ public class ASTCompositeTerm extends ASTTerm
       { ASTTerm oldterm = (ASTTerm) res.get(rilit);    
         if (oldterm == null) 
         { res.put(rilit, trmi);
-          JOptionPane.showMessageDialog(null, 
+          /* JOptionPane.showMessageDialog(null, 
             "### Binding: " + rilit + " bound to " + 
             trmi,   "",
-          JOptionPane.INFORMATION_MESSAGE);
+          JOptionPane.INFORMATION_MESSAGE); */ 
         } 
         else if (liti.equals(oldterm.literalForm())) 
         { } // must be the same as terms.get(i)
@@ -942,6 +941,16 @@ public class ASTCompositeTerm extends ASTTerm
       }     
     } 
 
+    return res; 
+  } 
+
+  public java.util.Set allMathMetavariables()
+  { java.util.Set res = new java.util.HashSet(); 
+    for (int i = 0; i < terms.size(); i++) 
+    { ASTTerm trm = (ASTTerm) terms.get(i); 
+      java.util.Set mvs = trm.allMathMetavariables(); 
+      res.addAll(mvs); 
+    } 
     return res; 
   } 
 
