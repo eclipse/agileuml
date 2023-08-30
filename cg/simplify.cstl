@@ -183,8 +183,7 @@ _1 < _1 |-->false
 _1 < _2 |-->_1`lArgument < _2`lArgument<when> _1`isLinear true, _1`lFunctor _2`lFunctor
 _1 < _2 |-->_1`fArgument < _2`fArgument<when> _1`isStrictlyIncreasing true, _1`functor _2`functor
 
-_1 < _2 |-->_0`symbolicLess<when> _1 real, _2 real
-_1 < _2 |-->_1 < _2
+_1 < _2 |-->_0`symbolicLess
 
 _1 > _1 |-->false
 _1 > _2 |-->_2 < _1
@@ -192,8 +191,7 @@ _1 > _2 |-->_2 < _1
 _1 <= _1 |-->true
 _1 <= … |-->true
 -… <= _1 |-->true
-_1 <= _2 |-->_0`symbolicLeq<when> _1 real, _2 real
-_1 <= _2 |-->((_1 < _2) or (_1 = _2))
+_1 <= _2 |-->_0`symbolicLeq
 
 _1 >= _1 |-->true
 … >= _1 |-->true
@@ -203,7 +201,7 @@ _1 >= _2 |-->((_2 < _1) or (_1 = _2))
 _1 © Ø |-->false
 _1 ¢ Ø |-->true
 
-_1 : Ñ |-->true<when> _1 integer
+_1 : Ñ |-->0 <= _1<when> _1 integer
 _1 : Ž |-->true<when> _1 integer 
 _1 : ® |-->true<when> _1 real 
 
@@ -446,6 +444,7 @@ _1 |-->_1
 
 evaluateLimit::
 _1 * _2 |-->_1*(_2`evaluateLimit)<when> _1 real
+_1 * _2 |-->(_1`evaluateLimit)*_2<when> _2 real
 _1 * _2 |-->(_1`evaluateLimit) * (_2`evaluateLimit)
 
 _1 / _2 |-->(_1`evaluateLimit)/_2<when> _2 real
@@ -461,8 +460,9 @@ _1 ^{ _2 } |-->(_1`evaluateLimit)^{_2}<when> _2 real
 † _1 |-->†(_1`evaluateLimit)
 - _1 |-->-(_1`evaluateLimit)
 
+lim_{ _1 » _2 } _3 |-->lim_{ _1 » _2 } (_3`evaluateLimit)
+
 _1 |-->_97<when> _1 _96
-_1 |-->_1<when> _1`isIdentifier true
 
 _1 |-->_1`evaluateLimit<when> _1 basicExpression
 _1 |-->_1`evaluateLimit<when> _1 factorExpression
