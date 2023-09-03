@@ -214,9 +214,13 @@ _1 + 0 |-->_1
 0 + _1 |-->_1
 _1 + 0.0 |-->_1
 0.0 + _1 |-->_1
+… + -… |-->?
+-… + … |-->?
+
 … + _1 |-->…
 _1 + … |-->…
 -… + _1 |-->-…
+_1 + -… |-->-…
 
 _1 + _1 |-->2*(_1)
 
@@ -230,6 +234,7 @@ _1 - 0.0 |-->_1
 0.0 - _1 |-->_1`negate
 _1 - _1 |-->0
 _1 - … |-->-…
+_1 - -… |-->…
 
 _1 - _2 |-->_0`symbolicSubtraction<when> _1 real, _2 real
 _1 - _2 |-->_1 - _2
@@ -243,6 +248,7 @@ factorExpression::
 _1 * 1 |-->_1
 1.0 * _1 |-->_1
 _1 * 1.0 |-->_1
+_1 * _1 |-->_1^{2}<when> _1`isIdentifier true
 
 0 * … |-->?
 … * 0 |-->?
@@ -285,6 +291,8 @@ _1 / 0 |-->?
 
 _1 / _2 |-->_1`firstArgument<when> _1`isMultiplication true, _1`secondArgument _2
 _1 / _2 |-->_1`secondArgument<when> _1`isMultiplication true, _1`firstArgument _2
+_1 / _2 |-->1.0/_2`firstArgument<when> _2`isMultiplication true, _2`secondArgument _1
+_1 / _2 |-->1.0/_2`secondArgument<when> _2`isMultiplication true, _2`firstArgument _1
 _1 / _2 |-->_1/_2
 
 - 0 |-->0
@@ -367,15 +375,20 @@ sin ( _1 ) |-->_1`evaluateSine
 cos ( _1 ) |-->_1`evaluateCosine 
 
 tan ( 0 ) |-->0
+tan ( … ) |-->?
 tan ( _1 ) |-->(sin(_1)/cos(_1))
 
 exp ( 0 ) |-->1
+exp ( … ) |-->…
+exp ( -… ) |-->0
 exp ( _1 ) |-->e^{_1}
 
 log ( _1 ) |-->_1`evaluateLog
 
 log10 ( 1 ) |-->0
 log10 ( 10 ) |-->1
+log10 ( … ) |-->…
+log10 ( 0 ) |-->-…
 
 cosh ( 0 ) |-->1
 sinh ( 0 ) |-->0
@@ -460,6 +473,9 @@ _1 ^{ _2 } |-->(_1`evaluateLimit)^{_2}<when> _2 real
 † _1 |-->†(_1`evaluateLimit)
 - _1 |-->-(_1`evaluateLimit)
 
+sin ( _1 ) |-->sin(_1`evaluateLimit)
+
+
 lim_{ _1 » _2 } _3 |-->lim_{ _1 » _2 } (_3`evaluateLimit)
 
 _1 |-->_97<when> _1 _96
@@ -478,6 +494,9 @@ _1 |-->lim_{ _96 » _97 } _1
 evaluateSine::
 0 |-->0
 0.0 |-->0
+… |-->?
+-… |-->?
+
 g{ p } |-->0
 
 asin ( _1 ) |-->_1
@@ -501,6 +520,9 @@ _* |-->sin(_*)
 evaluateCosine::
 0 |-->1
 0.0 |-->1
+… |-->?
+-… |-->?
+
 g{ p } |-->-1
 
 acos ( _1 ) |-->_1
@@ -886,6 +908,7 @@ x |-->x^{2}/2
 x ^{ 2 } |-->x^{3}/3
 x ^{ 3 } |-->x^{4}/4
 - x |-->-(x^{2})/2
+
 x ^{ -1 } |-->log(x)
 x ^{ _1 } |-->(x^{_1 + 1})/(_1 + 1)<when> _1 real
 x ^{ _1 } |-->(x^{_1 + 1})/(_1 + 1)<when> _1 integer
@@ -945,6 +968,10 @@ _1 * x |-->_1*(x^{2}/2)<when> _1 integer
 _1 * _2 |-->_1*(_2`integrate)<when> _1 real
 _1 * _2 |-->_1*(_2`integrate)<when> _1 integer
 _1 * _2 |-->‡ (_1*_2) dx
+
+1 / x |-->log(x)
+
+_1 / x |-->_1*log(x)<when> _1 real
 
 _1 / _2 |-->(_1`integrate)/_2<when> _2 real
 _1 / _2 |-->(_1`integrate)/_2<when> _2 integer
@@ -1348,6 +1375,12 @@ _1 |-->_1
 
 
 squareRoot::
+0 |-->0
+1 |-->1
+0.0 |-->0
+1.0 |-->1
+… |-->…
+
 _1 * _1 |-->_1
 _1 * _2 |-->(_1`squareRoot)*(_2`squareRoot)
 
